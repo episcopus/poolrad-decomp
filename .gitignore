@@ -1,0 +1,5 @@
+# public copy: the original game files are yours to supply (poolrad/README.md)
+poolrad/*
+!poolrad/README.md
+video/
+docs/maps/*.pdf
