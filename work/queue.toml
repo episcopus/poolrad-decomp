@@ -1,0 +1,4 @@
+# Unit work order (SPEC 9.4). Filled in at the end of Phase 1 once callers and callees are known.
+# [[unit]]
+# id = "res03"
+# reason = "leaf utilities used everywhere"

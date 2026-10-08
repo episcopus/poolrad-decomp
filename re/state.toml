@@ -1,0 +1,15 @@
+# Canonical game state for checkpoint comparison (SPEC 8.5). Changes need a human's approval (AGENTS.md rule 6).
+#
+# [[region]]                 # a DGROUP range that is compared
+# name = "party"
+# dseg = [0x0000, 0x0000]    # [start, end) DS-relative
+#
+# [[heap_root]]              # heap records reachable from a far pointer global
+# name = "player_list"
+# pointer = "dseg:0x0000"
+# record  = "Player"         # from re/types/
+# next    = "next"           # field that links the list
+#
+# [[mask]]                   # excluded bytes, each with a reason
+# dseg = [0x0000, 0x0000]
+# reason = ""

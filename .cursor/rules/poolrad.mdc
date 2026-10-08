@@ -1,0 +1,6 @@
+---
+description: Pool of Radiance decompilation project rules
+alwaysApply: true
+---
+
+Read and follow `AGENTS.md` at the repository root before doing anything. It is the canonical instruction set for this project; `docs/spec/SPEC.md` is the specification. Playbooks are in `docs/process/playbooks/` and are also exposed as commands in `.cursor/commands/`.

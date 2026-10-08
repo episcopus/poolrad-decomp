@@ -1,0 +1,15 @@
+[project]
+name = "poolrad-decomp-tools"
+version = "0.1.0"
+description = "Tooling for the Pool of Radiance (DOS) behaviour-matching decompilation"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+    "unicorn>=2.1.4,<3",   # oracle: x86 16-bit real mode emulation (SPEC 8.2)
+    "capstone>=5.0,<7",    # disassembly in packets and divergence reports
+    "pyghidra>=2.0",       # headless Ghidra from Python (needs GHIDRA_INSTALL_DIR, JDK 21)
+    "pillow>=10",          # screenshots, DAX picture dumps
+    "pytest>=8",           # tool and codec tests
+]
+
+[tool.uv]
+package = false

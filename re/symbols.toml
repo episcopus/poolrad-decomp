@@ -1,0 +1,16 @@
+# Every routine and global the project knows (SPEC 9.4). Tools append and update entries; humans and
+# agents edit names, signatures and notes. Only tools write `level` (AGENTS.md rule 2).
+#
+# [[routine]]
+# id         = "ovl12:0A3C"          # unit-relative address: ovlNN:offset or SSSS:offset (load-image segment)
+# unit       = "ovl12"
+# size       = 214                    # bytes
+# name       = "combat_roll_initiative"
+# signature  = "procedure(side: Byte; var order: OrderTable)"   # Pascal view, as recovered
+# c_name     = "combat_roll_initiative"
+# level      = "none"                 # none | L0 | L1 | L2 | L3 | M   (tool-written)
+# justification = ""                  # required when a routine cannot be fuzzed (L1 + L3)
+# notes      = ""                     # name sources, quirks, blocked notes
+# evidence   = ["string 'Initiative' at ...", "fuzz report build/fuzz/..."]
+#
+# Entries are added by tools/ghidra/export.py and tools/agent/*.py from Phase 1.

@@ -1,0 +1,10 @@
+# DGROUP (the Turbo Pascal data segment) layout, used to generate src/include/gen/dseg.h (SPEC 7.3).
+# DGROUP is paragraph 0C7C of the load image ([I]: the System unit init loads DS with 0C7C before relocation).
+# Initialised data ends with the image at paragraph 10BF; uninitialised data (BSS) follows; stack segment 14F2.
+#
+# [[global]]
+# offset = 0x1234        # DS-relative
+# size   = 2
+# type   = "u16"         # width type, record type from re/types/, or array "u8[16]"
+# name   = "party_gold"
+# evidence = "written by ovl19:0F00 after shop purchase; fuzz ..."

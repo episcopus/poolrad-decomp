@@ -1,3 +1,17 @@
+# generated
+build/
+.venv/
+__pycache__/
+*.pyc
+# Ghidra projects are rebuilt from re/ (SPEC 5); never commit them
+*.gpr
+*.rep/
+ghidra-project/
+# local tool installs
+tools/vendor/
+# editors / OS
+.DS_Store
+tools/setup/env.local.sh
 # public copy: the original game files are yours to supply (poolrad/README.md)
 poolrad/*
 !poolrad/README.md
