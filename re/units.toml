@@ -1,459 +1,616 @@
 # Units of the original program (SPEC 6, playbook 10).
-# Generated seed from tools/re/tpovl.py on 2026-10-07; Mappers extend it by hand with evidence.
-# Order of [[resident]] entries = order of the unit init calls at the entry point (the program's uses order).
-# Segments are load-image paragraphs (relative to the start of the image, before relocation).
-# name: provisional until there is evidence; role/evidence: fill in; source: C module in src/ once it exists.
+# Code ranges filled by tools/re/update_units.py; names/evidence edited by hand.
+# Order of [[resident]] entries = unit init call order at the entry point.
+# Segments are load-image paragraphs (relative to image start, before relocation).
+# Ghidra load segment is 1000h: absolute segment = 1000h + load-image paragraph.
 
 [[resident]]
 id = "res00"
 name = "System"
+kind = "resident"
 init = "0AF8:0000"
 segment = "0AF8"
-evidence = "[I] Turbo Pascal runtime. Init sets DS to DGROUP 0C7C and saves/sets interrupt vectors through INT 21h AH=35h/25h (tools/oracle/smoke.py)."
+code_start = "0AF8:0000"
+code_end = "0C7C:0000"
+code_bytes = 6208
+evidence = "[V] Turbo Pascal System: init sets DS=DGROUP 0C7C; strings 'Runtime error ' / Borland copyright; smoke INT 21h vector install"
 source = ""
 
 [[resident]]
 id = "res01"
 name = "Crt"
+kind = "resident"
 init = "0A40:0000"
 segment = "0A40"
+code_start = "0A40:0000"
+code_end = "0AF8:0000"
+code_bytes = 2944
 evidence = "[I] Init calls INT 10h AH=0Fh, 11h and 08h, the video probing Turbo Pascal's Crt unit does (tools/oracle/smoke.py)."
 source = ""
 
 [[resident]]
 id = "res02"
 name = "res02"
+kind = "resident"
 init = "0A31:0000"
 segment = "0A31"
+code_start = "0A31:0000"
+code_end = "0A40:0000"
+code_bytes = 240
 evidence = ""
 source = ""
 
 [[resident]]
 id = "res03"
 name = "res03"
+kind = "resident"
 init = "08AE:01D2"
 segment = "08AE"
+code_start = "08AE:0000"
+code_end = "0A31:0000"
+code_bytes = 6192
 evidence = ""
 source = ""
 
 [[resident]]
 id = "res04"
 name = "res04"
+kind = "resident"
 init = "0899:013C"
 segment = "0899"
+code_start = "0899:0000"
+code_end = "08AE:0000"
+code_bytes = 336
 evidence = ""
 source = ""
 
 [[resident]]
 id = "res05"
 name = "res05"
+kind = "resident"
 init = "0802:0968"
 segment = "0802"
+code_start = "0802:0000"
+code_end = "0899:0000"
+code_bytes = 2416
 evidence = ""
 source = ""
 
 [[resident]]
 id = "res06"
 name = "res06"
+kind = "resident"
 init = "0709:0F82"
 segment = "0709"
+code_start = "0709:0000"
+code_end = "0802:0000"
+code_bytes = 3984
 evidence = ""
 source = ""
 
 [[resident]]
 id = "res07"
 name = "res07"
+kind = "resident"
 init = "0464:2A4A"
 segment = "0464"
+code_start = "0464:0000"
+code_end = "0709:0000"
+code_bytes = 10832
 evidence = ""
 source = ""
 
 [[resident]]
 id = "res08"
-name = "res08"
+name = "Overlay"
+kind = "resident"
 init = "042B:00A4"
 segment = "042B"
-evidence = ""
+code_start = "042B:0000"
+code_end = "0464:0000"
+code_bytes = 912
+evidence = "[V] Overlay manager: nearby strings GAME.OVR / Overlay error (image offset 17152)"
 source = ""
 
 [[resident]]
 id = "res09"
 name = "res09"
+kind = "resident"
 init = "03F1:0367"
 segment = "03F1"
+code_start = "03F1:0000"
+code_end = "0428:0000"
+code_bytes = 880
 evidence = ""
 source = ""
 
 [[resident]]
 id = "res10"
 name = "res10"
+kind = "resident"
 init = "03ED:0000"
 segment = "03ED"
+code_start = "03ED:0000"
+code_end = "03EE:0000"
+code_bytes = 16
 evidence = ""
 source = ""
 
 [[resident]]
 id = "res11"
 name = "res11"
+kind = "resident"
 init = "03DA:0000"
 segment = "03DA"
+code_start = "03DA:0000"
+code_end = "03DB:0000"
+code_bytes = 16
 evidence = ""
 source = ""
 
 [[resident]]
 id = "res12"
 name = "res12"
+kind = "resident"
 init = "00BA:309E"
 segment = "00BA"
+code_start = "00BA:0000"
+code_end = "03C5:0000"
+code_bytes = 12464
 evidence = ""
 source = ""
 
 [[overlay]]
 id = "ovl00"
 name = "ovl00"
+kind = "overlay"
 stub_segment = "0016"
 ovr_file_offset = "0x8"
 code_bytes = 190
+fixup_bytes = 14
 entries = 2
+init_entry = "ovl00_e0"
 evidence = ""
 source = ""
 
 [[overlay]]
 id = "ovl01"
 name = "ovl01"
+kind = "overlay"
 stub_segment = "0019"
 ovr_file_offset = "0xD4"
 code_bytes = 2062
+fixup_bytes = 202
 entries = 2
+init_entry = "ovl01_e0"
 evidence = ""
 source = ""
 
 [[overlay]]
 id = "ovl02"
 name = "ovl02"
+kind = "overlay"
 stub_segment = "001C"
 ovr_file_offset = "0x9AC"
 code_bytes = 862
+fixup_bytes = 60
 entries = 2
+init_entry = "ovl02_e0"
 evidence = ""
 source = ""
 
 [[overlay]]
 id = "ovl03"
 name = "ovl03"
+kind = "overlay"
 stub_segment = "001F"
 ovr_file_offset = "0xD46"
 code_bytes = 13581
+fixup_bytes = 804
 entries = 2
+init_entry = "ovl03_e0"
 evidence = ""
 source = ""
 
 [[overlay]]
 id = "ovl04"
 name = "ovl04"
+kind = "overlay"
 stub_segment = "0022"
 ovr_file_offset = "0x4577"
 code_bytes = 3895
+fixup_bytes = 208
 entries = 2
+init_entry = "ovl04_e0"
 evidence = ""
 source = ""
 
 [[overlay]]
 id = "ovl05"
 name = "ovl05"
+kind = "overlay"
 stub_segment = "0025"
 ovr_file_offset = "0x557E"
 code_bytes = 5750
+fixup_bytes = 224
 entries = 2
+init_entry = "ovl05_e0"
 evidence = ""
 source = ""
 
 [[overlay]]
 id = "ovl06"
 name = "ovl06"
+kind = "overlay"
 stub_segment = "0028"
 ovr_file_offset = "0x6CD4"
 code_bytes = 1949
+fixup_bytes = 98
 entries = 3
+init_entry = "ovl06_e0"
 evidence = ""
 source = ""
 
 [[overlay]]
 id = "ovl07"
 name = "ovl07"
+kind = "overlay"
 stub_segment = "002B"
 ovr_file_offset = "0x74D3"
 code_bytes = 8730
+fixup_bytes = 282
 entries = 25
+init_entry = "ovl07_e0"
 evidence = ""
 source = ""
 
 [[overlay]]
 id = "ovl08"
 name = "ovl08"
+kind = "overlay"
 stub_segment = "0035"
 ovr_file_offset = "0x9807"
 code_bytes = 4735
+fixup_bytes = 314
 entries = 2
+init_entry = "ovl08_e0"
 evidence = ""
 source = ""
 
 [[overlay]]
 id = "ovl09"
 name = "ovl09"
+kind = "overlay"
 stub_segment = "0038"
 ovr_file_offset = "0xABC0"
 code_bytes = 6439
+fixup_bytes = 234
 entries = 2
+init_entry = "ovl09_e0"
 evidence = ""
 source = ""
 
 [[overlay]]
 id = "ovl10"
 name = "ovl10"
+kind = "overlay"
 stub_segment = "003B"
 ovr_file_offset = "0xC5D1"
 code_bytes = 8082
+fixup_bytes = 112
 entries = 2
+init_entry = "ovl10_e0"
 evidence = ""
 source = ""
 
 [[overlay]]
 id = "ovl11"
 name = "ovl11"
+kind = "overlay"
 stub_segment = "003E"
 ovr_file_offset = "0xE5D3"
 code_bytes = 1562
+fixup_bytes = 110
 entries = 2
+init_entry = "ovl11_e0"
 evidence = ""
 source = ""
 
 [[overlay]]
 id = "ovl12"
 name = "ovl12"
+kind = "overlay"
 stub_segment = "0041"
 ovr_file_offset = "0xEC5B"
 code_bytes = 14510
+fixup_bytes = 754
 entries = 117
+init_entry = "ovl12_e0"
 evidence = ""
 source = ""
 
 [[overlay]]
 id = "ovl13"
 name = "ovl13"
+kind = "overlay"
 stub_segment = "0068"
 ovr_file_offset = "0x127FB"
 code_bytes = 15474
+fixup_bytes = 606
 entries = 25
+init_entry = "ovl13_e0"
 evidence = ""
 source = ""
 
 [[overlay]]
 id = "ovl14"
 name = "ovl14"
+kind = "overlay"
 stub_segment = "0072"
 ovr_file_offset = "0x166CB"
 code_bytes = 4268
+fixup_bytes = 186
 entries = 3
+init_entry = "ovl14_e0"
 evidence = ""
 source = ""
 
 [[overlay]]
 id = "ovl15"
 name = "ovl15"
+kind = "overlay"
 stub_segment = "0075"
 ovr_file_offset = "0x17831"
 code_bytes = 8158
+fixup_bytes = 368
 entries = 3
+init_entry = "ovl15_e0"
 evidence = ""
 source = ""
 
 [[overlay]]
 id = "ovl16"
 name = "ovl16"
+kind = "overlay"
 stub_segment = "0078"
 ovr_file_offset = "0x1997F"
 code_bytes = 17497
+fixup_bytes = 526
 entries = 4
+init_entry = "ovl16_e0"
 evidence = ""
 source = ""
 
 [[overlay]]
 id = "ovl17"
 name = "ovl17"
+kind = "overlay"
 stub_segment = "007C"
 ovr_file_offset = "0x1DFE6"
 code_bytes = 9189
+fixup_bytes = 722
 entries = 12
+init_entry = "ovl17_e0"
 evidence = ""
 source = ""
 
 [[overlay]]
 id = "ovl18"
 name = "ovl18"
+kind = "overlay"
 stub_segment = "0082"
 ovr_file_offset = "0x2069D"
 code_bytes = 2299
+fixup_bytes = 162
 entries = 3
+init_entry = "ovl18_e0"
 evidence = ""
 source = ""
 
 [[overlay]]
 id = "ovl19"
 name = "ovl19"
+kind = "overlay"
 stub_segment = "0085"
 ovr_file_offset = "0x2103A"
 code_bytes = 11026
+fixup_bytes = 640
 entries = 13
+init_entry = "ovl19_e0"
 evidence = ""
 source = ""
 
 [[overlay]]
 id = "ovl20"
 name = "ovl20"
+kind = "overlay"
 stub_segment = "008C"
 ovr_file_offset = "0x23DCC"
 code_bytes = 3685
+fixup_bytes = 88
 entries = 3
+init_entry = "ovl20_e0"
 evidence = ""
 source = ""
 
 [[overlay]]
 id = "ovl21"
 name = "ovl21"
+kind = "overlay"
 stub_segment = "008F"
 ovr_file_offset = "0x24C89"
 code_bytes = 8795
+fixup_bytes = 308
 entries = 15
+init_entry = "ovl21_e0"
 evidence = ""
 source = ""
 
 [[overlay]]
 id = "ovl22"
 name = "ovl22"
+kind = "overlay"
 stub_segment = "0096"
 ovr_file_offset = "0x27018"
 code_bytes = 14261
+fixup_bytes = 698
 entries = 64
+init_entry = "ovl22_e0"
 evidence = ""
 source = ""
 
 [[overlay]]
 id = "ovl23"
 name = "ovl23"
+kind = "overlay"
 stub_segment = "00AC"
 ovr_file_offset = "0x2AA87"
 code_bytes = 1123
+fixup_bytes = 0
 entries = 5
+init_entry = "ovl23_e0"
 evidence = ""
 source = ""
 
 [[overlay]]
 id = "ovl24"
 name = "ovl24"
+kind = "overlay"
 stub_segment = "00B0"
 ovr_file_offset = "0x2AEEA"
 code_bytes = 6455
+fixup_bytes = 174
 entries = 23
+init_entry = "ovl24_e0"
 evidence = ""
 source = ""
 
 [[overlay]]
 id = "ovl25"
 name = "ovl25"
+kind = "overlay"
 stub_segment = "03C5"
 ovr_file_offset = "0x2C8CF"
 code_bytes = 4682
+fixup_bytes = 110
 entries = 8
+init_entry = "ovl25_e0"
 evidence = ""
 source = ""
 
 [[overlay]]
 id = "ovl26"
 name = "ovl26"
+kind = "overlay"
 stub_segment = "03CA"
 ovr_file_offset = "0x2DB87"
 code_bytes = 677
+fixup_bytes = 12
 entries = 3
+init_entry = "ovl26_e0"
 evidence = ""
 source = ""
 
 [[overlay]]
 id = "ovl27"
 name = "ovl27"
+kind = "overlay"
 stub_segment = "03CD"
 ovr_file_offset = "0x2DE38"
 code_bytes = 648
+fixup_bytes = 14
 entries = 3
+init_entry = "ovl27_e0"
 evidence = ""
 source = ""
 
 [[overlay]]
 id = "ovl28"
 name = "ovl28"
+kind = "overlay"
 stub_segment = "03D0"
 ovr_file_offset = "0x2E0CE"
 code_bytes = 1989
+fixup_bytes = 100
 entries = 8
+init_entry = "ovl28_e0"
 evidence = ""
 source = ""
 
 [[overlay]]
 id = "ovl29"
 name = "ovl29"
+kind = "overlay"
 stub_segment = "03D5"
 ovr_file_offset = "0x2E8F7"
 code_bytes = 4619
+fixup_bytes = 80
 entries = 8
+init_entry = "ovl29_e0"
 evidence = ""
 source = ""
 
 [[overlay]]
 id = "ovl30"
 name = "ovl30"
+kind = "overlay"
 stub_segment = "03DB"
 ovr_file_offset = "0x2FB52"
 code_bytes = 3038
+fixup_bytes = 10
 entries = 7
+init_entry = "ovl30_e0"
 evidence = ""
 source = ""
 
 [[overlay]]
 id = "ovl31"
 name = "ovl31"
+kind = "overlay"
 stub_segment = "03E0"
 ovr_file_offset = "0x3073A"
 code_bytes = 4864
+fixup_bytes = 50
 entries = 20
+init_entry = "ovl31_e0"
 evidence = ""
 source = ""
 
 [[overlay]]
 id = "ovl32"
 name = "ovl32"
+kind = "overlay"
 stub_segment = "03E9"
 ovr_file_offset = "0x31A6C"
 code_bytes = 1605
+fixup_bytes = 110
 entries = 6
+init_entry = "ovl32_e0"
 evidence = ""
 source = ""
 
 [[overlay]]
 id = "ovl33"
 name = "ovl33"
+kind = "overlay"
 stub_segment = "03EE"
 ovr_file_offset = "0x3211F"
 code_bytes = 252
+fixup_bytes = 26
 entries = 2
+init_entry = "ovl33_e0"
 evidence = ""
 source = ""
 
 [[overlay]]
 id = "ovl34"
 name = "ovl34"
+kind = "overlay"
 stub_segment = "0428"
 ovr_file_offset = "0x32235"
 code_bytes = 690
+fixup_bytes = 50
 entries = 3
+init_entry = "ovl34_e0"
 evidence = ""
 source = ""

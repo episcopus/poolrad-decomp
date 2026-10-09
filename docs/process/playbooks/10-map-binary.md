@@ -19,7 +19,15 @@
 
 ## Done when
 
-Every byte of code belongs to a routine in `re/symbols.toml`, every unit is in `re/units.toml`, the runtime is named, and `make status` reports the inventory.
+Every unit is in `re/units.toml` with a code range, routines are listed in `re/symbols.toml` (enumeration may leave data-in-code gaps; coverage is reported by `make status`), System/Crt/Overlay (at least) are named, and `make ghidra` rebuilds the project.
+
+## Tooling
+
+| Command | Role |
+|---|---|
+| `make map` | `update_units.py` + `enumerate_routines.py` + `rtl_ident.py` + `status.py` |
+| `make ghidra` | `map` then `tools/ghidra/import_tp.py` (needs `GHIDRA_INSTALL_DIR`) |
+| `tools/ghidra/export.py` | write interactive Ghidra names back to `re/symbols.toml` |
 
 ## Hand-off
 

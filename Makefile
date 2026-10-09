@@ -7,12 +7,12 @@ OVR := poolrad/GAME.OVR
 
 PACKED := poolrad/START.EXE
 
-.PHONY: help setup doctor inputs unexepack overlays dax smoke status next ghidra packet lock unlock \
+.PHONY: help setup doctor inputs unexepack overlays map dax smoke status next ghidra packet lock unlock \
         oracle-run golden sessions host hybrid fuzz test check review-pass dos coco3
 
 help:
-	@echo "Available now:  setup doctor inputs unexepack overlays dax smoke"
-	@echo "Phase 1:        status next ghidra packet lock unlock"
+	@echo "Available now:  setup doctor inputs unexepack overlays map dax smoke status next ghidra"
+	@echo "Phase 1 (partial): packet lock unlock"
 	@echo "Phase 2:        oracle-run golden"
 	@echo "Phase 3:        host hybrid fuzz sessions test check review-pass"
 	@echo "Later:          dos (P8) coco3 (P7)"
@@ -33,19 +33,32 @@ unexepack:        ## reproduce start-unpack.exe from START.EXE (EXEPACK) and che
 overlays:         ## regenerate the overlay manifest and extract overlay code to build/re
 	$(PY) tools/re/tpovl.py $(EXE) $(OVR) -o build/re/overlays.json --extract build/re/overlays
 
+map: overlays     ## fill units.toml ranges, enumerate routines, tag RTL (playbook 10)
+	$(PY) tools/re/update_units.py
+	$(PY) tools/re/enumerate_routines.py --merge
+	$(PY) tools/re/rtl_ident.py
+	$(PY) tools/agent/status.py
+
 dax:              ## verify every .DAX archive (container layout and RLE sizes)
 	$(PY) tools/re/dax.py verify poolrad/
 
 smoke:            ## run the original code in Unicorn up to its first interrupts (de-risks P2)
 	$(PY) tools/oracle/smoke.py $(EXE)
 
+status:           ## regenerate work/status.md from re/ inventory
+	$(PY) tools/agent/status.py
+
+next:             ## print the next unit from work/queue.toml
+	$(PY) tools/agent/next.py
+
+ghidra: map       ## rebuild the Ghidra project (build/ghidra/, not committed)
+	@test -n "$$GHIDRA_INSTALL_DIR" || (echo 'ghidra: source tools/setup/env.local.sh first'; exit 1)
+	$(PY) tools/ghidra/import_tp.py
+
 define todo
 	@echo "make $@: not built yet; delivered in $(1) (docs/spec/SPEC.md section $(2))."; exit 2
 endef
 
-status:      ; $(call todo,Phase 1,9.4)
-next:        ; $(call todo,Phase 1,9.4)
-ghidra:      ; $(call todo,Phase 1,10 and playbook 10)
 packet:      ; $(call todo,Phase 1,9.3)
 lock:        ; $(call todo,Phase 1,9.4)
 unlock:      ; $(call todo,Phase 1,9.4)

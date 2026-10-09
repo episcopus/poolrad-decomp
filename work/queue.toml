@@ -1,4 +1,195 @@
-# Unit work order (SPEC 9.4). Filled in at the end of Phase 1 once callers and callees are known.
-# [[unit]]
-# id = "res03"
-# reason = "leaf utilities used everywhere"
+# Unit work order (SPEC 9.4). Seeded in Phase 1; refine as callers/callees firm up.
+# Default order: runtime and leaf utilities, data loaders, text/graphics, ECL, maps,
+# menus/characters, items/shops, combat, magic, the rest.
+
+[[unit]]
+id = "res00"
+reason = "System RTL; every unit depends on it"
+
+[[unit]]
+id = "res01"
+reason = "Crt; console/video helpers"
+
+[[unit]]
+id = "res08"
+reason = "Overlay manager; loads GAME.OVR"
+
+[[unit]]
+id = "res02"
+reason = "early resident; identify next"
+
+[[unit]]
+id = "res03"
+reason = "resident utility"
+
+[[unit]]
+id = "res04"
+reason = "resident utility"
+
+[[unit]]
+id = "res05"
+reason = "resident; hosts overlay disk prompt string"
+
+[[unit]]
+id = "res06"
+reason = "resident; many far-call sites"
+
+[[unit]]
+id = "res07"
+reason = "large resident unit"
+
+[[unit]]
+id = "res09"
+reason = "resident"
+
+[[unit]]
+id = "res10"
+reason = "resident"
+
+[[unit]]
+id = "res11"
+reason = "resident"
+
+[[unit]]
+id = "res12"
+reason = "largest resident game unit before overlays"
+
+[[unit]]
+id = "ovl00"
+reason = "smallest overlay; smoke-test lift pipeline"
+
+[[unit]]
+id = "ovl01"
+reason = "small overlay"
+
+[[unit]]
+id = "ovl02"
+reason = "small overlay"
+
+[[unit]]
+id = "ovl33"
+reason = "tiny overlay (252 bytes)"
+
+[[unit]]
+id = "ovl34"
+reason = "small overlay"
+
+[[unit]]
+id = "ovl26"
+reason = "small overlay"
+
+[[unit]]
+id = "ovl27"
+reason = "small overlay"
+
+[[unit]]
+id = "ovl03"
+reason = "data / loader candidate (large)"
+
+[[unit]]
+id = "ovl22"
+reason = "many entries; likely shared helpers"
+
+[[unit]]
+id = "ovl12"
+reason = "largest entry count (117); combat-family lead [H]"
+
+[[unit]]
+id = "ovl13"
+reason = "large overlay"
+
+[[unit]]
+id = "ovl16"
+reason = "largest overlay by code bytes"
+
+[[unit]]
+id = "ovl19"
+reason = "shops / town lead [H]"
+
+[[unit]]
+id = "ovl07"
+reason = "mid-size, many entries"
+
+[[unit]]
+id = "ovl21"
+reason = "mid-size"
+
+[[unit]]
+id = "ovl24"
+reason = "mid-size"
+
+[[unit]]
+id = "ovl17"
+reason = "mid-size"
+
+[[unit]]
+id = "ovl04"
+reason = "overlay"
+
+[[unit]]
+id = "ovl05"
+reason = "overlay"
+
+[[unit]]
+id = "ovl06"
+reason = "overlay"
+
+[[unit]]
+id = "ovl08"
+reason = "overlay"
+
+[[unit]]
+id = "ovl09"
+reason = "overlay"
+
+[[unit]]
+id = "ovl10"
+reason = "overlay"
+
+[[unit]]
+id = "ovl11"
+reason = "overlay"
+
+[[unit]]
+id = "ovl14"
+reason = "overlay"
+
+[[unit]]
+id = "ovl15"
+reason = "overlay"
+
+[[unit]]
+id = "ovl18"
+reason = "overlay"
+
+[[unit]]
+id = "ovl20"
+reason = "overlay"
+
+[[unit]]
+id = "ovl23"
+reason = "overlay"
+
+[[unit]]
+id = "ovl25"
+reason = "overlay"
+
+[[unit]]
+id = "ovl28"
+reason = "overlay"
+
+[[unit]]
+id = "ovl29"
+reason = "overlay"
+
+[[unit]]
+id = "ovl30"
+reason = "overlay"
+
+[[unit]]
+id = "ovl31"
+reason = "overlay"
+
+[[unit]]
+id = "ovl32"
+reason = "overlay"

@@ -38,7 +38,7 @@ All work targets exactly these files. Tools refuse to run on anything else (`mak
 | `poolrad/GAME.OVR` | 206,105 | `14e2b132470cbae275d8d925ddeeb9e370fdc5a7cfd4564ea3212dd4956ca722` | Borland overlay file, `FBOV` header |
 | `poolrad/*.DAX`, `ITEMS`, `SAVE/` | | recorded by `make inputs` | Game data, read-only |
 
-`start-unpack.exe` was produced earlier by hand. Phase 0 must reproduce it from `START.EXE` with our own unpacker (or document the differences) so the chain from the shipped file to the analysis input is repeatable.
+`start-unpack.exe` is reproduced from `START.EXE` by `tools/re/unexepack.py` (`make unexepack`); the output matches the pinned file byte for byte.
 
 **Version caution.** Other Pool of Radiance projects analysed a different, earlier build: a 47,936-byte `START.EXE` with a 232,379-byte `GAME.OVR` in Turbo Pascal 5.x `TPOV` format with 38 overlays (wicanr2/Pool-of-Radiance-cht, `docs/re/dos-toolchain-baseline.md`). Ours has 35 overlays in `FBOV` format. Their findings are leads, never addresses we can reuse without re-proving them on our bytes.
 
@@ -50,7 +50,7 @@ Each item was checked against our files on 2026-10-07; details and evidence are 
 
 1. **Language: Turbo Pascal, not C.** The unpacked image contains the Borland Pascal runtime error strings ("Runtime error ", " at ", ".") followed by "Portions Copyright (c) 1983,91 Borland". The entry point is a chain of 48 far calls, one per unit initialisation, which is how Turbo Pascal starts a program.
 2. **Overlays.** `GAME.OVR` begins with `FBOV`. 35 overlay stub segments (INT 3Fh headers) in the load image describe 35 overlay units that tile the overlay file exactly, with 406 entry points and 197,641 bytes of code. The other 13 init calls go to resident units (the runtime and resident game units). `tools/re/tpovl.py` regenerates all of this.
-3. **Packing.** The shipped `START.EXE` is EXEPACK compressed.
+3. **Packing.** The shipped `START.EXE` is EXEPACK compressed; `make unexepack` unpacks it to the pinned `start-unpack.exe`.
 4. **Data.** All 113 `.DAX` files are block archives with one header layout, and all 1,245 blocks decompress to their declared size with one RLE scheme (whitepaper, section 4.1).
 5. **Memory.** DGROUP is paragraph `0C7C` in the load image (set by the System unit init), the stack segment is `14F2` with SP `4000`.
 
@@ -152,7 +152,7 @@ tests/
   sessions/               recorded input scripts + golden digests (no game data)
 tools/
   setup/                  setup-macos.sh, doctor.sh
-  re/                     tpovl.py and dax.py (done), unexepack.py, rtl_ident.py
+  re/                     tpovl.py, dax.py, unexepack.py (done); rtl_ident.py
   ghidra/                 PyGhidra scripts: import, apply re/, export
   oracle/                 the emulator harness (Unicorn based); smoke.py (done) proves the original runs
   agent/                  packet.py, status.py, lock.py
@@ -405,7 +405,7 @@ Game data and the original executables are copyrighted; they stay in this privat
 
 1. Exact Turbo Pascal version (runtime says 1983,91; overlay format `FBOV`).
 2. Which compiler directives were used (`$R` range checks, `$S` stack checks, `$O` overlays, `$F` far calls), visible as RTL calls in the code.
-3. Where `start-unpack.exe` came from and whether it matches a clean EXEPACK unpack.
+3. ~~Where `start-unpack.exe` came from and whether it matches a clean EXEPACK unpack.~~ Resolved: `make unexepack` matches the pinned file.
 4. Meaning of the overlay stub field at +0E and of the `POOL.CFG` third option (`F`/`N`).
 5. How much of the resident code is hand-written assembly.
 6. Which graphics modes must be supported at first (proposal: EGA only, CGA and Tandy in P5).

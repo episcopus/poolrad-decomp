@@ -1,10 +1,74 @@
 # DGROUP (the Turbo Pascal data segment) layout, used to generate src/include/gen/dseg.h (SPEC 7.3).
-# DGROUP is paragraph 0C7C of the load image ([I]: the System unit init loads DS with 0C7C before relocation).
-# Initialised data ends with the image at paragraph 10BF; uninitialised data (BSS) follows; stack segment 14F2.
-#
-# [[global]]
-# offset = 0x1234        # DS-relative
-# size   = 2
-# type   = "u16"         # width type, record type from re/types/, or array "u8[16]"
-# name   = "party_gold"
-# evidence = "written by ovl19:0F00 after shop purchase; fuzz ..."
+# DGROUP is paragraph 0C7C of the load image ([V]: System_init does `mov dx,0C7Ch; mov ds,dx`).
+# Initialised data ends with the image at paragraph 10BF; BSS follows; stack segment 14F2.
+# Offsets below are DS-relative. Seeded from System_init stores (playbook 10).
+
+[[global]]
+offset = 0x43EE
+size = 2
+type = "u16"
+name = "HeapOrg_related"
+evidence = "System_init reads [0x43EE] when computing heap bounds (0AF8:001E)"
+
+[[global]]
+offset = 0x43F4
+size = 2
+type = "u16"
+name = "HeapPtr_lo"
+evidence = "System_init writes AX-derived value at 0AF8:0018"
+
+[[global]]
+offset = 0x43F6
+size = 2
+type = "u16"
+name = "HeapPtr_hi_or_dup"
+evidence = "System_init stores same AX at 0AF8:001B"
+
+[[global]]
+offset = 0x43F8
+size = 2
+type = "u16"
+name = "HeapEnd"
+evidence = "System_init stores AX+[0x43EE] at 0AF8:0022"
+
+[[global]]
+offset = 0x4402
+size = 2
+type = "u16"
+name = "unk_4402"
+evidence = "System_init store at 0AF8:0025"
+
+[[global]]
+offset = 0x4406
+size = 2
+type = "u16"
+name = "unk_4406"
+evidence = "System_init store at 0AF8:0028"
+
+[[global]]
+offset = 0x440A
+size = 2
+type = "u16"
+name = "DosMemTop"
+evidence = "System_init copies ES:[0002] (PSP mem top) at 0AF8:002E"
+
+[[global]]
+offset = 0x440E
+size = 2
+type = "u16"
+name = "unk_440E"
+evidence = "System_init store at 0AF8:002B"
+
+[[global]]
+offset = 0x4414
+size = 2
+type = "u16"
+name = "unk_4414"
+evidence = "System_init mov [0x4414],0x00A9 at 0AF8:0037"
+
+[[global]]
+offset = 0x4422
+size = 2
+type = "u16"
+name = "PspSegment"
+evidence = "System_init mov [0x4422],ES at 0AF8:0005 (ES=PSP on entry)"

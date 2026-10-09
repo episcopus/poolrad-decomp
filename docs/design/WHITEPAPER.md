@@ -48,7 +48,8 @@ This document grows a chapter per subsystem as the decompilation proves how each
 ### 2.2 Toolchain and version
 
 - **Turbo Pascal** **[V]**: the unpacked image contains the runtime's error text ("Runtime error ", " at ", "." CR LF) immediately followed by "Portions Copyright (c) 1983,91 Borland"; the entry point is a chain of unit initialisation calls (section 3.2).
-- Overlay file signature `FBOV` **[V]**. The earlier 1988 build analysed by wicanr2 uses `TPOV` and Turbo Pascal 5.x **[H]** (their `docs/re/dos-toolchain-baseline.md`). Together with the 1991 runtime date this makes ours a later rebuild with a newer Turbo Pascal (6.0 era) **[I]**. Exact version **[?]**, to be bounded by comparing runtime code with Turbo Pascal 6.0 and 7.0 (playbook 10, step 4).
+- Overlay file signature `FBOV` **[V]**. The earlier 1988 build analysed by wicanr2 uses `TPOV` and Turbo Pascal 5.x **[H]** (their `docs/re/dos-toolchain-baseline.md`). Together with the 1991 runtime date this makes ours a later rebuild with a newer Turbo Pascal **[I]**.
+- **Version bound** **[I]** (`tools/re/rtl_ident.py`, playbook 10): `FBOV` + copyright year 1991 rules out TP 5.x (`TPOV`). Compatible with Turbo Pascal **6.0 or 7.0**. Exact patch level still **[?]** (needs a compiler install to byte-compare the System unit).
 - Which compiler directives were used (range, stack and overflow checks) **[?]**.
 
 ### 2.3 Configuration (`POOL.CFG`)
@@ -94,21 +95,21 @@ Compressed load image is 63,264 bytes; RLE commands are `0xB0` (fill) and `0xB2`
 
 The entry point is 48 consecutive far calls, one per unit initialisation, in Turbo Pascal's unit order. 35 of them call offset `0020` of an overlay stub segment (entry 0 of an overlay unit) and 13 call resident units:
 
-| Unit | Init call | Provisional role |
+| Unit | Init call | Role |
 |---|---|---|
-| res00 | 0AF8:0000 | System (Turbo Pascal runtime) [I] |
-| res01 | 0A40:0000 | Crt [I] |
+| res00 | 0AF8:0000 | System (Turbo Pascal runtime) **[V]** |
+| res01 | 0A40:0000 | Crt **[V]** (INT 10h probe in smoke) |
 | res02 | 0A31:0000 | [?] |
 | res03 | 08AE:01D2 | [?] |
 | res04 | 0899:013C | [?] |
-| res05 | 0802:0968 | [?] |
-| res06 | 0709:0F82 | [?] |
-| res07 | 0464:2A4A | [?] |
-| res08 | 042B:00A4 | [?] |
+| res05 | 0802:0968 | hosts "Please insert overlay disk." string **[V]**; role otherwise [?] |
+| res06 | 0709:0F82 | [?] (many far-call sites) |
+| res07 | 0464:2A4A | [?] (large resident) |
+| res08 | 042B:00A4 | Overlay manager **[V]** (strings `GAME.OVR`, `Overlay error...`) |
 | res09 | 03F1:0367 | [?] |
 | res10 | 03ED:0000 | [?] |
 | res11 | 03DA:0000 | [?] |
-| res12 | 00BA:309E | [?] |
+| res12 | 00BA:309E | [?] (largest resident code range before DGROUP) |
 
 Start-up as observed by running the original code in Unicorn (`tools/oracle/smoke.py`) **[V]**: the System unit saves 19 interrupt vectors (INT 21h AH=35h) and installs 4 handlers (AH=25h), queries a device with IOCTL (AH=44h), then the Crt unit probes the video BIOS (INT 10h AH=0Fh, 11h, 08h).
 
@@ -134,13 +135,26 @@ The 35 units tile `GAME.OVR` exactly (no gaps, no overlaps), with 406 entry poin
 
 Overlay error messages in the image **[V]**: "Overlay error, program abort!", "Please insert overlay disk.", "Not enough memory to run game.  You need ... more bytes."
 
-### 3.4 Calling conventions **[H]** (Turbo Pascal documentation; to verify on samples, playbook 10 step 5)
+### 3.4 Calling conventions **[V]** (samples below; matches Turbo Pascal far model)
 
-- Parameters pushed left to right; the callee removes them (`RET n`).
-- Function results: 8 and 16-bit in AL/AX, 32-bit and pointers in DX:AX; string results through a caller-provided buffer pushed first.
-- VAR parameters and large value parameters passed by address.
-- Nested procedures receive the enclosing procedure's frame pointer (static link) as an extra parameter.
-- Routines in a unit's interface use far calls; implementation-only routines may be near.
+Observed on this build (Capstone on `start-unpack.exe` / `ovl00.bin`):
+
+| Site | Evidence |
+|---|---|
+| `ovl00` entry 0 @ code `00AC` | `push bp; mov bp,sp; ...; pop bp; retf` (0 params) |
+| `Crt_init` `0A40:0000` | frame; far calls via `push cs`/`lcall`; ends `pop bp; retf` |
+| `System` `0AF8:0254` | reads `[bp+6]` then `les cx,[bp+8]`; ends `retf 6` (callee pops 6 bytes) |
+| `Overlay_init` `042B:00A4` | `sub sp,0Ah` locals; pushes `ds:di` / `cs:di` before `lcall` into System |
+| `System_init` `0AF8:0000` | no BP frame; sets `ds=0C7Ch`, installs INT vectors (smoke) |
+
+Rules for lifting:
+
+- Interface routines are **far** (`retf` / `retf n`). Near `call`/`ret` appear for unit-private helpers.
+- Frame: `push bp; mov bp,sp` then optional `sub sp,locals`.
+- After the far return address, the first parameter is at `[bp+6]`; a far pointer follows as `[bp+8]:[bp+0A]` when pushed as `seg` then `off` (order as pushed).
+- Callee removes parameters (`retf n` where `n` is total parameter bytes).
+- String / VAR arguments are passed as far pointers (`push ds; push di` or `push ss; push di` patterns above).
+- Nested-procedure static links and exact left-to-right push order for multi-arg calls: further samples **[I]** (still consistent with TP manuals).
 
 ### 3.5 Memory **[?]**
 
