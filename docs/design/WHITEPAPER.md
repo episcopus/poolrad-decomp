@@ -99,7 +99,7 @@ The entry point is 48 consecutive far calls, one per unit initialisation, in Tur
 |---|---|---|
 | res00 | 0AF8:0000 | System (Turbo Pascal runtime) **[V]** |
 | res01 | 0A40:0000 | Crt **[V]** (INT 10h probe in smoke) |
-| res02 | 0A31:0000 | [?] |
+| res02 | 0A31:0000 | Dos **[I]** (INT 21h present; typical TP `uses` order after Crt) |
 | res03 | 08AE:01D2 | [?] |
 | res04 | 0899:013C | [?] |
 | res05 | 0802:0968 | hosts "Please insert overlay disk." string **[V]**; role otherwise [?] |
@@ -110,6 +110,44 @@ The entry point is 48 consecutive far calls, one per unit initialisation, in Tur
 | res10 | 03ED:0000 | [?] |
 | res11 | 03DA:0000 | [?] |
 | res12 | 00BA:309E | [?] (largest resident code range before DGROUP) |
+
+Named overlay units from in-code strings (`make map` / `tools/re/name_units.py`) **[V]**; coab analogies tagged **[H]** in `re/units.toml` evidence only:
+
+| Overlay | Name | Sample evidence |
+|---|---|---|
+| ovl03 | Encounter | `~COMBAT ~WAIT ~FLEE`, item file error |
+| ovl04 | Temple | Heal / Pool / Appraise menus |
+| ovl06 | Shop | Shopkeeper dialogue |
+| ovl08/09 | CombatAI | Move/Attack strings |
+| ovl13 | CombatSpells | Begins Casting |
+| ovl15 | SpellMemorize | memorize / Cleric Spells |
+| ovl16 | CharCreate | Character name / Training costs |
+| ovl17 | SaveLoad | Put save disk in |
+| ovl19 | Inventory | Ready Item / Trade with Whom |
+| ovl22 | CastSpell | Choose Spell |
+| ovl29 | GeoLoad | LoadWallSet / Load3DMap |
+| ovl34 | TileLoad | Unable to load 8x8D |
+| (others) | see `re/units.toml` | |
+
+#### 3.2.1 System RTL entries used by game code **[V]** (`tools/re/rtl_ident.py`)
+
+Hand-verified (Capstone) names applied to far-call targets; full list in `re/symbols.toml`:
+
+| Address | Name | Evidence |
+|---|---|---|
+| 0AF8:0B0B | `System_StrCopy` | Pascal string copy; `retf` |
+| 0AF8:0B25 | `System_StrLCopy` | copy with max length |
+| 0AF8:0B98 | `System_StrConcat` | concatenate into dest |
+| 0AF8:1685 | `System_Move` | overlapping-safe block move |
+| 0AF8:16A8 | `System_FillChar` | `rep stosb` fill |
+| 0AF8:13E2 | `System_Assign` | FileRec magic `D7B0` + path |
+| 0AF8:1410 | `System_Reset` | INT 21h AH=3Dh |
+| 0AF8:1491 | `System_Close` | INT 21h AH=3Eh |
+| 0AF8:14FB | `System_BlockRead` | INT 21h AH=3Fh |
+| 0AF8:04A2 | `System_IOResult` | swap `InOutRes` at DS:4426 |
+| 0AF8:00E9 | `System_Halt` | exit / ExitProc teardown |
+
+Other externally called System/Crt/Overlay/Dos entries are named `*_rtl_XXXX` or INT-based until classified.
 
 Start-up as observed by running the original code in Unicorn (`tools/oracle/smoke.py`) **[V]**: the System unit saves 19 interrupt vectors (INT 21h AH=35h) and installs 4 handlers (AH=25h), queries a device with IOCTL (AH=44h), then the Crt unit probes the video BIOS (INT 10h AH=0Fh, 11h, 08h).
 

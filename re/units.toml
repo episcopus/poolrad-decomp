@@ -1,6 +1,6 @@
 # Units of the original program (SPEC 6, playbook 10).
 # Code ranges filled by tools/re/update_units.py; names/evidence edited by hand.
-# Order of [[resident]] entries = unit init call order at the entry point.
+# Order of resident entries = unit init call order at the entry point.
 # Segments are load-image paragraphs (relative to image start, before relocation).
 # Ghidra load segment is 1000h: absolute segment = 1000h + load-image paragraph.
 
@@ -13,7 +13,7 @@ segment = "0AF8"
 code_start = "0AF8:0000"
 code_end = "0C7C:0000"
 code_bytes = 6208
-evidence = "[V] Turbo Pascal System: init sets DS=DGROUP 0C7C; strings 'Runtime error ' / Borland copyright; smoke INT 21h vector install"
+evidence = "[V] Turbo Pascal System: DS:=0C7C; Runtime error / Borland copyright; INT 21h vector install"
 source = ""
 
 [[resident]]
@@ -25,19 +25,19 @@ segment = "0A40"
 code_start = "0A40:0000"
 code_end = "0AF8:0000"
 code_bytes = 2944
-evidence = "[I] Init calls INT 10h AH=0Fh, 11h and 08h, the video probing Turbo Pascal's Crt unit does (tools/oracle/smoke.py)."
+evidence = "[V] Crt: INT 10h AH=0Fh/11h/08h in init (smoke)"
 source = ""
 
 [[resident]]
 id = "res02"
-name = "res02"
+name = "Dos"
 kind = "resident"
 init = "0A31:0000"
 segment = "0A31"
 code_start = "0A31:0000"
 code_end = "0A40:0000"
 code_bytes = 240
-evidence = ""
+evidence = "[I] resident unit with INT 21h; likely Turbo Pascal Dos (between Crt and Overlay in typical uses)"
 source = ""
 
 [[resident]]
@@ -109,7 +109,7 @@ segment = "042B"
 code_start = "042B:0000"
 code_end = "0464:0000"
 code_bytes = 912
-evidence = "[V] Overlay manager: nearby strings GAME.OVR / Overlay error (image offset 17152)"
+evidence = "[V] Overlay: GAME.OVR / Overlay error / Not enough memory strings"
 source = ""
 
 [[resident]]
@@ -201,7 +201,7 @@ source = ""
 
 [[overlay]]
 id = "ovl03"
-name = "ovl03"
+name = "Encounter"
 kind = "overlay"
 stub_segment = "001F"
 ovr_file_offset = "0xD46"
@@ -209,12 +209,12 @@ code_bytes = 13581
 fixup_bytes = 804
 entries = 2
 init_entry = "ovl03_e0"
-evidence = ""
+evidence = "[V] string in ovl; combat/parlay menus nearby; [H] coab ovr* encounter/parlay family (addresses differ; role only)"
 source = ""
 
 [[overlay]]
 id = "ovl04"
-name = "ovl04"
+name = "Temple"
 kind = "overlay"
 stub_segment = "0022"
 ovr_file_offset = "0x4577"
@@ -222,12 +222,12 @@ code_bytes = 3895
 fixup_bytes = 208
 entries = 2
 init_entry = "ovl04_e0"
-evidence = ""
+evidence = "[V] temple/heal menu"
 source = ""
 
 [[overlay]]
 id = "ovl05"
-name = "ovl05"
+name = "TreasureShare"
 kind = "overlay"
 stub_segment = "0025"
 ovr_file_offset = "0x557E"
@@ -235,12 +235,12 @@ code_bytes = 5750
 fixup_bytes = 224
 entries = 2
 init_entry = "ovl05_e0"
-evidence = ""
+evidence = "[V] treasure share"
 source = ""
 
 [[overlay]]
 id = "ovl06"
-name = "ovl06"
+name = "Shop"
 kind = "overlay"
 stub_segment = "0028"
 ovr_file_offset = "0x6CD4"
@@ -248,12 +248,12 @@ code_bytes = 1949
 fixup_bytes = 98
 entries = 3
 init_entry = "ovl06_e0"
-evidence = ""
+evidence = "[V] shopkeeper dialogue/menu"
 source = ""
 
 [[overlay]]
 id = "ovl07"
-name = "ovl07"
+name = "Loader"
 kind = "overlay"
 stub_segment = "002B"
 ovr_file_offset = "0x74D3"
@@ -261,12 +261,12 @@ code_bytes = 8730
 fixup_bytes = 282
 entries = 25
 init_entry = "ovl07_e0"
-evidence = ""
+evidence = "[V] loading banner"
 source = ""
 
 [[overlay]]
 id = "ovl08"
-name = "ovl08"
+name = "CombatAI"
 kind = "overlay"
 stub_segment = "0035"
 ovr_file_offset = "0x9807"
@@ -274,12 +274,12 @@ code_bytes = 4735
 fixup_bytes = 314
 entries = 2
 init_entry = "ovl08_e0"
-evidence = ""
+evidence = "[V] combat move/attack string; [H] coab combat overlay family"
 source = ""
 
 [[overlay]]
 id = "ovl09"
-name = "ovl09"
+name = "CombatAI"
 kind = "overlay"
 stub_segment = "0038"
 ovr_file_offset = "0xABC0"
@@ -287,7 +287,7 @@ code_bytes = 6439
 fixup_bytes = 234
 entries = 2
 init_entry = "ovl09_e0"
-evidence = ""
+evidence = "[V] combat move/attack string; [H] coab combat overlay family"
 source = ""
 
 [[overlay]]
@@ -305,7 +305,7 @@ source = ""
 
 [[overlay]]
 id = "ovl11"
-name = "ovl11"
+name = "Loader"
 kind = "overlay"
 stub_segment = "003E"
 ovr_file_offset = "0xE5D3"
@@ -313,12 +313,12 @@ code_bytes = 1562
 fixup_bytes = 110
 entries = 2
 init_entry = "ovl11_e0"
-evidence = ""
+evidence = "[V] loading banner"
 source = ""
 
 [[overlay]]
 id = "ovl12"
-name = "ovl12"
+name = "TrainRewards"
 kind = "overlay"
 stub_segment = "0041"
 ovr_file_offset = "0xEC5B"
@@ -326,12 +326,12 @@ code_bytes = 14510
 fixup_bytes = 754
 entries = 117
 init_entry = "ovl12_e0"
-evidence = ""
+evidence = "[V] training reward"
 source = ""
 
 [[overlay]]
 id = "ovl13"
-name = "ovl13"
+name = "CombatSpells"
 kind = "overlay"
 stub_segment = "0068"
 ovr_file_offset = "0x127FB"
@@ -339,7 +339,7 @@ code_bytes = 15474
 fixup_bytes = 606
 entries = 25
 init_entry = "ovl13_e0"
-evidence = ""
+evidence = "[V] combat casting strings; [H] coab combat spell overlays"
 source = ""
 
 [[overlay]]
@@ -357,7 +357,7 @@ source = ""
 
 [[overlay]]
 id = "ovl15"
-name = "ovl15"
+name = "SpellMemorize"
 kind = "overlay"
 stub_segment = "0075"
 ovr_file_offset = "0x17831"
@@ -365,12 +365,12 @@ code_bytes = 8158
 fixup_bytes = 368
 entries = 3
 init_entry = "ovl15_e0"
-evidence = ""
+evidence = "[V] camp spell memorize; [H] coab camp/spell memorize"
 source = ""
 
 [[overlay]]
 id = "ovl16"
-name = "ovl16"
+name = "CharCreate"
 kind = "overlay"
 stub_segment = "0078"
 ovr_file_offset = "0x1997F"
@@ -378,12 +378,12 @@ code_bytes = 17497
 fixup_bytes = 526
 entries = 4
 init_entry = "ovl16_e0"
-evidence = ""
+evidence = "[V] character creation/training; [H] coab character creation/training"
 source = ""
 
 [[overlay]]
 id = "ovl17"
-name = "ovl17"
+name = "SaveLoad"
 kind = "overlay"
 stub_segment = "007C"
 ovr_file_offset = "0x1DFE6"
@@ -391,12 +391,12 @@ code_bytes = 9189
 fixup_bytes = 722
 entries = 12
 init_entry = "ovl17_e0"
-evidence = ""
+evidence = "[V] save disk prompt; [H] coab save/load overlays"
 source = ""
 
 [[overlay]]
 id = "ovl18"
-name = "ovl18"
+name = "PoolNarrative"
 kind = "overlay"
 stub_segment = "0082"
 ovr_file_offset = "0x2069D"
@@ -404,12 +404,12 @@ code_bytes = 2299
 fixup_bytes = 162
 entries = 3
 init_entry = "ovl18_e0"
-evidence = ""
+evidence = "[V] pool of radiance text"
 source = ""
 
 [[overlay]]
 id = "ovl19"
-name = "ovl19"
+name = "Inventory"
 kind = "overlay"
 stub_segment = "0085"
 ovr_file_offset = "0x2103A"
@@ -417,12 +417,12 @@ code_bytes = 11026
 fixup_bytes = 640
 entries = 13
 init_entry = "ovl19_e0"
-evidence = ""
+evidence = "[V] item ready/trade UI"
 source = ""
 
 [[overlay]]
 id = "ovl20"
-name = "ovl20"
+name = "PartyHeal"
 kind = "overlay"
 stub_segment = "008C"
 ovr_file_offset = "0x23DCC"
@@ -430,12 +430,12 @@ code_bytes = 3685
 fixup_bytes = 88
 entries = 3
 init_entry = "ovl20_e0"
-evidence = ""
+evidence = "[V] heal-all string"
 source = ""
 
 [[overlay]]
 id = "ovl21"
-name = "ovl21"
+name = "Money"
 kind = "overlay"
 stub_segment = "008F"
 ovr_file_offset = "0x24C89"
@@ -443,12 +443,12 @@ code_bytes = 8795
 fixup_bytes = 308
 entries = 15
 init_entry = "ovl21_e0"
-evidence = ""
+evidence = "[V] coin select"
 source = ""
 
 [[overlay]]
 id = "ovl22"
-name = "ovl22"
+name = "CastSpell"
 kind = "overlay"
 stub_segment = "0096"
 ovr_file_offset = "0x27018"
@@ -456,7 +456,7 @@ code_bytes = 14261
 fixup_bytes = 698
 entries = 64
 init_entry = "ovl22_e0"
-evidence = ""
+evidence = "[V] spell chooser"
 source = ""
 
 [[overlay]]
@@ -539,7 +539,7 @@ source = ""
 
 [[overlay]]
 id = "ovl29"
-name = "ovl29"
+name = "GeoLoad"
 kind = "overlay"
 stub_segment = "03D5"
 ovr_file_offset = "0x2E8F7"
@@ -547,7 +547,7 @@ code_bytes = 4619
 fixup_bytes = 80
 entries = 8
 init_entry = "ovl29_e0"
-evidence = ""
+evidence = "[V] LoadWallSet error string; [H] OpenGoldBox/coab geo+wall loaders"
 source = ""
 
 [[overlay]]
@@ -578,7 +578,7 @@ source = ""
 
 [[overlay]]
 id = "ovl32"
-name = "ovl32"
+name = "PicLoad"
 kind = "overlay"
 stub_segment = "03E9"
 ovr_file_offset = "0x31A6C"
@@ -586,7 +586,7 @@ code_bytes = 1605
 fixup_bytes = 110
 entries = 6
 init_entry = "ovl32_e0"
-evidence = ""
+evidence = "[V] Load24x24Set range error"
 source = ""
 
 [[overlay]]
@@ -604,7 +604,7 @@ source = ""
 
 [[overlay]]
 id = "ovl34"
-name = "ovl34"
+name = "TileLoad"
 kind = "overlay"
 stub_segment = "0428"
 ovr_file_offset = "0x32235"
@@ -612,5 +612,5 @@ code_bytes = 690
 fixup_bytes = 50
 entries = 3
 init_entry = "ovl34_e0"
-evidence = ""
+evidence = "[V] 8x8D load error"
 source = ""

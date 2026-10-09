@@ -37,7 +37,7 @@ def main(argv: list[str]) -> int:
     lines = [
         "# Units of the original program (SPEC 6, playbook 10).",
         "# Code ranges filled by tools/re/update_units.py; names/evidence edited by hand.",
-        "# Order of [[resident]] entries = unit init call order at the entry point.",
+        "# Order of resident entries = unit init call order at the entry point.",
         "# Segments are load-image paragraphs (relative to image start, before relocation).",
         "# Ghidra load segment is 1000h: absolute segment = 1000h + load-image paragraph.",
         "",

@@ -19,14 +19,15 @@
 
 ## Done when
 
-Every unit is in `re/units.toml` with a code range, routines are listed in `re/symbols.toml` (enumeration may leave data-in-code gaps; coverage is reported by `make status`), System/Crt/Overlay (at least) are named, and `make ghidra` rebuilds the project.
+`make p1-check` exits 0. That encodes SPEC section 10 Phase 1: Ghidra rebuildable, 48 units with ranges, routines listed with sizes, RTL named, TP version bounded, DGROUP started, CC samples written, initial names from strings/prior art, agent lock/packet/status tools present.
 
 ## Tooling
 
 | Command | Role |
 |---|---|
-| `make map` | `update_units.py` + `enumerate_routines.py` + `rtl_ident.py` + `status.py` |
+| `make map` | ranges + enumerate + `name_units` + `rtl_ident` + status |
 | `make ghidra` | `map` then `tools/ghidra/import_tp.py` (needs `GHIDRA_INSTALL_DIR`) |
+| `make p1-check` | verify Phase 1 exit criteria |
 | `tools/ghidra/export.py` | write interactive Ghidra names back to `re/symbols.toml` |
 
 ## Hand-off

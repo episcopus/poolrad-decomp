@@ -14431,34 +14431,34 @@ signature = ""
 c_name = "System_init"
 level = "none"
 justification = ""
-notes = "rtl_ident: System unit init [V]"
-evidence = ["init"]
+notes = "[V] sets DS=DGROUP; installs INT vectors"
+evidence = ["hand-verified System entry"]
 
 [[routine]]
 id = "0AF8:00E2"
 unit = "res00"
 addr = "0AF8:00E2"
 size = 7
-name = "res00_fn_00E2"
+name = "System_rtl_00E2"
 signature = ""
-c_name = "res00_fn_00E2"
+c_name = "System_rtl_00E2"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "[I] external far-call target from game/other units; ext_callers=1"
+evidence = ["far-called from outside res00 (1 sites)"]
 
 [[routine]]
 id = "0AF8:00E9"
 unit = "res00"
 addr = "0AF8:00E9"
 size = 188
-name = "res00_fn_00E9"
+name = "System_Halt"
 signature = ""
-c_name = "res00_fn_00E9"
+c_name = "System_Halt"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "[V] teardown / exit path; clears ExitProc"
+evidence = ["hand-verified System entry"]
 
 [[routine]]
 id = "0AF8:01A5"
@@ -14556,39 +14556,39 @@ id = "0AF8:023F"
 unit = "res00"
 addr = "0AF8:023F"
 size = 21
-name = "res00_fn_023F"
+name = "System_rtl_023F"
 signature = ""
-c_name = "res00_fn_023F"
+c_name = "System_rtl_023F"
 level = "none"
 justification = ""
-notes = "auto:prologue"
-evidence = ["prologue"]
+notes = "[I] external callee; classify later"
+evidence = ["hand-verified System entry"]
 
 [[routine]]
 id = "0AF8:0254"
 unit = "res00"
 addr = "0AF8:0254"
 size = 72
-name = "res00_fn_0254"
+name = "System_FreeMem"
 signature = ""
-c_name = "res00_fn_0254"
+c_name = "System_FreeMem"
 level = "none"
 justification = ""
-notes = "auto:prologue"
-evidence = ["prologue"]
+notes = "[I] far ptr+size; calls heap helper; retf 6"
+evidence = ["hand-verified System entry"]
 
 [[routine]]
 id = "0AF8:029C"
 unit = "res00"
 addr = "0AF8:029C"
 size = 108
-name = "res00_fn_029C"
+name = "System_rtl_029C"
 signature = ""
-c_name = "res00_fn_029C"
+c_name = "System_rtl_029C"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "[I] external far-call target from game/other units; ext_callers=1"
+evidence = ["far-called from outside res00 (1 sites)"]
 
 [[routine]]
 id = "0AF8:0308"
@@ -14647,65 +14647,65 @@ id = "0AF8:04A2"
 unit = "res00"
 addr = "0AF8:04A2"
 size = 7
-name = "res00_fn_04A2"
+name = "System_IOResult"
 signature = ""
-c_name = "res00_fn_04A2"
+c_name = "System_IOResult"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "[V] xchg InOutRes at DS:4426, return old"
+evidence = ["hand-verified System entry"]
 
 [[routine]]
 id = "0AF8:04A9"
 unit = "res00"
 addr = "0AF8:04A9"
 size = 78
-name = "res00_fn_04A9"
+name = "System_CheckInOutRes"
 signature = ""
-c_name = "res00_fn_04A9"
+c_name = "System_CheckInOutRes"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "[V] non-zero InOutRes -> error path"
+evidence = ["hand-verified System entry"]
 
 [[routine]]
 id = "0AF8:04F7"
 unit = "res00"
 addr = "0AF8:04F7"
 size = 112
-name = "res00_fn_04F7"
+name = "System_rtl_04F7"
 signature = ""
-c_name = "res00_fn_04F7"
+c_name = "System_rtl_04F7"
 level = "none"
 justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
+notes = "[I] external far-call target from game/other units; ext_callers=1"
+evidence = ["far-called from outside res00 (1 sites)"]
 
 [[routine]]
 id = "0AF8:0567"
 unit = "res00"
 addr = "0AF8:0567"
 size = 5
-name = "res00_fn_0567"
+name = "System_rtl_0567"
 signature = ""
-c_name = "res00_fn_0567"
+c_name = "System_rtl_0567"
 level = "none"
 justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
+notes = "[I] external far-call target from game/other units; ext_callers=2"
+evidence = ["far-called from outside res00 (2 sites)"]
 
 [[routine]]
 id = "0AF8:056C"
 unit = "res00"
 addr = "0AF8:056C"
 size = 8
-name = "res00_fn_056C"
+name = "System_rtl_056C"
 signature = ""
-c_name = "res00_fn_056C"
+c_name = "System_rtl_056C"
 level = "none"
 justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
+notes = "[I] external far-call target from game/other units; ext_callers=1"
+evidence = ["far-called from outside res00 (1 sites)"]
 
 [[routine]]
 id = "0AF8:0574"
@@ -14725,13 +14725,13 @@ id = "0AF8:05C1"
 unit = "res00"
 addr = "0AF8:05C1"
 size = 2
-name = "res00_fn_05C1"
+name = "System_rtl_05C1"
 signature = ""
-c_name = "res00_fn_05C1"
+c_name = "System_rtl_05C1"
 level = "none"
 justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
+notes = "[I] external far-call target from game/other units; ext_callers=1"
+evidence = ["far-called from outside res00 (1 sites)"]
 
 [[routine]]
 id = "0AF8:05C3"
@@ -14842,26 +14842,26 @@ id = "0AF8:081C"
 unit = "res00"
 addr = "0AF8:081C"
 size = 46
-name = "res00_fn_081C"
+name = "System_rtl_081C"
 signature = ""
-c_name = "res00_fn_081C"
+c_name = "System_rtl_081C"
 level = "none"
 justification = ""
-notes = "auto:prologue"
-evidence = ["prologue"]
+notes = "[I] external far-call target from game/other units; ext_callers=5"
+evidence = ["far-called from outside res00 (5 sites)"]
 
 [[routine]]
 id = "0AF8:084A"
 unit = "res00"
 addr = "0AF8:084A"
 size = 36
-name = "res00_fn_084A"
+name = "System_rtl_084A"
 signature = ""
-c_name = "res00_fn_084A"
+c_name = "System_rtl_084A"
 level = "none"
 justification = ""
-notes = "auto:prologue"
-evidence = ["prologue"]
+notes = "[I] external far-call target from game/other units; ext_callers=5"
+evidence = ["far-called from outside res00 (5 sites)"]
 
 [[routine]]
 id = "0AF8:086E"
@@ -14894,13 +14894,13 @@ id = "0AF8:0898"
 unit = "res00"
 addr = "0AF8:0898"
 size = 31
-name = "res00_fn_0898"
+name = "System_rtl_0898"
 signature = ""
-c_name = "res00_fn_0898"
+c_name = "System_rtl_0898"
 level = "none"
 justification = ""
-notes = "auto:prologue"
-evidence = ["prologue"]
+notes = "[I] external far-call target from game/other units; ext_callers=3"
+evidence = ["far-called from outside res00 (3 sites)"]
 
 [[routine]]
 id = "0AF8:08B7"
@@ -14920,26 +14920,26 @@ id = "0AF8:08E1"
 unit = "res00"
 addr = "0AF8:08E1"
 size = 56
-name = "res00_fn_08E1"
+name = "System_rtl_08E1"
 signature = ""
-c_name = "res00_fn_08E1"
+c_name = "System_rtl_08E1"
 level = "none"
 justification = ""
-notes = "auto:prologue"
-evidence = ["prologue"]
+notes = "[I] external far-call target from game/other units; ext_callers=2"
+evidence = ["far-called from outside res00 (2 sites)"]
 
 [[routine]]
 id = "0AF8:0919"
 unit = "res00"
 addr = "0AF8:0919"
 size = 62
-name = "res00_fn_0919"
+name = "System_rtl_0919"
 signature = ""
-c_name = "res00_fn_0919"
+c_name = "System_rtl_0919"
 level = "none"
 justification = ""
-notes = "auto:prologue"
-evidence = ["prologue"]
+notes = "[I] external far-call target from game/other units; ext_callers=6"
+evidence = ["far-called from outside res00 (6 sites)"]
 
 [[routine]]
 id = "0AF8:0957"
@@ -14959,13 +14959,13 @@ id = "0AF8:09AF"
 unit = "res00"
 addr = "0AF8:09AF"
 size = 87
-name = "res00_fn_09AF"
+name = "System_rtl_09AF"
 signature = ""
-c_name = "res00_fn_09AF"
+c_name = "System_rtl_09AF"
 level = "none"
 justification = ""
-notes = "auto:prologue"
-evidence = ["prologue"]
+notes = "[I] external far-call target from game/other units; ext_callers=1"
+evidence = ["far-called from outside res00 (1 sites)"]
 
 [[routine]]
 id = "0AF8:0A06"
@@ -14985,26 +14985,26 @@ id = "0AF8:0A3F"
 unit = "res00"
 addr = "0AF8:0A3F"
 size = 28
-name = "res00_fn_0A3F"
+name = "System_MemOp_0A3F"
 signature = ""
-c_name = "res00_fn_0A3F"
+c_name = "System_MemOp_0A3F"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "[I] rep movsb; external callee; ext_callers=6"
+evidence = ["far-called from outside res00 (6 sites)"]
 
 [[routine]]
 id = "0AF8:0A5B"
 unit = "res00"
 addr = "0AF8:0A5B"
 size = 27
-name = "res00_fn_0A5B"
+name = "System_rtl_0A5B"
 signature = ""
-c_name = "res00_fn_0A5B"
+c_name = "System_rtl_0A5B"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "[I] external far-call target from game/other units; ext_callers=7"
+evidence = ["far-called from outside res00 (7 sites)"]
 
 [[routine]]
 id = "0AF8:0A76"
@@ -15024,78 +15024,78 @@ id = "0AF8:0B0B"
 unit = "res00"
 addr = "0AF8:0B0B"
 size = 26
-name = "res00_fn_0B0B"
+name = "System_StrCopy"
 signature = ""
-c_name = "res00_fn_0B0B"
+c_name = "System_StrCopy"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "[V] Pascal string copy; retf 4"
+evidence = ["hand-verified System entry"]
 
 [[routine]]
 id = "0AF8:0B25"
 unit = "res00"
 addr = "0AF8:0B25"
 size = 50
-name = "res00_fn_0B25"
+name = "System_StrLCopy"
 signature = ""
-c_name = "res00_fn_0B25"
+c_name = "System_StrLCopy"
 level = "none"
 justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
+notes = "[V] Pascal string copy with max length; retf 0Ah"
+evidence = ["hand-verified System entry"]
 
 [[routine]]
 id = "0AF8:0B57"
 unit = "res00"
 addr = "0AF8:0B57"
 size = 65
-name = "res00_fn_0B57"
+name = "System_rtl_0B57"
 signature = ""
-c_name = "res00_fn_0B57"
+c_name = "System_rtl_0B57"
 level = "none"
 justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
+notes = "[I] string helper family"
+evidence = ["hand-verified System entry"]
 
 [[routine]]
 id = "0AF8:0B98"
 unit = "res00"
 addr = "0AF8:0B98"
 size = 120
-name = "res00_fn_0B98"
+name = "System_StrConcat"
 signature = ""
-c_name = "res00_fn_0B98"
+c_name = "System_StrConcat"
 level = "none"
 justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
+notes = "[V] Pascal string concatenate; retf 4"
+evidence = ["hand-verified System entry"]
 
 [[routine]]
 id = "0AF8:0C10"
 unit = "res00"
 addr = "0AF8:0C10"
 size = 43
-name = "res00_fn_0C10"
+name = "System_rtl_0C10"
 signature = ""
-c_name = "res00_fn_0C10"
+c_name = "System_rtl_0C10"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "[I] external far-call target from game/other units; ext_callers=3"
+evidence = ["far-called from outside res00 (3 sites)"]
 
 [[routine]]
 id = "0AF8:0C3B"
 unit = "res00"
 addr = "0AF8:0C3B"
 size = 45
-name = "res00_fn_0C3B"
+name = "System_MemOp_0C3B"
 signature = ""
-c_name = "res00_fn_0C3B"
+c_name = "System_MemOp_0C3B"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "[I] rep movsb; external callee; ext_callers=4"
+evidence = ["far-called from outside res00 (4 sites)"]
 
 [[routine]]
 id = "0AF8:0C68"
@@ -15115,39 +15115,39 @@ id = "0AF8:0CBC"
 unit = "res00"
 addr = "0AF8:0CBC"
 size = 86
-name = "res00_fn_0CBC"
+name = "System_rtl_0CBC"
 signature = ""
-c_name = "res00_fn_0CBC"
+c_name = "System_rtl_0CBC"
 level = "none"
 justification = ""
-notes = "auto:prologue"
-evidence = ["prologue"]
+notes = "[I] external far-call target from game/other units; ext_callers=1"
+evidence = ["far-called from outside res00 (1 sites)"]
 
 [[routine]]
 id = "0AF8:0D12"
 unit = "res00"
 addr = "0AF8:0D12"
 size = 174
-name = "res00_fn_0D12"
+name = "System_MemOp_0D12"
 signature = ""
-c_name = "res00_fn_0D12"
+c_name = "System_MemOp_0D12"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "[I] rep movsb; external callee; ext_callers=3"
+evidence = ["far-called from outside res00 (3 sites)"]
 
 [[routine]]
 id = "0AF8:0DC0"
 unit = "res00"
 addr = "0AF8:0DC0"
 size = 172
-name = "res00_fn_0DC0"
+name = "System_rtl_0DC0"
 signature = ""
-c_name = "res00_fn_0DC0"
+c_name = "System_rtl_0DC0"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "[I] external far-call target from game/other units; ext_callers=6"
+evidence = ["far-called from outside res00 (6 sites)"]
 
 [[routine]]
 id = "0AF8:0E6C"
@@ -15258,13 +15258,13 @@ id = "0AF8:11C0"
 unit = "res00"
 addr = "0AF8:11C0"
 size = 79
-name = "res00_fn_11C0"
+name = "System_rtl_11C0"
 signature = ""
-c_name = "res00_fn_11C0"
+c_name = "System_rtl_11C0"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "[I] external far-call target from game/other units; ext_callers=5"
+evidence = ["far-called from outside res00 (5 sites)"]
 
 [[routine]]
 id = "0AF8:120F"
@@ -15323,52 +15323,52 @@ id = "0AF8:1366"
 unit = "res00"
 addr = "0AF8:1366"
 size = 75
-name = "res00_fn_1366"
+name = "System_Str_Format"
 signature = ""
-c_name = "res00_fn_1366"
+c_name = "System_Str_Format"
 level = "none"
 justification = ""
-notes = "auto:prologue"
-evidence = ["prologue"]
+notes = "[I] builds Pascal string with padding/spaces"
+evidence = ["hand-verified System entry"]
 
 [[routine]]
 id = "0AF8:13B1"
 unit = "res00"
 addr = "0AF8:13B1"
 size = 49
-name = "res00_fn_13B1"
+name = "System_rtl_13B1"
 signature = ""
-c_name = "res00_fn_13B1"
+c_name = "System_rtl_13B1"
 level = "none"
 justification = ""
-notes = "auto:prologue"
-evidence = ["prologue"]
+notes = "[I] external far-call target from game/other units; ext_callers=1"
+evidence = ["far-called from outside res00 (1 sites)"]
 
 [[routine]]
 id = "0AF8:13E2"
 unit = "res00"
 addr = "0AF8:13E2"
 size = 46
-name = "res00_fn_13E2"
+name = "System_Assign"
 signature = ""
-c_name = "res00_fn_13E2"
+c_name = "System_Assign"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "[V] fills FileRec (magic D7B0) from path string"
+evidence = ["hand-verified System entry"]
 
 [[routine]]
 id = "0AF8:1410"
 unit = "res00"
 addr = "0AF8:1410"
 size = 15
-name = "res00_fn_1410"
+name = "System_Reset"
 signature = ""
-c_name = "res00_fn_1410"
+c_name = "System_Reset"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "[V] INT 21h AH=3Dh open existing; FileRec"
+evidence = ["hand-verified System entry"]
 
 [[routine]]
 id = "0AF8:141F"
@@ -15388,13 +15388,13 @@ id = "0AF8:1491"
 unit = "res00"
 addr = "0AF8:1491"
 size = 37
-name = "res00_fn_1491"
+name = "System_Close"
 signature = ""
-c_name = "res00_fn_1491"
+c_name = "System_Close"
 level = "none"
 justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
+notes = "[V] INT 21h AH=3Eh close; FileRec"
+evidence = ["hand-verified System entry"]
 
 [[routine]]
 id = "0AF8:14B6"
@@ -15427,13 +15427,13 @@ id = "0AF8:14FB"
 unit = "res00"
 addr = "0AF8:14FB"
 size = 12
-name = "res00_fn_14FB"
+name = "System_BlockRead"
 signature = ""
-c_name = "res00_fn_14FB"
+c_name = "System_BlockRead"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "[V] INT 21h AH=3Fh; FileRec + count"
+evidence = ["hand-verified System entry"]
 
 [[routine]]
 id = "0AF8:1507"
@@ -15453,26 +15453,26 @@ id = "0AF8:1563"
 unit = "res00"
 addr = "0AF8:1563"
 size = 48
-name = "res00_fn_1563"
+name = "System_rtl_1563"
 signature = ""
-c_name = "res00_fn_1563"
+c_name = "System_rtl_1563"
 level = "none"
 justification = ""
-notes = "auto:prologue"
-evidence = ["prologue"]
+notes = "[I] file I/O helper; INT 21h"
+evidence = ["hand-verified System entry"]
 
 [[routine]]
 id = "0AF8:1593"
 unit = "res00"
 addr = "0AF8:1593"
 size = 71
-name = "res00_fn_1593"
+name = "System_rtl_1593"
 signature = ""
-c_name = "res00_fn_1593"
+c_name = "System_rtl_1593"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "[I] external far-call target from game/other units; ext_callers=1"
+evidence = ["far-called from outside res00 (1 sites)"]
 
 [[routine]]
 id = "0AF8:15DA"
@@ -15505,39 +15505,39 @@ id = "0AF8:1685"
 unit = "res00"
 addr = "0AF8:1685"
 size = 35
-name = "res00_fn_1685"
+name = "System_Move"
 signature = ""
-c_name = "res00_fn_1685"
+c_name = "System_Move"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "[V] Move(src,dst,count); overlapping-safe"
+evidence = ["hand-verified System entry"]
 
 [[routine]]
 id = "0AF8:16A8"
 unit = "res00"
 addr = "0AF8:16A8"
 size = 20
-name = "res00_fn_16A8"
+name = "System_FillChar"
 signature = ""
-c_name = "res00_fn_16A8"
+c_name = "System_FillChar"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "[V] FillChar(dst,count,value)"
+evidence = ["hand-verified System entry"]
 
 [[routine]]
 id = "0AF8:16BC"
 unit = "res00"
 addr = "0AF8:16BC"
 size = 86
-name = "res00_fn_16BC"
+name = "System_DosVersion"
 signature = ""
-c_name = "res00_fn_16BC"
+c_name = "System_DosVersion"
 level = "none"
 justification = ""
-notes = "auto:prologue"
-evidence = ["prologue"]
+notes = "[V] INT 21h AH=30h"
+evidence = ["hand-verified System entry"]
 
 [[routine]]
 id = "0AF8:1712"
@@ -15635,13 +15635,13 @@ id = "0AF8:182A"
 unit = "res00"
 addr = "0AF8:182A"
 size = 22
-name = "res00_fn_182A"
+name = "System_rtl_182A"
 signature = ""
-c_name = "res00_fn_182A"
+c_name = "System_rtl_182A"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "[I] external far-call target from game/other units; ext_callers=3"
+evidence = ["far-called from outside res00 (3 sites)"]
 
 [[routine]]
 id = "0A40:0000"
@@ -15653,8 +15653,8 @@ signature = ""
 c_name = "Crt_init"
 level = "none"
 justification = ""
-notes = "rtl_ident: Crt unit init [V]"
-evidence = ["init"]
+notes = "[V] INT 10h video probe (smoke)"
+evidence = ["hand-verified Crt entry"]
 
 [[routine]]
 id = "0A40:002E"
@@ -15713,13 +15713,13 @@ id = "0A40:029C"
 unit = "res01"
 addr = "0A40:029C"
 size = 33
-name = "res01_fn_029C"
+name = "Crt_rtl_029C"
 signature = ""
-c_name = "res01_fn_029C"
+c_name = "Crt_rtl_029C"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "[I] Crt entry; ext_callers=5"
+evidence = ["far-called from outside res01 (5 sites)"]
 
 [[routine]]
 id = "0A40:02BD"
@@ -15739,26 +15739,26 @@ id = "0A40:02FD"
 unit = "res01"
 addr = "0A40:02FD"
 size = 18
-name = "res01_fn_02FD"
+name = "Crt_rtl_02FD"
 signature = ""
-c_name = "res01_fn_02FD"
+c_name = "Crt_rtl_02FD"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "[I] Crt entry; ext_callers=3"
+evidence = ["far-called from outside res01 (3 sites)"]
 
 [[routine]]
 id = "0A40:030F"
 unit = "res01"
 addr = "0A40:030F"
 size = 34
-name = "res01_fn_030F"
+name = "Crt_rtl_030F"
 signature = ""
-c_name = "res01_fn_030F"
+c_name = "Crt_rtl_030F"
 level = "none"
 justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
+notes = "[I] Crt entry; ext_callers=2"
+evidence = ["far-called from outside res01 (2 sites)"]
 
 [[routine]]
 id = "0A40:0331"
@@ -15895,13 +15895,13 @@ id = "0A40:0632"
 unit = "res01"
 addr = "0A40:0632"
 size = 215
-name = "res01_fn_0632"
+name = "Crt_rtl_0012"
 signature = ""
-c_name = "res01_fn_0632"
+c_name = "Crt_rtl_0012"
 level = "none"
 justification = ""
-notes = "auto:prologue"
-evidence = ["prologue"]
+notes = "[I] Crt entry; ext_callers=1"
+evidence = ["far-called from outside res01 (1 sites)"]
 
 [[routine]]
 id = "0A40:0709"
@@ -15960,26 +15960,26 @@ id = "0A40:07C3"
 unit = "res01"
 addr = "0A40:07C3"
 size = 79
-name = "res01_fn_07C3"
+name = "Crt_rtl_01A3"
 signature = ""
-c_name = "res01_fn_07C3"
+c_name = "Crt_rtl_01A3"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "[I] Crt entry; ext_callers=1"
+evidence = ["far-called from outside res01 (1 sites)"]
 
 [[routine]]
 id = "0A40:0812"
 unit = "res01"
 addr = "0A40:0812"
 size = 35
-name = "res01_fn_0812"
+name = "Crt_rtl_01F2"
 signature = ""
-c_name = "res01_fn_0812"
+c_name = "Crt_rtl_01F2"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "[I] Crt entry; ext_callers=2"
+evidence = ["far-called from outside res01 (2 sites)"]
 
 [[routine]]
 id = "0A40:0835"
@@ -16168,26 +16168,26 @@ id = "0A31:0000"
 unit = "res02"
 addr = "0A31:0000"
 size = 27
-name = "res02_init"
+name = "Dos_rtl_0000"
 signature = ""
-c_name = "res02_init"
+c_name = "Dos_rtl_0000"
 level = "none"
 justification = ""
-notes = "auto:init"
-evidence = ["init"]
+notes = "[I] Dos-like entry; ext_callers=1"
+evidence = ["far-called from outside res02 (1 sites)"]
 
 [[routine]]
 id = "0A31:001B"
 unit = "res02"
 addr = "0A31:001B"
 size = 61
-name = "res02_fn_001B"
+name = "Dos_rtl_000B"
 signature = ""
-c_name = "res02_fn_001B"
+c_name = "Dos_rtl_000B"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "[I] Dos-like entry; ext_callers=9"
+evidence = ["far-called from outside res02 (9 sites)"]
 
 [[routine]]
 id = "0A31:0058"
@@ -16233,13 +16233,13 @@ id = "0A31:00B2"
 unit = "res02"
 addr = "0A31:00B2"
 size = 37
-name = "res02_fn_00B2"
+name = "Dos_rtl_00A2"
 signature = ""
-c_name = "res02_fn_00B2"
+c_name = "Dos_rtl_00A2"
 level = "none"
 justification = ""
-notes = "auto:prologue"
-evidence = ["prologue"]
+notes = "[I] Dos-like entry; ext_callers=2"
+evidence = ["far-called from outside res02 (2 sites)"]
 
 [[routine]]
 id = "0A31:00D7"
@@ -17473,8 +17473,8 @@ signature = ""
 c_name = "Overlay_init"
 level = "none"
 justification = ""
-notes = "rtl_ident: Overlay unit init [V]"
-evidence = ["init"]
+notes = "[V] opens GAME.OVR; Assign/Reset path"
+evidence = ["hand-verified Overlay entry"]
 
 [[routine]]
 id = "03F1:0000"
@@ -18099,3 +18099,16 @@ level = "none"
 justification = ""
 notes = "auto:init"
 evidence = ["init"]
+
+[[routine]]
+id = "0AF8:1502"
+unit = "res00"
+addr = "0AF8:1502"
+size = 0
+name = "System_BlockWrite"
+signature = ""
+c_name = "System_BlockWrite"
+level = "none"
+justification = ""
+notes = "[V] INT 21h AH=40h twin of BlockRead"
+evidence = ["hand-verified System entry"]

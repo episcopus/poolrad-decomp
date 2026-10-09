@@ -86,6 +86,9 @@ def main(argv: list[str]) -> int:
 
     routines = parse_routines(ROOT / "re/symbols.toml")
     residents, overlays = parse_units(ROOT / "re/units.toml")
+    # drop accidental comment-only "resident" ghosts (no id)
+    residents = [r for r in residents if r.get("id")]
+    overlays = [o for o in overlays if o.get("id")]
     levels = Counter(str(r.get("level", "none")) for r in routines)
     by_unit = Counter(str(r.get("unit", "?")) for r in routines)
     named = sum(
@@ -94,6 +97,11 @@ def main(argv: list[str]) -> int:
         if r.get("name")
         and not re.search(r"_fn_[0-9A-Fa-f]{4}$", str(r.get("name")))
         and not re.search(r"_e\d+$", str(r.get("name")))
+    )
+    named_rtl = sum(
+        1
+        for r in routines
+        if str(r.get("name", "")).startswith(("System_", "Crt_", "Overlay_", "Dos_"))
     )
     code_bytes = sum(int(u.get("code_bytes") or 0) for u in residents + overlays)
     routine_bytes = sum(int(r.get("size") or 0) for r in routines)
@@ -106,19 +114,22 @@ def main(argv: list[str]) -> int:
         "",
         "## Phase",
         "",
-        "**P1 Map: in progress.** P0 bootstrap is done.",
+        "**P1 Map: complete** when `make p1-check` is green. P0 bootstrap is done.",
         "",
         "| P1 exit criterion | State |",
         "|---|---|",
-        "| Ghidra project via `make ghidra` | see latest `make ghidra` run |",
+        "| Ghidra project via `make ghidra` | tool + `build/ghidra/` (regenerate after map) |",
         "| 48 units with code ranges in `re/units.toml` | %d resident + %d overlay = %d |"
         % (len(residents), len(overlays), len(residents) + len(overlays)),
         "| Every routine listed in `re/symbols.toml` | %d routines (sum sizes %d; unit code_bytes %d) |"
         % (len(routines), routine_bytes, code_bytes),
-        "| RTL identified and named | System, Crt, Overlay tagged; more RTL names ongoing |",
+        "| RTL identified and named | System/Crt/Overlay/Dos; %d RTL-prefixed names |" % named_rtl,
         "| TP version pinned or bounded | bounded: TP 6.0/7.0 era (FBOV + 1983,91) |",
         "| DGROUP map started | `re/dseg.toml` |",
         "| Calling convention samples | whitepaper section 3.4 |",
+        "| Initial names from strings / prior art | overlay names in `re/units.toml` |",
+        "| Gate | run `make p1-check` |",
+
         "",
         "## Inventory",
         "",
@@ -127,6 +138,7 @@ def main(argv: list[str]) -> int:
         "| Units | %d |" % (len(residents) + len(overlays)),
         "| Routines | %d |" % len(routines),
         "| Routines with non-provisional names | %d |" % named,
+        "| RTL-prefixed routine names | %d |" % named_rtl,
         "| Unit code_bytes (declared) | %d |" % code_bytes,
         "| Sum of routine sizes | %d |" % routine_bytes,
         "",

@@ -1,4 +1,4 @@
-# Unit work order (SPEC 9.4). Seeded in Phase 1; refine as callers/callees firm up.
+# Unit work order (SPEC 9.4). Seeded at P1 exit; refine as callers/callees firm up.
 # Default order: runtime and leaf utilities, data loaders, text/graphics, ECL, maps,
 # menus/characters, items/shops, combat, magic, the rest.
 
@@ -11,12 +11,116 @@ id = "res01"
 reason = "Crt; console/video helpers"
 
 [[unit]]
+id = "res02"
+reason = "Dos [I]; INT 21h helpers"
+
+[[unit]]
 id = "res08"
 reason = "Overlay manager; loads GAME.OVR"
 
 [[unit]]
-id = "res02"
-reason = "early resident; identify next"
+id = "ovl00"
+reason = "smallest overlay; smoke-test lift pipeline"
+
+[[unit]]
+id = "ovl33"
+reason = "tiny overlay (252 bytes)"
+
+[[unit]]
+id = "ovl34"
+reason = "TileLoad; 8x8D loader"
+
+[[unit]]
+id = "ovl26"
+reason = "small overlay"
+
+[[unit]]
+id = "ovl27"
+reason = "small overlay"
+
+[[unit]]
+id = "ovl29"
+reason = "GeoLoad; wallset/3D map"
+
+[[unit]]
+id = "ovl32"
+reason = "PicLoad; 24x24 sets"
+
+[[unit]]
+id = "ovl07"
+reason = "Loader banner"
+
+[[unit]]
+id = "ovl11"
+reason = "Loader / ITEMS"
+
+[[unit]]
+id = "ovl03"
+reason = "Encounter; combat/parlay menus (ECL-adjacent lead)"
+
+[[unit]]
+id = "ovl17"
+reason = "SaveLoad"
+
+[[unit]]
+id = "ovl16"
+reason = "CharCreate / training"
+
+[[unit]]
+id = "ovl19"
+reason = "Inventory"
+
+[[unit]]
+id = "ovl06"
+reason = "Shop"
+
+[[unit]]
+id = "ovl04"
+reason = "Temple"
+
+[[unit]]
+id = "ovl05"
+reason = "TreasureShare"
+
+[[unit]]
+id = "ovl21"
+reason = "Money / coins"
+
+[[unit]]
+id = "ovl15"
+reason = "SpellMemorize"
+
+[[unit]]
+id = "ovl22"
+reason = "CastSpell"
+
+[[unit]]
+id = "ovl08"
+reason = "CombatAI"
+
+[[unit]]
+id = "ovl09"
+reason = "CombatAI"
+
+[[unit]]
+id = "ovl13"
+reason = "CombatSpells"
+
+[[unit]]
+id = "ovl12"
+reason = "TrainRewards; many entries"
+
+[[unit]]
+id = "ovl18"
+reason = "PoolNarrative"
+
+[[unit]]
+id = "ovl20"
+reason = "PartyHeal"
+
+[[unit]]
+id = "res05"
+reason = "hosts overlay disk prompt string"
 
 [[unit]]
 id = "res03"
@@ -25,10 +129,6 @@ reason = "resident utility"
 [[unit]]
 id = "res04"
 reason = "resident utility"
-
-[[unit]]
-id = "res05"
-reason = "resident; hosts overlay disk prompt string"
 
 [[unit]]
 id = "res06"
@@ -52,94 +152,14 @@ reason = "resident"
 
 [[unit]]
 id = "res12"
-reason = "largest resident game unit before overlays"
-
-[[unit]]
-id = "ovl00"
-reason = "smallest overlay; smoke-test lift pipeline"
+reason = "largest resident game unit"
 
 [[unit]]
 id = "ovl01"
-reason = "small overlay"
+reason = "overlay"
 
 [[unit]]
 id = "ovl02"
-reason = "small overlay"
-
-[[unit]]
-id = "ovl33"
-reason = "tiny overlay (252 bytes)"
-
-[[unit]]
-id = "ovl34"
-reason = "small overlay"
-
-[[unit]]
-id = "ovl26"
-reason = "small overlay"
-
-[[unit]]
-id = "ovl27"
-reason = "small overlay"
-
-[[unit]]
-id = "ovl03"
-reason = "data / loader candidate (large)"
-
-[[unit]]
-id = "ovl22"
-reason = "many entries; likely shared helpers"
-
-[[unit]]
-id = "ovl12"
-reason = "largest entry count (117); combat-family lead [H]"
-
-[[unit]]
-id = "ovl13"
-reason = "large overlay"
-
-[[unit]]
-id = "ovl16"
-reason = "largest overlay by code bytes"
-
-[[unit]]
-id = "ovl19"
-reason = "shops / town lead [H]"
-
-[[unit]]
-id = "ovl07"
-reason = "mid-size, many entries"
-
-[[unit]]
-id = "ovl21"
-reason = "mid-size"
-
-[[unit]]
-id = "ovl24"
-reason = "mid-size"
-
-[[unit]]
-id = "ovl17"
-reason = "mid-size"
-
-[[unit]]
-id = "ovl04"
-reason = "overlay"
-
-[[unit]]
-id = "ovl05"
-reason = "overlay"
-
-[[unit]]
-id = "ovl06"
-reason = "overlay"
-
-[[unit]]
-id = "ovl08"
-reason = "overlay"
-
-[[unit]]
-id = "ovl09"
 reason = "overlay"
 
 [[unit]]
@@ -147,27 +167,15 @@ id = "ovl10"
 reason = "overlay"
 
 [[unit]]
-id = "ovl11"
-reason = "overlay"
-
-[[unit]]
 id = "ovl14"
 reason = "overlay"
 
 [[unit]]
-id = "ovl15"
-reason = "overlay"
-
-[[unit]]
-id = "ovl18"
-reason = "overlay"
-
-[[unit]]
-id = "ovl20"
-reason = "overlay"
-
-[[unit]]
 id = "ovl23"
+reason = "overlay"
+
+[[unit]]
+id = "ovl24"
 reason = "overlay"
 
 [[unit]]
@@ -179,17 +187,9 @@ id = "ovl28"
 reason = "overlay"
 
 [[unit]]
-id = "ovl29"
-reason = "overlay"
-
-[[unit]]
 id = "ovl30"
 reason = "overlay"
 
 [[unit]]
 id = "ovl31"
-reason = "overlay"
-
-[[unit]]
-id = "ovl32"
 reason = "overlay"

@@ -7,12 +7,13 @@ OVR := poolrad/GAME.OVR
 
 PACKED := poolrad/START.EXE
 
-.PHONY: help setup doctor inputs unexepack overlays map dax smoke status next ghidra packet lock unlock \
+.PHONY: help setup doctor inputs unexepack overlays map dax smoke status next ghidra p1-check \
+        packet lock unlock \
         oracle-run golden sessions host hybrid fuzz test check review-pass dos coco3
 
 help:
-	@echo "Available now:  setup doctor inputs unexepack overlays map dax smoke status next ghidra"
-	@echo "Phase 1 (partial): packet lock unlock"
+	@echo "Available now:  setup doctor inputs unexepack overlays map dax smoke"
+	@echo "Phase 1:        status next ghidra p1-check packet lock unlock"
 	@echo "Phase 2:        oracle-run golden"
 	@echo "Phase 3:        host hybrid fuzz sessions test check review-pass"
 	@echo "Later:          dos (P8) coco3 (P7)"
@@ -33,9 +34,10 @@ unexepack:        ## reproduce start-unpack.exe from START.EXE (EXEPACK) and che
 overlays:         ## regenerate the overlay manifest and extract overlay code to build/re
 	$(PY) tools/re/tpovl.py $(EXE) $(OVR) -o build/re/overlays.json --extract build/re/overlays
 
-map: overlays     ## fill units.toml ranges, enumerate routines, tag RTL (playbook 10)
+map: overlays     ## fill units.toml ranges, enumerate routines, tag RTL/names (playbook 10)
 	$(PY) tools/re/update_units.py
 	$(PY) tools/re/enumerate_routines.py --merge
+	$(PY) tools/re/name_units.py
 	$(PY) tools/re/rtl_ident.py
 	$(PY) tools/agent/status.py
 
@@ -55,13 +57,22 @@ ghidra: map       ## rebuild the Ghidra project (build/ghidra/, not committed)
 	@test -n "$$GHIDRA_INSTALL_DIR" || (echo 'ghidra: source tools/setup/env.local.sh first'; exit 1)
 	$(PY) tools/ghidra/import_tp.py
 
+p1-check:         ## verify Phase 1 exit criteria (SPEC section 10)
+	$(PY) tools/agent/p1_check.py
+
+packet:           ## write build/packets/<id>.md for UNIT= or FN=
+	$(PY) tools/agent/packet.py --unit "$(UNIT)" --fn "$(FN)"
+
+lock:             ## claim a unit: make lock UNIT=ovl00
+	UNIT=$(UNIT) $(PY) tools/agent/lock.py
+
+unlock:           ## release a unit lock (FORCE=1 to break stale)
+	UNIT=$(UNIT) FORCE=$(FORCE) $(PY) tools/agent/unlock.py
+
 define todo
 	@echo "make $@: not built yet; delivered in $(1) (docs/spec/SPEC.md section $(2))."; exit 2
 endef
 
-packet:      ; $(call todo,Phase 1,9.3)
-lock:        ; $(call todo,Phase 1,9.4)
-unlock:      ; $(call todo,Phase 1,9.4)
 oracle-run:  ; $(call todo,Phase 2,8.2 and playbook 25)
 golden:      ; $(call todo,Phase 2,8.5 and playbook 40)
 host:        ; $(call todo,Phase 3,11)

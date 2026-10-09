@@ -35,11 +35,14 @@ You are working on a **behaviour-matching decompilation of SSI's Pool of Radianc
 | `make inputs` | Verify hashes of everything in `poolrad/` | P0 (now) |
 | `make unexepack` | Reproduce `start-unpack.exe` from `START.EXE` (EXEPACK) | P0 (now) |
 | `make overlays` | Regenerate the overlay manifest (`build/re/overlays.json`) | P0 (now) |
-| `make map` | Fill unit ranges, enumerate routines, tag RTL, refresh status | P1 (now) |
+| `make map` | Fill unit ranges, enumerate routines, tag RTL/names, refresh status | P1 (now) |
 | `make dax` | Verify every DAX archive (layout and RLE) | P0 (now) |
 | `make smoke` | Run the original code in Unicorn up to its first interrupts | P0 (now) |
 | `make status` / `make next` | Project status, next work item | P1 (now) |
 | `make ghidra` | Rebuild the Ghidra project from `re/` (needs `env.local.sh`) | P1 (now) |
+| `make p1-check` | Verify Phase 1 exit criteria | P1 (now) |
+| `make packet UNIT=` / `FN=` | Write a work packet under `build/packets/` | P1 (now) |
+| `make lock UNIT=` / `make unlock UNIT=` | Claim or release a unit | P1 (now) |
 | `make packet FN=<id>` / `UNIT=<id>` | Write a work packet to `build/packets/` | P1 |
 | `make lock UNIT=<id>` / `make unlock UNIT=<id>` | Claim or release a unit | P1 |
 | `make oracle-run SCRIPT=<keys>` | Run the original in the emulator | P2 |
