@@ -38,7 +38,7 @@ This document grows a chapter per subsystem as the decompilation proves how each
 | File | Bytes | Role |
 |---|---:|---|
 | `START.EXE` | 65,231 | Main program, EXEPACK compressed **[V]** ("Packed file is corrupt" stub) |
-| `start-unpack.exe` | 71,152 | The same program unpacked (made earlier by hand; reproduction is a Phase 0 task) |
+| `start-unpack.exe` | 71,152 | The same program unpacked **[V]** (`make unexepack` reproduces it byte for byte from `START.EXE`) |
 | `GAME.OVR` | 206,105 | Overlay code for 35 units **[V]** |
 | `*.DAX` (113 files) | | Game data archives **[V]** (section 4.1) |
 | `ITEMS` | 2,050 | Item data **[?]** format |
@@ -65,7 +65,7 @@ Five text lines **[V]** (writer: `CFG.C`; the game opens "POOL.CFG" and prints "
 
 ## 3. Program architecture
 
-### 3.1 The executable **[V]** (unpacked MZ header; `tools/re/tpovl.py`)
+### 3.1 The executable **[V]** (unpacked MZ header; `tools/re/tpovl.py`, `tools/re/unexepack.py`)
 
 | Field | Value |
 |---|---|
@@ -75,6 +75,20 @@ Five text lines **[V]** (writer: `CFG.C`; the game opens "POOL.CFG" and prints "
 | Initial SS:SP | 14F2:4000 (16 KB stack) |
 | Data segment (DGROUP) | paragraph 0C7C **[I]** (the System unit's init executes `mov dx,0C7Ch; mov ds,dx` before relocation) |
 | Initialised data | 0C7C to 10BE (about 17 KB); uninitialised data follows up to the stack segment |
+
+#### 3.1.1 EXEPACK packing **[V]** (`tools/re/unexepack.py`, `make unexepack`)
+
+`START.EXE` is Microsoft EXEPACK with an 18-byte header (`skip_len` present, signature `RB` at CS:0, stub at CS:IP = 0F72:0012). Fields that become the unpacked MZ values:
+
+| EXEPACK field | Value |
+|---|---|
+| `real_ip` / `real_cs` | 0006 / 0000 |
+| `real_sp` / `real_ss` | 4000 / 14F2 |
+| `dest_len` | 10BF paragraphs (68,592 bytes) |
+| `skip_len` | 1 |
+| `exepack_size` | 05AF (header + stub + packed relocs) |
+
+Compressed load image is 63,264 bytes; RLE commands are `0xB0` (fill) and `0xB2` (copy), decoded backwards after skipping trailing `0xFF` padding. The packed relocation table uses 16 segment buckets (`segment = i * 0x1000`). Reconstructing the MZ EXE pads the header to a multiple of 512 bytes (here 160 paragraphs) and sets `min_alloc` so load-image paragraphs plus `min_alloc` stay constant; the result matches `poolrad/start-unpack.exe` (SHA-256 `8e60e2b00c0caec91cd47d06abb30f5269ffeec857a06cb67975f619b47c549e`).
 
 ### 3.2 Units and start-up **[V]** (`tools/re/tpovl.py`, manifest field `init_chain`)
 

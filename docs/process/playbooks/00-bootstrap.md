@@ -8,11 +8,11 @@
 2. Run `make doctor`. Every line must be `ok` or an explicitly optional `skip`. Fix `missing` lines before anything else.
 3. Run `make inputs`. All hashes in `poolrad/` must match `re/inputs.toml`. If they do not, stop: the spec targets exactly these bytes.
 4. Run `make overlays`. Expect: `35 overlays, 406 entries, 197641 code bytes, 48 unit inits (13 resident); OK`.
-5. P0 work still open (check `work/status.md`): reproduce `start-unpack.exe` from `START.EXE` with `tools/re/unexepack.py` (to be written: implement the EXEPACK algorithm, compare the result byte for byte, document any difference in the whitepaper).
+5. Run `make unexepack`. Expect a byte match of the unpacker output against `poolrad/start-unpack.exe`.
 
 ## Done when
 
-`make doctor`, `make inputs` and `make overlays` all pass, and the unpack chain is reproducible.
+`make doctor`, `make inputs`, `make unexepack` and `make overlays` all pass.
 
 ## Hand-off
 

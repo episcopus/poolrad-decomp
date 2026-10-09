@@ -5,11 +5,13 @@ PY ?= $(if $(wildcard .venv/bin/python),.venv/bin/python,python3)
 EXE := poolrad/start-unpack.exe
 OVR := poolrad/GAME.OVR
 
-.PHONY: help setup doctor inputs overlays dax smoke status next ghidra packet lock unlock \
+PACKED := poolrad/START.EXE
+
+.PHONY: help setup doctor inputs unexepack overlays dax smoke status next ghidra packet lock unlock \
         oracle-run golden sessions host hybrid fuzz test check review-pass dos coco3
 
 help:
-	@echo "Available now:  setup doctor inputs overlays dax smoke"
+	@echo "Available now:  setup doctor inputs unexepack overlays dax smoke"
 	@echo "Phase 1:        status next ghidra packet lock unlock"
 	@echo "Phase 2:        oracle-run golden"
 	@echo "Phase 3:        host hybrid fuzz sessions test check review-pass"
@@ -24,6 +26,9 @@ doctor:           ## check the environment and pinned inputs
 
 inputs:           ## verify hashes of poolrad/ against re/inputs.toml
 	$(PY) tools/setup/inputs.py --check
+
+unexepack:        ## reproduce start-unpack.exe from START.EXE (EXEPACK) and check byte match
+	$(PY) tools/re/unexepack.py $(PACKED) --check $(EXE)
 
 overlays:         ## regenerate the overlay manifest and extract overlay code to build/re
 	$(PY) tools/re/tpovl.py $(EXE) $(OVR) -o build/re/overlays.json --extract build/re/overlays

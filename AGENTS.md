@@ -33,6 +33,7 @@ You are working on a **behaviour-matching decompilation of SSI's Pool of Radianc
 |---|---|---|
 | `make doctor` | Check the environment and pinned inputs | P0 (now) |
 | `make inputs` | Verify hashes of everything in `poolrad/` | P0 (now) |
+| `make unexepack` | Reproduce `start-unpack.exe` from `START.EXE` (EXEPACK) | P0 (now) |
 | `make overlays` | Regenerate the overlay manifest (`build/re/overlays.json`) | P0 (now) |
 | `make dax` | Verify every DAX archive (layout and RLE) | P0 (now) |
 | `make smoke` | Run the original code in Unicorn up to its first interrupts | P0 (now) |
