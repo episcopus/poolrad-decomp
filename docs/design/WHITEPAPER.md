@@ -95,6 +95,7 @@ The entry point is 48 consecutive far calls, one per unit initialisation, in Tur
 | res10 | 03ED:0000 | [?] |
 | res11 | 03DA:0000 | [?] |
 | res12 | 00BA:309E | [?] |
+
 Start-up as observed by running the original code in Unicorn (`tools/oracle/smoke.py`) **[V]**: the System unit saves 19 interrupt vectors (INT 21h AH=35h) and installs 4 handlers (AH=25h), queries a device with IOCTL (AH=44h), then the Crt unit probes the video BIOS (INT 10h AH=0Fh, 11h, 08h).
 
 Turbo Pascal background **[H]** (Turbo Pascal reference manuals): units are compiled separately; each has an interface, an implementation and an optional initialisation part; overlaid units are called through stubs and loaded on demand by the Overlay unit's manager.
@@ -261,6 +262,7 @@ Each section will cover: purpose, units and routines, data, algorithm, quirks, e
 | ovl32 | 03E9 | 0x31A6C | 1605 | 55 | 6 |
 | ovl33 | 03EE | 0x3211F | 252 | 13 | 2 |
 | ovl34 | 0428 | 0x32235 | 690 | 25 | 3 |
+
 ## Appendix B. Regenerating the facts in this document
 
 | Facts | Command |
