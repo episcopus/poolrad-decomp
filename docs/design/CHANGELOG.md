@@ -4,6 +4,9 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-09 | 4.2.4–4.4 | WALLDEF, MON*CHA/ITM/SPC, ITEMS, SAVE codecs; item encode keeps name-slot padding; playbook 20 exit criteria green | `tools/re/{walldef,records,items,save}.py`, `make dax` / `make test` (30 unit tests) |
+| 2026-10-09 | 4.2.3 | EGA picture decoder with PNG dump: 778 blocks (PIC/SPRIT/TITLE/HEAD/…); font block 201 | `tools/re/pic.py`, `tests/unit/test_pic.py`, `ovl32:008C` |
+| 2026-10-09 | 4.2.1, 4.2.2 | GEO and ECL decoders: all 29+29 blocks; Load3DMap/LoadEcl sizes; `make test` runs DAX/GEO/ECL | `tools/re/geo.py`, `tools/re/ecl.py`, `tests/unit/test_{dax,geo,ecl}.py`, `ovl29:10C7`, `ovl07:0341` |
 | 2026-10-09 | 2.2, 3.2 | Runtime units recorded in `re/units.toml` (`res13` Dos, `res14` Overlay, no init); res02 and res08 demoted to game units; `make tpc` added for codegen questions | `make map`, `make p1-check`, `tests/unit/test_tp_toolchain.py` |
 | 2026-10-09 | 2.2, 3.2, 6 | TP version pinned to 6.0 (June 1991 release) by RTL byte comparison; TP 6.0 (1990) and 7.0 eliminated; runtime unit ranges corrected; directives `$S- $R- $G- $F+`, `$I+` in res05 | `make tp-pin` (`tools/re/tp_toolchain.py`), `tests/unit/test_tp_toolchain.py` |
 | 2026-10-09 | 3.2, 3.2.1 | P1 complete: RTL entries named, 21 overlays named from strings, Dos [I], `make p1-check` green | `make map`, `make p1-check`, Capstone on System |

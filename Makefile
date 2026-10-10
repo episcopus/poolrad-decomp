@@ -16,8 +16,9 @@ help:
 	@echo "Available now:  setup doctor inputs unexepack overlays map dax smoke"
 	@echo "Phase 1:        status next ghidra p1-check packet lock unlock"
 	@echo "Turbo Pascal:   emu2 tp-install tp-probe tp-compare tp-pin tpc (docs/setup/SETUP-tp.md)"
+	@echo "Data codecs:    make dax (all playbook-20 formats); make test (pytest)"
 	@echo "Phase 2:        oracle-run golden"
-	@echo "Phase 3:        host hybrid fuzz sessions test check review-pass"
+	@echo "Phase 3:        host hybrid fuzz sessions check review-pass"
 	@echo "Later:          dos (P8) coco3 (P7)"
 	@echo "See AGENTS.md and docs/spec/SPEC.md."
 
@@ -43,8 +44,15 @@ map: overlays     ## fill units.toml ranges, enumerate routines, tag RTL/names (
 	$(PY) tools/re/rtl_ident.py
 	$(PY) tools/agent/status.py
 
-dax:              ## verify every .DAX archive (container layout and RLE sizes)
+dax:              ## verify DAX container + all playbook-20 codecs over pinned files
 	$(PY) tools/re/dax.py verify poolrad/
+	$(PY) tools/re/geo.py verify poolrad/
+	$(PY) tools/re/ecl.py verify poolrad/
+	$(PY) tools/re/pic.py verify poolrad/
+	$(PY) tools/re/walldef.py verify poolrad/
+	$(PY) tools/re/records.py verify poolrad/
+	$(PY) tools/re/items.py verify poolrad/
+	$(PY) tools/re/save.py verify poolrad/SAVE
 
 smoke:            ## run the original code in Unicorn up to its first interrupts (de-risks P2)
 	$(PY) tools/oracle/smoke.py $(EXE)
@@ -101,7 +109,8 @@ host:        ; $(call todo,Phase 3,11)
 hybrid:      ; $(call todo,Phase 3,8.4)
 fuzz:        ; $(call todo,Phase 3,8.3)
 sessions:    ; $(call todo,Phase 3,8.5)
-test:        ; $(call todo,Phase 2 to 3,8)
+test:              ## Python unit tests (DAX/GEO/ECL codecs, toolchain probes)
+	$(PY) -m pytest -q tests/unit
 check:       ; $(call todo,Phase 3,9.6)
 review-pass: ; $(call todo,Phase 4,8.1 and playbook 70)
 coco3:       ; $(call todo,Phase 7,11)

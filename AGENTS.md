@@ -38,7 +38,8 @@ You are working on a **behaviour-matching decompilation of SSI's Pool of Radianc
 | `make unexepack` | Reproduce `start-unpack.exe` from `START.EXE` (EXEPACK) | P0 (now) |
 | `make overlays` | Regenerate the overlay manifest (`build/re/overlays.json`) | P0 (now) |
 | `make map` | Fill unit ranges, enumerate routines, tag RTL/names, refresh status | P1 (now) |
-| `make dax` | Verify every DAX archive (layout and RLE) | P0 (now) |
+| `make dax` | Verify DAX container and all playbook-20 data codecs over pinned files | P0 (now) |
+| `make test` | Python unit tests (data codecs + toolchain probes) | P2 (now) |
 | `make smoke` | Run the original code in Unicorn up to its first interrupts | P0 (now) |
 | `make status` / `make next` | Project status, next work item | P1 (now) |
 | `make ghidra` | Rebuild the Ghidra project from `re/` (needs `env.local.sh`) | P1 (now) |

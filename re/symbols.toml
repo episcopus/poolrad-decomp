@@ -2349,13 +2349,13 @@ id = "ovl07:0341"
 unit = "ovl07"
 addr = "ovl07:0341"
 size = 208
-name = "ovl07_e4"
+name = "LoadEcl"
 signature = ""
-c_name = "ovl07_e4"
+c_name = "LoadEcl"
 level = "none"
 justification = ""
-notes = "auto:entry_4"
-evidence = ["entry_4"]
+notes = "Loads ECL#.DAX block: GetMem(0x1E00), skip u16, copy size-2 (whitepaper 4.2.2)"
+evidence = ["entry_4", "string:ECL.dax", "tools/re/ecl.py"]
 
 [[routine]]
 id = "ovl07:0411"
@@ -13841,26 +13841,26 @@ id = "ovl29:0E08"
 unit = "ovl29"
 addr = "ovl29:0E08"
 size = 703
-name = "ovl29_e6"
+name = "LoadWallSet"
 signature = ""
-c_name = "ovl29_e6"
+c_name = "LoadWallSet"
 level = "none"
 justification = ""
-notes = "auto:entry_6"
-evidence = ["entry_6"]
+notes = "Loads WALLDEF#.DAX; error string at ovl29:0DB5"
+evidence = ["entry_6", "string:LoadWallSet"]
 
 [[routine]]
 id = "ovl29:10C7"
 unit = "ovl29"
 addr = "ovl29:10C7"
 size = 319
-name = "ovl29_e7"
+name = "Load3DMap"
 signature = ""
-c_name = "ovl29_e7"
+c_name = "Load3DMap"
 level = "none"
 justification = ""
-notes = "auto:entry_7"
-evidence = ["entry_7"]
+notes = "Loads GEO#.DAX; requires size 0x402; copies four 256-byte planes (whitepaper 4.2.1)"
+evidence = ["entry_7", "string:Load3DMap", "tools/re/geo.py"]
 
 [[routine]]
 id = "ovl29:1206"
@@ -14283,13 +14283,13 @@ id = "ovl32:0022"
 unit = "ovl32"
 addr = "ovl32:0022"
 size = 207
-name = "ovl32_e1"
+name = "Load24x24Set"
 signature = ""
-c_name = "ovl32_e1"
+c_name = "Load24x24Set"
 level = "none"
 justification = ""
-notes = "auto:entry_1"
-evidence = ["entry_1"]
+notes = "Loads CHEAD/CBODY/COMSPR/ICON picture sets; reads DaxBlock height/count/bpp (whitepaper 4.2.3)"
+evidence = ["entry_1", "string:Load24x24Set", "tools/re/pic.py"]
 
 [[routine]]
 id = "ovl32:00F1"

@@ -41,7 +41,7 @@ This document grows a chapter per subsystem as the decompilation proves how each
 | `start-unpack.exe` | 71,152 | The same program unpacked **[V]** (`make unexepack` reproduces it byte for byte from `START.EXE`) |
 | `GAME.OVR` | 206,105 | Overlay code for 35 units **[V]** |
 | `*.DAX` (113 files) | | Game data archives **[V]** (section 4.1) |
-| `ITEMS` | 2,050 | Item data **[?]** format |
+| `ITEMS` | 2,050 | Item type table (section 4.3) **[V]** |
 | `SAVE/` | | A saved game: `SAVGAMA.DAT` plus per-character `CHRDAT<slot><n>.SAV/.ITM/.SPC` (section 4.4) |
 | `POOL.BAT`, `CFG.EXE`, `CFG.C` | | Third-party launcher ("Gold Box Starter by Japo @ Abandonia.com", per `CFG.C`), not part of the original game |
 
@@ -256,31 +256,109 @@ Byte-for-byte correctness of the decompressed content is **[I]** (sizes all matc
 
 | Family | Files | Blocks per file | Likely content |
 |---|---:|---|---|
-| `ECL1-8` | 8 | 2 to 5 | Event scripts per area |
-| `GEO1-8` | 8 | 2 to 6 | Area maps (walls, doors, events) |
-| `WALLDEF1-8` | 8 | 2 to 7 | Wall definitions for the 3D view |
+| `ECL1-8` | 8 | 2 to 5 | Event scripts per area (section 4.2.2) |
+| `GEO1-8` | 8 | 2 to 6 | Area maps (walls, doors, events) (section 4.2.1) |
+| `WALLDEF1-8` | 8 | 2 to 7 | Wall definitions for the 3D view (section 4.2.4) |
 | `8X8D1-8` | 8 | 3 to 7 | 8x8 tile graphics (3D view, frames, fonts) |
 | `PIC1-8`, `CPIC1-8` | 16 | 3 to 44 | Pictures (encounter art, combat pictures) |
 | `SPRIT1-8` | 8 | 5 to 15 | Monster sprites |
 | `HEAD1-8`, `BODY1-8`, `CHEAD`, `CBODY` | 18 | 1 to 128 | Character and monster portraits (heads, bodies) |
-| `MON1-8CHA`, `MON1-8ITM`, `MON2-8SPC` | 22 | | Monster characters, their items, their special abilities |
-| `ITEM1-8` | 8 | 1 to 10 | Item data per area |
+| `MON1-8CHA`, `MON1-8ITM`, `MON2-8SPC` | 22 | | Monster characters, items, affects (section 4.2.5) |
+| `ITEM1-8` | 8 | 1 to 10 | Area loot; 63-byte item records (section 4.2.5) |
 | `TITLE` | 1 | 2 | Title screens (both blocks unpack to 32,017 bytes: a 320x200x16-colour picture is 32,000 bytes) |
 | `COMSPR`, `ICON` | 2 | 26, 6 | Combat sprites, icons |
 | `DUNGCOM`, `WILDCOM`, `RANDCOM`, `SQRPACI`, `BACPAC`, `FINAL5` | 6 | 1 to 8 | Combat maps, random encounters, end sequence **[?]** |
 
-### 4.3 `ITEMS` **[?]**
+#### 4.2.1 GEO maps **[V]** (`make test` / `tools/re/geo.py verify`: 8 files, 29 blocks)
 
-2,050 bytes: 2 + 2,048, consistent with 128 records of 16 bytes **[H]**.
+Every decompressed GEO block is exactly `0x402` (1026) bytes **[V]** (`ovl29:10C7` Load3DMap compares the loaded size to `0x402` and fatals otherwise). Layout:
 
-### 4.4 Saved games **[V]** sizes, **[I]** structure
+```
+u16  payload_bytes                ; always 1024
+u8   wall_ne[256]                 ; 16x16: low nibble = east wall id, high = north
+u8   wall_sw[256]                 ; low nibble = west, high = south
+u8   event[256]                   ; bit7 = interior, bits0-6 = event id
+u8   door[256]                    ; 2 bits per direction: N, E, S, W (low bits first)
+```
 
-- `CHRDAT<slot><n>.SAV`: 285 bytes each: one character record.
-- `.ITM`: 63, 126 or 189 bytes: multiples of 63, so 63-byte item records **[I]**.
-- `.SPC`: 9 to 45 bytes: multiples of 9, so 9-byte records (spells or effects) **[I]**.
-- `SAVGAMA.DAT`: 13,137 bytes: the game state **[?]**.
+Load3DMap skips the `u16`, then `Move`s four 256-byte planes through the far pointer at DGROUP `0x6A5C` **[V]** (`ovl29:1160`..`ovl29:11DF`). Wall-id nibble packing matches the pre-UA Gold Box `CELL_A` layout (ImHex `GB_GEO.hexpat`, coab) **[H]** for field meaning; plane order and size are from our bytes. Door values are a 2-bit enum per side (none / open / locked variants) **[H]**. Event id 0 means no script trigger on that cell **[H]**.
 
-coab reads Pool of Radiance characters for import (`Classes/PoolRadPlayer.cs`) **[H]**: a lead for the 285-byte layout.
+GEO and ECL share block ids for the same area in most cases; three GEO-only ids (30, 31, 32) and three ECL-only ids (8, 11, 19) are the known exceptions **[V]** (file inventory).
+
+#### 4.2.2 ECL scripts **[V]** (`make test` / `tools/re/ecl.py verify`: 8 files, 29 blocks)
+
+LoadEcl (`ovl07:0341`) allocates a `0x1E00`-byte buffer (same size as coab `EclBlock.ecl_struct_size`), opens `ECL#.DAX` for the current area, loads one block by id, requires `raw_size >= 2`, skips the leading `u16`, and copies `raw_size - 2` bytes into the buffer **[V]**. In every pinned file that leading word is `5000` **[V]**; every payload fits in `0x1E00` **[V]**.
+
+After load, the VM reads five word operands from offset `0x8000` (coab `vm_init_ecl` / `vm_LoadCmdSets`) **[H]** naming, **[V]** that our headers parse as five type-1 word operands:
+
+| Slot | Role (coab name) **[H]** |
+|---|---|
+| 0 | `vm_run_1` |
+| 1 | `SearchLocation` |
+| 2 | `PreCampCheck` |
+| 3 | `CampInterrupted` |
+| 4 | `ecl_initial_entryPoint` |
+
+Operand encoding (type byte, then low, then high when type is 1/2/3) matches coab `ovr008.vm_LoadCmdSets` **[H]**; our headers all use type 1 **[V]**. Full opcode coverage is not claimed here; that lands with the interpreter unit (section 5.1).
+
+#### 4.2.3 EGA pictures **[V]** (`tools/re/pic.py verify`: 54 files, 778 blocks)
+
+Picture-bearing archives: `TITLE`, `PIC1-8`, `CPIC1-8`, `SPRIT1-8`, `HEAD1-8`, `BODY1-8`, `CHEAD`, `CBODY`, `COMSPR`, `ICON`, `8X8D1-8`, `FINAL5`. Pixel records match coab `DaxBlock` **[H]** and the fields `Load24x24Set` reads at `ovl32:008C` (height at +0, `item_count` at +8, bytes-per-picture at +0x11) **[V]**:
+
+```
+u16  height
+u16  width_cols                 ; pixel width = width_cols * 8
+u16  x_pos
+u16  y_pos
+u8   item_count                 ; tiles or frames inside this record
+u8   palette[8]                 ; 16 EGA indices as packed nibbles
+u8   pixels[item_count * height * width_cols * 4]
+     ; each byte = two 4-bit colour indices (high nibble first)
+```
+
+Record size is always `17 + item_count * height * width_cols * 4` **[V]** (all non-font blocks above). `TITLE` blocks are 320x200 (`height=200`, `width_cols=40`); `CPIC`/`COMSPR`/`ICON` combat icons are 24x24; `HEAD`/`BODY` are 40x88 and 48x88 **[V]**.
+
+`PIC*.DAX` and `SPRIT*.DAX` (and some `FINAL5` blocks) wrap several records as an animation **[V]**:
+
+```
+u8   num_frames
+repeat num_frames:
+  u32  delay                    ; tenths of a second **[H]** (coab)
+  <picture record>
+```
+
+For `PIC`/`FINAL`, pixel bytes of frame N are XOR'd with frame 0 before draw **[H]** (coab `ovr030.load_pic_final`); applying that delta yields coherent PNGs from our files **[V]** (`pic.py dump`).
+
+`8X8D1.DAX` block 201 is not a picture record: it is a 1-bit font, 177 glyphs of 8 bytes each (1416 bytes) **[V]** (size; coab `seg041.Load8x8Tiles` reads it the same way **[H]**). Other `8X8D` blocks are ordinary picture records of 8x8 tiles (`item_count` 31 to 70).
+
+CLI: `tools/re/pic.py dump <file.DAX> <id> out.png` (or a directory for multi-frame).
+
+#### 4.2.4 WALLDEF wallsets **[V]** (`tools/re/walldef.py verify`: 8 files, 38 blocks)
+
+`LoadWallSet` (`ovl29:0E08`) loads `WALLDEF#.DAX`, rejects a size that is not a positive multiple of `0x30C` (780), and `Move`s each 780-byte wallset into the wall buffer **[V]**. Within a wallset it addresses walls with stride `0x9C` (156), so each wallset is five walls of 156 bytes **[V]** (`ovl29:0FAA`). Observed sizes: 780, 1560, 2340 (1–3 wallsets) **[V]**. Bytes are small integers used as 8x8 tile indices **[H]**; PNG expansion is not done yet.
+
+#### 4.2.5 Monster character / item / affect blocks **[V]** (`tools/re/records.py`)
+
+| Archive | Blocks | Record | Size |
+|---|---:|---|---:|
+| `MON1-8CHA` | 172 | character | 285 (`0x11D`) |
+| `MON1-8ITM` | 105 | item × N | N × 63 (`0x3F`) |
+| `MON2-8SPC` | 42 | affect × N | N × 9 |
+
+Character and item layouts match coab `PoolRadPlayer` / `Item` **[H]** and round-trip byte-for-byte on every pinned block and every `SAVE/CHRDAT*` file **[V]** (`tests/unit/test_records.py`). A character begins with a length-prefixed name (max 15) then ability scores at `0x10`..`0x16`, THAC0 at `0x2D`, race/class at `0x2E`/`0x2F`, age at `0x30`, `hp_max` at `0x32`, sex at `0x9E` **[V]** on our bytes. An item is a 63-byte record: Pascal name (max `0x2A`), then type at `0x2E`, namenum1–3, plus, readied, weight, count, value, affect_1..3 **[V]**; bytes past the Pascal length in the name slot are preserved on encode (they are often non-zero on disk). Affect (`.SPC`) records are opaque 9-byte rows that round-trip **[V]**; field meanings **[?]**.
+
+Area loot `ITEM1-8.DAX` uses the same 63-byte item records **[V]**.
+
+### 4.3 `ITEMS` type table **[V]** (`tools/re/items.py`)
+
+File size 2,050 = 2 + 128 × 16 **[V]**. Loader skips the first `u16` then reads 128 `ItemData` rows of 16 bytes (coab `ItemDataTable` does the same seek/row size; Curse has 129 rows) **[H]/[V]** count on our file). Row fields (slot, hands, dice, bonus, attacks, range, classFlags, flags) match coab `ItemData` **[H]**; encode/decode round-trips the file **[V]**.
+
+### 4.4 Saved games **[V]** (`tools/re/save.py verify poolrad/SAVE`)
+
+- `CHRDAT<slot><n>.SAV`: 285 bytes; same character record as `MON*CHA` **[V]** (round-trip).
+- `.ITM`: multiples of 63; same item records **[V]** (round-trip).
+- `.SPC`: multiples of 9; same affect records **[V]** (round-trip).
+- `SAVGAMA.DAT`: 13,137 bytes exact **[V]**; internal field map still **[?]**.
 
 ---
 
@@ -312,7 +390,7 @@ Each section will cover: purpose, units and routines, data, algorithm, quirks, e
 2. Meaning of the stub field at +0E (3.3) and of the fifth `POOL.CFG` line (2.3).
 3. Roles of the 11 unnamed resident units (3.2).
 4. How much of the resident code is hand-written assembly (graphics, sound, timer) **[?]**.
-5. Formats of `ITEMS` and `SAVGAMA.DAT` (4.3, 4.4).
+5. Field map of `SAVGAMA.DAT` (size known, 4.4); WALLDEF tile-to-pixel expansion (4.2.4); affect (`.SPC`) field meanings (4.2.5).
 
 ---
 
@@ -363,4 +441,11 @@ Each section will cover: purpose, units and routines, data, algorithm, quirks, e
 | File hashes | `make inputs` |
 | Units, overlays, stubs, entry points | `make overlays` (writes `build/re/overlays.json`) |
 | Start-up interrupt sequence | `make smoke` |
-| DAX container and RLE | `make dax` (`tools/re/dax.py verify poolrad/`) |
+| DAX container and RLE | `make dax` / `make test` (`tools/re/dax.py verify poolrad/`) |
+| GEO maps | `tools/re/geo.py verify poolrad/` (also via `make dax` / `make test`) |
+| ECL script headers | `tools/re/ecl.py verify poolrad/` (also via `make dax` / `make test`) |
+| EGA pictures / font | `tools/re/pic.py verify poolrad/` (also via `make dax` / `make test`) |
+| WALLDEF wallsets | `tools/re/walldef.py verify poolrad/` |
+| Character / item / affect | `tools/re/records.py verify poolrad/` |
+| ITEMS type table | `tools/re/items.py verify poolrad/` |
+| SAVE directory | `tools/re/save.py verify poolrad/SAVE` |
