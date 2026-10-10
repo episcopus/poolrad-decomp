@@ -15258,12 +15258,12 @@ id = "0AF8:11C0"
 unit = "res00"
 addr = "0AF8:11C0"
 size = 79
-name = "System_rtl_11C0"
-signature = ""
-c_name = "System_rtl_11C0"
-level = "none"
+name = "System_Random"
+signature = "function Random(range: Word): Word"
+c_name = "System_Random"
+level = "L2"
 justification = ""
-notes = "[I] external far-call target from game/other units; ext_callers=5"
+notes = "[V] Random(range): step 0AF8:120F, then hi16(RandSeed) div range; range 0 steps and returns 0; fuzz:202cases-seed1234"
 evidence = ["far-called from outside res00 (5 sites)"]
 
 [[routine]]
@@ -15271,12 +15271,12 @@ id = "0AF8:120F"
 unit = "res00"
 addr = "0AF8:120F"
 size = 69
-name = "res00_fn_120F"
-signature = ""
-c_name = "res00_fn_120F"
+name = "System_RandomStep"
+signature = "procedure RandomStep (near)"
+c_name = "System_RandomStep"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "[V] RandSeed := RandSeed * 08088405h + 1; called from 0AF8:11C0, 11D6, 11F3"
 evidence = ["near_call"]
 
 [[routine]]
@@ -15506,11 +15506,11 @@ unit = "res00"
 addr = "0AF8:1685"
 size = 35
 name = "System_Move"
-signature = ""
+signature = "procedure Move(var src; var dst; count: Word)"
 c_name = "System_Move"
-level = "none"
+level = "L2"
 justification = ""
-notes = "[V] Move(src,dst,count); overlapping-safe"
+notes = "[V] Move(src,dst,count); overlapping-safe; fuzz:203cases-seed1234"
 evidence = ["hand-verified System entry"]
 
 [[routine]]
@@ -15519,11 +15519,11 @@ unit = "res00"
 addr = "0AF8:16A8"
 size = 20
 name = "System_FillChar"
-signature = ""
+signature = "procedure FillChar(var dst; count: Word; value: Char)"
 c_name = "System_FillChar"
-level = "none"
+level = "L2"
 justification = ""
-notes = "[V] FillChar(dst,count,value)"
+notes = "[V] FillChar(dst,count,value); fuzz:203cases-seed1234"
 evidence = ["hand-verified System entry"]
 
 [[routine]]

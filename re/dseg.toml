@@ -72,3 +72,10 @@ size = 2
 type = "u16"
 name = "PspSegment"
 evidence = "System_init mov [0x4422],ES at 0AF8:0005 (ES=PSP on entry)"
+
+[[global]]
+offset = 0x4428
+size = 4
+type = "u32"
+name = "RandSeed"
+evidence = "TP 6.0 System RandSeed at DS:4428 (WHITEPAPER 2.2); step 0AF8:120F, Random(range) 0AF8:11C0"
