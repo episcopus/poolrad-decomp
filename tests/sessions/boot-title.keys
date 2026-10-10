@@ -1,0 +1,9 @@
+# boot-title: start the game and capture the opening screens. No keys are sent until the copy
+# protection prompt, which the script then leaves unanswered (it ends the run when the game waits).
+# Virtual time: 1 BIOS tick = 1/18.2 s of the oracle's clock (1,000,000 instructions per second).
+wait 440
+shot ssi-logo            # SSI presents the Advanced Dungeons & Dragons computer product
+wait 200
+shot title               # POOL OF RADIANCE title picture
+wait 160
+shot credits             # scenario and game credits

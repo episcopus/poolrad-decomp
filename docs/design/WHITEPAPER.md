@@ -176,7 +176,14 @@ Hand-verified (Capstone) names applied to far-call targets; full list in `re/sym
 
 Other externally called System/Crt/Overlay/Dos entries are named `*_rtl_XXXX` or INT-based until classified.
 
-Start-up as observed by running the original code in Unicorn (`tools/oracle/smoke.py`) **[V]**: the System unit saves 19 interrupt vectors (INT 21h AH=35h) and installs 4 handlers (AH=25h), queries a device with IOCTL (AH=44h), then the Crt unit probes the video BIOS (INT 10h AH=0Fh, 11h, 08h).
+Start-up as observed by running the original code in the oracle (`make oracle-run`, appendix C) **[V]**:
+
+1. The System unit saves 19 interrupt vectors (INT 21h AH=35h), installs INT 00h (`0AF8:00DF`), INT 23h (`0AF8:00E6`), INT 24h (`0AF8:00AE`) and a default INT 3Fh handler (`0AF8:00D7`), and queries the output handle with IOCTL (AH=44h).
+2. The Crt unit probes the video BIOS (INT 10h AH=0Fh, 11h AL=30h, 08h) and installs INT 1Bh (`0A40:012D`).
+3. The Borland Overlay unit replaces INT 3Fh with its manager (`0AA2:02E6`), opens `GAME.OVR` and reads its 8-byte header. The 35 overlay initialisations then run through that handler; each first call reads the unit's code (file offset from the stub, dword at +04h) and its fixup table with two INT 21h reads, so every unit is loaded from `GAME.OVR` by the program's own manager (the oracle implements no overlay logic).
+4. `POOL.CFG` is opened and read. The sound unit (res03, init `08AE:01D2`) briefly hooks INT 08h and programs the timer to divisor `13B1h` (about 297 Hz) with `OUT 43h,B6h` followed by two `OUT 40h` bytes, restores INT 08h and divisor `FFFFh`, turns the speaker off (port 61h) and silences a Tandy SN76489 (`OUT C0h` with 9Fh, BFh, DFh, FFh).
+5. `8X8D1.DAX`, `SQRPACI.DAX`, `COMSPR.DAX`, `ITEMS` and `TITLE.DAX` are loaded, the game switches to EGA mode 0Dh (320x200, 16 colours), shows "Loading... please wait", then the SSI logo, the Pool of Radiance title and the credits, polling the keyboard throughout. The code wheel prompt (5.12) follows.
+6. The game installs no INT 08h/09h/1Ch handler for the rest of the session; keyboard input is INT 16h only (5.8).
 
 Turbo Pascal background **[H]** (Turbo Pascal reference manuals): units are compiled separately; each has an interface, an implementation and an optional initialisation part; overlaid units are called through stubs and loaded on demand by the Overlay unit's manager.
 
@@ -382,6 +389,20 @@ Each section will cover: purpose, units and routines, data, algorithm, quirks, e
 | 5.12 | Copy protection (code wheel) | `poolrad/__ Code Wheel __.pdf` |
 | 5.13 | Random numbers | Turbo Pascal's `Random` **[H]** |
 
+### 5.8 Keyboard input and menus (observed in the oracle)
+
+- Input is **INT 16h only** **[V]** (oracle: no INT 09h hook, ports 60h/64h never touched): Crt `KeyPressed` (`0A40:02FD`, AH=01h) and `ReadKey` (`0A40:030F`, AH=00h, an extended key returns 0 then the scan code on the next call).
+- A resident wrapper `res04:0059` (a `ReadKey` with Ctrl-S pause and a debug toggle) is what game code calls. Before most prompts the game flushes the keyboard with `res04:0104` (`while KeyPressed do ReadKey`) **[V]**, so keys typed before the prompt appears are lost, as for a person. The oracle's `key` script command therefore waits for the game to be idle.
+- The menu loop is `ovl25:03BD` (get key, parse the item string, redraw `ovl25:01DA`), called by the list handler at `ovl25:0FA0..10A7` **[V]**. It parses the item string with a 36-character set at `ovl25:00AB` (upper-case letters and digits mark the first letter of each item: the highlighted hotkey). In the lists of the character creation (race, sex, class, alignment) the highlight moves with **END (next) and HOME (previous)**, ENTER selects, and the one-item bar at the bottom ("Exit") answers to its first letter **[V]** (oracle session `create-character`). The arrow keys have no effect in these lists **[V]** (oracle: UP/DOWN/LEFT/RIGHT/TAB/SPACE leave the screen unchanged); `ovl25:03BD` drops an extended key unless its caller asked for it (`ovl25:0580..0599`) **[I]**, and `,` and `.` move the highlight of its own item bar (`ovl25:05C4`, `05E8`) **[I]**.
+- Character creation flow **[V]** (one run of `tests/sessions/create-character.keys`): main menu (C) > race list > sex > class > alignment > rolled character sheet with "Keep this character? Yes No" > name prompt > "Head Body Keep" > icon editor ("Parts Color-1 Color-2 Size Exit") > "Is this icon OK? Yes No" > main menu. The game writes `SAVE\RAD.CHA` (285 bytes, the character record of 4.2.5) and `SAVE\CHARLIST.TXT` (`RAD`, CR LF) **[V]**; decoding `RAD.CHA` with `tools/re/records.py` gives the race, class, sex, age and six scores shown on the sheet (human 7, fighter 2, male 0, age 19, STR 15 INT 13 WIS 11 DEX 12 CON 16 CHA 12 in the pinned run).
+
+### 5.12 Copy protection: the code wheel
+
+- The check is `ovl02:00FD` (entry point of overlay 2, 862 bytes of code) **[V]**. At most three times it picks `r = Random(13)` (`System_Random`, `0AF8:11C0`), draws two rune glyphs and a path pattern from a table at the very start of DGROUP (`DS:0000`, 13 records of 21 bytes), flushes the keyboard (`res04:0104`) and asks "INPUT THE CODE WORD:" **[V]**.
+- Record layout **[V]** (`start-unpack.exe` image at `0C7C0h`, and the lcalls in `ovl02:01A2..02FD`): `+02` Pascal string[6] with the answer; `+09`, `+0A`, `+0B` glyph indices, each drawn as character `index + 40h` in the game's font (the two rune pictures the prompt asks to match, then a third); `+0C` a fourth index drawn only when it is not FFh; `+0D` Pascal string with the path pattern drawn under the runes (`- - - -`, `-..-..-`, `.......`).
+- The 13 answers, in record order **[V]**: BEWARE, ZOMBIE, NOTNOW, COPPER, DRAGON, EFREET, FRIEND, JUNGLE, KNIGHT, SAVIOR, TEMPLE, VULCAN, WYVERN. The typed word is compared with `System_StrCompare` (`0AF8:0C10`, flags in ZF) after `StrLCopy(local, input, 40)`; the failure message is "Sorry, that's incorrect." (`ovl02:00E4`); after the third failure `res04:0000` ends the program **[V]**.
+- Which question appears depends on `RandSeed`, which comes from the clock, so it varies from run to run on real hardware. The oracle's virtual clock makes it repeat; its `wheel` script command reads the answer from the table by watching that `Random(13)` call (`tools/oracle/protection.py`) and types it, leaving the game's own check untouched.
+
 ---
 
 ## 6. Open questions
@@ -449,3 +470,37 @@ Each section will cover: purpose, units and routines, data, algorithm, quirks, e
 | Character / item / affect | `tools/re/records.py verify poolrad/` |
 | ITEMS type table | `tools/re/items.py verify poolrad/` |
 | SAVE directory | `tools/re/save.py verify poolrad/SAVE` |
+| Boot, key script sessions, traces | `make oracle-run SCRIPT=tests/sessions/create-character.keys` |
+| Screens vs DOSBox-X | `make oracle-dosbox` |
+
+## Appendix C. The oracle: what it models
+
+`tools/oracle` runs the original `start-unpack.exe` and `GAME.OVR` in Unicorn as a deterministic, headless PC (SPEC 8.2, playbook 25). Everything below is **[V]** by `tests/unit/test_oracle.py` unless marked otherwise.
+
+| Area | Modelled | Not modelled (raises or is ignored, never silently wrong) |
+|---|---|---|
+| CPU and memory | 16-bit real mode, 640 KB, MZ loader with relocations, PSP and environment at `0FF0`/`0F00`, load image at `1000:0000` (the addresses of this document plus `1000h`) | 8087, protected mode, EMS/XMS |
+| Interrupts | Software INTs dispatch through the real IVT, so handlers the program installs run as original code (the Borland overlay manager on INT 3Fh, INT 08h of the sound unit); service vectors end in IRET stubs hooked in Python | hardware IRQs 1 to 7 other than IRQ0 |
+| Time | Executed-instruction counter (1,000,000 per virtual second), PIT channel 0 reload honoured, IRQ0 delivered at chunk boundaries with IF set and EOI tracked; ports 40h/42h read as free-running counters; port 3DAh retrace derived from the clock | wall clock, host date (reported date is fixed 1991-06-11) |
+| DOS (INT 21h, 20h, 27h, 29h, 2Fh) | console, vectors, version 3.30, handle file I/O, find first/next, directories, memory blocks, IOCTL, time, exit | EXEC, FCBs, networking, EMS |
+| BIOS | INT 10h (mode set, cursor, scroll, tty, palette registers, font info, EGA info), 11h, 12h, 13h reset, 15h (a few), 16h (read, peek, flags), 1Ah (ticks, RTC, date) | disk I/O, serial, printer, mouse (INT 33h is a bare IRET: no driver), VGA DAC, CGA/Tandy video modes |
+| Files | `poolrad/` read-only as `C:\POOLRAD`; every write goes to an in-memory layer (`SAVE\RAD.CHA` etc.) and never reaches disk | |
+| EGA | 4 planes, latches, map mask, bit mask, set/reset, rotate, logical ops, write modes 0 to 3, read modes 0 and 1, attribute palette to RGB, CRTC start address, modes 0Dh/0Eh/0Fh/10h, simple text modes; PNG screenshots | split screen, panning, odd/even and chain-4 addressing |
+| Sound | PIT channel 2 and port 61h writes logged as a speaker event list (`m.speaker_log`) | audio output |
+| Input | Script player (`tests/sessions/*.keys`): keys released when the game is idle, time-based waits, `shot`, `digest`, `wheel`, `quit` | joystick, mouse |
+| Tracing | Interrupts, file I/O, port I/O, call and return of every routine of `re/symbols.toml` (resident and overlay, overlay entry points resolved from the stub's load segment), memory watch points, coverage of routines entered | argument decoding by signature (the signatures in `re/symbols.toml` are still empty: four raw stack words are logged) |
+| State | `Machine.state_digest()` (registers, conventional memory, video), `oracle.state.canonical_digest()` from `re/state.toml` (DGROUP and video planes while that file is empty) | `heap_root` entries (need `re/types/`) |
+| Hybrid hooks | `Machine.hook_routine(seg, off, fn, ret_bytes, cost=)` replaces a routine by Python or declines (`return False` runs the original); `unhook` | the C hybrid library and marshalling from `re/symbols.toml` signatures (P3) |
+
+Acceptance results (playbook 25):
+
+- **Boots to the title screens**: `tests/sessions/boot-title.keys` reaches the SSI logo, the title and the credits in EGA mode 0Dh after 24, 35 and 44 million instructions. Each of the three screens is **pixel-identical** to a frame recorded by DOSBox-X 2026.10.01 running the same unpacked executable (`make oracle-dosbox`: DOSBox-X's `dx-capture` ZMBV recording decoded with ffmpeg, compared byte for byte). The wheel screen is not compared because its runes depend on the clock.
+- **Deterministic**: the same script run twice gives identical stop points, instruction counts, per-key-read state digests, checkpoint digests, final state digest and call traces.
+- **Character creation completes from a script**: `tests/sessions/create-character.keys` (about 64 million instructions, 13 s of wall time) ends at the main menu with `SAVE\RAD.CHA` decoded as the character shown on the sheet (5.8).
+
+Known limits **[V]** (test `test_hybrid_hook_python_move_matches_original`):
+
+- Virtual time is instructions and a replacement executes none, so after a few timer ticks a hooked run places ticks at slightly different program points and tick-derived bytes in DGROUP differ (`DS:C312`, `C404..C407` at the 400th call of `System_Move`). Equal states hold up to the 120th call (four ticks). `cost=` narrows the drift; L3 on hybrid runs needs either masks with reasons in `re/state.toml` (human approval) or a precise-time mode.
+- Time is exact at chunk boundaries only (chunks end at timer events); an interrupt that falls inside a service call is delivered after it.
+- The BIOS font ROM is not in the pinned inputs: text-mode screenshots use a placeholder font (the game itself draws all text in graphics mode with its own font, so game screens are unaffected).
+

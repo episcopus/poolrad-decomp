@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-10 | 3.2, 5.8, 5.12, App. B, App. C | Oracle (playbook 25): original boots in Unicorn to the title screens (pixel-identical to DOSBox-X), runs deterministically, and creates a character from a key script; copy protection (ovl02:00FD, 13 answers) and menu key handling documented; oracle capabilities and limits listed | `tools/oracle/`, `tests/unit/test_oracle.py`, `make oracle-run`, `make oracle-dosbox`, `tests/sessions/{boot-title,create-character}.keys` |
 | 2026-10-09 | 4.2.4–4.4 | WALLDEF, MON*CHA/ITM/SPC, ITEMS, SAVE codecs; item encode keeps name-slot padding; playbook 20 exit criteria green | `tools/re/{walldef,records,items,save}.py`, `make dax` / `make test` (30 unit tests) |
 | 2026-10-09 | 4.2.3 | EGA picture decoder with PNG dump: 778 blocks (PIC/SPRIT/TITLE/HEAD/…); font block 201 | `tools/re/pic.py`, `tests/unit/test_pic.py`, `ovl32:008C` |
 | 2026-10-09 | 4.2.1, 4.2.2 | GEO and ECL decoders: all 29+29 blocks; Load3DMap/LoadEcl sizes; `make test` runs DAX/GEO/ECL | `tools/re/geo.py`, `tools/re/ecl.py`, `tests/unit/test_{dax,geo,ecl}.py`, `ovl29:10C7`, `ovl07:0341` |

@@ -1,0 +1,41 @@
+# create-character: pass the code wheel, then create one character with the keyboard only:
+# Human, male, fighter, lawful good; keep the rolled scores; name "Rad"; keep head and body; accept
+# the combat icon. The game writes SAVE\RAD.CHA and SAVE\CHARLIST.TXT and returns to the main menu.
+#
+# Menu keys in this game (ovl25:03BD / ovl25:0FA0, whitepaper 5.8): the highlight moves with END
+# (next) and HOME (previous); ENTER selects; the bar at the bottom answers to first letters.
+# (The arrow keys do nothing in these lists.)
+wheel                    # types the code word for whatever question the protection asked
+wait 20
+key C                    # main menu: Create new character
+wait 10
+key END                  # race list: Dwarf > Elf > Gnome > Half-elf > Halfling > Human
+key END
+key END
+key END
+key END
+shot race-human
+key ENTER
+wait 10
+key ENTER                # sex: Male
+wait 10
+key END                  # class list: Cleric, Fighter, Magic-user, Thief
+key ENTER
+wait 10
+key ENTER                # alignment: Lawful good (first entry)
+wait 20
+shot sheet               # the rolled character sheet: "Keep this character? Yes No"
+key Y
+wait 15
+text Rad                 # name prompt
+key ENTER
+wait 15
+shot head-body-keep
+key K                    # Head Body Keep > Keep
+wait 20
+shot icon-editor
+key E                    # icon editor: Exit
+wait 20
+key Y                    # Is this icon OK? Yes
+wait 40
+shot main-menu           # back at the main menu with the character saved

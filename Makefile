@@ -10,14 +10,14 @@ PACKED := poolrad/START.EXE
 .PHONY: help setup doctor inputs unexepack overlays map dax smoke status next ghidra p1-check \
         tp-install tp-probe tp-compare tp-pin tpc emu2 \
         packet lock unlock \
-        oracle-run golden sessions host hybrid fuzz test check review-pass dos coco3
+        oracle-run oracle-dosbox golden sessions host hybrid fuzz test check review-pass dos coco3
 
 help:
 	@echo "Available now:  setup doctor inputs unexepack overlays map dax smoke"
 	@echo "Phase 1:        status next ghidra p1-check packet lock unlock"
 	@echo "Turbo Pascal:   emu2 tp-install tp-probe tp-compare tp-pin tpc (docs/setup/SETUP-tp.md)"
 	@echo "Data codecs:    make dax (all playbook-20 formats); make test (pytest)"
-	@echo "Phase 2:        oracle-run golden"
+	@echo "Phase 2:        oracle-run oracle-dosbox golden"
 	@echo "Phase 3:        host hybrid fuzz sessions check review-pass"
 	@echo "Later:          dos (P8) coco3 (P7)"
 	@echo "See AGENTS.md and docs/spec/SPEC.md."
@@ -103,7 +103,11 @@ define todo
 	@echo "make $@: not built yet; delivered in $(1) (docs/spec/SPEC.md section $(2))."; exit 2
 endef
 
-oracle-run:  ; $(call todo,Phase 2,8.2 and playbook 25)
+oracle-run:       ## run the original in the oracle: SCRIPT=tests/sessions/x.keys [OUT=dir] [TRACE=ints,calls,files,ports] [MAX=n]
+	$(PY) tools/oracle/run.py $(if $(SCRIPT),--script $(SCRIPT)) $(if $(OUT),--out $(OUT)) $(if $(TRACE),--trace $(TRACE)) $(if $(MAX),--max-insns $(MAX))
+
+oracle-dosbox:    ## compare the oracle's title screens with DOSBox-X frames pixel for pixel (needs dosbox-x, ffmpeg)
+	$(PY) tools/oracle/dosbox_ref.py
 golden:      ; $(call todo,Phase 2,8.5 and playbook 40)
 host:        ; $(call todo,Phase 3,11)
 hybrid:      ; $(call todo,Phase 3,8.4)
