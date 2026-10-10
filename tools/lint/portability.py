@@ -65,8 +65,8 @@ def lint_file(path: Path) -> list[str]:
             quoted = '"' in line.split("include", 1)[1][:2]
             if quoted:
                 if hdr not in ("types.h", "pool_memory.h", "pool_rtl.h",
-                               "gen/dseg.h", "../types.h", "../game/res00_system.h",
-                               "res00_system.h"):
+                               "gen/dseg.h", "../types.h", "../pool_memory.h",
+                               "../game/res00_system.h", "res00_system.h"):
                     errs.append("%s:%d: surprising project include %s" % (path, i, hdr))
             elif hdr != "stddef.h":
                 errs.append("%s:%d: libc include <%s> (only <stddef.h> allowed)" % (path, i, hdr))

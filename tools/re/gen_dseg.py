@@ -45,6 +45,7 @@ def main(argv: list[str]) -> int:
         "#define POOLRAD_GEN_DSEG_H",
         "",
         '#include "../types.h"',
+        '#include "../pool_memory.h"',
         "#include <stddef.h>",
         "",
         "typedef struct {",
@@ -71,7 +72,15 @@ def main(argv: list[str]) -> int:
         pos = off + size
     if pos < DSIZE:
         lines.append("    u8 _pad%d[0x%X];" % (pad_n, DSIZE - pos))
-    lines += ["} pool_dgroup_t;", "", "extern pool_dgroup_t G;", ""]
+    lines += [
+        "} pool_dgroup_t;",
+        "",
+        "/* G is this struct inside the arena at pool_dgroup_linear (0x1C7C0). */",
+        "#define G (*(pool_dgroup_t *)(void *)(pool_mem_base + pool_dgroup_linear))",
+        "",
+        "POOL_STATIC_ASSERT(sizeof(pool_dgroup_t) == 0x10000, dgroup_size);",
+        "",
+    ]
     for name, off in fields:
         lines.append("POOL_STATIC_ASSERT(offsetof(pool_dgroup_t, %s) == 0x%X, %s);" % (name, off, name))
     lines += ["", "#endif /* POOLRAD_GEN_DSEG_H */", ""]

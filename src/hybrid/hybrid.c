@@ -1,20 +1,18 @@
 /* hybrid.c: glue that runs C routines inside the oracle (SPEC 8.4).
  *
- * The hybrid library exports one entry point per lifted routine with the same
- * parameters the Pascal routine takes, operating through FP() and G on bound
- * memory. The Python harness (tools/oracle/hybrid.py) binds a mirror buffer,
- * syncs the bytes the routine touches, and calls these; timing.py charges the
- * original's recorded cost, so the run keeps the original's time.
+ * The hybrid library exports one entry point per lifted routine. FP() and G
+ * address the buffer the harness binds. For a session that buffer is the
+ * guest's conventional RAM (the oracle maps it with mem_map_ptr), so a store
+ * in C is a store in the guest. timing.py charges the original's recorded
+ * cost, so the run keeps the original's time.
  *
- * P3 spike: the three System routines only. Later units add their exports
- * here without changing the mechanism.
+ * P3 spike: the three System routines, plus the Randomize seed packing.
+ * Later units add their exports here without changing the mechanism.
  */
 #include "pool_rtl.h"
 #include "../game/res00_system.h"
 
-/* Access to the DGROUP mirror for routines that read/write globals (Random):
- * the harness copies RandSeed between the guest DGROUP and this pointer
- * around the call. */
+/* Pointer to G inside the bound buffer (guest DGROUP when a session is bound). */
 pool_dgroup_t *pool_g_ptr(void)
 {
     return &G;
@@ -36,4 +34,12 @@ void hybrid_System_FillChar(farptr dst, u16 count, u8 value)
 u16 hybrid_System_Random(u16 range)
 {
     return System_Random(range);
+}
+
+/* 0AF8:1247 System_Randomize: INT 21h AH=2Ch, then RandSeed := DX:CX.
+ * The hybrid library does not call the platform; the caller passes the
+ * four time fields the interrupt returned. */
+void hybrid_rtl_randomize(u8 hour, u8 minute, u8 sec, u8 hund)
+{
+    rtl_randomize(hour, minute, sec, hund);
 }

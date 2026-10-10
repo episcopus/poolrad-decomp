@@ -8,7 +8,7 @@
 
 /* 0AF8:1685 (unit 'System', res00) verified: L2 2026-10-10
  * Original: Pascal procedure Move(var source; var dest; count: Word),
- * callee pops 10 param bytes (retf 10). Overlapping-safe block move. */
+ * callee pops 10 param bytes (retf 10). rep movsb: offset direction, offset wrap. */
 void System_Move(farptr src, farptr dst, u16 count)
 {
     rtl_move(src, dst, count);

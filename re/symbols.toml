@@ -15510,7 +15510,7 @@ signature = "procedure Move(var src; var dst; count: Word)"
 c_name = "System_Move"
 level = "L2"
 justification = ""
-notes = "[V] Move(src,dst,count); overlapping-safe; fuzz:203cases-seed1234"
+notes = "[V] Move(src,dst,count); offset direction at 0AF8:1696; rep movsb wraps offsets; DF set on the backward path; fuzz:207cases-seed1234"
 evidence = ["hand-verified System entry"]
 
 [[routine]]
@@ -15523,7 +15523,7 @@ signature = "procedure FillChar(var dst; count: Word; value: Char)"
 c_name = "System_FillChar"
 level = "L2"
 justification = ""
-notes = "[V] FillChar(dst,count,value); fuzz:203cases-seed1234"
+notes = "[V] FillChar(dst,count,value); rep stosb wraps DI and clears DF; fuzz:204cases-seed1234"
 evidence = ["hand-verified System entry"]
 
 [[routine]]

@@ -118,11 +118,11 @@ timing-scan:      ## find routines that wait on time or input (static; SESSIONS=
 golden:           ## record goldens (each session twice, must match): SESSION=name (default all); CHECK=1 verifies committed goldens
 	$(PY) tools/oracle/golden.py $(if $(SESSION),--session $(SESSION)) $(if $(CHECK),--check)
 host:           ## native binary (SPEC 11): cmake + SDL3 -> build/host/poolrad (P3 spike: platform smoke)
-	cmake -S . -B build/host -G Ninja -DCMAKE_BUILD_TYPE=Rel
+	cmake -S . -B build/host -G Ninja -DCMAKE_BUILD_TYPE=Release
 	cmake --build build/host --target poolrad
 
 hybrid:         ## hybrid library for the oracle (SPEC 8.4): build/host/libpoolrad_hybrid.*
-	cmake -S . -B build/host -G Ninja -DCMAKE_BUILD_TYPE=Rel
+	cmake -S . -B build/host -G Ninja -DCMAKE_BUILD_TYPE=Release
 	cmake --build build/host --target poolrad_hybrid
 
 lint:           ## portability lint over the engine (SPEC 7.2)

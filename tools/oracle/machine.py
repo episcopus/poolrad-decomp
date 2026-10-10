@@ -12,12 +12,14 @@ Determinism rules (so that the same key script gives the same trace and digests)
 """
 from __future__ import annotations
 
+import ctypes
 import hashlib
 import struct
 import sys
 from pathlib import Path
 
-from unicorn import Uc, UcError, UC_ARCH_X86, UC_MODE_16, UC_HOOK_INTR, UC_HOOK_CODE, UC_HOOK_INSN
+from unicorn import (Uc, UcError, UC_ARCH_X86, UC_MODE_16, UC_HOOK_INTR, UC_HOOK_CODE, UC_HOOK_INSN,
+                     UC_PROT_ALL)
 from unicorn.x86_const import (UC_X86_REG_AX, UC_X86_REG_BX, UC_X86_REG_CX, UC_X86_REG_DX, UC_X86_REG_SI,
                                UC_X86_REG_DI, UC_X86_REG_BP, UC_X86_REG_SP, UC_X86_REG_CS, UC_X86_REG_DS,
                                UC_X86_REG_ES, UC_X86_REG_SS, UC_X86_REG_IP, UC_X86_REG_EFLAGS,
@@ -36,7 +38,7 @@ ROM_INT8 = (0xF000, 0x2000)       # real x86 code for the default timer interrup
 ROM_IRQ_EOI = (0xF000, 0x2040)    # default handler for IRQ1..7: EOI + IRET
 ROM_IRET = (0xF000, 0x0000)       # generic IRET
 
-FLAG_CF, FLAG_ZF, FLAG_IF, FLAG_TF = 0x0001, 0x0040, 0x0200, 0x0100
+FLAG_CF, FLAG_ZF, FLAG_IF, FLAG_TF, FLAG_DF = 0x0001, 0x0040, 0x0200, 0x0100, 0x0400
 
 REG = dict(ax=UC_X86_REG_AX, bx=UC_X86_REG_BX, cx=UC_X86_REG_CX, dx=UC_X86_REG_DX, si=UC_X86_REG_SI,
            di=UC_X86_REG_DI, bp=UC_X86_REG_BP, sp=UC_X86_REG_SP, cs=UC_X86_REG_CS, ds=UC_X86_REG_DS,
@@ -106,7 +108,10 @@ class Machine:
         self.file_listeners: list = []   # callables(machine, op, path, pos, n) after each file read/write
 
         self.uc = uc = Uc(UC_ARCH_X86, UC_MODE_16)
-        uc.mem_map(0, 0xA0000)                                  # conventional RAM
+        # Conventional RAM is a host buffer so the C lift can address it (SPEC 7.3).
+        # The Machine keeps the reference: Unicorn does not copy the bytes.
+        self.ram = ctypes.create_string_buffer(0xA0000)
+        uc.mem_map_ptr(0, 0xA0000, UC_PROT_ALL, ctypes.cast(self.ram, ctypes.c_void_p))
         self.ega = EGA(self)
         uc.mmio_map(0xA0000, 0x20000, self.ega.mmio_read, None, self.ega.mmio_write, None)
         uc.mem_map(0xC0000, 0x40000)                            # ROM area: BIOS stubs live here

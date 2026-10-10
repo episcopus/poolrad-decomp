@@ -1,7 +1,8 @@
 /* pool_rtl.h: Turbo Pascal runtime semantics in C (SPEC 7.4).
  *
- * P3 spike: Move, FillChar and Random only. Strings, sets, files and the heap
- * arrive unit by unit in P4.
+ * P3 spike: Move, FillChar, Random and the Randomize seed packing. Strings,
+ * sets, files and the heap suballocator arrive with the first unit that
+ * calls them.
  */
 #ifndef POOLRAD_RTL_H
 #define POOLRAD_RTL_H
@@ -10,7 +11,8 @@
 #include "pool_memory.h"
 #include "gen/dseg.h"
 
-/* System_Move core: overlapping-safe copy of count bytes (rep movsb semantics). */
+/* System_Move core: rep movsb. Direction is the offsets alone; each offset
+ * wraps at 64 KB. See rtl_memory.c. */
 void rtl_move(farptr src, farptr dst, u16 count);
 
 /* System_FillChar core: store value into count bytes (rep stosb semantics). */

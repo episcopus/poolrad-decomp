@@ -42,6 +42,11 @@ def lib():
         LIB.hybrid_System_FillChar.restype = None
         LIB.hybrid_System_Random.argtypes = [ctypes.c_uint16]
         LIB.hybrid_System_Random.restype = ctypes.c_uint16
+        LIB.hybrid_rtl_randomize.argtypes = [ctypes.c_uint8, ctypes.c_uint8,
+                                             ctypes.c_uint8, ctypes.c_uint8]
+        LIB.hybrid_rtl_randomize.restype = None
+        LIB.pool_hybrid_set_dgroup.argtypes = [ctypes.c_uint32]
+        LIB.pool_hybrid_set_dgroup.restype = None
     return LIB
 
 
@@ -49,6 +54,7 @@ def lib():
 def mem():
     l = lib()
     mirror = ctypes.create_string_buffer(0x100000)
+    l.pool_hybrid_set_dgroup(0x1C7C0)
     l.pool_hybrid_bind(mirror, 0x100000)
     return l, mirror
 
@@ -117,6 +123,64 @@ def test_random_zero_range_steps_seed(mem):
     seed_of(lib).value = 0xABCDEF01
     assert lib.hybrid_System_Random(0) == 0
     assert seed_of(lib).value == (0xABCDEF01 * 0x08088405 + 1) & 0xFFFFFFFF
+
+
+def test_g_is_dgroup_inside_the_buffer(mem):
+    lib, mirror = mem
+    got = lib.pool_g_ptr()
+    got = got.value if hasattr(got, "value") else got
+    assert got == ctypes.addressof(mirror) + 0x1C7C0
+
+
+def _poke(mirror, seg, off, data):
+    for i, b in enumerate(data):
+        o = (off + i) & 0xFFFF
+        mirror[((seg << 4) + o) & 0xFFFFF] = bytes([b])
+
+
+def _peek(mirror, seg, off, n):
+    out = bytearray()
+    for i in range(n):
+        o = (off + i) & 0xFFFF
+        out.append(mirror[((seg << 4) + o) & 0xFFFFF][0])
+    return bytes(out)
+
+
+def test_move_wraps_the_offset(mem):
+    lib, mirror = mem
+    _poke(mirror, 0x1000, 0xFFF0, bytes(range(32)))
+    lib.hybrid_System_Move((0x1000 << 16) | 0xFFF0, (0x2000 << 16) | 0xFFF8, 32)
+    assert _peek(mirror, 0x2000, 0xFFF8, 32) == bytes(range(32))
+
+
+def test_move_smears_when_linear_order_disagrees(mem):
+    # src off 0x10 > dst off 0x00, so the copy runs forward, but the
+    # destination's linear address is 16 bytes above the source.
+    lib, mirror = mem
+    _poke(mirror, 0x1000, 0x0000, bytes(range(64)))
+    lib.hybrid_System_Move((0x1000 << 16) | 0x0010, (0x1002 << 16) | 0x0000, 32)
+    got = _peek(mirror, 0x1002, 0x0000, 32)
+    assert got[:16] == bytes(range(16, 32))
+    assert got[16:] == bytes(range(16, 32))
+
+
+def test_randomize_packs_dx_cx(mem):
+    lib, _mirror = mem
+    lib.hybrid_rtl_randomize(0x12, 0x30, 0x45, 0x67)
+    assert seed_of(lib).value == 0x45671230
+
+
+def test_move_df_and_video_decline_helpers():
+    from oracle.hybrid import move_leaves_df_set, range_leaves_ram
+    assert move_leaves_df_set(0x0010, 0x0020) is True
+    assert move_leaves_df_set(0x0020, 0x0010) is False
+    assert move_leaves_df_set(0x0010, 0x0010) is False
+    # A segment's 64 KB window stays below video until its base is high enough.
+    # 0x9000:0000..FFFF is 0x90000..0x9FFFF. 0x9800:8000 is linear 0xA0000.
+    assert range_leaves_ram(0x1000, 0xFFF0, 32) is False
+    assert range_leaves_ram(0x9000, 0xFFFF, 1) is False
+    assert range_leaves_ram(0x9800, 0x8000, 1) is True
+    assert range_leaves_ram(0x9800, 0x7FF0, 32) is True
 
 
 def test_portability_lint():

@@ -26,8 +26,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from oracle.hybrid import HybridLib  # noqa: E402
-from oracle.machine import LOAD_SEG, Machine, Stop  # noqa: E402
+from oracle.hybrid import HybridLib, move_leaves_df_set, range_leaves_ram  # noqa: E402
+from oracle.machine import FLAG_DF, LOAD_SEG, Machine, Stop  # noqa: E402
 from oracle.run import EXE, GAME  # noqa: E402
 from oracle.state import dgroup_seg  # noqa: E402
 
@@ -90,105 +90,144 @@ def linear(seg: int, off: int) -> int:
     return ((seg << 4) + (off & 0xFFFF)) & 0xFFFFF
 
 
-def check_move(hyb: HybridLib, rng: random.Random, cases: int) -> list[str]:
+def plant(seg: int, off: int, data: bytes, flat: bytearray, m: Machine, hyb: HybridLib) -> None:
+    """Write data the way rep movsb would see it: offsets wrap, segments do not."""
+    off &= 0xFFFF
+    if not data:
+        return
+    if off + len(data) <= 0x10000:
+        chunks = [(off, data)]
+    else:
+        head = 0x10000 - off
+        chunks = [(off, data[:head]), (0, data[head:])]
+    for o, blob in chunks:
+        for i, b in enumerate(blob):
+            flat[linear(seg, o + i)] = b
+        m.write(seg, o, blob)
+        hyb._put(linear(seg, o), blob)
+
+
+def taken(seg: int, off: int, count: int, flat: bytearray) -> bytes:
+    return bytes(flat[linear(seg, (off + i) & 0xFFFF)] for i in range(count))
+
+
+def mirror_span(hyb: HybridLib, seg: int, off: int, count: int) -> bytes:
+    off &= 0xFFFF
+    if count == 0:
+        return b""
+    if off + count <= 0x10000:
+        return hyb._get(linear(seg, off), count)
+    head = 0x10000 - off
+    return hyb._get(linear(seg, off), head) + hyb._get(linear(seg, 0), count - head)
+
+
+def sim_move(flat: bytearray, sseg: int, soff: int, dseg: int, doff: int, count: int) -> None:
+    if count == 0:
+        return
+    if (soff & 0xFFFF) >= (doff & 0xFFFF):
+        order = range(count)
+    else:
+        order = range(count - 1, -1, -1)
+    for i in order:
+        flat[linear(dseg, (doff + i) & 0xFFFF)] = flat[linear(sseg, (soff + i) & 0xFFFF)]
+
+
+def check_move(hyb: HybridLib, rng: random.Random, cases: int) -> tuple[list[str], int]:
     fails = []
     m = fresh_machine()
-    ds = SRC_SEG
-    scenarios = []
+    # (count, src_seg, src_off, dst_seg, dst_off). The first cases are the ones
+    # a flat memcpy misses: offset wrap, and a forward copy whose destination
+    # sits above the source in linear address.
+    scenarios = [
+        (32, 0x5000, 0xFFF0, 0x6000, 0x0010),
+        (32, 0x5000, 0xFFF0, 0x6000, 0xFFF8),
+        (32, 0x3000, 0x0010, 0x3002, 0x0000),
+        (0, 0x5000, 0x0010, 0x5000, 0x0020),
+        (65535, 0x5000, 0, 0x6000, 0),
+        (0, 0x5000, 100, 0x6000, 100),
+        (1, 0x5000, 0, 0x5000, 0),
+    ]
     for _ in range(cases):
         count = rng.choice([0, 1, 2, 3, 7, 8, 15, 16, 31, 64, 127, 128, 255, 256,
                             1024, 4096, rng.randrange(0, 3000)])
         src_off = rng.randrange(0, 8192)
-        # dst: separate, or overlapping either way (the std/cld choice)
         mode = rng.randrange(4)
         if mode == 0:
             dst_seg, dst_off = DST_SEG, rng.randrange(0, 8192)
         elif mode == 1:
-            dst_seg, dst_off = ds, (src_off + rng.choice([-16, -8, -1, 1, 8, 16])) % 12288
+            dst_seg, dst_off = SRC_SEG, (src_off + rng.choice([-16, -8, -1, 1, 8, 16])) % 12288
         elif mode == 2:
-            dst_seg, dst_off = ds, src_off
+            dst_seg, dst_off = SRC_SEG, src_off
         else:
-            dst_seg, dst_off = ds, rng.randrange(0, 8192)
-        scenarios.append((count, src_off, dst_seg, dst_off))
-    scenarios += [(65535, 0, DST_SEG, 0), (0, 100, DST_SEG, 100), (1, 0, ds, 0)]
-    for i, (count, src_off, dst_seg, dst_off) in enumerate(scenarios):
-        if linear(ds, src_off) + count > 0xA0000 or linear(dst_seg, dst_off) + count > 0xA0000:
+            dst_seg, dst_off = SRC_SEG, rng.randrange(0, 8192)
+        scenarios.append((count, SRC_SEG, src_off, dst_seg, dst_off))
+    flat = bytearray(0x100000)
+    for i, (count, src_seg, src_off, dst_seg, dst_off) in enumerate(scenarios):
+        if range_leaves_ram(src_seg, src_off, count) or range_leaves_ram(dst_seg, dst_off, count):
             continue
         data = bytes(rng.randrange(256) for _ in range(count))
-        # Poison dst first, then src data: where they overlap the src bytes
-        # win, which is exactly the pre-call memory both sides must see.
-        m.write(dst_seg, dst_off, bytes(0x5A for _ in range(count)))
-        m.write(ds, src_off, data)
-        src_actual = bytes(m.read(ds, src_off, count))
-        s_lin, d_lin = linear(ds, src_off), linear(dst_seg, dst_off)
-        hyb._put(d_lin, bytes(0xA5 for _ in range(count)))
-        hyb._put(s_lin, src_actual)
-        # Expected result: the original's destructive rep movsb with the
-        # original's direction rule (offsets only: forward when src_off >=
-        # dst_off, the jae at 0AF8:1698). Simulate on the pre-call bytes.
-        mem = bytearray(m.read(ds, 0, 16384)) if dst_seg == ds else None
-        if dst_seg == ds:
-            if (src_off & 0xFFFF) >= (dst_off & 0xFFFF):
-                for k in range(count):
-                    mem[dst_off + k] = mem[src_off + k]
-            else:
-                for k in range(count - 1, -1, -1):
-                    mem[dst_off + k] = mem[src_off + k]
-            want = bytes(mem[dst_off:dst_off + count])
-        else:
-            want = src_actual
+        # Poison the destination, then plant the source, so an overlap keeps
+        # the source bytes as the pre-call memory.
+        plant(dst_seg, dst_off, bytes(0x5A for _ in range(count)), flat, m, hyb)
+        plant(src_seg, src_off, data, flat, m, hyb)
+        work = bytearray(flat)
+        sim_move(work, src_seg, src_off, dst_seg, dst_off, count)
+        want = taken(dst_seg, dst_off, count, work)
+        want_src = taken(src_seg, src_off, count, work)
         call_original(m, "0AF8:1685",
-                      [count, dst_off, dst_seg, src_off, ds])
+                      [count, dst_off, dst_seg, src_off, src_seg])
         if m.get("sp") != SCRATCH_STACK[1]:
             fails.append("case %d: SP not restored (want retf 10 behaviour)" % i)
             break
-        got_orig = m.read(dst_seg, dst_off, count)
-        hyb.lib.hybrid_System_Move((ds << 16) | src_off, (dst_seg << 16) | dst_off, count)
-        got_c = hyb._get(d_lin, count)
+        got_orig = bytes(m.rb(dst_seg, (dst_off + k) & 0xFFFF) for k in range(count))
+        got_src = bytes(m.rb(src_seg, (src_off + k) & 0xFFFF) for k in range(count))
+        hyb.lib.hybrid_System_Move((src_seg << 16) | src_off, (dst_seg << 16) | dst_off, count)
+        got_c = mirror_span(hyb, dst_seg, dst_off, count)
+        got_c_src = mirror_span(hyb, src_seg, src_off, count)
+        df = bool(m.get("flags") & FLAG_DF)
+        if df != move_leaves_df_set(src_off, dst_off):
+            fails.append("case %d: DF=%s, want %s (count=%d src=%04X:%04X dst=%04X:%04X)" % (
+                i, df, move_leaves_df_set(src_off, dst_off), count, src_seg, src_off, dst_seg, dst_off))
+            break
         if got_orig != want:
             fails.append("case %d: original disagrees with rep-movsb model (count=%d src=%04X:%04X dst=%04X:%04X)" % (
-                i, count, ds, src_off, dst_seg, dst_off))
+                i, count, src_seg, src_off, dst_seg, dst_off))
             break
-        if got_c != want:
+        if got_c != want or got_c_src != want_src or got_src != want_src:
             fails.append("case %d: C disagrees (count=%d src=%04X:%04X dst=%04X:%04X)" % (
-                i, count, ds, src_off, dst_seg, dst_off))
+                i, count, src_seg, src_off, dst_seg, dst_off))
             (BUILD / "move-fail-%d.bin" % i).write_bytes(got_c)
             break
-        if dst_seg == ds:
-            # Destructive side effects on the source must match as well.
-            if hyb._get(s_lin, count) != m.read(ds, src_off, count):
-                fails.append("case %d: source side effects differ" % i)
-                break
-    return fails
+    return fails, len(scenarios)
 
 
-def check_fill(hyb: HybridLib, rng: random.Random, cases: int) -> list[str]:
+def check_fill(hyb: HybridLib, rng: random.Random, cases: int) -> tuple[list[str], int]:
     fails = []
     m = fresh_machine()
-    for i in range(cases + 3):
+    edges = [(65535, 0, 0x41), (0, 50, 7), (1, 8191, 0xFF), (32, 0xFFF0, 0xA5)]
+    total = cases + len(edges)
+    for i in range(total):
         if i < cases:
             count = rng.choice([0, 1, 2, 15, 16, 255, 256, 1000, rng.randrange(0, 2000)])
             dst_off = rng.randrange(0, 8192)
             value = rng.randrange(256)
         else:
-            count, dst_off, value = [(65535, 0, 0x41), (0, 50, 7), (1, 8191, 0xFF)][i - cases]
-        if linear(DST_SEG, dst_off) + count > 0xA0000:
+            count, dst_off, value = edges[i - cases]
+        if range_leaves_ram(DST_SEG, dst_off, count):
             continue
-        m.write(DST_SEG, dst_off, bytes(0x5A for _ in range(count)))
-        d_lin = linear(DST_SEG, dst_off)
-        hyb._put(d_lin, bytes(0xA5 for _ in range(count)))
+        plant(DST_SEG, dst_off, bytes(0x5A for _ in range(count)), bytearray(0x100000), m, hyb)
         call_original(m, "0AF8:16A8", [value, count, dst_off, DST_SEG])
-        got_orig = m.read(DST_SEG, dst_off, count)
+        got_orig = bytes(m.rb(DST_SEG, (dst_off + k) & 0xFFFF) for k in range(count))
         hyb.lib.hybrid_System_FillChar((DST_SEG << 16) | dst_off, count, value)
-        got_c = hyb._get(d_lin, count)
+        got_c = mirror_span(hyb, DST_SEG, dst_off, count)
         want = bytes(value for _ in range(count))
-        if got_orig != want or got_c != want:
+        if got_orig != want or got_c != want or (m.get("flags") & FLAG_DF):
             fails.append("case %d: count=%d value=%02X differ" % (i, count, value))
             break
-    return fails
+    return fails, total
 
 
-def check_random(hyb: HybridLib, rng: random.Random, cases: int) -> list[str]:
+def check_random(hyb: HybridLib, rng: random.Random, cases: int) -> tuple[list[str], int]:
     fails = []
     m = fresh_machine()
     ds = dgroup_seg()
@@ -207,7 +246,7 @@ def check_random(hyb: HybridLib, rng: random.Random, cases: int) -> list[str]:
             fails.append("case %d: seed=%08X range=%d: orig AX=%04X seed=%08X, C AX=%04X seed=%08X" % (
                 i, seed, rnge, ax_orig, seed_orig, ax_c, seed_c))
             break
-    return fails
+    return fails, cases + 2
 
 
 CHECKS = {"0AF8:1685": check_move, "0AF8:16A8": check_fill, "0AF8:11C0": check_random}
@@ -239,8 +278,7 @@ def main(argv=None) -> int:
     rng = random.Random(a.seed)
     hyb = HybridLib()
     BUILD.mkdir(parents=True, exist_ok=True)
-    fails = CHECKS[rid](hyb, rng, max(200, a.cases))
-    total = max(200, a.cases) + (3 if rid != "0AF8:11C0" else 2)
+    fails, total = CHECKS[rid](hyb, rng, max(200, a.cases))
     report = {"routine": rid, "cases": total, "seed": a.seed, "failed": fails[:3]}
     (BUILD / ("%s.json" % rid.replace(":", "-"))).write_text(json.dumps(report, indent=1) + "\n")
     if fails:

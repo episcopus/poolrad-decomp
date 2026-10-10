@@ -143,6 +143,16 @@ def main(argv: list[str]) -> int:
         "| DAX, map and ECL decoders with tests over all files | `make dax`, `make test` |",
         "| First goldens recorded | `tests/sessions/golden/` |",
         "",
+        "**P3 Runtime and skeleton**: gate is `make check`.",
+        "",
+        "| P3 exit criterion | State |",
+        "|---|---|",
+        "| Memory model spike (SPEC 7.3) | `System_Move`, `System_FillChar`, `System_Random` at L2; `G` is the DGROUP image at linear 0x1C7C0; hybrid `FP()` addresses guest RAM |",
+        "| `src/rtl` with tests | Move, FillChar, Random, Randomize packing; `tests/unit/test_p3_spike.py` |",
+        "| SDL3 host platform | `make host` -> `build/host/poolrad` (BIOS keys, PIT period, framebuffer) |",
+        "| Hybrid library in the oracle | `make hybrid`; `tools/oracle/hybrid.py` |",
+        "| `make check` | build, lint, unit tests, fuzz, sessions (Move+FillChar; Random stays L2 until the spinner decision below) |",
+        "",
         "## Inventory",
         "",
         "| | Count |",
@@ -176,16 +186,23 @@ def main(argv: list[str]) -> int:
     for uid, n in by_unit.most_common(15):
         lines.append("| %s | %d |" % (uid, n))
 
+    lifted = [r for r in routines if str(r.get("level", "none")) not in ("", "none")]
+    if not lifted:
+        verification = "No routines lifted yet (all levels `none`)."
+    else:
+        shown = ", ".join("%s %s (%s)" % (r.get("name", r.get("id")), r.get("level"), r.get("id"))
+                          for r in sorted(lifted, key=lambda r: str(r.get("id"))))
+        verification = "%d routines above `none`: %s." % (len(lifted), shown)
     lines += [
         "",
         "## Verification",
         "",
-        "No routines lifted yet (all levels `none`).",
+        verification,
         "",
         "## Blockers and decisions waiting for the human",
         "",
-        "- Review `docs/spec/SPEC.md` ADR-001 and memory model (section 7.3) if not already.",
-        "- Platform waits (decided 2026-10-10): `src/platform/platform.h` has the first part (input, time, entropy, timer, sound; WHITEPAPER 5.14). The orchestrator adds video, files and memory in Phase 3; lifters of the routines listed in `build/re/timing-scan.md` use the waits, never a spin on a poll.",
+        "- Platform waits (decided 2026-10-10): `src/platform/platform.h` has input, time, entropy, timer, sound and video present (WHITEPAPER 5.14). Files and the heap suballocator arrive with the first lifted unit that needs them. Lifters of the routines in `build/re/timing-scan.md` use the waits, never a spin on a poll.",
+        "- Random in a golden session (WHITEPAPER appendix C): `System_Random` is L2 by fuzz. Putting it in C during `boot-title` moves one title-screen `shot` by a single spinner step (5022 vs 5021 calls). `make check` therefore replays sessions with Move and FillChar only. Whether the golden comparison gains a spinner tolerance is still open.",
         "- Canonical state and the stack (WHITEPAPER appendix C): hybrid runs reproduce time, screens and Random exactly (`timing.py`), but the stack segment differs (replaced routines push no frames). Goldens carry `canonical` and `canonical_nostack`. Decide whether `re/state.toml` defines the stack as out of the canonical state before L3 on hybrids; until then hybrid runs compare `canonical_nostack`.",
         "- `re/units.toml` lists units found through the init chain plus the two runtime units without init; game units without an initialisation part are still invisible (WHITEPAPER 2.2).",
         "",

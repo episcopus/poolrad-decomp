@@ -5,6 +5,7 @@
  * Playing the game is P5; this binary only grows into it.
  */
 #include <stdio.h>
+#include <string.h>
 
 #include "types.h"
 #include "platform.h"
@@ -19,13 +20,16 @@ static const u8 ega_palette[16][3] = {
 
 static u8 fb[320u * 200u];
 
+int host_self_test(void);
+
 int main(int argc, char **argv)
 {
     u32 x, y;
     u32 t0, t1;
     u8 hour, min, sec, hund;
-    (void)argc;
-    (void)argv;
+    if (argc > 1 && strcmp(argv[1], "--self-test") == 0) {
+        return host_self_test();
+    }
     pool_mem_init();
     for (y = 0u; y < 200u; y++) {
         for (x = 0u; x < 320u; x++) {

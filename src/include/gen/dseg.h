@@ -4,6 +4,7 @@
 #define POOLRAD_GEN_DSEG_H
 
 #include "../types.h"
+#include "../pool_memory.h"
 #include <stddef.h>
 
 typedef struct {
@@ -30,7 +31,10 @@ typedef struct {
     u8 _pad9[0xBBD4];
 } pool_dgroup_t;
 
-extern pool_dgroup_t G;
+/* G is this struct inside the arena at pool_dgroup_linear (0x1C7C0). */
+#define G (*(pool_dgroup_t *)(void *)(pool_mem_base + pool_dgroup_linear))
+
+POOL_STATIC_ASSERT(sizeof(pool_dgroup_t) == 0x10000, dgroup_size);
 
 POOL_STATIC_ASSERT(offsetof(pool_dgroup_t, HeapOrg_related) == 0x43EE, HeapOrg_related);
 POOL_STATIC_ASSERT(offsetof(pool_dgroup_t, HeapPtr_lo) == 0x43F4, HeapPtr_lo);

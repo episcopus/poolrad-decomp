@@ -39,6 +39,13 @@ def run(cmd: list[str], what: str) -> None:
 
 
 def smoke_host() -> None:
+    print("p3-check: host self-test", flush=True)
+    r = subprocess.run(["./build/host/poolrad", "--self-test"], cwd=ROOT,
+                       capture_output=True, text=True)
+    if r.returncode != 0 or "host self-test ok" not in r.stdout:
+        print("p3-check: FAIL: host self-test:\n%s\n%s" % (r.stdout, r.stderr))
+        sys.exit(1)
+    print("p3-check: ok: %s" % r.stdout.strip())
     env = dict(os.environ, SDL_VIDEO_DRIVER="dummy")
     print("p3-check: host smoke: build/host/poolrad (SDL dummy driver)", flush=True)
     r = subprocess.run(["./build/host/poolrad"], cwd=ROOT, env=env, capture_output=True, text=True)
