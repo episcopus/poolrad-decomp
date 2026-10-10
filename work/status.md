@@ -72,7 +72,7 @@ No routines lifted yet (all levels `none`).
 ## Blockers and decisions waiting for the human
 
 - Review `docs/spec/SPEC.md` ADR-001 and memory model (section 7.3) if not already.
-- Wait loops (WHITEPAPER appendix C, `make timing-scan`): about 100 routines loop around keyboard, clock or sound waits and cannot be literal C (no time passes while C runs). Needs a platform wait in `platform.h` (human) or they stay in the original under hybrid runs.
+- Platform waits (decided 2026-10-10): `src/platform/platform.h` has the first part (input, time, entropy, timer, sound; WHITEPAPER 5.14). The orchestrator adds video, files and memory in Phase 3; lifters of the routines listed in `build/re/timing-scan.md` use the waits, never a spin on a poll.
 - Canonical state and the stack (WHITEPAPER appendix C): hybrid runs reproduce time, screens and Random exactly (`timing.py`), but the stack segment differs (replaced routines push no frames). Goldens carry `canonical` and `canonical_nostack`. Decide whether `re/state.toml` defines the stack as out of the canonical state before L3 on hybrids; until then hybrid runs compare `canonical_nostack`.
 - `re/units.toml` lists units found through the init chain plus the two runtime units without init; game units without an initialisation part are still invisible (WHITEPAPER 2.2).
 

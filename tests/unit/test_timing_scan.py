@@ -30,6 +30,18 @@ def test_crt_keyboard_routines_are_found_by_their_int16_calls(result):
     assert "kbd-int16" in raw["0A40:030F"]["feats"]          # Crt ReadKey
 
 
+def test_crt_init_spins_on_the_bios_tick_counter_through_a_register(result):
+    raw, cls = result
+    assert raw["0A40:002E"]["loop_feats"] == ["bios-tick-0040"]       # mov di,6Ch ; cmp al,es:[di] ; je
+    assert cls["0A40:002E"]["class"] == "waits" and cls["0A40:002E"]["families"] == ["time"]
+    assert sum(1 for v in raw.values() if any(f.startswith("bios-tick") for f in v["feats"])) == 1
+
+
+def test_int21_ah06_is_output_not_a_key_poll(result):
+    raw, _ = result
+    assert raw["0AF8:01E7"]["feats"] == []
+
+
 def test_a_loop_around_a_key_read_is_a_wait(result):
     _, cls = result
     r = cls["0A40:0143"]

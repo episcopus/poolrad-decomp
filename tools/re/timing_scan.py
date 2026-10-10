@@ -49,7 +49,7 @@ except ImportError:                                             # pragma: no cov
     Cs = None
 
 PERIOD = 54_925            # instructions per timer tick at 1,000,000 per virtual second (65536 / 1193182 s)
-KEY_21 = {0x01, 0x06, 0x07, 0x08, 0x0A, 0x0B, 0x0C}
+KEY_21 = {0x01, 0x07, 0x08, 0x0A, 0x0B, 0x0C}      # not 06h: with DL != FFh it is console output
 TIME_21 = {0x2A, 0x2C}
 PORT_CLASS = {0x3DA: "retrace", 0x3BA: "retrace", 0x40: "pit", 0x41: "pit", 0x42: "pit", 0x43: "pit",
               0x60: "kbd-port", 0x64: "kbd-port", 0x61: "speaker", 0x201: "joystick"}
@@ -105,10 +105,12 @@ class Scanner:
         loops: list[tuple[int, int]] = []          # (first index, last index) of backward branches
         addr_index = {i.address: n for n, i in enumerate(insns)}
         seg40 = False
+        reg_imm: dict[str, int] = {}               # 16-bit registers last loaded with an immediate
         for n, i in enumerate(insns):
             mn, ops = i.mnemonic, i.operands
             if mn == "mov" and len(ops) == 2 and ops[1].type == X86_OP_IMM and ops[0].type == X86_OP_REG:
                 reg = i.reg_name(ops[0].reg)
+                reg_imm[reg] = ops[1].imm & 0xFFFF
                 if reg == "ah":
                     ah = ops[1].imm & 0xFF
                 elif reg == "ax":
@@ -144,10 +146,14 @@ class Scanner:
             for o in ops:
                 if o.type == X86_OP_MEM:
                     d = o.mem.disp & 0xFFFF
-                    if seg40 and d in (0x6C, 0x6E) and o.mem.base == 0 and o.mem.index == 0:
+                    if o.mem.base:                  # [di], [bx+2]: the register may hold the tick counter's offset
+                        d = (reg_imm.get(i.reg_name(o.mem.base), -0x10000) + d) & 0xFFFF
+                    if seg40 and d in (0x6C, 0x6E) and o.mem.index == 0:
                         feats.append((n, "bios-tick-0040"))
-                    elif d in (0x46C, 0x46E) and o.mem.base == 0 and o.mem.index == 0:
+                    elif d in (0x46C, 0x46E) and o.mem.index == 0:
                         feats.append((n, "bios-tick-0000"))
+                    elif o.mem.base:
+                        continue
                     elif d in self.tick_vars and o.mem.base == 0 and o.mem.index == 0 and mn != "lea":
                         feats.append((n, "tick-var-%04X" % d))
             if mn.startswith("j") or mn in LOOPING:

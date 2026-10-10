@@ -231,7 +231,8 @@ Phase 3 starts with a spike that proves this model on two or three routines in b
 
 - Video: the engine draws into a 320x200 indexed framebuffer with a 16-entry palette (EGA mode first; CGA and Tandy paths are decompiled but may render through the same framebuffer). The host platform scales and presents it with SDL3.
 - Input: BIOS-style key codes (scan code + ASCII), as the original reads them.
-- Timer: an 18.2 Hz tick source plus whatever PIT reprogramming the game does (to be found).
+- Timer: an 18.2 Hz tick source plus the PIT reprogramming the game does: the sound unit runs the timer at 13 times the BIOS rate (divisor 5041, whitepaper 5.14) and chains to the BIOS tick every 13th call. The platform keeps the BIOS tick count itself and calls a registered handler at the programmed rate.
+- Waits (decision of the human, 2026-10-10): what the original does by spinning on the keyboard, the BIOS tick counter or a calibrated delay goes through platform *waits* (`platform_key_wait`, `platform_tick_wait`, `platform_delay_ms`), never through a loop over a poll. A wait returns the recorded result at once in a replay or hybrid run; time is charged from the original's recording (8.4). Draining loops that end by themselves may poll. The functions, their evidence and the rules are in `src/platform/platform.h`.
 - Sound: PC speaker and Tandy 3-voice tones, synthesised on the host.
 
 ---
