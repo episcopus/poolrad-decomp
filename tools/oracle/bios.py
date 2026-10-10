@@ -356,7 +356,7 @@ class Bios:
         elif ah == 0x01:
             self.bda_write(0x6C, struct.pack("<HH", m.get("dx"), m.get("cx")))
         elif ah == 0x02:
-            s = int(m.seconds()) + 12 * 3600
+            s = m.time_of_day() // 100
             hh, mm, ss = (s // 3600) % 24, (s // 60) % 60, s % 60
             bcd = lambda v: ((v // 10) << 4) | (v % 10)
             m.set("cx", (bcd(hh) << 8) | bcd(mm))

@@ -89,6 +89,9 @@ class Machine:
         self.exit_code: int | None = None
         self.events = []                 # hooks may append here; trace.py drains it
         self.tracer = None               # set by trace.Tracer
+        self.clock_pin: int | None = None   # hundredths of a second since midnight the FIRST time-of-day read returns
+        self._tod_offset: int | None = None
+        self.tod_log: list[tuple[int, int]] = []   # (virtual time, hundredths returned) for every read
         self.int_counts: dict = {}       # software INTs executed, by number
         self.service_counts: dict = {}   # calls that reached one of our service stubs, by number
 
@@ -168,6 +171,23 @@ class Machine:
 
     def seconds(self) -> float:
         return self.now() / self.insn_per_sec
+
+    def time_of_day(self) -> int:
+        """Time of day the program sees, in hundredths of a second since midnight.
+
+        Virtual: 12:00:00.00 plus the instruction clock. When the session pins the clock (script
+        command `clock HH:MM:SS.hh`), the first read returns exactly the pinned value and later reads
+        advance from it, so values derived from the first read (`Randomize` seeds) do not depend on how
+        many instructions ran before it."""
+        t = 12 * 360000 + (self.now() * 100) // self.insn_per_sec
+        if self.clock_pin is not None:
+            if self._tod_offset is None:
+                self._tod_offset = self.clock_pin - t
+            t += self._tod_offset
+        t %= 8_640_000
+        if len(self.tod_log) < 10_000:
+            self.tod_log.append((self.now(), t))
+        return t
 
     # ------------------------------------------------------------------ stack and flags
     def push(self, v: int) -> None:

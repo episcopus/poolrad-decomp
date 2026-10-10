@@ -1,6 +1,10 @@
 # boot-title: start the game and capture the opening screens. No keys are sent until the copy
 # protection prompt, which the script then leaves unanswered (it ends the run when the game waits).
 # Virtual time: 1 BIOS tick = 1/18.2 s of the oracle's clock (1,000,000 instructions per second).
+# Pin the time of day the program reads when it calls Randomize, so the random sequence (and
+# the wheel question) never depends on how many instructions ran before it. The value is what the
+# unpinned run produces, so recorded behaviour is unchanged.
+clock 12:00:16.58
 wait 440
 shot ssi-logo            # SSI presents the Advanced Dungeons & Dragons computer product
 wait 200

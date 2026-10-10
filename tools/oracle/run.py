@@ -22,24 +22,29 @@ from oracle.keys import KeyScript  # noqa: E402
 from oracle.trace import Tracer  # noqa: E402
 from oracle.protection import install_wheel_solver  # noqa: E402
 from oracle.state import canonical_digest  # noqa: E402
+from oracle.rng import install_random_log, sequence_digest, format_log  # noqa: E402
 
 EXE = ROOT / "poolrad/start-unpack.exe"
 GAME = ROOT / "poolrad"
 
 
-def build_machine(script: KeyScript | None, *, strict: bool = True) -> Machine:
-    m = Machine(EXE, GAME, strict=strict)
+def build_machine(script: KeyScript | None, *, strict: bool = True, insn_per_sec: int = 1_000_000) -> Machine:
+    m = Machine(EXE, GAME, strict=strict, insn_per_sec=insn_per_sec)
     m.keys = script
+    if script is not None:
+        m.clock_pin = script.clock
     install_wheel_solver(m)
+    install_random_log(m)
     return m
 
 
 def run_session(script_text: str | None, *, max_insns: int, out_dir: Path | None = None,
                 trace: str = "", shot_final: bool = True, digests: bool = True,
-                strict: bool = True, quiet: bool = False, shot_every: int = 0) -> dict:
+                strict: bool = True, quiet: bool = False, shot_every: int = 0,
+                insn_per_sec: int = 1_000_000) -> dict:
     """Run one session and return its summary (also used by tests and the golden recorder)."""
     script = KeyScript.parse(script_text) if script_text is not None else KeyScript([])
-    m = build_machine(script, strict=strict)
+    m = build_machine(script, strict=strict, insn_per_sec=insn_per_sec)
     shots_dir = None
     if out_dir:
         out_dir.mkdir(parents=True, exist_ok=True)
@@ -60,7 +65,8 @@ def run_session(script_text: str | None, *, max_insns: int, out_dir: Path | None
             mach.ega.screenshot(shots_dir / (arg + ".png"))
         if kind in ("shot", "digest"):
             checkpoints.append({"label": arg, "time": mach.now(), "digest": mach.state_digest(),
-                                "canonical": canonical_digest(mach), "screen": mach.ega.planes_digest()})
+                                "canonical": canonical_digest(mach), "screen": mach.ega.planes_digest(),
+                                "random_calls": len(mach.random_log)})
         if kind == "quit":
             raise Stop("quit")
 
@@ -95,6 +101,8 @@ def run_session(script_text: str | None, *, max_insns: int, out_dir: Path | None
         (out_dir / "console.txt").write_bytes(bytes(m.dos.console))
         if shot_final:
             m.ega.screenshot(out_dir / "final.png")
+        if "rng" in flags:
+            (out_dir / "random.txt").write_text(format_log(m.random_log))
     summary = {
         "reason": reason, "error": err, "insns": m.insns, "virtual_seconds": round(m.seconds(), 3),
         "mode": m.ega.mode, "key_reads": m.bios.key_reads, "blocked_reads": m.bios.blocked_reads,
@@ -104,6 +112,9 @@ def run_session(script_text: str | None, *, max_insns: int, out_dir: Path | None
         "service_counts": {"%02X" % k: v for k, v in sorted(m.service_counts.items())},
         "files_opened": [p for (op, p, _x) in m.vfs.log if op == "open"],
         "missing_opens": [p for (op, p, _x) in m.vfs.log if op == "open-missing"],
+        "random_calls": len(m.random_log), "random_digest": sequence_digest(m.random_log),
+        "random_seed_writes": [(w.time, w.where, w.value) for w in m.seed_writes],
+        "clock_pinned": script.clock, "clock_reads": m.tod_log[:5],
         "routines_entered": len(tracer.entered) if tracer and tracer.calls else None,
     }
     if out_dir:
@@ -122,7 +133,7 @@ def main(argv=None) -> int:
     ap.add_argument("--script", help="key script (.keys); omitted: no input, run until it blocks")
     ap.add_argument("--max-insns", type=int, default=200_000_000)
     ap.add_argument("--out", default=str(ROOT / "build/oracle/run"))
-    ap.add_argument("--trace", default="", help="comma list of: ints calls files ports")
+    ap.add_argument("--trace", default="", help="comma list of: ints calls files ports rng (rng writes random.txt)")
     ap.add_argument("--no-final-shot", action="store_true")
     ap.add_argument("--shot-every", type=int, default=0, help="screenshot every N instructions (debug)")
     ap.add_argument("--lenient", action="store_true", help="log unimplemented services instead of stopping")

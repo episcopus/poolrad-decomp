@@ -387,7 +387,7 @@ Each section will cover: purpose, units and routines, data, algorithm, quirks, e
 | 5.10 | Sound (PC speaker, Tandy) | OpenGoldBox `docs/sound-format.md` **[H]** |
 | 5.11 | Saving and loading | |
 | 5.12 | Copy protection (code wheel) | `poolrad/__ Code Wheel __.pdf` |
-| 5.13 | Random numbers | Turbo Pascal's `Random` **[H]** |
+| 5.13 | Random numbers | TP 6 generator, `Randomize` from the clock (below) |
 
 ### 5.8 Keyboard input and menus (observed in the oracle)
 
@@ -402,6 +402,14 @@ Each section will cover: purpose, units and routines, data, algorithm, quirks, e
 - Record layout **[V]** (`start-unpack.exe` image at `0C7C0h`, and the lcalls in `ovl02:01A2..02FD`): `+02` Pascal string[6] with the answer; `+09`, `+0A`, `+0B` glyph indices, each drawn as character `index + 40h` in the game's font (the two rune pictures the prompt asks to match, then a third); `+0C` a fourth index drawn only when it is not FFh; `+0D` Pascal string with the path pattern drawn under the runes (`- - - -`, `-..-..-`, `.......`).
 - The 13 answers, in record order **[V]**: BEWARE, ZOMBIE, NOTNOW, COPPER, DRAGON, EFREET, FRIEND, JUNGLE, KNIGHT, SAVIOR, TEMPLE, VULCAN, WYVERN. The typed word is compared with `System_StrCompare` (`0AF8:0C10`, flags in ZF) after `StrLCopy(local, input, 40)`; the failure message is "Sorry, that's incorrect." (`ovl02:00E4`); after the third failure `res04:0000` ends the program **[V]**.
 - Which question appears depends on `RandSeed`, which comes from the clock, so it varies from run to run on real hardware. The oracle's virtual clock makes it repeat; its `wheel` script command reads the answer from the table by watching that `Random(13)` call (`tools/oracle/protection.py`) and types it, leaving the game's own check untouched.
+
+### 5.13 Random numbers
+
+- The generator is Turbo Pascal 6.0's, in System at `0AF8:120F` (step), `0AF8:11C0` (`Random(range)`) and `0AF8:11D6` (`Random` real) **[V]** (code read; every logged call of the oracle satisfies the formulas below, and the logged results equal `AX` at the return of `Random(range)` for the first 300 calls, `tests/unit/test_oracle.py`).
+  - `RandSeed` (DS:4428, low word first) `:= RandSeed * 08088405h + 1` modulo 2^32.
+  - `Random(range) = hi16(RandSeed) mod range` (0 when `range` is 0). This is TP 6's `div`, not the multiply-and-shift of TP 7, which matters for anyone lifting a routine that compares sequences.
+- `Randomize` is `0AF8:1247`: `INT 21h AH=2Ch`, then `RandSeed := DX:CX` (seconds and hundredths in the high word, hours and minutes in the low word) **[V]**. The game calls it once, during the title screens, about 16.6 million instructions after start (`RandSeed` is written only there in the first 80 million instructions), so everything the game decides at random is a function of the clock at that moment and of the sequence of `Random` calls after it.
+- The title sequence calls `Random(4)` from `ovl01:0721` over 30,000 times in its first 80 million instructions **[V]**, so the number of calls before the wheel question depends on how long the title screens ran. A run is reproducible only if both the seed and the timing of those screens are reproducible (`clock` script command and `--trace rng`, appendix C).
 
 ---
 
@@ -481,13 +489,14 @@ Each section will cover: purpose, units and routines, data, algorithm, quirks, e
 |---|---|---|
 | CPU and memory | 16-bit real mode, 640 KB, MZ loader with relocations, PSP and environment at `0FF0`/`0F00`, load image at `1000:0000` (the addresses of this document plus `1000h`) | 8087, protected mode, EMS/XMS |
 | Interrupts | Software INTs dispatch through the real IVT, so handlers the program installs run as original code (the Borland overlay manager on INT 3Fh, INT 08h of the sound unit); service vectors end in IRET stubs hooked in Python | hardware IRQs 1 to 7 other than IRQ0 |
-| Time | Executed-instruction counter (1,000,000 per virtual second), PIT channel 0 reload honoured, IRQ0 delivered at chunk boundaries with IF set and EOI tracked; ports 40h/42h read as free-running counters; port 3DAh retrace derived from the clock | wall clock, host date (reported date is fixed 1991-06-11) |
+| Time | Executed-instruction counter (1,000,000 per virtual second), PIT channel 0 reload honoured, IRQ0 delivered at chunk boundaries with IF set and EOI tracked; ports 40h/42h read as free-running counters; port 3DAh retrace derived from the clock; time of day is 12:00:00 plus the clock, optionally pinned by the session (`clock HH:MM:SS.hh`: the first read returns exactly that) | wall clock, host date (reported date is fixed 1991-06-11) |
 | DOS (INT 21h, 20h, 27h, 29h, 2Fh) | console, vectors, version 3.30, handle file I/O, find first/next, directories, memory blocks, IOCTL, time, exit | EXEC, FCBs, networking, EMS |
 | BIOS | INT 10h (mode set, cursor, scroll, tty, palette registers, font info, EGA info), 11h, 12h, 13h reset, 15h (a few), 16h (read, peek, flags), 1Ah (ticks, RTC, date) | disk I/O, serial, printer, mouse (INT 33h is a bare IRET: no driver), VGA DAC, CGA/Tandy video modes |
 | Files | `poolrad/` read-only as `C:\POOLRAD`; every write goes to an in-memory layer (`SAVE\RAD.CHA` etc.) and never reaches disk | |
 | EGA | 4 planes, latches, map mask, bit mask, set/reset, rotate, logical ops, write modes 0 to 3, read modes 0 and 1, attribute palette to RGB, CRTC start address, modes 0Dh/0Eh/0Fh/10h, simple text modes; PNG screenshots | split screen, panning, odd/even and chain-4 addressing |
 | Sound | PIT channel 2 and port 61h writes logged as a speaker event list (`m.speaker_log`) | audio output |
 | Input | Script player (`tests/sessions/*.keys`): keys released when the game is idle, time-based waits, `shot`, `digest`, `wheel`, `quit` | joystick, mouse |
+| Randomness | Every call of the generator step is logged `(index, time, kind, caller, range, seed, result)` in `m.random_log` (`tools/oracle/rng.py`), direct `RandSeed` writes in `m.seed_writes`; `summary.json` carries the count and a digest of the `(kind, caller, range, result)` sequence without times, so a run with other timing can be compared on decisions alone; `--trace rng` writes `random.txt` | |
 | Tracing | Interrupts, file I/O, port I/O, call and return of every routine of `re/symbols.toml` (resident and overlay, overlay entry points resolved from the stub's load segment), memory watch points, coverage of routines entered | argument decoding by signature (the signatures in `re/symbols.toml` are still empty: four raw stack words are logged) |
 | State | `Machine.state_digest()` (registers, conventional memory, video), `oracle.state.canonical_digest()` from `re/state.toml` (DGROUP and video planes while that file is empty) | `heap_root` entries (need `re/types/`) |
 | Hybrid hooks | `Machine.hook_routine(seg, off, fn, ret_bytes, cost=)` replaces a routine by Python or declines (`return False` runs the original); `unhook` | the C hybrid library and marshalling from `re/symbols.toml` signatures (P3) |
@@ -501,6 +510,7 @@ Acceptance results (playbook 25):
 Known limits **[V]** (test `test_hybrid_hook_python_move_matches_original`):
 
 - Virtual time is instructions and a replacement executes none, so after a few timer ticks a hooked run places ticks at slightly different program points and tick-derived bytes in DGROUP differ (`DS:C312`, `C404..C407` at the 400th call of `System_Move`). Equal states hold up to the 120th call (four ticks). `cost=` narrows the drift; L3 on hybrid runs needs either masks with reasons in `re/state.toml` (human approval) or a precise-time mode.
+- Pinning the clock fixes the seed but not the number of `Random` calls that timing-driven code makes (5.13). In a hybrid run the logged sequence is the first thing to compare: the first differing entry names the call where it diverged.
 - Time is exact at chunk boundaries only (chunks end at timer events); an interrupt that falls inside a service call is delivered after it.
 - The BIOS font ROM is not in the pinned inputs: text-mode screenshots use a placeholder font (the game itself draws all text in graphics mode with its own font, so game screens are unaffected).
 

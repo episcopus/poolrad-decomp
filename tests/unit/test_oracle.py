@@ -18,7 +18,7 @@ sys.path.insert(0, str(ROOT / "tools/re"))
 sys.path.insert(0, str(ROOT / "tools/oracle"))
 
 from oracle.machine import Machine, Unimplemented, LOAD_SEG, FLAG_CF  # noqa: E402
-from oracle.keys import KeyScript, char_key, NAMED  # noqa: E402
+from oracle.keys import KeyScript, char_key, NAMED, parse_clock  # noqa: E402
 from oracle.ega import EGA  # noqa: E402
 from oracle.vfs import VFS  # noqa: E402
 import records  # noqa: E402
@@ -153,6 +153,38 @@ def test_vfs_writes_never_reach_the_pinned_directory(tmp_path):
     assert [x[0] for x in v.find("*.TXT")] == ["NEW.TXT"]
 
 
+def _clock_program(spin_iterations: int) -> bytes:
+    """spin, then INT 21h AH=2Ch and exit with DH (seconds): mov cx,N ; loop ; mov ah,2Ch ; int 21h ; ..."""
+    return (b"\xB9" + struct.pack("<H", spin_iterations) + bytes.fromhex("E2FE B42C CD21 88F0 B44C CD21".replace(" ", "")))
+
+
+def test_pinned_clock_makes_the_first_time_read_independent_of_timing(tmp_path):
+    results = {}
+    for spin in (10, 60000):                       # about 60,000 instructions apart
+        m = machine_for(_clock_program(spin), tmp_path)
+        m.clock_pin = parse_clock("07:08:09.10")
+        assert m.run(500_000) == "exit"
+        results[spin] = (m.exit_code, m.tod_log[0][1])
+    assert results[10] == results[60000] == (9, ((7 * 60 + 8) * 60 + 9) * 100 + 10)
+    # unpinned, the same two programs see different clocks: the spin is 0.06 virtual seconds
+    seen = []
+    for spin in (10, 60000):
+        m = machine_for(_clock_program(spin), tmp_path)
+        m.run(500_000)
+        seen.append(m.tod_log[0][1])
+    assert seen[0] != seen[1]
+
+
+def test_clock_command_parses_and_rejects_bad_values():
+    assert parse_clock("12:00:16.58") == 12 * 360000 + 16 * 100 + 58
+    assert parse_clock("00:00:01") == 100
+    assert KeyScript.parse("clock 01:02:03.04\nkey ENTER").clock == ((1 * 60 + 2) * 60 + 3) * 100 + 4
+    with pytest.raises(ValueError):
+        parse_clock("25:00:00")
+    with pytest.raises(ValueError):
+        parse_clock("noon")
+
+
 # --------------------------------------------------------------------------- EGA
 class _Dummy:
     pass
@@ -283,6 +315,7 @@ def test_same_script_twice_gives_identical_traces_and_digests(runs):
     assert [(c["label"], c["time"], c["digest"]) for c in a["checkpoints"]] == \
            [(c["label"], c["time"], c["digest"]) for c in b["checkpoints"]]
     assert a["insns"] == b["insns"] and a["int_counts"] == b["int_counts"]
+    assert a["random_digest"] == b["random_digest"] and a["random_calls"] == b["random_calls"] > 1000
 
 
 def test_call_trace_names_routines_and_is_repeatable():
@@ -294,6 +327,61 @@ def test_call_trace_names_routines_and_is_repeatable():
     assert t0.names["0AF8:0000"].startswith("res00") or "System" in t0.names["0AF8:0000"]
     assert any("call" in l for l in t0.lines) and any("ret" in l for l in t0.lines)
     assert t0.lines == t1.lines
+
+
+def test_random_log_follows_the_tp6_generator_exactly(runs):
+    """Every logged call is seed' = seed * 08088405h + 1 from the previous one, and Random(range) is
+    hi16(seed') mod range, as the System code at 0AF8:120F..1244 and 11C0 does (whitepaper 5.13)."""
+    log = runs["boot"]["_machine"].random_log
+    assert len(log) > 1000, "the title animation consumes thousands of Random(4) calls"
+    assert runs["boot"]["random_seed_writes"], "Randomize writes RandSeed once"
+    for prev, cur in zip(log, log[1:]):
+        assert cur.seed == (prev.seed * 0x08088405 + 1) & 0xFFFFFFFF
+        if cur.kind == "range":
+            assert cur.result == ((cur.seed >> 16) % cur.range if cur.range else 0)
+    # Randomize: RandSeed := DX:CX of INT 21h AH=2Ch, here the pinned 12:00:16.58 (CH=12, CL=0, DH=16, DL=58)
+    writes = runs["boot"]["random_seed_writes"]
+    assert [w[2] for w in writes] == [0x0C00, 0x103A]
+    assert writes[0][1] == "0AF8:124B" or writes[0][1].startswith("0AF8:12")
+
+
+def test_random_log_matches_what_random_actually_returns():
+    from oracle.run import build_machine
+    from oracle.machine import Stop
+    m = build_machine(KeyScript.parse("clock 12:00:16.58\nwait 3000\n"))
+    returned = []
+    m.add_breakpoint(0x0AF8 + LOAD_SEG, 0x11D3, lambda mach: returned.append(mach.get("ax")))   # retf 2 of Random(range)
+    m.run(37_000_000, on_chunk=lambda mach: (_ for _ in ()).throw(Stop("enough")) if len(returned) >= 300 else None)
+    logged = [c.result for c in m.random_log if c.kind == "range"]
+    assert len(returned) >= 300
+    assert logged[:len(returned)] == returned[:len(logged)]
+
+
+def test_pinned_clock_gives_the_same_random_sequence_whatever_the_timing(runs):
+    """The control for the whole feature: change the oracle's clock rate (which moves the instruction
+    count of every event) and the pinned seed and the first decisions stay identical; unpinned they
+    would not (the clock read at Randomize would differ)."""
+    from oracle.run import build_machine
+    from oracle.machine import Stop
+    ref = runs["boot"]["_machine"].random_log[:200]
+    m = build_machine(KeyScript.parse("clock 12:00:16.58\nwait 3000\n"), insn_per_sec=1_250_000)
+    m.run(60_000_000, on_chunk=lambda mach: (_ for _ in ()).throw(Stop("enough")) if len(mach.random_log) >= 200 else None)
+    got = m.random_log[:200]
+    assert len(got) == 200
+    assert [(c.kind, c.caller, c.range, c.seed, c.result) for c in got] == \
+           [(c.kind, c.caller, c.range, c.seed, c.result) for c in ref]
+    assert got[0].time != ref[0].time               # it really ran on a different clock
+
+
+def test_unpinned_seed_follows_the_instruction_clock():
+    from oracle.run import build_machine
+    from oracle.machine import Stop
+    seeds = []
+    for ips in (1_000_000, 1_250_000):
+        m = build_machine(KeyScript([]), insn_per_sec=ips)
+        m.run(25_000_000, on_chunk=lambda mach: (_ for _ in ()).throw(Stop("seeded")) if mach.seed_writes else None)
+        seeds.append([w.value for w in m.seed_writes][:2])
+    assert seeds[0] != seeds[1] and seeds[0][0] == 0x0C00     # same hour:minute, different seconds
 
 
 def test_hybrid_hook_python_move_matches_original(runs):

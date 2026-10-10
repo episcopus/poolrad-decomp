@@ -11,6 +11,8 @@ Script format, one command per line, `#` starts a comment:
     shot title           screenshot named `title`: taken as soon as the preceding ops are done and the game has
                          asked for input again (when it follows a key), or at the chunk boundary
     digest label         record a state digest checkpoint, timed like `shot`
+    clock 12:00:16.58    pin the time of day: the first clock read (INT 21h AH=2Ch, which is what
+                         `Randomize` uses) returns exactly this; a script setting, not a timed op
     wheel                types the answer to the copy-protection question the game last asked
                          (protection.py), followed by ENTER
     quit                 stop the run, timed like `shot`
@@ -51,6 +53,19 @@ def char_key(c: str) -> int:
 IDLE_POLLS = 4
 
 
+def parse_clock(arg: str, line: int = 0) -> int:
+    """HH:MM:SS or HH:MM:SS.hh to hundredths of a second since midnight."""
+    try:
+        hms, _, frac = arg.partition(".")
+        h, m, s = (int(x) for x in hms.split(":"))
+        hs = int((frac + "00")[:2]) if frac else 0
+    except ValueError:
+        raise ValueError("line %d: clock wants HH:MM:SS[.hh], got %r" % (line, arg)) from None
+    if not (0 <= h < 24 and 0 <= m < 60 and 0 <= s < 60):
+        raise ValueError("line %d: clock %r out of range" % (line, arg))
+    return ((h * 60 + m) * 60 + s) * 100 + hs
+
+
 def key_value(tok: str) -> int:
     t = tok.upper()
     if t in NAMED:
@@ -70,10 +85,12 @@ class KeyScript:
         self.fired: list = []           # (op, virtual time) log of non-key ops, for tests
         self.on_op = None               # callback(op, machine) for shot / digest / quit
         self.after_key = False          # a key was just delivered: capture ops wait for the game's next poll
+        self.clock: int | None = None   # pinned time of day in hundredths of a second (`clock` command)
 
     @classmethod
     def parse(cls, text: str) -> "KeyScript":
         ops = []
+        clock = None
         for n, raw in enumerate(text.splitlines(), 1):
             line = raw.split("#", 1)[0].strip()
             if not line:
@@ -95,9 +112,13 @@ class KeyScript:
                 ops.append(("quit", ""))
             elif cmd == "wheel":
                 ops.append(("wheel", ""))
+            elif cmd == "clock":
+                clock = parse_clock(arg, n)
             else:
                 raise ValueError("line %d: unknown command %r" % (n, cmd))
-        return cls(ops)
+        script = cls(ops)
+        script.clock = clock
+        return script
 
     @classmethod
     def from_file(cls, path) -> "KeyScript":

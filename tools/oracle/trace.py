@@ -144,14 +144,35 @@ def overlay_stubs(units: dict | None = None) -> dict[str, int]:
     return out
 
 
+_RES_RANGES = None
+
+
+def _resident_ranges():
+    """[(start_linear_rel, end_linear_rel, base_segment, unit_id)] from re/units.toml, load-relative."""
+    global _RES_RANGES
+    if _RES_RANGES is None:
+        _, units = load_symbols()
+        out = []
+        for u in units.get("resident", []):
+            if u.get("code_start") and u.get("code_end"):
+                (s0, o0), (s1, o1) = (tuple(int(x, 16) for x in u[k].split(":")) for k in ("code_start", "code_end"))
+                out.append((s0 * 16 + o0, s1 * 16 + o1, s0, u["id"]))
+        _RES_RANGES = out
+    return _RES_RANGES
+
+
 def locate(m, linear: int, stubs: dict[str, int] | None = None) -> str:
-    """Describe a runtime linear address as `ovlNN:OFFS` (unit-relative, from the stub's LoadSeg and
-    code size) or `res:SEG:OFF` (load-relative) so logs name code the way the project does."""
+    """Describe a runtime linear address the way the project writes addresses: `ovlNN:OFFS` inside a
+    loaded overlay (from the stub's load segment and code size), `SSSS:OOOO` load-relative inside a
+    resident unit (the form of whitepaper section 2.2), else the bare load-relative linear address."""
     stubs = stubs or overlay_stubs()
-    seg = linear >> 4
     for unit, stub in stubs.items():
         loadseg = m.rw(stub, OVL_LOADSEG_OFF)
         size = m.rw(stub, 0x08)
         if loadseg and loadseg * 16 <= linear < loadseg * 16 + size:
             return "%s:%04X" % (unit, linear - loadseg * 16)
-    return "res:%04X:%04X" % ((seg - LOAD_SEG) & 0xFFFF, linear & 0xF)
+    rel = linear - LOAD_SEG * 16
+    for lo, hi, seg, _uid in _resident_ranges():
+        if lo <= rel < hi:
+            return "%04X:%04X" % (seg, rel - seg * 16)
+    return "rel:%05X" % (rel & 0xFFFFF)

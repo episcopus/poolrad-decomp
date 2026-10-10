@@ -247,10 +247,9 @@ class Dos:
         m.set("ax", (m.get("ax") & 0xFF00) | ((2 + days) % 7))
 
     def f2C(self, m, al):
-        s = m.now() / m.insn_per_sec + 12 * 3600
-        sec = int(s)
-        m.set("cx", (((sec // 3600) % 24) << 8) | ((sec // 60) % 60))
-        m.set("dx", ((sec % 60) << 8) | int((s - sec) * 100))
+        t = m.time_of_day()
+        m.set("cx", (((t // 360000) % 24) << 8) | ((t // 6000) % 60))
+        m.set("dx", (((t // 100) % 60) << 8) | (t % 100))
 
     def f2E(self, m, al):
         self.verify = al

@@ -5,6 +5,10 @@
 # Menu keys in this game (ovl25:03BD / ovl25:0FA0, whitepaper 5.8): the highlight moves with END
 # (next) and HOME (previous); ENTER selects; the bar at the bottom answers to first letters.
 # (The arrow keys do nothing in these lists.)
+# Pin the time of day the program reads when it calls Randomize, so the random sequence (and
+# the wheel question) never depends on how many instructions ran before it. The value is what the
+# unpinned run produces, so recorded behaviour is unchanged.
+clock 12:00:16.58
 wheel                    # types the code word for whatever question the protection asked
 wait 20
 key C                    # main menu: Create new character
