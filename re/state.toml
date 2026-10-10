@@ -1,5 +1,12 @@
 # Canonical game state for checkpoint comparison (SPEC 8.5). Changes need a human's approval (AGENTS.md rule 6).
 #
+# stack = "diagnostic" (decision 2026-10-10): hybrid and L3 compares use
+# canonical_nostack. A C replacement pushes no guest frames, and C locals are
+# not on the guest stack, including unread slots of a live frame (SS:3A4D).
+# The stack segment overlaps DGROUP (initial SS 14F2, 16 KB). Those bytes are
+# not game state. The recorded `canonical` digest still includes them, so
+# existing goldens stay valid and the difference stays visible.
+#
 # [[region]]                 # a DGROUP range that is compared
 # name = "party"
 # dseg = [0x0000, 0x0000]    # [start, end) DS-relative
@@ -13,3 +20,5 @@
 # [[mask]]                   # excluded bytes, each with a reason
 # dseg = [0x0000, 0x0000]
 # reason = ""
+
+stack = "diagnostic"

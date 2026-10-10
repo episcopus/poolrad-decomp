@@ -36,8 +36,8 @@ def canonical_digest(m, definition: dict | None = None, *, exclude_stack: bool =
     replaced by C does not push the frames the original pushed (and C locals are never on the guest
     stack), so stack bytes, including stale slots of live frames that nobody has written yet, differ in
     a hybrid run while globals, heap and video are equal (timing.py, whitepaper appendix C). The default
-    keeps the stack, so recorded goldens stay valid; whether the project's definition should exclude it
-    is a decision for `re/state.toml` (human approval)."""
+    keeps the stack, so recorded goldens stay valid. `re/state.toml` `stack = "diagnostic"`
+    (decision 2026-10-10) says a C run is compared on `canonical_nostack` instead."""
     d = load_definition() if definition is None else definition
     if d.get("heap_root"):
         raise NotImplementedError("re/state.toml heap_root entries need re/types/ (first lifted unit)")

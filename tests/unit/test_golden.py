@@ -56,6 +56,46 @@ def test_golden_files_are_complete(name):
     assert {p.name for p in d.iterdir()} == {"golden.json", "reads.txt", "reads_nostack.txt"} | {l + ".png" for l in labels}
 
 
+def _hybrid_view():
+    return {
+        "stop_reason": "input-exhausted", "instructions": 1, "virtual_seconds": 1,
+        "video_mode": 0x0D, "key_reads": 0, "reads_nostack_sha256": "a",
+        "canonical_nostack_digest": "fin", "random_calls": 10, "random_digest": "seq",
+        "files_opened": [],
+        "checkpoints": [{"label": "title", "time": 5, "screen": "pix",
+                         "canonical_nostack": "st", "random_calls": 5022}],
+    }
+
+
+def test_spinner_tolerance_is_one_call_and_nothing_else():
+    a = _hybrid_view()
+    assert golden.hybrid_difference(a, json.loads(json.dumps(a))) is None
+    assert golden.hybrid_spinner_notes(a, a) == []
+    one = json.loads(json.dumps(a))
+    one["checkpoints"][0]["random_calls"] = 5021
+    one["checkpoints"][0]["canonical_nostack"] = "step"
+    assert golden.hybrid_difference(a, one) is None
+    assert "title" in golden.hybrid_spinner_notes(a, one)[0]
+    two = json.loads(json.dumps(a))
+    two["checkpoints"][0]["random_calls"] = 5020
+    assert "tolerance" in golden.hybrid_difference(a, two)
+    state = json.loads(json.dumps(a))
+    state["checkpoints"][0]["canonical_nostack"] = "other"
+    assert "same Random count" in golden.hybrid_difference(a, state)
+    screen = json.loads(json.dumps(a))
+    screen["checkpoints"][0]["screen"] = "nope"
+    assert "screen" in golden.hybrid_difference(a, screen)
+    final = json.loads(json.dumps(a))
+    final["random_digest"] = "other"
+    assert "random_digest" in golden.hybrid_difference(a, final)
+
+
+def test_stack_bytes_are_diagnostic():
+    import tomllib
+    d = tomllib.loads((ROOT / "re/state.toml").read_text())
+    assert d["stack"] == "diagnostic"
+
+
 def test_first_difference_names_the_checkpoint_and_the_key_read():
     a = {"stop_reason": "x", "reads_sha256": "A",
          "checkpoints": [{"label": "t", "time": 1, "screen": "s", "canonical": "c", "digest": "d", "random_calls": 3}]}

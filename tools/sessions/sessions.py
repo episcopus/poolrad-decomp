@@ -93,10 +93,12 @@ def run_hybrid(name: str, routine_ids: list[str]) -> int:
     got = golden.hybrid_view(golden.summarise(s))
     g = golden.json.loads((golden.GOLDEN / name / "golden.json").read_text())
     want = golden.hybrid_view({k: g[k] for k in golden.summarise(s)})
-    diff = golden.first_difference(want, got)
+    diff = golden.hybrid_difference(want, got)
     if diff:
         print("[%s] FAIL: hybrid run differs from golden: %s" % (name, diff))
         return 1
+    for note in golden.hybrid_spinner_notes(want, got):
+        print("[%s] note: %s" % (name, note))
     print("[%s] ok: C routines reproduce the golden (%d checkpoints, %d key reads)" % (
         name, len(got["checkpoints"]), got["key_reads"]))
     return 0

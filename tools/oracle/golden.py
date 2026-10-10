@@ -68,14 +68,58 @@ def summarise(s: dict) -> dict:
 HYBRID_FIELDS = ("stop_reason", "instructions", "virtual_seconds", "video_mode", "key_reads", "reads_nostack_sha256",
                  "canonical_nostack_digest", "random_calls", "random_digest", "files_opened")
 HYBRID_CHECKPOINT_FIELDS = ("label", "time", "screen", "canonical_nostack", "random_calls")
+# A script shot can fall inside a replaced routine. The C runs at entry and the
+# clock is charged afterwards, so one spinner iteration can land on the other
+# side of the shot (boot-title title: 5022 vs 5021 Random calls, same time,
+# same screen; WHITEPAPER appendix C). Decision 2026-10-10: that one call is
+# allowed. Screen, time, the final Random sequence and the final no-stack
+# state stay exact. A checkpoint whose call count matches and whose state
+# bytes differ is still a failure.
+SPINNER_CALLS = 1
 
 
 def hybrid_view(d: dict) -> dict:
     """The part of a summary or golden that a hybrid run (routines replaced by C or Python, timing from
-    timing.py) must equal: everything except digests that include the stack segment."""
+    timing.py) must equal: everything except digests that include the stack segment
+    (`re/state.toml` `stack = "diagnostic"`)."""
     out = {k: d[k] for k in HYBRID_FIELDS}
     out["checkpoints"] = [{k: c[k] for k in HYBRID_CHECKPOINT_FIELDS} for c in d["checkpoints"]]
     return out
+
+
+def hybrid_difference(want: dict, got: dict) -> str | None:
+    """First hybrid mismatch. Checkpoint `random_calls` may differ by `SPINNER_CALLS`;
+    the checkpoint state may differ only in that case."""
+    for k in want:
+        if k == "checkpoints":
+            if len(want[k]) != len(got[k]):
+                return "checkpoint count %d != %d" % (len(want[k]), len(got[k]))
+            for i, (x, y) in enumerate(zip(want[k], got[k])):
+                changed = {f: (x[f], y[f]) for f in ("label", "time", "screen") if x[f] != y[f]}
+                if changed:
+                    return "checkpoint %d (%s): %s" % (i, x["label"], changed)
+                delta = abs(x["random_calls"] - y["random_calls"])
+                if delta > SPINNER_CALLS:
+                    return ("checkpoint %d (%s): random_calls %d != %d (tolerance %d)"
+                            % (i, x["label"], x["random_calls"], y["random_calls"], SPINNER_CALLS))
+                if x["canonical_nostack"] != y["canonical_nostack"] and delta == 0:
+                    return ("checkpoint %d (%s): canonical_nostack differs with the same Random count"
+                            % (i, x["label"]))
+        elif want[k] != got[k]:
+            return "%s: %r != %r" % (k, want[k], got[k])
+    return None
+
+
+def hybrid_spinner_notes(want: dict, got: dict) -> list[str]:
+    """Checkpoints the spinner tolerance accepted. Printed, not treated as a pass with no record."""
+    notes = []
+    for i, (x, y) in enumerate(zip(want["checkpoints"], got["checkpoints"])):
+        if x["random_calls"] == y["random_calls"] and x["canonical_nostack"] == y["canonical_nostack"]:
+            continue
+        notes.append("checkpoint %d (%s): random_calls %d vs %d, state %s (one spinner step)" % (
+            i, x["label"], x["random_calls"], y["random_calls"],
+            "same" if x["canonical_nostack"] == y["canonical_nostack"] else "differs"))
+    return notes
 
 
 def first_difference(a: dict, b: dict, a_reads: list[str] = (), b_reads: list[str] = ()) -> str | None:

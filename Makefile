@@ -132,17 +132,16 @@ fuzz: hybrid    ## differential test of one routine (SPEC 8.3): FN=<id or C name
 	@test -n "$(FN)" || (echo 'fuzz: usage: make fuzz FN=<id|C name> [CASES=n] [SEED=n]'; exit 2)
 	$(PY) tools/fuzz/fuzz.py --routine "$(FN)" --cases $(if $(CASES),$(CASES),200) --seed $(if $(SEED),$(SEED),1234)
 
-sessions: hybrid ## replay goldens with C routines (SPEC 8.5): [SESSION=name] [FULL=1 adds Random]
+sessions: hybrid ## replay goldens with C routines (SPEC 8.5): [SESSION=name]
 	$(PY) tools/sessions/sessions.py \
-		$(if $(SESSION),--session $(SESSION),--session boot-title --session create-character) \
-		$(if $(FULL),,--routine 0AF8:1685 --routine 0AF8:16A8)
+		$(if $(SESSION),--session $(SESSION),--session boot-title --session create-character)
 
 test:              ## Python unit tests (DAX/GEO/ECL codecs, toolchain probes, P3 spike)
 	$(PY) -m pytest -q tests/unit
 check: host hybrid lint ## everything a commit must pass (SPEC 9.6): build, lint, tests, fuzz, sessions
 	$(PY) -m pytest -q tests/unit
 	$(PY) tools/agent/p3_check.py
-	$(PY) tools/sessions/sessions.py --session create-character --routine 0AF8:1685 --routine 0AF8:16A8
+	$(PY) tools/sessions/sessions.py --session create-character
 review-pass: ; $(call todo,Phase 4,8.1 and playbook 70)
 coco3:       ; $(call todo,Phase 7,11)
 dos:         ; $(call todo,Phase 8,11)

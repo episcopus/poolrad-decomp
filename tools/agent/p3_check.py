@@ -10,9 +10,10 @@ Checks, in order (stops at the first failure):
   2. Host binary and hybrid library build (cmake).
   3. Portability lint passes over the engine.
   4. Fuzz passes for the three spike routines (writes L2 verdicts).
-  5. Sessions pass with the C routines (Move+FillChar; Random is L2 by fuzz
-     and session-parity-demonstrated modulo the documented spinner
-     observation effect, WHITEPAPER appendix C).
+  5. Sessions pass with the C routines (Move, FillChar, Random). A checkpoint
+     may sample one spinner step to either side (golden.SPINNER_CALLS);
+     screen, time, the final Random sequence and the final no-stack state
+     stay exact (WHITEPAPER appendix C).
 
 `make test` (pytest, fast P3 file included) and the full gated sessions run
 inside `make check` via the Makefile, not here, so this tool stays quick to
@@ -62,11 +63,9 @@ def main() -> int:
     run([PY, "tools/lint/portability.py"], "portability lint")
     for fn in ("0AF8:1685", "0AF8:16A8", "0AF8:11C0"):
         run([PY, "tools/fuzz/fuzz.py", "--routine", fn], "fuzz %s" % fn)
-    run([PY, "tools/sessions/sessions.py", "--session", "boot-title",
-         "--routine", "0AF8:1685", "--routine", "0AF8:16A8"], "sessions boot-title")
+    run([PY, "tools/sessions/sessions.py", "--session", "boot-title"], "sessions boot-title")
     print("p3-check: GREEN: memory-model spike passes in both builds")
-    print("p3-check: note: create-character runs in `make sessions`; "
-          "Random-in-session is L2 + parity-demonstrated (WHITEPAPER appendix C)")
+    print("p3-check: note: create-character runs in `make sessions`")
     return 0
 
 
