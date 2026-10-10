@@ -1,17 +1,18 @@
 # src/
 
-The C reconstruction of Pool of Radiance. Empty until Phase 3 (docs/spec/SPEC.md section 10).
+The C reconstruction of Pool of Radiance (SPEC 6 and 7).
 
-Planned layout (SPEC section 6 and 7):
+P3 spike (green via `make check`): the memory model (SPEC 7.3), the RTL
+cores it needs, one game unit started, the SDL3 host platform and the hybrid
+glue. Bulk lifting is P4 in queue order (`work/queue.toml`).
 
-| Directory | Contents |
-|---|---|
-| `include/` | `types.h` (u8 s16 ...), `pascal.h` (string, set, frame helpers), `gen/` (generated from `re/`: DGROUP mirror, record types) |
-| `rtl/` | Turbo Pascal runtime semantics: strings, sets, Random, files, heap, range checks |
-| `game/` | one module per original unit (`res03_<role>.c`, `ovl12_<role>.c` until renamed) |
-| `platform/` | `platform.h` (the only boundary to the outside world; first part written, see whitepaper 5.14) |
-| `platform/host/` | SDL3 implementation of `platform.h` |
-| `platform/dos/`, `platform/coco3/` | later targets (P8, P7) |
-| `hybrid/` | glue that runs C routines inside the oracle |
+| Directory | Contents | Spike state |
+|---|---|---|
+| `include/` | `types.h` (u8 s16 ...), `pool_memory.h` (farptr, FP, arena/bind), `pool_rtl.h`, `gen/` (dseg.h generated from `re/dseg.toml`) | done |
+| `rtl/` | Turbo Pascal runtime semantics | Move, FillChar, Random/ Randomize formula only |
+| `game/` | one module per original unit | `res00_system.c` (3 routines, L2) |
+| `platform/` | `platform.h` (the only boundary to the outside world) | hooks, waits, video present |
+| `platform/host/` | SDL3 implementation + spike main | builds, presents, exits |
+| `hybrid/` | glue that runs C routines inside the oracle | 3 exports + DGROUP access |
 
-Rules: portability rules in SPEC 7.2, one function per original routine with a provenance comment (SPEC 7.1).
+Rules: portability rules in SPEC 7.2 (`make lint`), one function per original routine with a provenance comment (SPEC 7.1).

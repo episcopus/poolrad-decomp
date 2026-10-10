@@ -10,7 +10,7 @@ PACKED := poolrad/START.EXE
 .PHONY: help setup doctor inputs unexepack overlays map dax smoke status next ghidra p1-check \
         tp-install tp-probe tp-compare tp-pin tpc emu2 \
         packet lock unlock \
-        oracle-run oracle-dosbox oracle-timing timing-scan golden sessions host hybrid fuzz test check review-pass dos coco3
+        oracle-run oracle-dosbox oracle-timing timing-scan golden sessions host hybrid fuzz test check lint review-pass dos coco3
 
 help:
 	@echo "Available now:  setup doctor inputs unexepack overlays map dax smoke"
@@ -18,7 +18,7 @@ help:
 	@echo "Turbo Pascal:   emu2 tp-install tp-probe tp-compare tp-pin tpc (docs/setup/SETUP-tp.md)"
 	@echo "Data codecs:    make dax (all playbook-20 formats); make test (pytest)"
 	@echo "Phase 2:        oracle-run oracle-dosbox oracle-timing golden"
-	@echo "Phase 3:        host hybrid fuzz sessions check review-pass"
+	@echo "Phase 3:        host hybrid fuzz sessions check lint (P3 spike green; review-pass in P4)"
 	@echo "Later:          dos (P8) coco3 (P7)"
 	@echo "See AGENTS.md and docs/spec/SPEC.md."
 
@@ -117,13 +117,32 @@ timing-scan:      ## find routines that wait on time or input (static; SESSIONS=
 
 golden:           ## record goldens (each session twice, must match): SESSION=name (default all); CHECK=1 verifies committed goldens
 	$(PY) tools/oracle/golden.py $(if $(SESSION),--session $(SESSION)) $(if $(CHECK),--check)
-host:        ; $(call todo,Phase 3,11)
-hybrid:      ; $(call todo,Phase 3,8.4)
-fuzz:        ; $(call todo,Phase 3,8.3)
-sessions:    ; $(call todo,Phase 3,8.5)
-test:              ## Python unit tests (DAX/GEO/ECL codecs, toolchain probes)
+host:           ## native binary (SPEC 11): cmake + SDL3 -> build/host/poolrad (P3 spike: platform smoke)
+	cmake -S . -B build/host -G Ninja -DCMAKE_BUILD_TYPE=Rel
+	cmake --build build/host --target poolrad
+
+hybrid:         ## hybrid library for the oracle (SPEC 8.4): build/host/libpoolrad_hybrid.*
+	cmake -S . -B build/host -G Ninja -DCMAKE_BUILD_TYPE=Rel
+	cmake --build build/host --target poolrad_hybrid
+
+lint:           ## portability lint over the engine (SPEC 7.2)
+	$(PY) tools/lint/portability.py
+
+fuzz: hybrid    ## differential test of one routine (SPEC 8.3): FN=<id or C name> [CASES=200] [SEED=1234]
+	@test -n "$(FN)" || (echo 'fuzz: usage: make fuzz FN=<id|C name> [CASES=n] [SEED=n]'; exit 2)
+	$(PY) tools/fuzz/fuzz.py --routine "$(FN)" --cases $(if $(CASES),$(CASES),200) --seed $(if $(SEED),$(SEED),1234)
+
+sessions: hybrid ## replay goldens with C routines (SPEC 8.5): [SESSION=name] [FULL=1 adds Random]
+	$(PY) tools/sessions/sessions.py \
+		$(if $(SESSION),--session $(SESSION),--session boot-title --session create-character) \
+		$(if $(FULL),,--routine 0AF8:1685 --routine 0AF8:16A8)
+
+test:              ## Python unit tests (DAX/GEO/ECL codecs, toolchain probes, P3 spike)
 	$(PY) -m pytest -q tests/unit
-check:       ; $(call todo,Phase 3,9.6)
+check: host hybrid lint ## everything a commit must pass (SPEC 9.6): build, lint, tests, fuzz, sessions
+	$(PY) -m pytest -q tests/unit
+	$(PY) tools/agent/p3_check.py
+	$(PY) tools/sessions/sessions.py --session create-character --routine 0AF8:1685 --routine 0AF8:16A8
 review-pass: ; $(call todo,Phase 4,8.1 and playbook 70)
 coco3:       ; $(call todo,Phase 7,11)
 dos:         ; $(call todo,Phase 8,11)

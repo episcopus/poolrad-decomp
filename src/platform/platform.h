@@ -1,8 +1,9 @@
 /* platform.h: the only boundary between the engine and the outside world (SPEC 7.5).
  *
- * Status: hooks and waits (input, time, entropy, timer, sound), approved by the human on 2026-10-10 after
- * `make timing-scan` (whitepaper 5.14, appendix C). Video, files and memory arrive with Phase 3 and are
- * added here by the orchestrator. Needs src/include/types.h (u8 u16 u32), also Phase 3.
+ * Status: hooks, waits (input, time, entropy, timer, sound) and the video
+ * present call, approved by the human on 2026-10-10 after `make timing-scan`
+ * (whitepaper 5.14, appendix C); P3 adds video present only, files and heap
+ * records arrive with the first lifted unit that needs them (P4).
  *
  * HOOKS. Every function below reads the outside world, so it is a hook: a live or oracle run records its
  * result, a replay returns the recorded result unchanged, and the engine stays deterministic.
@@ -95,5 +96,14 @@ void platform_speaker_off(void);
 
 /* Tandy 3-voice sound chip (SN76489), one byte written to port C0h. */
 void platform_tandy_write(u8 value);
+
+/* ---- Video ------------------------------------------------------------------------------------ */
+
+/* The engine draws into a 320x200 indexed framebuffer with a 16-entry EGA
+ * palette and presents it here (SPEC 7.5; EGA mode 0Dh first, whitepaper 5.9
+ * is still open). The host scales and presents it (SDL3); the oracle harness
+ * compares m.ega.planes_digest() instead. Files and the heap record design
+ * arrive with the first lifted unit that needs them (P4). */
+void platform_present_frame(const u8 *fb_320x200, const u8 palette[16][3]);
 
 #endif /* POOLRAD_PLATFORM_H */
