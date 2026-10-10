@@ -52,6 +52,7 @@ You are working on a **behaviour-matching decompilation of SSI's Pool of Radianc
 | `make packet FN=<id>` / `UNIT=<id>` | Write a work packet to `build/packets/` | P1 |
 | `make lock UNIT=<id>` / `make unlock UNIT=<id>` | Claim or release a unit | P1 |
 | `make oracle-run SCRIPT=<keys>` | Run the original in the emulator | P2 |
+| `make golden SESSION=<name>` / `CHECK=1` | Record session goldens (two identical oracle runs), or verify the committed ones | P2 (now) |
 | `make host`, `make hybrid` | Native build, hybrid library | P3 |
 | `make fuzz FN=<id>` | Differential test of one routine (L2) | P3 |
 | `make sessions` | Replay goldens against the C build (L3) | P3 |

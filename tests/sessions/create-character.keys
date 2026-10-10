@@ -27,7 +27,8 @@ key END                  # class list: Cleric, Fighter, Magic-user, Thief
 key ENTER
 wait 10
 key ENTER                # alignment: Lawful good (first entry)
-wait 20
+wait 40                  # the sheet is drawn, then rolled (114 Random calls), then the prompt appears;
+                         # a shorter wait captured the sheet with all scores at 0 and no prompt
 shot sheet               # the rolled character sheet: "Keep this character? Yes No"
 key Y
 wait 15

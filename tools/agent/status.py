@@ -107,6 +107,8 @@ def main(argv: list[str]) -> int:
     code_bytes = sum(int(u.get("code_bytes") or 0) for u in residents + overlays)
     routine_bytes = sum(int(r.get("size") or 0) for r in routines)
 
+    scripts = sorted(p.stem for p in (ROOT / "tests/sessions").glob("*.keys"))
+    goldens = [n for n in scripts if (ROOT / "tests/sessions/golden" / n / "golden.json").exists()]
     today = dt.date.today().isoformat()
     lines = [
         "# Project status",
@@ -130,7 +132,15 @@ def main(argv: list[str]) -> int:
         "| Calling convention samples | whitepaper section 3.4 |",
         "| Initial names from strings / prior art | overlay names in `re/units.toml` |",
         "| Gate | run `make p1-check` |",
-
+        "",
+        "**P2 Oracle and data**: goldens recorded for %d of %d session scripts (%s)." % (len(goldens), len(scripts), ", ".join(goldens) or "none"),
+        "",
+        "| P2 exit criterion | Gate |",
+        "|---|---|",
+        "| Oracle boots to title and through character creation from a key script, twice identically | `make golden` (records each session from two runs that must match), `make golden CHECK=1` |",
+        "| Screenshots match DOSBox-X | `make oracle-dosbox` |",
+        "| DAX, map and ECL decoders with tests over all files | `make dax`, `make test` |",
+        "| First goldens recorded | `tests/sessions/golden/` |",
         "",
         "## Inventory",
         "",
@@ -174,6 +184,7 @@ def main(argv: list[str]) -> int:
         "## Blockers and decisions waiting for the human",
         "",
         "- Review `docs/spec/SPEC.md` ADR-001 and memory model (section 7.3) if not already.",
+        "- Hybrid timing (WHITEPAPER appendix C, known limits): a run with replaced routines places timer ticks at different program points, so tick-derived DGROUP bytes differ from the original after a few ticks. L3 on hybrid runs needs either masks with reasons in `re/state.toml` (human approval) or a precise-time mode in the oracle. Decide before Phase 3 builds the hybrid library.",
         "- `re/units.toml` lists units found through the init chain plus the two runtime units without init; game units without an initialisation part are still invisible (WHITEPAPER 2.2).",
         "",
         "## Toolchain",

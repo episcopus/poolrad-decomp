@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-10 | App. C | P2 closeout: `make golden` records goldens from two identical oracle runs (`boot-title`, `create-character`), `CHECK=1` verifies them; `sheet` capture point fixed (shot was taken mid-roll); status shows P2 gates and the open hybrid timing decision | `tools/oracle/golden.py`, `tests/unit/test_golden.py`, `tests/sessions/golden/`, `make oracle-dosbox`, `make dax`, `make test` |
 | 2026-10-10 | 5.13, App. C | Random numbers [V]: TP 6 generator and `Randomize` formulas, logged by call; session `clock` command pins the seed; title sequence consumes 30,000+ `Random(4)` calls | `tools/oracle/rng.py`, `tests/unit/test_oracle.py` (`test_random_log_*`, `test_pinned_clock_*`), `0AF8:120F..1253` |
 | 2026-10-10 | 3.2, 5.8, 5.12, App. B, App. C | Oracle (playbook 25): original boots in Unicorn to the title screens (pixel-identical to DOSBox-X), runs deterministically, and creates a character from a key script; copy protection (ovl02:00FD, 13 answers) and menu key handling documented; oracle capabilities and limits listed | `tools/oracle/`, `tests/unit/test_oracle.py`, `make oracle-run`, `make oracle-dosbox`, `tests/sessions/{boot-title,create-character}.keys` |
 | 2026-10-09 | 4.2.4–4.4 | WALLDEF, MON*CHA/ITM/SPC, ITEMS, SAVE codecs; item encode keeps name-slot padding; playbook 20 exit criteria green | `tools/re/{walldef,records,items,save}.py`, `make dax` / `make test` (30 unit tests) |

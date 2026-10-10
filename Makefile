@@ -108,7 +108,8 @@ oracle-run:       ## run the original in the oracle: SCRIPT=tests/sessions/x.key
 
 oracle-dosbox:    ## compare the oracle's title screens with DOSBox-X frames pixel for pixel (needs dosbox-x, ffmpeg)
 	$(PY) tools/oracle/dosbox_ref.py
-golden:      ; $(call todo,Phase 2,8.5 and playbook 40)
+golden:           ## record goldens (each session twice, must match): SESSION=name (default all); CHECK=1 verifies committed goldens
+	$(PY) tools/oracle/golden.py $(if $(SESSION),--session $(SESSION)) $(if $(CHECK),--check)
 host:        ; $(call todo,Phase 3,11)
 hybrid:      ; $(call todo,Phase 3,8.4)
 fuzz:        ; $(call todo,Phase 3,8.3)
