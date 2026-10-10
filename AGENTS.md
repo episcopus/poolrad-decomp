@@ -52,6 +52,7 @@ You are working on a **behaviour-matching decompilation of SSI's Pool of Radianc
 | `make packet FN=<id>` / `UNIT=<id>` | Write a work packet to `build/packets/` | P1 |
 | `make lock UNIT=<id>` / `make unlock UNIT=<id>` | Claim or release a unit | P1 |
 | `make oracle-run SCRIPT=<keys>` | Run the original in the emulator | P2 |
+| `make timing-scan [SESSIONS="a b"]` | List routines that wait on time or input (a C lift of these needs a platform wait or stays original); writes `build/re/timing-scan.md` | P2 (now) |
 | `make oracle-timing SESSION=<name> ROUTINE=<id,...> OUT=<file>` | Record per-call routine costs so hybrid runs keep the original's time (`tools/oracle/timing.py`) | P2 (now) |
 | `make golden SESSION=<name>` / `CHECK=1` | Record session goldens (two identical oracle runs), or verify the committed ones | P2 (now) |
 | `make host`, `make hybrid` | Native build, hybrid library | P3 |

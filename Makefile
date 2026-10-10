@@ -10,7 +10,7 @@ PACKED := poolrad/START.EXE
 .PHONY: help setup doctor inputs unexepack overlays map dax smoke status next ghidra p1-check \
         tp-install tp-probe tp-compare tp-pin tpc emu2 \
         packet lock unlock \
-        oracle-run oracle-dosbox oracle-timing golden sessions host hybrid fuzz test check review-pass dos coco3
+        oracle-run oracle-dosbox oracle-timing timing-scan golden sessions host hybrid fuzz test check review-pass dos coco3
 
 help:
 	@echo "Available now:  setup doctor inputs unexepack overlays map dax smoke"
@@ -111,6 +111,9 @@ oracle-dosbox:    ## compare the oracle's title screens with DOSBox-X frames pix
 comma := ,
 oracle-timing:    ## record per-call routine costs for exact-time hybrid runs: SESSION=name ROUTINE=id[,id...] OUT=file.json
 	$(PY) tools/oracle/timing.py record --session $(SESSION) $(foreach r,$(subst $(comma), ,$(ROUTINE)),--routine $(r)) --out $(OUT)
+
+timing-scan:      ## find routines that wait on time or input (static; SESSIONS="boot-title create-character" adds the dynamic pass)
+	$(PY) tools/re/timing_scan.py $(foreach s,$(SESSIONS),--dynamic $(s))
 
 golden:           ## record goldens (each session twice, must match): SESSION=name (default all); CHECK=1 verifies committed goldens
 	$(PY) tools/oracle/golden.py $(if $(SESSION),--session $(SESSION)) $(if $(CHECK),--check)

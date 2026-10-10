@@ -185,6 +185,7 @@ def main(argv: list[str]) -> int:
         "## Blockers and decisions waiting for the human",
         "",
         "- Review `docs/spec/SPEC.md` ADR-001 and memory model (section 7.3) if not already.",
+        "- Wait loops (WHITEPAPER appendix C, `make timing-scan`): about 100 routines loop around keyboard, clock or sound waits and cannot be literal C (no time passes while C runs). Needs a platform wait in `platform.h` (human) or they stay in the original under hybrid runs.",
         "- Canonical state and the stack (WHITEPAPER appendix C): hybrid runs reproduce time, screens and Random exactly (`timing.py`), but the stack segment differs (replaced routines push no frames). Goldens carry `canonical` and `canonical_nostack`. Decide whether `re/state.toml` defines the stack as out of the canonical state before L3 on hybrids; until then hybrid runs compare `canonical_nostack`.",
         "- `re/units.toml` lists units found through the init chain plus the two runtime units without init; game units without an initialisation part are still invisible (WHITEPAPER 2.2).",
         "",

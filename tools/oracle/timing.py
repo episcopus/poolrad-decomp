@@ -86,9 +86,10 @@ class Binder:
         self.rebind_cbs = []
         m.overlay_listeners.append(self.rebind)
 
-    def add(self, routine: Routine, payload) -> None:
+    def add(self, routine: Routine, payload, rebind: bool = True) -> None:
         self.items.append((routine, payload))
-        self.rebind(self.m)
+        if rebind:
+            self.rebind(self.m)
 
     def address(self, r: Routine) -> int | None:
         if r.seg is not None:
@@ -183,7 +184,8 @@ class CostRecorder:
         b = binder_of(m)
         b.rebind_cbs.append(self._rebind)
         for r in self.routines:
-            b.add(r, None)
+            b.add(r, None, rebind=False)
+        b.rebind(m)
         m._observer = self._observe
 
     def _rebind(self, bound) -> None:
