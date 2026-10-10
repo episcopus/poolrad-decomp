@@ -319,6 +319,7 @@ class Dos:
         m.ok()
         if m.tracer:
             m.tracer.on_file(m, "read", f.path, f.pos - len(chunk), len(chunk))
+        m.notify_file("read", f.path, f.pos - len(chunk), len(chunk))
 
     def f40(self, m, al):
         h, n = m.get("bx"), m.get("cx")
@@ -342,6 +343,7 @@ class Dos:
                 f.pos = end
             if m.tracer:
                 m.tracer.on_file(m, "write", f.path, f.pos - n, n)
+            m.notify_file("write", f.path, f.pos - n, n)
         m.set("ax", n)
         m.ok()
 

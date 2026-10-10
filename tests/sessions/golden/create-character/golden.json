@@ -1,5 +1,5 @@
 {
- "format": 1,
+ "format": 2,
  "session": "create-character",
  "script_sha256": "8aa21e46d02e44c13a8fcb29fe058f7354c57594d1e9da2f778f7aedbd301738",
  "exe": "poolrad/start-unpack.exe",
@@ -12,8 +12,10 @@
  "video_mode": 13,
  "key_reads": 26,
  "reads_sha256": "391da1224b91e0c0aeab7b1a1c2cc70851956cdd794849d13f509ea86fd953bb",
+ "reads_nostack_sha256": "9e53502606b4a991b4183001f368624b6f2264b2eed00cbf375f1c08a6bd8a6b",
  "state_digest": "22b0e9b0800359d7db402264c248427326ddcb78f889d58be8f0b4331ea1ae2b",
  "canonical_digest": "68158f05d6c176baeabc0a75d644040a4c3b3b3950cd1cacc4dcfff92691febf",
+ "canonical_nostack_digest": "4ebb9deea443683379c8b2f7ea2babeca22730e32cd4166dc9cf603c787c320b",
  "random_calls": 33548,
  "random_digest": "fc6390df8944eccb6d42bd5496ec214c7a335da039e433fc3a6c2481c6c94b67",
  "files_opened": [
@@ -160,6 +162,7 @@
    "time": 54594458,
    "screen": "49a9eb60485adf66975bdbe592810c0c8fadf02baa53686fe397c6f9120043d0",
    "canonical": "4f22a5baafcb3c099ffc8197d992905c3bdb334427da28717006ef3b0721b4bd",
+   "canonical_nostack": "06d005f9396795390eef4d3bac144f8ecc1ff60665b9161094f72ac4331aaaa7",
    "digest": "2a574a5c7791f8c92b63b730bc3a174a3eac6fd606604f288f4e2de8fc1ab66e",
    "random_calls": 33433
   },
@@ -168,6 +171,7 @@
    "time": 58873606,
    "screen": "dae47c8e32b2e9d9a77e05f8ea8b1b46a9c816e1cea26cf92badac5954cba698",
    "canonical": "1dbaae13a0b3a5b6e2eb40bcbe52bfdd5398de971c3d2b40821b757d1b38f324",
+   "canonical_nostack": "43dab0505daa05a1980d33afb61cd768783566eb60f70d9fd44544be3fcef206",
    "digest": "433ff17a6765ff652bfa2e4cb8c63f0a61777a41665d8de74143980f160ca229",
    "random_calls": 33548
   },
@@ -176,6 +180,7 @@
    "time": 60686098,
    "screen": "7cfc8e2f134bb9c1ebdd7ba0aa1f98b6326dd102dcfe12d1481af320d9329b91",
    "canonical": "0c023c9060013712c38907c24e61dd84792dc6d752813ac9cb29b2654b320150",
+   "canonical_nostack": "c7ae1c9f3bb2f0d37fbb7acca45b0714af351c17a0468f814eb25fe677e1fae3",
    "digest": "31a2faa3c435cc69255fbc213c708a9c1820318b4d975e5c2824dee88e7e8bc0",
    "random_calls": 33548
   },
@@ -184,6 +189,7 @@
    "time": 61839502,
    "screen": "0ada2ddc031d728207f3543a2fba24e41462cd2093050370087162752b134671",
    "canonical": "8a75816f4267a6fd640080f2006dd40ced809d8134ce4db5e0409137d64a29d7",
+   "canonical_nostack": "dc44d5db92d0533d75682ba6eaf112e6c6bbdf92bfa4bd6857adfd7b8f056feb",
    "digest": "16b648275a2b471c7d0792eca494f472a10b47fab2b5705c41c6b5cdbd15ca0c",
    "random_calls": 33548
   },
@@ -192,6 +198,7 @@
    "time": 65244790,
    "screen": "75af6047d1ab277b73a1cc7ee3f3479ee36f3ebacfd8612ca20a532e1cd76d87",
    "canonical": "68158f05d6c176baeabc0a75d644040a4c3b3b3950cd1cacc4dcfff92691febf",
+   "canonical_nostack": "4ebb9deea443683379c8b2f7ea2babeca22730e32cd4166dc9cf603c787c320b",
    "digest": "d16addd9ce69e46dc945a818cef0512bbdaf496db1e1782cca418b6bb23f3bb2",
    "random_calls": 33548
   }

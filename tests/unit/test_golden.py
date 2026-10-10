@@ -49,8 +49,11 @@ def test_golden_files_are_complete(name):
     assert len(reads) == g["key_reads"]
     import hashlib
     assert hashlib.sha256("\n".join(reads).encode()).hexdigest() == g["reads_sha256"]
+    nostack = (d / "reads_nostack.txt").read_text().split()
+    assert len(nostack) == g["key_reads"]
+    assert hashlib.sha256("\n".join(nostack).encode()).hexdigest() == g["reads_nostack_sha256"]
     # nothing but digests and our own screenshots (no game files)
-    assert {p.name for p in d.iterdir()} == {"golden.json", "reads.txt"} | {l + ".png" for l in labels}
+    assert {p.name for p in d.iterdir()} == {"golden.json", "reads.txt", "reads_nostack.txt"} | {l + ".png" for l in labels}
 
 
 def test_first_difference_names_the_checkpoint_and_the_key_read():

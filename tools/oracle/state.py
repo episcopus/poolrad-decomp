@@ -28,7 +28,16 @@ def load_definition(path: Path | None = None) -> dict:
     return tomllib.loads(p.read_text()) if p.exists() else {}
 
 
-def canonical_digest(m, definition: dict | None = None) -> str:
+STACK_SIZE = 0x4000           # whitepaper 3.1: initial SS:SP 14F2:4000 (16 KB stack segment)
+
+
+def canonical_digest(m, definition: dict | None = None, *, exclude_stack: bool = False) -> str:
+    """sha256 of the canonical state. `exclude_stack=True` leaves the stack segment out. A routine
+    replaced by C does not push the frames the original pushed (and C locals are never on the guest
+    stack), so stack bytes, including stale slots of live frames that nobody has written yet, differ in
+    a hybrid run while globals, heap and video are equal (timing.py, whitepaper appendix C). The default
+    keeps the stack, so recorded goldens stay valid; whether the project's definition should exclude it
+    is a decision for `re/state.toml` (human approval)."""
     d = load_definition() if definition is None else definition
     if d.get("heap_root"):
         raise NotImplementedError("re/state.toml heap_root entries need re/types/ (first lifted unit)")
@@ -39,6 +48,12 @@ def canonical_digest(m, definition: dict | None = None) -> str:
     for r in regions:
         lo, hi = r["dseg"]
         data = bytearray(m.read(ds, lo, hi - lo))
+        if exclude_stack:
+            base = (ds << 4) + lo
+            dlo, dhi = m.get("ss") << 4, (m.get("ss") << 4) + STACK_SIZE
+            a, b = max(base, dlo), min(base + len(data), dhi)
+            if a < b:
+                data[a - base:b - base] = bytes(b - a)
         for mlo, mhi in masks:
             a, b = max(lo, mlo), min(hi, mhi)
             if a < b:

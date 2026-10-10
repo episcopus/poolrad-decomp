@@ -10,14 +10,14 @@ PACKED := poolrad/START.EXE
 .PHONY: help setup doctor inputs unexepack overlays map dax smoke status next ghidra p1-check \
         tp-install tp-probe tp-compare tp-pin tpc emu2 \
         packet lock unlock \
-        oracle-run oracle-dosbox golden sessions host hybrid fuzz test check review-pass dos coco3
+        oracle-run oracle-dosbox oracle-timing golden sessions host hybrid fuzz test check review-pass dos coco3
 
 help:
 	@echo "Available now:  setup doctor inputs unexepack overlays map dax smoke"
 	@echo "Phase 1:        status next ghidra p1-check packet lock unlock"
 	@echo "Turbo Pascal:   emu2 tp-install tp-probe tp-compare tp-pin tpc (docs/setup/SETUP-tp.md)"
 	@echo "Data codecs:    make dax (all playbook-20 formats); make test (pytest)"
-	@echo "Phase 2:        oracle-run oracle-dosbox golden"
+	@echo "Phase 2:        oracle-run oracle-dosbox oracle-timing golden"
 	@echo "Phase 3:        host hybrid fuzz sessions check review-pass"
 	@echo "Later:          dos (P8) coco3 (P7)"
 	@echo "See AGENTS.md and docs/spec/SPEC.md."
@@ -108,6 +108,10 @@ oracle-run:       ## run the original in the oracle: SCRIPT=tests/sessions/x.key
 
 oracle-dosbox:    ## compare the oracle's title screens with DOSBox-X frames pixel for pixel (needs dosbox-x, ffmpeg)
 	$(PY) tools/oracle/dosbox_ref.py
+comma := ,
+oracle-timing:    ## record per-call routine costs for exact-time hybrid runs: SESSION=name ROUTINE=id[,id...] OUT=file.json
+	$(PY) tools/oracle/timing.py record --session $(SESSION) $(foreach r,$(subst $(comma), ,$(ROUTINE)),--routine $(r)) --out $(OUT)
+
 golden:           ## record goldens (each session twice, must match): SESSION=name (default all); CHECK=1 verifies committed goldens
 	$(PY) tools/oracle/golden.py $(if $(SESSION),--session $(SESSION)) $(if $(CHECK),--check)
 host:        ; $(call todo,Phase 3,11)

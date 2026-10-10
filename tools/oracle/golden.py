@@ -9,11 +9,13 @@ sequence, final state); otherwise nothing is written and the first difference is
 A golden lives in `tests/sessions/golden/<name>/`:
 
   golden.json   verdict data: script hash, input hash, settings, checkpoints, summary digests
-  reads.txt     one state digest (16 hex) per keyboard read, in order
+  reads.txt     one full state digest (16 hex) per keyboard read, in order
+  reads_nostack.txt  the same without the stack segment (the form a hybrid run can match)
   <label>.png   our own screenshot at each named `shot` (to be looked at by a person: playbook 40 step 3)
 
 `--check` re-runs each session once and compares against the committed golden (screen and state
-digests, not PNG bytes, which depend on the zlib build). Goldens hold digests and our own
+digests, not PNG bytes, which depend on the zlib build). `hybrid_view` projects a summary onto the fields
+a run with replaced routines can match (time, screen, state without the stack, Random sequence). Goldens hold digests and our own
 screenshots of our own runs; never copies of game files.
 """
 from __future__ import annotations
@@ -31,7 +33,7 @@ from oracle.run import EXE, run_session  # noqa: E402
 
 SESSIONS = ROOT / "tests/sessions"
 GOLDEN = SESSIONS / "golden"
-FORMAT = 1
+FORMAT = 2
 MAX_INSNS = 400_000_000
 INSN_PER_SEC = 1_000_000          # run_session default; recorded so a changed clock model is visible
 
@@ -43,6 +45,7 @@ def sha256_file(p: Path) -> str:
 def summarise(s: dict) -> dict:
     """The comparable verdict data of one run (no host-dependent values, no screenshots bytes)."""
     reads = s["read_digests"]
+    reads_nostack = s["read_nostack_digests"]
     return {
         "stop_reason": s["reason"],
         "instructions": s["insns"],
@@ -50,17 +53,32 @@ def summarise(s: dict) -> dict:
         "video_mode": s["mode"],
         "key_reads": s["key_reads"],
         "reads_sha256": hashlib.sha256("\n".join(reads).encode()).hexdigest(),
+        "reads_nostack_sha256": hashlib.sha256("\n".join(reads_nostack).encode()).hexdigest(),
         "state_digest": s["state_digest"],
         "canonical_digest": s["canonical_digest"],
+        "canonical_nostack_digest": s["canonical_nostack_digest"],
         "random_calls": s["random_calls"],
         "random_digest": s["random_digest"],
         "files_opened": s["files_opened"],
-        "checkpoints": [{k: c[k] for k in ("label", "time", "screen", "canonical", "digest", "random_calls")}
-                        for c in s["checkpoints"]],
+        "checkpoints": [{k: c[k] for k in ("label", "time", "screen", "canonical", "canonical_nostack", "digest",
+                                           "random_calls")} for c in s["checkpoints"]],
     }
 
 
-def first_difference(a: dict, b: dict, a_reads: list[str], b_reads: list[str]) -> str | None:
+HYBRID_FIELDS = ("stop_reason", "instructions", "virtual_seconds", "video_mode", "key_reads", "reads_nostack_sha256",
+                 "canonical_nostack_digest", "random_calls", "random_digest", "files_opened")
+HYBRID_CHECKPOINT_FIELDS = ("label", "time", "screen", "canonical_nostack", "random_calls")
+
+
+def hybrid_view(d: dict) -> dict:
+    """The part of a summary or golden that a hybrid run (routines replaced by C or Python, timing from
+    timing.py) must equal: everything except digests that include the stack segment."""
+    out = {k: d[k] for k in HYBRID_FIELDS}
+    out["checkpoints"] = [{k: c[k] for k in HYBRID_CHECKPOINT_FIELDS} for c in d["checkpoints"]]
+    return out
+
+
+def first_difference(a: dict, b: dict, a_reads: list[str] = (), b_reads: list[str] = ()) -> str | None:
     for k in a:
         if k == "checkpoints":
             for i, (x, y) in enumerate(zip(a[k], b[k])):
@@ -107,6 +125,11 @@ def record(name: str, out_root: Path) -> int:
         elif t.exists():
             t.unlink()
     (d / "reads.txt").write_text("\n".join(a["read_digests"]) + "\n")
+    (d / "reads_nostack.txt").write_text("\n".join(a["read_nostack_digests"]) + "\n")
+    keep = {"golden.json", "reads.txt", "reads_nostack.txt"} | {c["label"] + ".png" for c in sa["checkpoints"]}
+    for stale in d.iterdir():
+        if stale.name not in keep:
+            stale.unlink()                     # leftovers of an older format or of removed checkpoints
     gold = {
         "format": FORMAT,
         "session": name,
@@ -129,6 +152,9 @@ def check(name: str, out_root: Path) -> int:
         print("[%s] FAIL: no golden at %s" % (name, gp), file=sys.stderr)
         return 1
     gold = json.loads(gp.read_text())
+    if gold.get("format") != FORMAT:
+        print("[%s] FAIL: golden format %r, tool writes %d; re-record it" % (name, gold.get("format"), FORMAT), file=sys.stderr)
+        return 1
     if gold["script_sha256"] != sha256_file(SESSIONS / (name + ".keys")):
         print("[%s] FAIL: the script changed since the golden was recorded; re-record it" % name, file=sys.stderr)
         return 1

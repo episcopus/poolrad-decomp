@@ -28,8 +28,9 @@ EXE = ROOT / "poolrad/start-unpack.exe"
 GAME = ROOT / "poolrad"
 
 
-def build_machine(script: KeyScript | None, *, strict: bool = True, insn_per_sec: int = 1_000_000) -> Machine:
-    m = Machine(EXE, GAME, strict=strict, insn_per_sec=insn_per_sec)
+def build_machine(script: KeyScript | None, *, strict: bool = True, insn_per_sec: int = 1_000_000,
+                  exact: bool = False) -> Machine:
+    m = Machine(EXE, GAME, strict=strict, insn_per_sec=insn_per_sec, exact=exact)
     m.keys = script
     if script is not None:
         m.clock_pin = script.clock
@@ -41,10 +42,15 @@ def build_machine(script: KeyScript | None, *, strict: bool = True, insn_per_sec
 def run_session(script_text: str | None, *, max_insns: int, out_dir: Path | None = None,
                 trace: str = "", shot_final: bool = True, digests: bool = True,
                 strict: bool = True, quiet: bool = False, shot_every: int = 0,
-                insn_per_sec: int = 1_000_000) -> dict:
-    """Run one session and return its summary (also used by tests and the golden recorder)."""
+                insn_per_sec: int = 1_000_000, exact: bool = False, prepare=None) -> dict:
+    """Run one session and return its summary (also used by tests and the golden recorder).
+
+    exact: count instructions one by one (Machine(exact=True)); prepare(machine) is called before
+    the run, e.g. to install replacements or a cost recorder (timing.py)."""
     script = KeyScript.parse(script_text) if script_text is not None else KeyScript([])
-    m = build_machine(script, strict=strict, insn_per_sec=insn_per_sec)
+    m = build_machine(script, strict=strict, insn_per_sec=insn_per_sec, exact=exact)
+    if prepare is not None:
+        prepare(m)
     shots_dir = None
     if out_dir:
         out_dir.mkdir(parents=True, exist_ok=True)
@@ -65,20 +71,20 @@ def run_session(script_text: str | None, *, max_insns: int, out_dir: Path | None
             mach.ega.screenshot(shots_dir / (arg + ".png"))
         if kind in ("shot", "digest"):
             checkpoints.append({"label": arg, "time": mach.now(), "digest": mach.state_digest(),
-                                "canonical": canonical_digest(mach), "screen": mach.ega.planes_digest(),
+                                "canonical": canonical_digest(mach),
+                                "canonical_nostack": canonical_digest(mach, exclude_stack=True),
+                                "screen": mach.ega.planes_digest(),
                                 "random_calls": len(mach.random_log)})
         if kind == "quit":
             raise Stop("quit")
 
     script.on_op = on_op
+    reads, reads_nostack = [], []
     if digests:
-        reads = []
-
         def on_key(mach, k):
             reads.append(mach.state_digest()[:16])
+            reads_nostack.append(canonical_digest(mach, exclude_stack=True)[:16])
         m.on_key_read = on_key
-    else:
-        reads = []
     reason, err = None, None
     on_chunk = None
     if shot_every and shots_dir:
@@ -107,7 +113,8 @@ def run_session(script_text: str | None, *, max_insns: int, out_dir: Path | None
         "reason": reason, "error": err, "insns": m.insns, "virtual_seconds": round(m.seconds(), 3),
         "mode": m.ega.mode, "key_reads": m.bios.key_reads, "blocked_reads": m.bios.blocked_reads,
         "state_digest": m.state_digest(), "canonical_digest": canonical_digest(m),
-        "checkpoints": checkpoints, "read_digests": reads,
+        "canonical_nostack_digest": canonical_digest(m, exclude_stack=True),
+        "checkpoints": checkpoints, "read_digests": reads, "read_nostack_digests": reads_nostack,
         "int_counts": {"%02X" % k: v for k, v in sorted(m.int_counts.items())},
         "service_counts": {"%02X" % k: v for k, v in sorted(m.service_counts.items())},
         "files_opened": [p for (op, p, _x) in m.vfs.log if op == "open"],

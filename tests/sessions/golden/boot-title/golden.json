@@ -1,5 +1,5 @@
 {
- "format": 1,
+ "format": 2,
  "session": "boot-title",
  "script_sha256": "47a3b7df14baa09622e7d5aa6c96832672cf950e6bfe6b1b0ffaf178a2d43034",
  "exe": "poolrad/start-unpack.exe",
@@ -12,8 +12,10 @@
  "video_mode": 13,
  "key_reads": 0,
  "reads_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+ "reads_nostack_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
  "state_digest": "f74e323c91199691d8792ff00faa8978aac271b0153d2cde440103685ab41e81",
  "canonical_digest": "d9e0a52ca6138d6dd71b05cca29c12696212e159b0f5af0da050a7eb19d7a42d",
+ "canonical_nostack_digest": "7d5feaeb8e1d843c831a1fee69c63e2a0ebea3faf2de8ecc4909ef3cb28d102e",
  "random_calls": 33431,
  "random_digest": "510691fce412942ddabe23b5077980b68cbcd283ad9d8c880bb67fc4b3670450",
  "files_opened": [
@@ -130,6 +132,7 @@
    "time": 24221486,
    "screen": "5a482b7c745ce7c47f6d757439ec41f5f13b159209c485bdba08a0ce31036813",
    "canonical": "0f71cc96059399bd8f62eb24f59f547750cea765b6ae26caad568a6fbbe06832",
+   "canonical_nostack": "f80e9e29ea292bd9918675059bb179f2a3509ca2a0359130990ab0bb7dd3a7c4",
    "digest": "6fd1885952e79fe8767ba16225f0f0c708539fe73a252de52e7a300fd9c79edd",
    "random_calls": 0
   },
@@ -138,6 +141,7 @@
    "time": 35256286,
    "screen": "c98f287ed8f3006f8a0899c4be9a349658f2b222f21e99e45577235fac51a37e",
    "canonical": "8c6ff82a81ef234964e134c8c40121871f8da9cb8ef30ce3e228019704deb693",
+   "canonical_nostack": "0d245718183ee27a73d72c9cbcf6c86f6fad70afaffa930ca368fbb751bb0356",
    "digest": "1abc27d2876c0e3ff140548241ae6c9b689046bd9b843516e14b0f13c24d2ec2",
    "random_calls": 5021
   },
@@ -146,6 +150,7 @@
    "time": 44049050,
    "screen": "4d3748591682003a0a28d7b422b7cb5367807ba380a3677b816bb3cd8b8beb4b",
    "canonical": "3f318458bedcf8c5ae5079d7c618f55aac99acd7fd42ab8e3dd01bf48076de82",
+   "canonical_nostack": "7d5feaeb8e1d843c831a1fee69c63e2a0ebea3faf2de8ecc4909ef3cb28d102e",
    "digest": "c73a3d0070f2d22db91e54d414e72e67d992cdea512f66e93c0cb31dc368f056",
    "random_calls": 33431
   }
