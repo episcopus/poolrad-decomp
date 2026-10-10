@@ -48,9 +48,34 @@ This document grows a chapter per subsystem as the decompilation proves how each
 ### 2.2 Toolchain and version
 
 - **Turbo Pascal** **[V]**: the unpacked image contains the runtime's error text ("Runtime error ", " at ", "." CR LF) immediately followed by "Portions Copyright (c) 1983,91 Borland"; the entry point is a chain of unit initialisation calls (section 3.2).
-- Overlay file signature `FBOV` **[V]**. The earlier 1988 build analysed by wicanr2 uses `TPOV` and Turbo Pascal 5.x **[H]** (their `docs/re/dos-toolchain-baseline.md`). Together with the 1991 runtime date this makes ours a later rebuild with a newer Turbo Pascal **[I]**.
-- **Version bound** **[I]** (`tools/re/rtl_ident.py`, playbook 10): `FBOV` + copyright year 1991 rules out TP 5.x (`TPOV`). Compatible with Turbo Pascal **6.0 or 7.0**. Exact patch level still **[?]** (needs a compiler install to byte-compare the System unit).
-- Which compiler directives were used (range, stack and overflow checks) **[?]**.
+- **Pinned: Turbo Pascal 6.0, June 1991 release** **[V]** (`make tp-pin`, report `build/toolchain/compare.md`, setup and hashes in `docs/setup/SETUP-tp.md`). `TPC.EXE` 69,278 bytes (sha256 `03836c60d1a8e5ad4394462813bfd497d1d091913e533065c75fdf5cda97c563`), `TURBO.TPL` 45,344 bytes (sha256 `19040e3914d1b32209f88754ece12d6bc1eafc0c9e7873b73bdeee95483931ff`), files dated 1991-06-11. Its banner still reads "Version 6.0 ... 1983,90"; there is no separate version number for this release.
+  - A probe program compiled with this compiler links System, Crt, Dos and Overlay code that is identical to ours except for link-time fields. `tools/re/tp_toolchain.py compare` classifies every byte of our units:
+
+    | Unit (our range) | Bytes | Identical | Link-time fields (fixups, re-linked branches/offsets, moved DGROUP operands, padding) | Unexplained | Missing from reference |
+    |---|---:|---:|---:|---:|---:|
+    | System `0AF8:0000..0C7C:0000` | 6,208 | 5,935 | 273 | 0 | 0 |
+    | Crt `0A40:0000..0AA2:0000` | 1,568 | 1,402 | 166 | 0 | 0 |
+    | Dos `0A32:0000..0A40:0000` | 224 | 221 | 3 | 0 | 0 |
+    | Overlay `0AA2:0000..0AF8:0000` | 1,376 | 1,239 | 137 | 0 | 0 |
+
+    Every moved DGROUP operand differs by one of two constants per unit (typed-constant area, variable area), as expected when the game's own data shifts the runtime's. A one-byte change anywhere in System is rejected (`tests/unit/test_tp_toolchain.py`).
+  - The string "Portions Copyright (c) 1983,91 Borland" is in this `TURBO.TPL` and in neither other candidate **[V]**.
+- **Eliminated** **[V]** (same tool, same probe):
+  - Turbo Pascal 6.0, first release (files dated 1990-10-23, runtime "1983,90"): System has 6 unexplained bytes (0AF8:0236 copyright year; 0AF8:030B, 0327, 03CA, 03CC in heap-manager code; 0AF8:0BDC) and 6 bytes it lacks (0AF8:0383, 4 bytes; 0AF8:04E2, 2 bytes); Crt has 11 unexplained and 4 missing. Dos and Overlay match.
+  - Turbo Pascal 7.0 (files dated 1992-10-30, runtime "1983,92"): System 900 unexplained and 1,227 missing bytes, Crt 69 and 20, Dos 5 and 103. Two visible causes: 7.0's System init runs a CPU probe (`pushf`/`popf` flag test for `Test8086`) that ours lacks, and 7.0 inserts `SelectorInc..Test8086` before `FileMode` in its typed constants, while ours has `FileMode` at DS:442C, the 6.0 position. Overlay matches (the routines POOL uses did not change in 7.0), so the Overlay unit alone cannot tell 6.0 from 7.0.
+- **Overlay file** `FBOV` **[V]**. Both TP 6.0 and TP 7.0 write `FBOV` (probe `SINK.OVR`), so the signature does not separate them. The earlier 1988 build analysed by wicanr2 uses `TPOV` and TP 5.x **[H]** (their `docs/re/dos-toolchain-baseline.md`; no TP 5.x was compiled here).
+- **Runtime unit placement** **[V]** (k-mer location plus byte match above; supersedes the runtime rows of section 3.2 where they differ): Dos `0A32..0A40`, Crt `0A40..0AA2`, Borland Overlay unit `0AA2..0AF8`, System `0AF8..0C7C`. `0A31:0000` is a separate 16-byte unit whose only code is an empty initialisation (`push bp; mov bp,sp; pop bp; retf`). `042B` (res08) is a game unit, not the overlay manager: it holds the `GAME.OVR` string and makes 4 far calls into the Overlay unit at `0AA2`. Borland's Dos and Overlay units have no initialisation part, so they never appear in the init chain **[I]**. `re/units.toml` carries them as `res13` (Dos) and `res14` (Overlay) with `init = ""`; `make map` (`tools/re/rtl_ident.py`) applies these names and returned the two routines misnamed under the old ranges (`042B:00A4`, now `res08_init`; `0A31:0000`, now `res02_init`) to provisional names.
+- **System variables in DGROUP** **[V]** (operand pairs at aligned sites): OvrHeapSize `DS:43EE`, OvrHeapOrg `43F4`, OvrHeapPtr `43F6`, OvrHeapEnd `43F8`, OvrLoadList `43FA`, HeapOrg `4400`, HeapPtr `4404`, HeapEnd `4408`, FreeList `440C`, HeapError `4414`, ExitProc `4418`, ExitCode `441C`, ErrorAddr `441E`, PrefixSeg `4422`, StackLimit `4424`, InOutRes `4426`, RandSeed `4428`, FileMode `442C`, Input `8508`, Output `8608`, SaveInt00 `8708` (19 saved vectors follow).
+- **Compiler directives** (TP 6.0 code patterns measured by compiling each switch both ways; method in `docs/setup/SETUP-tp.md` section 5; counts over all resident code below `0A32` and all 35 overlays):
+  - `$S-` **[I]**: none of the 805 `push bp; mov bp,sp` prologues calls StackCheck (`0AF8:04DF`); no far call to it anywhere.
+  - `$R-` **[I]**: no far call to RangeCheck (`0AF8:04B7`).
+  - `$I+` in one resident unit only **[I]**: 12 far calls to the I/O check (`0AF8:04A9`), all inside `0802..0899` (res05, the unit with "Please insert overlay disk."); none in other resident units or in any overlay.
+  - `$G-` **[I]**: no 80286-only instruction (`push imm`, `enter`, `leave`, `pusha`, `imul imm`, shift by immediate) in the 805 routines.
+  - `$F+` **[I]**: all 622 `mov sp,bp; pop bp; ret` epilogues return far (`retf`/`retf n`: 528 in overlays, 94 resident); not one near return.
+  - `$Q`: does not exist in TP 6.0 **[V]** (`Error 17: Invalid compiler directive`).
+  - Language limits of TP 6.0 that matter when reading the code **[V]** (`make tpc`): no `const` parameters (`Error 2: Identifier expected`), so structured value parameters are copied into the callee's frame; functions cannot return records.
+  - `$N-`/`$E` **[I]**: no 8087 emulator interrupts (INT 34h..3Dh) or `fwait`+ESC sequences beyond 4 stray byte matches; the game does no floating point.
+  - `$A`, `$B`, `$V`, `$X` **[?]**: not visible in these counts. Next step: `$A` from the alignment of word variables after odd-sized ones in DGROUP; `$B` from the jump shape of `and`/`or` boolean expressions, both measured against probe compiles.
 
 ### 2.3 Configuration (`POOL.CFG`)
 
@@ -93,23 +118,25 @@ Compressed load image is 63,264 bytes; RLE commands are `0xB0` (fill) and `0xB2`
 
 ### 3.2 Units and start-up **[V]** (`tools/re/tpovl.py`, manifest field `init_chain`)
 
-The entry point is 48 consecutive far calls, one per unit initialisation, in Turbo Pascal's unit order. 35 of them call offset `0020` of an overlay stub segment (entry 0 of an overlay unit) and 13 call resident units:
+The entry point is 48 consecutive far calls, one per unit initialisation, in Turbo Pascal's unit order. 35 of them call offset `0020` of an overlay stub segment (entry 0 of an overlay unit) and 13 call resident units. Two more resident units have no initialisation part and so no init call; they were found by byte comparison with Turbo Pascal 6.0 (section 2.2) and are listed last:
 
 | Unit | Init call | Role |
 |---|---|---|
-| res00 | 0AF8:0000 | System (Turbo Pascal runtime) **[V]** |
-| res01 | 0A40:0000 | Crt **[V]** (INT 10h probe in smoke) |
-| res02 | 0A31:0000 | Dos **[I]** (INT 21h present; typical TP `uses` order after Crt) |
+| res00 | 0AF8:0000 | System (Turbo Pascal 6.0 runtime, byte-matched) **[V]** |
+| res01 | 0A40:0000 | Crt **[V]** (INT 10h probe in smoke); code `0A40..0AA2`, then the Borland Overlay unit `0AA2..0AF8` (2.2) |
+| res02 | 0A31:0000 | 16-byte unit with an empty init **[V]**; Dos code follows at `0A32..0A40` (2.2) |
 | res03 | 08AE:01D2 | [?] |
 | res04 | 0899:013C | [?] |
 | res05 | 0802:0968 | hosts "Please insert overlay disk." string **[V]**; role otherwise [?] |
 | res06 | 0709:0F82 | [?] (many far-call sites) |
 | res07 | 0464:2A4A | [?] (large resident) |
-| res08 | 042B:00A4 | Overlay manager **[V]** (strings `GAME.OVR`, `Overlay error...`) |
+| res08 | 042B:00A4 | game unit that sets up overlays **[V]**: strings `GAME.OVR`, `Overlay error...`, 4 far calls into the Borland Overlay unit at `0AA2` (2.2) |
 | res09 | 03F1:0367 | [?] |
 | res10 | 03ED:0000 | [?] |
 | res11 | 03DA:0000 | [?] |
 | res12 | 00BA:309E | [?] (largest resident code range before DGROUP) |
+| res13 | none | Borland Dos unit, `0A32..0A40` **[V]** (2.2) |
+| res14 | none | Borland Overlay unit, `0AA2..0AF8` **[V]** (2.2) |
 
 Named overlay units from in-code strings (`make map` / `tools/re/name_units.py`) **[V]**; coab analogies tagged **[H]** in `re/units.toml` evidence only:
 
@@ -281,7 +308,7 @@ Each section will cover: purpose, units and routines, data, algorithm, quirks, e
 
 ## 6. Open questions
 
-1. Exact Turbo Pascal version and compiler directives (2.2).
+1. Remaining compiler directives (`$A`, `$B`, `$V`, `$X`) and which game unit is the 16-byte unit at `0A31` (2.2). The version is pinned: Turbo Pascal 6.0, June 1991 release.
 2. Meaning of the stub field at +0E (3.3) and of the fifth `POOL.CFG` line (2.3).
 3. Roles of the 11 unnamed resident units (3.2).
 4. How much of the resident code is hand-written assembly (graphics, sound, timer) **[?]**.

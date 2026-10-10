@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """rtl_ident.py: identify Turbo Pascal runtime units and name RTL entry points.
 
-Names every System/Crt/Overlay (and Dos-like) routine that is far-called from
-outside its own unit. Classification uses INT 21h AH values and known Pascal
-string/file record shapes (playbook 10 step 3).
+Names every System/Crt/Dos/Overlay routine that is far-called from outside its
+own unit. Which ranges are runtime units comes from the byte comparison with
+Turbo Pascal 6.0 (June 1991) (`make tp-compare`, WHITEPAPER 2.2); System entry
+classification uses INT 21h AH values and known Pascal string/file record shapes
+(playbook 10 step 3). Routines in game units that carry a runtime prefix from
+older runs are given provisional names back.
 
 Usage:
   python3 tools/re/rtl_ident.py [--exe poolrad/start-unpack.exe] \
@@ -55,9 +58,26 @@ CRT_NAMED = {
     0x0000: ("Crt_init", "[V] INT 10h video probe (smoke)"),
 }
 
-OVERLAY_NAMED = {
-    0x00A4: ("Overlay_init", "[V] opens GAME.OVR; Assign/Reset path"),
+# Borland Overlay unit (res14, 0AA2). Its routines get names from the far-call graph.
+# 042B:00A4 used to be named Overlay_init here; it is the init of game unit res08
+# (WHITEPAPER 2.2), so it is no longer in this table.
+OVERLAY_NAMED: dict[int, tuple[str, str]] = {}
+
+# Runtime units (WHITEPAPER 2.2, make tp-compare): id -> (name, load-image segment, evidence).
+# Dos and Overlay have no initialisation part, so they are not in the init chain.
+RUNTIME_UNITS = {
+    "res00": ("System", 0x0AF8, "[V] Turbo Pascal 6.0 (June 1991) System unit: byte match, make tp-compare; DS:=%04X"),
+    "res01": ("Crt", 0x0A40, "[V] Turbo Pascal 6.0 (June 1991) Crt unit: byte match, make tp-compare; INT 10h probe in init (smoke)"),
+    "res13": ("Dos", 0x0A32, "[V] Borland Dos unit (TP 6.0, June 1991): byte match, make tp-compare; no initialisation part, so not in the init chain"),
+    "res14": ("Overlay", 0x0AA2, "[V] Borland Overlay unit (TP 6.0, June 1991): byte match, make tp-compare; no initialisation part, so not in the init chain"),
 }
+# Units that earlier versions of this tool mislabelled as runtime units.
+FORMER_RUNTIME = {
+    "res02": "[V] 16-byte game unit: only an empty init (push bp; mov bp,sp; pop bp; retf); Borland Dos code follows at 0A32 (WHITEPAPER 2.2)",
+    "res08": "[V] game unit that sets up overlays: GAME.OVR string, 4 far calls into the Borland Overlay unit at 0AA2 (WHITEPAPER 2.2)",
+}
+RUNTIME_PREFIXES = ("System_", "Crt_", "Dos_", "Overlay_")
+
 
 
 def parse_unit_ranges(text: str) -> list[tuple[str, str, int, int]]:
@@ -211,6 +231,36 @@ def classify_unknown(image: bytes, seg: int, off: int) -> tuple[str, str]:
     return "System_rtl_%04X" % off, "[I] external far-call target from game/other units"
 
 
+def demote_misattributed(sym: str, units_text: str) -> tuple[str, int]:
+    """Give provisional names back to routines that carry a runtime-unit prefix
+    (System_, Crt_, Dos_, Overlay_) but live in a game unit."""
+    inits = {}
+    for part in re.split(r"(?=\[\[resident\]\])", units_text):
+        m = re.search(r'^id = "(res\d+)"', part, re.M)
+        n = re.search(r'^init = "([0-9A-F]{4}):([0-9A-F]{4})"', part, re.M)
+        if m and n:
+            inits[m.group(1)] = int(n.group(2), 16)
+    parts = re.split(r"(?=\[\[routine\]\])", sym)
+    count = 0
+    for i, part in enumerate(parts):
+        u = re.search(r'^unit = "(\w+)"', part, re.M)
+        n = re.search(r'^name = "(\w+)"', part, re.M)
+        rid = re.search(r'^id = "([0-9A-F]{4}):([0-9A-F]{4})"', part, re.M)
+        if not (u and n and rid) or not u.group(1).startswith("res") or u.group(1) in RUNTIME_UNITS:
+            continue
+        if not n.group(1).startswith(RUNTIME_PREFIXES):
+            continue
+        off = int(rid.group(2), 16)
+        new = "%s_init" % u.group(1) if inits.get(u.group(1)) == off else "%s_fn_%04X" % (u.group(1), off)
+        note = "[V] game-unit routine, formerly misnamed %s (WHITEPAPER 2.2)" % n.group(1)
+        part = re.sub(r'^name = ".*"', 'name = "%s"' % new, part, count=1, flags=re.M)
+        part = re.sub(r'^c_name = ".*"', 'c_name = "%s"' % new, part, count=1, flags=re.M)
+        part = re.sub(r'^notes = ".*"', 'notes = "%s"' % note, part, count=1, flags=re.M)
+        parts[i] = part
+        count += 1
+    return "".join(parts), count
+
+
 def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--exe", default=str(ROOT / "poolrad/start-unpack.exe"))
@@ -227,44 +277,15 @@ def main(argv: list[str]) -> int:
         return 1
 
     # Unit tags
-    units_text = set_unit_field(units_text, "res00", "name", "System")
-    units_text = set_unit_field(
-        units_text,
-        "res00",
-        "evidence",
-        "[V] Turbo Pascal System: DS:=%04X; Runtime error / Borland copyright; INT 21h vector install"
-        % DGROUP_PARA,
-    )
-    units_text = set_unit_field(units_text, "res01", "name", "Crt")
-    units_text = set_unit_field(
-        units_text,
-        "res01",
-        "evidence",
-        "[V] Crt: INT 10h AH=0Fh/11h/08h in init (smoke)",
-    )
-    units_text = set_unit_field(units_text, "res08", "name", "Overlay")
-    units_text = set_unit_field(
-        units_text,
-        "res08",
-        "evidence",
-        "[V] Overlay: GAME.OVR / Overlay error / Not enough memory strings",
-    )
-
-    # Detect Dos-like unit: resident with many INT 21h sites, not System/Crt/Overlay
-    # res02 at 0A31 is adjacent to Crt; mark as Dos [I] if INT 21h present in range
-    for uid, name, a, b in ranges:
-        if uid in ("res00", "res01", "res08"):
-            continue
-        blob = image[a * 16 : b * 16]
-        if blob.find(b"\xcd\x21") >= 0 and uid == "res02":
-            units_text = set_unit_field(units_text, uid, "name", "Dos")
-            units_text = set_unit_field(
-                units_text,
-                uid,
-                "evidence",
-                "[I] resident unit with INT 21h; likely Turbo Pascal Dos (between Crt and Overlay in typical uses)",
-            )
-            print("rtl_ident: %s -> Dos [I]" % uid)
+    for uid, (uname, _seg, ev) in RUNTIME_UNITS.items():
+        units_text = set_unit_field(units_text, uid, "name", uname)
+        units_text = set_unit_field(units_text, uid, "evidence", ev % DGROUP_PARA if "%" in ev else ev)
+    for uid, ev in FORMER_RUNTIME.items():
+        block = next((b for b in re.split(r"(?=\[\[resident\]\]|\[\[overlay\]\])", units_text)
+                      if re.search(r'^id = "%s"' % uid, b, re.M)), "")
+        if re.search(r'^name = "(Dos|Overlay)"', block, re.M):
+            units_text = set_unit_field(units_text, uid, "name", uid)
+        units_text = set_unit_field(units_text, uid, "evidence", ev)
 
     # Far-call graph
     calls = defaultdict(set)  # (seg,off) -> caller paras
@@ -278,48 +299,33 @@ def main(argv: list[str]) -> int:
     sym = sym_path.read_text() if sym_path.exists() else ""
 
     named = 0
-    rtl_units = {"res00", "res01", "res08", "res02"}
+    rtl_units = set(RUNTIME_UNITS)
+    seg_unit = {seg: uid for uid, (_n, seg, _e) in RUNTIME_UNITS.items()}
     for (seg, off), callers in sorted(calls.items()):
         uid, uname = owner(ranges, seg)
-        if uid not in rtl_units and seg not in (0xAF8, 0xA40, 0x42B, 0xA31, 0xA32, 0xAA2):
-            continue
-        if uid is None:
-            # map known segs
-            if seg == 0xAF8:
-                uid = "res00"
-            elif seg == 0xA40:
-                uid = "res01"
-            elif seg == 0x42B:
-                uid = "res08"
-            elif seg in (0xA31, 0xA32, 0xAA2):
-                uid = "res02"
+        if uid not in rtl_units:
+            if uid is None and seg in seg_unit:
+                uid = seg_unit[seg]
             else:
                 continue
         ext = [c for c in callers if owner(ranges, c)[0] != uid]
-        if not ext and off not in (
-            list(SYSTEM_NAMED) + list(CRT_NAMED) + list(OVERLAY_NAMED)
-        ):
-            # still name verified table entries even if only internal
-            if not (uid == "res00" and off in SYSTEM_NAMED):
-                if not (uid == "res01" and off in CRT_NAMED):
-                    if not (uid == "res08" and off in OVERLAY_NAMED):
-                        continue
+        hand = (uid == "res00" and off in SYSTEM_NAMED) or (uid == "res01" and off in CRT_NAMED) \
+            or (uid == "res14" and off in OVERLAY_NAMED)
+        if not ext and not hand:
+            continue
 
         if uid == "res00" and off in SYSTEM_NAMED:
             name, note = SYSTEM_NAMED[off]
         elif uid == "res01" and off in CRT_NAMED:
             name, note = CRT_NAMED[off]
-        elif uid == "res08" and off in OVERLAY_NAMED:
+        elif uid == "res14" and off in OVERLAY_NAMED:
             name, note = OVERLAY_NAMED[off]
         elif uid == "res00":
             name, note = classify_unknown(image, seg, off)
             note = "%s; ext_callers=%d" % (note, len(ext))
-        elif uid == "res01":
-            name, note = "Crt_rtl_%04X" % off, "[I] Crt entry; ext_callers=%d" % len(ext)
-        elif uid == "res08":
-            name, note = "Overlay_rtl_%04X" % off, "[I] Overlay entry; ext_callers=%d" % len(ext)
         else:
-            name, note = "Dos_rtl_%04X" % off, "[I] Dos-like entry; ext_callers=%d" % len(ext)
+            uname = RUNTIME_UNITS[uid][0]
+            name, note = "%s_rtl_%04X" % (uname, off), "[V] %s unit entry; ext_callers=%d" % (uname, len(ext))
 
         # Prefer unit-base relative id as used by enumerator for resident
         # Enumerator uses start_para:offset_from_unit_start
@@ -342,15 +348,18 @@ def main(argv: list[str]) -> int:
         rid = "0A40:%04X" % off
         sym = patch_routine(sym, rid, name, note, "hand-verified Crt entry")
     for off, (name, note) in OVERLAY_NAMED.items():
-        rid = "042B:%04X" % off
+        rid = "0AA2:%04X" % off
         sym = patch_routine(sym, rid, name, note, "hand-verified Overlay entry")
+    sym, demoted = demote_misattributed(sym, units_text)
+    if demoted:
+        print("rtl_ident: %d routines in game units lost a runtime-unit name" % demoted)
 
     units_path.write_text(units_text)
     sym_path.write_text(sym)
     print("rtl_ident: named/updated %d RTL-facing routines -> %s" % (named, sym_path))
     print(
-        "rtl_ident: TP version bound [I]: FBOV + copyright 1983,91 => Turbo Pascal 6.0 or 7.0 "
-        "(not 5.x TPOV). Exact pin needs compiler disks."
+        "rtl_ident: TP version pinned [V]: Turbo Pascal 6.0, June 1991 release "
+        "(runtime units byte-match; make tp-compare, WHITEPAPER 2.2)."
     )
     return 0
 

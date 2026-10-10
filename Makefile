@@ -8,12 +8,14 @@ OVR := poolrad/GAME.OVR
 PACKED := poolrad/START.EXE
 
 .PHONY: help setup doctor inputs unexepack overlays map dax smoke status next ghidra p1-check \
+        tp-install tp-probe tp-compare tp-pin tpc emu2 \
         packet lock unlock \
         oracle-run golden sessions host hybrid fuzz test check review-pass dos coco3
 
 help:
 	@echo "Available now:  setup doctor inputs unexepack overlays map dax smoke"
 	@echo "Phase 1:        status next ghidra p1-check packet lock unlock"
+	@echo "Turbo Pascal:   emu2 tp-install tp-probe tp-compare tp-pin tpc (docs/setup/SETUP-tp.md)"
 	@echo "Phase 2:        oracle-run golden"
 	@echo "Phase 3:        host hybrid fuzz sessions test check review-pass"
 	@echo "Later:          dos (P8) coco3 (P7)"
@@ -59,6 +61,26 @@ ghidra: map       ## rebuild the Ghidra project (build/ghidra/, not committed)
 
 p1-check:         ## verify Phase 1 exit criteria (SPEC section 10)
 	$(PY) tools/agent/p1_check.py
+
+# Turbo Pascal version pin (WHITEPAPER 2.2, docs/setup/SETUP-tp.md). Compiler archives are
+# never committed: they live in build/toolchain/dist/.
+emu2:             ## build the headless DOS emulator used by tp-probe (tools/vendor/emu2)
+	sh tools/setup/build-emu2.sh
+
+tp-install:       ## verify build/toolchain/dist/ hashes and extract TPC.EXE + TURBO.TPL per version
+	$(PY) tools/re/tp_toolchain.py install
+
+tp-probe:         ## compile tools/re/tp_probe/SINK.PAS with each installed compiler
+	$(PY) tools/re/tp_toolchain.py probe
+
+tp-compare:       ## align our System/Crt/Dos/Overlay code with each probe; build/toolchain/compare.md
+	$(PY) tools/re/tp_toolchain.py compare
+
+tp-pin: tp-install tp-probe tp-compare  ## all of the above
+
+tpc:              ## compile SRC=<file.pas> with the pinned TP 6.0 (VER=, DISASM=1, OPTS='/$$R+') into build/tpc/
+	@test -n "$(SRC)" || (echo 'tpc: usage: make tpc SRC=path/FILE.PAS [DISASM=1] [VER=tp70] [OPTS=...]'; exit 2)
+	$(PY) tools/re/tp_toolchain.py tpc $(SRC) $(if $(VER),--version $(VER)) $(if $(DISASM),--disasm) $(if $(OPTS),--opts $(OPTS))
 
 packet:           ## write build/packets/<id>.md for UNIT= or FN=
 	$(PY) tools/agent/packet.py --unit "$(UNIT)" --fn "$(FN)"

@@ -28,10 +28,12 @@ Checked 2026-10-07. Licences from each repository's metadata. "Read only" means:
 | [bethington/ghidra-mcp](https://github.com/bethington/ghidra-mcp) | Ghidra MCP server (v6.0.0, Ghidra 12.1.3) | see repo | Optional interactive access |
 | [unicorn-engine/unicorn](https://github.com/unicorn-engine/unicorn) | CPU emulator (2.1.4) | GPL-2.0 (library) | Tool dependency (not linked into the game) |
 | [NationalSecurityAgency/ghidra](https://github.com/NationalSecurityAgency/ghidra) | Ghidra 12.1.4 | Apache-2.0 | Tool |
+| Borland Turbo Pascal 6.0 (June 1991), plus 6.0 (Oct 1990) and 7.0 for comparison | The compiler and runtime that built POOL (pinned 2026-10-09, `docs/setup/SETUP-tp.md`) | Proprietary (Borland, now Embarcadero); not freeware (only TP 1.0, 3.02 and 5.5 were released free); archive.org hosting is not a licence | Local reference tool under `build/toolchain/` only; never committed or pushed; runtime code never copied into `src/` |
+| [dmsc/emu2](https://github.com/dmsc/emu2) | Headless DOS emulator that runs `TPC.EXE` (commit `9d8698d`) | GPL-2.0 | Tool, built into `tools/vendor/` (ignored by git); no code copied |
 
 ## Background reading
 
 - Alex Bevilacqua, "Reverse Engineering a DOS Game with Ghidra and Codex" (2026): `docs/articles/`.
 - Simeon Pilgrim, blog posts on Curse of the Azure Bonds and SSI game tools: https://simeonpilgrim.com/blog/curse-of-the-azure-bonds
 - The Digital Antiquarian, "Opening the Gold Box" series: https://www.filfre.net/2017/03/opening-the-gold-box-part-5-all-that-glitters-is-not-gold/
-- Turbo Pascal 7.0 Programmer's Reference and Language Guide (bitsavers): runtime library, overlay manager, calling conventions.
+- Turbo Pascal 6.0 Programmer's Guide and Library Reference (bitsavers, archive.org): the documentation for the compiler that built POOL. The 7.0 Programmer's Reference and Language Guide (bitsavers) are still useful for the runtime, overlay manager and calling conventions, but check any 7.0-only feature (`const` parameters, `$Q`, `Test8086`) against 6.0.

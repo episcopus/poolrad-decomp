@@ -7,7 +7,7 @@
 1. Same parameters, in the same order, with the same types and sizes as the disassembly shows.
 2. Same calls, in the same order, with the same arguments; no call added or removed.
 3. Same evaluation order where side effects or RNG calls are involved.
-4. Pascal semantics respected: string lengths and truncation, set operations, signed vs unsigned comparisons, integer wraparound, Boolean as byte.
+4. Pascal semantics respected: string lengths and truncation, set operations, signed vs unsigned comparisons, integer wraparound, Boolean as byte. When unsure what TP 6.0 does for a construct, compile it with `make tpc SRC=... DISASM=1` and compare the listing with the original routine before filing a finding.
 5. Every global and record field used by offset matches `re/dseg.toml` / `re/types/`.
 6. Quirks kept and marked `QUIRK:`.
 7. Fuzz spec covers the routine's interesting inputs (look at branches the fuzz report shows as never taken).

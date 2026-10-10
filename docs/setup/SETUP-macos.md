@@ -25,6 +25,8 @@ make doctor && make inputs && make overlays && make dax && make smoke
 | OpenJDK 21 | 21 | `brew install openjdk@21` | Ghidra 12 requires Java 21 or later | P1 |
 | Ghidra | 12.1.4 | `setup-macos.sh --with-ghidra` (downloads the official zip into `~/opt`) | analysis database, headless scripts via PyGhidra | P1 |
 | DOSBox-X | 2026.10.01 | `brew install dosbox-x` | cross-checking the oracle against a real DOS emulator, running the original by hand | P2 |
+| emu2 | commit `9d8698d` | `make emu2` (clones and builds into `tools/vendor/emu2`) | headless DOS emulator that runs the Turbo Pascal compiler | P1 |
+| Turbo Pascal 6.0 (June 1991) | `TPC.EXE` sha256 `03836c60...` | archives into `build/toolchain/dist/`, then `make tp-pin` (`docs/setup/SETUP-tp.md`); proprietary, never committed | reference compiler: version pin, runtime naming, codegen questions (`make tpc`) | P1 |
 | CMake, Ninja, pkgconf | current | `brew install cmake ninja pkgconf` | native C build | P3 |
 | SDL3 | current | `brew install sdl3` | host platform layer (window, input, audio) | P3 |
 

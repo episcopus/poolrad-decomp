@@ -1,0 +1,84 @@
+# Turbo Pascal candidate compilers for the version pin (WHITEPAPER 2.2, docs/setup/SETUP-tp.md).
+# Archives are NOT in git: put them under build/toolchain/dist/ (see SETUP-tp.md) and run
+# `make tp-install`. Every hash below was checked on 2026-10-09 against the archive.org
+# item metadata and against the downloaded bytes.
+#
+# Licence: Turbo Pascal 6.0 and 7.0 are proprietary (Borland, now Embarcadero). Unlike
+# TP 1.0, 3.02 and 5.5 they were never released as freeware. archive.org hosting is not a
+# licence. Use them locally for reverse-engineering comparison only; never commit them.
+
+# The compiler that built POOL (WHITEPAPER 2.2). `make tpc` uses it by default.
+pinned = "tp60-1991"
+
+[version."tp60-1991"]
+label = "Turbo Pascal 6.0 (June 1991 release; TURBO.TPL 'Portions Copyright (c) 1983,91 Borland')"
+archive_item = ""  # not published: use media you own; the hashes below identify the release
+member_date = "1991-06-11"
+[[version."tp60-1991".dist]]
+path = "tp60/disk1_install_compiler.img"
+source = ""  # not published: use media you own; the hashes below identify the release
+bytes = 368640
+sha1 = "6321a93c3442f05a4160aadcd417720016d098f8"
+md5 = "9579e5044cd22aab90bd760936f1a06b"
+[[version."tp60-1991".dist]]
+path = "tp60/disk2_bgi_utilities.img"
+source = ""  # not published: use media you own; the hashes below identify the release
+bytes = 368640
+sha1 = "86aef330de1e40a87105c57ad8fb26faaa95e898"
+optional = true
+[[version."tp60-1991".dist]]
+path = "tp60/disk3_turbo_vision_tour.img"
+source = ""  # not published: use media you own; the hashes below identify the release
+bytes = 368640
+sha1 = "aa4ca3c557b7b686d444ea19f1effe17dff9ad64"
+optional = true
+[[version."tp60-1991".dist]]
+path = "tp60/disk4_help.img"
+source = ""  # not published: use media you own; the hashes below identify the release
+bytes = 368640
+sha1 = "3414a155b05450ba884d0ec8adbc9f57421ba84a"
+optional = true
+[version."tp60-1991".extract]
+# FAT12 floppy -> TURBO.ZIP (PKZIP implode) -> members
+container = "fat12:tp60/disk1_install_compiler.img:TURBO.ZIP"
+sha1_container = "90c78eb1039c357df0e0800a6eaf84b1f02a3807"
+[version."tp60-1991".files]
+"TPC.EXE" = { member = "TPC.EXE", bytes = 69278, sha1 = "873d21480e2e22272f0138c447f399ec9385897e" }
+"TURBO.TPL" = { member = "TURBO.TPL", bytes = 45344, sha1 = "cdcad876ad8b11273426dc24720d486114c6f22e" }
+
+[version."tp60-1990"]
+label = "Turbo Pascal 6.0 (October 1990 release; TURBO.TPL 'Portions Copyright (c) 1983,90 Borland')"
+archive_item = ""  # not published: use media you own; the hashes below identify the release
+member_date = "1990-10-23"
+# Use only the Borland distribution ZIPs at the top of this archive. Its Source/ tree is
+# third-party material of unclear provenance; the extractor never touches it.
+[[version."tp60-1990".dist]]
+path = "tp60src/TP6SrcInst.zip"
+source = ""  # not published: use media you own; the hashes below identify the release
+bytes = 1641257
+sha1 = "4432ede41be7be0f36aa5cf340406fa967d4779e"
+md5 = "0004c0c66b4e2fde9bdaa41bb6a3ca07"
+[version."tp60-1990".extract]
+container = "zip:tp60src/TP6SrcInst.zip:TURBO.ZIP"
+sha1_container = "7a00ce28dfcbab145fc630dc51d6478a2fed9923"
+[version."tp60-1990".files]
+"TPC.EXE" = { member = "TPC.EXE", bytes = 69214, sha1 = "f6be50b624abb10ef2ddad0c7ea5b6c0c42bad3f" }
+"TURBO.TPL" = { member = "TURBO.TPL", bytes = 45344, sha1 = "8f5b2487f7e86896a3682e7b619d4ff651733d74" }
+
+[version."tp70"]
+label = "Turbo Pascal 7.0 (October 1992; TURBO.TPL 'Portions Copyright (c) 1983,92 Borland')"
+archive_item = ""  # not published: use media you own; the hashes below identify the release
+member_date = "1992-10-30"
+[[version."tp70".dist]]
+path = "tp70/TP70.zip"
+source = ""  # not published: use media you own; the hashes below identify the release
+bytes = 1815811
+sha1 = "0025e6bfa804fa4f3cfa88d83997d0050f5edc4a"
+md5 = "a60e4a1c2fef43b9191536d9c04686fe"
+[version."tp70".extract]
+# TP70.zip -> TP70/PASCAL.EXE (PKZIP self-extractor; plain unzip reads it) -> members
+container = "zip:tp70/TP70.zip:TP70/PASCAL.EXE"
+sha1_container = "203263c92d6d093afe643879c8dd140219cdb4da"
+[version."tp70".files]
+"TPC.EXE" = { member = "./TP/BIN/TPC.EXE", bytes = 75400, sha1 = "bacdaee759aa019bfddcf432a7aff0df939073de" }
+"TURBO.TPL" = { member = "./TP/BIN/TURBO.TPL", bytes = 48432, sha1 = "23d1a4eaccbd4cf10769676defaa45cbe1cbb615" }

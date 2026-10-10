@@ -13,7 +13,7 @@ segment = "0AF8"
 code_start = "0AF8:0000"
 code_end = "0C7C:0000"
 code_bytes = 6208
-evidence = "[V] Turbo Pascal System: DS:=0C7C; Runtime error / Borland copyright; INT 21h vector install"
+evidence = "[V] Turbo Pascal 6.0 (June 1991) System unit: byte match, make tp-compare; DS:=0C7C"
 source = ""
 
 [[resident]]
@@ -23,21 +23,21 @@ kind = "resident"
 init = "0A40:0000"
 segment = "0A40"
 code_start = "0A40:0000"
-code_end = "0AF8:0000"
-code_bytes = 2944
-evidence = "[V] Crt: INT 10h AH=0Fh/11h/08h in init (smoke)"
+code_end = "0AA2:0000"
+code_bytes = 1568
+evidence = "[V] Turbo Pascal 6.0 (June 1991) Crt unit: byte match, make tp-compare; INT 10h probe in init (smoke)"
 source = ""
 
 [[resident]]
 id = "res02"
-name = "Dos"
+name = "res02"
 kind = "resident"
 init = "0A31:0000"
 segment = "0A31"
 code_start = "0A31:0000"
-code_end = "0A40:0000"
-code_bytes = 240
-evidence = "[I] resident unit with INT 21h; likely Turbo Pascal Dos (between Crt and Overlay in typical uses)"
+code_end = "0A32:0000"
+code_bytes = 16
+evidence = "[V] 16-byte game unit: only an empty init (push bp; mov bp,sp; pop bp; retf); Borland Dos code follows at 0A32 (WHITEPAPER 2.2)"
 source = ""
 
 [[resident]]
@@ -102,14 +102,14 @@ source = ""
 
 [[resident]]
 id = "res08"
-name = "Overlay"
+name = "res08"
 kind = "resident"
 init = "042B:00A4"
 segment = "042B"
 code_start = "042B:0000"
 code_end = "0464:0000"
 code_bytes = 912
-evidence = "[V] Overlay: GAME.OVR / Overlay error / Not enough memory strings"
+evidence = "[V] game unit that sets up overlays: GAME.OVR string, 4 far calls into the Borland Overlay unit at 0AA2 (WHITEPAPER 2.2)"
 source = ""
 
 [[resident]]
@@ -158,6 +158,30 @@ code_start = "00BA:0000"
 code_end = "03C5:0000"
 code_bytes = 12464
 evidence = ""
+source = ""
+
+[[resident]]
+id = "res13"
+name = "Dos"
+kind = "resident"
+init = ""
+segment = "0A32"
+code_start = "0A32:0000"
+code_end = "0A40:0000"
+code_bytes = 224
+evidence = "[V] Borland Dos unit (TP 6.0, June 1991): byte match, make tp-compare; no initialisation part, so not in the init chain"
+source = ""
+
+[[resident]]
+id = "res14"
+name = "Overlay"
+kind = "resident"
+init = ""
+segment = "0AA2"
+code_start = "0AA2:0000"
+code_end = "0AF8:0000"
+code_bytes = 1376
+evidence = "[V] Borland Overlay unit (TP 6.0, June 1991): byte match, make tp-compare; no initialisation part, so not in the init chain"
 source = ""
 
 [[overlay]]

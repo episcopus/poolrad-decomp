@@ -4,19 +4,27 @@
 
 [[unit]]
 id = "res00"
-reason = "System RTL; every unit depends on it"
+reason = "System RTL (TP 6.0 June 1991, byte-matched); every unit depends on it"
 
 [[unit]]
 id = "res01"
-reason = "Crt; console/video helpers"
+reason = "Crt (TP 6.0, byte-matched); console/video helpers"
+
+[[unit]]
+id = "res13"
+reason = "Dos (TP 6.0, byte-matched, no init); INT 21h helpers"
+
+[[unit]]
+id = "res14"
+reason = "Overlay (TP 6.0, byte-matched, no init); overlay manager, INT 3Fh"
 
 [[unit]]
 id = "res02"
-reason = "Dos [I]; INT 21h helpers"
+reason = "16-byte game unit with an empty init; trivial"
 
 [[unit]]
 id = "res08"
-reason = "Overlay manager; loads GAME.OVR"
+reason = "game unit that sets up overlays (GAME.OVR, calls Overlay unit)"
 
 [[unit]]
 id = "ovl00"

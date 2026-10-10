@@ -11,7 +11,9 @@ You are working on a **behaviour-matching decompilation of SSI's Pool of Radianc
 
 ## Facts you must not get wrong
 
-- The original program is **Turbo Pascal**, 16-bit real mode, with **35 overlay units** in `GAME.OVR` (`FBOV`) and **13 resident units**. It is not C. Byte-matching C is impossible; we prove behaviour instead (SPEC section 4).
+- The original program is **Turbo Pascal 6.0 (June 1991 release)**, 16-bit real mode, with **35 overlay units** in `GAME.OVR` (`FBOV`) and **15 known resident units**: 13 in the init chain plus the Borland Dos (`res13`, `0A32`) and Overlay (`res14`, `0AA2`) units, which have no init. It is not C. Byte-matching C is impossible; we prove behaviour instead (SPEC section 4).
+- Not TP 7.0 and not the October 1990 TP 6.0: our runtime units byte-match the June 1991 compiler only (`make tp-compare`, whitepaper 2.2). TP 6.0 has no `const` parameters and no `$Q`. POOL was compiled `$F+ $S- $R- $G-`, with `$I+` only in res05.
+- The Turbo Pascal compiler is a proprietary reference tool: it lives in `build/toolchain/` (ignored by git) and is never committed, pushed or copied into `src/`.
 - Analyse `poolrad/start-unpack.exe` (the unpacked image), not `START.EXE` (EXEPACK packed).
 - Our build differs from the 1988 build other projects analysed (38 overlays, `TPOV`). Their addresses never apply to us; their findings are leads to re-prove.
 
@@ -41,6 +43,9 @@ You are working on a **behaviour-matching decompilation of SSI's Pool of Radianc
 | `make status` / `make next` | Project status, next work item | P1 (now) |
 | `make ghidra` | Rebuild the Ghidra project from `re/` (needs `env.local.sh`) | P1 (now) |
 | `make p1-check` | Verify Phase 1 exit criteria | P1 (now) |
+| `make emu2` | Build the headless DOS emulator that runs the compiler | P1 (now) |
+| `make tp-pin` | Install the Turbo Pascal compilers from `build/toolchain/dist/`, compile the probe, compare runtimes (`docs/setup/SETUP-tp.md`) | P1 (now) |
+| `make tpc SRC=x.pas [DISASM=1]` | Compile Pascal with the pinned TP 6.0; listing labels runtime calls with POOL's routines | P1 (now) |
 | `make packet UNIT=` / `FN=` | Write a work packet under `build/packets/` | P1 (now) |
 | `make lock UNIT=` / `make unlock UNIT=` | Claim or release a unit | P1 (now) |
 | `make packet FN=<id>` / `UNIT=<id>` | Write a work packet to `build/packets/` | P1 |

@@ -103,6 +103,7 @@ def main(argv: list[str]) -> int:
         for r in routines
         if str(r.get("name", "")).startswith(("System_", "Crt_", "Overlay_", "Dos_"))
     )
+    res_init = [r for r in residents if r.get("init")]
     code_bytes = sum(int(u.get("code_bytes") or 0) for u in residents + overlays)
     routine_bytes = sum(int(r.get("size") or 0) for r in routines)
 
@@ -119,12 +120,12 @@ def main(argv: list[str]) -> int:
         "| P1 exit criterion | State |",
         "|---|---|",
         "| Ghidra project via `make ghidra` | tool + `build/ghidra/` (regenerate after map) |",
-        "| 48 units with code ranges in `re/units.toml` | %d resident + %d overlay = %d |"
-        % (len(residents), len(overlays), len(residents) + len(overlays)),
+        "| 48 units with code ranges in `re/units.toml` | %d init-chain resident + %d overlay = %d; plus %d runtime units without init (Dos, Overlay) |"
+        % (len(res_init), len(overlays), len(res_init) + len(overlays), len(residents) - len(res_init)),
         "| Every routine listed in `re/symbols.toml` | %d routines (sum sizes %d; unit code_bytes %d) |"
         % (len(routines), routine_bytes, code_bytes),
-        "| RTL identified and named | System/Crt/Overlay/Dos; %d RTL-prefixed names |" % named_rtl,
-        "| TP version pinned or bounded | bounded: TP 6.0/7.0 era (FBOV + 1983,91) |",
+        "| RTL identified and named | System/Crt/Dos/Overlay byte-matched to TP 6.0; %d RTL-prefixed names |" % named_rtl,
+        "| TP version pinned or bounded | **pinned**: Turbo Pascal 6.0, June 1991 release (`make tp-compare`, WHITEPAPER 2.2) |",
         "| DGROUP map started | `re/dseg.toml` |",
         "| Calling convention samples | whitepaper section 3.4 |",
         "| Initial names from strings / prior art | overlay names in `re/units.toml` |",
@@ -173,7 +174,15 @@ def main(argv: list[str]) -> int:
         "## Blockers and decisions waiting for the human",
         "",
         "- Review `docs/spec/SPEC.md` ADR-001 and memory model (section 7.3) if not already.",
-        "- Exact Turbo Pascal version (6.0 vs 7.0) if compiler disks are available.",
+        "- `re/units.toml` lists units found through the init chain plus the two runtime units without init; game units without an initialisation part are still invisible (WHITEPAPER 2.2).",
+        "",
+        "## Toolchain",
+        "",
+        "| Tool | Pin | Command |",
+        "|---|---|---|",
+        "| Turbo Pascal compiler (reference, never committed) | 6.0, June 1991 release (`tools/re/tp_toolchain.toml`) | `make tp-install`, `make tpc SRC=...` |",
+        "| Runtime byte comparison | System/Crt/Dos/Overlay match | `make tp-compare` |",
+        "| Headless DOS emulator | emu2 (commit in `tools/setup/build-emu2.sh`) | `make emu2` |",
         "",
     ]
     Path(args.output).write_text("\n".join(lines))

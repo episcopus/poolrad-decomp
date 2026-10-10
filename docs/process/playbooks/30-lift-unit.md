@@ -22,6 +22,7 @@
 ## Rules of thumb
 
 - Ghidra's decompiler output is a hint, not the answer: it often mis-types Pascal strings, sets and nested-procedure frames.
+- When a code shape is unclear (string temporaries, set operations, `with`, `case` tables, nested-procedure frames, Boolean evaluation), write the Pascal you think it was and compile it with the compiler that built the game: `make tpc SRC=<scratch dir>/GUESS.PAS DISASM=1` (TP 6.0, June 1991; output in `build/tpc/`). Use POOL's switches: `{$F+,S-,R-,G-}`, plus `{$I+}` only for res05 (whitepaper 2.2). Runtime calls in the listing are labelled with the matching POOL routine. TP 6.0 has no `const` parameters and no `$Q`. Keep scratch Pascal out of `src/`; the C is still the deliverable.
 - Keep original quirks (off-by-ones, uninitialised reads); comment them as `QUIRK:` with the address.
 - Never change shared headers or `platform.h` yourself; ask the orchestrator.
 

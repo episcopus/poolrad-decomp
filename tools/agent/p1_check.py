@@ -36,24 +36,26 @@ def main() -> int:
         bad("build/ghidra/ missing; run: . tools/setup/env.local.sh && make ghidra")
         fails += 1
 
-    # 2. 48 units with code ranges
+    # 2. units with code ranges: 48 from the init chain (13 resident + 35 overlay)
+    #    plus the Borland runtime units without an initialisation part (Dos, Overlay;
+    #    WHITEPAPER 2.2), which the init chain cannot see.
     units = (ROOT / "re/units.toml").read_text()
-    res = len(re.findall(r'^\[\[resident\]\]$', units, re.M))
-    # exclude false positive from comments: only tables that have id=
-    res_ids = re.findall(r'^\[\[resident\]\]\n(?:.*\n)*?id = "(res\d+)"', units, re.M)
-    # simpler:
-    res_ids = re.findall(r'^id = "(res\d+)"', units, re.M)
+    blocks = re.split(r"(?=^\[\[resident\]\]$|^\[\[overlay\]\]$)", units, flags=re.M)
+    res_blocks = [b for b in blocks if b.startswith("[[resident]]")]
+    res_init = [b for b in res_blocks if re.search(r'^init = "[0-9A-F]{4}:[0-9A-F]{4}"', b, re.M)]
+    res_noinit = [b for b in res_blocks if re.search(r'^init = ""', b, re.M)]
     ovl_ids = re.findall(r'^id = "(ovl\d+)"', units, re.M)
-    starts = len(re.findall(r'^code_start = "', units, re.M))
-    if len(res_ids) == 13 and len(ovl_ids) == 35 and starts >= 13:
-        ok("48 units (13 resident + 35 overlay) with code_start on residents")
+    starts = sum(1 for b in res_blocks if re.search(r'^code_start = "', b, re.M))
+    if len(res_init) == 13 and len(ovl_ids) == 35 and starts == len(res_blocks):
+        ok("48 init-chain units (13 resident + 35 overlay) + %d runtime units without init, all with code ranges"
+           % len(res_noinit))
     else:
         bad(
-            "units.toml expected 13 res + 35 ovl with ranges; got res=%d ovl=%d code_start=%d"
-            % (len(res_ids), len(ovl_ids), starts)
+            "units.toml expected 13 init-chain residents + 35 overlays with ranges; got res=%d (+%d no init) ovl=%d code_start=%d"
+            % (len(res_init), len(res_noinit), len(ovl_ids), starts)
         )
         fails += 1
-    for need in ("System", "Crt", "Overlay"):
+    for need in ("System", "Crt", "Dos", "Overlay"):
         if 'name = "%s"' % need in units:
             ok("runtime unit named %s" % need)
         else:
@@ -83,21 +85,26 @@ def main() -> int:
         "System_IOResult",
         "System_init",
         "Crt_init",
-        "Overlay_init",
     ]
     missing = [n for n in rtl_need if ('name = "%s"' % n) not in sym]
+    # Dos and Overlay have no init; require at least one named entry each (res13, res14)
+    for prefix in ("Dos_", "Overlay_"):
+        if not re.search(r'^name = "%s' % prefix, sym, re.M):
+            missing.append(prefix + "*")
     if not missing:
         ok("core RTL routine names present (%d)" % len(rtl_need))
     else:
         bad("missing RTL names: %s" % ", ".join(missing))
         fails += 1
 
-    # 5. version bounded in whitepaper
+    # 5. version pinned (or at least bounded) in the whitepaper
     wp = (ROOT / "docs/design/WHITEPAPER.md").read_text()
-    if "6.0 or 7.0" in wp or "6.0 or 7" in wp:
+    if "Pinned: Turbo Pascal 6.0" in wp:
+        ok("TP version pinned in whitepaper (Turbo Pascal 6.0, June 1991)")
+    elif "6.0 or 7.0" in wp or "6.0 or 7" in wp:
         ok("TP version bounded in whitepaper")
     else:
-        bad("whitepaper missing TP 6.0/7.0 bound")
+        bad("whitepaper missing TP version pin or bound")
         fails += 1
 
     # 6. dseg started

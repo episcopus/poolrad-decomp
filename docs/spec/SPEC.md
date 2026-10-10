@@ -2,13 +2,13 @@
 
 | | |
 |---|---|
-| Version | 0.1 (draft for review) |
-| Date | 2026-10-07 |
+| Version | 0.2 (Turbo Pascal 6.0 pinned; runtime units corrected) |
+| Date | 2026-10-09 |
 | Target | SSI *Pool of Radiance*, DOS, the build in `poolrad/` (hashes in section 2) |
 | Output | Readable C in `src/`, a build that reproduces the game, a living design doc in `docs/design/` |
 | Execution | AI-agent driven, harness agnostic (Claude Code, Cursor, OpenCode), human supervised |
 
-This document says **what** we build, **how** we prove it is right, and **how agents do the work**. The agent operating manual is `AGENTS.md`; step-by-step procedures are in `docs/process/playbooks/`; environment setup is in `docs/setup/SETUP-macos.md`; what we learn about the game goes in `docs/design/WHITEPAPER.md`.
+This document says **what** we build, **how** we prove it is right, and **how agents do the work**. The agent operating manual is `AGENTS.md`; step-by-step procedures are in `docs/process/playbooks/`; environment setup is in `docs/setup/SETUP-macos.md` (the reference compiler in `docs/setup/SETUP-tp.md`); what we learn about the game goes in `docs/design/WHITEPAPER.md`.
 
 ---
 
@@ -40,6 +40,15 @@ All work targets exactly these files. Tools refuse to run on anything else (`mak
 
 `start-unpack.exe` is reproduced from `START.EXE` by `tools/re/unexepack.py` (`make unexepack`); the output matches the pinned file byte for byte.
 
+**Pinned toolchain (reference only).** The program was compiled with **Turbo Pascal 6.0, June 1991 release** (whitepaper section 2.2). Its runtime units (System, Crt, Dos, Overlay) in our image are byte-identical, apart from link-time fields, to the same units linked by this compiler (`make tp-compare`). The compiler is proprietary and is never committed: `make tp-install` checks the archives in `build/toolchain/dist/` against `tools/re/tp_toolchain.toml` and installs it under `build/toolchain/tp60-1991/` (`docs/setup/SETUP-tp.md`).
+
+| File | Bytes | SHA-256 | Notes |
+|---|---:|---|---|
+| `TPC.EXE` | 69,278 | `03836c60d1a8e5ad4394462813bfd497d1d091913e533065c75fdf5cda97c563` | Command-line compiler; banner "Version 6.0 ... 1983,90"; files dated 1991-06-11 |
+| `TURBO.TPL` | 45,344 | `19040e3914d1b32209f88754ece12d6bc1eafc0c9e7873b73bdeee95483931ff` | Runtime library; "Portions Copyright (c) 1983,91 Borland" |
+
+The first TP 6.0 release (October 1990, runtime "1983,90") and TP 7.0 (runtime "1983,92") were compared and eliminated. `make tpc SRC=<file.pas>` compiles Pascal with the pinned compiler under emu2 (`make emu2`), a headless DOS emulator.
+
 **Version caution.** Other Pool of Radiance projects analysed a different, earlier build: a 47,936-byte `START.EXE` with a 232,379-byte `GAME.OVR` in Turbo Pascal 5.x `TPOV` format with 38 overlays (wicanr2/Pool-of-Radiance-cht, `docs/re/dos-toolchain-baseline.md`). Ours has 35 overlays in `FBOV` format. Their findings are leads, never addresses we can reuse without re-proving them on our bytes.
 
 ---
@@ -48,17 +57,18 @@ All work targets exactly these files. Tools refuse to run on anything else (`mak
 
 Each item was checked against our files on 2026-10-07; details and evidence are in the whitepaper.
 
-1. **Language: Turbo Pascal, not C.** The unpacked image contains the Borland Pascal runtime error strings ("Runtime error ", " at ", ".") followed by "Portions Copyright (c) 1983,91 Borland". The entry point is a chain of 48 far calls, one per unit initialisation, which is how Turbo Pascal starts a program.
-2. **Overlays.** `GAME.OVR` begins with `FBOV`. 35 overlay stub segments (INT 3Fh headers) in the load image describe 35 overlay units that tile the overlay file exactly, with 406 entry points and 197,641 bytes of code. The other 13 init calls go to resident units (the runtime and resident game units). `tools/re/tpovl.py` regenerates all of this.
+1. **Language: Turbo Pascal 6.0 (June 1991 release), not C.** The unpacked image contains the Borland Pascal runtime error strings ("Runtime error ", " at ", ".") followed by "Portions Copyright (c) 1983,91 Borland", and its runtime units byte-match that compiler's (section 2, checked 2026-10-09). The entry point is a chain of 48 far calls, one per unit initialisation, which is how Turbo Pascal starts a program.
+2. **Overlays.** `GAME.OVR` begins with `FBOV`. 35 overlay stub segments (INT 3Fh headers) in the load image describe 35 overlay units that tile the overlay file exactly, with 406 entry points and 197,641 bytes of code. The other 13 init calls go to resident units (the runtime and resident game units). Units without an initialisation part make no init call: the Borland Dos (`0A32`) and Overlay (`0AA2`) units are two of them, found by the byte comparison, so there are 15 known resident units. `tools/re/tpovl.py` regenerates the overlay facts; `make tp-compare` the runtime ones.
 3. **Packing.** The shipped `START.EXE` is EXEPACK compressed; `make unexepack` unpacks it to the pinned `start-unpack.exe`.
 4. **Data.** All 113 `.DAX` files are block archives with one header layout, and all 1,245 blocks decompress to their declared size with one RLE scheme (whitepaper, section 4.1).
 5. **Memory.** DGROUP is paragraph `0C7C` in the load image (set by the System unit init), the stack segment is `14F2` with SP `4000`.
+6. **Compiler switches** (whitepaper section 2.2): every routine returns far (`$F+`), no stack checks (`$S-`), no range checks (`$R-`), no 80286 instructions (`$G-`), no floating point; I/O checks (`$I+`) only in resident unit res05. TP 6.0 has no `$Q` and no `const` parameters.
 
 Consequences:
 
 - A byte-matching **C** decompilation is not possible: no C compiler produced these bytes.
-- The natural decomposition is the original one: **48 units** (13 resident, 35 overlay), each a source module. We keep that boundary in `src/` (it also maps well onto CoCo 3 memory banking later).
-- Turbo Pascal semantics (length-prefixed strings, sets, nested procedures, VAR parameters, the RTL's `Random`) must be reproduced exactly in C helpers, or behaviour will drift.
+- The natural decomposition is the original one: **50 known units** (48 from the init chain: 13 resident and 35 overlay; plus the Dos and Overlay runtime units, which have no init), each a source module. Game units without an initialisation part would also be invisible to the init chain; any found later are added the same way. We keep that boundary in `src/` (it also maps well onto CoCo 3 memory banking later).
+- Turbo Pascal semantics (length-prefixed strings, sets, nested procedures, VAR parameters, the RTL's `Random`) must be reproduced exactly in C helpers, or behaviour will drift. Because the runtime is a known compiler's, its behaviour can be checked against fresh compiles (`make tpc`) as well as against our bytes.
 
 ---
 
@@ -71,7 +81,7 @@ Consequences:
 | Option | What it gives | Why not chosen as primary |
 |---|---|---|
 | A. Byte-matching C | The strongest proof | Impossible: the original is Pascal |
-| B. Byte-matching Pascal, then translate to C | Byte-level proof of the Pascal; Turbo Pascal's simple, non-optimising codegen makes matching plausible | Needs the exact compiler version (unconfirmed, user must own it), doubles the work (match, then translate), and the C translation still needs its own proof |
+| B. Byte-matching Pascal, then translate to C | Byte-level proof of the Pascal; Turbo Pascal's simple, non-optimising codegen makes matching plausible | The compiler is now pinned (section 2), but this doubles the work (match, then translate) and the C translation still needs its own proof |
 | C. Clean-room reimplementation (OpenGoldBox, wicanr2's remake, CYD) | Fast to something playable | Not a decompilation; drifts from original behaviour; no traceability to the binary |
 | D. Static recompilation (machine translation of x86 to C) | Exact behaviour quickly | Unreadable output; fails outcome O1 |
 | **E. Behaviour-matching C with layered proof (chosen)** | Readable C, one function per original routine, proven by differential testing on the original's own bytes | Proof is by testing, not identity: strong but not absolute. Mitigated by fuzzing on random and recorded inputs plus full-session replays |
@@ -84,7 +94,7 @@ Consequences:
 
 ### 4.3 Optional track M (Pascal matching)
 
-If the Turbo Pascal version is pinned (Phase 1) and the user supplies that compiler, a unit may additionally be matched in Pascal to settle routines whose behaviour is hard to pin by testing. It is never on the critical path.
+The Turbo Pascal version is pinned (section 2) and the compiler runs headless (`make tpc`), so a unit may additionally be matched in Pascal to settle routines whose behaviour is hard to pin by testing. It is never on the critical path. The same tool serves the main track: lifters and reviewers compile a Pascal guess to see how TP 6.0 shapes an idiom (playbooks 30 and 70), and `make tpc DISASM=1` names every runtime call by the matching POOL routine.
 
 ---
 
@@ -130,12 +140,13 @@ poolrad/                  original game files (pinned, read-only, never edited)
 docs/
   spec/SPEC.md            this document
   setup/SETUP-macos.md    environment setup
+  setup/SETUP-tp.md       Turbo Pascal 6.0 reference compiler: sources, hashes, install, compare
   process/playbooks/      step-by-step procedures for each stage
   design/WHITEPAPER.md    how the game works (living document) + CHANGELOG.md
   reference/              prior art index and licence rules
   (existing reference material: dos-decomp-projects/, decomp-tools/, articles/, PDFs)
 re/                       reverse-engineering database (text, committed)
-  units.toml              48 units: name, kind, segment/overlay, source file
+  units.toml              50 units (48 init-chain + Dos, Overlay): name, kind, segment/overlay, source file
   symbols.toml            every routine and global: address, name, signature, status
   types/                  struct and enum definitions as C headers with offset asserts
   dseg.toml               DGROUP layout (globals by offset)
@@ -151,14 +162,17 @@ tests/
   fuzz/                   per-routine differential test specs
   sessions/               recorded input scripts + golden digests (no game data)
 tools/
-  setup/                  setup-macos.sh, doctor.sh
-  re/                     tpovl.py, dax.py, unexepack.py (done); rtl_ident.py
+  setup/                  setup-macos.sh, doctor.sh, build-emu2.sh
+  re/                     tpovl.py, dax.py, unexepack.py, rtl_ident.py; tp_toolchain.py (+ .toml manifest,
+                          tp_probe/, tp_idioms/): install, probe, compare, tpc
+  vendor/                 third-party tools built locally (emu2); ignored by git
   ghidra/                 PyGhidra scripts: import, apply re/, export
   oracle/                 the emulator harness (Unicorn based); smoke.py (done) proves the original runs
   agent/                  packet.py, status.py, lock.py
   lint/                   portability lint
 work/                     status, queue and locks (committed, small text files)
-build/                    everything generated (ignored by git)
+build/                    everything generated (ignored by git); build/toolchain/ holds the compilers
+                          and their archives, which are proprietary and never committed
 ```
 
 ---
@@ -201,13 +215,13 @@ Phase 3 starts with a spike that proves this model on two or three routines in b
 
 | Pascal | C | Notes |
 |---|---|---|
-| Byte, ShortInt, Integer, Word, LongInt | u8, s8, s16, u16, s32 | Wraparound semantics preserved; range checks mirror `{$R}` settings found in Phase 1 |
+| Byte, ShortInt, Integer, Word, LongInt | u8, s8, s16, u16, s32 | Wraparound semantics preserved; the game was compiled `{$R-}` (no range checks, section 3) |
 | Boolean, Char | u8 | |
 | `string[N]` | `u8 s[N+1]` with `pstr_*` helpers | Length byte first; truncation rules exactly as the RTL |
 | `set of 0..255` | `u8 s[32]` with `set_*` helpers | Small sets keep their original byte size |
 | Records | packed structs with offset asserts | |
 | Nested procedures | static functions taking an explicit `frame` struct pointer | Replaces the static link |
-| `Random`, `Randomize` | `rtl_random` | Must reproduce the RTL's generator and seed handling bit for bit (verify in Phase 1) |
+| `Random`, `Randomize` | `rtl_random` | Must reproduce the TP 6.0 (June 1991) generator and seed handling bit for bit; verify against our bytes and `make tpc` probes |
 | Files (`Assign/Reset/BlockRead`) | `rtl_file_*` over `platform_file_*` | DOS path rules, case-insensitive lookup on the host |
 | `New/Dispose/GetMem/FreeMem/MaxAvail` | `rtl_heap_*` | Same block layout, so heap snapshots compare |
 
@@ -232,7 +246,7 @@ Phase 3 starts with a spike that proves this model on two or three routines in b
 | L1 | Reviewed | An independent reviewer agent compared the C with the disassembly using the review checklist and recorded no open findings |
 | L2 | Fuzz-equivalent | Differential test passes: the original bytes in the emulator and the C function, started from the same state, end in the same state for every case (minimum 200 random cases plus every recorded case for that routine; more for routines with wide input spaces) |
 | L3 | Session-equivalent | The routine is exercised by at least one golden session that passes with the routine running as C |
-| M | Pascal-matched | Optional: Pascal source compiles to identical bytes (track M) |
+| M | Pascal-matched | Optional: Pascal source compiled by the pinned TP 6.0 (`make tpc`) gives identical bytes (track M) |
 
 A routine's level is the lowest level it has not failed. A regression demotes it automatically. Some routines (interrupt handlers, video plane tricks, timing loops) cannot sensibly be fuzzed; they need L1 plus L3 with a written justification in `re/symbols.toml`.
 
@@ -328,7 +342,7 @@ One person or one agent may play several roles over time, but **the reviewer of 
 | Phase | Goal | Exit criteria |
 |---|---|---|
 | P0 Bootstrap | Environment and pinned inputs | `make doctor` green on the Mac; `make inputs` verifies hashes; EXEPACK unpack reproduced from `START.EXE`; overlay manifest committed as `re/overlays.json` |
-| P1 Map | Know the binary | Ghidra project rebuildable by `make ghidra`; all 48 units with code ranges in `re/units.toml`; every routine listed with size in `re/symbols.toml`; Turbo Pascal RTL routines identified and named; Turbo Pascal version pinned or bounded; DGROUP map started; calling convention notes verified on samples; initial names from strings and prior art |
+| P1 Map | Know the binary | Ghidra project rebuildable by `make ghidra`; all units with code ranges in `re/units.toml` (48 from the init chain plus runtime units without init); every routine listed with size in `re/symbols.toml`; Turbo Pascal RTL routines identified and named; Turbo Pascal version pinned or bounded (done 2026-10-09: pinned to TP 6.0, June 1991); DGROUP map started; calling convention notes verified on samples; initial names from strings and prior art |
 | P2 Oracle and data | Run the original deterministically; decode the data | Oracle boots the original to the title screen and through character creation from a key script, twice identically; screenshots match DOSBox-X; DAX, map and ECL decoders with tests over all files; first goldens recorded |
 | P3 Runtime and skeleton | A C program that can grow | Memory model spike passes (section 7.3); `src/rtl` with tests; SDL3 host platform; hybrid library loads into the oracle; `make check` runs build, lint, unit tests, fuzz and sessions |
 | P4 Lift | All units in C | Every routine at least L2 (or justified L1+L3); unit by unit in queue order; whitepaper chapter per subsystem |
@@ -348,6 +362,7 @@ Milestones are reviewed by the human at each phase exit; the spec is updated (ne
 | Native host (primary) | clang, CMake, Ninja, SDL3 | `make host` -> `build/host/poolrad` | Phase 3 |
 | Hybrid library | clang, shared library for the oracle | `make hybrid` | Phase 3 |
 | Tests | Python (pytest), C unit tests | `make test`, `make fuzz`, `make sessions` | Phases 2 to 3 |
+| Reference compiler (analysis only, never ships) | Turbo Pascal 6.0 (June 1991) under emu2 | `make tp-pin`, `make tpc SRC=file.pas` | Available (P1) |
 | Everything a commit must pass | | `make check` | Phase 3 |
 | DOS (stretch) | Open Watcom v2, 16-bit large model, in a Linux container (no macOS host build exists) | `make dos` | Phase 8 |
 | CoCo 3 (future) | CMOC + LWTOOLS, XRoar or MAME to run | `make coco3` | Phase 7 |
@@ -380,6 +395,8 @@ Full index: `docs/reference/prior-art.md`. Summary of how each may be used:
 | Jzatopa/SSI-Engine-Full-Play-ability, farmboy0/ssi-engine | Gold Box engine reconstruction work, ECL analysis | GPL-3.0 | Read only; copying would impose GPL |
 | tomtombombadil/CYD-BYOG-PoolRadSeries | Gold Box engine on an ESP32 (constrained hardware) | MIT | Useful for the CoCo 3 port design |
 | GaidamakUA/DungeonCraft | Gold Box style engine and editor | see repo | Background only |
+| Borland Turbo Pascal 6.0 / 7.0 | The compiler and runtime that built the game (6.0, June 1991); 7.0 and the 1990 6.0 kept for comparison | Proprietary (Borland, now Embarcadero); never released as freeware | Local use under `build/toolchain/` only; never committed or pushed; RTL code is never copied into `src/` (behaviour is re-implemented and tested) |
+| dmsc/emu2 | Headless DOS emulator that runs `TPC.EXE` | GPL-2.0 | Built locally into `tools/vendor/` (ignored by git); used as a tool, no code copied |
 
 The user's earlier IDA databases in `poolrad/` (`START.*`, `CFG.*`, `start-unpack.idb`) are a starting point for names; import what is useful into `re/` in Phase 1.
 
@@ -396,15 +413,15 @@ Game data and the original executables are copyrighted; they stay in this privat
 | Memory model friction (far pointers everywhere) | Hard-to-read C | Spike in P3 before bulk work; readability pass converts proven-local pointers |
 | Agents drift or hallucinate | Bad names, wrong claims | Packets, evidence tags, tool-written verdicts, independent review |
 | Hand-written assembly in resident units (graphics, sound, timer) | Hard to express in C | Lift as C over the platform layer with L1+L3 justification; document hardware semantics |
-| Turbo Pascal version unknown | Track M blocked; RTL quirks unclear | Bound the version by RTL byte comparison in P1; behaviour is fuzzed regardless |
+| Reference compiler not redistributable | A new machine cannot rebuild `build/toolchain/` from the repository alone | Archive hashes and sources in `tools/re/tp_toolchain.toml` and `docs/setup/SETUP-tp.md`; nothing on the critical path needs the compiler (behaviour is fuzzed against our bytes regardless) |
 | Scope (about 270 KB of code) | Long project | Units in parallel worktrees; playable hybrid early keeps feedback tight |
 
 ---
 
 ## 15. Open questions (to resolve in P0/P1)
 
-1. Exact Turbo Pascal version (runtime says 1983,91; overlay format `FBOV`).
-2. Which compiler directives were used (`$R` range checks, `$S` stack checks, `$O` overlays, `$F` far calls), visible as RTL calls in the code.
+1. ~~Exact Turbo Pascal version (runtime says 1983,91; overlay format `FBOV`).~~ Resolved 2026-10-09: Turbo Pascal 6.0, June 1991 release, by runtime byte comparison (section 2; whitepaper 2.2). `FBOV` is written by both 6.0 and 7.0, so it was never the discriminator.
+2. ~~Which compiler directives were used (`$R` range checks, `$S` stack checks, `$O` overlays, `$F` far calls), visible as RTL calls in the code.~~ Mostly resolved (section 3, item 6). Still open: `$A`, `$B`, `$V`, `$X`.
 3. ~~Where `start-unpack.exe` came from and whether it matches a clean EXEPACK unpack.~~ Resolved: `make unexepack` matches the pinned file.
 4. Meaning of the overlay stub field at +0E and of the `POOL.CFG` third option (`F`/`N`).
 5. How much of the resident code is hand-written assembly.

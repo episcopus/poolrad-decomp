@@ -4,7 +4,9 @@
 #
 #   sh tools/setup/setup-macos.sh [--dry-run] [--with-ghidra] [--with-coco] [--with-dos]
 #
-#   (default)       Homebrew packages for phases 0 to 3, Python environment (uv sync)
+#   (default)       Homebrew packages for phases 0 to 3, Python environment (uv sync), emu2,
+#                   and the Turbo Pascal 6.0 reference compiler if its archive is in
+#                   build/toolchain/dist/ (docs/setup/SETUP-tp.md; never downloaded by this script)
 #   --with-ghidra   download Ghidra 12.1.4 into ~/opt and write tools/setup/env.local.sh
 #   --with-coco     LWTOOLS and XRoar for the CoCo 3 work (phase 7); CMOC is built from source
 #   --with-dos      checks for a container runtime for the Open Watcom DOS build (phase 8)
@@ -22,7 +24,7 @@ for a in "$@"; do
     --with-ghidra) WITH_GHIDRA=1 ;;
     --with-coco) WITH_COCO=1 ;;
     --with-dos) WITH_DOS=1 ;;
-    -h|--help) sed -n '2,12p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,14p' "$0"; exit 0 ;;
     *) echo "unknown option: $a"; exit 2 ;;
   esac
 done
@@ -61,6 +63,15 @@ run uv sync --python 3.12
 
 JAVA_HOME_GUESS="$(brew --prefix)/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home"
 GHIDRA_DIR="$OPT_DIR/ghidra_${GHIDRA_VERSION}_PUBLIC"
+
+say "Turbo Pascal 6.0 reference compiler (docs/setup/SETUP-tp.md)"
+run sh tools/setup/build-emu2.sh
+if [ -f build/toolchain/dist/tp60/disk1_install_compiler.img ]; then
+  run make tp-pin
+else
+  echo "Compiler archives are not distributed with the repository. Put them in build/toolchain/dist/"
+  echo "as listed in docs/setup/SETUP-tp.md section 2, then run: make tp-pin"
+fi
 
 if [ $WITH_GHIDRA -eq 1 ]; then
   say "Ghidra $GHIDRA_VERSION"

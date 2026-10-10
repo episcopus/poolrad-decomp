@@ -295,11 +295,9 @@ def main(argv: list[str]) -> int:
         starts = find_in_region(image, base, length)
         # unit init
         init_seg = int(str(r["segment"]), 16) if isinstance(r["segment"], str) else r["segment"]
-        init_off = int(str(r["init"]).split(":")[1], 16)
-        if init_seg == start_para:
-            add_start(starts, init_off, "init")
-        else:
-            # init in this unit but segment field equals unit segment in our table
+        # runtime units without an initialisation part (Dos, Overlay) have init = ""
+        init_off = int(str(r["init"]).split(":")[1], 16) if r.get("init") else -1
+        if init_off >= 0:
             add_start(starts, init_off, "init")
         for seg, off in far_targets:
             if start_para <= seg < end_para:
