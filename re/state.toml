@@ -22,3 +22,10 @@
 # reason = ""
 
 stack = "diagnostic"
+
+# heap = "compared" (decision 2026-10-11): the Turbo Pascal heap is game state
+# (the party's records live there). Until re/types/ can name heap_root records,
+# the allocated heap is compared byte for byte: linear HeapOrg (DS:4400) up to
+# HeapPtr (DS:4404), freed blocks included. The overlay buffer below it
+# (OvrHeapOrg..OvrHeapEnd) holds code and is not state.
+heap = "compared"

@@ -1,5 +1,5 @@
 {
- "format": 2,
+ "format": 3,
  "session": "create-character",
  "script_sha256": "8aa21e46d02e44c13a8fcb29fe058f7354c57594d1e9da2f778f7aedbd301738",
  "exe": "poolrad/start-unpack.exe",
@@ -12,10 +12,10 @@
  "video_mode": 13,
  "key_reads": 26,
  "reads_sha256": "391da1224b91e0c0aeab7b1a1c2cc70851956cdd794849d13f509ea86fd953bb",
- "reads_nostack_sha256": "9e53502606b4a991b4183001f368624b6f2264b2eed00cbf375f1c08a6bd8a6b",
+ "reads_nostack_sha256": "b456f3b2aa2842082c52e025dc0788064c0a5df95ac28eee85f4ffdbaf3efedf",
  "state_digest": "22b0e9b0800359d7db402264c248427326ddcb78f889d58be8f0b4331ea1ae2b",
- "canonical_digest": "68158f05d6c176baeabc0a75d644040a4c3b3b3950cd1cacc4dcfff92691febf",
- "canonical_nostack_digest": "4ebb9deea443683379c8b2f7ea2babeca22730e32cd4166dc9cf603c787c320b",
+ "canonical_digest": "41acccc24d25d7e53ee1ceffa6db563fb56910ee5349b5383842972856e1a87f",
+ "canonical_nostack_digest": "57306fdb7d41524cf229ef42a1130d9e9b82a4d9ab51e391a764c23d1285673c",
  "random_calls": 33548,
  "random_digest": "fc6390df8944eccb6d42bd5496ec214c7a335da039e433fc3a6c2481c6c94b67",
  "files_opened": [
@@ -161,8 +161,8 @@
    "label": "race-human",
    "time": 54594458,
    "screen": "49a9eb60485adf66975bdbe592810c0c8fadf02baa53686fe397c6f9120043d0",
-   "canonical": "4f22a5baafcb3c099ffc8197d992905c3bdb334427da28717006ef3b0721b4bd",
-   "canonical_nostack": "06d005f9396795390eef4d3bac144f8ecc1ff60665b9161094f72ac4331aaaa7",
+   "canonical": "03260b190714e6ceaf37de47c6c386ddc3dfa3afd7d7fdb1b58af42e23a8251e",
+   "canonical_nostack": "74dd644483894c50929ff73f192ec1ba617d6f8e954bfd155945c355339a2a1d",
    "digest": "2a574a5c7791f8c92b63b730bc3a174a3eac6fd606604f288f4e2de8fc1ab66e",
    "random_calls": 33433
   },
@@ -170,8 +170,8 @@
    "label": "sheet",
    "time": 58873606,
    "screen": "dae47c8e32b2e9d9a77e05f8ea8b1b46a9c816e1cea26cf92badac5954cba698",
-   "canonical": "1dbaae13a0b3a5b6e2eb40bcbe52bfdd5398de971c3d2b40821b757d1b38f324",
-   "canonical_nostack": "43dab0505daa05a1980d33afb61cd768783566eb60f70d9fd44544be3fcef206",
+   "canonical": "4ff0cdfa012fe580ac64ec78fae6e38bfbe687abc314ef7b683ed0339627997d",
+   "canonical_nostack": "79db7ab7b6b5fe7a2586f3fdc49a1b8855a906866be95aba8843ba1dd8f08cd2",
    "digest": "433ff17a6765ff652bfa2e4cb8c63f0a61777a41665d8de74143980f160ca229",
    "random_calls": 33548
   },
@@ -179,8 +179,8 @@
    "label": "head-body-keep",
    "time": 60686098,
    "screen": "7cfc8e2f134bb9c1ebdd7ba0aa1f98b6326dd102dcfe12d1481af320d9329b91",
-   "canonical": "0c023c9060013712c38907c24e61dd84792dc6d752813ac9cb29b2654b320150",
-   "canonical_nostack": "c7ae1c9f3bb2f0d37fbb7acca45b0714af351c17a0468f814eb25fe677e1fae3",
+   "canonical": "c6bf0cf5c769d9c34ba97a75546b4d3ec18986fdae75ab2f2bf43ec73beef822",
+   "canonical_nostack": "75bfb1173cc40c891acb254e0493c4af0556476fc379cab01818779e7429cf23",
    "digest": "31a2faa3c435cc69255fbc213c708a9c1820318b4d975e5c2824dee88e7e8bc0",
    "random_calls": 33548
   },
@@ -188,8 +188,8 @@
    "label": "icon-editor",
    "time": 61839502,
    "screen": "0ada2ddc031d728207f3543a2fba24e41462cd2093050370087162752b134671",
-   "canonical": "8a75816f4267a6fd640080f2006dd40ced809d8134ce4db5e0409137d64a29d7",
-   "canonical_nostack": "dc44d5db92d0533d75682ba6eaf112e6c6bbdf92bfa4bd6857adfd7b8f056feb",
+   "canonical": "74f0cac6e0bbca555a2cb9a47ff37107c56f10442719216f943b1a41a8dfbcc8",
+   "canonical_nostack": "1ec26240572f6fe747f7d056583746df592542a853aeb8fb857137c8c4baf83c",
    "digest": "16b648275a2b471c7d0792eca494f472a10b47fab2b5705c41c6b5cdbd15ca0c",
    "random_calls": 33548
   },
@@ -197,8 +197,8 @@
    "label": "main-menu",
    "time": 65244790,
    "screen": "75af6047d1ab277b73a1cc7ee3f3479ee36f3ebacfd8612ca20a532e1cd76d87",
-   "canonical": "68158f05d6c176baeabc0a75d644040a4c3b3b3950cd1cacc4dcfff92691febf",
-   "canonical_nostack": "4ebb9deea443683379c8b2f7ea2babeca22730e32cd4166dc9cf603c787c320b",
+   "canonical": "41acccc24d25d7e53ee1ceffa6db563fb56910ee5349b5383842972856e1a87f",
+   "canonical_nostack": "57306fdb7d41524cf229ef42a1130d9e9b82a4d9ab51e391a764c23d1285673c",
    "digest": "d16addd9ce69e46dc945a818cef0512bbdaf496db1e1782cca418b6bb23f3bb2",
    "random_calls": 33548
   }

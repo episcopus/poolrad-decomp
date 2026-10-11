@@ -3,8 +3,9 @@
  * The hybrid library exports one entry point per lifted routine. FP() and G
  * address the buffer the harness binds. For a session that buffer is the
  * guest's conventional RAM (the oracle maps it with mem_map_ptr), so a store
- * in C is a store in the guest. timing.py charges the original's recorded
- * cost, so the run keeps the original's time.
+ * in C is a store in the guest. No time is charged: session replays answer
+ * the game's reads of the outside world from the original's recording
+ * (tools/oracle/replay.py).
  *
  * P3 spike: the three System routines, plus the Randomize seed packing.
  * Later units add their exports here without changing the mechanism.

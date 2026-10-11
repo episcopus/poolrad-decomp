@@ -52,48 +52,27 @@ def test_golden_files_are_complete(name):
     nostack = (d / "reads_nostack.txt").read_text().split()
     assert len(nostack) == g["key_reads"]
     assert hashlib.sha256("\n".join(nostack).encode()).hexdigest() == g["reads_nostack_sha256"]
-    # nothing but digests and our own screenshots (no game files)
-    assert {p.name for p in d.iterdir()} == {"golden.json", "reads.txt", "reads_nostack.txt"} | {l + ".png" for l in labels}
+    # nothing but digests, our own screenshots and the recording of our own run (no game files)
+    assert {p.name for p in d.iterdir()} == ({"golden.json", "reads.txt", "reads_nostack.txt", golden.RECORDING}
+                                             | {l + ".png" for l in labels})
 
 
-def _hybrid_view():
-    return {
-        "stop_reason": "input-exhausted", "instructions": 1, "virtual_seconds": 1,
-        "video_mode": 0x0D, "key_reads": 0, "reads_nostack_sha256": "a",
-        "canonical_nostack_digest": "fin", "random_calls": 10, "random_digest": "seq",
-        "files_opened": [],
-        "checkpoints": [{"label": "title", "time": 5, "screen": "pix",
-                         "canonical_nostack": "st", "random_calls": 5022}],
-    }
+@pytest.mark.parametrize("name", SESSIONS)
+def test_golden_recording_loads_and_matches_its_golden(name):
+    from oracle import replay
+    g = _load(name)
+    rec = replay.Recording.load(golden.GOLDEN / name / golden.RECORDING)
+    assert rec.streams.total == sum(r[2] for runs in rec.streams.runs.values() for r in runs)
+    assert rec.final["canonical_nostack_digest"] == g["canonical_nostack_digest"]
+    assert rec.final["random_digest"] == g["random_digest"] and rec.final["reason"] == g["stop_reason"]
+    labels = [c["label"] for cps in rec.checkpoints.values() for c in cps]
+    assert all(c["label"] in labels for c in g["checkpoints"]), "every golden shot is a replay checkpoint"
 
 
-def test_spinner_tolerance_is_one_call_and_nothing_else():
-    a = _hybrid_view()
-    assert golden.hybrid_difference(a, json.loads(json.dumps(a))) is None
-    assert golden.hybrid_spinner_notes(a, a) == []
-    one = json.loads(json.dumps(a))
-    one["checkpoints"][0]["random_calls"] = 5021
-    one["checkpoints"][0]["canonical_nostack"] = "step"
-    assert golden.hybrid_difference(a, one) is None
-    assert "title" in golden.hybrid_spinner_notes(a, one)[0]
-    two = json.loads(json.dumps(a))
-    two["checkpoints"][0]["random_calls"] = 5020
-    assert "tolerance" in golden.hybrid_difference(a, two)
-    state = json.loads(json.dumps(a))
-    state["checkpoints"][0]["canonical_nostack"] = "other"
-    assert "same Random count" in golden.hybrid_difference(a, state)
-    screen = json.loads(json.dumps(a))
-    screen["checkpoints"][0]["screen"] = "nope"
-    assert "screen" in golden.hybrid_difference(a, screen)
-    final = json.loads(json.dumps(a))
-    final["random_digest"] = "other"
-    assert "random_digest" in golden.hybrid_difference(a, final)
-
-
-def test_stack_bytes_are_diagnostic():
+def test_stack_bytes_are_diagnostic_and_the_heap_is_state():
     import tomllib
     d = tomllib.loads((ROOT / "re/state.toml").read_text())
-    assert d["stack"] == "diagnostic"
+    assert d["stack"] == "diagnostic" and d["heap"] == "compared"
 
 
 def test_first_difference_names_the_checkpoint_and_the_key_read():
@@ -107,6 +86,7 @@ def test_first_difference_names_the_checkpoint_and_the_key_read():
     assert "key read 1" in golden.first_difference(a, c, ["x", "y", "z"], ["x", "q", "z"])
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("name", SESSIONS)
 def test_oracle_reproduces_committed_golden(name, capsys):
     assert golden.check(name, golden.GOLDEN) == 0, capsys.readouterr().err

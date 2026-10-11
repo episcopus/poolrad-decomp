@@ -10,14 +10,14 @@ PACKED := poolrad/START.EXE
 .PHONY: help setup doctor inputs unexepack overlays map dax smoke status next ghidra p1-check \
         tp-install tp-probe tp-compare tp-pin tpc emu2 \
         packet lock unlock \
-        oracle-run oracle-dosbox oracle-timing timing-scan golden sessions host hybrid fuzz test check lint review-pass dos coco3
+        oracle-run oracle-dosbox timing-scan golden sessions host hybrid fuzz test test-slow check lint review-pass dos coco3
 
 help:
 	@echo "Available now:  setup doctor inputs unexepack overlays map dax smoke"
 	@echo "Phase 1:        status next ghidra p1-check packet lock unlock"
 	@echo "Turbo Pascal:   emu2 tp-install tp-probe tp-compare tp-pin tpc (docs/setup/SETUP-tp.md)"
 	@echo "Data codecs:    make dax (all playbook-20 formats); make test (pytest)"
-	@echo "Phase 2:        oracle-run oracle-dosbox oracle-timing golden"
+	@echo "Phase 2:        oracle-run oracle-dosbox golden timing-scan"
 	@echo "Phase 3:        host hybrid fuzz sessions check lint (P3 spike green; review-pass in P4)"
 	@echo "Later:          dos (P8) coco3 (P7)"
 	@echo "See AGENTS.md and docs/spec/SPEC.md."
@@ -108,14 +108,10 @@ oracle-run:       ## run the original in the oracle: SCRIPT=tests/sessions/x.key
 
 oracle-dosbox:    ## compare the oracle's title screens with DOSBox-X frames pixel for pixel (needs dosbox-x, ffmpeg)
 	$(PY) tools/oracle/dosbox_ref.py
-comma := ,
-oracle-timing:    ## record per-call routine costs for exact-time hybrid runs: SESSION=name ROUTINE=id[,id...] OUT=file.json
-	$(PY) tools/oracle/timing.py record --session $(SESSION) $(foreach r,$(subst $(comma), ,$(ROUTINE)),--routine $(r)) --out $(OUT)
-
 timing-scan:      ## find routines that wait on time or input (static; SESSIONS="boot-title create-character" adds the dynamic pass)
 	$(PY) tools/re/timing_scan.py $(foreach s,$(SESSIONS),--dynamic $(s))
 
-golden:           ## record goldens (each session twice, must match): SESSION=name (default all); CHECK=1 verifies committed goldens
+golden:           ## record goldens and their recordings (each session twice, must match): SESSION=name (default all); CHECK=1 verifies committed goldens
 	$(PY) tools/oracle/golden.py $(if $(SESSION),--session $(SESSION)) $(if $(CHECK),--check)
 host:           ## native binary (SPEC 11): cmake + SDL3 -> build/host/poolrad (P3 spike: platform smoke)
 	cmake -S . -B build/host -G Ninja -DCMAKE_BUILD_TYPE=Release
@@ -132,16 +128,19 @@ fuzz: hybrid    ## differential test of one routine (SPEC 8.3): FN=<id or C name
 	@test -n "$(FN)" || (echo 'fuzz: usage: make fuzz FN=<id|C name> [CASES=n] [SEED=n]'; exit 2)
 	$(PY) tools/fuzz/fuzz.py --routine "$(FN)" --cases $(if $(CASES),$(CASES),200) --seed $(if $(SEED),$(SEED),1234)
 
-sessions: hybrid ## replay goldens with C routines (SPEC 8.5): [SESSION=name]
+sessions: hybrid ## replay each golden's recording with the C routines (SPEC 8.5, replay.py): [SESSION=name]
 	$(PY) tools/sessions/sessions.py \
 		$(if $(SESSION),--session $(SESSION),--session boot-title --session create-character)
 
-test:              ## Python unit tests (DAX/GEO/ECL codecs, toolchain probes, P3 spike)
-	$(PY) -m pytest -q tests/unit
-check: host hybrid lint ## everything a commit must pass (SPEC 9.6): build, lint, tests, fuzz, sessions
-	$(PY) -m pytest -q tests/unit
+test:              ## Python unit tests, fast set (codecs, toolchain probes, oracle, replay, P3 spike)
+	$(PY) -m pytest -q -m "not slow" tests/unit
+test-slow:         ## the unit tests that boot the real game (minutes; not part of `make check`)
+	$(PY) -m pytest -q -m slow tests/unit
+check: host hybrid lint ## everything a commit must pass (SPEC 9.6): build, lint, fast tests, fuzz, goldens, session replays
+	$(PY) -m pytest -q -m "not slow" tests/unit
 	$(PY) tools/agent/p3_check.py
-	$(PY) tools/sessions/sessions.py --session create-character
+	$(PY) tools/oracle/golden.py --check
+	$(PY) tools/sessions/sessions.py --session boot-title --session create-character
 review-pass: ; $(call todo,Phase 4,8.1 and playbook 70)
 coco3:       ; $(call todo,Phase 7,11)
 dos:         ; $(call todo,Phase 8,11)

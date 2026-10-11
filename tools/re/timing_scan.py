@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """timing_scan.py: which routines are time sensitive (hybrid runs, SPEC 8.4, whitepaper appendix C).
 
-A routine replaced by C runs instantly at its entry and the clock is charged afterwards
-(`tools/oracle/timing.py`). That is exact for routines that compute. It is wrong for routines that
-*wait*: a loop that spins until a tick counter changes, until the vertical retrace, until a key arrives,
-would spin forever in C because no time passes while it runs. This tool finds them before a lifter does.
+A routine replaced by C runs instantly, and in a session replay every read of the outside world is
+answered from the original's recording (`tools/oracle/replay.py`). That is right for routines that
+compute. It is wrong for a literal transliteration of a routine that *waits*: a loop that spins until a
+tick counter changes, until the vertical retrace, until a key arrives must go through a platform wait
+(`src/platform/platform.h`). This tool finds them before a lifter does.
 
 Static pass (every routine of re/symbols.toml, Capstone on the pinned bytes):
   features    int 16h / 21h key and time calls, int 1Ah, int 15h AH=86, hlt, ports (retrace 3DA, PIT,
@@ -19,8 +20,8 @@ Classes:
   none        neither.
 `direct` marks routines whose own bytes hold the feature (as opposed to reaching it through callees).
 
-Dynamic pass (--dynamic SESSION ...): runs the sessions in the oracle with a cost recorder on every
-routine; reports calls, total and longest own-code run per routine (a call spinning for a whole timer
+Dynamic pass (--dynamic SESSION ...): runs the sessions in the oracle with a profiler on every
+routine (`oracle.routines.Profiler`); reports calls, total and longest own-code run per routine (a call spinning for a whole timer
 period or more, 54,925 instructions, is a candidate whatever the static pass says), and the DGROUP bytes
 written while the timer interrupt is in service (the game's tick-driven variables).
 
@@ -254,8 +255,8 @@ def classify(scan: dict[str, dict]) -> dict[str, dict]:
 
 
 def dynamic(sessions: list[str]) -> tuple[dict[str, dict], dict[int, int]]:
-    """Run sessions with a cost recorder on every routine and a write watch on the timer handler."""
-    from oracle import timing
+    """Run sessions with a profiler on every routine and a write watch on the timer handler."""
+    from oracle import routines
     from oracle.run import run_session
     from oracle.state import dgroup_seg
     from oracle.machine import LOAD_SEG
@@ -268,7 +269,7 @@ def dynamic(sessions: list[str]) -> tuple[dict[str, dict], dict[int, int]]:
         holder = {}
 
         def prepare(m, holder=holder):
-            holder["rec"] = timing.CostRecorder(m, ids)
+            holder["rec"] = routines.Profiler(m, ids)
             base = dgroup_seg() << 4
             stack_lo = (m.get("ss") << 4) - base                  # the stack segment lies inside the DS window
             stack_hi = stack_lo + 0x4000
@@ -280,15 +281,15 @@ def dynamic(sessions: list[str]) -> tuple[dict[str, dict], dict[int, int]]:
                         tick_writes[o] += 1
             m.uc.hook_add(UC_HOOK_MEM_WRITE, on_write, begin=base, end=base + 0xFFFF)
 
-        s = run_session(text, max_insns=400_000_000, quiet=True, exact=True, prepare=prepare)
+        s = run_session(text, max_insns=400_000_000, quiet=True, prepare=prepare)
         print("[dynamic] %s: %s after %d instructions" % (name, s["reason"], s["insns"]), file=sys.stderr)
         for rid, rows in holder["rec"].rows.items():
             if not rows:
                 continue
             st = stats.setdefault(rid, {"calls": 0, "total": 0, "max": 0})
             st["calls"] += len(rows)
-            st["total"] += sum(x[1] for x in rows)
-            st["max"] = max(st["max"], max(x[1] for x in rows))
+            st["total"] += sum(rows)
+            st["max"] = max(st["max"], max(rows))
     return stats, dict(tick_writes)
 
 

@@ -17,8 +17,8 @@
  *      the oracle) no time passes while C runs, so such a loop does not end. Use the wait that names the
  *      condition. The original spins (Crt init on the BIOS tick, menu loops on KeyPressed); the lift
  *      replaces the spin by the wait, which is the one deliberate structural difference.
- *   2. A wait costs nothing in a replay: it returns the recorded result at once. Time is charged by the
- *      replay system from the original's recording (SPEC 8.4, tools/oracle/timing.py), never spent here.
+ *   2. A wait costs nothing in a replay: it returns the recorded result at once. The reads it stands for
+ *      come from the original's recording (SPEC 8.4, tools/oracle/replay.py); no time is spent here.
  *   3. Polling in a loop that has a bound of its own is fine (draining the keyboard buffer: the loop ends
  *      when platform_key_peek() returns 0).
  *

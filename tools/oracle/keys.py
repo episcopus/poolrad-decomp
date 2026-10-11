@@ -176,6 +176,12 @@ class KeyScript:
             m.bios.note_key_released()
         return k
 
+    def stalled(self, m) -> bool:
+        """The head op can never be satisfied while the game blocks in a read: a `wheel` with no answer
+        (the question is asked before the prompt, so a blocked read means it was missed)."""
+        return (self.i < len(self.ops) and self.ops[self.i][0] == "wheel"
+                and getattr(m, "wheel_answer", None) is None)
+
     def exhausted(self, m) -> bool:
         self._advance(m)
         return self.i >= len(self.ops)

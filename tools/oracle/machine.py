@@ -39,6 +39,10 @@ ROM_IRQ_EOI = (0xF000, 0x2040)    # default handler for IRQ1..7: EOI + IRET
 ROM_IRET = (0xF000, 0x0000)       # generic IRET
 
 FLAG_CF, FLAG_ZF, FLAG_IF, FLAG_TF, FLAG_DF = 0x0001, 0x0040, 0x0200, 0x0100, 0x0400
+# A timer interrupt that stays pending this long was never delivered: the guest is spinning with
+# interrupts off (a blocked read that can never be answered, for instance). Legitimate waits for IF are
+# a few hundred instructions; this turns a run that would crawl to max_insns into an error in seconds.
+STALL_INSNS = 2_000_000
 
 REG = dict(ax=UC_X86_REG_AX, bx=UC_X86_REG_BX, cx=UC_X86_REG_CX, dx=UC_X86_REG_DX, si=UC_X86_REG_SI,
            di=UC_X86_REG_DI, bp=UC_X86_REG_BP, sp=UC_X86_REG_SP, cs=UC_X86_REG_CS, ds=UC_X86_REG_DS,
@@ -77,7 +81,7 @@ def read_mz(path):
 
 class Machine:
     def __init__(self, exe, game_dir, *, insn_per_sec: int = 1_000_000, strict: bool = True,
-                 cmdline: bytes = b"", exact: bool = False):
+                 cmdline: bytes = b""):
         from .vfs import VFS
         from .dos import Dos
         from .bios import Bios
@@ -96,15 +100,7 @@ class Machine:
         self.tod_log: list[tuple[int, int]] = []   # (virtual time, hundredths returned) for every read
         self.int_counts: dict = {}       # software INTs executed, by number
         self.service_counts: dict = {}   # calls that reached one of our service stubs, by number
-        # --- exact time (hybrid runs, `Machine(exact=True)`) ---------------------------------------
-        self.exact = exact               # instructions are counted one by one, so hooks know the time exactly
-        self._u = 0                      # instructions executed so far in the current chunk (exact mode)
-        self._chunk = 0                  # length of the current chunk (exact mode)
-        self._cut = False                # the stepper ended the native run on purpose
-        self._repl_at: dict[int, object] = {}   # linear address -> Replacement (see timing.py)
-        self._observer = None            # callable(machine, linear address), exact mode, every instruction
-        self._epoch_dirty = False        # GAME.OVR was read: overlay routine addresses may have moved
-        self.overlay_listeners: list = []   # callables(machine) after an overlay load: rebind replacements
+        self.overlay_listeners: list = []   # callables(machine) after each read of GAME.OVR (routines.py)
         self.file_listeners: list = []   # callables(machine, op, path, pos, n) after each file read/write
 
         self.uc = uc = Uc(UC_ARCH_X86, UC_MODE_16)
@@ -129,6 +125,9 @@ class Machine:
         self.port61 = 0
         self.irq0_pending = False
         self.irq0_in_service = False
+        self.irq0_raised = 0               # timer interrupts raised so far (replay.py records it per read)
+        self.irq0_owed: int | None = None  # replay: interrupts to raise, set at reads (None: from the clock)
+        self._pending_since = 0
         self.next_irq0 = self._irq0_period()
         self.pic_mask = 0
         self.speaker_log = []              # (time, divisor, on) for sound capture
@@ -136,7 +135,7 @@ class Machine:
 
         self.services: dict[int, callable] = {}
         self.routine_hooks: dict[int, callable] = {}
-        self.breakpoints: dict[int, callable] = {}
+        self.breakpoints: dict[int, list] = {}     # linear address -> callbacks (add_breakpoint)
         self.watch_hooks = []
 
         self._build_rom()
@@ -308,10 +307,6 @@ class Machine:
 
     def _install_hooks(self) -> None:
         uc = self.uc
-        if self.exact:
-            # first, so that a chunk is cut before any other hook (service stubs, breakpoints) has run
-            # for the instruction that will be executed again in the next chunk
-            uc.hook_add(UC_HOOK_CODE, self._step)
         uc.hook_add(UC_HOOK_INTR, self._on_intr)
         uc.hook_add(UC_HOOK_CODE, self._on_stub, begin=STUB_BASE, end=STUB_BASE + 256 * 4 - 1)
         uc.hook_add(UC_HOOK_INSN, self._port_in, None, 1, 0, UC_X86_INS_IN)
@@ -434,130 +429,51 @@ class Machine:
 
     # ------------------------------------------------------------------ running
     def add_breakpoint(self, seg: int, off: int, fn) -> None:
-        """fn(machine) is called when execution reaches seg:off (runtime segment)."""
-        self.uc.hook_add(UC_HOOK_CODE, lambda uc, a, s, ud: fn(self), begin=self.linear(seg, off),
-                         end=self.linear(seg, off))
-
-    # ------------------------------------------------------------------ exact time (SPEC 8.4)
-    # `Machine(..., exact=True)` counts instructions one by one (a Python hook on every instruction, about
-    # 3 million per second). Time stays what it is in the plain loop: `insns` is still the value at the
-    # start of the chunk and every service that reads `now()` sees that value, so a run in this mode
-    # produces the same digests as one without it (tests/unit/test_exact_time.py). What changes is that
-    # hooks know the exact position inside the chunk (`exact_now()`), and a replaced routine can charge
-    # the instructions the original would have executed, with the timer ticks that fall inside the
-    # routine delivered at their original times (`timing.py`).
-    def exact_now(self) -> int:
-        """Virtual time at this very instruction (exact mode); `now()` is the chunk start."""
-        return self.insns + self._u + self.extra
+        """fn(machine) is called when execution reaches seg:off (runtime segment). Hooks run in the order
+        they were added, so a breakpoint added before a replacement at the same address (protection.py's
+        wheel solver on Random's entry) still sees the caller's stack."""
+        lin = self.linear(seg, off)
+        self.breakpoints.setdefault(lin, []).append(fn)
+        self.uc.hook_add(UC_HOOK_CODE, lambda uc, a, s, ud: fn(self), begin=lin, end=lin)
 
     def notify_file(self, op: str, path: str, pos: int, n: int) -> None:
         if op == "read" and path.upper().endswith("GAME.OVR"):
-            self._epoch_dirty = True
+            for cb in self.overlay_listeners:        # overlay routines may have moved (routines.py)
+                cb(self)
         for cb in self.file_listeners:
             cb(self, op, path, pos, n)
 
-    def _step(self, uc, addr, size, _ud) -> None:
-        if self._u >= self._chunk:                   # the chunk is over: stop before this instruction
-            self._cut = True
-            uc.reg_write(UC_X86_REG_IP, self.get("ip"))
-            uc.emu_stop()
-            return
-        if self._epoch_dirty:
-            self._epoch_dirty = False
-            for cb in self.overlay_listeners:
-                cb(self)
-        rep = self._repl_at.get(addr)
-        if rep is not None and self._dispatch(rep):
-            return
-        if self._observer is not None:
-            self._observer(self, addr)
-        self._u += 1
-
-    def _dispatch(self, rep) -> bool:
-        """The first instruction of a replaced routine is about to run (or the routine is resuming after
-        a timer interrupt that fell inside it). Returns True when that instruction must not execute.
-
-        The routine's effect is applied at its entry (the replacement `fn` runs once). Its time is the
-        number of instructions the original executes in its own code (`rep.rows`, recorded by
-        `timing.CostRecorder`), charged in the chunk structure the original had: a timer or other chunk
-        boundary that falls inside the routine ends the chunk here, the interrupt is delivered with the
-        guest at the routine's entry (the return address on the stack), and when its handler returns
-        the routine resumes with the rest of its cost."""
-        ss, sp = self.get("ss"), self.get("sp")
-        key = ((ss << 4) + sp) & 0xFFFFF
-        win = rep.windows.get(key)
-        if win is None:
-            idx = rep.calls
-            rep.calls += 1
-            row = None
-            if rep.rows is not None:
-                if idx >= len(rep.rows):
-                    raise OracleError("%s: call %d is not in the recorded timeline (%d calls): the run has "
-                                      "diverged from the recording" % (rep.name, idx, len(rep.rows)))
-                row = rep.rows[idx]
-                if row[0] != self.exact_now():
-                    raise OracleError("%s: call %d entered at time %d, the recording says %d: the run has "
-                                      "diverged from the recording (an earlier replacement charged the "
-                                      "wrong time, or behaved differently)" % (rep.name, idx, self.exact_now(), row[0]))
-            if rep.fn(self) is False:
-                return False                         # declined: the original code runs and is counted
-            if row is not None:
-                win = [row[1], row[2]]
-            else:
-                win = [1 + (rep.cost(self) if callable(rep.cost) else rep.cost), 0]
-        room = self._chunk - self._u
-        if win[0] <= room:
-            self._u += win[0]
-            self.extra += win[1]
-            rep.windows.pop(key, None)
-            if rep.far:
-                self.far_return(rep.ret_bytes)
-            else:
-                self.set("ip", self.pop())
-                self.set("sp", self.get("sp") + rep.ret_bytes)
-        else:
-            win[0] -= room                           # the rest of the routine falls into later chunks
-            self._u = self._chunk
-            rep.windows[key] = win
-            self.uc.reg_write(UC_X86_REG_IP, self.get("ip"))
-        self._cut = True
-        self.uc.emu_stop()
-        return True
-
-    def _emulate_chunk(self, chunk: int) -> None:
-        """Exact-mode counterpart of `emu_start(count=chunk)`."""
-        self._chunk = chunk
-        self._u = 0
-        while self._u < chunk:
-            self._cut = False
-            self.uc.emu_start(self.linear(self.get("cs"), self.get("ip")), 0xFFFFFFFF)
-            if not self._cut:
-                break                                # HLT: accounted like the plain loop does
-
-    def hook_routine(self, seg: int, off: int, fn, ret_bytes: int = 0, far: bool = True, cost=0):
+    def hook_routine(self, seg: int, off: int, fn, ret_bytes: int = 0, far: bool = True):
         """Replace a routine (hybrid execution, SPEC 8.4). `fn(machine)` runs when execution reaches
         seg:off. If it returns anything but False the routine is considered done and the machine
         performs the return (`retf ret_bytes`, or `ret` when far is False); if it returns False the
         original code runs, so a hook can handle only the cases it implements. Returns the hook handle
-        (pass to `unhook`).
+        (pass to `unhook`). `routines.replace` does this by routine id, overlay routines included.
 
-        Virtual time is instructions, and a replacement executes none, so a hooked run drifts from the
-        original in time (timer ticks, `Randomize` seeds). `cost` (an int, or a callable taking the
-        machine) charges that many instructions per call, which narrows the drift. For hybrid runs that
-        must stay exact use `Machine(exact=True)` and `timing.replace` (recorded per-call costs)."""
+        Virtual time is instructions and a replacement executes none, so a hooked run on the clock
+        drifts from the original (timer ticks, polls). Session replays (replay.py) answer every read of
+        the outside world from the original's recording instead, so the drift has nothing to act on."""
+        return self.hook_linear(self.linear(seg, off), fn, ret_bytes=ret_bytes, far=far)
+
+    def hook_linear(self, addr: int, fn, ret_bytes: int = 0, far: bool = True):
+        """`hook_routine` at a linear address."""
         def trampoline(uc, a, s, ud):
             if fn(self) is False:
                 return
-            self.extra += cost(self) if callable(cost) else cost
             if far:
                 self.far_return(ret_bytes)
             else:
                 self.set("ip", self.pop())
                 self.set("sp", self.get("sp") + ret_bytes)
-        return self.uc.hook_add(UC_HOOK_CODE, trampoline, begin=self.linear(seg, off), end=self.linear(seg, off))
+        return self.uc.hook_add(UC_HOOK_CODE, trampoline, begin=addr, end=addr)
 
     def unhook(self, handle) -> None:
         self.uc.hook_del(handle)
+
+    def _raise_irq0(self) -> None:
+        self.irq0_pending = True
+        self.irq0_raised += 1
+        self._pending_since = self.insns
 
     def _try_deliver_irq0(self) -> None:
         if not self.irq0_pending or self.irq0_in_service or (self.pic_mask & 1):
@@ -578,25 +494,33 @@ class Machine:
                 if self.exit_code is not None:
                     return "exit"
                 now = self.now()
-                if self.irq0_pending is False and now >= self.next_irq0:
-                    self.irq0_pending = True
-                    self.next_irq0 += self._irq0_period()
+                if self.irq0_owed is None:
+                    if self.irq0_pending is False and now >= self.next_irq0:
+                        self._raise_irq0()
+                        self.next_irq0 += self._irq0_period()
+                elif self.irq0_pending is False and self.irq0_owed > 0:
+                    self.irq0_owed -= 1                  # replay: raised as the recording's reads say
+                    self._raise_irq0()
                 self._try_deliver_irq0()
+                if self.irq0_pending and self.insns - self._pending_since > STALL_INSNS:
+                    raise OracleError("stalled: a timer interrupt has been pending for %d instructions with "
+                                      "interrupts off, at %04X:%04X (a read that can never be answered?)" % (
+                                          self.insns - self._pending_since, self.get("cs"), self.get("ip")))
                 if self.irq0_pending:
                     chunk = 100                      # waiting for IF; look again soon
+                elif self.irq0_owed is not None:
+                    chunk = 50_000                   # replay: no clock event to stop at
                 else:
                     chunk = max(1, self.next_irq0 - now)
                 chunk = min(chunk, 50_000, limit - self.insns)
                 if chunk <= 0:
                     return "max-insns"
-                if self.exact:
-                    self._emulate_chunk(chunk)
-                else:
-                    start = self.linear(self.get("cs"), self.get("ip"))
-                    uc.emu_start(start, 0xFFFFFFFF, count=chunk)
+                start = self.linear(self.get("cs"), self.get("ip"))
+                uc.emu_start(start, 0xFFFFFFFF, count=chunk)
                 self.insns += chunk
                 # HLT leaves emu_start early; jump to the next timer event instead of spinning
-                if uc.mem_read(self.linear(self.get("cs"), (self.get("ip") - 1)), 1) == b"\xF4":
+                # (in a replay the interrupts come from the recorded reads, so a halt simply resumes)
+                if self.irq0_owed is None and uc.mem_read(self.linear(self.get("cs"), (self.get("ip") - 1)), 1) == b"\xF4":
                     self.insns = max(self.insns, self.next_irq0 - self.extra)
                 keys = getattr(self, "keys", None)
                 if keys is not None:

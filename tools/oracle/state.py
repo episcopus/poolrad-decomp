@@ -31,13 +31,27 @@ def load_definition(path: Path | None = None) -> dict:
 STACK_SIZE = 0x4000           # whitepaper 3.1: initial SS:SP 14F2:4000 (16 KB stack segment)
 
 
+HEAP_ORG, HEAP_PTR = 0x4400, 0x4404   # System variables, far pointers (whitepaper 2.2)
+
+
+def heap_bytes(m, ds: int) -> bytes:
+    """The allocated heap: linear HeapOrg up to HeapPtr (empty before the runtime set them up)."""
+    def lin(o):
+        return ((m.rw(ds, o + 2) << 4) + m.rw(ds, o)) & 0xFFFFF
+    lo, hi = lin(HEAP_ORG), lin(HEAP_PTR)
+    if not (0 < lo <= hi <= 0xA0000):
+        return b""
+    return bytes(m.uc.mem_read(lo, hi - lo))
+
+
 def canonical_digest(m, definition: dict | None = None, *, exclude_stack: bool = False) -> str:
-    """sha256 of the canonical state. `exclude_stack=True` leaves the stack segment out. A routine
-    replaced by C does not push the frames the original pushed (and C locals are never on the guest
-    stack), so stack bytes, including stale slots of live frames that nobody has written yet, differ in
-    a hybrid run while globals, heap and video are equal (timing.py, whitepaper appendix C). The default
-    keeps the stack, so recorded goldens stay valid. `re/state.toml` `stack = "diagnostic"`
-    (decision 2026-10-10) says a C run is compared on `canonical_nostack` instead."""
+    """sha256 of the canonical state: DGROUP, the Turbo Pascal heap when `re/state.toml` says
+    `heap = "compared"` (the allocated part, HeapOrg up to HeapPtr, freed blocks included), and the
+    video planes. `exclude_stack=True` leaves the stack segment out. A routine replaced by C does not
+    push the frames the original pushed (and C locals are never on the guest stack), so stack bytes,
+    including stale slots of live frames that nobody has written yet, differ in a hybrid run while
+    globals, heap and video are equal (whitepaper appendix C). `re/state.toml` `stack = "diagnostic"`
+    (decision 2026-10-10) says a C run is compared on `canonical_nostack`."""
     d = load_definition() if definition is None else definition
     if d.get("heap_root"):
         raise NotImplementedError("re/state.toml heap_root entries need re/types/ (first lifted unit)")
@@ -60,6 +74,9 @@ def canonical_digest(m, definition: dict | None = None, *, exclude_stack: bool =
                 data[a - lo:b - lo] = bytes(b - a)
         h.update(r.get("name", "").encode())
         h.update(bytes(data))
+    if d.get("heap") == "compared":
+        h.update(b"heap")
+        h.update(heap_bytes(m, ds))
     if not d.get("region"):
         h.update(m.ega.planes_digest().encode())
     return h.hexdigest()

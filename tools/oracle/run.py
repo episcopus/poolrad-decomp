@@ -28,9 +28,8 @@ EXE = ROOT / "poolrad/start-unpack.exe"
 GAME = ROOT / "poolrad"
 
 
-def build_machine(script: KeyScript | None, *, strict: bool = True, insn_per_sec: int = 1_000_000,
-                  exact: bool = False) -> Machine:
-    m = Machine(EXE, GAME, strict=strict, insn_per_sec=insn_per_sec, exact=exact)
+def build_machine(script: KeyScript | None, *, strict: bool = True, insn_per_sec: int = 1_000_000) -> Machine:
+    m = Machine(EXE, GAME, strict=strict, insn_per_sec=insn_per_sec)
     m.keys = script
     if script is not None:
         m.clock_pin = script.clock
@@ -42,13 +41,13 @@ def build_machine(script: KeyScript | None, *, strict: bool = True, insn_per_sec
 def run_session(script_text: str | None, *, max_insns: int, out_dir: Path | None = None,
                 trace: str = "", shot_final: bool = True, digests: bool = True,
                 strict: bool = True, quiet: bool = False, shot_every: int = 0,
-                insn_per_sec: int = 1_000_000, exact: bool = False, prepare=None) -> dict:
+                insn_per_sec: int = 1_000_000, prepare=None) -> dict:
     """Run one session and return its summary (also used by tests and the golden recorder).
 
-    exact: count instructions one by one (Machine(exact=True)); prepare(machine) is called before
-    the run, e.g. to install replacements or a cost recorder (timing.py)."""
+    prepare(machine) is called before the run, e.g. to install replacements (routines.py), a
+    recorder or a player (replay.py)."""
     script = KeyScript.parse(script_text) if script_text is not None else KeyScript([])
-    m = build_machine(script, strict=strict, insn_per_sec=insn_per_sec, exact=exact)
+    m = build_machine(script, strict=strict, insn_per_sec=insn_per_sec)
     if prepare is not None:
         prepare(m)
     shots_dir = None

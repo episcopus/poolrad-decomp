@@ -12,11 +12,12 @@ A golden lives in `tests/sessions/golden/<name>/`:
   reads.txt     one full state digest (16 hex) per keyboard read, in order
   reads_nostack.txt  the same without the stack segment (the form a hybrid run can match)
   <label>.png   our own screenshot at each named `shot` (to be looked at by a person: playbook 40 step 3)
+  replay.json.gz  the run's reads of the outside world and its checkpoints (tools/oracle/replay.py):
+                what `make sessions` replays with the lifted routines in C
 
 `--check` re-runs each session once and compares against the committed golden (screen and state
-digests, not PNG bytes, which depend on the zlib build). `hybrid_view` projects a summary onto the fields
-a run with replaced routines can match (time, screen, state without the stack, Random sequence). Goldens hold digests and our own
-screenshots of our own runs; never copies of game files.
+digests, not PNG bytes, which depend on the zlib build) and its recording. Goldens hold digests, our own
+screenshots and recordings of our own runs; never copies of game files.
 """
 from __future__ import annotations
 
@@ -28,12 +29,14 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from oracle import replay  # noqa: E402
 from oracle.machine import ROOT  # noqa: E402
-from oracle.run import EXE, run_session  # noqa: E402
+from oracle.run import EXE  # noqa: E402
 
 SESSIONS = ROOT / "tests/sessions"
 GOLDEN = SESSIONS / "golden"
-FORMAT = 2
+FORMAT = 3                        # 3: heap in the canonical state (re/state.toml), recording saved
+RECORDING = "replay.json.gz"
 MAX_INSNS = 400_000_000
 INSN_PER_SEC = 1_000_000          # run_session default; recorded so a changed clock model is visible
 
@@ -65,63 +68,6 @@ def summarise(s: dict) -> dict:
     }
 
 
-HYBRID_FIELDS = ("stop_reason", "instructions", "virtual_seconds", "video_mode", "key_reads", "reads_nostack_sha256",
-                 "canonical_nostack_digest", "random_calls", "random_digest", "files_opened")
-HYBRID_CHECKPOINT_FIELDS = ("label", "time", "screen", "canonical_nostack", "random_calls")
-# A script shot can fall inside a replaced routine. The C runs at entry and the
-# clock is charged afterwards, so one spinner iteration can land on the other
-# side of the shot (boot-title title: 5022 vs 5021 Random calls, same time,
-# same screen; WHITEPAPER appendix C). Decision 2026-10-10: that one call is
-# allowed. Screen, time, the final Random sequence and the final no-stack
-# state stay exact. A checkpoint whose call count matches and whose state
-# bytes differ is still a failure.
-SPINNER_CALLS = 1
-
-
-def hybrid_view(d: dict) -> dict:
-    """The part of a summary or golden that a hybrid run (routines replaced by C or Python, timing from
-    timing.py) must equal: everything except digests that include the stack segment
-    (`re/state.toml` `stack = "diagnostic"`)."""
-    out = {k: d[k] for k in HYBRID_FIELDS}
-    out["checkpoints"] = [{k: c[k] for k in HYBRID_CHECKPOINT_FIELDS} for c in d["checkpoints"]]
-    return out
-
-
-def hybrid_difference(want: dict, got: dict) -> str | None:
-    """First hybrid mismatch. Checkpoint `random_calls` may differ by `SPINNER_CALLS`;
-    the checkpoint state may differ only in that case."""
-    for k in want:
-        if k == "checkpoints":
-            if len(want[k]) != len(got[k]):
-                return "checkpoint count %d != %d" % (len(want[k]), len(got[k]))
-            for i, (x, y) in enumerate(zip(want[k], got[k])):
-                changed = {f: (x[f], y[f]) for f in ("label", "time", "screen") if x[f] != y[f]}
-                if changed:
-                    return "checkpoint %d (%s): %s" % (i, x["label"], changed)
-                delta = abs(x["random_calls"] - y["random_calls"])
-                if delta > SPINNER_CALLS:
-                    return ("checkpoint %d (%s): random_calls %d != %d (tolerance %d)"
-                            % (i, x["label"], x["random_calls"], y["random_calls"], SPINNER_CALLS))
-                if x["canonical_nostack"] != y["canonical_nostack"] and delta == 0:
-                    return ("checkpoint %d (%s): canonical_nostack differs with the same Random count"
-                            % (i, x["label"]))
-        elif want[k] != got[k]:
-            return "%s: %r != %r" % (k, want[k], got[k])
-    return None
-
-
-def hybrid_spinner_notes(want: dict, got: dict) -> list[str]:
-    """Checkpoints the spinner tolerance accepted. Printed, not treated as a pass with no record."""
-    notes = []
-    for i, (x, y) in enumerate(zip(want["checkpoints"], got["checkpoints"])):
-        if x["random_calls"] == y["random_calls"] and x["canonical_nostack"] == y["canonical_nostack"]:
-            continue
-        notes.append("checkpoint %d (%s): random_calls %d vs %d, state %s (one spinner step)" % (
-            i, x["label"], x["random_calls"], y["random_calls"],
-            "same" if x["canonical_nostack"] == y["canonical_nostack"] else "differs"))
-    return notes
-
-
 def first_difference(a: dict, b: dict, a_reads: list[str] = (), b_reads: list[str] = ()) -> str | None:
     for k in a:
         if k == "checkpoints":
@@ -139,21 +85,24 @@ def first_difference(a: dict, b: dict, a_reads: list[str] = (), b_reads: list[st
     return None
 
 
-def run_once(name: str, out_dir: Path | None = None) -> dict:
+def run_once(name: str, out_dir: Path | None = None):
+    """One run of the original with its script; returns (summary, replay.Recording)."""
     text = (SESSIONS / (name + ".keys")).read_text()
-    return run_session(text, max_insns=MAX_INSNS, out_dir=out_dir, quiet=True, insn_per_sec=INSN_PER_SEC)
+    return replay.record(text, max_insns=MAX_INSNS, out_dir=out_dir, insn_per_sec=INSN_PER_SEC)
 
 
 def record(name: str, out_root: Path) -> int:
     print("[%s] run 1 ..." % name, flush=True)
-    a = run_once(name, out_root / name)
+    a, rec_a = run_once(name, out_root / name)
     print("[%s] run 2 ..." % name, flush=True)
-    b = run_once(name)
+    b, rec_b = run_once(name)
     sa, sb = summarise(a), summarise(b)
     if a["reason"] not in ("input-exhausted", "quit"):
         print("[%s] FAIL: unexpected stop %s %s" % (name, a["reason"], a["error"] or ""), file=sys.stderr)
         return 1
     diff = first_difference(sa, sb, a["read_digests"], b["read_digests"])
+    if not diff and rec_a.digest() != rec_b.digest():
+        diff = "the recordings of the outside world differ"
     if diff:
         print("[%s] FAIL: the two runs differ: %s" % (name, diff), file=sys.stderr)
         return 1
@@ -170,7 +119,8 @@ def record(name: str, out_root: Path) -> int:
             t.unlink()
     (d / "reads.txt").write_text("\n".join(a["read_digests"]) + "\n")
     (d / "reads_nostack.txt").write_text("\n".join(a["read_nostack_digests"]) + "\n")
-    keep = {"golden.json", "reads.txt", "reads_nostack.txt"} | {c["label"] + ".png" for c in sa["checkpoints"]}
+    rec_a.save(d / RECORDING)
+    keep = {"golden.json", "reads.txt", "reads_nostack.txt", RECORDING} | {c["label"] + ".png" for c in sa["checkpoints"]}
     for stale in d.iterdir():
         if stale.name not in keep:
             stale.unlink()                     # leftovers of an older format or of removed checkpoints
@@ -185,8 +135,9 @@ def record(name: str, out_root: Path) -> int:
         **sa,
     }
     (d / "golden.json").write_text(json.dumps(gold, indent=1) + "\n")
-    print("[%s] golden written: %d checkpoints, %d key reads, %d instructions, %d Random calls" % (
-        name, len(sa["checkpoints"]), sa["key_reads"], sa["instructions"], sa["random_calls"]))
+    print("[%s] golden written: %d checkpoints, %d key reads, %d instructions, %d Random calls; recording: %s" % (
+        name, len(sa["checkpoints"]), sa["key_reads"], sa["instructions"], sa["random_calls"],
+        replay.describe(rec_a)))
     return 0
 
 
@@ -205,11 +156,17 @@ def check(name: str, out_root: Path) -> int:
     if gold["exe_sha256"] != sha256_file(EXE):
         print("[%s] FAIL: the pinned executable differs from the one the golden was recorded on" % name, file=sys.stderr)
         return 1
-    r = run_once(name)
+    r, rec = run_once(name)
     got = summarise(r)
     want = {k: gold[k] for k in got}
     want_reads = (out_root / name / "reads.txt").read_text().split()
     diff = first_difference(want, got, want_reads, r["read_digests"])
+    if not diff:
+        try:
+            if replay.Recording.load(out_root / name / RECORDING).digest() != rec.digest():
+                diff = "the recording of the outside world (%s) differs" % RECORDING
+        except (OSError, ValueError) as e:
+            diff = "recording: %s" % e
     if diff:
         print("[%s] FAIL: differs from golden: %s" % (name, diff), file=sys.stderr)
         return 1

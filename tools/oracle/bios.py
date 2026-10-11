@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import struct
 
-from .machine import FLAG_ZF, Stop
+from .machine import FLAG_ZF, OracleError, Stop
 
 BDA = 0x400
 IDLE_STOP_POLLS = 50          # empty polls with a quiet screen before an exhausted script ends the run
@@ -312,6 +312,9 @@ class Bios:
                 self.blocked_now = True
                 if keys is None or keys.exhausted(m):
                     raise Stop("input-exhausted")
+                if keys.stalled(m):
+                    raise OracleError("stalled: the game waits for a key and the script waits for the wheel "
+                                      "answer, which protection.py never saw (is Random's entry hooked?)")
                 # block: retry the INT after letting virtual time advance to the next timer tick
                 ss, sp = m.get("ss"), m.get("sp")
                 m.ww(ss, sp, (m.rw(ss, sp) - 2) & 0xFFFF)

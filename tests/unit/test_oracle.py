@@ -271,6 +271,7 @@ def runs():
     return out
 
 
+@pytest.mark.slow
 def test_boots_to_the_title_screens_in_ega_mode(runs):
     s = runs["boot"]
     assert s["reason"] == "input-exhausted" and s["mode"] == 0x0D
@@ -280,6 +281,7 @@ def test_boots_to_the_title_screens_in_ega_mode(runs):
     assert "\\POOLRAD\\TITLE.DAX" in s["files_opened"]
 
 
+@pytest.mark.slow
 def test_overlay_manager_loads_every_unit_from_game_ovr(runs):
     m = runs["boot"]["_machine"]
     from oracle.trace import overlay_stubs
@@ -294,6 +296,7 @@ def test_overlay_manager_loads_every_unit_from_game_ovr(runs):
     assert m.int_counts[0x3F] > 35                      # the game's own manager ran on INT 3Fh
 
 
+@pytest.mark.slow
 def test_character_creation_completes_from_a_script(runs):
     s = runs["create"]
     assert s["reason"] == "input-exhausted"
@@ -307,6 +310,7 @@ def test_character_creation_completes_from_a_script(runs):
     assert (POOL / "SAVE" / "RAD.CHA").exists() is False   # the pinned directory was not touched
 
 
+@pytest.mark.slow
 def test_same_script_twice_gives_identical_traces_and_digests(runs):
     a, b = runs["create"], runs["create2"]
     assert a["state_digest"] == b["state_digest"]
@@ -329,6 +333,7 @@ def test_call_trace_names_routines_and_is_repeatable():
     assert t0.lines == t1.lines
 
 
+@pytest.mark.slow
 def test_random_log_follows_the_tp6_generator_exactly(runs):
     """Every logged call is seed' = seed * 08088405h + 1 from the previous one, and Random(range) is
     hi16(seed') mod range, as the System code at 0AF8:120F..1244 and 11C0 does (whitepaper 5.13)."""
@@ -357,6 +362,7 @@ def test_random_log_matches_what_random_actually_returns():
     assert logged[:len(returned)] == returned[:len(logged)]
 
 
+@pytest.mark.slow
 def test_pinned_clock_gives_the_same_random_sequence_whatever_the_timing(runs):
     """The control for the whole feature: change the oracle's clock rate (which moves the instruction
     count of every event) and the pinned seed and the first decisions stay identical; unpinned they
@@ -384,6 +390,7 @@ def test_unpinned_seed_follows_the_instruction_clock():
     assert seeds[0] != seeds[1] and seeds[0][0] == 0x0C00     # same hour:minute, different seconds
 
 
+@pytest.mark.slow
 def test_hybrid_hook_python_move_matches_original(runs):
     """Replace System.Move (0AF8:1685) by a Python version (video destinations are declined, so the
     original code handles them) and compare the state at the same logical point: just before the 120th
@@ -391,9 +398,9 @@ def test_hybrid_hook_python_move_matches_original(runs):
     call count, not an instruction budget.
 
     Known limit (whitepaper appendix C): later than this, timer ticks land at slightly different
-    program points in a hooked run (the clock counts instructions and a replacement executes none),
-    and tick-derived bytes in DGROUP differ. `hook_routine(cost=...)` narrows but does not remove
-    that; SPEC 8.4 needs either masks in re/state.toml or a precise-time mode before L3 on hybrids."""
+    program points in a hooked run on the clock (it counts instructions and a replacement executes
+    none), and tick-derived bytes in DGROUP differ. Session replays (replay.py, test_replay.py) remove
+    that by answering the game's reads of the outside world from the original's recording."""
     from oracle.run import build_machine
     from oracle.machine import Stop
     from oracle.state import canonical_digest
@@ -432,6 +439,7 @@ def test_hybrid_hook_python_move_matches_original(runs):
     assert m.state_digest(registers=False, include_video=False) == ref.state_digest(registers=False, include_video=False)
 
 
+@pytest.mark.slow
 def test_screens_equal_dosbox_x_frames_pixel_for_pixel():
     import dosbox_ref  # noqa: E402
     if not dosbox_ref.available():

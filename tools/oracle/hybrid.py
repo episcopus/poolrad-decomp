@@ -17,7 +17,8 @@ scratch buffer. A copy that would touch video MMIO (linear >= 0xA0000) is
 declined and the original runs. Move's direction flag is applied here: the
 original leaves DF set whenever the source offset is below the destination
 offset (std at 0AF8:169E, no cld before retf), including a count of 0.
-FillChar always cld's. Virtual time comes from timing.replace.
+FillChar always cld's. No time is charged for C: session replays answer the
+game's reads of the outside world from the original's recording (replay.py).
 """
 from __future__ import annotations
 
@@ -189,13 +190,10 @@ class HybridLib:
         return ctypes.c_uint32.from_address(self.g_base + self.seed_off).value
 
 
-def install(prepare_map: dict | None = None):
-    """Prepare callback for run_session: replace the spike routines with C.
-
-    Uses plain hook costs (1 instruction each); for exact-time runs pass a
-    CostTable via sessions.py instead.
-    """
-    from oracle import timing as _timing
+def install(prepare_map=None):
+    """Prepare callback for run_session: replace the spike routines with C
+    (routines.replace; every routine when prepare_map is None, else those in it)."""
+    from oracle import routines as _routines
     hyb = HybridLib()
     fns = {"0AF8:1685": hyb.c_move, "0AF8:16A8": hyb.c_fill, "0AF8:11C0": hyb.c_random}
 
@@ -203,8 +201,7 @@ def install(prepare_map: dict | None = None):
         for rid, fn in fns.items():
             if prepare_map is None or rid in prepare_map:
                 p = PARAMS[rid]
-                m.hook_routine(int(rid.split(":")[0], 16), int(rid.split(":")[1], 16),
-                               fn, ret_bytes=p["ret_bytes"], far=p["far"], cost=1)
+                _routines.replace(m, rid, fn, ret_bytes=p["ret_bytes"], far=p["far"])
 
     prepare.hybrid = hyb
     return prepare

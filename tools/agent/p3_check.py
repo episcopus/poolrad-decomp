@@ -10,14 +10,10 @@ Checks, in order (stops at the first failure):
   2. Host binary and hybrid library build (cmake).
   3. Portability lint passes over the engine.
   4. Fuzz passes for the three spike routines (writes L2 verdicts).
-  5. Sessions pass with the C routines (Move, FillChar, Random). A checkpoint
-     may sample one spinner step to either side (golden.SPINNER_CALLS);
-     screen, time, the final Random sequence and the final no-stack state
-     stay exact (WHITEPAPER appendix C).
-
-`make test` (pytest, fast P3 file included) and the full gated sessions run
-inside `make check` via the Makefile, not here, so this tool stays quick to
-re-run for the parts it owns. Exit 0 with a summary when green.
+Sessions with the C routines (record/replay, tools/oracle/replay.py) run once
+in `make sessions`, which `make check` calls after this tool; they are not
+repeated here. `make test` (pytest, fast set) also runs from the Makefile.
+Exit 0 with a summary when green.
 """
 from __future__ import annotations
 
@@ -63,9 +59,8 @@ def main() -> int:
     run([PY, "tools/lint/portability.py"], "portability lint")
     for fn in ("0AF8:1685", "0AF8:16A8", "0AF8:11C0"):
         run([PY, "tools/fuzz/fuzz.py", "--routine", fn], "fuzz %s" % fn)
-    run([PY, "tools/sessions/sessions.py", "--session", "boot-title"], "sessions boot-title")
     print("p3-check: GREEN: memory-model spike passes in both builds")
-    print("p3-check: note: create-character runs in `make sessions`")
+    print("p3-check: note: the session replays run once, in `make sessions` (part of `make check`)")
     return 0
 
 
