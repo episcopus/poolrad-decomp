@@ -16,5 +16,5 @@ package = false
 
 [tool.pytest.ini_options]
 markers = [
-    "slow: boots the real game (tens of seconds to minutes each); `make test-slow`. `make check` runs the fast set plus `make sessions`",
+    "slow: boots the real game (tens of seconds to minutes each); `make test-slow`. `make check` runs the fast set plus `make match --all` and the golden check",
 ]

@@ -53,10 +53,10 @@ brew_install() {
   done
 }
 
-say "Packages for phases 0 to 3"
-#  uv: Python and tool dependencies; cmake/ninja/pkgconf/sdl3: native C build; dosbox-x: oracle cross-check;
-#  openjdk@21: Ghidra 12 needs Java 21 or later.
-brew_install uv cmake ninja pkgconf sdl3 dosbox-x openjdk@21
+say "Packages for phases 0 to 6"
+#  uv: Python and tool dependencies; dosbox-x: oracle cross-check; openjdk@21: Ghidra 12 needs Java 21 or later.
+#  cmake/ninja/pkgconf/sdl3 (the C translation's native build, phase 7): brew install cmake ninja pkgconf sdl3
+brew_install uv dosbox-x openjdk@21
 
 say "Python environment (.venv via uv)"
 run uv sync --python 3.12

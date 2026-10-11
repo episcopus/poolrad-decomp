@@ -13,7 +13,7 @@ A golden lives in `tests/sessions/golden/<name>/`:
   reads_nostack.txt  the same without the stack segment (the form a hybrid run can match)
   <label>.png   our own screenshot at each named `shot` (to be looked at by a person: playbook 40 step 3)
   replay.json.gz  the run's reads of the outside world and its checkpoints (tools/oracle/replay.py):
-                what `make sessions` replays with the lifted routines in C
+                what a build of ours (rebuild, C translation) is replayed against
 
 `--check` re-runs each session once and compares against the committed golden (screen and state
 digests, not PNG bytes, which depend on the zlib build) and its recording. Goldens hold digests, our own

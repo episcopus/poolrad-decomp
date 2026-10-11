@@ -35,7 +35,7 @@ opt "emu2"           "test -x tools/vendor/emu2/emu2 || command -v emu2" "echo e
 opt "unzip (Info-ZIP)" "command -v unzip" "unzip -v 2>&1 | head -1" "ships with macOS; needed for PKZIP implode"
 opt "TP compilers"   "test -f build/toolchain/tp60-1991/BIN/TPC.EXE" "echo installed: \$(ls build/toolchain/*/BIN/TPC.EXE | wc -l | tr -d ' ')" "put archives in build/toolchain/dist/, then make tp-install"
 
-echo "== P3+: C builds"
+echo "== P7: C translation builds (optional until then)"
 opt "cc (clang)"     "command -v cc"      "cc --version"                        "xcode-select --install"
 opt "cmake"          "command -v cmake"   "cmake --version"                     "brew install cmake"
 opt "ninja"          "command -v ninja"   "echo ninja \$(ninja --version)"      "brew install ninja"

@@ -1,18 +1,17 @@
-# src/
+# src: the Pascal source
 
-The C reconstruction of Pool of Radiance (SPEC 6 and 7).
+Turbo Pascal 6.0 (June 1991), compiled by the pinned compiler (`make tp-pin`) and proven routine by routine against the original's machine code with `make match` (SPEC sections 7 and 8.3, playbook 30).
 
-P3 spike (green via `make check`): the memory model (SPEC 7.3), the RTL
-cores it needs, one game unit started, the SDL3 host platform and the hybrid
-glue. Bulk lifting is P4 in queue order (`work/queue.toml`).
+| File | Holds |
+|---|---|
+| `RESNN.PAS`, `OVLNN.PAS` | one original unit each, named after its id in `re/units.toml`; routines in address order, all declared in the interface |
+| `POOLVARS.PAS` | globals whose owning unit is not known yet (`dsXXXX` = DS offset, or a name from `re/dseg.toml`) |
 
-| Directory | Contents | Spike state |
-|---|---|---|
-| `include/` | `types.h` (u8 s16 ...), `pool_memory.h` (farptr, FP, arena/bind), `pool_rtl.h`, `gen/` (dseg.h generated from `re/dseg.toml`) | done |
-| `rtl/` | Turbo Pascal runtime semantics | Move, FillChar, Random/ Randomize formula only |
-| `game/` | one module per original unit | `res00_system.c` (3 routines, L2) |
-| `platform/` | `platform.h` (the only boundary to the outside world) | hooks, waits, video present |
-| `platform/host/` | SDL3 implementation + spike main | builds, presents, exits |
-| `hybrid/` | glue that runs C routines inside the oracle | 3 exports + DGROUP access |
+Conventions:
 
-Rules: portability rules in SPEC 7.2 (`make lint`), one function per original routine with a provenance comment (SPEC 7.1).
+- Directives: `{$A-,F+,S-,R-,G-,I-}`, overlay units `{$A-,O+,F+,S-,R-,G-,I-}`, res05 `I+`.
+- A routine not decompiled yet but called by one that is: `{@stub}` at the start of its header line, the right signature, an empty body.
+- Top-level routine headers start in column 1; nested routines are indented.
+- No raw machine code. Original quirks are kept and marked `QUIRK:`.
+
+The runtime units (System, Crt, Dos, Overlay) are the compiler's own and are never here.

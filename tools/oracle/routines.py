@@ -5,7 +5,7 @@ Resident code stays where the loader put it; overlay code moves, so an overlay r
 read from its stub's load segment again after every read of GAME.OVR (`Machine.overlay_listeners`).
 
   replace(m, id, fn, ret_bytes=, far=)   run `fn` instead of the routine (hybrid execution; the C lift
-                                         through tools/oracle/hybrid.py). Time is not charged: session
+                                         in the C translation, branch track-c-hybrid). Time is not charged: session
                                          replays answer the game's reads of the outside world from a
                                          recording (replay.py), so no clock depends on the instructions
                                          a routine executes.

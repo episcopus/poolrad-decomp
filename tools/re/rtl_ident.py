@@ -49,13 +49,18 @@ SYSTEM_NAMED = {
     0x14FB: ("System_BlockRead", "[V] INT 21h AH=3Fh; FileRec + count"),
     0x1502: ("System_BlockWrite", "[V] INT 21h AH=40h twin of BlockRead"),
     0x1563: ("System_rtl_1563", "[I] file I/O helper; INT 21h"),
-    0x1685: ("System_Move", "[V] Move(src,dst,count); overlapping-safe"),
-    0x16A8: ("System_FillChar", "[V] FillChar(dst,count,value)"),
-    0x16BC: ("System_DosVersion", "[V] INT 21h AH=30h"),
+    0x1685: ("System_Move", "[V] Move(src,dst,count); direction by offsets only (0AF8:1696); rep movsb wraps offsets; DF left set on the backward path (fuzzed on branch track-c-hybrid)"),
+    0x16A8: ("System_FillChar", "[V] FillChar(dst,count,value); rep stosb wraps DI; clears DF"),
+    0x11C0: ("System_Random", "[V] Random(range): step 0AF8:120F, then hi16(RandSeed) mod range; range 0 steps and returns 0"),
+    0x16BC: ("System_ParamStr", "[V] ParamStr(n) into a string temporary: `ParamStr(1)` compiles to a call here (make match UNIT=res04); uses INT 21h AH=30h for the program name"),
+    0x0C10: ("System_StrCompare", "[V] compares two Pascal strings, result in the flags: `ParamStr(1) = 'STING'` compiles to a call here (make match UNIT=res04)"),
+    0x0DC0: ("System_SetIn", "[V] byte in a 32-byte set constant, result in ZF: `x in [0, 1]` compiles to a call here (make match UNIT=res04)"),
 }
 
 CRT_NAMED = {
     0x0000: ("Crt_init", "[V] INT 10h video probe (smoke)"),
+    0x02FD: ("Crt_KeyPressed", "[V] `KeyPressed` compiles to a call here (make match UNIT=res04)"),
+    0x030F: ("Crt_ReadKey", "[V] `ReadKey` compiles to a call here (make match UNIT=res04)"),
 }
 
 # Borland Overlay unit (res14, 0AA2). Its routines get names from the far-call graph.

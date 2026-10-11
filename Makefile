@@ -10,7 +10,7 @@ PACKED := poolrad/START.EXE
 .PHONY: help setup doctor inputs unexepack overlays map dax smoke status next ghidra p1-check \
         tp-install tp-probe tp-compare tp-pin tpc emu2 \
         packet lock unlock \
-        oracle-run oracle-dosbox timing-scan golden sessions host hybrid fuzz test test-slow check lint review-pass dos coco3
+        oracle-run oracle-dosbox timing-scan golden match test test-slow check review-pass rebuild host coco3
 
 help:
 	@echo "Available now:  setup doctor inputs unexepack overlays map dax smoke"
@@ -18,8 +18,8 @@ help:
 	@echo "Turbo Pascal:   emu2 tp-install tp-probe tp-compare tp-pin tpc (docs/setup/SETUP-tp.md)"
 	@echo "Data codecs:    make dax (all playbook-20 formats); make test (pytest)"
 	@echo "Phase 2:        oracle-run oracle-dosbox golden timing-scan"
-	@echo "Phase 3:        host hybrid fuzz sessions check lint (P3 spike green; review-pass in P4)"
-	@echo "Later:          dos (P8) coco3 (P7)"
+	@echo "Phase 3/4:      match (UNIT= FN= WRITE=1) check test test-slow (review-pass in P4)"
+	@echo "Later:          rebuild (P5) host (P7, branch track-c-hybrid) coco3 (P8)"
 	@echo "See AGENTS.md and docs/spec/SPEC.md."
 
 setup:            ## install the toolchain on macOS (see docs/setup/SETUP-macos.md)
@@ -91,7 +91,7 @@ tpc:              ## compile SRC=<file.pas> with the pinned TP 6.0 (VER=, DISASM
 	$(PY) tools/re/tp_toolchain.py tpc $(SRC) $(if $(VER),--version $(VER)) $(if $(DISASM),--disasm) $(if $(OPTS),--opts $(OPTS))
 
 packet:           ## write build/packets/<id>.md for UNIT= or FN=
-	$(PY) tools/agent/packet.py --unit "$(UNIT)" --fn "$(FN)"
+	$(PY) tools/agent/packet.py $(if $(UNIT),--unit $(UNIT)) $(if $(FN),--fn $(FN))
 
 lock:             ## claim a unit: make lock UNIT=ovl00
 	UNIT=$(UNIT) $(PY) tools/agent/lock.py
@@ -113,34 +113,18 @@ timing-scan:      ## find routines that wait on time or input (static; SESSIONS=
 
 golden:           ## record goldens and their recordings (each session twice, must match): SESSION=name (default all); CHECK=1 verifies committed goldens
 	$(PY) tools/oracle/golden.py $(if $(SESSION),--session $(SESSION)) $(if $(CHECK),--check)
-host:           ## native binary (SPEC 11): cmake + SDL3 -> build/host/poolrad (P3 spike: platform smoke)
-	cmake -S . -B build/host -G Ninja -DCMAKE_BUILD_TYPE=Release
-	cmake --build build/host --target poolrad
+match:            ## prove decompiled Pascal against the original (SPEC 8.3): UNIT=<id> [FN=<name>] [WRITE=1]; no UNIT: every unit with source
+	$(PY) tools/match/match.py $(if $(UNIT),$(UNIT),--all) $(foreach f,$(FN),--routine $(f)) $(if $(WRITE),--write)
 
-hybrid:         ## hybrid library for the oracle (SPEC 8.4): build/host/libpoolrad_hybrid.*
-	cmake -S . -B build/host -G Ninja -DCMAKE_BUILD_TYPE=Release
-	cmake --build build/host --target poolrad_hybrid
-
-lint:           ## portability lint over the engine (SPEC 7.2)
-	$(PY) tools/lint/portability.py
-
-fuzz: hybrid    ## differential test of one routine (SPEC 8.3): FN=<id or C name> [CASES=200] [SEED=1234]
-	@test -n "$(FN)" || (echo 'fuzz: usage: make fuzz FN=<id|C name> [CASES=n] [SEED=n]'; exit 2)
-	$(PY) tools/fuzz/fuzz.py --routine "$(FN)" --cases $(if $(CASES),$(CASES),200) --seed $(if $(SEED),$(SEED),1234)
-
-sessions: hybrid ## replay each golden's recording with the C routines (SPEC 8.5, replay.py): [SESSION=name]
-	$(PY) tools/sessions/sessions.py \
-		$(if $(SESSION),--session $(SESSION),--session boot-title --session create-character)
-
-test:              ## Python unit tests, fast set (codecs, toolchain probes, oracle, replay, P3 spike)
+test:              ## Python unit tests, fast set (codecs, toolchain probes, matcher, oracle, replay)
 	$(PY) -m pytest -q -m "not slow" tests/unit
 test-slow:         ## the unit tests that boot the real game (minutes; not part of `make check`)
 	$(PY) -m pytest -q -m slow tests/unit
-check: host hybrid lint ## everything a commit must pass (SPEC 9.6): build, lint, fast tests, fuzz, goldens, session replays
+check:             ## everything a commit must pass (SPEC 9.6): fast tests, every unit's match, golden check
 	$(PY) -m pytest -q -m "not slow" tests/unit
-	$(PY) tools/agent/p3_check.py
+	$(PY) tools/match/match.py --all
 	$(PY) tools/oracle/golden.py --check
-	$(PY) tools/sessions/sessions.py --session boot-title --session create-character
 review-pass: ; $(call todo,Phase 4,8.1 and playbook 70)
-coco3:       ; $(call todo,Phase 7,11)
-dos:         ; $(call todo,Phase 8,11)
+rebuild:     ; $(call todo,Phase 5,8.4)
+host:        ; $(call todo,Phase 7 (C translation; see branch track-c-hybrid),7.4)
+coco3:       ; $(call todo,Phase 8,11)

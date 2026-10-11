@@ -28,9 +28,11 @@ runs out early is a divergence and names the read. No instruction counting, no p
 goes at the emulator's full speed.
 
 The recording is saved with the golden (`make golden`, `tests/sessions/golden/<name>/replay.json.gz`)
-and verified by `make golden CHECK=1`; `make sessions` replays it with the lifted routines in C.
+and verified by `make golden CHECK=1`. It verifies any build of the game against the original: the
+rebuild from Pascal (Phase 5) and the C translation (Phase 7, branch track-c-hybrid); `prepare` installs
+replacements (oracle.routines.replace).
 
-  .venv/bin/python tools/oracle/replay.py --session boot-title [--routine 0AF8:1685 ...] [--fresh]
+  .venv/bin/python tools/oracle/replay.py --session boot-title [--fresh]
 """
 from __future__ import annotations
 
@@ -415,7 +417,6 @@ def main(argv=None) -> int:
     from oracle import golden
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--session", required=True)
-    ap.add_argument("--routine", action="append", default=[], help="replace with the C lift (hybrid.py)")
     ap.add_argument("--fresh", action="store_true", help="record now instead of using the golden's recording")
     a = ap.parse_args(argv)
     t = time.time()
@@ -424,12 +425,8 @@ def main(argv=None) -> int:
         print("recorded in %.1fs: %s" % (time.time() - t, describe(rec)))
     else:
         rec = Recording.load(golden.GOLDEN / a.session / golden.RECORDING)
-    prepare = None
-    if a.routine:
-        from oracle.hybrid import install
-        prepare = install(set(a.routine))
     t = time.time()
-    got, player = replay(rec, prepare)
+    got, player = replay(rec)
     diff = difference(rec, got, player)
     print("replay: %s, %.1fs: %s" % (got["reason"], time.time() - t, diff or "matches the recording"))
     return 1 if diff else 0

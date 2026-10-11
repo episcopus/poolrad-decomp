@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| Status | Seeded 2026-10-07 (Phase 0). Most game systems are still open questions. |
+| Status | Seeded 2026-10-07 (Phase 0). Since 2026-10-11 the decompilation is Turbo Pascal matched by the original compiler (SPEC ADR-002); a matched routine is [V] evidence of what the code does. Most game systems are still open questions. |
 | Covers | The build pinned in `re/inputs.toml` (see section 2) |
 | Process | Updated by playbook 60 as each unit, format or tool lands; every change logged in `CHANGELOG.md` |
 
@@ -75,7 +75,9 @@ This document grows a chapter per subsystem as the decompilation proves how each
   - `$Q`: does not exist in TP 6.0 **[V]** (`Error 17: Invalid compiler directive`).
   - Language limits of TP 6.0 that matter when reading the code **[V]** (`make tpc`): no `const` parameters (`Error 2: Identifier expected`), so structured value parameters are copied into the callee's frame; functions cannot return records.
   - `$N-`/`$E` **[I]**: no 8087 emulator interrupts (INT 34h..3Dh) or `fwait`+ESC sequences beyond 4 stray byte matches; the game does no floating point.
-  - `$A`, `$B`, `$V`, `$X` **[?]**: not visible in these counts. Next step: `$A` from the alignment of word variables after odd-sized ones in DGROUP; `$B` from the jump shape of `and`/`or` boolean expressions, both measured against probe compiles.
+  - `$A-` **[V]** (`make match UNIT=res06`): `res06_fn_0BF5` copies its `string[40]` value parameter to `[bp-29h]` and keeps a `Char` at `[bp-2Ah]`, a 2Ah-byte frame; with `$A+` the compiler rounds the 41-byte copy to 42 and the frame to 2Ch. Every matched unit compiles with `$A-` (res04, res06, ovl00), and the setting also governs the DGROUP layout the rebuild must reproduce (SPEC 7.3).
+  - `$O+` in overlay units **[V]** (`make match UNIT=ovl00`): a string constant passed to a routine is first copied into a stack temporary (`0AF8:0B0B`) and the temporary is passed, since the overlay holding the constant may be moved; resident units pass the constant's code-segment address directly (res04).
+  - `$B`, `$V`, `$X` **[?]**: no evidence yet. `$B` will show in the jump shape of `and`/`or` Boolean expressions of the first unit that has one.
 
 ### 2.3 Configuration (`POOL.CFG`)
 
@@ -173,8 +175,13 @@ Hand-verified (Capstone) names applied to far-call targets; full list in `re/sym
 | 0AF8:14FB | `System_BlockRead` | INT 21h AH=3Fh |
 | 0AF8:04A2 | `System_IOResult` | swap `InOutRes` at DS:4426 |
 | 0AF8:00E9 | `System_Halt` | exit / ExitProc teardown |
+| 0AF8:16BC | `System_ParamStr` | `ParamStr(1)` compiles to a call here (`make match UNIT=res04`); it asks DOS for its version (INT 21h AH=30h) to find the program name, which is why it was first named `System_DosVersion` |
+| 0AF8:0C10 | `System_StrCompare` | string `=` compiles to a call here, result in the flags (`make match UNIT=res04`) |
+| 0AF8:0DC0 | `System_SetIn` | `x in [0, 1]` compiles to a call here with the set constant's address (`make match UNIT=res04`) |
+| 0A40:02FD, 0A40:030F | `Crt_KeyPressed`, `Crt_ReadKey` | `KeyPressed`, `ReadKey` compile to calls here (`make match UNIT=res04`) |
+| 0A32:000B | Dos `Intr` | `Intr($10, Regs)` compiles to a call here (`make match UNIT=res04`) |
 
-Other externally called System/Crt/Overlay/Dos entries are named `*_rtl_XXXX` or INT-based until classified.
+Other externally called System/Crt/Overlay/Dos entries are named `*_rtl_XXXX` or INT-based until classified. Matching names them as a side effect: our compiled call reaches the POOL routine through `tp_toolchain.runtime_names`.
 
 Start-up as observed by running the original code in the oracle (`make oracle-run`, appendix C) **[V]**:
 
@@ -228,11 +235,22 @@ Rules for lifting:
 - String / VAR arguments are passed as far pointers (`push ds; push di` or `push ss; push di` patterns above).
 - Nested-procedure static links and exact left-to-right push order for multi-arg calls: further samples **[I]** (still consistent with TP manuals).
 
-### 3.5 Memory **[?]** (spike proven in P3)
+### 3.5 Memory **[?]**
 
 Heap usage, far pointer structures (characters, items) and how overlays share the overlay buffer are open questions for Phase 1.
 
-P3 spike **[V]** (`make check`: `src/rtl`, `src/game/res00_system.c`, `tools/fuzz/fuzz.py`, `tools/sessions/sessions.py`): the SPEC 7.3 model holds for `System_Move` (0AF8:1685), `System_FillChar` (0AF8:16A8) and `System_Random` (0AF8:11C0) in both builds. `G` is the 64 KB DGROUP image inside the arena at linear `0x1C7C0` (`src/include/gen/dseg.h`, generated from `re/dseg.toml`; `RandSeed` at DS:4428). Far data is `farptr` + `FP()`. The native build uses a 1 MB arena. The hybrid build maps the oracle's conventional RAM with that buffer (`mem_map_ptr` in `tools/oracle/machine.py`), so a C store is a guest store. The Turbo Pascal heap suballocator (`src/rtl/heap.c` in SPEC 7.3) is not in the spike: these three routines do not call `GetMem` or `FreeMem`. Proven against the original bytes: every byte written, AX, the seed, and Move's direction flag, over 200 randomised cases plus edges (count 0, 1, 65535, offset wrap, a cross-segment overlap, range 0). Move's direction is `cmp si,di; jae` at `0AF8:1696` (offsets only). `rep movsb` wraps each offset at 64 KB and keeps the segment. Inside one segment that matches `memmove`. It smears when the offset order and the linear order disagree (source offset above destination offset, destination linear address above the source). The backward path executes `std` and does not `cld` before `retf`, so DF is set on return whenever the source offset is below the destination offset, including a count of 0; the hybrid hook sets that flag (`tools/oracle/hybrid.py`). `Random(0)` still steps the seed and returns 0 (5.13).
+C track (ADR-001, 2026-10-10, kept on branch `track-c-hybrid`) **[V]** on that branch: a C memory model (the 64 KB DGROUP image inside a 1 MB arena, `farptr` + `FP()`) held for `System_Move`, `System_FillChar` and `System_Random`, run inside the oracle and fuzzed against the original bytes. Facts it proved about the runtime, still true: `Move` chooses its direction by offsets only (`cmp si,di; jae` at `0AF8:1696`), `rep movsb` wraps each offset at 64 KB and keeps the segment (it smears when the offset order and the linear order disagree), the backward path leaves DF set on return (including a count of 0); `Random(0)` still steps the seed and returns 0 (5.13). Under ADR-002 these routines are the compiler's own and need no decompiling.
+
+### 3.6 How Turbo Pascal 6.0 lays out a unit **[V]** (`make match`, tests/unit/test_match.py)
+
+What the matching harness relies on, each proven by a complete match of res04 (resident) and ovl00 (overlay):
+
+- A unit's routines are laid out in source order, each starting `push bp; mov bp,sp` (encoded `55 89 E5`; the map tool used to look for `55 8B EC` only and missed routines such as `res04:0122`, fixed 2026-10-11: `make map` found 38 more).
+- The string and set constants a routine uses are placed in the code segment immediately before it (a set constant is 32 bytes); `re/symbols.toml` therefore counts them in the size of the routine before (for example `res04_fn_0000`, 89 bytes, of which 51 are code and 38 the constants of `res04_fn_0059`).
+- Every routine is far (`$F+`); a call within the unit is `push cs; call near`.
+- The initialisation part comes last; an empty one (`begin end.`) is `push bp; mov bp,sp; pop bp; retf`. A resident unit is padded with zeros to a paragraph.
+- Globals are DS offsets fixed at link time; a routine of an overlay unit is addressed through its stub entry (`@ovl00_e1` is `0016:0025`, the stub segment and entry offset).
+
 
 ---
 
@@ -390,17 +408,22 @@ Each section will cover: purpose, units and routines, data, algorithm, quirks, e
 | 5.11 | Saving and loading | |
 | 5.12 | Copy protection (code wheel) | `poolrad/__ Code Wheel __.pdf` |
 | 5.13 | Random numbers | TP 6 generator, `Randomize` from the clock (below) |
+| 5.15 | Messages and running out of memory | res06, ovl00 (below) |
 
 ### 5.8 Keyboard input and menus (observed in the oracle)
 
 - Input is **INT 16h only** **[V]** (oracle: no INT 09h hook, ports 60h/64h never touched): Crt `KeyPressed` (`0A40:02FD`, AH=01h) and `ReadKey` (`0A40:030F`, AH=00h, an extended key returns 0 then the scan code on the next call).
-- A resident wrapper `res04:0059` (a `ReadKey` with Ctrl-S pause and a debug toggle) is what game code calls. Before most prompts the game flushes the keyboard with `res04:0104` (`while KeyPressed do ReadKey`) **[V]**, so keys typed before the prompt appears are lost, as for a person. The oracle's `key` script command therefore waits for the game to be idle.
+- The resident unit res04 is the keyboard layer **[V]** (decompiled and matched as a whole, `src/RES04.PAS`):
+  - `res04_fn_0059` is the `ReadKey` game code calls. Ctrl-S (19) switches a two-state setting kept in `DS:5372` (with the previous value in `DS:5373`) by calling res03 (the sound unit) routines `08AE:00DC` and `08AE:017B` (so probably sound on and off **[I]**). When the program was started with the parameter `STING` (`ParamStr(1) = 'STING'`), Ctrl-D (4) toggles the Boolean `DS:49F7` and Ctrl-C (3) quits through `res04_fn_0000`: a developers' debug mode **[V]** (code), its effect **[?]**. After every key that is not an extended-key prefix it drains the keyboard buffer (`while KeyPressed do Key := ReadKey`), so keys typed ahead are lost, as for a person. The oracle's `key` script command therefore waits for the game to be idle.
+  - `res04_fn_0104`, called before prompts (the code wheel, 5.12), is meant to flush the keyboard but returns at once: its first statement is `Exit` and the flush loop after it is dead code (QUIRK, `0899:010A`).
+  - `res04_fn_0122` reads one key if one is waiting and discards it.
+  - `res04_fn_0000` ends the program: restores the setting in `DS:5372`, calls `res03` `08AE:00DC` with `DS:2612`, sets the video mode saved in `DS:4A1C` (`Intr($10)` with AH=0, through the `Registers` record at `DS:4A02`) and calls `Halt`.
 - The menu loop is `ovl25:03BD` (get key, parse the item string, redraw `ovl25:01DA`), called by the list handler at `ovl25:0FA0..10A7` **[V]**. It parses the item string with a 36-character set at `ovl25:00AB` (upper-case letters and digits mark the first letter of each item: the highlighted hotkey). In the lists of the character creation (race, sex, class, alignment) the highlight moves with **END (next) and HOME (previous)**, ENTER selects, and the one-item bar at the bottom ("Exit") answers to its first letter **[V]** (oracle session `create-character`). The arrow keys have no effect in these lists **[V]** (oracle: UP/DOWN/LEFT/RIGHT/TAB/SPACE leave the screen unchanged); `ovl25:03BD` drops an extended key unless its caller asked for it (`ovl25:0580..0599`) **[I]**, and `,` and `.` move the highlight of its own item bar (`ovl25:05C4`, `05E8`) **[I]**.
 - Character creation flow **[V]** (one run of `tests/sessions/create-character.keys`): main menu (C) > race list > sex > class > alignment > rolled character sheet with "Keep this character? Yes No" > name prompt > "Head Body Keep" > icon editor ("Parts Color-1 Color-2 Size Exit") > "Is this icon OK? Yes No" > main menu. The game writes `SAVE\RAD.CHA` (285 bytes, the character record of 4.2.5) and `SAVE\CHARLIST.TXT` (`RAD`, CR LF) **[V]**; decoding `RAD.CHA` with `tools/re/records.py` gives the race, class, sex, age and six scores shown on the sheet (human 7, fighter 2, male 0, age 19, STR 15 INT 13 WIS 11 DEX 12 CON 16 CHA 12 in the pinned run).
 
 ### 5.12 Copy protection: the code wheel
 
-- The check is `ovl02:00FD` (entry point of overlay 2, 862 bytes of code) **[V]**. At most three times it picks `r = Random(13)` (`System_Random`, `0AF8:11C0`), draws two rune glyphs and a path pattern from a table at the very start of DGROUP (`DS:0000`, 13 records of 21 bytes), flushes the keyboard (`res04:0104`) and asks "INPUT THE CODE WORD:" **[V]**.
+- The check is `ovl02:00FD` (entry point of overlay 2, 862 bytes of code) **[V]**. At most three times it picks `r = Random(13)` (`System_Random`, `0AF8:11C0`), draws two rune glyphs and a path pattern from a table at the very start of DGROUP (`DS:0000`, 13 records of 21 bytes), calls the keyboard flush `res04:0104` (which does nothing, 5.8) and asks "INPUT THE CODE WORD:" **[V]**.
 - Record layout **[V]** (`start-unpack.exe` image at `0C7C0h`, and the lcalls in `ovl02:01A2..02FD`): `+02` Pascal string[6] with the answer; `+09`, `+0A`, `+0B` glyph indices, each drawn as character `index + 40h` in the game's font (the two rune pictures the prompt asks to match, then a third); `+0C` a fourth index drawn only when it is not FFh; `+0D` Pascal string with the path pattern drawn under the runes (`- - - -`, `-..-..-`, `.......`).
 - The 13 answers, in record order **[V]**: BEWARE, ZOMBIE, NOTNOW, COPPER, DRAGON, EFREET, FRIEND, JUNGLE, KNIGHT, SAVIOR, TEMPLE, VULCAN, WYVERN. The typed word is compared with `System_StrCompare` (`0AF8:0C10`, flags in ZF) after `StrLCopy(local, input, 40)`; the failure message is "Sorry, that's incorrect." (`ovl02:00E4`); after the third failure `res04:0000` ends the program **[V]**.
 - Which question appears depends on `RandSeed`, which comes from the clock, so it varies from run to run on real hardware. The oracle's virtual clock makes it repeat; its `wheel` script command reads the answer from the table by watching that `Random(13)` call (`tools/oracle/protection.py`) and types it, leaving the game's own check untouched.
@@ -415,7 +438,7 @@ Each section will cover: purpose, units and routines, data, algorithm, quirks, e
 
 ### 5.14 Time, input and sound hooks
 
-What the game takes from the outside world, found by `make timing-scan` and by reading the routines (Capstone dumps of the addresses below). Basis of the first part of `src/platform/platform.h`.
+What the game takes from the outside world, found by `make timing-scan` and by reading the routines (Capstone dumps of the addresses below). Basis of the platform layer of the C translation (`src/platform/platform.h` on branch `track-c-hybrid`).
 
 - **Keyboard** **[V]**: Crt `KeyPressed` is `0A40:02FD` (`INT 16h AH=1`, ZF; a pending extended scan code is kept in `DS:8501`); `ReadKey` is `0A40:030F` (`INT 16h AH=0`, returns the scan code of an extended key on the second call, maps a zero scan code to Ctrl-C `3`) and then runs `0A40:0143` (when `CheckBreak` is on: drains the keyboard buffer in a loop that ends when it is empty, writes `^C` and raises `INT 23h`). `KeyPressed` was called 508,736 times in the two recorded sessions: menus and prompts poll it.
 - **Time of day and date** **[V]**: Dos `GetTime` is `0A32:00A2` (`INT 21h AH=2Ch`, also what `Randomize` reads, 5.13) and `GetDate` is `0A32:006C` (`AH=2Ah`).
@@ -425,6 +448,11 @@ What the game takes from the outside world, found by `make timing-scan` and by r
 - **Entropy** **[V]**: `ovl14:0B48` and `ovl22:0B89` read `IN AL,40h` (low byte of the PIT channel 0 counter) and use it as a random number (`ovl14` takes it modulo 8), outside `Random`. The oracle returns a deterministic function of the instruction count for port 40h.
 - **No retrace polling** **[V]**: no routine reads port 3DAh. No routine reads the BIOS tick counter other than `0A40:002E`.
 - **Not a wait** **[I]**: `0AF8:01A5` and `0AF8:01E7` write characters with `INT 21h AH=06h` (output, DL is the character); an early scan counted them as keyboard polls.
+
+### 5.15 Messages and running out of memory **[V]** (`src/RES06.PAS`, `src/OVL00.PAS`, matched)
+
+- `res06_fn_0BF5(Color, Text)` shows a one-line message on row 24: it clears 40 columns of that row (`res06_fn_05EB(0, 24, 0, 40)`), draws the text in the given colour (`res06_fn_0626(0, 24, Color, Text)`) and waits for a key through `res04_fn_0059`. The text is a `string[40]`. Twelve routines call it, in overlays 0, 3, 5, 7, 17 and 33 and in res06 itself (`make packet FN=res06_fn_0BF5`).
+- Overlay 0 is the heap error handler: its initialisation sets `HeapError := @ovl00_e1`, so Turbo Pascal calls `ovl00_e1(Size)` when `New` or `GetMem` cannot get `Size` bytes. For a non-zero size it shows "WARNING: Insufficient Memory" in colour 14 (yellow); if the Boolean `DS:49D0` is set it calls `ovl17_e9` (the save and load unit) and repeats until `DS:557D` says to stop, otherwise it shows "Insufficient Memory. Exiting Program". Then it always ends the program (`res04_fn_0000`). The function result is never assigned (QUIRK): Turbo Pascal would read whatever is in the frame, but the handler never returns to it.
 
 ---
 
@@ -522,7 +550,7 @@ Acceptance results (playbook 25):
 - **Deterministic**: the same script run twice gives identical stop points, instruction counts, per-key-read state digests, checkpoint digests, final state digest and call traces.
 - **Character creation completes from a script**: `tests/sessions/create-character.keys` (about 64 million instructions, 13 s of wall time) ends at the main menu with `SAVE\RAD.CHA` decoded as the character shown on the sheet (5.8).
 - **Hybrid timing, first method (2026-10-10, retired 2026-10-11)**: an exact-time mode counted instructions one by one in Python and charged each replaced call the instructions the original had spent in it, from a per-call cost table. It worked for `System_Move` and `System_FillChar`, but needed a cost merge for every callee a C routine absorbs, a one-call spinner allowance at checkpoints, ran 7 times slower than the plain oracle, and could never apply to the native build. It is replaced by record/replay (below). Kept from it: the finding that a hybrid run differs from the original only in the stack segment.
-- **Hybrid with C routines** (P3 spike, `tools/oracle/hybrid.py`, `tools/sessions/sessions.py`, `make sessions`): `System_Move`, `System_FillChar` and `System_Random` in C reproduce both goldens' recordings at every read and checkpoint (C calls: 49,966 + 15,138 + 33,431 in `boot-title`, 53,352 + 15,740 + 33,548 in `create-character`; FillChar and Move calls that would touch video memory are declined and run as original code). The C Random logs the `rng.py` entry (kind, game-code caller, range, stepped seed, result) the original's step would have logged.
+- **Hybrid with C routines** (C track, branch `track-c-hybrid`): `System_Move`, `System_FillChar` and `System_Random` in C reproduced both goldens' recordings at every read and checkpoint. The replacement hook (`oracle.routines.replace`) and the record/replay stay on `main` for the rebuild and the C translation.
 - **Record/replay** (decision of the human 2026-10-11, `tools/oracle/replay.py`, `tests/unit/test_replay.py`, SPEC 8.4). Exhume's port method (UW2Decomp `PORT.md`, "The differential test") applied to hybrid runs: time matters to the game only where it reads the outside world, so those reads are recorded and replayed instead of instructions being counted. A survey of both sessions found the reads are only INT 16h (peeks and reads), INT 21h AH=2Ch (106,036 polls in `boot-title`, 181,103 in `create-character`) and the BIOS tick word 0040:006C read by Crt init and Crt.Delay (32,176); no timer or retrace port reads and no INT 1Ah. The recording run is the golden run, and the recording is saved with the golden (`replay.json.gz`, about 115 KB per session) and verified by `make golden CHECK=1`; each read is stored with the number of timer interrupts raised so far, run-length coded per kind. A replay answers each read from its stream and raises the timer interrupt as often as the recording had by that read, so the game's timer handler runs at reads instead of mid-computation (its only writes are stack frames and the BIOS tick, see Time above). Checkpoints sit on read boundaries (after each key read, after the first read that follows a script `shot`, and every 20,000 reads) and compare the no-stack canonical state, all memory outside the stack segment, the screen, the Random count and the interrupt count; the end also compares the Random sequence and the files written. **[V]** Replaying the original alone reproduces both recordings; with Move, FillChar and Random in C (49,966 + 15,138 + 33,431 calls in `boot-title`, 53,352 + 15,740 + 33,548 in `create-character`) both sessions match at every read with no time charged, no cost table and no spinner allowance, in about 10 to 22 s per session. A C Random that answers one wrong value is caught at the `sheet` checkpoint; a corrupted Move is caught when the replay stops reading the outside world (watchdog at four times the recording's longest quiet stretch). A read of another kind than the recording's next one is reported by its number.
 - **Goldens recorded** (playbook 40, `make golden`): each session is run twice and written only when both runs agree on stop reason, instruction count, every checkpoint (virtual time, screen, canonical and full state digests, Random call count), every per-key-read state digest, the Random sequence and the final state. A golden is `tests/sessions/golden/<name>/{golden.json, reads.txt, reads_nostack.txt, replay.json.gz, <label>.png}`; `make golden CHECK=1` re-runs the original and compares digests (not PNG bytes). Recorded: `boot-title` (3 checkpoints, 44,049,050 instructions) and `create-character` (5 checkpoints, 26 key reads, 64,701,234 instructions, 33,548 Random calls). `boot-title` has no key reads: the title screens run without input, so its verdict is the three checkpoint digests. The scripts' screenshots were reviewed by eye; one capture point was wrong and was fixed before recording (`sheet` was taken while the character was still being rolled, all scores 0; the script now waits for the "Keep this character? Yes No" prompt).
 

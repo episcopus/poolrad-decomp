@@ -10,7 +10,7 @@ Every playbook has the same parts: **Inputs**, **Steps**, **Done when**, **Hand-
 | 10-map-binary.md | Mapper | P1 |
 | 20-data-formats.md | Mapper / Verifier | P2 |
 | 25-oracle.md | Verifier | P2 |
-| 30-lift-unit.md | Lifter | P3 to P4 |
+| 30-lift-unit.md | Decompiler | P3 to P4 |
 | 40-sessions.md | Verifier | P2 to P5 |
 | 60-design-doc.md | Documentarian | all |
 | 70-review.md | Reviewer | P4 to P6 |

@@ -5,7 +5,8 @@ A routine replaced by C runs instantly, and in a session replay every read of th
 answered from the original's recording (`tools/oracle/replay.py`). That is right for routines that
 compute. It is wrong for a literal transliteration of a routine that *waits*: a loop that spins until a
 tick counter changes, until the vertical retrace, until a key arrives must go through a platform wait
-(`src/platform/platform.h`). This tool finds them before a lifter does.
+(the C translation, Phase 7: `src/platform/platform.h` on branch track-c-hybrid). In the Pascal
+decompilation these loops are written as they are; this list says where the C translation needs care.
 
 Static pass (every routine of re/symbols.toml, Capstone on the pinned bytes):
   features    int 16h / 21h key and time calls, int 1Ah, int 15h AH=86, hlt, ports (retrace 3DA, PIT,

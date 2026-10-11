@@ -11,7 +11,7 @@
 5. `ega.py`: planes, latches, map mask, bit mask, write modes 0 to 2, read modes, palette registers; screenshot to PNG.
 6. Input: a script player (`tests/sessions/*.keys`) feeding INT 16h and the keyboard buffer.
 7. Tracing: call and return events with arguments (using `re/symbols.toml` signatures), memory watch points, state snapshots per `re/state.toml`.
-8. Hybrid hook: replace a routine by a C function from the hybrid library (SPEC 8.4).
+8. Replacement hook: replace a routine by Python (`oracle.routines.replace`), for experiments and, in Phase 7, for the C translation (branch `track-c-hybrid` has the hybrid library).
 
 ## Acceptance checks
 

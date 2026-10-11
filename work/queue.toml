@@ -1,203 +1,187 @@
-# Unit work order (SPEC 9.4). Seeded at P1 exit; refine as callers/callees firm up.
-# Default order: runtime and leaf utilities, data loaders, text/graphics, ECL, maps,
-# menus/characters, items/shops, combat, magic, the rest.
-
-[[unit]]
-id = "res00"
-reason = "System RTL (TP 6.0 June 1991, byte-matched); every unit depends on it"
-
-[[unit]]
-id = "res01"
-reason = "Crt (TP 6.0, byte-matched); console/video helpers"
-
-[[unit]]
-id = "res13"
-reason = "Dos (TP 6.0, byte-matched, no init); INT 21h helpers"
-
-[[unit]]
-id = "res14"
-reason = "Overlay (TP 6.0, byte-matched, no init); overlay manager, INT 3Fh"
+# Unit work order (SPEC 9.4, ADR-002). Library units (System, Crt, Dos, Overlay) are linked from
+# TURBO.TPL and never queued. Small units first: they settle stub signatures and global names that
+# larger units need. `make next` proposes the first unit that is not complete and not locked.
 
 [[unit]]
 id = "res02"
-reason = "16-byte game unit with an empty init; trivial"
-
-[[unit]]
-id = "res08"
-reason = "game unit that sets up overlays (GAME.OVR, calls Overlay unit)"
-
-[[unit]]
-id = "ovl00"
-reason = "smallest overlay; smoke-test lift pipeline"
-
-[[unit]]
-id = "ovl33"
-reason = "tiny overlay (252 bytes)"
-
-[[unit]]
-id = "ovl34"
-reason = "TileLoad; 8x8D loader"
-
-[[unit]]
-id = "ovl26"
-reason = "small overlay"
-
-[[unit]]
-id = "ovl27"
-reason = "small overlay"
-
-[[unit]]
-id = "ovl29"
-reason = "GeoLoad; wallset/3D map"
-
-[[unit]]
-id = "ovl32"
-reason = "PicLoad; 24x24 sets"
-
-[[unit]]
-id = "ovl07"
-reason = "Loader banner"
-
-[[unit]]
-id = "ovl11"
-reason = "Loader / ITEMS"
-
-[[unit]]
-id = "ovl03"
-reason = "Encounter; combat/parlay menus (ECL-adjacent lead)"
-
-[[unit]]
-id = "ovl17"
-reason = "SaveLoad"
-
-[[unit]]
-id = "ovl16"
-reason = "CharCreate / training"
-
-[[unit]]
-id = "ovl19"
-reason = "Inventory"
-
-[[unit]]
-id = "ovl06"
-reason = "Shop"
-
-[[unit]]
-id = "ovl04"
-reason = "Temple"
-
-[[unit]]
-id = "ovl05"
-reason = "TreasureShare"
-
-[[unit]]
-id = "ovl21"
-reason = "Money / coins"
-
-[[unit]]
-id = "ovl15"
-reason = "SpellMemorize"
-
-[[unit]]
-id = "ovl22"
-reason = "CastSpell"
-
-[[unit]]
-id = "ovl08"
-reason = "CombatAI"
-
-[[unit]]
-id = "ovl09"
-reason = "CombatAI"
-
-[[unit]]
-id = "ovl13"
-reason = "CombatSpells"
-
-[[unit]]
-id = "ovl12"
-reason = "TrainRewards; many entries"
-
-[[unit]]
-id = "ovl18"
-reason = "PoolNarrative"
-
-[[unit]]
-id = "ovl20"
-reason = "PartyHeal"
-
-[[unit]]
-id = "res05"
-reason = "hosts overlay disk prompt string"
-
-[[unit]]
-id = "res03"
-reason = "resident utility"
-
-[[unit]]
-id = "res04"
-reason = "resident utility"
-
-[[unit]]
-id = "res06"
-reason = "resident; many far-call sites"
-
-[[unit]]
-id = "res07"
-reason = "large resident unit"
-
-[[unit]]
-id = "res09"
-reason = "resident"
+reason = "16 bytes of code; 16-byte game unit with an empty init; trivial"
 
 [[unit]]
 id = "res10"
-reason = "resident"
+reason = "16 bytes of code; resident"
 
 [[unit]]
 id = "res11"
-reason = "resident"
+reason = "16 bytes of code; resident"
 
 [[unit]]
-id = "res12"
-reason = "largest resident game unit"
+id = "res04"
+reason = "336 bytes of code; resident utility; complete at L2 (P3 proof of concept)"
 
 [[unit]]
-id = "ovl01"
-reason = "overlay"
+id = "ovl00"
+reason = "190 bytes of code; smallest overlay; smoke-test lift pipeline; complete at L2 (P3 proof of concept)"
+
+[[unit]]
+id = "ovl33"
+reason = "252 bytes of code; tiny overlay (252 bytes)"
+
+[[unit]]
+id = "ovl27"
+reason = "648 bytes of code; small overlay"
+
+[[unit]]
+id = "ovl26"
+reason = "677 bytes of code; small overlay"
+
+[[unit]]
+id = "ovl34"
+reason = "690 bytes of code; TileLoad; 8x8D loader"
 
 [[unit]]
 id = "ovl02"
-reason = "overlay"
+reason = "862 bytes of code; overlay"
 
 [[unit]]
-id = "ovl10"
-reason = "overlay"
+id = "res09"
+reason = "880 bytes of code; resident"
 
 [[unit]]
-id = "ovl14"
-reason = "overlay"
+id = "res08"
+reason = "912 bytes of code; game unit that sets up overlays (GAME.OVR, calls Overlay unit)"
 
 [[unit]]
 id = "ovl23"
-reason = "overlay"
+reason = "1123 bytes of code; overlay"
 
 [[unit]]
-id = "ovl24"
-reason = "overlay"
+id = "ovl11"
+reason = "1562 bytes of code; Loader / ITEMS"
 
 [[unit]]
-id = "ovl25"
-reason = "overlay"
+id = "ovl32"
+reason = "1605 bytes of code; PicLoad; 24x24 sets"
+
+[[unit]]
+id = "ovl06"
+reason = "1949 bytes of code; Shop"
 
 [[unit]]
 id = "ovl28"
-reason = "overlay"
+reason = "1989 bytes of code; overlay"
+
+[[unit]]
+id = "ovl01"
+reason = "2062 bytes of code; overlay"
+
+[[unit]]
+id = "ovl18"
+reason = "2299 bytes of code; PoolNarrative"
+
+[[unit]]
+id = "res05"
+reason = "2416 bytes of code; hosts overlay disk prompt string"
 
 [[unit]]
 id = "ovl30"
-reason = "overlay"
+reason = "3038 bytes of code; overlay"
+
+[[unit]]
+id = "ovl20"
+reason = "3685 bytes of code; PartyHeal"
+
+[[unit]]
+id = "ovl04"
+reason = "3895 bytes of code; Temple"
+
+[[unit]]
+id = "res06"
+reason = "3984 bytes of code; resident; many far-call sites"
+
+[[unit]]
+id = "ovl14"
+reason = "4268 bytes of code; overlay"
+
+[[unit]]
+id = "ovl29"
+reason = "4619 bytes of code; GeoLoad; wallset/3D map"
+
+[[unit]]
+id = "ovl25"
+reason = "4682 bytes of code; overlay"
+
+[[unit]]
+id = "ovl08"
+reason = "4735 bytes of code; CombatAI"
 
 [[unit]]
 id = "ovl31"
-reason = "overlay"
+reason = "4864 bytes of code; overlay"
+
+[[unit]]
+id = "ovl05"
+reason = "5750 bytes of code; TreasureShare"
+
+[[unit]]
+id = "res03"
+reason = "6192 bytes of code; resident utility"
+
+[[unit]]
+id = "ovl09"
+reason = "6439 bytes of code; CombatAI"
+
+[[unit]]
+id = "ovl24"
+reason = "6455 bytes of code; overlay"
+
+[[unit]]
+id = "ovl10"
+reason = "8082 bytes of code; overlay"
+
+[[unit]]
+id = "ovl15"
+reason = "8158 bytes of code; SpellMemorize"
+
+[[unit]]
+id = "ovl07"
+reason = "8730 bytes of code; Loader banner"
+
+[[unit]]
+id = "ovl21"
+reason = "8795 bytes of code; Money / coins"
+
+[[unit]]
+id = "ovl17"
+reason = "9189 bytes of code; SaveLoad"
+
+[[unit]]
+id = "res07"
+reason = "10832 bytes of code; large resident unit"
+
+[[unit]]
+id = "ovl19"
+reason = "11026 bytes of code; Inventory"
+
+[[unit]]
+id = "res12"
+reason = "12464 bytes of code; largest resident game unit"
+
+[[unit]]
+id = "ovl03"
+reason = "13581 bytes of code; Encounter; combat/parlay menus (ECL-adjacent lead)"
+
+[[unit]]
+id = "ovl22"
+reason = "14261 bytes of code; CastSpell"
+
+[[unit]]
+id = "ovl12"
+reason = "14510 bytes of code; TrainRewards; many entries"
+
+[[unit]]
+id = "ovl13"
+reason = "15474 bytes of code; CombatSpells"
+
+[[unit]]
+id = "ovl16"
+reason = "17497 bytes of code; CharCreate / training"

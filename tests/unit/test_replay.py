@@ -1,8 +1,7 @@
 """Record/replay of the outside world (tools/oracle/replay.py, Exhume's method).
 
 Fast tests use tiny hand-assembled programs (helpers from test_oracle.py). The session tests boot the
-real game and are marked slow: `make golden CHECK=1` and `make sessions` (both in `make check`) run the
-recording and the replay with the C routines in the gate."""
+real game and are marked slow; `make golden CHECK=1` (in `make check`) verifies the recordings."""
 import sys
 from pathlib import Path
 
@@ -14,7 +13,7 @@ sys.path.insert(0, str(ROOT / "tests/unit"))
 
 from oracle import golden, replay  # noqa: E402
 from oracle.keys import KeyScript  # noqa: E402
-from oracle.machine import OracleError, LOAD_SEG  # noqa: E402
+from oracle.machine import OracleError  # noqa: E402
 from test_oracle import machine_for  # noqa: E402
 
 
@@ -119,27 +118,44 @@ def test_replay_of_the_original_matches_its_recording(create):
     assert replay.difference(create, got, player) is None
 
 
-@pytest.mark.slow
-def test_a_wrong_random_result_is_caught(create):
-    """The C Random answering one wrong value per call from call 33,500 (the character roll): caught at
-    the first checkpoint after it, no later than the character sheet."""
-    from oracle.hybrid import HybridLib, PARAMS
-    rec = create
-    hyb = HybridLib()
+def py_random(wrong_from: int | None = None):
+    """System.Random(range) in Python (whitepaper 5.13): steps RandSeed, logs the call like rng.py, returns
+    hi16(seed) mod range; from call `wrong_from` on, answers one off. A replacement executes none of the
+    original's instructions, which a replay must not care about."""
+    from oracle.rng import RandomCall
+    from oracle.state import dgroup_seg
+    from oracle.trace import locate, overlay_stubs
+    stubs = overlay_stubs()
     n = [0]
 
-    def bad_random(m):
-        r = hyb.c_random(m)
+    def fn(m):
+        ds, ss, sp = dgroup_seg(), m.get("ss"), m.get("sp")
+        seed = ((m.rw(ds, 0x442A) << 16) | m.rw(ds, 0x4428)) * 0x08088405 + 1 & 0xFFFFFFFF
+        m.ww(ds, 0x4428, seed & 0xFFFF)
+        m.ww(ds, 0x442A, seed >> 16)
+        rng = m.rw(ss, sp + 4)
+        result = (seed >> 16) % rng if rng else 0
+        caller = locate(m, m.linear(m.rw(ss, sp + 2), m.rw(ss, sp)), stubs)     # the far return address
+        m.random_log.append(RandomCall(len(m.random_log), m.now(), "range", caller, rng, seed, result))
         n[0] += 1
-        if n[0] >= 33_500:
-            m.set("ax", m.get("ax") ^ 1)
-        return r
+        m.set("ax", result ^ (1 if wrong_from is not None and n[0] >= wrong_from else 0))
+    return fn
 
-    def prepare(m):
-        p = PARAMS["0AF8:11C0"]
-        m.hook_routine(0x0AF8 + LOAD_SEG, 0x11C0, bad_random, ret_bytes=p["ret_bytes"], far=p["far"])
 
-    got, player = replay.replay(rec, prepare)
+@pytest.mark.slow
+def test_a_python_random_replays_the_original(create):
+    from oracle import routines
+    got, player = replay.replay(create, lambda m: routines.replace(m, "0AF8:11C0", py_random(), ret_bytes=2))
+    assert replay.difference(create, got, player) is None
+
+
+@pytest.mark.slow
+def test_a_wrong_random_result_is_caught(create):
+    """Random answering one wrong value per call from call 33,500 (the character roll): caught at the
+    first checkpoint after it, no later than the character sheet."""
+    from oracle import routines
+    rec = create
+    got, player = replay.replay(rec, lambda m: routines.replace(m, "0AF8:11C0", py_random(33_500), ret_bytes=2))
     diff = replay.difference(rec, got, player)
     assert diff is not None and diff.startswith("read ")       # at a checkpoint, by its read number
     first_bad = min(n for n, cps in rec.checkpoints.items() if any(c["label"] == "sheet" for c in cps))

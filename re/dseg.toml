@@ -1,81 +1,332 @@
-# DGROUP (the Turbo Pascal data segment) layout, used to generate src/include/gen/dseg.h (SPEC 7.3).
+# DGROUP (the Turbo Pascal data segment) layout: names of DS offsets (SPEC 7.3, playbook 30).
 # DGROUP is paragraph 0C7C of the load image ([V]: System_init does `mov dx,0C7Ch; mov ds,dx`).
 # Initialised data ends with the image at paragraph 10BF; BSS follows; stack segment 14F2.
-# Offsets below are DS-relative. Seeded from System_init stores (playbook 10).
+# Offsets below are DS-relative. tools/match/match.py resolves a Pascal global by this name
+# (case-insensitive); a global named dsXXXX needs no entry (its name is its offset).
+#
+# System variables: Turbo Pascal 6.0's own layout (the compiled map of `make match`: System's first
+# variable block, then Input, Output and the saved vectors after every unit's variables), placed in POOL
+# by the offsets whitepaper 2.2 verified on our bytes (OvrHeapSize 43EE ... FileMode 442C; Input 8508,
+# Output 8608, SaveInt00 8708). Every anchor agrees with one base per block.
+
+[[global]]
+offset = 0x43EC
+size = 2
+type = "system"
+name = "OvrCodeList"
+evidence = "TP 6.0 System layout (compiled map) placed by the whitepaper 2.2 anchors"
 
 [[global]]
 offset = 0x43EE
 size = 2
-type = "u16"
-name = "HeapOrg_related"
-evidence = "System_init reads [0x43EE] when computing heap bounds (0AF8:001E)"
+type = "system"
+name = "OvrHeapSize"
+evidence = "[V] whitepaper 2.2"
+
+[[global]]
+offset = 0x43F0
+size = 4
+type = "system"
+name = "OvrDebugPtr"
+evidence = "TP 6.0 System layout (compiled map) placed by the whitepaper 2.2 anchors"
 
 [[global]]
 offset = 0x43F4
 size = 2
-type = "u16"
-name = "HeapPtr_lo"
-evidence = "System_init writes AX-derived value at 0AF8:0018"
+type = "system"
+name = "OvrHeapOrg"
+evidence = "[V] whitepaper 2.2"
 
 [[global]]
 offset = 0x43F6
 size = 2
-type = "u16"
-name = "HeapPtr_hi_or_dup"
-evidence = "System_init stores same AX at 0AF8:001B"
+type = "system"
+name = "OvrHeapPtr"
+evidence = "[V] whitepaper 2.2"
 
 [[global]]
 offset = 0x43F8
 size = 2
-type = "u16"
+type = "system"
+name = "OvrHeapEnd"
+evidence = "[V] whitepaper 2.2"
+
+[[global]]
+offset = 0x43FA
+size = 2
+type = "system"
+name = "OvrLoadList"
+evidence = "[V] whitepaper 2.2"
+
+[[global]]
+offset = 0x43FC
+size = 2
+type = "system"
+name = "OvrDosHandle"
+evidence = "TP 6.0 System layout (compiled map) placed by the whitepaper 2.2 anchors"
+
+[[global]]
+offset = 0x43FE
+size = 2
+type = "system"
+name = "OvrEmsHandle"
+evidence = "TP 6.0 System layout (compiled map) placed by the whitepaper 2.2 anchors"
+
+[[global]]
+offset = 0x4400
+size = 4
+type = "system"
+name = "HeapOrg"
+evidence = "[V] whitepaper 2.2"
+
+[[global]]
+offset = 0x4404
+size = 4
+type = "system"
+name = "HeapPtr"
+evidence = "[V] whitepaper 2.2"
+
+[[global]]
+offset = 0x4408
+size = 4
+type = "system"
 name = "HeapEnd"
-evidence = "System_init stores AX+[0x43EE] at 0AF8:0022"
+evidence = "[V] whitepaper 2.2"
 
 [[global]]
-offset = 0x4402
-size = 2
-type = "u16"
-name = "unk_4402"
-evidence = "System_init store at 0AF8:0025"
+offset = 0x440C
+size = 4
+type = "system"
+name = "FreeList"
+evidence = "[V] whitepaper 2.2"
 
 [[global]]
-offset = 0x4406
-size = 2
-type = "u16"
-name = "unk_4406"
-evidence = "System_init store at 0AF8:0028"
-
-[[global]]
-offset = 0x440A
-size = 2
-type = "u16"
-name = "DosMemTop"
-evidence = "System_init copies ES:[0002] (PSP mem top) at 0AF8:002E"
-
-[[global]]
-offset = 0x440E
-size = 2
-type = "u16"
-name = "unk_440E"
-evidence = "System_init store at 0AF8:002B"
+offset = 0x4410
+size = 4
+type = "system"
+name = "FreeZero"
+evidence = "TP 6.0 System layout (compiled map) placed by the whitepaper 2.2 anchors"
 
 [[global]]
 offset = 0x4414
+size = 4
+type = "system"
+name = "HeapError"
+evidence = "[V] whitepaper 2.2"
+
+[[global]]
+offset = 0x4418
+size = 4
+type = "system"
+name = "ExitProc"
+evidence = "[V] whitepaper 2.2"
+
+[[global]]
+offset = 0x441C
 size = 2
-type = "u16"
-name = "unk_4414"
-evidence = "System_init mov [0x4414],0x00A9 at 0AF8:0037"
+type = "system"
+name = "ExitCode"
+evidence = "[V] whitepaper 2.2"
+
+[[global]]
+offset = 0x441E
+size = 4
+type = "system"
+name = "ErrorAddr"
+evidence = "[V] whitepaper 2.2"
 
 [[global]]
 offset = 0x4422
 size = 2
-type = "u16"
-name = "PspSegment"
-evidence = "System_init mov [0x4422],ES at 0AF8:0005 (ES=PSP on entry)"
+type = "system"
+name = "PrefixSeg"
+evidence = "[V] whitepaper 2.2"
+
+[[global]]
+offset = 0x4424
+size = 2
+type = "system"
+name = "StackLimit"
+evidence = "[V] whitepaper 2.2"
+
+[[global]]
+offset = 0x4426
+size = 2
+type = "system"
+name = "InOutRes"
+evidence = "[V] whitepaper 2.2"
 
 [[global]]
 offset = 0x4428
 size = 4
-type = "u32"
+type = "system"
 name = "RandSeed"
-evidence = "TP 6.0 System RandSeed at DS:4428 (WHITEPAPER 2.2); step 0AF8:120F, Random(range) 0AF8:11C0"
+evidence = "[V] whitepaper 2.2"
+
+[[global]]
+offset = 0x442C
+size = 1
+type = "system"
+name = "FileMode"
+evidence = "[V] whitepaper 2.2"
+
+[[global]]
+offset = 0x442D
+size = 1
+type = "system"
+name = "Test8087"
+evidence = "TP 6.0 System layout (compiled map) placed by the whitepaper 2.2 anchors"
+
+[[global]]
+offset = 0x8508
+size = 256
+type = "system"
+name = "Input"
+evidence = "[V] whitepaper 2.2"
+
+[[global]]
+offset = 0x8608
+size = 256
+type = "system"
+name = "Output"
+evidence = "[V] whitepaper 2.2"
+
+[[global]]
+offset = 0x8708
+size = 4
+type = "system"
+name = "SaveInt00"
+evidence = "[V] whitepaper 2.2"
+
+[[global]]
+offset = 0x870C
+size = 4
+type = "system"
+name = "SaveInt02"
+evidence = "TP 6.0 System layout (compiled map) placed by the whitepaper 2.2 anchors"
+
+[[global]]
+offset = 0x8710
+size = 4
+type = "system"
+name = "SaveInt1B"
+evidence = "TP 6.0 System layout (compiled map) placed by the whitepaper 2.2 anchors"
+
+[[global]]
+offset = 0x8714
+size = 4
+type = "system"
+name = "SaveInt21"
+evidence = "TP 6.0 System layout (compiled map) placed by the whitepaper 2.2 anchors"
+
+[[global]]
+offset = 0x8718
+size = 4
+type = "system"
+name = "SaveInt23"
+evidence = "TP 6.0 System layout (compiled map) placed by the whitepaper 2.2 anchors"
+
+[[global]]
+offset = 0x871C
+size = 4
+type = "system"
+name = "SaveInt24"
+evidence = "TP 6.0 System layout (compiled map) placed by the whitepaper 2.2 anchors"
+
+[[global]]
+offset = 0x8720
+size = 4
+type = "system"
+name = "SaveInt34"
+evidence = "TP 6.0 System layout (compiled map) placed by the whitepaper 2.2 anchors"
+
+[[global]]
+offset = 0x8724
+size = 4
+type = "system"
+name = "SaveInt35"
+evidence = "TP 6.0 System layout (compiled map) placed by the whitepaper 2.2 anchors"
+
+[[global]]
+offset = 0x8728
+size = 4
+type = "system"
+name = "SaveInt36"
+evidence = "TP 6.0 System layout (compiled map) placed by the whitepaper 2.2 anchors"
+
+[[global]]
+offset = 0x872C
+size = 4
+type = "system"
+name = "SaveInt37"
+evidence = "TP 6.0 System layout (compiled map) placed by the whitepaper 2.2 anchors"
+
+[[global]]
+offset = 0x8730
+size = 4
+type = "system"
+name = "SaveInt38"
+evidence = "TP 6.0 System layout (compiled map) placed by the whitepaper 2.2 anchors"
+
+[[global]]
+offset = 0x8734
+size = 4
+type = "system"
+name = "SaveInt39"
+evidence = "TP 6.0 System layout (compiled map) placed by the whitepaper 2.2 anchors"
+
+[[global]]
+offset = 0x8738
+size = 4
+type = "system"
+name = "SaveInt3A"
+evidence = "TP 6.0 System layout (compiled map) placed by the whitepaper 2.2 anchors"
+
+[[global]]
+offset = 0x873C
+size = 4
+type = "system"
+name = "SaveInt3B"
+evidence = "TP 6.0 System layout (compiled map) placed by the whitepaper 2.2 anchors"
+
+[[global]]
+offset = 0x8740
+size = 4
+type = "system"
+name = "SaveInt3C"
+evidence = "TP 6.0 System layout (compiled map) placed by the whitepaper 2.2 anchors"
+
+[[global]]
+offset = 0x8744
+size = 4
+type = "system"
+name = "SaveInt3D"
+evidence = "TP 6.0 System layout (compiled map) placed by the whitepaper 2.2 anchors"
+
+[[global]]
+offset = 0x8748
+size = 4
+type = "system"
+name = "SaveInt3E"
+evidence = "TP 6.0 System layout (compiled map) placed by the whitepaper 2.2 anchors"
+
+[[global]]
+offset = 0x874C
+size = 4
+type = "system"
+name = "SaveInt3F"
+evidence = "TP 6.0 System layout (compiled map) placed by the whitepaper 2.2 anchors"
+
+[[global]]
+offset = 0x8750
+size = 4
+type = "system"
+name = "SaveInt75"
+evidence = "TP 6.0 System layout (compiled map) placed by the whitepaper 2.2 anchors"
+
+[[global]]
+offset = 0x4A02
+size = 20
+type = "Registers"
+name = "Regs"
+evidence = "res04_fn_0000 (0899:0000) passes DS:4A02 as the var Registers of Dos.Intr($10, ...) after setting AH and AL (make match UNIT=res04)"

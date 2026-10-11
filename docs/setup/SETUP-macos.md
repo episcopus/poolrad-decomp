@@ -26,9 +26,8 @@ make doctor && make inputs && make overlays && make dax && make smoke
 | Ghidra | 12.1.4 | `setup-macos.sh --with-ghidra` (downloads the official zip into `~/opt`) | analysis database, headless scripts via PyGhidra | P1 |
 | DOSBox-X | 2026.10.01 | `brew install dosbox-x` | cross-checking the oracle against a real DOS emulator, running the original by hand | P2 |
 | emu2 | commit `9d8698d` | `make emu2` (clones and builds into `tools/vendor/emu2`) | headless DOS emulator that runs the Turbo Pascal compiler | P1 |
-| Turbo Pascal 6.0 (June 1991) | `TPC.EXE` sha256 `03836c60...` | archives into `build/toolchain/dist/`, then `make tp-pin` (`docs/setup/SETUP-tp.md`); proprietary, never committed | reference compiler: version pin, runtime naming, codegen questions (`make tpc`) | P1 |
-| CMake, Ninja, pkgconf | current | `brew install cmake ninja pkgconf` | native C build | P3 |
-| SDL3 | current | `brew install sdl3` | host platform layer (window, input, audio) | P3 |
+| Turbo Pascal 6.0 (June 1991) | `TPC.EXE` sha256 `03836c60...` | archives into `build/toolchain/dist/`, then `make tp-pin` (`docs/setup/SETUP-tp.md`); proprietary, never committed | the compiler every routine is matched with (`make match`), version pin, runtime naming (`make tpc`) | P1 |
+| CMake, Ninja, pkgconf, SDL3 | current | `brew install cmake ninja pkgconf sdl3` | the C translation's native build (branch `track-c-hybrid`) | P7 |
 
 Optional:
 

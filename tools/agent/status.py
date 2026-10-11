@@ -107,6 +107,21 @@ def main(argv: list[str]) -> int:
     code_bytes = sum(int(u.get("code_bytes") or 0) for u in residents + overlays)
     routine_bytes = sum(int(r.get("size") or 0) for r in routines)
 
+    library = {u["id"] for u in residents if u.get("name") in ("System", "Crt", "Dos", "Overlay")}
+    game = [r for r in routines if r.get("unit") not in library]
+    game_units = [u for u in residents + overlays if u["id"] not in library]
+    sources = {f.stem.lower() for f in (ROOT / "src").glob("*.PAS")}
+    p4 = {"routines": len(game), "bytes": sum(int(r.get("size") or 0) for r in game),
+          "matched": sum(1 for r in game if r.get("level") in ("L2", "L3")),
+          "matched_bytes": sum(int(r.get("size") or 0) for r in game if r.get("level") in ("L2", "L3")),
+          "units": len(game_units), "complete": 0, "rows": []}
+    for u in sorted(game_units, key=lambda u: u["id"]):
+        rs = [r for r in game if r.get("unit") == u["id"]]
+        ok = [r for r in rs if r.get("level") in ("L2", "L3")]
+        if rs and len(ok) == len(rs):
+            p4["complete"] += 1
+        if u["id"] in sources:
+            p4["rows"].append((u["id"], u.get("name", ""), len(rs), len(ok), sum(int(r.get("size") or 0) for r in ok)))
     scripts = sorted(p.stem for p in (ROOT / "tests/sessions").glob("*.keys"))
     goldens = [n for n in scripts if (ROOT / "tests/sessions/golden" / n / "golden.json").exists()]
     today = dt.date.today().isoformat()
@@ -117,41 +132,24 @@ def main(argv: list[str]) -> int:
         "",
         "## Phase",
         "",
-        "**P1 Map: complete** when `make p1-check` is green. P0 bootstrap is done.",
+        "Approach: ADR-002 (SPEC 4), Pascal-first matching decompilation; the C track (ADR-001) is on branch `track-c-hybrid`.",
         "",
-        "| P1 exit criterion | State |",
+        "| Phase | State |",
         "|---|---|",
-        "| Ghidra project via `make ghidra` | tool + `build/ghidra/` (regenerate after map) |",
-        "| 48 units with code ranges in `re/units.toml` | %d init-chain resident + %d overlay = %d; plus %d runtime units without init (Dos, Overlay) |"
-        % (len(res_init), len(overlays), len(res_init) + len(overlays), len(residents) - len(res_init)),
-        "| Every routine listed in `re/symbols.toml` | %d routines (sum sizes %d; unit code_bytes %d) |"
-        % (len(routines), routine_bytes, code_bytes),
-        "| RTL identified and named | System/Crt/Dos/Overlay byte-matched to TP 6.0; %d RTL-prefixed names |" % named_rtl,
-        "| TP version pinned or bounded | **pinned**: Turbo Pascal 6.0, June 1991 release (`make tp-compare`, WHITEPAPER 2.2) |",
-        "| DGROUP map started | `re/dseg.toml` |",
-        "| Calling convention samples | whitepaper section 3.4 |",
-        "| Initial names from strings / prior art | overlay names in `re/units.toml` |",
-        "| Gate | run `make p1-check` |",
+        "| P0 Bootstrap | done (`make doctor`, `make inputs`) |",
+        "| P1 Map | done (`make p1-check`): %d units, %d routines, TP 6.0 June 1991 pinned |" % (len(residents) + len(overlays), len(routines)),
+        "| P2 Oracle and data | done: goldens with recordings for %d of %d session scripts (%s); `make golden CHECK=1` |" % (len(goldens), len(scripts), ", ".join(goldens) or "none"),
+        "| P3 Match harness | done: `make match` (tools/match/match.py, tests/unit/test_match.py); gate `make check` |",
+        "| P4 Match | %d of %d game routines at L2 (%d of %d bytes by re/symbols.toml sizes); %d of %d game units complete |" % (
+            p4["matched"], p4["routines"], p4["matched_bytes"], p4["bytes"], p4["complete"], p4["units"]),
         "",
-        "**P2 Oracle and data**: goldens recorded for %d of %d session scripts (%s)." % (len(goldens), len(scripts), ", ".join(goldens) or "none"),
+        "### P4 units with source",
         "",
-        "| P2 exit criterion | Gate |",
-        "|---|---|",
-        "| Oracle boots to title and through character creation from a key script, twice identically | `make golden` (records each session from two runs that must match), `make golden CHECK=1` |",
-        "| Hybrid timing (decision 2026-10-11: record/replay of the outside world, no masks, no time charged) | `tools/oracle/replay.py`, golden `replay.json.gz`, `tests/unit/test_replay.py` |",
-        "| Screenshots match DOSBox-X | `make oracle-dosbox` |",
-        "| DAX, map and ECL decoders with tests over all files | `make dax`, `make test` |",
-        "| First goldens recorded | `tests/sessions/golden/` |",
-        "",
-        "**P3 Runtime and skeleton**: gate is `make check`.",
-        "",
-        "| P3 exit criterion | State |",
-        "|---|---|",
-        "| Memory model spike (SPEC 7.3) | `System_Move`, `System_FillChar`, `System_Random` at L2; `G` is the DGROUP image at linear 0x1C7C0; hybrid `FP()` addresses guest RAM |",
-        "| `src/rtl` with tests | Move, FillChar, Random, Randomize packing; `tests/unit/test_p3_spike.py` |",
-        "| SDL3 host platform | `make host` -> `build/host/poolrad` (BIOS keys, PIT period, framebuffer) |",
-        "| Hybrid library in the oracle | `make hybrid`; `tools/oracle/hybrid.py` |",
-        "| `make check` | build, lint, fast unit tests, fuzz, session replays once each (record/replay, `tools/oracle/replay.py`: Move, FillChar, Random in C, exact at every read) |",
+        "| Unit | Name | Routines | L2 | Bytes at L2 |",
+        "|---|---|---:|---:|---:|",
+    ] + [
+        "| %s | %s | %d | %d | %d |" % row for row in p4["rows"]
+    ] + [
         "",
         "## Inventory",
         "",
@@ -188,7 +186,7 @@ def main(argv: list[str]) -> int:
 
     lifted = [r for r in routines if str(r.get("level", "none")) not in ("", "none")]
     if not lifted:
-        verification = "No routines lifted yet (all levels `none`)."
+        verification = "No routines matched yet (all levels `none`)."
     else:
         shown = ", ".join("%s %s (%s)" % (r.get("name", r.get("id")), r.get("level"), r.get("id"))
                           for r in sorted(lifted, key=lambda r: str(r.get("id"))))
@@ -201,16 +199,16 @@ def main(argv: list[str]) -> int:
         "",
         "## Blockers and decisions waiting for the human",
         "",
-        "- Platform waits (decided 2026-10-10): `src/platform/platform.h` has input, time, entropy, timer, sound and video present (WHITEPAPER 5.14). Files and the heap suballocator arrive with the first lifted unit that needs them. Lifters of the routines in `build/re/timing-scan.md` use the waits, never a spin on a poll.",
-        "- Hybrid runs (decided 2026-10-11, WHITEPAPER appendix C): replay the golden's recording of every read of the outside world; checkpoints on read boundaries are exact (no spinner allowance). Canonical state includes the heap (`re/state.toml` `heap = \"compared\"`). `make check` replays Move, FillChar and Random in C.",
-        "- Canonical state and the stack (decided 2026-10-10, WHITEPAPER appendix C): `re/state.toml` sets `stack = \"diagnostic\"`. Hybrid runs compare `canonical_nostack`. The full digest stays in the golden. A C routine pushes no guest frames, so those bytes are not a failure.",
+        "- Approach (decided 2026-10-11, SPEC 4): Pascal first, matched by the pinned compiler; C later by translation (Phase 7, branch `track-c-hybrid`).",
+        "- Canonical state (decided 2026-10-10 and 2026-10-11): `re/state.toml` has `stack = \"diagnostic\"` and `heap = \"compared\"`; goldens carry recordings of the outside world (`tools/oracle/replay.py`) for the rebuild and the C translation.",
+        "- Shared files (SPEC 9.6): `src/POOLVARS.PAS` and stub declarations take additive edits; the orchestrator merges.",
         "- `re/units.toml` lists units found through the init chain plus the two runtime units without init; game units without an initialisation part are still invisible (WHITEPAPER 2.2).",
         "",
         "## Toolchain",
         "",
         "| Tool | Pin | Command |",
         "|---|---|---|",
-        "| Turbo Pascal compiler (reference, never committed) | 6.0, June 1991 release (`tools/re/tp_toolchain.toml`) | `make tp-install`, `make tpc SRC=...` |",
+        "| Turbo Pascal compiler (critical path, never committed) | 6.0, June 1991 release (`tools/re/tp_toolchain.toml`) | `make tp-pin`, `make match`, `make tpc SRC=...` |",
         "| Runtime byte comparison | System/Crt/Dos/Overlay match | `make tp-compare` |",
         "| Headless DOS emulator | emu2 (commit in `tools/setup/build-emu2.sh`) | `make emu2` |",
         "",

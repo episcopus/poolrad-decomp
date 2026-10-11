@@ -26,7 +26,9 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from mzutil import DGROUP_PARA, load_overlays_json, read_mz  # noqa: E402
 
-PROLOGUE = b"\x55\x8b\xec"
+# Frame prologues: push bp; mov bp,sp. Turbo Pascal 6.0 encodes the mov as 89 E5 (every routine
+# make match compiles); 8B EC is the other encoding, kept for hand-written assembly.
+PROLOGUES = (b"\x55\x89\xe5", b"\x55\x8b\xec")
 
 
 def _parse_units_toml(text: str) -> tuple[list[dict], list[dict]]:
@@ -101,13 +103,14 @@ def find_in_region(image: bytes, base: int, length: int) -> dict[int, str]:
     region = image[base : base + length]
     starts: dict[int, str] = {}
     # prologues
-    i = 0
-    while True:
-        j = region.find(PROLOGUE, i)
-        if j < 0:
-            break
-        add_start(starts, j, "prologue")
-        i = j + 1
+    for prologue in PROLOGUES:
+        i = 0
+        while True:
+            j = region.find(prologue, i)
+            if j < 0:
+                break
+            add_start(starts, j, "prologue")
+            i = j + 1
     # near calls
     for i in range(len(region) - 3):
         if region[i] != 0xE8:

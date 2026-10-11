@@ -1,15 +1,5 @@
 # Record and enum types
 
-One C header per record family (`player.h`, `item.h`, ...), written in the project's width types, packed, with an offset assert per field:
+Notes on the game's records (characters, items, monsters, map cells, ...) as evidence accumulates: one Markdown or TOML file per record family with every field's offset, size, Pascal type and evidence.
 
-```c
-typedef struct Player {
-    u8   name[16];          /* string[15] */
-    s16  hit_points;        /* +0x10 */
-    /* ... */
-} Player;
-STATIC_ASSERT(offsetof(Player, hit_points) == 0x10);
-STATIC_ASSERT(sizeof(Player) == 0x1A6);
-```
-
-Every field gets a comment with its offset and, once known, its evidence. These headers are copied into `src/include/gen/` by the build so the C code and the tools share one definition.
+The Pascal declarations themselves live in the unit sources in `src/` (record types in the interface of the unit that owns them). `make match` checks them indirectly: every field access compiles to a displacement that must equal the original's. `re/state.toml` `heap_root` entries will name records here once the heap is described by type rather than byte for byte.
