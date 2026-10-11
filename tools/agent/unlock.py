@@ -14,6 +14,8 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import common  # noqa: E402  (locks are shared by every worktree of the clone)
 
 
 def main(argv: list[str]) -> int:
@@ -27,7 +29,7 @@ def main(argv: list[str]) -> int:
     if not unit:
         print("unlock: need UNIT=<id>", file=sys.stderr)
         return 2
-    path = ROOT / "work" / "locks" / ("%s.lock" % unit)
+    path = common.lock_path(unit.lower())
     if not path.exists():
         print("unlock: %s is not locked" % unit)
         return 0

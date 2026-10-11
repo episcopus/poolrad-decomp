@@ -1,0 +1,262 @@
+unit OVL13;
+{ CombatSpells: overlay unit, 15474 bytes of code. Skeleton by tools/match/skeleton.py: every routine is a stub
+  until decompiled (playbook 30). }
+{$A-,O+,F+,S-,R-,G-,I-}
+interface
+procedure ovl13_e1;
+procedure ovl13_e2;
+procedure ovl13_fn_0191;
+procedure ovl13_fn_02F9;
+procedure ovl13_fn_0627;
+procedure ovl13_e3;
+procedure ovl13_fn_08AC;
+procedure ovl13_e4;
+procedure ovl13_fn_098F;
+procedure ovl13_fn_0999;
+procedure ovl13_fn_0B2A;
+procedure ovl13_fn_0B2F;
+procedure ovl13_fn_0B3E;
+procedure ovl13_fn_0B48;
+procedure ovl13_fn_0B4D;
+procedure ovl13_fn_0B57;
+procedure ovl13_fn_0B5C;
+procedure ovl13_fn_0B61;
+procedure ovl13_e5;
+procedure ovl13_fn_0CEE;
+procedure ovl13_e6;
+procedure ovl13_fn_0D92;
+procedure ovl13_fn_0D99;
+procedure ovl13_fn_0E08;
+procedure ovl13_fn_0E52;
+procedure ovl13_e7;
+procedure ovl13_fn_0FBF;
+procedure ovl13_fn_104E;
+procedure ovl13_e8;
+procedure ovl13_e9;
+procedure ovl13_fn_11D8;
+procedure ovl13_e10;
+procedure ovl13_fn_1406;
+procedure ovl13_fn_14A1;
+procedure ovl13_fn_1583;
+procedure ovl13_fn_1713;
+procedure ovl13_fn_1758;
+procedure ovl13_e11;
+procedure ovl13_e12;
+procedure ovl13_fn_1B1E;
+procedure ovl13_fn_1BD7;
+procedure ovl13_e13;
+procedure ovl13_fn_1C13;
+procedure ovl13_fn_1D08;
+procedure ovl13_fn_1E16;
+procedure ovl13_fn_202B;
+procedure ovl13_fn_20A9;
+procedure ovl13_e14;
+procedure ovl13_fn_2233;
+procedure ovl13_fn_228C;
+procedure ovl13_fn_2383;
+procedure ovl13_fn_23B6;
+procedure ovl13_e15;
+procedure ovl13_fn_2432;
+procedure ovl13_fn_2574;
+procedure ovl13_fn_257E;
+procedure ovl13_fn_25C9;
+procedure ovl13_e18;
+procedure ovl13_fn_26B0;
+procedure ovl13_e19;
+procedure ovl13_e20;
+procedure ovl13_e16;
+procedure ovl13_fn_2AA0;
+procedure ovl13_fn_2B8B;
+procedure ovl13_fn_2C3D;
+procedure ovl13_fn_2D39;
+procedure ovl13_fn_2DC8;
+procedure ovl13_fn_2DFA;
+procedure ovl13_fn_2F57;
+procedure ovl13_fn_2F7B;
+procedure ovl13_fn_2FD3;
+procedure ovl13_fn_30FB;
+procedure ovl13_fn_31D7;
+procedure ovl13_fn_32E6;
+procedure ovl13_fn_3389;
+procedure ovl13_e17;
+procedure ovl13_fn_3728;
+procedure ovl13_e21;
+procedure ovl13_fn_39A3;
+procedure ovl13_e22;
+procedure ovl13_fn_39E6;
+procedure ovl13_fn_3A2B;
+procedure ovl13_e23;
+procedure ovl13_e24;
+implementation
+
+{ ovl13:0000: retf 4: 4 bytes of parameters; 6 bytes of locals }
+{@stub} procedure ovl13_e1; begin end;
+{ ovl13:0123: retf 4: 4 bytes of parameters; 2 bytes of locals }
+{@stub} procedure ovl13_e2; begin end;
+{ ovl13:0191: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl13_fn_0191; begin end;
+{ ovl13:02F9: retf 16: 16 bytes of parameters; 594 bytes of locals }
+{@stub} procedure ovl13_fn_02F9; begin end;
+{ ovl13:0627: retf 4: 4 bytes of parameters; 8 bytes of locals }
+{@stub} procedure ovl13_fn_0627; begin end;
+{ ovl13:0712: frame not read }
+{@stub} procedure ovl13_e3; begin end;
+{ ovl13:08AC: retf 6: 6 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl13_fn_08AC; begin end;
+{ ovl13:08B2: frame not read }
+{@stub} procedure ovl13_e4; begin end;
+{ ovl13:098F: frame not read }
+{@stub} procedure ovl13_fn_098F; begin end;
+{ ovl13:0999: frame not read }
+{@stub} procedure ovl13_fn_0999; begin end;
+{ ovl13:0B2A: frame not read }
+{@stub} procedure ovl13_fn_0B2A; begin end;
+{ ovl13:0B2F: frame not read }
+{@stub} procedure ovl13_fn_0B2F; begin end;
+{ ovl13:0B3E: frame not read }
+{@stub} procedure ovl13_fn_0B3E; begin end;
+{ ovl13:0B48: frame not read }
+{@stub} procedure ovl13_fn_0B48; begin end;
+{ ovl13:0B4D: frame not read }
+{@stub} procedure ovl13_fn_0B4D; begin end;
+{ ovl13:0B57: frame not read }
+{@stub} procedure ovl13_fn_0B57; begin end;
+{ ovl13:0B5C: frame not read }
+{@stub} procedure ovl13_fn_0B5C; begin end;
+{ ovl13:0B61: retf 6: 6 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl13_fn_0B61; begin end;
+{ ovl13:0C6A: frame not read }
+{@stub} procedure ovl13_e5; begin end;
+{ ovl13:0CEE: retf 4: 4 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl13_fn_0CEE; begin end;
+{ ovl13:0D23: frame not read }
+{@stub} procedure ovl13_e6; begin end;
+{ ovl13:0D92: frame not read }
+{@stub} procedure ovl13_fn_0D92; begin end;
+{ ovl13:0D99: frame not read }
+{@stub} procedure ovl13_fn_0D99; begin end;
+{ ovl13:0E08: retf 4: 4 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl13_fn_0E08; begin end;
+{ ovl13:0E52: retf 2: 2 bytes of parameters; 2 bytes of locals }
+{@stub} procedure ovl13_fn_0E52; begin end;
+{ ovl13:0E82: frame not read }
+{@stub} procedure ovl13_e7; begin end;
+{ ovl13:0FBF: frame not read }
+{@stub} procedure ovl13_fn_0FBF; begin end;
+{ ovl13:104E: retf 8: 8 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl13_fn_104E; begin end;
+{ ovl13:1085: retf 8: 8 bytes of parameters; 6 bytes of locals }
+{@stub} procedure ovl13_e8; begin end;
+{ ovl13:116A: frame not read }
+{@stub} procedure ovl13_e9; begin end;
+{ ovl13:11D8: retf 4: 4 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl13_fn_11D8; begin end;
+{ ovl13:1351: retf 8: 8 bytes of parameters; 10 bytes of locals }
+{@stub} procedure ovl13_e10; begin end;
+{ ovl13:1406: frame not read }
+{@stub} procedure ovl13_fn_1406; begin end;
+{ ovl13:14A1: frame not read }
+{@stub} procedure ovl13_fn_14A1; begin end;
+{ ovl13:1583: frame not read }
+{@stub} procedure ovl13_fn_1583; begin end;
+{ ovl13:1713: frame not read }
+{@stub} procedure ovl13_fn_1713; begin end;
+{ ovl13:1758: retf 14: 14 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl13_fn_1758; begin end;
+{ ovl13:17F6: retf 8: 8 bytes of parameters; 2 bytes of locals }
+{@stub} procedure ovl13_e11; begin end;
+{ ovl13:1884: retf 18: 18 bytes of parameters; 10 bytes of locals }
+{@stub} procedure ovl13_e12; begin end;
+{ ovl13:1B1E: frame not read }
+{@stub} procedure ovl13_fn_1B1E; begin end;
+{ ovl13:1BD7: frame not read }
+{@stub} procedure ovl13_fn_1BD7; begin end;
+{ ovl13:1BF8: frame not read }
+{@stub} procedure ovl13_e13; begin end;
+{ ovl13:1C13: frame not read }
+{@stub} procedure ovl13_fn_1C13; begin end;
+{ ovl13:1D08: retf 8: 8 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl13_fn_1D08; begin end;
+{ ovl13:1E16: frame not read }
+{@stub} procedure ovl13_fn_1E16; begin end;
+{ ovl13:202B: frame not read }
+{@stub} procedure ovl13_fn_202B; begin end;
+{ ovl13:20A9: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl13_fn_20A9; begin end;
+{ ovl13:20C3: frame not read }
+{@stub} procedure ovl13_e14; begin end;
+{ ovl13:2233: frame not read }
+{@stub} procedure ovl13_fn_2233; begin end;
+{ ovl13:228C: frame not read }
+{@stub} procedure ovl13_fn_228C; begin end;
+{ ovl13:2383: frame not read }
+{@stub} procedure ovl13_fn_2383; begin end;
+{ ovl13:23B6: retf 8: 8 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl13_fn_23B6; begin end;
+{ ovl13:2414: frame not read }
+{@stub} procedure ovl13_e15; begin end;
+{ ovl13:2432: retf 8: 8 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl13_fn_2432; begin end;
+{ ovl13:2574: frame not read }
+{@stub} procedure ovl13_fn_2574; begin end;
+{ ovl13:257E: frame not read }
+{@stub} procedure ovl13_fn_257E; begin end;
+{ ovl13:25C9: retf 8: 8 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl13_fn_25C9; begin end;
+{ ovl13:263D: retf 8: 8 bytes of parameters; 6 bytes of locals }
+{@stub} procedure ovl13_e18; begin end;
+{ ovl13:26B0: retf 12: 12 bytes of parameters; 6 bytes of locals }
+{@stub} procedure ovl13_fn_26B0; begin end;
+{ ovl13:2879: retf 0: 0 bytes of parameters; 8 bytes of locals }
+{@stub} procedure ovl13_e19; begin end;
+{ ovl13:2908: retf 4: 4 bytes of parameters; 8 bytes of locals }
+{@stub} procedure ovl13_e20; begin end;
+{ ovl13:2998: retf 8: 8 bytes of parameters; 20 bytes of locals }
+{@stub} procedure ovl13_e16; begin end;
+{ ovl13:2AA0: frame not read }
+{@stub} procedure ovl13_fn_2AA0; begin end;
+{ ovl13:2B8B: retf 14: 14 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl13_fn_2B8B; begin end;
+{ ovl13:2C3D: frame not read }
+{@stub} procedure ovl13_fn_2C3D; begin end;
+{ ovl13:2D39: retf 18: 18 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl13_fn_2D39; begin end;
+{ ovl13:2DC8: frame not read }
+{@stub} procedure ovl13_fn_2DC8; begin end;
+{ ovl13:2DFA: frame not read }
+{@stub} procedure ovl13_fn_2DFA; begin end;
+{ ovl13:2F57: frame not read }
+{@stub} procedure ovl13_fn_2F57; begin end;
+{ ovl13:2F7B: frame not read }
+{@stub} procedure ovl13_fn_2F7B; begin end;
+{ ovl13:2FD3: frame not read }
+{@stub} procedure ovl13_fn_2FD3; begin end;
+{ ovl13:30FB: frame not read }
+{@stub} procedure ovl13_fn_30FB; begin end;
+{ ovl13:31D7: retf 22: 22 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl13_fn_31D7; begin end;
+{ ovl13:32E6: retf 6: 6 bytes of parameters; 2 bytes of locals }
+{@stub} procedure ovl13_fn_32E6; begin end;
+{ ovl13:3389: retf 6: 6 bytes of parameters; 8 bytes of locals }
+{@stub} procedure ovl13_fn_3389; begin end;
+{ ovl13:3558: frame not read }
+{@stub} procedure ovl13_e17; begin end;
+{ ovl13:3728: retf 18: 18 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl13_fn_3728; begin end;
+{ ovl13:37E4: frame not read }
+{@stub} procedure ovl13_e21; begin end;
+{ ovl13:39A3: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl13_fn_39A3; begin end;
+{ ovl13:39D2: frame not read }
+{@stub} procedure ovl13_e22; begin end;
+{ ovl13:39E6: frame not read }
+{@stub} procedure ovl13_fn_39E6; begin end;
+{ ovl13:3A2B: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl13_fn_3A2B; begin end;
+{ ovl13:3A86: retf 10: 10 bytes of parameters; 2 bytes of locals }
+{@stub} procedure ovl13_e23; begin end;
+{ ovl13:3B93: retf 0: 0 bytes of parameters; 262 bytes of locals }
+{@stub} procedure ovl13_e24; begin end;
+
+begin
+end.

@@ -1,0 +1,105 @@
+#!/usr/bin/env python3
+"""claim.py: start work on a unit in one step (SPEC 9.5, playbook 30).
+
+  make claim AGENT=<name> [UNIT=<id>]
+  make claim AGENT=<name> REVIEW=1 [UNIT=<id>]    a review: a complete unit not reviewed yet (playbook 70)
+
+1. Picks UNIT, or the next unit of work/queue.toml that is neither locked nor complete.
+2. Locks it atomically (tools/agent/common.py; shared by every worktree of the clone). Two agents
+   claiming at the same moment get different units.
+3. Creates the worktree <clone>/../poolrad-worktrees/<id> on branch unit/<id> from main (or reuses the
+   branch if it exists).
+4. Links what is not in git from the main checkout into it: .venv, build/toolchain (the compiler),
+   build/re (the extracted overlays), tools/vendor (emu2), tools/setup/env.local.sh.
+
+A review claim locks `review-<id>` and creates branch review/<id> (worktree poolrad-worktrees/review-<id>)
+from main, where the unit was merged when it became complete.
+
+Prints the worktree path. Work there; finish with playbook 30 step 7 (`make unlock UNIT=<id>` from any
+checkout after handing the branch to the orchestrator).
+"""
+from __future__ import annotations
+
+import argparse
+import os
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import common  # noqa: E402
+import lock  # noqa: E402
+import next as nxt  # noqa: E402
+
+LINKS = (".venv", "build/toolchain", "build/re", "tools/vendor", "tools/setup/env.local.sh")
+
+
+def main(argv=None) -> int:
+    ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    ap.add_argument("--unit", default=os.environ.get("UNIT", ""))
+    ap.add_argument("--agent", default=os.environ.get("AGENT", ""))
+    ap.add_argument("--base", default="main", help="branch the unit branch starts from")
+    ap.add_argument("--review", action="store_true", help="claim a review instead of a unit")
+    a = ap.parse_args(argv)
+    if not a.agent:
+        print("claim: need AGENT=<name> (a name unique to this agent session)", file=sys.stderr)
+        return 2
+    main_dir = common.main_checkout()
+    dirty = common.git("status", "--porcelain", "--", "src", "re", "tools", "tests", "Makefile", cwd=main_dir)
+    if dirty:
+        print("claim: the main checkout has uncommitted changes in src/, re/, tools/ or tests/; a unit branch "
+              "starts from the committed %s, so commit (or stash) them first:\n%s" % (a.base, dirty), file=sys.stderr)
+        return 1
+    unit = a.unit.lower()
+    prefix = "review-" if a.review else ""
+    if a.review and unit and not common.unit_complete(unit):
+        print("claim: %s is not complete on this checkout; review a unit after it is merged complete" % unit,
+              file=sys.stderr)
+        return 1
+    for _attempt in range(50):
+        if not unit:
+            n = nxt.next_review() if a.review else nxt.next_unit()
+            if n is None:
+                print("claim: nothing to claim (queue empty, or every unit locked or complete)")
+                return 1
+            unit = n[0]
+        if common.try_lock(prefix + unit, lock.body(prefix + unit, a.agent,
+                                                    "%s/%s" % ("review" if a.review else "unit", unit))):
+            break
+        if a.unit:
+            print("claim: %s is locked:\n%s" % (prefix + unit, common.lock_path(prefix + unit).read_text()),
+                  file=sys.stderr)
+            return 1
+        unit = ""                                    # someone took it a moment ago: take the next one
+    else:
+        print("claim: could not take a unit", file=sys.stderr)
+        return 1
+    wt = main_dir.parent / "poolrad-worktrees" / (prefix + unit)
+    branch = "%s/%s" % ("review" if a.review else "unit", unit)
+    try:
+        if not wt.exists():
+            wt.parent.mkdir(parents=True, exist_ok=True)
+            exists = bool(common.git("branch", "--list", branch, cwd=main_dir))
+            if exists:
+                common.git("worktree", "add", str(wt), branch, cwd=main_dir)
+            else:
+                common.git("worktree", "add", "-b", branch, str(wt), a.base, cwd=main_dir)
+        for rel in LINKS:
+            src, dst = main_dir / rel, wt / rel
+            if src.exists() and not dst.exists():
+                dst.parent.mkdir(parents=True, exist_ok=True)
+                dst.symlink_to(src)
+    except RuntimeError as e:
+        common.lock_path(prefix + unit).unlink(missing_ok=True)
+        print("claim: %s (lock released)" % e, file=sys.stderr)
+        return 1
+    print("claim: %s locked for %s" % (prefix + unit, a.agent))
+    print("claim: worktree %s (branch %s)" % (wt, branch))
+    if a.review:
+        print("claim: next: cd %s && cp work/reviews/TEMPLATE.md work/reviews/%s.md   (playbook 70)" % (wt, unit))
+    else:
+        print("claim: next: cd %s && make packet UNIT=%s   (playbook 30)" % (wt, unit))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

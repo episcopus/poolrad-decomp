@@ -192,6 +192,19 @@ Start-up as observed by running the original code in the oracle (`make oracle-ru
 5. `8X8D1.DAX`, `SQRPACI.DAX`, `COMSPR.DAX`, `ITEMS` and `TITLE.DAX` are loaded, the game switches to EGA mode 0Dh (320x200, 16 colours), shows "Loading... please wait", then the SSI logo, the Pool of Radiance title and the credits, polling the keyboard throughout. The code wheel prompt (5.12) follows.
 6. The game installs no INT 08h/09h/1Ch handler for the rest of the session; keyboard input is INT 16h only (5.8).
 
+The main program **[V]** (`src/POOL.PAS`, `make match UNIT=main`: matched completely, 58 address fields) is segment `0000` (337 bytes plus padding): the string `'STING'`, then one far call per unit initialisation in the order of its `uses` clause (System, Crt, res02 to res08, then overlays and resident units interleaved: ovl34, res09, ovl33, res10, ovl32 to ovl30, res11, ovl29 to ovl25, res12, ovl24 to ovl00), then the main block:
+
+```pascal
+ovl11_e1;
+if ParamStr(1) <> 'STING' then begin ovl01_e1; ovl02_e1; end;   { title screens, code wheel (5.12) }
+ovl16_e1;
+ovl29_e1(11, 0, 7, 6);
+ovl03_e1;
+res04_fn_0000;                                                    { quit (5.8) }
+```
+
+So the `STING` parameter also skips the title screens and the copy protection **[V]**. Of the 46 game units, 44 have an empty initialisation part (`begin end.`); only res08 (the overlay set-up) and ovl00 (the heap error handler) run code at start-up **[V]** (`tools/match/skeleton.py`, from the bytes at each init entry). res02, res10 and res11 contain nothing else: 16-byte units whose only code is that empty initialisation (`make match`, complete).
+
 Turbo Pascal background **[H]** (Turbo Pascal reference manuals): units are compiled separately; each has an interface, an implementation and an optional initialisation part; overlaid units are called through stubs and loaded on demand by the Overlay unit's manager.
 
 ### 3.3 Overlays **[V]** (`tools/re/tpovl.py`, all checks pass)
@@ -250,6 +263,7 @@ What the matching harness relies on, each proven by a complete match of res04 (r
 - Every routine is far (`$F+`); a call within the unit is `push cs; call near`.
 - The initialisation part comes last; an empty one (`begin end.`) is `push bp; mov bp,sp; pop bp; retf`. A resident unit is padded with zeros to a paragraph.
 - Globals are DS offsets fixed at link time; a routine of an overlay unit is addressed through its stub entry (`@ovl00_e1` is `0016:0025`, the stub segment and entry offset).
+- Linking the whole program from source (`make rebuild`: `src/POOL.PAS` with `{$O OVLnn}` for the overlay units) reproduces the original's arrangement **[V]**: the main program at `0000`, the overlay stub segments from paragraph `16h` on (where the original's ovl00 stub is), the resident units after them in reverse initialisation order and System last, and an `FBOV` overlay file whose first unit's code starts with ovl00's string pool, like `GAME.OVR`. `tools/re/tpovl.py` reads the rebuilt pair and finds the original's 35 overlays and 48 initialisations (13 resident).
 
 
 ---
@@ -415,6 +429,7 @@ Each section will cover: purpose, units and routines, data, algorithm, quirks, e
 - Input is **INT 16h only** **[V]** (oracle: no INT 09h hook, ports 60h/64h never touched): Crt `KeyPressed` (`0A40:02FD`, AH=01h) and `ReadKey` (`0A40:030F`, AH=00h, an extended key returns 0 then the scan code on the next call).
 - The resident unit res04 is the keyboard layer **[V]** (decompiled and matched as a whole, `src/RES04.PAS`):
   - `res04_fn_0059` is the `ReadKey` game code calls. Ctrl-S (19) switches a two-state setting kept in `DS:5372` (with the previous value in `DS:5373`) by calling res03 (the sound unit) routines `08AE:00DC` and `08AE:017B` (so probably sound on and off **[I]**). When the program was started with the parameter `STING` (`ParamStr(1) = 'STING'`), Ctrl-D (4) toggles the Boolean `DS:49F7` and Ctrl-C (3) quits through `res04_fn_0000`: a developers' debug mode **[V]** (code), its effect **[?]**. After every key that is not an extended-key prefix it drains the keyboard buffer (`while KeyPressed do Key := ReadKey`), so keys typed ahead are lost, as for a person. The oracle's `key` script command therefore waits for the game to be idle.
+  - The debug mode also shows traces: `ovl33_e1(Text, A, B, C)` (overlay 33, matched as a whole) does nothing unless `DS:49F7` is set; then it clears a line (`res06_fn_0DD3(0, 0, 39, 0)`), shows the three numbers as `A , B , C` in colour 14 and the message through `res06_fn_0BF5`, and clears the line again **[V]**. Its only caller is `ovl12:2233` (the training and rewards unit).
   - `res04_fn_0104`, called before prompts (the code wheel, 5.12), is meant to flush the keyboard but returns at once: its first statement is `Exit` and the flush loop after it is dead code (QUIRK, `0899:010A`).
   - `res04_fn_0122` reads one key if one is waiting and discards it.
   - `res04_fn_0000` ends the program: restores the setting in `DS:5372`, calls `res03` `08AE:00DC` with `DS:2612`, sets the video mode saved in `DS:4A1C` (`Intr($10)` with AH=0, through the `Registers` record at `DS:4A02`) and calls `Halt`.

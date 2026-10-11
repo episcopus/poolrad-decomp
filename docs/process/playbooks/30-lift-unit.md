@@ -1,20 +1,21 @@
 # 30 Decompile a unit to Pascal (Decompiler)
 
-**Inputs:** a unit id from `make next` or the orchestrator; the unit unlocked; the compiler installed (`make tp-pin`).
+**Inputs:** a name for yourself (`AGENT`, unique among the agents running, for example `dec-2`); the compiler installed in the main checkout (`make tp-pin`).
 
 ## Steps
 
-1. `make lock UNIT=<id>`; create a worktree: `git worktree add ../poolrad-<id> -b unit/<id>`.
-2. `make packet UNIT=<id>`; read it (annotated disassembly, frames, callers, the bytes after each return), then the whitepaper sections about the subsystem.
-3. Create `src/<ID>.PAS` if it does not exist: the unit header and directives (below), every routine of the unit declared in the interface in address order, and a `{@stub}` body for each. Keep this order: Turbo Pascal lays routines out in source order, which makes the whole-unit check possible at the end.
-4. For each routine, leaves first (callees before callers):
-   1. Read the frame: `retf n` gives the parameter bytes, `sub sp, n` the locals, `[bp+6]` upward are the parameters (last declared first), `[bp-1]` downward the function result and locals in declaration order.
-   2. Write the Pascal in place of the stub. For a callee that is not decompiled, give its stub the signature its callers' pushes show (same unit: edit the stub here; another unit: add or fix the `{@stub}` declaration in that unit's file) and record it in `re/symbols.toml` `signature`. For a new global, add `dsXXXX` to `src/POOLVARS.PAS` (or name it in `re/dseg.toml` with evidence).
-   3. `make match UNIT=<id> FN=<name>`. On a difference, the tool shows both instructions and the reason: fix the Pascal, not the tool. When the compiler's choice is unclear, probe it (rules of thumb). Maximum 5 attempts, then write a `blocked` note in `re/symbols.toml` and continue.
-   4. `make match UNIT=<id> WRITE=1` records L2; commit: `<unit>: decompile <name> (<id>) [L2]`.
-5. When no stub of the unit is left, `make match UNIT=<id>` also checks that routines, pools, the initialisation part and the padding cover the original segment exactly (`unit: complete`). The original has an initialisation part if `re/units.toml` lists an `init` (an empty one is `begin end.` at the end of the file).
-6. Apply what `WRITE=1` reports about `re/symbols.toml` boundaries through the mapper (playbook 10), or note them for the orchestrator.
-7. Request review (playbook 70) from a fresh agent session; update the design doc (playbook 60); `make unlock UNIT=<id>`; hand the branch to the orchestrator for merge.
+1. **Claim.** From the main checkout: `make claim AGENT=<you>` (or `UNIT=<id>` when the orchestrator assigned one). It locks the next unit of `work/queue.toml` that is neither locked nor complete, creates the worktree `../poolrad-worktrees/<id>` on branch `unit/<id>` and links the compiler into it. `cd` there; do everything else in that worktree.
+2. **Read.** `make packet UNIT=<id>`; read `build/packets/<id>.md` (annotated disassembly, frames, callers, the bytes after each return), the unit's skeleton `src/<ID>.PAS`, and the whitepaper sections about the subsystem.
+3. **Decompile, routine by routine, leaves first** (callees before callers):
+   1. Read the frame: `retf n` gives the parameter bytes, `sub sp, n` the locals; `[bp+6]` upward are the parameters (the last declared is nearest), `[bp-1]` downward the function result and the locals in declaration order.
+   2. Replace the routine's `{@stub}` line (and its interface declaration, if the signature changes) by the Pascal. For a callee that is still a stub, give it the signature its callers' pushes show, in whichever unit's file it lives, and record it in `re/symbols.toml` `signature` (the full header, `procedure name(...)` or `function name(...): T`). For a new global, add `dsXXXX: <type>;` to `src/POOLVARS.PAS` in offset order (or a name in `re/dseg.toml` with evidence).
+   3. `make match UNIT=<id> FN=<name>`. On a difference the tool shows both instructions and the reason: fix the Pascal, never the tool. When the compiler's choice is unclear, probe it (rules of thumb). Maximum 5 attempts, then write a `blocked` note in `re/symbols.toml` `notes` and go on.
+   4. `make match UNIT=<id> WRITE=1` records L2; commit: `<unit>: decompile <name> (<id>) [L2]` with the trailer line `Agent: <you>` (`git commit -m "..." --trailer "Agent: <you>"`).
+4. **The initialisation part.** If the file has `{@stub-init}`, decompile it like a routine (it runs once at start-up) and remove the marker. When no stub is left, `make match UNIT=<id>` also checks that routines, pools, the initialisation part and the padding cover the original segment exactly: `unit: complete`.
+5. **Before handing over:** `make check` green in your worktree (all units still match, the rebuild links, goldens hold). Apply the boundary notes `WRITE=1` printed as a note to the orchestrator (the mapper fixes `re/symbols.toml` sizes). Update the whitepaper (playbook 60) for what the unit taught.
+6. **Hand over:** commit everything on `unit/<id>`, then `make handoff AGENT=<you> UNIT=<id> STATE=complete|partial|blocked NOTE="<what is done, what is blocked and why, boundary notes for the mapper>"`. Do not merge, do not unlock, do not commit `work/status.md`: the orchestrator merges, regenerates the status and releases the lock. Then claim the next unit.
+
+A complete unit is reviewed by another agent after the merge (playbook 70). If the review has must-fix findings the unit comes back to a decompiler: `make claim AGENT=<you> UNIT=<id>`, fix, mark the finding `- [x] ... (fixed in <commit>)` in `work/reviews/<id>.md`, hand over again.
 
 ## Unit header
 
@@ -36,6 +37,7 @@ uses POOLVARS, RES04, ...;
 - **Ghidra's decompiler output is a hint**, not the answer: it mis-types Pascal strings, sets and nested-procedure frames.
 - **Keep original quirks** (dead code after `Exit`, unassigned function results, off-by-ones): the compiler demands them; comment them as `QUIRK:` with the address.
 - **Hand-written assembly** (no Pascal frame shape, `in`/`out`, odd register use) becomes a Turbo Pascal `assembler` routine with real instructions (never `db` bytes), marked as such in its header comment.
+- **A routine the map got wrong** (two routines in one entry, a literal pool counted as code, a routine missing): write what the compiler shows; name a missing routine `<unit>_fn_<offset>` (the matcher accepts it) and note it for the mapper.
 
 ## Idioms found so far (TP 6.0, proven by `make match`)
 
@@ -46,7 +48,7 @@ uses POOLVARS, RES04, ...;
 | `jmp` to the epilogue as the first instruction | `Exit;` followed by code the original kept (res04_fn_0104) |
 | `mov al,[bp-k]; mov [bp-1],al; mov al,[bp-1]` at the end | function result assigned from a local (`F := Key;`) |
 | `cmp byte [x],0; mov al,0; jne +1; inc ax; mov [x],al` | `x := not x` for a Boolean |
-| In an overlay unit: `push <len>`, then a stack temporary and the code-segment literal passed to `0AF8:0B0B` before a call | a string constant passed to a routine under `$O+` (the compiler copies it to the stack, since the overlay may move) |
+| In an overlay unit: a stack temporary filled from a code-segment literal by `0AF8:0B0B` before a call | a string constant passed to a routine under `$O+` (the compiler copies it, since the overlay may move) |
 | A value `string[N]` parameter copied by `0AF8:0B25` with max N in the prologue | parameter declared with that type (`Text: String40`) |
 | Locals not word-aligned (an odd-sized string at `[bp-29h]`) | `$A-` (every POOL unit) |
 | `mov ax, <off>; mov dx, <stub seg>` stored into a pointer | `P := @Routine` of an overlay routine: the address of its stub entry |
@@ -58,4 +60,4 @@ uses POOLVARS, RES04, ...;
 
 ## Done when
 
-Every routine of the unit at L2, `make match UNIT=<id>` says `unit: complete`, `make check` green, review passed, whitepaper updated.
+Every routine of the unit at L2, `make match UNIT=<id>` says `unit: complete`, `make check` green, the branch handed to the orchestrator. The unit is *done* after its review passes (playbook 70).

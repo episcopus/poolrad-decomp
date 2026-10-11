@@ -15,3 +15,5 @@ Every playbook has the same parts: **Inputs**, **Steps**, **Done when**, **Hand-
 | 60-design-doc.md | Documentarian | all |
 | 70-review.md | Reviewer | P4 to P6 |
 | 90-orchestrate.md | Orchestrator | all |
+
+Several agents at once: `../KICKOFF.md` (the roles to start and a prompt for each).

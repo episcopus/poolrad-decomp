@@ -190,7 +190,8 @@ build/                    everything generated (ignored by git); build/toolchain
 - **The original's order.** Routines appear in the implementation part in the order of their addresses, since Turbo Pascal lays them out in source order. Each routine is declared in the interface (the compiler's map lists only interface symbols; declaring it there changes no code).
 - **Directives.** Every unit starts with `{$A-,F+,S-,R-,G-,I-}`; overlay units add `O+` (`{$A-,O+,F+,S-,R-,G-,I-}`); res05 has `I+`. A unit whose evidence shows another switch documents it in its header comment.
 - **Names.** A routine keeps its `re/symbols.toml` name (`res04_fn_0059`, `ovl00_e1`) until renamed there; a global is `dsXXXX` (its DS offset) until named in `re/dseg.toml`. The matcher resolves both forms (section 8.3), so renaming is a change in `re/` plus the source, never in the proof.
-- **Stubs.** A routine that is not decompiled yet but is called by one that is gets a stub: the right signature, an empty body, `{@stub}` at the start of its header line. A stub's signature is evidence (the caller's pushes and the callee's `retf n`) and is recorded in `re/symbols.toml` `signature`.
+- **Skeletons and stubs.** Every game unit has source from the start: `make skeleton` wrote each one with every routine of `re/symbols.toml` declared in address order and a stub body (`{@stub}` at the start of the header line, an empty body, a comment with the frame the code shows). Decompiling replaces a stub by the routine. A stub's signature is evidence (the callers' pushes and the callee's `retf n`), recorded in `re/symbols.toml` `signature` (the full Pascal header, for example `procedure res06_fn_0BF5(Color: Byte; Text: String40)`) so that regenerated skeletons keep it. An initialisation part that does real work and is not decompiled yet is marked `{@stub-init}` on the line before its `begin`; an empty one (`begin end.`, 44 of the 46 game units) is already decompiled.
+- **The main program** is `src/POOL.PAS`: its `uses` clause lists the units in the original initialisation order (the compiler emits one initialisation call per unit in that order), and its main block is the game's. `make match UNIT=main` proves it.
 - **Globals** whose owning unit is not known yet live in `src/POOLVARS.PAS`. Their declarations do not affect the instructions (addresses are compared by name), so they can move to their unit when the rebuild needs the exact DGROUP layout (Phase 5).
 - **Faithful first.** Same control flow, same evaluation order, original quirks kept (dead code after `Exit`, unassigned function results). Turbo Pascal leaves no other choice: a different program compiles differently.
 
@@ -215,11 +216,12 @@ Translating matched Pascal to C reuses the decisions recorded on branch `track-c
 | Level | Name | Evidence required |
 |---|---|---|
 | L0 | Drafted | The routine is Pascal (not a stub) in its unit, and the unit compiles with the pinned TP 6.0 |
-| L1 | Reviewed | An independent reviewer checked names, types and comments against the disassembly and the whitepaper, and recorded no open findings |
-| L2 | Matched | `make match` passes: the routine's instructions and literal pool are identical to the original's, and every address names the same thing (8.3). Written by the tool |
+| L2 | Matched | `make match` passes: the routine's instructions and literal pool are identical to the original's, and every address names the same thing (8.3). Written by `make match WRITE=1` |
 | L3 | Rebuilt | The routine's unit is byte-identical in the full rebuild, or the rebuilt program passes the golden sessions in the oracle (Phase 5) |
 
-A routine's level is the lowest level it has not failed. Only tools write L2 and L3. A regression demotes a routine automatically the next time the tool runs.
+**Review** is recorded beside the level, not as a level: the matcher already proves the instructions, and the review checks what the compiler cannot (names, types, comments, evidence). `make review-pass UNIT=<id>` writes `review = "passed <date> by <reviewer>, <commit>"` on every routine of a complete unit when `work/reviews/<id>.md` names a reviewer who is not the decompiler and has no open must-fix finding (playbook 70). A unit is **done** when it is complete (every routine L2, `unit: complete`) and reviewed.
+
+Only tools write levels and reviews. A regression demotes a routine the next time the tool runs.
 
 ### 8.2 The oracle: running the original code
 
@@ -252,7 +254,7 @@ The first difference is reported with both instructions. `WRITE=1` records L2 fo
 
 ### 8.4 The rebuild (L3, Phase 5)
 
-`make rebuild` links all units with the pinned compiler, the overlay units into `GAME.OVR`, and compares the result with the pinned files: byte-identical, or every difference explained (for example link order constraints, recorded in the whitepaper). The rebuilt program then plays every golden session in the oracle (`make golden CHECK=1` against the rebuild).
+`make rebuild` (tools/match/rebuild.py) compiles `src/POOL.PAS` with every unit, adding `{$O OVLnn}` for the overlay units so the linker writes the overlay file, into `build/rebuild/POOL.EXE` and `POOL.OVR`. It compares segment by segment with `start-unpack.exe` and `GAME.OVR` (the main program, each resident unit, each overlay unit's code), ignoring relocation words on either side, and reports how many segments are identical and how large the image and the overlay file are. It runs in `make check` from P4 on as a gate on *linking* (every unit, decompiled or skeleton, must compile into one program); the comparison becomes the gate in Phase 5, which ends when the files are identical (or every difference is explained in the whitepaper) and the rebuilt program plays every golden session in the oracle. The smart linker drops routines nothing calls, so the rebuild converges only as callers are decompiled: until then it is a progress report.
 
 ### 8.5 Sessions and goldens
 
@@ -282,7 +284,7 @@ Every loader for game data (DAX blocks, maps, ECL scripts, monsters, items, save
 | Mapper | Ghidra analysis, names, types, signatures, boundaries in `re/` | Write unit source |
 | Decompiler | Writes Pascal for one unit until `make match` passes | Edit another unit's routines (stub signatures excepted, 9.6); write levels by hand |
 | Verifier | Sessions, goldens, oracle features, the rebuild; bisects failures | Change source to make a check pass without understanding why |
-| Reviewer | Independent L1 review with the checklist (playbook 70); files findings | Edit the code it reviews |
+| Reviewer | Independent review of a complete unit with the checklist (playbook 70); files findings; `make review-pass` | Edit the code it reviews; review a unit it decompiled |
 | Documentarian | Turns verified findings into whitepaper sections with evidence tags | Add claims without evidence or an explicit hypothesis tag |
 
 One agent may play several roles over time, but **the reviewer of a routine is never its decompiler** (a fresh session at minimum).
@@ -296,22 +298,23 @@ One agent may play several roles over time, but **the reviewer of a routine is n
 - `re/symbols.toml` holds per routine: `id`, `unit`, `addr`, `size`, `name`, `signature`, `level`, `notes`, `evidence`.
 - `work/status.md` is generated by `make status`: per unit counts by level, bytes covered.
 - `work/queue.toml` orders units. The runtime units are library and never queued. Order: small and leaf units first (they build the stub signatures and global names others need), then data loaders, text and graphics primitives, the ECL interpreter, maps and movement, menus and character screens, items and shops, combat, magic, the rest. `make next` proposes the next item.
-- `work/locks/<unit>.lock` prevents two agents taking the same unit; stale locks older than 24 hours may be broken by the orchestrator.
+- Locks prevent two agents taking the same unit or review. They live in the clone's git directory (`$(git rev-parse --git-common-dir)/poolrad-locks/`), shared by every worktree of the clone and never committed, and are created atomically. `make claim AGENT=<name> [REVIEW=1]` takes the next unit (or review), locks it and creates its worktree; `make locks` lists them; stale locks older than 24 hours may be broken by the orchestrator (`make unlock UNIT=<id> FORCE=1`). Parallel agents therefore share one machine and one clone; agents on several machines would need a shared lock store (not built).
 
 ### 9.5 The per-routine loop (summary; full detail in playbook 30)
 
-1. Lock the unit, create a worktree branch `unit/<id>`.
-2. `make packet FN=...`; read it and the relevant whitepaper sections.
-3. Write the routine in `src/<ID>.PAS`; add stubs for callees that are not decompiled and names for new globals.
+1. `make claim AGENT=<name>`: the next unit is locked and its worktree created on branch `unit/<id>`.
+2. `make packet UNIT=<id>`; read it and the relevant whitepaper sections.
+3. Replace stubs in `src/<ID>.PAS` by routines; fix callee stub signatures (in any unit's file) and add names for new globals.
 4. `make match UNIT=<id> FN=<name>` until it passes; when the compiler's choice is unclear, probe the idiom with `make tpc`. After 5 failed attempts on one routine, stop and write a `blocked` note with what was tried.
 5. `make match UNIT=<id> WRITE=1` records L2; commit with the routine id in the message.
-6. When the unit is complete: request review (playbook 70), update the whitepaper (playbook 60), unlock, merge.
+6. When the unit is complete, or when stopping: update the whitepaper (playbook 60), commit on the unit branch, hand the branch to the orchestrator, who merges it, runs `make check` and releases the lock (playbook 90).
+7. A complete unit merged on `main` is reviewed by another agent (`make claim REVIEW=1`, playbook 70); must-fix findings send it back to step 1 (`make claim UNIT=<id>`).
 
 ### 9.6 Guardrails
 
 - Never edit `poolrad/`. Never commit generated files from `build/`, never commit the compiler. Never paste code from repositories whose licence does not allow it (section 13).
 - Never mark levels by hand; only tools write verdicts. Never weaken the matcher (a new address kind, a looser rule) without a written reason in the same commit, reviewed by a human.
-- Shared files: `src/POOLVARS.PAS` and stub declarations in other units take small, additive edits (one declaration per line); the orchestrator resolves merge conflicts there. A stub's signature change must keep every matched caller matching (`make check`).
+- Shared files: `src/POOLVARS.PAS` (one declaration per line, kept in offset order), stub declarations in other units' files and `re/symbols.toml` `signature`/`notes` take small edits; the orchestrator resolves merge conflicts there (playbook 90). A stub's signature change must keep every matched caller matching (`make check`). `work/status.md` is regenerated by the orchestrator only.
 - No inline machine code (`inline(...)`, `asm` blocks of raw bytes) to force a match. Hand-written assembly routines of the original are written as Turbo Pascal `assembler` routines with real instructions, and say so in their header comment.
 - Ask the human before: changing ADRs, the session set, `re/state.toml`, or anything in `poolrad/`.
 
@@ -324,8 +327,8 @@ One agent may play several roles over time, but **the reviewer of a routine is n
 | P0 Bootstrap | Environment and pinned inputs | Done 2026-10-07 |
 | P1 Map | Know the binary | Done 2026-10-09: units, routines, RTL, TP 6.0 pinned, DGROUP map started |
 | P2 Oracle and data | Run the original deterministically; decode the data | Done 2026-10-10: oracle, goldens with recordings, data codecs |
-| P3 Match harness | Prove ADR-002 | `make match` with tests; three units decompiled, two complete (res04, ovl00, plus res06_fn_0BF5); `make check` runs build of the tools, unit tests, every unit's match and the golden check. Done 2026-10-11 |
-| P4 Match | All game units in Pascal | Every game routine at L2; map boundaries corrected from the compiler's; whitepaper chapter per subsystem |
+| P3 Match harness | Prove ADR-002; ready for parallel agents | `make match` with tests; units decompiled to complete (res04, ovl00), the main program matched; skeletons for every unit; `make rebuild`, `make review-pass`, `make claim`; `make check` runs the unit tests, every unit's match, the rebuild link and the golden check. Done 2026-10-11 |
+| P4 Match | All game units in Pascal | Every game unit done (complete and reviewed); map boundaries corrected from the compiler's; whitepaper chapter per subsystem |
 | P5 Rebuild | The original program from source | `make rebuild` byte-identical (or every difference explained); every golden session passes on the rebuild |
 | P6 Readability | Source a person enjoys reading | Names, types, comments; every routine still L2; reviewer sign-off per unit |
 | P7 C translation | Portable C | C translated from the Pascal (starting from branch `track-c-hybrid`), native build plays the goldens through record/replay; portability rules for CMOC set |
@@ -343,7 +346,7 @@ Milestones are reviewed by the human at each phase exit; the spec is updated (ne
 | Compile any Pascal (probes) | same | `make tpc SRC=file.pas [DISASM=1]` | Available |
 | Tests | Python (pytest) | `make test` (fast), `make test-slow` (boots the game) | Available |
 | Everything a commit must pass | | `make check` | P3 |
-| Rebuild the game | Turbo Pascal 6.0 | `make rebuild` | Phase 5 |
+| Rebuild the game | Turbo Pascal 6.0 | `make rebuild` (links from P4; byte-identical in Phase 5) | Available |
 | C translation | clang, SDL3 (from branch `track-c-hybrid`) | `make host` | Phase 7 |
 | CoCo 3 | CMOC + LWTOOLS | `make coco3` | Phase 8 |
 

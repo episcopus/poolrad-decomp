@@ -193,6 +193,7 @@ def write_symbols(path: Path, routines: list[dict], header_notes: str) -> None:
             "signature",
             "c_name",
             "level",
+            "review",
             "justification",
             "notes",
             "evidence",
@@ -270,6 +271,7 @@ def main(argv: list[str]) -> int:
                     "signature": prev.get("signature", ""),
                     "c_name": prev.get("c_name", name),
                     "level": prev.get("level", "none"),
+                    "review": prev.get("review", ""),
                     "justification": prev.get("justification", ""),
                     "notes": prev.get("notes", "auto:%s" % starts[off]),
                     "evidence": prev.get("evidence")
@@ -344,6 +346,7 @@ def main(argv: list[str]) -> int:
                     "signature": prev.get("signature", ""),
                     "c_name": prev.get("c_name", name),
                     "level": prev.get("level", "none"),
+                    "review": prev.get("review", ""),
                     "justification": prev.get("justification", ""),
                     "notes": prev.get("notes", "auto:%s" % starts[off]),
                     "evidence": prev.get("evidence")

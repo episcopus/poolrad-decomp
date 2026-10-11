@@ -1,0 +1,511 @@
+unit OVL12;
+{ TrainRewards: overlay unit, 14510 bytes of code. Skeleton by tools/match/skeleton.py: every routine is a stub
+  until decompiled (playbook 30). }
+{$A-,O+,F+,S-,R-,G-,I-}
+interface
+procedure ovl12_fn_0000;
+procedure ovl12_fn_001F;
+procedure ovl12_fn_0058;
+procedure ovl12_e2;
+procedure ovl12_e3;
+procedure ovl12_e4;
+procedure ovl12_e5;
+procedure ovl12_e6;
+procedure ovl12_e7;
+procedure ovl12_e8;
+procedure ovl12_e9;
+procedure ovl12_e10;
+procedure ovl12_e11;
+procedure ovl12_e12;
+procedure ovl12_e13;
+procedure ovl12_e14;
+procedure ovl12_e15;
+procedure ovl12_e16;
+procedure ovl12_e17;
+procedure ovl12_fn_06C8;
+procedure ovl12_e18;
+procedure ovl12_e19;
+procedure ovl12_e20;
+procedure ovl12_e21;
+procedure ovl12_e22;
+procedure ovl12_e23;
+procedure ovl12_e24;
+procedure ovl12_e25;
+procedure ovl12_e26;
+procedure ovl12_fn_0AE5;
+procedure ovl12_e27;
+procedure ovl12_fn_0B25;
+procedure ovl12_fn_0B2A;
+procedure ovl12_fn_0B2F;
+procedure ovl12_fn_0B43;
+procedure ovl12_fn_0B48;
+procedure ovl12_fn_0B4D;
+procedure ovl12_fn_0B52;
+procedure ovl12_fn_0B57;
+procedure ovl12_fn_0B61;
+procedure ovl12_fn_0B70;
+procedure ovl12_fn_0B75;
+procedure ovl12_fn_0B7A;
+procedure ovl12_fn_0B7F;
+procedure ovl12_fn_0B84;
+procedure ovl12_fn_0B89;
+procedure ovl12_fn_0B8E;
+procedure ovl12_e28;
+procedure ovl12_e29;
+procedure ovl12_e30;
+procedure ovl12_e31;
+procedure ovl12_e32;
+procedure ovl12_e33;
+procedure ovl12_e34;
+procedure ovl12_fn_0FAC;
+procedure ovl12_fn_101D;
+procedure ovl12_e35;
+procedure ovl12_e36;
+procedure ovl12_e37;
+procedure ovl12_e38;
+procedure ovl12_e39;
+procedure ovl12_e40;
+procedure ovl12_e41;
+procedure ovl12_e42;
+procedure ovl12_fn_1307;
+procedure ovl12_e43;
+procedure ovl12_e44;
+procedure ovl12_e45;
+procedure ovl12_e46;
+procedure ovl12_e47;
+procedure ovl12_e48;
+procedure ovl12_e49;
+procedure ovl12_e50;
+procedure ovl12_e51;
+procedure ovl12_fn_1543;
+procedure ovl12_fn_1545;
+procedure ovl12_fn_1583;
+procedure ovl12_fn_15EB;
+procedure ovl12_e52;
+procedure ovl12_e53;
+procedure ovl12_e54;
+procedure ovl12_e55;
+procedure ovl12_e56;
+procedure ovl12_e57;
+procedure ovl12_e58;
+procedure ovl12_e59;
+procedure ovl12_e60;
+procedure ovl12_fn_1758;
+procedure ovl12_e61;
+procedure ovl12_e62;
+procedure ovl12_e63;
+procedure ovl12_e64;
+procedure ovl12_e65;
+procedure ovl12_e66;
+procedure ovl12_e67;
+procedure ovl12_e68;
+procedure ovl12_fn_1BD7;
+procedure ovl12_fn_1C98;
+procedure ovl12_e69;
+procedure ovl12_e70;
+procedure ovl12_fn_1F9B;
+procedure ovl12_fn_2002;
+procedure ovl12_fn_20A9;
+procedure ovl12_fn_2122;
+procedure ovl12_fn_2197;
+procedure ovl12_fn_2233;
+procedure ovl12_fn_228C;
+procedure ovl12_fn_2383;
+procedure ovl12_e71;
+procedure ovl12_e72;
+procedure ovl12_e73;
+procedure ovl12_e74;
+procedure ovl12_e75;
+procedure ovl12_e76;
+procedure ovl12_fn_257E;
+procedure ovl12_e77;
+procedure ovl12_e78;
+procedure ovl12_fn_25C9;
+procedure ovl12_e79;
+procedure ovl12_e80;
+procedure ovl12_e81;
+procedure ovl12_e82;
+procedure ovl12_e83;
+procedure ovl12_e84;
+procedure ovl12_e85;
+procedure ovl12_e86;
+procedure ovl12_e87;
+procedure ovl12_e88;
+procedure ovl12_fn_2915;
+procedure ovl12_e89;
+procedure ovl12_e90;
+procedure ovl12_e91;
+procedure ovl12_e92;
+procedure ovl12_e93;
+procedure ovl12_e94;
+procedure ovl12_e95;
+procedure ovl12_e96;
+procedure ovl12_e97;
+procedure ovl12_e98;
+procedure ovl12_e99;
+procedure ovl12_e100;
+procedure ovl12_e101;
+procedure ovl12_e102;
+procedure ovl12_fn_2B6F;
+procedure ovl12_e103;
+procedure ovl12_fn_2B8B;
+procedure ovl12_e104;
+procedure ovl12_e105;
+procedure ovl12_e106;
+procedure ovl12_fn_2D39;
+procedure ovl12_e107;
+procedure ovl12_e108;
+procedure ovl12_e109;
+procedure ovl12_e110;
+procedure ovl12_e111;
+procedure ovl12_fn_2EEA;
+procedure ovl12_e112;
+procedure ovl12_fn_2F7B;
+procedure ovl12_e113;
+procedure ovl12_fn_30FB;
+procedure ovl12_e114;
+procedure ovl12_e115;
+procedure ovl12_e116;
+procedure ovl12_e1;
+procedure ovl12_fn_31D7;
+procedure ovl12_fn_3262;
+procedure ovl12_fn_3728;
+implementation
+
+{ ovl12:0000: retf 2: 2 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_fn_0000; begin end;
+{ ovl12:001F: retf 10: 10 bytes of parameters; 2 bytes of locals }
+{@stub} procedure ovl12_fn_001F; begin end;
+{ ovl12:0058: retf 10: 10 bytes of parameters; 42 bytes of locals }
+{@stub} procedure ovl12_fn_0058; begin end;
+{ ovl12:010D: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e2; begin end;
+{ ovl12:011D: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e3; begin end;
+{ ovl12:013B: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e4; begin end;
+{ ovl12:017F: retf 10: 10 bytes of parameters; 16 bytes of locals }
+{@stub} procedure ovl12_e5; begin end;
+{ ovl12:01C3: retf 10: 10 bytes of parameters; 2 bytes of locals }
+{@stub} procedure ovl12_e6; begin end;
+{ ovl12:0233: retf 10: 10 bytes of parameters; 14 bytes of locals }
+{@stub} procedure ovl12_e7; begin end;
+{ ovl12:0377: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e8; begin end;
+{ ovl12:03AC: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e9; begin end;
+{ ovl12:03E1: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e10; begin end;
+{ ovl12:0400: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e11; begin end;
+{ ovl12:04BA: retf 10: 10 bytes of parameters; 12 bytes of locals }
+{@stub} procedure ovl12_e12; begin end;
+{ ovl12:05D6: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e13; begin end;
+{ ovl12:05EB: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e14; begin end;
+{ ovl12:0647: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e15; begin end;
+{ ovl12:064E: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e16; begin end;
+{ ovl12:0679: frame not read }
+{@stub} procedure ovl12_e17; begin end;
+{ ovl12:06C8: frame not read }
+{@stub} procedure ovl12_fn_06C8; begin end;
+{ ovl12:06E4: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e18; begin end;
+{ ovl12:070F: retf 10: 10 bytes of parameters; 12 bytes of locals }
+{@stub} procedure ovl12_e19; begin end;
+{ ovl12:0775: retf 10: 10 bytes of parameters; 22 bytes of locals }
+{@stub} procedure ovl12_e20; begin end;
+{ ovl12:07E0: retf 10: 10 bytes of parameters; 20 bytes of locals }
+{@stub} procedure ovl12_e21; begin end;
+{ ovl12:0918: retf 10: 10 bytes of parameters; 4 bytes of locals }
+{@stub} procedure ovl12_e22; begin end;
+{ ovl12:0947: retf 10: 10 bytes of parameters; 2 bytes of locals }
+{@stub} procedure ovl12_e23; begin end;
+{ ovl12:09C0: retf 10: 10 bytes of parameters; 14 bytes of locals }
+{@stub} procedure ovl12_e24; begin end;
+{ ovl12:0A3D: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e25; begin end;
+{ ovl12:0A65: frame not read }
+{@stub} procedure ovl12_e26; begin end;
+{ ovl12:0AE5: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_fn_0AE5; begin end;
+{ ovl12:0B1B: frame not read }
+{@stub} procedure ovl12_e27; begin end;
+{ ovl12:0B25: frame not read }
+{@stub} procedure ovl12_fn_0B25; begin end;
+{ ovl12:0B2A: frame not read }
+{@stub} procedure ovl12_fn_0B2A; begin end;
+{ ovl12:0B2F: frame not read }
+{@stub} procedure ovl12_fn_0B2F; begin end;
+{ ovl12:0B43: frame not read }
+{@stub} procedure ovl12_fn_0B43; begin end;
+{ ovl12:0B48: frame not read }
+{@stub} procedure ovl12_fn_0B48; begin end;
+{ ovl12:0B4D: frame not read }
+{@stub} procedure ovl12_fn_0B4D; begin end;
+{ ovl12:0B52: frame not read }
+{@stub} procedure ovl12_fn_0B52; begin end;
+{ ovl12:0B57: frame not read }
+{@stub} procedure ovl12_fn_0B57; begin end;
+{ ovl12:0B61: frame not read }
+{@stub} procedure ovl12_fn_0B61; begin end;
+{ ovl12:0B70: frame not read }
+{@stub} procedure ovl12_fn_0B70; begin end;
+{ ovl12:0B75: frame not read }
+{@stub} procedure ovl12_fn_0B75; begin end;
+{ ovl12:0B7A: frame not read }
+{@stub} procedure ovl12_fn_0B7A; begin end;
+{ ovl12:0B7F: frame not read }
+{@stub} procedure ovl12_fn_0B7F; begin end;
+{ ovl12:0B84: frame not read }
+{@stub} procedure ovl12_fn_0B84; begin end;
+{ ovl12:0B89: frame not read }
+{@stub} procedure ovl12_fn_0B89; begin end;
+{ ovl12:0B8E: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_fn_0B8E; begin end;
+{ ovl12:0BAC: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e28; begin end;
+{ ovl12:0BCF: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e29; begin end;
+{ ovl12:0C06: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e30; begin end;
+{ ovl12:0C15: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e31; begin end;
+{ ovl12:0C26: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e32; begin end;
+{ ovl12:0C4B: retf 10: 10 bytes of parameters; 6 bytes of locals }
+{@stub} procedure ovl12_e33; begin end;
+{ ovl12:0CC3: retf 10: 10 bytes of parameters; 40 bytes of locals }
+{@stub} procedure ovl12_e34; begin end;
+{ ovl12:0FAC: retf 6: 6 bytes of parameters; 10 bytes of locals }
+{@stub} procedure ovl12_fn_0FAC; begin end;
+{ ovl12:101D: retf 4: 4 bytes of parameters; 10 bytes of locals }
+{@stub} procedure ovl12_fn_101D; begin end;
+{ ovl12:1086: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e35; begin end;
+{ ovl12:10C1: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e36; begin end;
+{ ovl12:10DE: retf 10: 10 bytes of parameters; 16 bytes of locals }
+{@stub} procedure ovl12_e37; begin end;
+{ ovl12:1168: retf 10: 10 bytes of parameters; 4 bytes of locals }
+{@stub} procedure ovl12_e38; begin end;
+{ ovl12:11F9: retf 10: 10 bytes of parameters; 2 bytes of locals }
+{@stub} procedure ovl12_e39; begin end;
+{ ovl12:1276: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e40; begin end;
+{ ovl12:12B2: retf 10: 10 bytes of parameters; 2 bytes of locals }
+{@stub} procedure ovl12_e41; begin end;
+{ ovl12:12FB: frame not read }
+{@stub} procedure ovl12_e42; begin end;
+{ ovl12:1307: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_fn_1307; begin end;
+{ ovl12:133F: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e43; begin end;
+{ ovl12:1355: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e44; begin end;
+{ ovl12:135C: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e45; begin end;
+{ ovl12:1363: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e46; begin end;
+{ ovl12:1399: retf 10: 10 bytes of parameters; 16 bytes of locals }
+{@stub} procedure ovl12_e47; begin end;
+{ ovl12:1452: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e48; begin end;
+{ ovl12:1472: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e49; begin end;
+{ ovl12:1490: retf 10: 10 bytes of parameters; 2 bytes of locals }
+{@stub} procedure ovl12_e50; begin end;
+{ ovl12:14EB: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e51; begin end;
+{ ovl12:1543: frame not read }
+{@stub} procedure ovl12_fn_1543; begin end;
+{ ovl12:1545: frame not read }
+{@stub} procedure ovl12_fn_1545; begin end;
+{ ovl12:1583: retf 6: 6 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_fn_1583; begin end;
+{ ovl12:15EB: retf 8: 8 bytes of parameters; 14 bytes of locals }
+{@stub} procedure ovl12_fn_15EB; begin end;
+{ ovl12:165D: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e52; begin end;
+{ ovl12:1671: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e53; begin end;
+{ ovl12:1685: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e54; begin end;
+{ ovl12:1699: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e55; begin end;
+{ ovl12:16BB: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e56; begin end;
+{ ovl12:16E6: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e57; begin end;
+{ ovl12:170B: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e58; begin end;
+{ ovl12:171F: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e59; begin end;
+{ ovl12:1730: frame not read }
+{@stub} procedure ovl12_e60; begin end;
+{ ovl12:1758: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_fn_1758; begin end;
+{ ovl12:176F: retf 10: 10 bytes of parameters; 20 bytes of locals }
+{@stub} procedure ovl12_e61; begin end;
+{ ovl12:18B5: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e62; begin end;
+{ ovl12:1935: retf 10: 10 bytes of parameters; 14 bytes of locals }
+{@stub} procedure ovl12_e63; begin end;
+{ ovl12:19D9: retf 10: 10 bytes of parameters; 2 bytes of locals }
+{@stub} procedure ovl12_e64; begin end;
+{ ovl12:1A19: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e65; begin end;
+{ ovl12:1A4C: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e66; begin end;
+{ ovl12:1AAA: retf 10: 10 bytes of parameters; 28 bytes of locals }
+{@stub} procedure ovl12_e67; begin end;
+{ ovl12:1BA8: frame not read }
+{@stub} procedure ovl12_e68; begin end;
+{ ovl12:1BD7: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_fn_1BD7; begin end;
+{ ovl12:1C98: frame not read }
+{@stub} procedure ovl12_fn_1C98; begin end;
+{ ovl12:1CAD: retf 10: 10 bytes of parameters; 22 bytes of locals }
+{@stub} procedure ovl12_e69; begin end;
+{ ovl12:1E77: frame not read }
+{@stub} procedure ovl12_e70; begin end;
+{ ovl12:1F9B: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_fn_1F9B; begin end;
+{ ovl12:2002: frame not read }
+{@stub} procedure ovl12_fn_2002; begin end;
+{ ovl12:20A9: retf 2: 2 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_fn_20A9; begin end;
+{ ovl12:2122: frame not read }
+{@stub} procedure ovl12_fn_2122; begin end;
+{ ovl12:2197: frame not read }
+{@stub} procedure ovl12_fn_2197; begin end;
+{ ovl12:2233: frame not read }
+{@stub} procedure ovl12_fn_2233; begin end;
+{ ovl12:228C: frame not read }
+{@stub} procedure ovl12_fn_228C; begin end;
+{ ovl12:2383: retf 6: 6 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_fn_2383; begin end;
+{ ovl12:23A4: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e71; begin end;
+{ ovl12:23C2: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e72; begin end;
+{ ovl12:23EC: retf 10: 10 bytes of parameters; 16 bytes of locals }
+{@stub} procedure ovl12_e73; begin end;
+{ ovl12:2490: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e74; begin end;
+{ ovl12:24D9: retf 10: 10 bytes of parameters; 2 bytes of locals }
+{@stub} procedure ovl12_e75; begin end;
+{ ovl12:2556: frame not read }
+{@stub} procedure ovl12_e76; begin end;
+{ ovl12:257E: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_fn_257E; begin end;
+{ ovl12:25A2: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e77; begin end;
+{ ovl12:25BC: frame not read }
+{@stub} procedure ovl12_e78; begin end;
+{ ovl12:25C9: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_fn_25C9; begin end;
+{ ovl12:2610: retf 10: 10 bytes of parameters; 12 bytes of locals }
+{@stub} procedure ovl12_e79; begin end;
+{ ovl12:264B: retf 10: 10 bytes of parameters; 4 bytes of locals }
+{@stub} procedure ovl12_e80; begin end;
+{ ovl12:268A: retf 10: 10 bytes of parameters; 2 bytes of locals }
+{@stub} procedure ovl12_e81; begin end;
+{ ovl12:2700: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e82; begin end;
+{ ovl12:2730: retf 10: 10 bytes of parameters; 2 bytes of locals }
+{@stub} procedure ovl12_e83; begin end;
+{ ovl12:27D9: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e84; begin end;
+{ ovl12:2814: retf 10: 10 bytes of parameters; 4 bytes of locals }
+{@stub} procedure ovl12_e85; begin end;
+{ ovl12:2866: retf 10: 10 bytes of parameters; 2 bytes of locals }
+{@stub} procedure ovl12_e86; begin end;
+{ ovl12:28BF: retf 10: 10 bytes of parameters; 26 bytes of locals }
+{@stub} procedure ovl12_e87; begin end;
+{ ovl12:2901: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e88; begin end;
+{ ovl12:2915: retf 2: 2 bytes of parameters; 2 bytes of locals }
+{@stub} procedure ovl12_fn_2915; begin end;
+{ ovl12:2976: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e89; begin end;
+{ ovl12:2984: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e90; begin end;
+{ ovl12:2992: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e91; begin end;
+{ ovl12:29B6: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e92; begin end;
+{ ovl12:29CB: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e93; begin end;
+{ ovl12:29D9: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e94; begin end;
+{ ovl12:29F0: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e95; begin end;
+{ ovl12:2A11: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e96; begin end;
+{ ovl12:2A28: retf 10: 10 bytes of parameters; 2 bytes of locals }
+{@stub} procedure ovl12_e97; begin end;
+{ ovl12:2A6D: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e98; begin end;
+{ ovl12:2A87: retf 10: 10 bytes of parameters; 4 bytes of locals }
+{@stub} procedure ovl12_e99; begin end;
+{ ovl12:2AE6: retf 10: 10 bytes of parameters; 4 bytes of locals }
+{@stub} procedure ovl12_e100; begin end;
+{ ovl12:2B20: retf 10: 10 bytes of parameters; 4 bytes of locals }
+{@stub} procedure ovl12_e101; begin end;
+{ ovl12:2B63: frame not read }
+{@stub} procedure ovl12_e102; begin end;
+{ ovl12:2B6F: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_fn_2B6F; begin end;
+{ ovl12:2B7D: frame not read }
+{@stub} procedure ovl12_e103; begin end;
+{ ovl12:2B8B: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_fn_2B8B; begin end;
+{ ovl12:2BC8: retf 10: 10 bytes of parameters; 4 bytes of locals }
+{@stub} procedure ovl12_e104; begin end;
+{ ovl12:2C1C: retf 10: 10 bytes of parameters; 12 bytes of locals }
+{@stub} procedure ovl12_e105; begin end;
+{ ovl12:2D38: frame not read }
+{@stub} procedure ovl12_e106; begin end;
+{ ovl12:2D39: retf 10: 10 bytes of parameters; 4 bytes of locals }
+{@stub} procedure ovl12_fn_2D39; begin end;
+{ ovl12:2D88: retf 10: 10 bytes of parameters; 4 bytes of locals }
+{@stub} procedure ovl12_e107; begin end;
+{ ovl12:2DE4: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e108; begin end;
+{ ovl12:2E08: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e109; begin end;
+{ ovl12:2E37: retf 10: 10 bytes of parameters; 6 bytes of locals }
+{@stub} procedure ovl12_e110; begin end;
+{ ovl12:2EDA: frame not read }
+{@stub} procedure ovl12_e111; begin end;
+{ ovl12:2EEA: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_fn_2EEA; begin end;
+{ ovl12:2F57: frame not read }
+{@stub} procedure ovl12_e112; begin end;
+{ ovl12:2F7B: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_fn_2F7B; begin end;
+{ ovl12:30A5: frame not read }
+{@stub} procedure ovl12_e113; begin end;
+{ ovl12:30FB: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_fn_30FB; begin end;
+{ ovl12:3134: retf 10: 10 bytes of parameters; 30 bytes of locals }
+{@stub} procedure ovl12_e114; begin end;
+{ ovl12:317A: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e115; begin end;
+{ ovl12:319B: retf 10: 10 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_e116; begin end;
+{ ovl12:31A2: frame not read }
+{@stub} procedure ovl12_e1; begin end;
+{ ovl12:31D7: frame not read }
+{@stub} procedure ovl12_fn_31D7; begin end;
+{ ovl12:3262: frame not read }
+{@stub} procedure ovl12_fn_3262; begin end;
+{ ovl12:3728: retf 0: 0 bytes of parameters; 0 bytes of locals }
+{@stub} procedure ovl12_fn_3728; begin end;
+
+begin
+end.

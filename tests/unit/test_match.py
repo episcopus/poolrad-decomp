@@ -22,23 +22,30 @@ def statuses(results):
     return {r.name: r.status for r in results}
 
 
-def test_res04_matches_as_a_whole_unit():
-    results, whole = match.match_unit("res04")
+@pytest.fixture(scope="module")
+def built():
+    """One build for the units these tests read (the whole program is compiled either way)."""
+    return match.match_units(["res04", "ovl00", "res06"])
+
+
+def test_res04_matches_as_a_whole_unit(built):
+    results, whole = built["res04"]
     assert set(statuses(results).values()) == {"matched"} and len(results) == 5
     assert whole.startswith("unit: complete")
     by = {r.name: r for r in results}
     assert by["res04_fn_0059"].pool == 38            # the set [0, 1] and 'STING' sit before the routine
 
 
-def test_an_overlay_unit_matches_through_its_stubs():
-    results, whole = match.match_unit("ovl00")
+def test_an_overlay_unit_matches_through_its_stubs(built):
+    results, whole = built["ovl00"]
     assert statuses(results) == {"ovl00_e1": "matched", "ovl00_init": "matched"}
     assert whole.startswith("unit: complete")
 
 
-def test_a_routine_matches_inside_a_unit_of_stubs():
-    results, whole = match.match_unit("res06")
-    assert statuses(results) == {"res06_fn_05EB": "stub", "res06_fn_0626": "stub", "res06_fn_0BF5": "matched"}
+def test_a_routine_matches_inside_a_unit_of_stubs(built):
+    results, whole = built["res06"]
+    st = statuses(results)
+    assert st.pop("res06_fn_0BF5") == "matched" and set(st.values()) == {"stub"} and len(st) >= 2
     assert whole == ""                               # a unit with stubs is not compared as a whole
 
 
@@ -84,7 +91,28 @@ def test_a_wrong_callee_is_caught(mutated):
 
 def test_sources_parse_and_pad():
     text = (match.SRC / "RES06.PAS").read_text()
-    assert match.routines_of(text) == [("res06_fn_05EB", True), ("res06_fn_0626", True), ("res06_fn_0BF5", False)]
+    parsed = dict(match.routines_of(text))
+    assert parsed["res06_fn_05EB"] and parsed["res06_fn_0626"] and not parsed["res06_fn_0BF5"]
     padded = match.with_pads("RES06", text)
     assert "var MPadVRES06: array[0..63] of Byte; procedure MPadCRES06;" in padded
     assert padded.index("procedure MPadCRES06; begin end;") > padded.index("implementation")
+
+
+def test_the_main_program_matches_with_every_initialisation_call():
+    results, whole = match.match_unit("main")
+    assert [r.status for r in results] == ["matched"] and whole.startswith("unit: complete")
+    assert results[0].symbols == 58                  # 48 initialisation calls and 10 calls of the main block
+
+
+def test_skeleton_declares_every_routine_and_marks_a_real_initialisation():
+    import skeleton
+    orig = match.Original()
+    text = skeleton.skeleton(orig, "res08")          # res08's initialisation sets up the overlay manager
+    assert match.STUB_INIT in text and match.init_begin_line(text) is not None
+    names = [n for n, stub in match.routines_of(text)]
+    assert all(stub for _n, stub in match.routines_of(text))
+    assert names == [r["name"] for r in sorted((r for r in orig.routines if r["unit"] == "res08"
+                                                and not r["name"].endswith("_init")),
+                                               key=lambda r: int(r["addr"].split(":")[1], 16))]
+    empty = skeleton.skeleton(orig, "res10")         # an empty initialisation is already decompiled
+    assert match.STUB_INIT not in empty and empty.endswith("begin\nend.\n")

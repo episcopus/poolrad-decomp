@@ -12,17 +12,22 @@ Approach: ADR-002 (SPEC 4), Pascal-first matching decompilation; the C track (AD
 | P1 Map | done (`make p1-check`): 50 units, 1431 routines, TP 6.0 June 1991 pinned |
 | P2 Oracle and data | done: goldens with recordings for 2 of 2 session scripts (boot-title, create-character); `make golden CHECK=1` |
 | P3 Match harness | done: `make match` (tools/match/match.py, tests/unit/test_match.py); gate `make check` |
-| P4 Match | 8 of 1289 game routines at L2 (534 of 234763 bytes by re/symbols.toml sizes); 2 of 46 game units complete |
+| P4 Match | 13 of 1289 game routines at L2 (830 of 234763 bytes by re/symbols.toml sizes); 6 of 46 game units complete, 0 reviewed; main program `src/POOL.PAS` matched by `make match UNIT=main` |
+| P5 Rebuild | `make rebuild` links the whole game from `src/` (every unit has source: decompiled or skeleton) and reports identical segments |
 
-### P4 units with source
+### P4 units with matched routines
 
-| Unit | Name | Routines | L2 | Bytes at L2 |
-|---|---|---:|---:|---:|
-| ovl00 | ovl00 | 2 | 2 | 124 |
-| ovl17 | SaveLoad | 20 | 0 | 0 |
-| res03 | res03 | 26 | 0 | 0 |
-| res04 | res04 | 5 | 5 | 336 |
-| res06 | res06 | 20 | 1 | 74 |
+| Unit | Name | Routines | L2 | Bytes at L2 | Reviewed |
+|---|---|---:|---:|---:|---|
+| ovl00 | ovl00 | 2 | 2 | 124 | complete |
+| ovl33 | ovl33 | 2 | 2 | 248 | complete |
+| res02 | res02 | 1 | 1 | 16 | complete |
+| res04 | res04 | 5 | 5 | 336 | complete |
+| res06 | res06 | 20 | 1 | 74 | in progress |
+| res10 | res10 | 1 | 1 | 16 | complete |
+| res11 | res11 | 1 | 1 | 16 | complete |
+
+Locks (agents at work): `make locks`. Next unit: `make next`.
 
 ## Inventory
 
@@ -39,8 +44,8 @@ Approach: ADR-002 (SPEC 4), Pascal-first matching decompilation; the C track (AD
 
 | Level | Count |
 |---|---:|
-| none | 1423 |
-| L2 | 8 |
+| none | 1418 |
+| L2 | 13 |
 
 ### Top units by routine count
 
@@ -64,7 +69,7 @@ Approach: ADR-002 (SPEC 4), Pascal-first matching decompilation; the C track (AD
 
 ## Verification
 
-8 routines above `none`: res06_fn_0BF5 L2 (0709:0BF5), res04_fn_0000 L2 (0899:0000), res04_fn_0059 L2 (0899:0059), res04_fn_0104 L2 (0899:0104), res04_fn_0122 L2 (0899:0122), res04_init L2 (0899:013C), ovl00_e1 L2 (ovl00:0042), ovl00_init L2 (ovl00:00AC).
+13 routines above `none`: res11_init L2 (03DA:0000), res10_init L2 (03ED:0000), res06_fn_0BF5 L2 (0709:0BF5), res04_fn_0000 L2 (0899:0000), res04_fn_0059 L2 (0899:0059), res04_fn_0104 L2 (0899:0104), res04_fn_0122 L2 (0899:0122), res04_init L2 (0899:013C), res02_init L2 (0A31:0000), ovl00_e1 L2 (ovl00:0042), ovl00_init L2 (ovl00:00AC), ovl33_e1 L2 (ovl33:0004), ovl33_init L2 (ovl33:00F7).
 
 ## Blockers and decisions waiting for the human
 

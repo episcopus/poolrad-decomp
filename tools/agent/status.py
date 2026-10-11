@@ -114,14 +114,17 @@ def main(argv: list[str]) -> int:
     p4 = {"routines": len(game), "bytes": sum(int(r.get("size") or 0) for r in game),
           "matched": sum(1 for r in game if r.get("level") in ("L2", "L3")),
           "matched_bytes": sum(int(r.get("size") or 0) for r in game if r.get("level") in ("L2", "L3")),
-          "units": len(game_units), "complete": 0, "rows": []}
+          "units": len(game_units), "complete": 0, "reviewed": 0, "rows": []}
     for u in sorted(game_units, key=lambda u: u["id"]):
         rs = [r for r in game if r.get("unit") == u["id"]]
         ok = [r for r in rs if r.get("level") in ("L2", "L3")]
+        reviewed = rs and all(str(r.get("review", "")).startswith("passed") for r in rs)
         if rs and len(ok) == len(rs):
             p4["complete"] += 1
-        if u["id"] in sources:
-            p4["rows"].append((u["id"], u.get("name", ""), len(rs), len(ok), sum(int(r.get("size") or 0) for r in ok)))
+            p4["reviewed"] += bool(reviewed)
+        if u["id"] in sources and ok:
+            p4["rows"].append((u["id"], u.get("name", ""), len(rs), len(ok), sum(int(r.get("size") or 0) for r in ok),
+                               "yes" if reviewed else ("complete" if len(ok) == len(rs) else "in progress")))
     scripts = sorted(p.stem for p in (ROOT / "tests/sessions").glob("*.keys"))
     goldens = [n for n in scripts if (ROOT / "tests/sessions/golden" / n / "golden.json").exists()]
     today = dt.date.today().isoformat()
@@ -140,16 +143,19 @@ def main(argv: list[str]) -> int:
         "| P1 Map | done (`make p1-check`): %d units, %d routines, TP 6.0 June 1991 pinned |" % (len(residents) + len(overlays), len(routines)),
         "| P2 Oracle and data | done: goldens with recordings for %d of %d session scripts (%s); `make golden CHECK=1` |" % (len(goldens), len(scripts), ", ".join(goldens) or "none"),
         "| P3 Match harness | done: `make match` (tools/match/match.py, tests/unit/test_match.py); gate `make check` |",
-        "| P4 Match | %d of %d game routines at L2 (%d of %d bytes by re/symbols.toml sizes); %d of %d game units complete |" % (
-            p4["matched"], p4["routines"], p4["matched_bytes"], p4["bytes"], p4["complete"], p4["units"]),
+        "| P4 Match | %d of %d game routines at L2 (%d of %d bytes by re/symbols.toml sizes); %d of %d game units complete, %d reviewed; main program `src/POOL.PAS` matched by `make match UNIT=main` |" % (
+            p4["matched"], p4["routines"], p4["matched_bytes"], p4["bytes"], p4["complete"], p4["units"], p4["reviewed"]),
+        "| P5 Rebuild | `make rebuild` links the whole game from `src/` (every unit has source: decompiled or skeleton) and reports identical segments |",
         "",
-        "### P4 units with source",
+        "### P4 units with matched routines",
         "",
-        "| Unit | Name | Routines | L2 | Bytes at L2 |",
-        "|---|---|---:|---:|---:|",
+        "| Unit | Name | Routines | L2 | Bytes at L2 | Reviewed |",
+        "|---|---|---:|---:|---:|---|",
     ] + [
-        "| %s | %s | %d | %d | %d |" % row for row in p4["rows"]
+        "| %s | %s | %d | %d | %d | %s |" % row for row in p4["rows"]
     ] + [
+        "",
+        "Locks (agents at work): `make locks`. Next unit: `make next`.",
         "",
         "## Inventory",
         "",

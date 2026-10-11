@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """lock.py: claim a unit for exclusive work (SPEC 9.4).
 
-Usage:
-  python3 tools/agent/lock.py UNIT=res00
-  make lock UNIT=res00
+  make lock UNIT=res05 [AGENT=name]
+  make locks                         list the current locks
+
+Locks are shared by every worktree of this clone (tools/agent/common.py) and created atomically, so two
+agents cannot hold the same unit. `make claim` locks and sets up a worktree in one step.
 """
 from __future__ import annotations
 
@@ -15,43 +17,37 @@ import socket
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import common  # noqa: E402
 
 
-def main(argv: list[str]) -> int:
-    ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("unit", nargs="?", help="unit id (or UNIT=id)")
-    ap.add_argument("--agent", default=os.environ.get("POOLRAD_AGENT", getpass.getuser()))
-    ap.add_argument("--branch", default="")
-    args = ap.parse_args(argv[1:])
-    unit = args.unit or ""
-    if unit.startswith("UNIT="):
-        unit = unit.split("=", 1)[1]
-    if not unit:
-        # Makefile passes UNIT= via env
-        unit = os.environ.get("UNIT", "")
+def body(unit: str, agent: str, branch: str) -> str:
+    return ("unit = %s\nagent = %s\nhost = %s\nbranch = %s\nstarted = %s\n" % (
+        unit, agent, socket.gethostname(), branch, dt.datetime.now(dt.timezone.utc).isoformat()))
+
+
+def main(argv=None) -> int:
+    ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    ap.add_argument("unit", nargs="?", default=os.environ.get("UNIT", ""))
+    ap.add_argument("--agent", default=os.environ.get("AGENT") or os.environ.get("POOLRAD_AGENT") or getpass.getuser())
+    ap.add_argument("--list", action="store_true")
+    a = ap.parse_args(argv)
+    if a.list:
+        locks = sorted(common.lock_dir().glob("*.lock"))
+        for p in locks:
+            print("%s\n" % p.read_text().strip())
+        print("locks: %d (%s)" % (len(locks), common.lock_dir()))
+        return 0
+    unit = a.unit.split("=", 1)[-1].lower()
     if not unit:
         print("lock: need UNIT=<id>", file=sys.stderr)
         return 2
-
-    lock_dir = ROOT / "work" / "locks"
-    lock_dir.mkdir(parents=True, exist_ok=True)
-    path = lock_dir / ("%s.lock" % unit)
-    if path.exists():
-        print("lock: %s already locked:\n%s" % (unit, path.read_text()), file=sys.stderr)
+    if not common.try_lock(unit, body(unit, a.agent, "unit/%s" % unit)):
+        print("lock: %s already locked:\n%s" % (unit, common.lock_path(unit).read_text()), file=sys.stderr)
         return 1
-    branch = args.branch or ("unit/%s" % unit)
-    body = (
-        "unit = %s\n"
-        "agent = %s\n"
-        "host = %s\n"
-        "branch = %s\n"
-        "started = %s\n"
-    ) % (unit, args.agent, socket.gethostname(), branch, dt.datetime.now(dt.timezone.utc).isoformat())
-    path.write_text(body)
-    print("lock: claimed %s -> %s" % (unit, path))
+    print("lock: claimed %s -> %s" % (unit, common.lock_path(unit)))
     return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv))
+    sys.exit(main())

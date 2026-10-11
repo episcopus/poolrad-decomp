@@ -65,6 +65,7 @@ DATA_PAD = 64                      # bytes of padding variable per unit in varia
 CODE_PAD = 5                       # `procedure P; begin end;` = push bp; mov bp,sp; pop bp; retf
 NAME_RE = re.compile(r"^(res|ovl)(\d\d)_(?:fn_([0-9a-f]{4})|init)$", re.I)
 DS_RE = re.compile(r"^ds([0-9a-f]{4})$", re.I)
+STUB_INIT = "{@stub-init}"          # on the line before the `begin` of an initialisation part not decompiled yet
 HEADER_RE = re.compile(r"^(\{@stub\}\s*)?(procedure|function)\s+([A-Za-z_][A-Za-z0-9_]*)", re.I | re.M)
 
 
@@ -80,6 +81,10 @@ class Original:
         self.image, self.relocs = tp.read_mz(tp.EXE)
         units = tomllib.loads((ROOT / "re/units.toml").read_text())
         self.units = {u["id"]: u for u in units["resident"] + units["overlay"]}
+        # The main program (POOL.PAS): segment 0000 up to the first overlay stub segment (entry 0000:0006).
+        first_stub = min(int(u["stub_segment"], 16) for u in units["overlay"])
+        self.units["main"] = {"id": "main", "name": "POOL (main program)", "kind": "program",
+                              "code_start": "0000:0000", "code_bytes": first_stub * 16, "init": ""}
         self.routines = tomllib.loads((ROOT / "re/symbols.toml").read_text())["routine"]
         self.by_name = {r["name"].upper(): r for r in self.routines}
         self.by_id = {r["id"]: r for r in self.routines}
@@ -104,7 +109,7 @@ class Original:
     def segment(self, uid: str) -> tuple[bytes, int | None]:
         """(code bytes of the unit, paragraph of the unit in the image or None for an overlay)."""
         u = self.units[uid]
-        if uid.startswith("res"):
+        if "code_start" in u:
             seg = int(u["code_start"].split(":")[0], 16)
             return self.image[seg * 16: seg * 16 + u["code_bytes"]], seg
         p = ROOT / "build/re/overlays" / (uid + ".bin")
@@ -113,7 +118,7 @@ class Original:
         return p.read_bytes(), None
 
     def routine_id(self, uid: str, off: int) -> str:
-        if uid.startswith("res"):
+        if "code_start" in self.units[uid]:
             return "%s:%04X" % (self.units[uid]["code_start"].split(":")[0].upper(), off)
         return "%s:%04X" % (uid, off)
 
@@ -176,6 +181,17 @@ class Build:
     pubs: dict
     lines: dict = field(default_factory=dict)        # unit segment name -> sorted [(offset, line)]
     rtl: dict = field(default_factory=dict)
+    sources: dict = field(default_factory=dict)      # unit name -> the text compiled (padded in variant B)
+    entry: tuple = (0, 0)                            # program entry point (segment, offset)
+
+    def init_entry(self, segname: str) -> int | None:
+        """Offset of the unit's initialisation part in its segment: its first source line's code."""
+        text = self.sources.get(segname)
+        line = init_begin_line(text) if text else None
+        if line is None:
+            return None
+        rows = [o for o, l in self.lines.get(segname, []) if l >= line]
+        return min(rows) if rows else None
 
     def seg_start(self, name: str) -> int:
         return self.segs[name][0]
@@ -204,8 +220,32 @@ class Build:
         return (best[0], off - best[1]) if best else None
 
 
-def unit_sources() -> dict[str, str]:
+PROGRAM = "POOL"                    # src/POOL.PAS, the main program (matched as unit "main")
+
+
+def all_sources() -> dict[str, str]:
     return {p.stem.upper(): p.read_text() for p in sorted(SRC.glob("*.PAS"))}
+
+
+def unit_sources() -> dict[str, str]:
+    """The units of src/ (the main program excluded)."""
+    return {n: t for n, t in all_sources().items() if not re.match(r"\s*program\b", t, re.I)}
+
+
+def init_begin_line(text: str) -> int | None:
+    """1-based line of the `begin` of the unit's initialisation part (column 1 by convention), or None.
+    Scanning up from `end.`: a column-1 `begin` first means an initialisation part; a column-1 `end;`
+    first means the file ends with a routine."""
+    lines = text.split("\n")
+    last = max((i for i, l in enumerate(lines) if re.match(r"end\.", l, re.I)), default=None)
+    if last is None:
+        return None
+    for i in range(last - 1, -1, -1):
+        if re.match(r"begin\b", lines[i], re.I):
+            return i + 1
+        if re.match(r"end;", lines[i], re.I):
+            return None
+    return None
 
 
 def routines_of(text: str) -> list[tuple[str, bool]]:
@@ -228,7 +268,10 @@ def with_pads(name: str, text: str) -> str:
     return after("implementation", "procedure MPadC%s; begin end;" % name, text)
 
 
-def compile_variant(unit: str, sources: dict[str, str], pads: bool, out: Path) -> Build:
+def compile_variant(units: list[str], sources: dict[str, str], pads: bool, out: Path,
+                    program: str | None = None) -> Build:
+    """Compile every unit of `sources` (padded in variant B) inside a generated program that references
+    each routine of `units`, or, with `program`, that program itself (the main program)."""
     ver = tp.pinned_version()
     bin_dir = tp.TC / ver / "BIN"
     if not (bin_dir / "TPC.EXE").exists():
@@ -243,20 +286,34 @@ def compile_variant(unit: str, sources: dict[str, str], pads: bool, out: Path) -
         (out / (name + ".PAS")).write_text(with_pads(name, text) if pads else text)
         if pads:                                 # referenced, or the smart linker drops them
             refs += ["@MPadC%s" % name, "@MPadV%s" % name]
-    refs += ["@%s" % n for n, _stub in routines_of(sources[unit.upper()])]
-    prog = ["program MATCH;", "{$F+,S-,R-,G-,I-}", "uses %s;" % ", ".join(sources), "var P: Pointer;", "begin"]
-    prog += ["  P := %s;" % r for r in refs] + ["end."]
-    (out / "MATCH.PAS").write_text("\r\n".join(prog) + "\r\n")
+    for unit in units:
+        refs += ["@%s" % n for n, _stub in routines_of(sources[unit.upper()])]
+    if program is None:
+        main = "MATCH"
+        prog = ["program MATCH;", "{$F+,S-,R-,G-,I-}", "uses"] + ["  %s%s" % (n, "," if k < len(sources) - 1 else ";")
+                                                                  for k, n in enumerate(sources)]
+        prog += ["var P: Pointer;", "begin"]              # one unit per line: TP lines end at 127 characters
+        if pads:                                         # the pads are not referenced by a real program
+            prog += ["  P := %s;" % r for r in refs if r.startswith("@MPad")]
+        prog += ["  P := %s;" % r for r in refs if not r.startswith("@MPad")] + ["end."]
+        (out / "MATCH.PAS").write_text("\r\n".join(prog) + "\r\n")
+    else:
+        main = PROGRAM                                   # compiled as written (variant A only)
+        (out / (main + ".PAS")).write_text(program)
     kind, emu = tp.find_emulator(None)
-    log = tp.run_tpc(kind, emu, out, ["/B", "/GD", "MATCH.PAS"])
-    exe, mapf = tp.ci(out, "MATCH.EXE"), tp.ci(out, "MATCH.MAP")
+    log = tp.run_tpc(kind, emu, out, ["/B", "/GD", main + ".PAS"])
+    exe, mapf = tp.ci(out, main + ".EXE"), tp.ci(out, main + ".MAP")
     if exe is None or mapf is None or "Error" in log:
-        errs = "\n".join(l for l in log.splitlines() if "Error" in l or l.strip().endswith(")"))
+        errs = "\n".join(re.findall(r"\w+\.PAS\(\d+\): Error[^\n]*", log))   # not the progress lines
         raise MatchError("compile failed%s:\n%s" % (" (variant B)" if pads else "", errs or log))
     img, relocs = tp.read_mz(exe)
     segs, pubs = tp.read_map(mapf)
     b = Build(img, relocs, segs, pubs)
+    b.sources = {n: (with_pads(n, t) if pads else t) for n, t in sources.items()}
     text = mapf.read_text(errors="replace")
+    m = re.search(r"Program entry point at ([0-9A-F]{4}):([0-9A-F]{4})", text)
+    if m:
+        b.entry = (int(m.group(1), 16), int(m.group(2), 16))
     for blk in re.finditer(r"Line numbers for (\w+)\([^)]*\) segment (\w+)\s*\n((?:\s*\d+ [0-9A-F]{4}:[0-9A-F]{4})+)",
                            text):
         rows = [(int(m.group(2), 16), int(m.group(1)))
@@ -342,7 +399,7 @@ class Comparer:
         self.orig, self.unit, self.a, self.b = orig, unit, a, b
         self.ra, self.rb = regs_a, regs_b
         self.obytes, self.opara = orig.segment(unit)
-        self.seg = unit.upper()
+        self.seg = PROGRAM if unit == "main" else unit.upper()
 
     # --- symbol resolution, ours -> what the original must hold
     def expect_global(self, build: Build, value: int) -> tuple[int, str] | None:
@@ -364,6 +421,11 @@ class Comparer:
                                  "uses: wrong library call?)" % (segname, off))
             return m.group(1)
         name = build.public_at(segname, off)
+        if name is None and off == build.init_entry(segname):
+            init = self.orig.init_id(segname.lower())    # the main program calls every initialisation part
+            if init is None:
+                raise MatchError("call to the initialisation part of %s, which the original does not have" % segname)
+            return init
         if name is None:
             raise MatchError("call into %s+%04X: not a routine entry in the map" % (segname, off))
         rid = self.orig.id_of_name(name)
@@ -502,18 +564,11 @@ class Comparer:
 
 
 # --------------------------------------------------------------------------- driver
-def match_unit(unit: str, only: list[str] | None = None, show: bool = False) -> tuple[list[Result], str]:
-    unit = unit.lower()
-    orig = Original()
-    if unit not in orig.units:
-        raise MatchError("no unit %s in re/units.toml" % unit)
-    sources = unit_sources()
-    if unit.upper() not in sources:
-        raise MatchError("no source src/%s.PAS" % unit.upper())
-    routines = routines_of(sources[unit.upper()])
+def compare_unit(orig: Original, unit: str, a: Build, b: Build, only: list[str] | None) -> tuple[list[Result], str]:
+    """Compare one unit of builds A and B with the original."""
+    source = a.sources[unit.upper()]                       # unpadded
+    routines = routines_of(source)
     names = [n for n, _s in routines]
-    a = compile_variant(unit, sources, False, BUILD / unit / "A")
-    b = compile_variant(unit, sources, True, BUILD / unit / "B")
     ra = regions(a, unit, names)
     rb = [r for r in regions(b, unit, names, pad="MPadC%s" % unit.upper()) if not r.name.upper().startswith("MPADC")]
     by_a, by_b = {r.name.upper(): r for r in ra}, {r.name.upper(): r for r in rb}
@@ -538,9 +593,65 @@ def match_unit(unit: str, only: list[str] | None = None, show: bool = False) -> 
             ok, why, nsym = False, str(e), 0
         results.append(Result(n, rid, "matched" if ok else "differs", why, r.end - r.entry, r.pool, nsym))
     whole = ""
-    if not stubs and not only:
+    if STUB_INIT in source:
+        results.append(Result("%s_init" % unit, orig.init_id(unit), "stub"))
+    elif not stubs and not only:
         whole = whole_unit(cmp, a, b, ra, rb, results)
     return results, whole
+
+
+def compare_main(orig: Original, a: Build) -> tuple[list[Result], str]:
+    """The main program: its literal pool, the initialisation calls and the main block, as one region."""
+    seg = PROGRAM
+    if seg not in a.segs:
+        raise MatchError("the program segment %s is not in the map" % seg)
+    seglen = a.segs[seg][1]
+    entry = a.entry[1]
+    region = Region("main", entry, entry, seglen)          # ends with the call to Halt, not a return
+    cmp = Comparer(orig, "main", a, a, {}, {})
+    orig_entry = 6                                          # start-unpack.exe CS:IP = 0000:0006
+    try:
+        ok, why, nsym = cmp.compare(region, region, orig_entry)
+    except MatchError as e:
+        ok, why, nsym = False, str(e), 0
+    res = Result("main", "0000:%04X" % orig_entry, "matched" if ok else "differs", why, seglen - entry, entry, nsym)
+    whole = ""
+    if ok:
+        tail = cmp.obytes[seglen:]
+        whole = ("unit: complete, %d bytes of code plus %d of paragraph padding cover the original segment" % (
+            seglen, len(tail))) if len(tail) < 16 and not any(tail) else \
+            "unit: the original main segment continues after ours (%d more bytes)" % len(tail)
+    return [res], whole
+
+
+def match_units(units: list[str], only: list[str] | None = None) -> dict[str, tuple[list[Result], str]]:
+    """Match several units from one pair of builds (and the main program from its own build)."""
+    orig = Original()
+    sources = unit_sources()
+    out: dict[str, tuple[list[Result], str]] = {}
+    plain = [u.lower() for u in units if u.lower() != "main"]
+    for u in plain:
+        if u not in orig.units:
+            raise MatchError("no unit %s in re/units.toml" % u)
+        if u.upper() not in sources:
+            raise MatchError("no source src/%s.PAS" % u.upper())
+    if plain:
+        tag = plain[0] if len(plain) == 1 else "all"
+        a = compile_variant(plain, sources, False, BUILD / tag / "A")
+        b = compile_variant(plain, sources, True, BUILD / tag / "B")
+        for u in plain:
+            out[u] = compare_unit(orig, u, a, b, only)
+    if any(u.lower() == "main" for u in units):
+        prog = all_sources().get(PROGRAM)
+        if prog is None:
+            raise MatchError("no source src/%s.PAS" % PROGRAM)
+        a = compile_variant([], sources, False, BUILD / "main" / "A", program=prog)
+        out["main"] = compare_main(orig, a)
+    return out
+
+
+def match_unit(unit: str, only: list[str] | None = None) -> tuple[list[Result], str]:
+    return match_units([unit], only)[unit.lower()]
 
 
 def whole_unit(cmp: Comparer, a: Build, b: Build, ra: list[Region], rb: list[Region], results: list[Result]) -> str:
@@ -598,13 +709,18 @@ def write_levels(results: list[Result], orig: Original) -> list[str]:
 
 
 def units_with_source() -> list[str]:
-    """Units of re/units.toml whose source has at least one decompiled (non-stub) routine."""
+    """Units of re/units.toml whose source has at least one decompiled (non-stub) routine, and "main"
+    when src/POOL.PAS exists."""
     units = tomllib.loads((ROOT / "re/units.toml").read_text())
     ids = {u["id"] for u in units["resident"] + units["overlay"]}
     out = []
     for name, text in unit_sources().items():
-        if name.lower() in ids and any(not stub for _n, stub in routines_of(text)):
+        rs = routines_of(text)
+        init_done = STUB_INIT not in text and init_begin_line(text) is not None
+        if name.lower() in ids and (any(not stub for _n, stub in rs) or (not rs and init_done)):
             out.append(name.lower())
+    if PROGRAM in all_sources():
+        out.append("main")
     return sorted(out)
 
 
@@ -638,17 +754,17 @@ def main(argv=None) -> int:
     a = ap.parse_args(argv)
     if bool(a.unit) == bool(a.all):
         ap.error("give a UNIT or --all")
-    units = units_with_source() if a.all else [a.unit]
+    units = units_with_source() if a.all else [a.unit.lower()]
     bad, total = 0, []
+    try:
+        done = match_units(units, a.routine)
+    except MatchError as e:
+        print("match: %s" % e)
+        return 2
     for u in units:
-        try:
-            results, whole = match_unit(u, a.routine)
-        except MatchError as e:
-            print("match %s: %s" % (u, e))
-            bad += 1
-            continue
+        results, whole = done[u]
         bad += report(u, results, whole)
-        total += results
+        total += [r for r in results if r.name != "main"]
     if a.write:
         for n in write_levels(total, Original()):
             print("note: " + n)

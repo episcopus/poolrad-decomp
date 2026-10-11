@@ -9,8 +9,8 @@ PACKED := poolrad/START.EXE
 
 .PHONY: help setup doctor inputs unexepack overlays map dax smoke status next ghidra p1-check \
         tp-install tp-probe tp-compare tp-pin tpc emu2 \
-        packet lock unlock \
-        oracle-run oracle-dosbox timing-scan golden match test test-slow check review-pass rebuild host coco3
+        packet claim lock locks unlock handoff handoffs handoff-done \
+        oracle-run oracle-dosbox timing-scan golden match test test-slow check review-pass rebuild skeleton host coco3
 
 help:
 	@echo "Available now:  setup doctor inputs unexepack overlays map dax smoke"
@@ -60,8 +60,8 @@ smoke:            ## run the original code in Unicorn up to its first interrupts
 status:           ## regenerate work/status.md from re/ inventory
 	$(PY) tools/agent/status.py
 
-next:             ## print the next unit from work/queue.toml
-	$(PY) tools/agent/next.py
+next:             ## print the next unit from work/queue.toml (REVIEW=1: the next unit waiting for review)
+	$(PY) tools/agent/next.py $(if $(REVIEW),--review)
 
 ghidra: map       ## rebuild the Ghidra project (build/ghidra/, not committed)
 	@test -n "$$GHIDRA_INSTALL_DIR" || (echo 'ghidra: source tools/setup/env.local.sh first'; exit 1)
@@ -93,8 +93,23 @@ tpc:              ## compile SRC=<file.pas> with the pinned TP 6.0 (VER=, DISASM
 packet:           ## write build/packets/<id>.md for UNIT= or FN=
 	$(PY) tools/agent/packet.py $(if $(UNIT),--unit $(UNIT)) $(if $(FN),--fn $(FN))
 
-lock:             ## claim a unit: make lock UNIT=ovl00
-	UNIT=$(UNIT) $(PY) tools/agent/lock.py
+claim:            ## start work: lock the next unit (or UNIT=) and create its worktree: AGENT=<name> [UNIT=<id>] [REVIEW=1]
+	$(PY) tools/agent/claim.py --agent "$(AGENT)" $(if $(UNIT),--unit $(UNIT)) $(if $(REVIEW),--review)
+
+lock:             ## claim a unit without a worktree: make lock UNIT=ovl00 [AGENT=name]
+	$(PY) tools/agent/lock.py $(UNIT) $(if $(AGENT),--agent $(AGENT))
+
+locks:            ## list the units locked by agents (shared by every worktree of this clone)
+	$(PY) tools/agent/lock.py --list
+
+handoff:          ## tell the orchestrator your branch is ready: AGENT=<you> UNIT=<id> STATE=complete|partial|blocked|review-passed|review-failed NOTE="..."
+	$(PY) tools/agent/handoff.py --agent "$(AGENT)" --unit "$(UNIT)" --state "$(STATE)" --note "$(NOTE)"
+
+handoffs:         ## list the branches waiting for the orchestrator
+	$(PY) tools/agent/handoff.py --list
+
+handoff-done:     ## clear a hand-off after merging it: UNIT=<id> [REVIEW=1]
+	$(PY) tools/agent/handoff.py --unit "$(if $(REVIEW),review-)$(UNIT)" --done
 
 unlock:           ## release a unit lock (FORCE=1 to break stale)
 	UNIT=$(UNIT) FORCE=$(FORCE) $(PY) tools/agent/unlock.py
@@ -120,11 +135,19 @@ test:              ## Python unit tests, fast set (codecs, toolchain probes, mat
 	$(PY) -m pytest -q -m "not slow" tests/unit
 test-slow:         ## the unit tests that boot the real game (minutes; not part of `make check`)
 	$(PY) -m pytest -q -m slow tests/unit
-check:             ## everything a commit must pass (SPEC 9.6): fast tests, every unit's match, golden check
+check:             ## everything a commit must pass (SPEC 9.6): fast tests, every unit's match, the rebuild links, golden check
 	$(PY) -m pytest -q -m "not slow" tests/unit
 	$(PY) tools/match/match.py --all
+	$(PY) tools/match/rebuild.py
 	$(PY) tools/oracle/golden.py --check
-review-pass: ; $(call todo,Phase 4,8.1 and playbook 70)
-rebuild:     ; $(call todo,Phase 5,8.4)
+review-pass:       ## record a passed review (playbook 70): UNIT=<id> [CHECK=1 only checks]
+	@test -n "$(UNIT)" || (echo 'review-pass: usage: make review-pass UNIT=<id> [CHECK=1]'; exit 2)
+	$(PY) tools/agent/review.py $(UNIT) $(if $(CHECK),--check)
+
+rebuild:           ## link the whole game from src/ and compare it with the original (SPEC 8.4)
+	$(PY) tools/match/rebuild.py
+
+skeleton:          ## write src/<ID>.PAS for a unit with no source yet: UNIT=<id> (no UNIT: every game unit)
+	$(PY) tools/match/skeleton.py $(if $(UNIT),$(UNIT),--all)
 host:        ; $(call todo,Phase 7 (C translation; see branch track-c-hybrid),7.4)
 coco3:       ; $(call todo,Phase 8,11)
