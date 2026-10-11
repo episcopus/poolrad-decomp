@@ -93,8 +93,8 @@ tpc:              ## compile SRC=<file.pas> with the pinned TP 6.0 (VER=, DISASM
 packet:           ## write build/packets/<id>.md for UNIT= or FN=
 	$(PY) tools/agent/packet.py $(if $(UNIT),--unit $(UNIT)) $(if $(FN),--fn $(FN))
 
-claim:            ## start work: lock the next unit (or UNIT=) and create its worktree: AGENT=<name> [UNIT=<id>] [REVIEW=1]
-	$(PY) tools/agent/claim.py --agent "$(AGENT)" $(if $(UNIT),--unit $(UNIT)) $(if $(REVIEW),--review)
+claim:            ## start work: lock the next unit (or UNIT=) and create its worktree: AGENT=<name> [UNIT=<id>] [REVIEW=1] [TASK=doc-<chapter>|map]
+	$(PY) tools/agent/claim.py --agent "$(AGENT)" $(if $(UNIT),--unit $(UNIT)) $(if $(REVIEW),--review) $(if $(TASK),--task $(TASK))
 
 lock:             ## claim a unit without a worktree: make lock UNIT=ovl00 [AGENT=name]
 	$(PY) tools/agent/lock.py $(UNIT) $(if $(AGENT),--agent $(AGENT))
@@ -102,13 +102,13 @@ lock:             ## claim a unit without a worktree: make lock UNIT=ovl00 [AGEN
 locks:            ## list the units locked by agents (shared by every worktree of this clone)
 	$(PY) tools/agent/lock.py --list
 
-handoff:          ## tell the orchestrator your branch is ready: AGENT=<you> UNIT=<id> STATE=complete|partial|blocked|review-passed|review-failed NOTE="..."
-	$(PY) tools/agent/handoff.py --agent "$(AGENT)" --unit "$(UNIT)" --state "$(STATE)" --note "$(NOTE)"
+handoff:          ## to the orchestrator: AGENT=<you> UNIT=<id> STATE=complete|partial|blocked|review-passed|review-failed|escalate NOTE="..." [CHANGELOG="<section> | <change> | <evidence>"]
+	$(PY) tools/agent/handoff.py --agent "$(AGENT)" --unit "$(UNIT)" --state "$(STATE)" --note "$(NOTE)" --changelog "$(CHANGELOG)"
 
-handoffs:         ## list the branches waiting for the orchestrator
+handoffs:         ## list what waits for the orchestrator: escalations first, then branches to merge
 	$(PY) tools/agent/handoff.py --list
 
-handoff-done:     ## clear a hand-off after merging it: UNIT=<id> [REVIEW=1]
+handoff-done:     ## after acting on a hand-off: UNIT=<key from make handoffs> [REVIEW=1]; adds its changelog row
 	$(PY) tools/agent/handoff.py --unit "$(if $(REVIEW),review-)$(UNIT)" --done
 
 unlock:           ## release a unit lock (FORCE=1 to break stale)

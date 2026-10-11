@@ -47,3 +47,45 @@ def test_review_pass_accepts_a_clean_review_of_a_complete_unit(tmp_path, monkeyp
         tmp_path, "decompiler: alice\nreviewer: bob\n- [x] must-fix res04_fn_0059: fixed in abc\n- [ ] note x\n"))
     assert review.main(["res04", "--check"]) == 0
     assert "would record 'passed" in capsys.readouterr().out
+
+
+def test_a_failed_review_goes_back_to_a_decompiler_not_to_a_reviewer(tmp_path, monkeypatch):
+    import next as nxt
+    reviews = tmp_path / "work/reviews"
+    reviews.mkdir(parents=True)
+    for f in ("re", "work/queue.toml"):
+        src = ROOT / f
+        dst = tmp_path / f
+        if src.is_dir():
+            dst.mkdir(parents=True, exist_ok=True)
+            (dst / "symbols.toml").write_text((src / "symbols.toml").read_text())
+        else:
+            dst.write_text(src.read_text())
+    monkeypatch.setattr(common, "ROOT", tmp_path)
+    (tmp_path / "locks").mkdir()
+    monkeypatch.setattr(common, "lock_dir", lambda: tmp_path / "locks")
+    assert nxt.next_review()[0] == "res02"                       # complete, not reviewed
+    (reviews / "res02.md").write_text("decompiler: a\nreviewer: b\n- [ ] must-fix res02_init: wrong\n")
+    assert nxt.next_review()[0] != "res02"                       # waits for the fix
+    assert nxt.next_unit()[0] == "res02" and "review failed" in nxt.next_unit()[1]
+    (reviews / "res02.md").write_text("decompiler: a\nreviewer: b\n- [x] must-fix res02_init: wrong (fixed)\n")
+    assert nxt.next_review()[0] == "res02"                       # fixed: back in the review queue
+
+
+def test_an_escalation_needs_no_commit_and_a_changelog_row_lands_on_done(tmp_path, monkeypatch, capsys):
+    import handoff
+    monkeypatch.setattr(handoff, "handoff_dir", lambda: tmp_path)
+    log = tmp_path / "CHANGELOG.md"
+    log.write_text("| Date | Section | Change | Evidence |\n|---|---|---|---|\n| old | x | y | z |\n")
+    monkeypatch.setattr(handoff, "CHANGELOG", log)
+    assert handoff.main(["--unit", "general", "--agent", "rev-1", "--state", "escalate"]) == 2   # needs a note
+    assert handoff.main(["--unit", "general", "--agent", "rev-1", "--state", "escalate",
+                         "--note", "matcher accepts X"]) == 0
+    esc = [p for p in tmp_path.glob("escalate-general-*.md")]
+    assert len(esc) == 1
+    handoff.main(["--list"])
+    assert "ESCALATION for the human" in capsys.readouterr().out
+    (tmp_path / "ovl33.md").write_text("unit = ovl33\nstate = complete\nchangelog = 5.8 | trace | make match\n")
+    assert handoff.main(["--unit", "ovl33", "--done"]) == 0
+    rows = log.read_text().splitlines()
+    assert rows[2].endswith("| 5.8 | trace | make match |") and rows[3] == "| old | x | y | z |"

@@ -7,6 +7,7 @@ working in parallel worktrees on one machine see each other's claims.
 from __future__ import annotations
 
 import os
+import re
 import subprocess
 import tomllib
 from pathlib import Path
@@ -63,3 +64,11 @@ def unit_complete(unit: str, rs: list[dict] | None = None) -> bool:
 
 def queue() -> list[dict]:
     return tomllib.loads((ROOT / "work/queue.toml").read_text()).get("unit", [])
+
+
+def open_must_fix(unit: str) -> list[str]:
+    """Open must-fix findings of the unit's review (work/reviews/<unit>.md): `- [ ] must-fix ...`."""
+    p = ROOT / "work/reviews" / ("%s.md" % unit)
+    if not p.exists():
+        return []
+    return [l.strip() for l in p.read_text().splitlines() if re.match(r"\s*-\s*\[ \]\s*must-fix\b", l, re.I)]

@@ -4,7 +4,7 @@
 
 ## Steps
 
-1. **Claim.** From the main checkout: `make claim AGENT=<you>` (or `UNIT=<id>` when the orchestrator assigned one). It locks the next unit of `work/queue.toml` that is neither locked nor complete, creates the worktree `../poolrad-worktrees/<id>` on branch `unit/<id>` and links the compiler into it. `cd` there; do everything else in that worktree.
+1. **Claim.** From the main checkout: `make claim AGENT=<you>` (or `UNIT=<id>` when the human assigned one). It locks the next unit: first a unit whose review failed (fix its must-fix findings, below), else the next unit of `work/queue.toml` that is neither locked nor complete. It creates the worktree `../poolrad-worktrees/<id>` on branch `unit/<id>` and links the compiler into it. `cd` there; do everything else in that worktree.
 2. **Read.** `make packet UNIT=<id>`; read `build/packets/<id>.md` (annotated disassembly, frames, callers, the bytes after each return), the unit's skeleton `src/<ID>.PAS`, and the whitepaper sections about the subsystem.
 3. **Decompile, routine by routine, leaves first** (callees before callers):
    1. Read the frame: `retf n` gives the parameter bytes, `sub sp, n` the locals; `[bp+6]` upward are the parameters (the last declared is nearest), `[bp-1]` downward the function result and the locals in declaration order.
@@ -12,10 +12,12 @@
    3. `make match UNIT=<id> FN=<name>`. On a difference the tool shows both instructions and the reason: fix the Pascal, never the tool. When the compiler's choice is unclear, probe it (rules of thumb). Maximum 5 attempts, then write a `blocked` note in `re/symbols.toml` `notes` and go on.
    4. `make match UNIT=<id> WRITE=1` records L2; commit: `<unit>: decompile <name> (<id>) [L2]` with the trailer line `Agent: <you>` (`git commit -m "..." --trailer "Agent: <you>"`).
 4. **The initialisation part.** If the file has `{@stub-init}`, decompile it like a routine (it runs once at start-up) and remove the marker. When no stub is left, `make match UNIT=<id>` also checks that routines, pools, the initialisation part and the padding cover the original segment exactly: `unit: complete`.
-5. **Before handing over:** `make check` green in your worktree (all units still match, the rebuild links, goldens hold). Apply the boundary notes `WRITE=1` printed as a note to the orchestrator (the mapper fixes `re/symbols.toml` sizes). Update the whitepaper (playbook 60) for what the unit taught.
-6. **Hand over:** commit everything on `unit/<id>`, then `make handoff AGENT=<you> UNIT=<id> STATE=complete|partial|blocked NOTE="<what is done, what is blocked and why, boundary notes for the mapper>"`. Do not merge, do not unlock, do not commit `work/status.md`: the orchestrator merges, regenerates the status and releases the lock. Then claim the next unit.
+5. **Before handing over:** `make check` green in your worktree (all units still match, the rebuild links, goldens hold). Keep the boundary notes `WRITE=1` printed for your hand-off note (a mapper fixes `re/symbols.toml` sizes). Update the whitepaper (playbook 60) for what the unit taught; do not edit `docs/design/CHANGELOG.md` (your row goes in the hand-off).
+6. **Hand over:** commit everything on `unit/<id>`, then `make handoff AGENT=<you> UNIT=<id> STATE=complete|partial|blocked NOTE="<what is done, what is blocked and why, boundary notes for the mapper>" CHANGELOG="<whitepaper sections> | <what changed> | <evidence, e.g. make match UNIT=<id>>"`. Do not merge, do not unlock, do not commit `work/status.md` or `CHANGELOG.md`: the orchestrator merges, adds the row, regenerates the status and releases the lock. Then claim the next unit.
 
-A complete unit is reviewed by another agent after the merge (playbook 70). If the review has must-fix findings the unit comes back to a decompiler: `make claim AGENT=<you> UNIT=<id>`, fix, mark the finding `- [x] ... (fixed in <commit>)` in `work/reviews/<id>.md`, hand over again.
+**Escalate** anything you cannot settle from evidence and that is not yours to change: a matcher result you believe is wrong, a spec rule in the way, a contradiction with another unit's claims, a decision AGENTS.md rule 6 reserves for the human. `make handoff AGENT=<you> UNIT=<id or general> STATE=escalate NOTE="<the question, the evidence, what you recommend>"`; it needs no commit, the orchestrator takes it to the human. Carry on with other routines meanwhile.
+
+A complete unit is reviewed by another agent after the merge (playbook 70). If the review has must-fix findings, `make claim` gives the unit back to the next decompiler before any new unit: fix each finding, mark it `- [x] ... (fixed in <commit>)` in `work/reviews/<id>.md`, `make check`, hand over again (`STATE=complete`). The unit then returns to the review queue.
 
 ## Unit header
 

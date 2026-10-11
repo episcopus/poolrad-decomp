@@ -3,6 +3,8 @@
 
   make claim AGENT=<name> [UNIT=<id>]
   make claim AGENT=<name> REVIEW=1 [UNIT=<id>]    a review: a complete unit not reviewed yet (playbook 70)
+  make claim AGENT=<name> TASK=<name>              other work (a whitepaper chapter `doc-<chapter>`, the
+                                                   map `map`): lock <name>, branch task/<name>
 
 1. Picks UNIT, or the next unit of work/queue.toml that is neither locked nor complete.
 2. Locks it atomically (tools/agent/common.py; shared by every worktree of the clone). Two agents
@@ -39,6 +41,7 @@ def main(argv=None) -> int:
     ap.add_argument("--agent", default=os.environ.get("AGENT", ""))
     ap.add_argument("--base", default="main", help="branch the unit branch starts from")
     ap.add_argument("--review", action="store_true", help="claim a review instead of a unit")
+    ap.add_argument("--task", default="", help="claim a named task (doc-<chapter>, map) instead of a unit")
     a = ap.parse_args(argv)
     if not a.agent:
         print("claim: need AGENT=<name> (a name unique to this agent session)", file=sys.stderr)
@@ -49,6 +52,12 @@ def main(argv=None) -> int:
         print("claim: the main checkout has uncommitted changes in src/, re/, tools/ or tests/; a unit branch "
               "starts from the committed %s, so commit (or stash) them first:\n%s" % (a.base, dirty), file=sys.stderr)
         return 1
+    if a.task:
+        task = a.task.lower()
+        if not common.try_lock(task, lock.body(task, a.agent, "task/%s" % task)):
+            print("claim: %s is locked:\n%s" % (task, common.lock_path(task).read_text()), file=sys.stderr)
+            return 1
+        return setup(main_dir, task, "task/%s" % task, a, "task " + task)
     unit = a.unit.lower()
     prefix = "review-" if a.review else ""
     if a.review and unit and not common.unit_complete(unit):
@@ -73,8 +82,13 @@ def main(argv=None) -> int:
     else:
         print("claim: could not take a unit", file=sys.stderr)
         return 1
-    wt = main_dir.parent / "poolrad-worktrees" / (prefix + unit)
     branch = "%s/%s" % ("review" if a.review else "unit", unit)
+    return setup(main_dir, prefix + unit, branch, a, unit)
+
+
+def setup(main_dir: Path, key: str, branch: str, a, unit: str) -> int:
+    """Create (or reuse) the worktree for `key` on `branch` and link the untracked tools into it."""
+    wt = main_dir.parent / "poolrad-worktrees" / key
     try:
         if not wt.exists():
             wt.parent.mkdir(parents=True, exist_ok=True)
@@ -89,12 +103,14 @@ def main(argv=None) -> int:
                 dst.parent.mkdir(parents=True, exist_ok=True)
                 dst.symlink_to(src)
     except RuntimeError as e:
-        common.lock_path(prefix + unit).unlink(missing_ok=True)
+        common.lock_path(key).unlink(missing_ok=True)
         print("claim: %s (lock released)" % e, file=sys.stderr)
         return 1
-    print("claim: %s locked for %s" % (prefix + unit, a.agent))
+    print("claim: %s locked for %s" % (key, a.agent))
     print("claim: worktree %s (branch %s)" % (wt, branch))
-    if a.review:
+    if a.task:
+        print("claim: next: cd %s   (playbook 60 for doc-*, playbook 10 for map)" % wt)
+    elif a.review:
         print("claim: next: cd %s && cp work/reviews/TEMPLATE.md work/reviews/%s.md   (playbook 70)" % (wt, unit))
     else:
         print("claim: next: cd %s && make packet UNIT=%s   (playbook 30)" % (wt, unit))

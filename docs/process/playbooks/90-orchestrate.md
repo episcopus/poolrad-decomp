@@ -1,34 +1,43 @@
 # 90 Orchestrate (Orchestrator)
 
-The orchestrator owns `main`: it starts the other agents, merges their branches one at a time, keeps `work/status.md` and the shared files consistent, and reports to the human. It does not decompile while orchestrating. Everything runs on one machine, in one clone: the main checkout plus one worktree per unit (`../poolrad-worktrees/<id>`), coordinated by locks in the clone's git directory (`make locks`).
+The orchestrator owns `main`: it merges what agents hand over, one branch at a time, keeps `work/status.md`, the changelog and the shared files consistent, and brings escalations and decisions to the human. It does not decompile, review or document while orchestrating.
 
-## Before starting agents
+**The orchestrator never creates, starts or stops agents.** The human operator does, in whatever harness or platform each agent runs (Claude Code, Cursor, OpenCode, another tool), so that agents of different kinds can work on the project together. The orchestrator works only through the repository and the coordination files every agent shares: locks (`make locks`), hand-offs (`make handoffs`), the queue (`make next`, `make next REVIEW=1`). When it thinks the project needs more or fewer agents of a role, it says so in its report to the human.
+
+All agents share one clone on one machine: the main checkout (the orchestrator's) plus one worktree per unit or review (`../poolrad-worktrees/`, made by `make claim`). Locks and hand-offs live in the clone's git directory, so agents in different harnesses see the same ones. An agent on another machine would see neither, and needs the compiler installed to run `make match`.
+
+## Before the human starts agents
 
 1. The main checkout is clean and committed (`git status` empty for `src/`, `re/`, `tools/`, `tests/`): `make claim` refuses otherwise, since unit branches start from committed `main`.
 2. `make check` is green on `main`.
-3. `make status`; read `work/status.md`, `make locks`, `make next`, `make next REVIEW=1`.
+3. `make status`; read `work/status.md`, `make locks`, `make handoffs`, `make next`, `make next REVIEW=1`, and tell the human what is waiting.
 
-## Starting agents
+## The loop
 
-Give each agent its prompt from `docs/process/KICKOFF.md` with a unique name (`dec-1`, `dec-2`, `rev-1`, ...). Two to four decompilers and one reviewer is a good start; add decompilers while merges stay easy. Each decompiler claims its own units (`make claim`); you may instead assign one (`UNIT=<id>` in its prompt), for example to keep a subsystem with one agent.
-
-## Merging a hand-off (one branch at a time)
-
-`make handoffs` lists the branches agents handed over (unit, agent, branch, commit, state, note), oldest first.
+1. `make handoffs`. Escalations are listed first, then branches to merge, oldest first.
+2. **Escalations** (`state = escalate`): never merged. Bring each to the human with its evidence and your recommendation; when the human has decided, act on it (or ask the right role to) and clear it: `make handoff-done UNIT=<key>`.
+3. **Branches** (`complete`, `partial`, `blocked`, `review-passed`, `review-failed`), one at a time:
 
 ```sh
 cd <main checkout>
-git merge --no-ff unit/<id>          # or review/<id>
+git merge --no-ff unit/<id>          # or review/<id>, task/<name>
 make check                           # must be green on the merged result
-make status && git add work/status.md && git commit -m "status after <id>"
+make handoff-done UNIT=<id>          # review branches: UNIT=<id> REVIEW=1; adds the hand-off's changelog row
+make status
+git add work/status.md docs/design/CHANGELOG.md && git commit -m "status after <id>"
 git worktree remove ../poolrad-worktrees/<id> && git branch -d unit/<id>    # or review-<id>, review/<id>
-make unlock UNIT=<id>                # review branches: make unlock UNIT=review-<id>
-make handoff-done UNIT=<id>          # review branches: make handoff-done UNIT=<id> REVIEW=1
+make unlock UNIT=<id>                # review branches: UNIT=review-<id>; tasks: UNIT=<name>
 ```
 
-State `review-failed`: merge the review file only (it is the branch's content), then the unit is free for a decompiler to take again (`make claim UNIT=<id>`); put the note in front of the next decompiler.
+   When `make check` fails after a merge: `git merge --abort` (or revert the merge commit) and write an escalation-style note for the agent's next session in `work/status.md` blockers; do not clear the hand-off until it is resolved.
+4. `make locks`: a lock older than 24 hours with no commits on its branch may be broken with `make unlock UNIT=<id> FORCE=1`; note it in `work/status.md`. The agent behind it may have been stopped by the human: say so in your report.
+5. When nothing is waiting, wait and look again.
+6. Every 5 merges, and whenever an escalation or decision is waiting, report to the human: units merged, units complete and reviewed, blocked routines, escalations, the `make rebuild` summary line, and whether the queues need more or fewer agents of a role (`make next`, `make next REVIEW=1`, open locks).
 
-A partial unit (some routines L2, the rest blocked or left) merges the same way; release its lock so another agent can continue, and note the blocked routines in `work/status.md` blockers.
+## What the queues do on their own
+
+- `make next` (decompilers) offers a unit whose review failed (open must-fix findings in `work/reviews/<id>.md`) before any new unit, so failed reviews come back to a decompiler without anyone assigning them. After `review-failed`, merge the review file and release the review lock: the unit is then claimable.
+- `make next REVIEW=1` (reviewers) offers complete units without a passed review, and skips units with open must-fix findings until a decompiler has fixed them and ticked the findings.
 
 ## Resolving conflicts
 
@@ -36,17 +45,13 @@ A partial unit (some routines L2, the rest blocked or left) merges the same way;
 - A stub line in a unit file against its decompiled routine: the decompiled routine wins; check the stub's callers still match (`make check`).
 - Two stub signatures for one callee: the callee's own evidence decides (its `retf n` and frame in the packet); record it in `re/symbols.toml` `signature`.
 - `re/symbols.toml`: keep both sides' lines (levels are per routine; a tool rewrites them on the next `make match --all --write`).
+- `docs/design/WHITEPAPER.md`: keep both sides' text; when two agents wrote about the same thing differently, keep the better-evidenced claim and note the other as an escalation if they contradict.
+- `docs/design/CHANGELOG.md` should not conflict: agents do not edit it, `make handoff-done` adds their rows.
 - `work/status.md`: take either side, then regenerate with `make status`.
-
-When `make check` fails after a merge: `git merge --abort` (or revert the merge commit), hand the failure back to the agent with the tool output.
-
-## Reviews
-
-After merging a complete unit, it appears in `make next REVIEW=1`. A reviewer claims it (`make claim REVIEW=1`). A passed review merges like a unit branch. A review with must-fix findings: merge the review file, then a decompiler takes the unit again (`make claim UNIT=<id>`; the lock is free once you released it).
 
 ## Housekeeping
 
-- Map corrections: decompilers report the boundary notes of `make match WRITE=1` (sizes `re/symbols.toml` has wrong, routines it misses). Batch them for a mapper session (playbook 10), then `make map` and `make check`.
-- A lock older than 24 hours with no commits on its branch may be broken: `make unlock UNIT=<id> FORCE=1`; note it in `work/status.md`.
+- Map corrections: decompilers report the boundary notes of `make match WRITE=1` in their hand-off notes. When they pile up, ask the human for a mapper session (playbook 10).
+- Whitepaper chapters: when most units of a subsystem are complete, ask the human for a documentarian session on that chapter (playbook 60).
 - `make rebuild` shows how close the linked game is to the original; watch the number of identical segments grow.
 - At each phase exit (SPEC 10), report to the human: what passed, what is blocked, what the spec should change.

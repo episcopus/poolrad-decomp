@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
-"""next.py: print the next unit from work/queue.toml (SPEC 9.4): the first that is neither locked nor
-complete (every routine of it at L2 or L3 in re/symbols.toml). With --review: the first complete unit
-that has no passed review and no review lock (`review-<id>`)."""
+"""next.py: print the next unit from work/queue.toml (SPEC 9.4).
+
+Work for a decompiler, first that applies: a unit whose review failed (open must-fix findings in
+work/reviews/<id>.md) and that nobody holds; then the first unit that is neither locked nor complete
+(every routine at L2 or L3 in re/symbols.toml).
+With --review: the first complete unit that has no passed review, no review lock (`review-<id>`) and no
+open must-fix finding (those wait for a decompiler's fixes first)."""
 from __future__ import annotations
 
 import sys
@@ -13,6 +17,12 @@ import common  # noqa: E402
 
 def next_unit() -> tuple[str, str, int, int] | None:
     rs = common.routines()
+    for u in common.queue():                         # failed reviews come back first
+        uid = u["id"]
+        findings = common.open_must_fix(uid)
+        if findings and not common.lock_path(uid).exists():
+            n = sum(1 for r in rs if r["unit"] == uid)
+            return uid, "review failed: fix the %d must-fix findings in work/reviews/%s.md" % (len(findings), uid), n, n
     for u in common.queue():
         uid = u["id"]
         if common.lock_path(uid).exists() or common.unit_complete(uid, rs):
@@ -31,7 +41,8 @@ def next_review() -> tuple[str, str, int, int] | None:
     rs = common.routines()
     for u in common.queue():
         uid = u["id"]
-        if common.unit_complete(uid, rs) and not reviewed(uid, rs) and not common.lock_path("review-" + uid).exists():
+        if common.unit_complete(uid, rs) and not reviewed(uid, rs) and not common.lock_path("review-" + uid).exists() \
+                and not common.open_must_fix(uid):
             n = sum(1 for r in rs if r["unit"] == uid)
             return uid, u.get("reason", ""), n, n
     return None

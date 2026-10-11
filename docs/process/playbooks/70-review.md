@@ -10,7 +10,9 @@
 2. `cp work/reviews/TEMPLATE.md work/reviews/<id>.md`; fill in `decompiler:` (the `Agent:` trailers of the unit's commits: `git log --format='%(trailers:key=Agent,valueonly)' -- src/<ID>.PAS`), `reviewer:` (you), `date:`, `commit:` (`git rev-parse --short HEAD`).
 3. `make match UNIT=<id>` (it must say `unit: complete`), `make packet UNIT=<id>`; read the source beside the packet.
 4. Go through the checklist for every routine; write each finding as `- [ ] <severity> <routine>: <what, why, address>`.
-5. Commit the review file. If there is no open must-fix: `make review-pass UNIT=<id>` (writes the `review` stamp on the unit's routines in `re/symbols.toml`), commit that too, and `make handoff AGENT=<you> UNIT=<id> STATE=review-passed NOTE="..."`. If there are must-fix findings: `make handoff ... STATE=review-failed NOTE="<the must-fix findings in one line each>"`; the unit goes back to a decompiler, who fixes and ticks the findings, and a review (yours or another) runs again.
+5. Commit the review file. If there is no open must-fix: `make review-pass UNIT=<id>` (writes the `review` stamp on the unit's routines in `re/symbols.toml`), commit that too, and `make handoff AGENT=<you> UNIT=<id> STATE=review-passed NOTE="..."`. If there are must-fix findings: `make handoff ... STATE=review-failed NOTE="<the must-fix findings in one line each>"`. Once the orchestrator merged the review file, `make claim` hands the unit to the next decompiler before any new unit; when the findings are ticked and merged, the unit is back in `make next REVIEW=1` and a review (yours or another, never by someone who committed to the unit) runs again.
+
+**Escalate** what a review finding cannot cover: a problem outside the unit (a wrong claim elsewhere in the whitepaper, a suspected matcher weakness, a spec question). `make handoff AGENT=<you> UNIT=<id or general> STATE=escalate NOTE="<the question, the evidence, what you recommend>"`; it needs no commit, the orchestrator takes it to the human. A finding about the unit itself belongs in the review file, not in an escalation.
 
 ## Checklist (per routine)
 
