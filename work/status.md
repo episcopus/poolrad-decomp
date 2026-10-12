@@ -12,7 +12,7 @@ Approach: ADR-002 (SPEC 4), Pascal-first matching decompilation; the C track (AD
 | P1 Map | done (`make p1-check`): 50 units, 1465 routines, TP 6.0 June 1991 pinned |
 | P2 Oracle and data | done: goldens with recordings for 2 of 2 session scripts (boot-title, create-character); `make golden CHECK=1` |
 | P3 Match harness | done: `make match` (tools/match/match.py, tests/unit/test_match.py); gate `make check` |
-| P4 Match | 115 of 1266 game routines at L2 (28676 of 233485 bytes by re/symbols.toml sizes); 22 of 46 game units complete, 16 reviewed; main program `src/POOL.PAS` matched by `make match UNIT=main` |
+| P4 Match | 115 of 1266 game routines at L2 (28676 of 233485 bytes by re/symbols.toml sizes); 22 of 46 game units complete, 17 reviewed; main program `src/POOL.PAS` matched by `make match UNIT=main` |
 | P5 Rebuild | `make rebuild` links the whole game from `src/` (every unit has source: decompiled or skeleton) and reports identical segments |
 
 ### P4 units with matched routines
@@ -25,7 +25,7 @@ Approach: ADR-002 (SPEC 4), Pascal-first matching decompilation; the C track (AD
 | ovl04 | Temple | 12 | 12 | 2844 | clean | complete |
 | ovl06 | Shop | 5 | 5 | 1821 | clean | complete |
 | ovl11 | Loader | 2 | 2 | 1517 | clean | complete |
-| ovl14 | ovl14 | 14 | 14 | 4184 | clean | complete |
+| ovl14 | ovl14 | 14 | 14 | 4184 | clean | yes |
 | ovl18 | PoolNarrative | 4 | 4 | 2293 | clean | yes |
 | ovl26 | ovl26 | 6 | 6 | 677 | clean | yes |
 | ovl27 | ovl27 | 3 | 3 | 648 | clean | yes |
