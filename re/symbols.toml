@@ -17101,12 +17101,12 @@ id = "0709:0000"
 unit = "res06"
 addr = "0709:0000"
 size = 113
-name = "res06_fn_0000"
+name = "SetEgaFillRegisters"
 signature = ""
 c_name = "res06_fn_0000"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res06_fn_0000 (sets the EGA Graphics Controller registers 0..5, 7 and 8 and the Sequencer map mask for the picture fill (Port I/O only), 0709:0000); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -17114,12 +17114,12 @@ id = "0709:0071"
 unit = "res06"
 addr = "0709:0071"
 size = 47
-name = "res06_fn_0071"
-signature = "procedure res06_fn_0071(A: Byte)"
+name = "SetActivePage"
+signature = "procedure SetActivePage(A: Byte)"
 c_name = "res06_fn_0071"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "renamed from res06_fn_0071 (sets the video BIOS active display page (Intr 10h AH=5) and stores the plane segment A shl 9 + A000 in ds4A16, 0709:0071); auto:far_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -17127,12 +17127,12 @@ id = "0709:00A0"
 unit = "res06"
 addr = "0709:00A0"
 size = 23
-name = "res06_fn_00A0"
-signature = "procedure res06_fn_00A0(A: Byte)"
+name = "SetPlaneSegment"
+signature = "procedure SetPlaneSegment(A: Byte)"
 c_name = "res06_fn_00A0"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res06_fn_00A0 (stores the plane segment A shl 9 + A000 in ds4A18, 0709:00A0); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -17322,12 +17322,12 @@ id = "0709:0DBE"
 unit = "res06"
 addr = "0709:0DBE"
 size = 21
-name = "res06_fn_0DBE"
+name = "DelayCounted"
 signature = ""
 c_name = "res06_fn_0DBE"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res06_fn_0DBE (delays ds49E2 * 225 ms through Crt.Delay, 0709:0DBE); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

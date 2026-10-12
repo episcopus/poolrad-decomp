@@ -5,9 +5,9 @@ unit RES06;
 interface
 type
   String40 = string[40];
-procedure res06_fn_0000;
-procedure res06_fn_0071(A: Byte);
-procedure res06_fn_00A0(A: Byte);
+procedure SetEgaFillRegisters;
+procedure SetActivePage(Plane: Byte);
+procedure SetPlaneSegment(Plane: Byte);
 procedure res06_fn_00B7(A, B, C, D: ShortInt; E, F: Byte);
 procedure res06_fn_017C;
 procedure res06_fn_01DF(A, B, C, D, Glyph, F: Byte);
@@ -22,7 +22,7 @@ procedure ShowMessageLine(Color: Byte; Text: String40);
 function res06_fn_0C3F: Longint;
 procedure res06_fn_0CAB;
 procedure res06_fn_0D68(Text: string; Color: Byte);
-procedure res06_fn_0DBE;
+procedure DelayCounted;
 procedure res06_fn_0DD3(Left, Top, Right, Bottom: Byte);
 implementation
 uses Crt, Dos, POOLVARS, RES04;
@@ -32,7 +32,7 @@ uses Crt, Dos, POOLVARS, RES04;
   (set/reset, enable set/reset, colour compare, data rotate, read map select, mode), GC 7 to
   $0F (colour don't care) and GC 8 to $FF (bit mask), then the Sequencer Map Mask (SC 2) to $0F.
   Port I/O only; no parameters. }
-procedure res06_fn_0000;
+procedure SetEgaFillRegisters;
 begin
   Port[$3CE] := 0;  Port[$3CF] := 0;
   Port[$3CE] := 1;  Port[$3CF] := 0;
@@ -47,20 +47,20 @@ end;
 { 0709:0071: retf 2: 2 bytes of parameters; 0 bytes of locals }
 { 0709:0071. Sets the EGA/VGA plane the video BIOS page A points at: writes AH=5 (set active
   display page) and AL=A into Regs and calls Intr($10), then stores the selected plane's segment
-  (A shl 9 + $A000) in ds4A16. Called by res08_init. }
-procedure res06_fn_0071(A: Byte);
+  (Plane shl 9 + $A000) in ds4A16. Called by res08_init. }
+procedure SetActivePage(Plane: Byte);
 begin
   Regs.AH := 5;
-  Regs.AL := A;
+  Regs.AL := Plane;
   Intr($10, Regs);
-  ds4A16 := A shl 9 + $A000;
+  ds4A16 := Plane shl 9 + $A000;
 end;
 { 0709:00A0: retf 2: 2 bytes of parameters; 0 bytes of locals }
-{ 0709:00A0. Stores the EGA/VGA plane segment of A (A shl 9 + $A000) in ds4A18. Called by
+{ 0709:00A0. Stores the EGA/VGA plane segment of Plane (Plane shl 9 + $A000) in ds4A18. Called by
   res06_fn_00B7 and res08_init. }
-procedure res06_fn_00A0(A: Byte);
+procedure SetPlaneSegment(Plane: Byte);
 begin
-  ds4A18 := A shl 9 + $A000;
+  ds4A18 := Plane shl 9 + $A000;
 end;
 { 0709:00B7: retf 12: 12 bytes of parameters; 10 bytes of locals }
 {@stub} procedure res06_fn_00B7(A, B, C, D: ShortInt; E, F: Byte); begin end;
@@ -71,6 +71,10 @@ end;
   index + $40): A and B the screen position, Glyph the character, the rest still open. }
 {@stub} procedure res06_fn_01DF(A, B, C, D, Glyph, F: Byte); begin end;
 { 0709:05EB: retf 8: 8 bytes of parameters; 0 bytes of locals }
+{ 0709:05EB. BLOCKED (dec-5, 2026-10-12): clears Width cells of row Row from column A
+  through res06_fn_01DF when A is in 0..$27 and Row in 0..$18. The four range checks match but
+  the compiler's false target differs (ours jumps straight to the end, the original jumps to a
+  jmp 2 bytes before the call), so it is left a stub. }
 {@stub} procedure res06_fn_05EB(A, Row, B, Width: Byte); begin end;
 { 0709:0626: retf 10: 10 bytes of parameters; 260 bytes of locals }
 {@stub} procedure res06_fn_0626(A, Row, Color: Byte; Text: string); begin end;
@@ -103,11 +107,15 @@ end;
 { 0709:0D68: retf 6: 6 bytes of parameters; 42 bytes of locals.
   Shows the Text and waits: CheckCodeWheel passes the failure message of a wrong code word and the
   colour 14. }
+{ 0709:0D68. BLOCKED (dec-5, 2026-10-12): shows Text on the bottom line in colour Color
+  (res06_fn_05EB clears the row, res06_fn_0626 shows the text, DelayCounted waits, res06_fn_05EB
+  clears again). Our frame is 256 bytes too big (a string temp our source creates), so it is left
+  a stub. }
 {@stub} procedure res06_fn_0D68(Text: string; Color: Byte); begin end;
 { 0709:0DBE: retf 0: 0 bytes of parameters; 0 bytes of locals }
 { 0709:0DBE. A delay of ds49E2 * 225 milliseconds (Crt.Delay). No parameters. Called while
   drawing many screens (ovl03, ovl10, ovl12, ovl13, ovl18, ovl19, ovl20). }
-procedure res06_fn_0DBE;
+procedure DelayCounted;
 begin
   Delay(ds49E2 * 225);
 end;

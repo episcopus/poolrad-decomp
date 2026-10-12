@@ -45,7 +45,10 @@ def test_an_overlay_unit_matches_through_its_stubs(built):
 def test_a_routine_matches_inside_a_unit_of_stubs(built):
     results, whole = built["res06"]
     st = statuses(results)
-    assert st.pop("ShowMessageLine") == "matched" and set(st.values()) == {"stub"} and len(st) >= 2
+    # res06 is being decompiled routine by routine, so more than ShowMessageLine may be matched;
+    # the point is that a matched routine sits beside stubs in one unit (see playbook 30).
+    assert st.pop("ShowMessageLine") == "matched"
+    assert "stub" in set(st.values()) and len(st) >= 2
     assert whole == ""                               # a unit with stubs is not compared as a whole
 
 

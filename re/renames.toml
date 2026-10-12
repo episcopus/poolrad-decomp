@@ -652,3 +652,31 @@ kind = "routine"
 why = "the Shop overlay's entry from ovl03: marks the shop open (ds49F3), redraws the shop screen (res12_fn_27D9, res12_fn_0767), clears ds67F4 and ds6DC0, then loops showing the shop menu (ovl25_e2) and dispatching Buy/View/Take/Pool/Share/Appraise/Exit and the leave prompt; leaves when Done is set (ovl06:053E)"
 date = "2026-10-11"
 
+[[rename]]
+old = "res06_fn_0000"
+new = "SetEgaFillRegisters"
+kind = "routine"
+why = "sets the EGA Graphics Controller registers 0..5, 7 and 8 and the Sequencer map mask for the picture fill (Port I/O only), 0709:0000"
+date = "2026-10-11"
+
+[[rename]]
+old = "res06_fn_0071"
+new = "SetActivePage"
+kind = "routine"
+why = "sets the video BIOS active display page (Intr 10h AH=5) and stores the plane segment A shl 9 + A000 in ds4A16, 0709:0071"
+date = "2026-10-11"
+
+[[rename]]
+old = "res06_fn_00A0"
+new = "SetPlaneSegment"
+kind = "routine"
+why = "stores the plane segment A shl 9 + A000 in ds4A18, 0709:00A0"
+date = "2026-10-11"
+
+[[rename]]
+old = "res06_fn_0DBE"
+new = "DelayCounted"
+kind = "routine"
+why = "delays ds49E2 * 225 ms through Crt.Delay, 0709:0DBE"
+date = "2026-10-11"
+
