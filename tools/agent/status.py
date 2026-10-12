@@ -90,9 +90,32 @@ def readable(uid: str) -> str:
     return "clean" if not f else "%d findings" % len(f)
 
 
+FIXED_DECISIONS = [
+    "- Approach (decided 2026-10-11, SPEC 4): Pascal first, matched by the pinned compiler; C later by translation (Phase 7, branch `track-c-hybrid`).",
+    "- Canonical state (decided 2026-10-10 and 2026-10-11): `re/state.toml` has `stack = \"diagnostic\"` and `heap = \"compared\"`; goldens carry recordings of the outside world (`tools/oracle/replay.py`) for the rebuild and the C translation.",
+    "- Shared files (SPEC 9.6): `src/POOLVARS.PAS` and stub declarations take additive edits; the orchestrator merges.",
+    "- `re/units.toml` lists units found through the init chain plus the two runtime units without init; game units without an initialisation part are still invisible (WHITEPAPER 2.2).",
+]
+
+
+def blocker_lines(path: Path) -> list[str]:
+    """The orchestrator's blockers from work/blockers.md (playbook 90), without its title and comments."""
+    if not path.exists():
+        return []
+    text = re.sub(r"<!--.*?-->", "", path.read_text(), flags=re.S)
+    out = [l.rstrip() for l in text.splitlines() if not l.startswith("# ")]
+    while out and not out[0]:
+        out.pop(0)
+    while out and not out[-1]:
+        out.pop()
+    return out
+
+
 def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("-o", "--output", default=str(ROOT / "work/status.md"))
+    ap.add_argument("--blockers", default=str(ROOT / "work/blockers.md"),
+                    help="the orchestrator's blockers, copied into the status (default work/blockers.md)")
     args = ap.parse_args(argv[1:])
 
     routines = parse_routines(ROOT / "re/symbols.toml")
@@ -209,6 +232,9 @@ def main(argv: list[str]) -> int:
         shown = ", ".join("%s %s (%s)" % (r.get("name", r.get("id")), r.get("level"), r.get("id"))
                           for r in sorted(lifted, key=lambda r: str(r.get("id"))))
         verification = "%d routines above `none`: %s." % (len(lifted), shown)
+    blockers = blocker_lines(Path(args.blockers))
+    if blockers:
+        blockers.append("")
     lines += [
         "",
         "## Verification",
@@ -217,10 +243,9 @@ def main(argv: list[str]) -> int:
         "",
         "## Blockers and decisions waiting for the human",
         "",
-        "- Approach (decided 2026-10-11, SPEC 4): Pascal first, matched by the pinned compiler; C later by translation (Phase 7, branch `track-c-hybrid`).",
-        "- Canonical state (decided 2026-10-10 and 2026-10-11): `re/state.toml` has `stack = \"diagnostic\"` and `heap = \"compared\"`; goldens carry recordings of the outside world (`tools/oracle/replay.py`) for the rebuild and the C translation.",
-        "- Shared files (SPEC 9.6): `src/POOLVARS.PAS` and stub declarations take additive edits; the orchestrator merges.",
-        "- `re/units.toml` lists units found through the init chain plus the two runtime units without init; game units without an initialisation part are still invisible (WHITEPAPER 2.2).",
+        "Blockers are kept in `work/blockers.md` (the orchestrator's, playbook 90) and copied here by `make status`.",
+        "",
+    ] + blockers + FIXED_DECISIONS + [
         "",
         "## Toolchain",
         "",

@@ -1,6 +1,6 @@
 # 90 Orchestrate (Orchestrator)
 
-The orchestrator owns `main`: it merges what agents hand over, one branch at a time, keeps `work/status.md`, the changelog and the shared files consistent, and brings escalations and decisions to the human. It does not decompile, review or document while orchestrating.
+The orchestrator owns `main`: it merges what agents hand over, one branch at a time, keeps `work/status.md`, `work/blockers.md`, the changelog and the shared files consistent, and brings escalations and decisions to the human. It does not decompile, review or document while orchestrating.
 
 **The orchestrator never creates, starts or stops agents.** The human operator does, in whatever harness or platform each agent runs (Claude Code, Cursor, OpenCode, another tool), so that agents of different kinds can work on the project together. The orchestrator works only through the repository and the coordination files every agent shares: locks (`make locks`), hand-offs (`make handoffs`), the queue (`make next`, `make next REVIEW=1`). When it thinks the project needs more or fewer agents of a role, it says so in its report to the human.
 
@@ -25,13 +25,13 @@ make rename APPLY=1                  # old names another branch still used: rena
 make check                           # must be green on the merged result
 make handoff-done UNIT=<id>          # review branches: UNIT=<id> REVIEW=1; adds the hand-off's changelog row
 make status
-git add work/status.md docs/design/CHANGELOG.md && git commit -m "status after <id>"
+git add work/status.md work/blockers.md docs/design/CHANGELOG.md && git commit -m "status after <id>"
 git worktree remove ../poolrad-worktrees/<id> && git branch -d unit/<id>    # or review-<id>, review/<id>
 make unlock UNIT=<id>                # review branches: UNIT=review-<id>; tasks: UNIT=<name>
 ```
 
-   When `make check` fails after a merge: `git merge --abort` (or revert the merge commit) and write an escalation-style note for the agent's next session in `work/status.md` blockers; do not clear the hand-off until it is resolved.
-4. `make locks`: a lock older than 24 hours with no commits on its branch may be broken with `make unlock UNIT=<id> FORCE=1`; note it in `work/status.md`. The agent behind it may have been stopped by the human: say so in your report.
+   When `make check` fails after a merge: `git merge --abort` (or revert the merge commit) and write an escalation-style note for the agent's next session in `work/blockers.md`, then `make status`; do not clear the hand-off until it is resolved.
+4. `make locks`: a lock older than 24 hours with no commits on its branch may be broken with `make unlock UNIT=<id> FORCE=1`; note it in `work/blockers.md`, then `make status`. The agent behind it may have been stopped by the human: say so in your report.
 5. When nothing is waiting, wait and look again.
 6. Every 5 merges, and whenever an escalation or decision is waiting, report to the human: units merged, units complete and reviewed, blocked routines, escalations, the `make rebuild` summary line, and whether the queues need more or fewer agents of a role (`make next`, `make next REVIEW=1`, open locks).
 
@@ -39,6 +39,10 @@ make unlock UNIT=<id>                # review branches: UNIT=review-<id>; tasks:
 
 - `make next` (decompilers) offers a unit whose review failed (open must-fix findings in `work/reviews/<id>.md`) before any new unit, so failed reviews come back to a decompiler without anyone assigning them. After `review-failed`, merge the review file and release the review lock: the unit is then claimable.
 - `make next REVIEW=1` (reviewers) offers complete units without a passed review, and skips units with open must-fix findings until a decompiler has fixed them and ticked the findings.
+
+## Blockers
+
+Blockers, aborted merges, broken locks and decisions waiting for the human go into `work/blockers.md`, one list item each, newest first; remove an item when it is resolved. `make status` copies the file into the "Blockers and decisions" section of `work/status.md`, which it regenerates from scratch, so never write blockers into `work/status.md` itself: they would vanish at the next `make status`. Both files are the orchestrator's: agents never edit or commit them.
 
 ## Resolving conflicts
 
@@ -49,6 +53,7 @@ make unlock UNIT=<id>                # review branches: UNIT=review-<id>; tasks:
 - `docs/design/WHITEPAPER.md`: keep both sides' text; when two agents wrote about the same thing differently, keep the better-evidenced claim and note the other as an escalation if they contradict.
 - `docs/design/CHANGELOG.md` should not conflict: agents do not edit it, `make handoff-done` adds their rows.
 - `work/status.md`: take either side, then regenerate with `make status`.
+- `work/blockers.md`: keep both sides' items, drop the resolved ones, then `make status`.
 
 ## Housekeeping
 
