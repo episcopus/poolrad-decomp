@@ -2260,3 +2260,73 @@ kind = "global"
 why = "ovl10:1B38/1B57: PlaceAllCombatants marks a grid cell usable when its column lies in the (Lo, Hi) span of its row in shape SideFacing (group 1: shape 4)"
 date = "2026-10-12"
 
+[[rename]]
+old = "ovl10_fn_01AD"
+new = "PassageKind"
+kind = "routine"
+why = "ovl10:01AD ORs WallSideKind of side Dir of the area map cell with WallSideKind of the opposite side of the neighbour that way (ds2736/ds273F): 1 a wall, 0 open, 3 with a door"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl10_fn_0810"
+new = "BuildDungeonMap"
+kind = "routine"
+why = "ovl10:0810 (CreateCombatMap calls it when AreaViewKind is 1) draws the combat map from the walls (PassageKind) of the area map cells within 6 columns and 2 rows of the party (ds6AAD, ds6AAE), then ScatterRareTiles"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl10_fn_0BDE"
+new = "PlaceRiver"
+kind = "routine"
+why = "ovl10:0BDE draws a diagonal river (tiles 32h, 33h) down the wilderness combat map with 35 or 75 in 100 for the BlockTerrainFlags bits 20h and 10h, with bridge pieces (PlaceBridge) at random rows or at least one"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl10_fn_012B"
+new = "WallSideKind"
+kind = "routine"
+why = "ovl10:012B (nested in PassageKind): for an area map cell in 0..15 answers 1 when DoorKindAt is 0 (a solid wall), 0 when WallIdAt is 0 (no wall), else 3 (a door); off the map 0 for the west and east sides on the party row, else 1"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl10_fn_0221"
+new = "SetDungeonCell"
+kind = "routine"
+why = "ovl10:0221 (nested in BuildDungeonMap) stores picture+1 at combat map cell (I*6 + J*5 + 21 + SubCol, J*5 + 10 + SubRow) of the area cell offset (I, J) when it is on the map"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl10_fn_02BA"
+new = "DrawFloorAndWest"
+kind = "routine"
+why = "ovl10:02BA (nested in BuildDungeonMap) fills sub-rows 2..4 of the area cell with picture 16h and draws the west side as a wall (West 1) or a door (West 3)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl10_fn_0377"
+new = "DrawNorthSide"
+kind = "routine"
+why = "ovl10:0377 (nested in BuildDungeonMap) draws sub-cells 3..4 of rows 0..1 as a wall (pictures 5 and 0Ah) when North is 1, else as floor (16h)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl10_fn_040F"
+new = "DrawNorthWestCorner"
+kind = "routine"
+why = "ovl10:040F (nested in BuildDungeonMap) picks the four corner pictures of sub-cells 1..2, rows 0..1, from North, West and the walls of the neighbouring cells (PassageKind)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl10_fn_0615"
+new = "DrawNorthEastCorner"
+kind = "routine"
+why = "ovl10:0615 (nested in BuildDungeonMap) picks the four corner pictures of sub-cells 5..6, rows 0..1, from North, East and the walls of the neighbouring cells (PassageKind)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl10_fn_0B97"
+new = "PlaceBridge"
+kind = "routine"
+why = "ovl10:0B97 (nested in PlaceRiver) puts tiles 34h and 35h on two neighbouring cells of a river row and counts the bridge pieces"
+date = "2026-10-12"
+

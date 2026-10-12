@@ -3220,12 +3220,12 @@ id = "ovl10:012B"
 unit = "ovl10"
 addr = "ovl10:012B"
 size = 130
-name = "ovl10_fn_012B"
+name = "WallSideKind"
 signature = ""
 c_name = "ovl10_fn_012B"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "blocked with its parent PassageKind (nested routine, draft in PassageKind's notes); renamed from ovl10_fn_012B (ovl10:012B (nested in PassageKind): for an area map cell in 0..15 answers 1 when DoorKindAt is 0 (a solid wall), 0 when WallIdAt is 0 (no wall), else 3 (a door); off the map 0 for the west and east sides on the party row, else 1); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3233,12 +3233,12 @@ id = "ovl10:01AD"
 unit = "ovl10"
 addr = "ovl10:01AD"
 size = 116
-name = "ovl10_fn_01AD"
-signature = "function ovl10_fn_01AD(Col, Row: ShortInt; Dir: Byte): Byte"
+name = "PassageKind"
+signature = "function PassageKind(Col, Row: ShortInt; Dir: Byte): Byte"
 c_name = "ovl10_fn_01AD"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "blocked (dec-16, 2026-10-12): the draft compiles to the original's bytes except the address fields of its nested WallSideKind (lcalls to DoorKindAt and WallIdAt, ds6AAE at 018A), which the matcher compares byte for byte in the parent's pre-entry region (held limit escalate-res06-20261012110841); every other byte of 012B..0220 is equal (byte diff of a probe build). Draft: function PassageKind(Col, Row: ShortInt; Dir: Byte): Byte; var Here, There: Byte; OppositeDir: Byte; function WallSideKind(Col, Row: ShortInt; Dir: Byte): Byte; begin if (Col >= 0) and (Col <= 15) and (Row >= 0) and (Row <= 15) then begin if DoorKindAt(Col, Row, Dir) = 0 then WallSideKind := 1 else if WallIdAt(Col, Row, Dir) = 0 then WallSideKind := 0 else WallSideKind := 3; end else if (Row = ds6AAE) and ((Dir = 2) or (Dir = 6)) then WallSideKind := 0 else WallSideKind := 1; end; begin OppositeDir := (Dir + 4) mod 8; Here := WallSideKind(Col, Row, Dir); There := WallSideKind(Col + ds2736[Dir], Row + ds273F[Dir], OppositeDir); PassageKind := Here or There; end;; renamed from ovl10_fn_01AD (ovl10:01AD ORs WallSideKind of side Dir of the area map cell with WallSideKind of the opposite side of the neighbour that way (ds2736/ds273F): 1 a wall, 0 open, 3 with a door); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3246,12 +3246,12 @@ id = "ovl10:0221"
 unit = "ovl10"
 addr = "ovl10:0221"
 size = 153
-name = "ovl10_fn_0221"
+name = "SetDungeonCell"
 signature = ""
 c_name = "ovl10_fn_0221"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "blocked with its parent BuildDungeonMap (nested routine, draft in BuildDungeonMap's notes); renamed from ovl10_fn_0221 (ovl10:0221 (nested in BuildDungeonMap) stores picture+1 at combat map cell (I*6 + J*5 + 21 + SubCol, J*5 + 10 + SubRow) of the area cell offset (I, J) when it is on the map); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3259,12 +3259,12 @@ id = "ovl10:02BA"
 unit = "ovl10"
 addr = "ovl10:02BA"
 size = 189
-name = "ovl10_fn_02BA"
+name = "DrawFloorAndWest"
 signature = ""
 c_name = "ovl10_fn_02BA"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "blocked with its parent BuildDungeonMap (nested routine, draft in BuildDungeonMap's notes); renamed from ovl10_fn_02BA (ovl10:02BA (nested in BuildDungeonMap) fills sub-rows 2..4 of the area cell with picture 16h and draws the west side as a wall (West 1) or a door (West 3)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3272,12 +3272,12 @@ id = "ovl10:0377"
 unit = "ovl10"
 addr = "ovl10:0377"
 size = 152
-name = "ovl10_fn_0377"
+name = "DrawNorthSide"
 signature = ""
 c_name = "ovl10_fn_0377"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "blocked with its parent BuildDungeonMap (nested routine, draft in BuildDungeonMap's notes); renamed from ovl10_fn_0377 (ovl10:0377 (nested in BuildDungeonMap) draws sub-cells 3..4 of rows 0..1 as a wall (pictures 5 and 0Ah) when North is 1, else as floor (16h)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3285,12 +3285,12 @@ id = "ovl10:040F"
 unit = "ovl10"
 addr = "ovl10:040F"
 size = 518
-name = "ovl10_fn_040F"
+name = "DrawNorthWestCorner"
 signature = ""
 c_name = "ovl10_fn_040F"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "blocked with its parent BuildDungeonMap (nested routine, draft in BuildDungeonMap's notes); renamed from ovl10_fn_040F (ovl10:040F (nested in BuildDungeonMap) picks the four corner pictures of sub-cells 1..2, rows 0..1, from North, West and the walls of the neighbouring cells (PassageKind)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3298,12 +3298,12 @@ id = "ovl10:0615"
 unit = "ovl10"
 addr = "ovl10:0615"
 size = 507
-name = "ovl10_fn_0615"
+name = "DrawNorthEastCorner"
 signature = ""
 c_name = "ovl10_fn_0615"
 level = "none"
 justification = ""
-notes = "auto:near_call; map dec-16 2026-10-12: ends 0810 (was 234); 06FF, 07AA were mid-routine, entries deleted"
+notes = "blocked with its parent BuildDungeonMap (nested routine, draft in BuildDungeonMap's notes); renamed from ovl10_fn_0615 (ovl10:0615 (nested in BuildDungeonMap) picks the four corner pictures of sub-cells 5..6, rows 0..1, from North, East and the walls of the neighbouring cells (PassageKind)); auto:near_call; map dec-16 2026-10-12: ends 0810 (was 234); 06FF, 07AA were mid-routine, entries deleted"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3311,12 +3311,12 @@ id = "ovl10:0810"
 unit = "ovl10"
 addr = "ovl10:0810"
 size = 148
-name = "ovl10_fn_0810"
+name = "BuildDungeonMap"
 signature = ""
 c_name = "ovl10_fn_0810"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "blocked (dec-16, 2026-10-12): the draft compiles to the original's bytes except CombatMap's address in its nested SetDungeonCell (02AA), compared byte for byte in the pre-entry region (held limit escalate-res06-20261012110841); every other byte of 0221..08A3 is equal apart from ds6AAD/ds6AAE in the body. Draft: procedure BuildDungeonMap; var I, J: ShortInt; MapX, MapY: ShortInt; Unused: array[0..1] of Byte; North, West, East: Byte; Unused2: Byte; procedure SetDungeonCell(SubCol, SubRow, Picture: Byte); var Col, Row: ShortInt; begin Col := I * 6 + J * 5 + $15 + SubCol; Row := J * 5 + $A + SubRow; if (Col >= 0) and (Col <= MapLastCol) and (Row >= 0) and (Row <= MapLastRow) then CombatMap^.Cells[Row, Col] := Picture + 1; end; procedure DrawFloorAndWest; var SubCol, SubRow: Byte; begin for SubRow := 2 to 4 do for SubCol := 0 to 5 do SetDungeonCell(SubCol, SubRow, $16); if West = 1 then for SubRow := 2 to 4 do begin SetDungeonCell(SubRow - 1, SubRow, 4); SetDungeonCell(SubRow, SubRow, 3); SetDungeonCell(SubRow + 1, SubRow, $D); end else if West = 3 then begin SetDungeonCell(1, 2, 8); SetDungeonCell(5, 4, 0); end; end; procedure DrawNorthSide; var Unused: array[0..1] of Byte; begin if North = 1 then begin SetDungeonCell(3, 0, 5); SetDungeonCell(4, 0, 5); SetDungeonCell(3, 1, $A); SetDungeonCell(4, 1, $A); end else begin SetDungeonCell(3, 0, $16); SetDungeonCell(4, 0, $16); SetDungeonCell(3, 1, $16); SetDungeonCell(4, 1, $16); end; end; procedure DrawNorthWestCorner; var K: Byte; TopLeft, BottomLeft, TopRight, BottomRight: Byte; Corner: Byte; begin if (PassageKind(MapX, MapY - 1, 6) = 0) and (PassageKind(MapX - 1, MapY, 0) = 0) then Corner := 1 else Corner := 0; for K := 1 to 4 do case K of 1: case North of 0: case West of 0: TopLeft := $16; 3: TopLeft := $D; 1: if Corner <> 0 then TopLeft := 0 else TopLeft := $D; end; 3, 1: if West = 0 then if Corner <> 0 then TopLeft := $F else TopLeft := 5 else if Corner <> 0 then TopLeft := $12 else TopLeft := 2; end; 2: case North of 0: TopRight := $16; 3: TopRight := $11; 1: TopRight := 5; end; 3: case West of 0: if North = 0 then BottomLeft := $16 else if Corner <> 0 then BottomLeft := $10 else BottomLeft := $A; 3: if Corner <> 0 then BottomLeft := $14 else BottomLeft := 7; 1: if Corner <> 0 then BottomLeft := 1 else BottomLeft := 3; end; 4: case West of 0, 3: case North of 0: BottomRight := $16; 3: BottomRight := $17; 1: BottomRight := $A; end; 1: case North of 0: BottomRight := $D; 3: BottomRight := $15; 1: BottomRight := 6; end; end; end; SetDungeonCell(1, 0, TopLeft); SetDungeonCell(2, 0, TopRight); SetDungeonCell(1, 1, BottomLeft); SetDungeonCell(2, 1, BottomRight); end; procedure DrawNorthEastCorner; var K: Byte; TopLeft, BottomLeft, TopRight, BottomRight: Byte; Corner: Byte; NorthEast, EastNorth: Byte; begin NorthEast := PassageKind(MapX, MapY - 1, 2); EastNorth := PassageKind(MapX + 1, MapY, 0); if (NorthEast = 0) and (EastNorth = 0) then Corner := 1 else Corner := 0; for K := 1 to 4 do case K of 1: case North of 0: if NorthEast = 1 then TopLeft := 4 else TopLeft := $16; 3: TopLeft := $F; 1: TopLeft := 5; end; 2: if North = 0 then case NorthEast of 0: TopRight := $16; 3: if (East = 0) and (EastNorth <> 0) then TopRight := $18 else TopRight := 1; 1: if (East = 0) and (EastNorth <> 0) then TopRight := $B else TopRight := 3; end else if East <> 0 then TopRight := 9 else if EastNorth <> 0 then TopRight := 5 else if Corner <> 0 then TopRight := $11 else TopRight := $13; 3: case North of 0: BottomLeft := $16; 3: BottomLeft := $10; 1: BottomLeft := $A; end; 4: if North = 0 then begin if NorthEast = 0 then BottomRight := $16 else if East <> 0 then BottomRight := 4 else if EastNorth = 0 then BottomRight := 8 else BottomRight := $C; end else if East <> 0 then BottomRight := $E else if EastNorth = 0 then BottomRight := $17 else BottomRight := $A; end; SetDungeonCell(5, 0, TopLeft); SetDungeonCell(6, 0, TopRight); SetDungeonCell(5, 1, BottomLeft); SetDungeonCell(6, 1, BottomRight); end; begin for J := -2 to 2 do for I := -6 to 6 do begin MapX := ds6AAD + I; MapY := ds6AAE + J; West := PassageKind(MapX, MapY, 6); North := PassageKind(MapX, MapY, 0); East := PassageKind(MapX, MapY, 2); DrawFloorAndWest; DrawNorthSide; DrawNorthWestCorner; DrawNorthEastCorner; end; ScatterRareTiles; end;; renamed from ovl10_fn_0810 (ovl10:0810 (CreateCombatMap calls it when AreaViewKind is 1) draws the combat map from the walls (PassageKind) of the area map cells within 6 columns and 2 rows of the party (ds6AAD, ds6AAE), then ScatterRareTiles); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3337,12 +3337,12 @@ id = "ovl10:0B97"
 unit = "ovl10"
 addr = "ovl10:0B97"
 size = 71
-name = "ovl10_fn_0B97"
+name = "PlaceBridge"
 signature = ""
 c_name = "ovl10_fn_0B97"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "blocked with its parent PlaceRiver (nested routine, draft in PlaceRiver's notes); renamed from ovl10_fn_0B97 (ovl10:0B97 (nested in PlaceRiver) puts tiles 34h and 35h on two neighbouring cells of a river row and counts the bridge pieces); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3350,12 +3350,12 @@ id = "ovl10:0BDE"
 unit = "ovl10"
 addr = "ovl10:0BDE"
 size = 309
-name = "ovl10_fn_0BDE"
+name = "PlaceRiver"
 signature = ""
 c_name = "ovl10_fn_0BDE"
 level = "none"
 justification = ""
-notes = "auto:near_call; map dec-16 2026-10-12: ends 0D13 (was 16); 0BEE was mid-routine, entry deleted"
+notes = "blocked (dec-16, 2026-10-12): the draft compiles to the original's bytes except the address fields of its nested PlaceBridge (CombatMap at 0BAB, 0BC8), compared byte for byte in the pre-entry region (held limit escalate-res06-20261012110841); the body differs only in CombatMap and RollDice addresses. Draft: procedure PlaceRiver; var Chance: Byte; Bridges: Byte; StartCol: ShortInt; Col, Row: ShortInt; Unused: Byte; procedure PlaceBridge(Row, Col: ShortInt); begin CombatMap^.Cells[Row, Col] := $34; CombatMap^.Cells[Row, Col + 1] := $35; Inc(Bridges); end; begin Chance := 0; Bridges := 0; if (BlockTerrainFlags and FlagRiverSometimes) <> 0 then Chance := $23; if (BlockTerrainFlags and FlagRiverOften) <> 0 then Chance := $4B; if RollDice(1, 100) <= Chance then begin Col := $22 - RollDice(5, 4); while (Col + 2) mod 7 > 0 do Dec(Col); StartCol := Col; for Row := 0 to MapLastRow do if Col <= MapLastCol then begin CombatMap^.Cells[Row, Col] := $32; CombatMap^.Cells[Row, Col + 1] := $33; if (RollDice(1, $14) = 1) or Odd(Bridges) then PlaceBridge(Row, Col); Inc(Col); end; if Bridges = 0 then begin Row := $C - RollDice(1, 9) + 4; Col := StartCol + Row; PlaceBridge(Row, Col); PlaceBridge(Row + 1, Col + 1); end; end; end;; renamed from ovl10_fn_0BDE (ovl10:0BDE draws a diagonal river (tiles 32h, 33h) down the wilderness combat map with 35 or 75 in 100 for the BlockTerrainFlags bits 20h and 10h, with bridge pieces (PlaceBridge) at random rows or at least one); auto:near_call; map dec-16 2026-10-12: ends 0D13 (was 16); 0BEE was mid-routine, entry deleted"
 evidence = ["prologue"]
 
 [[routine]]

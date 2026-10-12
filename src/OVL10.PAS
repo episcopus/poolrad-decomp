@@ -1,7 +1,7 @@
 unit OVL10;
 { The start of a battle (whitepaper 5.5.2): StartBattle (entry 1, called by RunCombat) resets the
   combat state, CreateCombatMap allocates the 50x25 cell combat map CombatMap^ and builds it (a
-  dungeon map from the walls around the party, ovl10_fn_0810, or a wilderness map from the area map
+  dungeon map from the walls around the party, BuildDungeonMap, or a wilderness map from the area map
   block the party stands on, BuildWildernessMap with its river and feature scatterers), then
   PrepareCombatants gives every character of the party list a combat record and PlaceAllCombatants
   puts each one on the map: every side has an 11x6 placement grid in four groups (PlacementCells),
@@ -10,17 +10,17 @@ unit OVL10;
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 procedure ScatterRareTiles;
-procedure ovl10_fn_012B;
-function ovl10_fn_01AD(Col, Row: ShortInt; Dir: Byte): Byte;
-procedure ovl10_fn_0221;
-procedure ovl10_fn_02BA;
-procedure ovl10_fn_0377;
-procedure ovl10_fn_040F;
-procedure ovl10_fn_0615;
-procedure ovl10_fn_0810;
+procedure WallSideKind;
+function PassageKind(Col, Row: ShortInt; Dir: Byte): Byte;
+procedure SetDungeonCell;
+procedure DrawFloorAndWest;
+procedure DrawNorthSide;
+procedure DrawNorthWestCorner;
+procedure DrawNorthEastCorner;
+procedure BuildDungeonMap;
 function BlockTerrainFlags: Byte;
-procedure ovl10_fn_0B97;
-procedure ovl10_fn_0BDE;
+procedure PlaceBridge;
+procedure PlaceRiver;
 procedure PlaceTallFeatures;
 procedure ScatterTerrainFeatures;
 procedure BuildWildernessMap;
@@ -48,8 +48,8 @@ const
   FlagMany2ATiles = 2;          { ScatterTerrainFeatures: tiles $2A..$2D on 45 of 255 rolls }
   FlagSome2ATiles = 4;          { ScatterTerrainFeatures: tiles $2A..$2D on 25 of 255 rolls }
   FlagMostTall = 8;             { PlaceTallFeatures: the highest chance, 7 in 100 }
-  FlagRiverOften = $10;         { ovl10_fn_0BDE: a river on 75 in 100 }
-  FlagRiverSometimes = $20;     { ovl10_fn_0BDE: a river on 35 in 100 }
+  FlagRiverOften = $10;         { PlaceRiver: a river on 75 in 100 }
+  FlagRiverSometimes = $20;     { PlaceRiver: a river on 35 in 100 }
   FlagTallKinds4To6 = $40;      { PlaceTallFeatures: only kinds 4..6; tiles $39..$3C on 30 of 255 rolls }
   { No tall features, tiles $3D..$41 on 15 of 255 rolls; BlockTerrainFlags turns it into
     FlagPlain while game word 435 is $FF. }
@@ -103,22 +103,33 @@ begin
         end;
       end;
 end;
-{ ovl10:012B: retf 8: 8 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl10_fn_012B; begin end;
-{ ovl10:01AD: retf 6: 6 bytes of parameters; 4 bytes of locals }
-{@stub} function ovl10_fn_01AD(Col, Row: ShortInt; Dir: Byte): Byte; begin end;
-{ ovl10:0221: retf 8: 8 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl10_fn_0221; begin end;
-{ ovl10:02BA: retf 2: 2 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl10_fn_02BA; begin end;
-{ ovl10:0377: retf 2: 2 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl10_fn_0377; begin end;
-{ ovl10:040F: retf 2: 2 bytes of parameters; 6 bytes of locals }
-{@stub} procedure ovl10_fn_040F; begin end;
-{ ovl10:0615: frame not read }
-{@stub} procedure ovl10_fn_0615; begin end;
-{ ovl10:0810: retf 0: 0 bytes of parameters; 10 bytes of locals }
-{@stub} procedure ovl10_fn_0810; begin end;
+{ ovl10:012B. Nested in PassageKind (blocked with it, see there): the kind of side Dir of area map
+  cell (Col, Row): 1 a solid wall (DoorKindAt 0), 0 no wall (WallIdAt 0), 3 a door; off the 16x16
+  map 0 for the west and east sides on the party row (ds6AAE), else 1. }
+{@stub} procedure WallSideKind; begin end;
+{ ovl10:01AD. The passage between area map cell (Col, Row) and its neighbour in direction Dir:
+  WallSideKind of this side OR that of the neighbour's opposite side (1 a wall, 0 open, 3 a door).
+  Blocked (escalate-res06-20261012110841): the draft in re/symbols.toml notes matches except the
+  address fields of its nested WallSideKind (DoorKindAt, WallIdAt, ds6AAE), which the matcher
+  compares byte for byte. }
+{@stub} function PassageKind(Col, Row: ShortInt; Dir: Byte): Byte; begin end;
+{ ovl10:0221. Nested in BuildDungeonMap: stores Picture + 1 at the combat map cell of sub-cell
+  (SubCol, SubRow) of the area cell being drawn. }
+{@stub} procedure SetDungeonCell; begin end;
+{ ovl10:02BA. Nested in BuildDungeonMap: the floor and the west side of an area cell. }
+{@stub} procedure DrawFloorAndWest; begin end;
+{ ovl10:0377. Nested in BuildDungeonMap: the north side of an area cell. }
+{@stub} procedure DrawNorthSide; begin end;
+{ ovl10:040F. Nested in BuildDungeonMap: the north-west corner pictures of an area cell. }
+{@stub} procedure DrawNorthWestCorner; begin end;
+{ ovl10:0615. Nested in BuildDungeonMap: the north-east corner pictures of an area cell. }
+{@stub} procedure DrawNorthEastCorner; begin end;
+{ ovl10:0810. Builds the combat map of a dungeon battle: every area map cell within 6 columns and
+  2 rows of the party becomes a skewed block of the combat map (6 columns right and 5 rows down
+  per area column and row) drawn from its west, north and east passages (PassageKind), then
+  ScatterRareTiles. Blocked (escalate-res06-20261012110841): the draft in re/symbols.toml notes
+  matches except CombatMap's address in the nested SetDungeonCell. }
+{@stub} procedure BuildDungeonMap; begin end;
 
 { ovl10:08A4. The terrain flags of the area map block the battle is fought on (CombatBlock): a
   fixed table of block code ranges, each giving a set of the Flag bits above. A code no range
@@ -164,16 +175,21 @@ begin
     end;
   BlockTerrainFlags := Flags;
 end;
-{ ovl10:0B97: retf 6: 6 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl10_fn_0B97; begin end;
-{ ovl10:0BDE: frame not read }
-{@stub} procedure ovl10_fn_0BDE; begin end;
+{ ovl10:0B97. Nested in PlaceRiver: puts the bridge tiles $34, $35 on a river row and counts them. }
+{@stub} procedure PlaceBridge; begin end;
+{ ovl10:0BDE. Draws a river on the wilderness combat map (35 in 100 with FlagRiverSometimes, 75
+  with FlagRiverOften): tiles $32, $33 down a diagonal from a column near 34 - 5d4, with bridge
+  pieces (PlaceBridge) on random rows, at least one bridge. Blocked
+  (escalate-res06-20261012110841): the draft in re/symbols.toml notes matches except the address
+  fields of its nested PlaceBridge (CombatMap). }
+{@stub} procedure PlaceRiver; begin end;
 
 { ovl10:0D13. Puts two-cell features on the plain ground: for every ground cell whose northern
-  neighbour is ground too, with Chance in 100 (1 by default, 3 for FlagSome2ATiles, 4 for
-  FlagTallKinds4To6, 7 for FlagMostTall, none for Flag3DTiles; the last flag set wins), a kind 1..6
-  (d10: 1..4 halved up, 9 and 10 give 5 or 6; kinds 4..6 only with FlagTallKinds4To6). The cell
-  gets tile Kind + $23 and, for kinds below 5, the cell above tile Kind + $1F. }
+  neighbour is ground too, with Chance in 100 (1 by default and for FlagMany2ATiles, 3 for
+  FlagSome2ATiles, 4 for FlagTallKinds4To6, 7 for FlagMostTall, none for Flag3DTiles; the last
+  flag tested wins), a kind 1..6: a d10 of 1..8 halved and rounded up gives 1..4, 9 and 10 give
+  d2 + 4; with FlagTallKinds4To6 the kind is d3 + 3 instead. The cell gets tile Kind + $23 and,
+  for kinds below 5, the cell above tile Kind + $1F. }
 procedure PlaceTallFeatures;
 var
   Unused: Byte;                 { QUIRK ovl10:0D16: the first byte of the frame nothing uses }
@@ -274,7 +290,7 @@ end;
 
 { ovl10:11B4. Builds the combat map of a wilderness battle: fills it with GroundTile, takes the
   area map block under the party (GameVars^ VarMapX, VarMapY, the column moved by 13 or 26 for
-  AreaViewKind 3 and 4 like MapBaseX) as CombatBlock, then adds a river (ovl10_fn_0BDE), the tall
+  AreaViewKind 3 and 4 like MapBaseX) as CombatBlock, then adds a river (PlaceRiver), the tall
   features, the scattered features and the rare tiles. }
 procedure BuildWildernessMap;
 var
@@ -287,7 +303,7 @@ begin
   if AreaViewKind = 3 then Inc(Col, $D);
   if AreaViewKind = 4 then Inc(Col, $1A);
   CombatBlock := AreaMap[Row, Col];
-  ovl10_fn_0BDE;
+  PlaceRiver;
   PlaceTallFeatures;
   ScatterTerrainFeatures;
   ScatterRareTiles;
@@ -309,7 +325,7 @@ begin
   CombatMap^.CursorKind := 1;
   CombatMap^.Head6 := 0;
   if AreaViewKind = AreaViewDungeon then
-    ovl10_fn_0810
+    BuildDungeonMap
   else
     BuildWildernessMap;
 end;
@@ -389,7 +405,7 @@ end;
   A ring ends after FirstRingCells of the side for the first ring, 12 cells for later ones, or
   when it leaves the grid while not IsBeyondGrid. For side 0 facing an odd direction, the first
   ring of group 0 is followed by one more skipped ring when one of the three FacingWallDirs from
-  the party's area map cell is not a plain wall (ovl10_fn_01AD answers 1 for a wall on both sides;
+  the party's area map cell is not a plain wall (PassageKind answers 1 for a wall on both sides;
   outside the dungeon view every direction counts as open). A cell beyond the grid moves on to
   the next group (up to 3) whose FacingWallDirs direction is open, with its origin one area map
   step that way. }
@@ -474,7 +490,7 @@ begin
           for I := 1 to 3 do
           begin
             Dir := FacingWallDirs[SideFacing[PlacingSide], I];
-            if (AreaViewKind > AreaViewDungeon) or (ovl10_fn_01AD(MapX, MapY, Dir) <> 1) then OpenSide := 1;
+            if (AreaViewKind > AreaViewDungeon) or (PassageKind(MapX, MapY, Dir) <> 1) then OpenSide := 1;
           end;
           if OpenSide <> 0 then Inc(Ring);
         end;
@@ -492,7 +508,7 @@ begin
           MapX := SideOriginCol[PlacingSide] + ds6AAD;
           MapY := SideOriginRow[PlacingSide] + ds6AAE;
           Dir := FacingWallDirs[SideFacing[PlacingSide], Group];
-          if (AreaViewKind > AreaViewDungeon) or (ovl10_fn_01AD(MapX, MapY, Dir) <> 1) then
+          if (AreaViewKind > AreaViewDungeon) or (PassageKind(MapX, MapY, Dir) <> 1) then
           begin
             OriginCol := SideOriginCol[PlacingSide] + ds2736[Dir];
             OriginRow := SideOriginRow[PlacingSide] + ds273F[Dir];
