@@ -729,3 +729,10 @@ kind = "routine"
 why = "tests whether (ToX,ToY) lies in the 90-degree arc facing compass direction Dir (0 north clockwise, 8 omni) from (FromX,FromY): per-direction step tables ds2736/ds273F verified as compass vectors, 8 wedge bodies sharing half-planes, ovl22_e5 loops Dir 0.. to aim at a target"
 date = "2026-10-12"
 
+[[rename]]
+old = "ovl30_e6"
+new = "ScanTargets"
+kind = "routine"
+why = "scans the DS:5F27 map entity table for records reachable from (X,Y): tries base/record neighbour pairs in Dir arc that ovl30_e5 walks in fewest steps, appends (index, steps, direction) to the sort table and sorts it; called from combat/item aiming (ovl22_e5) and res12/ovl09/ovl13/ovl24"
+date = "2026-10-12"
+

@@ -747,7 +747,7 @@ Overlay 18 (PoolNarrative) plays the game's ending and animates the area view do
 
 ---
 
-### 5.18 The line drawing unit ovl30 **[V]** (`src/OVL30.PAS`, `make match UNIT=ovl30`: 5 of 7 routines at L2)
+### 5.18 The line drawing unit ovl30 **[V]** (`src/OVL30.PAS`, `make match UNIT=ovl30`: 6 of 7 routines at L2)
 
 Overlay 30 draws lines and sorts:
 
@@ -778,8 +778,20 @@ Overlay 30 draws lines and sorts:
   coordinates are `ShortInt`, and a `case` over 0..8 keeps the selector in AL with chained
   `cmp`/`jne` (proven by `make tpc` probes in `scratch/Q1.PAS`, `scratch/Q2.PAS`).
 
-Still to decompile: `ovl30_e5` (`ovl30:0422`, the line walk, blocked in `re/symbols.toml`)
-and `ovl30_e6` (`ovl30:0909`).
+- `ScanTargets(FromX, FromY, MaxSteps, Dir, Base, Map)` (`ovl30:0909`) scans the DS:5F27
+  map entity table (records with a map position, an unknown byte and a kind byte; entry 0's
+  kind holds the count) for records reachable from the search point: for each active record it
+  tries the four neighbours of the base point against the four neighbours of the record
+  (`ovl31_e1` fills the neighbour offsets from a base value, invalid neighbours get -1), keeps
+  the pairs in direction Dir's arc (`InDirArc`) that the line walk (`ovl30_e5`) crosses in the
+  fewest steps, appends one record per hit (table index, step count, working direction) to the
+  `DS:6718` sort table and sorts it. The stored direction is the requested Dir, or the first
+  working one when Dir is 8. Called from combat and item aiming (`ovl22_e5`, which loops Dir to
+  aim) and from ovl09, ovl13, ovl24 and res12. Compiler notes: a `for` over a variable bound
+  snapshots it into a hidden temp slot (the `sub sp` covers it), and near/far jump selection
+  follows rel8 reachability (proven by `make tpc` probes in `scratch/Q4.PAS` to `scratch/Q6.PAS`).
+
+Still to decompile: `ovl30_e5` (`ovl30:0422`, the line walk, blocked in `re/symbols.toml`).
 
 ---
 
