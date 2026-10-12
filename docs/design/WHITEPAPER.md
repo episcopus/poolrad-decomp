@@ -747,9 +747,9 @@ Overlay 18 (PoolNarrative) plays the game's ending and animates the area view do
 
 ---
 
-### 5.18 The screen support unit ovl30 **[V]** (`src/OVL30.PAS`, `make match UNIT=ovl30`: 3 of 7 routines at L2)
+### 5.18 The line drawing unit ovl30 **[V]** (`src/OVL30.PAS`, `make match UNIT=ovl30`: 4 of 7 routines at L2)
 
-Overlay 30 is a screen support unit:
+Overlay 30 draws lines and sorts:
 
 - `SignOf(N)` (`ovl30:0000`) returns -1, 1 or 0 for the sign of N. Also called from ovl22 and res12.
 - `SortTable` (`ovl30:002E`) sorts the 3-byte record table DS:6718 in place (element 0 holds the
@@ -758,8 +758,15 @@ Overlay 30 is a screen support unit:
 - `SetupLine(Line)` (`ovl30:01A0`) fills the line drawing state (the `TLineState` type of
   `src/POOLVARS.PAS`: two endpoints, the three Bresenham steps, the current position and the x and y
   step directions) from the two endpoints.
+- `StepLine(Line)` (`ovl30:02CC`) steps the line one pixel: when `DX > DY` it moves `X` towards `X2`
+  and, while `D1 >= 0`, `Y` towards `Y2` by `SY`, else it moves `Y` towards `Y2` and, while
+  `D1 >= 0`, `X` towards `X2` by `SX`; the smaller axis moves on the sign of `D1`, `First` advances
+  by 2 or 3, and the direction taken picks the pattern byte from the 3x3 table `DS:25C0` at
+  `[SY + 1, SX + 1]`. It returns whether it stepped. `DS:25C0` is a 2D array (the original scales
+  the row by 3 with DI), and `TLineState.X,Y` are `Integer` like the coordinates (the original
+  compares `X` to `X2` with a word `cmp`).
 
-Still to decompile: `ovl30_e3` (`ovl30:02CC`, the line stepper), `ovl30_e5` (`ovl30:0422`),
+Still to decompile: `ovl30_e5` (`ovl30:0422`, the line walk, blocked in `re/symbols.toml`),
 `ovl30_e4` (`ovl30:057B`) and `ovl30_e6` (`ovl30:0909`).
 
 ---

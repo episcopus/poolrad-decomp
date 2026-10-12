@@ -13716,12 +13716,12 @@ id = "ovl30:02CC"
 unit = "ovl30"
 addr = "ovl30:02CC"
 size = 342
-name = "ovl30_e3"
+name = "StepLine"
 signature = ""
 c_name = "ovl30_e3"
 level = "none"
 justification = ""
-notes = "auto:near_call; BLOCKED (dec-5, 2026-10-12): drafted the Bresenham stepper; frame (8 bytes: SX, SY: ShortInt at bp-2/bp-3, the Boolean result at bp-1, a PLineState copy at bp-4..bp-7) and the first stores match, but the P := Line copy differs (ours mov ax,[bp+6]/mov dx,[bp+8]/mov [..]; the original les di,[bp+6]/mov [bp-7],di/mov [bp-5],es), so the pointer local does not line up. Also read ds25C0[3*(SY+1)+(SX+1)] into TLineState.Pattern (+$19) and the TLineState record grows to +$1A"
+notes = "renamed from ovl30_e3 (ovl30:02CC steps a Bresenham line one pixel: it moves X (DX>DY) or Y towards the end point, advances First by 2 or 3 and stores the 3x3 direction pattern ds25C0[SY+1, SX+1]; the Boolean says whether it stepped; called by ovl22_fn_295B, ovl30_e5 and res12_fn_1A29); auto:near_call; BLOCKED (dec-5, 2026-10-12): drafted the Bresenham stepper; frame (8 bytes: SX, SY: ShortInt at bp-2/bp-3, the Boolean result at bp-1, a PLineState copy at bp-4..bp-7) and the first stores match, but the P := Line copy differs (ours mov ax,[bp+6]/mov dx,[bp+8]/mov [..]; the original les di,[bp+6]/mov [bp-7],di/mov [bp-5],es), so the pointer local does not line up. Also read ds25C0[3*(SY+1)+(SX+1)] into TLineState.Pattern (+$19) and the TLineState record grows to +$1A"
 evidence = ["prologue"]
 
 [[routine]]
@@ -13730,11 +13730,11 @@ unit = "ovl30"
 addr = "ovl30:0422"
 size = 345
 name = "ovl30_e5"
-signature = ""
+signature = "function ovl30_e5(StartX, StartY: ShortInt; EndX, EndY: PShortInt; Count: PWord; Map: PByteArray): Boolean"
 c_name = "ovl30_e5"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; BLOCKED (dec-5, 2026-10-12): the line walk, 345 bytes, retf 20, frame 58 (result bp-1, TLineState Line at bp-0x1b, TLineState Bound at bp-0x35, Flag bp-0x36, StepDone bp-0x37, Limit bp-0x39 with a one-byte gap at bp-0x38). Params (bp+6 up): Map (far byte map, stride 50, tile id at +7 of a cell, a flag at +6), Count (PWord), EndY, EndX (pointers whose target is read sign-extended and written as a byte), StartY, StartX (ShortInt). Prologue drafted and matching to ovl30:0473: Limit := 2*Count^+1; Line gets the endpoints, SetupLine(@Line); Bound := (0, ds2745[Map^[StartY*50+StartX+7], 0]) to (Max(Line.DX, Line.DY), same Y), SetupLine(@Bound); then a loop that steps Bound then Line (StepLine(@Bound) result stored to a dead local, QUIRK ovl30:0544) and stops on (Map^[6]=0 and ds2745[Map^[Line.Y*50+Line.X+7], 1] > Bound.Y) or Line.First > Limit, writing EndX^/EndY^/Count^ and returning False, else returning True after Count^ := Line.First. Blocked on the ds2745 index codegen: the original computes Map+StartY*50+StartX with two separate adds to DI and folds +7 into [di+7] (add di,ax; add di,cx; mov al,es:[di+7]), which a flat PByteArray subscript (PByteArray^[StartY*50+StartX+7], any grouping) does not reproduce (it sums StartY*50+StartX into AX then add di,ax; add ax,7), and a 2D array subscript computes the column as StartX+7 (add ax,7). Likely the source indexes a 2D cell array and reads a record field at +7, but the same pointer is also read flat as Map^[6], so the exact construct is unresolved. ds2745 is an unknown 4-byte-stride table (ds2745[k*4] and ds2746[k*4])."
 evidence = ["prologue"]
 
 [[routine]]
