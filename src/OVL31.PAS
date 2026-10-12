@@ -506,10 +506,10 @@ begin
     CombatantTable[CombatantIndex(Who)].Kind := 0;
     RebuildOccupancy;
     MoveCombatCursor(CombatMap^.ViewX + ViewCentre, CombatMap^.ViewY + ViewCentre, CentreMargin, DirNone);
-    Who^.Combat^.Clear3 := 0;
-    Who^.Combat^.Clear6 := 0;
-    Who^.Combat^.Clear0 := 0;
-    Who^.Combat^.Clear7 := 0;
+    Who^.Combat^.Initiative := 0;
+    Who^.Combat^.Moves := 0;
+    Who^.Combat^.PendingSpell := 0;
+    Who^.Combat^.B7 := 0;
   end;
   res03_fn_01A5(AfterRemoval);
 end;

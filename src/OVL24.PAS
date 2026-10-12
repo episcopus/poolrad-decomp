@@ -6,9 +6,9 @@ interface
 procedure ovl24_e1;
 procedure ovl24_e2(Who: Pointer; AffectId: Byte; Affect: Pointer);
 procedure ovl24_fn_0160;
-procedure ovl24_e3;
+procedure ovl24_e3(Kind: Byte; Who: Pointer);
 procedure ovl24_fn_0475;
-procedure ovl24_e4;
+procedure ovl24_e4(Who: Pointer);
 procedure ovl24_e5;
 procedure ovl24_e6;
 procedure ovl24_e7;
@@ -38,11 +38,11 @@ implementation
 { ovl24:0160: retf 6: 6 bytes of parameters; 228 bytes of locals }
 {@stub} procedure ovl24_fn_0160; begin end;
 { ovl24:02FA: frame not read }
-{@stub} procedure ovl24_e3; begin end;
+{@stub} procedure ovl24_e3(Kind: Byte; Who: Pointer); begin end;
 { ovl24:0475: retf 6: 6 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl24_fn_0475; begin end;
 { ovl24:0AE7: retf 4: 4 bytes of parameters; 36 bytes of locals }
-{@stub} procedure ovl24_e4; begin end;
+{@stub} procedure ovl24_e4(Who: Pointer); begin end;
 { ovl24:0C4F: retf 6: 6 bytes of parameters; 2 bytes of locals }
 {@stub} procedure ovl24_e5; begin end;
 { ovl24:0CB7: retf 10: 10 bytes of parameters; 2 bytes of locals }

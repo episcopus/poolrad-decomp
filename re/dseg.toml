@@ -614,3 +614,8 @@ evidence = "the combatant table: X, Y and footprint kind per combatant, entry 0'
 offset = 0x66DD
 name = "BodyTable"
 evidence = "ovl31:0F61..1006 RemoveCombatant fills a 7-byte record (who, X, Y, tile) at DS:66DD+7(n-1), n = ++DS:6715; PlaceCombatant searches and clears them; 8 records end at DS:6715"
+
+[[global]]
+offset = 0x49E2
+name = "GameSpeed"
+evidence = "GameSpeedMenu (ovl08:10F6) shows it as GameSpeed (n) and its Slower/Faster keys move it in 0..9"

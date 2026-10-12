@@ -4,6 +4,13 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-12 | none | ovl25_init marked blocked behind the nested-routine comparison | make match UNIT=ovl25 |
+| 2026-10-12 | 5.4 | money truncation QUIRKs of BuyItems, the Overloaded flag, the leave-on-No answer | make match UNIT=ovl06 |
+| 2026-10-12 | none | ovl29 review fix: named constants only | make match UNIT=ovl29 |
+| 2026-10-12 | 4.2.3 | Put8x8Symbol's Direct per caller; Load8x8Bank takes a DAX block id | make match UNIT=ovl34 (unit complete) |
+| 2026-10-12 | 5.5 | the combat round loop, turn order, player commands, movement, dying and bandaging (ovl08) | make match UNIT=ovl08 (11 of 13 routines) |
+| 2026-10-12 | process | make next skips units whose every unfinished routine is blocked | tests/unit/test_agent_tools.py |
+| 2026-10-12 | 5.2 | ovl29 map entry 0143 removed (tail of DrawWallMap) | make match UNIT=ovl29: unit complete, 13 routines |
 | 2026-10-12 | 5.8 | menu unit ovl25: prompt line, word hotkeys, picture animation, timeout, list menu keys and paging | make match UNIT=ovl25 (6 matched), draft 3c8dac5 |
 | 2026-10-12 | 4.2.1, 4.2.4, 5.2.1, 5.2.2 | GEO plane accessors and off-map wrap; LoadWallSet slots, symbol offset and bank loading (no multiple-of-780 check); the 3D view's ten wall pieces, painter's order and overhead wall map | make match UNIT=ovl29 (unit complete) |
 | 2026-10-12 | 5.18 | ScanTargets caller corrected to ovl22_e48; POOLVARS section refs to 5.18; StepLine no-step Pattern note | make match UNIT=ovl30 (8 matched, unit complete), make readability clean, make check green |

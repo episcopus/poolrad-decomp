@@ -29,7 +29,7 @@ procedure ovl22_fn_0B7F;
 procedure ovl22_fn_0B84;
 procedure ovl22_fn_0B89;
 procedure ovl22_fn_0B8E;
-procedure ovl22_e5;
+procedure ovl22_e5(A, B, C: Byte; var Done: Byte);
 procedure ovl22_fn_0F4F;
 procedure ovl22_e11;
 procedure ovl22_e12;
@@ -165,7 +165,7 @@ implementation
 { ovl22:0B8E: retf 8: 8 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl22_fn_0B8E; begin end;
 { ovl22:0C20: retf 10: 10 bytes of parameters; 38 bytes of locals }
-{@stub} procedure ovl22_e5; begin end;
+{@stub} procedure ovl22_e5(A, B, C: Byte; var Done: Byte); begin end;
 { ovl22:0F4F: retf 6: 6 bytes of parameters; 44 bytes of locals }
 {@stub} procedure ovl22_fn_0F4F; begin end;
 { ovl22:100F: retf 0: 0 bytes of parameters; 12 bytes of locals }

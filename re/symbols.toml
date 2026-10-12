@@ -2046,7 +2046,7 @@ unit = "ovl06"
 addr = "ovl06:0239"
 size = 216
 name = "AddInventoryItem"
-signature = ""
+signature = "procedure AddInventoryItem(Item: PMenuLine; var Overloaded: Byte)"
 c_name = "ovl06_e2"
 level = "L2"
 justification = ""
@@ -2604,12 +2604,12 @@ id = "ovl08:0000"
 unit = "ovl08"
 addr = "ovl08:0000"
 size = 122
-name = "ovl08_fn_0000"
+name = "EndCombat"
 signature = ""
 c_name = "ovl08_fn_0000"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "blocked (dec-9, 2026-10-12): matches except ds6B84 := @ovl22_e4, a cross-unit routine address the matcher reads as ovl08:0000 (escalated). Draft: var Next: PCombatNode; Unused: Word; begin while ds6DBB <> nil do begin Next := ds6DBB^.Next; FreeMem(ds6DBB, $13); ds6DBB := Next; end; FreeMem(ds6716, $4E9); ds6716 := nil; res07_fn_2595(ds6E36); ovl31_e3; ds6B84 := @ovl22_e4; end; renamed from ovl08_fn_0000 (ovl08:0000 frees the combat data (the DS:6DBB list, the $4E9 block DS:6716, the picture DS:6E36) and calls ovl31_e3; called once by RunCombat after the last round); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2617,12 +2617,12 @@ id = "ovl08:007A"
 unit = "ovl08"
 addr = "ovl08:007A"
 size = 183
-name = "ovl08_e1"
+name = "RunCombat"
 signature = ""
 c_name = "ovl08_e1"
 level = "none"
 justification = ""
-notes = "auto:entry_1"
+notes = "blocked (dec-9, 2026-10-12): matches except ds6B84 := @ovl13_e14 (cross-unit routine address, escalated). Draft: var Done: Byte; Who: PCharacter; Unused: Byte; begin ds49F3 := 5; ds6B84 := @ovl13_e14; ovl10_e1; Done := 0; if (ds6814 = 0) or (ds6815 = 0) then Done := 1; while Done = 0 do begin res12_fn_23DB; Who := PCharacter(ds5D96); while Who <> nil do begin ovl13_e1(Who); Who := Who^.Next; end; ds49D6^[715] := 0; PickNextCombatant(Who); while Who <> nil do begin CombatTurn(Who); PickNextCombatant(Who); end; EndCombatRound(Done); end; EndCombat; end; renamed from ovl08_e1 (ovl08:007A the combat loop: rounds of ovl13_e1 per character, turns in initiative order (PickNextCombatant, CombatTurn), EndCombatRound until one side is gone; called by ovl03_fn_179B); auto:entry_1"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2630,12 +2630,12 @@ id = "ovl08:0131"
 unit = "ovl08"
 addr = "ovl08:0131"
 size = 197
-name = "ovl08_fn_0131"
+name = "PickNextCombatant"
 signature = ""
 c_name = "ovl08_fn_0131"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl08_fn_0131 (ovl08:0131 returns the party list character with the highest positive Combat^.Initiative (ties broken by a 1d100 roll), nil when none is left); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2643,12 +2643,12 @@ id = "ovl08:01F6"
 unit = "ovl08"
 addr = "ovl08:01F6"
 size = 292
-name = "ovl08_fn_01F6"
+name = "CombatTurn"
 signature = ""
 c_name = "ovl08_fn_01F6"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl08_fn_01F6 (ovl08:01F6 one character's turn: resets per-turn fields, selects and shows the character, then lets ovl09_e1 (quick) or PlayerTurn act); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2656,363 +2656,64 @@ id = "ovl08:031A"
 unit = "ovl08"
 addr = "ovl08:031A"
 size = 139
-name = "ovl08_fn_031A"
+name = "PlayerTurn"
 signature = ""
 c_name = "ovl08_fn_031A"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl08_fn_031A (ovl08:031A the player's command loop for one character: CombatMenu then Move, View, Aim, Use, Cast, Turn, Quick, Done and the Alt keys until the turn is done); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl08:03A5"
-unit = "ovl08"
-addr = "ovl08:03A5"
-size = 48
-name = "ovl08_fn_03A5"
-signature = ""
-c_name = "ovl08_fn_03A5"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl08:03D5"
-unit = "ovl08"
-addr = "ovl08:03D5"
-size = 657
-name = "ovl08_fn_03D5"
-signature = ""
-c_name = "ovl08_fn_03D5"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl08:0666"
 unit = "ovl08"
 addr = "ovl08:0666"
 size = 63
-name = "ovl08_fn_0666"
+name = "CombatMenu"
 signature = ""
 c_name = "ovl08_fn_0666"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl08_fn_0666 (ovl08:0666 builds the combat menu (Move, View Aim, Use, Cast, Turn, Quick Done) and returns an accepted key through ovl25_e2); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl08:06A5"
-unit = "ovl08"
-addr = "ovl08:06A5"
-size = 10
-name = "ovl08_fn_06A5"
-signature = ""
-c_name = "ovl08_fn_06A5"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl08:06AF"
-unit = "ovl08"
-addr = "ovl08:06AF"
-size = 5
-name = "ovl08_fn_06AF"
-signature = ""
-c_name = "ovl08_fn_06AF"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl08:06B4"
-unit = "ovl08"
-addr = "ovl08:06B4"
-size = 5
-name = "ovl08_fn_06B4"
-signature = ""
-c_name = "ovl08_fn_06B4"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl08:06B9"
-unit = "ovl08"
-addr = "ovl08:06B9"
-size = 5
-name = "ovl08_fn_06B9"
-signature = ""
-c_name = "ovl08_fn_06B9"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl08:06BE"
-unit = "ovl08"
-addr = "ovl08:06BE"
-size = 5
-name = "ovl08_fn_06BE"
-signature = ""
-c_name = "ovl08_fn_06BE"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl08:06C3"
-unit = "ovl08"
-addr = "ovl08:06C3"
-size = 10
-name = "ovl08_fn_06C3"
-signature = ""
-c_name = "ovl08_fn_06C3"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl08:06CD"
-unit = "ovl08"
-addr = "ovl08:06CD"
-size = 10
-name = "ovl08_fn_06CD"
-signature = ""
-c_name = "ovl08_fn_06CD"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl08:06D7"
-unit = "ovl08"
-addr = "ovl08:06D7"
-size = 5
-name = "ovl08_fn_06D7"
-signature = ""
-c_name = "ovl08_fn_06D7"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl08:06DC"
-unit = "ovl08"
-addr = "ovl08:06DC"
-size = 15
-name = "ovl08_fn_06DC"
-signature = ""
-c_name = "ovl08_fn_06DC"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl08:06EB"
-unit = "ovl08"
-addr = "ovl08:06EB"
-size = 5
-name = "ovl08_fn_06EB"
-signature = ""
-c_name = "ovl08_fn_06EB"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl08:06F0"
-unit = "ovl08"
-addr = "ovl08:06F0"
-size = 5
-name = "ovl08_fn_06F0"
-signature = ""
-c_name = "ovl08_fn_06F0"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl08:06F5"
-unit = "ovl08"
-addr = "ovl08:06F5"
-size = 10
-name = "ovl08_fn_06F5"
-signature = ""
-c_name = "ovl08_fn_06F5"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl08:06FF"
-unit = "ovl08"
-addr = "ovl08:06FF"
-size = 25
-name = "ovl08_fn_06FF"
-signature = ""
-c_name = "ovl08_fn_06FF"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl08:0718"
-unit = "ovl08"
-addr = "ovl08:0718"
-size = 360
-name = "ovl08_fn_0718"
-signature = ""
-c_name = "ovl08_fn_0718"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl08:0880"
 unit = "ovl08"
 addr = "ovl08:0880"
 size = 9
-name = "ovl08_fn_0880"
+name = "EndCombatRound"
 signature = ""
 c_name = "ovl08_fn_0880"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl08_fn_0880 (ovl08:0880 end of a combat round: per character updates, dying characters bleed (Status 5 -> 6 after 10 rounds), Your Teammate is Dying, the end test and Continue Battle); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl08:0889"
-unit = "ovl08"
-addr = "ovl08:0889"
-size = 5
-name = "ovl08_fn_0889"
-signature = ""
-c_name = "ovl08_fn_0889"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl08:088E"
-unit = "ovl08"
-addr = "ovl08:088E"
-size = 87
-name = "ovl08_fn_088E"
-signature = ""
-c_name = "ovl08_fn_088E"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl08:08E5"
-unit = "ovl08"
-addr = "ovl08:08E5"
-size = 180
-name = "ovl08_fn_08E5"
-signature = ""
-c_name = "ovl08_fn_08E5"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl08:0999"
-unit = "ovl08"
-addr = "ovl08:0999"
-size = 70
-name = "ovl08_fn_0999"
-signature = ""
-c_name = "ovl08_fn_0999"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl08:09DF"
 unit = "ovl08"
 addr = "ovl08:09DF"
 size = 336
-name = "ovl08_fn_09DF"
+name = "MoveCharacter"
 signature = ""
 c_name = "ovl08_fn_09DF"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl08_fn_09DF (ovl08:09DF the Move/Attack command: keypad scan codes H I M Q P O K G give directions 0..7, a step into an enemy attacks (MeleeAttack), off the map asks Flee:, terrain cost above the moves left says Blocked); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl08:0B2F"
-unit = "ovl08"
-addr = "ovl08:0B2F"
-size = 5
-name = "ovl08_fn_0B2F"
-signature = ""
-c_name = "ovl08_fn_0B2F"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl08:0B34"
-unit = "ovl08"
-addr = "ovl08:0B34"
-size = 20
-name = "ovl08_fn_0B34"
-signature = ""
-c_name = "ovl08_fn_0B34"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl08:0B48"
-unit = "ovl08"
-addr = "ovl08:0B48"
-size = 509
-name = "ovl08_fn_0B48"
-signature = ""
-c_name = "ovl08_fn_0B48"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl08:0D45"
 unit = "ovl08"
 addr = "ovl08:0D45"
 size = 256
-name = "ovl08_fn_0D45"
+name = "MeleeAttack"
 signature = ""
 c_name = "ovl08_fn_0D45"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl08_fn_0D45 (ovl08:0D45 attacks Target with the weapon in hand (Not with that weapon when res12_fn_2E03 and not 2E46), stores Combat^.Target, ovl13_e7/e11/e12 do the attack); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3020,12 +2721,12 @@ id = "ovl08:0E45"
 unit = "ovl08"
 addr = "ovl08:0E45"
 size = 442
-name = "ovl08_fn_0E45"
+name = "EndTurnMenu"
 signature = ""
 c_name = "ovl08_fn_0E45"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl08_fn_0E45 (ovl08:0E45 the Done command's menu: Guard, Delay (initiative 1), Quit, Bandage, Speed (GameSpeedMenu), Exit); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3033,12 +2734,12 @@ id = "ovl08:0FFF"
 unit = "ovl08"
 addr = "ovl08:0FFF"
 size = 247
-name = "ovl08_fn_0FFF"
+name = "BandageDying"
 signature = ""
 c_name = "ovl08_fn_0FFF"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl08_fn_0FFF (ovl08:0FFF finds party characters with Status 5 (dying); with DoIt it bandages the first (Status 4, message is bandaged); returns 1 when one was found); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3046,12 +2747,12 @@ id = "ovl08:10F6"
 unit = "ovl08"
 addr = "ovl08:10F6"
 size = 309
-name = "ovl08_fn_10F6"
+name = "GameSpeedMenu"
 signature = ""
 c_name = "ovl08_fn_10F6"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl08_fn_10F6 (ovl08:10F6 the GameSpeed (n) menu: Slower raises DS:49E2 up to 9, Faster lowers it to 0); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3059,12 +2760,12 @@ id = "ovl08:122B"
 unit = "ovl08"
 addr = "ovl08:122B"
 size = 79
-name = "ovl08_fn_122B"
+name = "SetQuickCombat"
 signature = ""
 c_name = "ovl08_fn_122B"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl08_fn_122B (ovl08:122B sets Quick (+$10F) so the computer fights for the character, and drops a Combat^.Target on the same Side); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3077,7 +2778,7 @@ signature = ""
 c_name = "ovl08_init"
 level = "none"
 justification = ""
-notes = "auto:entry_0"
+notes = "auto:entry_0; blocked: the original is the empty initialisation part (push bp; mov bp,sp; pop bp; retf at ovl08:127A, packet), which src/OVL08.PAS already has (begin end., no {@stub-init}); make match checks an init part only in the whole-unit comparison, which runs when no stub is left, so it waits for EndCombat and RunCombat (escalate-ovl08-20261012113252) (dec-10)"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3086,7 +2787,7 @@ unit = "ovl09"
 addr = "ovl09:000F"
 size = 500
 name = "ovl09_e1"
-signature = ""
+signature = "procedure ovl09_e1(Who: Pointer)"
 c_name = "ovl09_e1"
 level = "none"
 justification = ""
@@ -6336,7 +6037,7 @@ unit = "ovl13"
 addr = "ovl13:0000"
 size = 291
 name = "ovl13_e1"
-signature = ""
+signature = "procedure ovl13_e1(Who: Pointer)"
 c_name = "ovl13_e1"
 level = "none"
 justification = ""
@@ -6401,7 +6102,7 @@ unit = "ovl13"
 addr = "ovl13:0712"
 size = 410
 name = "ovl13_e3"
-signature = ""
+signature = "procedure ovl13_e3(Who: Pointer; Dir: Byte)"
 c_name = "ovl13_e3"
 level = "none"
 justification = ""
@@ -6427,7 +6128,7 @@ unit = "ovl13"
 addr = "ovl13:08B2"
 size = 221
 name = "ovl13_e4"
-signature = ""
+signature = "procedure ovl13_e4(Who: Pointer; Dir: Byte)"
 c_name = "ovl13_e4"
 level = "none"
 justification = ""
@@ -6570,7 +6271,7 @@ unit = "ovl13"
 addr = "ovl13:0C6A"
 size = 132
 name = "ovl13_e5"
-signature = ""
+signature = "function ovl13_e5(Who: Pointer): Byte"
 c_name = "ovl13_e5"
 level = "none"
 justification = ""
@@ -6596,7 +6297,7 @@ unit = "ovl13"
 addr = "ovl13:0D23"
 size = 111
 name = "ovl13_e6"
-signature = ""
+signature = "procedure ovl13_e6(Who: Pointer)"
 c_name = "ovl13_e6"
 level = "none"
 justification = ""
@@ -6661,7 +6362,7 @@ unit = "ovl13"
 addr = "ovl13:0E82"
 size = 317
 name = "ovl13_e7"
-signature = ""
+signature = "function ovl13_e7(Who, Target: Pointer): Boolean"
 c_name = "ovl13_e7"
 level = "none"
 justification = ""
@@ -6713,7 +6414,7 @@ unit = "ovl13"
 addr = "ovl13:116A"
 size = 110
 name = "ovl13_e9"
-signature = ""
+signature = "procedure ovl13_e9(Who: Pointer)"
 c_name = "ovl13_e9"
 level = "none"
 justification = ""
@@ -6817,7 +6518,7 @@ unit = "ovl13"
 addr = "ovl13:17F6"
 size = 142
 name = "ovl13_e11"
-signature = ""
+signature = "procedure ovl13_e11(Who, Target: Pointer)"
 c_name = "ovl13_e11"
 level = "none"
 justification = ""
@@ -6830,7 +6531,7 @@ unit = "ovl13"
 addr = "ovl13:1884"
 size = 666
 name = "ovl13_e12"
-signature = ""
+signature = "procedure ovl13_e12(Who, Target: Pointer; A: Byte; P: Pointer; var Done: Byte)"
 c_name = "ovl13_e12"
 level = "none"
 justification = ""
@@ -7012,7 +6713,7 @@ unit = "ovl13"
 addr = "ovl13:2414"
 size = 30
 name = "ovl13_e15"
-signature = ""
+signature = "procedure ovl13_e15(A, B: Byte; var Done: Byte)"
 c_name = "ovl13_e15"
 level = "none"
 justification = ""
@@ -7129,7 +6830,7 @@ unit = "ovl13"
 addr = "ovl13:2998"
 size = 264
 name = "ovl13_e16"
-signature = ""
+signature = "function ovl13_e16(Who, Target: Pointer): Boolean"
 c_name = "ovl13_e16"
 level = "none"
 justification = ""
@@ -7311,7 +7012,7 @@ unit = "ovl13"
 addr = "ovl13:3558"
 size = 464
 name = "ovl13_e17"
-signature = ""
+signature = "procedure ovl13_e17(Who: Pointer; A, B, C: Byte; var Done: Byte; var Aim)"
 c_name = "ovl13_e17"
 level = "none"
 justification = ""
@@ -7415,7 +7116,7 @@ unit = "ovl13"
 addr = "ovl13:3B93"
 size = 218
 name = "ovl13_e24"
-signature = ""
+signature = "function ovl13_e24: Boolean"
 c_name = "ovl13_e24"
 level = "none"
 justification = ""
@@ -10085,7 +9786,7 @@ unit = "ovl19"
 addr = "ovl19:0EF8"
 size = 234
 name = "ovl19_e6"
-signature = ""
+signature = "procedure ovl19_e6(var Done: Byte)"
 c_name = "ovl19_e6"
 level = "none"
 justification = ""
@@ -11450,7 +11151,7 @@ unit = "ovl22"
 addr = "ovl22:0C20"
 size = 815
 name = "ovl22_e5"
-signature = ""
+signature = "procedure ovl22_e5(A, B, C: Byte; var Done: Byte)"
 c_name = "ovl22_e5"
 level = "none"
 justification = ""
@@ -12620,7 +12321,7 @@ unit = "ovl24"
 addr = "ovl24:02FA"
 size = 379
 name = "ovl24_e3"
-signature = ""
+signature = "procedure ovl24_e3(Kind: Byte; Who: Pointer)"
 c_name = "ovl24_e3"
 level = "none"
 justification = ""
@@ -12646,7 +12347,7 @@ unit = "ovl24"
 addr = "ovl24:0AE7"
 size = 360
 name = "ovl24_e4"
-signature = ""
+signature = "procedure ovl24_e4(Who: Pointer)"
 c_name = "ovl24_e4"
 level = "none"
 justification = ""
@@ -13170,7 +12871,7 @@ signature = ""
 c_name = "ovl25_init"
 level = "none"
 justification = ""
-notes = "auto:entry_0"
+notes = "auto:entry_0; blocked: the original is the empty initialisation part (push bp; mov bp,sp; pop bp; retf at ovl25:1245, packet), which src/OVL25.PAS already has (begin end., no {@stub-init}); make match checks an init part only in the whole-unit comparison, which runs when no stub is left, so it waits for ReadPromptChoice and ChooseFromList (escalate-res06-20261012110841, nested-routine comparison) (dec-10)"
 evidence = ["prologue"]
 
 [[routine]]
@@ -13443,7 +13144,7 @@ evidence = ["prologue"]
 id = "ovl29:0000"
 unit = "ovl29"
 addr = "ovl29:0000"
-size = 323
+size = 341
 name = "DrawWallMap"
 signature = "procedure DrawWallMap(Col, Row: ShortInt; Dir: Byte)"
 c_name = "ovl29_fn_0000"
@@ -13451,19 +13152,6 @@ level = "L2"
 justification = ""
 notes = "renamed from ovl29_fn_0000 (ovl29:0000 draws the 11x11 cells of the area map around the party as 8x8 symbols $104 + wall bits (WallIdAt north 1, east 2, south 4, west 8) and the party arrow $100 + Dir div 2; ovl29_e5 calls it instead of the 3D walls while ds6AAC is nonzero); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl29:0143"
-unit = "ovl29"
-addr = "ovl29:0143"
-size = 18
-name = "ovl29_fn_0143"
-signature = ""
-c_name = "ovl29_fn_0143"
-level = "none"
-justification = ""
-notes = "not a routine (dec-9, 2026-10-12): the tail of DrawWallMap (ovl29:0000), whose matched code runs 0000..0154 (make match: 341 bytes); for the mapper to remove; auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl29:0155"
@@ -13739,10 +13427,7 @@ unit = "ovl31"
 addr = "ovl31:0000"
 size = 104
 name = "FootprintCell"
-signature = "function FootprintCell(Kind, Index: Byte"
-c_name = "ovl31_e1"
-level = "L2"
-justification = ""
+signature = "function FootprintCell(Kind, Index: Byte; var DX, DY: ShortInt): Boolean"
 notes = "renamed from ovl31_e1 (ovl31:0000 reads cell J of footprint kind Base from the DS:2844 table (offset pair) and answers whether it exists (DX >= 0); kinds 1..4 are 1 cell, 2 vertical, 2 horizontal, 2x2 (table bytes)); auto:near_call"
 evidence = ["prologue"]
 
@@ -13830,10 +13515,7 @@ unit = "ovl31"
 addr = "ovl31:04BE"
 size = 109
 name = "GetMapCell"
-signature = "procedure GetMapCell(CellX, CellY: ShortInt"
-c_name = "ovl31_e6"
-level = "L2"
-justification = ""
+signature = "procedure GetMapCell(CellX, CellY: ShortInt; var Occupant, Tile: Byte)"
 notes = "renamed from ovl31_e6 (ovl31:04BE returns the tile id (ds6716^ cells) and the occupant (DS:60DB) of map cell (X, Y), both 0 off the 50x25 map); auto:near_call"
 evidence = ["prologue"]
 
@@ -13843,10 +13525,7 @@ unit = "ovl31"
 addr = "ovl31:052B"
 size = 446
 name = "RedrawGround"
-signature = "procedure RedrawGround(Col, Row: ShortInt"
-c_name = "ovl31_e7"
-level = "L2"
-justification = ""
+signature = "procedure RedrawGround(Col, Row: ShortInt; Occupant: Byte)"
 notes = "renamed from ovl31_e7 (ovl31:052B redraws the cell pictures under combatant Occ's footprint, or under view cell (X, Y) when no combatant stands there); auto:near_call"
 evidence = ["prologue"]
 
@@ -13869,10 +13548,7 @@ unit = "ovl31"
 addr = "ovl31:071A"
 size = 186
 name = "IsCombatantInView"
-signature = "function IsCombatantInView(Who: PCharacter"
-c_name = "ovl31_e9"
-level = "L2"
-justification = ""
+signature = "function IsCombatantInView(Who: PCharacter; AllCells: Byte): Boolean"
 notes = "renamed from ovl31_e9 (ovl31:071A true when the footprint of combatant Who is in the 7x7 view: every cell when All is set, any cell otherwise; false for an inactive combatant); auto:near_call"
 evidence = ["prologue"]
 
@@ -13882,10 +13558,7 @@ unit = "ovl31"
 addr = "ovl31:07D4"
 size = 450
 name = "ScrollViewTo"
-signature = "function ScrollViewTo(CellX, CellY: ShortInt"
-c_name = "ovl31_fn_07D4"
-level = "L2"
-justification = ""
+signature = "function ScrollViewTo(CellX, CellY: ShortInt; Margin: Byte): Boolean"
 notes = "renamed from ovl31_fn_07D4 (ovl31:07D4 moves the 7x7 view origin (ds6716^+2,+3) until map cell (X, Y) is within Margin cells of the centre, redraws all 49 cell pictures and returns true; returns false when no scroll was needed); auto:near_call"
 evidence = ["prologue"]
 
@@ -13895,10 +13568,7 @@ unit = "ovl31"
 addr = "ovl31:0996"
 size = 354
 name = "MoveCombatCursor"
-signature = "procedure MoveCombatCursor(CellX, CellY: ShortInt"
-c_name = "ovl31_e10"
-level = "L2"
-justification = ""
+signature = "procedure MoveCombatCursor(CellX, CellY: ShortInt; Margin, Dir: Byte)"
 notes = "renamed from ovl31_e10 (ovl31:0996 steps from map cell (X, Y) by direction Dir (ds2736/ds273F, 8 = no step), scrolls and redraws the view and the combatants when needed, restores the old cell and draws the cursor at the new one); auto:near_call"
 evidence = ["prologue"]
 
@@ -13908,10 +13578,7 @@ unit = "ovl31"
 addr = "ovl31:0AF8"
 size = 239
 name = "SetCombatantIcon"
-signature = "procedure SetCombatantIcon(Who: PCharacter"
-c_name = "ovl31_e11"
-level = "L2"
-justification = ""
+signature = "procedure SetCombatantIcon(Who: PCharacter; IconSet, Mirror, NoDraw: Byte)"
 notes = "renamed from ovl31_e11 (ovl31:0AF8 brings combatant Who into view, stores IconSet in its combat record (+9) and redraws its icon with Mirror unless NoDraw); auto:entry_11"
 evidence = ["prologue"]
 
@@ -13973,10 +13640,7 @@ unit = "ovl31"
 addr = "ovl31:0CB9"
 size = 344
 name = "ProbeStep"
-signature = "procedure ProbeStep(Who: PCharacter"
-c_name = "ovl31_e16"
-level = "L2"
-justification = ""
+signature = "procedure ProbeStep(Who: PCharacter; Dir: Byte; var Occupant, Tile: Byte)"
 notes = "renamed from ovl31_e16 (ovl31:0CB9 looks at the cells combatant Who's footprint would cover one step in direction Dir: the other combatant there (Occ) and the tile that decides the move (0 or $1E win, else the largest DS:2744 cost)); auto:near_call"
 evidence = ["prologue"]
 
@@ -13999,10 +13663,7 @@ unit = "ovl31"
 addr = "ovl31:10A7"
 size = 497
 name = "PlaceCombatant"
-signature = "function PlaceCombatant(Who: PCharacter"
-c_name = "ovl31_e18"
-level = "L2"
-justification = ""
+signature = "function PlaceCombatant(Who: PCharacter; CellX, CellY: Byte; Restore: Byte): Boolean"
 notes = "renamed from ovl31_e18 (ovl31:10A7 puts combatant Who on map cell (X, Y) with its footprint (+$6C and $7F) when the cells are free and passable (ProbeStep with Dir 8); Restore takes back its body record and tile; returns whether it was placed (always true outside view mode 5)); auto:entry_18"
 evidence = ["prologue"]
 
@@ -14012,10 +13673,7 @@ unit = "ovl31"
 addr = "ovl31:1298"
 size = 99
 name = "ShowCursorOn"
-signature = "procedure ShowCursorOn(Who: PCharacter"
-c_name = "ovl31_e19"
-level = "L2"
-justification = ""
+signature = "procedure ShowCursorOn(Who: PCharacter; Margin, ShowCursor: Byte)"
 notes = "renamed from ovl31_e19 (ovl31:1298 draws the cursor with combatant Who's footprint on Who's cell (MoveCombatCursor with Dir 8), then resets the cursor to kind 1 and hidden); auto:entry_19"
 evidence = ["prologue"]
 
@@ -14150,9 +13808,10 @@ unit = "ovl34"
 addr = "ovl34:003B"
 size = 255
 name = "Load8x8Bank"
-signature = "procedure Load8x8Bank(Count, Bank: Byte)"
+signature = "procedure Load8x8Bank(BlockId, Bank: Byte)"
 c_name = "ovl34_e1"
 level = "L2"
+review = "passed 2026-10-12 by rev-5, eb245c4"
 justification = ""
 notes = "renamed from ovl34_e1 (loads one 8x8 tile bank: called by LoadWallSet and StartGame, builds filename 8x8d+N, fatal Unable to load 8x8D message (ovl34:003B)); auto:entry_1"
 evidence = ["prologue"]
@@ -14166,6 +13825,7 @@ name = "Put8x8Symbol"
 signature = "procedure Put8x8Symbol(XPos, YPos: ShortInt; Symbol: Word; Direct: Byte; Attr: Byte)"
 c_name = "ovl34_e2"
 level = "L2"
+review = "passed 2026-10-12 by rev-5, eb245c4"
 justification = ""
 notes = "renamed from ovl34_e2 (draws one 8x8 tile at X,Y: error string Bad symbol number in Put8x8Symbol (ovl34:015D), called by res09_fn_0000 and ovl29 3x); auto:entry_2"
 evidence = ["prologue"]
@@ -14179,6 +13839,7 @@ name = "ovl34_init"
 signature = ""
 c_name = "ovl34_init"
 level = "L2"
+review = "passed 2026-10-12 by rev-5, eb245c4"
 justification = ""
 notes = "auto:entry_0"
 evidence = ["prologue"]
@@ -18081,7 +17742,7 @@ unit = "res12"
 addr = "00BA:09E3"
 size = 364
 name = "res12_fn_09E3"
-signature = ""
+signature = "procedure res12_fn_09E3(Who: Pointer)"
 c_name = "res12_fn_09E3"
 level = "none"
 justification = ""
@@ -18107,7 +17768,7 @@ unit = "res12"
 addr = "00BA:0B73"
 size = 69
 name = "res12_fn_0B73"
-signature = ""
+signature = "function res12_fn_0B73(Who: Pointer): Boolean"
 c_name = "res12_fn_0B73"
 level = "none"
 justification = ""
@@ -18133,7 +17794,7 @@ unit = "res12"
 addr = "00BA:1037"
 size = 60
 name = "res12_fn_1037"
-signature = ""
+signature = "function res12_fn_1037(N: Byte): string"
 c_name = "res12_fn_1037"
 level = "none"
 justification = ""
@@ -18588,7 +18249,7 @@ unit = "res12"
 addr = "00BA:2637"
 size = 79
 name = "res12_fn_2637"
-signature = ""
+signature = "function res12_fn_2637(Who: Pointer): Byte"
 c_name = "res12_fn_2637"
 level = "none"
 justification = ""
@@ -18601,7 +18262,7 @@ unit = "res12"
 addr = "00BA:2686"
 size = 60
 name = "res12_fn_2686"
-signature = ""
+signature = "function res12_fn_2686(Who: Pointer): Byte"
 c_name = "res12_fn_2686"
 level = "none"
 justification = ""
@@ -18705,7 +18366,7 @@ unit = "res12"
 addr = "00BA:2E03"
 size = 67
 name = "res12_fn_2E03"
-signature = ""
+signature = "function res12_fn_2E03(Who: Pointer): Boolean"
 c_name = "res12_fn_2E03"
 level = "none"
 justification = ""
@@ -18718,7 +18379,7 @@ unit = "res12"
 addr = "00BA:2E46"
 size = 69
 name = "res12_fn_2E46"
-signature = ""
+signature = "function res12_fn_2E46(Who: Pointer): Boolean"
 c_name = "res12_fn_2E46"
 level = "none"
 justification = ""

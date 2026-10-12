@@ -127,11 +127,11 @@ end;
   a stub. }
 {@stub} procedure res06_fn_0D68(Text: string; Color: Byte); begin end;
 { 0709:0DBE: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{ 0709:0DBE. A delay of ds49E2 * 225 milliseconds (Crt.Delay). No parameters. Called while
+{ 0709:0DBE. A delay of GameSpeed * 225 milliseconds (Crt.Delay). No parameters. Called while
   drawing many screens (ovl03, ovl10, ovl12, ovl13, ovl18, ovl19, ovl20). }
 procedure DelayCounted;
 begin
-  Delay(ds49E2 * 225);
+  Delay(GameSpeed * 225);
 end;
 { 0709:0DD3: retf 8: 8 bytes of parameters; 12 bytes of locals }
 {@stub} procedure res06_fn_0DD3(Left, Top, Right, Bottom: Byte); begin end;

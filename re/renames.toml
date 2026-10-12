@@ -1338,3 +1338,122 @@ kind = "global"
 why = "ovl31:0F61..1006 RemoveCombatant fills a 7-byte record (who, X, Y, tile) at DS:66DD+7(n-1), n = ++DS:6715; PlaceCombatant searches and clears them; 8 records end at DS:6715"
 date = "2026-10-12"
 
+[[rename]]
+old = "ovl08_fn_0000"
+new = "EndCombat"
+kind = "routine"
+why = "ovl08:0000 frees the combat data (the DS:6DBB list, the $4E9 block DS:6716, the picture DS:6E36) and calls ovl31_e3; called once by RunCombat after the last round"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl08_fn_031A"
+new = "PlayerTurn"
+kind = "routine"
+why = "ovl08:031A the player's command loop for one character: CombatMenu then Move, View, Aim, Use, Cast, Turn, Quick, Done and the Alt keys until the turn is done"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl08_fn_0880"
+new = "EndCombatRound"
+kind = "routine"
+why = "ovl08:0880 end of a combat round: per character updates, dying characters bleed (Status 5 -> 6 after 10 rounds), Your Teammate is Dying, the end test and Continue Battle"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl08_fn_0E45"
+new = "EndTurnMenu"
+kind = "routine"
+why = "ovl08:0E45 the Done command's menu: Guard, Delay (initiative 1), Quit, Bandage, Speed (GameSpeedMenu), Exit"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl08_fn_10F6"
+new = "GameSpeedMenu"
+kind = "routine"
+why = "ovl08:10F6 the GameSpeed (n) menu: Slower raises DS:49E2 up to 9, Faster lowers it to 0"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl08_fn_122B"
+new = "SetQuickCombat"
+kind = "routine"
+why = "ovl08:122B sets Quick (+$10F) so the computer fights for the character, and drops a Combat^.Target on the same Side"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds49E2"
+new = "GameSpeed"
+kind = "global"
+why = "GameSpeedMenu (ovl08:10F6) shows it as GameSpeed (n) and its Slower/Faster keys move it in 0..9"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl08_e1"
+new = "RunCombat"
+kind = "routine"
+why = "ovl08:007A the combat loop: rounds of ovl13_e1 per character, turns in initiative order (PickNextCombatant, CombatTurn), EndCombatRound until one side is gone; called by ovl03_fn_179B"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl08_fn_0131"
+new = "PickNextCombatant"
+kind = "routine"
+why = "ovl08:0131 returns the party list character with the highest positive Combat^.Initiative (ties broken by a 1d100 roll), nil when none is left"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl08_fn_01F6"
+new = "CombatTurn"
+kind = "routine"
+why = "ovl08:01F6 one character's turn: resets per-turn fields, selects and shows the character, then lets ovl09_e1 (quick) or PlayerTurn act"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl08_fn_0666"
+new = "CombatMenu"
+kind = "routine"
+why = "ovl08:0666 builds the combat menu (Move, View Aim, Use, Cast, Turn, Quick Done) and returns an accepted key through ovl25_e2"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl08_fn_09DF"
+new = "MoveCharacter"
+kind = "routine"
+why = "ovl08:09DF the Move/Attack command: keypad scan codes H I M Q P O K G give directions 0..7, a step into an enemy attacks (MeleeAttack), off the map asks Flee:, terrain cost above the moves left says Blocked"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl08_fn_0D45"
+new = "MeleeAttack"
+kind = "routine"
+why = "ovl08:0D45 attacks Target with the weapon in hand (Not with that weapon when res12_fn_2E03 and not 2E46), stores Combat^.Target, ovl13_e7/e11/e12 do the attack"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl08_fn_0FFF"
+new = "BandageDying"
+kind = "routine"
+why = "ovl08:0FFF finds party characters with Status 5 (dying); with DoIt it bandages the first (Status 4, message is bandaged); returns 1 when one was found"
+date = "2026-10-12"
+
+
+[[rename]]
+old = "ds6716"
+new = "CombatMap"
+kind = "global"
+why = "merge of ovl08 and ovl31: ovl08's ds6716 (the $4E9 combat block, view at +2/+3) is ovl31's CombatMap (DS:6716)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds2744"
+new = "CombatTiles"
+kind = "global"
+why = "merge of ovl08 and ovl31: ovl08's ds2744 ground cost table (4-byte entries, cost at +0) is ovl31's CombatTiles (DS:2744)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds65B9"
+new = "CombatantRecord"
+kind = "global"
+why = "merge of ovl08 and ovl31: ovl08's ds65B9[n] (n from ovl31_e16) is CombatantRecord[n] (DS:65BD, entries 1..72; DS:65B9 is its index base)"
+date = "2026-10-12"

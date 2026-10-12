@@ -3,7 +3,7 @@ unit OVL09;
   until decompiled (playbook 30). }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
-procedure ovl09_e1;
+procedure ovl09_e1(Who: Pointer);
 procedure ovl09_fn_0203;
 procedure ovl09_fn_0255;
 procedure ovl09_fn_02EB;
@@ -52,7 +52,7 @@ procedure ovl09_fn_1758;
 implementation
 
 { ovl09:000F: retf 4: 4 bytes of parameters; 18 bytes of locals }
-{@stub} procedure ovl09_e1; begin end;
+{@stub} procedure ovl09_e1(Who: Pointer); begin end;
 { ovl09:0203: retf 4: 4 bytes of parameters; 6 bytes of locals }
 {@stub} procedure ovl09_fn_0203; begin end;
 { ovl09:0255: retf 8: 8 bytes of parameters; 4 bytes of locals }
