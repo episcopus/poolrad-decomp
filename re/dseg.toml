@@ -904,3 +904,57 @@ evidence = "seven string[10] Copper Silver Electrum Gold Platinum Gems Jewelry a
 offset = 0x0970
 name = "TreasureItemRows"
 evidence = "BuildTreasureItem copies the name numbers, weight, value and affects of a fixed item from eight words starting at the chosen row (ovl21:182F..18C2)"
+
+[[global]]
+offset = 0x49DE
+name = "EclCode"
+evidence = "LoadEcl fills it with the ECL block (ovl07:03F3); the script reads its operands from it at EclPC (ovl07:0026) and addresses it as 9900..B6FF (ovl07:06FB, 0E8D)"
+
+[[global]]
+offset = 0x49ED
+name = "EclPC"
+evidence = "the script's program counter: ovl07_e2 reads operand bytes at EclPC+1.. and advances it (ovl07:0022..012C); ovl07_e3 resets it to 9900, the start of EclCode (ovl07:01F5); ovl14 L key loads an entry point into it"
+
+[[global]]
+offset = 0x7005
+size = 65
+name = "OperandType"
+evidence = "DecodeOperands (ovl07:0000) stores the type byte of operand I = 1..Count at DS:7005 + I and branches on it (1/2/3 read a high byte, $80 a packed string, $81 a string address); OperandValue (ovl07:0136) reads it back; entry 0 is the byte before, never read"
+
+[[global]]
+offset = 0x7045
+size = 65
+name = "OperandHigh"
+evidence = "DecodeOperands (ovl07:0000) stores the third operand byte at DS:7045 + I for types 1, 2, 3 and $81; OperandValue (ovl07:0136) uses it as the high byte of the word (MakeWord); entry 0 is never read"
+
+[[global]]
+offset = 0x7085
+size = 65
+name = "OperandLow"
+evidence = "DecodeOperands (ovl07:0000) stores the second operand byte at DS:7085 + I (the low byte, or the length of a packed string for type $80); InitScript (ovl07:0254) reads entry 1; entry 0 is never read"
+
+[[global]]
+offset = 0x6FC8
+size = 3840
+name = "EclStrings"
+evidence = "string[255] table indexed by the string operand number shl 8 from DS:6FC8 (DecodeOperands clears entry n, ovl07:00CC; DecodeString appends to it, ovl07:1165..1284; ReadVmString, ovl07:1317); entry 0 is the index base, never read; the upper bound is not known"
+
+[[global]]
+offset = 0x6F70
+name = "ReturnStack"
+evidence = "top of the script's return stack: ScriptGosub pushes 6-byte entries (ReturnPC, Next) onto it (ovl07:1951..19B5); InitScript empties it (ovl07:0202)"
+
+[[global]]
+offset = 0x6F74
+name = "ReturnPrev"
+evidence = "ScriptGosub keeps the previous top of ReturnStack in it while pushing (ovl07:1984, 199B); InitScript clears it"
+
+[[global]]
+offset = 0x6F78
+name = "CompareFlags"
+evidence = "CompareStrings and CompareWords clear its six bytes and set [0..5] for =, <>, <, >, <=, >= (ovl07:1844..18E0, 18EE..1948)"
+
+[[global]]
+offset = 0x6F7F
+name = "SkippedOpcode"
+evidence = "SkipCommand stores the opcode at EclPC in it and dispatches on it (ovl07:1EB7)"

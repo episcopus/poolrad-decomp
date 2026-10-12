@@ -3,7 +3,7 @@ unit OVL26;
   window, DrawPartyMarker draws the animated party marker onto that window. The main callers are the
   view dispatcher of the resident unit (res12_fn_27D9, view types 3 and 4), the wilderness map screen
   (res12_fn_2B5E, after the text windows of DrawAdventureScreen) and the encounter unit (ovl03, five
-  sites); ovl07_e8 (the loader) also calls ShowAreaView. }
+  sites); ShowEncounterPicture (the loader) also calls ShowAreaView. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 procedure DrawPartyMarker;

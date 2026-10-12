@@ -75,7 +75,7 @@ const
   WorthlessItemChance = 3;      { a worthless item is taken when 1d10 is at most this }
   ItemListSize = $3F;           { SizeOf(TMenuLine): FreeMem sizes }
   CombatStateSize = $16;        { the size of a character's combat state (TCharacter.Combat) }
-  AnswerNo = 1;                 { ovl07_e13 returns the 0-based word of '~Yes ~No' }
+  AnswerNo = 1;                 { AskMenu returns the 0-based word of '~Yes ~No' }
   KeyEnter = #13;
   KeyNone = #0;
 
@@ -547,7 +547,7 @@ begin
             Menu := '~Yes ~No';
             ShowPagedText(1, $11, $26, $16, $A, 1, 'There is still treasure left.  ');
             ShowPagedText(1, $11, $26, $16, $F, 0, 'Do you want to go back and claim your treasure?');
-            Answer := ovl07_e13(Title, Menu, 13, 10, 15, 0, 0);
+            Answer := AskMenu(Title, Menu, 13, 10, 15, 0, 0);
             if Answer = AnswerNo then
               Done := True
             else

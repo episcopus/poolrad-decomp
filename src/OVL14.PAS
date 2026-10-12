@@ -397,7 +397,7 @@ begin
             begin
               ds49D6^[714] := ds49D6^[714] or 2;
               ovl20_e1(1, 2);
-              ds49ED := ds49E5;
+              EclPC := ds49E5;
               Redraw := 1;
             end;
         end
@@ -461,7 +461,7 @@ begin
             begin
               ds49D6^[714] := ds49D6^[714] or 2;
               ovl20_e1(1, 2);
-              ds49ED := ds49E5;
+              EclPC := ds49E5;
               Redraw := 1;
             end;
         end
