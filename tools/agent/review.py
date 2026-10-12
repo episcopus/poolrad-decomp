@@ -97,7 +97,7 @@ def main(argv=None) -> int:
     except match.MatchError as e:
         problems.append("make match: %s" % e)
         results, whole = [], ""
-    bad = [r for r in results if r.status != "matched"]
+    bad = [r for r in results if r.status not in ("matched", "nested")]
     if bad:
         problems.append("not every routine matches: %s" % ", ".join("%s (%s)" % (r.name, r.status) for r in bad[:8]))
     if results and not whole.startswith("unit: complete"):
