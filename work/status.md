@@ -12,7 +12,7 @@ Approach: ADR-002 (SPEC 4), Pascal-first matching decompilation; the C track (AD
 | P1 Map | done (`make p1-check`): 50 units, 1431 routines, TP 6.0 June 1991 pinned |
 | P2 Oracle and data | done: goldens with recordings for 2 of 2 session scripts (boot-title, create-character); `make golden CHECK=1` |
 | P3 Match harness | done: `make match` (tools/match/match.py, tests/unit/test_match.py); gate `make check` |
-| P4 Match | 13 of 1289 game routines at L2 (830 of 234763 bytes by re/symbols.toml sizes); 6 of 46 game units complete, 0 reviewed; main program `src/POOL.PAS` matched by `make match UNIT=main` |
+| P4 Match | 18 of 1289 game routines at L2 (2087 of 234763 bytes by re/symbols.toml sizes); 8 of 46 game units complete, 0 reviewed; main program `src/POOL.PAS` matched by `make match UNIT=main` |
 | P5 Rebuild | `make rebuild` links the whole game from `src/` (every unit has source: decompiled or skeleton) and reports identical segments |
 
 ### P4 units with matched routines
@@ -20,6 +20,8 @@ Approach: ADR-002 (SPEC 4), Pascal-first matching decompilation; the C track (AD
 | Unit | Name | Routines | L2 | Bytes at L2 | Readable (`make readability`) | Reviewed |
 |---|---|---:|---:|---:|---|---|
 | ovl00 | ovl00 | 2 | 2 | 124 | clean | complete |
+| ovl02 | ovl02 | 2 | 2 | 609 | clean | complete |
+| ovl27 | ovl27 | 3 | 3 | 648 | clean | complete |
 | ovl33 | ovl33 | 2 | 2 | 248 | clean | complete |
 | res02 | res02 | 1 | 1 | 16 | clean | complete |
 | res04 | res04 | 5 | 5 | 336 | clean | complete |
@@ -35,7 +37,7 @@ Locks (agents at work): `make locks`. Next unit: `make next`.
 |---|---:|
 | Units | 50 |
 | Routines | 1431 |
-| Routines with non-provisional names | 110 |
+| Routines with non-provisional names | 113 |
 | RTL-prefixed routine names | 53 |
 | Unit code_bytes (declared) | 245081 |
 | Sum of routine sizes | 244128 |
@@ -44,8 +46,8 @@ Locks (agents at work): `make locks`. Next unit: `make next`.
 
 | Level | Count |
 |---|---:|
-| none | 1418 |
-| L2 | 13 |
+| none | 1413 |
+| L2 | 18 |
 
 ### Top units by routine count
 
@@ -69,10 +71,11 @@ Locks (agents at work): `make locks`. Next unit: `make next`.
 
 ## Verification
 
-13 routines above `none`: res11_init L2 (03DA:0000), res10_init L2 (03ED:0000), ShowMessageLine L2 (0709:0BF5), QuitGame L2 (0899:0000), ReadGameKey L2 (0899:0059), FlushKeyboard L2 (0899:0104), DiscardWaitingKey L2 (0899:0122), res04_init L2 (0899:013C), res02_init L2 (0A31:0000), HeapErrorHandler L2 (ovl00:0042), ovl00_init L2 (ovl00:00AC), ShowDebugTrace L2 (ovl33:0004), ovl33_init L2 (ovl33:00F7).
+18 routines above `none`: res11_init L2 (03DA:0000), res10_init L2 (03ED:0000), ShowMessageLine L2 (0709:0BF5), QuitGame L2 (0899:0000), ReadGameKey L2 (0899:0059), FlushKeyboard L2 (0899:0104), DiscardWaitingKey L2 (0899:0122), res04_init L2 (0899:013C), res02_init L2 (0A31:0000), HeapErrorHandler L2 (ovl00:0042), ovl00_init L2 (ovl00:00AC), CheckCodeWheel L2 (ovl02:00FD), ovl02_init L2 (ovl02:0359), DrawAreaView L2 (ovl27:0000), DrawAdventureScreen L2 (ovl27:0207), ovl27_init L2 (ovl27:0283), ShowDebugTrace L2 (ovl33:0004), ovl33_init L2 (ovl33:00F7).
 
 ## Blockers and decisions waiting for the human
 
+- ovl26 merge aborted (orch, 2026-10-11): unit/ovl26 (56439d2) conflicts with ovl27, merged first, over DS:49D2. ovl27 declares `GameVars: ^TGameVars` (array[0..511] of Word, named with evidence in `re/dseg.toml`) and ovl26 declares `ds49D2: ^TGameState` (record, MapX at +$186 = word 195). `make rename APPLY=1` would also turn ovl26's `ds49D2` into `GameVars`. Also conflicting: `re/dseg.toml`, `re/renames.toml`, `re/symbols.toml`, the whitepaper, and `src/OVL27.PAS` (ovl26 still has ovl27's stubs; the decompiled routines win). For the ovl26 decompiler: merge `main` into `unit/ovl26`, give DS:49D2 one name and one type that both units compile and match against, run `make check`, and hand off again. The hand-off stays open until then.
 - Approach (decided 2026-10-11, SPEC 4): Pascal first, matched by the pinned compiler; C later by translation (Phase 7, branch `track-c-hybrid`).
 - Canonical state (decided 2026-10-10 and 2026-10-11): `re/state.toml` has `stack = "diagnostic"` and `heap = "compared"`; goldens carry recordings of the outside world (`tools/oracle/replay.py`) for the rebuild and the C translation.
 - Shared files (SPEC 9.6): `src/POOLVARS.PAS` and stub declarations take additive edits; the orchestrator merges.

@@ -359,9 +359,24 @@ evidence = "ovl26_e1 dispatches on it: case at ovl26:018C: 1 draws the 3D wall v
 [[global]]
 offset = 0x3C76
 name = "MapBaseX"
-evidence = "byte table indexed by AreaViewKind, added to TGameState.MapX: ovl26:0006 and ovl26:023F read entries 2,3,4 = 0,13,26 (the map window pages in the 44-wide grid, ds3648); entry 1 is 78"
+evidence = "byte table indexed by AreaViewKind, added to GameVars^[VarMapX] (word 195): ovl26:0006 and ovl26:023F read entries 2,3,4 = 0,13,26 (the map window pages in the 44-wide grid, AreaMap); entry 1 is 78"
 
 [[global]]
 offset = 0x6DDC
 name = "MarkerFrame"
 evidence = "ovl26_e2 cycles it 0..5 ((x+1) mod 6 at ovl26:00AE) and draws the party marker with MarkerFrame mod 2 (mirror) and MarkerFrame div 2 + 9 (icon picture 9..11); ovl11_e1 resets it to 0"
+
+[[global]]
+offset = 0x3648
+name = "AreaMap"
+evidence = "the area map: 36 rows x 44 columns of block codes at DS:3648, read as [row*44+col] minus one by DrawAreaView (ovl27:0000, matched), ovl10:1213 and ovl14:08B9 (ovl14 compares bytes with 'N'); rows 34 and 35 are all 'N' (0x4E) in the file image; ovl26_e1 clamps the view window to columns 0..39, rows 0..31"
+
+[[global]]
+offset = 0x0C30
+name = "SpecialBlocks"
+evidence = "ten records of (Col, Row, Pic) at DS:0C30: DrawAreaView (ovl27:0000, matched) walks entries 1..9 and overrides the view block at (Col, Row) with Pic - 1 while the game variables allow; entry 0 is never read (in the image its bytes are the tail of the previous table)"
+
+[[global]]
+offset = 0x49D2
+name = "GameVars"
+evidence = "far pointer at DS:49D2 to the game's word variables: ovl07:02E1 and ovl17:1C20 index it dynamically (shl ax,1; les; add di,ax), ShowAreaView and DrawPartyMarker (ovl26:016D, ovl26:0000, matched) read words 195 and 196 as the party's position on the area map and words 230, 251, 253 and 254 (+$1CC, +$1F6, +$1FA, +$1FC) for the wall view, and DrawAreaView (ovl27:0000, matched) reads words 380, 396, 415, 416, 435 and 466 as gates for the fixed area blocks. Type ^TGameVars (array of Word): the dynamic shl-ax-1 indexing fits a word array and not a record; with constant indices GameVars^[VarMapX] compiles to the same les di / es:[di+186h] a record field gave, so ovl26 and ovl27 both match against this one declaration (make match UNIT=ovl26, UNIT=ovl27, 2026-10-11)"

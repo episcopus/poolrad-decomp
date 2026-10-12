@@ -81,3 +81,16 @@ def test_rename_changes_the_registry_the_source_and_the_whitepaper(tree):
     (match.SRC / "RES09.PAS").write_text(src.replace("SetBorderColour", "res09_fn_0000", 1))   # a stale merge
     assert rename.main(["--apply"]) == 0
     assert "res09_fn_0000" not in (match.SRC / "RES09.PAS").read_text()
+
+
+def test_rename_reaches_code_after_apostrophes_in_comments_and_prose():
+    # dec-1, ovl27: an apostrophe in a comment paired with the next one further down, and every use in
+    # between kept the old name.
+    pas = ("{ the player's turn }\nprocedure Old(A: Byte);\nbegin\n  Old(1); Write('Old''s', 'x');\n"
+           "end;\n(* it's done *)\nbegin Old(2) end.\n")
+    text, n = rename.replace_word(pas, "Old", "New")
+    assert n == 3 and "Old(" not in text and "'Old''s'" in text
+    doc = "The game's main loop calls `Old`;\nthe players' turn calls Old too, see 'Old' in strings.\n"
+    text, n = rename.replace_word(doc, "Old", "New", pascal=False)
+    assert n == 2 and "`New`" in text and "calls New too" in text and "'Old'" in text
+    assert rename.left_behind(text, "Old") == [2]

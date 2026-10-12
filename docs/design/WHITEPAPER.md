@@ -196,7 +196,7 @@ The main program **[V]** (`src/POOL.PAS`, `make match UNIT=main`: matched comple
 
 ```pascal
 ovl11_e1;
-if ParamStr(1) <> 'STING' then begin ovl01_e1; ovl02_e1; end;   { title screens, code wheel (5.12) }
+if ParamStr(1) <> 'STING' then begin ovl01_e1; CheckCodeWheel; end;   { title screens, code wheel (5.12) }
 ovl16_e1;
 ovl29_e1(11, 0, 7, 6);
 ovl03_e1;
@@ -259,10 +259,10 @@ C track (ADR-001, 2026-10-10, kept on branch `track-c-hybrid`) **[V]** on that b
 What the matching harness relies on, each proven by a complete match of res04 (resident) and ovl00 (overlay):
 
 - A unit's routines are laid out in source order, each starting `push bp; mov bp,sp` (encoded `55 89 E5`; the map tool used to look for `55 8B EC` only and missed routines such as `res04:0122`, fixed 2026-10-11: `make map` found 38 more).
-- The string and set constants a routine uses are placed in the code segment immediately before it (a set constant is 32 bytes); `re/symbols.toml` therefore counts them in the size of the routine before (for example `res04_fn_0000`, 89 bytes, of which 51 are code and 38 the constants of `res04_fn_0059`).
+- The string and set constants a routine uses are placed in the code segment immediately before it (a set constant is 32 bytes); `re/symbols.toml` therefore counts them in the size of the routine before (for example `QuitGame`, 89 bytes, of which 51 are code and 38 the constants of `ReadGameKey`).
 - Every routine is far (`$F+`); a call within the unit is `push cs; call near`.
 - The initialisation part comes last; an empty one (`begin end.`) is `push bp; mov bp,sp; pop bp; retf`. A resident unit is padded with zeros to a paragraph.
-- Globals are DS offsets fixed at link time; a routine of an overlay unit is addressed through its stub entry (`@ovl00_e1` is `0016:0025`, the stub segment and entry offset).
+- Globals are DS offsets fixed at link time; a routine of an overlay unit is addressed through its stub entry (`@HeapErrorHandler` is `0016:0025`, the stub segment and entry offset).
 - Linking the whole program from source (`make rebuild`: `src/POOL.PAS` with `{$O OVLnn}` for the overlay units) reproduces the original's arrangement **[V]**: the main program at `0000`, the overlay stub segments from paragraph `16h` on (where the original's ovl00 stub is), the resident units after them in reverse initialisation order and System last, and an `FBOV` overlay file whose first unit's code starts with ovl00's string pool, like `GAME.OVR`. `tools/re/tpovl.py` reads the rebuilt pair and finds the original's 35 overlays and 48 initialisations (13 resident).
 
 
@@ -424,33 +424,77 @@ Each section will cover: purpose, units and routines, data, algorithm, quirks, e
 | 5.13 | Random numbers | TP 6 generator, `Randomize` from the clock (below) |
 | 5.15 | Messages and running out of memory | res06, ovl00 (below) |
 
-### 5.2 Areas, maps and movement: the area view (ovl26, matched)
+### 5.2 The area view: wilderness blocks and the adventure screen **[V]** (`make match UNIT=ovl27`, `src/OVL27.PAS`)
 
-- **The area view unit** **[V]** (`src/OVL26.PAS`, `make match UNIT=ovl26`: unit complete): the resident unit's view dispatcher calls `ShowAreaView` (`ovl26:016D`) for its view types 3 and 4 (`res12_fn_27D9`), and the wilderness map screen calls it after the text windows of `ovl27_e2` (`res12_fn_2B5E`).
-- **Two kinds of view** **[V]** (the `case` at `ovl26:018C`): `AreaViewKind` (DS:49FA) selects what to draw. Kind 1 is the 3D wall view: GeoLoad returns the event byte of the party cell (`ovl29_e4`, wrapping the coordinates into 0..15; bit 7 marks an interior cell, 4.2.1), the wall id table `ds0C26` (16 entries: two equal groups of eight ids 0,15,12,11,13,10,9,14) is indexed by the game state words at +$1FA (outside cell) or +$1FC (interior cell), the four wall view descriptors DS:6A60..6A63 go to `ovl29_e1` (a pure setter for the same globals), and `ovl29_e5` draws the rest (the overlay labels only while DS:6AAC is 0, cleared when the state word at +$1F6 is set). Kinds 2 to 4 are the map window: `ovl27_e1(MapLeft, MapTop)` draws 25 cells of the 44-column map grid (DS:3648, stride 44 [V] from `ovl27:0040`) at 3 pixels per cell, and `DrawPartyMarker` follows.
+The wilderness around Phlan is drawn as a 5x5 grid of area blocks. Every block covers 3x3 map
+tiles and is one picture, drawn by `ovl32_e2` (`ovl32:00F1`) at a cell position of the 3D view
+window; the block at map position (column, row) comes from the area map and can be overridden by
+a fixed table entry while the game variables allow it (`DrawAreaView`, `ovl27:0000`).
+
+- **The area map** at DGROUP `0x3648` (`AreaMap` in `src/POOLVARS.PAS`) is 36 rows by 44 columns
+  of one-byte block codes **[V]** (row stride 44 at `ovl27:0040`; `ShowAreaView` clamps the view
+  window to columns 0..39 and rows 0..31, `ovl26:0289`, which is 44-5 and 36-5). The picture code
+  drawn is the map byte minus one **[V]** (`ovl27:0049`). The shipped image fills the map with
+  terrain codes; rows 34 and 35 are all `0x4E` (the letter N), and `ovl14:08BB` compares map bytes
+  with `0x4E` specially **[I]**: N marks ground that draws no block. **[?]** Nothing in the code
+  writes the map, so it is compiled-in data; whether the game rewrites parts of it at run time is
+  open.
+- **Nine fixed positions** can replace a block with their own picture: the table at DGROUP
+  `0x0C30` (`SpecialBlocks`, ten records of Col, Row, Pic: Word; entry 0 is never read, its bytes
+  are the tail of the previous table in the image). Each entry has its own condition on the game
+  variables **[V]** (`ovl27:00B2`): entry 3 while word 396 is not 255; entry 4 while word 466 is
+  nonzero, or bit 3 of word 380 is set, or word 415 is zero; entry 5 while bit 1 of word 416 is
+  clear; entry 6 always; entry 7 while bit 0 of word 416 is clear; entries 8 and 9 while word 435
+  is above 253. Entries 6 and 7 hold columns 165 and 157, beyond the 44-column map, so they can
+  never match the window **[I]**: dead entries, or coordinates in a system not seen yet.
+- **The party position on the area map** lives in the game variables, the word array the far
+  pointer at DGROUP `0x49D2` (`GameVars`) leads to: word 195 is the column and word 196 the row
+  **[I]** (`ovl26:0249` passes both minus 2, so the party block sits at the centre of the 5x5
+  grid; `ovl26:023F` adds a per-zone column base from the byte table at `0x3C78`, whose entries
+  for zones 2..4 are 0, 13, 26: three side-by-side strips of 13 columns **[V]** for the table,
+  **[I]** for them being the wilderness zones). `ovl07:02E1` and `ovl17:1C20` index the same array
+  dynamically **[V]**, consistent with the ECL scripts' variables **[H]** (coab `VmOpp.cs`).
+- **`DrawAdventureScreen`** (`ovl27:0207`) frames the three windows of the adventure screen
+  **[V]**: the 3D view rows 1..15 x columns 1..15, the side window rows 1..15 x columns 17..38
+  and the text area rows 17..22 x columns 1..38, through `res09_fn_02E8` (`03F1:02E8`), the
+  window routine of res09 **[V]**: it clears the interior (`res09_fn_0137`), draws a frame from
+  picture set `FrameSet` around it (`res09_fn_0000`: the corner and edge pictures come from index
+  `FrameSet*3+276` and are blitted by `ovl34_e2`) and centres the text on the top row
+  (`res06_fn_0626`). Its grid: a column is 16 pixels and a row 4 scanlines, 40x50 cells on a
+  640x200 screen **[V]** (the multiplies in `res09_fn_0137`).
+- QUIRK `ovl27:01CC`: `DrawAreaView` passes both cell coordinates as `BaseCol + 1 - 1` (and the
+  same for the row): the additions cancel; the compiler must emit them to match the bytes. The
+  fourth argument of `ovl32_e2` is always 1 here (0 from `ovl31`) and the callee never reads it
+  **[V]**.
+
+#### 5.2.1 The area view dispatcher and the party marker **[V]** (`make match UNIT=ovl26`, `src/OVL26.PAS`)
+
+- **The area view unit** **[V]** (`src/OVL26.PAS`, `make match UNIT=ovl26`: unit complete): the resident unit's view dispatcher calls `ShowAreaView` (`ovl26:016D`) for its view types 3 and 4 (`res12_fn_27D9`), and the wilderness map screen calls it after the text windows of `DrawAdventureScreen` (`res12_fn_2B5E`).
+- **Two kinds of view** **[V]** (the `case` at `ovl26:018C`): `AreaViewKind` (DS:49FA) selects what to draw. Kind 1 is the 3D wall view: GeoLoad returns the event byte of the party cell (`ovl29_e4`, wrapping the coordinates into 0..15; bit 7 marks an interior cell, 4.2.1), the wall id table `ds0C26` (16 entries: two equal groups of eight ids 0,15,12,11,13,10,9,14) is indexed by the game state words at +$1FA (outside cell) or +$1FC (interior cell), the four wall view descriptors DS:6A60..6A63 go to `ovl29_e1` (a pure setter for the same globals), and `ovl29_e5` draws the rest (the overlay labels only while DS:6AAC is 0, cleared when the state word at +$1F6 is set). Kinds 2 to 4 are the map window: `DrawAreaView(LeftCol, TopRow)` draws 25 cells of the 44-column map grid (DS:3648, stride 44 [V] from `ovl27:0040`) at 3 pixels per cell, and `DrawPartyMarker` follows.
 - **Where the kinds come from** **[V]**: the area loader sets `AreaViewKind := 1` (`ovl11_e1`), the encounter unit sets 2, 3 or 4 together with view type 3 (`ovl03_fn_31B4`, keyed on DS:84DC); the game state word at +$1CC forces kind 1. `MapBaseX` (DS:3C76) holds the base column of each kind: entries 2..4 are 0, 13 and 26 **[V]** (the map image), so the kinds are three pages of the 44-column grid; the window is the party position minus 2, clamped to columns 0..39 and rows 0..31, and the page base is added to the column.
 - **The party marker** **[V]** (`DrawPartyMarker`, `ovl26:0000`): the marker cell is the party position folded the same way the window clamps (0 and 1 kept at the edges, everything up to column 42 / row 34 becomes the centre cell 2, past that 3 and 4). PicLoad draws it (`ovl32_e5`) with the icon set DS:6AAF and the six-frame walk animation `MarkerFrame` (DS:6DDC): frame mod 2 picks the mirrored half, frame div 2 + 9 the picture 9 to 11, and the frame steps modulo 6 after each draw. The wilderness keys H, M, P and K set the icon set to 0, 2, 4 and 6 **[V]** (`ovl14_fn_0B48`), and `ovl07_e10` maps a script value 0..3 to the same four **[V]**; what the icon sets are is **[?]** (H/M/P/K do not spell anything obvious).
 - **Special view codes** **[V]**: while DS:84E5 is set, `ShowAreaView` refreshes descriptors 2 to 4 from DS:6F69 and DS:6F68 through three nested Byte functions (`WallDesc2FromCode`..`WallDesc4FromCode`, `ovl26:00C7..016C`): codes 8 and $41 give descriptor 0, code $0B gives 8, code 6 gives 1, everything else $0F, 7 and 6. The loaders and the script set the codes together with DS:84E5: `ovl07_e3` ($41 and 9), `ovl11_fn_0435` ($DB and $E8), and script commands $F1 and $F7 through `ovl07_e10`. What the descriptors select is **[?]** (they reach the screen through `ovl29_fn_0174` and `res07_fn_2632`, which are not decompiled yet; the label strings near DS:0A26 include "1st Level" to "9th Level").
-- **The game state record** **[V]**: DS:49D2 points at the running state record (the `TGameState` type in `src/POOLVARS.PAS`): the party position on the area grid is the word pair at +$186 (column) and +$188 (row) [V] (`ovl26:0019`, `ovl27:0025`); +$1CC forces the wall view, +$1F6 asks for the overlay labels, +$1FA and +$1FC index the wall id table. `ovl27_e1` also reads words at +$2F8, +$318, +$33E, +$340, +$366 and +$3A4 **[V]**, so the record is at least 0x3A6 bytes; which unit owns it is **[?]**.
+- **More game variables** **[V]**: besides the party position (words 195 and 196, above), `ShowAreaView` reads word 230 (+$1CC, forces the wall view), word 251 (+$1F6, asks for the overlay labels) and words 253 and 254 (+$1FA and +$1FC, the wall id table index for an outside and an interior cell) of `GameVars^`; their names are the `Var...` constants of `src/POOLVARS.PAS`. The words are read as constant indices of the same `TGameVars` array that `DrawAreaView` uses, and `GameVars^[VarMapX]` compiles to the same `les di; mov ax,es:[di+186h]` a record field did (both units match against the one declaration).
 - **TP 6.0 idioms proven here** **[V]** (probes `build/probes/`, `make tpc`): a nested routine receives its parent frame as a hidden last parameter (the caller pushes `bp` right before `push cs; call near`) and its code is emitted just before the parent's body, so the matcher proves it as the byte-exact pool of the parent's region; a `case` with an arm body longer than the short-jump range places the arm body at a distance with `je` plus a `jmp` to the next test (`ovl26:018C`); `x - 2` compiles to two `dec`s; `x mod 2` on a Byte uses signed `idiv` while `x div 2` uses `shr`; an empty `then` branch compiles to the branch and a `jmp` and is what `ovl26:001F` shows.
 
 ### 5.8 Keyboard input and menus (observed in the oracle)
 
 - Input is **INT 16h only** **[V]** (oracle: no INT 09h hook, ports 60h/64h never touched): Crt `KeyPressed` (`0A40:02FD`, AH=01h) and `ReadKey` (`0A40:030F`, AH=00h, an extended key returns 0 then the scan code on the next call).
 - The resident unit res04 is the keyboard layer **[V]** (decompiled and matched as a whole, `src/RES04.PAS`):
-  - `res04_fn_0059` is the `ReadKey` game code calls. Ctrl-S (19) switches a two-state setting kept in `DS:5372` (with the previous value in `DS:5373`) by calling res03 (the sound unit) routines `08AE:00DC` and `08AE:017B` (so probably sound on and off **[I]**). When the program was started with the parameter `STING` (`ParamStr(1) = 'STING'`), Ctrl-D (4) toggles the Boolean `DS:49F7` and Ctrl-C (3) quits through `res04_fn_0000`: a developers' debug mode **[V]** (code), its effect **[?]**. After every key that is not an extended-key prefix it drains the keyboard buffer (`while KeyPressed do Key := ReadKey`), so keys typed ahead are lost, as for a person. The oracle's `key` script command therefore waits for the game to be idle.
-  - The debug mode also shows traces: `ovl33_e1(Text, A, B, C)` (overlay 33, matched as a whole) does nothing unless `DS:49F7` is set; then it clears a line (`res06_fn_0DD3(0, 0, 39, 0)`), shows the three numbers as `A , B , C` in colour 14 and the message through `res06_fn_0BF5`, and clears the line again **[V]**. Its only caller is `ovl12:2233` (the training and rewards unit).
-  - `res04_fn_0104`, called before prompts (the code wheel, 5.12), is meant to flush the keyboard but returns at once: its first statement is `Exit` and the flush loop after it is dead code (QUIRK, `0899:010A`).
-  - `res04_fn_0122` reads one key if one is waiting and discards it.
-  - `res04_fn_0000` ends the program: restores the setting in `DS:5372`, calls `res03` `08AE:00DC` with `DS:2612`, sets the video mode saved in `DS:4A1C` (`Intr($10)` with AH=0, through the `Registers` record at `DS:4A02`) and calls `Halt`.
+  - `ReadGameKey` is the `ReadKey` game code calls. Ctrl-S (19) switches a two-state setting kept in `DS:5372` (with the previous value in `DS:5373`) by calling res03 (the sound unit) routines `08AE:00DC` and `08AE:017B` (so probably sound on and off **[I]**). When the program was started with the parameter `STING` (`ParamStr(1) = 'STING'`), Ctrl-D (4) toggles the Boolean `DS:49F7` and Ctrl-C (3) quits through `QuitGame`: a developers' debug mode **[V]** (code), its effect **[?]**. After every key that is not an extended-key prefix it drains the keyboard buffer (`while KeyPressed do Key := ReadKey`), so keys typed ahead are lost, as for a person. The oracle's `key` script command therefore waits for the game to be idle.
+  - The debug mode also shows traces: `ShowDebugTrace(Text, A, B, C)` (overlay 33, matched as a whole) does nothing unless `DS:49F7` is set; then it clears a line (`res06_fn_0DD3(0, 0, 39, 0)`), shows the three numbers as `A , B , C` in colour 14 and the message through `ShowMessageLine`, and clears the line again **[V]**. Its only caller is `ovl12:2233` (the training and rewards unit).
+  - `FlushKeyboard`, called before prompts (the code wheel, 5.12), is meant to flush the keyboard but returns at once: its first statement is `Exit` and the flush loop after it is dead code (QUIRK, `0899:010A`).
+  - `DiscardWaitingKey` reads one key if one is waiting and discards it.
+  - `QuitGame` ends the program: restores the setting in `DS:5372`, calls `res03` `08AE:00DC` with `DS:2612`, sets the video mode saved in `DS:4A1C` (`Intr($10)` with AH=0, through the `Registers` record at `DS:4A02`) and calls `Halt`.
 - The menu loop is `ovl25:03BD` (get key, parse the item string, redraw `ovl25:01DA`), called by the list handler at `ovl25:0FA0..10A7` **[V]**. It parses the item string with a 36-character set at `ovl25:00AB` (upper-case letters and digits mark the first letter of each item: the highlighted hotkey). In the lists of the character creation (race, sex, class, alignment) the highlight moves with **END (next) and HOME (previous)**, ENTER selects, and the one-item bar at the bottom ("Exit") answers to its first letter **[V]** (oracle session `create-character`). The arrow keys have no effect in these lists **[V]** (oracle: UP/DOWN/LEFT/RIGHT/TAB/SPACE leave the screen unchanged); `ovl25:03BD` drops an extended key unless its caller asked for it (`ovl25:0580..0599`) **[I]**, and `,` and `.` move the highlight of its own item bar (`ovl25:05C4`, `05E8`) **[I]**.
 - Character creation flow **[V]** (one run of `tests/sessions/create-character.keys`): main menu (C) > race list > sex > class > alignment > rolled character sheet with "Keep this character? Yes No" > name prompt > "Head Body Keep" > icon editor ("Parts Color-1 Color-2 Size Exit") > "Is this icon OK? Yes No" > main menu. The game writes `SAVE\RAD.CHA` (285 bytes, the character record of 4.2.5) and `SAVE\CHARLIST.TXT` (`RAD`, CR LF) **[V]**; decoding `RAD.CHA` with `tools/re/records.py` gives the race, class, sex, age and six scores shown on the sheet (human 7, fighter 2, male 0, age 19, STR 15 INT 13 WIS 11 DEX 12 CON 16 CHA 12 in the pinned run).
 
 ### 5.12 Copy protection: the code wheel
 
-- The check is `ovl02:00FD` (entry point of overlay 2, 862 bytes of code) **[V]**. At most three times it picks `r = Random(13)` (`System_Random`, `0AF8:11C0`), draws two rune glyphs and a path pattern from a table at the very start of DGROUP (`DS:0000`, 13 records of 21 bytes), calls the keyboard flush `res04:0104` (which does nothing, 5.8) and asks "INPUT THE CODE WORD:" **[V]**.
+- The check is `CheckCodeWheel` (`ovl02:00FD`, entry point of overlay 2, matched as a whole: `src/OVL02.PAS`, `make match UNIT=ovl02`: unit complete) **[V]**. At most three times it picks `r = Random(13)` (`System_Random`, `0AF8:11C0`), draws two rune glyphs and a path pattern from a table at the very start of DGROUP (`DS:0000`, 13 records of 21 bytes, the `TCodeWheelEntry` type in `src/POOLVARS.PAS`), calls the keyboard flush `res04:0104` (which does nothing, 5.8) and asks "INPUT THE CODE WORD:" **[V]**. The question window is drawn by `res09_fn_02E8(1, 1, $26, $16, 0, 0, '')` and the instructions, the runes and the path by `res06_fn_0626`, `res06_fn_01DF` (the runes as font characters at the four corners of a small grid) and one concatenation of five spaces with the record path **[V]** (code).
 - Record layout **[V]** (`start-unpack.exe` image at `0C7C0h`, and the lcalls in `ovl02:01A2..02FD`): `+02` Pascal string[6] with the answer; `+09`, `+0A`, `+0B` glyph indices, each drawn as character `index + 40h` in the game's font (the two rune pictures the prompt asks to match, then a third); `+0C` a fourth index drawn only when it is not FFh; `+0D` Pascal string with the path pattern drawn under the runes (`- - - -`, `-..-..-`, `.......`).
-- The 13 answers, in record order **[V]**: BEWARE, ZOMBIE, NOTNOW, COPPER, DRAGON, EFREET, FRIEND, JUNGLE, KNIGHT, SAVIOR, TEMPLE, VULCAN, WYVERN. The typed word is compared with `System_StrCompare` (`0AF8:0C10`, flags in ZF) after `StrLCopy(local, input, 40)`; the failure message is "Sorry, that's incorrect." (`ovl02:00E4`); after the third failure `res04:0000` ends the program **[V]**.
+- The 13 answers, in record order **[V]**: BEWARE, ZOMBIE, NOTNOW, COPPER, DRAGON, EFREET, FRIEND, JUNGLE, KNIGHT, SAVIOR, TEMPLE, VULCAN, WYVERN. The typed word is compared with `System_StrCompare` (`0AF8:0C10`, flags in ZF) after truncating the function result of `res06_fn_09E3` (the line reader of res06) to 40 characters; the failure message is "Sorry, that's incorrect." (`ovl02:00E4`) through `res06_fn_0D68`; after the third failure `res04:0000` ends the program **[V]**.
+- The line reader `res06_fn_09E3` is a string function: TP 6.0 passes the caller result pointer as the first (deepest) argument and the callee `retf 8` pops only the prompt and the two numbers, leaving the result pointer for the caller to consume (here: the truncating assignment `Answer := res06_fn_09E3('INPUT THE CODE WORD: ', 13, 6)`, `0AF8:0B25` with max 40) **[V]** (the frames: `retf 8` = 8 bytes of parameters, the observed 12 pushed).
 - Which question appears depends on `RandSeed`, which comes from the clock, so it varies from run to run on real hardware. The oracle's virtual clock makes it repeat; its `wheel` script command reads the answer from the table by watching that `Random(13)` call (`tools/oracle/protection.py`) and types it, leaving the game's own check untouched.
 
 ### 5.13 Random numbers
@@ -476,8 +520,8 @@ What the game takes from the outside world, found by `make timing-scan` and by r
 
 ### 5.15 Messages and running out of memory **[V]** (`src/RES06.PAS`, `src/OVL00.PAS`, matched)
 
-- `res06_fn_0BF5(Color, Text)` shows a one-line message on row 24: it clears 40 columns of that row (`res06_fn_05EB(0, 24, 0, 40)`), draws the text in the given colour (`res06_fn_0626(0, 24, Color, Text)`) and waits for a key through `res04_fn_0059`. The text is a `string[40]`. Twelve routines call it, in overlays 0, 3, 5, 7, 17 and 33 and in res06 itself (`make packet FN=res06_fn_0BF5`).
-- Overlay 0 is the heap error handler: its initialisation sets `HeapError := @ovl00_e1`, so Turbo Pascal calls `ovl00_e1(Size)` when `New` or `GetMem` cannot get `Size` bytes. For a non-zero size it shows "WARNING: Insufficient Memory" in colour 14 (yellow); if the Boolean `DS:49D0` is set it calls `ovl17_e9` (the save and load unit) and repeats until `DS:557D` says to stop, otherwise it shows "Insufficient Memory. Exiting Program". Then it always ends the program (`res04_fn_0000`). The function result is never assigned (QUIRK): Turbo Pascal would read whatever is in the frame, but the handler never returns to it.
+- `ShowMessageLine(Color, Text)` shows a one-line message on row 24: it clears 40 columns of that row (`res06_fn_05EB(0, 24, 0, 40)`), draws the text in the given colour (`res06_fn_0626(0, 24, Color, Text)`) and waits for a key through `ReadGameKey`. The text is a `string[40]`. Twelve routines call it, in overlays 0, 3, 5, 7, 17 and 33 and in res06 itself (`make packet FN=ShowMessageLine`).
+- Overlay 0 is the heap error handler: its initialisation sets `HeapError := @HeapErrorHandler`, so Turbo Pascal calls `HeapErrorHandler(Size)` when `New` or `GetMem` cannot get `Size` bytes. For a non-zero size it shows "WARNING: Insufficient Memory" in colour 14 (yellow); if the Boolean `DS:49D0` is set it calls `ovl17_e9` (the save and load unit) and repeats until `DS:557D` says to stop, otherwise it shows "Insufficient Memory. Exiting Program". Then it always ends the program (`QuitGame`). The function result is never assigned (QUIRK): Turbo Pascal would read whatever is in the frame, but the handler never returns to it.
 
 ---
 

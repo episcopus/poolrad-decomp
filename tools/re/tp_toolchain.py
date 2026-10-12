@@ -180,7 +180,13 @@ def ci(d: Path, name: str) -> Path | None:
 
 
 def run_tpc(kind: str, emu: str, w: Path, tpc_args: list[str]) -> str:
-    """Run TPC.EXE in directory w under emu2 or DOSBox-X; return the compiler log."""
+    """Run TPC.EXE in directory w under emu2 or DOSBox-X; return the compiler log.
+    Outputs of an earlier run are removed first, so a failed compile cannot pass on a
+    stale log or EXE (the two emulators also differ in name case, which would leave
+    both spellings side by side)."""
+    for p in w.iterdir():
+        if p.name.upper() != "TPC.EXE" and p.suffix.upper() in (".LOG", ".EXE", ".MAP", ".OVR", ".TPU"):
+            p.unlink()
     if kind == "emu2":
         r = subprocess.run([emu, "TPC.EXE", *tpc_args], cwd=w, capture_output=True)
         (w / "TPC.LOG").write_bytes(r.stdout + r.stderr)
@@ -191,6 +197,13 @@ def run_tpc(kind: str, emu: str, w: Path, tpc_args: list[str]) -> str:
                        capture_output=True)
     log = ci(w, "TPC.LOG")
     return log.read_bytes().decode("latin-1").replace("\r", "\n") if log else ""
+
+
+def compiled_ok(log: str) -> bool:
+    """True when the compiler log ends in its success summary and reports no error.
+    The elapsed-time field is optional: emu2 gives `66 lines, 4384 bytes code, ...`,
+    DOSBox-X gives `167 lines, 0.2 seconds, 17552 bytes code, ...`."""
+    return bool(re.search(r"\d+ lines, (?:[\d.]+ seconds, )?\d+ bytes code", log)) and "Error" not in log
 
 
 def cmd_tpc(args) -> int:
@@ -214,7 +227,7 @@ def cmd_tpc(args) -> int:
             shutil.copy(f, w / f.name.upper())
     log = run_tpc(kind, emu, w, ["/B", "/GD", *args.opts, stem + ".PAS"])
     exe, mapf = ci(w, stem + ".EXE"), ci(w, stem + ".MAP")
-    ok = exe is not None and re.search(r"\d+ lines, \d+ bytes code", log) and "Error" not in log
+    ok = exe is not None and compiled_ok(log)
     print("\n".join(l for l in log.splitlines() if l.strip() and not re.fullmatch(r"\S+\(\d+\)", l.strip())))
     if not ok:
         return 1
@@ -313,7 +326,7 @@ def cmd_probe(args) -> int:
             shutil.copy(f, w / f.name)
         log = run_tpc(kind, emu, w, TPC_ARGS)
         exe = ci(w, "SINK.EXE")
-        ok = exe is not None and re.search(r"\d+ lines, \d+ bytes code", log) and "Error" not in log
+        ok = exe is not None and compiled_ok(log)
         if not ok:
             print("FAIL %-10s compile failed:\n%s" % (ver, log[-600:]))
             rc = 1

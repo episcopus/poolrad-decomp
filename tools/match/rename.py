@@ -42,11 +42,21 @@ procedure program record repeat set shl shr string then to type unit until uses 
 assembler external far forward interrupt near private public virtual""".split())
 
 
-def replace_word(text: str, old: str, new: str) -> tuple[str, int]:
-    """Replace the identifier `old` (any case) by `new`, outside string literals."""
+# What a rename must not touch. Pascal: a 'string literal' never spans a line, and an apostrophe inside a
+# { comment } or (* comment *) starts nothing (comments follow the rename, so they are matched only to be
+# passed through). Markdown: a quoted 'name' is a literal only when its quotes stand apart from words, so
+# the apostrophes of prose ("the player's", "games'") never pair with a quote further on.
+PAS_TOKENS = re.compile(r"\{[^}]*\}|\(\*.*?\*\)|'(?:[^'\n]|'')*'", re.S)
+DOC_LITERALS = re.compile(r"(?<![A-Za-z0-9_])'(?:[^'\n]|'')*'(?![A-Za-z0-9_])")
+
+
+def replace_word(text: str, old: str, new: str, pascal: bool = True) -> tuple[str, int]:
+    """Replace the identifier `old` (any case) by `new`, outside string literals (comments follow it)."""
     out, n, pos = [], 0, 0
     word = re.compile(r"(?<![A-Za-z0-9_])%s(?![A-Za-z0-9_])" % re.escape(old), re.I)
-    for m in re.finditer(r"'(?:[^']|'')*'", text):             # skip 'string literals'
+    for m in (PAS_TOKENS if pascal else DOC_LITERALS).finditer(text):
+        if m.group(0)[0] != "'":                                  # a comment: renamed like code
+            continue
         chunk, k = word.subn(new, text[pos:m.start()])
         out += [chunk, m.group(0)]
         n += k
@@ -54,6 +64,12 @@ def replace_word(text: str, old: str, new: str) -> tuple[str, int]:
     chunk, k = word.subn(new, text[pos:])
     out.append(chunk)
     return "".join(out), n + k
+
+
+def left_behind(text: str, old: str) -> list[int]:
+    """Line numbers where `old` still appears after a rename (inside a literal, so on purpose or not)."""
+    word = re.compile(r"(?<![A-Za-z0-9_])%s(?![A-Za-z0-9_])" % re.escape(old), re.I)
+    return [i for i, line in enumerate(text.splitlines(), 1) if word.search(line)]
 
 
 def in_sources(name: str) -> int:
@@ -64,13 +80,17 @@ DOCS = (ROOT / "docs/design/WHITEPAPER.md",)
 
 
 def rename_sources(old: str, new: str) -> int:
-    """src/*.PAS and the whitepaper (addresses stay; only the name changes)."""
+    """src/*.PAS and the whitepaper (addresses stay; only the name changes). Warns about every use of the
+    old name left inside a literal, so a half-applied rename cannot pass unnoticed."""
     total = 0
     for p in sorted(match.SRC.glob("*.PAS")) + [d for d in DOCS if d.exists()]:
-        text, n = replace_word(p.read_text(), old, new)
+        text, n = replace_word(p.read_text(), old, new, pascal=p.suffix.upper() == ".PAS")
         if n:
             p.write_text(text)
             total += n
+        for line in left_behind(text, old):
+            print("rename: warning: %s:%d still says %s (inside a quoted string; check it)"
+                  % (p.relative_to(ROOT) if p.is_relative_to(ROOT) else p, line, old))
     return total
 
 

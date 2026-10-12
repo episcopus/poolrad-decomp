@@ -134,3 +134,45 @@ kind = "routine"
 why = "ovl26:012F: nested Byte function of ShowAreaView (static link push bp at ovl26:01EF): a case on the special view code ds6F68 maps code 11 to 8, code 6 to 1 and anything else to 6, for wall view descriptor 4 (ds6A63)"
 date = "2026-10-11"
 
+[[rename]]
+old = "ovl27_e1"
+new = "DrawAreaView"
+kind = "routine"
+why = "draws the 5x5 grid of 3x3-tile area blocks around a map position into the 3D view window (ovl27:0000, matched): reads the block code from the area map, lets the nine fixed blocks override it while the game variables allow, and draws each block through ovl32_e2"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl27_e2"
+new = "DrawAdventureScreen"
+kind = "routine"
+why = "frames the three windows of the adventure screen with res09_fn_02E8 (ovl27:0207, matched): 3D view rows 1..15 cols 1..15, side window rows 1..15 cols 17..38, text area rows 17..22 cols 1..38, the standard Gold Box adventure layout"
+date = "2026-10-11"
+
+[[rename]]
+old = "ds3648"
+new = "AreaMap"
+kind = "global"
+why = "the area map: 36 rows x 44 columns of block codes at DS:3648, read as [row*44+col] minus one by DrawAreaView (ovl27:0000, matched), ovl10:1213 and ovl14:08B9 (ovl14 compares bytes with 'N'); rows 34 and 35 are all 'N' (0x4E) in the file image; ovl26_e1 clamps the view window to columns 0..39, rows 0..31"
+date = "2026-10-11"
+
+[[rename]]
+old = "ds0C30"
+new = "SpecialBlocks"
+kind = "global"
+why = "ten records of (Col, Row, Pic) at DS:0C30: DrawAreaView (ovl27:0000, matched) walks entries 1..9 and overrides the view block at (Col, Row) with Pic - 1 while the game variables allow; entry 0 is never read (in the image its bytes are the tail of the previous table)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ds49D2"
+new = "GameVars"
+kind = "global"
+why = "far pointer at DS:49D2 to the game's word variables: ovl07:02E1 and ovl17:1C20 index it dynamically (shl ax,1; les; add di,ax), ovl26_e1 reads words 195 and 196 as the party's position on the area map, and DrawAreaView (ovl27:0000, matched) reads words 380, 396, 415, 416, 435 and 466 as gates for the fixed area blocks"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl02_e1"
+new = "CheckCodeWheel"
+kind = "routine"
+why = "ovl02:00FD: the copy protection check of whitepaper 5.12: up to three times it draws a random code wheel record (the runes as font characters, the path pattern) and reads the code word; a matching answer leaves at once, the third wrong one ends the program through QuitGame"
+date = "2026-10-11"
+

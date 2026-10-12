@@ -87,12 +87,12 @@ id = "ovl02:00FD"
 unit = "ovl02"
 addr = "ovl02:00FD"
 size = 604
-name = "ovl02_e1"
+name = "CheckCodeWheel"
 signature = ""
 c_name = "ovl02_e1"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_1"
+notes = "renamed from ovl02_e1 (ovl02:00FD: the copy protection check of whitepaper 5.12: up to three times it draws a random code wheel record (the runes as font characters, the path pattern) and reads the code word; a matching answer leaves at once, the third wrong one ends the program through QuitGame); auto:entry_1"
 evidence = ["prologue"]
 
 [[routine]]
@@ -103,7 +103,7 @@ size = 5
 name = "ovl02_init"
 signature = ""
 c_name = "ovl02_init"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_0"
 evidence = ["prologue"]
@@ -13529,12 +13529,12 @@ id = "ovl27:0000"
 unit = "ovl27"
 addr = "ovl27:0000"
 size = 519
-name = "ovl27_e1"
-signature = "procedure ovl27_e1(MapLeft, MapTop: Integer)"
+name = "DrawAreaView"
+signature = "procedure DrawAreaView(LeftCol, TopRow: Integer)"
 c_name = "ovl27_e1"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_1"
+notes = "renamed from ovl27_e1 (draws the 5x5 grid of 3x3-tile area blocks around a map position into the 3D view window (ovl27:0000, matched): reads the block code from the area map, lets the nine fixed blocks override it while the game variables allow, and draws each block through ovl32_e2); auto:entry_1"
 evidence = ["prologue"]
 
 [[routine]]
@@ -13542,12 +13542,12 @@ id = "ovl27:0207"
 unit = "ovl27"
 addr = "ovl27:0207"
 size = 124
-name = "ovl27_e2"
-signature = ""
+name = "DrawAdventureScreen"
+signature = "procedure DrawAdventureScreen"
 c_name = "ovl27_e2"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_2"
+notes = "renamed from ovl27_e2 (frames the three windows of the adventure screen with res09_fn_02E8 (ovl27:0207, matched): 3D view rows 1..15 cols 1..15, side window rows 1..15 cols 17..38, text area rows 17..22 cols 1..38, the standard Gold Box adventure layout); auto:entry_2"
 evidence = ["prologue"]
 
 [[routine]]
@@ -13558,7 +13558,7 @@ size = 5
 name = "ovl27_init"
 signature = ""
 c_name = "ovl27_init"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_0"
 evidence = ["prologue"]
@@ -14297,11 +14297,11 @@ unit = "ovl32"
 addr = "ovl32:00F1"
 size = 93
 name = "ovl32_e2"
-signature = ""
+signature = "procedure ovl32_e2(PicCol, PicRow: Shortint; PicCode, Unused: Byte)"
 c_name = "ovl32_e2"
 level = "none"
 justification = ""
-notes = "auto:entry_2"
+notes = "auto:entry_2; signature from the pushes of DrawAreaView (ovl27:0000: bytes, words; cbw in the callee), ovl31_fn_0127/ovl31_e7 pass 3*(a+b) words; the callee reads only [+8] (bit 7 flags, low 7 the picture), [+0xa], [+0xc], never [+6]"
 evidence = ["prologue"]
 
 [[routine]]
@@ -17352,11 +17352,11 @@ unit = "res09"
 addr = "03F1:02E8"
 size = 127
 name = "res09_fn_02E8"
-signature = ""
+signature = "procedure res09_fn_02E8(LeftCol, TopRow, RightCol, BottomRow, FrameSet, TextColour: Byte; Text: string)"
 c_name = "res09_fn_02E8"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; signature from the callers' pushes (six bytes first, the string last, as in res06_fn_0626) and the callee's own passes: it clears rows TopRow..BottomRow, cols LeftCol..RightCol (res09_fn_0137), draws frame set FrameSet (res09_fn_0000) and centres Text on TopRow in colour TextColour (res06_fn_0626); the copy limit 40 in the callee says Text is really a string[40], recorded as the generic string so a skeleton compiles"
 evidence = ["prologue"]
 
 [[routine]]
