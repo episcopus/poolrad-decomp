@@ -484,7 +484,7 @@ Each section will cover: purpose, units and routines, data, algorithm, quirks, e
 | 5.1 | ECL script interpreter: opcodes, variables, events | coab `engine/ovr003.cs`, `VmOpp.cs` **[H]**; wicanr2 places Pool's interpreter in overlay 3 of the 1988 build **[H]** |
 | 5.2 | Areas, maps and movement (GEO, walls, 3D view) | OpenGoldBox `docs/MAPS.md` **[H]**; the area view, ovl26 (below) |
 | 5.3 | Party and characters (creation, attributes, classes, levels) | wicanr2 `docs/spec/003`, `004` **[H]** |
-| 5.4 | Items, money, shops | |
+| 5.4 | Items, money, shops | ovl06 Shop (below, **[V]**); ovl19 Inventory, ovl21 Money (still stubs) |
 | 5.5 | Combat (tactical map, initiative, movement, attacks) | wicanr2 `ida-overlay08-*`, `ida-overlay13-*` **[H]** |
 | 5.6 | Magic and effects (spells, memorisation, durations) | |
 | 5.7 | Rest, time and healing | |
@@ -550,6 +550,44 @@ a fixed table can replace it while the game variables allow it (`DrawAreaView`, 
 - **Special view codes** **[V]**: while DS:84E5 is set, `ShowAreaView` refreshes descriptors 2 to 4 from DS:6F69 and DS:6F68 through three nested Byte functions (`WallDesc2FromCode`..`WallDesc4FromCode`, `ovl26:00C7..016C`): codes 8 and $41 give descriptor 0, code $0B gives 8, code 6 gives 1, everything else $0F, 7 and 6. The loaders and the script set the codes together with DS:84E5: `ovl07_e3` ($41 and 9), `ovl11_fn_0435` ($DB and $E8), and script commands $F1 and $F7 through `ovl07_e10`. What the descriptors select is **[?]** (they reach the screen through `ovl29_fn_0174` and `res07_fn_2632`, which are not decompiled yet; the label strings near DS:0A26 include "1st Level" to "9th Level").
 - **More game variables** **[V]**: besides the party position (words 195 and 196, above), `ShowAreaView` reads word 230 (+$1CC, forces the wall view), word 251 (+$1F6, asks for the overlay labels) and words 253 and 254 (+$1FA and +$1FC, the wall id table index for an outside and an interior cell) of `GameVars^`; their names are the `Var...` constants of `src/POOLVARS.PAS`. The words are read as constant indices of the same `TGameVars` array that `DrawAreaView` uses, and `GameVars^[VarMapX]` compiles to the same `les di; mov ax,es:[di+186h]` a record field did (both units match against the one declaration).
 - **TP 6.0 idioms proven here** **[V]** (probes `build/probes/`, `make tpc`): a nested routine receives its parent frame as a hidden last parameter (the caller pushes `bp` right before `push cs; call near`) and its code is emitted just before the parent's body, so the matcher proves it as the byte-exact pool of the parent's region; a `case` with an arm body longer than the short-jump range places the arm body at a distance with `je` plus a `jmp` to the next test (`ovl26:018C`); `x - 2` compiles to two `dec`s; `x mod 2` on a Byte uses signed `idiv` while `x div 2` uses `shr`; an empty `then` branch compiles to the branch and a `jmp` and is what `ovl26:001F` shows.
+
+### 5.4 Items, money and shops **[V]** (`src/OVL06.PAS`, `make match UNIT=ovl06`: unit complete)
+
+The shop is overlay 6 (`ovl06`, "Shop"). `ShopMain` (`ovl06:053E`) is its entry, called from
+ovl03 when the party enters a shop. It marks the shop open (`DS:49F3`, read by res12), clears
+the 28-byte money block at `DS:67F4` and `DS:6DC0`, redraws the shop (`res12:27D9`,
+`res12:0767`), and loops on a menu (`ovl25_e2`) whose text comes from `ovl21_e9`:
+
+- The full menu is "Buy View Take Pool Share Appraise Exit"; when `ovl21_e9` says there is
+  nothing to take or share, the shorter "Buy View Pool Appraise Exit" is shown. One `case`
+  dispatches the key: B buys, V views an entry (`ovl19_e5`), T takes (`ovl21_e4`), P pools
+  when the flag is clear (`ovl21_e2`), S shares (`ovl21_e3`), A appraises (`ovl21_e14`), E
+  leaves, and two keys that are in neither menu text (G and O) call `ovl19_e10` with the key
+  as an amount. Leaving with money in hand prompts through `ovl07_e13` ("Do you want to go
+  back and get your Money?").
+- The shop stock is the linked list at `DS:6810` of 63-byte `TMenuItem` records
+  (`src/POOLVARS.PAS`): a 40-character `Name` at +0, an `Enabled` byte at +$29 (the list menu
+  skips a zero entry), `Next` at +$2A, a word `Value37` and a byte `Factor39` at +$37/+$39
+  that `ovl19_e9` multiplies, and the quantity `Count` at +$3A. `ChooseShopItem`
+  (`ovl06:0030`) draws the window titled "Shop" (`DrawWindow`) and, for each entry, rewrites
+  `Name` into a 30-character field with the name on the left and `Count` right-justified (a
+  zero quantity becomes 1); it then runs the item picker `ovl25_e4` ("Items: " with a "Buy"
+  button).
+- `BuyItems` (`ovl06:0361`) pays first from the party's pool (`ovl19_e11`) and then from its
+  money (`ovl21_e12` on `DS:67F4`); if the chosen entry's `Count` fits, the entry is added to
+  the inventory and the amount is deducted (`ovl21_e10` pool, `ovl21_e11` money), otherwise it
+  shows "Not enough Money.". Both deduction routines divide the amount by 5 and write five
+  coin words (`ovl21_e10` into `DS:5D92` +$88..+$90, `ovl21_e11` into `DS:67F4`), so the
+  amounts are in the smallest coin and the pool and money blocks hold five denominations each
+  **[I]**.
+- `AddInventoryItem` (`ovl06:0239`) appends a clone of an entry to the list at
+  `DS:5D92^.Stock` (+$C8), which `ovl19_e9` (`Inventory`) checks against a capacity of 15
+  (`DS:5D92` +$C7); when it is full it shows "OverLoaded" and reports failure. The loader
+  (`StartGame`) clears `DS:5D92` and `DS:6810` at start-up, so `DS:5D92^.Stock` is the party
+  inventory, not the shop's own stock.
+
+Map note: `re/symbols.toml` had split `ovl06:0239` at `ovl06:0311`; `0311` is one byte into a
+`les di, [bp-8]` instruction, not a routine entry, and its stub was removed.
 
 ### 5.8 Keyboard input and menus (observed in the oracle)
 

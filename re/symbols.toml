@@ -2028,12 +2028,12 @@ id = "ovl06:0030"
 unit = "ovl06"
 addr = "ovl06:0030"
 size = 521
-name = "ovl06_fn_0030"
+name = "ChooseShopItem"
 signature = ""
 c_name = "ovl06_fn_0030"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl06_fn_0030 (builds the Shop window (DrawWindow 'Shop'), rewrites each stock entry's Name into a 30-char name+Count field, runs the item picker ovl25_e4 ('Items: '/'Buy') over the list at ds6810 and returns the chosen entry in Head/Selected with the key in Action; called from ovl06_fn_0361 (Buy) (ovl06:0030)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2041,38 +2041,25 @@ id = "ovl06:0239"
 unit = "ovl06"
 addr = "ovl06:0239"
 size = 216
-name = "ovl06_e2"
+name = "AddInventoryItem"
 signature = ""
 c_name = "ovl06_e2"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl06_e2 (appends a clone of the item to the linked list at ds5D92^.Stock unless ovl19_e9 (Inventory) reports the list full (15 slots) and then shows OverLoaded; called from ovl05 (TreasureShare) and ovl06_fn_0361 (Buy), so it adds an item to the party inventory (ovl06:0239)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl06:0311"
-unit = "ovl06"
-addr = "ovl06:0311"
-size = 80
-name = "ovl06_fn_0311"
-signature = ""
-c_name = "ovl06_fn_0311"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl06:0361"
 unit = "ovl06"
 addr = "ovl06:0361"
 size = 477
-name = "ovl06_fn_0361"
+name = "BuyItems"
 signature = ""
 c_name = "ovl06_fn_0361"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl06_fn_0361 (the Buy flow of the shop menu: loops on ChooseShopItem, pays from the pool (ovl19_e11) or the money (ovl21_e12 on ds67F4), adds the entry with AddInventoryItem and deducts via ovl21_e10/ovl21_e11, else shows Not enough Money.; called from ovl06_e1 on the 'B' menu key (ovl06:0361)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2080,12 +2067,12 @@ id = "ovl06:053E"
 unit = "ovl06"
 addr = "ovl06:053E"
 size = 602
-name = "ovl06_e1"
+name = "ShopMain"
 signature = ""
 c_name = "ovl06_e1"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_1"
+notes = "renamed from ovl06_e1 (the Shop overlay's entry from ovl03: marks the shop open (ds49F3), redraws the shop screen (res12_fn_27D9, res12_fn_0767), clears ds67F4 and ds6DC0, then loops showing the shop menu (ovl25_e2) and dispatching Buy/View/Take/Pool/Share/Appraise/Exit and the leave prompt; leaves when Done is set (ovl06:053E)); auto:entry_1"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2096,7 +2083,7 @@ size = 5
 name = "ovl06_init"
 signature = ""
 c_name = "ovl06_init"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_0"
 evidence = ["prologue"]
