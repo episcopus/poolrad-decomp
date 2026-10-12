@@ -161,7 +161,18 @@ var
   ds49D6: ^TGameVars;             { second game word block; see above }
   ds49DA: ^TBlock400;             { $400-byte block the loader allocates (ovl11:0054) }
   ds49DE: ^TBlock1E00;            { $1E00-byte block the loader allocates (ovl11:0064) }
-  ds49E2: Byte;                   { set to 1 by the loader (ovl11:03C6) }
+  ds49E2: Byte;                   { set to 1 by the loader; a count the ovl18 narratives read }
+  ds49F3: Byte;                   { the view mode: ShowEndingNarrative saves it, sets 7, restores it }
+  ds0900: array[0..$A] of Byte;   { the first door block codes of AnimateAreaDoors (bit 7 = other bank) }
+  ds090B: array[0..$11] of Byte;  { the second door block codes of AnimateAreaDoors (indexed 0..$11); same 7-bit flag }
+  ds091D: array[0..$F] of Byte;   { the first 16-byte record AnimateAreaDoors passes to res07_fn_1E5C }
+  ds092D: array[0..$F] of Byte;   { the second 16-byte record AnimateAreaDoors passes to res07_fn_1E5C }
+  ds093D: array[0..$F] of Byte;   { the third 16-byte record AnimateAreaDoors passes to res07_fn_1E5C }
+  ds094D: array[0..8] of Word;    { the per-step DrawAreaView columns of AnimateAreaDoors (indexed 0..8) }
+  ds095F: array[0..8] of Word;    { the per-step DrawAreaView rows of AnimateAreaDoors (indexed 0..8) }
+  ds470E: Pointer;                { the FINAL picture bank ShowEndingNarrative loads through res07_fn_0111 and draws }
+  ds4712: Byte;                   { the DS:49F3 value ShowEndingNarrative saves at the start and restores at the end }
+  ds4713: string[1];              { Str(TileSet): the picture number ShowEndingNarrative appends to FINAL }
   ds49ED: Word;                   { set to $9900 by the loader (ovl11:03C0) }
   ds49F4: Byte;                   { cleared by the loader (ovl11:03CB) }
   ds49F5: Byte;                   { set to 1 by the loader (ovl11:0392) }

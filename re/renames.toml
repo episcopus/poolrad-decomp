@@ -477,3 +477,17 @@ kind = "routine"
 why = "ovl28:04F9: draws the HEAD/BODY picture window (columns 28..38, rows 1..11) for the character record ds5D92 and shows the HEAD and BODY sprites of its bank numbers; called by ovl16:33E7 and ovl19:031E"
 date = "2026-10-11"
 
+[[rename]]
+old = "ovl18_e1"
+new = "ShowEndingNarrative"
+kind = "routine"
+why = "ovl18:02A4: the ending narrative (the dragon and Tyranthraxus/Bane speech, the FINAL pictures and the fn_0006 animations); called by ovl03:2E10 (whitepaper 5.x)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl18_e2"
+new = "AnimateAreaDoors"
+kind = "routine"
+why = "ovl18:06B3: animates or clears the doors of the area view through res07_fn_1E5C with the two SQRPACI banks, stepping the view through DS:094D/DS:095F; called by ovl03:31B4 and ovl17:1602"
+date = "2026-10-11"
+
