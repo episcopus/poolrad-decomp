@@ -7453,12 +7453,12 @@ id = "ovl14:0109"
 unit = "ovl14"
 addr = "ovl14:0109"
 size = 301
-name = "ovl14_fn_0109"
-signature = ""
+name = "SetIconBits"
+signature = "procedure SetIconBits(Col, Row, Icon: ShortInt)"
 c_name = "ovl14_fn_0109"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl14_fn_0109 (ovl14:0109 sets the icon set's bit in the map cell byte (high bit of the pair); counterpart of ClearIconBits, called by the Bash and Pick commands); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

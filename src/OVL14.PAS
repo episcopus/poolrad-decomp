@@ -16,7 +16,7 @@ type
     Next: PCodeRec;                   { +$104: next record, nil ends the list }
   end;
 procedure ClearIconBits(Col, Row, Icon: ShortInt);
-procedure ovl14_fn_0109;
+procedure SetIconBits(Col, Row, Icon: ShortInt);
 procedure ovl14_fn_0236;
 procedure ovl14_fn_0294;
 procedure ovl14_fn_04DF;
@@ -47,8 +47,27 @@ begin
       GeoCells^.Cells[Row, Col] := GeoCells^.Cells[Row, Col] and $FC;
   end;
 end;
-{ ovl14:0109: retf 6: 6 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl14_fn_0109; begin end;
+{ ovl14:0109. Sets the icon set's bit in the map cell byte (Col, Row): bit 6 for icon 6,
+  4 for 4, 2 for 2, 0 for 0, clearing the pair's other bit; out-of-map cells do
+  nothing. The counterpart of ClearIconBits. Called by the Bash and Pick commands. }
+procedure SetIconBits(Col, Row, Icon: ShortInt);
+begin
+  if (Col < 0) or (Col > $F) or (Row < 0) or (Row > $F) then
+  begin
+    { out of the map: nothing to set }
+  end
+  else
+    case Icon of
+      6:
+        GeoCells^.Cells[Row, Col] := GeoCells^.Cells[Row, Col] and $3F or $40;
+      4:
+        GeoCells^.Cells[Row, Col] := GeoCells^.Cells[Row, Col] and $CF or $10;
+      2:
+        GeoCells^.Cells[Row, Col] := GeoCells^.Cells[Row, Col] and $F3 or $04;
+      0:
+        GeoCells^.Cells[Row, Col] := GeoCells^.Cells[Row, Col] and $FC or $01;
+    end;
+end;
 { ovl14:0236: retf 2: 2 bytes of parameters; 6 bytes of locals }
 {@stub} procedure ovl14_fn_0236; begin end;
 { ovl14:0294: retf 0: 0 bytes of parameters; 10 bytes of locals }

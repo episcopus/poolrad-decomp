@@ -708,3 +708,10 @@ kind = "routine"
 why = "ovl14:0000 clears the icon set's bit pair (6, 4, 2, 0 select bits 6-7, 4-5, 2-3, 0-1) in the map cell byte; called by ovl14_e1 on the Exit path"
 date = "2026-10-11"
 
+[[rename]]
+old = "ovl14_fn_0109"
+new = "SetIconBits"
+kind = "routine"
+why = "ovl14:0109 sets the icon set's bit in the map cell byte (high bit of the pair); counterpart of ClearIconBits, called by the Bash and Pick commands"
+date = "2026-10-11"
+
