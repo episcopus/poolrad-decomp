@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-11 | 5.2 (clamp address), 5.2.1 (citations and constants) | fixed the ovl26 window clamp citations (they pointed into WallDesc4FromCode), named the marker and clamp limits, and corrected the whitepaper 5.2 clamp address | make match UNIT=ovl26: unit complete, 3 matched, 3 nested, 0 differ; src/OVL26.PAS |
 | 2026-10-11 | 5.8, 5.2 (cross-ref) | named the debug trace rectangle and its three hit point values in ShowDebugTrace and made the whitepaper match (the top text line: columns 0..39, row 0; the caller ovl12:2233 passes a character maximum, current and lost hit points) | make match UNIT=ovl33: unit complete, 2 matched, 0 differ; src/OVL33.PAS, docs/design/WHITEPAPER.md 5.8 |
 | 2026-10-11 | 3.2.2 (new), 5.2.1 | added the start-up loader StartGame (ovl11:002D): the seven heap blocks, the three screen buffers (res07_fn_248E), the three 200-cell screen tables (DS:4EC0/5050/51E0), the game globals, and the data loads SQRPACI, COMSPR and ITEMS; corrected the ovl11:0435 phantom | make match UNIT=ovl11: unit complete, 2 matched, 0 differ; src/OVL11.PAS, docs/design/WHITEPAPER.md 3.2.2 |
 | 2026-10-11 | process | make claim shows the orchestrator's blocker notes for the claimed unit | tests/unit/test_agent_tools.py |
