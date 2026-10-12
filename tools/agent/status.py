@@ -79,6 +79,17 @@ def parse_units(path: Path) -> tuple[list[dict], list[dict]]:
     return res, ovl
 
 
+def readable(uid: str) -> str:
+    """`clean`, or the number of findings of tools/match/readability.py for the unit."""
+    try:
+        sys.path.insert(0, str(ROOT / "tools/match"))
+        import readability
+        f = readability.check(uid)
+    except Exception as e:                       # the status must not fail on a tool problem
+        return "? (%s)" % e.__class__.__name__
+    return "clean" if not f else "%d findings" % len(f)
+
+
 def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("-o", "--output", default=str(ROOT / "work/status.md"))
@@ -124,6 +135,7 @@ def main(argv: list[str]) -> int:
             p4["reviewed"] += bool(reviewed)
         if u["id"] in sources and ok:
             p4["rows"].append((u["id"], u.get("name", ""), len(rs), len(ok), sum(int(r.get("size") or 0) for r in ok),
+                               readable(u["id"]),
                                "yes" if reviewed else ("complete" if len(ok) == len(rs) else "in progress")))
     scripts = sorted(p.stem for p in (ROOT / "tests/sessions").glob("*.keys"))
     goldens = [n for n in scripts if (ROOT / "tests/sessions/golden" / n / "golden.json").exists()]
@@ -149,10 +161,10 @@ def main(argv: list[str]) -> int:
         "",
         "### P4 units with matched routines",
         "",
-        "| Unit | Name | Routines | L2 | Bytes at L2 | Reviewed |",
-        "|---|---|---:|---:|---:|---|",
+        "| Unit | Name | Routines | L2 | Bytes at L2 | Readable (`make readability`) | Reviewed |",
+        "|---|---|---:|---:|---:|---|---|",
     ] + [
-        "| %s | %s | %d | %d | %d | %s |" % row for row in p4["rows"]
+        "| %s | %s | %d | %d | %d | %s | %s |" % row for row in p4["rows"]
     ] + [
         "",
         "Locks (agents at work): `make locks`. Next unit: `make next`.",

@@ -1,6 +1,6 @@
 unit RES02;
-{ res02: resident unit, 16 bytes of code. Skeleton by tools/match/skeleton.py: every routine is a stub
-  until decompiled (playbook 30). }
+{ res02: a 16-byte unit whose only code is an empty initialisation part (whitepaper 3.2);
+  complete, nothing else to decompile. }
 {$A-,F+,S-,R-,G-,I-}
 interface
 implementation

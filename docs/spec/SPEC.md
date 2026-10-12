@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Version | 0.3 (ADR-002: Pascal-first matching decompilation; C becomes a later translation pass) |
+| Version | 0.4 (ADR-002 with parallel agents: claims, hand-offs, reviews, the rebuild; owners of every phase in 10.1) |
 | Date | 2026-10-11 |
 | Target | SSI *Pool of Radiance*, DOS, the build in `poolrad/` (hashes in section 2) |
 | Output | Turbo Pascal 6.0 source in `src/` that compiles to the original's machine code, a rebuild of the game from it, a living design doc in `docs/design/`; later a C translation for other platforms |
@@ -21,7 +21,7 @@ The previous approach (ADR-001: behaviour-matching C, run routine by routine ins
 | O1 | Pascal source for the whole game in `src/` | Every original routine outside the Turbo Pascal runtime is Pascal that the pinned compiler turns into the original's instructions (level L2, section 8) |
 | O2 | A rebuild of the game | `make rebuild` compiles `src/` with Turbo Pascal 6.0 into `START.EXE` and `GAME.OVR` that are identical to the originals, or differ only where a byte-identical link is shown to be impossible, and play the golden sessions identically in the oracle |
 | O3 | A design doc that explains how the game works | `docs/design/WHITEPAPER.md` covers every subsystem with evidence-tagged claims and is updated as part of each unit's definition of done |
-| O4 | Readable source | Meaningful names for units, routines, globals and types; comments where the code is not obvious; no test regressions (Phase 6) |
+| O4 | Readable source | Meaningful names for units, routines, globals, parameters, constants and types, backed by evidence; a comment on every unit and routine; written unit by unit as part of decompiling (P4, `docs/process/READABILITY.md`), harmonised across units in P6 |
 | O5 | A portable C version | A translation of the matched Pascal into portable C (Phase 7) that builds natively and on the way to the CoCo 3 (CMOC), proven against the Pascal rebuild by the oracle's session replays |
 
 Non-goals for now: the CoCo 3 port itself, enhancements or bug fixes to game behaviour (allowed only in a later, separate build after O2).
@@ -194,6 +194,7 @@ build/                    everything generated (ignored by git); build/toolchain
 - **The main program** is `src/POOL.PAS`: its `uses` clause lists the units in the original initialisation order (the compiler emits one initialisation call per unit in that order), and its main block is the game's. `make match UNIT=main` proves it.
 - **Globals** whose owning unit is not known yet live in `src/POOLVARS.PAS`. Their declarations do not affect the instructions (addresses are compared by name), so they can move to their unit when the rebuild needs the exact DGROUP layout (Phase 5).
 - **Faithful first.** Same control flow, same evaluation order, original quirks kept (dead code after `Exit`, unassigned function results). Turbo Pascal leaves no other choice: a different program compiles differently.
+- **Readable at once** (`docs/process/READABILITY.md`). The source is what every port starts from, so a routine is not finished until it is named, its parameters, locals, constants and the globals it uses are named for what they are (with evidence), and it carries a comment with its address and its meaning in game terms. Names never change the code, so they are never postponed; `make readability` checks that nothing was skipped (part of `make check`), the reviewer judges whether the names and comments are true. Routines and globals are renamed with `make rename`, which keeps `re/` and the source in step.
 
 ### 7.2 Turbo Pascal idioms
 
@@ -219,7 +220,7 @@ Translating matched Pascal to C reuses the decisions recorded on branch `track-c
 | L2 | Matched | `make match` passes: the routine's instructions and literal pool are identical to the original's, and every address names the same thing (8.3). Written by `make match WRITE=1` |
 | L3 | Rebuilt | The routine's unit is byte-identical in the full rebuild, or the rebuilt program passes the golden sessions in the oracle (Phase 5) |
 
-**Review** is recorded beside the level, not as a level: the matcher already proves the instructions, and the review checks what the compiler cannot (names, types, comments, evidence). `make review-pass UNIT=<id>` writes `review = "passed <date> by <reviewer>, <commit>"` on every routine of a complete unit when `work/reviews/<id>.md` names a reviewer who is not the decompiler and has no open must-fix finding (playbook 70). A unit is **done** when it is complete (every routine L2, `unit: complete`) and reviewed.
+**Review** is recorded beside the level, not as a level: the matcher already proves the instructions, and the review checks what the compiler cannot (names, types, comments, evidence). `make review-pass UNIT=<id>` writes `review = "passed <date> by <reviewer>, <commit>"` on every routine of a complete unit when `work/reviews/<id>.md` names a reviewer who is not the decompiler and has no open must-fix finding (playbook 70). A unit is **done** when it is complete (every routine L2, `unit: complete`), readable (`make readability` clean, and the names and comments judged by the review) and reviewed.
 
 Only tools write levels and reviews. A regression demotes a routine the next time the tool runs.
 
@@ -308,9 +309,10 @@ One agent may play several roles over time, but **the reviewer of a routine is n
 2. `make packet UNIT=<id>`; read it and the relevant whitepaper sections.
 3. Replace stubs in `src/<ID>.PAS` by routines; fix callee stub signatures (in any unit's file) and add names for new globals.
 4. `make match UNIT=<id> FN=<name>` until it passes; when the compiler's choice is unclear, probe the idiom with `make tpc`. After 5 failed attempts on one routine, stop and write a `blocked` note with what was tried.
-5. `make match UNIT=<id> WRITE=1` records L2; commit with the routine id in the message.
-6. When the unit is complete, or when stopping: update the whitepaper (playbook 60), commit on the unit branch, hand the branch to the orchestrator, who merges it, runs `make check` and releases the lock (playbook 90).
-7. A complete unit merged on `main` is reviewed by another agent (`make claim REVIEW=1`, playbook 70); must-fix findings send it back to step 1 (`make claim UNIT=<id>`).
+5. Make the routine readable (names with evidence through `make rename`, named constants, its comment), `make match` again and `make readability UNIT=<id>` clean.
+6. `make match UNIT=<id> WRITE=1` records L2; commit with the routine id in the message.
+7. When the unit is complete, or when stopping: update the whitepaper (playbook 60), commit on the unit branch, hand the branch to the orchestrator, who merges it, runs `make check` and releases the lock (playbook 90).
+8. A complete unit merged on `main` is reviewed by another agent (`make claim REVIEW=1`, playbook 70); must-fix findings send it back to step 1 (`make claim UNIT=<id>`).
 
 ### 9.6 Guardrails
 
@@ -331,13 +333,25 @@ One agent may play several roles over time, but **the reviewer of a routine is n
 | P1 Map | Know the binary | Done 2026-10-09: units, routines, RTL, TP 6.0 pinned, DGROUP map started |
 | P2 Oracle and data | Run the original deterministically; decode the data | Done 2026-10-10: oracle, goldens with recordings, data codecs |
 | P3 Match harness | Prove ADR-002; ready for parallel agents | `make match` with tests; units decompiled to complete (res04, ovl00), the main program matched; skeletons for every unit; `make rebuild`, `make review-pass`, `make claim`; `make check` runs the unit tests, every unit's match, the rebuild link and the golden check. Done 2026-10-11 |
-| P4 Match | All game units in Pascal | Every game unit done (complete and reviewed); map boundaries corrected from the compiler's; whitepaper chapter per subsystem |
+| P4 Match | All game units in readable Pascal | Every game unit done (complete, readable and reviewed); map boundaries corrected from the compiler's; whitepaper chapter per subsystem |
 | P5 Rebuild | The original program from source | `make rebuild` byte-identical (or every difference explained); every golden session passes on the rebuild |
-| P6 Readability | Source a person enjoys reading | Names, types, comments; every routine still L2; reviewer sign-off per unit |
+| P6 Consistency | One vocabulary across the whole game | Readability is done unit by unit in P4; P6 harmonises names across units once the whole game is known (the same thing has one name everywhere, record types shared), every routine still L2, reviewer sign-off per subsystem |
 | P7 C translation | Portable C | C translated from the Pascal (starting from branch `track-c-hybrid`), native build plays the goldens through record/replay; portability rules for CMOC set |
 | P8 CoCo 3 | Plan and prototype | CMOC builds the engine for 6809; memory banking by unit; GIME video mapping |
 
 Milestones are reviewed by the human at each phase exit; the spec is updated (new version) when a phase teaches something that changes it.
+
+### 10.1 Owners of each phase
+
+Every phase has the human operator (starts and stops the agents, answers escalations, approves the phase exit) and the orchestrator (merges, `make check`, status, changelog, reports). The roles below do the work. Placeholders mark what is decided in principle but not built yet; each becomes a playbook and its tools before its phase starts.
+
+| Phase | Produces (outcome) | Does the work | Proves or accepts | Ready? |
+|---|---|---|---|---|
+| P4 Match | O1, O3 (unit facts), O4 (unit by unit) | Decompilers (playbook 30), including readability (`docs/process/READABILITY.md`); documentarians for chapters across units (playbook 60); a mapper for map corrections (playbook 10) | `make match` (L2), `make readability`, reviewers judging names and comments (`make review-pass`, playbook 70), the orchestrator's `make check` | Yes |
+| P5 Rebuild | O2 | **Placeholder:** a verifier. Moves globals from `src/POOLVARS.PAS` into their owning units in the original order, puts the overlay directives into `src/POOL.PAS`, matches the original link order and the layout of `GAME.OVR` | `make rebuild` byte-identical (or every difference explained in the whitepaper); goldens passing on the rebuild | **No:** needs a verifier playbook, and `make golden CHECK=1` against the rebuilt EXE (the oracle runs only the original today). Due before P4 ends |
+| P6 Consistency | O4 (across units) | **Placeholder:** decompilers and a documentarian, per subsystem: one name for one thing across units, shared record types | Every routine still L2 (`make check`); a reviewer signs off each subsystem | Partly: `make rename` and `make readability` exist; a consistency playbook is due late in P4 |
+| P7 C translation | O5 | **Open decision for the human:** agents translating by hand, or a mechanical Pascal to C translator that agents then clean up. Either way it starts from branch `track-c-hybrid` (memory model, runtime, platform layer) | The oracle's record/replay sessions against the rebuild (`tools/oracle/replay.py`, on `main`) | **No:** decide late in P4 |
+| P8 CoCo 3 | Beyond the outcomes above | To be planned after P7 | | No |
 
 ---
 

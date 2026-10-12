@@ -21,6 +21,7 @@ All agents share one clone on one machine: the main checkout (the orchestrator's
 ```sh
 cd <main checkout>
 git merge --no-ff unit/<id>          # or review/<id>, task/<name>
+make rename APPLY=1                  # old names another branch still used: renamed (commit if it changed anything)
 make check                           # must be green on the merged result
 make handoff-done UNIT=<id>          # review branches: UNIT=<id> REVIEW=1; adds the hand-off's changelog row
 make status

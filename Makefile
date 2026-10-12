@@ -10,7 +10,7 @@ PACKED := poolrad/START.EXE
 .PHONY: help setup doctor inputs unexepack overlays map dax smoke status next ghidra p1-check \
         tp-install tp-probe tp-compare tp-pin tpc emu2 \
         packet claim lock locks unlock handoff handoffs handoff-done \
-        oracle-run oracle-dosbox timing-scan golden match test test-slow check review-pass rebuild skeleton host coco3
+        oracle-run oracle-dosbox timing-scan golden match test test-slow check review-pass rebuild skeleton readability rename host coco3
 
 help:
 	@echo "Available now:  setup doctor inputs unexepack overlays map dax smoke"
@@ -135,9 +135,10 @@ test:              ## Python unit tests, fast set (codecs, toolchain probes, mat
 	$(PY) -m pytest -q -m "not slow" tests/unit
 test-slow:         ## the unit tests that boot the real game (minutes; not part of `make check`)
 	$(PY) -m pytest -q -m slow tests/unit
-check:             ## everything a commit must pass (SPEC 9.6): fast tests, every unit's match, the rebuild links, golden check
+check:             ## everything a commit must pass (SPEC 9.6): fast tests, every unit's match and readability, the rebuild links, golden check
 	$(PY) -m pytest -q -m "not slow" tests/unit
 	$(PY) tools/match/match.py --all
+	$(PY) tools/match/readability.py
 	$(PY) tools/match/rebuild.py
 	$(PY) tools/oracle/golden.py --check
 review-pass:       ## record a passed review (playbook 70): UNIT=<id> [CHECK=1 only checks]
@@ -146,6 +147,12 @@ review-pass:       ## record a passed review (playbook 70): UNIT=<id> [CHECK=1 o
 
 rebuild:           ## link the whole game from src/ and compare it with the original (SPEC 8.4)
 	$(PY) tools/match/rebuild.py
+
+readability:       ## the checkable readability rules of docs/process/READABILITY.md: UNIT=<id> (no UNIT: every unit with decompiled routines)
+	$(PY) tools/match/readability.py $(UNIT)
+
+rename:            ## give a routine or global its real name everywhere: OLD=<name> NEW=<Name> WHY="<evidence>"; APPLY=1 re-applies recorded renames
+	$(if $(APPLY),$(PY) tools/match/rename.py --apply,$(PY) tools/match/rename.py "$(OLD)" "$(NEW)" --why "$(WHY)")
 
 skeleton:          ## write src/<ID>.PAS for a unit with no source yet: UNIT=<id> (no UNIT: every game unit)
 	$(PY) tools/match/skeleton.py $(if $(UNIT),$(UNIT),--all)

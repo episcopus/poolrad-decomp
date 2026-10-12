@@ -9,12 +9,12 @@ id = "ovl00:0042"
 unit = "ovl00"
 addr = "ovl00:0042"
 size = 106
-name = "ovl00_e1"
-signature = "function ovl00_e1(Size: Word): Integer"
+name = "HeapErrorHandler"
+signature = "function HeapErrorHandler(Size: Word): Integer"
 c_name = "ovl00_e1"
 level = "L2"
 justification = ""
-notes = "auto:entry_1"
+notes = "renamed from ovl00_e1 (installed as HeapError by the ovl00 initialisation (ovl00:00AC, whitepaper 5.15)); auto:entry_1"
 evidence = ["prologue"]
 
 [[routine]]
@@ -14361,12 +14361,12 @@ id = "ovl33:0004"
 unit = "ovl33"
 addr = "ovl33:0004"
 size = 243
-name = "ovl33_e1"
-signature = "procedure ovl33_e1(Text: String40; A, B, C: Byte)"
+name = "ShowDebugTrace"
+signature = "procedure ShowDebugTrace(Message: String40; First, Second, Third: Byte)"
 c_name = "ovl33_e1"
 level = "L2"
 justification = ""
-notes = "auto:entry_1"
+notes = "renamed from ovl33_e1 (shows three numbers and a message only when DebugMode is set (ovl33:0004, whitepaper 5.8)); auto:entry_1"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16246,12 +16246,12 @@ id = "0899:0000"
 unit = "res04"
 addr = "0899:0000"
 size = 89
-name = "res04_fn_0000"
-signature = "procedure res04_fn_0000"
+name = "QuitGame"
+signature = "procedure QuitGame"
 c_name = "res04_fn_0000"
 level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res04_fn_0000 (restores the sound mode, sets the saved video mode through INT 10h and calls Halt (0899:0000, whitepaper 5.8)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16259,12 +16259,12 @@ id = "0899:0059"
 unit = "res04"
 addr = "0899:0059"
 size = 171
-name = "res04_fn_0059"
-signature = "function res04_fn_0059: Char"
+name = "ReadGameKey"
+signature = "function ReadGameKey: Char"
 c_name = "res04_fn_0059"
 level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res04_fn_0059 (the ReadKey that game code calls: Ctrl-S sound toggle, STING debug keys, keyboard drain (0899:0059, whitepaper 5.8)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16272,12 +16272,12 @@ id = "0899:0104"
 unit = "res04"
 addr = "0899:0104"
 size = 30
-name = "res04_fn_0104"
-signature = "procedure res04_fn_0104"
+name = "FlushKeyboard"
+signature = "procedure FlushKeyboard"
 c_name = "res04_fn_0104"
 level = "L2"
 justification = ""
-notes = "auto:far_call"
+notes = "renamed from res04_fn_0104 (a keyboard flush loop called before prompts, disabled by an Exit before it (0899:0104, whitepaper 5.8)); auto:far_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16285,12 +16285,12 @@ id = "0899:0122"
 unit = "res04"
 addr = "0899:0122"
 size = 26
-name = "res04_fn_0122"
-signature = "procedure res04_fn_0122"
+name = "DiscardWaitingKey"
+signature = "procedure DiscardWaitingKey"
 c_name = "res04_fn_0122"
 level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res04_fn_0122 (reads one key if one is waiting and discards it (0899:0122)); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16714,12 +16714,12 @@ id = "0709:0BF5"
 unit = "res06"
 addr = "0709:0BF5"
 size = 74
-name = "res06_fn_0BF5"
-signature = "procedure res06_fn_0BF5(Color: Byte; Text: String40)"
+name = "ShowMessageLine"
+signature = "procedure ShowMessageLine(Color: Byte; Text: String40)"
 c_name = "res06_fn_0BF5"
 level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res06_fn_0BF5 (shows a string on row 24 in a colour and waits for a key (0709:0BF5, whitepaper 5.15)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

@@ -33,19 +33,19 @@ def test_res04_matches_as_a_whole_unit(built):
     assert set(statuses(results).values()) == {"matched"} and len(results) == 5
     assert whole.startswith("unit: complete")
     by = {r.name: r for r in results}
-    assert by["res04_fn_0059"].pool == 38            # the set [0, 1] and 'STING' sit before the routine
+    assert by["ReadGameKey"].pool == 38            # the set [0, 1] and 'STING' sit before the routine
 
 
 def test_an_overlay_unit_matches_through_its_stubs(built):
     results, whole = built["ovl00"]
-    assert statuses(results) == {"ovl00_e1": "matched", "ovl00_init": "matched"}
+    assert statuses(results) == {"HeapErrorHandler": "matched", "ovl00_init": "matched"}
     assert whole.startswith("unit: complete")
 
 
 def test_a_routine_matches_inside_a_unit_of_stubs(built):
     results, whole = built["res06"]
     st = statuses(results)
-    assert st.pop("res06_fn_0BF5") == "matched" and set(st.values()) == {"stub"} and len(st) >= 2
+    assert st.pop("ShowMessageLine") == "matched" and set(st.values()) == {"stub"} and len(st) >= 2
     assert whole == ""                               # a unit with stubs is not compared as a whole
 
 
@@ -70,13 +70,13 @@ def mutated(tmp_path, monkeypatch):
 
 
 def test_a_wrong_constant_is_caught(mutated):
-    r = mutated("if Key = #19 then", "if Key = #20 then")
-    assert r.name == "res04_fn_0059" and "not an address" in r.detail
+    r = mutated("KeyCtrlS = #19;", "KeyCtrlS = #20;")          # a named constant is still a constant
+    assert r.name == "ReadGameKey" and "not an address" in r.detail
 
 
 def test_a_wrong_global_is_caught(mutated):
-    r = mutated("Regs.AL := ds4A1C;", "Regs.AL := ds5372;")
-    assert r.name == "res04_fn_0000" and "global: ours is DS5372" in r.detail and "DS:4A1C" in r.detail
+    r = mutated("Regs.AL := SavedVideoMode;", "Regs.AL := SoundMode;")
+    assert r.name == "QuitGame" and "global: ours is SOUNDMODE (DS:5372 expected)" in r.detail and "DS:4A1C" in r.detail
 
 
 def test_a_wrong_set_constant_is_caught(mutated):
@@ -86,13 +86,13 @@ def test_a_wrong_set_constant_is_caught(mutated):
 
 def test_a_wrong_callee_is_caught(mutated):
     r = mutated("  Halt;\n", "  RunError(0);\n")              # same shape: code in AX, far call
-    assert r.name == "res04_fn_0000" and "far call: ours goes to 0AF8:00E2, the original to 0AF8:00E9" in r.detail
+    assert r.name == "QuitGame" and "far call: ours goes to 0AF8:00E2, the original to 0AF8:00E9" in r.detail
 
 
 def test_sources_parse_and_pad():
     text = (match.SRC / "RES06.PAS").read_text()
     parsed = dict(match.routines_of(text))
-    assert parsed["res06_fn_05EB"] and parsed["res06_fn_0626"] and not parsed["res06_fn_0BF5"]
+    assert parsed["res06_fn_05EB"] and parsed["res06_fn_0626"] and not parsed["ShowMessageLine"]
     padded = match.with_pads("RES06", text)
     assert "var MPadVRES06: array[0..63] of Byte; procedure MPadCRES06;" in padded
     assert padded.index("procedure MPadCRES06; begin end;") > padded.index("implementation")

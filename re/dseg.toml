@@ -330,3 +330,23 @@ size = 20
 type = "Registers"
 name = "Regs"
 evidence = "res04_fn_0000 (0899:0000) passes DS:4A02 as the var Registers of Dos.Intr($10, ...) after setting AH and AL (make match UNIT=res04)"
+
+[[global]]
+offset = 0x49F7
+name = "DebugMode"
+evidence = "Boolean toggled by Ctrl-D in the STING mode (0899:00C7); gates ShowDebugTrace (ovl33:001E)"
+
+[[global]]
+offset = 0x4A1C
+name = "SavedVideoMode"
+evidence = "the video mode QuitGame restores through INT 10h AH=0 (0899:0017)"
+
+[[global]]
+offset = 0x5372
+name = "SoundMode"
+evidence = "Ctrl-S sets it to 2 after calling the sound unit res03 (08AE:00DC) and restores it from SoundModeBeforePause through 08AE:017B (0899:006E)"
+
+[[global]]
+offset = 0x5373
+name = "SoundModeBeforePause"
+evidence = "holds SoundMode while Ctrl-S has it at 2; restored only when it is 0 or 1 (0899:0075, 0899:008B)"

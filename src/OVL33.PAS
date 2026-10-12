@@ -1,27 +1,31 @@
 unit OVL33;
-{ ovl33: overlay unit, 252 bytes of code. Skeleton by tools/match/skeleton.py: every routine is a stub
-  until decompiled (playbook 30). }
+{ Debug traces of the STING debug mode (whitepaper 5.8): one routine, called from the training and
+  rewards unit (ovl12:2233), that shows numbers and a message only while DebugMode is set. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 uses RES06;
-procedure ovl33_e1(Text: String40; A, B, C: Byte);
+procedure ShowDebugTrace(Message: String40; First, Second, Third: Byte);
 implementation
 uses POOLVARS;
 
-{ ovl33:0004: retf 10: 10 bytes of parameters; 1066 bytes of locals }
-{ Debug trace: when the STING debug mode is on (ds49F7, whitepaper 5.8), show three numbers and a message. }
-procedure ovl33_e1(Text: String40; A, B, C: Byte);
+const
+  Yellow = 14;                { EGA colour index }
+
+{ ovl33:0004. When DebugMode is set, clears the top line, shows the three numbers there as
+  "First , Second , Third" in yellow, shows Message on the message line (waiting for a key), and
+  clears the top line again. Does nothing otherwise. }
+procedure ShowDebugTrace(Message: String40; First, Second, Third: Byte);
 var
-  SA, SB, SC: string;
+  FirstText, SecondText, ThirdText: string;
 begin
-  if ds49F7 then
+  if DebugMode then
   begin
-    Str(A, SA);
-    Str(B, SB);
-    Str(C, SC);
+    Str(First, FirstText);
+    Str(Second, SecondText);
+    Str(Third, ThirdText);
     res06_fn_0DD3(0, 0, 39, 0);
-    res06_fn_0626(0, 0, 14, SA + ' , ' + SB + ' , ' + SC);
-    res06_fn_0BF5(14, Text);
+    res06_fn_0626(0, 0, Yellow, FirstText + ' , ' + SecondText + ' , ' + ThirdText);
+    ShowMessageLine(Yellow, Message);
     res06_fn_0DD3(0, 0, 39, 0);
   end;
 end;

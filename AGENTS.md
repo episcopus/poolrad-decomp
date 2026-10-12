@@ -47,6 +47,8 @@ You are working on a **matching decompilation of SSI's Pool of Radiance (DOS) in
 | `make match UNIT=<id> [FN=<name>] [WRITE=1]` | Prove the unit's Pascal against the original (L2); `UNIT=main` is `src/POOL.PAS`; no `UNIT`: every unit with source |
 | `make skeleton UNIT=<id>` | Write the starting source of a unit (every unit already has one) |
 | `make review-pass UNIT=<id> [CHECK=1]` | Record a passed review of a complete unit (playbook 70) |
+| `make readability [UNIT=<id>]` | The checkable readability rules (`docs/process/READABILITY.md`) |
+| `make rename OLD=<name> NEW=<Name> WHY="<evidence>"` | Rename a routine or a global in `re/`, the source and the whitepaper at once; `APPLY=1` after a merge |
 | `make rebuild` | Link the whole game from `src/` and compare it with the original, segment by segment |
 | `make locks` / `make lock UNIT=` / `make unlock UNIT=` | List, take or release locks (shared by every worktree of the clone) |
 | `make status` / `make next [REVIEW=1]` | Project status, next unit (or review) |
@@ -67,7 +69,7 @@ A target that is not built yet prints which phase delivers it.
 | `10-map-binary.md` | Ghidra import, units, routines, runtime identification, naming |
 | `20-data-formats.md` | Decoding a game data format with round-trip tests |
 | `25-oracle.md` | Building or extending the emulator harness |
-| `30-lift-unit.md` | Decompiling a unit to Pascal, routine by routine, to L2 |
+| `30-lift-unit.md` | Decompiling a unit to readable Pascal, routine by routine, to L2 (with `docs/process/READABILITY.md`) |
 | `40-sessions.md` | Recording sessions and goldens; verifying a rebuild |
 | `60-design-doc.md` | Updating the whitepaper from verified findings |
 | `70-review.md` | Independent review of a complete unit (`make claim REVIEW=1`, `make review-pass`) |
@@ -79,3 +81,4 @@ A target that is not built yet prints which phase delivers it.
 - Names: routines keep their `re/symbols.toml` name until renamed there; globals are `dsXXXX` (their DS offset) until named in `re/dseg.toml`; unattributed globals live in `src/POOLVARS.PAS`.
 - A routine not decompiled yet is a `{@stub}` (header line starts with it, empty body); give it the right signature when a caller needs it and record that in `re/symbols.toml` `signature`. An initialisation part with real code not decompiled yet is marked `{@stub-init}`.
 - Faithful: same control flow and evaluation order, original quirks kept (the compiler will not accept anything else).
+- **Readable before committing** (`docs/process/READABILITY.md`): every routine you decompile gets a real name, named parameters, locals and constants, names or commented declarations for the globals it uses, and a comment with its address and meaning. `make readability` (part of `make check`) refuses what was skipped. Rename routines of your unit and globals you have evidence for with `make rename OLD= NEW= WHY=`; leave other units' routines to their decompilers.

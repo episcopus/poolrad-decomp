@@ -1,0 +1,80 @@
+# Every rename of a routine or a global (tools/match/rename.py). `make rename APPLY=1`
+# replaces old names still used in src/ by the new ones (after a merge).
+
+[[rename]]
+old = "res04_fn_0000"
+new = "QuitGame"
+kind = "routine"
+why = "restores the sound mode, sets the saved video mode through INT 10h and calls Halt (0899:0000, whitepaper 5.8)"
+date = "2026-10-11"
+
+[[rename]]
+old = "res04_fn_0059"
+new = "ReadGameKey"
+kind = "routine"
+why = "the ReadKey that game code calls: Ctrl-S sound toggle, STING debug keys, keyboard drain (0899:0059, whitepaper 5.8)"
+date = "2026-10-11"
+
+[[rename]]
+old = "res04_fn_0104"
+new = "FlushKeyboard"
+kind = "routine"
+why = "a keyboard flush loop called before prompts, disabled by an Exit before it (0899:0104, whitepaper 5.8)"
+date = "2026-10-11"
+
+[[rename]]
+old = "res04_fn_0122"
+new = "DiscardWaitingKey"
+kind = "routine"
+why = "reads one key if one is waiting and discards it (0899:0122)"
+date = "2026-10-11"
+
+[[rename]]
+old = "res06_fn_0BF5"
+new = "ShowMessageLine"
+kind = "routine"
+why = "shows a string on row 24 in a colour and waits for a key (0709:0BF5, whitepaper 5.15)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl00_e1"
+new = "HeapErrorHandler"
+kind = "routine"
+why = "installed as HeapError by the ovl00 initialisation (ovl00:00AC, whitepaper 5.15)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl33_e1"
+new = "ShowDebugTrace"
+kind = "routine"
+why = "shows three numbers and a message only when DebugMode is set (ovl33:0004, whitepaper 5.8)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ds49F7"
+new = "DebugMode"
+kind = "global"
+why = "Boolean toggled by Ctrl-D in the STING mode (0899:00C7); gates ShowDebugTrace (ovl33:001E)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ds4A1C"
+new = "SavedVideoMode"
+kind = "global"
+why = "the video mode QuitGame restores through INT 10h AH=0 (0899:0017)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ds5372"
+new = "SoundMode"
+kind = "global"
+why = "Ctrl-S sets it to 2 after calling the sound unit res03 (08AE:00DC) and restores it from SoundModeBeforePause through 08AE:017B (0899:006E)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ds5373"
+new = "SoundModeBeforePause"
+kind = "global"
+why = "holds SoundMode while Ctrl-S has it at 2; restored only when it is 0 or 1 (0899:0075, 0899:008B)"
+date = "2026-10-11"
+

@@ -62,5 +62,5 @@ begin
   ovl16_e1;
   ovl29_e1(11, 0, 7, 6);
   ovl03_e1;
-  res04_fn_0000;
+  QuitGame;
 end.

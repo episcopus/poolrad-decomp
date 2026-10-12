@@ -75,7 +75,7 @@ This document grows a chapter per subsystem as the decompilation proves how each
   - `$Q`: does not exist in TP 6.0 **[V]** (`Error 17: Invalid compiler directive`).
   - Language limits of TP 6.0 that matter when reading the code **[V]** (`make tpc`): no `const` parameters (`Error 2: Identifier expected`), so structured value parameters are copied into the callee's frame; functions cannot return records.
   - `$N-`/`$E` **[I]**: no 8087 emulator interrupts (INT 34h..3Dh) or `fwait`+ESC sequences beyond 4 stray byte matches; the game does no floating point.
-  - `$A-` **[V]** (`make match UNIT=res06`): `res06_fn_0BF5` copies its `string[40]` value parameter to `[bp-29h]` and keeps a `Char` at `[bp-2Ah]`, a 2Ah-byte frame; with `$A+` the compiler rounds the 41-byte copy to 42 and the frame to 2Ch. Every matched unit compiles with `$A-` (res04, res06, ovl00), and the setting also governs the DGROUP layout the rebuild must reproduce (SPEC 7.3).
+  - `$A-` **[V]** (`make match UNIT=res06`): `ShowMessageLine` copies its `string[40]` value parameter to `[bp-29h]` and keeps a `Char` at `[bp-2Ah]`, a 2Ah-byte frame; with `$A+` the compiler rounds the 41-byte copy to 42 and the frame to 2Ch. Every matched unit compiles with `$A-` (res04, res06, ovl00), and the setting also governs the DGROUP layout the rebuild must reproduce (SPEC 7.3).
   - `$O+` in overlay units **[V]** (`make match UNIT=ovl00`): a string constant passed to a routine is first copied into a stack temporary (`0AF8:0B0B`) and the temporary is passed, since the overlay holding the constant may be moved; resident units pass the constant's code-segment address directly (res04).
   - `$B`, `$V`, `$X` **[?]**: no evidence yet. `$B` will show in the jump shape of `and`/`or` Boolean expressions of the first unit that has one.
 
@@ -200,7 +200,7 @@ if ParamStr(1) <> 'STING' then begin ovl01_e1; ovl02_e1; end;   { title screens,
 ovl16_e1;
 ovl29_e1(11, 0, 7, 6);
 ovl03_e1;
-res04_fn_0000;                                                    { quit (5.8) }
+QuitGame;                                                    { quit (5.8) }
 ```
 
 So the `STING` parameter also skips the title screens and the copy protection **[V]**. Of the 46 game units, 44 have an empty initialisation part (`begin end.`); only res08 (the overlay set-up) and ovl00 (the heap error handler) run code at start-up **[V]** (`tools/match/skeleton.py`, from the bytes at each init entry). res02, res10 and res11 contain nothing else: 16-byte units whose only code is that empty initialisation (`make match`, complete).

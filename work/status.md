@@ -17,15 +17,15 @@ Approach: ADR-002 (SPEC 4), Pascal-first matching decompilation; the C track (AD
 
 ### P4 units with matched routines
 
-| Unit | Name | Routines | L2 | Bytes at L2 | Reviewed |
-|---|---|---:|---:|---:|---|
-| ovl00 | ovl00 | 2 | 2 | 124 | complete |
-| ovl33 | ovl33 | 2 | 2 | 248 | complete |
-| res02 | res02 | 1 | 1 | 16 | complete |
-| res04 | res04 | 5 | 5 | 336 | complete |
-| res06 | res06 | 20 | 1 | 74 | in progress |
-| res10 | res10 | 1 | 1 | 16 | complete |
-| res11 | res11 | 1 | 1 | 16 | complete |
+| Unit | Name | Routines | L2 | Bytes at L2 | Readable (`make readability`) | Reviewed |
+|---|---|---:|---:|---:|---|---|
+| ovl00 | ovl00 | 2 | 2 | 124 | clean | complete |
+| ovl33 | ovl33 | 2 | 2 | 248 | clean | complete |
+| res02 | res02 | 1 | 1 | 16 | clean | complete |
+| res04 | res04 | 5 | 5 | 336 | clean | complete |
+| res06 | res06 | 20 | 1 | 74 | clean | in progress |
+| res10 | res10 | 1 | 1 | 16 | clean | complete |
+| res11 | res11 | 1 | 1 | 16 | clean | complete |
 
 Locks (agents at work): `make locks`. Next unit: `make next`.
 
@@ -35,7 +35,7 @@ Locks (agents at work): `make locks`. Next unit: `make next`.
 |---|---:|
 | Units | 50 |
 | Routines | 1431 |
-| Routines with non-provisional names | 103 |
+| Routines with non-provisional names | 110 |
 | RTL-prefixed routine names | 53 |
 | Unit code_bytes (declared) | 245081 |
 | Sum of routine sizes | 244128 |
@@ -69,7 +69,7 @@ Locks (agents at work): `make locks`. Next unit: `make next`.
 
 ## Verification
 
-13 routines above `none`: res11_init L2 (03DA:0000), res10_init L2 (03ED:0000), res06_fn_0BF5 L2 (0709:0BF5), res04_fn_0000 L2 (0899:0000), res04_fn_0059 L2 (0899:0059), res04_fn_0104 L2 (0899:0104), res04_fn_0122 L2 (0899:0122), res04_init L2 (0899:013C), res02_init L2 (0A31:0000), ovl00_e1 L2 (ovl00:0042), ovl00_init L2 (ovl00:00AC), ovl33_e1 L2 (ovl33:0004), ovl33_init L2 (ovl33:00F7).
+13 routines above `none`: res11_init L2 (03DA:0000), res10_init L2 (03ED:0000), ShowMessageLine L2 (0709:0BF5), QuitGame L2 (0899:0000), ReadGameKey L2 (0899:0059), FlushKeyboard L2 (0899:0104), DiscardWaitingKey L2 (0899:0122), res04_init L2 (0899:013C), res02_init L2 (0A31:0000), HeapErrorHandler L2 (ovl00:0042), ovl00_init L2 (ovl00:00AC), ShowDebugTrace L2 (ovl33:0004), ovl33_init L2 (ovl33:00F7).
 
 ## Blockers and decisions waiting for the human
 

@@ -69,8 +69,12 @@ Loop until the queue is empty or I stop you:
    review failed comes first: fix its must-fix findings). cd there and work only there.
 2. `make packet UNIT=<id>`, read the packet and the skeleton src/<ID>.PAS, then decompile routine by
    routine, leaves first: replace each {@stub} by Pascal, `make match UNIT=<id> FN=<name>` until it
-   matches, `make match UNIT=<id> WRITE=1`, commit `<unit>: decompile <name> (<id>) [L2]` with
-   `--trailer "Agent: <dec-N>"`.
+   matches; then make it readable as docs/process/READABILITY.md asks (real names with evidence through
+   `make rename`, named parameters, locals and constants, a comment with the address and the meaning in
+   game terms), `make match` again and `make readability UNIT=<id>` clean; then
+   `make match UNIT=<id> WRITE=1`, commit `<unit>: decompile <name> (<id>) [L2]` with
+   `--trailer "Agent: <dec-N>"`. Ports will be written from your source: never leave a routine unnamed
+   or uncommented for later.
 3. Settle every compiler question with `make tpc` probes, never from memory. Fix the Pascal, never the
    tools. After 5 failed attempts on one routine, write a `blocked` note in re/symbols.toml and move on.
 4. When the unit is complete (`unit: complete`) or you stop: write what it taught in the whitepaper
@@ -92,9 +96,10 @@ To assign a unit instead of letting the queue choose, add to step 1: `make claim
 ```text
 You are a reviewer on the Pool of Radiance decompilation in <path to the main checkout>, agent name
 "<rev-N>". Read AGENTS.md, docs/spec/SPEC.md sections 7 to 9, and docs/process/playbooks/70-review.md,
-and follow playbook 70 exactly. You review what the compiler cannot check (names, types, comments,
-evidence, the whitepaper entry); you never edit the code you review, and you never review a unit you
-committed to.
+and follow playbook 70 and docs/process/READABILITY.md exactly. You review what no tool can check:
+whether every name, type and comment is true, specific and backed by evidence, so that someone could port
+the unit from its source alone, and the whitepaper entry; you never edit the code you review, and you
+never review a unit you committed to.
 
 Loop until `make next REVIEW=1` says none is waiting or I stop you:
 1. From the main checkout: `make claim AGENT=<rev-N> REVIEW=1`; cd into the printed worktree.

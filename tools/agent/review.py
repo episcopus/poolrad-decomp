@@ -10,7 +10,9 @@ The review lives in work/reviews/<unit>.md (template: work/reviews/TEMPLATE.md).
   1. the file names a `decompiler:` and a `reviewer:`, and they differ (the reviewer of a unit is never
      its decompiler, SPEC 9.2);
   2. no finding is open with severity must-fix (`- [ ] must-fix ...`; a resolved one is `- [x] ...`);
-  3. the unit matches completely now (`make match UNIT=<id>`: every routine L2, `unit: complete`).
+  3. the unit matches completely now (`make match UNIT=<id>`: every routine L2, `unit: complete`);
+  4. the unit passes the checkable readability rules (`make readability UNIT=<id>`); the reviewer has
+     judged the rest (docs/process/READABILITY.md).
 
 Then every routine of the unit gets `review = "passed <date> by <reviewer>, <commit>"` in re/symbols.toml
 (only tools write it, AGENTS rule 2). A unit is done when it is complete and reviewed.
@@ -100,6 +102,8 @@ def main(argv=None) -> int:
         problems.append("not every routine matches: %s" % ", ".join("%s (%s)" % (r.name, r.status) for r in bad[:8]))
     if results and not whole.startswith("unit: complete"):
         problems.append("the unit is not complete: %s" % (whole or "stubs remain"))
+    import readability
+    problems += ["readability: %s" % f for f in readability.check(unit)]
     if problems:
         print("review-pass %s: NOT PASSED" % unit)
         for p in problems:

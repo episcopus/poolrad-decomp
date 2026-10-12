@@ -1,6 +1,6 @@
 unit RES06;
-{ res06: resident unit, 3984 bytes of code. Skeleton by tools/match/skeleton.py: every routine is a stub
-  until decompiled (playbook 30). }
+{ Screen text output (whitepaper 5.15), partly decompiled: ShowMessageLine shows a message on the
+  bottom line and waits for a key; the rest are stubs. }
 {$A-,F+,S-,R-,G-,I-}
 interface
 type
@@ -18,7 +18,7 @@ procedure res06_fn_0714;
 procedure res06_fn_0768;
 procedure res06_fn_09E3;
 procedure res06_fn_0B66;
-procedure res06_fn_0BF5(Color: Byte; Text: String40);
+procedure ShowMessageLine(Color: Byte; Text: String40);
 procedure res06_fn_0C3F;
 procedure res06_fn_0CAB;
 procedure res06_fn_0D68;
@@ -54,13 +54,13 @@ uses RES04;
 { 0709:0B66: retf 6: 6 bytes of parameters; 346 bytes of locals }
 {@stub} procedure res06_fn_0B66; begin end;
 { 0709:0BF5: show a one-line message on row 24 and wait for a key (whitepaper 5.15). }
-procedure res06_fn_0BF5(Color: Byte; Text: String40);
+procedure ShowMessageLine(Color: Byte; Text: String40);
 var
   Key: Char;
 begin
   res06_fn_05EB(0, 24, 0, 40);
   res06_fn_0626(0, 24, Color, Text);
-  Key := res04_fn_0059;
+  Key := ReadGameKey;
 end;
 { 0709:0C3F: retf 0: 0 bytes of parameters; 12 bytes of locals }
 {@stub} procedure res06_fn_0C3F; begin end;
