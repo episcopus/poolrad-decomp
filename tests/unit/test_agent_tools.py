@@ -123,3 +123,15 @@ def test_the_watch_screen_shows_agents_handoffs_and_locks(tmp_path, monkeypatch)
     text = watch.screen(5)
     assert "dec-9" in text and "matching ovl34_fn_0000" in text
     assert "ESCALATE" in text and "a question" in text and "ovl34" in text and "next unit" in text
+
+
+def test_a_claim_shows_the_orchestrators_notes_on_its_unit(tmp_path):
+    import claim
+    (tmp_path / "work").mkdir()
+    (tmp_path / "work/blockers.md").write_text(
+        "# Blockers\n\n<!-- mentions ovl34 in a comment -->\n\n"
+        "- ovl34 back on the decompiler: revert 1bb73fd,\n  then make res09 agree.\n\n"
+        "- res06 stub parameters: Left, Top.\n- ovl340 is another unit.\n")
+    notes = claim.blocker_notes(tmp_path, "ovl34")
+    assert notes == ["- ovl34 back on the decompiler: revert 1bb73fd, then make res09 agree."]
+    assert claim.blocker_notes(tmp_path, "res08") == []
