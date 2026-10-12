@@ -17394,6 +17394,7 @@ name = "res11_init"
 signature = ""
 c_name = "res11_init"
 level = "L2"
+review = "passed 2026-10-11 by rev-1, 2bc3fb9"
 justification = ""
 notes = "auto:init"
 evidence = ["prologue"]
