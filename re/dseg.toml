@@ -819,3 +819,8 @@ evidence = "AlterMenu's Pics submenu shows 'Monsters on' while it is nonzero and
 offset = 0x49F5
 name = "ShowPortraits"
 evidence = "AlterMenu's Pics submenu shows 'Portraits on' while it is nonzero and the P key toggles it (ovl15:1D31, 1DFC); the loader sets it to 1"
+
+[[global]]
+offset = 0x0D24
+name = "CoinCopperValues"
+evidence = "five LongInts 1,10,100,200,1000 (the image); MoneyValueInGold multiplies the coin kinds by them and divides by entry 3 (ovl21:00EC, 0111)"

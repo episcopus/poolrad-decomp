@@ -10101,12 +10101,12 @@ id = "ovl21:0000"
 unit = "ovl21"
 addr = "ovl21:0000"
 size = 32
-name = "ovl21_fn_0000"
-signature = ""
+name = "CarryLimit"
+signature = "function CarryLimit(Who: PCharacter): Word"
 c_name = "ovl21_fn_0000"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl21_fn_0000 (returns res12_fn_13AB (the strength weight allowance) plus 1500; WouldOverload compares the carried weight with it (ovl21:0000, 0054)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -10114,12 +10114,12 @@ id = "ovl21:0020"
 unit = "ovl21"
 addr = "ovl21:0020"
 size = 26
-name = "ovl21_fn_0020"
-signature = ""
+name = "RemoveCarriedWeight"
+signature = "procedure RemoveCarriedWeight(Who: PCharacter; Amount: Word)"
 c_name = "ovl21_fn_0020"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl21_fn_0020 (subtracts Amount from TCharacter+102, the carried weight MaxLoad bounds (ovl21:0020)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -10127,12 +10127,12 @@ id = "ovl21:003A"
 unit = "ovl21"
 addr = "ovl21:003A"
 size = 26
-name = "ovl21_fn_003A"
-signature = ""
+name = "AddCarriedWeight"
+signature = "procedure AddCarriedWeight(Who: PCharacter; Amount: Word)"
 c_name = "ovl21_fn_003A"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl21_fn_003A (adds Amount to TCharacter+102, the carried weight MaxLoad bounds (ovl21:003A)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -10140,12 +10140,12 @@ id = "ovl21:0054"
 unit = "ovl21"
 addr = "ovl21:0054"
 size = 84
-name = "ovl21_e1"
-signature = ""
+name = "WouldOverload"
+signature = "function WouldOverload(Who: PCharacter; Amount: Word; var Room: Word): Boolean"
 c_name = "ovl21_e1"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl21_e1 (True when carried weight plus Amount exceeds MaxLoad, with the room left; its caller then shows 'Overloaded. Money will be put in Pool.' (ovl21:0054, 0219)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -10153,12 +10153,12 @@ id = "ovl21:00A8"
 unit = "ovl21"
 addr = "ovl21:00A8"
 size = 136
-name = "ovl21_e12"
-signature = "function ovl21_e12(Money: TPartyMoney): LongInt"
+name = "MoneyValueInGold"
+signature = "function MoneyValueInGold(Money: TPartyMoney): LongInt"
 c_name = "ovl21_e12"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_12"
+notes = "renamed from ovl21_e12 (sums the five coin kinds times their copper values (DS:0D24: 1,10,100,200,1000), adds 100 and divides by 200, the gold value (ovl21:00A8)); auto:entry_12"
 evidence = ["prologue"]
 
 [[routine]]
@@ -10166,12 +10166,12 @@ id = "ovl21:0130"
 unit = "ovl21"
 addr = "ovl21:0130"
 size = 85
-name = "ovl21_e10"
-signature = "procedure ovl21_e10(Amount: Word)"
+name = "SetCharacterGold"
+signature = "procedure SetCharacterGold(Amount: Word)"
 c_name = "ovl21_e10"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_10"
+notes = "renamed from ovl21_e10 (clears the selected character's five coin words and writes Amount div 5 platinum and Amount mod 5 gold (ovl21:0130)); auto:entry_10"
 evidence = ["prologue"]
 
 [[routine]]
@@ -10179,12 +10179,12 @@ id = "ovl21:0185"
 unit = "ovl21"
 addr = "ovl21:0185"
 size = 126
-name = "ovl21_e11"
-signature = "procedure ovl21_e11(Amount: Word)"
+name = "SetPooledGold"
+signature = "procedure SetPooledGold(Amount: Word)"
 c_name = "ovl21_e11"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_11"
+notes = "renamed from ovl21_e11 (clears PooledMoney kinds 0..4 and writes Amount div 5 platinum and Amount mod 5 gold (ovl21:0185)); auto:entry_11"
 evidence = ["prologue"]
 
 [[routine]]
@@ -10192,12 +10192,12 @@ id = "ovl21:0203"
 unit = "ovl21"
 addr = "ovl21:0203"
 size = 145
-name = "ovl21_fn_0203"
-signature = ""
+name = "GivePlatinum"
+signature = "procedure GivePlatinum(Amount: Word)"
 c_name = "ovl21_fn_0203"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl21_fn_0203 (adds Amount to the selected character's Money[4] (platinum, 1000 copper in DS:0D24), the overflow to PooledMoney[4] with 'Overloaded. Money will be put in Pool.' (ovl21:0203)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -17620,7 +17620,7 @@ unit = "res12"
 addr = "00BA:13AB"
 size = 224
 name = "res12_fn_13AB"
-signature = ""
+signature = "function res12_fn_13AB(Who: Pointer): Integer"
 c_name = "res12_fn_13AB"
 level = "none"
 justification = ""

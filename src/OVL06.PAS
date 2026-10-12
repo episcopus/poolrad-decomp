@@ -111,15 +111,15 @@ end;
   ChooseShopItem until the player cancels (any key other than 'B' or Enter). For a chosen entry the
   Price is its Value (+$3A, ovl06:0361). It first reads the selected character's money
   (ovl19_e11); if the Price fits it adds the item to the character's items (AddInventoryItem) and,
-  when that worked, stores the money less the Price (ovl21_e10). Otherwise it reads the money pooled
-  in the shop (ovl21_e12 on PooledMoney); if the Price fits it adds the item and stores the pool less the
-  Price (ovl21_e11), else it shows "Not enough Money." (res12_fn_1693). No parameters; side effects:
+  when that worked, stores the money less the Price (SetCharacterGold). Otherwise it reads the money pooled
+  in the shop (MoneyValueInGold on PooledMoney); if the Price fits it adds the item and stores the pool less the
+  Price (SetPooledGold), else it shows "Not enough Money." (res12_fn_1693). No parameters; side effects:
   the character's items, the money and the screen.
   QUIRK ovl06:03C7: ovl19_e11 returns a LongInt, but Money is a Word, so only AX is kept and a
   character with 65536 or more is compared and charged modulo 65536 (a price can fit when only the
-  low word does, or the pool pays when it does not, and ovl21_e10 then stores the low word less the
+  low word does, or the pool pays when it does not, and SetCharacterGold then stores the low word less the
   price, ovl06:03E7..03F3). QUIRK ovl06:0449: the pool path computes Pooled - Price as a LongInt
-  (ovl06:0430..0446) but ovl21_e11(Amount: Word) receives only the low word, so a pool above 65535
+  (ovl06:0430..0446) but SetPooledGold(Amount: Word) receives only the low word, so a pool above 65535
   is rewritten with the truncated amount (the same truncations as ovl04's ChargeForCure). }
 procedure BuyItems;
 var
@@ -150,19 +150,19 @@ begin
         if Overloaded = 0 then
         begin
           Money := Money - Price;
-          ovl21_e10(Money);
+          SetCharacterGold(Money);
         end;
       end
       else
       begin
-        Pooled := ovl21_e12(PooledMoney);
+        Pooled := MoneyValueInGold(PooledMoney);
         if Price <= Pooled then
         begin
           AddInventoryItem(Selected, Overloaded);
           if Overloaded = 0 then
           begin
             Pooled := Pooled - Price;
-            ovl21_e11(Pooled);   { QUIRK ovl06:0449: only the low word of the LongInt is passed }
+            SetPooledGold(Pooled);   { QUIRK ovl06:0449: only the low word of the LongInt is passed }
           end;
         end
         else

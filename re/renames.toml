@@ -2295,3 +2295,66 @@ kind = "global"
 why = "AlterMenu's Pics submenu shows 'Portraits on' while it is nonzero and the P key toggles it (ovl15:1D31, 1DFC); the loader sets it to 1"
 date = "2026-10-12"
 
+[[rename]]
+old = "ovl21_fn_0020"
+new = "RemoveCarriedWeight"
+kind = "routine"
+why = "subtracts Amount from TCharacter+102, the carried weight MaxLoad bounds (ovl21:0020)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_fn_003A"
+new = "AddCarriedWeight"
+kind = "routine"
+why = "adds Amount to TCharacter+102, the carried weight MaxLoad bounds (ovl21:003A)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_e1"
+new = "WouldOverload"
+kind = "routine"
+why = "True when carried weight plus Amount exceeds MaxLoad, with the room left; its caller then shows 'Overloaded. Money will be put in Pool.' (ovl21:0054, 0219)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_e12"
+new = "MoneyValueInGold"
+kind = "routine"
+why = "sums the five coin kinds times their copper values (DS:0D24: 1,10,100,200,1000), adds 100 and divides by 200, the gold value (ovl21:00A8)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_e10"
+new = "SetCharacterGold"
+kind = "routine"
+why = "clears the selected character's five coin words and writes Amount div 5 platinum and Amount mod 5 gold (ovl21:0130)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_e11"
+new = "SetPooledGold"
+kind = "routine"
+why = "clears PooledMoney kinds 0..4 and writes Amount div 5 platinum and Amount mod 5 gold (ovl21:0185)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_fn_0203"
+new = "GivePlatinum"
+kind = "routine"
+why = "adds Amount to the selected character's Money[4] (platinum, 1000 copper in DS:0D24), the overflow to PooledMoney[4] with 'Overloaded. Money will be put in Pool.' (ovl21:0203)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds0D24"
+new = "CoinCopperValues"
+kind = "global"
+why = "five LongInts 1,10,100,200,1000 (the image); MoneyValueInGold multiplies the coin kinds by them and divides by entry 3 (ovl21:00EC, 0111)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_fn_0000"
+new = "CarryLimit"
+kind = "routine"
+why = "returns res12_fn_13AB (the strength weight allowance) plus 1500; WouldOverload compares the carried weight with it (ovl21:0000, 0054)"
+date = "2026-10-12"
+

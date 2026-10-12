@@ -594,18 +594,18 @@ the 28-byte money block at `DS:67F4` and `DS:6DC0`, redraws the shop (`res12:27D
   picker `ChooseFromList` ("Items: " with a "Buy" button).
 - `BuyItems` (`ovl06:0361`) takes the chosen item's `Value` as the price. It pays first from the
   selected character's money (`ovl19_e11(SelectedCharacter)`, a LongInt) and then from the money
-  pooled in the shop (`ovl21_e12` on `DS:67F4`); if the price fits, the item is added to the
-  character's items and the amount is deducted (`ovl21_e10` for the character, `ovl21_e11` for the
-  pool), otherwise it shows "Not enough Money.". `ovl19_e11` and `ovl21_e12` both sum five coin
+  pooled in the shop (`MoneyValueInGold` on `DS:67F4`); if the price fits, the item is added to the
+  character's items and the amount is deducted (`SetCharacterGold` for the character, `SetPooledGold` for the
+  pool), otherwise it shows "Not enough Money.". `ovl19_e11` and `MoneyValueInGold` both sum five coin
   amounts, each multiplied by its LongInt rate from the table at `DS:0D24`, add 100 and divide by
   the LongInt at `DS:0D30` (`ovl19:28BE`, `ovl21:00A8`); the character's coins are five words at
   +$88..+$90, the pool's five LongInts at the start of the 28-byte block `DS:67F4`. Both deduction
-  routines divide the amount by 5 and write five coin amounts (`ovl21_e10` into the character,
-  `ovl21_e11` into `DS:67F4`), so the money blocks hold five denominations **[I]** (ovl05 shows seven LongInt kinds in `DS:67F4`, 5.20) (callees not
+  routines divide the amount by 5 and write five coin amounts (`SetCharacterGold` into the character,
+  `SetPooledGold` into `DS:67F4`), so the money blocks hold five denominations **[I]** (ovl05 shows seven LongInt kinds in `DS:67F4`, 5.20) (callees not
   decompiled). Two 16-bit truncations are kept (QUIRKs): `BuyItems` keeps only the low word of
   `ovl19_e11`'s LongInt (`ovl06:03C7`), so a character with 65536 or more is compared and charged
   modulo 65536, and it passes only the low word of the pool's LongInt remainder to
-  `ovl21_e11(Amount: Word)` (`ovl06:0449`), so a pool above 65535 is rewritten truncated; ovl04's
+  `SetPooledGold(Amount: Word)` (`ovl06:0449`), so a pool above 65535 is rewritten truncated; ovl04's
   `ChargeForCure` does the same (5.19).
 - `AddInventoryItem` (`ovl06:0239`) appends a clone of an item to `SelectedCharacter^.Items`
   (+$C8, the character's carried items) and sets its var `Overloaded` to 1 when the item was
@@ -870,8 +870,8 @@ All seven routines are decompiled and matched.
 
 ### 5.19 The Temple **[V]** (`src/OVL04.PAS`, `make match UNIT=ovl04`: unit complete)
 
-- **The shop menu** **[V]** (`VisitTemple`, `ovl04:0D09`): `Heal View Take Pool Share Appraise Exit`, or `Heal View Pool Appraise Exit` while `ovl21_e9` reports no pooled money. On entry it sets the view mode `DS:49F3` to 1, redraws the view (`res12_fn_27D9`), reshows the character (`res12_fn_0767`), clears the 28 bytes at `DS:67F4` (the pooled money that `ovl21_e12` sums into a `LongInt`) and clears `DS:6DC0`. Exit with money left in the pool shows the priest's `As you leave a priest says, "Excuse me but you have left some money here"` and `Do you want to go back and retrieve your money?` (`ovl07_e13`) and leaves when that returns 1 (No: `ovl07_e13` returns the 0-based hotkey position of `'~Yes ~No'`), so Yes keeps the money in the Temple.
-- **The services** **[V]** (`HealMenu`, `ovl04:09D7`, ten names from the `string[40]` table at `DS:011A`: the nine services plus `Exit` at entry 10, `DS:028B`): every service routine checks the selected character (`SelectedCharacter`, `DS:5D92`), asks `cast cure anyway:` when the service is not needed (`AskCastAnyway`), then `ChargeForCure` shows `<service> will only cost <n> gold pieces.`, takes the price from the character's money (`ovl19_e11`, `ovl21_e10`) or else from the pool (`ovl21_e12`, `ovl21_e11`), and says `Not enough money.` when neither covers it. QUIRK `ovl04:0177`, `ovl04:01C8`: `ovl19_e11` returns a `LongInt` but `Money` is a `Word` and `ovl21_e11(Amount: Word)` takes only the low word of the pooled `LongInt`, so money or a pool of 65536 or more is compared and rewritten modulo 65536 (the same truncations as ovl06's `BuyItems`).
+- **The shop menu** **[V]** (`VisitTemple`, `ovl04:0D09`): `Heal View Take Pool Share Appraise Exit`, or `Heal View Pool Appraise Exit` while `ovl21_e9` reports no pooled money. On entry it sets the view mode `DS:49F3` to 1, redraws the view (`res12_fn_27D9`), reshows the character (`res12_fn_0767`), clears the 28 bytes at `DS:67F4` (the pooled money that `MoneyValueInGold` sums into a `LongInt`) and clears `DS:6DC0`. Exit with money left in the pool shows the priest's `As you leave a priest says, "Excuse me but you have left some money here"` and `Do you want to go back and retrieve your money?` (`ovl07_e13`) and leaves when that returns 1 (No: `ovl07_e13` returns the 0-based hotkey position of `'~Yes ~No'`), so Yes keeps the money in the Temple.
+- **The services** **[V]** (`HealMenu`, `ovl04:09D7`, ten names from the `string[40]` table at `DS:011A`: the nine services plus `Exit` at entry 10, `DS:028B`): every service routine checks the selected character (`SelectedCharacter`, `DS:5D92`), asks `cast cure anyway:` when the service is not needed (`AskCastAnyway`), then `ChargeForCure` shows `<service> will only cost <n> gold pieces.`, takes the price from the character's money (`ovl19_e11`, `SetCharacterGold`) or else from the pool (`MoneyValueInGold`, `SetPooledGold`), and says `Not enough money.` when neither covers it. QUIRK `ovl04:0177`, `ovl04:01C8`: `ovl19_e11` returns a `LongInt` but `Money` is a `Word` and `SetPooledGold(Amount: Word)` takes only the low word of the pooled `LongInt`, so money or a pool of 65536 or more is compared and rewritten modulo 65536 (the same truncations as ovl06's `BuyItems`).
 
   | Service | Price | Needed when | Effect |
   |---|---:|---|---|

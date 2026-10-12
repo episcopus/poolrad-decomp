@@ -27,7 +27,7 @@ procedure res12_fn_1168;
 procedure res12_fn_11EA;
 procedure res12_fn_1282;
 procedure res12_fn_1325;
-procedure res12_fn_13AB;
+function res12_fn_13AB(Who: Pointer): Integer;
 procedure res12_fn_148B(Spell: Byte);
 procedure res12_fn_1509;
 procedure res12_fn_15F7;
@@ -118,7 +118,7 @@ implementation
 { 00BA:1325: retf 4: 4 bytes of parameters; 2 bytes of locals }
 {@stub} procedure res12_fn_1325; begin end;
 { 00BA:13AB: retf 4: 4 bytes of parameters; 4 bytes of locals }
-{@stub} procedure res12_fn_13AB; begin end;
+{@stub} function res12_fn_13AB(Who: Pointer): Integer; begin end;
 { 00BA:148B: retf 2: 2 bytes of parameters; 2 bytes of locals }
 {@stub} procedure res12_fn_148B(Spell: Byte); begin end;
 { 00BA:1509: retf 8: 8 bytes of parameters; 44 bytes of locals }

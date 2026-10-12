@@ -75,13 +75,13 @@ end;
 
 { ovl04:00BF. Tells what Service costs ("<service> will only cost <price> gold pieces."), asks
   "pay for cure", and on Yes takes Price from the selected character's money (ovl19_e11, then
-  ovl21_e10) or else from the pooled money DS:67F4 (ovl21_e12, then ovl21_e11). When neither
+  SetCharacterGold) or else from the pooled money DS:67F4 (MoneyValueInGold, then SetPooledGold). When neither
   covers the price it says "Not enough money." and the answer becomes No. On Yes it shows
   "is cured.". Returns the answer.
   QUIRK ovl04:0177: ovl19_e11 returns a LongInt, but Money is a Word, so only AX is kept and a
   character with 65536 or more is compared and charged modulo 65536 (a price can fit when only the
-  low word does, and ovl21_e10 then stores the low word less the price). QUIRK ovl04:01C8: the pool
-  path computes Pooled - Price as a LongInt but ovl21_e11(Amount: Word) receives only the low word,
+  low word does, and SetCharacterGold then stores the low word less the price). QUIRK ovl04:01C8: the pool
+  path computes Pooled - Price as a LongInt but SetPooledGold(Amount: Word) receives only the low word,
   so a pool above 65535 is rewritten with the truncated amount (the same truncations as ovl06's
   BuyItems). }
 function ChargeForCure(Service: string; Price: Word): Char;
@@ -99,15 +99,15 @@ begin
     if Price <= Money then
     begin
       Dec(Money, Price);
-      ovl21_e10(Money);
+      SetCharacterGold(Money);
     end
     else
     begin
-      Pooled := ovl21_e12(PooledMoney);
+      Pooled := MoneyValueInGold(PooledMoney);
       if Price <= Pooled then
       begin
         Dec(Pooled, Price);
-        ovl21_e11(Pooled);   { QUIRK ovl04:01C8: only the low word of the LongInt is passed }
+        SetPooledGold(Pooled);   { QUIRK ovl04:01C8: only the low word of the LongInt is passed }
       end
       else
       begin
