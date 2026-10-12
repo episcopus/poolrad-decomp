@@ -548,7 +548,7 @@ var
   ds6814: Byte;                   { zero (or ds6815 zero) ends the combat (ovl08:009B, 095C); likely the count of one side }
   ds6815: Byte;                   { see ds6814; likely the count of the other side }
   ds6E30: Boolean;                { the Alt-M Magic On/Off toggle of the combat keys (ovl08:04A7) }
-  ds6E31: Byte;                   { the key flag the ovl08 menus pass to ovl25_e2 }
+  ds6E31: Byte;                   { the key flag the ovl08 menus pass to ReadPromptChoice }
   ds6DE3: Byte;                   { counted up once per combat round (ovl08:0891) }
   { The combatants by number: MoveCharacter attacks ds65B9[n] for the number ovl31_e16 returns
     (ovl08:0BF8). Extent unknown. }

@@ -50,7 +50,7 @@ const
   MaxGameSpeed = 9;
   VarNoCasting = 229;     { the game variable (+$1CA) that hides Cast in the combat menu }
   VarCombatWord715 = 715; { a word of ds49D6^ RunCombat clears every round (+$596); meaning unknown }
-  MenuColors = $F;        { the last ovl25_e2/ovl25_e5 argument of every menu here }
+  MenuColors = $F;        { the last ReadPromptChoice/AskYesNo argument of every menu here }
 
 { ovl08:0000. Purpose: frees the combat data at the end of a combat (the DS:6DBB list of $13-byte
   records, the $4E9-byte block DS:6716, the picture DS:6E36), calls ovl31_e3 and stores @ovl22_e4
@@ -174,7 +174,7 @@ begin
           'Q':
           begin
             SetQuickCombat(Who);
-            ovl25_e3;
+            ClearPromptLine;
             FlushKeyboard;
             Delay(200);
             Done := 1;
@@ -207,7 +207,7 @@ begin
               SetQuickCombat(Member);
               Member := Member^.Next;
             end;
-            ovl25_e3;
+            ClearPromptLine;
             Delay(200);
             Done := 1;
           end;
@@ -234,9 +234,9 @@ end;
 { ovl08:0666. Shows the combat menu of Who and returns the key in Cmd: Move while it has moves
   left, View Aim, Use when it carries items, Cast when it has a memorized spell, may cast and the
   game variable VarNoCasting is 0, Turn for a cleric (ClassLevels[0]) that has not turned yet, and
-  Quick Done. With the key flag of ovl25_e2 set only the Alt keys pass; the menu repeats until one
+  Quick Done. With the key flag of ReadPromptChoice set only the Alt keys pass; the menu repeats until one
   of the command keys of PlayerTurn comes. Flag first records whether a spell is memorized, then
-  holds ovl25_e2's key flag. }
+  holds ReadPromptChoice's key flag. }
 procedure CombatMenu(Who: PCharacter; var Cmd: Char);
 var
   Menu: string[40];
@@ -256,7 +256,7 @@ begin
   if (Who^.ClassLevels[0] > 0) and (Who^.Combat^.Turned = 0) then Menu := Menu + 'Turn ';
   Menu := Menu + 'Quick Done';
   repeat
-    Cmd := ovl25_e2('', Menu, $D, $A, MenuColors, 1, 0, Flag);
+    Cmd := ReadPromptChoice('', Menu, $D, $A, MenuColors, 1, 0, Flag);
     if (Flag <> 0) and not (Cmd in [KeyQuickAll, KeyAltR, KeyAltX, KeyAltM]) then Cmd := #0;
   until Cmd in [KeyQuickAll, KeyAltR, ' ', KeyAltX, KeyAltM, 'A', 'C', 'D', 'M', 'Q', 'T', 'U', 'V'];
 end;
@@ -295,7 +295,7 @@ begin
   ovl31_e10(ds6716^.ViewCol + 3, ds6716^.ViewRow + 3, $FF, 8);
   if (ds6814 = 0) or (ds6815 = 0) then Done := 1;
   if (ds6814 > 0) and (ds6815 = 0) and (ds49F4 = 0) then
-    if ovl25_e5('Continue Battle:', $D, $A, MenuColors) = 'Y' then Done := 0;
+    if AskYesNo('Continue Battle:', $D, $A, MenuColors) = 'Y' then Done := 0;
 end;
 { ovl08:09DF. The Move command: while Who has more than one half-move left the prompt Move/Attack,
   Move Left = n takes keypad keys (KeyUp..KeyHome give the directions 0..7). A step towards a
@@ -327,7 +327,7 @@ begin
   while (Who^.Combat^.Moves > 1) and (Key <> #0) and (Key <> #13) do
   begin
     ClearWindow($18, $18, $27, $18);
-    Key := ovl25_e2('Move/Attack, Move Left = ' + res12_fn_1037(Who^.Combat^.Moves shr 1) + ' ', '',
+    Key := ReadPromptChoice('Move/Attack, Move Left = ' + res12_fn_1037(Who^.Combat^.Moves shr 1) + ' ', '',
       $A, $A, MenuColors, 1, 0, ds6E31);
     case Key of
       #0:
@@ -357,7 +357,7 @@ begin
       if Other > 0 then
         MeleeAttack(Who, ds65B9[Other], Done)
       else if Ground = 0 then
-        case ovl25_e5('Flee:', $D, $A, MenuColors) of
+        case AskYesNo('Flee:', $D, $A, MenuColors) of
           'Y': Done := ovl13_e5(Who);
           'N': Done := 0;
         end
@@ -418,7 +418,7 @@ begin
   Key := ' ';
   while not (Key in [#0, 'E']) and (Done = 0) do
   begin
-    Key := ovl25_e2('', Menu, $D, $A, MenuColors, 0, 0, ds6E31);
+    Key := ReadPromptChoice('', Menu, $D, $A, MenuColors, 0, 0, ds6E31);
     case Key of
       'G': Done := res12_fn_2686(Who);
       'D':
@@ -479,7 +479,7 @@ begin
     if GameSpeed < MaxGameSpeed then Menu := Menu + 'Slower ';
     if GameSpeed > 0 then Menu := Menu + 'Faster ';
     Menu := Menu + 'Exit';
-    Key := ovl25_e2(Title, Menu, $D, $A, MenuColors, 0, 0, ds6E31);
+    Key := ReadPromptChoice(Title, Menu, $D, $A, MenuColors, 0, 0, ds6E31);
     case Key of
       'S': Inc(GameSpeed);
       'F': Dec(GameSpeed);
