@@ -23,7 +23,7 @@ procedure res06_fn_0C3F;
 procedure res06_fn_0CAB;
 procedure res06_fn_0D68(Text: string; Color: Byte);
 procedure res06_fn_0DBE;
-procedure res06_fn_0DD3(A, B, Width, D: Byte);
+procedure res06_fn_0DD3(Left, Top, Right, Bottom: Byte);
 implementation
 uses RES04;
 
@@ -78,7 +78,7 @@ end;
 { 0709:0DBE: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure res06_fn_0DBE; begin end;
 { 0709:0DD3: retf 8: 8 bytes of parameters; 12 bytes of locals }
-{@stub} procedure res06_fn_0DD3(A, B, Width, D: Byte); begin end;
+{@stub} procedure res06_fn_0DD3(Left, Top, Right, Bottom: Byte); begin end;
 
 begin
 end.
