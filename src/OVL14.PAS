@@ -37,12 +37,12 @@ procedure ClampPartyPosition;
 procedure MoveParty;
 procedure CheckMapCell;
 function HandleWildernessKeys: Char;
-procedure ovl14_e1;
+procedure DoWildernessMenu;
 implementation
-uses OVL29, RES03, RES05, RES06, OVL20, OVL24, OVL25, OVL19, OVL15, RES12, RES09, OVL32;
+uses OVL29, RES03, RES05, RES06, RES07, OVL20, OVL24, OVL25, OVL19, OVL15, RES12, RES09, OVL32, OVL28;
 
 { ovl14:0000. Clears the icon set's bit pair in the event byte of the area-map cell
-  (Col, Row): bits 6-7 for icon 6, 4-5 for 4, 2-3 for 2, 0-1 for 0. Called by ovl14_e1
+  (Col, Row): bits 6-7 for icon 6, 4-5 for 4, 2-3 for 2, 0-1 for 0. Called by DoWildernessMenu
   on the Exit path with the party cell and icon set. }
 procedure ClearIconBits(Col, Row, Icon: ShortInt);
 begin
@@ -79,7 +79,7 @@ begin
     end;
 end;
 { ovl14:0236. Returns 1 when any record of the ds5D96 list has a nonzero byte at
-  +$96+Which, else 0. The Bash/Pick/Knock menu (ovl14_e1) offers Pick when flag 6 is
+  +$96+Which, else 0. The Bash/Pick/Knock menu (DoWildernessMenu) offers Pick when flag 6 is
   found and Knock when flag 5 is found. }
 function HasRecFlag(Which: ShortInt): Byte;
 var
@@ -291,7 +291,7 @@ end;
   the 16x16 area map ($F steps to 0, 0 steps to $F), then refreshes the cell bytes
   ds6AB0 (through ovl29_e2) and ds6AB1 (through ovl29_e4), clears ds6DDE, and steps
   the sound through ovl20_e1 (mode 2 when ds49D6^[714] has bit 0, else mode 1).
-  Called by ovl14_e1. }
+  Called by DoWildernessMenu. }
 procedure MoveParty;
 begin
   res03_fn_00DC(ds2628);
@@ -317,7 +317,7 @@ end;
   position by the icon set's direction, clamps it (columns 0..$F, rows 0..$23), and
   reads that cell of AreaMap. N ($4E) and the impassable ranges pass through silently;
   the river codes ($66..$6C, $72) either print the stench message (when GameVars^[418]
-  is 0) or move there; anything else moves there with a sound. Called by ovl14_e1. }
+  is 0) or move there; anything else moves there with a sound. Called by DoWildernessMenu. }
 procedure CheckMapCell;
 var
   MapCol, GridCol, GridRow: ShortInt;
@@ -494,8 +494,104 @@ begin
   end;
   HandleWildernessKeys := Key;
 end;
-{ ovl14:0D6D: retf 0: 0 bytes of parameters; 300 bytes of locals }
-{@stub} procedure ovl14_e1; begin end;
+{ ovl14:0D6D. The wilderness command menu (called by ovl03_fn_3379): in the 3D view it
+  builds the Bash/Pick/Knock/Exit menu from the ds6DDE/ds6DDF/ds6DE0 flags and the
+  record flag checks, prompts through ovl25_e2 (Bash/Pick/Knock dispatch to DoBash,
+  DoPick, DoKnock), otherwise it steps the area map (CheckMapCell on map pages 2..4);
+  on success it moves the party (MoveParty), then always tidies the sprite banks. }
+procedure DoWildernessMenu;
+var
+  Done: Byte;
+  MenuFlag: Byte;
+  Menu: String[40];
+  Key2: Char;
+begin
+  Done := 0;
+  case AreaViewKind of
+    1:
+    begin
+      if ds49D6^[713] < $FF then
+      begin
+      case ovl29_e3(ds6AAD, ds6AAE, ds6AAF) of
+        1:
+          Done := 1;
+        2:
+        begin
+          Menu[0] := #0;
+          if ds6DDE[0] <> 0 then
+            Menu := 'Bash';
+          if (ds6DDF <> 0) and (HasRecFlag(6) <> 0) then
+            Menu := Menu + ' Pick';
+          if (ds6DE0 <> 0) and (FindCodeRecord(KnockCode) <> nil) then
+            Menu := Menu + ' Knock';
+          Menu := Menu + ' Exit';
+          if Menu = ' Exit' then
+            ClearIconBits(ds6AAD, ds6AAE, ds6AAF)
+          else
+          begin
+            Key2 := ovl25_e2('Locked. ', Menu, $D, $A, $F, 0, 0, MenuFlag);
+            case Key2 of
+              'B':
+                Done := DoBash;
+              'P':
+                Done := DoPick;
+              'K':
+                Done := Ord(DoKnock);
+            end;
+          end;
+        end;
+        3:
+        begin
+          Menu[0] := #0;
+          if ds6DDE[0] <> 0 then
+            Menu := 'Bash';
+          if (ds6DDF <> 0) and (HasRecFlag(6) <> 0) then
+            Menu := Menu + ' Pick';
+          if (ds6DE0 <> 0) and (HasRecFlag(5) <> 0) then
+            Menu := Menu + ' Knock';
+          Menu := Menu + ' Exit';
+          if Menu = ' Exit' then
+            ClearIconBits(ds6AAD, ds6AAE, ds6AAF)
+          else
+          begin
+            Key2 := ovl25_e2('Locked. ', Menu, $D, $A, $F, 0, 0, MenuFlag);
+            case Key2 of
+              'B':
+                Done := DoBash;
+              'P':
+                ds6DDF := 0;
+              'K':
+                Done := Ord(DoKnock);
+            end;
+          end;
+        end;
+      end;
+      if Done <> 0 then
+        MoveParty
+      else
+        res03_fn_00DC(ds2622);
+      res12_fn_290B;
+    end
+    else
+      ds49D6^[713] := 0;
+  end;
+  2..4:
+  begin
+    if ds49D6^[713] < $FF then
+    begin
+      CheckMapCell;
+      res12_fn_290B;
+    end
+    else
+      ds49D6^[713] := 0;
+  end;
+  end;
+  FreeSpriteList(@ds6ABE);
+  res07_fn_2595(ds6B01);
+  res07_fn_2595(ds6B06);
+  ds6B00 := $FF;
+  ds6B05 := $FF;
+end;
 
 begin
 end.

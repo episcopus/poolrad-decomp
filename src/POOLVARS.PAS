@@ -176,6 +176,7 @@ var
   ds0C26: array[0..15] of Byte;  { wall view id table, two equal groups of 8; see above }
   SpecialBlocks: array[0..9] of TSpecialBlock;  { entries 1..9 tested; only 3..9 replace the map block }
   ds2612: Word;                   { word passed to res03_fn_00DC by QuitGame and the Ctrl-S pause path; meaning unknown }
+  ds2622: Word;                   { word e1 passes to res03_fn_00DC when Done is 0; meaning unknown }
   ds2628: Word;                   { word the ovl14 movement code passes to res03_fn_00DC; meaning unknown }
   { Five words, one per 8x8 tile bank, subtracted from the symbol number to index within the
     bank (Put8x8Symbol, ovl34:020F); evidence in re/dseg.toml. }
@@ -219,7 +220,7 @@ var
   ds6AAE: ShortInt;               { the party's row in the 16x16 area map }
     { ShortInt, not Byte: ovl14 widens it with cbw (ovl14:069D); ovl29_e4/e5 take it; set to 1 by StartGame. }
   { The marker's icon set (DrawIcon's third parameter): the wilderness keys H, M, P and K set 0,
-    2, 4 and 6 (ovl14_fn_0B48); ovl07_e10 maps a script value 0..3 to the same 0/2/4/6. }
+    2, 4 and 6 (HandleWildernessKeys, ovl14_e2); ovl07_e10 maps a script value 0..3 to the same 0/2/4/6. }
   ds6AAF: Byte;                   { the marker's icon set; see above }
   ds6AB0: Byte;                   { ovl29_e2's result for the party cell and icon set (MoveParty); meaning unknown }
   ds6AB1: Byte;                   { the event byte of the party's map cell, from ovl29_e4; bit 7 = interior }
@@ -342,6 +343,7 @@ var
   ds6B29: Word;                   { set to 1 by the loader (ovl11:0405) }
   ds6DDA: Byte;                   { cleared by the loader (ovl11:0410) }
   ds6DDE: array[0..2] of Byte;    { 3-byte buffer the loader fills with 1 (ovl11:0342) }
+  ds6DE0: Byte;                   { knock menu flag: e1 offers Knock while nonzero; overlaps ds6DDE[2] }
   ds6DDF: Byte;                   { pick/knock menu flag (e1 offers Pick/Knock while nonzero) }
     { DoPick clears it. Overlaps ds6DDE[1]; exact sharing uncertain. }
   ds84D4: Byte;                   { cleared by the loader (ovl11:040B) }

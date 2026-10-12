@@ -743,3 +743,10 @@ kind = "routine"
 why = "ovl14:0989 drives wilderness interaction for ovl03: reads menu and movement keys, moves the party, manages icon sets and view pages, returns the key"
 date = "2026-10-12"
 
+[[rename]]
+old = "ovl14_e1"
+new = "DoWildernessMenu"
+kind = "routine"
+why = "ovl14:0D6D builds the Bash Pick Knock Exit command menu from cell and record flags, dispatches to DoBash DoPick DoKnock, moves the party and tidies sprite banks; called by ovl03"
+date = "2026-10-12"
+

@@ -7596,12 +7596,12 @@ id = "ovl14:0D6D"
 unit = "ovl14"
 addr = "ovl14:0D6D"
 size = 826
-name = "ovl14_e1"
-signature = ""
+name = "DoWildernessMenu"
+signature = "procedure DoWildernessMenu"
 c_name = "ovl14_e1"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_1"
+notes = "renamed from ovl14_e1 (ovl14:0D6D builds the Bash Pick Knock Exit command menu from cell and record flags, dispatches to DoBash DoPick DoKnock, moves the party and tidies sprite banks; called by ovl03); auto:entry_1"
 evidence = ["prologue"]
 
 [[routine]]
@@ -7612,7 +7612,7 @@ size = 5
 name = "ovl14_init"
 signature = ""
 c_name = "ovl14_init"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_0"
 evidence = ["prologue"]
