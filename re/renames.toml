@@ -617,3 +617,10 @@ kind = "routine"
 why = "ovl18:06B3: animates or clears the doors of the area view through res07_fn_1E5C with the two SQRPACI banks, stepping the view through DS:094D/DS:095F; called by ovl03:31B4 and ovl17:1602"
 date = "2026-10-11"
 
+[[rename]]
+old = "ovl32_e4"
+new = "LoadPictureSlot"
+kind = "routine"
+why = "loads picture Block and its mirrored half Block+80h of a picture set into the two pointers of slot Slot of the table DS:5E5A (res07_fn_0111), with the CHEAD/CBODY T suffix rule and the recolouring of ICON and TileSet sets (ovl32:01C8, matched); the counterpart of FreePictureSlot"
+date = "2026-10-11"
+

@@ -14114,12 +14114,12 @@ id = "ovl32:01C8"
 unit = "ovl32"
 addr = "ovl32:01C8"
 size = 820
-name = "ovl32_e4"
-signature = "procedure ovl32_e4(S: string; A, B: Byte)"
+name = "LoadPictureSlot"
+signature = "procedure LoadPictureSlot(S: string; A, B: Byte)"
 c_name = "ovl32_e4"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_4"
+notes = "renamed from ovl32_e4 (loads picture Block and its mirrored half Block+80h of a picture set into the two pointers of slot Slot of the table DS:5E5A (res07_fn_0111), with the CHEAD/CBODY T suffix rule and the recolouring of ICON and TileSet sets (ovl32:01C8, matched); the counterpart of FreePictureSlot); auto:entry_4"
 evidence = ["prologue"]
 
 [[routine]]
@@ -14143,7 +14143,7 @@ size = 5
 name = "ovl32_init"
 signature = ""
 c_name = "ovl32_init"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_0"
 evidence = ["prologue"]

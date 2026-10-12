@@ -35,12 +35,12 @@ const
   address used with VideoAdapter 2, ovl11:019F), and finally sets the screen and game globals
   (ovl11:0392..0456). The second half (ovl11:0469..0614) is the save game load: it saves the
   current file path, draws 'Loading...Please Wait' (res06_fn_0626), loads the 12 sprites of 'COMSPR'
-  through ovl32_e4, builds the game file name from the InsertDiskPrompts name table plus the character in
+  through LoadPictureSlot, builds the game file name from the InsertDiskPrompts name table plus the character in
   DS:547D (OpenGameFile opens it), reads one $810-byte block (Reset/Seek/BlockRead/Close,
   ovl11:05A9..05E5), restores the path, randomises the seed (System.Randomize, ovl11:0602) and
   calls ovl22_e10 and ovl12_e1.
   Reads and changes: the globals listed in POOLVARS.PAS (their comments name the write).
-  Side effects: the heap, the screen (res06_fn_0626, ovl32_e4, Load8x8Bank) and the disk (the file
+  Side effects: the heap, the screen (res06_fn_0626, LoadPictureSlot, Load8x8Bank) and the disk (the file
   read). The loop counter is the global DS:465C, reused by the three fill loops. }
 procedure StartGame;
 begin
@@ -149,8 +149,8 @@ begin
   res07_fn_0111('sqrpaci', 1, 0, 0, ds5E52);
   res07_fn_0111('sqrpaci', 2, 0, 0, ds5E56);
   for ds465C := 0 to $B do
-    ovl32_e4('COMSPR', ds465C, ds465C + $D);
-  ovl32_e4('COMSPR', $19, $19);
+    LoadPictureSlot('COMSPR', ds465C, ds465C + $D);
+  LoadPictureSlot('COMSPR', $19, $19);
   ds4660 := OpenGameFile('ITEMS', InsertDiskPrompts[TileSet] + Chr(ds547D) + ':', 0, ds468C);
   Reset(ds468C, 1);
   Seek(ds468C, 2);
