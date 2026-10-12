@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-11 | 5.2, 5.2.1 | ovl26 area view dispatcher and party marker added under 5.2; DS:49D2 settled as GameVars (word array) with words 230, 251, 253, 254 named | make match UNIT=ovl26, make match UNIT=ovl27 |
 | 2026-10-11 | tools | make status copies the orchestrator's work/blockers.md into the status blockers section, so hand-written blockers survive regeneration | tests/unit/test_status.py; make check |
 | 2026-10-11 | 5.12 Copy protection | the check is now matched Pascal: CheckCodeWheel; the question window, the rune draws and the line reader named; the TP 6.0 string-function result convention proven (result pointer pushed first, left on the stack by retf 8) | make match UNIT=ovl02 (unit complete), the TCodeWheelEntry type in src/POOLVARS.PAS |
 | 2026-10-11 | tools | make rename applies renames past apostrophes in comments and prose, warns about names left in literals | tests/unit/test_readability.py; 3 stale whitepaper names fixed |
