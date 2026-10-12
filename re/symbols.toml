@@ -15899,6 +15899,7 @@ name = "res02_init"
 signature = ""
 c_name = "res02_init"
 level = "L2"
+review = "passed 2026-10-11 by rev-1, 5f74fb5"
 justification = ""
 notes = "[V] game-unit routine, formerly misnamed Dos_rtl_0000 (WHITEPAPER 2.2)"
 evidence = ["prologue"]
