@@ -35,7 +35,11 @@ def without_randomize(text: str) -> str:
 
 
 def test_randomize_is_a_forced_start():
+    """A committed manual entry, so it does not hang on runtime_entries output (which op-rtl is
+    changing, escalate-ovl11-20261012040806)."""
     assert "0AF8:1247" in forced_starts.forced()
+    manual = [e for e in forced_starts.load() if e["source"] == "manual"]
+    assert "0AF8:1247" in {e["id"] for e in manual}
 
 
 def test_map_keeps_randomize_its_own_routine(tmp_path):
