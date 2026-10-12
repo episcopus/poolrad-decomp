@@ -7556,105 +7556,40 @@ evidence = ["prologue"]
 id = "ovl14:073B"
 unit = "ovl14"
 addr = "ovl14:073B"
-size = 63
+size = 185
 name = "ovl14_fn_073B"
 signature = ""
 c_name = "ovl14_fn_073B"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; map dec-1 2026-10-12: ends 07F4 (was 63); 077A was mid-routine, entry deleted"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl14:077A"
-unit = "ovl14"
-addr = "ovl14:077A"
-size = 158
-name = "ovl14_fn_077A"
-signature = ""
-c_name = "ovl14_fn_077A"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl14:0818"
 unit = "ovl14"
 addr = "ovl14:0818"
-size = 113
+size = 354
 name = "ovl14_fn_0818"
 signature = ""
 c_name = "ovl14_fn_0818"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; map dec-1 2026-10-12: ends 097A (was 113); 0889, 08A2, 08E5 were mid-routine, entries deleted"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl14:0889"
-unit = "ovl14"
-addr = "ovl14:0889"
-size = 25
-name = "ovl14_fn_0889"
-signature = ""
-c_name = "ovl14_fn_0889"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl14:08A2"
-unit = "ovl14"
-addr = "ovl14:08A2"
-size = 67
-name = "ovl14_fn_08A2"
-signature = ""
-c_name = "ovl14_fn_08A2"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl14:08E5"
-unit = "ovl14"
-addr = "ovl14:08E5"
-size = 164
-name = "ovl14_fn_08E5"
-signature = ""
-c_name = "ovl14_fn_08E5"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl14:0989"
 unit = "ovl14"
 addr = "ovl14:0989"
-size = 447
+size = 963
 name = "ovl14_e2"
 signature = ""
 c_name = "ovl14_e2"
 level = "none"
 justification = ""
-notes = "auto:entry_2"
+notes = "auto:entry_2; map dec-1 2026-10-12: ends 0D4C (was 447); 0B48 was mid-routine (its E4 40 bytes are xor ah,ah + inc ax, not IN AL,40h), entry deleted"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl14:0B48"
-unit = "ovl14"
-addr = "ovl14:0B48"
-size = 549
-name = "ovl14_fn_0B48"
-signature = ""
-c_name = "ovl14_fn_0B48"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl14:0D6D"

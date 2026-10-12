@@ -13,13 +13,8 @@ procedure ovl14_fn_05EE;
 procedure ovl14_fn_0648;
 procedure ovl14_fn_068D;
 procedure ovl14_fn_073B;
-procedure ovl14_fn_077A;
 procedure ovl14_fn_0818;
-procedure ovl14_fn_0889;
-procedure ovl14_fn_08A2;
-procedure ovl14_fn_08E5;
 procedure ovl14_e2;
-procedure ovl14_fn_0B48;
 procedure ovl14_e1;
 implementation
 
@@ -41,22 +36,12 @@ implementation
 {@stub} procedure ovl14_fn_0648; begin end;
 { ovl14:068D: retf 0: 0 bytes of parameters; 6 bytes of locals }
 {@stub} procedure ovl14_fn_068D; begin end;
-{ ovl14:073B: frame not read }
+{ ovl14:073B: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl14_fn_073B; begin end;
-{ ovl14:077A: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl14_fn_077A; begin end;
-{ ovl14:0818: frame not read }
+{ ovl14:0818: retf 0: 0 bytes of parameters; 40 bytes of locals }
 {@stub} procedure ovl14_fn_0818; begin end;
-{ ovl14:0889: frame not read }
-{@stub} procedure ovl14_fn_0889; begin end;
-{ ovl14:08A2: frame not read }
-{@stub} procedure ovl14_fn_08A2; begin end;
-{ ovl14:08E5: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl14_fn_08E5; begin end;
-{ ovl14:0989: frame not read }
+{ ovl14:0989: retf 0: 0 bytes of parameters; 60 bytes of locals }
 {@stub} procedure ovl14_e2; begin end;
-{ ovl14:0B48: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl14_fn_0B48; begin end;
 { ovl14:0D6D: retf 0: 0 bytes of parameters; 300 bytes of locals }
 {@stub} procedure ovl14_e1; begin end;
 
