@@ -1,9 +1,9 @@
 # Review: ovl01
 
 decompiler: dec-2 (Agent trailers of c2e76ca, 6ce2cc6, d8d585d)
-reviewer: rev-6 (round 2; round 1 by rev-4 at 109bf74)
-date: 2026-10-11
-commit: e9d5afd
+reviewer: rev-6 (round 3; round 2 by rev-6 at e9d5afd, round 1 by rev-4 at 109bf74)
+date: 2026-10-12
+commit: 76e6dcc
 
 Checklist: docs/process/playbooks/70-review.md (every item, every routine).
 
@@ -29,6 +29,7 @@ Severity: must-fix (blocks review-pass), should-fix, note. When the decompiler f
 
 - [x] must-fix ShowTitleScreen: the comment (src/OVL01.PAS line 78, "sets the palette (res07_fn_2595)") and whitepaper 5.8 (line 565, same words) misstate the call at ovl01:06F8. (fixed in 52a0bca) `res07_fn_2595(var Pic)` (0464:2595) frees the picture: when the pointer is not nil it frees the pixel buffer at +$13 (size byte +8 times word +$11, quartered when DS:4A1E = 1; FreeMem at 0464:25F0/2605), frees the block itself (size plus $17, FreeMem at 0464:261B) and stores nil in the pointer (0464:2620..2628). So the title picture is freed right after it is drawn, and nothing touches the palette. Say "frees the picture (res07_fn_2595)" in both places, as ovl32 (src/OVL32.PAS line 81) and whitepaper 4.2.3 (line 426) already do. Found by rev-4 after the round-1 verdict (escalate-ovl01-20261012050826), confirmed by rev-6 from `make packet FN=res07_fn_2595`.
 - [x] note ShowTitleScreen: round-1 must-fix lines on FlushKeyboard look addressed in the source at e9d5afd (the unit comment and ShowTitleScreen's comment now say FlushKeyboard does nothing, QUIRK 0899:010A), but they are not ticked with a fixing commit; whitepaper 5.8 line 565 still says `WaitKeyOrTimeout` "then drains keys (`FlushKeyboard`)" (the round-1 should-fix). Tick them with the commit when fixing the line above. (fixed in 52a0bca; the review file ticks them now)
+- [ ] must-fix ShowTitleScreen: the QUIRK comment (src/OVL01.PAS line 79, "QUIRK ovl01:0729: Total is Random(4), always below 50000") and whitepaper 5.8 (line 567, "never runs" tagged [V] (code)) misstate the code. `Total` is a running sum, not one `Random(4)`: ovl01:0721..0726 adds `Random(4)` into `[bp-8]`/`[bp-6]` with `add`/`adc` on every pass of the wait loop, and it is zeroed only before the loop and when the gate fires (ovl01:073E..0743). So the EGA animation runs as soon as the loop has made enough passes for the sum to pass 50000 (about 33,000 passes at the mean of 1.5) before the 500-tick deadline: it depends on CPU speed, and the code alone cannot show it never runs. The only evidence for "never" is the oracle's virtual-time run (whitepaper line 605: about 30,000 `Random(4)` calls, a sum near 45,000), which is one machine speed, not the code. Say what the code does (an accumulated `Random(4)` sum compared with 50000, so the animation is CPU-speed dependent and did not fire in the oracle run [V], whether it fires on period hardware [?]), and correct the whitepaper tag. A port that drops the animation as dead code would be wrong. (Round 1 noted the thin margin; on rereading, the comment is wrong, not only strong.)
 ## What was verified
 
 1. `make match UNIT=ovl01` rerun: complete, all four routines L2. `make readability UNIT=ovl01` is clean.
@@ -47,3 +48,5 @@ Severity: must-fix (blocks review-pass), should-fix, note. When the decompiler f
 Not passed. Two must-fix: the `WaitKeyOrTimeout` and `ShowTitleScreen` comments claim `FlushKeyboard` drains the keyboard, and it does nothing.
 
 Round 2 (rev-6): not passed. One open must-fix: `ShowTitleScreen`'s comment and whitepaper 5.8 say `res07_fn_2595` sets the palette; it frees the picture (0464:2595, called at ovl01:06F8).
+
+Round 3 (rev-6, at 76e6dcc): the round-2 must-fix is fixed (52a0bca: comment and whitepaper 5.8 now say res07_fn_2595 frees the title picture; match complete, readability clean). Not passed: one new must-fix, the ovl01:0729 QUIRK claims the animation never runs, but `Total` accumulates across the wait loop (ovl01:0721..0726), so it runs whenever the loop makes enough passes.
