@@ -747,7 +747,7 @@ Overlay 18 (PoolNarrative) plays the game's ending and animates the area view do
 
 ---
 
-### 5.18 The line drawing unit ovl30 **[V]** (`src/OVL30.PAS`, `make match UNIT=ovl30`: 6 of 7 routines at L2)
+### 5.18 The line drawing unit ovl30 **[V]** (`src/OVL30.PAS`, `make match UNIT=ovl30`: unit complete)
 
 Overlay 30 draws lines and sorts:
 
@@ -778,20 +778,32 @@ Overlay 30 draws lines and sorts:
   coordinates are `ShortInt`, and a `case` over 0..8 keeps the selector in AL with chained
   `cmp`/`jne` (proven by `make tpc` probes in `scratch/Q1.PAS`, `scratch/Q2.PAS`).
 
+- `WalkLine(X1, Y1, Ex, Ey, StepCount, Map)` (`ovl30:0422`) walks a Bresenham line from
+  (X1, Y1) towards (Ex, Ey) over the map rows and reports the steps in StepCount: it sets up
+  Line from the endpoints and a horizontal Bound line from the start tile's table height (the
+  `DS:2745` tile table, 4 bytes per tile id), then steps Bound and Line together, stopping with
+  False at a blocking tile or past `2 * StepCount + 1` steps, else with True. The map is an
+  array of 50-byte rows (7 header bytes, 43 tile cells); the tile gate needs row 0's header
+  byte 6 clear and the current tile's block height above Bound.Y. Ex, Ey and StepCount carry
+  the end point and the steps used. Called by ovl09_fn_0B96, ovl12_e70, ovl13_fn_2DFA and
+  `ScanTargets`. Compiler notes: a far 2D subscript keeps a nonzero low bound as a memory
+  displacement (`Map^[Y].Cells[X]` gives two `add di` plus `[di+7]`), and `Result := False;
+  Exit` jumps to the epilogue including the result fetch (proven by `make tpc` probes in
+  `scratch/Q8.PAS` to `scratch/Q11.PAS`). This unblocks the `BLOCKED` note dec-5 left in
+  `re/symbols.toml`.
 - `ScanTargets(FromX, FromY, MaxSteps, Dir, Base, Map)` (`ovl30:0909`) scans the DS:5F27
   map entity table (records with a map position, an unknown byte and a kind byte; entry 0's
   kind holds the count) for records reachable from the search point: for each active record it
   tries the four neighbours of the base point against the four neighbours of the record
   (`ovl31_e1` fills the neighbour offsets from a base value, invalid neighbours get -1), keeps
-  the pairs in direction Dir's arc (`InDirArc`) that the line walk (`ovl30_e5`) crosses in the
+  the pairs in direction Dir's arc (`InDirArc`) that the line walk (`WalkLine`) crosses in the
   fewest steps, appends one record per hit (table index, step count, working direction) to the
   `DS:6718` sort table and sorts it. The stored direction is the requested Dir, or the first
   working one when Dir is 8. Called from combat and item aiming (`ovl22_e5`, which loops Dir to
   aim) and from ovl09, ovl13, ovl24 and res12. Compiler notes: a `for` over a variable bound
   snapshots it into a hidden temp slot (the `sub sp` covers it), and near/far jump selection
   follows rel8 reachability (proven by `make tpc` probes in `scratch/Q4.PAS` to `scratch/Q6.PAS`).
-
-Still to decompile: `ovl30_e5` (`ovl30:0422`, the line walk, blocked in `re/symbols.toml`).
+All seven routines are decompiled and matched.
 
 ---
 

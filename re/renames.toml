@@ -736,3 +736,10 @@ kind = "routine"
 why = "scans the DS:5F27 map entity table for records reachable from (X,Y): tries base/record neighbour pairs in Dir arc that ovl30_e5 walks in fewest steps, appends (index, steps, direction) to the sort table and sorts it; called from combat/item aiming (ovl22_e5) and res12/ovl09/ovl13/ovl24"
 date = "2026-10-12"
 
+[[rename]]
+old = "ovl30_e5"
+new = "WalkLine"
+kind = "routine"
+why = "walks a Bresenham line over the map rows with tile gating (stops False at blocking tiles or past Limit steps, else True with steps in StepCount); called for line-of-sight by ovl09/ovl12/ovl13 and ScanTargets"
+date = "2026-10-12"
+
