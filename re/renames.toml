@@ -302,3 +302,17 @@ kind = "routine"
 why = "ovl28:05D9: loads the HEAD and BODY 8x8 sprite banks of the picture number DS:5376 from HEAD<num> and BODY<num> through res07_fn_0111; called by ovl07_e7, ovl28_e4 and res12_fn_27D9"
 date = "2026-10-11"
 
+[[rename]]
+old = "res05_fn_094A"
+new = "SelectTileSet"
+kind = "routine"
+why = "saves TileSet into ds5377 and stores the byte parameter as the new 8X8D file number (0802:094A, matched). ovl07 and ovl17 call it"
+date = "2026-10-11"
+
+[[rename]]
+old = "res05_fn_095D"
+new = "RestoreTileSet"
+kind = "routine"
+why = "copies the TileSet that SelectTileSet saved in ds5377 back into TileSet (0802:095D, matched). ovl17 calls it"
+date = "2026-10-11"
+
