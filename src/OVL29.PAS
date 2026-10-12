@@ -225,7 +225,7 @@ begin
   end;
 end;
 { ovl29:05F3. Steps the picture display (res07_fn_1B52, the same call ovl34 uses after a
-  direct blit). No parameters. Called by ovl29_fn_0143 and DrawWallView. }
+  direct blit). No parameters. Called by DrawWallMap and DrawWallView. }
 procedure StepDisplay;
 begin
   res07_fn_1B52;

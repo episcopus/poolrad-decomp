@@ -13443,7 +13443,7 @@ evidence = ["prologue"]
 id = "ovl29:0000"
 unit = "ovl29"
 addr = "ovl29:0000"
-size = 323
+size = 341
 name = "DrawWallMap"
 signature = "procedure DrawWallMap(Col, Row: ShortInt; Dir: Byte)"
 c_name = "ovl29_fn_0000"
@@ -13451,19 +13451,6 @@ level = "L2"
 justification = ""
 notes = "renamed from ovl29_fn_0000 (ovl29:0000 draws the 11x11 cells of the area map around the party as 8x8 symbols $104 + wall bits (WallIdAt north 1, east 2, south 4, west 8) and the party arrow $100 + Dir div 2; ovl29_e5 calls it instead of the 3D walls while ds6AAC is nonzero); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl29:0143"
-unit = "ovl29"
-addr = "ovl29:0143"
-size = 18
-name = "ovl29_fn_0143"
-signature = ""
-c_name = "ovl29_fn_0143"
-level = "none"
-justification = ""
-notes = "not a routine (dec-9, 2026-10-12): the tail of DrawWallMap (ovl29:0000), whose matched code runs 0000..0154 (make match: 341 bytes); for the mapper to remove; auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl29:0155"
