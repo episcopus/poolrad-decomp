@@ -385,28 +385,3 @@ evidence = "far pointer at DS:49D2 to the game's word variables: ovl07:02E1 and 
 offset = 0x4A1E
 name = "VideoAdapter"
 evidence = "ClearWindow (03F1:0137) dispatches on it: 0 fills scanline planes, 1 writes text cells, 2 fills four planes; the video hardware the game drives (POOL.CFG offers EGA/CGA/Tandy, mapping still open)"
-
-[[global]]
-offset = 0x5376
-name = "TileSet"
-evidence = "8X8D file number: Str(TileSet) is the suffix of the 8x8dN filename Load8x8Bank loads (ovl34:0055, whitepaper 8X8D1-8)"
-
-[[global]]
-offset = 0x5E3A
-name = "TileBanks"
-evidence = "five far pointers to the loaded 8x8 tile banks, indexed Bank*4, nil means load failed (ovl34:00B4,00CE,01F9)"
-
-[[global]]
-offset = 0x2722
-name = "SymbolBase"
-evidence = "five words, one per 8x8 bank, subtracted from Symbol to index within the bank (ovl34:020F)"
-
-[[global]]
-offset = 0x5E4E
-name = "TileBuf"
-evidence = "far pointer to the tile staging buffer: tiles are Moved to +$17 and shown by res07_fn_1951 (ovl34:027A,029E)"
-
-[[global]]
-offset = 0x4A20
-name = "DrawBuf"
-evidence = "far pointer passed to res07_fn_08D4 as the destination buffer (ovl34:0241,0245)"

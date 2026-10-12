@@ -22,16 +22,6 @@ type
     Col, Row: Word;              { position of the block on the area map (DS:3648) }
     Pic: Word;                   { the picture word; entries 3..9 draw Pic minus one }
   end;
-  { One bank of 8x8 tiles as res07_fn_0111 loads it: a picture record (whitepaper 4.x; its
-    header carries the height at +0 and the item count at +8), Stride bytes per tile at +$11,
-    the tile data at +$17. Only Stride and Data are read by this unit. }
-  T8x8Bank = record
-    Head: array[0..$10] of Byte;  { +0..+$10: record header (height at +0, item count at +8) }
-    Stride: Word;                 { +$11: bytes per tile }
-    Gap: array[0..3] of Byte;     { +$13..+$16: unused by this unit }
-    Data: array[0..8191] of Byte; { +$17: the tiles, indexed Symbol * Stride with $R- }
-  end;
-  PT8x8Bank = ^T8x8Bank;          { a loaded 8x8 tile bank }
   { The word variables of the game: the structure the far pointer at DS:49D2 leads to. ovl07 and
     ovl17 index it dynamically (the variables of the ECL scripts), words 195 and 196 keep the party
     position on the area map, and DrawAreaView reads words 380, 396, 415, 416, 435 and 466 as gates
@@ -56,9 +46,6 @@ var
   ds0C26: array[0..15] of Byte;  { wall view id table, two equal groups of 8; see above }
   SpecialBlocks: array[0..9] of TSpecialBlock;  { entries 1..9 tested; only 3..9 replace the map block }
   ds2612: Word;                   { word passed to res03_fn_00DC by QuitGame and the Ctrl-S pause path; meaning unknown }
-  { Five words, one per 8x8 tile bank, subtracted from the symbol number to index within the
-    bank (Put8x8Symbol, ovl34:020F); evidence in re/dseg.toml. }
-  SymbolBase: array[0..4] of Word;  { per-bank base symbol numbers; see above }
   AreaMap: array[0..35, 0..43] of Byte;  { the area map: one block code per 3x3-tile block, one more
                                           than the code ovl32_e2 draws; byte 0x4E (the letter N)
                                           where no block is drawn (all of rows 34 and 35 in the
@@ -96,12 +83,5 @@ var
   { True ends HeapErrorHandler's retry loop: it is read after ovl17_e9 runs (ovl00:0075),
     and who sets it is not shown until ovl17 is decompiled. }
   ds557D: Boolean;                { heap error retry gate; see above }
-  { The 8x8 tile world of ovl34 (whitepaper 4.x): which 8X8D file to take the bank from, the five
-    loaded banks, the staging buffer tiles are copied through, the buffer res07_fn_08D4 draws
-    into, and a word res07_fn_1951 takes. Evidence in re/dseg.toml. }
-  DrawBuf: Pointer;               { the buffer res07_fn_08D4 draws into }
-  TileSet: Byte;                  { the 8X8D file number: Load8x8Bank loads 8x8d<TileSet> }
-  TileBanks: array[0..4] of PT8x8Bank;  { the loaded 8x8 banks, indexed by bank; nil when the load failed }
-  TileBuf: PT8x8Bank;             { the tile staging buffer: Put8x8Symbol Moves one tile to +$17 }
 implementation
 end.
