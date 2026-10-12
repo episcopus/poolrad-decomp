@@ -167,9 +167,14 @@ var
   ds0C26: array[0..15] of Byte;  { wall view id table, two equal groups of 8; see above }
   SpecialBlocks: array[0..9] of TSpecialBlock;  { entries 1..9 tested; only 3..9 replace the map block }
   ds2612: Word;                   { word passed to res03_fn_00DC by QuitGame and the Ctrl-S pause path; meaning unknown }
+  ds2628: Word;                   { word the ovl14 movement code passes to res03_fn_00DC; meaning unknown }
   { Five words, one per 8x8 tile bank, subtracted from the symbol number to index within the
     bank (Put8x8Symbol, ovl34:020F); evidence in re/dseg.toml. }
   SymbolBase: array[0..4] of Word;  { per-bank base symbol numbers; see above }
+  ds2736: array[0..7] of ShortInt; { per-icon-set column step for the party }
+    { ClampPartyPosition adds it; cbw at ovl14:06D0; extent uncertain. }
+  ds273F: array[0..7] of ShortInt; { per-icon-set row step for the party }
+    { ClampPartyPosition adds it; cbw at ovl14:06DB; extent uncertain. }
   AreaMap: array[0..35, 0..43] of Byte;  { the area map: one block code per 3x3-tile block, one more
                                           than the code DrawCellPicture draws; byte 0x4E (the letter N)
                                           where no block is drawn (all of rows 34 and 35 in the
@@ -199,8 +204,10 @@ var
   { ovl29_e5 draws the four wall view descriptors through ovl29_fn_0174 only while ds6AAC is 0;
     ShowAreaView (when GameVars^[VarShowWallOverlays] is set) and ovl07_e8 clear it. }
   ds6AAC: Byte;                   { wall view overlay gate; see above }
-  ds6AAD: Byte;                   { the party's column in the 16x16 area map (GEO); ovl29_e4/e5 take it }
-  ds6AAE: Byte;                   { the party's row in the 16x16 area map; ovl29_e4/e5 take it; set to 1 by StartGame }
+  ds6AAD: ShortInt;               { the party's column in the 16x16 area map (GEO) }
+    { ShortInt, not Byte: ovl14 widens it with cbw (ovl14:0696); ovl29_e4/e5 take it. }
+  ds6AAE: ShortInt;               { the party's row in the 16x16 area map }
+    { ShortInt, not Byte: ovl14 widens it with cbw (ovl14:069D); ovl29_e4/e5 take it; set to 1 by StartGame. }
   { The marker's icon set (DrawIcon's third parameter): the wilderness keys H, M, P and K set 0,
     2, 4 and 6 (ovl14_fn_0B48); ovl07_e10 maps a script value 0..3 to the same 0/2/4/6. }
   ds6AAF: Byte;                   { the marker's icon set; see above }

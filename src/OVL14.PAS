@@ -23,12 +23,13 @@ procedure ovl14_fn_04DF;
 function FindCodeSlot(Code: Byte; Rec: PCodeRec): Byte;
 function FindCodeRecord(Code: Byte): PCodeRec;
 function DoKnock: Boolean;
-procedure ovl14_fn_068D;
+procedure ClampPartyPosition;
 procedure ovl14_fn_073B;
 procedure ovl14_fn_0818;
 procedure ovl14_e2;
 procedure ovl14_e1;
 implementation
+uses OVL29;
 
 { ovl14:0000: retf 6: 6 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl14_fn_0000; begin end;
@@ -82,8 +83,46 @@ begin
   else
     DoKnock := False;
 end;
-{ ovl14:068D: retf 0: 0 bytes of parameters; 6 bytes of locals }
-{@stub} procedure ovl14_fn_068D; begin end;
+{ ovl14:068D. Steps the party one cell in the current icon set's direction when
+  ovl29_e3 allows it, clamping the result into the 16x16 area map: each clamped
+  coordinate is written back and the edge flag ds49D6^[725] (+$5AA) is set. Called
+  by the movement driver ovl14_e2. The direction tables ds2736/ds273F are indexed
+  by the icon set [I]. }
+procedure ClampPartyPosition;
+var
+  Col, Row: Integer;
+  Icon: Integer;
+begin
+  Col := ds6AAD;
+  Row := ds6AAE;
+  Icon := ds6AAF;
+  ds49D6^[725] := 0;
+  if ovl29_e3(Col, Row, Icon) then
+  begin
+    Inc(Col, ds2736[Icon]);
+    Inc(Row, ds273F[Icon]);
+    if Col > $F then
+    begin
+      ds6AAD := $F;
+      ds49D6^[725] := 1;
+    end;
+    if Col < 0 then
+    begin
+      ds6AAD := 0;
+      ds49D6^[725] := 1;
+    end;
+    if Row > $F then
+    begin
+      ds6AAE := $F;
+      ds49D6^[725] := 1;
+    end;
+    if Row < 0 then
+    begin
+      ds6AAE := 0;
+      ds49D6^[725] := 1;
+    end;
+  end;
+end;
 { ovl14:073B: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl14_fn_073B; begin end;
 { ovl14:0818: retf 0: 0 bytes of parameters; 40 bytes of locals }

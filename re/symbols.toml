@@ -7544,12 +7544,12 @@ id = "ovl14:068D"
 unit = "ovl14"
 addr = "ovl14:068D"
 size = 174
-name = "ovl14_fn_068D"
-signature = ""
+name = "ClampPartyPosition"
+signature = "procedure ClampPartyPosition"
 c_name = "ovl14_fn_068D"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl14_fn_068D (ovl14:068D steps the party one cell in the icon-set direction when ovl29_e3 allows, clamping into the 0..F 16x16 map with the ds49D6 725 edge flag; called by the movement driver ovl14_e2); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
