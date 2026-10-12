@@ -1,6 +1,8 @@
 unit RES06;
-{ Screen text output (whitepaper 5.15), partly decompiled: ShowMessageLine shows a message on the
-  bottom line and waits for a key; the rest are stubs. }
+{ Screen text output (whitepaper 5.15): the 8 by 8 font (LoadGameFont, DrawGlyph), text on cells
+  (ClearTextCells, DrawTextAt), the bottom message line (ShowMessageLine, FlashMessageLine), the
+  line editor (ReadInputLine, ReadNumber), screen clearing and the game clock. ShowPagedText, the
+  word-wrapping pager, is still a stub (held: nested routines). }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 type

@@ -17199,7 +17199,7 @@ signature = "procedure ShowPagedText(Left, Top, Right, Bottom, Color, ClearFirst
 c_name = "res06_fn_0768"
 level = "none"
 justification = ""
-notes = "renamed from res06_fn_0768 (word-wrapping text pager (0709:0768): shows Text in the Left..Bottom rect with BreakChars word scan, GlyphCol/GlyphRow cursor, FillPlaneRect/ClearRect clear and 'Press any key to continue' paging; called by ChargeForCure, VisitTemple, ShopMain, LoadEcl, ShowCredits); auto:far_call; dec-1 draft stashed in scratch/SHOWPAGEDTEXT.DRAFT.PAS: parent body plus nested DrawTextRun/SkipSpaces written, matches except nested pool bytes (nested code with globals and calls needs address-aware pool compare, escalated)"
+notes = "renamed from res06_fn_0768 (word-wrapping text pager (0709:0768): shows Text in the Left..Bottom rect with BreakChars word scan, GlyphCol/GlyphRow cursor, FillPlaneRect/ClearRect clear and 'Press any key to continue' paging; called by ChargeForCure, VisitTemple, ShopMain, LoadEcl, ShowCredits); auto:far_call; dec-1 draft stashed in scratch/SHOWPAGEDTEXT.DRAFT.PAS: parent body plus nested DrawTextRun/SkipSpaces written, matches except nested pool bytes (nested code with globals and calls needs address-aware pool compare, escalated); blocked: waiting for the human on escalate-res06-20261012110841 (nested routines with globals and calls), draft in scratch/SHOWPAGEDTEXT.DRAFT.PAS"
 evidence = ["prologue"]
 
 [[routine]]
