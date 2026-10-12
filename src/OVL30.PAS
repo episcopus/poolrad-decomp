@@ -1,6 +1,7 @@
 unit OVL30;
-{ ovl30: a resident-screen support unit (whitepaper 5.x). SignOf returns the sign of a value and
-  SortTable sorts a 3-byte record table in place; the remaining routines are not decompiled yet. }
+{ ovl30: the line drawing unit (whitepaper 5.18). SignOf returns the sign of a value, SortTable
+  sorts a 3-byte record table in place, SetupLine fills a Bresenham line state and StepLine advances
+  it one step; the remaining routines are not decompiled yet. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 uses POOLVARS;
@@ -141,7 +142,13 @@ begin
     Pattern := ds25C0[StepY + 1, StepX + 1];
   end;
 end;
-{ ovl30:0422: retf 20: 20 bytes of parameters; 58 bytes of locals }
+{ ovl30:0422. BLOCKED (dec-5, 2026-10-12): the line walk, 345 bytes, retf 20, frame 58. The
+  prologue matches to ovl30:0473 (Limit := 2*Count^+1; Line from the endpoints; SetupLine(@Line);
+  Bound from (0, ds2745[tile, 0]) to (Max(DX, DY), tile); SetupLine(@Bound)) and the loop shape is
+  clear (step Bound then Line, QUIRK ovl30:0544 dead StepDone, stop on the ds2745[tile, 1] gate or
+  First > Limit), but the ds2745 index codegen does not reproduce: the original adds Map + StartY*50
+  + StartX with two separate adds to DI and folds +7 into [di+7], which a flat byte subscript does
+  not. See the note in re/symbols.toml. }
 {@stub} procedure ovl30_e5; begin end;
 { ovl30:057B: retf 10: 10 bytes of parameters; 4 bytes of locals }
 {@stub} procedure ovl30_e4; begin end;
