@@ -22,6 +22,13 @@ type
     Col, Row: Word;              { position of the block on the area map (DS:3648) }
     Pic: Word;                   { the picture word; entries 3..9 draw Pic minus one }
   end;
+  { One slot of the picture table at DS:5E5A. Two pointers, stride 8. FreePictureSlot frees
+    either one when it is not nil. Pics[Mirror] is the same two pointers, indexed. }
+  TPictureSlot = record
+    case Integer of
+      0: (FirstPic, SecondPic: Pointer);
+      1: (Pics: array[0..1] of Pointer);
+  end;
   { One bank of 8x8 tiles as res07_fn_0111 loads it: a picture record (whitepaper 4.x; its
     header carries the height at +0 and the item count at +8), Stride bytes per tile at +$11,
     the tile data at +$17. Only Stride and Data are read by this unit. }
@@ -108,7 +115,7 @@ var
     bank (Put8x8Symbol, ovl34:020F); evidence in re/dseg.toml. }
   SymbolBase: array[0..4] of Word;  { per-bank base symbol numbers; see above }
   AreaMap: array[0..35, 0..43] of Byte;  { the area map: one block code per 3x3-tile block, one more
-                                          than the code ovl32_e2 draws; byte 0x4E (the letter N)
+                                          than the code DrawCellPicture draws; byte 0x4E (the letter N)
                                           where no block is drawn (all of rows 34 and 35 in the
                                           shipped image). Read by DrawAreaView, ovl10 and ovl14. }
   { The base column of the map window page, indexed by AreaViewKind: entries 2..4 hold 0, 13 and
@@ -138,7 +145,7 @@ var
   ds6AAC: Byte;                   { wall view overlay gate; see above }
   ds6AAD: Byte;                   { the party's column in the 16x16 area map (GEO); ovl29_e4/e5 take it }
   ds6AAE: Byte;                   { the party's row in the 16x16 area map; ovl29_e4/e5 take it; set to 1 by StartGame }
-  { The marker's icon set (ovl32_e5's third parameter): the wilderness keys H, M, P and K set 0,
+  { The marker's icon set (DrawIcon's third parameter): the wilderness keys H, M, P and K set 0,
     2, 4 and 6 (ovl14_fn_0B48); ovl07_e10 maps a script value 0..3 to the same 0/2/4/6. }
   ds6AAF: Byte;                   { the marker's icon set; see above }
   ds6AB1: Byte;                   { the event byte of the party's map cell, from ovl29_e4; bit 7 = interior }
@@ -158,6 +165,7 @@ var
   ds4A1D: Byte;                   { copy of SavedVideoMode taken in res08_init; reader unknown }
   VideoAdapter: Byte;                   { video mode flag read by ClearWindow (03F1:0137): 0 fills the EGA planes,
                                     1 draws through res06_fn_00B7, 2 fills four planes; meaning unknown }
+  DrawBuf: Pointer;                { far pointer DrawCellPicture passes to res07_fn_08D4; what it points at is unknown }
   SoundMode: Byte;                { sound setting; 2 while a Ctrl-S pause is in effect (ReadGameKey) }
   SoundModeBeforePause: Byte;     { SoundMode saved by a Ctrl-S pause; copied back only when it is 0 or 1 }
   SaveDir: string;                { POOL.CFG line 4: the save directory with trailing backslash (2.3) }
@@ -168,6 +176,9 @@ var
   { True ends HeapErrorHandler's retry loop: it is read after ovl17_e9 runs (ovl00:0075),
     and who sets it is not shown until ovl17 is decompiled. }
   ds557D: Boolean;                { heap error retry gate; see above }
+  ds5E52: PT8x8Bank;              { SQRPACI bank 1 (ovl11:04D6); DrawCellPicture source (PicCode <= 127) }
+  ds5E56: PT8x8Bank;              { SQRPACI bank 2 (ovl11:04F8); DrawCellPicture source (bit 7 set) }
+  ds5E5A: array[Byte] of TPictureSlot;  { picture slots (ovl32); loader clears $D0 bytes (ovl11:02B9) }
   { Globals of the loader (StartGame, src/OVL11.PAS); the address in each comment is the write or
     read that shows it. }
   { Table of 30-byte entries indexed by TileSet: entries 1..8 hold 'Insert disk N in drive ' in the
@@ -230,9 +241,6 @@ var
   ds5D96: LongInt;                { a 4-byte value the loader clears (ovl11:03B0): one `xor ax,ax` and two stores }
   ds5E1E: Word;                   { BlockRead result count of the loader (ovl11:05D6) }
   ds5E20: ^TBlock588;             { $588-byte block the loader allocates (ovl11:0074) }
-  ds5E52: PT8x8Bank;              { the SQRPACI sprite bank 1 the loader loads (ovl11:04D6) }
-  ds5E56: PT8x8Bank;              { the SQRPACI sprite bank 2 the loader loads (ovl11:04F8) }
-  ds5E5A: array[0..$CF] of Byte;  { $D0-byte buffer the loader clears (ovl11:02B9); the picture set table of ovl32_e4 }
   ds6810: LongInt;                { a 4-byte value the loader clears (ovl11:031A): one `xor ax,ax` and two stores }
   ds6A58: ^TBlock924;             { $924-byte block the loader allocates (ovl11:0084) }
   ds6A5C: ^TBlock400;             { $400-byte block the loader allocates (ovl11:0094) }
@@ -264,7 +272,6 @@ var
   { The 8x8 tile world of ovl34 (whitepaper 4.x): which 8X8D file to take the bank from, the five
     loaded banks, the staging buffer tiles are copied through, the buffer res07_fn_08D4 draws
     into, and a word res07_fn_1951 takes. Evidence in re/dseg.toml. }
-  DrawBuf: Pointer;               { the buffer res07_fn_08D4 draws into }
   TileSet: Byte;                  { the 8X8D file number: Load8x8Bank loads 8x8d<TileSet> }
   TileBanks: array[0..4] of PT8x8Bank;  { the loaded 8x8 banks, indexed by bank; nil when the load failed }
   TileBuf: PT8x8Bank;             { the tile staging buffer: Put8x8Symbol Moves one tile to +$17 }

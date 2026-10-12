@@ -205,6 +205,27 @@ why = "ClearWindow (03F1:0137) dispatches on it: 0 fills scanline planes, 1 writ
 date = "2026-10-11"
 
 [[rename]]
+old = "ovl32_e2"
+new = "DrawCellPicture"
+kind = "routine"
+why = "draws picture PicCode at cell (PicCol, PicRow) through res07_fn_08D4; bit 7 selects the source pointer (ovl32:00F1, matched). DrawAreaView calls it for each area block"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl32_e3"
+new = "FreePictureSlot"
+kind = "routine"
+why = "frees both picture pointers of one slot in the table at DS:5E5A when not nil, through res07_fn_2595 which FreeMems the picture (ovl32:014E, matched)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl32_e5"
+new = "DrawIcon"
+kind = "routine"
+why = "draws picture PicIndex, mirror half Mirror, from the DS:5E5A table at the cell times 3, after copying it (ovl32:04FC, matched). DrawPartyMarker calls it for the party marker"
+date = "2026-10-11"
+
+[[rename]]
 old = "ovl11_e1"
 new = "StartGame"
 kind = "routine"

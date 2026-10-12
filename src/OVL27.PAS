@@ -37,7 +37,7 @@ const
   into the 3D view window. The block code comes from AreaMap, minus one. Entries 1 to 9 of
   SpecialBlocks are tested for that position. Entries 1 and 2 have no case arm, so a match leaves
   the map code. Entries 3 to 9 can replace it: entry 6 always, the others only while the game
-  variables named above allow. Each block is one picture drawn by ovl32_e2, stepped by BlockCells.
+  variables named above allow. Each block is one picture drawn by DrawCellPicture, stepped by BlockCells.
   Parameters: LeftCol and TopRow are the map column and row of the top-left block.
   Callers: ShowAreaView (ovl26:0293) passes MapBaseX[AreaViewKind] plus the party column, minus 2
   (ovl26:023F), and the party row minus 2, then clamps the column to 0..39 (ovl26:025D) and the
@@ -46,13 +46,13 @@ const
   DS:095F (index 0..8, ovl18:07C8), then with (23, 25) (ovl18:08D4). When that byte is zero those
   calls are skipped.
   Globals: reads AreaMap, SpecialBlocks and the words of GameVars^ named above. Side effects:
-  the 3D view part of the screen, through ovl32_e2. }
+  the 3D view part of the screen, through DrawCellPicture. }
 procedure DrawAreaView(LeftCol, TopRow: Integer);
 var
   BaseCol, BaseRow: Shortint;    { where in the view window the current block goes, in cells }
   Special: 1..9;                  { index into SpecialBlocks while looking for an override }
   TileCol, TileRow: Shortint;    { position of the current block on the area map }
-  Count: Byte;                    { the block code ovl32_e2 draws }
+  Count: Byte;                    { the block code DrawCellPicture draws }
   GridCol, GridRow: Byte;         { position within the 5x5 view grid }
 begin
   BaseRow := 0;
@@ -81,9 +81,9 @@ begin
           end
         end;
       { QUIRK ovl27:01CC: the original adds and subtracts 1 from both coordinates, which changes
-        nothing; kept for a byte-exact match. The fourth argument is always 1 here and ovl32_e2
+        nothing; kept for a byte-exact match. The fourth argument is always 1 here and DrawCellPicture
         never reads it. }
-      ovl32_e2(BaseCol + 1 - 1, BaseRow + 1 - 1, Count, 1);
+      DrawCellPicture(BaseCol + 1 - 1, BaseRow + 1 - 1, Count, 1);
       Inc(BaseCol, BlockCells);
     end;
     Inc(BaseRow, BlockCells);

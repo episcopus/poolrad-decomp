@@ -40,11 +40,11 @@ const
   plus GameVars^[VarMapX] (the column) and GameVars^[VarMapY] (the row), folded with the same edge
   limits ShowAreaView clamps the window to (ovl26:0253..0285): columns and rows 0 and 1 stay at the
   edges, 2 to 41 (rows 2 to 33) become the centre cell 2, 42 (row 34) cell 3 and 43 (row 35) or more
-  cell 4. PicLoad draws the marker itself (ovl32_e5) with the icon set ds6AAF and the walk animation
+  cell 4. PicLoad draws the marker itself (DrawIcon) with the icon set ds6AAF and the walk animation
   MarkerFrame (MarkerFrame mod 2 picks the mirrored half, MarkerFrame div 2 + 9 the picture 9 to
   11); the frame then steps to the next of its six values.
   Reads and changes: MapBaseX, AreaViewKind, GameVars^, ds6AAF, MarkerFrame. Side effect: the view
-  on the screen, through ovl32_e5 and the display step res07_fn_1B52 that drawing units call. }
+  on the screen, through DrawIcon and the display step res07_fn_1B52 that drawing units call. }
 procedure DrawPartyMarker;
 var
   MarkerCol: ShortInt;      { the marker cell column in the 5x5 window (0 to 4) }
@@ -60,7 +60,7 @@ begin
   else if GameVars^[VarMapY] < Cell3Row then MarkerRow := CentreCell
   else if GameVars^[VarMapY] < Cell4Row then MarkerRow := 3
   else MarkerRow := 4;
-  ovl32_e5(MarkerCol, MarkerRow, ds6AAF, MarkerFrame mod 2,
+  DrawIcon(MarkerCol, MarkerRow, ds6AAF, MarkerFrame mod 2,
            MarkerFrame div 2 + FirstMarkerPicture);
   MarkerFrame := (MarkerFrame + 1) mod MarkerFrames;
   res07_fn_1B52;
