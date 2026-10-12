@@ -75,7 +75,7 @@ begin
 end;
 { ovl01:0627. Shows the title sequence: backs up GameDir and clears it, loads the title
   picture (res07_fn_0111) and shows it (res07_fn_1951), waits (WaitKeyOrTimeout), then, when
-  the F flag (ds49D1) is set, reloads, reshows, sets the palette (res07_fn_2595) and waits
+  the F flag (ds49D1) is set, reloads, reshows, frees the title picture (res07_fn_2595) and waits
   for a key or a deadline (res06_fn_0C3F ticks) with an EGA-only animation that never runs
   (QUIRK ovl01:0729: Total is Random(4), always below 50000), then calls FlushKeyboard, which
   does nothing (QUIRK 0899:010A), and shows the credits (ShowCredits). With F clear it only
