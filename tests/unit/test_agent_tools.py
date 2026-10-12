@@ -50,26 +50,25 @@ def test_review_pass_accepts_a_clean_review_of_a_complete_unit(tmp_path, monkeyp
 
 
 def test_a_failed_review_goes_back_to_a_decompiler_not_to_a_reviewer(tmp_path, monkeypatch):
+    # Built from a copy of the live registry with every recorded review removed, so it does not depend on
+    # which units have been reviewed on main (a merged review used to move the queue and break this test).
+    import re
     import next as nxt
     reviews = tmp_path / "work/reviews"
     reviews.mkdir(parents=True)
-    for f in ("re", "work/queue.toml"):
-        src = ROOT / f
-        dst = tmp_path / f
-        if src.is_dir():
-            dst.mkdir(parents=True, exist_ok=True)
-            (dst / "symbols.toml").write_text((src / "symbols.toml").read_text())
-        else:
-            dst.write_text(src.read_text())
+    (tmp_path / "re").mkdir()
+    symbols = (ROOT / "re/symbols.toml").read_text()
+    (tmp_path / "re/symbols.toml").write_text(re.sub(r"(?m)^review = .*\n", "", symbols))
+    (tmp_path / "work/queue.toml").write_text((ROOT / "work/queue.toml").read_text())
     monkeypatch.setattr(common, "ROOT", tmp_path)
     (tmp_path / "locks").mkdir()
     monkeypatch.setattr(common, "lock_dir", lambda: tmp_path / "locks")
-    assert nxt.next_review()[0] == "res02"                       # complete, not reviewed
-    (reviews / "res02.md").write_text("decompiler: a\nreviewer: b\n- [ ] must-fix res02_init: wrong\n")
-    assert nxt.next_review()[0] != "res02"                       # waits for the fix
-    assert nxt.next_unit()[0] == "res02" and "review failed" in nxt.next_unit()[1]
-    (reviews / "res02.md").write_text("decompiler: a\nreviewer: b\n- [x] must-fix res02_init: wrong (fixed)\n")
-    assert nxt.next_review()[0] == "res02"                       # fixed: back in the review queue
+    first = nxt.next_review()[0]                                 # complete, not reviewed
+    (reviews / ("%s.md" % first)).write_text("decompiler: a\nreviewer: b\n- [ ] must-fix x: wrong\n")
+    assert nxt.next_review()[0] != first                         # waits for the fix
+    assert nxt.next_unit()[0] == first and "review failed" in nxt.next_unit()[1]
+    (reviews / ("%s.md" % first)).write_text("decompiler: a\nreviewer: b\n- [x] must-fix x: wrong (fixed)\n")
+    assert nxt.next_review()[0] == first                         # fixed: back in the review queue
 
 
 def test_an_escalation_needs_no_commit_and_a_changelog_row_lands_on_done(tmp_path, monkeypatch, capsys):
