@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-12 | 5.8 | menu unit ovl25: prompt line, word hotkeys, picture animation, timeout, list menu keys and paging | make match UNIT=ovl25 (6 matched), draft 3c8dac5 |
 | 2026-10-12 | 4.2.1, 4.2.4, 5.2.1, 5.2.2 | GEO plane accessors and off-map wrap; LoadWallSet slots, symbol offset and bank loading (no multiple-of-780 check); the 3D view's ten wall pieces, painter's order and overhead wall map | make match UNIT=ovl29 (unit complete) |
 | 2026-10-12 | 5.18 | ScanTargets caller corrected to ovl22_e48; POOLVARS section refs to 5.18; StepLine no-step Pattern note | make match UNIT=ovl30 (8 matched, unit complete), make readability clean, make check green |
 | 2026-10-12 | 5.3 | DoWildernessMenu = 2 vs = 3 dispatch (Pick calls DoPick only in = 2, clears flag in = 3; Knock via FindCodeRecord(1F) vs HasRecFlag(5)), VarRiverGate word 418, ds5D96 LongInt rationale | make match UNIT=ovl14 (unit complete), make readability UNIT=ovl14 clean |
