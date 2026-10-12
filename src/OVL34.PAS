@@ -43,9 +43,46 @@ begin
   end;
 end;
 
-{ ovl34:015D: retf 10: 10 bytes of parameters; 6 bytes of locals.
-  Draws one 8x8 symbol; signature from the pushes of its callers (res09_fn_0000, ovl29). }
-{@stub} procedure Put8x8Symbol(XPos, YPos: ShortInt; Symbol: Word; Direct: Boolean; Attr: Byte); begin end;
+{ ovl34:015D. Draws 8x8 symbol Symbol at (XPos, YPos). Symbols 1..$11E live in banks 0..4
+  (ranges 1..$2D, $2E..$73, $74..$B9, $BA..$FF, $100..$11E, based at SymbolBase); 0 and
+  $11F..$7FFF are fatal (Bad symbol number in Put8x8Symbol on Output, a key, then the game
+  ends). QUIRK ovl34:01C0: symbols above $7FFF skip the check and run on with an unset bank.
+  A nil bank pointer draws nothing. Otherwise Symbol is made bank relative and the tile is
+  drawn through res07_fn_08D4 when Direct is set (the 3D view) or copied into the staging
+  buffer TileBuf and shown with res07_fn_1951 (window frames). Called by res09_fn_0000 and
+  ovl29 (three times). }
+procedure Put8x8Symbol(XPos, YPos: ShortInt; Symbol: Word; Direct: Boolean; Attr: Byte);
+var
+  Bank: Byte;                   { the bank holding Symbol, from the case ranges }
+  Key: Char;                    { the key waited for before quitting on a bad symbol }
+begin
+  case Symbol of
+    1..$2D: Bank := 0;
+    $2E..$73: Bank := 1;
+    $74..$B9: Bank := 2;
+    $BA..$FF: Bank := 3;
+    $100..$11E: Bank := 4;
+    0, $11F..$7FFF:
+    begin
+      res07_fn_00FF;
+      WriteLn(Output, 'Bad symbol number in Put8x8Symbol.');
+      Key := ReadGameKey;
+      QuitGame;
+    end;
+  end;
+  if TileBanks[Bank] <> nil then
+  begin
+    Dec(Symbol, SymbolBase[Bank]);
+    if Direct then
+      res07_fn_08D4(XPos, YPos, Lo(Symbol), Attr, TileBanks[Bank], DrawBuf)
+    else
+      with TileBanks[Bank]^ do
+      begin
+        Move(Data[Symbol * Stride], TileBuf^.Data[0], Stride);
+        res07_fn_1951(XPos, YPos, TileBuf);
+      end;
+  end;
+end;
 
 begin
 end.
