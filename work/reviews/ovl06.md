@@ -1,22 +1,15 @@
 # Review: ovl06
 
-decompiler: dec-5, dec-7, dec-10 (Agent trailers of 062ef1e, 3e29f87, 65d3a4e, f8c6e4a)
-reviewer: rev-5
-rounds: 1 rev-4, 2 rev-6 at 58026af
+decompiler: dec-5 (Agent trailers of 265ea8c, e1ac919, 062ef1e, 3e29f87), dec-10 (f8c6e4a), dec-13 (58c4860)
+reviewer: rev-4
 date: 2026-10-12
-commit: ea69de3
+commit: 7eb2494 (re-review after f8c6e4a and 58c4860; the first review was of 1d0a180)
 
 Checklist: docs/process/playbooks/70-review.md (every item, every routine).
 
-Round 3. Round 1 failed on the +$3A Value/Count naming and TMenuItem (fixed in 65d3a4e).
-Round 2 failed on the unmarked money truncations and the inverted OK flag (fixed in
-f8c6e4a: QUIRKs ovl06:03C7/0449, Overloaded, MoneyPooled/PoolSecond/MenuFlag/Appraised,
-AnswerNo, Cancelled, SizeOf). This round re-runs the checklist on the fixed source.
-
-`make match UNIT=ovl06` (rerun): `ChooseShopItem` 510 bytes, `AddInventoryItem` 278,
-`BuyItems` 275, `ShopMain` 602, `ovl06_init` 5; `unit: complete, 1949 bytes of code
-plus 0 of paragraph padding cover the original segment`. `make readability UNIT=ovl06`
-is clean. Packet: `build/packets/ovl06.md`.
+`make match UNIT=ovl06` (rerun): `unit: complete`, 5 routines, 1949 bytes (`ChooseShopItem` 510,
+`AddInventoryItem` 278, `BuyItems` 275, `ShopMain` 602, `ovl06_init` 5), 0 differ, 0 stubs.
+`make readability UNIT=ovl06` is clean. Packet: `build/packets/ovl06.md`.
 
 ## Findings
 
@@ -24,39 +17,29 @@ One line per finding: `- [ ] <severity> <routine name>: <what and why, with the 
 Severity: must-fix (blocks review-pass), should-fix, note. When the decompiler fixes one, mark it
 `- [x]` and add `(fixed in <commit>)`. Do not delete findings.
 
-### Resolved in rounds 1-2 (rev-4, rev-6; fixed in 65d3a4e, f8c6e4a)
+### Resolved in the previous cycle (rev-4, commit 1d0a180)
 
-- [x] must-fix ChooseShopItem/BuyItems: +$3A called Count, is Value. (fixed)
-- [x] must-fix OVL06/whitepaper 5.4: TMenuItem, no such type. (fixed: TMenuLine)
-- [x] should-fix whitepaper 5.4 field names. (fixed)
-- [x] note ChooseShopItem Text field naming. (fixed)
-- [x] note ShopMain G/O keys and second case. (fixed)
-- [x] must-fix BuyItems: unmarked LongInt-to-Word truncations. (fixed: QUIRKs ovl06:03C7, ovl06:0449, whitepaper 5.4 sentence)
-- [x] must-fix AddInventoryItem/BuyItems: OK inverted. (fixed: Overloaded)
-- [x] should-fix ShopMain vague locals. (fixed: MoneyPooled/PoolSecond/MenuFlag/Appraised)
-- [x] should-fix ShopMain Leave answer. (fixed: AnswerNo = 1, leaves on No)
-- [x] should-fix ChooseShopItem/BuyItems vague Flags. (fixed: MenuFlag, Cancelled)
-- [x] note ShopMain FillChar SizeOf. (fixed)
+- [x] must-fix ChooseShopItem/BuyItems: the number the shop shows and pays was called "Count" though it is the word at +$3A, which `POOLVARS.PAS` names `Value` (the record's `Count` is +$39). f8c6e4a calls it `Value`/`Price` (`Price := Selected^.Value`, ovl06:0361) and the comment says "its Value (the price, +$3A)" and "Price is its Value (+$3A)"; the `SelCount` local is gone.
+- [x] must-fix OVL06/whitepaper 5.4: the item/menu record was called `TMenuItem`, which does not exist. f8c6e4a uses `TMenuLine` (the unit comment and `AddInventoryItem`), and the whitepaper was corrected.
+- [x] should-fix whitepaper 5.4: the field names it listed (`Name`/`Enabled`/`Value37`/`Factor39`/`Count` +$3A) contradicted `POOLVARS.PAS` and whitepaper 4.2.5. Corrected with the rename pass.
 
-### This cycle (rev-5)
+### This cycle (rev-4)
 
-- [x] must-fix stub signatures: three parameterized stubs this unit uses have full declarations in the other units' files (set for this unit's calls in 3e29f87) but empty `signature` fields in re/symbols.toml (checklist item 9; the same class that failed the ovl02 round-1 review): `res12_fn_0442(Value: LongInt; P: Pointer; A, B, C, D: Byte)` (RES12.PAS:12, called with (0, Entry, 0, 0, 0, 0) at ovl06:01FE), `res12_fn_0BB8(Who: Pointer)` (RES12.PAS:21, AddInventoryItem's tail call with SelectedCharacter), and `function ovl19_e9(Shop: Pointer; Item: Pointer): Boolean` (OVL19.PAS:52, called at ovl06:024D, result tested at ovl06:0252). Record each string. (Parameterless ovl21_e2/e3/e4 and res12_fn_27D9 correctly record none; every other parameterized callee is recorded.) (fixed in 58c4860)
-- [x] should-fix ovl06_init: the empty initialisation at ovl06:0798 (`55 89 E5 5D CB`) has no comment and no address. Every reviewed unit carries an init comment with the address. (fixed in 58c4860)
-- [ ] note ChooseShopItem: the var-parameter plumbing (ChooseFromList receives @MenuFlag, @Choice, @Head as its Flag/Choice/First; Action takes the returned key; Selected takes Head) matches the pushes byte for byte; the comment describes it exactly.
+- [ ] note ChooseShopItem: the "picker" is now `ChooseFromList` and the prompt `ReadPromptChoice`, the real names dec-8 gave ovl25 (their former stub names are `ovl25_e4`/`ovl25_e2`); the merge APPLY'd the renames and the call matches the 14-parameter signature.
+- [ ] note BuyItems: the two money QUIRKs came from rev-6's ovl06/ovl04 finding; they are marked (`ovl06:03C7`, `ovl06:0449`) and the ovl04 fix list carries the same note. Correct as far as this unit goes.
+- [ ] note ShopMain: the comment now names `MoneyPooled`, `MenuFlag`, `LeaveAnswer`, `Appraised` and `AnswerNo`; the `G`/`O` keys and the second `case` are covered.
 
-Round 3 verification (all checked against the bytes): the QUIRK wordings match the
-instructions (only AX kept at ovl06:03C7; only [bp-0xe] pushed at ovl06:0449);
-Overloaded is 1-refused/0-added at ovl06:026D/0277 with BuyItems paying on 0; the
-ChooseShopItem rewrite (Value 0 to 1, Str, right-justify at 30-N+I, name copy,
-Text assign, QUIRK ovl06:012B length reset), the ChooseFromList arguments, the
-Selected-Head copy direction and the res12_fn_0442 per-entry loop match; the $3F
-New, the +$2A/+$2C nil link and the 0BB8 redraw match; the BuyItems B/Enter
-($42/$0D) test, price, pool order and 'Not enough Money.' match; ShopMain's prologue,
-both menu texts, all key arms, the AnswerNo leave rule, the G/O arms, the second
-case and the 0767 tail match; callers agree with the packet (ShopMain from
-ovl03:179B, AddInventoryItem from ovl05:0C06); whitepaper 5.4 covers the unit and
-agrees with the fixed source.
+## What was verified
+
+1. `make match UNIT=ovl06` rerun: complete, all five routines L2. `make readability UNIT=ovl06` is clean.
+2. The rename pass holds against the packet: `Entry^.Value` (+$3A, `cmp word ptr es:[di + 0x3a],0` at ovl06:0068), the price comment at ovl06:0361, `TMenuLine`, the locals `Price`/`Money`/`Pooled`/`Overloaded`/`Cancelled`/`MenuFlag`/`MoneyPooled`/`PoolSecond`/`LeaveAnswer`/`Appraised`.
+3. The QUIRK addresses match: `ovl06:026D` (`Overloaded := 1`), `ovl06:0277` (0), `ovl06:03C7` (the `Word` store of `ovl19_e11`'s LongInt), `ovl06:03E7..03F3` (the deduction), `ovl06:0430..0446` (`Pooled - Price` as a LongInt) and `ovl06:0449` (the low-word push to `ovl21_e11`).
+4. Comments give addresses and meaning: the stock walk and the 30-character rewrite (`Entry^.Text[0] := #30` QUIRK ovl06:012B), `DrawWindow(1,1,$26,$16,0,$0F,'Shop')`, the `ChooseFromList('Items: ','Buy',$0D,$0A,$0F,1,4,$26,$16,List,1,MenuFlag,Choice,Head)` call and the `res12_fn_0442` passes; `AddInventoryItem`'s `ovl19_e9`, `res12_fn_1693('OverLoaded')`, the `New`/record copy/append and `res12_fn_0BB8`; `BuyItems`'s money-then-pool order and the two truncation QUIRKs; `ShopMain`'s `ds49F3 := 1`, the two redraws, `FillChar(ds67F4, SizeOf(ds67F4), 0)`, the two menu texts, the full key dispatch (`B`/`V`/`T`/`P`/`S`/`A`/`E`/`G`/`O`), the Leave prompt with `AnswerNo` and the second `case`.
+5. Types fit: `Action`/`Key` `Char`, the list pointers `PMenuLine`, `Choice` `Integer`, `Price`/`Money` `Word`, `Pooled` `LongInt`, the flags `Byte`, `Cancelled` `Boolean`, `Title` `string[1]`, `MenuText` `string[40]`.
+6. Quirks kept and marked: ovl06:012B, ovl06:03C7, ovl06:0449. No `inline`/`db`/`assembler`.
+7. Stub signatures this unit set are recorded (`res12_fn_0442`, `res12_fn_0BB8`, `ovl19_e9`, `ovl25_e4`/`e2`, `ovl21_e2`/`e3`/`e4`/`e9`/`e10`/`e11`/`e12`/`e14`, `ovl07_e13`, `res06_fn_0768`/`0DD3`); `ovl06_init` has an address comment.
+8. Whitepaper 5.4 has the corrected record, field names and dispatch.
 
 ## Verdict
 
-Not passed. Three stub signatures this unit's calls rely on are missing from re/symbols.toml.
+Passed. The two must-fixes (the +$3A field name and `TMenuItem`) and the whitepaper should-fix are fixed in f8c6e4a; the remaining notes are informational.
