@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-11 | process | make claim shows the orchestrator's blocker notes for the claimed unit | tests/unit/test_agent_tools.py |
 | 2026-10-11 | tools | runtime call targets resolved by routine entry (runtime_entries), not by raw byte alignment; fixes Move resolved as Assign | escalate-ovl34-20261012033554; ovl34 Put8x8Symbol matches; tests/unit/test_rtl_resolve.py |
 | 2026-10-11 | process | make watch-agents: colored live view of progress, agents, hand-offs, locks and queues | tests/unit/test_agent_tools.py |
 | 2026-10-11 | 5.2, 5.2.1 | entries 1 and 2 of SpecialBlocks never override a block; ovl18_e2 has three DrawAreaView call sites; the step of 3 is view cells | make match UNIT=ovl27 |
