@@ -204,3 +204,17 @@ kind = "global"
 why = "ClearWindow (03F1:0137) dispatches on it: 0 fills scanline planes, 1 writes text cells, 2 fills four planes; the video hardware the game drives (POOL.CFG offers EGA/CGA/Tandy, mapping still open)"
 date = "2026-10-11"
 
+[[rename]]
+old = "ds49CD"
+new = "CfgProbeResult"
+kind = "global"
+why = "IOResult of probing pool.cfg with Reset in res08_init (042B:00E0); the repeat loop retries while nonzero"
+date = "2026-10-11"
+
+[[rename]]
+old = "ds484C"
+new = "CfgChar"
+kind = "global"
+why = "the POOL.CFG choice just read in res08_init (042B:016E): video E/C/T, sound T/P, retry key, F/N; compared with character literals"
+date = "2026-10-11"
+

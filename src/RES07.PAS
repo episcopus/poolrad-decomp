@@ -5,7 +5,7 @@ unit RES07;
 interface
 procedure res07_fn_0000;
 procedure res07_fn_007B;
-procedure res07_fn_00CF;
+procedure res07_fn_00CF(A: Byte);
 procedure res07_fn_00FF;
 procedure res07_fn_0111;
 procedure res07_fn_02A5;
@@ -48,7 +48,7 @@ implementation
 { 0464:007B: retf 6: 6 bytes of parameters; 10 bytes of locals }
 {@stub} procedure res07_fn_007B; begin end;
 { 0464:00CF: retf 2: 2 bytes of parameters; 2 bytes of locals }
-{@stub} procedure res07_fn_00CF; begin end;
+{@stub} procedure res07_fn_00CF(A: Byte); begin end;
 { 0464:00FF: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure res07_fn_00FF; begin end;
 { 0464:0111: retf 14: 14 bytes of parameters; 288 bytes of locals }
