@@ -565,26 +565,30 @@ the 28-byte money block at `DS:67F4` and `DS:6DC0`, redraws the shop (`res12:27D
   leaves, and two keys that are in neither menu text (G and O) call `ovl19_e10` with the key
   as an amount. Leaving with money in hand prompts through `ovl07_e13` ("Do you want to go
   back and get your Money?").
-- The shop stock is the linked list at `DS:6810` of 63-byte `TMenuItem` records
-  (`src/POOLVARS.PAS`): a 40-character `Name` at +0, an `Enabled` byte at +$29 (the list menu
-  skips a zero entry), `Next` at +$2A, a word `Value37` and a byte `Factor39` at +$37/+$39
-  that `ovl19_e9` multiplies, and the quantity `Count` at +$3A. `ChooseShopItem`
-  (`ovl06:0030`) draws the window titled "Shop" (`DrawWindow`) and, for each entry, rewrites
-  `Name` into a 30-character field with the name on the left and `Count` right-justified (a
-  zero quantity becomes 1); it then runs the item picker `ovl25_e4` ("Items: " with a "Buy"
-  button).
-- `BuyItems` (`ovl06:0361`) pays first from the party's pool (`ovl19_e11`) and then from its
-  money (`ovl21_e12` on `DS:67F4`); if the chosen entry's `Count` fits, the entry is added to
-  the inventory and the amount is deducted (`ovl21_e10` pool, `ovl21_e11` money), otherwise it
-  shows "Not enough Money.". Both deduction routines divide the amount by 5 and write five
-  coin words (`ovl21_e10` into `DS:5D92` +$88..+$90, `ovl21_e11` into `DS:67F4`), so the
-  amounts are in the smallest coin and the pool and money blocks hold five denominations each
-  **[I]**.
-- `AddInventoryItem` (`ovl06:0239`) appends a clone of an entry to the list at
-  `DS:5D92^.Stock` (+$C8), which `ovl19_e9` (`Inventory`) checks against a capacity of 15
-  (`DS:5D92` +$C7); when it is full it shows "OverLoaded" and reports failure. The loader
-  (`StartGame`) clears `DS:5D92` and `DS:6810` at start-up, so `DS:5D92^.Stock` is the party
-  inventory, not the shop's own stock.
+- The shop stock is the linked list at `DS:6810` of 63-byte item records, the `TMenuLine` type
+  of `src/POOLVARS.PAS` (`TItem` is the same record): the item record of 4.2.5 in memory, with
+  `Text` (a `string[40]`, the item name) at +0, `Flag29` at +$29, `Next` at +$2A, `Weight` at +$37,
+  `Count` at +$39 and `Value` (the price) at +$3A **[V]** (`make match UNIT=ovl06`, field offsets
+  by `tools/re/records.py`). `ChooseShopItem` (`ovl06:0030`) draws the window titled "Shop"
+  (`DrawWindow`) and, for each entry, rewrites `Text` into a 30-character field with the name on
+  the left and `Value` right-justified (a zero value becomes 1, `ovl06:0068`); it then runs the item
+  picker `ovl25_e4` ("Items: " with a "Buy" button).
+- `BuyItems` (`ovl06:0361`) takes the chosen item's `Value` as the price. It pays first from the
+  selected character's money (`ovl19_e11(SelectedCharacter)`, a LongInt) and then from the money
+  pooled in the shop (`ovl21_e12` on `DS:67F4`); if the price fits, the item is added to the
+  character's items and the amount is deducted (`ovl21_e10` for the character, `ovl21_e11` for the
+  pool), otherwise it shows "Not enough Money.". `ovl19_e11` and `ovl21_e12` both sum five coin
+  amounts, each multiplied by its LongInt rate from the table at `DS:0D24`, add 100 and divide by
+  the LongInt at `DS:0D30` (`ovl19:28BE`, `ovl21:00A8`); the character's coins are five words at
+  +$88..+$90, the pool's five LongInts at the start of the 28-byte block `DS:67F4`. Both deduction
+  routines divide the amount by 5 and write five coin amounts (`ovl21_e10` into the character,
+  `ovl21_e11` into `DS:67F4`), so the money blocks hold five denominations **[I]** (callees not
+  decompiled).
+- `AddInventoryItem` (`ovl06:0239`) appends a clone of an item to `SelectedCharacter^.Items`
+  (+$C8, the character's carried items). `ovl19_e9` (`ovl19:275B`, not decompiled) refuses it, and
+  "OverLoaded" is shown, when the character already has more than 15 items (the byte at +$C7) or
+  when the item's `Weight` times its `Count` (when the count is not 0) plus the character's load
+  (the word at +$102) exceeds `res12_fn_13AB` + 1500 **[I]** (code read).
 
 Map note: `re/symbols.toml` had split `ovl06:0239` at `ovl06:0311`; `0311` is one byte into a
 `les di, [bp-8]` instruction, not a routine entry, and its stub was removed.
