@@ -57,7 +57,7 @@ begin
   if ParamStr(1) <> 'STING' then
   begin
     ovl01_e1;
-    ovl02_e1;
+    CheckCodeWheel;
   end;
   ovl16_e1;
   ovl29_e1(11, 0, 7, 6);
