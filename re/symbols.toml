@@ -15998,7 +15998,7 @@ signature = ""
 c_name = "res03_init"
 level = "none"
 justification = ""
-notes = "auto:init"
+notes = "blocked (dec-15, 2026-10-12): part of the TASM-assembled sound driver linked from an .OBJ after the init (08AE:01D7 to the segment end), held for the human in escalate-res03-20261012120732; auto:init"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16011,7 +16011,7 @@ signature = ""
 c_name = "res03_fn_09E3"
 level = "none"
 justification = ""
-notes = "auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
+notes = "blocked (dec-15, 2026-10-12): part of the TASM-assembled sound driver linked from an .OBJ after the init (08AE:01D7 to the segment end), held for the human in escalate-res03-20261012120732; auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
 evidence = ["near_call"]
 
 [[routine]]
@@ -16024,7 +16024,7 @@ signature = ""
 c_name = "res03_fn_0A27"
 level = "none"
 justification = ""
-notes = "auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
+notes = "blocked (dec-15, 2026-10-12): part of the TASM-assembled sound driver linked from an .OBJ after the init (08AE:01D7 to the segment end), held for the human in escalate-res03-20261012120732; auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
 evidence = ["near_call"]
 
 [[routine]]
@@ -16037,7 +16037,7 @@ signature = ""
 c_name = "res03_fn_0AD3"
 level = "none"
 justification = ""
-notes = "auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
+notes = "blocked (dec-15, 2026-10-12): part of the TASM-assembled sound driver linked from an .OBJ after the init (08AE:01D7 to the segment end), held for the human in escalate-res03-20261012120732; auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
 evidence = ["near_call"]
 
 [[routine]]
@@ -16050,7 +16050,7 @@ signature = ""
 c_name = "res03_fn_0C8F"
 level = "none"
 justification = ""
-notes = "auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
+notes = "blocked (dec-15, 2026-10-12): part of the TASM-assembled sound driver linked from an .OBJ after the init (08AE:01D7 to the segment end), held for the human in escalate-res03-20261012120732; auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
 evidence = ["near_call"]
 
 [[routine]]
@@ -16063,7 +16063,7 @@ signature = ""
 c_name = "res03_fn_0DB1"
 level = "none"
 justification = ""
-notes = "auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
+notes = "blocked (dec-15, 2026-10-12): part of the TASM-assembled sound driver linked from an .OBJ after the init (08AE:01D7 to the segment end), held for the human in escalate-res03-20261012120732; auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
 evidence = ["near_call"]
 
 [[routine]]
@@ -16076,7 +16076,7 @@ signature = ""
 c_name = "res03_fn_0DCC"
 level = "none"
 justification = ""
-notes = "auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
+notes = "blocked (dec-15, 2026-10-12): part of the TASM-assembled sound driver linked from an .OBJ after the init (08AE:01D7 to the segment end), held for the human in escalate-res03-20261012120732; auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
 evidence = ["near_call"]
 
 [[routine]]
@@ -16089,7 +16089,7 @@ signature = ""
 c_name = "res03_fn_0DEB"
 level = "none"
 justification = ""
-notes = "auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
+notes = "blocked (dec-15, 2026-10-12): part of the TASM-assembled sound driver linked from an .OBJ after the init (08AE:01D7 to the segment end), held for the human in escalate-res03-20261012120732; auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
 evidence = ["near_call"]
 
 [[routine]]
@@ -16102,7 +16102,7 @@ signature = ""
 c_name = "res03_fn_0E06"
 level = "none"
 justification = ""
-notes = "auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
+notes = "blocked (dec-15, 2026-10-12): part of the TASM-assembled sound driver linked from an .OBJ after the init (08AE:01D7 to the segment end), held for the human in escalate-res03-20261012120732; auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
 evidence = ["near_call"]
 
 [[routine]]
@@ -16115,7 +16115,7 @@ signature = ""
 c_name = "res03_fn_0F5B"
 level = "none"
 justification = ""
-notes = "auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
+notes = "blocked (dec-15, 2026-10-12): part of the TASM-assembled sound driver linked from an .OBJ after the init (08AE:01D7 to the segment end), held for the human in escalate-res03-20261012120732; auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
 evidence = ["near_call"]
 
 [[routine]]
@@ -16128,7 +16128,7 @@ signature = ""
 c_name = "res03_fn_1091"
 level = "none"
 justification = ""
-notes = "auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
+notes = "blocked (dec-15, 2026-10-12): part of the TASM-assembled sound driver linked from an .OBJ after the init (08AE:01D7 to the segment end), held for the human in escalate-res03-20261012120732; auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
 evidence = ["near_call"]
 
 [[routine]]
@@ -16141,7 +16141,7 @@ signature = ""
 c_name = "res03_fn_1221"
 level = "none"
 justification = ""
-notes = "auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
+notes = "blocked (dec-15, 2026-10-12): part of the TASM-assembled sound driver linked from an .OBJ after the init (08AE:01D7 to the segment end), held for the human in escalate-res03-20261012120732; auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
 evidence = ["near_call"]
 
 [[routine]]
