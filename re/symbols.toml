@@ -12286,12 +12286,12 @@ id = "ovl24:0000"
 unit = "ovl24"
 addr = "ovl24:0000"
 size = 38
-name = "ovl24_e1"
-signature = ""
+name = "CallAffectHandler"
+signature = "procedure CallAffectHandler(AffectId: Byte; Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl24_e1"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl24_e1 (calls the handler table ds6828[AffectId](Who, Affect, Mode) (ovl24:001E, matched)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -12299,12 +12299,12 @@ id = "ovl24:0026"
 unit = "ovl24"
 addr = "ovl24:0026"
 size = 314
-name = "ovl24_e2"
-signature = "procedure ovl24_e2(Who: Pointer; AffectId: Byte; Affect: Pointer)"
+name = "RemoveAffect"
+signature = "procedure RemoveAffect(Who: PCharacter; AffectId: Byte; Affect: Pointer)"
 c_name = "ovl24_e2"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl24_e2 (finds the affect by id in Who's list when none is given, calls its handler with mode 1 when its flag is set, unlinks it and frees its 9 bytes (ovl24:0026, matched)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -12312,51 +12312,38 @@ id = "ovl24:0160"
 unit = "ovl24"
 addr = "ovl24:0160"
 size = 410
-name = "ovl24_fn_0160"
-signature = ""
+name = "RunAffectHook"
+signature = "procedure RunAffectHook(Who: PCharacter; AffectId: Byte)"
 c_name = "ovl24_fn_0160"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl24_fn_0160 (calls the handler (mode 0) when Who has the affect, or for affects 21, 45, 46, 49 when another member within range (ScanTargets, 6 squares for 31h) has it (ovl24:0160, matched)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl24:02FA"
 unit = "ovl24"
 addr = "ovl24:02FA"
-size = 379
-name = "ovl24_e3"
-signature = "procedure ovl24_e3(Kind: Byte; Who: Pointer)"
+size = 2029
+name = "RunAffectHooks"
+signature = "procedure RunAffectHooks(Kind: Byte; Who: PCharacter)"
 c_name = "ovl24_e3"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl24_e3 (one case over 20 roll kinds, each running RunAffectHook for a fixed list of affect ids; called by the rolls with kinds 6, 9, 0Ah, 0Ch, 0Dh, 10h (ovl24:02FA, matched)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl24:0475"
-unit = "ovl24"
-addr = "ovl24:0475"
-size = 1650
-name = "ovl24_fn_0475"
-signature = ""
-c_name = "ovl24_fn_0475"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl24:0AE7"
 unit = "ovl24"
 addr = "ovl24:0AE7"
 size = 360
-name = "ovl24_e4"
-signature = "procedure ovl24_e4(Who: Pointer)"
+name = "ApplyCloudTile"
+signature = "procedure ApplyCloudTile(Who: PCharacter)"
 c_name = "ovl24_e4"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_4"
+notes = "renamed from ovl24_e4 (a combatant on tile 1Eh without affects 1Eh 1Fh 20h 6Fh 7Dh saves and gets 'starts to cough' (1Eh) or 'chokes and gags from nausea' (1Fh for 1d4+1) (ovl24:0AE7, matched)); auto:entry_4"
 evidence = ["prologue"]
 
 [[routine]]
@@ -12364,12 +12351,12 @@ id = "ovl24:0C4F"
 unit = "ovl24"
 addr = "ovl24:0C4F"
 size = 104
-name = "ovl24_e5"
-signature = ""
+name = "RollBeatsResistance"
+signature = "function RollBeatsResistance(Who: PCharacter; Level: Byte): Boolean"
 c_name = "ovl24_e5"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_5"
+notes = "renamed from ovl24_e5 (d20 (20 counts 100) through the hooks of kind 10h plus the given level must exceed the character's byte +111h (ovl24:0C4F, matched)); auto:entry_5"
 evidence = ["prologue"]
 
 [[routine]]
@@ -12377,12 +12364,12 @@ id = "ovl24:0CB7"
 unit = "ovl24"
 addr = "ovl24:0CB7"
 size = 172
-name = "ovl24_e6"
-signature = ""
+name = "RollToHit"
+signature = "function RollToHit(Attacker, Target: PCharacter; Needed: Byte): Boolean"
 c_name = "ovl24_e6"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_6"
+notes = "renamed from ovl24_e6 (d20 (20 counts 100) plus the attacker's +110h and a per-side game word must reach the needed value; hooks 0Ah (attacker) and 10h (target) (ovl24:0CB7, matched)); auto:entry_6"
 evidence = ["prologue"]
 
 [[routine]]
@@ -12390,12 +12377,12 @@ id = "ovl24:0D63"
 unit = "ovl24"
 addr = "ovl24:0D63"
 size = 128
-name = "ovl24_e7"
-signature = ""
+name = "SavingThrow"
+signature = "function SavingThrow(Who: PCharacter; Kind, Bonus: ShortInt): Boolean"
 c_name = "ovl24_e7"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl24_e7 (d20: 1 fails, 20 succeeds, else roll + SaveBonus + bonus against SavingThrows[kind] after the hooks of kind 0Ch (ovl24:0D63, matched)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -12403,12 +12390,12 @@ id = "ovl24:0DE3"
 unit = "ovl24"
 addr = "ovl24:0DE3"
 size = 75
-name = "ovl24_e8"
-signature = "function ovl24_e8(Count, Sides: Byte): Byte"
+name = "RollDice"
+signature = "function RollDice(Count, Sides: Byte): Byte"
 c_name = "ovl24_e8"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl24_e8 (sums Count rolls of Random(Sides) + 1; ovl04 rolls 1d8, 2d8, 3d8 for the cure spells (ovl24:0DE3, matched)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -12416,12 +12403,12 @@ id = "ovl24:0E2E"
 unit = "ovl24"
 addr = "ovl24:0E2E"
 size = 36
-name = "ovl24_e9"
-signature = ""
+name = "RollDiceCounted"
+signature = "function RollDiceCounted(Count, Sides: Byte): Byte"
 c_name = "ovl24_e9"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_9"
+notes = "renamed from ovl24_e9 (keeps the dice count in ds681C and returns RollDice(Count, Sides) (ovl24:0E2E, matched)); auto:entry_9"
 evidence = ["prologue"]
 
 [[routine]]
@@ -12429,12 +12416,12 @@ id = "ovl24:0E52"
 unit = "ovl24"
 addr = "ovl24:0E52"
 size = 180
-name = "ovl24_e10"
-signature = ""
+name = "AddAffect"
+signature = "procedure AddAffect(Who: PCharacter; AffectId: Byte; Duration: Word; Data, Flag: Byte)"
 c_name = "ovl24_e10"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl24_e10 (allocates a 9-byte affect, appends it to Who's list and fills id, duration, data and flag (ovl24:0E52, matched)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -12442,12 +12429,12 @@ id = "ovl24:0F06"
 unit = "ovl24"
 addr = "ovl24:0F06"
 size = 204
-name = "ovl24_e11"
-signature = ""
+name = "DropCombatant"
+signature = "procedure DropCombatant(Who: PCharacter; NewStatus: Byte; Msg: String40)"
 c_name = "ovl24_e11"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_11"
+notes = "renamed from ovl24_e11 (shows the message, clears +10Dh, sets the status (hit points 0 unless 3), clears the combatant from the map (RedrawGround, CombatantTable) (ovl24:0F06, matched)); auto:entry_11"
 evidence = ["prologue"]
 
 [[routine]]
@@ -12455,12 +12442,12 @@ id = "ovl24:0FD2"
 unit = "ovl24"
 addr = "ovl24:0FD2"
 size = 56
-name = "ovl24_e12"
-signature = ""
+name = "ClearAttackerAffect"
+signature = "procedure ClearAttackerAffect(Who: PCharacter)"
 c_name = "ovl24_e12"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl24_e12 (removes every affect 19h from the attacker before RollToHit rolls (ovl24:0FD2, 0CC8, matched)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -12468,12 +12455,12 @@ id = "ovl24:100A"
 unit = "ovl24"
 addr = "ovl24:100A"
 size = 55
-name = "ovl24_e13"
-signature = ""
+name = "RemoveDeathAffects"
+signature = "procedure RemoveDeathAffects(Who: PCharacter)"
 c_name = "ovl24_e13"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl24_e13 (removes the 16 affects of the table at DS:0C14 from the character; DropCombatant and DealDamage call it when a combatant goes down (ovl24:100A, matched)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -12482,9 +12469,9 @@ unit = "ovl24"
 addr = "ovl24:1041"
 size = 64
 name = "ovl24_e14"
-signature = ""
+signature = "procedure ovl24_e14(Who: PCharacter)"
 c_name = "ovl24_e14"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_14"
 evidence = ["prologue"]
@@ -12494,12 +12481,12 @@ id = "ovl24:1081"
 unit = "ovl24"
 addr = "ovl24:1081"
 size = 99
-name = "ovl24_e15"
-signature = ""
+name = "CureAffect"
+signature = "function CureAffect(Who: PCharacter; AffectId: Byte): Boolean"
 c_name = "ovl24_e15"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_15"
+notes = "renamed from ovl24_e15 (when Who has the affect: 'is Cured', RemoveAffect, returns True (ovl24:1081, matched)); auto:entry_15"
 evidence = ["prologue"]
 
 [[routine]]
@@ -12507,12 +12494,12 @@ id = "ovl24:10E4"
 unit = "ovl24"
 addr = "ovl24:10E4"
 size = 41
-name = "ovl24_e16"
-signature = ""
+name = "EncodeStrength"
+signature = "function EncodeStrength(Strength, Percent: Byte): Byte"
 c_name = "ovl24_e16"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl24_e16 (Strength + 100, or for 18 the percentile + 1: one byte for strength and exceptional strength (ovl24:10E4, matched)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -12520,12 +12507,12 @@ id = "ovl24:110D"
 unit = "ovl24"
 addr = "ovl24:110D"
 size = 79
-name = "ovl24_e17"
-signature = ""
+name = "DecodeStrength"
+signature = "procedure DecodeStrength(Affect: PAffect; var Strength, Percent: Byte)"
 c_name = "ovl24_e17"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl24_e17 (the inverse of EncodeStrength on an affect's data byte (bit 7 masked): up to 65h is 18/(n-1), above is n - 100 (ovl24:110D, matched)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -12533,12 +12520,12 @@ id = "ovl24:115C"
 unit = "ovl24"
 addr = "ovl24:115C"
 size = 488
-name = "ovl24_e18"
-signature = ""
+name = "RaiseStrength"
+signature = "function RaiseStrength(Who: PCharacter; Strength, Percent: Byte; var Code: Byte): Boolean"
 c_name = "ovl24_e18"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_18"
+notes = "renamed from ovl24_e18 (refuses a strength below the current one, else keeps the old strength in the first strength affect (0Ch or 26h), sets Strength and StrengthPercent (ovl24:115C, matched)); auto:entry_18"
 evidence = ["prologue"]
 
 [[routine]]
@@ -12546,51 +12533,38 @@ id = "ovl24:1344"
 unit = "ovl24"
 addr = "ovl24:1344"
 size = 786
-name = "ovl24_e19"
-signature = ""
+name = "DealDamage"
+signature = "procedure DealDamage(Who: PCharacter; Damage, SaveEffect: Byte; Saved: Boolean)"
 c_name = "ovl24_e19"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_19"
+notes = "renamed from ovl24_e19 ('takes <n> points of damage from Fire/Cold/Electricity/Acid/Magic', halved or none on a save, 'lost a spell', 'Goes Down, and is Dying', 'is killed' (ovl24:1344, matched)); auto:entry_19"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl24:1656"
 unit = "ovl24"
 addr = "ovl24:1656"
-size = 258
-name = "ovl24_e20"
-signature = ""
+size = 263
+name = "ApplyAffect"
+signature = "procedure ApplyAffect(Who: PCharacter; AffectId: Byte; Duration: Word; Data, Flag, SaveNegates: Byte; Saved: Boolean; Msg: String40)"
 c_name = "ovl24_e20"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl24_e20 ('is Unaffected' when the hooks clear the id or a save negates it, else replaces a shorter affect and AddAffect, then shows the message (ovl24:1656, matched)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl24:1758"
-unit = "ovl24"
-addr = "ovl24:1758"
-size = 5
-name = "ovl24_fn_1758"
-signature = ""
-c_name = "ovl24_fn_1758"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl24:175D"
 unit = "ovl24"
 addr = "ovl24:175D"
 size = 268
-name = "ovl24_e21"
-signature = "function ovl24_e21(Who: Pointer; Amount, Flag: Byte): Boolean"
+name = "HealCharacter"
+signature = "function HealCharacter(Who: PCharacter; Amount, Flag: Byte): Boolean"
 c_name = "ovl24_e21"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_21"
+notes = "renamed from ovl24_e21 (adds hit points to +11Bh capped at HpMax, a dying character becomes unconscious; ovl04 cure spells call it (ovl24:175D, matched)); auto:entry_21"
 evidence = ["prologue"]
 
 [[routine]]
@@ -12598,12 +12572,12 @@ id = "ovl24:1869"
 unit = "ovl24"
 addr = "ovl24:1869"
 size = 201
-name = "ovl24_e22"
-signature = ""
+name = "ReviveCombatant"
+signature = "function ReviveCombatant(Who: PCharacter; HitPoints: Byte): Boolean"
 c_name = "ovl24_e22"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_22"
+notes = "renamed from ovl24_e22 (places the combatant back on the map, status 0, hit points set, 'stands up and grins' (monster) or 'gets back up' (ovl24:1869, matched)); auto:entry_22"
 evidence = ["prologue"]
 
 [[routine]]
@@ -12614,7 +12588,7 @@ size = 5
 name = "ovl24_init"
 signature = ""
 c_name = "ovl24_init"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_0"
 evidence = ["prologue"]
@@ -17959,7 +17933,7 @@ unit = "res12"
 addr = "00BA:148B"
 size = 126
 name = "res12_fn_148B"
-signature = ""
+signature = "procedure res12_fn_148B(Spell: Byte)"
 c_name = "res12_fn_148B"
 level = "none"
 justification = ""
@@ -18180,7 +18154,7 @@ unit = "res12"
 addr = "00BA:1FEB"
 size = 430
 name = "res12_fn_1FEB"
-signature = ""
+signature = "procedure res12_fn_1FEB(Who: Pointer; Flag: Byte; Text: String40)"
 c_name = "res12_fn_1FEB"
 level = "none"
 justification = ""
@@ -18206,7 +18180,7 @@ unit = "res12"
 addr = "00BA:2228"
 size = 290
 name = "res12_fn_2228"
-signature = ""
+signature = "procedure res12_fn_2228(Who: Pointer; Damage: Byte)"
 c_name = "res12_fn_2228"
 level = "none"
 justification = ""

@@ -28,7 +28,7 @@ procedure res12_fn_11EA;
 procedure res12_fn_1282;
 procedure res12_fn_1325;
 procedure res12_fn_13AB;
-procedure res12_fn_148B;
+procedure res12_fn_148B(Spell: Byte);
 procedure res12_fn_1509;
 procedure res12_fn_15F7;
 procedure res12_fn_1693(Text: String40);
@@ -45,9 +45,9 @@ procedure res12_fn_19DE;
 procedure res12_fn_1A29;
 procedure res12_fn_1CBA;
 procedure res12_fn_1CE0;
-procedure res12_fn_1FEB;
+procedure res12_fn_1FEB(Who: Pointer; Flag: Byte; Text: String40);
 function res12_fn_2199(Who: Pointer; AffectId: Byte; var Affect: Pointer): Boolean;
-procedure res12_fn_2228;
+procedure res12_fn_2228(Who: Pointer; Damage: Byte);
 procedure res12_fn_234A;
 procedure res12_fn_23B7;
 procedure res12_fn_23DB;
@@ -120,7 +120,7 @@ implementation
 { 00BA:13AB: retf 4: 4 bytes of parameters; 4 bytes of locals }
 {@stub} procedure res12_fn_13AB; begin end;
 { 00BA:148B: retf 2: 2 bytes of parameters; 2 bytes of locals }
-{@stub} procedure res12_fn_148B; begin end;
+{@stub} procedure res12_fn_148B(Spell: Byte); begin end;
 { 00BA:1509: retf 8: 8 bytes of parameters; 44 bytes of locals }
 {@stub} procedure res12_fn_1509; begin end;
 { 00BA:15F7: retf 8: 8 bytes of parameters; 8 bytes of locals }
@@ -154,13 +154,13 @@ implementation
 { 00BA:1CE0: retf 12: 12 bytes of parameters; 0 bytes of locals }
 {@stub} procedure res12_fn_1CE0; begin end;
 { 00BA:1FEB: retf 10: 10 bytes of parameters; 48 bytes of locals }
-{@stub} procedure res12_fn_1FEB; begin end;
+{@stub} procedure res12_fn_1FEB(Who: Pointer; Flag: Byte; Text: String40); begin end;
 { 00BA:2199: retf 10; walks the affect list of Who (+$7F) for AffectId, leaves the affect in
   Affect and returns 1 when found. }
 {@stub} function res12_fn_2199(Who: Pointer; AffectId: Byte; var Affect: Pointer): Boolean;
   begin end;
 { 00BA:2228: retf 6: 6 bytes of parameters; 2 bytes of locals }
-{@stub} procedure res12_fn_2228; begin end;
+{@stub} procedure res12_fn_2228(Who: Pointer; Damage: Byte); begin end;
 { 00BA:234A: retf 4: 4 bytes of parameters; 42 bytes of locals }
 {@stub} procedure res12_fn_234A; begin end;
 { 00BA:23B7: retf 4: 4 bytes of parameters; 2 bytes of locals }
