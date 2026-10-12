@@ -415,3 +415,20 @@ evidence = "far pointer to the tile staging buffer: tiles are Moved to +$17 and 
 offset = 0x4A20
 name = "DrawBuf"
 evidence = "far pointer passed to res07_fn_08D4 as the destination buffer (ovl34:0241,0245); the loader (StartGame) allocates it through res07_fn_248E($A8, $15, 1, 0) at ovl11:00BC"
+
+[[global]]
+offset = 0x0D19
+size = 11
+name = "BadNameChars"
+evidence = "res05_fn_0425 (0802:0465) indexes DS:0D19 + I for I = 1..10 and deletes each character from a file name; the image holds ' .*,?/\\:;|' at DS:0D1A"
+
+[[global]]
+offset = 0x557E
+size = 4
+name = "PackedBuf"
+evidence = "res05_fn_0716 allocates it with the packed size (0802:08B3), BlockReads the packed block into PackedBuf^ (0802:08F8), unpacks it through res05_fn_050F and frees it (0802:0938)"
+
+[[global]]
+offset = 0x2614
+name = "InsertDiskPrompts"
+evidence = "entries 1..8 of the 30-byte string[29] table at DS:2614 hold 'Insert disk N in drive ' in the image (entry 0 is not a string); OpenDaxFile (0802:061A) and StartGame index it by TileSet and append the drive letter DS:547D and ':' to make the prompt OpenGameFile shows through ShowBottomMessage"
