@@ -5,8 +5,7 @@ unit OVL29;
   LoadWallSet and Load3DMap load the WALLDEF and GEO data. Design doc whitepaper 5.2. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
-procedure ovl29_fn_0000;
-procedure ovl29_fn_0143;
+procedure DrawWallMap(Col, Row: ShortInt; Dir: Byte);
 procedure SetWallDescriptors(Wall1, Wall2, Wall3, Wall4: Byte);
 procedure DrawWallDescriptors;
 procedure DrawWallPiece(Col, Row: ShortInt; Wall, Piece: Byte);
@@ -29,13 +28,58 @@ const
   DirWest = 6;
   MapLast = $F;          { the last row and column of the 16x16 area map }
   DoorOpen = 1;          { DoorKindAt's answer for a side with no wall }
+  WallSymbols = $104;    { the 8x8 symbol of a map cell with no wall; plus 1/2/4/8 per wall side }
+  PartyArrow = $100;     { the 8x8 symbol of the party arrow facing north; plus Dir div 2 }
+  MapWindowHalf = 5;     { the overhead map window reaches 5 cells each side of the party }
   ViewLast = 10;         { the last tile column and row of the 11x11 tile 3D view }
   ViewLeft = 3;          { the screen column (and row) of the view's first tile, counted from 1 }
 
-{ ovl29:0000: frame not read }
-{@stub} procedure ovl29_fn_0000; begin end;
-{ ovl29:0143: retf 6: 6 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl29_fn_0143; begin end;
+{ ovl29:0000. Draws the overhead wall map in the view instead of the 3D walls (ovl29_e5 calls it
+  while ds6AAC is nonzero): an 11x11 window of the 16x16 area map, placed so that the party cell
+  (Col, Row) is centred where the map allows (the window's left column and top row are clamped to
+  0..5), one 8x8 symbol per cell: WallSymbols plus 1, 2, 4 and 8 for a wall on the north, east,
+  south and west side (WallIdAt nonzero). Then the party arrow, PartyArrow + Dir div 2 (Dir 0, 2,
+  4, 6), goes on the party's cell, and StepDisplay shows the result. The map's symbols go through
+  Put8x8Symbol with Direct 1, Attr 0. QUIRK ovl29:0003: the frame holds 256 more bytes that no code
+  uses (Unused). The map placed a second routine at ovl29:0143; it is this routine's tail. }
+procedure DrawWallMap(Col, Row: ShortInt; Dir: Byte);
+var
+  PartyCol: ShortInt;
+  PartyRow: ShortInt;
+  ViewCol: ShortInt;
+  ViewRow: ShortInt;
+  LeftCol: ShortInt;
+  TopRow: ShortInt;
+  MapCol: ShortInt;
+  MapRow: ShortInt;
+  Symbol: Word;
+  Unused: string;
+begin
+  LeftCol := Col - MapWindowHalf;
+  if LeftCol < 0 then LeftCol := 0;
+  if LeftCol > MapWindowHalf then LeftCol := MapWindowHalf;
+  PartyCol := Col - LeftCol;
+  TopRow := Row - MapWindowHalf;
+  if TopRow < 0 then TopRow := 0;
+  if TopRow > MapWindowHalf then TopRow := MapWindowHalf;
+  PartyRow := Row - TopRow;
+  for ViewRow := 0 to ViewLast do
+  begin
+    MapRow := ViewRow + TopRow;
+    for ViewCol := 0 to ViewLast do
+    begin
+      MapCol := ViewCol + LeftCol;
+      Symbol := WallSymbols;
+      if WallIdAt(MapCol, MapRow, DirNorth) > 0 then Inc(Symbol);
+      if WallIdAt(MapCol, MapRow, DirEast) > 0 then Inc(Symbol, 2);
+      if WallIdAt(MapCol, MapRow, DirSouth) > 0 then Inc(Symbol, 4);
+      if WallIdAt(MapCol, MapRow, DirWest) > 0 then Inc(Symbol, 8);
+      Put8x8Symbol(ViewCol + ViewLeft - 1, ViewRow + ViewLeft - 1, Symbol, 1, 0);
+    end;
+  end;
+  Put8x8Symbol(PartyCol + ViewLeft - 1, PartyRow + ViewLeft - 1, Dir shr 1 + PartyArrow, 1, 0);
+  StepDisplay;
+end;
 { ovl29:0155: retf 8: 8 bytes of parameters; 0 bytes of locals }
 { ovl29:0155. Stores the four wall view descriptors: A..D into ds6A60..ds6A63 (descriptor 1..4;
   whitepaper 5.2). Called by ovl26 ShowAreaView with the wall view ids. }
@@ -167,7 +211,7 @@ begin
 end;
 { ovl29:05FD: retf 6: 6 bytes of parameters; 24 bytes of locals.
   Draws the rest of the wall view: with ds6AAC at 0 it draws the four descriptors through
-  DrawWallDescriptors, otherwise it calls ovl29_fn_0000; A and B are the party cell (ds6AAD, ds6AAE)
+  DrawWallDescriptors, otherwise it calls DrawWallMap; A and B are the party cell (ds6AAD, ds6AAE)
   and C the icon set of the marker (ds6AAF). }
 {@stub} procedure ovl29_e5(A, B, C: Byte); begin end;
 { ovl29:0E08: retf 4: 4 bytes of parameters; 280 bytes of locals }

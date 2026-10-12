@@ -876,3 +876,10 @@ kind = "routine"
 why = "ovl29:0211 draws piece Piece (0..9, tables ds0C8C/ds0C96/ds0CA0) of wall Wall from the wall tiles ds6A58 as 8x8 symbols at view column Col, row Row, clipped to the 11x11 view; called by ovl29_e5 per visible wall"
 date = "2026-10-12"
 
+[[rename]]
+old = "ovl29_fn_0000"
+new = "DrawWallMap"
+kind = "routine"
+why = "ovl29:0000 draws the 11x11 cells of the area map around the party as 8x8 symbols $104 + wall bits (WallIdAt north 1, east 2, south 4, west 8) and the party arrow $100 + Dir div 2; ovl29_e5 calls it instead of the 3D walls while ds6AAC is nonzero"
+date = "2026-10-12"
+
