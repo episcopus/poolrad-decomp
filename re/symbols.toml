@@ -13587,7 +13587,7 @@ evidence = ["prologue"]
 id = "ovl28:0070"
 unit = "ovl28"
 addr = "ovl28:0070"
-size = 50
+size = 35
 name = "DrawBodySprite"
 signature = ""
 c_name = "ovl28_fn_0070"
@@ -13613,13 +13613,13 @@ evidence = ["prologue"]
 id = "ovl28:048F"
 unit = "ovl28"
 addr = "ovl28:048F"
-size = 106
-name = "ovl28_e3"
+size = 105
+name = "FreeSpriteList"
 signature = ""
 c_name = "ovl28_e3"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl28_e3 (ovl28:048F: frees every loaded sprite bank of the list and zeroes the list record, clears the picture name DS:6B0A and sets DS:6B1C to F; called by ovl10, ovl14, ovl18 and ovl28_e2 (the picture loaders)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

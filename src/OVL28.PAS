@@ -5,11 +5,27 @@ unit OVL28;
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 uses POOLVARS;
+type
+  { One 8-byte slot of the sprite list ovl28_e2 builds and FreeSpriteList frees: a far pointer at +0. }
+  TSpriteSlot = record
+    Sprite: Pointer;              { +0: the loaded sprite bank (nil when empty) }
+    Filler: array[0..3] of Byte;  { +4..+7: never read }
+  end;
+  { The list of loaded sprites: a count byte, a flag, and the slots at +6 with a stride of 8
+    (FreeSpriteList frees slot I at Rec + 8*I - 2, ovl28_e2 reads and fills the same slots). }
+  TSpriteList = record
+    Count: ShortInt;                      { +0: the number of slots in use (signed: the for loop exits with jg) }
+    Flag: Byte;                           { +1: set to 1 by ovl28_e2 }
+    Filler: array[0..3] of Byte;          { +2..+5: never read }
+    Slots: array[1..7] of TSpriteSlot;    { +6: the slots }
+    Tail: array[0..3] of Byte;            { +$3E..+$41: never read }
+  end;
+  PSpriteList = ^TSpriteList;
 procedure DrawSprite(Col, Row: Integer; Direct: Byte; Sprite: Pointer);
 procedure DrawHeadSprite(Col, Row: Byte; Sprite: Pointer);
 procedure DrawBodySprite(Col, Row: Byte; Sprite: Pointer);
 procedure ovl28_e2;
-procedure ovl28_e3;
+procedure FreeSpriteList(Rec: PSpriteList);
 procedure ovl28_e4;
 procedure ovl28_e6;
 procedure ovl28_e5;
@@ -17,7 +33,7 @@ procedure ovl28_e7;
 implementation
 uses RES05, RES07;
 
-{ ovl28:0000. Draws the 8x8 sprite Sprite at column X and row Y. A nil Sprite draws nothing. When
+{ ovl28:0000. Draws the 8x8 sprite Sprite at column Col and row Row. A nil Sprite draws nothing. When
   Direct is set it blits the sprite one pixel up and left onto the screen buffer ds4A20 through
   res07_fn_0D71 (mode 0, the flag 1) and steps the display through res07_fn_1B52; otherwise it
   copies it into the staging buffer with res07_fn_1951. Called by DrawHeadSprite, DrawBodySprite and
@@ -53,7 +69,18 @@ end;
 { ovl28:00A2: retf 12: 12 bytes of parameters; 296 bytes of locals }
 {@stub} procedure ovl28_e2; begin end;
 { ovl28:048F: retf 4: 4 bytes of parameters; 6 bytes of locals }
-{@stub} procedure ovl28_e3; begin end;
+{ ovl28:048F. Frees the sprite list Rec^: it frees the bank of every used slot (through
+  res07_fn_2595), then zeroes the whole $42-byte record, clears the picture name DS:6B0A and sets
+  the current bank DS:6B1C to $FF. Called by ovl10, ovl14, ovl18 and ovl28_e2. }
+procedure FreeSpriteList(Rec: PSpriteList);
+begin
+  with Rec^ do
+    for ds70C7 := 1 to Count do
+      res07_fn_2595(Slots[ds70C7].Sprite);
+  FillChar(Rec^, $42, 0);
+  ds6B0A := 0;
+  ds6B1C := $FF;
+end;
 { ovl28:04F9: retf 0: 0 bytes of parameters; 12 bytes of locals }
 {@stub} procedure ovl28_e4; begin end;
 { ovl28:05D9: retf 4: 4 bytes of parameters; 258 bytes of locals }

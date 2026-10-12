@@ -232,3 +232,10 @@ kind = "routine"
 why = "ovl28:0070: draws the BODY sprite (DS:6B06, loaded by ovl28_e6) at its column and row plus 5 through DrawSprite; called by Show3DSprite (ovl28_e5)"
 date = "2026-10-11"
 
+[[rename]]
+old = "ovl28_e3"
+new = "FreeSpriteList"
+kind = "routine"
+why = "ovl28:048F: frees every loaded sprite bank of the list and zeroes the list record, clears the picture name DS:6B0A and sets DS:6B1C to F; called by ovl10, ovl14, ovl18 and ovl28_e2 (the picture loaders)"
+date = "2026-10-11"
+
