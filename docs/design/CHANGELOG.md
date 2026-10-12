@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-11 | 3.2.2 (new), 5.2.1 | added the start-up loader StartGame (ovl11:002D): the seven heap blocks, the three screen buffers (res07_fn_248E), the three 200-cell screen tables (DS:4EC0/5050/51E0), the game globals, and the data loads SQRPACI, COMSPR and ITEMS; corrected the ovl11:0435 phantom | make match UNIT=ovl11: unit complete, 2 matched, 0 differ; src/OVL11.PAS, docs/design/WHITEPAPER.md 3.2.2 |
 | 2026-10-11 | process | make claim shows the orchestrator's blocker notes for the claimed unit | tests/unit/test_agent_tools.py |
 | 2026-10-11 | tools | runtime call targets resolved by routine entry (runtime_entries), not by raw byte alignment; fixes Move resolved as Assign | escalate-ovl34-20261012033554; ovl34 Put8x8Symbol matches; tests/unit/test_rtl_resolve.py |
 | 2026-10-11 | process | make watch-agents: colored live view of progress, agents, hand-offs, locks and queues | tests/unit/test_agent_tools.py |
