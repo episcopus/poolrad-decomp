@@ -1,13 +1,13 @@
 unit OVL28;
 { ovl28: the 3D sprite and picture unit (whitepaper 4.x). It draws the 8x8 sprites of the 3D view
-  (Show3DSprite and its helpers), loads PIC/FINAL picture records into the sprite banks through
+  (the 3D sprite routines), loads PIC/FINAL picture records into the sprite banks through
   res07_fn_0111 and frees them again, and shows the HEAD/BODY window of the character screen. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 uses POOLVARS;
 type
   { One loaded 8x8 sprite bank. Only the two words at +4 and +6 are read here: the sprite's base
-    screen column and row (ovl28_e7 adds 2 to each and passes them to res07_fn_0D71). }
+    screen column and row (Show3DSprite adds 2 to each and passes them to res07_fn_0D71). }
   TSpriteBank = record
     Filler: array[0..3] of Byte;  { +0..+3: never read here }
     X: Word;                      { +4: the sprite's base column }
@@ -37,7 +37,7 @@ procedure FreeSpriteList(Rec: PSpriteList);
 procedure ovl28_e4;
 procedure LoadHeadBodySprites(HeadBank, BodyBank: Byte);
 procedure ShowHeadBodySprites(Col, Row: Byte; Direct: Byte);
-procedure ovl28_e7(Bank: Byte; Rec: PSpriteList);
+procedure Show3DSprite(Bank: Byte; Rec: PSpriteList);
 implementation
 uses RES04, RES05, RES07;
 
@@ -61,14 +61,14 @@ begin
 end;
 
 { ovl28:0050. Draws the 8x8 sprite Sprite of a bank at column Col and row Row without an offset
-  (through DrawSprite, the staging buffer path). Called by ShowHeadBodySprites (Show3DSprite). }
+  (through DrawSprite, the staging buffer path). Called by ShowHeadBodySprites. }
 procedure DrawHeadSprite(Col, Row: Byte; Sprite: Pointer);
 begin
   DrawSprite(Col, Row, 0, Sprite);
 end;
 
 { ovl28:0070. Draws the 8x8 sprite Sprite at column Col and row Row plus 5 (through DrawSprite, the
-  staging buffer path). Called by ShowHeadBodySprites (Show3DSprite). }
+  staging buffer path). Called by ShowHeadBodySprites. }
 procedure DrawBodySprite(Col, Row: Byte; Sprite: Pointer);
 begin
   DrawSprite(Col, Row + 5, 0, Sprite);
@@ -130,10 +130,10 @@ begin
     DrawSprite(Col, Row, 0, ds6B01);
 end;
 { ovl28:0708. Copies the sprite list Rec^ and shows slot Bank (only 1..3 are legal; another bank
-  ends the game with Illegal range in Show3DSprite): it draws the sprite at its base column and row
+  ends the game with its range message): it draws the sprite at its base column and row
   plus 2 through res07_fn_0D71 onto the screen buffer DrawBuf and steps the display. Called by
   ovl07_e8. }
-procedure ovl28_e7(Bank: Byte; Rec: PSpriteList);
+procedure Show3DSprite(Bank: Byte; Rec: PSpriteList);
 var
   List: TSpriteList;
 begin
