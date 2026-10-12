@@ -225,3 +225,10 @@ kind = "routine"
 why = "builds the Shop window (DrawWindow 'Shop'), rewrites each stock entry's Name into a 30-char name+Count field, runs the item picker ovl25_e4 ('Items: '/'Buy') over the list at ds6810 and returns the chosen entry in Head/Selected with the key in Action; called from ovl06_fn_0361 (Buy) (ovl06:0030)"
 date = "2026-10-11"
 
+[[rename]]
+old = "ovl06_fn_0361"
+new = "BuyItems"
+kind = "routine"
+why = "the Buy flow of the shop menu: loops on ChooseShopItem, pays from the pool (ovl19_e11) or the money (ovl21_e12 on ds67F4), adds the entry with AddInventoryItem and deducts via ovl21_e10/ovl21_e11, else shows Not enough Money.; called from ovl06_e1 on the 'B' menu key (ovl06:0361)"
+date = "2026-10-11"
+

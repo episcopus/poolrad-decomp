@@ -7,9 +7,9 @@ procedure ovl21_fn_0000;
 procedure ovl21_fn_0020;
 procedure ovl21_fn_003A;
 procedure ovl21_e1;
-procedure ovl21_e12;
-procedure ovl21_e10;
-procedure ovl21_e11;
+function ovl21_e12(P: Pointer): LongInt;
+procedure ovl21_e10(Value: Word);
+procedure ovl21_e11(Value: Word);
 procedure ovl21_fn_0203;
 procedure ovl21_e6;
 procedure ovl21_e7;
@@ -41,11 +41,11 @@ implementation
 { ovl21:0054: retf 10: 10 bytes of parameters; 2 bytes of locals }
 {@stub} procedure ovl21_e1; begin end;
 { ovl21:00A8: retf 4: 4 bytes of parameters; 38 bytes of locals }
-{@stub} procedure ovl21_e12; begin end;
+{@stub} function ovl21_e12(P: Pointer): LongInt; begin end;
 { ovl21:0130: retf 2: 2 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl21_e10; begin end;
+{@stub} procedure ovl21_e10(Value: Word); begin end;
 { ovl21:0185: retf 2: 2 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl21_e11; begin end;
+{@stub} procedure ovl21_e11(Value: Word); begin end;
 { ovl21:0203: retf 2: 2 bytes of parameters; 42 bytes of locals }
 {@stub} procedure ovl21_fn_0203; begin end;
 { ovl21:0294: retf 8: 8 bytes of parameters; 580 bytes of locals }

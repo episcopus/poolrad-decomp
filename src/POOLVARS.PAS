@@ -48,7 +48,7 @@ type
   end;
   { One entry of a menu/stock list, walked through Next. The shop builds the display text into Name
     (ChooseShopItem copies a 30-character field into it with System_StrLCopy limit $28, then sets the
-    length to $1E), reads Count for the buy flow (ovl06_fn_0361) and the list menu (ovl25_e4) skips an
+    length to $1E), reads Count for the buy flow (BuyItems) and the list menu (ovl25_e4) skips an
     entry whose Enabled is 0. ovl19_e9 reads Value37 and Factor39. The record is 63 ($3F) bytes: the
     loader clones one with a Move of $3F bytes (AddInventoryItem). }
   PByte = ^Byte;
@@ -185,6 +185,7 @@ var
   ds5E52: array[0..7] of Byte;    { 8-byte buffer the loader clears (ovl11:0260) and passes to res07_fn_0111 (ovl11:04D6) }
   ds5E56: array[0..7] of Byte;    { second 8-byte buffer passed to res07_fn_0111 (ovl11:04F8) }
   ds5E5A: array[0..$CF] of Byte;  { $D0-byte buffer the loader clears (ovl11:02B9); the picture set table of ovl32_e4 }
+  ds67F4: array[0..$1B] of Byte;  { the 28-byte block at DS:67F4 whose address ovl06 passes to ovl21_e12 (Money) }
   ds6810: PMenuItem;              { head of the shop's item list, a far pointer the loader clears (ovl11:031A); see TMenuItem }
   ds6A58: ^TBlock924;             { $924-byte block the loader allocates (ovl11:0084) }
   ds6A5C: ^TBlock400;             { $400-byte block the loader allocates (ovl11:0094) }

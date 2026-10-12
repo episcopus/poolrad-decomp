@@ -2275,12 +2275,12 @@ id = "ovl06:0361"
 unit = "ovl06"
 addr = "ovl06:0361"
 size = 477
-name = "ovl06_fn_0361"
+name = "BuyItems"
 signature = ""
 c_name = "ovl06_fn_0361"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl06_fn_0361 (the Buy flow of the shop menu: loops on ChooseShopItem, pays from the pool (ovl19_e11) or the money (ovl21_e12 on ds67F4), adds the entry with AddInventoryItem and deducts via ovl21_e10/ovl21_e11, else shows Not enough Money.; called from ovl06_e1 on the 'B' menu key (ovl06:0361)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

@@ -2,18 +2,18 @@ unit OVL06;
 { Shop: the shopkeeper screen. ovl06_e1 (053E) is the entry: it shows the shop menu
   (Buy/View/Take/Pool/Share/Appraise/Exit) through ovl25_e2 and dispatches each choice.
   ChooseShopItem (0030) lists the shop's stock in the shop window and runs the item picker
-  (ovl25_e4); ovl06_fn_0361 (0361) is the Buy flow, AddInventoryItem (0239) adds an item to the
+  (ovl25_e4); BuyItems (0361) is the Buy flow, AddInventoryItem (0239) adds an item to the
   shop's stock list. Whitepaper section 5.4. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 uses POOLVARS;
-procedure ChooseShopItem(var Action: Byte; var Selected: PMenuItem; var Head: PMenuItem; var Count: Word);
+procedure ChooseShopItem(var Action: Char; var Selected: PMenuItem; var Head: PMenuItem; var Count: Word);
 procedure AddInventoryItem(Item: PMenuItem; OK: PByte);
 procedure ovl06_fn_0311;
-procedure ovl06_fn_0361;
+procedure BuyItems;
 procedure ovl06_e1;
 implementation
-uses OVL19, OVL25, RES09, RES12;
+uses OVL19, OVL21, OVL25, RES09, RES12;
 
 { ovl06:0030 (ChooseShopItem). Builds the shop window and the item picker. Walks the stock list at
   ds6810 and rewrites each entry's Name into a 30-character field with the name on the left and the
@@ -21,8 +21,8 @@ uses OVL19, OVL25, RES09, RES12;
   the item picker ovl25_e4 titled "Items: " with a "Buy" button. Action receives the picker's key,
   Head the chosen entry, Selected is set to Head; res12_fn_0442 is called for each entry afterwards.
   Parameters: Action (out, the key), Selected (out, the chosen entry), Head (in/out, the list the
-  picker works on), Count (in/out). Side effect: the screen. Called from ovl06_fn_0361 (Buy). }
-procedure ChooseShopItem(var Action: Byte; var Selected: PMenuItem; var Head: PMenuItem; var Count: Word);
+  picker works on), Count (in/out). Side effect: the screen. Called from BuyItems (Buy). }
+procedure ChooseShopItem(var Action: Char; var Selected: PMenuItem; var Head: PMenuItem; var Count: Word);
 var
   List, Entry: PMenuItem;
   NumStr: string[16];
@@ -65,7 +65,7 @@ end;
   is overloaded: OK^ is then 1 and "OverLoaded" is shown. Otherwise OK^ is 0 and a new TMenuItem is
   allocated (New), the item copied into it (record assignment of $3F bytes) and the node linked at the
   end of ds5D92^.Stock; res12_fn_0BB8 then redraws the list. Item is the entry to add, OK receives the
-  overload flag (1 = full). Called from ovl05 (TreasureShare) and ovl06_fn_0361 (Buy). }
+  overload flag (1 = full). Called from ovl05 (TreasureShare) and BuyItems (Buy). }
 procedure AddInventoryItem(Item: PMenuItem; OK: PByte);
 var
   Tail, NewItem: PMenuItem;
@@ -102,8 +102,63 @@ end;
 { ovl06:0311: retf 8: 8 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl06_fn_0311; begin end;
 
-{ ovl06:0361: retf 0: 0 bytes of parameters; 40 bytes of locals }
-{@stub} procedure ovl06_fn_0361; begin end;
+{ ovl06:0361 (BuyItems). The shop's Buy flow, called from ovl06_e1 on the 'B' menu key. It loops on
+  ChooseShopItem until the player cancels (any key other than 'B' or Enter). For a chosen entry it
+  first checks the party's pool (ovl19_e11 on ds5D92); if the entry's Count fits it adds the entry to
+  the inventory (AddInventoryItem) and deducts the amount from the pool (ovl21_e10). Otherwise it
+  reads the party's money (ovl21_e12 on ds67F4); if the Count fits it adds the entry and deducts the
+  money (ovl21_e11), else it shows "Not enough Money." (res12_fn_1693). No parameters; side effect:
+  the inventory and the screen. }
+procedure BuyItems;
+var
+  Selected: PMenuItem;
+  Action: Char;
+  Flag: Boolean;
+  SelCount, Avail: Word;
+  Money: LongInt;
+  OK: Byte;
+  Head: PMenuItem;
+  Count: Word;
+begin
+  Selected := nil;
+  Head := ds6810;
+  Count := 1;
+  repeat
+    ChooseShopItem(Action, Selected, Head, Count);
+    if (Action <> 'B') and (Action <> #13) then
+      Flag := True
+    else
+    begin
+      Flag := False;
+      SelCount := Selected^.Count;
+      Avail := ovl19_e11(ds5D92);
+      if SelCount <= Avail then
+      begin
+        AddInventoryItem(Selected, @OK);
+        if OK = 0 then
+        begin
+          Avail := Avail - SelCount;
+          ovl21_e10(Avail);
+        end;
+      end
+      else
+      begin
+        Money := ovl21_e12(@ds67F4);
+        if SelCount <= Money then
+        begin
+          AddInventoryItem(Selected, @OK);
+          if OK = 0 then
+          begin
+            Money := Money - SelCount;
+            ovl21_e11(Money);
+          end;
+        end
+        else
+          res12_fn_1693('Not enough Money.');
+      end;
+    end;
+  until Flag;
+end;
 
 { ovl06:053E: retf 0: 0 bytes of parameters; 138 bytes of locals }
 {@stub} procedure ovl06_e1; begin end;
