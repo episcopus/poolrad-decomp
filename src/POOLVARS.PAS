@@ -185,9 +185,15 @@ type
   { One 16-byte row of the spell table DS:320A (SpellTable): RecalcClassStats reads the class
     and the level (ovl23:0110, 0119); the other bytes are not known yet. }
   TSpellEntry = record
-    SpellClass: Byte;             { +0: 0 for the spells a cleric gets }
-    Level: ShortInt;              { +1: the spell level 1..3, an index of ClericSlots; signed (ovl23:011D cwde) }
-    Pad2: array[2..15] of Byte;
+    { +0: 0 for a cleric spell, 1 for a magic-user spell (the row of TCharacter.SpellSlots);
+      signed: ovl15:02C0 compares it with a signed class. }
+    SpellClass: ShortInt;
+    Level: ShortInt;              { +1: the spell level 1..3, an index of TCharacter.SpellSlots; signed (ovl23:011D cwde) }
+    Pad2: array[2..9] of Byte;
+    { +$A: the affect the spell leaves on a character: the camp's Display names an affect by the first
+      spell with this affect (ovl15:10D9). }
+    AffectId: Byte;
+    PadB: array[$B..15] of Byte;
   end;
   TCharacter = record
     Name: string[15];             { +$00 }
@@ -197,7 +203,9 @@ type
     { +$17..+$2B: the memorized spells, one spell number per slot, 0 = empty (CombatMenu offers
       Cast when one is set, ovl08:071E; ovl14 looks for Knock in them). }
     Spells: array[0..20] of Byte;
-    Pad2C: Byte;
+    { +$2C: the hours of rest the character's study needs, 0, 4 or 6 (StudyRestMinutes sets it,
+      CancelMemorizing clears it, ovl15:0123, 0191). }
+    RestHours: Byte;
     { +$2D: the to-hit value: RecalcClassStats sets it to the best (highest) entry of
       ClassThac0Table over the character's classes (ovl23:0006..0062); whitepaper 4.2.5 calls it THAC0. }
     Thac0: Byte;
@@ -254,13 +262,12 @@ type
     { +$B1: Raise Dead subtracts it from HpMax to get the hit points its constitution
       arithmetic works on (ovl04:0612); its meaning beyond that is not known. }
     HpB1: Byte;
-    { +$B2..+$B4: the cleric spell slots of levels 1..3: RecalcClassStats copies them from
-      ClericSlotTable for the cleric level (ovl23:00B0) and AddWisdomBonusSpells adds the wisdom
-      bonus; the table's level indexes them (ovl23:0123). }
-    ClericSlots: array[1..3] of Byte;
-    { +$B5..+$B7: the magic-user spell slots of levels 1..3, from MageSlotTable for the
-      magic-user level (ovl23:014C). }
-    MageSlots: array[1..3] of Byte;
+    { +$B2..+$B7: the spell slots by spell class (0 cleric, 1 magic-user, the SpellClass of
+      SpellTable) and spell level 1..3: RecalcClassStats copies the cleric row from ClericSlotTable
+      for the cleric level (ovl23:00B0) and AddWisdomBonusSpells adds the wisdom bonus; the magic-user
+      row comes from MageSlotTable (ovl23:014C). The spell menus index both rows with the class and
+      level of a SpellTable entry (ovl15:02ED: [$B1 + class*3 + level]). }
+    SpellSlots: array[0..1, 1..3] of Byte;
     { +$B8, +$BA: a monster's experience value: ComputeBattleExperience adds XpValue plus HpB1 times
       XpPerHp for every defeated monster (ovl05:00C4) [I]. }
     XpValue: Word;
@@ -543,8 +550,10 @@ var
   ds49ED: Word;                   { set to $9900 by the loader (ovl11:03C0) }
   ds49E5: Word;                   { copied to ds49ED by the ovl14 L key; meaning unknown }
   ds49F4: Byte;                   { cleared by the loader (ovl11:03CB) }
-  ds49F5: Byte;                   { set to 1 by the loader (ovl11:0392) }
-  ds49F6: Byte;                   { set to 1 by the loader (ovl11:0397) }
+  ShowPortraits: Byte;            { nonzero: the portraits are shown; the camp's Pics submenu toggles it
+                                    (ovl15:1D31, 1DFC); the loader sets it to 1 (ovl11:0392) }
+  ShowMonsterPics: Byte;          { nonzero: the monster pictures are shown; the camp's Pics submenu toggles it
+                                    (ovl15:1D02, 1DE9); the loader sets it to 1 (ovl11:0397) }
   ds49F8: Byte;                   { cleared by the loader (ovl11:03A6) }
   ds49F9: Byte;                   { set to 1 by the loader (ovl11:03EB) }
   ds49FB: Word;                   { cleared by the loader (ovl11:03AD) }
@@ -742,5 +751,20 @@ var
   DeathAffects: array[0..16] of Byte;  { affects removed when a combatant dies; see above }
   { The two affects ovl24_e14 removes are entries 1..2 at DS:0C24 ($4A $4B); entry 0 is the byte before. }
   ds0C23: array[0..2] of Byte;    { entries 1..2 ($4A $4B) are the affects ovl24_e14 removes }
+  { Globals of the camp unit ovl15 (whitepaper 5.22). }
+  CampMenuText: string[40];             { 'Save View Magic Rest Alter Exit': the Camp menu MakeCamp shows (ovl15:1F06) }
+  CampMagicMenuText: string[40];             { 'Cast Memorize Scribe Display Rest Exit': the camp Magic menu (ovl15:1429) }
+  AlterMenuText: string[40];             { 'Order Drop Speed Icon Pics Exit': the camp Alter menu (ovl15:1C86) }
+  PartyOrderMenuTexts: array[0..1] of string[40];  { 'Select Exit' and 'Place Exit': the Party Order menu before and after a
+                                    character is picked (ovl15:17B0) }
+  { The time a rest lasts, one word per digit of the game clock (ovl20 indexes it, ovl20:04A7): the
+    camp's Rest command sets [1] minutes, [2] tens of minutes and [3] hours from the longest study
+    time of the party (ovl15:07CA) before ovl20_e2 runs the rest, and clears all seven words after. }
+  RestTime: array[0..6] of Word;
+  ds6DB5: Pointer;                { set to nil when the camp opens and closes and before casting (ovl15:04B0, 1FB6) }
+  ds6DD8: Word;                   { cleared when the camp opens (ovl15:1E80); meaning unknown }
+  { The spell names, string[40] per spell 1..$38 at DS:2912 ('Bless' .. 'Restoration' in the image,
+    the rows of SpellTable); entry 0 is the index base (ovl15:10EE), never read. }
+  SpellNames: array[0..$38] of string[40];
 implementation
 end.

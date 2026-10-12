@@ -98,8 +98,8 @@ begin
     ds6AAEWords[ds465C].A := $FFFF;
     ds6AAEWords[ds465C].B := $FFFF;
   end;
-  ds49F5 := 1;
-  ds49F6 := 1;
+  ShowPortraits := 1;
+  ShowMonsterPics := 1;
   DebugMode := False;
   ds4A00 := 1;
   ds49F8 := 0;

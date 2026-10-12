@@ -779,3 +779,43 @@ evidence = "DrawGlyph mode 0 ANDs ds25CD[mapped colour] with the column mask to 
 offset = 0x25E5
 name = "GlyphPixelMasks"
 evidence = "DrawGlyph mode 0 picks ds25E5[Bit] for pixel column Bit 0..7 of the 16-bit text-scanline word (0709:02B0)"
+
+[[global]]
+offset = 0x0508
+name = "CampMenuText"
+evidence = "DS:0508 holds string[40] 'Save View Magic Rest Alter Exit' (image); MakeCamp passes it to ReadPromptChoice (ovl15:1F06) and dispatches S, V, M, R, A on it"
+
+[[global]]
+offset = 0x0531
+name = "CampMagicMenuText"
+evidence = "DS:0531 holds string[40] 'Cast Memorize Scribe Display Rest Exit' (image); CampMagicMenu passes it to ReadPromptChoice (ovl15:1429)"
+
+[[global]]
+offset = 0x055A
+name = "AlterMenuText"
+evidence = "DS:055A holds string[40] 'Order Drop Speed Icon Pics Exit' (image); AlterMenu passes it to ReadPromptChoice (ovl15:1C86)"
+
+[[global]]
+offset = 0x0584
+name = "PartyOrderMenuTexts"
+evidence = "DS:0584 and DS:05AD hold string[40] 'Select Exit' and 'Place Exit' (image); PartyOrderMenu indexes them with its picked flag (ovl15:17B0)"
+
+[[global]]
+offset = 0x6DC2
+name = "RestTime"
+evidence = "seven words cleared together (FillChar 14 bytes, ovl15:0808, 1E91); RestParty sets [1] minutes, [2] tens of minutes and [3] hours of the rest (ovl15:07CA..07FA) before ovl20_e2, which reads them (ovl20:0487..04A7)"
+
+[[global]]
+offset = 0x28E9
+name = "SpellNames"
+evidence = "string[40] array indexed by spell number (mul 29h, add 28E9h at ovl15:10EA); entries 1..38h in the image are 'Bless' .. 'Restoration', the rows of SpellTable"
+
+[[global]]
+offset = 0x49F6
+name = "ShowMonsterPics"
+evidence = "AlterMenu's Pics submenu shows 'Monsters on' while it is nonzero and the M key toggles it (ovl15:1D02, 1DE9); the loader sets it to 1"
+
+[[global]]
+offset = 0x49F5
+name = "ShowPortraits"
+evidence = "AlterMenu's Pics submenu shows 'Portraits on' while it is nonzero and the P key toggles it (ovl15:1D31, 1DFC); the loader sets it to 1"

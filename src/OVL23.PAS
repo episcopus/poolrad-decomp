@@ -24,7 +24,8 @@ const
   LastClass = 7;
   LastSpell = $38;              { SpellTable and KnownSpells hold spells 1..$38 }
   LastSpellLevel = 3;           { cleric and magic-user spell levels 1..3 }
-  ClericSpell = 0;              { TSpellEntry.SpellClass of a cleric spell }
+  ClericSpell = 0;              { TSpellEntry.SpellClass of a cleric spell, the cleric row of SpellSlots }
+  MageSpell = 1;                { the magic-user row of TCharacter.SpellSlots }
   FighterExtraAttackLevel = 6;  { above this fighter level Attacks is 3, else 2 }
   FewAttacks = 2;
   MoreAttacks = 3;
@@ -37,9 +38,9 @@ const
 { ovl23:0000. Recomputes what a character draws from its eight class levels (ClassLevels[0..7]):
   Thac0 (cleared first) becomes the best (largest) ClassThac0Table[class, level]; HighestLevel is
   raised to the highest level (it is never lowered here); a fighter gets Attacks 3 above level 6,
-  else 2; a cleric above level 1 gets the ClericSlots of ClericSlotTable plus the wisdom bonus
+  else 2; a cleric above level 1 gets the cleric SpellSlots of ClericSlotTable plus the wisdom bonus
   (AddWisdomBonusSpells) and KnownSpells[n] := 1 for every cleric spell of SpellTable whose level
-  has a slot; a magic-user above level 1 gets the MageSlots of MageSlotTable. Then the saving
+  has a slot; a magic-user above level 1 gets the magic-user SpellSlots of MageSlotTable. Then the saving
   throws (ComputeSavingThrows) and, when the thief level is above 0, the thief skills
   (ComputeThiefSkills). KnownSpells entries are only ever set, never cleared. Called by ovl12,
   ovl16, ovl17 and ovl22. }
@@ -68,17 +69,17 @@ begin
         if ClassLevel > FirstSpellLevel then
         begin
           for SpellLevel := 1 to LastSpellLevel do
-            Character^.ClericSlots[SpellLevel] := ClericSlotTable[ClassLevel, SpellLevel];
+            Character^.SpellSlots[ClericSpell, SpellLevel] := ClericSlotTable[ClassLevel, SpellLevel];
           AddWisdomBonusSpells(Character);
           for Spell := 1 to LastSpell do
             with SpellTable[Spell] do   { the compiler keeps the row's far address in a temporary }
-              if (SpellClass = ClericSpell) and (Character^.ClericSlots[Level] > 0) then
+              if (SpellClass = ClericSpell) and (Character^.SpellSlots[ClericSpell, Level] > 0) then
                 Character^.KnownSpells[Spell] := 1;
         end;
       ClassMage:
         if ClassLevel > FirstSpellLevel then
           for SpellLevel := 1 to LastSpellLevel do
-            Character^.MageSlots[SpellLevel] := MageSlotTable[ClassLevel, SpellLevel];
+            Character^.SpellSlots[MageSpell, SpellLevel] := MageSlotTable[ClassLevel, SpellLevel];
     end;
   end;
   ComputeSavingThrows(Character);
@@ -86,19 +87,19 @@ begin
     ComputeThiefSkills(Character);
 end;
 
-{ ovl23:01AF. Adds the wisdom bonus spells to a cleric's slots: ClericSlots[1] gains one at
-  Wisdom 13 and another at 14, ClericSlots[2] one at 15 and one at 16, ClericSlots[3] one at 17;
+{ ovl23:01AF. Adds the wisdom bonus spells to a cleric's slots: SpellSlots[ClericSpell, 1] gains one at
+  Wisdom 13 and another at 14, SpellSlots[ClericSpell, 2] one at 15 and one at 16, SpellSlots[ClericSpell, 3] one at 17;
   a level with no slot (0) gains nothing. Called by RecalcClassStats after it fills the slots and
   three times by ovl16. }
 procedure AddWisdomBonusSpells(Character: PCharacter);
 begin
   with Character^ do
   begin
-    if (Wisdom > 12) and (ClericSlots[1] > 0) then Inc(ClericSlots[1]);
-    if (Wisdom > 13) and (ClericSlots[1] > 0) then Inc(ClericSlots[1]);
-    if (Wisdom > 14) and (ClericSlots[2] > 0) then Inc(ClericSlots[2]);
-    if (Wisdom > 15) and (ClericSlots[2] > 0) then Inc(ClericSlots[2]);
-    if (Wisdom > 16) and (ClericSlots[3] > 0) then Inc(ClericSlots[3]);
+    if (Wisdom > 12) and (SpellSlots[ClericSpell, 1] > 0) then Inc(SpellSlots[ClericSpell, 1]);
+    if (Wisdom > 13) and (SpellSlots[ClericSpell, 1] > 0) then Inc(SpellSlots[ClericSpell, 1]);
+    if (Wisdom > 14) and (SpellSlots[ClericSpell, 2] > 0) then Inc(SpellSlots[ClericSpell, 2]);
+    if (Wisdom > 15) and (SpellSlots[ClericSpell, 2] > 0) then Inc(SpellSlots[ClericSpell, 2]);
+    if (Wisdom > 16) and (SpellSlots[ClericSpell, 3] > 0) then Inc(SpellSlots[ClericSpell, 3]);
   end;
 end;
 

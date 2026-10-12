@@ -2085,3 +2085,213 @@ kind = "routine"
 why = "repeats ReadInputLine (6 characters) until Val gives a number with no error in 0..65536 and returns it (0709:0B80..0BE9)"
 date = "2026-10-12"
 
+[[rename]]
+old = "ovl15_fn_0000"
+new = "StudyRestMinutes"
+kind = "routine"
+why = "ovl15:0000 sums 15 minutes per level of the spells being memorized (Spells bit 7) and of the scroll spells being scribed (item affects bit 7), plus 4 or 6 hours; RestParty takes the party maximum"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl15_fn_0159"
+new = "CancelMemorizing"
+kind = "routine"
+why = "ovl15:0159 clears every Spells slot with bit 7 set and RestHours; called when the player answers No to 'Memorize These Spells?'"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl15_fn_019C"
+new = "CancelScribing"
+kind = "routine"
+why = "ovl15:019C clears bit 7 of the spell bytes of every scroll the character carries; called when the player answers No to 'Scribe These Spells?'"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl15_fn_0214"
+new = "CancelPartyStudy"
+kind = "routine"
+why = "ovl15:0214 runs CancelMemorizing and CancelScribing on every party member; MakeCamp calls it on entry and exit"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl15_fn_025C"
+new = "SpellSlotsLeft"
+kind = "routine"
+why = "ovl15:025C returns SpellSlots[class, level] minus the memorized spells of that class and level"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl15_fn_036C"
+new = "MayUseMagic"
+kind = "routine"
+why = "ovl15:036C returns False and shows 'cannot cast spells in this area' or 'is in no condition to cast any spells / memorize spells / scribe any scrolls' for actions 1..3"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl15_e2"
+new = "CastSpells"
+kind = "routine"
+why = "ovl15:04A1 checks MayUseMagic(cast), lists the memorized spells (ovl19_e12) and casts the chosen one through ovl22_e5, or says 'has no spells memorized'; the camp Magic menu's Cast key and ovl14's wilderness keys call it"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl15_fn_05A4"
+new = "ShowSpellSlotsLeft"
+kind = "routine"
+why = "ovl15:05A4 shows 'can memorize:' and the slots left per level under 'Cleric Spells:' and 'Magic-User Spells:'; returns whether the character has any slot"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl15_fn_077A"
+new = "RestParty"
+kind = "routine"
+why = "ovl15:077A sets the rest time to the longest StudyRestMinutes of the party, runs the rest (ovl20_e2) and clears it; the camp's Rest key"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl15_fn_0824"
+new = "SortMemorizedSpells"
+kind = "routine"
+why = "ovl15:0824 exchange-sorts the 21 Spells bytes by spell number (bit 7 masked); MemorizeSpells calls it after adding a spell"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl15_fn_090A"
+new = "MemorizeSpells"
+kind = "routine"
+why = "ovl15:090A strings 'Memorize These Spells?' and 'cannot memorize any spells': adds chosen spells with bit 7 set to the Spells slots while slots are left"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl15_fn_0B5B"
+new = "ScribeScrolls"
+kind = "routine"
+why = "ovl15:0B5B strings 'Scribe These Spells?', 'has no copyable scrolls', 'You can not scribe that spell.': marks a scroll spell with bit 7 for scribing"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl15_fn_0E37"
+new = "AddDisplayLine"
+kind = "routine"
+why = "ovl15:0E37 nested in DisplaySpellEffects: allocates a 46-byte menu line after the parent's last line and sets its text and heading flag"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl15_fn_0FBC"
+new = "DisplaySpellEffects"
+kind = "routine"
+why = "ovl15:0FBC builds a list of every member's affects by name (spell names, 'Prayer', 'Poisoned', ' <No Spell Effects>') and shows it with ChooseFromList titled 'Display'"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl15_fn_13F1"
+new = "CampMagicMenu"
+kind = "routine"
+why = "ovl15:13F1 the menu 'Cast Memorize Scribe Display Rest Exit' (DS:0531): C, M, S, D and R call CastSpells, MemorizeSpells, ScribeScrolls, DisplaySpellEffects and RestParty"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl15_fn_14A9"
+new = "MoveMemberUp"
+kind = "routine"
+why = "ovl15:14A9 swaps SelectedCharacter with the member before it in the party list (the first goes to the end); the Party Order menu's G key"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl15_fn_1601"
+new = "MoveMemberDown"
+kind = "routine"
+why = "ovl15:1601 swaps SelectedCharacter with the member after it in the party list (the last goes to the front); the Party Order menu's O key"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl15_fn_1780"
+new = "PartyOrderMenu"
+kind = "routine"
+why = "ovl15:1780 the prompt 'Party Order: ' with 'Select Exit' / 'Place Exit' (DS:0584) and 'has been selected'"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl15_fn_18E5"
+new = "DropPartyMember"
+kind = "routine"
+why = "ovl15:18E5 strings 'Drop from party?', 'bids you farewell', 'is dumped in a ditch' and, for the last member, 'quit TO DOS:'"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl15_fn_1A97"
+new = "CampSpeedMenu"
+kind = "routine"
+why = "ovl15:1A97 shows 'Game Speed = n (0=fastest 9=slowest)' and moves GameSpeed with Faster and Slower; the camp Alter menu's Speed key"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl15_fn_1C59"
+new = "AlterMenu"
+kind = "routine"
+why = "ovl15:1C59 the prompt 'Alter: ' with 'Order Drop Speed Icon Pics Exit' (DS:055A)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl15_e1"
+new = "MakeCamp"
+kind = "routine"
+why = "ovl15:1E6F shows 'The party makes camp...' and runs the menu 'Save View Magic Rest Alter Exit' (DS:0508); entry 1 called by ovl03"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds0508"
+new = "CampMenuText"
+kind = "global"
+why = "DS:0508 holds string[40] 'Save View Magic Rest Alter Exit' (image); MakeCamp passes it to ReadPromptChoice (ovl15:1F06) and dispatches S, V, M, R, A on it"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds0531"
+new = "CampMagicMenuText"
+kind = "global"
+why = "DS:0531 holds string[40] 'Cast Memorize Scribe Display Rest Exit' (image); CampMagicMenu passes it to ReadPromptChoice (ovl15:1429)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds055A"
+new = "AlterMenuText"
+kind = "global"
+why = "DS:055A holds string[40] 'Order Drop Speed Icon Pics Exit' (image); AlterMenu passes it to ReadPromptChoice (ovl15:1C86)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds0584"
+new = "PartyOrderMenuTexts"
+kind = "global"
+why = "DS:0584 and DS:05AD hold string[40] 'Select Exit' and 'Place Exit' (image); PartyOrderMenu indexes them with its picked flag (ovl15:17B0)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6DC2"
+new = "RestTime"
+kind = "global"
+why = "seven words cleared together (FillChar 14 bytes, ovl15:0808, 1E91); RestParty sets [1] minutes, [2] tens of minutes and [3] hours of the rest (ovl15:07CA..07FA) before ovl20_e2, which reads them (ovl20:0487..04A7)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds28E9"
+new = "SpellNames"
+kind = "global"
+why = "string[40] array indexed by spell number (mul 29h, add 28E9h at ovl15:10EA); entries 1..38h in the image are 'Bless' .. 'Restoration', the rows of SpellTable"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds49F6"
+new = "ShowMonsterPics"
+kind = "global"
+why = "AlterMenu's Pics submenu shows 'Monsters on' while it is nonzero and the M key toggles it (ovl15:1D02, 1DE9); the loader sets it to 1"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds49F5"
+new = "ShowPortraits"
+kind = "global"
+why = "AlterMenu's Pics submenu shows 'Portraits on' while it is nonzero and the P key toggles it (ovl15:1D31, 1DFC); the loader sets it to 1"
+date = "2026-10-12"
+
