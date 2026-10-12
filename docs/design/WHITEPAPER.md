@@ -459,7 +459,7 @@ a fixed table entry while the game variables allow it (`DrawAreaView`, `ovl27:00
   and the text area rows 17..22 x columns 1..38, through `res09_fn_02E8` (`03F1:02E8`), the
   window routine of res09 **[V]**: it clears the interior (`res09_fn_0137`), draws a frame from
   picture set `FrameSet` around it (`res09_fn_0000`: the corner and edge pictures come from index
-  `FrameSet*3+276` and are blitted by `ovl34_e2`) and centres the text on the top row
+  `FrameSet*3+276` and are blitted by `Put8x8Symbol`) and centres the text on the top row
   (`res06_fn_0626`). Its grid: a column is 16 pixels and a row 4 scanlines, 40x50 cells on a
   640x200 screen **[V]** (the multiplies in `res09_fn_0137`).
 - QUIRK `ovl27:01CC`: `DrawAreaView` passes both cell coordinates as `BaseCol + 1 - 1` (and the

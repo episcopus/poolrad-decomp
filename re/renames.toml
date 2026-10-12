@@ -176,3 +176,52 @@ kind = "routine"
 why = "ovl02:00FD: the copy protection check of whitepaper 5.12: up to three times it draws a random code wheel record (the runes as font characters, the path pattern) and reads the code word; a matching answer leaves at once, the third wrong one ends the program through QuitGame"
 date = "2026-10-11"
 
+[[rename]]
+old = "ovl34_e1"
+new = "Load8x8Bank"
+kind = "routine"
+why = "loads one 8x8 tile bank: called by LoadWallSet and ovl11_fn_0435, builds filename 8x8d+N, fatal Unable to load 8x8D message (ovl34:003B)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl34_e2"
+new = "Put8x8Symbol"
+kind = "routine"
+why = "draws one 8x8 tile at X,Y: error string Bad symbol number in Put8x8Symbol (ovl34:015D), called by res09_fn_0000 and ovl29 3x"
+date = "2026-10-11"
+
+[[rename]]
+old = "ds5376"
+new = "TileSet"
+kind = "global"
+why = "8X8D file number: Str(TileSet) is the suffix of the 8x8dN filename Load8x8Bank loads (ovl34:0055, whitepaper 8X8D1-8)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ds5E3A"
+new = "TileBanks"
+kind = "global"
+why = "five far pointers to the loaded 8x8 tile banks, indexed Bank*4, nil means load failed (ovl34:00B4,00CE,01F9)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ds2722"
+new = "SymbolBase"
+kind = "global"
+why = "five words, one per 8x8 bank, subtracted from Symbol to index within the bank (ovl34:020F)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ds5E4E"
+new = "TileBuf"
+kind = "global"
+why = "far pointer to the tile staging buffer: tiles are Moved to +7 and shown by res07_fn_1951 (ovl34:027A,029E)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ds4A20"
+new = "DrawBuf"
+kind = "global"
+why = "far pointer passed to res07_fn_08D4 as the destination buffer (ovl34:0241,0245)"
+date = "2026-10-11"
+
