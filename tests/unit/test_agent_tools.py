@@ -204,3 +204,20 @@ def test_a_unit_handoff_that_does_not_match_is_refused(tmp_path, monkeypatch, ca
 def test_unmatched_is_empty_for_a_matching_unit():
     import handoff
     assert handoff.unmatched("ovl00") == ""
+
+
+def test_the_queue_skips_units_that_can_only_wait(monkeypatch):
+    import next as nxt
+    rs = [{"unit": "ovl25", "id": "a", "level": "L2"},
+          {"unit": "ovl25", "id": "b", "notes": "draft; blocked (dec-8): waits for the nested decision"},
+          {"unit": "ovl25", "id": "c", "notes": "nested; blocked with its parent"},
+          {"unit": "ovl31", "id": "d", "notes": "unblocked by the map fix"},
+          {"unit": "ovl08", "id": "e"}]
+    monkeypatch.setattr(common, "routines", lambda: rs)
+    monkeypatch.setattr(common, "queue", lambda: [{"id": "ovl25"}, {"id": "ovl31"}, {"id": "ovl08"}])
+    monkeypatch.setattr(common, "open_must_fix", lambda uid: [])
+    monkeypatch.setattr(common, "lock_path", lambda uid: Path("/nonexistent/%s.lock" % uid))
+    assert nxt.next_unit()[0] == "ovl31"                              # ovl25: every routine left is blocked
+    rs.append({"unit": "ovl25", "id": "f"})                           # one routine still workable
+    assert nxt.next_unit()[0] == "ovl25"
+
