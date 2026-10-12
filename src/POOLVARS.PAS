@@ -80,6 +80,8 @@ var
                                     1 draws through res06_fn_00B7, 2 fills four planes; meaning unknown }
   SoundMode: Byte;                { sound setting; 2 while a Ctrl-S pause is in effect (ReadGameKey) }
   SoundModeBeforePause: Byte;     { SoundMode saved by a Ctrl-S pause; copied back only when it is 0 or 1 }
-  ds557D: Boolean;                { set by ovl17_e9; True ends the retry loop of HeapErrorHandler }
+  { True ends HeapErrorHandler's retry loop: it is read after ovl17_e9 runs (ovl00:0075),
+    and who sets it is not shown until ovl17 is decompiled. }
+  ds557D: Boolean;                { heap error retry gate; see above }
 implementation
 end.
