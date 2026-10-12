@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-11 | tools | match resolves absolute aliases to their base global (HeapWords -> HeapEnd), independent of map order | unblocks ovl28 merge |
 | 2026-10-11 | 2.2, 4.1 | res05: how the game loads a DAX block (index walk, packed buffer, UnpackRle quirk for codes 7Fh/80h, none in 1,245 blocks), the insert-disk prompt, BIOS text output; res05 compiles with O+ and an I- region | make match UNIT=res05 (unit complete), tools/re/dax.py scan |
 | 2026-10-11 | 5.8 | title sequence ovl01 (ShowTitleScreen, ShowCredits, WaitKeyOrTimeout, dead EGA anim quirk) | make match UNIT=ovl01 unit complete, make readability UNIT=ovl01 clean |
 | 2026-10-11 | 2.3, 5.8, 3.6 | boot init res08 (POOL.CFG parsing, VideoAdapter/SoundMode mappings, heap/overlay sizing) and TP6 codegen (resident O+, WriteLn multi-arg, StrCopy retf 4, self-assign quirk) | variant-A instruction comparison (tool L2 pending fix) |
