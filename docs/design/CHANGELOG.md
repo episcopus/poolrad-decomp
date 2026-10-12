@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-11 | 5.19 | The Temple: the shop menu, the nine cleric services with prices and conditions, Raise Dead's constitution rule, the phantom map entries | make match UNIT=ovl04 (unit complete) |
 | 2026-10-11 | 4.2.3 pictures | ovl32 merge resolved; 0111/248E/2595 signatures reconciled; renames applied | make check exit 0; work/blockers.md ovl32 |
 | 2026-10-11 | 5.17 (new) | added ovl30 (screen support): SignOf, SortTable and SetupLine, and the TLineState and TSortRec types | make match UNIT=ovl30: 3 matched, 0 differ, 4 stubs; make check green |
 | 2026-10-11 | 5.17 (new) | added ovl18 (PoolNarrative): the ending narrative ShowEndingNarrative and the door animation AnimateAreaDoors, and blocked the timed animation ovl18_fn_0006 with notes | make match UNIT=ovl18: 2 matched, 0 differ, 1 stub; make check green |
