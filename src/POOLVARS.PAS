@@ -85,8 +85,19 @@ var
   { The base column of the map window page, indexed by AreaViewKind: entries 2..4 hold 0, 13 and
     26 (the pages of the 44-column map grid), entry 1 holds 78; evidence in re/dseg.toml. }
   MapBaseX: array[0..5] of Byte;  { map window page base column per AreaViewKind; see above }
+  ds43DC: Word;                   { nonzero after overlay sizing means the overlay manager failed: res08_init
+                                    shows 'Overlay error, program abort!' and halts (probably OvrResult) }
+  NewHeapEnd: Pointer;            { DS:$4848: HeapEnd cut by $400 paragraphs; assigned to HeapEnd }
+  CfgChar: Char;                   { the POOL.CFG choice just read (video E/C/T, sound T/P, retry key, F/N) }
+  CfgText: Text;                  { POOL.CFG opened for reading (lines: video, sound, game dir, save dir, F/N);
+                                    overlaps CfgProbeResult..SavedVideoMode in time-shared DGROUP; see res08_init }
+  CfgProbeResult: Byte;                   { IOResult of probing pool.cfg (Reset); res08_init retries while nonzero }
+  HeapWords: array[0..1] of Word absolute HeapEnd;
+  { the offset (0) and segment (1) words of the heap end (res08_init cuts it by $400 paragraphs) }
   ds49D0: Boolean;                { when set, HeapErrorHandler offers ovl17_e9 (save and load unit) before quitting }
+  ds49D1: Byte;                   { 1 when POOL.CFG line 5 is 'F', 0 otherwise (meaning of F/N unknown, 2.3) }
   GameVars: ^TGameVars;           { the game variables (see TGameVars) }
+  CfgProbe: File;                 { pool.cfg opened untyped (128-byte records) to probe its existence }
   DebugMode: Boolean;             { STING debug mode: switched by Ctrl-D in ReadGameKey; ShowDebugTrace shows only when set }
   AreaViewKind: Byte;             { what to draw: 1 the 3D wall view, 2..4 the map window page; evidence in re/dseg.toml }
   ds6A60: Byte;                   { wall view descriptor 1 (of 4): ovl29_e1 stores them, ovl29_fn_0174 draws with them }
@@ -106,12 +117,21 @@ var
   ds6F68: Byte;                   { special view code 2; set with ds84E5 := 1 by ovl07_e3 ($41) and ovl11_fn_0435 ($DB) }
   ds6F69: Byte;                   { special view code 1; set with ds84E5 := 1 by ovl07_e3 (9) and ovl11_fn_0435 ($E8) }
   ds84E5: Byte;                   { special view gate: ShowAreaView uses ds6F68/ds6F69 only while it is nonzero }
+  ds84F0: Byte;                   { set to 0 in res08_init after closing pool.cfg; meaning unknown }
   Regs: Registers;                { registers for Intr calls (QuitGame) }
+  ds4A1A: Byte;                   { set to 0 for EGA in res08_init, passed to res06_fn_00A0; meaning unknown }
+  ds4A1B: Byte;                   { set to 0 for EGA in res08_init, passed to res06_fn_0071; meaning unknown }
   SavedVideoMode: Byte;           { video mode QuitGame passes to INT 10h; no writer is in the decompiled units }
+  ds4A1D: Byte;                   { copy of SavedVideoMode taken in res08_init; reader unknown }
   VideoAdapter: Byte;                   { video mode flag read by ClearWindow (03F1:0137): 0 fills the EGA planes,
                                     1 draws through res06_fn_00B7, 2 fills four planes; meaning unknown }
   SoundMode: Byte;                { sound setting; 2 while a Ctrl-S pause is in effect (ReadGameKey) }
   SoundModeBeforePause: Byte;     { SoundMode saved by a Ctrl-S pause; copied back only when it is 0 or 1 }
+  SaveDir: string;                { POOL.CFG line 4: the save directory with trailing backslash (2.3) }
+  { POOL.CFG line 3: the game directory with trailing backslash (res08_init, whitepaper 2.3). StartGame
+    saves it in ds4661, empties it, builds a file path in it (ovl11:0564) for res05_fn_025D and
+    restores it (ovl11:0469, 05EA). }
+  GameDir: string;                { the game directory; see above }
   { True ends HeapErrorHandler's retry loop: it is read after ovl17_e9 runs (ovl00:0075),
     and who sets it is not shown until ovl17 is decompiled. }
   ds557D: Boolean;                { heap error retry gate; see above }
@@ -155,9 +175,6 @@ var
   ds5377: Byte;                   { set to 1 by the loader (ovl11:03D5) }
   ds5378: Word;                   { set to 1 by the loader (ovl11:03E0) }
   ds547A: Word;                   { set to 1 by the loader (ovl11:03DA) }
-  { The file path the loader builds (ovl11:0564) and passes to res05_fn_025D; the loader saves it
-    in ds4661 and restores it (ovl11:0469, 05EA). }
-  ds547C: string;                 { the file path; see above }
   ds547D: Byte;                   { a character the loader appends to the path through System_MemOp_0C3B (ovl11:0581) }
   ds557C: Byte;                   { cleared by the loader (ovl11:0438) }
   ds5582: array[0..$80F] of Byte; { $810-byte buffer the loader reads the file block into (ovl11:05CD) }
