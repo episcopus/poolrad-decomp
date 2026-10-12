@@ -497,7 +497,7 @@ begin
 end;
 { ovl14:0D6D. The wilderness command menu (called by ovl03_fn_3379): in the 3D view it
   builds the Bash/Pick/Knock/Exit menu from the ds6DDE/ds6DDF/ds6DE0 flags and the
-  record flag checks, prompts through ovl25_e2 and dispatches the key: in the DoorKindAt = 2
+  record flag checks, prompts through ReadPromptChoice and dispatches the key: in the DoorKindAt = 2
   arm 'B' calls DoBash, 'P' calls DoPick (ovl14:0ED6) and 'K' calls DoKnock, with Knock
   offered when FindCodeRecord($1F) finds a record (ovl14:0E14), while in the = 3 arm 'B'
   calls DoBash and 'K' calls DoKnock, with Knock offered when HasRecFlag(5) is set
