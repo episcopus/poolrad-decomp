@@ -1,7 +1,7 @@
 unit RES06;
 { Screen text output (whitepaper 5.15), partly decompiled: ShowMessageLine shows a message on the
   bottom line and waits for a key; the rest are stubs. }
-{$A-,F+,S-,R-,G-,I-}
+{$A-,O+,F+,S-,R-,G-,I-}
 interface
 type
   String40 = string[40];
@@ -9,7 +9,7 @@ procedure SetEgaFillRegisters;
 procedure SetActivePage(Plane: Byte);
 procedure SetPlaneSegment(Plane: Byte);
 procedure FillPlaneRect(LeftCol, TopRow, RightCol, BotRow: ShortInt; Plane, Value: Byte);
-procedure res06_fn_017C;
+procedure LoadGameFont;
 procedure res06_fn_01DF(A, B, C, D, Glyph, F: Byte);
 procedure res06_fn_05EB(A, Row, B, Width: Byte);
 procedure res06_fn_0626(A, Row, Color: Byte; Text: string);
@@ -25,7 +25,7 @@ procedure res06_fn_0D68(Text: string; Color: Byte);
 procedure DelayCounted;
 procedure res06_fn_0DD3(Left, Top, Right, Bottom: Byte);
 implementation
-uses Crt, Dos, POOLVARS, RES04;
+uses Crt, Dos, POOLVARS, RES04, RES05;
 
 { 0709:0000: retf 0: 0 bytes of parameters; 0 bytes of locals }
 { 0709:0000. Sets the EGA Graphics Controller registers for the picture fill: GC 0..5 to 0
@@ -95,8 +95,22 @@ begin
   ds4A1A := SavedPlane;
   SetPlaneSegment(ds4A1A);
 end;
-{ 0709:017C: retf 0: 0 bytes of parameters; 18 bytes of locals }
-{@stub} procedure res06_fn_017C; begin end;
+{ 0709:017C. Loads the game's 1-bit font: DAX block 201 ($C9) of 8X8D1.DAX (177 glyphs
+  of 8 bytes each) into the GameFont heap block, then frees the DAX buffer. Called once by
+  StartGame after it allocates GameFont. Exits at once when the block is missing (size 0).
+  Side effects: the heap and the disk through LoadDaxBlock. }
+procedure LoadGameFont;
+const
+  FontBlockId = $C9;      { block 201 of 8X8D1.DAX: the 1-bit font (whitepaper 4.x) }
+var
+  BlockSize: Word;        { unpacked size LoadDaxBlock returns; 0 when the block is missing }
+  Block: Pointer;         { the DAX buffer LoadDaxBlock allocates; freed after the copy }
+begin
+  LoadDaxBlock('8X8d1', '.dax', FontBlockId, BlockSize, Block);
+  if BlockSize = 0 then Exit;
+  Move(Block^, GameFont^, BlockSize);
+  FreeMem(Block, BlockSize);
+end;
 { 0709:01DF: retf 12: 12 bytes of parameters; 18 bytes of locals.
   Draws one rune glyph of the code wheel question as a font character (CheckCodeWheel passes the rune
   index + $40): A and B the screen position, Glyph the character, the rest still open. }

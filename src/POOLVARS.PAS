@@ -263,7 +263,7 @@ var
   SavedVideoMode: Byte;           { video mode QuitGame passes to INT 10h; no writer is in the decompiled units }
   ds4A1D: Byte;                   { copy of SavedVideoMode taken in res08_init; reader unknown }
   VideoAdapter: Byte;                   { video mode flag read by ClearWindow (03F1:0137): 0 fills the EGA planes,
-                                    1 draws through res06_fn_00B7, 2 fills four planes; meaning unknown }
+                                    1 draws through FillPlaneRect, 2 fills four planes; meaning unknown }
   DrawBuf: Pointer;                { far pointer DrawCellPicture passes to res07_fn_08D4; what it points at is unknown }
   SoundMode: Byte;                { sound setting; 2 while a Ctrl-S pause is in effect (ReadGameKey) }
   SoundModeBeforePause: Byte;     { SoundMode saved by a Ctrl-S pause; copied back only when it is 0 or 1 }
@@ -356,7 +356,7 @@ var
       which is Error 26 for a Pointer (proven by a make tpc probe); ovl14 reaches the
       records through Pointer(ds5D96). }
   ds5E1E: Word;                   { BlockRead result count of the loader (ovl11:05D6) }
-  ds5E20: ^TBlock588;             { $588-byte block the loader allocates (ovl11:0074) }
+  GameFont: ^TBlock588;             { $588-byte block the loader allocates (ovl11:0074) }
   ds6810: PMenuLine;              { head of the shop's item list, a far pointer the loader clears (ovl11:031A) }
   ds6A58: ^TBlock924;             { $924-byte block the loader allocates (ovl11:0084) }
   ds6A5C: ^TBlock400;             { $400-byte block the loader allocates (ovl11:0094) }

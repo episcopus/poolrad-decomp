@@ -848,3 +848,24 @@ kind = "routine"
 why = "walks a Bresenham line over the map rows with tile gating (stops False at blocking tiles or past Limit steps, else True with steps in StepCount); called for line-of-sight by ovl09/ovl12/ovl13 and ScanTargets"
 date = "2026-10-12"
 
+[[rename]]
+old = "res06_fn_00B7"
+new = "FillPlaneRect"
+kind = "routine"
+why = "fills a byte-column by cell-row rectangle on an EGA plane via FillChar with GC write mode (0709:00B7, called by res06_fn_0CAB, res06_fn_0DD3 and ClearWindow)"
+date = "2026-10-12"
+
+[[rename]]
+old = "res06_fn_017C"
+new = "LoadGameFont"
+kind = "routine"
+why = "loads DAX block 201 ($C9) of 8X8d1.dax into ds5E20 (0709:017C); block 201 is the 1-bit font, 177 glyphs of 8 bytes (whitepaper font section); called by StartGame (ovl11:002D); ds5E20 is read as glyph bitmaps by res06_fn_01DF"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds5E20"
+new = "GameFont"
+kind = "global"
+why = "the 1-bit font block: allocated $588 bytes by StartGame (ovl11:0074), filled by LoadGameFont from 8X8D1.DAX block 201 (0709:017C), read as glyph bitmaps by res06_fn_01DF (0709:01DF)"
+date = "2026-10-12"
+

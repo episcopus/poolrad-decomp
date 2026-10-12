@@ -48,7 +48,7 @@ begin
   New(ds49D6);
   New(ds49DA);
   New(ds49DE);
-  New(ds5E20);
+  New(GameFont);
   New(ds6A58);
   New(ds6A5C);
   res07_fn_248E(8, 1, 1, 0, TileBuf);
@@ -141,7 +141,7 @@ begin
     saves the current path DS:547C into DS:4661. }
   ds4661 := GameDir;
   GameDir := '';
-  res06_fn_017C;
+  LoadGameFont;
   ovl25_e3;
   res06_fn_0626(0, $18, $A, 'Loading...Please Wait');
   Load8x8Bank($CA, 4);

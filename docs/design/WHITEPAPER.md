@@ -633,9 +633,9 @@ Map note: `re/symbols.toml` had split `ovl06:0239` at `ovl06:0311`; `0311` is on
   - `ClearWindow` fills the rectangle with 0 by video hardware, selected by the `VideoAdapter`
     global (`DS:4A1E`) **[V]** (code): 0 fills two text-scanline planes (absolute byte planes
     over `$B800`/`$BA00`, 80 bytes per scanline row, 4 scanlines per text row), 1 draws through
-    `res06_fn_00B7` twice, 2 fills four graphics planes (`$B800`/`$BA00`/`$BC00`/`$BE00`, 160
+    `FillPlaneRect` twice, 2 fills four graphics planes (`$B800`/`$BA00`/`$BC00`/`$BE00`, 160
     bytes per row, 2 rows per text row). The values are proven: res08_init sets 1 for `E`,
-    2 for `T` and 0 otherwise (`042B:019B..01F9`) **[V]**; what `res06_fn_00B7` draws is still
+    2 for `T` and 0 otherwise (`042B:019B..01F9`) **[V]**; what `FillPlaneRect` draws is still
     open **[?]**.
   - Callers **[V]** (`make packet UNIT=res09`): `DrawWindow` is called for dialogs and screens
     from ovl01, ovl02 (the code wheel), ovl03, ovl04, ovl05 and ovl06; the frame and clear
