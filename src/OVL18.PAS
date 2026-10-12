@@ -1,14 +1,14 @@
 unit OVL18;
 { PoolNarrative: the ending narrative and door animation (whitepaper 5.x). ShowEndingNarrative
   shows the dragon's death and the Tyranthraxus and Bane speech as text lines and FINAL pictures,
-  running the ovl18_fn_0006 animation between the speech blocks, and ovl18_e2 animates the doors of
+  running the ovl18_fn_0006 animation between the speech blocks, and AnimateAreaDoors animates the doors of
   the area view. Both draw through the res07 primitives. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 uses POOLVARS;
 procedure ovl18_fn_0006(A, B: Word; C, D: Byte);
 procedure ShowEndingNarrative;
-procedure ovl18_e2;
+procedure AnimateAreaDoors(Flag: Byte);
 implementation
 uses OVL27, OVL28, RES06, RES07, RES12;
 
@@ -71,8 +71,54 @@ begin
   ds49F3 := ds4712;
   res12_fn_27D9;
 end;
-{ ovl18:06B3: retf 2: 2 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl18_e2; begin end;
+{ ovl18:06B3. Animates the doors of the area view (Flag 1) or clears them (flag 0): it draws the
+  doors of the two block-code tables DS:0900 and DS:090B through res07_fn_1E5C (bit 7 of a code
+  selects the second SQRPACI bank ds5E56, otherwise ds5E52), stepping the area view through
+  DS:094D/DS:095F and stepping the display, then clears the doors. Called by ovl03:31B4 and
+  ovl17:1602. }
+procedure AnimateAreaDoors(Flag: Byte);
+var
+  DoorCol: Byte;                  { the door index within a block-code table }
+  DoorRow: Byte;                  { the animation step, 0 to 8 }
+begin
+  if Flag <> 0 then
+  begin
+    DrawAreaView($11, $F);
+    res07_fn_1B52;
+    for DoorRow := 0 to 8 do
+    begin
+      for DoorCol := 0 to $A do
+        if ds0900[DoorCol] > $7F then
+          res07_fn_1E5C(@ds091D, @ds092D, ds0900[DoorCol] and $7F, 1, Pointer(ds5E56))
+        else
+          res07_fn_1E5C(@ds091D, @ds092D, ds0900[DoorCol], 1, Pointer(ds5E52));
+      for DoorCol := 0 to $11 do
+        if ds090B[DoorCol] > $7F then
+          res07_fn_1E5C(@ds091D, @ds093D, ds090B[DoorCol] and $7F, 1, Pointer(ds5E56))
+        else
+          res07_fn_1E5C(@ds091D, @ds093D, ds090B[DoorCol], 1, Pointer(ds5E52));
+      DrawAreaView(ds094D[DoorRow], ds095F[DoorRow]);
+      res07_fn_1B52;
+    end;
+  end;
+  for DoorCol := 0 to $A do
+    if ds0900[DoorCol] > $7F then
+      res07_fn_1E5C(@ds091D, @ds092D, ds0900[DoorCol] and $7F, 0, Pointer(ds5E56))
+    else
+      res07_fn_1E5C(@ds091D, @ds092D, ds0900[DoorCol], 0, Pointer(ds5E52));
+  for DoorCol := 0 to $11 do
+    if ds090B[DoorCol] > $7F then
+      res07_fn_1E5C(@ds091D, @ds093D, ds090B[DoorCol] and $7F, 0, Pointer(ds5E56))
+    else
+      res07_fn_1E5C(@ds091D, @ds093D, ds090B[DoorCol], 0, Pointer(ds5E52));
+  if Flag <> 0 then
+  begin
+    DrawAreaView($17, $19);
+    res07_fn_1B52;
+    res06_fn_0DBE;
+    res06_fn_0DBE;
+  end;
+end;
 
 begin
 end.

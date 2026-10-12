@@ -10049,12 +10049,12 @@ id = "ovl18:06B3"
 unit = "ovl18"
 addr = "ovl18:06B3"
 size = 579
-name = "ovl18_e2"
+name = "AnimateAreaDoors"
 signature = ""
 c_name = "ovl18_e2"
 level = "none"
 justification = ""
-notes = "auto:entry_2"
+notes = "renamed from ovl18_e2 (ovl18:06B3: animates or clears the doors of the area view through res07_fn_1E5C with the two SQRPACI banks, stepping the view through DS:094D/DS:095F; called by ovl03:31B4 and ovl17:1602); auto:entry_2"
 evidence = ["prologue"]
 
 [[routine]]
