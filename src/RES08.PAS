@@ -48,8 +48,8 @@ begin
         res07_fn_00CF($0D);
         ds4A1B := 0;
         ds4A1A := 0;
-        res06_fn_0071(ds4A1B);
-        res06_fn_00A0(ds4A1A);
+        SetActivePage(ds4A1B);
+        SetPlaneSegment(ds4A1A);
       end;
     'T':
       begin

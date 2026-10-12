@@ -666,3 +666,31 @@ kind = "routine"
 why = "ovl18:0006 loads the FINAL picture frames through ovl28_e2 and cycles them on screen between the ending-narrative speech blocks (called 3 times by ShowEndingNarrative with Col, Row, Bank, Cycles); the loop draws each frame through DrawSprite and waits its data delay in res06_fn_0C3F ticks"
 date = "2026-10-11"
 
+[[rename]]
+old = "res06_fn_0000"
+new = "SetEgaFillRegisters"
+kind = "routine"
+why = "sets the EGA Graphics Controller registers 0..5, 7 and 8 and the Sequencer map mask for the picture fill (Port I/O only), 0709:0000"
+date = "2026-10-11"
+
+[[rename]]
+old = "res06_fn_0071"
+new = "SetActivePage"
+kind = "routine"
+why = "sets the video BIOS active display page (Intr 10h AH=5) and stores the plane segment A shl 9 + A000 in ds4A16, 0709:0071"
+date = "2026-10-11"
+
+[[rename]]
+old = "res06_fn_00A0"
+new = "SetPlaneSegment"
+kind = "routine"
+why = "stores the plane segment A shl 9 + A000 in ds4A18, 0709:00A0"
+date = "2026-10-11"
+
+[[rename]]
+old = "res06_fn_0DBE"
+new = "DelayCounted"
+kind = "routine"
+why = "delays ds49E2 * 225 ms through Crt.Delay, 0709:0DBE"
+date = "2026-10-11"
+

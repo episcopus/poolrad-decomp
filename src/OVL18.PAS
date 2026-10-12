@@ -99,9 +99,9 @@ begin
   res06_fn_0626(1, $13, $A, 'through the pool!"');
   res06_fn_0626(1, $14, $A, 'Noooo...');
   AnimateFinalPicture(3, 1, 8, 1);
-  res06_fn_0DBE;
-  res06_fn_0DBE;
-  res06_fn_0DBE;
+  DelayCounted;
+  DelayCounted;
+  DelayCounted;
   ds49F3 := ds4712;
   res12_fn_27D9;
 end;
@@ -149,8 +149,8 @@ begin
   begin
     DrawAreaView($17, $19);
     res07_fn_1B52;
-    res06_fn_0DBE;
-    res06_fn_0DBE;
+    DelayCounted;
+    DelayCounted;
   end;
 end;
 
