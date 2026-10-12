@@ -13464,12 +13464,12 @@ id = "ovl26:00C7"
 unit = "ovl26"
 addr = "ovl26:00C7"
 size = 52
-name = "ovl26_fn_00C7"
-signature = ""
+name = "WallDesc2FromCode"
+signature = "function WallDesc2FromCode(SpecialCode: Byte): Byte"
 c_name = "ovl26_fn_00C7"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "nested inside ShowAreaView (its caller pushes the parent frame as the static link: push bp at ovl26:01D7); the 4 parameter bytes are the byte argument plus the link. Its 52 bytes match byte for byte inside the pool region of ShowAreaView (make match UNIT=ovl26: unit complete); the level stays none only because the matcher reports no per routine row for nested routines (TPC writes no public symbol for them): a matcher bookkeeping extension is needed to record their L2"
 evidence = ["prologue"]
 
 [[routine]]
@@ -13477,12 +13477,12 @@ id = "ovl26:00FB"
 unit = "ovl26"
 addr = "ovl26:00FB"
 size = 52
-name = "ovl26_fn_00FB"
-signature = ""
+name = "WallDesc3FromCode"
+signature = "function WallDesc3FromCode(SpecialCode: Byte): Byte"
 c_name = "ovl26_fn_00FB"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "nested inside ShowAreaView (its caller pushes the parent frame as the static link: push bp at ovl26:01E3). Its 52 bytes match byte for byte inside the pool region of ShowAreaView (make match UNIT=ovl26: unit complete); the level stays none only because the matcher reports no per routine row for nested routines: a matcher bookkeeping extension is needed to record their L2"
 evidence = ["prologue"]
 
 [[routine]]
@@ -13490,12 +13490,12 @@ id = "ovl26:012F"
 unit = "ovl26"
 addr = "ovl26:012F"
 size = 62
-name = "ovl26_fn_012F"
-signature = ""
+name = "WallDesc4FromCode"
+signature = "function WallDesc4FromCode(SpecialCode: Byte): Byte"
 c_name = "ovl26_fn_012F"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "nested inside ShowAreaView (its caller pushes the parent frame as the static link: push bp at ovl26:01EF). Its 62 bytes match byte for byte inside the pool region of ShowAreaView (make match UNIT=ovl26: unit complete); the level stays none only because the matcher reports no per routine row for nested routines: a matcher bookkeeping extension is needed to record their L2"
 evidence = ["prologue"]
 
 [[routine]]
@@ -13503,12 +13503,12 @@ id = "ovl26:016D"
 unit = "ovl26"
 addr = "ovl26:016D"
 size = 307
-name = "ovl26_e1"
+name = "ShowAreaView"
 signature = ""
 c_name = "ovl26_e1"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_1"
+notes = "renamed from ovl26_e1 (ovl26:016D: shows the current area view: a case on the view kind draws either the 3D wall view (ovl29_e4/e1/e5, the ds0C26 wall id table and the special view codes) or the 5x5 map window (ovl27_e1) plus DrawPartyMarker; the resident view dispatcher res12_fn_27D9 calls it for view types 3 and 4, res12_fn_2B5E for the wilderness map screen); auto:entry_1"
 evidence = ["prologue"]
 
 [[routine]]
@@ -13519,7 +13519,7 @@ size = 5
 name = "ovl26_init"
 signature = ""
 c_name = "ovl26_init"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_0"
 evidence = ["prologue"]
@@ -13530,7 +13530,7 @@ unit = "ovl27"
 addr = "ovl27:0000"
 size = 519
 name = "ovl27_e1"
-signature = ""
+signature = "procedure ovl27_e1(MapLeft, MapTop: Integer)"
 c_name = "ovl27_e1"
 level = "none"
 justification = ""
@@ -13803,7 +13803,7 @@ unit = "ovl29"
 addr = "ovl29:057A"
 size = 121
 name = "ovl29_e4"
-signature = ""
+signature = "function ovl29_e4(X, Y: ShortInt): Byte"
 c_name = "ovl29_e4"
 level = "none"
 justification = ""
@@ -13829,7 +13829,7 @@ unit = "ovl29"
 addr = "ovl29:05FD"
 size = 2059
 name = "ovl29_e5"
-signature = ""
+signature = "procedure ovl29_e5(A, B, C: Byte)"
 c_name = "ovl29_e5"
 level = "none"
 justification = ""

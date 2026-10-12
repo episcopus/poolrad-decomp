@@ -106,3 +106,31 @@ kind = "routine"
 why = "ovl26:0000: draws the party marker at its map window cell (the party position folded like ovl26_e1 clamps the window) with the 6-frame walk animation, then steps the frame; called right after the map window (res12_fn_2B5E, ovl26_e1) and from res12_fn_2B5E after ovl26_e1"
 date = "2026-10-11"
 
+[[rename]]
+old = "ovl26_e1"
+new = "ShowAreaView"
+kind = "routine"
+why = "ovl26:016D: shows the current area view: a case on the view kind draws either the 3D wall view (ovl29_e4/e1/e5, the ds0C26 wall id table and the special view codes) or the 5x5 map window (ovl27_e1) plus DrawPartyMarker; the resident view dispatcher res12_fn_27D9 calls it for view types 3 and 4, res12_fn_2B5E for the wilderness map screen"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl26_fn_00C7"
+new = "WallDesc2FromCode"
+kind = "routine"
+why = "ovl26:00C7: nested Byte function of ShowAreaView (static link push bp at ovl26:01D7): a case on the special view code ds6F69 maps codes 8 and 41 to 0 and anything else to 15, for wall view descriptor 2 (ds6A61)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl26_fn_00FB"
+new = "WallDesc3FromCode"
+kind = "routine"
+why = "ovl26:00FB: nested Byte function of ShowAreaView (static link push bp at ovl26:01E3): a case on the special view code ds6F69 maps code 8 to 8 and anything else to 7, for wall view descriptor 3 (ds6A62)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl26_fn_012F"
+new = "WallDesc4FromCode"
+kind = "routine"
+why = "ovl26:012F: nested Byte function of ShowAreaView (static link push bp at ovl26:01EF): a case on the special view code ds6F68 maps code 11 to 8, code 6 to 1 and anything else to 6, for wall view descriptor 4 (ds6A63)"
+date = "2026-10-11"
+
