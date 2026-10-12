@@ -25,7 +25,8 @@
 
 | Command | Role |
 |---|---|
-| `make map` | ranges + enumerate + `name_units` + `rtl_ident` + status |
+| `make map` | ranges + forced starts + enumerate + `name_units` + `rtl_ident` + status; keeps every routine and field already in `re/symbols.toml` |
+| `tools/re/forced_starts.py` | starts the scan cannot find (leaf runtime routines with no prologue): probe far-call targets confirmed by `runtime_entries`, `rtl_ident` hand tables, manual entries of `re/forced_starts.toml` with evidence |
 | `make ghidra` | `map` then `tools/ghidra/import_tp.py` (needs `GHIDRA_INSTALL_DIR`) |
 | `make p1-check` | verify Phase 1 exit criteria |
 | `tools/ghidra/export.py` | write interactive Ghidra names back to `re/symbols.toml` |
