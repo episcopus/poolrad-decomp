@@ -489,3 +489,38 @@ evidence = "res05_fn_0716 allocates it with the packed size (0802:08B3), BlockRe
 offset = 0x2614
 name = "InsertDiskPrompts"
 evidence = "entries 1..8 of the 30-byte string[29] table at DS:2614 hold 'Insert disk N in drive ' in the image (entry 0 is not a string); OpenDaxFile (0802:061A) and StartGame index it by TileSet and append the drive letter DS:547D and ':' to make the prompt OpenGameFile shows through ShowBottomMessage"
+
+[[global]]
+offset = 0x6B2B
+name = "PromptWordChoice"
+evidence = "ReadPromptChoice (ovl25:03BD) highlights word DS:6B2B of the prompt (DrawPromptWords), , and . step it, a hotkey sets it; ChooseFromList sets 1, AskYesNo 2"
+
+[[global]]
+offset = 0x6B2C
+name = "LastPromptExtKey"
+evidence = "ReadPromptChoice clears DS:6B2C on entry and copies its var Flag (set by an extended or keypad key) into it on exit (ovl25:03EA, ovl25:06EF)"
+
+[[global]]
+offset = 0x6B29
+name = "ListMenuTop"
+evidence = "ChooseFromList and its nested routines treat DS:6B29 as the first shown line of the list: GetMenuLine(DS:6B29) is drawn at the window top (ovl25:07DE), ScrollListPage adds or subtracts a page (ovl25:0C57)"
+
+[[global]]
+offset = 0x6B2E
+name = "PromptTimeout"
+evidence = "ReadPromptChoice: when the Longint DS:6B2E is above 0 and GameClock minus the start passes it, the prompt returns DS:6B32 (ovl25:0530..0563)"
+
+[[global]]
+offset = 0x6B32
+name = "PromptTimeoutKey"
+evidence = "ReadPromptChoice returns the Char DS:6B32 when PromptTimeout runs out (ovl25:0559)"
+
+[[global]]
+offset = 0x288C
+name = "KeypadScanLetters"
+evidence = "DS:288C holds OPQK MGHI; ReadPromptChoice maps keypad digit k to its byte k-1 (ovl25:06B3), the letters of the extended scan codes End, Down, PgDn, Left, (5), Right, Home, Up, PgUp"
+
+[[global]]
+offset = 0x6ABE
+name = "PictureAnimation"
+evidence = "ReadPromptChoice (ovl25:04A3..052D) draws frame DS:6ABF of the sprite list DS:6ABE at column 3 row 3 and steps to the next frame after its delay; LoadSpriteList fills it (ovl07_e8), ovl14 frees it"

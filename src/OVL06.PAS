@@ -1,8 +1,8 @@
 unit OVL06;
 { Shop: the shopkeeper screen. ShopMain (053E) is the entry: it shows the shop menu
-  (Buy/View/Take/Pool/Share/Appraise/Exit) through ovl25_e2 and dispatches each choice.
+  (Buy/View/Take/Pool/Share/Appraise/Exit) through ReadPromptChoice and dispatches each choice.
   ChooseShopItem (0030) lists the shop's stock with its prices in the shop window and runs the item
-  picker (ovl25_e4); BuyItems (0361) is the Buy flow, AddInventoryItem (0239) adds an item to the
+  picker (ChooseFromList); BuyItems (0361) is the Buy flow, AddInventoryItem (0239) adds an item to the
   selected character's carried items. Items and menu lines share one record, TMenuLine
   (POOLVARS). Whitepaper section 5.4. }
 {$A-,O+,F+,S-,R-,G-,I-}
@@ -18,11 +18,11 @@ uses OVL07, OVL19, OVL21, OVL25, RES06, RES09, RES12;
 { ovl06:0030 (ChooseShopItem). Builds the shop window and the item picker. Walks the stock list at
   ds6810 and rewrites each entry's Text into a 30-character field with the item name on the left
   and its Value (the price, +$3A) right-justified (a zero Value becomes 1, ovl06:0068), then draws
-  the "Shop" window (DrawWindow) and runs the item picker ovl25_e4 titled "Items: " with a "Buy"
+  the "Shop" window (DrawWindow) and runs the item picker ChooseFromList titled "Items: " with a "Buy"
   button. Action receives the picker's key, Head the chosen entry, Selected is set to Head;
   res12_fn_0442 is called for each entry afterwards. Parameters: Action (out, the key), Selected
   (out, the chosen entry), Head (in/out, the list the picker works on), Choice (in/out, the
-  picker's position, ovl25_e4's Choice). Side effect: the screen (and the stock entries' Text and
+  picker's position, ChooseFromList's Choice). Side effect: the screen (and the stock entries' Text and
   Value). Called from BuyItems (Buy). }
 procedure ChooseShopItem(var Action: Char; var Selected: PMenuLine; var Head: PMenuLine; var Choice: Integer);
 var
@@ -52,7 +52,7 @@ begin
   end;
   DrawWindow(1, 1, $26, $16, 0, $0F, 'Shop');
   List := ds6810;
-  Action := ovl25_e4('Items: ', 'Buy', $0D, $0A, $0F, 1, 4, $26, $16, List, 1, Flag, Choice, Head);
+  Action := ChooseFromList('Items: ', 'Buy', $0D, $0A, $0F, 1, 4, $26, $16, List, 1, Flag, Choice, Head);
   Selected := Head;
   Entry := ds6810;
   while Entry <> nil do
@@ -163,7 +163,7 @@ end;
 { ovl06:053E (ShopMain). The shop's entry and main loop, called from ovl03 (the area logic) when the
   party enters a shop. It marks the shop open (ds49F3), redraws the shop screen (res12_fn_27D9,
   res12_fn_0767 on SelectedCharacter), clears the money block ds67F4 and clears ds6DC0, then shows the menu
-  (ovl25_e2) with a text chosen by ovl21_e9 (the Take/Share entries appear only when it says so)
+  (ReadPromptChoice) with a text chosen by ovl21_e9 (the Take/Share entries appear only when it says so)
   and dispatches the key: B BuyItems, V ovl19_e5, T ovl21_e4, P ovl21_e2 (when Flag2 is 0), S
   ovl21_e3, A ovl21_e14, E leaves (asking first through ovl07_e13 when money lies in the pool), and
   G and O, which neither menu text shows, call ovl19_e10 with the key. A second case redraws the
@@ -197,7 +197,7 @@ begin
       MenuText := 'Buy View Take Pool Share Appraise Exit'
     else
       MenuText := 'Buy View Pool Appraise Exit';
-    Key := ovl25_e2(Title, MenuText, $D, $A, $F, 1, 0, Flag2);
+    Key := ReadPromptChoice(Title, MenuText, $D, $A, $F, 1, 0, Flag2);
     case Key of
       'B': BuyItems;
       'V': ovl19_e5(Flag2);
