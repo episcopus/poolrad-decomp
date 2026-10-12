@@ -57,5 +57,6 @@ begin
   QuitGame;
 end;
 
+{ Initialisation (ovl02:0359): empty (55 89 E5 5D CB). }
 begin
 end.
