@@ -12,7 +12,7 @@ Approach: ADR-002 (SPEC 4), Pascal-first matching decompilation; the C track (AD
 | P1 Map | done (`make p1-check`): 50 units, 1487 routines, TP 6.0 June 1991 pinned |
 | P2 Oracle and data | done: goldens with recordings for 2 of 2 session scripts (boot-title, create-character); `make golden CHECK=1` |
 | P3 Match harness | done: `make match` (tools/match/match.py, tests/unit/test_match.py); gate `make check` |
-| P4 Match | 42 of 1288 game routines at L2 (7059 of 234681 bytes by re/symbols.toml sizes); 13 of 46 game units complete, 10 reviewed; main program `src/POOL.PAS` matched by `make match UNIT=main` |
+| P4 Match | 46 of 1288 game routines at L2 (9121 of 234681 bytes by re/symbols.toml sizes); 14 of 46 game units complete, 10 reviewed; main program `src/POOL.PAS` matched by `make match UNIT=main` |
 | P5 Rebuild | `make rebuild` links the whole game from `src/` (every unit has source: decompiled or skeleton) and reports identical segments |
 
 ### P4 units with matched routines
@@ -20,6 +20,7 @@ Approach: ADR-002 (SPEC 4), Pascal-first matching decompilation; the C track (AD
 | Unit | Name | Routines | L2 | Bytes at L2 | Readable (`make readability`) | Reviewed |
 |---|---|---:|---:|---:|---|---|
 | ovl00 | ovl00 | 2 | 2 | 124 | clean | yes |
+| ovl01 | ovl01 | 4 | 4 | 2062 | clean | complete |
 | ovl02 | ovl02 | 2 | 2 | 609 | clean | yes |
 | ovl11 | Loader | 2 | 2 | 1517 | clean | complete |
 | ovl26 | ovl26 | 6 | 6 | 677 | clean | yes |
@@ -44,7 +45,7 @@ Locks (agents at work): `make locks`. Next unit: `make next`.
 |---|---:|
 | Units | 50 |
 | Routines | 1487 |
-| Routines with non-provisional names | 133 |
+| Routines with non-provisional names | 136 |
 | RTL-prefixed routine names | 54 |
 | Unit code_bytes (declared) | 245081 |
 | Sum of routine sizes | 244057 |
@@ -53,8 +54,8 @@ Locks (agents at work): `make locks`. Next unit: `make next`.
 
 | Level | Count |
 |---|---:|
-| none | 1445 |
-| L2 | 42 |
+| none | 1441 |
+| L2 | 46 |
 
 ### Top units by routine count
 
@@ -78,7 +79,7 @@ Locks (agents at work): `make locks`. Next unit: `make next`.
 
 ## Verification
 
-42 routines above `none`: res11_init L2 (03DA:0000), res10_init L2 (03ED:0000), DrawWindowFrame L2 (03F1:0000), ClearWindow L2 (03F1:0137), DrawWindow L2 (03F1:02E8), res09_init L2 (03F1:0367), res08_init L2 (042B:00A4), ShowMessageLine L2 (0709:0BF5), SelectTileSet L2 (0802:094A), RestoreTileSet L2 (0802:095D), QuitGame L2 (0899:0000), ReadGameKey L2 (0899:0059), FlushKeyboard L2 (0899:0104), DiscardWaitingKey L2 (0899:0122), res04_init L2 (0899:013C), res02_init L2 (0A31:0000), HeapErrorHandler L2 (ovl00:0042), ovl00_init L2 (ovl00:00AC), CheckCodeWheel L2 (ovl02:00FD), ovl02_init L2 (ovl02:0359), StartGame L2 (ovl11:002D), ovl11_init L2 (ovl11:0615), DrawPartyMarker L2 (ovl26:0000), WallDesc2FromCode L2 (ovl26:00C7), WallDesc3FromCode L2 (ovl26:00FB), WallDesc4FromCode L2 (ovl26:012F), ShowAreaView L2 (ovl26:016D), ovl26_init L2 (ovl26:02A0), DrawAreaView L2 (ovl27:0000), DrawAdventureScreen L2 (ovl27:0207), ovl27_init L2 (ovl27:0283), DrawSprite L2 (ovl28:0000), DrawHeadSprite L2 (ovl28:0050), DrawBodySprite L2 (ovl28:0070), FreeSpriteList L2 (ovl28:048F), LoadHeadBodySprites L2 (ovl28:05D9), ShowHeadBodySprites L2 (ovl28:0697), ShowDebugTrace L2 (ovl33:0004), ovl33_init L2 (ovl33:00F7), Load8x8Bank L2 (ovl34:003B), Put8x8Symbol L2 (ovl34:015D), ovl34_init L2 (ovl34:02AD).
+46 routines above `none`: res11_init L2 (03DA:0000), res10_init L2 (03ED:0000), DrawWindowFrame L2 (03F1:0000), ClearWindow L2 (03F1:0137), DrawWindow L2 (03F1:02E8), res09_init L2 (03F1:0367), res08_init L2 (042B:00A4), ShowMessageLine L2 (0709:0BF5), SelectTileSet L2 (0802:094A), RestoreTileSet L2 (0802:095D), QuitGame L2 (0899:0000), ReadGameKey L2 (0899:0059), FlushKeyboard L2 (0899:0104), DiscardWaitingKey L2 (0899:0122), res04_init L2 (0899:013C), res02_init L2 (0A31:0000), HeapErrorHandler L2 (ovl00:0042), ovl00_init L2 (ovl00:00AC), WaitKeyOrTimeout L2 (ovl01:0000), ShowCredits L2 (ovl01:0206), ShowTitleScreen L2 (ovl01:0627), ovl01_init L2 (ovl01:0809), CheckCodeWheel L2 (ovl02:00FD), ovl02_init L2 (ovl02:0359), StartGame L2 (ovl11:002D), ovl11_init L2 (ovl11:0615), DrawPartyMarker L2 (ovl26:0000), WallDesc2FromCode L2 (ovl26:00C7), WallDesc3FromCode L2 (ovl26:00FB), WallDesc4FromCode L2 (ovl26:012F), ShowAreaView L2 (ovl26:016D), ovl26_init L2 (ovl26:02A0), DrawAreaView L2 (ovl27:0000), DrawAdventureScreen L2 (ovl27:0207), ovl27_init L2 (ovl27:0283), DrawSprite L2 (ovl28:0000), DrawHeadSprite L2 (ovl28:0050), DrawBodySprite L2 (ovl28:0070), FreeSpriteList L2 (ovl28:048F), LoadHeadBodySprites L2 (ovl28:05D9), ShowHeadBodySprites L2 (ovl28:0697), ShowDebugTrace L2 (ovl33:0004), ovl33_init L2 (ovl33:00F7), Load8x8Bank L2 (ovl34:003B), Put8x8Symbol L2 (ovl34:015D), ovl34_init L2 (ovl34:02AD).
 
 ## Blockers and decisions waiting for the human
 
@@ -94,7 +95,9 @@ Blockers are kept in `work/blockers.md` (the orchestrator's, playbook 90) and co
 - escalate-ovl11-20261012040806 (runtime_entries, single unit vs --all): fix ready on task/tools-rtl2 (op-rtl, 1acdcc9), held for the human: it relaxes when a byte counts as present (AGENTS.md rule 2). Do not merge it, and do not rerun `make map` for it, until the human confirms.
 - ovl11 review can be redone now (orch, 2026-10-12): on current main `make match UNIT=ovl11` matches StartGame alone (2 matched, 0 differ), so rev-4 or any reviewer can redo the ovl11 review. op-rtl reports that ovl02 run alone is still affected; on main at this commit `make match UNIT=ovl02` also shows 2 matched, 0 differ.
 
-- ovl28 merge reverted (orch, 2026-10-12, revert ad7bcd2 of merge b2df10a): with ovl28 (dcf86cd, partial, 8 of 9 at L2) on main, `make match UNIT=ovl28` and `UNIT=res08` each pass, but `match.py --all` (in `make check`) stops with `match: global HEAPWORDS has no original offset: name it dsXXXX or add it to re/dseg.toml`. HeapWords is res08's `array[0..1] of Word absolute HeapEnd` (src/POOLVARS.PAS:103, used by res08_init); it shares its address with HeapEnd (named in re/dseg.toml), and which of the two names the matcher sees seems to depend on the layout. Not ovl28's fault; needs a decision (a tool fix so an absolute alias resolves to its base, or a res08 source change). Merge b2df10a resolves the conflicts with main (renames kept both sides); to bring ovl28 back: `git revert --no-edit ad7bcd2`. The ovl28 hand-off stays open.
+- ovl28 merge reverted (orch, 2026-10-12, revert ad7bcd2 of merge b2df10a): with ovl28 (dcf86cd, partial, 8 of 9 at L2) on main, `make match UNIT=ovl28` and `UNIT=res08` each pass, but `match.py --all` (in `make check`) stops with `match: global HEAPWORDS has no original offset: name it dsXXXX or add it to re/dseg.toml`. HeapWords is res08's `array[0..1] of Word absolute HeapEnd` (src/POOLVARS.PAS:103, used by res08_init); it shares its address with HeapEnd (named in re/dseg.toml), and which of the two names the matcher sees seems to depend on the layout. Not ovl28's fault. Acting operator, 2026-10-12: tool fix approved (an `absolute` alias resolves to its base only through its own declaration); op-alias works on task/tools-alias. After tools-alias merges: bring ovl28 back, `make check`, then merge ovl18. Merge b2df10a resolves the conflicts with main (renames kept both sides); to bring ovl28 back: `git revert --no-edit ad7bcd2`. The ovl28 hand-off stays open.
+
+- ovl18 hand-off (dec-4, partial, b65a718) waits for ovl28: its branch merges unit/ovl28 (78882ec), whose merge on main is reverted (see the ovl28 item). Merge ovl18 only after ovl28 is back on main (revert of the revert first), then ovl18 as a normal branch.
 
 - Approach (decided 2026-10-11, SPEC 4): Pascal first, matched by the pinned compiler; C later by translation (Phase 7, branch `track-c-hybrid`).
 - Canonical state (decided 2026-10-10 and 2026-10-11): `re/state.toml` has `stack = "diagnostic"` and `heap = "compared"`; goldens carry recordings of the outside world (`tools/oracle/replay.py`) for the rebuild and the C translation.
