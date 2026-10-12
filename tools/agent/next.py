@@ -21,10 +21,17 @@ import common  # noqa: E402
 BLOCKED = re.compile(r"(?<![A-Za-z])blocked(?![A-Za-z])", re.I)
 
 
+def is_init(r: dict) -> bool:
+    return str(r.get("name", "")).lower().endswith("_init")
+
+
 def waiting(uid: str, rs: list[dict]) -> bool:
-    """Nothing to do until something changes: every routine not yet at L2 or L3 is blocked."""
+    """Nothing to do until something changes: every routine not yet at L2 or L3 is blocked. The unit's
+    initialisation part does not count while other routines are left: the matcher proves it only in the
+    whole-unit comparison, which runs once no stubs remain, so it can never be the work that is left."""
     left = [r for r in rs if r["unit"] == uid and r.get("level") not in ("L2", "L3")]
-    return bool(left) and all(BLOCKED.search(str(r.get("notes", ""))) for r in left)
+    rest = [r for r in left if not is_init(r)] or left
+    return bool(rest) and all(BLOCKED.search(str(r.get("notes", ""))) for r in rest)
 
 
 def next_unit() -> tuple[str, str, int, int] | None:
