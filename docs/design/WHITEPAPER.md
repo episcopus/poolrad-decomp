@@ -721,7 +721,7 @@ Overlay 18 (PoolNarrative) plays the game's ending and animates the area view do
 
 - `AnimateFinalPicture` (`ovl18:0006`, called by `ShowEndingNarrative`) **[V]** (`make match
   UNIT=ovl18 FN=AnimateFinalPicture`) loads the `FINAL<TileSet>` frames of one bank through
-  `ovl28_e2('FINAL', Bank, 2, List)` and shows them `Cycles` times: each frame is drawn with
+  `LoadSpriteList('FINAL', Bank, 2, List)` and shows them `Cycles` times: each frame is drawn with
   `DrawSprite(Col, Row, 1, sprite)` and held for that slot's 4 data bytes, read as a LongInt
   delay scaled by (`ds49E2` + 3) ticks of the `res06_fn_0C3F` timer, before stepping to the next
   frame. The frame cursor is the sprite list's `Flag` field (the loader sets it to 1, `ovl28:01D6`);

@@ -13,7 +13,7 @@ implementation
 uses OVL27, OVL28, RES06, RES07, RES12;
 
 { ovl18:0006. Animates the FINAL ending picture at (Col, Row): loads the FINAL<TileSet>
-  frames of bank Bank through ovl28_e2 and shows them Cycles times, drawing each frame
+  frames of bank Bank through LoadSpriteList and shows them Cycles times, drawing each frame
   through DrawSprite and waiting that frame's data delay, scaled by (ds49E2 + 3) ticks of
   the res06_fn_0C3F timer, before stepping to the next one, then frees the list. The frame
   cursor is the sprite list's Flag field (the loader sets it to 1); Count is read as a
@@ -28,7 +28,7 @@ begin
   DoneCycles := 0;
   StartTick := res06_fn_0C3F;
   FillChar(Sprites, SizeOf(TSpriteList), 0);
-  ovl28_e2('FINAL', Bank, 2, @Sprites);
+  LoadSpriteList('FINAL', Bank, 2, @Sprites);
   res07_fn_0D71(Col - 1, Row - 1, 0, 0, Sprites.Slots[1].Sprite, DrawBuf);
   res07_fn_1B52;
   repeat
