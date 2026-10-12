@@ -12,7 +12,7 @@ Approach: ADR-002 (SPEC 4), Pascal-first matching decompilation; the C track (AD
 | P1 Map | done (`make p1-check`): 50 units, 1487 routines, TP 6.0 June 1991 pinned |
 | P2 Oracle and data | done: goldens with recordings for 2 of 2 session scripts (boot-title, create-character); `make golden CHECK=1` |
 | P3 Match harness | done: `make match` (tools/match/match.py, tests/unit/test_match.py); gate `make check` |
-| P4 Match | 62 of 1288 game routines at L2 (11507 of 234681 bytes by re/symbols.toml sizes); 15 of 46 game units complete, 11 reviewed; main program `src/POOL.PAS` matched by `make match UNIT=main` |
+| P4 Match | 66 of 1288 game routines at L2 (12253 of 234681 bytes by re/symbols.toml sizes); 15 of 46 game units complete, 11 reviewed; main program `src/POOL.PAS` matched by `make match UNIT=main` |
 | P5 Rebuild | `make rebuild` links the whole game from `src/` (every unit has source: decompiled or skeleton) and reports identical segments |
 
 ### P4 units with matched routines
@@ -26,6 +26,7 @@ Approach: ADR-002 (SPEC 4), Pascal-first matching decompilation; the C track (AD
 | ovl26 | ovl26 | 6 | 6 | 677 | clean | yes |
 | ovl27 | ovl27 | 3 | 3 | 648 | clean | yes |
 | ovl28 | ovl28 | 10 | 6 | 524 | clean | in progress |
+| ovl32 | PicLoad | 6 | 4 | 746 | clean | in progress |
 | ovl33 | DebugTrace | 2 | 2 | 248 | clean | yes |
 | ovl34 | TileLoad | 3 | 3 | 596 | clean | complete |
 | res02 | res02 | 1 | 1 | 16 | clean | yes |
@@ -45,7 +46,7 @@ Locks (agents at work): `make locks`. Next unit: `make next`.
 |---|---:|
 | Units | 50 |
 | Routines | 1487 |
-| Routines with non-provisional names | 158 |
+| Routines with non-provisional names | 161 |
 | RTL-prefixed routine names | 54 |
 | Unit code_bytes (declared) | 245081 |
 | Sum of routine sizes | 244057 |
@@ -54,8 +55,8 @@ Locks (agents at work): `make locks`. Next unit: `make next`.
 
 | Level | Count |
 |---|---:|
-| none | 1425 |
-| L2 | 62 |
+| none | 1421 |
+| L2 | 66 |
 
 ### Top units by routine count
 
@@ -79,13 +80,11 @@ Locks (agents at work): `make locks`. Next unit: `make next`.
 
 ## Verification
 
-62 routines above `none`: res11_init L2 (03DA:0000), res10_init L2 (03ED:0000), DrawWindowFrame L2 (03F1:0000), ClearWindow L2 (03F1:0137), DrawWindow L2 (03F1:02E8), res09_init L2 (03F1:0367), res08_init L2 (042B:00A4), ShowMessageLine L2 (0709:0BF5), FreeHeapBlock L2 (0802:0000), AllocHeapBlock L2 (0802:0020), WriteCharsAt L2 (0802:0040), WriteTextAt L2 (0802:0105), FillBlocksAt L2 (0802:0175), ShowBottomMessage L2 (0802:0193), WaitForOverlayDisk L2 (0802:0212), OpenGameFile L2 (0802:025D), FileExists L2 (0802:02EB), DeleteAllOccurrences L2 (0802:0356), MakeDosFileName L2 (0802:0425), UnpackRle L2 (0802:050F), OpenDaxFile L2 (0802:05CD), CloseDaxFile L2 (0802:06E7), LoadDaxBlock L2 (0802:0716), SelectTileSet L2 (0802:094A), RestoreTileSet L2 (0802:095D), res05_init L2 (0802:0968), QuitGame L2 (0899:0000), ReadGameKey L2 (0899:0059), FlushKeyboard L2 (0899:0104), DiscardWaitingKey L2 (0899:0122), res04_init L2 (0899:013C), res02_init L2 (0A31:0000), HeapErrorHandler L2 (ovl00:0042), ovl00_init L2 (ovl00:00AC), WaitKeyOrTimeout L2 (ovl01:0000), ShowCredits L2 (ovl01:0206), ShowTitleScreen L2 (ovl01:0627), ovl01_init L2 (ovl01:0809), CheckCodeWheel L2 (ovl02:00FD), ovl02_init L2 (ovl02:0359), StartGame L2 (ovl11:002D), ovl11_init L2 (ovl11:0615), DrawPartyMarker L2 (ovl26:0000), WallDesc2FromCode L2 (ovl26:00C7), WallDesc3FromCode L2 (ovl26:00FB), WallDesc4FromCode L2 (ovl26:012F), ShowAreaView L2 (ovl26:016D), ovl26_init L2 (ovl26:02A0), DrawAreaView L2 (ovl27:0000), DrawAdventureScreen L2 (ovl27:0207), ovl27_init L2 (ovl27:0283), DrawSprite L2 (ovl28:0000), DrawHeadSprite L2 (ovl28:0050), DrawBodySprite L2 (ovl28:0070), FreeSpriteList L2 (ovl28:048F), LoadHeadBodySprites L2 (ovl28:05D9), ShowHeadBodySprites L2 (ovl28:0697), ShowDebugTrace L2 (ovl33:0004), ovl33_init L2 (ovl33:00F7), Load8x8Bank L2 (ovl34:003B), Put8x8Symbol L2 (ovl34:015D), ovl34_init L2 (ovl34:02AD).
+66 routines above `none`: res11_init L2 (03DA:0000), res10_init L2 (03ED:0000), DrawWindowFrame L2 (03F1:0000), ClearWindow L2 (03F1:0137), DrawWindow L2 (03F1:02E8), res09_init L2 (03F1:0367), res08_init L2 (042B:00A4), ShowMessageLine L2 (0709:0BF5), FreeHeapBlock L2 (0802:0000), AllocHeapBlock L2 (0802:0020), WriteCharsAt L2 (0802:0040), WriteTextAt L2 (0802:0105), FillBlocksAt L2 (0802:0175), ShowBottomMessage L2 (0802:0193), WaitForOverlayDisk L2 (0802:0212), OpenGameFile L2 (0802:025D), FileExists L2 (0802:02EB), DeleteAllOccurrences L2 (0802:0356), MakeDosFileName L2 (0802:0425), UnpackRle L2 (0802:050F), OpenDaxFile L2 (0802:05CD), CloseDaxFile L2 (0802:06E7), LoadDaxBlock L2 (0802:0716), SelectTileSet L2 (0802:094A), RestoreTileSet L2 (0802:095D), res05_init L2 (0802:0968), QuitGame L2 (0899:0000), ReadGameKey L2 (0899:0059), FlushKeyboard L2 (0899:0104), DiscardWaitingKey L2 (0899:0122), res04_init L2 (0899:013C), res02_init L2 (0A31:0000), HeapErrorHandler L2 (ovl00:0042), ovl00_init L2 (ovl00:00AC), WaitKeyOrTimeout L2 (ovl01:0000), ShowCredits L2 (ovl01:0206), ShowTitleScreen L2 (ovl01:0627), ovl01_init L2 (ovl01:0809), CheckCodeWheel L2 (ovl02:00FD), ovl02_init L2 (ovl02:0359), StartGame L2 (ovl11:002D), ovl11_init L2 (ovl11:0615), DrawPartyMarker L2 (ovl26:0000), WallDesc2FromCode L2 (ovl26:00C7), WallDesc3FromCode L2 (ovl26:00FB), WallDesc4FromCode L2 (ovl26:012F), ShowAreaView L2 (ovl26:016D), ovl26_init L2 (ovl26:02A0), DrawAreaView L2 (ovl27:0000), DrawAdventureScreen L2 (ovl27:0207), ovl27_init L2 (ovl27:0283), DrawSprite L2 (ovl28:0000), DrawHeadSprite L2 (ovl28:0050), DrawBodySprite L2 (ovl28:0070), FreeSpriteList L2 (ovl28:048F), LoadHeadBodySprites L2 (ovl28:05D9), ShowHeadBodySprites L2 (ovl28:0697), Load24x24Set L2 (ovl32:0022), DrawCellPicture L2 (ovl32:00F1), FreePictureSlot L2 (ovl32:014E), DrawIcon L2 (ovl32:04FC), ShowDebugTrace L2 (ovl33:0004), ovl33_init L2 (ovl33:00F7), Load8x8Bank L2 (ovl34:003B), Put8x8Symbol L2 (ovl34:015D), ovl34_init L2 (ovl34:02AD).
 
 ## Blockers and decisions waiting for the human
 
 Blockers are kept in `work/blockers.md` (the orchestrator's, playbook 90) and copied here by `make status`.
-
-- ovl32 not merged (orch, 2026-10-12): unit/ovl32 (partial, 4 commits) conflicts with main in src/OVL26.PAS, src/OVL27.PAS, src/OVL32.PAS, src/RES07.PAS, src/POOLVARS.PAS, re/symbols.toml, re/renames.toml and the whitepaper (ovl26, ovl27, ovl34 and ovl28 changed the same stubs and globals meanwhile). For whoever continues ovl32 (dec-3): in the ovl32 worktree `git merge main`, resolve with the units' evidence (decompiled routines win over stubs; one name and one signature per routine and offset), `make rename APPLY=1`, `make check`, hand off again. The ovl32 hand-off stays open.
 
 - Waiting for the human (acting operator held it, 2026-10-12): res08 is a resident unit but its code shows it was compiled with O+ (dec-2, res08 hand-off note), which AGENTS.md's compiler-switch facts do not allow for resident units. A spec question; nothing to do until the human decides.
 
