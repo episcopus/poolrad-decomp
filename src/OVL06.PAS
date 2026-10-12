@@ -111,15 +111,15 @@ end;
   ChooseShopItem until the player cancels (any key other than 'B' or Enter). For a chosen entry the
   Price is its Value (+$3A, ovl06:0361). It first reads the selected character's money
   (ovl19_e11); if the Price fits it adds the item to the character's items (AddInventoryItem) and,
-  when that worked, stores the money less the Price (ovl21_e10). Otherwise it reads the money pooled
-  in the shop (ovl21_e12 on PooledMoney); if the Price fits it adds the item and stores the pool less the
-  Price (ovl21_e11), else it shows "Not enough Money." (res12_fn_1693). No parameters; side effects:
+  when that worked, stores the money less the Price (SetCharacterGold). Otherwise it reads the money pooled
+  in the shop (MoneyValueInGold on PooledMoney); if the Price fits it adds the item and stores the pool less the
+  Price (SetPooledGold), else it shows "Not enough Money." (res12_fn_1693). No parameters; side effects:
   the character's items, the money and the screen.
   QUIRK ovl06:03C7: ovl19_e11 returns a LongInt, but Money is a Word, so only AX is kept and a
   character with 65536 or more is compared and charged modulo 65536 (a price can fit when only the
-  low word does, or the pool pays when it does not, and ovl21_e10 then stores the low word less the
+  low word does, or the pool pays when it does not, and SetCharacterGold then stores the low word less the
   price, ovl06:03E7..03F3). QUIRK ovl06:0449: the pool path computes Pooled - Price as a LongInt
-  (ovl06:0430..0446) but ovl21_e11(Amount: Word) receives only the low word, so a pool above 65535
+  (ovl06:0430..0446) but SetPooledGold(Amount: Word) receives only the low word, so a pool above 65535
   is rewritten with the truncated amount (the same truncations as ovl04's ChargeForCure). }
 procedure BuyItems;
 var
@@ -150,19 +150,19 @@ begin
         if Overloaded = 0 then
         begin
           Money := Money - Price;
-          ovl21_e10(Money);
+          SetCharacterGold(Money);
         end;
       end
       else
       begin
-        Pooled := ovl21_e12(PooledMoney);
+        Pooled := MoneyValueInGold(PooledMoney);
         if Price <= Pooled then
         begin
           AddInventoryItem(Selected, Overloaded);
           if Overloaded = 0 then
           begin
             Pooled := Pooled - Price;
-            ovl21_e11(Pooled);   { QUIRK ovl06:0449: only the low word of the LongInt is passed }
+            SetPooledGold(Pooled);   { QUIRK ovl06:0449: only the low word of the LongInt is passed }
           end;
         end
         else
@@ -174,10 +174,10 @@ end;
 
 { ovl06:053E (ShopMain). The shop's entry and main loop, called from ovl03 (the area logic) when the
   party enters a shop. It marks the shop open (ds49F3), redraws the shop screen (res12_fn_27D9,
-  res12_fn_0767 on SelectedCharacter), clears the money block PooledMoney and clears ds6DC0, then shows the
-  menu (ReadPromptChoice) with a text chosen by ovl21_e9 (the Take/Share entries appear only while
-  MoneyPooled says money lies in the pool) and dispatches the key: B BuyItems, V ovl19_e5, T ovl21_e4,
-  P ovl21_e2 (when MenuFlag is 0), S ovl21_e3, A ovl21_e14 (Appraise), E leaves, and G and O, which
+  res12_fn_0767 on SelectedCharacter), clears the money block PooledMoney and clears MoneyInPool, then shows the
+  menu (ReadPromptChoice) with a text chosen by TreasureLeft (the Take/Share entries appear only while
+  MoneyPooled says money lies in the pool) and dispatches the key: B BuyItems, V ovl19_e5, T TakeMoney,
+  P PoolMoney (when MenuFlag is 0), S ShareMoney, A AppraiseGems (Appraise), E leaves, and G and O, which
   neither menu text shows, call ovl19_e10 with the key. With money left in the pool, E first asks
   "Do you want to go back and get your Money?" ('~Yes ~No' through ovl07_e13, which returns the
   0-based hotkey position) and the party leaves on No (AnswerNo); Yes clears the message window
@@ -191,10 +191,10 @@ var
   MenuFlag: Byte;      { the var Flag of ReadPromptChoice: Pool runs only when it is 0, View gets it }
   Done: Byte;
   Key: Char;
-  MoneyPooled: Byte;   { nonzero while money lies in the pool (ovl21_e9's first result) }
-  PoolSecond: Byte;    { ovl21_e9's second result; not read here }
+  MoneyPooled: Byte;   { nonzero while money lies in the pool (TreasureLeft's first result) }
+  PoolSecond: Byte;    { TreasureLeft's second result; not read here }
   LeaveAnswer: Byte;   { the answer to "go back and get your Money?" }
-  Appraised: Byte;     { set by Appraise (ovl21_e14); nonzero redraws the view }
+  Appraised: Byte;     { set by Appraise (AppraiseGems); nonzero redraws the view }
   Entry: PMenuLine;
 begin
   ds49F3 := 1;
@@ -202,7 +202,7 @@ begin
   res12_fn_0767(SelectedCharacter);
   FillChar(PooledMoney, SizeOf(PooledMoney), 0);
   Title := '';
-  ds6DC0 := 0;
+  MoneyInPool := 0;
   Done := 0;
   Entry := ds6810;
   while Entry <> nil do
@@ -211,7 +211,7 @@ begin
     Entry := Entry^.Next;
   end;
   repeat
-    ovl21_e9(MoneyPooled, PoolSecond);
+    TreasureLeft(MoneyPooled, PoolSecond);
     if MoneyPooled <> 0 then
       MenuText := 'Buy View Take Pool Share Appraise Exit'
     else
@@ -220,14 +220,14 @@ begin
     case Key of
       'B': BuyItems;
       'V': ovl19_e5(MenuFlag);
-      'T': ovl21_e4;
+      'T': TakeMoney;
       'P': if MenuFlag = 0 then
-             ovl21_e2;
-      'S': ovl21_e3;
-      'A': ovl21_e14(Appraised);
+             PoolMoney;
+      'S': ShareMoney;
+      'A': AppraiseGems(Appraised);
       'E':
         begin
-          ovl21_e9(MoneyPooled, PoolSecond);
+          TreasureLeft(MoneyPooled, PoolSecond);
           if MoneyPooled <> 0 then
           begin
             MenuText := '~Yes ~No';

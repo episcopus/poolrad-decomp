@@ -9971,12 +9971,12 @@ id = "ovl21:0000"
 unit = "ovl21"
 addr = "ovl21:0000"
 size = 32
-name = "ovl21_fn_0000"
-signature = ""
+name = "CarryLimit"
+signature = "function CarryLimit(Who: PCharacter): Word"
 c_name = "ovl21_fn_0000"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl21_fn_0000 (returns res12_fn_13AB (the strength weight allowance) plus 1500; WouldOverload compares the carried weight with it (ovl21:0000, 0054)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -9984,12 +9984,12 @@ id = "ovl21:0020"
 unit = "ovl21"
 addr = "ovl21:0020"
 size = 26
-name = "ovl21_fn_0020"
-signature = ""
+name = "RemoveCarriedWeight"
+signature = "procedure RemoveCarriedWeight(Who: PCharacter; Amount: Word)"
 c_name = "ovl21_fn_0020"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl21_fn_0020 (subtracts Amount from TCharacter+102, the carried weight MaxLoad bounds (ovl21:0020)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -9997,12 +9997,12 @@ id = "ovl21:003A"
 unit = "ovl21"
 addr = "ovl21:003A"
 size = 26
-name = "ovl21_fn_003A"
-signature = ""
+name = "AddCarriedWeight"
+signature = "procedure AddCarriedWeight(Who: PCharacter; Amount: Word)"
 c_name = "ovl21_fn_003A"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl21_fn_003A (adds Amount to TCharacter+102, the carried weight MaxLoad bounds (ovl21:003A)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -10010,12 +10010,12 @@ id = "ovl21:0054"
 unit = "ovl21"
 addr = "ovl21:0054"
 size = 84
-name = "ovl21_e1"
-signature = ""
+name = "WouldOverload"
+signature = "function WouldOverload(Who: PCharacter; Amount: Word; var Room: Word): Boolean"
 c_name = "ovl21_e1"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl21_e1 (True when carried weight plus Amount exceeds MaxLoad, with the room left; its caller then shows 'Overloaded. Money will be put in Pool.' (ovl21:0054, 0219)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -10023,12 +10023,12 @@ id = "ovl21:00A8"
 unit = "ovl21"
 addr = "ovl21:00A8"
 size = 136
-name = "ovl21_e12"
-signature = "function ovl21_e12(Money: TPartyMoney): LongInt"
+name = "MoneyValueInGold"
+signature = "function MoneyValueInGold(Money: TPartyMoney): LongInt"
 c_name = "ovl21_e12"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_12"
+notes = "renamed from ovl21_e12 (sums the five coin kinds times their copper values (DS:0D24: 1,10,100,200,1000), adds 100 and divides by 200, the gold value (ovl21:00A8)); auto:entry_12"
 evidence = ["prologue"]
 
 [[routine]]
@@ -10036,12 +10036,12 @@ id = "ovl21:0130"
 unit = "ovl21"
 addr = "ovl21:0130"
 size = 85
-name = "ovl21_e10"
-signature = "procedure ovl21_e10(Amount: Word)"
+name = "SetCharacterGold"
+signature = "procedure SetCharacterGold(Amount: Word)"
 c_name = "ovl21_e10"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_10"
+notes = "renamed from ovl21_e10 (clears the selected character's five coin words and writes Amount div 5 platinum and Amount mod 5 gold (ovl21:0130)); auto:entry_10"
 evidence = ["prologue"]
 
 [[routine]]
@@ -10049,12 +10049,12 @@ id = "ovl21:0185"
 unit = "ovl21"
 addr = "ovl21:0185"
 size = 126
-name = "ovl21_e11"
-signature = "procedure ovl21_e11(Amount: Word)"
+name = "SetPooledGold"
+signature = "procedure SetPooledGold(Amount: Word)"
 c_name = "ovl21_e11"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_11"
+notes = "renamed from ovl21_e11 (clears PooledMoney kinds 0..4 and writes Amount div 5 platinum and Amount mod 5 gold (ovl21:0185)); auto:entry_11"
 evidence = ["prologue"]
 
 [[routine]]
@@ -10062,12 +10062,12 @@ id = "ovl21:0203"
 unit = "ovl21"
 addr = "ovl21:0203"
 size = 145
-name = "ovl21_fn_0203"
-signature = ""
+name = "GivePlatinum"
+signature = "procedure GivePlatinum(Amount: Word)"
 c_name = "ovl21_fn_0203"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl21_fn_0203 (adds Amount to the selected character's Money[4] (platinum, 1000 copper in DS:0D24), the overflow to PooledMoney[4] with 'Overloaded. Money will be put in Pool.' (ovl21:0203)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -10075,12 +10075,12 @@ id = "ovl21:0294"
 unit = "ovl21"
 addr = "ovl21:0294"
 size = 440
-name = "ovl21_e6"
-signature = ""
+name = "ReadAmount"
+signature = "function ReadAmount(Max: Word; Prompt: String40; Color: Byte): Word"
 c_name = "ovl21_e6"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl21_e6 (shows a prompt on row 24, reads digits until Enter or Escape with Backspace, clamps to Max (Str of Max), returns the Val of the digits or 0 on Escape (ovl21:0294)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -10088,12 +10088,12 @@ id = "ovl21:044C"
 unit = "ovl21"
 addr = "ovl21:044C"
 size = 188
-name = "ovl21_e7"
-signature = ""
+name = "TransferMoney"
+signature = "procedure TransferMoney(var Giver, Taker: PCharacter; Amount: Word; Kind: ShortInt)"
 c_name = "ovl21_e7"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_7"
+notes = "renamed from ovl21_e7 (moves Amount of Money[Kind] from one character to another with RemoveCarriedWeight/AddCarriedWeight, else shows 'Overloaded' (ovl21:044C)); auto:entry_7"
 evidence = ["prologue"]
 
 [[routine]]
@@ -10101,12 +10101,12 @@ id = "ovl21:0508"
 unit = "ovl21"
 addr = "ovl21:0508"
 size = 216
-name = "ovl21_e2"
+name = "PoolMoney"
 signature = ""
 c_name = "ovl21_e2"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_2"
+notes = "renamed from ovl21_e2 (adds every sharing member's seven Money words into PooledMoney, clears them and their weight, sets ds6DC0; ShopMain and VisitTemple call it on the Pool key (ovl21:0508)); auto:entry_2"
 evidence = ["prologue"]
 
 [[routine]]
@@ -10114,129 +10114,90 @@ id = "ovl21:05E0"
 unit = "ovl21"
 addr = "ovl21:05E0"
 size = 90
-name = "ovl21_fn_05E0"
-signature = ""
+name = "CountSharers"
+signature = "function CountSharers: Byte"
 c_name = "ovl21_fn_05E0"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl21_fn_05E0 (counts the party members with B84 0 or B3, the members PoolMoney takes money from; ShareMoney divides the pool by it (ovl21:05E0, 0652)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl21:063A"
 unit = "ovl21"
 addr = "ovl21:063A"
-size = 407
-name = "ovl21_e3"
+size = 967
+name = "ShareMoney"
 signature = ""
 c_name = "ovl21_e3"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_3"
+notes = "renamed from ovl21_e3 (divides each kind of PooledMoney by CountSharers and adds the shares to the members' Money within their load, the rest stays pooled; called on the Share key (ovl21:063A)); auto:entry_3; map dec-18 2026-10-12: ends 0A00 (was 407); 07D1 was mid-routine (inside the call at 07D0), entry deleted"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl21:07D1"
-unit = "ovl21"
-addr = "ovl21:07D1"
-size = 560
-name = "ovl21_fn_07D1"
-signature = ""
-c_name = "ovl21_fn_07D1"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl21:0A01"
 unit = "ovl21"
 addr = "ovl21:0A01"
 size = 135
-name = "ovl21_e8"
-signature = ""
+name = "DropMoney"
+signature = "procedure DropMoney(Who: PCharacter; Amount: Word; Kind: ShortInt)"
 c_name = "ovl21_e8"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_8"
+notes = "renamed from ovl21_e8 (subtracts Amount from Who^.Money[Kind] and its weight, adds it to PooledMoney only in view modes 1 and 6 (ovl21:0A01)); auto:entry_8"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl21:0A88"
 unit = "ovl21"
 addr = "ovl21:0A88"
-size = 192
-name = "ovl21_fn_0A88"
-signature = ""
+size = 210
+name = "TakeFromPool"
+signature = "procedure TakeFromPool(Who: PCharacter; Amount: Word; Kind: ShortInt)"
 c_name = "ovl21_fn_0A88"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl21_fn_0A88 (moves Amount (at most what PooledMoney[Kind] holds) from the pool to Who^.Money[Kind] with its weight, 'Overloaded' when it does not fit; TakeMoney calls it with the chosen kind (ovl21:0A88, 0F26)); auto:near_call; map dec-18 2026-10-12: ends 0B59; 0B48 was mid-routine, entry deleted"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl21:0B48"
-unit = "ovl21"
-addr = "ovl21:0B48"
-size = 75
-name = "ovl21_fn_0B48"
-signature = ""
-c_name = "ovl21_fn_0B48"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl21:0B93"
 unit = "ovl21"
 addr = "ovl21:0B93"
 size = 344
-name = "ovl21_e5"
-signature = ""
+name = "MoneyKindOfLine"
+signature = "function MoneyKindOfLine(Line: string; var Name: string): ShortInt"
 c_name = "ovl21_e5"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl21_e5 (returns 0..6 from the first letter of a Take menu line (G+E Gems 5, G Gold 3, P 4, E 2, S 1, C 0, J 6) and its name ('Gems ', 'Gold ', ...) (ovl21:0B93)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl21:0CEB"
 unit = "ovl21"
 addr = "ovl21:0CEB"
-size = 566
-name = "ovl21_e4"
+size = 659
+name = "TakeMoney"
 signature = ""
 c_name = "ovl21_e4"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_4"
+notes = "renamed from ovl21_e4 (lists the pooled money kinds ('Select type of coin'), asks 'How much <kind> will you take?' and calls TakeFromPool for SelectedCharacter; the shop, Temple and treasure Take commands call it (ovl21:0CEB)); auto:entry_4; map dec-18 2026-10-12: ends 0F7D; 0F21 was mid-routine, entry deleted"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl21:0F21"
-unit = "ovl21"
-addr = "ovl21:0F21"
-size = 93
-name = "ovl21_fn_0F21"
-signature = ""
-c_name = "ovl21_fn_0F21"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl21:0F7E"
 unit = "ovl21"
 addr = "ovl21:0F7E"
 size = 84
-name = "ovl21_e9"
-signature = "procedure ovl21_e9(var A, B: Byte)"
+name = "TreasureLeft"
+signature = "procedure TreasureLeft(var MoneyLeft, ItemsLeft: Byte)"
 c_name = "ovl21_e9"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_9"
+notes = "renamed from ovl21_e9 (sets its first var to 1 when any PooledMoney kind is nonzero and its second when the loot list ds6810 is not nil; the treasure, shop and Temple menus show Take/Share from it (ovl21:0F7E)); auto:entry_9"
 evidence = ["prologue"]
 
 [[routine]]
@@ -10244,78 +10205,39 @@ id = "ovl21:0FD2"
 unit = "ovl21"
 addr = "ovl21:0FD2"
 size = 62
-name = "ovl21_fn_0FD2"
-signature = ""
+name = "RollItemBonus"
+signature = "function RollItemBonus: ShortInt"
 c_name = "ovl21_fn_0FD2"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl21_fn_0FD2 (d20: 1..14 gives 1, 15..19 gives 2, else 3; BuildTreasureItem stores it in TMenuLine.Plus (ovl21:0FD2, 10AF)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl21:1010"
 unit = "ovl21"
 addr = "ovl21:1010"
-size = 1864
-name = "ovl21_e13"
-signature = ""
+size = 2256
+name = "BuildTreasureItem"
+signature = "procedure BuildTreasureItem(Kind: Byte; var Item: TMenuLine)"
 c_name = "ovl21_e13"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_13"
+notes = "renamed from ovl21_e13 (clears a 63-byte TMenuLine and fills ItemType, Plus, NameNum, Weight, Value and Affects from the item type and dice (ovl21:1010)); auto:entry_13; map dec-18 2026-10-12: ends 18DF (retf 6 at 18DD); 1758 was mid-routine, entry deleted"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl21:1758"
-unit = "ovl21"
-addr = "ovl21:1758"
-size = 602
-name = "ovl21_fn_1758"
-signature = ""
-c_name = "ovl21_fn_1758"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl21:19B2"
 unit = "ovl21"
 addr = "ovl21:19B2"
-size = 1433
-name = "ovl21_e14"
-signature = "procedure ovl21_e14(var Flag: Byte)"
+size = 2212
+name = "AppraiseGems"
+signature = "procedure AppraiseGems(var Redraw: Byte)"
 c_name = "ovl21_e14"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_14"
+notes = "renamed from ovl21_e14 (asks 'Appraise : ' over the selected character's gems (Money[5]) and jewelry (Money[6]), values one with a d100 ('The Gem is Valued at <n> gp.') and sells it or keeps it as an item; the shop and Temple Appraise key call it (ovl21:19B2)); auto:entry_14; map dec-18 2026-10-12: ends 2255 (retf 4 at 2253); 1F4B and 2233 were mid-routine, entries deleted"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl21:1F4B"
-unit = "ovl21"
-addr = "ovl21:1F4B"
-size = 744
-name = "ovl21_fn_1F4B"
-signature = ""
-c_name = "ovl21_fn_1F4B"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl21:2233"
-unit = "ovl21"
-addr = "ovl21:2233"
-size = 35
-name = "ovl21_fn_2233"
-signature = ""
-c_name = "ovl21_fn_2233"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl21:2256"
@@ -10325,7 +10247,7 @@ size = 5
 name = "ovl21_init"
 signature = ""
 c_name = "ovl21_init"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_0"
 evidence = ["prologue"]
@@ -17490,7 +17412,7 @@ unit = "res12"
 addr = "00BA:13AB"
 size = 224
 name = "res12_fn_13AB"
-signature = ""
+signature = "function res12_fn_13AB(Who: Pointer): Integer"
 c_name = "res12_fn_13AB"
 level = "none"
 justification = ""
@@ -17581,7 +17503,7 @@ unit = "res12"
 addr = "00BA:1816"
 size = 65
 name = "res12_fn_1816"
-signature = ""
+signature = "procedure res12_fn_1816(Who: Pointer; Col, Row, Mode: Byte)"
 c_name = "res12_fn_1816"
 level = "none"
 justification = ""

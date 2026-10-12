@@ -281,7 +281,9 @@ type
     Items: PItem;                 { +$C8: the list of carried items }
     PadCC: array[$CC..$100] of Byte;
     SaveBonus: ShortInt;          { +$101: added to the d20 of every saving throw (SavingThrow, ovl24:0D96) }
-    Pad102: array[$102..$103] of Byte;
+    { +$102: the weight the character carries; every coin counts one (ovl21:0020, 003A), and it may
+      not exceed CarryLimit, 1500 plus the strength allowance res12_fn_13AB (ovl21:0000, 0054). }
+    CarriedWeight: Word;
     Next: PCharacter;             { +$104: the next character of the party list (ds5D96), nil ends it }
     Combat: PCombatant;           { +$108: the character's combat state (ovl08, ovl31) }
     { +$10C: the health status: 0 after Raise Dead and Stone to Flesh, 1 and 6 count as dead for
@@ -306,7 +308,7 @@ type
     Flag11B: Byte;
     Pad11C: Byte;
   end;
-  { The 28 bytes at DS:67F4 that the Temple clears on entry and ovl21_e12 turns into a LongInt
+  { The 28 bytes at DS:67F4 that the Temple clears on entry and MoneyValueInGold turns into a LongInt
     sum (the money pooled in the shop or left after a battle): seven LongInt amounts, one per kind
     of money (ovl05 adds TCharacter.Money[0..6] into them, ovl05:0093, and values them at 1/200,
     1/20, 1/2, 1, 5, 250 and 2200 units each for the battle's experience, ovl05:0233). }
@@ -667,9 +669,11 @@ var
     $2C, $32, $39 in the image; ovl04:031E, 03A6). Entry 0, the byte before, is never read. }
   DiseaseAffects: array[0..6] of Byte;  { see above }
   ds681F: Byte;                   { 1 while the Temple removes affects (RemoveAffect; ovl04:0386, 05AB, 07CE), 0 after }
-  PooledMoney: TPartyMoney;       { the Temple clears it on entry (ovl04:0D32) and passes it to ovl21_e12 }
+  PooledMoney: TPartyMoney;       { the Temple clears it on entry (ovl04:0D32) and passes it to MoneyValueInGold }
   ds6C95: PCharacter;             { the character Remove Curse hands to ovl22_e9 (ovl04:08FA) }
-  ds6DC0: Byte;                   { cleared when the Temple opens (ovl04:0D37); meaning unknown }
+  { 1 while money lies in the pool: PoolMoney sets it, ShareMoney sets it when some is left; the
+    Temple and the shop clear it with the pool (ovl04:0D37). }
+  MoneyInPool: Byte;
   { Globals of the DOS file and BIOS text layer (res05); evidence in re/dseg.toml where named. }
   { 16 entries, the colours 0..15 mapped to 0..3 (0,0,0,1,2,2,2,3,3,1,1,1,2,2,3,3 in the image);
     WriteCharsAt maps the text colour through it when VideoAdapter is 0 (0802:0086). }
@@ -694,6 +698,16 @@ var
   { The ten characters MakeDosFileName removes from a file name are entries 1..10 (DS:0D1A..0D23);
     entry 0 is the byte before them, never read (declared so the index base DS:0D19 names it). }
   BadNameChars: array[0..10] of Char;  { characters not allowed in a file name; see above }
+  { The value of the five coins in copper pieces: copper 1, silver 10, electrum 100, gold 200,
+    platinum 1000 (the image); MoneyValueInGold values money with it and divides by the gold entry. }
+  { Rows of eight words describing the fixed treasure items BuildTreasureItem builds (DS:0970): a row starts at
+    the index BuildTreasureItem picks (1, 9, $11, ... $91, and $90 once) and holds the three name numbers,
+    the weight, the value and three affect numbers (ovl21:182F..18C2; the image). }
+  TreasureItemRows: array[0..$98] of Word;
+  CoinCopperValues: array[0..4] of LongInt;
+  { The names of the seven kinds of money, string[10] at DS:0FFA: Copper, Silver, Electrum, Gold,
+    Platinum, Gems, Jewelry (the image); the Take menu lists the pool with them (ovl21:0DDF). }
+  MoneyKindNames: array[0..6] of string[10];
   PackedBuf: Pointer;             { the packed bytes of the DAX block LoadDaxBlock is reading }
   { Colour maps for res07_fn_1E5C (16 entries, colour I becomes entry I): ds0CD2 is the identity,
     ds0CE2 turns colour 13 into 8 and ds0CF2 turns 13 into 0 (the image). LoadPictureSlot recolours the

@@ -276,7 +276,7 @@ end;
   is, clears Count cells of a row to the background; nothing when the cell is off the 40 by 25
   screen. QUIRK 0709:05EE, 05FA: the Byte parameters are also compared below 0, which is never
   true; the compiler keeps the compares. Called by
-  ovl21_e6, ClearPromptLine, ReadInputLine, ShowMessageLine (row 24, 40 cells) and FlashMessageLine. }
+  ReadAmount, ClearPromptLine, ReadInputLine, ShowMessageLine (row 24, 40 cells) and FlashMessageLine. }
 procedure ClearTextCells(Col, Row, Color, Count: Byte);
 const
   GlyphSpace = $20;

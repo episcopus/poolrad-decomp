@@ -2540,3 +2540,178 @@ kind = "routine"
 why = "ovl10:0B97 (nested in PlaceRiver) puts tiles 34h and 35h on two neighbouring cells of a river row and counts the bridge pieces"
 date = "2026-10-12"
 
+[[rename]]
+old = "ovl21_fn_0020"
+new = "RemoveCarriedWeight"
+kind = "routine"
+why = "subtracts Amount from TCharacter+102, the carried weight MaxLoad bounds (ovl21:0020)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_fn_003A"
+new = "AddCarriedWeight"
+kind = "routine"
+why = "adds Amount to TCharacter+102, the carried weight MaxLoad bounds (ovl21:003A)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_e1"
+new = "WouldOverload"
+kind = "routine"
+why = "True when carried weight plus Amount exceeds MaxLoad, with the room left; its caller then shows 'Overloaded. Money will be put in Pool.' (ovl21:0054, 0219)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_e12"
+new = "MoneyValueInGold"
+kind = "routine"
+why = "sums the five coin kinds times their copper values (DS:0D24: 1,10,100,200,1000), adds 100 and divides by 200, the gold value (ovl21:00A8)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_e10"
+new = "SetCharacterGold"
+kind = "routine"
+why = "clears the selected character's five coin words and writes Amount div 5 platinum and Amount mod 5 gold (ovl21:0130)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_e11"
+new = "SetPooledGold"
+kind = "routine"
+why = "clears PooledMoney kinds 0..4 and writes Amount div 5 platinum and Amount mod 5 gold (ovl21:0185)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_fn_0203"
+new = "GivePlatinum"
+kind = "routine"
+why = "adds Amount to the selected character's Money[4] (platinum, 1000 copper in DS:0D24), the overflow to PooledMoney[4] with 'Overloaded. Money will be put in Pool.' (ovl21:0203)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds0D24"
+new = "CoinCopperValues"
+kind = "global"
+why = "five LongInts 1,10,100,200,1000 (the image); MoneyValueInGold multiplies the coin kinds by them and divides by entry 3 (ovl21:00EC, 0111)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_fn_0000"
+new = "CarryLimit"
+kind = "routine"
+why = "returns res12_fn_13AB (the strength weight allowance) plus 1500; WouldOverload compares the carried weight with it (ovl21:0000, 0054)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_e6"
+new = "ReadAmount"
+kind = "routine"
+why = "shows a prompt on row 24, reads digits until Enter or Escape with Backspace, clamps to Max (Str of Max), returns the Val of the digits or 0 on Escape (ovl21:0294)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_e7"
+new = "TransferMoney"
+kind = "routine"
+why = "moves Amount of Money[Kind] from one character to another with RemoveCarriedWeight/AddCarriedWeight, else shows 'Overloaded' (ovl21:044C)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_e2"
+new = "PoolMoney"
+kind = "routine"
+why = "adds every sharing member's seven Money words into PooledMoney, clears them and their weight, sets ds6DC0; ShopMain and VisitTemple call it on the Pool key (ovl21:0508)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_fn_05E0"
+new = "CountSharers"
+kind = "routine"
+why = "counts the party members with B84 0 or B3, the members PoolMoney takes money from; ShareMoney divides the pool by it (ovl21:05E0, 0652)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_e3"
+new = "ShareMoney"
+kind = "routine"
+why = "divides each kind of PooledMoney by CountSharers and adds the shares to the members' Money within their load, the rest stays pooled; called on the Share key (ovl21:063A)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_e8"
+new = "DropMoney"
+kind = "routine"
+why = "subtracts Amount from Who^.Money[Kind] and its weight, adds it to PooledMoney only in view modes 1 and 6 (ovl21:0A01)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6DC0"
+new = "MoneyInPool"
+kind = "global"
+why = "PoolMoney sets it to 1, ShareMoney sets it to 1 when any kind is left in PooledMoney, else 0 (ovl21:051B, 09AD..09F2); the shop and the Temple clear it with the pool"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_fn_0A88"
+new = "TakeFromPool"
+kind = "routine"
+why = "moves Amount (at most what PooledMoney[Kind] holds) from the pool to Who^.Money[Kind] with its weight, 'Overloaded' when it does not fit; TakeMoney calls it with the chosen kind (ovl21:0A88, 0F26)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_e5"
+new = "MoneyKindOfLine"
+kind = "routine"
+why = "returns 0..6 from the first letter of a Take menu line (G+E Gems 5, G Gold 3, P 4, E 2, S 1, C 0, J 6) and its name ('Gems ', 'Gold ', ...) (ovl21:0B93)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_e4"
+new = "TakeMoney"
+kind = "routine"
+why = "lists the pooled money kinds ('Select type of coin'), asks 'How much <kind> will you take?' and calls TakeFromPool for SelectedCharacter; the shop, Temple and treasure Take commands call it (ovl21:0CEB)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds0FFA"
+new = "MoneyKindNames"
+kind = "global"
+why = "seven string[10] Copper Silver Electrum Gold Platinum Gems Jewelry at DS:0FFA (the image); TakeMoney prefixes each pooled amount with MoneyKindNames[Kind] (ovl21:0DDF)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_e9"
+new = "TreasureLeft"
+kind = "routine"
+why = "sets its first var to 1 when any PooledMoney kind is nonzero and its second when the loot list ds6810 is not nil; the treasure, shop and Temple menus show Take/Share from it (ovl21:0F7E)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_fn_0FD2"
+new = "RollItemBonus"
+kind = "routine"
+why = "d20: 1..14 gives 1, 15..19 gives 2, else 3; BuildTreasureItem stores it in TMenuLine.Plus (ovl21:0FD2, 10AF)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_e13"
+new = "BuildTreasureItem"
+kind = "routine"
+why = "clears a 63-byte TMenuLine and fills ItemType, Plus, NameNum, Weight, Value and Affects from the item type and dice (ovl21:1010)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds0970"
+new = "TreasureItemRows"
+kind = "global"
+why = "BuildTreasureItem copies the name numbers, weight, value and affects of a fixed item from eight words starting at the chosen row (ovl21:182F..18C2)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_e14"
+new = "AppraiseGems"
+kind = "routine"
+why = "asks 'Appraise : ' over the selected character's gems (Money[5]) and jewelry (Money[6]), values one with a d100 ('The Gem is Valued at <n> gp.') and sells it or keeps it as an item; the shop and Temple Appraise key call it (ovl21:19B2)"
+date = "2026-10-12"
+

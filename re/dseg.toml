@@ -884,3 +884,23 @@ evidence = "ovl10:1672: as RingStartCol for the row"
 offset = 0x0306
 name = "PlacementShapes"
 evidence = "ovl10:1B38/1B57: PlaceAllCombatants marks a grid cell usable when its column lies in the (Lo, Hi) span of its row in shape SideFacing (group 1: shape 4)"
+
+[[global]]
+offset = 0x0D24
+name = "CoinCopperValues"
+evidence = "five LongInts 1,10,100,200,1000 (the image); MoneyValueInGold multiplies the coin kinds by them and divides by entry 3 (ovl21:00EC, 0111)"
+
+[[global]]
+offset = 0x6DC0
+name = "MoneyInPool"
+evidence = "PoolMoney sets it to 1, ShareMoney sets it to 1 when any kind is left in PooledMoney, else 0 (ovl21:051B, 09AD..09F2); the shop and the Temple clear it with the pool"
+
+[[global]]
+offset = 0x0FFA
+name = "MoneyKindNames"
+evidence = "seven string[10] Copper Silver Electrum Gold Platinum Gems Jewelry at DS:0FFA (the image); TakeMoney prefixes each pooled amount with MoneyKindNames[Kind] (ovl21:0DDF)"
+
+[[global]]
+offset = 0x0970
+name = "TreasureItemRows"
+evidence = "BuildTreasureItem copies the name numbers, weight, value and affects of a fixed item from eight words starting at the chosen row (ovl21:182F..18C2)"

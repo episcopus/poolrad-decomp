@@ -484,7 +484,7 @@ Each section will cover: purpose, units and routines, data, algorithm, quirks, e
 | 5.1 | ECL script interpreter: opcodes, variables, events | coab `engine/ovr003.cs`, `VmOpp.cs` **[H]**; wicanr2 places Pool's interpreter in overlay 3 of the 1988 build **[H]** |
 | 5.2 | Areas, maps and movement (GEO, walls, 3D view) | OpenGoldBox `docs/MAPS.md` **[H]**; the area view, ovl26 (below) |
 | 5.3 | Party and characters (creation, attributes, classes, levels) | wicanr2 `docs/spec/003`, `004` **[H]** |
-| 5.4 | Items, money, shops | ovl06 Shop (below, **[V]**); ovl19 Inventory, ovl21 Money (still stubs) |
+| 5.4 | Items, money, shops | ovl06 Shop (below, **[V]**); ovl19 Inventory (still stubs), ovl21 Money (5.4.1, **[V]**) |
 | 5.5 | Combat (tactical map, initiative, movement, attacks) | wicanr2 `ida-overlay08-*`, `ida-overlay13-*` **[H]** |
 | 5.6 | Magic and effects (spells, memorisation, durations) | |
 | 5.7 | Rest, time and healing | |
@@ -574,12 +574,12 @@ Overlay 14 drives wilderness interaction for `ovl03_fn_3379`: movement and view 
 The shop is overlay 6 (`ovl06`, "Shop"). `ShopMain` (`ovl06:053E`) is its entry, called from
 ovl03 when the party enters a shop. It marks the shop open (`DS:49F3`, read by res12), clears
 the 28-byte money block at `DS:67F4` and `DS:6DC0`, redraws the shop (`res12:27D9`,
-`res12:0767`), and loops on a menu (`ReadPromptChoice`) whose text comes from `ovl21_e9`:
+`res12:0767`), and loops on a menu (`ReadPromptChoice`) whose text comes from `TreasureLeft`:
 
-- The full menu is "Buy View Take Pool Share Appraise Exit"; when `ovl21_e9` says there is
+- The full menu is "Buy View Take Pool Share Appraise Exit"; when `TreasureLeft` says there is
   nothing to take or share, the shorter "Buy View Pool Appraise Exit" is shown. One `case`
-  dispatches the key: B buys, V views an entry (`ovl19_e5`), T takes (`ovl21_e4`), P pools
-  when the flag is clear (`ovl21_e2`), S shares (`ovl21_e3`), A appraises (`ovl21_e14`), E
+  dispatches the key: B buys, V views an entry (`ovl19_e5`), T takes (`TakeMoney`), P pools
+  when the flag is clear (`PoolMoney`), S shares (`ShareMoney`), A appraises (`AppraiseGems`), E
   leaves, and two keys that are in neither menu text (G and O) call `ovl19_e10` with the key
   as an amount. Leaving while money lies in the pool asks through `ovl07_e13` ("Do you want to
   go back and get your Money?", '~Yes ~No'); `ovl07_e13` returns the 0-based hotkey position, so
@@ -594,18 +594,17 @@ the 28-byte money block at `DS:67F4` and `DS:6DC0`, redraws the shop (`res12:27D
   picker `ChooseFromList` ("Items: " with a "Buy" button).
 - `BuyItems` (`ovl06:0361`) takes the chosen item's `Value` as the price. It pays first from the
   selected character's money (`ovl19_e11(SelectedCharacter)`, a LongInt) and then from the money
-  pooled in the shop (`ovl21_e12` on `DS:67F4`); if the price fits, the item is added to the
-  character's items and the amount is deducted (`ovl21_e10` for the character, `ovl21_e11` for the
-  pool), otherwise it shows "Not enough Money.". `ovl19_e11` and `ovl21_e12` both sum five coin
+  pooled in the shop (`MoneyValueInGold` on `DS:67F4`); if the price fits, the item is added to the
+  character's items and the amount is deducted (`SetCharacterGold` for the character, `SetPooledGold` for the
+  pool), otherwise it shows "Not enough Money.". `ovl19_e11` and `MoneyValueInGold` both sum five coin
   amounts, each multiplied by its LongInt rate from the table at `DS:0D24`, add 100 and divide by
   the LongInt at `DS:0D30` (`ovl19:28BE`, `ovl21:00A8`); the character's coins are five words at
   +$88..+$90, the pool's five LongInts at the start of the 28-byte block `DS:67F4`. Both deduction
-  routines divide the amount by 5 and write five coin amounts (`ovl21_e10` into the character,
-  `ovl21_e11` into `DS:67F4`), so the money blocks hold five denominations **[I]** (ovl05 shows seven LongInt kinds in `DS:67F4`, 5.20) (callees not
-  decompiled). Two 16-bit truncations are kept (QUIRKs): `BuyItems` keeps only the low word of
+  routines divide the amount by 5 and write five coin amounts (`SetCharacterGold` into the character,
+  `SetPooledGold` into `DS:67F4`), and the money blocks hold seven kinds, the five coins first (5.4.1). Two 16-bit truncations are kept (QUIRKs): `BuyItems` keeps only the low word of
   `ovl19_e11`'s LongInt (`ovl06:03C7`), so a character with 65536 or more is compared and charged
   modulo 65536, and it passes only the low word of the pool's LongInt remainder to
-  `ovl21_e11(Amount: Word)` (`ovl06:0449`), so a pool above 65535 is rewritten truncated; ovl04's
+  `SetPooledGold(Amount: Word)` (`ovl06:0449`), so a pool above 65535 is rewritten truncated; ovl04's
   `ChargeForCure` does the same (5.19).
 - `AddInventoryItem` (`ovl06:0239`) appends a clone of an item to `SelectedCharacter^.Items`
   (+$C8, the character's carried items) and sets its var `Overloaded` to 1 when the item was
@@ -616,6 +615,47 @@ the 28-byte money block at `DS:67F4` and `DS:6DC0`, redraws the shop (`res12:27D
 
 Map note: `re/symbols.toml` had split `ovl06:0239` at `ovl06:0311`; `0311` is one byte into a
 `les di, [bp-8]` instruction, not a routine entry, and its stub was removed.
+
+#### 5.4.1 Money: ovl21 **[V]** (`src/OVL21.PAS`, `make match UNIT=ovl21`: unit complete, 22 routines)
+
+ovl21 ("Money") holds the coin arithmetic and the money commands the shop (5.4), the Temple (5.19)
+and the treasure menu (5.20) share.
+
+- **Seven kinds.** `TCharacter.Money` (+$88, seven words) and `PooledMoney` (`DS:67F4`, seven
+  LongInts) are indexed alike: copper, silver, electrum, gold, platinum, gems, jewelry, the order of
+  the name table `MoneyKindNames` (`DS:0FFA`, seven `string[10]`). `CoinCopperValues` (`DS:0D24`)
+  values the five coins in copper: 1, 10, 100, 200, 1000. `MoneyValueInGold` (`ovl21:00A8`) sums the
+  five coins in copper, adds 100 and divides by 200 (rounding to gold); gems and jewelry are not
+  money until appraised. `SetCharacterGold` and `SetPooledGold` rewrite a gold amount as
+  `Amount div 5` platinum plus `Amount mod 5` gold, clearing the other coins.
+- **Weight.** Every coin weighs one unit of the carried weight `TCharacter.CarriedWeight` (+$102);
+  `CarryLimit` is 1500 plus the strength allowance `res12_fn_13AB` (a table on the strength
+  class: -350 for the weakest, up to several thousand), and `WouldOverload` tells whether Amount more fits and how much
+  room is left. QUIRK `ovl21:04DB`: `TransferMoney` adds the coins' weight back to the giver instead
+  of the taker.
+- **Pool and Share.** `PoolMoney` (`ovl21:0508`) moves all the money of every member whose `B84` is
+  0 or $B3 into `PooledMoney` and sets `MoneyInPool` (`DS:6DC0`). `ShareMoney` (`ovl21:063A`)
+  divides each kind by the number of such members (`CountSharers`): each member below `B84` $80 takes
+  his share, jewelry first, as far as his load allows, plus one coin of the remainder; the remainders
+  then go to anybody who can carry them, and what is left stays pooled.
+- **Take.** `TakeMoney` (`ovl21:0CEB`) lists the pooled kinds ("Select type of coin"), asks "How much
+  <kind> will you take?" with `ReadAmount` (`ovl21:0294`: digits on row 24, Backspace, clamped to the
+  maximum, Escape gives 0) and moves the amount with `TakeFromPool`. `DropMoney` puts dropped coins
+  into the pool only in view mode 1 (shop, Temple) or 6 (treasure); elsewhere they are lost.
+  `TreasureLeft` (`ovl21:0F7E`) reports pooled money and loot left for the menus.
+- **Appraise.** `AppraiseGems` (`ovl21:19B2`) values one gem (d100: 10, 50, 100, 500, 1000 or 5000
+  gp) or piece of jewelry (100 + Random(900) up to 2000 + Random(10000)) at a time; selling pays a
+  fifth of the value in platinum (`GivePlatinum`, the overflow to the pool with "Overloaded.  Money
+  will be put in Pool."), keeping makes an item of type $46 when the character can carry it and has
+  fewer than 16 items. QUIRK `ovl21:1E74`: a character with no items loses the kept gem, and the
+  kept item adds no weight.
+- **Treasure items.** `BuildTreasureItem` (`ovl21:1010`, called from ovl03) fills a 63-byte
+  `TMenuLine` for an item type: weapons and armour get a bonus of 1..3 (`RollItemBonus`, d20) with
+  their name numbers, weight and value; types $3D and $3E get 1..3 random affects; other types take
+  a fixed row of eight words of `TreasureItemRows` (`DS:0970`).
+
+Map note: `07D1`, `0B48`, `0F21`, `1758`, `1F4B` and `2233` were inside routines (`ShareMoney`,
+`TakeFromPool`, `TakeMoney`, `BuildTreasureItem`, `AppraiseGems`) and their entries were removed.
 
 ### 5.5 Combat: the round loop and the player's commands **[V]** (`src/OVL08.PAS`, `make match UNIT=ovl08`: 11 of 13 routines at L2)
 
@@ -880,8 +920,8 @@ All seven routines are decompiled and matched.
 
 ### 5.19 The Temple **[V]** (`src/OVL04.PAS`, `make match UNIT=ovl04`: unit complete)
 
-- **The shop menu** **[V]** (`VisitTemple`, `ovl04:0D09`): `Heal View Take Pool Share Appraise Exit`, or `Heal View Pool Appraise Exit` while `ovl21_e9` reports no pooled money. On entry it sets the view mode `DS:49F3` to 1, redraws the view (`res12_fn_27D9`), reshows the character (`res12_fn_0767`), clears the 28 bytes at `DS:67F4` (the pooled money that `ovl21_e12` sums into a `LongInt`) and clears `DS:6DC0`. Exit with money left in the pool shows the priest's `As you leave a priest says, "Excuse me but you have left some money here"` and `Do you want to go back and retrieve your money?` (`ovl07_e13`) and leaves when that returns 1 (No: `ovl07_e13` returns the 0-based hotkey position of `'~Yes ~No'`), so Yes keeps the money in the Temple.
-- **The services** **[V]** (`HealMenu`, `ovl04:09D7`, ten names from the `string[40]` table at `DS:011A`: the nine services plus `Exit` at entry 10, `DS:028B`): every service routine checks the selected character (`SelectedCharacter`, `DS:5D92`), asks `cast cure anyway:` when the service is not needed (`AskCastAnyway`), then `ChargeForCure` shows `<service> will only cost <n> gold pieces.`, takes the price from the character's money (`ovl19_e11`, `ovl21_e10`) or else from the pool (`ovl21_e12`, `ovl21_e11`), and says `Not enough money.` when neither covers it. QUIRK `ovl04:0177`, `ovl04:01C8`: `ovl19_e11` returns a `LongInt` but `Money` is a `Word` and `ovl21_e11(Amount: Word)` takes only the low word of the pooled `LongInt`, so money or a pool of 65536 or more is compared and rewritten modulo 65536 (the same truncations as ovl06's `BuyItems`).
+- **The shop menu** **[V]** (`VisitTemple`, `ovl04:0D09`): `Heal View Take Pool Share Appraise Exit`, or `Heal View Pool Appraise Exit` while `TreasureLeft` reports no pooled money. On entry it sets the view mode `DS:49F3` to 1, redraws the view (`res12_fn_27D9`), reshows the character (`res12_fn_0767`), clears the 28 bytes at `DS:67F4` (the pooled money that `MoneyValueInGold` sums into a `LongInt`) and clears `DS:6DC0`. Exit with money left in the pool shows the priest's `As you leave a priest says, "Excuse me but you have left some money here"` and `Do you want to go back and retrieve your money?` (`ovl07_e13`) and leaves when that returns 1 (No: `ovl07_e13` returns the 0-based hotkey position of `'~Yes ~No'`), so Yes keeps the money in the Temple.
+- **The services** **[V]** (`HealMenu`, `ovl04:09D7`, ten names from the `string[40]` table at `DS:011A`: the nine services plus `Exit` at entry 10, `DS:028B`): every service routine checks the selected character (`SelectedCharacter`, `DS:5D92`), asks `cast cure anyway:` when the service is not needed (`AskCastAnyway`), then `ChargeForCure` shows `<service> will only cost <n> gold pieces.`, takes the price from the character's money (`ovl19_e11`, `SetCharacterGold`) or else from the pool (`MoneyValueInGold`, `SetPooledGold`), and says `Not enough money.` when neither covers it. QUIRK `ovl04:0177`, `ovl04:01C8`: `ovl19_e11` returns a `LongInt` but `Money` is a `Word` and `SetPooledGold(Amount: Word)` takes only the low word of the pooled `LongInt`, so money or a pool of 65536 or more is compared and rewritten modulo 65536 (the same truncations as ovl06's `BuyItems`).
 
   | Service | Price | Needed when | Effect |
   |---|---:|---|---|
@@ -904,7 +944,7 @@ Overlay 5 (`ovl05`, "TreasureShare") runs once a combat is over; its only entry 
 - **Experience** **[V]** (`ComputeBattleExperience`, `ovl05:0000`; `AwardExperience`, `ovl05:0355`): every monster (Side 1) that did not flee gives `XpValue` (+$B8) plus `HpB1` times `XpPerHp` (+$BA), its seven money words (+$88..+$94) go into `PooledMoney` (`DS:67F4`, seven LongInts: the money block holds seven kinds, not five as 5.4 inferred) and its items into the loot list `DS:6810` (every valuable item; worthless ones only while fewer than 8 items were taken and on 1d10 at most 3; none when word 739 is 1). The pooled money then adds its value: kind 0 / 200, kind 1 / 20, kind 2 / 2, kind 3, kind 4 * 5, kind 5 * 250, kind 6 * 2200 (the AD&D copper, silver, electrum, gold and platinum rates, then gems and jewelry **[I]**), and every looted item before `DS:5D9A` adds 400 per point of `Plus`. The total is divided by the party size (word 830) less the members without `Flag10D` or dead (`NoExperienceCount`, `DS:84D5`): `BattleExperience` (`DS:84D6`). In a duel with word 742 set it is 100 times the selected character's highest level instead. Each member with `Flag10D` that is not dead adds it to `Experience` (+$AC): 10% more for a cleric (class 0), fighter (2), magic-user (5) or thief (6) whose prime requisite (Wisdom, Strength, Intelligence, Dexterity) is above 15, half for classes 8, 10..14 and 16 and a third for 9 and 15, the multi-class combinations **[I]**. The class byte (+$2F) is compared signed (`jl` at `ovl05:045A`), so it is a `ShortInt`.
 - **Monsters out** **[V]** (`RemoveBattleCombatants`, `ovl05:11AC`): monsters and extra combatants leave the party list through `ovl16_e2(Uncounted, FreePicture)` (`ovl16:3291`: unlinks `SelectedCharacter`, frees its picture slot when `FreePicture`, and decrements the party size word 830 unless `Uncounted`); word 712 counts the removed ones whose `Flag10D` is not 1. The members' combat states ($16 bytes) are freed.
 - **Hirelings** **[V]** (`TakeHirelingShares`, `ovl05:12E8`): an okay member with `B84` $80 or more (run by the computer) holds `HirelingShare` (+$85) and 7 shares, everybody else one; each kind of pooled money loses the hirelings' part (QUIRK `ovl05:13A5`: the share of one kind is truncated to a byte before it is multiplied), and "<name> takes and hides his share." is shown for each hireling.
-- **Result and loot** **[V]** (`ShowBattleResult`, `ovl05:0916`; `TreasureMenu`, `ovl05:0ECD`): "The party has won." (or the duel texts), "The party has fled." (no experience) or "The party has found Treasure!", then "Each character receives <n> experience points.". The menu is "View Take Pool Share" with " Detect Exit" when `SelectedCharacter` has spell 5 or $B memorized (Detect Magic of the cleric and the magic-user **[I]**, cast through `ovl22_e5`) and there are items; Take (`TakeTreasure`) asks "Take: Money Items Exit" when both are left, and the items are taken one by one from the "Loot" window (`TakeLootItems`, `ChooseLootItem`, `AddInventoryItem`). `ovl21_e9(var MoneyLeft, ItemsLeft)` reports what is left. Exit with treasure left asks "There is still treasure left.  Do you want to go back and claim your treasure?". Whatever loot is left is freed when the menu ends.
+- **Result and loot** **[V]** (`ShowBattleResult`, `ovl05:0916`; `TreasureMenu`, `ovl05:0ECD`): "The party has won." (or the duel texts), "The party has fled." (no experience) or "The party has found Treasure!", then "Each character receives <n> experience points.". The menu is "View Take Pool Share" with " Detect Exit" when `SelectedCharacter` has spell 5 or $B memorized (Detect Magic of the cleric and the magic-user **[I]**, cast through `ovl22_e5`) and there are items; Take (`TakeTreasure`) asks "Take: Money Items Exit" when both are left, and the items are taken one by one from the "Loot" window (`TakeLootItems`, `ChooseLootItem`, `AddInventoryItem`). `TreasureLeft(var MoneyLeft, ItemsLeft)` reports what is left. Exit with treasure left asks "There is still treasure left.  Do you want to go back and claim your treasure?". Whatever loot is left is freed when the menu ends.
 - **The end** **[V]**: a destroyed party (not in a duel) sets the outcome word to $80 and shows "The END!" and "The monsters rejoice for the party has been destroyed". Every battle ends by setting `DS:4A00` and clearing words 880..882, 739 and 742.
 - **Map corrections and frames** **[V]**: the map listed 26 entries; 15 (`02AA`, `0311`, `0507`, `06EB`, `07AA`, `0889`, `08A2`, `091A`, `091F`, `0924`, `093D`, `0999`, `0B48`, `0FE2`, `1307`) are inside the 11 routines and the initialisation part (`ovl05:1671`). Four routines have frame bytes no statement uses (QUIRKs `ovl05:04CC`, `0B17`, `0ED0`, `12EB`), declared as unused locals to keep the frame. A record assignment of a 63-byte item (`Dest^ := Src^`) compiles to the copy helper `0AF8:0A3F`, not to `Move`.
 

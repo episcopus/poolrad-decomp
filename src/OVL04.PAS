@@ -75,13 +75,13 @@ end;
 
 { ovl04:00BF. Tells what Service costs ("<service> will only cost <price> gold pieces."), asks
   "pay for cure", and on Yes takes Price from the selected character's money (ovl19_e11, then
-  ovl21_e10) or else from the pooled money DS:67F4 (ovl21_e12, then ovl21_e11). When neither
+  SetCharacterGold) or else from the pooled money DS:67F4 (MoneyValueInGold, then SetPooledGold). When neither
   covers the price it says "Not enough money." and the answer becomes No. On Yes it shows
   "is cured.". Returns the answer.
   QUIRK ovl04:0177: ovl19_e11 returns a LongInt, but Money is a Word, so only AX is kept and a
   character with 65536 or more is compared and charged modulo 65536 (a price can fit when only the
-  low word does, and ovl21_e10 then stores the low word less the price). QUIRK ovl04:01C8: the pool
-  path computes Pooled - Price as a LongInt but ovl21_e11(Amount: Word) receives only the low word,
+  low word does, and SetCharacterGold then stores the low word less the price). QUIRK ovl04:01C8: the pool
+  path computes Pooled - Price as a LongInt but SetPooledGold(Amount: Word) receives only the low word,
   so a pool above 65535 is rewritten with the truncated amount (the same truncations as ovl06's
   BuyItems). }
 function ChargeForCure(Service: string; Price: Word): Char;
@@ -99,15 +99,15 @@ begin
     if Price <= Money then
     begin
       Dec(Money, Price);
-      ovl21_e10(Money);
+      SetCharacterGold(Money);
     end
     else
     begin
-      Pooled := ovl21_e12(PooledMoney);
+      Pooled := MoneyValueInGold(PooledMoney);
       if Price <= Pooled then
       begin
         Dec(Pooled, Price);
-        ovl21_e11(Pooled);   { QUIRK ovl04:01C8: only the low word of the LongInt is passed }
+        SetPooledGold(Pooled);   { QUIRK ovl04:01C8: only the low word of the LongInt is passed }
       end
       else
       begin
@@ -424,15 +424,15 @@ begin
 end;
 
 { ovl04:0D09. The Temple: the menu Heal, View, Take, Pool, Share, Appraise, Exit (Take and
-  Share only while ovl21_e9 reports pooled money). Heal opens HealMenu and Pool runs only when
+  Share only while TreasureLeft reports pooled money). Heal opens HealMenu and Pool runs only when
   MenuFlag is 0; View ovl19_e5 receives MenuFlag, Take
-  ovl21_e4, Pool ovl21_e2, Share ovl21_e3, Appraise ovl21_e14, G and O ovl19_e10. Exit with
+  TakeMoney, Pool PoolMoney, Share ShareMoney, Appraise AppraiseGems, G and O ovl19_e10. Exit with
   money left in the pool asks "Do you want to go back and retrieve your money?" ('~Yes ~No') and
   leaves on No (ovl07_e13 returns the 0-based hotkey position, 1 = No = AnswerNo); Yes keeps the
   money in the Temple. The trailing case (ovl04:0F02) also runs res12_fn_27D9 for a 'B'
   key with 'T' and for 'A' when Appraised is set, but neither menu text offers 'B'; what produces
   it is unknown. On entry it sets the view mode ds49F3 := 1, redraws the view (res12_fn_27D9) and
-  reshows the character (res12_fn_0767), clears the pooled money DS:67F4 and sets ds6DC0 := 0. }
+  reshows the character (res12_fn_0767), clears the pooled money DS:67F4 and sets MoneyInPool := 0. }
 procedure VisitTemple;
 var
   Key: Char;
@@ -441,19 +441,19 @@ var
                             when the menu did not take it (then H and P are skipped and View gets
                             it) [I] }
   Prompt: String40;
-  MoneyPooled: Byte;      { nonzero while money lies in the pool (ovl21_e9's first result) }
-  PoolSecond: Byte;       { ovl21_e9's second result; not read here }
+  MoneyPooled: Byte;      { nonzero while money lies in the pool (TreasureLeft's first result) }
+  PoolSecond: Byte;       { TreasureLeft's second result; not read here }
   LeaveAnswer: Byte;      { the choice in the "retrieve your money" question }
-  Appraised: Byte;        { set by Appraise (ovl21_e14); nonzero redraws the view }
+  Appraised: Byte;        { set by Appraise (AppraiseGems); nonzero redraws the view }
 begin
   ds49F3 := 1;
   res12_fn_27D9;
   res12_fn_0767(SelectedCharacter);
   FillChar(PooledMoney, SizeOf(PooledMoney), 0);
-  ds6DC0 := 0;
+  MoneyInPool := 0;
   Done := False;
   repeat
-    ovl21_e9(MoneyPooled, PoolSecond);
+    TreasureLeft(MoneyPooled, PoolSecond);
     if MoneyPooled <> 0 then
       Prompt := 'Heal View Take Pool Share Appraise Exit'
     else
@@ -462,13 +462,13 @@ begin
     case Key of
       'H': if MenuFlag = 0 then HealMenu;
       'V': ovl19_e5(MenuFlag);
-      'T': ovl21_e4;
-      'P': if MenuFlag = 0 then ovl21_e2;
-      'S': ovl21_e3;
-      'A': ovl21_e14(Appraised);
+      'T': TakeMoney;
+      'P': if MenuFlag = 0 then PoolMoney;
+      'S': ShareMoney;
+      'A': AppraiseGems(Appraised);
       'E':
         begin
-          ovl21_e9(MoneyPooled, PoolSecond);
+          TreasureLeft(MoneyPooled, PoolSecond);
           if MoneyPooled <> 0 then
           begin
             Prompt := '~Yes ~No';

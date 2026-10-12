@@ -439,9 +439,9 @@ begin
   res12_fn_27D9;
 end;
 
-{ ovl05:0D38. The Take command of the treasure menu. MoneyLeft and ItemsLeft are ovl21_e9's two
+{ ovl05:0D38. The Take command of the treasure menu. MoneyLeft and ItemsLeft are TreasureLeft's two
   results (money in the pool, items in the loot). With only items it goes to TakeLootItems, with
-  only money it takes the money (ovl21_e4); with both it loops on 'Take: Money Items Exit' until
+  only money it takes the money (TakeMoney); with both it loops on 'Take: Money Items Exit' until
   Exit or one of them runs out (G and O, in no menu text, go to ovl19_e10 as in the shop). }
 procedure TakeTreasure(var MoneyLeft, ItemsLeft: Byte);
 var
@@ -459,7 +459,7 @@ begin
         case Key of
           'M':
             begin
-              ovl21_e4;
+              TakeMoney;
               res12_fn_27D9;
             end;
           'I': TakeLootItems;
@@ -468,14 +468,14 @@ begin
           'O': ovl19_e10(Key);
         end;
         res12_fn_0767(SelectedCharacter);
-        ovl21_e9(MoneyLeft, ItemsLeft);
+        TreasureLeft(MoneyLeft, ItemsLeft);
         if (MoneyLeft = 0) or (ItemsLeft = 0) then
           Done := True;
       until Done;
     end
     else
     begin
-      ovl21_e4;
+      TakeMoney;
       res12_fn_27D9;
     end;
   end
@@ -486,7 +486,7 @@ end;
 { ovl05:0ECD. The treasure menu after a won battle: 'View Pool Exit', with Take while there is loot
   and Share while there is pooled money, and Detect when SelectedCharacter has Detect Magic
   memorized and there are items (Detect casts it through ovl22_e5). V views (ovl19_e5), T takes
-  (TakeTreasure), P pools (ovl21_e2) when the key flag is clear, S shares (ovl21_e3). Exit with
+  (TakeTreasure), P pools (PoolMoney) when the key flag is clear, S shares (ShareMoney). Exit with
   treasure left asks 'There is still treasure left.  Do you want to go back and claim your
   treasure?' and leaves on No. }
 procedure TreasureMenu;
@@ -510,7 +510,7 @@ begin
   res12_fn_27D9;
   MoneyLeft := 0;
   repeat
-    ovl21_e9(MoneyLeft, ItemsLeft);
+    TreasureLeft(MoneyLeft, ItemsLeft);
     Menu := 'View Pool Exit';
     Slot := 0;
     ExitText := ' Exit';
@@ -536,12 +536,12 @@ begin
     case Key of
       'V': ovl19_e5(ExtKey);
       'T': TakeTreasure(MoneyLeft, ItemsLeft);
-      'P': if ExtKey = 0 then ovl21_e2;
-      'S': ovl21_e3;
+      'P': if ExtKey = 0 then PoolMoney;
+      'S': ShareMoney;
       'D': ovl22_e5(DetectSpell, 0, 0, ExtKey);
       'E', KeyNone:
         begin
-          ovl21_e9(MoneyLeft, ItemsLeft);
+          TreasureLeft(MoneyLeft, ItemsLeft);
           if (MoneyLeft <> 0) or (ItemsLeft <> 0) then
           begin
             Menu := '~Yes ~No';
