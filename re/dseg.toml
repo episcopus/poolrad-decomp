@@ -829,3 +829,27 @@ evidence = "LoadEcl fills it with the ECL block (ovl07:03F3); the script reads i
 offset = 0x49ED
 name = "EclPC"
 evidence = "the script's program counter: ovl07_e2 reads operand bytes at EclPC+1.. and advances it (ovl07:0022..012C); ovl07_e3 resets it to 9900, the start of EclCode (ovl07:01F5); ovl14 L key loads an entry point into it"
+
+[[global]]
+offset = 0x7005
+size = 65
+name = "OperandType"
+evidence = "DecodeOperands (ovl07:0000) stores the type byte of operand I = 1..Count at DS:7005 + I and branches on it (1/2/3 read a high byte, $80 a packed string, $81 a string address); OperandValue (ovl07:0136) reads it back; entry 0 is the byte before, never read"
+
+[[global]]
+offset = 0x7045
+size = 65
+name = "OperandHigh"
+evidence = "DecodeOperands (ovl07:0000) stores the third operand byte at DS:7045 + I for types 1, 2, 3 and $81; OperandValue (ovl07:0136) uses it as the high byte of the word (MakeWord); entry 0 is never read"
+
+[[global]]
+offset = 0x7085
+size = 65
+name = "OperandLow"
+evidence = "DecodeOperands (ovl07:0000) stores the second operand byte at DS:7085 + I (the low byte, or the length of a packed string for type $80); InitScript (ovl07:0254) reads entry 1; entry 0 is never read"
+
+[[global]]
+offset = 0x6FC8
+size = 3840
+name = "EclStrings"
+evidence = "string[255] table indexed by the string operand number shl 8 from DS:6FC8 (DecodeOperands clears entry n, ovl07:00CC; DecodeString appends to it, ovl07:1165..1284; ReadVmString, ovl07:1317); entry 0 is the index base, never read; the upper bound is not known"

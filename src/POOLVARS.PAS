@@ -471,8 +471,8 @@ var
   ds6AB0: Byte;                   { WallIdAt's result for the party cell and icon set (MoveParty); meaning unknown }
   ds6AB1: Byte;                   { the event byte of the party's map cell, from EventByteAt; bit 7 = interior }
   MarkerFrame: Byte;              { the party marker's animation frame 0..5; evidence in re/dseg.toml }
-  ds6F68: Byte;                   { special view code 2; set with ds84E5 := 1 by ovl07_e3 ($41) and ovl11_fn_0435 ($DB) }
-  ds6F69: Byte;                   { special view code 1; set with ds84E5 := 1 by ovl07_e3 (9) and ovl11_fn_0435 ($E8) }
+  ds6F68: Byte;                   { special view code 2; set with ds84E5 := 1 by InitScript ($41) and ovl11_fn_0435 ($DB) }
+  ds6F69: Byte;                   { special view code 1; set with ds84E5 := 1 by InitScript (9) and ovl11_fn_0435 ($E8) }
   ds84E5: Byte;                   { special view gate: ShowAreaView uses ds6F68/ds6F69 only while it is nonzero }
   ds84F0: Byte;                   { set to 0 in res08_init after closing pool.cfg; meaning unknown }
   Regs: Registers;                { registers for Intr calls (QuitGame) }
@@ -558,7 +558,7 @@ var
   ds261E: Word;                   { the sound RemoveCombatant plays (PlaySound) when a combatant dies }
   ds6718: array[0..255] of TSortRec;  { the ovl30 sort table (element 0 holds the count, SortTable) }
   EclPC: Word;                   { set to $9900 by the loader (ovl11:03C0) }
-  ds49E5: Word;                   { copied to EclPC by the ovl14 L key; meaning unknown }
+  ds49E5: Word;                   { the second script entry address (see ds49E3); the ovl14 L key copies it to EclPC }
   ds49F4: Byte;                   { cleared by the loader (ovl11:03CB) }
   ShowPortraits: Byte;            { nonzero: the portraits are shown; the camp's Pics submenu toggles it
                                     (ovl15:1D31, 1DFC); the loader sets it to 1 (ovl11:0392) }
@@ -795,5 +795,31 @@ var
   ds84E1: Byte;                   { cleared by ShowHeadBody (ovl07:0514); meaning unknown }
   ds84E6: Byte;                   { set to 1 when the script moves the party or changes its marker (ovl07:0D6C..0DD6) }
   ds84E8: Byte;                   { set to 1 when the script writes game variable $49FD or $49FE (ovl07:0CAF) }
+  { The decoded operands of the current script command (DecodeOperands, ovl07:0000): entries
+    1..64 of each table; entry 0 is the byte before, never read (in the image it is the last entry
+    of the table before). OperandType 0 is an immediate byte, 1 and 3 an address to read, 2 an
+    immediate word, $80 a packed string, $81 the address of a string. }
+  OperandType: array[0..64] of Byte;
+  OperandHigh: array[0..64] of Byte;   { the high byte of a word operand }
+  OperandLow: array[0..64] of Byte;    { the low byte, or the length of a packed string }
+  { The string operands of the current command, entries 1.. in operand order (DecodeOperands);
+    entry 0 is the index base, never read (in the image it overlaps the operand tables). The upper
+    bound is not known: the largest operand count seen is 14 (ovl03). }
+  EclStrings: array[0..14] of string;
+  { The five entry addresses of the loaded script, read from its header by InitScript
+    (ovl07:0260..02B8); coab calls them vm_run_1, SearchLocation, PreCampCheck, CampInterrupted
+    and ecl_initial_entryPoint [H]. The wilderness L key starts the script at the second
+    (ovl14). }
+  ds49E3: Word;                   { the first script entry address; see above }
+  ds49E7: Word;                   { the third script entry address; see above }
+  ds49E9: Word;                   { the fourth script entry address; see above }
+  ds49EB: Word;                   { the fifth script entry address; see above }
+  ds6F70: Pointer;                { cleared by InitScript (ovl07:0202); meaning unknown }
+  ds6F74: Pointer;                { cleared by InitScript (ovl07:020A); meaning unknown }
+  ds6F78: array[0..5] of Byte;    { six bytes InitScript clears (ovl07:0210); meaning unknown }
+  ds6F83: Byte;                   { set to 8 by InitScript (ovl07:01F0); meaning unknown }
+  ds70C6: Byte;                   { cleared by InitScript (ovl07:01FB); meaning unknown }
+  ds84C8: array[0..1] of Byte;    { two bytes InitScript clears (ovl07:01DF); meaning unknown }
+  ds84E2: Byte;                   { cleared by InitScript (ovl07:01C1); meaning unknown }
 implementation
 end.

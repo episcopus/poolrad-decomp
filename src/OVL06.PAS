@@ -16,7 +16,7 @@ implementation
 uses OVL07, OVL19, OVL21, OVL25, RES06, RES09, RES12;
 
 const
-  AnswerNo = 1;   { ovl07_e13 returns the 0-based hotkey position: for '~Yes ~No' the second key
+  AnswerNo = 1;   { AskMenu returns the 0-based hotkey position: for '~Yes ~No' the second key
                     (No) is 1, the answer ShopMain leaves on }
 
 { ovl06:0030 (ChooseShopItem). Builds the shop window and the item picker. Walks the stock list at
@@ -179,7 +179,7 @@ end;
   MoneyPooled says money lies in the pool) and dispatches the key: B BuyItems, V ovl19_e5, T ovl21_e4,
   P ovl21_e2 (when MenuFlag is 0), S ovl21_e3, A ovl21_e14 (Appraise), E leaves, and G and O, which
   neither menu text shows, call ovl19_e10 with the key. With money left in the pool, E first asks
-  "Do you want to go back and get your Money?" ('~Yes ~No' through ovl07_e13, which returns the
+  "Do you want to go back and get your Money?" ('~Yes ~No' through AskMenu, which returns the
   0-based hotkey position) and the party leaves on No (AnswerNo); Yes clears the message window
   (ClearRect) and stays. A second case redraws the screen (res12_fn_27D9) after B and T, and
   after A when Appraised is set. No parameters; side effects: the screen, the items and the money
@@ -235,7 +235,7 @@ begin
               'As you Leave the Shopkeeper says, "Excuse me but you have Left Some Money here."  ');
             ShowPagedText(1, $11, $26, $16, $F, 0,
               'Do you want to go back and get your Money?');
-            LeaveAnswer := ovl07_e13(Title, MenuText, $D, $A, $F, 0, 0);
+            LeaveAnswer := AskMenu(Title, MenuText, $D, $A, $F, 0, 0);
             if LeaveAnswer = AnswerNo then
               Done := 1
             else

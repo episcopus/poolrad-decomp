@@ -61,7 +61,7 @@ const
   KeyNone = #0;                 { treated as Escape/Cancel; ReadPromptChoice/e4 are still stubs, so this comes
                                   from the callers (an extended key returns #0 first, whitepaper 5.8), not
                                   from the callee's own bytes }
-  AnswerNo = 1;                 { ovl07_e13 returns the 0-based hotkey position: for '~Yes ~No' the
+  AnswerNo = 1;                 { AskMenu returns the 0-based hotkey position: for '~Yes ~No' the
                                   second key (No) is 1, the value VisitTemple leaves on }
 
 { ovl04:0013. Shows Reason for the selected character (res12_fn_16EC, e.g. "is not blind.") and
@@ -428,7 +428,7 @@ end;
   MenuFlag is 0; View ovl19_e5 receives MenuFlag, Take
   ovl21_e4, Pool ovl21_e2, Share ovl21_e3, Appraise ovl21_e14, G and O ovl19_e10. Exit with
   money left in the pool asks "Do you want to go back and retrieve your money?" ('~Yes ~No') and
-  leaves on No (ovl07_e13 returns the 0-based hotkey position, 1 = No = AnswerNo); Yes keeps the
+  leaves on No (AskMenu returns the 0-based hotkey position, 1 = No = AnswerNo); Yes keeps the
   money in the Temple. The trailing case (ovl04:0F02) also runs res12_fn_27D9 for a 'B'
   key with 'T' and for 'A' when Appraised is set, but neither menu text offers 'B'; what produces
   it is unknown. On entry it sets the view mode ds49F3 := 1, redraws the view (res12_fn_27D9) and
@@ -475,7 +475,7 @@ begin
             ShowPagedText(1, $11, $26, $16, $A, 1,
               'As you leave a priest says, "Excuse me but you have left some money here" ');
             ShowPagedText(1, $11, $26, $16, $A, 1, 'Do you want to go back and retrieve your money?');
-            LeaveAnswer := ovl07_e13('', Prompt, 13, 10, 15, 0, 0);
+            LeaveAnswer := AskMenu('', Prompt, 13, 10, 15, 0, 0);
             if LeaveAnswer = AnswerNo then
               Done := True
             else
