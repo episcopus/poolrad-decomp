@@ -211,3 +211,24 @@ kind = "routine"
 why = "ovl11:002D: the start-up loader the main program runs first (src/POOL.PAS: ovl11_e1 before the title and the copy protection); it allocates the game blocks, fills the cell tables, sets the game globals and reads the initial file (make match UNIT=ovl11)"
 date = "2026-10-11"
 
+[[rename]]
+old = "ovl28_e1"
+new = "DrawSprite"
+kind = "routine"
+why = "ovl28:0000: draws an 8x8 sprite at column X row Y, through the screen buffer when Direct is set (res07_fn_0D71) or the staging buffer otherwise (res07_fn_1951)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl28_fn_0050"
+new = "DrawHeadSprite"
+kind = "routine"
+why = "ovl28:0050: draws the HEAD sprite (DS:6B01, loaded by ovl28_e6) at its column and row through DrawSprite; called by Show3DSprite (ovl28_e5)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl28_fn_0070"
+new = "DrawBodySprite"
+kind = "routine"
+why = "ovl28:0070: draws the BODY sprite (DS:6B06, loaded by ovl28_e6) at its column and row plus 5 through DrawSprite; called by Show3DSprite (ovl28_e5)"
+date = "2026-10-11"
+

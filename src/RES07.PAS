@@ -15,7 +15,7 @@ procedure res07_fn_08D4;
 procedure res07_fn_0A33;
 procedure res07_fn_0C0C;
 procedure res07_fn_0D6C;
-procedure res07_fn_0D71;
+procedure res07_fn_0D71(Top, Left: Word; Mode, Flags: Byte; Sprite, Screen: Pointer);
 procedure res07_fn_0E01;
 procedure res07_fn_0E28;
 procedure res07_fn_0E33;
@@ -33,7 +33,7 @@ procedure res07_fn_1514;
 procedure res07_fn_1596;
 procedure res07_fn_15C7;
 procedure res07_fn_1708;
-procedure res07_fn_1951;
+procedure res07_fn_1951(X, Y: Integer; Buf: Pointer);
 procedure res07_fn_1A19;
 procedure res07_fn_1B52;
 procedure res07_fn_1E5C;
@@ -68,7 +68,7 @@ implementation
 { 0464:0D6C: retf 16: 16 bytes of parameters; 0 bytes of locals }
 {@stub} procedure res07_fn_0D6C; begin end;
 { 0464:0D71: frame not read }
-{@stub} procedure res07_fn_0D71; begin end;
+{@stub} procedure res07_fn_0D71(Top, Left: Word; Mode, Flags: Byte; Sprite, Screen: Pointer); begin end;
 { 0464:0E01: frame not read }
 {@stub} procedure res07_fn_0E01; begin end;
 { 0464:0E28: frame not read }
@@ -104,7 +104,7 @@ implementation
 { 0464:1708: retf 8: 8 bytes of parameters; 0 bytes of locals }
 {@stub} procedure res07_fn_1708; begin end;
 { 0464:1951: frame not read }
-{@stub} procedure res07_fn_1951; begin end;
+{@stub} procedure res07_fn_1951(X, Y: Integer; Buf: Pointer); begin end;
 { 0464:1A19: retf 8: 8 bytes of parameters; 0 bytes of locals }
 {@stub} procedure res07_fn_1A19; begin end;
 { 0464:1B52: retf 0: 0 bytes of parameters; 10 bytes of locals }
