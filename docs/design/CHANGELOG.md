@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-12 | 5.21 | ovl24 affects, handler table and hooks, dice, saving throws, to-hit and resistance rolls, damage and healing | make match UNIT=ovl24 |
 | 2026-10-12 | 5.15 | res06 glyph drawing, text cells, flash message, line editor and number reader; new TP idioms | make match UNIT=res06 |
 | 2026-10-12 | 5.20, 5.4 | ovl05 battle aftermath: outcome, experience formula, hirelings' share, treasure menu; money block is seven LongInt kinds | make match UNIT=ovl05 |
 | 2026-10-12 | 5.14 | the sound unit res03: Pascal front end (PlaySound, SilenceSound, SetSoundDriverIdle, timing) and the assembly driver after the init; CS (not DS) offsets for the voice records | make match UNIT=res03 |
