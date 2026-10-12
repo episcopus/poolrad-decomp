@@ -9,10 +9,10 @@ Approach: ADR-002 (SPEC 4), Pascal-first matching decompilation; the C track (AD
 | Phase | State |
 |---|---|
 | P0 Bootstrap | done (`make doctor`, `make inputs`) |
-| P1 Map | done (`make p1-check`): 50 units, 1471 routines, TP 6.0 June 1991 pinned |
+| P1 Map | done (`make p1-check`): 50 units, 1470 routines, TP 6.0 June 1991 pinned |
 | P2 Oracle and data | done: goldens with recordings for 2 of 2 session scripts (boot-title, create-character); `make golden CHECK=1` |
 | P3 Match harness | done: `make match` (tools/match/match.py, tests/unit/test_match.py); gate `make check` |
-| P4 Match | 82 of 1272 game routines at L2 (16330 of 233649 bytes by re/symbols.toml sizes); 17 of 46 game units complete, 13 reviewed; main program `src/POOL.PAS` matched by `make match UNIT=main` |
+| P4 Match | 87 of 1271 game routines at L2 (18151 of 233569 bytes by re/symbols.toml sizes); 18 of 46 game units complete, 13 reviewed; main program `src/POOL.PAS` matched by `make match UNIT=main` |
 | P5 Rebuild | `make rebuild` links the whole game from `src/` (every unit has source: decompiled or skeleton) and reports identical segments |
 
 ### P4 units with matched routines
@@ -23,6 +23,7 @@ Approach: ADR-002 (SPEC 4), Pascal-first matching decompilation; the C track (AD
 | ovl01 | ovl01 | 4 | 4 | 2062 | clean | complete |
 | ovl02 | ovl02 | 2 | 2 | 609 | clean | yes |
 | ovl04 | Temple | 12 | 12 | 2844 | clean | complete |
+| ovl06 | Shop | 5 | 5 | 1821 | clean | complete |
 | ovl11 | Loader | 2 | 2 | 1517 | clean | complete |
 | ovl26 | ovl26 | 6 | 6 | 677 | clean | yes |
 | ovl27 | ovl27 | 3 | 3 | 648 | clean | yes |
@@ -46,18 +47,18 @@ Locks (agents at work): `make locks`. Next unit: `make next`.
 | | Count |
 |---|---:|
 | Units | 50 |
-| Routines | 1471 |
-| Routines with non-provisional names | 173 |
+| Routines | 1470 |
+| Routines with non-provisional names | 177 |
 | RTL-prefixed routine names | 54 |
 | Unit code_bytes (declared) | 245081 |
-| Sum of routine sizes | 243025 |
+| Sum of routine sizes | 242945 |
 
 ### Routines by level
 
 | Level | Count |
 |---|---:|
-| none | 1389 |
-| L2 | 82 |
+| none | 1383 |
+| L2 | 87 |
 
 ### Top units by routine count
 
@@ -81,7 +82,7 @@ Locks (agents at work): `make locks`. Next unit: `make next`.
 
 ## Verification
 
-82 routines above `none`: res11_init L2 (03DA:0000), res10_init L2 (03ED:0000), DrawWindowFrame L2 (03F1:0000), ClearWindow L2 (03F1:0137), DrawWindow L2 (03F1:02E8), res09_init L2 (03F1:0367), res08_init L2 (042B:00A4), ShowMessageLine L2 (0709:0BF5), FreeHeapBlock L2 (0802:0000), AllocHeapBlock L2 (0802:0020), WriteCharsAt L2 (0802:0040), WriteTextAt L2 (0802:0105), FillBlocksAt L2 (0802:0175), ShowBottomMessage L2 (0802:0193), WaitForOverlayDisk L2 (0802:0212), OpenGameFile L2 (0802:025D), FileExists L2 (0802:02EB), DeleteAllOccurrences L2 (0802:0356), MakeDosFileName L2 (0802:0425), UnpackRle L2 (0802:050F), OpenDaxFile L2 (0802:05CD), CloseDaxFile L2 (0802:06E7), LoadDaxBlock L2 (0802:0716), SelectTileSet L2 (0802:094A), RestoreTileSet L2 (0802:095D), res05_init L2 (0802:0968), QuitGame L2 (0899:0000), ReadGameKey L2 (0899:0059), FlushKeyboard L2 (0899:0104), DiscardWaitingKey L2 (0899:0122), res04_init L2 (0899:013C), res02_init L2 (0A31:0000), HeapErrorHandler L2 (ovl00:0042), ovl00_init L2 (ovl00:00AC), WaitKeyOrTimeout L2 (ovl01:0000), ShowCredits L2 (ovl01:0206), ShowTitleScreen L2 (ovl01:0627), ovl01_init L2 (ovl01:0809), CheckCodeWheel L2 (ovl02:00FD), ovl02_init L2 (ovl02:0359), AskCastAnyway L2 (ovl04:0013), ChargeForCure L2 (ovl04:00BF), CureBlindness L2 (ovl04:0249), CureDisease L2 (ovl04:02ED), CureWounds L2 (ovl04:0401), RaiseDead L2 (ovl04:0510), NeutralizePoison L2 (ovl04:0751), RemoveCurse L2 (ovl04:083A), StoneToFlesh L2 (ovl04:0928), HealMenu L2 (ovl04:09D7), VisitTemple L2 (ovl04:0D09), ovl04_init L2 (ovl04:0F32), StartGame L2 (ovl11:002D), ovl11_init L2 (ovl11:0615), DrawPartyMarker L2 (ovl26:0000), WallDesc2FromCode L2 (ovl26:00C7), WallDesc3FromCode L2 (ovl26:00FB), WallDesc4FromCode L2 (ovl26:012F), ShowAreaView L2 (ovl26:016D), ovl26_init L2 (ovl26:02A0), DrawAreaView L2 (ovl27:0000), DrawAdventureScreen L2 (ovl27:0207), ovl27_init L2 (ovl27:0283), DrawSprite L2 (ovl28:0000), DrawHeadSprite L2 (ovl28:0050), DrawBodySprite L2 (ovl28:0070), FreeSpriteList L2 (ovl28:048F), ShowHeadBodyWindow L2 (ovl28:04F9), LoadHeadBodySprites L2 (ovl28:05D9), ShowHeadBodySprites L2 (ovl28:0697), Show3DSprite L2 (ovl28:0708), Load24x24Set L2 (ovl32:0022), DrawCellPicture L2 (ovl32:00F1), FreePictureSlot L2 (ovl32:014E), LoadPictureSlot L2 (ovl32:01C8), DrawIcon L2 (ovl32:04FC), ovl32_init L2 (ovl32:0640), ShowDebugTrace L2 (ovl33:0004), ovl33_init L2 (ovl33:00F7), Load8x8Bank L2 (ovl34:003B), Put8x8Symbol L2 (ovl34:015D), ovl34_init L2 (ovl34:02AD).
+87 routines above `none`: res11_init L2 (03DA:0000), res10_init L2 (03ED:0000), DrawWindowFrame L2 (03F1:0000), ClearWindow L2 (03F1:0137), DrawWindow L2 (03F1:02E8), res09_init L2 (03F1:0367), res08_init L2 (042B:00A4), ShowMessageLine L2 (0709:0BF5), FreeHeapBlock L2 (0802:0000), AllocHeapBlock L2 (0802:0020), WriteCharsAt L2 (0802:0040), WriteTextAt L2 (0802:0105), FillBlocksAt L2 (0802:0175), ShowBottomMessage L2 (0802:0193), WaitForOverlayDisk L2 (0802:0212), OpenGameFile L2 (0802:025D), FileExists L2 (0802:02EB), DeleteAllOccurrences L2 (0802:0356), MakeDosFileName L2 (0802:0425), UnpackRle L2 (0802:050F), OpenDaxFile L2 (0802:05CD), CloseDaxFile L2 (0802:06E7), LoadDaxBlock L2 (0802:0716), SelectTileSet L2 (0802:094A), RestoreTileSet L2 (0802:095D), res05_init L2 (0802:0968), QuitGame L2 (0899:0000), ReadGameKey L2 (0899:0059), FlushKeyboard L2 (0899:0104), DiscardWaitingKey L2 (0899:0122), res04_init L2 (0899:013C), res02_init L2 (0A31:0000), HeapErrorHandler L2 (ovl00:0042), ovl00_init L2 (ovl00:00AC), WaitKeyOrTimeout L2 (ovl01:0000), ShowCredits L2 (ovl01:0206), ShowTitleScreen L2 (ovl01:0627), ovl01_init L2 (ovl01:0809), CheckCodeWheel L2 (ovl02:00FD), ovl02_init L2 (ovl02:0359), AskCastAnyway L2 (ovl04:0013), ChargeForCure L2 (ovl04:00BF), CureBlindness L2 (ovl04:0249), CureDisease L2 (ovl04:02ED), CureWounds L2 (ovl04:0401), RaiseDead L2 (ovl04:0510), NeutralizePoison L2 (ovl04:0751), RemoveCurse L2 (ovl04:083A), StoneToFlesh L2 (ovl04:0928), HealMenu L2 (ovl04:09D7), VisitTemple L2 (ovl04:0D09), ovl04_init L2 (ovl04:0F32), ChooseShopItem L2 (ovl06:0030), AddInventoryItem L2 (ovl06:0239), BuyItems L2 (ovl06:0361), ShopMain L2 (ovl06:053E), ovl06_init L2 (ovl06:0798), StartGame L2 (ovl11:002D), ovl11_init L2 (ovl11:0615), DrawPartyMarker L2 (ovl26:0000), WallDesc2FromCode L2 (ovl26:00C7), WallDesc3FromCode L2 (ovl26:00FB), WallDesc4FromCode L2 (ovl26:012F), ShowAreaView L2 (ovl26:016D), ovl26_init L2 (ovl26:02A0), DrawAreaView L2 (ovl27:0000), DrawAdventureScreen L2 (ovl27:0207), ovl27_init L2 (ovl27:0283), DrawSprite L2 (ovl28:0000), DrawHeadSprite L2 (ovl28:0050), DrawBodySprite L2 (ovl28:0070), FreeSpriteList L2 (ovl28:048F), ShowHeadBodyWindow L2 (ovl28:04F9), LoadHeadBodySprites L2 (ovl28:05D9), ShowHeadBodySprites L2 (ovl28:0697), Show3DSprite L2 (ovl28:0708), Load24x24Set L2 (ovl32:0022), DrawCellPicture L2 (ovl32:00F1), FreePictureSlot L2 (ovl32:014E), LoadPictureSlot L2 (ovl32:01C8), DrawIcon L2 (ovl32:04FC), ovl32_init L2 (ovl32:0640), ShowDebugTrace L2 (ovl33:0004), ovl33_init L2 (ovl33:00F7), Load8x8Bank L2 (ovl34:003B), Put8x8Symbol L2 (ovl34:015D), ovl34_init L2 (ovl34:02AD).
 
 ## Blockers and decisions waiting for the human
 

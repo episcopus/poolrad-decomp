@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-11 | docs/design/CHANGELOG.md unchanged | the ovl06 merge resolution: unified TMenuLine/TItem, ds6810 as PMenuLine, callee signatures settled from ovl04 | make match UNIT=ovl04 and UNIT=ovl06, make check green |
 | 2026-10-11 | docs/design/WHITEPAPER.md 5.8 | corrected the title sequence line: res07_fn_2595 frees the title picture (not a palette write) and WaitKeyOrTimeout calls FlushKeyboard, which does nothing (QUIRK 0899:010A) | review work/reviews/ovl01.md (rev-6), make packet FN=res07_fn_2595 |
 | 2026-10-11 | docs/design/WHITEPAPER.md (unchanged) | no new verified sections; the ovl28_e2 findings are in the hand-off note and re/symbols.toml | make match UNIT=ovl28 (8 matched, 1 stub), make check green |
 | 2026-10-11 | title (ovl01) | ShowCredits/ShowTitleScreen signatures recorded | make check exit 0 |
