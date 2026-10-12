@@ -80,6 +80,13 @@ type
     (ds49DA) at $9700..$98FF. The index base gives the displacement the code shows ($6E00, $2A00,
     -$2E00); TGameVars and TBlock400 stay the 0-based views of the same blocks. }
   TVmWords4900 = array[$4900..$4CFF] of Word;
+  { One entry of the script's return stack (ScriptGosub, ovl07:1951): the address to return to
+    and the entry below it. }
+  PReturnEntry = ^TReturnEntry;
+  TReturnEntry = record
+    ReturnPC: Word;               { +0 }
+    Next: PReturnEntry;           { +2 }
+  end;
   TVmWords6B00 = array[$6B00..$6EFF] of Word;
   TVmWords9700 = array[$9700..$98FF] of Word;
   { One 4-byte element of the table at DS:6AAE the loader fills (ovl11:0369..0390). }
@@ -314,7 +321,9 @@ type
     { +$11B: Raise Dead and Stone to Flesh set it to 1; HealCharacter adds to it up to HpMax,
       ReviveCombatant sets it and DropCombatant clears it: the current hit points [I] (ovl24:17B9). }
     Flag11B: Byte;
-    Pad11C: Byte;
+    { +$11C: the party's slowest and fastest values of it set the script's range (MovementRange,
+      ovl07:1FB1), doubled by affect $27 and halved by affect $2A: likely the movement rate [I]. }
+    Movement: Byte;
   end;
   { The 28 bytes at DS:67F4 that the Temple clears on entry and ovl21_e12 turns into a LongInt
     sum (the money pooled in the shop or left after a battle): seven LongInt amounts, one per kind
@@ -459,7 +468,7 @@ var
   { Nonzero: the view shows the overhead wall map (DrawWallMap) instead of the 3D walls and their
     frame (DrawWallView, ovl29:0603). The A key of the movement loop toggles it while
     GameVars^[VarShowWallOverlays] is 0 (ovl14:0380); ShowAreaView (when that variable is set),
-    ovl07_e8 and StartGame clear it. }
+    ShowEncounterPicture and StartGame clear it. }
   WallMapMode: Byte;              { overhead wall map shown instead of the 3D view; see above }
   ds6AAD: ShortInt;               { the party's column in the 16x16 area map (GEO) }
     { ShortInt, not Byte: ovl14 widens it with cbw (ovl14:0696); EventByteAt/DrawWallView take it. }
@@ -613,7 +622,7 @@ var
                                     elements 2 and 3 to $FFFF (ovl11:035E..0390) }
   ds6AB2: Word;                   { cleared by the loader (ovl11:0353) }
   ds6AB4: Word;                   { set to 1 by the loader (ovl11:0358) }
-  { The $42-byte sprite list the loader clears (ovl11:0309) and ovl07_e8 loads; ReadPromptChoice
+  { The $42-byte sprite list the loader clears (ovl11:0309) and ShowEncounterPicture loads; ReadPromptChoice
     animates it while it waits for a key. }
   PictureAnimation: TAnimation;
   { The loader sets entries 1 and 2 to Kind $FF and Addr nil (ovl11:02CA..0302). }
@@ -814,9 +823,13 @@ var
   ds49E7: Word;                   { the third script entry address; see above }
   ds49E9: Word;                   { the fourth script entry address; see above }
   ds49EB: Word;                   { the fifth script entry address; see above }
-  ds6F70: Pointer;                { cleared by InitScript (ovl07:0202); meaning unknown }
-  ds6F74: Pointer;                { cleared by InitScript (ovl07:020A); meaning unknown }
-  ds6F78: array[0..5] of Byte;    { six bytes InitScript clears (ovl07:0210); meaning unknown }
+  ReturnStack: PReturnEntry;           { the top of the script's return stack (ScriptGosub); InitScript empties it }
+  ReturnPrev: PReturnEntry;           { the previous top while ScriptGosub pushes; InitScript clears it }
+  { The results of the script's last comparison (CompareStrings, CompareWords): 1 in [0] when
+    equal, [1] unequal, [2] less, [3] greater, [4] less or equal, [5] greater or equal, else 0. }
+  CompareFlags: array[0..5] of Byte;
+  SkippedOpcode: Byte;                   { the opcode SkipCommand reads at EclPC (ovl07:1EB7) }
+  ds84EA: Byte;                   { the head/picture word ds49D6^[$2E1] ShowEncounterPicture last showed (ovl07:0633) }
   ds6F83: Byte;                   { set to 8 by InitScript (ovl07:01F0); meaning unknown }
   ds70C6: Byte;                   { cleared by InitScript (ovl07:01FB); meaning unknown }
   ds84C8: array[0..1] of Byte;    { two bytes InitScript clears (ovl07:01DF); meaning unknown }

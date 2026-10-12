@@ -29,7 +29,7 @@ procedure res12_fn_1282;
 procedure res12_fn_1325;
 procedure res12_fn_13AB;
 procedure res12_fn_148B(Spell: Byte);
-procedure res12_fn_1509;
+procedure res12_fn_1509(Who: Pointer; Item: Pointer);
 procedure res12_fn_15F7;
 procedure res12_fn_1693(Text: String40);
 procedure res12_fn_16EC(Who: Pointer; Text: string; A, B: Byte);
@@ -122,7 +122,7 @@ implementation
 { 00BA:148B: retf 2: 2 bytes of parameters; 2 bytes of locals }
 {@stub} procedure res12_fn_148B(Spell: Byte); begin end;
 { 00BA:1509: retf 8: 8 bytes of parameters; 44 bytes of locals }
-{@stub} procedure res12_fn_1509; begin end;
+{@stub} procedure res12_fn_1509(Who: Pointer; Item: Pointer); begin end;
 { 00BA:15F7: retf 8: 8 bytes of parameters; 8 bytes of locals }
 {@stub} procedure res12_fn_15F7; begin end;
 { 00BA:1693: retf 4; copies a string[40] value (limit $28). ovl04 passes 'Not enough money.'. }

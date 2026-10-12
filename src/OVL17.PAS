@@ -15,7 +15,7 @@ procedure ovl17_fn_0865;
 procedure ovl17_fn_0AE5;
 procedure ovl17_e5;
 procedure ovl17_fn_0B48;
-procedure ovl17_e6;
+procedure ovl17_e6(Kind: Byte; Who: Pointer);
 procedure ovl17_fn_0F99;
 procedure ovl17_e7;
 procedure ovl17_e10;
@@ -49,7 +49,7 @@ implementation
 { ovl17:0B48: retf 12: 12 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl17_fn_0B48; begin end;
 { ovl17:0EC4: frame not read }
-{@stub} procedure ovl17_e6; begin end;
+{@stub} procedure ovl17_e6(Kind: Byte; Who: Pointer); begin end;
 { ovl17:0F99: retf 6: 6 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl17_fn_0F99; begin end;
 { ovl17:1262: retf 2: 2 bytes of parameters; 18 bytes of locals }

@@ -2435,3 +2435,122 @@ kind = "routine"
 why = "ParseHotkeys on the menu text, then ChooseFromList with all other parameters (ovl07:1788, matched)"
 date = "2026-10-12"
 
+[[rename]]
+old = "ovl07_e5"
+new = "LoadCharacter"
+kind = "routine"
+why = "New(Who) then ovl17_e6 (save and load unit) fills it for Kind; returns its Items and Affects (ovl07:0411, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_e6"
+new = "OpenStepsAhead"
+kind = "routine"
+why = "counts cells without a wall (WallIdAt = 0) ahead in direction Dir, up to 2 (ovl07:0482, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_e8"
+new = "ShowEncounterPicture"
+kind = "routine"
+why = "loads SPRIT sprites and shows the one for the distance (Show3DSprite), then the PIC or HEAD/BODY close-up when adjacent (ovl07:054E, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_e15"
+new = "CompareStrings"
+kind = "routine"
+why = "sets six flags at DS:6F78 for =, <>, <, >, <=, >= of two strings (ovl07:1815, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_e16"
+new = "CompareWords"
+kind = "routine"
+why = "sets six flags at DS:6F78 for =, <>, <, >, <=, >= of two words (ovl07:18EB, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_e17"
+new = "ScriptGosub"
+kind = "routine"
+why = "pushes EclPC on a linked stack of 6-byte entries at DS:6F70 and jumps to an operand address (ovl07:1951, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_e19"
+new = "StepPartyForward"
+kind = "routine"
+why = "moves DS:6AAD/6AAE one cell in the direction DS:6AAF (0/2/4/6) with wrap at 0..15, then EventByteAt and WallIdAt of the new cell (ovl07:19DB, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_e18"
+new = "SetupDuel"
+kind = "routine"
+why = "sets DuelMode, clears Flag10D of the other members, appends a copy of the selected character named ROLF on side 1 with its items (ovl07:1A6F, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_e20"
+new = "ScaleMoney"
+kind = "routine"
+why = "Money[0..6] := Trunc(Money[i] * Factor) with a Real factor (ovl07:1CC3, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_e21"
+new = "LoseItems"
+kind = "routine"
+why = "per item: lowers the chance by 90 (weight above 255) or 50 (above 24), rolls d100 and hands the item to res12_fn_1509 when the roll is at most the chance (ovl07:1DF0, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_e22"
+new = "SkipCommand"
+kind = "routine"
+why = "reads the opcode at EclPC and decodes its operand count without executing, else steps one byte (ovl07:1EA6, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_e23"
+new = "MovementRange"
+kind = "routine"
+why = "max and min of TCharacter +11C over the party, doubled by affect 27h, halved by affect 2Ah (ovl07:1FB1, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_e24"
+new = "DamageWithMessage"
+kind = "routine"
+why = "shows 'dies.' or 'is hit FOR n points of Damage.' and applies the damage through res12_fn_2228 (ovl07:20CC, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6F70"
+new = "ReturnStack"
+kind = "global"
+why = "top of the script's return stack: ScriptGosub pushes 6-byte entries (ReturnPC, Next) onto it (ovl07:1951..19B5); InitScript empties it (ovl07:0202)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6F74"
+new = "ReturnPrev"
+kind = "global"
+why = "ScriptGosub keeps the previous top of ReturnStack in it while pushing (ovl07:1984, 199B); InitScript clears it"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6F78"
+new = "CompareFlags"
+kind = "global"
+why = "CompareStrings and CompareWords clear its six bytes and set [0..5] for =, <>, <, >, <=, >= (ovl07:1844..18E0, 18EE..1948)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6F7F"
+new = "SkippedOpcode"
+kind = "global"
+why = "SkipCommand stores the opcode at EclPC in it and dispatches on it (ovl07:1EB7)"
+date = "2026-10-12"
+

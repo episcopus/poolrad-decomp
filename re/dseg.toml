@@ -853,3 +853,23 @@ offset = 0x6FC8
 size = 3840
 name = "EclStrings"
 evidence = "string[255] table indexed by the string operand number shl 8 from DS:6FC8 (DecodeOperands clears entry n, ovl07:00CC; DecodeString appends to it, ovl07:1165..1284; ReadVmString, ovl07:1317); entry 0 is the index base, never read; the upper bound is not known"
+
+[[global]]
+offset = 0x6F70
+name = "ReturnStack"
+evidence = "top of the script's return stack: ScriptGosub pushes 6-byte entries (ReturnPC, Next) onto it (ovl07:1951..19B5); InitScript empties it (ovl07:0202)"
+
+[[global]]
+offset = 0x6F74
+name = "ReturnPrev"
+evidence = "ScriptGosub keeps the previous top of ReturnStack in it while pushing (ovl07:1984, 199B); InitScript clears it"
+
+[[global]]
+offset = 0x6F78
+name = "CompareFlags"
+evidence = "CompareStrings and CompareWords clear its six bytes and set [0..5] for =, <>, <, >, <=, >= (ovl07:1844..18E0, 18EE..1948)"
+
+[[global]]
+offset = 0x6F7F
+name = "SkippedOpcode"
+evidence = "SkipCommand stores the opcode at EclPC in it and dispatches on it (ovl07:1EB7)"

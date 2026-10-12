@@ -1971,12 +1971,12 @@ id = "ovl07:0411"
 unit = "ovl07"
 addr = "ovl07:0411"
 size = 113
-name = "ovl07_e5"
-signature = ""
+name = "LoadCharacter"
+signature = "procedure LoadCharacter(Kind: Byte; var Who: PCharacter; var Items: PItem; var Affects: Pointer)"
 c_name = "ovl07_e5"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_5"
+notes = "renamed from ovl07_e5 (New(Who) then ovl17_e6 (save and load unit) fills it for Kind; returns its Items and Affects (ovl07:0411, matched)); auto:entry_5"
 evidence = ["prologue"]
 
 [[routine]]
@@ -1984,12 +1984,12 @@ id = "ovl07:0482"
 unit = "ovl07"
 addr = "ovl07:0482"
 size = 143
-name = "ovl07_e6"
-signature = ""
+name = "OpenStepsAhead"
+signature = "function OpenStepsAhead(Col, Row: ShortInt; Dir: Byte): Byte"
 c_name = "ovl07_e6"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_6"
+notes = "renamed from ovl07_e6 (counts cells without a wall (WallIdAt = 0) ahead in direction Dir, up to 2 (ovl07:0482, matched)); auto:entry_6"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2010,12 +2010,12 @@ id = "ovl07:054E"
 unit = "ovl07"
 addr = "ovl07:054E"
 size = 353
-name = "ovl07_e8"
-signature = ""
+name = "ShowEncounterPicture"
+signature = "procedure ShowEncounterPicture(SpriteBank, PicBank, Distance: Byte; var Shown: TPictureShown)"
 c_name = "ovl07_e8"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_8"
+notes = "renamed from ovl07_e8 (loads SPRIT sprites and shows the one for the distance (Show3DSprite), then the PIC or HEAD/BODY close-up when adjacent (ovl07:054E, matched)); auto:entry_8"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2205,12 +2205,12 @@ id = "ovl07:1815"
 unit = "ovl07"
 addr = "ovl07:1815"
 size = 214
-name = "ovl07_e15"
-signature = ""
+name = "CompareStrings"
+signature = "procedure CompareStrings(Left, Right: string)"
 c_name = "ovl07_e15"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_15"
+notes = "renamed from ovl07_e15 (sets six flags at DS:6F78 for =, <>, <, >, <=, >= of two strings (ovl07:1815, matched)); auto:entry_15"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2218,12 +2218,12 @@ id = "ovl07:18EB"
 unit = "ovl07"
 addr = "ovl07:18EB"
 size = 102
-name = "ovl07_e16"
-signature = ""
+name = "CompareWords"
+signature = "procedure CompareWords(Left, Right: Word)"
 c_name = "ovl07_e16"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_16"
+notes = "renamed from ovl07_e16 (sets six flags at DS:6F78 for =, <>, <, >, <=, >= of two words (ovl07:18EB, matched)); auto:entry_16"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2231,12 +2231,12 @@ id = "ovl07:1951"
 unit = "ovl07"
 addr = "ovl07:1951"
 size = 138
-name = "ovl07_e17"
-signature = ""
+name = "ScriptGosub"
+signature = "procedure ScriptGosub(N: Byte)"
 c_name = "ovl07_e17"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_17"
+notes = "renamed from ovl07_e17 (pushes EclPC on a linked stack of 6-byte entries at DS:6F70 and jumps to an operand address (ovl07:1951, matched)); auto:entry_17"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2244,12 +2244,12 @@ id = "ovl07:19DB"
 unit = "ovl07"
 addr = "ovl07:19DB"
 size = 148
-name = "ovl07_e19"
-signature = ""
+name = "StepPartyForward"
+signature = "procedure StepPartyForward"
 c_name = "ovl07_e19"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_19"
+notes = "renamed from ovl07_e19 (moves DS:6AAD/6AAE one cell in the direction DS:6AAF (0/2/4/6) with wrap at 0..15, then EventByteAt and WallIdAt of the new cell (ovl07:19DB, matched)); auto:entry_19"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2257,12 +2257,12 @@ id = "ovl07:1A6F"
 unit = "ovl07"
 addr = "ovl07:1A6F"
 size = 596
-name = "ovl07_e18"
-signature = ""
+name = "SetupDuel"
+signature = "procedure SetupDuel(WithCopy: ShortInt)"
 c_name = "ovl07_e18"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_18"
+notes = "renamed from ovl07_e18 (sets DuelMode, clears Flag10D of the other members, appends a copy of the selected character named ROLF on side 1 with its items (ovl07:1A6F, matched)); auto:entry_18"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2270,12 +2270,12 @@ id = "ovl07:1CC3"
 unit = "ovl07"
 addr = "ovl07:1CC3"
 size = 301
-name = "ovl07_e20"
-signature = ""
+name = "ScaleMoney"
+signature = "procedure ScaleMoney(Factor: Real; Who: PCharacter)"
 c_name = "ovl07_e20"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_20"
+notes = "renamed from ovl07_e20 (Money[0..6] := Trunc(Money[i] * Factor) with a Real factor (ovl07:1CC3, matched)); auto:entry_20"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2283,12 +2283,12 @@ id = "ovl07:1DF0"
 unit = "ovl07"
 addr = "ovl07:1DF0"
 size = 182
-name = "ovl07_e21"
-signature = ""
+name = "LoseItems"
+signature = "procedure LoseItems(Chance: Byte; Who: PCharacter)"
 c_name = "ovl07_e21"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_21"
+notes = "renamed from ovl07_e21 (per item: lowers the chance by 90 (weight above 255) or 50 (above 24), rolls d100 and hands the item to res12_fn_1509 when the roll is at most the chance (ovl07:1DF0, matched)); auto:entry_21"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2296,12 +2296,12 @@ id = "ovl07:1EA6"
 unit = "ovl07"
 addr = "ovl07:1EA6"
 size = 267
-name = "ovl07_e22"
-signature = ""
+name = "SkipCommand"
+signature = "procedure SkipCommand"
 c_name = "ovl07_e22"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_22"
+notes = "renamed from ovl07_e22 (reads the opcode at EclPC and decodes its operand count without executing, else steps one byte (ovl07:1EA6, matched)); auto:entry_22"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2309,38 +2309,25 @@ id = "ovl07:1FB1"
 unit = "ovl07"
 addr = "ovl07:1FB1"
 size = 248
-name = "ovl07_e23"
-signature = ""
+name = "MovementRange"
+signature = "procedure MovementRange(var Fastest, Slowest: Byte)"
 c_name = "ovl07_e23"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_23"
+notes = "renamed from ovl07_e23 (max and min of TCharacter +11C over the party, doubled by affect 27h, halved by affect 2Ah (ovl07:1FB1, matched)); auto:entry_23"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl07:20A9"
-unit = "ovl07"
-addr = "ovl07:20A9"
-size = 35
-name = "ovl07_fn_20A9"
-signature = ""
-c_name = "ovl07_fn_20A9"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl07:20CC"
 unit = "ovl07"
 addr = "ovl07:20CC"
 size = 329
-name = "ovl07_e24"
-signature = ""
+name = "DamageWithMessage"
+signature = "procedure DamageWithMessage(Damage: Word; Who: PCharacter)"
 c_name = "ovl07_e24"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_24"
+notes = "renamed from ovl07_e24 (shows 'dies.' or 'is hit FOR n points of Damage.' and applies the damage through res12_fn_2228 (ovl07:20CC, matched)); auto:entry_24"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2351,7 +2338,7 @@ size = 5
 name = "ovl07_init"
 signature = ""
 c_name = "ovl07_init"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_0"
 evidence = ["prologue"]
@@ -8941,7 +8928,7 @@ unit = "ovl17"
 addr = "ovl17:0EC4"
 size = 213
 name = "ovl17_e6"
-signature = ""
+signature = "procedure ovl17_e6(Kind: Byte; Who: Pointer)"
 c_name = "ovl17_e6"
 level = "none"
 justification = ""
@@ -17581,7 +17568,7 @@ unit = "res12"
 addr = "00BA:1509"
 size = 238
 name = "res12_fn_1509"
-signature = ""
+signature = "procedure res12_fn_1509(Who: Pointer; Item: Pointer)"
 c_name = "res12_fn_1509"
 level = "none"
 justification = ""
