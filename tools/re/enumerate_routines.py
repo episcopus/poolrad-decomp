@@ -9,6 +9,19 @@ Seeds re/symbols.toml from:
 Sizes are the gap to the next start in the same unit (or to the end of the unit's
 code). Bytes that are not reached stay uncovered; make status reports coverage.
 
+With --merge nothing already known is lost (escalate-ovl11-20261012040038):
+  - forced starts (tools/re/forced_starts.py: re/forced_starts.toml and the hand-verified
+    runtime entries of rtl_ident.py) are always starts, so a leaf with no prologue such as
+    System.Randomize (0AF8:1247) is never merged into the routine before it;
+  - every routine of the existing re/symbols.toml stays a start, with all its fields
+    (name, signature, level, review, notes, evidence...);
+  - a scanned start strictly inside a routine whose extent is proven (level set by
+    `make match WRITE=1`, or evidence citing `make match`) is dropped: the compiler showed
+    there is no routine there (the false far-call split ovl11:0435 inside StartGame);
+  - a proven routine keeps its size: the compiler's boundary wins over the gap to the next
+    start (ovl34:003B Load8x8Bank is 255 bytes; the 35 after it are the next routine's
+    literal pool, which the gap would count).
+
 Usage:
   python3 tools/re/enumerate_routines.py [--exe poolrad/start-unpack.exe]
       [--overlays build/re/overlays.json] [--units re/units.toml]
@@ -20,11 +33,13 @@ import argparse
 import re
 import struct
 import sys
+import tomllib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from mzutil import DGROUP_PARA, load_overlays_json, read_mz  # noqa: E402
+import forced_starts  # noqa: E402
 
 # Frame prologues: push bp; mov bp,sp. Turbo Pascal 6.0 encodes the mov as 89 E5 (every routine
 # make match compiles); 8B EC is the other encoding, kept for hand-written assembly.
@@ -142,35 +157,66 @@ def sizes_from_starts(starts: list[int], end: int) -> dict[int, int]:
 def merge_existing(path: Path) -> dict[str, dict]:
     if not path.exists():
         return {}
-    text = path.read_text()
-    cur = None
-    by_id: dict[str, dict] = {}
-    for line in text.splitlines():
-        s = line.strip()
-        if s == "[[routine]]":
-            if cur and "id" in cur:
-                by_id[cur["id"]] = cur
-            cur = {}
-            continue
-        if cur is None or not s or s.startswith("#"):
-            continue
-        m = re.match(r'^([A-Za-z0-9_]+)\s*=\s*(.+)$', s)
-        if not m:
-            continue
-        key, raw = m.group(1), m.group(2).strip()
-        if raw.startswith("["):
-            cur[key] = raw
-            continue
-        if raw.startswith('"') and raw.endswith('"'):
-            cur[key] = raw[1:-1]
+    return {r["id"]: r for r in tomllib.loads(path.read_text()).get("routine", [])}
+
+
+def proven(r: dict) -> bool:
+    """The routine's extent was proven by the compiler (make match), so no routine starts inside."""
+    ev = r.get("evidence", [])
+    return r.get("level", "none") not in ("", "none") or any("make match" in e for e in ev)
+
+
+def apply_known(starts: dict[int, str], prefix: str, existing: dict[str, dict],
+                forced: dict[str, dict], log: list[str]) -> None:
+    """Add forced and existing starts of one unit (ids `prefix` + XXXX); drop scanned starts
+    strictly inside a proven routine."""
+    def ids():
+        for rid in list(existing) + list(forced):
+            if rid.startswith(prefix) and len(rid) == len(prefix) + 4:
+                yield rid, int(rid[len(prefix):], 16)
+    for rid, off in ids():
+        if rid in forced:
+            starts[off] = "forced"
         else:
-            try:
-                cur[key] = int(raw, 0)
-            except ValueError:
-                cur[key] = raw
-    if cur and "id" in cur:
-        by_id[cur["id"]] = cur
-    return by_id
+            add_start(starts, off, "symbols")
+    for rid, r in existing.items():
+        if not (rid.startswith(prefix) and proven(r)):
+            continue
+        a = int(rid[len(prefix):], 16)
+        for off in [o for o in starts if a < o < a + r["size"]]:
+            fid = "%s%04X" % (prefix, off)
+            if fid in forced:
+                log.append("CONFLICT forced start %s inside proven routine %s (%d bytes)" % (fid, rid, r["size"]))
+            elif fid in existing:
+                log.append("kept %s although it lies inside proven routine %s" % (fid, rid))
+            else:
+                log.append("dropped scanned start %s (%s) inside proven routine %s" % (fid, starts.pop(off), rid))
+
+
+def record(rid: str, uid: str, size: int, default_name: str, why: str,
+           existing: dict[str, dict], forced: dict[str, dict]) -> dict:
+    """The routine entry: the existing one with its size refreshed, else a new one."""
+    prev = existing.get(rid)
+    if prev is not None:
+        r = dict(prev)
+        if not proven(prev):      # the compiler's boundary wins over the scan's gap
+            r["size"] = size
+        return r
+    f = forced.get(rid, {})
+    name = f.get("name") or default_name
+    return {
+        "id": rid,
+        "unit": uid,
+        "addr": rid,
+        "size": size,
+        "name": name,
+        "signature": "",
+        "c_name": name,
+        "level": "none",
+        "justification": "",
+        "notes": "auto:%s" % why,
+        "evidence": [f["evidence"]] if f else [why],
+    }
 
 
 def write_symbols(path: Path, routines: list[dict], header_notes: str) -> None:
@@ -182,31 +228,17 @@ def write_symbols(path: Path, routines: list[dict], header_notes: str) -> None:
         header_notes.rstrip(),
         "",
     ]
+    order = ("id", "unit", "addr", "size", "name", "signature", "c_name", "level", "review",
+             "justification", "notes", "evidence")
     for r in routines:
         lines.append("[[routine]]")
-        for key in (
-            "id",
-            "unit",
-            "addr",
-            "size",
-            "name",
-            "signature",
-            "c_name",
-            "level",
-            "review",
-            "justification",
-            "notes",
-            "evidence",
-        ):
+        for key in list(order) + sorted(k for k in r if k not in order):
             if key not in r:
                 continue
             val = r[key]
-            if key == "evidence":
-                if isinstance(val, list):
-                    esc = ", ".join('"%s"' % e.replace('"', '\\"') for e in val)
-                    lines.append("evidence = [%s]" % esc)
-                else:
-                    lines.append("evidence = %s" % val)
+            if isinstance(val, list):
+                esc = ", ".join('"%s"' % str(e).replace("\\", "\\\\").replace('"', '\\"') for e in val)
+                lines.append("%s = [%s]" % (key, esc))
             elif isinstance(val, int):
                 lines.append("%s = %d" % (key, val))
             else:
@@ -220,8 +252,9 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--exe", default=str(ROOT / "poolrad/start-unpack.exe"))
     ap.add_argument("--overlays", default=str(ROOT / "build/re/overlays.json"))
     ap.add_argument("--units", default=str(ROOT / "re/units.toml"))
+    ap.add_argument("--forced", default=str(forced_starts.TOML), help="forced starts (re/forced_starts.toml)")
     ap.add_argument("-o", "--output", default=str(ROOT / "re/symbols.toml"))
-    ap.add_argument("--merge", action="store_true", help="keep hand-edited fields from existing -o")
+    ap.add_argument("--merge", action="store_true", help="keep every routine and field of the existing -o")
     args = ap.parse_args(argv[1:])
 
     hdr, image = read_mz(args.exe)
@@ -232,6 +265,8 @@ def main(argv: list[str]) -> int:
     ranges = resident_ranges(residents, image_paras, stub_paras)
 
     existing = merge_existing(Path(args.output)) if args.merge else {}
+    forced = forced_starts.forced(Path(args.forced))
+    log: list[str] = []
     routines: list[dict] = []
 
     # --- overlays ---
@@ -243,42 +278,18 @@ def main(argv: list[str]) -> int:
         starts = find_in_region(code, 0, len(code))
         for e in o["entries"]:
             add_start(starts, e["code_offset"], "entry_%d" % e["index"])
-        # entry 0 is init
+        apply_known(starts, uid + ":", existing, forced, log)
         sizes = sizes_from_starts(list(starts), len(code))
+        entry_of = {e["code_offset"]: e["index"] for e in o["entries"]}
         for off in sorted(starts):
             rid = "%s:%04X" % (uid, off)
-            prev = existing.get(rid, {})
-            name = prev.get("name") or (
-                "%s_init" % uid if any(
-                    e["code_offset"] == off and e["index"] == 0 for e in o["entries"]
-                )
-                else "%s_e%d" % (uid, next(
-                    (e["index"] for e in o["entries"] if e["code_offset"] == off),
-                    -1,
-                ))
-                if any(e["code_offset"] == off for e in o["entries"])
-                else "%s_fn_%04X" % (uid, off)
-            )
-            if name.endswith("_e-1"):
-                name = "%s_fn_%04X" % (uid, off)
-            routines.append(
-                {
-                    "id": rid,
-                    "unit": uid,
-                    "addr": rid,
-                    "size": sizes[off],
-                    "name": name,
-                    "signature": prev.get("signature", ""),
-                    "c_name": prev.get("c_name", name),
-                    "level": prev.get("level", "none"),
-                    "review": prev.get("review", ""),
-                    "justification": prev.get("justification", ""),
-                    "notes": prev.get("notes", "auto:%s" % starts[off]),
-                    "evidence": prev.get("evidence")
-                    if isinstance(prev.get("evidence"), list)
-                    else [starts[off]],
-                }
-            )
+            if off not in entry_of:
+                default_name = "%s_fn_%04X" % (uid, off)
+            elif entry_of[off] == 0:
+                default_name = "%s_init" % uid
+            else:
+                default_name = "%s_e%d" % (uid, entry_of[off])
+            routines.append(record(rid, uid, sizes[off], default_name, starts[off], existing, forced))
 
     # --- resident ---
     # also accept far-call targets whose segment falls in a unit range
@@ -298,8 +309,6 @@ def main(argv: list[str]) -> int:
         if length <= 0:
             continue
         starts = find_in_region(image, base, length)
-        # unit init
-        init_seg = int(str(r["segment"]), 16) if isinstance(r["segment"], str) else r["segment"]
         # runtime units without an initialisation part (Dos, Overlay) have init = ""
         init_off = int(str(r["init"]).split(":")[1], 16) if r.get("init") else -1
         if init_off >= 0:
@@ -307,53 +316,45 @@ def main(argv: list[str]) -> int:
         for seg, off in far_targets:
             if start_para <= seg < end_para:
                 # offset is relative to seg, convert to unit-base relative
-                linear = seg * 16 + off
-                rel = linear - base
+                rel = seg * 16 + off - base
                 if 0 <= rel < length:
                     add_start(starts, rel, "far_call")
+        # ids are unit_base_para:offset_from_unit_start
+        prefix = "%04X:" % start_para
+        apply_known(starts, prefix, existing, forced, log)
+        for off in [o for o in starts if o >= length]:
+            log.append("CONFLICT start %s%04X lies past the end of %s" % (prefix, off, uid))
+            del starts[off]
         sizes = sizes_from_starts(list(starts), length)
         for off in sorted(starts):
-            # prefer id as unit-segment:offset when off is within first segment page...
-            # Use load-image segment of the byte: (base+off)//16 form with offset in segment
-            linear = base + off
-            seg = linear // 16
-            seg_off = linear % 16
-            # Better ids: use unit segment + offset from unit start (common in whitepaper)
-            # Playbook: id is ovlNN:XXXX or seg:XXXX. For resident use SSSS:OOOO of the entry.
-            rid = "%04X:%04X" % (seg, seg_off)
-            # If offset spans, prefer unit_base_para:offset_from_unit for stability
-            rid = "%04X:%04X" % (start_para, off)
-            prev = existing.get(rid, {})
+            rid = "%s%04X" % (prefix, off)
             is_init = off == init_off
-            default_name = (
-                r.get("name", uid) + "_init"
-                if is_init and r.get("name") not in ("", uid)
-                else ("%s_init" % uid if is_init else "%s_fn_%04X" % (uid, off))
-            )
-            # special-case known System/Crt inits
             if uid == "res00" and is_init:
                 default_name = "System_init"
-            if uid == "res01" and is_init:
+            elif uid == "res01" and is_init:
                 default_name = "Crt_init"
-            name = prev.get("name") or default_name
-            routines.append(
-                {
-                    "id": rid,
-                    "unit": uid,
-                    "addr": rid,
-                    "size": sizes[off],
-                    "name": name,
-                    "signature": prev.get("signature", ""),
-                    "c_name": prev.get("c_name", name),
-                    "level": prev.get("level", "none"),
-                    "review": prev.get("review", ""),
-                    "justification": prev.get("justification", ""),
-                    "notes": prev.get("notes", "auto:%s" % starts[off]),
-                    "evidence": prev.get("evidence")
-                    if isinstance(prev.get("evidence"), list)
-                    else [starts[off]],
-                }
-            )
+            elif is_init:
+                default_name = (r.get("name", uid) if r.get("name") not in ("", None) else uid) + "_init"
+            else:
+                default_name = "%s_fn_%04X" % (uid, off)
+            routines.append(record(rid, uid, sizes[off], default_name, starts[off], existing, forced))
+
+    # existing routines outside every unit range are kept as they are
+    made = {r["id"] for r in routines}
+    for rid, r in existing.items():
+        if rid not in made:
+            log.append("CONFLICT %s (%s) is outside every unit range; kept unchanged" % (rid, r.get("name")))
+            routines.append(r)
+    for rid in forced:
+        if rid not in made:
+            log.append("CONFLICT forced start %s is outside every unit range" % rid)
+
+    for r in routines:
+        old = existing.get(r["id"])
+        if old is not None and old["size"] != r["size"]:
+            log.append("size %s %s: %d -> %d" % (r["id"], r["name"], old["size"], r["size"]))
+        elif old is None and existing:
+            log.append("new %s %s (%d bytes, %s)" % (r["id"], r["name"], r["size"], r["evidence"][0]))
 
     routines.sort(key=lambda r: (r["unit"], r["id"]))
     covered = sum(r["size"] for r in routines)
@@ -364,11 +365,13 @@ def main(argv: list[str]) -> int:
     )
     out = Path(args.output)
     write_symbols(out, routines, note)
+    for line in log:
+        print("enumerate_routines: " + line)
     print(
         "enumerate_routines: %d routines -> %s (sum sizes %d)"
         % (len(routines), out, covered)
     )
-    return 0
+    return 1 if any(line.startswith("CONFLICT") for line in log) else 0
 
 
 if __name__ == "__main__":

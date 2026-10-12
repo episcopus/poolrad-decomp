@@ -6,6 +6,8 @@ EXE := poolrad/start-unpack.exe
 OVR := poolrad/GAME.OVR
 
 PACKED := poolrad/START.EXE
+# Refresh the heartbeat of the agent holding the lock on this branch (tools/agent/heartbeat.py --auto); never fails.
+AUTOBEAT = -@$(PY) tools/agent/heartbeat.py --auto
 
 .PHONY: help setup doctor inputs unexepack overlays map dax smoke status next ghidra p1-check \
         tp-install tp-probe tp-compare tp-pin tpc emu2 \
@@ -39,6 +41,7 @@ overlays:         ## regenerate the overlay manifest and extract overlay code to
 
 map: overlays     ## fill units.toml ranges, enumerate routines, tag RTL/names (playbook 10)
 	$(PY) tools/re/update_units.py
+	$(PY) tools/re/forced_starts.py --write
 	$(PY) tools/re/enumerate_routines.py --merge
 	$(PY) tools/re/name_units.py
 	$(PY) tools/re/rtl_ident.py
@@ -87,10 +90,12 @@ tp-compare:       ## align our System/Crt/Dos/Overlay code with each probe; buil
 tp-pin: tp-install tp-probe tp-compare  ## all of the above
 
 tpc:              ## compile SRC=<file.pas> with the pinned TP 6.0 (VER=, DISASM=1, OPTS='/$$R+') into build/tpc/
+	$(AUTOBEAT) "make tpc $(SRC)"
 	@test -n "$(SRC)" || (echo 'tpc: usage: make tpc SRC=path/FILE.PAS [DISASM=1] [VER=tp70] [OPTS=...]'; exit 2)
 	$(PY) tools/re/tp_toolchain.py tpc $(SRC) $(if $(VER),--version $(VER)) $(if $(DISASM),--disasm) $(if $(OPTS),--opts $(OPTS))
 
 packet:           ## write build/packets/<id>.md for UNIT= or FN=
+	$(AUTOBEAT) "make packet $(UNIT)$(FN)"
 	$(PY) tools/agent/packet.py $(if $(UNIT),--unit $(UNIT)) $(if $(FN),--fn $(FN))
 
 claim:            ## start work: lock the next unit (or UNIT=) and create its worktree: AGENT=<name> [UNIT=<id>] [REVIEW=1] [TASK=doc-<chapter>|map]
@@ -138,6 +143,7 @@ timing-scan:      ## find routines that wait on time or input (static; SESSIONS=
 golden:           ## record goldens and their recordings (each session twice, must match): SESSION=name (default all); CHECK=1 verifies committed goldens
 	$(PY) tools/oracle/golden.py $(if $(SESSION),--session $(SESSION)) $(if $(CHECK),--check)
 match:            ## prove decompiled Pascal against the original (SPEC 8.3): UNIT=<id> [FN=<name>] [WRITE=1]; no UNIT: every unit with source
+	$(AUTOBEAT) "make match $(UNIT)$(if $(FN), FN=$(FN))$(if $(WRITE), WRITE=1)"
 	$(PY) tools/match/match.py $(if $(UNIT),$(UNIT),--all) $(foreach f,$(FN),--routine $(f)) $(if $(WRITE),--write)
 
 test:              ## Python unit tests, fast set (codecs, toolchain probes, matcher, oracle, replay)
@@ -145,6 +151,7 @@ test:              ## Python unit tests, fast set (codecs, toolchain probes, mat
 test-slow:         ## the unit tests that boot the real game (minutes; not part of `make check`)
 	$(PY) -m pytest -q -m slow tests/unit
 check:             ## everything a commit must pass (SPEC 9.6): fast tests, every unit's match and readability, the rebuild links, golden check
+	$(AUTOBEAT) "make check"
 	$(PY) -m pytest -q -m "not slow" tests/unit
 	$(PY) tools/match/match.py --all
 	$(PY) tools/match/readability.py
@@ -161,7 +168,7 @@ readability:       ## the checkable readability rules of docs/process/READABILIT
 	$(PY) tools/match/readability.py $(UNIT)
 
 rename:            ## give a routine or global its real name everywhere: OLD=<name> NEW=<Name> WHY="<evidence>"; APPLY=1 re-applies recorded renames
-	$(if $(APPLY),$(PY) tools/match/rename.py --apply,$(PY) tools/match/rename.py "$(OLD)" "$(NEW)" --why "$(WHY)")
+	$(if $(APPLY),$(PY) tools/match/rename.py --apply,RENAME_WHY='$(subst ','\'',$(value WHY))' $(PY) tools/match/rename.py "$(OLD)" "$(NEW)")
 
 skeleton:          ## write src/<ID>.PAS for a unit with no source yet: UNIT=<id> (no UNIT: every game unit)
 	$(PY) tools/match/skeleton.py $(if $(UNIT),$(UNIT),--all)

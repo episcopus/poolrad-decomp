@@ -316,7 +316,7 @@ source = ""
 
 [[overlay]]
 id = "ovl10"
-name = "ovl10"
+name = "BattleStart"
 kind = "overlay"
 stub_segment = "003B"
 ovr_file_offset = "0xC5D1"
@@ -381,7 +381,7 @@ source = ""
 
 [[overlay]]
 id = "ovl15"
-name = "SpellMemorize"
+name = "Camp"
 kind = "overlay"
 stub_segment = "0075"
 ovr_file_offset = "0x17831"
@@ -389,7 +389,7 @@ code_bytes = 8158
 fixup_bytes = 368
 entries = 3
 init_entry = "ovl15_e0"
-evidence = "[V] camp spell memorize; [H] coab camp/spell memorize"
+evidence = "[V] the camp: MakeCamp (entry 1) runs the Camp, Magic and Alter menus, memorizing, scribing and resting (make match UNIT=ovl15, whitepaper 5.22); was SpellMemorize"
 source = ""
 
 [[overlay]]
@@ -615,7 +615,7 @@ source = ""
 
 [[overlay]]
 id = "ovl33"
-name = "ovl33"
+name = "DebugTrace"
 kind = "overlay"
 stub_segment = "03EE"
 ovr_file_offset = "0x3211F"
@@ -623,7 +623,7 @@ code_bytes = 252
 fixup_bytes = 26
 entries = 2
 init_entry = "ovl33_e0"
-evidence = ""
+evidence = "[V] ShowDebugTrace (ovl33:0004, matched as a whole) is the STING debug trace: when DebugMode is set it shows a character's maximum, current and lost hit points and a message (whitepaper 5.8); its only caller is the training and rewards unit ovl12:2233"
 source = ""
 
 [[overlay]]

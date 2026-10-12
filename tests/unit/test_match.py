@@ -45,7 +45,10 @@ def test_an_overlay_unit_matches_through_its_stubs(built):
 def test_a_routine_matches_inside_a_unit_of_stubs(built):
     results, whole = built["res06"]
     st = statuses(results)
-    assert st.pop("ShowMessageLine") == "matched" and set(st.values()) == {"stub"} and len(st) >= 2
+    # res06 is being decompiled routine by routine, so more than ShowMessageLine may be matched;
+    # the point is that a matched routine sits beside stubs in one unit (see playbook 30).
+    assert st.pop("ShowMessageLine") == "matched"
+    assert "stub" in set(st.values()) and len(st) >= 2
     assert whole == ""                               # a unit with stubs is not compared as a whole
 
 
@@ -92,7 +95,11 @@ def test_a_wrong_callee_is_caught(mutated):
 def test_sources_parse_and_pad():
     text = (match.SRC / "RES06.PAS").read_text()
     parsed = dict(match.routines_of(text))
-    assert parsed["res06_fn_05EB"] and parsed["res06_fn_0626"] and not parsed["ShowMessageLine"]
+    assert not parsed["ClearTextCells"] and not parsed["ShowMessageLine"]
+    # a stub marker on the implementation header (the last occurrence) is seen as a stub
+    head, sep, tail = text.rpartition("procedure ClearTextCells(")
+    stubbed = dict(match.routines_of(head + "{@stub} " + sep + tail))
+    assert stubbed["ClearTextCells"] and not stubbed["ShowMessageLine"]
     padded = match.with_pads("RES06", text)
     assert "var MPadVRES06: array[0..63] of Byte; procedure MPadCRES06;" in padded
     assert padded.index("procedure MPadCRES06; begin end;") > padded.index("implementation")

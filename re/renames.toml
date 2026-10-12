@@ -205,9 +205,2772 @@ why = "ClearWindow (03F1:0137) dispatches on it: 0 fills scanline planes, 1 writ
 date = "2026-10-11"
 
 [[rename]]
+old = "ovl32_e2"
+new = "DrawCellPicture"
+kind = "routine"
+why = "draws picture PicCode at cell (PicCol, PicRow) through res07_fn_08D4; bit 7 selects the source pointer (ovl32:00F1, matched). DrawAreaView calls it for each area block"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl32_e3"
+new = "FreePictureSlot"
+kind = "routine"
+why = "frees both picture pointers of one slot in the table at DS:5E5A when not nil, through res07_fn_2595 which FreeMems the picture (ovl32:014E, matched)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl32_e5"
+new = "DrawIcon"
+kind = "routine"
+why = "draws picture PicIndex, mirror half Mirror, from the DS:5E5A table at the cell times 3, after copying it (ovl32:04FC, matched). DrawPartyMarker calls it for the party marker"
+date = "2026-10-11"
+
+[[rename]]
 old = "ovl11_e1"
 new = "StartGame"
 kind = "routine"
-why = "ovl11:002D: the start-up loader the main program runs first (src/POOL.PAS: ovl11_e1 before the title and the copy protection); it allocates the game blocks, fills the cell tables, sets the game globals and reads the initial file (make match UNIT=ovl11)"
+why = "ovl11:002D: the start-up loader the main program runs first (src/POOL.PAS: StartGame before the title and the copy protection); it allocates the game blocks, fills the cell tables, sets the game globals and reads the initial file (make match UNIT=ovl11)"
 date = "2026-10-11"
+
+[[rename]]
+old = "ovl34_e1"
+new = "Load8x8Bank"
+kind = "routine"
+why = "loads one 8x8 tile bank: called by LoadWallSet and StartGame, builds filename 8x8d+N, fatal Unable to load 8x8D message (ovl34:003B)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl34_e2"
+new = "Put8x8Symbol"
+kind = "routine"
+why = "draws one 8x8 tile at X,Y: error string Bad symbol number in Put8x8Symbol (ovl34:015D), called by res09_fn_0000 and ovl29 3x"
+date = "2026-10-11"
+
+[[rename]]
+old = "ds5376"
+new = "TileSet"
+kind = "global"
+why = "8X8D file number: Str(TileSet) is the suffix of the 8x8dN filename Load8x8Bank loads (ovl34:0055, whitepaper 8X8D1-8); StartGame also indexes ds2614 with it"
+date = "2026-10-11"
+
+[[rename]]
+old = "ds5E3A"
+new = "TileBanks"
+kind = "global"
+why = "five far pointers to the loaded 8x8 tile banks, indexed Bank*4, nil means load failed (ovl34:00B4,00CE,01F9); StartGame clears them at ovl11:024F"
+date = "2026-10-11"
+
+[[rename]]
+old = "ds2722"
+new = "SymbolBase"
+kind = "global"
+why = "five words, one per 8x8 bank, subtracted from Symbol to index within the bank (ovl34:020F)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ds5E4E"
+new = "TileBuf"
+kind = "global"
+why = "far pointer to the tile staging buffer: tiles are Moved to +$17 and shown by res07_fn_1951 (ovl34:027A,029E); StartGame allocates it at ovl11:00A4"
+date = "2026-10-11"
+
+[[rename]]
+old = "ds4A20"
+new = "DrawBuf"
+kind = "global"
+why = "far pointer passed to res07_fn_08D4 as the destination buffer (ovl34:0241,0245); StartGame allocates it at ovl11:00BC"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl01_fn_0000"
+new = "WaitKeyOrTimeout"
+kind = "routine"
+why = "waits until the res06_fn_0C3F tick count passes Start plus 100 times Pause, or a key is pressed, then drains keys with FlushKeyboard; called with 10 by the credits and 5 by the title sequence"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl01_fn_0206"
+new = "ShowCredits"
+kind = "routine"
+why = "draws two empty windows and some thirty credit lines (names, roles) through DrawWindow and res06_fn_0626, then waits with WaitKeyOrTimeout(10); called by the title sequence"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl01_e1"
+new = "ShowTitleScreen"
+kind = "routine"
+why = "loads and shows the title picture, waits, then runs the credits: called once at startup (entry point); backup/clear/restore of GameDir, res07 picture calls, key-or-deadline wait, ShowCredits"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl28_e1"
+new = "DrawSprite"
+kind = "routine"
+why = "ovl28:0000: draws an 8x8 sprite at column X row Y, through the screen buffer when Direct is set (res07_fn_0D71) or the staging buffer otherwise (res07_fn_1951)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl28_fn_0050"
+new = "DrawHeadSprite"
+kind = "routine"
+why = "ovl28:0050: draws the HEAD sprite (DS:6B01, loaded by ovl28_e6) at its column and row through DrawSprite; called by Show3DSprite (ovl28_e5)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl28_fn_0070"
+new = "DrawBodySprite"
+kind = "routine"
+why = "ovl28:0070: draws the BODY sprite (DS:6B06, loaded by ovl28_e6) at its column and row plus 5 through DrawSprite; called by Show3DSprite (ovl28_e5)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl28_e3"
+new = "FreeSpriteList"
+kind = "routine"
+why = "ovl28:048F: frees every loaded sprite bank of the list and zeroes the list record, clears the picture name DS:6B0A and sets DS:6B1C to F; called by ovl10, ovl14, ovl18 and ovl28_e2 (the picture loaders)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl28_e5"
+new = "ShowHeadBodySprites"
+kind = "routine"
+why = "ovl28:0697: shows the HEAD sprite (DS:6B01) and the BODY sprite (DS:6B06, 5 rows lower) of the 3D view; called by ovl07_e7, res12_fn_27D9 and ovl28_e4"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl28_e6"
+new = "LoadHeadBodySprites"
+kind = "routine"
+why = "ovl28:05D9: loads the HEAD and BODY 8x8 sprite banks of the picture number DS:5376 from HEAD<num> and BODY<num> through res07_fn_0111; called by ovl07_e7, ovl28_e4 and res12_fn_27D9"
+date = "2026-10-11"
+
+[[rename]]
+old = "res05_fn_094A"
+new = "SelectTileSet"
+kind = "routine"
+why = "saves TileSet into ds5377 and stores the byte parameter as the new 8X8D file number (0802:094A, matched). ovl07 and ovl17 call it"
+date = "2026-10-11"
+
+[[rename]]
+old = "res05_fn_095D"
+new = "RestoreTileSet"
+kind = "routine"
+why = "copies the TileSet that SelectTileSet saved in ds5377 back into TileSet (0802:095D, matched). ovl17 calls it"
+date = "2026-10-11"
+
+[[rename]]
+old = "ds49CD"
+new = "CfgProbeResult"
+kind = "global"
+why = "IOResult of probing pool.cfg with Reset in res08_init (042B:00E0); the repeat loop retries while nonzero"
+date = "2026-10-11"
+
+[[rename]]
+old = "ds484C"
+new = "CfgChar"
+kind = "global"
+why = "the POOL.CFG choice just read in res08_init (042B:016E): video E/C/T, sound T/P, retry key, F/N; compared with character literals"
+date = "2026-10-11"
+
+[[rename]]
+old = "ds5D92"
+new = "SelectedCharacter"
+kind = "global"
+why = "far pointer to the character every Temple service acts on: pushed as the character argument of res12_fn_2199, ovl24_e2 and res12_fn_16EC, and dereferenced for the record fields (Status +10Ch, Items +C8h, Name +0) throughout ovl04 (ovl04:002E, 0539, 084F, 0AC9); StartGame sets it nil"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl04_fn_0013"
+new = "AskCastAnyway"
+kind = "routine"
+why = "shows the reason a cure is not needed for SelectedCharacter (res12_fn_16EC) and returns the key of the prompt 'cast cure anyway: ' (ovl04:0013, matched)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl04_fn_00BF"
+new = "ChargeForCure"
+kind = "routine"
+why = "shows '<service> will only cost <n> gold pieces.', asks 'pay for cure', takes the price from the character or the pooled money, says 'Not enough money.' or 'is cured.' (ovl04:00BF, matched)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl04_fn_0249"
+new = "CureBlindness"
+kind = "routine"
+why = "checks affect 21h, prompt 'is not blind.', service 'Cure Blindness' for 1000, removes affect 21h through ovl24_e2 (ovl04:0249, matched)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl04_fn_02ED"
+new = "CureDisease"
+kind = "routine"
+why = "checks the six affects at DS:0114, 'is not Diseased.', 'Cure Disease' for 1000, removes the six (ovl04:02ED, matched)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl04_fn_0401"
+new = "CureWounds"
+kind = "routine"
+why = "case 1..3: 'Cure Light/Serious/Critical Wounds' for 100/350/600, heals ovl24_e8(1,8), (2,8)+1, (3,8)+3 through ovl24_e21 (ovl04:0401, matched)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl04_fn_0510"
+new = "RaiseDead"
+kind = "routine"
+why = "status 1 or 6 is dead, 'is not dead.', 'Raise Dead' for 5500, clears the status, lowers constitution and adjusts hp_max (ovl04:0510, matched)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl04_fn_0751"
+new = "NeutralizePoison"
+kind = "routine"
+why = "checks affect 37h, 'is not poisoned.', 'Neutralize Poison' for 1000, removes affects 37h, 16h, 0Fh (ovl04:0751, matched)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl04_fn_083A"
+new = "RemoveCurse"
+kind = "routine"
+why = "looks for a cursed item (+36h) or affect 24h, 'is not cursed.', 'Remove Curse' for 3500, hands the character to ovl22_e9 (ovl04:083A, matched)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl04_fn_0928"
+new = "StoneToFlesh"
+kind = "routine"
+why = "status 7 is stoned, 'is not stoned.', 'Stone to Flesh' for 2000, sets the status to 0 (ovl04:0928, matched)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl04_fn_09D7"
+new = "HealMenu"
+kind = "routine"
+why = "fills ten menu lines with the service names at DS:011A, '<name>, how can we help you?', menu 'Heal Exit', runs the chosen service routine (ovl04:09D7, matched)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl04_e1"
+new = "VisitTemple"
+kind = "routine"
+why = "the Temple entry: menu 'Heal View Take Pool Share Appraise Exit', the priest's 'you have left some money here' on Exit (ovl04:0D09, matched)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl30_e1"
+new = "SignOf"
+kind = "routine"
+why = "ovl30:0000: returns the sign of N (-1, 1, 0); called by ovl22_e63, ovl30_e2 and res12_fn_1CE0"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl30_fn_002E"
+new = "SortTable"
+kind = "routine"
+why = "ovl30:002E: sorts the 3-byte record table DS:6718 in place by Key then Val with a mod-2 tie-break; called by ovl30_e6"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl30_e2"
+new = "SetupLine"
+kind = "routine"
+why = "ovl30:01A0: sets up the line drawing state TLineState from its endpoints (DX/DY, the SignOf directions, the start position and the three Bresenham steps); called by ovl22_fn_295B, ovl30_e5 and res12_fn_1A29"
+date = "2026-10-11"
+
+[[rename]]
+old = "res05_fn_0000"
+new = "FreeHeapBlock"
+kind = "routine"
+why = "FreeMem of the block with its size rounded up to a multiple of 8 (0802:0000, matched); LoadDaxBlock frees its packed buffer with it"
+date = "2026-10-11"
+
+[[rename]]
+old = "res05_fn_0020"
+new = "AllocHeapBlock"
+kind = "routine"
+why = "GetMem of Size rounded up to a multiple of 8 into the var pointer (0802:0020, matched); LoadDaxBlock allocates its packed buffer with it"
+date = "2026-10-11"
+
+[[rename]]
+old = "res05_fn_0040"
+new = "WriteCharsAt"
+kind = "routine"
+why = "INT 10h function 2 (cursor to DL column, DH row) then function 9 (write AL CX times, attribute BL) on page DS:4A1B, repeated on page DS:4A1A when VideoAdapter is 1 (0802:0040, matched)"
+date = "2026-10-11"
+
+[[rename]]
+old = "res05_fn_0105"
+new = "WriteTextAt"
+kind = "routine"
+why = "writes each character of its string parameter through WriteCharsAt at successive columns (0802:0105, matched)"
+date = "2026-10-11"
+
+[[rename]]
+old = "res05_fn_0175"
+new = "FillBlocksAt"
+kind = "routine"
+why = "WriteCharsAt with the character DBh (full block) Count times (0802:0175, matched); ShowBottomMessage clears row 24 with it"
+date = "2026-10-11"
+
+[[rename]]
+old = "res05_fn_0193"
+new = "ShowBottomMessage"
+kind = "routine"
+why = "clears row 24 (40 black blocks), writes the message there, waits for ReadGameKey, clears the row again (0802:0193, matched); shows the disk prompt of OpenGameFile and 'tempsize' of LoadDaxBlock"
+date = "2026-10-11"
+
+[[rename]]
+old = "res05_fn_0212"
+new = "WaitForOverlayDisk"
+kind = "routine"
+why = "loops until FileExists('game.ovr'), writing 'Please insert overlay disk.' and waiting for a key each time it fails (0802:0212, matched); res08's initialisation calls it"
+date = "2026-10-11"
+
+[[rename]]
+old = "res05_fn_025D"
+new = "OpenGameFile"
+kind = "routine"
+why = "repeats FileExists and the disk prompt until the file is there (unless NoPrompt), then Assign and Reset(F, 1); returns 1 when open (0802:025D, matched)"
+date = "2026-10-11"
+
+[[rename]]
+old = "res05_fn_02EB"
+new = "FileExists"
+kind = "routine"
+why = "Assign, Reset and Close with I/O checks off; True when IOResult is 0 and the name is not empty (0802:02EB, matched)"
+date = "2026-10-11"
+
+[[rename]]
+old = "res05_fn_0356"
+new = "DeleteAllOccurrences"
+kind = "routine"
+why = "for each start position, Delete(Text, I, Length(Pattern)) when Copy matches Pattern; returns the text (0802:0356, matched)"
+date = "2026-10-11"
+
+[[rename]]
+old = "res05_fn_0425"
+new = "MakeDosFileName"
+kind = "routine"
+why = "deletes the ten characters space . * , ? / backslash : ; | (DS:0D1A), keeps 8 characters and upper-cases them, returns string[40] (0802:0425, matched); ovl17 calls it"
+date = "2026-10-11"
+
+[[rename]]
+old = "res05_fn_050F"
+new = "UnpackRle"
+kind = "routine"
+why = "codes 0..7Eh copy code+1 literal bytes, codes -127..-1 repeat the next byte -code times, until the packed size is consumed (0802:050F, matched); LoadDaxBlock unpacks every block with it"
+date = "2026-10-11"
+
+[[rename]]
+old = "res05_fn_05CD"
+new = "OpenDaxFile"
+kind = "routine"
+why = "OpenGameFile on Name+Ext as the data file, Assign/Reset the same name as the index file, reads the header size word and seeks the data file past the header (0802:05CD, matched)"
+date = "2026-10-11"
+
+[[rename]]
+old = "res05_fn_06E7"
+new = "CloseDaxFile"
+kind = "routine"
+why = "closes the data and the index file that OpenDaxFile opened (0802:06E7, matched)"
+date = "2026-10-11"
+
+[[rename]]
+old = "res05_fn_0716"
+new = "LoadDaxBlock"
+kind = "routine"
+why = "walks the DAX index (id, offset, size, packed size) for BlockId, reads the packed bytes and unpacks them into a new heap block (0802:0716, matched); called by res07_fn_0111, LoadEcl, LoadWallSet, Load3DMap and others"
+date = "2026-10-11"
+
+[[rename]]
+old = "ds2614"
+new = "InsertDiskPrompts"
+kind = "global"
+why = "entries 1..8 of the 30-byte string[29] table at DS:2614 hold 'Insert disk N in drive ' in the image (entry 0 is not a string); OpenDaxFile (0802:061A) and StartGame index it by TileSet and append the drive letter DS:547D and ':' to make the prompt OpenGameFile shows through ShowBottomMessage"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl28_e7"
+new = "Show3DSprite"
+kind = "routine"
+why = "ovl28:0708: shows one of slots 1..3 of the sprite list at its base column and row plus 2 through res07_fn_0D71; its range error string names itself (ovl28:0737); called by ovl07_e8"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl28_e4"
+new = "ShowHeadBodyWindow"
+kind = "routine"
+why = "ovl28:04F9: draws the HEAD/BODY picture window (columns 28..38, rows 1..11) for the character record ds5D92 and shows the HEAD and BODY sprites of its bank numbers; called by ovl16:33E7 and ovl19:031E"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl18_e1"
+new = "ShowEndingNarrative"
+kind = "routine"
+why = "ovl18:02A4: the ending narrative (the dragon and Tyranthraxus/Bane speech, the FINAL pictures and the fn_0006 animations); called by ovl03:2E10 (whitepaper 5.x)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl18_e2"
+new = "AnimateAreaDoors"
+kind = "routine"
+why = "ovl18:06B3: animates or clears the doors of the area view through res07_fn_1E5C with the two SQRPACI banks, stepping the view through DS:094D/DS:095F; called by ovl03:31B4 and ovl17:1602"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl32_e4"
+new = "LoadPictureSlot"
+kind = "routine"
+why = "loads picture Block and its mirrored half Block+80h of a picture set into the two pointers of slot Slot of the table DS:5E5A (res07_fn_0111), with the CHEAD/CBODY T suffix rule and the recolouring of ICON and TileSet sets (ovl32:01C8, matched); the counterpart of FreePictureSlot"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl06_e2"
+new = "AddInventoryItem"
+kind = "routine"
+why = "appends a clone of the item to the linked list at ds5D92^.Stock unless ovl19_e9 (Inventory) reports the list full (15 slots) and then shows OverLoaded; called from ovl05 (TreasureShare) and ovl06_fn_0361 (Buy), so it adds an item to the party inventory (ovl06:0239)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl06_fn_0030"
+new = "ChooseShopItem"
+kind = "routine"
+why = "builds the Shop window (DrawWindow 'Shop'), rewrites each stock entry's Name into a 30-char name+Count field, runs the item picker ovl25_e4 ('Items: '/'Buy') over the list at ds6810 and returns the chosen entry in Head/Selected with the key in Action; called from ovl06_fn_0361 (Buy) (ovl06:0030)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl06_fn_0361"
+new = "BuyItems"
+kind = "routine"
+why = "the Buy flow of the shop menu: loops on ChooseShopItem, pays from the pool (ovl19_e11) or the money (ovl21_e12 on ds67F4), adds the entry with AddInventoryItem and deducts via ovl21_e10/ovl21_e11, else shows Not enough Money.; called from ovl06_e1 on the 'B' menu key (ovl06:0361)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl06_e1"
+new = "ShopMain"
+kind = "routine"
+why = "the Shop overlay's entry from ovl03: marks the shop open (ds49F3), redraws the shop screen (res12_fn_27D9, res12_fn_0767), clears ds67F4 and ds6DC0, then loops showing the shop menu (ovl25_e2) and dispatching Buy/View/Take/Pool/Share/Appraise/Exit and the leave prompt; leaves when Done is set (ovl06:053E)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl28_e2"
+new = "LoadSpriteList"
+kind = "routine"
+why = "ovl28:00A2 (matched): loads block Bank of <Name><TileSet>.dax through LoadDaxBlock into the sprite list it is given, allocating each picture with res07_fn_248E and decoding it with res07_fn_02A5"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl18_fn_0006"
+new = "AnimateFinalPicture"
+kind = "routine"
+why = "ovl18:0006 loads the FINAL picture frames through ovl28_e2 and cycles them on screen between the ending-narrative speech blocks (called 3 times by ShowEndingNarrative with Col, Row, Bank, Cycles); the loop draws each frame through DrawSprite and waits its data delay in res06_fn_0C3F ticks"
+date = "2026-10-11"
+
+[[rename]]
+old = "res06_fn_0000"
+new = "SetEgaFillRegisters"
+kind = "routine"
+why = "sets the EGA Graphics Controller registers 0..5, 7 and 8 and the Sequencer map mask for the picture fill (Port I/O only), 0709:0000"
+date = "2026-10-11"
+
+[[rename]]
+old = "res06_fn_0071"
+new = "SetActivePage"
+kind = "routine"
+why = "sets the video BIOS active display page (Intr 10h AH=5) and stores the plane segment A shl 9 + A000 in ds4A16, 0709:0071"
+date = "2026-10-11"
+
+[[rename]]
+old = "res06_fn_00A0"
+new = "SetPlaneSegment"
+kind = "routine"
+why = "stores the plane segment A shl 9 + A000 in ds4A18, 0709:00A0"
+date = "2026-10-11"
+
+[[rename]]
+old = "res06_fn_0DBE"
+new = "DelayCounted"
+kind = "routine"
+why = "delays ds49E2 * 225 ms through Crt.Delay, 0709:0DBE"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl29_fn_05F3"
+new = "StepDisplay"
+kind = "routine"
+why = "steps the picture display through res07_fn_1B52, the same call ovl34 uses after a direct blit (ovl29:05F3)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl29_fn_031F"
+new = "CellInRange"
+kind = "routine"
+why = "returns True when both map cell coordinates X and Y are in 0..15 (a cell inside the 16x16 block); used by ovl29_e3/e2/e4/e5 (ovl29:031F)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl29_e1"
+new = "SetWallDescriptors"
+kind = "routine"
+why = "stores the four wall view descriptors Wall1..Wall4 into ds6A60..ds6A63 (descriptor 1..4); called by ovl26 ShowAreaView (ovl29:0155)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl30_e3"
+new = "StepLine"
+kind = "routine"
+why = "ovl30:02CC steps a Bresenham line one pixel: it moves X (DX>DY) or Y towards the end point, advances First by 2 or 3 and stores the 3x3 direction pattern ds25C0[SY+1, SX+1]; the Boolean says whether it stepped; called by ovl22_fn_295B, ovl30_e5 and res12_fn_1A29"
+date = "2026-10-11"
+
+[[rename]]
+old = "res06_fn_0C3F"
+new = "GameClock"
+kind = "routine"
+why = "0709:0C3F reads the DOS time (GetTime) and returns Hour*360000 + Minute*6000 + Second*100 + Sec100, the time of day in hundredths; WaitKeyOrTimeout, ShowTitleScreen, AnimateFinalPicture and ovl25_e2 use it as a clock"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl29_fn_0174"
+new = "DrawWallDescriptors"
+kind = "routine"
+why = "ovl29:0174 draws the four wall view descriptors ds6A60..ds6A63 through res07_fn_2632 (A=2, B/D the position/size, C=$B, E the descriptor, F=@ds260A, G=DrawBuf); called by ovl29_e5"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl14_fn_05AB"
+new = "FindCodeSlot"
+kind = "routine"
+why = "ovl14:05AB scans a code-table record for a byte value and returns the slot index or FF; called by FindCodeRecord and Knock"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl14_fn_05EE"
+new = "FindCodeRecord"
+kind = "routine"
+why = "ovl14:05EE walks the ds5D96 record list and returns the first record whose code table holds the byte, or nil; called with 1F by the Knock menu path and Knock"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl14_fn_0648"
+new = "DoKnock"
+kind = "routine"
+why = "ovl14:0648 is the K key handler in e1's Bash/Pick/Knock/Exit menu: it clears the 1F KnockCode slot and returns success"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl14_fn_068D"
+new = "ClampPartyPosition"
+kind = "routine"
+why = "ovl14:068D steps the party one cell in the icon-set direction when ovl29_e3 allows, clamping into the 0..F 16x16 map with the ds49D6 725 edge flag; called by the movement driver ovl14_e2"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl14_fn_073B"
+new = "MoveParty"
+kind = "routine"
+why = "ovl14:073B steps the party one cell in the icon-set direction with wraparound, refreshes ds6AB0/ds6AB1 and sounds; called by ovl14_e1"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl14_fn_0818"
+new = "CheckMapCell"
+kind = "routine"
+why = "ovl14:0818 checks the area-map block ahead of the party and moves there, with the river stench message and impassable ranges; called by ovl14_e1"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl14_fn_0000"
+new = "ClearIconBits"
+kind = "routine"
+why = "ovl14:0000 clears the icon set's bit pair (6, 4, 2, 0 select bits 6-7, 4-5, 2-3, 0-1) in the map cell byte; called by ovl14_e1 on the Exit path"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl14_fn_0109"
+new = "SetIconBits"
+kind = "routine"
+why = "ovl14:0109 sets the icon set's bit in the map cell byte (high bit of the pair); counterpart of ClearIconBits, called by the Bash and Pick commands"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl14_fn_0236"
+new = "HasRecFlag"
+kind = "routine"
+why = "ovl14:0236 returns 1 when any ds5D96 record has a nonzero Flags byte at the given index (5 gates Knock, 6 gates Pick); called by ovl14_e1"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl14_fn_04DF"
+new = "DoPick"
+kind = "routine"
+why = "ovl14:04DF is the P key handler in e1's Bash Pick Knock Exit menu"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl14_fn_0294"
+new = "DoBash"
+kind = "routine"
+why = "ovl14:0294 is the B key handler in e1's menu: it bashes the first bashable ds5D96 record by lock type and strength rolls"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl14_e2"
+new = "HandleWildernessKeys"
+kind = "routine"
+why = "ovl14:0989 drives wilderness interaction for ovl03: reads menu and movement keys, moves the party, manages icon sets and view pages, returns the key"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl14_e1"
+new = "DoWildernessMenu"
+kind = "routine"
+why = "ovl14:0D6D builds the Bash Pick Knock Exit command menu from cell and record flags, dispatches to DoBash DoPick DoKnock, moves the party and tidies sprite banks; called by ovl03"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl30_e4"
+new = "InDirArc"
+kind = "routine"
+why = "tests whether (ToX,ToY) lies in the 90-degree arc facing compass direction Dir (0 north clockwise, 8 omni) from (FromX,FromY): per-direction step tables ds2736/ds273F verified as compass vectors, 8 wedge bodies sharing half-planes, ovl22_e5 loops Dir 0.. to aim at a target"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl30_e6"
+new = "ScanTargets"
+kind = "routine"
+why = "scans the DS:5F27 map entity table for records reachable from (X,Y): tries base/record neighbour pairs in Dir arc that ovl30_e5 walks in fewest steps, appends (index, steps, direction) to the sort table and sorts it; called from combat/item aiming (ovl22_e5) and res12/ovl09/ovl13/ovl24"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl30_e5"
+new = "WalkLine"
+kind = "routine"
+why = "walks a Bresenham line over the map rows with tile gating (stops False at blocking tiles or past Limit steps, else True with steps in StepCount); called for line-of-sight by ovl09/ovl12/ovl13 and ScanTargets"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl29_e2"
+new = "WallIdAt"
+kind = "routine"
+why = "ovl29:047B returns the wall id nibble of map cell (X,Y) for direction 0/2/4/6 (N,E,S,W) from the first two GEO planes (whitepaper 4.2.1)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl29_e3"
+new = "DoorKindAt"
+kind = "routine"
+why = "ovl29:0350 returns 1 when the cell side has no wall, else the door bit pair of the fourth GEO plane for direction 0/2/4/6; ovl14 DoWildernessMenu treats 1 as open, 2 and 3 as locked kinds (Bash/Pick/Knock)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl29_e4"
+new = "EventByteAt"
+kind = "routine"
+why = "ovl29:057A returns the event plane byte (third GEO plane, +200h) of the wrapped map cell; ShowAreaView tests bit 7 (interior)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl29_fn_0211"
+new = "DrawWallPiece"
+kind = "routine"
+why = "ovl29:0211 draws piece Piece (0..9, tables ds0C8C/ds0C96/ds0CA0) of wall Wall from the wall tiles ds6A58 as 8x8 symbols at view column Col, row Row, clipped to the 11x11 view; called by ovl29_e5 per visible wall"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl29_fn_0000"
+new = "DrawWallMap"
+kind = "routine"
+why = "ovl29:0000 draws the 11x11 cells of the area map around the party as 8x8 symbols $104 + wall bits (WallIdAt north 1, east 2, south 4, west 8) and the party arrow $100 + Dir div 2; ovl29_e5 calls it instead of the 3D walls while ds6AAC is nonzero"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl29_e5"
+new = "DrawWallView"
+kind = "routine"
+why = "ovl29:05FD draws the 3D wall view: the frame (DrawWallDescriptors) then the walls three cells deep around the party, nearest last, as wall pieces 0..9 (DrawWallPiece); while ds6AAC is nonzero it draws the overhead wall map (DrawWallMap) instead"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds0C8C"
+new = "WallPieceFirstTile"
+kind = "global"
+why = "DrawWallPiece (ovl29:021E) starts at this tile of the wall's 156-byte tile list; values 0,2,6,10,22,38,54,110,132,154 are the running sums of width*height"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds0C96"
+new = "WallPieceWidth"
+kind = "global"
+why = "DrawWallPiece (ovl29:0232) last column = Col + this - 1; values 1,1,1,3,2,2,7,2,2,1"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds0CA0"
+new = "WallPieceHeight"
+kind = "global"
+why = "DrawWallPiece (ovl29:024B) last row = Row + this - 1; values 2,4,4,4,8,8,8,11,11,2"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds0CAA"
+new = "WallPieceCol"
+kind = "global"
+why = "DrawWallView passes WallPieceCol[n] plus a per-cell shift as the view column of piece n (ovl29:072C..0D36)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds0CBE"
+new = "WallPieceRow"
+kind = "global"
+why = "DrawWallView passes WallPieceRow[n] as the view row of piece n (ovl29:0733..0D3D)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6A58"
+new = "WallTiles"
+kind = "global"
+why = "the 15 walls x 156 tile numbers LoadWallSet fills from WALLDEF (ovl29:0EF7) and DrawWallPiece draws (ovl29:02B4); allocated by StartGame (ovl11:0084)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6AAC"
+new = "WallMapMode"
+kind = "global"
+why = "DrawWallView (ovl29:0603) draws the overhead wall map (DrawWallMap) instead of the 3D walls while it is nonzero"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl25_e1"
+new = "GetMenuLine"
+kind = "routine"
+why = "ovl25:0000 walks Index Next links (+2A) from List and returns that line or nil (matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl25_fn_0067"
+new = "CountMenuLines"
+kind = "routine"
+why = "ovl25:0067 counts the Next links (+2A) of a menu line list (matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl25_e2"
+new = "ReadPromptChoice"
+kind = "routine"
+why = "ovl25:03BD shows Title and the words of Prompt on row 24, highlights the chosen word (, and . move it, its capital letter picks it) and returns the key chosen (draft, address fields only differ)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl25_fn_00CB"
+new = "SplitPromptWords"
+kind = "routine"
+why = "ovl25:00CB nested in ovl25:03BD: fills the parent's word spans from the capital letters and digits of the prompt text"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl25_fn_01DA"
+new = "DrawPromptWords"
+kind = "routine"
+why = "ovl25:01DA nested in ovl25:03BD: draws the prompt text on row 24 with res06_fn_01DF, the chosen word and the capitals in the highlight colour"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl25_e3"
+new = "ClearPromptLine"
+kind = "routine"
+why = "ovl25:06FB calls res06_fn_05EB(0, 24, 0, 40): blanks row 24, the row ReadPromptChoice draws on (matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl25_fn_0711"
+new = "LastHeadingBefore"
+kind = "routine"
+why = "ovl25:0711 nested in ovl25:0D9A: the last line with Flag29 set among the first Count lines of List"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl25_fn_07A4"
+new = "DrawListPage"
+kind = "routine"
+why = "ovl25:07A4 nested in ovl25:0D9A: clears the list window and draws the lines from TopLine on, headings in colour A, others in B"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl25_fn_08D7"
+new = "FirstNonBlank"
+kind = "routine"
+why = "ovl25:08D7 nested in ovl25:0D9A: the index of the first non-space character of a string[40]"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl25_fn_0923"
+new = "LastNonBlank"
+kind = "routine"
+why = "ovl25:0923 nested in ovl25:0D9A: the index of the last non-space character of a string[40]"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl25_fn_0969"
+new = "HighlightListLine"
+kind = "routine"
+why = "ovl25:0969 nested in ovl25:0D9A: redraws the trimmed text of line Line in the highlight colour C"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl25_fn_0A08"
+new = "UnhighlightListLine"
+kind = "routine"
+why = "ovl25:0A08 nested in ovl25:0D9A: redraws the trimmed text of line Line in its normal colour (A for a heading, B otherwise)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl25_fn_0B03"
+new = "SkipHeadingLines"
+kind = "routine"
+why = "ovl25:0B03 nested in ovl25:0D9A: moves Choice past lines with Flag29 set, down or up, wrapping inside the shown page"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl25_fn_0C33"
+new = "ScrollListPage"
+kind = "routine"
+why = "ovl25:0C33 nested in ovl25:0D9A: moves the first shown line (DS:6B29) a page down or up, keeps the cursor's place on the page and redraws"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl25_fn_0CC5"
+new = "MoveListCursor"
+kind = "routine"
+why = "ovl25:0CC5 nested in ovl25:0D9A: moves Choice one line down or up, wrapping inside the shown page, then skips headings"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl25_e4"
+new = "ChooseFromList"
+kind = "routine"
+why = "ovl25:0D9A a list menu: draws List in the window D..G, highlights line Choice, reads the key through the prompt line with Next/Prev/Exit words and returns it with the chosen line (draft, address fields only differ)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl25_e5"
+new = "AskYesNo"
+kind = "routine"
+why = "ovl25:10D1 asks Prompt with the words Yes No through the prompt line until the key is Y or N and returns it (matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl25_e6"
+new = "NewMenuList"
+kind = "routine"
+why = "ovl25:1140 allocates Count menu lines of 46 bytes linked by Next, each blank (matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl25_e7"
+new = "FreeMenuList"
+kind = "routine"
+why = "ovl25:11F3 frees every 46-byte line of a list built by NewMenuList (matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6B2B"
+new = "PromptWordChoice"
+kind = "global"
+why = "ReadPromptChoice (ovl25:03BD) highlights word DS:6B2B of the prompt (DrawPromptWords), , and . step it, a hotkey sets it; ChooseFromList sets 1, AskYesNo 2"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6B2C"
+new = "LastPromptExtKey"
+kind = "global"
+why = "ReadPromptChoice clears DS:6B2C on entry and copies its var Flag (set by an extended or keypad key) into it on exit (ovl25:03EA, ovl25:06EF)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6B29"
+new = "ListMenuTop"
+kind = "global"
+why = "ChooseFromList and its nested routines treat DS:6B29 as the first shown line of the list: GetMenuLine(DS:6B29) is drawn at the window top (ovl25:07DE), ScrollListPage adds or subtracts a page (ovl25:0C57)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6B2E"
+new = "PromptTimeout"
+kind = "global"
+why = "ReadPromptChoice: when the Longint DS:6B2E is above 0 and GameClock minus the start passes it, the prompt returns DS:6B32 (ovl25:0530..0563)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6B32"
+new = "PromptTimeoutKey"
+kind = "global"
+why = "ReadPromptChoice returns the Char DS:6B32 when PromptTimeout runs out (ovl25:0559)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds288C"
+new = "KeypadScanLetters"
+kind = "global"
+why = "DS:288C holds OPQK MGHI; ReadPromptChoice maps keypad digit k to its byte k-1 (ovl25:06B3), the letters of the extended scan codes End, Down, PgDn, Left, (5), Right, Home, Up, PgUp"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6ABE"
+new = "PictureAnimation"
+kind = "global"
+why = "ReadPromptChoice (ovl25:04A3..052D) draws frame DS:6ABF of the sprite list DS:6ABE at column 3 row 3 and steps to the next frame after its delay; LoadSpriteList fills it (ovl07_e8), ovl14 frees it"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl31_e1"
+new = "FootprintCell"
+kind = "routine"
+why = "ovl31:0000 reads cell J of footprint kind Base from the DS:2844 table (offset pair) and answers whether it exists (DX >= 0); kinds 1..4 are 1 cell, 2 vertical, 2 horizontal, 2x2 (table bytes)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl31_fn_0068"
+new = "UpdateViewPositions"
+kind = "routine"
+why = "ovl31:0068 sets ds604B/ds6093[I] to each combatant's map X/Y minus the view origin (ds6716^ +2, +3)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl31_fn_0127"
+new = "DrawCursorAt"
+kind = "routine"
+why = "ovl31:0127 redraws the cells of the cursor footprint (ds6716^+5) at map cell (X, Y), puts icon $19 on each when ds6716^+4 is set, then redraws the combatant standing there"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl31_e4"
+new = "RedrawMapCell"
+kind = "routine"
+why = "ovl31:02D5 redraws the ground under view cell (X, Y) (ovl31_e7) and the combatant standing on map cell (X, Y)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl31_e5"
+new = "RebuildOccupancy"
+kind = "routine"
+why = "ovl31:03A0 clears the 50x25 occupant map DS:60DB and writes each active combatant's index into its footprint cells, then refreshes its view position"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl31_e6"
+new = "GetMapCell"
+kind = "routine"
+why = "ovl31:04BE returns the tile id (ds6716^ cells) and the occupant (DS:60DB) of map cell (X, Y), both 0 off the 50x25 map"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl31_e7"
+new = "RedrawGround"
+kind = "routine"
+why = "ovl31:052B redraws the cell pictures under combatant Occ's footprint, or under view cell (X, Y) when no combatant stands there"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl31_e8"
+new = "IsInView"
+kind = "routine"
+why = "ovl31:06E9 true when view cell (X, Y) is inside the 7x7 view (0..6)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl31_e9"
+new = "IsCombatantInView"
+kind = "routine"
+why = "ovl31:071A true when the footprint of combatant Who is in the 7x7 view: every cell when All is set, any cell otherwise; false for an inactive combatant"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl31_fn_07D4"
+new = "ScrollViewTo"
+kind = "routine"
+why = "ovl31:07D4 moves the 7x7 view origin (ds6716^+2,+3) until map cell (X, Y) is within Margin cells of the centre, redraws all 49 cell pictures and returns true; returns false when no scroll was needed"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl31_e10"
+new = "MoveCombatCursor"
+kind = "routine"
+why = "ovl31:0996 steps from map cell (X, Y) by direction Dir (ds2736/ds273F, 8 = no step), scrolls and redraws the view and the combatants when needed, restores the old cell and draws the cursor at the new one"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl31_e11"
+new = "SetCombatantIcon"
+kind = "routine"
+why = "ovl31:0AF8 brings combatant Who into view, stores IconSet in its combat record (+9) and redraws its icon with Mirror unless NoDraw"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl31_e12"
+new = "CombatantX"
+kind = "routine"
+why = "ovl31:0BE7 returns ds5F27[CombatantIndex(Who)].X"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl31_e13"
+new = "CombatantY"
+kind = "routine"
+why = "ovl31:0C0F returns ds5F27[CombatantIndex(Who)].Y"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl31_e14"
+new = "CombatantKind"
+kind = "routine"
+why = "ovl31:0C37 returns ds5F27[CombatantIndex(Who)].Kind, the footprint kind"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl31_e15"
+new = "CombatantIndex"
+kind = "routine"
+why = "ovl31:0C5F returns the index I with DS:65BD[I] = Who among the ds5F27[0].Kind combatants, 0 when absent"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl31_e16"
+new = "ProbeStep"
+kind = "routine"
+why = "ovl31:0CB9 looks at the cells combatant Who's footprint would cover one step in direction Dir: the other combatant there (Occ) and the tile that decides the move (0 or $1E win, else the largest DS:2744 cost)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl31_e17"
+new = "RemoveCombatant"
+kind = "routine"
+why = "ovl31:0E11 takes combatant Who off the combat map: draws ds5F1A over its cells, leaves a body record (DS:66DD) and tile $1F unless +$13 of its combat record is set, clears its entry and redraws"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl31_e18"
+new = "PlaceCombatant"
+kind = "routine"
+why = "ovl31:10A7 puts combatant Who on map cell (X, Y) with its footprint (+$6C and $7F) when the cells are free and passable (ProbeStep with Dir 8); Restore takes back its body record and tile; returns whether it was placed (always true outside view mode 5)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl31_e19"
+new = "ShowCursorOn"
+kind = "routine"
+why = "ovl31:1298 draws the cursor with combatant Who's footprint on Who's cell (MoveCombatCursor with Dir 8), then resets the cursor to kind 1 and hidden"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds604B"
+new = "CombatantViewCol"
+kind = "global"
+why = "ovl31:0068 stores Combatants[I].X - ViewX at DS:604B+I-1 ([di+604A] with di = I); DrawIcon gets it as the column"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6093"
+new = "CombatantViewRow"
+kind = "global"
+why = "ovl31:0068 stores Combatants[I].Y - ViewY at DS:6093+I-1; DrawIcon gets it as the row"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds60DB"
+new = "CellOccupant"
+kind = "global"
+why = "ovl31:03A0 clears 1250 (50x25) bytes at DS:60DB and writes combatant indexes into the footprint cells; GetMapCell reads it"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds65BD"
+new = "CombatantRecord"
+kind = "global"
+why = "ovl31:0C5F compares Who with the far pointers at DS:65BD+4(I-1); DrawIcon draws their +$BF icon"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6715"
+new = "BodyCount"
+kind = "global"
+why = "ovl31:0F61 incremented per body record RemoveCombatant adds; PlaceCombatant loops 1..DS:6715"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6716"
+new = "CombatMap"
+kind = "global"
+why = "ovl31: far pointer whose +2/+3 are the view origin and +7 + 50 row + col the tile ids (GetMapCell, ScrollViewTo)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds2744"
+new = "CombatTiles"
+kind = "global"
+why = "ovl31:01FE and ovl31:0DDE index 4-byte entries at DS:2744 by tile id: +3 the picture DrawCellPicture draws, +0 the cost ProbeStep compares ($FF refused by PlaceCombatant)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds2844"
+new = "Footprints"
+kind = "global"
+why = "ovl31:0028 reads offset pairs at DS:2844 + 8 Kind + 2 J (bytes: kind 1 one cell, 2 (0,0)(0,1), 3 (0,0)(1,0), 4 the 2x2 square)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds5F1A"
+new = "DyingPicture"
+kind = "global"
+why = "ovl31:0F2F RemoveCombatant draws the far pointer DS:5F1A with res07_fn_0D71 on every cell of the dying combatant"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds5F27"
+new = "CombatantTable"
+kind = "global"
+why = "the combatant table: X, Y and footprint kind per combatant, entry 0's Kind the count (ovl31 RebuildOccupancy reads it, PlaceCombatant writes Kind/X/Y, ovl30 ScanTargets reads it); 73 entries fit before DS:604B"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds66DD"
+new = "BodyTable"
+kind = "global"
+why = "ovl31:0F61..1006 RemoveCombatant fills a 7-byte record (who, X, Y, tile) at DS:66DD+7(n-1), n = ++DS:6715; PlaceCombatant searches and clears them; 8 records end at DS:6715"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl08_fn_0000"
+new = "EndCombat"
+kind = "routine"
+why = "ovl08:0000 frees the combat data (the DS:6DBB list, the $4E9 block DS:6716, the picture DS:6E36) and calls ovl31_e3; called once by RunCombat after the last round"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl08_fn_031A"
+new = "PlayerTurn"
+kind = "routine"
+why = "ovl08:031A the player's command loop for one character: CombatMenu then Move, View, Aim, Use, Cast, Turn, Quick, Done and the Alt keys until the turn is done"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl08_fn_0880"
+new = "EndCombatRound"
+kind = "routine"
+why = "ovl08:0880 end of a combat round: per character updates, dying characters bleed (Status 5 -> 6 after 10 rounds), Your Teammate is Dying, the end test and Continue Battle"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl08_fn_0E45"
+new = "EndTurnMenu"
+kind = "routine"
+why = "ovl08:0E45 the Done command's menu: Guard, Delay (initiative 1), Quit, Bandage, Speed (GameSpeedMenu), Exit"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl08_fn_10F6"
+new = "GameSpeedMenu"
+kind = "routine"
+why = "ovl08:10F6 the GameSpeed (n) menu: Slower raises DS:49E2 up to 9, Faster lowers it to 0"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl08_fn_122B"
+new = "SetQuickCombat"
+kind = "routine"
+why = "ovl08:122B sets Quick (+$10F) so the computer fights for the character, and drops a Combat^.Target on the same Side"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds49E2"
+new = "GameSpeed"
+kind = "global"
+why = "GameSpeedMenu (ovl08:10F6) shows it as GameSpeed (n) and its Slower/Faster keys move it in 0..9"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl08_e1"
+new = "RunCombat"
+kind = "routine"
+why = "ovl08:007A the combat loop: rounds of ovl13_e1 per character, turns in initiative order (PickNextCombatant, CombatTurn), EndCombatRound until one side is gone; called by ovl03_fn_179B"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl08_fn_0131"
+new = "PickNextCombatant"
+kind = "routine"
+why = "ovl08:0131 returns the party list character with the highest positive Combat^.Initiative (ties broken by a 1d100 roll), nil when none is left"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl08_fn_01F6"
+new = "CombatTurn"
+kind = "routine"
+why = "ovl08:01F6 one character's turn: resets per-turn fields, selects and shows the character, then lets ovl09_e1 (quick) or PlayerTurn act"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl08_fn_0666"
+new = "CombatMenu"
+kind = "routine"
+why = "ovl08:0666 builds the combat menu (Move, View Aim, Use, Cast, Turn, Quick Done) and returns an accepted key through ovl25_e2"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl08_fn_09DF"
+new = "MoveCharacter"
+kind = "routine"
+why = "ovl08:09DF the Move/Attack command: keypad scan codes H I M Q P O K G give directions 0..7, a step into an enemy attacks (MeleeAttack), off the map asks Flee:, terrain cost above the moves left says Blocked"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl08_fn_0D45"
+new = "MeleeAttack"
+kind = "routine"
+why = "ovl08:0D45 attacks Target with the weapon in hand (Not with that weapon when res12_fn_2E03 and not 2E46), stores Combat^.Target, ovl13_e7/e11/e12 do the attack"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl08_fn_0FFF"
+new = "BandageDying"
+kind = "routine"
+why = "ovl08:0FFF finds party characters with Status 5 (dying); with DoIt it bandages the first (Status 4, message is bandaged); returns 1 when one was found"
+date = "2026-10-12"
+
+[[rename]]
+old = "res06_fn_00B7"
+new = "FillPlaneRect"
+kind = "routine"
+why = "fills a byte-column by cell-row rectangle on an EGA plane via FillChar with GC write mode (0709:00B7, called by res06_fn_0CAB, res06_fn_0DD3 and ClearWindow)"
+date = "2026-10-12"
+
+[[rename]]
+old = "res06_fn_017C"
+new = "LoadGameFont"
+kind = "routine"
+why = "loads DAX block 201 ($C9) of 8X8d1.dax into ds5E20 (0709:017C); block 201 is the 1-bit font, 177 glyphs of 8 bytes (whitepaper font section); called by StartGame (ovl11:002D); ds5E20 is read as glyph bitmaps by res06_fn_01DF"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds5E20"
+new = "GameFont"
+kind = "global"
+why = "the 1-bit font block: allocated $588 bytes by StartGame (ovl11:0074), filled by LoadGameFont from 8X8D1.DAX block 201 (0709:017C), read as glyph bitmaps by res06_fn_01DF (0709:01DF)"
+date = "2026-10-12"
+
+[[rename]]
+old = "res06_fn_0CAB"
+new = "ClearFullScreen"
+kind = "routine"
+why = "clears the whole screen to 0 by VideoAdapter (0709:0CAB): 0 fills two planes, 1 draws the full screen through FillPlaneRect twice, 2 fills four planes; called by ovl19"
+date = "2026-10-12"
+
+[[rename]]
+old = "res06_fn_0DD3"
+new = "ClearRect"
+kind = "routine"
+why = "Byte-coordinate twin of ClearWindow (0709:0DD3): clears Left..Right by Top..Bottom to 0 by VideoAdapter (text scanlines, FillPlaneRect pair, or graphics rows); called by HealMenu, VisitTemple, ShopMain, ShowEndingNarrative"
+date = "2026-10-12"
+
+[[rename]]
+old = "res06_fn_0768"
+new = "ShowPagedText"
+kind = "routine"
+why = "word-wrapping text pager (0709:0768): shows Text in the Left..Bottom rect with BreakChars word scan, GlyphCol/GlyphRow cursor, FillPlaneRect/ClearRect clear and 'Press any key to continue' paging; called by ChargeForCure, VisitTemple, ShopMain, LoadEcl, ShowCredits"
+date = "2026-10-12"
+
+[[rename]]
+old = "res06_fn_06A7"
+new = "DrawTextRun"
+kind = "routine"
+why = "nested in ShowPagedText (0709:06A7): draws Buf[I..J] glyph by glyph through res06_fn_01DF at advancing GlyphCol with the Crt delay"
+date = "2026-10-12"
+
+[[rename]]
+old = "res06_fn_0714"
+new = "SkipSpaces"
+kind = "routine"
+why = "nested in ShowPagedText (0709:0714): skips blank Buf chars while I is below Len"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds5E24"
+new = "GlyphCol"
+kind = "global"
+why = "ShowPagedText current glyph column (0709:0768, nested DrawTextRun): reset to Left on clear and newline, Inc per glyph, clamped to Right"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds5E25"
+new = "GlyphRow"
+kind = "global"
+why = "ShowPagedText current glyph row (0709:0768): reset to Top on clear, Inc per newline, paged at Bottom"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds0D16"
+new = "BreakChars"
+kind = "global"
+why = "char set ShowPagedText word scan tests (0709:0822..08F0, set of 32..63 per the 0D12 descriptor, proven by tpc probe Q32); image value members $, %, &, 2, 3, 7, ="
+date = "2026-10-12"
+
+[[rename]]
+old = "res06_fn_01DF"
+new = "DrawGlyph"
+kind = "routine"
+why = "draws Count copies of the GameFont glyph Glyph from cell Col advancing right (0709:01DF): text-scanline words, EGA planar bytes, or graphics nibbles by VideoAdapter; called by CheckCodeWheel, ShowMessageLine path, DrawTextRun"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds31FA"
+new = "SpellTable"
+kind = "global"
+why = "16-byte rows indexed by spell 1..38h (entry 0 at DS:31FA is the index base); RecalcClassStats reads byte 0 (0 = cleric spell) and byte 1 (spell level 1..3, an index of the cleric slots) and sets the character's byte per spell (ovl23:00F8..0135)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds3C7C"
+new = "ClassThac0Table"
+kind = "global"
+why = "[class 0..7, level] bytes; RecalcClassStats keeps the largest entry over the classes in the character's THAC0 byte +2Dh (ovl23:0020..0062)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds3CF4"
+new = "ThiefSkillTable"
+kind = "global"
+why = "[thief level, 1..8] bytes: the base of the eight thief skills (ComputeThiefSkills, ovl23:0377); index base DS:3CF3"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds3D3C"
+new = "ThiefRaceTable"
+kind = "global"
+why = "[race, 1..8] signed adjustments added to the thief skills; a negative one larger than the base zeroes the skill (ovl23:0358..03A2); index base DS:3D3B"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds3D4F"
+new = "ThiefDexTable"
+kind = "global"
+why = "[dexterity, 1..5] signed adjustments added to the first five thief skills (ovl23:0426); index base DS:3D4E"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds40BD"
+new = "ClericSlotTable"
+kind = "global"
+why = "[cleric level, 1..3] bytes copied into the cleric spell slots +B2h..+B4h when the cleric level (ClassLevels[0]) is above 1 (ovl23:00B0..00E3); index base DS:40BC"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds41D5"
+new = "MageSlotTable"
+kind = "global"
+why = "[magic-user level, 1..3] bytes copied into +B5h..+B7h when ClassLevels[5] is above 1 (ovl23:014C..017F); index base DS:41D4"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds426E"
+new = "SavingThrowTable"
+kind = "global"
+why = "[class 0..7, level 0..8, 0..4] bytes: ComputeSavingThrows lowers the five values +6Dh..+71h to their minimum over the classes (ovl23:0255)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds65B9"
+new = "CombatantRecord"
+kind = "global"
+why = "merge of ovl08 and ovl31: ovl08's ds65B9[n] (n from ovl31_e16) is CombatantRecord[n] (DS:65BD, entries 1..72; DS:65B9 is its index base)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl23_e1"
+new = "RecalcClassStats"
+kind = "routine"
+why = "recomputes per class 0..7 the to-hit max (+2Dh from DS:3C7C), the highest level (+73h), fighter attacks (+A1h), cleric and magic-user spell slots (+B2h, +B5h), cleric spells known, then calls ovl23_e3/e4 (ovl23:0000, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl23_e2"
+new = "AddWisdomBonusSpells"
+kind = "routine"
+why = "adds 1 to cleric slot 1 at wisdom (+12h) 13 and 14, slot 2 at 15 and 16, slot 3 at 17, each only when nonzero: the AD&D wisdom bonus spells (ovl23:01AF, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl23_e3"
+new = "ComputeSavingThrows"
+kind = "routine"
+why = "sets five bytes +6Dh..+71h to 20 and lowers each to the minimum of DS:426E[class, level, n] over the classes with a level: the shape of the five AD&D saving throws (ovl23:0255, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl23_e4"
+new = "ComputeThiefSkills"
+kind = "routine"
+why = "called when the thief level ClassLevels[6] is above 0; eight bytes +77h..+7Eh from a thief-level table plus a race table, plus a dexterity table for the first five: the eight AD&D thief skills (ovl23:0329, matched)"
+date = "2026-10-12"
+[[rename]]
+old = "ovl24_e1"
+new = "CallAffectHandler"
+kind = "routine"
+why = "calls the handler table ds6828[AffectId](Who, Affect, Mode) (ovl24:001E, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl24_fn_0160"
+new = "RunAffectHook"
+kind = "routine"
+why = "calls the handler (mode 0) when Who has the affect, or for affects 21, 45, 46, 49 when another member within range (ScanTargets, 6 squares for 31h) has it (ovl24:0160, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl24_e3"
+new = "RunAffectHooks"
+kind = "routine"
+why = "one case over 20 roll kinds, each running RunAffectHook for a fixed list of affect ids; called by the rolls with kinds 6, 9, 0Ah, 0Ch, 0Dh, 10h (ovl24:02FA, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl24_e4"
+new = "ApplyCloudTile"
+kind = "routine"
+why = "a combatant on tile 1Eh without affects 1Eh 1Fh 20h 6Fh 7Dh saves and gets 'starts to cough' (1Eh) or 'chokes and gags from nausea' (1Fh for 1d4+1) (ovl24:0AE7, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl24_e5"
+new = "RollBeatsResistance"
+kind = "routine"
+why = "d20 (20 counts 100) through the hooks of kind 10h plus the given level must exceed the character's byte +111h (ovl24:0C4F, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl24_e6"
+new = "RollToHit"
+kind = "routine"
+why = "d20 (20 counts 100) plus the attacker's +110h and a per-side game word must reach the needed value; hooks 0Ah (attacker) and 10h (target) (ovl24:0CB7, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl24_e8"
+new = "RollDice"
+kind = "routine"
+why = "sums Count rolls of Random(Sides) + 1; ovl04 rolls 1d8, 2d8, 3d8 for the cure spells (ovl24:0DE3, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl24_e9"
+new = "RollDiceCounted"
+kind = "routine"
+why = "keeps the dice count in ds681C and returns RollDice(Count, Sides) (ovl24:0E2E, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl24_e11"
+new = "DropCombatant"
+kind = "routine"
+why = "shows the message, clears +10Dh, sets the status (hit points 0 unless 3), clears the combatant from the map (RedrawGround, CombatantTable) (ovl24:0F06, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl24_e15"
+new = "CureAffect"
+kind = "routine"
+why = "when Who has the affect: 'is Cured', RemoveAffect, returns True (ovl24:1081, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl24_e16"
+new = "EncodeStrength"
+kind = "routine"
+why = "Strength + 100, or for 18 the percentile + 1: one byte for strength and exceptional strength (ovl24:10E4, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl24_e17"
+new = "DecodeStrength"
+kind = "routine"
+why = "the inverse of EncodeStrength on an affect's data byte (bit 7 masked): up to 65h is 18/(n-1), above is n - 100 (ovl24:110D, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl24_e18"
+new = "RaiseStrength"
+kind = "routine"
+why = "refuses a strength below the current one, else keeps the old strength in the first strength affect (0Ch or 26h), sets Strength and StrengthPercent (ovl24:115C, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl24_e21"
+new = "HealCharacter"
+kind = "routine"
+why = "adds hit points to +11Bh capped at HpMax, a dying character becomes unconscious; ovl04 cure spells call it (ovl24:175D, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl24_e22"
+new = "ReviveCombatant"
+kind = "routine"
+why = "places the combatant back on the map, status 0, hit points set, 'stands up and grins' (monster) or 'gets back up' (ovl24:1869, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl24_e10"
+new = "AddAffect"
+kind = "routine"
+why = "allocates a 9-byte affect, appends it to Who's list and fills id, duration, data and flag (ovl24:0E52, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl24_e13"
+new = "RemoveDeathAffects"
+kind = "routine"
+why = "removes the 16 affects of the table at DS:0C14 from the character; DropCombatant and DealDamage call it when a combatant goes down (ovl24:100A, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl24_e19"
+new = "DealDamage"
+kind = "routine"
+why = "'takes <n> points of damage from Fire/Cold/Electricity/Acid/Magic', halved or none on a save, 'lost a spell', 'Goes Down, and is Dying', 'is killed' (ovl24:1344, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl24_e20"
+new = "ApplyAffect"
+kind = "routine"
+why = "'is Unaffected' when the hooks clear the id or a save negates it, else replaces a shorter affect and AddAffect, then shows the message (ovl24:1656, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl24_e2"
+new = "RemoveAffect"
+kind = "routine"
+why = "finds the affect by id in Who's list when none is given, calls its handler with mode 1 when its flag is set, unlinks it and frees its 9 bytes (ovl24:0026, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl24_e7"
+new = "SavingThrow"
+kind = "routine"
+why = "d20: 1 fails, 20 succeeds, else roll + SaveBonus + bonus against SavingThrows[kind] after the hooks of kind 0Ch (ovl24:0D63, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl24_e12"
+new = "ClearAttackerAffect"
+kind = "routine"
+why = "removes every affect 19h from the attacker before RollToHit rolls (ovl24:0FD2, 0CC8, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6816"
+new = "SaveRoll"
+kind = "global"
+why = "SavingThrow: d20 plus SaveBonus and the bonus, compared with SavingThrows[kind] after the hooks (ovl24:0D73..0DCA)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6817"
+new = "HookAffectId"
+kind = "global"
+why = "ApplyAffect sets the affect id before RunAffectHooks kind 9; zero afterwards means 'is Unaffected' (ovl24:1672, 1682)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6818"
+new = "DamageAmount"
+kind = "global"
+why = "DealDamage sets the damage before RunAffectHooks kind 6, halves or clears it on a save, prints and deals it (ovl24:134E..14FB)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6819"
+new = "DamageKind"
+kind = "global"
+why = "DealDamage's text: and F7h = 1 Fire, 2 Cold, 4 Electricity, 10h Acid; bit 3 alone Magic (ovl24:13E4, 14A8)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6822"
+new = "AttackRoll"
+kind = "global"
+why = "RollToHit and RollBeatsResistance: d20 with 20 counted as 100, hooks may change it, negative means a miss (ovl24:0C63, 0CD5)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds682A"
+new = "SaveKind"
+kind = "global"
+why = "SavingThrow stores the saving throw kind for the hooks of kind 0Ch (ovl24:0DAD)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds0C13"
+new = "DeathAffects"
+kind = "global"
+why = "entries 1..16 (DS:0C14) are the affects RemoveDeathAffects removes (ovl24:1026)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6828"
+new = "AffectHandlers"
+kind = "global"
+why = "the far procedure table CallAffectHandler calls by affect id (lcall [di+6828h], ovl24:001E)"
+
+[[rename]]
+old = "res03_fn_0000"
+new = "TimeInHundredths"
+kind = "routine"
+why = "Dos.GetTime, then Hour*360000 + Minute*6000 + Second*100 + Sec100 (08AE:001A..005A)"
+date = "2026-10-12"
+
+[[rename]]
+old = "res03_fn_006C"
+new = "WaitHundredths"
+kind = "routine"
+why = "loops on TimeInHundredths until it reaches start + parameter (08AE:0072..00D4); PlaySound passes 10"
+date = "2026-10-12"
+
+[[rename]]
+old = "res03_fn_00DC"
+new = "PlaySound"
+kind = "routine"
+why = "0: both tunes 0 and output off; 1: output on; FFh: both tunes 0; else tune n-1 on the device SoundMode selects (1: speaker setter 08AE:1742, 0: Tandy setter 08AE:17AE) (08AE:00F4..0153)"
+date = "2026-10-12"
+
+[[rename]]
+old = "res03_fn_017B"
+new = "SilenceSound"
+kind = "routine"
+why = "starts the timer driver, sets both voice groups to tune 0, stops the driver; saves SoundMode in SoundModeBeforePause (08AE:017E..01A0)"
+date = "2026-10-12"
+
+[[rename]]
+old = "res03_fn_01A5"
+new = "SetSoundDriverIdle"
+kind = "routine"
+why = "nonzero: stops the timer driver (08AE:13B1) if it ran; zero: starts it (08AE:137C); stores the value in ds5374 which PlaySound tests to run the driver only around one sound (08AE:01B1..01CB, 0156..0174)"
+date = "2026-10-12"
+
+[[rename]]
+old = "res03_fn_137C"
+new = "StartSoundTimer"
+kind = "routine"
+why = "saves INT 08h, installs handler 08AE:13EA, PIT divisor 13B1h (08AE:1383..13AC; whitepaper 5.14)"
+date = "2026-10-12"
+
+[[rename]]
+old = "res03_fn_13B1"
+new = "StopSoundTimer"
+kind = "routine"
+why = "restores INT 08h, divisor FFFFh, speaker off, Tandy silenced (08AE:13B8..13E6; whitepaper 5.14)"
+date = "2026-10-12"
+
+[[rename]]
+old = "res03_fn_1742"
+new = "SetSpeakerTune"
+kind = "routine"
+why = "loads tune n from table CS:055F into the four voices at CS:022D, which the stepper 08AE:1477 plays on port 42h (PC speaker) (08AE:174F..179E)"
+date = "2026-10-12"
+
+[[rename]]
+old = "res03_fn_17AE"
+new = "SetTandyTune"
+kind = "routine"
+why = "loads tune n from table CS:0607 into the four voices at CS:03C7, which the stepper 08AE:14EC plays on port C0h (Tandy SN76489) (08AE:17BB..180A)"
+date = "2026-10-12"
+
+[[rename]]
+old = "res03_fn_181A"
+new = "SetSoundOutput"
+kind = "routine"
+why = "stores the byte at CS:020D which both voice steppers test before writing the speaker (08AE:14C0) or the Tandy chip (08AE:1519) (08AE:1824..1827)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds5374"
+new = "SoundDriverIdle"
+kind = "global"
+why = "SetSoundDriverIdle stores it (08AE:01CB); nonzero: the timer driver is stopped and PlaySound runs it only around one sound, waiting 0.1 s (08AE:00E9, 0156); StartGame sets 100 (ovl11)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl05_fn_04C9"
+new = "SettleBattleOutcome"
+kind = "routine"
+why = "decides fled/won/destroyed from the members' Status and Side, awards the experience through ComputeBattleExperience and AwardExperience, revives fled and dying members or removes the party (ovl05:04C9, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl05_fn_0916"
+new = "ShowBattleResult"
+kind = "routine"
+why = "shows 'The party has won.'/'fled'/'found Treasure!' or the duel result and 'Each character receives <n> experience points.' (ovl05:0916, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl05_fn_0B14"
+new = "ChooseLootItem"
+kind = "routine"
+why = "draws the 'Loot' window and lets the player pick an item of the loot list ds6810 through ChooseFromList ('Items: ', 'Take') (ovl05:0B14, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl05_fn_0C06"
+new = "TakeLootItems"
+kind = "routine"
+why = "loops ChooseLootItem; on Take gives the chosen item to SelectedCharacter (AddInventoryItem) and unlinks and frees it from the loot list ds6810 (ovl05:0C06, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl05_fn_0D38"
+new = "TakeTreasure"
+kind = "routine"
+why = "the Take command: 'Take: Money Items Exit' when both money and items are left, else takes the money (ovl21_e4) or the items (TakeLootItems) directly (ovl05:0D38, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl05_fn_0ECD"
+new = "TreasureMenu"
+kind = "routine"
+why = "the menu after a battle: 'View Take Pool Share Detect Exit', asks 'There is still treasure left. Do you want to go back and claim your treasure?' on Exit (ovl05:0ECD, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl05_fn_11AC"
+new = "RemoveBattleCombatants"
+kind = "routine"
+why = "removes the monsters (Side 1) and the B13 combatants from the party list through ovl16_e2 and frees the remaining members' combat state (ovl05:11AC, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl05_e1"
+new = "EndBattle"
+kind = "routine"
+why = "the entry after a combat: settles the outcome, removes the monsters, shares, shows the result and the treasure menu, frees the loot; or 'The END!' / 'The monsters rejoice for the party has been destroyed' (ovl05:1527, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl05_fn_0000"
+new = "ComputeBattleExperience"
+kind = "routine"
+why = "sums the defeated monsters' XpValue + HpB1*XpPerHp, the pooled money at 1/200..2200 per coin and 400 per magic plus of the looted items, divided by the party size; moves the monsters' money and items into the loot (ovl05:0000, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl05_fn_0355"
+new = "AwardExperience"
+kind = "routine"
+why = "adds the experience to every member with Flag10D set and not dead, +10% when the prime requisite of the class is above 15, halved or a third for multi-class (ovl05:0355, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl05_fn_12E8"
+new = "TakeHirelingShares"
+kind = "routine"
+why = "computer-run members (B84 80h and up) take their share (byte +85h and 7) of each pooled money kind: '<name> takes and hides his share.' (ovl05:12E8, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds84D4"
+new = "DuelMode"
+kind = "global"
+why = "nonzero during a duel: EndBattle shows 'You have lost the duel.'/'You have won the duel.' and 'The duelist receives' instead of the party texts (ovl05:095A..0A3B)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds49FF"
+new = "PartyDestroyed"
+kind = "global"
+why = "SettleBattleOutcome sets 1 and clears it when a player-run party member (Side 0, B84 below 80h) is still standing; EndBattle then shows 'The monsters rejoice for the party has been destroyed' (ovl05:04D4, 05AF, 154A)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds443B"
+new = "PartyFled"
+kind = "global"
+why = "set by SettleBattleOutcome when a member has Status 3 and no member is okay or dead; ShowBattleResult then shows 'The party has fled.' and gives no experience (ovl05:050D, 09D7)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds84DA"
+new = "BattleWon"
+kind = "global"
+why = "SettleBattleOutcome sets it when a combatant is left with Status 0 or 1 (or the duelist won); only then the experience is computed; zero in a duel shows 'You have lost the duel.' (ovl05:05CA, 07AC, 0961)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds84D6"
+new = "BattleExperience"
+kind = "global"
+why = "ComputeBattleExperience writes the experience per character into it, AwardExperience and ShowBattleResult ('Each character receives <n>') take it (ovl05:060B, 155C)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds84D5"
+new = "NoExperienceCount"
+kind = "global"
+why = "SettleBattleOutcome counts the members without Flag10D or with Status 1 (dead); ComputeBattleExperience divides by the party size minus it (ovl05:05EA, 0322)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds443A"
+new = "MonstersLooted"
+kind = "global"
+why = "ComputeBattleExperience sets it when a defeated monster (Side 1, not fled) gives up its money and items to the loot; ShowBattleResult then says 'The party has won.' instead of the fled or treasure text (ovl05:0088, 0949)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds67F4"
+new = "PooledMoney"
+kind = "global"
+why = "seven LongInt kinds of money: the shop and the Temple pool the party's money into it (ovl21_e12 sums it), EndBattle puts the defeated monsters' money into it and TakeHirelingShares takes the hirelings' shares from it (ovl05:0093, 1366)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds25C9"
+new = "EgaPlaneMasks"
+kind = "global"
+why = "DrawGlyph mode 1 writes ds25C9[3 - Bit] to the Sequencer Map Mask (port 3C5h) and gates the font byte on it AND Color (0709:03C0..03ED)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds25CD"
+new = "GlyphColorPatterns"
+kind = "global"
+why = "DrawGlyph mode 0 ANDs ds25CD[mapped colour] with the column mask to colour each set pixel of a text-scanline word (0709:02A3)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds25E5"
+new = "GlyphPixelMasks"
+kind = "global"
+why = "DrawGlyph mode 0 picks ds25E5[Bit] for pixel column Bit 0..7 of the 16-bit text-scanline word (0709:02B0)"
+date = "2026-10-12"
+
+[[rename]]
+old = "res06_fn_05EB"
+new = "ClearTextCells"
+kind = "routine"
+why = "draws Count space glyphs (DrawGlyph with $20) from Col on Row (0709:0608..061F); ShowMessageLine clears row 24 with (0, 24, 0, 40) before writing"
+date = "2026-10-12"
+
+[[rename]]
+old = "res06_fn_0626"
+new = "DrawTextAt"
+kind = "routine"
+why = "for each character of the string calls DrawGlyph(Col, Row, Color, 1, char, 1) and advances Col (0709:0671..069F); ShowMessageLine writes its message with it"
+date = "2026-10-12"
+
+[[rename]]
+old = "res06_fn_0D68"
+new = "FlashMessageLine"
+kind = "routine"
+why = "clears row 24, writes the text there, waits DelayCounted and clears it again, with no key wait (0709:0D81..0DB5); CheckCodeWheel shows the wrong-code message with it"
+date = "2026-10-12"
+
+[[rename]]
+old = "res06_fn_09E3"
+new = "ReadInputLine"
+kind = "routine"
+why = "reads keys with ReadGameKey, adds ' '..'z' up to MaxLen and echoes them, Backspace deletes, Enter or Esc ends, returns the line upper-cased (0709:0A2B..0B5B); CheckCodeWheel reads the code word with it"
+date = "2026-10-12"
+
+[[rename]]
+old = "res06_fn_0B66"
+new = "ReadNumber"
+kind = "routine"
+why = "repeats ReadInputLine (6 characters) until Val gives a number with no error in 0..65536 and returns it (0709:0B80..0BE9)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl15_fn_0000"
+new = "StudyRestMinutes"
+kind = "routine"
+why = "ovl15:0000 sums 15 minutes per level of the spells being memorized (Spells bit 7) and of the scroll spells being scribed (item affects bit 7), plus 4 or 6 hours; RestParty takes the party maximum"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl15_fn_0159"
+new = "CancelMemorizing"
+kind = "routine"
+why = "ovl15:0159 clears every Spells slot with bit 7 set and RestHours; called when the player answers No to 'Memorize These Spells?'"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl15_fn_019C"
+new = "CancelScribing"
+kind = "routine"
+why = "ovl15:019C clears bit 7 of the spell bytes of every scroll the character carries; called when the player answers No to 'Scribe These Spells?'"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl15_fn_0214"
+new = "CancelPartyStudy"
+kind = "routine"
+why = "ovl15:0214 runs CancelMemorizing and CancelScribing on every party member; MakeCamp calls it on entry and exit"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl15_fn_025C"
+new = "SpellSlotsLeft"
+kind = "routine"
+why = "ovl15:025C returns SpellSlots[class, level] minus the memorized spells of that class and level"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl15_fn_036C"
+new = "MayUseMagic"
+kind = "routine"
+why = "ovl15:036C returns False and shows 'cannot cast spells in this area' or 'is in no condition to cast any spells / memorize spells / scribe any scrolls' for actions 1..3"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl15_e2"
+new = "CastSpells"
+kind = "routine"
+why = "ovl15:04A1 checks MayUseMagic(cast), lists the memorized spells (ovl19_e12) and casts the chosen one through ovl22_e5, or says 'has no spells memorized'; the camp Magic menu's Cast key and ovl14's wilderness keys call it"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl15_fn_05A4"
+new = "ShowSpellSlotsLeft"
+kind = "routine"
+why = "ovl15:05A4 shows 'can memorize:' and the slots left per level under 'Cleric Spells:' and 'Magic-User Spells:'; returns whether the character has any slot"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl15_fn_077A"
+new = "RestParty"
+kind = "routine"
+why = "ovl15:077A sets the rest time to the longest StudyRestMinutes of the party, runs the rest (ovl20_e2) and clears it; the camp's Rest key"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl15_fn_0824"
+new = "SortMemorizedSpells"
+kind = "routine"
+why = "ovl15:0824 exchange-sorts the 21 Spells bytes by spell number (bit 7 masked); MemorizeSpells calls it after adding a spell"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl15_fn_090A"
+new = "MemorizeSpells"
+kind = "routine"
+why = "ovl15:090A strings 'Memorize These Spells?' and 'cannot memorize any spells': adds chosen spells with bit 7 set to the Spells slots while slots are left"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl15_fn_0B5B"
+new = "ScribeScrolls"
+kind = "routine"
+why = "ovl15:0B5B strings 'Scribe These Spells?', 'has no copyable scrolls', 'You can not scribe that spell.': marks a scroll spell with bit 7 for scribing"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl15_fn_0E37"
+new = "AddDisplayLine"
+kind = "routine"
+why = "ovl15:0E37 nested in DisplaySpellEffects: allocates a 46-byte menu line after the parent's last line and sets its text and heading flag"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl15_fn_0FBC"
+new = "DisplaySpellEffects"
+kind = "routine"
+why = "ovl15:0FBC builds a list of every member's affects by name (spell names, 'Prayer', 'Poisoned', ' <No Spell Effects>') and shows it with ChooseFromList titled 'Display'"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl15_fn_13F1"
+new = "CampMagicMenu"
+kind = "routine"
+why = "ovl15:13F1 the menu 'Cast Memorize Scribe Display Rest Exit' (DS:0531): C, M, S, D and R call CastSpells, MemorizeSpells, ScribeScrolls, DisplaySpellEffects and RestParty"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl15_fn_14A9"
+new = "MoveMemberUp"
+kind = "routine"
+why = "ovl15:14A9 swaps SelectedCharacter with the member before it in the party list (the first goes to the end); the Party Order menu's G key"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl15_fn_1601"
+new = "MoveMemberDown"
+kind = "routine"
+why = "ovl15:1601 swaps SelectedCharacter with the member after it in the party list (the last goes to the front); the Party Order menu's O key"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl15_fn_1780"
+new = "PartyOrderMenu"
+kind = "routine"
+why = "ovl15:1780 the prompt 'Party Order: ' with 'Select Exit' / 'Place Exit' (DS:0584) and 'has been selected'"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl15_fn_18E5"
+new = "DropPartyMember"
+kind = "routine"
+why = "ovl15:18E5 strings 'Drop from party?', 'bids you farewell', 'is dumped in a ditch' and, for the last member, 'quit TO DOS:'"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl15_fn_1A97"
+new = "CampSpeedMenu"
+kind = "routine"
+why = "ovl15:1A97 shows 'Game Speed = n (0=fastest 9=slowest)' and moves GameSpeed with Faster and Slower; the camp Alter menu's Speed key"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl15_fn_1C59"
+new = "AlterMenu"
+kind = "routine"
+why = "ovl15:1C59 the prompt 'Alter: ' with 'Order Drop Speed Icon Pics Exit' (DS:055A)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl15_e1"
+new = "MakeCamp"
+kind = "routine"
+why = "ovl15:1E6F shows 'The party makes camp...' and runs the menu 'Save View Magic Rest Alter Exit' (DS:0508); entry 1 called by ovl03"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds0508"
+new = "CampMenuText"
+kind = "global"
+why = "DS:0508 holds string[40] 'Save View Magic Rest Alter Exit' (image); MakeCamp passes it to ReadPromptChoice (ovl15:1F06) and dispatches S, V, M, R, A on it"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds0531"
+new = "CampMagicMenuText"
+kind = "global"
+why = "DS:0531 holds string[40] 'Cast Memorize Scribe Display Rest Exit' (image); CampMagicMenu passes it to ReadPromptChoice (ovl15:1429)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds055A"
+new = "AlterMenuText"
+kind = "global"
+why = "DS:055A holds string[40] 'Order Drop Speed Icon Pics Exit' (image); AlterMenu passes it to ReadPromptChoice (ovl15:1C86)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds0584"
+new = "PartyOrderMenuTexts"
+kind = "global"
+why = "DS:0584 and DS:05AD hold string[40] 'Select Exit' and 'Place Exit' (image); PartyOrderMenu indexes them with its picked flag (ovl15:17B0)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6DC2"
+new = "RestTime"
+kind = "global"
+why = "seven words cleared together (FillChar 14 bytes, ovl15:0808, 1E91); RestParty sets [1] minutes, [2] tens of minutes and [3] hours of the rest (ovl15:07CA..07FA) before ovl20_e2, which reads them (ovl20:0487..04A7)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds28E9"
+new = "SpellNames"
+kind = "global"
+why = "string[40] array indexed by spell number (mul 29h, add 28E9h at ovl15:10EA); entries 1..38h in the image are 'Bless' .. 'Restoration', the rows of SpellTable"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds49F6"
+new = "ShowMonsterPics"
+kind = "global"
+why = "AlterMenu's Pics submenu shows 'Monsters on' while it is nonzero and the M key toggles it (ovl15:1D02, 1DE9); the loader sets it to 1"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds49F5"
+new = "ShowPortraits"
+kind = "global"
+why = "AlterMenu's Pics submenu shows 'Portraits on' while it is nonzero and the P key toggles it (ovl15:1D31, 1DFC); the loader sets it to 1"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl10_fn_08A4"
+new = "BlockTerrainFlags"
+kind = "routine"
+why = "ovl10:08A4 maps the area block code ds465A to a terrain flag byte through a case of block code ranges; the map builders 0BDE, 0D13 and 0E9E test its bits to choose rivers and features"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl10_fn_0000"
+new = "ScatterRareTiles"
+kind = "routine"
+why = "ovl10:0000 turns plain ground cells (picture 16h) of the combat map into tile 1Ah or 1Bh on a d100 roll of 98 or 99 and, on 100, rarely 1Ch or 1Dh"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl10_fn_0D13"
+new = "PlaceTallFeatures"
+kind = "routine"
+why = "ovl10:0D13 puts two-cell features (lower tile Kind+23h, upper tile Kind+1Fh for kinds below 5) on plain ground, with a chance from BlockTerrainFlags"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl10_fn_0E9E"
+new = "ScatterTerrainFeatures"
+kind = "routine"
+why = "ovl10:0E9E rolls d255 per plain ground cell against five chances set from BlockTerrainFlags and replaces it by one of five tile ranges"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl10_fn_11B4"
+new = "BuildWildernessMap"
+kind = "routine"
+why = "ovl10:11B4 fills the combat map with the ground tile, reads the area map block at the party position (GameVars 195, 196) into ds465A and runs the river and feature builders; CreateCombatMap calls it when AreaViewKind is not 1"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl10_fn_1244"
+new = "CreateCombatMap"
+kind = "routine"
+why = "ovl10:1244 loads the DungCom or WildCom and RandCom 24x24 sets, GetMems CombatMap (4E9h bytes), clears its cursor fields and builds the dungeon (0810) or wilderness (11B4) map"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl10_fn_12E1"
+new = "PrepareCombatants"
+kind = "routine"
+why = "ovl10:12E1 walks the party list ds5D96 and gives each character a zeroed 16h-byte Combat record with its NoBody flag and starting icon set"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl10_fn_1403"
+new = "IsBeyondGrid"
+kind = "routine"
+why = "ovl10:1403 is True when X is outside 0..10 and Y outside 0..5, the 11x6 placement grid of ds4440; FindStartCell uses it to leave a ring"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl10_fn_1434"
+new = "TryPlaceAt"
+kind = "routine"
+why = "ovl10:1434 puts combatant Index on the map cell of grid cell (Col, Row) when that grid cell is free and ProbeStep finds no occupant and a passable tile, and marks the grid cell used"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl10_fn_1577"
+new = "FindStartCell"
+kind = "routine"
+why = "ovl10:1577 walks rings of the placement grid of the side ds4658 calling TryPlaceAt until the combatant is placed or every group is exhausted (False)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl10_fn_19F5"
+new = "PlaceAllCombatants"
+kind = "routine"
+why = "ovl10:19F5 sets up both sides' placement grids and walks the party list placing every combatant with FindStartCell (CombatantTable, CombatantRecord), leaving bodies for those already down and dropping those that do not fit"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl10_e1"
+new = "StartBattle"
+kind = "routine"
+why = "ovl10:1E31 (entry 1, called by RunCombat) shows 'A battle begins...', resets the combat state, creates the combat map, prepares and places the combatants and centres the view on the first one"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds465A"
+new = "CombatBlock"
+kind = "global"
+why = "BuildWildernessMap (ovl10:1215) stores the area map block at the party position here; BlockTerrainFlags (ovl10:08AA) reads it"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds4440"
+new = "PlacementCells"
+kind = "global"
+why = "PlaceAllCombatants (ovl10:1B8E) sets each byte of 2 sides x 4 groups x 6 rows x 11 columns to 1 inside the group's shape, TryPlaceAt (ovl10:1480, 1563) requires 1 and clears it when it places a combatant"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds4658"
+new = "PlacingSide"
+kind = "global"
+why = "PlaceAllCombatants sets it to each character's Side (ovl10:1C41) before FindStartCell, and loops it over 0..1 to build the per-side tables; every per-side table of the placement is indexed by it"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds4650"
+new = "SideOriginCol"
+kind = "global"
+why = "per side: PlaceAllCombatants sets side 0 to 0 and side 1 to the column step of the party facing times game word 705 (ovl10:1A2C..1A6E); FindStartCell adds the party column ds6AAD to it for the wall tests and TryPlaceAt adds it to the map column"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds4652"
+new = "SideOriginRow"
+kind = "global"
+why = "per side, as SideOriginCol for the row (ovl10:1A31..1A9F, 1846)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds4654"
+new = "FirstRingCells"
+kind = "global"
+why = "per side: (ds6814/ds6815 + 1) shr 1 (ovl10:1AD8); FindStartCell closes its first ring after that many cells (ovl10:17E7)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds4656"
+new = "SideFacing"
+kind = "global"
+why = "per side: the party facing ds6AAF shr 1 and its opposite ((ds6AAF + 4) mod 8) shr 1 (ovl10:1A3D, 1AB3); it selects the placement shape and the GroupFacing and FacingWallDirs rows"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds02D2"
+new = "FacingWallDirs"
+kind = "global"
+why = "ovl10:1879 and 1935: FindStartCell passes ds02D2[SideFacing, 1..3] as the direction of the wall test ovl10_fn_01AD on the area map"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds02E2"
+new = "GroupFacing"
+kind = "global"
+why = "ovl10:15C5: FindStartCell takes ds02E2[SideFacing, Group] shr 1 as the facing that orients the rings of placement group Group"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds02F2"
+new = "FacingCombatDir"
+kind = "global"
+why = "ovl10:1363 and 15EA: indexed by a facing 0..3, its values (7, 2, 3, 6 in the image) index the direction step tables ds2736/ds273F, and PrepareCombatants gives each combatant ds02F2[ds6AAF shr 1] as its icon set"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds02F6"
+new = "RingStartCol"
+kind = "global"
+why = "ovl10:1640: FindStartCell starts a ring at column ds02F6[Group > 0, Facing] plus the ring number times the step"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds02FE"
+new = "RingStartRow"
+kind = "global"
+why = "ovl10:1672: as RingStartCol for the row"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds0306"
+new = "PlacementShapes"
+kind = "global"
+why = "ovl10:1B38/1B57: PlaceAllCombatants marks a grid cell usable when its column lies in the (Lo, Hi) span of its row in shape SideFacing (group 1: shape 4)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl10_fn_01AD"
+new = "PassageKind"
+kind = "routine"
+why = "ovl10:01AD ORs WallSideKind of side Dir of the area map cell with WallSideKind of the opposite side of the neighbour that way (ds2736/ds273F): 1 a wall, 0 open, 3 with a door"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl10_fn_0810"
+new = "BuildDungeonMap"
+kind = "routine"
+why = "ovl10:0810 (CreateCombatMap calls it when AreaViewKind is 1) draws the combat map from the walls (PassageKind) of the area map cells within 6 columns and 2 rows of the party (ds6AAD, ds6AAE), then ScatterRareTiles"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl10_fn_0BDE"
+new = "PlaceRiver"
+kind = "routine"
+why = "ovl10:0BDE draws a diagonal river (tiles 32h, 33h) down the wilderness combat map with 35 or 75 in 100 for the BlockTerrainFlags bits 20h and 10h, with bridge pieces (PlaceBridge) at random rows or at least one"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl10_fn_012B"
+new = "WallSideKind"
+kind = "routine"
+why = "ovl10:012B (nested in PassageKind): for an area map cell in 0..15 answers 1 when DoorKindAt is 0 (a solid wall), 0 when WallIdAt is 0 (no wall), else 3 (a door); off the map 0 for the west and east sides on the party row, else 1"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl10_fn_0221"
+new = "SetDungeonCell"
+kind = "routine"
+why = "ovl10:0221 (nested in BuildDungeonMap) stores picture+1 at combat map cell (I*6 + J*5 + 21 + SubCol, J*5 + 10 + SubRow) of the area cell offset (I, J) when it is on the map"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl10_fn_02BA"
+new = "DrawFloorAndWest"
+kind = "routine"
+why = "ovl10:02BA (nested in BuildDungeonMap) fills sub-rows 2..4 of the area cell with picture 16h and draws the west side as a wall (West 1) or a door (West 3)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl10_fn_0377"
+new = "DrawNorthSide"
+kind = "routine"
+why = "ovl10:0377 (nested in BuildDungeonMap) draws sub-cells 3..4 of rows 0..1 as a wall (pictures 5 and 0Ah) when North is 1, else as floor (16h)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl10_fn_040F"
+new = "DrawNorthWestCorner"
+kind = "routine"
+why = "ovl10:040F (nested in BuildDungeonMap) picks the four corner pictures of sub-cells 1..2, rows 0..1, from North, West and the walls of the neighbouring cells (PassageKind)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl10_fn_0615"
+new = "DrawNorthEastCorner"
+kind = "routine"
+why = "ovl10:0615 (nested in BuildDungeonMap) picks the four corner pictures of sub-cells 5..6, rows 0..1, from North, East and the walls of the neighbouring cells (PassageKind)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl10_fn_0B97"
+new = "PlaceBridge"
+kind = "routine"
+why = "ovl10:0B97 (nested in PlaceRiver) puts tiles 34h and 35h on two neighbouring cells of a river row and counts the bridge pieces"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_fn_0020"
+new = "RemoveCarriedWeight"
+kind = "routine"
+why = "subtracts Amount from TCharacter+102, the carried weight MaxLoad bounds (ovl21:0020)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_fn_003A"
+new = "AddCarriedWeight"
+kind = "routine"
+why = "adds Amount to TCharacter+102, the carried weight MaxLoad bounds (ovl21:003A)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_e1"
+new = "WouldOverload"
+kind = "routine"
+why = "True when carried weight plus Amount exceeds MaxLoad, with the room left; its caller then shows 'Overloaded. Money will be put in Pool.' (ovl21:0054, 0219)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_e12"
+new = "MoneyValueInGold"
+kind = "routine"
+why = "sums the five coin kinds times their copper values (DS:0D24: 1,10,100,200,1000), adds 100 and divides by 200, the gold value (ovl21:00A8)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_e10"
+new = "SetCharacterGold"
+kind = "routine"
+why = "clears the selected character's five coin words and writes Amount div 5 platinum and Amount mod 5 gold (ovl21:0130)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_e11"
+new = "SetPooledGold"
+kind = "routine"
+why = "clears PooledMoney kinds 0..4 and writes Amount div 5 platinum and Amount mod 5 gold (ovl21:0185)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_fn_0203"
+new = "GivePlatinum"
+kind = "routine"
+why = "adds Amount to the selected character's Money[4] (platinum, 1000 copper in DS:0D24), the overflow to PooledMoney[4] with 'Overloaded. Money will be put in Pool.' (ovl21:0203)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds0D24"
+new = "CoinCopperValues"
+kind = "global"
+why = "five LongInts 1,10,100,200,1000 (the image); MoneyValueInGold multiplies the coin kinds by them and divides by entry 3 (ovl21:00EC, 0111)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_fn_0000"
+new = "CarryLimit"
+kind = "routine"
+why = "returns res12_fn_13AB (the strength weight allowance) plus 1500; WouldOverload compares the carried weight with it (ovl21:0000, 0054)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_e6"
+new = "ReadAmount"
+kind = "routine"
+why = "shows a prompt on row 24, reads digits until Enter or Escape with Backspace, clamps to Max (Str of Max), returns the Val of the digits or 0 on Escape (ovl21:0294)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_e7"
+new = "TransferMoney"
+kind = "routine"
+why = "moves Amount of Money[Kind] from one character to another with RemoveCarriedWeight/AddCarriedWeight, else shows 'Overloaded' (ovl21:044C)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_e2"
+new = "PoolMoney"
+kind = "routine"
+why = "adds every sharing member's seven Money words into PooledMoney, clears them and their weight, sets ds6DC0; ShopMain and VisitTemple call it on the Pool key (ovl21:0508)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_fn_05E0"
+new = "CountSharers"
+kind = "routine"
+why = "counts the party members with B84 0 or B3, the members PoolMoney takes money from; ShareMoney divides the pool by it (ovl21:05E0, 0652)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_e3"
+new = "ShareMoney"
+kind = "routine"
+why = "divides each kind of PooledMoney by CountSharers and adds the shares to the members' Money within their load, the rest stays pooled; called on the Share key (ovl21:063A)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_e8"
+new = "DropMoney"
+kind = "routine"
+why = "subtracts Amount from Who^.Money[Kind] and its weight, adds it to PooledMoney only in view modes 1 and 6 (ovl21:0A01)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6DC0"
+new = "MoneyInPool"
+kind = "global"
+why = "PoolMoney sets it to 1, ShareMoney sets it to 1 when any kind is left in PooledMoney, else 0 (ovl21:051B, 09AD..09F2); the shop and the Temple clear it with the pool"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_fn_0A88"
+new = "TakeFromPool"
+kind = "routine"
+why = "moves Amount (at most what PooledMoney[Kind] holds) from the pool to Who^.Money[Kind] with its weight, 'Overloaded' when it does not fit; TakeMoney calls it with the chosen kind (ovl21:0A88, 0F26)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_e5"
+new = "MoneyKindOfLine"
+kind = "routine"
+why = "returns 0..6 from the first letter of a Take menu line (G+E Gems 5, G Gold 3, P 4, E 2, S 1, C 0, J 6) and its name ('Gems ', 'Gold ', ...) (ovl21:0B93)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_e4"
+new = "TakeMoney"
+kind = "routine"
+why = "lists the pooled money kinds ('Select type of coin'), asks 'How much <kind> will you take?' and calls TakeFromPool for SelectedCharacter; the shop, Temple and treasure Take commands call it (ovl21:0CEB)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds0FFA"
+new = "MoneyKindNames"
+kind = "global"
+why = "seven string[10] Copper Silver Electrum Gold Platinum Gems Jewelry at DS:0FFA (the image); TakeMoney prefixes each pooled amount with MoneyKindNames[Kind] (ovl21:0DDF)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_e9"
+new = "TreasureLeft"
+kind = "routine"
+why = "sets its first var to 1 when any PooledMoney kind is nonzero and its second when the loot list ds6810 is not nil; the treasure, shop and Temple menus show Take/Share from it (ovl21:0F7E)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_fn_0FD2"
+new = "RollItemBonus"
+kind = "routine"
+why = "d20: 1..14 gives 1, 15..19 gives 2, else 3; BuildTreasureItem stores it in TMenuLine.Plus (ovl21:0FD2, 10AF)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_e13"
+new = "BuildTreasureItem"
+kind = "routine"
+why = "clears a 63-byte TMenuLine and fills ItemType, Plus, NameNum, Weight, Value and Affects from the item type and dice (ovl21:1010)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds0970"
+new = "TreasureItemRows"
+kind = "global"
+why = "BuildTreasureItem copies the name numbers, weight, value and affects of a fixed item from eight words starting at the chosen row (ovl21:182F..18C2)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_e14"
+new = "AppraiseGems"
+kind = "routine"
+why = "asks 'Appraise : ' over the selected character's gems (Money[5]) and jewelry (Money[6]), values one with a d100 ('The Gem is Valued at <n> gp.') and sells it or keeps it as an item; the shop and Temple Appraise key call it (ovl21:19B2)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds49DE"
+new = "EclCode"
+kind = "global"
+why = "LoadEcl fills it with the ECL block (ovl07:03F3); the script reads its operands from it at EclPC (ovl07:0026) and addresses it as 9900..B6FF (ovl07:06FB, 0E8D)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds49ED"
+new = "EclPC"
+kind = "global"
+why = "the script's program counter: ovl07_e2 reads operand bytes at EclPC+1.. and advances it (ovl07:0022..012C); ovl07_e3 resets it to 9900, the start of EclCode (ovl07:01F5); ovl14 L key loads an entry point into it"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_e7"
+new = "ShowHeadBody"
+kind = "routine"
+why = "loads HEAD/BODY banks (LoadHeadBodySprites), stores them in ds49FD/ds49FE and shows them at 3,3 (ovl07:0511, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_e9"
+new = "MakeWord"
+kind = "routine"
+why = "returns Hi*256+Lo of two operand bytes (ovl07:06AF, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_fn_06D3"
+new = "SixBitChar"
+kind = "routine"
+why = "maps a 6-bit packed string code to a character: above 1F unchanged, else plus 40h; used by the string operand decoder (ovl07:06D3, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_fn_06FB"
+new = "MemRegion"
+kind = "routine"
+why = "classifies a script address into 0..4 by the ranges 4900-4CFF, 6B00-6EFF, 9700-98FF, 9900-B6FF that ReadVmWord/WriteVmWord map to GameVars, ds49D6, ds49DA, the ECL buffer (ovl07:06FB, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_fn_0756"
+new = "PartyIndexOf"
+kind = "routine"
+why = "walks the party list ds5D96 by Next counting until the given character (ovl07:0756, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_fn_07BC"
+new = "GetCharacterVar"
+kind = "routine"
+why = "case on script address minus 6B00 returning SelectedCharacter fields, Found cleared for unknown addresses (ovl07:07BC, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_fn_0A74"
+new = "SetCharacterVar"
+kind = "routine"
+why = "case on script address minus 6B00 storing the value into SelectedCharacter fields; called by WriteVmWord for region 1 (ovl07:0A74, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_e10"
+new = "WriteVmWord"
+kind = "routine"
+why = "stores a word at a script address by MemRegion: GameVars, ds49D6, ds49DA, ECL buffer bytes or special engine variables (ovl07:0C77, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_e11"
+new = "ReadVmWord"
+kind = "routine"
+why = "loads a word from a script address by MemRegion, the read counterpart of WriteVmWord (ovl07:0E0C, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_e2"
+new = "DecodeOperands"
+kind = "routine"
+why = "reads Count operands (type, low, high bytes) from EclCode at EclPC into OperandType/Low/High and unpacks string operands (ovl07:0000, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_e1"
+new = "OperandValue"
+kind = "routine"
+why = "returns decoded operand N: the byte (type 0), ReadVmWord of its address (1, 3, 80h) or the word (2, 81h) (ovl07:0136, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_e3"
+new = "InitScript"
+kind = "routine"
+why = "resets EclPC to 9900, reads the five header entry addresses with DecodeOperands into ds49E3..ds49EB and clears VM state; called by ovl03 after LoadEcl (ovl07:01B6, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_e12"
+new = "WriteVmString"
+kind = "routine"
+why = "stores a string at a script address by MemRegion, a character per word or byte, 0-terminated; 6B00 is the selected character's name (ovl07:0F53, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_fn_1153"
+new = "DecodeString"
+kind = "routine"
+why = "unpacks Len bytes of 6-bit packed characters from EclCode into EclStrings[Index] through SixBitChar (ovl07:1153, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_fn_12FB"
+new = "ReadVmString"
+kind = "routine"
+why = "copies the 0-terminated string at a script address into EclStrings[Index] (ovl07:12FB, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_fn_156D"
+new = "ParseHotkeys"
+kind = "routine"
+why = "removes each ~ of a menu text and collects the upper-cased letter after it into Keys; lower-cases letters and digits (ovl07:156D, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_e13"
+new = "AskMenu"
+kind = "routine"
+why = "prompt-line menu: ReadPromptChoice until a ~ hotkey (ParseHotkeys) or Return, returns the 0-based hotkey position (ovl07:1684, matched; whitepaper 5.4, 5.19)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_e14"
+new = "AskListMenu"
+kind = "routine"
+why = "ParseHotkeys on the menu text, then ChooseFromList with all other parameters (ovl07:1788, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_e5"
+new = "LoadCharacter"
+kind = "routine"
+why = "New(Who) then ovl17_e6 (save and load unit) fills it for Kind; returns its Items and Affects (ovl07:0411, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_e6"
+new = "OpenStepsAhead"
+kind = "routine"
+why = "counts cells without a wall (WallIdAt = 0) ahead in direction Dir, up to 2 (ovl07:0482, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_e8"
+new = "ShowEncounterPicture"
+kind = "routine"
+why = "loads SPRIT sprites and shows the one for the distance (Show3DSprite), then the PIC or HEAD/BODY close-up when adjacent (ovl07:054E, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_e15"
+new = "CompareStrings"
+kind = "routine"
+why = "sets six flags at DS:6F78 for =, <>, <, >, <=, >= of two strings (ovl07:1815, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_e16"
+new = "CompareWords"
+kind = "routine"
+why = "sets six flags at DS:6F78 for =, <>, <, >, <=, >= of two words (ovl07:18EB, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_e17"
+new = "ScriptGosub"
+kind = "routine"
+why = "pushes EclPC on a linked stack of 6-byte entries at DS:6F70 and jumps to an operand address (ovl07:1951, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_e19"
+new = "StepPartyForward"
+kind = "routine"
+why = "moves DS:6AAD/6AAE one cell in the direction DS:6AAF (0/2/4/6) with wrap at 0..15, then EventByteAt and WallIdAt of the new cell (ovl07:19DB, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_e18"
+new = "SetupDuel"
+kind = "routine"
+why = "sets DuelMode, clears Flag10D of the other members, appends a copy of the selected character named ROLF on side 1 with its items (ovl07:1A6F, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_e20"
+new = "ScaleMoney"
+kind = "routine"
+why = "Money[0..6] := Trunc(Money[i] * Factor) with a Real factor (ovl07:1CC3, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_e21"
+new = "LoseItems"
+kind = "routine"
+why = "per item: lowers the chance by 90 (weight above 255) or 50 (above 24), rolls d100 and hands the item to res12_fn_1509 when the roll is at most the chance (ovl07:1DF0, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_e22"
+new = "SkipCommand"
+kind = "routine"
+why = "reads the opcode at EclPC and decodes its operand count without executing, else steps one byte (ovl07:1EA6, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_e23"
+new = "MovementRange"
+kind = "routine"
+why = "max and min of TCharacter +11C over the party, doubled by affect 27h, halved by affect 2Ah (ovl07:1FB1, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_e24"
+new = "DamageWithMessage"
+kind = "routine"
+why = "shows 'dies.' or 'is hit FOR n points of Damage.' and applies the damage through res12_fn_2228 (ovl07:20CC, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6F70"
+new = "ReturnStack"
+kind = "global"
+why = "top of the script's return stack: ScriptGosub pushes 6-byte entries (ReturnPC, Next) onto it (ovl07:1951..19B5); InitScript empties it (ovl07:0202)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6F74"
+new = "ReturnPrev"
+kind = "global"
+why = "ScriptGosub keeps the previous top of ReturnStack in it while pushing (ovl07:1984, 199B); InitScript clears it"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6F78"
+new = "CompareFlags"
+kind = "global"
+why = "CompareStrings and CompareWords clear its six bytes and set [0..5] for =, <>, <, >, <=, >= (ovl07:1844..18E0, 18EE..1948)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6F7F"
+new = "SkippedOpcode"
+kind = "global"
+why = "SkipCommand stores the opcode at EclPC in it and dispatches on it (ovl07:1EB7)"
+date = "2026-10-12"
 

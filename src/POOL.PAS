@@ -56,11 +56,11 @@ begin
   StartGame;
   if ParamStr(1) <> 'STING' then
   begin
-    ovl01_e1;
+    ShowTitleScreen;
     CheckCodeWheel;
   end;
   ovl16_e1;
-  ovl29_e1(11, 0, 7, 6);
+  SetWallDescriptors(11, 0, 7, 6);
   ovl03_e1;
   QuitGame;
 end.

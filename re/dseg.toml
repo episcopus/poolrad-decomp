@@ -384,9 +384,577 @@ evidence = "far pointer at DS:49D2 to the game's word variables: ovl07:02E1 and 
 [[global]]
 offset = 0x4A1E
 name = "VideoAdapter"
-evidence = "ClearWindow (03F1:0137) dispatches on it: 0 fills scanline planes, 1 writes text cells, 2 fills four planes; the video hardware the game drives (POOL.CFG offers EGA/CGA/Tandy, mapping still open)"
+evidence = "ClearWindow (03F1:0137) dispatches on it: 0 fills scanline planes, 1 writes text cells, 2 fills four planes; the video hardware the game drives; res08_init sets 1 for POOL.CFG E, 2 for T, 0 otherwise (042B:019B..01F9)"
 
 [[global]]
 offset = 0x6AAE
 name = "ds6AAEWords"
 evidence = "the 4-byte element table at DS:6AAE: the loader (ovl11_e1, ovl11:0369..0390) sets the two words of elements 2 and 3 to $FFFF (stride I*4: mov word [di+6AAEh] and [di+6AB0h]); its element 0 shares its first byte with DS:6AAE, the party row ovl29_e4 gets (ovl26_e1 passes ds6AAE). Declared as the alias array ds6AAEWords in src/POOLVARS.PAS because DS:6AAE itself is the party row byte"
+
+[[global]]
+offset = 0x5376
+name = "TileSet"
+evidence = "8X8D file number: Str(TileSet) is the suffix of the 8x8dN filename Load8x8Bank loads (ovl34:0055, whitepaper 8X8D1-8); the loader (StartGame, ovl11) also sets it to 1 and indexes the 30-byte name table ds2614 with it (ovl11:0564)"
+
+[[global]]
+offset = 0x5E3A
+name = "TileBanks"
+evidence = "five far pointers to the loaded 8x8 tile banks, indexed Bank*4, nil means load failed (ovl34:00B4,00CE,01F9); the loader (StartGame) clears them with FillChar(TileBanks, $14, 0) at ovl11:024F"
+
+[[global]]
+offset = 0x2722
+name = "SymbolBase"
+evidence = "five words, one per 8x8 bank, subtracted from Symbol to index within the bank (ovl34:020F)"
+
+[[global]]
+offset = 0x5E4E
+name = "TileBuf"
+evidence = "far pointer to the tile staging buffer: tiles are Moved to +$17 and shown by res07_fn_1951 (ovl34:027A,029E); the loader (StartGame) allocates it through res07_fn_248E(8, 1, 1, 0) at ovl11:00A4"
+
+[[global]]
+offset = 0x4A20
+name = "DrawBuf"
+evidence = "far pointer passed to res07_fn_08D4 as the destination buffer (ovl34:0241,0245); the loader (StartGame) allocates it through res07_fn_248E($A8, $15, 1, 0) at ovl11:00BC"
+
+[[global]]
+offset = 0x484D
+size = 578
+name = "CfgText"
+evidence = "text file res08_init Assigns as POOL.CFG and Reads line by line (042B:0124..038C)"
+
+[[global]]
+offset = 0x494D
+size = 6
+name = "CfgProbe"
+evidence = "untyped file res08_init Assigns as pool.cfg and Resets with 128-byte records to probe existence (042B:00C3..011A)"
+
+[[global]]
+offset = 0x537A
+size = 256
+name = "SaveDir"
+evidence = "POOL.CFG line 4 (save directory) ReadLn into it by res08_init (042B:0332)"
+
+[[global]]
+offset = 0x547C
+size = 256
+name = "GameDir"
+evidence = "POOL.CFG line 3 (game directory) ReadLn into it by res08_init (042B:030C)"
+
+[[global]]
+offset = 0x4848
+size = 4
+name = "NewHeapEnd"
+evidence = "Pointer res08_init sets to HeapEnd cut by $400 paragraphs, then assigns to HeapEnd (042B:01CF, 042B:02E2)"
+
+[[global]]
+offset = 0x49CD
+name = "CfgProbeResult"
+evidence = "IOResult of probing pool.cfg with Reset in res08_init (042B:00E0); the repeat loop retries while nonzero"
+
+[[global]]
+offset = 0x484C
+name = "CfgChar"
+evidence = "the POOL.CFG choice just read in res08_init (042B:016E): video E/C/T, sound T/P, retry key, F/N; compared with character literals"
+
+[[global]]
+offset = 0x00F1
+size = 410
+name = "TempleMenuText"
+evidence = "the Temple's Heal menu (ovl04:0A18) copies string[40] entries I = 1..9 from DS:00F1 + I * $29 into its menu lines; the image holds Cure Blindness, Cure Disease, Cure Light/Serious/Critical Wounds, Neutralize Poison, Raise Dead, Remove Curse, Stone to Flesh, Exit at DS:011A + $29 * (I - 1); entry 0 is never read"
+
+[[global]]
+offset = 0x0113
+size = 7
+name = "DiseaseAffects"
+evidence = "Cure Disease (ovl04:031E, 03A6) tests and removes the affect DS:0113 + I for I = 1..6; the image holds $1F $22 $2B $2C $32 $39 at DS:0114; entry 0 is never read"
+
+[[global]]
+offset = 0x5D92
+name = "SelectedCharacter"
+evidence = "far pointer to the character every Temple service acts on: pushed as the character argument of res12_fn_2199, ovl24_e2 and res12_fn_16EC, and dereferenced for the record fields (Status +10Ch, Items +C8h, Name +0) throughout ovl04 (ovl04:002E, 0539, 084F, 0AC9); StartGame sets it nil; ShowHeadBodyWindow (ovl28:04F9) reads its HEAD and BODY bank numbers at +BBh and +BCh"
+
+[[global]]
+offset = 0x0D19
+size = 11
+name = "BadNameChars"
+evidence = "res05_fn_0425 (0802:0465) indexes DS:0D19 + I for I = 1..10 and deletes each character from a file name; the image holds ' .*,?/\\:;|' at DS:0D1A"
+
+[[global]]
+offset = 0x557E
+size = 4
+name = "PackedBuf"
+evidence = "res05_fn_0716 allocates it with the packed size (0802:08B3), BlockReads the packed block into PackedBuf^ (0802:08F8), unpacks it through res05_fn_050F and frees it (0802:0938)"
+
+[[global]]
+offset = 0x2614
+name = "InsertDiskPrompts"
+evidence = "entries 1..8 of the 30-byte string[29] table at DS:2614 hold 'Insert disk N in drive ' in the image (entry 0 is not a string); OpenDaxFile (0802:061A) and StartGame index it by TileSet and append the drive letter DS:547D and ':' to make the prompt OpenGameFile shows through ShowBottomMessage"
+
+[[global]]
+offset = 0x0C8C
+name = "WallPieceFirstTile"
+evidence = "DrawWallPiece (ovl29:021E) starts at this tile of the wall's 156-byte tile list; values 0,2,6,10,22,38,54,110,132,154 are the running sums of width*height"
+
+[[global]]
+offset = 0x0C96
+name = "WallPieceWidth"
+evidence = "DrawWallPiece (ovl29:0232) last column = Col + this - 1; values 1,1,1,3,2,2,7,2,2,1"
+
+[[global]]
+offset = 0x0CA0
+name = "WallPieceHeight"
+evidence = "DrawWallPiece (ovl29:024B) last row = Row + this - 1; values 2,4,4,4,8,8,8,11,11,2"
+
+[[global]]
+offset = 0x0CAA
+name = "WallPieceCol"
+evidence = "DrawWallView passes WallPieceCol[n] plus a per-cell shift as the view column of piece n (ovl29:072C..0D36)"
+
+[[global]]
+offset = 0x0CBE
+name = "WallPieceRow"
+evidence = "DrawWallView passes WallPieceRow[n] as the view row of piece n (ovl29:0733..0D3D)"
+
+[[global]]
+offset = 0x6A58
+name = "WallTiles"
+evidence = "the 15 walls x 156 tile numbers LoadWallSet fills from WALLDEF (ovl29:0EF7) and DrawWallPiece draws (ovl29:02B4); allocated by StartGame (ovl11:0084)"
+
+[[global]]
+offset = 0x6AAC
+name = "WallMapMode"
+evidence = "DrawWallView (ovl29:0603) draws the overhead wall map (DrawWallMap) instead of the 3D walls while it is nonzero"
+
+[[global]]
+offset = 0x6B2B
+name = "PromptWordChoice"
+evidence = "ReadPromptChoice (ovl25:03BD) highlights word DS:6B2B of the prompt (DrawPromptWords), , and . step it, a hotkey sets it; ChooseFromList sets 1, AskYesNo 2"
+
+[[global]]
+offset = 0x6B2C
+name = "LastPromptExtKey"
+evidence = "ReadPromptChoice clears DS:6B2C on entry and copies its var Flag (set by an extended or keypad key) into it on exit (ovl25:03EA, ovl25:06EF)"
+
+[[global]]
+offset = 0x6B29
+name = "ListMenuTop"
+evidence = "ChooseFromList and its nested routines treat DS:6B29 as the first shown line of the list: GetMenuLine(DS:6B29) is drawn at the window top (ovl25:07DE), ScrollListPage adds or subtracts a page (ovl25:0C57)"
+
+[[global]]
+offset = 0x6B2E
+name = "PromptTimeout"
+evidence = "ReadPromptChoice: when the Longint DS:6B2E is above 0 and GameClock minus the start passes it, the prompt returns DS:6B32 (ovl25:0530..0563)"
+
+[[global]]
+offset = 0x6B32
+name = "PromptTimeoutKey"
+evidence = "ReadPromptChoice returns the Char DS:6B32 when PromptTimeout runs out (ovl25:0559)"
+
+[[global]]
+offset = 0x288C
+name = "KeypadScanLetters"
+evidence = "DS:288C holds OPQK MGHI; ReadPromptChoice maps keypad digit k to its byte k-1 (ovl25:06B3), the letters of the extended scan codes End, Down, PgDn, Left, (5), Right, Home, Up, PgUp"
+
+[[global]]
+offset = 0x6ABE
+name = "PictureAnimation"
+evidence = "ReadPromptChoice (ovl25:04A3..052D) draws frame DS:6ABF of the sprite list DS:6ABE at column 3 row 3 and steps to the next frame after its delay; LoadSpriteList fills it (ovl07_e8), ovl14 frees it"
+
+[[global]]
+offset = 0x604B
+name = "CombatantViewCol"
+evidence = "ovl31:0068 stores Combatants[I].X - ViewX at DS:604B+I-1 ([di+604A] with di = I); DrawIcon gets it as the column"
+
+[[global]]
+offset = 0x6093
+name = "CombatantViewRow"
+evidence = "ovl31:0068 stores Combatants[I].Y - ViewY at DS:6093+I-1; DrawIcon gets it as the row"
+
+[[global]]
+offset = 0x60DB
+name = "CellOccupant"
+evidence = "ovl31:03A0 clears 1250 (50x25) bytes at DS:60DB and writes combatant indexes into the footprint cells; GetMapCell reads it"
+
+[[global]]
+offset = 0x65BD
+name = "CombatantRecord"
+evidence = "ovl31:0C5F compares Who with the far pointers at DS:65BD+4(I-1); DrawIcon draws their +$BF icon"
+
+[[global]]
+offset = 0x6715
+name = "BodyCount"
+evidence = "ovl31:0F61 incremented per body record RemoveCombatant adds; PlaceCombatant loops 1..DS:6715"
+
+[[global]]
+offset = 0x6716
+name = "CombatMap"
+evidence = "ovl31: far pointer whose +2/+3 are the view origin and +7 + 50 row + col the tile ids (GetMapCell, ScrollViewTo)"
+
+[[global]]
+offset = 0x2744
+name = "CombatTiles"
+evidence = "ovl31:01FE and ovl31:0DDE index 4-byte entries at DS:2744 by tile id: +3 the picture DrawCellPicture draws, +0 the cost ProbeStep compares ($FF refused by PlaceCombatant)"
+
+[[global]]
+offset = 0x2844
+name = "Footprints"
+evidence = "ovl31:0028 reads offset pairs at DS:2844 + 8 Kind + 2 J (bytes: kind 1 one cell, 2 (0,0)(0,1), 3 (0,0)(1,0), 4 the 2x2 square)"
+
+[[global]]
+offset = 0x5F1A
+name = "DyingPicture"
+evidence = "ovl31:0F2F RemoveCombatant draws the far pointer DS:5F1A with res07_fn_0D71 on every cell of the dying combatant"
+
+[[global]]
+offset = 0x5F27
+name = "CombatantTable"
+evidence = "the combatant table: X, Y and footprint kind per combatant, entry 0's Kind the count (ovl31 RebuildOccupancy reads it, PlaceCombatant writes Kind/X/Y, ovl30 ScanTargets reads it); 73 entries fit before DS:604B"
+
+[[global]]
+offset = 0x66DD
+name = "BodyTable"
+evidence = "ovl31:0F61..1006 RemoveCombatant fills a 7-byte record (who, X, Y, tile) at DS:66DD+7(n-1), n = ++DS:6715; PlaceCombatant searches and clears them; 8 records end at DS:6715"
+
+[[global]]
+offset = 0x49E2
+name = "GameSpeed"
+evidence = "GameSpeedMenu (ovl08:10F6) shows it as GameSpeed (n) and its Slower/Faster keys move it in 0..9"
+
+[[global]]
+offset = 0x31FA
+name = "SpellTable"
+evidence = "16-byte rows indexed by spell 1..38h (entry 0 at DS:31FA is the index base); RecalcClassStats reads byte 0 (0 = cleric spell) and byte 1 (spell level 1..3, an index of the cleric slots) and sets the character's byte per spell (ovl23:00F8..0135)"
+
+[[global]]
+offset = 0x3C7C
+name = "ClassThac0Table"
+evidence = "[class 0..7, level] bytes; RecalcClassStats keeps the largest entry over the classes in the character's THAC0 byte +2Dh (ovl23:0020..0062)"
+
+[[global]]
+offset = 0x40BD
+name = "ClericSlotTable"
+evidence = "[cleric level, 1..3] bytes copied into the cleric spell slots +B2h..+B4h when the cleric level (ClassLevels[0]) is above 1 (ovl23:00B0..00E3); index base DS:40BC"
+
+[[global]]
+offset = 0x41D5
+name = "MageSlotTable"
+evidence = "[magic-user level, 1..3] bytes copied into +B5h..+B7h when ClassLevels[5] is above 1 (ovl23:014C..017F); index base DS:41D4"
+
+[[global]]
+offset = 0x426E
+name = "SavingThrowTable"
+evidence = "[class 0..7, level 0..8, 0..4] bytes: ComputeSavingThrows lowers the five values +6Dh..+71h to their minimum over the classes (ovl23:0255)"
+
+[[global]]
+offset = 0x3CF4
+name = "ThiefSkillTable"
+evidence = "[thief level, 1..8] bytes: the base of the eight thief skills (ComputeThiefSkills, ovl23:0377); index base DS:3CF3"
+
+[[global]]
+offset = 0x3D3C
+name = "ThiefRaceTable"
+evidence = "[race, 1..8] signed adjustments added to the thief skills; a negative one larger than the base zeroes the skill (ovl23:0358..03A2); index base DS:3D3B"
+
+[[global]]
+offset = 0x3D4F
+name = "ThiefDexTable"
+evidence = "[dexterity, 1..5] signed adjustments added to the first five thief skills (ovl23:0426); index base DS:3D4E"
+
+[[global]]
+offset = 0x84D4
+name = "DuelMode"
+evidence = "nonzero during a duel: EndBattle shows 'You have lost the duel.'/'You have won the duel.' and 'The duelist receives' instead of the party texts (ovl05:095A..0A3B)"
+
+[[global]]
+offset = 0x49FF
+name = "PartyDestroyed"
+evidence = "SettleBattleOutcome sets 1 and clears it when a player-run party member (Side 0, B84 below 80h) is still standing; EndBattle then shows 'The monsters rejoice for the party has been destroyed' (ovl05:04D4, 05AF, 154A)"
+
+[[global]]
+offset = 0x443B
+name = "PartyFled"
+evidence = "set by SettleBattleOutcome when a member has Status 3 and no member is okay or dead; ShowBattleResult then shows 'The party has fled.' and gives no experience (ovl05:050D, 09D7)"
+
+[[global]]
+offset = 0x84DA
+name = "BattleWon"
+evidence = "SettleBattleOutcome sets it when a combatant is left with Status 0 or 1 (or the duelist won); only then the experience is computed; zero in a duel shows 'You have lost the duel.' (ovl05:05CA, 07AC, 0961)"
+
+[[global]]
+offset = 0x84D6
+name = "BattleExperience"
+evidence = "ComputeBattleExperience writes the experience per character into it, AwardExperience and ShowBattleResult ('Each character receives <n>') take it (ovl05:060B, 155C)"
+
+[[global]]
+offset = 0x84D5
+name = "NoExperienceCount"
+evidence = "SettleBattleOutcome counts the members without Flag10D or with Status 1 (dead); ComputeBattleExperience divides by the party size minus it (ovl05:05EA, 0322)"
+
+[[global]]
+offset = 0x443A
+name = "MonstersLooted"
+evidence = "ComputeBattleExperience sets it when a defeated monster (Side 1, not fled) gives up its money and items to the loot; ShowBattleResult then says 'The party has won.' instead of the fled or treasure text (ovl05:0088, 0949)"
+
+[[global]]
+offset = 0x67F4
+name = "PooledMoney"
+evidence = "seven LongInt kinds of money: the shop and the Temple pool the party's money into it (ovl21_e12 sums it), EndBattle puts the defeated monsters' money into it and TakeHirelingShares takes the hirelings' shares from it (ovl05:0093, 1366)"
+
+[[global]]
+offset = 0x5E20
+name = "GameFont"
+evidence = "the 1-bit font block: allocated $588 bytes by StartGame (ovl11:0074), filled by LoadGameFont from 8X8D1.DAX block 201 (0709:017C), read as glyph bitmaps by res06_fn_01DF (0709:01DF)"
+
+[[global]]
+offset = 0x5E24
+name = "GlyphCol"
+evidence = "ShowPagedText current glyph column (0709:0768, nested DrawTextRun): reset to Left on clear and newline, Inc per glyph, clamped to Right"
+
+[[global]]
+offset = 0x5E25
+name = "GlyphRow"
+evidence = "ShowPagedText current glyph row (0709:0768): reset to Top on clear, Inc per newline, paged at Bottom"
+
+[[global]]
+offset = 0x0D16
+name = "BreakChars"
+evidence = "char set ShowPagedText word scan tests (0709:0822..08F0, set of 32..63 per the 0D12 descriptor, proven by tpc probe Q32); image value members $, %, &, 2, 3, 7, ="
+
+[[global]]
+offset = 0x6816
+name = "SaveRoll"
+evidence = "SavingThrow: d20 plus SaveBonus and the bonus, compared with SavingThrows[kind] after the hooks (ovl24:0D73..0DCA)"
+
+[[global]]
+offset = 0x6817
+name = "HookAffectId"
+evidence = "ApplyAffect sets the affect id before RunAffectHooks kind 9; zero afterwards means 'is Unaffected' (ovl24:1672, 1682)"
+
+[[global]]
+offset = 0x6818
+name = "DamageAmount"
+evidence = "DealDamage sets the damage before RunAffectHooks kind 6, halves or clears it on a save, prints and deals it (ovl24:134E..14FB)"
+
+[[global]]
+offset = 0x6819
+name = "DamageKind"
+evidence = "DealDamage's text: and F7h = 1 Fire, 2 Cold, 4 Electricity, 10h Acid; bit 3 alone Magic (ovl24:13E4, 14A8)"
+
+[[global]]
+offset = 0x6822
+name = "AttackRoll"
+evidence = "RollToHit and RollBeatsResistance: d20 with 20 counted as 100, hooks may change it, negative means a miss (ovl24:0C63, 0CD5)"
+
+[[global]]
+offset = 0x682A
+name = "SaveKind"
+evidence = "SavingThrow stores the saving throw kind for the hooks of kind 0Ch (ovl24:0DAD)"
+
+[[global]]
+offset = 0x0C13
+name = "DeathAffects"
+evidence = "entries 1..16 (DS:0C14) are the affects RemoveDeathAffects removes (ovl24:1026)"
+
+[[global]]
+offset = 0x6828
+name = "AffectHandlers"
+evidence = "the far procedure table CallAffectHandler calls by affect id (lcall [di+6828h], ovl24:001E)"
+
+[[global]]
+offset = 0x5374
+name = "SoundDriverIdle"
+evidence = "SetSoundDriverIdle stores it (08AE:01CB); nonzero: the timer driver is stopped and PlaySound runs it only around one sound, waiting 0.1 s (08AE:00E9, 0156); StartGame sets 100 (ovl11)"
+
+[[global]]
+offset = 0x25C9
+name = "EgaPlaneMasks"
+evidence = "DrawGlyph mode 1 writes ds25C9[3 - Bit] to the Sequencer Map Mask (port 3C5h) and gates the font byte on it AND Color (0709:03C0..03ED)"
+
+[[global]]
+offset = 0x25CD
+name = "GlyphColorPatterns"
+evidence = "DrawGlyph mode 0 ANDs ds25CD[mapped colour] with the column mask to colour each set pixel of a text-scanline word (0709:02A3)"
+
+[[global]]
+offset = 0x25E5
+name = "GlyphPixelMasks"
+evidence = "DrawGlyph mode 0 picks ds25E5[Bit] for pixel column Bit 0..7 of the 16-bit text-scanline word (0709:02B0)"
+
+[[global]]
+offset = 0x0508
+name = "CampMenuText"
+evidence = "DS:0508 holds string[40] 'Save View Magic Rest Alter Exit' (image); MakeCamp passes it to ReadPromptChoice (ovl15:1F06) and dispatches S, V, M, R, A on it"
+
+[[global]]
+offset = 0x0531
+name = "CampMagicMenuText"
+evidence = "DS:0531 holds string[40] 'Cast Memorize Scribe Display Rest Exit' (image); CampMagicMenu passes it to ReadPromptChoice (ovl15:1429)"
+
+[[global]]
+offset = 0x055A
+name = "AlterMenuText"
+evidence = "DS:055A holds string[40] 'Order Drop Speed Icon Pics Exit' (image); AlterMenu passes it to ReadPromptChoice (ovl15:1C86)"
+
+[[global]]
+offset = 0x0584
+name = "PartyOrderMenuTexts"
+evidence = "DS:0584 and DS:05AD hold string[40] 'Select Exit' and 'Place Exit' (image); PartyOrderMenu indexes them with its picked flag (ovl15:17B0)"
+
+[[global]]
+offset = 0x6DC2
+name = "RestTime"
+evidence = "seven words cleared together (FillChar 14 bytes, ovl15:0808, 1E91); RestParty sets [1] minutes, [2] tens of minutes and [3] hours of the rest (ovl15:07CA..07FA) before ovl20_e2, which reads them (ovl20:0487..04A7)"
+
+[[global]]
+offset = 0x28E9
+name = "SpellNames"
+evidence = "string[40] array indexed by spell number (mul 29h, add 28E9h at ovl15:10EA); entries 1..38h in the image are 'Bless' .. 'Restoration', the rows of SpellTable"
+
+[[global]]
+offset = 0x49F6
+name = "ShowMonsterPics"
+evidence = "AlterMenu's Pics submenu shows 'Monsters on' while it is nonzero and the M key toggles it (ovl15:1D02, 1DE9); the loader sets it to 1"
+
+[[global]]
+offset = 0x49F5
+name = "ShowPortraits"
+evidence = "AlterMenu's Pics submenu shows 'Portraits on' while it is nonzero and the P key toggles it (ovl15:1D31, 1DFC); the loader sets it to 1"
+
+[[global]]
+offset = 0x465A
+name = "CombatBlock"
+evidence = "BuildWildernessMap (ovl10:1215) stores the area map block at the party position here; BlockTerrainFlags (ovl10:08AA) reads it"
+
+[[global]]
+offset = 0x4440
+name = "PlacementCells"
+evidence = "PlaceAllCombatants (ovl10:1B8E) sets each byte of 2 sides x 4 groups x 6 rows x 11 columns to 1 inside the group's shape, TryPlaceAt (ovl10:1480, 1563) requires 1 and clears it when it places a combatant"
+
+[[global]]
+offset = 0x4658
+name = "PlacingSide"
+evidence = "PlaceAllCombatants sets it to each character's Side (ovl10:1C41) before FindStartCell, and loops it over 0..1 to build the per-side tables; every per-side table of the placement is indexed by it"
+
+[[global]]
+offset = 0x4650
+name = "SideOriginCol"
+evidence = "per side: PlaceAllCombatants sets side 0 to 0 and side 1 to the column step of the party facing times game word 705 (ovl10:1A2C..1A6E); FindStartCell adds the party column ds6AAD to it for the wall tests and TryPlaceAt adds it to the map column"
+
+[[global]]
+offset = 0x4652
+name = "SideOriginRow"
+evidence = "per side, as SideOriginCol for the row (ovl10:1A31..1A9F, 1846)"
+
+[[global]]
+offset = 0x4654
+name = "FirstRingCells"
+evidence = "per side: (ds6814/ds6815 + 1) shr 1 (ovl10:1AD8); FindStartCell closes its first ring after that many cells (ovl10:17E7)"
+
+[[global]]
+offset = 0x4656
+name = "SideFacing"
+evidence = "per side: the party facing ds6AAF shr 1 and its opposite ((ds6AAF + 4) mod 8) shr 1 (ovl10:1A3D, 1AB3); it selects the placement shape and the GroupFacing and FacingWallDirs rows"
+
+[[global]]
+offset = 0x02D2
+name = "FacingWallDirs"
+evidence = "ovl10:1879 and 1935: FindStartCell passes ds02D2[SideFacing, 1..3] as the direction of the wall test ovl10_fn_01AD on the area map"
+
+[[global]]
+offset = 0x02E2
+name = "GroupFacing"
+evidence = "ovl10:15C5: FindStartCell takes ds02E2[SideFacing, Group] shr 1 as the facing that orients the rings of placement group Group"
+
+[[global]]
+offset = 0x02F2
+name = "FacingCombatDir"
+evidence = "ovl10:1363 and 15EA: indexed by a facing 0..3, its values (7, 2, 3, 6 in the image) index the direction step tables ds2736/ds273F, and PrepareCombatants gives each combatant ds02F2[ds6AAF shr 1] as its icon set"
+
+[[global]]
+offset = 0x02F6
+name = "RingStartCol"
+evidence = "ovl10:1640: FindStartCell starts a ring at column ds02F6[Group > 0, Facing] plus the ring number times the step"
+
+[[global]]
+offset = 0x02FE
+name = "RingStartRow"
+evidence = "ovl10:1672: as RingStartCol for the row"
+
+[[global]]
+offset = 0x0306
+name = "PlacementShapes"
+evidence = "ovl10:1B38/1B57: PlaceAllCombatants marks a grid cell usable when its column lies in the (Lo, Hi) span of its row in shape SideFacing (group 1: shape 4)"
+
+[[global]]
+offset = 0x0D24
+name = "CoinCopperValues"
+evidence = "five LongInts 1,10,100,200,1000 (the image); MoneyValueInGold multiplies the coin kinds by them and divides by entry 3 (ovl21:00EC, 0111)"
+
+[[global]]
+offset = 0x6DC0
+name = "MoneyInPool"
+evidence = "PoolMoney sets it to 1, ShareMoney sets it to 1 when any kind is left in PooledMoney, else 0 (ovl21:051B, 09AD..09F2); the shop and the Temple clear it with the pool"
+
+[[global]]
+offset = 0x0FFA
+name = "MoneyKindNames"
+evidence = "seven string[10] Copper Silver Electrum Gold Platinum Gems Jewelry at DS:0FFA (the image); TakeMoney prefixes each pooled amount with MoneyKindNames[Kind] (ovl21:0DDF)"
+
+[[global]]
+offset = 0x0970
+name = "TreasureItemRows"
+evidence = "BuildTreasureItem copies the name numbers, weight, value and affects of a fixed item from eight words starting at the chosen row (ovl21:182F..18C2)"
+
+[[global]]
+offset = 0x49DE
+name = "EclCode"
+evidence = "LoadEcl fills it with the ECL block (ovl07:03F3); the script reads its operands from it at EclPC (ovl07:0026) and addresses it as 9900..B6FF (ovl07:06FB, 0E8D)"
+
+[[global]]
+offset = 0x49ED
+name = "EclPC"
+evidence = "the script's program counter: ovl07_e2 reads operand bytes at EclPC+1.. and advances it (ovl07:0022..012C); ovl07_e3 resets it to 9900, the start of EclCode (ovl07:01F5); ovl14 L key loads an entry point into it"
+
+[[global]]
+offset = 0x7005
+size = 65
+name = "OperandType"
+evidence = "DecodeOperands (ovl07:0000) stores the type byte of operand I = 1..Count at DS:7005 + I and branches on it (1/2/3 read a high byte, $80 a packed string, $81 a string address); OperandValue (ovl07:0136) reads it back; entry 0 is the byte before, never read"
+
+[[global]]
+offset = 0x7045
+size = 65
+name = "OperandHigh"
+evidence = "DecodeOperands (ovl07:0000) stores the third operand byte at DS:7045 + I for types 1, 2, 3 and $81; OperandValue (ovl07:0136) uses it as the high byte of the word (MakeWord); entry 0 is never read"
+
+[[global]]
+offset = 0x7085
+size = 65
+name = "OperandLow"
+evidence = "DecodeOperands (ovl07:0000) stores the second operand byte at DS:7085 + I (the low byte, or the length of a packed string for type $80); InitScript (ovl07:0254) reads entry 1; entry 0 is never read"
+
+[[global]]
+offset = 0x6FC8
+size = 3840
+name = "EclStrings"
+evidence = "string[255] table indexed by the string operand number shl 8 from DS:6FC8 (DecodeOperands clears entry n, ovl07:00CC; DecodeString appends to it, ovl07:1165..1284; ReadVmString, ovl07:1317); entry 0 is the index base, never read; the upper bound is not known"
+
+[[global]]
+offset = 0x6F70
+name = "ReturnStack"
+evidence = "top of the script's return stack: ScriptGosub pushes 6-byte entries (ReturnPC, Next) onto it (ovl07:1951..19B5); InitScript empties it (ovl07:0202)"
+
+[[global]]
+offset = 0x6F74
+name = "ReturnPrev"
+evidence = "ScriptGosub keeps the previous top of ReturnStack in it while pushing (ovl07:1984, 199B); InitScript clears it"
+
+[[global]]
+offset = 0x6F78
+name = "CompareFlags"
+evidence = "CompareStrings and CompareWords clear its six bytes and set [0..5] for =, <>, <, >, <=, >= (ovl07:1844..18E0, 18EE..1948)"
+
+[[global]]
+offset = 0x6F7F
+name = "SkippedOpcode"
+evidence = "SkipCommand stores the opcode at EclPC in it and dispatches on it (ovl07:1EB7)"

@@ -4,6 +4,74 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-12 | 4.2.2, 5.1, 5.2.1 | ovl07 script machine: address space, character window, operands, packed strings, helpers; header read at 9900h; DS:6AAF is the party facing | make match UNIT=ovl07 (unit complete, 33 routines) |
+| 2026-10-12 | 5.4, 5.4.1 | ovl21 Money decompiled: seven money kinds, coin values, carried weight and CarryLimit, Pool/Share/Take/Appraise, BuildTreasureItem; QUIRKs 04DB, 1E74 | make match UNIT=ovl21 (unit complete) |
+| 2026-10-12 | 5.5.2 | new section: the start of a battle (StartBattle, the wilderness map builders, combatant placement grids), 10 bogus map entries removed | make match UNIT=ovl10 (12 of 22 at L2) |
+| 2026-10-12 | 5.22, 5.6, 2 (unit table) | the camp unit ovl15: study pending until rest, rest time, spell slots as SpellSlots[class, level], Display, Alter menu | make match UNIT=ovl15 (20 matched, 2 blocked stubs) |
+| 2026-10-12 | 5.21 | ovl24 affects, handler table and hooks, dice, saving throws, to-hit and resistance rolls, damage and healing | make match UNIT=ovl24 |
+| 2026-10-12 | 5.15 | res06 glyph drawing, text cells, flash message, line editor and number reader; new TP idioms | make match UNIT=res06 |
+| 2026-10-12 | 5.20, 5.4 | ovl05 battle aftermath: outcome, experience formula, hirelings' share, treasure menu; money block is seven LongInt kinds | make match UNIT=ovl05 |
+| 2026-10-12 | 5.14 | the sound unit res03: Pascal front end (PlaySound, SilenceSound, SetSoundDriverIdle, timing) and the assembly driver after the init; CS (not DS) offsets for the voice records | make match UNIT=res03 |
+| 2026-10-12 | 5.15 | res06 glyph/pager vocabulary, video tables, TP idioms (or-flattening, UpCase, for-forms); DrawGlyph stashed blocked, ShowPagedText escalated | make match UNIT=res06 (10 matched, 0 differ), make check green |
+| 2026-10-12 | tests | make check catches registry entries that lost fields in a merge | tests/unit/test_registry.py |
+| 2026-10-12 | 5.5, 5.5.1 | ovl31 combat map view merged under combat as 5.5.1; one TCombatant record shared with ovl08 | make match UNIT=ovl31, make match UNIT=ovl08 |
+| 2026-10-12 | 5.6 | new section: ovl23 class statistics (to-hit, spell slots, saving throws, thief skills) and the multi-dimensional table idiom | make match UNIT=ovl23 |
+| 2026-10-12 | process | make next ignores an unprovable init when deciding whether a unit is waiting | tests/unit/test_agent_tools.py |
+| 2026-10-12 | none | ovl08 map cleanup, ovl08_init blocked | make match UNIT=ovl08 |
+| 2026-10-12 | none | ovl25_init marked blocked behind the nested-routine comparison | make match UNIT=ovl25 |
+| 2026-10-12 | 5.4 | money truncation QUIRKs of BuyItems, the Overloaded flag, the leave-on-No answer | make match UNIT=ovl06 |
+| 2026-10-12 | none | ovl29 review fix: named constants only | make match UNIT=ovl29 |
+| 2026-10-12 | 4.2.3 | Put8x8Symbol's Direct per caller; Load8x8Bank takes a DAX block id | make match UNIT=ovl34 (unit complete) |
+| 2026-10-12 | 5.5 | the combat round loop, turn order, player commands, movement, dying and bandaging (ovl08) | make match UNIT=ovl08 (11 of 13 routines) |
+| 2026-10-12 | process | make next skips units whose every unfinished routine is blocked | tests/unit/test_agent_tools.py |
+| 2026-10-12 | 5.2 | ovl29 map entry 0143 removed (tail of DrawWallMap) | make match UNIT=ovl29: unit complete, 13 routines |
+| 2026-10-12 | 5.8 | menu unit ovl25: prompt line, word hotkeys, picture animation, timeout, list menu keys and paging | make match UNIT=ovl25 (6 matched), draft 3c8dac5 |
+| 2026-10-12 | 4.2.1, 4.2.4, 5.2.1, 5.2.2 | GEO plane accessors and off-map wrap; LoadWallSet slots, symbol offset and bank loading (no multiple-of-780 check); the 3D view's ten wall pieces, painter's order and overhead wall map | make match UNIT=ovl29 (unit complete) |
+| 2026-10-12 | 5.18 | ScanTargets caller corrected to ovl22_e48; POOLVARS section refs to 5.18; StepLine no-step Pattern note | make match UNIT=ovl30 (8 matched, unit complete), make readability clean, make check green |
+| 2026-10-12 | 5.3 | DoWildernessMenu = 2 vs = 3 dispatch (Pick calls DoPick only in = 2, clears flag in = 3; Knock via FindCodeRecord(1F) vs HasRecFlag(5)), VarRiverGate word 418, ds5D96 LongInt rationale | make match UNIT=ovl14 (unit complete), make readability UNIT=ovl14 clean |
+| 2026-10-12 | 5.18 | InDirArc/ScanTargets/WalkLine decompiled, e5 block resolved, map row and tile table layout | make match UNIT=ovl30 (unit complete), make check green |
+| 2026-10-12 | 5.3 | new wilderness unit section, corrected Entropy PIT claim and icon-set reference | make match UNIT=ovl14 (unit: complete), make check green |
+| 2026-10-11 | ovl29 | DrawWallDescriptors (ovl29_fn_0174) decompiled; res07_fn_2632 signature and ds260A recorded | make match UNIT=ovl29, make readability UNIT=ovl29, make check |
+| 2026-10-11 | res06 | GameClock (res06_fn_0C3F) decompiled and renamed; res06_fn_05EB body settled (set membership, blocked on res06_fn_01DF's pool) | make match UNIT=res06, make readability UNIT=res06, make check |
+| 2026-10-11 | ovl30 | StepLine decompiled (ovl28_e3 unblocked); ds25C0 is a 2D pattern table and TLineState.X,Y are Integer; ovl30_e5 blocked | make match UNIT=ovl30, make readability UNIT=ovl30, make check |
+| 2026-10-11 | ovl04 | round-2 review fixed (AnswerNo/No rule, MenuFlag, entry globals, ChargeForCure 16-bit money QUIRKs ovl04:0177/01C8, whitepaper 5.19) | make match UNIT=ovl04, make readability UNIT=ovl04, make check |
+| 2026-10-11 | docs/design/WHITEPAPER.md (unchanged) | ovl29 now has SetWallDescriptors, CellInRange and StepDisplay at L2; no new claims beyond whitepaper 5.2 | make match UNIT=ovl29, make readability UNIT=ovl29, make check |
+| 2026-10-11 | ovl28 | review findings fixed (WithBody, quirks ovl28:0269/046C/056C/0593, constants, TSpritePicture, whitepaper 5.16) | make match UNIT=ovl28, make readability UNIT=ovl28, make check |
+| 2026-10-11 | work/reviews/ovl18.md | new review: passed with one should-fix (the 830 gate) | make match UNIT=ovl18, make readability UNIT=ovl18, make packet UNIT=ovl18 |
+| 2026-10-11 | docs/design/WHITEPAPER.md (unchanged) | the EGA fill/page setup and the counted delay of res06 are now L2 (SetEgaFillRegisters, SetActivePage, SetPlaneSegment, DelayCounted); no new whitepaper claims beyond 5.15 | make match UNIT=res06, make readability UNIT=res06, make check |
+| 2026-10-11 | 5.17 | documented AnimateFinalPicture (was blocked, now matched) and marked ovl18 complete | make match UNIT=ovl18 (unit: complete), make check green |
+| 2026-10-11 | 5.4 | Shop price is the item Value (+3A); record named TMenuLine; money sources and overload rule corrected | make match UNIT=ovl06; ovl06:0068, ovl19:275B, ovl19:28BE, ovl21:00A8 |
+| 2026-10-11 | docs/design/WHITEPAPER.md | renumbered the ovl30 section from 5.17 to 5.18 to remove the duplicate with ovl18 | the orchestrator's duplicate-section note |
+| 2026-10-11 | 5.16 | LoadSpriteList: the DAX sprite block layout, xor-delta PIC/FINAL pictures, MaxAvail 3900 gate; sprite list slots at +2 | make match UNIT=ovl28 (unit complete) |
+| 2026-10-11 | docs/design/WHITEPAPER.md 5.19 | the services list now says ten names (the nine services plus Exit), matching the corrected TempleMenuText[0..10] | make match UNIT=ovl04, make readability UNIT=ovl04 (review rev-5) |
+| 2026-10-11 | 5.8 | QUIRK ovl01:0729 corrected: the title animation gate is an accumulated Random(4) sum, CPU-speed dependent, not dead code | make match UNIT=ovl01; ovl01:0721..0743 |
+| 2026-10-11 | docs/design/CHANGELOG.md unchanged | the ovl06 merge resolution: unified TMenuLine/TItem, ds6810 as PMenuLine, callee signatures settled from ovl04 | make match UNIT=ovl04 and UNIT=ovl06, make check green |
+| 2026-10-11 | docs/design/WHITEPAPER.md 5.8 | corrected the title sequence line: res07_fn_2595 frees the title picture (not a palette write) and WaitKeyOrTimeout calls FlushKeyboard, which does nothing (QUIRK 0899:010A) | review work/reviews/ovl01.md (rev-6), make packet FN=res07_fn_2595 |
+| 2026-10-11 | docs/design/WHITEPAPER.md (unchanged) | no new verified sections; the ovl28_e2 findings are in the hand-off note and re/symbols.toml | make match UNIT=ovl28 (8 matched, 1 stub), make check green |
+| 2026-10-11 | title (ovl01) | ShowCredits/ShowTitleScreen signatures recorded | make check exit 0 |
+| 2026-10-11 | tools | make rename keeps evidence with backslashes, quotes and dollar signs intact | tests/unit/test_readability.py |
+| 2026-10-11 | 5.16 sprites | Show3DSprite, ShowHeadBodyWindow L2; e2 248E conflict documented | make match UNIT=ovl28 (8 L2); build/packets/ovl28.md |
+| 2026-10-11 | 4.2.3 | LoadPictureSlot: the CHEAD/CBODY T rule, the mirrored half at Block+80h, the colour maps of ICON and TileSet sets | make match UNIT=ovl32 (unit complete) |
+| 2026-10-11 | 5.19 | The Temple: the shop menu, the nine cleric services with prices and conditions, Raise Dead's constitution rule, the phantom map entries | make match UNIT=ovl04 (unit complete) |
+| 2026-10-11 | 4.2.3 pictures | ovl32 merge resolved; 0111/248E/2595 signatures reconciled; renames applied | make check exit 0; work/blockers.md ovl32 |
+| 2026-10-11 | 5.17 (new) | added ovl30 (screen support): SignOf, SortTable and SetupLine, and the TLineState and TSortRec types | make match UNIT=ovl30: 3 matched, 0 differ, 4 stubs; make check green |
+| 2026-10-11 | 5.17 (new) | added ovl18 (PoolNarrative): the ending narrative ShowEndingNarrative and the door animation AnimateAreaDoors, and blocked the timed animation ovl18_fn_0006 with notes | make match UNIT=ovl18: 2 matched, 0 differ, 1 stub; make check green |
+| 2026-10-11 | 5.16 | added ovl28 Show3DSprite and ShowHeadBodyWindow and the DS:5D92 character picture record, blocked the PIC/FINAL loader ovl28_e2 with notes | make match UNIT=ovl28: 8 matched, 0 differ, 1 stub; make check green |
+| 2026-10-11 | tools | match resolves absolute aliases to their base global (HeapWords -> HeapEnd), independent of map order | unblocks ovl28 merge |
+| 2026-10-11 | 2.2, 4.1 | res05: how the game loads a DAX block (index walk, packed buffer, UnpackRle quirk for codes 7Fh/80h, none in 1,245 blocks), the insert-disk prompt, BIOS text output; res05 compiles with O+ and an I- region | make match UNIT=res05 (unit complete), tools/re/dax.py scan |
+| 2026-10-11 | 5.8 | title sequence ovl01 (ShowTitleScreen, ShowCredits, WaitKeyOrTimeout, dead EGA anim quirk) | make match UNIT=ovl01 unit complete, make readability UNIT=ovl01 clean |
+| 2026-10-11 | 2.3, 5.8, 3.6 | boot init res08 (POOL.CFG parsing, VideoAdapter/SoundMode mappings, heap/overlay sizing) and TP6 codegen (resident O+, WriteLn multi-arg, StrCopy retf 4, self-assign quirk) | variant-A instruction comparison (tool L2 pending fix) |
+| 2026-10-11 | tools | matcher: init part of a unit with no interface routines no longer taken from variant B's padding procedure | unblocks res08 (escalate-general-20261012041843) |
+| 2026-10-11 | process | make handoff refuses a unit branch that does not match; partial hand-offs stub their drafts | tests/unit/test_agent_tools.py |
+| 2026-10-11 | tools | make map keeps forced routine starts (manual list, probe far-call entries, rtl tables), every known routine and field, and the compiler size of proven routines; Randomize 0AF8:1247 survives | tests/unit/test_enumerate_routines.py; make map diff on task/tools-map |
+| 2026-10-11 | 4.x | SelectTileSet saves TileSet in ds5377 and RestoreTileSet copies it back | make match UNIT=res05 |
+| 2026-10-11 | 5.16 (new) | added the 3D sprite unit ovl28: DrawSprite, the HEAD and BODY sprite helpers, LoadHeadBodySprites, FreeSpriteList and the sprite list record | make match UNIT=ovl28: 6 matched, 0 differ, 3 stubs; make check green |
+| 2026-10-11 | process | make match, check, packet and tpc keep the working agent's heartbeat alive | tests/unit/test_agent_tools.py |
+| 2026-10-11 | process | make handoff refuses a branch hand-off with nothing to merge | tests/unit/test_agent_tools.py |
+| 2026-10-11 | 4.x (8x8 tiles), 3.2.2 (cross-ref) | Load8x8Bank and Put8x8Symbol at L2; the fourth parameter of Put8x8Symbol settled as a Byte (the callers pass 0 and the test compiles the same); the shared globals renamed TileSet, TileBanks, TileBuf, DrawBuf and ovl11 reconciled with them | make match UNIT=ovl34: unit complete, 3 matched, 0 differ; make check green |
+| 2026-10-11 | 5.2 (clamp address), 5.2.1 (citations and constants) | fixed the ovl26 window clamp citations (they pointed into WallDesc4FromCode), named the marker and clamp limits, and corrected the whitepaper 5.2 clamp address | make match UNIT=ovl26: unit complete, 3 matched, 3 nested, 0 differ; src/OVL26.PAS |
+| 2026-10-11 | 5.8, 5.2 (cross-ref) | named the debug trace rectangle and its three hit point values in ShowDebugTrace and made the whitepaper match (the top text line: columns 0..39, row 0; the caller ovl12:2233 passes a character maximum, current and lost hit points) | make match UNIT=ovl33: unit complete, 2 matched, 0 differ; src/OVL33.PAS, docs/design/WHITEPAPER.md 5.8 |
+| 2026-10-11 | 3.2.2 (new), 5.2.1 | added the start-up loader StartGame (ovl11:002D): the seven heap blocks, the three screen buffers (res07_fn_248E), the three 200-cell screen tables (DS:4EC0/5050/51E0), the game globals, and the data loads SQRPACI, COMSPR and ITEMS; corrected the ovl11:0435 phantom | make match UNIT=ovl11: unit complete, 2 matched, 0 differ; src/OVL11.PAS, docs/design/WHITEPAPER.md 3.2.2 |
 | 2026-10-11 | process | make claim shows the orchestrator's blocker notes for the claimed unit | tests/unit/test_agent_tools.py |
 | 2026-10-11 | tools | runtime call targets resolved by routine entry (runtime_entries), not by raw byte alignment; fixes Move resolved as Assign | escalate-ovl34-20261012033554; ovl34 Put8x8Symbol matches; tests/unit/test_rtl_resolve.py |
 | 2026-10-11 | process | make watch-agents: colored live view of progress, agents, hand-offs, locks and queues | tests/unit/test_agent_tools.py |

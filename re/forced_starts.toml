@@ -1,0 +1,727 @@
+# Routine starts `make map` keeps even when its prologue and call scan cannot find them
+# (tools/re/forced_starts.py, escalate-ovl11-20261012040038). One [[start]] per routine entry:
+#   id        routine id as in re/symbols.toml (resident: unit segment:offset from unit start)
+#   name      name for a routine re/symbols.toml does not hold yet ("" keeps the provisional one)
+#   source    "manual" (kept as written, needs evidence) or "probe" (rewritten by
+#             `forced_starts.py --write` from the pinned compiler's probe build; do not edit)
+#   evidence  why a routine begins there
+
+[[start]]
+id = "0AF8:1247"
+name = "System_Randomize"
+source = "manual"
+evidence = "manual: System.Randomize, a leaf with no prologue (mov ah,2Ch; int 21h; stores CX:DX in RandSeed DS:4428/442A; retf); ovl11:0602 far-calls it and make match UNIT=ovl11 resolves the call here (dec-4, escalate-ovl11-20261012040038); the probe build's far call to Randomize also lands here, but this entry does not depend on runtime_entries output"
+
+[[start]]
+id = "0A32:0000"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls DOS:0005 (public MSDOS); aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0A32:000B"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls DOS:0010 (public INTR); aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0A32:006C"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls DOS:0071 (public GETDATE); aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0A32:00A2"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls DOS:00A7 (public GETTIME); aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0A32:00C7"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls DOS:00CC (public SETTIME); aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0A40:0000"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls CRT:0000 (public @); aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0A40:016B"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls CRT:016B (public TEXTMODE); aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0A40:0180"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls CRT:0180 (public WINDOW); aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0A40:01C0"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls CRT:01C0 (public CLRSCR); aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0A40:01DA"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls CRT:01DA (public CLREOL); aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0A40:01EE"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls CRT:01EE (public INSLINE); aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0A40:01F3"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls CRT:01F3 (public DELLINE); aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0A40:0213"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls CRT:0213 (public GOTOXY); aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0A40:023F"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls CRT:023F (public WHEREX); aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0A40:024B"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls CRT:024B (public WHEREY); aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0A40:0257"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls CRT:0257 (public TEXTCOLOR); aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0A40:0271"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls CRT:0271 (public TEXTBACKGROUND); aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0A40:0289"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls CRT:0289 (public LOWVIDEO); aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0A40:028F"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls CRT:028F (public HIGHVIDEO); aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0A40:029C"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls CRT:029C (public DELAY); aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0A40:02C9"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls CRT:02C9 (public SOUND); aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0A40:02F6"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls CRT:02F6 (public NOSOUND); aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0A40:02FD"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls CRT:02FD (public KEYPRESSED); aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0A40:030F"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls CRT:030F (public READKEY); aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0A40:0331"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls CRT:0331 (public ASSIGNCRT); aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AA2:0012"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls OVERLAY:0012 (public OVRINIT); aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AA2:01A3"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls OVERLAY:01A3 (public OVRSETBUF); aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AA2:01F2"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls OVERLAY:01F2 (public OVRGETBUF); aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AA2:0215"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls OVERLAY:0215 (public OVRCLEARBUF); aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:0000"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:0000; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:00E2"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:00E2; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:00E9"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:00E9; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:023F"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:023F; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:0254"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:0254; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:026E"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:026E; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:0280"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:0280; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:029C"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:029C; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:02B8"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:02B8; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:04A2"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:04A2; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:04B7"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:04B7; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:04DF"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:04DF; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:04F7"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:059B; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:053C"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:05E0; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:0567"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:060B; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:056C"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:0610; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:0571"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:0615; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:05BD"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:0661; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:05C1"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:0665; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:081C"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:08C0; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:084A"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:08EE; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:086E"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:0912; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:0898"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:093C; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:08B7"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:095B; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:08E1"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:0985; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:0919"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:09BD; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:09AF"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:0A83; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:09F8"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:0B87; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:09FC"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:0B8B; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:0A00"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:0B8F; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:0A04"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:0B93; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:0A3F"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:0BCE; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:0A5B"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:0BEA; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:0A76"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:0C05; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:0AE4"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:0C73; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:0AF0"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:0C7F; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:0B0B"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:0C9A; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:0B25"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:0CB4; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:0B57"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:0CE6; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:0B98"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:0D27; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:0BC4"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:0D53; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:0C10"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:0D9F; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:0C3B"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:0DCA; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:0C68"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:0DF7; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:0CBC"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:0E4B; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:0D12"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:0EA1; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:0D4B"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:0EDA; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:0DA0"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:0F2F; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:0DC0"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:0F4F; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:0DE1"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:0F70; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:0DFD"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:0F8C; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:0E1B"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:0FAA; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:0E37"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:0FC6; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:0E4E"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:0FDD; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:1174"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:1303; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:117A"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:1309; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:1180"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:130F; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:1186"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:1315; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:118C"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:131B; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:1196"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:1325; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:119A"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:1329; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:119E"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:132D; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:11A6"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:1335; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:11C0"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:17C2; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:11D6"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:17D8; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:13B1"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:1CFA; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:13E2"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:1DC1; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:1410"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:1DEF; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:1419"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:1DF8; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:1475"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:1E54; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:1491"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:1E70; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:14C5"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:1EA4; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:14CC"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:1EAB; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:14FB"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:1EDA; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:1502"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:1EE1; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:1563"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:1F42; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:1593"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:1F72; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:15AA"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:1F89; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:15C5"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:1FA4; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:161F"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:1FFE; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:1636"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:2015; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:1685"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:2064; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:16A8"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:2087; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:16BC"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:209B; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:170B"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:20EA; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:1744"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:2123; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:1795"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:2174; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:17D6"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:21B5; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:17EB"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:21CA; aligned by make tp-compare, confirmed by runtime_entries"
+
+[[start]]
+id = "0AF8:182A"
+name = ""
+source = "probe"
+evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:2209; aligned by make tp-compare, confirmed by runtime_entries"
