@@ -177,7 +177,7 @@ end;
   res12_fn_0767 on SelectedCharacter), clears the money block PooledMoney and clears MoneyInPool, then shows the
   menu (ReadPromptChoice) with a text chosen by TreasureLeft (the Take/Share entries appear only while
   MoneyPooled says money lies in the pool) and dispatches the key: B BuyItems, V ovl19_e5, T TakeMoney,
-  P PoolMoney (when MenuFlag is 0), S ShareMoney, A ovl21_e14 (Appraise), E leaves, and G and O, which
+  P PoolMoney (when MenuFlag is 0), S ShareMoney, A AppraiseGems (Appraise), E leaves, and G and O, which
   neither menu text shows, call ovl19_e10 with the key. With money left in the pool, E first asks
   "Do you want to go back and get your Money?" ('~Yes ~No' through ovl07_e13, which returns the
   0-based hotkey position) and the party leaves on No (AnswerNo); Yes clears the message window
@@ -194,7 +194,7 @@ var
   MoneyPooled: Byte;   { nonzero while money lies in the pool (TreasureLeft's first result) }
   PoolSecond: Byte;    { TreasureLeft's second result; not read here }
   LeaveAnswer: Byte;   { the answer to "go back and get your Money?" }
-  Appraised: Byte;     { set by Appraise (ovl21_e14); nonzero redraws the view }
+  Appraised: Byte;     { set by Appraise (AppraiseGems); nonzero redraws the view }
   Entry: PMenuLine;
 begin
   ds49F3 := 1;
@@ -224,7 +224,7 @@ begin
       'P': if MenuFlag = 0 then
              PoolMoney;
       'S': ShareMoney;
-      'A': ovl21_e14(Appraised);
+      'A': AppraiseGems(Appraised);
       'E':
         begin
           TreasureLeft(MoneyPooled, PoolSecond);

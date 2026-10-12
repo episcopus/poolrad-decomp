@@ -484,7 +484,7 @@ Each section will cover: purpose, units and routines, data, algorithm, quirks, e
 | 5.1 | ECL script interpreter: opcodes, variables, events | coab `engine/ovr003.cs`, `VmOpp.cs` **[H]**; wicanr2 places Pool's interpreter in overlay 3 of the 1988 build **[H]** |
 | 5.2 | Areas, maps and movement (GEO, walls, 3D view) | OpenGoldBox `docs/MAPS.md` **[H]**; the area view, ovl26 (below) |
 | 5.3 | Party and characters (creation, attributes, classes, levels) | wicanr2 `docs/spec/003`, `004` **[H]** |
-| 5.4 | Items, money, shops | ovl06 Shop (below, **[V]**); ovl19 Inventory, ovl21 Money (still stubs) |
+| 5.4 | Items, money, shops | ovl06 Shop (below, **[V]**); ovl19 Inventory (still stubs), ovl21 Money (5.4.1, **[V]**) |
 | 5.5 | Combat (tactical map, initiative, movement, attacks) | wicanr2 `ida-overlay08-*`, `ida-overlay13-*` **[H]** |
 | 5.6 | Magic and effects (spells, memorisation, durations) | |
 | 5.7 | Rest, time and healing | |
@@ -579,7 +579,7 @@ the 28-byte money block at `DS:67F4` and `DS:6DC0`, redraws the shop (`res12:27D
 - The full menu is "Buy View Take Pool Share Appraise Exit"; when `TreasureLeft` says there is
   nothing to take or share, the shorter "Buy View Pool Appraise Exit" is shown. One `case`
   dispatches the key: B buys, V views an entry (`ovl19_e5`), T takes (`TakeMoney`), P pools
-  when the flag is clear (`PoolMoney`), S shares (`ShareMoney`), A appraises (`ovl21_e14`), E
+  when the flag is clear (`PoolMoney`), S shares (`ShareMoney`), A appraises (`AppraiseGems`), E
   leaves, and two keys that are in neither menu text (G and O) call `ovl19_e10` with the key
   as an amount. Leaving while money lies in the pool asks through `ovl07_e13` ("Do you want to
   go back and get your Money?", '~Yes ~No'); `ovl07_e13` returns the 0-based hotkey position, so
@@ -601,8 +601,7 @@ the 28-byte money block at `DS:67F4` and `DS:6DC0`, redraws the shop (`res12:27D
   the LongInt at `DS:0D30` (`ovl19:28BE`, `ovl21:00A8`); the character's coins are five words at
   +$88..+$90, the pool's five LongInts at the start of the 28-byte block `DS:67F4`. Both deduction
   routines divide the amount by 5 and write five coin amounts (`SetCharacterGold` into the character,
-  `SetPooledGold` into `DS:67F4`), so the money blocks hold five denominations **[I]** (ovl05 shows seven LongInt kinds in `DS:67F4`, 5.20) (callees not
-  decompiled). Two 16-bit truncations are kept (QUIRKs): `BuyItems` keeps only the low word of
+  `SetPooledGold` into `DS:67F4`), and the money blocks hold seven kinds, the five coins first (5.4.1). Two 16-bit truncations are kept (QUIRKs): `BuyItems` keeps only the low word of
   `ovl19_e11`'s LongInt (`ovl06:03C7`), so a character with 65536 or more is compared and charged
   modulo 65536, and it passes only the low word of the pool's LongInt remainder to
   `SetPooledGold(Amount: Word)` (`ovl06:0449`), so a pool above 65535 is rewritten truncated; ovl04's
@@ -616,6 +615,47 @@ the 28-byte money block at `DS:67F4` and `DS:6DC0`, redraws the shop (`res12:27D
 
 Map note: `re/symbols.toml` had split `ovl06:0239` at `ovl06:0311`; `0311` is one byte into a
 `les di, [bp-8]` instruction, not a routine entry, and its stub was removed.
+
+#### 5.4.1 Money: ovl21 **[V]** (`src/OVL21.PAS`, `make match UNIT=ovl21`: unit complete, 22 routines)
+
+ovl21 ("Money") holds the coin arithmetic and the money commands the shop (5.4), the Temple (5.19)
+and the treasure menu (5.20) share.
+
+- **Seven kinds.** `TCharacter.Money` (+$88, seven words) and `PooledMoney` (`DS:67F4`, seven
+  LongInts) are indexed alike: copper, silver, electrum, gold, platinum, gems, jewelry, the order of
+  the name table `MoneyKindNames` (`DS:0FFA`, seven `string[10]`). `CoinCopperValues` (`DS:0D24`)
+  values the five coins in copper: 1, 10, 100, 200, 1000. `MoneyValueInGold` (`ovl21:00A8`) sums the
+  five coins in copper, adds 100 and divides by 200 (rounding to gold); gems and jewelry are not
+  money until appraised. `SetCharacterGold` and `SetPooledGold` rewrite a gold amount as
+  `Amount div 5` platinum plus `Amount mod 5` gold, clearing the other coins.
+- **Weight.** Every coin weighs one unit of the carried weight `TCharacter.CarriedWeight` (+$102);
+  `CarryLimit` is 1500 plus the strength allowance `res12_fn_13AB` (a table on the strength
+  class: -350 for the weakest, up to several thousand), and `WouldOverload` tells whether Amount more fits and how much
+  room is left. QUIRK `ovl21:04DB`: `TransferMoney` adds the coins' weight back to the giver instead
+  of the taker.
+- **Pool and Share.** `PoolMoney` (`ovl21:0508`) moves all the money of every member whose `B84` is
+  0 or $B3 into `PooledMoney` and sets `MoneyInPool` (`DS:6DC0`). `ShareMoney` (`ovl21:063A`)
+  divides each kind by the number of such members (`CountSharers`): each member below `B84` $80 takes
+  his share, jewelry first, as far as his load allows, plus one coin of the remainder; the remainders
+  then go to anybody who can carry them, and what is left stays pooled.
+- **Take.** `TakeMoney` (`ovl21:0CEB`) lists the pooled kinds ("Select type of coin"), asks "How much
+  <kind> will you take?" with `ReadAmount` (`ovl21:0294`: digits on row 24, Backspace, clamped to the
+  maximum, Escape gives 0) and moves the amount with `TakeFromPool`. `DropMoney` puts dropped coins
+  into the pool only in view mode 1 (shop, Temple) or 6 (treasure); elsewhere they are lost.
+  `TreasureLeft` (`ovl21:0F7E`) reports pooled money and loot left for the menus.
+- **Appraise.** `AppraiseGems` (`ovl21:19B2`) values one gem (d100: 10, 50, 100, 500, 1000 or 5000
+  gp) or piece of jewelry (100 + Random(900) up to 2000 + Random(10000)) at a time; selling pays a
+  fifth of the value in platinum (`GivePlatinum`, the overflow to the pool with "Overloaded.  Money
+  will be put in Pool."), keeping makes an item of type $46 when the character can carry it and has
+  fewer than 16 items. QUIRK `ovl21:1E74`: a character with no items loses the kept gem, and the
+  kept item adds no weight.
+- **Treasure items.** `BuildTreasureItem` (`ovl21:1010`, called from ovl03) fills a 63-byte
+  `TMenuLine` for an item type: weapons and armour get a bonus of 1..3 (`RollItemBonus`, d20) with
+  their name numbers, weight and value; types $3D and $3E get 1..3 random affects; other types take
+  a fixed row of eight words of `TreasureItemRows` (`DS:0970`).
+
+Map note: `07D1`, `0B48`, `0F21`, `1758`, `1F4B` and `2233` were inside routines (`ShareMoney`,
+`TakeFromPool`, `TakeMoney`, `BuildTreasureItem`, `AppraiseGems`) and their entries were removed.
 
 ### 5.5 Combat: the round loop and the player's commands **[V]** (`src/OVL08.PAS`, `make match UNIT=ovl08`: 11 of 13 routines at L2)
 

@@ -10360,40 +10360,14 @@ evidence = ["prologue"]
 id = "ovl21:19B2"
 unit = "ovl21"
 addr = "ovl21:19B2"
-size = 1433
-name = "ovl21_e14"
-signature = "procedure ovl21_e14(var Flag: Byte)"
+size = 2212
+name = "AppraiseGems"
+signature = "procedure AppraiseGems(var Redraw: Byte)"
 c_name = "ovl21_e14"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_14"
+notes = "renamed from ovl21_e14 (asks 'Appraise : ' over the selected character's gems (Money[5]) and jewelry (Money[6]), values one with a d100 ('The Gem is Valued at <n> gp.') and sells it or keeps it as an item; the shop and Temple Appraise key call it (ovl21:19B2)); auto:entry_14; map dec-18 2026-10-12: ends 2255 (retf 4 at 2253); 1F4B and 2233 were mid-routine, entries deleted"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl21:1F4B"
-unit = "ovl21"
-addr = "ovl21:1F4B"
-size = 744
-name = "ovl21_fn_1F4B"
-signature = ""
-c_name = "ovl21_fn_1F4B"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl21:2233"
-unit = "ovl21"
-addr = "ovl21:2233"
-size = 35
-name = "ovl21_fn_2233"
-signature = ""
-c_name = "ovl21_fn_2233"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl21:2256"
@@ -10403,7 +10377,7 @@ size = 5
 name = "ovl21_init"
 signature = ""
 c_name = "ovl21_init"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_0"
 evidence = ["prologue"]
@@ -17659,7 +17633,7 @@ unit = "res12"
 addr = "00BA:1816"
 size = 65
 name = "res12_fn_1816"
-signature = ""
+signature = "procedure res12_fn_1816(Who: Pointer; Col, Row, Mode: Byte)"
 c_name = "res12_fn_1816"
 level = "none"
 justification = ""

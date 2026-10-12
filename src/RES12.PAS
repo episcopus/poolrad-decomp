@@ -34,7 +34,7 @@ procedure res12_fn_15F7;
 procedure res12_fn_1693(Text: String40);
 procedure res12_fn_16EC(Who: Pointer; Text: string; A, B: Byte);
 procedure res12_fn_17E3;
-procedure res12_fn_1816;
+procedure res12_fn_1816(Who: Pointer; Col, Row, Mode: Byte);
 procedure res12_fn_1857;
 procedure res12_fn_187D;
 procedure res12_fn_1892;
@@ -132,7 +132,7 @@ implementation
 { 00BA:17E3: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure res12_fn_17E3; begin end;
 { 00BA:1816: frame not read }
-{@stub} procedure res12_fn_1816; begin end;
+{@stub} procedure res12_fn_1816(Who: Pointer; Col, Row, Mode: Byte); begin end;
 { 00BA:1857: frame not read }
 {@stub} procedure res12_fn_1857; begin end;
 { 00BA:187D: retf 10: 10 bytes of parameters; 0 bytes of locals }

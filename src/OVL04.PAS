@@ -426,7 +426,7 @@ end;
 { ovl04:0D09. The Temple: the menu Heal, View, Take, Pool, Share, Appraise, Exit (Take and
   Share only while TreasureLeft reports pooled money). Heal opens HealMenu and Pool runs only when
   MenuFlag is 0; View ovl19_e5 receives MenuFlag, Take
-  TakeMoney, Pool PoolMoney, Share ShareMoney, Appraise ovl21_e14, G and O ovl19_e10. Exit with
+  TakeMoney, Pool PoolMoney, Share ShareMoney, Appraise AppraiseGems, G and O ovl19_e10. Exit with
   money left in the pool asks "Do you want to go back and retrieve your money?" ('~Yes ~No') and
   leaves on No (ovl07_e13 returns the 0-based hotkey position, 1 = No = AnswerNo); Yes keeps the
   money in the Temple. The trailing case (ovl04:0F02) also runs res12_fn_27D9 for a 'B'
@@ -444,7 +444,7 @@ var
   MoneyPooled: Byte;      { nonzero while money lies in the pool (TreasureLeft's first result) }
   PoolSecond: Byte;       { TreasureLeft's second result; not read here }
   LeaveAnswer: Byte;      { the choice in the "retrieve your money" question }
-  Appraised: Byte;        { set by Appraise (ovl21_e14); nonzero redraws the view }
+  Appraised: Byte;        { set by Appraise (AppraiseGems); nonzero redraws the view }
 begin
   ds49F3 := 1;
   res12_fn_27D9;
@@ -465,7 +465,7 @@ begin
       'T': TakeMoney;
       'P': if MenuFlag = 0 then PoolMoney;
       'S': ShareMoney;
-      'A': ovl21_e14(Appraised);
+      'A': AppraiseGems(Appraised);
       'E':
         begin
           TreasureLeft(MoneyPooled, PoolSecond);

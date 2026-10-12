@@ -2463,3 +2463,10 @@ kind = "global"
 why = "BuildTreasureItem copies the name numbers, weight, value and affects of a fixed item from eight words starting at the chosen row (ovl21:182F..18C2)"
 date = "2026-10-12"
 
+[[rename]]
+old = "ovl21_e14"
+new = "AppraiseGems"
+kind = "routine"
+why = "asks 'Appraise : ' over the selected character's gems (Money[5]) and jewelry (Money[6]), values one with a d100 ('The Gem is Valued at <n> gp.') and sells it or keeps it as an item; the shop and Temple Appraise key call it (ovl21:19B2)"
+date = "2026-10-12"
+

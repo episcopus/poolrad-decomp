@@ -1,8 +1,9 @@
 unit OVL21;
-{ Money: the party's coins and their weight. The value of money in gold (MoneyValueInGold), setting a
-  character's or the pool's money from a gold amount (SetCharacterGold, SetPooledGold), the carried
-  weight and its limit (CarryLimit, WouldOverload), and the Take, Pool, Share and Appraise commands the
-  shop, the Temple and the treasure menu share (whitepaper 5.4). }
+{ Money: the party's coins and their weight (whitepaper 5.4.1). The value of money in gold
+  (MoneyValueInGold), setting a character's or the pool's money from a gold amount (SetCharacterGold,
+  SetPooledGold), the carried weight and its limit (CarryLimit, WouldOverload), the Take, Pool, Share
+  and Appraise commands the shop, the Temple and the treasure menu share (TakeMoney, PoolMoney,
+  ShareMoney, AppraiseGems), and BuildTreasureItem, which makes the items a treasure holds. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 uses POOLVARS, RES06;
@@ -26,9 +27,7 @@ procedure TakeMoney;
 procedure TreasureLeft(var MoneyLeft, ItemsLeft: Byte);
 function RollItemBonus: ShortInt;
 procedure BuildTreasureItem(Kind: Byte; var Item: TMenuLine);
-procedure ovl21_e14(var Flag: Byte);
-procedure ovl21_fn_1F4B;
-procedure ovl21_fn_2233;
+procedure AppraiseGems(var Redraw: Byte);
 implementation
 uses RES04, RES09, RES12, OVL24, OVL25;
 
@@ -56,6 +55,10 @@ const
   ViewShop = 1;         { ds49F3 view modes where dropped money goes into the pool: a shop or }
   ViewTreasure = 6;     { the Temple (1), the treasure after a battle (6) }
   MenuLineBytes = $2E;  { the Text, Flag29 and Next fields of TMenuLine, as NewMenuList allocates }
+  MaxItems = 16;        { a character carries at most 16 items (TCharacter.ItemCountC7) }
+  GemItemName = $65;    { the name number of a kept gem (NameNum[3]) }
+  JewelItemName = $D6;  { the name number of a kept piece of jewelry }
+  GemItemType = $46;    { the item type of a kept gem or jewel }
   HalfGoldInCopper = 100;  { added before dividing by the gold value: rounds to the nearest gold piece }
 
 { ovl21:0000. The most weight Who may carry: 1500 plus the strength allowance res12_fn_13AB
@@ -751,12 +754,190 @@ begin
     end;
   end;
 end;
-{ ovl21:19B2: one var parameter (the Temple passes a local byte it tests afterwards). }
-{@stub} procedure ovl21_e14(var Flag: Byte); begin end;
-{ ovl21:1F4B: frame not read }
-{@stub} procedure ovl21_fn_1F4B; begin end;
-{ ovl21:2233: retf 4: 4 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl21_fn_2233; begin end;
+{ ovl21:19B2. The Appraise command of the shop and the Temple for the selected character's gems
+  and jewelry: "No Gems or Jewelry" (and Redraw 0) when he has none; otherwise it shows "You have a
+  fine collection of:" with the counts and asks "Appraise :  Gems  Jewelry Exit". Each gem or piece
+  appraised is taken from his money, valued with a d100 ("The Gem is Valued at <n> gp.", jewels
+  "The Jewel is Valued at ..."), and either sold for a fifth of its value in platinum (GivePlatinum)
+  or, when he can carry it and has fewer than 16 items, kept as an item of type $46 with that value.
+  Repeats until Exit or nothing is left; Redraw is 1 unless there was nothing to appraise.
+  QUIRK ovl21:1E74, 21C7: a character with no items does not get the kept gem (the new item is only
+  stored in a local), and a kept gem adds no weight. }
+procedure AppraiseGems(var Redraw: Byte);
+var
+  GemsText: String40;
+  JewelryText: String40;
+  Key: Char;
+  Menu: String40;
+  SellMenu: String40;
+  Roll: Byte;
+  Value: Word;
+  Room: Word;
+  Last: PMenuLine;
+  NewItem: PMenuLine;
+  Done: Boolean;
+  ExtKey: Byte;
+  MustSell: Boolean;
+begin
+  Redraw := 1;
+  if (SelectedCharacter^.Money[GemsKind] = 0) and (SelectedCharacter^.Money[JewelryKind] = 0) then
+  begin
+    res12_fn_1693('No Gems or Jewelry');
+    Redraw := 0;
+    Exit;
+  end;
+  repeat
+    if (SelectedCharacter^.Money[GemsKind] = 0) and (SelectedCharacter^.Money[JewelryKind] = 0) then
+      Done := True
+    else
+    begin
+      Done := False;
+      Str(SelectedCharacter^.Money[GemsKind], GemsText);
+      Str(SelectedCharacter^.Money[JewelryKind], JewelryText);
+      case SelectedCharacter^.Money[GemsKind] of
+        0: GemsText := '';
+        1: GemsText := GemsText + ' Gem';
+      else
+        GemsText := GemsText + ' Gems';
+      end;
+      case SelectedCharacter^.Money[JewelryKind] of
+        0: JewelryText := '';
+        1: JewelryText := JewelryText + ' piece of Jewelry';
+      else
+        JewelryText := JewelryText + ' pieces of Jewelry';
+      end;
+      ClearRect(1, 1, $26, $16);
+      res12_fn_1816(SelectedCharacter, 1, 1, 0);
+      DrawTextAt(1, 7, White, 'You have a fine collection of:');
+      DrawTextAt(1, 9, White, GemsText);
+      DrawTextAt(1, $0A, White, JewelryText);
+      Menu := '';
+      if SelectedCharacter^.Money[GemsKind] <> 0 then
+        Menu := '  Gems';
+      if SelectedCharacter^.Money[JewelryKind] <> 0 then
+        Menu := Menu + '  Jewelry';
+      Menu := Menu + ' Exit';
+      Key := ReadPromptChoice('Appraise : ', Menu, $0D, $0A, White, 1, 0, ExtKey);
+      case Key of
+        'G':
+          if SelectedCharacter^.Money[GemsKind] <> 0 then
+          begin
+            Dec(SelectedCharacter^.Money[GemsKind]);
+            Roll := RollDice(1, 100);
+            case Roll of
+              1..25: Value := 10;
+              26..50: Value := 50;
+              51..70: Value := 100;
+              71..90: Value := 500;
+              91..99: Value := 1000;
+              100: Value := 5000;
+            end;
+            Str(Value, GemsText);
+            GemsText := 'The Gem is Valued at ' + GemsText + ' gp.';
+            DrawTextAt(1, $0C, White, GemsText);
+            if WouldOverload(SelectedCharacter, 1, Room) or (SelectedCharacter^.ItemCountC7 >= MaxItems) then
+            begin
+              SellMenu := 'Sell';
+              MustSell := True;
+            end
+            else
+            begin
+              SellMenu := 'Sell Keep';
+              MustSell := False;
+            end;
+            Key := ReadPromptChoice('You can : ', SellMenu, $0D, $0A, White, 1, 0, ExtKey);
+            if (Key = 'K') and not MustSell then
+            begin
+              New(NewItem);
+              FillChar(NewItem^, SizeOf(NewItem^), 0);
+              NewItem^.Next := nil;
+              NewItem^.Readied := False;
+              NewItem^.NameNum[3] := GemItemName;
+              NewItem^.NameNum[2] := 0;
+              NewItem^.NameNum[1] := 0;
+              NewItem^.ItemType := GemItemType;
+              NewItem^.Value := Value;
+              NewItem^.Weight := 1;
+              NewItem^.HiddenNames := 0;
+              Last := SelectedCharacter^.Items;
+              if Last = nil then
+                Last := NewItem
+              else
+              begin
+                while Last^.Next <> nil do
+                  Last := Last^.Next;
+                Last^.Next := NewItem;
+              end;
+            end
+            else
+            begin
+              Value := Value div GoldPerPlatinum;
+              GivePlatinum(Value);
+            end;
+          end;
+        'J':
+          if SelectedCharacter^.Money[JewelryKind] <> 0 then
+          begin
+            Dec(SelectedCharacter^.Money[JewelryKind]);
+            Roll := RollDice(1, 100);
+            case Roll of
+              1..10: Value := Trunc(Random(900)) + 100;
+              11..20: Value := Trunc(Random(1000)) + 200;
+              21..40: Value := Trunc(Random(1500)) + 300;
+              41..50: Value := Trunc(Random(2500)) + 500;
+              51..70: Value := Trunc(Random(5000)) + 1000;
+              71..90: Value := Trunc(Random(6000)) + 2000;
+              91..100: Value := Trunc(Random(10000)) + 2000;
+            end;
+            Str(Value, JewelryText);
+            GemsText := 'The Jewel is Valued at ' + JewelryText + ' gp.';
+            DrawTextAt(1, $0C, White, GemsText);
+            if WouldOverload(SelectedCharacter, 1, Room) or (SelectedCharacter^.ItemCountC7 >= MaxItems) then
+            begin
+              SellMenu := 'Sell';
+              MustSell := True;
+            end
+            else
+            begin
+              SellMenu := 'Sell Keep';
+              MustSell := False;
+            end;
+            Key := ReadPromptChoice('You can : ', SellMenu, $0D, $0A, White, 1, 0, ExtKey);
+            if (Key = 'K') and not MustSell then
+            begin
+              New(NewItem);
+              FillChar(NewItem^, SizeOf(NewItem^), 0);
+              NewItem^.Next := nil;
+              NewItem^.Readied := False;
+              NewItem^.NameNum[3] := JewelItemName;
+              NewItem^.NameNum[2] := 0;
+              NewItem^.NameNum[1] := 0;
+              NewItem^.ItemType := GemItemType;
+              NewItem^.Value := Value;
+              NewItem^.Weight := 1;
+              NewItem^.HiddenNames := 0;
+              Last := SelectedCharacter^.Items;
+              if Last = nil then
+                Last := NewItem
+              else
+              begin
+                while Last^.Next <> nil do
+                  Last := Last^.Next;
+                Last^.Next := NewItem;
+              end;
+            end
+            else
+            begin
+              Value := Value div GoldPerPlatinum;
+              GivePlatinum(Value);
+            end;
+          end;
+        'E', #0: Done := True;
+      end;
+      res12_fn_0BB8(SelectedCharacter);
+    end;
+  until Done;
+end;
 
 begin
 end.
