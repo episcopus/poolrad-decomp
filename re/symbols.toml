@@ -10036,12 +10036,12 @@ id = "ovl18:02A4"
 unit = "ovl18"
 addr = "ovl18:02A4"
 size = 1039
-name = "ovl18_e1"
+name = "ShowEndingNarrative"
 signature = ""
 c_name = "ovl18_e1"
 level = "none"
 justification = ""
-notes = "auto:entry_1"
+notes = "renamed from ovl18_e1 (ovl18:02A4: the ending narrative (the dragon and Tyranthraxus/Bane speech, the FINAL pictures and the fn_0006 animations); called by ovl03:2E10 (whitepaper 5.x)); auto:entry_1"
 evidence = ["prologue"]
 
 [[routine]]
