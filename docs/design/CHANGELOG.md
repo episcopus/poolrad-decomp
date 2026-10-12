@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-12 | 5.6 | new section: ovl23 class statistics (to-hit, spell slots, saving throws, thief skills) and the multi-dimensional table idiom | make match UNIT=ovl23 |
 | 2026-10-12 | process | make next ignores an unprovable init when deciding whether a unit is waiting | tests/unit/test_agent_tools.py |
 | 2026-10-12 | none | ovl08 map cleanup, ovl08_init blocked | make match UNIT=ovl08 |
 | 2026-10-12 | none | ovl25_init marked blocked behind the nested-routine comparison | make match UNIT=ovl25 |
