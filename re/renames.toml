@@ -1436,3 +1436,17 @@ kind = "routine"
 why = "ovl08:0FFF finds party characters with Status 5 (dying); with DoIt it bandages the first (Status 4, message is bandaged); returns 1 when one was found"
 date = "2026-10-12"
 
+[[rename]]
+old = "ovl09_fn_128D"
+new = "ScoreTarget"
+kind = "routine"
+why = "ovl09:128D returns a Byte score that ovl09_fn_13CA maximizes (ovl09:1543 keeps the candidate with the highest value)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl09_fn_0FC1"
+new = "HandleCombatKey"
+kind = "routine"
+why = "ovl09:0FC1 reads a key during the AI turn and dispatches Alt-M magic toggle, Space quick marking and Alt-X (callers ovl09_e1, ovl09_fn_07F2 region)"
+date = "2026-10-12"
+

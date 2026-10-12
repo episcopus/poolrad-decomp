@@ -46,7 +46,7 @@ procedure ovl09_fn_0B57;
 procedure ovl09_fn_0B66;
 procedure ovl09_fn_0B96;
 function ovl09_fn_0F4F(Who: PCharacter): Byte;
-procedure ovl09_fn_0FC1;
+function HandleCombatKey(Who: PCharacter): Boolean;
 procedure ovl09_fn_10D7;
 function ScoreTarget(Actor, Foe: PCharacter): Byte;
 procedure ovl09_fn_13CA;
@@ -54,7 +54,12 @@ procedure ovl09_fn_1583;
 procedure ovl09_fn_1713;
 procedure ovl09_fn_1758;
 implementation
-uses RES04, RES06, RES12, OVL13, OVL19, OVL22, OVL24, OVL25, OVL30, OVL31;
+uses Crt, RES04, RES06, RES12, OVL13, OVL19, OVL22, OVL24, OVL25, OVL30, OVL31;
+
+const
+  KeyAltM = '2';                { Alt-M: Magic On / Magic Off (ovl08 calls it KeyAltM too) }
+  KeyAltX = '-';                { Alt-X: ovl13_e24 decides }
+  InitiativeQuickAll = $14;     { Initiative marking a quick-combat character (ovl08: InitiativeQuickAll) }
 
 { ovl09:000F: retf 4: 4 bytes of parameters; 18 bytes of locals }
 {@stub} procedure ovl09_e1(Who: Pointer); begin end;
@@ -160,8 +165,58 @@ begin
   else
     ovl09_fn_0F4F := res12_fn_2686(Who);
 end;
-{ ovl09:0FC1: retf 4: 4 bytes of parameters; 16 bytes of locals }
-{@stub} procedure ovl09_fn_0FC1; begin end;
+{ ovl09:0FC1. Handles a key pressed during the computer's combat turn (called by
+  ovl09_e1 and the 07F2 region, who act when it returns True). Alt-M toggles the ds6E30 Magic
+  flag with the same 'Magic On'/'Magic Off' message as PlayerTurn (ovl08:031A); Space clears
+  Quick on every party member (B84 below $80, Status not 1) and, when Who is not quick yet,
+  marks Who quick (Initiative := InitiativeQuickAll) and returns True; Alt-X asks ovl13_e24.
+  QUIRK ovl09:10AA: the Alt-X answer is tested and nothing happens either way (empty then).
+  QUIRK ovl09:0FD2: the KeyPressed test is inverted with an empty then-branch (if not
+  KeyPressed then else). FlushKeyboard always runs at the end. }
+function HandleCombatKey(Who: PCharacter): Boolean;
+var
+  Member: PCharacter;
+  Key: Char;
+begin
+  HandleCombatKey := False;
+  if not KeyPressed then
+  else
+  begin
+    Key := ReadGameKey;
+    if Key = #0 then
+      Key := ReadGameKey;
+    case Key of
+      KeyAltM:
+        begin
+          ds6E30 := not ds6E30;
+          if ds6E30 then
+            res12_fn_1693('Magic On')
+          else
+            res12_fn_1693('Magic Off');
+        end;
+      ' ':
+        begin
+          Member := PCharacter(ds5D96);
+          while Member <> nil do
+          begin
+            if (Member^.B84 < $80) and (Member^.Status <> 1) then
+              Member^.Quick := 0;
+            Member := Member^.Next;
+          end;
+          if Who^.Quick = 0 then
+          begin
+            Who^.Combat^.Initiative := InitiativeQuickAll;
+            HandleCombatKey := True;
+          end;
+        end;
+      KeyAltX:
+        if ovl13_e24 then
+        begin
+        end;
+    end;
+  end;
+  FlushKeyboard;
+end;
 { ovl09:10D7: retf 4: 4 bytes of parameters; 22 bytes of locals }
 {@stub} procedure ovl09_fn_10D7; begin end;
 { ovl09:128D. Scores a potential target for the computer's combat turn: copies the

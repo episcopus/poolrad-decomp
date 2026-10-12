@@ -3293,12 +3293,12 @@ id = "ovl09:0FC1"
 unit = "ovl09"
 addr = "ovl09:0FC1"
 size = 278
-name = "ovl09_fn_0FC1"
+name = "HandleCombatKey"
 signature = ""
 c_name = "ovl09_fn_0FC1"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl09_fn_0FC1 (ovl09:0FC1 reads a key during the AI turn and dispatches Alt-M magic toggle, Space quick marking and Alt-X (callers ovl09_e1, ovl09_fn_07F2 region)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
