@@ -76,6 +76,8 @@ var
   ds84E5: Byte;                   { special view gate: ShowAreaView uses ds6F68/ds6F69 only while it is nonzero }
   Regs: Registers;                { registers for Intr calls (QuitGame) }
   SavedVideoMode: Byte;           { the video mode QuitGame restores }
+  VideoAdapter: Byte;                   { video mode flag read by ClearWindow (03F1:0137): 0 fills the EGA planes,
+                                    1 draws through res06_fn_00B7, 2 fills four planes; meaning unknown }
   SoundMode: Byte;                { sound setting; 2 while paused by Ctrl-S (ReadGameKey) }
   SoundModeBeforePause: Byte;     { SoundMode before a Ctrl-S pause; restored when 0 or 1 }
   ds557D: Boolean;                { set by ovl17_e9; True ends the retry loop of HeapErrorHandler }
