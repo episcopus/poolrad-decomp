@@ -12801,12 +12801,12 @@ id = "ovl23:01AF"
 unit = "ovl23"
 addr = "ovl23:01AF"
 size = 166
-name = "ovl23_e2"
+name = "IncrementBonuses"
 signature = ""
 c_name = "ovl23_e2"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl23_e2 (bumps the character Bonus bytes when Ability[2] passes 12..16 (ovl23:01AF); called by ovl16 3x and ovl23_e1); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

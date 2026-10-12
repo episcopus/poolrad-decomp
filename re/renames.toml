@@ -204,3 +204,10 @@ kind = "global"
 why = "ClearWindow (03F1:0137) dispatches on it: 0 fills scanline planes, 1 writes text cells, 2 fills four planes; the video hardware the game drives (POOL.CFG offers EGA/CGA/Tandy, mapping still open)"
 date = "2026-10-11"
 
+[[rename]]
+old = "ovl23_e2"
+new = "IncrementBonuses"
+kind = "routine"
+why = "bumps the character Bonus bytes when Ability[2] passes 12..16 (ovl23:01AF); called by ovl16 3x and ovl23_e1"
+date = "2026-10-11"
+

@@ -27,6 +27,40 @@ type
     position on the area map, and DrawAreaView reads words 380, 396, 415, 416, 435 and 466 as gates
     for fixed area blocks. The upper bound is still unknown; 465 words are in use. }
   TGameVars = array[0..511] of Word;
+  { One character: 285 bytes (whitepaper 4.x; MON*CHA, CHRDAT, RAD.CHA round-trip). Named fields
+    are whitepaper-verified or read by ovl23 (offsets in comments); the rest is filler. }
+  TCharacter = record
+    Name: string[15];                 { +0: length-prefixed name (whitepaper 4.x) }
+    Ability: array[0..6] of Byte;     { +$10..+$16: ability scores (whitepaper 4.x) }
+    Filler17: array[$17..$2C] of Byte;{ +$17..+$2C }
+    THAC0: Byte;                      { +$2D: to hit armor class 0 (whitepaper 4.x) }
+    Race: Byte;                       { +$2E: race (whitepaper 4.x) }
+    Class: Byte;                      { +$2F: class (whitepaper 4.x) }
+    Filler30: array[$30..$31] of Byte;{ +$30..+$31 }
+    Flags32: array[0..$38] of Byte;   { +$32..+$6A: e1 sets +$33..+$6A from table $31FA;
+                                  [0] is +$32 (hp_max, whitepaper 4.x) }
+    Filler6B: array[$6B..$6C] of Byte;{ +$6B..+$6C }
+    Best: array[0..4] of Byte;        { +$6D..+$71: e3 maximizes these from table $426E }
+    Filler72: Byte;                   { +$72 }
+    MaxSlot: Byte;                    { +$73: e1 keeps the max slot class here }
+    Filler74: array[$74..$75] of Byte;{ +$74..+$75 }
+    ClassVal: array[0..8] of Byte;    { +$76..+$7E: e4 computes these from class tables }
+    Filler7F: array[$7F..$95] of Byte;{ +$7F..+$95 }
+    SlotClass: array[0..6] of Byte;   { +$96..+$9C: e1's per-slot class-like values }
+    Filler9D: array[$9D..$A0] of Byte;{ +$9D..+$A0 }
+    ModeA1: Byte;                     { +$A1: e1 sets 3 when the slot class passes 6, else 2 }
+    FillerA2: array[$A2..$B0] of Byte;{ +$A2..+$B0 }
+    Bonus: array[0..3] of Byte;       { +$B1..+$B4: seeded by e1, bumped by e2 }
+    BonusHi: array[1..3] of Byte;     { +$B5..+$B7: seeded by e1 }
+    FillerB8: array[$B8..$11C] of Byte; { +$B8..+$11C }
+  end;
+  PCharacter = ^TCharacter;           { a character record }
+  { One row of the flag table at DS:$31FA that e1 reads: 57 entries of 16 bytes. }
+  TFlagEntry = record
+    Skip: Byte;                       { +0: when nonzero e1 skips the flag }
+    BonusIdx: Byte;                   { +1: Bonus index gated for the flag }
+    Pad: array[2..15] of Byte;        { +2..+15 }
+  end;
 const
   { Words of GameVars^ whose meaning is proven (word n is at byte offset 2n of the block; the
     matched reads in ovl26 are at +$186, +$188, +$1CC, +$1F6, +$1FA and +$1FC). }
