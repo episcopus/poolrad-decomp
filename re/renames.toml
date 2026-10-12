@@ -260,3 +260,17 @@ kind = "global"
 why = "far pointer passed to res07_fn_08D4 as the destination buffer (ovl34:0241,0245); StartGame allocates it at ovl11:00BC"
 date = "2026-10-11"
 
+[[rename]]
+old = "res05_fn_094A"
+new = "SelectTileSet"
+kind = "routine"
+why = "saves TileSet into ds5377 and stores the byte parameter as the new 8X8D file number (0802:094A, matched). ovl07 and ovl17 call it"
+date = "2026-10-11"
+
+[[rename]]
+old = "res05_fn_095D"
+new = "RestoreTileSet"
+kind = "routine"
+why = "copies the TileSet that SelectTileSet saved in ds5377 back into TileSet (0802:095D, matched). ovl17 calls it"
+date = "2026-10-11"
+

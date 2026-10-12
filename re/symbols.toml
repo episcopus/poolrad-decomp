@@ -16527,12 +16527,12 @@ id = "0802:094A"
 unit = "res05"
 addr = "0802:094A"
 size = 19
-name = "res05_fn_094A"
+name = "SelectTileSet"
 signature = ""
 c_name = "res05_fn_094A"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res05_fn_094A (saves TileSet into ds5377 and stores the byte parameter as the new 8X8D file number (0802:094A, matched). ovl07 and ovl17 call it); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16540,12 +16540,12 @@ id = "0802:095D"
 unit = "res05"
 addr = "0802:095D"
 size = 11
-name = "res05_fn_095D"
+name = "RestoreTileSet"
 signature = ""
 c_name = "res05_fn_095D"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res05_fn_095D (copies the TileSet that SelectTileSet saved in ds5377 back into TileSet (0802:095D, matched). ovl17 calls it); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]

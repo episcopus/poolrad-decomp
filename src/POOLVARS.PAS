@@ -152,7 +152,7 @@ var
   ds51E0: array[0..$C7] of Word;  { cell graphics plane address; see above }
   ds5370: Byte;                   { set to 1 by the loader (ovl11:042E) }
   ds5374: Word;                   { last sound value rung by res03_fn_01A5, cleared by the loader (ovl11:045D) }
-  ds5377: Byte;                   { set to 1 by the loader (ovl11:03D5) }
+  ds5377: Byte;                   { TileSet saved by SelectTileSet; the loader also sets it to 1 }
   ds5378: Word;                   { set to 1 by the loader (ovl11:03E0) }
   ds547A: Word;                   { set to 1 by the loader (ovl11:03DA) }
   { The file path the loader builds (ovl11:0564) and passes to res05_fn_025D; the loader saves it
