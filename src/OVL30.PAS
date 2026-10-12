@@ -2,17 +2,18 @@ unit OVL30;
 { ovl30: the line drawing unit (whitepaper 5.18). SignOf returns the sign of a value, SortTable
   sorts a 3-byte record table in place, SetupLine fills a Bresenham line state, StepLine advances
   it one step and InDirArc tests whether a point lies in a compass direction's arc; the
-  remaining routines (ovl30_e5, ovl30_e6) are not decompiled yet. }
+  remaining routines (ovl30_e5, ScanTargets) are not decompiled yet. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
-uses POOLVARS;
+uses POOLVARS, OVL31;
 function SignOf(N: Integer): Integer;
 procedure SortTable;
 procedure SetupLine(Line: PLineState);
 function StepLine(Line: PLineState): Boolean;
-procedure ovl30_e5;
+function ovl30_e5(X1, Y1: ShortInt; var Ex, Ey: ShortInt; var StepCount: Word;
+  Map: Pointer): Boolean;
 function InDirArc(FromX, FromY, ToX, ToY: ShortInt; Dir: Byte): Boolean;
-procedure ovl30_e6;
+procedure ScanTargets(FromX, FromY: ShortInt; MaxSteps: Word; Dir, Base: Byte; Map: Pointer);
 implementation
 
 { ovl30:0000. Returns the sign of N: -1 when N is negative, 1 when N is positive and 0 when N is
@@ -28,7 +29,7 @@ begin
 end;
 { ovl30:002E. Sorts the table DS:6718 in place (element 0 holds the count in Val): for every pair
   I < J it swaps the two 3-byte records when Key[J] < Key[I], or when the keys are equal and Val[J]
-  < Val[I] and Val[J] mod 2 <= Val[I] mod 2. Called by ovl30_e6. }
+  < Val[I] and Val[J] mod 2 <= Val[I] mod 2. Called by ScanTargets. }
 procedure SortTable;
 var
   I: Byte;                        { the outer index, 1 to Count - 1 }
@@ -150,14 +151,15 @@ end;
   First > Limit), but the ds2745 index codegen does not reproduce: the original adds Map + StartY*50
   + StartX with two separate adds to DI and folds +7 into [di+7], which a flat byte subscript does
   not. See the note in re/symbols.toml. }
-{@stub} procedure ovl30_e5; begin end;
+{@stub} function ovl30_e5(X1, Y1: ShortInt; var Ex, Ey: ShortInt; var StepCount: Word;
+  Map: Pointer): Boolean; begin end;
 { ovl30:057B. Tests whether the point (ToX, ToY) lies in the 90-degree arc facing compass
   direction Dir from (FromX, FromY): 0 is north then clockwise to 7 (north-west), 8 (and the
   $FF default) is omni and always true. Points outside X 0..49 or Y 0..24 fail; a point equal
   to the from point or to the base point passes. Otherwise the base point steps once towards
   Dir (ds2736, ds273F) and the case body checks the two half-planes of that direction's wedge
   (each shared with the neighbouring direction). Returns True when the point is in the arc.
-  Called by ovl13_e18, ovl22_e5 (which loops Dir upward to aim at a point) and ovl30_e6. }
+  Called by ovl13_e18, ovl22_e5 (which loops Dir upward to aim at a point) and ScanTargets. }
 function InDirArc(FromX, FromY, ToX, ToY: ShortInt; Dir: Byte): Boolean;
 var
   BaseX, BaseY: ShortInt;         { the from point stepped once towards Dir }
@@ -193,8 +195,89 @@ begin
     end;
   end;
 end;
-{ ovl30:0909: retf 14: 14 bytes of parameters; 32 bytes of locals }
-{@stub} procedure ovl30_e6; begin end;
+{ ovl30:0909. Scans the DS:5F27 map entity table for records reachable from (FromX, FromY) and
+  appends one sort record per hit, then sorts the table. MaxSteps budgets the line walk, Dir is
+  the arc to try, Base is the ovl31_e1 neighbour base for the search point and Map is passed to
+  ovl30_e5. For each active record it tries the four neighbours of the base point against the
+  four neighbours of the record (ovl31_e1 fills the offsets, invalid neighbours get -1), keeps
+  the pairs in Dir's arc (InDirArc) that the line walk (ovl30_e5) crosses in the fewest steps,
+  and stores the record index, the step count and the working direction (the requested Dir, or
+  the first working one when Dir is 8). Called from combat and item aiming (ovl22_e5) and from
+  ovl09, ovl13, ovl24 and res12. }
+procedure ScanTargets(FromX, FromY: ShortInt; MaxSteps: Word; Dir, Base: Byte; Map: Pointer);
+var
+  I: Byte;                            { the table index, 1 to the entry-0 count }
+  L2: Byte;                           { the retry direction stored in Val }
+  J: Byte;                            { the base neighbour index, 0 to 3 }
+  K: Byte;                            { the record neighbour index, 0 to 3 }
+  BestJ: Byte;                        { the neighbour index of the best hit }
+  BestK: Byte;                        { the record index of the best hit }
+  Found: Boolean;                     { a walked line hit this record }
+  Ex, Ey: ShortInt;                   { the walk endpoint ovl30_e5 updates }
+  LocX, LocY: ShortInt;               { the ovl31_e1 neighbour offsets }
+  CandX, CandY: array[0..3] of ShortInt;  { the base neighbours (X is -1 when invalid) }
+  TargX, TargY: array[0..3] of ShortInt;  { the record neighbours (X is -1 when invalid) }
+  StepCount: Word;                    { the walk steps ovl30_e5 reports }
+  Best: Word;                         { the fewest steps so far }
+begin
+  for J := 0 to 3 do
+    if ovl31_e1(Base, J, LocX, LocY) then
+    begin
+      CandX[J] := FromX + LocX;
+      CandY[J] := FromY + LocY;
+    end
+    else
+      CandX[J] := -1;
+  ds6718[0].Val := 0;
+  for I := 1 to ds5F27[0].Kind do
+    if ds5F27[I].Kind > 0 then
+    begin
+      Found := False;
+      Best := $FF;
+      for K := 0 to 3 do
+        if ovl31_e1(ds5F27[I].Kind, K, LocX, LocY) then
+        begin
+          TargX[K] := ds5F27[I].X + LocX;
+          TargY[K] := ds5F27[I].Y + LocY;
+        end
+        else
+          TargX[K] := -1;
+      for K := 0 to 3 do
+        if TargX[K] >= 0 then
+          for J := 0 to 3 do
+            if CandX[J] >= 0 then
+              if InDirArc(CandX[J], CandY[J], TargX[K], TargY[K], Dir) then
+              begin
+                Ex := TargX[K];
+                Ey := TargY[K];
+                StepCount := MaxSteps;
+                if ovl30_e5(CandX[J], CandY[J], Ex, Ey, StepCount, Map) then
+                begin
+                  Found := True;
+                  if StepCount < Best then
+                  begin
+                    Best := StepCount;
+                    BestJ := J;
+                    BestK := K;
+                  end;
+                end;
+              end;
+      if Found then
+      begin
+        Inc(ds6718[0].Val);
+        ds6718[ds6718[0].Val].Head := I;
+        ds6718[ds6718[0].Val].Key := Best;
+        L2 := 0;
+        if Dir < 8 then
+          L2 := Dir
+        else
+          while not InDirArc(CandX[BestJ], CandY[BestJ], TargX[BestK], TargY[BestK], L2) do
+            Inc(L2);
+        ds6718[ds6718[0].Val].Val := L2;
+      end;
+    end;
+  SortTable;
+end;
 
 begin
 end.
