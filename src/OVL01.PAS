@@ -15,20 +15,20 @@ const
   LightCyan = $0B;            { EGA text colour of most credit lines }
   Yellow = $0E;               { EGA text colour of the headers }
 
-{ ovl01:0000. Waits for a keypress or a timeout: loops until the res06_fn_0C3F tick count
+{ ovl01:0000. Waits for a keypress or a timeout: loops until the GameClock tick count
   reaches Start plus 100 times Pause, or a key is waiting (KeyPressed), then calls
   FlushKeyboard, which does nothing (QUIRK 0899:010A: its first statement is Exit), so a
   pending key still reaches the next screen. Called by the credits (Pause 10) and the title
   sequence (Pause 5). }
 procedure WaitKeyOrTimeout(Pause: Word);
 var
-  Start: Longint;             { res06_fn_0C3F when the wait began }
+  Start: Longint;             { GameClock when the wait began }
   Limit: Longint;             { Start plus 100 times Pause: the tick count that ends the wait }
 begin
-  Start := res06_fn_0C3F;
+  Start := GameClock;
   Limit := 100 * Pause + Start;
   repeat
-  until (res06_fn_0C3F >= Limit) or KeyPressed;
+  until (GameClock >= Limit) or KeyPressed;
   FlushKeyboard;
 end;
 { ovl01:0206. Shows the credits screen: two empty windows (DrawWindow) and some thirty
@@ -77,7 +77,7 @@ end;
   more than 40 characters comes back cut: StrLCopy limit $28 at ovl01:0647) and clears it, loads
   the title picture (res07_fn_0111) and shows it (res07_fn_1951), waits (WaitKeyOrTimeout), then,
   when the F flag (ds49D1) is set, reloads, reshows, frees the title picture (res07_fn_2595) and
-  waits for a key or a deadline (res06_fn_0C3F ticks, 500 after the start). On EGA each pass of
+  waits for a key or a deadline (GameClock ticks, 500 after the start). On EGA each pass of
   that wait adds Random(4) to the running sum Total (ovl01:0721..0726); when the sum passes 50000
   the palette animation runs (res07_fn_2A0D with Delay) and the sum starts again from 0
   (ovl01:073E..0743). QUIRK ovl01:0729: whether the animation ever fires depends on how many
@@ -109,7 +109,7 @@ begin
     GameDir := DirBackup;
     res07_fn_1951(0, 0, Pic);
     res07_fn_2595(Pic);
-    Deadline := res06_fn_0C3F + 500;
+    Deadline := GameClock + 500;
     repeat
       if VideoAdapter = 1 then
       begin
@@ -133,7 +133,7 @@ begin
           end;
         end;
       end;
-    until KeyPressed or (res06_fn_0C3F >= Deadline);
+    until KeyPressed or (GameClock >= Deadline);
     FlushKeyboard;
     ShowCredits;
   end;

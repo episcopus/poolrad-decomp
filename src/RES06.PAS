@@ -19,7 +19,7 @@ procedure res06_fn_0768(A, B, C, D, E, F: Byte; Text: string);
 function res06_fn_09E3(Prompt: string; A: Byte; MaxLen: Byte): string;
 procedure res06_fn_0B66;
 procedure ShowMessageLine(Color: Byte; Text: String40);
-function res06_fn_0C3F: Longint;
+function GameClock: Longint;
 procedure res06_fn_0CAB;
 procedure res06_fn_0D68(Text: string; Color: Byte);
 procedure DelayCounted;
@@ -71,10 +71,14 @@ end;
   index + $40): A and B the screen position, Glyph the character, the rest still open. }
 {@stub} procedure res06_fn_01DF(A, B, C, D, Glyph, F: Byte); begin end;
 { 0709:05EB: retf 8: 8 bytes of parameters; 0 bytes of locals }
-{ 0709:05EB. BLOCKED (dec-5, 2026-10-12): clears Width cells of row Row from column A
-  through res06_fn_01DF when A is in 0..$27 and Row in 0..$18. The four range checks match but
-  the compiler's false target differs (ours jumps straight to the end, the original jumps to a
-  jmp 2 bytes before the call), so it is left a stub. }
+{ 0709:05EB. Clears (or fills) Width cells of a row: when the column Width is in 0..$27 and the
+  row B is in 0..$18 it calls res06_fn_01DF(Width, B, Row, A, $20, 1). BLOCKED (dec-5,
+  2026-10-12): the body is settled as two set membership tests, `if not (Width in [0..$27]) then
+  Exit; if not (B in [0..$18]) then Exit; ...` (the never-true lower-bound compares and the Exit
+  block come from the set), but the routine does not match because a literal-pool byte 64 before the
+  entry differs (ours FF, original F8): the pool belongs to the preceding res06_fn_01DF, still a
+  stub, so decompile 01DF first. Called by ovl21_e6, ovl25_e3, res06_fn_09E3, ShowMessageLine and
+  res06_fn_0D68. }
 {@stub} procedure res06_fn_05EB(A, Row, B, Width: Byte); begin end;
 { 0709:0626: retf 10: 10 bytes of parameters; 260 bytes of locals }
 {@stub} procedure res06_fn_0626(A, Row, Color: Byte; Text: string); begin end;
@@ -100,8 +104,18 @@ begin
   res06_fn_0626(0, 24, Color, Text);
   Key := ReadGameKey;
 end;
-{ 0709:0C3F: retf 0: 0 bytes of parameters; 12 bytes of locals }
-{@stub} function res06_fn_0C3F: Longint; begin end;
+{ 0709:0C3F. The game clock in hundredths of a second: reads the DOS time (GetTime) and returns
+  Hour * 360000 + Minute * 6000 + Second * 100 + Sec100. Hour * 360000 is a LongInt multiply,
+  Minute * 6000 and Second * 100 are Word multiplies (the high word of the product is dropped,
+  QUIRK 0709:0C75, 0709:0C85). Called by WaitKeyOrTimeout, ShowTitleScreen, AnimateFinalPicture and
+  ovl25_e2. }
+function GameClock: Longint;
+var
+  Hour, Minute, Second, Sec100: Word;
+begin
+  GetTime(Hour, Minute, Second, Sec100);
+  GameClock := Hour * 360000 + Minute * 6000 + Second * 100 + Sec100;
+end;
 { 0709:0CAB: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure res06_fn_0CAB; begin end;
 { 0709:0D68: retf 6: 6 bytes of parameters; 42 bytes of locals.

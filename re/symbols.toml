@@ -17297,12 +17297,12 @@ id = "0709:0C3F"
 unit = "res06"
 addr = "0709:0C3F"
 size = 108
-name = "res06_fn_0C3F"
-signature = "function res06_fn_0C3F: Longint"
+name = "GameClock"
+signature = "function GameClock: Longint"
 c_name = "res06_fn_0C3F"
 level = "none"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res06_fn_0C3F (0709:0C3F reads the DOS time (GetTime) and returns Hour*360000 + Minute*6000 + Second*100 + Sec100, the time of day in hundredths; WaitKeyOrTimeout, ShowTitleScreen, AnimateFinalPicture and ovl25_e2 use it as a clock); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]

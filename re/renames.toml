@@ -722,3 +722,10 @@ kind = "routine"
 why = "ovl30:02CC steps a Bresenham line one pixel: it moves X (DX>DY) or Y towards the end point, advances First by 2 or 3 and stores the 3x3 direction pattern ds25C0[SY+1, SX+1]; the Boolean says whether it stepped; called by ovl22_fn_295B, ovl30_e5 and res12_fn_1A29"
 date = "2026-10-11"
 
+[[rename]]
+old = "res06_fn_0C3F"
+new = "GameClock"
+kind = "routine"
+why = "0709:0C3F reads the DOS time (GetTime) and returns Hour*360000 + Minute*6000 + Second*100 + Sec100, the time of day in hundredths; WaitKeyOrTimeout, ShowTitleScreen, AnimateFinalPicture and ovl25_e2 use it as a clock"
+date = "2026-10-11"
+

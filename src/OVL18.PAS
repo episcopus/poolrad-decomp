@@ -15,7 +15,7 @@ uses OVL27, OVL28, RES06, RES07, RES12;
 { ovl18:0006. Animates the FINAL ending picture at (Col, Row): loads the FINAL<TileSet>
   frames of bank Bank through LoadSpriteList and shows them Cycles times, drawing each frame
   through DrawSprite and waiting that frame's data delay, scaled by (ds49E2 + 3) ticks of
-  the res06_fn_0C3F timer, before stepping to the next one, then frees the list. The frame
+  the GameClock timer, before stepping to the next one, then frees the list. The frame
   cursor is the sprite list's Flag field (the loader sets it to 1); Count is read as a
   byte here (ovl18:00E1 compares it with a byte cmp/jbe although the shared type says
   ShortInt). Called by ShowEndingNarrative. }
@@ -26,14 +26,14 @@ var
   DoneCycles: Byte;             { full passes shown so far }
 begin
   DoneCycles := 0;
-  StartTick := res06_fn_0C3F;
+  StartTick := GameClock;
   FillChar(Sprites, SizeOf(TSpriteList), 0);
   LoadSpriteList('FINAL', Bank, 2, @Sprites);
   res07_fn_0D71(Col - 1, Row - 1, 0, 0, Sprites.Slots[1].Sprite, DrawBuf);
   res07_fn_1B52;
   repeat
     DrawSprite(Col, Row, 1, Sprites.Slots[Sprites.Flag].Sprite);
-    NowTick := res06_fn_0C3F;
+    NowTick := GameClock;
     if (NowTick - StartTick) > LongInt(Sprites.Slots[Sprites.Flag].Data) * (ds49E2 + 3) then
     begin
       Inc(Sprites.Flag);
