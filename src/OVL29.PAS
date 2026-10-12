@@ -11,8 +11,8 @@ procedure SetWallDescriptors(Wall1, Wall2, Wall3, Wall4: Byte);
 procedure DrawWallDescriptors;
 procedure ovl29_fn_0211;
 function CellInRange(Col, Row: ShortInt): Boolean;
-procedure ovl29_e3;
-procedure ovl29_e2;
+function ovl29_e3(A, B: ShortInt; C: Byte): Byte;
+function ovl29_e2(A, B, C: Byte): Byte;
 function ovl29_e4(X, Y: ShortInt): Byte;
 procedure StepDisplay;
 procedure ovl29_e5(A, B, C: Byte);
@@ -66,9 +66,9 @@ begin
     CellInRange := True;
 end;
 { ovl29:0350: retf 6: 6 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl29_e3; begin end;
+{@stub} function ovl29_e3(A, B: ShortInt; C: Byte): Byte; begin end;
 { ovl29:047B: retf 6: 6 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl29_e2; begin end;
+{@stub} function ovl29_e2(A, B, C: Byte): Byte; begin end;
 { ovl29:057A: retf 4: 4 bytes of parameters; 2 bytes of locals.
   Returns the event byte of the area map cell (X, Y), wrapping both into 0..15 first; the event
   plane is the third 256 bytes of the GEO block (whitepaper 4.2.1: bit 7 = interior). ShowAreaView

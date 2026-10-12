@@ -46,6 +46,14 @@ type
     (New with the size $800 at ovl11:0034 and the FillChar of $800 at ovl11:0271), so the array has
     1024 words; the words above 465 are simply not read. }
   TGameVars = array[0..1023] of Word;
+  { $400-byte map data block at DS:6A5C (also ^TBlock400): the first $300 bytes are not
+    read here; the plane at +$300 holds one byte per 16x16-map cell (row * 16 + col)
+    with a bit pair per icon set that ovl14 clears on exit. Full structure uncertain. }
+  TGeoCellBlock = record
+    Unknown: array[0..$2FF] of Byte;
+    Cells: array[0..15, 0..15] of Byte;
+  end;
+  PGeoCellBlock = ^TGeoCellBlock;
   { Heap blocks the loader (StartGame) allocates with New; the size is the argument of each New
     (ovl11:0044..00A3) and the type only fixes SizeOf. They are word arrays at the offsets the map
     code indexes. }
@@ -162,6 +170,7 @@ var
   { The 13 code wheel records of the copy protection (whitepaper 5.12): the answer, the rune
     indices and the path pattern. CheckCodeWheel picks one at random. }
   ds0000: array[0..12] of TCodeWheelEntry;  { the code wheel records; see above }
+  ds04DF: string[40];             { prompt string HandleWildernessKeys passes to ovl25_e2; filled elsewhere }
   { The wall view's id table: two equal groups of eight ids (0,15,12,11,13,10,9,14). ShowAreaView
     indexes it with the game variables VarWallIndexOutside and VarWallIndexInside. Its last six
     bytes are also entry 0 of SpecialBlocks, which DrawAreaView never reads. }
@@ -169,9 +178,15 @@ var
   SpecialBlocks: array[0..9] of TSpecialBlock;  { entries 1..9 tested; only 3..9 replace the map block }
   ds2612: Word;                   { word passed to res03_fn_00DC by QuitGame and the Ctrl-S pause path; meaning unknown }
   ds260A: array[0..7] of Byte;    { 8-byte structure res07_fn_2632 copies from @ds260A (DrawWallDescriptors) }
+  ds2622: Word;                   { word e1 passes to res03_fn_00DC when Done is 0; meaning unknown }
+  ds2628: Word;                   { word the ovl14 movement code passes to res03_fn_00DC; meaning unknown }
   { Five words, one per 8x8 tile bank, subtracted from the symbol number to index within the
     bank (Put8x8Symbol, ovl34:020F); evidence in re/dseg.toml. }
   SymbolBase: array[0..4] of Word;  { per-bank base symbol numbers; see above }
+  ds2736: array[0..7] of ShortInt; { per-icon-set column step for the party }
+    { ClampPartyPosition adds it; cbw at ovl14:06D0; extent uncertain. }
+  ds273F: array[0..7] of ShortInt; { per-icon-set row step for the party }
+    { ClampPartyPosition adds it; cbw at ovl14:06DB; extent uncertain. }
   AreaMap: array[0..35, 0..43] of Byte;  { the area map: one block code per 3x3-tile block, one more
                                           than the code DrawCellPicture draws; byte 0x4E (the letter N)
                                           where no block is drawn (all of rows 34 and 35 in the
@@ -192,6 +207,7 @@ var
   ds49D1: Byte;                   { 1 when POOL.CFG line 5 is 'F', 0 otherwise (meaning of F/N unknown, 2.3) }
   GameVars: ^TGameVars;           { the game variables (see TGameVars) }
   CfgProbe: File;                 { pool.cfg opened untyped (128-byte records) to probe its existence }
+  ds04B6: string[40];             { prompt string HandleWildernessKeys passes to ovl25_e2 in the movement loop }
   DebugMode: Boolean;             { STING debug mode: switched by Ctrl-D in ReadGameKey; ShowDebugTrace shows only when set }
   AreaViewKind: Byte;             { what to draw: 1 the 3D wall view, 2..4 the map window page; evidence in re/dseg.toml }
   ds6A60: Byte;                   { wall view descriptor 1 (of 4): SetWallDescriptors sets them }
@@ -201,11 +217,14 @@ var
   { ovl29_e5 draws the four wall view descriptors through DrawWallDescriptors only while ds6AAC is 0;
     ShowAreaView (when GameVars^[VarShowWallOverlays] is set) and ovl07_e8 clear it. }
   ds6AAC: Byte;                   { wall view overlay gate; see above }
-  ds6AAD: Byte;                   { the party's column in the 16x16 area map (GEO); ovl29_e4/e5 take it }
-  ds6AAE: Byte;                   { the party's row in the 16x16 area map; ovl29_e4/e5 take it; set to 1 by StartGame }
+  ds6AAD: ShortInt;               { the party's column in the 16x16 area map (GEO) }
+    { ShortInt, not Byte: ovl14 widens it with cbw (ovl14:0696); ovl29_e4/e5 take it. }
+  ds6AAE: ShortInt;               { the party's row in the 16x16 area map }
+    { ShortInt, not Byte: ovl14 widens it with cbw (ovl14:069D); ovl29_e4/e5 take it; set to 1 by StartGame. }
   { The marker's icon set (DrawIcon's third parameter): the wilderness keys H, M, P and K set 0,
-    2, 4 and 6 (ovl14_fn_0B48); ovl07_e10 maps a script value 0..3 to the same 0/2/4/6. }
+    2, 4 and 6 (HandleWildernessKeys, ovl14_e2); ovl07_e10 maps a script value 0..3 to the same 0/2/4/6. }
   ds6AAF: Byte;                   { the marker's icon set; see above }
+  ds6AB0: Byte;                   { ovl29_e2's result for the party cell and icon set (MoveParty); meaning unknown }
   ds6AB1: Byte;                   { the event byte of the party's map cell, from ovl29_e4; bit 7 = interior }
   MarkerFrame: Byte;              { the party marker's animation frame 0..5; evidence in re/dseg.toml }
   ds6F68: Byte;                   { special view code 2; set with ds84E5 := 1 by ovl07_e3 ($41) and ovl11_fn_0435 ($DB) }
@@ -269,6 +288,7 @@ var
   ds25C0: array[0..2, 0..2] of Byte;  { the 3x3 line pattern table StepLine reads at [SY+1, SX+1] }
   ds6718: array[0..255] of TSortRec;  { the ovl30 sort table (element 0 holds the count, SortTable) }
   ds49ED: Word;                   { set to $9900 by the loader (ovl11:03C0) }
+  ds49E5: Word;                   { copied to ds49ED by the ovl14 L key; meaning unknown }
   ds49F4: Byte;                   { cleared by the loader (ovl11:03CB) }
   ds49F5: Byte;                   { set to 1 by the loader (ovl11:0392) }
   ds49F6: Byte;                   { set to 1 by the loader (ovl11:0397) }
@@ -309,6 +329,7 @@ var
   ds6A58: ^TBlock924;             { $924-byte block the loader allocates (ovl11:0084) }
   ds6A5C: ^TBlock400;             { $400-byte block the loader allocates (ovl11:0094) }
   ds84DC: Byte;                   { the wall view / outdoor mode ovl29_e4 tests (0 and $A both skip) }
+  GeoCells: PGeoCellBlock absolute ds6A5C; { cell-byte view of the $400 block for ovl14 }
   ds6AAEWords: array[0..3] of TPresenceSlot;  { the 4-byte element table at DS:6AAE; the loader sets
                                     elements 2 and 3 to $FFFF (ovl11:035E..0390) }
   ds6AB2: Word;                   { cleared by the loader (ovl11:0353) }
@@ -328,12 +349,16 @@ var
   ds6B29: Word;                   { set to 1 by the loader (ovl11:0405) }
   ds6DDA: Byte;                   { cleared by the loader (ovl11:0410) }
   ds6DDE: array[0..2] of Byte;    { 3-byte buffer the loader fills with 1 (ovl11:0342) }
+  ds6DE0: Byte;                   { knock menu flag: e1 offers Knock while nonzero; overlaps ds6DDE[2] }
+  ds6DDF: Byte;                   { pick/knock menu flag (e1 offers Pick/Knock while nonzero) }
+    { DoPick clears it. Overlaps ds6DDE[1]; exact sharing uncertain. }
   ds84D4: Byte;                   { cleared by the loader (ovl11:040B) }
   ds84DD: Byte;                   { cleared by the loader (ovl11:0415) }
   ds84DE: Byte;                   { cleared by the loader (ovl11:041A) }
   ds84DF: Byte;                   { cleared by the loader (ovl11:041F) }
   ds84E0: Byte;                   { cleared by the loader (ovl11:0424) }
   ds84E3: Byte;                   { cleared by the loader (ovl11:0433) }
+  ds84E4: Byte;                   { window-clear once flag: HandleWildernessKeys clears the text window and sets it }
   ds84E9: Byte;                   { cleared by the loader (ovl11:0456) }
 
   { The 8x8 tile world of ovl34 (whitepaper 4.x): which 8X8D file to take the bank from, the five
