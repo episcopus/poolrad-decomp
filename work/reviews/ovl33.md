@@ -32,11 +32,11 @@ The only caller is `ovl12:2233` (`ovl12_fn_2233`, unit name TrainRewards, eviden
 
 ## Findings
 
-- [ ] must-fix ShowDebugTrace: the screen position is left as bare numbers, at ovl33:0079 and ovl33:00E0 (`res06_fn_0DD3(0, 0, 39, 0)`) and at ovl33:008A (`res06_fn_0626(0, 0, Yellow, ...)`). 39 is the inclusive right column of the 40 column grid (whitepaper 5.2): 0709:0E02 fills (right - left + 1) columns, and 0709:0DE3 / 0709:0DEE cover character row top through bottom. The zeros are column 0 and row 0. Name them.
+- [x] must-fix ShowDebugTrace: the screen position is left as bare numbers, at ovl33:0079 and ovl33:00E0 (`res06_fn_0DD3(0, 0, 39, 0)`) and at ovl33:008A (`res06_fn_0626(0, 0, Yellow, ...)`). 39 is the inclusive right column of the 40 column grid (whitepaper 5.2): 0709:0E02 fills (right - left + 1) columns, and 0709:0DE3 / 0709:0DEE cover character row top through bottom. The zeros are column 0 and row 0. Name them. (fixed in 2236fe2: TraceLeft, TraceTop, TraceRight, TraceBottom)
 
-- [ ] should-fix ShowDebugTrace: `First`, `Second` and `Third` only number the bytes. The only caller, ovl12:2233, passes the message `'max,cur,lost'` and the bytes at +$32 (`hp_max`), +$11B and +$75. The comment's quoted "First , Second , Third" reads like the literal text; the literals are the separators `' , '` (ovl33:0000). Both the numbers and `Message` are drawn in `Yellow`, and the comment only says the numbers are.
+- [x] should-fix ShowDebugTrace: `First`, `Second` and `Third` only number the bytes. The only caller, ovl12:2233, passes the message `'max,cur,lost'` and the bytes at +$32 (`hp_max`), +$11B and +$75. The comment's quoted "First , Second , Third" reads like the literal text; the literals are the separators `' , '` (ovl33:0000). Both the numbers and `Message` are drawn in `Yellow`, and the comment only says the numbers are. (fixed in 2236fe2: the parameters are Max, Current, Lost; the comment says the separators are ' , ' and that both are yellow)
 
-- [ ] should-fix ShowDebugTrace: whitepaper 5.8 still writes `ShowDebugTrace(Text, A, B, C)` and colour 14, and does not record the caller's `'max,cur,lost'` arguments. `re/units.toml` still names the unit `ovl33` with empty evidence.
+- [x] should-fix ShowDebugTrace: whitepaper 5.8 still writes `ShowDebugTrace(Text, A, B, C)` and colour 14, and does not record the caller's `'max,cur,lost'` arguments. `re/units.toml` still names the unit `ovl33` with empty evidence. (fixed in 2236fe2: 5.8 has the new signature and the caller's arguments; re/units.toml names it DebugTrace with evidence)
 
 - [ ] note ovl33_init: empty initialisation at ovl33:00F7, five bytes, matched. The unit comment's "one routine" is the trace.
 
