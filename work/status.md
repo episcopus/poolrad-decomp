@@ -96,6 +96,8 @@ Blockers are kept in `work/blockers.md` (the orchestrator's, playbook 90) and co
 - escalate-ovl11-20261012040806 (runtime_entries, single unit vs --all): fix ready on task/tools-rtl2 (op-rtl, 1acdcc9), held for the human: it relaxes when a byte counts as present (AGENTS.md rule 2). Do not merge it, and do not rerun `make map` for it, until the human confirms.
 - ovl11 review can be redone now (orch, 2026-10-12): on current main `make match UNIT=ovl11` matches StartGame alone (2 matched, 0 differ), so rev-4 or any reviewer can redo the ovl11 review. op-rtl reports that ovl02 run alone is still affected; on main at this commit `make match UNIT=ovl02` also shows 2 matched, 0 differ.
 
+- ovl04 (acting operator, 2026-10-12, from escalate-ovl04-20261012054432 by rev-6): for the next ovl04 decompiler: mark the two 16-bit money QUIRKs in ChargeForCure exactly as rev-6 found in ovl06 (ovl06:03C7 LongInt result stored as Word; ovl06:0449 low word only).
+
 - Approach (decided 2026-10-11, SPEC 4): Pascal first, matched by the pinned compiler; C later by translation (Phase 7, branch `track-c-hybrid`).
 - Canonical state (decided 2026-10-10 and 2026-10-11): `re/state.toml` has `stack = "diagnostic"` and `heap = "compared"`; goldens carry recordings of the outside world (`tools/oracle/replay.py`) for the rebuild and the C translation.
 - Shared files (SPEC 9.6): `src/POOLVARS.PAS` and stub declarations take additive edits; the orchestrator merges.

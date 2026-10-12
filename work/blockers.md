@@ -13,3 +13,6 @@ section of work/status.md. Remove an item when it is resolved.
 
 - escalate-ovl11-20261012040806 (runtime_entries, single unit vs --all): fix ready on task/tools-rtl2 (op-rtl, 1acdcc9), held for the human: it relaxes when a byte counts as present (AGENTS.md rule 2). Do not merge it, and do not rerun `make map` for it, until the human confirms.
 - ovl11 review can be redone now (orch, 2026-10-12): on current main `make match UNIT=ovl11` matches StartGame alone (2 matched, 0 differ), so rev-4 or any reviewer can redo the ovl11 review. op-rtl reports that ovl02 run alone is still affected; on main at this commit `make match UNIT=ovl02` also shows 2 matched, 0 differ.
+
+- ovl04 (acting operator, 2026-10-12, from escalate-ovl04-20261012054432 by rev-6): for the next ovl04 decompiler: mark the two 16-bit money QUIRKs in ChargeForCure exactly as rev-6 found in ovl06 (ovl06:03C7 LongInt result stored as Word; ovl06:0449 low word only).
+
