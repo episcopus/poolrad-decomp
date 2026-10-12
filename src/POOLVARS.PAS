@@ -646,6 +646,8 @@ var
     @ovl22_e4 at the end (ovl08:0069); who calls it is not known yet. }
   ds6B84: Pointer;                { see above }
   ds6814: Byte;                   { zero (or ds6815 zero) ends the combat (ovl08:009B, 095C); likely the count of one side }
+  ds6825: Byte;                   { AI morale scratch (CheckMorale computes it from B84, compares percentages) }
+  ds6E2F: Byte;                   { byte CheckMorale copies into ds6825; meaning unknown }
   ds6815: Byte;                   { see ds6814; likely the count of the other side }
   ds6E30: Boolean;                { the Alt-M Magic On/Off toggle of the combat keys (ovl08:04A7) }
   ds6E31: Byte;                   { the key flag the ovl08 menus pass to ReadPromptChoice }

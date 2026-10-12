@@ -47,14 +47,14 @@ procedure ovl09_fn_0B66;
 procedure ovl09_fn_0B96;
 function ovl09_fn_0F4F(Who: PCharacter): Byte;
 function HandleCombatKey(Who: PCharacter): Boolean;
-procedure ovl09_fn_10D7;
+function CheckMorale(Who: PCharacter): Byte;
 function ScoreTarget(Actor, Foe: PCharacter): Byte;
 procedure ovl09_fn_13CA;
 procedure ovl09_fn_1583;
 procedure ovl09_fn_1713;
 procedure ovl09_fn_1758;
 implementation
-uses Crt, RES04, RES06, RES12, OVL13, OVL19, OVL22, OVL24, OVL25, OVL30, OVL31;
+uses Crt, RES04, RES05, RES06, RES12, OVL13, OVL19, OVL22, OVL24, OVL25, OVL30, OVL31;
 
 const
   KeyAltM = '2';                { Alt-M: Magic On / Magic Off (ovl08 calls it KeyAltM too) }
@@ -217,8 +217,60 @@ begin
   end;
   FlushKeyboard;
 end;
-{ ovl09:10D7: retf 4: 4 bytes of parameters; 22 bytes of locals }
-{@stub} procedure ovl09_fn_10D7; begin end;
+{ ovl09:10D7. The morale gauntlet for the computer's turn (called by ovl09_e1 when
+  HandleCombatKey is false): clears the combat byte at +$14, then walks a chain of early exits
+  to the end (result 0). A nonzero Combat^.Pad10 forces flight ('is forced to flee' through
+  res12_fn_16EC); B84 at or below $7F ends it; otherwise ds6825 ((B84 and $7F) * 2, zeroed above
+  $66) is compared against two hit-point percentages (Who's Flag11B loss and game word 710),
+  each failure ending it. Survivors with a good ovl13_e20 roll against half the ovl13_e2 roll
+  and Intelligence above 5 offer surrender ('Surrenders' through ovl24_e11) and return
+  res12_fn_2637(Who); the rest get two ovl24_e2 affects ($4A, $4B) and also end it.
+  QUIRK ovl09:1141: the B84 gate is an inverted test with an empty then-branch. QUIRK
+  ovl09:11AD: Saved6825 is saved from ds6825 and never used. The +$14 combat byte lies past
+  TCombatant (NoBody at +$13). Globals: ds6825, ds6E2F. }
+function CheckMorale(Who: PCharacter): Byte;
+var
+  E20Result: Byte;
+  Saved6825: Byte;
+begin
+  CheckMorale := 0;
+  PByteArray(Who^.Combat)^[$14] := 0;
+  ovl24_e14(Who);
+  if Who^.Combat^.Pad10 <> 0 then
+  begin
+    PByteArray(Who^.Combat)^[$14] := 1;
+    res12_fn_16EC(Who, 'is forced to flee', $0A, 1);
+  end
+  else if Who^.B84 <= $7F then
+  else
+  begin
+    ds6825 := (Who^.B84 and $7F) * 2;
+    if ds6825 > $66 then
+      ds6825 := 0;
+    ovl24_e3($11, Who);
+    if (ds6825 < 100 - Who^.Flag11B * 100 div Who^.HpMax) or (ds6825 = 0) then
+    begin
+      Saved6825 := ds6825;
+      ds6825 := ds6E2F;
+      ovl24_e3($11, Who);
+      if (ds6825 < 100 - ds49D6^[710]) or (ds6825 = 0) or (Who^.Side = 0) then
+      begin
+        E20Result := ovl13_e20(Who);
+        if E20Result <= ovl13_e2(Who) div 2 then
+        begin
+          PByteArray(Who^.Combat)^[$14] := 1;
+          ovl24_e2(Who, $4A, nil);
+          ovl24_e2(Who, $4B, nil);
+        end
+        else if Who^.Intelligence > 5 then
+        begin
+          ovl24_e11(Who, 4, 'Surrenders');
+          CheckMorale := res12_fn_2637(Who);
+        end;
+      end;
+    end;
+  end;
+end;
 { ovl09:128D. Scores a potential target for the computer's combat turn: copies the
   sixteen-byte RaceRow of the foe's race and builds a score from it, the foe's hit points and
   known-spell bytes, and the actor's combat state. ovl09_fn_13CA calls it for each candidate and
