@@ -380,6 +380,10 @@ type
     X, Y: ShortInt;               { +4, +5 }
     Tile: Byte;                   { +6: the tile id under the body }
   end;
+  { A column span of one row of a placement shape (ovl10's DS:0306 table). }
+  TColSpan = record
+    Lo, Hi: ShortInt;
+  end;
   { One entry of the DS:5F27 map entity table ScanTargets scans: the position, an unknown byte and
     a kind byte; entry 0's Kind holds the count e6 loops over (like ds6718[0].Val). }
   TMapEntry = record
@@ -705,6 +709,7 @@ var
   ds6B84: Pointer;                { see above }
   ds6814: Byte;                   { zero (or ds6815 zero) ends the combat (ovl08:009B, 095C); likely the count of one side }
   ds6815: Byte;                   { see ds6814; likely the count of the other side }
+  ds6814Sides: array[0..1] of Byte absolute ds6814;  { ds6814 and ds6815 indexed by side (ovl10:1AC7) }
   ds6E30: Boolean;                { the Alt-M Magic On/Off toggle of the combat keys (ovl08:04A7) }
   ds6E31: Byte;                   { the key flag the ovl08 menus pass to ReadPromptChoice }
   ds6DE3: Byte;                   { counted up once per combat round (ovl08:0891) }
@@ -751,20 +756,5 @@ var
   DeathAffects: array[0..16] of Byte;  { affects removed when a combatant dies; see above }
   { The two affects ovl24_e14 removes are entries 1..2 at DS:0C24 ($4A $4B); entry 0 is the byte before. }
   ds0C23: array[0..2] of Byte;    { entries 1..2 ($4A $4B) are the affects ovl24_e14 removes }
-  { Globals of the camp unit ovl15 (whitepaper 5.22). }
-  CampMenuText: string[40];             { 'Save View Magic Rest Alter Exit': the Camp menu MakeCamp shows (ovl15:1F06) }
-  CampMagicMenuText: string[40];             { 'Cast Memorize Scribe Display Rest Exit': the camp Magic menu (ovl15:1429) }
-  AlterMenuText: string[40];             { 'Order Drop Speed Icon Pics Exit': the camp Alter menu (ovl15:1C86) }
-  PartyOrderMenuTexts: array[0..1] of string[40];  { 'Select Exit' and 'Place Exit': the Party Order menu before and after a
-                                    character is picked (ovl15:17B0) }
-  { The time a rest lasts, one word per digit of the game clock (ovl20 indexes it, ovl20:04A7): the
-    camp's Rest command sets [1] minutes, [2] tens of minutes and [3] hours from the longest study
-    time of the party (ovl15:07CA) before ovl20_e2 runs the rest, and clears all seven words after. }
-  RestTime: array[0..6] of Word;
-  ds6DB5: Pointer;                { set to nil when the camp opens and closes and before casting (ovl15:04B0, 1FB6) }
-  ds6DD8: Word;                   { cleared when the camp opens (ovl15:1E80); meaning unknown }
-  { The spell names, string[40] per spell 1..$38 at DS:2912 ('Bless' .. 'Restoration' in the image,
-    the rows of SpellTable); entry 0 is the index base (ovl15:10EE), never read. }
-  SpellNames: array[0..$38] of string[40];
 implementation
 end.
