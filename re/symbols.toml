@@ -7492,12 +7492,12 @@ id = "ovl14:04DF"
 unit = "ovl14"
 addr = "ovl14:04DF"
 size = 204
-name = "ovl14_fn_04DF"
-signature = ""
+name = "DoPick"
+signature = "function DoPick: Byte"
 c_name = "ovl14_fn_04DF"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl14_fn_04DF (ovl14:04DF is the P key handler in e1's Bash Pick Knock Exit menu); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

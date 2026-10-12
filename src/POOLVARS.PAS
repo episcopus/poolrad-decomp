@@ -339,6 +339,8 @@ var
   ds6B29: Word;                   { set to 1 by the loader (ovl11:0405) }
   ds6DDA: Byte;                   { cleared by the loader (ovl11:0410) }
   ds6DDE: array[0..2] of Byte;    { 3-byte buffer the loader fills with 1 (ovl11:0342) }
+  ds6DDF: Byte;                   { pick/knock menu flag (e1 offers Pick/Knock while nonzero) }
+    { DoPick clears it. Overlaps ds6DDE[1]; exact sharing uncertain. }
   ds84D4: Byte;                   { cleared by the loader (ovl11:040B) }
   ds84DD: Byte;                   { cleared by the loader (ovl11:0415) }
   ds84DE: Byte;                   { cleared by the loader (ovl11:041A) }

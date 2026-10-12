@@ -12,17 +12,21 @@ type
   TCodeRec = record
     Unknown00: array[0..$16] of Byte; { +$00..+$16: not read here }
     Codes: array[0..$14] of Byte;     { +$17..+$2B: scanned for the wanted code }
-    Unknown2C: array[$2C..$95] of Byte; { +$2C..+$95: not read here }
+    Unknown2C: array[$2C..$77] of Byte; { +$2C..+$77: not read here }
+    PickThreshold: Byte;              { +$78: the 1d100 Pick roll must not exceed it }
+    Unknown79: array[$79..$95] of Byte; { +$79..+$95: not read here }
     Flags: array[0..13] of ShortInt;  { +$96..+$A3: nonzero gates a menu item (5 Knock, 6 Pick);
                                         signed: ovl14:026A compares with jle; extent uncertain }
     UnknownA4: array[$A4..$103] of Byte; { +$A4..+$103: not read here }
     Next: PCodeRec;                   { +$104: next record, nil ends the list }
+    Unknown108: array[$108..$10B] of Byte; { +$108..+$10B: not read here }
+    PickFlag: Byte;                   { +$10C: Pick proceeds only when it is 0 }
   end;
 procedure ClearIconBits(Col, Row, Icon: ShortInt);
 procedure SetIconBits(Col, Row, Icon: ShortInt);
 function HasRecFlag(Which: ShortInt): Byte;
 procedure ovl14_fn_0294;
-procedure ovl14_fn_04DF;
+function DoPick: Byte;
 function FindCodeSlot(Code: Byte; Rec: PCodeRec): Byte;
 function FindCodeRecord(Code: Byte): PCodeRec;
 function DoKnock: Boolean;
@@ -32,7 +36,7 @@ procedure CheckMapCell;
 procedure ovl14_e2;
 procedure ovl14_e1;
 implementation
-uses OVL29, RES03, RES06, OVL20;
+uses OVL29, RES03, RES05, RES06, OVL20, OVL24;
 
 { ovl14:0000. Clears the icon set's bit pair in the event byte of the area-map cell
   (Col, Row): bits 6-7 for icon 6, 4-5 for 4, 2-3 for 2, 0-1 for 0. Called by ovl14_e1
@@ -91,8 +95,35 @@ begin
 end;
 { ovl14:0294: retf 0: 0 bytes of parameters; 10 bytes of locals }
 {@stub} procedure ovl14_fn_0294; begin end;
-{ ovl14:04DF: retf 0: 0 bytes of parameters; 10 bytes of locals }
-{@stub} procedure ovl14_fn_04DF; begin end;
+{ ovl14:04DF. The Pick command (the P key): rolls 1d100 (ovl24_e8) against each
+  ds5D96 record's +$78 byte and requires its +$10C byte clear; on the first success it
+  sets the icon bits at the party cell and ahead of it (the facing cell uses the icon
+  set +4 mod 8), clears the ds6DDF menu flag, and returns 1, else 0. }
+function DoPick: Byte;
+var
+  Rec: PCodeRec;
+  Done: Byte;
+begin
+  Done := 0;
+  Rec := Pointer(ds5D96);
+  while (Rec <> nil) and (Done = 0) do
+  begin
+    with Rec^ do
+    begin
+      if ovl24_e8(1, $64) <= PickThreshold then
+        if PickFlag = 0 then
+          Done := 1;
+    end;
+    Rec := Rec^.Next;
+  end;
+  ds6DDF := 0;
+  if Done <> 0 then
+  begin
+    SetIconBits(ds6AAD, ds6AAE, ds6AAF);
+    SetIconBits(ds6AAD + ds2736[ds6AAF], ds6AAE + ds273F[ds6AAF], (ds6AAF + 4) mod 8);
+  end;
+  DoPick := Done;
+end;
 { ovl14:05AB. Scans Rec's 21-byte code table for Code: returns the slot index, or $FF
   when no slot holds it. }
 function FindCodeSlot(Code: Byte; Rec: PCodeRec): Byte;
