@@ -81,7 +81,8 @@ type
   PMenuLine = ^TMenuLine;
   TMenuLine = record
     Text: string[40];             { +$00: the line's text (a menu line or an item name) }
-    Flag29: Byte;                 { +$29: cleared when a menu line is filled; meaning unknown }
+    Flag29: Byte;                 { +$29: nonzero marks a heading line of a list menu: drawn in the
+                                    heading colour and skipped by the highlight (ChooseFromList) }
     Next: PMenuLine;              { +$2A: the next line/item of the list; nil ends it }
     ItemType: Byte;               { +$2E }
     NameNum: array[1..3] of Byte; { +$2F..$31 }
@@ -96,12 +97,12 @@ type
     Affects: array[1..3] of Byte; { +$3C..$3E }
   end;
   PItem = PMenuLine;
-  { One frame of the animated picture the prompt line (ReadPromptChoice) cycles while it waits for a key: the
-    4 bytes LoadSpriteList copies from the picture data are the frame's delay (ReadPromptChoice multiplies it
-    by 10 and compares it with the GameClock ticks since the last frame, ovl25:04D1), then the sprite
-    (drawn by DrawSprite at column 3, row 3, ovl25:04CC). }
+  { One frame of the animated picture the prompt line (ReadPromptChoice) cycles while it waits for
+    a key: the 4 bytes LoadSpriteList copies from the picture data are the frame's delay
+    (ReadPromptChoice multiplies it by 10 and compares it with the GameClock hundredths since the
+    last frame, ovl25:04D1), then the sprite (drawn by DrawSprite at column 3, row 3, ovl25:04CC). }
   TAnimFrame = record
-    Delay: Longint;               { +0: ticks / 10 the frame stays up }
+    Delay: Longint;               { +0: tenths of a second the frame stays up }
     Sprite: Pointer;              { +4: the frame's picture }
   end;
   { The $42-byte sprite list at DS:6ABE seen as an animation (ReadPromptChoice): the number of frames, the
@@ -399,7 +400,7 @@ var
   ListMenuTop: Integer;            { the list menu's first shown line (ChooseFromList); 1 after the loader (ovl11:0405) }
   PromptWordChoice: Byte;         { the highlighted word of the prompt line, 1-based (ReadPromptChoice) }
   LastPromptExtKey: Byte;         { the last prompt's Flag (an extended key), copied by ReadPromptChoice }
-  PromptTimeout: Longint;         { prompt timeout in GameClock ticks; 0 waits forever (ReadPromptChoice) }
+  PromptTimeout: Longint;         { prompt timeout in GameClock hundredths; 0 waits forever (ReadPromptChoice) }
   PromptTimeoutKey: Char;         { the key the prompt returns when the timeout runs out (ReadPromptChoice) }
   ds6DDA: Byte;                   { cleared by the loader (ovl11:0410) }
   ds6DDE: array[0..2] of Byte;    { 3-byte buffer the loader fills with 1 (ovl11:0342) }
