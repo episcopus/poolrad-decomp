@@ -4,6 +4,13 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-12 | 5.3 | DoWildernessMenu = 2 vs = 3 dispatch (Pick calls DoPick only in = 2, clears flag in = 3; Knock via FindCodeRecord(1F) vs HasRecFlag(5)), VarRiverGate word 418, ds5D96 LongInt rationale | make match UNIT=ovl14 (unit complete), make readability UNIT=ovl14 clean |
+| 2026-10-12 | 5.18 | InDirArc/ScanTargets/WalkLine decompiled, e5 block resolved, map row and tile table layout | make match UNIT=ovl30 (unit complete), make check green |
+| 2026-10-12 | 5.3 | new wilderness unit section, corrected Entropy PIT claim and icon-set reference | make match UNIT=ovl14 (unit: complete), make check green |
+| 2026-10-11 | ovl29 | DrawWallDescriptors (ovl29_fn_0174) decompiled; res07_fn_2632 signature and ds260A recorded | make match UNIT=ovl29, make readability UNIT=ovl29, make check |
+| 2026-10-11 | res06 | GameClock (res06_fn_0C3F) decompiled and renamed; res06_fn_05EB body settled (set membership, blocked on res06_fn_01DF's pool) | make match UNIT=res06, make readability UNIT=res06, make check |
+| 2026-10-11 | ovl30 | StepLine decompiled (ovl28_e3 unblocked); ds25C0 is a 2D pattern table and TLineState.X,Y are Integer; ovl30_e5 blocked | make match UNIT=ovl30, make readability UNIT=ovl30, make check |
+| 2026-10-11 | ovl04 | round-2 review fixed (AnswerNo/No rule, MenuFlag, entry globals, ChargeForCure 16-bit money QUIRKs ovl04:0177/01C8, whitepaper 5.19) | make match UNIT=ovl04, make readability UNIT=ovl04, make check |
 | 2026-10-11 | docs/design/WHITEPAPER.md (unchanged) | ovl29 now has SetWallDescriptors, CellInRange and StepDisplay at L2; no new claims beyond whitepaper 5.2 | make match UNIT=ovl29, make readability UNIT=ovl29, make check |
 | 2026-10-11 | ovl28 | review findings fixed (WithBody, quirks ovl28:0269/046C/056C/0593, constants, TSpritePicture, whitepaper 5.16) | make match UNIT=ovl28, make readability UNIT=ovl28, make check |
 | 2026-10-11 | work/reviews/ovl18.md | new review: passed with one should-fix (the 830 gate) | make match UNIT=ovl18, make readability UNIT=ovl18, make packet UNIT=ovl18 |

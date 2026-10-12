@@ -89,7 +89,7 @@ var
   { ovl26:00C7. Purpose unknown beyond the mapping: turns the special view code (ds6F69) into wall
     view descriptor 2 (ds6A61): codes 8 and $41 give 0, anything else $0F. This unit only reads
     ds6F69; whitepaper 5.2.1 records who sets it together with ds84E5. The descriptors reach the
-    screen through ovl29_fn_0174; what the values select is still open. }
+    screen through DrawWallDescriptors; what the values select is still open. }
   function WallDesc2FromCode(SpecialCode: Byte): Byte;
   begin
     case SpecialCode of

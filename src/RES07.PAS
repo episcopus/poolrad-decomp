@@ -40,7 +40,7 @@ procedure res07_fn_1B52;
 procedure res07_fn_1E5C(P1, P2: Pointer; A: Word; B: Byte; P3: Pointer);
 procedure res07_fn_248E(Height, Width: Word; ItemCount, AllocFlags: Byte; var Pic);
 procedure res07_fn_2595(var Pic);
-procedure res07_fn_2632;
+procedure res07_fn_2632(A, B, C, D: Word; E: Byte; F, G: Pointer);
 procedure res07_fn_2A0D(A, B: Byte);
 implementation
 
@@ -123,7 +123,7 @@ implementation
   Pic is untyped so ovl28 can pass its typed sprite banks. }
 {@stub} procedure res07_fn_2595(var Pic); begin end;
 { 0464:2632: retf 18: 18 bytes of parameters; 36 bytes of locals }
-{@stub} procedure res07_fn_2632; begin end;
+{@stub} procedure res07_fn_2632(A, B, C, D: Word; E: Byte; F, G: Pointer); begin end;
 { 0464:2A0D: retf 4: 4 bytes of parameters; 0 bytes of locals }
 {@stub} procedure res07_fn_2A0D(A, B: Byte); begin end;
 

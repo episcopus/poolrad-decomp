@@ -16,3 +16,5 @@ section of work/status.md. Remove an item when it is resolved.
 
 - ovl04 (acting operator, 2026-10-12, from escalate-ovl04-20261012054432 by rev-6): for the next ovl04 decompiler: mark the two 16-bit money QUIRKs in ChargeForCure exactly as rev-6 found in ovl06 (ovl06:03C7 LongInt result stored as Word; ovl06:0449 low word only).
 
+- ovl11 and the whitepaper (acting operator, 2026-10-12, from escalate-general-20261012060445 by rev-5): for the next documentarian or ovl11 decompiler: rewrite the three references to the phantom `ovl11_fn_0435` (whitepaper 5.2.1 line 550; the src/POOLVARS.PAS comments on ds6F68 and ds6F69) to StartGame (ovl11_e1): ovl11:0435 lies inside StartGame (whitepaper 3.2.2).
+
