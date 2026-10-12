@@ -1,5 +1,5 @@
 unit OVL14;
-{ Wilderness travel (whitepaper 5.2): the area-map movement keys and icon sets, the
+{ Wilderness travel (whitepaper 5.3): the area-map movement keys and icon sets, the
   Bash/Pick/Knock/Exit command menu, and the code-table records behind Knock. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
@@ -18,7 +18,7 @@ type
     Unknown2C: array[$2C..$77] of Byte; { +$2C..+$77: not read here }
     PickThreshold: Byte;              { +$78: the 1d100 Pick roll must not exceed it }
     Unknown79: array[$79..$95] of Byte; { +$79..+$95: not read here }
-    Flags: array[0..13] of ShortInt;  { +$96..+$A3: nonzero gates a menu item (5 Knock, 6 Pick);
+    Flags: array[0..13] of ShortInt;  { +$96..+$A3: positive gates a menu item (5 Knock, 6 Pick);
                                         signed: ovl14:026A compares with jle; extent uncertain }
     UnknownA4: array[$A4..$103] of Byte; { +$A4..+$103: not read here }
     Next: PCodeRec;                   { +$104: next record, nil ends the list }
@@ -78,7 +78,7 @@ begin
         GeoCells^.Cells[Row, Col] := GeoCells^.Cells[Row, Col] and $FC or $01;
     end;
 end;
-{ ovl14:0236. Returns 1 when any record of the ds5D96 list has a nonzero byte at
+{ ovl14:0236. Returns 1 when any record of the ds5D96 list has a positive byte at
   +$96+Which, else 0. The Bash/Pick/Knock menu (DoWildernessMenu) offers Pick when flag 6 is
   found and Knock when flag 5 is found. }
 function HasRecFlag(Which: ShortInt): Byte;
@@ -251,7 +251,7 @@ end;
   ovl29_e3 allows it, clamping the result into the 16x16 area map: each clamped
   coordinate is written back and the edge flag ds49D6^[725] (+$5AA) is set. Called
   by the movement driver HandleWildernessKeys. The direction tables ds2736/ds273F are indexed
-  by the icon set [I]. }
+  by the icon set. }
 procedure ClampPartyPosition;
 var
   Col, Row: Integer;
@@ -289,7 +289,8 @@ begin
 end;
 { ovl14:073B. Moves the party one cell in the current icon set's direction, wrapping
   the 16x16 area map ($F steps to 0, 0 steps to $F), then refreshes the cell bytes
-  ds6AB0 (through ovl29_e2) and ds6AB1 (through ovl29_e4), clears ds6DDE, and steps
+  ds6AB0 (through ovl29_e2) and ds6AB1 (through ovl29_e4), resets the ds6DDE..ds6DE0
+  menu flags to 1, and steps
   the sound through ovl20_e1 (mode 2 when ds49D6^[714] has bit 0, else mode 1).
   Called by DoWildernessMenu. }
 procedure MoveParty;
@@ -316,7 +317,7 @@ end;
 { ovl14:0818. Checks the area-map block ahead of the party: steps the GameVars area-map
   position by the icon set's direction, clamps it (columns 0..$F, rows 0..$23), and
   reads that cell of AreaMap. N ($4E) and the impassable ranges pass through silently;
-  the river codes ($66..$6C, $72) either print the stench message (when GameVars^[418]
+  the river codes ($66..$6C, $72) either print the stench message (when GameVars^[VarRiverGate]
   is 0) or move there; anything else moves there with a sound. Called by DoWildernessMenu. }
 procedure CheckMapCell;
 var
@@ -337,7 +338,7 @@ begin
     $4E, $7E..$80, $82..$84, $A8..$AC, $AE..$B3, $BC, $DD..$DE, $E1..$E9, $F5:
       ;
     $66..$6C, $72:
-      if GameVars^[418] = 0 then
+      if GameVars^[VarRiverGate] = 0 then
         res06_fn_0D68('The river''s stench drives you back.', $E)
       else
       begin
@@ -384,7 +385,7 @@ begin
             else
               res06_fn_0D68('Not Here', $E);
           'C':
-            if PByteArray(SelectedCharacter)^[$10C] = 0 then
+            if SelectedCharacter^.Status = 0 then
               ovl15_e2;
           'V':
             ovl19_e5(ViewFlag);
@@ -496,8 +497,12 @@ begin
 end;
 { ovl14:0D6D. The wilderness command menu (called by ovl03_fn_3379): in the 3D view it
   builds the Bash/Pick/Knock/Exit menu from the ds6DDE/ds6DDF/ds6DE0 flags and the
-  record flag checks, prompts through ovl25_e2 (Bash/Pick/Knock dispatch to DoBash,
-  DoPick, DoKnock), otherwise it steps the area map (CheckMapCell on map pages 2..4);
+  record flag checks, prompts through ovl25_e2 and dispatches the key: in the ovl29_e3 = 2
+  arm 'B' calls DoBash, 'P' calls DoPick (ovl14:0ED6) and 'K' calls DoKnock, with Knock
+  offered when FindCodeRecord($1F) finds a record (ovl14:0E14), while in the = 3 arm 'B'
+  calls DoBash and 'K' calls DoKnock, with Knock offered when HasRecFlag(5) is set
+  (ovl14:0F53), but 'P' only clears the Pick flag (mov ds6DDF,0 at ovl14:1015, no DoPick
+  call); on the map pages it steps the area map (CheckMapCell on pages 2..4);
   on success it moves the party (MoveParty), then always tidies the sprite banks. }
 procedure DoWildernessMenu;
 var
@@ -593,5 +598,8 @@ begin
   ds6B05 := $FF;
 end;
 
+{ ovl14:10A7. The unit's initialisation part is empty: the compiler emits only `55 89 E5 5D CB`
+  (push bp; mov bp, sp; pop bp; retf, the frame with no body), so the wilderness unit runs no code
+  at start-up. }
 begin
 end.
