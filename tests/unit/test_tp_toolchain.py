@@ -52,3 +52,13 @@ def test_tpc_annotates_runtime_calls_with_pool_names(capsys):
     out = capsys.readouterr().out
     assert "System_StrConcat (POOL 0AF8:0B98)" in out
     assert "System_StrLCopy (POOL 0AF8:0B25)" in out
+
+
+@pytest.mark.parametrize("log,ok", [
+    ("Turbo Pascal  Version 6.0\nSINK.PAS(12)\n66 lines, 4384 bytes code, 2668 bytes data.\n", True),  # emu2
+    ("Turbo Pascal  Version 6.0\n167 lines, 0.2 seconds, 17552 bytes code, 2764 bytes data.\n", True),  # DOSBox-X
+    ("SINK.PAS(3): Error 3: Unknown identifier.\n", False),
+    ("12 lines, 0.1 seconds, 100 bytes code, 10 bytes data.\nError 2: File not found.\n", False),
+])
+def test_compiled_ok_accepts_both_emulator_summaries(log, ok):
+    assert tc.compiled_ok(log) is ok
