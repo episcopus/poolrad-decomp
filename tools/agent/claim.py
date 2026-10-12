@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -87,6 +88,18 @@ def main(argv=None) -> int:
     return setup(main_dir, prefix + unit, branch, a, unit)
 
 
+def blocker_notes(main_dir: Path, unit: str) -> list[str]:
+    """The items of work/blockers.md (the orchestrator's notes, on main) that name `unit`: instructions
+    for whoever takes it next, such as how to bring a reverted branch back."""
+    p = main_dir / "work/blockers.md"
+    if not unit or not p.exists():
+        return []
+    text = re.sub(r"<!--.*?-->", "", p.read_text(), flags=re.S)
+    items = re.split(r"\n(?=- )", "\n" + text)
+    word = re.compile(r"(?<![A-Za-z0-9_])%s(?![A-Za-z0-9_])" % re.escape(unit), re.I)
+    return [" ".join(i.split()) for i in items if i.lstrip().startswith("- ") and word.search(i)]
+
+
 def setup(main_dir: Path, key: str, branch: str, a, unit: str) -> int:
     """Create (or reuse) the worktree for `key` on `branch` and link the untracked tools into it."""
     wt = main_dir.parent / "poolrad-worktrees" / key
@@ -116,6 +129,11 @@ def setup(main_dir: Path, key: str, branch: str, a, unit: str) -> int:
         print("claim: next: cd %s && cp work/reviews/TEMPLATE.md work/reviews/%s.md   (playbook 70)" % (wt, unit))
     else:
         print("claim: next: cd %s && make packet UNIT=%s   (playbook 30)" % (wt, unit))
+    notes = blocker_notes(main_dir, unit)
+    if notes:
+        print("claim: READ FIRST, the orchestrator's notes on %s in work/blockers.md (do these before anything else):" % unit)
+        for n in notes:
+            print("  " + n)
     return 0
 
 
