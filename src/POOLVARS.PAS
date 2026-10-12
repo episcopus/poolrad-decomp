@@ -178,8 +178,13 @@ var
   ds6ABE: array[0..$41] of Byte;  { $42-byte buffer the loader clears (ovl11:0309) }
   { The loader sets entries 1 and 2 to Kind $FF and Addr nil (ovl11:02CA..0302). }
   ds6AFB: array[0..2] of TLoadSlot;  { 5-byte slot table; see TLoadSlot }
+  ds6B00: Byte;                   { the bank index of the HEAD sprite in DS:6B01; $FF when none (LoadHeadBodySprites) }
+  ds6B01: Pointer;                { the loaded HEAD sprite bank (ShowHeadBodySprites, LoadHeadBodySprites) }
+  ds6B05: Byte;                   { the bank index of the BODY sprite in DS:6B06; $FF when none (LoadHeadBodySprites) }
+  ds6B06: Pointer;                { the loaded BODY sprite bank (ShowHeadBodySprites, LoadHeadBodySprites) }
   ds6B0A: Byte;                   { cleared by the loader (ovl11:043D) }
-  ds6B1C: Byte;                   { set to $FF by the loader (ovl11:0442) }
+  ds6B1C: Byte;                   { set to $FF by the loader (ovl11:0442) and by FreeSpriteList }
+  ds70C7: ShortInt;               { loop counter of FreeSpriteList (the sprite list slots); ShortInt: the loop exits with jg }
   ds6B29: Word;                   { set to 1 by the loader (ovl11:0405) }
   ds6DDA: Byte;                   { cleared by the loader (ovl11:0410) }
   ds6DDE: array[0..2] of Byte;    { 3-byte buffer the loader fills with 1 (ovl11:0342) }
