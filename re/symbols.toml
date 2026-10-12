@@ -42,7 +42,7 @@ signature = "procedure WaitKeyOrTimeout(Pause: Word)"
 c_name = "ovl01_fn_0000"
 level = "L2"
 justification = ""
-notes = "renamed from ovl01_fn_0000 (waits until the res06_fn_0C3F tick count passes Start plus 100 times Pause, or a key is pressed, then drains keys with FlushKeyboard; called with 10 by the credits and 5 by the title sequence); auto:near_call"
+notes = "renamed from ovl01_fn_0000 (waits until the res06_fn_0C3F tick count passes Start plus 100 times Pause, or a key is pressed, then calls FlushKeyboard, which does nothing (QUIRK 0899:010A: its first statement is Exit); called with 10 by the credits and 5 by the title sequence); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
