@@ -17207,12 +17207,12 @@ id = "0709:09E3"
 unit = "res06"
 addr = "0709:09E3"
 size = 387
-name = "res06_fn_09E3"
-signature = "function res06_fn_09E3(Prompt: string; A: Byte; MaxLen: Byte): string"
+name = "ReadInputLine"
+signature = "function ReadInputLine(Prompt: String40; Color: Byte; MaxLen: Byte): String40"
 c_name = "res06_fn_09E3"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res06_fn_09E3 (reads keys with ReadGameKey, adds ' '..'z' up to MaxLen and echoes them, Backspace deletes, Enter or Esc ends, returns the line upper-cased (0709:0A2B..0B5B); CheckCodeWheel reads the code word with it); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -17220,12 +17220,12 @@ id = "0709:0B66"
 unit = "res06"
 addr = "0709:0B66"
 size = 143
-name = "res06_fn_0B66"
-signature = ""
+name = "ReadNumber"
+signature = "function ReadNumber(Prompt: String40; Color: Byte): Word"
 c_name = "res06_fn_0B66"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res06_fn_0B66 (repeats ReadInputLine (6 characters) until Val gives a number with no error in 0..65536 and returns it (0709:0B80..0BE9)); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -17272,12 +17272,12 @@ id = "0709:0D68"
 unit = "res06"
 addr = "0709:0D68"
 size = 86
-name = "res06_fn_0D68"
-signature = "procedure res06_fn_0D68(Text: string; Color: Byte)"
+name = "FlashMessageLine"
+signature = "procedure FlashMessageLine(Text: String40; Color: Byte)"
 c_name = "res06_fn_0D68"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res06_fn_0D68 (clears row 24, writes the text there, waits DelayCounted and clears it again, with no key wait (0709:0D81..0DB5); CheckCodeWheel shows the wrong-code message with it); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]

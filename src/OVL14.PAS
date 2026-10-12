@@ -339,7 +339,7 @@ begin
       ;
     $66..$6C, $72:
       if GameVars^[VarRiverGate] = 0 then
-        res06_fn_0D68('The river''s stench drives you back.', $E)
+        FlashMessageLine('The river''s stench drives you back.', $E)
       else
       begin
         GameVars^[VarMapX] := GridCol;
@@ -383,7 +383,7 @@ begin
               ovl29_e5(ds6AAD, ds6AAE, ds6AAF);
             end
             else
-              res06_fn_0D68('Not Here', $E);
+              FlashMessageLine('Not Here', $E);
           'C':
             if SelectedCharacter^.Status = 0 then
               ovl15_e2;

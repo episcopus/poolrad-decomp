@@ -21,9 +21,9 @@ const
   clears the question window (DrawWindow), writes the instructions (DrawTextAt), draws the
   record runes as font characters (DrawGlyph: the two runes to match and the third, plus the
   fourth only when the record has one), shows the path pattern as five spaces and the record path
-  (DrawTextAt), flushes the keyboard and asks for the code word (res06_fn_09E3, the line reader
+  (DrawTextAt), flushes the keyboard and asks for the code word (ReadInputLine, the line reader
   of res06). A matching answer (the record CodeWord) leaves the routine at once; a wrong one shows
-  the failure message (res06_fn_0D68), and the third wrong answer ends the program through
+  the failure message (FlashMessageLine), and the third wrong answer ends the program through
   QuitGame. Reads: ds0000 (the wheel records), Random. Globals: none besides those. Side effect:
   the screen; on the third failure the program halts. }
 procedure CheckCodeWheel;
@@ -49,10 +49,10 @@ begin
     DrawTextAt(1, $0D, LightRed, '     ' + ds0000[Question].Path);
     DrawTextAt(1, $0E, Green, 'READ FROM THE INSIDE TO THE OUTSIDE.');
     FlushKeyboard;
-    Answer := res06_fn_09E3('INPUT THE CODE WORD: ', 13, 6);
+    Answer := ReadInputLine('INPUT THE CODE WORD: ', 13, 6);
     if Answer = ds0000[Question].CodeWord then
       Exit;
-    res06_fn_0D68('Sorry, that''s incorrect.', Yellow);
+    FlashMessageLine('Sorry, that''s incorrect.', Yellow);
   end;
   QuitGame;
 end;

@@ -14,12 +14,12 @@ procedure DrawGlyph(Col, Row, Color, Count, Glyph, Cook: Byte);
 procedure ClearTextCells(Col, Row, Color, Count: Byte);
 procedure DrawTextAt(Col, Row, Color: Byte; Text: string);
 procedure ShowPagedText(Left, Top, Right, Bottom, Color, ClearFirst: Byte; Text: string);
-function res06_fn_09E3(Prompt: string; A: Byte; MaxLen: Byte): string;
-procedure res06_fn_0B66;
+function ReadInputLine(Prompt: String40; Color: Byte; MaxLen: Byte): String40;
+function ReadNumber(Prompt: String40; Color: Byte): Word;
 procedure ShowMessageLine(Color: Byte; Text: String40);
 function GameClock: Longint;
 procedure ClearFullScreen;
-procedure res06_fn_0D68(Text: string; Color: Byte);
+procedure FlashMessageLine(Text: String40; Color: Byte);
 procedure DelayCounted;
 procedure ClearRect(Left, Top, Right, Bottom: ShortInt);
 implementation
@@ -274,7 +274,7 @@ end;
   is, clears Count cells of a row to the background; nothing when the cell is off the 40 by 25
   screen. QUIRK 0709:05EE, 05FA: the Byte parameters are also compared below 0, which is never
   true; the compiler keeps the compares. Called by
-  ovl21_e6, ovl25_e3, res06_fn_09E3, ShowMessageLine (row 24, 40 cells) and res06_fn_0D68. }
+  ovl21_e6, ovl25_e3, ReadInputLine, ShowMessageLine (row 24, 40 cells) and FlashMessageLine. }
 procedure ClearTextCells(Col, Row, Color, Count: Byte);
 const
   GlyphSpace = $20;
@@ -304,13 +304,71 @@ end;
   scratch/SHOWPAGEDTEXT.DRAFT.PAS and matches except the nested pool bytes (escalated:
   nested code with globals/calls needs address-aware pool compare). }
 {@stub} procedure ShowPagedText(Left, Top, Right, Bottom, Color, ClearFirst: Byte; Text: string); begin end;
-{ 0709:09E3: retf 8: 8 bytes of parameters; 812 bytes of locals.
-  The line reader: shows the Prompt and returns what the player types as its string result
-  (the caller keeps the result pointer: retf 8 pops Prompt, A and B only). CheckCodeWheel asks for the
-  code word with it. }
-{@stub} function res06_fn_09E3(Prompt: string; A: Byte; MaxLen: Byte): string; begin end;
-{ 0709:0B66: retf 6: 6 bytes of parameters; 346 bytes of locals }
-{@stub} procedure res06_fn_0B66; begin end;
+{ 0709:09E3. The line reader: shows Prompt in Color on the bottom line (row 24) and lets the
+  player type up to MaxLen characters after it, echoed in white: ' '..'z' are added, Backspace
+  removes the last one; Enter or Esc ends. Returns the line in upper case (Esc returns what was
+  typed too). The row is cleared at the end. CheckCodeWheel asks for the code word with it. }
+function ReadInputLine(Prompt: String40; Color: Byte; MaxLen: Byte): String40;
+const
+  BottomRow = 24;
+  ScreenCols = 40;
+  EchoColor = 15;           { white }
+  KeyBackspace = #8;
+  KeyEnter = #13;
+  KeyEsc = #27;
+var
+  Col: Byte;                { screen column of the last character shown }
+  Line: string;
+  Key: Char;
+begin
+  ClearTextCells(0, BottomRow, 0, ScreenCols);
+  DrawTextAt(0, BottomRow, Color, Prompt);
+  Col := Length(Prompt);
+  Line := '';
+  repeat
+    Key := ReadGameKey;
+    case Key of
+      ' '..'z':
+        if Length(Line) < MaxLen then
+        begin
+          Line := Line + Key;
+          Inc(Col);
+          DrawTextAt(Col, BottomRow, EchoColor, Key);
+        end;
+      KeyBackspace:
+        if Length(Line) > 0 then
+        begin
+          Line := Copy(Line, 1, Length(Line) - 1);
+          ClearTextCells(Col, BottomRow, 0, 1);
+          Dec(Col);
+        end;
+    end;
+  until (Key = KeyEnter) or (Key = KeyEsc);
+  ClearTextCells(0, BottomRow, 0, ScreenCols);
+  for Col := 1 to Length(Line) do
+    Line[Col] := UpCase(Line[Col]);
+  ReadInputLine := Line;
+end;
+{ 0709:0B66. Asks for a number on the bottom line: reads up to 6 characters with
+  ReadInputLine (Prompt in Color) until Val accepts them as a number from 0 to 65536, and
+  returns it as a Word. QUIRK 0709:0BBF: 65536 itself is accepted and returns 0. Called by
+  ovl03_fn_0951. }
+function ReadNumber(Prompt: String40; Color: Byte): Word;
+const
+  MaxDigits = 6;
+var
+  Value: Longint;
+  Answer: String40;
+  Code: Integer;
+begin
+  repeat
+    Answer := ReadInputLine(Prompt, Color, MaxDigits);
+    Val(Answer, Value, Code);
+    if (Code = 0) and ((Value > 65536) or (Value < 0)) then
+      Code := 1;
+  until Code = 0;
+  ReadNumber := Value;
+end;
 { 0709:0BF5: show a one-line message on row 24 and wait for a key (whitepaper 5.15). }
 procedure ShowMessageLine(Color: Byte; Text: String40);
 var
@@ -362,14 +420,20 @@ begin
       end;
   end;
 end;
-{ 0709:0D68: retf 6: 6 bytes of parameters; 42 bytes of locals.
-  Shows the Text and waits: CheckCodeWheel passes the failure message of a wrong code word and the
-  colour 14. }
-{ 0709:0D68. BLOCKED (dec-5, 2026-10-12): shows Text on the bottom line in colour Color
-  (ClearTextCells clears the row, DrawTextAt shows the text, DelayCounted waits, ClearTextCells
-  clears again). Our frame is 256 bytes too big (a string temp our source creates), so it is left
-  a stub. }
-{@stub} procedure res06_fn_0D68(Text: string; Color: Byte); begin end;
+{ 0709:0D68. Shows Text in Color on the bottom line (row 24) for a moment: clears the row
+  (ClearTextCells), writes the text (DrawTextAt), waits DelayCounted and clears the row again;
+  no key is waited for, unlike ShowMessageLine. CheckCodeWheel shows a wrong code word with it,
+  ovl14 'Not Here' and the river's stench, in colour 14. }
+procedure FlashMessageLine(Text: String40; Color: Byte);
+const
+  BottomRow = 24;
+  ScreenCols = 40;
+begin
+  ClearTextCells(0, BottomRow, 0, ScreenCols);
+  DrawTextAt(0, BottomRow, Color, Text);
+  DelayCounted;
+  ClearTextCells(0, BottomRow, 0, ScreenCols);
+end;
 { 0709:0DBE: retf 0: 0 bytes of parameters; 0 bytes of locals }
 { 0709:0DBE. A delay of ds49E2 * 225 milliseconds (Crt.Delay). No parameters. Called while
   drawing many screens (ovl03, ovl10, ovl12, ovl13, ovl18, ovl19, ovl20). }
