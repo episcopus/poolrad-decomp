@@ -6,9 +6,9 @@ interface
 uses POOLVARS;
 procedure res07_fn_0000;
 procedure res07_fn_007B;
-procedure res07_fn_00CF;
+procedure res07_fn_00CF(A: Byte);
 procedure res07_fn_00FF;
-procedure res07_fn_0111(S: String; A, B, C: Byte; var P: PT8x8Bank);
+procedure res07_fn_0111(S: String; A, B, C: Byte; var P);
 procedure res07_fn_02A5;
 procedure res07_fn_066F;
 procedure res07_fn_0710;
@@ -16,7 +16,7 @@ procedure res07_fn_08D4(X, Y: Integer; S, A: Byte; Tile, Buf: Pointer);
 procedure res07_fn_0A33;
 procedure res07_fn_0C0C;
 procedure res07_fn_0D6C;
-procedure res07_fn_0D71;
+procedure res07_fn_0D71(Top, Left: Word; Mode, Flags: Byte; Sprite, Screen: Pointer);
 procedure res07_fn_0E01;
 procedure res07_fn_0E28;
 procedure res07_fn_0E33;
@@ -49,11 +49,11 @@ implementation
 { 0464:007B: retf 6: 6 bytes of parameters; 10 bytes of locals }
 {@stub} procedure res07_fn_007B; begin end;
 { 0464:00CF: retf 2: 2 bytes of parameters; 2 bytes of locals }
-{@stub} procedure res07_fn_00CF; begin end;
+{@stub} procedure res07_fn_00CF(A: Byte); begin end;
 { 0464:00FF: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure res07_fn_00FF; begin end;
 { 0464:0111: retf 14: 14 bytes of parameters; 288 bytes of locals }
-{@stub} procedure res07_fn_0111(S: String; A, B, C: Byte; var P: PT8x8Bank); begin end;
+{@stub} procedure res07_fn_0111(S: String; A, B, C: Byte; var P); begin end;
 { 0464:02A5: frame not read }
 {@stub} procedure res07_fn_02A5; begin end;
 { 0464:066F: frame not read }
@@ -69,7 +69,7 @@ implementation
 { 0464:0D6C: retf 16: 16 bytes of parameters; 0 bytes of locals }
 {@stub} procedure res07_fn_0D6C; begin end;
 { 0464:0D71: frame not read }
-{@stub} procedure res07_fn_0D71; begin end;
+{@stub} procedure res07_fn_0D71(Top, Left: Word; Mode, Flags: Byte; Sprite, Screen: Pointer); begin end;
 { 0464:0E01: frame not read }
 {@stub} procedure res07_fn_0E01; begin end;
 { 0464:0E28: frame not read }

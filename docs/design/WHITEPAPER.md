@@ -89,6 +89,19 @@ Five text lines **[V]** (writer: `CFG.C`; the game opens "POOL.CFG" and prints "
 4. save directory with trailing backslash
 5. `F` or `N` **[?]** (meaning unknown)
 
+How the game starts **[V]** (the initialisation part of res08, `042B:00A4`, `src/RES08.PAS`):
+it initialises res05, then the overlay manager on `GAME.OVR`; probes `pool.cfg` (untyped,
+128-byte records) retrying with `Please insert startup disk.` plus a keypress until it opens,
+then closes it and sets `DS:84F0` to 0; opens `POOL.CFG` as text (halting with `Unable to find
+POOL.CFG` when missing) and reads the five lines: line 1 selects the video hardware
+(`E`: `VideoAdapter` 1 and EGA mode `$0D`; `T`: 2 with the heap cut by `$400` paragraphs;
+anything else: 0), line 2 the sound (`T`: `SoundMode` 0, `P`: 1, anything else: 2), lines 3
+and 4 the game and save directories (each followed by a self-assigning `S := S` QUIRK),
+line 5 the `F` flag (`DS:49D1` 1 for `F`, else 0). It saves the video mode (`INT 10h AH=$0F`
+into `SavedVideoMode` and `DS:4A1D`), gives the overlay buffer `$18800` bytes (halting with
+how many more bytes are needed when short), halts on a nonzero overlay status (`DS:43DC`,
+`Overlay error, program abort!`) and starts the sound unit (`res03_fn_017B`).
+
 ---
 
 ## 3. Program architecture
@@ -292,6 +305,20 @@ What the matching harness relies on, each proven by a complete match of res04 (r
   so a `Word` loop variable needs `Integer(...)` casts in products; and a `ShortInt` `for`
   loop exits with `jg` where a `Word` loop uses `ja` **[V]** (the offset arithmetic and both
   `for` loops of the res09 routines; `make tpc` probes).
+- res08 is a resident unit compiled with `$O+` **[V]** (its `OvrInit('GAME.OVR')` copies the
+  literal to a stack temporary with `System_StrCopy` before the call, at `042B:00AF`; without
+  `$O+` the compiler pushes the literal directly, as the unit's `Assign`/`WriteLn` literals
+  show). So `$O+` is not overlay-units-only; SPEC 3 item 6 and AGENTS.md rule it per unit.
+- `System_StrCopy` (`0AF8:0B0B`) pops only its source argument (`retf 4`), leaving the
+  destination pushed: that is how a `$O+` caller passes a literal (push dest temp, push
+  literal, copy, call) with no extra push **[V]** (res08_init `042B:00AF`, `DrawAdventureScreen`
+  ovl27:020F; read from the image).
+- A multi-argument `WriteLn` compiles to one string/number part after another plus a single
+  newline (`WriteLn(Output, A, B, C)` is `0919, 09AF, 0919, 084A`); the `086E` helper call
+  trails only a complete `Read`/`Write` without `Ln` **[V]** (res08_init `042B:023B`, `make tpc`
+  probes of every form).
+- `GameDir := GameDir` (and the same for `SaveDir`) is really in the code: a self-assigning
+  `StrLCopy` with limit 255, kept for the match (QUIRK `042B:032D`, `042B:0358`) **[V]**.
 
 
 ---
@@ -401,6 +428,8 @@ For `PIC`/`FINAL`, pixel bytes of frame N are XOR'd with frame 0 before draw **[
 `8X8D1.DAX` block 201 is not a picture record: it is a 1-bit font, 177 glyphs of 8 bytes each (1416 bytes) **[V]** (size; coab `seg041.Load8x8Tiles` reads it the same way **[H]**). Other `8X8D` blocks are ordinary picture records of 8x8 tiles (`item_count` 31 to 70).
 
 `Load8x8Bank` (`ovl34:003B`) loads one of five 8x8 tile banks (bank 0..4 into `TileBanks`) from the file `8X8D<TileSet>` through res07 **[V]** (`make match UNIT=ovl34`; called by `LoadWallSet` and `StartGame`, ovl11). A bank that stays nil after the load ends the game: `Unable to load 8x8D<set>-<count>` on Output, a key, `QuitGame` **[V]** (`ovl34:00D8`). `Put8x8Symbol` (`ovl34:015D`) draws symbols 1..$11E from banks 0..4 (ranges 1..$2D, $2E..$73, $74..$B9, $BA..$FF, $100..$11E, made bank relative through `SymbolBase`) **[V]** (`make match UNIT=ovl34`: the fourth parameter is a `Byte` used as `Direct <> 0`, which compiles to the same `cmp byte [bp+8],0` a `Boolean` did, and the callers pass 0; called by `DrawWindowFrame` and ovl29 three times). Symbols 0 and $11F..$7FFF print `Bad symbol number in Put8x8Symbol.` and quit the same way **[V]** (`ovl34:01C5`); symbols above $7FFF skip the check and run on with an unset bank (QUIRK `ovl34:01C0`). A nil bank draws nothing; otherwise the tile goes through res07_fn_08D4 or is copied into the `TileBuf` staging buffer and shown with res07_fn_1951 **[V]** (`ovl34:01EE`). Each bank is a picture record with the per-tile byte count at +$11 and the tiles at +$17 **[V]** (`ovl34:026B`, `ovl34:0274`).
+
+`SelectTileSet` (`0802:094A`) saves `TileSet` in `ds5377` and stores the new 8X8D file number; `RestoreTileSet` (`0802:095D`) copies `ds5377` back **[V]** (`make match UNIT=res05`). ovl07 and ovl17 call the first; ovl17 calls the second.
 
 CLI: `tools/re/pic.py dump <file.DAX> <id> out.png` (or a directory for multi-frame).
 
@@ -539,8 +568,9 @@ a fixed table can replace it while the game variables allow it (`DrawAreaView`, 
     global (`DS:4A1E`) **[V]** (code): 0 fills two text-scanline planes (absolute byte planes
     over `$B800`/`$BA00`, 80 bytes per scanline row, 4 scanlines per text row), 1 draws through
     `res06_fn_00B7` twice, 2 fills four graphics planes (`$B800`/`$BA00`/`$BC00`/`$BE00`, 160
-    bytes per row, 2 rows per text row). Which adapter (EGA/CGA/Tandy of `POOL.CFG`) each value
-    means is still open **[?]**, as is what `res06_fn_00B7` draws.
+    bytes per row, 2 rows per text row). The values are proven: res08_init sets 1 for `E`,
+    2 for `T` and 0 otherwise (`042B:019B..01F9`) **[V]**; what `res06_fn_00B7` draws is still
+    open **[?]**.
   - Callers **[V]** (`make packet UNIT=res09`): `DrawWindow` is called for dialogs and screens
     from ovl01, ovl02 (the code wheel), ovl03, ovl04, ovl05 and ovl06; the frame and clear
     routines are also called directly from ovl08, ovl13, ovl14, ovl15, ovl16, ovl19 and res12.
@@ -578,6 +608,29 @@ What the game takes from the outside world, found by `make timing-scan` and by r
 
 - `ShowMessageLine(Color, Text)` shows a one-line message on row 24: it clears 40 columns of that row (`res06_fn_05EB(0, 24, 0, 40)`), draws the text in the given colour (`res06_fn_0626(0, 24, Color, Text)`) and waits for a key through `ReadGameKey`. The text is a `string[40]`. Twelve routines call it, in overlays 0, 3, 5, 7, 17 and 33 and in res06 itself (`make packet FN=ShowMessageLine`).
 - Overlay 0 is the heap error handler: its initialisation sets `HeapError := @HeapErrorHandler`, so Turbo Pascal calls `HeapErrorHandler(Size)` when `New` or `GetMem` cannot get `Size` bytes. A zero size returns at once with an unassigned result (`jbe ovl00:004C` to `ovl00:00A3`). For a non-zero size it shows "WARNING: Insufficient Memory" in colour 14 (yellow); if the Boolean `DS:49D0` is set it calls `ovl17_e9` (the save and load unit) and repeats until `DS:557D` says to stop, otherwise it shows "Insufficient Memory. Exiting Program". Then it always ends the program (`QuitGame`), so that path never returns. The function result is never assigned on any path (QUIRK `ovl00:00A3`).
+
+### 5.16 The 3D sprite unit ovl28 **[V]** (`src/OVL28.PAS`, `make match UNIT=ovl28`: 6 of 9 routines at L2)
+
+Overlay 28 draws the 8x8 sprites of the 3D view and the HEAD/BODY strip of the character screen.
+The parts proven so far:
+
+- `DrawSprite(Col, Row: Integer; Direct: Byte; Sprite: Pointer)` (`ovl28:0000`): a nil sprite draws
+  nothing; with `Direct` set it blits the sprite one pixel up and left onto the screen buffer
+  `DS:4A20` through `res07_fn_0D71` (mode 0, flag 1) and steps the display (`res07_fn_1B52`);
+  otherwise it copies the sprite into the staging buffer with `res07_fn_1951`.
+- `DrawHeadSprite` and `DrawBodySprite` (`ovl28:0050`, `ovl28:0070`): draw a sprite at (column,
+  row) and at (column, row + 5); `ShowHeadBodySprites` (`ovl28:0697`) uses them to draw the HEAD
+  sprite `DS:6B01` and the BODY sprite `DS:6B06` over the 3D view.
+- `LoadHeadBodySprites` (`ovl28:05D9`) loads the HEAD and BODY banks of the picture number
+  `DS:5376` from the files `HEAD<number>` and `BODY<number>` through `res07_fn_0111` into
+  `DS:6B01` and `DS:6B06` (recording the loaded number in `DS:6B00` and `DS:6B05`, `$FF` = none).
+- `FreeSpriteList` (`ovl28:048F`) frees every loaded sprite bank of a sprite list (through
+  `res07_fn_2595`) and zeroes the list, the picture name `DS:6B0A` and the current bank `DS:6B1C`.
+- The sprite list is a `$42`-byte record: a count byte at +0, a flag at +1, and slots of 8 bytes
+  from +6, each holding a far pointer at +0 (the `TSpriteList` type of `src/OVL28.PAS`).
+
+Still to decompile: `ovl28_e7` (the range-checked 3D sprite draw, "Illegal range in
+Show3DSprite."), `ovl28_e4` (the HEAD/BODY window) and `ovl28_e2` (the PIC/FINAL picture loader).
 
 ---
 

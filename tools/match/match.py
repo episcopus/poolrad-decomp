@@ -374,6 +374,11 @@ def code_end(b: Build, seg: str, entry: int, limit: int) -> int:
     return end
 
 
+def pad_proc(unit: str) -> str:
+    """Variant B's padding procedure of `unit` (with_pads): first in the segment, never one of ours."""
+    return "MPadC%s" % unit.upper()
+
+
 def regions(b: Build, unit: str, names: list[str], pad: str | None = None) -> list[Region]:
     seg = unit.upper()
     if seg not in b.segs:
@@ -396,9 +401,14 @@ def regions(b: Build, unit: str, names: list[str], pad: str | None = None) -> li
     return out
 
 
-def init_region(b: Build, unit: str, after: int) -> Region | None:
+def init_region(b: Build, unit: str, after: int, pad: str | None = None) -> Region | None:
+    """The initialization part: the first line-numbered code at or after `after`. In variant B, `pad`
+    (pad_proc) is skipped exactly as regions() skips it: in a unit with no interface routines the padding
+    procedure is the first code of the segment and would otherwise be taken for the init part."""
     seg = unit.upper()
     seglen = b.segs[seg][1]
+    if pad is not None:
+        after = max(after, regions(b, unit, [], pad=pad)[0].end)
     lines = [o for o, _l in b.lines.get(seg, []) if o >= after]
     if not lines:
         return None
@@ -618,7 +628,7 @@ def compare_unit(orig: Original, unit: str, a: Build, b: Build, only: list[str] 
     routines = routines_of(source)
     names = [n for n, _s in routines]
     ra = regions(a, unit, names)
-    rb = [r for r in regions(b, unit, names, pad="MPadC%s" % unit.upper()) if not r.name.upper().startswith("MPADC")]
+    rb = [r for r in regions(b, unit, names, pad=pad_proc(unit)) if r.name.upper() != pad_proc(unit).upper()]
     by_a, by_b = {r.name.upper(): r for r in ra}, {r.name.upper(): r for r in rb}
     cmp = Comparer(orig, unit, a, b, by_a, by_b)
     results = []
@@ -722,7 +732,7 @@ def whole_unit(cmp: Comparer, a: Build, b: Build, ra: list[Region], rb: list[Reg
     seg = cmp.seg
     last_a = max(r.end for r in ra) if ra else 0
     last_b = max(r.end for r in rb) if rb else 0
-    ia, ib = init_region(a, cmp.unit, last_a), init_region(b, cmp.unit, last_b)
+    ia, ib = init_region(a, cmp.unit, last_a), init_region(b, cmp.unit, last_b, pad=pad_proc(cmp.unit))
     if ia is not None:
         init_id = cmp.orig.init_id(cmp.unit)
         if not init_id:

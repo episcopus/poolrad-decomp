@@ -139,8 +139,8 @@ begin
   res03_fn_01A5(100);
   { A string assignment to a string[40] truncates to 40 (the compiler uses System_StrLCopy); this
     saves the current path DS:547C into DS:4661. }
-  ds4661 := ds547C;
-  ds547C := '';
+  ds4661 := GameDir;
+  GameDir := '';
   res06_fn_017C;
   ovl25_e3;
   res06_fn_0626(0, $18, $A, 'Loading...Please Wait');
@@ -157,7 +157,7 @@ begin
   BlockRead(ds468C, ds5582, LoadBlockSize, ds5E1E);
   Close(ds468C);
   { restore the path saved above }
-  ds547C := ds4661;
+  GameDir := ds4661;
   ovl25_e3;
   Randomize;
   ovl22_e10;

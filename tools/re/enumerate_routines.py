@@ -17,7 +17,10 @@ With --merge nothing already known is lost (escalate-ovl11-20261012040038):
     (name, signature, level, review, notes, evidence...);
   - a scanned start strictly inside a routine whose extent is proven (level set by
     `make match WRITE=1`, or evidence citing `make match`) is dropped: the compiler showed
-    there is no routine there (the false far-call split ovl11:0435 inside StartGame).
+    there is no routine there (the false far-call split ovl11:0435 inside StartGame);
+  - a proven routine keeps its size: the compiler's boundary wins over the gap to the next
+    start (ovl34:003B Load8x8Bank is 255 bytes; the 35 after it are the next routine's
+    literal pool, which the gap would count).
 
 Usage:
   python3 tools/re/enumerate_routines.py [--exe poolrad/start-unpack.exe]
@@ -196,7 +199,8 @@ def record(rid: str, uid: str, size: int, default_name: str, why: str,
     prev = existing.get(rid)
     if prev is not None:
         r = dict(prev)
-        r["size"] = size
+        if not proven(prev):      # the compiler's boundary wins over the scan's gap
+            r["size"] = size
         return r
     f = forced.get(rid, {})
     name = f.get("name") or default_name
@@ -351,8 +355,6 @@ def main(argv: list[str]) -> int:
             log.append("size %s %s: %d -> %d" % (r["id"], r["name"], old["size"], r["size"]))
         elif old is None and existing:
             log.append("new %s %s (%d bytes, %s)" % (r["id"], r["name"], r["size"], r["evidence"][0]))
-        if old is not None and proven(old) and old["size"] != r["size"]:
-            log.append("CONFLICT proven routine %s changed size" % r["id"])
 
     routines.sort(key=lambda r: (r["unit"], r["id"]))
     covered = sum(r["size"] for r in routines)

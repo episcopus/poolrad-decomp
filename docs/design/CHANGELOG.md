@@ -4,6 +4,13 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-11 | 2.3, 5.8, 3.6 | boot init res08 (POOL.CFG parsing, VideoAdapter/SoundMode mappings, heap/overlay sizing) and TP6 codegen (resident O+, WriteLn multi-arg, StrCopy retf 4, self-assign quirk) | variant-A instruction comparison (tool L2 pending fix) |
+| 2026-10-11 | tools | matcher: init part of a unit with no interface routines no longer taken from variant B's padding procedure | unblocks res08 (escalate-general-20261012041843) |
+| 2026-10-11 | process | make handoff refuses a unit branch that does not match; partial hand-offs stub their drafts | tests/unit/test_agent_tools.py |
+| 2026-10-11 | tools | make map keeps forced routine starts (manual list, probe far-call entries, rtl tables), every known routine and field, and the compiler size of proven routines; Randomize 0AF8:1247 survives | tests/unit/test_enumerate_routines.py; make map diff on task/tools-map |
+| 2026-10-11 | 4.x | SelectTileSet saves TileSet in ds5377 and RestoreTileSet copies it back | make match UNIT=res05 |
+| 2026-10-11 | 5.16 (new) | added the 3D sprite unit ovl28: DrawSprite, the HEAD and BODY sprite helpers, LoadHeadBodySprites, FreeSpriteList and the sprite list record | make match UNIT=ovl28: 6 matched, 0 differ, 3 stubs; make check green |
+| 2026-10-11 | process | make match, check, packet and tpc keep the working agent's heartbeat alive | tests/unit/test_agent_tools.py |
 | 2026-10-11 | process | make handoff refuses a branch hand-off with nothing to merge | tests/unit/test_agent_tools.py |
 | 2026-10-11 | 4.x (8x8 tiles), 3.2.2 (cross-ref) | Load8x8Bank and Put8x8Symbol at L2; the fourth parameter of Put8x8Symbol settled as a Byte (the callers pass 0 and the test compiles the same); the shared globals renamed TileSet, TileBanks, TileBuf, DrawBuf and ovl11 reconciled with them | make match UNIT=ovl34: unit complete, 3 matched, 0 differ; make check green |
 | 2026-10-11 | 5.2 (clamp address), 5.2.1 (citations and constants) | fixed the ovl26 window clamp citations (they pointed into WallDesc4FromCode), named the marker and clamp limits, and corrected the whitepaper 5.2 clamp address | make match UNIT=ovl26: unit complete, 3 matched, 3 nested, 0 differ; src/OVL26.PAS |

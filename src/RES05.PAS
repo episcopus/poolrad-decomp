@@ -1,6 +1,6 @@
 unit RES05;
-{ res05: resident unit, 2416 bytes of code. Skeleton by tools/match/skeleton.py: every routine is a stub
-  until decompiled (playbook 30). }
+{ res05 opens game files (res05_fn_025D) and keeps the 8X8D file number. SelectTileSet saves
+  TileSet and stores a new one; RestoreTileSet puts the saved number back. }
 {$A-,F+,S-,R-,G-,I+}
 interface
 type
@@ -22,9 +22,10 @@ procedure res05_fn_050F;
 procedure res05_fn_05CD;
 procedure res05_fn_06E7;
 procedure res05_fn_0716;
-procedure res05_fn_094A;
-procedure res05_fn_095D;
+procedure SelectTileSet(NewSet: Byte);
+procedure RestoreTileSet;
 implementation
+uses POOLVARS;
 
 { 0802:0000: retf 6: 6 bytes of parameters; 0 bytes of locals }
 {@stub} procedure res05_fn_0000; begin end;
@@ -56,10 +57,19 @@ implementation
 {@stub} procedure res05_fn_06E7; begin end;
 { 0802:0716: retf 18: 18 bytes of parameters; 574 bytes of locals }
 {@stub} procedure res05_fn_0716; begin end;
-{ 0802:094A: retf 2: 2 bytes of parameters; 0 bytes of locals }
-{@stub} procedure res05_fn_094A; begin end;
-{ 0802:095D: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure res05_fn_095D; begin end;
+{ 0802:094A. Saves TileSet in ds5377, then makes NewSet the current 8X8D file number.
+  RestoreTileSet copies ds5377 back. ovl07 and ovl17 call this. }
+procedure SelectTileSet(NewSet: Byte);
+begin
+  ds5377 := TileSet;
+  TileSet := NewSet;
+end;
+
+{ 0802:095D. Puts back the TileSet that SelectTileSet saved in ds5377. ovl17 calls this. }
+procedure RestoreTileSet;
+begin
+  TileSet := ds5377;
+end;
 
 begin
 end.
