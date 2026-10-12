@@ -148,6 +148,7 @@ def test_a_handoff_with_nothing_to_merge_is_refused(tmp_path, monkeypatch):
         return {"rev-parse": state["branch"] if "--abbrev-ref" in args else "abc1234",
                 "status": "", "rev-list": state["ahead"]}.get(args[0], "")
     monkeypatch.setattr(common, "git", fake_git)
+    monkeypatch.setattr(handoff, "unmatched", lambda unit: "")
     run = ["--unit", "ovl33", "--agent", "dec-9", "--state", "complete", "--note", "already complete"]
     assert handoff.main(run) == 1 and not (tmp_path / "ovl33.md").exists()      # nothing beyond main
     state["branch"] = "main"
@@ -179,3 +180,27 @@ def test_make_targets_keep_the_lock_owners_heartbeat_alive(tmp_path, monkeypatch
     assert heartbeat.auto("make check") is None
     monkeypatch.setattr(common, "git", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("no git")))
     assert heartbeat.auto("make check") is None                     # never raises
+
+
+def test_a_unit_handoff_that_does_not_match_is_refused(tmp_path, monkeypatch, capsys):
+    import handoff
+    import heartbeat
+    monkeypatch.setattr(handoff, "handoff_dir", lambda: tmp_path)
+    monkeypatch.setattr(heartbeat, "heartbeat_dir", lambda: tmp_path)
+    monkeypatch.setattr(common, "git", lambda *a, **k: {"rev-parse": "unit/ovl23" if "--abbrev-ref" in a
+                                                        else "abc1234", "rev-list": "2"}.get(a[0], ""))
+    monkeypatch.setattr(handoff, "unmatched", lambda unit: "DIFF    RecalcCharacter ovl23:0010 x")
+    run = ["--unit", "ovl23", "--agent", "dec-9", "--state", "partial", "--note", "3 drafts"]
+    assert handoff.main(run) == 1 and not (tmp_path / "ovl23.md").exists()
+    assert "RecalcCharacter" in capsys.readouterr().err
+    monkeypatch.setattr(handoff, "unmatched", lambda unit: "")
+    assert handoff.main(run) == 0                                    # drafts turned back into stubs
+    esc = ["--unit", "ovl23", "--agent", "dec-9", "--state", "escalate", "--note", "a question"]
+    monkeypatch.setattr(handoff, "unmatched", lambda unit: "DIFF x")
+    assert handoff.main(esc) == 0                                    # escalations are not checked
+
+
+@pytest.mark.skipif(not (ROOT / "build/toolchain").exists(), reason="needs Turbo Pascal 6.0 (make tp-pin)")
+def test_unmatched_is_empty_for_a_matching_unit():
+    import handoff
+    assert handoff.unmatched("ovl00") == ""
