@@ -259,10 +259,10 @@ C track (ADR-001, 2026-10-10, kept on branch `track-c-hybrid`) **[V]** on that b
 What the matching harness relies on, each proven by a complete match of res04 (resident) and ovl00 (overlay):
 
 - A unit's routines are laid out in source order, each starting `push bp; mov bp,sp` (encoded `55 89 E5`; the map tool used to look for `55 8B EC` only and missed routines such as `res04:0122`, fixed 2026-10-11: `make map` found 38 more).
-- The string and set constants a routine uses are placed in the code segment immediately before it (a set constant is 32 bytes); `re/symbols.toml` therefore counts them in the size of the routine before (for example `res04_fn_0000`, 89 bytes, of which 51 are code and 38 the constants of `res04_fn_0059`).
+- The string and set constants a routine uses are placed in the code segment immediately before it (a set constant is 32 bytes); `re/symbols.toml` therefore counts them in the size of the routine before (for example `QuitGame`, 89 bytes, of which 51 are code and 38 the constants of `ReadGameKey`).
 - Every routine is far (`$F+`); a call within the unit is `push cs; call near`.
 - The initialisation part comes last; an empty one (`begin end.`) is `push bp; mov bp,sp; pop bp; retf`. A resident unit is padded with zeros to a paragraph.
-- Globals are DS offsets fixed at link time; a routine of an overlay unit is addressed through its stub entry (`@ovl00_e1` is `0016:0025`, the stub segment and entry offset).
+- Globals are DS offsets fixed at link time; a routine of an overlay unit is addressed through its stub entry (`@HeapErrorHandler` is `0016:0025`, the stub segment and entry offset).
 - Linking the whole program from source (`make rebuild`: `src/POOL.PAS` with `{$O OVLnn}` for the overlay units) reproduces the original's arrangement **[V]**: the main program at `0000`, the overlay stub segments from paragraph `16h` on (where the original's ovl00 stub is), the resident units after them in reverse initialisation order and System last, and an `FBOV` overlay file whose first unit's code starts with ovl00's string pool, like `GAME.OVR`. `tools/re/tpovl.py` reads the rebuilt pair and finds the original's 35 overlays and 48 initialisations (13 resident).
 
 
