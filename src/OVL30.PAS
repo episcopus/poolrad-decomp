@@ -7,7 +7,7 @@ uses POOLVARS;
 function SignOf(N: Integer): Integer;
 procedure SortTable;
 procedure SetupLine(Line: PLineState);
-procedure ovl30_e3;
+function ovl30_e3(Line: PLineState): Boolean;
 procedure ovl30_e5;
 procedure ovl30_e4;
 procedure ovl30_e6;
@@ -82,8 +82,12 @@ begin
     end;
   end;
 end;
-{ ovl30:02CC: retf 4: 4 bytes of parameters; 8 bytes of locals }
-{@stub} procedure ovl30_e3; begin end;
+{ ovl30:02CC. BLOCKED (dec-5, 2026-10-12): the Bresenham line stepper, 342 bytes, frame 8 bytes
+  (SX, SY: ShortInt, a PLineState copy and the Boolean result at bp-1). Drafted; the frame and the
+  first stores match but the `P := Line` copy differs (ours mov ax,[bp+6]/mov dx,[bp+8]; the original
+  les di,[bp+6]/mov [bp-7],di/mov [bp-5],es), so the local pointer does not line up. See the
+  hand-off note. }
+{@stub} function ovl30_e3(Line: PLineState): Boolean; begin end;
 { ovl30:0422: retf 20: 20 bytes of parameters; 58 bytes of locals }
 {@stub} procedure ovl30_e5; begin end;
 { ovl30:057B: retf 10: 10 bytes of parameters; 4 bytes of locals }
