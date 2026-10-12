@@ -135,9 +135,9 @@ type
   { The 28 bytes at DS:67F4 that the Temple clears on entry and ovl21_e12 turns into a LongInt
     sum (the money pooled in the shop); the element layout is not known yet. }
   TPartyMoney = array[0..$1B] of Byte;
-  { A 3-byte record of the ovl30 sort table (whitepaper 5.x): the table DS:6718 is an array of
+  { A 3-byte record of the ovl30 sort table (whitepaper 5.18): the table DS:6718 is an array of
     these, element 0 holding the count in Val (SortTable reads and writes Key and Val). }
-  { The line drawing state SetupLine fills and StepLine/e5 step (whitepaper 5.x): the endpoints, the
+  { The line drawing state SetupLine fills and StepLine/e5 step (whitepaper 5.18): the endpoints, the
     three Bresenham steps and the current position. }
   TLineState = record
     X1, Y1: Integer;               { +$0, +$2: the start point }
@@ -157,7 +157,7 @@ type
     Key: Byte;                     { +1: the first sort key }
     Val: Byte;                     { +2: the second sort key }
   end;
-  { One row of WalkLine's map (whitepaper 5.x): a 7-byte header and 43 tile cells; rows are 50
+  { One row of WalkLine's map (whitepaper 5.18): a 7-byte header and 43 tile cells; rows are 50
     bytes. Head[6] = 0 enables the tile gate. QUIRK: callers may pass X above 42, reading past
     Cells into the next row (no range checks). }
   TMapRow = record
@@ -166,7 +166,7 @@ type
   end;
   TMapRows = array[0..24] of TMapRow;  { the map: row per Y; extent unverified }
   PMapRows = ^TMapRows;
-  { One entry of the DS:2745 tile table WalkLine reads (whitepaper 5.x): 4 bytes per tile id;
+  { One entry of the DS:2745 tile table WalkLine reads (whitepaper 5.18): 4 bytes per tile id;
     BoundY feeds the Bound line endpoints, BlockY gates the walk against Bound.Y. }
   TTileEntry = record
     BoundY: Byte;                 { +0: the walk base height of the tile }
