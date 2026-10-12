@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-12 | 5.5 | the combat round loop, turn order, player commands, movement, dying and bandaging (ovl08) | make match UNIT=ovl08 (11 of 13 routines) |
 | 2026-10-12 | process | make next skips units whose every unfinished routine is blocked | tests/unit/test_agent_tools.py |
 | 2026-10-12 | 5.2 | ovl29 map entry 0143 removed (tail of DrawWallMap) | make match UNIT=ovl29: unit complete, 13 routines |
 | 2026-10-12 | 5.8 | menu unit ovl25: prompt line, word hotkeys, picture animation, timeout, list menu keys and paging | make match UNIT=ovl25 (6 matched), draft 3c8dac5 |
