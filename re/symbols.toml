@@ -13467,9 +13467,9 @@ size = 52
 name = "WallDesc2FromCode"
 signature = "function WallDesc2FromCode(SpecialCode: Byte): Byte"
 c_name = "ovl26_fn_00C7"
-level = "none"
+level = "L2"
 justification = ""
-notes = "nested inside ShowAreaView (its caller pushes the parent frame as the static link: push bp at ovl26:01D7); the 4 parameter bytes are the byte argument plus the link. Its 52 bytes match byte for byte inside the pool region of ShowAreaView (make match UNIT=ovl26: unit complete); the level stays none only because the matcher reports no per routine row for nested routines (TPC writes no public symbol for them): a matcher bookkeeping extension is needed to record their L2"
+notes = "nested inside ShowAreaView (its caller pushes the parent frame as the static link: push bp at ovl26:01D7); the 4 parameter bytes are the byte argument plus the link. Its 52 bytes match byte for byte inside the pool region of ShowAreaView (make match UNIT=ovl26: unit complete); the level stays none only because the matcher reports no per routine row for nested routines (TPC writes no public symbol for them): a matcher bookkeeping extension is needed to record their L2; nested in ShowAreaView (ovl26:016D), proven by the parent's match"
 evidence = ["prologue"]
 
 [[routine]]
@@ -13480,9 +13480,9 @@ size = 52
 name = "WallDesc3FromCode"
 signature = "function WallDesc3FromCode(SpecialCode: Byte): Byte"
 c_name = "ovl26_fn_00FB"
-level = "none"
+level = "L2"
 justification = ""
-notes = "nested inside ShowAreaView (its caller pushes the parent frame as the static link: push bp at ovl26:01E3). Its 52 bytes match byte for byte inside the pool region of ShowAreaView (make match UNIT=ovl26: unit complete); the level stays none only because the matcher reports no per routine row for nested routines: a matcher bookkeeping extension is needed to record their L2"
+notes = "nested inside ShowAreaView (its caller pushes the parent frame as the static link: push bp at ovl26:01E3). Its 52 bytes match byte for byte inside the pool region of ShowAreaView (make match UNIT=ovl26: unit complete); the level stays none only because the matcher reports no per routine row for nested routines: a matcher bookkeeping extension is needed to record their L2; nested in ShowAreaView (ovl26:016D), proven by the parent's match"
 evidence = ["prologue"]
 
 [[routine]]
@@ -13493,9 +13493,9 @@ size = 62
 name = "WallDesc4FromCode"
 signature = "function WallDesc4FromCode(SpecialCode: Byte): Byte"
 c_name = "ovl26_fn_012F"
-level = "none"
+level = "L2"
 justification = ""
-notes = "nested inside ShowAreaView (its caller pushes the parent frame as the static link: push bp at ovl26:01EF). Its 62 bytes match byte for byte inside the pool region of ShowAreaView (make match UNIT=ovl26: unit complete); the level stays none only because the matcher reports no per routine row for nested routines: a matcher bookkeeping extension is needed to record their L2"
+notes = "nested inside ShowAreaView (its caller pushes the parent frame as the static link: push bp at ovl26:01EF). Its 62 bytes match byte for byte inside the pool region of ShowAreaView (make match UNIT=ovl26: unit complete); the level stays none only because the matcher reports no per routine row for nested routines: a matcher bookkeeping extension is needed to record their L2; nested in ShowAreaView (ovl26:016D), proven by the parent's match"
 evidence = ["prologue"]
 
 [[routine]]
