@@ -17142,12 +17142,12 @@ id = "0709:05EB"
 unit = "res06"
 addr = "0709:05EB"
 size = 59
-name = "res06_fn_05EB"
-signature = "procedure res06_fn_05EB(A, Row, B, Width: Byte)"
+name = "ClearTextCells"
+signature = "procedure ClearTextCells(Col, Row, Color, Count: Byte)"
 c_name = "res06_fn_05EB"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res06_fn_05EB (draws Count space glyphs (DrawGlyph with $20) from Col on Row (0709:0608..061F); ShowMessageLine clears row 24 with (0, 24, 0, 40) before writing); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -17155,12 +17155,12 @@ id = "0709:0626"
 unit = "res06"
 addr = "0709:0626"
 size = 129
-name = "res06_fn_0626"
-signature = "procedure res06_fn_0626(A, Row, Color: Byte; Text: string)"
+name = "DrawTextAt"
+signature = "procedure DrawTextAt(Col, Row, Color: Byte; Text: string)"
 c_name = "res06_fn_0626"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res06_fn_0626 (for each character of the string calls DrawGlyph(Col, Row, Color, 1, char, 1) and advances Col (0709:0671..069F); ShowMessageLine writes its message with it); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

@@ -48,7 +48,7 @@ begin
   FreeSpriteList(@Sprites);
 end;
 { ovl18:02A4. The ending narrative (PoolNarrative): it shows the dragon's death and the
-  Tyranthraxus and Bane speech as lines of text (res06_fn_0626 on column 1, rows $11 onwards, colour
+  Tyranthraxus and Bane speech as lines of text (DrawTextAt on column 1, rows $11 onwards, colour
   10), loads the FINAL<number> pictures (whose number is Str(TileSet) in DS:4713) through
   res07_fn_0111 and draws them with res07_fn_0D71, running the AnimateFinalPicture
   animation between the speech blocks, and restores the view mode DS:49F3 at the end.
@@ -61,9 +61,9 @@ begin
   ds49F3 := 7;
   ds470E := nil;
   ClearRect(1, $11, $26, $16);
-  res06_fn_0626(1, $11, $A, 'Mortally wounded, the dragon roars!');
-  res06_fn_0626(1, $12, $A, 'The spirit of Tyranthraxus flares up');
-  res06_fn_0626(1, $13, $A, 'from the dragon''s body.');
+  DrawTextAt(1, $11, $A, 'Mortally wounded, the dragon roars!');
+  DrawTextAt(1, $12, $A, 'The spirit of Tyranthraxus flares up');
+  DrawTextAt(1, $13, $A, 'from the dragon''s body.');
   res12_fn_27D9;
   res07_fn_0111('FINAL' + ds4713, 1, 0, 0, ds470E);
   res07_fn_0D71(0, 0, 0, 0, ds470E, DrawBuf);
@@ -86,18 +86,18 @@ begin
     res07_fn_0D71(0, 9, 0, 0, ds470E, DrawBuf);
   end;
   ClearRect(1, $11, $26, $16);
-  res06_fn_0626(1, $11, $A, '"Fools, you have but slain the body');
-  res06_fn_0626(1, $12, $A, 'I possessed.  I cannot be defeated!"');
-  res06_fn_0626(1, $13, $A, 'With the power of the pool of radiance');
-  res06_fn_0626(1, $14, $A, 'which I moved here, to my lair,');
-  res06_fn_0626(1, $15, $A, 'I will still rule, by possessing one');
-  res06_fn_0626(1, $16, $A, 'of you!"');
+  DrawTextAt(1, $11, $A, '"Fools, you have but slain the body');
+  DrawTextAt(1, $12, $A, 'I possessed.  I cannot be defeated!"');
+  DrawTextAt(1, $13, $A, 'With the power of the pool of radiance');
+  DrawTextAt(1, $14, $A, 'which I moved here, to my lair,');
+  DrawTextAt(1, $15, $A, 'I will still rule, by possessing one');
+  DrawTextAt(1, $16, $A, 'of you!"');
   AnimateFinalPicture(3, 1, 7, (10 - ds49E2) * 5 div 2);
   ClearRect(1, $11, $26, $16);
-  res06_fn_0626(1, $11, $A, '"No Lord Bane!  I can still rule here!');
-  res06_fn_0626(1, $12, $A, 'I have not failed.  Do not call me back');
-  res06_fn_0626(1, $13, $A, 'through the pool!"');
-  res06_fn_0626(1, $14, $A, 'Noooo...');
+  DrawTextAt(1, $11, $A, '"No Lord Bane!  I can still rule here!');
+  DrawTextAt(1, $12, $A, 'I have not failed.  Do not call me back');
+  DrawTextAt(1, $13, $A, 'through the pool!"');
+  DrawTextAt(1, $14, $A, 'Noooo...');
   AnimateFinalPicture(3, 1, 8, 1);
   DelayCounted;
   DelayCounted;

@@ -18,10 +18,10 @@ const
   Yellow = 14;               { EGA colour: the failure message }
 
 { ovl02:00FD. The code wheel check. Up to MaxAttempts times it picks a wheel record at random,
-  clears the question window (DrawWindow), writes the instructions (res06_fn_0626), draws the
+  clears the question window (DrawWindow), writes the instructions (DrawTextAt), draws the
   record runes as font characters (DrawGlyph: the two runes to match and the third, plus the
   fourth only when the record has one), shows the path pattern as five spaces and the record path
-  (res06_fn_0626), flushes the keyboard and asks for the code word (res06_fn_09E3, the line reader
+  (DrawTextAt), flushes the keyboard and asks for the code word (res06_fn_09E3, the line reader
   of res06). A matching answer (the record CodeWord) leaves the routine at once; a wrong one shows
   the failure message (res06_fn_0D68), and the third wrong answer ends the program through
   QuitGame. Reads: ds0000 (the wheel records), Random. Globals: none besides those. Side effect:
@@ -36,18 +36,18 @@ begin
   begin
     Question := Random(WheelEntryCount);
     DrawWindow(1, 1, $26, $16, 0, 0, '');
-    res06_fn_0626(1, 1, Green, 'USE THE TRANSLATION WHEEL TO DECIPHER');
-    res06_fn_0626(1, 2, Green, 'THE CODE WORD.');
-    res06_fn_0626(1, 5, Green, 'MATCH THE ESPRUAR RUNE (OUTER RING)');
+    DrawTextAt(1, 1, Green, 'USE THE TRANSLATION WHEEL TO DECIPHER');
+    DrawTextAt(1, 2, Green, 'THE CODE WORD.');
+    DrawTextAt(1, 5, Green, 'MATCH THE ESPRUAR RUNE (OUTER RING)');
     DrawGlyph(8, 6, $0C, 1, ds0000[Question].OuterRune + RuneCharBase, 0);
     DrawGlyph(9, 6, $0C, 1, ds0000[Question].InnerRune + RuneCharBase, 0);
-    res06_fn_0626(1, 8, Green, 'WITH THE DETHEK RUNE (INNER RING)');
+    DrawTextAt(1, 8, Green, 'WITH THE DETHEK RUNE (INNER RING)');
     DrawGlyph(8, 9, $0C, 1, ds0000[Question].ThirdRune + RuneCharBase, 0);
     if ds0000[Question].FourthRune <> NoFourthRune then
       DrawGlyph(9, 9, $0C, 1, ds0000[Question].FourthRune + RuneCharBase, 0);
-    res06_fn_0626(1, $0B, Green, 'AND READ THE CODE WORD UNDER THE PATH:');
-    res06_fn_0626(1, $0D, LightRed, '     ' + ds0000[Question].Path);
-    res06_fn_0626(1, $0E, Green, 'READ FROM THE INSIDE TO THE OUTSIDE.');
+    DrawTextAt(1, $0B, Green, 'AND READ THE CODE WORD UNDER THE PATH:');
+    DrawTextAt(1, $0D, LightRed, '     ' + ds0000[Question].Path);
+    DrawTextAt(1, $0E, Green, 'READ FROM THE INSIDE TO THE OUTSIDE.');
     FlushKeyboard;
     Answer := res06_fn_09E3('INPUT THE CODE WORD: ', 13, 6);
     if Answer = ds0000[Question].CodeWord then

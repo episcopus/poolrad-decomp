@@ -953,3 +953,17 @@ kind = "global"
 why = "DrawGlyph mode 0 picks ds25E5[Bit] for pixel column Bit 0..7 of the 16-bit text-scanline word (0709:02B0)"
 date = "2026-10-12"
 
+[[rename]]
+old = "res06_fn_05EB"
+new = "ClearTextCells"
+kind = "routine"
+why = "draws Count space glyphs (DrawGlyph with $20) from Col on Row (0709:0608..061F); ShowMessageLine clears row 24 with (0, 24, 0, 40) before writing"
+date = "2026-10-12"
+
+[[rename]]
+old = "res06_fn_0626"
+new = "DrawTextAt"
+kind = "routine"
+why = "for each character of the string calls DrawGlyph(Col, Row, Color, 1, char, 1) and advances Col (0709:0671..069F); ShowMessageLine writes its message with it"
+date = "2026-10-12"
+

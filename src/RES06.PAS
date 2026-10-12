@@ -11,8 +11,8 @@ procedure SetPlaneSegment(Plane: Byte);
 procedure FillPlaneRect(LeftCol, TopRow, RightCol, BotRow: ShortInt; Plane, Value: Byte);
 procedure LoadGameFont;
 procedure DrawGlyph(Col, Row, Color, Count, Glyph, Cook: Byte);
-procedure res06_fn_05EB(A, Row, B, Width: Byte);
-procedure res06_fn_0626(A, Row, Color: Byte; Text: string);
+procedure ClearTextCells(Col, Row, Color, Count: Byte);
+procedure DrawTextAt(Col, Row, Color: Byte; Text: string);
 procedure ShowPagedText(Left, Top, Right, Bottom, Color, ClearFirst: Byte; Text: string);
 function res06_fn_09E3(Prompt: string; A: Byte; MaxLen: Byte): string;
 procedure res06_fn_0B66;
@@ -149,7 +149,7 @@ end;
   signature because ovl02 passes Integer expressions (changing it to Char would break its
   four matched call sites); the Ord(Chr()) bridges compile to nothing (proven by tpc
   probes) and are revisited when DrawGlyph itself is reviewed. Side effect: video memory.
-  Called by CheckCodeWheel, ovl03, ovl25, res06_fn_05EB, res06_fn_0626 and DrawTextRun. }
+  Called by CheckCodeWheel, ovl03, ovl25, ClearTextCells, DrawTextAt and DrawTextRun. }
 procedure DrawGlyph(Col, Row, Color, Count, Glyph, Cook: Byte);
 const
   MaxCol = $27;         { widest cell column }
@@ -270,18 +270,35 @@ begin
     Inc(Col);
   end;
 end;
-{ 0709:05EB: retf 8: 8 bytes of parameters; 0 bytes of locals }
-{ 0709:05EB. Clears (or fills) Width cells of a row: when the column Width is in 0..$27 and the
-  row B is in 0..$18 it calls DrawGlyph(Width, B, Row, A, $20, 1). BLOCKED (dec-5,
-  2026-10-12): the body is settled as two set membership tests, `if not (Width in [0..$27]) then
-  Exit; if not (B in [0..$18]) then Exit; ...` (the never-true lower-bound compares and the Exit
-  block come from the set), but the routine does not match because a literal-pool byte 64 before the
-  entry differs (ours FF, original F8): the pool belongs to the preceding DrawGlyph, still a
-  stub, so decompile 01DF first. Called by ovl21_e6, ovl25_e3, res06_fn_09E3, ShowMessageLine and
-  res06_fn_0D68. }
-{@stub} procedure res06_fn_05EB(A, Row, B, Width: Byte); begin end;
-{ 0709:0626: retf 10: 10 bytes of parameters; 260 bytes of locals }
-{@stub} procedure res06_fn_0626(A, Row, Color: Byte; Text: string); begin end;
+{ 0709:05EB. Draws Count space glyphs (GlyphSpace) in Color from cell Col of text row Row, that
+  is, clears Count cells of a row to the background; nothing when the cell is off the 40 by 25
+  screen. QUIRK 0709:05EE, 05FA: the Byte parameters are also compared below 0, which is never
+  true; the compiler keeps the compares. Called by
+  ovl21_e6, ovl25_e3, res06_fn_09E3, ShowMessageLine (row 24, 40 cells) and res06_fn_0D68. }
+procedure ClearTextCells(Col, Row, Color, Count: Byte);
+const
+  GlyphSpace = $20;
+begin
+  if (Col < 0) or (Col > $27) or (Row < 0) or (Row > $18) then Exit;
+  DrawGlyph(Col, Row, Color, Count, GlyphSpace, 1);
+end;
+{ 0709:0626. Draws Text in Color from cell Col of text row Row, one DrawGlyph per character
+  (cooked through UpCase into the 64-glyph text set), advancing Col; nothing when Col is past
+  column 39. QUIRK 0709:0647: Row is also tested against 39, not 24; DrawGlyph then skips rows
+  past 24, and characters past column 39. Called
+  by ShowMessageLine (row 24), ShowCredits, CheckCodeWheel, StartGame and many menus. }
+procedure DrawTextAt(Col, Row, Color: Byte; Text: string);
+var
+  Len, I: Byte;
+begin
+  if (Col > $27) or (Row > $27) then Exit;
+  Len := Length(Text);
+  for I := 1 to Len do
+  begin
+    DrawGlyph(Col, Row, Color, 1, Ord(Text[I]), 1);
+    Inc(Col);
+  end;
+end;
 { 0709:0768: retf 16; six bytes and a string; ovl04 passes (1, $11, $26, $16, $A, 1, message). }
 { DRAFT STASHED (dec-1): full ShowPagedText with nested DrawTextRun/SkipSpaces is in
   scratch/SHOWPAGEDTEXT.DRAFT.PAS and matches except the nested pool bytes (escalated:
@@ -299,8 +316,8 @@ procedure ShowMessageLine(Color: Byte; Text: String40);
 var
   Key: Char;
 begin
-  res06_fn_05EB(0, 24, 0, 40);
-  res06_fn_0626(0, 24, Color, Text);
+  ClearTextCells(0, 24, 0, 40);
+  DrawTextAt(0, 24, Color, Text);
   Key := ReadGameKey;
 end;
 { 0709:0C3F. The game clock in hundredths of a second: reads the DOS time (GetTime) and returns
@@ -349,7 +366,7 @@ end;
   Shows the Text and waits: CheckCodeWheel passes the failure message of a wrong code word and the
   colour 14. }
 { 0709:0D68. BLOCKED (dec-5, 2026-10-12): shows Text on the bottom line in colour Color
-  (res06_fn_05EB clears the row, res06_fn_0626 shows the text, DelayCounted waits, res06_fn_05EB
+  (ClearTextCells clears the row, DrawTextAt shows the text, DelayCounted waits, ClearTextCells
   clears again). Our frame is 256 bytes too big (a string temp our source creates), so it is left
   a stub. }
 {@stub} procedure res06_fn_0D68(Text: string; Color: Byte); begin end;
