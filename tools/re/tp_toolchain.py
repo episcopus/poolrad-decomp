@@ -283,7 +283,9 @@ def disasm_program(exe: Path, mapf: Path) -> None:
 
 def runtime_names(img: bytes, segs: dict) -> dict[tuple[int, int], str]:
     """Map far-call targets in a freshly compiled program's runtime units to the same
-    routine in POOL (aligned like `compare`), with its name from re/symbols.toml."""
+    routine in POOL, with its name from re/symbols.toml. Every key is the entry of a POOL
+    runtime routine found in the fresh unit (`runtime_entries`), never an offset that only
+    happens to sit at the same place in the byte alignment."""
     out: dict[tuple[int, int], str] = {}
     try:
         ours_img, _ = read_mz(EXE)
@@ -299,13 +301,44 @@ def runtime_names(img: bytes, segs: dict) -> dict[tuple[int, int], str]:
         a = int(u["code_start"].split(":")[0], 16)
         b = int(u["code_end"].split(":")[0], 16)
         rs, rl, _ = segs[uname]
-        _, m = align_unit(ours_img[a * 16:b * 16], img[rs:rs + rl])
-        back = {rv: uv for uv, rv in m.items()}
-        for rv, uv in back.items():
+        entries = sorted(int(rid[5:], 16) for rid in names if rid.startswith("%04X:" % a))
+        for rv, uv in runtime_entries(ours_img[a * 16:b * 16], img[rs:rs + rl], entries).items():
             rid = "%04X:%04X" % (a, uv)
-            if rid in names:
-                out[(rs >> 4, rv)] = "%s (POOL %s)" % (names[rid], rid)
+            out[(rs >> 4, rv)] = "%s (POOL %s)" % (names[rid], rid)
     return out
+
+
+def runtime_entries(U: bytes, R: bytes, entries: list[int]) -> dict[int, int]:
+    """Find POOL's runtime routines (entries: offsets in U, POOL's unit) in a fresh build
+    of the same unit (R); return {offset in R: entry in U}, one to one.
+
+    A plain byte alignment (`align_unit`) cannot be read at a routine entry: when the smart
+    linker dropped routines from R, a short common prefix (TP's `mov bx,sp`) glues onto the
+    preceding equal block and lands on the entry of a dropped neighbour (Move resolved as
+    Assign). So each routine is placed by its whole body instead: every aligned byte of the
+    routine votes for where its entry lies in R. A routine is found only when
+      - most of its bytes are present in R: aligned, or in a same-length difference (link-time
+        address fields), not in a region R lacks (a routine the linker dropped), and
+      - the aligned bytes agree: a strict majority of them votes for one entry.
+    An offset of R claimed by two routines resolves to neither."""
+    regs = regions(U, R)
+    pos, present = {}, set()
+    for tag, i1, i2, j1, j2 in regs:
+        if tag == "equal":
+            for k in range(i2 - i1):
+                pos[i1 + k] = j1 + k
+        if tag == "equal" or i2 - i1 == j2 - j1:
+            present.update(range(i1, i2))
+    found: dict[int, list[int]] = collections.defaultdict(list)
+    for e, end in zip(entries, entries[1:] + [len(U)]):
+        votes = collections.Counter(pos[x] - (x - e) for x in range(e, end) if x in pos)
+        if not votes:
+            continue
+        (t, c), = votes.most_common(1)
+        here = sum(1 for x in range(e, end) if x in present)
+        if 2 * c > sum(votes.values()) and 2 * here > end - e and 0 <= t < len(R):
+            found[t].append(e)
+    return {t: es[0] for t, es in found.items() if len(es) == 1}
 
 
 def cmd_probe(args) -> int:
