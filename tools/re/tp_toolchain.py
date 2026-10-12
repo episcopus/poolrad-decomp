@@ -180,7 +180,13 @@ def ci(d: Path, name: str) -> Path | None:
 
 
 def run_tpc(kind: str, emu: str, w: Path, tpc_args: list[str]) -> str:
-    """Run TPC.EXE in directory w under emu2 or DOSBox-X; return the compiler log."""
+    """Run TPC.EXE in directory w under emu2 or DOSBox-X; return the compiler log.
+    Outputs of an earlier run are removed first, so a failed compile cannot pass on a
+    stale log or EXE (the two emulators also differ in name case, which would leave
+    both spellings side by side)."""
+    for p in w.iterdir():
+        if p.name.upper() != "TPC.EXE" and p.suffix.upper() in (".LOG", ".EXE", ".MAP", ".OVR", ".TPU"):
+            p.unlink()
     if kind == "emu2":
         r = subprocess.run([emu, "TPC.EXE", *tpc_args], cwd=w, capture_output=True)
         (w / "TPC.LOG").write_bytes(r.stdout + r.stderr)

@@ -62,3 +62,11 @@ def test_tpc_annotates_runtime_calls_with_pool_names(capsys):
 ])
 def test_compiled_ok_accepts_both_emulator_summaries(log, ok):
     assert tc.compiled_ok(log) is ok
+
+
+def test_run_tpc_clears_stale_outputs(tmp_path, monkeypatch):
+    for name in ("TPC.EXE", "TURBO.TPL", "SINK.PAS", "X.OBJ", "hello.exe", "HELLO.MAP", "SINK.OVR", "A.TPU", "TPC.LOG"):
+        (tmp_path / name).write_bytes(b"old")
+    monkeypatch.setattr(tc.subprocess, "run", lambda *a, **k: None)  # the compiler "crashes", writing nothing
+    assert tc.run_tpc("dosbox-x", "dosbox-x", tmp_path, ["SINK.PAS"]) == ""
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["SINK.PAS", "TPC.EXE", "TURBO.TPL", "X.OBJ"]
