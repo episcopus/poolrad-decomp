@@ -12,6 +12,14 @@ import common  # noqa: E402
 import review  # noqa: E402
 
 
+@pytest.fixture(autouse=True)
+def isolated_coordination(tmp_path, monkeypatch):
+    """Unit tests must never modify the running clone's locks, control state or audit log."""
+    directory = tmp_path / "git-common"
+    directory.mkdir()
+    monkeypatch.setattr(common, "common_dir", lambda: directory)
+
+
 def test_a_lock_is_shared_and_atomic():
     unit = "zz_test_lock"
     common.lock_path(unit).unlink(missing_ok=True)
@@ -72,6 +80,7 @@ def test_a_failed_review_goes_back_to_a_decompiler_not_to_a_reviewer(tmp_path, m
 
 
 def test_an_escalation_needs_no_commit_and_a_changelog_row_lands_on_done(tmp_path, monkeypatch, capsys):
+    import check
     import handoff
     import heartbeat
     monkeypatch.setattr(handoff, "handoff_dir", lambda: tmp_path)
@@ -87,8 +96,11 @@ def test_an_escalation_needs_no_commit_and_a_changelog_row_lands_on_done(tmp_pat
     assert len(esc) == 1
     handoff.main(["--list"])
     assert "ESCALATION for the human" in capsys.readouterr().out
-    (tmp_path / "ovl33.md").write_text("unit = ovl33\nstate = complete\nchangelog = 5.8 | trace | make match\n")
-    assert handoff.main(["--unit", "ovl33", "--done"]) == 0
+    monkeypatch.setattr(common, "require_main", lambda operation: None)
+    monkeypatch.setattr(common, "git", lambda *a, **kw: "")
+    monkeypatch.setattr(check, "require_receipt", lambda: None)
+    (tmp_path / "ovl33.md").write_text("unit = ovl33\nstate = complete\ncommit = abc1234\nchangelog = 5.8 | trace | make match\n")
+    assert handoff.main(["--unit", "ovl33", "--agent", "orch", "--done"]) == 0
     rows = log.read_text().splitlines()
     assert rows[2].endswith("| 5.8 | trace | make match |") and rows[3] == "| old | x | y | z |"
 
@@ -138,6 +150,7 @@ def test_a_claim_shows_the_orchestrators_notes_on_its_unit(tmp_path):
 
 
 def test_a_handoff_with_nothing_to_merge_is_refused(tmp_path, monkeypatch):
+    import safety
     import handoff
     import heartbeat
     monkeypatch.setattr(handoff, "handoff_dir", lambda: tmp_path)
@@ -148,6 +161,8 @@ def test_a_handoff_with_nothing_to_merge_is_refused(tmp_path, monkeypatch):
         return {"rev-parse": state["branch"] if "--abbrev-ref" in args else "abc1234",
                 "status": "", "rev-list": state["ahead"]}.get(args[0], "")
     monkeypatch.setattr(common, "git", fake_git)
+    monkeypatch.setattr(common, "require_owner", lambda *a: None)
+    monkeypatch.setattr(safety, "branch_findings", lambda branch: [])
     monkeypatch.setattr(handoff, "unmatched", lambda unit: "")
     run = ["--unit", "ovl33", "--agent", "dec-9", "--state", "complete", "--note", "already complete"]
     assert handoff.main(run) == 1 and not (tmp_path / "ovl33.md").exists()      # nothing beyond main
@@ -183,12 +198,15 @@ def test_make_targets_keep_the_lock_owners_heartbeat_alive(tmp_path, monkeypatch
 
 
 def test_a_unit_handoff_that_does_not_match_is_refused(tmp_path, monkeypatch, capsys):
+    import safety
     import handoff
     import heartbeat
     monkeypatch.setattr(handoff, "handoff_dir", lambda: tmp_path)
     monkeypatch.setattr(heartbeat, "heartbeat_dir", lambda: tmp_path)
     monkeypatch.setattr(common, "git", lambda *a, **k: {"rev-parse": "unit/ovl23" if "--abbrev-ref" in a
                                                         else "abc1234", "rev-list": "2"}.get(a[0], ""))
+    monkeypatch.setattr(common, "require_owner", lambda *a: None)
+    monkeypatch.setattr(safety, "branch_findings", lambda branch: [])
     monkeypatch.setattr(handoff, "unmatched", lambda unit: "DIFF    RecalcCharacter ovl23:0010 x")
     run = ["--unit", "ovl23", "--agent", "dec-9", "--state", "partial", "--note", "3 drafts"]
     assert handoff.main(run) == 1 and not (tmp_path / "ovl23.md").exists()

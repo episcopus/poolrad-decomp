@@ -8,6 +8,10 @@
 
 Nothing to claim is a pause, not the end: post an idle heartbeat, wait about 5 minutes and run `make claim REVIEW=1` again (AGENTS.md rule 9).
 
+Check `make agent-step AGENT=<you>` before each review and after waits. Paused/stopped: start no new
+review, preserve and hand off existing findings, then stop. Draining: finish the current review, hand
+off and stop without another claim. Never repair a dirty main or release another holder's lock.
+
 1. From the main checkout: `make claim AGENT=<you> REVIEW=1` (or `UNIT=<id>`). It locks `review-<id>` and creates `../poolrad-worktrees/review-<id>` on branch `review/<id>`. Work there.
 2. `cp work/reviews/TEMPLATE.md work/reviews/<id>.md`; fill in `decompiler:` (the `Agent:` trailers of the unit's commits: `git log --format='%(trailers:key=Agent,valueonly)' -- src/<ID>.PAS`), `reviewer:` (you), `date:`, `commit:` (`git rev-parse --short HEAD`).
 3. `make match UNIT=<id>` (it must say `unit: complete`), `make readability UNIT=<id>` (it must be clean), `make packet UNIT=<id>`; read the source beside the packet. Ask yourself for each routine: could I port this from the source and its comments alone?

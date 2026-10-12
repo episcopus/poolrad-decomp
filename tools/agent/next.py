@@ -39,12 +39,12 @@ def next_unit() -> tuple[str, str, int, int] | None:
     for u in common.queue():                         # failed reviews come back first
         uid = u["id"]
         findings = common.open_must_fix(uid)
-        if findings and not common.lock_path(uid).exists():
+        if findings and not common.lock_path(uid).exists() and not common.pending_handoff(uid):
             n = sum(1 for r in rs if r["unit"] == uid)
             return uid, "review failed: fix the %d must-fix findings in work/reviews/%s.md" % (len(findings), uid), n, n
     for u in common.queue():
         uid = u["id"]
-        if common.lock_path(uid).exists() or common.unit_complete(uid, rs) or waiting(uid, rs):
+        if common.lock_path(uid).exists() or common.pending_handoff(uid) or common.unit_complete(uid, rs) or waiting(uid, rs):
             continue
         mine = [r for r in rs if r["unit"] == uid]
         return uid, u.get("reason", ""), sum(r.get("level") in ("L2", "L3") for r in mine), len(mine)
@@ -61,7 +61,7 @@ def next_review() -> tuple[str, str, int, int] | None:
     for u in common.queue():
         uid = u["id"]
         if common.unit_complete(uid, rs) and not reviewed(uid, rs) and not common.lock_path("review-" + uid).exists() \
-                and not common.open_must_fix(uid):
+                and not common.pending_handoff("review-" + uid) and not common.open_must_fix(uid):
             n = sum(1 for r in rs if r["unit"] == uid)
             return uid, u.get("reason", ""), n, n
     return None

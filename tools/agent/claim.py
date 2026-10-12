@@ -17,8 +17,7 @@
 A review claim locks `review-<id>` and creates branch review/<id> (worktree poolrad-worktrees/review-<id>)
 from main, where the unit was merged when it became complete.
 
-Prints the worktree path. Work there; finish with playbook 30 step 7 (`make unlock UNIT=<id>` from any
-checkout after handing the branch to the orchestrator).
+Prints the worktree path. Work there; hand off to the orchestrator, which releases the lock after merging.
 """
 from __future__ import annotations
 
@@ -30,6 +29,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import common  # noqa: E402
+import control  # noqa: E402
 import heartbeat  # noqa: E402
 import lock  # noqa: E402
 import next as nxt  # noqa: E402
@@ -38,6 +38,15 @@ LINKS = (".venv", "build/toolchain", "build/re", "tools/vendor", "tools/setup/en
 
 
 def main(argv=None) -> int:
+    try:
+        with control.coordination_lock():
+            return claim(argv)
+    except (ValueError, RuntimeError, OSError) as e:
+        print("claim: %s" % e, file=sys.stderr)
+        return 2
+
+
+def claim(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--unit", default=os.environ.get("UNIT", ""))
     ap.add_argument("--agent", default=os.environ.get("AGENT", ""))
@@ -48,14 +57,26 @@ def main(argv=None) -> int:
     if not a.agent:
         print("claim: need AGENT=<name> (a name unique to this agent session)", file=sys.stderr)
         return 2
+    common.identifier(a.agent, "agent")
+    if a.unit:
+        common.identifier(a.unit, "unit")
+        if a.unit not in {u["id"] for u in common.queue()}:
+            raise ValueError("unit is not a queued game unit: %s" % a.unit)
+    if a.task:
+        common.identifier(a.task, "task")
+    if a.task and (a.unit or a.review):
+        raise ValueError("TASK cannot be combined with UNIT or REVIEW")
+    control.admit()
     main_dir = common.main_checkout()
-    dirty = common.git("status", "--porcelain", "--", "src", "re", "tools", "tests", "Makefile", cwd=main_dir)
+    dirty = common.git("status", "--porcelain", "--untracked-files=no", cwd=main_dir)
     if dirty:
-        print("claim: the main checkout has uncommitted changes in src/, re/, tools/ or tests/; a unit branch "
-              "starts from the committed %s, so commit (or stash) them first:\n%s" % (a.base, dirty), file=sys.stderr)
+        print("claim: main has uncommitted tracked changes; a work branch starts from committed %s. "
+              "Wait for the orchestrator; never stash, reset or clean main:\n%s" % (a.base, dirty), file=sys.stderr)
         return 1
     if a.task:
         task = a.task.lower()
+        if common.pending_handoff(task):
+            raise ValueError("%s has a hand-off waiting; do not duplicate unmerged work" % task)
         if not common.try_lock(task, lock.body(task, a.agent, "task/%s" % task)):
             print("claim: %s is locked:\n%s" % (task, common.lock_path(task).read_text()), file=sys.stderr)
             return 1
@@ -73,6 +94,8 @@ def main(argv=None) -> int:
                 print("claim: nothing to claim (queue empty, or every unit locked or complete)")
                 return 1
             unit = n[0]
+        if common.pending_handoff(prefix + unit):
+            raise ValueError("%s has a hand-off waiting; do not duplicate unmerged work" % unit)
         if common.try_lock(prefix + unit, lock.body(prefix + unit, a.agent,
                                                     "%s/%s" % ("review" if a.review else "unit", unit))):
             break
@@ -104,7 +127,11 @@ def setup(main_dir: Path, key: str, branch: str, a, unit: str) -> int:
     """Create (or reuse) the worktree for `key` on `branch` and link the untracked tools into it."""
     wt = main_dir.parent / "poolrad-worktrees" / key
     try:
-        if not wt.exists():
+        if wt.exists():
+            actual = common.git("branch", "--show-current", cwd=wt)
+            if actual != branch:
+                raise ValueError("existing worktree %s is on %s, not %s; leave it alone" % (wt, actual, branch))
+        else:
             wt.parent.mkdir(parents=True, exist_ok=True)
             exists = bool(common.git("branch", "--list", branch, cwd=main_dir))
             if exists:
@@ -116,11 +143,12 @@ def setup(main_dir: Path, key: str, branch: str, a, unit: str) -> int:
             if src.exists() and not dst.exists():
                 dst.parent.mkdir(parents=True, exist_ok=True)
                 dst.symlink_to(src)
-    except RuntimeError as e:
+    except (RuntimeError, ValueError, OSError) as e:
         common.lock_path(key).unlink(missing_ok=True)
         print("claim: %s (lock released)" % e, file=sys.stderr)
         return 1
     print("claim: %s locked for %s" % (key, a.agent))
+    control.event("claim", agent=a.agent, key=key, branch=branch, worktree=str(wt))
     heartbeat.beat(a.agent, "claimed %s, worktree %s (branch %s)" % (key, wt, branch))
     print("claim: worktree %s (branch %s)" % (wt, branch))
     if a.task:

@@ -24,6 +24,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import common  # noqa: E402
+import control  # noqa: E402
 
 QUIET_MINUTES = 20
 
@@ -35,18 +36,21 @@ def heartbeat_dir() -> Path:
 
 
 def fields(text: str) -> dict:
-    return dict(l.split(" = ", 1) for l in text.splitlines() if " = " in l)
+    return common.fields(text)
 
 
 def beat(agent: str, note: str, done: bool = False) -> Path:
+    common.identifier(agent, "agent")
     try:
         branch = common.git("rev-parse", "--abbrev-ref", "HEAD", cwd=Path.cwd())
     except RuntimeError:
         branch = "?"
     p = heartbeat_dir() / ("%s.txt" % agent)
-    p.write_text("agent = %s\ntime = %s\nbranch = %s\nstate = %s\nnote = %s\n" % (
+    common.atomic_write(p, "agent = %s\ntime = %s\nbranch = %s\nstate = %s\nnote = %s\n" % (
         agent, dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), branch,
-        "stopped" if done else "working", " ".join(note.split())))
+         "stopped" if done else "working", " ".join(note.split())))
+    if done:
+        control.event("agent-stopped", agent=agent, branch=branch, note=" ".join(note.split()))
     return p
 
 
@@ -68,7 +72,8 @@ def auto(activity: str) -> str | None:
             return None
         p = heartbeat_dir() / ("%s.txt" % agent)
         old = fields(p.read_text()) if p.exists() else {}
-        p.write_text("agent = %s\ntime = %s\nbranch = %s\nstate = working\nnote = %s\nactivity = %s\n" % (
+        common.identifier(agent, "agent")
+        common.atomic_write(p, "agent = %s\ntime = %s\nbranch = %s\nstate = working\nnote = %s\nactivity = %s\n" % (
             agent, dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), branch,
             old.get("note", "working"), " ".join(activity.split())))
         return agent
@@ -109,7 +114,11 @@ def main(argv=None) -> int:
     if not a.agent or not a.note.strip():
         print('heartbeat: need AGENT=<you> NOTE="<what you are doing now>"', file=sys.stderr)
         return 2
-    beat(a.agent, a.note, a.done)
+    try:
+        beat(a.agent, a.note, a.done)
+    except (ValueError, RuntimeError, OSError) as e:
+        print("heartbeat: %s" % e, file=sys.stderr)
+        return 2
     print("heartbeat: %s, %s" % (a.agent, "stopped" if a.done else "working"))
     return 0
 
