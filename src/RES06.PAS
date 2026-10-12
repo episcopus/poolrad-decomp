@@ -8,7 +8,7 @@ type
 procedure SetEgaFillRegisters;
 procedure SetActivePage(Plane: Byte);
 procedure SetPlaneSegment(Plane: Byte);
-procedure res06_fn_00B7(A, B, C, D: ShortInt; E, F: Byte);
+procedure FillPlaneRect(LeftCol, TopRow, RightCol, BotRow: ShortInt; Plane, Value: Byte);
 procedure res06_fn_017C;
 procedure res06_fn_01DF(A, B, C, D, Glyph, F: Byte);
 procedure res06_fn_05EB(A, Row, B, Width: Byte);
@@ -57,13 +57,44 @@ begin
 end;
 { 0709:00A0: retf 2: 2 bytes of parameters; 0 bytes of locals }
 { 0709:00A0. Stores the EGA/VGA plane segment of Plane (Plane shl 9 + $A000) in ds4A18. Called by
-  res06_fn_00B7 and res08_init. }
+  FillPlaneRect and res08_init. }
 procedure SetPlaneSegment(Plane: Byte);
 begin
   ds4A18 := Plane shl 9 + $A000;
 end;
 { 0709:00B7: retf 12: 12 bytes of parameters; 10 bytes of locals }
-{@stub} procedure res06_fn_00B7(A, B, C, D: ShortInt; E, F: Byte); begin end;
+{ 0709:00B7. Fills a rectangle on one EGA plane: byte columns LeftCol..RightCol and cell rows
+  TopRow..BotRow (8 scanlines each), on Plane with the byte Value. It saves the current plane
+  ds4A1A, points SetPlaneSegment(Plane) at the fill plane, sets the EGA registers
+  (SetEgaFillRegisters, GC index 5 to 2), fills scanline by scanline with
+  FillChar(Mem[ds4A18:DestOff], RightCol - LeftCol + 1, Value) stepping DestOff by 40, then
+  restores GC index 5 to 0, ds4A1A and its plane segment. The Word/LongInt casts keep
+  the TopRow * 40 * 8 offset math unsigned. Called by res06_fn_0CAB, res06_fn_0DD3 and
+  ClearWindow. }
+procedure FillPlaneRect(LeftCol, TopRow, RightCol, BotRow: ShortInt; Plane, Value: Byte);
+var
+  SavedPlane: Byte;             { ds4A1A on entry, restored before returning }
+  DestOff: Word;                { the EGA offset, +40 per scanline }
+  ScanLast: Word;               { (BotRow - TopRow + 1) * 8 - 1: the last scanline index }
+  Scan: Word;                   { the scanline index }
+begin
+  SavedPlane := ds4A1A;
+  DestOff := Word(TopRow) * 40 * 8 + LongInt(LeftCol);
+  ScanLast := (BotRow - TopRow + 1) * 8 - 1;
+  SetPlaneSegment(Plane);
+  SetEgaFillRegisters;
+  Port[$3CE] := 5;
+  Port[$3CF] := 2;
+  for Scan := 0 to ScanLast do
+  begin
+    FillChar(Mem[ds4A18:DestOff], RightCol - LeftCol + 1, Value);
+    Inc(DestOff, $28);
+  end;
+  Port[$3CE] := 5;
+  Port[$3CF] := 0;
+  ds4A1A := SavedPlane;
+  SetPlaneSegment(ds4A1A);
+end;
 { 0709:017C: retf 0: 0 bytes of parameters; 18 bytes of locals }
 {@stub} procedure res06_fn_017C; begin end;
 { 0709:01DF: retf 12: 12 bytes of parameters; 18 bytes of locals.

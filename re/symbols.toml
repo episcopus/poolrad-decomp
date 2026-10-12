@@ -17103,12 +17103,12 @@ id = "0709:00B7"
 unit = "res06"
 addr = "0709:00B7"
 size = 197
-name = "res06_fn_00B7"
-signature = "procedure res06_fn_00B7(A, B, C, D: ShortInt; E, F: Byte)"
+name = "FillPlaneRect"
+signature = "procedure FillPlaneRect(A, B, C, D: ShortInt; E, F: Byte)"
 c_name = "res06_fn_00B7"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res06_fn_00B7 (fills a byte-column by cell-row rectangle on an EGA plane via FillChar with GC write mode (0709:00B7, called by res06_fn_0CAB, res06_fn_0DD3 and ClearWindow)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
