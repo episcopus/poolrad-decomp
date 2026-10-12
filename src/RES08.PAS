@@ -15,7 +15,7 @@ uses Dos, Overlay, POOLVARS, RES03, RES04, RES05, RES06, RES07;
   many more bytes are needed when short), halts on an overlay error, and starts the sound
   unit. Side effects: files, screen, heap, sound, halt on failure. }
 begin
-  res05_fn_0212;
+  WaitForOverlayDisk;
   OvrInit('GAME.OVR');
   repeat
     Assign(CfgProbe, 'pool.cfg');

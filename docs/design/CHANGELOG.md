@@ -4,6 +4,12 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-11 | 5.17 (new) | added ovl30 (screen support): SignOf, SortTable and SetupLine, and the TLineState and TSortRec types | make match UNIT=ovl30: 3 matched, 0 differ, 4 stubs; make check green |
+| 2026-10-11 | 5.17 (new) | added ovl18 (PoolNarrative): the ending narrative ShowEndingNarrative and the door animation AnimateAreaDoors, and blocked the timed animation ovl18_fn_0006 with notes | make match UNIT=ovl18: 2 matched, 0 differ, 1 stub; make check green |
+| 2026-10-11 | 5.16 | added ovl28 Show3DSprite and ShowHeadBodyWindow and the DS:5D92 character picture record, blocked the PIC/FINAL loader ovl28_e2 with notes | make match UNIT=ovl28: 8 matched, 0 differ, 1 stub; make check green |
+| 2026-10-11 | tools | match resolves absolute aliases to their base global (HeapWords -> HeapEnd), independent of map order | unblocks ovl28 merge |
+| 2026-10-11 | 2.2, 4.1 | res05: how the game loads a DAX block (index walk, packed buffer, UnpackRle quirk for codes 7Fh/80h, none in 1,245 blocks), the insert-disk prompt, BIOS text output; res05 compiles with O+ and an I- region | make match UNIT=res05 (unit complete), tools/re/dax.py scan |
+| 2026-10-11 | 5.8 | title sequence ovl01 (ShowTitleScreen, ShowCredits, WaitKeyOrTimeout, dead EGA anim quirk) | make match UNIT=ovl01 unit complete, make readability UNIT=ovl01 clean |
 | 2026-10-11 | 2.3, 5.8, 3.6 | boot init res08 (POOL.CFG parsing, VideoAdapter/SoundMode mappings, heap/overlay sizing) and TP6 codegen (resident O+, WriteLn multi-arg, StrCopy retf 4, self-assign quirk) | variant-A instruction comparison (tool L2 pending fix) |
 | 2026-10-11 | tools | matcher: init part of a unit with no interface routines no longer taken from variant B's padding procedure | unblocks res08 (escalate-general-20261012041843) |
 | 2026-10-11 | process | make handoff refuses a unit branch that does not match; partial hand-offs stub their drafts | tests/unit/test_agent_tools.py |

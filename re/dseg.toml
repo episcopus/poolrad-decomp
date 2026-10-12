@@ -471,4 +471,21 @@ evidence = "Cure Disease (ovl04:031E, 03A6) tests and removes the affect DS:0113
 [[global]]
 offset = 0x5D92
 name = "SelectedCharacter"
-evidence = "far pointer to the character every Temple service acts on: pushed as the character argument of res12_fn_2199, ovl24_e2 and res12_fn_16EC, and dereferenced for the record fields (Status +0C, Items +8, Name +0) throughout ovl04 (ovl04:002E, 0539, 084F, 0AC9); StartGame sets it nil"
+evidence = "far pointer to the character every Temple service acts on: pushed as the character argument of res12_fn_2199, ovl24_e2 and res12_fn_16EC, and dereferenced for the record fields (Status +10Ch, Items +C8h, Name +0) throughout ovl04 (ovl04:002E, 0539, 084F, 0AC9); StartGame sets it nil; ShowHeadBodyWindow (ovl28:04F9) reads its HEAD and BODY bank numbers at +BBh and +BCh"
+
+[[global]]
+offset = 0x0D19
+size = 11
+name = "BadNameChars"
+evidence = "res05_fn_0425 (0802:0465) indexes DS:0D19 + I for I = 1..10 and deletes each character from a file name; the image holds ' .*,?/\\:;|' at DS:0D1A"
+
+[[global]]
+offset = 0x557E
+size = 4
+name = "PackedBuf"
+evidence = "res05_fn_0716 allocates it with the packed size (0802:08B3), BlockReads the packed block into PackedBuf^ (0802:08F8), unpacks it through res05_fn_050F and frees it (0802:0938)"
+
+[[global]]
+offset = 0x2614
+name = "InsertDiskPrompts"
+evidence = "entries 1..8 of the 30-byte string[29] table at DS:2614 hold 'Insert disk N in drive ' in the image (entry 0 is not a string); OpenDaxFile (0802:061A) and StartGame index it by TileSet and append the drive letter DS:547D and ':' to make the prompt OpenGameFile shows through ShowBottomMessage"

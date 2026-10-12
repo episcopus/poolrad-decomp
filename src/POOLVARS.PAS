@@ -96,7 +96,10 @@ type
     { +$B1: Raise Dead subtracts it from HpMax to get the hit points its constitution
       arithmetic works on (ovl04:0612); its meaning beyond that is not known. }
     HpB1: Byte;
-    PadB2: array[$B2..$C7] of Byte;
+    PadB2: array[$B2..$BA] of Byte;
+    HeadBank: Byte;               { +$BB: the HEAD picture bank number, 0 when none (ShowHeadBodyWindow) }
+    BodyBank: Byte;               { +$BC: the BODY picture bank number, 0 when none (ShowHeadBodyWindow) }
+    PadBD: array[$BD..$C7] of Byte;
     Items: PItem;                 { +$C8: the list of carried items }
     PadCC: array[$CC..$10B] of Byte;
     { +$10C: the health status: 0 after Raise Dead and Stone to Flesh, 1 and 6 count as dead for
@@ -118,6 +121,27 @@ type
   { The 28 bytes at DS:67F4 that the Temple clears on entry and ovl21_e12 turns into a LongInt
     sum (the money pooled in the shop); the element layout is not known yet. }
   TPartyMoney = array[0..$1B] of Byte;
+  { A 3-byte record of the ovl30 sort table (whitepaper 5.x): the table DS:6718 is an array of
+    these, element 0 holding the count in Val (SortTable reads and writes Key and Val). }
+  { The line drawing state SetupLine fills and ovl30_e3/e5 step (whitepaper 5.x): the endpoints, the
+    three Bresenham steps and the current position. }
+  TLineState = record
+    X1, Y1: Integer;               { +$0, +$2: the start point }
+    X2, Y2: Integer;               { +$4, +$6: the end point }
+    D1: Integer;                   { +$8: the first Bresenham step }
+    DX, DY: Integer;               { +$A, +$C: |X2-X1| and |Y2-Y1| }
+    D2: Integer;                   { +$E: the second step }
+    D3: Integer;                   { +$10: the third step }
+    SX, SY: ShortInt;              { +$12, +$13: the x and y step direction }
+    X, Y: Word;                    { +$14, +$16: the current position, starts at X1, Y1 }
+    First: Byte;                   { +$18: 0 while the line has not been stepped }
+  end;
+  PLineState = ^TLineState;
+  TSortRec = record
+    Head: Byte;                    { +0: never read by the sort }
+    Key: Byte;                     { +1: the first sort key }
+    Val: Byte;                     { +2: the second sort key }
+  end;
 const
   { Words of GameVars^ whose meaning is proven (word n is at byte offset 2n of the block; the
     matched reads in ovl26 are at +$186, +$188, +$1CC, +$1F6, +$1FA and +$1FC). }
@@ -181,8 +205,12 @@ var
   ds84E5: Byte;                   { special view gate: ShowAreaView uses ds6F68/ds6F69 only while it is nonzero }
   ds84F0: Byte;                   { set to 0 in res08_init after closing pool.cfg; meaning unknown }
   Regs: Registers;                { registers for Intr calls (QuitGame) }
-  ds4A1A: Byte;                   { set to 0 for EGA in res08_init, passed to res06_fn_00A0; meaning unknown }
-  ds4A1B: Byte;                   { set to 0 for EGA in res08_init, passed to res06_fn_0071; meaning unknown }
+  { The second display page WriteCharsAt writes to when VideoAdapter is 1 (BH of INT 10h);
+    res08_init sets it to 0 for EGA and passes it to res06_fn_00A0. }
+  ds4A1A: Byte;                   { display page; see above }
+  { The display page WriteCharsAt writes to first (BH of INT 10h, 0802:0048); res08_init sets it
+    to 0 for EGA and passes it to res06_fn_0071. }
+  ds4A1B: Byte;                   { display page; see above }
   SavedVideoMode: Byte;           { video mode QuitGame passes to INT 10h; no writer is in the decompiled units }
   ds4A1D: Byte;                   { copy of SavedVideoMode taken in res08_init; reader unknown }
   VideoAdapter: Byte;                   { video mode flag read by ClearWindow (03F1:0137): 0 fills the EGA planes,
@@ -191,7 +219,7 @@ var
   SoundModeBeforePause: Byte;     { SoundMode saved by a Ctrl-S pause; copied back only when it is 0 or 1 }
   SaveDir: string;                { POOL.CFG line 4: the save directory with trailing backslash (2.3) }
   { POOL.CFG line 3: the game directory with trailing backslash (res08_init, whitepaper 2.3). StartGame
-    saves it in ds4661, empties it, builds a file path in it (ovl11:0564) for res05_fn_025D and
+    saves it in ds4661, empties it, builds a file path in it (ovl11:0564) for OpenGameFile and
     restores it (ovl11:0469, 05EA). }
   GameDir: string;                { the game directory; see above }
   { True ends HeapErrorHandler's retry loop: it is read after ovl17_e9 runs (ovl00:0075),
@@ -199,18 +227,32 @@ var
   ds557D: Boolean;                { heap error retry gate; see above }
   { Globals of the loader (StartGame, src/OVL11.PAS); the address in each comment is the write or
     read that shows it. }
-  { Table of 30-byte entries the loader copies into the file path (ovl11:0564, indexed by TileSet);
-    its contents are the save directory names (save/load). }
-  ds2614: array[0..9] of string[29];  { save directory name table; see above }
+  { Table of 30-byte entries indexed by TileSet: entries 1..8 hold 'Insert disk N in drive ' in the
+    image (entry 0 is not a string). With the drive letter DS:547D and ':' appended it is the prompt
+    OpenGameFile shows while a file is missing (OpenDaxFile 0802:061A, StartGame ovl11:0564). }
+  InsertDiskPrompts: array[0..9] of string[29];  { the insert-disk prompts; see above }
   ds465C: Byte;                   { loop counter of the loader's three fill loops (ovl11:0130, 02CA, 035E) }
-  ds4660: Byte;                   { result of res05_fn_025D (the file open state) read at ovl11:05A6 }
-  ds4661: string[40];             { the save game name; the loader copies ds547C here and back (ovl11:0469, 05EA) }
+  ds4660: Byte;                   { result of OpenGameFile (the file open state) read at ovl11:05A6 }
+  ds4661: string[40];             { the save game name; the loader copies GameDir here and back (ovl11:0469, 05EA) }
   ds468C: file;                   { the untyped file the loader reads the block from (ovl11:05A1..05E5) }
   { Second $800-byte word block the loader allocates (ovl11:0044); it zeroes word 830 (ovl11:03F5). }
   ds49D6: ^TGameVars;             { second game word block; see above }
   ds49DA: ^TBlock400;             { $400-byte block the loader allocates (ovl11:0054) }
   ds49DE: ^TBlock1E00;            { $1E00-byte block the loader allocates (ovl11:0064) }
-  ds49E2: Byte;                   { set to 1 by the loader (ovl11:03C6) }
+  ds49E2: Byte;                   { set to 1 by the loader; a count the ovl18 narratives read }
+  { The view mode: ShowEndingNarrative saves it, sets 7, restores it; VisitTemple sets 1 (ovl04:0D0F). }
+  ds49F3: Byte;                   { the view mode; see above }
+  ds0900: array[0..$A] of Byte;   { the first door block codes of AnimateAreaDoors (bit 7 = other bank) }
+  ds090B: array[0..$11] of Byte;  { the second door block codes of AnimateAreaDoors (indexed 0..$11); same 7-bit flag }
+  ds091D: array[0..$F] of Byte;   { the first 16-byte record AnimateAreaDoors passes to res07_fn_1E5C }
+  ds092D: array[0..$F] of Byte;   { the second 16-byte record AnimateAreaDoors passes to res07_fn_1E5C }
+  ds093D: array[0..$F] of Byte;   { the third 16-byte record AnimateAreaDoors passes to res07_fn_1E5C }
+  ds094D: array[0..8] of Word;    { the per-step DrawAreaView columns of AnimateAreaDoors (indexed 0..8) }
+  ds095F: array[0..8] of Word;    { the per-step DrawAreaView rows of AnimateAreaDoors (indexed 0..8) }
+  ds470E: Pointer;                { the FINAL picture bank ShowEndingNarrative loads through res07_fn_0111 and draws }
+  ds4712: Byte;                   { the DS:49F3 value ShowEndingNarrative saves at the start and restores at the end }
+  ds4713: string[1];              { Str(TileSet): the picture number ShowEndingNarrative appends to FINAL }
+  ds6718: array[0..255] of TSortRec;  { the ovl30 sort table (element 0 holds the count, SortTable) }
   ds49ED: Word;                   { set to $9900 by the loader (ovl11:03C0) }
   ds49F4: Byte;                   { cleared by the loader (ovl11:03CB) }
   ds49F5: Byte;                   { set to 1 by the loader (ovl11:0392) }
@@ -240,9 +282,11 @@ var
   ds547D: Byte;                   { a character the loader appends to the path through System_MemOp_0C3B (ovl11:0581) }
   ds557C: Byte;                   { cleared by the loader (ovl11:0438) }
   ds5582: array[0..$80F] of Byte; { $810-byte buffer the loader reads the file block into (ovl11:05CD) }
-  { The character the Temple acts on (ovl04 reads it everywhere); the loader sets it nil
-    (ovl11:03B8). }
+  { The selected character: the Temple acts on it (ovl04 reads it everywhere), ShowHeadBodyWindow
+    shows its HEAD and BODY pictures (ovl28:04F9); the loader sets it nil (ovl11:03B8). }
   SelectedCharacter: PCharacter;  { see above }
+  ds286F: array[0..13] of Byte;   { the HEAD picture number per bank (SelectedCharacter^.HeadBank, ShowHeadBodyWindow) }
+  ds287D: array[0..13] of Byte;   { the BODY picture number per bank (SelectedCharacter^.BodyBank, ShowHeadBodyWindow) }
   ds5D96: LongInt;                { a 4-byte value the loader clears (ovl11:03B0): one `xor ax,ax` and two stores }
   ds5E1E: Word;                   { BlockRead result count of the loader (ovl11:05D6) }
   ds5E20: ^TBlock588;             { $588-byte block the loader allocates (ovl11:0074) }
@@ -263,7 +307,7 @@ var
   ds6B01: Pointer;                { the loaded HEAD sprite bank (ShowHeadBodySprites, LoadHeadBodySprites) }
   ds6B05: Byte;                   { the bank index of the BODY sprite in DS:6B06; $FF when none (LoadHeadBodySprites) }
   ds6B06: Pointer;                { the loaded BODY sprite bank (ShowHeadBodySprites, LoadHeadBodySprites) }
-  ds6B0A: Byte;                   { cleared by the loader (ovl11:043D) }
+  ds6B0A: string[8];              { the name of the last picture file loaded (ovl28_e2); cleared by the loader (ovl11:043D) }
   ds6B1C: Byte;                   { set to $FF by the loader (ovl11:0442) and by FreeSpriteList }
   ds70C7: ShortInt;               { loop counter of FreeSpriteList (the sprite list slots); ShortInt: the loop exits with jg }
   ds6B29: Word;                   { set to 1 by the loader (ovl11:0405) }
@@ -294,10 +338,18 @@ var
   { The six affects Cure Disease looks for and removes (entries 1..6 at DS:0114: $1F, $22, $2B,
     $2C, $32, $39 in the image; ovl04:031E, 03A6). Entry 0, the byte before, is never read. }
   DiseaseAffects: array[0..6] of Byte;  { see above }
-  ds49F3: Byte;                   { set to 1 when the Temple opens (ovl04:0D0F); meaning unknown }
   ds681F: Byte;                   { 1 while the Temple removes affects through ovl24_e2 (ovl04:0386, 05AB, 07CE), 0 after }
   ds67F4: TPartyMoney;            { the Temple clears it on entry (ovl04:0D32) and passes it to ovl21_e12 }
   ds6C95: PCharacter;             { the character Remove Curse hands to ovl22_e9 (ovl04:08FA) }
   ds6DC0: Byte;                   { cleared when the Temple opens (ovl04:0D37); meaning unknown }
+  { Globals of the DOS file and BIOS text layer (res05); evidence in re/dseg.toml where named. }
+  { 16 entries, the colours 0..15 mapped to 0..3 (0,0,0,1,2,2,2,3,3,1,1,1,2,2,3,3 in the image);
+    WriteCharsAt maps the text colour through it when VideoAdapter is 0 (0802:0086). }
+  ds25D5: array[0..15] of Byte;   { four-colour map of the text colours; see above }
+  ds49CE: Word;                   { IOResult of the last FileExists file probe (0802:0334) }
+  { The ten characters MakeDosFileName removes from a file name are entries 1..10 (DS:0D1A..0D23);
+    entry 0 is the byte before them, never read (declared so the index base DS:0D19 names it). }
+  BadNameChars: array[0..10] of Char;  { characters not allowed in a file name; see above }
+  PackedBuf: Pointer;             { the packed bytes of the DAX block LoadDaxBlock is reading }
 implementation
 end.

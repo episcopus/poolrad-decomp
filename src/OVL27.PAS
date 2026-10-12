@@ -41,7 +41,7 @@ const
   Parameters: LeftCol and TopRow are the map column and row of the top-left block.
   Callers: ShowAreaView (ovl26:0293) passes MapBaseX[AreaViewKind] plus the party column, minus 2
   (ovl26:023F), and the party row minus 2, then clamps the column to 0..39 (ovl26:025D) and the
-  row to 0..31 (ovl26:027F). ovl18_e2, when its byte parameter is nonzero, calls this with (17, 15)
+  row to 0..31 (ovl26:027F). AnimateAreaDoors, when its byte parameter is nonzero, calls this with (17, 15)
   (ovl18:06C2), then nine times with a word from the table at DS:094D and a word from the table at
   DS:095F (index 0..8, ovl18:07C8), then with (23, 25) (ovl18:08D4). When that byte is zero those
   calls are skipped.

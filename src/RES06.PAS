@@ -19,7 +19,7 @@ procedure res06_fn_0768(A, B, C, D, E, F: Byte; Text: string);
 function res06_fn_09E3(Prompt: string; A: Byte; MaxLen: Byte): string;
 procedure res06_fn_0B66;
 procedure ShowMessageLine(Color: Byte; Text: String40);
-procedure res06_fn_0C3F;
+function res06_fn_0C3F: Longint;
 procedure res06_fn_0CAB;
 procedure res06_fn_0D68(Text: string; Color: Byte);
 procedure res06_fn_0DBE;
@@ -68,7 +68,7 @@ begin
   Key := ReadGameKey;
 end;
 { 0709:0C3F: retf 0: 0 bytes of parameters; 12 bytes of locals }
-{@stub} procedure res06_fn_0C3F; begin end;
+{@stub} function res06_fn_0C3F: Longint; begin end;
 { 0709:0CAB: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure res06_fn_0CAB; begin end;
 { 0709:0D68: retf 6: 6 bytes of parameters; 42 bytes of locals.

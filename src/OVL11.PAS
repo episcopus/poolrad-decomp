@@ -3,7 +3,7 @@ unit OVL11;
   the title screens and the copy protection (src/POOL.PAS: `StartGame;`). It allocates the game's
   main heap blocks, sets up the screen buffers (through res07_fn_248E), fills the three 200-entry
   cell address tables, initialises the screen and game globals, then builds the save game file path
-  and reads its data file (res05_fn_025D, Reset/Seek/BlockRead/Close) before handing over to
+  and reads its data file (OpenGameFile, Reset/Seek/BlockRead/Close) before handing over to
   ovl22_e10 (the character/party loader) and ovl12_e1 (the training and rewards unit). }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
@@ -35,8 +35,8 @@ const
   address used with VideoAdapter 2, ovl11:019F), and finally sets the screen and game globals
   (ovl11:0392..0456). The second half (ovl11:0469..0614) is the save game load: it saves the
   current file path, draws 'Loading...Please Wait' (res06_fn_0626), loads the 12 sprites of 'COMSPR'
-  through ovl32_e4, builds the game file name from the ds2614 name table plus the character in
-  DS:547D (res05_fn_025D opens it), reads one $810-byte block (Reset/Seek/BlockRead/Close,
+  through ovl32_e4, builds the game file name from the InsertDiskPrompts name table plus the character in
+  DS:547D (OpenGameFile opens it), reads one $810-byte block (Reset/Seek/BlockRead/Close,
   ovl11:05A9..05E5), restores the path, randomises the seed (System.Randomize, ovl11:0602) and
   calls ovl22_e10 and ovl12_e1.
   Reads and changes: the globals listed in POOLVARS.PAS (their comments name the write).
@@ -129,7 +129,7 @@ begin
   ds5370 := 1;
   ds84E3 := 0;
   ds557C := 0;
-  ds6B0A := 0;
+  ds6B0A := '';
   ds6B1C := $FF;
   ds557D := False;
   ds6F69 := $E8;
@@ -151,7 +151,7 @@ begin
   for ds465C := 0 to $B do
     ovl32_e4('COMSPR', ds465C, ds465C + $D);
   ovl32_e4('COMSPR', $19, $19);
-  ds4660 := res05_fn_025D('ITEMS', ds2614[TileSet] + Chr(ds547D) + ':', 0, ds468C);
+  ds4660 := OpenGameFile('ITEMS', InsertDiskPrompts[TileSet] + Chr(ds547D) + ':', 0, ds468C);
   Reset(ds468C, 1);
   Seek(ds468C, 2);
   BlockRead(ds468C, ds5582, LoadBlockSize, ds5E1E);

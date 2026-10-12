@@ -1,5 +1,5 @@
 unit OVL04;
-{ Temple: the temple shop of a town (whitepaper 5.17). The entry (VisitTemple) offers Heal, View,
+{ Temple: the temple shop of a town (whitepaper 5.19). The entry (VisitTemple) offers Heal, View,
   Take, Pool, Share, Appraise and Exit; HealMenu lists the cleric services, each a routine here
   (CureBlindness, CureDisease, CureWounds, NeutralizePoison, RaiseDead, RemoveCurse,
   StoneToFlesh) that checks the selected character, asks for confirmation when the service is not

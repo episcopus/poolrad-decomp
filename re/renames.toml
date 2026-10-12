@@ -261,6 +261,27 @@ why = "far pointer passed to res07_fn_08D4 as the destination buffer (ovl34:0241
 date = "2026-10-11"
 
 [[rename]]
+old = "ovl01_fn_0000"
+new = "WaitKeyOrTimeout"
+kind = "routine"
+why = "waits until the res06_fn_0C3F tick count passes Start plus 100 times Pause, or a key is pressed, then drains keys with FlushKeyboard; called with 10 by the credits and 5 by the title sequence"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl01_fn_0206"
+new = "ShowCredits"
+kind = "routine"
+why = "draws two empty windows and some thirty credit lines (names, roles) through DrawWindow and res06_fn_0626, then waits with WaitKeyOrTimeout(10); called by the title sequence"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl01_e1"
+new = "ShowTitleScreen"
+kind = "routine"
+why = "loads and shows the title picture, waits, then runs the credits: called once at startup (entry point); backup/clear/restore of GameDir, res07 picture calls, key-or-deadline wait, ShowCredits"
+date = "2026-10-11"
+
+[[rename]]
 old = "ovl28_e1"
 new = "DrawSprite"
 kind = "routine"
@@ -334,7 +355,7 @@ date = "2026-10-11"
 old = "ds5D92"
 new = "SelectedCharacter"
 kind = "global"
-why = "far pointer to the character every Temple service acts on: pushed as the character argument of res12_fn_2199, ovl24_e2 and res12_fn_16EC, and dereferenced for the record fields (Status +0C, Items +8, Name +0) throughout ovl04 (ovl04:002E, 0539, 084F, 0AC9); StartGame sets it nil"
+why = "far pointer to the character every Temple service acts on: pushed as the character argument of res12_fn_2199, ovl24_e2 and res12_fn_16EC, and dereferenced for the record fields (Status +10Ch, Items +C8h, Name +0) throughout ovl04 (ovl04:002E, 0539, 084F, 0AC9); StartGame sets it nil"
 date = "2026-10-11"
 
 [[rename]]
@@ -412,5 +433,166 @@ old = "ovl04_e1"
 new = "VisitTemple"
 kind = "routine"
 why = "the Temple entry: menu 'Heal View Take Pool Share Appraise Exit', the priest's 'you have left some money here' on Exit (ovl04:0D09, matched)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl30_e1"
+new = "SignOf"
+kind = "routine"
+why = "ovl30:0000: returns the sign of N (-1, 1, 0); called by ovl22_e63, ovl30_e2 and res12_fn_1CE0"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl30_fn_002E"
+new = "SortTable"
+kind = "routine"
+why = "ovl30:002E: sorts the 3-byte record table DS:6718 in place by Key then Val with a mod-2 tie-break; called by ovl30_e6"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl30_e2"
+new = "SetupLine"
+kind = "routine"
+why = "ovl30:01A0: sets up the line drawing state TLineState from its endpoints (DX/DY, the SignOf directions, the start position and the three Bresenham steps); called by ovl22_fn_295B, ovl30_e5 and res12_fn_1A29"
+date = "2026-10-11"
+
+[[rename]]
+old = "res05_fn_0000"
+new = "FreeHeapBlock"
+kind = "routine"
+why = "FreeMem of the block with its size rounded up to a multiple of 8 (0802:0000, matched); LoadDaxBlock frees its packed buffer with it"
+date = "2026-10-11"
+
+[[rename]]
+old = "res05_fn_0020"
+new = "AllocHeapBlock"
+kind = "routine"
+why = "GetMem of Size rounded up to a multiple of 8 into the var pointer (0802:0020, matched); LoadDaxBlock allocates its packed buffer with it"
+date = "2026-10-11"
+
+[[rename]]
+old = "res05_fn_0040"
+new = "WriteCharsAt"
+kind = "routine"
+why = "INT 10h function 2 (cursor to DL column, DH row) then function 9 (write AL CX times, attribute BL) on page DS:4A1B, repeated on page DS:4A1A when VideoAdapter is 1 (0802:0040, matched)"
+date = "2026-10-11"
+
+[[rename]]
+old = "res05_fn_0105"
+new = "WriteTextAt"
+kind = "routine"
+why = "writes each character of its string parameter through WriteCharsAt at successive columns (0802:0105, matched)"
+date = "2026-10-11"
+
+[[rename]]
+old = "res05_fn_0175"
+new = "FillBlocksAt"
+kind = "routine"
+why = "WriteCharsAt with the character DBh (full block) Count times (0802:0175, matched); ShowBottomMessage clears row 24 with it"
+date = "2026-10-11"
+
+[[rename]]
+old = "res05_fn_0193"
+new = "ShowBottomMessage"
+kind = "routine"
+why = "clears row 24 (40 black blocks), writes the message there, waits for ReadGameKey, clears the row again (0802:0193, matched); shows the disk prompt of OpenGameFile and 'tempsize' of LoadDaxBlock"
+date = "2026-10-11"
+
+[[rename]]
+old = "res05_fn_0212"
+new = "WaitForOverlayDisk"
+kind = "routine"
+why = "loops until FileExists('game.ovr'), writing 'Please insert overlay disk.' and waiting for a key each time it fails (0802:0212, matched); res08's initialisation calls it"
+date = "2026-10-11"
+
+[[rename]]
+old = "res05_fn_025D"
+new = "OpenGameFile"
+kind = "routine"
+why = "repeats FileExists and the disk prompt until the file is there (unless NoPrompt), then Assign and Reset(F, 1); returns 1 when open (0802:025D, matched)"
+date = "2026-10-11"
+
+[[rename]]
+old = "res05_fn_02EB"
+new = "FileExists"
+kind = "routine"
+why = "Assign, Reset and Close with I/O checks off; True when IOResult is 0 and the name is not empty (0802:02EB, matched)"
+date = "2026-10-11"
+
+[[rename]]
+old = "res05_fn_0356"
+new = "DeleteAllOccurrences"
+kind = "routine"
+why = "for each start position, Delete(Text, I, Length(Pattern)) when Copy matches Pattern; returns the text (0802:0356, matched)"
+date = "2026-10-11"
+
+[[rename]]
+old = "res05_fn_0425"
+new = "MakeDosFileName"
+kind = "routine"
+why = "deletes the ten characters space . * , ? / backslash : ; | (DS:0D1A), keeps 8 characters and upper-cases them, returns string[40] (0802:0425, matched); ovl17 calls it"
+date = "2026-10-11"
+
+[[rename]]
+old = "res05_fn_050F"
+new = "UnpackRle"
+kind = "routine"
+why = "codes 0..7Eh copy code+1 literal bytes, codes -127..-1 repeat the next byte -code times, until the packed size is consumed (0802:050F, matched); LoadDaxBlock unpacks every block with it"
+date = "2026-10-11"
+
+[[rename]]
+old = "res05_fn_05CD"
+new = "OpenDaxFile"
+kind = "routine"
+why = "OpenGameFile on Name+Ext as the data file, Assign/Reset the same name as the index file, reads the header size word and seeks the data file past the header (0802:05CD, matched)"
+date = "2026-10-11"
+
+[[rename]]
+old = "res05_fn_06E7"
+new = "CloseDaxFile"
+kind = "routine"
+why = "closes the data and the index file that OpenDaxFile opened (0802:06E7, matched)"
+date = "2026-10-11"
+
+[[rename]]
+old = "res05_fn_0716"
+new = "LoadDaxBlock"
+kind = "routine"
+why = "walks the DAX index (id, offset, size, packed size) for BlockId, reads the packed bytes and unpacks them into a new heap block (0802:0716, matched); called by res07_fn_0111, LoadEcl, LoadWallSet, Load3DMap and others"
+date = "2026-10-11"
+
+[[rename]]
+old = "ds2614"
+new = "InsertDiskPrompts"
+kind = "global"
+why = "entries 1..8 of the 30-byte string[29] table at DS:2614 hold 'Insert disk N in drive ' in the image (entry 0 is not a string); OpenDaxFile (0802:061A) and StartGame index it by TileSet and append the drive letter DS:547D and ':' to make the prompt OpenGameFile shows through ShowBottomMessage"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl28_e7"
+new = "Show3DSprite"
+kind = "routine"
+why = "ovl28:0708: shows one of slots 1..3 of the sprite list at its base column and row plus 2 through res07_fn_0D71; its range error string names itself (ovl28:0737); called by ovl07_e8"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl28_e4"
+new = "ShowHeadBodyWindow"
+kind = "routine"
+why = "ovl28:04F9: draws the HEAD/BODY picture window (columns 28..38, rows 1..11) for the character record ds5D92 and shows the HEAD and BODY sprites of its bank numbers; called by ovl16:33E7 and ovl19:031E"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl18_e1"
+new = "ShowEndingNarrative"
+kind = "routine"
+why = "ovl18:02A4: the ending narrative (the dragon and Tyranthraxus/Bane speech, the FINAL pictures and the fn_0006 animations); called by ovl03:2E10 (whitepaper 5.x)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl18_e2"
+new = "AnimateAreaDoors"
+kind = "routine"
+why = "ovl18:06B3: animates or clears the doors of the area view through res07_fn_1E5C with the two SQRPACI banks, stepping the view through DS:094D/DS:095F; called by ovl03:31B4 and ovl17:1602"
 date = "2026-10-11"
 

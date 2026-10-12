@@ -69,14 +69,14 @@ This document grows a chapter per subsystem as the decompilation proves how each
 - **Compiler directives** (TP 6.0 code patterns measured by compiling each switch both ways; method in `docs/setup/SETUP-tp.md` section 5; counts over all resident code below `0A32` and all 35 overlays):
   - `$S-` **[I]**: none of the 805 `push bp; mov bp,sp` prologues calls StackCheck (`0AF8:04DF`); no far call to it anywhere.
   - `$R-` **[I]**: no far call to RangeCheck (`0AF8:04B7`).
-  - `$I+` in one resident unit only **[I]**: 12 far calls to the I/O check (`0AF8:04A9`), all inside `0802..0899` (res05, the unit with "Please insert overlay disk."); none in other resident units or in any overlay.
+  - `$I+` in one resident unit only **[I]**: 12 far calls to the I/O check (`0AF8:04A9`), all inside `0802..0899` (res05, the unit with "Please insert overlay disk."); none in other resident units or in any overlay. **[V]** (`make match UNIT=res05`): the unit compiles with `$I+`, and `WaitForOverlayDisk`, `OpenGameFile` and `FileExists` sit in a `{$I-}` region (no check after their `WriteLn`, `Reset` and `Close`).
   - `$G-` **[I]**: no 80286-only instruction (`push imm`, `enter`, `leave`, `pusha`, `imul imm`, shift by immediate) in the 805 routines.
   - `$F+` **[I]**: all 622 `mov sp,bp; pop bp; ret` epilogues return far (`retf`/`retf n`: 528 in overlays, 94 resident); not one near return.
   - `$Q`: does not exist in TP 6.0 **[V]** (`Error 17: Invalid compiler directive`).
   - Language limits of TP 6.0 that matter when reading the code **[V]** (`make tpc`): no `const` parameters (`Error 2: Identifier expected`), so structured value parameters are copied into the callee's frame; functions cannot return records.
   - `$N-`/`$E` **[I]**: no 8087 emulator interrupts (INT 34h..3Dh) or `fwait`+ESC sequences beyond 4 stray byte matches; the game does no floating point.
   - `$A-` **[V]** (`make match UNIT=res06`): `ShowMessageLine` copies its `string[40]` value parameter to `[bp-29h]` and keeps a `Char` at `[bp-2Ah]`, a 2Ah-byte frame; with `$A+` the compiler rounds the 41-byte copy to 42 and the frame to 2Ch. Every matched unit compiles with `$A-` (res04, res06, ovl00), and the setting also governs the DGROUP layout the rebuild must reproduce (SPEC 7.3).
-  - `$O+` in overlay units **[V]** (`make match UNIT=ovl00`): a string constant passed to a routine is first copied into a stack temporary (`0AF8:0B0B`) and the temporary is passed, since the overlay holding the constant may be moved; resident units pass the constant's code-segment address directly (res04).
+  - `$O+` in overlay units **[V]** (`make match UNIT=ovl00`): a string constant passed to a routine is first copied into a stack temporary (`0AF8:0B0B`) and the temporary is passed, since the overlay holding the constant may be moved; resident units pass the constant's code-segment address directly (res04). Exception **[V]** (`make match UNIT=res05`): res05 is resident but compiled with `$O+`: `WaitForOverlayDisk` copies `'game.ovr'` into a stack temporary before calling `FileExists` (`0802:0218`, a 12-byte frame; without `$O+` the frame is 2 bytes and the literal is passed directly).
   - `$B`, `$V`, `$X` **[?]**: no evidence yet. `$B` will show in the jump shape of `and`/`or` Boolean expressions of the first unit that has one.
 
 ### 2.3 Configuration (`POOL.CFG`)
@@ -213,14 +213,14 @@ The loader is overlay 11 (`ovl11:002D`, 1512 bytes) and is the first thing the m
 - Allocates three screen buffers through `res07_fn_248E(Cols, Rows: Word; Planes, Flag: Byte; var Buf)` (`ovl11:00A4`, `00BC`, `00D4`): `(8, 1, 1, 0)` into `TileBuf`, `($A8, $15, 1, 0)` into `DrawBuf` and `($18, 3, 1, 0)` into `DS:4A24`. The callee allocates `Rows*Cols*2` (doubled when `VideoAdapter` is not 0) times `Planes`, plus `$17` bytes, and stores the pointer at `Buf` (`0464:248E`).
 - Fills three 200-cell tables (`ovl11:0130..024D`): `DS:4EC0[I]` is the cell's scanline address (`$B800` for an even cell, `$BA00` for an odd one, plus `5*(I div 2)`), `DS:5050[I]` is `I*40` and `DS:51E0[I]` is the cell's graphics plane address (`10*(I div 4)` plus `$B800`, `$BA00`, `$BC00` or `$BE00`), so the tables drive the text and graphics planes of video adapter 2 (5.11). `DS:465C` is the loop counter of all three loops (a global).
 - Sets the screen and game globals (`ovl11:0392..0456`), including `AreaViewKind := 1`, `MarkerFrame := 0`, the special view codes `DS:6F69 := $E8` and `DS:6F68 := $DB` (5.2.1) and `DebugMode := False`.
-- Loads the data files (`ovl11:0469..0614`): it saves the current path `DS:547C` in `DS:4661`, draws "Loading...Please Wait" on row 24 (`res06_fn_0626(0, 24, 10, ...)`), draws through `Load8x8Bank($CA, 4)` and `Load8x8Bank($CB, 0)`, loads pictures 1 and 2 of `SQRPACI` (`res07_fn_0111('sqrpaci', N, 0, 0, <bank pointer>)`, `ovl11:04BE`, into `DS:5E52` and `DS:5E56`) and pictures 13 to 24 of `COMSPR` (`ovl32_e4('COMSPR', I, I+13)`, `ovl11:0502`, then `ovl32_e4('COMSPR', $19, $19)`). It then builds the file path from the 30-byte name table `DS:2614[TileSet]` plus the character `DS:547D` plus `':'` and calls `res05_fn_025D('ITEMS', Path, 0, F)` (a `Byte` function), which opens the untyped file `DS:468C`; `StartGame` seeks to record 2 (`Seek(F, 2)`) and reads one `$810`-byte block into `DS:5582` (`BlockRead`, count in `DS:5E1E`), closes it, restores the path, calls `Randomize` (`0AF8:1247`) and hands over to `ovl22_e10` and `ovl12_e1`.
+- Loads the data files (`ovl11:0469..0614`): it saves the current path `DS:547C` in `DS:4661`, draws "Loading...Please Wait" on row 24 (`res06_fn_0626(0, 24, 10, ...)`), draws through `Load8x8Bank($CA, 4)` and `Load8x8Bank($CB, 0)`, loads pictures 1 and 2 of `SQRPACI` (`res07_fn_0111('sqrpaci', N, 0, 0, <bank pointer>)`, `ovl11:04BE`, into `DS:5E52` and `DS:5E56`) and pictures 13 to 24 of `COMSPR` (`ovl32_e4('COMSPR', I, I+13)`, `ovl11:0502`, then `ovl32_e4('COMSPR', $19, $19)`). It then builds the file path from the 30-byte name table `DS:2614[TileSet]` plus the character `DS:547D` plus `':'` and calls `OpenGameFile('ITEMS', Path, 0, F)` (a `Byte` function), which opens the untyped file `DS:468C`; `StartGame` seeks to record 2 (`Seek(F, 2)`) and reads one `$810`-byte block into `DS:5582` (`BlockRead`, count in `DS:5E1E`), closes it, restores the path, calls `Randomize` (`0AF8:1247`) and hands over to `ovl22_e10` and `ovl12_e1`.
 - TP 6.0 idioms proven here (`make match UNIT=ovl11`, probe `tools/re/tp_idioms/PRB11..PRB16.PAS`): `New(P)` for an array type of `N` bytes emits `push N; lcall GetMem` and stores `DX:AX` in `P`; a `string` assignment always compiles to `System_StrLCopy` with the destination limit as the third argument; a `LongInt` (or pointer) `:= 0` (or `nil`) zeroes both words after one `xor ax,ax`, so `DS:6810`, `DS:5D92` and `DS:5D96` are 4-byte values; TP 6.0 rejects an anonymous `string[40]` in a parameter list (the type must be named, `String40`).
 
 The main program **[V]** (`src/POOL.PAS`, `make match UNIT=main`: matched completely, 58 address fields) is segment `0000` (337 bytes plus padding): the string `'STING'`, then one far call per unit initialisation in the order of its `uses` clause (System, Crt, res02 to res08, then overlays and resident units interleaved: ovl34, res09, ovl33, res10, ovl32 to ovl30, res11, ovl29 to ovl25, res12, ovl24 to ovl00), then the main block:
 
 ```pascal
 StartGame;
-if ParamStr(1) <> 'STING' then begin ovl01_e1; CheckCodeWheel; end;   { title screens, code wheel (5.12) }
+if ParamStr(1) <> 'STING' then begin ShowTitleScreen; CheckCodeWheel; end;   { title screens, code wheel (5.12) }
 ovl16_e1;
 ovl29_e1(11, 0, 7, 6);
 ovl03_e1;
@@ -347,6 +347,11 @@ while input remains:
 ```
 
 Byte-for-byte correctness of the decompressed content is **[I]** (sizes all match; content checks come with each format's decoder).
+
+**How the game reads a block** **[V]** (`make match UNIT=res05`, `src/RES05.PAS`: unit complete). `LoadDaxBlock(Name, Ext, BlockId, var Size, var Block)` (`0802:0716`) prefixes the name with the path `DS:547C` and opens the file twice through `OpenDaxFile` (`0802:05CD`): once as the data file through `OpenGameFile`, which asks for the disk while the file is missing, and once as the index file, from which it reads `header_bytes`; the data file is then positioned past the header. It reads index entries (id, offset, raw size into `Size`, packed size) until the id matches or the index file position reaches the header end; a packed size above `$8CA0` shows `tempsize <n>` and quits. A missing file or block gives `Size = 0` and `Block = nil`. Otherwise it allocates the packed buffer `PackedBuf` (`DS:557E`, rounded up to 8 bytes), `GetMem`s `Block` with the raw size, seeks to `header_bytes + 2 + offset`, reads the packed bytes, closes both files and unpacks with `UnpackRle` (`0802:050F`).
+- `UnpackRle` reads the code byte as a `ShortInt`: 0..$7E copy code + 1 literal bytes, -127..-1 repeat the next byte -code times. QUIRK `0802:0574`: the codes $7F and $80 fall through both arms without moving the input, so the loop would never end. None of the 1,245 shipped blocks contains either code **[V]** (scan of the code bytes with `tools/re/dax.py`), so the decoder above is exact for the shipped data.
+- The disk prompt **[V]**: `OpenGameFile` (`0802:025D`) shows `InsertDiskPrompts[TileSet]` (`DS:2614`, 30-byte `string[29]` entries; entries 1..8 hold `Insert disk N in drive ` in the image) plus the drive letter `DS:547D` and `:` on text row 24 (`ShowBottomMessage`, colour 14) and waits for a key, unless its `NoPrompt` byte (`DS:557C` from `OpenDaxFile`) is set. `FileExists` (`0802:02EB`) is `Reset` and `Close` with I/O checks off; the result of `IOResult` stays in `DS:49CE`. At start-up `WaitForOverlayDisk` (`0802:0212`, called by res08's initialisation) loops on `FileExists('game.ovr')`, writing `Please insert overlay disk.` with `WriteLn`.
+- Text through the BIOS **[V]**: `WriteCharsAt` (`0802:0040`) sets the cursor with INT 10h function 2 and writes with function 9 on the page in `DS:4A1B`; with `VideoAdapter` 0 the colour goes through the 16-entry table `DS:25D5` (0,0,0,1,2,2,2,3,3,1,1,1,2,2,3,3 in the image: four colours), and with `VideoAdapter` 1 both calls are repeated on the page in `DS:4A1A`. `MakeDosFileName` (`0802:0425`) deletes the ten characters at `DS:0D1A` (space . * , ? / backslash : ; |), keeps 8 characters and upper-cases them; ovl17 calls it.
 
 ### 4.2 DAX families **[V]** counts, **[H]** roles (from file names and prior art)
 
@@ -549,6 +554,9 @@ a fixed table can replace it while the game variables allow it (`DrawAreaView`, 
   - `QuitGame` (`0899:0000`) ends the program: it copies `SoundModeBeforePause` into `SoundMode` and calls `res03_fn_00DC(ds2612)`, the pause-path call, not `res03_fn_017B`. What that call does to the sound is not shown in this unit; the sound unit's proven stop is `08AE:13B1` (5.14) **[V]**. Then `Intr($10)` with AH=0 and AL = `SavedVideoMode` (`DS:4A1C`), through the `Registers` record at `DS:4A02`, and `Halt`. No writer of `SavedVideoMode` is in the decompiled units, so where that byte was saved is **[?]**.
 - The menu loop is `ovl25:03BD` (get key, parse the item string, redraw `ovl25:01DA`), called by the list handler at `ovl25:0FA0..10A7` **[V]**. It parses the item string with a 36-character set at `ovl25:00AB` (upper-case letters and digits mark the first letter of each item: the highlighted hotkey). In the lists of the character creation (race, sex, class, alignment) the highlight moves with **END (next) and HOME (previous)**, ENTER selects, and the one-item bar at the bottom ("Exit") answers to its first letter **[V]** (oracle session `create-character`). The arrow keys have no effect in these lists **[V]** (oracle: UP/DOWN/LEFT/RIGHT/TAB/SPACE leave the screen unchanged); `ovl25:03BD` drops an extended key unless its caller asked for it (`ovl25:0580..0599`) **[I]**, and `,` and `.` move the highlight of its own item bar (`ovl25:05C4`, `05E8`) **[I]**.
 - Character creation flow **[V]** (one run of `tests/sessions/create-character.keys`): main menu (C) > race list > sex > class > alignment > rolled character sheet with "Keep this character? Yes No" > name prompt > "Head Body Keep" > icon editor ("Parts Color-1 Color-2 Size Exit") > "Is this icon OK? Yes No" > main menu. The game writes `SAVE\RAD.CHA` (285 bytes, the character record of 4.2.5) and `SAVE\CHARLIST.TXT` (`RAD`, CR LF) **[V]**; decoding `RAD.CHA` with `tools/re/records.py` gives the race, class, sex, age and six scores shown on the sheet (human 7, fighter 2, male 0, age 19, STR 15 INT 13 WIS 11 DEX 12 CON 16 CHA 12 in the pinned run).
+- The title sequence is `ShowTitleScreen` (ShowTitleScreen, entry point called from the main program before the code wheel) **[V]** (decompiled and matched as a whole, `src/OVL01.PAS`): it backs up `GameDir` and clears it, loads the `title` picture (`res07_fn_0111`) and shows it (`res07_fn_1951`), waits (`WaitKeyOrTimeout(5)`), and, when the `F` flag (`DS:49D1`) is set, reloads, reshows, sets the palette (`res07_fn_2595`), waits for a key or a tick deadline (`res06_fn_0C3F` + 500) and shows the credits (`ShowCredits`); with `F` clear it only restores `GameDir` and returns. `WaitKeyOrTimeout(Pause)` loops until the `res06_fn_0C3F` tick count passes its start plus 100 times `Pause`, or a key is waiting, then drains keys (`FlushKeyboard`) **[V]** (code).
+- `ShowCredits` (ShowCredits) draws two empty windows and some thirty green/cyan/yellow name and role lines (`DrawWindow`, `res06_fn_0626`) and waits the same way **[V]** (code).
+- QUIRK ovl01:0729: the EGA-only animation inside the title wait never runs: its gate adds `Random(4)` (0..3) to a zeroed total and requires more than 50000 **[V]** (code).
 - The window unit is res09 **[V]** (decompiled and matched as a whole, `src/RES09.PAS`):
   `DrawWindow(LeftCol, TopRow, RightCol, BottomRow, FrameSet, TextColour, Text)` clears the
   rectangle (`ClearWindow`, `03F1:0137`), draws one frame set around it (`DrawWindowFrame`,
@@ -626,12 +634,56 @@ The parts proven so far:
 - The sprite list is a `$42`-byte record: a count byte at +0, a flag at +1, and slots of 8 bytes
   from +6, each holding a far pointer at +0 (the `TSpriteList` type of `src/OVL28.PAS`).
 
-Still to decompile: `ovl28_e7` (the range-checked 3D sprite draw, "Illegal range in
-Show3DSprite."), `ovl28_e4` (the HEAD/BODY window) and `ovl28_e2` (the PIC/FINAL picture loader).
+- `Show3DSprite` (`ovl28:0708`) shows slot 1..3 of a sprite list at the sprite's base column and row
+  plus 2 through `res07_fn_0D71`; another bank ends the game with the unit's range error string.
+- `ShowHeadBodyWindow` (`ovl28:04F9`) draws the HEAD/BODY picture window (columns 28..38, rows 1..11)
+  of the character record `DS:5D92` and shows the HEAD and BODY sprites of its two bank numbers.
+
+Still to decompile: `ovl28_e2` (`ovl28:00A2`, the PIC/FINAL picture loader), blocked with its mapped
+signature, callees and decode loop in the `re/symbols.toml` notes; its 296-byte frame of compiler
+temporaries is what remains.
 
 ---
 
-### 5.17 The Temple **[V]** (`src/OVL04.PAS`, `make match UNIT=ovl04`: unit complete)
+### 5.17 The ending narrative and door animation ovl18 **[V]** (`src/OVL18.PAS`, `make match UNIT=ovl18`: 2 of 3 routines at L2)
+
+Overlay 18 (PoolNarrative) plays the game's ending and animates the area view doors:
+
+- `ShowEndingNarrative` (`ovl18:02A4`, called by `ovl03:2E10`) shows the dragon's death and the
+  Tyranthraxus and Bane speech as lines of text at column 1, rows $11 onwards, colour 10
+  (`res06_fn_0626(1, Row, 10, Text)`) and loads and draws the `FINAL<number>` pictures (the number is
+  `Str(TileSet)` in DS:4713) through `res07_fn_0111` and `res07_fn_0D71`, running the animation
+  `ovl18_fn_0006(3, 5, 2, x)`, `(3, 1, 7, x)` and `(3, 1, 8, 1)` between the speech blocks. It saves
+  the view mode DS:49F3 in DS:4712, sets 7 and restores it.
+- `AnimateAreaDoors` (`ovl18:06B3`, called by `ovl03:31B4` and `ovl17:1602`) draws or clears the doors
+  of the area view: it calls `res07_fn_1E5C(@ds091D, @ds092D, code, 1, bank)` for each entry of
+  DS:0900 (0..10) and `(@ds091D, @ds093D, code, 1, bank)` for DS:090B (0..17), where bit 7 of a code
+  selects the second SQRPACI bank DS:5E56 instead of DS:5E52 and the low 7 bits are the picture
+  number, and it steps the view with `DrawAreaView(DS:094D[I], DS:095F[I])` over 9 steps.
+
+Still to decompile: `ovl18_fn_0006` (`ovl18:0006`), the timed animation, blocked with its mapped
+structure in the `re/symbols.toml` notes.
+
+---
+
+### 5.17 The screen support unit ovl30 **[V]** (`src/OVL30.PAS`, `make match UNIT=ovl30`: 3 of 7 routines at L2)
+
+Overlay 30 is a screen support unit:
+
+- `SignOf(N)` (`ovl30:0000`) returns -1, 1 or 0 for the sign of N. Also called from ovl22 and res12.
+- `SortTable` (`ovl30:002E`) sorts the 3-byte record table DS:6718 in place (element 0 holds the
+  count in its Val field): for every I < J it swaps the records when Key[J] < Key[I], or when the
+  keys are equal and Val[J] < Val[I] and Val[J] mod 2 <= Val[I] mod 2.
+- `SetupLine(Line)` (`ovl30:01A0`) fills the line drawing state (the `TLineState` type of
+  `src/POOLVARS.PAS`: two endpoints, the three Bresenham steps, the current position and the x and y
+  step directions) from the two endpoints.
+
+Still to decompile: `ovl30_e3` (`ovl30:02CC`, the line stepper), `ovl30_e5` (`ovl30:0422`),
+`ovl30_e4` (`ovl30:057B`) and `ovl30_e6` (`ovl30:0909`).
+
+---
+
+### 5.19 The Temple **[V]** (`src/OVL04.PAS`, `make match UNIT=ovl04`: unit complete)
 
 - **The shop menu** **[V]** (`VisitTemple`, `ovl04:0D09`): `Heal View Take Pool Share Appraise Exit`, or `Heal View Pool Appraise Exit` while `ovl21_e9` reports no pooled money. On entry it clears the 28 bytes at `DS:67F4` (the pooled money that `ovl21_e12` sums into a `LongInt`) and sets `DS:49F3` to 1. Exit with money left in the pool shows the priest's `As you leave a priest says, "Excuse me but you have left some money here"` and `Do you want to go back and retrieve your money?` (`ovl07_e13`) and leaves only when that returns 1.
 - **The services** **[V]** (`HealMenu`, `ovl04:09D7`, nine names from the `string[40]` table at `DS:011A`): every service routine checks the selected character (`SelectedCharacter`, `DS:5D92`), asks `cast cure anyway:` when the service is not needed (`AskCastAnyway`), then `ChargeForCure` shows `<service> will only cost <n> gold pieces.`, takes the price from the character's money (`ovl19_e11`, `ovl21_e10`) or else from the pool (`ovl21_e12`, `ovl21_e11`), and says `Not enough money.` when neither covers it.
@@ -750,7 +802,7 @@ Acceptance results (playbook 25):
 Known limits **[V]** (test `test_hybrid_hook_python_move_matches_original`):
 
 - On the instruction clock, virtual time is instructions and a replacement executes none, so after a few timer ticks a hooked run places ticks at slightly different program points and tick-derived bytes in DGROUP differ (`DS:C312`, `C404..C407` at the 400th call of `System_Move`; equal states hold up to the 120th call). Session replays remove this: the game's reads of the outside world are answered from the original's recording, so where the timer lands no longer changes what the game decides (acceptance results above).
-- **Wait loops** **[V]** (`make timing-scan`, `tools/re/timing_scan.py`, tests `test_timing_scan.py`): the replacement runs instantly at the routine's entry, so a routine that *waits* (spins until a key, a tick, a retrace) cannot be a literal C transliteration: no time passes while C runs, and in a replay the reads it would spin on are recorded values. Static scan over all 1393 routines with the call graph (far calls through overlay stubs resolved): 100 loop around a time or input feature (2 in their own bytes: the keyboard drain `res01_fn_0143` and Crt init `0A40:002E`, which spins on the BIOS tick; 98 through a callee: `Crt` KeyPressed `0A40:02FD` and ReadKey `0A40:030F`, the sound routines `0A40:029C` and `08AE:006C`); 369 more read the clock or keyboard outside a loop; 924 do neither. Note that most of these loops are not waits in the sense that matters: draining a buffer or polling a key in a menu loop ends by itself in a replay, where each poll returns its recorded result; what cannot work in C inside the oracle is a loop whose exit depends on time passing (5.14). Dynamic pass over `boot-title` and `create-character`: 228 routines ran, KeyPressed alone 508,736 times; four calls spun a whole timer period or more in their own code (`ovl01:0000`, `ovl01:0627`, the menu loop `ovl25:03BD`, and `res05_fn_050F` with 342,000 instructions, which the static pass says touches nothing, so it is computation). The game's own timer interrupt writes no DGROUP global (its only writes are its stack frames). Exactly one routine reads the BIOS tick counter at 0040:006C, `0A40:002E` (an earlier version of this paragraph said none: the scan missed the register-indirect access). Decision of 2026-10-10 (human): waits go through the platform layer, `src/platform/platform.h` (5.14); the scan's list (`build/re/timing-scan.md`) says which routines need `platform_*_wait` instead of a spin.
+- **Wait loops** **[V]** (`make timing-scan`, `tools/re/timing_scan.py`, tests `test_timing_scan.py`): the replacement runs instantly at the routine's entry, so a routine that *waits* (spins until a key, a tick, a retrace) cannot be a literal C transliteration: no time passes while C runs, and in a replay the reads it would spin on are recorded values. Static scan over all 1393 routines with the call graph (far calls through overlay stubs resolved): 100 loop around a time or input feature (2 in their own bytes: the keyboard drain `res01_fn_0143` and Crt init `0A40:002E`, which spins on the BIOS tick; 98 through a callee: `Crt` KeyPressed `0A40:02FD` and ReadKey `0A40:030F`, the sound routines `0A40:029C` and `08AE:006C`); 369 more read the clock or keyboard outside a loop; 924 do neither. Note that most of these loops are not waits in the sense that matters: draining a buffer or polling a key in a menu loop ends by itself in a replay, where each poll returns its recorded result; what cannot work in C inside the oracle is a loop whose exit depends on time passing (5.14). Dynamic pass over `boot-title` and `create-character`: 228 routines ran, KeyPressed alone 508,736 times; four calls spun a whole timer period or more in their own code (`ovl01:0000`, `ovl01:0627`, the menu loop `ovl25:03BD`, and `UnpackRle` with 342,000 instructions, which the static pass says touches nothing, so it is computation). The game's own timer interrupt writes no DGROUP global (its only writes are its stack frames). Exactly one routine reads the BIOS tick counter at 0040:006C, `0A40:002E` (an earlier version of this paragraph said none: the scan missed the register-indirect access). Decision of 2026-10-10 (human): waits go through the platform layer, `src/platform/platform.h` (5.14); the scan's list (`build/re/timing-scan.md`) says which routines need `platform_*_wait` instead of a spin.
 - **Stack segment** **[V]**: a replaced routine does not push the frames the original pushed, so bytes of the stack segment (SS:0000 to 4000) differ between a hybrid run and the original, including slots of live frames that nobody has written yet (SS:3A4D at the first key reads of `create-character`). No byte of globals, heap or video differs. The goldens therefore carry two state digests: `canonical` (everything, as before) and `canonical_nostack`. Decision 2026-10-10 (human): `re/state.toml` sets `stack = "diagnostic"`, and a hybrid run is compared on `canonical_nostack`. The full digest stays in the golden. A read of an uninitialised Pascal local (stale stack content) is a quirk a C lift does not reproduce, and it is not part of the state the port has to match.
 - Pinning the clock fixes the seed but not the number of `Random` calls that timing-driven code makes (5.13). In a hybrid run the logged sequence is the first thing to compare: the first differing entry names the call where it diverged.
 - Time is exact at chunk boundaries only (chunks end at timer events); an interrupt that falls inside a service call is delivered after it.
