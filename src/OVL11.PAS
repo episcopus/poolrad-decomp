@@ -85,7 +85,7 @@ begin
     ds6AFB[ds465C].Addr := nil;
   end;
   FillChar(ds6ABE, $42, 0);
-  ds6810 := 0;
+  ds6810 := nil;
   FillChar(ds6AAD, 5, 0);
   ds6AAD := $F;
   ds6AAE := 1;
@@ -105,7 +105,7 @@ begin
   ds49F8 := 0;
   ds49FB := 0;
   ds5D96 := 0;
-  ds5D92 := 0;
+  ds5D92 := nil;
   ds49ED := $9900;
   ds49E2 := 1;
   ds49F4 := 0;

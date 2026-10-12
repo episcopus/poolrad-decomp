@@ -211,3 +211,10 @@ kind = "routine"
 why = "ovl11:002D: the start-up loader the main program runs first (src/POOL.PAS: ovl11_e1 before the title and the copy protection); it allocates the game blocks, fills the cell tables, sets the game globals and reads the initial file (make match UNIT=ovl11)"
 date = "2026-10-11"
 
+[[rename]]
+old = "ovl06_e2"
+new = "AddInventoryItem"
+kind = "routine"
+why = "appends a clone of the item to the linked list at ds5D92^.Stock unless ovl19_e9 (Inventory) reports the list full (15 slots) and then shows OverLoaded; called from ovl05 (TreasureShare) and ovl06_fn_0361 (Buy), so it adds an item to the party inventory (ovl06:0239)"
+date = "2026-10-11"
+

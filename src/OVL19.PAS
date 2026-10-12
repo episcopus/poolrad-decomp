@@ -49,9 +49,9 @@ procedure ovl19_fn_228C;
 procedure ovl19_fn_2383;
 procedure ovl19_fn_23B6;
 procedure ovl19_fn_24A7;
-procedure ovl19_e9;
-procedure ovl19_e10;
-procedure ovl19_e11;
+function ovl19_e9(Shop, Item: Pointer): Boolean;
+procedure ovl19_e10(X: Byte);
+function ovl19_e11(Shop: Pointer): Word;
 procedure ovl19_e12;
 implementation
 
@@ -148,11 +148,11 @@ implementation
 { ovl19:24A7: retf 0: 0 bytes of parameters; 558 bytes of locals }
 {@stub} procedure ovl19_fn_24A7; begin end;
 { ovl19:275B: retf 8: 8 bytes of parameters; 4 bytes of locals }
-{@stub} procedure ovl19_e9; begin end;
+{@stub} function ovl19_e9(Shop, Item: Pointer): Boolean; begin end;
 { ovl19:27DF: retf 2: 2 bytes of parameters; 4 bytes of locals }
-{@stub} procedure ovl19_e10; begin end;
+{@stub} procedure ovl19_e10(X: Byte); begin end;
 { ovl19:28BE: retf 4: 4 bytes of parameters; 10 bytes of locals }
-{@stub} procedure ovl19_e11; begin end;
+{@stub} function ovl19_e11(Shop: Pointer): Word; begin end;
 { ovl19:299C: retf 12: 12 bytes of parameters; 298 bytes of locals }
 {@stub} procedure ovl19_e12; begin end;
 

@@ -3,6 +3,8 @@ unit RES12;
   until decompiled (playbook 30). }
 {$A-,F+,S-,R-,G-,I-}
 interface
+type
+  String40 = string[40];          { the fixed string type res12_fn_1693 shows and DrawWindow takes }
 procedure res12_fn_0000;
 procedure res12_fn_0188;
 procedure res12_fn_01FB;
@@ -17,7 +19,7 @@ procedure res12_fn_0973;
 procedure res12_fn_09E3;
 procedure res12_fn_0B4F;
 procedure res12_fn_0B73;
-procedure res12_fn_0BB8;
+procedure res12_fn_0BB8(Shop: Pointer);
 procedure res12_fn_1037;
 procedure res12_fn_1073;
 procedure res12_fn_10AD;
@@ -30,7 +32,7 @@ procedure res12_fn_13AB;
 procedure res12_fn_148B;
 procedure res12_fn_1509;
 procedure res12_fn_15F7;
-procedure res12_fn_1693;
+procedure res12_fn_1693(Text: String40);
 procedure res12_fn_16EC;
 procedure res12_fn_17E3;
 procedure res12_fn_1816;
@@ -97,7 +99,7 @@ implementation
 { 00BA:0B73: retf 4: 4 bytes of parameters; 6 bytes of locals }
 {@stub} procedure res12_fn_0B73; begin end;
 { 00BA:0BB8: retf 4: 4 bytes of parameters; 20 bytes of locals }
-{@stub} procedure res12_fn_0BB8; begin end;
+{@stub} procedure res12_fn_0BB8(Shop: Pointer); begin end;
 { 00BA:1037: retf 2: 2 bytes of parameters; 256 bytes of locals }
 {@stub} procedure res12_fn_1037; begin end;
 { 00BA:1073: retf 2: 2 bytes of parameters; 256 bytes of locals }
@@ -123,7 +125,7 @@ implementation
 { 00BA:15F7: retf 8: 8 bytes of parameters; 8 bytes of locals }
 {@stub} procedure res12_fn_15F7; begin end;
 { 00BA:1693: retf 4: 4 bytes of parameters; 42 bytes of locals }
-{@stub} procedure res12_fn_1693; begin end;
+{@stub} procedure res12_fn_1693(Text: String40); begin end;
 { 00BA:16EC: retf 12: 12 bytes of parameters; 258 bytes of locals }
 {@stub} procedure res12_fn_16EC; begin end;
 { 00BA:17E3: retf 0: 0 bytes of parameters; 0 bytes of locals }

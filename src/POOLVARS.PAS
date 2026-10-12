@@ -46,6 +46,32 @@ type
     Kind: Byte;
     Addr: Pointer;
   end;
+  { One entry of a menu/stock list, walked through Next. The shop builds the display text into Name
+    (ovl06_fn_0030 copies a 30-character field into it with System_StrLCopy limit $28, then sets the
+    length to $1E), reads Count for the buy flow (ovl06_fn_0361) and the list menu (ovl25_e4) skips an
+    entry whose Enabled is 0. ovl19_e9 reads Value37 and Factor39. The record is 63 ($3F) bytes: the
+    loader clones one with a Move of $3F bytes (AddInventoryItem). }
+  PByte = ^Byte;
+  PMenuItem = ^TMenuItem;
+  TMenuItem = record
+    Name: string[40];               { +0: the text the menu shows }
+    Enabled: Byte;                  { +$29: 0 = the list menu skips this entry }
+    Next: PMenuItem;                { +$2A: the next entry, nil at the end }
+    Unknown2E: array[0..8] of Byte; { +$2E..+$36: not touched by ovl06 }
+    Value37: Word;                  { +$37: read by ovl19_e9 }
+    Factor39: Byte;                 { +$39: multiplier in ovl19_e9 }
+    Count: Word;                    { +$3A: the quantity shown and bought }
+    Unknown3C: array[0..2] of Byte;  { +$3C..+$3E: not touched by ovl06 }
+  end;
+  { The object the pointer at DS:5D92 leads to: the shop's current stock. AddInventoryItem appends an item to
+    the list at Stock and res12_fn_0BB8 and ovl19_e9 read StockCount at +$C7. Only the fields ovl06
+    touches are named here. }
+  PShopState = ^TShopState;
+  TShopState = record
+    Unknown00: array[0..$C6] of Byte; { +0..+$C6: fields other units touch, not read by ovl06 }
+    StockCount: Byte;                 { +$C7: the shop's used-slot count (ovl19_e9 compares it with $F) }
+    Stock: PMenuItem;                 { +$C8: head of the shop's stock list AddInventoryItem appends to }
+  end;
 const
   { Words of GameVars^ whose meaning is proven (word n is at byte offset 2n of the block; the
     matched reads in ovl26 are at +$186, +$188, +$1CC, +$1F6, +$1FA and +$1FC). }
@@ -150,7 +176,7 @@ var
   ds547D: Byte;                   { a character the loader appends to the path through System_MemOp_0C3B (ovl11:0581) }
   ds557C: Byte;                   { cleared by the loader (ovl11:0438) }
   ds5582: array[0..$80F] of Byte; { $810-byte buffer the loader reads the file block into (ovl11:05CD) }
-  ds5D92: LongInt;                { a 4-byte value the loader clears (ovl11:03B8): one `xor ax,ax` and two stores }
+  ds5D92: PShopState;             { the current stock list, a far pointer the loader clears (ovl11:03B8); see TShopState }
   ds5D96: LongInt;                { a 4-byte value the loader clears (ovl11:03B0): one `xor ax,ax` and two stores }
   ds5E1E: Word;                   { BlockRead result count of the loader (ovl11:05D6) }
   ds5E20: ^TBlock588;             { $588-byte block the loader allocates (ovl11:0074) }
@@ -159,7 +185,7 @@ var
   ds5E52: array[0..7] of Byte;    { 8-byte buffer the loader clears (ovl11:0260) and passes to res07_fn_0111 (ovl11:04D6) }
   ds5E56: array[0..7] of Byte;    { second 8-byte buffer passed to res07_fn_0111 (ovl11:04F8) }
   ds5E5A: array[0..$CF] of Byte;  { $D0-byte buffer the loader clears (ovl11:02B9); the picture set table of ovl32_e4 }
-  ds6810: LongInt;                { a 4-byte value the loader clears (ovl11:031A): one `xor ax,ax` and two stores }
+  ds6810: PMenuItem;              { head of the shop's item list, a far pointer the loader clears (ovl11:031A); see TMenuItem }
   ds6A58: ^TBlock924;             { $924-byte block the loader allocates (ovl11:0084) }
   ds6A5C: ^TBlock400;             { $400-byte block the loader allocates (ovl11:0094) }
   ds6AAEWords: array[0..3] of TPresenceSlot;  { the 4-byte element table at DS:6AAE; the loader sets
