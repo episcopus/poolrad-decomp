@@ -597,7 +597,7 @@ The parts proven so far:
   from +6, each holding a far pointer at +0 (the `TSpriteList` type of `src/OVL28.PAS`).
 
 Still to decompile: `Show3DSprite` (the range-checked 3D sprite draw, "Illegal range in
-Show3DSprite."), `ovl28_e4` (the HEAD/BODY window) and `ovl28_e2` (the PIC/FINAL picture loader).
+Show3DSprite."), `ShowHeadBodyWindow` (the HEAD/BODY window) and `ovl28_e2` (the PIC/FINAL picture loader).
 
 ---
 

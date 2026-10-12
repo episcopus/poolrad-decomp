@@ -34,12 +34,12 @@ procedure DrawHeadSprite(Col, Row: Byte; Sprite: Pointer);
 procedure DrawBodySprite(Col, Row: Byte; Sprite: Pointer);
 procedure ovl28_e2;
 procedure FreeSpriteList(Rec: PSpriteList);
-procedure ovl28_e4;
+procedure ShowHeadBodyWindow;
 procedure LoadHeadBodySprites(HeadBank, BodyBank: Byte);
 procedure ShowHeadBodySprites(Col, Row: Byte; Direct: Byte);
 procedure Show3DSprite(Bank: Byte; Rec: PSpriteList);
 implementation
-uses RES04, RES05, RES07;
+uses RES04, RES05, RES09, RES12, RES07;
 
 { ovl28:0000. Draws the 8x8 sprite Sprite at column Col and row Row. A nil Sprite draws nothing. When
   Direct is set it blits the sprite one pixel up and left onto the screen buffer DrawBuf through
@@ -89,12 +89,29 @@ begin
   ds6B0A := 0;
   ds6B1C := $FF;
 end;
-{ ovl28:04F9: retf 0: 0 bytes of parameters; 12 bytes of locals }
-{@stub} procedure ovl28_e4; begin end;
+{ ovl28:04F9. Shows the HEAD/BODY picture window of the character screen: when the character record
+  DS:5D92 has both a HEAD and a BODY picture bank it draws the window (columns 28..38, rows 1..11)
+  and loads and shows the HEAD and BODY sprites of those banks. Does nothing when either bank is 0.
+  Called by ovl16:33E7 and ovl19:031E. }
+procedure ShowHeadBodyWindow;
+var
+  V1, V2: string[3];              { the Str() of the two picture numbers, computed but not used }
+begin
+  if (ds5D92^.HeadBank = 0) or (ds5D92^.BodyBank = 0) then
+    Exit;
+  DrawWindow($1C, 1, $26, $B, 0, 0, '');
+  with ds5D92^ do
+  begin
+    Str(ds286F[HeadBank], V1);
+    Str(ds287D[BodyBank], V2);
+    LoadHeadBodySprites(ds286F[HeadBank], ds287D[BodyBank]);
+  end;
+  ShowHeadBodySprites($1C, 1, 1);
+end;
 { ovl28:05D9. Loads the HEAD and the BODY 8x8 sprite bank for the picture number DS:5376: for each
   bank that is asked for (not $FF) and not already loaded (DS:6B00, DS:6B05) it loads the picture
   through res07_fn_0111 from the file HEAD<number> or BODY<number> into DS:6B01 or DS:6B06, then
-  records the loaded number. Flushes the keyboard at the end. Called by ovl07_e7, ovl28_e4 and
+  records the loaded number. Flushes the keyboard at the end. Called by ovl07_e7, ShowHeadBodyWindow and
   res12_fn_27D9. }
 procedure LoadHeadBodySprites(HeadBank, BodyBank: Byte);
 var
@@ -118,7 +135,7 @@ end;
 { ovl28:0697. Shows the 3D sprite at its column and row: when Direct is set it draws the HEAD
   sprite and the BODY sprite (5 rows lower, DS:6B01 and DS:6B06) over the 3D view, otherwise it
   draws the HEAD sprite through the staging buffer. Called by ovl07_e7, res12_fn_27D9 and
-  ovl28_e4. }
+  ShowHeadBodyWindow. }
 procedure ShowHeadBodySprites(Col, Row: Byte; Direct: Byte);
 begin
   if Direct <> 0 then
