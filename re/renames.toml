@@ -883,3 +883,52 @@ kind = "routine"
 why = "Byte-coordinate twin of ClearWindow (0709:0DD3): clears Left..Right by Top..Bottom to 0 by VideoAdapter (text scanlines, FillPlaneRect pair, or graphics rows); called by HealMenu, VisitTemple, ShopMain, ShowEndingNarrative"
 date = "2026-10-12"
 
+[[rename]]
+old = "res06_fn_0768"
+new = "ShowPagedText"
+kind = "routine"
+why = "word-wrapping text pager (0709:0768): shows Text in the Left..Bottom rect with BreakChars word scan, GlyphCol/GlyphRow cursor, FillPlaneRect/ClearRect clear and 'Press any key to continue' paging; called by ChargeForCure, VisitTemple, ShopMain, LoadEcl, ShowCredits"
+date = "2026-10-12"
+
+[[rename]]
+old = "res06_fn_06A7"
+new = "DrawTextRun"
+kind = "routine"
+why = "nested in ShowPagedText (0709:06A7): draws Buf[I..J] glyph by glyph through res06_fn_01DF at advancing GlyphCol with the Crt delay"
+date = "2026-10-12"
+
+[[rename]]
+old = "res06_fn_0714"
+new = "SkipSpaces"
+kind = "routine"
+why = "nested in ShowPagedText (0709:0714): skips blank Buf chars while I is below Len"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds5E24"
+new = "GlyphCol"
+kind = "global"
+why = "ShowPagedText current glyph column (0709:0768, nested DrawTextRun): reset to Left on clear and newline, Inc per glyph, clamped to Right"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds5E25"
+new = "GlyphRow"
+kind = "global"
+why = "ShowPagedText current glyph row (0709:0768): reset to Top on clear, Inc per newline, paged at Bottom"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds0D16"
+new = "BreakChars"
+kind = "global"
+why = "char set ShowPagedText word scan tests (0709:0822..08F0, set of 32..63 per the 0D12 descriptor, proven by tpc probe Q32); image value members $, %, &, 2, 3, 7, ="
+date = "2026-10-12"
+
+[[rename]]
+old = "res06_fn_01DF"
+new = "DrawGlyph"
+kind = "routine"
+why = "draws Count copies of the GameFont glyph Glyph from cell Col advancing right (0709:01DF): text-scanline words, EGA planar bytes, or graphics nibbles by VideoAdapter; called by CheckCodeWheel, ShowMessageLine path, DrawTextRun"
+date = "2026-10-12"
+

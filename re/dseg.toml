@@ -494,3 +494,18 @@ evidence = "entries 1..8 of the 30-byte string[29] table at DS:2614 hold 'Insert
 offset = 0x5E20
 name = "GameFont"
 evidence = "the 1-bit font block: allocated $588 bytes by StartGame (ovl11:0074), filled by LoadGameFont from 8X8D1.DAX block 201 (0709:017C), read as glyph bitmaps by res06_fn_01DF (0709:01DF)"
+
+[[global]]
+offset = 0x5E24
+name = "GlyphCol"
+evidence = "ShowPagedText current glyph column (0709:0768, nested DrawTextRun): reset to Left on clear and newline, Inc per glyph, clamped to Right"
+
+[[global]]
+offset = 0x5E25
+name = "GlyphRow"
+evidence = "ShowPagedText current glyph row (0709:0768): reset to Top on clear, Inc per newline, paged at Bottom"
+
+[[global]]
+offset = 0x0D16
+name = "BreakChars"
+evidence = "char set ShowPagedText word scan tests (0709:0822..08F0, set of 32..63 per the 0D12 descriptor, proven by tpc probe Q32); image value members $, %, &, 2, 3, 7, ="

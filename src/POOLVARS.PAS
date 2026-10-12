@@ -357,6 +357,8 @@ var
       records through Pointer(ds5D96). }
   ds5E1E: Word;                   { BlockRead result count of the loader (ovl11:05D6) }
   GameFont: ^TBlock588;             { $588-byte block the loader allocates (ovl11:0074) }
+  GlyphCol: Byte;                   { 0768's current glyph column: reset to Left on clear/newline, Inc per glyph }
+  GlyphRow: Byte;                   { 0768's current glyph row: reset to Top on clear, Inc per newline }
   ds6810: PMenuLine;              { head of the shop's item list, a far pointer the loader clears (ovl11:031A) }
   ds6A58: ^TBlock924;             { $924-byte block the loader allocates (ovl11:0084) }
   ds6A5C: ^TBlock400;             { $400-byte block the loader allocates (ovl11:0094) }
@@ -418,7 +420,23 @@ var
   { 16 entries, the colours 0..15 mapped to 0..3 (0,0,0,1,2,2,2,3,3,1,1,1,2,2,3,3 in the image);
     WriteCharsAt maps the text colour through it when VideoAdapter is 0 (0802:0086). }
   ds25D5: array[0..15] of Byte;   { four-colour map of the text colours; see above }
+  { EGA plane masks for DrawGlyph mode 1 (0709:03C0): selected through Port[$3C5] by
+    3 - Bit; adjacent to ds25CD. }
+  ds25C9: array[0..3] of Byte;
+  { Per-colour words DrawGlyph mode 0 ORs into the pixel accumulator (0709:02A3):
+    indexed by the mapped colour 0..3; adjacent to ds25D5. }
+  ds25CD: array[0..3] of Word;
+  { Per-column words DrawGlyph mode 0 ANDs with the colour word (0709:02B0):
+    indexed by the bit column 0..7. }
+  ds25E5: array[0..7] of Word;
   ds49CE: Word;                   { IOResult of the last FileExists file probe (0802:0334) }
+  { Characters 0768's word scanner tests (0709:0822..08F0): the leading run is skipped,
+    the word run stops at them or space, the trailing run is skipped. Storage descriptor
+    $0404 in the three 0D12 calls: 4 bytes at bit offset 32 (set of #32..#63, proven by a
+    make tpc probe). Storage overlaps BadNameChars entry 0 at $D19 by one byte. No writer
+    exists anywhere in the image; the initial bytes are 70 00 8C 20 (members $, %, &, 2,
+    3, 7, =). Runtime meaning of those members: open. }
+  BreakChars: set of #32..#63;
   { The ten characters MakeDosFileName removes from a file name are entries 1..10 (DS:0D1A..0D23);
     entry 0 is the byte before them, never read (declared so the index base DS:0D19 names it). }
   BadNameChars: array[0..10] of Char;  { characters not allowed in a file name; see above }

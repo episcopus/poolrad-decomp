@@ -212,15 +212,15 @@ begin
           if Has1 <> 0 then
           begin
             MenuText := '~Yes ~No';
-            res06_fn_0768(1, $11, $26, $16, $A, 1,
+            ShowPagedText(1, $11, $26, $16, $A, 1,
               'As you Leave the Shopkeeper says, "Excuse me but you have Left Some Money here."  ');
-            res06_fn_0768(1, $11, $26, $16, $F, 0,
+            ShowPagedText(1, $11, $26, $16, $F, 0,
               'Do you want to go back and get your Money?');
             Choice := ovl07_e13(Title, MenuText, $D, $A, $F, 0, 0);
             if Choice = 1 then
               Done := 1
             else
-              res06_fn_0DD3(1, $11, $26, $16);
+              ClearRect(1, $11, $26, $16);
           end
           else
             Done := 1;

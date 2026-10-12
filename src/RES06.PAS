@@ -10,12 +10,10 @@ procedure SetActivePage(Plane: Byte);
 procedure SetPlaneSegment(Plane: Byte);
 procedure FillPlaneRect(LeftCol, TopRow, RightCol, BotRow: ShortInt; Plane, Value: Byte);
 procedure LoadGameFont;
-procedure res06_fn_01DF(A, B, C, D, Glyph, F: Byte);
+procedure DrawGlyph(Col, Row, Color, Count, Glyph, Cook: Byte);
 procedure res06_fn_05EB(A, Row, B, Width: Byte);
 procedure res06_fn_0626(A, Row, Color: Byte; Text: string);
-procedure res06_fn_06A7;
-procedure res06_fn_0714;
-procedure res06_fn_0768(A, B, C, D, E, F: Byte; Text: string);
+procedure ShowPagedText(Left, Top, Right, Bottom, Color, ClearFirst: Byte; Text: string);
 function res06_fn_09E3(Prompt: string; A: Byte; MaxLen: Byte): string;
 procedure res06_fn_0B66;
 procedure ShowMessageLine(Color: Byte; Text: String40);
@@ -33,6 +31,10 @@ type
   TTextPlane = array[0..99, 0..79] of Byte;
   { One graphics video plane: 50 rows of 160 bytes, like RES09's TGraphPlane. }
   TGraphPlane = array[0..49, 0..159] of Byte;
+  { One text-scanline plane as words: 200 rows of 40 words. DrawGlyph mode 0 writes one
+    assembled 16-bit pixel row per scanline through it (2-D indexing keeps the $50 row
+    stride the compiler multiplies by, proven by a make tpc probe). }
+  TWordPlane = array[0..199, 0..39] of Word;
 var
   { The EGA planes. The text and graphics views share the segments; they are the same
     memory RES09 maps as the VideoText/VideoGrf planes. }
@@ -42,6 +44,9 @@ var
   GraphPlane1: TGraphPlane absolute $BA00:$0000;
   GraphPlane2: TGraphPlane absolute $BC00:$0000;
   GraphPlane3: TGraphPlane absolute $BE00:$0000;
+  { The text planes as words, same memory as TextPlane0/1 above. }
+  WordPlane0: TWordPlane absolute $B800:$0000;
+  WordPlane1: TWordPlane absolute $BA00:$0000;
 
 { 0709:0000: retf 0: 0 bytes of parameters; 0 bytes of locals }
 { 0709:0000. Sets the EGA Graphics Controller registers for the picture fill: GC 0..5 to 0
@@ -127,28 +132,29 @@ begin
   Move(Block^, GameFont^, BlockSize);
   FreeMem(Block, BlockSize);
 end;
-{ 0709:01DF: retf 12: 12 bytes of parameters; 18 bytes of locals.
-  Draws one rune glyph of the code wheel question as a font character (CheckCodeWheel passes the rune
-  index + $40): A and B the screen position, Glyph the character, the rest still open. }
-{@stub} procedure res06_fn_01DF(A, B, C, D, Glyph, F: Byte); begin end;
+{ 0709:01DF: retf 12: 12 bytes of parameters; 18 bytes of locals }
+{ BLOCKED (dec-1, 2026-10-12, 5 attempts): full DrawGlyph draft stashed in
+  scratch/DRAWGLYPH.DRAFT.PAS (head guard, UpCase/mod, for-loops, 2-D word planes
+  and Mem/graph writes all match through 01FA; pending: a $10 length gap downstream
+  plus the if/else I-init applied but unverified). See re/symbols.toml 0709:01DF notes. }
+{@stub} procedure DrawGlyph(Col, Row, Color, Count, Glyph, Cook: Byte); begin end;
 { 0709:05EB: retf 8: 8 bytes of parameters; 0 bytes of locals }
 { 0709:05EB. Clears (or fills) Width cells of a row: when the column Width is in 0..$27 and the
-  row B is in 0..$18 it calls res06_fn_01DF(Width, B, Row, A, $20, 1). BLOCKED (dec-5,
+  row B is in 0..$18 it calls DrawGlyph(Width, B, Row, A, $20, 1). BLOCKED (dec-5,
   2026-10-12): the body is settled as two set membership tests, `if not (Width in [0..$27]) then
   Exit; if not (B in [0..$18]) then Exit; ...` (the never-true lower-bound compares and the Exit
   block come from the set), but the routine does not match because a literal-pool byte 64 before the
-  entry differs (ours FF, original F8): the pool belongs to the preceding res06_fn_01DF, still a
+  entry differs (ours FF, original F8): the pool belongs to the preceding DrawGlyph, still a
   stub, so decompile 01DF first. Called by ovl21_e6, ovl25_e3, res06_fn_09E3, ShowMessageLine and
   res06_fn_0D68. }
 {@stub} procedure res06_fn_05EB(A, Row, B, Width: Byte); begin end;
 { 0709:0626: retf 10: 10 bytes of parameters; 260 bytes of locals }
 {@stub} procedure res06_fn_0626(A, Row, Color: Byte; Text: string); begin end;
-{ 0709:06A7: retf 2: 2 bytes of parameters; 0 bytes of locals }
-{@stub} procedure res06_fn_06A7; begin end;
-{ 0709:0714: retf 2: 2 bytes of parameters; 0 bytes of locals }
-{@stub} procedure res06_fn_0714; begin end;
 { 0709:0768: retf 16; six bytes and a string; ovl04 passes (1, $11, $26, $16, $A, 1, message). }
-{@stub} procedure res06_fn_0768(A, B, C, D, E, F: Byte; Text: string); begin end;
+{ DRAFT STASHED (dec-1): full ShowPagedText with nested DrawTextRun/SkipSpaces is in
+  scratch/SHOWPAGEDTEXT.DRAFT.PAS and matches except the nested pool bytes (escalated:
+  nested code with globals/calls needs address-aware pool compare). }
+{@stub} procedure ShowPagedText(Left, Top, Right, Bottom, Color, ClearFirst: Byte; Text: string); begin end;
 { 0709:09E3: retf 8: 8 bytes of parameters; 812 bytes of locals.
   The line reader: shows the Prompt and returns what the player types as its string result
   (the caller keeps the result pointer: retf 8 pops Prompt, A and B only). CheckCodeWheel asks for the

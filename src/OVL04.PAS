@@ -91,7 +91,7 @@ var
   Pooled: LongInt;
 begin
   Service := Service + ' will only cost ' + res12_fn_1073(Price) + ' gold pieces.';
-  res06_fn_0768(1, $11, $26, $16, $A, 1, Service);
+  ShowPagedText(1, $11, $26, $16, $A, 1, Service);
   Answer := ovl25_e5('pay for cure ', 13, 15, 10);
   if Answer = Yes then
   begin
@@ -363,7 +363,7 @@ end;
 { ovl04:09D7. The Heal menu: fills ten menu lines (ovl25_e6) with TempleMenuText, draws the
   windows and "<name>, how can we help you?", and runs the menu (ovl25_e4, keys "Heal Exit")
   until Exit or Escape; Heal or Enter on lines 0..8 runs that service, line 9 is Exit. Frees the
-  lines (ovl25_e7), clears the text area (res06_fn_0DD3(0, 0, 39, 24)), redraws the view
+  lines (ovl25_e7), clears the text area (ClearRect(0, 0, 39, 24)), redraws the view
   (res12_fn_27D9) and reshows the character (res12_fn_0767(SelectedCharacter)). }
 procedure HealMenu;
 var
@@ -391,7 +391,7 @@ begin
     Inc(I);
   end;
   List := First;
-  res06_fn_0DD3(0, 24, 39, 24);
+  ClearRect(0, 24, 39, 24);
   MenuFlag := 1;
   DrawWindow(1, 1, $26, $16, 0, $F, '');
   DrawWindow(1, 1, $26, 1, 0, $F, '');
@@ -418,7 +418,7 @@ begin
     end;
   until Done;
   ovl25_e7(List);
-  res06_fn_0DD3(0, 0, 39, 24);
+  ClearRect(0, 0, 39, 24);
   res12_fn_27D9;
   res12_fn_0767(SelectedCharacter);
 end;
@@ -472,14 +472,14 @@ begin
           if MoneyPooled <> 0 then
           begin
             Prompt := '~Yes ~No';
-            res06_fn_0768(1, $11, $26, $16, $A, 1,
+            ShowPagedText(1, $11, $26, $16, $A, 1,
               'As you leave a priest says, "Excuse me but you have left some money here" ');
-            res06_fn_0768(1, $11, $26, $16, $A, 1, 'Do you want to go back and retrieve your money?');
+            ShowPagedText(1, $11, $26, $16, $A, 1, 'Do you want to go back and retrieve your money?');
             LeaveAnswer := ovl07_e13('', Prompt, 13, 10, 15, 0, 0);
             if LeaveAnswer = AnswerNo then
               Done := True
             else
-              res06_fn_0DD3(1, $11, $26, $16);
+              ClearRect(1, $11, $26, $16);
           end
           else
             Done := True;
