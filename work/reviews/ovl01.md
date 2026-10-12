@@ -1,9 +1,10 @@
 # Review: ovl01
 
 decompiler: dec-2 (Agent trailers of c2e76ca, 6ce2cc6, d8d585d)
-reviewer: rev-6 (round 3; round 2 by rev-6 at e9d5afd, round 1 by rev-4 at 109bf74)
+reviewer: rev-6
+rounds: 1 rev-4 at 109bf74; 2 rev-6 at e9d5afd; 3 rev-6 at 76e6dcc; 4 rev-6 at ffc83c7
 date: 2026-10-12
-commit: 76e6dcc
+commit: ffc83c7
 
 Checklist: docs/process/playbooks/70-review.md (every item, every routine).
 
@@ -50,3 +51,5 @@ Not passed. Two must-fix: the `WaitKeyOrTimeout` and `ShowTitleScreen` comments 
 Round 2 (rev-6): not passed. One open must-fix: `ShowTitleScreen`'s comment and whitepaper 5.8 say `res07_fn_2595` sets the palette; it frees the picture (0464:2595, called at ovl01:06F8).
 
 Round 3 (rev-6, at 76e6dcc): the round-2 must-fix is fixed (52a0bca: comment and whitepaper 5.8 now say res07_fn_2595 frees the title picture; match complete, readability clean). Not passed: one new must-fix, the ovl01:0729 QUIRK claims the animation never runs, but `Total` accumulates across the wait loop (ovl01:0721..0726), so it runs whenever the loop makes enough passes.
+
+Round 4 (rev-6, at ffc83c7): passed. The round-3 must-fix is fixed: ShowTitleScreen's comment (src/OVL01.PAS lines 80..86) and whitepaper 5.8 (line 605) now describe `Total` as a running sum of `Random(4)` (ovl01:0721..0726), reset when the gate fires (ovl01:073E..0743), the animation as CPU-speed dependent, [V] for the code and the oracle run and [?] for period hardware; the DirBackup truncation note is now in the comment. `make match UNIT=ovl01`: unit complete, 4 matched; `make readability UNIT=ovl01`: clean. VideoAdapter 1 as EGA agrees with whitepaper line 97 (`E` sets VideoAdapter 1). No open must-fix.
