@@ -7,6 +7,12 @@
 #   evidence  why a routine begins there
 
 [[start]]
+id = "0AF8:1247"
+name = "System_Randomize"
+source = "manual"
+evidence = "manual: System.Randomize, a leaf with no prologue (mov ah,2Ch; int 21h; stores CX:DX in RandSeed DS:4428/442A; retf); ovl11:0602 far-calls it and make match UNIT=ovl11 resolves the call here (dec-4, escalate-ovl11-20261012040038); the probe build's far call to Randomize also lands here, but this entry does not depend on runtime_entries output"
+
+[[start]]
 id = "0A32:0000"
 name = ""
 source = "probe"
@@ -569,12 +575,6 @@ id = "0AF8:11D6"
 name = ""
 source = "probe"
 evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:17D8; aligned by make tp-compare, confirmed by runtime_entries"
-
-[[start]]
-id = "0AF8:1247"
-name = ""
-source = "probe"
-evidence = "probe tp60-1991: sink.exe far-calls SYSTEM:1849; aligned by make tp-compare, confirmed by runtime_entries"
 
 [[start]]
 id = "0AF8:13B1"
