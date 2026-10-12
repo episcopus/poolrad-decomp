@@ -829,3 +829,8 @@ evidence = "five LongInts 1,10,100,200,1000 (the image); MoneyValueInGold multip
 offset = 0x6DC0
 name = "MoneyInPool"
 evidence = "PoolMoney sets it to 1, ShareMoney sets it to 1 when any kind is left in PooledMoney, else 0 (ovl21:051B, 09AD..09F2); the shop and the Temple clear it with the pool"
+
+[[global]]
+offset = 0x0FFA
+name = "MoneyKindNames"
+evidence = "seven string[10] Copper Silver Electrum Gold Platinum Gems Jewelry at DS:0FFA (the image); TakeMoney prefixes each pooled amount with MoneyKindNames[Kind] (ovl21:0DDF)"

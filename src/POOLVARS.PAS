@@ -697,6 +697,9 @@ var
   { The value of the five coins in copper pieces: copper 1, silver 10, electrum 100, gold 200,
     platinum 1000 (the image); MoneyValueInGold values money with it and divides by the gold entry. }
   CoinCopperValues: array[0..4] of LongInt;
+  { The names of the seven kinds of money, string[10] at DS:0FFA: Copper, Silver, Electrum, Gold,
+    Platinum, Gems, Jewelry (the image); the Take menu lists the pool with them (ovl21:0DDF). }
+  MoneyKindNames: array[0..6] of string[10];
   PackedBuf: Pointer;             { the packed bytes of the DAX block LoadDaxBlock is reading }
   { Colour maps for res07_fn_1E5C (16 entries, colour I becomes entry I): ds0CD2 is the identity,
     ds0CE2 turns colour 13 into 8 and ds0CF2 turns 13 into 0 (the image). LoadPictureSlot recolours the

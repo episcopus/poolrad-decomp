@@ -441,7 +441,7 @@ end;
 
 { ovl05:0D38. The Take command of the treasure menu. MoneyLeft and ItemsLeft are ovl21_e9's two
   results (money in the pool, items in the loot). With only items it goes to TakeLootItems, with
-  only money it takes the money (ovl21_e4); with both it loops on 'Take: Money Items Exit' until
+  only money it takes the money (TakeMoney); with both it loops on 'Take: Money Items Exit' until
   Exit or one of them runs out (G and O, in no menu text, go to ovl19_e10 as in the shop). }
 procedure TakeTreasure(var MoneyLeft, ItemsLeft: Byte);
 var
@@ -459,7 +459,7 @@ begin
         case Key of
           'M':
             begin
-              ovl21_e4;
+              TakeMoney;
               res12_fn_27D9;
             end;
           'I': TakeLootItems;
@@ -475,7 +475,7 @@ begin
     end
     else
     begin
-      ovl21_e4;
+      TakeMoney;
       res12_fn_27D9;
     end;
   end

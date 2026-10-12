@@ -10282,66 +10282,40 @@ evidence = ["prologue"]
 id = "ovl21:0A88"
 unit = "ovl21"
 addr = "ovl21:0A88"
-size = 192
-name = "ovl21_fn_0A88"
-signature = ""
+size = 210
+name = "TakeFromPool"
+signature = "procedure TakeFromPool(Who: PCharacter; Amount: Word; Kind: ShortInt)"
 c_name = "ovl21_fn_0A88"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl21_fn_0A88 (moves Amount (at most what PooledMoney[Kind] holds) from the pool to Who^.Money[Kind] with its weight, 'Overloaded' when it does not fit; TakeMoney calls it with the chosen kind (ovl21:0A88, 0F26)); auto:near_call; map dec-18 2026-10-12: ends 0B59; 0B48 was mid-routine, entry deleted"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl21:0B48"
-unit = "ovl21"
-addr = "ovl21:0B48"
-size = 75
-name = "ovl21_fn_0B48"
-signature = ""
-c_name = "ovl21_fn_0B48"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl21:0B93"
 unit = "ovl21"
 addr = "ovl21:0B93"
 size = 344
-name = "ovl21_e5"
-signature = ""
+name = "MoneyKindOfLine"
+signature = "function MoneyKindOfLine(Line: string; var Name: string): ShortInt"
 c_name = "ovl21_e5"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl21_e5 (returns 0..6 from the first letter of a Take menu line (G+E Gems 5, G Gold 3, P 4, E 2, S 1, C 0, J 6) and its name ('Gems ', 'Gold ', ...) (ovl21:0B93)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl21:0CEB"
 unit = "ovl21"
 addr = "ovl21:0CEB"
-size = 566
-name = "ovl21_e4"
+size = 659
+name = "TakeMoney"
 signature = ""
 c_name = "ovl21_e4"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_4"
+notes = "renamed from ovl21_e4 (lists the pooled money kinds ('Select type of coin'), asks 'How much <kind> will you take?' and calls TakeFromPool for SelectedCharacter; the shop, Temple and treasure Take commands call it (ovl21:0CEB)); auto:entry_4; map dec-18 2026-10-12: ends 0F7D; 0F21 was mid-routine, entry deleted"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl21:0F21"
-unit = "ovl21"
-addr = "ovl21:0F21"
-size = 93
-name = "ovl21_fn_0F21"
-signature = ""
-c_name = "ovl21_fn_0F21"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl21:0F7E"

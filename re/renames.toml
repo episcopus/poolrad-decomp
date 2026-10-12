@@ -2407,3 +2407,31 @@ kind = "global"
 why = "PoolMoney sets it to 1, ShareMoney sets it to 1 when any kind is left in PooledMoney, else 0 (ovl21:051B, 09AD..09F2); the shop and the Temple clear it with the pool"
 date = "2026-10-12"
 
+[[rename]]
+old = "ovl21_fn_0A88"
+new = "TakeFromPool"
+kind = "routine"
+why = "moves Amount (at most what PooledMoney[Kind] holds) from the pool to Who^.Money[Kind] with its weight, 'Overloaded' when it does not fit; TakeMoney calls it with the chosen kind (ovl21:0A88, 0F26)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_e5"
+new = "MoneyKindOfLine"
+kind = "routine"
+why = "returns 0..6 from the first letter of a Take menu line (G+E Gems 5, G Gold 3, P 4, E 2, S 1, C 0, J 6) and its name ('Gems ', 'Gold ', ...) (ovl21:0B93)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_e4"
+new = "TakeMoney"
+kind = "routine"
+why = "lists the pooled money kinds ('Select type of coin'), asks 'How much <kind> will you take?' and calls TakeFromPool for SelectedCharacter; the shop, Temple and treasure Take commands call it (ovl21:0CEB)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds0FFA"
+new = "MoneyKindNames"
+kind = "global"
+why = "seven string[10] Copper Silver Electrum Gold Platinum Gems Jewelry at DS:0FFA (the image); TakeMoney prefixes each pooled amount with MoneyKindNames[Kind] (ovl21:0DDF)"
+date = "2026-10-12"
+

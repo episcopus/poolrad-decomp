@@ -20,11 +20,9 @@ procedure PoolMoney;
 function CountSharers: Byte;
 procedure ShareMoney;
 procedure DropMoney(Who: PCharacter; Amount: Word; Kind: ShortInt);
-procedure ovl21_fn_0A88;
-procedure ovl21_fn_0B48;
-procedure ovl21_e5;
-procedure ovl21_e4;
-procedure ovl21_fn_0F21;
+procedure TakeFromPool(Who: PCharacter; Amount: Word; Kind: ShortInt);
+function MoneyKindOfLine(Line: string; var Name: string): ShortInt;
+procedure TakeMoney;
 procedure ovl21_e9(var A, B: Byte);
 procedure ovl21_fn_0FD2;
 procedure ovl21_e13;
@@ -33,13 +31,17 @@ procedure ovl21_e14(var Flag: Byte);
 procedure ovl21_fn_1F4B;
 procedure ovl21_fn_2233;
 implementation
-uses RES04, RES12;
+uses RES04, RES09, RES12, OVL25;
 
 const
   BaseLoad = 1500;      { the load every character may carry before the strength allowance }
   CopperCoin = 0;       { the money kinds, indexes of TCharacter.Money and TPartyMoney }
+  SilverCoin = 1;
+  ElectrumCoin = 2;
   GoldCoin = 3;
   PlatinumCoin = 4;
+  GemsKind = 5;
+  JewelryKind = 6;
   GoldPerPlatinum = 5;
   PromptRow = 24;       { the bottom text row, where amounts are typed }
   ScreenCols = 40;
@@ -47,13 +49,14 @@ const
   KeyBackspace = #8;
   KeyEnter = #13;
   KeyEscape = #27;
-  LastMoneyKind = 6;    { seven kinds: copper, silver, electrum, gold, platinum, gems, jewelry }
+  LastMoneyKind = JewelryKind;    { seven kinds: copper, silver, electrum, gold, platinum, gems, jewelry }
   { TCharacter.B84 values of the members that pool and share money: 0 and $B3 (a player-run
     member; what $B3 marks is not known) }
   SharerB84 = $B3;
   ComputerRunB84 = $80; { B84 from $80 up: a member run by the computer, who gets no share }
   ViewShop = 1;         { ds49F3 view modes where dropped money goes into the pool: a shop or }
   ViewTreasure = 6;     { the Temple (1), the treasure after a battle (6) }
+  MenuLineBytes = $2E;  { the Text, Flag29 and Next fields of TMenuLine, as NewMenuList allocates }
   HalfGoldInCopper = 100;  { added before dividing by the gold value: rounds to the nearest gold piece }
 
 { ovl21:0000. The most weight Who may carry: 1500 plus the strength allowance res12_fn_13AB
@@ -352,16 +355,146 @@ begin
   if (ds49F3 = ViewTreasure) or (ds49F3 = ViewShop) then
     PooledMoney[Kind] := PooledMoney[Kind] + Amount;
 end;
-{ ovl21:0A88: frame not read }
-{@stub} procedure ovl21_fn_0A88; begin end;
-{ ovl21:0B48: retf 8: 8 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl21_fn_0B48; begin end;
-{ ovl21:0B93: retf 8: 8 bytes of parameters; 258 bytes of locals }
-{@stub} procedure ovl21_e5; begin end;
-{ ovl21:0CEB: frame not read }
-{@stub} procedure ovl21_e4; begin end;
-{ ovl21:0F21: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl21_fn_0F21; begin end;
+{ ovl21:0A88. Who takes Amount of money kind Kind from the pool: "Overloaded" and nothing taken when
+  he cannot carry that much more; otherwise at most what the pool holds moves to his money, with its
+  weight. }
+procedure TakeFromPool(Who: PCharacter; Amount: Word; Kind: ShortInt);
+var
+  Room: Word;
+begin
+  if WouldOverload(Who, Amount, Room) then
+    res12_fn_1693('Overloaded')
+  else
+  begin
+    if Amount > PooledMoney[Kind] then
+      Amount := PooledMoney[Kind];
+    PooledMoney[Kind] := PooledMoney[Kind] - Amount;
+    Who^.Money[Kind] := Who^.Money[Kind] + Amount;
+    AddCarriedWeight(Who, Amount);
+  end;
+end;
+{ ovl21:0B93. The money kind a line of the Take menu names, from its first letter after the leading
+  blanks: G is Gems when an E follows, else Gold; P Platinum, E electrum, S silver, C Copper, J
+  Jewelry. Name receives the kind's name with a trailing blank for the "How much" prompt.
+  QUIRK ovl21:0CB1: for any other letter the result is never assigned. }
+function MoneyKindOfLine(Line: string; var Name: string): ShortInt;
+var
+  I: Byte;
+begin
+  I := 1;
+  while Line[I] = ' ' do
+    Inc(I);
+  case Line[I] of
+    'G':
+      if UpCase(Line[I + 1]) = 'E' then
+      begin
+        MoneyKindOfLine := GemsKind;
+        Name := 'Gems ';
+      end
+      else
+      begin
+        Name := 'Gold ';
+        MoneyKindOfLine := GoldCoin;
+      end;
+    'P':
+      begin
+        Name := 'Platinum ';
+        MoneyKindOfLine := PlatinumCoin;
+      end;
+    'E':
+      begin
+        Name := 'electrum ';
+        MoneyKindOfLine := ElectrumCoin;
+      end;
+    'S':
+      begin
+        Name := 'silver ';
+        MoneyKindOfLine := SilverCoin;
+      end;
+    'C':
+      begin
+        Name := 'Copper ';
+        MoneyKindOfLine := CopperCoin;
+      end;
+    'J':
+      begin
+        Name := 'Jewelry ';
+        MoneyKindOfLine := JewelryKind;
+      end;
+  end;
+end;
+{ ovl21:0CEB. The Take command for pooled money: in a window, lists every kind of money in the pool
+  with its amount ("Select type of coin"), asks "How much <kind> will you take?" (ReadAmount, at most
+  the pooled amount) and gives it to the selected character (TakeFromPool); repeats while money is
+  left in the pool, until the list is left without a choice. Updates MoneyInPool.
+  QUIRK ovl21:0D5C: Count is incremented for every listed kind but never set or read.
+  QUIRK ovl21:0EA3: leaving the list without a choice does not free the menu lines. }
+procedure TakeMoney;
+var
+  Kind: ShortInt;
+  CoinKind: ShortInt;
+  Unused: Word;
+  List: PMenuLine;
+  Chosen: PMenuLine;
+  Head: PMenuLine;
+  Count: Word;
+  Choice: Integer;
+  Text: string;
+  Amount: Word;
+  Done: Boolean;
+  Redraw: Byte;
+  Key: Char;
+begin
+  DrawWindow(1, 1, $26, $16, 0, $0A, '');
+  Choice := 0;
+  repeat
+    Redraw := 1;
+    List := nil;
+    Chosen := nil;
+    for Kind := LastMoneyKind downto 0 do
+      if PooledMoney[Kind] > 0 then
+      begin
+        Inc(Count);
+        if List = nil then
+        begin
+          GetMem(List, MenuLineBytes);
+          List^.Next := nil;
+        end
+        else
+        begin
+          Chosen := List;
+          GetMem(List, MenuLineBytes);
+          List^.Next := Chosen;
+        end;
+        Str(PooledMoney[Kind], Text);
+        List^.Text := MoneyKindNames[Kind] + ' ' + Text;
+        List^.Flag29 := 0;
+      end;
+    Chosen := List;
+    Head := List;
+    Key := ChooseFromList('Select type of coin', '', $0D, $0A, $0F, 2, 2, $0F, 8, List, 1, Redraw, Choice,
+      Chosen);
+    if (Chosen = nil) or (Key = #0) then
+      Done := True
+    else
+    begin
+      Done := False;
+      CoinKind := MoneyKindOfLine(Chosen^.Text, Text);
+      Text := 'How much ' + Text + 'will you take? ';
+      Amount := ReadAmount(PooledMoney[CoinKind], Text, $0A);
+      TakeFromPool(SelectedCharacter, Amount, CoinKind);
+      FreeMenuList(Head);
+      MoneyInPool := 0;
+      Done := True;
+      for Kind := 0 to LastMoneyKind do
+        if PooledMoney[Kind] > 0 then
+        begin
+          MoneyInPool := 1;
+          Done := False;
+        end;
+    end;
+  until Done;
+end;
 { ovl21:0F7E: retf 8; two var parameters; the Temple tests the first for nonzero. }
 {@stub} procedure ovl21_e9(var A, B: Byte); begin end;
 { ovl21:0FD2: retf 0: 0 bytes of parameters; 2 bytes of locals }

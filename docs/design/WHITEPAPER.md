@@ -578,7 +578,7 @@ the 28-byte money block at `DS:67F4` and `DS:6DC0`, redraws the shop (`res12:27D
 
 - The full menu is "Buy View Take Pool Share Appraise Exit"; when `ovl21_e9` says there is
   nothing to take or share, the shorter "Buy View Pool Appraise Exit" is shown. One `case`
-  dispatches the key: B buys, V views an entry (`ovl19_e5`), T takes (`ovl21_e4`), P pools
+  dispatches the key: B buys, V views an entry (`ovl19_e5`), T takes (`TakeMoney`), P pools
   when the flag is clear (`PoolMoney`), S shares (`ShareMoney`), A appraises (`ovl21_e14`), E
   leaves, and two keys that are in neither menu text (G and O) call `ovl19_e10` with the key
   as an amount. Leaving while money lies in the pool asks through `ovl07_e13` ("Do you want to

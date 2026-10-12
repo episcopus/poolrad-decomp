@@ -176,7 +176,7 @@ end;
   party enters a shop. It marks the shop open (ds49F3), redraws the shop screen (res12_fn_27D9,
   res12_fn_0767 on SelectedCharacter), clears the money block PooledMoney and clears MoneyInPool, then shows the
   menu (ReadPromptChoice) with a text chosen by ovl21_e9 (the Take/Share entries appear only while
-  MoneyPooled says money lies in the pool) and dispatches the key: B BuyItems, V ovl19_e5, T ovl21_e4,
+  MoneyPooled says money lies in the pool) and dispatches the key: B BuyItems, V ovl19_e5, T TakeMoney,
   P PoolMoney (when MenuFlag is 0), S ShareMoney, A ovl21_e14 (Appraise), E leaves, and G and O, which
   neither menu text shows, call ovl19_e10 with the key. With money left in the pool, E first asks
   "Do you want to go back and get your Money?" ('~Yes ~No' through ovl07_e13, which returns the
@@ -220,7 +220,7 @@ begin
     case Key of
       'B': BuyItems;
       'V': ovl19_e5(MenuFlag);
-      'T': ovl21_e4;
+      'T': TakeMoney;
       'P': if MenuFlag = 0 then
              PoolMoney;
       'S': ShareMoney;
