@@ -38,7 +38,7 @@ procedure res07_fn_1A19;
 procedure res07_fn_1B52;
 procedure res07_fn_1E5C;
 procedure res07_fn_248E;
-procedure res07_fn_2595;
+procedure res07_fn_2595(var Pic: Pointer);
 procedure res07_fn_2632;
 procedure res07_fn_2A0D;
 implementation
@@ -114,8 +114,8 @@ implementation
 {@stub} procedure res07_fn_1E5C; begin end;
 { 0464:248E: retf 12: 12 bytes of parameters; 4 bytes of locals }
 {@stub} procedure res07_fn_248E; begin end;
-{ 0464:2595: retf 4: 4 bytes of parameters; 6 bytes of locals }
-{@stub} procedure res07_fn_2595; begin end;
+{ 0464:2595: retf 4: one var Pointer. Frees the picture (FreeMem) and nils the pointer. }
+{@stub} procedure res07_fn_2595(var Pic: Pointer); begin end;
 { 0464:2632: retf 18: 18 bytes of parameters; 36 bytes of locals }
 {@stub} procedure res07_fn_2632; begin end;
 { 0464:2A0D: retf 4: 4 bytes of parameters; 0 bytes of locals }

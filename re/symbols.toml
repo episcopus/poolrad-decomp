@@ -14309,12 +14309,12 @@ id = "ovl32:014E"
 unit = "ovl32"
 addr = "ovl32:014E"
 size = 122
-name = "ovl32_e3"
-signature = ""
+name = "FreePictureSlot"
+signature = "procedure FreePictureSlot(Slot: Byte)"
 c_name = "ovl32_e3"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_3"
+notes = "renamed from ovl32_e3 (frees both picture pointers of one slot in the table at DS:5E5A when not nil, through res07_fn_2595 which FreeMems the picture (ovl32:014E, matched)); auto:entry_3"
 evidence = ["prologue"]
 
 [[routine]]
@@ -17262,7 +17262,7 @@ unit = "res07"
 addr = "0464:2595"
 size = 157
 name = "res07_fn_2595"
-signature = ""
+signature = "procedure res07_fn_2595(var Pic: Pointer)"
 c_name = "res07_fn_2595"
 level = "none"
 justification = ""

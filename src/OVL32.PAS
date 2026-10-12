@@ -5,7 +5,7 @@ unit OVL32;
 interface
 procedure Load24x24Set;
 procedure DrawCellPicture(PicCol, PicRow: Shortint; PicCode, Unused: Byte);
-procedure ovl32_e3;
+procedure FreePictureSlot(Slot: Byte);
 procedure ovl32_e4;
 procedure ovl32_e5(A, B: ShortInt; C, D, E: Byte);
 implementation
@@ -29,8 +29,16 @@ begin
   else
     res07_fn_08D4(PicCol, PicRow, PicCode, NoBlitFlags, ds5E52, ds4A20);
 end;
-{ ovl32:014E: retf 2: 2 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl32_e3; begin end;
+{ ovl32:014E. Frees both pictures of one slot in ds5E5A, when the pointer is not nil,
+  through res07_fn_2595 (FreeMem, then the pointer is set nil). Slot selects the
+  record, stride 8. QUIRK ovl32:0151: UnusedWord is allocated and never read or written. }
+procedure FreePictureSlot(Slot: Byte);
+var
+  UnusedWord: Word;
+begin
+  if ds5E5A[Slot].FirstPic <> nil then res07_fn_2595(ds5E5A[Slot].FirstPic);
+  if ds5E5A[Slot].SecondPic <> nil then res07_fn_2595(ds5E5A[Slot].SecondPic);
+end;
 { ovl32:01C8: retf 8: 8 bytes of parameters; 1028 bytes of locals }
 {@stub} procedure ovl32_e4; begin end;
 { ovl32:04FC: retf 10: 10 bytes of parameters; 8 bytes of locals.

@@ -22,6 +22,11 @@ type
     Col, Row: Word;              { position of the block on the area map (DS:3648) }
     Pic: Word;                   { the block code drawn instead of the one in the map }
   end;
+  { One slot of the picture table at DS:5E5A. Two pointers, stride 8. FreePictureSlot frees
+    either one when it is not nil. Which picture is which is not known yet. }
+  TPictureSlot = record
+    FirstPic, SecondPic: Pointer;
+  end;
   { The word variables of the game: the structure the far pointer at DS:49D2 leads to. ovl07 and
     ovl17 index it dynamically (the variables of the ECL scripts), words 195 and 196 keep the party
     position on the area map, and DrawAreaView reads words 380, 396, 415, 416, 435 and 466 as gates
@@ -86,5 +91,6 @@ var
   ds557D: Boolean;                { heap error retry gate; see above }
   ds5E52: Pointer;                { picture pointer DrawCellPicture uses when PicCode is at most 127 }
   ds5E56: Pointer;                { picture pointer DrawCellPicture uses when bit 7 of PicCode is set }
+  ds5E5A: array[0..3] of TPictureSlot;  { picture slots; one routine frees a slot's two pictures }
 implementation
 end.
