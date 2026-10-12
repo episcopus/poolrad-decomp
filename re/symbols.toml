@@ -13428,6 +13428,9 @@ addr = "ovl31:0000"
 size = 104
 name = "FootprintCell"
 signature = "function FootprintCell(Kind, Index: Byte; var DX, DY: ShortInt): Boolean"
+c_name = "ovl31_e1"
+level = "L2"
+justification = ""
 notes = "renamed from ovl31_e1 (ovl31:0000 reads cell J of footprint kind Base from the DS:2844 table (offset pair) and answers whether it exists (DX >= 0); kinds 1..4 are 1 cell, 2 vertical, 2 horizontal, 2x2 (table bytes)); auto:near_call"
 evidence = ["prologue"]
 
@@ -13516,6 +13519,9 @@ addr = "ovl31:04BE"
 size = 109
 name = "GetMapCell"
 signature = "procedure GetMapCell(CellX, CellY: ShortInt; var Occupant, Tile: Byte)"
+c_name = "ovl31_e6"
+level = "L2"
+justification = ""
 notes = "renamed from ovl31_e6 (ovl31:04BE returns the tile id (ds6716^ cells) and the occupant (DS:60DB) of map cell (X, Y), both 0 off the 50x25 map); auto:near_call"
 evidence = ["prologue"]
 
@@ -13526,6 +13532,9 @@ addr = "ovl31:052B"
 size = 446
 name = "RedrawGround"
 signature = "procedure RedrawGround(Col, Row: ShortInt; Occupant: Byte)"
+c_name = "ovl31_e7"
+level = "L2"
+justification = ""
 notes = "renamed from ovl31_e7 (ovl31:052B redraws the cell pictures under combatant Occ's footprint, or under view cell (X, Y) when no combatant stands there); auto:near_call"
 evidence = ["prologue"]
 
@@ -13549,6 +13558,9 @@ addr = "ovl31:071A"
 size = 186
 name = "IsCombatantInView"
 signature = "function IsCombatantInView(Who: PCharacter; AllCells: Byte): Boolean"
+c_name = "ovl31_e9"
+level = "L2"
+justification = ""
 notes = "renamed from ovl31_e9 (ovl31:071A true when the footprint of combatant Who is in the 7x7 view: every cell when All is set, any cell otherwise; false for an inactive combatant); auto:near_call"
 evidence = ["prologue"]
 
@@ -13559,6 +13571,9 @@ addr = "ovl31:07D4"
 size = 450
 name = "ScrollViewTo"
 signature = "function ScrollViewTo(CellX, CellY: ShortInt; Margin: Byte): Boolean"
+c_name = "ovl31_fn_07D4"
+level = "L2"
+justification = ""
 notes = "renamed from ovl31_fn_07D4 (ovl31:07D4 moves the 7x7 view origin (ds6716^+2,+3) until map cell (X, Y) is within Margin cells of the centre, redraws all 49 cell pictures and returns true; returns false when no scroll was needed); auto:near_call"
 evidence = ["prologue"]
 
@@ -13569,6 +13584,9 @@ addr = "ovl31:0996"
 size = 354
 name = "MoveCombatCursor"
 signature = "procedure MoveCombatCursor(CellX, CellY: ShortInt; Margin, Dir: Byte)"
+c_name = "ovl31_e10"
+level = "L2"
+justification = ""
 notes = "renamed from ovl31_e10 (ovl31:0996 steps from map cell (X, Y) by direction Dir (ds2736/ds273F, 8 = no step), scrolls and redraws the view and the combatants when needed, restores the old cell and draws the cursor at the new one); auto:near_call"
 evidence = ["prologue"]
 
@@ -13579,6 +13597,9 @@ addr = "ovl31:0AF8"
 size = 239
 name = "SetCombatantIcon"
 signature = "procedure SetCombatantIcon(Who: PCharacter; IconSet, Mirror, NoDraw: Byte)"
+c_name = "ovl31_e11"
+level = "L2"
+justification = ""
 notes = "renamed from ovl31_e11 (ovl31:0AF8 brings combatant Who into view, stores IconSet in its combat record (+9) and redraws its icon with Mirror unless NoDraw); auto:entry_11"
 evidence = ["prologue"]
 
@@ -13641,6 +13662,9 @@ addr = "ovl31:0CB9"
 size = 344
 name = "ProbeStep"
 signature = "procedure ProbeStep(Who: PCharacter; Dir: Byte; var Occupant, Tile: Byte)"
+c_name = "ovl31_e16"
+level = "L2"
+justification = ""
 notes = "renamed from ovl31_e16 (ovl31:0CB9 looks at the cells combatant Who's footprint would cover one step in direction Dir: the other combatant there (Occ) and the tile that decides the move (0 or $1E win, else the largest DS:2744 cost)); auto:near_call"
 evidence = ["prologue"]
 
@@ -13664,6 +13688,9 @@ addr = "ovl31:10A7"
 size = 497
 name = "PlaceCombatant"
 signature = "function PlaceCombatant(Who: PCharacter; CellX, CellY: Byte; Restore: Byte): Boolean"
+c_name = "ovl31_e18"
+level = "L2"
+justification = ""
 notes = "renamed from ovl31_e18 (ovl31:10A7 puts combatant Who on map cell (X, Y) with its footprint (+$6C and $7F) when the cells are free and passable (ProbeStep with Dir 8); Restore takes back its body record and tile; returns whether it was placed (always true outside view mode 5)); auto:entry_18"
 evidence = ["prologue"]
 
@@ -13674,6 +13701,9 @@ addr = "ovl31:1298"
 size = 99
 name = "ShowCursorOn"
 signature = "procedure ShowCursorOn(Who: PCharacter; Margin, ShowCursor: Byte)"
+c_name = "ovl31_e19"
+level = "L2"
+justification = ""
 notes = "renamed from ovl31_e19 (ovl31:1298 draws the cursor with combatant Who's footprint on Who's cell (MoveCombatCursor with Dir 8), then resets the cursor to kind 1 and hidden); auto:entry_19"
 evidence = ["prologue"]
 
