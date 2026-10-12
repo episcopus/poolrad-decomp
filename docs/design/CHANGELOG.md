@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-12 | process | Harden agent coordination, run admission and integration evidence; require explicit human staffing authority | make check (175 tests, 316 matches); historical merge preservation checks |
 | 2026-10-12 | 4.2.2, 5.1, 5.2.1 | ovl07 script machine: address space, character window, operands, packed strings, helpers; header read at 9900h; DS:6AAF is the party facing | make match UNIT=ovl07 (unit complete, 33 routines) |
 | 2026-10-12 | 5.4, 5.4.1 | ovl21 Money decompiled: seven money kinds, coin values, carried weight and CarryLimit, Pool/Share/Take/Appraise, BuildTreasureItem; QUIRKs 04DB, 1E74 | make match UNIT=ovl21 (unit complete) |
 | 2026-10-12 | 5.5.2 | new section: the start of a battle (StartBattle, the wilderness map builders, combatant placement grids), 10 bogus map entries removed | make match UNIT=ovl10 (12 of 22 at L2) |
