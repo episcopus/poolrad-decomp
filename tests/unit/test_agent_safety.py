@@ -48,6 +48,8 @@ def repo(tmp_path, monkeypatch):
     monkeypatch.setattr(handoff, "CHANGELOG", main / "CHANGELOG.md")
     (main / "CHANGELOG.md").write_text("| Date | Section | Change | Evidence |\n|---|---|---|---|\n")
     monkeypatch.chdir(main)
+    # The fixture simulates an explicitly admitted human run; the real clone is never admitted here.
+    common.atomic_write(common.common_dir() / "poolrad-control.json", '{"state":"running","reason":"test fixture"}\n')
     return main
 
 
@@ -63,8 +65,10 @@ def test_duplicate_fields_are_not_silently_reinterpreted():
 
 
 def test_control_requires_explicit_human_acknowledgement_and_main(repo):
+    path = common.common_dir() / "poolrad-control.json"
+    original = path.read_bytes()
     assert control.main(["--state", "stopped", "--reason", "test"]) == 2
-    assert not (common.common_dir() / "poolrad-control.json").exists()
+    assert path.read_bytes() == original
     assert control.main(["--state", "draining", "--operator", "--reason", "human stop"]) == 0
     assert control.main(["--step", "--agent", "dec-1"]) == 0
     assert claim.main(["--agent", "dec-1", "--unit", "ovl00"]) == 2
@@ -77,6 +81,15 @@ def test_control_requires_explicit_human_acknowledgement_and_main(repo):
 def test_corrupt_control_fails_closed(repo):
     (common.common_dir() / "poolrad-control.json").write_text('{"state": "unknown"}')
     assert claim.main(["--agent", "dec-1", "--unit", "ovl00"]) == 2
+    assert not common.lock_path("ovl00").exists()
+
+
+def test_missing_operator_admission_refuses_claims_and_raw_locks(repo):
+    import lock
+    (common.common_dir() / "poolrad-control.json").unlink()
+    assert control.state()["state"] == "stopped"
+    assert claim.main(["--agent", "dec-1", "--unit", "ovl00"]) == 2
+    assert lock.main(["ovl00", "--agent", "dec-1"]) == 2
     assert not common.lock_path("ovl00").exists()
 
 

@@ -38,7 +38,7 @@ def coordination_lock():
 def state() -> dict:
     path = common.common_dir() / "poolrad-control.json"
     if not path.exists():
-        return {"state": "running", "reason": "legacy run: no operator control set"}
+        return {"state": "stopped", "reason": "human must explicitly approve a run before new claims"}
     record = json.loads(path.read_text())
     if not isinstance(record, dict) or record.get("state") not in STATES:
         raise ValueError("invalid operator control state; refusing new work")

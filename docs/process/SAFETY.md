@@ -35,8 +35,8 @@ make agent-control STATE=draining OPERATOR=1 REASON="finish current tasks and st
 make agent-control STATE=stopped OPERATOR=1 REASON="run ended; no new work"
 ```
 
-No args (`make agent-control`) displays the state. A clone with no control file retains legacy running
-behavior; set a state explicitly before a new run. Corrupt state fails closed. All worktrees share the
+No args (`make agent-control`) displays the state. A clone with no control file defaults to stopped;
+the human must explicitly admit a new run. Missing or corrupt state fails closed. All worktrees share the
 file. State changes and claim admission are serialized; paused, draining and stopped refuse new claims
 and raw locks. Existing agents must call `make agent-step AGENT=<name>` before each routine/review and
 after waits. Paused/stopped returns nonzero: do not retry it as a tool failure. Preserve drafts, commit
