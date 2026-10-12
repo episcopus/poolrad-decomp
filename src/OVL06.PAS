@@ -256,5 +256,6 @@ begin
   until Done <> 0;
 end;
 
+{ Initialisation (ovl06:0798): empty (55 89 E5 5D CB). }
 begin
 end.
