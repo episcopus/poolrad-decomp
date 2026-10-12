@@ -1,6 +1,6 @@
 unit OVL30;
-{ ovl30: overlay unit, 3038 bytes of code. Skeleton by tools/match/skeleton.py: every routine is a stub
-  until decompiled (playbook 30). }
+{ ovl30: a resident-screen support unit (whitepaper 5.x). SignOf returns the sign of a value and
+  SortTable sorts a 3-byte record table in place; the remaining routines are not decompiled yet. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 uses POOLVARS;
@@ -31,9 +31,9 @@ procedure SortTable;
 var
   I: Byte;                        { the outer index, 1 to Count - 1 }
   J: Byte;                        { the inner index, I + 1 to Count }
-  B: Byte;                        { Val of record J }
-  A: Byte;                        { Val of record I }
-  Temp: TSortRec;                 { the swap buffer }
+  ValJ: Byte;                     { Val of record J }
+  ValI: Byte;                     { Val of record I }
+  Swap: TSortRec;                 { the swap buffer }
 begin
   if ds6718[0].Val <= 1 then
     Exit;
@@ -41,14 +41,14 @@ begin
   begin
     for J := I + 1 to ds6718[0].Val do
     begin
-      A := ds6718[I].Val;
-      B := ds6718[J].Val;
+      ValI := ds6718[I].Val;
+      ValJ := ds6718[J].Val;
       if (ds6718[J].Key < ds6718[I].Key) or
-         ((ds6718[J].Key = ds6718[I].Key) and (B < A) and ((B mod 2) <= (A mod 2))) then
+         ((ds6718[J].Key = ds6718[I].Key) and (ValJ < ValI) and ((ValJ mod 2) <= (ValI mod 2))) then
       begin
-        Temp := ds6718[I];
+        Swap := ds6718[I];
         ds6718[I] := ds6718[J];
-        ds6718[J] := Temp;
+        ds6718[J] := Swap;
       end;
     end;
   end;
