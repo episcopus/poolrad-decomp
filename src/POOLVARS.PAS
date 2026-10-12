@@ -56,6 +56,13 @@ type
     Kind: Byte;
     Addr: Pointer;
   end;
+  { A 3-byte record of the ovl30 sort table (whitepaper 5.x): the table DS:6718 is an array of
+    these, element 0 holding the count in Val (SortTable reads and writes Key and Val). }
+  TSortRec = record
+    Head: Byte;                    { +0: never read by the sort }
+    Key: Byte;                     { +1: the first sort key }
+    Val: Byte;                     { +2: the second sort key }
+  end;
 const
   { Words of GameVars^ whose meaning is proven (word n is at byte offset 2n of the block; the
     matched reads in ovl26 are at +$186, +$188, +$1CC, +$1F6, +$1FA and +$1FC). }
@@ -149,6 +156,7 @@ var
   ds49DA: ^TBlock400;             { $400-byte block the loader allocates (ovl11:0054) }
   ds49DE: ^TBlock1E00;            { $1E00-byte block the loader allocates (ovl11:0064) }
   ds49E2: Byte;                   { set to 1 by the loader (ovl11:03C6) }
+  ds6718: array[0..255] of TSortRec;  { the ovl30 sort table (element 0 holds the count, SortTable) }
   ds49ED: Word;                   { set to $9900 by the loader (ovl11:03C0) }
   ds49F4: Byte;                   { cleared by the loader (ovl11:03CB) }
   ds49F5: Byte;                   { set to 1 by the loader (ovl11:0392) }

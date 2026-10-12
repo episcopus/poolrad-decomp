@@ -330,3 +330,17 @@ kind = "global"
 why = "the POOL.CFG choice just read in res08_init (042B:016E): video E/C/T, sound T/P, retry key, F/N; compared with character literals"
 date = "2026-10-11"
 
+[[rename]]
+old = "ovl30_e1"
+new = "SignOf"
+kind = "routine"
+why = "ovl30:0000: returns the sign of N (-1, 1, 0); called by ovl22_e63, ovl30_e2 and res12_fn_1CE0"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl30_fn_002E"
+new = "SortTable"
+kind = "routine"
+why = "ovl30:002E: sorts the 3-byte record table DS:6718 in place by Key then Val with a mod-2 tie-break; called by ovl30_e6"
+date = "2026-10-11"
+
