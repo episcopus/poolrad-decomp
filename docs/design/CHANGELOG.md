@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-11 | ovl28 | review findings fixed (WithBody, quirks ovl28:0269/046C/056C/0593, constants, TSpritePicture, whitepaper 5.16) | make match UNIT=ovl28, make readability UNIT=ovl28, make check |
 | 2026-10-11 | work/reviews/ovl18.md | new review: passed with one should-fix (the 830 gate) | make match UNIT=ovl18, make readability UNIT=ovl18, make packet UNIT=ovl18 |
 | 2026-10-11 | docs/design/WHITEPAPER.md (unchanged) | the EGA fill/page setup and the counted delay of res06 are now L2 (SetEgaFillRegisters, SetActivePage, SetPlaneSegment, DelayCounted); no new whitepaper claims beyond 5.15 | make match UNIT=res06, make readability UNIT=res06, make check |
 | 2026-10-11 | 5.17 | documented AnimateFinalPicture (was blocked, now matched) and marked ovl18 complete | make match UNIT=ovl18 (unit: complete), make check green |
