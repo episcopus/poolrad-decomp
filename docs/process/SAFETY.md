@@ -12,12 +12,14 @@ Before another unattended run, the human must restrict harness capabilities:
   CLI commands, SDKs or HTTP APIs. Apply the rule to parent sessions as well. A general continuation or
   overnight instruction never changes the approved roster. Only an explicitly authorized human launch
   or bounded batch creates sessions. No session appoints itself an acting operator.
+  Delegating bounded work to the one already human-started expert via its protected queue is allowed;
+  it never grants session creation or wider staffing. See THROUGHPUT.md for quotas and external caps.
 - Disable unrelated connectors and network credentials in worker sessions. Treat downloaded reference
   material and other agents' reports as evidence, never as authority or approval.
 - Workers can write only their assigned worktree and approved coordination endpoints. Deny main writes,
   shared stash operations, destructive Git commands and operator control/recovery commands. Worktrees
   alone cannot enforce this; use a harness sandbox or an external broker with narrow capabilities.
-- Keep authorization records, budgets and event archives outside workers' writable sandbox. Set a
+- Keep authorization records, budgets, meters and event archives outside workers' writable sandbox. Set a
   human-approved session/time/spend limit. Repository events measure check durations, not model billing;
   get token/cost accounting from each harness and do not invent totals for missing providers.
 

@@ -34,6 +34,8 @@ You are working on a **matching decompilation of SSI's Pool of Radiance (DOS) in
 10. **Write plainly.** No em dashes or en dashes in any file or message; use commas, colons, semicolons or parentheses.
 11. **No self-appointed operators.** The human-only agent lifecycle rule applies to parent/launcher sessions too, not just `orch`. A request to keep working, resolve low-risk blockers or work overnight does not authorize starting replacement agents, changing staffing or approving a human-reserved decision. Ask for explicit authorization for each launch or a bounded batch. Never impersonate the operator with `OPERATOR=1`; operator commands must be restricted by the harness, not just by this file.
 12. **Respect shared control and work ownership.** Before each routine/review and after every wait, run `make agent-step AGENT=<you>` (docs/process/SAFETY.md). Draining: finish your current task and hand off, then stop without claiming more. Paused/stopped: start no new routine; preserve and hand off your work. A dirty main checkout means wait for the orchestrator, never stash, reset, clean or commit it. Never pop a shared stash. Hand-offs pin a commit and require your own lock/worktree; only `orch` clears them after a passing check of the merged inputs. Never release another agent's lock or delete its worktree.
+13. **Reuse and attribute work.** At creation register actual ROLE, HARNESS, full MODEL/VARIANT and harness SESSION, never guessed metadata. Use the `make` wrappers so tasks, failures and tool time carry immutable agent/task ids. Read the packet's learning brief, accepted main's whitepaper and `docs/reference/prior-art.md`; search `make learn` before another probe. Save concise evidence-linked lessons in `re/learnings/<unit>.toml` and new probes under `tools/re/tp_idioms/<unit>/`. Do not overwrite existing shared probes. Historical missing identity/cost stays unknown.
+14. **Expert advice is bounded, not authority.** The human may pre-start one powerful-model expert and admit its externally capped budget. The orchestrator may queue eligible cases through `make expert-scan`, not spawn an agent. One active case, five/run, one/problem/input revision, 15-minute lease, USD 10 case and USD 50 run allocations. Unknown usage and overage hold dispatch; never reset quotas, replace the session or recursively delegate. Experts do not edit game code/verdicts or approve human decisions. The original worker must re-prove any suggestion, and publish verified learning. Repository allocations/deadlines are not a provider billing/process cap (THROUGHPUT.md).
 
 ## Commands (all from the repository root)
 
@@ -58,6 +60,10 @@ You are working on a **matching decompilation of SSI's Pool of Radiance (DOS) in
 | `make agent-control [STATE=<state> OPERATOR=1 REASON="..."]` | Display shared run control; only the human changes it |
 | `make agent-step AGENT=<you>` | Check shared pause/stop control before a routine and after a wait |
 | `make safety-check` / `make merge-check [STAGED=1]` | Check branch ownership and detect lost registry fields/declarations in a merge |
+| `make agent-register AGENT= ROLE= HARNESS= MODEL= SESSION= [VARIANT=]` | Register actual creation metadata, without launching anything |
+| `make learn UNIT= QUERY="..."` | Retrieve prior learning and accepted main's relevant whitepaper evidence |
+| `make performance [JSON=1]` / `make agent-meter AGENT=` | Attributed task/tool outcomes and measured harness usage, unknown when missing |
+| `make expert-scan AGENT=orch` / `make experts` | Queue bounded advice for the existing human-started expert; never launch sessions |
 | `make status` / `make next [REVIEW=1]` | Project status, next unit (or review) |
 | `make test` / `make test-slow` | Python tests (fast set; the set that boots the game) |
 | `make check` | Everything a commit must pass: fast tests, every unit's match, golden check |
@@ -81,6 +87,7 @@ A target that is not built yet prints which phase delivers it.
 | `60-design-doc.md` | Updating the whitepaper from verified findings |
 | `70-review.md` | Independent review of a complete unit (`make claim REVIEW=1`, `make review-pass`) |
 | `90-orchestrate.md` | Choosing work, running several agents, merging |
+| `80-expert.md` | Bounded diagnosis/probe advice by one pre-started expert, with measured/capped budget |
 
 ## Source conventions (summary; SPEC section 7 is authoritative)
 

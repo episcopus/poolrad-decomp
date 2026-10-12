@@ -25,6 +25,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import common  # noqa: E402
 import control  # noqa: E402
+import identity  # noqa: E402
 
 QUIET_MINUTES = 20
 
@@ -48,7 +49,7 @@ def beat(agent: str, note: str, done: bool = False) -> Path:
     p = heartbeat_dir() / ("%s.txt" % agent)
     common.atomic_write(p, "agent = %s\ntime = %s\nbranch = %s\nstate = %s\nnote = %s\n" % (
         agent, dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), branch,
-         "stopped" if done else "working", " ".join(note.split())))
+         "stopped" if done else "working", " ".join(note.split())) + identity.attribution_fields(agent, branch))
     if done:
         control.event("agent-stopped", agent=agent, branch=branch, note=" ".join(note.split()))
     return p
@@ -75,7 +76,7 @@ def auto(activity: str) -> str | None:
         common.identifier(agent, "agent")
         common.atomic_write(p, "agent = %s\ntime = %s\nbranch = %s\nstate = working\nnote = %s\nactivity = %s\n" % (
             agent, dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), branch,
-            old.get("note", "working"), " ".join(activity.split())))
+            old.get("note", "working"), " ".join(activity.split())) + identity.attribution_fields(agent, branch))
         return agent
     except Exception:                                          # a heartbeat must never break a build
         return None

@@ -31,6 +31,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import common  # noqa: E402
 import control  # noqa: E402
 import heartbeat  # noqa: E402
+import identity  # noqa: E402
 import lock  # noqa: E402
 import next as nxt  # noqa: E402
 
@@ -53,6 +54,10 @@ def claim(argv=None) -> int:
     ap.add_argument("--base", default="main", help="branch the unit branch starts from")
     ap.add_argument("--review", action="store_true", help="claim a review instead of a unit")
     ap.add_argument("--task", default="", help="claim a named task (doc-<chapter>, map) instead of a unit")
+    ap.add_argument("--harness", default=os.environ.get("POOLRAD_HARNESS", ""))
+    ap.add_argument("--model", default=os.environ.get("POOLRAD_MODEL", ""))
+    ap.add_argument("--session", default=os.environ.get("POOLRAD_SESSION_ID", ""))
+    ap.add_argument("--variant", default=os.environ.get("POOLRAD_VARIANT", ""))
     a = ap.parse_args(argv)
     if not a.agent:
         print("claim: need AGENT=<name> (a name unique to this agent session)", file=sys.stderr)
@@ -73,6 +78,9 @@ def claim(argv=None) -> int:
         print("claim: main has uncommitted tracked changes; a work branch starts from committed %s. "
               "Wait for the orchestrator; never stash, reset or clean main:\n%s" % (a.base, dirty), file=sys.stderr)
         return 1
+    role = "reviewer" if a.review else ("mapper" if a.task == "map" else
+            ("documentarian" if a.task.startswith("doc-") else ("tooling" if a.task else "decompiler")))
+    a.identity = identity.ensure(a.agent, role, a.harness, a.model, a.session, a.variant)
     if a.task:
         task = a.task.lower()
         if common.pending_handoff(task):
@@ -148,7 +156,12 @@ def setup(main_dir: Path, key: str, branch: str, a, unit: str) -> int:
         print("claim: %s (lock released)" % e, file=sys.stderr)
         return 1
     print("claim: %s locked for %s" % (key, a.agent))
-    control.event("claim", agent=a.agent, key=key, branch=branch, worktree=str(wt))
+    task = identity.task_snapshot(key, unit, a.identity, branch)
+    path = common.lock_path(key)
+    common.atomic_write(path, path.read_text() + "agent_id = %s\ntask_id = %s\n" % (
+        a.identity["agent_id"], task["task_id"]))
+    control.event("claim", agent=a.agent, key=key, branch=branch, worktree=str(wt), task_id=task["task_id"],
+                  agent_id=a.identity["agent_id"], base=task["base"])
     heartbeat.beat(a.agent, "claimed %s, worktree %s (branch %s)" % (key, wt, branch))
     print("claim: worktree %s (branch %s)" % (wt, branch))
     if a.task:

@@ -33,6 +33,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import common  # noqa: E402
 import control  # noqa: E402
 import heartbeat  # noqa: E402
+import identity  # noqa: E402
 
 STATES = ("complete", "partial", "blocked", "review-passed", "review-failed", "escalate")
 CHANGELOG = common.ROOT / "docs/design/CHANGELOG.md"
@@ -100,6 +101,7 @@ def finish(key: str, agent: str, decision: str) -> int:
         return 0
     text = path.read_text()
     f = fields(text)
+    check_record = None
     if f.get("state") == "escalate":
         if not decision.strip():
             raise ValueError("clearing an escalation needs DECISION=<human instruction or reference>; agents cannot approve it")
@@ -110,12 +112,22 @@ def finish(key: str, agent: str, decision: str) -> int:
             raise ValueError("hand-off has no valid pinned commit")
         common.git("merge-base", "--is-ancestor", commit, "HEAD")
         import check
-        check.require_receipt()
+        check_record = check.require_receipt()
     # Preserve the record before removing it. A malformed changelog must leave the hand-off pending.
     if f.get("changelog") and f.get("state") != "escalate":
         print("handoff: changelog row added: %s" % add_changelog_row(f["changelog"]))
     archive(key, text)
+    if f.get("state") != "escalate":
+        import performance
+        performance.accepted(f, check_record)
     control.event("handoff-done", agent=agent, key=key, commit=f.get("commit"), decision=decision)
+    grant = common.common_dir() / "poolrad-task-approvals" / (key + ".json")
+    if grant.exists():
+        directory = common.common_dir() / "poolrad-task-approval-archive"
+        directory.mkdir(exist_ok=True)
+        text = grant.read_text()
+        common.atomic_write(directory / (key + "-" + hashlib.sha256(text.encode()).hexdigest() + ".json"), text)
+        grant.unlink()
     path.unlink()
     print("handoff: archived and cleared %s" % key)
     return 0
@@ -204,7 +216,8 @@ def run(argv=None) -> int:
     common.atomic_write(path,
         "unit = %s\nagent = %s\nbranch = %s\ncommit = %s\nstate = %s\ntime = %s\nnote = %s\nchangelog = %s\n" % (
             a.unit.lower(), a.agent, branch, head, a.state,
-             dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), a.note, a.changelog))
+             dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), a.note, a.changelog) +
+        identity.attribution_fields(a.agent, branch))
     control.event("handoff", agent=a.agent, key=key, branch=branch, commit=head, state=a.state)
     heartbeat.beat(a.agent, "handed off %s (%s)" % (key, a.state))
     if a.state == "escalate":

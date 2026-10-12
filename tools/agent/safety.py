@@ -15,6 +15,7 @@ import argparse
 import re
 import sys
 import tomllib
+import json
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -132,6 +133,15 @@ def branch_findings(branch: str | None = None) -> list[str]:
         return ["work must be on a claimed unit/, review/ or task/ branch"]
     base = common.git("merge-base", "main", "HEAD")
     paths = common.git("diff", "--name-only", base, "--").splitlines()
+    approved = set()
+    if branch.startswith("task/"):
+        grant = common.common_dir() / "poolrad-task-approvals" / (common.identifier(branch[5:]) + ".json")
+        if grant.exists():
+            approval = json.loads(grant.read_text())
+            if approval.get("branch") != branch or not approval.get("reason") or not approval.get("base"):
+                raise ValueError("invalid task approval")
+            common.git("merge-base", "--is-ancestor", approval["base"], "HEAD")
+            approved = set(approval["paths"])
     out = []
     reserved = {"work/status.md", "work/blockers.md", "docs/design/CHANGELOG.md"}
     for path in paths:
@@ -139,9 +149,11 @@ def branch_findings(branch: str | None = None) -> list[str]:
             out.append("%s is orchestrator-owned; do not commit or overwrite it" % path)
         if path.startswith(("poolrad/", "build/", "tools/vendor/")):
             out.append("%s is a pinned/generated/proprietary input, not agent output" % path)
-        if path in {"docs/spec/SPEC.md", "re/state.toml"} or path.startswith(("docs/spec/ADR", "tests/sessions/")):
+        if path not in approved and (path in {"docs/spec/SPEC.md", "re/state.toml"} or path.startswith(("docs/spec/ADR", "tests/sessions/"))):
             out.append("%s requires a separately authorized human decision" % path)
-        if branch.startswith("unit/") and (path.startswith("tools/") or path.startswith("tests/") or path == "Makefile"):
+        probe_prefix = "tools/re/tp_idioms/" + branch.split("/", 1)[1] + "/"
+        new_probe = path.startswith(probe_prefix) and path.upper().endswith(".PAS") and not blob(base, path)
+        if branch.startswith("unit/") and not new_probe and (path.startswith("tools/") or path.startswith("tests/") or path == "Makefile"):
             out.append("%s is tooling; escalate it rather than changing it as a decompiler" % path)
         if branch.startswith("review/") and not (path.startswith("work/reviews/") or path == "re/symbols.toml"):
             out.append("%s is not reviewer output; reviewers never edit the code they review" % path)
