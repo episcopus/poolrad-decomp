@@ -39,7 +39,7 @@ procedure LoadHeadBodySprites(HeadBank, BodyBank: Byte);
 procedure ShowHeadBodySprites(Col, Row: Byte; Direct: Byte);
 procedure Show3DSprite(Bank: Byte; Rec: PSpriteList);
 implementation
-uses RES04, RES05, RES09, RES12, RES07;
+uses RES04, RES05, RES09, RES07;
 
 { ovl28:0000. Draws the 8x8 sprite Sprite at column Col and row Row. A nil Sprite draws nothing. When
   Direct is set it blits the sprite one pixel up and left onto the screen buffer DrawBuf through
