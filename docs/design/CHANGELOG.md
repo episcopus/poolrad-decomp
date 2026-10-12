@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-11 | docs/design/WHITEPAPER.md (unchanged) | the EGA fill/page setup and the counted delay of res06 are now L2 (SetEgaFillRegisters, SetActivePage, SetPlaneSegment, DelayCounted); no new whitepaper claims beyond 5.15 | make match UNIT=res06, make readability UNIT=res06, make check |
 | 2026-10-11 | 5.17 | documented AnimateFinalPicture (was blocked, now matched) and marked ovl18 complete | make match UNIT=ovl18 (unit: complete), make check green |
 | 2026-10-11 | 5.4 | Shop price is the item Value (+3A); record named TMenuLine; money sources and overload rule corrected | make match UNIT=ovl06; ovl06:0068, ovl19:275B, ovl19:28BE, ovl21:00A8 |
 | 2026-10-11 | docs/design/WHITEPAPER.md | renumbered the ovl30 section from 5.17 to 5.18 to remove the duplicate with ovl18 | the orchestrator's duplicate-section note |
