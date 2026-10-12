@@ -373,6 +373,10 @@ type
     X, Y: ShortInt;               { +4, +5 }
     Tile: Byte;                   { +6: the tile id under the body }
   end;
+  { A column span of one row of a placement shape (ovl10's DS:0306 table). }
+  TColSpan = record
+    Lo, Hi: ShortInt;
+  end;
   { One entry of the DS:5F27 map entity table ScanTargets scans: the position, an unknown byte and
     a kind byte; entry 0's Kind holds the count e6 loops over (like ds6718[0].Val). }
   TMapEntry = record
@@ -696,6 +700,7 @@ var
   ds6B84: Pointer;                { see above }
   ds6814: Byte;                   { zero (or ds6815 zero) ends the combat (ovl08:009B, 095C); likely the count of one side }
   ds6815: Byte;                   { see ds6814; likely the count of the other side }
+  ds6814Sides: array[0..1] of Byte absolute ds6814;  { ds6814 and ds6815 indexed by side (ovl10:1AC7) }
   ds6E30: Boolean;                { the Alt-M Magic On/Off toggle of the combat keys (ovl08:04A7) }
   ds6E31: Byte;                   { the key flag the ovl08 menus pass to ReadPromptChoice }
   ds6DE3: Byte;                   { counted up once per combat round (ovl08:0891) }
@@ -742,5 +747,26 @@ var
   DeathAffects: array[0..16] of Byte;  { affects removed when a combatant dies; see above }
   { The two affects ovl24_e14 removes are entries 1..2 at DS:0C24 ($4A $4B); entry 0 is the byte before. }
   ds0C23: array[0..2] of Byte;    { entries 1..2 ($4A $4B) are the affects ovl24_e14 removes }
+  { Globals of the combat map builder ovl10 (whitepaper 5.5.2). }
+  CombatBlock: Byte;              { the area map block code the battle is fought on (ovl10:1215) }
+  { The combat direction (an index of ds2736/ds273F) of a facing 0..3; PrepareCombatants also
+    uses it as the starting icon set (ovl10:1363, 15EA). }
+  FacingCombatDir: array[0..3] of Byte;
+  { Per side (PlacingSide): 4 groups of 6 rows of 11 placement cells, 1 while free (ovl10:1480). }
+  PlacementCells: array[0..1, 0..3, 0..5, 0..10] of Byte;
+  SideOriginCol: array[0..1] of ShortInt;   { per side: the grid origin column in area map steps (ovl10:1597) }
+  SideOriginRow: array[0..1] of ShortInt;   { per side: the grid origin row in area map steps (ovl10:15A4) }
+  FirstRingCells: array[0..1] of ShortInt;  { per side: the cells of its first placement ring (ovl10:17DB) }
+  SideFacing: array[0..1] of ShortInt;      { per side: the facing 0..3 (ovl10:1A3D) }
+  { Per side facing: the area map directions (entries 1..3) FindStartCell tests for walls (ovl10:1879). }
+  FacingWallDirs: array[0..3, 0..3] of Byte;
+  { Per side facing: twice the facing of each placement group 0..3 (ovl10:15C5). }
+  GroupFacing: array[0..3, 0..3] of Byte;
+  RingStartCol: array[Boolean, 0..3] of ShortInt;  { a ring's first column, per group > 0 and facing (ovl10:1640) }
+  RingStartRow: array[Boolean, 0..3] of ShortInt;  { a ring's first row, per group > 0 and facing (ovl10:1672) }
+  { The column span (Lo..Hi) of each of the 6 rows of a placement shape: shapes 0..3 per facing,
+    4 for group 1 (ovl10:1B38). }
+  PlacementShapes: array[0..4, 0..5] of TColSpan;
+  PlacingSide: ShortInt;          { the side being placed on the combat map (ovl10:1C41) }
 implementation
 end.

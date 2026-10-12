@@ -2085,3 +2085,178 @@ kind = "routine"
 why = "repeats ReadInputLine (6 characters) until Val gives a number with no error in 0..65536 and returns it (0709:0B80..0BE9)"
 date = "2026-10-12"
 
+[[rename]]
+old = "ovl10_fn_08A4"
+new = "BlockTerrainFlags"
+kind = "routine"
+why = "ovl10:08A4 maps the area block code ds465A to a terrain flag byte through a case of block code ranges; the map builders 0BDE, 0D13 and 0E9E test its bits to choose rivers and features"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl10_fn_0000"
+new = "ScatterRareTiles"
+kind = "routine"
+why = "ovl10:0000 turns plain ground cells (picture 16h) of the combat map into tile 1Ah or 1Bh on a d100 roll of 98 or 99 and, on 100, rarely 1Ch or 1Dh"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl10_fn_0D13"
+new = "PlaceTallFeatures"
+kind = "routine"
+why = "ovl10:0D13 puts two-cell features (lower tile Kind+23h, upper tile Kind+1Fh for kinds below 5) on plain ground, with a chance from BlockTerrainFlags"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl10_fn_0E9E"
+new = "ScatterTerrainFeatures"
+kind = "routine"
+why = "ovl10:0E9E rolls d255 per plain ground cell against five chances set from BlockTerrainFlags and replaces it by one of five tile ranges"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl10_fn_11B4"
+new = "BuildWildernessMap"
+kind = "routine"
+why = "ovl10:11B4 fills the combat map with the ground tile, reads the area map block at the party position (GameVars 195, 196) into ds465A and runs the river and feature builders; CreateCombatMap calls it when AreaViewKind is not 1"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl10_fn_1244"
+new = "CreateCombatMap"
+kind = "routine"
+why = "ovl10:1244 loads the DungCom or WildCom and RandCom 24x24 sets, GetMems CombatMap (4E9h bytes), clears its cursor fields and builds the dungeon (0810) or wilderness (11B4) map"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl10_fn_12E1"
+new = "PrepareCombatants"
+kind = "routine"
+why = "ovl10:12E1 walks the party list ds5D96 and gives each character a zeroed 16h-byte Combat record with its NoBody flag and starting icon set"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl10_fn_1403"
+new = "IsBeyondGrid"
+kind = "routine"
+why = "ovl10:1403 is True when X is outside 0..10 and Y outside 0..5, the 11x6 placement grid of ds4440; FindStartCell uses it to leave a ring"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl10_fn_1434"
+new = "TryPlaceAt"
+kind = "routine"
+why = "ovl10:1434 puts combatant Index on the map cell of grid cell (Col, Row) when that grid cell is free and ProbeStep finds no occupant and a passable tile, and marks the grid cell used"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl10_fn_1577"
+new = "FindStartCell"
+kind = "routine"
+why = "ovl10:1577 walks rings of the placement grid of the side ds4658 calling TryPlaceAt until the combatant is placed or every group is exhausted (False)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl10_fn_19F5"
+new = "PlaceAllCombatants"
+kind = "routine"
+why = "ovl10:19F5 sets up both sides' placement grids and walks the party list placing every combatant with FindStartCell (CombatantTable, CombatantRecord), leaving bodies for those already down and dropping those that do not fit"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl10_e1"
+new = "StartBattle"
+kind = "routine"
+why = "ovl10:1E31 (entry 1, called by RunCombat) shows 'A battle begins...', resets the combat state, creates the combat map, prepares and places the combatants and centres the view on the first one"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds465A"
+new = "CombatBlock"
+kind = "global"
+why = "BuildWildernessMap (ovl10:1215) stores the area map block at the party position here; BlockTerrainFlags (ovl10:08AA) reads it"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds4440"
+new = "PlacementCells"
+kind = "global"
+why = "PlaceAllCombatants (ovl10:1B8E) sets each byte of 2 sides x 4 groups x 6 rows x 11 columns to 1 inside the group's shape, TryPlaceAt (ovl10:1480, 1563) requires 1 and clears it when it places a combatant"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds4658"
+new = "PlacingSide"
+kind = "global"
+why = "PlaceAllCombatants sets it to each character's Side (ovl10:1C41) before FindStartCell, and loops it over 0..1 to build the per-side tables; every per-side table of the placement is indexed by it"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds4650"
+new = "SideOriginCol"
+kind = "global"
+why = "per side: PlaceAllCombatants sets side 0 to 0 and side 1 to the column step of the party facing times game word 705 (ovl10:1A2C..1A6E); FindStartCell adds the party column ds6AAD to it for the wall tests and TryPlaceAt adds it to the map column"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds4652"
+new = "SideOriginRow"
+kind = "global"
+why = "per side, as SideOriginCol for the row (ovl10:1A31..1A9F, 1846)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds4654"
+new = "FirstRingCells"
+kind = "global"
+why = "per side: (ds6814/ds6815 + 1) shr 1 (ovl10:1AD8); FindStartCell closes its first ring after that many cells (ovl10:17E7)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds4656"
+new = "SideFacing"
+kind = "global"
+why = "per side: the party facing ds6AAF shr 1 and its opposite ((ds6AAF + 4) mod 8) shr 1 (ovl10:1A3D, 1AB3); it selects the placement shape and the GroupFacing and FacingWallDirs rows"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds02D2"
+new = "FacingWallDirs"
+kind = "global"
+why = "ovl10:1879 and 1935: FindStartCell passes ds02D2[SideFacing, 1..3] as the direction of the wall test ovl10_fn_01AD on the area map"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds02E2"
+new = "GroupFacing"
+kind = "global"
+why = "ovl10:15C5: FindStartCell takes ds02E2[SideFacing, Group] shr 1 as the facing that orients the rings of placement group Group"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds02F2"
+new = "FacingCombatDir"
+kind = "global"
+why = "ovl10:1363 and 15EA: indexed by a facing 0..3, its values (7, 2, 3, 6 in the image) index the direction step tables ds2736/ds273F, and PrepareCombatants gives each combatant ds02F2[ds6AAF shr 1] as its icon set"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds02F6"
+new = "RingStartCol"
+kind = "global"
+why = "ovl10:1640: FindStartCell starts a ring at column ds02F6[Group > 0, Facing] plus the ring number times the step"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds02FE"
+new = "RingStartRow"
+kind = "global"
+why = "ovl10:1672: as RingStartCol for the row"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds0306"
+new = "PlacementShapes"
+kind = "global"
+why = "ovl10:1B38/1B57: PlaceAllCombatants marks a grid cell usable when its column lies in the (Lo, Hi) span of its row in shape SideFacing (group 1: shape 4)"
+date = "2026-10-12"
+

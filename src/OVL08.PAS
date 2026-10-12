@@ -58,7 +58,7 @@ const
   resolve across units yet (escalated; draft in re/symbols.toml notes). }
 {@stub} procedure EndCombat; begin end;
 { ovl08:007A. The combat: sets the view mode 5 and DS:6B84 := @ovl13_e14, sets up through
-  ovl10_e1, then runs rounds until EndCombatRound says done and calls EndCombat. A stub for the
+  StartBattle, then runs rounds until EndCombatRound says done and calls EndCombat. A stub for the
   same matcher reason as EndCombat (draft in re/symbols.toml notes). }
 {@stub} procedure RunCombat; begin end;
 { ovl08:0131. Picks the character who acts next: of the party list (ds5D96, which holds every

@@ -779,3 +779,68 @@ evidence = "DrawGlyph mode 0 ANDs ds25CD[mapped colour] with the column mask to 
 offset = 0x25E5
 name = "GlyphPixelMasks"
 evidence = "DrawGlyph mode 0 picks ds25E5[Bit] for pixel column Bit 0..7 of the 16-bit text-scanline word (0709:02B0)"
+
+[[global]]
+offset = 0x465A
+name = "CombatBlock"
+evidence = "BuildWildernessMap (ovl10:1215) stores the area map block at the party position here; BlockTerrainFlags (ovl10:08AA) reads it"
+
+[[global]]
+offset = 0x4440
+name = "PlacementCells"
+evidence = "PlaceAllCombatants (ovl10:1B8E) sets each byte of 2 sides x 4 groups x 6 rows x 11 columns to 1 inside the group's shape, TryPlaceAt (ovl10:1480, 1563) requires 1 and clears it when it places a combatant"
+
+[[global]]
+offset = 0x4658
+name = "PlacingSide"
+evidence = "PlaceAllCombatants sets it to each character's Side (ovl10:1C41) before FindStartCell, and loops it over 0..1 to build the per-side tables; every per-side table of the placement is indexed by it"
+
+[[global]]
+offset = 0x4650
+name = "SideOriginCol"
+evidence = "per side: PlaceAllCombatants sets side 0 to 0 and side 1 to the column step of the party facing times game word 705 (ovl10:1A2C..1A6E); FindStartCell adds the party column ds6AAD to it for the wall tests and TryPlaceAt adds it to the map column"
+
+[[global]]
+offset = 0x4652
+name = "SideOriginRow"
+evidence = "per side, as SideOriginCol for the row (ovl10:1A31..1A9F, 1846)"
+
+[[global]]
+offset = 0x4654
+name = "FirstRingCells"
+evidence = "per side: (ds6814/ds6815 + 1) shr 1 (ovl10:1AD8); FindStartCell closes its first ring after that many cells (ovl10:17E7)"
+
+[[global]]
+offset = 0x4656
+name = "SideFacing"
+evidence = "per side: the party facing ds6AAF shr 1 and its opposite ((ds6AAF + 4) mod 8) shr 1 (ovl10:1A3D, 1AB3); it selects the placement shape and the GroupFacing and FacingWallDirs rows"
+
+[[global]]
+offset = 0x02D2
+name = "FacingWallDirs"
+evidence = "ovl10:1879 and 1935: FindStartCell passes ds02D2[SideFacing, 1..3] as the direction of the wall test ovl10_fn_01AD on the area map"
+
+[[global]]
+offset = 0x02E2
+name = "GroupFacing"
+evidence = "ovl10:15C5: FindStartCell takes ds02E2[SideFacing, Group] shr 1 as the facing that orients the rings of placement group Group"
+
+[[global]]
+offset = 0x02F2
+name = "FacingCombatDir"
+evidence = "ovl10:1363 and 15EA: indexed by a facing 0..3, its values (7, 2, 3, 6 in the image) index the direction step tables ds2736/ds273F, and PrepareCombatants gives each combatant ds02F2[ds6AAF shr 1] as its icon set"
+
+[[global]]
+offset = 0x02F6
+name = "RingStartCol"
+evidence = "ovl10:1640: FindStartCell starts a ring at column ds02F6[Group > 0, Facing] plus the ring number times the step"
+
+[[global]]
+offset = 0x02FE
+name = "RingStartRow"
+evidence = "ovl10:1672: as RingStartCol for the row"
+
+[[global]]
+offset = 0x0306
+name = "PlacementShapes"
+evidence = "ovl10:1B38/1B57: PlaceAllCombatants marks a grid cell usable when its column lies in the (Lo, Hi) span of its row in shape SideFacing (group 1: shape 4)"

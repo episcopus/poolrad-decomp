@@ -3207,12 +3207,12 @@ id = "ovl10:0000"
 unit = "ovl10"
 addr = "ovl10:0000"
 size = 299
-name = "ovl10_fn_0000"
+name = "ScatterRareTiles"
 signature = ""
 c_name = "ovl10_fn_0000"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl10_fn_0000 (ovl10:0000 turns plain ground cells (picture 16h) of the combat map into tile 1Ah or 1Bh on a d100 roll of 98 or 99 and, on 100, rarely 1Ch or 1Dh); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3234,7 +3234,7 @@ unit = "ovl10"
 addr = "ovl10:01AD"
 size = 116
 name = "ovl10_fn_01AD"
-signature = ""
+signature = "function ovl10_fn_01AD(Col, Row: ShortInt; Dir: Byte): Byte"
 c_name = "ovl10_fn_01AD"
 level = "none"
 justification = ""
@@ -3324,12 +3324,12 @@ id = "ovl10:08A4"
 unit = "ovl10"
 addr = "ovl10:08A4"
 size = 755
-name = "ovl10_fn_08A4"
-signature = ""
+name = "BlockTerrainFlags"
+signature = "function BlockTerrainFlags: Byte"
 c_name = "ovl10_fn_08A4"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call; map dec-16 2026-10-12: ends 0B97 (was 651); 0B2F, 0B48 were mid-routine, entries deleted"
+notes = "renamed from ovl10_fn_08A4 (ovl10:08A4 maps the area block code ds465A to a terrain flag byte through a case of block code ranges; the map builders 0BDE, 0D13 and 0E9E test its bits to choose rivers and features); auto:near_call; map dec-16 2026-10-12: ends 0B97 (was 651); 0B2F, 0B48 were mid-routine, entries deleted"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3363,12 +3363,12 @@ id = "ovl10:0D13"
 unit = "ovl10"
 addr = "ovl10:0D13"
 size = 395
-name = "ovl10_fn_0D13"
+name = "PlaceTallFeatures"
 signature = ""
 c_name = "ovl10_fn_0D13"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl10_fn_0D13 (ovl10:0D13 puts two-cell features (lower tile Kind+23h, upper tile Kind+1Fh for kinds below 5) on plain ground, with a chance from BlockTerrainFlags); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3376,12 +3376,12 @@ id = "ovl10:0E9E"
 unit = "ovl10"
 addr = "ovl10:0E9E"
 size = 790
-name = "ovl10_fn_0E9E"
+name = "ScatterTerrainFeatures"
 signature = ""
 c_name = "ovl10_fn_0E9E"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl10_fn_0E9E (ovl10:0E9E rolls d255 per plain ground cell against five chances set from BlockTerrainFlags and replaces it by one of five tile ranges); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3389,12 +3389,12 @@ id = "ovl10:11B4"
 unit = "ovl10"
 addr = "ovl10:11B4"
 size = 144
-name = "ovl10_fn_11B4"
+name = "BuildWildernessMap"
 signature = ""
 c_name = "ovl10_fn_11B4"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl10_fn_11B4 (ovl10:11B4 fills the combat map with the ground tile, reads the area map block at the party position (GameVars 195, 196) into ds465A and runs the river and feature builders; CreateCombatMap calls it when AreaViewKind is not 1); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3402,12 +3402,12 @@ id = "ovl10:1244"
 unit = "ovl10"
 addr = "ovl10:1244"
 size = 157
-name = "ovl10_fn_1244"
+name = "CreateCombatMap"
 signature = ""
 c_name = "ovl10_fn_1244"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl10_fn_1244 (ovl10:1244 loads the DungCom or WildCom and RandCom 24x24 sets, GetMems CombatMap (4E9h bytes), clears its cursor fields and builds the dungeon (0810) or wilderness (11B4) map); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3415,12 +3415,12 @@ id = "ovl10:12E1"
 unit = "ovl10"
 addr = "ovl10:12E1"
 size = 290
-name = "ovl10_fn_12E1"
+name = "PrepareCombatants"
 signature = ""
 c_name = "ovl10_fn_12E1"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl10_fn_12E1 (ovl10:12E1 walks the party list ds5D96 and gives each character a zeroed 16h-byte Combat record with its NoBody flag and starting icon set); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3428,12 +3428,12 @@ id = "ovl10:1403"
 unit = "ovl10"
 addr = "ovl10:1403"
 size = 49
-name = "ovl10_fn_1403"
-signature = ""
+name = "IsBeyondGrid"
+signature = "function IsBeyondGrid(Col, Row: ShortInt): Boolean"
 c_name = "ovl10_fn_1403"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl10_fn_1403 (ovl10:1403 is True when X is outside 0..10 and Y outside 0..5, the 11x6 placement grid of ds4440; FindStartCell uses it to leave a ring); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3441,12 +3441,12 @@ id = "ovl10:1434"
 unit = "ovl10"
 addr = "ovl10:1434"
 size = 323
-name = "ovl10_fn_1434"
-signature = ""
+name = "TryPlaceAt"
+signature = "function TryPlaceAt(Index: Byte; Col, Row, OriginCol, OriginRow: ShortInt; Group: Byte): Boolean"
 c_name = "ovl10_fn_1434"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl10_fn_1434 (ovl10:1434 puts combatant Index on the map cell of grid cell (Col, Row) when that grid cell is free and ProbeStep finds no occupant and a passable tile, and marks the grid cell used); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3454,12 +3454,12 @@ id = "ovl10:1577"
 unit = "ovl10"
 addr = "ovl10:1577"
 size = 1150
-name = "ovl10_fn_1577"
-signature = ""
+name = "FindStartCell"
+signature = "function FindStartCell(Index: Byte): Boolean"
 c_name = "ovl10_fn_1577"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call; map dec-16 2026-10-12: ends 19F5 (was 11); 1582, 1758 were mid-routine, entries deleted"
+notes = "renamed from ovl10_fn_1577 (ovl10:1577 walks rings of the placement grid of the side ds4658 calling TryPlaceAt until the combatant is placed or every group is exhausted (False)); auto:near_call; map dec-16 2026-10-12: ends 19F5 (was 11); 1582, 1758 were mid-routine, entries deleted"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3467,12 +3467,12 @@ id = "ovl10:19F5"
 unit = "ovl10"
 addr = "ovl10:19F5"
 size = 1084
-name = "ovl10_fn_19F5"
+name = "PlaceAllCombatants"
 signature = ""
 c_name = "ovl10_fn_19F5"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call; map dec-16 2026-10-12: ends 1E31 (was 42); 1A1F, 1A91, 1B83 were mid-routine, entries deleted"
+notes = "renamed from ovl10_fn_19F5 (ovl10:19F5 sets up both sides' placement grids and walks the party list placing every combatant with FindStartCell (CombatantTable, CombatantRecord), leaving bodies for those already down and dropping those that do not fit); auto:near_call; map dec-16 2026-10-12: ends 1E31 (was 42); 1A1F, 1A91, 1B83 were mid-routine, entries deleted"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3480,12 +3480,12 @@ id = "ovl10:1E31"
 unit = "ovl10"
 addr = "ovl10:1E31"
 size = 348
-name = "ovl10_e1"
+name = "StartBattle"
 signature = ""
 c_name = "ovl10_e1"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_1"
+notes = "renamed from ovl10_e1 (ovl10:1E31 (entry 1, called by RunCombat) shows 'A battle begins...', resets the combat state, creates the combat map, prepares and places the combatants and centres the view on the first one); auto:entry_1"
 evidence = ["prologue"]
 
 [[routine]]
