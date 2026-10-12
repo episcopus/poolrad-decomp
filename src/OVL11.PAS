@@ -107,7 +107,7 @@ begin
   ds5D96 := 0;
   SelectedCharacter := nil;
   ds49ED := $9900;
-  ds49E2 := 1;
+  GameSpeed := 1;
   ds49F4 := 0;
   TileSet := 1;
   ds5377 := 1;

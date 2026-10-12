@@ -559,3 +559,8 @@ evidence = "DS:288C holds OPQK MGHI; ReadPromptChoice maps keypad digit k to its
 offset = 0x6ABE
 name = "PictureAnimation"
 evidence = "ReadPromptChoice (ovl25:04A3..052D) draws frame DS:6ABF of the sprite list DS:6ABE at column 3 row 3 and steps to the next frame after its delay; LoadSpriteList fills it (ovl07_e8), ovl14 frees it"
+
+[[global]]
+offset = 0x49E2
+name = "GameSpeed"
+evidence = "GameSpeedMenu (ovl08:10F6) shows it as GameSpeed (n) and its Slower/Faster keys move it in 0..9"

@@ -15,11 +15,11 @@ procedure res12_fn_0712;
 procedure res12_fn_0767(Who: Pointer);
 procedure res12_fn_08EF;
 procedure res12_fn_0973;
-procedure res12_fn_09E3;
+procedure res12_fn_09E3(Who: Pointer);
 procedure res12_fn_0B4F;
-procedure res12_fn_0B73;
+function res12_fn_0B73(Who: Pointer): Boolean;
 procedure res12_fn_0BB8(Who: Pointer);
-procedure res12_fn_1037;
+function res12_fn_1037(N: Byte): string;
 function res12_fn_1073(Value: Word): string;
 procedure res12_fn_10AD;
 procedure res12_fn_10E6;
@@ -54,8 +54,8 @@ procedure res12_fn_23DB;
 procedure res12_fn_2433;
 procedure res12_fn_255B;
 procedure res12_fn_2571;
-procedure res12_fn_2637;
-procedure res12_fn_2686;
+function res12_fn_2637(Who: Pointer): Byte;
+function res12_fn_2686(Who: Pointer): Byte;
 procedure res12_fn_26C2;
 procedure res12_fn_272A;
 procedure res12_fn_27D9;
@@ -63,8 +63,8 @@ procedure res12_fn_290B;
 procedure res12_fn_2B5E;
 procedure res12_fn_2B88;
 procedure res12_fn_2C48;
-procedure res12_fn_2E03;
-procedure res12_fn_2E46;
+function res12_fn_2E03(Who: Pointer): Boolean;
+function res12_fn_2E46(Who: Pointer): Boolean;
 procedure res12_fn_2E8B;
 procedure res12_fn_2F57;
 implementation
@@ -93,15 +93,15 @@ implementation
 { 00BA:0973: retf 10: 10 bytes of parameters; 258 bytes of locals }
 {@stub} procedure res12_fn_0973; begin end;
 { 00BA:09E3: frame not read }
-{@stub} procedure res12_fn_09E3; begin end;
+{@stub} procedure res12_fn_09E3(Who: Pointer); begin end;
 { 00BA:0B4F: retf 4: 4 bytes of parameters; 0 bytes of locals }
 {@stub} procedure res12_fn_0B4F; begin end;
 { 00BA:0B73: retf 4: 4 bytes of parameters; 6 bytes of locals }
-{@stub} procedure res12_fn_0B73; begin end;
+{@stub} function res12_fn_0B73(Who: Pointer): Boolean; begin end;
 { 00BA:0BB8: retf 4: 4 bytes of parameters; 20 bytes of locals }
 {@stub} procedure res12_fn_0BB8(Who: Pointer); begin end;
 { 00BA:1037: retf 2: 2 bytes of parameters; 256 bytes of locals }
-{@stub} procedure res12_fn_1037; begin end;
+{@stub} function res12_fn_1037(N: Byte): string; begin end;
 { 00BA:1073: retf 2, a string function (the caller pushes the result temporary first); ovl04 puts
   a price into a message with it. }
 {@stub} function res12_fn_1073(Value: Word): string; begin end;
@@ -174,9 +174,9 @@ implementation
 { 00BA:2571: retf 8: 8 bytes of parameters; 0 bytes of locals }
 {@stub} procedure res12_fn_2571; begin end;
 { 00BA:2637: retf 4: 4 bytes of parameters; 2 bytes of locals }
-{@stub} procedure res12_fn_2637; begin end;
+{@stub} function res12_fn_2637(Who: Pointer): Byte; begin end;
 { 00BA:2686: retf 4: 4 bytes of parameters; 10 bytes of locals }
-{@stub} procedure res12_fn_2686; begin end;
+{@stub} function res12_fn_2686(Who: Pointer): Byte; begin end;
 { 00BA:26C2: retf 2: 2 bytes of parameters; 2 bytes of locals }
 {@stub} procedure res12_fn_26C2; begin end;
 { 00BA:272A: retf 2: 2 bytes of parameters; 2 bytes of locals }
@@ -192,9 +192,9 @@ implementation
 { 00BA:2C48: retf 10: 10 bytes of parameters; 602 bytes of locals }
 {@stub} procedure res12_fn_2C48; begin end;
 { 00BA:2E03: retf 4: 4 bytes of parameters; 2 bytes of locals }
-{@stub} procedure res12_fn_2E03; begin end;
+{@stub} function res12_fn_2E03(Who: Pointer): Boolean; begin end;
 { 00BA:2E46: retf 4: 4 bytes of parameters; 2 bytes of locals }
-{@stub} procedure res12_fn_2E46; begin end;
+{@stub} function res12_fn_2E46(Who: Pointer): Boolean; begin end;
 { 00BA:2E8B: retf 8: 8 bytes of parameters; 6 bytes of locals }
 {@stub} procedure res12_fn_2E8B; begin end;
 { 00BA:2F57: retf 6: 6 bytes of parameters; 6 bytes of locals }

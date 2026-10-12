@@ -14,7 +14,7 @@ uses OVL27, OVL28, RES06, RES07, RES12;
 
 { ovl18:0006. Animates the FINAL ending picture at (Col, Row): loads the FINAL<TileSet>
   frames of bank Bank through LoadSpriteList and shows them Cycles times, drawing each frame
-  through DrawSprite and waiting that frame's data delay, scaled by (ds49E2 + 3) ticks of
+  through DrawSprite and waiting that frame's data delay, scaled by (GameSpeed + 3) ticks of
   the GameClock timer, before stepping to the next one, then frees the list. The frame
   cursor is the sprite list's Flag field (the loader sets it to 1); Count is read as a
   byte here (ovl18:00E1 compares it with a byte cmp/jbe although the shared type says
@@ -34,7 +34,7 @@ begin
   repeat
     DrawSprite(Col, Row, 1, Sprites.Slots[Sprites.Flag].Sprite);
     NowTick := GameClock;
-    if (NowTick - StartTick) > LongInt(Sprites.Slots[Sprites.Flag].Data) * (ds49E2 + 3) then
+    if (NowTick - StartTick) > LongInt(Sprites.Slots[Sprites.Flag].Data) * (GameSpeed + 3) then
     begin
       Inc(Sprites.Flag);
       if Sprites.Flag > Byte(Sprites.Count) then
@@ -67,7 +67,7 @@ begin
   res12_fn_27D9;
   res07_fn_0111('FINAL' + ds4713, 1, 0, 0, ds470E);
   res07_fn_0D71(0, 0, 0, 0, ds470E, DrawBuf);
-  AnimateFinalPicture(3, 5, 2, (10 - ds49E2) * 5 div 2);
+  AnimateFinalPicture(3, 5, 2, (10 - GameSpeed) * 5 div 2);
   res07_fn_0111('FINAL' + ds4713, 3, 0, 0, ds470E);
   res07_fn_0D71(0, 0, 0, 0, ds470E, DrawBuf);
   if ds49D6^[830] > 1 then
@@ -92,7 +92,7 @@ begin
   res06_fn_0626(1, $14, $A, 'which I moved here, to my lair,');
   res06_fn_0626(1, $15, $A, 'I will still rule, by possessing one');
   res06_fn_0626(1, $16, $A, 'of you!"');
-  AnimateFinalPicture(3, 1, 7, (10 - ds49E2) * 5 div 2);
+  AnimateFinalPicture(3, 1, 7, (10 - GameSpeed) * 5 div 2);
   res06_fn_0DD3(1, $11, $26, $16);
   res06_fn_0626(1, $11, $A, '"No Lord Bane!  I can still rule here!');
   res06_fn_0626(1, $12, $A, 'I have not failed.  Do not call me back');
