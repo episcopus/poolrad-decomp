@@ -168,7 +168,7 @@ readability:       ## the checkable readability rules of docs/process/READABILIT
 	$(PY) tools/match/readability.py $(UNIT)
 
 rename:            ## give a routine or global its real name everywhere: OLD=<name> NEW=<Name> WHY="<evidence>"; APPLY=1 re-applies recorded renames
-	$(if $(APPLY),$(PY) tools/match/rename.py --apply,$(PY) tools/match/rename.py "$(OLD)" "$(NEW)" --why "$(WHY)")
+	$(if $(APPLY),$(PY) tools/match/rename.py --apply,RENAME_WHY='$(subst ','\'',$(value WHY))' $(PY) tools/match/rename.py "$(OLD)" "$(NEW)")
 
 skeleton:          ## write src/<ID>.PAS for a unit with no source yet: UNIT=<id> (no UNIT: every game unit)
 	$(PY) tools/match/skeleton.py $(if $(UNIT),$(UNIT),--all)
