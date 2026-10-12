@@ -250,6 +250,8 @@ var
   ds49DA: ^TBlock400;             { $400-byte block the loader allocates (ovl11:0054) }
   ds49DE: ^TBlock1E00;            { $1E00-byte block the loader allocates (ovl11:0064) }
   ds49E2: Byte;                   { set to 1 by the loader; a count the ovl18 narratives read }
+  ds4A16: Word;                   { EGA/VGA plane segment res06_fn_0071 sets to AIndex shl 9 + $A000 }
+  ds4A18: Word;                   { EGA/VGA plane segment res06_fn_00A0 sets to AIndex shl 9 + $A000 }
   { The view mode: ShowEndingNarrative saves it, sets 7, restores it; VisitTemple sets 1 (ovl04:0D0F). }
   ds49F3: Byte;                   { the view mode; see above }
   ds0900: array[0..$A] of Byte;   { the first door block codes of AnimateAreaDoors (bit 7 = other bank) }
