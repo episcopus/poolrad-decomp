@@ -196,7 +196,7 @@ The main program **[V]** (`src/POOL.PAS`, `make match UNIT=main`: matched comple
 
 ```pascal
 ovl11_e1;
-if ParamStr(1) <> 'STING' then begin ovl01_e1; ovl02_e1; end;   { title screens, code wheel (5.12) }
+if ParamStr(1) <> 'STING' then begin ovl01_e1; CheckCodeWheel; end;   { title screens, code wheel (5.12) }
 ovl16_e1;
 ovl29_e1(11, 0, 7, 6);
 ovl03_e1;
@@ -481,9 +481,10 @@ a fixed table entry while the game variables allow it (`DrawAreaView`, `ovl27:00
 
 ### 5.12 Copy protection: the code wheel
 
-- The check is `ovl02:00FD` (entry point of overlay 2, 862 bytes of code) **[V]**. At most three times it picks `r = Random(13)` (`System_Random`, `0AF8:11C0`), draws two rune glyphs and a path pattern from a table at the very start of DGROUP (`DS:0000`, 13 records of 21 bytes), calls the keyboard flush `res04:0104` (which does nothing, 5.8) and asks "INPUT THE CODE WORD:" **[V]**.
+- The check is `CheckCodeWheel` (`ovl02:00FD`, entry point of overlay 2, matched as a whole: `src/OVL02.PAS`, `make match UNIT=ovl02`: unit complete) **[V]**. At most three times it picks `r = Random(13)` (`System_Random`, `0AF8:11C0`), draws two rune glyphs and a path pattern from a table at the very start of DGROUP (`DS:0000`, 13 records of 21 bytes, the `TCodeWheelEntry` type in `src/POOLVARS.PAS`), calls the keyboard flush `res04:0104` (which does nothing, 5.8) and asks "INPUT THE CODE WORD:" **[V]**. The question window is drawn by `res09_fn_02E8(1, 1, $26, $16, 0, 0, '')` and the instructions, the runes and the path by `res06_fn_0626`, `res06_fn_01DF` (the runes as font characters at the four corners of a small grid) and one concatenation of five spaces with the record path **[V]** (code).
 - Record layout **[V]** (`start-unpack.exe` image at `0C7C0h`, and the lcalls in `ovl02:01A2..02FD`): `+02` Pascal string[6] with the answer; `+09`, `+0A`, `+0B` glyph indices, each drawn as character `index + 40h` in the game's font (the two rune pictures the prompt asks to match, then a third); `+0C` a fourth index drawn only when it is not FFh; `+0D` Pascal string with the path pattern drawn under the runes (`- - - -`, `-..-..-`, `.......`).
-- The 13 answers, in record order **[V]**: BEWARE, ZOMBIE, NOTNOW, COPPER, DRAGON, EFREET, FRIEND, JUNGLE, KNIGHT, SAVIOR, TEMPLE, VULCAN, WYVERN. The typed word is compared with `System_StrCompare` (`0AF8:0C10`, flags in ZF) after `StrLCopy(local, input, 40)`; the failure message is "Sorry, that's incorrect." (`ovl02:00E4`); after the third failure `res04:0000` ends the program **[V]**.
+- The 13 answers, in record order **[V]**: BEWARE, ZOMBIE, NOTNOW, COPPER, DRAGON, EFREET, FRIEND, JUNGLE, KNIGHT, SAVIOR, TEMPLE, VULCAN, WYVERN. The typed word is compared with `System_StrCompare` (`0AF8:0C10`, flags in ZF) after truncating the function result of `res06_fn_09E3` (the line reader of res06) to 40 characters; the failure message is "Sorry, that's incorrect." (`ovl02:00E4`) through `res06_fn_0D68`; after the third failure `res04:0000` ends the program **[V]**.
+- The line reader `res06_fn_09E3` is a string function: TP 6.0 passes the caller result pointer as the first (deepest) argument and the callee `retf 8` pops only the prompt and the two numbers, leaving the result pointer for the caller to consume (here: the truncating assignment `Answer := res06_fn_09E3('INPUT THE CODE WORD: ', 13, 6)`, `0AF8:0B25` with max 40) **[V]** (the frames: `retf 8` = 8 bytes of parameters, the observed 12 pushed).
 - Which question appears depends on `RandSeed`, which comes from the clock, so it varies from run to run on real hardware. The oracle's virtual clock makes it repeat; its `wheel` script command reads the answer from the table by watching that `Random(13)` call (`tools/oracle/protection.py`) and types it, leaving the game's own check untouched.
 
 ### 5.13 Random numbers
