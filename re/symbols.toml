@@ -7583,12 +7583,12 @@ id = "ovl14:0989"
 unit = "ovl14"
 addr = "ovl14:0989"
 size = 963
-name = "ovl14_e2"
-signature = ""
+name = "HandleWildernessKeys"
+signature = "function HandleWildernessKeys: Char"
 c_name = "ovl14_e2"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_2; map dec-1 2026-10-12: ends 0D4C (was 447); 0B48 was mid-routine (its E4 40 bytes are xor ah,ah + inc ax, not IN AL,40h), entry deleted"
+notes = "renamed from ovl14_e2 (ovl14:0989 drives wilderness interaction for ovl03: reads menu and movement keys, moves the party, manages icon sets and view pages, returns the key); auto:entry_2; map dec-1 2026-10-12: ends 0D4C (was 447); 0B48 was mid-routine (its E4 40 bytes are xor ah,ah + inc ax, not IN AL,40h), entry deleted"
 evidence = ["prologue"]
 
 [[routine]]

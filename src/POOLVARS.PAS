@@ -169,6 +169,7 @@ var
   { The 13 code wheel records of the copy protection (whitepaper 5.12): the answer, the rune
     indices and the path pattern. CheckCodeWheel picks one at random. }
   ds0000: array[0..12] of TCodeWheelEntry;  { the code wheel records; see above }
+  ds04DF: string[40];             { prompt string HandleWildernessKeys passes to ovl25_e2; filled elsewhere }
   { The wall view's id table: two equal groups of eight ids (0,15,12,11,13,10,9,14). ShowAreaView
     indexes it with the game variables VarWallIndexOutside and VarWallIndexInside. Its last six
     bytes are also entry 0 of SpecialBlocks, which DrawAreaView never reads. }
@@ -203,6 +204,7 @@ var
   ds49D1: Byte;                   { 1 when POOL.CFG line 5 is 'F', 0 otherwise (meaning of F/N unknown, 2.3) }
   GameVars: ^TGameVars;           { the game variables (see TGameVars) }
   CfgProbe: File;                 { pool.cfg opened untyped (128-byte records) to probe its existence }
+  ds04B6: string[40];             { prompt string HandleWildernessKeys passes to ovl25_e2 in the movement loop }
   DebugMode: Boolean;             { STING debug mode: switched by Ctrl-D in ReadGameKey; ShowDebugTrace shows only when set }
   AreaViewKind: Byte;             { what to draw: 1 the 3D wall view, 2..4 the map window page; evidence in re/dseg.toml }
   ds6A60: Byte;                   { wall view descriptor 1 (of 4): ovl29_e1 stores them, ovl29_fn_0174 draws with them }
@@ -280,6 +282,7 @@ var
   ds4713: string[1];              { Str(TileSet): the picture number ShowEndingNarrative appends to FINAL }
   ds6718: array[0..255] of TSortRec;  { the ovl30 sort table (element 0 holds the count, SortTable) }
   ds49ED: Word;                   { set to $9900 by the loader (ovl11:03C0) }
+  ds49E5: Word;                   { copied to ds49ED by the ovl14 L key; meaning unknown }
   ds49F4: Byte;                   { cleared by the loader (ovl11:03CB) }
   ds49F5: Byte;                   { set to 1 by the loader (ovl11:0392) }
   ds49F6: Byte;                   { set to 1 by the loader (ovl11:0397) }
@@ -347,6 +350,7 @@ var
   ds84DF: Byte;                   { cleared by the loader (ovl11:041F) }
   ds84E0: Byte;                   { cleared by the loader (ovl11:0424) }
   ds84E3: Byte;                   { cleared by the loader (ovl11:0433) }
+  ds84E4: Byte;                   { window-clear once flag: HandleWildernessKeys clears the text window and sets it }
   ds84E9: Byte;                   { cleared by the loader (ovl11:0456) }
 
   { The 8x8 tile world of ovl34 (whitepaper 4.x): which 8X8D file to take the bank from, the five

@@ -36,10 +36,10 @@ function DoKnock: Boolean;
 procedure ClampPartyPosition;
 procedure MoveParty;
 procedure CheckMapCell;
-procedure ovl14_e2;
+function HandleWildernessKeys: Char;
 procedure ovl14_e1;
 implementation
-uses OVL29, RES03, RES05, RES06, OVL20, OVL24;
+uses OVL29, RES03, RES05, RES06, OVL20, OVL24, OVL25, OVL19, OVL15, RES12, RES09, OVL32;
 
 { ovl14:0000. Clears the icon set's bit pair in the event byte of the area-map cell
   (Col, Row): bits 6-7 for icon 6, 4-5 for 4, 2-3 for 2, 0-1 for 0. Called by ovl14_e1
@@ -250,7 +250,7 @@ end;
 { ovl14:068D. Steps the party one cell in the current icon set's direction when
   ovl29_e3 allows it, clamping the result into the 16x16 area map: each clamped
   coordinate is written back and the edge flag ds49D6^[725] (+$5AA) is set. Called
-  by the movement driver ovl14_e2. The direction tables ds2736/ds273F are indexed
+  by the movement driver HandleWildernessKeys. The direction tables ds2736/ds273F are indexed
   by the icon set [I]. }
 procedure ClampPartyPosition;
 var
@@ -351,8 +351,149 @@ begin
     ovl20_e1($C, 3);
   end;
 end;
-{ ovl14:0989: retf 0: 0 bytes of parameters; 60 bytes of locals }
-{@stub} procedure ovl14_e2; begin end;
+{ ovl14:0989. The wilderness key driver (called by ovl03_fn_3379): in the 3D view it
+  reads menu and movement keys through ovl25_e2 and dispatches them (A/C/V/E/S/L
+  menu keys, H/M/P/K movement with the icon sets, anything else through ovl19_e10),
+  otherwise it loads the ICON pictures for map pages 2..4 and runs a smaller key loop;
+  either loop repeats through res12_fn_290B until Redraw is set, then it tidies the
+  window and returns the key. Also clears ds49D6^[713] on entry. }
+function HandleWildernessKeys: Char;
+var
+  Redraw: Byte;
+  Key: Char;
+  KeyFlag: Byte;
+  SpareBuf: String[40];   { 41 frame-filling bytes, never read; purpose unknown }
+  ViewFlag: Byte;         { flag ovl19_e5 (View) takes }
+  SpareLong: LongInt;     { 4 frame-filling bytes, never read; purpose unknown }
+begin
+  ds49D6^[713] := 0;
+  case AreaViewKind of
+    1:
+      begin
+        Redraw := 0;
+    repeat
+      Key := ovl25_e2('', ds04B6, $D, $A, $F, 1, 0, KeyFlag);
+      if KeyFlag = 0 then
+        case Key of
+          'A':
+            if GameVars^[VarShowWallOverlays] = 0 then
+            begin
+              ds6AAC := Ord(ds6AAC = 0);
+              ovl29_e5(ds6AAD, ds6AAE, ds6AAF);
+            end
+            else
+              res06_fn_0D68('Not Here', $E);
+          'C':
+            if PByteArray(SelectedCharacter)^[$10C] = 0 then
+              ovl15_e2;
+          'V':
+            ovl19_e5(ViewFlag);
+          'E':
+            Redraw := 1;
+          'S':
+            ds49D6^[714] := ds49D6^[714] xor 1;
+          'L':
+            begin
+              ds49D6^[714] := ds49D6^[714] or 2;
+              ovl20_e1(1, 2);
+              ds49ED := ds49E5;
+              Redraw := 1;
+            end;
+        end
+      else
+        case Key of
+          'H':
+            begin
+              ClampPartyPosition;
+              Redraw := 1;
+            end;
+          'P':
+            begin
+              ds6AAF := (ds6AAF + 4) mod 8;
+              ds6AB0 := ovl29_e2(ds6AAD, ds6AAE, ds6AAF);
+              ovl29_e5(ds6AAD, ds6AAE, ds6AAF);
+            end;
+          'K':
+            begin
+              ds6AAF := (ds6AAF + 6) mod 8;
+              res03_fn_00DC(ds2628);
+              ds6AB0 := ovl29_e2(ds6AAD, ds6AAE, ds6AAF);
+              ovl29_e5(ds6AAD, ds6AAE, ds6AAF);
+            end;
+          'M':
+            begin
+              ds6AAF := (ds6AAF + 2) mod 8;
+              res03_fn_00DC(ds2628);
+              ds6AB0 := ovl29_e2(ds6AAD, ds6AAE, ds6AAF);
+              ovl29_e5(ds6AAD, ds6AAE, ds6AAF);
+            end;
+        else
+          ovl19_e10(Key);
+          res12_fn_0767(SelectedCharacter);
+        end;
+      res12_fn_290B;
+    until Redraw <> 0;
+  end;
+  2..4:
+  begin
+    if ds49F9 < 2 then
+    begin
+      LoadPictureSlot('ICON', 0, 9);
+      LoadPictureSlot('ICON', 1, $A);
+      LoadPictureSlot('ICON', 2, $B);
+      res12_fn_2B5E;
+    end;
+    Redraw := 0;
+    repeat
+      Key := ovl25_e2('', ds04DF, $D, $A, $F, 1, 0, KeyFlag);
+      if KeyFlag = 0 then
+        case Key of
+          'C':
+            ovl15_e2;
+          'V':
+            ovl19_e5(ViewFlag);
+          'E':
+            Redraw := 1;
+          'S':
+            ds49D6^[714] := ds49D6^[714] xor 1;
+          'L':
+            begin
+              ds49D6^[714] := ds49D6^[714] or 2;
+              ovl20_e1(1, 2);
+              ds49ED := ds49E5;
+              Redraw := 1;
+            end;
+        end
+      else
+      begin
+        Redraw := 1;
+        case Key of
+          'H':
+            ds6AAF := 0;
+          'M':
+            ds6AAF := 2;
+          'P':
+            ds6AAF := 4;
+          'K':
+            ds6AAF := 6;
+        else
+          ovl19_e10(Key);
+          res12_fn_0767(SelectedCharacter);
+          Redraw := 0;
+        end;
+      end;
+      res12_fn_290B;
+    until Redraw <> 0;
+    end;
+  end;
+  ds49F9 := AreaViewKind;
+  if ds84E4 = 0 then
+  begin
+    ClearWindow(1, $11, $26, $16);
+    ds84E4 := 1;
+  end;
+  HandleWildernessKeys := Key;
+end;
 { ovl14:0D6D: retf 0: 0 bytes of parameters; 300 bytes of locals }
 {@stub} procedure ovl14_e1; begin end;
 

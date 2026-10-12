@@ -736,3 +736,10 @@ kind = "routine"
 why = "ovl14:0294 is the B key handler in e1's menu: it bashes the first bashable ds5D96 record by lock type and strength rolls"
 date = "2026-10-11"
 
+[[rename]]
+old = "ovl14_e2"
+new = "HandleWildernessKeys"
+kind = "routine"
+why = "ovl14:0989 drives wilderness interaction for ovl03: reads menu and movement keys, moves the party, manages icon sets and view pages, returns the key"
+date = "2026-10-12"
+
