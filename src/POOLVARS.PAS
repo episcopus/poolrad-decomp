@@ -166,6 +166,8 @@ const
   VarShowWallOverlays = 251;      { nonzero: ShowAreaView clears ds6AAC, so ovl29_e5 draws the overlay labels }
   VarWallIndexOutside = 253;      { the ds0C26 wall id index ShowAreaView uses for a cell that is not interior }
   VarWallIndexInside = 254;       { the ds0C26 wall id index for an interior cell (event byte bit 7) }
+  VarRiverGate = 418;             { river-crossing gate: CheckMapCell prints the stench message while it is 0
+                                    (ovl14:0905); who sets it is not known yet }
 var
   { The 13 code wheel records of the copy protection (whitepaper 5.12): the answer, the rune
     indices and the path pattern. CheckCodeWheel picks one at random. }
@@ -266,7 +268,8 @@ var
   ds4660: Byte;                   { result of OpenGameFile (the file open state) read at ovl11:05A6 }
   ds4661: string[40];             { the save game name; the loader copies GameDir here and back (ovl11:0469, 05EA) }
   ds468C: file;                   { the untyped file the loader reads the block from (ovl11:05A1..05E5) }
-  { Second $800-byte word block the loader allocates (ovl11:0044); it zeroes word 830 (ovl11:03F5). }
+  { Second $800-byte word block the loader allocates (ovl11:0044); it zeroes word 830 (ovl11:03F5).
+    ovl14 reads words 713, 714 and 725 of it, all within the 1024 words of TGameVars. }
   ds49D6: ^TGameVars;             { second game word block; see above }
   ds49DA: ^TBlock400;             { $400-byte block the loader allocates (ovl11:0054) }
   ds49DE: ^TBlock1E00;            { $1E00-byte block the loader allocates (ovl11:0064) }
@@ -322,7 +325,10 @@ var
   SelectedCharacter: PCharacter;  { see above }
   ds286F: array[0..13] of Byte;   { the HEAD picture number per bank (SelectedCharacter^.HeadBank, ShowHeadBodyWindow) }
   ds287D: array[0..13] of Byte;   { the BODY picture number per bank (SelectedCharacter^.BodyBank, ShowHeadBodyWindow) }
-  ds5D96: LongInt;                { a 4-byte value the loader clears (ovl11:03B0): one `xor ax,ax` and two stores }
+  ds5D96: LongInt;                { head of the TCodeRec list ovl14 walks (see below) }
+    { Kept LongInt, not Pointer: the loader clears it with `ds5D96 := 0` (ovl11:03B0),
+      which is Error 26 for a Pointer (proven by a make tpc probe); ovl14 reaches the
+      records through Pointer(ds5D96). }
   ds5E1E: Word;                   { BlockRead result count of the loader (ovl11:05D6) }
   ds5E20: ^TBlock588;             { $588-byte block the loader allocates (ovl11:0074) }
   ds6810: PMenuLine;              { head of the shop's item list, a far pointer the loader clears (ovl11:031A) }
