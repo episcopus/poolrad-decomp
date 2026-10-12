@@ -144,7 +144,7 @@ end;
   2026-10-12): the body is settled as two set membership tests, `if not (Width in [0..$27]) then
   Exit; if not (B in [0..$18]) then Exit; ...` (the never-true lower-bound compares and the Exit
   block come from the set), but the routine does not match because a literal-pool byte 64 before the
-  entry differs (ours FF, original F8): the pool belongs to the preceding res06_fn_01DF, still a
+  entry differs (ours FF, original F8): the pool belongs to the preceding DrawGlyph, still a
   stub, so decompile 01DF first. Called by ovl21_e6, ClearPromptLine, res06_fn_09E3, ShowMessageLine and
   res06_fn_0D68. }
 {@stub} procedure res06_fn_05EB(A, Row, B, Width: Byte); begin end;

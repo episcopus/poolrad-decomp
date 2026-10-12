@@ -93,7 +93,7 @@ begin
   res06_fn_0626(1, $15, $A, 'I will still rule, by possessing one');
   res06_fn_0626(1, $16, $A, 'of you!"');
   AnimateFinalPicture(3, 1, 7, (10 - GameSpeed) * 5 div 2);
-  res06_fn_0DD3(1, $11, $26, $16);
+  ClearRect(1, $11, $26, $16);
   res06_fn_0626(1, $11, $A, '"No Lord Bane!  I can still rule here!');
   res06_fn_0626(1, $12, $A, 'I have not failed.  Do not call me back');
   res06_fn_0626(1, $13, $A, 'through the pool!"');

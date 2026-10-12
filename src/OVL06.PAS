@@ -181,7 +181,7 @@ end;
   neither menu text shows, call ovl19_e10 with the key. With money left in the pool, E first asks
   "Do you want to go back and get your Money?" ('~Yes ~No' through ovl07_e13, which returns the
   0-based hotkey position) and the party leaves on No (AnswerNo); Yes clears the message window
-  (res06_fn_0DD3) and stays. A second case redraws the screen (res12_fn_27D9) after B and T, and
+  (ClearRect) and stays. A second case redraws the screen (res12_fn_27D9) after B and T, and
   after A when Appraised is set. No parameters; side effects: the screen, the items and the money
   through the called routines. }
 procedure ShopMain;

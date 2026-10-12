@@ -39,7 +39,7 @@ const
   PromptLeftCol = 0;            { the title starts in column 0 (ovl25:0466); its words follow it }
   LastTextCol = $27;            { the last of the 40 text columns (ovl25:032B) }
   TextCols = $28;               { ClearPromptLine blanks 40 columns (ovl25:0707) }
-  Space = $20;                  { the blank res06_fn_01DF draws (ovl25:036C) }
+  Space = $20;                  { the blank DrawGlyph draws (ovl25:036C) }
   MaxPromptWords = 20;          { the word spans of the prompt, 40 bytes cleared (ovl25:00ED) }
   KeyNone = #0;                 { the extended-key prefix of ReadGameKey; also what Escape returns }
   KeyEnter = #13;

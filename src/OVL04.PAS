@@ -91,7 +91,7 @@ var
   Pooled: LongInt;
 begin
   Service := Service + ' will only cost ' + res12_fn_1073(Price) + ' gold pieces.';
-  res06_fn_0768(1, $11, $26, $16, $A, 1, Service);
+  ShowPagedText(1, $11, $26, $16, $A, 1, Service);
   Answer := AskYesNo('pay for cure ', 13, 15, 10);
   if Answer = Yes then
   begin
@@ -363,7 +363,7 @@ end;
 { ovl04:09D7. The Heal menu: fills ten menu lines (NewMenuList) with TempleMenuText, draws the
   windows and "<name>, how can we help you?", and runs the menu (ChooseFromList, keys "Heal Exit")
   until Exit or Escape; Heal or Enter on lines 0..8 runs that service, line 9 is Exit. Frees the
-  lines (FreeMenuList), clears the text area (res06_fn_0DD3(0, 0, 39, 24)), redraws the view
+  lines (FreeMenuList), clears the text area (ClearRect(0, 0, 39, 24)), redraws the view
   (res12_fn_27D9) and reshows the character (res12_fn_0767(SelectedCharacter)). }
 procedure HealMenu;
 var
@@ -418,7 +418,7 @@ begin
     end;
   until Done;
   FreeMenuList(List);
-  res06_fn_0DD3(0, 0, 39, 24);
+  ClearRect(0, 0, 39, 24);
   res12_fn_27D9;
   res12_fn_0767(SelectedCharacter);
 end;
