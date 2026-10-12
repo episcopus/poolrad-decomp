@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-12 | 5.4, 5.4.1 | ovl21 Money decompiled: seven money kinds, coin values, carried weight and CarryLimit, Pool/Share/Take/Appraise, BuildTreasureItem; QUIRKs 04DB, 1E74 | make match UNIT=ovl21 (unit complete) |
 | 2026-10-12 | 5.5.2 | new section: the start of a battle (StartBattle, the wilderness map builders, combatant placement grids), 10 bogus map entries removed | make match UNIT=ovl10 (12 of 22 at L2) |
 | 2026-10-12 | 5.22, 5.6, 2 (unit table) | the camp unit ovl15: study pending until rest, rest time, spell slots as SpellSlots[class, level], Display, Alter menu | make match UNIT=ovl15 (20 matched, 2 blocked stubs) |
 | 2026-10-12 | 5.21 | ovl24 affects, handler table and hooks, dice, saving throws, to-hit and resistance rolls, damage and healing | make match UNIT=ovl24 |
