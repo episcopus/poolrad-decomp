@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-11 | 2.3, 5.8, 3.6 | boot init res08 (POOL.CFG parsing, VideoAdapter/SoundMode mappings, heap/overlay sizing) and TP6 codegen (resident O+, WriteLn multi-arg, StrCopy retf 4, self-assign quirk) | variant-A instruction comparison (tool L2 pending fix) |
 | 2026-10-11 | tools | matcher: init part of a unit with no interface routines no longer taken from variant B's padding procedure | unblocks res08 (escalate-general-20261012041843) |
 | 2026-10-11 | process | make handoff refuses a unit branch that does not match; partial hand-offs stub their drafts | tests/unit/test_agent_tools.py |
 | 2026-10-11 | tools | make map keeps forced routine starts (manual list, probe far-call entries, rtl tables), every known routine and field, and the compiler size of proven routines; Randomize 0AF8:1247 survives | tests/unit/test_enumerate_routines.py; make map diff on task/tools-map |
