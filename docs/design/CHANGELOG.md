@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-11 | tools | make rename keeps evidence with backslashes, quotes and dollar signs intact | tests/unit/test_readability.py |
 | 2026-10-11 | 5.16 sprites | Show3DSprite, ShowHeadBodyWindow L2; e2 248E conflict documented | make match UNIT=ovl28 (8 L2); build/packets/ovl28.md |
 | 2026-10-11 | 4.2.3 | LoadPictureSlot: the CHEAD/CBODY T rule, the mirrored half at Block+80h, the colour maps of ICON and TileSet sets | make match UNIT=ovl32 (unit complete) |
 | 2026-10-11 | 5.19 | The Temple: the shop menu, the nine cleric services with prices and conditions, Raise Dead's constitution rule, the phantom map entries | make match UNIT=ovl04 (unit complete) |
