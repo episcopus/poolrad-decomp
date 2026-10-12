@@ -759,7 +759,7 @@ Overlay 18 (PoolNarrative) plays the game's ending and animates the area view do
 
 ---
 
-### 5.18 The line drawing unit ovl30 **[V]** (`src/OVL30.PAS`, `make match UNIT=ovl30`: 4 of 7 routines at L2)
+### 5.18 The line drawing unit ovl30 **[V]** (`src/OVL30.PAS`, `make match UNIT=ovl30`: unit complete)
 
 Overlay 30 draws lines and sorts:
 
@@ -778,8 +778,44 @@ Overlay 30 draws lines and sorts:
   the row by 3 with DI), and `TLineState.X,Y` are `Integer` like the coordinates (the original
   compares `X` to `X2` with a word `cmp`).
 
-Still to decompile: `ovl30_e5` (`ovl30:0422`, the line walk, blocked in `re/symbols.toml`),
-`ovl30_e4` (`ovl30:057B`) and `ovl30_e6` (`ovl30:0909`).
+- `InDirArc(FromX, FromY, ToX, ToY, Dir)` (`ovl30:057B`) tests whether the point (ToX, ToY)
+  lies in the 90-degree arc facing compass direction Dir from (FromX, FromY): 0 is north then
+  clockwise to 7, 8 (and the $FF default) is omni and always true. Points outside X 0..49 or Y
+  0..24 fail. The base point steps once towards Dir through the tables `DS:2736`/`DS:273F`
+  (verified bytes: compass vectors (0,-1), (1,-1), (1,0), (1,1), (0,1), (-1,1), (-1,0), (-1,-1),
+  (0,0)), and each direction's `case` body checks the two half-planes of its wedge, each shared
+  with the neighbouring direction (direction 0 is `(ToX >= BaseX) and (ToY <= BaseX - ToX + BaseY)`
+  or `(ToX <= BaseX) and (ToY <= ToX - BaseX + BaseY)`). `ovl22_e5` loops Dir upward to aim at a
+  point. Compiler notes: the direction parameter is `Byte` (the table index zero-extends), the
+  coordinates are `ShortInt`, and a `case` over 0..8 keeps the selector in AL with chained
+  `cmp`/`jne` (proven by `make tpc` probes in `scratch/Q1.PAS`, `scratch/Q2.PAS`).
+
+- `WalkLine(X1, Y1, Ex, Ey, StepCount, Map)` (`ovl30:0422`) walks a Bresenham line from
+  (X1, Y1) towards (Ex, Ey) over the map rows and reports the steps in StepCount: it sets up
+  Line from the endpoints and a horizontal Bound line from the start tile's table height (the
+  `DS:2745` tile table, 4 bytes per tile id), then steps Bound and Line together, stopping with
+  False at a blocking tile or past `2 * StepCount + 1` steps, else with True. The map is an
+  array of 50-byte rows (7 header bytes, 43 tile cells); the tile gate needs row 0's header
+  byte 6 clear and the current tile's block height above Bound.Y. Ex, Ey and StepCount carry
+  the end point and the steps used. Called by ovl09_fn_0B96, ovl12_e70, ovl13_fn_2DFA and
+  `ScanTargets`. Compiler notes: a far 2D subscript keeps a nonzero low bound as a memory
+  displacement (`Map^[Y].Cells[X]` gives two `add di` plus `[di+7]`), and `Result := False;
+  Exit` jumps to the epilogue including the result fetch (proven by `make tpc` probes in
+  `scratch/Q8.PAS` to `scratch/Q11.PAS`). This unblocks the `BLOCKED` note dec-5 left in
+  `re/symbols.toml`.
+- `ScanTargets(FromX, FromY, MaxSteps, Dir, Base, Map)` (`ovl30:0909`) scans the DS:5F27
+  map entity table (records with a map position, an unknown byte and a kind byte; entry 0's
+  kind holds the count) for records reachable from the search point: for each active record it
+  tries the four neighbours of the base point against the four neighbours of the record
+  (`ovl31_e1` fills the neighbour offsets from a base value, invalid neighbours get -1), keeps
+  the pairs in direction Dir's arc (`InDirArc`) that the line walk (`WalkLine`) crosses in the
+  fewest steps, appends one record per hit (table index, step count, working direction) to the
+  `DS:6718` sort table and sorts it. The stored direction is the requested Dir, or the first
+  working one when Dir is 8. Called from combat and item aiming (`ovl22_e5`, which loops Dir to
+  aim) and from ovl09, ovl13, ovl24 and res12. Compiler notes: a `for` over a variable bound
+  snapshots it into a hidden temp slot (the `sub sp` covers it), and near/far jump selection
+  follows rel8 reachability (proven by `make tpc` probes in `scratch/Q4.PAS` to `scratch/Q6.PAS`).
+All seven routines are decompiled and matched.
 
 ---
 

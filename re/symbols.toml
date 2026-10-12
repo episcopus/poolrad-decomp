@@ -13615,7 +13615,7 @@ size = 46
 name = "SignOf"
 signature = ""
 c_name = "ovl30_e1"
-level = "none"
+level = "L2"
 justification = ""
 notes = "renamed from ovl30_e1 (ovl30:0000: returns the sign of N (-1, 1, 0); called by ovl22_e63, ovl30_e2 and res12_fn_1CE0); auto:near_call"
 evidence = ["prologue"]
@@ -13628,7 +13628,7 @@ size = 370
 name = "SortTable"
 signature = ""
 c_name = "ovl30_fn_002E"
-level = "none"
+level = "L2"
 justification = ""
 notes = "renamed from ovl30_fn_002E (ovl30:002E: sorts the 3-byte record table DS:6718 in place by Key then Val with a mod-2 tie-break; called by ovl30_e6); auto:near_call"
 evidence = ["prologue"]
@@ -13641,7 +13641,7 @@ size = 300
 name = "SetupLine"
 signature = ""
 c_name = "ovl30_e2"
-level = "none"
+level = "L2"
 justification = ""
 notes = "renamed from ovl30_e2 (ovl30:01A0: sets up the line drawing state TLineState from its endpoints (DX/DY, the SignOf directions, the start position and the three Bresenham steps); called by ovl22_fn_295B, ovl30_e5 and res12_fn_1A29); auto:near_call"
 evidence = ["prologue"]
@@ -13654,9 +13654,9 @@ size = 342
 name = "StepLine"
 signature = ""
 c_name = "ovl30_e3"
-level = "none"
+level = "L2"
 justification = ""
-notes = "renamed from ovl30_e3 (ovl30:02CC steps a Bresenham line one pixel: it moves X (DX>DY) or Y towards the end point, advances First by 2 or 3 and stores the 3x3 direction pattern ds25C0[SY+1, SX+1]; the Boolean says whether it stepped; called by ovl22_fn_295B, ovl30_e5 and res12_fn_1A29); auto:near_call; BLOCKED (dec-5, 2026-10-12): drafted the Bresenham stepper; frame (8 bytes: SX, SY: ShortInt at bp-2/bp-3, the Boolean result at bp-1, a PLineState copy at bp-4..bp-7) and the first stores match, but the P := Line copy differs (ours mov ax,[bp+6]/mov dx,[bp+8]/mov [..]; the original les di,[bp+6]/mov [bp-7],di/mov [bp-5],es), so the pointer local does not line up. Also read ds25C0[3*(SY+1)+(SX+1)] into TLineState.Pattern (+$19) and the TLineState record grows to +$1A"
+notes = "renamed from ovl30_e3 (ovl30:02CC steps a Bresenham line one pixel: it moves X (DX>DY) or Y towards the end point, advances First by 2 or 3 and stores the 3x3 direction pattern ds25C0[SY+1, SX+1]; the Boolean says whether it stepped; called by ovl22_fn_295B, ovl30_e5 and res12_fn_1A29); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -13664,12 +13664,12 @@ id = "ovl30:0422"
 unit = "ovl30"
 addr = "ovl30:0422"
 size = 345
-name = "ovl30_e5"
-signature = "function ovl30_e5(StartX, StartY: ShortInt; EndX, EndY: PShortInt; Count: PWord; Map: PByteArray): Boolean"
+name = "WalkLine"
+signature = "function WalkLine(X1, Y1: ShortInt; var Ex, Ey: ShortInt; var StepCount: Word; Map: PMapRows): Boolean"
 c_name = "ovl30_e5"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call; BLOCKED (dec-5, 2026-10-12): the line walk, 345 bytes, retf 20, frame 58 (result bp-1, TLineState Line at bp-0x1b, TLineState Bound at bp-0x35, Flag bp-0x36, StepDone bp-0x37, Limit bp-0x39 with a one-byte gap at bp-0x38). Params (bp+6 up): Map (far byte map, stride 50, tile id at +7 of a cell, a flag at +6), Count (PWord), EndY, EndX (pointers whose target is read sign-extended and written as a byte), StartY, StartX (ShortInt). Prologue drafted and matching to ovl30:0473: Limit := 2*Count^+1; Line gets the endpoints, SetupLine(@Line); Bound := (0, ds2745[Map^[StartY*50+StartX+7], 0]) to (Max(Line.DX, Line.DY), same Y), SetupLine(@Bound); then a loop that steps Bound then Line (StepLine(@Bound) result stored to a dead local, QUIRK ovl30:0544) and stops on (Map^[6]=0 and ds2745[Map^[Line.Y*50+Line.X+7], 1] > Bound.Y) or Line.First > Limit, writing EndX^/EndY^/Count^ and returning False, else returning True after Count^ := Line.First. Blocked on the ds2745 index codegen: the original computes Map+StartY*50+StartX with two separate adds to DI and folds +7 into [di+7] (add di,ax; add di,cx; mov al,es:[di+7]), which a flat PByteArray subscript (PByteArray^[StartY*50+StartX+7], any grouping) does not reproduce (it sums StartY*50+StartX into AX then add di,ax; add ax,7), and a 2D array subscript computes the column as StartX+7 (add ax,7). Likely the source indexes a 2D cell array and reads a record field at +7, but the same pointer is also read flat as Map^[6], so the exact construct is unresolved. ds2745 is an unknown 4-byte-stride table (ds2745[k*4] and ds2746[k*4])."
+notes = "renamed from ovl30_e5 (walks a Bresenham line over the map rows with tile gating (stops False at blocking tiles or past Limit steps, else True with steps in StepCount); called for line-of-sight by ovl09/ovl12/ovl13 and ScanTargets); auto:near_call; UNBLOCKED (dec-1, 2026-10-12): matched at L2. The map is an array of 50-byte rows (TMapRow: 7 header bytes, 43 tile cells); a far 2D subscript keeps the low-bound adjust as a memory displacement, so Map^[Y].Cells[X] gives the two adds plus [di+7] (make tpc probes Q8/Q9). The mid-loop fail exits are Result := False; Exit inside repeat/until-Flag (Exit jumps to the epilogue including the result fetch, probe Q10). ds2745 is array[0..255] of 4-byte tile records (field 0 feeds Bound.Y, field 1 gates against Bound.Y). The bp-0x38 gap is an automatic pad before the Limit word in a function frame (probe Q11)."
 evidence = ["prologue"]
 
 [[routine]]
@@ -13677,12 +13677,12 @@ id = "ovl30:057B"
 unit = "ovl30"
 addr = "ovl30:057B"
 size = 910
-name = "ovl30_e4"
-signature = ""
+name = "InDirArc"
+signature = "function InDirArc(FromX, FromY, ToX, ToY: ShortInt; Dir: Byte): Boolean"
 c_name = "ovl30_e4"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl30_e4 (tests whether (ToX,ToY) lies in the 90-degree arc facing compass direction Dir (0 north clockwise, 8 omni) from (FromX,FromY): per-direction step tables ds2736/ds273F verified as compass vectors, 8 wedge bodies sharing half-planes, ovl22_e5 loops Dir 0.. to aim at a target); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -13690,12 +13690,12 @@ id = "ovl30:0909"
 unit = "ovl30"
 addr = "ovl30:0909"
 size = 720
-name = "ovl30_e6"
-signature = ""
+name = "ScanTargets"
+signature = "procedure ScanTargets(FromX, FromY: ShortInt; MaxSteps: Word; Dir, Base: Byte; Map: Pointer)"
 c_name = "ovl30_e6"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_6"
+notes = "renamed from ovl30_e6 (scans the DS:5F27 map entity table for records reachable from (X,Y): tries base/record neighbour pairs in Dir arc that ovl30_e5 walks in fewest steps, appends (index, steps, direction) to the sort table and sorts it; called from combat/item aiming (ovl22_e5) and res12/ovl09/ovl13/ovl24); auto:entry_6"
 evidence = ["prologue"]
 
 [[routine]]
@@ -13706,7 +13706,7 @@ size = 5
 name = "ovl30_init"
 signature = ""
 c_name = "ovl30_init"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_0"
 evidence = ["prologue"]
@@ -13717,7 +13717,7 @@ unit = "ovl31"
 addr = "ovl31:0000"
 size = 104
 name = "ovl31_e1"
-signature = ""
+signature = "function ovl31_e1(Base, J: Byte; var X, Y: ShortInt): Boolean"
 c_name = "ovl31_e1"
 level = "none"
 justification = ""

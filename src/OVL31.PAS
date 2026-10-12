@@ -3,7 +3,7 @@ unit OVL31;
   until decompiled (playbook 30). }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
-procedure ovl31_e1;
+function ovl31_e1(Base, J: Byte; var X, Y: ShortInt): Boolean;
 procedure ovl31_fn_0068;
 procedure ovl31_e2;
 procedure ovl31_e3;
@@ -28,7 +28,7 @@ procedure ovl31_e19;
 implementation
 
 { ovl31:0000: retf 12: 12 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl31_e1; begin end;
+{@stub} function ovl31_e1(Base, J: Byte; var X, Y: ShortInt): Boolean; begin end;
 { ovl31:0068: retf 0: 0 bytes of parameters; 2 bytes of locals }
 {@stub} procedure ovl31_fn_0068; begin end;
 { ovl31:00E3: retf 0: 0 bytes of parameters; 0 bytes of locals }
