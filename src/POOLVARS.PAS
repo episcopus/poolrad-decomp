@@ -5,6 +5,17 @@ unit POOLVARS;
 interface
 uses Dos;
 type
+  { One record of the code wheel table at DS:0000 (whitepaper 5.12; CheckCodeWheel reads it for the copy
+    protection question). }
+  TCodeWheelEntry = record
+    Unknown: array[0..1] of Byte;  { +0: not read by CheckCodeWheel }
+    CodeWord: string[6];          { +2: the answer the player must type }
+    OuterRune: Byte;               { +9: the Espruar (outer ring) rune index }
+    InnerRune: Byte;               { +$A: the Dethek (inner ring) rune index }
+    ThirdRune: Byte;               { +$B: the third rune index }
+    FourthRune: Byte;              { +$C: the fourth rune index, $FF when the record has none }
+    Path: string[7];               { +$D: the path pattern drawn under the runes }
+  end;
   { One fixed position of the area view whose block the game variables can override
     (the table at DS:0C30; DrawAreaView reads entries 1..9, entry 0 is never read). }
   TSpecialBlock = record
@@ -17,6 +28,9 @@ type
     for fixed area blocks. The upper bound is still unknown; 465 words are in use. }
   TGameVars = array[0..511] of Word;
 var
+  { The 13 code wheel records of the copy protection (whitepaper 5.12): the answer, the rune
+    indices and the path pattern. CheckCodeWheel picks one at random. }
+  ds0000: array[0..12] of TCodeWheelEntry;  { the code wheel records; see above }
   SpecialBlocks: array[0..9] of TSpecialBlock;  { fixed area blocks; entries 1..9 (0 never read) }
   ds2612: Word;                   { passed to res03_fn_00DC when the sound stops (QuitGame, Ctrl-S); meaning unknown }
   AreaMap: array[0..35, 0..43] of Byte;  { the area map: one block code per 3x3-tile block, one more
