@@ -211,3 +211,24 @@ kind = "routine"
 why = "bumps the character Bonus bytes when Ability[2] passes 12..16 (ovl23:01AF); called by ovl16 3x and ovl23_e1"
 date = "2026-10-11"
 
+[[rename]]
+old = "ovl23_e1"
+new = "RecalcCharacter"
+kind = "routine"
+why = "recomputes character derived stats: THAC0 max, MaxSlot, Bonus/Flags fills, calls IncrementBonuses and ovl23_e3/e4 (ovl23:0000)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl23_e3"
+new = "MinimizeLeast"
+kind = "routine"
+why = "minimizes the character Least bytes over table 426E (ovl23:0255); called by ovl16 and RecalcCharacter"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl23_e4"
+new = "ComputeClassVal"
+kind = "routine"
+why = "computes the character ClassVal bytes from class tables (ovl23:0329); called by ovl16 and RecalcCharacter"
+date = "2026-10-11"
+

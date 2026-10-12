@@ -33,20 +33,23 @@ type
     Name: string[15];                 { +0: length-prefixed name (whitepaper 4.x) }
     Ability: array[0..6] of Byte;     { +$10..+$16: ability scores (whitepaper 4.x) }
     Filler17: array[$17..$2C] of Byte;{ +$17..+$2C }
-    THAC0: Byte;                      { +$2D: to hit armor class 0 (whitepaper 4.x) }
-    Race: Byte;                       { +$2E: race (whitepaper 4.x) }
-    Class: Byte;                      { +$2F: class (whitepaper 4.x) }
+    THAC0: Byte;                      { +$2D: to hit armor class 0 (records.py reads it
+                                  signed; e1 compares it unsigned) }
+    Race: ShortInt;                   { +$2E: race (records.py); signed: e4 sign-extends it }
+    Class: Byte;                      { +$2F: class bitmask (records.py) }
     Filler30: array[$30..$31] of Byte;{ +$30..+$31 }
     Flags32: array[0..$38] of Byte;   { +$32..+$6A: e1 sets +$33..+$6A from table $31FA;
                                   [0] is +$32 (hp_max, whitepaper 4.x) }
     Filler6B: array[$6B..$6C] of Byte;{ +$6B..+$6C }
-    Best: array[0..4] of Byte;        { +$6D..+$71: e3 maximizes these from table $426E }
+    Least: array[0..4] of Byte;       { +$6D..+$71: e3 keeps the minima over the class slots here,
+                                  starting at $14 (saving throws? [H]) }
     Filler72: Byte;                   { +$72 }
-    MaxSlot: Byte;                    { +$73: e1 keeps the max slot class here }
+    MaxSlot: ShortInt;                { +$73: e1 keeps the max slot class here (signed: compared with C) }
     Filler74: array[$74..$75] of Byte;{ +$74..+$75 }
     ClassVal: array[0..8] of Byte;    { +$76..+$7E: e4 computes these from class tables }
     Filler7F: array[$7F..$95] of Byte;{ +$7F..+$95 }
-    SlotClass: array[0..6] of Byte;   { +$96..+$9C: e1's per-slot class-like values }
+    SlotClass: array[0..6] of ShortInt; { +$96..+$9C: e1's per-slot class-like values
+                                  (signed: e1/e3 sign-extend them) }
     Filler9D: array[$9D..$A0] of Byte;{ +$9D..+$A0 }
     ModeA1: Byte;                     { +$A1: e1 sets 3 when the slot class passes 6, else 2 }
     FillerA2: array[$A2..$B0] of Byte;{ +$A2..+$B0 }
@@ -115,5 +118,15 @@ var
   SoundMode: Byte;                { sound setting; 2 while a Ctrl-S pause is in effect (ReadGameKey) }
   SoundModeBeforePause: Byte;     { SoundMode saved by a Ctrl-S pause; copied back only when it is 0 or 1 }
   ds557D: Boolean;                { set by ovl17_e9; True ends the retry loop of HeapErrorHandler }
+  { Class tables read by ovl23 (whitepaper 5.3): byte arrays of open extent (addressed with $R-).
+    ds31FA has 57 sixteen-byte rows read by e1. }
+  ds31FA: array[0..$38] of TFlagEntry;  { the e1 flag table: 57 rows of Skip and BonusIdx }
+  ds3C7C: array[0..6, 0..10] of Byte;  { e1 THAC0 table: 7 rows of 11 }
+  ds40BC: array[0..10, 0..4] of Byte;  { e1 Bonus table: 5-wide rows }
+  ds41D4: array[0..10, 0..4] of Byte;  { e1 BonusHi table: 5-wide rows }
+  ds426E: array[0..7, 0..44] of Byte;  { e3 Least table: 8 rows of 45 }
+  ds3D3B: array[0..7, 0..7] of ShortInt;  { e4 first class table: 8-wide rows }
+  ds3CF3: array[0..10, 0..7] of Byte;  { e4 second class table: 8-wide rows }
+  ds3D4E: array[0..25, 0..4] of ShortInt;  { e4 add-on table: 5-wide rows }
 implementation
 end.
