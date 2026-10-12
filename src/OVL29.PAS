@@ -15,10 +15,10 @@ function WallIdAt(Col, Row: ShortInt; Dir: Byte): Byte;
 function EventByteAt(Col, Row: ShortInt): Byte;
 procedure StepDisplay;
 procedure ovl29_e5(A, B, C: Byte);
-procedure LoadWallSet;
-procedure Load3DMap;
+procedure LoadWallSet(BlockId, First: Byte);
+procedure Load3DMap(BlockId: Byte);
 implementation
-uses POOLVARS, RES07, OVL34;
+uses POOLVARS, RES04, RES05, RES07, OVL34;
 const
   { The facing directions the map routines take (the step tables ds2736/ds273F are indexed by
     them); which wall nibble and door bit pair each one selects is whitepaper 4.2.1. }
@@ -33,6 +33,12 @@ const
   MapWindowHalf = 5;     { the overhead map window reaches 5 cells each side of the party }
   ViewLast = 10;         { the last tile column and row of the 11x11 tile 3D view }
   ViewLeft = 3;          { the screen column (and row) of the view's first tile, counted from 1 }
+  GeoBlockSize = $402;   { a GEO block: a size word and four 256-byte planes (whitepaper 4.2.1) }
+  GeoPlaneSize = $100;   { one 16x16 plane of a GEO block }
+  WallSetSize = $30C;    { one WALLDEF wallset: five walls of 156 tiles (whitepaper 4.2.4) }
+  LastWallSlot = 3;      { the wallset slots of the wall tiles are 1..3 }
+  WallsPerSet = 5;
+  LastWallTile = $9B;    { the tiles of one wall are 0..155 }
 
 { ovl29:0000. Draws the overhead wall map in the view instead of the 3D walls (ovl29_e5 calls it
   while ds6AAC is nonzero): an 11x11 window of the 16x16 area map, placed so that the party cell
@@ -214,10 +220,105 @@ end;
   DrawWallDescriptors, otherwise it calls DrawWallMap; A and B are the party cell (ds6AAD, ds6AAE)
   and C the icon set of the marker (ds6AAF). }
 {@stub} procedure ovl29_e5(A, B, C: Byte); begin end;
-{ ovl29:0E08: retf 4: 4 bytes of parameters; 280 bytes of locals }
-{@stub} procedure LoadWallSet; begin end;
-{ ovl29:10C7: retf 2: 2 bytes of parameters; 272 bytes of locals }
-{@stub} procedure Load3DMap; begin end;
+{ ovl29:0E08. Loads the WALLDEF<TileSet>.DAX block BlockId (one to three wallsets of $30C
+  bytes, whitepaper 4.2.4) into the wall tiles from wallset slot First (1..3) on; any other First
+  does nothing. A missing block or one that does not fit in the slots left is fatal (Unable to
+  load wallset in LoadWallSet. on Output, a key, QuitGame). For each wallset slot filled it marks
+  the slot's ds6AAEWords pair $FFFF, adds Delta (SymbolBase[First] - SymbolBase[1], the slot's
+  8x8 bank base) to every tile number at or above ds272C, and loads the slot's 8x8 tiles with
+  Load8x8Bank: block BlockId for a single wallset, BlockId * 10 + n for the n-th of several
+  (block 0 counting as 10 there). Finally ds6AAEWords[First] records (BlockId, First).
+  The size check does not ask for a multiple of $30C: a partial last wallset is copied whole
+  (reading past the block) and counted, and only the slot test of ovl29:0F5B (1..3) keeps its
+  tiles in range. QUIRK ovl29:101A: BlockId 0 becomes 10 inside the loop and back to 0 after it. }
+procedure LoadWallSet(BlockId, First: Byte);
+var
+  Size: Word;
+  Block: Pointer;
+  Offset: Word;
+  Delta: Word;
+  Wall: Byte;
+  WallSet: Word;
+  Tile: Word;
+  Count: Byte;
+  Num: string[1];
+  Key: Char;
+begin
+  if (First < 1) or (First > LastWallSlot) then Exit;
+  Str(TileSet, Num);
+  LoadDaxBlock('WALLDEF' + Num, '.dax', BlockId, Size, Block);
+  if (Size = 0) or (Size div WallSetSize + First > LastWallSlot + 1) then
+  begin
+    res07_fn_00FF;
+    WriteLn(Output, 'Unable to load wallset in LoadWallSet.');
+    Key := ReadGameKey;
+    res07_fn_00FF;
+    QuitGame;
+  end;
+  Delta := SymbolBase[First] - SymbolBase[1];
+  Offset := 0;
+  WallSet := 1;
+  repeat
+    Move(TByteArray(Block^)[Offset], WallSets^[First + WallSet - 1], WallSetSize);
+    Inc(Offset, WallSetSize);
+    Inc(WallSet);
+  until Offset >= Size;
+  FreeMem(Block, Size);
+  Count := WallSet - 1;
+  for WallSet := 1 to Count do
+    if First + WallSet - 1 in [1..LastWallSlot] then
+    begin
+      ds6AAEWords[First + WallSet - 1].A := $FFFF;
+      ds6AAEWords[First + WallSet - 1].B := $FFFF;
+      for Wall := 1 to WallsPerSet do
+        for Tile := 0 to LastWallTile do
+          if WallSets^[First + WallSet - 1, Wall, Tile] >= ds272C then
+            Inc(WallSets^[First + WallSet - 1, Wall, Tile], Delta);
+      if Count > 1 then
+      begin
+        if BlockId = 0 then BlockId := 10;
+        Load8x8Bank(BlockId * 10 + WallSet, First + WallSet - 1);
+      end
+      else
+        Load8x8Bank(BlockId, First + WallSet - 1);
+    end;
+  if BlockId = 10 then BlockId := 0;
+  ds6AAEWords[First].A := BlockId;
+  ds6AAEWords[First].B := First;
+end;
+{ ovl29:10C7. Loads the 3D area map: block BlockId of GEO<TileSet>.DAX, which must be exactly
+  $402 bytes (else Unable to load geo in Load3DMap. on Output, a key, QuitGame). It skips the
+  size word, copies the four 256-byte planes into GeoCells^ (WallsNE, WallsSW, Events, Cells;
+  whitepaper 4.2.1), frees the block and records BlockId in GameVars^[VarGeoBlock]. }
+procedure Load3DMap(BlockId: Byte);
+var
+  Size: Word;
+  Block: Pointer;
+  Offset: Word;
+  Num: string[1];
+  Key: Char;
+begin
+  Str(TileSet, Num);
+  LoadDaxBlock('GEO' + Num, '.dax', BlockId, Size, Block);
+  if (Size = 0) or (Size <> GeoBlockSize) then
+  begin
+    res07_fn_00FF;
+    WriteLn(Output, 'Unable to load geo in Load3DMap.');
+    Key := ReadGameKey;
+    res07_fn_00FF;
+    QuitGame;
+  end;
+  Offset := 2;
+  Move(TByteArray(Block^)[Offset], GeoCells^.WallsNE, GeoPlaneSize);
+  Inc(Offset, GeoPlaneSize);
+  Move(TByteArray(Block^)[Offset], GeoCells^.WallsSW, GeoPlaneSize);
+  Inc(Offset, GeoPlaneSize);
+  Move(TByteArray(Block^)[Offset], GeoCells^.Events, GeoPlaneSize);
+  Inc(Offset, GeoPlaneSize);
+  Move(TByteArray(Block^)[Offset], GeoCells^.Cells, GeoPlaneSize);
+  FreeMem(Block, Size);
+  GameVars^[VarGeoBlock] := BlockId;
+end;
 
 begin
 end.

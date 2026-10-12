@@ -69,6 +69,9 @@ type
     of 156 bytes each, one 8x8 tile number per byte; LoadWallSet fills them from WALLDEF wallsets
     of five walls (whitepaper 4.2.4), DrawWallPiece reads them. }
   TWallTiles = array[1..15, 0..$9B] of Byte;
+  { The same $924 bytes seen as LoadWallSet fills them: three wallset slots (1..3) of five walls
+    (1..5) of 156 tile numbers; wallset slot S, wall W is wall id (S - 1) * 5 + W of TWallTiles. }
+  TWallSets = array[1..3, 1..5, 0..$9B] of Byte;
   TBlock1E00 = array[0..3839] of Word;    { a $1E00-byte block }
   { One 4-byte element of the table at DS:6AAE the loader fills (ovl11:0369..0390). }
   TPresenceSlot = record
@@ -195,6 +198,7 @@ const
     matched reads in ovl26 are at +$186, +$188, +$1CC, +$1F6, +$1FA and +$1FC). }
   VarMapX = 195;                  { the party's column in the area map grid (44 wide) }
   VarMapY = 196;                  { the party's row in the area map grid }
+  VarGeoBlock = 197;              { the GEO block id of the loaded 3D area map (Load3DMap, ovl29:11FB) }
   VarForceWallView = 230;         { nonzero: ShowAreaView shows the wall view whatever AreaViewKind says }
   VarShowWallOverlays = 251;      { nonzero: ShowAreaView clears ds6AAC, so ovl29_e5 draws the overlay labels }
   VarWallIndexOutside = 253;      { the ds0C26 wall id index ShowAreaView uses for a cell that is not interior }
@@ -218,6 +222,7 @@ var
   { Five words, one per 8x8 tile bank, subtracted from the symbol number to index within the
     bank (Put8x8Symbol, ovl34:020F); evidence in re/dseg.toml. }
   SymbolBase: array[0..4] of Word;  { per-bank base symbol numbers; see above }
+  ds272C: Word;                   { LoadWallSet adds the bank's symbol offset to the wall tile numbers at or above it }
   AreaMap: array[0..35, 0..43] of Byte;  { the area map: one block code per 3x3-tile block, one more
                                           than the code DrawCellPicture draws; byte 0x4E (the letter N)
                                           where no block is drawn (all of rows 34 and 35 in the
@@ -371,6 +376,7 @@ var
   ds6A5C: ^TBlock400;             { $400-byte block the loader allocates (ovl11:0094) }
   ds84DC: Byte;                   { the wall view / outdoor mode EventByteAt tests (0 and $A both skip) }
   GeoCells: PGeoCellBlock absolute ds6A5C; { cell-byte view of the $400 block for ovl14 }
+  WallSets: ^TWallSets absolute ds6A58; { the wall tiles by wallset slot and wall (LoadWallSet) }
   ds6AAEWords: array[0..3] of TPresenceSlot;  { the 4-byte element table at DS:6AAE; the loader sets
                                     elements 2 and 3 to $FFFF (ovl11:035E..0390) }
   ds6AB2: Word;                   { cleared by the loader (ovl11:0353) }
