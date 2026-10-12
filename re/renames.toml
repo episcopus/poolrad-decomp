@@ -729,3 +729,10 @@ kind = "routine"
 why = "ovl14:04DF is the P key handler in e1's Bash Pick Knock Exit menu"
 date = "2026-10-11"
 
+[[rename]]
+old = "ovl14_fn_0294"
+new = "DoBash"
+kind = "routine"
+why = "ovl14:0294 is the B key handler in e1's menu: it bashes the first bashable ds5D96 record by lock type and strength rolls"
+date = "2026-10-11"
+

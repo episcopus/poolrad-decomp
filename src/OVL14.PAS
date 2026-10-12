@@ -10,7 +10,10 @@ type
     nothing in this unit allocates them). }
   PCodeRec = ^TCodeRec;
   TCodeRec = record
-    Unknown00: array[0..$16] of Byte; { +$00..+$16: not read here }
+    Unknown00: array[0..$0F] of Byte; { +$00..+$0F: not read here }
+    LockType: Byte;                   { +$10: the Bash/Pick lock kind }
+    Unknown11: array[$11..$15] of Byte; { +$11..+$15: not read here }
+    Strength: Byte;                   { +$16: 0..100 value gating the Bash rolls }
     Codes: array[0..$14] of Byte;     { +$17..+$2B: scanned for the wanted code }
     Unknown2C: array[$2C..$77] of Byte; { +$2C..+$77: not read here }
     PickThreshold: Byte;              { +$78: the 1d100 Pick roll must not exceed it }
@@ -25,7 +28,7 @@ type
 procedure ClearIconBits(Col, Row, Icon: ShortInt);
 procedure SetIconBits(Col, Row, Icon: ShortInt);
 function HasRecFlag(Which: ShortInt): Byte;
-procedure ovl14_fn_0294;
+function DoBash: Byte;
 function DoPick: Byte;
 function FindCodeSlot(Code: Byte; Rec: PCodeRec): Byte;
 function FindCodeRecord(Code: Byte): PCodeRec;
@@ -93,8 +96,86 @@ begin
   end;
   HasRecFlag := Found;
 end;
-{ ovl14:0294: retf 0: 0 bytes of parameters; 10 bytes of locals }
-{@stub} procedure ovl14_fn_0294; begin end;
+{ ovl14:0294. The Bash command (the B key): walks the ds5D96 records and tries to force
+  the first one whose lock answers the ovl29_e3 cell test with 3 (or another value,
+  below): each lock type wants its own 1d6/1d8 roll (ovl24_e8), setting Done on success
+  and clearing ds6DDE[0] on some failures. On success it sets the icon bits like Pick
+  and returns 1, else 0. }
+function DoBash: Byte;
+var
+  Rec: PCodeRec;
+  Done: Byte;
+begin
+  Done := 0;
+  Rec := Pointer(ds5D96);
+  while (Rec <> nil) and (Done = 0) do
+  begin
+    with Rec^ do
+    begin
+      if ovl29_e3(ds6AAD, ds6AAE, ds6AAF) = 3 then
+        case LockType of
+          $12:
+            case Strength of
+              $5B..$63:
+                if ovl24_e8(1, 6) = 1 then
+                  Done := 1;
+              $64:
+                if ovl24_e8(1, 6) <= 2 then
+                  Done := 1;
+            else
+              ds6DDE[0] := 0;
+            end;
+          $13, $14:
+            if ovl24_e8(1, 6) <= 3 then
+              Done := 1;
+          $15, $16:
+            if ovl24_e8(1, 6) <= 4 then
+              Done := 1;
+          $17:
+            if ovl24_e8(1, 6) <= 5 then
+              Done := 1;
+          $18:
+            if ovl24_e8(1, 8) <= 7 then
+              Done := 1;
+          $19:
+            Done := 1;
+        else
+          ds6DDE[0] := 0;
+        end
+      else
+        case LockType of
+          $03..$07:
+            if ovl24_e8(1, 6) = 1 then
+              Done := 1;
+          $08..$0F:
+            if ovl24_e8(1, 6) <= 2 then
+              Done := 1;
+          $10..$11:
+            if ovl24_e8(1, 6) <= 3 then
+              Done := 1;
+          $12:
+            case Strength of
+              0..$32:
+                if ovl24_e8(1, 6) <= 3 then
+                  Done := 1;
+              $33..$63:
+                if ovl24_e8(1, 6) <= 4 then
+                  Done := 1;
+              $64:
+                if ovl24_e8(1, 6) <= 5 then
+                  Done := 1;
+            end;
+        end;
+    end;
+    Rec := Rec^.Next;
+  end;
+  if Done <> 0 then
+  begin
+    SetIconBits(ds6AAD, ds6AAE, ds6AAF);
+    SetIconBits(ds6AAD + ds2736[ds6AAF], ds6AAE + ds273F[ds6AAF], (ds6AAF + 4) mod 8);
+  end;
+  DoBash := Done;
+end;
 { ovl14:04DF. The Pick command (the P key): rolls 1d100 (ovl24_e8) against each
   ds5D96 record's +$78 byte and requires its +$10C byte clear; on the first success it
   sets the icon bits at the party cell and ahead of it (the facing cell uses the icon
@@ -180,7 +261,7 @@ begin
   Row := ds6AAE;
   Icon := ds6AAF;
   ds49D6^[725] := 0;
-  if ovl29_e3(Col, Row, Icon) then
+  if ovl29_e3(Col, Row, Icon) <> 0 then
   begin
     Inc(Col, ds2736[Icon]);
     Inc(Row, ds273F[Icon]);

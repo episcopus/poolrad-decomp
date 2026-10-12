@@ -9,7 +9,7 @@ procedure ovl29_e1(A, B, C, D: Byte);
 procedure ovl29_fn_0174;
 procedure ovl29_fn_0211;
 procedure ovl29_fn_031F;
-function ovl29_e3(A, B, C: Byte): Boolean;
+function ovl29_e3(A, B: ShortInt; C: Byte): Byte;
 function ovl29_e2(A, B, C: Byte): Byte;
 function ovl29_e4(X, Y: ShortInt): Byte;
 procedure ovl29_fn_05F3;
@@ -31,7 +31,7 @@ implementation
 { ovl29:031F: retf 4: 4 bytes of parameters; 2 bytes of locals }
 {@stub} procedure ovl29_fn_031F; begin end;
 { ovl29:0350: retf 6: 6 bytes of parameters; 2 bytes of locals }
-{@stub} function ovl29_e3(A, B, C: Byte): Boolean; begin end;
+{@stub} function ovl29_e3(A, B: ShortInt; C: Byte): Byte; begin end;
 { ovl29:047B: retf 6: 6 bytes of parameters; 2 bytes of locals }
 {@stub} function ovl29_e2(A, B, C: Byte): Byte; begin end;
 { ovl29:057A: retf 4: 4 bytes of parameters; 2 bytes of locals.

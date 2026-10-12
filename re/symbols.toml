@@ -7479,12 +7479,12 @@ id = "ovl14:0294"
 unit = "ovl14"
 addr = "ovl14:0294"
 size = 587
-name = "ovl14_fn_0294"
-signature = ""
+name = "DoBash"
+signature = "function DoBash: Byte"
 c_name = "ovl14_fn_0294"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl14_fn_0294 (ovl14:0294 is the B key handler in e1's menu: it bashes the first bashable ds5D96 record by lock type and strength rolls); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -13495,7 +13495,7 @@ unit = "ovl29"
 addr = "ovl29:0350"
 size = 299
 name = "ovl29_e3"
-signature = ""
+signature = "function ovl29_e3(A, B: ShortInt; C: Byte): Byte"
 c_name = "ovl29_e3"
 level = "none"
 justification = ""
