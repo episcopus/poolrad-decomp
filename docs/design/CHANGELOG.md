@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-11 | 5.17 | documented AnimateFinalPicture (was blocked, now matched) and marked ovl18 complete | make match UNIT=ovl18 (unit: complete), make check green |
 | 2026-10-11 | 5.4 | Shop price is the item Value (+3A); record named TMenuLine; money sources and overload rule corrected | make match UNIT=ovl06; ovl06:0068, ovl19:275B, ovl19:28BE, ovl21:00A8 |
 | 2026-10-11 | docs/design/WHITEPAPER.md | renumbered the ovl30 section from 5.17 to 5.18 to remove the duplicate with ovl18 | the orchestrator's duplicate-section note |
 | 2026-10-11 | 5.16 | LoadSpriteList: the DAX sprite block layout, xor-delta PIC/FINAL pictures, MaxAvail 3900 gate; sprite list slots at +2 | make match UNIT=ovl28 (unit complete) |
