@@ -19,6 +19,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import common  # noqa: E402
+import control  # noqa: E402
 import handoff  # noqa: E402
 import heartbeat  # noqa: E402
 import next as nxt  # noqa: E402
@@ -113,7 +114,10 @@ def screen(interval: int) -> str:
     now = dt.datetime.now(dt.timezone.utc)
     title = "POOL OF RADIANCE  agents"
     stamp = "%s  every %ds  Ctrl+C to stop" % (now.astimezone().strftime("%H:%M:%S"), interval)
-    lines = [c(BOLD, title) + " " * max(width - len(title) - len(stamp), 1) + c(DIM, stamp), progress(), ""]
+    state = control.state()
+    label = "Control: %s, %s" % (state["state"], state.get("reason", ""))
+    lines = [c(BOLD, title) + " " * max(width - len(title) - len(stamp), 1) + c(DIM, stamp),
+             progress(), cut(label, width), ""]
     for name, body in (("Agents", agents(now, width)), ("Hand-offs", handoffs(width)), ("Locks", locks()),
                        ("Queues", [queues()])):
         lines += [section(name, width), *body, ""]

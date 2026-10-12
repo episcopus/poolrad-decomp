@@ -8,10 +8,13 @@ OVR := poolrad/GAME.OVR
 PACKED := poolrad/START.EXE
 # Refresh the heartbeat of the agent holding the lock on this branch (tools/agent/heartbeat.py --auto); never fails.
 AUTOBEAT = -@$(PY) tools/agent/heartbeat.py --auto
+# Keep operator notes literal (including Pascal $ directives), never interpolate them as shell code.
+q = '$(subst ','\'',$(1))'
 
 .PHONY: help setup doctor inputs unexepack overlays map dax smoke status next ghidra p1-check \
         tp-install tp-probe tp-compare tp-pin tpc emu2 \
         packet claim lock locks unlock handoff handoffs handoff-done heartbeat agents watch-agents \
+        agent-control agent-step safety-check merge-check \
         oracle-run oracle-dosbox timing-scan golden match test test-slow check review-pass rebuild skeleton readability rename host coco3
 
 help:
@@ -21,6 +24,7 @@ help:
 	@echo "Data codecs:    make dax (all playbook-20 formats); make test (pytest)"
 	@echo "Phase 2:        oracle-run oracle-dosbox golden timing-scan"
 	@echo "Phase 3/4:      match (UNIT= FN= WRITE=1) check test test-slow (review-pass in P4)"
+	@echo "Agent safety:   agent-control agent-step safety-check merge-check (docs/process/SAFETY.md)"
 	@echo "Later:          rebuild (P5) host (P7, branch track-c-hybrid) coco3 (P8)"
 	@echo "See AGENTS.md and docs/spec/SPEC.md."
 
@@ -99,25 +103,25 @@ packet:           ## write build/packets/<id>.md for UNIT= or FN=
 	$(PY) tools/agent/packet.py $(if $(UNIT),--unit $(UNIT)) $(if $(FN),--fn $(FN))
 
 claim:            ## start work: lock the next unit (or UNIT=) and create its worktree: AGENT=<name> [UNIT=<id>] [REVIEW=1] [TASK=doc-<chapter>|map]
-	$(PY) tools/agent/claim.py --agent "$(AGENT)" $(if $(UNIT),--unit $(UNIT)) $(if $(REVIEW),--review) $(if $(TASK),--task $(TASK))
+	$(PY) tools/agent/claim.py --agent $(call q,$(value AGENT)) $(if $(UNIT),--unit $(call q,$(value UNIT))) $(if $(REVIEW),--review) $(if $(TASK),--task $(call q,$(value TASK)))
 
 lock:             ## claim a unit without a worktree: make lock UNIT=ovl00 [AGENT=name]
-	$(PY) tools/agent/lock.py $(UNIT) $(if $(AGENT),--agent $(AGENT))
+	$(PY) tools/agent/lock.py $(call q,$(value UNIT)) $(if $(AGENT),--agent $(call q,$(value AGENT)))
 
 locks:            ## list the units locked by agents (shared by every worktree of this clone)
 	$(PY) tools/agent/lock.py --list
 
 handoff:          ## to the orchestrator: AGENT=<you> UNIT=<id> STATE=complete|partial|blocked|review-passed|review-failed|escalate NOTE="..." [CHANGELOG="<section> | <change> | <evidence>"]
-	$(PY) tools/agent/handoff.py --agent "$(AGENT)" --unit "$(UNIT)" --state "$(STATE)" --note "$(NOTE)" --changelog "$(CHANGELOG)"
+	$(PY) tools/agent/handoff.py --agent $(call q,$(value AGENT)) --unit $(call q,$(value UNIT)) --state $(call q,$(value STATE)) --note $(call q,$(value NOTE)) --changelog $(call q,$(value CHANGELOG))
 
 handoffs:         ## list what waits for the orchestrator: escalations first, then branches to merge
 	$(PY) tools/agent/handoff.py --list
 
-handoff-done:     ## after acting on a hand-off: UNIT=<key from make handoffs> [REVIEW=1]; adds its changelog row
-	$(PY) tools/agent/handoff.py --unit "$(if $(REVIEW),review-)$(UNIT)" --done
+handoff-done:     ## AGENT=orch UNIT=<key> [REVIEW=1]; requires merged commit and current check receipt; escalations need DECISION=
+	$(PY) tools/agent/handoff.py --agent $(call q,$(value AGENT)) --unit $(call q,$(if $(REVIEW),review-)$(value UNIT)) --decision $(call q,$(value DECISION)) --done
 
 heartbeat:        ## tell the human what you are doing: AGENT=<you> NOTE="<now, next>" [DONE=1 when you stop]; at each step and every 20 minutes
-	$(PY) tools/agent/heartbeat.py --agent "$(AGENT)" --note "$(NOTE)" $(if $(DONE),--done)
+	$(PY) tools/agent/heartbeat.py --agent $(call q,$(value AGENT)) --note $(call q,$(value NOTE)) $(if $(DONE),--done)
 
 agents:           ## every agent's last heartbeat, oldest first; QUIET = silent for more than 20 minutes
 	$(PY) tools/agent/heartbeat.py --list
@@ -125,8 +129,20 @@ agents:           ## every agent's last heartbeat, oldest first; QUIET = silent 
 watch-agents:     ## live view for the operator: progress, agents, hand-offs, locks, queues; redrawn every 5 seconds (INTERVAL=n; Ctrl+C to stop)
 	@$(PY) tools/agent/watch.py --interval $(or $(INTERVAL),5)
 
-unlock:           ## release a unit lock (FORCE=1 to break stale)
-	UNIT=$(UNIT) FORCE=$(FORCE) $(PY) tools/agent/unlock.py
+unlock:           ## main only: AGENT=orch UNIT=<key>; recovery: OPERATOR=1 FORCE=1 REASON=<human instruction>
+	$(PY) tools/agent/unlock.py $(call q,$(value UNIT)) --agent $(call q,$(value AGENT)) $(if $(OPERATOR),--operator) $(if $(FORCE),--force) --reason $(call q,$(value REASON))
+
+agent-control:    ## human: STATE=running|paused|draining|stopped OPERATOR=1 REASON=...; no args: display
+	$(PY) tools/agent/control.py $(if $(STATE),--state $(call q,$(value STATE))) $(if $(OPERATOR),--operator) --reason $(call q,$(value REASON))
+
+agent-step:       ## agents: check shared stop/pause state before each routine and after waiting
+	$(PY) tools/agent/control.py --step --agent $(call q,$(value AGENT))
+
+safety-check:     ## check branch ownership and registry preservation, without modifying anything
+	$(PY) tools/agent/safety.py
+
+merge-check:      ## check HEAD merge, COMMIT=<sha> or STAGED=1 before committing a resolved merge
+	$(PY) tools/agent/safety.py --merge-only $(if $(COMMIT),--commit $(call q,$(value COMMIT))) $(if $(STAGED),--staged)
 
 define todo
 	@echo "make $@: not built yet; delivered in $(1) (docs/spec/SPEC.md section $(2))."; exit 2
@@ -152,11 +168,7 @@ test-slow:         ## the unit tests that boot the real game (minutes; not part 
 	$(PY) -m pytest -q -m slow tests/unit
 check:             ## everything a commit must pass (SPEC 9.6): fast tests, every unit's match and readability, the rebuild links, golden check
 	$(AUTOBEAT) "make check"
-	$(PY) -m pytest -q -m "not slow" tests/unit
-	$(PY) tools/match/match.py --all
-	$(PY) tools/match/readability.py
-	$(PY) tools/match/rebuild.py
-	$(PY) tools/oracle/golden.py --check
+	$(PY) tools/agent/check.py
 review-pass:       ## record a passed review (playbook 70): UNIT=<id> [CHECK=1 only checks]
 	@test -n "$(UNIT)" || (echo 'review-pass: usage: make review-pass UNIT=<id> [CHECK=1]'; exit 2)
 	$(PY) tools/agent/review.py $(UNIT) $(if $(CHECK),--check)

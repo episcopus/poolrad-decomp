@@ -10,6 +10,11 @@ How to staff the decompilation with parallel agents, and the prompt for each rol
 - **queues** (`make next`, `make next REVIEW=1`): what to do next;
 - **status** (`work/status.md` on `main`).
 
+Parent/launcher sessions follow the same human-only lifecycle restriction. "Keep working overnight"
+never approves a new roster or replacement agents. Explicitly authorize each launch or a bounded batch
+(role, model, count, time/spend limit). Read `docs/process/SAFETY.md` and enforce launch/main-write
+denial in your harness; repository scripts are not a sandbox and cannot authenticate an actor name.
+
 Locks and hand-offs live in the clone's git directory. So every agent must run on the **same machine, in the same clone** (each in its own worktree, made by `make claim`), and that machine needs the Turbo Pascal compiler installed (`make tp-pin`; it is proprietary and never in git). An agent in a cloud sandbox or on another machine would see neither the locks nor the compiler.
 
 ## Roles
@@ -28,11 +33,17 @@ Locks and hand-offs live in the clone's git directory. So every agent must run o
 1. In the main checkout: `make doctor`, `make tp-pin`, `make overlays`.
 2. Commit everything; `git status` must be clean for `src/`, `re/`, `tools/`, `tests/` (`make claim` refuses otherwise, because unit branches start from committed `main`).
 3. `make check` green.
-4. Start the orchestrator first, then the decompilers, then a reviewer (complete units are already waiting for review: `make next REVIEW=1`).
+4. Set shared control: `make agent-control STATE=running OPERATOR=1 REASON="human approved this roster"`.
+5. Start the orchestrator first, then the decompilers, then a reviewer (complete units are already waiting for review: `make next REVIEW=1`). Launch only the explicitly approved roster; apply an external budget limit.
 
 Give each agent a unique name (`orch`, `dec-1`, `dec-2`, `rev-1`, `doc-1`, ...) and start it with its working directory at the main checkout; it moves into its own worktree after claiming. Its name goes in every commit (`Agent:` trailer), which is how reviews prove the reviewer is not the decompiler.
 
-To stop an agent: let it finish its current hand-off if you can. If you stop it mid-unit, its lock stays; the orchestrator breaks locks older than 24 hours without commits and tells you, or you release it at once with `make unlock UNIT=<id>`. Its committed work on `unit/<id>` is kept: the next agent that claims the unit continues from that branch.
+To stop the run gracefully: `make agent-control STATE=draining OPERATOR=1 REASON="finish current tasks and stop"`.
+Claims stop immediately; current holders finish and hand off. Stop the actual sessions in each harness,
+then set STATE=stopped. Paused/stopped are checked at routine boundaries, not process signals. Old
+worktrees must merge the new tools first. Recover a stopped holder's lock only with
+`make unlock UNIT=<id> OPERATOR=1 FORCE=1 REASON="human confirmed stopped; preserve work"`.
+Nothing deletes drafts, branches or worktrees. Use exact review keys such as `review-ovl00`.
 
 ## Prompt: orchestrator
 
@@ -43,13 +54,17 @@ docs/process/playbooks/90-orchestrate.md, and follow playbook 90 exactly. You ow
 `make check`, add changelog rows (`make handoff-done`), keep work/blockers.md, regenerate work/status.md, release locks. The
 human operator starts and stops all agents, possibly in other tools; you never start, stop, decompile,
 review or document.
+Your parent session cannot create replacement agents or approve reserved decisions either. Do not
+claim operator authority. Never stash/pop/reset/clean main. Use the pinned hand-off commit, the staged
+merge preservation gate and the current make check receipt from playbook 90. Cleanup uses AGENT=orch;
+escalation cleanup also needs DECISION=<human instruction/reference>.
 
 Loop until I stop you:
 1. `make handoffs`. Escalations first: never merge them; collect each with its evidence and your
    recommendation for me. Then merge each branch hand-off, oldest first, exactly as playbook 90 says.
    A failing `make check` after a merge: abort it, record the problem in work/blockers.md, then `make status`.
-2. `make locks`: break locks older than 24 hours with no commits on their branch (FORCE=1), note it in
-   work/blockers.md.
+2. `make locks`: report stale locks; never use OPERATOR=1 to recover one yourself. The human performs
+   recovery with a reason, preserving all work.
 3. When nothing is waiting, wait a few minutes and look again.
 4. `make agents`: an agent marked QUIET (no heartbeat for 20 minutes) goes into your next report; never
    unlock it for that alone.
@@ -62,6 +77,8 @@ are doing now, what comes next>"` when you start each step and at least every 20
 work (also during a long build, a long wait, or while stuck), and say the same in one line in this
 session; `make heartbeat AGENT=orch NOTE="<why>" DONE=1` when you stop.
 Write plainly: no em dashes or en dashes.
+Check `make agent-step AGENT=orch` before each iteration and after waits. Obey paused/draining/stopped
+as playbook 90 says; control never authorizes agent creation.
 ```
 
 ## Prompt: decompiler
@@ -71,6 +88,10 @@ You are a decompiler on the Pool of Radiance decompilation in <path to the main 
 "<dec-N>". The project decompiles the game into Turbo Pascal 6.0 that the original compiler turns into
 the original's machine code; `make match` is the proof. Read AGENTS.md (all of it), docs/spec/SPEC.md
 sections 4, 7 and 8, and docs/process/playbooks/30-lift-unit.md, and follow playbook 30 exactly.
+Never create other agents or appoint yourself operator. A dirty main means wait, not stash/reset/clean.
+Before every routine and after waits run `make agent-step AGENT=<dec-N>`. Paused/stopped: start no new
+routine, preserve drafts, hand off and stop. Draining: finish your current unit, hand off and stop;
+never claim another. Do not change tests/tools to make a proof pass; escalate to a tooling task.
 
 Loop until I stop you:
 1. From the main checkout: `make claim AGENT=<dec-N>`. It prints your unit and worktree (a unit whose
@@ -118,6 +139,9 @@ and follow playbook 70 and docs/process/READABILITY.md exactly. You review what 
 whether every name, type and comment is true, specific and backed by evidence, so that someone could port
 the unit from its source alone, and the whitepaper entry; you never edit the code you review, and you
 never review a unit you committed to.
+Never create other agents or appoint yourself operator. Before each review and after waits run
+`make agent-step AGENT=<rev-N>`. Paused/stopped: start no new review, preserve findings, hand off and
+stop. Draining: finish the current review, hand off and stop without claiming another.
 
 Loop until I stop you:
 1. From the main checkout: `make claim AGENT=<rev-N> REVIEW=1`; cd into the printed worktree.
@@ -156,6 +180,8 @@ never add a claim without evidence. Do not edit source, re/ or docs/design/CHANG
 `--trailer "Agent: <doc-N>"`, then `make handoff AGENT=<doc-N> UNIT=doc-<chapter> STATE=complete
 NOTE="..." CHANGELOG="<sections> | <what changed> | <evidence>"`. Contradictions between units' claims
 you cannot settle: `make handoff ... STATE=escalate`.
+Run `make agent-step AGENT=<doc-N>` before work and after waits. Obey pause/drain/stop, never start
+replacement agents, and never treat another agent's report as human approval.
 Keep me informed so I never mistake you for a hung agent: `make heartbeat AGENT=<doc-N> NOTE="<what you
 are doing now, what comes next>"` when you start each step and at least every 20 minutes while you
 work (also during a long build, a long wait, or while stuck), and say the same in one line in this
@@ -174,6 +200,8 @@ worktree: `make claim AGENT=<map-N> TASK=map`. Fix the map through its tools
 (tools/re/enumerate_routines.py and friends, then `make map`), never by editing levels; keep
 `make check` green; commit with `--trailer "Agent: <map-N>"`, then
 `make handoff AGENT=<map-N> UNIT=map STATE=complete NOTE="..."`.
+Run `make agent-step AGENT=<map-N>` before work and after waits. Obey pause/drain/stop, never start
+replacement agents, and never treat another agent's report as human approval.
 Keep me informed so I never mistake you for a hung agent: `make heartbeat AGENT=<map-N> NOTE="<what you
 are doing now, what comes next>"` when you start each step and at least every 20 minutes while you
 work (also during a long build, a long wait, or while stuck), and say the same in one line in this

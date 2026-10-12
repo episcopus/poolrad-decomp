@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import hashlib
 import os
 import re
 import subprocess
@@ -30,6 +31,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import common  # noqa: E402
+import control  # noqa: E402
 import heartbeat  # noqa: E402
 
 STATES = ("complete", "partial", "blocked", "review-passed", "review-failed", "escalate")
@@ -54,7 +56,7 @@ def handoff_dir() -> Path:
 
 
 def fields(text: str) -> dict:
-    return dict(re.findall(r"^(\w+) = (.*)$", text, re.M))
+    return common.fields(text)
 
 
 def add_changelog_row(row: str) -> str:
@@ -67,11 +69,59 @@ def add_changelog_row(row: str) -> str:
     head = "|---|---|---|---|\n"
     if head not in text:
         raise ValueError("%s: no table header" % CHANGELOG)
-    CHANGELOG.write_text(text.replace(head, head + line, 1))
+    if line not in text:
+        common.atomic_write(CHANGELOG, text.replace(head, head + line, 1))
     return line.strip()
 
 
 def main(argv=None) -> int:
+    try:
+        with control.coordination_lock():
+            return run(argv)
+    except (ValueError, RuntimeError, OSError) as e:
+        print("handoff: %s" % e, file=sys.stderr)
+        return 2
+
+
+def archive(key: str, text: str) -> None:
+    directory = common.common_dir() / "poolrad-handoff-archive"
+    directory.mkdir(exist_ok=True)
+    digest = hashlib.sha256(text.encode()).hexdigest()
+    common.atomic_write(directory / ("%s-%s.md" % (key, digest)), text)
+
+
+def finish(key: str, agent: str, decision: str) -> int:
+    common.require_main("handoff-done")
+    if agent != "orch":
+        raise ValueError("handoff-done needs AGENT=orch in the main checkout")
+    path = handoff_dir() / ("%s.md" % key)
+    if not path.exists():
+        print("handoff: no pending record for %s" % key)
+        return 0
+    text = path.read_text()
+    f = fields(text)
+    if f.get("state") == "escalate":
+        if not decision.strip():
+            raise ValueError("clearing an escalation needs DECISION=<human instruction or reference>; agents cannot approve it")
+        common.single_line(decision, "decision")
+    else:
+        commit = f.get("commit", "")
+        if not re.fullmatch(r"[0-9a-f]{7,40}", commit):
+            raise ValueError("hand-off has no valid pinned commit")
+        common.git("merge-base", "--is-ancestor", commit, "HEAD")
+        import check
+        check.require_receipt()
+    # Preserve the record before removing it. A malformed changelog must leave the hand-off pending.
+    if f.get("changelog") and f.get("state") != "escalate":
+        print("handoff: changelog row added: %s" % add_changelog_row(f["changelog"]))
+    archive(key, text)
+    control.event("handoff-done", agent=agent, key=key, commit=f.get("commit"), decision=decision)
+    path.unlink()
+    print("handoff: archived and cleared %s" % key)
+    return 0
+
+
+def run(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--unit", default=os.environ.get("UNIT", ""))
     ap.add_argument("--agent", default=os.environ.get("AGENT", ""))
@@ -80,6 +130,7 @@ def main(argv=None) -> int:
     ap.add_argument("--changelog", default=os.environ.get("CHANGELOG", ""))
     ap.add_argument("--list", action="store_true")
     ap.add_argument("--done", action="store_true", help="remove the hand-off UNIT (a key from --list)")
+    ap.add_argument("--decision", default="", help="human instruction/reference before clearing an escalation")
     a = ap.parse_args(argv)
     if a.list:
         files = sorted(handoff_dir().glob("*.md"), key=lambda p: (not p.stem.startswith("escalate-"), p.stat().st_mtime))
@@ -93,35 +144,40 @@ def main(argv=None) -> int:
     if not key:
         print("handoff: need UNIT=<id>", file=sys.stderr)
         return 2
+    common.identifier(key, "unit or hand-off key")
     if a.done:                                       # the orchestrator names the hand-off by its key
-        path = handoff_dir() / ("%s.md" % key)
-        if path.exists():
-            f = fields(path.read_text())
-            if f.get("changelog") and f.get("state") != "escalate":
-                try:
-                    print("handoff: changelog row added: %s" % add_changelog_row(f["changelog"]))
-                except ValueError as e:
-                    print("handoff: %s (add the row by hand)" % e, file=sys.stderr)
-            path.unlink()
-        print("handoff: cleared %s" % key)
-        return 0
+        return finish(key, a.agent, a.decision)
     if a.state not in STATES or not a.agent:
         print("handoff: need AGENT=<you> and STATE=%s" % "|".join(STATES), file=sys.stderr)
         return 2
+    common.identifier(a.agent, "agent")
+    common.single_line(a.note, "note")
+    common.single_line(a.changelog, "changelog")
     branch = common.git("rev-parse", "--abbrev-ref", "HEAD")
     if a.state == "escalate":
         if not a.note:
             print("handoff: an escalation needs NOTE=\"<the question or problem, with evidence>\"", file=sys.stderr)
             return 2
-        key = "escalate-%s-%s" % (key, dt.datetime.now(dt.timezone.utc).strftime("%Y%m%d%H%M%S"))
+        key = "escalate-%s-%s" % (key, dt.datetime.now(dt.timezone.utc).strftime("%Y%m%d%H%M%S%f"))
     else:
-        if common.git("status", "--porcelain", "--", "src", "re", "docs", "work", "tools", "tests"):
+        if common.git("status", "--porcelain", "--", "src", "re", "docs", "work", "tools", "tests", "Makefile",
+                      "AGENTS.md", "CLAUDE.md", "pyproject.toml", "uv.lock", ".claude", ".cursor", ".opencode"):
             print("handoff: commit your work first (git status is not clean)", file=sys.stderr)
             return 1
         if branch == "main" or not int(common.git("rev-list", "--count", "main..HEAD") or 0):
             print("handoff: %s has no commits beyond main, so there is nothing to merge; run it from your "
                   "worktree after committing (an escalation needs no commits)" % branch, file=sys.stderr)
             return 1
+        prefix = "review" if a.state.startswith("review-") else ("task" if branch.startswith("task/") else "unit")
+        expected = "%s/%s" % (prefix, a.unit)
+        if branch != expected:
+            raise ValueError("STATE and UNIT require branch %s, not %s" % (expected, branch))
+        owner_key = "review-" + key if prefix == "review" else key
+        common.require_owner(owner_key, a.agent, branch)
+        import safety
+        problems = safety.branch_findings(branch)
+        if problems:
+            raise ValueError("branch contains forbidden changes:\n" + "\n".join(problems))
         if branch.startswith("unit/"):
             problems = unmatched(branch.split("/", 1)[1])
             if problems:
@@ -136,11 +192,20 @@ def main(argv=None) -> int:
                 print("handoff: CHANGELOG must be '<section> | <change> | <evidence>'", file=sys.stderr)
                 return 2
         key = ("review-" + key) if branch.startswith("review/") else key
-    head = common.git("rev-parse", "--short", "HEAD")
-    (handoff_dir() / ("%s.md" % key)).write_text(
+    head = common.git("rev-parse", "HEAD")
+    path = handoff_dir() / ("%s.md" % key)
+    if path.exists():
+        old_text = path.read_text()
+        old = fields(old_text)
+        if old.get("agent") != a.agent or old.get("branch") != branch:
+            raise ValueError("%s already has a pending hand-off from another agent; do not overwrite it" % key)
+        common.git("merge-base", "--is-ancestor", old["commit"], head)
+        archive(key, old_text)
+    common.atomic_write(path,
         "unit = %s\nagent = %s\nbranch = %s\ncommit = %s\nstate = %s\ntime = %s\nnote = %s\nchangelog = %s\n" % (
             a.unit.lower(), a.agent, branch, head, a.state,
-            dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), a.note, a.changelog))
+             dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), a.note, a.changelog))
+    control.event("handoff", agent=a.agent, key=key, branch=branch, commit=head, state=a.state)
     heartbeat.beat(a.agent, "handed off %s (%s)" % (key, a.state))
     if a.state == "escalate":
         print("handoff: escalation %s is waiting for the orchestrator (it goes to the human)" % key)
