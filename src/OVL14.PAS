@@ -15,7 +15,7 @@ type
     Unknown2C: array[$2C..$103] of Byte; { +$2C..+$103: not read here }
     Next: PCodeRec;                   { +$104: next record, nil ends the list }
   end;
-procedure ovl14_fn_0000;
+procedure ClearIconBits(Col, Row, Icon: ShortInt);
 procedure ovl14_fn_0109;
 procedure ovl14_fn_0236;
 procedure ovl14_fn_0294;
@@ -31,8 +31,22 @@ procedure ovl14_e1;
 implementation
 uses OVL29, RES03, RES06, OVL20;
 
-{ ovl14:0000: retf 6: 6 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl14_fn_0000; begin end;
+{ ovl14:0000. Clears the icon set's bit pair in the event byte of the area-map cell
+  (Col, Row): bits 6-7 for icon 6, 4-5 for 4, 2-3 for 2, 0-1 for 0. Called by ovl14_e1
+  on the Exit path with the party cell and icon set. }
+procedure ClearIconBits(Col, Row, Icon: ShortInt);
+begin
+  case Icon of
+    6:
+      GeoCells^.Cells[Row, Col] := GeoCells^.Cells[Row, Col] and $3F;
+    4:
+      GeoCells^.Cells[Row, Col] := GeoCells^.Cells[Row, Col] and $CF;
+    2:
+      GeoCells^.Cells[Row, Col] := GeoCells^.Cells[Row, Col] and $F3;
+    0:
+      GeoCells^.Cells[Row, Col] := GeoCells^.Cells[Row, Col] and $FC;
+  end;
+end;
 { ovl14:0109: retf 6: 6 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl14_fn_0109; begin end;
 { ovl14:0236: retf 2: 2 bytes of parameters; 6 bytes of locals }

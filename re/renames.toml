@@ -701,3 +701,10 @@ kind = "routine"
 why = "ovl14:0818 checks the area-map block ahead of the party and moves there, with the river stench message and impassable ranges; called by ovl14_e1"
 date = "2026-10-11"
 
+[[rename]]
+old = "ovl14_fn_0000"
+new = "ClearIconBits"
+kind = "routine"
+why = "ovl14:0000 clears the icon set's bit pair (6, 4, 2, 0 select bits 6-7, 4-5, 2-3, 0-1) in the map cell byte; called by ovl14_e1 on the Exit path"
+date = "2026-10-11"
+

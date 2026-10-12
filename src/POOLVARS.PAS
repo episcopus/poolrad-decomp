@@ -46,6 +46,14 @@ type
     (New with the size $800 at ovl11:0034 and the FillChar of $800 at ovl11:0271), so the array has
     1024 words; the words above 465 are simply not read. }
   TGameVars = array[0..1023] of Word;
+  { $400-byte map data block at DS:6A5C (also ^TBlock400): the first $300 bytes are not
+    read here; the plane at +$300 holds one byte per 16x16-map cell (row * 16 + col)
+    with a bit pair per icon set that ovl14 clears on exit. Full structure uncertain. }
+  TGeoCellBlock = record
+    Unknown: array[0..$2FF] of Byte;
+    Cells: array[0..15, 0..15] of Byte;
+  end;
+  PGeoCellBlock = ^TGeoCellBlock;
   { Heap blocks the loader (StartGame) allocates with New; the size is the argument of each New
     (ovl11:0044..00A3) and the type only fixes SizeOf. They are word arrays at the offsets the map
     code indexes. }
@@ -311,6 +319,7 @@ var
   ds6810: PMenuLine;              { head of the shop's item list, a far pointer the loader clears (ovl11:031A) }
   ds6A58: ^TBlock924;             { $924-byte block the loader allocates (ovl11:0084) }
   ds6A5C: ^TBlock400;             { $400-byte block the loader allocates (ovl11:0094) }
+  GeoCells: PGeoCellBlock absolute ds6A5C; { cell-byte view of the $400 block for ovl14 }
   ds6AAEWords: array[0..3] of TPresenceSlot;  { the 4-byte element table at DS:6AAE; the loader sets
                                     elements 2 and 3 to $FFFF (ovl11:035E..0390) }
   ds6AB2: Word;                   { cleared by the loader (ovl11:0353) }

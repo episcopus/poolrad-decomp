@@ -7440,12 +7440,12 @@ id = "ovl14:0000"
 unit = "ovl14"
 addr = "ovl14:0000"
 size = 265
-name = "ovl14_fn_0000"
-signature = ""
+name = "ClearIconBits"
+signature = "procedure ClearIconBits(Col, Row, Icon: ShortInt)"
 c_name = "ovl14_fn_0000"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl14_fn_0000 (ovl14:0000 clears the icon set's bit pair (6, 4, 2, 0 select bits 6-7, 4-5, 2-3, 0-1) in the map cell byte; called by ovl14_e1 on the Exit path); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
