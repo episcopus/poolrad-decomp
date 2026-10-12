@@ -9,7 +9,7 @@ PACKED := poolrad/START.EXE
 
 .PHONY: help setup doctor inputs unexepack overlays map dax smoke status next ghidra p1-check \
         tp-install tp-probe tp-compare tp-pin tpc emu2 \
-        packet claim lock locks unlock handoff handoffs handoff-done heartbeat agents \
+        packet claim lock locks unlock handoff handoffs handoff-done heartbeat agents watch-agents \
         oracle-run oracle-dosbox timing-scan golden match test test-slow check review-pass rebuild skeleton readability rename host coco3
 
 help:
@@ -116,6 +116,9 @@ heartbeat:        ## tell the human what you are doing: AGENT=<you> NOTE="<now, 
 
 agents:           ## every agent's last heartbeat, oldest first; QUIET = silent for more than 20 minutes
 	$(PY) tools/agent/heartbeat.py --list
+
+watch-agents:     ## live view for the operator: heartbeats, hand-offs and locks, redrawn every 30 seconds (Ctrl+C to stop)
+	@while true; do clear; date; $(MAKE) -s agents; echo; $(MAKE) -s handoffs | tail -1; $(MAKE) -s locks | tail -1; sleep 30; done
 
 unlock:           ## release a unit lock (FORCE=1 to break stale)
 	UNIT=$(UNIT) FORCE=$(FORCE) $(PY) tools/agent/unlock.py
