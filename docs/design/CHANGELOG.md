@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-11 | 5.12 code wheel | res06 signatures recorded and named; ovl02 init comment | work/reviews/ovl02.md findings fixed in e302d2f |
 | 2026-10-11 | none | already complete; verified only | make match UNIT=ovl33 unit complete |
 | 2026-10-11 | 5.15 heap errors | Size=0 returns at once with unassigned result; init comment; ds557D writer open | work/reviews/ovl00.md findings fixed in 2012dbb |
 | 2026-10-11 | 3.2, 5.8 | res04 returns the last typed-ahead key, and Ctrl-S resumes only for saved modes 0 and 1; the unit table names res04 | make match UNIT=res04 |
