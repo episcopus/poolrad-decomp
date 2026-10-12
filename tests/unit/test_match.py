@@ -80,7 +80,7 @@ def test_a_wrong_global_is_caught(mutated):
 
 
 def test_a_wrong_set_constant_is_caught(mutated):
-    r = mutated("in [0, 1]", "in [0, 2]")
+    r = mutated("ResumeIfSaved1 = 1;", "ResumeIfSaved1 = 2;")  # the resume set [0, 1] before ReadGameKey
     assert "literal pool" in r.detail
 
 
