@@ -581,8 +581,9 @@ the 28-byte money block at `DS:67F4` and `DS:6DC0`, redraws the shop (`res12:27D
   dispatches the key: B buys, V views an entry (`ovl19_e5`), T takes (`ovl21_e4`), P pools
   when the flag is clear (`ovl21_e2`), S shares (`ovl21_e3`), A appraises (`ovl21_e14`), E
   leaves, and two keys that are in neither menu text (G and O) call `ovl19_e10` with the key
-  as an amount. Leaving with money in hand prompts through `ovl07_e13` ("Do you want to go
-  back and get your Money?").
+  as an amount. Leaving while money lies in the pool asks through `ovl07_e13` ("Do you want to
+  go back and get your Money?", '~Yes ~No'); `ovl07_e13` returns the 0-based hotkey position, so
+  the party leaves on No (1) and stays on Yes **[V]** (`dec ax` at `ovl07:1775`, `ovl06:053E`).
 - The shop stock is the linked list at `DS:6810` of 63-byte item records, the `TMenuLine` type
   of `src/POOLVARS.PAS` (`TItem` is the same record): the item record of 4.2.5 in memory, with
   `Text` (a `string[40]`, the item name) at +0, `Flag29` at +$29, `Next` at +$2A, `Weight` at +$37,
@@ -601,9 +602,14 @@ the 28-byte money block at `DS:67F4` and `DS:6DC0`, redraws the shop (`res12:27D
   +$88..+$90, the pool's five LongInts at the start of the 28-byte block `DS:67F4`. Both deduction
   routines divide the amount by 5 and write five coin amounts (`ovl21_e10` into the character,
   `ovl21_e11` into `DS:67F4`), so the money blocks hold five denominations **[I]** (callees not
-  decompiled).
+  decompiled). Two 16-bit truncations are kept (QUIRKs): `BuyItems` keeps only the low word of
+  `ovl19_e11`'s LongInt (`ovl06:03C7`), so a character with 65536 or more is compared and charged
+  modulo 65536, and it passes only the low word of the pool's LongInt remainder to
+  `ovl21_e11(Amount: Word)` (`ovl06:0449`), so a pool above 65535 is rewritten truncated; ovl04's
+  `ChargeForCure` does the same (5.19).
 - `AddInventoryItem` (`ovl06:0239`) appends a clone of an item to `SelectedCharacter^.Items`
-  (+$C8, the character's carried items). `ovl19_e9` (`ovl19:275B`, not decompiled) refuses it, and
+  (+$C8, the character's carried items) and sets its var `Overloaded` to 1 when the item was
+  refused, 0 when it was added (`ovl06:026D`, `ovl06:0277`). `ovl19_e9` (`ovl19:275B`, not decompiled) refuses it, and
   "OverLoaded" is shown, when the character already has more than 15 items (the byte at +$C7) or
   when the item's `Weight` times its `Count` (when the count is not 0) plus the character's load
   (the word at +$102) exceeds `res12_fn_13AB` + 1500 **[I]** (code read).
