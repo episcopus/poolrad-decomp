@@ -1,0 +1,65 @@
+# Reusable leads extracted from verified project evidence. These are not matcher verdicts.
+# Add unit-specific lessons to re/learnings/<unit>.toml; reviewers check claims and evidence.
+
+[[lesson]]
+id = "multidimensional-indexing"
+confidence = "V"
+units = ["*"]
+tags = ["array", "index", "di", "ax", "frame", "codegen"]
+title = "Use real multidimensional arrays before inventing arithmetic workarounds"
+lesson = "Flattening a table changes the accumulator registers TP 6.0 chooses. Match the original dimensions and lower bounds first. A far-pointer 2-D array also changes the order of LES and index additions. This solved repeated ovl23 and ovl29 failures."
+evidence = ["docs/design/WHITEPAPER.md#5.6", "docs/design/WHITEPAPER.md#5.2.2", "src/OVL23.PAS", "src/OVL29.PAS"]
+
+[[lesson]]
+id = "with-string-temporaries"
+confidence = "V"
+units = ["ovl28", "ovl07", "ovl15", "ovl21"]
+tags = ["with", "string", "temporary", "frame", "sp", "loader"]
+title = "WITH placement controls temporary lifetime and frame size"
+lesson = "When a draft's frame is a few bytes too large around a string-valued call, test opening WITH after that call. LoadSpriteList finally matched when WITH opened after LoadDaxBlock, so the call's string temporaries were freed first. Do not call the callee's signature irreconcilable without checking its frame and argument address."
+evidence = ["src/OVL28.PAS#LoadSpriteList", "re/symbols.toml#ovl28:00A2", "docs/design/WHITEPAPER.md#5.16"]
+
+[[lesson]]
+id = "string-value-parameters"
+confidence = "V"
+units = ["*"]
+tags = ["string", "parameter", "strlcopy", "frame", "alignment"]
+title = "String value parameters are hidden local copies"
+lesson = "TP 6.0 copies a string value parameter into the frame and uses the local copy. Under A- a String40 occupies 41 bytes. Named parameter types are required; anonymous string[40] parameters are rejected. Distinguish this copy from overlay literal temporaries."
+evidence = ["docs/design/WHITEPAPER.md#3.6", "docs/design/WHITEPAPER.md#3.2.2", "src/RES09.PAS", "tools/re/tp_idioms/PRB11.PAS"]
+
+[[lesson]]
+id = "signed-byte-arithmetic"
+confidence = "V"
+units = ["*"]
+tags = ["byte", "shortint", "word", "integer", "multiply", "compare", "codegen"]
+title = "Signedness and expression order change code generation"
+lesson = "CBW versus zero extension, signed versus unsigned branches, and Word versus Integer products are evidence of type. Some Word sums promote to 32 bits. Preserve operand order: commutative Pascal expressions need not load operands in the same order. Probe the smallest disputed expression, not the whole game routine."
+evidence = ["docs/design/WHITEPAPER.md#3.6", "docs/design/WHITEPAPER.md#5.3", "src/OVL14.PAS", "src/RES09.PAS"]
+
+[[lesson]]
+id = "pool-and-boundaries"
+confidence = "V"
+units = ["*"]
+tags = ["pool", "literal", "boundary", "return", "mapping"]
+title = "Map sizes include following literal pools and may contain phantom entries"
+lesson = "A reported routine extent can include the next routine's string/set constants or a false entry. Read disassembly through forward targets, not just the first return. Keep compiler-proven boundaries and report corrections; never force a source workaround for a phantom entry."
+evidence = ["docs/design/WHITEPAPER.md#3.6", "docs/design/WHITEPAPER.md#3.2.2", "tools/match/match.py", "src/OVL11.PAS"]
+
+[[lesson]]
+id = "known-nested-limit"
+confidence = "V"
+units = ["res06", "ovl25", "ovl15", "ovl10"]
+tags = ["nested", "pool", "global", "callee", "blocked", "matcher"]
+title = "Nested address fields are a known human-held matcher limitation"
+lesson = "The parent's pre-entry bytes are compared exactly. Nested routines with moved globals/calls therefore cannot match yet. Search the current blockers before probing: expert advice cannot approve the matcher extension or change acceptance rules. Preserve a draft and work on unblocked routines."
+evidence = ["work/blockers.md", "tools/match/match.py", "docs/design/WHITEPAPER.md#5.5.2"]
+
+[[lesson]]
+id = "prior-art-build-and-license"
+confidence = "H"
+units = ["*"]
+tags = ["prior-art", "ecl", "character", "graphics", "data", "mapping"]
+title = "Prior art supplies leads, not our addresses or reusable code"
+lesson = "Consult the reference index before reconstructing a known engine/data format. coab and wicanr2 are read-only; re-prove claims on our bytes and never copy restricted code. wicanr2 studied a TP5/TPOV build with 38 overlays, not our TP6/FBOV build with 35. Keep prior-art claims H until verified here."
+evidence = ["docs/reference/prior-art.md", "docs/design/WHITEPAPER.md#2.2"]

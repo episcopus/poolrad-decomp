@@ -16,6 +16,7 @@ import handoff
 import heartbeat
 import safety
 import unlock
+import identity
 
 
 def git_at(path, *args):
@@ -50,6 +51,7 @@ def repo(tmp_path, monkeypatch):
     monkeypatch.chdir(main)
     # The fixture simulates an explicitly admitted human run; the real clone is never admitted here.
     common.atomic_write(common.common_dir() / "poolrad-control.json", '{"state":"running","reason":"test fixture"}\n')
+    identity.register("dec-1", "decompiler", "test-harness", "test/model", "test-session")
     return main
 
 
@@ -300,7 +302,7 @@ def test_fingerprint_invalidates_changed_source_and_added_local_files(repo):
 def test_failed_or_concurrently_modified_checks_never_write_receipt(repo, monkeypatch):
     class Result:
         returncode = 1
-    monkeypatch.setattr(check.subprocess, "run", lambda *a, **kw: Result())
+    monkeypatch.setattr(check, "run_stage", lambda *a, **kw: Result())
     # common.git also uses subprocess.run: isolate its reads before replacing the runner.
     monkeypatch.setattr(common, "git", lambda *a, **kw: "HEAD")
     monkeypatch.setattr(common, "common_dir", lambda: repo / ".git")
@@ -320,7 +322,7 @@ def test_failed_recheck_invalidates_previous_passing_receipt(repo, monkeypatch):
     monkeypatch.setattr(check, "fingerprint", lambda: current)
     class Result:
         returncode = 1
-    monkeypatch.setattr(check.subprocess, "run", lambda *a, **kw: Result())
+    monkeypatch.setattr(check, "run_stage", lambda *a, **kw: Result())
     assert check.main() == 1 and not path.exists()
 
 

@@ -15,6 +15,7 @@ import fcntl
 import json
 import os
 import sys
+import uuid
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -54,8 +55,11 @@ def admit() -> None:
 
 def event(kind: str, **data) -> None:
     """Append-only coordination history; the dashboard's latest heartbeat is not an audit log."""
-    record = {"time": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
-              "event": kind, **data}
+    import identity
+    context = identity.context(data.get("agent", ""), data.get("branch", ""), data.get("agent_id"))
+    run = state().get("run_id")
+    record = {**context, "time": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
+              "event_id": uuid.uuid4().hex, "run_id": run, "event": kind, **data}
     with (common.common_dir() / "poolrad-events.jsonl").open("a") as f:
         fcntl.flock(f, fcntl.LOCK_EX)
         f.write(json.dumps(record, sort_keys=True) + "\n")
@@ -69,9 +73,32 @@ def main(argv=None) -> int:
     ap.add_argument("--operator", action="store_true", help="human acknowledgement, not authentication")
     ap.add_argument("--reason", default="")
     ap.add_argument("--step", action="store_true")
+    ap.add_argument("--approve-task", default="")
+    ap.add_argument("--path", action="append", default=[])
     ap.add_argument("--agent", default=os.environ.get("AGENT", ""))
     a = ap.parse_args(argv)
     try:
+        if a.approve_task:
+            if a.step or a.state or not a.operator or not a.reason.strip() or not a.path:
+                raise ValueError("task approval needs OPERATOR=1, REASON and exact PATHS, without a state change")
+            main_dir = common.main_checkout()
+            if Path.cwd().resolve() != main_dir.resolve() or common.git("branch", "--show-current", cwd=main_dir) != "main":
+                raise ValueError("task approval must be issued from the main checkout")
+            task = common.identifier(a.approve_task, "task")
+            common.single_line(a.reason, "reason")
+            for path in a.path:
+                if Path(path).is_absolute() or ".." in Path(path).parts or not (
+                    path in {"docs/spec/SPEC.md", "re/state.toml"} or path.startswith(("docs/spec/ADR", "tests/sessions/"))):
+                    raise ValueError("only exact human-reserved document/session/state paths can be approved here")
+            with coordination_lock():
+                directory = common.common_dir() / "poolrad-task-approvals"
+                directory.mkdir(exist_ok=True)
+                approval = dict(branch="task/" + task, paths=a.path, reason=a.reason,
+                                base=common.git("rev-parse", "HEAD", cwd=main_dir))
+                common.atomic_write(directory / (task + ".json"), json.dumps(approval, sort_keys=True) + "\n")
+                event("task-approved", **approval)
+            print("approval: %s, %s" % (task, ", ".join(a.path)))
+            return 0
         if a.step and a.state:
             raise ValueError("--step cannot change operator state")
         if a.state:
@@ -80,8 +107,11 @@ def main(argv=None) -> int:
             common.require_main("agent-control")
             common.single_line(a.reason, "reason")
             with coordination_lock():
-                old = state()["state"]
+                old_record = state()
+                old = old_record["state"]
                 record = {"state": a.state, "reason": a.reason,
+                          "run_id": uuid.uuid4().hex if a.state == "running" and old == "stopped" else
+                              (old_record.get("run_id") or uuid.uuid4().hex),
                           "time": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")}
                 common.atomic_write(common.common_dir() / "poolrad-control.json", json.dumps(record) + "\n")
                 event("control", previous=old, **record)

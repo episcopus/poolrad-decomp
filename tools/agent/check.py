@@ -8,10 +8,13 @@ from __future__ import annotations
 
 import hashlib
 import fcntl
+import argparse
 import json
 import subprocess
 import sys
 import time
+import uuid
+import os
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -19,11 +22,12 @@ import common
 import control
 
 PATHS = ("src", "re", "tools", "tests", "poolrad", "Makefile", "AGENTS.md", "pyproject.toml", "uv.lock",
-         "docs/design/WHITEPAPER.md")
+         "docs/design", "docs/process", "docs/spec", "docs/reference/prior-art.md")
 STAGES = (("inputs", "tools/setup/inputs.py", "--check"),
           ("safety", "tools/agent/safety.py"),
+          ("learning", "tools/agent/learning.py", "--check"),
           ("tests", "-m", "pytest", "-q", "-m", "not slow", "tests/unit"),
-          ("match", "tools/match/match.py", "--all"),
+          ("match", "tools/agent/activity.py", "match", "--", "--all"),
           ("readability", "tools/match/readability.py"),
           ("rebuild", "tools/match/rebuild.py"),
           ("golden", "tools/oracle/golden.py", "--check"))
@@ -52,7 +56,11 @@ def receipts() -> Path:
     return directory
 
 
-def require_receipt() -> None:
+def run_stage(args: list[str], env: dict):
+    return subprocess.run([sys.executable, *args], cwd=common.ROOT, env=env)
+
+
+def require_receipt() -> dict:
     current = fingerprint()
     path = receipts() / (current + ".json")
     if not path.exists():
@@ -60,9 +68,13 @@ def require_receipt() -> None:
     record = json.loads(path.read_text())
     if record.get("fingerprint") != current or record.get("stages") != [s[0] for s in STAGES]:
         raise ValueError("invalid check receipt; rerun make check")
+    return record
 
 
-def main() -> int:
+def main(argv=()) -> int:
+    ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    ap.add_argument("--fresh", action="store_true", help="rerun even unchanged original goldens")
+    options = ap.parse_args(argv)
     try:
         before = fingerprint()
         # A new failed check must not leave an older passing receipt usable for the same inputs.
@@ -71,20 +83,35 @@ def main() -> int:
             fcntl.flock(lock, fcntl.LOCK_EX)
             path = receipts() / (before + ".json")
             path.unlink(missing_ok=True)
-            elapsed = {}
+            import cache
+            elapsed, modes = {}, {}
+            check_id = uuid.uuid4().hex
+            env = {**os.environ, "POOLRAD_CHECK_ID": check_id}
             for name, *args in STAGES:
                 started = time.monotonic()
-                result = subprocess.run([sys.executable, *args], cwd=common.ROOT)
+                key = cache.golden_key() if name == "golden" else None
+                if key and not options.fresh and cache.hit(key):
+                    elapsed[name], modes[name] = round(time.monotonic() - started, 3), "cached-original"
+                    print("check: original golden inputs unchanged; cached pass %s" % key[:12], flush=True)
+                    continue
+                if key:
+                    cache.invalidate(key)
+                result = run_stage(args, env)
                 elapsed[name] = round(time.monotonic() - started, 3)
+                modes[name] = "fresh"
                 if result.returncode:
                     control.event("check-failed", fingerprint=before, stage=name, seconds=elapsed)
                     print("check: %s failed; no receipt written" % name, flush=True)
                     return 1
+                if key:
+                    if cache.golden_key() != key:
+                        raise ValueError("original golden inputs changed during the check")
+                    cache.save(key)
             if fingerprint() != before:
                 control.event("check-failed", fingerprint=before, stage="inputs-changed", seconds=elapsed)
                 raise ValueError("checked inputs changed during make check; rerun after writers finish")
             record = {"fingerprint": before, "stages": [s[0] for s in STAGES], "seconds": elapsed,
-                      "commit": common.git("rev-parse", "HEAD")}
+                      "commit": common.git("rev-parse", "HEAD"), "check_id": check_id, "stage_modes": modes}
             common.atomic_write(path, json.dumps(record, sort_keys=True) + "\n")
             control.event("check-passed", **record)
             print("check: passed; receipt %s; stages %s" % (before[:12], elapsed), flush=True)
@@ -95,4 +122,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main(sys.argv[1:]))

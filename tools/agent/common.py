@@ -10,6 +10,7 @@ import os
 import re
 import subprocess
 import tempfile
+from functools import lru_cache
 import tomllib
 from pathlib import Path
 
@@ -61,9 +62,20 @@ def git(*args: str, cwd: Path | None = None) -> str:
     return r.stdout.strip()
 
 
+@lru_cache(maxsize=128)
+def _common_dir(root: Path, marker: tuple) -> Path:
+    p = Path(git("rev-parse", "--git-common-dir", cwd=root))
+    return p if p.is_absolute() else (root / p).resolve()
+
+
 def common_dir() -> Path:
-    p = Path(git("rev-parse", "--git-common-dir"))
-    return p if p.is_absolute() else (ROOT / p).resolve()
+    # This location is stable during a CLI invocation. Repeated attribution/ledger reads must not
+    # spawn dozens of identical git processes. Root/marker changes invalidate it (including tests).
+    root = ROOT.resolve()
+    path = root / ".git"
+    stat = path.stat()
+    marker = (stat.st_dev, stat.st_ino, stat.st_mtime_ns if path.is_file() else 0)
+    return _common_dir(root, marker)
 
 
 def main_checkout() -> Path:
