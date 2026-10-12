@@ -1,10 +1,12 @@
 unit OVL04;
 { Temple: the temple shop of a town (whitepaper 5.19). The entry (VisitTemple) offers Heal, View,
-  Take, Pool, Share, Appraise and Exit; HealMenu lists the cleric services, each a routine here
+  Take, Pool, Share, Appraise and Exit; HealMenu lists the ten cleric services, each a routine here
   (CureBlindness, CureDisease, CureWounds, NeutralizePoison, RaiseDead, RemoveCurse,
-  StoneToFlesh) that checks the selected character, asks for confirmation when the service is not
-  needed (AskCastAnyway), takes the price (ChargeForCure) and applies the cure through the affect
-  routines of ovl24. }
+  StoneToFlesh). Most of them check the selected character, ask for confirmation when the service
+  is not needed (AskCastAnyway), take the price (ChargeForCure) and add or remove the affect
+  through ovl24_e2/e5; the ones that differ: CureWounds never asks (ovl04:0401) and heals through
+  ovl24_e8/e21, and RemoveCurse applies through ovl22_e9 (ovl04:083A), not the ovl24 affect
+  routines. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 function AskCastAnyway(Reason: string): Char;
@@ -55,7 +57,9 @@ const
   LastClass = 7;
   HealMenuLines = 10;           { lines ovl25_e6 builds for the Heal menu }
   KeyEnter = #13;
-  KeyNone = #0;                 { what the menus return for Escape }
+  KeyNone = #0;                 { treated as Escape/Cancel; ovl25_e2/e4 are still stubs, so this comes
+                                  from the callers (an extended key returns #0 first, whitepaper 5.8), not
+                                  from the callee's own bytes }
 
 { ovl04:0013. Shows Reason for the selected character (res12_fn_16EC, e.g. "is not blind.") and
   asks "cast cure anyway: "; returns the key (Yes or not). res12_fn_17E3 clears the prompt. }
@@ -204,8 +208,9 @@ end;
   and AffectPoison are removed, Status becomes StatusOkay, Flag10D and Flag11B become 1, and the
   character loses a point of constitution. From constitution 14 up the hit points above HpB1 are
   divided by the constitution bonus of all its class levels (a fighter level counts
-  constitution - 14, another level 2 above 15, else 1), and that share is taken off HpMax unless
-  the constitution is 17 or more and the character has no fighter level. }
+  constitution - 14; a non-fighter level counts twice once the constitution is above 15, else 1),
+  and that share is taken off HpMax unless the constitution is 17 or more and the character has
+  no fighter level. }
 procedure RaiseDead;
 var
   Affect: Pointer;
@@ -348,8 +353,9 @@ end;
 
 { ovl04:09D7. The Heal menu: fills ten menu lines (ovl25_e6) with TempleMenuText, draws the
   windows and "<name>, how can we help you?", and runs the menu (ovl25_e4, keys "Heal Exit")
-  until Exit or Escape; Heal or Enter on line 0..8 runs that service. Frees the lines
-  (ovl25_e7) and redraws the view (res12_fn_27D9). }
+  until Exit or Escape; Heal or Enter on lines 0..8 runs that service, line 9 is Exit. Frees the
+  lines (ovl25_e7), clears the text area (res06_fn_0DD3(0, 0, 39, 24)), redraws the view
+  (res12_fn_27D9) and reshows the character (res12_fn_0767(SelectedCharacter)). }
 procedure HealMenu;
 var
   List: PMenuLine;
@@ -411,7 +417,9 @@ end;
   Share only while ovl21_e9 reports pooled money). Heal opens HealMenu, View ovl19_e5, Take
   ovl21_e4, Pool ovl21_e2, Share ovl21_e3, Appraise ovl21_e14, G and O ovl19_e10. Exit with
   money left in the pool asks "Do you want to go back and retrieve your money?" and leaves only
-  on that menu's first choice. Clears the pooled money DS:67F4 on entry. }
+  on that menu's first choice. The trailing case (ovl04:0F02) also runs res12_fn_27D9 for a 'B'
+  key with 'T' and for 'A' when Appraised is set, but neither menu text offers 'B'; what produces
+  it is unknown. Clears the pooled money DS:67F4 on entry. }
 procedure VisitTemple;
 var
   Key: Char;
@@ -472,5 +480,8 @@ begin
   until Done;
 end;
 
+{ ovl04:0F32. The unit's initialisation part is empty: the compiler emits only `55 89 E5 5D CB`
+  (push bp; mov bp, sp; pop bp; retf, the frame with no body), so the Temple runs no code when the
+  program starts; its work happens only when VisitTemple is called. }
 begin
 end.
