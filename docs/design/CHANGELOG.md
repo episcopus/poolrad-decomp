@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-11 | 5.17 (new) | added ovl30 (screen support): SignOf, SortTable and SetupLine, and the TLineState and TSortRec types | make match UNIT=ovl30: 3 matched, 0 differ, 4 stubs; make check green |
 | 2026-10-11 | 5.17 (new) | added ovl18 (PoolNarrative): the ending narrative ShowEndingNarrative and the door animation AnimateAreaDoors, and blocked the timed animation ovl18_fn_0006 with notes | make match UNIT=ovl18: 2 matched, 0 differ, 1 stub; make check green |
 | 2026-10-11 | 5.16 | added ovl28 Show3DSprite and ShowHeadBodyWindow and the DS:5D92 character picture record, blocked the PIC/FINAL loader ovl28_e2 with notes | make match UNIT=ovl28: 8 matched, 0 differ, 1 stub; make check green |
 | 2026-10-11 | tools | match resolves absolute aliases to their base global (HeapWords -> HeapEnd), independent of map order | unblocks ovl28 merge |
