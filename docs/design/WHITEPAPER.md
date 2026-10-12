@@ -609,6 +609,27 @@ temporaries is what remains.
 
 ---
 
+### 5.17 The ending narrative and door animation ovl18 **[V]** (`src/OVL18.PAS`, `make match UNIT=ovl18`: 2 of 3 routines at L2)
+
+Overlay 18 (PoolNarrative) plays the game's ending and animates the area view doors:
+
+- `ShowEndingNarrative` (`ovl18:02A4`, called by `ovl03:2E10`) shows the dragon's death and the
+  Tyranthraxus and Bane speech as lines of text at column 1, rows $11 onwards, colour 10
+  (`res06_fn_0626(1, Row, 10, Text)`) and loads and draws the `FINAL<number>` pictures (the number is
+  `Str(TileSet)` in DS:4713) through `res07_fn_0111` and `res07_fn_0D71`, running the animation
+  `ovl18_fn_0006(3, 5, 2, x)`, `(3, 1, 7, x)` and `(3, 1, 8, 1)` between the speech blocks. It saves
+  the view mode DS:49F3 in DS:4712, sets 7 and restores it.
+- `AnimateAreaDoors` (`ovl18:06B3`, called by `ovl03:31B4` and `ovl17:1602`) draws or clears the doors
+  of the area view: it calls `res07_fn_1E5C(@ds091D, @ds092D, code, 1, bank)` for each entry of
+  DS:0900 (0..10) and `(@ds091D, @ds093D, code, 1, bank)` for DS:090B (0..17), where bit 7 of a code
+  selects the second SQRPACI bank DS:5E56 instead of DS:5E52 and the low 7 bits are the picture
+  number, and it steps the view with `DrawAreaView(DS:094D[I], DS:095F[I])` over 9 steps.
+
+Still to decompile: `ovl18_fn_0006` (`ovl18:0006`), the timed animation, blocked with its mapped
+structure in the `re/symbols.toml` notes.
+
+---
+
 ## 6. Open questions
 
 1. Remaining compiler directives (`$A`, `$B`, `$V`, `$X`) and which game unit is the 16-byte unit at `0A31` (2.2). The version is pinned: Turbo Pascal 6.0, June 1991 release.

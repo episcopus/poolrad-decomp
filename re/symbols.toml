@@ -10024,11 +10024,11 @@ unit = "ovl18"
 addr = "ovl18:0006"
 size = 670
 name = "ovl18_fn_0006"
-signature = ""
+signature = "procedure ovl18_fn_0006(A, B: Word; C, D: Byte)"
 c_name = "ovl18_fn_0006"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; BLOCKED (dec-4, 2026-10-12): the timed animation between the narrative blocks, mapped but not matched within the session budget. Signature (A, B: Word; C, D: Byte) from ShowEndingNarrative's three calls ((3, 5, 2, x), (3, 1, 7, x), (3, 1, 8, 1)). It sets Count [bp-0x4B] := 0, T1 (32-bit at bp-0x4A/bp-0x48) := res06_fn_0C3F, zeroes the 66-byte TSpriteList local List at [bp-0x42], loads 'FINAL' through ovl28_e2('FINAL', C, 2, @List) (0802:0716 is the file loader it reaches), draws the first slot with res07_fn_0D71(B-1, A-1, 0, 0, List.Slots[1].Sprite, DrawBuf) and res07_fn_1B52, then loops: DrawSprite(A, B, 1, List.Slots[I].Sprite), T2 := res06_fn_0C3F (bp-0x46/bp-0x44), and continues while (T2 - T1) <= (a 32-bit value from the list at bp+di-0x48/bp+di-0x46) * (DS:49E2 + 3), through the LongInt multiply helper 0AF8:0A5B and the 32-bit compare at ovl18:00D1; it steps I [bp-0x41] (reset to 1 and Count incremented when I passes List.Count) and stops when Count = D; it ends with FreeSpriteList(@List). res06_fn_0C3F (0709:0C3F) is the timer it reads and DS:49E2 the start-up count. The frame is 82 bytes (List 66 + Name 15 + two 32-bit values + I); matching its compiler temporaries is what remains"
 evidence = ["prologue"]
 
 [[routine]]
