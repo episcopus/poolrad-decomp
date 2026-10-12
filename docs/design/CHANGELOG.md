@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-12 | process | make next skips units whose every unfinished routine is blocked | tests/unit/test_agent_tools.py |
 | 2026-10-12 | 5.2 | ovl29 map entry 0143 removed (tail of DrawWallMap) | make match UNIT=ovl29: unit complete, 13 routines |
 | 2026-10-12 | 5.8 | menu unit ovl25: prompt line, word hotkeys, picture animation, timeout, list menu keys and paging | make match UNIT=ovl25 (6 matched), draft 3c8dac5 |
 | 2026-10-12 | 4.2.1, 4.2.4, 5.2.1, 5.2.2 | GEO plane accessors and off-map wrap; LoadWallSet slots, symbol offset and bank loading (no multiple-of-780 check); the 3D view's ten wall pieces, painter's order and overhead wall map | make match UNIT=ovl29 (unit complete) |
