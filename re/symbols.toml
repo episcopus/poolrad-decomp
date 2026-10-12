@@ -7505,12 +7505,12 @@ id = "ovl14:05AB"
 unit = "ovl14"
 addr = "ovl14:05AB"
 size = 67
-name = "ovl14_fn_05AB"
-signature = ""
+name = "FindCodeSlot"
+signature = "function FindCodeSlot(Code: Byte; Rec: PCodeRec): Byte"
 c_name = "ovl14_fn_05AB"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl14_fn_05AB (ovl14:05AB scans a code-table record for a byte value and returns the slot index or FF; called by FindCodeRecord and Knock); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -7518,12 +7518,12 @@ id = "ovl14:05EE"
 unit = "ovl14"
 addr = "ovl14:05EE"
 size = 90
-name = "ovl14_fn_05EE"
-signature = ""
+name = "FindCodeRecord"
+signature = "function FindCodeRecord(Code: Byte): PCodeRec"
 c_name = "ovl14_fn_05EE"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl14_fn_05EE (ovl14:05EE walks the ds5D96 record list and returns the first record whose code table holds the byte, or nil; called with 1F by the Knock menu path and Knock); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -7531,12 +7531,12 @@ id = "ovl14:0648"
 unit = "ovl14"
 addr = "ovl14:0648"
 size = 69
-name = "ovl14_fn_0648"
-signature = ""
+name = "DoKnock"
+signature = "function DoKnock: Boolean"
 c_name = "ovl14_fn_0648"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl14_fn_0648 (ovl14:0648 is the K key handler in e1's Bash/Pick/Knock/Exit menu: it clears the 1F KnockCode slot and returns success); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
