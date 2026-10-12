@@ -23,9 +23,11 @@ type
     Pic: Word;                   { the block code drawn instead of the one in the map }
   end;
   { One slot of the picture table at DS:5E5A. Two pointers, stride 8. FreePictureSlot frees
-    either one when it is not nil. Which picture is which is not known yet. }
+    either one when it is not nil. Pics[Mirror] is the same two pointers, indexed. }
   TPictureSlot = record
-    FirstPic, SecondPic: Pointer;
+    case Integer of
+      0: (FirstPic, SecondPic: Pointer);
+      1: (Pics: array[0..1] of Pointer);
   end;
   { The word variables of the game: the structure the far pointer at DS:49D2 leads to. ovl07 and
     ovl17 index it dynamically (the variables of the ECL scripts), words 195 and 196 keep the party
@@ -71,7 +73,7 @@ var
   ds6AAC: Byte;                   { wall view overlay gate; see above }
   ds6AAD: Byte;                   { the party's column in the 16x16 area map (GEO); ovl29_e4/e5 take it }
   ds6AAE: Byte;                   { the party's row in the 16x16 area map; ovl29_e4/e5 take it; set to 1 by ovl11_e1 }
-  { The marker's icon set (ovl32_e5's third parameter): the wilderness keys H, M, P and K set 0,
+  { The marker's icon set (DrawIcon's third parameter): the wilderness keys H, M, P and K set 0,
     2, 4 and 6 (ovl14_fn_0B48); ovl07_e10 maps a script value 0..3 to the same 0/2/4/6. }
   ds6AAF: Byte;                   { the marker's icon set; see above }
   ds6AB1: Byte;                   { the event byte of the party's map cell, from ovl29_e4; bit 7 = interior }
@@ -91,6 +93,6 @@ var
   ds557D: Boolean;                { heap error retry gate; see above }
   ds5E52: Pointer;                { picture pointer DrawCellPicture uses when PicCode is at most 127 }
   ds5E56: Pointer;                { picture pointer DrawCellPicture uses when bit 7 of PicCode is set }
-  ds5E5A: array[0..3] of TPictureSlot;  { picture slots; one routine frees a slot's two pictures }
+  ds5E5A: array[Byte] of TPictureSlot;  { slots at DS:5E5A; picture numbers reach at least 11 }
 implementation
 end.

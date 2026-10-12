@@ -7,13 +7,33 @@ procedure Load24x24Set;
 procedure DrawCellPicture(PicCol, PicRow: Shortint; PicCode, Unused: Byte);
 procedure FreePictureSlot(Slot: Byte);
 procedure ovl32_e4;
-procedure ovl32_e5(A, B: ShortInt; C, D, E: Byte);
+procedure DrawIcon(CellCol, CellRow: Shortint; IconSet, Mirror, PicIndex: Byte);
 implementation
 uses POOLVARS, RES07;
 
 const
   PicIndexMask = $7F;         { bit 7 of the picture code selects the source pointer }
   NoBlitFlags = 0;            { the flags byte this routine passes to the blitter }
+  IconSetCopyLimit = 3;       { icon sets above this are copied by res07_fn_15C7 }
+  OneItem = 1;                { item count stored in the allocated picture }
+  AllocatePixels = 1;         { bit 0 of AllocFlags asks res07_fn_248E for a pixel buffer }
+  NoPicIndex = 0;             { picture index this routine passes to res07_fn_0D71 }
+  BlitFlagBit = 1;            { res07_fn_0D71 tests bit 0 of the flags byte }
+  CellStep = 3;               { the cell column and row are multiplied by 3 for the blit }
+  QuarterAdapter = 1;         { VideoAdapter 1: the pixel copy is a quarter of the byte size }
+
+type
+  PMemPic = ^TMemPic;
+  { In-memory picture. Height and width are the words at +0 and +2. ByteSize, the pixel
+    pointer and the copied tail sit at +$11, +$13 and +$17; the 13 bytes between width and
+    ByteSize are not read here. }
+  TMemPic = record
+    Height, WidthCols: Word;
+    BeforeSize: array[0..12] of Byte;
+    ByteSize: Word;
+    Pixels: ^Byte;
+    Tail: Byte;
+  end;
 
 { ovl32:0022: retf 8: 8 bytes of parameters; 264 bytes of locals }
 {@stub} procedure Load24x24Set; begin end;
@@ -41,12 +61,36 @@ begin
 end;
 { ovl32:01C8: retf 8: 8 bytes of parameters; 1028 bytes of locals }
 {@stub} procedure ovl32_e4; begin end;
-{ ovl32:04FC: retf 10: 10 bytes of parameters; 8 bytes of locals.
-  Draws an icon: A and B name the cell (times 3 pixels each when they reach the display call
-  res07_fn_0D71), C the picture set (its table is ds5E5A, checked against 3), D and E the mirror
-  half and the picture index. DrawPartyMarker passes the marker cell, ds6AAF and MarkerFrame mod 2 and
-  div 2 + 9. }
-{@stub} procedure ovl32_e5(A, B: ShortInt; C, D, E: Byte); begin end;
+{ ovl32:04FC. Draws the picture PicIndex, mirror half Mirror, from the table at ds5E5A.
+  Nothing happens when that pointer is nil. Otherwise a picture of the same height and
+  width is allocated, the bytes are copied (res07_fn_15C7 when IconSet is above
+  IconSetCopyLimit, otherwise Move of the tail and the pixels), and res07_fn_0D71 draws
+  it at the cell times CellStep. The copy is then freed. DrawPartyMarker passes the
+  marker cell, the icon set ds6AAF, and the walk frame split into half and picture. }
+procedure DrawIcon(CellCol, CellRow: Shortint; IconSet, Mirror, PicIndex: Byte);
+var
+  Dest: Pointer;
+begin
+  if ds5E5A[PicIndex].Pics[Mirror] <> nil then
+  begin
+    with PMemPic(ds5E5A[PicIndex].Pics[Mirror])^ do
+    begin
+      res07_fn_248E(Height, WidthCols, OneItem, AllocatePixels, Dest);
+      if IconSet > IconSetCopyLimit then
+        res07_fn_15C7(ds5E5A[PicIndex].Pics[Mirror], Dest)
+      else
+      begin
+        Move(Tail, PMemPic(Dest)^.Tail, ByteSize);
+        if VideoAdapter = QuarterAdapter then
+          Move(Pixels^, PMemPic(Dest)^.Pixels^, ByteSize shr 1 shr 1)
+        else
+          Move(Pixels^, PMemPic(Dest)^.Pixels^, ByteSize);
+      end;
+    end;
+    res07_fn_0D71(CellCol * CellStep, CellRow * CellStep, NoPicIndex, BlitFlagBit, Dest, ds4A20);
+    res07_fn_2595(Dest);
+  end;
+end;
 
 begin
 end.

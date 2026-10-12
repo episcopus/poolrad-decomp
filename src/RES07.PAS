@@ -15,7 +15,7 @@ procedure res07_fn_08D4(Col, Row: Integer; PicIndex, Flags: Byte; Source, Dest: 
 procedure res07_fn_0A33;
 procedure res07_fn_0C0C;
 procedure res07_fn_0D6C;
-procedure res07_fn_0D71;
+procedure res07_fn_0D71(Col, Row: Integer; PicIndex, Flags: Byte; Source, Dest: Pointer);
 procedure res07_fn_0E01;
 procedure res07_fn_0E28;
 procedure res07_fn_0E33;
@@ -31,13 +31,13 @@ procedure res07_fn_1484;
 procedure res07_fn_1509;
 procedure res07_fn_1514;
 procedure res07_fn_1596;
-procedure res07_fn_15C7;
+procedure res07_fn_15C7(Source, Dest: Pointer);
 procedure res07_fn_1708;
 procedure res07_fn_1951;
 procedure res07_fn_1A19;
 procedure res07_fn_1B52;
 procedure res07_fn_1E5C;
-procedure res07_fn_248E;
+procedure res07_fn_248E(Height, Width: Word; ItemCount, AllocFlags: Byte; var Pic: Pointer);
 procedure res07_fn_2595(var Pic: Pointer);
 procedure res07_fn_2632;
 procedure res07_fn_2A0D;
@@ -68,8 +68,8 @@ implementation
 {@stub} procedure res07_fn_0C0C; begin end;
 { 0464:0D6C: retf 16: 16 bytes of parameters; 0 bytes of locals }
 {@stub} procedure res07_fn_0D6C; begin end;
-{ 0464:0D71: frame not read }
-{@stub} procedure res07_fn_0D71; begin end;
+{ 0464:0D71: retf 16: same frame as res07_fn_08D4. Bit 0 of Flags is tested. }
+{@stub} procedure res07_fn_0D71(Col, Row: Integer; PicIndex, Flags: Byte; Source, Dest: Pointer); begin end;
 { 0464:0E01: frame not read }
 {@stub} procedure res07_fn_0E01; begin end;
 { 0464:0E28: frame not read }
@@ -100,8 +100,8 @@ implementation
 {@stub} procedure res07_fn_1514; begin end;
 { 0464:1596: retf 2: 2 bytes of parameters; 2 bytes of locals }
 {@stub} procedure res07_fn_1596; begin end;
-{ 0464:15C7: frame not read }
-{@stub} procedure res07_fn_15C7; begin end;
+{ 0464:15C7: retf 8: two Pointers. Returns at once when either is nil. }
+{@stub} procedure res07_fn_15C7(Source, Dest: Pointer); begin end;
 { 0464:1708: retf 8: 8 bytes of parameters; 0 bytes of locals }
 {@stub} procedure res07_fn_1708; begin end;
 { 0464:1951: frame not read }
@@ -112,8 +112,9 @@ implementation
 {@stub} procedure res07_fn_1B52; begin end;
 { 0464:1E5C: retf 16: 16 bytes of parameters; 68 bytes of locals }
 {@stub} procedure res07_fn_1E5C; begin end;
-{ 0464:248E: retf 12: 12 bytes of parameters; 4 bytes of locals }
-{@stub} procedure res07_fn_248E; begin end;
+{ 0464:248E: retf 12. GetMems a picture (height * width, plus a pixel buffer when bit 0
+  of AllocFlags is set) and stores the pointer. }
+{@stub} procedure res07_fn_248E(Height, Width: Word; ItemCount, AllocFlags: Byte; var Pic: Pointer); begin end;
 { 0464:2595: retf 4: one var Pointer. Frees the picture (FreeMem) and nils the pointer. }
 {@stub} procedure res07_fn_2595(var Pic: Pointer); begin end;
 { 0464:2632: retf 18: 18 bytes of parameters; 36 bytes of locals }

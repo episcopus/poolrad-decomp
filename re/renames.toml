@@ -218,3 +218,10 @@ kind = "routine"
 why = "frees both picture pointers of one slot in the table at DS:5E5A when not nil, through res07_fn_2595 which FreeMems the picture (ovl32:014E, matched)"
 date = "2026-10-11"
 
+[[rename]]
+old = "ovl32_e5"
+new = "DrawIcon"
+kind = "routine"
+why = "draws picture PicIndex, mirror half Mirror, from the DS:5E5A table at the cell times 3, after copying it (ovl32:04FC, matched). DrawPartyMarker calls it for the party marker"
+date = "2026-10-11"
+
