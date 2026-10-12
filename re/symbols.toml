@@ -13906,12 +13906,12 @@ id = "ovl30:01A0"
 unit = "ovl30"
 addr = "ovl30:01A0"
 size = 300
-name = "ovl30_e2"
+name = "SetupLine"
 signature = ""
 c_name = "ovl30_e2"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl30_e2 (ovl30:01A0: sets up the line drawing state TLineState from its endpoints (DX/DY, the SignOf directions, the start position and the three Bresenham steps); called by ovl22_fn_295B, ovl30_e5 and res12_fn_1A29); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

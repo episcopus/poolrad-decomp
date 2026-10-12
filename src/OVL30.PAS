@@ -6,7 +6,7 @@ interface
 uses POOLVARS;
 function SignOf(N: Integer): Integer;
 procedure SortTable;
-procedure ovl30_e2;
+procedure SetupLine(Line: PLineState);
 procedure ovl30_e3;
 procedure ovl30_e5;
 procedure ovl30_e4;
@@ -14,7 +14,7 @@ procedure ovl30_e6;
 implementation
 
 { ovl30:0000. Returns the sign of N: -1 when N is negative, 1 when N is positive and 0 when N is
-  zero. Called by ovl22_e63, ovl30_e2 and res12_fn_1CE0. }
+  zero. Called by ovl22_e63, SetupLine and res12_fn_1CE0. }
 function SignOf(N: Integer): Integer;
 begin
   if N < 0 then
@@ -53,8 +53,35 @@ begin
     end;
   end;
 end;
-{ ovl30:01A0: retf 4: 4 bytes of parameters; 4 bytes of locals }
-{@stub} procedure ovl30_e2; begin end;
+{ ovl30:01A0. Sets up the line drawing state Line from its two endpoints: it clears the stepped
+  flag, computes DX = |X2 - X1| and DY = |Y2 - Y1|, the x and y step directions through SignOf, the
+  current position (X1, Y1) and the three Bresenham steps (the larger of DX and DY drives them).
+  Called by ovl22_fn_295B, ovl30_e5 and res12_fn_1A29. }
+procedure SetupLine(Line: PLineState);
+begin
+  with Line^ do
+  begin
+    First := 0;
+    DX := Abs(X2 - X1);
+    DY := Abs(Y2 - Y1);
+    SX := SignOf(X2 - X1);
+    SY := SignOf(Y2 - Y1);
+    X := X1;
+    Y := Y1;
+    if DX > DY then
+    begin
+      D1 := DY * 2 - DX;
+      D2 := (DY - DX) * 2;
+      D3 := DY * 2;
+    end
+    else
+    begin
+      D1 := DX * 2 - DY;
+      D2 := (DX - DY) * 2;
+      D3 := DX * 2;
+    end;
+  end;
+end;
 { ovl30:02CC: retf 4: 4 bytes of parameters; 8 bytes of locals }
 {@stub} procedure ovl30_e3; begin end;
 { ovl30:0422: retf 20: 20 bytes of parameters; 58 bytes of locals }
