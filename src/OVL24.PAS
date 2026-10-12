@@ -3,6 +3,8 @@ unit OVL24;
   until decompiled (playbook 30). }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
+type
+  String10 = string[10];
 procedure ovl24_e1;
 procedure ovl24_e2(Who: Pointer; AffectId: Byte; Affect: Pointer);
 procedure ovl24_fn_0160;
@@ -15,10 +17,10 @@ procedure ovl24_e7;
 function ovl24_e8(Count, Sides: Byte): Byte;
 procedure ovl24_e9;
 procedure ovl24_e10;
-procedure ovl24_e11;
+procedure ovl24_e11(Who: Pointer; N: Byte; Text: String10);
 procedure ovl24_e12;
 procedure ovl24_e13;
-procedure ovl24_e14;
+procedure ovl24_e14(Who: Pointer);
 procedure ovl24_e15;
 procedure ovl24_e16;
 procedure ovl24_e17;
@@ -56,13 +58,13 @@ implementation
 { ovl24:0E52: retf 12: 12 bytes of parameters; 8 bytes of locals }
 {@stub} procedure ovl24_e10; begin end;
 { ovl24:0F06: retf 10: 10 bytes of parameters; 42 bytes of locals }
-{@stub} procedure ovl24_e11; begin end;
+{@stub} procedure ovl24_e11(Who: Pointer; N: Byte; Text: String10); begin end;
 { ovl24:0FD2: retf 4: 4 bytes of parameters; 4 bytes of locals }
 {@stub} procedure ovl24_e12; begin end;
 { ovl24:100A: retf 4: 4 bytes of parameters; 2 bytes of locals }
 {@stub} procedure ovl24_e13; begin end;
 { ovl24:1041: retf 4: 4 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl24_e14; begin end;
+{@stub} procedure ovl24_e14(Who: Pointer); begin end;
 { ovl24:1081: retf 6: 6 bytes of parameters; 14 bytes of locals }
 {@stub} procedure ovl24_e15; begin end;
 { ovl24:10E4: retf 4: 4 bytes of parameters; 2 bytes of locals }

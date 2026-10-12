@@ -342,6 +342,8 @@ type
     Unk2: Byte;                   { +$2: never read by ScanTargets; meaning unknown }
     Kind: Byte;                   { +$3: the footprint kind (FootprintCell; 1..4), 0 when not on the map }
   end;
+  { One sixteen-byte combat AI row of RaceRow (ScoreTarget copies one into a local). }
+  TRaceRow = array[0..15] of Byte;
 const
   { Words of GameVars^ whose meaning is proven (word n is at byte offset 2n of the block; the
     matched reads in ovl26 are at +$186, +$188, +$1CC, +$1F6, +$1FA and +$1FC). }
@@ -531,7 +533,12 @@ var
   ds547A: Word;                   { set to 1 by the loader (ovl11:03DA) }
   ds547D: Byte;                   { a character the loader appends to the path through System_MemOp_0C3B (ovl11:0581) }
   ds557C: Byte;                   { cleared by the loader (ovl11:0438) }
-  ds5582: array[0..$80F] of Byte; { $810-byte buffer the loader reads the file block into (ovl11:05CD) }
+  ds5582: array[0..$80F] of Byte;   { $810-byte buffer the loader reads the file block into (ovl11:05CD) }
+  { 129 sixteen-byte combat AI rows indexed by race (ScoreTarget copies the row of Who^.Race
+    into a local and scores it): the same block the loader uses as its file buffer (load time
+    only, ovl11:05CD). The row count ($810 div 16) is from the size; the per-race meaning of
+    the bytes is open. }
+  RaceRow: array[0..128] of TRaceRow absolute ds5582;
   { The selected character: the Temple acts on it (ovl04 reads it everywhere), ShowHeadBodyWindow
     shows its HEAD and BODY pictures (ovl28:04F9); the loader sets it nil (ovl11:03B8). }
   SelectedCharacter: PCharacter;  { see above }

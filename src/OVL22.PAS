@@ -8,7 +8,7 @@ procedure ovl22_fn_028D;
 procedure ovl22_fn_044E;
 procedure ovl22_fn_051C;
 procedure ovl22_e2;
-procedure ovl22_e3;
+function ovl22_e3(B: Byte): Byte;
 procedure ovl22_fn_07D6;
 procedure ovl22_fn_08C3;
 procedure ovl22_e4;
@@ -104,7 +104,7 @@ procedure ovl22_e61;
 procedure ovl22_e62;
 procedure ovl22_e63;
 procedure ovl22_fn_31D7;
-procedure ovl22_e6;
+function ovl22_e6(P: Pointer): Boolean;
 procedure ovl22_fn_3262;
 procedure ovl22_e7;
 procedure ovl22_e8;
@@ -123,7 +123,7 @@ implementation
 { ovl22:059C: retf 2: 2 bytes of parameters; 2 bytes of locals }
 {@stub} procedure ovl22_e2; begin end;
 { ovl22:0729: retf 2: 2 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl22_e3; begin end;
+{@stub} function ovl22_e3(B: Byte): Byte; begin end;
 { ovl22:07D6: retf 2: 2 bytes of parameters; 4 bytes of locals }
 {@stub} procedure ovl22_fn_07D6; begin end;
 { ovl22:08C3: retf 14: 14 bytes of parameters; 50 bytes of locals }
@@ -315,7 +315,7 @@ implementation
 { ovl22:31D7: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl22_fn_31D7; begin end;
 { ovl22:323D: frame not read }
-{@stub} procedure ovl22_e6; begin end;
+{@stub} function ovl22_e6(P: Pointer): Boolean; begin end;
 { ovl22:3262: retf 4: 4 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl22_fn_3262; begin end;
 { ovl22:328A: retf 10: 10 bytes of parameters; 4 bytes of locals }
