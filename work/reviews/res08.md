@@ -1,9 +1,9 @@
 # Review: res08
 
-decompiler: dec-2 (Agent trailer of bd9a3f4; the unit was re-applied in dfca441)
+decompiler: dec-2 (Agent trailer of bd9a3f4; the unit was re-applied in dfca441); dec-4 fixed the review finding in a4c4a09
 reviewer: rev-4
 date: 2026-10-11
-commit: fdfc118
+commit: fe564d7 (re-review after a4c4a09; the first review was of fdfc118)
 
 Checklist: docs/process/playbooks/70-review.md (every item, every routine).
 
@@ -32,7 +32,7 @@ Severity: must-fix (blocks review-pass), should-fix, note. When the decompiler f
 3. Types fit: `VideoAdapter`/`SoundMode`/`ds4A1A`/`ds4A1B`/`ds4A1D`/`ds49D1`/`ds84F0` are `Byte`, `CfgChar` is `Char`, `GameDir`/`SaveDir` are `string`, `NewHeapEnd` is `Pointer`, `CfgProbe` is `File`, `CfgText` is `Text`, `ds43DC` is `Word`, `HeapWords` is `array[0..1] of Word absolute HeapEnd` (`HeapWords[0]`/`[1]` are the offset and segment words the disasm reads at `[$4408]`/`[$440A]`).
 4. Comments give addresses and meaning: the res05 call, `OvrInit('GAME.OVR')`, the probe loop with `'Please insert startup disk.'` and `ReadGameKey`, the `DS:84F0` clear, the `POOL.CFG` open and `Unable to find POOL.CFG`, the three video arms (`E`: 1 and `$0D`; `T`: 2 and the heap cut; else 0 with `res07_fn_00CF(4)`), the `$18800` overlay buffer and the `Not enough memory to run game.  You need N more bytes.` message, the overlay-error halt, the three sound arms (`T`: 0, `P`: 1, else 2), `res03_fn_017B`, the two directory reads and the F flag.
 5. The `CfgText`/`CfgProbeResult`/`SavedVideoMode` overlap is documented in `POOLVARS.PAS` as time-shared DGROUP; the disasm writes `IOResult` to `[$49CD]` (inside the `CfgText` slot) and the video mode to `[$4A02]`/`[$4A1C]`, which the comments explain.
-6. Quirks: the two self-assignments are not marked in the source (the must-fix); the heap double cut is the should-fix. No `inline`/`db`/`assembler`.
+6. Quirks: the two self-assignments are now marked `QUIRK 042B:032D` and `QUIRK 042B:0358` (a4c4a09); the heap double cut is the should-fix. No `inline`/`db`/`assembler`.
 7. Side effects stated: files, screen, heap, sound, halt. `OvrGetBuf`/`OvrSetBuf`/`OvrInit` come from the `Overlay` unit.
 8. The caller: `res08_init` runs from the main program's initialisation chain (POOL.PAS); the packet finds no direct caller because it is an init entry. Whitepaper 2.3 and 2.2 describe it `[V]`.
 9. No stub signature is owed: the unit declares no procedure and sets no signature in another unit.
@@ -40,4 +40,4 @@ Severity: must-fix (blocks review-pass), should-fix, note. When the decompiler f
 
 ## Verdict
 
-Not passed. One must-fix: the two self-assigning `S := S` copies at 042B:032D and 042B:0358 are QUIRKs and the source leaves them unmarked.
+Passed. The must-fix is fixed in a4c4a09 (both self-assigning copies carry a `QUIRK` comment at 042B:032D and 042B:0358); the should-fix (the uncommented second heap cut at 042B:02E2) and the notes do not block.
