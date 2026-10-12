@@ -62,7 +62,8 @@ def agents(now: dt.datetime, width: int) -> list[str]:
         f = heartbeat.fields(p.read_text())
         age = int((now - dt.datetime.fromisoformat(f["time"])).total_seconds() // 60)
         stopped = f.get("state") == "stopped"
-        rows.append((stopped, f["agent"], age, f.get("branch", "?"), f.get("note", "")))
+        note = f.get("note", "") + (" | last: %s" % f["activity"] if f.get("activity") else "")
+        rows.append((stopped, f["agent"], age, f.get("branch", "?"), note))
     rows.sort(key=lambda r: (r[0], r[1]))                     # working agents first, then by name
     out = []
     for stopped, agent, age, branch, note in rows:
