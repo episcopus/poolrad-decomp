@@ -374,7 +374,7 @@ evidence = "the area map: 36 rows x 44 columns of block codes at DS:3648, read a
 [[global]]
 offset = 0x0C30
 name = "SpecialBlocks"
-evidence = "ten records of (Col, Row, Pic) at DS:0C30: DrawAreaView (ovl27:0000, matched) walks entries 1..9 and overrides the view block at (Col, Row) with Pic - 1 while the game variables allow; entry 0 is never read (in the image its bytes are the tail of the previous table)"
+evidence = "ten records of (Col, Row, Pic) at DS:0C30: DrawAreaView (ovl27:0000, matched) tests entries 1..9 for position; entries 1 and 2 have no case arm, so a match leaves the map code, and entries 3..9 replace it with Pic - 1 while the game variables allow (entry 6 always); entry 0 is never read (in the image its bytes are the tail of the previous table)"
 
 [[global]]
 offset = 0x49D2

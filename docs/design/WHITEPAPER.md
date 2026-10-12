@@ -428,8 +428,8 @@ Each section will cover: purpose, units and routines, data, algorithm, quirks, e
 
 The wilderness around Phlan is drawn as a 5x5 grid of area blocks. Every block covers 3x3 map
 tiles and is one picture, drawn by `ovl32_e2` (`ovl32:00F1`) at a cell position of the 3D view
-window; the block at map position (column, row) comes from the area map and can be overridden by
-a fixed table entry while the game variables allow it (`DrawAreaView`, `ovl27:0000`).
+window; the block at map position (column, row) comes from the area map, and entries 3 to 9 of
+a fixed table can replace it while the game variables allow it (`DrawAreaView`, `ovl27:0000`).
 
 - **The area map** at DGROUP `0x3648` (`AreaMap` in `src/POOLVARS.PAS`) is 36 rows by 44 columns
   of one-byte block codes **[V]** (row stride 44 at `ovl27:0040`; `ShowAreaView` clamps the view
@@ -439,10 +439,12 @@ a fixed table entry while the game variables allow it (`DrawAreaView`, `ovl27:00
   with `0x4E` specially **[I]**: N marks ground that draws no block. **[?]** Nothing in the code
   writes the map, so it is compiled-in data; whether the game rewrites parts of it at run time is
   open.
-- **Nine fixed positions** can replace a block with their own picture: the table at DGROUP
-  `0x0C30` (`SpecialBlocks`, ten records of Col, Row, Pic: Word; entry 0 is never read, its bytes
-  are the tail of the previous table in the image). Each entry has its own condition on the game
-  variables **[V]** (`ovl27:00B2`): entry 3 while word 396 is not 255; entry 4 while word 466 is
+- **Nine fixed positions** are tested, and only entries 3 to 9 can replace a block: the table at
+  DGROUP `0x0C30` (`SpecialBlocks`, ten records of Col, Row, Pic: Word; entry 0 is never read, its
+  bytes are the tail of the previous table in the image). Entries 1 and 2 are compared with the
+  block's column and row (`ovl27:006A`, index times 6 from DS:0C30) and then the `case` has no arm,
+  so a match leaves the map code **[V]**. Entries 3 to 9 replace it with Pic minus one **[V]**
+  (`ovl27:00B2`): entry 3 while word 396 is not 255; entry 4 while word 466 is
   nonzero, or bit 3 of word 380 is set, or word 415 is zero; entry 5 while bit 1 of word 416 is
   clear; entry 6 always; entry 7 while bit 0 of word 416 is clear; entries 8 and 9 while word 435
   is above 253. Entries 6 and 7 hold columns 165 and 157, beyond the 44-column map, so they can
@@ -470,7 +472,7 @@ a fixed table entry while the game variables allow it (`DrawAreaView`, `ovl27:00
 #### 5.2.1 The area view dispatcher and the party marker **[V]** (`make match UNIT=ovl26`, `src/OVL26.PAS`)
 
 - **The area view unit** **[V]** (`src/OVL26.PAS`, `make match UNIT=ovl26`: unit complete): the resident unit's view dispatcher calls `ShowAreaView` (`ovl26:016D`) for its view types 3 and 4 (`res12_fn_27D9`), and the wilderness map screen calls it after the text windows of `DrawAdventureScreen` (`res12_fn_2B5E`).
-- **Two kinds of view** **[V]** (the `case` at `ovl26:018C`): `AreaViewKind` (DS:49FA) selects what to draw. Kind 1 is the 3D wall view: GeoLoad returns the event byte of the party cell (`ovl29_e4`, wrapping the coordinates into 0..15; bit 7 marks an interior cell, 4.2.1), the wall id table `ds0C26` (16 entries: two equal groups of eight ids 0,15,12,11,13,10,9,14) is indexed by the game state words at +$1FA (outside cell) or +$1FC (interior cell), the four wall view descriptors DS:6A60..6A63 go to `ovl29_e1` (a pure setter for the same globals), and `ovl29_e5` draws the rest (the overlay labels only while DS:6AAC is 0, cleared when the state word at +$1F6 is set). Kinds 2 to 4 are the map window: `DrawAreaView(LeftCol, TopRow)` draws 25 cells of the 44-column map grid (DS:3648, stride 44 [V] from `ovl27:0040`) at 3 pixels per cell, and `DrawPartyMarker` follows.
+- **Two kinds of view** **[V]** (the `case` at `ovl26:018C`): `AreaViewKind` (DS:49FA) selects what to draw. Kind 1 is the 3D wall view: GeoLoad returns the event byte of the party cell (`ovl29_e4`, wrapping the coordinates into 0..15; bit 7 marks an interior cell, 4.2.1), the wall id table `ds0C26` (16 entries: two equal groups of eight ids 0,15,12,11,13,10,9,14) is indexed by the game state words at +$1FA (outside cell) or +$1FC (interior cell), the four wall view descriptors DS:6A60..6A63 go to `ovl29_e1` (a pure setter for the same globals), and `ovl29_e5` draws the rest (the overlay labels only while DS:6AAC is 0, cleared when the state word at +$1F6 is set). Kinds 2 to 4 are the map window: `DrawAreaView(LeftCol, TopRow)` draws 25 blocks of the 44-column map grid (DS:3648, stride 44 [V] from `ovl27:0040`), stepping 3 view cells per block (the source's `BlockCells`, the same 3x3 cells as above), and `DrawPartyMarker` follows.
 - **Where the kinds come from** **[V]**: the area loader sets `AreaViewKind := 1` (`ovl11_e1`), the encounter unit sets 2, 3 or 4 together with view type 3 (`ovl03_fn_31B4`, keyed on DS:84DC); the game state word at +$1CC forces kind 1. `MapBaseX` (DS:3C76) holds the base column of each kind: entries 2..4 are 0, 13 and 26 **[V]** (the map image), so the kinds are three pages of the 44-column grid; the window is the party position minus 2, clamped to columns 0..39 and rows 0..31, and the page base is added to the column.
 - **The party marker** **[V]** (`DrawPartyMarker`, `ovl26:0000`): the marker cell is the party position folded the same way the window clamps (0 and 1 kept at the edges, everything up to column 42 / row 34 becomes the centre cell 2, past that 3 and 4). PicLoad draws it (`ovl32_e5`) with the icon set DS:6AAF and the six-frame walk animation `MarkerFrame` (DS:6DDC): frame mod 2 picks the mirrored half, frame div 2 + 9 the picture 9 to 11, and the frame steps modulo 6 after each draw. The wilderness keys H, M, P and K set the icon set to 0, 2, 4 and 6 **[V]** (`ovl14_fn_0B48`), and `ovl07_e10` maps a script value 0..3 to the same four **[V]**; what the icon sets are is **[?]** (H/M/P/K do not spell anything obvious).
 - **Special view codes** **[V]**: while DS:84E5 is set, `ShowAreaView` refreshes descriptors 2 to 4 from DS:6F69 and DS:6F68 through three nested Byte functions (`WallDesc2FromCode`..`WallDesc4FromCode`, `ovl26:00C7..016C`): codes 8 and $41 give descriptor 0, code $0B gives 8, code 6 gives 1, everything else $0F, 7 and 6. The loaders and the script set the codes together with DS:84E5: `ovl07_e3` ($41 and 9), `ovl11_fn_0435` ($DB and $E8), and script commands $F1 and $F7 through `ovl07_e10`. What the descriptors select is **[?]** (they reach the screen through `ovl29_fn_0174` and `res07_fn_2632`, which are not decompiled yet; the label strings near DS:0A26 include "1st Level" to "9th Level").
