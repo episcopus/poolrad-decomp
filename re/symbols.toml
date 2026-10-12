@@ -7466,12 +7466,12 @@ id = "ovl14:0236"
 unit = "ovl14"
 addr = "ovl14:0236"
 size = 94
-name = "ovl14_fn_0236"
-signature = ""
+name = "HasRecFlag"
+signature = "function HasRecFlag(Which: ShortInt): Byte"
 c_name = "ovl14_fn_0236"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl14_fn_0236 (ovl14:0236 returns 1 when any ds5D96 record has a nonzero Flags byte at the given index (5 gates Knock, 6 gates Pick); called by ovl14_e1); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

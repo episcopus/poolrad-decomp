@@ -12,12 +12,15 @@ type
   TCodeRec = record
     Unknown00: array[0..$16] of Byte; { +$00..+$16: not read here }
     Codes: array[0..$14] of Byte;     { +$17..+$2B: scanned for the wanted code }
-    Unknown2C: array[$2C..$103] of Byte; { +$2C..+$103: not read here }
+    Unknown2C: array[$2C..$95] of Byte; { +$2C..+$95: not read here }
+    Flags: array[0..13] of ShortInt;  { +$96..+$A3: nonzero gates a menu item (5 Knock, 6 Pick);
+                                        signed: ovl14:026A compares with jle; extent uncertain }
+    UnknownA4: array[$A4..$103] of Byte; { +$A4..+$103: not read here }
     Next: PCodeRec;                   { +$104: next record, nil ends the list }
   end;
 procedure ClearIconBits(Col, Row, Icon: ShortInt);
 procedure SetIconBits(Col, Row, Icon: ShortInt);
-procedure ovl14_fn_0236;
+function HasRecFlag(Which: ShortInt): Byte;
 procedure ovl14_fn_0294;
 procedure ovl14_fn_04DF;
 function FindCodeSlot(Code: Byte; Rec: PCodeRec): Byte;
@@ -68,8 +71,24 @@ begin
         GeoCells^.Cells[Row, Col] := GeoCells^.Cells[Row, Col] and $FC or $01;
     end;
 end;
-{ ovl14:0236: retf 2: 2 bytes of parameters; 6 bytes of locals }
-{@stub} procedure ovl14_fn_0236; begin end;
+{ ovl14:0236. Returns 1 when any record of the ds5D96 list has a nonzero byte at
+  +$96+Which, else 0. The Bash/Pick/Knock menu (ovl14_e1) offers Pick when flag 6 is
+  found and Knock when flag 5 is found. }
+function HasRecFlag(Which: ShortInt): Byte;
+var
+  Rec: PCodeRec;
+  Found: Byte;
+begin
+  Found := 0;
+  Rec := Pointer(ds5D96);
+  while (Rec <> nil) and (Found = 0) do
+  begin
+    if Rec^.Flags[Which] > 0 then
+      Found := 1;
+    Rec := Rec^.Next;
+  end;
+  HasRecFlag := Found;
+end;
 { ovl14:0294: retf 0: 0 bytes of parameters; 10 bytes of locals }
 {@stub} procedure ovl14_fn_0294; begin end;
 { ovl14:04DF: retf 0: 0 bytes of parameters; 10 bytes of locals }

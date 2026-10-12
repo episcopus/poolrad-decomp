@@ -715,3 +715,10 @@ kind = "routine"
 why = "ovl14:0109 sets the icon set's bit in the map cell byte (high bit of the pair); counterpart of ClearIconBits, called by the Bash and Pick commands"
 date = "2026-10-11"
 
+[[rename]]
+old = "ovl14_fn_0236"
+new = "HasRecFlag"
+kind = "routine"
+why = "ovl14:0236 returns 1 when any ds5D96 record has a nonzero Flags byte at the given index (5 gates Knock, 6 gates Pick); called by ovl14_e1"
+date = "2026-10-11"
+
