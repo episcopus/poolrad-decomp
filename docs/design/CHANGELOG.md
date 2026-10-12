@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-11 | 4.2.3 | LoadPictureSlot: the CHEAD/CBODY T rule, the mirrored half at Block+80h, the colour maps of ICON and TileSet sets | make match UNIT=ovl32 (unit complete) |
 | 2026-10-11 | 5.19 | The Temple: the shop menu, the nine cleric services with prices and conditions, Raise Dead's constitution rule, the phantom map entries | make match UNIT=ovl04 (unit complete) |
 | 2026-10-11 | 4.2.3 pictures | ovl32 merge resolved; 0111/248E/2595 signatures reconciled; renames applied | make check exit 0; work/blockers.md ovl32 |
 | 2026-10-11 | 5.17 (new) | added ovl30 (screen support): SignOf, SortTable and SetupLine, and the TLineState and TSortRec types | make match UNIT=ovl30: 3 matched, 0 differ, 4 stubs; make check green |
