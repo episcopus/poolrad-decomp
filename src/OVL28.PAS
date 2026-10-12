@@ -12,27 +12,31 @@ type
     Filler: array[0..3] of Byte;  { +0..+3: never read here }
     X: Word;                      { +4: the sprite's base column }
     Y: Word;                      { +6: the sprite's base row }
+    Unknown8: Byte;               { +8: never read here }
+    Palette: array[0..7] of Byte; { +9..+$10: 8 palette bytes ovl28_e2 Moves in }
+    Stride: Word;                 { +$11: the row stride ovl28_e2 reads }
   end;
   PSpriteBank = ^TSpriteBank;
-  { One 8-byte slot of the sprite list ovl28_e2 builds and FreeSpriteList frees: a far pointer at +0. }
+  { One 8-byte slot of the sprite list ovl28_e2 builds and FreeSpriteList frees. The 4 bytes at +0
+    are copied from the picture data and the picture pointer is at +4 (FreeSpriteList frees
+    Rec + 8*I - 2, slot I's +4, which is where ovl28_e2's res07_fn_248E stores it). }
   TSpriteSlot = record
-    Sprite: PSpriteBank;          { +0: the loaded sprite bank (nil when empty) }
-    Filler: array[0..3] of Byte;  { +4..+7: never read }
+    Data: array[0..3] of Byte;    { +0: 4 bytes of picture data ovl28_e2 Moves in }
+    Sprite: PSpriteBank;          { +4: the allocated picture (nil when empty) }
   end;
-  { The list of loaded sprites: a count byte, a flag, and the slots at +6 with a stride of 8
-    (FreeSpriteList frees slot I at Rec + 8*I - 2, ovl28_e2 reads and fills the same slots). }
+  { The list of loaded sprites: a count byte, a flag, and the slots at +2 with a stride of 8. }
   TSpriteList = record
     Count: ShortInt;                      { +0: the number of slots in use (signed: the for loop exits with jg) }
     Flag: Byte;                           { +1: set to 1 by ovl28_e2 }
-    Filler: array[0..3] of Byte;          { +2..+5: never read }
-    Slots: array[1..7] of TSpriteSlot;    { +6: the slots }
-    Tail: array[0..3] of Byte;            { +$3E..+$41: never read }
+    Slots: array[1..7] of TSpriteSlot;    { +2: the slots (slot I at +2 + 8*(I-1)) }
+    Tail: array[0..7] of Byte;            { +$3A..+$41: never read }
   end;
   PSpriteList = ^TSpriteList;
+  String8 = string[8];            { the picture base name ovl28_e2 takes and stores in DS:6B0A }
 procedure DrawSprite(Col, Row: Integer; Direct: Byte; Sprite: Pointer);
 procedure DrawHeadSprite(Col, Row: Byte; Sprite: Pointer);
 procedure DrawBodySprite(Col, Row: Byte; Sprite: Pointer);
-procedure ovl28_e2;
+procedure ovl28_e2(Name: String8; Bank: Byte; Mode: Byte; List: PSpriteList);
 procedure FreeSpriteList(Rec: PSpriteList);
 procedure ShowHeadBodyWindow;
 procedure LoadHeadBodySprites(HeadBank, BodyBank: Byte);
@@ -74,8 +78,12 @@ begin
   DrawSprite(Col, Row + 5, 0, Sprite);
 end;
 
-{ ovl28:00A2: retf 12: 12 bytes of parameters; 296 bytes of locals }
-{@stub} procedure ovl28_e2; begin end;
+{ ovl28:00A2. BLOCKED (dec-5, 2026-10-12): the PIC/FINAL picture loader, 1005 bytes. Reached
+  make match with the frame 4 bytes too big (sub sp 12Ch vs 128h); the declared locals match the
+  original up to bp-2Ah but the compiler places the Name+Digit and '.dax' string temps 4 bytes
+  deeper (bp-127h/bp-12Ch vs bp-123h/bp-128h). Draft on the branch, see the hand-off note. }
+{@stub} procedure ovl28_e2(Name: String8; Bank: Byte; Mode: Byte; List: PSpriteList); begin end;
+
 { ovl28:048F: retf 4: 4 bytes of parameters; 6 bytes of locals }
 { ovl28:048F. Frees the sprite list Rec^: it frees the bank of every used slot (through
   res07_fn_2595), then zeroes the whole $42-byte record, clears the picture name DS:6B0A and sets
