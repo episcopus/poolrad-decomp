@@ -16,9 +16,10 @@ const
   Yellow = $0E;               { EGA text colour of the headers }
 
 { ovl01:0000. Waits for a keypress or a timeout: loops until the res06_fn_0C3F tick count
-  reaches Start plus 100 times Pause, or a key is waiting (KeyPressed), then drains the
-  keyboard buffer (FlushKeyboard) so the key does not leak into the next screen. Called by
-  the credits (Pause 10) and the title sequence (Pause 5). }
+  reaches Start plus 100 times Pause, or a key is waiting (KeyPressed), then calls
+  FlushKeyboard, which does nothing (QUIRK 0899:010A: its first statement is Exit), so a
+  pending key still reaches the next screen. Called by the credits (Pause 10) and the title
+  sequence (Pause 5). }
 procedure WaitKeyOrTimeout(Pause: Word);
 var
   Start: Longint;             { res06_fn_0C3F when the wait began }
@@ -76,9 +77,10 @@ end;
   picture (res07_fn_0111) and shows it (res07_fn_1951), waits (WaitKeyOrTimeout), then, when
   the F flag (ds49D1) is set, reloads, reshows, sets the palette (res07_fn_2595) and waits
   for a key or a deadline (res06_fn_0C3F ticks) with an EGA-only animation that never runs
-  (QUIRK ovl01:0729: Total is Random(4), always below 50000), then flushes keys and shows
-  the credits (ShowCredits). With F clear it only restores GameDir and returns. Entry point
-  (no callers in the map). Side effects: screen, GameDir. }
+  (QUIRK ovl01:0729: Total is Random(4), always below 50000), then calls FlushKeyboard, which
+  does nothing (QUIRK 0899:010A), and shows the credits (ShowCredits). With F clear it only
+  restores GameDir and returns. Entry point (no callers in the map). Side effects: screen,
+  GameDir. }
 procedure ShowTitleScreen;
 var
   Pic: PT8x8Bank;
