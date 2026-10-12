@@ -90,8 +90,11 @@ begin
   HeapEnd := NewHeapEnd;
   res03_fn_017B;
   ReadLn(CfgText, GameDir);
+  { QUIRK 042B:032D: the original copies GameDir onto itself (System_StrLCopy with the same source
+    and destination, limit $FF). Kept: the source's own assignment emits the bytes at 042B:032D. }
   GameDir := GameDir;
   ReadLn(CfgText, SaveDir);
+  { QUIRK 042B:0358: SaveDir is copied onto itself the same way. Kept for the same reason. }
   SaveDir := SaveDir;
   ReadLn(CfgText, CfgChar);
   if CfgChar = 'F' then
