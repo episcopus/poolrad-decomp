@@ -129,8 +129,28 @@ begin
   else
     DrawSprite(Col, Row, 0, ds6B01);
 end;
-{ ovl28:0708: retf 6: 6 bytes of parameters; 70 bytes of locals }
-{@stub} procedure ovl28_e7(Bank: Byte; Rec: PSpriteList); begin end;
+{ ovl28:0708. Copies the sprite list Rec^ and shows slot Bank (only 1..3 are legal; another bank
+  ends the game with Illegal range in Show3DSprite): it draws the sprite at its base column and row
+  plus 2 through res07_fn_0D71 onto the screen buffer DrawBuf and steps the display. Called by
+  ovl07_e8. }
+procedure ovl28_e7(Bank: Byte; Rec: PSpriteList);
+var
+  List: TSpriteList;
+begin
+  List := Rec^;
+  if (Bank < 1) or (Bank > 3) then
+  begin
+    res07_fn_00FF;
+    WriteLn(Output, 'Illegal range in Show3DSprite.');
+    QuitGame;
+  end;
+  if List.Slots[Bank].Sprite <> nil then
+    with List.Slots[Bank].Sprite^ do
+      res07_fn_0D71(X + 3 - 1, Y + 3 - 1, 0, 1, List.Slots[Bank].Sprite, DrawBuf)
+  else
+    Exit;
+  res07_fn_1B52;
+end;
 
 begin
 end.
