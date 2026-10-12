@@ -136,9 +136,9 @@ var
   ds49D6: ^TGameVars;             { second game word block; see above }
   ds49DA: ^TBlock400;             { $400-byte block the loader allocates (ovl11:0054) }
   ds49DE: ^TBlock1E00;            { $1E00-byte block the loader allocates (ovl11:0064) }
-  ds49E2: Byte;                   { set to 1 by the loader (ovl11:03C6); a count ShowEndingNarrative and AnimateAreaDoors read }
+  ds49E2: Byte;                   { set to 1 by the loader; a count the ovl18 narratives read }
   ds49F3: Byte;                   { the view mode: ShowEndingNarrative saves it, sets 7, restores it }
-  ds0900: array[0..$A] of Byte;   { the door block codes of AnimateAreaDoors (indexed 0..$A); 7-bit set = the other sprite bank }
+  ds0900: array[0..$A] of Byte;   { the first door block codes of AnimateAreaDoors (bit 7 = other bank) }
   ds090B: array[0..$11] of Byte;  { the second door block codes of AnimateAreaDoors (indexed 0..$11); same 7-bit flag }
   ds091D: array[0..$F] of Byte;   { the first 16-byte record AnimateAreaDoors passes to res07_fn_1E5C }
   ds092D: array[0..$F] of Byte;   { the second 16-byte record AnimateAreaDoors passes to res07_fn_1E5C }
