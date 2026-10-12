@@ -12,7 +12,7 @@ Approach: ADR-002 (SPEC 4), Pascal-first matching decompilation; the C track (AD
 | P1 Map | done (`make p1-check`): 50 units, 1431 routines, TP 6.0 June 1991 pinned |
 | P2 Oracle and data | done: goldens with recordings for 2 of 2 session scripts (boot-title, create-character); `make golden CHECK=1` |
 | P3 Match harness | done: `make match` (tools/match/match.py, tests/unit/test_match.py); gate `make check` |
-| P4 Match | 13 of 1289 game routines at L2 (830 of 234763 bytes by re/symbols.toml sizes); 6 of 46 game units complete, 0 reviewed; main program `src/POOL.PAS` matched by `make match UNIT=main` |
+| P4 Match | 16 of 1289 game routines at L2 (1478 of 234763 bytes by re/symbols.toml sizes); 7 of 46 game units complete, 0 reviewed; main program `src/POOL.PAS` matched by `make match UNIT=main` |
 | P5 Rebuild | `make rebuild` links the whole game from `src/` (every unit has source: decompiled or skeleton) and reports identical segments |
 
 ### P4 units with matched routines
@@ -20,6 +20,7 @@ Approach: ADR-002 (SPEC 4), Pascal-first matching decompilation; the C track (AD
 | Unit | Name | Routines | L2 | Bytes at L2 | Readable (`make readability`) | Reviewed |
 |---|---|---:|---:|---:|---|---|
 | ovl00 | ovl00 | 2 | 2 | 124 | clean | complete |
+| ovl27 | ovl27 | 3 | 3 | 648 | clean | complete |
 | ovl33 | ovl33 | 2 | 2 | 248 | clean | complete |
 | res02 | res02 | 1 | 1 | 16 | clean | complete |
 | res04 | res04 | 5 | 5 | 336 | clean | complete |
@@ -35,7 +36,7 @@ Locks (agents at work): `make locks`. Next unit: `make next`.
 |---|---:|
 | Units | 50 |
 | Routines | 1431 |
-| Routines with non-provisional names | 110 |
+| Routines with non-provisional names | 112 |
 | RTL-prefixed routine names | 53 |
 | Unit code_bytes (declared) | 245081 |
 | Sum of routine sizes | 244128 |
@@ -44,8 +45,8 @@ Locks (agents at work): `make locks`. Next unit: `make next`.
 
 | Level | Count |
 |---|---:|
-| none | 1418 |
-| L2 | 13 |
+| none | 1415 |
+| L2 | 16 |
 
 ### Top units by routine count
 
@@ -69,7 +70,7 @@ Locks (agents at work): `make locks`. Next unit: `make next`.
 
 ## Verification
 
-13 routines above `none`: res11_init L2 (03DA:0000), res10_init L2 (03ED:0000), ShowMessageLine L2 (0709:0BF5), QuitGame L2 (0899:0000), ReadGameKey L2 (0899:0059), FlushKeyboard L2 (0899:0104), DiscardWaitingKey L2 (0899:0122), res04_init L2 (0899:013C), res02_init L2 (0A31:0000), HeapErrorHandler L2 (ovl00:0042), ovl00_init L2 (ovl00:00AC), ShowDebugTrace L2 (ovl33:0004), ovl33_init L2 (ovl33:00F7).
+16 routines above `none`: res11_init L2 (03DA:0000), res10_init L2 (03ED:0000), ShowMessageLine L2 (0709:0BF5), QuitGame L2 (0899:0000), ReadGameKey L2 (0899:0059), FlushKeyboard L2 (0899:0104), DiscardWaitingKey L2 (0899:0122), res04_init L2 (0899:013C), res02_init L2 (0A31:0000), HeapErrorHandler L2 (ovl00:0042), ovl00_init L2 (ovl00:00AC), DrawAreaView L2 (ovl27:0000), DrawAdventureScreen L2 (ovl27:0207), ovl27_init L2 (ovl27:0283), ShowDebugTrace L2 (ovl33:0004), ovl33_init L2 (ovl33:00F7).
 
 ## Blockers and decisions waiting for the human
 

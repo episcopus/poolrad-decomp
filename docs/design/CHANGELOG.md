@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-11 | 5.2 | new section: the area view (5x5 grid of 3x3-tile blocks from the 36x44 area map at DS:3648, nine fixed override blocks at DS:0C30 gated by game variables, the party position in GameVars words 195/196, and the three adventure screen windows through res09_fn_02E8) | make match UNIT=ovl27: unit complete, 3 routines at L2 |
 | 2026-10-11 | 2.2, 3.6, 5.8, 5.15 | Routines and globals of the decompiled units named with evidence (`make rename`, logged in `re/renames.toml`): QuitGame, ReadGameKey, FlushKeyboard, DiscardWaitingKey, ShowMessageLine, HeapErrorHandler, ShowDebugTrace; DebugMode, SavedVideoMode, SoundMode, SoundModeBeforePause | `make match --all` unchanged, `make readability` clean |
 | 2026-10-11 | 5.8 | ovl33 decompiled (the end-to-end trial of the multi-agent procedure): a debug trace shown only in the STING mode | `make match UNIT=ovl33` (complete) |
 | 2026-10-11 | 3.2, 3.6 | The main program decompiled and matched (`src/POOL.PAS`: initialisation order, `STING` skips the title and the code wheel); 44 of 46 game units have an empty initialisation, res02, res10, res11 are complete; the whole program links from source with the original's segment arrangement (`make rebuild`) | `make match UNIT=main`, `make match --all`, `make rebuild`, tools/match/skeleton.py |
