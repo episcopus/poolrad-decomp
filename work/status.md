@@ -96,6 +96,8 @@ Blockers are kept in `work/blockers.md` (the orchestrator's, playbook 90) and co
 
 - ovl28 merge reverted (orch, 2026-10-12, revert ad7bcd2 of merge b2df10a): with ovl28 (dcf86cd, partial, 8 of 9 at L2) on main, `make match UNIT=ovl28` and `UNIT=res08` each pass, but `match.py --all` (in `make check`) stops with `match: global HEAPWORDS has no original offset: name it dsXXXX or add it to re/dseg.toml`. HeapWords is res08's `array[0..1] of Word absolute HeapEnd` (src/POOLVARS.PAS:103, used by res08_init); it shares its address with HeapEnd (named in re/dseg.toml), and which of the two names the matcher sees seems to depend on the layout. Not ovl28's fault; needs a decision (a tool fix so an absolute alias resolves to its base, or a res08 source change). Merge b2df10a resolves the conflicts with main (renames kept both sides); to bring ovl28 back: `git revert --no-edit ad7bcd2`. The ovl28 hand-off stays open.
 
+- ovl18 hand-off (dec-4, partial, b65a718) waits for ovl28: its branch merges unit/ovl28 (78882ec), whose merge on main is reverted (see the ovl28 item). Merge ovl18 only after ovl28 is back on main (revert of the revert first), then ovl18 as a normal branch.
+
 - Approach (decided 2026-10-11, SPEC 4): Pascal first, matched by the pinned compiler; C later by translation (Phase 7, branch `track-c-hybrid`).
 - Canonical state (decided 2026-10-10 and 2026-10-11): `re/state.toml` has `stack = "diagnostic"` and `heap = "compared"`; goldens carry recordings of the outside world (`tools/oracle/replay.py`) for the rebuild and the C translation.
 - Shared files (SPEC 9.6): `src/POOLVARS.PAS` and stub declarations take additive edits; the orchestrator merges.
