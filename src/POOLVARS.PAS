@@ -50,7 +50,7 @@ type
     (ovl11:0044..00A3) and the type only fixes SizeOf. They are word arrays at the offsets the map
     code indexes. }
   TBlock400 = array[0..511] of Word;      { a $400-byte block }
-  TBlock588 = array[0..707] of Word;      { a $588-byte block (the sprite data, loaded by ovl32_e4) }
+  TBlock588 = array[0..707] of Word;      { a $588-byte block (the sprite data, loaded by LoadPictureSlot) }
   TBlock924 = array[0..1169] of Word;     { a $924-byte block }
   TBlock1E00 = array[0..3839] of Word;    { a $1E00-byte block }
   { The record the far pointer at DS:5D92 leads to. Only the two picture bank numbers at +$BB and
@@ -285,5 +285,11 @@ var
     entry 0 is the byte before them, never read (declared so the index base DS:0D19 names it). }
   BadNameChars: array[0..10] of Char;  { characters not allowed in a file name; see above }
   PackedBuf: Pointer;             { the packed bytes of the DAX block LoadDaxBlock is reading }
+  { Colour maps for res07_fn_1E5C (16 entries, colour I becomes entry I): ds0CD2 is the identity,
+    ds0CE2 turns colour 13 into 8 and ds0CF2 turns 13 into 0 (the image). LoadPictureSlot recolours the
+    TileSet picture sets from ds0CD2 to ds0CE2 and ICON from ds0CD2 to ds0CF2. }
+  ds0CD2: array[0..15] of Byte;   { identity colour map; see above }
+  ds0CE2: array[0..15] of Byte;   { colour 13 to 8; see above }
+  ds0CF2: array[0..15] of Byte;   { colour 13 to 0; see above }
 implementation
 end.
