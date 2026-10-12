@@ -56,7 +56,7 @@ begin
   StartGame;
   if ParamStr(1) <> 'STING' then
   begin
-    ovl01_e1;
+    ShowTitleScreen;
     CheckCodeWheel;
   end;
   ovl16_e1;

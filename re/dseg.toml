@@ -415,3 +415,9 @@ evidence = "far pointer to the tile staging buffer: tiles are Moved to +$17 and 
 offset = 0x4A20
 name = "DrawBuf"
 evidence = "far pointer passed to res07_fn_08D4 as the destination buffer (ovl34:0241,0245); the loader (StartGame) allocates it through res07_fn_248E($A8, $15, 1, 0) at ovl11:00BC"
+
+[[global]]
+offset = 0x547C
+size = 256
+name = "GameDir"
+evidence = "POOL.CFG line 3 (game directory); res08_init Reads into it, ovl01_e1 backs it up and clears it (ovl01:063D)"
