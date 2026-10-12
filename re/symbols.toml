@@ -50,12 +50,12 @@ id = "ovl01:0206"
 unit = "ovl01"
 addr = "ovl01:0206"
 size = 1057
-name = "ovl01_fn_0206"
+name = "ShowCredits"
 signature = ""
 c_name = "ovl01_fn_0206"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl01_fn_0206 (draws two empty windows and some thirty credit lines (names, roles) through DrawWindow and res06_fn_0626, then waits with WaitKeyOrTimeout(10); called by the title sequence); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

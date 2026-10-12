@@ -267,3 +267,10 @@ kind = "routine"
 why = "waits until the res06_fn_0C3F tick count passes Start plus 100 times Pause, or a key is pressed, then drains keys with FlushKeyboard; called with 10 by the credits and 5 by the title sequence"
 date = "2026-10-11"
 
+[[rename]]
+old = "ovl01_fn_0206"
+new = "ShowCredits"
+kind = "routine"
+why = "draws two empty windows and some thirty credit lines (names, roles) through DrawWindow and res06_fn_0626, then waits with WaitKeyOrTimeout(10); called by the title sequence"
+date = "2026-10-11"
+
