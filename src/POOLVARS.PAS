@@ -168,6 +168,7 @@ var
   ds0C26: array[0..15] of Byte;  { wall view id table, two equal groups of 8; see above }
   SpecialBlocks: array[0..9] of TSpecialBlock;  { entries 1..9 tested; only 3..9 replace the map block }
   ds2612: Word;                   { word passed to res03_fn_00DC by QuitGame and the Ctrl-S pause path; meaning unknown }
+  ds260A: array[0..7] of Byte;    { 8-byte structure res07_fn_2632 copies from @ds260A (DrawWallDescriptors) }
   { Five words, one per 8x8 tile bank, subtracted from the symbol number to index within the
     bank (Put8x8Symbol, ovl34:020F); evidence in re/dseg.toml. }
   SymbolBase: array[0..4] of Word;  { per-bank base symbol numbers; see above }
@@ -197,7 +198,7 @@ var
   ds6A61: Byte;                   { wall view descriptor 2: ShowAreaView fills it from ds6F69 when ds84E5 is set }
   ds6A62: Byte;                   { wall view descriptor 3: ShowAreaView fills it from ds6F69 when ds84E5 is set }
   ds6A63: Byte;                   { wall view descriptor 4: ShowAreaView fills it from ds6F68 when ds84E5 is set }
-  { ovl29_e5 draws the four wall view descriptors through ovl29_fn_0174 only while ds6AAC is 0;
+  { ovl29_e5 draws the four wall view descriptors through DrawWallDescriptors only while ds6AAC is 0;
     ShowAreaView (when GameVars^[VarShowWallOverlays] is set) and ovl07_e8 clear it. }
   ds6AAC: Byte;                   { wall view overlay gate; see above }
   ds6AAD: Byte;                   { the party's column in the 16x16 area map (GEO); ovl29_e4/e5 take it }

@@ -8,7 +8,7 @@ interface
 procedure ovl29_fn_0000;
 procedure ovl29_fn_0143;
 procedure SetWallDescriptors(Wall1, Wall2, Wall3, Wall4: Byte);
-procedure ovl29_fn_0174;
+procedure DrawWallDescriptors;
 procedure ovl29_fn_0211;
 function CellInRange(Col, Row: ShortInt): Boolean;
 procedure ovl29_e3;
@@ -42,8 +42,16 @@ begin
   ds6A62 := Wall3;
   ds6A63 := Wall4;
 end;
-{ ovl29:0174: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl29_fn_0174; begin end;
+{ ovl29:0174. Draws the four wall view descriptors ds6A60..ds6A63 through res07_fn_2632 (A=2,
+  B and D the descriptor's screen position/size, C=$B, E the descriptor, F=@ds260A's 8-byte
+  structure, G=DrawBuf). Called by ovl29_e5. }
+procedure DrawWallDescriptors;
+begin
+  res07_fn_2632(2, $10, $B, $2B, ds6A60, @ds260A, DrawBuf);
+  res07_fn_2632(2, $3B, $B, 1, ds6A61, @ds260A, DrawBuf);
+  res07_fn_2632(2, $3C, $B, 2, ds6A62, @ds260A, DrawBuf);
+  res07_fn_2632(2, $3E, $B, $2A, ds6A63, @ds260A, DrawBuf);
+end;
 { ovl29:0211: retf 8: 8 bytes of parameters; 14 bytes of locals }
 {@stub} procedure ovl29_fn_0211; begin end;
 { ovl29:031F: retf 4: 4 bytes of parameters; 2 bytes of locals }
@@ -80,7 +88,7 @@ begin
 end;
 { ovl29:05FD: retf 6: 6 bytes of parameters; 24 bytes of locals.
   Draws the rest of the wall view: with ds6AAC at 0 it draws the four descriptors through
-  ovl29_fn_0174, otherwise it calls ovl29_fn_0000; A and B are the party cell (ds6AAD, ds6AAE)
+  DrawWallDescriptors, otherwise it calls ovl29_fn_0000; A and B are the party cell (ds6AAD, ds6AAE)
   and C the icon set of the marker (ds6AAF). }
 {@stub} procedure ovl29_e5(A, B, C: Byte); begin end;
 { ovl29:0E08: retf 4: 4 bytes of parameters; 280 bytes of locals }

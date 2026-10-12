@@ -13534,12 +13534,12 @@ id = "ovl29:0174"
 unit = "ovl29"
 addr = "ovl29:0174"
 size = 157
-name = "ovl29_fn_0174"
+name = "DrawWallDescriptors"
 signature = ""
 c_name = "ovl29_fn_0174"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl29_fn_0174 (ovl29:0174 draws the four wall view descriptors ds6A60..ds6A63 through res07_fn_2632 (A=2, B/D the position/size, C=$B, E the descriptor, F=@ds260A, G=DrawBuf); called by ovl29_e5); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
