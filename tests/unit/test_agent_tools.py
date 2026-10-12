@@ -106,3 +106,20 @@ def test_a_heartbeat_is_shared_and_a_silent_agent_shows_as_quiet(tmp_path, monke
     assert rows[1].startswith("stopped") and "rev-9" in rows[1]                # stopped is never quiet
     assert heartbeat.listing()[0].startswith("ok")                            # fresh: not quiet
     assert heartbeat.heartbeat_dir is not None and common.common_dir().exists()
+
+
+def test_the_watch_screen_shows_agents_handoffs_and_locks(tmp_path, monkeypatch):
+    import handoff
+    import heartbeat
+    import watch
+    for name in ("beats", "handoffs", "locks"):
+        (tmp_path / name).mkdir()
+    monkeypatch.setattr(heartbeat, "heartbeat_dir", lambda: tmp_path / "beats")
+    monkeypatch.setattr(handoff, "handoff_dir", lambda: tmp_path / "handoffs")
+    monkeypatch.setattr(common, "lock_dir", lambda: tmp_path / "locks")
+    heartbeat.beat("dec-9", "matching ovl34_fn_0000")
+    (tmp_path / "handoffs/escalate-general-1.md").write_text("agent = rev-9\nstate = escalate\nnote = a question\n")
+    (tmp_path / "locks/ovl34.lock").write_text("agent = dec-9\n")
+    text = watch.screen(5)
+    assert "dec-9" in text and "matching ovl34_fn_0000" in text
+    assert "ESCALATE" in text and "a question" in text and "ovl34" in text and "next unit" in text

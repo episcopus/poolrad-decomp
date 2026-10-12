@@ -117,8 +117,8 @@ heartbeat:        ## tell the human what you are doing: AGENT=<you> NOTE="<now, 
 agents:           ## every agent's last heartbeat, oldest first; QUIET = silent for more than 20 minutes
 	$(PY) tools/agent/heartbeat.py --list
 
-watch-agents:     ## live view for the operator: heartbeats, hand-offs and locks, redrawn every 30 seconds (Ctrl+C to stop)
-	@while true; do clear; date; $(MAKE) -s agents; echo; $(MAKE) -s handoffs | tail -1; $(MAKE) -s locks | tail -1; sleep 30; done
+watch-agents:     ## live view for the operator: progress, agents, hand-offs, locks, queues; redrawn every 5 seconds (INTERVAL=n; Ctrl+C to stop)
+	@$(PY) tools/agent/watch.py --interval $(or $(INTERVAL),5)
 
 unlock:           ## release a unit lock (FORCE=1 to break stale)
 	UNIT=$(UNIT) FORCE=$(FORCE) $(PY) tools/agent/unlock.py
