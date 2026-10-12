@@ -660,7 +660,7 @@ What the game takes from the outside world, found by `make timing-scan` and by r
 - `ShowMessageLine(Color, Text)` shows a one-line message on row 24: it clears 40 columns of that row (`res06_fn_05EB(0, 24, 0, 40)`), draws the text in the given colour (`res06_fn_0626(0, 24, Color, Text)`) and waits for a key through `ReadGameKey`. The text is a `string[40]`. Twelve routines call it, in overlays 0, 3, 5, 7, 17 and 33 and in res06 itself (`make packet FN=ShowMessageLine`).
 - Overlay 0 is the heap error handler: its initialisation sets `HeapError := @HeapErrorHandler`, so Turbo Pascal calls `HeapErrorHandler(Size)` when `New` or `GetMem` cannot get `Size` bytes. A zero size returns at once with an unassigned result (`jbe ovl00:004C` to `ovl00:00A3`). For a non-zero size it shows "WARNING: Insufficient Memory" in colour 14 (yellow); if the Boolean `DS:49D0` is set it calls `ovl17_e9` (the save and load unit) and repeats until `DS:557D` says to stop, otherwise it shows "Insufficient Memory. Exiting Program". Then it always ends the program (`QuitGame`), so that path never returns. The function result is never assigned on any path (QUIRK `ovl00:00A3`).
 
-### 5.16 The 3D sprite unit ovl28 **[V]** (`src/OVL28.PAS`, `make match UNIT=ovl28`: 6 of 9 routines at L2)
+### 5.16 The 3D sprite unit ovl28 **[V]** (`src/OVL28.PAS`, `make match UNIT=ovl28`: all 10 routines at L2, complete)
 
 Overlay 28 draws the 8x8 sprites of the 3D view and the HEAD/BODY strip of the character screen.
 The parts proven so far:
@@ -677,17 +677,25 @@ The parts proven so far:
   `DS:6B01` and `DS:6B06` (recording the loaded number in `DS:6B00` and `DS:6B05`, `$FF` = none).
 - `FreeSpriteList` (`ovl28:048F`) frees every loaded sprite bank of a sprite list (through
   `res07_fn_2595`) and zeroes the list, the picture name `DS:6B0A` and the current bank `DS:6B1C`.
-- The sprite list is a `$42`-byte record: a count byte at +0, a flag at +1, and slots of 8 bytes
-  from +6, each holding a far pointer at +0 (the `TSpriteList` type of `src/OVL28.PAS`).
+- The sprite list is a `$42`-byte record: a count byte at +0, a flag at +1, and seven slots of 8
+  bytes from +2, each holding 4 bytes copied from the picture data and the picture pointer at +4
+  (the `TSpriteList` type of `src/OVL28.PAS`) **[V]** (`make match UNIT=ovl28`).
 
 - `Show3DSprite` (`ovl28:0708`) shows slot 1..3 of a sprite list at the sprite's base column and row
   plus 2 through `res07_fn_0D71`; another bank ends the game with the unit's range error string.
 - `ShowHeadBodyWindow` (`ovl28:04F9`) draws the HEAD/BODY picture window (columns 28..38, rows 1..11)
   of the character record `DS:5D92` and shows the HEAD and BODY sprites of its two bank numbers.
 
-Still to decompile: `ovl28_e2` (`ovl28:00A2`, the PIC/FINAL picture loader), blocked with its mapped
-signature, callees and decode loop in the `re/symbols.toml` notes; its 296-byte frame of compiler
-temporaries is what remains.
+- `LoadSpriteList(Name, Bank, Mode, List)` (`ovl28:00A2`) loads block `Bank` of `<Name><TileSet>.dax`
+  into a sprite list, unless the same file and block are loaded already (`DS:6B0A`, `DS:6B1C`). The
+  block is a count byte (clamped to 4 for `PIC` block 1) followed per sprite by 4 bytes, the height
+  and width words, the X and Y words, one skipped byte, 8 palette bytes and `Row + 1` bytes of pixel
+  data (`Row` is the picture's stride minus one, twice the stride on `VideoAdapter` 0). A sprite is
+  loaded only while `MaxAvail` is at least 3900, and the count becomes the number loaded. `PIC` and
+  `FINAL` pictures after the first are stored xored with the first one's data, which the loader
+  undoes before decoding (`res07_fn_02A5`); bit 0 of `Mode` adds a pass through `res07_fn_1E5C` on
+  non-zero video adapters **[V]** (matched). Callers: `ovl03`, `ovl07_e8`, `ovl18` (FINAL) and
+  `res12_fn_27D9`.
 
 ---
 

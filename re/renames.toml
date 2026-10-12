@@ -652,3 +652,10 @@ kind = "routine"
 why = "the Shop overlay's entry from ovl03: marks the shop open (ds49F3), redraws the shop screen (res12_fn_27D9, res12_fn_0767), clears ds67F4 and ds6DC0, then loops showing the shop menu (ovl25_e2) and dispatching Buy/View/Take/Pool/Share/Appraise/Exit and the leave prompt; leaves when Done is set (ovl06:053E)"
 date = "2026-10-11"
 
+[[rename]]
+old = "ovl28_e2"
+new = "LoadSpriteList"
+kind = "routine"
+why = "ovl28:00A2 (matched): loads block Bank of <Name><TileSet>.dax through LoadDaxBlock into the sprite list it is given, allocating each picture with res07_fn_248E and decoding it with res07_fn_02A5"
+date = "2026-10-11"
+
