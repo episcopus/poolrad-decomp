@@ -869,3 +869,10 @@ kind = "routine"
 why = "ovl29:057A returns the event plane byte (third GEO plane, +200h) of the wrapped map cell; ShowAreaView tests bit 7 (interior)"
 date = "2026-10-12"
 
+[[rename]]
+old = "ovl29_fn_0211"
+new = "DrawWallPiece"
+kind = "routine"
+why = "ovl29:0211 draws piece Piece (0..9, tables ds0C8C/ds0C96/ds0CA0) of wall Wall from the wall tiles ds6A58 as 8x8 symbols at view column Col, row Row, clipped to the 11x11 view; called by ovl29_e5 per visible wall"
+date = "2026-10-12"
+

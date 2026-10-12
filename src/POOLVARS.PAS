@@ -65,6 +65,10 @@ type
   TBlock400 = array[0..511] of Word;      { a $400-byte block }
   TBlock588 = array[0..707] of Word;      { a $588-byte block (the sprite data, loaded by LoadPictureSlot) }
   TBlock924 = array[0..1169] of Word;     { a $924-byte block }
+  { The wall tiles at DS:6A58 ($924 bytes, allocated by StartGame): fifteen walls (wall ids 1..15)
+    of 156 bytes each, one 8x8 tile number per byte; LoadWallSet fills them from WALLDEF wallsets
+    of five walls (whitepaper 4.2.4), DrawWallPiece reads them. }
+  TWallTiles = array[1..15, 0..$9B] of Byte;
   TBlock1E00 = array[0..3839] of Word;    { a $1E00-byte block }
   { One 4-byte element of the table at DS:6AAE the loader fills (ovl11:0369..0390). }
   TPresenceSlot = record
@@ -363,7 +367,7 @@ var
   ds5E1E: Word;                   { BlockRead result count of the loader (ovl11:05D6) }
   ds5E20: ^TBlock588;             { $588-byte block the loader allocates (ovl11:0074) }
   ds6810: PMenuLine;              { head of the shop's item list, a far pointer the loader clears (ovl11:031A) }
-  ds6A58: ^TBlock924;             { $924-byte block the loader allocates (ovl11:0084) }
+  ds6A58: ^TWallTiles;            { the wall tiles, $924 bytes the loader allocates (ovl11:0084) }
   ds6A5C: ^TBlock400;             { $400-byte block the loader allocates (ovl11:0094) }
   ds84DC: Byte;                   { the wall view / outdoor mode EventByteAt tests (0 and $A both skip) }
   GeoCells: PGeoCellBlock absolute ds6A5C; { cell-byte view of the $400 block for ovl14 }
@@ -382,6 +386,15 @@ var
   ds6B1C: Byte;                   { set to $FF by the loader (ovl11:0442) and by FreeSpriteList }
   ds0C6C: array[0..$F] of Byte;   { 16-byte table LoadSpriteList passes to res07_fn_1E5C (with ds0C7C) }
   ds0C7C: array[0..$F] of Byte;   { second 16-byte table LoadSpriteList passes to res07_fn_1E5C }
+  { The ten pieces a wall of the 3D view is drawn from (DrawWallPiece, ovl29_e5): each piece is a
+    rectangle of 8x8 tiles, Width x Height, whose tiles follow each other in a wall's 156-byte tile
+    list from FirstTile on (the image's values 0,2,6,..,$9A add up to $9C exactly), drawn with its
+    top left tile at view column Col, row Row. Indexed by the piece number 0..9. }
+  ds0C8C: array[0..9] of Byte;     { first tile of each wall piece in the 156-byte tile list; see above }
+  ds0C96: array[0..9] of Byte;     { width in tiles of each wall piece; see above }
+  ds0CA0: array[0..9] of Byte;     { height in tiles of each wall piece; see above }
+  ds0CAA: array[0..9] of Integer;  { view column of each wall piece's top left tile; see above }
+  ds0CBE: array[0..9] of Integer;  { view row of each wall piece's top left tile; see above }
   ds70C7: ShortInt;               { loop counter of FreeSpriteList (the sprite list slots); ShortInt: the loop exits with jg }
   ds6B29: Word;                   { set to 1 by the loader (ovl11:0405) }
   ds6DDA: Byte;                   { cleared by the loader (ovl11:0410) }

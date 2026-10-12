@@ -13496,12 +13496,12 @@ id = "ovl29:0211"
 unit = "ovl29"
 addr = "ovl29:0211"
 size = 270
-name = "ovl29_fn_0211"
-signature = ""
+name = "DrawWallPiece"
+signature = "procedure DrawWallPiece(Col, Row: ShortInt; Wall, Piece: Byte)"
 c_name = "ovl29_fn_0211"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl29_fn_0211 (ovl29:0211 draws piece Piece (0..9, tables ds0C8C/ds0C96/ds0CA0) of wall Wall from the wall tiles ds6A58 as 8x8 symbols at view column Col, row Row, clipped to the 11x11 view; called by ovl29_e5 per visible wall); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

@@ -9,7 +9,7 @@ procedure ovl29_fn_0000;
 procedure ovl29_fn_0143;
 procedure SetWallDescriptors(Wall1, Wall2, Wall3, Wall4: Byte);
 procedure DrawWallDescriptors;
-procedure ovl29_fn_0211;
+procedure DrawWallPiece(Col, Row: ShortInt; Wall, Piece: Byte);
 function CellInRange(Col, Row: ShortInt): Boolean;
 function DoorKindAt(Col, Row: ShortInt; Dir: Byte): Byte;
 function WallIdAt(Col, Row: ShortInt; Dir: Byte): Byte;
@@ -19,7 +19,7 @@ procedure ovl29_e5(A, B, C: Byte);
 procedure LoadWallSet;
 procedure Load3DMap;
 implementation
-uses POOLVARS, RES07;
+uses POOLVARS, RES07, OVL34;
 const
   { The facing directions the map routines take (the step tables ds2736/ds273F are indexed by
     them); which wall nibble and door bit pair each one selects is whitepaper 4.2.1. }
@@ -29,6 +29,8 @@ const
   DirWest = 6;
   MapLast = $F;          { the last row and column of the 16x16 area map }
   DoorOpen = 1;          { DoorKindAt's answer for a side with no wall }
+  ViewLast = 10;         { the last tile column and row of the 11x11 tile 3D view }
+  ViewLeft = 3;          { the screen column (and row) of the view's first tile, counted from 1 }
 
 { ovl29:0000: frame not read }
 {@stub} procedure ovl29_fn_0000; begin end;
@@ -54,8 +56,32 @@ begin
   res07_fn_2632(2, $3C, $B, 2, ds6A62, @ds260A, DrawBuf);
   res07_fn_2632(2, $3E, $B, $2A, ds6A63, @ds260A, DrawBuf);
 end;
-{ ovl29:0211: retf 8: 8 bytes of parameters; 14 bytes of locals }
-{@stub} procedure ovl29_fn_0211; begin end;
+{ ovl29:0211. Draws piece Piece (0..9) of wall Wall (a wall id 1..15) in the 3D view: the piece's
+  Width x Height tiles (ds0C96, ds0CA0), taken in order from the wall's tile list ds6A58^[Wall]
+  starting at ds0C8C[Piece], go row by row to the view cells from (Col, Row) on. Cells outside the
+  11x11 view (0..ViewLast) and tile number 0 are skipped; each drawn tile is an 8x8 symbol at
+  screen column Col + ViewLeft - 1 (Put8x8Symbol with Direct 1, the 3D view path). Called by
+  ovl29_e5 with the piece positions ds0CAA/ds0CBE, shifted per distance and side. }
+procedure DrawWallPiece(Col, Row: ShortInt; Wall, Piece: Byte);
+var
+  LastCol: Integer;
+  LastRow: Integer;
+  TileCol: Integer;
+  TileRow: Integer;
+  Tile: Byte;
+begin
+  Tile := ds0C8C[Piece];
+  LastCol := ds0C96[Piece] + Col - 1;
+  LastRow := ds0CA0[Piece] + Row - 1;
+  for TileRow := Row to LastRow do
+    for TileCol := Col to LastCol do
+    begin
+      if (TileRow >= 0) and (TileRow <= ViewLast) and (TileCol >= 0) and (TileCol <= ViewLast) then
+        if ds6A58^[Wall, Tile] > 0 then
+          Put8x8Symbol(TileCol + ViewLeft - 1, TileRow + ViewLeft - 1, ds6A58^[Wall, Tile], 1, 1);
+      Inc(Tile);
+    end;
+end;
 { ovl29:031F: retf 4: 4 bytes of parameters; 2 bytes of locals }
 { ovl29:031F. True when both X and Y are in 0..$F (a map cell inside the 16x16 block). Signed
   ShortInt parameters; the four compares are in the order X <= $F, X >= 0, Y <= $F, Y >= 0. Called
