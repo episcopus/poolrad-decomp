@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-12 | 4.2.3 | Put8x8Symbol's Direct per caller; Load8x8Bank takes a DAX block id | make match UNIT=ovl34 (unit complete) |
 | 2026-10-12 | 5.5 | the combat round loop, turn order, player commands, movement, dying and bandaging (ovl08) | make match UNIT=ovl08 (11 of 13 routines) |
 | 2026-10-12 | process | make next skips units whose every unfinished routine is blocked | tests/unit/test_agent_tools.py |
 | 2026-10-12 | 5.2 | ovl29 map entry 0143 removed (tail of DrawWallMap) | make match UNIT=ovl29: unit complete, 13 routines |
