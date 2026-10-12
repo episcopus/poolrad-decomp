@@ -380,3 +380,28 @@ evidence = "ten records of (Col, Row, Pic) at DS:0C30: DrawAreaView (ovl27:0000,
 offset = 0x49D2
 name = "GameVars"
 evidence = "far pointer at DS:49D2 to the game's word variables: ovl07:02E1 and ovl17:1C20 index it dynamically (shl ax,1; les; add di,ax), ShowAreaView and DrawPartyMarker (ovl26:016D, ovl26:0000, matched) read words 195 and 196 as the party's position on the area map and words 230, 251, 253 and 254 (+$1CC, +$1F6, +$1FA, +$1FC) for the wall view, and DrawAreaView (ovl27:0000, matched) reads words 380, 396, 415, 416, 435 and 466 as gates for the fixed area blocks. Type ^TGameVars (array of Word): the dynamic shl-ax-1 indexing fits a word array and not a record; with constant indices GameVars^[VarMapX] compiles to the same les di / es:[di+186h] a record field gave, so ovl26 and ovl27 both match against this one declaration (make match UNIT=ovl26, UNIT=ovl27, 2026-10-11)"
+
+[[global]]
+offset = 0x5376
+name = "TileSet"
+evidence = "8X8D file number: Str(TileSet) is the suffix of the 8x8dN filename Load8x8Bank loads (ovl34:0055, whitepaper 8X8D1-8)"
+
+[[global]]
+offset = 0x5E3A
+name = "TileBanks"
+evidence = "five far pointers to the loaded 8x8 tile banks, indexed Bank*4, nil means load failed (ovl34:00B4,00CE,01F9)"
+
+[[global]]
+offset = 0x2722
+name = "SymbolBase"
+evidence = "five words, one per 8x8 bank, subtracted from Symbol to index within the bank (ovl34:020F)"
+
+[[global]]
+offset = 0x5E4E
+name = "TileBuf"
+evidence = "far pointer to the tile staging buffer: tiles are Moved to +$17 and shown by res07_fn_1951 (ovl34:027A,029E)"
+
+[[global]]
+offset = 0x4A20
+name = "DrawBuf"
+evidence = "far pointer passed to res07_fn_08D4 as the destination buffer (ovl34:0241,0245)"
