@@ -6,8 +6,8 @@ interface
 type
   String40 = string[40];
 procedure res06_fn_0000;
-procedure res06_fn_0071;
-procedure res06_fn_00A0;
+procedure res06_fn_0071(A: Byte);
+procedure res06_fn_00A0(A: Byte);
 procedure res06_fn_00B7(A, B, C, D: ShortInt; E, F: Byte);
 procedure res06_fn_017C;
 procedure res06_fn_01DF(A, B, C, D, Glyph, F: Byte);
@@ -19,7 +19,7 @@ procedure res06_fn_0768(A, B, C, D, E, F: Byte; Text: string);
 function res06_fn_09E3(Prompt: string; A: Byte; MaxLen: Byte): string;
 procedure res06_fn_0B66;
 procedure ShowMessageLine(Color: Byte; Text: String40);
-procedure res06_fn_0C3F;
+function res06_fn_0C3F: Longint;
 procedure res06_fn_0CAB;
 procedure res06_fn_0D68(Text: string; Color: Byte);
 procedure res06_fn_0DBE;
@@ -30,9 +30,9 @@ uses RES04;
 { 0709:0000: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure res06_fn_0000; begin end;
 { 0709:0071: retf 2: 2 bytes of parameters; 0 bytes of locals }
-{@stub} procedure res06_fn_0071; begin end;
+{@stub} procedure res06_fn_0071(A: Byte); begin end;
 { 0709:00A0: retf 2: 2 bytes of parameters; 0 bytes of locals }
-{@stub} procedure res06_fn_00A0; begin end;
+{@stub} procedure res06_fn_00A0(A: Byte); begin end;
 { 0709:00B7: retf 12: 12 bytes of parameters; 10 bytes of locals }
 {@stub} procedure res06_fn_00B7(A, B, C, D: ShortInt; E, F: Byte); begin end;
 { 0709:017C: retf 0: 0 bytes of parameters; 18 bytes of locals }
@@ -49,7 +49,7 @@ uses RES04;
 {@stub} procedure res06_fn_06A7; begin end;
 { 0709:0714: retf 2: 2 bytes of parameters; 0 bytes of locals }
 {@stub} procedure res06_fn_0714; begin end;
-{ 0709:0768: retf 16: 16 bytes of parameters; 294 bytes of locals }
+{ 0709:0768: retf 16; six bytes and a string; ovl04 passes (1, $11, $26, $16, $A, 1, message). }
 {@stub} procedure res06_fn_0768(A, B, C, D, E, F: Byte; Text: string); begin end;
 { 0709:09E3: retf 8: 8 bytes of parameters; 812 bytes of locals.
   The line reader: shows the Prompt and returns what the player types as its string result
@@ -68,7 +68,7 @@ begin
   Key := ReadGameKey;
 end;
 { 0709:0C3F: retf 0: 0 bytes of parameters; 12 bytes of locals }
-{@stub} procedure res06_fn_0C3F; begin end;
+{@stub} function res06_fn_0C3F: Longint; begin end;
 { 0709:0CAB: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure res06_fn_0CAB; begin end;
 { 0709:0D68: retf 6: 6 bytes of parameters; 42 bytes of locals.

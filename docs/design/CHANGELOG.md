@@ -4,6 +4,28 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-11 | docs/design/WHITEPAPER.md (unchanged) | no new verified sections; the ovl28_e2 findings are in the hand-off note and re/symbols.toml | make match UNIT=ovl28 (8 matched, 1 stub), make check green |
+| 2026-10-11 | title (ovl01) | ShowCredits/ShowTitleScreen signatures recorded | make check exit 0 |
+| 2026-10-11 | tools | make rename keeps evidence with backslashes, quotes and dollar signs intact | tests/unit/test_readability.py |
+| 2026-10-11 | 5.16 sprites | Show3DSprite, ShowHeadBodyWindow L2; e2 248E conflict documented | make match UNIT=ovl28 (8 L2); build/packets/ovl28.md |
+| 2026-10-11 | 4.2.3 | LoadPictureSlot: the CHEAD/CBODY T rule, the mirrored half at Block+80h, the colour maps of ICON and TileSet sets | make match UNIT=ovl32 (unit complete) |
+| 2026-10-11 | 5.19 | The Temple: the shop menu, the nine cleric services with prices and conditions, Raise Dead's constitution rule, the phantom map entries | make match UNIT=ovl04 (unit complete) |
+| 2026-10-11 | 4.2.3 pictures | ovl32 merge resolved; 0111/248E/2595 signatures reconciled; renames applied | make check exit 0; work/blockers.md ovl32 |
+| 2026-10-11 | 5.17 (new) | added ovl30 (screen support): SignOf, SortTable and SetupLine, and the TLineState and TSortRec types | make match UNIT=ovl30: 3 matched, 0 differ, 4 stubs; make check green |
+| 2026-10-11 | 5.17 (new) | added ovl18 (PoolNarrative): the ending narrative ShowEndingNarrative and the door animation AnimateAreaDoors, and blocked the timed animation ovl18_fn_0006 with notes | make match UNIT=ovl18: 2 matched, 0 differ, 1 stub; make check green |
+| 2026-10-11 | 5.16 | added ovl28 Show3DSprite and ShowHeadBodyWindow and the DS:5D92 character picture record, blocked the PIC/FINAL loader ovl28_e2 with notes | make match UNIT=ovl28: 8 matched, 0 differ, 1 stub; make check green |
+| 2026-10-11 | tools | match resolves absolute aliases to their base global (HeapWords -> HeapEnd), independent of map order | unblocks ovl28 merge |
+| 2026-10-11 | 2.2, 4.1 | res05: how the game loads a DAX block (index walk, packed buffer, UnpackRle quirk for codes 7Fh/80h, none in 1,245 blocks), the insert-disk prompt, BIOS text output; res05 compiles with O+ and an I- region | make match UNIT=res05 (unit complete), tools/re/dax.py scan |
+| 2026-10-11 | 5.8 | title sequence ovl01 (ShowTitleScreen, ShowCredits, WaitKeyOrTimeout, dead EGA anim quirk) | make match UNIT=ovl01 unit complete, make readability UNIT=ovl01 clean |
+| 2026-10-11 | 2.3, 5.8, 3.6 | boot init res08 (POOL.CFG parsing, VideoAdapter/SoundMode mappings, heap/overlay sizing) and TP6 codegen (resident O+, WriteLn multi-arg, StrCopy retf 4, self-assign quirk) | variant-A instruction comparison (tool L2 pending fix) |
+| 2026-10-11 | tools | matcher: init part of a unit with no interface routines no longer taken from variant B's padding procedure | unblocks res08 (escalate-general-20261012041843) |
+| 2026-10-11 | process | make handoff refuses a unit branch that does not match; partial hand-offs stub their drafts | tests/unit/test_agent_tools.py |
+| 2026-10-11 | tools | make map keeps forced routine starts (manual list, probe far-call entries, rtl tables), every known routine and field, and the compiler size of proven routines; Randomize 0AF8:1247 survives | tests/unit/test_enumerate_routines.py; make map diff on task/tools-map |
+| 2026-10-11 | 4.x | SelectTileSet saves TileSet in ds5377 and RestoreTileSet copies it back | make match UNIT=res05 |
+| 2026-10-11 | 5.16 (new) | added the 3D sprite unit ovl28: DrawSprite, the HEAD and BODY sprite helpers, LoadHeadBodySprites, FreeSpriteList and the sprite list record | make match UNIT=ovl28: 6 matched, 0 differ, 3 stubs; make check green |
+| 2026-10-11 | process | make match, check, packet and tpc keep the working agent's heartbeat alive | tests/unit/test_agent_tools.py |
+| 2026-10-11 | process | make handoff refuses a branch hand-off with nothing to merge | tests/unit/test_agent_tools.py |
+| 2026-10-11 | 4.x (8x8 tiles), 3.2.2 (cross-ref) | Load8x8Bank and Put8x8Symbol at L2; the fourth parameter of Put8x8Symbol settled as a Byte (the callers pass 0 and the test compiles the same); the shared globals renamed TileSet, TileBanks, TileBuf, DrawBuf and ovl11 reconciled with them | make match UNIT=ovl34: unit complete, 3 matched, 0 differ; make check green |
 | 2026-10-11 | 5.2 (clamp address), 5.2.1 (citations and constants) | fixed the ovl26 window clamp citations (they pointed into WallDesc4FromCode), named the marker and clamp limits, and corrected the whitepaper 5.2 clamp address | make match UNIT=ovl26: unit complete, 3 matched, 3 nested, 0 differ; src/OVL26.PAS |
 | 2026-10-11 | 5.8, 5.2 (cross-ref) | named the debug trace rectangle and its three hit point values in ShowDebugTrace and made the whitepaper match (the top text line: columns 0..39, row 0; the caller ovl12:2233 passes a character maximum, current and lost hit points) | make match UNIT=ovl33: unit complete, 2 matched, 0 differ; src/OVL33.PAS, docs/design/WHITEPAPER.md 5.8 |
 | 2026-10-11 | 3.2.2 (new), 5.2.1 | added the start-up loader StartGame (ovl11:002D): the seven heap blocks, the three screen buffers (res07_fn_248E), the three 200-cell screen tables (DS:4EC0/5050/51E0), the game globals, and the data loads SQRPACI, COMSPR and ITEMS; corrected the ovl11:0435 phantom | make match UNIT=ovl11: unit complete, 2 matched, 0 differ; src/OVL11.PAS, docs/design/WHITEPAPER.md 3.2.2 |

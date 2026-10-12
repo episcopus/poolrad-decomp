@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import os
 import re
 import sys
 import tomllib
@@ -94,9 +95,14 @@ def rename_sources(old: str, new: str) -> int:
     return total
 
 
+def toml_text(why: str) -> str:
+    """Evidence as the inside of a TOML basic string: backslashes escaped, double quotes made single."""
+    return " ".join(why.split()).replace("\\", "\\\\").replace('"', "'")
+
+
 def log(old: str, new: str, kind: str, why: str) -> None:
     entry = '[[rename]]\nold = "%s"\nnew = "%s"\nkind = "%s"\nwhy = "%s"\ndate = "%s"\n\n' % (
-        old, new, kind, why.replace('"', "'"), dt.date.today().isoformat())
+        old, new, kind, toml_text(why), dt.date.today().isoformat())
     if not LOG.exists():
         LOG.write_text("# Every rename of a routine or a global (tools/match/rename.py). `make rename APPLY=1`\n"
                        "# replaces old names still used in src/ by the new ones (after a merge).\n\n")
@@ -126,7 +132,7 @@ def rename_routine(old: str, new: str, why: str) -> str:
         raise SystemExit("rename: no routine %s in re/symbols.toml" % old)
     text, _ = re.subn(r'(signature = "(?:procedure|function) )%s\b' % re.escape(old), r"\g<1>%s" % new, text, flags=re.I)
     text, _ = re.subn(r'(name = "%s"(?:(?!\[\[routine\]\]).)*?\nnotes = ")' % re.escape(new),
-                      lambda m: m.group(1) + "renamed from %s (%s); " % (old, why.replace('"', "'")), text,
+                      lambda m: m.group(1) + "renamed from %s (%s); " % (old, toml_text(why)), text,
                       count=1, flags=re.S)
     SYMBOLS.write_text(text)
     return "routine"
@@ -140,7 +146,7 @@ def rename_global(old: str, new: str, why: str) -> str:
         text = text[:named.start()] + 'name = "%s"' % new + text[named.end():]
     elif m:
         text = text.rstrip("\n") + '\n\n[[global]]\noffset = 0x%s\nname = "%s"\nevidence = "%s"\n' % (
-            m.group(1).upper(), new, why.replace('"', "'"))
+            m.group(1).upper(), new, toml_text(why))
     else:
         raise SystemExit("rename: %s is neither a routine of re/symbols.toml nor a global (re/dseg.toml or dsXXXX)" % old)
     DSEG.write_text(text)
@@ -151,7 +157,8 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("old", nargs="?")
     ap.add_argument("new", nargs="?")
-    ap.add_argument("--why", default="")
+    ap.add_argument("--why", default=os.environ.get("RENAME_WHY", ""),
+                    help="the evidence (make passes WHY= unexpanded through RENAME_WHY)")
     ap.add_argument("--apply", action="store_true", help="re-apply every rename of re/renames.toml to src/")
     a = ap.parse_args(argv)
     if a.apply:

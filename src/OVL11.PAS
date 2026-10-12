@@ -3,7 +3,7 @@ unit OVL11;
   the title screens and the copy protection (src/POOL.PAS: `StartGame;`). It allocates the game's
   main heap blocks, sets up the screen buffers (through res07_fn_248E), fills the three 200-entry
   cell address tables, initialises the screen and game globals, then builds the save game file path
-  and reads its data file (res05_fn_025D, Reset/Seek/BlockRead/Close) before handing over to
+  and reads its data file (OpenGameFile, Reset/Seek/BlockRead/Close) before handing over to
   ovl22_e10 (the character/party loader) and ovl12_e1 (the training and rewards unit). }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
@@ -35,12 +35,12 @@ const
   address used with VideoAdapter 2, ovl11:019F), and finally sets the screen and game globals
   (ovl11:0392..0456). The second half (ovl11:0469..0614) is the save game load: it saves the
   current file path, draws 'Loading...Please Wait' (res06_fn_0626), loads the 12 sprites of 'COMSPR'
-  through ovl32_e4, builds the game file name from the ds2614 name table plus the character in
-  DS:547D (res05_fn_025D opens it), reads one $810-byte block (Reset/Seek/BlockRead/Close,
+  through LoadPictureSlot, builds the game file name from the InsertDiskPrompts name table plus the character in
+  DS:547D (OpenGameFile opens it), reads one $810-byte block (Reset/Seek/BlockRead/Close,
   ovl11:05A9..05E5), restores the path, randomises the seed (System.Randomize, ovl11:0602) and
   calls ovl22_e10 and ovl12_e1.
   Reads and changes: the globals listed in POOLVARS.PAS (their comments name the write).
-  Side effects: the heap, the screen (res06_fn_0626, ovl32_e4, ovl34_e1) and the disk (the file
+  Side effects: the heap, the screen (res06_fn_0626, LoadPictureSlot, Load8x8Bank) and the disk (the file
   read). The loop counter is the global DS:465C, reused by the three fill loops. }
 procedure StartGame;
 begin
@@ -51,8 +51,8 @@ begin
   New(ds5E20);
   New(ds6A58);
   New(ds6A5C);
-  res07_fn_248E(8, 1, 1, 0, ds5E4E);
-  res07_fn_248E($A8, $15, 1, 0, ds4A20);
+  res07_fn_248E(8, 1, 1, 0, TileBuf);
+  res07_fn_248E($A8, $15, 1, 0, DrawBuf);
   res07_fn_248E($18, 3, 1, 0, ds4A24);
   FillChar(ds4A28, $A8, 0);
   FillChar(ds4AD0, $150, 0);
@@ -72,7 +72,7 @@ begin
       3: ds51E0[ds465C] := (ds465C div 4) * $A + Plane4;
     end;
   end;
-  FillChar(ds5E3A, $14, 0);
+  FillChar(TileBanks, $14, 0);
   FillChar(ds5E52, 8, 0);
   FillChar(GameVars^, $800, 0);
   FillChar(ds49D6^, $800, 0);
@@ -85,7 +85,7 @@ begin
     ds6AFB[ds465C].Addr := nil;
   end;
   FillChar(ds6ABE, $42, 0);
-  ds6810 := nil;
+  ds6810 := 0;
   FillChar(ds6AAD, 5, 0);
   ds6AAD := $F;
   ds6AAE := 1;
@@ -105,11 +105,11 @@ begin
   ds49F8 := 0;
   ds49FB := 0;
   ds5D96 := 0;
-  ds5D92 := nil;
+  SelectedCharacter := nil;
   ds49ED := $9900;
   ds49E2 := 1;
   ds49F4 := 0;
-  ds5376 := 1;
+  TileSet := 1;
   ds5377 := 1;
   ds547A := 1;
   ds5378 := 1;
@@ -129,7 +129,7 @@ begin
   ds5370 := 1;
   ds84E3 := 0;
   ds557C := 0;
-  ds6B0A := 0;
+  ds6B0A := '';
   ds6B1C := $FF;
   ds557D := False;
   ds6F69 := $E8;
@@ -139,25 +139,25 @@ begin
   res03_fn_01A5(100);
   { A string assignment to a string[40] truncates to 40 (the compiler uses System_StrLCopy); this
     saves the current path DS:547C into DS:4661. }
-  ds4661 := ds547C;
-  ds547C := '';
+  ds4661 := GameDir;
+  GameDir := '';
   res06_fn_017C;
   ovl25_e3;
   res06_fn_0626(0, $18, $A, 'Loading...Please Wait');
-  ovl34_e1($CA, 4);
-  ovl34_e1($CB, 0);
-  res07_fn_0111('sqrpaci', 1, 0, 0, @ds5E52);
-  res07_fn_0111('sqrpaci', 2, 0, 0, @ds5E56);
+  Load8x8Bank($CA, 4);
+  Load8x8Bank($CB, 0);
+  res07_fn_0111('sqrpaci', 1, 0, 0, ds5E52);
+  res07_fn_0111('sqrpaci', 2, 0, 0, ds5E56);
   for ds465C := 0 to $B do
-    ovl32_e4('COMSPR', ds465C, ds465C + $D);
-  ovl32_e4('COMSPR', $19, $19);
-  ds4660 := res05_fn_025D('ITEMS', ds2614[ds5376] + Chr(ds547D) + ':', 0, ds468C);
+    LoadPictureSlot('COMSPR', ds465C, ds465C + $D);
+  LoadPictureSlot('COMSPR', $19, $19);
+  ds4660 := OpenGameFile('ITEMS', InsertDiskPrompts[TileSet] + Chr(ds547D) + ':', 0, ds468C);
   Reset(ds468C, 1);
   Seek(ds468C, 2);
   BlockRead(ds468C, ds5582, LoadBlockSize, ds5E1E);
   Close(ds468C);
   { restore the path saved above }
-  ds547C := ds4661;
+  GameDir := ds4661;
   ovl25_e3;
   Randomize;
   ovl22_e10;

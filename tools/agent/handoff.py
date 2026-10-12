@@ -24,6 +24,7 @@ import argparse
 import datetime as dt
 import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -33,6 +34,17 @@ import heartbeat  # noqa: E402
 
 STATES = ("complete", "partial", "blocked", "review-passed", "review-failed", "escalate")
 CHANGELOG = common.ROOT / "docs/design/CHANGELOG.md"
+
+
+def unmatched(unit: str) -> str:
+    """Run the matcher on a unit branch's unit; the problem lines when anything other than a stub differs
+    (`make check` matches every routine that is not a {@stub}, so such a merge would fail on main)."""
+    r = subprocess.run([sys.executable, str(common.ROOT / "tools/match/match.py"), unit],
+                       cwd=common.ROOT, capture_output=True, text=True)
+    if r.returncode == 0:
+        return ""
+    lines = [l for l in (r.stdout + r.stderr).splitlines() if not l.startswith("MATCH")]
+    return "\n".join(lines[-12:]) or "match exited %d" % r.returncode
 
 
 def handoff_dir() -> Path:
@@ -106,6 +118,18 @@ def main(argv=None) -> int:
         if common.git("status", "--porcelain", "--", "src", "re", "docs", "work", "tools", "tests"):
             print("handoff: commit your work first (git status is not clean)", file=sys.stderr)
             return 1
+        if branch == "main" or not int(common.git("rev-list", "--count", "main..HEAD") or 0):
+            print("handoff: %s has no commits beyond main, so there is nothing to merge; run it from your "
+                  "worktree after committing (an escalation needs no commits)" % branch, file=sys.stderr)
+            return 1
+        if branch.startswith("unit/"):
+            problems = unmatched(branch.split("/", 1)[1])
+            if problems:
+                print("handoff: make match on %s still shows differences; a hand-off (also partial or blocked) "
+                      "must match everywhere it is not a {@stub}: turn each unfinished routine back into a "
+                      "{@stub} (keep the draft in its re/symbols.toml notes or an earlier commit), commit, and "
+                      "hand off again:\n%s" % (branch, problems), file=sys.stderr)
+                return 1
         if a.changelog:
             parts = [p for p in a.changelog.split("|") if p.strip()]
             if len(parts) != 3:

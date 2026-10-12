@@ -3,8 +3,7 @@ unit OVL07;
   until decompiled (playbook 30). }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
-type
-  String40 = string[40];
+uses RES06;
 procedure ovl07_e2;
 procedure ovl07_e1;
 procedure ovl07_e3;
@@ -30,7 +29,7 @@ procedure ovl07_fn_1153;
 procedure ovl07_fn_12FB;
 procedure ovl07_fn_1307;
 procedure ovl07_fn_156D;
-function ovl07_e13(P1: Pointer; Text: String40; A, B, C, D, E: Byte): Byte;
+function ovl07_e13(Title: String40; Text: string; A, B, C, D, E: Byte): Byte;
 procedure ovl07_e14;
 procedure ovl07_e15;
 procedure ovl07_e16;
@@ -95,8 +94,8 @@ implementation
 {@stub} procedure ovl07_fn_1307; begin end;
 { ovl07:156D: retf 8: 8 bytes of parameters; 514 bytes of locals }
 {@stub} procedure ovl07_fn_156D; begin end;
-{ ovl07:1684: retf 18: 18 bytes of parameters; 342 bytes of locals }
-{@stub} function ovl07_e13(P1: Pointer; Text: String40; A, B, C, D, E: Byte): Byte; begin end;
+{ ovl07:1684: retf 18; a string[40], a string and five bytes; returns a byte (the Temple tests it for 1). }
+{@stub} function ovl07_e13(Title: String40; Text: string; A, B, C, D, E: Byte): Byte; begin end;
 { ovl07:1788: retf 40: 40 bytes of parameters; 340 bytes of locals }
 {@stub} procedure ovl07_e14; begin end;
 { ovl07:1815: retf 8: 8 bytes of parameters; 512 bytes of locals }
