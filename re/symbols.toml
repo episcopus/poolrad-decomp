@@ -17875,6 +17875,7 @@ name = "res08_init"
 signature = ""
 c_name = "res08_init"
 level = "L2"
+review = "passed 2026-10-11 by rev-4, 2ad2c4c"
 justification = ""
 notes = "[V] game-unit routine, formerly misnamed Overlay_init (WHITEPAPER 2.2)"
 evidence = ["prologue"]
