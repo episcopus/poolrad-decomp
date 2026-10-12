@@ -631,6 +631,24 @@ Show3DSprite."), `ovl28_e4` (the HEAD/BODY window) and `ovl28_e2` (the PIC/FINAL
 
 ---
 
+### 5.17 The Temple **[V]** (`src/OVL04.PAS`, `make match UNIT=ovl04`: unit complete)
+
+- **The shop menu** **[V]** (`VisitTemple`, `ovl04:0D09`): `Heal View Take Pool Share Appraise Exit`, or `Heal View Pool Appraise Exit` while `ovl21_e9` reports no pooled money. On entry it clears the 28 bytes at `DS:67F4` (the pooled money that `ovl21_e12` sums into a `LongInt`) and sets `DS:49F3` to 1. Exit with money left in the pool shows the priest's `As you leave a priest says, "Excuse me but you have left some money here"` and `Do you want to go back and retrieve your money?` (`ovl07_e13`) and leaves only when that returns 1.
+- **The services** **[V]** (`HealMenu`, `ovl04:09D7`, nine names from the `string[40]` table at `DS:011A`): every service routine checks the selected character (`SelectedCharacter`, `DS:5D92`), asks `cast cure anyway:` when the service is not needed (`AskCastAnyway`), then `ChargeForCure` shows `<service> will only cost <n> gold pieces.`, takes the price from the character's money (`ovl19_e11`, `ovl21_e10`) or else from the pool (`ovl21_e12`, `ovl21_e11`), and says `Not enough money.` when neither covers it.
+
+  | Service | Price | Needed when | Effect |
+  |---|---:|---|---|
+  | Cure Blindness | 1000 | affect $21 | removes affect $21 |
+  | Cure Disease | 1000 | one of the affects $1F $22 $2B $2C $32 $39 (`DS:0114`) | removes all six |
+  | Cure Light / Serious / Critical Wounds | 100 / 350 / 600 | always offered | heals 1d8, 2d8+1, 3d8+3 (`ovl24_e8`, `ovl24_e21`) |
+  | Neutralize Poison | 1000 | affect $37 | removes $37, $16, $0F |
+  | Raise Dead | 5500 | status (+$10C) 1 or 6 | removes $20 and $37, status 0, constitution - 1, hit point loss (below) |
+  | Remove Curse | 3500 | a cursed item (+$36 of an item in the list at +$C8) or affect $24 | hands the character to `ovl22_e9` (`DS:6C95`) |
+  | Stone to Flesh | 2000 | status 7 | status 0 |
+
+- **Raise Dead and constitution** **[V]** (`ovl04:05E1..072A`): after lowering constitution (+$14) by one, a character with constitution 14 or more loses `(hp_max - byte +$B1) div bonus` hit points, where bonus sums over the eight class levels at +$96 (signed bytes): constitution - 14 per fighter level (class index 2), 2 per other level above constitution 15, else 1. The loss is skipped when the constitution is 17 or more and the character has no fighter level. Raise Dead and Stone to Flesh also set the bytes +$10D and +$11B to 1 (meaning open).
+- QUIRK `ovl04:0250`: every service routine clears a 256-byte string local it never reads. The map had listed 16 phantom routines inside this overlay (case arms, literal pools and the middle of instructions, e.g. `ovl04:0311`); the compiler shows eleven routines plus the initialisation, and `re/symbols.toml` no longer lists the phantoms.
+
 ## 6. Open questions
 
 1. Remaining compiler directives (`$A`, `$B`, `$V`, `$X`) and which game unit is the 16-byte unit at `0A31` (2.2). The version is pinned: Turbo Pascal 6.0, June 1991 release.

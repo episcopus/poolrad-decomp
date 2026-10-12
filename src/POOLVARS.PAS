@@ -56,6 +56,68 @@ type
     Kind: Byte;
     Addr: Pointer;
   end;
+  { An item in memory: the 63-byte item record of whitepaper 4.2.5 (field offsets [V] by
+    tools/re/records.py round-trips); in memory the four bytes after the name hold the link to the
+    next item of the owner's list (Remove Curse walks it, ovl04:087F). }
+  PItem = ^TItem;
+  TItem = record
+    Name: string[41];             { +$00 }
+    Next: PItem;                  { +$2A: next item of the list; nil ends it }
+    ItemType: Byte;               { +$2E }
+    NameNum: array[1..3] of Byte; { +$2F..$31 }
+    Plus: ShortInt;               { +$32 }
+    PlusSave: Byte;               { +$33 }
+    Readied: Boolean;             { +$34 }
+    HiddenNames: Byte;            { +$35 }
+    Cursed: Boolean;              { +$36: the item is cursed (Remove Curse looks for one, ovl04:0874) }
+    Weight: Word;                 { +$37 }
+    Count: Byte;                  { +$39 }
+    Value: Word;                  { +$3A }
+    Affects: array[1..3] of Byte; { +$3C..$3E }
+  end;
+  { A character in memory: the 285-byte record of whitepaper 4.2.5 (name, abilities and hp_max
+    [V] by tools/re/records.py). Only the fields a decompiled unit uses are named; the Pad
+    arrays keep the offsets. }
+  PCharacter = ^TCharacter;
+  TCharacter = record
+    Name: string[15];             { +$00 }
+    Strength, Intelligence, Wisdom, Dexterity: Byte;  { +$10..$13 }
+    Constitution: Byte;           { +$14: Raise Dead lowers it by one (ovl04:060E) }
+    Charisma, StrengthPercent: Byte;  { +$15, +$16 }
+    Pad17: array[$17..$31] of Byte;
+    HpMax: Byte;                  { +$32: maximum hit points }
+    Pad33: array[$33..$7E] of Byte;
+    Affects: Pointer;             { +$7F: the list of affects (res12_fn_2199, ovl24_e2 walk it) }
+    Pad83: array[$83..$95] of Byte;
+    { +$96..$9D: the level in each of the eight classes; Raise Dead treats index 2 apart (class 2
+      is the fighter in the create-character run, whitepaper 5.8). Signed: only levels above 0 count. }
+    ClassLevels: array[0..7] of ShortInt;
+    Pad9E: array[$9E..$B0] of Byte;
+    { +$B1: Raise Dead subtracts it from HpMax to get the hit points its constitution
+      arithmetic works on (ovl04:0612); its meaning beyond that is not known. }
+    HpB1: Byte;
+    PadB2: array[$B2..$C7] of Byte;
+    Items: PItem;                 { +$C8: the list of carried items }
+    PadCC: array[$CC..$10B] of Byte;
+    { +$10C: the health status: 0 after Raise Dead and Stone to Flesh, 1 and 6 count as dead for
+      Raise Dead, 7 as stoned for Stone to Flesh (ovl04:0539, 093D). }
+    Status: Byte;
+    Flag10D: Byte;                { +$10D: Raise Dead and Stone to Flesh set it to 1; meaning unknown }
+    Pad10E: array[$10E..$11A] of Byte;
+    Flag11B: Byte;                { +$11B: Raise Dead and Stone to Flesh set it to 1; meaning unknown }
+    Pad11C: Byte;
+  end;
+  { One line of the menu list ovl25_e6 builds (the Temple's Heal menu fills ten of them from
+    TempleMenuText, ovl04:0A18): the text, a byte the Temple clears, the link to the next line. }
+  PMenuLine = ^TMenuLine;
+  TMenuLine = record
+    Text: string[40];             { +$00 }
+    Flag29: Byte;                 { +$29: cleared when the line is filled; meaning unknown }
+    Next: PMenuLine;              { +$2A }
+  end;
+  { The 28 bytes at DS:67F4 that the Temple clears on entry and ovl21_e12 turns into a LongInt
+    sum (the money pooled in the shop); the element layout is not known yet. }
+  TPartyMoney = array[0..$1B] of Byte;
 const
   { Words of GameVars^ whose meaning is proven (word n is at byte offset 2n of the block; the
     matched reads in ovl26 are at +$186, +$188, +$1CC, +$1F6, +$1FA and +$1FC). }
@@ -178,7 +240,9 @@ var
   ds547D: Byte;                   { a character the loader appends to the path through System_MemOp_0C3B (ovl11:0581) }
   ds557C: Byte;                   { cleared by the loader (ovl11:0438) }
   ds5582: array[0..$80F] of Byte; { $810-byte buffer the loader reads the file block into (ovl11:05CD) }
-  ds5D92: LongInt;                { a 4-byte value the loader clears (ovl11:03B8): one `xor ax,ax` and two stores }
+  { The character the Temple acts on (ovl04 reads it everywhere); the loader sets it nil
+    (ovl11:03B8). }
+  SelectedCharacter: PCharacter;  { see above }
   ds5D96: LongInt;                { a 4-byte value the loader clears (ovl11:03B0): one `xor ax,ax` and two stores }
   ds5E1E: Word;                   { BlockRead result count of the loader (ovl11:05D6) }
   ds5E20: ^TBlock588;             { $588-byte block the loader allocates (ovl11:0074) }
@@ -220,5 +284,20 @@ var
   TileSet: Byte;                  { the 8X8D file number: Load8x8Bank loads 8x8d<TileSet> }
   TileBanks: array[0..4] of PT8x8Bank;  { the loaded 8x8 banks, indexed by bank; nil when the load failed }
   TileBuf: PT8x8Bank;             { the tile staging buffer: Put8x8Symbol Moves one tile to +$17 }
+
+  { Globals of the Temple (ovl04). }
+  { The Heal menu texts, string[40] entries 1..9 at DS:011A (Cure Blindness ... Stone to Flesh,
+    Exit) copied into the menu lines (ovl04:0A33). Entry 0 is never read: the index base
+    DS:00F1 is entry 0 so that TempleMenuText[I] names the same address; its bytes are the tail
+    of the previous data and DiseaseAffects. }
+  TempleMenuText: array[0..9] of string[40];  { see above }
+  { The six affects Cure Disease looks for and removes (entries 1..6 at DS:0114: $1F, $22, $2B,
+    $2C, $32, $39 in the image; ovl04:031E, 03A6). Entry 0, the byte before, is never read. }
+  DiseaseAffects: array[0..6] of Byte;  { see above }
+  ds49F3: Byte;                   { set to 1 when the Temple opens (ovl04:0D0F); meaning unknown }
+  ds681F: Byte;                   { 1 while the Temple removes affects through ovl24_e2 (ovl04:0386, 05AB, 07CE), 0 after }
+  ds67F4: TPartyMoney;            { the Temple clears it on entry (ovl04:0D32) and passes it to ovl21_e12 }
+  ds6C95: PCharacter;             { the character Remove Curse hands to ovl22_e9 (ovl04:08FA) }
+  ds6DC0: Byte;                   { cleared when the Temple opens (ovl04:0D37); meaning unknown }
 implementation
 end.

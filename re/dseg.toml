@@ -455,3 +455,20 @@ evidence = "IOResult of probing pool.cfg with Reset in res08_init (042B:00E0); t
 offset = 0x484C
 name = "CfgChar"
 evidence = "the POOL.CFG choice just read in res08_init (042B:016E): video E/C/T, sound T/P, retry key, F/N; compared with character literals"
+
+[[global]]
+offset = 0x00F1
+size = 410
+name = "TempleMenuText"
+evidence = "the Temple's Heal menu (ovl04:0A18) copies string[40] entries I = 1..9 from DS:00F1 + I * $29 into its menu lines; the image holds Cure Blindness, Cure Disease, Cure Light/Serious/Critical Wounds, Neutralize Poison, Raise Dead, Remove Curse, Stone to Flesh, Exit at DS:011A + $29 * (I - 1); entry 0 is never read"
+
+[[global]]
+offset = 0x0113
+size = 7
+name = "DiseaseAffects"
+evidence = "Cure Disease (ovl04:031E, 03A6) tests and removes the affect DS:0113 + I for I = 1..6; the image holds $1F $22 $2B $2C $32 $39 at DS:0114; entry 0 is never read"
+
+[[global]]
+offset = 0x5D92
+name = "SelectedCharacter"
+evidence = "far pointer to the character every Temple service acts on: pushed as the character argument of res12_fn_2199, ovl24_e2 and res12_fn_16EC, and dereferenced for the record fields (Status +0C, Items +8, Name +0) throughout ovl04 (ovl04:002E, 0539, 084F, 0AC9); StartGame sets it nil"

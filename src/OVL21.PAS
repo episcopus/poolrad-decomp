@@ -3,13 +3,14 @@ unit OVL21;
   until decompiled (playbook 30). }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
+uses POOLVARS;
 procedure ovl21_fn_0000;
 procedure ovl21_fn_0020;
 procedure ovl21_fn_003A;
 procedure ovl21_e1;
-procedure ovl21_e12;
-procedure ovl21_e10;
-procedure ovl21_e11;
+function ovl21_e12(Money: TPartyMoney): LongInt;
+procedure ovl21_e10(Amount: Word);
+procedure ovl21_e11(Amount: Word);
 procedure ovl21_fn_0203;
 procedure ovl21_e6;
 procedure ovl21_e7;
@@ -23,11 +24,11 @@ procedure ovl21_fn_0B48;
 procedure ovl21_e5;
 procedure ovl21_e4;
 procedure ovl21_fn_0F21;
-procedure ovl21_e9;
+procedure ovl21_e9(var A, B: Byte);
 procedure ovl21_fn_0FD2;
 procedure ovl21_e13;
 procedure ovl21_fn_1758;
-procedure ovl21_e14;
+procedure ovl21_e14(var Flag: Byte);
 procedure ovl21_fn_1F4B;
 procedure ovl21_fn_2233;
 implementation
@@ -40,12 +41,12 @@ implementation
 {@stub} procedure ovl21_fn_003A; begin end;
 { ovl21:0054: retf 10: 10 bytes of parameters; 2 bytes of locals }
 {@stub} procedure ovl21_e1; begin end;
-{ ovl21:00A8: retf 4: 4 bytes of parameters; 38 bytes of locals }
-{@stub} procedure ovl21_e12; begin end;
-{ ovl21:0130: retf 2: 2 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl21_e10; begin end;
-{ ovl21:0185: retf 2: 2 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl21_e11; begin end;
+{ ovl21:00A8: retf 4; copies a 28-byte value parameter (MemOp 0A3F, $1C) and returns a LongInt; the Temple passes DS:67F4. }
+{@stub} function ovl21_e12(Money: TPartyMoney): LongInt; begin end;
+{ ovl21:0130: retf 2; one word; the Temple passes the selected character's money minus a price. }
+{@stub} procedure ovl21_e10(Amount: Word); begin end;
+{ ovl21:0185: retf 2; one word; the Temple passes the pooled money minus a price. }
+{@stub} procedure ovl21_e11(Amount: Word); begin end;
 { ovl21:0203: retf 2: 2 bytes of parameters; 42 bytes of locals }
 {@stub} procedure ovl21_fn_0203; begin end;
 { ovl21:0294: retf 8: 8 bytes of parameters; 580 bytes of locals }
@@ -72,16 +73,16 @@ implementation
 {@stub} procedure ovl21_e4; begin end;
 { ovl21:0F21: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl21_fn_0F21; begin end;
-{ ovl21:0F7E: retf 8: 8 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl21_e9; begin end;
+{ ovl21:0F7E: retf 8; two var parameters; the Temple tests the first for nonzero. }
+{@stub} procedure ovl21_e9(var A, B: Byte); begin end;
 { ovl21:0FD2: retf 0: 0 bytes of parameters; 2 bytes of locals }
 {@stub} procedure ovl21_fn_0FD2; begin end;
 { ovl21:1010: frame not read }
 {@stub} procedure ovl21_e13; begin end;
 { ovl21:1758: frame not read }
 {@stub} procedure ovl21_fn_1758; begin end;
-{ ovl21:19B2: frame not read }
-{@stub} procedure ovl21_e14; begin end;
+{ ovl21:19B2: one var parameter (the Temple passes a local byte it tests afterwards). }
+{@stub} procedure ovl21_e14(var Flag: Byte); begin end;
 { ovl21:1F4B: frame not read }
 {@stub} procedure ovl21_fn_1F4B; begin end;
 { ovl21:2233: retf 4: 4 bytes of parameters; 0 bytes of locals }

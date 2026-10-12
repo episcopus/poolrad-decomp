@@ -21,7 +21,7 @@ procedure ovl19_fn_098A;
 procedure ovl19_fn_0999;
 procedure ovl19_fn_099E;
 procedure ovl19_fn_09A3;
-procedure ovl19_e5;
+procedure ovl19_e5(var Flag: Byte);
 procedure ovl19_fn_0B25;
 procedure ovl19_fn_0D70;
 procedure ovl19_e6;
@@ -50,8 +50,8 @@ procedure ovl19_fn_2383;
 procedure ovl19_fn_23B6;
 procedure ovl19_fn_24A7;
 procedure ovl19_e9;
-procedure ovl19_e10;
-procedure ovl19_e11;
+procedure ovl19_e10(Key: Char);
+function ovl19_e11(Who: Pointer): LongInt;
 procedure ovl19_e12;
 implementation
 
@@ -91,8 +91,8 @@ implementation
 {@stub} procedure ovl19_fn_099E; begin end;
 { ovl19:09A3: frame not read }
 {@stub} procedure ovl19_fn_09A3; begin end;
-{ ovl19:0AB3: frame not read }
-{@stub} procedure ovl19_e5; begin end;
+{ ovl19:0AB3: one var parameter (the Temple's View command). }
+{@stub} procedure ovl19_e5(var Flag: Byte); begin end;
 { ovl19:0B25: retf 4: 4 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl19_fn_0B25; begin end;
 { ovl19:0D70: retf 4: 4 bytes of parameters; 40 bytes of locals }
@@ -149,10 +149,10 @@ implementation
 {@stub} procedure ovl19_fn_24A7; begin end;
 { ovl19:275B: retf 8: 8 bytes of parameters; 4 bytes of locals }
 {@stub} procedure ovl19_e9; begin end;
-{ ovl19:27DF: retf 2: 2 bytes of parameters; 4 bytes of locals }
-{@stub} procedure ovl19_e10; begin end;
-{ ovl19:28BE: retf 4: 4 bytes of parameters; 10 bytes of locals }
-{@stub} procedure ovl19_e11; begin end;
+{ ovl19:27DF: retf 2; the Temple passes the key G or O. }
+{@stub} procedure ovl19_e10(Key: Char); begin end;
+{ ovl19:28BE: retf 4; returns a LongInt summed over the character's money words; the Temple keeps the low word. }
+{@stub} function ovl19_e11(Who: Pointer): LongInt; begin end;
 { ovl19:299C: retf 12: 12 bytes of parameters; 298 bytes of locals }
 {@stub} procedure ovl19_e12; begin end;
 
