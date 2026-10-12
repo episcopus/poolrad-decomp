@@ -9,7 +9,7 @@ Approach: ADR-002 (SPEC 4), Pascal-first matching decompilation; the C track (AD
 | Phase | State |
 |---|---|
 | P0 Bootstrap | done (`make doctor`, `make inputs`) |
-| P1 Map | done (`make p1-check`): 50 units, 1431 routines, TP 6.0 June 1991 pinned |
+| P1 Map | done (`make p1-check`): 50 units, 1487 routines, TP 6.0 June 1991 pinned |
 | P2 Oracle and data | done: goldens with recordings for 2 of 2 session scripts (boot-title, create-character); `make golden CHECK=1` |
 | P3 Match harness | done: `make match` (tools/match/match.py, tests/unit/test_match.py); gate `make check` |
 | P4 Match | 41 of 1288 game routines at L2 (6311 of 234681 bytes by re/symbols.toml sizes); 12 of 46 game units complete, 10 reviewed; main program `src/POOL.PAS` matched by `make match UNIT=main` |
@@ -42,17 +42,17 @@ Locks (agents at work): `make locks`. Next unit: `make next`.
 | | Count |
 |---|---:|
 | Units | 50 |
-| Routines | 1431 |
+| Routines | 1487 |
 | Routines with non-provisional names | 133 |
 | RTL-prefixed routine names | 54 |
 | Unit code_bytes (declared) | 245081 |
-| Sum of routine sizes | 244046 |
+| Sum of routine sizes | 244057 |
 
 ### Routines by level
 
 | Level | Count |
 |---|---:|
-| none | 1390 |
+| none | 1446 |
 | L2 | 41 |
 
 ### Top units by routine count
@@ -60,10 +60,10 @@ Locks (agents at work): `make locks`. Next unit: `make next`.
 | Unit | Routines |
 |---|---:|
 | ovl12 | 168 |
+| res00 | 136 |
 | ovl03 | 108 |
 | ovl22 | 108 |
 | ovl16 | 107 |
-| res00 | 96 |
 | ovl13 | 85 |
 | res12 | 64 |
 | ovl19 | 51 |
@@ -72,8 +72,8 @@ Locks (agents at work): `make locks`. Next unit: `make next`.
 | res07 | 39 |
 | ovl08 | 37 |
 | ovl15 | 36 |
+| res01 | 34 |
 | ovl10 | 33 |
-| ovl04 | 28 |
 
 ## Verification
 

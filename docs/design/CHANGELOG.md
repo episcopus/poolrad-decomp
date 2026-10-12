@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-11 | tools | make map keeps forced routine starts (manual list, probe far-call entries, rtl tables), every known routine and field, and the compiler size of proven routines; Randomize 0AF8:1247 survives | tests/unit/test_enumerate_routines.py; make map diff on task/tools-map |
 | 2026-10-11 | 4.x | SelectTileSet saves TileSet in ds5377 and RestoreTileSet copies it back | make match UNIT=res05 |
 | 2026-10-11 | 5.16 (new) | added the 3D sprite unit ovl28: DrawSprite, the HEAD and BODY sprite helpers, LoadHeadBodySprites, FreeSpriteList and the sprite list record | make match UNIT=ovl28: 6 matched, 0 differ, 3 stubs; make check green |
 | 2026-10-11 | process | make match, check, packet and tpc keep the working agent's heartbeat alive | tests/unit/test_agent_tools.py |
