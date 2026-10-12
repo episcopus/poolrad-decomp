@@ -13386,12 +13386,12 @@ id = "ovl28:00A2"
 unit = "ovl28"
 addr = "ovl28:00A2"
 size = 1005
-name = "ovl28_e2"
-signature = "procedure ovl28_e2(Name: string[8]; Bank: Byte; Mode: Byte; List: PSpriteList)"
+name = "LoadSpriteList"
+signature = "procedure LoadSpriteList(Name: String8; Bank: Byte; Mode: Byte; List: PSpriteList)"
 c_name = "ovl28_e2"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_2; BLOCKED (dec-4, 2026-10-12): the PIC/FINAL picture loader, 1005 bytes with a 296-byte frame full of compiler temporaries; mapped but not matched within the session budget. Signature (Name: string[8]; Bank: Byte; Mode: Byte; List: PSpriteList) from the pushes (ovl18_fn_0006 calls it with 'FINAL', a bank and the list). It builds Name + Str(TileSet) + '.dax', loads it through res05_fn_0716(Path, Ext: string[20]; Bank: Byte; var Count: Word; var Data: Pointer) (0802:0716), then walks the data: List^.Count := Data^[0] (clamped to 4 when Name is PIC and Bank is 1), then for I := 1 to List^.Count: Move(Data+Offset, List^.Slots[I].Sprite, 4), read two words H, W, if MaxAvail >= 3900 (the 0AF8:02B8 heap query) then res07_fn_248E(W, H, 1, Mode, List^.Slots[I].Sprite), then Move(Data+Offset, Q^.X, 2), Move(Data+Offset, Q^.Y, 2), Move(Data+Offset, Q^.Palette, 8), Row := Stride*2 - 1 when VideoAdapter is 0 else Stride - 1, and for the first slot New(Temp, Row+1) + Move(Data+Offset, Temp, Row+1) else Data[J] := Data[J] xor Temp[J - Offset] for J := Offset..Offset+Row, then res07_fn_02A5(...) and, when (Mode and 1) <> 0 and VideoAdapter <> 0, res07_fn_1E5C(...), Offset := Offset + Row + 1; at the end List^.Count := Count, FreeMem the temp and Data, FlushKeyboard. Unknown signatures still to settle: res07_fn_02A5 (retf 14: (P1 at +6; A at +$A, B at +$C, C at +$E: Word; P2 at +$10)) and res07_fn_1E5C (retf 16: (P1 at +6; A at +$A: Word; W at +$C: Word; P2 at +$E, P3 at +$12)). BLOCKED (dec-5, 2026-10-12): attempted again; the res07_fn_248E conflict is NOT real (at ovl28:0298 e2 pushes the ADDRESS Base+8*I-2 of the slot Sprite field, so the current var Pic fits e2 too), and the routine drafted compiles and matches up to the frame: sub sp 12Ch in ours vs 128h in the original, the declared locals match exactly up to bp-2Ah (no Name2 local: e2 uses the Name value-param temp at bp-9 directly), but the compiler places the Name+Digit and .dax value-param temps 4 bytes deeper (bp-127h/bp-12Ch vs bp-123h/bp-128h). Also dec-1 note follows: res07_fn_248E 5th param is irreconcilable across call sites: e2 pushes the Sprite VALUE (hi/lo reads, needs value-Pointer) but ovl11 (TileBuf/ds4A24, must receive buffers) and ovl32 DrawIcon (Dest, uninit, must receive) push ADDRESSES (need var). No single signature fits all three [L2] call shapes; res07 decompiler must decide (var + e2 workaround, or value + @ added to ovl11/ovl32, all byte-preserving). Move() calls resolve fine now (matcher maps correctly in this build). Also: e2's I counter at [bp-0x41] overlaps the 66-byte List at [bp-0x42] (I is List+1), so the source overlays them (absolute/variant) or I is a List field; plain separate locals cannot produce this layout."
+notes = "auto:entry_2; matched by dec-7 (2026-10-12): the List^ of a with statement holds the with temp at bp-27h and the sprite at bp-2Ch; the frame size 128h comes from the LoadDaxBlock string temps being released before the with (earlier drafts had 4 more bytes of temps); FreeSpriteList gets @List^ (ovl28:00D9)"
 evidence = ["prologue"]
 
 [[routine]]
@@ -13467,7 +13467,7 @@ size = 5
 name = "ovl28_init"
 signature = ""
 c_name = "ovl28_init"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_0"
 evidence = ["prologue"]
@@ -17423,7 +17423,7 @@ unit = "res07"
 addr = "0464:02A5"
 size = 970
 name = "res07_fn_02A5"
-signature = ""
+signature = "procedure res07_fn_02A5(Data: Pointer; Offset: Word; A, B: Byte; Sprite: Pointer)"
 c_name = "res07_fn_02A5"
 level = "none"
 justification = ""

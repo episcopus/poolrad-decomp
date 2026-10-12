@@ -1,7 +1,8 @@
 unit OVL28;
 { ovl28: the 3D sprite and picture unit (whitepaper 4.x). It draws the 8x8 sprites of the 3D view
-  (the 3D sprite routines), loads PIC/FINAL picture records into the sprite banks through
-  res07_fn_0111 and frees them again, and shows the HEAD/BODY window of the character screen. }
+  (DrawSprite, Show3DSprite), loads the pictures of a DAX block into a sprite list (LoadSpriteList)
+  and frees them again (FreeSpriteList), and shows the HEAD/BODY window of the character screen
+  (ShowHeadBodyWindow). Whitepaper 5.16. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 uses POOLVARS;
@@ -13,30 +14,30 @@ type
     X: Word;                      { +4: the sprite's base column }
     Y: Word;                      { +6: the sprite's base row }
     Unknown8: Byte;               { +8: never read here }
-    Palette: array[0..7] of Byte; { +9..+$10: 8 palette bytes ovl28_e2 Moves in }
-    Stride: Word;                 { +$11: the row stride ovl28_e2 reads }
+    Palette: array[0..7] of Byte; { +9..+$10: 8 palette bytes LoadSpriteList Moves in }
+    Stride: Word;                 { +$11: the row stride LoadSpriteList reads }
   end;
   PSpriteBank = ^TSpriteBank;
-  { One 8-byte slot of the sprite list ovl28_e2 builds and FreeSpriteList frees. The 4 bytes at +0
+  { One 8-byte slot of the sprite list LoadSpriteList builds and FreeSpriteList frees. The 4 bytes at +0
     are copied from the picture data and the picture pointer is at +4 (FreeSpriteList frees
-    Rec + 8*I - 2, slot I's +4, which is where ovl28_e2's res07_fn_248E stores it). }
+    Rec + 8*I - 2, slot I's +4, which is where LoadSpriteList's res07_fn_248E stores it). }
   TSpriteSlot = record
-    Data: array[0..3] of Byte;    { +0: 4 bytes of picture data ovl28_e2 Moves in }
+    Data: array[0..3] of Byte;    { +0: 4 bytes of picture data LoadSpriteList Moves in }
     Sprite: PSpriteBank;          { +4: the allocated picture (nil when empty) }
   end;
   { The list of loaded sprites: a count byte, a flag, and the slots at +2 with a stride of 8. }
   TSpriteList = record
     Count: ShortInt;                      { +0: the number of slots in use (signed: the for loop exits with jg) }
-    Flag: Byte;                           { +1: set to 1 by ovl28_e2 }
+    Flag: Byte;                           { +1: set to 1 by LoadSpriteList }
     Slots: array[1..7] of TSpriteSlot;    { +2: the slots (slot I at +2 + 8*(I-1)) }
     Tail: array[0..7] of Byte;            { +$3A..+$41: never read }
   end;
   PSpriteList = ^TSpriteList;
-  String8 = string[8];            { the picture base name ovl28_e2 takes and stores in DS:6B0A }
+  String8 = string[8];            { the picture base name LoadSpriteList takes and stores in DS:6B0A }
 procedure DrawSprite(Col, Row: Integer; Direct: Byte; Sprite: Pointer);
 procedure DrawHeadSprite(Col, Row: Byte; Sprite: Pointer);
 procedure DrawBodySprite(Col, Row: Byte; Sprite: Pointer);
-procedure ovl28_e2(Name: String8; Bank: Byte; Mode: Byte; List: PSpriteList);
+procedure LoadSpriteList(Name: String8; Bank: Byte; Mode: Byte; List: PSpriteList);
 procedure FreeSpriteList(Rec: PSpriteList);
 procedure ShowHeadBodyWindow;
 procedure LoadHeadBodySprites(HeadBank, BodyBank: Byte);
@@ -78,16 +79,112 @@ begin
   DrawSprite(Col, Row + 5, 0, Sprite);
 end;
 
-{ ovl28:00A2. BLOCKED (dec-5, 2026-10-12): the PIC/FINAL picture loader, 1005 bytes. Reached
-  make match with the frame 4 bytes too big (sub sp 12Ch vs 128h); the declared locals match the
-  original up to bp-2Ah but the compiler places the Name+Digit and '.dax' string temps 4 bytes
-  deeper (bp-127h/bp-12Ch vs bp-123h/bp-128h). Draft on the branch, see the hand-off note. }
-{@stub} procedure ovl28_e2(Name: String8; Bank: Byte; Mode: Byte; List: PSpriteList); begin end;
+{ ovl28:00A2. Loads the sprite pictures of block Bank of the DAX file <Name><TileSet>.dax (for
+  example PIC or FINAL, ovl18 passes 'FINAL') into the sprite list List^, unless that file and block
+  are already loaded (the name and block of the last load are kept in ds6B0A and ds6B1C). It frees
+  the old list first (FreeSpriteList), reads the block (LoadDaxBlock) and walks it: a count byte
+  (at most 4 for PIC block 1), then per sprite 4 bytes into the slot, the Height and Width words, and
+  when at least 3900 bytes of heap are free (MaxAvail) it allocates the picture
+  (res07_fn_248E(Height, Width, 1, Mode, slot)), reads its X and Y words (one byte after Y is
+  skipped) and 8 palette bytes, and decodes Row + 1 bytes of pixel data (res07_fn_02A5), Row being
+  the picture's stride (twice the stride when VideoAdapter is 0) minus one. PIC and FINAL pictures
+  are stored as differences: the first picture's data is kept in Prev and every later picture's
+  bytes are xored with it before decoding. When bit 0 of Mode is set and VideoAdapter is not 0, the
+  picture also goes through res07_fn_1E5C with the two 16-byte tables ds0C6C and ds0C7C. Sprites
+  skipped for lack of memory are not counted: List^.Count ends as the number loaded. Frees Prev and
+  the block at the end and calls FlushKeyboard (which does nothing, QUIRK 0899:010A).
+  QUIRK ovl28:00D9: FreeSpriteList is passed @List^ (les/push es/push di), not the List value.
+  Parameters: Name (the file base name), Bank (the DAX block), Mode (passed on to the allocator and
+  the decoder; bit 0 enables res07_fn_1E5C), List (the sprite list to fill). Side effects: the heap,
+  ds6B0A, ds6B1C. Callers: ovl03:0856, ovl07_e8, ovl18:0006, res12_fn_27D9 (packet). }
+procedure LoadSpriteList(Name: String8; Bank: Byte; Mode: Byte; List: PSpriteList);
+var
+  Size: Word;
+  Block: Pointer;
+  Offset: Word;
+  I: Byte;
+  Height, Width: Word;
+  Digit: string[1];
+  Prev: PByteArray;
+  J: Word;
+  Row: Word;
+  IsPicOrFinal: Boolean;
+  PrevAllocated: Boolean;
+  Loaded: Byte;
+begin
+  if (Name = ds6B0A) and (Bank = ds6B1C) then Exit;
+  FreeSpriteList(@List^);
+  ds6B0A := Name;
+  ds6B1C := Bank;
+  IsPicOrFinal := (Name = 'PIC') or (Name = 'FINAL');
+  Str(TileSet, Digit);
+  LoadDaxBlock(Name + Digit, '.dax', Bank, Size, Block);
+  if Size = 0 then Exit;
+  Offset := 0;
+  PrevAllocated := False;
+  with List^ do
+  begin
+    Count := PByteArray(Block)^[Offset];
+    if (Name = 'PIC') and (Bank = 1) and (Byte(Count) > 4) then
+      Count := 4;
+    Inc(Offset);
+    Flag := 1;
+    Loaded := 0;
+    for I := 1 to Byte(Count) do
+    begin
+      Move(PByteArray(Block)^[Offset], Slots[I].Data, 4);
+      Inc(Offset, 4);
+      Move(PByteArray(Block)^[Offset], Height, 2);
+      Inc(Offset, 2);
+      Move(PByteArray(Block)^[Offset], Width, 2);
+      Inc(Offset, 2);
+      if MaxAvail >= 3900 then
+      begin
+        Inc(Loaded);
+        res07_fn_248E(Height, Width, 1, Mode, Slots[I].Sprite);
+        with Slots[I].Sprite^ do
+        begin
+          Move(PByteArray(Block)^[Offset], X, 2);
+          Inc(Offset, 2);
+          Move(PByteArray(Block)^[Offset], Y, 2);
+          Inc(Offset, 3);
+          Move(PByteArray(Block)^[Offset], Palette, 8);
+          Inc(Offset, 8);
+        end;
+        if VideoAdapter = 0 then
+          Row := Slots[I].Sprite^.Stride * 2 - 1
+        else
+          Row := Slots[I].Sprite^.Stride - 1;
+        if IsPicOrFinal then
+        begin
+          if I = 1 then
+          begin
+            GetMem(Prev, Row + 1);
+            Move(PByteArray(Block)^[Offset], Prev^, Row + 1);
+            PrevAllocated := True;
+          end
+          else
+            for J := Offset to Offset + Row do
+              PByteArray(Block)^[J] := PByteArray(Block)^[J] xor Prev^[J - Offset];
+        end;
+        res07_fn_02A5(Block, Offset, Mode, 0, Slots[I].Sprite);
+        if ((Mode and 1) > 0) and (VideoAdapter <> 0) then
+          res07_fn_1E5C(@ds0C6C, @ds0C7C, 0, 0, Slots[I].Sprite);
+        Inc(Offset, Row + 1);
+      end;
+    end;
+    Count := Loaded;
+  end;
+  if IsPicOrFinal and PrevAllocated then
+    FreeMem(Prev, Row + 1);
+  FreeMem(Block, Size);
+  FlushKeyboard;
+end;
 
 { ovl28:048F: retf 4: 4 bytes of parameters; 6 bytes of locals }
 { ovl28:048F. Frees the sprite list Rec^: it frees the bank of every used slot (through
   res07_fn_2595), then zeroes the whole $42-byte record, clears the picture name DS:6B0A and sets
-  the current bank DS:6B1C to $FF. Called by ovl10, ovl14, ovl18 and ovl28_e2. }
+  the current bank DS:6B1C to $FF. Called by ovl10, ovl14, ovl18 and LoadSpriteList. }
 procedure FreeSpriteList(Rec: PSpriteList);
 begin
   with Rec^ do
