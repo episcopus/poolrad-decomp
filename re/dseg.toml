@@ -659,3 +659,8 @@ evidence = "[race, 1..8] signed adjustments added to the thief skills; a negativ
 offset = 0x3D4F
 name = "ThiefDexTable"
 evidence = "[dexterity, 1..5] signed adjustments added to the first five thief skills (ovl23:0426); index base DS:3D4E"
+
+[[global]]
+offset = 0x5374
+name = "SoundDriverIdle"
+evidence = "SetSoundDriverIdle stores it (08AE:01CB); nonzero: the timer driver is stopped and PlaySound runs it only around one sound, waiting 0.1 s (08AE:00E9, 0156); StartGame sets 100 (ovl11)"

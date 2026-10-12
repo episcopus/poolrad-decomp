@@ -1436,3 +1436,80 @@ kind = "routine"
 why = "ovl08:0FFF finds party characters with Status 5 (dying); with DoIt it bandages the first (Status 4, message is bandaged); returns 1 when one was found"
 date = "2026-10-12"
 
+[[rename]]
+old = "res03_fn_0000"
+new = "TimeInHundredths"
+kind = "routine"
+why = "Dos.GetTime, then Hour*360000 + Minute*6000 + Second*100 + Sec100 (08AE:001A..005A)"
+date = "2026-10-12"
+
+[[rename]]
+old = "res03_fn_006C"
+new = "WaitHundredths"
+kind = "routine"
+why = "loops on TimeInHundredths until it reaches start + parameter (08AE:0072..00D4); PlaySound passes 10"
+date = "2026-10-12"
+
+[[rename]]
+old = "res03_fn_00DC"
+new = "PlaySound"
+kind = "routine"
+why = "0: both tunes 0 and output off; 1: output on; FFh: both tunes 0; else tune n-1 on the device SoundMode selects (1: speaker setter 08AE:1742, 0: Tandy setter 08AE:17AE) (08AE:00F4..0153)"
+date = "2026-10-12"
+
+[[rename]]
+old = "res03_fn_017B"
+new = "SilenceSound"
+kind = "routine"
+why = "starts the timer driver, sets both voice groups to tune 0, stops the driver; saves SoundMode in SoundModeBeforePause (08AE:017E..01A0)"
+date = "2026-10-12"
+
+[[rename]]
+old = "res03_fn_01A5"
+new = "SetSoundDriverIdle"
+kind = "routine"
+why = "nonzero: stops the timer driver (08AE:13B1) if it ran; zero: starts it (08AE:137C); stores the value in ds5374 which PlaySound tests to run the driver only around one sound (08AE:01B1..01CB, 0156..0174)"
+date = "2026-10-12"
+
+[[rename]]
+old = "res03_fn_137C"
+new = "StartSoundTimer"
+kind = "routine"
+why = "saves INT 08h, installs handler 08AE:13EA, PIT divisor 13B1h (08AE:1383..13AC; whitepaper 5.14)"
+date = "2026-10-12"
+
+[[rename]]
+old = "res03_fn_13B1"
+new = "StopSoundTimer"
+kind = "routine"
+why = "restores INT 08h, divisor FFFFh, speaker off, Tandy silenced (08AE:13B8..13E6; whitepaper 5.14)"
+date = "2026-10-12"
+
+[[rename]]
+old = "res03_fn_1742"
+new = "SetSpeakerTune"
+kind = "routine"
+why = "loads tune n from table CS:055F into the four voices at CS:022D, which the stepper 08AE:1477 plays on port 42h (PC speaker) (08AE:174F..179E)"
+date = "2026-10-12"
+
+[[rename]]
+old = "res03_fn_17AE"
+new = "SetTandyTune"
+kind = "routine"
+why = "loads tune n from table CS:0607 into the four voices at CS:03C7, which the stepper 08AE:14EC plays on port C0h (Tandy SN76489) (08AE:17BB..180A)"
+date = "2026-10-12"
+
+[[rename]]
+old = "res03_fn_181A"
+new = "SetSoundOutput"
+kind = "routine"
+why = "stores the byte at CS:020D which both voice steppers test before writing the speaker (08AE:14C0) or the Tandy chip (08AE:1519) (08AE:1824..1827)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds5374"
+new = "SoundDriverIdle"
+kind = "global"
+why = "SetSoundDriverIdle stores it (08AE:01CB); nonzero: the timer driver is stopped and PlaySound runs it only around one sound, waiting 0.1 s (08AE:00E9, 0156); StartGame sets 100 (ovl11)"
+date = "2026-10-12"
+

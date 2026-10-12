@@ -295,7 +295,7 @@ end;
   Called by DoWildernessMenu. }
 procedure MoveParty;
 begin
-  res03_fn_00DC(ds2628);
+  PlaySound(ds2628);
   Inc(ds6AAD, ds2736[ds6AAF]);
   Inc(ds6AAE, ds273F[ds6AAF]);
   if ds6AAD < 0 then
@@ -417,14 +417,14 @@ begin
           'K':
             begin
               ds6AAF := (ds6AAF + 6) mod 8;
-              res03_fn_00DC(ds2628);
+              PlaySound(ds2628);
               ds6AB0 := WallIdAt(ds6AAD, ds6AAE, ds6AAF);
               DrawWallView(ds6AAD, ds6AAE, ds6AAF);
             end;
           'M':
             begin
               ds6AAF := (ds6AAF + 2) mod 8;
-              res03_fn_00DC(ds2628);
+              PlaySound(ds2628);
               ds6AB0 := WallIdAt(ds6AAD, ds6AAE, ds6AAF);
               DrawWallView(ds6AAD, ds6AAE, ds6AAF);
             end;
@@ -574,7 +574,7 @@ begin
       if Done <> 0 then
         MoveParty
       else
-        res03_fn_00DC(ds2622);
+        PlaySound(ds2622);
       res12_fn_290B;
     end
     else

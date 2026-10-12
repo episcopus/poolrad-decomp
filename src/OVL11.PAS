@@ -135,8 +135,8 @@ begin
   ds6F69 := $E8;
   ds6F68 := $DB;
   ds84E9 := 0;
-  ds5374 := 0;
-  res03_fn_01A5(100);
+  SoundDriverIdle := 0;
+  SetSoundDriverIdle(100);
   { A string assignment to a string[40] truncates to 40 (the compiler uses System_StrLCopy); this
     saves the current path DS:547C into DS:4661. }
   ds4661 := GameDir;
