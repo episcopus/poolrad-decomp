@@ -2851,12 +2851,12 @@ id = "ovl09:0545"
 unit = "ovl09"
 addr = "ovl09:0545"
 size = 304
-name = "ovl09_fn_0545"
+name = "CastMemorizedSpell"
 signature = ""
 c_name = "ovl09_fn_0545"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl09_fn_0545 (ovl09:0545 casts a memorized spell for the AI turn (collects Who Spells, picks one in 02EB range, casts through ovl13_e15 which CombatMenu calls Cast); caller ovl09_e1); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

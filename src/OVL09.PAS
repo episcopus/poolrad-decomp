@@ -12,7 +12,7 @@ function ovl09_fn_0203(Who: PCharacter): Boolean;
 procedure ovl09_fn_0255;
 function ovl09_fn_02EB(Who: Pointer; Spell, N: Byte): Boolean;
 function UseMagicItem(Who: PCharacter): Boolean;
-procedure ovl09_fn_0545;
+function CastMemorizedSpell(Who: PCharacter): Byte;
 procedure ovl09_fn_0675;
 procedure ovl09_fn_06AA;
 procedure ovl09_fn_06AF;
@@ -154,8 +154,71 @@ Done:
     UseMagicItem := True;
   end;
 end;
-{ ovl09:0545: retf 4: 4 bytes of parameters; 36 bytes of locals }
-{@stub} procedure ovl09_fn_0545; begin end;
+{ ovl09:0545. Casts a memorized spell for the computer's turn (called by ovl09_e1; the
+  nonzero result ends the turn): collects Who's nonzero memorized Spells (when CanCast allows),
+  rolls rounds with a shrinking level, tries up to three random spells per round through
+  ovl09_fn_02EB (Who, Spell, Level) and casts the first in range through ovl13_e15 (the Cast of
+  CombatMenu). Skips everything when no spell is memorized. QUIRK: the [bp-0x17..-0x1A] and
+  [bp-0x24] frame bytes are never read (UnusedC, UnusedD). Globals: SideCounts (ds6814),
+  ds6E30, GameVars (word 710). }
+function CastMemorizedSpell(Who: PCharacter): Byte;
+label
+  Done;
+var
+  SpellList: array[0..20] of Byte;
+  UnusedC: array[0..3] of Byte;
+  Level: Byte;
+  Roll: Byte;
+  CastDone: Byte;
+  Round: Byte;
+  J: Byte;
+  Count: Byte;
+  I: Byte;
+  Spell: Byte;
+  Chosen: Byte;
+  UnusedD: Byte;
+begin
+  Count := 0;
+  if Who^.Combat^.CanCast <> 0 then
+    for I := 0 to $14 do
+      if Who^.Spells[I] > 0 then
+      begin
+        SpellList[Count] := Who^.Spells[I];
+        Inc(Count);
+      end;
+  Chosen := 0;
+  Level := 7;
+  Roll := ovl24_e8(1, 7);
+  Round := 1;
+  if Count <= 0 then
+    goto Done;
+  if (Who^.B84 > $7F) or ds6E30 then
+  begin
+    if SideCounts[ShortInt(res12_fn_23B7(Who))] > 0 then
+    begin
+      while (Round <= Roll) and (Chosen = 0) do
+      begin
+        J := 1;
+        while (J < 4) and (Chosen = 0) do
+        begin
+          I := ovl24_e8(1, Count) - 1;
+          Spell := SpellList[I];
+          if ovl09_fn_02EB(Who, Spell, Level) then
+            Chosen := Spell;
+          Inc(J);
+        end;
+        Dec(Level);
+        Inc(Round);
+      end;
+    end;
+  end;
+Done:
+  if Chosen > 0 then
+    ovl13_e15(Chosen, 1, CastDone)
+  else
+    CastDone := 0;
+  CastMemorizedSpell := CastDone;
+end;
 { ovl09:0675: frame not read }
 {@stub} procedure ovl09_fn_0675; begin end;
 { ovl09:06AA: frame not read }

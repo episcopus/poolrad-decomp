@@ -1464,3 +1464,10 @@ kind = "routine"
 why = "ovl09:03E4 walks Who Items for a castable item (Affects and 02EB range checks), uses it through ovl19_e8 and ends the turn; caller ovl09_e1"
 date = "2026-10-12"
 
+[[rename]]
+old = "ovl09_fn_0545"
+new = "CastMemorizedSpell"
+kind = "routine"
+why = "ovl09:0545 casts a memorized spell for the AI turn (collects Who Spells, picks one in 02EB range, casts through ovl13_e15 which CombatMenu calls Cast); caller ovl09_e1"
+date = "2026-10-12"
+
