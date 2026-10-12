@@ -5,7 +5,10 @@
   make agents                                       (everyone's last heartbeat, oldest first, with its age)
 
 Every agent posts a heartbeat when it starts a step (claim, each routine, a long `make check`, a hand-off)
-and at least every QUIET_MINUTES while it works; `make claim` and `make handoff` post one on their own.
+and at least every QUIET_MINUTES while it works; `make claim` and `make handoff` post one on their own, and
+`make match`, `make check`, `make packet` and `make tpc` refresh the heartbeat of whoever holds the lock on
+the current branch (`--auto`), keeping its last note and recording the command as its last activity, so an
+agent that works without posting still shows as alive.
 A heartbeat is a small file in the clone's git directory next to the locks and hand-offs
 (tools/agent/common.py), so every worktree sees it and nothing is committed. Each agent has one file,
 overwritten by its next heartbeat. `make agents` marks an agent QUIET when its last heartbeat is older
@@ -47,6 +50,32 @@ def beat(agent: str, note: str, done: bool = False) -> Path:
     return p
 
 
+def lock_owner(branch: str) -> str | None:
+    """The agent whose lock names `branch` (unit/<id>, review/<id>, task/<name>), if any."""
+    for lk in common.lock_dir().glob("*.lock"):
+        f = fields(lk.read_text())
+        if f.get("branch") == branch:
+            return f.get("agent")
+    return None
+
+
+def auto(activity: str) -> str | None:
+    """Refresh the heartbeat of the agent that holds the lock on the current branch; never fails."""
+    try:
+        branch = common.git("rev-parse", "--abbrev-ref", "HEAD", cwd=Path.cwd())
+        agent = lock_owner(branch)
+        if not agent:
+            return None
+        p = heartbeat_dir() / ("%s.txt" % agent)
+        old = fields(p.read_text()) if p.exists() else {}
+        p.write_text("agent = %s\ntime = %s\nbranch = %s\nstate = working\nnote = %s\nactivity = %s\n" % (
+            agent, dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), branch,
+            old.get("note", "working"), " ".join(activity.split())))
+        return agent
+    except Exception:                                          # a heartbeat must never break a build
+        return None
+
+
 def listing(now: dt.datetime | None = None) -> list[str]:
     now = now or dt.datetime.now(dt.timezone.utc)
     rows = []
@@ -54,8 +83,8 @@ def listing(now: dt.datetime | None = None) -> list[str]:
         f = fields(p.read_text())
         age = int((now - dt.datetime.fromisoformat(f["time"])).total_seconds() // 60)
         flag = "stopped" if f.get("state") == "stopped" else ("QUIET" if age > QUIET_MINUTES else "ok")
-        rows.append((-age, "%-8s %-10s %4d min ago  %-22s %s" % (flag, f["agent"], age, f.get("branch", "?"),
-                                                                  f.get("note", ""))))
+        note = f.get("note", "") + (" | last: %s" % f["activity"] if f.get("activity") else "")
+        rows.append((-age, "%-8s %-10s %4d min ago  %-22s %s" % (flag, f["agent"], age, f.get("branch", "?"), note)))
     return [r for _, r in sorted(rows)]
 
 
@@ -65,7 +94,11 @@ def main(argv=None) -> int:
     ap.add_argument("--note", default="")
     ap.add_argument("--done", action="store_true", help="you are stopping: no longer reported as QUIET")
     ap.add_argument("--list", action="store_true")
+    ap.add_argument("--auto", metavar="ACTIVITY", help="refresh the lock owner's heartbeat (used by make targets)")
     a = ap.parse_args(argv)
+    if a.auto is not None:
+        auto(a.auto)
+        return 0
     if a.list:
         rows = listing()
         print("\n".join(rows) if rows else "agents: no heartbeat yet")

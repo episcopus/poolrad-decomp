@@ -1,7 +1,7 @@
 unit RES09;
 { Windows: DrawWindow draws a titled window for dialogs and screens (whitepaper 5.9):
   ClearWindow clears its rectangle for the current video adapter (VideoAdapter),
-  DrawWindowFrame draws one tile set's frame around it through ovl34_e2, and DrawWindow
+  DrawWindowFrame draws one tile set's frame around it through Put8x8Symbol, and DrawWindow
   centres a title on its top row through res06_fn_0626. }
 {$A-,F+,S-,R-,G-,I-}
 interface
@@ -46,7 +46,7 @@ var
   (TileBase + TileCorner), the top and bottom edges (TileBase + TileHorizontal) and the
   left and right edges (TileBase + TileVertical), with TileBase from FrameSet. The frame
   extends one cell past the window on every side (Dec/Inc first), so the coordinates are
-  ShortInt and can reach -1. Drawn through ovl34_e2; side effect: the screen. Called by
+  ShortInt and can reach -1. Drawn through Put8x8Symbol; side effect: the screen. Called by
   DrawWindow. }
 procedure DrawWindowFrame(LeftCol, TopRow, RightCol, BottomRow: ShortInt; FrameSet: Byte);
 var
@@ -58,19 +58,19 @@ begin
   Inc(RightCol);
   Inc(BottomRow);
   TileBase := FrameSet * TilesPerFrameSet + FirstFrameTile;
-  ovl34_e2(LeftCol, TopRow, TileBase + TileCorner, 0, 0);
-  ovl34_e2(RightCol, TopRow, TileBase + TileCorner, 0, 0);
-  ovl34_e2(LeftCol, BottomRow, TileBase + TileCorner, 0, 0);
-  ovl34_e2(RightCol, BottomRow, TileBase + TileCorner, 0, 0);
+  Put8x8Symbol(LeftCol, TopRow, TileBase + TileCorner, 0, 0);
+  Put8x8Symbol(RightCol, TopRow, TileBase + TileCorner, 0, 0);
+  Put8x8Symbol(LeftCol, BottomRow, TileBase + TileCorner, 0, 0);
+  Put8x8Symbol(RightCol, BottomRow, TileBase + TileCorner, 0, 0);
   for Edge := LeftCol + 1 to RightCol - 1 do
   begin
-    ovl34_e2(Edge, TopRow, TileBase + TileHorizontal, 0, 0);
-    ovl34_e2(Edge, BottomRow, TileBase + TileHorizontal, 0, 0);
+    Put8x8Symbol(Edge, TopRow, TileBase + TileHorizontal, 0, 0);
+    Put8x8Symbol(Edge, BottomRow, TileBase + TileHorizontal, 0, 0);
   end;
   for Edge := TopRow + 1 to BottomRow - 1 do
   begin
-    ovl34_e2(LeftCol, Edge, TileBase + TileVertical, 0, 0);
-    ovl34_e2(RightCol, Edge, TileBase + TileVertical, 0, 0);
+    Put8x8Symbol(LeftCol, Edge, TileBase + TileVertical, 0, 0);
+    Put8x8Symbol(RightCol, Edge, TileBase + TileVertical, 0, 0);
   end;
 end;
 { 03F1:0137. Clears the window rectangle LeftCol..RightCol by TopRow..BottomRow to 0, by

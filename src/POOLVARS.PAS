@@ -22,6 +22,16 @@ type
     Col, Row: Word;              { position of the block on the area map (DS:3648) }
     Pic: Word;                   { the picture word; entries 3..9 draw Pic minus one }
   end;
+  { One bank of 8x8 tiles as res07_fn_0111 loads it: a picture record (whitepaper 4.x; its
+    header carries the height at +0 and the item count at +8), Stride bytes per tile at +$11,
+    the tile data at +$17. Only Stride and Data are read by this unit. }
+  T8x8Bank = record
+    Head: array[0..$10] of Byte;  { +0..+$10: record header (height at +0, item count at +8) }
+    Stride: Word;                 { +$11: bytes per tile }
+    Gap: array[0..3] of Byte;     { +$13..+$16: unused by this unit }
+    Data: array[0..8191] of Byte; { +$17: the tiles, indexed Symbol * Stride with $R- }
+  end;
+  PT8x8Bank = ^T8x8Bank;          { a loaded 8x8 tile bank }
   { The word variables of the game: the structure the far pointer at DS:49D2 leads to. ovl07 and
     ovl17 index it dynamically (the variables of the ECL scripts), words 195 and 196 keep the party
     position on the area map, and DrawAreaView reads words 380, 396, 415, 416, 435 and 466 as gates
@@ -65,6 +75,9 @@ var
   ds0C26: array[0..15] of Byte;  { wall view id table, two equal groups of 8; see above }
   SpecialBlocks: array[0..9] of TSpecialBlock;  { entries 1..9 tested; only 3..9 replace the map block }
   ds2612: Word;                   { word passed to res03_fn_00DC by QuitGame and the Ctrl-S pause path; meaning unknown }
+  { Five words, one per 8x8 tile bank, subtracted from the symbol number to index within the
+    bank (Put8x8Symbol, ovl34:020F); evidence in re/dseg.toml. }
+  SymbolBase: array[0..4] of Word;  { per-bank base symbol numbers; see above }
   AreaMap: array[0..35, 0..43] of Byte;  { the area map: one block code per 3x3-tile block, one more
                                           than the code ovl32_e2 draws; byte 0x4E (the letter N)
                                           where no block is drawn (all of rows 34 and 35 in the
@@ -104,7 +117,7 @@ var
   ds557D: Boolean;                { heap error retry gate; see above }
   { Globals of the loader (StartGame, src/OVL11.PAS); the address in each comment is the write or
     read that shows it. }
-  { Table of 30-byte entries the loader copies into the file path (ovl11:0564, indexed by ds5376);
+  { Table of 30-byte entries the loader copies into the file path (ovl11:0564, indexed by TileSet);
     its contents are the save directory names (save/load). }
   ds2614: array[0..9] of string[29];  { save directory name table; see above }
   ds465C: Byte;                   { loop counter of the loader's three fill loops (ovl11:0130, 02CA, 035E) }
@@ -125,7 +138,6 @@ var
   ds49FB: Word;                   { cleared by the loader (ovl11:03AD) }
   ds49FF: Byte;                   { cleared by the loader (ovl11:0429) }
   ds4A00: Byte;                   { set to 1 by the loader (ovl11:03A1) }
-  ds4A20: Pointer;                { screen buffer the loader allocates through res07_fn_248E (ovl11:00BC) }
   ds4A24: Pointer;                { screen buffer the loader allocates through res07_fn_248E (ovl11:00D4) }
   ds4A28: array[0..$A7] of Byte;  { $A8-byte buffer the loader clears (ovl11:00EC) }
   ds4AD0: array[0..$14F] of Byte; { $150-byte buffer the loader clears (ovl11:00FD) }
@@ -140,7 +152,6 @@ var
   ds51E0: array[0..$C7] of Word;  { cell graphics plane address; see above }
   ds5370: Byte;                   { set to 1 by the loader (ovl11:042E) }
   ds5374: Word;                   { last sound value rung by res03_fn_01A5, cleared by the loader (ovl11:045D) }
-  ds5376: Byte;                   { index into ds2614 (ovl11:0564); the loader sets it to 1 (ovl11:03D0) }
   ds5377: Byte;                   { set to 1 by the loader (ovl11:03D5) }
   ds5378: Word;                   { set to 1 by the loader (ovl11:03E0) }
   ds547A: Word;                   { set to 1 by the loader (ovl11:03DA) }
@@ -154,10 +165,8 @@ var
   ds5D96: LongInt;                { a 4-byte value the loader clears (ovl11:03B0): one `xor ax,ax` and two stores }
   ds5E1E: Word;                   { BlockRead result count of the loader (ovl11:05D6) }
   ds5E20: ^TBlock588;             { $588-byte block the loader allocates (ovl11:0074) }
-  ds5E3A: array[0..$13] of Byte;  { $14-byte buffer the loader clears (ovl11:024F) }
-  ds5E4E: Pointer;                { screen buffer the loader allocates through res07_fn_248E (ovl11:00A4) }
-  ds5E52: array[0..7] of Byte;    { 8-byte buffer the loader clears (ovl11:0260) and passes to res07_fn_0111 (ovl11:04D6) }
-  ds5E56: array[0..7] of Byte;    { second 8-byte buffer passed to res07_fn_0111 (ovl11:04F8) }
+  ds5E52: PT8x8Bank;              { the SQRPACI sprite bank 1 the loader loads (ovl11:04D6) }
+  ds5E56: PT8x8Bank;              { the SQRPACI sprite bank 2 the loader loads (ovl11:04F8) }
   ds5E5A: array[0..$CF] of Byte;  { $D0-byte buffer the loader clears (ovl11:02B9); the picture set table of ovl32_e4 }
   ds6810: LongInt;                { a 4-byte value the loader clears (ovl11:031A): one `xor ax,ax` and two stores }
   ds6A58: ^TBlock924;             { $924-byte block the loader allocates (ovl11:0084) }
@@ -186,5 +195,13 @@ var
   ds84E0: Byte;                   { cleared by the loader (ovl11:0424) }
   ds84E3: Byte;                   { cleared by the loader (ovl11:0433) }
   ds84E9: Byte;                   { cleared by the loader (ovl11:0456) }
+
+  { The 8x8 tile world of ovl34 (whitepaper 4.x): which 8X8D file to take the bank from, the five
+    loaded banks, the staging buffer tiles are copied through, the buffer res07_fn_08D4 draws
+    into, and a word res07_fn_1951 takes. Evidence in re/dseg.toml. }
+  DrawBuf: Pointer;               { the buffer res07_fn_08D4 draws into }
+  TileSet: Byte;                  { the 8X8D file number: Load8x8Bank loads 8x8d<TileSet> }
+  TileBanks: array[0..4] of PT8x8Bank;  { the loaded 8x8 banks, indexed by bank; nil when the load failed }
+  TileBuf: PT8x8Bank;             { the tile staging buffer: Put8x8Symbol Moves one tile to +$17 }
 implementation
 end.
