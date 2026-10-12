@@ -13451,12 +13451,12 @@ id = "ovl26:0000"
 unit = "ovl26"
 addr = "ovl26:0000"
 size = 199
-name = "ovl26_e2"
+name = "DrawPartyMarker"
 signature = ""
 c_name = "ovl26_e2"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl26_e2 (ovl26:0000: draws the party marker at its map window cell (the party position folded like ovl26_e1 clamps the window) with the 6-frame walk animation, then steps the frame; called right after the map window (res12_fn_2B5E, ovl26_e1) and from res12_fn_2B5E after ovl26_e1); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -14336,7 +14336,7 @@ unit = "ovl32"
 addr = "ovl32:04FC"
 size = 324
 name = "ovl32_e5"
-signature = ""
+signature = "procedure ovl32_e5(A, B: ShortInt; C, D, E: Byte)"
 c_name = "ovl32_e5"
 level = "none"
 justification = ""
