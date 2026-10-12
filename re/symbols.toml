@@ -13706,12 +13706,12 @@ id = "ovl30:02CC"
 unit = "ovl30"
 addr = "ovl30:02CC"
 size = 342
-name = "ovl30_e3"
+name = "StepLine"
 signature = ""
 c_name = "ovl30_e3"
 level = "none"
 justification = ""
-notes = "auto:near_call; BLOCKED (dec-5, 2026-10-12): drafted the Bresenham stepper; frame (8 bytes: SX, SY: ShortInt at bp-2/bp-3, the Boolean result at bp-1, a PLineState copy at bp-4..bp-7) and the first stores match, but the P := Line copy differs (ours mov ax,[bp+6]/mov dx,[bp+8]/mov [..]; the original les di,[bp+6]/mov [bp-7],di/mov [bp-5],es), so the pointer local does not line up. Also read ds25C0[3*(SY+1)+(SX+1)] into TLineState.Pattern (+$19) and the TLineState record grows to +$1A"
+notes = "renamed from ovl30_e3 (ovl30:02CC steps a Bresenham line one pixel: it moves X (DX>DY) or Y towards the end point, advances First by 2 or 3 and stores the 3x3 direction pattern ds25C0[SY+1, SX+1]; the Boolean says whether it stepped; called by ovl22_fn_295B, ovl30_e5 and res12_fn_1A29); auto:near_call; BLOCKED (dec-5, 2026-10-12): drafted the Bresenham stepper; frame (8 bytes: SX, SY: ShortInt at bp-2/bp-3, the Boolean result at bp-1, a PLineState copy at bp-4..bp-7) and the first stores match, but the P := Line copy differs (ours mov ax,[bp+6]/mov dx,[bp+8]/mov [..]; the original les di,[bp+6]/mov [bp-7],di/mov [bp-5],es), so the pointer local does not line up. Also read ds25C0[3*(SY+1)+(SX+1)] into TLineState.Pattern (+$19) and the TLineState record grows to +$1A"
 evidence = ["prologue"]
 
 [[routine]]

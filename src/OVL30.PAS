@@ -7,7 +7,7 @@ uses POOLVARS;
 function SignOf(N: Integer): Integer;
 procedure SortTable;
 procedure SetupLine(Line: PLineState);
-function ovl30_e3(Line: PLineState): Boolean;
+function StepLine(Line: PLineState): Boolean;
 procedure ovl30_e5;
 procedure ovl30_e4;
 procedure ovl30_e6;
@@ -82,12 +82,65 @@ begin
     end;
   end;
 end;
-{ ovl30:02CC. BLOCKED (dec-5, 2026-10-12): the Bresenham line stepper, 342 bytes, frame 8 bytes
-  (SX, SY: ShortInt, a PLineState copy and the Boolean result at bp-1). Drafted; the frame and the
-  first stores match but the `P := Line` copy differs (ours mov ax,[bp+6]/mov dx,[bp+8]; the original
-  les di,[bp+6]/mov [bp-7],di/mov [bp-5],es), so the local pointer does not line up. See the
-  hand-off note. }
-{@stub} function ovl30_e3(Line: PLineState): Boolean; begin end;
+{ ovl30:02CC. Steps a Bresenham line: with Line^ it returns whether it moved. When DX > DY it
+  walks X towards X2 (and, while D1 >= 0, Y towards Y2 by SY), else it walks Y towards Y2 (and,
+  while D1 >= 0, X towards X2 by SX); the smaller axis moves on the sign of D1 and First advances
+  by 2 or 3, and the direction taken picks the Pattern byte from the 3x3 table ds25C0 at
+  3*(StepY+1) + (StepX+1). Called by ovl22_fn_295B, ovl30_e5 and res12_fn_1A29. }
+function StepLine(Line: PLineState): Boolean;
+var
+  StepX, StepY: ShortInt;         { the x and y direction of this step, -1, 0 or 1 }
+begin
+  StepX := 0;
+  StepY := 0;
+  StepLine := False;
+  with Line^ do
+  begin
+    if DX > DY then
+    begin
+      if X <> X2 then
+      begin
+        StepX := SX;
+        if D1 >= 0 then
+        begin
+          StepY := SY;
+          Inc(Y, SY);
+          Inc(D1, D2);
+          Inc(First, 3);
+        end
+        else
+        begin
+          Inc(D1, D3);
+          Inc(First, 2);
+        end;
+        Inc(X, SX);
+        StepLine := True;
+      end;
+    end
+    else
+    begin
+      if Y <> Y2 then
+      begin
+        StepY := SY;
+        if D1 >= 0 then
+        begin
+          StepX := SX;
+          Inc(X, SX);
+          Inc(D1, D2);
+          Inc(First, 3);
+        end
+        else
+        begin
+          Inc(D1, D3);
+          Inc(First, 2);
+        end;
+        Inc(Y, SY);
+        StepLine := True;
+      end;
+    end;
+    Pattern := ds25C0[StepY + 1, StepX + 1];
+  end;
+end;
 { ovl30:0422: retf 20: 20 bytes of parameters; 58 bytes of locals }
 {@stub} procedure ovl30_e5; begin end;
 { ovl30:057B: retf 10: 10 bytes of parameters; 4 bytes of locals }

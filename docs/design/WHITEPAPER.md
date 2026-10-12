@@ -759,7 +759,7 @@ Overlay 30 is a screen support unit:
   `src/POOLVARS.PAS`: two endpoints, the three Bresenham steps, the current position and the x and y
   step directions) from the two endpoints.
 
-Still to decompile: `ovl30_e3` (`ovl30:02CC`, the line stepper), `ovl30_e5` (`ovl30:0422`),
+Still to decompile: `StepLine` (`ovl30:02CC`, the line stepper), `ovl30_e5` (`ovl30:0422`),
 `ovl30_e4` (`ovl30:057B`) and `ovl30_e6` (`ovl30:0909`).
 
 ---

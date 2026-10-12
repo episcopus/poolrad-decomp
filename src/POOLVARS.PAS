@@ -129,7 +129,7 @@ type
   TPartyMoney = array[0..$1B] of Byte;
   { A 3-byte record of the ovl30 sort table (whitepaper 5.x): the table DS:6718 is an array of
     these, element 0 holding the count in Val (SortTable reads and writes Key and Val). }
-  { The line drawing state SetupLine fills and ovl30_e3/e5 step (whitepaper 5.x): the endpoints, the
+  { The line drawing state SetupLine fills and StepLine/e5 step (whitepaper 5.x): the endpoints, the
     three Bresenham steps and the current position. }
   TLineState = record
     X1, Y1: Integer;               { +$0, +$2: the start point }
@@ -139,9 +139,9 @@ type
     D2: Integer;                   { +$E: the second step }
     D3: Integer;                   { +$10: the third step }
     SX, SY: ShortInt;              { +$12, +$13: the x and y step direction }
-    X, Y: Word;                    { +$14, +$16: the current position, starts at X1, Y1 }
+    X, Y: Integer;                 { +$14, +$16: the current position, starts at X1, Y1 }
     First: Byte;                   { +$18: 0 while the line has not been stepped }
-    Pattern: Byte;                 { +$19: a pattern byte ovl30_e3 sets from ds25C0 }
+    Pattern: Byte;                 { +$19: a pattern byte StepLine sets from ds25C0 }
   end;
   PLineState = ^TLineState;
   TSortRec = record
@@ -265,7 +265,7 @@ var
   ds470E: Pointer;                { the FINAL picture bank ShowEndingNarrative loads through res07_fn_0111 and draws }
   ds4712: Byte;                   { the DS:49F3 value ShowEndingNarrative saves at the start and restores at the end }
   ds4713: string[1];              { Str(TileSet): the picture number ShowEndingNarrative appends to FINAL }
-  ds25C0: array[0..15] of Byte;   { the 3x3 line pattern table ovl30_e3 reads at 3*(SY+1)+(SX+1) }
+  ds25C0: array[0..2, 0..2] of Byte;  { the 3x3 line pattern table StepLine reads at [SY+1, SX+1] }
   ds6718: array[0..255] of TSortRec;  { the ovl30 sort table (element 0 holds the count, SortTable) }
   ds49ED: Word;                   { set to $9900 by the loader (ovl11:03C0) }
   ds49F4: Byte;                   { cleared by the loader (ovl11:03CB) }

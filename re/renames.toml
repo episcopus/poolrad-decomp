@@ -715,3 +715,10 @@ kind = "routine"
 why = "stores the four wall view descriptors Wall1..Wall4 into ds6A60..ds6A63 (descriptor 1..4); called by ovl26 ShowAreaView (ovl29:0155)"
 date = "2026-10-11"
 
+[[rename]]
+old = "ovl30_e3"
+new = "StepLine"
+kind = "routine"
+why = "ovl30:02CC steps a Bresenham line one pixel: it moves X (DX>DY) or Y towards the end point, advances First by 2 or 3 and stores the 3x3 direction pattern ds25C0[SY+1, SX+1]; the Boolean says whether it stepped; called by ovl22_fn_295B, ovl30_e5 and res12_fn_1A29"
+date = "2026-10-11"
+
