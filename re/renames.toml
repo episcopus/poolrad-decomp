@@ -939,3 +939,185 @@ kind = "global"
 why = "DrawWallView (ovl29:0603) draws the overhead wall map (DrawWallMap) instead of the 3D walls while it is nonzero"
 date = "2026-10-12"
 
+[[rename]]
+old = "ovl25_e1"
+new = "GetMenuLine"
+kind = "routine"
+why = "ovl25:0000 walks Index Next links (+2A) from List and returns that line or nil (matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl25_fn_0067"
+new = "CountMenuLines"
+kind = "routine"
+why = "ovl25:0067 counts the Next links (+2A) of a menu line list (matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl25_e2"
+new = "ReadPromptChoice"
+kind = "routine"
+why = "ovl25:03BD shows Title and the words of Prompt on row 24, highlights the chosen word (, and . move it, its capital letter picks it) and returns the key chosen (draft, address fields only differ)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl25_fn_00CB"
+new = "SplitPromptWords"
+kind = "routine"
+why = "ovl25:00CB nested in ovl25:03BD: fills the parent's word spans from the capital letters and digits of the prompt text"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl25_fn_01DA"
+new = "DrawPromptWords"
+kind = "routine"
+why = "ovl25:01DA nested in ovl25:03BD: draws the prompt text on row 24 with res06_fn_01DF, the chosen word and the capitals in the highlight colour"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl25_e3"
+new = "ClearPromptLine"
+kind = "routine"
+why = "ovl25:06FB calls res06_fn_05EB(0, 24, 0, 40): blanks row 24, the row ReadPromptChoice draws on (matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl25_fn_0711"
+new = "LastHeadingBefore"
+kind = "routine"
+why = "ovl25:0711 nested in ovl25:0D9A: the last line with Flag29 set among the first Count lines of List"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl25_fn_07A4"
+new = "DrawListPage"
+kind = "routine"
+why = "ovl25:07A4 nested in ovl25:0D9A: clears the list window and draws the lines from TopLine on, headings in colour A, others in B"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl25_fn_08D7"
+new = "FirstNonBlank"
+kind = "routine"
+why = "ovl25:08D7 nested in ovl25:0D9A: the index of the first non-space character of a string[40]"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl25_fn_0923"
+new = "LastNonBlank"
+kind = "routine"
+why = "ovl25:0923 nested in ovl25:0D9A: the index of the last non-space character of a string[40]"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl25_fn_0969"
+new = "HighlightListLine"
+kind = "routine"
+why = "ovl25:0969 nested in ovl25:0D9A: redraws the trimmed text of line Line in the highlight colour C"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl25_fn_0A08"
+new = "UnhighlightListLine"
+kind = "routine"
+why = "ovl25:0A08 nested in ovl25:0D9A: redraws the trimmed text of line Line in its normal colour (A for a heading, B otherwise)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl25_fn_0B03"
+new = "SkipHeadingLines"
+kind = "routine"
+why = "ovl25:0B03 nested in ovl25:0D9A: moves Choice past lines with Flag29 set, down or up, wrapping inside the shown page"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl25_fn_0C33"
+new = "ScrollListPage"
+kind = "routine"
+why = "ovl25:0C33 nested in ovl25:0D9A: moves the first shown line (DS:6B29) a page down or up, keeps the cursor's place on the page and redraws"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl25_fn_0CC5"
+new = "MoveListCursor"
+kind = "routine"
+why = "ovl25:0CC5 nested in ovl25:0D9A: moves Choice one line down or up, wrapping inside the shown page, then skips headings"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl25_e4"
+new = "ChooseFromList"
+kind = "routine"
+why = "ovl25:0D9A a list menu: draws List in the window D..G, highlights line Choice, reads the key through the prompt line with Next/Prev/Exit words and returns it with the chosen line (draft, address fields only differ)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl25_e5"
+new = "AskYesNo"
+kind = "routine"
+why = "ovl25:10D1 asks Prompt with the words Yes No through the prompt line until the key is Y or N and returns it (matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl25_e6"
+new = "NewMenuList"
+kind = "routine"
+why = "ovl25:1140 allocates Count menu lines of 46 bytes linked by Next, each blank (matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl25_e7"
+new = "FreeMenuList"
+kind = "routine"
+why = "ovl25:11F3 frees every 46-byte line of a list built by NewMenuList (matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6B2B"
+new = "PromptWordChoice"
+kind = "global"
+why = "ReadPromptChoice (ovl25:03BD) highlights word DS:6B2B of the prompt (DrawPromptWords), , and . step it, a hotkey sets it; ChooseFromList sets 1, AskYesNo 2"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6B2C"
+new = "LastPromptExtKey"
+kind = "global"
+why = "ReadPromptChoice clears DS:6B2C on entry and copies its var Flag (set by an extended or keypad key) into it on exit (ovl25:03EA, ovl25:06EF)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6B29"
+new = "ListMenuTop"
+kind = "global"
+why = "ChooseFromList and its nested routines treat DS:6B29 as the first shown line of the list: GetMenuLine(DS:6B29) is drawn at the window top (ovl25:07DE), ScrollListPage adds or subtracts a page (ovl25:0C57)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6B2E"
+new = "PromptTimeout"
+kind = "global"
+why = "ReadPromptChoice: when the Longint DS:6B2E is above 0 and GameClock minus the start passes it, the prompt returns DS:6B32 (ovl25:0530..0563)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6B32"
+new = "PromptTimeoutKey"
+kind = "global"
+why = "ReadPromptChoice returns the Char DS:6B32 when PromptTimeout runs out (ovl25:0559)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds288C"
+new = "KeypadScanLetters"
+kind = "global"
+why = "DS:288C holds OPQK MGHI; ReadPromptChoice maps keypad digit k to its byte k-1 (ovl25:06B3), the letters of the extended scan codes End, Down, PgDn, Left, (5), Right, Home, Up, PgUp"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6ABE"
+new = "PictureAnimation"
+kind = "global"
+why = "ReadPromptChoice (ovl25:04A3..052D) draws frame DS:6ABF of the sprite list DS:6ABE at column 3 row 3 and steps to the next frame after its delay; LoadSpriteList fills it (ovl07_e8), ovl14 frees it"
+date = "2026-10-12"
+

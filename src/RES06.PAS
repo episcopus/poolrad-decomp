@@ -77,7 +77,7 @@ end;
   Exit; if not (B in [0..$18]) then Exit; ...` (the never-true lower-bound compares and the Exit
   block come from the set), but the routine does not match because a literal-pool byte 64 before the
   entry differs (ours FF, original F8): the pool belongs to the preceding res06_fn_01DF, still a
-  stub, so decompile 01DF first. Called by ovl21_e6, ovl25_e3, res06_fn_09E3, ShowMessageLine and
+  stub, so decompile 01DF first. Called by ovl21_e6, ClearPromptLine, res06_fn_09E3, ShowMessageLine and
   res06_fn_0D68. }
 {@stub} procedure res06_fn_05EB(A, Row, B, Width: Byte); begin end;
 { 0709:0626: retf 10: 10 bytes of parameters; 260 bytes of locals }
@@ -108,7 +108,7 @@ end;
   Hour * 360000 + Minute * 6000 + Second * 100 + Sec100. Hour * 360000 is a LongInt multiply,
   Minute * 6000 and Second * 100 are Word multiplies (the high word of the product is dropped,
   QUIRK 0709:0C75, 0709:0C85). Called by WaitKeyOrTimeout, ShowTitleScreen, AnimateFinalPicture and
-  ovl25_e2. }
+  ReadPromptChoice. }
 function GameClock: Longint;
 var
   Hour, Minute, Second, Sec100: Word;

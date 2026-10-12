@@ -353,7 +353,7 @@ begin
   end;
 end;
 { ovl14:0989. The wilderness key driver (called by ovl03_fn_3379): in the 3D view it
-  reads menu and movement keys through ovl25_e2 and dispatches them (A/C/V/E/S/L
+  reads menu and movement keys through ReadPromptChoice and dispatches them (A/C/V/E/S/L
   menu keys, H/M/P/K movement with the icon sets, anything else through ovl19_e10),
   otherwise it loads the ICON pictures for map pages 2..4 and runs a smaller key loop;
   either loop repeats through res12_fn_290B until Redraw is set, then it tidies the
@@ -373,7 +373,7 @@ begin
       begin
         Redraw := 0;
     repeat
-      Key := ovl25_e2('', ds04B6, $D, $A, $F, 1, 0, KeyFlag);
+      Key := ReadPromptChoice('', ds04B6, $D, $A, $F, 1, 0, KeyFlag);
       if KeyFlag = 0 then
         case Key of
           'A':
@@ -446,7 +446,7 @@ begin
     end;
     Redraw := 0;
     repeat
-      Key := ovl25_e2('', ds04DF, $D, $A, $F, 1, 0, KeyFlag);
+      Key := ReadPromptChoice('', ds04DF, $D, $A, $F, 1, 0, KeyFlag);
       if KeyFlag = 0 then
         case Key of
           'C':
@@ -534,7 +534,7 @@ begin
             ClearIconBits(ds6AAD, ds6AAE, ds6AAF)
           else
           begin
-            Key2 := ovl25_e2('Locked. ', Menu, $D, $A, $F, 0, 0, MenuFlag);
+            Key2 := ReadPromptChoice('Locked. ', Menu, $D, $A, $F, 0, 0, MenuFlag);
             case Key2 of
               'B':
                 Done := DoBash;
@@ -559,7 +559,7 @@ begin
             ClearIconBits(ds6AAD, ds6AAE, ds6AAF)
           else
           begin
-            Key2 := ovl25_e2('Locked. ', Menu, $D, $A, $F, 0, 0, MenuFlag);
+            Key2 := ReadPromptChoice('Locked. ', Menu, $D, $A, $F, 0, 0, MenuFlag);
             case Key2 of
               'B':
                 Done := DoBash;
@@ -591,7 +591,7 @@ begin
       ds49D6^[713] := 0;
   end;
   end;
-  FreeSpriteList(@ds6ABE);
+  FreeSpriteList(@PictureAnimation);
   res07_fn_2595(ds6B01);
   res07_fn_2595(ds6B06);
   ds6B00 := $FF;

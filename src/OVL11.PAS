@@ -84,7 +84,7 @@ begin
     ds6AFB[ds465C].Kind := $FF;
     ds6AFB[ds465C].Addr := nil;
   end;
-  FillChar(ds6ABE, $42, 0);
+  FillChar(PictureAnimation, $42, 0);
   ds6810 := nil;
   FillChar(ds6AAD, 5, 0);
   ds6AAD := $F;
@@ -118,7 +118,7 @@ begin
   AreaViewKind := 1;
   ds49D6^[830] := 0;
   MarkerFrame := 0;
-  ds6B29 := 1;
+  ListMenuTop := 1;
   ds84D4 := 0;
   ds6DDA := 0;
   ds84DD := 0;
@@ -142,7 +142,7 @@ begin
   ds4661 := GameDir;
   GameDir := '';
   res06_fn_017C;
-  ovl25_e3;
+  ClearPromptLine;
   res06_fn_0626(0, $18, $A, 'Loading...Please Wait');
   Load8x8Bank($CA, 4);
   Load8x8Bank($CB, 0);
@@ -158,7 +158,7 @@ begin
   Close(ds468C);
   { restore the path saved above }
   GameDir := ds4661;
-  ovl25_e3;
+  ClearPromptLine;
   Randomize;
   ovl22_e10;
   ovl12_e1;

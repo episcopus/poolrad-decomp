@@ -85,7 +85,7 @@ type
   end;
   { One line of a menu list or an item in memory: the 63-byte record of whitepaper 4.2.5 (field
     offsets [V] by tools/re/records.py round-trips). The Temple builds its Heal menu from these
-    (ovl25_e6, ovl04:0A18) and the Shop shows its stock and the character's carried items with the
+    (NewMenuList, ovl04:0A18) and the Shop shows its stock and the character's carried items with the
     same record, so ovl04, ovl06 and ovl25 all share one type; Text is a string[40] (the Shop's
     ovl06:0030 assigns with a System_StrLCopy limit of $28) and the byte at +$29 is the menu line's
     cleared flag, so the link is at +$2A. PItem/TItem are the same record. }
@@ -93,7 +93,8 @@ type
   PMenuLine = ^TMenuLine;
   TMenuLine = record
     Text: string[40];             { +$00: the line's text (a menu line or an item name) }
-    Flag29: Byte;                 { +$29: cleared when a menu line is filled; meaning unknown }
+    Flag29: Byte;                 { +$29: nonzero marks a heading line of a list menu: drawn in the
+                                    heading colour and skipped by the highlight (ChooseFromList) }
     Next: PMenuLine;              { +$2A: the next line/item of the list; nil ends it }
     ItemType: Byte;               { +$2E }
     NameNum: array[1..3] of Byte; { +$2F..$31 }
@@ -108,6 +109,21 @@ type
     Affects: array[1..3] of Byte; { +$3C..$3E }
   end;
   PItem = PMenuLine;
+  { One frame of the animated picture the prompt line (ReadPromptChoice) cycles while it waits for
+    a key: the 4 bytes LoadSpriteList copies from the picture data are the frame's delay
+    (ReadPromptChoice multiplies it by 10 and compares it with the GameClock hundredths since the
+    last frame, ovl25:04D1), then the sprite (drawn by DrawSprite at column 3, row 3, ovl25:04CC). }
+  TAnimFrame = record
+    Delay: Longint;               { +0: tenths of a second the frame stays up }
+    Sprite: Pointer;              { +4: the frame's picture }
+  end;
+  { The $42-byte sprite list at DS:6ABE seen as an animation (ReadPromptChoice): the number of frames, the
+    frame shown, then the frames (OVL28 declares the same bytes as TSpriteList). }
+  TAnimation = record
+    Count: Byte;                  { +0: frames loaded }
+    Current: Byte;                { +1: the frame shown, 1..Count; 0 when there is no animation }
+    Frames: array[1..8] of TAnimFrame;  { +2 }
+  end;
   TItem = TMenuLine;
   { A character in memory: the 285-byte record of whitepaper 4.2.5 (name, abilities and hp_max
     [V] by tools/re/records.py). Only the fields a decompiled unit uses are named; the Pad
@@ -211,7 +227,7 @@ var
   { The 13 code wheel records of the copy protection (whitepaper 5.12): the answer, the rune
     indices and the path pattern. CheckCodeWheel picks one at random. }
   ds0000: array[0..12] of TCodeWheelEntry;  { the code wheel records; see above }
-  ds04DF: string[40];             { prompt string HandleWildernessKeys passes to ovl25_e2; filled elsewhere }
+  ds04DF: string[40];             { prompt string HandleWildernessKeys passes to ReadPromptChoice; filled elsewhere }
   { The wall view's id table: two equal groups of eight ids (0,15,12,11,13,10,9,14). ShowAreaView
     indexes it with the game variables VarWallIndexOutside and VarWallIndexInside. Its last six
     bytes are also entry 0 of SpecialBlocks, which DrawAreaView never reads. }
@@ -245,7 +261,7 @@ var
   ds49D1: Byte;                   { 1 when POOL.CFG line 5 is 'F', 0 otherwise (meaning of F/N unknown, 2.3) }
   GameVars: ^TGameVars;           { the game variables (see TGameVars) }
   CfgProbe: File;                 { pool.cfg opened untyped (128-byte records) to probe its existence }
-  ds04B6: string[40];             { prompt string HandleWildernessKeys passes to ovl25_e2 in the movement loop }
+  ds04B6: string[40];             { prompt string HandleWildernessKeys passes to ReadPromptChoice in the movement loop }
   DebugMode: Boolean;             { STING debug mode: switched by Ctrl-D in ReadGameKey; ShowDebugTrace shows only when set }
   AreaViewKind: Byte;             { what to draw: 1 the 3D wall view, 2..4 the map window page; evidence in re/dseg.toml }
   ds6A60: Byte;                   { wall view descriptor 1 (of 4): SetWallDescriptors sets them }
@@ -369,6 +385,7 @@ var
   SelectedCharacter: PCharacter;  { see above }
   ds286F: array[0..13] of Byte;   { the HEAD picture number per bank (SelectedCharacter^.HeadBank, ShowHeadBodyWindow) }
   ds287D: array[0..13] of Byte;   { the BODY picture number per bank (SelectedCharacter^.BodyBank, ShowHeadBodyWindow) }
+  KeypadScanLetters: array[0..8] of Char; { 'OPQK MGHI': the scan code letter of keypad digits 1..9 (ReadPromptChoice) }
   ds5D96: LongInt;                { head of the TCodeRec list ovl14 walks (see below) }
     { Kept LongInt, not Pointer: the loader clears it with `ds5D96 := 0` (ovl11:03B0),
       which is Error 26 for a Pointer (proven by a make tpc probe); ovl14 reaches the
@@ -385,7 +402,9 @@ var
                                     elements 2 and 3 to $FFFF (ovl11:035E..0390) }
   ds6AB2: Word;                   { cleared by the loader (ovl11:0353) }
   ds6AB4: Word;                   { set to 1 by the loader (ovl11:0358) }
-  ds6ABE: array[0..$41] of Byte;  { $42-byte buffer the loader clears (ovl11:0309) }
+  { The $42-byte sprite list the loader clears (ovl11:0309) and ovl07_e8 loads; ReadPromptChoice
+    animates it while it waits for a key. }
+  PictureAnimation: TAnimation;
   { The loader sets entries 1 and 2 to Kind $FF and Addr nil (ovl11:02CA..0302). }
   ds6AFB: array[0..2] of TLoadSlot;  { 5-byte slot table; see TLoadSlot }
   ds6B00: Byte;                   { the bank index of the HEAD sprite in DS:6B01; $FF when none (LoadHeadBodySprites) }
@@ -406,7 +425,11 @@ var
   WallPieceCol: array[0..9] of Integer;  { view column of each wall piece's top left tile; see above }
   WallPieceRow: array[0..9] of Integer;  { view row of each wall piece's top left tile; see above }
   ds70C7: ShortInt;               { loop counter of FreeSpriteList (the sprite list slots); ShortInt: the loop exits with jg }
-  ds6B29: Word;                   { set to 1 by the loader (ovl11:0405) }
+  ListMenuTop: Integer;            { the list menu's first shown line (ChooseFromList); 1 after the loader (ovl11:0405) }
+  PromptWordChoice: Byte;         { the highlighted word of the prompt line, 1-based (ReadPromptChoice) }
+  LastPromptExtKey: Byte;         { the last prompt's Flag (an extended key), copied by ReadPromptChoice }
+  PromptTimeout: Longint;         { prompt timeout in GameClock hundredths; 0 waits forever (ReadPromptChoice) }
+  PromptTimeoutKey: Char;         { the key the prompt returns when the timeout runs out (ReadPromptChoice) }
   ds6DDA: Byte;                   { cleared by the loader (ovl11:0410) }
   ds6DDE: array[0..2] of Byte;    { 3-byte buffer the loader fills with 1 (ovl11:0342) }
   ds6DE0: Byte;                   { knock menu flag: e1 offers Knock while nonzero; overlaps ds6DDE[2] }

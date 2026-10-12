@@ -12918,12 +12918,12 @@ id = "ovl25:0000"
 unit = "ovl25"
 addr = "ovl25:0000"
 size = 103
-name = "ovl25_e1"
-signature = ""
+name = "GetMenuLine"
+signature = "function GetMenuLine(Index: Integer; List: PMenuLine): PMenuLine"
 c_name = "ovl25_e1"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl25_e1 (ovl25:0000 walks Index Next links (+2A) from List and returns that line or nil (matched)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -12931,12 +12931,12 @@ id = "ovl25:0067"
 unit = "ovl25"
 addr = "ovl25:0067"
 size = 100
-name = "ovl25_fn_0067"
-signature = ""
+name = "CountMenuLines"
+signature = "function CountMenuLines(List: PMenuLine): Integer"
 c_name = "ovl25_fn_0067"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl25_fn_0067 (ovl25:0067 counts the Next links (+2A) of a menu line list (matched)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -12944,12 +12944,12 @@ id = "ovl25:00CB"
 unit = "ovl25"
 addr = "ovl25:00CB"
 size = 271
-name = "ovl25_fn_00CB"
+name = "SplitPromptWords"
 signature = ""
 c_name = "ovl25_fn_00CB"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl25_fn_00CB (ovl25:00CB nested in ovl25:03BD: fills the parent's word spans from the capital letters and digits of the prompt text); auto:near_call; nested in ReadPromptChoice (static link pushed by its callers); drafted in commit 3c8dac5, blocked with its parent (see the parent's notes)"
 evidence = ["prologue"]
 
 [[routine]]
@@ -12957,12 +12957,12 @@ id = "ovl25:01DA"
 unit = "ovl25"
 addr = "ovl25:01DA"
 size = 483
-name = "ovl25_fn_01DA"
+name = "DrawPromptWords"
 signature = ""
 c_name = "ovl25_fn_01DA"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl25_fn_01DA (ovl25:01DA nested in ovl25:03BD: draws the prompt text on row 24 with res06_fn_01DF, the chosen word and the capitals in the highlight colour); auto:near_call; nested in ReadPromptChoice (static link pushed by its callers); drafted in commit 3c8dac5, blocked with its parent (see the parent's notes)"
 evidence = ["prologue"]
 
 [[routine]]
@@ -12970,12 +12970,12 @@ id = "ovl25:03BD"
 unit = "ovl25"
 addr = "ovl25:03BD"
 size = 830
-name = "ovl25_e2"
-signature = "function ovl25_e2(Title, Prompt: String40; A, B, C, D, E: Byte; var Flag: Byte): Char"
+name = "ReadPromptChoice"
+signature = "function ReadPromptChoice(Title, Prompt: String40; TitleColor, WordColor, HotColor, ExtKeys, Animate: Byte; var ExtKey: Byte): Char"
 c_name = "ovl25_e2"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl25_e2 (ovl25:03BD shows Title and the words of Prompt on row 24, highlights the chosen word (, and . move it, its capital letter picks it) and returns the key chosen (draft, address fields only differ)); auto:near_call; blocked (dec-8, 2026-10-12): the full draft is in commit 3c8dac5 (unit/ovl25, src/OVL25.PAS). Its body and its nested routines compile to the original's bytes except address fields: make match reports 'literal pool byte N before the entry' because the nested routines (TP 6.0 puts them in the parent's pre-entry region) hold far calls (System, res06, GameClock, DrawSprite) and DS operands, and the matcher compares that region byte-exact. A capstone diff of both builds (every differing instruction is an lcall or a DS displacement naming the same global, e.g. ListMenuTop, PromptWordChoice, PictureAnimation) shows no other difference. Waits for the nested-routine address comparison held in work/blockers.md (escalate-res06-20261012110841); restore the draft from 3c8dac5 once it lands; nested: SplitPromptWords (ovl25:00CB), DrawPromptWords (ovl25:01DA)"
 evidence = ["prologue"]
 
 [[routine]]
@@ -12983,12 +12983,12 @@ id = "ovl25:06FB"
 unit = "ovl25"
 addr = "ovl25:06FB"
 size = 22
-name = "ovl25_e3"
-signature = ""
+name = "ClearPromptLine"
+signature = "procedure ClearPromptLine"
 c_name = "ovl25_e3"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_3"
+notes = "renamed from ovl25_e3 (ovl25:06FB calls res06_fn_05EB(0, 24, 0, 40): blanks row 24, the row ReadPromptChoice draws on (matched)); auto:entry_3"
 evidence = ["prologue"]
 
 [[routine]]
@@ -12996,12 +12996,12 @@ id = "ovl25:0711"
 unit = "ovl25"
 addr = "ovl25:0711"
 size = 147
-name = "ovl25_fn_0711"
+name = "LastHeadingBefore"
 signature = ""
 c_name = "ovl25_fn_0711"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl25_fn_0711 (ovl25:0711 nested in ovl25:0D9A: the last line with Flag29 set among the first Count lines of List); auto:near_call; nested in ChooseFromList (static link pushed by its callers); drafted in commit 3c8dac5, blocked with its parent (see the parent's notes)"
 evidence = ["prologue"]
 
 [[routine]]
@@ -13009,12 +13009,12 @@ id = "ovl25:07A4"
 unit = "ovl25"
 addr = "ovl25:07A4"
 size = 307
-name = "ovl25_fn_07A4"
+name = "DrawListPage"
 signature = ""
 c_name = "ovl25_fn_07A4"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl25_fn_07A4 (ovl25:07A4 nested in ovl25:0D9A: clears the list window and draws the lines from TopLine on, headings in colour A, others in B); auto:near_call; nested in ChooseFromList (static link pushed by its callers); drafted in commit 3c8dac5, blocked with its parent (see the parent's notes)"
 evidence = ["prologue"]
 
 [[routine]]
@@ -13022,12 +13022,12 @@ id = "ovl25:08D7"
 unit = "ovl25"
 addr = "ovl25:08D7"
 size = 76
-name = "ovl25_fn_08D7"
+name = "FirstNonBlank"
 signature = ""
 c_name = "ovl25_fn_08D7"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl25_fn_08D7 (ovl25:08D7 nested in ovl25:0D9A: the index of the first non-space character of a string[40]); auto:near_call; nested in ChooseFromList (static link pushed by its callers); drafted in commit 3c8dac5, blocked with its parent (see the parent's notes)"
 evidence = ["prologue"]
 
 [[routine]]
@@ -13035,12 +13035,12 @@ id = "ovl25:0923"
 unit = "ovl25"
 addr = "ovl25:0923"
 size = 70
-name = "ovl25_fn_0923"
+name = "LastNonBlank"
 signature = ""
 c_name = "ovl25_fn_0923"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl25_fn_0923 (ovl25:0923 nested in ovl25:0D9A: the index of the last non-space character of a string[40]); auto:near_call; nested in ChooseFromList (static link pushed by its callers); drafted in commit 3c8dac5, blocked with its parent (see the parent's notes)"
 evidence = ["prologue"]
 
 [[routine]]
@@ -13048,12 +13048,12 @@ id = "ovl25:0969"
 unit = "ovl25"
 addr = "ovl25:0969"
 size = 159
-name = "ovl25_fn_0969"
+name = "HighlightListLine"
 signature = ""
 c_name = "ovl25_fn_0969"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl25_fn_0969 (ovl25:0969 nested in ovl25:0D9A: redraws the trimmed text of line Line in the highlight colour C); auto:near_call; nested in ChooseFromList (static link pushed by its callers); drafted in commit 3c8dac5, blocked with its parent (see the parent's notes)"
 evidence = ["prologue"]
 
 [[routine]]
@@ -13061,12 +13061,12 @@ id = "ovl25:0A08"
 unit = "ovl25"
 addr = "ovl25:0A08"
 size = 251
-name = "ovl25_fn_0A08"
+name = "UnhighlightListLine"
 signature = ""
 c_name = "ovl25_fn_0A08"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl25_fn_0A08 (ovl25:0A08 nested in ovl25:0D9A: redraws the trimmed text of line Line in its normal colour (A for a heading, B otherwise)); auto:near_call; nested in ChooseFromList (static link pushed by its callers); drafted in commit 3c8dac5, blocked with its parent (see the parent's notes)"
 evidence = ["prologue"]
 
 [[routine]]
@@ -13074,12 +13074,12 @@ id = "ovl25:0B03"
 unit = "ovl25"
 addr = "ovl25:0B03"
 size = 304
-name = "ovl25_fn_0B03"
+name = "SkipHeadingLines"
 signature = ""
 c_name = "ovl25_fn_0B03"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl25_fn_0B03 (ovl25:0B03 nested in ovl25:0D9A: moves Choice past lines with Flag29 set, down or up, wrapping inside the shown page); auto:near_call; nested in ChooseFromList (static link pushed by its callers); drafted in commit 3c8dac5, blocked with its parent (see the parent's notes)"
 evidence = ["prologue"]
 
 [[routine]]
@@ -13087,12 +13087,12 @@ id = "ovl25:0C33"
 unit = "ovl25"
 addr = "ovl25:0C33"
 size = 146
-name = "ovl25_fn_0C33"
+name = "ScrollListPage"
 signature = ""
 c_name = "ovl25_fn_0C33"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl25_fn_0C33 (ovl25:0C33 nested in ovl25:0D9A: moves the first shown line (DS:6B29) a page down or up, keeps the cursor's place on the page and redraws); auto:near_call; nested in ChooseFromList (static link pushed by its callers); drafted in commit 3c8dac5, blocked with its parent (see the parent's notes)"
 evidence = ["prologue"]
 
 [[routine]]
@@ -13100,12 +13100,12 @@ id = "ovl25:0CC5"
 unit = "ovl25"
 addr = "ovl25:0CC5"
 size = 213
-name = "ovl25_fn_0CC5"
+name = "MoveListCursor"
 signature = ""
 c_name = "ovl25_fn_0CC5"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl25_fn_0CC5 (ovl25:0CC5 nested in ovl25:0D9A: moves Choice one line down or up, wrapping inside the shown page, then skips headings); auto:near_call; nested in ChooseFromList (static link pushed by its callers); drafted in commit 3c8dac5, blocked with its parent (see the parent's notes)"
 evidence = ["prologue"]
 
 [[routine]]
@@ -13113,12 +13113,12 @@ id = "ovl25:0D9A"
 unit = "ovl25"
 addr = "ovl25:0D9A"
 size = 823
-name = "ovl25_e4"
-signature = "function ovl25_e4(Title, Prompt: String40; A, B, C, D, E, F, G: Byte; List: PMenuLine; H: Byte; var Flag: Byte; var Choice: Integer; var First: PMenuLine): Char"
+name = "ChooseFromList"
+signature = "function ChooseFromList(Title, Prompt: String40; HeadingColor, LineColor, HighlightColor: Byte; Left, Top, Right, Bottom: ShortInt; List: PMenuLine; WithExit: Byte; var Redraw: Byte; var Choice: Integer; var Selected: PMenuLine): Char"
 c_name = "ovl25_e4"
 level = "none"
 justification = ""
-notes = "auto:entry_4"
+notes = "renamed from ovl25_e4 (ovl25:0D9A a list menu: draws List in the window D..G, highlights line Choice, reads the key through the prompt line with Next/Prev/Exit words and returns it with the chosen line (draft, address fields only differ)); auto:entry_4; blocked (dec-8, 2026-10-12): the full draft is in commit 3c8dac5 (unit/ovl25, src/OVL25.PAS). Its body and its nested routines compile to the original's bytes except address fields: make match reports 'literal pool byte N before the entry' because the nested routines (TP 6.0 puts them in the parent's pre-entry region) hold far calls (System, res06, GameClock, DrawSprite) and DS operands, and the matcher compares that region byte-exact. A capstone diff of both builds (every differing instruction is an lcall or a DS displacement naming the same global, e.g. ListMenuTop, PromptWordChoice, PictureAnimation) shows no other difference. Waits for the nested-routine address comparison held in work/blockers.md (escalate-res06-20261012110841); restore the draft from 3c8dac5 once it lands; nested: LastHeadingBefore 0711, DrawListPage 07A4, FirstNonBlank 08D7, LastNonBlank 0923, HighlightListLine 0969, UnhighlightListLine 0A08, SkipHeadingLines 0B03, ScrollListPage 0C33, MoveListCursor 0CC5"
 evidence = ["prologue"]
 
 [[routine]]
@@ -13126,12 +13126,12 @@ id = "ovl25:10D1"
 unit = "ovl25"
 addr = "ovl25:10D1"
 size = 111
-name = "ovl25_e5"
-signature = "function ovl25_e5(Prompt: String40; A, B, C: Byte): Char"
+name = "AskYesNo"
+signature = "function AskYesNo(Prompt: String40; TitleColor, WordColor, HotColor: Byte): Char"
 c_name = "ovl25_e5"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_5"
+notes = "renamed from ovl25_e5 (ovl25:10D1 asks Prompt with the words Yes No through the prompt line until the key is Y or N and returns it (matched)); auto:entry_5"
 evidence = ["prologue"]
 
 [[routine]]
@@ -13139,12 +13139,12 @@ id = "ovl25:1140"
 unit = "ovl25"
 addr = "ovl25:1140"
 size = 179
-name = "ovl25_e6"
-signature = "procedure ovl25_e6(Count: Word; var List: PMenuLine)"
+name = "NewMenuList"
+signature = "procedure NewMenuList(Count: Integer; var List: PMenuLine)"
 c_name = "ovl25_e6"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_6"
+notes = "renamed from ovl25_e6 (ovl25:1140 allocates Count menu lines of 46 bytes linked by Next, each blank (matched)); auto:entry_6"
 evidence = ["prologue"]
 
 [[routine]]
@@ -13152,12 +13152,12 @@ id = "ovl25:11F3"
 unit = "ovl25"
 addr = "ovl25:11F3"
 size = 82
-name = "ovl25_e7"
-signature = "procedure ovl25_e7(var List: PMenuLine)"
+name = "FreeMenuList"
+signature = "procedure FreeMenuList(var List: PMenuLine)"
 c_name = "ovl25_e7"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_7"
+notes = "renamed from ovl25_e7 (ovl25:11F3 frees every 46-byte line of a list built by NewMenuList (matched)); auto:entry_7"
 evidence = ["prologue"]
 
 [[routine]]

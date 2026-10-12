@@ -25,7 +25,7 @@ implementation
 uses POOLVARS, RES06, RES09, RES12, OVL07, OVL19, OVL21, OVL22, OVL24, OVL25;
 
 const
-  Yes = 'Y';                    { the answer key ovl25_e5 returns for yes }
+  Yes = 'Y';                    { the answer key AskYesNo returns for yes }
   No = 'N';
   { Affect numbers (the ids res12_fn_2199 and ovl24_e2 look for in a character's affect list). }
   AffectBlind = $21;            { Cure Blindness checks and removes it (ovl04:0262) }
@@ -56,9 +56,9 @@ const
   HighConstitution = 15;        { above it a non-fighter class counts twice }
   FighterOnlyConstitution = 17; { from 17 up only a fighter level loses the hit points }
   LastClass = 7;
-  HealMenuLines = 10;           { lines ovl25_e6 builds for the Heal menu }
+  HealMenuLines = 10;           { lines NewMenuList builds for the Heal menu }
   KeyEnter = #13;
-  KeyNone = #0;                 { treated as Escape/Cancel; ovl25_e2/e4 are still stubs, so this comes
+  KeyNone = #0;                 { treated as Escape/Cancel; ReadPromptChoice/e4 are still stubs, so this comes
                                   from the callers (an extended key returns #0 first, whitepaper 5.8), not
                                   from the callee's own bytes }
   AnswerNo = 1;                 { ovl07_e13 returns the 0-based hotkey position: for '~Yes ~No' the
@@ -69,7 +69,7 @@ const
 function AskCastAnyway(Reason: string): Char;
 begin
   res12_fn_16EC(SelectedCharacter, Reason, 0, 0);
-  AskCastAnyway := ovl25_e5('cast cure anyway: ', 13, 10, 15);
+  AskCastAnyway := AskYesNo('cast cure anyway: ', 13, 10, 15);
   res12_fn_17E3;
 end;
 
@@ -92,7 +92,7 @@ var
 begin
   Service := Service + ' will only cost ' + res12_fn_1073(Price) + ' gold pieces.';
   res06_fn_0768(1, $11, $26, $16, $A, 1, Service);
-  Answer := ovl25_e5('pay for cure ', 13, 15, 10);
+  Answer := AskYesNo('pay for cure ', 13, 15, 10);
   if Answer = Yes then
   begin
     Money := ovl19_e11(SelectedCharacter);   { QUIRK ovl04:0177: a LongInt kept in a Word }
@@ -360,16 +360,16 @@ begin
   end;
 end;
 
-{ ovl04:09D7. The Heal menu: fills ten menu lines (ovl25_e6) with TempleMenuText, draws the
-  windows and "<name>, how can we help you?", and runs the menu (ovl25_e4, keys "Heal Exit")
+{ ovl04:09D7. The Heal menu: fills ten menu lines (NewMenuList) with TempleMenuText, draws the
+  windows and "<name>, how can we help you?", and runs the menu (ChooseFromList, keys "Heal Exit")
   until Exit or Escape; Heal or Enter on lines 0..8 runs that service, line 9 is Exit. Frees the
-  lines (ovl25_e7), clears the text area (res06_fn_0DD3(0, 0, 39, 24)), redraws the view
+  lines (FreeMenuList), clears the text area (res06_fn_0DD3(0, 0, 39, 24)), redraws the view
   (res12_fn_27D9) and reshows the character (res12_fn_0767(SelectedCharacter)). }
 procedure HealMenu;
 var
   List: PMenuLine;
   First: PMenuLine;
-  MenuFlag: Byte;                 { the var Flag of ovl25_e4: set to 1 before the menu and never
+  MenuFlag: Byte;                 { the var Flag of ChooseFromList: set to 1 before the menu and never
                                     read here (VisitTemple gates on its own MenuFlag) }
   I: Byte;
   Choice: Integer;
@@ -380,7 +380,7 @@ begin
   Done := False;
   List := nil;
   First := nil;
-  ovl25_e6(HealMenuLines, List);
+  NewMenuList(HealMenuLines, List);
   First := List;
   I := 1;
   while List <> nil do
@@ -399,7 +399,7 @@ begin
     Prompt := SelectedCharacter^.Name + ', how can we help you?';
     res06_fn_0626(1, 1, $F, Prompt);
     DrawWindow(1, $11, $26, $16, 0, $F, '');
-    Key := ovl25_e4('', 'Heal Exit', 13, 10, 15, 2, 4, $26, $F, List, 0, MenuFlag, Choice, First);
+    Key := ChooseFromList('', 'Heal Exit', 13, 10, 15, 2, 4, $26, $F, List, 0, MenuFlag, Choice, First);
     case Key of
       'H', KeyEnter:
         case Choice of
@@ -417,7 +417,7 @@ begin
       KeyNone: Done := True;
     end;
   until Done;
-  ovl25_e7(List);
+  FreeMenuList(List);
   res06_fn_0DD3(0, 0, 39, 24);
   res12_fn_27D9;
   res12_fn_0767(SelectedCharacter);
@@ -437,7 +437,7 @@ procedure VisitTemple;
 var
   Key: Char;
   Done: Boolean;
-  MenuFlag: Byte;         { the var Flag of ovl25_e2: 0 when the key was a menu choice, nonzero
+  MenuFlag: Byte;         { the var Flag of ReadPromptChoice: 0 when the key was a menu choice, nonzero
                             when the menu did not take it (then H and P are skipped and View gets
                             it) [I] }
   Prompt: String40;
@@ -458,7 +458,7 @@ begin
       Prompt := 'Heal View Take Pool Share Appraise Exit'
     else
       Prompt := 'Heal View Pool Appraise Exit';
-    Key := ovl25_e2('', Prompt, 13, 10, 15, 1, 0, MenuFlag);
+    Key := ReadPromptChoice('', Prompt, 13, 10, 15, 1, 0, MenuFlag);
     case Key of
       'H': if MenuFlag = 0 then HealMenu;
       'V': ovl19_e5(MenuFlag);
