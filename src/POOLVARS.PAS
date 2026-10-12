@@ -56,6 +56,43 @@ type
     Kind: Byte;
     Addr: Pointer;
   end;
+  { One character: 285 bytes (whitepaper 4.x; MON*CHA, CHRDAT, RAD.CHA round-trip). Named fields
+    are whitepaper-verified or read by ovl23 (offsets in comments); the rest is filler. }
+  TCharacter = record
+    Name: string[15];                 { +0: length-prefixed name (whitepaper 4.x) }
+    Ability: array[0..6] of Byte;     { +$10..+$16: ability scores (whitepaper 4.x) }
+    Filler17: array[$17..$2C] of Byte;{ +$17..+$2C }
+    THAC0: Byte;                      { +$2D: to hit armor class 0 (records.py reads it
+                                  signed; e1 compares it unsigned) }
+    Race: ShortInt;                   { +$2E: race (records.py); signed: e4 sign-extends it }
+    Class: Byte;                      { +$2F: class bitmask (records.py) }
+    Filler30: array[$30..$31] of Byte;{ +$30..+$31 }
+    Flags32: array[0..$38] of Byte;   { +$32..+$6A: e1 sets +$33..+$6A from table $31FA;
+                                  [0] is +$32 (hp_max, whitepaper 4.x) }
+    Filler6B: array[$6B..$6C] of Byte;{ +$6B..+$6C }
+    Least: array[0..4] of Byte;       { +$6D..+$71: e3 keeps the minima over the class slots here,
+                                  starting at $14 (saving throws? [H]) }
+    Filler72: Byte;                   { +$72 }
+    MaxSlot: ShortInt;                { +$73: e1 keeps the max slot class here (signed: compared with C) }
+    Filler74: array[$74..$75] of Byte;{ +$74..+$75 }
+    ClassVal: array[0..8] of Byte;    { +$76..+$7E: e4 computes these from class tables }
+    Filler7F: array[$7F..$95] of Byte;{ +$7F..+$95 }
+    SlotClass: array[0..6] of ShortInt; { +$96..+$9C: e1's per-slot class-like values
+                                  (signed: e1/e3 sign-extend them) }
+    Filler9D: array[$9D..$A0] of Byte;{ +$9D..+$A0 }
+    ModeA1: Byte;                     { +$A1: e1 sets 3 when the slot class passes 6, else 2 }
+    FillerA2: array[$A2..$B0] of Byte;{ +$A2..+$B0 }
+    Bonus: array[0..3] of Byte;       { +$B1..+$B4: seeded by e1, bumped by e2 }
+    BonusHi: array[1..3] of Byte;     { +$B5..+$B7: seeded by e1 }
+    FillerB8: array[$B8..$11C] of Byte; { +$B8..+$11C }
+  end;
+  PCharacter = ^TCharacter;           { a character record }
+  { One row of the flag table at DS:$31FA that e1 reads: 57 entries of 16 bytes. }
+  TFlagEntry = record
+    Skip: Byte;                       { +0: when nonzero e1 skips the flag }
+    BonusIdx: Byte;                   { +1: Bonus index gated for the flag }
+    Pad: array[2..15] of Byte;        { +2..+15 }
+  end;
 const
   { Words of GameVars^ whose meaning is proven (word n is at byte offset 2n of the block; the
     matched reads in ovl26 are at +$186, +$188, +$1CC, +$1F6, +$1FA and +$1FC). }
@@ -203,5 +240,15 @@ var
   TileSet: Byte;                  { the 8X8D file number: Load8x8Bank loads 8x8d<TileSet> }
   TileBanks: array[0..4] of PT8x8Bank;  { the loaded 8x8 banks, indexed by bank; nil when the load failed }
   TileBuf: PT8x8Bank;             { the tile staging buffer: Put8x8Symbol Moves one tile to +$17 }
+  { Class tables read by ovl23 (whitepaper 5.3): byte arrays of open extent (addressed with $R-).
+    ds31FA has 57 sixteen-byte rows read by e1. }
+  ds31FA: array[0..$38] of TFlagEntry;  { the e1 flag table: 57 rows of Skip and BonusIdx }
+  ds3C7C: array[0..6, 0..10] of Byte;  { e1 THAC0 table: 7 rows of 11 }
+  ds40BC: array[0..10, 0..4] of Byte;  { e1 Bonus table: 5-wide rows }
+  ds41D4: array[0..10, 0..4] of Byte;  { e1 BonusHi table: 5-wide rows }
+  ds426E: array[0..7, 0..44] of Byte;  { e3 Least table: 8 rows of 45 }
+  ds3D3B: array[0..7, 0..7] of ShortInt;  { e4 first class table: 8-wide rows }
+  ds3CF3: array[0..10, 0..7] of Byte;  { e4 second class table: 8-wide rows }
+  ds3D4E: array[0..25, 0..4] of ShortInt;  { e4 add-on table: 5-wide rows }
 implementation
 end.
