@@ -89,19 +89,6 @@ Five text lines **[V]** (writer: `CFG.C`; the game opens "POOL.CFG" and prints "
 4. save directory with trailing backslash
 5. `F` or `N` **[?]** (meaning unknown)
 
-How the game starts **[V]** (the initialisation part of res08, `042B:00A4`, `src/RES08.PAS`):
-it initialises res05, then the overlay manager on `GAME.OVR`; probes `pool.cfg` (untyped,
-128-byte records) retrying with `Please insert startup disk.` plus a keypress until it opens,
-then closes it and sets `DS:84F0` to 0; opens `POOL.CFG` as text (halting with `Unable to find
-POOL.CFG` when missing) and reads the five lines: line 1 selects the video hardware
-(`E`: `VideoAdapter` 1 and EGA mode `$0D`; `T`: 2 with the heap cut by `$400` paragraphs;
-anything else: 0), line 2 the sound (`T`: `SoundMode` 0, `P`: 1, anything else: 2), lines 3
-and 4 the game and save directories (each followed by a self-assigning `S := S` QUIRK),
-line 5 the `F` flag (`DS:49D1` 1 for `F`, else 0). It saves the video mode (`INT 10h AH=$0F`
-into `SavedVideoMode` and `DS:4A1D`), gives the overlay buffer `$18800` bytes (halting with
-how many more bytes are needed when short), halts on a nonzero overlay status (`DS:43DC`,
-`Overlay error, program abort!`) and starts the sound unit (`res03_fn_017B`).
-
 ---
 
 ## 3. Program architecture
@@ -305,20 +292,6 @@ What the matching harness relies on, each proven by a complete match of res04 (r
   so a `Word` loop variable needs `Integer(...)` casts in products; and a `ShortInt` `for`
   loop exits with `jg` where a `Word` loop uses `ja` **[V]** (the offset arithmetic and both
   `for` loops of the res09 routines; `make tpc` probes).
-- res08 is a resident unit compiled with `$O+` **[V]** (its `OvrInit('GAME.OVR')` copies the
-  literal to a stack temporary with `System_StrCopy` before the call, at `042B:00AF`; without
-  `$O+` the compiler pushes the literal directly, as the unit's `Assign`/`WriteLn` literals
-  show). So `$O+` is not overlay-units-only; SPEC 3 item 6 and AGENTS.md rule it per unit.
-- `System_StrCopy` (`0AF8:0B0B`) pops only its source argument (`retf 4`), leaving the
-  destination pushed: that is how a `$O+` caller passes a literal (push dest temp, push
-  literal, copy, call) with no extra push **[V]** (res08_init `042B:00AF`, `DrawAdventureScreen`
-  ovl27:020F; read from the image).
-- A multi-argument `WriteLn` compiles to one string/number part after another plus a single
-  newline (`WriteLn(Output, A, B, C)` is `0919, 09AF, 0919, 084A`); the `086E` helper call
-  trails only a complete `Read`/`Write` without `Ln` **[V]** (res08_init `042B:023B`, `make tpc`
-  probes of every form).
-- `GameDir := GameDir` (and the same for `SaveDir`) is really in the code: a self-assigning
-  `StrLCopy` with limit 255, kept for the match (QUIRK `042B:032D`, `042B:0358`) **[V]**.
 
 
 ---
@@ -563,9 +536,8 @@ a fixed table can replace it while the game variables allow it (`DrawAreaView`, 
     global (`DS:4A1E`) **[V]** (code): 0 fills two text-scanline planes (absolute byte planes
     over `$B800`/`$BA00`, 80 bytes per scanline row, 4 scanlines per text row), 1 draws through
     `res06_fn_00B7` twice, 2 fills four graphics planes (`$B800`/`$BA00`/`$BC00`/`$BE00`, 160
-    bytes per row, 2 rows per text row). The values are proven: res08_init sets 1 for `E`,
-    2 for `T` and 0 otherwise (`042B:019B..01F9`) **[V]**; what `res06_fn_00B7` draws is still
-    open **[?]**.
+    bytes per row, 2 rows per text row). Which adapter (EGA/CGA/Tandy of `POOL.CFG`) each value
+    means is still open **[?]**, as is what `res06_fn_00B7` draws.
   - Callers **[V]** (`make packet UNIT=res09`): `DrawWindow` is called for dialogs and screens
     from ovl01, ovl02 (the code wheel), ovl03, ovl04, ovl05 and ovl06; the frame and clear
     routines are also called directly from ovl08, ovl13, ovl14, ovl15, ovl16, ovl19 and res12.

@@ -6,8 +6,8 @@ interface
 type
   String40 = string[40];
 procedure res06_fn_0000;
-procedure res06_fn_0071(A: Byte);
-procedure res06_fn_00A0(A: Byte);
+procedure res06_fn_0071;
+procedure res06_fn_00A0;
 procedure res06_fn_00B7(A, B, C, D: ShortInt; E, F: Byte);
 procedure res06_fn_017C;
 procedure res06_fn_01DF(A, B, C, D, Glyph, F: Byte);
@@ -30,9 +30,9 @@ uses RES04;
 { 0709:0000: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure res06_fn_0000; begin end;
 { 0709:0071: retf 2: 2 bytes of parameters; 0 bytes of locals }
-{@stub} procedure res06_fn_0071(A: Byte); begin end;
+{@stub} procedure res06_fn_0071; begin end;
 { 0709:00A0: retf 2: 2 bytes of parameters; 0 bytes of locals }
-{@stub} procedure res06_fn_00A0(A: Byte); begin end;
+{@stub} procedure res06_fn_00A0; begin end;
 { 0709:00B7: retf 12: 12 bytes of parameters; 10 bytes of locals }
 {@stub} procedure res06_fn_00B7(A, B, C, D: ShortInt; E, F: Byte); begin end;
 { 0709:017C: retf 0: 0 bytes of parameters; 18 bytes of locals }

@@ -384,7 +384,7 @@ evidence = "far pointer at DS:49D2 to the game's word variables: ovl07:02E1 and 
 [[global]]
 offset = 0x4A1E
 name = "VideoAdapter"
-evidence = "ClearWindow (03F1:0137) dispatches on it: 0 fills scanline planes, 1 writes text cells, 2 fills four planes; the video hardware the game drives; res08_init sets 1 for POOL.CFG E, 2 for T, 0 otherwise (042B:019B..01F9)"
+evidence = "ClearWindow (03F1:0137) dispatches on it: 0 fills scanline planes, 1 writes text cells, 2 fills four planes; the video hardware the game drives (POOL.CFG offers EGA/CGA/Tandy, mapping still open)"
 
 [[global]]
 offset = 0x6AAE
@@ -415,43 +415,3 @@ evidence = "far pointer to the tile staging buffer: tiles are Moved to +$17 and 
 offset = 0x4A20
 name = "DrawBuf"
 evidence = "far pointer passed to res07_fn_08D4 as the destination buffer (ovl34:0241,0245); the loader (StartGame) allocates it through res07_fn_248E($A8, $15, 1, 0) at ovl11:00BC"
-
-[[global]]
-offset = 0x484D
-size = 578
-name = "CfgText"
-evidence = "text file res08_init Assigns as POOL.CFG and Reads line by line (042B:0124..038C)"
-
-[[global]]
-offset = 0x494D
-size = 6
-name = "CfgProbe"
-evidence = "untyped file res08_init Assigns as pool.cfg and Resets with 128-byte records to probe existence (042B:00C3..011A)"
-
-[[global]]
-offset = 0x537A
-size = 256
-name = "SaveDir"
-evidence = "POOL.CFG line 4 (save directory) ReadLn into it by res08_init (042B:0332)"
-
-[[global]]
-offset = 0x547C
-size = 256
-name = "GameDir"
-evidence = "POOL.CFG line 3 (game directory) ReadLn into it by res08_init (042B:030C)"
-
-[[global]]
-offset = 0x4848
-size = 4
-name = "NewHeapEnd"
-evidence = "Pointer res08_init sets to HeapEnd cut by $400 paragraphs, then assigns to HeapEnd (042B:01CF, 042B:02E2)"
-
-[[global]]
-offset = 0x49CD
-name = "CfgProbeResult"
-evidence = "IOResult of probing pool.cfg with Reset in res08_init (042B:00E0); the repeat loop retries while nonzero"
-
-[[global]]
-offset = 0x484C
-name = "CfgChar"
-evidence = "the POOL.CFG choice just read in res08_init (042B:016E): video E/C/T, sound T/P, retry key, F/N; compared with character literals"
