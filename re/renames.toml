@@ -722,3 +722,10 @@ kind = "routine"
 why = "ovl30:02CC steps a Bresenham line one pixel: it moves X (DX>DY) or Y towards the end point, advances First by 2 or 3 and stores the 3x3 direction pattern ds25C0[SY+1, SX+1]; the Boolean says whether it stepped; called by ovl22_fn_295B, ovl30_e5 and res12_fn_1A29"
 date = "2026-10-11"
 
+[[rename]]
+old = "ovl30_e4"
+new = "InDirArc"
+kind = "routine"
+why = "tests whether (ToX,ToY) lies in the 90-degree arc facing compass direction Dir (0 north clockwise, 8 omni) from (FromX,FromY): per-direction step tables ds2736/ds273F verified as compass vectors, 8 wedge bodies sharing half-planes, ovl22_e5 loops Dir 0.. to aim at a target"
+date = "2026-10-12"
+

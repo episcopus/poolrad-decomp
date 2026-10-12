@@ -747,7 +747,7 @@ Overlay 18 (PoolNarrative) plays the game's ending and animates the area view do
 
 ---
 
-### 5.18 The line drawing unit ovl30 **[V]** (`src/OVL30.PAS`, `make match UNIT=ovl30`: 4 of 7 routines at L2)
+### 5.18 The line drawing unit ovl30 **[V]** (`src/OVL30.PAS`, `make match UNIT=ovl30`: 5 of 7 routines at L2)
 
 Overlay 30 draws lines and sorts:
 
@@ -766,8 +766,20 @@ Overlay 30 draws lines and sorts:
   the row by 3 with DI), and `TLineState.X,Y` are `Integer` like the coordinates (the original
   compares `X` to `X2` with a word `cmp`).
 
-Still to decompile: `ovl30_e5` (`ovl30:0422`, the line walk, blocked in `re/symbols.toml`),
-`ovl30_e4` (`ovl30:057B`) and `ovl30_e6` (`ovl30:0909`).
+- `InDirArc(FromX, FromY, ToX, ToY, Dir)` (`ovl30:057B`) tests whether the point (ToX, ToY)
+  lies in the 90-degree arc facing compass direction Dir from (FromX, FromY): 0 is north then
+  clockwise to 7, 8 (and the $FF default) is omni and always true. Points outside X 0..49 or Y
+  0..24 fail. The base point steps once towards Dir through the tables `DS:2736`/`DS:273F`
+  (verified bytes: compass vectors (0,-1), (1,-1), (1,0), (1,1), (0,1), (-1,1), (-1,0), (-1,-1),
+  (0,0)), and each direction's `case` body checks the two half-planes of its wedge, each shared
+  with the neighbouring direction (direction 0 is `(ToX >= BaseX) and (ToY <= BaseX - ToX + BaseY)`
+  or `(ToX <= BaseX) and (ToY <= ToX - BaseX + BaseY)`). `ovl22_e5` loops Dir upward to aim at a
+  point. Compiler notes: the direction parameter is `Byte` (the table index zero-extends), the
+  coordinates are `ShortInt`, and a `case` over 0..8 keeps the selector in AL with chained
+  `cmp`/`jne` (proven by `make tpc` probes in `scratch/Q1.PAS`, `scratch/Q2.PAS`).
+
+Still to decompile: `ovl30_e5` (`ovl30:0422`, the line walk, blocked in `re/symbols.toml`)
+and `ovl30_e6` (`ovl30:0909`).
 
 ---
 
