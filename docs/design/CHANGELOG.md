@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-11 | ovl29 | DrawWallDescriptors (ovl29_fn_0174) decompiled; res07_fn_2632 signature and ds260A recorded | make match UNIT=ovl29, make readability UNIT=ovl29, make check |
 | 2026-10-11 | res06 | GameClock (res06_fn_0C3F) decompiled and renamed; res06_fn_05EB body settled (set membership, blocked on res06_fn_01DF's pool) | make match UNIT=res06, make readability UNIT=res06, make check |
 | 2026-10-11 | ovl30 | StepLine decompiled (ovl28_e3 unblocked); ds25C0 is a 2D pattern table and TLineState.X,Y are Integer; ovl30_e5 blocked | make match UNIT=ovl30, make readability UNIT=ovl30, make check |
 | 2026-10-11 | ovl04 | round-2 review fixed (AnswerNo/No rule, MenuFlag, entry globals, ChargeForCure 16-bit money QUIRKs ovl04:0177/01C8, whitepaper 5.19) | make match UNIT=ovl04, make readability UNIT=ovl04, make check |
