@@ -1,6 +1,8 @@
 unit RES06;
-{ Screen text output (whitepaper 5.15), partly decompiled: ShowMessageLine shows a message on the
-  bottom line and waits for a key; the rest are stubs. }
+{ Screen text output (whitepaper 5.15): the 8 by 8 font (LoadGameFont, DrawGlyph), text on cells
+  (ClearTextCells, DrawTextAt), the bottom message line (ShowMessageLine, FlashMessageLine), the
+  line editor (ReadInputLine, ReadNumber), screen clearing and the game clock. ShowPagedText, the
+  word-wrapping pager, is still a stub (held: nested routines). }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 type
@@ -11,15 +13,15 @@ procedure SetPlaneSegment(Plane: Byte);
 procedure FillPlaneRect(LeftCol, TopRow, RightCol, BotRow: ShortInt; Plane, Value: Byte);
 procedure LoadGameFont;
 procedure DrawGlyph(Col, Row, Color, Count, Glyph, Cook: Byte);
-procedure res06_fn_05EB(A, Row, B, Width: Byte);
-procedure res06_fn_0626(A, Row, Color: Byte; Text: string);
+procedure ClearTextCells(Col, Row, Color, Count: Byte);
+procedure DrawTextAt(Col, Row, Color: Byte; Text: string);
 procedure ShowPagedText(Left, Top, Right, Bottom, Color, ClearFirst: Byte; Text: string);
-function res06_fn_09E3(Prompt: string; A: Byte; MaxLen: Byte): string;
-procedure res06_fn_0B66;
+function ReadInputLine(Prompt: String40; Color: Byte; MaxLen: Byte): String40;
+function ReadNumber(Prompt: String40; Color: Byte): Word;
 procedure ShowMessageLine(Color: Byte; Text: String40);
 function GameClock: Longint;
 procedure ClearFullScreen;
-procedure res06_fn_0D68(Text: string; Color: Byte);
+procedure FlashMessageLine(Text: String40; Color: Byte);
 procedure DelayCounted;
 procedure ClearRect(Left, Top, Right, Bottom: ShortInt);
 implementation
@@ -35,6 +37,11 @@ type
     assembled 16-bit pixel row per scanline through it (2-D indexing keeps the $50 row
     stride the compiler multiplies by, proven by a make tpc probe). }
   TWordPlane = array[0..199, 0..39] of Word;
+  { The game font in the GameFont block: 8 bytes per glyph, one per pixel row, the top bit the
+    leftmost pixel. DrawGlyph indexes it [Glyph, Row] (2-D: the row is added after the glyph
+    offset, 0709:027C..028E). 177 glyphs fill the $588-byte block. }
+  TFont = array[0..176, 0..7] of Byte;
+  PFont = ^TFont;
 var
   { The EGA planes. The text and graphics views share the segments; they are the same
     memory RES09 maps as the VideoText/VideoGrf planes. }
@@ -132,43 +139,245 @@ begin
   Move(Block^, GameFont^, BlockSize);
   FreeMem(Block, BlockSize);
 end;
-{ 0709:01DF: retf 12: 12 bytes of parameters; 18 bytes of locals }
-{ BLOCKED (dec-1, 2026-10-12, 5 attempts): full DrawGlyph draft stashed in
-  scratch/DRAWGLYPH.DRAFT.PAS (head guard, UpCase/mod, for-loops, 2-D word planes
-  and Mem/graph writes all match through 01FA; pending: a $10 length gap downstream
-  plus the if/else I-init applied but unverified). See re/symbols.toml 0709:01DF notes. }
-{@stub} procedure DrawGlyph(Col, Row, Color, Count, Glyph, Cook: Byte); begin end;
-{ 0709:05EB: retf 8: 8 bytes of parameters; 0 bytes of locals }
-{ 0709:05EB. Clears (or fills) Width cells of a row: when the column Width is in 0..$27 and the
-  row B is in 0..$18 it calls DrawGlyph(Width, B, Row, A, $20, 1). BLOCKED (dec-5,
-  2026-10-12): the body is settled as two set membership tests, `if not (Width in [0..$27]) then
-  Exit; if not (B in [0..$18]) then Exit; ...` (the never-true lower-bound compares and the Exit
-  block come from the set), but the routine does not match because a literal-pool byte 64 before the
-  entry differs (ours FF, original F8): the pool belongs to the preceding DrawGlyph, still a
-  stub, so decompile 01DF first. Called by ovl21_e6, ClearPromptLine, res06_fn_09E3, ShowMessageLine and
-  res06_fn_0D68. }
-{@stub} procedure res06_fn_05EB(A, Row, B, Width: Byte); begin end;
-{ 0709:0626: retf 10: 10 bytes of parameters; 260 bytes of locals }
-{@stub} procedure res06_fn_0626(A, Row, Color: Byte; Text: string); begin end;
+{ 0709:01DF. Draws Count copies of the GameFont glyph Glyph from cell Col rightwards on
+  text row Row in Color, one per outer iteration (Col advances). Cook nonzero cooks Glyph
+  through UpCase into 0..63, else the raw byte indexes the font. By VideoAdapter: 0 writes
+  the 8 font rows as byte-swapped 16-bit pixel rows to the two text-scanline planes
+  (even rows to $B800, odd rows to $BA00, 4 scanlines per text row); 1 writes the 8 font
+  bytes to the two EGA pages through the Sequencer Map Mask (masks from EgaPlaneMasks, colour
+  gating); 2 builds two colour nibbles per font-bit pair and writes them to all four
+  graphics planes (2 rows per text row, 4 bytes per column). Exits at once for
+  out-of-range cells, a nil GameFont, or Count 0. Glyph stays Byte in the
+  signature because ovl02 passes Integer expressions (changing it to Char would break its
+  four matched call sites); the Ord(Chr()) bridges compile to nothing (proven by tpc
+  probes) and are revisited when DrawGlyph itself is reviewed. Side effect: video memory.
+  Called by CheckCodeWheel, ovl03, ovl25, ClearTextCells, DrawTextAt and DrawTextRun. }
+procedure DrawGlyph(Col, Row, Color, Count, Glyph, Cook: Byte);
+const
+  MaxCol = $27;         { widest cell column }
+  MaxRow = $18;         { deepest text row }
+  CookedGlyphMod = $40; { cooked glyph index wraps into 0..63 }
+  TopBit = $80;         { starting font-bit mask }
+  GraphStride = $28;    { bytes per scanline in the 320-wide graphics plane }
+  MapMaskRestore = $0F; { Sequencer Map Mask value restored after mode 1 }
+var
+  I: Byte;              { outer copy counter, 1..Count }
+  Index: Byte;          { GameFont glyph index: Glyph raw, or cooked }
+  DestOff: Word;        { dest scanline (mode 0) or pixel offset (mode 1); font row (mode 2) }
+  FontRow: Word;        { font row (mode 0); dest graph row (mode 2) }
+  ColBase: Word;        { A*4 byte column base (mode 2) }
+  Acc: Word;            { assembled 16-bit pixel row (mode 0) }
+  Pix: Byte;            { two colour nibbles (mode 2) }
+  Bit: Byte;            { bit/column counter: 0..7 (mode 0) or 0..3 }
+  Mask: Byte;           { font bit mask, $80 shrank per bit (modes 0 and 2) }
+  Plane: Byte;          { graphics plane 0..3 (mode 2) }
+  Line: Byte;           { row counter: 0..3 (mode 0), 0..7 (mode 1), 0..1 (mode 2) }
+  Unused: Byte;         { never referenced; the original frame has this byte before the for limit }
+begin
+  if (Col > MaxCol) or (Row > MaxRow) or (GameFont = nil) then Exit;
+  if Cook <> 0 then
+    Index := Ord(UpCase(Chr(Glyph))) mod CookedGlyphMod
+  else
+    Index := Glyph;
+  for I := 1 to Count do
+  begin
+  case VideoAdapter of
+      0:
+        begin
+          Color := ds25D5[Color];
+          DestOff := Row * 4;
+          FontRow := 0;
+          for Line := 0 to 3 do
+          begin
+            Acc := 0;
+            Mask := TopBit;
+            for Bit := 0 to 7 do
+            begin
+              if PFont(GameFont)^[Index, FontRow] and Mask > 0 then
+                Acc := Acc or (GlyphPixelMasks[Bit] and GlyphColorPatterns[Color]);
+              Mask := Mask shr 1;
+            end;
+            WordPlane0[DestOff, Col] := Swap(Acc);
+            Inc(FontRow);
+            Acc := 0;
+            Mask := TopBit;
+            for Bit := 0 to 7 do
+            begin
+              if PFont(GameFont)^[Index, FontRow] and Mask > 0 then
+                Acc := Acc or (GlyphPixelMasks[Bit] and GlyphColorPatterns[Color]);
+              Mask := Mask shr 1;
+            end;
+            WordPlane1[DestOff, Col] := Swap(Acc);
+            Inc(FontRow);
+            Inc(DestOff);
+          end;
+        end;
+      1:
+        begin
+          DestOff := Row * 8 * GraphStride + Col;
+          Port[$3C4] := 2;
+          for Line := 0 to 7 do
+          begin
+            for Bit := 0 to 3 do
+            begin
+              Port[$3C5] := EgaPlaneMasks[3 - Bit];
+              if (EgaPlaneMasks[3 - Bit] and Color) > 0 then
+              begin
+                Mem[ds4A16:DestOff] := PFont(GameFont)^[Index, Line];
+                Mem[ds4A18:DestOff] := PFont(GameFont)^[Index, Line];
+              end
+              else
+              begin
+                Mem[ds4A16:DestOff] := 0;
+                Mem[ds4A18:DestOff] := 0;
+              end;
+            end;
+            Inc(DestOff, GraphStride);
+          end;
+          Port[$3C5] := MapMaskRestore;
+        end;
+      2:
+        begin
+          DestOff := 0;
+          FontRow := Row * 2;
+          ColBase := Col * 4;
+          for Line := 0 to 1 do
+          begin
+            for Plane := 0 to 3 do
+            begin
+              Mask := TopBit;
+              for Bit := 0 to 3 do
+              begin
+                if PFont(GameFont)^[Index, DestOff] and Mask > 0 then
+                  Pix := Color shl 4
+                else
+                  Pix := 0;
+                Mask := Mask shr 1;
+                if PFont(GameFont)^[Index, DestOff] and Mask > 0 then
+                  Pix := Pix or Color;
+                Mask := Mask shr 1;
+                case Plane of
+                  0: GraphPlane0[FontRow, Bit + ColBase] := Pix;
+                  1: GraphPlane1[FontRow, Bit + ColBase] := Pix;
+                  2: GraphPlane2[FontRow, Bit + ColBase] := Pix;
+                  3: GraphPlane3[FontRow, Bit + ColBase] := Pix;
+                end;
+              end;
+              Inc(DestOff);
+            end;
+            Inc(FontRow);
+          end;
+        end;
+    end;
+    Inc(Col);
+  end;
+end;
+{ 0709:05EB. Draws Count space glyphs (GlyphSpace) in Color from cell Col of text row Row, that
+  is, clears Count cells of a row to the background; nothing when the cell is off the 40 by 25
+  screen. QUIRK 0709:05EE, 05FA: the Byte parameters are also compared below 0, which is never
+  true; the compiler keeps the compares. Called by
+  ovl21_e6, ovl25_e3, ReadInputLine, ShowMessageLine (row 24, 40 cells) and FlashMessageLine. }
+procedure ClearTextCells(Col, Row, Color, Count: Byte);
+const
+  GlyphSpace = $20;
+begin
+  if (Col < 0) or (Col > $27) or (Row < 0) or (Row > $18) then Exit;
+  DrawGlyph(Col, Row, Color, Count, GlyphSpace, 1);
+end;
+{ 0709:0626. Draws Text in Color from cell Col of text row Row, one DrawGlyph per character
+  (cooked through UpCase into the 64-glyph text set), advancing Col; nothing when Col is past
+  column 39. QUIRK 0709:0647: Row is also tested against 39, not 24; DrawGlyph then skips rows
+  past 24, and characters past column 39. Called
+  by ShowMessageLine (row 24), ShowCredits, CheckCodeWheel, StartGame and many menus. }
+procedure DrawTextAt(Col, Row, Color: Byte; Text: string);
+var
+  Len, I: Byte;
+begin
+  if (Col > $27) or (Row > $27) then Exit;
+  Len := Length(Text);
+  for I := 1 to Len do
+  begin
+    DrawGlyph(Col, Row, Color, 1, Ord(Text[I]), 1);
+    Inc(Col);
+  end;
+end;
 { 0709:0768: retf 16; six bytes and a string; ovl04 passes (1, $11, $26, $16, $A, 1, message). }
 { DRAFT STASHED (dec-1): full ShowPagedText with nested DrawTextRun/SkipSpaces is in
   scratch/SHOWPAGEDTEXT.DRAFT.PAS and matches except the nested pool bytes (escalated:
   nested code with globals/calls needs address-aware pool compare). }
 {@stub} procedure ShowPagedText(Left, Top, Right, Bottom, Color, ClearFirst: Byte; Text: string); begin end;
-{ 0709:09E3: retf 8: 8 bytes of parameters; 812 bytes of locals.
-  The line reader: shows the Prompt and returns what the player types as its string result
-  (the caller keeps the result pointer: retf 8 pops Prompt, A and B only). CheckCodeWheel asks for the
-  code word with it. }
-{@stub} function res06_fn_09E3(Prompt: string; A: Byte; MaxLen: Byte): string; begin end;
-{ 0709:0B66: retf 6: 6 bytes of parameters; 346 bytes of locals }
-{@stub} procedure res06_fn_0B66; begin end;
+{ 0709:09E3. The line reader: shows Prompt in Color on the bottom line (row 24) and lets the
+  player type up to MaxLen characters after it, echoed in white: ' '..'z' are added, Backspace
+  removes the last one; Enter or Esc ends. Returns the line in upper case (Esc returns what was
+  typed too). The row is cleared at the end. CheckCodeWheel asks for the code word with it. }
+function ReadInputLine(Prompt: String40; Color: Byte; MaxLen: Byte): String40;
+const
+  BottomRow = 24;
+  ScreenCols = 40;
+  EchoColor = 15;           { white }
+  KeyBackspace = #8;
+  KeyEnter = #13;
+  KeyEsc = #27;
+var
+  Col: Byte;                { screen column of the last character shown }
+  Line: string;
+  Key: Char;
+begin
+  ClearTextCells(0, BottomRow, 0, ScreenCols);
+  DrawTextAt(0, BottomRow, Color, Prompt);
+  Col := Length(Prompt);
+  Line := '';
+  repeat
+    Key := ReadGameKey;
+    case Key of
+      ' '..'z':
+        if Length(Line) < MaxLen then
+        begin
+          Line := Line + Key;
+          Inc(Col);
+          DrawTextAt(Col, BottomRow, EchoColor, Key);
+        end;
+      KeyBackspace:
+        if Length(Line) > 0 then
+        begin
+          Line := Copy(Line, 1, Length(Line) - 1);
+          ClearTextCells(Col, BottomRow, 0, 1);
+          Dec(Col);
+        end;
+    end;
+  until (Key = KeyEnter) or (Key = KeyEsc);
+  ClearTextCells(0, BottomRow, 0, ScreenCols);
+  for Col := 1 to Length(Line) do
+    Line[Col] := UpCase(Line[Col]);
+  ReadInputLine := Line;
+end;
+{ 0709:0B66. Asks for a number on the bottom line: reads up to 6 characters with
+  ReadInputLine (Prompt in Color) until Val accepts them as a number from 0 to 65536, and
+  returns it as a Word. QUIRK 0709:0BBF: 65536 itself is accepted and returns 0. Called by
+  ovl03_fn_0951. }
+function ReadNumber(Prompt: String40; Color: Byte): Word;
+const
+  MaxDigits = 6;
+var
+  Value: Longint;
+  Answer: String40;
+  Code: Integer;
+begin
+  repeat
+    Answer := ReadInputLine(Prompt, Color, MaxDigits);
+    Val(Answer, Value, Code);
+    if (Code = 0) and ((Value > 65536) or (Value < 0)) then
+      Code := 1;
+  until Code = 0;
+  ReadNumber := Value;
+end;
 { 0709:0BF5: show a one-line message on row 24 and wait for a key (whitepaper 5.15). }
 procedure ShowMessageLine(Color: Byte; Text: String40);
 var
   Key: Char;
 begin
-  res06_fn_05EB(0, 24, 0, 40);
-  res06_fn_0626(0, 24, Color, Text);
+  ClearTextCells(0, 24, 0, 40);
+  DrawTextAt(0, 24, Color, Text);
   Key := ReadGameKey;
 end;
 { 0709:0C3F. The game clock in hundredths of a second: reads the DOS time (GetTime) and returns
@@ -213,14 +422,20 @@ begin
       end;
   end;
 end;
-{ 0709:0D68: retf 6: 6 bytes of parameters; 42 bytes of locals.
-  Shows the Text and waits: CheckCodeWheel passes the failure message of a wrong code word and the
-  colour 14. }
-{ 0709:0D68. BLOCKED (dec-5, 2026-10-12): shows Text on the bottom line in colour Color
-  (res06_fn_05EB clears the row, res06_fn_0626 shows the text, DelayCounted waits, res06_fn_05EB
-  clears again). Our frame is 256 bytes too big (a string temp our source creates), so it is left
-  a stub. }
-{@stub} procedure res06_fn_0D68(Text: string; Color: Byte); begin end;
+{ 0709:0D68. Shows Text in Color on the bottom line (row 24) for a moment: clears the row
+  (ClearTextCells), writes the text (DrawTextAt), waits DelayCounted and clears the row again;
+  no key is waited for, unlike ShowMessageLine. CheckCodeWheel shows a wrong code word with it,
+  ovl14 'Not Here' and the river's stench, in colour 14. }
+procedure FlashMessageLine(Text: String40; Color: Byte);
+const
+  BottomRow = 24;
+  ScreenCols = 40;
+begin
+  ClearTextCells(0, BottomRow, 0, ScreenCols);
+  DrawTextAt(0, BottomRow, Color, Text);
+  DelayCounted;
+  ClearTextCells(0, BottomRow, 0, ScreenCols);
+end;
 { 0709:0DBE: retf 0: 0 bytes of parameters; 0 bytes of locals }
 { 0709:0DBE. A delay of GameSpeed * 225 milliseconds (Crt.Delay). No parameters. Called while
   drawing many screens (ovl03, ovl10, ovl12, ovl13, ovl18, ovl19, ovl20). }

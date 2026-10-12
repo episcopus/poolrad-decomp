@@ -1821,3 +1821,59 @@ kind = "global"
 why = "seven LongInt kinds of money: the shop and the Temple pool the party's money into it (ovl21_e12 sums it), EndBattle puts the defeated monsters' money into it and TakeHirelingShares takes the hirelings' shares from it (ovl05:0093, 1366)"
 date = "2026-10-12"
 
+[[rename]]
+old = "ds25C9"
+new = "EgaPlaneMasks"
+kind = "global"
+why = "DrawGlyph mode 1 writes ds25C9[3 - Bit] to the Sequencer Map Mask (port 3C5h) and gates the font byte on it AND Color (0709:03C0..03ED)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds25CD"
+new = "GlyphColorPatterns"
+kind = "global"
+why = "DrawGlyph mode 0 ANDs ds25CD[mapped colour] with the column mask to colour each set pixel of a text-scanline word (0709:02A3)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds25E5"
+new = "GlyphPixelMasks"
+kind = "global"
+why = "DrawGlyph mode 0 picks ds25E5[Bit] for pixel column Bit 0..7 of the 16-bit text-scanline word (0709:02B0)"
+date = "2026-10-12"
+
+[[rename]]
+old = "res06_fn_05EB"
+new = "ClearTextCells"
+kind = "routine"
+why = "draws Count space glyphs (DrawGlyph with $20) from Col on Row (0709:0608..061F); ShowMessageLine clears row 24 with (0, 24, 0, 40) before writing"
+date = "2026-10-12"
+
+[[rename]]
+old = "res06_fn_0626"
+new = "DrawTextAt"
+kind = "routine"
+why = "for each character of the string calls DrawGlyph(Col, Row, Color, 1, char, 1) and advances Col (0709:0671..069F); ShowMessageLine writes its message with it"
+date = "2026-10-12"
+
+[[rename]]
+old = "res06_fn_0D68"
+new = "FlashMessageLine"
+kind = "routine"
+why = "clears row 24, writes the text there, waits DelayCounted and clears it again, with no key wait (0709:0D81..0DB5); CheckCodeWheel shows the wrong-code message with it"
+date = "2026-10-12"
+
+[[rename]]
+old = "res06_fn_09E3"
+new = "ReadInputLine"
+kind = "routine"
+why = "reads keys with ReadGameKey, adds ' '..'z' up to MaxLen and echoes them, Backspace deletes, Enter or Esc ends, returns the line upper-cased (0709:0A2B..0B5B); CheckCodeWheel reads the code word with it"
+date = "2026-10-12"
+
+[[rename]]
+old = "res06_fn_0B66"
+new = "ReadNumber"
+kind = "routine"
+why = "repeats ReadInputLine (6 characters) until Val gives a number with no error in 0..65536 and returns it (0709:0B80..0BE9)"
+date = "2026-10-12"
+

@@ -397,7 +397,7 @@ begin
   DrawWindow(1, 1, $26, 1, 0, $F, '');
   repeat
     Prompt := SelectedCharacter^.Name + ', how can we help you?';
-    res06_fn_0626(1, 1, $F, Prompt);
+    DrawTextAt(1, 1, $F, Prompt);
     DrawWindow(1, $11, $26, $16, 0, $F, '');
     Key := ChooseFromList('', 'Heal Exit', 13, 10, 15, 2, 4, $26, $F, List, 0, MenuFlag, Choice, First);
     case Key of
