@@ -116,3 +116,15 @@ def test_rename_reaches_code_after_apostrophes_in_comments_and_prose():
     text, n = rename.replace_word(doc, "Old", "New", pascal=False)
     assert n == 2 and "`New`" in text and "calls New too" in text and "'Old'" in text
     assert rename.left_behind(text, "Old") == [2]
+
+
+def test_rename_evidence_with_backslashes_and_quotes_stays_valid_toml(tree):
+    import tomllib
+    why = 'prompt "Insert disk" at C:\\GAME\\ costs $5'
+    routine, _ = _provisional_routine(tree)
+    assert rename.main([routine, "SetBorderColour", "--why", why]) == 0
+    assert rename.main(["ds1234", "BorderColour", "--why", why]) == 0
+    for name in ("symbols.toml", "dseg.toml", "renames.toml"):
+        tomllib.loads((tree / name).read_text())                        # still parses
+    log = tomllib.loads((tree / "renames.toml").read_text())["rename"]
+    assert log[-1]["why"] == "prompt 'Insert disk' at C:\\GAME\\ costs $5"
