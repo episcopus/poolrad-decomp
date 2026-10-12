@@ -75,7 +75,10 @@ Locks (agents at work): `make locks`. Next unit: `make next`.
 
 ## Blockers and decisions waiting for the human
 
+Blockers are kept in `work/blockers.md` (the orchestrator's, playbook 90) and copied here by `make status`.
+
 - ovl26 merge aborted (orch, 2026-10-11): unit/ovl26 (56439d2) conflicts with ovl27, merged first, over DS:49D2. ovl27 declares `GameVars: ^TGameVars` (array[0..511] of Word, named with evidence in `re/dseg.toml`) and ovl26 declares `ds49D2: ^TGameState` (record, MapX at +$186 = word 195). `make rename APPLY=1` would also turn ovl26's `ds49D2` into `GameVars`. Also conflicting: `re/dseg.toml`, `re/renames.toml`, `re/symbols.toml`, the whitepaper, and `src/OVL27.PAS` (ovl26 still has ovl27's stubs; the decompiled routines win). For the ovl26 decompiler: merge `main` into `unit/ovl26`, give DS:49D2 one name and one type that both units compile and match against, run `make check`, and hand off again. The hand-off stays open until then.
+
 - Approach (decided 2026-10-11, SPEC 4): Pascal first, matched by the pinned compiler; C later by translation (Phase 7, branch `track-c-hybrid`).
 - Canonical state (decided 2026-10-10 and 2026-10-11): `re/state.toml` has `stack = "diagnostic"` and `heap = "compared"`; goldens carry recordings of the outside world (`tools/oracle/replay.py`) for the rebuild and the C translation.
 - Shared files (SPEC 9.6): `src/POOLVARS.PAS` and stub declarations take additive edits; the orchestrator merges.

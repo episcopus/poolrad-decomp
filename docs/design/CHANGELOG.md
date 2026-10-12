@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-11 | tools | make status copies the orchestrator's work/blockers.md into the status blockers section, so hand-written blockers survive regeneration | tests/unit/test_status.py; make check |
 | 2026-10-11 | 5.12 Copy protection | the check is now matched Pascal: CheckCodeWheel; the question window, the rune draws and the line reader named; the TP 6.0 string-function result convention proven (result pointer pushed first, left on the stack by retf 8) | make match UNIT=ovl02 (unit complete), the TCodeWheelEntry type in src/POOLVARS.PAS |
 | 2026-10-11 | tools | make rename applies renames past apostrophes in comments and prose, warns about names left in literals | tests/unit/test_readability.py; 3 stale whitepaper names fixed |
 | 2026-10-11 | 5.2 | new section: the area view (5x5 grid of 3x3-tile blocks from the 36x44 area map at DS:3648, nine fixed override blocks at DS:0C30 gated by game variables, the party position in GameVars words 195/196, and the three adventure screen windows through res09_fn_02E8) | make match UNIT=ovl27: unit complete, 3 routines at L2 |
