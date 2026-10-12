@@ -461,7 +461,7 @@ a fixed table can replace it while the game variables allow it (`DrawAreaView`, 
 
 - **The area map** at DGROUP `0x3648` (`AreaMap` in `src/POOLVARS.PAS`) is 36 rows by 44 columns
   of one-byte block codes **[V]** (row stride 44 at `ovl27:0040`; `ShowAreaView` clamps the view
-  window to columns 0..39 and rows 0..31, `ovl26:0289`, which is 44-5 and 36-5). The picture code
+  window to columns 0..39 and rows 0..31, `ovl26:0253..0287`, which is 44-5 and 36-5). The picture code
   drawn is the map byte minus one **[V]** (`ovl27:0049`). The shipped image fills the map with
   terrain codes; rows 34 and 35 are all `0x4E` (the letter N), and `ovl14:08BB` compares map bytes
   with `0x4E` specially **[I]**: N marks ground that draws no block. **[?]** Nothing in the code
