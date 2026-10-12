@@ -37,7 +37,7 @@ const
   into the 3D view window: the block code comes from the area map (AreaMap, minus one), except
   where one of the nine fixed positions (SpecialBlocks) matches and the game variables allow its
   own code; every entry of that table has its own condition, entry 6 always applies. Each block
-  is one picture drawn by ovl32_e2 at the cell position (BaseCol, BaseRow). Callers: ovl26_e1
+  is one picture drawn by ovl32_e2 at the cell position (BaseCol, BaseRow). Callers: ShowAreaView
   passes the position of the party minus 2 (the party block sits at the centre of the grid),
   clamped to columns 0..39 and rows 0..31; ovl18_e2 passes (17, 15).
   Parameters: LeftCol and TopRow are the map column and row of the top-left block.
