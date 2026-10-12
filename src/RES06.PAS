@@ -15,7 +15,7 @@ procedure res06_fn_05EB(A, Row, B, Width: Byte);
 procedure res06_fn_0626(A, Row, Color: Byte; Text: string);
 procedure res06_fn_06A7;
 procedure res06_fn_0714;
-procedure res06_fn_0768;
+procedure res06_fn_0768(A, B, C, D, E, F: Byte; Text: string);
 function res06_fn_09E3(Prompt: string; A: Byte; MaxLen: Byte): string;
 procedure res06_fn_0B66;
 procedure ShowMessageLine(Color: Byte; Text: String40);
@@ -49,8 +49,8 @@ uses RES04;
 {@stub} procedure res06_fn_06A7; begin end;
 { 0709:0714: retf 2: 2 bytes of parameters; 0 bytes of locals }
 {@stub} procedure res06_fn_0714; begin end;
-{ 0709:0768: retf 16: 16 bytes of parameters; 294 bytes of locals }
-{@stub} procedure res06_fn_0768; begin end;
+{ 0709:0768: retf 16; six bytes and a string; ovl04 passes (1, $11, $26, $16, $A, 1, message). }
+{@stub} procedure res06_fn_0768(A, B, C, D, E, F: Byte; Text: string); begin end;
 { 0709:09E3: retf 8: 8 bytes of parameters; 812 bytes of locals.
   The line reader: shows the Prompt and returns what the player types as its string result
   (the caller keeps the result pointer: retf 8 pops Prompt, A and B only). CheckCodeWheel asks for the

@@ -373,6 +373,90 @@ why = "the POOL.CFG choice just read in res08_init (042B:016E): video E/C/T, sou
 date = "2026-10-11"
 
 [[rename]]
+old = "ds5D92"
+new = "SelectedCharacter"
+kind = "global"
+why = "far pointer to the character every Temple service acts on: pushed as the character argument of res12_fn_2199, ovl24_e2 and res12_fn_16EC, and dereferenced for the record fields (Status +10Ch, Items +C8h, Name +0) throughout ovl04 (ovl04:002E, 0539, 084F, 0AC9); StartGame sets it nil"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl04_fn_0013"
+new = "AskCastAnyway"
+kind = "routine"
+why = "shows the reason a cure is not needed for SelectedCharacter (res12_fn_16EC) and returns the key of the prompt 'cast cure anyway: ' (ovl04:0013, matched)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl04_fn_00BF"
+new = "ChargeForCure"
+kind = "routine"
+why = "shows '<service> will only cost <n> gold pieces.', asks 'pay for cure', takes the price from the character or the pooled money, says 'Not enough money.' or 'is cured.' (ovl04:00BF, matched)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl04_fn_0249"
+new = "CureBlindness"
+kind = "routine"
+why = "checks affect 21h, prompt 'is not blind.', service 'Cure Blindness' for 1000, removes affect 21h through ovl24_e2 (ovl04:0249, matched)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl04_fn_02ED"
+new = "CureDisease"
+kind = "routine"
+why = "checks the six affects at DS:0114, 'is not Diseased.', 'Cure Disease' for 1000, removes the six (ovl04:02ED, matched)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl04_fn_0401"
+new = "CureWounds"
+kind = "routine"
+why = "case 1..3: 'Cure Light/Serious/Critical Wounds' for 100/350/600, heals ovl24_e8(1,8), (2,8)+1, (3,8)+3 through ovl24_e21 (ovl04:0401, matched)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl04_fn_0510"
+new = "RaiseDead"
+kind = "routine"
+why = "status 1 or 6 is dead, 'is not dead.', 'Raise Dead' for 5500, clears the status, lowers constitution and adjusts hp_max (ovl04:0510, matched)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl04_fn_0751"
+new = "NeutralizePoison"
+kind = "routine"
+why = "checks affect 37h, 'is not poisoned.', 'Neutralize Poison' for 1000, removes affects 37h, 16h, 0Fh (ovl04:0751, matched)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl04_fn_083A"
+new = "RemoveCurse"
+kind = "routine"
+why = "looks for a cursed item (+36h) or affect 24h, 'is not cursed.', 'Remove Curse' for 3500, hands the character to ovl22_e9 (ovl04:083A, matched)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl04_fn_0928"
+new = "StoneToFlesh"
+kind = "routine"
+why = "status 7 is stoned, 'is not stoned.', 'Stone to Flesh' for 2000, sets the status to 0 (ovl04:0928, matched)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl04_fn_09D7"
+new = "HealMenu"
+kind = "routine"
+why = "fills ten menu lines with the service names at DS:011A, '<name>, how can we help you?', menu 'Heal Exit', runs the chosen service routine (ovl04:09D7, matched)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl04_e1"
+new = "VisitTemple"
+kind = "routine"
+why = "the Temple entry: menu 'Heal View Take Pool Share Appraise Exit', the priest's 'you have left some money here' on Exit (ovl04:0D09, matched)"
+date = "2026-10-11"
+
+[[rename]]
 old = "ovl30_e1"
 new = "SignOf"
 kind = "routine"

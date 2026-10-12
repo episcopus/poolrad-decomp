@@ -105,7 +105,7 @@ begin
   ds49F8 := 0;
   ds49FB := 0;
   ds5D96 := 0;
-  ds5D92 := nil;
+  SelectedCharacter := nil;
   ds49ED := $9900;
   ds49E2 := 1;
   ds49F4 := 0;

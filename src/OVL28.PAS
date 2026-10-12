@@ -97,10 +97,10 @@ procedure ShowHeadBodyWindow;
 var
   V1, V2: string[3];              { the Str() of the two picture numbers, computed but not used }
 begin
-  if (ds5D92^.HeadBank = 0) or (ds5D92^.BodyBank = 0) then
+  if (SelectedCharacter^.HeadBank = 0) or (SelectedCharacter^.BodyBank = 0) then
     Exit;
   DrawWindow($1C, 1, $26, $B, 0, 0, '');
-  with ds5D92^ do
+  with SelectedCharacter^ do
   begin
     Str(ds286F[HeadBank], V1);
     Str(ds287D[BodyBank], V2);
