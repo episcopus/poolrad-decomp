@@ -421,14 +421,14 @@ var
     WriteCharsAt maps the text colour through it when VideoAdapter is 0 (0802:0086). }
   ds25D5: array[0..15] of Byte;   { four-colour map of the text colours; see above }
   { EGA plane masks for DrawGlyph mode 1 (0709:03C0): selected through Port[$3C5] by
-    3 - Bit; adjacent to ds25CD. }
-  ds25C9: array[0..3] of Byte;
+    3 - Bit; adjacent to GlyphColorPatterns. }
+  EgaPlaneMasks: array[0..3] of Byte;
   { Per-colour words DrawGlyph mode 0 ORs into the pixel accumulator (0709:02A3):
     indexed by the mapped colour 0..3; adjacent to ds25D5. }
-  ds25CD: array[0..3] of Word;
+  GlyphColorPatterns: array[0..3] of Word;
   { Per-column words DrawGlyph mode 0 ANDs with the colour word (0709:02B0):
     indexed by the bit column 0..7. }
-  ds25E5: array[0..7] of Word;
+  GlyphPixelMasks: array[0..7] of Word;
   ds49CE: Word;                   { IOResult of the last FileExists file probe (0802:0334) }
   { Characters 0768's word scanner tests (0709:0822..08F0): the leading run is skipped,
     the word run stops at them or space, the trailing run is skipped. Storage descriptor

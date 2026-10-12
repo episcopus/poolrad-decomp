@@ -932,3 +932,24 @@ kind = "routine"
 why = "draws Count copies of the GameFont glyph Glyph from cell Col advancing right (0709:01DF): text-scanline words, EGA planar bytes, or graphics nibbles by VideoAdapter; called by CheckCodeWheel, ShowMessageLine path, DrawTextRun"
 date = "2026-10-12"
 
+[[rename]]
+old = "ds25C9"
+new = "EgaPlaneMasks"
+kind = "global"
+why = "DrawGlyph mode 1 writes ds25C9[3 - Bit] to the Sequencer Map Mask (port 3C5h) and gates the font byte on it AND Color (0709:03C0..03ED)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds25CD"
+new = "GlyphColorPatterns"
+kind = "global"
+why = "DrawGlyph mode 0 ANDs ds25CD[mapped colour] with the column mask to colour each set pixel of a text-scanline word (0709:02A3)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds25E5"
+new = "GlyphPixelMasks"
+kind = "global"
+why = "DrawGlyph mode 0 picks ds25E5[Bit] for pixel column Bit 0..7 of the 16-bit text-scanline word (0709:02B0)"
+date = "2026-10-12"
+

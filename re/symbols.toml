@@ -17132,9 +17132,9 @@ size = 1036
 name = "DrawGlyph"
 signature = "procedure DrawGlyph(Col, Row, Color, Count, Glyph, Cook: Byte)"
 c_name = "res06_fn_01DF"
-level = "none"
+level = "L2"
 justification = ""
-notes = "renamed from res06_fn_01DF (draws Count copies of the GameFont glyph Glyph from cell Col advancing right (0709:01DF): text-scanline words, EGA planar bytes, or graphics nibbles by VideoAdapter; called by CheckCodeWheel, ShowMessageLine path, DrawTextRun); auto:near_call; BLOCKED dec-1 2026-10-12 after 5 match attempts: full draft in scratch/DRAWGLYPH.DRAFT.PAS. Settled by evidence: 3-operand or-guard with GameFont=nil (or-chains flatten, all but last jump on true, Q55); Index:=Ord(UpCase(Chr(Glyph))) mod $40 with zero-codegen bridges (Q44/Q45; Glyph stays Byte because ovl02 passes Integer exprs, revisit at review); 2-D WordPlane store (Q41); inner loops are fors (Q39; long arms use je+jmp, short arms jne); outer loop is manual goto (for would double-assign I: the if/else I-init reuses al=1, lockstep-verified). Open: a $10 length gap downstream of 01FA (suspects: PByteArray les/add order, mode-1 Mem store order, plane if-chain); the if/else I-init applied but unverified; Unused byte local theory for the 18-byte frame"
+notes = "renamed from res06_fn_01DF (draws Count copies of the GameFont glyph Glyph from cell Col advancing right (0709:01DF): text-scanline words, EGA planar bytes, or graphics nibbles by VideoAdapter; called by CheckCodeWheel, ShowMessageLine path, DrawTextRun); auto:near_call; matched by dec-14 2026-10-12 from dec-1's draft: for I := 1 to Count, the font as a 2-D [Glyph, Row] byte array, '> 0' bit tests (jbe), Inc(DestOff, 40), Color shl 4, case Plane"
 evidence = ["prologue"]
 
 [[routine]]

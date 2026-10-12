@@ -35,6 +35,11 @@ type
     assembled 16-bit pixel row per scanline through it (2-D indexing keeps the $50 row
     stride the compiler multiplies by, proven by a make tpc probe). }
   TWordPlane = array[0..199, 0..39] of Word;
+  { The game font in the GameFont block: 8 bytes per glyph, one per pixel row, the top bit the
+    leftmost pixel. DrawGlyph indexes it [Glyph, Row] (2-D: the row is added after the glyph
+    offset, 0709:027C..028E). 177 glyphs fill the $588-byte block. }
+  TFont = array[0..176, 0..7] of Byte;
+  PFont = ^TFont;
 var
   { The EGA planes. The text and graphics views share the segments; they are the same
     memory RES09 maps as the VideoText/VideoGrf planes. }
@@ -132,12 +137,139 @@ begin
   Move(Block^, GameFont^, BlockSize);
   FreeMem(Block, BlockSize);
 end;
-{ 0709:01DF: retf 12: 12 bytes of parameters; 18 bytes of locals }
-{ BLOCKED (dec-1, 2026-10-12, 5 attempts): full DrawGlyph draft stashed in
-  scratch/DRAWGLYPH.DRAFT.PAS (head guard, UpCase/mod, for-loops, 2-D word planes
-  and Mem/graph writes all match through 01FA; pending: a $10 length gap downstream
-  plus the if/else I-init applied but unverified). See re/symbols.toml 0709:01DF notes. }
-{@stub} procedure DrawGlyph(Col, Row, Color, Count, Glyph, Cook: Byte); begin end;
+{ 0709:01DF. Draws Count copies of the GameFont glyph Glyph from cell Col rightwards on
+  text row Row in Color, one per outer iteration (Col advances). Cook nonzero cooks Glyph
+  through UpCase into 0..63, else the raw byte indexes the font. By VideoAdapter: 0 writes
+  the 8 font rows as byte-swapped 16-bit pixel rows to the two text-scanline planes
+  (even rows to $B800, odd rows to $BA00, 4 scanlines per text row); 1 writes the 8 font
+  bytes to the two EGA pages through the Sequencer Map Mask (masks from EgaPlaneMasks, colour
+  gating); 2 builds two colour nibbles per font-bit pair and writes them to all four
+  graphics planes (2 rows per text row, 4 bytes per column). Exits at once for
+  out-of-range cells, a nil GameFont, or Count 0. Glyph stays Byte in the
+  signature because ovl02 passes Integer expressions (changing it to Char would break its
+  four matched call sites); the Ord(Chr()) bridges compile to nothing (proven by tpc
+  probes) and are revisited when DrawGlyph itself is reviewed. Side effect: video memory.
+  Called by CheckCodeWheel, ovl03, ovl25, res06_fn_05EB, res06_fn_0626 and DrawTextRun. }
+procedure DrawGlyph(Col, Row, Color, Count, Glyph, Cook: Byte);
+const
+  MaxCol = $27;         { widest cell column }
+  MaxRow = $18;         { deepest text row }
+  CookedGlyphMod = $40; { cooked glyph index wraps into 0..63 }
+  TopBit = $80;         { starting font-bit mask }
+  GraphStride = $28;    { bytes per scanline in the 320-wide graphics plane }
+  MapMaskRestore = $0F; { Sequencer Map Mask value restored after mode 1 }
+var
+  I: Byte;              { outer copy counter, 1..Count }
+  Index: Byte;          { GameFont glyph index: Glyph raw, or cooked }
+  DestOff: Word;        { dest scanline (mode 0) or pixel offset (mode 1); font row (mode 2) }
+  FontRow: Word;        { font row (mode 0); dest graph row (mode 2) }
+  ColBase: Word;        { A*4 byte column base (mode 2) }
+  Acc: Word;            { assembled 16-bit pixel row (mode 0) }
+  Pix: Byte;            { two colour nibbles (mode 2) }
+  Bit: Byte;            { bit/column counter: 0..7 (mode 0) or 0..3 }
+  Mask: Byte;           { font bit mask, $80 shrank per bit (modes 0 and 2) }
+  Plane: Byte;          { graphics plane 0..3 (mode 2) }
+  Line: Byte;           { row counter: 0..3 (mode 0), 0..7 (mode 1), 0..1 (mode 2) }
+  Unused: Byte;         { never referenced; the original frame has this byte before the for limit }
+begin
+  if (Col > MaxCol) or (Row > MaxRow) or (GameFont = nil) then Exit;
+  if Cook <> 0 then
+    Index := Ord(UpCase(Chr(Glyph))) mod CookedGlyphMod
+  else
+    Index := Glyph;
+  for I := 1 to Count do
+  begin
+  case VideoAdapter of
+      0:
+        begin
+          Color := ds25D5[Color];
+          DestOff := Row * 4;
+          FontRow := 0;
+          for Line := 0 to 3 do
+          begin
+            Acc := 0;
+            Mask := TopBit;
+            for Bit := 0 to 7 do
+            begin
+              if PFont(GameFont)^[Index, FontRow] and Mask > 0 then
+                Acc := Acc or (GlyphPixelMasks[Bit] and GlyphColorPatterns[Color]);
+              Mask := Mask shr 1;
+            end;
+            WordPlane0[DestOff, Col] := Swap(Acc);
+            Inc(FontRow);
+            Acc := 0;
+            Mask := TopBit;
+            for Bit := 0 to 7 do
+            begin
+              if PFont(GameFont)^[Index, FontRow] and Mask > 0 then
+                Acc := Acc or (GlyphPixelMasks[Bit] and GlyphColorPatterns[Color]);
+              Mask := Mask shr 1;
+            end;
+            WordPlane1[DestOff, Col] := Swap(Acc);
+            Inc(FontRow);
+            Inc(DestOff);
+          end;
+        end;
+      1:
+        begin
+          DestOff := Row * 8 * GraphStride + Col;
+          Port[$3C4] := 2;
+          for Line := 0 to 7 do
+          begin
+            for Bit := 0 to 3 do
+            begin
+              Port[$3C5] := EgaPlaneMasks[3 - Bit];
+              if (EgaPlaneMasks[3 - Bit] and Color) > 0 then
+              begin
+                Mem[ds4A16:DestOff] := PFont(GameFont)^[Index, Line];
+                Mem[ds4A18:DestOff] := PFont(GameFont)^[Index, Line];
+              end
+              else
+              begin
+                Mem[ds4A16:DestOff] := 0;
+                Mem[ds4A18:DestOff] := 0;
+              end;
+            end;
+            Inc(DestOff, GraphStride);
+          end;
+          Port[$3C5] := MapMaskRestore;
+        end;
+      2:
+        begin
+          DestOff := 0;
+          FontRow := Row * 2;
+          ColBase := Col * 4;
+          for Line := 0 to 1 do
+          begin
+            for Plane := 0 to 3 do
+            begin
+              Mask := TopBit;
+              for Bit := 0 to 3 do
+              begin
+                if PFont(GameFont)^[Index, DestOff] and Mask > 0 then
+                  Pix := Color shl 4
+                else
+                  Pix := 0;
+                Mask := Mask shr 1;
+                if PFont(GameFont)^[Index, DestOff] and Mask > 0 then
+                  Pix := Pix or Color;
+                Mask := Mask shr 1;
+                case Plane of
+                  0: GraphPlane0[FontRow, Bit + ColBase] := Pix;
+                  1: GraphPlane1[FontRow, Bit + ColBase] := Pix;
+                  2: GraphPlane2[FontRow, Bit + ColBase] := Pix;
+                  3: GraphPlane3[FontRow, Bit + ColBase] := Pix;
+                end;
+              end;
+              Inc(DestOff);
+            end;
+            Inc(FontRow);
+          end;
+        end;
+    end;
+    Inc(Col);
+  end;
+end;
 { 0709:05EB: retf 8: 8 bytes of parameters; 0 bytes of locals }
 { 0709:05EB. Clears (or fills) Width cells of a row: when the column Width is in 0..$27 and the
   row B is in 0..$18 it calls DrawGlyph(Width, B, Row, A, $20, 1). BLOCKED (dec-5,

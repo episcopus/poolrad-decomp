@@ -509,3 +509,18 @@ evidence = "ShowPagedText current glyph row (0709:0768): reset to Top on clear, 
 offset = 0x0D16
 name = "BreakChars"
 evidence = "char set ShowPagedText word scan tests (0709:0822..08F0, set of 32..63 per the 0D12 descriptor, proven by tpc probe Q32); image value members $, %, &, 2, 3, 7, ="
+
+[[global]]
+offset = 0x25C9
+name = "EgaPlaneMasks"
+evidence = "DrawGlyph mode 1 writes ds25C9[3 - Bit] to the Sequencer Map Mask (port 3C5h) and gates the font byte on it AND Color (0709:03C0..03ED)"
+
+[[global]]
+offset = 0x25CD
+name = "GlyphColorPatterns"
+evidence = "DrawGlyph mode 0 ANDs ds25CD[mapped colour] with the column mask to colour each set pixel of a text-scanline word (0709:02A3)"
+
+[[global]]
+offset = 0x25E5
+name = "GlyphPixelMasks"
+evidence = "DrawGlyph mode 0 picks ds25E5[Bit] for pixel column Bit 0..7 of the 16-bit text-scanline word (0709:02B0)"
