@@ -45,7 +45,7 @@ Locks (agents at work): `make locks`. Next unit: `make next`.
 |---|---:|
 | Units | 50 |
 | Routines | 1487 |
-| Routines with non-provisional names | 151 |
+| Routines with non-provisional names | 153 |
 | RTL-prefixed routine names | 54 |
 | Unit code_bytes (declared) | 245081 |
 | Sum of routine sizes | 244057 |
