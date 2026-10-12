@@ -361,7 +361,7 @@ Operand encoding (type byte, then low, then high when type is 1/2/3) matches coa
 
 #### 4.2.3 EGA pictures **[V]** (`tools/re/pic.py verify`: 54 files, 778 blocks)
 
-Picture-bearing archives: `TITLE`, `PIC1-8`, `CPIC1-8`, `SPRIT1-8`, `HEAD1-8`, `BODY1-8`, `CHEAD`, `CBODY`, `COMSPR`, `ICON`, `8X8D1-8`, `FINAL5`. Pixel records match coab `DaxBlock` **[H]** and the fields `Load24x24Set` reads at `ovl32:008C` (height at +0, `item_count` at +8, bytes-per-picture at +0x11) **[V]**:
+Picture-bearing archives: `TITLE`, `PIC1-8`, `CPIC1-8`, `SPRIT1-8`, `HEAD1-8`, `BODY1-8`, `CHEAD`, `CBODY`, `COMSPR`, `ICON`, `8X8D1-8`, `FINAL5`. Pixel records match coab `DaxBlock` **[H]**. `Load24x24Set` reads the item count at +8 and the word at +$11 (`ovl32:008C`) **[V]**; `DrawIcon` reads the height at +0 and the width at +2 when it allocates a copy **[V]**:
 
 ```
 u16  height
@@ -375,6 +375,8 @@ u8   pixels[item_count * height * width_cols * 4]
 ```
 
 Record size is always `17 + item_count * height * width_cols * 4` **[V]** (all non-font blocks above). `TITLE` blocks are 320x200 (`height=200`, `width_cols=40`); `CPIC`/`COMSPR`/`ICON` combat icons are 24x24; `HEAD`/`BODY` are 40x88 and 48x88 **[V]**.
+
+**Loading a set** **[V]** (`Load24x24Set`, `ovl32:0022`): the set name is a string parameter. An index above 127 prints `Start range error in Load24x24Set` and calls `QuitGame`. Otherwise `res07_fn_0111` loads the set, and when the pointer at DS:5E52 is not nil the routine copies `item_count` times the word at +$11 bytes from the loaded picture's tail into that pointer, starting at index times the same word. The loaded picture is then freed. Callers in ovl03 and ovl10 also push 40, 24 or 5; the routine does not read that byte.
 
 **Drawing one cell** **[V]** (`DrawCellPicture`, `ovl32:00F1`): a picture code above 127 is drawn from the pointer at DS:5E56 with bit 7 cleared; a code of 127 or less is drawn from DS:5E52. Both calls pass flags 0 and the destination pointer at DS:4A20 to `res07_fn_08D4`. The fourth argument is never read.
 

@@ -3,13 +3,13 @@ unit OVL32;
   code at a cell of the view; Load24x24Set loads the CHEAD, CBODY, COMSPR and ICON sets. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
-procedure Load24x24Set;
+procedure Load24x24Set(SetName: string; Index, Unused: Byte);
 procedure DrawCellPicture(PicCol, PicRow: Shortint; PicCode, Unused: Byte);
 procedure FreePictureSlot(Slot: Byte);
 procedure ovl32_e4;
 procedure DrawIcon(CellCol, CellRow: Shortint; IconSet, Mirror, PicIndex: Byte);
 implementation
-uses POOLVARS, RES07;
+uses POOLVARS, RES04, RES07;
 
 const
   PicIndexMask = $7F;         { bit 7 of the picture code selects the source pointer }
@@ -24,19 +24,43 @@ const
 
 type
   PMemPic = ^TMemPic;
-  { In-memory picture. Height and width are the words at +0 and +2. ByteSize, the pixel
-    pointer and the copied tail sit at +$11, +$13 and +$17; the 13 bytes between width and
-    ByteSize are not read here. }
+  { In-memory picture. Height and width are the words at +0 and +2, the item count is the
+    byte at +8, and ByteSize, the pixel pointer and the copied tail sit at +$11, +$13 and +$17.
+    Tail is indexed by a byte times ByteSize; the array bound is only there so the index compiles. }
   TMemPic = record
     Height, WidthCols: Word;
-    BeforeSize: array[0..12] of Byte;
+    BeforeCount: array[0..3] of Byte;
+    ItemCount: Byte;
+    AfterCount: array[0..7] of Byte;
     ByteSize: Word;
     Pixels: ^Byte;
-    Tail: Byte;
+    Tail: array[0..20000] of Byte;
   end;
 
-{ ovl32:0022: retf 8: 8 bytes of parameters; 264 bytes of locals }
-{@stub} procedure Load24x24Set; begin end;
+{ ovl32:0022. Loads the picture set SetName and, when ds5E52 is not nil, copies one picture's
+  bytes into it at Index times the picture's byte size. Index above 127 prints
+  "Start range error in Load24x24Set" and leaves through QuitGame. Callers in ovl03 and ovl10
+  pass 40, 24 or 5 as Unused; this routine never reads it. }
+procedure Load24x24Set(SetName: string; Index, Unused: Byte);
+var
+  Loaded: Pointer;
+  CopyBytes, DestOfs: Word;
+begin
+  if Index > PicIndexMask then
+  begin
+    res07_fn_00FF;
+    WriteLn('Start range error in Load24x24Set');
+    QuitGame;
+  end;
+  Loaded := nil;
+  res07_fn_0111(SetName, 1, 0, 0, @Loaded);
+  CopyBytes := PMemPic(Loaded)^.ItemCount * PMemPic(Loaded)^.ByteSize;
+  DestOfs := Index * PMemPic(Loaded)^.ByteSize;
+  if ds5E52 <> nil then
+    Move(PMemPic(Loaded)^.Tail, PMemPic(ds5E52)^.Tail[DestOfs], CopyBytes);
+  res07_fn_2595(Loaded);
+  FlushKeyboard;
+end;
 
 { ovl32:00F1. Draws the picture PicCode at cell (PicCol, PicRow). When PicCode is above
   PicIndexMask, bit 7 is cleared and the source is ds5E56; otherwise the source is ds5E52
