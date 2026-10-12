@@ -260,3 +260,10 @@ kind = "global"
 why = "far pointer passed to res07_fn_08D4 as the destination buffer (ovl34:0241,0245); StartGame allocates it at ovl11:00BC"
 date = "2026-10-11"
 
+[[rename]]
+old = "ovl01_fn_0000"
+new = "WaitKeyOrTimeout"
+kind = "routine"
+why = "waits until the res06_fn_0C3F tick count passes Start plus 100 times Pause, or a key is pressed, then drains keys with FlushKeyboard; called with 10 by the credits and 5 by the title sequence"
+date = "2026-10-11"
+
