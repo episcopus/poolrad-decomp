@@ -11,7 +11,7 @@ procedure res07_fn_0111;
 procedure res07_fn_02A5;
 procedure res07_fn_066F;
 procedure res07_fn_0710;
-procedure res07_fn_08D4;
+procedure res07_fn_08D4(Col, Row: Integer; PicIndex, Flags: Byte; Source, Dest: Pointer);
 procedure res07_fn_0A33;
 procedure res07_fn_0C0C;
 procedure res07_fn_0D6C;
@@ -59,8 +59,9 @@ implementation
 {@stub} procedure res07_fn_066F; begin end;
 { 0464:0710: retf 14: 14 bytes of parameters; 0 bytes of locals }
 {@stub} procedure res07_fn_0710; begin end;
-{ 0464:08D4: frame not read }
-{@stub} procedure res07_fn_08D4; begin end;
+{ 0464:08D4: retf 16: two Integers, two Bytes, two Pointers. DrawCellPicture passes the cell,
+  the picture index, flags 0, a picture pointer and ds4A20. }
+{@stub} procedure res07_fn_08D4(Col, Row: Integer; PicIndex, Flags: Byte; Source, Dest: Pointer); begin end;
 { 0464:0A33: frame not read }
 {@stub} procedure res07_fn_0A33; begin end;
 { 0464:0C0C: frame not read }

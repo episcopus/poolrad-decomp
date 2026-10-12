@@ -204,3 +204,10 @@ kind = "global"
 why = "ClearWindow (03F1:0137) dispatches on it: 0 fills scanline planes, 1 writes text cells, 2 fills four planes; the video hardware the game drives (POOL.CFG offers EGA/CGA/Tandy, mapping still open)"
 date = "2026-10-11"
 
+[[rename]]
+old = "ovl32_e2"
+new = "DrawCellPicture"
+kind = "routine"
+why = "draws picture PicCode at cell (PicCol, PicRow) through res07_fn_08D4; bit 7 selects the source pointer (ovl32:00F1, matched). DrawAreaView calls it for each area block"
+date = "2026-10-11"
+

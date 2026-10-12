@@ -14296,12 +14296,12 @@ id = "ovl32:00F1"
 unit = "ovl32"
 addr = "ovl32:00F1"
 size = 93
-name = "ovl32_e2"
-signature = "procedure ovl32_e2(PicCol, PicRow: Shortint; PicCode, Unused: Byte)"
+name = "DrawCellPicture"
+signature = "procedure DrawCellPicture(PicCol, PicRow: Shortint; PicCode, Unused: Byte)"
 c_name = "ovl32_e2"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_2; signature from the pushes of DrawAreaView (ovl27:0000: bytes, words; cbw in the callee), ovl31_fn_0127/ovl31_e7 pass 3*(a+b) words; the callee reads only [+8] (bit 7 flags, low 7 the picture), [+0xa], [+0xc], never [+6]"
+notes = "renamed from ovl32_e2 (draws picture PicCode at cell (PicCol, PicRow) through res07_fn_08D4; bit 7 selects the source pointer (ovl32:00F1, matched). DrawAreaView calls it for each area block); auto:entry_2; signature from the pushes of DrawAreaView (ovl27:0000: bytes, words; cbw in the callee), ovl31_fn_0127/ovl31_e7 pass 3*(a+b) words; the callee reads only [+8] (bit 7 flags, low 7 the picture), [+0xa], [+0xc], never [+6]"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16911,7 +16911,7 @@ unit = "res07"
 addr = "0464:08D4"
 size = 351
 name = "res07_fn_08D4"
-signature = ""
+signature = "procedure res07_fn_08D4(Col, Row: Integer; PicIndex, Flags: Byte; Source, Dest: Pointer)"
 c_name = "res07_fn_08D4"
 level = "none"
 justification = ""

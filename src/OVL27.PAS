@@ -37,18 +37,18 @@ const
   into the 3D view window: the block code comes from the area map (AreaMap, minus one), except
   where one of the nine fixed positions (SpecialBlocks) matches and the game variables allow its
   own code; every entry of that table has its own condition, entry 6 always applies. Each block
-  is one picture drawn by ovl32_e2 at the cell position (BaseCol, BaseRow). Callers: ShowAreaView
+  is one picture drawn by DrawCellPicture at the cell position (BaseCol, BaseRow). Callers: ShowAreaView
   passes the position of the party minus 2 (the party block sits at the centre of the grid),
   clamped to columns 0..39 and rows 0..31; ovl18_e2 passes (17, 15).
   Parameters: LeftCol and TopRow are the map column and row of the top-left block.
   Globals: reads AreaMap, SpecialBlocks and the words of GameVars^ named above. Side effects:
-  the 3D view part of the screen, through ovl32_e2. }
+  the 3D view part of the screen, through DrawCellPicture. }
 procedure DrawAreaView(LeftCol, TopRow: Integer);
 var
   BaseCol, BaseRow: Shortint;    { where in the view window the current block goes, in cells }
   Special: 1..9;                  { index into SpecialBlocks while looking for an override }
   TileCol, TileRow: Shortint;    { position of the current block on the area map }
-  Count: Byte;                    { the block code ovl32_e2 draws }
+  Count: Byte;                    { the block code DrawCellPicture draws }
   GridCol, GridRow: Byte;         { position within the 5x5 view grid }
 begin
   BaseRow := 0;
@@ -77,9 +77,9 @@ begin
           end
         end;
       { QUIRK ovl27:01CC: the original adds and subtracts 1 from both coordinates, which changes
-        nothing; kept for a byte-exact match. The fourth argument is always 1 here and ovl32_e2
+        nothing; kept for a byte-exact match. The fourth argument is always 1 here and DrawCellPicture
         never reads it. }
-      ovl32_e2(BaseCol + 1 - 1, BaseRow + 1 - 1, Count, 1);
+      DrawCellPicture(BaseCol + 1 - 1, BaseRow + 1 - 1, Count, 1);
       Inc(BaseCol, BlockCells);
     end;
     Inc(BaseRow, BlockCells);

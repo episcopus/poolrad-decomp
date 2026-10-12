@@ -47,7 +47,7 @@ var
   SpecialBlocks: array[0..9] of TSpecialBlock;  { fixed area blocks; entries 1..9 (0 never read) }
   ds2612: Word;                   { word passed to res03_fn_00DC by QuitGame and the Ctrl-S pause path; meaning unknown }
   AreaMap: array[0..35, 0..43] of Byte;  { the area map: one block code per 3x3-tile block, one more
-                                          than the code ovl32_e2 draws; byte 0x4E (the letter N)
+                                          than the code DrawCellPicture draws; byte 0x4E (the letter N)
                                           where no block is drawn (all of rows 34 and 35 in the
                                           shipped image). Read by DrawAreaView, ovl10 and ovl14. }
   { The base column of the map window page, indexed by AreaViewKind: entries 2..4 hold 0, 13 and
@@ -78,10 +78,13 @@ var
   SavedVideoMode: Byte;           { video mode QuitGame passes to INT 10h; no writer is in the decompiled units }
   VideoAdapter: Byte;                   { video mode flag read by ClearWindow (03F1:0137): 0 fills the EGA planes,
                                     1 draws through res06_fn_00B7, 2 fills four planes; meaning unknown }
+  ds4A20: Pointer;                { far pointer DrawCellPicture passes to res07_fn_08D4; what it points at is unknown }
   SoundMode: Byte;                { sound setting; 2 while a Ctrl-S pause is in effect (ReadGameKey) }
   SoundModeBeforePause: Byte;     { SoundMode saved by a Ctrl-S pause; copied back only when it is 0 or 1 }
   { True ends HeapErrorHandler's retry loop: it is read after ovl17_e9 runs (ovl00:0075),
     and who sets it is not shown until ovl17 is decompiled. }
   ds557D: Boolean;                { heap error retry gate; see above }
+  ds5E52: Pointer;                { picture pointer DrawCellPicture uses when PicCode is at most 127 }
+  ds5E56: Pointer;                { picture pointer DrawCellPicture uses when bit 7 of PicCode is set }
 implementation
 end.

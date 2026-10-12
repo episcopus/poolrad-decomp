@@ -444,7 +444,7 @@ Each section will cover: purpose, units and routines, data, algorithm, quirks, e
 ### 5.2 The area view: wilderness blocks and the adventure screen **[V]** (`make match UNIT=ovl27`, `src/OVL27.PAS`)
 
 The wilderness around Phlan is drawn as a 5x5 grid of area blocks. Every block covers 3x3 map
-tiles and is one picture, drawn by `ovl32_e2` (`ovl32:00F1`) at a cell position of the 3D view
+tiles and is one picture, drawn by `DrawCellPicture` (`ovl32:00F1`) at a cell position of the 3D view
 window; the block at map position (column, row) comes from the area map and can be overridden by
 a fixed table entry while the game variables allow it (`DrawAreaView`, `ovl27:0000`).
 
@@ -481,7 +481,7 @@ a fixed table entry while the game variables allow it (`DrawAreaView`, `ovl27:00
   640x200 screen **[V]** (the multiplies in `ClearWindow`).
 - QUIRK `ovl27:01CC`: `DrawAreaView` passes both cell coordinates as `BaseCol + 1 - 1` (and the
   same for the row): the additions cancel; the compiler must emit them to match the bytes. The
-  fourth argument of `ovl32_e2` is always 1 here (0 from `ovl31`) and the callee never reads it
+  fourth argument of `DrawCellPicture` is always 1 here (0 from `ovl31`) and the callee never reads it
   **[V]**.
 
 #### 5.2.1 The area view dispatcher and the party marker **[V]** (`make match UNIT=ovl26`, `src/OVL26.PAS`)

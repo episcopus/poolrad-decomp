@@ -1,22 +1,34 @@
 unit OVL32;
-{ PicLoad: overlay unit, 1605 bytes of code. Skeleton by tools/match/skeleton.py: every routine is a stub
-  until decompiled (playbook 30). }
+{ PicLoad: picture sets and the block blit (whitepaper 4.2.3). DrawCellPicture draws one picture
+  code at a cell of the view; Load24x24Set loads the CHEAD, CBODY, COMSPR and ICON sets. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 procedure Load24x24Set;
-procedure ovl32_e2(PicCol, PicRow: Shortint; PicCode, Unused: Byte);
+procedure DrawCellPicture(PicCol, PicRow: Shortint; PicCode, Unused: Byte);
 procedure ovl32_e3;
 procedure ovl32_e4;
 procedure ovl32_e5(A, B: ShortInt; C, D, E: Byte);
 implementation
+uses POOLVARS, RES07;
+
+const
+  PicIndexMask = $7F;         { bit 7 of the picture code selects the source pointer }
+  NoBlitFlags = 0;            { the flags byte this routine passes to the blitter }
 
 { ovl32:0022: retf 8: 8 bytes of parameters; 264 bytes of locals }
 {@stub} procedure Load24x24Set; begin end;
-{ ovl32:00F1: retf 8: 8 bytes of parameters; 0 bytes of locals }
-{ Draws the picture of code PicCode (bit 7 is a flag the blitter sees, the low 7 bits pick the
-  picture) at cell position (PicCol, PicRow) of the 3D view window; Unused is never read by the
-  callee (1 from DrawAreaView, 0 from ovl31). Signature from the pushes of the callers and the code of the callee. }
-{@stub} procedure ovl32_e2(PicCol, PicRow: Shortint; PicCode, Unused: Byte); begin end;
+
+{ ovl32:00F1. Draws the picture PicCode at cell (PicCol, PicRow). When PicCode is above
+  PicIndexMask, bit 7 is cleared and the source is ds5E56; otherwise the source is ds5E52
+  and the code is passed whole. Both paths pass NoBlitFlags and the destination ds4A20 to
+  res07_fn_08D4. Unused is never read (DrawAreaView passes 1, ovl31 passes 0). }
+procedure DrawCellPicture(PicCol, PicRow: Shortint; PicCode, Unused: Byte);
+begin
+  if PicCode > PicIndexMask then
+    res07_fn_08D4(PicCol, PicRow, PicCode and PicIndexMask, NoBlitFlags, ds5E56, ds4A20)
+  else
+    res07_fn_08D4(PicCol, PicRow, PicCode, NoBlitFlags, ds5E52, ds4A20);
+end;
 { ovl32:014E: retf 2: 2 bytes of parameters; 2 bytes of locals }
 {@stub} procedure ovl32_e3; begin end;
 { ovl32:01C8: retf 8: 8 bytes of parameters; 1028 bytes of locals }
