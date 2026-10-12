@@ -703,7 +703,7 @@ The parts proven so far:
 
 ---
 
-### 5.17 The ending narrative and door animation ovl18 **[V]** (`src/OVL18.PAS`, `make match UNIT=ovl18`: 2 of 3 routines at L2)
+### 5.17 The ending narrative and door animation ovl18 **[V]** (`src/OVL18.PAS`, `make match UNIT=ovl18`: complete, every routine at L2)
 
 Overlay 18 (PoolNarrative) plays the game's ending and animates the area view doors:
 
@@ -711,7 +711,7 @@ Overlay 18 (PoolNarrative) plays the game's ending and animates the area view do
   Tyranthraxus and Bane speech as lines of text at column 1, rows $11 onwards, colour 10
   (`res06_fn_0626(1, Row, 10, Text)`) and loads and draws the `FINAL<number>` pictures (the number is
   `Str(TileSet)` in DS:4713) through `res07_fn_0111` and `res07_fn_0D71`, running the animation
-  `ovl18_fn_0006(3, 5, 2, x)`, `(3, 1, 7, x)` and `(3, 1, 8, 1)` between the speech blocks. It saves
+  `AnimateFinalPicture(3, 5, 2, x)`, `(3, 1, 7, x)` and `(3, 1, 8, 1)` between the speech blocks. It saves
   the view mode DS:49F3 in DS:4712, sets 7 and restores it.
 - `AnimateAreaDoors` (`ovl18:06B3`, called by `ovl03:31B4` and `ovl17:1602`) draws or clears the doors
   of the area view: it calls `res07_fn_1E5C(@ds091D, @ds092D, code, 1, bank)` for each entry of
@@ -719,8 +719,14 @@ Overlay 18 (PoolNarrative) plays the game's ending and animates the area view do
   selects the second SQRPACI bank DS:5E56 instead of DS:5E52 and the low 7 bits are the picture
   number, and it steps the view with `DrawAreaView(DS:094D[I], DS:095F[I])` over 9 steps.
 
-Still to decompile: `ovl18_fn_0006` (`ovl18:0006`), the timed animation, blocked with its mapped
-structure in the `re/symbols.toml` notes.
+- `AnimateFinalPicture` (`ovl18:0006`, called by `ShowEndingNarrative`) **[V]** (`make match
+  UNIT=ovl18 FN=AnimateFinalPicture`) loads the `FINAL<TileSet>` frames of one bank through
+  `ovl28_e2('FINAL', Bank, 2, List)` and shows them `Cycles` times: each frame is drawn with
+  `DrawSprite(Col, Row, 1, sprite)` and held for that slot's 4 data bytes, read as a LongInt
+  delay scaled by (`ds49E2` + 3) ticks of the `res06_fn_0C3F` timer, before stepping to the next
+  frame. The frame cursor is the sprite list's `Flag` field (the loader sets it to 1, `ovl28:01D6`);
+  `Count` is compared as a byte here (`ovl18:00E1` uses a byte `cmp`/`jbe`) although `TSpriteList`
+  declares it `ShortInt`, so the source casts it with `Byte()`.
 
 ---
 

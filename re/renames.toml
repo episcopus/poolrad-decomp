@@ -659,3 +659,10 @@ kind = "routine"
 why = "ovl28:00A2 (matched): loads block Bank of <Name><TileSet>.dax through LoadDaxBlock into the sprite list it is given, allocating each picture with res07_fn_248E and decoding it with res07_fn_02A5"
 date = "2026-10-11"
 
+[[rename]]
+old = "ovl18_fn_0006"
+new = "AnimateFinalPicture"
+kind = "routine"
+why = "ovl18:0006 loads the FINAL picture frames through ovl28_e2 and cycles them on screen between the ending-narrative speech blocks (called 3 times by ShowEndingNarrative with Col, Row, Bank, Cycles); the loop draws each frame through DrawSprite and waits its data delay in res06_fn_0C3F ticks"
+date = "2026-10-11"
+
