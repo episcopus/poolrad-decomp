@@ -13719,12 +13719,12 @@ id = "ovl30:0422"
 unit = "ovl30"
 addr = "ovl30:0422"
 size = 345
-name = "ovl30_e5"
-signature = "function ovl30_e5(X1, Y1: ShortInt; var Ex, Ey: ShortInt; var StepCount: Word; Map: Pointer): Boolean"
+name = "WalkLine"
+signature = "function WalkLine(X1, Y1: ShortInt; var Ex, Ey: ShortInt; var StepCount: Word; Map: PMapRows): Boolean"
 c_name = "ovl30_e5"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call; BLOCKED (dec-5, 2026-10-12): the line walk, 345 bytes, retf 20, frame 58 (result bp-1, TLineState Line at bp-0x1b, TLineState Bound at bp-0x35, Flag bp-0x36, StepDone bp-0x37, Limit bp-0x39 with a one-byte gap at bp-0x38). Params (bp+6 up): Map (far byte map, stride 50, tile id at +7 of a cell, a flag at +6), Count (PWord), EndY, EndX (pointers whose target is read sign-extended and written as a byte), StartY, StartX (ShortInt). Prologue drafted and matching to ovl30:0473: Limit := 2*Count^+1; Line gets the endpoints, SetupLine(@Line); Bound := (0, ds2745[Map^[StartY*50+StartX+7], 0]) to (Max(Line.DX, Line.DY), same Y), SetupLine(@Bound); then a loop that steps Bound then Line (StepLine(@Bound) result stored to a dead local, QUIRK ovl30:0544) and stops on (Map^[6]=0 and ds2745[Map^[Line.Y*50+Line.X+7], 1] > Bound.Y) or Line.First > Limit, writing EndX^/EndY^/Count^ and returning False, else returning True after Count^ := Line.First. Blocked on the ds2745 index codegen: the original computes Map+StartY*50+StartX with two separate adds to DI and folds +7 into [di+7] (add di,ax; add di,cx; mov al,es:[di+7]), which a flat PByteArray subscript (PByteArray^[StartY*50+StartX+7], any grouping) does not reproduce (it sums StartY*50+StartX into AX then add di,ax; add ax,7), and a 2D array subscript computes the column as StartX+7 (add ax,7). Likely the source indexes a 2D cell array and reads a record field at +7, but the same pointer is also read flat as Map^[6], so the exact construct is unresolved. ds2745 is an unknown 4-byte-stride table (ds2745[k*4] and ds2746[k*4])."
+notes = "renamed from ovl30_e5 (walks a Bresenham line over the map rows with tile gating (stops False at blocking tiles or past Limit steps, else True with steps in StepCount); called for line-of-sight by ovl09/ovl12/ovl13 and ScanTargets); auto:near_call; UNBLOCKED (dec-1, 2026-10-12): matched at L2. The map is an array of 50-byte rows (TMapRow: 7 header bytes, 43 tile cells); a far 2D subscript keeps the low-bound adjust as a memory displacement, so Map^[Y].Cells[X] gives the two adds plus [di+7] (make tpc probes Q8/Q9). The mid-loop fail exits are Result := False; Exit inside repeat/until-Flag (Exit jumps to the epilogue including the result fetch, probe Q10). ds2745 is array[0..255] of 4-byte tile records (field 0 feeds Bound.Y, field 1 gates against Bound.Y). The bp-0x38 gap is an automatic pad before the Limit word in a function frame (probe Q11)."
 evidence = ["prologue"]
 
 [[routine]]
@@ -13761,7 +13761,7 @@ size = 5
 name = "ovl30_init"
 signature = ""
 c_name = "ovl30_init"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_0"
 evidence = ["prologue"]

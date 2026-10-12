@@ -149,6 +149,23 @@ type
     Key: Byte;                     { +1: the first sort key }
     Val: Byte;                     { +2: the second sort key }
   end;
+  { One row of WalkLine's map (whitepaper 5.x): a 7-byte header and 43 tile cells; rows are 50
+    bytes. Head[6] = 0 enables the tile gate. QUIRK: callers may pass X above 42, reading past
+    Cells into the next row (no range checks). }
+  TMapRow = record
+    Head: array[0..6] of Byte;    { +$0..$6: the header; see above }
+    Cells: array[0..42] of Byte;  { +$7..$31: the tile ids }
+  end;
+  TMapRows = array[0..24] of TMapRow;  { the map: row per Y; extent unverified }
+  PMapRows = ^TMapRows;
+  { One entry of the DS:2745 tile table WalkLine reads (whitepaper 5.x): 4 bytes per tile id;
+    BoundY feeds the Bound line endpoints, BlockY gates the walk against Bound.Y. }
+  TTileEntry = record
+    BoundY: Byte;                 { +0: the walk base height of the tile }
+    BlockY: Byte;                 { +1: blocks the walk while above Bound.Y }
+    B2: Byte;                     { +2: never read by WalkLine; meaning unknown }
+    B3: Byte;                     { +3: never read by WalkLine; meaning unknown }
+  end;
   { One entry of the DS:5F27 map entity table ScanTargets scans: the position, an unknown byte and
     a kind byte; entry 0's Kind holds the count e6 loops over (like ds6718[0].Val). }
   TMapEntry = record
@@ -275,6 +292,7 @@ var
   ds25C0: array[0..2, 0..2] of Byte;  { the 3x3 line pattern table StepLine reads at [SY+1, SX+1] }
   ds2736: array[0..8] of ShortInt;  { the x step per direction; see above }
   ds273F: array[0..8] of ShortInt;  { the y step per direction; see above }
+  ds2745: array[0..255] of TTileEntry;  { the tile table WalkLine reads; see above }
   ds5F27: array[0..15] of TMapEntry;  { the map entity table e6 scans; extent unverified }
   ds6718: array[0..255] of TSortRec;  { the ovl30 sort table (element 0 holds the count, SortTable) }
   ds49ED: Word;                   { set to $9900 by the loader (ovl11:03C0) }

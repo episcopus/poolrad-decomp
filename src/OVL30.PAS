@@ -1,8 +1,9 @@
 unit OVL30;
 { ovl30: the line drawing unit (whitepaper 5.18). SignOf returns the sign of a value, SortTable
   sorts a 3-byte record table in place, SetupLine fills a Bresenham line state, StepLine advances
-  it one step and InDirArc tests whether a point lies in a compass direction's arc; the
-  remaining routines (ovl30_e5, ScanTargets) are not decompiled yet. }
+  it one step, WalkLine walks a line over the map rows with tile gating, InDirArc tests whether
+  a point lies in a compass direction's arc and ScanTargets collects the reachable map entities
+  sorted by distance. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 uses POOLVARS, OVL31;
@@ -10,8 +11,8 @@ function SignOf(N: Integer): Integer;
 procedure SortTable;
 procedure SetupLine(Line: PLineState);
 function StepLine(Line: PLineState): Boolean;
-function ovl30_e5(X1, Y1: ShortInt; var Ex, Ey: ShortInt; var StepCount: Word;
-  Map: Pointer): Boolean;
+function WalkLine(X1, Y1: ShortInt; var Ex, Ey: ShortInt; var StepCount: Word;
+  Map: PMapRows): Boolean;
 function InDirArc(FromX, FromY, ToX, ToY: ShortInt; Dir: Byte): Boolean;
 procedure ScanTargets(FromX, FromY: ShortInt; MaxSteps: Word; Dir, Base: Byte; Map: Pointer);
 implementation
@@ -59,7 +60,7 @@ end;
 { ovl30:01A0. Sets up the line drawing state Line from its two endpoints: it clears the stepped
   flag, computes DX = |X2 - X1| and DY = |Y2 - Y1|, the x and y step directions through SignOf, the
   current position (X1, Y1) and the three Bresenham steps (the larger of DX and DY drives them).
-  Called by ovl22_fn_295B, ovl30_e5 and res12_fn_1A29. }
+  Called by ovl22_fn_295B, WalkLine and res12_fn_1A29. }
 procedure SetupLine(Line: PLineState);
 begin
   with Line^ do
@@ -89,7 +90,7 @@ end;
   walks X towards X2 (and, while D1 >= 0, Y towards Y2 by SY), else it walks Y towards Y2 (and,
   while D1 >= 0, X towards X2 by SX); the smaller axis moves on the sign of D1 and First advances
   by 2 or 3, and the direction taken picks the Pattern byte from the 3x3 table ds25C0 at
-  3*(StepY+1) + (StepX+1). Called by ovl22_fn_295B, ovl30_e5 and res12_fn_1A29. }
+  3*(StepY+1) + (StepX+1). Called by ovl22_fn_295B, WalkLine and res12_fn_1A29. }
 function StepLine(Line: PLineState): Boolean;
 var
   StepX, StepY: ShortInt;         { the x and y direction of this step, -1, 0 or 1 }
@@ -151,8 +152,52 @@ end;
   First > Limit), but the ds2745 index codegen does not reproduce: the original adds Map + StartY*50
   + StartX with two separate adds to DI and folds +7 into [di+7], which a flat byte subscript does
   not. See the note in re/symbols.toml. }
-{@stub} function ovl30_e5(X1, Y1: ShortInt; var Ex, Ey: ShortInt; var StepCount: Word;
-  Map: Pointer): Boolean; begin end;
+{ ovl30:0422. Walks a Bresenham line from (X1, Y1) towards (Ex, Ey) over the Map rows and
+  reports the steps in StepCount: it sets up Line from the endpoints and a horizontal Bound
+  line from the start tile's table height, then steps Bound and Line together, stopping with
+  False at a blocking tile (the tile gate) or past Limit steps, else with True. Ex, Ey and
+  StepCount carry the end point and the steps used. Called by ovl09_fn_0B96, ovl12_e70,
+  ovl13_fn_2DFA and ScanTargets. }
+function WalkLine(X1, Y1: ShortInt; var Ex, Ey: ShortInt; var StepCount: Word;
+  Map: PMapRows): Boolean;
+var
+  Line, Bound: TLineState;        { the walked line and the horizontal tile bound }
+  Flag: Boolean;                  { True once the line stepped }
+  StepDone: Boolean;              { the Bound step result, never read (QUIRK ovl30:0544) }
+  Limit: Word;                    { 2 * StepCount + 1: the First cutoff }
+begin
+  Limit := StepCount * 2 + 1;
+  Line.X1 := X1;
+  Line.Y1 := Y1;
+  Line.X2 := Ex;
+  Line.Y2 := Ey;
+  SetupLine(@Line);
+  Bound.X1 := 0;
+  Bound.Y1 := ds2745[Map^[Y1].Cells[X1]].BoundY;
+  if Line.DX > Line.DY then
+    Bound.X2 := Line.DX
+  else
+    Bound.X2 := Line.DY;
+  Bound.Y2 := ds2745[Map^[Y1].Cells[X1]].BoundY;
+  SetupLine(@Bound);
+  Flag := False;
+  repeat
+    if ((Map^[0].Head[6] = 0) and
+        (ds2745[Map^[Line.Y].Cells[Line.X]].BlockY > Bound.Y)) or
+       (Line.First > Limit) then
+    begin
+      Ex := Line.X;
+      Ey := Line.Y;
+      StepCount := Line.First;
+      WalkLine := False;
+      Exit;
+    end;
+    StepDone := StepLine(@Bound);
+    Flag := not StepLine(@Line);
+  until Flag;
+  StepCount := Line.First;
+  WalkLine := True;
+end;
 { ovl30:057B. Tests whether the point (ToX, ToY) lies in the 90-degree arc facing compass
   direction Dir from (FromX, FromY): 0 is north then clockwise to 7 (north-west), 8 (and the
   $FF default) is omni and always true. Points outside X 0..49 or Y 0..24 fail; a point equal
@@ -198,9 +243,9 @@ end;
 { ovl30:0909. Scans the DS:5F27 map entity table for records reachable from (FromX, FromY) and
   appends one sort record per hit, then sorts the table. MaxSteps budgets the line walk, Dir is
   the arc to try, Base is the ovl31_e1 neighbour base for the search point and Map is passed to
-  ovl30_e5. For each active record it tries the four neighbours of the base point against the
+  WalkLine. For each active record it tries the four neighbours of the base point against the
   four neighbours of the record (ovl31_e1 fills the offsets, invalid neighbours get -1), keeps
-  the pairs in Dir's arc (InDirArc) that the line walk (ovl30_e5) crosses in the fewest steps,
+  the pairs in Dir's arc (InDirArc) that the line walk (WalkLine) crosses in the fewest steps,
   and stores the record index, the step count and the working direction (the requested Dir, or
   the first working one when Dir is 8). Called from combat and item aiming (ovl22_e5) and from
   ovl09, ovl13, ovl24 and res12. }
@@ -213,11 +258,11 @@ var
   BestJ: Byte;                        { the neighbour index of the best hit }
   BestK: Byte;                        { the record index of the best hit }
   Found: Boolean;                     { a walked line hit this record }
-  Ex, Ey: ShortInt;                   { the walk endpoint ovl30_e5 updates }
+  Ex, Ey: ShortInt;                   { the walk endpoint WalkLine updates }
   LocX, LocY: ShortInt;               { the ovl31_e1 neighbour offsets }
   CandX, CandY: array[0..3] of ShortInt;  { the base neighbours (X is -1 when invalid) }
   TargX, TargY: array[0..3] of ShortInt;  { the record neighbours (X is -1 when invalid) }
-  StepCount: Word;                    { the walk steps ovl30_e5 reports }
+  StepCount: Word;                    { the walk steps WalkLine reports }
   Best: Word;                         { the fewest steps so far }
 begin
   for J := 0 to 3 do
@@ -251,7 +296,7 @@ begin
                 Ex := TargX[K];
                 Ey := TargY[K];
                 StepCount := MaxSteps;
-                if ovl30_e5(CandX[J], CandY[J], Ex, Ey, StepCount, Map) then
+                if WalkLine(CandX[J], CandY[J], Ex, Ey, StepCount, Map) then
                 begin
                   Found := True;
                   if StepCount < Best then
