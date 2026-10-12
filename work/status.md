@@ -78,6 +78,9 @@ Locks (agents at work): `make locks`. Next unit: `make next`.
 
 Blockers are kept in `work/blockers.md` (the orchestrator's, playbook 90) and copied here by `make status`.
 
+- For the decompiler who takes ovl33's review fixes (operator decision on escalate-res06-20261012033157, 2026-10-11): also rename res06_fn_0DD3's stub parameters to Left, Top, Right, Bottom in src/RES06.PAS and update its re/symbols.toml `signature`, citing 0709:0E02 (fills third - first + 1 columns) and 0709:0DE3/0DEE (the second and fourth parameters are the top and bottom character rows). The third parameter is the inclusive right column, not a width.
+- For the decompiler who takes ovl26's review fixes (operator, 2026-10-11): also remove the stale sentence "the level stays none only because the matcher reports no per routine row ..." from the `notes` of the three nested routines (WallDesc2FromCode, WallDesc3FromCode, WallDesc4FromCode: ovl26:00C7, 00FB, 012F) in re/symbols.toml; they are L2 now (make match proves them as NESTED).
+
 - Approach (decided 2026-10-11, SPEC 4): Pascal first, matched by the pinned compiler; C later by translation (Phase 7, branch `track-c-hybrid`).
 - Canonical state (decided 2026-10-10 and 2026-10-11): `re/state.toml` has `stack = "diagnostic"` and `heap = "compared"`; goldens carry recordings of the outside world (`tools/oracle/replay.py`) for the rebuild and the C translation.
 - Shared files (SPEC 9.6): `src/POOLVARS.PAS` and stub declarations take additive edits; the orchestrator merges.
