@@ -12779,12 +12779,12 @@ id = "ovl23:0000"
 unit = "ovl23"
 addr = "ovl23:0000"
 size = 431
-name = "ovl23_e1"
-signature = ""
+name = "RecalcCharacter"
+signature = "procedure RecalcCharacter(Character: Pointer)"
 c_name = "ovl23_e1"
 level = "none"
 justification = ""
-notes = "auto:entry_1"
+notes = "renamed from ovl23_e1 (recomputes character derived stats: THAC0 max, MaxSlot, Bonus/Flags fills, calls IncrementBonuses and ovl23_e3/e4 (ovl23:0000)); blocked: P2 address take combines in di (add di,$31FA; mov mem,ds) but @arr[K], Addr(), Ofs()/Seg(), DSeg, Ptr() and arithmetic all give lea-ax + mov-dx-ds (probes SM/SQ/SR/SS/ST/SU). Everything else matches (THAC0, MaxSlot, case dispatch, loops, calls, 2-D indices). Source complete in src/OVL23.PAS. Resume: find what forces di-combine address-take; auto:entry_1"
 evidence = ["prologue"]
 
 [[routine]]
@@ -12792,12 +12792,12 @@ id = "ovl23:01AF"
 unit = "ovl23"
 addr = "ovl23:01AF"
 size = 166
-name = "ovl23_e2"
-signature = ""
+name = "IncrementBonuses"
+signature = "procedure IncrementBonuses(Character: Pointer)"
 c_name = "ovl23_e2"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl23_e2 (bumps the character Bonus bytes when Ability[2] passes 12..16 (ovl23:01AF); called by ovl16 3x and ovl23_e1); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -12805,12 +12805,12 @@ id = "ovl23:0255"
 unit = "ovl23"
 addr = "ovl23:0255"
 size = 212
-name = "ovl23_e3"
-signature = ""
+name = "MinimizeLeast"
+signature = "procedure MinimizeLeast(Character: Pointer)"
 c_name = "ovl23_e3"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl23_e3 (minimizes the character Least bytes over table 426E (ovl23:0255); called by ovl16 and RecalcCharacter); blocked: 3-term table index combines in di (mov di,ax after mul; add di,cx; add di,bx) but all 6 term orders with parens variants give ax-combine (probes SG/SH/SI/SJ/SK/SN/SO). Eval order cracked (right-to-left; 2-D ds426E[J, C*5+I] matches eval I,C,J). Frame/types/loops/control match. Source complete in src/OVL23.PAS. Resume: find what forces di-accumulate for J*45+C*5+I; auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -12818,12 +12818,12 @@ id = "ovl23:0329"
 unit = "ovl23"
 addr = "ovl23:0329"
 size = 309
-name = "ovl23_e4"
-signature = ""
+name = "ComputeClassVal"
+signature = "procedure ComputeClassVal(Character: Pointer)"
 c_name = "ovl23_e4"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl23_e4 (computes the character ClassVal bytes from class tables (ovl23:0329); called by ovl16 and RecalcCharacter); blocked: 2-term table indices combine in di (mov di,ax; shl di; add di,dx) but both term orders give ax-combine; with/for/and/Abs/calls all match otherwise. Source complete in src/OVL23.PAS. Same di-combine rule as ovl23_e1/e3. Resume: find what forces di-accumulate; auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
