@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-12 | 5.18 | ScanTargets caller corrected to ovl22_e48; POOLVARS section refs to 5.18; StepLine no-step Pattern note | make match UNIT=ovl30 (8 matched, unit complete), make readability clean, make check green |
 | 2026-10-12 | 5.3 | DoWildernessMenu = 2 vs = 3 dispatch (Pick calls DoPick only in = 2, clears flag in = 3; Knock via FindCodeRecord(1F) vs HasRecFlag(5)), VarRiverGate word 418, ds5D96 LongInt rationale | make match UNIT=ovl14 (unit complete), make readability UNIT=ovl14 clean |
 | 2026-10-12 | 5.18 | InDirArc/ScanTargets/WalkLine decompiled, e5 block resolved, map row and tile table layout | make match UNIT=ovl30 (unit complete), make check green |
 | 2026-10-12 | 5.3 | new wilderness unit section, corrected Entropy PIT claim and icon-set reference | make match UNIT=ovl14 (unit: complete), make check green |
