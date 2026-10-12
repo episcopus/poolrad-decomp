@@ -1,16 +1,101 @@
 unit OVL27;
-{ ovl27: overlay unit, 648 bytes of code. Skeleton by tools/match/skeleton.py: every routine is a stub
-  until decompiled (playbook 30). }
+{ The area view of the wilderness and the adventure screen (whitepaper 5.2, 5.8). DrawAreaView paints
+  the 5x5 grid of 3x3-tile area blocks around a position on the area map into the 3D view window,
+  letting nine fixed positions override a block while the game variables allow it; DrawAdventureScreen frames
+  the three windows of the adventure screen: the 3D view on the left, the side window on the right
+  and the text area at the bottom. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
-procedure ovl27_e1;
-procedure ovl27_e2;
+procedure DrawAreaView(LeftCol, TopRow: Integer);
+procedure DrawAdventureScreen;
 implementation
+uses POOLVARS, OVL32, RES09;
 
-{ ovl27:0000: retf 4: 4 bytes of parameters; 8 bytes of locals }
-{@stub} procedure ovl27_e1; begin end;
-{ ovl27:0207: retf 0: 0 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl27_e2; begin end;
+const
+  ViewBlocks = 5;                { the area view is a 5x5 grid of blocks }
+  BlockCells = 3;                { each block is 3x3 cells of the 3D view window }
+  SpecialCount = 9;              { fixed positions that can override a block (SpecialBlocks, 1..9) }
+
+  { Words of the game variables (GameVars^) that decide when a fixed block is drawn. What each
+    variable counts is still unknown; the names say which block depends on it. }
+  GateVarBlock3 = 396;           { block 3 is drawn while this is not 255 }
+  GateVarBlock4State = 466;      { block 4 is drawn while this is nonzero, }
+  GateVarBlock4Flags = 380;      { or while bit 3 of this is set, }
+  GateVarBlock4Empty = 415;      { or while this is zero }
+  GateVarBlockBits = 416;         { bit 1 gates block 5 and bit 0 gates block 7: each is drawn while its bit is clear }
+  GateVarBlock8Count = 435;       { blocks 8 and 9 are drawn while this is above 253 }
+
+  { The three windows of the adventure screen, in the grid res09_fn_02E8 works in: a column is
+    16 pixels wide, a row 4 scanlines. The names give TopRow, LeftCol, BottomRow, RightCol. }
+  ViewTop = 1;                    ViewLeft = 1;     ViewBottom = 15;  ViewRight = 15;
+  SideTop = 1;                    SideLeft = 17;    SideBottom = 15;  SideRight = 38;
+  TextTop = 17;                   TextLeft = 1;     TextBottom = 22;   TextRight = 38;
+  Black = 0;                      { EGA colour of the window text (never shown: the text is empty) }
+  PlainFrame = 0;                 { the frame set res09_fn_02E8 draws around each window }
+
+{ ovl27:0000. Draws the 5x5 grid of 3x3-tile area blocks around map position (LeftCol, TopRow)
+  into the 3D view window: the block code comes from the area map (AreaMap, minus one), except
+  where one of the nine fixed positions (SpecialBlocks) matches and the game variables allow its
+  own code; every entry of that table has its own condition, entry 6 always applies. Each block
+  is one picture drawn by ovl32_e2 at the cell position (BaseCol, BaseRow). Callers: ovl26_e1
+  passes the position of the party minus 2 (the party block sits at the centre of the grid),
+  clamped to columns 0..39 and rows 0..31; ovl18_e2 passes (17, 15).
+  Parameters: LeftCol and TopRow are the map column and row of the top-left block.
+  Globals: reads AreaMap, SpecialBlocks and the words of GameVars^ named above. Side effects:
+  the 3D view part of the screen, through ovl32_e2. }
+procedure DrawAreaView(LeftCol, TopRow: Integer);
+var
+  BaseCol, BaseRow: Shortint;    { where in the view window the current block goes, in cells }
+  Special: 1..9;                  { index into SpecialBlocks while looking for an override }
+  TileCol, TileRow: Shortint;    { position of the current block on the area map }
+  Count: Byte;                    { the block code ovl32_e2 draws }
+  GridCol, GridRow: Byte;         { position within the 5x5 view grid }
+begin
+  BaseRow := 0;
+  for GridRow := 0 to ViewBlocks - 1 do
+  begin
+    BaseCol := 0;
+    for GridCol := 0 to ViewBlocks - 1 do
+    begin
+      TileCol := GridCol + LeftCol;
+      TileRow := GridRow + TopRow;
+      Count := AreaMap[TileRow, TileCol] - 1;
+      for Special := 1 to SpecialCount do
+        if (TileCol = SpecialBlocks[Special].Col) and (TileRow = SpecialBlocks[Special].Row) then
+        begin
+          { Every fixed block has its own condition on the game variables; the case labels are
+            the entries of SpecialBlocks it belongs to. }
+          case Special of
+            3: if GameVars^[GateVarBlock3] <> 255 then Count := SpecialBlocks[Special].Pic - 1;
+            4: if (GameVars^[GateVarBlock4State] <> 0) or ((GameVars^[GateVarBlock4Flags] and 8) <> 0)
+                 or (GameVars^[GateVarBlock4Empty] = 0) then
+                 Count := SpecialBlocks[Special].Pic - 1;
+            5: if (GameVars^[GateVarBlockBits] and 2) = 0 then Count := SpecialBlocks[Special].Pic - 1;
+            6: Count := SpecialBlocks[Special].Pic - 1;
+            7: if (GameVars^[GateVarBlockBits] and 1) = 0 then Count := SpecialBlocks[Special].Pic - 1;
+            8, 9: if GameVars^[GateVarBlock8Count] > 253 then Count := SpecialBlocks[Special].Pic - 1;
+          end
+        end;
+      { QUIRK ovl27:01CC: the original adds and subtracts 1 from both coordinates, which changes
+        nothing; kept for a byte-exact match. The fourth argument is always 1 here and ovl32_e2
+        never reads it. }
+      ovl32_e2(BaseCol + 1 - 1, BaseRow + 1 - 1, Count, 1);
+      Inc(BaseCol, BlockCells);
+    end;
+    Inc(BaseRow, BlockCells);
+  end;
+end;
+
+{ ovl27:0207. Frames the three windows of the adventure screen: the 3D view on the left (15x15
+  cells), the side window on the right and the text area at the bottom, with no text in them.
+  Side effects: the screen (through res09_fn_02E8, which clears each window, draws its frame
+  and would centre its text on the top row). }
+procedure DrawAdventureScreen;
+begin
+  res09_fn_02E8(ViewLeft, ViewTop, ViewRight, ViewBottom, PlainFrame, Black, '');
+  res09_fn_02E8(SideLeft, SideTop, SideRight, SideBottom, PlainFrame, Black, '');
+  res09_fn_02E8(TextLeft, TextTop, TextRight, TextBottom, PlainFrame, Black, '');
+end;
 
 begin
 end.

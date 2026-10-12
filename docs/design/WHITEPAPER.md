@@ -424,6 +424,49 @@ Each section will cover: purpose, units and routines, data, algorithm, quirks, e
 | 5.13 | Random numbers | TP 6 generator, `Randomize` from the clock (below) |
 | 5.15 | Messages and running out of memory | res06, ovl00 (below) |
 
+### 5.2 The area view: wilderness blocks and the adventure screen **[V]** (`make match UNIT=ovl27`, `src/OVL27.PAS`)
+
+The wilderness around Phlan is drawn as a 5x5 grid of area blocks. Every block covers 3x3 map
+tiles and is one picture, drawn by `ovl32_e2` (`ovl32:00F1`) at a cell position of the 3D view
+window; the block at map position (column, row) comes from the area map and can be overridden by
+a fixed table entry while the game variables allow it (`DrawAreaView`, `ovl27:0000`).
+
+- **The area map** at DGROUP `0x3648` (`AreaMap` in `src/POOLVARS.PAS`) is 36 rows by 44 columns
+  of one-byte block codes **[V]** (row stride 44 at `ovl27:0040`; `ovl26_e1` clamps the view
+  window to columns 0..39 and rows 0..31, `ovl26:0289`, which is 44-5 and 36-5). The picture code
+  drawn is the map byte minus one **[V]** (`ovl27:0049`). The shipped image fills the map with
+  terrain codes; rows 34 and 35 are all `0x4E` (the letter N), and `ovl14:08BB` compares map bytes
+  with `0x4E` specially **[I]**: N marks ground that draws no block. **[?]** Nothing in the code
+  writes the map, so it is compiled-in data; whether the game rewrites parts of it at run time is
+  open.
+- **Nine fixed positions** can replace a block with their own picture: the table at DGROUP
+  `0x0C30` (`SpecialBlocks`, ten records of Col, Row, Pic: Word; entry 0 is never read, its bytes
+  are the tail of the previous table in the image). Each entry has its own condition on the game
+  variables **[V]** (`ovl27:00B2`): entry 3 while word 396 is not 255; entry 4 while word 466 is
+  nonzero, or bit 3 of word 380 is set, or word 415 is zero; entry 5 while bit 1 of word 416 is
+  clear; entry 6 always; entry 7 while bit 0 of word 416 is clear; entries 8 and 9 while word 435
+  is above 253. Entries 6 and 7 hold columns 165 and 157, beyond the 44-column map, so they can
+  never match the window **[I]**: dead entries, or coordinates in a system not seen yet.
+- **The party position on the area map** lives in the game variables, the word array the far
+  pointer at DGROUP `0x49D2` (`GameVars`) leads to: word 195 is the column and word 196 the row
+  **[I]** (`ovl26:0249` passes both minus 2, so the party block sits at the centre of the 5x5
+  grid; `ovl26:023F` adds a per-zone column base from the byte table at `0x3C78`, whose entries
+  for zones 2..4 are 0, 13, 26: three side-by-side strips of 13 columns **[V]** for the table,
+  **[I]** for them being the wilderness zones). `ovl07:02E1` and `ovl17:1C20` index the same array
+  dynamically **[V]**, consistent with the ECL scripts' variables **[H]** (coab `VmOpp.cs`).
+- **`DrawAdventureScreen`** (`ovl27:0207`) frames the three windows of the adventure screen
+  **[V]**: the 3D view rows 1..15 x columns 1..15, the side window rows 1..15 x columns 17..38
+  and the text area rows 17..22 x columns 1..38, through `res09_fn_02E8` (`03F1:02E8`), the
+  window routine of res09 **[V]**: it clears the interior (`res09_fn_0137`), draws a frame from
+  picture set `FrameSet` around it (`res09_fn_0000`: the corner and edge pictures come from index
+  `FrameSet*3+276` and are blitted by `ovl34_e2`) and centres the text on the top row
+  (`res06_fn_0626`). Its grid: a column is 16 pixels and a row 4 scanlines, 40x50 cells on a
+  640x200 screen **[V]** (the multiplies in `res09_fn_0137`).
+- QUIRK `ovl27:01CC`: `DrawAreaView` passes both cell coordinates as `BaseCol + 1 - 1` (and the
+  same for the row): the additions cancel; the compiler must emit them to match the bytes. The
+  fourth argument of `ovl32_e2` is always 1 here (0 from `ovl31`) and the callee never reads it
+  **[V]**.
+
 ### 5.8 Keyboard input and menus (observed in the oracle)
 
 - Input is **INT 16h only** **[V]** (oracle: no INT 09h hook, ports 60h/64h never touched): Crt `KeyPressed` (`0A40:02FD`, AH=01h) and `ReadKey` (`0A40:030F`, AH=00h, an extended key returns 0 then the scan code on the next call).
