@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-12 | 5.22, 5.6, 2 (unit table) | the camp unit ovl15: study pending until rest, rest time, spell slots as SpellSlots[class, level], Display, Alter menu | make match UNIT=ovl15 (20 matched, 2 blocked stubs) |
 | 2026-10-12 | 5.21 | ovl24 affects, handler table and hooks, dice, saving throws, to-hit and resistance rolls, damage and healing | make match UNIT=ovl24 |
 | 2026-10-12 | 5.15 | res06 glyph drawing, text cells, flash message, line editor and number reader; new TP idioms | make match UNIT=res06 |
 | 2026-10-12 | 5.20, 5.4 | ovl05 battle aftermath: outcome, experience formula, hirelings' share, treasure menu; money block is seven LongInt kinds | make match UNIT=ovl05 |
