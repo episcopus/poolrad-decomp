@@ -2358,3 +2358,52 @@ kind = "routine"
 why = "returns res12_fn_13AB (the strength weight allowance) plus 1500; WouldOverload compares the carried weight with it (ovl21:0000, 0054)"
 date = "2026-10-12"
 
+[[rename]]
+old = "ovl21_e6"
+new = "ReadAmount"
+kind = "routine"
+why = "shows a prompt on row 24, reads digits until Enter or Escape with Backspace, clamps to Max (Str of Max), returns the Val of the digits or 0 on Escape (ovl21:0294)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_e7"
+new = "TransferMoney"
+kind = "routine"
+why = "moves Amount of Money[Kind] from one character to another with RemoveCarriedWeight/AddCarriedWeight, else shows 'Overloaded' (ovl21:044C)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_e2"
+new = "PoolMoney"
+kind = "routine"
+why = "adds every sharing member's seven Money words into PooledMoney, clears them and their weight, sets ds6DC0; ShopMain and VisitTemple call it on the Pool key (ovl21:0508)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_fn_05E0"
+new = "CountSharers"
+kind = "routine"
+why = "counts the party members with B84 0 or B3, the members PoolMoney takes money from; ShareMoney divides the pool by it (ovl21:05E0, 0652)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_e3"
+new = "ShareMoney"
+kind = "routine"
+why = "divides each kind of PooledMoney by CountSharers and adds the shares to the members' Money within their load, the rest stays pooled; called on the Share key (ovl21:063A)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_e8"
+new = "DropMoney"
+kind = "routine"
+why = "subtracts Amount from Who^.Money[Kind] and its weight, adds it to PooledMoney only in view modes 1 and 6 (ovl21:0A01)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6DC0"
+new = "MoneyInPool"
+kind = "global"
+why = "PoolMoney sets it to 1, ShareMoney sets it to 1 when any kind is left in PooledMoney, else 0 (ovl21:051B, 09AD..09F2); the shop and the Temple clear it with the pool"
+date = "2026-10-12"
+

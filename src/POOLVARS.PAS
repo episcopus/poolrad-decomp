@@ -667,7 +667,9 @@ var
   ds681F: Byte;                   { 1 while the Temple removes affects (RemoveAffect; ovl04:0386, 05AB, 07CE), 0 after }
   PooledMoney: TPartyMoney;       { the Temple clears it on entry (ovl04:0D32) and passes it to MoneyValueInGold }
   ds6C95: PCharacter;             { the character Remove Curse hands to ovl22_e9 (ovl04:08FA) }
-  ds6DC0: Byte;                   { cleared when the Temple opens (ovl04:0D37); meaning unknown }
+  { 1 while money lies in the pool: PoolMoney sets it, ShareMoney sets it when some is left; the
+    Temple and the shop clear it with the pool (ovl04:0D37). }
+  MoneyInPool: Byte;
   { Globals of the DOS file and BIOS text layer (res05); evidence in re/dseg.toml where named. }
   { 16 entries, the colours 0..15 mapped to 0..3 (0,0,0,1,2,2,2,3,3,1,1,1,2,2,3,3 in the image);
     WriteCharsAt maps the text colour through it when VideoAdapter is 0 (0802:0086). }

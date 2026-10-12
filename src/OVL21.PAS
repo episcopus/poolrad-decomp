@@ -5,7 +5,7 @@ unit OVL21;
   shop, the Temple and the treasure menu share (whitepaper 5.4). }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
-uses POOLVARS;
+uses POOLVARS, RES06;
 function CarryLimit(Who: PCharacter): Word;
 procedure RemoveCarriedWeight(Who: PCharacter; Amount: Word);
 procedure AddCarriedWeight(Who: PCharacter; Amount: Word);
@@ -14,13 +14,12 @@ function MoneyValueInGold(Money: TPartyMoney): LongInt;
 procedure SetCharacterGold(Amount: Word);
 procedure SetPooledGold(Amount: Word);
 procedure GivePlatinum(Amount: Word);
-procedure ovl21_e6;
-procedure ovl21_e7;
-procedure ovl21_e2;
-procedure ovl21_fn_05E0;
-procedure ovl21_e3;
-procedure ovl21_fn_07D1;
-procedure ovl21_e8;
+function ReadAmount(Max: Word; Prompt: String40; Color: Byte): Word;
+procedure TransferMoney(var Giver, Taker: PCharacter; Amount: Word; Kind: ShortInt);
+procedure PoolMoney;
+function CountSharers: Byte;
+procedure ShareMoney;
+procedure DropMoney(Who: PCharacter; Amount: Word; Kind: ShortInt);
 procedure ovl21_fn_0A88;
 procedure ovl21_fn_0B48;
 procedure ovl21_e5;
@@ -34,7 +33,7 @@ procedure ovl21_e14(var Flag: Byte);
 procedure ovl21_fn_1F4B;
 procedure ovl21_fn_2233;
 implementation
-uses RES12;
+uses RES04, RES12;
 
 const
   BaseLoad = 1500;      { the load every character may carry before the strength allowance }
@@ -42,6 +41,19 @@ const
   GoldCoin = 3;
   PlatinumCoin = 4;
   GoldPerPlatinum = 5;
+  PromptRow = 24;       { the bottom text row, where amounts are typed }
+  ScreenCols = 40;
+  White = 15;
+  KeyBackspace = #8;
+  KeyEnter = #13;
+  KeyEscape = #27;
+  LastMoneyKind = 6;    { seven kinds: copper, silver, electrum, gold, platinum, gems, jewelry }
+  { TCharacter.B84 values of the members that pool and share money: 0 and $B3 (a player-run
+    member; what $B3 marks is not known) }
+  SharerB84 = $B3;
+  ComputerRunB84 = $80; { B84 from $80 up: a member run by the computer, who gets no share }
+  ViewShop = 1;         { ds49F3 view modes where dropped money goes into the pool: a shop or }
+  ViewTreasure = 6;     { the Temple (1), the treasure after a battle (6) }
   HalfGoldInCopper = 100;  { added before dividing by the gold value: rounds to the nearest gold piece }
 
 { ovl21:0000. The most weight Who may carry: 1500 plus the strength allowance res12_fn_13AB
@@ -133,20 +145,213 @@ begin
     AddCarriedWeight(SelectedCharacter, Amount);
   end;
 end;
-{ ovl21:0294: retf 8: 8 bytes of parameters; 580 bytes of locals }
-{@stub} procedure ovl21_e6; begin end;
-{ ovl21:044C: retf 12: 12 bytes of parameters; 12 bytes of locals }
-{@stub} procedure ovl21_e7; begin end;
-{ ovl21:0508: retf 0: 0 bytes of parameters; 6 bytes of locals }
-{@stub} procedure ovl21_e2; begin end;
-{ ovl21:05E0: retf 0: 0 bytes of parameters; 6 bytes of locals }
-{@stub} procedure ovl21_fn_05E0; begin end;
-{ ovl21:063A: frame not read }
-{@stub} procedure ovl21_e3; begin end;
-{ ovl21:07D1: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl21_fn_07D1; begin end;
-{ ovl21:0A01: retf 8: 8 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl21_e8; begin end;
+{ ovl21:0294. Asks for an amount on the bottom row: shows Prompt in Color, then reads digits
+  (shown in white after the prompt) until Enter or Escape; Backspace deletes the last digit. A
+  number above Max is replaced by Max. Returns the amount typed, 0 on Escape. }
+function ReadAmount(Max: Word; Prompt: String40; Color: Byte): Word;
+var
+  Col: Byte;              { the column after the last digit }
+  Unused: Byte;
+  Start: Byte;            { the column of the first digit, right after the prompt }
+  MaxText: string[5];
+  Digits: string[6];
+  Key: Char;
+  Typed: LongInt;
+  Code: Integer;
+  Amount: Word;
+begin
+  ClearTextCells(0, PromptRow, 0, ScreenCols);
+  DrawTextAt(0, PromptRow, Color, Prompt);
+  Start := Length(Prompt);
+  Col := Start;
+  Str(Max, MaxText);
+  Digits := '';
+  repeat
+    Key := ReadGameKey;
+    case Key of
+      '0'..'9':
+        begin
+          Digits := Concat(Digits, Key);
+          Val(Digits, Typed, Code);
+          if Max >= Typed then
+            Inc(Col)
+          else
+          begin
+            Digits := MaxText;
+            Col := Start + Length(MaxText);
+          end;
+          DrawTextAt(Start, PromptRow, White, Digits);
+        end;
+      KeyBackspace:
+        if Length(Digits) > 0 then
+        begin
+          Digits := Copy(Digits, 1, Length(Digits) - 1);
+          ClearTextCells(Col, PromptRow, 0, 1);
+          Dec(Col);
+        end;
+    end;
+  until (Key = KeyEnter) or (Key = KeyEscape);
+  ClearTextCells(0, PromptRow, 0, ScreenCols);
+  if Key = KeyEscape then
+    Amount := 0
+  else
+    Val(Digits, Amount, Code);
+  ReadAmount := Amount;
+end;
+{ ovl21:044C. Hands Amount coins of money kind Kind from Giver to Taker, moving their weight
+  with them (but see the quirk); when Taker cannot carry that much more it shows "Overloaded" and nothing moves. }
+procedure TransferMoney(var Giver, Taker: PCharacter; Amount: Word; Kind: ShortInt);
+begin
+  if Taker^.CarriedWeight + Amount <= CarryLimit(Taker) then
+  begin
+    Giver^.Money[Kind] := Giver^.Money[Kind] - Amount;
+    RemoveCarriedWeight(Giver, Amount);
+    Taker^.Money[Kind] := Taker^.Money[Kind] + Amount;
+    { QUIRK ovl21:04DB: the weight is added back to Giver, not to Taker: Giver's weight ends
+      unchanged and Taker's does not grow }
+    AddCarriedWeight(Giver, Amount);
+  end
+  else
+    res12_fn_1693('Overloaded');
+end;
+{ ovl21:0508. The Pool command: every player-run member (B84 0 or $B3) puts all seven kinds of
+  his money into the pool (PooledMoney) and loses its weight; sets MoneyInPool (money in the pool). }
+procedure PoolMoney;
+var
+  Who: PCharacter;
+  Kind: ShortInt;
+  Slot: ShortInt;
+begin
+  Who := PCharacter(ds5D96);
+  MoneyInPool := 1;
+  while Who <> nil do
+  begin
+    if (Who^.B84 = 0) or (Who^.B84 = SharerB84) then
+    begin
+      for Kind := 0 to LastMoneyKind do
+      begin
+        Slot := Kind;
+        PooledMoney[Slot] := Who^.Money[Slot] + PooledMoney[Slot];
+        RemoveCarriedWeight(Who, Who^.Money[Slot]);
+      end;
+      FillChar(Who^.Money, SizeOf(Who^.Money), 0);
+    end;
+    Who := Who^.Next;
+  end;
+end;
+{ ovl21:05E0. The number of members who take part in pooling and sharing (B84 0 or $B3). }
+function CountSharers: Byte;
+var
+  Who: PCharacter;
+  Count: Byte;
+begin
+  Who := PCharacter(ds5D96);
+  Count := 0;
+  while Who <> nil do
+  begin
+    if (Who^.B84 = 0) or (Who^.B84 = SharerB84) then
+      Inc(Count);
+    Who := Who^.Next;
+  end;
+  CountSharers := Count;
+end;
+{ ovl21:063A. The Share command: each kind of pooled money is divided by the number of sharers
+  (CountSharers). Walking the party, every member below B84 $80 takes his share of each kind, from
+  jewelry down to copper, as far as his load allows, plus one coin of the remainder when it fits;
+  what he cannot carry goes back to the remainder. The remainders are then handed out to whoever
+  can still carry them (any member), and what is left stays in the pool; MoneyInPool says whether any
+  money is left there. }
+procedure ShareMoney;
+var
+  Who: PCharacter;
+  Unused1: Pointer;
+  Sharers: Byte;
+  Unused2: Byte;
+  Room: Word;
+  Share: array[0..LastMoneyKind] of Word;
+  Remainder: array[0..LastMoneyKind] of Word;
+  Kind: ShortInt;
+begin
+  Who := PCharacter(ds5D96);
+  Unused2 := 0;
+  Sharers := CountSharers;
+  FillChar(Share, SizeOf(Share), 0);
+  FillChar(Remainder, SizeOf(Remainder), 0);
+  for Kind := 0 to LastMoneyKind do
+    if PooledMoney[Kind] > 0 then
+    begin
+      Share[Kind] := PooledMoney[Kind] div Sharers;
+      Remainder[Kind] := PooledMoney[Kind] mod Sharers;
+    end
+    else
+    begin
+      Share[Kind] := 0;
+      Remainder[Kind] := 0;
+    end;
+  while Who <> nil do
+  begin
+    if Who^.B84 < ComputerRunB84 then
+      for Kind := LastMoneyKind downto 0 do
+        if not WouldOverload(Who, Share[Kind], Room) then
+        begin
+          Who^.Money[Kind] := Share[Kind] + Who^.Money[Kind];
+          AddCarriedWeight(Who, Share[Kind]);
+          if Remainder[Kind] > 0 then
+            if not WouldOverload(Who, Remainder[Kind], Room) then
+            begin
+              Who^.Money[Kind] := Who^.Money[Kind] + 1;
+              AddCarriedWeight(Who, 1);
+              Dec(Remainder[Kind]);
+            end;
+        end
+        else
+        begin
+          Who^.Money[Kind] := Who^.Money[Kind] + Room;
+          Remainder[Kind] := Remainder[Kind] + Share[Kind] - Room;
+          AddCarriedWeight(Who, Room);
+        end;
+    Who := Who^.Next;
+  end;
+  for Kind := LastMoneyKind downto 0 do
+    if Remainder[Kind] > 0 then
+    begin
+      Who := PCharacter(ds5D96);
+      while Who <> nil do
+      begin
+        Room := CarryLimit(Who) - Who^.CarriedWeight;
+        if Room > 0 then
+          if Remainder[Kind] > Room then
+          begin
+            Who^.Money[Kind] := Who^.Money[Kind] + Room;
+            AddCarriedWeight(Who, Room);
+            Remainder[Kind] := Remainder[Kind] - Room;
+          end
+          else
+          begin
+            Who^.Money[Kind] := Who^.Money[Kind] + Remainder[Kind];
+            AddCarriedWeight(Who, Remainder[Kind]);
+            Remainder[Kind] := 0;
+          end;
+        Who := Who^.Next;
+      end;
+    end;
+  MoneyInPool := 0;
+  for Kind := 0 to LastMoneyKind do
+  begin
+    PooledMoney[Kind] := Remainder[Kind];
+    if PooledMoney[Kind] <> 0 then
+      MoneyInPool := 1;
+  end;
+end;
+{ ovl21:0A01. Drops Amount coins of money kind Kind from Who, with their weight; in a shop or the
+  Temple (view mode 1) or at a battle's treasure (6) they go into the pool, elsewhere they are lost. }
+procedure DropMoney(Who: PCharacter; Amount: Word; Kind: ShortInt);
+begin
+  Who^.Money[Kind] := Who^.Money[Kind] - Amount;
+  RemoveCarriedWeight(Who, Amount);
+  if (ds49F3 = ViewTreasure) or (ds49F3 = ViewShop) then
+    PooledMoney[Kind] := PooledMoney[Kind] + Amount;
+end;
 { ovl21:0A88: frame not read }
 {@stub} procedure ovl21_fn_0A88; begin end;
 { ovl21:0B48: retf 8: 8 bytes of parameters; 0 bytes of locals }

@@ -824,3 +824,8 @@ evidence = "AlterMenu's Pics submenu shows 'Portraits on' while it is nonzero an
 offset = 0x0D24
 name = "CoinCopperValues"
 evidence = "five LongInts 1,10,100,200,1000 (the image); MoneyValueInGold multiplies the coin kinds by them and divides by entry 3 (ovl21:00EC, 0111)"
+
+[[global]]
+offset = 0x6DC0
+name = "MoneyInPool"
+evidence = "PoolMoney sets it to 1, ShareMoney sets it to 1 when any kind is left in PooledMoney, else 0 (ovl21:051B, 09AD..09F2); the shop and the Temple clear it with the pool"

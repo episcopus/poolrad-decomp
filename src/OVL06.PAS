@@ -174,10 +174,10 @@ end;
 
 { ovl06:053E (ShopMain). The shop's entry and main loop, called from ovl03 (the area logic) when the
   party enters a shop. It marks the shop open (ds49F3), redraws the shop screen (res12_fn_27D9,
-  res12_fn_0767 on SelectedCharacter), clears the money block PooledMoney and clears ds6DC0, then shows the
+  res12_fn_0767 on SelectedCharacter), clears the money block PooledMoney and clears MoneyInPool, then shows the
   menu (ReadPromptChoice) with a text chosen by ovl21_e9 (the Take/Share entries appear only while
   MoneyPooled says money lies in the pool) and dispatches the key: B BuyItems, V ovl19_e5, T ovl21_e4,
-  P ovl21_e2 (when MenuFlag is 0), S ovl21_e3, A ovl21_e14 (Appraise), E leaves, and G and O, which
+  P PoolMoney (when MenuFlag is 0), S ShareMoney, A ovl21_e14 (Appraise), E leaves, and G and O, which
   neither menu text shows, call ovl19_e10 with the key. With money left in the pool, E first asks
   "Do you want to go back and get your Money?" ('~Yes ~No' through ovl07_e13, which returns the
   0-based hotkey position) and the party leaves on No (AnswerNo); Yes clears the message window
@@ -202,7 +202,7 @@ begin
   res12_fn_0767(SelectedCharacter);
   FillChar(PooledMoney, SizeOf(PooledMoney), 0);
   Title := '';
-  ds6DC0 := 0;
+  MoneyInPool := 0;
   Done := 0;
   Entry := ds6810;
   while Entry <> nil do
@@ -222,8 +222,8 @@ begin
       'V': ovl19_e5(MenuFlag);
       'T': ovl21_e4;
       'P': if MenuFlag = 0 then
-             ovl21_e2;
-      'S': ovl21_e3;
+             PoolMoney;
+      'S': ShareMoney;
       'A': ovl21_e14(Appraised);
       'E':
         begin

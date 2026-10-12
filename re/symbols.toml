@@ -10205,12 +10205,12 @@ id = "ovl21:0294"
 unit = "ovl21"
 addr = "ovl21:0294"
 size = 440
-name = "ovl21_e6"
-signature = ""
+name = "ReadAmount"
+signature = "function ReadAmount(Max: Word; Prompt: String40; Color: Byte): Word"
 c_name = "ovl21_e6"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl21_e6 (shows a prompt on row 24, reads digits until Enter or Escape with Backspace, clamps to Max (Str of Max), returns the Val of the digits or 0 on Escape (ovl21:0294)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -10218,12 +10218,12 @@ id = "ovl21:044C"
 unit = "ovl21"
 addr = "ovl21:044C"
 size = 188
-name = "ovl21_e7"
-signature = ""
+name = "TransferMoney"
+signature = "procedure TransferMoney(var Giver, Taker: PCharacter; Amount: Word; Kind: ShortInt)"
 c_name = "ovl21_e7"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_7"
+notes = "renamed from ovl21_e7 (moves Amount of Money[Kind] from one character to another with RemoveCarriedWeight/AddCarriedWeight, else shows 'Overloaded' (ovl21:044C)); auto:entry_7"
 evidence = ["prologue"]
 
 [[routine]]
@@ -10231,12 +10231,12 @@ id = "ovl21:0508"
 unit = "ovl21"
 addr = "ovl21:0508"
 size = 216
-name = "ovl21_e2"
+name = "PoolMoney"
 signature = ""
 c_name = "ovl21_e2"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_2"
+notes = "renamed from ovl21_e2 (adds every sharing member's seven Money words into PooledMoney, clears them and their weight, sets ds6DC0; ShopMain and VisitTemple call it on the Pool key (ovl21:0508)); auto:entry_2"
 evidence = ["prologue"]
 
 [[routine]]
@@ -10244,51 +10244,38 @@ id = "ovl21:05E0"
 unit = "ovl21"
 addr = "ovl21:05E0"
 size = 90
-name = "ovl21_fn_05E0"
-signature = ""
+name = "CountSharers"
+signature = "function CountSharers: Byte"
 c_name = "ovl21_fn_05E0"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl21_fn_05E0 (counts the party members with B84 0 or B3, the members PoolMoney takes money from; ShareMoney divides the pool by it (ovl21:05E0, 0652)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl21:063A"
 unit = "ovl21"
 addr = "ovl21:063A"
-size = 407
-name = "ovl21_e3"
+size = 967
+name = "ShareMoney"
 signature = ""
 c_name = "ovl21_e3"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_3"
+notes = "renamed from ovl21_e3 (divides each kind of PooledMoney by CountSharers and adds the shares to the members' Money within their load, the rest stays pooled; called on the Share key (ovl21:063A)); auto:entry_3; map dec-18 2026-10-12: ends 0A00 (was 407); 07D1 was mid-routine (inside the call at 07D0), entry deleted"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl21:07D1"
-unit = "ovl21"
-addr = "ovl21:07D1"
-size = 560
-name = "ovl21_fn_07D1"
-signature = ""
-c_name = "ovl21_fn_07D1"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl21:0A01"
 unit = "ovl21"
 addr = "ovl21:0A01"
 size = 135
-name = "ovl21_e8"
-signature = ""
+name = "DropMoney"
+signature = "procedure DropMoney(Who: PCharacter; Amount: Word; Kind: ShortInt)"
 c_name = "ovl21_e8"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_8"
+notes = "renamed from ovl21_e8 (subtracts Amount from Who^.Money[Kind] and its weight, adds it to PooledMoney only in view modes 1 and 6 (ovl21:0A01)); auto:entry_8"
 evidence = ["prologue"]
 
 [[routine]]

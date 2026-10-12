@@ -426,13 +426,13 @@ end;
 { ovl04:0D09. The Temple: the menu Heal, View, Take, Pool, Share, Appraise, Exit (Take and
   Share only while ovl21_e9 reports pooled money). Heal opens HealMenu and Pool runs only when
   MenuFlag is 0; View ovl19_e5 receives MenuFlag, Take
-  ovl21_e4, Pool ovl21_e2, Share ovl21_e3, Appraise ovl21_e14, G and O ovl19_e10. Exit with
+  ovl21_e4, Pool PoolMoney, Share ShareMoney, Appraise ovl21_e14, G and O ovl19_e10. Exit with
   money left in the pool asks "Do you want to go back and retrieve your money?" ('~Yes ~No') and
   leaves on No (ovl07_e13 returns the 0-based hotkey position, 1 = No = AnswerNo); Yes keeps the
   money in the Temple. The trailing case (ovl04:0F02) also runs res12_fn_27D9 for a 'B'
   key with 'T' and for 'A' when Appraised is set, but neither menu text offers 'B'; what produces
   it is unknown. On entry it sets the view mode ds49F3 := 1, redraws the view (res12_fn_27D9) and
-  reshows the character (res12_fn_0767), clears the pooled money DS:67F4 and sets ds6DC0 := 0. }
+  reshows the character (res12_fn_0767), clears the pooled money DS:67F4 and sets MoneyInPool := 0. }
 procedure VisitTemple;
 var
   Key: Char;
@@ -450,7 +450,7 @@ begin
   res12_fn_27D9;
   res12_fn_0767(SelectedCharacter);
   FillChar(PooledMoney, SizeOf(PooledMoney), 0);
-  ds6DC0 := 0;
+  MoneyInPool := 0;
   Done := False;
   repeat
     ovl21_e9(MoneyPooled, PoolSecond);
@@ -463,8 +463,8 @@ begin
       'H': if MenuFlag = 0 then HealMenu;
       'V': ovl19_e5(MenuFlag);
       'T': ovl21_e4;
-      'P': if MenuFlag = 0 then ovl21_e2;
-      'S': ovl21_e3;
+      'P': if MenuFlag = 0 then PoolMoney;
+      'S': ShareMoney;
       'A': ovl21_e14(Appraised);
       'E':
         begin
