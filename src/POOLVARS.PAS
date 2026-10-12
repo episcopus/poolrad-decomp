@@ -16,11 +16,11 @@ type
     FourthRune: Byte;              { +$C: the fourth rune index, $FF when the record has none }
     Path: string[7];               { +$D: the path pattern drawn under the runes }
   end;
-  { One fixed position of the area view whose block the game variables can override
-    (the table at DS:0C30; DrawAreaView reads entries 1..9, entry 0 is never read). }
+  { One fixed position of the area view (the table at DS:0C30). DrawAreaView tests entries
+    1..9 for position; only entries 3..9 can replace the map block. Entry 0 is never read. }
   TSpecialBlock = record
     Col, Row: Word;              { position of the block on the area map (DS:3648) }
-    Pic: Word;                   { the block code drawn instead of the one in the map }
+    Pic: Word;                   { the picture word; entries 3..9 draw Pic minus one }
   end;
   { The word variables of the game: the structure the far pointer at DS:49D2 leads to. ovl07 and
     ovl17 index it dynamically (the variables of the ECL scripts), words 195 and 196 keep the party
@@ -44,7 +44,7 @@ var
     indexes it with the game variables VarWallIndexOutside and VarWallIndexInside. Its last six
     bytes are also entry 0 of SpecialBlocks, which DrawAreaView never reads. }
   ds0C26: array[0..15] of Byte;  { wall view id table, two equal groups of 8; see above }
-  SpecialBlocks: array[0..9] of TSpecialBlock;  { fixed area blocks; entries 1..9 (0 never read) }
+  SpecialBlocks: array[0..9] of TSpecialBlock;  { entries 1..9 tested; only 3..9 replace the map block }
   ds2612: Word;                   { word passed to res03_fn_00DC by QuitGame and the Ctrl-S pause path; meaning unknown }
   AreaMap: array[0..35, 0..43] of Byte;  { the area map: one block code per 3x3-tile block, one more
                                           than the code ovl32_e2 draws; byte 0x4E (the letter N)
