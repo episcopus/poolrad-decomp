@@ -140,8 +140,9 @@ var
   ds84E5: Byte;                   { special view gate: ShowAreaView uses ds6F68/ds6F69 only while it is nonzero }
   ds84F0: Byte;                   { set to 0 in res08_init after closing pool.cfg; meaning unknown }
   Regs: Registers;                { registers for Intr calls (QuitGame) }
-  ds4A1A: Byte;                   { set to 0 for EGA in res08_init, passed to res06_fn_00A0; meaning unknown }
-  ds4A1B: Byte;                   { set to 0 for EGA in res08_init, passed to res06_fn_0071; meaning unknown }
+  { The two display pages the BIOS text layer writes; res08_init sets both to 0 for EGA. }
+  ds4A1A: Byte;                   { the 2nd display page WriteCharsAt writes to when VideoAdapter is 1 }
+  ds4A1B: Byte;                   { the display page WriteCharsAt writes to first (BH of INT 10h) }
   SavedVideoMode: Byte;           { video mode QuitGame passes to INT 10h; no writer is in the decompiled units }
   ds4A1D: Byte;                   { copy of SavedVideoMode taken in res08_init; reader unknown }
   VideoAdapter: Byte;                   { video mode flag read by ClearWindow (03F1:0137): 0 fills the EGA planes,
@@ -150,7 +151,7 @@ var
   SoundModeBeforePause: Byte;     { SoundMode saved by a Ctrl-S pause; copied back only when it is 0 or 1 }
   SaveDir: string;                { POOL.CFG line 4: the save directory with trailing backslash (2.3) }
   { POOL.CFG line 3: the game directory with trailing backslash (res08_init, whitepaper 2.3). StartGame
-    saves it in ds4661, empties it, builds a file path in it (ovl11:0564) for res05_fn_025D and
+    saves it in ds4661, empties it, builds a file path in it (ovl11:0564) for OpenGameFile and
     restores it (ovl11:0469, 05EA). }
   GameDir: string;                { the game directory; see above }
   { True ends HeapErrorHandler's retry loop: it is read after ovl17_e9 runs (ovl00:0075),
@@ -245,8 +246,6 @@ var
   TileBuf: PT8x8Bank;             { the tile staging buffer: Put8x8Symbol Moves one tile to +$17 }
 
   { Globals of the DOS file and BIOS text layer (res05); evidence in re/dseg.toml where named. }
-  ds4A1A: Byte;                   { the second display page WriteCharsAt writes to when VideoAdapter is 1 (BH of INT 10h) }
-  ds4A1B: Byte;                   { the display page WriteCharsAt writes to first (BH of INT 10h, 0802:0048) }
   { 16 entries, the colours 0..15 mapped to 0..3 (0,0,0,1,2,2,2,3,3,1,1,1,2,2,3,3 in the image);
     WriteCharsAt maps the text colour through it when VideoAdapter is 0 (0802:0086). }
   ds25D5: array[0..15] of Byte;   { four-colour map of the text colours; see above }
