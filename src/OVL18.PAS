@@ -1,6 +1,8 @@
 unit OVL18;
-{ PoolNarrative: overlay unit, 2299 bytes of code. Skeleton by tools/match/skeleton.py: every routine is a stub
-  until decompiled (playbook 30). }
+{ PoolNarrative: the ending narrative and door animation (whitepaper 5.x). ShowEndingNarrative
+  shows the dragon's death and the Tyranthraxus and Bane speech as text lines and FINAL pictures,
+  running the ovl18_fn_0006 animation between the speech blocks, and ovl18_e2 animates the doors of
+  the area view. Both draw through the res07 primitives. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 uses POOLVARS;

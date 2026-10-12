@@ -137,7 +137,7 @@ var
   ds49DA: ^TBlock400;             { $400-byte block the loader allocates (ovl11:0054) }
   ds49DE: ^TBlock1E00;            { $1E00-byte block the loader allocates (ovl11:0064) }
   ds49E2: Byte;                   { set to 1 by the loader (ovl11:03C6); a count ShowEndingNarrative and ovl18_e2 read }
-  ds49F3: Byte;                   { the current view mode: ShowEndingNarrative saves it in ds4712 and sets 7, then restores it }
+  ds49F3: Byte;                   { the view mode: ShowEndingNarrative saves it, sets 7, restores it }
   ds470E: Pointer;                { the FINAL picture bank ShowEndingNarrative loads through res07_fn_0111 and draws }
   ds4712: Byte;                   { the DS:49F3 value ShowEndingNarrative saves at the start and restores at the end }
   ds4713: string[1];              { Str(TileSet): the picture number ShowEndingNarrative appends to FINAL }
