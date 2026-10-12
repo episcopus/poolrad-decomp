@@ -869,3 +869,10 @@ kind = "global"
 why = "the 1-bit font block: allocated $588 bytes by StartGame (ovl11:0074), filled by LoadGameFont from 8X8D1.DAX block 201 (0709:017C), read as glyph bitmaps by res06_fn_01DF (0709:01DF)"
 date = "2026-10-12"
 
+[[rename]]
+old = "res06_fn_0CAB"
+new = "ClearFullScreen"
+kind = "routine"
+why = "clears the whole screen to 0 by VideoAdapter (0709:0CAB): 0 fills two planes, 1 draws the full screen through FillPlaneRect twice, 2 fills four planes; called by ovl19"
+date = "2026-10-12"
+

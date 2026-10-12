@@ -20,12 +20,22 @@ function res06_fn_09E3(Prompt: string; A: Byte; MaxLen: Byte): string;
 procedure res06_fn_0B66;
 procedure ShowMessageLine(Color: Byte; Text: String40);
 function GameClock: Longint;
-procedure res06_fn_0CAB;
+procedure ClearFullScreen;
 procedure res06_fn_0D68(Text: string; Color: Byte);
 procedure DelayCounted;
 procedure res06_fn_0DD3(Left, Top, Right, Bottom: Byte);
 implementation
 uses Crt, Dos, POOLVARS, RES04, RES05;
+
+type
+  TPlaneBytes = array[0..$1F3F] of Byte;  { one whole EGA plane, 8000 bytes }
+var
+  { The EGA planes as whole byte arrays. They are the same memory RES09 maps as the
+    VideoText/VideoGrf planes; res06 cannot use those names (res09 uses res06). }
+  PlaneB800: TPlaneBytes absolute $B800:$0000;
+  PlaneBA00: TPlaneBytes absolute $BA00:$0000;
+  PlaneBC00: TPlaneBytes absolute $BC00:$0000;
+  PlaneBE00: TPlaneBytes absolute $BE00:$0000;
 
 { 0709:0000: retf 0: 0 bytes of parameters; 0 bytes of locals }
 { 0709:0000. Sets the EGA Graphics Controller registers for the picture fill: GC 0..5 to 0
@@ -69,7 +79,7 @@ end;
   (SetEgaFillRegisters, GC index 5 to 2), fills scanline by scanline with
   FillChar(Mem[ds4A18:DestOff], RightCol - LeftCol + 1, Value) stepping DestOff by 40, then
   restores GC index 5 to 0, ds4A1A and its plane segment. The Word/LongInt casts keep
-  the TopRow * 40 * 8 offset math unsigned. Called by res06_fn_0CAB, res06_fn_0DD3 and
+  the TopRow * 40 * 8 offset math unsigned. Called by ClearFullScreen, res06_fn_0DD3 and
   ClearWindow. }
 procedure FillPlaneRect(LeftCol, TopRow, RightCol, BotRow: ShortInt; Plane, Value: Byte);
 var
@@ -161,8 +171,36 @@ begin
   GetTime(Hour, Minute, Second, Sec100);
   GameClock := Hour * 360000 + Minute * 6000 + Second * 100 + Sec100;
 end;
-{ 0709:0CAB: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure res06_fn_0CAB; begin end;
+{ 0709:0CAB. Clears the whole screen to 0 by video adapter (the VideoAdapter global):
+  0 fills the two text-scanline planes ($BA00 then $B800, one plane each), 1 draws the full
+  40 by 25 cell screen through FillPlaneRect on planes 0 and 1, 2 fills the four graphics
+  planes ($B800/$BA00/$BC00/$BE00). Called by ovl19. }
+procedure ClearFullScreen;
+const
+  PlaneBytes = $1F40;  { one EGA plane in bytes }
+  LastCol = $27;       { rightmost byte column of the 40-column screen }
+  LastRow = $18;       { bottom cell row of the 25-row screen }
+begin
+  case VideoAdapter of
+    0:
+      begin
+        FillChar(PlaneBA00, PlaneBytes, 0);
+        FillChar(PlaneB800, PlaneBytes, 0);
+      end;
+    1:
+      begin
+        FillPlaneRect(0, 0, LastCol, LastRow, 0, 0);
+        FillPlaneRect(0, 0, LastCol, LastRow, 1, 0);
+      end;
+    2:
+      begin
+        FillChar(PlaneB800, PlaneBytes, 0);
+        FillChar(PlaneBA00, PlaneBytes, 0);
+        FillChar(PlaneBC00, PlaneBytes, 0);
+        FillChar(PlaneBE00, PlaneBytes, 0);
+      end;
+  end;
+end;
 { 0709:0D68: retf 6: 6 bytes of parameters; 42 bytes of locals.
   Shows the Text and waits: CheckCodeWheel passes the failure message of a wrong code word and the
   colour 14. }

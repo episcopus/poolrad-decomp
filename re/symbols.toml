@@ -17259,12 +17259,12 @@ id = "0709:0CAB"
 unit = "res06"
 addr = "0709:0CAB"
 size = 189
-name = "res06_fn_0CAB"
+name = "ClearFullScreen"
 signature = ""
 c_name = "res06_fn_0CAB"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res06_fn_0CAB (clears the whole screen to 0 by VideoAdapter (0709:0CAB): 0 fills two planes, 1 draws the full screen through FillPlaneRect twice, 2 fills four planes; called by ovl19); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
