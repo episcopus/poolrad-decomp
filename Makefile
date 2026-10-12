@@ -9,7 +9,7 @@ PACKED := poolrad/START.EXE
 
 .PHONY: help setup doctor inputs unexepack overlays map dax smoke status next ghidra p1-check \
         tp-install tp-probe tp-compare tp-pin tpc emu2 \
-        packet claim lock locks unlock handoff handoffs handoff-done \
+        packet claim lock locks unlock handoff handoffs handoff-done heartbeat agents \
         oracle-run oracle-dosbox timing-scan golden match test test-slow check review-pass rebuild skeleton readability rename host coco3
 
 help:
@@ -110,6 +110,12 @@ handoffs:         ## list what waits for the orchestrator: escalations first, th
 
 handoff-done:     ## after acting on a hand-off: UNIT=<key from make handoffs> [REVIEW=1]; adds its changelog row
 	$(PY) tools/agent/handoff.py --unit "$(if $(REVIEW),review-)$(UNIT)" --done
+
+heartbeat:        ## tell the human what you are doing: AGENT=<you> NOTE="<now, next>" [DONE=1 when you stop]; at each step and every 20 minutes
+	$(PY) tools/agent/heartbeat.py --agent "$(AGENT)" --note "$(NOTE)" $(if $(DONE),--done)
+
+agents:           ## every agent's last heartbeat, oldest first; QUIET = silent for more than 20 minutes
+	$(PY) tools/agent/heartbeat.py --list
 
 unlock:           ## release a unit lock (FORCE=1 to break stale)
 	UNIT=$(UNIT) FORCE=$(FORCE) $(PY) tools/agent/unlock.py

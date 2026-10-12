@@ -74,7 +74,10 @@ def test_a_failed_review_goes_back_to_a_decompiler_not_to_a_reviewer(tmp_path, m
 
 def test_an_escalation_needs_no_commit_and_a_changelog_row_lands_on_done(tmp_path, monkeypatch, capsys):
     import handoff
+    import heartbeat
     monkeypatch.setattr(handoff, "handoff_dir", lambda: tmp_path)
+    monkeypatch.setattr(heartbeat, "heartbeat_dir", lambda: tmp_path / "beats")
+    (tmp_path / "beats").mkdir()
     log = tmp_path / "CHANGELOG.md"
     log.write_text("| Date | Section | Change | Evidence |\n|---|---|---|---|\n| old | x | y | z |\n")
     monkeypatch.setattr(handoff, "CHANGELOG", log)
@@ -89,3 +92,18 @@ def test_an_escalation_needs_no_commit_and_a_changelog_row_lands_on_done(tmp_pat
     assert handoff.main(["--unit", "ovl33", "--done"]) == 0
     rows = log.read_text().splitlines()
     assert rows[2].endswith("| 5.8 | trace | make match |") and rows[3] == "| old | x | y | z |"
+
+
+def test_a_heartbeat_is_shared_and_a_silent_agent_shows_as_quiet(tmp_path, monkeypatch, capsys):
+    import datetime as dt
+    import heartbeat
+    monkeypatch.setattr(heartbeat, "heartbeat_dir", lambda: tmp_path)
+    assert heartbeat.main(["--agent", "dec-9", "--note", ""]) == 2               # a note is required
+    assert heartbeat.main(["--agent", "dec-9", "--note", "matching ovl34_fn_0000"]) == 0
+    assert heartbeat.main(["--agent", "rev-9", "--note", "queue empty", "--done"]) == 0
+    later = dt.datetime.now(dt.timezone.utc) + dt.timedelta(minutes=heartbeat.QUIET_MINUTES + 5)
+    rows = heartbeat.listing(later)
+    assert rows[0].startswith("QUIET") and "dec-9" in rows[0] and "matching ovl34_fn_0000" in rows[0]
+    assert rows[1].startswith("stopped") and "rev-9" in rows[1]                # stopped is never quiet
+    assert heartbeat.listing()[0].startswith("ok")                            # fresh: not quiet
+    assert heartbeat.heartbeat_dir is not None and common.common_dir().exists()

@@ -29,6 +29,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import common  # noqa: E402
+import heartbeat  # noqa: E402
 
 STATES = ("complete", "partial", "blocked", "review-passed", "review-failed", "escalate")
 CHANGELOG = common.ROOT / "docs/design/CHANGELOG.md"
@@ -116,6 +117,7 @@ def main(argv=None) -> int:
         "unit = %s\nagent = %s\nbranch = %s\ncommit = %s\nstate = %s\ntime = %s\nnote = %s\nchangelog = %s\n" % (
             a.unit.lower(), a.agent, branch, head, a.state,
             dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), a.note, a.changelog))
+    heartbeat.beat(a.agent, "handed off %s (%s)" % (key, a.state))
     if a.state == "escalate":
         print("handoff: escalation %s is waiting for the orchestrator (it goes to the human)" % key)
     else:
