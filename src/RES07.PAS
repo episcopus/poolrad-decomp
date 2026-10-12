@@ -38,7 +38,7 @@ procedure res07_fn_1A19;
 procedure res07_fn_1B52;
 procedure res07_fn_1E5C;
 procedure res07_fn_248E(Cols, Rows: Word; Planes, Flag: Byte; var Buf: Pointer);
-procedure res07_fn_2595(var P: Pointer);
+procedure res07_fn_2595(var P);
 procedure res07_fn_2632;
 procedure res07_fn_2A0D;
 implementation
@@ -114,7 +114,7 @@ implementation
 { 0464:248E: retf 12: 12 bytes of parameters; 4 bytes of locals }
 {@stub} procedure res07_fn_248E(Cols, Rows: Word; Planes, Flag: Byte; var Buf: Pointer); begin end;
 { 0464:2595: retf 4: 4 bytes of parameters; 6 bytes of locals }
-{@stub} procedure res07_fn_2595(var P: Pointer); begin end;
+{@stub} procedure res07_fn_2595(var P); begin end;
 { 0464:2632: retf 18: 18 bytes of parameters; 36 bytes of locals }
 {@stub} procedure res07_fn_2632; begin end;
 { 0464:2A0D: retf 4: 4 bytes of parameters; 0 bytes of locals }

@@ -574,6 +574,29 @@ What the game takes from the outside world, found by `make timing-scan` and by r
 - `ShowMessageLine(Color, Text)` shows a one-line message on row 24: it clears 40 columns of that row (`res06_fn_05EB(0, 24, 0, 40)`), draws the text in the given colour (`res06_fn_0626(0, 24, Color, Text)`) and waits for a key through `ReadGameKey`. The text is a `string[40]`. Twelve routines call it, in overlays 0, 3, 5, 7, 17 and 33 and in res06 itself (`make packet FN=ShowMessageLine`).
 - Overlay 0 is the heap error handler: its initialisation sets `HeapError := @HeapErrorHandler`, so Turbo Pascal calls `HeapErrorHandler(Size)` when `New` or `GetMem` cannot get `Size` bytes. A zero size returns at once with an unassigned result (`jbe ovl00:004C` to `ovl00:00A3`). For a non-zero size it shows "WARNING: Insufficient Memory" in colour 14 (yellow); if the Boolean `DS:49D0` is set it calls `ovl17_e9` (the save and load unit) and repeats until `DS:557D` says to stop, otherwise it shows "Insufficient Memory. Exiting Program". Then it always ends the program (`QuitGame`), so that path never returns. The function result is never assigned on any path (QUIRK `ovl00:00A3`).
 
+### 5.16 The 3D sprite unit ovl28 **[V]** (`src/OVL28.PAS`, `make match UNIT=ovl28`: 6 of 9 routines at L2)
+
+Overlay 28 draws the 8x8 sprites of the 3D view and the HEAD/BODY strip of the character screen.
+The parts proven so far:
+
+- `DrawSprite(Col, Row: Integer; Direct: Byte; Sprite: Pointer)` (`ovl28:0000`): a nil sprite draws
+  nothing; with `Direct` set it blits the sprite one pixel up and left onto the screen buffer
+  `DS:4A20` through `res07_fn_0D71` (mode 0, flag 1) and steps the display (`res07_fn_1B52`);
+  otherwise it copies the sprite into the staging buffer with `res07_fn_1951`.
+- `DrawHeadSprite` and `DrawBodySprite` (`ovl28:0050`, `ovl28:0070`): draw a sprite at (column,
+  row) and at (column, row + 5); `ShowHeadBodySprites` (`ovl28:0697`) uses them to draw the HEAD
+  sprite `DS:6B01` and the BODY sprite `DS:6B06` over the 3D view.
+- `LoadHeadBodySprites` (`ovl28:05D9`) loads the HEAD and BODY banks of the picture number
+  `DS:5376` from the files `HEAD<number>` and `BODY<number>` through `res07_fn_0111` into
+  `DS:6B01` and `DS:6B06` (recording the loaded number in `DS:6B00` and `DS:6B05`, `$FF` = none).
+- `FreeSpriteList` (`ovl28:048F`) frees every loaded sprite bank of a sprite list (through
+  `res07_fn_2595`) and zeroes the list, the picture name `DS:6B0A` and the current bank `DS:6B1C`.
+- The sprite list is a `$42`-byte record: a count byte at +0, a flag at +1, and slots of 8 bytes
+  from +6, each holding a far pointer at +0 (the `TSpriteList` type of `src/OVL28.PAS`).
+
+Still to decompile: `ovl28_e7` (the range-checked 3D sprite draw, "Illegal range in
+Show3DSprite."), `ovl28_e4` (the HEAD/BODY window) and `ovl28_e2` (the PIC/FINAL picture loader).
+
 ---
 
 ## 6. Open questions

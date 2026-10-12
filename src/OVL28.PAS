@@ -6,9 +6,17 @@ unit OVL28;
 interface
 uses POOLVARS;
 type
+  { One loaded 8x8 sprite bank. Only the two words at +4 and +6 are read here: the sprite's base
+    screen column and row (ovl28_e7 adds 2 to each and passes them to res07_fn_0D71). }
+  TSpriteBank = record
+    Filler: array[0..3] of Byte;  { +0..+3: never read here }
+    X: Word;                      { +4: the sprite's base column }
+    Y: Word;                      { +6: the sprite's base row }
+  end;
+  PSpriteBank = ^TSpriteBank;
   { One 8-byte slot of the sprite list ovl28_e2 builds and FreeSpriteList frees: a far pointer at +0. }
   TSpriteSlot = record
-    Sprite: Pointer;              { +0: the loaded sprite bank (nil when empty) }
+    Sprite: PSpriteBank;          { +0: the loaded sprite bank (nil when empty) }
     Filler: array[0..3] of Byte;  { +4..+7: never read }
   end;
   { The list of loaded sprites: a count byte, a flag, and the slots at +6 with a stride of 8
@@ -29,7 +37,7 @@ procedure FreeSpriteList(Rec: PSpriteList);
 procedure ovl28_e4;
 procedure LoadHeadBodySprites(HeadBank, BodyBank: Byte);
 procedure ShowHeadBodySprites(Col, Row: Byte; Direct: Byte);
-procedure ovl28_e7;
+procedure ovl28_e7(Bank: Byte; Rec: PSpriteList);
 implementation
 uses RES04, RES05, RES07;
 
@@ -122,7 +130,7 @@ begin
     DrawSprite(Col, Row, 0, ds6B01);
 end;
 { ovl28:0708: retf 6: 6 bytes of parameters; 70 bytes of locals }
-{@stub} procedure ovl28_e7; begin end;
+{@stub} procedure ovl28_e7(Bank: Byte; Rec: PSpriteList); begin end;
 
 begin
 end.
