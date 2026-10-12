@@ -679,3 +679,8 @@ evidence = "ShowPagedText current glyph row (0709:0768): reset to Top on clear, 
 offset = 0x0D16
 name = "BreakChars"
 evidence = "char set ShowPagedText word scan tests (0709:0822..08F0, set of 32..63 per the 0D12 descriptor, proven by tpc probe Q32); image value members $, %, &, 2, 3, 7, ="
+
+[[global]]
+offset = 0x5374
+name = "SoundDriverIdle"
+evidence = "SetSoundDriverIdle stores it (08AE:01CB); nonzero: the timer driver is stopped and PlaySound runs it only around one sound, waiting 0.1 s (08AE:00E9, 0156); StartGame sets 100 (ovl11)"

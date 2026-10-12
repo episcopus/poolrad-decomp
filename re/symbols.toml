@@ -16149,12 +16149,12 @@ id = "08AE:0000"
 unit = "res03"
 addr = "08AE:0000"
 size = 108
-name = "res03_fn_0000"
-signature = ""
+name = "TimeInHundredths"
+signature = "function TimeInHundredths: Longint"
 c_name = "res03_fn_0000"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res03_fn_0000 (Dos.GetTime, then Hour*360000 + Minute*6000 + Second*100 + Sec100 (08AE:001A..005A)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16162,12 +16162,12 @@ id = "08AE:006C"
 unit = "res03"
 addr = "08AE:006C"
 size = 112
-name = "res03_fn_006C"
-signature = ""
+name = "WaitHundredths"
+signature = "procedure WaitHundredths(Hundredths: Word)"
 c_name = "res03_fn_006C"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res03_fn_006C (loops on TimeInHundredths until it reaches start + parameter (08AE:0072..00D4); PlaySound passes 10); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16175,12 +16175,12 @@ id = "08AE:00DC"
 unit = "res03"
 addr = "08AE:00DC"
 size = 159
-name = "res03_fn_00DC"
-signature = "procedure res03_fn_00DC(UnknownWord: Word)"
+name = "PlaySound"
+signature = "procedure PlaySound(Sound: Word)"
 c_name = "res03_fn_00DC"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:far_call"
+notes = "renamed from res03_fn_00DC (0: both tunes 0 and output off; 1: output on; FFh: both tunes 0; else tune n-1 on the device SoundMode selects (1: speaker setter 08AE:1742, 0: Tandy setter 08AE:17AE) (08AE:00F4..0153)); auto:far_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16188,12 +16188,12 @@ id = "08AE:017B"
 unit = "res03"
 addr = "08AE:017B"
 size = 42
-name = "res03_fn_017B"
-signature = "procedure res03_fn_017B"
+name = "SilenceSound"
+signature = "procedure SilenceSound"
 c_name = "res03_fn_017B"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:far_call"
+notes = "renamed from res03_fn_017B (starts the timer driver, sets both voice groups to tune 0, stops the driver; saves SoundMode in SoundModeBeforePause (08AE:017E..01A0)); auto:far_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16201,12 +16201,12 @@ id = "08AE:01A5"
 unit = "res03"
 addr = "08AE:01A5"
 size = 45
-name = "res03_fn_01A5"
-signature = "procedure res03_fn_01A5(Note: Word)"
+name = "SetSoundDriverIdle"
+signature = "procedure SetSoundDriverIdle(Idle: Word)"
 c_name = "res03_fn_01A5"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:far_call"
+notes = "renamed from res03_fn_01A5 (nonzero: stops the timer driver (08AE:13B1) if it ran; zero: starts it (08AE:137C); stores the value in ds5374 which PlaySound tests to run the driver only around one sound (08AE:01B1..01CB, 0156..0174)); auto:far_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16232,7 +16232,7 @@ signature = ""
 c_name = "res03_fn_09E3"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
 evidence = ["near_call"]
 
 [[routine]]
@@ -16245,7 +16245,7 @@ signature = ""
 c_name = "res03_fn_0A27"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
 evidence = ["near_call"]
 
 [[routine]]
@@ -16258,7 +16258,7 @@ signature = ""
 c_name = "res03_fn_0AD3"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
 evidence = ["near_call"]
 
 [[routine]]
@@ -16271,7 +16271,7 @@ signature = ""
 c_name = "res03_fn_0C8F"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
 evidence = ["near_call"]
 
 [[routine]]
@@ -16284,7 +16284,7 @@ signature = ""
 c_name = "res03_fn_0DB1"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
 evidence = ["near_call"]
 
 [[routine]]
@@ -16297,7 +16297,7 @@ signature = ""
 c_name = "res03_fn_0DCC"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
 evidence = ["near_call"]
 
 [[routine]]
@@ -16310,7 +16310,7 @@ signature = ""
 c_name = "res03_fn_0DEB"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
 evidence = ["near_call"]
 
 [[routine]]
@@ -16323,7 +16323,7 @@ signature = ""
 c_name = "res03_fn_0E06"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
 evidence = ["near_call"]
 
 [[routine]]
@@ -16336,7 +16336,7 @@ signature = ""
 c_name = "res03_fn_0F5B"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
 evidence = ["near_call"]
 
 [[routine]]
@@ -16349,7 +16349,7 @@ signature = ""
 c_name = "res03_fn_1091"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
 evidence = ["near_call"]
 
 [[routine]]
@@ -16362,7 +16362,7 @@ signature = ""
 c_name = "res03_fn_1221"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
 evidence = ["near_call"]
 
 [[routine]]
@@ -16370,12 +16370,12 @@ id = "08AE:137C"
 unit = "res03"
 addr = "08AE:137C"
 size = 53
-name = "res03_fn_137C"
+name = "StartSoundTimer"
 signature = ""
 c_name = "res03_fn_137C"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res03_fn_137C (saves INT 08h, installs handler 08AE:13EA, PIT divisor 13B1h (08AE:1383..13AC; whitepaper 5.14)); auto:near_call; blocked (dec-14): hand-written assembly from an external .OBJ linked after the initialisation part (TASM prologue 8B EC, DS loaded with the unit's own segment 08AE, data at CS offsets); Turbo Pascal places BASM routines before the init, and the tables need raw bytes, so it cannot be written in Pascal without breaking the rules; escalated"
 evidence = ["near_call"]
 
 [[routine]]
@@ -16383,12 +16383,12 @@ id = "08AE:13B1"
 unit = "res03"
 addr = "08AE:13B1"
 size = 198
-name = "res03_fn_13B1"
+name = "StopSoundTimer"
 signature = ""
 c_name = "res03_fn_13B1"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res03_fn_13B1 (restores INT 08h, divisor FFFFh, speaker off, Tandy silenced (08AE:13B8..13E6; whitepaper 5.14)); auto:near_call; blocked (dec-14): hand-written assembly from an external .OBJ linked after the initialisation part (TASM prologue 8B EC, DS loaded with the unit's own segment 08AE, data at CS offsets); Turbo Pascal places BASM routines before the init, and the tables need raw bytes, so it cannot be written in Pascal without breaking the rules; escalated"
 evidence = ["near_call"]
 
 [[routine]]
@@ -16401,7 +16401,7 @@ signature = ""
 c_name = "res03_fn_1477"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked (dec-14): hand-written assembly from an external .OBJ linked after the initialisation part (TASM prologue 8B EC, DS loaded with the unit's own segment 08AE, data at CS offsets); Turbo Pascal places BASM routines before the init, and the tables need raw bytes, so it cannot be written in Pascal without breaking the rules; escalated"
 evidence = ["near_call"]
 
 [[routine]]
@@ -16414,7 +16414,7 @@ signature = ""
 c_name = "res03_fn_14EC"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked (dec-14): hand-written assembly from an external .OBJ linked after the initialisation part (TASM prologue 8B EC, DS loaded with the unit's own segment 08AE, data at CS offsets); Turbo Pascal places BASM routines before the init, and the tables need raw bytes, so it cannot be written in Pascal without breaking the rules; escalated"
 evidence = ["near_call"]
 
 [[routine]]
@@ -16427,7 +16427,7 @@ signature = ""
 c_name = "res03_fn_157A"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked (dec-14): hand-written assembly from an external .OBJ linked after the initialisation part (TASM prologue 8B EC, DS loaded with the unit's own segment 08AE, data at CS offsets); Turbo Pascal places BASM routines before the init, and the tables need raw bytes, so it cannot be written in Pascal without breaking the rules; escalated"
 evidence = ["near_call"]
 
 [[routine]]
@@ -16440,7 +16440,7 @@ signature = ""
 c_name = "res03_fn_160B"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked (dec-14): hand-written assembly from an external .OBJ linked after the initialisation part (TASM prologue 8B EC, DS loaded with the unit's own segment 08AE, data at CS offsets); Turbo Pascal places BASM routines before the init, and the tables need raw bytes, so it cannot be written in Pascal without breaking the rules; escalated"
 evidence = ["near_call"]
 
 [[routine]]
@@ -16448,12 +16448,12 @@ id = "08AE:1742"
 unit = "res03"
 addr = "08AE:1742"
 size = 108
-name = "res03_fn_1742"
-signature = ""
+name = "SetSpeakerTune"
+signature = "procedure SetSpeakerTune(Tune: Word)"
 c_name = "res03_fn_1742"
 level = "none"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res03_fn_1742 (loads tune n from table CS:055F into the four voices at CS:022D, which the stepper 08AE:1477 plays on port 42h (PC speaker) (08AE:174F..179E)); auto:prologue; blocked (dec-14): hand-written assembly from an external .OBJ linked after the initialisation part (TASM prologue 8B EC, DS loaded with the unit's own segment 08AE, data at CS offsets); Turbo Pascal places BASM routines before the init, and the tables need raw bytes, so it cannot be written in Pascal without breaking the rules; escalated"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16461,12 +16461,12 @@ id = "08AE:17AE"
 unit = "res03"
 addr = "08AE:17AE"
 size = 108
-name = "res03_fn_17AE"
-signature = ""
+name = "SetTandyTune"
+signature = "procedure SetTandyTune(Tune: Word)"
 c_name = "res03_fn_17AE"
 level = "none"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res03_fn_17AE (loads tune n from table CS:0607 into the four voices at CS:03C7, which the stepper 08AE:14EC plays on port C0h (Tandy SN76489) (08AE:17BB..180A)); auto:prologue; blocked (dec-14): hand-written assembly from an external .OBJ linked after the initialisation part (TASM prologue 8B EC, DS loaded with the unit's own segment 08AE, data at CS offsets); Turbo Pascal places BASM routines before the init, and the tables need raw bytes, so it cannot be written in Pascal without breaking the rules; escalated"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16474,12 +16474,12 @@ id = "08AE:181A"
 unit = "res03"
 addr = "08AE:181A"
 size = 22
-name = "res03_fn_181A"
-signature = ""
+name = "SetSoundOutput"
+signature = "procedure SetSoundOutput(Enabled: Word)"
 c_name = "res03_fn_181A"
 level = "none"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res03_fn_181A (stores the byte at CS:020D which both voice steppers test before writing the speaker (08AE:14C0) or the Tandy chip (08AE:1519) (08AE:1824..1827)); auto:prologue; blocked (dec-14): hand-written assembly from an external .OBJ linked after the initialisation part (TASM prologue 8B EC, DS loaded with the unit's own segment 08AE, data at CS offsets); Turbo Pascal places BASM routines before the init, and the tables need raw bytes, so it cannot be written in Pascal without breaking the rules; escalated"
 evidence = ["prologue"]
 
 [[routine]]

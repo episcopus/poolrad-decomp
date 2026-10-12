@@ -55,7 +55,7 @@ const
   TileKept = $1E;               { a tile that is never replaced by a body and always wins ProbeStep }
   TileBody = $1F;               { the tile a body leaves on the map }
   MaxBodies = 8;                { BodyTable holds 8 records }
-  { res03_fn_01A5 (the sound unit) is called with 0 before RemoveCombatant's work and with 10 after;
+  { SetSoundDriverIdle (the sound unit) is called with 0 before RemoveCombatant's work and with 10 after;
     what the two values select is not known. }
   BeforeRemoval = 0;
   AfterRemoval = $A;
@@ -451,15 +451,15 @@ begin
 end;
 
 { ovl31:0E11. Takes combatant Who off the combat map (it dies or leaves). Outside view mode 5 it only
-  makes the res03_fn_00DC(ds261E) call and waits (DelayCounted). In combat it does nothing when Who
+  makes the PlaySound(ds261E) call and waits (DelayCounted). In combat it does nothing when Who
   already has a body record; otherwise it brings Who into view, erases it, draws DyingPicture on
   each of its cells, and unless Who^.Combat^.NoBody is set adds a body record (BodyTable: who, cell,
   the tile under it) and puts TileBody on its cell (a TileKept cell stays). Then the res03 call and
   the wait, the ground is redrawn, its Kind is cleared, CellOccupant rebuilt, the view redrawn round
-  its centre and four bytes of its combat record cleared. res03_fn_01A5 brackets the whole.
+  its centre and four bytes of its combat record cleared. SetSoundDriverIdle brackets the whole.
   QUIRK ovl31:0E41: the search for an existing body record tests BodyTable[ds70C7] (the sprite list
   loop counter of FreeSpriteList) every time, not BodyTable[I]; I only counts to 9.
-  QUIRK ovl31:0E69: the early exit skips the closing res03_fn_01A5(10).
+  QUIRK ovl31:0E69: the early exit skips the closing SetSoundDriverIdle(10).
   QUIRK ovl31:0E14: the frame holds two bytes no code uses (Spare). }
 procedure RemoveCombatant(Who: PCharacter);
 var
@@ -467,10 +467,10 @@ var
   DX, DY, CellX, CellY: ShortInt;
   Spare: array[0..1] of Byte;
 begin
-  res03_fn_01A5(BeforeRemoval);
+  SetSoundDriverIdle(BeforeRemoval);
   if ds49F3 <> ViewModeCombat then
   begin
-    res03_fn_00DC(ds261E);
+    PlaySound(ds261E);
     DelayCounted;
   end
   else
@@ -500,7 +500,7 @@ begin
       BodyTable[BodyCount].X := CellX;
       BodyTable[BodyCount].Y := CellY;
     end;
-    res03_fn_00DC(ds261E);
+    PlaySound(ds261E);
     DelayCounted;
     RedrawGround(0, 0, Index);
     CombatantTable[CombatantIndex(Who)].Kind := 0;
@@ -511,7 +511,7 @@ begin
     Who^.Combat^.PendingSpell := 0;
     Who^.Combat^.B7 := 0;
   end;
-  res03_fn_01A5(AfterRemoval);
+  SetSoundDriverIdle(AfterRemoval);
 end;
 
 { ovl31:10A7. Puts combatant Who on map cell (CellX, CellY) with the footprint kind of its record

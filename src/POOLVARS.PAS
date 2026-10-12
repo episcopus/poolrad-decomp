@@ -366,10 +366,10 @@ var
     bytes are also entry 0 of SpecialBlocks, which DrawAreaView never reads. }
   ds0C26: array[0..15] of Byte;  { wall view id table, two equal groups of 8; see above }
   SpecialBlocks: array[0..9] of TSpecialBlock;  { entries 1..9 tested; only 3..9 replace the map block }
-  ds2612: Word;                   { word passed to res03_fn_00DC by QuitGame and the Ctrl-S pause path; meaning unknown }
+  ds2612: Word;                   { word passed to PlaySound by QuitGame and the Ctrl-S pause path; meaning unknown }
   ds260A: array[0..7] of Byte;    { 8-byte structure res07_fn_2632 copies from @ds260A (DrawWallDescriptors) }
-  ds2622: Word;                   { word e1 passes to res03_fn_00DC when Done is 0; meaning unknown }
-  ds2628: Word;                   { word the ovl14 movement code passes to res03_fn_00DC; meaning unknown }
+  ds2622: Word;                   { word e1 passes to PlaySound when Done is 0; meaning unknown }
+  ds2628: Word;                   { word the ovl14 movement code passes to PlaySound; meaning unknown }
   { Five words, one per 8x8 tile bank, subtracted from the symbol number to index within the
     bank (Put8x8Symbol, ovl34:020F); evidence in re/dseg.toml. }
   SymbolBase: array[0..4] of Word;  { per-bank base symbol numbers; see above }
@@ -500,7 +500,7 @@ var
   CombatTiles: array[0..255] of TCombatTile;  { see above }
   Footprints: array[0..4, 0..3] of TFootCell;  { the cells of footprint kinds 1..4 (kind 0 unused) }
   DyingPicture: Pointer;                { the picture RemoveCombatant draws over a dying combatant's cells }
-  ds261E: Word;                   { the sound RemoveCombatant plays (res03_fn_00DC) when a combatant dies }
+  ds261E: Word;                   { the sound RemoveCombatant plays (PlaySound) when a combatant dies }
   ds6718: array[0..255] of TSortRec;  { the ovl30 sort table (element 0 holds the count, SortTable) }
   ds49ED: Word;                   { set to $9900 by the loader (ovl11:03C0) }
   ds49E5: Word;                   { copied to ds49ED by the ovl14 L key; meaning unknown }
@@ -525,7 +525,7 @@ var
     $BA00, $BC00 or $BE00. }
   ds51E0: array[0..$C7] of Word;  { cell graphics plane address; see above }
   ds5370: Byte;                   { set to 1 by the loader (ovl11:042E) }
-  ds5374: Word;                   { last sound value rung by res03_fn_01A5, cleared by the loader (ovl11:045D) }
+  SoundDriverIdle: Word;          { nonzero: sound timer driver stopped between sounds (RES03); ovl11:045D clears it }
   ds5377: Byte;                   { TileSet saved by SelectTileSet; the loader also sets it to 1 }
   ds5378: Word;                   { set to 1 by the loader (ovl11:03E0) }
   ds547A: Word;                   { set to 1 by the loader (ovl11:03DA) }
