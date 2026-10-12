@@ -106,3 +106,76 @@ def test_a_heartbeat_is_shared_and_a_silent_agent_shows_as_quiet(tmp_path, monke
     assert rows[1].startswith("stopped") and "rev-9" in rows[1]                # stopped is never quiet
     assert heartbeat.listing()[0].startswith("ok")                            # fresh: not quiet
     assert heartbeat.heartbeat_dir is not None and common.common_dir().exists()
+
+
+def test_the_watch_screen_shows_agents_handoffs_and_locks(tmp_path, monkeypatch):
+    import handoff
+    import heartbeat
+    import watch
+    for name in ("beats", "handoffs", "locks"):
+        (tmp_path / name).mkdir()
+    monkeypatch.setattr(heartbeat, "heartbeat_dir", lambda: tmp_path / "beats")
+    monkeypatch.setattr(handoff, "handoff_dir", lambda: tmp_path / "handoffs")
+    monkeypatch.setattr(common, "lock_dir", lambda: tmp_path / "locks")
+    heartbeat.beat("dec-9", "matching ovl34_fn_0000")
+    (tmp_path / "handoffs/escalate-general-1.md").write_text("agent = rev-9\nstate = escalate\nnote = a question\n")
+    (tmp_path / "locks/ovl34.lock").write_text("agent = dec-9\n")
+    text = watch.screen(5)
+    assert "dec-9" in text and "matching ovl34_fn_0000" in text
+    assert "ESCALATE" in text and "a question" in text and "ovl34" in text and "next unit" in text
+
+
+def test_a_claim_shows_the_orchestrators_notes_on_its_unit(tmp_path):
+    import claim
+    (tmp_path / "work").mkdir()
+    (tmp_path / "work/blockers.md").write_text(
+        "# Blockers\n\n<!-- mentions ovl34 in a comment -->\n\n"
+        "- ovl34 back on the decompiler: revert 1bb73fd,\n  then make res09 agree.\n\n"
+        "- res06 stub parameters: Left, Top.\n- ovl340 is another unit.\n")
+    notes = claim.blocker_notes(tmp_path, "ovl34")
+    assert notes == ["- ovl34 back on the decompiler: revert 1bb73fd, then make res09 agree."]
+    assert claim.blocker_notes(tmp_path, "res08") == []
+
+
+def test_a_handoff_with_nothing_to_merge_is_refused(tmp_path, monkeypatch):
+    import handoff
+    import heartbeat
+    monkeypatch.setattr(handoff, "handoff_dir", lambda: tmp_path)
+    monkeypatch.setattr(heartbeat, "heartbeat_dir", lambda: tmp_path)
+    state = {"branch": "unit/ovl33", "ahead": "0"}
+
+    def fake_git(*args, **kw):
+        return {"rev-parse": state["branch"] if "--abbrev-ref" in args else "abc1234",
+                "status": "", "rev-list": state["ahead"]}.get(args[0], "")
+    monkeypatch.setattr(common, "git", fake_git)
+    run = ["--unit", "ovl33", "--agent", "dec-9", "--state", "complete", "--note", "already complete"]
+    assert handoff.main(run) == 1 and not (tmp_path / "ovl33.md").exists()      # nothing beyond main
+    state["branch"] = "main"
+    state["ahead"] = "3"
+    assert handoff.main(run) == 1                                                # run from the main checkout
+    state["branch"] = "unit/ovl33"
+    assert handoff.main(run) == 0 and (tmp_path / "ovl33.md").exists()
+
+
+def test_make_targets_keep_the_lock_owners_heartbeat_alive(tmp_path, monkeypatch):
+    import datetime as dt
+    import heartbeat
+    (tmp_path / "beats").mkdir()
+    (tmp_path / "locks").mkdir()
+    monkeypatch.setattr(heartbeat, "heartbeat_dir", lambda: tmp_path / "beats")
+    monkeypatch.setattr(common, "lock_dir", lambda: tmp_path / "locks")
+    (tmp_path / "locks/ovl23.lock").write_text("unit = ovl23\nagent = dec-9\nbranch = unit/ovl23\n")
+    branch = {"now": "unit/ovl23"}
+    monkeypatch.setattr(common, "git", lambda *a, **k: branch["now"])
+    heartbeat.beat("dec-9", "decompiling IncrementBonuses")
+    beat = tmp_path / "beats/dec-9.txt"
+    old = heartbeat.fields(beat.read_text())["time"]
+    beat.write_text(beat.read_text().replace(old, "2000-01-01T00:00:00+00:00"))   # long silent
+    assert heartbeat.auto("make match ovl23") == "dec-9"
+    f = heartbeat.fields(beat.read_text())
+    assert f["note"] == "decompiling IncrementBonuses" and f["activity"] == "make match ovl23"
+    assert dt.datetime.fromisoformat(f["time"]).year > 2000 and heartbeat.listing()[0].startswith("ok")
+    branch["now"] = "main"                                           # the orchestrator's make check
+    assert heartbeat.auto("make check") is None
+    monkeypatch.setattr(common, "git", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("no git")))
+    assert heartbeat.auto("make check") is None                     # never raises

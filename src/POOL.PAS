@@ -53,7 +53,7 @@ uses
   OVL00;
 
 begin
-  ovl11_e1;
+  StartGame;
   if ParamStr(1) <> 'STING' then
   begin
     ovl01_e1;

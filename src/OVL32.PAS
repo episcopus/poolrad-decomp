@@ -6,7 +6,7 @@ interface
 procedure Load24x24Set(SetName: string; Index, Unused: Byte);
 procedure DrawCellPicture(PicCol, PicRow: Shortint; PicCode, Unused: Byte);
 procedure FreePictureSlot(Slot: Byte);
-procedure ovl32_e4;
+procedure ovl32_e4(S: string; A, B: Byte);
 procedure DrawIcon(CellCol, CellRow: Shortint; IconSet, Mirror, PicIndex: Byte);
 implementation
 uses POOLVARS, RES04, RES07;
@@ -53,7 +53,7 @@ begin
     QuitGame;
   end;
   Loaded := nil;
-  res07_fn_0111(SetName, 1, 0, 0, @Loaded);
+  res07_fn_0111(SetName, 1, 0, 0, Loaded);
   CopyBytes := PMemPic(Loaded)^.ItemCount * PMemPic(Loaded)^.ByteSize;
   DestOfs := Index * PMemPic(Loaded)^.ByteSize;
   if ds5E52 <> nil then
@@ -64,14 +64,14 @@ end;
 
 { ovl32:00F1. Draws the picture PicCode at cell (PicCol, PicRow). When PicCode is above
   PicIndexMask, bit 7 is cleared and the source is ds5E56; otherwise the source is ds5E52
-  and the code is passed whole. Both paths pass NoBlitFlags and the destination ds4A20 to
+  and the code is passed whole. Both paths pass NoBlitFlags and the destination DrawBuf to
   res07_fn_08D4. Unused is never read (DrawAreaView passes 1, ovl31 passes 0). }
 procedure DrawCellPicture(PicCol, PicRow: Shortint; PicCode, Unused: Byte);
 begin
   if PicCode > PicIndexMask then
-    res07_fn_08D4(PicCol, PicRow, PicCode and PicIndexMask, NoBlitFlags, ds5E56, ds4A20)
+    res07_fn_08D4(PicCol, PicRow, PicCode and PicIndexMask, NoBlitFlags, ds5E56, DrawBuf)
   else
-    res07_fn_08D4(PicCol, PicRow, PicCode, NoBlitFlags, ds5E52, ds4A20);
+    res07_fn_08D4(PicCol, PicRow, PicCode, NoBlitFlags, ds5E52, DrawBuf);
 end;
 { ovl32:014E. Frees both pictures of one slot in ds5E5A, when the pointer is not nil,
   through res07_fn_2595 (FreeMem, then the pointer is set nil). Slot selects the
@@ -84,7 +84,7 @@ begin
   if ds5E5A[Slot].SecondPic <> nil then res07_fn_2595(ds5E5A[Slot].SecondPic);
 end;
 { ovl32:01C8: retf 8: 8 bytes of parameters; 1028 bytes of locals }
-{@stub} procedure ovl32_e4; begin end;
+{@stub} procedure ovl32_e4(S: string; A, B: Byte); begin end;
 { ovl32:04FC. Draws the picture PicIndex, mirror half Mirror, from the table at ds5E5A.
   Nothing happens when that pointer is nil. Otherwise a picture of the same height and
   width is allocated, the bytes are copied (res07_fn_15C7 when IconSet is above
@@ -111,7 +111,7 @@ begin
           Move(Pixels^, PMemPic(Dest)^.Pixels^, ByteSize);
       end;
     end;
-    res07_fn_0D71(CellCol * CellStep, CellRow * CellStep, NoPicIndex, BlitFlagBit, Dest, ds4A20);
+    res07_fn_0D71(CellCol * CellStep, CellRow * CellStep, NoPicIndex, BlitFlagBit, Dest, DrawBuf);
     res07_fn_2595(Dest);
   end;
 end;

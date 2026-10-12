@@ -6,6 +6,8 @@ EXE := poolrad/start-unpack.exe
 OVR := poolrad/GAME.OVR
 
 PACKED := poolrad/START.EXE
+# Refresh the heartbeat of the agent holding the lock on this branch (tools/agent/heartbeat.py --auto); never fails.
+AUTOBEAT = -@$(PY) tools/agent/heartbeat.py --auto
 
 .PHONY: help setup doctor inputs unexepack overlays map dax smoke status next ghidra p1-check \
         tp-install tp-probe tp-compare tp-pin tpc emu2 \
@@ -87,10 +89,12 @@ tp-compare:       ## align our System/Crt/Dos/Overlay code with each probe; buil
 tp-pin: tp-install tp-probe tp-compare  ## all of the above
 
 tpc:              ## compile SRC=<file.pas> with the pinned TP 6.0 (VER=, DISASM=1, OPTS='/$$R+') into build/tpc/
+	$(AUTOBEAT) "make tpc $(SRC)"
 	@test -n "$(SRC)" || (echo 'tpc: usage: make tpc SRC=path/FILE.PAS [DISASM=1] [VER=tp70] [OPTS=...]'; exit 2)
 	$(PY) tools/re/tp_toolchain.py tpc $(SRC) $(if $(VER),--version $(VER)) $(if $(DISASM),--disasm) $(if $(OPTS),--opts $(OPTS))
 
 packet:           ## write build/packets/<id>.md for UNIT= or FN=
+	$(AUTOBEAT) "make packet $(UNIT)$(FN)"
 	$(PY) tools/agent/packet.py $(if $(UNIT),--unit $(UNIT)) $(if $(FN),--fn $(FN))
 
 claim:            ## start work: lock the next unit (or UNIT=) and create its worktree: AGENT=<name> [UNIT=<id>] [REVIEW=1] [TASK=doc-<chapter>|map]
@@ -117,8 +121,8 @@ heartbeat:        ## tell the human what you are doing: AGENT=<you> NOTE="<now, 
 agents:           ## every agent's last heartbeat, oldest first; QUIET = silent for more than 20 minutes
 	$(PY) tools/agent/heartbeat.py --list
 
-watch-agents:     ## live view for the operator: heartbeats, hand-offs and locks, redrawn every 30 seconds (Ctrl+C to stop)
-	@while true; do clear; date; $(MAKE) -s agents; echo; $(MAKE) -s handoffs | tail -1; $(MAKE) -s locks | tail -1; sleep 30; done
+watch-agents:     ## live view for the operator: progress, agents, hand-offs, locks, queues; redrawn every 5 seconds (INTERVAL=n; Ctrl+C to stop)
+	@$(PY) tools/agent/watch.py --interval $(or $(INTERVAL),5)
 
 unlock:           ## release a unit lock (FORCE=1 to break stale)
 	UNIT=$(UNIT) FORCE=$(FORCE) $(PY) tools/agent/unlock.py
@@ -138,6 +142,7 @@ timing-scan:      ## find routines that wait on time or input (static; SESSIONS=
 golden:           ## record goldens and their recordings (each session twice, must match): SESSION=name (default all); CHECK=1 verifies committed goldens
 	$(PY) tools/oracle/golden.py $(if $(SESSION),--session $(SESSION)) $(if $(CHECK),--check)
 match:            ## prove decompiled Pascal against the original (SPEC 8.3): UNIT=<id> [FN=<name>] [WRITE=1]; no UNIT: every unit with source
+	$(AUTOBEAT) "make match $(UNIT)$(if $(FN), FN=$(FN))$(if $(WRITE), WRITE=1)"
 	$(PY) tools/match/match.py $(if $(UNIT),$(UNIT),--all) $(foreach f,$(FN),--routine $(f)) $(if $(WRITE),--write)
 
 test:              ## Python unit tests, fast set (codecs, toolchain probes, matcher, oracle, replay)
@@ -145,6 +150,7 @@ test:              ## Python unit tests, fast set (codecs, toolchain probes, mat
 test-slow:         ## the unit tests that boot the real game (minutes; not part of `make check`)
 	$(PY) -m pytest -q -m slow tests/unit
 check:             ## everything a commit must pass (SPEC 9.6): fast tests, every unit's match and readability, the rebuild links, golden check
+	$(AUTOBEAT) "make check"
 	$(PY) -m pytest -q -m "not slow" tests/unit
 	$(PY) tools/match/match.py --all
 	$(PY) tools/match/readability.py

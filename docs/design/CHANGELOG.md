@@ -4,6 +4,23 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-11 | 4.x | SelectTileSet saves TileSet in ds5377 and RestoreTileSet copies it back | make match UNIT=res05 |
+| 2026-10-11 | 5.16 (new) | added the 3D sprite unit ovl28: DrawSprite, the HEAD and BODY sprite helpers, LoadHeadBodySprites, FreeSpriteList and the sprite list record | make match UNIT=ovl28: 6 matched, 0 differ, 3 stubs; make check green |
+| 2026-10-11 | process | make match, check, packet and tpc keep the working agent's heartbeat alive | tests/unit/test_agent_tools.py |
+| 2026-10-11 | process | make handoff refuses a branch hand-off with nothing to merge | tests/unit/test_agent_tools.py |
+| 2026-10-11 | 4.x (8x8 tiles), 3.2.2 (cross-ref) | Load8x8Bank and Put8x8Symbol at L2; the fourth parameter of Put8x8Symbol settled as a Byte (the callers pass 0 and the test compiles the same); the shared globals renamed TileSet, TileBanks, TileBuf, DrawBuf and ovl11 reconciled with them | make match UNIT=ovl34: unit complete, 3 matched, 0 differ; make check green |
+| 2026-10-11 | 5.2 (clamp address), 5.2.1 (citations and constants) | fixed the ovl26 window clamp citations (they pointed into WallDesc4FromCode), named the marker and clamp limits, and corrected the whitepaper 5.2 clamp address | make match UNIT=ovl26: unit complete, 3 matched, 3 nested, 0 differ; src/OVL26.PAS |
+| 2026-10-11 | 5.8, 5.2 (cross-ref) | named the debug trace rectangle and its three hit point values in ShowDebugTrace and made the whitepaper match (the top text line: columns 0..39, row 0; the caller ovl12:2233 passes a character maximum, current and lost hit points) | make match UNIT=ovl33: unit complete, 2 matched, 0 differ; src/OVL33.PAS, docs/design/WHITEPAPER.md 5.8 |
+| 2026-10-11 | 3.2.2 (new), 5.2.1 | added the start-up loader StartGame (ovl11:002D): the seven heap blocks, the three screen buffers (res07_fn_248E), the three 200-cell screen tables (DS:4EC0/5050/51E0), the game globals, and the data loads SQRPACI, COMSPR and ITEMS; corrected the ovl11:0435 phantom | make match UNIT=ovl11: unit complete, 2 matched, 0 differ; src/OVL11.PAS, docs/design/WHITEPAPER.md 3.2.2 |
+| 2026-10-11 | process | make claim shows the orchestrator's blocker notes for the claimed unit | tests/unit/test_agent_tools.py |
+| 2026-10-11 | tools | runtime call targets resolved by routine entry (runtime_entries), not by raw byte alignment; fixes Move resolved as Assign | escalate-ovl34-20261012033554; ovl34 Put8x8Symbol matches; tests/unit/test_rtl_resolve.py |
+| 2026-10-11 | process | make watch-agents: colored live view of progress, agents, hand-offs, locks and queues | tests/unit/test_agent_tools.py |
+| 2026-10-11 | 5.2, 5.2.1 | entries 1 and 2 of SpecialBlocks never override a block; ovl18_e2 has three DrawAreaView call sites; the step of 3 is view cells | make match UNIT=ovl27 |
+| 2026-10-11 | process | decompilers and reviewers wait for work instead of exiting on an empty queue | rev-1..3 exited on an empty review queue |
+| 2026-10-11 | 5.2.1 | corrected the party marker fold: column 42 / row 34 are cell 3 and column 43 / row 35 or more cell 4, and ShowAreaView (not DrawAreaView) clamps the window; added the ovl26:02A0 init comment to src/OVL26.PAS | make match UNIT=ovl26 (3 matched, 3 nested, 0 differ), make readability UNIT=ovl26 clean, make check green |
+| 2026-10-11 | 5.12 code wheel | res06 signatures recorded and named; ovl02 init comment | work/reviews/ovl02.md findings fixed in e302d2f |
+| 2026-10-11 | none | already complete; verified only | make match UNIT=ovl33 unit complete |
+| 2026-10-11 | 5.15 heap errors | Size=0 returns at once with unassigned result; init comment; ds557D writer open | work/reviews/ovl00.md findings fixed in 2012dbb |
 | 2026-10-11 | 3.2, 5.8 | res04 returns the last typed-ahead key, and Ctrl-S resumes only for saved modes 0 and 1; the unit table names res04 | make match UNIT=res04 |
 | 2026-10-11 | 5.8, 3.6 | window unit res09 (DrawWindow/ClearWindow/DrawWindowFrame, VideoAdapter) and TP6 codegen facts (string value-param entry copy, case jump form, 2D-array index, signed/unsigned mul, ShortInt loops) | make match UNIT=res09 unit complete, make readability UNIT=res09 clean |
 | 2026-10-11 | tests | review-queue test independent of which units are reviewed | tests/unit/test_agent_tools.py |

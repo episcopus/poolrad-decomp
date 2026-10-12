@@ -3,11 +3,12 @@ unit RES07;
   until decompiled (playbook 30). }
 {$A-,F+,S-,R-,G-,I-}
 interface
+uses POOLVARS;
 procedure res07_fn_0000;
 procedure res07_fn_007B;
 procedure res07_fn_00CF;
 procedure res07_fn_00FF;
-procedure res07_fn_0111(Text: string; A, B, C: Byte; Target: Pointer);
+procedure res07_fn_0111(Text: string; A, B, C: Byte; var Target);
 procedure res07_fn_02A5;
 procedure res07_fn_066F;
 procedure res07_fn_0710;
@@ -33,12 +34,12 @@ procedure res07_fn_1514;
 procedure res07_fn_1596;
 procedure res07_fn_15C7(Source, Dest: Pointer);
 procedure res07_fn_1708;
-procedure res07_fn_1951;
+procedure res07_fn_1951(X, Y: Integer; Buf: Pointer);
 procedure res07_fn_1A19;
 procedure res07_fn_1B52;
 procedure res07_fn_1E5C;
-procedure res07_fn_248E(Height, Width: Word; ItemCount, AllocFlags: Byte; var Pic: Pointer);
-procedure res07_fn_2595(var Pic: Pointer);
+procedure res07_fn_248E(Height, Width: Word; ItemCount, AllocFlags: Byte; var Pic);
+procedure res07_fn_2595(var Pic);
 procedure res07_fn_2632;
 procedure res07_fn_2A0D;
 implementation
@@ -51,9 +52,10 @@ implementation
 {@stub} procedure res07_fn_00CF; begin end;
 { 0464:00FF: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure res07_fn_00FF; begin end;
-{ 0464:0111: retf 14. Text is a string value. Target is the address of the picture pointer
-  (@ of a Pointer): the routine frees it when it is not nil, then loads the picture there. }
-{@stub} procedure res07_fn_0111(Text: string; A, B, C: Byte; Target: Pointer); begin end;
+{ 0464:0111: retf 14. Text is a string value. Target is untyped var so ovl32, ovl34,
+  ovl28 and ovl11 can each pass their pointer variable: the routine frees it when it is not
+  nil, then loads the picture there. }
+{@stub} procedure res07_fn_0111(Text: string; A, B, C: Byte; var Target); begin end;
 { 0464:02A5: frame not read }
 {@stub} procedure res07_fn_02A5; begin end;
 { 0464:066F: frame not read }
@@ -61,7 +63,7 @@ implementation
 { 0464:0710: retf 14: 14 bytes of parameters; 0 bytes of locals }
 {@stub} procedure res07_fn_0710; begin end;
 { 0464:08D4: retf 16: two Integers, two Bytes, two Pointers. DrawCellPicture passes the cell,
-  the picture index, flags 0, a picture pointer and ds4A20. }
+  the picture index, flags 0, a picture pointer and DrawBuf. }
 {@stub} procedure res07_fn_08D4(Col, Row: Integer; PicIndex, Flags: Byte; Source, Dest: Pointer); begin end;
 { 0464:0A33: frame not read }
 {@stub} procedure res07_fn_0A33; begin end;
@@ -106,7 +108,7 @@ implementation
 { 0464:1708: retf 8: 8 bytes of parameters; 0 bytes of locals }
 {@stub} procedure res07_fn_1708; begin end;
 { 0464:1951: frame not read }
-{@stub} procedure res07_fn_1951; begin end;
+{@stub} procedure res07_fn_1951(X, Y: Integer; Buf: Pointer); begin end;
 { 0464:1A19: retf 8: 8 bytes of parameters; 0 bytes of locals }
 {@stub} procedure res07_fn_1A19; begin end;
 { 0464:1B52: retf 0: 0 bytes of parameters; 10 bytes of locals }
@@ -114,10 +116,12 @@ implementation
 { 0464:1E5C: retf 16: 16 bytes of parameters; 68 bytes of locals }
 {@stub} procedure res07_fn_1E5C; begin end;
 { 0464:248E: retf 12. GetMems a picture (height * width, plus a pixel buffer when bit 0
-  of AllocFlags is set) and stores the pointer. }
-{@stub} procedure res07_fn_248E(Height, Width: Word; ItemCount, AllocFlags: Byte; var Pic: Pointer); begin end;
-{ 0464:2595: retf 4: one var Pointer. Frees the picture (FreeMem) and nils the pointer. }
-{@stub} procedure res07_fn_2595(var Pic: Pointer); begin end;
+  of AllocFlags is set) and stores the pointer. Pic is untyped so ovl11 can pass its
+  PT8x8Bank banks. }
+{@stub} procedure res07_fn_248E(Height, Width: Word; ItemCount, AllocFlags: Byte; var Pic); begin end;
+{ 0464:2595: retf 4: one var Pointer. Frees the picture (FreeMem) and nils the pointer.
+  Pic is untyped so ovl28 can pass its typed sprite banks. }
+{@stub} procedure res07_fn_2595(var Pic); begin end;
 { 0464:2632: retf 18: 18 bytes of parameters; 36 bytes of locals }
 {@stub} procedure res07_fn_2632; begin end;
 { 0464:2A0D: retf 4: 4 bytes of parameters; 0 bytes of locals }

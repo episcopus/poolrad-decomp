@@ -374,7 +374,7 @@ evidence = "the area map: 36 rows x 44 columns of block codes at DS:3648, read a
 [[global]]
 offset = 0x0C30
 name = "SpecialBlocks"
-evidence = "ten records of (Col, Row, Pic) at DS:0C30: DrawAreaView (ovl27:0000, matched) walks entries 1..9 and overrides the view block at (Col, Row) with Pic - 1 while the game variables allow; entry 0 is never read (in the image its bytes are the tail of the previous table)"
+evidence = "ten records of (Col, Row, Pic) at DS:0C30: DrawAreaView (ovl27:0000, matched) tests entries 1..9 for position; entries 1 and 2 have no case arm, so a match leaves the map code, and entries 3..9 replace it with Pic - 1 while the game variables allow (entry 6 always); entry 0 is never read (in the image its bytes are the tail of the previous table)"
 
 [[global]]
 offset = 0x49D2
@@ -385,3 +385,33 @@ evidence = "far pointer at DS:49D2 to the game's word variables: ovl07:02E1 and 
 offset = 0x4A1E
 name = "VideoAdapter"
 evidence = "ClearWindow (03F1:0137) dispatches on it: 0 fills scanline planes, 1 writes text cells, 2 fills four planes; the video hardware the game drives (POOL.CFG offers EGA/CGA/Tandy, mapping still open)"
+
+[[global]]
+offset = 0x6AAE
+name = "ds6AAEWords"
+evidence = "the 4-byte element table at DS:6AAE: the loader (ovl11_e1, ovl11:0369..0390) sets the two words of elements 2 and 3 to $FFFF (stride I*4: mov word [di+6AAEh] and [di+6AB0h]); its element 0 shares its first byte with DS:6AAE, the party row ovl29_e4 gets (ovl26_e1 passes ds6AAE). Declared as the alias array ds6AAEWords in src/POOLVARS.PAS because DS:6AAE itself is the party row byte"
+
+[[global]]
+offset = 0x5376
+name = "TileSet"
+evidence = "8X8D file number: Str(TileSet) is the suffix of the 8x8dN filename Load8x8Bank loads (ovl34:0055, whitepaper 8X8D1-8); the loader (StartGame, ovl11) also sets it to 1 and indexes the 30-byte name table ds2614 with it (ovl11:0564)"
+
+[[global]]
+offset = 0x5E3A
+name = "TileBanks"
+evidence = "five far pointers to the loaded 8x8 tile banks, indexed Bank*4, nil means load failed (ovl34:00B4,00CE,01F9); the loader (StartGame) clears them with FillChar(TileBanks, $14, 0) at ovl11:024F"
+
+[[global]]
+offset = 0x2722
+name = "SymbolBase"
+evidence = "five words, one per 8x8 bank, subtracted from Symbol to index within the bank (ovl34:020F)"
+
+[[global]]
+offset = 0x5E4E
+name = "TileBuf"
+evidence = "far pointer to the tile staging buffer: tiles are Moved to +$17 and shown by res07_fn_1951 (ovl34:027A,029E); the loader (StartGame) allocates it through res07_fn_248E(8, 1, 1, 0) at ovl11:00A4"
+
+[[global]]
+offset = 0x4A20
+name = "DrawBuf"
+evidence = "far pointer passed to res07_fn_08D4 as the destination buffer (ovl34:0241,0245); the loader (StartGame) allocates it through res07_fn_248E($A8, $15, 1, 0) at ovl11:00BC"

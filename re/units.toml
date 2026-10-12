@@ -615,7 +615,7 @@ source = ""
 
 [[overlay]]
 id = "ovl33"
-name = "ovl33"
+name = "DebugTrace"
 kind = "overlay"
 stub_segment = "03EE"
 ovr_file_offset = "0x3211F"
@@ -623,7 +623,7 @@ code_bytes = 252
 fixup_bytes = 26
 entries = 2
 init_entry = "ovl33_e0"
-evidence = ""
+evidence = "[V] ShowDebugTrace (ovl33:0004, matched as a whole) is the STING debug trace: when DebugMode is set it shows a character's maximum, current and lost hit points and a message (whitepaper 5.8); its only caller is the training and rewards unit ovl12:2233"
 source = ""
 
 [[overlay]]

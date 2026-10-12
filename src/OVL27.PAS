@@ -1,9 +1,9 @@
 unit OVL27;
-{ The area view of the wilderness and the adventure screen (whitepaper 5.2, 5.8). DrawAreaView paints
-  the 5x5 grid of 3x3-tile area blocks around a position on the area map into the 3D view window,
-  letting nine fixed positions override a block while the game variables allow it; DrawAdventureScreen frames
-  the three windows of the adventure screen: the 3D view on the left, the side window on the right
-  and the text area at the bottom. }
+{ The area view of the wilderness and the adventure screen (whitepaper 5.2). DrawAreaView paints
+  the 5x5 grid of 3x3-tile area blocks around a position on the area map into the 3D view window.
+  Entries 3 to 9 of the fixed-position table can override a block while the game variables allow
+  it; entries 1 and 2 never do. DrawAdventureScreen frames the three windows of the adventure
+  screen: the 3D view on the left, the side window on the right and the text area at the bottom. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 procedure DrawAreaView(LeftCol, TopRow: Integer);
@@ -14,7 +14,7 @@ uses POOLVARS, OVL32, RES09;
 const
   ViewBlocks = 5;                { the area view is a 5x5 grid of blocks }
   BlockCells = 3;                { each block is 3x3 cells of the 3D view window }
-  SpecialCount = 9;              { fixed positions that can override a block (SpecialBlocks, 1..9) }
+  SpecialCount = 9;              { entries 1..9 are tested for position; only 3..9 can override a block }
 
   { Words of the game variables (GameVars^) that decide when a fixed block is drawn. What each
     variable counts is still unknown; the names say which block depends on it. }
@@ -34,13 +34,17 @@ const
   PlainFrame = 0;                 { the frame set DrawWindow draws around each window }
 
 { ovl27:0000. Draws the 5x5 grid of 3x3-tile area blocks around map position (LeftCol, TopRow)
-  into the 3D view window: the block code comes from the area map (AreaMap, minus one), except
-  where one of the nine fixed positions (SpecialBlocks) matches and the game variables allow its
-  own code; every entry of that table has its own condition, entry 6 always applies. Each block
-  is one picture drawn by DrawCellPicture at the cell position (BaseCol, BaseRow). Callers: ShowAreaView
-  passes the position of the party minus 2 (the party block sits at the centre of the grid),
-  clamped to columns 0..39 and rows 0..31; ovl18_e2 passes (17, 15).
+  into the 3D view window. The block code comes from AreaMap, minus one. Entries 1 to 9 of
+  SpecialBlocks are tested for that position. Entries 1 and 2 have no case arm, so a match leaves
+  the map code. Entries 3 to 9 can replace it: entry 6 always, the others only while the game
+  variables named above allow. Each block is one picture drawn by DrawCellPicture, stepped by BlockCells.
   Parameters: LeftCol and TopRow are the map column and row of the top-left block.
+  Callers: ShowAreaView (ovl26:0293) passes MapBaseX[AreaViewKind] plus the party column, minus 2
+  (ovl26:023F), and the party row minus 2, then clamps the column to 0..39 (ovl26:025D) and the
+  row to 0..31 (ovl26:027F). ovl18_e2, when its byte parameter is nonzero, calls this with (17, 15)
+  (ovl18:06C2), then nine times with a word from the table at DS:094D and a word from the table at
+  DS:095F (index 0..8, ovl18:07C8), then with (23, 25) (ovl18:08D4). When that byte is zero those
+  calls are skipped.
   Globals: reads AreaMap, SpecialBlocks and the words of GameVars^ named above. Side effects:
   the 3D view part of the screen, through DrawCellPicture. }
 procedure DrawAreaView(LeftCol, TopRow: Integer);
@@ -63,8 +67,8 @@ begin
       for Special := 1 to SpecialCount do
         if (TileCol = SpecialBlocks[Special].Col) and (TileRow = SpecialBlocks[Special].Row) then
         begin
-          { Every fixed block has its own condition on the game variables; the case labels are
-            the entries of SpecialBlocks it belongs to. }
+          { Entries 1 and 2 have no arm, so a position match leaves Count. Entries 3 to 9 can
+            replace it; the case labels are those entries of SpecialBlocks. }
           case Special of
             3: if GameVars^[GateVarBlock3] <> 255 then Count := SpecialBlocks[Special].Pic - 1;
             4: if (GameVars^[GateVarBlock4State] <> 0) or ((GameVars^[GateVarBlock4Flags] and 8) <> 0)
@@ -97,5 +101,6 @@ begin
   DrawWindow(TextLeft, TextTop, TextRight, TextBottom, PlainFrame, Black, '');
 end;
 
+{ ovl27:0283. Empty initialisation: push bp, mov bp, sp, pop bp, retf. }
 begin
 end.

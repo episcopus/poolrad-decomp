@@ -225,3 +225,115 @@ kind = "routine"
 why = "draws picture PicIndex, mirror half Mirror, from the DS:5E5A table at the cell times 3, after copying it (ovl32:04FC, matched). DrawPartyMarker calls it for the party marker"
 date = "2026-10-11"
 
+[[rename]]
+old = "ovl11_e1"
+new = "StartGame"
+kind = "routine"
+why = "ovl11:002D: the start-up loader the main program runs first (src/POOL.PAS: StartGame before the title and the copy protection); it allocates the game blocks, fills the cell tables, sets the game globals and reads the initial file (make match UNIT=ovl11)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl34_e1"
+new = "Load8x8Bank"
+kind = "routine"
+why = "loads one 8x8 tile bank: called by LoadWallSet and StartGame, builds filename 8x8d+N, fatal Unable to load 8x8D message (ovl34:003B)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl34_e2"
+new = "Put8x8Symbol"
+kind = "routine"
+why = "draws one 8x8 tile at X,Y: error string Bad symbol number in Put8x8Symbol (ovl34:015D), called by res09_fn_0000 and ovl29 3x"
+date = "2026-10-11"
+
+[[rename]]
+old = "ds5376"
+new = "TileSet"
+kind = "global"
+why = "8X8D file number: Str(TileSet) is the suffix of the 8x8dN filename Load8x8Bank loads (ovl34:0055, whitepaper 8X8D1-8); StartGame also indexes ds2614 with it"
+date = "2026-10-11"
+
+[[rename]]
+old = "ds5E3A"
+new = "TileBanks"
+kind = "global"
+why = "five far pointers to the loaded 8x8 tile banks, indexed Bank*4, nil means load failed (ovl34:00B4,00CE,01F9); StartGame clears them at ovl11:024F"
+date = "2026-10-11"
+
+[[rename]]
+old = "ds2722"
+new = "SymbolBase"
+kind = "global"
+why = "five words, one per 8x8 bank, subtracted from Symbol to index within the bank (ovl34:020F)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ds5E4E"
+new = "TileBuf"
+kind = "global"
+why = "far pointer to the tile staging buffer: tiles are Moved to +$17 and shown by res07_fn_1951 (ovl34:027A,029E); StartGame allocates it at ovl11:00A4"
+date = "2026-10-11"
+
+[[rename]]
+old = "ds4A20"
+new = "DrawBuf"
+kind = "global"
+why = "far pointer passed to res07_fn_08D4 as the destination buffer (ovl34:0241,0245); StartGame allocates it at ovl11:00BC"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl28_e1"
+new = "DrawSprite"
+kind = "routine"
+why = "ovl28:0000: draws an 8x8 sprite at column X row Y, through the screen buffer when Direct is set (res07_fn_0D71) or the staging buffer otherwise (res07_fn_1951)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl28_fn_0050"
+new = "DrawHeadSprite"
+kind = "routine"
+why = "ovl28:0050: draws the HEAD sprite (DS:6B01, loaded by ovl28_e6) at its column and row through DrawSprite; called by Show3DSprite (ovl28_e5)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl28_fn_0070"
+new = "DrawBodySprite"
+kind = "routine"
+why = "ovl28:0070: draws the BODY sprite (DS:6B06, loaded by ovl28_e6) at its column and row plus 5 through DrawSprite; called by Show3DSprite (ovl28_e5)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl28_e3"
+new = "FreeSpriteList"
+kind = "routine"
+why = "ovl28:048F: frees every loaded sprite bank of the list and zeroes the list record, clears the picture name DS:6B0A and sets DS:6B1C to F; called by ovl10, ovl14, ovl18 and ovl28_e2 (the picture loaders)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl28_e5"
+new = "ShowHeadBodySprites"
+kind = "routine"
+why = "ovl28:0697: shows the HEAD sprite (DS:6B01) and the BODY sprite (DS:6B06, 5 rows lower) of the 3D view; called by ovl07_e7, res12_fn_27D9 and ovl28_e4"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl28_e6"
+new = "LoadHeadBodySprites"
+kind = "routine"
+why = "ovl28:05D9: loads the HEAD and BODY 8x8 sprite banks of the picture number DS:5376 from HEAD<num> and BODY<num> through res07_fn_0111; called by ovl07_e7, ovl28_e4 and res12_fn_27D9"
+date = "2026-10-11"
+
+[[rename]]
+old = "res05_fn_094A"
+new = "SelectTileSet"
+kind = "routine"
+why = "saves TileSet into ds5377 and stores the byte parameter as the new 8X8D file number (0802:094A, matched). ovl07 and ovl17 call it"
+date = "2026-10-11"
+
+[[rename]]
+old = "res05_fn_095D"
+new = "RestoreTileSet"
+kind = "routine"
+why = "copies the TileSet that SelectTileSet saved in ds5377 back into TileSet (0802:095D, matched). ovl17 calls it"
+date = "2026-10-11"
+

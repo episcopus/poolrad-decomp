@@ -12,22 +12,26 @@ Approach: ADR-002 (SPEC 4), Pascal-first matching decompilation; the C track (AD
 | P1 Map | done (`make p1-check`): 50 units, 1431 routines, TP 6.0 June 1991 pinned |
 | P2 Oracle and data | done: goldens with recordings for 2 of 2 session scripts (boot-title, create-character); `make golden CHECK=1` |
 | P3 Match harness | done: `make match` (tools/match/match.py, tests/unit/test_match.py); gate `make check` |
-| P4 Match | 28 of 1289 game routines at L2 (3644 of 234763 bytes by re/symbols.toml sizes); 10 of 46 game units complete, 3 reviewed; main program `src/POOL.PAS` matched by `make match UNIT=main` |
+| P4 Match | 41 of 1288 game routines at L2 (6311 of 234681 bytes by re/symbols.toml sizes); 12 of 46 game units complete, 10 reviewed; main program `src/POOL.PAS` matched by `make match UNIT=main` |
 | P5 Rebuild | `make rebuild` links the whole game from `src/` (every unit has source: decompiled or skeleton) and reports identical segments |
 
 ### P4 units with matched routines
 
 | Unit | Name | Routines | L2 | Bytes at L2 | Readable (`make readability`) | Reviewed |
 |---|---|---:|---:|---:|---|---|
-| ovl00 | ovl00 | 2 | 2 | 124 | clean | complete |
-| ovl02 | ovl02 | 2 | 2 | 609 | clean | complete |
-| ovl26 | ovl26 | 6 | 6 | 677 | clean | complete |
-| ovl27 | ovl27 | 3 | 3 | 648 | clean | complete |
-| ovl33 | ovl33 | 2 | 2 | 248 | clean | complete |
+| ovl00 | ovl00 | 2 | 2 | 124 | clean | yes |
+| ovl02 | ovl02 | 2 | 2 | 609 | clean | yes |
+| ovl11 | Loader | 2 | 2 | 1517 | clean | complete |
+| ovl26 | ovl26 | 6 | 6 | 677 | clean | yes |
+| ovl27 | ovl27 | 3 | 3 | 648 | clean | yes |
+| ovl28 | ovl28 | 10 | 6 | 524 | clean | in progress |
+| ovl33 | DebugTrace | 2 | 2 | 248 | clean | yes |
+| ovl34 | TileLoad | 3 | 3 | 596 | clean | complete |
 | res02 | res02 | 1 | 1 | 16 | clean | yes |
-| res04 | res04 | 5 | 5 | 336 | clean | complete |
+| res04 | res04 | 5 | 5 | 336 | clean | yes |
+| res05 | res05 | 18 | 2 | 30 | clean | in progress |
 | res06 | res06 | 20 | 1 | 74 | clean | in progress |
-| res09 | res09 | 4 | 4 | 880 | clean | complete |
+| res09 | res09 | 4 | 4 | 880 | clean | yes |
 | res10 | res10 | 1 | 1 | 16 | clean | yes |
 | res11 | res11 | 1 | 1 | 16 | clean | yes |
 
@@ -39,17 +43,17 @@ Locks (agents at work): `make locks`. Next unit: `make next`.
 |---|---:|
 | Units | 50 |
 | Routines | 1431 |
-| Routines with non-provisional names | 121 |
-| RTL-prefixed routine names | 53 |
+| Routines with non-provisional names | 133 |
+| RTL-prefixed routine names | 54 |
 | Unit code_bytes (declared) | 245081 |
-| Sum of routine sizes | 244128 |
+| Sum of routine sizes | 244046 |
 
 ### Routines by level
 
 | Level | Count |
 |---|---:|
-| none | 1403 |
-| L2 | 28 |
+| none | 1390 |
+| L2 | 41 |
 
 ### Top units by routine count
 
@@ -59,7 +63,7 @@ Locks (agents at work): `make locks`. Next unit: `make next`.
 | ovl03 | 108 |
 | ovl22 | 108 |
 | ovl16 | 107 |
-| res00 | 95 |
+| res00 | 96 |
 | ovl13 | 85 |
 | res12 | 64 |
 | ovl19 | 51 |
@@ -73,16 +77,20 @@ Locks (agents at work): `make locks`. Next unit: `make next`.
 
 ## Verification
 
-28 routines above `none`: res11_init L2 (03DA:0000), res10_init L2 (03ED:0000), DrawWindowFrame L2 (03F1:0000), ClearWindow L2 (03F1:0137), DrawWindow L2 (03F1:02E8), res09_init L2 (03F1:0367), ShowMessageLine L2 (0709:0BF5), QuitGame L2 (0899:0000), ReadGameKey L2 (0899:0059), FlushKeyboard L2 (0899:0104), DiscardWaitingKey L2 (0899:0122), res04_init L2 (0899:013C), res02_init L2 (0A31:0000), HeapErrorHandler L2 (ovl00:0042), ovl00_init L2 (ovl00:00AC), CheckCodeWheel L2 (ovl02:00FD), ovl02_init L2 (ovl02:0359), DrawPartyMarker L2 (ovl26:0000), WallDesc2FromCode L2 (ovl26:00C7), WallDesc3FromCode L2 (ovl26:00FB), WallDesc4FromCode L2 (ovl26:012F), ShowAreaView L2 (ovl26:016D), ovl26_init L2 (ovl26:02A0), DrawAreaView L2 (ovl27:0000), DrawAdventureScreen L2 (ovl27:0207), ovl27_init L2 (ovl27:0283), ShowDebugTrace L2 (ovl33:0004), ovl33_init L2 (ovl33:00F7).
+41 routines above `none`: res11_init L2 (03DA:0000), res10_init L2 (03ED:0000), DrawWindowFrame L2 (03F1:0000), ClearWindow L2 (03F1:0137), DrawWindow L2 (03F1:02E8), res09_init L2 (03F1:0367), ShowMessageLine L2 (0709:0BF5), SelectTileSet L2 (0802:094A), RestoreTileSet L2 (0802:095D), QuitGame L2 (0899:0000), ReadGameKey L2 (0899:0059), FlushKeyboard L2 (0899:0104), DiscardWaitingKey L2 (0899:0122), res04_init L2 (0899:013C), res02_init L2 (0A31:0000), HeapErrorHandler L2 (ovl00:0042), ovl00_init L2 (ovl00:00AC), CheckCodeWheel L2 (ovl02:00FD), ovl02_init L2 (ovl02:0359), StartGame L2 (ovl11:002D), ovl11_init L2 (ovl11:0615), DrawPartyMarker L2 (ovl26:0000), WallDesc2FromCode L2 (ovl26:00C7), WallDesc3FromCode L2 (ovl26:00FB), WallDesc4FromCode L2 (ovl26:012F), ShowAreaView L2 (ovl26:016D), ovl26_init L2 (ovl26:02A0), DrawAreaView L2 (ovl27:0000), DrawAdventureScreen L2 (ovl27:0207), ovl27_init L2 (ovl27:0283), DrawSprite L2 (ovl28:0000), DrawHeadSprite L2 (ovl28:0050), DrawBodySprite L2 (ovl28:0070), FreeSpriteList L2 (ovl28:048F), LoadHeadBodySprites L2 (ovl28:05D9), ShowHeadBodySprites L2 (ovl28:0697), ShowDebugTrace L2 (ovl33:0004), ovl33_init L2 (ovl33:00F7), Load8x8Bank L2 (ovl34:003B), Put8x8Symbol L2 (ovl34:015D), ovl34_init L2 (ovl34:02AD).
 
 ## Blockers and decisions waiting for the human
 
 Blockers are kept in `work/blockers.md` (the orchestrator's, playbook 90) and copied here by `make status`.
 
-- For the decompiler who takes ovl33's review fixes (operator decision on escalate-res06-20261012033157, 2026-10-11): also rename res06_fn_0DD3's stub parameters to Left, Top, Right, Bottom in src/RES06.PAS and update its re/symbols.toml `signature`, citing 0709:0E02 (fills third - first + 1 columns) and 0709:0DE3/0DEE (the second and fourth parameters are the top and bottom character rows). The third parameter is the inclusive right column, not a width.
-- For the decompiler who takes ovl26's review fixes (operator, 2026-10-11): also remove the stale sentence "the level stays none only because the matcher reports no per routine row ..." from the `notes` of the three nested routines (WallDesc2FromCode, WallDesc3FromCode, WallDesc4FromCode: ovl26:00C7, 00FB, 012F) in re/symbols.toml; they are L2 now (make match proves them as NESTED).
+- tools-map merge reverted (orch, 2026-10-12, revert 5043e0c of merge 61d10f0): on main, its new tests fail (tests/unit/test_enumerate_routines.py, 4 tests: `enumerate_routines.main(--merge)` returns 1). The tool reports `size ovl34:003B Load8x8Bank: 255 -> 290` and `CONFLICT proven routine ovl34:003B changed size`: ovl34 (merged after the branch was cut) recorded the compiler's size 255 (the 35 bytes after it are the next routine's 59-byte literal pool, which TP places before Put8x8Symbol), and the scan wants 290. For op-map: merge main into task/tools-map, make the map keep the compiler-proven size of an L2 routine (pool bytes go to the next routine), make the tests pass against main's live symbols.toml, `make check`, hand off. The escalation escalate-ovl11-20261012040038 stays open; do not run `make map` on main until then.
 
-- ovl34 merge reverted (orch, 2026-10-11, revert c72239a of merge 2f1186b): unit/ovl34 (0d77369, partial) fails `make check` on main: `DIFF Put8x8Symbol ovl34:015D far call: ours goes to 0AF8:13E2, the original to 0AF8:1685`, the System.Move misattribution in escalate-ovl34-20261012033554 (tools/re/tp_toolchain.py runtime_names). Waiting for the human's decision on the tool fix. When ovl34 is merged again, the orchestrator first reverts the revert (c72239a), then merges the branch. The ovl34 hand-off stays open.
+- res08 merge reverted (orch, 2026-10-12, revert 2bf7810 of merge 6c14e33): unit/res08 (7e918b5, partial) fails `make check`: `DIFF res08_init 042B:00A4 our code changes length with the layout (912 vs 5 bytes)`, the matcher bug dec-2 escalated (escalate-general-20261012041843: variant B's init_region takes the padding procedure as the init of a unit with no interface routines). The merge commit 6c14e33 already resolves the conflicts with main (dseg/renames kept both sides; DS:547C has one name, GameDir, and ovl11's three uses point at it). After the matcher fix is merged, the orchestrator brings res08 back by reverting the revert (`git revert --no-edit 2bf7810`), then merges any newer res08 commits. The res08 hand-off stays open.
+
+- ovl32 not merged (orch, 2026-10-12): unit/ovl32 (partial, 4 commits) conflicts with main in src/OVL26.PAS, src/OVL27.PAS, src/OVL32.PAS, src/RES07.PAS, src/POOLVARS.PAS, re/symbols.toml, re/renames.toml and the whitepaper (ovl26, ovl27, ovl34 and ovl28 changed the same stubs and globals meanwhile). For whoever continues ovl32 (dec-3): in the ovl32 worktree `git merge main`, resolve with the units' evidence (decompiled routines win over stubs; one name and one signature per routine and offset), `make rename APPLY=1`, `make check`, hand off again. The ovl32 hand-off stays open.
+
+- ovl18: take it after ovl28 is merged (acting operator, 2026-10-12, from escalate-ovl18-20261012042146). ovl18 calls ovl28_e1, ovl28_e2 and ovl28_e3, whose signatures ovl28 (dec-4, in progress) defines; decompiling ovl18 first would set them differently. dec-4's notes: ovl18_fn_0006 (ovl18:0006, 82 bytes of locals), called by ovl18_e1, loops drawing through ovl28_e1/e2/e3 and res07_fn_0D71. ovl18_e1 (ovl18:02A4, 256 bytes of locals), called from ovl03:2E10, is the ending narrative (the dragon and Tyranthraxus speech as res06_fn_0626(1, row, 10, text) lines, fn_0006 calls, FINAL<number> pictures through res07_fn_0111 and res07_fn_0D71, res12_fn_27D9). ovl18_e2 (ovl18:06B3, 2 bytes of locals), called from ovl03:31B4 and ovl17:1602, is the door animation over the area view: DrawAreaView(17, 15) and (25, 23), loops over ds0900/ds090B against res07_fn_1E5C with the SQRPACI banks ds5E52..ds5E58, then DrawAreaView(ds095F[I], ds094D[I]).
+- Waiting for the human (acting operator held it, 2026-10-12): res08 is a resident unit but its code shows it was compiled with O+ (dec-2, res08 hand-off note), which AGENTS.md's compiler-switch facts do not allow for resident units. A spec question; nothing to do until the human decides.
 
 - Approach (decided 2026-10-11, SPEC 4): Pascal first, matched by the pinned compiler; C later by translation (Phase 7, branch `track-c-hybrid`).
 - Canonical state (decided 2026-10-10 and 2026-10-11): `re/state.toml` has `stack = "diagnostic"` and `heap = "compared"`; goldens carry recordings of the outside world (`tools/oracle/replay.py`) for the rebuild and the C translation.

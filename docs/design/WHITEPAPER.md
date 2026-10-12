@@ -192,10 +192,21 @@ Start-up as observed by running the original code in the oracle (`make oracle-ru
 5. `8X8D1.DAX`, `SQRPACI.DAX`, `COMSPR.DAX`, `ITEMS` and `TITLE.DAX` are loaded, the game switches to EGA mode 0Dh (320x200, 16 colours), shows "Loading... please wait", then the SSI logo, the Pool of Radiance title and the credits, polling the keyboard throughout. The code wheel prompt (5.12) follows.
 6. The game installs no INT 08h/09h/1Ch handler for the rest of the session; keyboard input is INT 16h only (5.8).
 
+#### 3.2.2 The start-up loader `StartGame` **[V]** (`make match UNIT=ovl11`, `src/OVL11.PAS`: unit complete)
+
+The loader is overlay 11 (`ovl11:002D`, 1512 bytes) and is the first thing the main program runs. It owns the whole unit: `ovl11:0615` is its empty initialisation part, and no other routine exists (the map's `ovl11:0435` was a phantom: the far-call heuristic read the `lcall 0041:0025` at `ovl11:060C`, a call through ovl12's stub, as the linear address `0041*16+0025 = 0435` inside ovl11). `StartGame`:
+
+- Allocates seven heap blocks with `New` (`ovl11:0034..00A3`): the game variables at `DS:49D2` (`^TGameVars`, `$800` bytes), a second `$800`-byte word block at `DS:49D6`, then `$400` (`DS:49DA`), `$1E00` (`DS:49DE`), `$588` (`DS:5E20`), `$924` (`DS:6A58`) and `$400` (`DS:6A5C`) byte blocks.
+- Allocates three screen buffers through `res07_fn_248E(Cols, Rows: Word; Planes, Flag: Byte; var Buf)` (`ovl11:00A4`, `00BC`, `00D4`): `(8, 1, 1, 0)` into `TileBuf`, `($A8, $15, 1, 0)` into `DrawBuf` and `($18, 3, 1, 0)` into `DS:4A24`. The callee allocates `Rows*Cols*2` (doubled when `VideoAdapter` is not 0) times `Planes`, plus `$17` bytes, and stores the pointer at `Buf` (`0464:248E`).
+- Fills three 200-cell tables (`ovl11:0130..024D`): `DS:4EC0[I]` is the cell's scanline address (`$B800` for an even cell, `$BA00` for an odd one, plus `5*(I div 2)`), `DS:5050[I]` is `I*40` and `DS:51E0[I]` is the cell's graphics plane address (`10*(I div 4)` plus `$B800`, `$BA00`, `$BC00` or `$BE00`), so the tables drive the text and graphics planes of video adapter 2 (5.11). `DS:465C` is the loop counter of all three loops (a global).
+- Sets the screen and game globals (`ovl11:0392..0456`), including `AreaViewKind := 1`, `MarkerFrame := 0`, the special view codes `DS:6F69 := $E8` and `DS:6F68 := $DB` (5.2.1) and `DebugMode := False`.
+- Loads the data files (`ovl11:0469..0614`): it saves the current path `DS:547C` in `DS:4661`, draws "Loading...Please Wait" on row 24 (`res06_fn_0626(0, 24, 10, ...)`), draws through `Load8x8Bank($CA, 4)` and `Load8x8Bank($CB, 0)`, loads pictures 1 and 2 of `SQRPACI` (`res07_fn_0111('sqrpaci', N, 0, 0, <bank pointer>)`, `ovl11:04BE`, into `DS:5E52` and `DS:5E56`) and pictures 13 to 24 of `COMSPR` (`ovl32_e4('COMSPR', I, I+13)`, `ovl11:0502`, then `ovl32_e4('COMSPR', $19, $19)`). It then builds the file path from the 30-byte name table `DS:2614[TileSet]` plus the character `DS:547D` plus `':'` and calls `res05_fn_025D('ITEMS', Path, 0, F)` (a `Byte` function), which opens the untyped file `DS:468C`; `StartGame` seeks to record 2 (`Seek(F, 2)`) and reads one `$810`-byte block into `DS:5582` (`BlockRead`, count in `DS:5E1E`), closes it, restores the path, calls `Randomize` (`0AF8:1247`) and hands over to `ovl22_e10` and `ovl12_e1`.
+- TP 6.0 idioms proven here (`make match UNIT=ovl11`, probe `tools/re/tp_idioms/PRB11..PRB16.PAS`): `New(P)` for an array type of `N` bytes emits `push N; lcall GetMem` and stores `DX:AX` in `P`; a `string` assignment always compiles to `System_StrLCopy` with the destination limit as the third argument; a `LongInt` (or pointer) `:= 0` (or `nil`) zeroes both words after one `xor ax,ax`, so `DS:6810`, `DS:5D92` and `DS:5D96` are 4-byte values; TP 6.0 rejects an anonymous `string[40]` in a parameter list (the type must be named, `String40`).
+
 The main program **[V]** (`src/POOL.PAS`, `make match UNIT=main`: matched completely, 58 address fields) is segment `0000` (337 bytes plus padding): the string `'STING'`, then one far call per unit initialisation in the order of its `uses` clause (System, Crt, res02 to res08, then overlays and resident units interleaved: ovl34, res09, ovl33, res10, ovl32 to ovl30, res11, ovl29 to ovl25, res12, ovl24 to ovl00), then the main block:
 
 ```pascal
-ovl11_e1;
+StartGame;
 if ParamStr(1) <> 'STING' then begin ovl01_e1; CheckCodeWheel; end;   { title screens, code wheel (5.12) }
 ovl16_e1;
 ovl29_e1(11, 0, 7, 6);
@@ -395,6 +406,10 @@ For `PIC`/`FINAL`, pixel bytes of frame N are XOR'd with frame 0 before draw **[
 
 `8X8D1.DAX` block 201 is not a picture record: it is a 1-bit font, 177 glyphs of 8 bytes each (1416 bytes) **[V]** (size; coab `seg041.Load8x8Tiles` reads it the same way **[H]**). Other `8X8D` blocks are ordinary picture records of 8x8 tiles (`item_count` 31 to 70).
 
+`Load8x8Bank` (`ovl34:003B`) loads one of five 8x8 tile banks (bank 0..4 into `TileBanks`) from the file `8X8D<TileSet>` through res07 **[V]** (`make match UNIT=ovl34`; called by `LoadWallSet` and `StartGame`, ovl11). A bank that stays nil after the load ends the game: `Unable to load 8x8D<set>-<count>` on Output, a key, `QuitGame` **[V]** (`ovl34:00D8`). `Put8x8Symbol` (`ovl34:015D`) draws symbols 1..$11E from banks 0..4 (ranges 1..$2D, $2E..$73, $74..$B9, $BA..$FF, $100..$11E, made bank relative through `SymbolBase`) **[V]** (`make match UNIT=ovl34`: the fourth parameter is a `Byte` used as `Direct <> 0`, which compiles to the same `cmp byte [bp+8],0` a `Boolean` did, and the callers pass 0; called by `DrawWindowFrame` and ovl29 three times). Symbols 0 and $11F..$7FFF print `Bad symbol number in Put8x8Symbol.` and quit the same way **[V]** (`ovl34:01C5`); symbols above $7FFF skip the check and run on with an unset bank (QUIRK `ovl34:01C0`). A nil bank draws nothing; otherwise the tile goes through res07_fn_08D4 or is copied into the `TileBuf` staging buffer and shown with res07_fn_1951 **[V]** (`ovl34:01EE`). Each bank is a picture record with the per-tile byte count at +$11 and the tiles at +$17 **[V]** (`ovl34:026B`, `ovl34:0274`).
+
+`SelectTileSet` (`0802:094A`) saves `TileSet` in `ds5377` and stores the new 8X8D file number; `RestoreTileSet` (`0802:095D`) copies `ds5377` back **[V]** (`make match UNIT=res05`). ovl07 and ovl17 call the first; ovl17 calls the second.
+
 CLI: `tools/re/pic.py dump <file.DAX> <id> out.png` (or a directory for multi-frame).
 
 #### 4.2.4 WALLDEF wallsets **[V]** (`tools/re/walldef.py verify`: 8 files, 38 blocks)
@@ -451,21 +466,23 @@ Each section will cover: purpose, units and routines, data, algorithm, quirks, e
 
 The wilderness around Phlan is drawn as a 5x5 grid of area blocks. Every block covers 3x3 map
 tiles and is one picture, drawn by `DrawCellPicture` (`ovl32:00F1`) at a cell position of the 3D view
-window; the block at map position (column, row) comes from the area map and can be overridden by
-a fixed table entry while the game variables allow it (`DrawAreaView`, `ovl27:0000`).
+window; the block at map position (column, row) comes from the area map, and entries 3 to 9 of
+a fixed table can replace it while the game variables allow it (`DrawAreaView`, `ovl27:0000`).
 
 - **The area map** at DGROUP `0x3648` (`AreaMap` in `src/POOLVARS.PAS`) is 36 rows by 44 columns
   of one-byte block codes **[V]** (row stride 44 at `ovl27:0040`; `ShowAreaView` clamps the view
-  window to columns 0..39 and rows 0..31, `ovl26:0289`, which is 44-5 and 36-5). The picture code
+  window to columns 0..39 and rows 0..31, `ovl26:0253..0287`, which is 44-5 and 36-5). The picture code
   drawn is the map byte minus one **[V]** (`ovl27:0049`). The shipped image fills the map with
   terrain codes; rows 34 and 35 are all `0x4E` (the letter N), and `ovl14:08BB` compares map bytes
   with `0x4E` specially **[I]**: N marks ground that draws no block. **[?]** Nothing in the code
   writes the map, so it is compiled-in data; whether the game rewrites parts of it at run time is
   open.
-- **Nine fixed positions** can replace a block with their own picture: the table at DGROUP
-  `0x0C30` (`SpecialBlocks`, ten records of Col, Row, Pic: Word; entry 0 is never read, its bytes
-  are the tail of the previous table in the image). Each entry has its own condition on the game
-  variables **[V]** (`ovl27:00B2`): entry 3 while word 396 is not 255; entry 4 while word 466 is
+- **Nine fixed positions** are tested, and only entries 3 to 9 can replace a block: the table at
+  DGROUP `0x0C30` (`SpecialBlocks`, ten records of Col, Row, Pic: Word; entry 0 is never read, its
+  bytes are the tail of the previous table in the image). Entries 1 and 2 are compared with the
+  block's column and row (`ovl27:006A`, index times 6 from DS:0C30) and then the `case` has no arm,
+  so a match leaves the map code **[V]**. Entries 3 to 9 replace it with Pic minus one **[V]**
+  (`ovl27:00B2`): entry 3 while word 396 is not 255; entry 4 while word 466 is
   nonzero, or bit 3 of word 380 is set, or word 415 is zero; entry 5 while bit 1 of word 416 is
   clear; entry 6 always; entry 7 while bit 0 of word 416 is clear; entries 8 and 9 while word 435
   is above 253. Entries 6 and 7 hold columns 165 and 157, beyond the 44-column map, so they can
@@ -482,7 +499,7 @@ a fixed table entry while the game variables allow it (`DrawAreaView`, `ovl27:00
   and the text area rows 17..22 x columns 1..38, through `DrawWindow` (`03F1:02E8`), the
   window routine of res09 **[V]**: it clears the interior (`ClearWindow`), draws a frame from
   picture set `FrameSet` around it (`DrawWindowFrame`: the corner and edge pictures come from index
-  `FrameSet*3+276` and are blitted by `ovl34_e2`) and centres the text on the top row
+  `FrameSet*3+276` and are blitted by `Put8x8Symbol`) and centres the text on the top row
   (`res06_fn_0626`). Its grid: a column is 16 pixels and a row 4 scanlines, 40x50 cells on a
   640x200 screen **[V]** (the multiplies in `ClearWindow`).
 - QUIRK `ovl27:01CC`: `DrawAreaView` passes both cell coordinates as `BaseCol + 1 - 1` (and the
@@ -493,9 +510,9 @@ a fixed table entry while the game variables allow it (`DrawAreaView`, `ovl27:00
 #### 5.2.1 The area view dispatcher and the party marker **[V]** (`make match UNIT=ovl26`, `src/OVL26.PAS`)
 
 - **The area view unit** **[V]** (`src/OVL26.PAS`, `make match UNIT=ovl26`: unit complete): the resident unit's view dispatcher calls `ShowAreaView` (`ovl26:016D`) for its view types 3 and 4 (`res12_fn_27D9`), and the wilderness map screen calls it after the text windows of `DrawAdventureScreen` (`res12_fn_2B5E`).
-- **Two kinds of view** **[V]** (the `case` at `ovl26:018C`): `AreaViewKind` (DS:49FA) selects what to draw. Kind 1 is the 3D wall view: GeoLoad returns the event byte of the party cell (`ovl29_e4`, wrapping the coordinates into 0..15; bit 7 marks an interior cell, 4.2.1), the wall id table `ds0C26` (16 entries: two equal groups of eight ids 0,15,12,11,13,10,9,14) is indexed by the game state words at +$1FA (outside cell) or +$1FC (interior cell), the four wall view descriptors DS:6A60..6A63 go to `ovl29_e1` (a pure setter for the same globals), and `ovl29_e5` draws the rest (the overlay labels only while DS:6AAC is 0, cleared when the state word at +$1F6 is set). Kinds 2 to 4 are the map window: `DrawAreaView(LeftCol, TopRow)` draws 25 cells of the 44-column map grid (DS:3648, stride 44 [V] from `ovl27:0040`) at 3 pixels per cell, and `DrawPartyMarker` follows.
-- **Where the kinds come from** **[V]**: the area loader sets `AreaViewKind := 1` (`ovl11_e1`), the encounter unit sets 2, 3 or 4 together with view type 3 (`ovl03_fn_31B4`, keyed on DS:84DC); the game state word at +$1CC forces kind 1. `MapBaseX` (DS:3C76) holds the base column of each kind: entries 2..4 are 0, 13 and 26 **[V]** (the map image), so the kinds are three pages of the 44-column grid; the window is the party position minus 2, clamped to columns 0..39 and rows 0..31, and the page base is added to the column.
-- **The party marker** **[V]** (`DrawPartyMarker`, `ovl26:0000`): the marker cell is the party position folded the same way the window clamps (0 and 1 kept at the edges, everything up to column 42 / row 34 becomes the centre cell 2, past that 3 and 4). PicLoad draws it (`DrawIcon`) with the icon set DS:6AAF and the six-frame walk animation `MarkerFrame` (DS:6DDC): frame mod 2 picks the mirrored half, frame div 2 + 9 the picture 9 to 11, and the frame steps modulo 6 after each draw. The wilderness keys H, M, P and K set the icon set to 0, 2, 4 and 6 **[V]** (`ovl14_fn_0B48`), and `ovl07_e10` maps a script value 0..3 to the same four **[V]**; what the icon sets are is **[?]** (H/M/P/K do not spell anything obvious).
+- **Two kinds of view** **[V]** (the `case` at `ovl26:018C`): `AreaViewKind` (DS:49FA) selects what to draw. Kind 1 is the 3D wall view: GeoLoad returns the event byte of the party cell (`ovl29_e4`, wrapping the coordinates into 0..15; bit 7 marks an interior cell, 4.2.1), the wall id table `ds0C26` (16 entries: two equal groups of eight ids 0,15,12,11,13,10,9,14) is indexed by the game state words at +$1FA (outside cell) or +$1FC (interior cell), the four wall view descriptors DS:6A60..6A63 go to `ovl29_e1` (a pure setter for the same globals), and `ovl29_e5` draws the rest (the overlay labels only while DS:6AAC is 0, cleared when the state word at +$1F6 is set). Kinds 2 to 4 are the map window: `DrawAreaView(LeftCol, TopRow)` draws 25 blocks of the 44-column map grid (DS:3648, stride 44 [V] from `ovl27:0040`), stepping 3 view cells per block (the source's `BlockCells`, the same 3x3 cells as above), and `DrawPartyMarker` follows.
+- **Where the kinds come from** **[V]**: the area loader sets `AreaViewKind := 1` (`StartGame`), the encounter unit sets 2, 3 or 4 together with view type 3 (`ovl03_fn_31B4`, keyed on DS:84DC); the game state word at +$1CC forces kind 1. `MapBaseX` (DS:3C76) holds the base column of each kind: entries 2..4 are 0, 13 and 26 **[V]** (the map image), so the kinds are three pages of the 44-column grid; the window is the party position minus 2, clamped to columns 0..39 and rows 0..31, and the page base is added to the column.
+- **The party marker** **[V]** (`DrawPartyMarker`, `ovl26:0000`): the marker cell is the party position within the window `ShowAreaView` clamped (0 and 1 stay at the edges, columns 2 to 41 / rows 2 to 33 become the centre cell 2, column 42 / row 34 become cell 3, column 43 / row 35 or more cell 4, ovl26:001F and ovl26:0043). PicLoad draws it (`DrawIcon`) with the icon set DS:6AAF and the six-frame walk animation `MarkerFrame` (DS:6DDC): frame mod 2 picks the mirrored half, frame div 2 + 9 the picture 9 to 11, and the frame steps modulo 6 after each draw. The wilderness keys H, M, P and K set the icon set to 0, 2, 4 and 6 **[V]** (`ovl14_fn_0B48`), and `ovl07_e10` maps a script value 0..3 to the same four **[V]**; what the icon sets are is **[?]** (H/M/P/K do not spell anything obvious).
 - **Special view codes** **[V]**: while DS:84E5 is set, `ShowAreaView` refreshes descriptors 2 to 4 from DS:6F69 and DS:6F68 through three nested Byte functions (`WallDesc2FromCode`..`WallDesc4FromCode`, `ovl26:00C7..016C`): codes 8 and $41 give descriptor 0, code $0B gives 8, code 6 gives 1, everything else $0F, 7 and 6. The loaders and the script set the codes together with DS:84E5: `ovl07_e3` ($41 and 9), `ovl11_fn_0435` ($DB and $E8), and script commands $F1 and $F7 through `ovl07_e10`. What the descriptors select is **[?]** (they reach the screen through `ovl29_fn_0174` and `res07_fn_2632`, which are not decompiled yet; the label strings near DS:0A26 include "1st Level" to "9th Level").
 - **More game variables** **[V]**: besides the party position (words 195 and 196, above), `ShowAreaView` reads word 230 (+$1CC, forces the wall view), word 251 (+$1F6, asks for the overlay labels) and words 253 and 254 (+$1FA and +$1FC, the wall id table index for an outside and an interior cell) of `GameVars^`; their names are the `Var...` constants of `src/POOLVARS.PAS`. The words are read as constant indices of the same `TGameVars` array that `DrawAreaView` uses, and `GameVars^[VarMapX]` compiles to the same `les di; mov ax,es:[di+186h]` a record field did (both units match against the one declaration).
 - **TP 6.0 idioms proven here** **[V]** (probes `build/probes/`, `make tpc`): a nested routine receives its parent frame as a hidden last parameter (the caller pushes `bp` right before `push cs; call near`) and its code is emitted just before the parent's body, so the matcher proves it as the byte-exact pool of the parent's region; a `case` with an arm body longer than the short-jump range places the arm body at a distance with `je` plus a `jmp` to the next test (`ovl26:018C`); `x - 2` compiles to two `dec`s; `x mod 2` on a Byte uses signed `idiv` while `x div 2` uses `shr`; an empty `then` branch compiles to the branch and a `jmp` and is what `ovl26:001F` shows.
@@ -505,7 +522,7 @@ a fixed table entry while the game variables allow it (`DrawAreaView`, `ovl27:00
 - Input is **INT 16h only** **[V]** (oracle: no INT 09h hook, ports 60h/64h never touched): Crt `KeyPressed` (`0A40:02FD`, AH=01h) and `ReadKey` (`0A40:030F`, AH=00h, an extended key returns 0 then the scan code on the next call).
 - The resident unit res04 is the keyboard layer and the way out of the game **[V]** (`src/RES04.PAS`, `make match UNIT=res04`: unit complete):
   - `ReadGameKey` (`0899:0059`) is the `ReadKey` game code calls. Ctrl-S (`#19`), when `SoundMode` (`DS:5372`) is not 2, saves that byte in `SoundModeBeforePause` (`DS:5373`), calls `res03_fn_00DC` (`08AE:00DC`) with `ds2612` (`DS:2612`) and sets `SoundMode` to 2. A later Ctrl-S resumes only when `SoundMode` is already 2 and `SoundModeBeforePause` is in `[0, 1]` (`System_SetIn` at `0899:008B`): it copies the saved byte back and calls `res03_fn_017B` (`08AE:017B`). Any other second Ctrl-S does nothing. What 0 and 1 are is not shown here **[V]** (the bytes); reading the pair as a simple on/off switch was too strong. When `ParamStr(1) = 'STING'`, Ctrl-D (`#4`) toggles `DebugMode` (`DS:49F7`) and Ctrl-C (`#3`) quits through `QuitGame`: a developers' debug mode **[V]** (code), its effect **[?]**. Those tests use the first key. Then, unless that key is `#0` (the extended-key prefix), `while KeyPressed do Key := ReadKey` (`0899:00E4`) reads every key still waiting into `Key`, and the function returns that last key, not the first with the rest discarded **[V]**. The oracle's `key` script command therefore waits for the game to be idle.
-  - The debug mode also shows traces: `ShowDebugTrace(Text, A, B, C)` (overlay 33, matched as a whole) does nothing unless `DS:49F7` is set; then it clears a line (`res06_fn_0DD3(0, 0, 39, 0)`), shows the three numbers as `A , B , C` in colour 14 and the message through `ShowMessageLine`, and clears the line again **[V]**. Its only caller is `ovl12:2233` (the training and rewards unit).
+  - The debug mode also shows traces: `ShowDebugTrace(Message: String40; Max, Current, Lost: Byte)` (overlay 33, matched as a whole) does nothing unless `DS:49F7` is set; then it clears the top text line (`res06_fn_0DD3(0, 0, 39, 0)`: columns 0 to 39 of character row 0), shows the three numbers as `Max , Current , Lost` in colour 14, shows the message through `ShowMessageLine` (also colour 14, and it waits for a key, 5.15), and clears the line again **[V]**. Its only caller is `ovl12:2233` (the training and rewards unit), which passes the label `'max,cur,lost'` and a character's maximum, current and lost hit points (`hp_max` at +$32 of the character record, 4.2.5, and the bytes at +$11B and +$75), in that order.
   - `FlushKeyboard`, called before prompts (the code wheel, 5.12), is meant to flush the keyboard but returns at once: its first statement is `Exit` and the flush loop after it is dead code (QUIRK, `0899:010A`).
   - `DiscardWaitingKey` (`0899:0122`) calls `ReadGameKey` once when a key is waiting and throws the result away, so Ctrl-S and the STING keys still run. `ReadGameKey`'s drain can still consume keys past that one.
   - `QuitGame` (`0899:0000`) ends the program: it copies `SoundModeBeforePause` into `SoundMode` and calls `res03_fn_00DC(ds2612)`, the pause-path call, not `res03_fn_017B`. What that call does to the sound is not shown in this unit; the sound unit's proven stop is `08AE:13B1` (5.14) **[V]**. Then `Intr($10)` with AH=0 and AL = `SavedVideoMode` (`DS:4A1C`), through the `Registers` record at `DS:4A02`, and `Halt`. No writer of `SavedVideoMode` is in the decompiled units, so where that byte was saved is **[?]**.
@@ -520,8 +537,8 @@ a fixed table entry while the game variables allow it (`DrawAreaView`, `ovl27:00
   is a `string[40]` value parameter, which the compiler copies to a hidden stack temporary on
   entry (`System_StrLCopy`, `0AF8:0B25`, limit 40) **[V]** (code).
   - `DrawWindowFrame` draws four corner tiles, the top/bottom edges and the left/right edges
-    through `ovl34_e2`, with tile base `FrameSet * 3 + $114` (`$114` = 276, the value 5.2 already
-    reports for the adventure screen frame) **[V]** (code). The last two arguments of `ovl34_e2`
+    through `Put8x8Symbol`, with tile base `FrameSet * 3 + $114` (`$114` = 276, the value 5.2 already
+    reports for the adventure screen frame) **[V]** (code). The last two arguments of `Put8x8Symbol`
     are 0 here; what they select is still open **[?]**.
   - `ClearWindow` fills the rectangle with 0 by video hardware, selected by the `VideoAdapter`
     global (`DS:4A1E`) **[V]** (code): 0 fills two text-scanline planes (absolute byte planes
@@ -566,6 +583,29 @@ What the game takes from the outside world, found by `make timing-scan` and by r
 
 - `ShowMessageLine(Color, Text)` shows a one-line message on row 24: it clears 40 columns of that row (`res06_fn_05EB(0, 24, 0, 40)`), draws the text in the given colour (`res06_fn_0626(0, 24, Color, Text)`) and waits for a key through `ReadGameKey`. The text is a `string[40]`. Twelve routines call it, in overlays 0, 3, 5, 7, 17 and 33 and in res06 itself (`make packet FN=ShowMessageLine`).
 - Overlay 0 is the heap error handler: its initialisation sets `HeapError := @HeapErrorHandler`, so Turbo Pascal calls `HeapErrorHandler(Size)` when `New` or `GetMem` cannot get `Size` bytes. A zero size returns at once with an unassigned result (`jbe ovl00:004C` to `ovl00:00A3`). For a non-zero size it shows "WARNING: Insufficient Memory" in colour 14 (yellow); if the Boolean `DS:49D0` is set it calls `ovl17_e9` (the save and load unit) and repeats until `DS:557D` says to stop, otherwise it shows "Insufficient Memory. Exiting Program". Then it always ends the program (`QuitGame`), so that path never returns. The function result is never assigned on any path (QUIRK `ovl00:00A3`).
+
+### 5.16 The 3D sprite unit ovl28 **[V]** (`src/OVL28.PAS`, `make match UNIT=ovl28`: 6 of 9 routines at L2)
+
+Overlay 28 draws the 8x8 sprites of the 3D view and the HEAD/BODY strip of the character screen.
+The parts proven so far:
+
+- `DrawSprite(Col, Row: Integer; Direct: Byte; Sprite: Pointer)` (`ovl28:0000`): a nil sprite draws
+  nothing; with `Direct` set it blits the sprite one pixel up and left onto the screen buffer
+  `DS:4A20` through `res07_fn_0D71` (mode 0, flag 1) and steps the display (`res07_fn_1B52`);
+  otherwise it copies the sprite into the staging buffer with `res07_fn_1951`.
+- `DrawHeadSprite` and `DrawBodySprite` (`ovl28:0050`, `ovl28:0070`): draw a sprite at (column,
+  row) and at (column, row + 5); `ShowHeadBodySprites` (`ovl28:0697`) uses them to draw the HEAD
+  sprite `DS:6B01` and the BODY sprite `DS:6B06` over the 3D view.
+- `LoadHeadBodySprites` (`ovl28:05D9`) loads the HEAD and BODY banks of the picture number
+  `DS:5376` from the files `HEAD<number>` and `BODY<number>` through `res07_fn_0111` into
+  `DS:6B01` and `DS:6B06` (recording the loaded number in `DS:6B00` and `DS:6B05`, `$FF` = none).
+- `FreeSpriteList` (`ovl28:048F`) frees every loaded sprite bank of a sprite list (through
+  `res07_fn_2595`) and zeroes the list, the picture name `DS:6B0A` and the current bank `DS:6B1C`.
+- The sprite list is a `$42`-byte record: a count byte at +0, a flag at +1, and slots of 8 bytes
+  from +6, each holding a far pointer at +0 (the `TSpriteList` type of `src/OVL28.PAS`).
+
+Still to decompile: `ovl28_e7` (the range-checked 3D sprite draw, "Illegal range in
+Show3DSprite."), `ovl28_e4` (the HEAD/BODY window) and `ovl28_e2` (the PIC/FINAL picture loader).
 
 ---
 
