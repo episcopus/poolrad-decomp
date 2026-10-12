@@ -106,6 +106,10 @@ def main(argv=None) -> int:
         if common.git("status", "--porcelain", "--", "src", "re", "docs", "work", "tools", "tests"):
             print("handoff: commit your work first (git status is not clean)", file=sys.stderr)
             return 1
+        if branch == "main" or not int(common.git("rev-list", "--count", "main..HEAD") or 0):
+            print("handoff: %s has no commits beyond main, so there is nothing to merge; run it from your "
+                  "worktree after committing (an escalation needs no commits)" % branch, file=sys.stderr)
+            return 1
         if a.changelog:
             parts = [p for p in a.changelog.split("|") if p.strip()]
             if len(parts) != 3:
