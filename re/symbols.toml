@@ -13511,12 +13511,12 @@ id = "ovl29:0155"
 unit = "ovl29"
 addr = "ovl29:0155"
 size = 31
-name = "ovl29_e1"
-signature = "procedure ovl29_e1(A, B, C, D: Byte)"
+name = "SetWallDescriptors"
+signature = "procedure SetWallDescriptors(A, B, C, D: Byte)"
 c_name = "ovl29_e1"
 level = "none"
 justification = ""
-notes = "auto:entry_1"
+notes = "renamed from ovl29_e1 (stores the four wall view descriptors Wall1..Wall4 into ds6A60..ds6A63 (descriptor 1..4); called by ovl26 ShowAreaView (ovl29:0155)); auto:entry_1"
 evidence = ["prologue"]
 
 [[routine]]
@@ -13550,12 +13550,12 @@ id = "ovl29:031F"
 unit = "ovl29"
 addr = "ovl29:031F"
 size = 49
-name = "ovl29_fn_031F"
+name = "CellInRange"
 signature = ""
 c_name = "ovl29_fn_031F"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl29_fn_031F (returns True when both map cell coordinates X and Y are in 0..15 (a cell inside the 16x16 block); used by ovl29_e3/e2/e4/e5 (ovl29:031F)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -13602,12 +13602,12 @@ id = "ovl29:05F3"
 unit = "ovl29"
 addr = "ovl29:05F3"
 size = 10
-name = "ovl29_fn_05F3"
+name = "StepDisplay"
 signature = ""
 c_name = "ovl29_fn_05F3"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl29_fn_05F3 (steps the picture display through res07_fn_1B52, the same call ovl34 uses after a direct blit (ovl29:05F3)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
