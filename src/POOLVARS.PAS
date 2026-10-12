@@ -171,6 +171,13 @@ type
     Cost: Byte;                   { +0 }
     Pad1: array[1..3] of Byte;
   end;
+  { One 16-byte row of the spell table DS:320A (SpellTable): RecalcClassStats reads the class
+    and the level (ovl23:0110, 0119); the other bytes are not known yet. }
+  TSpellEntry = record
+    SpellClass: Byte;             { +0: 0 for the spells a cleric gets }
+    Level: ShortInt;              { +1: the spell level 1..3, an index of ClericSlots; signed (ovl23:011D cwde) }
+    Pad2: array[2..15] of Byte;
+  end;
   TCharacter = record
     Name: string[15];             { +$00 }
     Strength, Intelligence, Wisdom, Dexterity: Byte;  { +$10..$13 }
@@ -179,9 +186,32 @@ type
     { +$17..+$2B: the memorized spells, one spell number per slot, 0 = empty (CombatMenu offers
       Cast when one is set, ovl08:071E; ovl14 looks for Knock in them). }
     Spells: array[0..20] of Byte;
-    Pad2C: array[$2C..$31] of Byte;
+    Pad2C: Byte;
+    { +$2D: the to-hit value: RecalcClassStats sets it to the best (highest) entry of
+      ClassThac0Table over the character's classes (ovl23:0006..0062); whitepaper 4.2.5 calls it THAC0. }
+    Thac0: Byte;
+    { +$2E: the race (whitepaper 4.2.5); signed: ComputeThiefSkills sign-extends it (ovl23:034F)
+      to index the race row of ThiefRaceTable. }
+    Race: ShortInt;
+    ClassMask: Byte;              { +$2F: the class (whitepaper 4.2.5) }
+    Pad30: array[$30..$31] of Byte;
     HpMax: Byte;                  { +$32: maximum hit points }
-    Pad33: array[$33..$7E] of Byte;
+    { +$33..+$6A: one byte per spell 1..$38 (the rows of the spell table SpellTable): RecalcClassStats sets it to 1
+      for every cleric spell (table class 0) of a level the character has a cleric spell slot
+      for (ovl23:0135); likely the spells the character can learn [I]. }
+    KnownSpells: array[1..$38] of Byte;
+    Pad6B: array[$6B..$6C] of Byte;
+    { +$6D..+$71: five values ComputeSavingThrows sets to 20 and lowers to the best entry of
+      SaveTable over the character's classes (ovl23:026D..030D): the five saving throws [I]. }
+    SavingThrows: array[0..4] of Byte;
+    Pad72: Byte;
+    { +$73: raised to the highest class level by RecalcClassStats (ovl23:0066), never lowered
+      there; signed. }
+    HighestLevel: ShortInt;
+    Pad74: array[$74..$76] of Byte;
+    { +$77..+$7E: the eight values ComputeThiefSkills builds from the thief level, the race and
+      (for the first five) the dexterity: the thief skills [I] (ovl23:0329). }
+    ThiefSkills: array[1..8] of Byte;
     Affects: Pointer;             { +$7F: the list of affects (res12_fn_2199, ovl24_e2 walk it) }
     Pad83: Byte;
     { +$84: below $80 the party's Space command takes the character out of quick combat
@@ -191,11 +221,22 @@ type
     { +$96..$9D: the level in each of the eight classes; Raise Dead treats index 2 apart (class 2
       is the fighter in the create-character run, whitepaper 5.8). Signed: only levels above 0 count. }
     ClassLevels: array[0..7] of ShortInt;
-    Pad9E: array[$9E..$B0] of Byte;
+    Pad9E: array[$9E..$A0] of Byte;
+    { +$A1: RecalcClassStats sets 3 when the fighter level (ClassLevels[2]) is above 6, else 2
+      (ovl23:0083): likely attacks per two rounds [I]. }
+    Attacks: Byte;
+    PadA2: array[$A2..$B0] of Byte;
     { +$B1: Raise Dead subtracts it from HpMax to get the hit points its constitution
       arithmetic works on (ovl04:0612); its meaning beyond that is not known. }
     HpB1: Byte;
-    PadB2: array[$B2..$BA] of Byte;
+    { +$B2..+$B4: the cleric spell slots of levels 1..3: RecalcClassStats copies them from
+      ClericSlotTable for the cleric level (ovl23:00B0) and AddWisdomBonusSpells adds the wisdom
+      bonus; the table's level indexes them (ovl23:0123). }
+    ClericSlots: array[1..3] of Byte;
+    { +$B5..+$B7: the magic-user spell slots of levels 1..3, from MageSlotTable for the
+      magic-user level (ovl23:014C). }
+    MageSlots: array[1..3] of Byte;
+    PadB8: array[$B8..$BA] of Byte;
     HeadBank: Byte;               { +$BB: the HEAD picture bank number, 0 when none (ShowHeadBodyWindow) }
     BodyBank: Byte;               { +$BC: the BODY picture bank number, 0 when none (ShowHeadBodyWindow) }
     PadBD: array[$BD..$C6] of Byte;
@@ -557,5 +598,25 @@ var
     of a step onto it: MoveCharacter refuses ("Blocked") a step whose cost is above the moves left
     (ovl08:0C5F); kind 0 is off the map (Flee:). Extent unknown. }
   ds2744: array[0..15] of TStepCost;  { the movement cost of each kind of ground; see above }
+  { Class tables of ovl23 (whitepaper 5.6). Their extents are not known (only the rows the
+    characters reach are read). A table whose columns count from 1 is addressed from the byte
+    before it ([row, column] is base - 1 + row * width + column), so that byte is declared just
+    before the table: it is never read, and declaring it makes the index base name it in our
+    layout as in the original (as BadNameChars does). }
+  { The spell table: one 16-byte row per spell 1..$38 at DS:320A. Entry 0 (DS:31FA) is never
+    read: it is declared so that the index base, which RecalcClassStats adds (ovl23:0103), names it. }
+  SpellTable: array[0..$38] of TSpellEntry;  { see above }
+  ClassThac0Table: array[0..7, 0..10] of Byte;  { the to-hit value per class 0..7 and level (RecalcClassStats) }
+  ds40BC: Byte;                   { the byte before ClericSlotTable; see above }
+  ClericSlotTable: array[0..12, 1..3] of Byte;  { cleric spell slots of levels 1..3 per cleric level }
+  ds41D4: Byte;                   { the byte before MageSlotTable; see above }
+  MageSlotTable: array[0..12, 1..3] of Byte;  { magic-user spell slots of levels 1..3 per magic-user level }
+  SavingThrowTable: array[0..7, 0..8, 0..4] of Byte;  { the five saving throws per class 0..7 and level }
+  ds3CF3: Byte;                   { the byte before ThiefSkillTable; see above }
+  ThiefSkillTable: array[0..8, 1..8] of Byte;  { the eight thief skills per thief level }
+  ds3D3B: Byte;                   { the byte before ThiefRaceTable; see above }
+  ThiefRaceTable: array[0..7, 1..8] of ShortInt;  { the race adjustment of the eight thief skills }
+  ds3D4E: Byte;                   { the byte before ThiefDexTable; see above }
+  ThiefDexTable: array[0..18, 1..5] of ShortInt;  { the dexterity adjustment of the first five thief skills }
 implementation
 end.

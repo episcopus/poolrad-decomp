@@ -1219,3 +1219,87 @@ kind = "routine"
 why = "ovl08:0FFF finds party characters with Status 5 (dying); with DoIt it bandages the first (Status 4, message is bandaged); returns 1 when one was found"
 date = "2026-10-12"
 
+[[rename]]
+old = "ovl23_e1"
+new = "RecalcClassStats"
+kind = "routine"
+why = "recomputes per class 0..7 the to-hit max (+2Dh from DS:3C7C), the highest level (+73h), fighter attacks (+A1h), cleric and magic-user spell slots (+B2h, +B5h), cleric spells known, then calls ovl23_e3/e4 (ovl23:0000, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl23_e2"
+new = "AddWisdomBonusSpells"
+kind = "routine"
+why = "adds 1 to cleric slot 1 at wisdom (+12h) 13 and 14, slot 2 at 15 and 16, slot 3 at 17, each only when nonzero: the AD&D wisdom bonus spells (ovl23:01AF, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl23_e3"
+new = "ComputeSavingThrows"
+kind = "routine"
+why = "sets five bytes +6Dh..+71h to 20 and lowers each to the minimum of DS:426E[class, level, n] over the classes with a level: the shape of the five AD&D saving throws (ovl23:0255, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl23_e4"
+new = "ComputeThiefSkills"
+kind = "routine"
+why = "called when the thief level ClassLevels[6] is above 0; eight bytes +77h..+7Eh from a thief-level table plus a race table, plus a dexterity table for the first five: the eight AD&D thief skills (ovl23:0329, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds31FA"
+new = "SpellTable"
+kind = "global"
+why = "16-byte rows indexed by spell 1..38h (entry 0 at DS:31FA is the index base); RecalcClassStats reads byte 0 (0 = cleric spell) and byte 1 (spell level 1..3, an index of the cleric slots) and sets the character's byte per spell (ovl23:00F8..0135)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds3C7C"
+new = "ClassThac0Table"
+kind = "global"
+why = "[class 0..7, level] bytes; RecalcClassStats keeps the largest entry over the classes in the character's THAC0 byte +2Dh (ovl23:0020..0062)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds40BD"
+new = "ClericSlotTable"
+kind = "global"
+why = "[cleric level, 1..3] bytes copied into the cleric spell slots +B2h..+B4h when the cleric level (ClassLevels[0]) is above 1 (ovl23:00B0..00E3); index base DS:40BC"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds41D5"
+new = "MageSlotTable"
+kind = "global"
+why = "[magic-user level, 1..3] bytes copied into +B5h..+B7h when ClassLevels[5] is above 1 (ovl23:014C..017F); index base DS:41D4"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds426E"
+new = "SavingThrowTable"
+kind = "global"
+why = "[class 0..7, level 0..8, 0..4] bytes: ComputeSavingThrows lowers the five values +6Dh..+71h to their minimum over the classes (ovl23:0255)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds3CF4"
+new = "ThiefSkillTable"
+kind = "global"
+why = "[thief level, 1..8] bytes: the base of the eight thief skills (ComputeThiefSkills, ovl23:0377); index base DS:3CF3"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds3D3C"
+new = "ThiefRaceTable"
+kind = "global"
+why = "[race, 1..8] signed adjustments added to the thief skills; a negative one larger than the base zeroes the skill (ovl23:0358..03A2); index base DS:3D3B"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds3D4F"
+new = "ThiefDexTable"
+kind = "global"
+why = "[dexterity, 1..5] signed adjustments added to the first five thief skills (ovl23:0426); index base DS:3D4E"
+date = "2026-10-12"
+
