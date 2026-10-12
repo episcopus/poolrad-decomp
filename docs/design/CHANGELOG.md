@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-11 | docs/design/WHITEPAPER.md | renumbered the ovl30 section from 5.17 to 5.18 to remove the duplicate with ovl18 | the orchestrator's duplicate-section note |
 | 2026-10-11 | 5.16 | LoadSpriteList: the DAX sprite block layout, xor-delta PIC/FINAL pictures, MaxAvail 3900 gate; sprite list slots at +2 | make match UNIT=ovl28 (unit complete) |
 | 2026-10-11 | docs/design/WHITEPAPER.md 5.19 | the services list now says ten names (the nine services plus Exit), matching the corrected TempleMenuText[0..10] | make match UNIT=ovl04, make readability UNIT=ovl04 (review rev-5) |
 | 2026-10-11 | 5.8 | QUIRK ovl01:0729 corrected: the title animation gate is an accumulated Random(4) sum, CPU-speed dependent, not dead code | make match UNIT=ovl01; ovl01:0721..0743 |
