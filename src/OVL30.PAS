@@ -90,7 +90,9 @@ end;
   walks X towards X2 (and, while D1 >= 0, Y towards Y2 by SY), else it walks Y towards Y2 (and,
   while D1 >= 0, X towards X2 by SX); the smaller axis moves on the sign of D1 and First advances
   by 2 or 3, and the direction taken picks the Pattern byte from the 3x3 table ds25C0 at
-  3*(StepY+1) + (StepX+1). Called by ovl22_fn_295B, WalkLine and res12_fn_1A29. }
+  3*(StepY+1) + (StepX+1). Pattern is written on every call, even when the line is already at its
+  end point and the routine returns False (StepX and StepY stay 0, giving ds25C0[1, 1]).
+  Called by ovl22_fn_295B, WalkLine and res12_fn_1A29. }
 function StepLine(Line: PLineState): Boolean;
 var
   StepX, StepY: ShortInt;         { the x and y direction of this step, -1, 0 or 1 }
@@ -145,13 +147,6 @@ begin
     Pattern := ds25C0[StepY + 1, StepX + 1];
   end;
 end;
-{ ovl30:0422. BLOCKED (dec-5, 2026-10-12): the line walk, 345 bytes, retf 20, frame 58. The
-  prologue matches to ovl30:0473 (Limit := 2*Count^+1; Line from the endpoints; SetupLine(@Line);
-  Bound from (0, ds2745[tile, 0]) to (Max(DX, DY), tile); SetupLine(@Bound)) and the loop shape is
-  clear (step Bound then Line, QUIRK ovl30:0544 dead StepDone, stop on the ds2745[tile, 1] gate or
-  First > Limit), but the ds2745 index codegen does not reproduce: the original adds Map + StartY*50
-  + StartX with two separate adds to DI and folds +7 into [di+7], which a flat byte subscript does
-  not. See the note in re/symbols.toml. }
 { ovl30:0422. Walks a Bresenham line from (X1, Y1) towards (Ex, Ey) over the Map rows and
   reports the steps in StepCount: it sets up Line from the endpoints and a horizontal Bound
   line from the start tile's table height, then steps Bound and Line together, stopping with
@@ -247,7 +242,7 @@ end;
   four neighbours of the record (ovl31_e1 fills the offsets, invalid neighbours get -1), keeps
   the pairs in Dir's arc (InDirArc) that the line walk (WalkLine) crosses in the fewest steps,
   and stores the record index, the step count and the working direction (the requested Dir, or
-  the first working one when Dir is 8). Called from combat and item aiming (ovl22_e5) and from
+  the first working one when Dir is 8). Called from combat and item aiming (ovl22_e48) and from
   ovl09, ovl13, ovl24 and res12. }
 procedure ScanTargets(FromX, FromY: ShortInt; MaxSteps: Word; Dir, Base: Byte; Map: Pointer);
 var
