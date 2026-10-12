@@ -232,3 +232,10 @@ kind = "routine"
 why = "the Buy flow of the shop menu: loops on ChooseShopItem, pays from the pool (ovl19_e11) or the money (ovl21_e12 on ds67F4), adds the entry with AddInventoryItem and deducts via ovl21_e10/ovl21_e11, else shows Not enough Money.; called from ovl06_e1 on the 'B' menu key (ovl06:0361)"
 date = "2026-10-11"
 
+[[rename]]
+old = "ovl06_e1"
+new = "ShopMain"
+kind = "routine"
+why = "the Shop overlay's entry from ovl03: marks the shop open (ds49F3), redraws the shop screen (res12_fn_27D9, res12_fn_0767), clears ds67F4 and ds6DC0, then loops showing the shop menu (ovl25_e2) and dispatching Buy/View/Take/Pool/Share/Appraise/Exit and the leave prompt; leaves when Done is set (ovl06:053E)"
+date = "2026-10-11"
+

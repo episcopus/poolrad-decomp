@@ -13,7 +13,7 @@ procedure res12_fn_03A0;
 procedure res12_fn_0442(Value: LongInt; P: Pointer; A, B, C, D: Byte);
 procedure res12_fn_06D5;
 procedure res12_fn_0712;
-procedure res12_fn_0767;
+procedure res12_fn_0767(P: Pointer);
 procedure res12_fn_08EF;
 procedure res12_fn_0973;
 procedure res12_fn_09E3;
@@ -87,7 +87,7 @@ implementation
 { 00BA:0712: retf 16: 16 bytes of parameters; 0 bytes of locals }
 {@stub} procedure res12_fn_0712; begin end;
 { 00BA:0767: retf 4: 4 bytes of parameters; 14 bytes of locals }
-{@stub} procedure res12_fn_0767; begin end;
+{@stub} procedure res12_fn_0767(P: Pointer); begin end;
 { 00BA:08EF: retf 8: 8 bytes of parameters; 514 bytes of locals }
 {@stub} procedure res12_fn_08EF; begin end;
 { 00BA:0973: retf 10: 10 bytes of parameters; 258 bytes of locals }

@@ -1,5 +1,5 @@
 unit OVL06;
-{ Shop: the shopkeeper screen. ovl06_e1 (053E) is the entry: it shows the shop menu
+{ Shop: the shopkeeper screen. ShopMain (053E) is the entry: it shows the shop menu
   (Buy/View/Take/Pool/Share/Appraise/Exit) through ovl25_e2 and dispatches each choice.
   ChooseShopItem (0030) lists the shop's stock in the shop window and runs the item picker
   (ovl25_e4); BuyItems (0361) is the Buy flow, AddInventoryItem (0239) adds an item to the
@@ -9,11 +9,10 @@ interface
 uses POOLVARS;
 procedure ChooseShopItem(var Action: Char; var Selected: PMenuItem; var Head: PMenuItem; var Count: Word);
 procedure AddInventoryItem(Item: PMenuItem; OK: PByte);
-procedure ovl06_fn_0311;
 procedure BuyItems;
-procedure ovl06_e1;
+procedure ShopMain;
 implementation
-uses OVL19, OVL21, OVL25, RES09, RES12;
+uses OVL07, OVL19, OVL21, OVL25, RES06, RES09, RES12;
 
 { ovl06:0030 (ChooseShopItem). Builds the shop window and the item picker. Walks the stock list at
   ds6810 and rewrites each entry's Name into a 30-character field with the name on the left and the
@@ -99,10 +98,7 @@ begin
   end;
 end;
 
-{ ovl06:0311: retf 8: 8 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl06_fn_0311; begin end;
-
-{ ovl06:0361 (BuyItems). The shop's Buy flow, called from ovl06_e1 on the 'B' menu key. It loops on
+{ ovl06:0361 (BuyItems). The shop's Buy flow, called from ShopMain on the 'B' menu key. It loops on
   ChooseShopItem until the player cancels (any key other than 'B' or Enter). For a chosen entry it
   first checks the party's pool (ovl19_e11 on ds5D92); if the entry's Count fits it adds the entry to
   the inventory (AddInventoryItem) and deducts the amount from the pool (ovl21_e10). Otherwise it
@@ -160,8 +156,79 @@ begin
   until Flag;
 end;
 
-{ ovl06:053E: retf 0: 0 bytes of parameters; 138 bytes of locals }
-{@stub} procedure ovl06_e1; begin end;
+{ ovl06:053E (ShopMain). The shop's entry and main loop, called from ovl03 (the area logic) when the
+  party enters a shop. It marks the shop open (ds49F3), redraws the shop screen (res12_fn_27D9,
+  res12_fn_0767 on ds5D92), clears the money block ds67F4 and clears ds6DC0, then shows the menu
+  (ovl25_e2) with a text chosen by ovl21_e9 (the Take/Share entries appear only when it says so)
+  and dispatches the key. Done leaves the loop. No parameters; side effects: the screen, the
+  inventory and the money through the called routines. }
+procedure ShopMain;
+var
+  MenuText: string[40];
+  Unknown2A: Byte;                { Purpose unknown: a byte local between MenuText and Confirmed }
+  Confirmed, Flag2, Done: Byte;
+  Key: Char;
+  Has1, Has2, Choice, Restored: Byte;
+  Entry: PMenuItem;
+begin
+  ds49F3 := 1;
+  res12_fn_27D9;
+  res12_fn_0767(ds5D92);
+  FillChar(ds67F4, $1C, 0);
+  Confirmed := 0;
+  ds6DC0 := 0;
+  Done := 0;
+  Entry := ds6810;
+  while Entry <> nil do
+  begin
+    res12_fn_0442(0, Entry, 0, 0, 0, 0);
+    Entry := Entry^.Next;
+  end;
+  repeat
+    ovl21_e9(@Has1, @Has2);
+    if Has1 <> 0 then
+      MenuText := 'Buy View Take Pool Share Appraise Exit'
+    else
+      MenuText := 'Buy View Pool Appraise Exit';
+    Key := ovl25_e2(@Confirmed, MenuText, $D, $A, $F, 1, 0, @Flag2);
+    case Key of
+      'B': BuyItems;
+      'V': ovl19_e5(@Flag2);
+      'T': ovl21_e4;
+      'P': if Flag2 = 0 then
+             ovl21_e2;
+      'S': ovl21_e3;
+      'A': ovl21_e14(@Restored);
+      'E':
+        begin
+          ovl21_e9(@Has1, @Has2);
+          if Has1 <> 0 then
+          begin
+            MenuText := '~Yes ~No';
+            res06_fn_0768(1, $11, $26, $16, $A, 1,
+              'As you Leave the Shopkeeper says, "Excuse me but you have Left Some Money here."  ');
+            res06_fn_0768(1, $11, $26, $16, $F, 0,
+              'Do you want to go back and get your Money?');
+            Choice := ovl07_e13(@Confirmed, MenuText, $D, $A, $F, 0, 0);
+            if Choice = 1 then
+              Done := 1
+            else
+              res06_fn_0DD3(1, $11, $26, $16);
+          end
+          else
+            Done := 1;
+        end;
+      'G': ovl19_e10(Ord(Key));
+      'O': ovl19_e10(Ord(Key));
+    end;
+    case Key of
+      'B', 'T': res12_fn_27D9;
+      'A': if Restored <> 0 then
+             res12_fn_27D9;
+    end;
+    res12_fn_0767(ds5D92);
+  until Done <> 0;
+end;
 
 begin
 end.

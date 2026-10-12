@@ -185,7 +185,9 @@ var
   ds5E52: array[0..7] of Byte;    { 8-byte buffer the loader clears (ovl11:0260) and passes to res07_fn_0111 (ovl11:04D6) }
   ds5E56: array[0..7] of Byte;    { second 8-byte buffer passed to res07_fn_0111 (ovl11:04F8) }
   ds5E5A: array[0..$CF] of Byte;  { $D0-byte buffer the loader clears (ovl11:02B9); the picture set table of ovl32_e4 }
+  ds49F3: Byte;                   { nonzero while a shop is open (ShopMain sets it to 1; res12 reads it) }
   ds67F4: array[0..$1B] of Byte;  { the 28-byte block at DS:67F4 whose address ovl06 passes to ovl21_e12 (Money) }
+  ds6DC0: Byte;                   { cleared by ShopMain while the shop is open (ovl06:0571) }
   ds6810: PMenuItem;              { head of the shop's item list, a far pointer the loader clears (ovl11:031A); see TMenuItem }
   ds6A58: ^TBlock924;             { $924-byte block the loader allocates (ovl11:0084) }
   ds6A5C: ^TBlock400;             { $400-byte block the loader allocates (ovl11:0094) }

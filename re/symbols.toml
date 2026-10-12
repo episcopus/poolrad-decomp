@@ -2258,19 +2258,6 @@ notes = "renamed from ovl06_e2 (appends a clone of the item to the linked list a
 evidence = ["prologue"]
 
 [[routine]]
-id = "ovl06:0311"
-unit = "ovl06"
-addr = "ovl06:0311"
-size = 80
-name = "ovl06_fn_0311"
-signature = ""
-c_name = "ovl06_fn_0311"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
 id = "ovl06:0361"
 unit = "ovl06"
 addr = "ovl06:0361"
@@ -2288,12 +2275,12 @@ id = "ovl06:053E"
 unit = "ovl06"
 addr = "ovl06:053E"
 size = 602
-name = "ovl06_e1"
+name = "ShopMain"
 signature = ""
 c_name = "ovl06_e1"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_1"
+notes = "renamed from ovl06_e1 (the Shop overlay's entry from ovl03: marks the shop open (ds49F3), redraws the shop screen (res12_fn_27D9, res12_fn_0767), clears ds67F4 and ds6DC0, then loops showing the shop menu (ovl25_e2) and dispatching Buy/View/Take/Pool/Share/Appraise/Exit and the leave prompt; leaves when Done is set (ovl06:053E)); auto:entry_1"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2304,7 +2291,7 @@ size = 5
 name = "ovl06_init"
 signature = ""
 c_name = "ovl06_init"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_0"
 evidence = ["prologue"]

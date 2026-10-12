@@ -23,11 +23,11 @@ procedure ovl21_fn_0B48;
 procedure ovl21_e5;
 procedure ovl21_e4;
 procedure ovl21_fn_0F21;
-procedure ovl21_e9;
+procedure ovl21_e9(P1, P2: Pointer);
 procedure ovl21_fn_0FD2;
 procedure ovl21_e13;
 procedure ovl21_fn_1758;
-procedure ovl21_e14;
+procedure ovl21_e14(P: Pointer);
 procedure ovl21_fn_1F4B;
 procedure ovl21_fn_2233;
 implementation
@@ -73,7 +73,7 @@ implementation
 { ovl21:0F21: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl21_fn_0F21; begin end;
 { ovl21:0F7E: retf 8: 8 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl21_e9; begin end;
+{@stub} procedure ovl21_e9(P1, P2: Pointer); begin end;
 { ovl21:0FD2: retf 0: 0 bytes of parameters; 2 bytes of locals }
 {@stub} procedure ovl21_fn_0FD2; begin end;
 { ovl21:1010: frame not read }
@@ -81,7 +81,7 @@ implementation
 { ovl21:1758: frame not read }
 {@stub} procedure ovl21_fn_1758; begin end;
 { ovl21:19B2: frame not read }
-{@stub} procedure ovl21_e14; begin end;
+{@stub} procedure ovl21_e14(P: Pointer); begin end;
 { ovl21:1F4B: frame not read }
 {@stub} procedure ovl21_fn_1F4B; begin end;
 { ovl21:2233: retf 4: 4 bytes of parameters; 0 bytes of locals }
