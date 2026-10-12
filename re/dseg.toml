@@ -564,3 +564,43 @@ evidence = "ReadPromptChoice (ovl25:04A3..052D) draws frame DS:6ABF of the sprit
 offset = 0x49E2
 name = "GameSpeed"
 evidence = "GameSpeedMenu (ovl08:10F6) shows it as GameSpeed (n) and its Slower/Faster keys move it in 0..9"
+
+[[global]]
+offset = 0x31FA
+name = "SpellTable"
+evidence = "16-byte rows indexed by spell 1..38h (entry 0 at DS:31FA is the index base); RecalcClassStats reads byte 0 (0 = cleric spell) and byte 1 (spell level 1..3, an index of the cleric slots) and sets the character's byte per spell (ovl23:00F8..0135)"
+
+[[global]]
+offset = 0x3C7C
+name = "ClassThac0Table"
+evidence = "[class 0..7, level] bytes; RecalcClassStats keeps the largest entry over the classes in the character's THAC0 byte +2Dh (ovl23:0020..0062)"
+
+[[global]]
+offset = 0x40BD
+name = "ClericSlotTable"
+evidence = "[cleric level, 1..3] bytes copied into the cleric spell slots +B2h..+B4h when the cleric level (ClassLevels[0]) is above 1 (ovl23:00B0..00E3); index base DS:40BC"
+
+[[global]]
+offset = 0x41D5
+name = "MageSlotTable"
+evidence = "[magic-user level, 1..3] bytes copied into +B5h..+B7h when ClassLevels[5] is above 1 (ovl23:014C..017F); index base DS:41D4"
+
+[[global]]
+offset = 0x426E
+name = "SavingThrowTable"
+evidence = "[class 0..7, level 0..8, 0..4] bytes: ComputeSavingThrows lowers the five values +6Dh..+71h to their minimum over the classes (ovl23:0255)"
+
+[[global]]
+offset = 0x3CF4
+name = "ThiefSkillTable"
+evidence = "[thief level, 1..8] bytes: the base of the eight thief skills (ComputeThiefSkills, ovl23:0377); index base DS:3CF3"
+
+[[global]]
+offset = 0x3D3C
+name = "ThiefRaceTable"
+evidence = "[race, 1..8] signed adjustments added to the thief skills; a negative one larger than the base zeroes the skill (ovl23:0358..03A2); index base DS:3D3B"
+
+[[global]]
+offset = 0x3D4F
+name = "ThiefDexTable"
+evidence = "[dexterity, 1..5] signed adjustments added to the first five thief skills (ovl23:0426); index base DS:3D4E"

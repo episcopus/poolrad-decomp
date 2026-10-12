@@ -12515,12 +12515,12 @@ id = "ovl23:0000"
 unit = "ovl23"
 addr = "ovl23:0000"
 size = 431
-name = "ovl23_e1"
+name = "RecalcClassStats"
 signature = ""
 c_name = "ovl23_e1"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_1"
+notes = "renamed from ovl23_e1 (recomputes per class 0..7 the to-hit max (+2Dh from DS:3C7C), the highest level (+73h), fighter attacks (+A1h), cleric and magic-user spell slots (+B2h, +B5h), cleric spells known, then calls ovl23_e3/e4 (ovl23:0000, matched)); auto:entry_1"
 evidence = ["prologue"]
 
 [[routine]]
@@ -12528,12 +12528,12 @@ id = "ovl23:01AF"
 unit = "ovl23"
 addr = "ovl23:01AF"
 size = 166
-name = "ovl23_e2"
+name = "AddWisdomBonusSpells"
 signature = ""
 c_name = "ovl23_e2"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl23_e2 (adds 1 to cleric slot 1 at wisdom (+12h) 13 and 14, slot 2 at 15 and 16, slot 3 at 17, each only when nonzero: the AD&D wisdom bonus spells (ovl23:01AF, matched)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -12541,12 +12541,12 @@ id = "ovl23:0255"
 unit = "ovl23"
 addr = "ovl23:0255"
 size = 212
-name = "ovl23_e3"
+name = "ComputeSavingThrows"
 signature = ""
 c_name = "ovl23_e3"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl23_e3 (sets five bytes +6Dh..+71h to 20 and lowers each to the minimum of DS:426E[class, level, n] over the classes with a level: the shape of the five AD&D saving throws (ovl23:0255, matched)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -12554,12 +12554,12 @@ id = "ovl23:0329"
 unit = "ovl23"
 addr = "ovl23:0329"
 size = 309
-name = "ovl23_e4"
+name = "ComputeThiefSkills"
 signature = ""
 c_name = "ovl23_e4"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl23_e4 (called when the thief level ClassLevels[6] is above 0; eight bytes +77h..+7Eh from a thief-level table plus a race table, plus a dexterity table for the first five: the eight AD&D thief skills (ovl23:0329, matched)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -12570,7 +12570,7 @@ size = 5
 name = "ovl23_init"
 signature = ""
 c_name = "ovl23_init"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_0"
 evidence = ["prologue"]
