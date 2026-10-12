@@ -16697,7 +16697,7 @@ signature = ""
 c_name = "res06_fn_06A7"
 level = "none"
 justification = ""
-notes = "renamed from res06_fn_06A7 (nested in ShowPagedText (0709:06A7): draws Buf[I..J] glyph by glyph through res06_fn_01DF at advancing GlyphCol with the Crt delay); auto:near_call"
+notes = "renamed from res06_fn_06A7 (nested in ShowPagedText (0709:06A7): draws Buf[I..J] glyph by glyph through res06_fn_01DF at advancing GlyphCol with the Crt delay); auto:near_call; blocked: nested in ShowPagedText (0709:0768); a nested routine gets L2 only through its matched parent, which waits for the human on escalate-res06-20261012110841 (nested routines with globals and calls); draft in dec-1's scratch/SHOWPAGEDTEXT.DRAFT.PAS (dec-12)"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16710,7 +16710,7 @@ signature = ""
 c_name = "res06_fn_0714"
 level = "none"
 justification = ""
-notes = "renamed from res06_fn_0714 (nested in ShowPagedText (0709:0714): skips blank Buf chars while I is below Len); auto:near_call"
+notes = "renamed from res06_fn_0714 (nested in ShowPagedText (0709:0714): skips blank Buf chars while I is below Len); auto:near_call; blocked: nested in ShowPagedText (0709:0768); a nested routine gets L2 only through its matched parent, which waits for the human on escalate-res06-20261012110841 (nested routines with globals and calls); draft in dec-1's scratch/SHOWPAGEDTEXT.DRAFT.PAS (dec-12)"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16840,7 +16840,7 @@ signature = ""
 c_name = "res06_init"
 level = "none"
 justification = ""
-notes = "auto:init"
+notes = "auto:init; blocked: the original is the empty initialisation part (push bp; mov bp,sp; pop bp; retf at 0709:0F82), which src/RES06.PAS already has (begin end., no {@stub-init}); make match checks an init part only in the whole-unit comparison, which runs when no stub is left, so it waits for ShowPagedText (escalate-res06-20261012110841) (dec-12)"
 evidence = ["prologue"]
 
 [[routine]]
