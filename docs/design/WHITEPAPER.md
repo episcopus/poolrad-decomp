@@ -611,6 +611,14 @@ the 28-byte money block at `DS:67F4` and `DS:6DC0`, redraws the shop (`res12:27D
 Map note: `re/symbols.toml` had split `ovl06:0239` at `ovl06:0311`; `0311` is one byte into a
 `les di, [bp-8]` instruction, not a routine entry, and its stub was removed.
 
+### 5.5 The combat map view ovl31 **[V]** (`src/OVL31.PAS`, `make match UNIT=ovl31`: unit complete, 23 routines)
+
+- **The map** is a block behind the far pointer `CombatMap` (`DS:6716`): a 7-byte header, then 25 rows of 50 tile ids (`+7 + 50 row + column`). Header `+2`/`+3` are the map cell shown at the top left of the 7x7 cell view, `+4` makes the cursor icon visible, `+5` is the cursor's footprint kind, `+6` is the tile gate ovl30's `WalkLine` reads (5.18). A view cell is drawn with `DrawCellPicture` at 3 times its column and row; the picture is byte `+3` of the 4-byte combat tile entry at `DS:2744` (`CombatTiles`, the same table ovl30 reads from `DS:2745`). Byte `+0` of the entry is a cost: `$FF` refuses a combatant, and when a footprint covers several tiles the one with the largest cost decides a step (`ProbeStep`); tile 0 (off the map) and tile `$1E` always win **[V]** (code; the table bytes give `$FF` or 1 for the costs and picture = tile id - 1).
+- **Combatants** are numbered 1..n: `CombatantTable` (`DS:5F27`, 4 bytes each: X, Y, an unread byte, the footprint kind; entry 0's kind byte is n), `CombatantRecord` (`DS:65BD`, far pointers to their character records), their place in the view `CombatantViewCol/Row` (`DS:604B`, `DS:6093`) and the occupant map `CellOccupant` (`DS:60DB`, 50x25 bytes, rebuilt by `RebuildOccupancy`). The layout leaves room for 72 combatants **[I]** (the tables are packed back to back). A **footprint kind** (`Footprints`, `DS:2844`, four cell offsets per kind) is 1 for one cell, 2 for two cells one above the other, 3 for two side by side and 4 for a 2x2 square **[V]** (table bytes); `PlaceCombatant` takes it from bits 0..6 of the character record's byte `+$6C`, and the icon `DrawIcon` draws is the record's `+$BF` with the icon set at `+9` of the combat record the character points to at `+$108` **[V]**.
+- **The view and the cursor**: `ScrollViewTo` moves the window's centre one cell at a time until a cell is within a margin of it (columns 3..46, rows 3..21) and redraws all 49 cells; `MoveCombatCursor(X, Y, Margin, Dir)` steps by the direction tables `ds2736`/`ds273F` (direction 8 does not move), scrolls, redraws the combatants, repaints the old cell and draws the cursor (icon `$19`) on every cell of the cursor footprint. `ShowCursorOn` shows it on a combatant with that combatant's footprint **[V]**.
+- **Death and bodies** (only in view mode 5, `ds49F3`): `RemoveCombatant` draws the picture `DS:5F1A` over the dying combatant's cells, calls the sound unit (`res03_fn_00DC(ds261E)`) and waits, and unless byte `+$13` of its combat record is set records a body (`BodyTable`, `DS:66DD`, 8 records of who, X, Y and the tile it covered; count `DS:6715`) and puts tile `$1F` on its cell (a `$1E` tile stays). `PlaceCombatant` with its Restore flag takes the body back and restores the tile. QUIRK `ovl31:0E41`: the check for an existing body record reads `BodyTable[ds70C7]`, a stray global (FreeSpriteList's loop counter), on every pass instead of the loop index **[V]** (code).
+- `ovl31_e2` and `ovl31_e3` call `res07_fn_2A0D` with (0, 8), (8, 0) and (0, 0), (8, 8) when `VideoAdapter` is 1; their purpose is **[?]**.
+
 ### 5.8 Keyboard input and menus (observed in the oracle)
 
 - Input is **INT 16h only** **[V]** (oracle: no INT 09h hook, ports 60h/64h never touched): Crt `KeyPressed` (`0A40:02FD`, AH=01h) and `ReadKey` (`0A40:030F`, AH=00h, an extended key returns 0 then the scan code on the next call).
@@ -818,7 +826,7 @@ Overlay 30 draws lines and sorts:
   map entity table (records with a map position, an unknown byte and a kind byte; entry 0's
   kind holds the count) for records reachable from the search point: for each active record it
   tries the four neighbours of the base point against the four neighbours of the record
-  (`ovl31_e1` fills the neighbour offsets from a base value, invalid neighbours get -1), keeps
+  (`FootprintCell` fills the neighbour offsets from a base value, invalid neighbours get -1), keeps
   the pairs in direction Dir's arc (`InDirArc`) that the line walk (`WalkLine`) crosses in the
   fewest steps, appends one record per hit (table index, step count, working direction) to the
   `DS:6718` sort table and sorts it. The stored direction is the requested Dir, or the first

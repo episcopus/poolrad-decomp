@@ -128,6 +128,20 @@ type
   { A character in memory: the 285-byte record of whitepaper 4.2.5 (name, abilities and hp_max
     [V] by tools/re/records.py). Only the fields a decompiled unit uses are named; the Pad
     arrays keep the offsets. }
+  { The combat state record a character points to (TCharacter.Combat, +$108). Only the bytes ovl31
+    reads or clears are named. }
+  TCombatState = record
+    Clear0: Byte;                 { +$0: cleared when the combatant leaves the map (RemoveCombatant) }
+    Pad1: array[1..2] of Byte;
+    Clear3: Byte;                 { +$3: cleared with Clear0 }
+    Pad4: array[4..5] of Byte;
+    Clear6, Clear7: Byte;         { +$6, +$7: cleared with Clear0 }
+    Pad8: Byte;
+    IconSet: Byte;                { +$9: the icon set (facing) DrawIcon draws the combatant with }
+    PadA: array[$A..$12] of Byte;
+    NoBody: Byte;                 { +$13: nonzero: no body is left on the map when it dies (RemoveCombatant) }
+  end;
+  PCombatState = ^TCombatState;
   PCharacter = ^TCharacter;
   TCharacter = record
     Name: string[15];             { +$00 }
@@ -136,7 +150,11 @@ type
     Charisma, StrengthPercent: Byte;  { +$15, +$16 }
     Pad17: array[$17..$31] of Byte;
     HpMax: Byte;                  { +$32: maximum hit points }
-    Pad33: array[$33..$7E] of Byte;
+    Pad33: array[$33..$6B] of Byte;
+    { +$6C: bits 0..6 are the combat footprint kind (PlaceCombatant copies them into CombatantTable[].Kind); bit 7
+      is not part of it. }
+    CombatSize: Byte;
+    Pad6D: array[$6D..$7E] of Byte;
     Affects: Pointer;             { +$7F: the list of affects (res12_fn_2199, ovl24_e2 walk it) }
     Pad83: array[$83..$95] of Byte;
     { +$96..$9D: the level in each of the eight classes; Raise Dead treats index 2 apart (class 2
@@ -149,13 +167,17 @@ type
     PadB2: array[$B2..$BA] of Byte;
     HeadBank: Byte;               { +$BB: the HEAD picture bank number, 0 when none (ShowHeadBodyWindow) }
     BodyBank: Byte;               { +$BC: the BODY picture bank number, 0 when none (ShowHeadBodyWindow) }
-    PadBD: array[$BD..$C7] of Byte;
+    PadBD: array[$BD..$BE] of Byte;
+    CombatIcon: Byte;             { +$BF: the icon picture DrawIcon draws for it on the combat map (ovl31) }
+    PadC0: array[$C0..$C7] of Byte;
     Items: PItem;                 { +$C8: the list of carried items }
-    PadCC: array[$CC..$10B] of Byte;
+    PadCC: array[$CC..$107] of Byte;
+    Combat: PCombatState;         { +$108: its combat state record (ovl31: icon set at +9) }
     { +$10C: the health status: 0 after Raise Dead and Stone to Flesh, 1 and 6 count as dead for
       Raise Dead, 7 as stoned for Stone to Flesh (ovl04:0539, 093D). }
     Status: Byte;
-    Flag10D: Byte;                { +$10D: Raise Dead and Stone to Flesh set it to 1; meaning unknown }
+    Flag10D: Byte;                { +$10D: Raise Dead and Stone to Flesh set it to 1; MoveCombatCursor
+                                    redraws only combatants with it set; meaning unknown }
     Pad10E: array[$10E..$11A] of Byte;
     Flag11B: Byte;                { +$11B: Raise Dead and Stone to Flesh set it to 1; meaning unknown }
     Pad11C: Byte;
@@ -202,12 +224,42 @@ type
     B2: Byte;                     { +2: never read by WalkLine; meaning unknown }
     B3: Byte;                     { +3: never read by WalkLine; meaning unknown }
   end;
+  { The combat map CombatMap points at (ovl31): a 7-byte header, then 25 rows of 50 tile ids. ovl30's
+    WalkLine reads the same block as TMapRows (Head[6] is its tile gate). }
+  TCombatMap = record
+    Head0: array[0..1] of Byte;   { +$0..$1: not read by ovl31 }
+    ViewX, ViewY: ShortInt;       { +$2, +$3: the map cell shown at the top left of the 7x7 view }
+    ShowCursor: Byte;             { +$4: nonzero: the cursor icon is drawn on the cursor cells }
+    CursorKind: Byte;             { +$5: the footprint kind of the cursor (ShowCursorOn; 1 otherwise) }
+    Head6: Byte;                  { +$6: WalkLine's tile gate }
+    Cells: array[0..24, 0..49] of Byte;  { +$7: the tile id of each cell, [row, column] }
+  end;
+  PCombatMap = ^TCombatMap;
+  { One entry of DS:2744, the combat tile table (4 bytes per tile id; ovl30 reads the same table
+    from DS:2745 as TTileEntry). }
+  TCombatTile = record
+    Cost: Byte;                   { +0: $FF: no combatant may stand there (PlaceCombatant); the largest
+                                    cost under a footprint wins (ProbeStep) }
+    Bound, Block: Byte;           { +1, +2: TTileEntry.BoundY and BlockY }
+    Picture: Byte;                { +3: the cell picture DrawCellPicture draws for the tile }
+  end;
+  { One cell of a combat footprint (DS:2844): its offset from the combatant's cell, or DX = -1 for
+    no cell. }
+  TFootCell = record
+    DX, DY: ShortInt;
+  end;
+  { A body left on the combat map (DS:66DD, RemoveCombatant): who died, where, and the tile it covered. }
+  TBody = record
+    Who: PCharacter;              { +0 }
+    X, Y: ShortInt;               { +4, +5 }
+    Tile: Byte;                   { +6: the tile id under the body }
+  end;
   { One entry of the DS:5F27 map entity table ScanTargets scans: the position, an unknown byte and
     a kind byte; entry 0's Kind holds the count e6 loops over (like ds6718[0].Val). }
   TMapEntry = record
     X, Y: ShortInt;               { +$0, +$1: the position in map coordinates }
     Unk2: Byte;                   { +$2: never read by ScanTargets; meaning unknown }
-    Kind: Byte;                   { +$3: nonzero means active, the value goes to ovl31_e1 }
+    Kind: Byte;                   { +$3: the footprint kind (FootprintCell; 1..4), 0 when not on the map }
   end;
 const
   { Words of GameVars^ whose meaning is proven (word n is at byte offset 2n of the block; the
@@ -330,7 +382,8 @@ var
   ds49E2: Byte;                   { set to 1 by the loader; a count the ovl18 narratives read }
   ds4A16: Word;                   { EGA/VGA plane segment SetActivePage sets to AIndex shl 9 + $A000 }
   ds4A18: Word;                   { EGA/VGA plane segment SetPlaneSegment sets to AIndex shl 9 + $A000 }
-  { The view mode: ShowEndingNarrative saves it, sets 7, restores it; VisitTemple sets 1 (ovl04:0D0F). }
+  { The view mode: ShowEndingNarrative saves it, sets 7, restores it; VisitTemple sets 1 (ovl04:0D0F);
+    5 during combat (ovl31 changes the combat map only then). }
   ds49F3: Byte;                   { the view mode; see above }
   ds0900: array[0..$A] of Byte;   { the first door block codes of AnimateAreaDoors (bit 7 = other bank) }
   ds090B: array[0..$11] of Byte;  { the second door block codes of AnimateAreaDoors (indexed 0..$11); same 7-bit flag }
@@ -348,7 +401,19 @@ var
   ds2736: array[0..8] of ShortInt;  { the x step per direction; see above }
   ds273F: array[0..8] of ShortInt;  { the y step per direction; see above }
   ds2745: array[0..255] of TTileEntry;  { the tile table WalkLine reads; see above }
-  ds5F27: array[0..15] of TMapEntry;  { the map entity table e6 scans; extent unverified }
+  CombatantTable: array[0..72] of TMapEntry;  { the combatants on the combat map; entry 0's Kind is the count
+                                    (72 entries fit before CombatantViewCol) }
+  CombatantViewCol: array[1..72] of ShortInt;  { each combatant's column on the 7x7 view (X - ViewX, ovl31) }
+  CombatantViewRow: array[1..72] of ShortInt;  { each combatant's row on the view (Y - ViewY, ovl31) }
+  CellOccupant: array[0..24, 0..49] of Byte;  { the combatant standing on each map cell, 0 for none (RebuildOccupancy) }
+  CombatantRecord: array[1..72] of PCharacter;  { the character record of each combatant (ovl31) }
+  BodyTable: array[1..8] of TBody;   { the bodies left on the combat map (RemoveCombatant) }
+  BodyCount: Byte;                   { the number of bodies in BodyTable }
+  CombatMap: PCombatMap;             { the combat map (ovl31) }
+  CombatTiles: array[0..255] of TCombatTile;  { the combat tile table; overlaps ds2745 (one byte on) }
+  Footprints: array[0..4, 0..3] of TFootCell;  { the cells of footprint kinds 1..4 (kind 0 unused) }
+  DyingPicture: Pointer;                { the picture RemoveCombatant draws over a dying combatant's cells }
+  ds261E: Word;                   { the sound RemoveCombatant plays (res03_fn_00DC) when a combatant dies }
   ds6718: array[0..255] of TSortRec;  { the ovl30 sort table (element 0 holds the count, SortTable) }
   ds49ED: Word;                   { set to $9900 by the loader (ovl11:03C0) }
   ds49E5: Word;                   { copied to ds49ED by the ovl14 L key; meaning unknown }

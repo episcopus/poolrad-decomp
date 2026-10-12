@@ -1121,3 +1121,220 @@ kind = "global"
 why = "ReadPromptChoice (ovl25:04A3..052D) draws frame DS:6ABF of the sprite list DS:6ABE at column 3 row 3 and steps to the next frame after its delay; LoadSpriteList fills it (ovl07_e8), ovl14 frees it"
 date = "2026-10-12"
 
+[[rename]]
+old = "ovl31_e1"
+new = "FootprintCell"
+kind = "routine"
+why = "ovl31:0000 reads cell J of footprint kind Base from the DS:2844 table (offset pair) and answers whether it exists (DX >= 0); kinds 1..4 are 1 cell, 2 vertical, 2 horizontal, 2x2 (table bytes)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl31_fn_0068"
+new = "UpdateViewPositions"
+kind = "routine"
+why = "ovl31:0068 sets ds604B/ds6093[I] to each combatant's map X/Y minus the view origin (ds6716^ +2, +3)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl31_fn_0127"
+new = "DrawCursorAt"
+kind = "routine"
+why = "ovl31:0127 redraws the cells of the cursor footprint (ds6716^+5) at map cell (X, Y), puts icon $19 on each when ds6716^+4 is set, then redraws the combatant standing there"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl31_e4"
+new = "RedrawMapCell"
+kind = "routine"
+why = "ovl31:02D5 redraws the ground under view cell (X, Y) (ovl31_e7) and the combatant standing on map cell (X, Y)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl31_e5"
+new = "RebuildOccupancy"
+kind = "routine"
+why = "ovl31:03A0 clears the 50x25 occupant map DS:60DB and writes each active combatant's index into its footprint cells, then refreshes its view position"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl31_e6"
+new = "GetMapCell"
+kind = "routine"
+why = "ovl31:04BE returns the tile id (ds6716^ cells) and the occupant (DS:60DB) of map cell (X, Y), both 0 off the 50x25 map"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl31_e7"
+new = "RedrawGround"
+kind = "routine"
+why = "ovl31:052B redraws the cell pictures under combatant Occ's footprint, or under view cell (X, Y) when no combatant stands there"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl31_e8"
+new = "IsInView"
+kind = "routine"
+why = "ovl31:06E9 true when view cell (X, Y) is inside the 7x7 view (0..6)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl31_e9"
+new = "IsCombatantInView"
+kind = "routine"
+why = "ovl31:071A true when the footprint of combatant Who is in the 7x7 view: every cell when All is set, any cell otherwise; false for an inactive combatant"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl31_fn_07D4"
+new = "ScrollViewTo"
+kind = "routine"
+why = "ovl31:07D4 moves the 7x7 view origin (ds6716^+2,+3) until map cell (X, Y) is within Margin cells of the centre, redraws all 49 cell pictures and returns true; returns false when no scroll was needed"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl31_e10"
+new = "MoveCombatCursor"
+kind = "routine"
+why = "ovl31:0996 steps from map cell (X, Y) by direction Dir (ds2736/ds273F, 8 = no step), scrolls and redraws the view and the combatants when needed, restores the old cell and draws the cursor at the new one"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl31_e11"
+new = "SetCombatantIcon"
+kind = "routine"
+why = "ovl31:0AF8 brings combatant Who into view, stores IconSet in its combat record (+9) and redraws its icon with Mirror unless NoDraw"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl31_e12"
+new = "CombatantX"
+kind = "routine"
+why = "ovl31:0BE7 returns ds5F27[CombatantIndex(Who)].X"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl31_e13"
+new = "CombatantY"
+kind = "routine"
+why = "ovl31:0C0F returns ds5F27[CombatantIndex(Who)].Y"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl31_e14"
+new = "CombatantKind"
+kind = "routine"
+why = "ovl31:0C37 returns ds5F27[CombatantIndex(Who)].Kind, the footprint kind"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl31_e15"
+new = "CombatantIndex"
+kind = "routine"
+why = "ovl31:0C5F returns the index I with DS:65BD[I] = Who among the ds5F27[0].Kind combatants, 0 when absent"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl31_e16"
+new = "ProbeStep"
+kind = "routine"
+why = "ovl31:0CB9 looks at the cells combatant Who's footprint would cover one step in direction Dir: the other combatant there (Occ) and the tile that decides the move (0 or $1E win, else the largest DS:2744 cost)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl31_e17"
+new = "RemoveCombatant"
+kind = "routine"
+why = "ovl31:0E11 takes combatant Who off the combat map: draws ds5F1A over its cells, leaves a body record (DS:66DD) and tile $1F unless +$13 of its combat record is set, clears its entry and redraws"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl31_e18"
+new = "PlaceCombatant"
+kind = "routine"
+why = "ovl31:10A7 puts combatant Who on map cell (X, Y) with its footprint (+$6C and $7F) when the cells are free and passable (ProbeStep with Dir 8); Restore takes back its body record and tile; returns whether it was placed (always true outside view mode 5)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl31_e19"
+new = "ShowCursorOn"
+kind = "routine"
+why = "ovl31:1298 draws the cursor with combatant Who's footprint on Who's cell (MoveCombatCursor with Dir 8), then resets the cursor to kind 1 and hidden"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds604B"
+new = "CombatantViewCol"
+kind = "global"
+why = "ovl31:0068 stores Combatants[I].X - ViewX at DS:604B+I-1 ([di+604A] with di = I); DrawIcon gets it as the column"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6093"
+new = "CombatantViewRow"
+kind = "global"
+why = "ovl31:0068 stores Combatants[I].Y - ViewY at DS:6093+I-1; DrawIcon gets it as the row"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds60DB"
+new = "CellOccupant"
+kind = "global"
+why = "ovl31:03A0 clears 1250 (50x25) bytes at DS:60DB and writes combatant indexes into the footprint cells; GetMapCell reads it"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds65BD"
+new = "CombatantRecord"
+kind = "global"
+why = "ovl31:0C5F compares Who with the far pointers at DS:65BD+4(I-1); DrawIcon draws their +$BF icon"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6715"
+new = "BodyCount"
+kind = "global"
+why = "ovl31:0F61 incremented per body record RemoveCombatant adds; PlaceCombatant loops 1..DS:6715"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6716"
+new = "CombatMap"
+kind = "global"
+why = "ovl31: far pointer whose +2/+3 are the view origin and +7 + 50 row + col the tile ids (GetMapCell, ScrollViewTo)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds2744"
+new = "CombatTiles"
+kind = "global"
+why = "ovl31:01FE and ovl31:0DDE index 4-byte entries at DS:2744 by tile id: +3 the picture DrawCellPicture draws, +0 the cost ProbeStep compares ($FF refused by PlaceCombatant)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds2844"
+new = "Footprints"
+kind = "global"
+why = "ovl31:0028 reads offset pairs at DS:2844 + 8 Kind + 2 J (bytes: kind 1 one cell, 2 (0,0)(0,1), 3 (0,0)(1,0), 4 the 2x2 square)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds5F1A"
+new = "DyingPicture"
+kind = "global"
+why = "ovl31:0F2F RemoveCombatant draws the far pointer DS:5F1A with res07_fn_0D71 on every cell of the dying combatant"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds5F27"
+new = "CombatantTable"
+kind = "global"
+why = "the combatant table: X, Y and footprint kind per combatant, entry 0's Kind the count (ovl31 RebuildOccupancy reads it, PlaceCombatant writes Kind/X/Y, ovl30 ScanTargets reads it); 73 entries fit before DS:604B"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds66DD"
+new = "BodyTable"
+kind = "global"
+why = "ovl31:0F61..1006 RemoveCombatant fills a 7-byte record (who, X, Y, tile) at DS:66DD+7(n-1), n = ++DS:6715; PlaceCombatant searches and clears them; 8 records end at DS:6715"
+date = "2026-10-12"
+
