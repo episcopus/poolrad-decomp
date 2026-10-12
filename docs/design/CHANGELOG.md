@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-12 | none | ovl25_init marked blocked behind the nested-routine comparison | make match UNIT=ovl25 |
 | 2026-10-12 | 5.4 | money truncation QUIRKs of BuyItems, the Overloaded flag, the leave-on-No answer | make match UNIT=ovl06 |
 | 2026-10-12 | none | ovl29 review fix: named constants only | make match UNIT=ovl29 |
 | 2026-10-12 | 4.2.3 | Put8x8Symbol's Direct per caller; Load8x8Bank takes a DAX block id | make match UNIT=ovl34 (unit complete) |
