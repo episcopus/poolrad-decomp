@@ -92,8 +92,8 @@ begin
 end;
 { ovl08:01F6. One combat turn of Who: clears the per-turn fields BF, B12 and B7, runs the
   ovl24_e3 hook 7 and, while Who still has an initiative, selects it (SelectedCharacter), shows it
-  (ovl31_e19, res12_fn_0BB8, res12_fn_09E3), runs hook $F and lets the computer (ovl09_e1, quick
-  combat) or the player (PlayerTurn) act; then ovl31_e4 at its position (ovl31_e12, ovl31_e13).
+  (ShowCursorOn, res12_fn_0BB8, res12_fn_09E3), runs hook $F and lets the computer (ovl09_e1, quick
+  combat) or the player (PlayerTurn) act; then RedrawMapCell at its position (CombatantX, CombatantY).
   An initiative of InitiativeQuickAll (the Alt-Q fight) counts as $13. }
 procedure CombatTurn(Who: PCharacter);
 var
@@ -107,7 +107,7 @@ begin
   begin
     if Who^.Combat^.Initiative = InitiativeQuickAll then Who^.Combat^.Initiative := InitiativeQuickAll - 1;
     SelectedCharacter := Who;
-    ovl31_e19(Who, 2, 1);
+    ShowCursorOn(Who, 2, 1);
     res12_fn_0BB8(Who);
     res12_fn_09E3(Who);
     ovl24_e3($F, Who);
@@ -116,7 +116,7 @@ begin
         ovl09_e1(Who)
       else
         PlayerTurn(Who);
-    ovl31_e4(ovl31_e12(Who), ovl31_e13(Who));
+    RedrawMapCell(CombatantX(Who), CombatantY(Who));
   end;
 end;
 { ovl08:031A. The player's turn for Who: a character with Flag10D clear ends it at once
@@ -214,7 +214,7 @@ begin
           KeyAltX:
             if ovl13_e24 then
             begin
-              ovl31_e19(Who, 3, 0);
+              ShowCursorOn(Who, 3, 0);
               Done := 1;
             end
             else
@@ -222,7 +222,7 @@ begin
         end;
         if Done = 0 then
         begin
-          ovl31_e19(Who, 2, 1);
+          ShowCursorOn(Who, 2, 1);
           res12_fn_09E3(Who);
         end;
       end;
@@ -263,8 +263,8 @@ end;
 { ovl08:0880. The end of a combat round: ovl20_e1(1, 1), the round counter ds6DE3, ovl13_e19,
   then for each character the ovl24_e3 hook $13 and ovl24_e4; a dying character (StatusDying)
   bleeds one more round and after LastDyingRound rounds is StatusBledOut. Warns Your Teammate is
-  Dying while a party member can be bandaged, redraws the map around the ds6716 view position
-  (ovl31_e10), and sets Done when one side is empty (ds6814 or ds6815 zero). When only the
+  Dying while a party member can be bandaged, redraws the map around the CombatMap view position
+  (MoveCombatCursor), and sets Done when one side is empty (ds6814 or ds6815 zero). When only the
   enemies are gone and ds49F4 is 0 it asks Continue Battle: and Y clears Done again. Index is
   counted but never used. }
 procedure EndCombatRound(var Done: Byte);
@@ -292,23 +292,23 @@ begin
   end;
   if BandageDying(0) <> 0 then res12_fn_1693('Your Teammate is Dying');
   res12_fn_23DB;
-  ovl31_e10(ds6716^.ViewCol + 3, ds6716^.ViewRow + 3, $FF, 8);
+  MoveCombatCursor(CombatMap^.ViewX + 3, CombatMap^.ViewY + 3, $FF, 8);
   if (ds6814 = 0) or (ds6815 = 0) then Done := 1;
   if (ds6814 > 0) and (ds6815 = 0) and (ds49F4 = 0) then
     if AskYesNo('Continue Battle:', $D, $A, MenuColors) = 'Y' then Done := 0;
 end;
 { ovl08:09DF. The Move command: while Who has more than one half-move left the prompt Move/Attack,
   Move Left = n takes keypad keys (KeyUp..KeyHome give the directions 0..7). A step towards a
-  combatant attacks it (MeleeAttack, ds65B9 by the number ovl31_e16 returns); a step off the map
+  combatant attacks it (MeleeAttack, CombatantRecord by the number ProbeStep returns); a step off the map
   asks Flee: (ovl13_e5 on Y); a step whose ground costs more than the moves left says Blocked;
   otherwise ovl13_e4 and ovl13_e3 move the character, and a character whose Flag10D clears or
   for whom res12_fn_0B73 says so ends the turn (res12_fn_2637). Key #0 (Esc on the prompt) takes
-  the move back: the saved moves, position (ovl31_e18) and B9 return. Fewer than two half-moves
+  the move back: the saved moves, position (PlaceCombatant) and B9 return. Fewer than two half-moves
   left become 0. }
 procedure MoveCharacter(Who: PCharacter; var Done: Byte);
 var
   SavedMoves: Byte;
-  SavedB9: Byte;
+  SavedIconSet: Byte;
   Col: Byte;
   Row: Byte;
   Unused: Word;
@@ -318,9 +318,9 @@ var
   Key: Char;
 begin
   SavedMoves := Who^.Combat^.Moves;
-  SavedB9 := Who^.Combat^.B9;
-  Col := ovl31_e12(Who);
-  Row := ovl31_e13(Who);
+  SavedIconSet := Who^.Combat^.IconSet;
+  Col := CombatantX(Who);
+  Row := CombatantY(Who);
   Key := ' ';
   Done := 0;
   Dir := NoDirection;
@@ -333,10 +333,10 @@ begin
       #0:
       begin
         Who^.Combat^.Moves := SavedMoves;
-        ovl31_e7(0, 0, ovl31_e15(Who));
-        Done := Ord(not ovl31_e18(Who, Col, Row, 0));
-        ovl31_e10(ovl31_e12(Who), ovl31_e13(Who), 0, 8);
-        Who^.Combat^.B9 := SavedB9;
+        RedrawGround(0, 0, CombatantIndex(Who));
+        Done := Ord(not PlaceCombatant(Who, Col, Row, 0));
+        MoveCombatCursor(CombatantX(Who), CombatantY(Who), 0, 8);
+        Who^.Combat^.IconSet := SavedIconSet;
         Dir := NoDirection;
       end;
       KeyUp: Dir := 0;
@@ -352,16 +352,16 @@ begin
     end;
     if Dir < NoDirection then
     begin
-      ovl31_e11(Who, Dir, 0, 0);
-      ovl31_e16(Who, Dir, Other, Ground);
+      SetCombatantIcon(Who, Dir, 0, 0);
+      ProbeStep(Who, Dir, Other, Ground);
       if Other > 0 then
-        MeleeAttack(Who, ds65B9[Other], Done)
+        MeleeAttack(Who, CombatantRecord[Other], Done)
       else if Ground = 0 then
         case AskYesNo('Flee:', $D, $A, MenuColors) of
           'Y': Done := ovl13_e5(Who);
           'N': Done := 0;
         end
-      else if ds2744[Ground].Cost > Who^.Combat^.Moves then
+      else if CombatTiles[Ground].Cost > Who^.Combat^.Moves then
         res12_fn_1693('Blocked')
       else
       begin
@@ -437,7 +437,7 @@ begin
   end;
 end;
 { ovl08:0FFF. Returns 1 when a party character (Side 0) is dying (StatusDying) and may be
-  bandaged (Combat^.B13 0), else 0. With DoIt nonzero the first one found is bandaged: Status
+  bandaged (Combat^.NoBody 0), else 0. With DoIt nonzero the first one found is bandaged: Status
   StatusBandaged, the bleeding count reset and the message is bandaged (res12_fn_16EC). }
 function BandageDying(DoIt: Byte): Byte;
 var
@@ -448,7 +448,7 @@ begin
   Who := PCharacter(ds5D96);
   while Who <> nil do
   begin
-    if (Who^.Combat^.B13 = 0) and (Who^.Side = 0) and (Who^.Status = StatusDying) then
+    if (Who^.Combat^.NoBody = 0) and (Who^.Side = 0) and (Who^.Status = StatusDying) then
     begin
       Found := 1;
       if DoIt <> 0 then

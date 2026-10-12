@@ -75,7 +75,7 @@ begin
 end;
 { 03F1:0137. Clears the window rectangle LeftCol..RightCol by TopRow..BottomRow to 0, by
   video adapter (the VideoAdapter global): 0 fills two text-scanline planes (VideoText0/1),
-  1 draws through res06_fn_00B7 twice, 2 fills four graphics planes (VideoGrf0..3).
+  1 draws through FillPlaneRect twice, 2 fills four graphics planes (VideoGrf0..3).
   The coordinates are ShortInt (sign-extended to Integer); Row stays Word (the for-loop
   exit test is unsigned). Side effect: video memory. Called by DrawWindow. }
 procedure ClearWindow(LeftCol, TopRow, RightCol, BottomRow: ShortInt);
@@ -100,8 +100,8 @@ begin
       end;
     1:
       begin
-        res06_fn_00B7(LeftCol, TopRow, RightCol, BottomRow, 0, 0);
-        res06_fn_00B7(LeftCol, TopRow, RightCol, BottomRow, 1, 0);
+        FillPlaneRect(LeftCol, TopRow, RightCol, BottomRow, 0, 0);
+        FillPlaneRect(LeftCol, TopRow, RightCol, BottomRow, 1, 0);
       end;
     2:
       begin

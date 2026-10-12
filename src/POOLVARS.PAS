@@ -130,27 +130,37 @@ type
     arrays keep the offsets. }
   PCharacter = ^TCharacter;
   { The combat state of a character (TCharacter.Combat, +$108), read and written by the combat
-    unit ovl08; only the fields it uses are named. }
+    units ovl08 and ovl31; only the fields they use are named. }
   PCombatant = ^TCombatant;
   TCombatant = record
-    PendingSpell: Byte;           { +$0: nonzero: the turn finishes this spell through ovl22_e5 (ovl08:0336) }
+    { +$0: nonzero: the turn finishes this spell through ovl22_e5 (ovl08:0336); cleared when the
+      combatant leaves the map (RemoveCombatant). }
+    PendingSpell: Byte;
     CanCast: Byte;                { +$1: zero hides Cast in the combat menu (ovl08:0747) }
     Pad2: Byte;
     { +$3: the turn order: CombatTurn acts only above 0, the highest roll goes first
-      (PickNextCombatant), Delay sets 1, $14 (the Alt-Q quick fight) acts as $13. Signed. }
+      (PickNextCombatant), Delay sets 1, $14 (the Alt-Q quick fight) acts as $13. Signed. Cleared
+      by RemoveCombatant. }
     Initiative: ShortInt;
     Pad4: array[4..5] of Byte;
-    Moves: Byte;                  { +$6: movement left in half squares (the Move menu shows Moves div 2) }
-    B7: Byte;                     { +$7: cleared at the start of each turn (ovl08:021E); meaning unknown }
+    { +$6: movement left in half squares (the Move menu shows Moves div 2); cleared by
+      RemoveCombatant. }
+    Moves: Byte;
+    { +$7: cleared at the start of each turn (ovl08:021E) and by RemoveCombatant; meaning unknown }
+    B7: Byte;
     Pad8: Byte;
-    B9: Byte;                     { +$9: saved and restored around a move that is taken back (ovl08:09FD, 0B41) }
+    { +$9: the icon set (facing) DrawIcon draws the combatant with (SetCombatantIcon, ovl31);
+      saved and restored around a move that is taken back (ovl08:09FD, 0B41). }
+    IconSet: Byte;
     Target: PCharacter;           { +$A: the character attacked last (MeleeAttack sets it) }
     DyingRounds: Byte;            { +$E: the rounds a dying character (Status 5) has bled; above 9 it dies }
     BF: Byte;                     { +$F: cleared at the start of each turn (ovl08:0204); meaning unknown }
     Pad10: Byte;
     Turned: Byte;                 { +$11: nonzero hides Turn in the combat menu (ovl08:0795) }
     B12: Byte;                    { +$12: cleared at the start of each turn (ovl08:0211); meaning unknown }
-    B13: Byte;                    { +$13: nonzero keeps a dying character from being bandaged (ovl08:1029) }
+    { +$13: nonzero: no body is left on the map when the combatant dies (RemoveCombatant, ovl31),
+      and a dying character with it set is not bandaged (ovl08:1029). }
+    NoBody: Byte;
   end;
   { One $13-byte record of the list at DS:6DBB (FreeMem size, ovl08:0029); only Next is known. }
   PCombatNode = ^TCombatNode;
@@ -158,18 +168,6 @@ type
     Pad0: array[0..3] of Byte;
     Next: PCombatNode;            { +$4 }
     Pad8: array[8..$12] of Byte;
-  end;
-  { The $4E9-byte combat block at DS:6716 (FreeMem size, ovl08:0049); +2 and +3 are the column
-    and row EndCombatRound centres the map view on (ovl08:0937). }
-  PCombatMap = ^TCombatMap;
-  TCombatMap = record
-    Pad0: array[0..1] of Byte;
-    ViewCol, ViewRow: ShortInt;   { +$2, +$3 }
-    Pad4: array[4..$4E8] of Byte;
-  end;
-  TStepCost = record
-    Cost: Byte;                   { +0 }
-    Pad1: array[1..3] of Byte;
   end;
   { One 16-byte row of the spell table DS:320A (SpellTable): RecalcClassStats reads the class
     and the level (ovl23:0110, 0119); the other bytes are not known yet. }
@@ -203,7 +201,10 @@ type
       for every cleric spell (table class 0) of a level the character has a cleric spell slot
       for (ovl23:0135); likely the spells the character can learn [I]. }
     KnownSpells: array[1..$38] of Byte;
-    Pad6B: array[$6B..$6C] of Byte;
+    Pad6B: Byte;                  { +$6B }
+    { +$6C: bits 0..6 are the combat footprint kind (PlaceCombatant copies them into CombatantTable[].Kind); bit 7
+      is not part of it. }
+    CombatSize: Byte;
     { +$6D..+$71: five values ComputeSavingThrows sets to 20 and lowers to the best entry of
       SaveTable over the character's classes (ovl23:026D..030D): the five saving throws [I]. }
     SavingThrows: array[0..4] of Byte;
@@ -253,16 +254,19 @@ type
     XpPerHp: Byte;
     HeadBank: Byte;               { +$BB: the HEAD picture bank number, 0 when none (ShowHeadBodyWindow) }
     BodyBank: Byte;               { +$BC: the BODY picture bank number, 0 when none (ShowHeadBodyWindow) }
-    PadBD: array[$BD..$C6] of Byte;
+    PadBD: array[$BD..$BE] of Byte;
+    CombatIcon: Byte;             { +$BF: the icon picture DrawIcon draws for it on the combat map (ovl31) }
+    PadC0: array[$C0..$C6] of Byte;
     ItemCountC7: Byte;            { +$C7: nonzero offers Use in the combat menu (ovl08:06E1); likely the item count }
     Items: PItem;                 { +$C8: the list of carried items }
     PadCC: array[$CC..$103] of Byte;
     Next: PCharacter;             { +$104: the next character of the party list (ds5D96), nil ends it }
-    Combat: PCombatant;           { +$108: the character's combat state (ovl08) }
+    Combat: PCombatant;           { +$108: the character's combat state (ovl08, ovl31) }
     { +$10C: the health status: 0 after Raise Dead and Stone to Flesh, 1 and 6 count as dead for
       Raise Dead, 7 as stoned for Stone to Flesh (ovl04:0539, 093D). }
     Status: Byte;
-    Flag10D: Byte;                { +$10D: Raise Dead and Stone to Flesh set it to 1; meaning unknown }
+    Flag10D: Byte;                { +$10D: Raise Dead and Stone to Flesh set it to 1; MoveCombatCursor
+                                    redraws only combatants with it set; meaning unknown }
     { +$10E: the side: SetQuickCombat compares it between attacker and target (ovl08:125D), and
       BandageDying only bandages characters with 0 (the party). }
     Side: Byte;
@@ -317,12 +321,42 @@ type
     B2: Byte;                     { +2: never read by WalkLine; meaning unknown }
     B3: Byte;                     { +3: never read by WalkLine; meaning unknown }
   end;
+  { The combat map CombatMap points at (ovl31): a 7-byte header, then 25 rows of 50 tile ids. ovl30's
+    WalkLine reads the same block as TMapRows (Head[6] is its tile gate). }
+  TCombatMap = record
+    Head0: array[0..1] of Byte;   { +$0..$1: not read by ovl31 }
+    ViewX, ViewY: ShortInt;       { +$2, +$3: the map cell shown at the top left of the 7x7 view }
+    ShowCursor: Byte;             { +$4: nonzero: the cursor icon is drawn on the cursor cells }
+    CursorKind: Byte;             { +$5: the footprint kind of the cursor (ShowCursorOn; 1 otherwise) }
+    Head6: Byte;                  { +$6: WalkLine's tile gate }
+    Cells: array[0..24, 0..49] of Byte;  { +$7: the tile id of each cell, [row, column] }
+  end;
+  PCombatMap = ^TCombatMap;
+  { One entry of DS:2744, the combat tile table (4 bytes per tile id; ovl30 reads the same table
+    from DS:2745 as TTileEntry). }
+  TCombatTile = record
+    Cost: Byte;                   { +0: $FF: no combatant may stand there (PlaceCombatant); the largest
+                                    cost under a footprint wins (ProbeStep) }
+    Bound, Block: Byte;           { +1, +2: TTileEntry.BoundY and BlockY }
+    Picture: Byte;                { +3: the cell picture DrawCellPicture draws for the tile }
+  end;
+  { One cell of a combat footprint (DS:2844): its offset from the combatant's cell, or DX = -1 for
+    no cell. }
+  TFootCell = record
+    DX, DY: ShortInt;
+  end;
+  { A body left on the combat map (DS:66DD, RemoveCombatant): who died, where, and the tile it covered. }
+  TBody = record
+    Who: PCharacter;              { +0 }
+    X, Y: ShortInt;               { +4, +5 }
+    Tile: Byte;                   { +6: the tile id under the body }
+  end;
   { One entry of the DS:5F27 map entity table ScanTargets scans: the position, an unknown byte and
     a kind byte; entry 0's Kind holds the count e6 loops over (like ds6718[0].Val). }
   TMapEntry = record
     X, Y: ShortInt;               { +$0, +$1: the position in map coordinates }
     Unk2: Byte;                   { +$2: never read by ScanTargets; meaning unknown }
-    Kind: Byte;                   { +$3: nonzero means active, the value goes to ovl31_e1 }
+    Kind: Byte;                   { +$3: the footprint kind (FootprintCell; 1..4), 0 when not on the map }
   end;
 const
   { Words of GameVars^ whose meaning is proven (word n is at byte offset 2n of the block; the
@@ -412,7 +446,7 @@ var
   SavedVideoMode: Byte;           { video mode QuitGame passes to INT 10h; no writer is in the decompiled units }
   ds4A1D: Byte;                   { copy of SavedVideoMode taken in res08_init; reader unknown }
   VideoAdapter: Byte;                   { video mode flag read by ClearWindow (03F1:0137): 0 fills the EGA planes,
-                                    1 draws through res06_fn_00B7, 2 fills four planes; meaning unknown }
+                                    1 draws through FillPlaneRect, 2 fills four planes; meaning unknown }
   DrawBuf: Pointer;                { far pointer DrawCellPicture passes to res07_fn_08D4; what it points at is unknown }
   SoundMode: Byte;                { sound setting; 2 while a Ctrl-S pause is in effect (ReadGameKey) }
   SoundModeBeforePause: Byte;     { SoundMode saved by a Ctrl-S pause; copied back only when it is 0 or 1 }
@@ -445,7 +479,8 @@ var
   GameSpeed: Byte;                   { set to 1 by the loader; a count the ovl18 narratives read }
   ds4A16: Word;                   { EGA/VGA plane segment SetActivePage sets to AIndex shl 9 + $A000 }
   ds4A18: Word;                   { EGA/VGA plane segment SetPlaneSegment sets to AIndex shl 9 + $A000 }
-  { The view mode: ShowEndingNarrative saves it, sets 7, restores it; VisitTemple sets 1 (ovl04:0D0F). }
+  { The view mode: ShowEndingNarrative saves it, sets 7, restores it; VisitTemple sets 1 (ovl04:0D0F);
+    5 during combat (ovl31 changes the combat map only then). }
   ds49F3: Byte;                   { the view mode; see above }
   ds0900: array[0..$A] of Byte;   { the first door block codes of AnimateAreaDoors (bit 7 = other bank) }
   ds090B: array[0..$11] of Byte;  { the second door block codes of AnimateAreaDoors (indexed 0..$11); same 7-bit flag }
@@ -463,7 +498,25 @@ var
   ds2736: array[0..8] of ShortInt;  { the x step per direction; see above }
   ds273F: array[0..8] of ShortInt;  { the y step per direction; see above }
   ds2745: array[0..255] of TTileEntry;  { the tile table WalkLine reads; see above }
-  ds5F27: array[0..15] of TMapEntry;  { the map entity table e6 scans; extent unverified }
+  CombatantTable: array[0..72] of TMapEntry;  { the combatants on the combat map; entry 0's Kind is the count
+                                    (72 entries fit before CombatantViewCol) }
+  CombatantViewCol: array[1..72] of ShortInt;  { each combatant's column on the 7x7 view (X - ViewX, ovl31) }
+  CombatantViewRow: array[1..72] of ShortInt;  { each combatant's row on the view (Y - ViewY, ovl31) }
+  CellOccupant: array[0..24, 0..49] of Byte;  { the combatant standing on each map cell, 0 for none (RebuildOccupancy) }
+  { The character record of each combatant (ovl31); MoveCharacter attacks CombatantRecord[n] for
+    the number ProbeStep returns (ovl08:0BF8). }
+  CombatantRecord: array[1..72] of PCharacter;  { see above }
+  BodyTable: array[1..8] of TBody;   { the bodies left on the combat map (RemoveCombatant) }
+  BodyCount: Byte;                   { the number of bodies in BodyTable }
+  { The combat map (ovl31): the $4E9-byte block EndCombat frees (ovl08:0041); EndCombatRound
+    centres the view on ViewX/ViewY (ovl08:0937). }
+  CombatMap: PCombatMap;             { see above }
+  { The combat tile table; overlaps ds2745 (one byte on). Cost is also the movement cost:
+    MoveCharacter refuses ("Blocked") a step whose cost is above the moves left (ovl08:0C5F). }
+  CombatTiles: array[0..255] of TCombatTile;  { see above }
+  Footprints: array[0..4, 0..3] of TFootCell;  { the cells of footprint kinds 1..4 (kind 0 unused) }
+  DyingPicture: Pointer;                { the picture RemoveCombatant draws over a dying combatant's cells }
+  ds261E: Word;                   { the sound RemoveCombatant plays (res03_fn_00DC) when a combatant dies }
   ds6718: array[0..255] of TSortRec;  { the ovl30 sort table (element 0 holds the count, SortTable) }
   ds49ED: Word;                   { set to $9900 by the loader (ovl11:03C0) }
   ds49E5: Word;                   { copied to ds49ED by the ovl14 L key; meaning unknown }
@@ -506,7 +559,9 @@ var
       which is Error 26 for a Pointer (proven by a make tpc probe); ovl14 reaches the
       records through Pointer(ds5D96). }
   ds5E1E: Word;                   { BlockRead result count of the loader (ovl11:05D6) }
-  ds5E20: ^TBlock588;             { $588-byte block the loader allocates (ovl11:0074) }
+  GameFont: ^TBlock588;             { $588-byte block the loader allocates (ovl11:0074) }
+  GlyphCol: Byte;                   { 0768's current glyph column: reset to Left on clear/newline, Inc per glyph }
+  GlyphRow: Byte;                   { 0768's current glyph row: reset to Top on clear, Inc per newline }
   ds6810: PMenuLine;              { head of the shop's item list, a far pointer the loader clears (ovl11:031A) }
   WallTiles: ^TWallTiles;            { the wall tiles, $924 bytes the loader allocates (ovl11:0084) }
   ds6A5C: ^TBlock400;             { $400-byte block the loader allocates (ovl11:0094) }
@@ -584,7 +639,23 @@ var
   { 16 entries, the colours 0..15 mapped to 0..3 (0,0,0,1,2,2,2,3,3,1,1,1,2,2,3,3 in the image);
     WriteCharsAt maps the text colour through it when VideoAdapter is 0 (0802:0086). }
   ds25D5: array[0..15] of Byte;   { four-colour map of the text colours; see above }
+  { EGA plane masks for DrawGlyph mode 1 (0709:03C0): selected through Port[$3C5] by
+    3 - Bit; adjacent to ds25CD. }
+  ds25C9: array[0..3] of Byte;
+  { Per-colour words DrawGlyph mode 0 ORs into the pixel accumulator (0709:02A3):
+    indexed by the mapped colour 0..3; adjacent to ds25D5. }
+  ds25CD: array[0..3] of Word;
+  { Per-column words DrawGlyph mode 0 ANDs with the colour word (0709:02B0):
+    indexed by the bit column 0..7. }
+  ds25E5: array[0..7] of Word;
   ds49CE: Word;                   { IOResult of the last FileExists file probe (0802:0334) }
+  { Characters 0768's word scanner tests (0709:0822..08F0): the leading run is skipped,
+    the word run stops at them or space, the trailing run is skipped. Storage descriptor
+    $0404 in the three 0D12 calls: 4 bytes at bit offset 32 (set of #32..#63, proven by a
+    make tpc probe). Storage overlaps BadNameChars entry 0 at $D19 by one byte. No writer
+    exists anywhere in the image; the initial bytes are 70 00 8C 20 (members $, %, &, 2,
+    3, 7, =). Runtime meaning of those members: open. }
+  BreakChars: set of #32..#63;
   { The ten characters MakeDosFileName removes from a file name are entries 1..10 (DS:0D1A..0D23);
     entry 0 is the byte before them, never read (declared so the index base DS:0D19 names it). }
   BadNameChars: array[0..10] of Char;  { characters not allowed in a file name; see above }
@@ -597,7 +668,6 @@ var
   ds0CF2: array[0..15] of Byte;   { colour 13 to 0; see above }
   { Globals of the combat unit ovl08 (whitepaper 5.5). }
   ds6DBB: PCombatNode;            { a list of $13-byte records EndCombat frees (ovl08:0006); meaning unknown }
-  ds6716: PCombatMap;             { the $4E9-byte combat block EndCombat frees (ovl08:0041) }
   ds6E36: Pointer;                { a picture EndCombat frees through res07_fn_2595 (ovl08:005A) }
   { A routine pointer: RunCombat sets @ovl13_e14 at the start (ovl08:0085) and EndCombat
     @ovl22_e4 at the end (ovl08:0069); who calls it is not known yet. }
@@ -607,13 +677,6 @@ var
   ds6E30: Boolean;                { the Alt-M Magic On/Off toggle of the combat keys (ovl08:04A7) }
   ds6E31: Byte;                   { the key flag the ovl08 menus pass to ReadPromptChoice }
   ds6DE3: Byte;                   { counted up once per combat round (ovl08:0891) }
-  { The combatants by number: MoveCharacter attacks ds65B9[n] for the number ovl31_e16 returns
-    (ovl08:0BF8). Extent unknown. }
-  ds65B9: array[0..63] of PCharacter;  { the combatants by number; see above }
-  { One 4-byte entry per kind of ground (the number ovl31_e16 returns); byte 0 is the movement cost
-    of a step onto it: MoveCharacter refuses ("Blocked") a step whose cost is above the moves left
-    (ovl08:0C5F); kind 0 is off the map (Flee:). Extent unknown. }
-  ds2744: array[0..15] of TStepCost;  { the movement cost of each kind of ground; see above }
   { Class tables of ovl23 (whitepaper 5.6). Their extents are not known (only the rows the
     characters reach are read). A table whose columns count from 1 is addressed from the byte
     before it ([row, column] is base - 1 + row * width + column), so that byte is declared just
@@ -641,7 +704,5 @@ var
   BattleExperience: LongInt;      { the experience each character receives for the battle (ovl05:060B) }
   BattleWon: Byte;                { 1 when the party (or the duelist) won the battle (ovl05:05CA, 07AC) }
   ds5D9A: PMenuLine;              { loot list entry where the battle's item experience count stops (ovl05:02E5) }
-  ds5E24: Byte;                   { set to 2 with the party destroyed message (ovl05:15EA); meaning unknown }
-  ds5E25: Byte;                   { set to 6 with the party destroyed message (ovl05:15EF); meaning unknown }
 implementation
 end.

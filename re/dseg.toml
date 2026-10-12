@@ -561,6 +561,61 @@ name = "PictureAnimation"
 evidence = "ReadPromptChoice (ovl25:04A3..052D) draws frame DS:6ABF of the sprite list DS:6ABE at column 3 row 3 and steps to the next frame after its delay; LoadSpriteList fills it (ovl07_e8), ovl14 frees it"
 
 [[global]]
+offset = 0x604B
+name = "CombatantViewCol"
+evidence = "ovl31:0068 stores Combatants[I].X - ViewX at DS:604B+I-1 ([di+604A] with di = I); DrawIcon gets it as the column"
+
+[[global]]
+offset = 0x6093
+name = "CombatantViewRow"
+evidence = "ovl31:0068 stores Combatants[I].Y - ViewY at DS:6093+I-1; DrawIcon gets it as the row"
+
+[[global]]
+offset = 0x60DB
+name = "CellOccupant"
+evidence = "ovl31:03A0 clears 1250 (50x25) bytes at DS:60DB and writes combatant indexes into the footprint cells; GetMapCell reads it"
+
+[[global]]
+offset = 0x65BD
+name = "CombatantRecord"
+evidence = "ovl31:0C5F compares Who with the far pointers at DS:65BD+4(I-1); DrawIcon draws their +$BF icon"
+
+[[global]]
+offset = 0x6715
+name = "BodyCount"
+evidence = "ovl31:0F61 incremented per body record RemoveCombatant adds; PlaceCombatant loops 1..DS:6715"
+
+[[global]]
+offset = 0x6716
+name = "CombatMap"
+evidence = "ovl31: far pointer whose +2/+3 are the view origin and +7 + 50 row + col the tile ids (GetMapCell, ScrollViewTo)"
+
+[[global]]
+offset = 0x2744
+name = "CombatTiles"
+evidence = "ovl31:01FE and ovl31:0DDE index 4-byte entries at DS:2744 by tile id: +3 the picture DrawCellPicture draws, +0 the cost ProbeStep compares ($FF refused by PlaceCombatant)"
+
+[[global]]
+offset = 0x2844
+name = "Footprints"
+evidence = "ovl31:0028 reads offset pairs at DS:2844 + 8 Kind + 2 J (bytes: kind 1 one cell, 2 (0,0)(0,1), 3 (0,0)(1,0), 4 the 2x2 square)"
+
+[[global]]
+offset = 0x5F1A
+name = "DyingPicture"
+evidence = "ovl31:0F2F RemoveCombatant draws the far pointer DS:5F1A with res07_fn_0D71 on every cell of the dying combatant"
+
+[[global]]
+offset = 0x5F27
+name = "CombatantTable"
+evidence = "the combatant table: X, Y and footprint kind per combatant, entry 0's Kind the count (ovl31 RebuildOccupancy reads it, PlaceCombatant writes Kind/X/Y, ovl30 ScanTargets reads it); 73 entries fit before DS:604B"
+
+[[global]]
+offset = 0x66DD
+name = "BodyTable"
+evidence = "ovl31:0F61..1006 RemoveCombatant fills a 7-byte record (who, X, Y, tile) at DS:66DD+7(n-1), n = ++DS:6715; PlaceCombatant searches and clears them; 8 records end at DS:6715"
+
+[[global]]
 offset = 0x49E2
 name = "GameSpeed"
 evidence = "GameSpeedMenu (ovl08:10F6) shows it as GameSpeed (n) and its Slower/Faster keys move it in 0..9"
@@ -644,3 +699,23 @@ evidence = "ComputeBattleExperience sets it when a defeated monster (Side 1, not
 offset = 0x67F4
 name = "PooledMoney"
 evidence = "seven LongInt kinds of money: the shop and the Temple pool the party's money into it (ovl21_e12 sums it), EndBattle puts the defeated monsters' money into it and TakeHirelingShares takes the hirelings' shares from it (ovl05:0093, 1366)"
+
+[[global]]
+offset = 0x5E20
+name = "GameFont"
+evidence = "the 1-bit font block: allocated $588 bytes by StartGame (ovl11:0074), filled by LoadGameFont from 8X8D1.DAX block 201 (0709:017C), read as glyph bitmaps by res06_fn_01DF (0709:01DF)"
+
+[[global]]
+offset = 0x5E24
+name = "GlyphCol"
+evidence = "ShowPagedText current glyph column (0709:0768, nested DrawTextRun): reset to Left on clear and newline, Inc per glyph, clamped to Right"
+
+[[global]]
+offset = 0x5E25
+name = "GlyphRow"
+evidence = "ShowPagedText current glyph row (0709:0768): reset to Top on clear, Inc per newline, paged at Bottom"
+
+[[global]]
+offset = 0x0D16
+name = "BreakChars"
+evidence = "char set ShowPagedText word scan tests (0709:0822..08F0, set of 32..63 per the 0D12 descriptor, proven by tpc probe Q32); image value members $, %, &, 2, 3, 7, ="

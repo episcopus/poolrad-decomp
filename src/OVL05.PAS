@@ -48,7 +48,7 @@ const
   SideMonsters = 1;
   ComputerRun = $80;            { TCharacter.B84 from $80 up: a member the player does not run (a hireling) }
   ShareMask = 7;                { the bits of HirelingShare that are the share }
-  ExtraCombatant = 1;           { TCombatant.B13: a combatant that is not a real party member }
+  ExtraCombatant = 1;           { TCombatant.NoBody: a combatant that is not a real party member }
   { TCharacter.ClassMask values of AwardExperience: the four single classes whose prime requisite
     above PrimeRequisiteBonus gives 10% more experience. }
   ClassCleric = 0;
@@ -192,7 +192,7 @@ begin
 end;
 
 { ovl05:04C9. Decides how the battle ended and applies it to the party list (ds5D96); the walks stop
-  at the first extra combatant (TCombatant.B13 = 1). PartyFled is set when a member has fled
+  at the first extra combatant (TCombatant.NoBody = 1). PartyFled is set when a member has fled
   (Status 3). In a battle (not DuelMode): PartyDestroyed stays 1 unless a player-run member (Side 0,
   B84 below $80) is okay, dead or fled (or VarFixedXpBattle is 1); BattleWon is set and PartyFled
   cleared when a combatant is okay or dead; NoExperienceCount counts the members without Flag10D or
@@ -212,7 +212,7 @@ begin
   PartyDestroyed := 1;
   PartyFled := 0;
   Who := PCharacter(ds5D96);
-  while (Who <> nil) and (Who^.Combat^.B13 <> ExtraCombatant) do
+  while (Who <> nil) and (Who^.Combat^.NoBody <> ExtraCombatant) do
   begin
     if Who^.Status = StatusFled then
       PartyFled := 1;
@@ -224,7 +224,7 @@ begin
   Who := PCharacter(ds5D96);
   if DuelMode = 0 then
   begin
-    while (Who <> nil) and (Who^.Combat^.B13 <> ExtraCombatant) do
+    while (Who <> nil) and (Who^.Combat^.NoBody <> ExtraCombatant) do
     begin
       if ((Who^.Status = StatusFled) or (Who^.Status = StatusDead) or (Who^.Status = StatusOkay) or
         (ds49D6^[VarFixedXpBattle] = 1)) and (Who^.Side = SideParty) and (Who^.B84 < ComputerRun) then
@@ -246,7 +246,7 @@ begin
     Who := PCharacter(ds5D96);
     if PartyDestroyed = 0 then
     begin
-      while (Who <> nil) and (Who^.Combat^.B13 <> ExtraCombatant) do
+      while (Who <> nil) and (Who^.Combat^.NoBody <> ExtraCombatant) do
       begin
         if PartyFled = 0 then
         begin
@@ -288,7 +288,7 @@ begin
       Stop := False;
       while (Who <> nil) and not Stop do
       begin
-        if Who^.Combat^.B13 <> ExtraCombatant then
+        if Who^.Combat^.NoBody <> ExtraCombatant then
         begin
           SelectedCharacter := Who;
           ovl16_e2(False, True);
@@ -545,13 +545,13 @@ begin
           if (MoneyLeft <> 0) or (ItemsLeft <> 0) then
           begin
             Menu := '~Yes ~No';
-            res06_fn_0768(1, $11, $26, $16, $A, 1, 'There is still treasure left.  ');
-            res06_fn_0768(1, $11, $26, $16, $F, 0, 'Do you want to go back and claim your treasure?');
+            ShowPagedText(1, $11, $26, $16, $A, 1, 'There is still treasure left.  ');
+            ShowPagedText(1, $11, $26, $16, $F, 0, 'Do you want to go back and claim your treasure?');
             Answer := ovl07_e13(Title, Menu, 13, 10, 15, 0, 0);
             if Answer = AnswerNo then
               Done := True
             else
-              res06_fn_0DD3(1, $11, $26, $16);
+              ClearRect(1, $11, $26, $16);
           end
           else
             Done := True;
@@ -570,7 +570,7 @@ begin
   until Done;
 end;
 
-{ ovl05:11AC. Takes the monsters (Side 1) and the extra combatants (TCombatant.B13 = 1) out of the
+{ ovl05:11AC. Takes the monsters (Side 1) and the extra combatants (TCombatant.NoBody = 1) out of the
   party list (ovl16_e2 on SelectedCharacter; an extra combatant does not lower VarPartySize) and
   counts in VarRemovedCount the removed ones whose Flag10D is not 1; the remaining members' combat
   state is freed. SelectedCharacter is the first member afterwards. }
@@ -583,13 +583,13 @@ begin
   Who := PCharacter(ds5D96);
   while Who <> nil do
   begin
-    if (Who^.Combat^.B13 = ExtraCombatant) or (Who^.Side = SideMonsters) then
+    if (Who^.Combat^.NoBody = ExtraCombatant) or (Who^.Side = SideMonsters) then
     begin
       if Who^.Flag10D <> 1 then
         Inc(ds49D6^[VarRemovedCount]);
       NextWho := Who^.Next;
       SelectedCharacter := Who;
-      ovl16_e2(Who^.Combat^.B13 = ExtraCombatant, True);
+      ovl16_e2(Who^.Combat^.NoBody = ExtraCombatant, True);
       Who := NextWho;
     end
     else
@@ -655,7 +655,7 @@ begin
     begin
       if (Who^.B84 > ComputerRun - 1) and (Who^.Status = StatusOkay) and (Who^.HirelingShare > 0) then
       begin
-        res06_fn_0768(5, Row + 5, $22, $16, $A, 1, Who^.Name + ' takes and hides his share.');
+        ShowPagedText(5, Row + 5, $22, $16, $A, 1, Who^.Name + ' takes and hides his share.');
         Inc(Row, 2);
       end;
       Who := Who^.Next;
@@ -698,9 +698,9 @@ begin
   begin
     ds49D6^[VarBattleOutcome] := BattleOutcomeDestroyed;
     DrawWindow(1, 1, $26, $16, 0, $F, 'The END!');
-    ds5E24 := 2;
-    ds5E25 := 6;
-    res06_fn_0768(2, 5, $25, $16, $A, 1, 'The monsters rejoice for the party has been destroyed');
+    GlyphCol := 2;
+    GlyphRow := 6;
+    ShowPagedText(2, 5, $25, $16, $A, 1, 'The monsters rejoice for the party has been destroyed');
     ShowMessageLine($D, 'Press any key to continue');
   end;
   ds4A00 := 1;

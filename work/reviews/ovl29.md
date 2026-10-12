@@ -1,23 +1,17 @@
 # Review: ovl29
 
-decompiler: dec-5, dec-9, dec-11, dec-8 (Agent trailers of b3cf424, 4ac9311, 90cebbd, 9a39e79, 590bf3a, b573e38)
-reviewer: rev-5
+decompiler: dec-5, dec-9 (Agent trailers of 4ac9311, 90cebbd, 9a39e79), dec-8 (b573e38); the review fixes are 590bf3a (dec-11) and dafc8cf (dec-13)
+reviewer: rev-4
 date: 2026-10-12
-commit: 381991a
+commit: e2a89f4 (re-review after 590bf3a and dafc8cf; the first review was of 11ef975)
 
 Checklist: docs/process/playbooks/70-review.md (every item, every routine).
 
-Round 2. Round 1 (rev-4, commit 11ef975) failed on the reused piece-index constants,
-fixed in 590bf3a (ticked in 6c48e4e); dec-8 also removed the phantom ovl29:0143 entry
-(b573e38). This round re-runs the checklist on the fixed source.
-
-`make match UNIT=ovl29` (rerun): 13 routines matched (`DrawWallMap` 341,
-`SetWallDescriptors` 31, `DrawWallDescriptors` 157, `DrawWallPiece` 270,
-`CellInRange` 49, `DoorKindAt` 299, `WallIdAt` 255, `EventByteAt` 121,
-`StepDisplay` 10, `DrawWallView` 1975, `LoadWallSet` 661 plus 84 pool,
-`Load3DMap` 319 plus 42, `ovl29_init` 5); `unit: complete, 4619 bytes of code plus
-0 of paragraph padding cover the original segment`. `make readability UNIT=ovl29` is
-clean. Packet: `build/packets/ovl29.md`.
+`make match UNIT=ovl29` (rerun): `unit: complete`, 13 routines, 4619 bytes (`DrawWallMap` 341,
+`SetWallDescriptors` 31, `DrawWallDescriptors` 157, `DrawWallPiece` 270, `CellInRange` 49,
+`DoorKindAt` 299, `WallIdAt` 255, `EventByteAt` 121, `StepDisplay` 10, `DrawWallView` 1975,
+`LoadWallSet` 661 plus 84 pool, `Load3DMap` 319 plus 42, `ovl29_init` 5), 0 differ, 0 stubs.
+`make readability UNIT=ovl29` is clean. Packet: `build/packets/ovl29.md`.
 
 ## Findings
 
@@ -25,23 +19,25 @@ One line per finding: `- [ ] <severity> <routine name>: <what and why, with the 
 Severity: must-fix (blocks review-pass), should-fix, note. When the decompiler fixes one, mark it
 `- [x]` and add `(fixed in <commit>)`. Do not delete findings.
 
-### Resolved in round 1 (rev-4, fixed in 590bf3a unless noted)
+### Resolved in the previous cycle (rev-4, commit 11ef975)
 
-- [x] must-fix DrawWallMap/DrawWallPiece/DrawWallView: the ten piece-index constants were reused for side bits, per-cell steps and the Put8x8Symbol Attr. (fixed in 590bf3a: WallBitNorth/East/South/West, FarCellStep/MidCellStep/NearCellStep, DrawDirect/MapSymbolAttr/WallTileAttr, used consistently)
-- [ ] note DrawWallView: the side-bit/step values coincide with the piece indices, which is why the reuse compiles. (carried; still true)
-- [ ] note DrawWallMap/Unused and DrawWallView/Unused1/Unused2 frame fillers, honestly marked QUIRKs. (carried; still true)
-- [ ] note LoadWallSet: the non-multiple-of-$30C size check and QUIRK ovl29:101A. (carried; still true)
+- [x] must-fix DrawWallMap/DrawWallPiece/DrawWallView: the piece-index constants were reused for the side bits, the per-cell tile steps and the `Put8x8Symbol` Attr/Direct. 590bf3a adds `WallBitNorth/East/South/West` (1/2/4/8), `FarCellStep`/`MidCellStep`/`NearCellStep` (2/3/7) and `DrawDirect`/`MapSymbolAttr`/`WallTileAttr` (1/0/1) and uses them: `Inc(Symbol, WallBitEast)` etc. (ovl29:0000), `Dec(Shift, FarCellStep)` / `Inc(Shift, MidCellStep)` / `Inc(Shift, NearCellStep)` and `Put8x8Symbol(..., DrawDirect, MapSymbolAttr/WallTileAttr)`. The piece constants now index `WallPieceCol/Row/FirstTile/Width/Height` and pass the `Piece` argument, where they are right.
+- [x] note SetWallDescriptors: dafc8cf names the parameters `Wall1..Wall4` in the comment (was "A..D") and drops the leftover frame line, and records `res07_fn_2632(A, B, C, D: Word; E: Byte; F, G: Pointer)` in `RES07.PAS` and `re/symbols.toml`.
+- [x] note CellInRange/ovl29_init: dafc8cf gives `CellInRange` a parameter-level comment (the four compare order) and an address comment for the empty initialisation at ovl29:1206.
 
-### This cycle (rev-5)
+### This cycle (rev-4)
 
-- [ ] must-fix DrawWallDescriptors: the stub this unit set in RES07.PAS (`procedure res07_fn_2632(A, B, C, D: Word; E: Byte; F, G: Pointer)`, added by dec-5 in b3cf424) has no `signature` in re/symbols.toml (checklist item 9). The recorded signature must be exactly that string: the four calls push A=2, B, C=$B, D as words, E the descriptor byte, F=@ds260A and G=DrawBuf as far pointers (ovl29:0177..020A).
-- [ ] should-fix ovl29_init: the empty initialisation at ovl29:1206 (`55 89 E5 5D CB`) has no comment and no address. Every reviewed unit carries an init comment with the address.
-- [ ] should-fix OVL29 unit comment: cites "(whitepaper 4.2.1, 4.2.4, 5.2)". The 3D-view half of the unit is section 5.2.2; cite it (prior reviews required the exact section).
-- [ ] should-fix SetWallDescriptors/CellInRange: the skeleton frame comments ("retf 8: 8 bytes of parameters; 0 bytes of locals", "retf 4: ...; 2 bytes of locals") were left above the real comments. Remove them, as the ovl28 round 1 fix did for FreeSpriteList.
-- [ ] should-fix SetWallDescriptors: "Stores the four wall view descriptors: A..D into ds6A60..ds6A63". The parameters are Wall1..Wall4; "A..D" names nothing. Say Wall1..Wall4.
+- [ ] note DrawWallView: the two `Unused1`/`Unused2` locals (`QUIRK ovl29:05FD`) and `DrawWallMap`'s 256-byte `Unused: string` (`QUIRK ovl29:0003`) are frame fillers, honestly marked.
+- [ ] note LoadWallSet: the comment and whitepaper 4.2.4 agree that the size check does not ask for a multiple of `$30C` and a partial last wallset is copied whole; `QUIRK ovl29:101A` (BlockId 0 -> 10 -> 0) is marked.
 
-Round 2 verification (all checked against the bytes): the WallBit/FarCellStep/MidCellStep/NearCellStep/Direct/Attr constants are used only in their roles (DrawWallMap 109..116, DrawWallPiece 161, DrawWallView 326..468); DrawWallMap's clamp, $104 base, side bits, arrow and Direct-1/Attr-0 calls match; SetWallDescriptors stores Wall1..Wall4 into ds6A60..ds6A63 in push order; DrawWallDescriptors' four calls match the comment letter for letter; DrawWallPiece's rectangle, clip, tile test and Direct-1/Attr-1 call match; CellInRange's compare order matches its comment; DoorKindAt/WallIdAt/EventByteAt match (nibbles, bit pairs, +$200 event plane, the ds84DC 0/$A rule, the wrap, QUIRK ovl29:047B's unassigned Dir); the ovl14 movement reading of DoorKindAt (0 solid, 1 open, 2/3 locked) is backed by DoWildernessMenu's matched arms; DrawWallView's WallMapMode branch, DirLeft/Back/Right mods, far/middle/near loops, edge logic, piece calls and Depth-$FF exit match; LoadWallSet's fatal condition, Delta, repeat-Move, SetIn [1..3] slot test, $FFFF marks, ds272C-gated Delta add, BlockId*10+WallSet numbering, QUIRK ovl29:101A and the (BlockId, First) record match; Load3DMap's $402 check, four plane Moves, FreeMem and VarGeoBlock match; TGeoCellBlock/TWallTiles/TWallSets/WallPiece tables/ds260A/VarGeoBlock/ds84DC/WallMapMode declarations match every use; interface order is address order; no inline, db or assembler; whitepaper 4.2.1, 4.2.4 and 5.2.2 cover the unit and agree with the source.
+## What was verified
+
+1. `make match UNIT=ovl29` rerun: complete, all 13 routines L2. `make readability UNIT=ovl29` is clean.
+2. The 590bf3a fix is complete and correct: no piece constant is used as a side bit, a cell step or a Direct/Attr any more (`grep` over the whole file), and `DrawWallMap`'s `Inc(Symbol, WallBitNorth/East/South/West)` and `DrawWallView`'s `FarCellStep`/`MidCellStep`/`NearCellStep` match the packet's push values (1/2/4/8 and 2/3/7).
+3. Names, types and the rest of the comments are unchanged from the first review and were verified there: the four direction constants, the view constants, `WallTiles^[Wall, Tile]`, the GEO planes, the off-map wrap, the two `case` selectors, `CellInRange`, `DrawWallPiece`'s `WallPieceFirstTile/Width/Height` rectangle, `DrawWallView`'s far/middle/near rows down to `Depth = $FF`, `LoadWallSet`'s `WALLDEF<TileSet>.DAX` and `$30C` wallsets, and `Load3DMap`'s four planes.
+4. Quirks kept and marked: `ovl29:0003`, `ovl29:047B` (WallIdAt's unassigned result for a Dir outside 0/2/4/6), `ovl29:05FD`, `ovl29:101A`. No raw machine code or assembler routine.
+5. Whitepaper 4.2.1, 4.2.4 and 5.2.2 record what the unit taught and were updated with the same corrections.
 
 ## Verdict
 
-Not passed. One must-fix: the res07_fn_2632 stub signature this unit set is missing from re/symbols.toml.
+Passed. The must-fix (the reused piece constants) is fixed in 590bf3a, the three notes are fixed in dafc8cf, and the remaining two notes are informational.

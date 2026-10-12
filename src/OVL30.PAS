@@ -237,9 +237,9 @@ begin
 end;
 { ovl30:0909. Scans the DS:5F27 map entity table for records reachable from (FromX, FromY) and
   appends one sort record per hit, then sorts the table. MaxSteps budgets the line walk, Dir is
-  the arc to try, Base is the ovl31_e1 neighbour base for the search point and Map is passed to
+  the arc to try, Base is the FootprintCell neighbour base for the search point and Map is passed to
   WalkLine. For each active record it tries the four neighbours of the base point against the
-  four neighbours of the record (ovl31_e1 fills the offsets, invalid neighbours get -1), keeps
+  four neighbours of the record (FootprintCell fills the offsets, invalid neighbours get -1), keeps
   the pairs in Dir's arc (InDirArc) that the line walk (WalkLine) crosses in the fewest steps,
   and stores the record index, the step count and the working direction (the requested Dir, or
   the first working one when Dir is 8). Called from combat and item aiming (ovl22_e48) and from
@@ -254,14 +254,14 @@ var
   BestK: Byte;                        { the record index of the best hit }
   Found: Boolean;                     { a walked line hit this record }
   Ex, Ey: ShortInt;                   { the walk endpoint WalkLine updates }
-  LocX, LocY: ShortInt;               { the ovl31_e1 neighbour offsets }
+  LocX, LocY: ShortInt;               { the FootprintCell neighbour offsets }
   CandX, CandY: array[0..3] of ShortInt;  { the base neighbours (X is -1 when invalid) }
   TargX, TargY: array[0..3] of ShortInt;  { the record neighbours (X is -1 when invalid) }
   StepCount: Word;                    { the walk steps WalkLine reports }
   Best: Word;                         { the fewest steps so far }
 begin
   for J := 0 to 3 do
-    if ovl31_e1(Base, J, LocX, LocY) then
+    if FootprintCell(Base, J, LocX, LocY) then
     begin
       CandX[J] := FromX + LocX;
       CandY[J] := FromY + LocY;
@@ -269,16 +269,16 @@ begin
     else
       CandX[J] := -1;
   ds6718[0].Val := 0;
-  for I := 1 to ds5F27[0].Kind do
-    if ds5F27[I].Kind > 0 then
+  for I := 1 to CombatantTable[0].Kind do
+    if CombatantTable[I].Kind > 0 then
     begin
       Found := False;
       Best := $FF;
       for K := 0 to 3 do
-        if ovl31_e1(ds5F27[I].Kind, K, LocX, LocY) then
+        if FootprintCell(CombatantTable[I].Kind, K, LocX, LocY) then
         begin
-          TargX[K] := ds5F27[I].X + LocX;
-          TargY[K] := ds5F27[I].Y + LocY;
+          TargX[K] := CombatantTable[I].X + LocX;
+          TargY[K] := CombatantTable[I].Y + LocY;
         end
         else
           TargX[K] := -1;

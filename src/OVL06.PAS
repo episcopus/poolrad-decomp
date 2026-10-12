@@ -181,7 +181,7 @@ end;
   neither menu text shows, call ovl19_e10 with the key. With money left in the pool, E first asks
   "Do you want to go back and get your Money?" ('~Yes ~No' through ovl07_e13, which returns the
   0-based hotkey position) and the party leaves on No (AnswerNo); Yes clears the message window
-  (res06_fn_0DD3) and stays. A second case redraws the screen (res12_fn_27D9) after B and T, and
+  (ClearRect) and stays. A second case redraws the screen (res12_fn_27D9) after B and T, and
   after A when Appraised is set. No parameters; side effects: the screen, the items and the money
   through the called routines. }
 procedure ShopMain;
@@ -231,15 +231,15 @@ begin
           if MoneyPooled <> 0 then
           begin
             MenuText := '~Yes ~No';
-            res06_fn_0768(1, $11, $26, $16, $A, 1,
+            ShowPagedText(1, $11, $26, $16, $A, 1,
               'As you Leave the Shopkeeper says, "Excuse me but you have Left Some Money here."  ');
-            res06_fn_0768(1, $11, $26, $16, $F, 0,
+            ShowPagedText(1, $11, $26, $16, $F, 0,
               'Do you want to go back and get your Money?');
             LeaveAnswer := ovl07_e13(Title, MenuText, $D, $A, $F, 0, 0);
             if LeaveAnswer = AnswerNo then
               Done := 1
             else
-              res06_fn_0DD3(1, $11, $26, $16);
+              ClearRect(1, $11, $26, $16);
           end
           else
             Done := 1;
@@ -256,5 +256,6 @@ begin
   until Done <> 0;
 end;
 
+{ Initialisation (ovl06:0798): empty (55 89 E5 5D CB). }
 begin
 end.
