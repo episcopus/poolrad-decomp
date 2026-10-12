@@ -604,3 +604,43 @@ evidence = "[race, 1..8] signed adjustments added to the thief skills; a negativ
 offset = 0x3D4F
 name = "ThiefDexTable"
 evidence = "[dexterity, 1..5] signed adjustments added to the first five thief skills (ovl23:0426); index base DS:3D4E"
+
+[[global]]
+offset = 0x84D4
+name = "DuelMode"
+evidence = "nonzero during a duel: EndBattle shows 'You have lost the duel.'/'You have won the duel.' and 'The duelist receives' instead of the party texts (ovl05:095A..0A3B)"
+
+[[global]]
+offset = 0x49FF
+name = "PartyDestroyed"
+evidence = "SettleBattleOutcome sets 1 and clears it when a player-run party member (Side 0, B84 below 80h) is still standing; EndBattle then shows 'The monsters rejoice for the party has been destroyed' (ovl05:04D4, 05AF, 154A)"
+
+[[global]]
+offset = 0x443B
+name = "PartyFled"
+evidence = "set by SettleBattleOutcome when a member has Status 3 and no member is okay or dead; ShowBattleResult then shows 'The party has fled.' and gives no experience (ovl05:050D, 09D7)"
+
+[[global]]
+offset = 0x84DA
+name = "BattleWon"
+evidence = "SettleBattleOutcome sets it when a combatant is left with Status 0 or 1 (or the duelist won); only then the experience is computed; zero in a duel shows 'You have lost the duel.' (ovl05:05CA, 07AC, 0961)"
+
+[[global]]
+offset = 0x84D6
+name = "BattleExperience"
+evidence = "ComputeBattleExperience writes the experience per character into it, AwardExperience and ShowBattleResult ('Each character receives <n>') take it (ovl05:060B, 155C)"
+
+[[global]]
+offset = 0x84D5
+name = "NoExperienceCount"
+evidence = "SettleBattleOutcome counts the members without Flag10D or with Status 1 (dead); ComputeBattleExperience divides by the party size minus it (ovl05:05EA, 0322)"
+
+[[global]]
+offset = 0x443A
+name = "MonstersLooted"
+evidence = "ComputeBattleExperience sets it when a defeated monster (Side 1, not fled) gives up its money and items to the loot; ShowBattleResult then says 'The party has won.' instead of the fled or treasure text (ovl05:0088, 0949)"
+
+[[global]]
+offset = 0x67F4
+name = "PooledMoney"
+evidence = "seven LongInt kinds of money: the shop and the Temple pool the party's money into it (ovl21_e12 sums it), EndBattle puts the defeated monsters' money into it and TakeHirelingShares takes the hirelings' shares from it (ovl05:0093, 1366)"

@@ -103,7 +103,7 @@ begin
     end
     else
     begin
-      Pooled := ovl21_e12(ds67F4);
+      Pooled := ovl21_e12(PooledMoney);
       if Price <= Pooled then
       begin
         Dec(Pooled, Price);
@@ -449,7 +449,7 @@ begin
   ds49F3 := 1;
   res12_fn_27D9;
   res12_fn_0767(SelectedCharacter);
-  FillChar(ds67F4, SizeOf(ds67F4), 0);
+  FillChar(PooledMoney, SizeOf(PooledMoney), 0);
   ds6DC0 := 0;
   Done := False;
   repeat

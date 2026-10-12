@@ -1303,3 +1303,136 @@ kind = "global"
 why = "[dexterity, 1..5] signed adjustments added to the first five thief skills (ovl23:0426); index base DS:3D4E"
 date = "2026-10-12"
 
+[[rename]]
+old = "ovl05_fn_04C9"
+new = "SettleBattleOutcome"
+kind = "routine"
+why = "decides fled/won/destroyed from the members' Status and Side, awards the experience through ComputeBattleExperience and AwardExperience, revives fled and dying members or removes the party (ovl05:04C9, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl05_fn_0916"
+new = "ShowBattleResult"
+kind = "routine"
+why = "shows 'The party has won.'/'fled'/'found Treasure!' or the duel result and 'Each character receives <n> experience points.' (ovl05:0916, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl05_fn_0B14"
+new = "ChooseLootItem"
+kind = "routine"
+why = "draws the 'Loot' window and lets the player pick an item of the loot list ds6810 through ChooseFromList ('Items: ', 'Take') (ovl05:0B14, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl05_fn_0C06"
+new = "TakeLootItems"
+kind = "routine"
+why = "loops ChooseLootItem; on Take gives the chosen item to SelectedCharacter (AddInventoryItem) and unlinks and frees it from the loot list ds6810 (ovl05:0C06, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl05_fn_0D38"
+new = "TakeTreasure"
+kind = "routine"
+why = "the Take command: 'Take: Money Items Exit' when both money and items are left, else takes the money (ovl21_e4) or the items (TakeLootItems) directly (ovl05:0D38, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl05_fn_0ECD"
+new = "TreasureMenu"
+kind = "routine"
+why = "the menu after a battle: 'View Take Pool Share Detect Exit', asks 'There is still treasure left. Do you want to go back and claim your treasure?' on Exit (ovl05:0ECD, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl05_fn_11AC"
+new = "RemoveBattleCombatants"
+kind = "routine"
+why = "removes the monsters (Side 1) and the B13 combatants from the party list through ovl16_e2 and frees the remaining members' combat state (ovl05:11AC, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl05_e1"
+new = "EndBattle"
+kind = "routine"
+why = "the entry after a combat: settles the outcome, removes the monsters, shares, shows the result and the treasure menu, frees the loot; or 'The END!' / 'The monsters rejoice for the party has been destroyed' (ovl05:1527, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl05_fn_0000"
+new = "ComputeBattleExperience"
+kind = "routine"
+why = "sums the defeated monsters' XpValue + HpB1*XpPerHp, the pooled money at 1/200..2200 per coin and 400 per magic plus of the looted items, divided by the party size; moves the monsters' money and items into the loot (ovl05:0000, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl05_fn_0355"
+new = "AwardExperience"
+kind = "routine"
+why = "adds the experience to every member with Flag10D set and not dead, +10% when the prime requisite of the class is above 15, halved or a third for multi-class (ovl05:0355, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl05_fn_12E8"
+new = "TakeHirelingShares"
+kind = "routine"
+why = "computer-run members (B84 80h and up) take their share (byte +85h and 7) of each pooled money kind: '<name> takes and hides his share.' (ovl05:12E8, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds84D4"
+new = "DuelMode"
+kind = "global"
+why = "nonzero during a duel: EndBattle shows 'You have lost the duel.'/'You have won the duel.' and 'The duelist receives' instead of the party texts (ovl05:095A..0A3B)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds49FF"
+new = "PartyDestroyed"
+kind = "global"
+why = "SettleBattleOutcome sets 1 and clears it when a player-run party member (Side 0, B84 below 80h) is still standing; EndBattle then shows 'The monsters rejoice for the party has been destroyed' (ovl05:04D4, 05AF, 154A)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds443B"
+new = "PartyFled"
+kind = "global"
+why = "set by SettleBattleOutcome when a member has Status 3 and no member is okay or dead; ShowBattleResult then shows 'The party has fled.' and gives no experience (ovl05:050D, 09D7)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds84DA"
+new = "BattleWon"
+kind = "global"
+why = "SettleBattleOutcome sets it when a combatant is left with Status 0 or 1 (or the duelist won); only then the experience is computed; zero in a duel shows 'You have lost the duel.' (ovl05:05CA, 07AC, 0961)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds84D6"
+new = "BattleExperience"
+kind = "global"
+why = "ComputeBattleExperience writes the experience per character into it, AwardExperience and ShowBattleResult ('Each character receives <n>') take it (ovl05:060B, 155C)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds84D5"
+new = "NoExperienceCount"
+kind = "global"
+why = "SettleBattleOutcome counts the members without Flag10D or with Status 1 (dead); ComputeBattleExperience divides by the party size minus it (ovl05:05EA, 0322)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds443A"
+new = "MonstersLooted"
+kind = "global"
+why = "ComputeBattleExperience sets it when a defeated monster (Side 1, not fled) gives up its money and items to the loot; ShowBattleResult then says 'The party has won.' instead of the fled or treasure text (ovl05:0088, 0949)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds67F4"
+new = "PooledMoney"
+kind = "global"
+why = "seven LongInt kinds of money: the shop and the Temple pool the party's money into it (ovl21_e12 sums it), EndBattle puts the defeated monsters' money into it and TakeHirelingShares takes the hirelings' shares from it (ovl05:0093, 1366)"
+date = "2026-10-12"
+
