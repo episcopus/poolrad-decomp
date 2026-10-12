@@ -236,7 +236,7 @@ end;
   bank that is asked for (not NoBank) and not already loaded (DS:6B00, DS:6B05) it loads the picture
   through res07_fn_0111 from the file HEAD<number> or BODY<number> into DS:6B01 or DS:6B06, then
   records the loaded number. Calls FlushKeyboard at the end, which does nothing (QUIRK 0899:010A).
-  Called by ovl07_e7, ShowHeadBodyWindow and res12_fn_27D9. }
+  Called by ShowHeadBody, ShowHeadBodyWindow and res12_fn_27D9. }
 procedure LoadHeadBodySprites(HeadBank, BodyBank: Byte);
 var
   Num: string[1];                 { Str(TileSet): the picture number in the file name }
@@ -260,7 +260,7 @@ end;
   arms draw through the staging buffer (DrawHeadSprite and DrawBodySprite pass Direct 0 to
   DrawSprite): when WithBody is not 0 it draws the HEAD sprite DS:6B01 and the BODY sprite DS:6B06
   (5 rows lower), otherwise only the HEAD sprite. WithBody is not a Direct flag; every path goes
-  through res07_fn_1951. Called by ovl07_e7, res12_fn_27D9 and ShowHeadBodyWindow. }
+  through res07_fn_1951. Called by ShowHeadBody, res12_fn_27D9 and ShowHeadBodyWindow. }
 procedure ShowHeadBodySprites(Col, Row: Byte; WithBody: Byte);
 begin
   if WithBody <> 0 then

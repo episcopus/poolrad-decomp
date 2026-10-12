@@ -72,7 +72,16 @@ type
   { The same $924 bytes seen as LoadWallSet fills them: three wallset slots (1..3) of five walls
     (1..5) of 156 tile numbers; wallset slot S, wall W is wall id (S - 1) * 5 + W of TWallTiles. }
   TWallSets = array[1..3, 1..5, 0..$9B] of Byte;
-  TBlock1E00 = array[0..3839] of Word;    { a $1E00-byte block }
+  { The loaded ECL script (whitepaper 4.2.2, 5.1): $1E00 bytes the loader allocates and LoadEcl
+    fills; the script addresses it as VM addresses $9900..$B6FF (ReadVmWord region 3). }
+  TEclCode = array[$9900..$B6FF] of Byte;
+  { The three word blocks as the ECL script addresses them (MemRegion, ovl07:06FB): the game
+    variables at VM addresses $4900..$4CFF, the second block (ds49D6) at $6B00..$6EFF, the third
+    (ds49DA) at $9700..$98FF. The index base gives the displacement the code shows ($6E00, $2A00,
+    -$2E00); TGameVars and TBlock400 stay the 0-based views of the same blocks. }
+  TVmWords4900 = array[$4900..$4CFF] of Word;
+  TVmWords6B00 = array[$6B00..$6EFF] of Word;
+  TVmWords9700 = array[$9700..$98FF] of Word;
   { One 4-byte element of the table at DS:6AAE the loader fills (ovl11:0369..0390). }
   TPresenceSlot = record
     A, B: Word;
@@ -252,7 +261,8 @@ type
     { +$96..$9D: the level in each of the eight classes; Raise Dead treats index 2 apart (class 2
       is the fighter in the create-character run, whitepaper 5.8). Signed: only levels above 0 count. }
     ClassLevels: array[0..7] of ShortInt;
-    Pad9E: array[$9E..$A0] of Byte;
+    Pad9E: array[$9E..$9F] of Byte;
+    ByteA0: ShortInt;             { +$A0: the script reads it signed (GetCharacterVar, ovl07:08C5); meaning unknown }
     { +$A1: RecalcClassStats sets 3 when the fighter level (ClassLevels[2]) is above 6, else 2
       (ovl23:0083): likely attacks per two rounds [I]. }
     Attacks: Byte;
@@ -456,7 +466,7 @@ var
   ds6AAE: ShortInt;               { the party's row in the 16x16 area map }
     { ShortInt, not Byte: ovl14 widens it with cbw (ovl14:069D); EventByteAt/DrawWallView take it; set to 1 by StartGame. }
   { The marker's icon set (DrawIcon's third parameter): the wilderness keys H, M, P and K set 0,
-    2, 4 and 6 (HandleWildernessKeys, HandleWildernessKeys); ovl07_e10 maps a script value 0..3 to the same 0/2/4/6. }
+    2, 4 and 6 (HandleWildernessKeys, HandleWildernessKeys); WriteVmWord maps a script value 0..3 to the same 0/2/4/6. }
   ds6AAF: Byte;                   { the marker's icon set; see above }
   ds6AB0: Byte;                   { WallIdAt's result for the party cell and icon set (MoveParty); meaning unknown }
   ds6AB1: Byte;                   { the event byte of the party's map cell, from EventByteAt; bit 7 = interior }
@@ -504,7 +514,7 @@ var
     ovl14 reads words 713, 714 and 725 of it, all within the 1024 words of TGameVars. }
   ds49D6: ^TGameVars;             { second game word block; see above }
   ds49DA: ^TBlock400;             { $400-byte block the loader allocates (ovl11:0054) }
-  ds49DE: ^TBlock1E00;            { $1E00-byte block the loader allocates (ovl11:0064) }
+  EclCode: ^TEclCode;              { $1E00-byte block the loader allocates (ovl11:0064) }
   GameSpeed: Byte;                   { set to 1 by the loader; a count the ovl18 narratives read }
   ds4A16: Word;                   { EGA/VGA plane segment SetActivePage sets to AIndex shl 9 + $A000 }
   ds4A18: Word;                   { EGA/VGA plane segment SetPlaneSegment sets to AIndex shl 9 + $A000 }
@@ -547,8 +557,8 @@ var
   DyingPicture: Pointer;                { the picture RemoveCombatant draws over a dying combatant's cells }
   ds261E: Word;                   { the sound RemoveCombatant plays (PlaySound) when a combatant dies }
   ds6718: array[0..255] of TSortRec;  { the ovl30 sort table (element 0 holds the count, SortTable) }
-  ds49ED: Word;                   { set to $9900 by the loader (ovl11:03C0) }
-  ds49E5: Word;                   { copied to ds49ED by the ovl14 L key; meaning unknown }
+  EclPC: Word;                   { set to $9900 by the loader (ovl11:03C0) }
+  ds49E5: Word;                   { copied to EclPC by the ovl14 L key; meaning unknown }
   ds49F4: Byte;                   { cleared by the loader (ovl11:03CB) }
   ShowPortraits: Byte;            { nonzero: the portraits are shown; the camp's Pics submenu toggles it
                                     (ovl15:1D31, 1DFC); the loader sets it to 1 (ovl11:0392) }
@@ -766,5 +776,24 @@ var
   { The spell names, string[40] per spell 1..$38 at DS:2912 ('Bless' .. 'Restoration' in the image,
     the rows of SpellTable); entry 0 is the index base (ovl15:10EE), never read. }
   SpellNames: array[0..$38] of string[40];
+  { Globals of the ECL script machine's memory and operands (ovl07, whitepaper 5.1). }
+  { The three word blocks as the script addresses them (see TVmWords4900): the same pointers as
+    GameVars, ds49D6 and ds49DA. }
+  VarsAt4900: ^TVmWords4900 absolute GameVars;
+  VarsAt6B00: ^TVmWords6B00 absolute ds49D6;
+  VarsAt9700: ^TVmWords9700 absolute ds49DA;
+  ds49FD: Byte;                   { the HEAD bank ShowHeadBody last loaded (ovl07:051C) }
+  ds49FE: Byte;                   { the BODY bank ShowHeadBody last loaded (ovl07:0522) }
+  ds6F6A: Word;                   { returned for script address $FB (ReadVmWord, ovl07:0EC3); meaning unknown }
+  ds6F6C: Word;                   { returned for script address $FC (ReadVmWord, ovl07:0ED0); meaning unknown }
+  ds6F6E: Word;                   { returned for script address $B1 (ReadVmWord, ovl07:0EB6); meaning unknown }
+  ds84CC: Word;                   { set by a script write to address $3DE (WriteVmWord, ovl07:0D3B); meaning unknown }
+  ds84CE: Word;                   { set by a script write to address $B8 (WriteVmWord, ovl07:0D48); meaning unknown }
+  ds84D0: Word;                   { set by a script write to address $B9 (WriteVmWord, ovl07:0D55); meaning unknown }
+  ds84D2: Byte;                   { set to 1 when the script writes 0 to the character word $6C00 (ovl07:0B99) }
+  ds84D3: Byte;                   { set to 1 when the script writes 0 to the character word $6B00 (ovl07:0A91) }
+  ds84E1: Byte;                   { cleared by ShowHeadBody (ovl07:0514); meaning unknown }
+  ds84E6: Byte;                   { set to 1 when the script moves the party or changes its marker (ovl07:0D6C..0DD6) }
+  ds84E8: Byte;                   { set to 1 when the script writes game variable $49FD or $49FE (ovl07:0CAF) }
 implementation
 end.

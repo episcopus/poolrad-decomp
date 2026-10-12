@@ -819,3 +819,13 @@ evidence = "AlterMenu's Pics submenu shows 'Monsters on' while it is nonzero and
 offset = 0x49F5
 name = "ShowPortraits"
 evidence = "AlterMenu's Pics submenu shows 'Portraits on' while it is nonzero and the P key toggles it (ovl15:1D31, 1DFC); the loader sets it to 1"
+
+[[global]]
+offset = 0x49DE
+name = "EclCode"
+evidence = "LoadEcl fills it with the ECL block (ovl07:03F3); the script reads its operands from it at EclPC (ovl07:0026) and addresses it as 9900..B6FF (ovl07:06FB, 0E8D)"
+
+[[global]]
+offset = 0x49ED
+name = "EclPC"
+evidence = "the script's program counter: ovl07_e2 reads operand bytes at EclPC+1.. and advances it (ovl07:0022..012C); ovl07_e3 resets it to 9900, the start of EclCode (ovl07:01F5); ovl14 L key loads an entry point into it"

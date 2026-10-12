@@ -47,7 +47,7 @@ begin
   New(GameVars);
   New(ds49D6);
   New(ds49DA);
-  New(ds49DE);
+  New(EclCode);
   New(GameFont);
   New(WallTiles);
   New(ds6A5C);
@@ -77,7 +77,7 @@ begin
   FillChar(GameVars^, $800, 0);
   FillChar(ds49D6^, $800, 0);
   FillChar(ds49DA^, $400, 0);
-  FillChar(ds49DE^, $1E00, 0);
+  FillChar(EclCode^, $1E00, 0);
   FillChar(ds5E5A, $D0, 0);
   for ds465C := 1 to 2 do
   begin
@@ -106,7 +106,7 @@ begin
   ds49FB := 0;
   ds5D96 := 0;
   SelectedCharacter := nil;
-  ds49ED := $9900;
+  EclPC := $9900;
   GameSpeed := 1;
   ds49F4 := 0;
   TileSet := 1;

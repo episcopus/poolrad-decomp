@@ -1996,13 +1996,13 @@ evidence = ["prologue"]
 id = "ovl07:0511"
 unit = "ovl07"
 addr = "ovl07:0511"
-size = 61
-name = "ovl07_e7"
-signature = ""
+size = 51
+name = "ShowHeadBody"
+signature = "procedure ShowHeadBody(HeadBank, BodyBank: Byte)"
 c_name = "ovl07_e7"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl07_e7 (loads HEAD/BODY banks (LoadHeadBodySprites), stores them in ds49FD/ds49FE and shows them at 3,3 (ovl07:0511, matched)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2023,12 +2023,12 @@ id = "ovl07:06AF"
 unit = "ovl07"
 addr = "ovl07:06AF"
 size = 36
-name = "ovl07_e9"
-signature = ""
+name = "MakeWord"
+signature = "function MakeWord(Lo, Hi: Byte): Word"
 c_name = "ovl07_e9"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl07_e9 (returns Hi*256+Lo of two operand bytes (ovl07:06AF, matched)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2036,12 +2036,12 @@ id = "ovl07:06D3"
 unit = "ovl07"
 addr = "ovl07:06D3"
 size = 40
-name = "ovl07_fn_06D3"
-signature = ""
+name = "SixBitChar"
+signature = "function SixBitChar(Code: Byte): Char"
 c_name = "ovl07_fn_06D3"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl07_fn_06D3 (maps a 6-bit packed string code to a character: above 1F unchanged, else plus 40h; used by the string operand decoder (ovl07:06D3, matched)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2049,12 +2049,12 @@ id = "ovl07:06FB"
 unit = "ovl07"
 addr = "ovl07:06FB"
 size = 91
-name = "ovl07_fn_06FB"
-signature = ""
+name = "MemRegion"
+signature = "function MemRegion(Addr: Word): Byte"
 c_name = "ovl07_fn_06FB"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl07_fn_06FB (classifies a script address into 0..4 by the ranges 4900-4CFF, 6B00-6EFF, 9700-98FF, 9900-B6FF that ReadVmWord/WriteVmWord map to GameVars, ds49D6, ds49DA, the ECL buffer (ovl07:06FB, matched)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2062,117 +2062,65 @@ id = "ovl07:0756"
 unit = "ovl07"
 addr = "ovl07:0756"
 size = 102
-name = "ovl07_fn_0756"
-signature = ""
+name = "PartyIndexOf"
+signature = "function PartyIndexOf(Who: PCharacter): Byte"
 c_name = "ovl07_fn_0756"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl07_fn_0756 (walks the party list ds5D96 by Next counting until the given character (ovl07:0756, matched)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl07:07BC"
 unit = "ovl07"
 addr = "ovl07:07BC"
-size = 66
-name = "ovl07_fn_07BC"
-signature = ""
+size = 696
+name = "GetCharacterVar"
+signature = "function GetCharacterVar(Addr: Word; var Found: Boolean): Word"
 c_name = "ovl07_fn_07BC"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl07_fn_07BC (case on script address minus 6B00 returning SelectedCharacter fields, Found cleared for unknown addresses (ovl07:07BC, matched)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl07:07FE"
-unit = "ovl07"
-addr = "ovl07:07FE"
-size = 164
-name = "ovl07_fn_07FE"
-signature = ""
-c_name = "ovl07_fn_07FE"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl07:08A2"
-unit = "ovl07"
-addr = "ovl07:08A2"
-size = 466
-name = "ovl07_fn_08A2"
-signature = ""
-c_name = "ovl07_fn_08A2"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl07:0A74"
 unit = "ovl07"
 addr = "ovl07:0A74"
-size = 212
-name = "ovl07_fn_0A74"
-signature = ""
+size = 515
+name = "SetCharacterVar"
+signature = "procedure SetCharacterVar(Addr, Value: Word)"
 c_name = "ovl07_fn_0A74"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl07_fn_0A74 (case on script address minus 6B00 storing the value into SelectedCharacter fields; called by WriteVmWord for region 1 (ovl07:0A74, matched)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl07:0B48"
-unit = "ovl07"
-addr = "ovl07:0B48"
-size = 303
-name = "ovl07_fn_0B48"
-signature = ""
-c_name = "ovl07_fn_0B48"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl07:0C77"
 unit = "ovl07"
 addr = "ovl07:0C77"
 size = 405
-name = "ovl07_e10"
-signature = ""
+name = "WriteVmWord"
+signature = "procedure WriteVmWord(Addr, Value: Word)"
 c_name = "ovl07_e10"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_10"
+notes = "renamed from ovl07_e10 (stores a word at a script address by MemRegion: GameVars, ds49D6, ds49DA, ECL buffer bytes or special engine variables (ovl07:0C77, matched)); auto:entry_10"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl07:0E0C"
 unit = "ovl07"
 addr = "ovl07:0E0C"
-size = 44
-name = "ovl07_e11"
-signature = ""
+size = 327
+name = "ReadVmWord"
+signature = "function ReadVmWord(Addr: Word): Word"
 c_name = "ovl07_e11"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl07_e11 (loads a word from a script address by MemRegion, the read counterpart of WriteVmWord (ovl07:0E0C, matched)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl07:0E38"
-unit = "ovl07"
-addr = "ovl07:0E38"
-size = 283
-name = "ovl07_fn_0E38"
-signature = ""
-c_name = "ovl07_fn_0E38"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl07:0F53"
@@ -2212,19 +2160,6 @@ level = "none"
 justification = ""
 notes = "auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl07:1307"
-unit = "ovl07"
-addr = "ovl07:1307"
-size = 614
-name = "ovl07_fn_1307"
-signature = ""
-c_name = "ovl07_fn_1307"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl07:156D"

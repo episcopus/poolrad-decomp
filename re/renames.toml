@@ -2295,3 +2295,80 @@ kind = "global"
 why = "AlterMenu's Pics submenu shows 'Portraits on' while it is nonzero and the P key toggles it (ovl15:1D31, 1DFC); the loader sets it to 1"
 date = "2026-10-12"
 
+[[rename]]
+old = "ds49DE"
+new = "EclCode"
+kind = "global"
+why = "LoadEcl fills it with the ECL block (ovl07:03F3); the script reads its operands from it at EclPC (ovl07:0026) and addresses it as 9900..B6FF (ovl07:06FB, 0E8D)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds49ED"
+new = "EclPC"
+kind = "global"
+why = "the script's program counter: ovl07_e2 reads operand bytes at EclPC+1.. and advances it (ovl07:0022..012C); ovl07_e3 resets it to 9900, the start of EclCode (ovl07:01F5); ovl14 L key loads an entry point into it"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_e7"
+new = "ShowHeadBody"
+kind = "routine"
+why = "loads HEAD/BODY banks (LoadHeadBodySprites), stores them in ds49FD/ds49FE and shows them at 3,3 (ovl07:0511, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_e9"
+new = "MakeWord"
+kind = "routine"
+why = "returns Hi*256+Lo of two operand bytes (ovl07:06AF, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_fn_06D3"
+new = "SixBitChar"
+kind = "routine"
+why = "maps a 6-bit packed string code to a character: above 1F unchanged, else plus 40h; used by the string operand decoder (ovl07:06D3, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_fn_06FB"
+new = "MemRegion"
+kind = "routine"
+why = "classifies a script address into 0..4 by the ranges 4900-4CFF, 6B00-6EFF, 9700-98FF, 9900-B6FF that ReadVmWord/WriteVmWord map to GameVars, ds49D6, ds49DA, the ECL buffer (ovl07:06FB, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_fn_0756"
+new = "PartyIndexOf"
+kind = "routine"
+why = "walks the party list ds5D96 by Next counting until the given character (ovl07:0756, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_fn_07BC"
+new = "GetCharacterVar"
+kind = "routine"
+why = "case on script address minus 6B00 returning SelectedCharacter fields, Found cleared for unknown addresses (ovl07:07BC, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_fn_0A74"
+new = "SetCharacterVar"
+kind = "routine"
+why = "case on script address minus 6B00 storing the value into SelectedCharacter fields; called by WriteVmWord for region 1 (ovl07:0A74, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_e10"
+new = "WriteVmWord"
+kind = "routine"
+why = "stores a word at a script address by MemRegion: GameVars, ds49D6, ds49DA, ECL buffer bytes or special engine variables (ovl07:0C77, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl07_e11"
+new = "ReadVmWord"
+kind = "routine"
+why = "loads a word from a script address by MemRegion, the read counterpart of WriteVmWord (ovl07:0E0C, matched)"
+date = "2026-10-12"
+
