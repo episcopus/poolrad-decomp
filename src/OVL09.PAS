@@ -45,7 +45,7 @@ procedure ovl09_fn_0B48;
 procedure ovl09_fn_0B57;
 procedure ovl09_fn_0B66;
 procedure ovl09_fn_0B96;
-procedure ovl09_fn_0F4F;
+function ovl09_fn_0F4F(Who: PCharacter): Byte;
 procedure ovl09_fn_0FC1;
 procedure ovl09_fn_10D7;
 function ScoreTarget(Actor, Foe: PCharacter): Byte;
@@ -148,8 +148,18 @@ end;
 {@stub} procedure ovl09_fn_0B66; begin end;
 { ovl09:0B96: retf 4: 4 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl09_fn_0B96; begin end;
-{ ovl09:0F4F: retf 4: 4 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl09_fn_0F4F; begin end;
+{ ovl09:0F4F. Purpose unknown: returns res12_fn_2637(Who) when res12_fn_0B73(Who) or
+  res12_fn_2E03(Who) is true or the combatant's Initiative is 0, else res12_fn_2686(Who).
+  Called by ovl09_e1 (ovl09:01EE) and from the 07F2 and 0B3C regions. res12_fn_17E3 runs first
+  (parameterless). }
+function ovl09_fn_0F4F(Who: PCharacter): Byte;
+begin
+  res12_fn_17E3;
+  if res12_fn_0B73(Who) or res12_fn_2E03(Who) or (Who^.Combat^.Initiative = 0) then
+    ovl09_fn_0F4F := res12_fn_2637(Who)
+  else
+    ovl09_fn_0F4F := res12_fn_2686(Who);
+end;
 { ovl09:0FC1: retf 4: 4 bytes of parameters; 16 bytes of locals }
 {@stub} procedure ovl09_fn_0FC1; begin end;
 { ovl09:10D7: retf 4: 4 bytes of parameters; 22 bytes of locals }
