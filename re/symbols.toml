@@ -3297,40 +3297,14 @@ evidence = ["prologue"]
 id = "ovl10:0615"
 unit = "ovl10"
 addr = "ovl10:0615"
-size = 234
+size = 507
 name = "ovl10_fn_0615"
 signature = ""
 c_name = "ovl10_fn_0615"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; map dec-16 2026-10-12: ends 0810 (was 234); 06FF, 07AA were mid-routine, entries deleted"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl10:06FF"
-unit = "ovl10"
-addr = "ovl10:06FF"
-size = 171
-name = "ovl10_fn_06FF"
-signature = ""
-c_name = "ovl10_fn_06FF"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl10:07AA"
-unit = "ovl10"
-addr = "ovl10:07AA"
-size = 102
-name = "ovl10_fn_07AA"
-signature = ""
-c_name = "ovl10_fn_07AA"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl10:0810"
@@ -3349,40 +3323,14 @@ evidence = ["prologue"]
 id = "ovl10:08A4"
 unit = "ovl10"
 addr = "ovl10:08A4"
-size = 651
+size = 755
 name = "ovl10_fn_08A4"
 signature = ""
 c_name = "ovl10_fn_08A4"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; map dec-16 2026-10-12: ends 0B97 (was 651); 0B2F, 0B48 were mid-routine, entries deleted"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl10:0B2F"
-unit = "ovl10"
-addr = "ovl10:0B2F"
-size = 25
-name = "ovl10_fn_0B2F"
-signature = ""
-c_name = "ovl10_fn_0B2F"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl10:0B48"
-unit = "ovl10"
-addr = "ovl10:0B48"
-size = 79
-name = "ovl10_fn_0B48"
-signature = ""
-c_name = "ovl10_fn_0B48"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl10:0B97"
@@ -3401,27 +3349,14 @@ evidence = ["prologue"]
 id = "ovl10:0BDE"
 unit = "ovl10"
 addr = "ovl10:0BDE"
-size = 16
+size = 309
 name = "ovl10_fn_0BDE"
 signature = ""
 c_name = "ovl10_fn_0BDE"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; map dec-16 2026-10-12: ends 0D13 (was 16); 0BEE was mid-routine, entry deleted"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl10:0BEE"
-unit = "ovl10"
-addr = "ovl10:0BEE"
-size = 293
-name = "ovl10_fn_0BEE"
-signature = ""
-c_name = "ovl10_fn_0BEE"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl10:0D13"
@@ -3518,92 +3453,27 @@ evidence = ["prologue"]
 id = "ovl10:1577"
 unit = "ovl10"
 addr = "ovl10:1577"
-size = 11
+size = 1150
 name = "ovl10_fn_1577"
 signature = ""
 c_name = "ovl10_fn_1577"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; map dec-16 2026-10-12: ends 19F5 (was 11); 1582, 1758 were mid-routine, entries deleted"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl10:1582"
-unit = "ovl10"
-addr = "ovl10:1582"
-size = 470
-name = "ovl10_fn_1582"
-signature = ""
-c_name = "ovl10_fn_1582"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl10:1758"
-unit = "ovl10"
-addr = "ovl10:1758"
-size = 669
-name = "ovl10_fn_1758"
-signature = ""
-c_name = "ovl10_fn_1758"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl10:19F5"
 unit = "ovl10"
 addr = "ovl10:19F5"
-size = 42
+size = 1084
 name = "ovl10_fn_19F5"
 signature = ""
 c_name = "ovl10_fn_19F5"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; map dec-16 2026-10-12: ends 1E31 (was 42); 1A1F, 1A91, 1B83 were mid-routine, entries deleted"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl10:1A1F"
-unit = "ovl10"
-addr = "ovl10:1A1F"
-size = 114
-name = "ovl10_fn_1A1F"
-signature = ""
-c_name = "ovl10_fn_1A1F"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl10:1A91"
-unit = "ovl10"
-addr = "ovl10:1A91"
-size = 242
-name = "ovl10_fn_1A91"
-signature = ""
-c_name = "ovl10_fn_1A91"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl10:1B83"
-unit = "ovl10"
-addr = "ovl10:1B83"
-size = 686
-name = "ovl10_fn_1B83"
-signature = ""
-c_name = "ovl10_fn_1B83"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl10:1E31"
