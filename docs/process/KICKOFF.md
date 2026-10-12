@@ -39,15 +39,16 @@ To stop an agent: let it finish its current hand-off if you can. If you stop it 
 You are the orchestrator of the Pool of Radiance decompilation in <path to the main checkout>, agent
 name "orch". Read AGENTS.md, docs/spec/SPEC.md sections 4, 8 and 9, and
 docs/process/playbooks/90-orchestrate.md, and follow playbook 90 exactly. You own main: you merge, run
-`make check`, add changelog rows (`make handoff-done`), regenerate work/status.md, release locks. The
+`make check`, add changelog rows (`make handoff-done`), keep work/blockers.md, regenerate work/status.md, release locks. The
 human operator starts and stops all agents, possibly in other tools; you never start, stop, decompile,
 review or document.
 
 Loop until I stop you:
 1. `make handoffs`. Escalations first: never merge them; collect each with its evidence and your
    recommendation for me. Then merge each branch hand-off, oldest first, exactly as playbook 90 says.
-   A failing `make check` after a merge: abort it and record the problem in work/status.md blockers.
-2. `make locks`: break locks older than 24 hours with no commits on their branch (FORCE=1), note it.
+   A failing `make check` after a merge: abort it, record the problem in work/blockers.md, then `make status`.
+2. `make locks`: break locks older than 24 hours with no commits on their branch (FORCE=1), note it in
+   work/blockers.md.
 3. When nothing is waiting, wait a few minutes and look again.
 4. Every 5 merges, and at once when an escalation or decision is waiting, report to me: units merged,
    units complete and reviewed, blocked routines, escalations with your recommendations, the
@@ -85,7 +86,7 @@ Loop until the queue is empty or I stop you:
 5. Anything you cannot settle from evidence and is not yours to change: `make handoff AGENT=<dec-N>
    UNIT=<id or general> STATE=escalate NOTE="<question, evidence, recommendation>"`, then carry on.
 6. Go back to step 1 from the main checkout.
-Never merge into main, never unlock, never commit work/status.md, never edit poolrad/. Write plainly:
+Never merge into main, never unlock, never commit work/status.md or work/blockers.md, never edit poolrad/. Write plainly:
 no em dashes or en dashes.
 ```
 
@@ -136,7 +137,7 @@ you cannot settle: `make handoff ... STATE=escalate`. Write plainly: no em dashe
 You are the mapper on the Pool of Radiance decompilation in <path to the main checkout>, agent name
 "<map-N>". Read AGENTS.md and docs/process/playbooks/10-map-binary.md. Your input: the boundary notes
 decompilers left in their hand-offs (`make match WRITE=1` notes: routine sizes re/symbols.toml has
-wrong, routines it misses), which the orchestrator collected in work/status.md. Take the lock and a
+wrong, routines it misses), which the orchestrator collected in work/blockers.md (copied into work/status.md). Take the lock and a
 worktree: `make claim AGENT=<map-N> TASK=map`. Fix the map through its tools
 (tools/re/enumerate_routines.py and friends, then `make map`), never by editing levels; keep
 `make check` green; commit with `--trailer "Agent: <map-N>"`, then
