@@ -720,7 +720,7 @@ structure in the `re/symbols.toml` notes.
 
 ---
 
-### 5.17 The screen support unit ovl30 **[V]** (`src/OVL30.PAS`, `make match UNIT=ovl30`: 3 of 7 routines at L2)
+### 5.18 The screen support unit ovl30 **[V]** (`src/OVL30.PAS`, `make match UNIT=ovl30`: 3 of 7 routines at L2)
 
 Overlay 30 is a screen support unit:
 

@@ -13707,7 +13707,7 @@ signature = ""
 c_name = "ovl30_e3"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; BLOCKED (dec-5, 2026-10-12): drafted the Bresenham stepper; frame (8 bytes: SX, SY: ShortInt at bp-2/bp-3, the Boolean result at bp-1, a PLineState copy at bp-4..bp-7) and the first stores match, but the P := Line copy differs (ours mov ax,[bp+6]/mov dx,[bp+8]/mov [..]; the original les di,[bp+6]/mov [bp-7],di/mov [bp-5],es), so the pointer local does not line up. Also read ds25C0[3*(SY+1)+(SX+1)] into TLineState.Pattern (+$19) and the TLineState record grows to +$1A"
 evidence = ["prologue"]
 
 [[routine]]
