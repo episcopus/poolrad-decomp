@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-11 | 5.2.1 | corrected the party marker fold: column 42 / row 34 are cell 3 and column 43 / row 35 or more cell 4, and ShowAreaView (not DrawAreaView) clamps the window; added the ovl26:02A0 init comment to src/OVL26.PAS | make match UNIT=ovl26 (3 matched, 3 nested, 0 differ), make readability UNIT=ovl26 clean, make check green |
 | 2026-10-11 | 5.12 code wheel | res06 signatures recorded and named; ovl02 init comment | work/reviews/ovl02.md findings fixed in e302d2f |
 | 2026-10-11 | none | already complete; verified only | make match UNIT=ovl33 unit complete |
 | 2026-10-11 | 5.15 heap errors | Size=0 returns at once with unassigned result; init comment; ds557D writer open | work/reviews/ovl00.md findings fixed in 2012dbb |
