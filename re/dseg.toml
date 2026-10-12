@@ -385,3 +385,8 @@ evidence = "far pointer at DS:49D2 to the game's word variables: ovl07:02E1 and 
 offset = 0x4A1E
 name = "VideoAdapter"
 evidence = "ClearWindow (03F1:0137) dispatches on it: 0 fills scanline planes, 1 writes text cells, 2 fills four planes; the video hardware the game drives (POOL.CFG offers EGA/CGA/Tandy, mapping still open)"
+
+[[global]]
+offset = 0x6AAE
+name = "ds6AAEWords"
+evidence = "the 4-byte element table at DS:6AAE: the loader (ovl11_e1, ovl11:0369..0390) sets the two words of elements 2 and 3 to $FFFF (stride I*4: mov word [di+6AAEh] and [di+6AB0h]); its element 0 shares its first byte with DS:6AAE, the party row ovl29_e4 gets (ovl26_e1 passes ds6AAE). Declared as the alias array ds6AAEWords in src/POOLVARS.PAS because DS:6AAE itself is the party row byte"

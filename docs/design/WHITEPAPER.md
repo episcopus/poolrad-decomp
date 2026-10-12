@@ -192,10 +192,21 @@ Start-up as observed by running the original code in the oracle (`make oracle-ru
 5. `8X8D1.DAX`, `SQRPACI.DAX`, `COMSPR.DAX`, `ITEMS` and `TITLE.DAX` are loaded, the game switches to EGA mode 0Dh (320x200, 16 colours), shows "Loading... please wait", then the SSI logo, the Pool of Radiance title and the credits, polling the keyboard throughout. The code wheel prompt (5.12) follows.
 6. The game installs no INT 08h/09h/1Ch handler for the rest of the session; keyboard input is INT 16h only (5.8).
 
+#### 3.2.2 The start-up loader `StartGame` **[V]** (`make match UNIT=ovl11`, `src/OVL11.PAS`: unit complete)
+
+The loader is overlay 11 (`ovl11:002D`, 1512 bytes) and is the first thing the main program runs. It owns the whole unit: `ovl11:0615` is its empty initialisation part, and no other routine exists (the map's `ovl11:0435` was a phantom: the far-call heuristic read the `lcall 0041:0025` at `ovl11:060C`, a call through ovl12's stub, as the linear address `0041*16+0025 = 0435` inside ovl11). `StartGame`:
+
+- Allocates seven heap blocks with `New` (`ovl11:0034..00A3`): the game variables at `DS:49D2` (`^TGameVars`, `$800` bytes), a second `$800`-byte word block at `DS:49D6`, then `$400` (`DS:49DA`), `$1E00` (`DS:49DE`), `$588` (`DS:5E20`), `$924` (`DS:6A58`) and `$400` (`DS:6A5C`) byte blocks.
+- Allocates three screen buffers through `res07_fn_248E(Cols, Rows: Word; Planes, Flag: Byte; var Buf: Pointer)` (`ovl11:00A4`, `00BC`, `00D4`): `(8, 1, 1, 0)` into `DS:5E4E`, `($A8, $15, 1, 0)` into `DS:4A20` and `($18, 3, 1, 0)` into `DS:4A24`. The callee allocates `Rows*Cols*2` (doubled when `VideoAdapter` is not 0) times `Planes`, plus `$17` bytes, and stores the pointer at `Buf` (`0464:248E`).
+- Fills three 200-cell tables (`ovl11:0130..024D`): `DS:4EC0[I]` is the cell's scanline address (`$B800` for an even cell, `$BA00` for an odd one, plus `5*(I div 2)`), `DS:5050[I]` is `I*40` and `DS:51E0[I]` is the cell's graphics plane address (`10*(I div 4)` plus `$B800`, `$BA00`, `$BC00` or `$BE00`), so the tables drive the text and graphics planes of video adapter 2 (5.11). `DS:465C` is the loop counter of all three loops (a global).
+- Sets the screen and game globals (`ovl11:0392..0456`), including `AreaViewKind := 1`, `MarkerFrame := 0`, the special view codes `DS:6F69 := $E8` and `DS:6F68 := $DB` (5.2.1) and `DebugMode := False`.
+- Loads the data files (`ovl11:0469..0614`): it saves the current path `DS:547C` in `DS:4661`, draws "Loading...Please Wait" on row 24 (`res06_fn_0626(0, 24, 10, ...)`), draws through `ovl34_e1($CA, 4)` and `ovl34_e1($CB, 0)`, loads pictures 1 and 2 of `SQRPACI` (`res07_fn_0111('sqrpaci', N, 0, 0, @Buf)`, `ovl11:04BE`) and pictures 13 to 24 of `COMSPR` (`ovl32_e4('COMSPR', I, I+13)`, `ovl11:0502`, then `ovl32_e4('COMSPR', $19, $19)`). It then builds the file path from the 30-byte name table `DS:2614[DS:5376]` plus the character `DS:547D` plus `':'` and calls `res05_fn_025D('ITEMS', Path, 0, F)` (a `Byte` function), which opens the untyped file `DS:468C`; `StartGame` seeks to record 2 (`Seek(F, 2)`) and reads one `$810`-byte block into `DS:5582` (`BlockRead`, count in `DS:5E1E`), closes it, restores the path, calls `Randomize` (`0AF8:1247`) and hands over to `ovl22_e10` and `ovl12_e1`.
+- TP 6.0 idioms proven here (`make match UNIT=ovl11`, probe `tools/re/tp_idioms/PRB11..PRB16.PAS`): `New(P)` for an array type of `N` bytes emits `push N; lcall GetMem` and stores `DX:AX` in `P`; a `string` assignment always compiles to `System_StrLCopy` with the destination limit as the third argument; a `LongInt` (or pointer) `:= 0` (or `nil`) zeroes both words after one `xor ax,ax`, so `DS:6810`, `DS:5D92` and `DS:5D96` are 4-byte values; TP 6.0 rejects an anonymous `string[40]` in a parameter list (the type must be named, `String40`).
+
 The main program **[V]** (`src/POOL.PAS`, `make match UNIT=main`: matched completely, 58 address fields) is segment `0000` (337 bytes plus padding): the string `'STING'`, then one far call per unit initialisation in the order of its `uses` clause (System, Crt, res02 to res08, then overlays and resident units interleaved: ovl34, res09, ovl33, res10, ovl32 to ovl30, res11, ovl29 to ovl25, res12, ovl24 to ovl00), then the main block:
 
 ```pascal
-ovl11_e1;
+StartGame;
 if ParamStr(1) <> 'STING' then begin ovl01_e1; CheckCodeWheel; end;   { title screens, code wheel (5.12) }
 ovl16_e1;
 ovl29_e1(11, 0, 7, 6);

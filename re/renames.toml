@@ -204,3 +204,10 @@ kind = "global"
 why = "ClearWindow (03F1:0137) dispatches on it: 0 fills scanline planes, 1 writes text cells, 2 fills four planes; the video hardware the game drives (POOL.CFG offers EGA/CGA/Tandy, mapping still open)"
 date = "2026-10-11"
 
+[[rename]]
+old = "ovl11_e1"
+new = "StartGame"
+kind = "routine"
+why = "ovl11:002D: the start-up loader the main program runs first (src/POOL.PAS: ovl11_e1 before the title and the copy protection); it allocates the game blocks, fills the cell tables, sets the game globals and reads the initial file (make match UNIT=ovl11)"
+date = "2026-10-11"
+

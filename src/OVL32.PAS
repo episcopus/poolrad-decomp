@@ -6,7 +6,7 @@ interface
 procedure Load24x24Set;
 procedure ovl32_e2(PicCol, PicRow: Shortint; PicCode, Unused: Byte);
 procedure ovl32_e3;
-procedure ovl32_e4;
+procedure ovl32_e4(S: string; A, B: Byte);
 procedure ovl32_e5(A, B: ShortInt; C, D, E: Byte);
 implementation
 
@@ -20,7 +20,7 @@ implementation
 { ovl32:014E: retf 2: 2 bytes of parameters; 2 bytes of locals }
 {@stub} procedure ovl32_e3; begin end;
 { ovl32:01C8: retf 8: 8 bytes of parameters; 1028 bytes of locals }
-{@stub} procedure ovl32_e4; begin end;
+{@stub} procedure ovl32_e4(S: string; A, B: Byte); begin end;
 { ovl32:04FC: retf 10: 10 bytes of parameters; 8 bytes of locals.
   Draws an icon: A and B name the cell (times 3 pixels each when they reach the display call
   res07_fn_0D71), C the picture set (its table is ds5E5A, checked against 3), D and E the mirror
