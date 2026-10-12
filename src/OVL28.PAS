@@ -86,7 +86,7 @@ begin
     for ds70C7 := 1 to Count do
       res07_fn_2595(Slots[ds70C7].Sprite);
   FillChar(Rec^, $42, 0);
-  ds6B0A := 0;
+  ds6B0A := '';
   ds6B1C := $FF;
 end;
 { ovl28:04F9. Shows the HEAD/BODY picture window of the character screen: when the character record

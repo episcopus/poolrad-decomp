@@ -192,7 +192,7 @@ var
   ds6B01: Pointer;                { the loaded HEAD sprite bank (ShowHeadBodySprites, LoadHeadBodySprites) }
   ds6B05: Byte;                   { the bank index of the BODY sprite in DS:6B06; $FF when none (LoadHeadBodySprites) }
   ds6B06: Pointer;                { the loaded BODY sprite bank (ShowHeadBodySprites, LoadHeadBodySprites) }
-  ds6B0A: Byte;                   { cleared by the loader (ovl11:043D) }
+  ds6B0A: string[8];              { the name of the last picture file loaded (ovl28_e2); cleared by the loader (ovl11:043D) }
   ds6B1C: Byte;                   { set to $FF by the loader (ovl11:0442) and by FreeSpriteList }
   ds70C7: ShortInt;               { loop counter of FreeSpriteList (the sprite list slots); ShortInt: the loop exits with jg }
   ds6B29: Word;                   { set to 1 by the loader (ovl11:0405) }
