@@ -119,13 +119,13 @@ begin
   ds49D6^[830] := 0;
   MarkerFrame := 0;
   ListMenuTop := 1;
-  ds84D4 := 0;
+  DuelMode := 0;
   ds6DDA := 0;
   ds84DD := 0;
   ds84DE := 0;
   ds84DF := 0;
   ds84E0 := 0;
-  ds49FF := 0;
+  PartyDestroyed := 0;
   ds5370 := 1;
   ds84E3 := 0;
   ds557C := 0;

@@ -84,7 +84,7 @@ procedure ovl16_fn_2639;
 procedure ovl16_fn_295B;
 procedure ovl16_fn_29AE;
 procedure ovl16_fn_306D;
-procedure ovl16_e2;
+procedure ovl16_e2(Uncounted, FreePicture: Boolean);
 procedure ovl16_fn_33E7;
 procedure ovl16_fn_34DF;
 procedure ovl16_fn_35BE;
@@ -274,7 +274,7 @@ implementation
 { ovl16:306D: retf 0: 0 bytes of parameters; 278 bytes of locals }
 {@stub} procedure ovl16_fn_306D; begin end;
 { ovl16:3291: retf 4: 4 bytes of parameters; 4 bytes of locals }
-{@stub} procedure ovl16_e2; begin end;
+{@stub} procedure ovl16_e2(Uncounted, FreePicture: Boolean); begin end;
 { ovl16:33E7: retf 0: 0 bytes of parameters; 24 bytes of locals }
 {@stub} procedure ovl16_fn_33E7; begin end;
 { ovl16:34DF: retf 6: 6 bytes of parameters; 0 bytes of locals }

@@ -112,7 +112,7 @@ end;
   Price is its Value (+$3A, ovl06:0361). It first reads the selected character's money
   (ovl19_e11); if the Price fits it adds the item to the character's items (AddInventoryItem) and,
   when that worked, stores the money less the Price (ovl21_e10). Otherwise it reads the money pooled
-  in the shop (ovl21_e12 on ds67F4); if the Price fits it adds the item and stores the pool less the
+  in the shop (ovl21_e12 on PooledMoney); if the Price fits it adds the item and stores the pool less the
   Price (ovl21_e11), else it shows "Not enough Money." (res12_fn_1693). No parameters; side effects:
   the character's items, the money and the screen.
   QUIRK ovl06:03C7: ovl19_e11 returns a LongInt, but Money is a Word, so only AX is kept and a
@@ -155,7 +155,7 @@ begin
       end
       else
       begin
-        Pooled := ovl21_e12(ds67F4);
+        Pooled := ovl21_e12(PooledMoney);
         if Price <= Pooled then
         begin
           AddInventoryItem(Selected, Overloaded);
@@ -174,7 +174,7 @@ end;
 
 { ovl06:053E (ShopMain). The shop's entry and main loop, called from ovl03 (the area logic) when the
   party enters a shop. It marks the shop open (ds49F3), redraws the shop screen (res12_fn_27D9,
-  res12_fn_0767 on SelectedCharacter), clears the money block ds67F4 and clears ds6DC0, then shows the
+  res12_fn_0767 on SelectedCharacter), clears the money block PooledMoney and clears ds6DC0, then shows the
   menu (ReadPromptChoice) with a text chosen by ovl21_e9 (the Take/Share entries appear only while
   MoneyPooled says money lies in the pool) and dispatches the key: B BuyItems, V ovl19_e5, T ovl21_e4,
   P ovl21_e2 (when MenuFlag is 0), S ovl21_e3, A ovl21_e14 (Appraise), E leaves, and G and O, which
@@ -200,7 +200,7 @@ begin
   ds49F3 := 1;
   res12_fn_27D9;
   res12_fn_0767(SelectedCharacter);
-  FillChar(ds67F4, SizeOf(ds67F4), 0);
+  FillChar(PooledMoney, SizeOf(PooledMoney), 0);
   Title := '';
   ds6DC0 := 0;
   Done := 0;

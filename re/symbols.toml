@@ -1680,247 +1680,78 @@ evidence = ["prologue"]
 id = "ovl05:0000"
 unit = "ovl05"
 addr = "ovl05:0000"
-size = 682
-name = "ovl05_fn_0000"
+size = 853
+name = "ComputeBattleExperience"
 signature = ""
 c_name = "ovl05_fn_0000"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl05_fn_0000 (sums the defeated monsters' XpValue + HpB1*XpPerHp, the pooled money at 1/200..2200 per coin and 400 per magic plus of the looted items, divided by the party size; moves the monsters' money and items into the loot (ovl05:0000, matched)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl05:02AA"
-unit = "ovl05"
-addr = "ovl05:02AA"
-size = 103
-name = "ovl05_fn_02AA"
-signature = ""
-c_name = "ovl05_fn_02AA"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl05:0311"
-unit = "ovl05"
-addr = "ovl05:0311"
-size = 68
-name = "ovl05_fn_0311"
-signature = ""
-c_name = "ovl05_fn_0311"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl05:0355"
 unit = "ovl05"
 addr = "ovl05:0355"
 size = 372
-name = "ovl05_fn_0355"
+name = "AwardExperience"
 signature = ""
 c_name = "ovl05_fn_0355"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl05_fn_0355 (adds the experience to every member with Flag10D set and not dead, +10% when the prime requisite of the class is above 15, halved or a third for multi-class (ovl05:0355, matched)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl05:04C9"
 unit = "ovl05"
 addr = "ovl05:04C9"
-size = 62
-name = "ovl05_fn_04C9"
+size = 1101
+name = "SettleBattleOutcome"
 signature = ""
 c_name = "ovl05_fn_04C9"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl05_fn_04C9 (decides fled/won/destroyed from the members' Status and Side, awards the experience through ComputeBattleExperience and AwardExperience, revives fled and dying members or removes the party (ovl05:04C9, matched)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl05:0507"
-unit = "ovl05"
-addr = "ovl05:0507"
-size = 484
-name = "ovl05_fn_0507"
-signature = ""
-c_name = "ovl05_fn_0507"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl05:06EB"
-unit = "ovl05"
-addr = "ovl05:06EB"
-size = 191
-name = "ovl05_fn_06EB"
-signature = ""
-c_name = "ovl05_fn_06EB"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl05:07AA"
-unit = "ovl05"
-addr = "ovl05:07AA"
-size = 223
-name = "ovl05_fn_07AA"
-signature = ""
-c_name = "ovl05_fn_07AA"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl05:0889"
-unit = "ovl05"
-addr = "ovl05:0889"
-size = 25
-name = "ovl05_fn_0889"
-signature = ""
-c_name = "ovl05_fn_0889"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl05:08A2"
-unit = "ovl05"
-addr = "ovl05:08A2"
-size = 116
-name = "ovl05_fn_08A2"
-signature = ""
-c_name = "ovl05_fn_08A2"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl05:0916"
 unit = "ovl05"
 addr = "ovl05:0916"
-size = 4
-name = "ovl05_fn_0916"
+size = 510
+name = "ShowBattleResult"
 signature = ""
 c_name = "ovl05_fn_0916"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl05_fn_0916 (shows 'The party has won.'/'fled'/'found Treasure!' or the duel result and 'Each character receives <n> experience points.' (ovl05:0916, matched)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl05:091A"
-unit = "ovl05"
-addr = "ovl05:091A"
-size = 5
-name = "ovl05_fn_091A"
-signature = ""
-c_name = "ovl05_fn_091A"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl05:091F"
-unit = "ovl05"
-addr = "ovl05:091F"
-size = 5
-name = "ovl05_fn_091F"
-signature = ""
-c_name = "ovl05_fn_091F"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl05:0924"
-unit = "ovl05"
-addr = "ovl05:0924"
-size = 25
-name = "ovl05_fn_0924"
-signature = ""
-c_name = "ovl05_fn_0924"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl05:093D"
-unit = "ovl05"
-addr = "ovl05:093D"
-size = 92
-name = "ovl05_fn_093D"
-signature = ""
-c_name = "ovl05_fn_093D"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl05:0999"
-unit = "ovl05"
-addr = "ovl05:0999"
-size = 379
-name = "ovl05_fn_0999"
-signature = ""
-c_name = "ovl05_fn_0999"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl05:0B14"
 unit = "ovl05"
 addr = "ovl05:0B14"
-size = 52
-name = "ovl05_fn_0B14"
+size = 242
+name = "ChooseLootItem"
 signature = ""
 c_name = "ovl05_fn_0B14"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl05_fn_0B14 (draws the 'Loot' window and lets the player pick an item of the loot list ds6810 through ChooseFromList ('Items: ', 'Take') (ovl05:0B14, matched)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl05:0B48"
-unit = "ovl05"
-addr = "ovl05:0B48"
-size = 190
-name = "ovl05_fn_0B48"
-signature = ""
-c_name = "ovl05_fn_0B48"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl05:0C06"
 unit = "ovl05"
 addr = "ovl05:0C06"
 size = 306
-name = "ovl05_fn_0C06"
+name = "TakeLootItems"
 signature = ""
 c_name = "ovl05_fn_0C06"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl05_fn_0C06 (loops ChooseLootItem; on Take gives the chosen item to SelectedCharacter (AddInventoryItem) and unlinks and frees it from the loot list ds6810 (ovl05:0C06, matched)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -1928,90 +1759,64 @@ id = "ovl05:0D38"
 unit = "ovl05"
 addr = "ovl05:0D38"
 size = 405
-name = "ovl05_fn_0D38"
+name = "TakeTreasure"
 signature = ""
 c_name = "ovl05_fn_0D38"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl05_fn_0D38 (the Take command: 'Take: Money Items Exit' when both money and items are left, else takes the money (ovl21_e4) or the items (TakeLootItems) directly (ovl05:0D38, matched)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl05:0ECD"
 unit = "ovl05"
 addr = "ovl05:0ECD"
-size = 277
-name = "ovl05_fn_0ECD"
+size = 735
+name = "TreasureMenu"
 signature = ""
 c_name = "ovl05_fn_0ECD"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl05_fn_0ECD (the menu after a battle: 'View Take Pool Share Detect Exit', asks 'There is still treasure left. Do you want to go back and claim your treasure?' on Exit (ovl05:0ECD, matched)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl05:0FE2"
-unit = "ovl05"
-addr = "ovl05:0FE2"
-size = 458
-name = "ovl05_fn_0FE2"
-signature = ""
-c_name = "ovl05_fn_0FE2"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl05:11AC"
 unit = "ovl05"
 addr = "ovl05:11AC"
 size = 316
-name = "ovl05_fn_11AC"
+name = "RemoveBattleCombatants"
 signature = ""
 c_name = "ovl05_fn_11AC"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl05_fn_11AC (removes the monsters (Side 1) and the B13 combatants from the party list through ovl16_e2 and frees the remaining members' combat state (ovl05:11AC, matched)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl05:12E8"
 unit = "ovl05"
 addr = "ovl05:12E8"
-size = 31
-name = "ovl05_fn_12E8"
+size = 575
+name = "TakeHirelingShares"
 signature = ""
 c_name = "ovl05_fn_12E8"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl05_fn_12E8 (computer-run members (B84 80h and up) take their share (byte +85h and 7) of each pooled money kind: '<name> takes and hides his share.' (ovl05:12E8, matched)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl05:1307"
-unit = "ovl05"
-addr = "ovl05:1307"
-size = 544
-name = "ovl05_fn_1307"
-signature = ""
-c_name = "ovl05_fn_1307"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl05:1527"
 unit = "ovl05"
 addr = "ovl05:1527"
 size = 330
-name = "ovl05_e1"
+name = "EndBattle"
 signature = ""
 c_name = "ovl05_e1"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_1"
+notes = "renamed from ovl05_e1 (the entry after a combat: settles the outcome, removes the monsters, shares, shows the result and the treasure menu, frees the loot; or 'The END!' / 'The monsters rejoice for the party has been destroyed' (ovl05:1527, matched)); auto:entry_1"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2022,7 +1827,7 @@ size = 5
 name = "ovl05_init"
 signature = ""
 c_name = "ovl05_init"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_0"
 evidence = ["prologue"]
@@ -8864,7 +8669,7 @@ unit = "ovl16"
 addr = "ovl16:3291"
 size = 342
 name = "ovl16_e2"
-signature = ""
+signature = "procedure ovl16_e2(Uncounted, FreePicture: Boolean)"
 c_name = "ovl16_e2"
 level = "none"
 justification = ""
