@@ -4,6 +4,8 @@
 
 ## Steps
 
+Nothing to claim is a pause, not the end: post an idle heartbeat, wait about 5 minutes and run `make claim` again (AGENTS.md rule 9).
+
 1. **Claim.** From the main checkout: `make claim AGENT=<you>` (or `UNIT=<id>` when the human assigned one). It locks the next unit: first a unit whose review failed (fix its must-fix findings, below), else the next unit of `work/queue.toml` that is neither locked nor complete. It creates the worktree `../poolrad-worktrees/<id>` on branch `unit/<id>` and links the compiler into it. `cd` there; do everything else in that worktree.
 2. **Read.** `make packet UNIT=<id>`; read `build/packets/<id>.md` (annotated disassembly, frames, callers, the bytes after each return), the unit's skeleton `src/<ID>.PAS`, and the whitepaper sections about the subsystem.
 3. **Decompile, routine by routine, leaves first** (callees before callers):

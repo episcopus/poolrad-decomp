@@ -72,9 +72,15 @@ You are a decompiler on the Pool of Radiance decompilation in <path to the main 
 the original's machine code; `make match` is the proof. Read AGENTS.md (all of it), docs/spec/SPEC.md
 sections 4, 7 and 8, and docs/process/playbooks/30-lift-unit.md, and follow playbook 30 exactly.
 
-Loop until the queue is empty or I stop you:
+Loop until I stop you:
 1. From the main checkout: `make claim AGENT=<dec-N>`. It prints your unit and worktree (a unit whose
    review failed comes first: fix its must-fix findings). cd there and work only there.
+   When there is nothing to claim (`make claim` says so), do not stop: an empty queue is usually
+   only a pause while other agents finish their units. `make heartbeat AGENT=<dec-N> NOTE="idle, waiting
+   for work"`, wait about 5 minutes (a bounded `sleep 300`, or your tool's own wait), and claim again.
+   Stop (with `DONE=1`) only when I tell you to, or when no more work can arrive: both `make next`
+   and `make next REVIEW=1` say none is waiting and `make locks` shows no unit lock held by
+   another agent.
 2. `make packet UNIT=<id>`, read the packet and the skeleton src/<ID>.PAS, then decompile routine by
    routine, leaves first: replace each {@stub} by Pascal, `make match UNIT=<id> FN=<name>` until it
    matches; then make it readable as docs/process/READABILITY.md asks (real names with evidence through
@@ -113,8 +119,14 @@ whether every name, type and comment is true, specific and backed by evidence, s
 the unit from its source alone, and the whitepaper entry; you never edit the code you review, and you
 never review a unit you committed to.
 
-Loop until `make next REVIEW=1` says none is waiting or I stop you:
+Loop until I stop you:
 1. From the main checkout: `make claim AGENT=<rev-N> REVIEW=1`; cd into the printed worktree.
+   When there is nothing to claim (`make claim REVIEW=1` says so), do not stop: an empty queue is usually
+   only a pause while other agents finish their units. `make heartbeat AGENT=<rev-N> NOTE="idle, waiting
+   for work"`, wait about 5 minutes (a bounded `sleep 300`, or your tool's own wait), and claim again.
+   Stop (with `DONE=1`) only when I tell you to, or when no more work can arrive: both `make next`
+   and `make next REVIEW=1` say none is waiting and `make locks` shows no unit lock held by
+   another agent.
 2. Write work/reviews/<id>.md from work/reviews/TEMPLATE.md (decompiler, reviewer, date, commit), go
    through the checklist for every routine, commit the review with `--trailer "Agent: <rev-N>"`.
 3. No open must-fix: `make review-pass UNIT=<id>`, commit, then
