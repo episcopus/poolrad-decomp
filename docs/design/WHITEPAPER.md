@@ -264,6 +264,23 @@ What the matching harness relies on, each proven by a complete match of res04 (r
 - The initialisation part comes last; an empty one (`begin end.`) is `push bp; mov bp,sp; pop bp; retf`. A resident unit is padded with zeros to a paragraph.
 - Globals are DS offsets fixed at link time; a routine of an overlay unit is addressed through its stub entry (`@HeapErrorHandler` is `0016:0025`, the stub segment and entry offset).
 - Linking the whole program from source (`make rebuild`: `src/POOL.PAS` with `{$O OVLnn}` for the overlay units) reproduces the original's arrangement **[V]**: the main program at `0000`, the overlay stub segments from paragraph `16h` on (where the original's ovl00 stub is), the resident units after them in reverse initialisation order and System last, and an `FBOV` overlay file whose first unit's code starts with ovl00's string pool, like `GAME.OVR`. `tools/re/tpovl.py` reads the rebuilt pair and finds the original's 35 overlays and 48 initialisations (13 resident).
+- A string value parameter is copied to a hidden stack temporary on entry (`System_StrLCopy`,
+  `0AF8:0B25`, limit = the parameter's maximum), and the routine uses the temporary throughout
+  (a `string[40]` value parameter costs a 42-byte frame: 41 bytes of string plus one of
+  padding **[I]**) **[V]** (`DrawWindow`, `03F1:02E8`: the copy is the entry code, and `Length`
+  and the `res06_fn_0626` call read `[bp-$29]`; `make tpc` probes of every value form).
+- A `case` on consecutive values compiles to one compare per label, `cmp; je body; jmp next`
+  when the next dispatch is beyond a short jump and `cmp; jne next` when it is not (the jump
+  form follows body size) **[V]** (`ClearWindow`, `03F1:0137`: `je` for labels 0 and 2, `jne`
+  for 1; the same `je`-form opens the `case` of `ShowAreaView`, ovl26:018C).
+- Indexing a two-dimensional absolute array generates the row-stride multiply inline
+  (`mov ax,$50; mul Row; mov di,ax; add di,cx`) **[V]** (`ClearWindow` addresses its video
+  planes, declared as `array[0..99, 0..79] of Byte absolute $B800:$0000`, as `Plane[Row, Col]`).
+- Signed and unsigned multiply differently: `80 * IntegerRow + ShortIntExpr` adds in 16 bits,
+  while the same expression with a `Word` row promotes the addition to 32 bits (`cdq`/`adc`),
+  so a `Word` loop variable needs `Integer(...)` casts in products; and a `ShortInt` `for`
+  loop exits with `jg` where a `Word` loop uses `ja` **[V]** (the offset arithmetic and both
+  `for` loops of the res09 routines; `make tpc` probes).
 
 
 ---
@@ -456,12 +473,12 @@ a fixed table entry while the game variables allow it (`DrawAreaView`, `ovl27:00
   dynamically **[V]**, consistent with the ECL scripts' variables **[H]** (coab `VmOpp.cs`).
 - **`DrawAdventureScreen`** (`ovl27:0207`) frames the three windows of the adventure screen
   **[V]**: the 3D view rows 1..15 x columns 1..15, the side window rows 1..15 x columns 17..38
-  and the text area rows 17..22 x columns 1..38, through `res09_fn_02E8` (`03F1:02E8`), the
-  window routine of res09 **[V]**: it clears the interior (`res09_fn_0137`), draws a frame from
-  picture set `FrameSet` around it (`res09_fn_0000`: the corner and edge pictures come from index
+  and the text area rows 17..22 x columns 1..38, through `DrawWindow` (`03F1:02E8`), the
+  window routine of res09 **[V]**: it clears the interior (`ClearWindow`), draws a frame from
+  picture set `FrameSet` around it (`DrawWindowFrame`: the corner and edge pictures come from index
   `FrameSet*3+276` and are blitted by `ovl34_e2`) and centres the text on the top row
   (`res06_fn_0626`). Its grid: a column is 16 pixels and a row 4 scanlines, 40x50 cells on a
-  640x200 screen **[V]** (the multiplies in `res09_fn_0137`).
+  640x200 screen **[V]** (the multiplies in `ClearWindow`).
 - QUIRK `ovl27:01CC`: `DrawAreaView` passes both cell coordinates as `BaseCol + 1 - 1` (and the
   same for the row): the additions cancel; the compiler must emit them to match the bytes. The
   fourth argument of `ovl32_e2` is always 1 here (0 from `ovl31`) and the callee never reads it
@@ -488,10 +505,31 @@ a fixed table entry while the game variables allow it (`DrawAreaView`, `ovl27:00
   - `QuitGame` ends the program: restores the setting in `DS:5372`, calls `res03` `08AE:00DC` with `DS:2612`, sets the video mode saved in `DS:4A1C` (`Intr($10)` with AH=0, through the `Registers` record at `DS:4A02`) and calls `Halt`.
 - The menu loop is `ovl25:03BD` (get key, parse the item string, redraw `ovl25:01DA`), called by the list handler at `ovl25:0FA0..10A7` **[V]**. It parses the item string with a 36-character set at `ovl25:00AB` (upper-case letters and digits mark the first letter of each item: the highlighted hotkey). In the lists of the character creation (race, sex, class, alignment) the highlight moves with **END (next) and HOME (previous)**, ENTER selects, and the one-item bar at the bottom ("Exit") answers to its first letter **[V]** (oracle session `create-character`). The arrow keys have no effect in these lists **[V]** (oracle: UP/DOWN/LEFT/RIGHT/TAB/SPACE leave the screen unchanged); `ovl25:03BD` drops an extended key unless its caller asked for it (`ovl25:0580..0599`) **[I]**, and `,` and `.` move the highlight of its own item bar (`ovl25:05C4`, `05E8`) **[I]**.
 - Character creation flow **[V]** (one run of `tests/sessions/create-character.keys`): main menu (C) > race list > sex > class > alignment > rolled character sheet with "Keep this character? Yes No" > name prompt > "Head Body Keep" > icon editor ("Parts Color-1 Color-2 Size Exit") > "Is this icon OK? Yes No" > main menu. The game writes `SAVE\RAD.CHA` (285 bytes, the character record of 4.2.5) and `SAVE\CHARLIST.TXT` (`RAD`, CR LF) **[V]**; decoding `RAD.CHA` with `tools/re/records.py` gives the race, class, sex, age and six scores shown on the sheet (human 7, fighter 2, male 0, age 19, STR 15 INT 13 WIS 11 DEX 12 CON 16 CHA 12 in the pinned run).
+- The window unit is res09 **[V]** (decompiled and matched as a whole, `src/RES09.PAS`):
+  `DrawWindow(LeftCol, TopRow, RightCol, BottomRow, FrameSet, TextColour, Text)` clears the
+  rectangle (`ClearWindow`, `03F1:0137`), draws one frame set around it (`DrawWindowFrame`,
+  `03F1:0000`) and centres `Text` on `TopRow` in colour `TextColour` (`res06_fn_0626`,
+  skipped when `Text` is empty). Coordinates are `ShortInt` (sign-extended; the frame reaches
+  one cell past the window, so -1 is legal), colours and the frame set are `Byte`, and `Text`
+  is a `string[40]` value parameter, which the compiler copies to a hidden stack temporary on
+  entry (`System_StrLCopy`, `0AF8:0B25`, limit 40) **[V]** (code).
+  - `DrawWindowFrame` draws four corner tiles, the top/bottom edges and the left/right edges
+    through `ovl34_e2`, with tile base `FrameSet * 3 + $114` (`$114` = 276, the value 5.2 already
+    reports for the adventure screen frame) **[V]** (code). The last two arguments of `ovl34_e2`
+    are 0 here; what they select is still open **[?]**.
+  - `ClearWindow` fills the rectangle with 0 by video hardware, selected by the `VideoAdapter`
+    global (`DS:4A1E`) **[V]** (code): 0 fills two text-scanline planes (absolute byte planes
+    over `$B800`/`$BA00`, 80 bytes per scanline row, 4 scanlines per text row), 1 draws through
+    `res06_fn_00B7` twice, 2 fills four graphics planes (`$B800`/`$BA00`/`$BC00`/`$BE00`, 160
+    bytes per row, 2 rows per text row). Which adapter (EGA/CGA/Tandy of `POOL.CFG`) each value
+    means is still open **[?]**, as is what `res06_fn_00B7` draws.
+  - Callers **[V]** (`make packet UNIT=res09`): `DrawWindow` is called for dialogs and screens
+    from ovl01, ovl02 (the code wheel), ovl03, ovl04, ovl05 and ovl06; the frame and clear
+    routines are also called directly from ovl08, ovl13, ovl14, ovl15, ovl16, ovl19 and res12.
 
 ### 5.12 Copy protection: the code wheel
 
-- The check is `CheckCodeWheel` (`ovl02:00FD`, entry point of overlay 2, matched as a whole: `src/OVL02.PAS`, `make match UNIT=ovl02`: unit complete) **[V]**. At most three times it picks `r = Random(13)` (`System_Random`, `0AF8:11C0`), draws two rune glyphs and a path pattern from a table at the very start of DGROUP (`DS:0000`, 13 records of 21 bytes, the `TCodeWheelEntry` type in `src/POOLVARS.PAS`), calls the keyboard flush `res04:0104` (which does nothing, 5.8) and asks "INPUT THE CODE WORD:" **[V]**. The question window is drawn by `res09_fn_02E8(1, 1, $26, $16, 0, 0, '')` and the instructions, the runes and the path by `res06_fn_0626`, `res06_fn_01DF` (the runes as font characters at the four corners of a small grid) and one concatenation of five spaces with the record path **[V]** (code).
+- The check is `CheckCodeWheel` (`ovl02:00FD`, entry point of overlay 2, matched as a whole: `src/OVL02.PAS`, `make match UNIT=ovl02`: unit complete) **[V]**. At most three times it picks `r = Random(13)` (`System_Random`, `0AF8:11C0`), draws two rune glyphs and a path pattern from a table at the very start of DGROUP (`DS:0000`, 13 records of 21 bytes, the `TCodeWheelEntry` type in `src/POOLVARS.PAS`), calls the keyboard flush `res04:0104` (which does nothing, 5.8) and asks "INPUT THE CODE WORD:" **[V]**. The question window is drawn by `DrawWindow(1, 1, $26, $16, 0, 0, '')` and the instructions, the runes and the path by `res06_fn_0626`, `res06_fn_01DF` (the runes as font characters at the four corners of a small grid) and one concatenation of five spaces with the record path **[V]** (code).
 - Record layout **[V]** (`start-unpack.exe` image at `0C7C0h`, and the lcalls in `ovl02:01A2..02FD`): `+02` Pascal string[6] with the answer; `+09`, `+0A`, `+0B` glyph indices, each drawn as character `index + 40h` in the game's font (the two rune pictures the prompt asks to match, then a third); `+0C` a fourth index drawn only when it is not FFh; `+0D` Pascal string with the path pattern drawn under the runes (`- - - -`, `-..-..-`, `.......`).
 - The 13 answers, in record order **[V]**: BEWARE, ZOMBIE, NOTNOW, COPPER, DRAGON, EFREET, FRIEND, JUNGLE, KNIGHT, SAVIOR, TEMPLE, VULCAN, WYVERN. The typed word is compared with `System_StrCompare` (`0AF8:0C10`, flags in ZF) after truncating the function result of `res06_fn_09E3` (the line reader of res06) to 40 characters; the failure message is "Sorry, that's incorrect." (`ovl02:00E4`) through `res06_fn_0D68`; after the third failure `res04:0000` ends the program **[V]**.
 - The line reader `res06_fn_09E3` is a string function: TP 6.0 passes the caller result pointer as the first (deepest) argument and the callee `retf 8` pops only the prompt and the two numbers, leaving the result pointer for the caller to consume (here: the truncating assignment `Answer := res06_fn_09E3('INPUT THE CODE WORD: ', 13, 6)`, `0AF8:0B25` with max 40) **[V]** (the frames: `retf 8` = 8 bytes of parameters, the observed 12 pushed).
