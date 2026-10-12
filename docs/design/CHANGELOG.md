@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-12 | process | make next ignores an unprovable init when deciding whether a unit is waiting | tests/unit/test_agent_tools.py |
 | 2026-10-12 | none | ovl08 map cleanup, ovl08_init blocked | make match UNIT=ovl08 |
 | 2026-10-12 | none | ovl25_init marked blocked behind the nested-routine comparison | make match UNIT=ovl25 |
 | 2026-10-12 | 5.4 | money truncation QUIRKs of BuyItems, the Overloaded flag, the leave-on-No answer | make match UNIT=ovl06 |
