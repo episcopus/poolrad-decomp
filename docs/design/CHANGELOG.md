@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-11 | process | make handoff refuses a branch hand-off with nothing to merge | tests/unit/test_agent_tools.py |
 | 2026-10-11 | 4.x (8x8 tiles), 3.2.2 (cross-ref) | Load8x8Bank and Put8x8Symbol at L2; the fourth parameter of Put8x8Symbol settled as a Byte (the callers pass 0 and the test compiles the same); the shared globals renamed TileSet, TileBanks, TileBuf, DrawBuf and ovl11 reconciled with them | make match UNIT=ovl34: unit complete, 3 matched, 0 differ; make check green |
 | 2026-10-11 | 5.2 (clamp address), 5.2.1 (citations and constants) | fixed the ovl26 window clamp citations (they pointed into WallDesc4FromCode), named the marker and clamp limits, and corrected the whitepaper 5.2 clamp address | make match UNIT=ovl26: unit complete, 3 matched, 3 nested, 0 differ; src/OVL26.PAS |
 | 2026-10-11 | 5.8, 5.2 (cross-ref) | named the debug trace rectangle and its three hit point values in ShowDebugTrace and made the whitepaper match (the top text line: columns 0..39, row 0; the caller ovl12:2233 passes a character maximum, current and lost hit points) | make match UNIT=ovl33: unit complete, 2 matched, 0 differ; src/OVL33.PAS, docs/design/WHITEPAPER.md 5.8 |
