@@ -9,7 +9,7 @@ procedure res07_fn_007B;
 procedure res07_fn_00CF(A: Byte);
 procedure res07_fn_00FF;
 procedure res07_fn_0111(Text: string; A, B, C: Byte; var Target);
-procedure res07_fn_02A5;
+procedure res07_fn_02A5(Data: Pointer; Offset: Word; A, B: Byte; Sprite: Pointer);
 procedure res07_fn_066F;
 procedure res07_fn_0710;
 procedure res07_fn_08D4(Col, Row: Integer; PicIndex, Flags: Byte; Source, Dest: Pointer);
@@ -57,7 +57,7 @@ implementation
   nil, then loads the picture there. }
 {@stub} procedure res07_fn_0111(Text: string; A, B, C: Byte; var Target); begin end;
 { 0464:02A5: frame not read }
-{@stub} procedure res07_fn_02A5; begin end;
+{@stub} procedure res07_fn_02A5(Data: Pointer; Offset: Word; A, B: Byte; Sprite: Pointer); begin end;
 { 0464:066F: frame not read }
 {@stub} procedure res07_fn_066F; begin end;
 { 0464:0710: retf 14: 14 bytes of parameters; 0 bytes of locals }
