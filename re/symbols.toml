@@ -2665,32 +2665,6 @@ notes = "renamed from ovl08_fn_031A (ovl08:031A the player's command loop for on
 evidence = ["prologue"]
 
 [[routine]]
-id = "ovl08:03A5"
-unit = "ovl08"
-addr = "ovl08:03A5"
-size = 48
-name = "ovl08_fn_03A5"
-signature = ""
-c_name = "ovl08_fn_03A5"
-level = "none"
-justification = ""
-notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl08:03D5"
-unit = "ovl08"
-addr = "ovl08:03D5"
-size = 657
-name = "ovl08_fn_03D5"
-signature = ""
-c_name = "ovl08_fn_03D5"
-level = "none"
-justification = ""
-notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
 id = "ovl08:0666"
 unit = "ovl08"
 addr = "ovl08:0666"
@@ -2702,188 +2676,6 @@ level = "L2"
 justification = ""
 notes = "renamed from ovl08_fn_0666 (ovl08:0666 builds the combat menu (Move, View Aim, Use, Cast, Turn, Quick Done) and returns an accepted key through ovl25_e2); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl08:06A5"
-unit = "ovl08"
-addr = "ovl08:06A5"
-size = 10
-name = "ovl08_fn_06A5"
-signature = ""
-c_name = "ovl08_fn_06A5"
-level = "none"
-justification = ""
-notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl08:06AF"
-unit = "ovl08"
-addr = "ovl08:06AF"
-size = 5
-name = "ovl08_fn_06AF"
-signature = ""
-c_name = "ovl08_fn_06AF"
-level = "none"
-justification = ""
-notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl08:06B4"
-unit = "ovl08"
-addr = "ovl08:06B4"
-size = 5
-name = "ovl08_fn_06B4"
-signature = ""
-c_name = "ovl08_fn_06B4"
-level = "none"
-justification = ""
-notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl08:06B9"
-unit = "ovl08"
-addr = "ovl08:06B9"
-size = 5
-name = "ovl08_fn_06B9"
-signature = ""
-c_name = "ovl08_fn_06B9"
-level = "none"
-justification = ""
-notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl08:06BE"
-unit = "ovl08"
-addr = "ovl08:06BE"
-size = 5
-name = "ovl08_fn_06BE"
-signature = ""
-c_name = "ovl08_fn_06BE"
-level = "none"
-justification = ""
-notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl08:06C3"
-unit = "ovl08"
-addr = "ovl08:06C3"
-size = 10
-name = "ovl08_fn_06C3"
-signature = ""
-c_name = "ovl08_fn_06C3"
-level = "none"
-justification = ""
-notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl08:06CD"
-unit = "ovl08"
-addr = "ovl08:06CD"
-size = 10
-name = "ovl08_fn_06CD"
-signature = ""
-c_name = "ovl08_fn_06CD"
-level = "none"
-justification = ""
-notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl08:06D7"
-unit = "ovl08"
-addr = "ovl08:06D7"
-size = 5
-name = "ovl08_fn_06D7"
-signature = ""
-c_name = "ovl08_fn_06D7"
-level = "none"
-justification = ""
-notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl08:06DC"
-unit = "ovl08"
-addr = "ovl08:06DC"
-size = 15
-name = "ovl08_fn_06DC"
-signature = ""
-c_name = "ovl08_fn_06DC"
-level = "none"
-justification = ""
-notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl08:06EB"
-unit = "ovl08"
-addr = "ovl08:06EB"
-size = 5
-name = "ovl08_fn_06EB"
-signature = ""
-c_name = "ovl08_fn_06EB"
-level = "none"
-justification = ""
-notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl08:06F0"
-unit = "ovl08"
-addr = "ovl08:06F0"
-size = 5
-name = "ovl08_fn_06F0"
-signature = ""
-c_name = "ovl08_fn_06F0"
-level = "none"
-justification = ""
-notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl08:06F5"
-unit = "ovl08"
-addr = "ovl08:06F5"
-size = 10
-name = "ovl08_fn_06F5"
-signature = ""
-c_name = "ovl08_fn_06F5"
-level = "none"
-justification = ""
-notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl08:06FF"
-unit = "ovl08"
-addr = "ovl08:06FF"
-size = 25
-name = "ovl08_fn_06FF"
-signature = ""
-c_name = "ovl08_fn_06FF"
-level = "none"
-justification = ""
-notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl08:0718"
-unit = "ovl08"
-addr = "ovl08:0718"
-size = 360
-name = "ovl08_fn_0718"
-signature = ""
-c_name = "ovl08_fn_0718"
-level = "none"
-justification = ""
-notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl08:0880"
@@ -2899,58 +2691,6 @@ notes = "renamed from ovl08_fn_0880 (ovl08:0880 end of a combat round: per chara
 evidence = ["prologue"]
 
 [[routine]]
-id = "ovl08:0889"
-unit = "ovl08"
-addr = "ovl08:0889"
-size = 5
-name = "ovl08_fn_0889"
-signature = ""
-c_name = "ovl08_fn_0889"
-level = "none"
-justification = ""
-notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl08:088E"
-unit = "ovl08"
-addr = "ovl08:088E"
-size = 87
-name = "ovl08_fn_088E"
-signature = ""
-c_name = "ovl08_fn_088E"
-level = "none"
-justification = ""
-notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl08:08E5"
-unit = "ovl08"
-addr = "ovl08:08E5"
-size = 180
-name = "ovl08_fn_08E5"
-signature = ""
-c_name = "ovl08_fn_08E5"
-level = "none"
-justification = ""
-notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl08:0999"
-unit = "ovl08"
-addr = "ovl08:0999"
-size = 70
-name = "ovl08_fn_0999"
-signature = ""
-c_name = "ovl08_fn_0999"
-level = "none"
-justification = ""
-notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
 id = "ovl08:09DF"
 unit = "ovl08"
 addr = "ovl08:09DF"
@@ -2962,45 +2702,6 @@ level = "L2"
 justification = ""
 notes = "renamed from ovl08_fn_09DF (ovl08:09DF the Move/Attack command: keypad scan codes H I M Q P O K G give directions 0..7, a step into an enemy attacks (MeleeAttack), off the map asks Flee:, terrain cost above the moves left says Blocked); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl08:0B2F"
-unit = "ovl08"
-addr = "ovl08:0B2F"
-size = 5
-name = "ovl08_fn_0B2F"
-signature = ""
-c_name = "ovl08_fn_0B2F"
-level = "none"
-justification = ""
-notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl08:0B34"
-unit = "ovl08"
-addr = "ovl08:0B34"
-size = 20
-name = "ovl08_fn_0B34"
-signature = ""
-c_name = "ovl08_fn_0B34"
-level = "none"
-justification = ""
-notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl08:0B48"
-unit = "ovl08"
-addr = "ovl08:0B48"
-size = 509
-name = "ovl08_fn_0B48"
-signature = ""
-c_name = "ovl08_fn_0B48"
-level = "none"
-justification = ""
-notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl08:0D45"
@@ -3077,7 +2778,7 @@ signature = ""
 c_name = "ovl08_init"
 level = "none"
 justification = ""
-notes = "auto:entry_0"
+notes = "auto:entry_0; blocked: the original is the empty initialisation part (push bp; mov bp,sp; pop bp; retf at ovl08:127A, packet), which src/OVL08.PAS already has (begin end., no {@stub-init}); make match checks an init part only in the whole-unit comparison, which runs when no stub is left, so it waits for EndCombat and RunCombat (escalate-ovl08-20261012113252) (dec-10)"
 evidence = ["prologue"]
 
 [[routine]]
