@@ -197,10 +197,10 @@ Start-up as observed by running the original code in the oracle (`make oracle-ru
 The loader is overlay 11 (`ovl11:002D`, 1512 bytes) and is the first thing the main program runs. It owns the whole unit: `ovl11:0615` is its empty initialisation part, and no other routine exists (the map's `ovl11:0435` was a phantom: the far-call heuristic read the `lcall 0041:0025` at `ovl11:060C`, a call through ovl12's stub, as the linear address `0041*16+0025 = 0435` inside ovl11). `StartGame`:
 
 - Allocates seven heap blocks with `New` (`ovl11:0034..00A3`): the game variables at `DS:49D2` (`^TGameVars`, `$800` bytes), a second `$800`-byte word block at `DS:49D6`, then `$400` (`DS:49DA`), `$1E00` (`DS:49DE`), `$588` (`DS:5E20`), `$924` (`DS:6A58`) and `$400` (`DS:6A5C`) byte blocks.
-- Allocates three screen buffers through `res07_fn_248E(Cols, Rows: Word; Planes, Flag: Byte; var Buf: Pointer)` (`ovl11:00A4`, `00BC`, `00D4`): `(8, 1, 1, 0)` into `DS:5E4E`, `($A8, $15, 1, 0)` into `DS:4A20` and `($18, 3, 1, 0)` into `DS:4A24`. The callee allocates `Rows*Cols*2` (doubled when `VideoAdapter` is not 0) times `Planes`, plus `$17` bytes, and stores the pointer at `Buf` (`0464:248E`).
+- Allocates three screen buffers through `res07_fn_248E(Cols, Rows: Word; Planes, Flag: Byte; var Buf)` (`ovl11:00A4`, `00BC`, `00D4`): `(8, 1, 1, 0)` into `TileBuf`, `($A8, $15, 1, 0)` into `DrawBuf` and `($18, 3, 1, 0)` into `DS:4A24`. The callee allocates `Rows*Cols*2` (doubled when `VideoAdapter` is not 0) times `Planes`, plus `$17` bytes, and stores the pointer at `Buf` (`0464:248E`).
 - Fills three 200-cell tables (`ovl11:0130..024D`): `DS:4EC0[I]` is the cell's scanline address (`$B800` for an even cell, `$BA00` for an odd one, plus `5*(I div 2)`), `DS:5050[I]` is `I*40` and `DS:51E0[I]` is the cell's graphics plane address (`10*(I div 4)` plus `$B800`, `$BA00`, `$BC00` or `$BE00`), so the tables drive the text and graphics planes of video adapter 2 (5.11). `DS:465C` is the loop counter of all three loops (a global).
 - Sets the screen and game globals (`ovl11:0392..0456`), including `AreaViewKind := 1`, `MarkerFrame := 0`, the special view codes `DS:6F69 := $E8` and `DS:6F68 := $DB` (5.2.1) and `DebugMode := False`.
-- Loads the data files (`ovl11:0469..0614`): it saves the current path `DS:547C` in `DS:4661`, draws "Loading...Please Wait" on row 24 (`res06_fn_0626(0, 24, 10, ...)`), draws through `ovl34_e1($CA, 4)` and `ovl34_e1($CB, 0)`, loads pictures 1 and 2 of `SQRPACI` (`res07_fn_0111('sqrpaci', N, 0, 0, @Buf)`, `ovl11:04BE`) and pictures 13 to 24 of `COMSPR` (`ovl32_e4('COMSPR', I, I+13)`, `ovl11:0502`, then `ovl32_e4('COMSPR', $19, $19)`). It then builds the file path from the 30-byte name table `DS:2614[DS:5376]` plus the character `DS:547D` plus `':'` and calls `res05_fn_025D('ITEMS', Path, 0, F)` (a `Byte` function), which opens the untyped file `DS:468C`; `StartGame` seeks to record 2 (`Seek(F, 2)`) and reads one `$810`-byte block into `DS:5582` (`BlockRead`, count in `DS:5E1E`), closes it, restores the path, calls `Randomize` (`0AF8:1247`) and hands over to `ovl22_e10` and `ovl12_e1`.
+- Loads the data files (`ovl11:0469..0614`): it saves the current path `DS:547C` in `DS:4661`, draws "Loading...Please Wait" on row 24 (`res06_fn_0626(0, 24, 10, ...)`), draws through `Load8x8Bank($CA, 4)` and `Load8x8Bank($CB, 0)`, loads pictures 1 and 2 of `SQRPACI` (`res07_fn_0111('sqrpaci', N, 0, 0, <bank pointer>)`, `ovl11:04BE`, into `DS:5E52` and `DS:5E56`) and pictures 13 to 24 of `COMSPR` (`ovl32_e4('COMSPR', I, I+13)`, `ovl11:0502`, then `ovl32_e4('COMSPR', $19, $19)`). It then builds the file path from the 30-byte name table `DS:2614[TileSet]` plus the character `DS:547D` plus `':'` and calls `res05_fn_025D('ITEMS', Path, 0, F)` (a `Byte` function), which opens the untyped file `DS:468C`; `StartGame` seeks to record 2 (`Seek(F, 2)`) and reads one `$810`-byte block into `DS:5582` (`BlockRead`, count in `DS:5E1E`), closes it, restores the path, calls `Randomize` (`0AF8:1247`) and hands over to `ovl22_e10` and `ovl12_e1`.
 - TP 6.0 idioms proven here (`make match UNIT=ovl11`, probe `tools/re/tp_idioms/PRB11..PRB16.PAS`): `New(P)` for an array type of `N` bytes emits `push N; lcall GetMem` and stores `DX:AX` in `P`; a `string` assignment always compiles to `System_StrLCopy` with the destination limit as the third argument; a `LongInt` (or pointer) `:= 0` (or `nil`) zeroes both words after one `xor ax,ax`, so `DS:6810`, `DS:5D92` and `DS:5D96` are 4-byte values; TP 6.0 rejects an anonymous `string[40]` in a parameter list (the type must be named, `String40`).
 
 The main program **[V]** (`src/POOL.PAS`, `make match UNIT=main`: matched completely, 58 address fields) is segment `0000` (337 bytes plus padding): the string `'STING'`, then one far call per unit initialisation in the order of its `uses` clause (System, Crt, res02 to res08, then overlays and resident units interleaved: ovl34, res09, ovl33, res10, ovl32 to ovl30, res11, ovl29 to ovl25, res12, ovl24 to ovl00), then the main block:
@@ -400,6 +400,10 @@ For `PIC`/`FINAL`, pixel bytes of frame N are XOR'd with frame 0 before draw **[
 
 `8X8D1.DAX` block 201 is not a picture record: it is a 1-bit font, 177 glyphs of 8 bytes each (1416 bytes) **[V]** (size; coab `seg041.Load8x8Tiles` reads it the same way **[H]**). Other `8X8D` blocks are ordinary picture records of 8x8 tiles (`item_count` 31 to 70).
 
+`Load8x8Bank` (`ovl34:003B`) loads one of five 8x8 tile banks (bank 0..4 into `TileBanks`) from the file `8X8D<TileSet>` through res07 **[V]** (`make match UNIT=ovl34`; called by `LoadWallSet` and `StartGame`, ovl11). A bank that stays nil after the load ends the game: `Unable to load 8x8D<set>-<count>` on Output, a key, `QuitGame` **[V]** (`ovl34:00D8`). `Put8x8Symbol` (`ovl34:015D`) draws symbols 1..$11E from banks 0..4 (ranges 1..$2D, $2E..$73, $74..$B9, $BA..$FF, $100..$11E, made bank relative through `SymbolBase`) **[V]** (`make match UNIT=ovl34`: the fourth parameter is a `Byte` used as `Direct <> 0`, which compiles to the same `cmp byte [bp+8],0` a `Boolean` did, and the callers pass 0; called by `DrawWindowFrame` and ovl29 three times). Symbols 0 and $11F..$7FFF print `Bad symbol number in Put8x8Symbol.` and quit the same way **[V]** (`ovl34:01C5`); symbols above $7FFF skip the check and run on with an unset bank (QUIRK `ovl34:01C0`). A nil bank draws nothing; otherwise the tile goes through res07_fn_08D4 or is copied into the `TileBuf` staging buffer and shown with res07_fn_1951 **[V]** (`ovl34:01EE`). Each bank is a picture record with the per-tile byte count at +$11 and the tiles at +$17 **[V]** (`ovl34:026B`, `ovl34:0274`).
+
+`SelectTileSet` (`0802:094A`) saves `TileSet` in `ds5377` and stores the new 8X8D file number; `RestoreTileSet` (`0802:095D`) copies `ds5377` back **[V]** (`make match UNIT=res05`). ovl07 and ovl17 call the first; ovl17 calls the second.
+
 CLI: `tools/re/pic.py dump <file.DAX> <id> out.png` (or a directory for multi-frame).
 
 #### 4.2.4 WALLDEF wallsets **[V]** (`tools/re/walldef.py verify`: 8 files, 38 blocks)
@@ -489,7 +493,7 @@ a fixed table can replace it while the game variables allow it (`DrawAreaView`, 
   and the text area rows 17..22 x columns 1..38, through `DrawWindow` (`03F1:02E8`), the
   window routine of res09 **[V]**: it clears the interior (`ClearWindow`), draws a frame from
   picture set `FrameSet` around it (`DrawWindowFrame`: the corner and edge pictures come from index
-  `FrameSet*3+276` and are blitted by `ovl34_e2`) and centres the text on the top row
+  `FrameSet*3+276` and are blitted by `Put8x8Symbol`) and centres the text on the top row
   (`res06_fn_0626`). Its grid: a column is 16 pixels and a row 4 scanlines, 40x50 cells on a
   640x200 screen **[V]** (the multiplies in `ClearWindow`).
 - QUIRK `ovl27:01CC`: `DrawAreaView` passes both cell coordinates as `BaseCol + 1 - 1` (and the
@@ -527,8 +531,8 @@ a fixed table can replace it while the game variables allow it (`DrawAreaView`, 
   is a `string[40]` value parameter, which the compiler copies to a hidden stack temporary on
   entry (`System_StrLCopy`, `0AF8:0B25`, limit 40) **[V]** (code).
   - `DrawWindowFrame` draws four corner tiles, the top/bottom edges and the left/right edges
-    through `ovl34_e2`, with tile base `FrameSet * 3 + $114` (`$114` = 276, the value 5.2 already
-    reports for the adventure screen frame) **[V]** (code). The last two arguments of `ovl34_e2`
+    through `Put8x8Symbol`, with tile base `FrameSet * 3 + $114` (`$114` = 276, the value 5.2 already
+    reports for the adventure screen frame) **[V]** (code). The last two arguments of `Put8x8Symbol`
     are 0 here; what they select is still open **[?]**.
   - `ClearWindow` fills the rectangle with 0 by video hardware, selected by the `VideoAdapter`
     global (`DS:4A1E`) **[V]** (code): 0 fills two text-scanline planes (absolute byte planes
@@ -573,6 +577,29 @@ What the game takes from the outside world, found by `make timing-scan` and by r
 
 - `ShowMessageLine(Color, Text)` shows a one-line message on row 24: it clears 40 columns of that row (`res06_fn_05EB(0, 24, 0, 40)`), draws the text in the given colour (`res06_fn_0626(0, 24, Color, Text)`) and waits for a key through `ReadGameKey`. The text is a `string[40]`. Twelve routines call it, in overlays 0, 3, 5, 7, 17 and 33 and in res06 itself (`make packet FN=ShowMessageLine`).
 - Overlay 0 is the heap error handler: its initialisation sets `HeapError := @HeapErrorHandler`, so Turbo Pascal calls `HeapErrorHandler(Size)` when `New` or `GetMem` cannot get `Size` bytes. A zero size returns at once with an unassigned result (`jbe ovl00:004C` to `ovl00:00A3`). For a non-zero size it shows "WARNING: Insufficient Memory" in colour 14 (yellow); if the Boolean `DS:49D0` is set it calls `ovl17_e9` (the save and load unit) and repeats until `DS:557D` says to stop, otherwise it shows "Insufficient Memory. Exiting Program". Then it always ends the program (`QuitGame`), so that path never returns. The function result is never assigned on any path (QUIRK `ovl00:00A3`).
+
+### 5.16 The 3D sprite unit ovl28 **[V]** (`src/OVL28.PAS`, `make match UNIT=ovl28`: 6 of 9 routines at L2)
+
+Overlay 28 draws the 8x8 sprites of the 3D view and the HEAD/BODY strip of the character screen.
+The parts proven so far:
+
+- `DrawSprite(Col, Row: Integer; Direct: Byte; Sprite: Pointer)` (`ovl28:0000`): a nil sprite draws
+  nothing; with `Direct` set it blits the sprite one pixel up and left onto the screen buffer
+  `DS:4A20` through `res07_fn_0D71` (mode 0, flag 1) and steps the display (`res07_fn_1B52`);
+  otherwise it copies the sprite into the staging buffer with `res07_fn_1951`.
+- `DrawHeadSprite` and `DrawBodySprite` (`ovl28:0050`, `ovl28:0070`): draw a sprite at (column,
+  row) and at (column, row + 5); `ShowHeadBodySprites` (`ovl28:0697`) uses them to draw the HEAD
+  sprite `DS:6B01` and the BODY sprite `DS:6B06` over the 3D view.
+- `LoadHeadBodySprites` (`ovl28:05D9`) loads the HEAD and BODY banks of the picture number
+  `DS:5376` from the files `HEAD<number>` and `BODY<number>` through `res07_fn_0111` into
+  `DS:6B01` and `DS:6B06` (recording the loaded number in `DS:6B00` and `DS:6B05`, `$FF` = none).
+- `FreeSpriteList` (`ovl28:048F`) frees every loaded sprite bank of a sprite list (through
+  `res07_fn_2595`) and zeroes the list, the picture name `DS:6B0A` and the current bank `DS:6B1C`.
+- The sprite list is a `$42`-byte record: a count byte at +0, a flag at +1, and slots of 8 bytes
+  from +6, each holding a far pointer at +0 (the `TSpriteList` type of `src/OVL28.PAS`).
+
+Still to decompile: `ovl28_e7` (the range-checked 3D sprite draw, "Illegal range in
+Show3DSprite."), `ovl28_e4` (the HEAD/BODY window) and `ovl28_e2` (the PIC/FINAL picture loader).
 
 ---
 

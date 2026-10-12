@@ -40,7 +40,7 @@ const
   ovl11:05A9..05E5), restores the path, randomises the seed (System.Randomize, ovl11:0602) and
   calls ovl22_e10 and ovl12_e1.
   Reads and changes: the globals listed in POOLVARS.PAS (their comments name the write).
-  Side effects: the heap, the screen (res06_fn_0626, ovl32_e4, ovl34_e1) and the disk (the file
+  Side effects: the heap, the screen (res06_fn_0626, ovl32_e4, Load8x8Bank) and the disk (the file
   read). The loop counter is the global DS:465C, reused by the three fill loops. }
 procedure StartGame;
 begin
@@ -51,8 +51,8 @@ begin
   New(ds5E20);
   New(ds6A58);
   New(ds6A5C);
-  res07_fn_248E(8, 1, 1, 0, ds5E4E);
-  res07_fn_248E($A8, $15, 1, 0, ds4A20);
+  res07_fn_248E(8, 1, 1, 0, TileBuf);
+  res07_fn_248E($A8, $15, 1, 0, DrawBuf);
   res07_fn_248E($18, 3, 1, 0, ds4A24);
   FillChar(ds4A28, $A8, 0);
   FillChar(ds4AD0, $150, 0);
@@ -72,7 +72,7 @@ begin
       3: ds51E0[ds465C] := (ds465C div 4) * $A + Plane4;
     end;
   end;
-  FillChar(ds5E3A, $14, 0);
+  FillChar(TileBanks, $14, 0);
   FillChar(ds5E52, 8, 0);
   FillChar(GameVars^, $800, 0);
   FillChar(ds49D6^, $800, 0);
@@ -109,7 +109,7 @@ begin
   ds49ED := $9900;
   ds49E2 := 1;
   ds49F4 := 0;
-  ds5376 := 1;
+  TileSet := 1;
   ds5377 := 1;
   ds547A := 1;
   ds5378 := 1;
@@ -144,14 +144,14 @@ begin
   res06_fn_017C;
   ovl25_e3;
   res06_fn_0626(0, $18, $A, 'Loading...Please Wait');
-  ovl34_e1($CA, 4);
-  ovl34_e1($CB, 0);
-  res07_fn_0111('sqrpaci', 1, 0, 0, @ds5E52);
-  res07_fn_0111('sqrpaci', 2, 0, 0, @ds5E56);
+  Load8x8Bank($CA, 4);
+  Load8x8Bank($CB, 0);
+  res07_fn_0111('sqrpaci', 1, 0, 0, ds5E52);
+  res07_fn_0111('sqrpaci', 2, 0, 0, ds5E56);
   for ds465C := 0 to $B do
     ovl32_e4('COMSPR', ds465C, ds465C + $D);
   ovl32_e4('COMSPR', $19, $19);
-  ds4660 := res05_fn_025D('ITEMS', ds2614[ds5376] + Chr(ds547D) + ':', 0, ds468C);
+  ds4660 := res05_fn_025D('ITEMS', ds2614[TileSet] + Chr(ds547D) + ':', 0, ds468C);
   Reset(ds468C, 1);
   Seek(ds468C, 2);
   BlockRead(ds468C, ds5582, LoadBlockSize, ds5E1E);
