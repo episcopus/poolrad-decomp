@@ -16784,7 +16784,7 @@ size = 113
 name = "SetEgaFillRegisters"
 signature = ""
 c_name = "res06_fn_0000"
-level = "none"
+level = "L2"
 justification = ""
 notes = "renamed from res06_fn_0000 (sets the EGA Graphics Controller registers 0..5, 7 and 8 and the Sequencer map mask for the picture fill (Port I/O only), 0709:0000); auto:near_call"
 evidence = ["prologue"]
@@ -16797,7 +16797,7 @@ size = 47
 name = "SetActivePage"
 signature = "procedure SetActivePage(A: Byte)"
 c_name = "res06_fn_0071"
-level = "none"
+level = "L2"
 justification = ""
 notes = "renamed from res06_fn_0071 (sets the video BIOS active display page (Intr 10h AH=5) and stores the plane segment A shl 9 + A000 in ds4A16, 0709:0071); auto:far_call"
 evidence = ["prologue"]
@@ -16810,7 +16810,7 @@ size = 23
 name = "SetPlaneSegment"
 signature = "procedure SetPlaneSegment(A: Byte)"
 c_name = "res06_fn_00A0"
-level = "none"
+level = "L2"
 justification = ""
 notes = "renamed from res06_fn_00A0 (stores the plane segment A shl 9 + A000 in ds4A18, 0709:00A0); auto:near_call"
 evidence = ["prologue"]
@@ -16820,12 +16820,12 @@ id = "0709:00B7"
 unit = "res06"
 addr = "0709:00B7"
 size = 197
-name = "res06_fn_00B7"
-signature = "procedure res06_fn_00B7(A, B, C, D: ShortInt; E, F: Byte)"
+name = "FillPlaneRect"
+signature = "procedure FillPlaneRect(A, B, C, D: ShortInt; E, F: Byte)"
 c_name = "res06_fn_00B7"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res06_fn_00B7 (fills a byte-column by cell-row rectangle on an EGA plane via FillChar with GC write mode (0709:00B7, called by res06_fn_0CAB, res06_fn_0DD3 and ClearWindow)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16833,12 +16833,12 @@ id = "0709:017C"
 unit = "res06"
 addr = "0709:017C"
 size = 99
-name = "res06_fn_017C"
+name = "LoadGameFont"
 signature = ""
 c_name = "res06_fn_017C"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res06_fn_017C (loads DAX block 201 ($C9) of 8X8d1.dax into ds5E20 (0709:017C); block 201 is the 1-bit font, 177 glyphs of 8 bytes (whitepaper font section); called by StartGame (ovl11:002D); ds5E20 is read as glyph bitmaps by res06_fn_01DF); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16846,12 +16846,12 @@ id = "0709:01DF"
 unit = "res06"
 addr = "0709:01DF"
 size = 1036
-name = "res06_fn_01DF"
-signature = "procedure res06_fn_01DF(A, B, C, D, Glyph, F: Byte)"
+name = "DrawGlyph"
+signature = "procedure DrawGlyph(Col, Row, Color, Count, Glyph, Cook: Byte)"
 c_name = "res06_fn_01DF"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res06_fn_01DF (draws Count copies of the GameFont glyph Glyph from cell Col advancing right (0709:01DF): text-scanline words, EGA planar bytes, or graphics nibbles by VideoAdapter; called by CheckCodeWheel, ShowMessageLine path, DrawTextRun); auto:near_call; BLOCKED dec-1 2026-10-12 after 5 match attempts: full draft in scratch/DRAWGLYPH.DRAFT.PAS. Settled by evidence: 3-operand or-guard with GameFont=nil (or-chains flatten, all but last jump on true, Q55); Index:=Ord(UpCase(Chr(Glyph))) mod $40 with zero-codegen bridges (Q44/Q45; Glyph stays Byte because ovl02 passes Integer exprs, revisit at review); 2-D WordPlane store (Q41); inner loops are fors (Q39; long arms use je+jmp, short arms jne); outer loop is manual goto (for would double-assign I: the if/else I-init reuses al=1, lockstep-verified). Open: a $10 length gap downstream of 01FA (suspects: PByteArray les/add order, mode-1 Mem store order, plane if-chain); the if/else I-init applied but unverified; Unused byte local theory for the 18-byte frame"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16885,12 +16885,12 @@ id = "0709:06A7"
 unit = "res06"
 addr = "0709:06A7"
 size = 109
-name = "res06_fn_06A7"
+name = "DrawTextRun"
 signature = ""
 c_name = "res06_fn_06A7"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res06_fn_06A7 (nested in ShowPagedText (0709:06A7): draws Buf[I..J] glyph by glyph through res06_fn_01DF at advancing GlyphCol with the Crt delay); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16898,12 +16898,12 @@ id = "0709:0714"
 unit = "res06"
 addr = "0709:0714"
 size = 84
-name = "res06_fn_0714"
+name = "SkipSpaces"
 signature = ""
 c_name = "res06_fn_0714"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res06_fn_0714 (nested in ShowPagedText (0709:0714): skips blank Buf chars while I is below Len); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16911,12 +16911,12 @@ id = "0709:0768"
 unit = "res06"
 addr = "0709:0768"
 size = 635
-name = "res06_fn_0768"
-signature = "procedure res06_fn_0768(A, B, C, D, E, F: Byte; Text: string)"
+name = "ShowPagedText"
+signature = "procedure ShowPagedText(Left, Top, Right, Bottom, Color, ClearFirst: Byte; Text: string)"
 c_name = "res06_fn_0768"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "renamed from res06_fn_0768 (word-wrapping text pager (0709:0768): shows Text in the Left..Bottom rect with BreakChars word scan, GlyphCol/GlyphRow cursor, FillPlaneRect/ClearRect clear and 'Press any key to continue' paging; called by ChargeForCure, VisitTemple, ShopMain, LoadEcl, ShowCredits); auto:far_call; dec-1 draft stashed in scratch/SHOWPAGEDTEXT.DRAFT.PAS: parent body plus nested DrawTextRun/SkipSpaces written, matches except nested pool bytes (nested code with globals and calls needs address-aware pool compare, escalated)"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16966,7 +16966,7 @@ size = 108
 name = "GameClock"
 signature = "function GameClock: Longint"
 c_name = "res06_fn_0C3F"
-level = "none"
+level = "L2"
 justification = ""
 notes = "renamed from res06_fn_0C3F (0709:0C3F reads the DOS time (GetTime) and returns Hour*360000 + Minute*6000 + Second*100 + Sec100, the time of day in hundredths; WaitKeyOrTimeout, ShowTitleScreen, AnimateFinalPicture and ovl25_e2 use it as a clock); auto:prologue"
 evidence = ["prologue"]
@@ -16976,12 +16976,12 @@ id = "0709:0CAB"
 unit = "res06"
 addr = "0709:0CAB"
 size = 189
-name = "res06_fn_0CAB"
+name = "ClearFullScreen"
 signature = ""
 c_name = "res06_fn_0CAB"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res06_fn_0CAB (clears the whole screen to 0 by VideoAdapter (0709:0CAB): 0 fills two planes, 1 draws the full screen through FillPlaneRect twice, 2 fills four planes; called by ovl19); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -17005,7 +17005,7 @@ size = 21
 name = "DelayCounted"
 signature = ""
 c_name = "res06_fn_0DBE"
-level = "none"
+level = "L2"
 justification = ""
 notes = "renamed from res06_fn_0DBE (delays ds49E2 * 225 ms through Crt.Delay, 0709:0DBE); auto:near_call"
 evidence = ["prologue"]
@@ -17015,12 +17015,12 @@ id = "0709:0DD3"
 unit = "res06"
 addr = "0709:0DD3"
 size = 431
-name = "res06_fn_0DD3"
-signature = "procedure res06_fn_0DD3(Left, Top, Right, Bottom: Byte)"
+name = "ClearRect"
+signature = "procedure ClearRect(Left, Top, Right, Bottom: ShortInt)"
 c_name = "res06_fn_0DD3"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res06_fn_0DD3 (Byte-coordinate twin of ClearWindow (0709:0DD3): clears Left..Right by Top..Bottom to 0 by VideoAdapter (text scanlines, FillPlaneRect pair, or graphics rows); called by HealMenu, VisitTemple, ShopMain, ShowEndingNarrative); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

@@ -391,7 +391,7 @@ begin
     Inc(I);
   end;
   List := First;
-  res06_fn_0DD3(0, 24, 39, 24);
+  ClearRect(0, 24, 39, 24);
   MenuFlag := 1;
   DrawWindow(1, 1, $26, $16, 0, $F, '');
   DrawWindow(1, 1, $26, 1, 0, $F, '');
@@ -472,14 +472,14 @@ begin
           if MoneyPooled <> 0 then
           begin
             Prompt := '~Yes ~No';
-            res06_fn_0768(1, $11, $26, $16, $A, 1,
+            ShowPagedText(1, $11, $26, $16, $A, 1,
               'As you leave a priest says, "Excuse me but you have left some money here" ');
-            res06_fn_0768(1, $11, $26, $16, $A, 1, 'Do you want to go back and retrieve your money?');
+            ShowPagedText(1, $11, $26, $16, $A, 1, 'Do you want to go back and retrieve your money?');
             LeaveAnswer := ovl07_e13('', Prompt, 13, 10, 15, 0, 0);
             if LeaveAnswer = AnswerNo then
               Done := True
             else
-              res06_fn_0DD3(1, $11, $26, $16);
+              ClearRect(1, $11, $26, $16);
           end
           else
             Done := True;
