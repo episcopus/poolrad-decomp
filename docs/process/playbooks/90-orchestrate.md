@@ -32,8 +32,9 @@ make unlock UNIT=<id>                # review branches: UNIT=review-<id>; tasks:
 
    When `make check` fails after a merge: `git merge --abort` (or revert the merge commit) and write an escalation-style note for the agent's next session in `work/blockers.md`, then `make status`; do not clear the hand-off until it is resolved.
 4. `make locks`: a lock older than 24 hours with no commits on its branch may be broken with `make unlock UNIT=<id> FORCE=1`; note it in `work/blockers.md`, then `make status`. The agent behind it may have been stopped by the human: say so in your report.
-5. When nothing is waiting, wait and look again.
-6. Every 5 merges, and whenever an escalation or decision is waiting, report to the human: units merged, units complete and reviewed, blocked routines, escalations, the `make rebuild` summary line, and whether the queues need more or fewer agents of a role (`make next`, `make next REVIEW=1`, open locks).
+5. `make agents`: an agent marked QUIET has posted no heartbeat for 20 minutes (AGENTS.md rule 9). Name it in your next report with its last note and branch; the human decides whether it hung. Never unlock it for that alone (the 24 hour rule of step 4 still applies).
+6. When nothing is waiting, wait and look again; post your own heartbeat while you wait (`make heartbeat AGENT=orch NOTE="idle, polling hand-offs"`), at least every 20 minutes.
+7. Every 5 merges, and whenever an escalation or decision is waiting, report to the human: units merged, units complete and reviewed, blocked routines, escalations, quiet agents, the `make rebuild` summary line, and whether the queues need more or fewer agents of a role (`make next`, `make next REVIEW=1`, open locks).
 
 ## What the queues do on their own
 

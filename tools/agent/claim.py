@@ -29,6 +29,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import common  # noqa: E402
+import heartbeat  # noqa: E402
 import lock  # noqa: E402
 import next as nxt  # noqa: E402
 
@@ -107,6 +108,7 @@ def setup(main_dir: Path, key: str, branch: str, a, unit: str) -> int:
         print("claim: %s (lock released)" % e, file=sys.stderr)
         return 1
     print("claim: %s locked for %s" % (key, a.agent))
+    heartbeat.beat(a.agent, "claimed %s, worktree %s (branch %s)" % (key, wt, branch))
     print("claim: worktree %s (branch %s)" % (wt, branch))
     if a.task:
         print("claim: next: cd %s   (playbook 60 for doc-*, playbook 10 for map)" % wt)

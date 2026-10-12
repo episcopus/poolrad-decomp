@@ -6,6 +6,7 @@ How to staff the decompilation with parallel agents, and the prompt for each rol
 
 - **locks** (`make claim`, `make locks`): who works on which unit or review;
 - **hand-offs** (`make handoff`, `make handoffs`): branches ready to merge, and escalations for you;
+- **heartbeats** (`make heartbeat`, `make agents`): what each agent is doing now and how long ago it last said so;
 - **queues** (`make next`, `make next REVIEW=1`): what to do next;
 - **status** (`work/status.md` on `main`).
 
@@ -50,10 +51,16 @@ Loop until I stop you:
 2. `make locks`: break locks older than 24 hours with no commits on their branch (FORCE=1), note it in
    work/blockers.md.
 3. When nothing is waiting, wait a few minutes and look again.
-4. Every 5 merges, and at once when an escalation or decision is waiting, report to me: units merged,
+4. `make agents`: an agent marked QUIET (no heartbeat for 20 minutes) goes into your next report; never
+   unlock it for that alone.
+5. Every 5 merges, and at once when an escalation or decision is waiting, report to me: units merged,
    units complete and reviewed, blocked routines, escalations with your recommendations, the
-   `make rebuild` summary line, and whether the queues need more or fewer agents of a role
+   `make rebuild` summary line, quiet agents, and whether the queues need more or fewer agents of a role
    (`make next`, `make next REVIEW=1`, open locks).
+Keep me informed so I never mistake you for a hung agent: `make heartbeat AGENT=orch NOTE="<what you
+are doing now, what comes next>"` when you start each step and at least every 20 minutes while you
+work (also during a long build, a long wait, or while stuck), and say the same in one line in this
+session; `make heartbeat AGENT=orch NOTE="<why>" DONE=1` when you stop.
 Write plainly: no em dashes or en dashes.
 ```
 
@@ -86,6 +93,10 @@ Loop until the queue is empty or I stop you:
 5. Anything you cannot settle from evidence and is not yours to change: `make handoff AGENT=<dec-N>
    UNIT=<id or general> STATE=escalate NOTE="<question, evidence, recommendation>"`, then carry on.
 6. Go back to step 1 from the main checkout.
+Keep me informed so I never mistake you for a hung agent: `make heartbeat AGENT=<dec-N> NOTE="<what you
+are doing now, what comes next>"` when you start each step and at least every 20 minutes while you
+work (also during a long build, a long wait, or while stuck), and say the same in one line in this
+session; `make heartbeat AGENT=<dec-N> NOTE="<why>" DONE=1` when you stop.
 Never merge into main, never unlock, never commit work/status.md or work/blockers.md, never edit poolrad/. Write plainly:
 no em dashes or en dashes.
 ```
@@ -113,6 +124,10 @@ Loop until `make next REVIEW=1` says none is waiting or I stop you:
    `make handoff AGENT=<rev-N> UNIT=<id or general> STATE=escalate NOTE="<question, evidence,
    recommendation>"`.
 5. Go back to step 1 from the main checkout.
+Keep me informed so I never mistake you for a hung agent: `make heartbeat AGENT=<rev-N> NOTE="<what you
+are doing now, what comes next>"` when you start each step and at least every 20 minutes while you
+work (also during a long build, a long wait, or while stuck), and say the same in one line in this
+session; `make heartbeat AGENT=<rev-N> NOTE="<why>" DONE=1` when you stop.
 Write plainly: no em dashes or en dashes.
 ```
 
@@ -128,7 +143,12 @@ reader who knows programming but not this game; tag every claim ([V] with eviden
 never add a claim without evidence. Do not edit source, re/ or docs/design/CHANGELOG.md. Commit with
 `--trailer "Agent: <doc-N>"`, then `make handoff AGENT=<doc-N> UNIT=doc-<chapter> STATE=complete
 NOTE="..." CHANGELOG="<sections> | <what changed> | <evidence>"`. Contradictions between units' claims
-you cannot settle: `make handoff ... STATE=escalate`. Write plainly: no em dashes or en dashes.
+you cannot settle: `make handoff ... STATE=escalate`.
+Keep me informed so I never mistake you for a hung agent: `make heartbeat AGENT=<doc-N> NOTE="<what you
+are doing now, what comes next>"` when you start each step and at least every 20 minutes while you
+work (also during a long build, a long wait, or while stuck), and say the same in one line in this
+session; `make heartbeat AGENT=<doc-N> NOTE="<why>" DONE=1` when you stop.
+Write plainly: no em dashes or en dashes.
 ```
 
 ## Prompt: mapper (when the orchestrator suggests one)
@@ -141,7 +161,12 @@ wrong, routines it misses), which the orchestrator collected in work/blockers.md
 worktree: `make claim AGENT=<map-N> TASK=map`. Fix the map through its tools
 (tools/re/enumerate_routines.py and friends, then `make map`), never by editing levels; keep
 `make check` green; commit with `--trailer "Agent: <map-N>"`, then
-`make handoff AGENT=<map-N> UNIT=map STATE=complete NOTE="..."`. Write plainly: no em dashes or en dashes.
+`make handoff AGENT=<map-N> UNIT=map STATE=complete NOTE="..."`.
+Keep me informed so I never mistake you for a hung agent: `make heartbeat AGENT=<map-N> NOTE="<what you
+are doing now, what comes next>"` when you start each step and at least every 20 minutes while you
+work (also during a long build, a long wait, or while stuck), and say the same in one line in this
+session; `make heartbeat AGENT=<map-N> NOTE="<why>" DONE=1` when you stop.
+Write plainly: no em dashes or en dashes.
 ```
 
 ## What you watch
@@ -149,4 +174,5 @@ worktree: `make claim AGENT=<map-N> TASK=map`. Fix the map through its tools
 - The orchestrator's reports: merges, escalations waiting for your decision, staffing suggestions.
 - `work/status.md` on `main` (P4 row: routines at L2, units complete and reviewed).
 - `make handoffs` and `make locks` (what is waiting, who works on what).
+- `make agents` (each agent's last heartbeat; QUIET means silent for more than 20 minutes: look at its session before assuming it hung).
 - `make rebuild` (segments identical to the original: the Phase 5 target).
