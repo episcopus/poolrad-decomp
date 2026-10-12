@@ -5,7 +5,7 @@ unit RES03;
 interface
 procedure res03_fn_0000;
 procedure res03_fn_006C;
-procedure res03_fn_00DC(w: Word);
+procedure res03_fn_00DC(UnknownWord: Word);
 procedure res03_fn_017B;
 procedure res03_fn_01A5;
 procedure res03_fn_09E3;
@@ -34,8 +34,8 @@ implementation
 {@stub} procedure res03_fn_0000; begin end;
 { 08AE:006C: retf 2: 2 bytes of parameters; 8 bytes of locals }
 {@stub} procedure res03_fn_006C; begin end;
-{ 08AE:00DC: retf 2: 2 bytes of parameters; 0 bytes of locals }
-{@stub} procedure res03_fn_00DC(w: Word); begin end;
+{ 08AE:00DC: retf 2: one Word. Callers pass ds2612; what that word means is unknown. }
+{@stub} procedure res03_fn_00DC(UnknownWord: Word); begin end;
 { 08AE:017B: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure res03_fn_017B; begin end;
 { 08AE:01A5: retf 2: 2 bytes of parameters; 0 bytes of locals }
