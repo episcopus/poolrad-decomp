@@ -381,7 +381,7 @@ source = ""
 
 [[overlay]]
 id = "ovl15"
-name = "SpellMemorize"
+name = "Camp"
 kind = "overlay"
 stub_segment = "0075"
 ovr_file_offset = "0x17831"
@@ -389,7 +389,7 @@ code_bytes = 8158
 fixup_bytes = 368
 entries = 3
 init_entry = "ovl15_e0"
-evidence = "[V] camp spell memorize; [H] coab camp/spell memorize"
+evidence = "[V] the camp: MakeCamp (entry 1) runs the Camp, Magic and Alter menus, memorizing, scribing and resting (make match UNIT=ovl15, whitepaper 5.22); was SpellMemorize"
 source = ""
 
 [[overlay]]

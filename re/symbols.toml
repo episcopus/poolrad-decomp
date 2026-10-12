@@ -7159,12 +7159,12 @@ id = "ovl15:0000"
 unit = "ovl15"
 addr = "ovl15:0000"
 size = 345
-name = "ovl15_fn_0000"
-signature = ""
+name = "StudyRestMinutes"
+signature = "function StudyRestMinutes(Who: PCharacter): Word"
 c_name = "ovl15_fn_0000"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl15_fn_0000 (ovl15:0000 sums 15 minutes per level of the spells being memorized (Spells bit 7) and of the scroll spells being scribed (item affects bit 7), plus 4 or 6 hours; RestParty takes the party maximum); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -7172,12 +7172,12 @@ id = "ovl15:0159"
 unit = "ovl15"
 addr = "ovl15:0159"
 size = 67
-name = "ovl15_fn_0159"
-signature = ""
+name = "CancelMemorizing"
+signature = "procedure CancelMemorizing(Who: PCharacter)"
 c_name = "ovl15_fn_0159"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl15_fn_0159 (ovl15:0159 clears every Spells slot with bit 7 set and RestHours; called when the player answers No to 'Memorize These Spells?'); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -7185,90 +7185,64 @@ id = "ovl15:019C"
 unit = "ovl15"
 addr = "ovl15:019C"
 size = 120
-name = "ovl15_fn_019C"
-signature = ""
+name = "CancelScribing"
+signature = "procedure CancelScribing(Who: PCharacter)"
 c_name = "ovl15_fn_019C"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl15_fn_019C (ovl15:019C clears bit 7 of the spell bytes of every scroll the character carries; called when the player answers No to 'Scribe These Spells?'); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl15:0214"
 unit = "ovl15"
 addr = "ovl15:0214"
-size = 49
-name = "ovl15_fn_0214"
-signature = ""
+size = 72
+name = "CancelPartyStudy"
+signature = "procedure CancelPartyStudy"
 c_name = "ovl15_fn_0214"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl15_fn_0214 (ovl15:0214 runs CancelMemorizing and CancelScribing on every party member; MakeCamp calls it on entry and exit); auto:near_call; map dec-15 2026-10-12: 0245 was mid-routine, entry deleted (size 72, was 49)"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl15:0245"
-unit = "ovl15"
-addr = "ovl15:0245"
-size = 23
-name = "ovl15_fn_0245"
-signature = ""
-c_name = "ovl15_fn_0245"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl15:025C"
 unit = "ovl15"
 addr = "ovl15:025C"
 size = 272
-name = "ovl15_fn_025C"
-signature = ""
+name = "SpellSlotsLeft"
+signature = "function SpellSlotsLeft(SpellLevel, SpellClass: ShortInt): Byte"
 c_name = "ovl15_fn_025C"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl15_fn_025C (ovl15:025C returns SpellSlots[class, level] minus the memorized spells of that class and level); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl15:036C"
 unit = "ovl15"
 addr = "ovl15:036C"
-size = 256
-name = "ovl15_fn_036C"
-signature = ""
+size = 309
+name = "MayUseMagic"
+signature = "function MayUseMagic(Action: Byte): Boolean"
 c_name = "ovl15_fn_036C"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl15_fn_036C (ovl15:036C returns False and shows 'cannot cast spells in this area' or 'is in no condition to cast any spells / memorize spells / scribe any scrolls' for actions 1..3); auto:near_call; map dec-15 2026-10-12: 046C was mid-routine, entry deleted (size 309, was 256)"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl15:046C"
-unit = "ovl15"
-addr = "ovl15:046C"
-size = 53
-name = "ovl15_fn_046C"
-signature = ""
-c_name = "ovl15_fn_046C"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl15:04A1"
 unit = "ovl15"
 addr = "ovl15:04A1"
 size = 259
-name = "ovl15_e2"
-signature = ""
+name = "CastSpells"
+signature = "procedure CastSpells"
 c_name = "ovl15_e2"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl15_e2 (ovl15:04A1 checks MayUseMagic(cast), lists the memorized spells (ovl19_e12) and casts the chosen one through ovl22_e5, or says 'has no spells memorized'; the camp Magic menu's Cast key and ovl14's wilderness keys call it); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -7276,181 +7250,64 @@ id = "ovl15:05A4"
 unit = "ovl15"
 addr = "ovl15:05A4"
 size = 470
-name = "ovl15_fn_05A4"
-signature = ""
+name = "ShowSpellSlotsLeft"
+signature = "function ShowSpellSlotsLeft: Boolean"
 c_name = "ovl15_fn_05A4"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl15_fn_05A4 (ovl15:05A4 shows 'can memorize:' and the slots left per level under 'Cleric Spells:' and 'Magic-User Spells:'; returns whether the character has any slot); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl15:077A"
 unit = "ovl15"
 addr = "ovl15:077A"
-size = 48
-name = "ovl15_fn_077A"
-signature = ""
+size = 170
+name = "RestParty"
+signature = "procedure RestParty(var EndCamp: Byte)"
 c_name = "ovl15_fn_077A"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl15_fn_077A (ovl15:077A sets the rest time to the longest StudyRestMinutes of the party, runs the rest (ovl20_e2) and clears it; the camp's Rest key); auto:near_call; map dec-15 2026-10-12: 07AA, 07AF, 080D were mid-routine, entries deleted (size 170, was 48)"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl15:07AA"
-unit = "ovl15"
-addr = "ovl15:07AA"
-size = 5
-name = "ovl15_fn_07AA"
-signature = ""
-c_name = "ovl15_fn_07AA"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl15:07AF"
-unit = "ovl15"
-addr = "ovl15:07AF"
-size = 94
-name = "ovl15_fn_07AF"
-signature = ""
-c_name = "ovl15_fn_07AF"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl15:080D"
-unit = "ovl15"
-addr = "ovl15:080D"
-size = 23
-name = "ovl15_fn_080D"
-signature = ""
-c_name = "ovl15_fn_080D"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl15:0824"
 unit = "ovl15"
 addr = "ovl15:0824"
-size = 101
-name = "ovl15_fn_0824"
-signature = ""
+size = 230
+name = "SortMemorizedSpells"
+signature = "procedure SortMemorizedSpells"
 c_name = "ovl15_fn_0824"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl15_fn_0824 (ovl15:0824 exchange-sorts the 21 Spells bytes by spell number (bit 7 masked); MemorizeSpells calls it after adding a spell); auto:near_call; map dec-15 2026-10-12: 0889, 08A2, 08AC were mid-routine, entries deleted (size 230, was 101)"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl15:0889"
-unit = "ovl15"
-addr = "ovl15:0889"
-size = 25
-name = "ovl15_fn_0889"
-signature = ""
-c_name = "ovl15_fn_0889"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl15:08A2"
-unit = "ovl15"
-addr = "ovl15:08A2"
-size = 10
-name = "ovl15_fn_08A2"
-signature = ""
-c_name = "ovl15_fn_08A2"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl15:08AC"
-unit = "ovl15"
-addr = "ovl15:08AC"
-size = 62
-name = "ovl15_fn_08AC"
-signature = ""
-c_name = "ovl15_fn_08AC"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl15:08EA"
-unit = "ovl15"
-addr = "ovl15:08EA"
-size = 32
-name = "ovl15_fn_08EA"
-signature = ""
-c_name = "ovl15_fn_08EA"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl15:090A"
 unit = "ovl15"
 addr = "ovl15:090A"
-size = 143
-name = "ovl15_fn_090A"
-signature = ""
+size = 593
+name = "MemorizeSpells"
+signature = "procedure MemorizeSpells"
 c_name = "ovl15_fn_090A"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl15_fn_090A (ovl15:090A strings 'Memorize These Spells?' and 'cannot memorize any spells': adds chosen spells with bit 7 set to the Spells slots while slots are left); auto:near_call; map dec-15 2026-10-12: 08EA (the strings before 090A), 0999 and 099E were mid-routine, entries deleted (size 593, was 143)"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl15:0999"
-unit = "ovl15"
-addr = "ovl15:0999"
-size = 5
-name = "ovl15_fn_0999"
-signature = ""
-c_name = "ovl15_fn_0999"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl15:099E"
-unit = "ovl15"
-addr = "ovl15:099E"
-size = 445
-name = "ovl15_fn_099E"
-signature = ""
-c_name = "ovl15_fn_099E"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl15:0B5B"
 unit = "ovl15"
 addr = "ovl15:0B5B"
 size = 732
-name = "ovl15_fn_0B5B"
-signature = ""
+name = "ScribeScrolls"
+signature = "procedure ScribeScrolls"
 c_name = "ovl15_fn_0B5B"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl15_fn_0B5B (ovl15:0B5B strings 'Scribe These Spells?', 'has no copyable scrolls', 'You can not scribe that spell.': marks a scroll spell with bit 7 for scribing); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -7458,51 +7315,38 @@ id = "ovl15:0E37"
 unit = "ovl15"
 addr = "ovl15:0E37"
 size = 389
-name = "ovl15_fn_0E37"
-signature = ""
+name = "AddDisplayLine"
+signature = "procedure AddDisplayLine(Flag: Byte; Text: String40)"
 c_name = "ovl15_fn_0E37"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "blocked (dec-15, 2026-10-12): nested in DisplaySpellEffects (static link at [bp+6], the parent pushes bp, ovl15:102A); matches byte for byte except its far runtime calls, the held nested-routine limit (escalate-res06-20261012110841); its draft is in the parent notes; renamed from ovl15_fn_0E37 (ovl15:0E37 nested in DisplaySpellEffects: allocates a 46-byte menu line after the parent's last line and sets its text and heading flag); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl15:0FBC"
 unit = "ovl15"
 addr = "ovl15:0FBC"
-size = 843
-name = "ovl15_fn_0FBC"
-signature = ""
+size = 1077
+name = "DisplaySpellEffects"
+signature = "procedure DisplaySpellEffects"
 c_name = "ovl15_fn_0FBC"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "blocked (dec-15, 2026-10-12): the draft below matches the original except inside its nested AddDisplayLine (ovl15:0E37), whose far calls to the runtime (System StrLCopy, GetMem) lie in the byte-exact pre-entry region: the held nested-routine limit of escalate-res06-20261012110841; the parent body after the entry is the same instruction for instruction (only the SpellNames address differs, a DS address the matcher resolves). Draft: procedure DisplaySpellEffects; var Affect: PAffect; List, Last: PMenuLine; Who: PCharacter; AffectId, Spell, Count, Unused: Byte; Found, Known, Redraw: Byte; Name: String40; Choice: Integer; Key: Char; procedure AddDisplayLine(Flag: Byte; Text: String40); begin GetMem(Last^.Next, $2E); Last := Last^.Next; Last^.Next := nil; Last^.Text := Text; Last^.Flag29 := Flag; end; begin GetMem(List, $2E); Last := List; Last^.Flag29 := 0; Last^.Text := ' '; Last^.Next := nil; Who := PCharacter(ds5D96); while Who <> nil do begin Count := 0; AddDisplayLine(1, Who^.Name); Affect := Who^.Affects; while Affect <> nil do begin Known := 1; AffectId := Affect^.Id; case AffectId of 1, 2, 5, 8..$E, $10, $11, $13..$19, $1C, $1D, $20..$22, $24..$27, $29, $2A, $2D, $2E, $31, $33..$35: begin Spell := 1; Found := 0; while (Spell <= $38) and (Found = 0) do if SpellTable[Spell].AffectId = AffectId then begin Name := SpellNames[Spell]; Found := 1; end else Inc(Spell); if Found = 0 then Name := 'Funky--' + res12_fn_1037(AffectId); end; 4: Name := 'Studying Manual of Bodily Health'; 7: Name := 'Training with Manual of Bodily Health'; $1B: Name := 'Feather Fall'; $1F: Name := 'Helpless'; $23: Name := 'Prayer'; $2C: Name := 'Cause Disease'; $32: Name := 'Dreaded Mummy Disease'; $36: Name := 'Repulsed'; $37: Name := 'Poisoned'; $3B: Name := 'Regenerating'; $3D: Name := 'Fire Resistance'; $47: Name := 'Invisible'; $48: Name := 'Camouflaged'; $59: Name := 'Displaced'; else Known := 0; end; if Known <> 0 then begin Inc(Count); AddDisplayLine(0, ' ' + Name); end; Affect := Affect^.Next; end; if Count = 0 then AddDisplayLine(0, ' <No Spell Effects>'); AddDisplayLine(0, ' '); Who := Who^.Next; end; Redraw := 1; Choice := 0; DrawWindow(1, 1, $26, $16, 0, $F, 'Display'); Key := ChooseFromList('', '', $B, $A, $F, 1, 4, $26, $16, List, 1, Redraw, Choice, Last); FreeMenuList(List); res12_fn_27D9; end;; renamed from ovl15_fn_0FBC (ovl15:0FBC builds a list of every member's affects by name (spell names, 'Prayer', 'Poisoned', ' <No Spell Effects>') and shows it with ChooseFromList titled 'Display'); auto:near_call; map dec-15 2026-10-12: 1307 was mid-routine, entry deleted (size 1077, was 843)"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl15:1307"
-unit = "ovl15"
-addr = "ovl15:1307"
-size = 234
-name = "ovl15_fn_1307"
-signature = ""
-c_name = "ovl15_fn_1307"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl15:13F1"
 unit = "ovl15"
 addr = "ovl15:13F1"
 size = 184
-name = "ovl15_fn_13F1"
-signature = ""
+name = "CampMagicMenu"
+signature = "procedure CampMagicMenu(var EndCamp: Byte)"
 c_name = "ovl15_fn_13F1"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl15_fn_13F1 (ovl15:13F1 the menu 'Cast Memorize Scribe Display Rest Exit' (DS:0531): C, M, S, D and R call CastSpells, MemorizeSpells, ScribeScrolls, DisplaySpellEffects and RestParty); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -7510,12 +7354,12 @@ id = "ovl15:14A9"
 unit = "ovl15"
 addr = "ovl15:14A9"
 size = 344
-name = "ovl15_fn_14A9"
-signature = ""
+name = "MoveMemberUp"
+signature = "procedure MoveMemberUp"
 c_name = "ovl15_fn_14A9"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl15_fn_14A9 (ovl15:14A9 swaps SelectedCharacter with the member before it in the party list (the first goes to the end); the Party Order menu's G key); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -7523,12 +7367,12 @@ id = "ovl15:1601"
 unit = "ovl15"
 addr = "ovl15:1601"
 size = 383
-name = "ovl15_fn_1601"
-signature = ""
+name = "MoveMemberDown"
+signature = "procedure MoveMemberDown"
 c_name = "ovl15_fn_1601"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl15_fn_1601 (ovl15:1601 swaps SelectedCharacter with the member after it in the party list (the last goes to the front); the Party Order menu's O key); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -7536,12 +7380,12 @@ id = "ovl15:1780"
 unit = "ovl15"
 addr = "ovl15:1780"
 size = 357
-name = "ovl15_fn_1780"
-signature = ""
+name = "PartyOrderMenu"
+signature = "procedure PartyOrderMenu"
 c_name = "ovl15_fn_1780"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl15_fn_1780 (ovl15:1780 the prompt 'Party Order: ' with 'Select Exit' / 'Place Exit' (DS:0584) and 'has been selected'); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -7549,51 +7393,38 @@ id = "ovl15:18E5"
 unit = "ovl15"
 addr = "ovl15:18E5"
 size = 434
-name = "ovl15_fn_18E5"
-signature = ""
+name = "DropPartyMember"
+signature = "procedure DropPartyMember"
 c_name = "ovl15_fn_18E5"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl15_fn_18E5 (ovl15:18E5 strings 'Drop from party?', 'bids you farewell', 'is dumped in a ditch' and, for the last member, 'quit TO DOS:'); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl15:1A97"
 unit = "ovl15"
 addr = "ovl15:1A97"
-size = 320
-name = "ovl15_fn_1A97"
-signature = ""
+size = 450
+name = "CampSpeedMenu"
+signature = "procedure CampSpeedMenu"
 c_name = "ovl15_fn_1A97"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl15_fn_1A97 (ovl15:1A97 shows 'Game Speed = n (0=fastest 9=slowest)' and moves GameSpeed with Faster and Slower; the camp Alter menu's Speed key); auto:near_call; map dec-15 2026-10-12: 1BD7 was mid-routine, entry deleted (size 450, was 320)"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl15:1BD7"
-unit = "ovl15"
-addr = "ovl15:1BD7"
-size = 130
-name = "ovl15_fn_1BD7"
-signature = ""
-c_name = "ovl15_fn_1BD7"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl15:1C59"
 unit = "ovl15"
 addr = "ovl15:1C59"
 size = 534
-name = "ovl15_fn_1C59"
-signature = ""
+name = "AlterMenu"
+signature = "procedure AlterMenu"
 c_name = "ovl15_fn_1C59"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl15_fn_1C59 (ovl15:1C59 the prompt 'Alter: ' with 'Order Drop Speed Icon Pics Exit' (DS:055A)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -7601,12 +7432,12 @@ id = "ovl15:1E6F"
 unit = "ovl15"
 addr = "ovl15:1E6F"
 size = 362
-name = "ovl15_e1"
-signature = ""
+name = "MakeCamp"
+signature = "procedure MakeCamp(var EndCamp: Byte)"
 c_name = "ovl15_e1"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_1"
+notes = "renamed from ovl15_e1 (ovl15:1E6F shows 'The party makes camp...' and runs the menu 'Save View Magic Rest Alter Exit' (DS:0508); entry 1 called by ovl03); auto:entry_1"
 evidence = ["prologue"]
 
 [[routine]]
@@ -9972,7 +9803,7 @@ unit = "ovl19"
 addr = "ovl19:299C"
 size = 369
 name = "ovl19_e12"
-signature = ""
+signature = "function ovl19_e12(Kind, Mode: Byte; var Choice: Word; var Listed: Byte): Byte"
 c_name = "ovl19_e12"
 level = "none"
 justification = ""
@@ -10245,7 +10076,7 @@ unit = "ovl20"
 addr = "ovl20:0C9A"
 size = 454
 name = "ovl20_e2"
-signature = ""
+signature = "function ovl20_e2: Byte"
 c_name = "ovl20_e2"
 level = "none"
 justification = ""
@@ -11948,7 +11779,7 @@ unit = "ovl22"
 addr = "ovl22:323D"
 size = 37
 name = "ovl22_e6"
-signature = ""
+signature = "function ovl22_e6(Item: Pointer): Boolean"
 c_name = "ovl22_e6"
 level = "none"
 justification = ""

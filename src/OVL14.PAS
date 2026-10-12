@@ -386,7 +386,7 @@ begin
               FlashMessageLine('Not Here', $E);
           'C':
             if SelectedCharacter^.Status = 0 then
-              ovl15_e2;
+              CastSpells;
           'V':
             ovl19_e5(ViewFlag);
           'E':
@@ -450,7 +450,7 @@ begin
       if KeyFlag = 0 then
         case Key of
           'C':
-            ovl15_e2;
+            CastSpells;
           'V':
             ovl19_e5(ViewFlag);
           'E':

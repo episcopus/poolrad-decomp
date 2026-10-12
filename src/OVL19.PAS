@@ -52,7 +52,7 @@ procedure ovl19_fn_24A7;
 function ovl19_e9(Shop: Pointer; Item: Pointer): Boolean;
 procedure ovl19_e10(Key: Char);
 function ovl19_e11(Who: Pointer): LongInt;
-procedure ovl19_e12;
+function ovl19_e12(Kind, Mode: Byte; var Choice: Word; var Listed: Byte): Byte;
 implementation
 
 { ovl19:004A: frame not read }
@@ -154,7 +154,7 @@ implementation
 { ovl19:28BE: retf 4; returns a LongInt summed over the character's money words; the Temple keeps the low word. }
 {@stub} function ovl19_e11(Who: Pointer): LongInt; begin end;
 { ovl19:299C: retf 12: 12 bytes of parameters; 298 bytes of locals }
-{@stub} procedure ovl19_e12; begin end;
+{@stub} function ovl19_e12(Kind, Mode: Byte; var Choice: Word; var Listed: Byte): Byte; begin end;
 
 begin
 end.

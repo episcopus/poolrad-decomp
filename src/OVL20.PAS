@@ -22,7 +22,7 @@ procedure ovl20_fn_0B2A;
 procedure ovl20_fn_0B48;
 procedure ovl20_fn_0B89;
 procedure ovl20_fn_0BB2;
-procedure ovl20_e2;
+function ovl20_e2: Byte;
 implementation
 
 { ovl20:0000: retf 4: 4 bytes of parameters; 28 bytes of locals }
@@ -64,7 +64,7 @@ implementation
 { ovl20:0BB2: retf 4: 4 bytes of parameters; 8 bytes of locals }
 {@stub} procedure ovl20_fn_0BB2; begin end;
 { ovl20:0C9A: retf 0: 0 bytes of parameters; 48 bytes of locals }
-{@stub} procedure ovl20_e2; begin end;
+{@stub} function ovl20_e2: Byte; begin end;
 
 begin
 end.
