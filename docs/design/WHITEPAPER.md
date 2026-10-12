@@ -670,32 +670,49 @@ Overlay 28 draws the 8x8 sprites of the 3D view and the HEAD/BODY strip of the c
 The parts proven so far:
 
 - `DrawSprite(Col, Row: Integer; Direct: Byte; Sprite: Pointer)` (`ovl28:0000`): a nil sprite draws
-  nothing; with `Direct` set it blits the sprite one pixel up and left onto the screen buffer
+  nothing; with `Direct` set it blits the sprite one column and one row up and left (`Col - 1`,
+  `Row - 1`) onto the screen buffer
   `DS:4A20` through `res07_fn_0D71` (mode 0, flag 1) and steps the display (`res07_fn_1B52`);
   otherwise it copies the sprite into the staging buffer with `res07_fn_1951`.
 - `DrawHeadSprite` and `DrawBodySprite` (`ovl28:0050`, `ovl28:0070`): draw a sprite at (column,
   row) and at (column, row + 5); `ShowHeadBodySprites` (`ovl28:0697`) uses them to draw the HEAD
-  sprite `DS:6B01` and the BODY sprite `DS:6B06` over the 3D view.
+  sprite `DS:6B01`, and with its `WithBody` argument also the BODY sprite `DS:6B06`, through the
+  staging buffer (both helpers pass `Direct` 0; neither path draws straight to the screen buffer).
 - `LoadHeadBodySprites` (`ovl28:05D9`) loads the HEAD and BODY banks of the picture number
-  `DS:5376` from the files `HEAD<number>` and `BODY<number>` through `res07_fn_0111` into
+  `TileSet` (`DS:5376`) from the files `HEAD<number>` and `BODY<number>` through `res07_fn_0111` into
   `DS:6B01` and `DS:6B06` (recording the loaded number in `DS:6B00` and `DS:6B05`, `$FF` = none).
-- `FreeSpriteList` (`ovl28:048F`) frees every loaded sprite bank of a sprite list (through
-  `res07_fn_2595`) and zeroes the list, the picture name `DS:6B0A` and the current bank `DS:6B1C`.
+- `FreeSpriteList` (`ovl28:048F`) frees every loaded sprite picture of a sprite list (through
+  `res07_fn_2595`) and zeroes the list, clears the picture name `DS:6B0A` and sets the current bank
+  `DS:6B1C` to `$FF` (not 0).
 - The sprite list is a `$42`-byte record: a count byte at +0, a flag at +1, and seven slots of 8
   bytes from +2, each holding 4 bytes copied from the picture data and the picture pointer at +4
   (the `TSpriteList` type of `src/OVL28.PAS`) **[V]** (`make match UNIT=ovl28`).
+- Each picture is one record of `res07_fn_248E` (the same one `ovl32`'s `DrawIcon` copies): height
+  and width at +0 and +2 (the record fields `Height` and `WidthCols`, after `ovl32`; `res07_fn_248E`
+  declares the two parameters `Height` and `Width` and whitepaper 3.2.2 calls them `Cols` and
+  `Rows`), item count at +8 (1 for a sprite), the pixel byte size at +$11 (height times width
+  times 2, doubled on a non-zero `VideoAdapter`) and the pixel pointer at +$13; the sprite's base
+  screen column and row sit at +4 and +6 (`TSpritePicture`) **[V]** (`make match UNIT=ovl28`;
+  whitepaper 4.2.3, 5.13).
 
 - `Show3DSprite` (`ovl28:0708`) shows slot 1..3 of a sprite list at the sprite's base column and row
-  plus 2 through `res07_fn_0D71`; another bank ends the game with the unit's range error string.
+  plus 2 through `res07_fn_0D71`; another slot restores the saved video mode (`res07_fn_00FF`,
+  `SavedVideoMode`) and ends the game with the unit's range error string.
 - `ShowHeadBodyWindow` (`ovl28:04F9`) draws the HEAD/BODY picture window (columns 28..38, rows 1..11)
-  of the character record `DS:5D92` and shows the HEAD and BODY sprites of its two bank numbers.
+  of the character record `DS:5D92` and shows the HEAD and BODY sprites of its two bank numbers
+  (its two `Str` calls are computed and never read, QUIRK `ovl28:056C`).
 
 - `LoadSpriteList(Name, Bank, Mode, List)` (`ovl28:00A2`) loads block `Bank` of `<Name><TileSet>.dax`
-  into a sprite list, unless the same file and block are loaded already (`DS:6B0A`, `DS:6B1C`). The
+  into a sprite list, unless the same file and block are loaded already (`DS:6B0A`, `DS:6B1C`; the
+  test ignores the `TileSet` digit). The
   block is a count byte (clamped to 4 for `PIC` block 1) followed per sprite by 4 bytes, the height
   and width words, the X and Y words, one skipped byte, 8 palette bytes and `Row + 1` bytes of pixel
-  data (`Row` is the picture's stride minus one, twice the stride on `VideoAdapter` 0). A sprite is
-  loaded only while `MaxAvail` is at least 3900, and the count becomes the number loaded. `PIC` and
+  data (`Row` is the picture's byte size minus one, twice the byte size on `VideoAdapter` 0). A
+  sprite is loaded only while `MaxAvail` is at least 3900, and the count becomes the number loaded.
+  When it is below 3900 the jump to the loop end also skips the offset advance, so every later
+  sprite is read from the middle of the skipped one and the loaded slots keep a nil gap under
+  `Count` (QUIRK `ovl28:0269`); the final `FreeMem(Prev, Row + 1)` frees with the last picture's
+  `Row` (QUIRK `ovl28:046C`). `PIC` and
   `FINAL` pictures after the first are stored xored with the first one's data, which the loader
   undoes before decoding (`res07_fn_02A5`); bit 0 of `Mode` adds a pass through `res07_fn_1E5C` on
   non-zero video adapters **[V]** (matched). Callers: `ovl03`, `ovl07_e8`, `ovl18` (FINAL) and
