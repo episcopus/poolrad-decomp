@@ -140,9 +140,12 @@ var
   ds84E5: Byte;                   { special view gate: ShowAreaView uses ds6F68/ds6F69 only while it is nonzero }
   ds84F0: Byte;                   { set to 0 in res08_init after closing pool.cfg; meaning unknown }
   Regs: Registers;                { registers for Intr calls (QuitGame) }
-  { The two display pages the BIOS text layer writes; res08_init sets both to 0 for EGA. }
-  ds4A1A: Byte;                   { the 2nd display page WriteCharsAt writes to when VideoAdapter is 1 }
-  ds4A1B: Byte;                   { the display page WriteCharsAt writes to first (BH of INT 10h) }
+  { The second display page WriteCharsAt writes to when VideoAdapter is 1 (BH of INT 10h);
+    res08_init sets it to 0 for EGA and passes it to res06_fn_00A0. }
+  ds4A1A: Byte;                   { display page; see above }
+  { The display page WriteCharsAt writes to first (BH of INT 10h, 0802:0048); res08_init sets it
+    to 0 for EGA and passes it to res06_fn_0071. }
+  ds4A1B: Byte;                   { display page; see above }
   SavedVideoMode: Byte;           { video mode QuitGame passes to INT 10h; no writer is in the decompiled units }
   ds4A1D: Byte;                   { copy of SavedVideoMode taken in res08_init; reader unknown }
   VideoAdapter: Byte;                   { video mode flag read by ClearWindow (03F1:0137): 0 fills the EGA planes,

@@ -15,7 +15,9 @@ sides:
 
   global        a DS operand (memory displacement or immediate): our variable V plus delta d must be
                 the original's offset of V plus d. V's original offset comes from re/dseg.toml (by name)
-                or from the name itself: `dsXXXX` is DS:XXXX.
+                or from the name itself: `dsXXXX` is DS:XXXX. A global declared in an interface of src/
+                as `V: T absolute W` (W another global) has W's original offset (absolute_aliases()):
+                the map lists V and W at one address in an order that changes with the layout.
   routine       a near call inside the unit or a far call: our target's name (a routine of re/symbols.toml
                 by name, or `resNN_fn_XXXX` / `ovlNN_fn_XXXX` / `resNN_init`) must be the original target
                 (runtime library targets are identified through tp_toolchain.runtime_names).
@@ -188,6 +190,7 @@ class Build:
     rtl: dict = field(default_factory=dict)
     sources: dict = field(default_factory=dict)      # unit name -> the text compiled (padded in variant B)
     entry: tuple = (0, 0)                            # program entry point (segment, offset)
+    _aliases: dict | None = None
 
     def init_entry(self, segname: str) -> int | None:
         """Offset of the unit's initialisation part in its segment: its first source line's code."""
@@ -215,6 +218,14 @@ class Build:
             if s == para and o == off:
                 return n
         return None
+
+    def aliases(self) -> dict[str, str]:
+        """{ALIAS: BASE} of the `absolute` declarations of the compiled sources (absolute_aliases)."""
+        if self._aliases is None:
+            self._aliases = {}
+            for text in self.sources.values():
+                self._aliases.update(absolute_aliases(text))
+        return self._aliases
 
     def data_var(self, off: int) -> tuple[str, int] | None:
         para = self.segs["DATA"][0] >> 4
@@ -251,6 +262,28 @@ def init_begin_line(text: str) -> int | None:
         if re.match(r"end;", lines[i], re.I):
             return None
     return None
+
+
+COMMENT_RE = re.compile(r"\{[^}]*\}|\(\*.*?\*\)", re.S)
+ABSOLUTE_RE = re.compile(r"^\s*(?:var\s+)?([A-Za-z_]\w*(?:\s*,\s*[A-Za-z_]\w*)*)\s*:[^:]*?\babsolute\s+"
+                         r"([A-Za-z_]\w*)\s*$", re.I | re.S)
+
+
+def absolute_aliases(text: str) -> dict[str, str]:
+    """{ALIAS: BASE} for each global of the unit's interface declared `ALIAS: T absolute BASE`, BASE a
+    variable (TP 6.0 gives ALIAS BASE's address: `absolute <variable>` takes no offset). An `absolute`
+    on a fixed segment:offset (`absolute $B800:$0000`, res09) is not an alias and is left out."""
+    text = COMMENT_RE.sub(" ", text)
+    m = re.search(r"^\s*interface\b(.*?)^\s*implementation\b", text, re.I | re.M | re.S)
+    if not m:
+        return {}
+    out = {}
+    for stmt in m.group(1).split(";"):
+        d = ABSOLUTE_RE.match(stmt)
+        if d:
+            for name in d.group(1).split(","):
+                out[name.strip().upper()] = d.group(2).upper()
+    return out
 
 
 def routines_of(text: str) -> list[tuple[str, bool]]:
@@ -452,6 +485,30 @@ def nested_routines(seg_bytes: bytes, region_start: int, parent_entry: int,
     return found
 
 
+def original_global(orig: Original, aliases: dict[str, str], name: str) -> int:
+    """The original's offset of our global `name`. A global declared `absolute` on another global (an
+    alias, absolute_aliases()) has its base's offset, found the same way: the map lists both names at one
+    address in an order that depends on the layout, so the name data_var() finds there may be either."""
+    seen = [name.upper()]
+    while seen[-1] in aliases:
+        base = aliases[seen[-1]]
+        if base in seen:
+            raise MatchError("global %s: `absolute` declarations form a cycle (%s)" % (name, " -> ".join(seen + [base])))
+        seen.append(base)
+    off = orig.global_offset(seen[-1])
+    if off is None:
+        if len(seen) > 1:
+            raise MatchError("global %s is declared absolute %s, which has no original offset: name it dsXXXX or "
+                             "add it to re/dseg.toml" % (name, seen[-1]))
+        raise MatchError("global %s has no original offset: name it dsXXXX or add it to re/dseg.toml" % name)
+    for alias in seen[:-1]:                          # an alias with an offset of its own must agree
+        own = orig.global_offset(alias)
+        if own is not None and own != off:
+            raise MatchError("global %s is declared absolute %s, but re/dseg.toml gives it DS:%04X, not DS:%04X"
+                             % (alias, seen[-1], own, off))
+    return off
+
+
 class Comparer:
     def __init__(self, orig: Original, unit: str, a: Build, b: Build, regs_a: dict, regs_b: dict):
         self.orig, self.unit, self.a, self.b = orig, unit, a, b
@@ -465,9 +522,7 @@ class Comparer:
         if hit is None:
             return None
         name, delta = hit
-        off = self.orig.global_offset(name)
-        if off is None:
-            raise MatchError("global %s has no original offset: name it dsXXXX or add it to re/dseg.toml" % name)
+        off = original_global(self.orig, build.aliases(), name)
         return off + delta, "%s+%d" % (name, delta) if delta else name
 
     def expect_routine(self, build: Build, segname: str, off: int) -> str:
