@@ -33,6 +33,11 @@ and the paragraph padding cover the original segment exactly.
 `--write` records level L2 (matched) for each matched routine in re/symbols.toml (only tools write
 levels, AGENTS.md rule 2) and prints where re/symbols.toml's boundaries disagree with the compiler's.
 
+Nested routines have no map symbol; TP 6.0 puts their code in the parent's pre-entry region, which is
+compared exactly. A matched parent proves a nested routine (reported `NESTED`, L2 with a note saying so)
+only by the strict rule of nested_routines(): called as `push bp; push cs; call` from the parent or an
+already proven nested routine, and wholly inside that region (escalate-general-20261012012957).
+
 Conventions for the sources (playbook 30): one file per original unit, named after its id (RES04.PAS
 is unit RES04); every routine is declared in the interface (the map lists only interface symbols);
 top-level routine headers start in column 1, nested ones are indented; a routine not decompiled yet is
@@ -347,19 +352,26 @@ md = Cs(CS_ARCH_X86, CS_MODE_16)
 md.detail = True
 
 
-def code_end(b: Build, seg: str, entry: int, limit: int) -> int:
-    """End of the routine's code: the first return at or after every forward jump target seen so far
-    (Turbo Pascal emits one epilogue; `exit` and loops jump to it)."""
-    code = b.img[b.seg_start(seg) + entry: b.seg_start(seg) + limit]
+def return_end(seg_bytes: bytes, entry: int, limit: int) -> int | None:
+    """End of the routine's code in `seg_bytes` (a whole segment): the first return at or after every
+    forward jump target seen so far (Turbo Pascal emits one epilogue; `exit` and loops jump to it)."""
     reach = entry
-    for i in md.disasm(code, entry):
+    for i in md.disasm(seg_bytes[entry:limit], entry):
         if i.group(1) or i.mnemonic.startswith("loop") or i.mnemonic == "jcxz":      # 1 = CS_GRP_JUMP
             for op in i.operands:
                 if op.type == X86_OP_IMM and entry <= op.imm < limit:
                     reach = max(reach, op.imm)
         if i.mnemonic in ("ret", "retf", "iret") and i.address >= reach:
             return i.address + i.size
-    raise MatchError("%s+%04X: no return instruction found" % (seg, entry))
+    return None
+
+
+def code_end(b: Build, seg: str, entry: int, limit: int) -> int:
+    start = b.seg_start(seg)
+    end = return_end(b.img[start: start + limit], entry, limit)
+    if end is None:
+        raise MatchError("%s+%04X: no return instruction found" % (seg, entry))
+    return end
 
 
 def regions(b: Build, unit: str, names: list[str], pad: str | None = None) -> list[Region]:
@@ -392,6 +404,42 @@ def init_region(b: Build, unit: str, after: int) -> Region | None:
         return None
     entry = min(lines)
     return Region("%s_init" % unit.lower(), entry, entry - after, code_end(b, seg, entry, seglen))
+
+
+PUSH_BP, PUSH_CS, CALL_NEAR = 0x55, 0x0E, 0xE8
+
+
+def nested_routines(seg_bytes: bytes, region_start: int, parent_entry: int,
+                    parent_end: int) -> dict[int, tuple[int, int]]:
+    """Nested routines of a matched parent, proven by the parent's match: {entry: (end, caller entry)}.
+
+    Turbo Pascal 6.0 puts a nested routine's code before its parent's body, inside the bytes the matcher
+    compares exactly as the parent's pre-entry region [region_start, parent_entry). The map has no symbol
+    for it, so its entry is proven by how it is called. A routine counts only when ALL hold (operator
+    decision on escalation escalate-general-20261012012957, the strict rule):
+      1. its entry is the target of a near call inside the parent, or inside a nested routine already
+         proven this way; with {$F+} (every unit) TP 6.0 calls a nested routine as `push cs; call near`
+         (probe: `make tpc` of a parent with nested routines; ovl26:01D7 calls ovl26:00C7 the same way);
+      2. that call is preceded by the static link push `push bp`, so the bytes are 55 0E E8 rel16;
+         a sibling call pushes the caller's own static link (`push word ptr [bp+6]`) and does not count;
+      3. the routine, from its entry to its return, lies wholly inside the pre-entry region.
+    Never by address range alone: the region also holds string and set literals."""
+    found: dict[int, tuple[int, int]] = {}
+    work = [(parent_entry, parent_end)]
+    while work:
+        start, end = work.pop()
+        prev: list = []
+        for i in md.disasm(seg_bytes[start:end], start):
+            if (i.bytes[0] == CALL_NEAR and i.size == 3 and len(prev) >= 2
+                    and bytes(prev[-1].bytes) == bytes([PUSH_CS]) and bytes(prev[-2].bytes) == bytes([PUSH_BP])):
+                target = (i.address + 3 + int.from_bytes(i.bytes[1:3], "little", signed=True)) & 0xFFFF
+                if region_start <= target < parent_entry and target not in found:
+                    t_end = return_end(seg_bytes[:parent_entry], target, parent_entry)
+                    if t_end is not None and t_end <= parent_entry:
+                        found[target] = (t_end, start)
+                        work.append((target, t_end))
+            prev.append(i)
+    return found
 
 
 class Comparer:
@@ -597,7 +645,22 @@ def compare_unit(orig: Original, unit: str, a: Build, b: Build, only: list[str] 
         results.append(Result("%s_init" % unit, orig.init_id(unit), "stub"))
     elif not stubs and not only:
         whole = whole_unit(cmp, a, b, ra, rb, results)
-    return results, whole
+    return results + nested_results(orig, unit, cmp.obytes, results), whole
+
+
+def nested_results(orig: Original, unit: str, obytes: bytes, results: list[Result]) -> list[Result]:
+    """Results (status "nested") for the nested routines each matched routine proves (nested_routines)."""
+    out = []
+    for r in results:
+        if r.status != "matched" or r.id is None or r.name.lower().endswith("_init"):
+            continue
+        entry = int(r.id.split(":")[1], 16)
+        for t, (end, _caller) in sorted(nested_routines(obytes, entry - r.pool, entry, entry + r.size).items()):
+            rid = orig.routine_id(unit, t)
+            known = orig.by_id.get(rid)
+            out.append(Result(known["name"] if known else "%s_fn_%04x" % (unit, t), rid, "nested",
+                              "nested in %s (%s), proven by the parent's match" % (r.name, r.id), end - t, 0, 0))
+    return out
 
 
 def compare_main(orig: Original, a: Build) -> tuple[list[Result], str]:
@@ -690,7 +753,7 @@ def write_levels(results: list[Result], orig: Original) -> list[str]:
     text = path.read_text()
     notes = []
     for r in results:
-        if r.status != "matched" or r.id is None:
+        if r.status not in ("matched", "nested") or r.id is None:
             continue
         known = orig.by_id.get(r.id)
         if known is None:
@@ -704,6 +767,15 @@ def write_levels(results: list[Result], orig: Original) -> list[str]:
         text, k = block.subn(r'\1"L2"', text, count=1)
         if not k:
             notes.append("%s: no level field found" % r.id)
+        if r.status == "nested":                   # how it was proven, once
+            nb = re.compile(r'(\[\[routine\]\]\nid = "%s"\n(?:(?!\[\[routine\]\]).)*?\nnotes = ")([^"]*)"' % re.escape(r.id),
+                            re.S)
+            m = nb.search(text)
+            if m is None:
+                notes.append("%s: no notes field found" % r.id)
+            elif r.detail not in m.group(2):
+                joined = (m.group(2) + "; " if m.group(2) else "") + r.detail
+                text = text[:m.start(2)] + joined + text[m.end(2):]
     path.write_text(text)
     return notes
 
@@ -730,6 +802,8 @@ def report(unit: str, results: list[Result], whole: str) -> int:
         if r.status == "matched":
             print("MATCH   %-16s %-12s %4d bytes code, %3d pool, %d address fields" % (
                 r.name, r.id, r.size, r.pool, r.symbols))
+        elif r.status == "nested":
+            print("NESTED  %-16s %-12s %4d bytes code, %s" % (r.name, r.id, r.size, r.detail))
         elif r.status == "stub":
             print("stub    %-16s %s" % (r.name, r.id or ""))
         else:
@@ -739,9 +813,9 @@ def report(unit: str, results: list[Result], whole: str) -> int:
         print(whole)
         if "complete" not in whole:
             bad += 1
-    print("match %s: %d matched, %d differ, %d stubs" % (
-        unit, sum(r.status == "matched" for r in results), sum(r.status in ("differs", "missing") for r in results),
-        sum(r.status == "stub" for r in results)))
+    print("match %s: %d matched, %d nested, %d differ, %d stubs" % (
+        unit, sum(r.status == "matched" for r in results), sum(r.status == "nested" for r in results),
+        sum(r.status in ("differs", "missing") for r in results), sum(r.status == "stub" for r in results)))
     return bad
 
 
@@ -769,8 +843,9 @@ def main(argv=None) -> int:
         for n in write_levels(total, Original()):
             print("note: " + n)
     if a.all:
-        print("match --all: %d units, %d routines matched, %s" % (
-            len(units), sum(r.status == "matched" for r in total), "all match" if not bad else "%d problems" % bad))
+        print("match --all: %d units, %d routines matched, %d nested, %s" % (
+            len(units), sum(r.status == "matched" for r in total), sum(r.status == "nested" for r in total),
+            "all match" if not bad else "%d problems" % bad))
     return 1 if bad else 0
 
 
