@@ -239,3 +239,17 @@ kind = "routine"
 why = "ovl28:048F: frees every loaded sprite bank of the list and zeroes the list record, clears the picture name DS:6B0A and sets DS:6B1C to F; called by ovl10, ovl14, ovl18 and ovl28_e2 (the picture loaders)"
 date = "2026-10-11"
 
+[[rename]]
+old = "ovl28_e5"
+new = "ShowHeadBodySprites"
+kind = "routine"
+why = "ovl28:0697: shows the HEAD sprite (DS:6B01) and the BODY sprite (DS:6B06, 5 rows lower) of the 3D view; called by ovl07_e7, res12_fn_27D9 and ovl28_e4"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl28_e6"
+new = "LoadHeadBodySprites"
+kind = "routine"
+why = "ovl28:05D9: loads the HEAD and BODY 8x8 sprite banks of the picture number DS:5376 from HEAD<num> and BODY<num> through res07_fn_0111; called by ovl07_e7, ovl28_e4 and res12_fn_27D9"
+date = "2026-10-11"
+

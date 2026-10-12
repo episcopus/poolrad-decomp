@@ -13640,12 +13640,12 @@ id = "ovl28:05D9"
 unit = "ovl28"
 addr = "ovl28:05D9"
 size = 190
-name = "ovl28_e6"
+name = "LoadHeadBodySprites"
 signature = ""
 c_name = "ovl28_e6"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl28_e6 (ovl28:05D9: loads the HEAD and BODY 8x8 sprite banks of the picture number DS:5376 from HEAD<num> and BODY<num> through res07_fn_0111; called by ovl07_e7, ovl28_e4 and res12_fn_27D9); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -13653,12 +13653,12 @@ id = "ovl28:0697"
 unit = "ovl28"
 addr = "ovl28:0697"
 size = 113
-name = "ovl28_e5"
+name = "ShowHeadBodySprites"
 signature = ""
 c_name = "ovl28_e5"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl28_e5 (ovl28:0697: shows the HEAD sprite (DS:6B01) and the BODY sprite (DS:6B06, 5 rows lower) of the 3D view; called by ovl07_e7, res12_fn_27D9 and ovl28_e4); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
