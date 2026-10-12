@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-11 | 5.8, 3.6 | window unit res09 (DrawWindow/ClearWindow/DrawWindowFrame, VideoAdapter) and TP6 codegen facts (string value-param entry copy, case jump form, 2D-array index, signed/unsigned mul, ShortInt loops) | make match UNIT=res09 unit complete, make readability UNIT=res09 clean |
 | 2026-10-11 | tests | review-queue test independent of which units are reviewed | tests/unit/test_agent_tools.py |
 | 2026-10-11 | process | make watch-agents: live view of agents, hand-offs and locks | tried on the branch |
 | 2026-10-11 | process | agents post heartbeats; make agents shows who has gone quiet | tests/unit/test_agent_tools.py |

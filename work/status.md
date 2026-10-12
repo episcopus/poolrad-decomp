@@ -12,7 +12,7 @@ Approach: ADR-002 (SPEC 4), Pascal-first matching decompilation; the C track (AD
 | P1 Map | done (`make p1-check`): 50 units, 1431 routines, TP 6.0 June 1991 pinned |
 | P2 Oracle and data | done: goldens with recordings for 2 of 2 session scripts (boot-title, create-character); `make golden CHECK=1` |
 | P3 Match harness | done: `make match` (tools/match/match.py, tests/unit/test_match.py); gate `make check` |
-| P4 Match | 24 of 1289 game routines at L2 (2764 of 234763 bytes by re/symbols.toml sizes); 9 of 46 game units complete, 3 reviewed; main program `src/POOL.PAS` matched by `make match UNIT=main` |
+| P4 Match | 28 of 1289 game routines at L2 (3644 of 234763 bytes by re/symbols.toml sizes); 10 of 46 game units complete, 3 reviewed; main program `src/POOL.PAS` matched by `make match UNIT=main` |
 | P5 Rebuild | `make rebuild` links the whole game from `src/` (every unit has source: decompiled or skeleton) and reports identical segments |
 
 ### P4 units with matched routines
@@ -27,6 +27,7 @@ Approach: ADR-002 (SPEC 4), Pascal-first matching decompilation; the C track (AD
 | res02 | res02 | 1 | 1 | 16 | clean | yes |
 | res04 | res04 | 5 | 5 | 336 | clean | complete |
 | res06 | res06 | 20 | 1 | 74 | clean | in progress |
+| res09 | res09 | 4 | 4 | 880 | clean | complete |
 | res10 | res10 | 1 | 1 | 16 | clean | yes |
 | res11 | res11 | 1 | 1 | 16 | clean | yes |
 
@@ -38,7 +39,7 @@ Locks (agents at work): `make locks`. Next unit: `make next`.
 |---|---:|
 | Units | 50 |
 | Routines | 1431 |
-| Routines with non-provisional names | 118 |
+| Routines with non-provisional names | 121 |
 | RTL-prefixed routine names | 53 |
 | Unit code_bytes (declared) | 245081 |
 | Sum of routine sizes | 244128 |
@@ -47,8 +48,8 @@ Locks (agents at work): `make locks`. Next unit: `make next`.
 
 | Level | Count |
 |---|---:|
-| none | 1407 |
-| L2 | 24 |
+| none | 1403 |
+| L2 | 28 |
 
 ### Top units by routine count
 
@@ -72,7 +73,7 @@ Locks (agents at work): `make locks`. Next unit: `make next`.
 
 ## Verification
 
-24 routines above `none`: res11_init L2 (03DA:0000), res10_init L2 (03ED:0000), ShowMessageLine L2 (0709:0BF5), QuitGame L2 (0899:0000), ReadGameKey L2 (0899:0059), FlushKeyboard L2 (0899:0104), DiscardWaitingKey L2 (0899:0122), res04_init L2 (0899:013C), res02_init L2 (0A31:0000), HeapErrorHandler L2 (ovl00:0042), ovl00_init L2 (ovl00:00AC), CheckCodeWheel L2 (ovl02:00FD), ovl02_init L2 (ovl02:0359), DrawPartyMarker L2 (ovl26:0000), WallDesc2FromCode L2 (ovl26:00C7), WallDesc3FromCode L2 (ovl26:00FB), WallDesc4FromCode L2 (ovl26:012F), ShowAreaView L2 (ovl26:016D), ovl26_init L2 (ovl26:02A0), DrawAreaView L2 (ovl27:0000), DrawAdventureScreen L2 (ovl27:0207), ovl27_init L2 (ovl27:0283), ShowDebugTrace L2 (ovl33:0004), ovl33_init L2 (ovl33:00F7).
+28 routines above `none`: res11_init L2 (03DA:0000), res10_init L2 (03ED:0000), DrawWindowFrame L2 (03F1:0000), ClearWindow L2 (03F1:0137), DrawWindow L2 (03F1:02E8), res09_init L2 (03F1:0367), ShowMessageLine L2 (0709:0BF5), QuitGame L2 (0899:0000), ReadGameKey L2 (0899:0059), FlushKeyboard L2 (0899:0104), DiscardWaitingKey L2 (0899:0122), res04_init L2 (0899:013C), res02_init L2 (0A31:0000), HeapErrorHandler L2 (ovl00:0042), ovl00_init L2 (ovl00:00AC), CheckCodeWheel L2 (ovl02:00FD), ovl02_init L2 (ovl02:0359), DrawPartyMarker L2 (ovl26:0000), WallDesc2FromCode L2 (ovl26:00C7), WallDesc3FromCode L2 (ovl26:00FB), WallDesc4FromCode L2 (ovl26:012F), ShowAreaView L2 (ovl26:016D), ovl26_init L2 (ovl26:02A0), DrawAreaView L2 (ovl27:0000), DrawAdventureScreen L2 (ovl27:0207), ovl27_init L2 (ovl27:0283), ShowDebugTrace L2 (ovl33:0004), ovl33_init L2 (ovl33:00F7).
 
 ## Blockers and decisions waiting for the human
 
