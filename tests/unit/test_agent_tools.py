@@ -221,3 +221,12 @@ def test_the_queue_skips_units_that_can_only_wait(monkeypatch):
     rs.append({"unit": "ovl25", "id": "f"})                           # one routine still workable
     assert nxt.next_unit()[0] == "ovl25"
 
+
+
+def test_an_unprovable_init_does_not_keep_a_blocked_unit_in_the_queue(monkeypatch):
+    import next as nxt
+    rs = [{"unit": "ovl25", "id": "a", "name": "ReadPromptChoice", "notes": "blocked: nested decision"},
+          {"unit": "ovl25", "id": "b", "name": "ovl25_init"},
+          {"unit": "ovl31", "id": "c", "name": "ovl31_init"}]
+    assert nxt.waiting("ovl25", rs)                  # only the init is left besides blocked routines
+    assert not nxt.waiting("ovl31", rs)              # the init alone is real work (no stubs left)
