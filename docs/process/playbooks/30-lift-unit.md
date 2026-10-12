@@ -2,6 +2,10 @@
 
 **Inputs:** a name for yourself (`AGENT`, unique among the agents running, for example `dec-2`); the compiler installed in the main checkout (`make tp-pin`).
 
+Creation metadata (ROLE=decompiler, actual HARNESS/MODEL/VARIANT/SESSION) must be registered before
+claiming. `make` wrappers bind tool outcomes and input revisions to your immutable identity/task id.
+See `docs/process/THROUGHPUT.md`; no billing/model guesses and no retroactive attribution.
+
 ## Steps
 
 Nothing to claim is a pause, not the end: post an idle heartbeat, wait about 5 minutes and run `make claim` again (AGENTS.md rule 9).
@@ -12,11 +16,11 @@ hand off and stop without another claim. A dirty main is not yours to repair: wa
 shared stash, reset, clean or commit main. Tool/test defects go to a separately authorized tooling task.
 
 1. **Claim.** From the main checkout: `make claim AGENT=<you>` (or `UNIT=<id>` when the human assigned one). It locks the next unit: first a unit whose review failed (fix its must-fix findings, below), else the next unit of `work/queue.toml` that is neither locked nor complete. It creates the worktree `../poolrad-worktrees/<id>` on branch `unit/<id>` and links the compiler into it. `cd` there; do everything else in that worktree. If the claim prints notes from `work/blockers.md` (for example how to bring back a branch the orchestrator reverted), do those first.
-2. **Read.** `make packet UNIT=<id>`; read `build/packets/<id>.md` (annotated disassembly, frames, callers, the bytes after each return), the unit's skeleton `src/<ID>.PAS`, and the whitepaper sections about the subsystem.
+2. **Read.** `make packet UNIT=<id>`; read its front-loaded learning brief, the linked accepted-main whitepaper/subsystem sections and `docs/reference/prior-art.md` before the disassembly and skeleton. `make learn UNIT=<id> QUERY="<symptom>"` retrieves relevant prior fixes even from a stale worktree. Prior-art addresses/claims are leads only; obey licences and re-prove on our build.
 3. **Decompile, routine by routine, leaves first** (callees before callers):
    1. Read the frame: `retf n` gives the parameter bytes, `sub sp, n` the locals; `[bp+6]` upward are the parameters (the last declared is nearest), `[bp-1]` downward the function result and the locals in declaration order.
    2. Replace the routine's `{@stub}` line (and its interface declaration, if the signature changes) by the Pascal. For a callee that is still a stub, give it the signature its callers' pushes show, in whichever unit's file it lives, and record it in `re/symbols.toml` `signature` (the full header, `procedure name(...)` or `function name(...): T`). For a new global, add `dsXXXX: <type>;` to `src/POOLVARS.PAS` in offset order (or a name in `re/dseg.toml` with evidence).
-   3. `make match UNIT=<id> FN=<name>`. On a difference the tool shows both instructions and the reason: fix the Pascal, never the tool. When the compiler's choice is unclear, probe it (rules of thumb). Maximum 5 attempts, then write a `blocked` note in `re/symbols.toml` `notes` and go on.
+    3. `make match UNIT=<id> FN=<name>`. On a difference, search `make learn` and existing TP idioms before another probe; fix the Pascal, never the tool. Probe the smallest disputed expression. Maximum 5 attempts, then record failed approaches, useful probes and learning ids in a `blocked` note and move on. After recorded recurring failures the orchestrator may relay one bounded expert diagnosis; it is a lead, never permission to change proof rules or mark L2.
    4. **Make it readable** before committing (`docs/process/READABILITY.md`): name the routine (`make rename OLD=<provisional> NEW=<Name> WHY="<evidence>"`), its parameters and locals; name the globals it uses (`make rename OLD=dsXXXX NEW=<Name> WHY=...`) or comment their declaration in `POOLVARS.PAS` with what is known; replace meaningful numbers by named constants; write the routine's comment (address, what it does in game terms, parameters, result, globals, side effects) and mark quirks `QUIRK <address>:`. `make match` again (names never change the code), then `make readability UNIT=<id>` until clean. When the purpose is really unknown, keep the provisional name and say `Purpose unknown:` with what is known.
    5. `make match UNIT=<id> WRITE=1` records L2 (a nested routine, which has no map symbol, gets L2 from its matched parent only when the parent calls it with `push bp; push cs; call` and it lies inside the parent's exactly compared pre-entry region: `NESTED` lines); commit: `<unit>: decompile <name> (<id>) [L2]` with the trailer line `Agent: <you>` (`git commit -m "..." --trailer "Agent: <you>"`).
 4. **The unit.** Write the unit's comment (what it is for, its main routines, the whitepaper section) once its purpose is clear, and look over the names across the unit: the same thing gets one name.
@@ -44,6 +48,9 @@ uses POOLVARS, RES04, ...;
 ## Rules of thumb
 
 - **Probe, do not guess.** `make tpc SRC=<scratch>/GUESS.PAS DISASM=1` compiles a guess with POOL's compiler and names every runtime call by the POOL routine it reaches. Keep scratch Pascal out of `src/`; worthwhile probes go to `tools/re/tp_idioms/`.
+- New durable probes go to `tools/re/tp_idioms/<unit>/` (never overwrite another unit's probe). Record
+  reusable findings in `re/learnings/<unit>.toml` with durable matched-source/probe evidence in the
+  same commit, then meter usage at the hand-off. Reviewers judge V/I/H annotations, not a guessed name.
 - **The runtime library is a call.** A `lcall 0AF8:xxxx` (System), `0A40:xxxx` (Crt), `0A32:xxxx` (Dos) in the packet is a standard routine or a compiler helper; the packet names it when `re/symbols.toml` does. Find the Pascal construct that produces that call with a probe.
 - **Ghidra's decompiler output is a hint**, not the answer: it mis-types Pascal strings, sets and nested-procedure frames.
 - **Keep original quirks** (dead code after `Exit`, unassigned function results, off-by-ones): the compiler demands them; comment them as `QUIRK:` with the address.

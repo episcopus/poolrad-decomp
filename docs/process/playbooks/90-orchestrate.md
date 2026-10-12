@@ -8,6 +8,13 @@ This also applies to its parent/launcher session. Neither may appoint itself an 
 `docs/process/SAFETY.md`; tool guards prevent accidents but need harness permissions for real isolation.
 Never use a shared stash, reset main or clear a hand-off to make a merge problem disappear.
 
+Register actual ROLE=orchestrator harness/model/session metadata at creation. Read THROUGHPUT.md;
+after activity/hand-off triage use `make expert-scan AGENT=orch` if the human admitted the existing expert.
+It finds recurring recorded failures and queues bounded advice without creating a session. Inspect
+`make experts` and relay `make expert-result CASE=<id>` to the original worker. Never turn a held budget
+or human decision into a repeated paid consultation or replacement-model launch. Use `make performance`
+for accepted work/repair/time/usage comparisons, not raw commit counts. Missing data stays unknown.
+
 All agents share one clone on one machine: the main checkout (the orchestrator's) plus one worktree per unit or review (`../poolrad-worktrees/`, made by `make claim`). Locks and hand-offs live in the clone's git directory, so agents in different harnesses see the same ones. An agent on another machine would see neither, and needs the compiler installed to run `make match`.
 
 ## Before the human starts agents
