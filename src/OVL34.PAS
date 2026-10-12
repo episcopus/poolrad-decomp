@@ -5,7 +5,7 @@ unit OVL34;
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 procedure Load8x8Bank(Count, Bank: Byte);
-procedure Put8x8Symbol(XPos, YPos: ShortInt; Symbol: Word; Direct: Boolean; Attr: Byte);
+procedure Put8x8Symbol(XPos, YPos: ShortInt; Symbol: Word; Direct: Byte; Attr: Byte);
 implementation
 uses POOLVARS, RES04, RES07;
 
@@ -18,7 +18,7 @@ const
 { ovl34:003B. Loads Count tiles of 8x8 bank Bank (0..4) from the file 8x8d<TileSet> through
   res07_fn_0111. On a failure (the bank pointer stays nil) it announces Unable to load
   8x8D<set>-<count> on Output, waits for a key and ends the game; otherwise it flushes the
-  keyboard. Called by LoadWallSet and ovl11_fn_0435. }
+  keyboard. Called by LoadWallSet and StartGame. }
 procedure Load8x8Bank(Count, Bank: Byte);
 var
   NumSet: string[1];            { Str(TileSet): the file number in the name and the message }
@@ -48,10 +48,10 @@ end;
   $11F..$7FFF are fatal (Bad symbol number in Put8x8Symbol on Output, a key, then the game
   ends). QUIRK ovl34:01C0: symbols above $7FFF skip the check and run on with an unset bank.
   A nil bank pointer draws nothing. Otherwise Symbol is made bank relative and the tile is
-  drawn through res07_fn_08D4 when Direct is set (the 3D view) or copied into the staging
-  buffer TileBuf and shown with res07_fn_1951 (window frames). Called by res09_fn_0000 and
-  ovl29 (three times). }
-procedure Put8x8Symbol(XPos, YPos: ShortInt; Symbol: Word; Direct: Boolean; Attr: Byte);
+  drawn through res07_fn_08D4 when Direct is nonzero (the 3D view) or copied into the staging
+  buffer TileBuf and shown with res07_fn_1951 (window frames). Called by DrawWindowFrame and
+  ovl29 (three times); the callers pass 0 for Direct (the window frame path). }
+procedure Put8x8Symbol(XPos, YPos: ShortInt; Symbol: Word; Direct: Byte; Attr: Byte);
 var
   Bank: Byte;                   { the bank holding Symbol, from the case ranges }
   Key: Char;                    { the key waited for before quitting on a bad symbol }
@@ -73,7 +73,7 @@ begin
   if TileBanks[Bank] <> nil then
   begin
     Dec(Symbol, SymbolBase[Bank]);
-    if Direct then
+    if Direct <> 0 then
       res07_fn_08D4(XPos, YPos, Lo(Symbol), Attr, TileBanks[Bank], DrawBuf)
     else
       with TileBanks[Bank]^ do
