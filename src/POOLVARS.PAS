@@ -338,11 +338,12 @@ var
   TileBuf: PT8x8Bank;             { the tile staging buffer: Put8x8Symbol Moves one tile to +$17 }
 
   { Globals of the Temple (ovl04). }
-  { The Heal menu texts, string[40] entries 1..9 at DS:011A (Cure Blindness ... Stone to Flesh,
-    Exit) copied into the menu lines (ovl04:0A33). Entry 0 is never read: the index base
-    DS:00F1 is entry 0 so that TempleMenuText[I] names the same address; its bytes are the tail
-    of the previous data and DiseaseAffects. }
-  TempleMenuText: array[0..9] of string[40];  { see above }
+  { The Heal menu texts, string[40] entries 1..10 at DS:011A (Cure Blindness ... Stone to Flesh,
+    Exit) copied into the menu lines (ovl04:0A33, I from 1 to 10 at ovl04:0A0C..0A54). Entry 0
+    (DS:00F1) is never read: the index base is entry 0 so that TempleMenuText[I] names the same
+    address; its bytes are the tail of the previous data. Entry 10 (DS:028B) holds length 4
+    'Exit'. }
+  TempleMenuText: array[0..10] of string[40];  { see above }
   { The six affects Cure Disease looks for and removes (entries 1..6 at DS:0114: $1F, $22, $2B,
     $2C, $32, $39 in the image; ovl04:031E, 03A6). Entry 0, the byte before, is never read. }
   DiseaseAffects: array[0..6] of Byte;  { see above }
