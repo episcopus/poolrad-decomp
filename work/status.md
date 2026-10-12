@@ -12,7 +12,7 @@ Approach: ADR-002 (SPEC 4), Pascal-first matching decompilation; the C track (AD
 | P1 Map | done (`make p1-check`): 50 units, 1431 routines, TP 6.0 June 1991 pinned |
 | P2 Oracle and data | done: goldens with recordings for 2 of 2 session scripts (boot-title, create-character); `make golden CHECK=1` |
 | P3 Match harness | done: `make match` (tools/match/match.py, tests/unit/test_match.py); gate `make check` |
-| P4 Match | 24 of 1289 game routines at L2 (2764 of 234763 bytes by re/symbols.toml sizes); 9 of 46 game units complete, 1 reviewed; main program `src/POOL.PAS` matched by `make match UNIT=main` |
+| P4 Match | 24 of 1289 game routines at L2 (2764 of 234763 bytes by re/symbols.toml sizes); 9 of 46 game units complete, 2 reviewed; main program `src/POOL.PAS` matched by `make match UNIT=main` |
 | P5 Rebuild | `make rebuild` links the whole game from `src/` (every unit has source: decompiled or skeleton) and reports identical segments |
 
 ### P4 units with matched routines
@@ -28,7 +28,7 @@ Approach: ADR-002 (SPEC 4), Pascal-first matching decompilation; the C track (AD
 | res04 | res04 | 5 | 5 | 336 | clean | complete |
 | res06 | res06 | 20 | 1 | 74 | clean | in progress |
 | res10 | res10 | 1 | 1 | 16 | clean | complete |
-| res11 | res11 | 1 | 1 | 16 | clean | complete |
+| res11 | res11 | 1 | 1 | 16 | clean | yes |
 
 Locks (agents at work): `make locks`. Next unit: `make next`.
 
