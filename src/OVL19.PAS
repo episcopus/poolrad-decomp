@@ -49,7 +49,7 @@ procedure ovl19_fn_228C;
 procedure ovl19_fn_2383;
 procedure ovl19_fn_23B6;
 procedure ovl19_fn_24A7;
-procedure ovl19_e9;
+function ovl19_e9(Shop: Pointer; Item: Pointer): Boolean;
 procedure ovl19_e10(Key: Char);
 function ovl19_e11(Who: Pointer): LongInt;
 procedure ovl19_e12;
@@ -148,7 +148,7 @@ implementation
 { ovl19:24A7: retf 0: 0 bytes of parameters; 558 bytes of locals }
 {@stub} procedure ovl19_fn_24A7; begin end;
 { ovl19:275B: retf 8: 8 bytes of parameters; 4 bytes of locals }
-{@stub} procedure ovl19_e9; begin end;
+{@stub} function ovl19_e9(Shop: Pointer; Item: Pointer): Boolean; begin end;
 { ovl19:27DF: retf 2; the Temple passes the key G or O. }
 {@stub} procedure ovl19_e10(Key: Char); begin end;
 { ovl19:28BE: retf 4; returns a LongInt summed over the character's money words; the Temple keeps the low word. }

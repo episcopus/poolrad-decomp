@@ -63,13 +63,18 @@ type
     Kind: Byte;
     Addr: Pointer;
   end;
-  { An item in memory: the 63-byte item record of whitepaper 4.2.5 (field offsets [V] by
-    tools/re/records.py round-trips); in memory the four bytes after the name hold the link to the
-    next item of the owner's list (Remove Curse walks it, ovl04:087F). }
-  PItem = ^TItem;
-  TItem = record
-    Name: string[41];             { +$00 }
-    Next: PItem;                  { +$2A: next item of the list; nil ends it }
+  { One line of a menu list or an item in memory: the 63-byte record of whitepaper 4.2.5 (field
+    offsets [V] by tools/re/records.py round-trips). The Temple builds its Heal menu from these
+    (ovl25_e6, ovl04:0A18) and the Shop shows its stock and the character's carried items with the
+    same record, so ovl04, ovl06 and ovl25 all share one type; Text is a string[40] (the Shop's
+    ovl06:0030 assigns with a System_StrLCopy limit of $28) and the byte at +$29 is the menu line's
+    cleared flag, so the link is at +$2A. PItem/TItem are the same record. }
+  PByte = ^Byte;
+  PMenuLine = ^TMenuLine;
+  TMenuLine = record
+    Text: string[40];             { +$00: the line's text (a menu line or an item name) }
+    Flag29: Byte;                 { +$29: cleared when a menu line is filled; meaning unknown }
+    Next: PMenuLine;              { +$2A: the next line/item of the list; nil ends it }
     ItemType: Byte;               { +$2E }
     NameNum: array[1..3] of Byte; { +$2F..$31 }
     Plus: ShortInt;               { +$32 }
@@ -82,6 +87,8 @@ type
     Value: Word;                  { +$3A }
     Affects: array[1..3] of Byte; { +$3C..$3E }
   end;
+  PItem = PMenuLine;
+  TItem = TMenuLine;
   { A character in memory: the 285-byte record of whitepaper 4.2.5 (name, abilities and hp_max
     [V] by tools/re/records.py). Only the fields a decompiled unit uses are named; the Pad
     arrays keep the offsets. }
@@ -116,14 +123,6 @@ type
     Pad10E: array[$10E..$11A] of Byte;
     Flag11B: Byte;                { +$11B: Raise Dead and Stone to Flesh set it to 1; meaning unknown }
     Pad11C: Byte;
-  end;
-  { One line of the menu list ovl25_e6 builds (the Temple's Heal menu fills ten of them from
-    TempleMenuText, ovl04:0A18): the text, a byte the Temple clears, the link to the next line. }
-  PMenuLine = ^TMenuLine;
-  TMenuLine = record
-    Text: string[40];             { +$00 }
-    Flag29: Byte;                 { +$29: cleared when the line is filled; meaning unknown }
-    Next: PMenuLine;              { +$2A }
   end;
   { The 28 bytes at DS:67F4 that the Temple clears on entry and ovl21_e12 turns into a LongInt
     sum (the money pooled in the shop); the element layout is not known yet. }
@@ -301,7 +300,7 @@ var
   ds5D96: LongInt;                { a 4-byte value the loader clears (ovl11:03B0): one `xor ax,ax` and two stores }
   ds5E1E: Word;                   { BlockRead result count of the loader (ovl11:05D6) }
   ds5E20: ^TBlock588;             { $588-byte block the loader allocates (ovl11:0074) }
-  ds6810: LongInt;                { a 4-byte value the loader clears (ovl11:031A): one `xor ax,ax` and two stores }
+  ds6810: PMenuLine;              { head of the shop's item list, a far pointer the loader clears (ovl11:031A) }
   ds6A58: ^TBlock924;             { $924-byte block the loader allocates (ovl11:0084) }
   ds6A5C: ^TBlock400;             { $400-byte block the loader allocates (ovl11:0094) }
   ds6AAEWords: array[0..3] of TPresenceSlot;  { the 4-byte element table at DS:6AAE; the loader sets
