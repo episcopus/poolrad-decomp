@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-12 | 5.18 | InDirArc/ScanTargets/WalkLine decompiled, e5 block resolved, map row and tile table layout | make match UNIT=ovl30 (unit complete), make check green |
 | 2026-10-12 | 5.3 | new wilderness unit section, corrected Entropy PIT claim and icon-set reference | make match UNIT=ovl14 (unit: complete), make check green |
 | 2026-10-11 | ovl29 | DrawWallDescriptors (ovl29_fn_0174) decompiled; res07_fn_2632 signature and ds260A recorded | make match UNIT=ovl29, make readability UNIT=ovl29, make check |
 | 2026-10-11 | res06 | GameClock (res06_fn_0C3F) decompiled and renamed; res06_fn_05EB body settled (set membership, blocked on res06_fn_01DF's pool) | make match UNIT=res06, make readability UNIT=res06, make check |
