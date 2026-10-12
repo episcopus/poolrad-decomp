@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-11 | process | make watch-agents: colored live view of progress, agents, hand-offs, locks and queues | tests/unit/test_agent_tools.py |
 | 2026-10-11 | 5.2, 5.2.1 | entries 1 and 2 of SpecialBlocks never override a block; ovl18_e2 has three DrawAreaView call sites; the step of 3 is view cells | make match UNIT=ovl27 |
 | 2026-10-11 | process | decompilers and reviewers wait for work instead of exiting on an empty queue | rev-1..3 exited on an empty review queue |
 | 2026-10-11 | 5.2.1 | corrected the party marker fold: column 42 / row 34 are cell 3 and column 43 / row 35 or more cell 4, and ShowAreaView (not DrawAreaView) clamps the window; added the ovl26:02A0 init comment to src/OVL26.PAS | make match UNIT=ovl26 (3 matched, 3 nested, 0 differ), make readability UNIT=ovl26 clean, make check green |
