@@ -25,7 +25,7 @@ const
   VideoSetMode = $00;         { INT 10h function: set video mode }
 
 { 0899:0000. Ends the program. Copies SoundModeBeforePause into SoundMode and calls
-  res03_fn_00DC(ds2612), the same call as the Ctrl-S pause path, not res03_fn_017B (the resume
+  PlaySound(ds2612), the same call as the Ctrl-S pause path, not SilenceSound (the resume
   call at 0899:00A1). What that call does to the sound is not shown here; the sound unit's
   proven stop is 08AE:13B1 (whitepaper 5.14). Then INT 10h function VideoSetMode with
   SavedVideoMode in AL. No writer of SavedVideoMode is in this unit, so where that byte was
@@ -33,7 +33,7 @@ const
 procedure QuitGame;
 begin
   SoundMode := SoundModeBeforePause;
-  res03_fn_00DC(ds2612);
+  PlaySound(ds2612);
   Regs.AH := VideoSetMode;
   Regs.AL := SavedVideoMode;
   Intr(VideoBios, Regs);
@@ -41,10 +41,10 @@ begin
 end;
 
 { 0899:0059. The ReadKey of the game: waits for a key and returns a Char. Ctrl-S, when SoundMode
-  is not SoundPaused, saves SoundMode in SoundModeBeforePause, calls res03_fn_00DC(ds2612) and
+  is not SoundPaused, saves SoundMode in SoundModeBeforePause, calls PlaySound(ds2612) and
   sets SoundMode to SoundPaused. A later Ctrl-S resumes only when SoundMode is already
   SoundPaused and SoundModeBeforePause is ResumeIfSaved0 or ResumeIfSaved1: it copies the saved
-  mode back and calls res03_fn_017B. Any other second Ctrl-S does nothing. When ParamStr(1) is
+  mode back and calls SilenceSound. Any other second Ctrl-S does nothing. When ParamStr(1) is
   STING, Ctrl-D switches DebugMode and Ctrl-C quits. Those tests, and the Ctrl-S test, use the
   first key. Then, unless that key is KeyExtended, every key still waiting is read into Key
   (0899:00E4), so the function returns the last key in the buffer. The 258-byte frame is
@@ -58,13 +58,13 @@ begin
     if SoundMode <> SoundPaused then
     begin
       SoundModeBeforePause := SoundMode;
-      res03_fn_00DC(ds2612);
+      PlaySound(ds2612);
       SoundMode := SoundPaused;
     end
     else if SoundModeBeforePause in [ResumeIfSaved0, ResumeIfSaved1] then
     begin
       SoundMode := SoundModeBeforePause;
-      res03_fn_017B;
+      SilenceSound;
     end;
   if ParamStr(1) = 'STING' then
   begin

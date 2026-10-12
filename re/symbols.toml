@@ -1680,247 +1680,78 @@ evidence = ["prologue"]
 id = "ovl05:0000"
 unit = "ovl05"
 addr = "ovl05:0000"
-size = 682
-name = "ovl05_fn_0000"
+size = 853
+name = "ComputeBattleExperience"
 signature = ""
 c_name = "ovl05_fn_0000"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl05_fn_0000 (sums the defeated monsters' XpValue + HpB1*XpPerHp, the pooled money at 1/200..2200 per coin and 400 per magic plus of the looted items, divided by the party size; moves the monsters' money and items into the loot (ovl05:0000, matched)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl05:02AA"
-unit = "ovl05"
-addr = "ovl05:02AA"
-size = 103
-name = "ovl05_fn_02AA"
-signature = ""
-c_name = "ovl05_fn_02AA"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl05:0311"
-unit = "ovl05"
-addr = "ovl05:0311"
-size = 68
-name = "ovl05_fn_0311"
-signature = ""
-c_name = "ovl05_fn_0311"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl05:0355"
 unit = "ovl05"
 addr = "ovl05:0355"
 size = 372
-name = "ovl05_fn_0355"
+name = "AwardExperience"
 signature = ""
 c_name = "ovl05_fn_0355"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl05_fn_0355 (adds the experience to every member with Flag10D set and not dead, +10% when the prime requisite of the class is above 15, halved or a third for multi-class (ovl05:0355, matched)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl05:04C9"
 unit = "ovl05"
 addr = "ovl05:04C9"
-size = 62
-name = "ovl05_fn_04C9"
+size = 1101
+name = "SettleBattleOutcome"
 signature = ""
 c_name = "ovl05_fn_04C9"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl05_fn_04C9 (decides fled/won/destroyed from the members' Status and Side, awards the experience through ComputeBattleExperience and AwardExperience, revives fled and dying members or removes the party (ovl05:04C9, matched)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl05:0507"
-unit = "ovl05"
-addr = "ovl05:0507"
-size = 484
-name = "ovl05_fn_0507"
-signature = ""
-c_name = "ovl05_fn_0507"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl05:06EB"
-unit = "ovl05"
-addr = "ovl05:06EB"
-size = 191
-name = "ovl05_fn_06EB"
-signature = ""
-c_name = "ovl05_fn_06EB"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl05:07AA"
-unit = "ovl05"
-addr = "ovl05:07AA"
-size = 223
-name = "ovl05_fn_07AA"
-signature = ""
-c_name = "ovl05_fn_07AA"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl05:0889"
-unit = "ovl05"
-addr = "ovl05:0889"
-size = 25
-name = "ovl05_fn_0889"
-signature = ""
-c_name = "ovl05_fn_0889"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl05:08A2"
-unit = "ovl05"
-addr = "ovl05:08A2"
-size = 116
-name = "ovl05_fn_08A2"
-signature = ""
-c_name = "ovl05_fn_08A2"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl05:0916"
 unit = "ovl05"
 addr = "ovl05:0916"
-size = 4
-name = "ovl05_fn_0916"
+size = 510
+name = "ShowBattleResult"
 signature = ""
 c_name = "ovl05_fn_0916"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl05_fn_0916 (shows 'The party has won.'/'fled'/'found Treasure!' or the duel result and 'Each character receives <n> experience points.' (ovl05:0916, matched)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl05:091A"
-unit = "ovl05"
-addr = "ovl05:091A"
-size = 5
-name = "ovl05_fn_091A"
-signature = ""
-c_name = "ovl05_fn_091A"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl05:091F"
-unit = "ovl05"
-addr = "ovl05:091F"
-size = 5
-name = "ovl05_fn_091F"
-signature = ""
-c_name = "ovl05_fn_091F"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl05:0924"
-unit = "ovl05"
-addr = "ovl05:0924"
-size = 25
-name = "ovl05_fn_0924"
-signature = ""
-c_name = "ovl05_fn_0924"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl05:093D"
-unit = "ovl05"
-addr = "ovl05:093D"
-size = 92
-name = "ovl05_fn_093D"
-signature = ""
-c_name = "ovl05_fn_093D"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl05:0999"
-unit = "ovl05"
-addr = "ovl05:0999"
-size = 379
-name = "ovl05_fn_0999"
-signature = ""
-c_name = "ovl05_fn_0999"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl05:0B14"
 unit = "ovl05"
 addr = "ovl05:0B14"
-size = 52
-name = "ovl05_fn_0B14"
+size = 242
+name = "ChooseLootItem"
 signature = ""
 c_name = "ovl05_fn_0B14"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl05_fn_0B14 (draws the 'Loot' window and lets the player pick an item of the loot list ds6810 through ChooseFromList ('Items: ', 'Take') (ovl05:0B14, matched)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl05:0B48"
-unit = "ovl05"
-addr = "ovl05:0B48"
-size = 190
-name = "ovl05_fn_0B48"
-signature = ""
-c_name = "ovl05_fn_0B48"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl05:0C06"
 unit = "ovl05"
 addr = "ovl05:0C06"
 size = 306
-name = "ovl05_fn_0C06"
+name = "TakeLootItems"
 signature = ""
 c_name = "ovl05_fn_0C06"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl05_fn_0C06 (loops ChooseLootItem; on Take gives the chosen item to SelectedCharacter (AddInventoryItem) and unlinks and frees it from the loot list ds6810 (ovl05:0C06, matched)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -1928,90 +1759,64 @@ id = "ovl05:0D38"
 unit = "ovl05"
 addr = "ovl05:0D38"
 size = 405
-name = "ovl05_fn_0D38"
+name = "TakeTreasure"
 signature = ""
 c_name = "ovl05_fn_0D38"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl05_fn_0D38 (the Take command: 'Take: Money Items Exit' when both money and items are left, else takes the money (ovl21_e4) or the items (TakeLootItems) directly (ovl05:0D38, matched)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl05:0ECD"
 unit = "ovl05"
 addr = "ovl05:0ECD"
-size = 277
-name = "ovl05_fn_0ECD"
+size = 735
+name = "TreasureMenu"
 signature = ""
 c_name = "ovl05_fn_0ECD"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl05_fn_0ECD (the menu after a battle: 'View Take Pool Share Detect Exit', asks 'There is still treasure left. Do you want to go back and claim your treasure?' on Exit (ovl05:0ECD, matched)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl05:0FE2"
-unit = "ovl05"
-addr = "ovl05:0FE2"
-size = 458
-name = "ovl05_fn_0FE2"
-signature = ""
-c_name = "ovl05_fn_0FE2"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl05:11AC"
 unit = "ovl05"
 addr = "ovl05:11AC"
 size = 316
-name = "ovl05_fn_11AC"
+name = "RemoveBattleCombatants"
 signature = ""
 c_name = "ovl05_fn_11AC"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl05_fn_11AC (removes the monsters (Side 1) and the B13 combatants from the party list through ovl16_e2 and frees the remaining members' combat state (ovl05:11AC, matched)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl05:12E8"
 unit = "ovl05"
 addr = "ovl05:12E8"
-size = 31
-name = "ovl05_fn_12E8"
+size = 575
+name = "TakeHirelingShares"
 signature = ""
 c_name = "ovl05_fn_12E8"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl05_fn_12E8 (computer-run members (B84 80h and up) take their share (byte +85h and 7) of each pooled money kind: '<name> takes and hides his share.' (ovl05:12E8, matched)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl05:1307"
-unit = "ovl05"
-addr = "ovl05:1307"
-size = 544
-name = "ovl05_fn_1307"
-signature = ""
-c_name = "ovl05_fn_1307"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl05:1527"
 unit = "ovl05"
 addr = "ovl05:1527"
 size = 330
-name = "ovl05_e1"
+name = "EndBattle"
 signature = ""
 c_name = "ovl05_e1"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_1"
+notes = "renamed from ovl05_e1 (the entry after a combat: settles the outcome, removes the monsters, shares, shows the result and the treasure menu, frees the loot; or 'The END!' / 'The monsters rejoice for the party has been destroyed' (ovl05:1527, matched)); auto:entry_1"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2022,7 +1827,7 @@ size = 5
 name = "ovl05_init"
 signature = ""
 c_name = "ovl05_init"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_0"
 evidence = ["prologue"]
@@ -2036,6 +1841,7 @@ name = "ChooseShopItem"
 signature = ""
 c_name = "ovl06_fn_0030"
 level = "L2"
+review = "passed 2026-10-12 by rev-4, 7b45c7f"
 justification = ""
 notes = "renamed from ovl06_fn_0030 (builds the Shop window (DrawWindow 'Shop'), rewrites each stock entry's Name into a 30-char name+Count field, runs the item picker ovl25_e4 ('Items: '/'Buy') over the list at ds6810 and returns the chosen entry in Head/Selected with the key in Action; called from ovl06_fn_0361 (Buy) (ovl06:0030)); auto:near_call"
 evidence = ["prologue"]
@@ -2049,6 +1855,7 @@ name = "AddInventoryItem"
 signature = "procedure AddInventoryItem(Item: PMenuLine; var Overloaded: Byte)"
 c_name = "ovl06_e2"
 level = "L2"
+review = "passed 2026-10-12 by rev-4, 7b45c7f"
 justification = ""
 notes = "renamed from ovl06_e2 (appends a clone of the item to the linked list at ds5D92^.Stock unless ovl19_e9 (Inventory) reports the list full (15 slots) and then shows OverLoaded; called from ovl05 (TreasureShare) and ovl06_fn_0361 (Buy), so it adds an item to the party inventory (ovl06:0239)); auto:near_call"
 evidence = ["prologue"]
@@ -2062,6 +1869,7 @@ name = "BuyItems"
 signature = ""
 c_name = "ovl06_fn_0361"
 level = "L2"
+review = "passed 2026-10-12 by rev-4, 7b45c7f"
 justification = ""
 notes = "renamed from ovl06_fn_0361 (the Buy flow of the shop menu: loops on ChooseShopItem, pays from the pool (ovl19_e11) or the money (ovl21_e12 on ds67F4), adds the entry with AddInventoryItem and deducts via ovl21_e10/ovl21_e11, else shows Not enough Money.; called from ovl06_e1 on the 'B' menu key (ovl06:0361)); auto:near_call"
 evidence = ["prologue"]
@@ -2075,6 +1883,7 @@ name = "ShopMain"
 signature = ""
 c_name = "ovl06_e1"
 level = "L2"
+review = "passed 2026-10-12 by rev-4, 7b45c7f"
 justification = ""
 notes = "renamed from ovl06_e1 (the Shop overlay's entry from ovl03: marks the shop open (ds49F3), redraws the shop screen (res12_fn_27D9, res12_fn_0767), clears ds67F4 and ds6DC0, then loops showing the shop menu (ovl25_e2) and dispatching Buy/View/Take/Pool/Share/Appraise/Exit and the leave prompt; leaves when Done is set (ovl06:053E)); auto:entry_1"
 evidence = ["prologue"]
@@ -2088,6 +1897,7 @@ name = "ovl06_init"
 signature = ""
 c_name = "ovl06_init"
 level = "L2"
+review = "passed 2026-10-12 by rev-4, 7b45c7f"
 justification = ""
 notes = "auto:entry_0"
 evidence = ["prologue"]
@@ -8859,7 +8669,7 @@ unit = "ovl16"
 addr = "ovl16:3291"
 size = 342
 name = "ovl16_e2"
-signature = ""
+signature = "procedure ovl16_e2(Uncounted, FreePicture: Boolean)"
 c_name = "ovl16_e2"
 level = "none"
 justification = ""
@@ -13422,6 +13232,7 @@ name = "FootprintCell"
 signature = "function FootprintCell(Kind, Index: Byte; var DX, DY: ShortInt): Boolean"
 c_name = "ovl31_e1"
 level = "L2"
+review = "passed 2026-10-12 by rev-4, 8291710"
 justification = ""
 notes = "renamed from ovl31_e1 (ovl31:0000 reads cell J of footprint kind Base from the DS:2844 table (offset pair) and answers whether it exists (DX >= 0); kinds 1..4 are 1 cell, 2 vertical, 2 horizontal, 2x2 (table bytes)); auto:near_call"
 evidence = ["prologue"]
@@ -13435,6 +13246,7 @@ name = "UpdateViewPositions"
 signature = "procedure UpdateViewPositions"
 c_name = "ovl31_fn_0068"
 level = "L2"
+review = "passed 2026-10-12 by rev-4, 8291710"
 justification = ""
 notes = "renamed from ovl31_fn_0068 (ovl31:0068 sets ds604B/ds6093[I] to each combatant's map X/Y minus the view origin (ds6716^ +2, +3)); auto:near_call"
 evidence = ["prologue"]
@@ -13448,6 +13260,7 @@ name = "ovl31_e2"
 signature = "procedure ovl31_e2"
 c_name = "ovl31_e2"
 level = "L2"
+review = "passed 2026-10-12 by rev-4, 8291710"
 justification = ""
 notes = "auto:entry_2"
 evidence = ["prologue"]
@@ -13461,6 +13274,7 @@ name = "ovl31_e3"
 signature = "procedure ovl31_e3"
 c_name = "ovl31_e3"
 level = "L2"
+review = "passed 2026-10-12 by rev-4, 8291710"
 justification = ""
 notes = "auto:entry_3"
 evidence = ["prologue"]
@@ -13474,6 +13288,7 @@ name = "DrawCursorAt"
 signature = "procedure DrawCursorAt(CellX, CellY: ShortInt)"
 c_name = "ovl31_fn_0127"
 level = "L2"
+review = "passed 2026-10-12 by rev-4, 8291710"
 justification = ""
 notes = "renamed from ovl31_fn_0127 (ovl31:0127 redraws the cells of the cursor footprint (ds6716^+5) at map cell (X, Y), puts icon $19 on each when ds6716^+4 is set, then redraws the combatant standing there); auto:near_call"
 evidence = ["prologue"]
@@ -13487,6 +13302,7 @@ name = "RedrawMapCell"
 signature = "procedure RedrawMapCell(CellX, CellY: ShortInt)"
 c_name = "ovl31_e4"
 level = "L2"
+review = "passed 2026-10-12 by rev-4, 8291710"
 justification = ""
 notes = "renamed from ovl31_e4 (ovl31:02D5 redraws the ground under view cell (X, Y) (ovl31_e7) and the combatant standing on map cell (X, Y)); auto:near_call"
 evidence = ["prologue"]
@@ -13500,6 +13316,7 @@ name = "RebuildOccupancy"
 signature = "procedure RebuildOccupancy"
 c_name = "ovl31_e5"
 level = "L2"
+review = "passed 2026-10-12 by rev-4, 8291710"
 justification = ""
 notes = "renamed from ovl31_e5 (ovl31:03A0 clears the 50x25 occupant map DS:60DB and writes each active combatant's index into its footprint cells, then refreshes its view position); auto:near_call"
 evidence = ["prologue"]
@@ -13513,6 +13330,7 @@ name = "GetMapCell"
 signature = "procedure GetMapCell(CellX, CellY: ShortInt; var Occupant, Tile: Byte)"
 c_name = "ovl31_e6"
 level = "L2"
+review = "passed 2026-10-12 by rev-4, 8291710"
 justification = ""
 notes = "renamed from ovl31_e6 (ovl31:04BE returns the tile id (ds6716^ cells) and the occupant (DS:60DB) of map cell (X, Y), both 0 off the 50x25 map); auto:near_call"
 evidence = ["prologue"]
@@ -13526,6 +13344,7 @@ name = "RedrawGround"
 signature = "procedure RedrawGround(Col, Row: ShortInt; Occupant: Byte)"
 c_name = "ovl31_e7"
 level = "L2"
+review = "passed 2026-10-12 by rev-4, 8291710"
 justification = ""
 notes = "renamed from ovl31_e7 (ovl31:052B redraws the cell pictures under combatant Occ's footprint, or under view cell (X, Y) when no combatant stands there); auto:near_call"
 evidence = ["prologue"]
@@ -13539,6 +13358,7 @@ name = "IsInView"
 signature = "function IsInView(Col, Row: ShortInt): Boolean"
 c_name = "ovl31_e8"
 level = "L2"
+review = "passed 2026-10-12 by rev-4, 8291710"
 justification = ""
 notes = "renamed from ovl31_e8 (ovl31:06E9 true when view cell (X, Y) is inside the 7x7 view (0..6)); auto:near_call"
 evidence = ["prologue"]
@@ -13552,6 +13372,7 @@ name = "IsCombatantInView"
 signature = "function IsCombatantInView(Who: PCharacter; AllCells: Byte): Boolean"
 c_name = "ovl31_e9"
 level = "L2"
+review = "passed 2026-10-12 by rev-4, 8291710"
 justification = ""
 notes = "renamed from ovl31_e9 (ovl31:071A true when the footprint of combatant Who is in the 7x7 view: every cell when All is set, any cell otherwise; false for an inactive combatant); auto:near_call"
 evidence = ["prologue"]
@@ -13565,6 +13386,7 @@ name = "ScrollViewTo"
 signature = "function ScrollViewTo(CellX, CellY: ShortInt; Margin: Byte): Boolean"
 c_name = "ovl31_fn_07D4"
 level = "L2"
+review = "passed 2026-10-12 by rev-4, 8291710"
 justification = ""
 notes = "renamed from ovl31_fn_07D4 (ovl31:07D4 moves the 7x7 view origin (ds6716^+2,+3) until map cell (X, Y) is within Margin cells of the centre, redraws all 49 cell pictures and returns true; returns false when no scroll was needed); auto:near_call"
 evidence = ["prologue"]
@@ -13578,6 +13400,7 @@ name = "MoveCombatCursor"
 signature = "procedure MoveCombatCursor(CellX, CellY: ShortInt; Margin, Dir: Byte)"
 c_name = "ovl31_e10"
 level = "L2"
+review = "passed 2026-10-12 by rev-4, 8291710"
 justification = ""
 notes = "renamed from ovl31_e10 (ovl31:0996 steps from map cell (X, Y) by direction Dir (ds2736/ds273F, 8 = no step), scrolls and redraws the view and the combatants when needed, restores the old cell and draws the cursor at the new one); auto:near_call"
 evidence = ["prologue"]
@@ -13591,6 +13414,7 @@ name = "SetCombatantIcon"
 signature = "procedure SetCombatantIcon(Who: PCharacter; IconSet, Mirror, NoDraw: Byte)"
 c_name = "ovl31_e11"
 level = "L2"
+review = "passed 2026-10-12 by rev-4, 8291710"
 justification = ""
 notes = "renamed from ovl31_e11 (ovl31:0AF8 brings combatant Who into view, stores IconSet in its combat record (+9) and redraws its icon with Mirror unless NoDraw); auto:entry_11"
 evidence = ["prologue"]
@@ -13604,6 +13428,7 @@ name = "CombatantX"
 signature = "function CombatantX(Who: PCharacter): ShortInt"
 c_name = "ovl31_e12"
 level = "L2"
+review = "passed 2026-10-12 by rev-4, 8291710"
 justification = ""
 notes = "renamed from ovl31_e12 (ovl31:0BE7 returns ds5F27[CombatantIndex(Who)].X); auto:near_call"
 evidence = ["prologue"]
@@ -13617,6 +13442,7 @@ name = "CombatantY"
 signature = "function CombatantY(Who: PCharacter): ShortInt"
 c_name = "ovl31_e13"
 level = "L2"
+review = "passed 2026-10-12 by rev-4, 8291710"
 justification = ""
 notes = "renamed from ovl31_e13 (ovl31:0C0F returns ds5F27[CombatantIndex(Who)].Y); auto:near_call"
 evidence = ["prologue"]
@@ -13630,6 +13456,7 @@ name = "CombatantKind"
 signature = "function CombatantKind(Who: PCharacter): Byte"
 c_name = "ovl31_e14"
 level = "L2"
+review = "passed 2026-10-12 by rev-4, 8291710"
 justification = ""
 notes = "renamed from ovl31_e14 (ovl31:0C37 returns ds5F27[CombatantIndex(Who)].Kind, the footprint kind); auto:entry_14"
 evidence = ["prologue"]
@@ -13643,6 +13470,7 @@ name = "CombatantIndex"
 signature = "function CombatantIndex(Who: PCharacter): Byte"
 c_name = "ovl31_e15"
 level = "L2"
+review = "passed 2026-10-12 by rev-4, 8291710"
 justification = ""
 notes = "renamed from ovl31_e15 (ovl31:0C5F returns the index I with DS:65BD[I] = Who among the ds5F27[0].Kind combatants, 0 when absent); auto:near_call"
 evidence = ["prologue"]
@@ -13656,6 +13484,7 @@ name = "ProbeStep"
 signature = "procedure ProbeStep(Who: PCharacter; Dir: Byte; var Occupant, Tile: Byte)"
 c_name = "ovl31_e16"
 level = "L2"
+review = "passed 2026-10-12 by rev-4, 8291710"
 justification = ""
 notes = "renamed from ovl31_e16 (ovl31:0CB9 looks at the cells combatant Who's footprint would cover one step in direction Dir: the other combatant there (Occ) and the tile that decides the move (0 or $1E win, else the largest DS:2744 cost)); auto:near_call"
 evidence = ["prologue"]
@@ -13669,6 +13498,7 @@ name = "RemoveCombatant"
 signature = "procedure RemoveCombatant(Who: PCharacter)"
 c_name = "ovl31_e17"
 level = "L2"
+review = "passed 2026-10-12 by rev-4, 8291710"
 justification = ""
 notes = "renamed from ovl31_e17 (ovl31:0E11 takes combatant Who off the combat map: draws ds5F1A over its cells, leaves a body record (DS:66DD) and tile $1F unless +$13 of its combat record is set, clears its entry and redraws); auto:entry_17"
 evidence = ["prologue"]
@@ -13682,6 +13512,7 @@ name = "PlaceCombatant"
 signature = "function PlaceCombatant(Who: PCharacter; CellX, CellY: Byte; Restore: Byte): Boolean"
 c_name = "ovl31_e18"
 level = "L2"
+review = "passed 2026-10-12 by rev-4, 8291710"
 justification = ""
 notes = "renamed from ovl31_e18 (ovl31:10A7 puts combatant Who on map cell (X, Y) with its footprint (+$6C and $7F) when the cells are free and passable (ProbeStep with Dir 8); Restore takes back its body record and tile; returns whether it was placed (always true outside view mode 5)); auto:entry_18"
 evidence = ["prologue"]
@@ -13695,6 +13526,7 @@ name = "ShowCursorOn"
 signature = "procedure ShowCursorOn(Who: PCharacter; Margin, ShowCursor: Byte)"
 c_name = "ovl31_e19"
 level = "L2"
+review = "passed 2026-10-12 by rev-4, 8291710"
 justification = ""
 notes = "renamed from ovl31_e19 (ovl31:1298 draws the cursor with combatant Who's footprint on Who's cell (MoveCombatCursor with Dir 8), then resets the cursor to kind 1 and hidden); auto:entry_19"
 evidence = ["prologue"]
@@ -13708,6 +13540,7 @@ name = "ovl31_init"
 signature = ""
 c_name = "ovl31_init"
 level = "L2"
+review = "passed 2026-10-12 by rev-4, 8291710"
 justification = ""
 notes = "auto:entry_0"
 evidence = ["prologue"]
@@ -16095,12 +15928,12 @@ id = "08AE:0000"
 unit = "res03"
 addr = "08AE:0000"
 size = 108
-name = "res03_fn_0000"
-signature = ""
+name = "TimeInHundredths"
+signature = "function TimeInHundredths: Longint"
 c_name = "res03_fn_0000"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res03_fn_0000 (Dos.GetTime, then Hour*360000 + Minute*6000 + Second*100 + Sec100 (08AE:001A..005A)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16108,12 +15941,12 @@ id = "08AE:006C"
 unit = "res03"
 addr = "08AE:006C"
 size = 112
-name = "res03_fn_006C"
-signature = ""
+name = "WaitHundredths"
+signature = "procedure WaitHundredths(Hundredths: Word)"
 c_name = "res03_fn_006C"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res03_fn_006C (loops on TimeInHundredths until it reaches start + parameter (08AE:0072..00D4); PlaySound passes 10); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16121,12 +15954,12 @@ id = "08AE:00DC"
 unit = "res03"
 addr = "08AE:00DC"
 size = 159
-name = "res03_fn_00DC"
-signature = "procedure res03_fn_00DC(UnknownWord: Word)"
+name = "PlaySound"
+signature = "procedure PlaySound(Sound: Word)"
 c_name = "res03_fn_00DC"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:far_call"
+notes = "renamed from res03_fn_00DC (0: both tunes 0 and output off; 1: output on; FFh: both tunes 0; else tune n-1 on the device SoundMode selects (1: speaker setter 08AE:1742, 0: Tandy setter 08AE:17AE) (08AE:00F4..0153)); auto:far_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16134,12 +15967,12 @@ id = "08AE:017B"
 unit = "res03"
 addr = "08AE:017B"
 size = 42
-name = "res03_fn_017B"
-signature = "procedure res03_fn_017B"
+name = "SilenceSound"
+signature = "procedure SilenceSound"
 c_name = "res03_fn_017B"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:far_call"
+notes = "renamed from res03_fn_017B (starts the timer driver, sets both voice groups to tune 0, stops the driver; saves SoundMode in SoundModeBeforePause (08AE:017E..01A0)); auto:far_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16147,12 +15980,12 @@ id = "08AE:01A5"
 unit = "res03"
 addr = "08AE:01A5"
 size = 45
-name = "res03_fn_01A5"
-signature = "procedure res03_fn_01A5(Note: Word)"
+name = "SetSoundDriverIdle"
+signature = "procedure SetSoundDriverIdle(Idle: Word)"
 c_name = "res03_fn_01A5"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:far_call"
+notes = "renamed from res03_fn_01A5 (nonzero: stops the timer driver (08AE:13B1) if it ran; zero: starts it (08AE:137C); stores the value in ds5374 which PlaySound tests to run the driver only around one sound (08AE:01B1..01CB, 0156..0174)); auto:far_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16178,7 +16011,7 @@ signature = ""
 c_name = "res03_fn_09E3"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
 evidence = ["near_call"]
 
 [[routine]]
@@ -16191,7 +16024,7 @@ signature = ""
 c_name = "res03_fn_0A27"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
 evidence = ["near_call"]
 
 [[routine]]
@@ -16204,7 +16037,7 @@ signature = ""
 c_name = "res03_fn_0AD3"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
 evidence = ["near_call"]
 
 [[routine]]
@@ -16217,7 +16050,7 @@ signature = ""
 c_name = "res03_fn_0C8F"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
 evidence = ["near_call"]
 
 [[routine]]
@@ -16230,7 +16063,7 @@ signature = ""
 c_name = "res03_fn_0DB1"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
 evidence = ["near_call"]
 
 [[routine]]
@@ -16243,7 +16076,7 @@ signature = ""
 c_name = "res03_fn_0DCC"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
 evidence = ["near_call"]
 
 [[routine]]
@@ -16256,7 +16089,7 @@ signature = ""
 c_name = "res03_fn_0DEB"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
 evidence = ["near_call"]
 
 [[routine]]
@@ -16269,7 +16102,7 @@ signature = ""
 c_name = "res03_fn_0E06"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
 evidence = ["near_call"]
 
 [[routine]]
@@ -16282,7 +16115,7 @@ signature = ""
 c_name = "res03_fn_0F5B"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
 evidence = ["near_call"]
 
 [[routine]]
@@ -16295,7 +16128,7 @@ signature = ""
 c_name = "res03_fn_1091"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
 evidence = ["near_call"]
 
 [[routine]]
@@ -16308,7 +16141,7 @@ signature = ""
 c_name = "res03_fn_1221"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
 evidence = ["near_call"]
 
 [[routine]]
@@ -16316,12 +16149,12 @@ id = "08AE:137C"
 unit = "res03"
 addr = "08AE:137C"
 size = 53
-name = "res03_fn_137C"
+name = "StartSoundTimer"
 signature = ""
 c_name = "res03_fn_137C"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res03_fn_137C (saves INT 08h, installs handler 08AE:13EA, PIT divisor 13B1h (08AE:1383..13AC; whitepaper 5.14)); auto:near_call; blocked (dec-14): hand-written assembly from an external .OBJ linked after the initialisation part (TASM prologue 8B EC, DS loaded with the unit's own segment 08AE, data at CS offsets); Turbo Pascal places BASM routines before the init, and the tables need raw bytes, so it cannot be written in Pascal without breaking the rules; escalated"
 evidence = ["near_call"]
 
 [[routine]]
@@ -16329,12 +16162,12 @@ id = "08AE:13B1"
 unit = "res03"
 addr = "08AE:13B1"
 size = 198
-name = "res03_fn_13B1"
+name = "StopSoundTimer"
 signature = ""
 c_name = "res03_fn_13B1"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res03_fn_13B1 (restores INT 08h, divisor FFFFh, speaker off, Tandy silenced (08AE:13B8..13E6; whitepaper 5.14)); auto:near_call; blocked (dec-14): hand-written assembly from an external .OBJ linked after the initialisation part (TASM prologue 8B EC, DS loaded with the unit's own segment 08AE, data at CS offsets); Turbo Pascal places BASM routines before the init, and the tables need raw bytes, so it cannot be written in Pascal without breaking the rules; escalated"
 evidence = ["near_call"]
 
 [[routine]]
@@ -16347,7 +16180,7 @@ signature = ""
 c_name = "res03_fn_1477"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked (dec-14): hand-written assembly from an external .OBJ linked after the initialisation part (TASM prologue 8B EC, DS loaded with the unit's own segment 08AE, data at CS offsets); Turbo Pascal places BASM routines before the init, and the tables need raw bytes, so it cannot be written in Pascal without breaking the rules; escalated"
 evidence = ["near_call"]
 
 [[routine]]
@@ -16360,7 +16193,7 @@ signature = ""
 c_name = "res03_fn_14EC"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked (dec-14): hand-written assembly from an external .OBJ linked after the initialisation part (TASM prologue 8B EC, DS loaded with the unit's own segment 08AE, data at CS offsets); Turbo Pascal places BASM routines before the init, and the tables need raw bytes, so it cannot be written in Pascal without breaking the rules; escalated"
 evidence = ["near_call"]
 
 [[routine]]
@@ -16373,7 +16206,7 @@ signature = ""
 c_name = "res03_fn_157A"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked (dec-14): hand-written assembly from an external .OBJ linked after the initialisation part (TASM prologue 8B EC, DS loaded with the unit's own segment 08AE, data at CS offsets); Turbo Pascal places BASM routines before the init, and the tables need raw bytes, so it cannot be written in Pascal without breaking the rules; escalated"
 evidence = ["near_call"]
 
 [[routine]]
@@ -16386,7 +16219,7 @@ signature = ""
 c_name = "res03_fn_160B"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked (dec-14): hand-written assembly from an external .OBJ linked after the initialisation part (TASM prologue 8B EC, DS loaded with the unit's own segment 08AE, data at CS offsets); Turbo Pascal places BASM routines before the init, and the tables need raw bytes, so it cannot be written in Pascal without breaking the rules; escalated"
 evidence = ["near_call"]
 
 [[routine]]
@@ -16394,12 +16227,12 @@ id = "08AE:1742"
 unit = "res03"
 addr = "08AE:1742"
 size = 108
-name = "res03_fn_1742"
-signature = ""
+name = "SetSpeakerTune"
+signature = "procedure SetSpeakerTune(Tune: Word)"
 c_name = "res03_fn_1742"
 level = "none"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res03_fn_1742 (loads tune n from table CS:055F into the four voices at CS:022D, which the stepper 08AE:1477 plays on port 42h (PC speaker) (08AE:174F..179E)); auto:prologue; blocked (dec-14): hand-written assembly from an external .OBJ linked after the initialisation part (TASM prologue 8B EC, DS loaded with the unit's own segment 08AE, data at CS offsets); Turbo Pascal places BASM routines before the init, and the tables need raw bytes, so it cannot be written in Pascal without breaking the rules; escalated"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16407,12 +16240,12 @@ id = "08AE:17AE"
 unit = "res03"
 addr = "08AE:17AE"
 size = 108
-name = "res03_fn_17AE"
-signature = ""
+name = "SetTandyTune"
+signature = "procedure SetTandyTune(Tune: Word)"
 c_name = "res03_fn_17AE"
 level = "none"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res03_fn_17AE (loads tune n from table CS:0607 into the four voices at CS:03C7, which the stepper 08AE:14EC plays on port C0h (Tandy SN76489) (08AE:17BB..180A)); auto:prologue; blocked (dec-14): hand-written assembly from an external .OBJ linked after the initialisation part (TASM prologue 8B EC, DS loaded with the unit's own segment 08AE, data at CS offsets); Turbo Pascal places BASM routines before the init, and the tables need raw bytes, so it cannot be written in Pascal without breaking the rules; escalated"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16420,12 +16253,12 @@ id = "08AE:181A"
 unit = "res03"
 addr = "08AE:181A"
 size = 22
-name = "res03_fn_181A"
-signature = ""
+name = "SetSoundOutput"
+signature = "procedure SetSoundOutput(Enabled: Word)"
 c_name = "res03_fn_181A"
 level = "none"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res03_fn_181A (stores the byte at CS:020D which both voice steppers test before writing the speaker (08AE:14C0) or the Tandy chip (08AE:1519) (08AE:1824..1827)); auto:prologue; blocked (dec-14): hand-written assembly from an external .OBJ linked after the initialisation part (TASM prologue 8B EC, DS loaded with the unit's own segment 08AE, data at CS offsets); Turbo Pascal places BASM routines before the init, and the tables need raw bytes, so it cannot be written in Pascal without breaking the rules; escalated"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16823,9 +16656,9 @@ size = 1036
 name = "DrawGlyph"
 signature = "procedure DrawGlyph(Col, Row, Color, Count, Glyph, Cook: Byte)"
 c_name = "res06_fn_01DF"
-level = "none"
+level = "L2"
 justification = ""
-notes = "renamed from res06_fn_01DF (draws Count copies of the GameFont glyph Glyph from cell Col advancing right (0709:01DF): text-scanline words, EGA planar bytes, or graphics nibbles by VideoAdapter; called by CheckCodeWheel, ShowMessageLine path, DrawTextRun); auto:near_call; BLOCKED dec-1 2026-10-12 after 5 match attempts: full draft in scratch/DRAWGLYPH.DRAFT.PAS. Settled by evidence: 3-operand or-guard with GameFont=nil (or-chains flatten, all but last jump on true, Q55); Index:=Ord(UpCase(Chr(Glyph))) mod $40 with zero-codegen bridges (Q44/Q45; Glyph stays Byte because ovl02 passes Integer exprs, revisit at review); 2-D WordPlane store (Q41); inner loops are fors (Q39; long arms use je+jmp, short arms jne); outer loop is manual goto (for would double-assign I: the if/else I-init reuses al=1, lockstep-verified). Open: a $10 length gap downstream of 01FA (suspects: PByteArray les/add order, mode-1 Mem store order, plane if-chain); the if/else I-init applied but unverified; Unused byte local theory for the 18-byte frame"
+notes = "renamed from res06_fn_01DF (draws Count copies of the GameFont glyph Glyph from cell Col advancing right (0709:01DF): text-scanline words, EGA planar bytes, or graphics nibbles by VideoAdapter; called by CheckCodeWheel, ShowMessageLine path, DrawTextRun); auto:near_call; matched by dec-14 2026-10-12 from dec-1's draft: for I := 1 to Count, the font as a 2-D [Glyph, Row] byte array, '> 0' bit tests (jbe), Inc(DestOff, 40), Color shl 4, case Plane"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16833,12 +16666,12 @@ id = "0709:05EB"
 unit = "res06"
 addr = "0709:05EB"
 size = 59
-name = "res06_fn_05EB"
-signature = "procedure res06_fn_05EB(A, Row, B, Width: Byte)"
+name = "ClearTextCells"
+signature = "procedure ClearTextCells(Col, Row, Color, Count: Byte)"
 c_name = "res06_fn_05EB"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res06_fn_05EB (draws Count space glyphs (DrawGlyph with $20) from Col on Row (0709:0608..061F); ShowMessageLine clears row 24 with (0, 24, 0, 40) before writing); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16846,12 +16679,12 @@ id = "0709:0626"
 unit = "res06"
 addr = "0709:0626"
 size = 129
-name = "res06_fn_0626"
-signature = "procedure res06_fn_0626(A, Row, Color: Byte; Text: string)"
+name = "DrawTextAt"
+signature = "procedure DrawTextAt(Col, Row, Color: Byte; Text: string)"
 c_name = "res06_fn_0626"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res06_fn_0626 (for each character of the string calls DrawGlyph(Col, Row, Color, 1, char, 1) and advances Col (0709:0671..069F); ShowMessageLine writes its message with it); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16890,7 +16723,7 @@ signature = "procedure ShowPagedText(Left, Top, Right, Bottom, Color, ClearFirst
 c_name = "res06_fn_0768"
 level = "none"
 justification = ""
-notes = "renamed from res06_fn_0768 (word-wrapping text pager (0709:0768): shows Text in the Left..Bottom rect with BreakChars word scan, GlyphCol/GlyphRow cursor, FillPlaneRect/ClearRect clear and 'Press any key to continue' paging; called by ChargeForCure, VisitTemple, ShopMain, LoadEcl, ShowCredits); auto:far_call; dec-1 draft stashed in scratch/SHOWPAGEDTEXT.DRAFT.PAS: parent body plus nested DrawTextRun/SkipSpaces written, matches except nested pool bytes (nested code with globals and calls needs address-aware pool compare, escalated)"
+notes = "renamed from res06_fn_0768 (word-wrapping text pager (0709:0768): shows Text in the Left..Bottom rect with BreakChars word scan, GlyphCol/GlyphRow cursor, FillPlaneRect/ClearRect clear and 'Press any key to continue' paging; called by ChargeForCure, VisitTemple, ShopMain, LoadEcl, ShowCredits); auto:far_call; dec-1 draft stashed in scratch/SHOWPAGEDTEXT.DRAFT.PAS: parent body plus nested DrawTextRun/SkipSpaces written, matches except nested pool bytes (nested code with globals and calls needs address-aware pool compare, escalated); blocked: waiting for the human on escalate-res06-20261012110841 (nested routines with globals and calls), draft in scratch/SHOWPAGEDTEXT.DRAFT.PAS"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16898,12 +16731,12 @@ id = "0709:09E3"
 unit = "res06"
 addr = "0709:09E3"
 size = 387
-name = "res06_fn_09E3"
-signature = "function res06_fn_09E3(Prompt: string; A: Byte; MaxLen: Byte): string"
+name = "ReadInputLine"
+signature = "function ReadInputLine(Prompt: String40; Color: Byte; MaxLen: Byte): String40"
 c_name = "res06_fn_09E3"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res06_fn_09E3 (reads keys with ReadGameKey, adds ' '..'z' up to MaxLen and echoes them, Backspace deletes, Enter or Esc ends, returns the line upper-cased (0709:0A2B..0B5B); CheckCodeWheel reads the code word with it); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16911,12 +16744,12 @@ id = "0709:0B66"
 unit = "res06"
 addr = "0709:0B66"
 size = 143
-name = "res06_fn_0B66"
-signature = ""
+name = "ReadNumber"
+signature = "function ReadNumber(Prompt: String40; Color: Byte): Word"
 c_name = "res06_fn_0B66"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res06_fn_0B66 (repeats ReadInputLine (6 characters) until Val gives a number with no error in 0..65536 and returns it (0709:0B80..0BE9)); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16963,12 +16796,12 @@ id = "0709:0D68"
 unit = "res06"
 addr = "0709:0D68"
 size = 86
-name = "res06_fn_0D68"
-signature = "procedure res06_fn_0D68(Text: string; Color: Byte)"
+name = "FlashMessageLine"
+signature = "procedure FlashMessageLine(Text: String40; Color: Byte)"
 c_name = "res06_fn_0D68"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res06_fn_0D68 (clears row 24, writes the text there, waits DelayCounted and clears it again, with no key wait (0709:0D81..0DB5); CheckCodeWheel shows the wrong-code message with it); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]

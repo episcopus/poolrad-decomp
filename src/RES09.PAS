@@ -2,7 +2,7 @@ unit RES09;
 { Windows: DrawWindow draws a titled window for dialogs and screens (whitepaper 5.9):
   ClearWindow clears its rectangle for the current video adapter (VideoAdapter),
   DrawWindowFrame draws one tile set's frame around it through Put8x8Symbol, and DrawWindow
-  centres a title on its top row through res06_fn_0626. }
+  centres a title on its top row through DrawTextAt. }
 {$A-,F+,S-,R-,G-,I-}
 interface
 uses RES06;
@@ -121,7 +121,7 @@ begin
 end;
 { 03F1:02E8. Draws a titled window for dialogs and screens: clears it (ClearWindow), draws
   its frame (DrawWindowFrame) and centres Text on TopRow in colour TextColour
-  (res06_fn_0626, skipped when Text is empty). LeftCol/TopRow/RightCol/BottomRow are the
+  (DrawTextAt, skipped when Text is empty). LeftCol/TopRow/RightCol/BottomRow are the
   window's text columns and rows; FrameSet selects the frame tiles. Text is a String40
   value parameter: the compiler copies it to a hidden stack temporary on entry (the
   StrLCopy at 02EE, limit $28), and Length and the 0626 call read that temporary
@@ -132,7 +132,7 @@ begin
   ClearWindow(LeftCol, TopRow, RightCol, BottomRow);
   DrawWindowFrame(LeftCol, TopRow, RightCol, BottomRow, FrameSet);
   if Length(Text) <> 0 then
-    res06_fn_0626((LeftCol + RightCol - Length(Text)) div 2, TopRow, TextColour, Text);
+    DrawTextAt((LeftCol + RightCol - Length(Text)) div 2, TopRow, TextColour, Text);
 end;
 
 begin

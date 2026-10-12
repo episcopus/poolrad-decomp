@@ -22,7 +22,7 @@ const
 { ovl33:0004. When DebugMode (DS:49F7) is set, clears the top line, shows the three numbers there
   separated by ' , ' in Yellow, shows Message on the message line and waits for a key, then clears
   the top line again. Does nothing (not even the clear) otherwise.
-  The numbers are shown with res06_fn_0626(TraceLeft, TraceTop, Yellow, ...) and Message with
+  The numbers are shown with DrawTextAt(TraceLeft, TraceTop, Yellow, ...) and Message with
   ShowMessageLine(Yellow, Message) (whitepaper 5.15); both are coloured Yellow. The clear is
   ClearRect with the top line rectangle, through the video hardware VideoAdapter selects.
   The only caller is the training and rewards unit (ovl12:2233), which passes the label
@@ -43,7 +43,7 @@ begin
     Str(Current, CurrentText);
     Str(Lost, LostText);
     ClearRect(TraceLeft, TraceTop, TraceRight, TraceBottom);
-    res06_fn_0626(TraceLeft, TraceTop, Yellow, MaxText + ' , ' + CurrentText + ' , ' + LostText);
+    DrawTextAt(TraceLeft, TraceTop, Yellow, MaxText + ' , ' + CurrentText + ' , ' + LostText);
     ShowMessageLine(Yellow, Message);
     ClearRect(TraceLeft, TraceTop, TraceRight, TraceBottom);
   end;

@@ -204,7 +204,10 @@ type
     { +$2E: the race (whitepaper 4.2.5); signed: ComputeThiefSkills sign-extends it (ovl23:034F)
       to index the race row of ThiefRaceTable. }
     Race: ShortInt;
-    ClassMask: Byte;              { +$2F: the class (whitepaper 4.2.5) }
+    { +$2F: the class (whitepaper 4.2.5): 0 cleric, 2 fighter, 5 magic-user, 6 thief, 8..16 the
+      multi-class combinations (AwardExperience splits the experience by 2 or 3, ovl05:0454);
+      signed (the case at ovl05:045A compares with jl). }
+    ClassMask: ShortInt;
     Pad30: array[$30..$31] of Byte;
     HpMax: Byte;                  { +$32: maximum hit points }
     { +$33..+$6A: one byte per spell 1..$38 (the rows of the spell table SpellTable): RecalcClassStats sets it to 1
@@ -231,7 +234,13 @@ type
     { +$84: below $80 the party's Space command takes the character out of quick combat
       (ovl08:0504); meaning otherwise unknown. }
     B84: Byte;
-    Pad85: array[$85..$95] of Byte;
+    { +$85: the low three bits are the shares of the treasure a computer-run member (B84 $80 and up)
+      takes for himself after a battle (TakeHirelingShares, ovl05:1329). }
+    HirelingShare: Byte;
+    Pad86: array[$86..$87] of Byte;
+    { +$88..+$95: the character's money, seven words in the order of the pooled money TPartyMoney
+      (a defeated monster's are added to it, ovl05:0093). }
+    Money: array[0..6] of Word;
     { +$96..$9D: the level in each of the eight classes; Raise Dead treats index 2 apart (class 2
       is the fighter in the create-character run, whitepaper 5.8). Signed: only levels above 0 count. }
     ClassLevels: array[0..7] of ShortInt;
@@ -239,7 +248,9 @@ type
     { +$A1: RecalcClassStats sets 3 when the fighter level (ClassLevels[2]) is above 6, else 2
       (ovl23:0083): likely attacks per two rounds [I]. }
     Attacks: Byte;
-    PadA2: array[$A2..$B0] of Byte;
+    PadA2: array[$A2..$AB] of Byte;
+    Experience: LongInt;          { +$AC: experience points; AwardExperience adds a battle's share (ovl05:04A3) }
+    PadB0: Byte;
     { +$B1: Raise Dead subtracts it from HpMax to get the hit points its constitution
       arithmetic works on (ovl04:0612); its meaning beyond that is not known. }
     HpB1: Byte;
@@ -250,7 +261,10 @@ type
     { +$B5..+$B7: the magic-user spell slots of levels 1..3, from MageSlotTable for the
       magic-user level (ovl23:014C). }
     MageSlots: array[1..3] of Byte;
-    PadB8: array[$B8..$BA] of Byte;
+    { +$B8, +$BA: a monster's experience value: ComputeBattleExperience adds XpValue plus HpB1 times
+      XpPerHp for every defeated monster (ovl05:00C4) [I]. }
+    XpValue: Word;
+    XpPerHp: Byte;
     HeadBank: Byte;               { +$BB: the HEAD picture bank number, 0 when none (ShowHeadBodyWindow) }
     BodyBank: Byte;               { +$BC: the BODY picture bank number, 0 when none (ShowHeadBodyWindow) }
     PadBD: array[$BD..$BE] of Byte;
@@ -286,8 +300,10 @@ type
     Pad11C: Byte;
   end;
   { The 28 bytes at DS:67F4 that the Temple clears on entry and ovl21_e12 turns into a LongInt
-    sum (the money pooled in the shop); the element layout is not known yet. }
-  TPartyMoney = array[0..$1B] of Byte;
+    sum (the money pooled in the shop or left after a battle): seven LongInt amounts, one per kind
+    of money (ovl05 adds TCharacter.Money[0..6] into them, ovl05:0093, and values them at 1/200,
+    1/20, 1/2, 1, 5, 250 and 2200 units each for the battle's experience, ovl05:0233). }
+  TPartyMoney = array[0..6] of LongInt;
   { A 3-byte record of the ovl30 sort table (whitepaper 5.18): the table DS:6718 is an array of
     these, element 0 holding the count in Val (SortTable reads and writes Key and Val). }
   { The line drawing state SetupLine fills and StepLine/e5 step (whitepaper 5.18): the endpoints, the
@@ -388,10 +404,10 @@ var
     bytes are also entry 0 of SpecialBlocks, which DrawAreaView never reads. }
   ds0C26: array[0..15] of Byte;  { wall view id table, two equal groups of 8; see above }
   SpecialBlocks: array[0..9] of TSpecialBlock;  { entries 1..9 tested; only 3..9 replace the map block }
-  ds2612: Word;                   { word passed to res03_fn_00DC by QuitGame and the Ctrl-S pause path; meaning unknown }
+  ds2612: Word;                   { word passed to PlaySound by QuitGame and the Ctrl-S pause path; meaning unknown }
   ds260A: array[0..7] of Byte;    { 8-byte structure res07_fn_2632 copies from @ds260A (DrawWallDescriptors) }
-  ds2622: Word;                   { word e1 passes to res03_fn_00DC when Done is 0; meaning unknown }
-  ds2628: Word;                   { word the ovl14 movement code passes to res03_fn_00DC; meaning unknown }
+  ds2622: Word;                   { word e1 passes to PlaySound when Done is 0; meaning unknown }
+  ds2628: Word;                   { word the ovl14 movement code passes to PlaySound; meaning unknown }
   { Five words, one per 8x8 tile bank, subtracted from the symbol number to index within the
     bank (Put8x8Symbol, ovl34:020F); evidence in re/dseg.toml. }
   SymbolBase: array[0..4] of Word;  { per-bank base symbol numbers; see above }
@@ -522,7 +538,7 @@ var
   CombatTiles: array[0..255] of TCombatTile;  { see above }
   Footprints: array[0..4, 0..3] of TFootCell;  { the cells of footprint kinds 1..4 (kind 0 unused) }
   DyingPicture: Pointer;                { the picture RemoveCombatant draws over a dying combatant's cells }
-  ds261E: Word;                   { the sound RemoveCombatant plays (res03_fn_00DC) when a combatant dies }
+  ds261E: Word;                   { the sound RemoveCombatant plays (PlaySound) when a combatant dies }
   ds6718: array[0..255] of TSortRec;  { the ovl30 sort table (element 0 holds the count, SortTable) }
   ds49ED: Word;                   { set to $9900 by the loader (ovl11:03C0) }
   ds49E5: Word;                   { copied to ds49ED by the ovl14 L key; meaning unknown }
@@ -532,8 +548,8 @@ var
   ds49F8: Byte;                   { cleared by the loader (ovl11:03A6) }
   ds49F9: Byte;                   { set to 1 by the loader (ovl11:03EB) }
   ds49FB: Word;                   { cleared by the loader (ovl11:03AD) }
-  ds49FF: Byte;                   { cleared by the loader (ovl11:0429) }
-  ds4A00: Byte;                   { set to 1 by the loader (ovl11:03A1) }
+  PartyDestroyed: Byte;           { 1 when no player-run member is left (SettleBattleOutcome); loader clears it }
+  ds4A00: Byte;                   { set to 1 by the loader (ovl11:03A1) and by EndBattle (ovl05:1631) }
   ds4A24: Pointer;                { screen buffer the loader allocates through res07_fn_248E (ovl11:00D4) }
   ds4A28: array[0..$A7] of Byte;  { $A8-byte buffer the loader clears (ovl11:00EC) }
   ds4AD0: array[0..$14F] of Byte; { $150-byte buffer the loader clears (ovl11:00FD) }
@@ -547,7 +563,7 @@ var
     $BA00, $BC00 or $BE00. }
   ds51E0: array[0..$C7] of Word;  { cell graphics plane address; see above }
   ds5370: Byte;                   { set to 1 by the loader (ovl11:042E) }
-  ds5374: Word;                   { last sound value rung by res03_fn_01A5, cleared by the loader (ovl11:045D) }
+  SoundDriverIdle: Word;          { nonzero: sound timer driver stopped between sounds (RES03); ovl11:045D clears it }
   ds5377: Byte;                   { TileSet saved by SelectTileSet; the loader also sets it to 1 }
   ds5378: Word;                   { set to 1 by the loader (ovl11:03E0) }
   ds547A: Word;                   { set to 1 by the loader (ovl11:03DA) }
@@ -611,7 +627,7 @@ var
   ds6DE0: Byte;                   { knock menu flag: e1 offers Knock while nonzero; overlaps ds6DDE[2] }
   ds6DDF: Byte;                   { pick/knock menu flag (e1 offers Pick/Knock while nonzero) }
     { DoPick clears it. Overlaps ds6DDE[1]; exact sharing uncertain. }
-  ds84D4: Byte;                   { cleared by the loader (ovl11:040B) }
+  DuelMode: Byte;                 { nonzero during a duel (EndBattle's duel texts); the loader clears it (ovl11:040B) }
   ds84DD: Byte;                   { cleared by the loader (ovl11:0415) }
   ds84DE: Byte;                   { cleared by the loader (ovl11:041A) }
   ds84DF: Byte;                   { cleared by the loader (ovl11:041F) }
@@ -638,7 +654,7 @@ var
     $2C, $32, $39 in the image; ovl04:031E, 03A6). Entry 0, the byte before, is never read. }
   DiseaseAffects: array[0..6] of Byte;  { see above }
   ds681F: Byte;                   { 1 while the Temple removes affects (RemoveAffect; ovl04:0386, 05AB, 07CE), 0 after }
-  ds67F4: TPartyMoney;            { the Temple clears it on entry (ovl04:0D32) and passes it to ovl21_e12 }
+  PooledMoney: TPartyMoney;       { the Temple clears it on entry (ovl04:0D32) and passes it to ovl21_e12 }
   ds6C95: PCharacter;             { the character Remove Curse hands to ovl22_e9 (ovl04:08FA) }
   ds6DC0: Byte;                   { cleared when the Temple opens (ovl04:0D37); meaning unknown }
   { Globals of the DOS file and BIOS text layer (res05); evidence in re/dseg.toml where named. }
@@ -646,14 +662,14 @@ var
     WriteCharsAt maps the text colour through it when VideoAdapter is 0 (0802:0086). }
   ds25D5: array[0..15] of Byte;   { four-colour map of the text colours; see above }
   { EGA plane masks for DrawGlyph mode 1 (0709:03C0): selected through Port[$3C5] by
-    3 - Bit; adjacent to ds25CD. }
-  ds25C9: array[0..3] of Byte;
+    3 - Bit; adjacent to GlyphColorPatterns. }
+  EgaPlaneMasks: array[0..3] of Byte;
   { Per-colour words DrawGlyph mode 0 ORs into the pixel accumulator (0709:02A3):
     indexed by the mapped colour 0..3; adjacent to ds25D5. }
-  ds25CD: array[0..3] of Word;
+  GlyphColorPatterns: array[0..3] of Word;
   { Per-column words DrawGlyph mode 0 ANDs with the colour word (0709:02B0):
     indexed by the bit column 0..7. }
-  ds25E5: array[0..7] of Word;
+  GlyphPixelMasks: array[0..7] of Word;
   ds49CE: Word;                   { IOResult of the last FileExists file probe (0802:0334) }
   { Characters 0768's word scanner tests (0709:0822..08F0): the leading run is skipped,
     the word run stops at them or space, the trailing run is skipped. Storage descriptor
@@ -703,6 +719,13 @@ var
   ThiefRaceTable: array[0..7, 1..8] of ShortInt;  { the race adjustment of the eight thief skills }
   ds3D4E: Byte;                   { the byte before ThiefDexTable; see above }
   ThiefDexTable: array[0..18, 1..5] of ShortInt;  { the dexterity adjustment of the first five thief skills }
+  { Globals of the battle's aftermath ovl05 (whitepaper 5.20). }
+  MonstersLooted: Byte;           { 1 when a defeated monster gave up its money and items (ovl05:0088) }
+  PartyFled: Byte;                { 1 when the party fled the battle (a member with Status 3, ovl05:050D) }
+  NoExperienceCount: Byte;        { members that get no share of the battle's experience (ovl05:05EA) }
+  BattleExperience: LongInt;      { the experience each character receives for the battle (ovl05:060B) }
+  BattleWon: Byte;                { 1 when the party (or the duelist) won the battle (ovl05:05CA, 07AC) }
+  ds5D9A: PMenuLine;              { loot list entry where the battle's item experience count stops (ovl05:02E5) }
   { Globals of the affect and roll unit ovl24. }
   SaveRoll: Byte;                 { the saving throw roll: d20 plus SaveBonus and the bonus (ovl24:0D73) }
   HookAffectId: Byte;             { the affect ApplyAffect offers to the hooks; 0 afterwards: unaffected (ovl24:1672) }

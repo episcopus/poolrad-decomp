@@ -88,7 +88,7 @@ begin
   end;
   NewHeapEnd := Ptr(HeapWords[1] - $400, HeapWords[0]);
   HeapEnd := NewHeapEnd;
-  res03_fn_017B;
+  SilenceSound;
   ReadLn(CfgText, GameDir);
   { QUIRK 042B:032D: the original copies GameDir onto itself (System_StrLCopy with the same source
     and destination, limit $FF). Kept: the source's own assignment emits the bytes at 042B:032D. }
