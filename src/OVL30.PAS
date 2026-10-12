@@ -1,7 +1,8 @@
 unit OVL30;
 { ovl30: the line drawing unit (whitepaper 5.18). SignOf returns the sign of a value, SortTable
-  sorts a 3-byte record table in place, SetupLine fills a Bresenham line state and StepLine advances
-  it one step; the remaining routines are not decompiled yet. }
+  sorts a 3-byte record table in place, SetupLine fills a Bresenham line state, StepLine advances
+  it one step and InDirArc tests whether a point lies in a compass direction's arc; the
+  remaining routines (ovl30_e5, ovl30_e6) are not decompiled yet. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 uses POOLVARS;
@@ -10,7 +11,7 @@ procedure SortTable;
 procedure SetupLine(Line: PLineState);
 function StepLine(Line: PLineState): Boolean;
 procedure ovl30_e5;
-procedure ovl30_e4;
+function InDirArc(FromX, FromY, ToX, ToY: ShortInt; Dir: Byte): Boolean;
 procedure ovl30_e6;
 implementation
 
@@ -150,8 +151,48 @@ end;
   + StartX with two separate adds to DI and folds +7 into [di+7], which a flat byte subscript does
   not. See the note in re/symbols.toml. }
 {@stub} procedure ovl30_e5; begin end;
-{ ovl30:057B: retf 10: 10 bytes of parameters; 4 bytes of locals }
-{@stub} procedure ovl30_e4; begin end;
+{ ovl30:057B. Tests whether the point (ToX, ToY) lies in the 90-degree arc facing compass
+  direction Dir from (FromX, FromY): 0 is north then clockwise to 7 (north-west), 8 (and the
+  $FF default) is omni and always true. Points outside X 0..49 or Y 0..24 fail; a point equal
+  to the from point or to the base point passes. Otherwise the base point steps once towards
+  Dir (ds2736, ds273F) and the case body checks the two half-planes of that direction's wedge
+  (each shared with the neighbouring direction). Returns True when the point is in the arc.
+  Called by ovl13_e18, ovl22_e5 (which loops Dir upward to aim at a point) and ovl30_e6. }
+function InDirArc(FromX, FromY, ToX, ToY: ShortInt; Dir: Byte): Boolean;
+var
+  BaseX, BaseY: ShortInt;         { the from point stepped once towards Dir }
+begin
+  if (FromX < 0) or (FromX > 49) or (FromY < 0) or (FromY > 24) or
+     (ToX < 0) or (ToX > 49) or (ToY < 0) or (ToY > 24) then
+    InDirArc := False
+  else begin
+    if Dir = $FF then
+      Dir := 8;
+    BaseX := FromX + ds2736[Dir];
+    BaseY := FromY + ds273F[Dir];
+    if ((FromX = ToX) and (FromY = ToY)) or ((BaseX = ToX) and (BaseY = ToY)) then
+      InDirArc := True
+    else case Dir of
+      0: InDirArc := ((ToX >= BaseX) and (ToY <= BaseX - ToX + BaseY)) or
+                      ((ToX <= BaseX) and (ToY <= ToX - BaseX + BaseY));
+      1: InDirArc := ((ToX >= BaseX) and (ToY <= BaseX - ToX + BaseY)) or
+                      ((ToX >= BaseX + BaseY - ToY) and (ToY <= BaseY));
+      2: InDirArc := ((ToX >= BaseX + BaseY - ToY) and (ToY <= BaseY)) or
+                      ((ToX >= BaseX + ToY - BaseY) and (ToY >= BaseY));
+      3: InDirArc := ((ToX >= BaseX + ToY - BaseY) and (ToY >= BaseY)) or
+                      ((ToX >= BaseX) and (ToY >= ToX - BaseX + BaseY));
+      4: InDirArc := ((ToX >= BaseX) and (ToY >= ToX - BaseX + BaseY)) or
+                      ((ToX <= BaseX) and (ToY >= BaseX - ToX + BaseY));
+      5: InDirArc := ((ToX <= BaseX) and (ToY >= BaseX - ToX + BaseY)) or
+                      ((ToX <= BaseX + BaseY - ToY) and (ToY >= BaseY));
+      6: InDirArc := ((ToX <= BaseX + BaseY - ToY) and (ToY >= BaseY)) or
+                      ((ToX <= BaseX + ToY - BaseY) and (ToY <= BaseY));
+      7: InDirArc := ((ToX <= BaseX + ToY - BaseY) and (ToY <= BaseY)) or
+                      ((ToX <= BaseX) and (ToY <= ToX - BaseX + BaseY));
+      8: InDirArc := True;
+    end;
+  end;
+end;
 { ovl30:0909: retf 14: 14 bytes of parameters; 32 bytes of locals }
 {@stub} procedure ovl30_e6; begin end;
 

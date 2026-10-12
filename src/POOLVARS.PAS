@@ -266,6 +266,11 @@ var
   ds4712: Byte;                   { the DS:49F3 value ShowEndingNarrative saves at the start and restores at the end }
   ds4713: string[1];              { Str(TileSet): the picture number ShowEndingNarrative appends to FINAL }
   ds25C0: array[0..2, 0..2] of Byte;  { the 3x3 line pattern table StepLine reads at [SY+1, SX+1] }
+  { The per-direction step offsets InDirArc adds to the from point: (0,-1), (1,-1), (1,0),
+    (1,1), (0,1), (-1,1), (-1,0), (-1,-1) for directions 0..7 (north clockwise) and (0,0) for
+    8 (verified bytes at DS:2736 and DS:273F of start-unpack.exe). }
+  ds2736: array[0..8] of ShortInt;  { the x step per direction; see above }
+  ds273F: array[0..8] of ShortInt;  { the y step per direction; see above }
   ds6718: array[0..255] of TSortRec;  { the ovl30 sort table (element 0 holds the count, SortTable) }
   ds49ED: Word;                   { set to $9900 by the loader (ovl11:03C0) }
   ds49F4: Byte;                   { cleared by the loader (ovl11:03CB) }

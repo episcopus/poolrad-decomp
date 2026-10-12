@@ -13732,12 +13732,12 @@ id = "ovl30:057B"
 unit = "ovl30"
 addr = "ovl30:057B"
 size = 910
-name = "ovl30_e4"
-signature = ""
+name = "InDirArc"
+signature = "function InDirArc(FromX, FromY, ToX, ToY: ShortInt; Dir: Byte): Boolean"
 c_name = "ovl30_e4"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl30_e4 (tests whether (ToX,ToY) lies in the 90-degree arc facing compass direction Dir (0 north clockwise, 8 omni) from (FromX,FromY): per-direction step tables ds2736/ds273F verified as compass vectors, 8 wedge bodies sharing half-planes, ovl22_e5 loops Dir 0.. to aim at a target); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
