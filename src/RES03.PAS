@@ -7,7 +7,7 @@ procedure res03_fn_0000;
 procedure res03_fn_006C;
 procedure res03_fn_00DC(UnknownWord: Word);
 procedure res03_fn_017B;
-procedure res03_fn_01A5;
+procedure res03_fn_01A5(Note: Word);
 procedure res03_fn_09E3;
 procedure res03_fn_0A27;
 procedure res03_fn_0AD3;
@@ -39,7 +39,7 @@ implementation
 { 08AE:017B: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure res03_fn_017B; begin end;
 { 08AE:01A5: retf 2: 2 bytes of parameters; 0 bytes of locals }
-{@stub} procedure res03_fn_01A5; begin end;
+{@stub} procedure res03_fn_01A5(Note: Word); begin end;
 { 08AE:09E3: frame not read }
 {@stub} procedure res03_fn_09E3; begin end;
 { 08AE:0A27: frame not read }

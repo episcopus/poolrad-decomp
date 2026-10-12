@@ -7,7 +7,7 @@ procedure res07_fn_0000;
 procedure res07_fn_007B;
 procedure res07_fn_00CF;
 procedure res07_fn_00FF;
-procedure res07_fn_0111;
+procedure res07_fn_0111(Text: string; A, B, C: Byte; Target: Pointer);
 procedure res07_fn_02A5;
 procedure res07_fn_066F;
 procedure res07_fn_0710;
@@ -37,7 +37,7 @@ procedure res07_fn_1951;
 procedure res07_fn_1A19;
 procedure res07_fn_1B52;
 procedure res07_fn_1E5C;
-procedure res07_fn_248E;
+procedure res07_fn_248E(Cols, Rows: Word; Planes, Flag: Byte; var Buf: Pointer);
 procedure res07_fn_2595;
 procedure res07_fn_2632;
 procedure res07_fn_2A0D;
@@ -52,7 +52,7 @@ implementation
 { 0464:00FF: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure res07_fn_00FF; begin end;
 { 0464:0111: retf 14: 14 bytes of parameters; 288 bytes of locals }
-{@stub} procedure res07_fn_0111; begin end;
+{@stub} procedure res07_fn_0111(Text: string; A, B, C: Byte; Target: Pointer); begin end;
 { 0464:02A5: frame not read }
 {@stub} procedure res07_fn_02A5; begin end;
 { 0464:066F: frame not read }
@@ -112,7 +112,7 @@ implementation
 { 0464:1E5C: retf 16: 16 bytes of parameters; 68 bytes of locals }
 {@stub} procedure res07_fn_1E5C; begin end;
 { 0464:248E: retf 12: 12 bytes of parameters; 4 bytes of locals }
-{@stub} procedure res07_fn_248E; begin end;
+{@stub} procedure res07_fn_248E(Cols, Rows: Word; Planes, Flag: Byte; var Buf: Pointer); begin end;
 { 0464:2595: retf 4: 4 bytes of parameters; 6 bytes of locals }
 {@stub} procedure res07_fn_2595; begin end;
 { 0464:2632: retf 18: 18 bytes of parameters; 36 bytes of locals }
