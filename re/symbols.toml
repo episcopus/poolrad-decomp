@@ -17298,12 +17298,12 @@ id = "0709:0DD3"
 unit = "res06"
 addr = "0709:0DD3"
 size = 431
-name = "res06_fn_0DD3"
-signature = "procedure res06_fn_0DD3(Left, Top, Right, Bottom: Byte)"
+name = "ClearRect"
+signature = "procedure ClearRect(Left, Top, Right, Bottom: ShortInt)"
 c_name = "res06_fn_0DD3"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res06_fn_0DD3 (Byte-coordinate twin of ClearWindow (0709:0DD3): clears Left..Right by Top..Bottom to 0 by VideoAdapter (text scanlines, FillPlaneRect pair, or graphics rows); called by HealMenu, VisitTemple, ShopMain, ShowEndingNarrative); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

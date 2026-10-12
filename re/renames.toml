@@ -876,3 +876,10 @@ kind = "routine"
 why = "clears the whole screen to 0 by VideoAdapter (0709:0CAB): 0 fills two planes, 1 draws the full screen through FillPlaneRect twice, 2 fills four planes; called by ovl19"
 date = "2026-10-12"
 
+[[rename]]
+old = "res06_fn_0DD3"
+new = "ClearRect"
+kind = "routine"
+why = "Byte-coordinate twin of ClearWindow (0709:0DD3): clears Left..Right by Top..Bottom to 0 by VideoAdapter (text scanlines, FillPlaneRect pair, or graphics rows); called by HealMenu, VisitTemple, ShopMain, ShowEndingNarrative"
+date = "2026-10-12"
+

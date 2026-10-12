@@ -23,19 +23,25 @@ function GameClock: Longint;
 procedure ClearFullScreen;
 procedure res06_fn_0D68(Text: string; Color: Byte);
 procedure DelayCounted;
-procedure res06_fn_0DD3(Left, Top, Right, Bottom: Byte);
+procedure ClearRect(Left, Top, Right, Bottom: ShortInt);
 implementation
 uses Crt, Dos, POOLVARS, RES04, RES05;
 
 type
-  TPlaneBytes = array[0..$1F3F] of Byte;  { one whole EGA plane, 8000 bytes }
+  { One text-scanline video plane: 100 scanline rows of 80 bytes, like RES09's TTextPlane
+    (res06 cannot use those names: res09 uses res06). ClearRect indexes [Row, Column]. }
+  TTextPlane = array[0..99, 0..79] of Byte;
+  { One graphics video plane: 50 rows of 160 bytes, like RES09's TGraphPlane. }
+  TGraphPlane = array[0..49, 0..159] of Byte;
 var
-  { The EGA planes as whole byte arrays. They are the same memory RES09 maps as the
-    VideoText/VideoGrf planes; res06 cannot use those names (res09 uses res06). }
-  PlaneB800: TPlaneBytes absolute $B800:$0000;
-  PlaneBA00: TPlaneBytes absolute $BA00:$0000;
-  PlaneBC00: TPlaneBytes absolute $BC00:$0000;
-  PlaneBE00: TPlaneBytes absolute $BE00:$0000;
+  { The EGA planes. The text and graphics views share the segments; they are the same
+    memory RES09 maps as the VideoText/VideoGrf planes. }
+  TextPlane0: TTextPlane absolute $B800:$0000;
+  TextPlane1: TTextPlane absolute $BA00:$0000;
+  GraphPlane0: TGraphPlane absolute $B800:$0000;
+  GraphPlane1: TGraphPlane absolute $BA00:$0000;
+  GraphPlane2: TGraphPlane absolute $BC00:$0000;
+  GraphPlane3: TGraphPlane absolute $BE00:$0000;
 
 { 0709:0000: retf 0: 0 bytes of parameters; 0 bytes of locals }
 { 0709:0000. Sets the EGA Graphics Controller registers for the picture fill: GC 0..5 to 0
@@ -79,7 +85,7 @@ end;
   (SetEgaFillRegisters, GC index 5 to 2), fills scanline by scanline with
   FillChar(Mem[ds4A18:DestOff], RightCol - LeftCol + 1, Value) stepping DestOff by 40, then
   restores GC index 5 to 0, ds4A1A and its plane segment. The Word/LongInt casts keep
-  the TopRow * 40 * 8 offset math unsigned. Called by ClearFullScreen, res06_fn_0DD3 and
+  the TopRow * 40 * 8 offset math unsigned. Called by ClearFullScreen, ClearRect and
   ClearWindow. }
 procedure FillPlaneRect(LeftCol, TopRow, RightCol, BotRow: ShortInt; Plane, Value: Byte);
 var
@@ -184,8 +190,8 @@ begin
   case VideoAdapter of
     0:
       begin
-        FillChar(PlaneBA00, PlaneBytes, 0);
-        FillChar(PlaneB800, PlaneBytes, 0);
+        FillChar(TextPlane1, PlaneBytes, 0);
+        FillChar(TextPlane0, PlaneBytes, 0);
       end;
     1:
       begin
@@ -194,10 +200,10 @@ begin
       end;
     2:
       begin
-        FillChar(PlaneB800, PlaneBytes, 0);
-        FillChar(PlaneBA00, PlaneBytes, 0);
-        FillChar(PlaneBC00, PlaneBytes, 0);
-        FillChar(PlaneBE00, PlaneBytes, 0);
+        FillChar(GraphPlane0, PlaneBytes, 0);
+        FillChar(GraphPlane1, PlaneBytes, 0);
+        FillChar(GraphPlane2, PlaneBytes, 0);
+        FillChar(GraphPlane3, PlaneBytes, 0);
       end;
   end;
 end;
@@ -216,8 +222,60 @@ procedure DelayCounted;
 begin
   Delay(ds49E2 * 225);
 end;
-{ 0709:0DD3: retf 8: 8 bytes of parameters; 12 bytes of locals }
-{@stub} procedure res06_fn_0DD3(Left, Top, Right, Bottom: Byte); begin end;
+{ 0709:0DD3. Clears the Left..Right by Top..Bottom rectangle to 0 by video adapter (the
+  VideoAdapter global), the Byte-coordinate twin of ClearWindow: 0 fills the text-scanline
+  rows Top*4..Bottom*4+3 on both planes, 1 draws the rectangle through FillPlaneRect on
+  planes 0 and 1, 2 fills the graphics rows Top*2..Bottom*2+1 on all four planes. Called by
+  the menu screens (HealMenu, VisitTemple, ShopMain), ShowEndingNarrative and others.
+  Side effect: video memory. }
+procedure ClearRect(Left, Top, Right, Bottom: ShortInt);
+const
+  ScanlinesPerTextRow = 4;  { each text row is 4 scanlines }
+  LastTextScanline = 3;     { BottomCode is the last scanline of Bottom }
+  BytesPerTextColumn = 2;   { each text column is 2 bytes }
+  GraphRowsPerTextRow = 2;  { each text row is 2 graphics rows }
+  LastGraphRow = 1;         { BottomCode is the last graphics row of Bottom }
+  BytesPerGraphColumn = 4;  { each text column is 4 bytes }
+var
+  TopCode: Integer;         { first scanline (mode 0) or graphics row (mode 2) to clear }
+  BottomCode: Integer;      { last scanline or graphics row to clear }
+  LeftCode: Integer;        { first byte column to clear (mode 2 only) }
+  Width: Integer;           { bytes to clear per scanline or graphics row }
+  Row: Word;                { the scanline or graphics row being cleared }
+begin
+  case VideoAdapter of
+    0:
+      begin
+        TopCode := Top * ScanlinesPerTextRow;
+        BottomCode := Bottom * ScanlinesPerTextRow + LastTextScanline;
+        Width := (Right - Left + 1) * BytesPerTextColumn;
+        for Row := TopCode to BottomCode do
+        begin
+          FillChar(TextPlane0[Row, Left * BytesPerTextColumn], Width, 0);
+          FillChar(TextPlane1[Row, Left * BytesPerTextColumn], Width, 0);
+        end;
+      end;
+    1:
+      begin
+        FillPlaneRect(Left, Top, Right, Bottom, 0, 0);
+        FillPlaneRect(Left, Top, Right, Bottom, 1, 0);
+      end;
+    2:
+      begin
+        TopCode := Top * GraphRowsPerTextRow;
+        BottomCode := Bottom * GraphRowsPerTextRow + LastGraphRow;
+        LeftCode := Left * BytesPerGraphColumn;
+        Width := (Right - Left + 1) * BytesPerGraphColumn;
+        for Row := TopCode to BottomCode do
+        begin
+          FillChar(GraphPlane0[Row, LeftCode], Width, 0);
+          FillChar(GraphPlane1[Row, LeftCode], Width, 0);
+          FillChar(GraphPlane2[Row, LeftCode], Width, 0);
+          FillChar(GraphPlane3[Row, LeftCode], Width, 0);
+        end;
+      end;
+  end;
+end;
 
 begin
 end.
