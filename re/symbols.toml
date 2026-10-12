@@ -2236,12 +2236,12 @@ id = "ovl06:0030"
 unit = "ovl06"
 addr = "ovl06:0030"
 size = 521
-name = "ovl06_fn_0030"
+name = "ChooseShopItem"
 signature = ""
 c_name = "ovl06_fn_0030"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl06_fn_0030 (builds the Shop window (DrawWindow 'Shop'), rewrites each stock entry's Name into a 30-char name+Count field, runs the item picker ovl25_e4 ('Items: '/'Buy') over the list at ds6810 and returns the chosen entry in Head/Selected with the key in Action; called from ovl06_fn_0361 (Buy) (ovl06:0030)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

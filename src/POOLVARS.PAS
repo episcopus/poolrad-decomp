@@ -47,7 +47,7 @@ type
     Addr: Pointer;
   end;
   { One entry of a menu/stock list, walked through Next. The shop builds the display text into Name
-    (ovl06_fn_0030 copies a 30-character field into it with System_StrLCopy limit $28, then sets the
+    (ChooseShopItem copies a 30-character field into it with System_StrLCopy limit $28, then sets the
     length to $1E), reads Count for the buy flow (ovl06_fn_0361) and the list menu (ovl25_e4) skips an
     entry whose Enabled is 0. ovl19_e9 reads Value37 and Factor39. The record is 63 ($3F) bytes: the
     loader clones one with a Move of $3F bytes (AddInventoryItem). }

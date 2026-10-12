@@ -10,7 +10,7 @@ procedure res12_fn_0188;
 procedure res12_fn_01FB;
 procedure res12_fn_0282;
 procedure res12_fn_03A0;
-procedure res12_fn_0442;
+procedure res12_fn_0442(Value: LongInt; P: Pointer; A, B, C, D: Byte);
 procedure res12_fn_06D5;
 procedure res12_fn_0712;
 procedure res12_fn_0767;
@@ -81,7 +81,7 @@ implementation
 { 00BA:03A0: retf 4: 4 bytes of parameters; 4 bytes of locals }
 {@stub} procedure res12_fn_03A0; begin end;
 { 00BA:0442: frame not read }
-{@stub} procedure res12_fn_0442; begin end;
+{@stub} procedure res12_fn_0442(Value: LongInt; P: Pointer; A, B, C, D: Byte); begin end;
 { 00BA:06D5: frame not read }
 {@stub} procedure res12_fn_06D5; begin end;
 { 00BA:0712: retf 16: 16 bytes of parameters; 0 bytes of locals }
