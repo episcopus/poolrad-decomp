@@ -687,3 +687,10 @@ kind = "routine"
 why = "ovl14:068D steps the party one cell in the icon-set direction when ovl29_e3 allows, clamping into the 0..F 16x16 map with the ds49D6 725 edge flag; called by the movement driver ovl14_e2"
 date = "2026-10-11"
 
+[[rename]]
+old = "ovl14_fn_073B"
+new = "MoveParty"
+kind = "routine"
+why = "ovl14:073B steps the party one cell in the icon-set direction with wraparound, refreshes ds6AB0/ds6AB1 and sounds; called by ovl14_e1"
+date = "2026-10-11"
+

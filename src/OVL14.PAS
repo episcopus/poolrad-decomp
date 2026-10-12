@@ -24,12 +24,12 @@ function FindCodeSlot(Code: Byte; Rec: PCodeRec): Byte;
 function FindCodeRecord(Code: Byte): PCodeRec;
 function DoKnock: Boolean;
 procedure ClampPartyPosition;
-procedure ovl14_fn_073B;
+procedure MoveParty;
 procedure ovl14_fn_0818;
 procedure ovl14_e2;
 procedure ovl14_e1;
 implementation
-uses OVL29;
+uses OVL29, RES03, OVL20;
 
 { ovl14:0000: retf 6: 6 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl14_fn_0000; begin end;
@@ -123,8 +123,32 @@ begin
     end;
   end;
 end;
-{ ovl14:073B: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl14_fn_073B; begin end;
+{ ovl14:073B. Moves the party one cell in the current icon set's direction, wrapping
+  the 16x16 area map ($F steps to 0, 0 steps to $F), then refreshes the cell bytes
+  ds6AB0 (through ovl29_e2) and ds6AB1 (through ovl29_e4), clears ds6DDE, and steps
+  the sound through ovl20_e1 (mode 2 when ds49D6^[714] has bit 0, else mode 1).
+  Called by ovl14_e1. }
+procedure MoveParty;
+begin
+  res03_fn_00DC(ds2628);
+  Inc(ds6AAD, ds2736[ds6AAF]);
+  Inc(ds6AAE, ds273F[ds6AAF]);
+  if ds6AAD < 0 then
+    ds6AAD := $F;
+  if ds6AAD > $F then
+    ds6AAD := 0;
+  if ds6AAE < 0 then
+    ds6AAE := $F;
+  if ds6AAE > $F then
+    ds6AAE := 0;
+  ds6AB0 := ovl29_e2(ds6AAD, ds6AAE, ds6AAF);
+  FillChar(ds6DDE, 3, 1);
+  ds6AB1 := ovl29_e4(ds6AAD, ds6AAE);
+  if ds49D6^[714] and 1 > 0 then
+    ovl20_e1(1, 2)
+  else
+    ovl20_e1(1, 1);
+end;
 { ovl14:0818: retf 0: 0 bytes of parameters; 40 bytes of locals }
 {@stub} procedure ovl14_fn_0818; begin end;
 { ovl14:0989: retf 0: 0 bytes of parameters; 60 bytes of locals }

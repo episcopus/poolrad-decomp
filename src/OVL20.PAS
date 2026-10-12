@@ -6,7 +6,7 @@ interface
 procedure ovl20_fn_0000;
 procedure ovl20_fn_02F2;
 procedure ovl20_fn_03A3;
-procedure ovl20_e1;
+procedure ovl20_e1(A, B: Byte);
 procedure ovl20_fn_047A;
 procedure ovl20_fn_0565;
 procedure ovl20_fn_05F0;
@@ -32,7 +32,7 @@ implementation
 { ovl20:03A3: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl20_fn_03A3; begin end;
 { ovl20:03D5: retf 4: 4 bytes of parameters; 18 bytes of locals }
-{@stub} procedure ovl20_e1; begin end;
+{@stub} procedure ovl20_e1(A, B: Byte); begin end;
 { ovl20:047A: retf 4: 4 bytes of parameters; 4 bytes of locals }
 {@stub} procedure ovl20_fn_047A; begin end;
 { ovl20:0565: retf 2: 2 bytes of parameters; 298 bytes of locals }
