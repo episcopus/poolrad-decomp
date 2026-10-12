@@ -848,3 +848,94 @@ kind = "routine"
 why = "walks a Bresenham line over the map rows with tile gating (stops False at blocking tiles or past Limit steps, else True with steps in StepCount); called for line-of-sight by ovl09/ovl12/ovl13 and ScanTargets"
 date = "2026-10-12"
 
+[[rename]]
+old = "ovl29_e2"
+new = "WallIdAt"
+kind = "routine"
+why = "ovl29:047B returns the wall id nibble of map cell (X,Y) for direction 0/2/4/6 (N,E,S,W) from the first two GEO planes (whitepaper 4.2.1)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl29_e3"
+new = "DoorKindAt"
+kind = "routine"
+why = "ovl29:0350 returns 1 when the cell side has no wall, else the door bit pair of the fourth GEO plane for direction 0/2/4/6; ovl14 DoWildernessMenu treats 1 as open, 2 and 3 as locked kinds (Bash/Pick/Knock)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl29_e4"
+new = "EventByteAt"
+kind = "routine"
+why = "ovl29:057A returns the event plane byte (third GEO plane, +200h) of the wrapped map cell; ShowAreaView tests bit 7 (interior)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl29_fn_0211"
+new = "DrawWallPiece"
+kind = "routine"
+why = "ovl29:0211 draws piece Piece (0..9, tables ds0C8C/ds0C96/ds0CA0) of wall Wall from the wall tiles ds6A58 as 8x8 symbols at view column Col, row Row, clipped to the 11x11 view; called by ovl29_e5 per visible wall"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl29_fn_0000"
+new = "DrawWallMap"
+kind = "routine"
+why = "ovl29:0000 draws the 11x11 cells of the area map around the party as 8x8 symbols $104 + wall bits (WallIdAt north 1, east 2, south 4, west 8) and the party arrow $100 + Dir div 2; ovl29_e5 calls it instead of the 3D walls while ds6AAC is nonzero"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl29_e5"
+new = "DrawWallView"
+kind = "routine"
+why = "ovl29:05FD draws the 3D wall view: the frame (DrawWallDescriptors) then the walls three cells deep around the party, nearest last, as wall pieces 0..9 (DrawWallPiece); while ds6AAC is nonzero it draws the overhead wall map (DrawWallMap) instead"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds0C8C"
+new = "WallPieceFirstTile"
+kind = "global"
+why = "DrawWallPiece (ovl29:021E) starts at this tile of the wall's 156-byte tile list; values 0,2,6,10,22,38,54,110,132,154 are the running sums of width*height"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds0C96"
+new = "WallPieceWidth"
+kind = "global"
+why = "DrawWallPiece (ovl29:0232) last column = Col + this - 1; values 1,1,1,3,2,2,7,2,2,1"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds0CA0"
+new = "WallPieceHeight"
+kind = "global"
+why = "DrawWallPiece (ovl29:024B) last row = Row + this - 1; values 2,4,4,4,8,8,8,11,11,2"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds0CAA"
+new = "WallPieceCol"
+kind = "global"
+why = "DrawWallView passes WallPieceCol[n] plus a per-cell shift as the view column of piece n (ovl29:072C..0D36)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds0CBE"
+new = "WallPieceRow"
+kind = "global"
+why = "DrawWallView passes WallPieceRow[n] as the view row of piece n (ovl29:0733..0D3D)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6A58"
+new = "WallTiles"
+kind = "global"
+why = "the 15 walls x 156 tile numbers LoadWallSet fills from WALLDEF (ovl29:0EF7) and DrawWallPiece draws (ovl29:02B4); allocated by StartGame (ovl11:0084)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6AAC"
+new = "WallMapMode"
+kind = "global"
+why = "DrawWallView (ovl29:0603) draws the overhead wall map (DrawWallMap) instead of the 3D walls while it is nonzero"
+date = "2026-10-12"
+

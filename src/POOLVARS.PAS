@@ -46,12 +46,17 @@ type
     (New with the size $800 at ovl11:0034 and the FillChar of $800 at ovl11:0271), so the array has
     1024 words; the words above 465 are simply not read. }
   TGameVars = array[0..1023] of Word;
-  { $400-byte map data block at DS:6A5C (also ^TBlock400): the first $300 bytes are not
-    read here; the plane at +$300 holds one byte per 16x16-map cell (row * 16 + col)
-    with a bit pair per icon set that ovl14 clears on exit. Full structure uncertain. }
+  { $400-byte map data block at DS:6A5C (also ^TBlock400): the four 256-byte planes of a GEO
+    block (whitepaper 4.2.1), each indexed [Row, Col] of the 16x16 area map. WallsNE and WallsSW
+    hold two wall ids per cell (WallIdAt: direction 0 north = high nibble of WallsNE, 2 east = low
+    nibble, 4 south = high nibble of WallsSW, 6 west = low nibble); Events the event byte
+    (EventByteAt; bit 7 = interior); Cells the door plane, a bit pair per direction (DoorKindAt: 0 =
+    bits 0-1, 2 = bits 2-3, 4 = bits 4-5, 6 = bits 6-7), which ovl14 also changes. }
   TGeoCellBlock = record
-    Unknown: array[0..$2FF] of Byte;
-    Cells: array[0..15, 0..15] of Byte;
+    WallsNE: array[0..15, 0..15] of Byte;   { +$000 }
+    WallsSW: array[0..15, 0..15] of Byte;   { +$100 }
+    Events: array[0..15, 0..15] of Byte;    { +$200 }
+    Cells: array[0..15, 0..15] of Byte;     { +$300 }
   end;
   PGeoCellBlock = ^TGeoCellBlock;
   { Heap blocks the loader (StartGame) allocates with New; the size is the argument of each New
@@ -60,6 +65,13 @@ type
   TBlock400 = array[0..511] of Word;      { a $400-byte block }
   TBlock588 = array[0..707] of Word;      { a $588-byte block (the sprite data, loaded by LoadPictureSlot) }
   TBlock924 = array[0..1169] of Word;     { a $924-byte block }
+  { The wall tiles at DS:6A58 ($924 bytes, allocated by StartGame): fifteen walls (wall ids 1..15)
+    of 156 bytes each, one 8x8 tile number per byte; LoadWallSet fills them from WALLDEF wallsets
+    of five walls (whitepaper 4.2.4), DrawWallPiece reads them. }
+  TWallTiles = array[1..15, 0..$9B] of Byte;
+  { The same $924 bytes seen as LoadWallSet fills them: three wallset slots (1..3) of five walls
+    (1..5) of 156 tile numbers; wallset slot S, wall W is wall id (S - 1) * 5 + W of TWallTiles. }
+  TWallSets = array[1..3, 1..5, 0..$9B] of Byte;
   TBlock1E00 = array[0..3839] of Word;    { a $1E00-byte block }
   { One 4-byte element of the table at DS:6AAE the loader fills (ovl11:0369..0390). }
   TPresenceSlot = record
@@ -186,8 +198,11 @@ const
     matched reads in ovl26 are at +$186, +$188, +$1CC, +$1F6, +$1FA and +$1FC). }
   VarMapX = 195;                  { the party's column in the area map grid (44 wide) }
   VarMapY = 196;                  { the party's row in the area map grid }
+  VarGeoBlock = 197;              { the GEO block id of the loaded 3D area map (Load3DMap, ovl29:11FB) }
   VarForceWallView = 230;         { nonzero: ShowAreaView shows the wall view whatever AreaViewKind says }
-  VarShowWallOverlays = 251;      { nonzero: ShowAreaView clears ds6AAC, so ovl29_e5 draws the overlay labels }
+  { Nonzero: the overhead wall map is off (ShowAreaView clears WallMapMode, the A key cannot set
+    it, ovl14:0380); the name predates that evidence. }
+  VarShowWallOverlays = 251;
   VarWallIndexOutside = 253;      { the ds0C26 wall id index ShowAreaView uses for a cell that is not interior }
   VarWallIndexInside = 254;       { the ds0C26 wall id index for an interior cell (event byte bit 7) }
   VarRiverGate = 418;             { river-crossing gate: CheckMapCell prints the stench message while it is 0
@@ -209,6 +224,7 @@ var
   { Five words, one per 8x8 tile bank, subtracted from the symbol number to index within the
     bank (Put8x8Symbol, ovl34:020F); evidence in re/dseg.toml. }
   SymbolBase: array[0..4] of Word;  { per-bank base symbol numbers; see above }
+  ds272C: Word;                   { LoadWallSet adds the bank's symbol offset to the wall tile numbers at or above it }
   AreaMap: array[0..35, 0..43] of Byte;  { the area map: one block code per 3x3-tile block, one more
                                           than the code DrawCellPicture draws; byte 0x4E (the letter N)
                                           where no block is drawn (all of rows 34 and 35 in the
@@ -236,18 +252,20 @@ var
   ds6A61: Byte;                   { wall view descriptor 2: ShowAreaView fills it from ds6F69 when ds84E5 is set }
   ds6A62: Byte;                   { wall view descriptor 3: ShowAreaView fills it from ds6F69 when ds84E5 is set }
   ds6A63: Byte;                   { wall view descriptor 4: ShowAreaView fills it from ds6F68 when ds84E5 is set }
-  { ovl29_e5 draws the four wall view descriptors through DrawWallDescriptors only while ds6AAC is 0;
-    ShowAreaView (when GameVars^[VarShowWallOverlays] is set) and ovl07_e8 clear it. }
-  ds6AAC: Byte;                   { wall view overlay gate; see above }
+  { Nonzero: the view shows the overhead wall map (DrawWallMap) instead of the 3D walls and their
+    frame (DrawWallView, ovl29:0603). The A key of the movement loop toggles it while
+    GameVars^[VarShowWallOverlays] is 0 (ovl14:0380); ShowAreaView (when that variable is set),
+    ovl07_e8 and StartGame clear it. }
+  WallMapMode: Byte;              { overhead wall map shown instead of the 3D view; see above }
   ds6AAD: ShortInt;               { the party's column in the 16x16 area map (GEO) }
-    { ShortInt, not Byte: ovl14 widens it with cbw (ovl14:0696); ovl29_e4/e5 take it. }
+    { ShortInt, not Byte: ovl14 widens it with cbw (ovl14:0696); EventByteAt/DrawWallView take it. }
   ds6AAE: ShortInt;               { the party's row in the 16x16 area map }
-    { ShortInt, not Byte: ovl14 widens it with cbw (ovl14:069D); ovl29_e4/e5 take it; set to 1 by StartGame. }
+    { ShortInt, not Byte: ovl14 widens it with cbw (ovl14:069D); EventByteAt/DrawWallView take it; set to 1 by StartGame. }
   { The marker's icon set (DrawIcon's third parameter): the wilderness keys H, M, P and K set 0,
     2, 4 and 6 (HandleWildernessKeys, HandleWildernessKeys); ovl07_e10 maps a script value 0..3 to the same 0/2/4/6. }
   ds6AAF: Byte;                   { the marker's icon set; see above }
-  ds6AB0: Byte;                   { ovl29_e2's result for the party cell and icon set (MoveParty); meaning unknown }
-  ds6AB1: Byte;                   { the event byte of the party's map cell, from ovl29_e4; bit 7 = interior }
+  ds6AB0: Byte;                   { WallIdAt's result for the party cell and icon set (MoveParty); meaning unknown }
+  ds6AB1: Byte;                   { the event byte of the party's map cell, from EventByteAt; bit 7 = interior }
   MarkerFrame: Byte;              { the party marker's animation frame 0..5; evidence in re/dseg.toml }
   ds6F68: Byte;                   { special view code 2; set with ds84E5 := 1 by ovl07_e3 ($41) and ovl11_fn_0435 ($DB) }
   ds6F69: Byte;                   { special view code 1; set with ds84E5 := 1 by ovl07_e3 (9) and ovl11_fn_0435 ($E8) }
@@ -358,10 +376,11 @@ var
   ds5E1E: Word;                   { BlockRead result count of the loader (ovl11:05D6) }
   ds5E20: ^TBlock588;             { $588-byte block the loader allocates (ovl11:0074) }
   ds6810: PMenuLine;              { head of the shop's item list, a far pointer the loader clears (ovl11:031A) }
-  ds6A58: ^TBlock924;             { $924-byte block the loader allocates (ovl11:0084) }
+  WallTiles: ^TWallTiles;            { the wall tiles, $924 bytes the loader allocates (ovl11:0084) }
   ds6A5C: ^TBlock400;             { $400-byte block the loader allocates (ovl11:0094) }
-  ds84DC: Byte;                   { the wall view / outdoor mode ovl29_e4 tests (0 and $A both skip) }
+  ds84DC: Byte;                   { the wall view / outdoor mode EventByteAt tests (0 and $A both skip) }
   GeoCells: PGeoCellBlock absolute ds6A5C; { cell-byte view of the $400 block for ovl14 }
+  WallSets: ^TWallSets absolute WallTiles; { the wall tiles by wallset slot and wall (LoadWallSet) }
   ds6AAEWords: array[0..3] of TPresenceSlot;  { the 4-byte element table at DS:6AAE; the loader sets
                                     elements 2 and 3 to $FFFF (ovl11:035E..0390) }
   ds6AB2: Word;                   { cleared by the loader (ovl11:0353) }
@@ -377,6 +396,15 @@ var
   ds6B1C: Byte;                   { set to $FF by the loader (ovl11:0442) and by FreeSpriteList }
   ds0C6C: array[0..$F] of Byte;   { 16-byte table LoadSpriteList passes to res07_fn_1E5C (with ds0C7C) }
   ds0C7C: array[0..$F] of Byte;   { second 16-byte table LoadSpriteList passes to res07_fn_1E5C }
+  { The ten pieces a wall of the 3D view is drawn from (DrawWallPiece, DrawWallView): each piece is a
+    rectangle of 8x8 tiles, Width x Height, whose tiles follow each other in a wall's 156-byte tile
+    list from FirstTile on (the image's values 0,2,6,..,$9A add up to $9C exactly), drawn with its
+    top left tile at view column Col, row Row. Indexed by the piece number 0..9. }
+  WallPieceFirstTile: array[0..9] of Byte;     { first tile of each wall piece in the 156-byte tile list; see above }
+  WallPieceWidth: array[0..9] of Byte;     { width in tiles of each wall piece; see above }
+  WallPieceHeight: array[0..9] of Byte;     { height in tiles of each wall piece; see above }
+  WallPieceCol: array[0..9] of Integer;  { view column of each wall piece's top left tile; see above }
+  WallPieceRow: array[0..9] of Integer;  { view row of each wall piece's top left tile; see above }
   ds70C7: ShortInt;               { loop counter of FreeSpriteList (the sprite list slots); ShortInt: the loop exits with jg }
   ds6B29: Word;                   { set to 1 by the loader (ovl11:0405) }
   ds6DDA: Byte;                   { cleared by the loader (ovl11:0410) }

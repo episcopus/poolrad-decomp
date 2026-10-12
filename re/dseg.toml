@@ -489,3 +489,38 @@ evidence = "res05_fn_0716 allocates it with the packed size (0802:08B3), BlockRe
 offset = 0x2614
 name = "InsertDiskPrompts"
 evidence = "entries 1..8 of the 30-byte string[29] table at DS:2614 hold 'Insert disk N in drive ' in the image (entry 0 is not a string); OpenDaxFile (0802:061A) and StartGame index it by TileSet and append the drive letter DS:547D and ':' to make the prompt OpenGameFile shows through ShowBottomMessage"
+
+[[global]]
+offset = 0x0C8C
+name = "WallPieceFirstTile"
+evidence = "DrawWallPiece (ovl29:021E) starts at this tile of the wall's 156-byte tile list; values 0,2,6,10,22,38,54,110,132,154 are the running sums of width*height"
+
+[[global]]
+offset = 0x0C96
+name = "WallPieceWidth"
+evidence = "DrawWallPiece (ovl29:0232) last column = Col + this - 1; values 1,1,1,3,2,2,7,2,2,1"
+
+[[global]]
+offset = 0x0CA0
+name = "WallPieceHeight"
+evidence = "DrawWallPiece (ovl29:024B) last row = Row + this - 1; values 2,4,4,4,8,8,8,11,11,2"
+
+[[global]]
+offset = 0x0CAA
+name = "WallPieceCol"
+evidence = "DrawWallView passes WallPieceCol[n] plus a per-cell shift as the view column of piece n (ovl29:072C..0D36)"
+
+[[global]]
+offset = 0x0CBE
+name = "WallPieceRow"
+evidence = "DrawWallView passes WallPieceRow[n] as the view row of piece n (ovl29:0733..0D3D)"
+
+[[global]]
+offset = 0x6A58
+name = "WallTiles"
+evidence = "the 15 walls x 156 tile numbers LoadWallSet fills from WALLDEF (ovl29:0EF7) and DrawWallPiece draws (ovl29:02B4); allocated by StartGame (ovl11:0084)"
+
+[[global]]
+offset = 0x6AAC
+name = "WallMapMode"
+evidence = "DrawWallView (ovl29:0603) draws the overhead wall map (DrawWallMap) instead of the 3D walls while it is nonzero"
