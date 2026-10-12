@@ -18,7 +18,7 @@ const
   Yellow = 14;               { EGA colour: the failure message }
 
 { ovl02:00FD. The code wheel check. Up to MaxAttempts times it picks a wheel record at random,
-  clears the question window (res09_fn_02E8), writes the instructions (res06_fn_0626), draws the
+  clears the question window (DrawWindow), writes the instructions (res06_fn_0626), draws the
   record runes as font characters (res06_fn_01DF: the two runes to match and the third, plus the
   fourth only when the record has one), shows the path pattern as five spaces and the record path
   (res06_fn_0626), flushes the keyboard and asks for the code word (res06_fn_09E3, the line reader
@@ -35,7 +35,7 @@ begin
   for Attempt := 1 to MaxAttempts do
   begin
     Question := Random(WheelEntryCount);
-    res09_fn_02E8(1, 1, $26, $16, 0, 0, '');
+    DrawWindow(1, 1, $26, $16, 0, 0, '');
     res06_fn_0626(1, 1, Green, 'USE THE TRANSLATION WHEEL TO DECIPHER');
     res06_fn_0626(1, 2, Green, 'THE CODE WORD.');
     res06_fn_0626(1, 5, Green, 'MATCH THE ESPRUAR RUNE (OUTER RING)');

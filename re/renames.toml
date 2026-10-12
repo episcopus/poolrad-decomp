@@ -176,3 +176,31 @@ kind = "routine"
 why = "ovl02:00FD: the copy protection check of whitepaper 5.12: up to three times it draws a random code wheel record (the runes as font characters, the path pattern) and reads the code word; a matching answer leaves at once, the third wrong one ends the program through QuitGame"
 date = "2026-10-11"
 
+[[rename]]
+old = "res09_fn_0000"
+new = "DrawWindowFrame"
+kind = "routine"
+why = "draws 4 corner tiles plus top/bottom/left/right edge tiles around LeftCol-1..RightCol+1, TopRow-1..BottomRow+1 with tiles FrameSet*3+114h..+2 through ovl34_e2; called by DrawWindow (03F1:02E8) after ClearWindow"
+date = "2026-10-11"
+
+[[rename]]
+old = "res09_fn_0137"
+new = "ClearWindow"
+kind = "routine"
+why = "fills the LeftCol..RightCol by TopRow..BottomRow rectangle with 0, by video hardware: scanline planes for 0, text cells through res06 for 1, four planes for 2, selected by VideoAdapter; called by DrawWindow (03F1:02E8)"
+date = "2026-10-11"
+
+[[rename]]
+old = "res09_fn_02E8"
+new = "DrawWindow"
+kind = "routine"
+why = "clears the window (ClearWindow), draws its frame (DrawWindowFrame) and centres Text on TopRow (res06_fn_0626); called for dialog boxes and screens from ovl01/02/03/04/05/06 and res12"
+date = "2026-10-11"
+
+[[rename]]
+old = "ds4A1E"
+new = "VideoAdapter"
+kind = "global"
+why = "ClearWindow (03F1:0137) dispatches on it: 0 fills scanline planes, 1 writes text cells, 2 fills four planes; the video hardware the game drives (POOL.CFG offers EGA/CGA/Tandy, mapping still open)"
+date = "2026-10-11"
+

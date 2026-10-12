@@ -25,13 +25,13 @@ const
   GateVarBlockBits = 416;         { bit 1 gates block 5 and bit 0 gates block 7: each is drawn while its bit is clear }
   GateVarBlock8Count = 435;       { blocks 8 and 9 are drawn while this is above 253 }
 
-  { The three windows of the adventure screen, in the grid res09_fn_02E8 works in: a column is
+  { The three windows of the adventure screen, in the grid DrawWindow works in: a column is
     16 pixels wide, a row 4 scanlines. The names give TopRow, LeftCol, BottomRow, RightCol. }
   ViewTop = 1;                    ViewLeft = 1;     ViewBottom = 15;  ViewRight = 15;
   SideTop = 1;                    SideLeft = 17;    SideBottom = 15;  SideRight = 38;
   TextTop = 17;                   TextLeft = 1;     TextBottom = 22;   TextRight = 38;
   Black = 0;                      { EGA colour of the window text (never shown: the text is empty) }
-  PlainFrame = 0;                 { the frame set res09_fn_02E8 draws around each window }
+  PlainFrame = 0;                 { the frame set DrawWindow draws around each window }
 
 { ovl27:0000. Draws the 5x5 grid of 3x3-tile area blocks around map position (LeftCol, TopRow)
   into the 3D view window: the block code comes from the area map (AreaMap, minus one), except
@@ -88,13 +88,13 @@ end;
 
 { ovl27:0207. Frames the three windows of the adventure screen: the 3D view on the left (15x15
   cells), the side window on the right and the text area at the bottom, with no text in them.
-  Side effects: the screen (through res09_fn_02E8, which clears each window, draws its frame
+  Side effects: the screen (through DrawWindow, which clears each window, draws its frame
   and would centre its text on the top row). }
 procedure DrawAdventureScreen;
 begin
-  res09_fn_02E8(ViewLeft, ViewTop, ViewRight, ViewBottom, PlainFrame, Black, '');
-  res09_fn_02E8(SideLeft, SideTop, SideRight, SideBottom, PlainFrame, Black, '');
-  res09_fn_02E8(TextLeft, TextTop, TextRight, TextBottom, PlainFrame, Black, '');
+  DrawWindow(ViewLeft, ViewTop, ViewRight, ViewBottom, PlainFrame, Black, '');
+  DrawWindow(SideLeft, SideTop, SideRight, SideBottom, PlainFrame, Black, '');
+  DrawWindow(TextLeft, TextTop, TextRight, TextBottom, PlainFrame, Black, '');
 end;
 
 begin
