@@ -1,5 +1,5 @@
 unit OVL26;
-{ The area view (whitepaper 5.x): ShowAreaView shows either the 3D wall view or the scrolling map
+{ The area view (whitepaper 5.2.1): ShowAreaView shows either the 3D wall view or the scrolling map
   window, DrawPartyMarker draws the animated party marker onto that window. The callers are the
   view dispatcher of the resident unit (res12_fn_27D9, view types 3 and 4) and the wilderness map
   screen (res12_fn_2B5E, after the text windows of DrawAdventureScreen). }
@@ -11,21 +11,23 @@ implementation
 uses POOLVARS, OVL27, OVL29, OVL32, RES07;
 
 const
-  { Where the party cell in the 5x5 map window stops being the centre cell 2: DrawAreaView clamps the
-    window to columns 0..39 and rows 0..31 of the 44-column map, so a column of 42 (a row of 34)
-    puts the party at cell 3, and 43 (35) or more at cell 4 (ovl26:001F, ovl26:0043). }
+  { Where the party cell in the 5x5 map window stops being the centre cell 2: ShowAreaView clamps
+    the window to columns 0..39 and rows 0..31 of the 44-column map (ovl26:0137), and the marker
+    is the party position within that window, so a party column of 42 (a party row of 34) puts the
+    marker at cell 3 and 43 (35) or more at cell 4 (ovl26:001F, ovl26:0043). }
   Cell3Column = $2A;
   Cell4Column = $2B;
   Cell3Row = $22;
   Cell4Row = $23;
 
 { ovl26:0000. Draws the animated party marker onto the 5x5 map window that ShowAreaView just drew
-  (through DrawAreaView). The marker cell is the party position, MapBaseX[AreaViewKind] plus
-  GameVars^[VarMapX] and GameVars^[VarMapY], folded the same way ShowAreaView clamps the window:
-  columns and rows 0 and 1 are kept, everything up to the fold constants becomes the centre cell
-  2, and past them the cell shows 3 and 4. PicLoad draws the marker itself (ovl32_e5) with the
-  icon set ds6AAF and the walk animation MarkerFrame (MarkerFrame mod 2 picks the mirrored half,
-  MarkerFrame div 2 + 9 the picture 9 to 11); the frame then steps to the next of its six values.
+  (through DrawAreaView). The marker cell is the party position within that window, MapBaseX[AreaViewKind]
+  plus GameVars^[VarMapX] (the column) and GameVars^[VarMapY] (the row), folded with the same edge
+  limits ShowAreaView clamps the window to (ovl26:0137): columns and rows 0 and 1 stay at the edges,
+  2 to 41 (rows 2 to 33) become the centre cell 2, 42 (row 34) cell 3 and 43 (row 35) or more cell 4.
+  PicLoad draws the marker itself (ovl32_e5) with the icon set ds6AAF and the walk animation
+  MarkerFrame (MarkerFrame mod 2 picks the mirrored half, MarkerFrame div 2 + 9 the picture 9 to
+  11); the frame then steps to the next of its six values.
   Reads and changes: MapBaseX, AreaViewKind, GameVars^, ds6AAF, MarkerFrame. Side effect: the view
   on the screen, through ovl32_e5 and the display step res07_fn_1B52 that drawing units call. }
 procedure DrawPartyMarker;
@@ -68,10 +70,10 @@ var
   WindowTop: ShortInt;      { the map window top row (0 to 31) }
   ViewKind: Byte;           { AreaViewKind, or 1 when VarForceWallView forces the wall view }
 
-  { ovl26:00C7. Purpose unknown beyond the mapping: turns the special view code (ds6F69, a
-    location code the loaders and the script command $F7 set when they also set ds84E5) into wall
-    view descriptor 2 (ds6A61): codes 8 and $41 give 0, anything else $0F. ovl29_fn_0174 draws
-    with the descriptors; what the values select is still open. }
+  { ovl26:00C7. Purpose unknown beyond the mapping: turns the special view code (ds6F69) into wall
+    view descriptor 2 (ds6A61): codes 8 and $41 give 0, anything else $0F. This unit only reads
+    ds6F69; whitepaper 5.2.1 records who sets it together with ds84E5. The descriptors reach the
+    screen through ovl29_fn_0174; what the values select is still open. }
   function WallDesc2FromCode(SpecialCode: Byte): Byte;
   begin
     case SpecialCode of
@@ -84,7 +86,7 @@ var
   end;
 
   { ovl26:00FB. Purpose unknown beyond the mapping: turns the special view code (ds6F69) into wall
-    view descriptor 3 (ds6A62): code 8 gives 8, anything else 7. }
+    view descriptor 3 (ds6A62): code 8 gives 8, anything else 7. This unit only reads ds6F69. }
   function WallDesc3FromCode(SpecialCode: Byte): Byte;
   begin
     case SpecialCode of
@@ -96,9 +98,9 @@ var
     end;
   end;
 
-  { ovl26:012F. Purpose unknown beyond the mapping: turns the special view code (ds6F68, set with
-    ds84E5 by the loaders and by the script command $F1) into wall view descriptor 4 (ds6A63):
-    code $0B gives 8, code 6 gives 1, anything else 6. }
+  { ovl26:012F. Purpose unknown beyond the mapping: turns the special view code (ds6F68) into wall
+    view descriptor 4 (ds6A63): code $0B gives 8, code 6 gives 1, anything else 6. This unit only
+    reads ds6F68; whitepaper 5.2.1 records who sets it together with ds84E5. }
   function WallDesc4FromCode(SpecialCode: Byte): Byte;
   begin
     case SpecialCode of
@@ -146,5 +148,8 @@ begin
   end;
 end;
 
+{ ovl26:02A0. The unit's initialisation part is empty: the compiler emits only `55 89 E5 5D CB`
+  (push bp; mov bp, sp; pop bp; retf, the frame with no body), so the area view unit runs no code
+  at start-up. }
 begin
 end.
