@@ -63,12 +63,12 @@ id = "ovl01:0627"
 unit = "ovl01"
 addr = "ovl01:0627"
 size = 482
-name = "ovl01_e1"
+name = "ShowTitleScreen"
 signature = ""
 c_name = "ovl01_e1"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_1"
+notes = "renamed from ovl01_e1 (loads and shows the title picture, waits, then runs the credits: called once at startup (entry point); backup/clear/restore of GameDir, res07 picture calls, key-or-deadline wait, ShowCredits); auto:entry_1"
 evidence = ["prologue"]
 
 [[routine]]
@@ -79,7 +79,7 @@ size = 5
 name = "ovl01_init"
 signature = ""
 c_name = "ovl01_init"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_0"
 evidence = ["prologue"]

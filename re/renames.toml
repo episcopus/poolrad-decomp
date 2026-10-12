@@ -274,3 +274,10 @@ kind = "routine"
 why = "draws two empty windows and some thirty credit lines (names, roles) through DrawWindow and res06_fn_0626, then waits with WaitKeyOrTimeout(10); called by the title sequence"
 date = "2026-10-11"
 
+[[rename]]
+old = "ovl01_e1"
+new = "ShowTitleScreen"
+kind = "routine"
+why = "loads and shows the title picture, waits, then runs the credits: called once at startup (entry point); backup/clear/restore of GameDir, res07 picture calls, key-or-deadline wait, ShowCredits"
+date = "2026-10-11"
+

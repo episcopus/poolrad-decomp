@@ -1,11 +1,12 @@
 unit OVL01;
-{ ovl01: overlay unit, 2062 bytes of code. Skeleton by tools/match/skeleton.py: every routine is a stub
-  until decompiled (playbook 30). }
+{ Title screens and credits (whitepaper 5.8): ShowTitleScreen loads and shows the title
+  picture, waits for a key or a deadline, then shows the credits (ShowCredits);
+  WaitKeyOrTimeout waits for a key or a tick-count timeout. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 procedure WaitKeyOrTimeout(Pause: Word);
 procedure ShowCredits;
-procedure ovl01_e1;
+procedure ShowTitleScreen;
 implementation
 uses Crt, POOLVARS, RES04, RES06, RES07, RES09;
 
@@ -31,7 +32,7 @@ begin
 end;
 { ovl01:0206. Shows the credits screen: two empty windows (DrawWindow) and some thirty
   name and role lines in green, cyan and yellow (res06_fn_0626), then waits for a key or a
-  timeout (WaitKeyOrTimeout). Called by the title sequence (ovl01_e1). }
+  timeout (WaitKeyOrTimeout). Called by the title sequence (ShowTitleScreen). }
 procedure ShowCredits;
 begin
   DrawWindow(1, 1, $26, 3, 0, 0, '');
@@ -71,8 +72,65 @@ begin
   res06_fn_0626(2, $17, LightCyan, 'james kucera,robert daly,rick white');
   WaitKeyOrTimeout($0A);
 end;
-{ ovl01:0627: retf 0: 0 bytes of parameters; 60 bytes of locals }
-{@stub} procedure ovl01_e1; begin end;
+{ ovl01:0627. Shows the title sequence: backs up GameDir and clears it, loads the title
+  picture (res07_fn_0111) and shows it (res07_fn_1951), waits (WaitKeyOrTimeout), then, when
+  the F flag (ds49D1) is set, reloads, reshows, sets the palette (res07_fn_2595) and waits
+  for a key or a deadline (res06_fn_0C3F ticks) with an EGA-only animation that never runs
+  (QUIRK ovl01:0729: Total is Random(4), always below 50000), then flushes keys and shows
+  the credits (ShowCredits). With F clear it only restores GameDir and returns. Entry point
+  (no callers in the map). Side effects: screen, GameDir. }
+procedure ShowTitleScreen;
+var
+  Pic: PT8x8Bank;
+  Total: Longint;
+  I: Byte;
+  DirBackup: String40;
+  Deadline: Longint;
+begin
+  Total := 0;
+  Pic := nil;
+  DirBackup := GameDir;
+  GameDir := '';
+  res07_fn_0111('title', 1, 0, 0, Pic);
+  res07_fn_1951(0, 0, Pic);
+  WaitKeyOrTimeout(5);
+  if ds49D1 = 0 then
+    GameDir := DirBackup
+  else
+  begin
+    res07_fn_0111('title', 2, 0, 0, Pic);
+    GameDir := DirBackup;
+    res07_fn_1951(0, 0, Pic);
+    res07_fn_2595(Pic);
+    Deadline := res06_fn_0C3F + 500;
+    repeat
+      if VideoAdapter = 1 then
+      begin
+        Inc(Total, Random(4));
+        if Total > 50000 then
+        begin
+          Total := 0;
+          for I := 0 to Random(3) + 1 do
+          begin
+            res07_fn_2A0D(1, 9);
+            Delay($96);
+            res07_fn_2A0D(1, $0B);
+            Delay($64);
+            res07_fn_2A0D(1, $0F);
+            Delay($32);
+            res07_fn_2A0D(1, $0B);
+            Delay($64);
+            res07_fn_2A0D(1, 9);
+            Delay($96);
+            res07_fn_2A0D(1, 1);
+          end;
+        end;
+      end;
+    until KeyPressed or (res06_fn_0C3F >= Deadline);
+    FlushKeyboard;
+    ShowCredits;
+  end;
+end;
 
 begin
 end.
