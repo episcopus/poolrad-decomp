@@ -316,7 +316,7 @@ source = ""
 
 [[overlay]]
 id = "ovl10"
-name = "ovl10"
+name = "BattleStart"
 kind = "overlay"
 stub_segment = "003B"
 ovr_file_offset = "0xC5D1"
