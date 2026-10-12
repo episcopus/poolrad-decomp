@@ -42,7 +42,7 @@ implementation
 uses RES04, RES05, RES07;
 
 { ovl28:0000. Draws the 8x8 sprite Sprite at column Col and row Row. A nil Sprite draws nothing. When
-  Direct is set it blits the sprite one pixel up and left onto the screen buffer ds4A20 through
+  Direct is set it blits the sprite one pixel up and left onto the screen buffer DrawBuf through
   res07_fn_0D71 (mode 0, the flag 1) and steps the display through res07_fn_1B52; otherwise it
   copies it into the staging buffer with res07_fn_1951. Called by DrawHeadSprite, DrawBodySprite and
   ShowHeadBodySprites inside this unit, and from ovl03, ovl07_e8, ovl18 and ovl25 (the packet's callers). }
@@ -52,7 +52,7 @@ begin
   begin
     if Direct <> 0 then
     begin
-      res07_fn_0D71(Col - 1, Row - 1, 0, 1, Sprite, ds4A20);
+      res07_fn_0D71(Col - 1, Row - 1, 0, 1, Sprite, DrawBuf);
       res07_fn_1B52;
     end
     else
@@ -100,17 +100,17 @@ procedure LoadHeadBodySprites(HeadBank, BodyBank: Byte);
 var
   Num: string[1];                 { Str(DS:5376): the picture number in the file name }
 begin
-  Str(ds5376, Num);
+  Str(TileSet, Num);
   if HeadBank <> $FF then
     if (ds6B00 = $FF) or (ds6B00 <> HeadBank) then
     begin
-      res07_fn_0111('HEAD' + Num, HeadBank, 0, 0, @ds6B01);
+      res07_fn_0111('HEAD' + Num, HeadBank, 0, 0, ds6B01);
       ds6B00 := HeadBank;
     end;
   if BodyBank <> $FF then
     if (ds6B05 = $FF) or (ds6B05 <> BodyBank) then
     begin
-      res07_fn_0111('BODY' + Num, BodyBank, 0, 0, @ds6B06);
+      res07_fn_0111('BODY' + Num, BodyBank, 0, 0, ds6B06);
       ds6B05 := BodyBank;
     end;
   FlushKeyboard;

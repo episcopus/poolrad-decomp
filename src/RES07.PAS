@@ -8,7 +8,7 @@ procedure res07_fn_0000;
 procedure res07_fn_007B;
 procedure res07_fn_00CF;
 procedure res07_fn_00FF;
-procedure res07_fn_0111(S: String; A, B, C: Byte; var P: PT8x8Bank);
+procedure res07_fn_0111(S: String; A, B, C: Byte; var P);
 procedure res07_fn_02A5;
 procedure res07_fn_066F;
 procedure res07_fn_0710;
@@ -53,7 +53,7 @@ implementation
 { 0464:00FF: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure res07_fn_00FF; begin end;
 { 0464:0111: retf 14: 14 bytes of parameters; 288 bytes of locals }
-{@stub} procedure res07_fn_0111(S: String; A, B, C: Byte; var P: PT8x8Bank); begin end;
+{@stub} procedure res07_fn_0111(S: String; A, B, C: Byte; var P); begin end;
 { 0464:02A5: frame not read }
 {@stub} procedure res07_fn_02A5; begin end;
 { 0464:066F: frame not read }
