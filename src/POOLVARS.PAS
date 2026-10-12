@@ -101,16 +101,65 @@ type
     [V] by tools/re/records.py). Only the fields a decompiled unit uses are named; the Pad
     arrays keep the offsets. }
   PCharacter = ^TCharacter;
+  { The combat state of a character (TCharacter.Combat, +$108), read and written by the combat
+    unit ovl08; only the fields it uses are named. }
+  PCombatant = ^TCombatant;
+  TCombatant = record
+    PendingSpell: Byte;           { +$0: nonzero: the turn finishes this spell through ovl22_e5 (ovl08:0336) }
+    CanCast: Byte;                { +$1: zero hides Cast in the combat menu (ovl08:0747) }
+    Pad2: Byte;
+    { +$3: the turn order: CombatTurn acts only above 0, the highest roll goes first
+      (PickNextCombatant), Delay sets 1, $14 (the Alt-Q quick fight) acts as $13. Signed. }
+    Initiative: ShortInt;
+    Pad4: array[4..5] of Byte;
+    Moves: Byte;                  { +$6: movement left in half squares (the Move menu shows Moves div 2) }
+    B7: Byte;                     { +$7: cleared at the start of each turn (ovl08:021E); meaning unknown }
+    Pad8: Byte;
+    B9: Byte;                     { +$9: saved and restored around a move that is taken back (ovl08:09FD, 0B41) }
+    Target: PCharacter;           { +$A: the character attacked last (MeleeAttack sets it) }
+    DyingRounds: Byte;            { +$E: the rounds a dying character (Status 5) has bled; above 9 it dies }
+    BF: Byte;                     { +$F: cleared at the start of each turn (ovl08:0204); meaning unknown }
+    Pad10: Byte;
+    Turned: Byte;                 { +$11: nonzero hides Turn in the combat menu (ovl08:0795) }
+    B12: Byte;                    { +$12: cleared at the start of each turn (ovl08:0211); meaning unknown }
+    B13: Byte;                    { +$13: nonzero keeps a dying character from being bandaged (ovl08:1029) }
+  end;
+  { One $13-byte record of the list at DS:6DBB (FreeMem size, ovl08:0029); only Next is known. }
+  PCombatNode = ^TCombatNode;
+  TCombatNode = record
+    Pad0: array[0..3] of Byte;
+    Next: PCombatNode;            { +$4 }
+    Pad8: array[8..$12] of Byte;
+  end;
+  { The $4E9-byte combat block at DS:6716 (FreeMem size, ovl08:0049); +2 and +3 are the column
+    and row EndCombatRound centres the map view on (ovl08:0937). }
+  PCombatMap = ^TCombatMap;
+  TCombatMap = record
+    Pad0: array[0..1] of Byte;
+    ViewCol, ViewRow: ShortInt;   { +$2, +$3 }
+    Pad4: array[4..$4E8] of Byte;
+  end;
+  TStepCost = record
+    Cost: Byte;                   { +0 }
+    Pad1: array[1..3] of Byte;
+  end;
   TCharacter = record
     Name: string[15];             { +$00 }
     Strength, Intelligence, Wisdom, Dexterity: Byte;  { +$10..$13 }
     Constitution: Byte;           { +$14: Raise Dead lowers it by one (ovl04:060E) }
     Charisma, StrengthPercent: Byte;  { +$15, +$16 }
-    Pad17: array[$17..$31] of Byte;
+    { +$17..+$2B: the memorized spells, one spell number per slot, 0 = empty (CombatMenu offers
+      Cast when one is set, ovl08:071E; ovl14 looks for Knock in them). }
+    Spells: array[0..20] of Byte;
+    Pad2C: array[$2C..$31] of Byte;
     HpMax: Byte;                  { +$32: maximum hit points }
     Pad33: array[$33..$7E] of Byte;
     Affects: Pointer;             { +$7F: the list of affects (res12_fn_2199, ovl24_e2 walk it) }
-    Pad83: array[$83..$95] of Byte;
+    Pad83: Byte;
+    { +$84: below $80 the party's Space command takes the character out of quick combat
+      (ovl08:0504); meaning otherwise unknown. }
+    B84: Byte;
+    Pad85: array[$85..$95] of Byte;
     { +$96..$9D: the level in each of the eight classes; Raise Dead treats index 2 apart (class 2
       is the fighter in the create-character run, whitepaper 5.8). Signed: only levels above 0 count. }
     ClassLevels: array[0..7] of ShortInt;
@@ -121,14 +170,23 @@ type
     PadB2: array[$B2..$BA] of Byte;
     HeadBank: Byte;               { +$BB: the HEAD picture bank number, 0 when none (ShowHeadBodyWindow) }
     BodyBank: Byte;               { +$BC: the BODY picture bank number, 0 when none (ShowHeadBodyWindow) }
-    PadBD: array[$BD..$C7] of Byte;
+    PadBD: array[$BD..$C6] of Byte;
+    ItemCountC7: Byte;            { +$C7: nonzero offers Use in the combat menu (ovl08:06E1); likely the item count }
     Items: PItem;                 { +$C8: the list of carried items }
-    PadCC: array[$CC..$10B] of Byte;
+    PadCC: array[$CC..$103] of Byte;
+    Next: PCharacter;             { +$104: the next character of the party list (ds5D96), nil ends it }
+    Combat: PCombatant;           { +$108: the character's combat state (ovl08) }
     { +$10C: the health status: 0 after Raise Dead and Stone to Flesh, 1 and 6 count as dead for
       Raise Dead, 7 as stoned for Stone to Flesh (ovl04:0539, 093D). }
     Status: Byte;
     Flag10D: Byte;                { +$10D: Raise Dead and Stone to Flesh set it to 1; meaning unknown }
-    Pad10E: array[$10E..$11A] of Byte;
+    { +$10E: the side: SetQuickCombat compares it between attacker and target (ovl08:125D), and
+      BandageDying only bandages characters with 0 (the party). }
+    Side: Byte;
+    { +$10F: nonzero while the computer fights for the character (quick combat): CombatTurn hands the
+      turn to ovl09_e1 (ovl08:02B3); Quick sets it, the Space command clears it. }
+    Quick: Byte;
+    Pad110: array[$110..$11A] of Byte;
     Flag11B: Byte;                { +$11B: Raise Dead and Stone to Flesh set it to 1; meaning unknown }
     Pad11C: Byte;
   end;
@@ -293,7 +351,7 @@ var
   ds49D6: ^TGameVars;             { second game word block; see above }
   ds49DA: ^TBlock400;             { $400-byte block the loader allocates (ovl11:0054) }
   ds49DE: ^TBlock1E00;            { $1E00-byte block the loader allocates (ovl11:0064) }
-  ds49E2: Byte;                   { set to 1 by the loader; a count the ovl18 narratives read }
+  GameSpeed: Byte;                   { set to 1 by the loader; a count the ovl18 narratives read }
   ds4A16: Word;                   { EGA/VGA plane segment SetActivePage sets to AIndex shl 9 + $A000 }
   ds4A18: Word;                   { EGA/VGA plane segment SetPlaneSegment sets to AIndex shl 9 + $A000 }
   { The view mode: ShowEndingNarrative saves it, sets 7, restores it; VisitTemple sets 1 (ovl04:0D0F). }
@@ -429,5 +487,24 @@ var
   ds0CD2: array[0..15] of Byte;   { identity colour map; see above }
   ds0CE2: array[0..15] of Byte;   { colour 13 to 8; see above }
   ds0CF2: array[0..15] of Byte;   { colour 13 to 0; see above }
+  { Globals of the combat unit ovl08 (whitepaper 5.5). }
+  ds6DBB: PCombatNode;            { a list of $13-byte records EndCombat frees (ovl08:0006); meaning unknown }
+  ds6716: PCombatMap;             { the $4E9-byte combat block EndCombat frees (ovl08:0041) }
+  ds6E36: Pointer;                { a picture EndCombat frees through res07_fn_2595 (ovl08:005A) }
+  { A routine pointer: RunCombat sets @ovl13_e14 at the start (ovl08:0085) and EndCombat
+    @ovl22_e4 at the end (ovl08:0069); who calls it is not known yet. }
+  ds6B84: Pointer;                { see above }
+  ds6814: Byte;                   { zero (or ds6815 zero) ends the combat (ovl08:009B, 095C); likely the count of one side }
+  ds6815: Byte;                   { see ds6814; likely the count of the other side }
+  ds6E30: Boolean;                { the Alt-M Magic On/Off toggle of the combat keys (ovl08:04A7) }
+  ds6E31: Byte;                   { the key flag the ovl08 menus pass to ovl25_e2 }
+  ds6DE3: Byte;                   { counted up once per combat round (ovl08:0891) }
+  { The combatants by number: MoveCharacter attacks ds65B9[n] for the number ovl31_e16 returns
+    (ovl08:0BF8). Extent unknown. }
+  ds65B9: array[0..63] of PCharacter;  { the combatants by number; see above }
+  { One 4-byte entry per kind of ground (the number ovl31_e16 returns); byte 0 is the movement cost
+    of a step onto it: MoveCharacter refuses ("Blocked") a step whose cost is above the moves left
+    (ovl08:0C5F); kind 0 is off the map (Flee:). Extent unknown. }
+  ds2744: array[0..15] of TStepCost;  { the movement cost of each kind of ground; see above }
 implementation
 end.

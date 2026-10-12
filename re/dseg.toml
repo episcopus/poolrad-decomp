@@ -489,3 +489,8 @@ evidence = "res05_fn_0716 allocates it with the packed size (0802:08B3), BlockRe
 offset = 0x2614
 name = "InsertDiskPrompts"
 evidence = "entries 1..8 of the 30-byte string[29] table at DS:2614 hold 'Insert disk N in drive ' in the image (entry 0 is not a string); OpenDaxFile (0802:061A) and StartGame index it by TileSet and append the drive letter DS:547D and ':' to make the prompt OpenGameFile shows through ShowBottomMessage"
+
+[[global]]
+offset = 0x49E2
+name = "GameSpeed"
+evidence = "GameSpeedMenu (ovl08:10F6) shows it as GameSpeed (n) and its Slower/Faster keys move it in 0..9"

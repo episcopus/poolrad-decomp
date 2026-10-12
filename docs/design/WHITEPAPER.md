@@ -604,6 +604,15 @@ the 28-byte money block at `DS:67F4` and `DS:6DC0`, redraws the shop (`res12:27D
 Map note: `re/symbols.toml` had split `ovl06:0239` at `ovl06:0311`; `0311` is one byte into a
 `les di, [bp-8]` instruction, not a routine entry, and its stub was removed.
 
+### 5.5 Combat: the round loop and the player's commands **[V]** (`src/OVL08.PAS`, `make match UNIT=ovl08`: 11 of 13 routines at L2)
+
+- **Rounds and turns** **[V]**: `RunCombat` (`ovl08:007A`, a stub until the matcher resolves cross-unit routine addresses) runs rounds until one side is gone (DS:6814 or DS:6815 zero). In a round every character of the party list DS:5D96 (which holds every combatant, monsters included) gets `ovl13_e1`, then `PickNextCombatant` repeatedly picks the character with the highest positive initiative (`TCombatant.Initiative`, the combat state at character +$108, signed), ties broken by a 1d100 roll, and `CombatTurn` plays it; the round ends when nobody has an initiative above 0. Delay sets the initiative to 1 (act last).
+- **Who plays** **[V]**: a character with `Quick` (+$10F) set is played by the computer (`ovl09_e1`), the others by the player (`PlayerTurn`). Quick sets it (`SetQuickCombat`, which also forgets a remembered target on the character's own side, +$10E is the side), Space clears it for every character with byte +$84 below $80, and Alt-Q makes everybody quick. A pending spell (+$108^.+0) is finished through `ovl22_e5` instead of a turn.
+- **Commands** **[V]**: the menu is Move (while half-moves are left, +$108^.+6, shown halved), View Aim, Use (item count +$C7), Cast (a memorized spell at +$17..+$2B, the combat flag +$108^.+1 and game variable 229 zero), Turn (cleric level, not turned yet), Quick Done. Done opens Guard, Delay, Quit, Bandage, Speed, Exit; Speed is the GameSpeed (0..9) menu of DS:49E2. The keys accepted besides the letters are the scan codes of Alt-Q, Alt-R, Alt-X and Alt-M (Magic On/Off, DS:6E30), with the key flag of `ovl25_e2` set.
+- **Movement** **[V]** (`MoveCharacter`): the keypad scan codes H, I, M, Q, P, O, K, G are the directions 0 to 7 clockwise from north; a step towards a combatant attacks it (`MeleeAttack`: Not with that weapon, else `ovl13_e16`/`e7`/`e11`/`e12`), a step off the map asks Flee:, a step onto ground whose cost (DS:2744, 4-byte entries) is above the half-moves left says Blocked. Esc takes the move back.
+- **Dying** **[V]**: a character with Status 5 bleeds one round per round end (`EndCombatRound`, +$108^.+$E) and gets Status 6 after more than 9; Your Teammate is Dying is shown while a party member (side 0) can be bandaged, and Bandage gives Status 4. When only the enemies are gone and DS:49F4 is 0 the game asks Continue Battle:.
+- **Map corrections** **[V]**: the map listed 36 routines; 23 of them (`03A5`, `03D5`, `06A5`..`06FF`, `0718`, `0889`, `088E`, `08E5`, `0999`, `0B2F`, `0B34`, `0B48`) are inside the 13 real ones.
+
 ### 5.8 Keyboard input and menus (observed in the oracle)
 
 - Input is **INT 16h only** **[V]** (oracle: no INT 09h hook, ports 60h/64h never touched): Crt `KeyPressed` (`0A40:02FD`, AH=01h) and `ReadKey` (`0A40:030F`, AH=00h, an extended key returns 0 then the scan code on the next call).
@@ -752,7 +761,7 @@ Overlay 18 (PoolNarrative) plays the game's ending and animates the area view do
   UNIT=ovl18 FN=AnimateFinalPicture`) loads the `FINAL<TileSet>` frames of one bank through
   `LoadSpriteList('FINAL', Bank, 2, List)` and shows them `Cycles` times: each frame is drawn with
   `DrawSprite(Col, Row, 1, sprite)` and held for that slot's 4 data bytes, read as a LongInt
-  delay scaled by (`ds49E2` + 3) ticks of the `GameClock` timer, before stepping to the next
+  delay scaled by (`GameSpeed` + 3) ticks of the `GameClock` timer, before stepping to the next
   frame. The frame cursor is the sprite list's `Flag` field (the loader sets it to 1, `ovl28:01D6`);
   `Count` is compared as a byte here (`ovl18:00E1` uses a byte `cmp`/`jbe`) although `TSpriteList`
   declares it `ShortInt`, so the source casts it with `Byte()`.

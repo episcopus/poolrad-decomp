@@ -2604,12 +2604,12 @@ id = "ovl08:0000"
 unit = "ovl08"
 addr = "ovl08:0000"
 size = 122
-name = "ovl08_fn_0000"
+name = "EndCombat"
 signature = ""
 c_name = "ovl08_fn_0000"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "blocked (dec-9, 2026-10-12): matches except ds6B84 := @ovl22_e4, a cross-unit routine address the matcher reads as ovl08:0000 (escalated). Draft: var Next: PCombatNode; Unused: Word; begin while ds6DBB <> nil do begin Next := ds6DBB^.Next; FreeMem(ds6DBB, $13); ds6DBB := Next; end; FreeMem(ds6716, $4E9); ds6716 := nil; res07_fn_2595(ds6E36); ovl31_e3; ds6B84 := @ovl22_e4; end; renamed from ovl08_fn_0000 (ovl08:0000 frees the combat data (the DS:6DBB list, the $4E9 block DS:6716, the picture DS:6E36) and calls ovl31_e3; called once by RunCombat after the last round); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2617,12 +2617,12 @@ id = "ovl08:007A"
 unit = "ovl08"
 addr = "ovl08:007A"
 size = 183
-name = "ovl08_e1"
+name = "RunCombat"
 signature = ""
 c_name = "ovl08_e1"
 level = "none"
 justification = ""
-notes = "auto:entry_1"
+notes = "blocked (dec-9, 2026-10-12): matches except ds6B84 := @ovl13_e14 (cross-unit routine address, escalated). Draft: var Done: Byte; Who: PCharacter; Unused: Byte; begin ds49F3 := 5; ds6B84 := @ovl13_e14; ovl10_e1; Done := 0; if (ds6814 = 0) or (ds6815 = 0) then Done := 1; while Done = 0 do begin res12_fn_23DB; Who := PCharacter(ds5D96); while Who <> nil do begin ovl13_e1(Who); Who := Who^.Next; end; ds49D6^[715] := 0; PickNextCombatant(Who); while Who <> nil do begin CombatTurn(Who); PickNextCombatant(Who); end; EndCombatRound(Done); end; EndCombat; end; renamed from ovl08_e1 (ovl08:007A the combat loop: rounds of ovl13_e1 per character, turns in initiative order (PickNextCombatant, CombatTurn), EndCombatRound until one side is gone; called by ovl03_fn_179B); auto:entry_1"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2630,12 +2630,12 @@ id = "ovl08:0131"
 unit = "ovl08"
 addr = "ovl08:0131"
 size = 197
-name = "ovl08_fn_0131"
+name = "PickNextCombatant"
 signature = ""
 c_name = "ovl08_fn_0131"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl08_fn_0131 (ovl08:0131 returns the party list character with the highest positive Combat^.Initiative (ties broken by a 1d100 roll), nil when none is left); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2643,12 +2643,12 @@ id = "ovl08:01F6"
 unit = "ovl08"
 addr = "ovl08:01F6"
 size = 292
-name = "ovl08_fn_01F6"
+name = "CombatTurn"
 signature = ""
 c_name = "ovl08_fn_01F6"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl08_fn_01F6 (ovl08:01F6 one character's turn: resets per-turn fields, selects and shows the character, then lets ovl09_e1 (quick) or PlayerTurn act); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2656,12 +2656,12 @@ id = "ovl08:031A"
 unit = "ovl08"
 addr = "ovl08:031A"
 size = 139
-name = "ovl08_fn_031A"
+name = "PlayerTurn"
 signature = ""
 c_name = "ovl08_fn_031A"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl08_fn_031A (ovl08:031A the player's command loop for one character: CombatMenu then Move, View, Aim, Use, Cast, Turn, Quick, Done and the Alt keys until the turn is done); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2674,7 +2674,7 @@ signature = ""
 c_name = "ovl08_fn_03A5"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
 evidence = ["far_call"]
 
 [[routine]]
@@ -2687,7 +2687,7 @@ signature = ""
 c_name = "ovl08_fn_03D5"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
 evidence = ["far_call"]
 
 [[routine]]
@@ -2695,12 +2695,12 @@ id = "ovl08:0666"
 unit = "ovl08"
 addr = "ovl08:0666"
 size = 63
-name = "ovl08_fn_0666"
+name = "CombatMenu"
 signature = ""
 c_name = "ovl08_fn_0666"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl08_fn_0666 (ovl08:0666 builds the combat menu (Move, View Aim, Use, Cast, Turn, Quick Done) and returns an accepted key through ovl25_e2); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2713,7 +2713,7 @@ signature = ""
 c_name = "ovl08_fn_06A5"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
 evidence = ["far_call"]
 
 [[routine]]
@@ -2726,7 +2726,7 @@ signature = ""
 c_name = "ovl08_fn_06AF"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
 evidence = ["far_call"]
 
 [[routine]]
@@ -2739,7 +2739,7 @@ signature = ""
 c_name = "ovl08_fn_06B4"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
 evidence = ["far_call"]
 
 [[routine]]
@@ -2752,7 +2752,7 @@ signature = ""
 c_name = "ovl08_fn_06B9"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
 evidence = ["far_call"]
 
 [[routine]]
@@ -2765,7 +2765,7 @@ signature = ""
 c_name = "ovl08_fn_06BE"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
 evidence = ["far_call"]
 
 [[routine]]
@@ -2778,7 +2778,7 @@ signature = ""
 c_name = "ovl08_fn_06C3"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
 evidence = ["far_call"]
 
 [[routine]]
@@ -2791,7 +2791,7 @@ signature = ""
 c_name = "ovl08_fn_06CD"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
 evidence = ["far_call"]
 
 [[routine]]
@@ -2804,7 +2804,7 @@ signature = ""
 c_name = "ovl08_fn_06D7"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
 evidence = ["far_call"]
 
 [[routine]]
@@ -2817,7 +2817,7 @@ signature = ""
 c_name = "ovl08_fn_06DC"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
 evidence = ["far_call"]
 
 [[routine]]
@@ -2830,7 +2830,7 @@ signature = ""
 c_name = "ovl08_fn_06EB"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
 evidence = ["far_call"]
 
 [[routine]]
@@ -2843,7 +2843,7 @@ signature = ""
 c_name = "ovl08_fn_06F0"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
 evidence = ["far_call"]
 
 [[routine]]
@@ -2856,7 +2856,7 @@ signature = ""
 c_name = "ovl08_fn_06F5"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
 evidence = ["far_call"]
 
 [[routine]]
@@ -2869,7 +2869,7 @@ signature = ""
 c_name = "ovl08_fn_06FF"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
 evidence = ["far_call"]
 
 [[routine]]
@@ -2882,7 +2882,7 @@ signature = ""
 c_name = "ovl08_fn_0718"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
 evidence = ["far_call"]
 
 [[routine]]
@@ -2890,12 +2890,12 @@ id = "ovl08:0880"
 unit = "ovl08"
 addr = "ovl08:0880"
 size = 9
-name = "ovl08_fn_0880"
+name = "EndCombatRound"
 signature = ""
 c_name = "ovl08_fn_0880"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl08_fn_0880 (ovl08:0880 end of a combat round: per character updates, dying characters bleed (Status 5 -> 6 after 10 rounds), Your Teammate is Dying, the end test and Continue Battle); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2908,7 +2908,7 @@ signature = ""
 c_name = "ovl08_fn_0889"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
 evidence = ["far_call"]
 
 [[routine]]
@@ -2921,7 +2921,7 @@ signature = ""
 c_name = "ovl08_fn_088E"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
 evidence = ["far_call"]
 
 [[routine]]
@@ -2934,7 +2934,7 @@ signature = ""
 c_name = "ovl08_fn_08E5"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
 evidence = ["far_call"]
 
 [[routine]]
@@ -2947,7 +2947,7 @@ signature = ""
 c_name = "ovl08_fn_0999"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
 evidence = ["far_call"]
 
 [[routine]]
@@ -2955,12 +2955,12 @@ id = "ovl08:09DF"
 unit = "ovl08"
 addr = "ovl08:09DF"
 size = 336
-name = "ovl08_fn_09DF"
+name = "MoveCharacter"
 signature = ""
 c_name = "ovl08_fn_09DF"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl08_fn_09DF (ovl08:09DF the Move/Attack command: keypad scan codes H I M Q P O K G give directions 0..7, a step into an enemy attacks (MeleeAttack), off the map asks Flee:, terrain cost above the moves left says Blocked); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2973,7 +2973,7 @@ signature = ""
 c_name = "ovl08_fn_0B2F"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
 evidence = ["far_call"]
 
 [[routine]]
@@ -2986,7 +2986,7 @@ signature = ""
 c_name = "ovl08_fn_0B34"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
 evidence = ["far_call"]
 
 [[routine]]
@@ -2999,7 +2999,7 @@ signature = ""
 c_name = "ovl08_fn_0B48"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "not a routine (dec-9, 2026-10-12): no push bp; mov bp,sp here, the bytes lie inside a routine the compiler places around it (make match UNIT=ovl08); for the mapper to remove; auto:far_call"
 evidence = ["far_call"]
 
 [[routine]]
@@ -3007,12 +3007,12 @@ id = "ovl08:0D45"
 unit = "ovl08"
 addr = "ovl08:0D45"
 size = 256
-name = "ovl08_fn_0D45"
+name = "MeleeAttack"
 signature = ""
 c_name = "ovl08_fn_0D45"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl08_fn_0D45 (ovl08:0D45 attacks Target with the weapon in hand (Not with that weapon when res12_fn_2E03 and not 2E46), stores Combat^.Target, ovl13_e7/e11/e12 do the attack); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3020,12 +3020,12 @@ id = "ovl08:0E45"
 unit = "ovl08"
 addr = "ovl08:0E45"
 size = 442
-name = "ovl08_fn_0E45"
+name = "EndTurnMenu"
 signature = ""
 c_name = "ovl08_fn_0E45"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl08_fn_0E45 (ovl08:0E45 the Done command's menu: Guard, Delay (initiative 1), Quit, Bandage, Speed (GameSpeedMenu), Exit); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3033,12 +3033,12 @@ id = "ovl08:0FFF"
 unit = "ovl08"
 addr = "ovl08:0FFF"
 size = 247
-name = "ovl08_fn_0FFF"
+name = "BandageDying"
 signature = ""
 c_name = "ovl08_fn_0FFF"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl08_fn_0FFF (ovl08:0FFF finds party characters with Status 5 (dying); with DoIt it bandages the first (Status 4, message is bandaged); returns 1 when one was found); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3046,12 +3046,12 @@ id = "ovl08:10F6"
 unit = "ovl08"
 addr = "ovl08:10F6"
 size = 309
-name = "ovl08_fn_10F6"
+name = "GameSpeedMenu"
 signature = ""
 c_name = "ovl08_fn_10F6"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl08_fn_10F6 (ovl08:10F6 the GameSpeed (n) menu: Slower raises DS:49E2 up to 9, Faster lowers it to 0); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3059,12 +3059,12 @@ id = "ovl08:122B"
 unit = "ovl08"
 addr = "ovl08:122B"
 size = 79
-name = "ovl08_fn_122B"
+name = "SetQuickCombat"
 signature = ""
 c_name = "ovl08_fn_122B"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl08_fn_122B (ovl08:122B sets Quick (+$10F) so the computer fights for the character, and drops a Combat^.Target on the same Side); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3086,7 +3086,7 @@ unit = "ovl09"
 addr = "ovl09:000F"
 size = 500
 name = "ovl09_e1"
-signature = ""
+signature = "procedure ovl09_e1(Who: Pointer)"
 c_name = "ovl09_e1"
 level = "none"
 justification = ""
@@ -6336,7 +6336,7 @@ unit = "ovl13"
 addr = "ovl13:0000"
 size = 291
 name = "ovl13_e1"
-signature = ""
+signature = "procedure ovl13_e1(Who: Pointer)"
 c_name = "ovl13_e1"
 level = "none"
 justification = ""
@@ -6401,7 +6401,7 @@ unit = "ovl13"
 addr = "ovl13:0712"
 size = 410
 name = "ovl13_e3"
-signature = ""
+signature = "procedure ovl13_e3(Who: Pointer; Dir: Byte)"
 c_name = "ovl13_e3"
 level = "none"
 justification = ""
@@ -6427,7 +6427,7 @@ unit = "ovl13"
 addr = "ovl13:08B2"
 size = 221
 name = "ovl13_e4"
-signature = ""
+signature = "procedure ovl13_e4(Who: Pointer; Dir: Byte)"
 c_name = "ovl13_e4"
 level = "none"
 justification = ""
@@ -6570,7 +6570,7 @@ unit = "ovl13"
 addr = "ovl13:0C6A"
 size = 132
 name = "ovl13_e5"
-signature = ""
+signature = "function ovl13_e5(Who: Pointer): Byte"
 c_name = "ovl13_e5"
 level = "none"
 justification = ""
@@ -6596,7 +6596,7 @@ unit = "ovl13"
 addr = "ovl13:0D23"
 size = 111
 name = "ovl13_e6"
-signature = ""
+signature = "procedure ovl13_e6(Who: Pointer)"
 c_name = "ovl13_e6"
 level = "none"
 justification = ""
@@ -6661,7 +6661,7 @@ unit = "ovl13"
 addr = "ovl13:0E82"
 size = 317
 name = "ovl13_e7"
-signature = ""
+signature = "function ovl13_e7(Who, Target: Pointer): Boolean"
 c_name = "ovl13_e7"
 level = "none"
 justification = ""
@@ -6713,7 +6713,7 @@ unit = "ovl13"
 addr = "ovl13:116A"
 size = 110
 name = "ovl13_e9"
-signature = ""
+signature = "procedure ovl13_e9(Who: Pointer)"
 c_name = "ovl13_e9"
 level = "none"
 justification = ""
@@ -6817,7 +6817,7 @@ unit = "ovl13"
 addr = "ovl13:17F6"
 size = 142
 name = "ovl13_e11"
-signature = ""
+signature = "procedure ovl13_e11(Who, Target: Pointer)"
 c_name = "ovl13_e11"
 level = "none"
 justification = ""
@@ -6830,7 +6830,7 @@ unit = "ovl13"
 addr = "ovl13:1884"
 size = 666
 name = "ovl13_e12"
-signature = ""
+signature = "procedure ovl13_e12(Who, Target: Pointer; A: Byte; P: Pointer; var Done: Byte)"
 c_name = "ovl13_e12"
 level = "none"
 justification = ""
@@ -7012,7 +7012,7 @@ unit = "ovl13"
 addr = "ovl13:2414"
 size = 30
 name = "ovl13_e15"
-signature = ""
+signature = "procedure ovl13_e15(A, B: Byte; var Done: Byte)"
 c_name = "ovl13_e15"
 level = "none"
 justification = ""
@@ -7129,7 +7129,7 @@ unit = "ovl13"
 addr = "ovl13:2998"
 size = 264
 name = "ovl13_e16"
-signature = ""
+signature = "function ovl13_e16(Who, Target: Pointer): Boolean"
 c_name = "ovl13_e16"
 level = "none"
 justification = ""
@@ -7311,7 +7311,7 @@ unit = "ovl13"
 addr = "ovl13:3558"
 size = 464
 name = "ovl13_e17"
-signature = ""
+signature = "procedure ovl13_e17(Who: Pointer; A, B, C: Byte; var Done: Byte; var Aim)"
 c_name = "ovl13_e17"
 level = "none"
 justification = ""
@@ -7415,7 +7415,7 @@ unit = "ovl13"
 addr = "ovl13:3B93"
 size = 218
 name = "ovl13_e24"
-signature = ""
+signature = "function ovl13_e24: Boolean"
 c_name = "ovl13_e24"
 level = "none"
 justification = ""
@@ -10085,7 +10085,7 @@ unit = "ovl19"
 addr = "ovl19:0EF8"
 size = 234
 name = "ovl19_e6"
-signature = ""
+signature = "procedure ovl19_e6(var Done: Byte)"
 c_name = "ovl19_e6"
 level = "none"
 justification = ""
@@ -11450,7 +11450,7 @@ unit = "ovl22"
 addr = "ovl22:0C20"
 size = 815
 name = "ovl22_e5"
-signature = ""
+signature = "procedure ovl22_e5(A, B, C: Byte; var Done: Byte)"
 c_name = "ovl22_e5"
 level = "none"
 justification = ""
@@ -12620,7 +12620,7 @@ unit = "ovl24"
 addr = "ovl24:02FA"
 size = 379
 name = "ovl24_e3"
-signature = ""
+signature = "procedure ovl24_e3(Kind: Byte; Who: Pointer)"
 c_name = "ovl24_e3"
 level = "none"
 justification = ""
@@ -12646,7 +12646,7 @@ unit = "ovl24"
 addr = "ovl24:0AE7"
 size = 360
 name = "ovl24_e4"
-signature = ""
+signature = "procedure ovl24_e4(Who: Pointer)"
 c_name = "ovl24_e4"
 level = "none"
 justification = ""
@@ -13804,7 +13804,7 @@ unit = "ovl31"
 addr = "ovl31:02D5"
 size = 203
 name = "ovl31_e4"
-signature = ""
+signature = "procedure ovl31_e4(A, B: Byte)"
 c_name = "ovl31_e4"
 level = "none"
 justification = ""
@@ -13843,7 +13843,7 @@ unit = "ovl31"
 addr = "ovl31:052B"
 size = 446
 name = "ovl31_e7"
-signature = ""
+signature = "procedure ovl31_e7(A, B, C: Byte)"
 c_name = "ovl31_e7"
 level = "none"
 justification = ""
@@ -13895,7 +13895,7 @@ unit = "ovl31"
 addr = "ovl31:0996"
 size = 354
 name = "ovl31_e10"
-signature = ""
+signature = "procedure ovl31_e10(A, B, C, D: Byte)"
 c_name = "ovl31_e10"
 level = "none"
 justification = ""
@@ -13908,7 +13908,7 @@ unit = "ovl31"
 addr = "ovl31:0AF8"
 size = 239
 name = "ovl31_e11"
-signature = ""
+signature = "procedure ovl31_e11(Who: Pointer; A, B, C: Byte)"
 c_name = "ovl31_e11"
 level = "none"
 justification = ""
@@ -13921,7 +13921,7 @@ unit = "ovl31"
 addr = "ovl31:0BE7"
 size = 40
 name = "ovl31_e12"
-signature = ""
+signature = "function ovl31_e12(Who: Pointer): Byte"
 c_name = "ovl31_e12"
 level = "none"
 justification = ""
@@ -13934,7 +13934,7 @@ unit = "ovl31"
 addr = "ovl31:0C0F"
 size = 40
 name = "ovl31_e13"
-signature = ""
+signature = "function ovl31_e13(Who: Pointer): Byte"
 c_name = "ovl31_e13"
 level = "none"
 justification = ""
@@ -13960,7 +13960,7 @@ unit = "ovl31"
 addr = "ovl31:0C5F"
 size = 90
 name = "ovl31_e15"
-signature = ""
+signature = "function ovl31_e15(Who: Pointer): Byte"
 c_name = "ovl31_e15"
 level = "none"
 justification = ""
@@ -13973,7 +13973,7 @@ unit = "ovl31"
 addr = "ovl31:0CB9"
 size = 344
 name = "ovl31_e16"
-signature = ""
+signature = "procedure ovl31_e16(Who: Pointer; A: Byte; var B, C: Byte)"
 c_name = "ovl31_e16"
 level = "none"
 justification = ""
@@ -13999,7 +13999,7 @@ unit = "ovl31"
 addr = "ovl31:10A7"
 size = 497
 name = "ovl31_e18"
-signature = ""
+signature = "function ovl31_e18(Who: Pointer; A, B, C: Byte): Boolean"
 c_name = "ovl31_e18"
 level = "none"
 justification = ""
@@ -14012,7 +14012,7 @@ unit = "ovl31"
 addr = "ovl31:1298"
 size = 99
 name = "ovl31_e19"
-signature = ""
+signature = "procedure ovl31_e19(Who: Pointer; A, B: Byte)"
 c_name = "ovl31_e19"
 level = "none"
 justification = ""
@@ -18081,7 +18081,7 @@ unit = "res12"
 addr = "00BA:09E3"
 size = 364
 name = "res12_fn_09E3"
-signature = ""
+signature = "procedure res12_fn_09E3(Who: Pointer)"
 c_name = "res12_fn_09E3"
 level = "none"
 justification = ""
@@ -18107,7 +18107,7 @@ unit = "res12"
 addr = "00BA:0B73"
 size = 69
 name = "res12_fn_0B73"
-signature = ""
+signature = "function res12_fn_0B73(Who: Pointer): Boolean"
 c_name = "res12_fn_0B73"
 level = "none"
 justification = ""
@@ -18133,7 +18133,7 @@ unit = "res12"
 addr = "00BA:1037"
 size = 60
 name = "res12_fn_1037"
-signature = ""
+signature = "function res12_fn_1037(N: Byte): string"
 c_name = "res12_fn_1037"
 level = "none"
 justification = ""
@@ -18588,7 +18588,7 @@ unit = "res12"
 addr = "00BA:2637"
 size = 79
 name = "res12_fn_2637"
-signature = ""
+signature = "function res12_fn_2637(Who: Pointer): Byte"
 c_name = "res12_fn_2637"
 level = "none"
 justification = ""
@@ -18601,7 +18601,7 @@ unit = "res12"
 addr = "00BA:2686"
 size = 60
 name = "res12_fn_2686"
-signature = ""
+signature = "function res12_fn_2686(Who: Pointer): Byte"
 c_name = "res12_fn_2686"
 level = "none"
 justification = ""
@@ -18705,7 +18705,7 @@ unit = "res12"
 addr = "00BA:2E03"
 size = 67
 name = "res12_fn_2E03"
-signature = ""
+signature = "function res12_fn_2E03(Who: Pointer): Boolean"
 c_name = "res12_fn_2E03"
 level = "none"
 justification = ""
@@ -18718,7 +18718,7 @@ unit = "res12"
 addr = "00BA:2E46"
 size = 69
 name = "res12_fn_2E46"
-signature = ""
+signature = "function res12_fn_2E46(Who: Pointer): Boolean"
 c_name = "res12_fn_2E46"
 level = "none"
 justification = ""
