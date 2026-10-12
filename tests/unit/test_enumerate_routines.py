@@ -81,3 +81,15 @@ def test_probe_finds_randomize():
     if probe is None:
         pytest.skip("no probe build; run make tp-probe")
     assert "0AF8:1247" in probe
+
+
+def test_map_keeps_the_compiler_size_of_an_l2_routine(tmp_path):
+    """ovl34:003B Load8x8Bank is 255 bytes by make match; the gap to the next start is 290 (the 35
+    bytes after it are the next routine's literal pool). The compiler's boundary wins."""
+    text = SYMBOLS.read_text()
+    blocks = re.split(r"(?=\[\[routine\]\]\n)", text)
+    i = next(k for k, b in enumerate(blocks) if 'id = "ovl34:003B"' in b)
+    blocks[i] = re.sub(r"size = \d+", "size = 255", blocks[i])
+    blocks[i] = re.sub(r'level = "[^"]*"', 'level = "L2"', blocks[i])
+    got = run(tmp_path, "".join(blocks))
+    assert got["ovl34:003B"]["size"] == 255
