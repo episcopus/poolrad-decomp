@@ -439,7 +439,7 @@ begin
   res12_fn_27D9;
 end;
 
-{ ovl05:0D38. The Take command of the treasure menu. MoneyLeft and ItemsLeft are ovl21_e9's two
+{ ovl05:0D38. The Take command of the treasure menu. MoneyLeft and ItemsLeft are TreasureLeft's two
   results (money in the pool, items in the loot). With only items it goes to TakeLootItems, with
   only money it takes the money (TakeMoney); with both it loops on 'Take: Money Items Exit' until
   Exit or one of them runs out (G and O, in no menu text, go to ovl19_e10 as in the shop). }
@@ -468,7 +468,7 @@ begin
           'O': ovl19_e10(Key);
         end;
         res12_fn_0767(SelectedCharacter);
-        ovl21_e9(MoneyLeft, ItemsLeft);
+        TreasureLeft(MoneyLeft, ItemsLeft);
         if (MoneyLeft = 0) or (ItemsLeft = 0) then
           Done := True;
       until Done;
@@ -510,7 +510,7 @@ begin
   res12_fn_27D9;
   MoneyLeft := 0;
   repeat
-    ovl21_e9(MoneyLeft, ItemsLeft);
+    TreasureLeft(MoneyLeft, ItemsLeft);
     Menu := 'View Pool Exit';
     Slot := 0;
     ExitText := ' Exit';
@@ -541,7 +541,7 @@ begin
       'D': ovl22_e5(DetectSpell, 0, 0, ExtKey);
       'E', KeyNone:
         begin
-          ovl21_e9(MoneyLeft, ItemsLeft);
+          TreasureLeft(MoneyLeft, ItemsLeft);
           if (MoneyLeft <> 0) or (ItemsLeft <> 0) then
           begin
             Menu := '~Yes ~No';

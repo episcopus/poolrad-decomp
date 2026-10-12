@@ -23,15 +23,14 @@ procedure DropMoney(Who: PCharacter; Amount: Word; Kind: ShortInt);
 procedure TakeFromPool(Who: PCharacter; Amount: Word; Kind: ShortInt);
 function MoneyKindOfLine(Line: string; var Name: string): ShortInt;
 procedure TakeMoney;
-procedure ovl21_e9(var A, B: Byte);
-procedure ovl21_fn_0FD2;
-procedure ovl21_e13;
-procedure ovl21_fn_1758;
+procedure TreasureLeft(var MoneyLeft, ItemsLeft: Byte);
+function RollItemBonus: ShortInt;
+procedure BuildTreasureItem(Kind: Byte; var Item: TMenuLine);
 procedure ovl21_e14(var Flag: Byte);
 procedure ovl21_fn_1F4B;
 procedure ovl21_fn_2233;
 implementation
-uses RES04, RES09, RES12, OVL25;
+uses RES04, RES09, RES12, OVL24, OVL25;
 
 const
   BaseLoad = 1500;      { the load every character may carry before the strength allowance }
@@ -495,14 +494,263 @@ begin
     end;
   until Done;
 end;
-{ ovl21:0F7E: retf 8; two var parameters; the Temple tests the first for nonzero. }
-{@stub} procedure ovl21_e9(var A, B: Byte); begin end;
-{ ovl21:0FD2: retf 0: 0 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl21_fn_0FD2; begin end;
-{ ovl21:1010: frame not read }
-{@stub} procedure ovl21_e13; begin end;
-{ ovl21:1758: frame not read }
-{@stub} procedure ovl21_fn_1758; begin end;
+{ ovl21:0F7E. Reports what treasure is left: MoneyLeft 1 when any kind of pooled money is not 0,
+  ItemsLeft 1 when the loot list (ds6810) is not empty, else 0. The shop, the Temple and the treasure
+  menu build their menus from it. }
+procedure TreasureLeft(var MoneyLeft, ItemsLeft: Byte);
+var
+  Kind: ShortInt;
+begin
+  MoneyLeft := 0;
+  ItemsLeft := 0;
+  for Kind := 0 to LastMoneyKind do
+    if PooledMoney[Kind] <> 0 then
+      MoneyLeft := 1;
+  if ds6810 <> nil then
+    ItemsLeft := 1;
+end;
+{ ovl21:0FD2. Rolls the magic bonus of a treasure item: 1 on 1..14 of a d20, 2 on 15..19, 3 on 20. }
+function RollItemBonus: ShortInt;
+var
+  Roll: Byte;
+begin
+  Roll := RollDice(1, 20);
+  case Roll of
+    1..14: RollItemBonus := 1;
+    15..19: RollItemBonus := 2;
+  else
+    RollItemBonus := 3;
+  end;
+end;
+{ ovl21:1010. Builds a treasure item of type Kind into Item. Weapons and armour (types 1..$3B, $49,
+  $4D, $5D) get a magic bonus (RollItemBonus) and the name numbers, weight and value of their type;
+  types $3D and $3E get 1..3 random affects; the other types listed take a fixed row of TreasureItemRows
+  chosen by type and a die roll (names, weight, value, affects, bonus 1, 2 for row $61).
+  QUIRK ovl21:10D5: type $15 on a 5 of a d5 takes the row at $90, one word before the row at $91.
+  QUIRK ovl21:1753: type $4E rolls 2..4, so its row 1 choice is never taken and a 4 takes no row.
+  QUIRK ovl21:17A6: type $47 rolls a d11; 11 takes no row. }
+procedure BuildTreasureItem(Kind: Byte; var Item: TMenuLine);
+var
+  Roll: Byte;
+  NumAffects: Byte;
+  I: Byte;
+  Row: Byte;
+  Affect: Byte;
+begin
+  FillChar(Item, SizeOf(Item), 0);
+  Row := 0;
+  with Item do
+  begin
+    FillChar(Affects, SizeOf(Affects), 0);
+    Next := nil;
+    Readied := False;
+    HiddenNames := 6;
+    Cursed := False;
+    ItemType := Kind;
+    FillChar(NameNum, SizeOf(NameNum), 0);
+    case ItemType of
+      1..$3B, $49, $4D, $5D:
+        begin
+          Plus := RollItemBonus;
+          case ItemType of
+            $15:
+              begin
+                Roll := RollDice(1, 5);
+                if Roll = 5 then
+                  Row := $90;
+                NameNum[3] := $15;
+                NameNum[2] := Plus + $A1;
+              end;
+            $1C:
+              begin
+                NameNum[3] := $1C;
+                NameNum[2] := Plus + $A1;
+              end;
+            $32, $33:
+              begin
+                NameNum[3] := ItemType;
+                NameNum[2] := $31;
+                NameNum[1] := Plus + $A1;
+                HiddenNames := 4;
+              end;
+            $34:
+              begin
+                NameNum[3] := ItemType;
+                NameNum[2] := $32;
+                NameNum[1] := Plus + $A1;
+                HiddenNames := 4;
+              end;
+            $35..$3A:
+              begin
+                NameNum[3] := ItemType;
+                NameNum[2] := $30;
+                NameNum[1] := Plus + $A1;
+                HiddenNames := 4;
+              end;
+            $49:
+              begin
+                NameNum[3] := $3D;
+                NameNum[2] := Plus + $A1;
+              end;
+            $4D:
+              begin
+                NameNum[3] := $4F;
+                NameNum[2] := $A7;
+                Plus := Plus * 2 + 2;
+                case Plus of
+                  4: NameNum[1] := $DD;
+                  6: NameNum[1] := $DE;
+                  8: NameNum[1] := $DC;
+                end;
+              end;
+            $5D:
+              begin
+                NameNum[3] := $42;
+                NameNum[2] := $E0;
+                NameNum[1] := Plus + $A1;
+              end;
+          else
+            NameNum[3] := ItemType;
+            NameNum[2] := Plus + $A1;
+          end;
+          PlusSave := 0;
+          Count := 0;
+          case ItemType of
+            1, $0D, $0E, $23: Weight := $4B;
+            2, $14, $1D, $1F, $20, $21, $27, $2A, $2C, $2E, $3B: Weight := $32;
+            3, $18, $28: Weight := $7D;
+            4, $0F, $17, $22, $2B, $2D, $33: Weight := $64;
+            5, $0C, $11, $13, $32: Weight := $96;
+            6: Weight := $0F;
+            7: Weight := $1E;
+            8, $4D: Weight := $0A;
+            9:
+              begin
+                Weight := $19;
+                Count := 5;
+              end;
+            $0A, $1A, $24: Weight := $3C;
+            $0B, $10, $19, $1B, $29, $2F: Weight := $50;
+            $12: Weight := $AF;
+            $15: Weight := $14;
+            $16, $1E: Weight := $28;
+            $25: Weight := $23;
+            $26, $35: Weight := $FA;
+            $34: Weight := $C8;
+            $36, $38: Weight := $190;
+            $37: Weight := $12C;
+            $39: Weight := $15E;
+            $3A: Weight := $1C2;
+            $2F, $5D: Weight := 1;
+          else
+            Weight := $28;
+            Count := $0A;
+          end;
+          case ItemType of
+            $3B: Value := Plus * $9C4;
+            $49, $1C: Value := Plus * $96;
+            $35, $36: Value := Plus * $BB8;
+            $37, $38: Value := Plus * $DAC;
+            $39: Value := Plus * $FA0;
+            $3A: Value := Plus * $1388;
+            $4D: Value := Plus * $BB8;
+          else
+            Value := Plus * $7D0;
+          end;
+        end;
+      $3D, $3E:
+        begin
+          NumAffects := RollDice(1, 3);
+          if ItemType = $3D then
+            NameNum[3] := $D1
+          else
+            NameNum[3] := $D0;
+          NameNum[2] := NumAffects + $D1;
+          NameNum[1] := 0;
+          Plus := 1;
+          Weight := $19;
+          Count := 0;
+          Value := 0;
+          for I := 1 to NumAffects do
+          begin
+            Roll := RollDice(1, 3);
+            if ItemType = $3D then
+              case Roll of
+                1: Affect := RollDice(1, $0D) + 8;
+                2: Affect := RollDice(1, 7) + $1C;
+                3: Affect := RollDice(1, $0B) + $2C;
+              end
+            else
+              case Roll of
+                1: Affect := RollDice(1, 8);
+                2: Affect := RollDice(1, 7) + $15;
+                3: Affect := RollDice(1, 9) + $23;
+              end;
+            Affects[I] := Affect;
+            Value := Roll * $12C + Value;
+          end;
+        end;
+      $3F: Row := $49;
+      $43: Row := $91;
+      $45:
+        begin
+          Roll := RollDice(1, 10);
+          case Roll of
+            1: Row := $29;
+            2..6: Row := $79;
+            7..10: Row := $81;
+          end;
+        end;
+      $4E:
+        begin
+          Roll := RollDice(1, 3) + 1;
+          case Roll of
+            1: Row := $31;
+            2: Row := $41;
+            3: Row := $71;
+          end;
+        end;
+      $4F: Row := $39;
+      $54: Row := 9;
+      $5C: Row := $61;
+      $47:
+        begin
+          Roll := RollDice(1, $0B);
+          case Roll of
+            1..5: Row := $11;
+            6..8: Row := 1;
+            9: Row := $19;
+            10: Row := $51;
+          end;
+        end;
+      $46:
+        begin
+          Roll := RollDice(1, 10);
+          case Roll of
+            1..7: Row := $59;
+            8..10: Row := $89;
+          end;
+        end;
+    end;
+    if Row <> 0 then
+    begin
+      for I := 0 to 2 do
+        NameNum[I + 1] := TreasureItemRows[Row + I];
+      Plus := 1;
+      PlusSave := 1;
+      if Row = $61 then
+      begin
+        Plus := 2;
+        PlusSave := 2;
+      end;
+      Weight := TreasureItemRows[Row + 3];
+      Count := 0;
+      Value := TreasureItemRows[Row + 4];
+      for I := 1 to 3 do
+        Affects[I] := TreasureItemRows[Row + 4 + I];
+    end;
+  end;
+end;
 { ovl21:19B2: one var parameter (the Temple passes a local byte it tests afterwards). }
 {@stub} procedure ovl21_e14(var Flag: Byte); begin end;
 { ovl21:1F4B: frame not read }

@@ -696,6 +696,10 @@ var
   BadNameChars: array[0..10] of Char;  { characters not allowed in a file name; see above }
   { The value of the five coins in copper pieces: copper 1, silver 10, electrum 100, gold 200,
     platinum 1000 (the image); MoneyValueInGold values money with it and divides by the gold entry. }
+  { Rows of eight words describing the fixed treasure items BuildTreasureItem builds (DS:0970): a row starts at
+    the index BuildTreasureItem picks (1, 9, $11, ... $91, and $90 once) and holds the three name numbers,
+    the weight, the value and three affect numbers (ovl21:182F..18C2; the image). }
+  TreasureItemRows: array[0..$98] of Word;
   CoinCopperValues: array[0..4] of LongInt;
   { The names of the seven kinds of money, string[10] at DS:0FFA: Copper, Silver, Electrum, Gold,
     Platinum, Gems, Jewelry (the image); the Take menu lists the pool with them (ovl21:0DDF). }

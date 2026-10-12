@@ -424,7 +424,7 @@ begin
 end;
 
 { ovl04:0D09. The Temple: the menu Heal, View, Take, Pool, Share, Appraise, Exit (Take and
-  Share only while ovl21_e9 reports pooled money). Heal opens HealMenu and Pool runs only when
+  Share only while TreasureLeft reports pooled money). Heal opens HealMenu and Pool runs only when
   MenuFlag is 0; View ovl19_e5 receives MenuFlag, Take
   TakeMoney, Pool PoolMoney, Share ShareMoney, Appraise ovl21_e14, G and O ovl19_e10. Exit with
   money left in the pool asks "Do you want to go back and retrieve your money?" ('~Yes ~No') and
@@ -441,8 +441,8 @@ var
                             when the menu did not take it (then H and P are skipped and View gets
                             it) [I] }
   Prompt: String40;
-  MoneyPooled: Byte;      { nonzero while money lies in the pool (ovl21_e9's first result) }
-  PoolSecond: Byte;       { ovl21_e9's second result; not read here }
+  MoneyPooled: Byte;      { nonzero while money lies in the pool (TreasureLeft's first result) }
+  PoolSecond: Byte;       { TreasureLeft's second result; not read here }
   LeaveAnswer: Byte;      { the choice in the "retrieve your money" question }
   Appraised: Byte;        { set by Appraise (ovl21_e14); nonzero redraws the view }
 begin
@@ -453,7 +453,7 @@ begin
   MoneyInPool := 0;
   Done := False;
   repeat
-    ovl21_e9(MoneyPooled, PoolSecond);
+    TreasureLeft(MoneyPooled, PoolSecond);
     if MoneyPooled <> 0 then
       Prompt := 'Heal View Take Pool Share Appraise Exit'
     else
@@ -468,7 +468,7 @@ begin
       'A': ovl21_e14(Appraised);
       'E':
         begin
-          ovl21_e9(MoneyPooled, PoolSecond);
+          TreasureLeft(MoneyPooled, PoolSecond);
           if MoneyPooled <> 0 then
           begin
             Prompt := '~Yes ~No';

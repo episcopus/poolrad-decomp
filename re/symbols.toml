@@ -10322,12 +10322,12 @@ id = "ovl21:0F7E"
 unit = "ovl21"
 addr = "ovl21:0F7E"
 size = 84
-name = "ovl21_e9"
-signature = "procedure ovl21_e9(var A, B: Byte)"
+name = "TreasureLeft"
+signature = "procedure TreasureLeft(var MoneyLeft, ItemsLeft: Byte)"
 c_name = "ovl21_e9"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_9"
+notes = "renamed from ovl21_e9 (sets its first var to 1 when any PooledMoney kind is nonzero and its second when the loot list ds6810 is not nil; the treasure, shop and Temple menus show Take/Share from it (ovl21:0F7E)); auto:entry_9"
 evidence = ["prologue"]
 
 [[routine]]
@@ -10335,39 +10335,26 @@ id = "ovl21:0FD2"
 unit = "ovl21"
 addr = "ovl21:0FD2"
 size = 62
-name = "ovl21_fn_0FD2"
-signature = ""
+name = "RollItemBonus"
+signature = "function RollItemBonus: ShortInt"
 c_name = "ovl21_fn_0FD2"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl21_fn_0FD2 (d20: 1..14 gives 1, 15..19 gives 2, else 3; BuildTreasureItem stores it in TMenuLine.Plus (ovl21:0FD2, 10AF)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl21:1010"
 unit = "ovl21"
 addr = "ovl21:1010"
-size = 1864
-name = "ovl21_e13"
-signature = ""
+size = 2256
+name = "BuildTreasureItem"
+signature = "procedure BuildTreasureItem(Kind: Byte; var Item: TMenuLine)"
 c_name = "ovl21_e13"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_13"
+notes = "renamed from ovl21_e13 (clears a 63-byte TMenuLine and fills ItemType, Plus, NameNum, Weight, Value and Affects from the item type and dice (ovl21:1010)); auto:entry_13; map dec-18 2026-10-12: ends 18DF (retf 6 at 18DD); 1758 was mid-routine, entry deleted"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl21:1758"
-unit = "ovl21"
-addr = "ovl21:1758"
-size = 602
-name = "ovl21_fn_1758"
-signature = ""
-c_name = "ovl21_fn_1758"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl21:19B2"

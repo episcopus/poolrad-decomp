@@ -2435,3 +2435,31 @@ kind = "global"
 why = "seven string[10] Copper Silver Electrum Gold Platinum Gems Jewelry at DS:0FFA (the image); TakeMoney prefixes each pooled amount with MoneyKindNames[Kind] (ovl21:0DDF)"
 date = "2026-10-12"
 
+[[rename]]
+old = "ovl21_e9"
+new = "TreasureLeft"
+kind = "routine"
+why = "sets its first var to 1 when any PooledMoney kind is nonzero and its second when the loot list ds6810 is not nil; the treasure, shop and Temple menus show Take/Share from it (ovl21:0F7E)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_fn_0FD2"
+new = "RollItemBonus"
+kind = "routine"
+why = "d20: 1..14 gives 1, 15..19 gives 2, else 3; BuildTreasureItem stores it in TMenuLine.Plus (ovl21:0FD2, 10AF)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl21_e13"
+new = "BuildTreasureItem"
+kind = "routine"
+why = "clears a 63-byte TMenuLine and fills ItemType, Plus, NameNum, Weight, Value and Affects from the item type and dice (ovl21:1010)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds0970"
+new = "TreasureItemRows"
+kind = "global"
+why = "BuildTreasureItem copies the name numbers, weight, value and affects of a fixed item from eight words starting at the chosen row (ovl21:182F..18C2)"
+date = "2026-10-12"
+
