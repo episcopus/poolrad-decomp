@@ -626,8 +626,14 @@ The parts proven so far:
 - The sprite list is a `$42`-byte record: a count byte at +0, a flag at +1, and slots of 8 bytes
   from +6, each holding a far pointer at +0 (the `TSpriteList` type of `src/OVL28.PAS`).
 
-Still to decompile: `ovl28_e7` (the range-checked 3D sprite draw, "Illegal range in
-Show3DSprite."), `ovl28_e4` (the HEAD/BODY window) and `ovl28_e2` (the PIC/FINAL picture loader).
+- `Show3DSprite` (`ovl28:0708`) shows slot 1..3 of a sprite list at the sprite's base column and row
+  plus 2 through `res07_fn_0D71`; another bank ends the game with the unit's range error string.
+- `ShowHeadBodyWindow` (`ovl28:04F9`) draws the HEAD/BODY picture window (columns 28..38, rows 1..11)
+  of the character record `DS:5D92` and shows the HEAD and BODY sprites of its two bank numbers.
+
+Still to decompile: `ovl28_e2` (`ovl28:00A2`, the PIC/FINAL picture loader), blocked with its mapped
+signature, callees and decode loop in the `re/symbols.toml` notes; its 296-byte frame of compiler
+temporaries is what remains.
 
 ---
 

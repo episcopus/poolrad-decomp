@@ -105,7 +105,7 @@ begin
   ds49F8 := 0;
   ds49FB := 0;
   ds5D96 := 0;
-  ds5D92 := 0;
+  ds5D92 := nil;
   ds49ED := $9900;
   ds49E2 := 1;
   ds49F4 := 0;
@@ -129,7 +129,7 @@ begin
   ds5370 := 1;
   ds84E3 := 0;
   ds557C := 0;
-  ds6B0A := 0;
+  ds6B0A := '';
   ds6B1C := $FF;
   ds557D := False;
   ds6F69 := $E8;
