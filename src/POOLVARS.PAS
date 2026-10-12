@@ -46,14 +46,6 @@ type
   TBlock588 = array[0..707] of Word;      { a $588-byte block (the sprite data, loaded by ovl32_e4) }
   TBlock924 = array[0..1169] of Word;     { a $924-byte block }
   TBlock1E00 = array[0..3839] of Word;    { a $1E00-byte block }
-  { The record the far pointer at DS:5D92 leads to. Only the two picture bank numbers at +$BB and
-    +$BC are known (ShowHeadBodyWindow reads them); the rest of the 285-byte character record is not declared
-    here yet. }
-  TCharPictures = record
-    Filler: array[0..$BA] of Byte;  { +0..+$BA: not read here }
-    HeadBank: Byte;                 { +$BB: the HEAD picture bank number (0 when none) }
-    BodyBank: Byte;                 { +$BC: the BODY picture bank number (0 when none) }
-  end;
   { One 4-byte element of the table at DS:6AAE the loader fills (ovl11:0369..0390). }
   TPresenceSlot = record
     A, B: Word;
@@ -186,9 +178,7 @@ var
   ds547D: Byte;                   { a character the loader appends to the path through System_MemOp_0C3B (ovl11:0581) }
   ds557C: Byte;                   { cleared by the loader (ovl11:0438) }
   ds5582: array[0..$80F] of Byte; { $810-byte buffer the loader reads the file block into (ovl11:05CD) }
-  ds5D92: ^TCharPictures;         { the character record with the HEAD/BODY bank numbers (ShowHeadBodyWindow) }
-  ds286F: array[0..13] of Byte;   { the HEAD picture number per bank (ds5D92^.HeadBank, ShowHeadBodyWindow) }
-  ds287D: array[0..13] of Byte;   { the BODY picture number per bank (ds5D92^.BodyBank, ShowHeadBodyWindow) }
+  ds5D92: LongInt;                { a 4-byte value the loader clears (ovl11:03B8): one `xor ax,ax` and two stores }
   ds5D96: LongInt;                { a 4-byte value the loader clears (ovl11:03B0): one `xor ax,ax` and two stores }
   ds5E1E: Word;                   { BlockRead result count of the loader (ovl11:05D6) }
   ds5E20: ^TBlock588;             { $588-byte block the loader allocates (ovl11:0074) }
@@ -209,7 +199,7 @@ var
   ds6B01: Pointer;                { the loaded HEAD sprite bank (ShowHeadBodySprites, LoadHeadBodySprites) }
   ds6B05: Byte;                   { the bank index of the BODY sprite in DS:6B06; $FF when none (LoadHeadBodySprites) }
   ds6B06: Pointer;                { the loaded BODY sprite bank (ShowHeadBodySprites, LoadHeadBodySprites) }
-  ds6B0A: string[8];              { the name of the last picture file loaded (ovl28_e2); cleared by the loader (ovl11:043D) }
+  ds6B0A: Byte;                   { cleared by the loader (ovl11:043D) }
   ds6B1C: Byte;                   { set to $FF by the loader (ovl11:0442) and by FreeSpriteList }
   ds70C7: ShortInt;               { loop counter of FreeSpriteList (the sprite list slots); ShortInt: the loop exits with jg }
   ds6B29: Word;                   { set to 1 by the loader (ovl11:0405) }
