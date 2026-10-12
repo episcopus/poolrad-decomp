@@ -41,7 +41,7 @@ procedure res07_fn_1E5C;
 procedure res07_fn_248E(Cols, Rows: Word; Planes, Flag: Byte; var Buf);
 procedure res07_fn_2595(var P);
 procedure res07_fn_2632;
-procedure res07_fn_2A0D;
+procedure res07_fn_2A0D(A, B: Byte);
 implementation
 
 { 0464:0000: retf 6: 6 bytes of parameters; 6 bytes of locals }
@@ -119,7 +119,7 @@ implementation
 { 0464:2632: retf 18: 18 bytes of parameters; 36 bytes of locals }
 {@stub} procedure res07_fn_2632; begin end;
 { 0464:2A0D: retf 4: 4 bytes of parameters; 0 bytes of locals }
-{@stub} procedure res07_fn_2A0D; begin end;
+{@stub} procedure res07_fn_2A0D(A, B: Byte); begin end;
 
 begin
 end.
