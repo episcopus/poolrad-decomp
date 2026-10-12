@@ -1,8 +1,10 @@
 unit OVL29;
-{ The wall view and GEO loader (whitepaper 5.2): SetWallDescriptors stores the four wall view
-  descriptors (ds6A60..ds6A63) that ShowAreaView passes; CellInRange tests a 16x16 block map cell;
-  EventByteAt reads the event byte of a map cell; DrawWallView draws the wall view and its overlay labels;
-  LoadWallSet and Load3DMap load the WALLDEF and GEO data. Design doc whitepaper 5.2. }
+{ GeoLoad: the 3D area map and the wall view (whitepaper 4.2.1, 4.2.4, 5.2). Load3DMap loads a GEO
+  block into the four 16x16 planes of GeoCells^ and LoadWallSet loads WALLDEF wallsets into the wall
+  tiles WallTiles^ with their 8x8 tile banks. WallIdAt, DoorKindAt and EventByteAt read a cell's wall
+  id, door kind and event byte (CellInRange and the off-map wrap shared by all three). DrawWallView
+  draws the 3D view from ten wall pieces (DrawWallPiece) or, in WallMapMode, the overhead wall map
+  (DrawWallMap); SetWallDescriptors and DrawWallDescriptors keep and draw the view's frame. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 procedure DrawWallMap(Col, Row: ShortInt; Dir: Byte);
