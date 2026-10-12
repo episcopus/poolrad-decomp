@@ -1,5 +1,5 @@
 unit OVL29;
-{ GeoLoad: the 3D area map and the wall view (whitepaper 4.2.1, 4.2.4, 5.2). Load3DMap loads a GEO
+{ GeoLoad: the 3D area map and the wall view (whitepaper 4.2.1, 4.2.4, 5.2.2). Load3DMap loads a GEO
   block into the four 16x16 planes of GeoCells^ and LoadWallSet loads WALLDEF wallsets into the wall
   tiles WallTiles^ with their 8x8 tile banks. WallIdAt, DoorKindAt and EventByteAt read a cell's wall
   id, door kind and event byte (CellInRange and the off-map wrap shared by all three). DrawWallView
@@ -116,8 +116,7 @@ begin
   Put8x8Symbol(PartyCol + ViewLeft - 1, PartyRow + ViewLeft - 1, Dir shr 1 + PartyArrow, DrawDirect, MapSymbolAttr);
   StepDisplay;
 end;
-{ ovl29:0155: retf 8: 8 bytes of parameters; 0 bytes of locals }
-{ ovl29:0155. Stores the four wall view descriptors: A..D into ds6A60..ds6A63 (descriptor 1..4;
+{ ovl29:0155. Stores the four wall view descriptors Wall1..Wall4 into ds6A60..ds6A63 (descriptor 1..4;
   whitepaper 5.2). Called by ovl26 ShowAreaView with the wall view ids. }
 procedure SetWallDescriptors(Wall1, Wall2, Wall3, Wall4: Byte);
 begin
@@ -162,9 +161,8 @@ begin
       Inc(Tile);
     end;
 end;
-{ ovl29:031F: retf 4: 4 bytes of parameters; 2 bytes of locals }
-{ ovl29:031F. True when both X and Y are in 0..$F (a map cell inside the 16x16 block). Signed
-  ShortInt parameters; the four compares are in the order X <= $F, X >= 0, Y <= $F, Y >= 0. Called
+{ ovl29:031F. True when both Col and Row are in 0..$F (a map cell inside the 16x16 block). Signed
+  ShortInt parameters; the four compares are in the order Col <= $F, Col >= 0, Row <= $F, Row >= 0. Called
   by DoorKindAt, WallIdAt, EventByteAt and DrawWallView. }
 function CellInRange(Col, Row: ShortInt): Boolean;
 begin
@@ -578,5 +576,6 @@ begin
   GameVars^[VarGeoBlock] := BlockId;
 end;
 
+{ Initialisation (ovl29:1206): empty (55 89 E5 5D CB). }
 begin
 end.
