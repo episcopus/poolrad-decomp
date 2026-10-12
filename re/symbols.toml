@@ -13170,7 +13170,7 @@ signature = ""
 c_name = "ovl25_init"
 level = "none"
 justification = ""
-notes = "auto:entry_0"
+notes = "auto:entry_0; blocked: the original is the empty initialisation part (push bp; mov bp,sp; pop bp; retf at ovl25:1245, packet), which src/OVL25.PAS already has (begin end., no {@stub-init}); make match checks an init part only in the whole-unit comparison, which runs when no stub is left, so it waits for ReadPromptChoice and ChooseFromList (escalate-res06-20261012110841, nested-routine comparison) (dec-10)"
 evidence = ["prologue"]
 
 [[routine]]
