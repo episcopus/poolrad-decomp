@@ -7570,12 +7570,12 @@ id = "ovl14:0818"
 unit = "ovl14"
 addr = "ovl14:0818"
 size = 354
-name = "ovl14_fn_0818"
-signature = ""
+name = "CheckMapCell"
+signature = "procedure CheckMapCell"
 c_name = "ovl14_fn_0818"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call; map dec-1 2026-10-12: ends 097A (was 113); 0889, 08A2, 08E5 were mid-routine, entries deleted"
+notes = "renamed from ovl14_fn_0818 (ovl14:0818 checks the area-map block ahead of the party and moves there, with the river stench message and impassable ranges; called by ovl14_e1); auto:near_call; map dec-1 2026-10-12: ends 097A (was 113); 0889, 08A2, 08E5 were mid-routine, entries deleted"
 evidence = ["prologue"]
 
 [[routine]]

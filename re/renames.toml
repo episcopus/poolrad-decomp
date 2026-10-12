@@ -694,3 +694,10 @@ kind = "routine"
 why = "ovl14:073B steps the party one cell in the icon-set direction with wraparound, refreshes ds6AB0/ds6AB1 and sounds; called by ovl14_e1"
 date = "2026-10-11"
 
+[[rename]]
+old = "ovl14_fn_0818"
+new = "CheckMapCell"
+kind = "routine"
+why = "ovl14:0818 checks the area-map block ahead of the party and moves there, with the river stench message and impassable ranges; called by ovl14_e1"
+date = "2026-10-11"
+

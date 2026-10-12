@@ -25,11 +25,11 @@ function FindCodeRecord(Code: Byte): PCodeRec;
 function DoKnock: Boolean;
 procedure ClampPartyPosition;
 procedure MoveParty;
-procedure ovl14_fn_0818;
+procedure CheckMapCell;
 procedure ovl14_e2;
 procedure ovl14_e1;
 implementation
-uses OVL29, RES03, OVL20;
+uses OVL29, RES03, RES06, OVL20;
 
 { ovl14:0000: retf 6: 6 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl14_fn_0000; begin end;
@@ -149,8 +149,44 @@ begin
   else
     ovl20_e1(1, 1);
 end;
-{ ovl14:0818: retf 0: 0 bytes of parameters; 40 bytes of locals }
-{@stub} procedure ovl14_fn_0818; begin end;
+{ ovl14:0818. Checks the area-map block ahead of the party: steps the GameVars area-map
+  position by the icon set's direction, clamps it (columns 0..$F, rows 0..$23), and
+  reads that cell of AreaMap. N ($4E) and the impassable ranges pass through silently;
+  the river codes ($66..$6C, $72) either print the stench message (when GameVars^[418]
+  is 0) or move there; anything else moves there with a sound. Called by ovl14_e1. }
+procedure CheckMapCell;
+var
+  MapCol, GridCol, GridRow: ShortInt;
+begin
+  GridCol := GameVars^[VarMapX] + ds2736[ds6AAF];
+  GridRow := GameVars^[VarMapY] + ds273F[ds6AAF];
+  if GridCol < 0 then
+    GridCol := 0;
+  if GridCol > $F then
+    GridCol := $F;
+  if GridRow < 0 then
+    GridRow := 0;
+  if GridRow > $23 then
+    GridRow := $23;
+  MapCol := GridCol + MapBaseX[AreaViewKind];
+  case AreaMap[GridRow, MapCol] of
+    $4E, $7E..$80, $82..$84, $A8..$AC, $AE..$B3, $BC, $DD..$DE, $E1..$E9, $F5:
+      ;
+    $66..$6C, $72:
+      if GameVars^[418] = 0 then
+        res06_fn_0D68('The river''s stench drives you back.', $E)
+      else
+      begin
+        GameVars^[VarMapX] := GridCol;
+        GameVars^[VarMapY] := GridRow;
+        ovl20_e1($C, 3);
+      end;
+  else
+    GameVars^[VarMapX] := GridCol;
+    GameVars^[VarMapY] := GridRow;
+    ovl20_e1($C, 3);
+  end;
+end;
 { ovl14:0989: retf 0: 0 bytes of parameters; 60 bytes of locals }
 {@stub} procedure ovl14_e2; begin end;
 { ovl14:0D6D: retf 0: 0 bytes of parameters; 300 bytes of locals }
