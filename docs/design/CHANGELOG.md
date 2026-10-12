@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-11 | process | make watch-agents: live view of agents, hand-offs and locks | tried on the branch |
 | 2026-10-11 | process | agents post heartbeats; make agents shows who has gone quiet | tests/unit/test_agent_tools.py |
 | 2026-10-11 | tools | make match proves nested routines from their matched parent (push bp; push cs; call, inside the exactly compared pre-entry region) and records L2 with a note | tests/unit/test_match_nested.py; dry run on ovl26 branch: 3 nested routines proven |
 | 2026-10-11 | 5.2, 5.2.1 | ovl26 area view dispatcher and party marker added under 5.2; DS:49D2 settled as GameVars (word array) with words 230, 251, 253, 254 named | make match UNIT=ovl26, make match UNIT=ovl27 |
