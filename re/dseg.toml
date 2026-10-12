@@ -721,6 +721,46 @@ name = "BreakChars"
 evidence = "char set ShowPagedText word scan tests (0709:0822..08F0, set of 32..63 per the 0D12 descriptor, proven by tpc probe Q32); image value members $, %, &, 2, 3, 7, ="
 
 [[global]]
+offset = 0x6816
+name = "SaveRoll"
+evidence = "SavingThrow: d20 plus SaveBonus and the bonus, compared with SavingThrows[kind] after the hooks (ovl24:0D73..0DCA)"
+
+[[global]]
+offset = 0x6817
+name = "HookAffectId"
+evidence = "ApplyAffect sets the affect id before RunAffectHooks kind 9; zero afterwards means 'is Unaffected' (ovl24:1672, 1682)"
+
+[[global]]
+offset = 0x6818
+name = "DamageAmount"
+evidence = "DealDamage sets the damage before RunAffectHooks kind 6, halves or clears it on a save, prints and deals it (ovl24:134E..14FB)"
+
+[[global]]
+offset = 0x6819
+name = "DamageKind"
+evidence = "DealDamage's text: and F7h = 1 Fire, 2 Cold, 4 Electricity, 10h Acid; bit 3 alone Magic (ovl24:13E4, 14A8)"
+
+[[global]]
+offset = 0x6822
+name = "AttackRoll"
+evidence = "RollToHit and RollBeatsResistance: d20 with 20 counted as 100, hooks may change it, negative means a miss (ovl24:0C63, 0CD5)"
+
+[[global]]
+offset = 0x682A
+name = "SaveKind"
+evidence = "SavingThrow stores the saving throw kind for the hooks of kind 0Ch (ovl24:0DAD)"
+
+[[global]]
+offset = 0x0C13
+name = "DeathAffects"
+evidence = "entries 1..16 (DS:0C14) are the affects RemoveDeathAffects removes (ovl24:1026)"
+
+[[global]]
+offset = 0x6828
+name = "AffectHandlers"
+evidence = "the far procedure table CallAffectHandler calls by affect id (lcall [di+6828h], ovl24:001E)"
+
+[[global]]
 offset = 0x5374
 name = "SoundDriverIdle"
 evidence = "SetSoundDriverIdle stores it (08AE:01CB); nonzero: the timer driver is stopped and PlaySound runs it only around one sound, waiting 0.1 s (08AE:00E9, 0156); StartGame sets 100 (ovl11)"

@@ -5,8 +5,8 @@ unit OVL04;
   (CureBlindness, CureDisease, CureWounds, NeutralizePoison, RaiseDead, RemoveCurse,
   StoneToFlesh). Most of them check the selected character, ask for confirmation when the service
   is not needed (AskCastAnyway), take the price (ChargeForCure) and add or remove the affect
-  through ovl24_e2/e5; the ones that differ: CureWounds never asks (ovl04:0401) and heals through
-  ovl24_e8/e21, and RemoveCurse applies through ovl22_e9 (ovl04:083A), not the ovl24 affect
+  through RemoveAffect/e5; the ones that differ: CureWounds never asks (ovl04:0401) and heals through
+  RollDice/e21, and RemoveCurse applies through ovl22_e9 (ovl04:083A), not the ovl24 affect
   routines. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
@@ -27,7 +27,7 @@ uses POOLVARS, RES06, RES09, RES12, OVL07, OVL19, OVL21, OVL22, OVL24, OVL25;
 const
   Yes = 'Y';                    { the answer key AskYesNo returns for yes }
   No = 'N';
-  { Affect numbers (the ids res12_fn_2199 and ovl24_e2 look for in a character's affect list). }
+  { Affect numbers (the ids res12_fn_2199 and RemoveAffect look for in a character's affect list). }
   AffectBlind = $21;            { Cure Blindness checks and removes it (ovl04:0262) }
   AffectCurse = $24;            { Remove Curse accepts it as a reason to cast (ovl04:08A0) }
   AffectPoison = $37;           { Neutralize Poison checks it; Raise Dead also removes it }
@@ -140,7 +140,7 @@ begin
   if Answer = Yes then
   begin
     Answer := ChargeForCure('Cure Blindness', PriceCureBlindness);
-    if Answer = Yes then ovl24_e2(SelectedCharacter, AffectBlind, nil);
+    if Answer = Yes then RemoveAffect(SelectedCharacter, AffectBlind, nil);
   end;
 end;
 
@@ -167,14 +167,14 @@ begin
     if Answer = Yes then
     begin
       ds681F := 1;
-      for I := 1 to DiseaseCount do ovl24_e2(SelectedCharacter, DiseaseAffects[I], nil);
+      for I := 1 to DiseaseCount do RemoveAffect(SelectedCharacter, DiseaseAffects[I], nil);
       ds681F := 0;
     end;
   end;
 end;
 
 { ovl04:0401. Cure Light, Serious or Critical Wounds (Strength 1, 2 or 3): charges 100, 350 or
-  600 and heals 1d8, 2d8+1 or 3d8+3 hit points (ovl24_e8 rolls, ovl24_e21 heals). }
+  600 and heals 1d8, 2d8+1 or 3d8+3 hit points (RollDice rolls, HealCharacter heals). }
 procedure CureWounds(Strength: Byte);
 var
   Amount: Byte;
@@ -187,8 +187,8 @@ begin
         Answer := ChargeForCure('Cure Light Wounds', PriceCureLight);
         if Answer = Yes then
         begin
-          Amount := ovl24_e8(1, 8);
-          Healed := ovl24_e21(SelectedCharacter, Amount, 0);
+          Amount := RollDice(1, 8);
+          Healed := HealCharacter(SelectedCharacter, Amount, 0);
         end;
       end;
     2:
@@ -196,8 +196,8 @@ begin
         Answer := ChargeForCure('Cure Serious Wounds', PriceCureSerious);
         if Answer = Yes then
         begin
-          Amount := ovl24_e8(2, 8) + 1;
-          Healed := ovl24_e21(SelectedCharacter, Amount, 0);
+          Amount := RollDice(2, 8) + 1;
+          Healed := HealCharacter(SelectedCharacter, Amount, 0);
         end;
       end;
     3:
@@ -205,8 +205,8 @@ begin
         Answer := ChargeForCure('Cure Critical Wounds', PriceCureCritical);
         if Answer = Yes then
         begin
-          Amount := ovl24_e8(3, 8) + 3;
-          Healed := ovl24_e21(SelectedCharacter, Amount, 0);
+          Amount := RollDice(3, 8) + 3;
+          Healed := HealCharacter(SelectedCharacter, Amount, 0);
         end;
       end;
   end;
@@ -244,8 +244,8 @@ begin
       if Dead then
       begin
         ds681F := 1;
-        ovl24_e2(Who, AffectDeath, nil);
-        ovl24_e2(Who, AffectPoison, nil);
+        RemoveAffect(Who, AffectDeath, nil);
+        RemoveAffect(Who, AffectPoison, nil);
         ds681F := 0;
         Who^.Flag11B := 1;
         Who^.Status := StatusOkay;
@@ -294,9 +294,9 @@ begin
     if Answer = Yes then
     begin
       ds681F := 1;
-      ovl24_e2(SelectedCharacter, AffectPoison, nil);
-      ovl24_e2(SelectedCharacter, AffectPoison2, nil);
-      ovl24_e2(SelectedCharacter, AffectPoison3, nil);
+      RemoveAffect(SelectedCharacter, AffectPoison, nil);
+      RemoveAffect(SelectedCharacter, AffectPoison2, nil);
+      RemoveAffect(SelectedCharacter, AffectPoison3, nil);
       ds681F := 0;
     end;
   end;

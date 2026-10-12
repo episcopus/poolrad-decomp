@@ -98,7 +98,7 @@ begin
 end;
 { ovl14:0294. The Bash command (the B key): walks the ds5D96 records and tries to force
   the first one whose lock answers the DoorKindAt cell test with 3 (or another value,
-  below): each lock type wants its own 1d6/1d8 roll (ovl24_e8), setting Done on success
+  below): each lock type wants its own 1d6/1d8 roll (RollDice), setting Done on success
   and clearing ds6DDE[0] on some failures. On success it sets the icon bits like Pick
   and returns 1, else 0. }
 function DoBash: Byte;
@@ -117,25 +117,25 @@ begin
           $12:
             case Strength of
               $5B..$63:
-                if ovl24_e8(1, 6) = 1 then
+                if RollDice(1, 6) = 1 then
                   Done := 1;
               $64:
-                if ovl24_e8(1, 6) <= 2 then
+                if RollDice(1, 6) <= 2 then
                   Done := 1;
             else
               ds6DDE[0] := 0;
             end;
           $13, $14:
-            if ovl24_e8(1, 6) <= 3 then
+            if RollDice(1, 6) <= 3 then
               Done := 1;
           $15, $16:
-            if ovl24_e8(1, 6) <= 4 then
+            if RollDice(1, 6) <= 4 then
               Done := 1;
           $17:
-            if ovl24_e8(1, 6) <= 5 then
+            if RollDice(1, 6) <= 5 then
               Done := 1;
           $18:
-            if ovl24_e8(1, 8) <= 7 then
+            if RollDice(1, 8) <= 7 then
               Done := 1;
           $19:
             Done := 1;
@@ -145,24 +145,24 @@ begin
       else
         case LockType of
           $03..$07:
-            if ovl24_e8(1, 6) = 1 then
+            if RollDice(1, 6) = 1 then
               Done := 1;
           $08..$0F:
-            if ovl24_e8(1, 6) <= 2 then
+            if RollDice(1, 6) <= 2 then
               Done := 1;
           $10..$11:
-            if ovl24_e8(1, 6) <= 3 then
+            if RollDice(1, 6) <= 3 then
               Done := 1;
           $12:
             case Strength of
               0..$32:
-                if ovl24_e8(1, 6) <= 3 then
+                if RollDice(1, 6) <= 3 then
                   Done := 1;
               $33..$63:
-                if ovl24_e8(1, 6) <= 4 then
+                if RollDice(1, 6) <= 4 then
                   Done := 1;
               $64:
-                if ovl24_e8(1, 6) <= 5 then
+                if RollDice(1, 6) <= 5 then
                   Done := 1;
             end;
         end;
@@ -176,7 +176,7 @@ begin
   end;
   DoBash := Done;
 end;
-{ ovl14:04DF. The Pick command (the P key): rolls 1d100 (ovl24_e8) against each
+{ ovl14:04DF. The Pick command (the P key): rolls 1d100 (RollDice) against each
   ds5D96 record's +$78 byte and requires its +$10C byte clear; on the first success it
   sets the icon bits at the party cell and ahead of it (the facing cell uses the icon
   set +4 mod 8), clears the ds6DDF menu flag, and returns 1, else 0. }
@@ -191,7 +191,7 @@ begin
   begin
     with Rec^ do
     begin
-      if ovl24_e8(1, $64) <= PickThreshold then
+      if RollDice(1, $64) <= PickThreshold then
         if PickFlag = 0 then
           Done := 1;
     end;

@@ -63,7 +63,7 @@ const
 {@stub} procedure RunCombat; begin end;
 { ovl08:0131. Picks the character who acts next: of the party list (ds5D96, which holds every
   combatant) the one with the highest positive Combat^.Initiative; each candidate rolls 1d100
-  (ovl24_e8) and among equal initiatives the higher roll wins. Best is nil when nobody has an
+  (RollDice) and among equal initiatives the higher roll wins. Best is nil when nobody has an
   initiative above 0 any more, which ends the round in RunCombat. }
 procedure PickNextCombatant(var Best: PCharacter);
 var
@@ -78,7 +78,7 @@ begin
   Who := PCharacter(ds5D96);
   while Who <> nil do
   begin
-    Roll := ovl24_e8(1, 100);
+    Roll := RollDice(1, 100);
     if Who^.Combat^.Initiative > BestInit then BestRoll := Roll;
     if (Who^.Combat^.Initiative >= BestInit) and (Roll >= BestRoll) then
     begin
@@ -91,7 +91,7 @@ begin
   if BestInit = NoInitiative then Best := nil;
 end;
 { ovl08:01F6. One combat turn of Who: clears the per-turn fields BF, B12 and B7, runs the
-  ovl24_e3 hook 7 and, while Who still has an initiative, selects it (SelectedCharacter), shows it
+  RunAffectHooks hook 7 and, while Who still has an initiative, selects it (SelectedCharacter), shows it
   (ShowCursorOn, res12_fn_0BB8, res12_fn_09E3), runs hook $F and lets the computer (ovl09_e1, quick
   combat) or the player (PlayerTurn) act; then RedrawMapCell at its position (CombatantX, CombatantY).
   An initiative of InitiativeQuickAll (the Alt-Q fight) counts as $13. }
@@ -102,7 +102,7 @@ begin
   Who^.Combat^.BF := 0;
   Who^.Combat^.B12 := 0;
   Who^.Combat^.B7 := 0;
-  ovl24_e3(7, Who);
+  RunAffectHooks(7, Who);
   if Who^.Combat^.Initiative > 0 then
   begin
     if Who^.Combat^.Initiative = InitiativeQuickAll then Who^.Combat^.Initiative := InitiativeQuickAll - 1;
@@ -110,7 +110,7 @@ begin
     ShowCursorOn(Who, 2, 1);
     res12_fn_0BB8(Who);
     res12_fn_09E3(Who);
-    ovl24_e3($F, Who);
+    RunAffectHooks($F, Who);
     if Who^.Combat^.Initiative > 0 then
       if Who^.Quick <> 0 then
         ovl09_e1(Who)
@@ -243,7 +243,7 @@ var
   I: Byte;
   Flag: Byte;
 begin
-  ovl24_e3($F, Who);
+  RunAffectHooks($F, Who);
   Menu := '';
   if Who^.Combat^.Moves > 0 then Menu := Menu + 'Move ';
   Menu := Menu + 'View Aim ';
@@ -261,7 +261,7 @@ begin
   until Cmd in [KeyQuickAll, KeyAltR, ' ', KeyAltX, KeyAltM, 'A', 'C', 'D', 'M', 'Q', 'T', 'U', 'V'];
 end;
 { ovl08:0880. The end of a combat round: ovl20_e1(1, 1), the round counter ds6DE3, ovl13_e19,
-  then for each character the ovl24_e3 hook $13 and ovl24_e4; a dying character (StatusDying)
+  then for each character the RunAffectHooks hook $13 and ApplyCloudTile; a dying character (StatusDying)
   bleeds one more round and after LastDyingRound rounds is StatusBledOut. Warns Your Teammate is
   Dying while a party member can be bandaged, redraws the map around the CombatMap view position
   (MoveCombatCursor), and sets Done when one side is empty (ds6814 or ds6815 zero). When only the
@@ -280,8 +280,8 @@ begin
   Index := 1;
   while Who <> nil do
   begin
-    ovl24_e3($13, Who);
-    ovl24_e4(Who);
+    RunAffectHooks($13, Who);
+    ApplyCloudTile(Who);
     if Who^.Status = StatusDying then
     begin
       Inc(Who^.Combat^.DyingRounds);
@@ -372,7 +372,7 @@ begin
         begin
           ovl13_e3(Who, Dir);
           if Who^.Flag10D = 0 then Done := res12_fn_2637(Who);
-          ovl24_e4(Who);
+          ApplyCloudTile(Who);
           if res12_fn_0B73(Who) then Done := res12_fn_2637(Who);
         end;
       end;

@@ -1610,6 +1610,214 @@ new = "ComputeThiefSkills"
 kind = "routine"
 why = "called when the thief level ClassLevels[6] is above 0; eight bytes +77h..+7Eh from a thief-level table plus a race table, plus a dexterity table for the first five: the eight AD&D thief skills (ovl23:0329, matched)"
 date = "2026-10-12"
+[[rename]]
+old = "ovl24_e1"
+new = "CallAffectHandler"
+kind = "routine"
+why = "calls the handler table ds6828[AffectId](Who, Affect, Mode) (ovl24:001E, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl24_fn_0160"
+new = "RunAffectHook"
+kind = "routine"
+why = "calls the handler (mode 0) when Who has the affect, or for affects 21, 45, 46, 49 when another member within range (ScanTargets, 6 squares for 31h) has it (ovl24:0160, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl24_e3"
+new = "RunAffectHooks"
+kind = "routine"
+why = "one case over 20 roll kinds, each running RunAffectHook for a fixed list of affect ids; called by the rolls with kinds 6, 9, 0Ah, 0Ch, 0Dh, 10h (ovl24:02FA, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl24_e4"
+new = "ApplyCloudTile"
+kind = "routine"
+why = "a combatant on tile 1Eh without affects 1Eh 1Fh 20h 6Fh 7Dh saves and gets 'starts to cough' (1Eh) or 'chokes and gags from nausea' (1Fh for 1d4+1) (ovl24:0AE7, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl24_e5"
+new = "RollBeatsResistance"
+kind = "routine"
+why = "d20 (20 counts 100) through the hooks of kind 10h plus the given level must exceed the character's byte +111h (ovl24:0C4F, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl24_e6"
+new = "RollToHit"
+kind = "routine"
+why = "d20 (20 counts 100) plus the attacker's +110h and a per-side game word must reach the needed value; hooks 0Ah (attacker) and 10h (target) (ovl24:0CB7, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl24_e8"
+new = "RollDice"
+kind = "routine"
+why = "sums Count rolls of Random(Sides) + 1; ovl04 rolls 1d8, 2d8, 3d8 for the cure spells (ovl24:0DE3, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl24_e9"
+new = "RollDiceCounted"
+kind = "routine"
+why = "keeps the dice count in ds681C and returns RollDice(Count, Sides) (ovl24:0E2E, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl24_e11"
+new = "DropCombatant"
+kind = "routine"
+why = "shows the message, clears +10Dh, sets the status (hit points 0 unless 3), clears the combatant from the map (RedrawGround, CombatantTable) (ovl24:0F06, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl24_e15"
+new = "CureAffect"
+kind = "routine"
+why = "when Who has the affect: 'is Cured', RemoveAffect, returns True (ovl24:1081, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl24_e16"
+new = "EncodeStrength"
+kind = "routine"
+why = "Strength + 100, or for 18 the percentile + 1: one byte for strength and exceptional strength (ovl24:10E4, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl24_e17"
+new = "DecodeStrength"
+kind = "routine"
+why = "the inverse of EncodeStrength on an affect's data byte (bit 7 masked): up to 65h is 18/(n-1), above is n - 100 (ovl24:110D, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl24_e18"
+new = "RaiseStrength"
+kind = "routine"
+why = "refuses a strength below the current one, else keeps the old strength in the first strength affect (0Ch or 26h), sets Strength and StrengthPercent (ovl24:115C, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl24_e21"
+new = "HealCharacter"
+kind = "routine"
+why = "adds hit points to +11Bh capped at HpMax, a dying character becomes unconscious; ovl04 cure spells call it (ovl24:175D, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl24_e22"
+new = "ReviveCombatant"
+kind = "routine"
+why = "places the combatant back on the map, status 0, hit points set, 'stands up and grins' (monster) or 'gets back up' (ovl24:1869, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl24_e10"
+new = "AddAffect"
+kind = "routine"
+why = "allocates a 9-byte affect, appends it to Who's list and fills id, duration, data and flag (ovl24:0E52, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl24_e13"
+new = "RemoveDeathAffects"
+kind = "routine"
+why = "removes the 16 affects of the table at DS:0C14 from the character; DropCombatant and DealDamage call it when a combatant goes down (ovl24:100A, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl24_e19"
+new = "DealDamage"
+kind = "routine"
+why = "'takes <n> points of damage from Fire/Cold/Electricity/Acid/Magic', halved or none on a save, 'lost a spell', 'Goes Down, and is Dying', 'is killed' (ovl24:1344, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl24_e20"
+new = "ApplyAffect"
+kind = "routine"
+why = "'is Unaffected' when the hooks clear the id or a save negates it, else replaces a shorter affect and AddAffect, then shows the message (ovl24:1656, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl24_e2"
+new = "RemoveAffect"
+kind = "routine"
+why = "finds the affect by id in Who's list when none is given, calls its handler with mode 1 when its flag is set, unlinks it and frees its 9 bytes (ovl24:0026, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl24_e7"
+new = "SavingThrow"
+kind = "routine"
+why = "d20: 1 fails, 20 succeeds, else roll + SaveBonus + bonus against SavingThrows[kind] after the hooks of kind 0Ch (ovl24:0D63, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl24_e12"
+new = "ClearAttackerAffect"
+kind = "routine"
+why = "removes every affect 19h from the attacker before RollToHit rolls (ovl24:0FD2, 0CC8, matched)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6816"
+new = "SaveRoll"
+kind = "global"
+why = "SavingThrow: d20 plus SaveBonus and the bonus, compared with SavingThrows[kind] after the hooks (ovl24:0D73..0DCA)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6817"
+new = "HookAffectId"
+kind = "global"
+why = "ApplyAffect sets the affect id before RunAffectHooks kind 9; zero afterwards means 'is Unaffected' (ovl24:1672, 1682)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6818"
+new = "DamageAmount"
+kind = "global"
+why = "DealDamage sets the damage before RunAffectHooks kind 6, halves or clears it on a save, prints and deals it (ovl24:134E..14FB)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6819"
+new = "DamageKind"
+kind = "global"
+why = "DealDamage's text: and F7h = 1 Fire, 2 Cold, 4 Electricity, 10h Acid; bit 3 alone Magic (ovl24:13E4, 14A8)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6822"
+new = "AttackRoll"
+kind = "global"
+why = "RollToHit and RollBeatsResistance: d20 with 20 counted as 100, hooks may change it, negative means a miss (ovl24:0C63, 0CD5)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds682A"
+new = "SaveKind"
+kind = "global"
+why = "SavingThrow stores the saving throw kind for the hooks of kind 0Ch (ovl24:0DAD)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds0C13"
+new = "DeathAffects"
+kind = "global"
+why = "entries 1..16 (DS:0C14) are the affects RemoveDeathAffects removes (ovl24:1026)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds6828"
+new = "AffectHandlers"
+kind = "global"
+why = "the far procedure table CallAffectHandler calls by affect id (lcall [di+6828h], ovl24:001E)"
 
 [[rename]]
 old = "res03_fn_0000"

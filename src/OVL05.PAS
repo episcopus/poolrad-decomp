@@ -118,7 +118,7 @@ begin
           while Item <> nil do
           begin
             if (Item^.Value > 0) or
-              ((Taken < MaxWorthlessItems) and (ovl24_e8(1, 10) <= WorthlessItemChance)) then
+              ((Taken < MaxWorthlessItems) and (RollDice(1, 10) <= WorthlessItemChance)) then
             begin
               Inc(Taken);
               if ds6810 = nil then

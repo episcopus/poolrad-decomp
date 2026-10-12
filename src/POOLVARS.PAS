@@ -129,6 +129,19 @@ type
     [V] by tools/re/records.py). Only the fields a decompiled unit uses are named; the Pad
     arrays keep the offsets. }
   PCharacter = ^TCharacter;
+  { One 9-byte affect of a character's affect list (TCharacter.Affects; New and FreeMem size 9 in
+    ovl24): AddAffect fills it, RemoveAffect unlinks it and, when Flag is set, first calls its
+    handler (AffectHandlers) with mode 1. }
+  PAffect = ^TAffect;
+  TAffect = record
+    Id: Byte;                     { +0: the affect number }
+    Duration: Word;               { +1: 0 for a permanent affect (ApplyAffect replaces a shorter one) }
+    Data: Byte;                   { +3: the affect's value (a strength affect keeps the earlier strength here) }
+    Flag: Byte;                   { +4: nonzero: the handler runs when the affect is removed }
+    Next: PAffect;                { +5: the next affect; nil ends the list }
+  end;
+  { The handler of an affect number (the table AffectHandlers): Mode 0 applies it, 1 removes it. }
+  TAffectHandler = procedure(Who: PCharacter; Affect: PAffect; Mode: Byte);
   { The combat state of a character (TCharacter.Combat, +$108), read and written by the combat
     units ovl08 and ovl31; only the fields they use are named. }
   PCombatant = ^TCombatant;
@@ -216,7 +229,7 @@ type
     { +$77..+$7E: the eight values ComputeThiefSkills builds from the thief level, the race and
       (for the first five) the dexterity: the thief skills [I] (ovl23:0329). }
     ThiefSkills: array[1..8] of Byte;
-    Affects: Pointer;             { +$7F: the list of affects (res12_fn_2199, ovl24_e2 walk it) }
+    Affects: Pointer;             { +$7F: the list of affects (res12_fn_2199, RemoveAffect walk it) }
     Pad83: Byte;
     { +$84: below $80 the party's Space command takes the character out of quick combat
       (ovl08:0504); meaning otherwise unknown. }
@@ -259,7 +272,9 @@ type
     PadC0: array[$C0..$C6] of Byte;
     ItemCountC7: Byte;            { +$C7: nonzero offers Use in the combat menu (ovl08:06E1); likely the item count }
     Items: PItem;                 { +$C8: the list of carried items }
-    PadCC: array[$CC..$103] of Byte;
+    PadCC: array[$CC..$100] of Byte;
+    SaveBonus: ShortInt;          { +$101: added to the d20 of every saving throw (SavingThrow, ovl24:0D96) }
+    Pad102: array[$102..$103] of Byte;
     Next: PCharacter;             { +$104: the next character of the party list (ds5D96), nil ends it }
     Combat: PCombatant;           { +$108: the character's combat state (ovl08, ovl31) }
     { +$10C: the health status: 0 after Raise Dead and Stone to Flesh, 1 and 6 count as dead for
@@ -273,8 +288,15 @@ type
     { +$10F: nonzero while the computer fights for the character (quick combat): CombatTurn hands the
       turn to ovl09_e1 (ovl08:02B3); Quick sets it, the Space command clears it. }
     Quick: Byte;
-    Pad110: array[$110..$11A] of Byte;
-    Flag11B: Byte;                { +$11B: Raise Dead and Stone to Flesh set it to 1; meaning unknown }
+    { +$110: added to the d20 an attack roll (RollToHit) must bring to the needed value (ovl24:0D41) [I]. }
+    HitAdjust: Byte;
+    { +$111: the d20 roll (20 counts 100) plus the level RollBeatsResistance is given must exceed it
+      (ovl24:0C90); likely the magic resistance [I]. }
+    ResistValue: Byte;
+    Pad112: array[$112..$11A] of Byte;
+    { +$11B: Raise Dead and Stone to Flesh set it to 1; HealCharacter adds to it up to HpMax,
+      ReviveCombatant sets it and DropCombatant clears it: the current hit points [I] (ovl24:17B9). }
+    Flag11B: Byte;
     Pad11C: Byte;
   end;
   { The 28 bytes at DS:67F4 that the Temple clears on entry and ovl21_e12 turns into a LongInt
@@ -631,7 +653,7 @@ var
   { The six affects Cure Disease looks for and removes (entries 1..6 at DS:0114: $1F, $22, $2B,
     $2C, $32, $39 in the image; ovl04:031E, 03A6). Entry 0, the byte before, is never read. }
   DiseaseAffects: array[0..6] of Byte;  { see above }
-  ds681F: Byte;                   { 1 while the Temple removes affects through ovl24_e2 (ovl04:0386, 05AB, 07CE), 0 after }
+  ds681F: Byte;                   { 1 while the Temple removes affects (RemoveAffect; ovl04:0386, 05AB, 07CE), 0 after }
   PooledMoney: TPartyMoney;       { the Temple clears it on entry (ovl04:0D32) and passes it to ovl21_e12 }
   ds6C95: PCharacter;             { the character Remove Curse hands to ovl22_e9 (ovl04:08FA) }
   ds6DC0: Byte;                   { cleared when the Temple opens (ovl04:0D37); meaning unknown }
@@ -704,5 +726,21 @@ var
   BattleExperience: LongInt;      { the experience each character receives for the battle (ovl05:060B) }
   BattleWon: Byte;                { 1 when the party (or the duelist) won the battle (ovl05:05CA, 07AC) }
   ds5D9A: PMenuLine;              { loot list entry where the battle's item experience count stops (ovl05:02E5) }
+  { Globals of the affect and roll unit ovl24. }
+  SaveRoll: Byte;                 { the saving throw roll: d20 plus SaveBonus and the bonus (ovl24:0D73) }
+  HookAffectId: Byte;             { the affect ApplyAffect offers to the hooks; 0 afterwards: unaffected (ovl24:1672) }
+  DamageAmount: Byte;             { the damage DealDamage offers to the hooks and then deals (ovl24:134E) }
+  DamageKind: Byte;               { the kind of damage: 1 fire, 2 cold, 4 electricity, $10 acid, bit 3 magic (ovl24:13E4) }
+  ds681C: Byte;                   { the dice count of the last RollDiceCounted roll (ovl24:0E37) }
+  AttackRoll: ShortInt;           { the d20 attack or resistance roll (20 counts 100) the hooks may change (ovl24:0C63) }
+  SaveKind: Byte;                 { the saving throw kind SavingThrow offers to the hooks (ovl24:0DAD) }
+  { The handler of every affect number, called through CallAffectHandler (ovl24:001E); extent unknown. Entry 0
+    is not a handler: SaveKind lies in it. }
+  AffectHandlers: array[0..$8B] of TAffectHandler;  { see above }
+  { The sixteen affects RemoveDeathAffects removes are entries 1..16 at DS:0C14 ($07 $0B $1E $1F $20
+    $33 $34 $35 $36 $3A $3B $5F $62 $89 $4A $4B in the image); entry 0 is the byte before. }
+  DeathAffects: array[0..16] of Byte;  { affects removed when a combatant dies; see above }
+  { The two affects ovl24_e14 removes are entries 1..2 at DS:0C24 ($4A $4B); entry 0 is the byte before. }
+  ds0C23: array[0..2] of Byte;    { entries 1..2 ($4A $4B) are the affects ovl24_e14 removes }
 implementation
 end.
