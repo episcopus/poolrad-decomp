@@ -49,7 +49,7 @@ begin
   New(ds49DA);
   New(ds49DE);
   New(ds5E20);
-  New(ds6A58);
+  New(WallTiles);
   New(ds6A5C);
   res07_fn_248E(8, 1, 1, 0, TileBuf);
   res07_fn_248E($A8, $15, 1, 0, DrawBuf);
@@ -113,7 +113,7 @@ begin
   ds5377 := 1;
   ds547A := 1;
   ds5378 := 1;
-  ds6AAC := 0;
+  WallMapMode := 0;
   ds49F9 := 1;
   AreaViewKind := 1;
   ds49D6^[830] := 0;

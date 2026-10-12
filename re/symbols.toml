@@ -13574,12 +13574,12 @@ id = "ovl29:05FD"
 unit = "ovl29"
 addr = "ovl29:05FD"
 size = 2059
-name = "ovl29_e5"
-signature = "procedure ovl29_e5(A, B, C: Byte)"
+name = "DrawWallView"
+signature = "procedure DrawWallView(Col0, Row0: ShortInt; Dir: Byte)"
 c_name = "ovl29_e5"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_5"
+notes = "renamed from ovl29_e5 (ovl29:05FD draws the 3D wall view: the frame (DrawWallDescriptors) then the walls three cells deep around the party, nearest last, as wall pieces 0..9 (DrawWallPiece); while ds6AAC is nonzero it draws the overhead wall map (DrawWallMap) instead); auto:entry_5"
 evidence = ["prologue"]
 
 [[routine]]
@@ -13616,7 +13616,7 @@ size = 5
 name = "ovl29_init"
 signature = ""
 c_name = "ovl29_init"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_0"
 evidence = ["prologue"]

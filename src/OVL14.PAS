@@ -379,8 +379,8 @@ begin
           'A':
             if GameVars^[VarShowWallOverlays] = 0 then
             begin
-              ds6AAC := Ord(ds6AAC = 0);
-              ovl29_e5(ds6AAD, ds6AAE, ds6AAF);
+              WallMapMode := Ord(WallMapMode = 0);
+              DrawWallView(ds6AAD, ds6AAE, ds6AAF);
             end
             else
               res06_fn_0D68('Not Here', $E);
@@ -412,21 +412,21 @@ begin
             begin
               ds6AAF := (ds6AAF + 4) mod 8;
               ds6AB0 := WallIdAt(ds6AAD, ds6AAE, ds6AAF);
-              ovl29_e5(ds6AAD, ds6AAE, ds6AAF);
+              DrawWallView(ds6AAD, ds6AAE, ds6AAF);
             end;
           'K':
             begin
               ds6AAF := (ds6AAF + 6) mod 8;
               res03_fn_00DC(ds2628);
               ds6AB0 := WallIdAt(ds6AAD, ds6AAE, ds6AAF);
-              ovl29_e5(ds6AAD, ds6AAE, ds6AAF);
+              DrawWallView(ds6AAD, ds6AAE, ds6AAF);
             end;
           'M':
             begin
               ds6AAF := (ds6AAF + 2) mod 8;
               res03_fn_00DC(ds2628);
               ds6AB0 := WallIdAt(ds6AAD, ds6AAE, ds6AAF);
-              ovl29_e5(ds6AAD, ds6AAE, ds6AAF);
+              DrawWallView(ds6AAD, ds6AAE, ds6AAF);
             end;
         else
           ovl19_e10(Key);

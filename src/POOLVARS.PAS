@@ -200,7 +200,9 @@ const
   VarMapY = 196;                  { the party's row in the area map grid }
   VarGeoBlock = 197;              { the GEO block id of the loaded 3D area map (Load3DMap, ovl29:11FB) }
   VarForceWallView = 230;         { nonzero: ShowAreaView shows the wall view whatever AreaViewKind says }
-  VarShowWallOverlays = 251;      { nonzero: ShowAreaView clears ds6AAC, so ovl29_e5 draws the overlay labels }
+  { Nonzero: the overhead wall map is off (ShowAreaView clears WallMapMode, the A key cannot set
+    it, ovl14:0380); the name predates that evidence. }
+  VarShowWallOverlays = 251;
   VarWallIndexOutside = 253;      { the ds0C26 wall id index ShowAreaView uses for a cell that is not interior }
   VarWallIndexInside = 254;       { the ds0C26 wall id index for an interior cell (event byte bit 7) }
   VarRiverGate = 418;             { river-crossing gate: CheckMapCell prints the stench message while it is 0
@@ -250,13 +252,15 @@ var
   ds6A61: Byte;                   { wall view descriptor 2: ShowAreaView fills it from ds6F69 when ds84E5 is set }
   ds6A62: Byte;                   { wall view descriptor 3: ShowAreaView fills it from ds6F69 when ds84E5 is set }
   ds6A63: Byte;                   { wall view descriptor 4: ShowAreaView fills it from ds6F68 when ds84E5 is set }
-  { ovl29_e5 draws the four wall view descriptors through DrawWallDescriptors only while ds6AAC is 0;
-    ShowAreaView (when GameVars^[VarShowWallOverlays] is set) and ovl07_e8 clear it. }
-  ds6AAC: Byte;                   { wall view overlay gate; see above }
+  { Nonzero: the view shows the overhead wall map (DrawWallMap) instead of the 3D walls and their
+    frame (DrawWallView, ovl29:0603). The A key of the movement loop toggles it while
+    GameVars^[VarShowWallOverlays] is 0 (ovl14:0380); ShowAreaView (when that variable is set),
+    ovl07_e8 and StartGame clear it. }
+  WallMapMode: Byte;              { overhead wall map shown instead of the 3D view; see above }
   ds6AAD: ShortInt;               { the party's column in the 16x16 area map (GEO) }
-    { ShortInt, not Byte: ovl14 widens it with cbw (ovl14:0696); EventByteAt/e5 take it. }
+    { ShortInt, not Byte: ovl14 widens it with cbw (ovl14:0696); EventByteAt/DrawWallView take it. }
   ds6AAE: ShortInt;               { the party's row in the 16x16 area map }
-    { ShortInt, not Byte: ovl14 widens it with cbw (ovl14:069D); EventByteAt/e5 take it; set to 1 by StartGame. }
+    { ShortInt, not Byte: ovl14 widens it with cbw (ovl14:069D); EventByteAt/DrawWallView take it; set to 1 by StartGame. }
   { The marker's icon set (DrawIcon's third parameter): the wilderness keys H, M, P and K set 0,
     2, 4 and 6 (HandleWildernessKeys, HandleWildernessKeys); ovl07_e10 maps a script value 0..3 to the same 0/2/4/6. }
   ds6AAF: Byte;                   { the marker's icon set; see above }
@@ -372,11 +376,11 @@ var
   ds5E1E: Word;                   { BlockRead result count of the loader (ovl11:05D6) }
   ds5E20: ^TBlock588;             { $588-byte block the loader allocates (ovl11:0074) }
   ds6810: PMenuLine;              { head of the shop's item list, a far pointer the loader clears (ovl11:031A) }
-  ds6A58: ^TWallTiles;            { the wall tiles, $924 bytes the loader allocates (ovl11:0084) }
+  WallTiles: ^TWallTiles;            { the wall tiles, $924 bytes the loader allocates (ovl11:0084) }
   ds6A5C: ^TBlock400;             { $400-byte block the loader allocates (ovl11:0094) }
   ds84DC: Byte;                   { the wall view / outdoor mode EventByteAt tests (0 and $A both skip) }
   GeoCells: PGeoCellBlock absolute ds6A5C; { cell-byte view of the $400 block for ovl14 }
-  WallSets: ^TWallSets absolute ds6A58; { the wall tiles by wallset slot and wall (LoadWallSet) }
+  WallSets: ^TWallSets absolute WallTiles; { the wall tiles by wallset slot and wall (LoadWallSet) }
   ds6AAEWords: array[0..3] of TPresenceSlot;  { the 4-byte element table at DS:6AAE; the loader sets
                                     elements 2 and 3 to $FFFF (ovl11:035E..0390) }
   ds6AB2: Word;                   { cleared by the loader (ovl11:0353) }
@@ -392,15 +396,15 @@ var
   ds6B1C: Byte;                   { set to $FF by the loader (ovl11:0442) and by FreeSpriteList }
   ds0C6C: array[0..$F] of Byte;   { 16-byte table LoadSpriteList passes to res07_fn_1E5C (with ds0C7C) }
   ds0C7C: array[0..$F] of Byte;   { second 16-byte table LoadSpriteList passes to res07_fn_1E5C }
-  { The ten pieces a wall of the 3D view is drawn from (DrawWallPiece, ovl29_e5): each piece is a
+  { The ten pieces a wall of the 3D view is drawn from (DrawWallPiece, DrawWallView): each piece is a
     rectangle of 8x8 tiles, Width x Height, whose tiles follow each other in a wall's 156-byte tile
     list from FirstTile on (the image's values 0,2,6,..,$9A add up to $9C exactly), drawn with its
     top left tile at view column Col, row Row. Indexed by the piece number 0..9. }
-  ds0C8C: array[0..9] of Byte;     { first tile of each wall piece in the 156-byte tile list; see above }
-  ds0C96: array[0..9] of Byte;     { width in tiles of each wall piece; see above }
-  ds0CA0: array[0..9] of Byte;     { height in tiles of each wall piece; see above }
-  ds0CAA: array[0..9] of Integer;  { view column of each wall piece's top left tile; see above }
-  ds0CBE: array[0..9] of Integer;  { view row of each wall piece's top left tile; see above }
+  WallPieceFirstTile: array[0..9] of Byte;     { first tile of each wall piece in the 156-byte tile list; see above }
+  WallPieceWidth: array[0..9] of Byte;     { width in tiles of each wall piece; see above }
+  WallPieceHeight: array[0..9] of Byte;     { height in tiles of each wall piece; see above }
+  WallPieceCol: array[0..9] of Integer;  { view column of each wall piece's top left tile; see above }
+  WallPieceRow: array[0..9] of Integer;  { view row of each wall piece's top left tile; see above }
   ds70C7: ShortInt;               { loop counter of FreeSpriteList (the sprite list slots); ShortInt: the loop exits with jg }
   ds6B29: Word;                   { set to 1 by the loader (ovl11:0405) }
   ds6DDA: Byte;                   { cleared by the loader (ovl11:0410) }

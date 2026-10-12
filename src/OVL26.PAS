@@ -72,11 +72,11 @@ end;
   the event byte of the party cell (EventByteAt; bit 7 says the cell is interior), picks the wall id
   table entry ds0C26[VarWallIndexInside] or ds0C26[VarWallIndexOutside] accordingly, refreshes
   descriptors 2 to 4 from the special view codes ds6F69 and ds6F68 while ds84E5 is set, hands all
-  four descriptors to SetWallDescriptors, clears ds6AAC when VarShowWallOverlays asks, and lets ovl29_e5 draw
+  four descriptors to SetWallDescriptors, clears WallMapMode when VarShowWallOverlays asks, and lets DrawWallView draw
   the rest. Kinds 2 to 4 draw the 5x5 map window (DrawAreaView) around the party position minus 2,
   clamped to columns 0..39 and rows 0..31, then DrawPartyMarker. Reads: AreaViewKind, GameVars^,
   ds6AAD, ds6AAE, ds6AAF, ds6F68, ds6F69, ds84E5, ds0C26, MapBaseX. Changes: ds6A60 to ds6A63,
-  ds6AB1, ds6AAC. Side effect: the view on the screen.
+  ds6AB1, WallMapMode. Side effect: the view on the screen.
   QUIRK ovl26:018C: the three helpers below are nested functions of this routine: the caller
   pushes its frame as their static link (push bp at ovl26:01D7, 01E3, 01EF), which is why they
   carry 4 parameter bytes and live in the code right before this routine. }
@@ -147,8 +147,8 @@ begin
           ds6A63 := WallDesc4FromCode(ds6F68);
         end;
         SetWallDescriptors(ds6A60, ds6A61, ds6A62, ds6A63);
-        if GameVars^[VarShowWallOverlays] <> 0 then ds6AAC := 0;
-        ovl29_e5(ds6AAD, ds6AAE, ds6AAF);
+        if GameVars^[VarShowWallOverlays] <> 0 then WallMapMode := 0;
+        DrawWallView(ds6AAD, ds6AAE, ds6AAF);
       end;
     2..4:
       begin

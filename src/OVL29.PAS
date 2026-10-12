@@ -1,7 +1,7 @@
 unit OVL29;
 { The wall view and GEO loader (whitepaper 5.2): SetWallDescriptors stores the four wall view
   descriptors (ds6A60..ds6A63) that ShowAreaView passes; CellInRange tests a 16x16 block map cell;
-  EventByteAt reads the event byte of a map cell; ovl29_e5 draws the wall view and its overlay labels;
+  EventByteAt reads the event byte of a map cell; DrawWallView draws the wall view and its overlay labels;
   LoadWallSet and Load3DMap load the WALLDEF and GEO data. Design doc whitepaper 5.2. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
@@ -14,7 +14,7 @@ function DoorKindAt(Col, Row: ShortInt; Dir: Byte): Byte;
 function WallIdAt(Col, Row: ShortInt; Dir: Byte): Byte;
 function EventByteAt(Col, Row: ShortInt): Byte;
 procedure StepDisplay;
-procedure ovl29_e5(A, B, C: Byte);
+procedure DrawWallView(Col0, Row0: ShortInt; Dir: Byte);
 procedure LoadWallSet(BlockId, First: Byte);
 procedure Load3DMap(BlockId: Byte);
 implementation
@@ -33,6 +33,19 @@ const
   MapWindowHalf = 5;     { the overhead map window reaches 5 cells each side of the party }
   ViewLast = 10;         { the last tile column and row of the 11x11 tile 3D view }
   ViewLeft = 3;          { the screen column (and row) of the view's first tile, counted from 1 }
+  { The ten wall pieces (WallPieceFirstTile..WallPieceRow): the front, left and right walls of
+    the far (two cells ahead), middle and near rows of the view, and the edge of a far front wall. }
+  PieceFarFront = 0;
+  PieceFarLeft = 1;
+  PieceFarRight = 2;
+  PieceMidFront = 3;
+  PieceMidLeft = 4;
+  PieceMidRight = 5;
+  PieceNearFront = 6;
+  PieceNearLeft = 7;
+  PieceNearRight = 8;
+  PieceFarEdge = 9;
+  ViewDepth = 2;         { the view reaches two cells ahead of the party }
   GeoBlockSize = $402;   { a GEO block: a size word and four 256-byte planes (whitepaper 4.2.1) }
   GeoPlaneSize = $100;   { one 16x16 plane of a GEO block }
   WallSetSize = $30C;    { one WALLDEF wallset: five walls of 156 tiles (whitepaper 4.2.4) }
@@ -40,8 +53,8 @@ const
   WallsPerSet = 5;
   LastWallTile = $9B;    { the tiles of one wall are 0..155 }
 
-{ ovl29:0000. Draws the overhead wall map in the view instead of the 3D walls (ovl29_e5 calls it
-  while ds6AAC is nonzero): an 11x11 window of the 16x16 area map, placed so that the party cell
+{ ovl29:0000. Draws the overhead wall map in the view instead of the 3D walls (DrawWallView calls it
+  while WallMapMode is nonzero): an 11x11 window of the 16x16 area map, placed so that the party cell
   (Col, Row) is centred where the map allows (the window's left column and top row are clamped to
   0..5), one 8x8 symbol per cell: WallSymbols plus 1, 2, 4 and 8 for a wall on the north, east,
   south and west side (WallIdAt nonzero). Then the party arrow, PartyArrow + Dir div 2 (Dir 0, 2,
@@ -77,13 +90,13 @@ begin
       MapCol := ViewCol + LeftCol;
       Symbol := WallSymbols;
       if WallIdAt(MapCol, MapRow, DirNorth) > 0 then Inc(Symbol);
-      if WallIdAt(MapCol, MapRow, DirEast) > 0 then Inc(Symbol, 2);
-      if WallIdAt(MapCol, MapRow, DirSouth) > 0 then Inc(Symbol, 4);
-      if WallIdAt(MapCol, MapRow, DirWest) > 0 then Inc(Symbol, 8);
-      Put8x8Symbol(ViewCol + ViewLeft - 1, ViewRow + ViewLeft - 1, Symbol, 1, 0);
+      if WallIdAt(MapCol, MapRow, DirEast) > 0 then Inc(Symbol, PieceFarRight);
+      if WallIdAt(MapCol, MapRow, DirSouth) > 0 then Inc(Symbol, PieceMidLeft);
+      if WallIdAt(MapCol, MapRow, DirWest) > 0 then Inc(Symbol, PieceNearRight);
+      Put8x8Symbol(ViewCol + ViewLeft - 1, ViewRow + ViewLeft - 1, Symbol, 1, PieceFarFront);
     end;
   end;
-  Put8x8Symbol(PartyCol + ViewLeft - 1, PartyRow + ViewLeft - 1, Dir shr 1 + PartyArrow, 1, 0);
+  Put8x8Symbol(PartyCol + ViewLeft - 1, PartyRow + ViewLeft - 1, Dir shr 1 + PartyArrow, 1, PieceFarFront);
   StepDisplay;
 end;
 { ovl29:0155: retf 8: 8 bytes of parameters; 0 bytes of locals }
@@ -98,7 +111,7 @@ begin
 end;
 { ovl29:0174. Draws the four wall view descriptors ds6A60..ds6A63 through res07_fn_2632 (A=2,
   B and D the descriptor's screen position/size, C=$B, E the descriptor, F=@ds260A's 8-byte
-  structure, G=DrawBuf). Called by ovl29_e5. }
+  structure, G=DrawBuf). Called by DrawWallView. }
 procedure DrawWallDescriptors;
 begin
   res07_fn_2632(2, $10, $B, $2B, ds6A60, @ds260A, DrawBuf);
@@ -107,11 +120,11 @@ begin
   res07_fn_2632(2, $3E, $B, $2A, ds6A63, @ds260A, DrawBuf);
 end;
 { ovl29:0211. Draws piece Piece (0..9) of wall Wall (a wall id 1..15) in the 3D view: the piece's
-  Width x Height tiles (ds0C96, ds0CA0), taken in order from the wall's tile list ds6A58^[Wall]
-  starting at ds0C8C[Piece], go row by row to the view cells from (Col, Row) on. Cells outside the
+  Width x Height tiles (WallPieceWidth, WallPieceHeight), taken in order from the wall's tile list WallTiles^[Wall]
+  starting at WallPieceFirstTile[Piece], go row by row to the view cells from (Col, Row) on. Cells outside the
   11x11 view (0..ViewLast) and tile number 0 are skipped; each drawn tile is an 8x8 symbol at
   screen column Col + ViewLeft - 1 (Put8x8Symbol with Direct 1, the 3D view path). Called by
-  ovl29_e5 with the piece positions ds0CAA/ds0CBE, shifted per distance and side. }
+  DrawWallView with the piece positions WallPieceCol/WallPieceRow, shifted per distance and side. }
 procedure DrawWallPiece(Col, Row: ShortInt; Wall, Piece: Byte);
 var
   LastCol: Integer;
@@ -120,22 +133,22 @@ var
   TileRow: Integer;
   Tile: Byte;
 begin
-  Tile := ds0C8C[Piece];
-  LastCol := ds0C96[Piece] + Col - 1;
-  LastRow := ds0CA0[Piece] + Row - 1;
+  Tile := WallPieceFirstTile[Piece];
+  LastCol := WallPieceWidth[Piece] + Col - 1;
+  LastRow := WallPieceHeight[Piece] + Row - 1;
   for TileRow := Row to LastRow do
     for TileCol := Col to LastCol do
     begin
       if (TileRow >= 0) and (TileRow <= ViewLast) and (TileCol >= 0) and (TileCol <= ViewLast) then
-        if ds6A58^[Wall, Tile] > 0 then
-          Put8x8Symbol(TileCol + ViewLeft - 1, TileRow + ViewLeft - 1, ds6A58^[Wall, Tile], 1, 1);
+        if WallTiles^[Wall, Tile] > 0 then
+          Put8x8Symbol(TileCol + ViewLeft - 1, TileRow + ViewLeft - 1, WallTiles^[Wall, Tile], 1, PieceFarLeft);
       Inc(Tile);
     end;
 end;
 { ovl29:031F: retf 4: 4 bytes of parameters; 2 bytes of locals }
 { ovl29:031F. True when both X and Y are in 0..$F (a map cell inside the 16x16 block). Signed
   ShortInt parameters; the four compares are in the order X <= $F, X >= 0, Y <= $F, Y >= 0. Called
-  by DoorKindAt, WallIdAt, EventByteAt and ovl29_e5. }
+  by DoorKindAt, WallIdAt, EventByteAt and DrawWallView. }
 function CellInRange(Col, Row: ShortInt): Boolean;
 begin
   if (Col > $F) or (Col < 0) or (Row > $F) or (Row < 0) then
@@ -210,16 +223,244 @@ begin
   end;
 end;
 { ovl29:05F3. Steps the picture display (res07_fn_1B52, the same call ovl34 uses after a
-  direct blit). No parameters. Called by ovl29_fn_0143 and ovl29_e5. }
+  direct blit). No parameters. Called by ovl29_fn_0143 and DrawWallView. }
 procedure StepDisplay;
 begin
   res07_fn_1B52;
 end;
-{ ovl29:05FD: retf 6: 6 bytes of parameters; 24 bytes of locals.
-  Draws the rest of the wall view: with ds6AAC at 0 it draws the four descriptors through
-  DrawWallDescriptors, otherwise it calls DrawWallMap; A and B are the party cell (ds6AAD, ds6AAE)
-  and C the icon set of the marker (ds6AAF). }
-{@stub} procedure ovl29_e5(A, B, C: Byte); begin end;
+{ ovl29:05FD. Draws the 3D view for the party at map cell (Col0, Row0) facing Dir (0, 2, 4, 6):
+  while WallMapMode is set it draws the overhead wall map (DrawWallMap) instead. Otherwise it draws
+  the view's frame (DrawWallDescriptors), then the walls from the farthest row of cells (ViewDepth
+  ahead) to the party's own row, so nearer walls cover farther ones, and shows the result
+  (StepDisplay). Each wall goes through DrawWallPiece at its piece position WallPieceCol/Row[n]
+  moved by Shift tiles per cell to the side: far row, up to four cells each side, front walls
+  (piece 0, 2 tiles per cell) and the edge piece 9 where a front wall ends, then the side walls of
+  the nearest three cells each side (pieces 1, PieceFarRight); middle row, three cells from two to the left and
+  from two to the right, front (3) and side walls (4, 5), 3 tiles per cell; near row, two cells
+  each side, front (6) and side walls (7, 8), 7 tiles per cell. Wall ids come from WallIdAt with
+  the facing direction for front walls and the left (Dir + 6) or right (Dir + 2) direction for
+  side walls; the step tables ds2736/ds273F move one cell. Called by ShowAreaView and the
+  movement loop (A key). QUIRK ovl29:05FD: two locals (Unused1, Unused2) are never used. }
+procedure DrawWallView(Col0, Row0: ShortInt; Dir: Byte);
+var
+  DirLeft: Byte;
+  DirRight: Byte;
+  DirBack: Byte;
+  BaseCol: Integer;
+  BaseRow: Integer;
+  StepCol: Integer;
+  StepRow: Integer;
+  Col: Integer;
+  Row: Integer;
+  Count: Byte;
+  Shift: Integer;
+  Depth: Byte;
+  FrontWall: Byte;
+  SideWall: Byte;
+  Unused1: Byte;
+  EdgeWall: Byte;
+  Unused2: Byte;
+begin
+  if WallMapMode <> 0 then
+    DrawWallMap(Col0, Row0, Dir)
+  else
+  begin
+    DrawWallDescriptors;
+    DirLeft := (Dir + 6) mod 8;
+    DirBack := (Dir + 4) mod 8;
+    DirRight := (Dir + 2) mod 8;
+    BaseCol := Col0;
+    BaseRow := Row0;
+    StepCol := ds2736[Dir];
+    StepRow := ds273F[Dir];
+    Depth := ViewDepth;
+    Inc(BaseCol, Depth * StepCol);
+    Inc(BaseRow, Depth * StepRow);
+    repeat
+      case Depth of
+        2:  { the far row }
+        begin
+          Col := BaseCol;
+          Row := BaseRow;
+          Count := 0;
+          Shift := 0;
+          EdgeWall := 0;
+          while Count < 4 do
+          begin
+            FrontWall := WallIdAt(Col, Row, Dir);
+            if not CellInRange(Col, Row) then
+              if WallIdAt(Col, Row, DirRight) = 0 then
+                EdgeWall := 0;
+            if FrontWall <> 0 then
+            begin
+              if EdgeWall > 0 then
+                DrawWallPiece(WallPieceCol[PieceFarEdge] + Shift + 1, WallPieceRow[PieceFarEdge], EdgeWall, PieceFarEdge);
+              EdgeWall := FrontWall;
+              DrawWallPiece(WallPieceCol[PieceFarFront] + Shift, WallPieceRow[PieceFarFront], FrontWall, PieceFarFront);
+            end
+            else
+            begin
+              if EdgeWall > 0 then
+                if WallIdAt(Col - ds2736[DirLeft], Row - ds273F[DirLeft], DirLeft) <> 0 then
+                  DrawWallPiece(WallPieceCol[PieceFarEdge] + Shift + 1, WallPieceRow[PieceFarEdge], EdgeWall, PieceFarEdge);
+              EdgeWall := 0;
+            end;
+            Inc(Count);
+            Dec(Shift, PieceFarRight);
+            Col := Col + ds2736[DirLeft];
+            Row := Row + ds273F[DirLeft];
+          end;
+          Col := BaseCol;
+          Row := BaseRow;
+          Count := 0;
+          Shift := 0;
+          EdgeWall := 0;
+          while Count < 4 do
+          begin
+            FrontWall := WallIdAt(Col, Row, Dir);
+            if not CellInRange(Col, Row) then
+              if WallIdAt(Col, Row, DirLeft) = 0 then
+                EdgeWall := 0;
+            if FrontWall <> 0 then
+            begin
+              if EdgeWall > 0 then
+                DrawWallPiece(WallPieceCol[PieceFarEdge] + Shift - 1, WallPieceRow[PieceFarEdge], EdgeWall, PieceFarEdge);
+              EdgeWall := FrontWall;
+              DrawWallPiece(WallPieceCol[PieceFarFront] + Shift, WallPieceRow[PieceFarFront], FrontWall, PieceFarFront);
+            end
+            else
+            begin
+              if EdgeWall > 0 then
+                if WallIdAt(Col - ds2736[DirRight], Row - ds273F[DirRight], DirRight) <> 0 then
+                  DrawWallPiece(WallPieceCol[PieceFarEdge] + Shift - 1, WallPieceRow[PieceFarEdge], EdgeWall, PieceFarEdge);
+              EdgeWall := 0;
+            end;
+            Inc(Count);
+            Inc(Shift, PieceFarRight);
+            Col := Col + ds2736[DirRight];
+            Row := Row + ds273F[DirRight];
+          end;
+          Col := BaseCol;
+          Row := BaseRow;
+          Count := 0;
+          Shift := 0;
+          while Count < 3 do
+          begin
+            SideWall := WallIdAt(Col, Row, DirLeft);
+            if SideWall <> 0 then
+              if Count = 0 then
+                DrawWallPiece(WallPieceCol[PieceFarLeft] + Shift, WallPieceRow[PieceFarLeft], SideWall, 1)
+              else
+                DrawWallPiece(WallPieceCol[PieceFarLeft] + Shift - 1, WallPieceRow[PieceFarLeft], SideWall, PieceFarLeft);
+            Inc(Count);
+            Dec(Shift, PieceFarRight);
+            Col := Col + ds2736[DirLeft];
+            Row := Row + ds273F[DirLeft];
+          end;
+          Col := BaseCol;
+          Row := BaseRow;
+          Count := 0;
+          Shift := 0;
+          while Count < 3 do
+          begin
+            SideWall := WallIdAt(Col, Row, DirRight);
+            if SideWall <> 0 then
+              if Count = 0 then
+                DrawWallPiece(WallPieceCol[PieceFarRight] + Shift, WallPieceRow[PieceFarRight], SideWall, 2)
+              else
+                DrawWallPiece(WallPieceCol[PieceFarRight] + Shift + 1, WallPieceRow[PieceFarRight], SideWall, PieceFarRight);
+            Inc(Count);
+            Inc(Shift, PieceFarRight);
+            Col := Col + ds2736[DirRight];
+            Row := Row + ds273F[DirRight];
+          end;
+        end;
+        1:  { the middle row }
+        begin
+          Col := BaseCol + ds2736[DirLeft];
+          Col := Col + ds2736[DirLeft];
+          Row := BaseRow + ds273F[DirLeft];
+          Row := Row + ds273F[DirLeft];
+          Count := 0;
+          Shift := -6;
+          while Count < 3 do
+          begin
+            FrontWall := WallIdAt(Col, Row, Dir);
+            if FrontWall <> 0 then
+              DrawWallPiece(WallPieceCol[PieceMidFront] + Shift, WallPieceRow[PieceMidFront], FrontWall, PieceMidFront);
+            SideWall := WallIdAt(Col, Row, DirLeft);
+            if SideWall <> 0 then
+              DrawWallPiece(WallPieceCol[PieceMidLeft] + Shift, WallPieceRow[PieceMidLeft], SideWall, PieceMidLeft);
+            Inc(Count);
+            Inc(Shift, PieceMidFront);
+            Col := Col + ds2736[DirRight];
+            Row := Row + ds273F[DirRight];
+          end;
+          Col := BaseCol + ds2736[DirRight];
+          Col := Col + ds2736[DirRight];
+          Row := BaseRow + ds273F[DirRight];
+          Row := Row + ds273F[DirRight];
+          Count := 0;
+          Shift := 6;
+          while Count < 3 do
+          begin
+            FrontWall := WallIdAt(Col, Row, Dir);
+            if FrontWall <> 0 then
+              DrawWallPiece(WallPieceCol[PieceMidFront] + Shift, WallPieceRow[PieceMidFront], FrontWall, PieceMidFront);
+            SideWall := WallIdAt(Col, Row, DirRight);
+            if SideWall <> 0 then
+              DrawWallPiece(WallPieceCol[PieceMidRight] + Shift, WallPieceRow[PieceMidRight], SideWall, PieceMidRight);
+            Inc(Count);
+            Dec(Shift, PieceMidFront);
+            Col := Col + ds2736[DirLeft];
+            Row := Row + ds273F[DirLeft];
+          end;
+        end;
+        0:  { the party's row }
+        begin
+          Col := BaseCol + ds2736[DirLeft];
+          Row := BaseRow + ds273F[DirLeft];
+          Count := 0;
+          Shift := -7;
+          while Count < 2 do
+          begin
+            FrontWall := WallIdAt(Col, Row, Dir);
+            if FrontWall <> 0 then
+              DrawWallPiece(WallPieceCol[PieceNearFront] + Shift, WallPieceRow[PieceNearFront], FrontWall, PieceNearFront);
+            SideWall := WallIdAt(Col, Row, DirLeft);
+            if SideWall <> 0 then
+              DrawWallPiece(WallPieceCol[PieceNearLeft] + Shift, WallPieceRow[PieceNearLeft], SideWall, PieceNearLeft);
+            Inc(Count);
+            Inc(Shift, PieceNearLeft);
+            Col := Col + ds2736[DirRight];
+            Row := Row + ds273F[DirRight];
+          end;
+          Col := BaseCol + ds2736[DirRight];
+          Row := BaseRow + ds273F[DirRight];
+          Count := 0;
+          Shift := 7;
+          while Count < 2 do
+          begin
+            FrontWall := WallIdAt(Col, Row, Dir);
+            if FrontWall <> 0 then
+              DrawWallPiece(WallPieceCol[PieceNearFront] + Shift, WallPieceRow[PieceNearFront], FrontWall, PieceNearFront);
+            SideWall := WallIdAt(Col, Row, DirRight);
+            if SideWall <> 0 then
+              DrawWallPiece(WallPieceCol[PieceNearRight] + Shift, WallPieceRow[PieceNearRight], SideWall, PieceNearRight);
+            Inc(Count);
+            Dec(Shift, PieceNearLeft);
+            Col := Col + ds2736[DirLeft];
+            Row := Row + ds273F[DirLeft];
+          end;
+        end;
+      end;
+      BaseCol := BaseCol + ds2736[DirBack];
+      BaseRow := BaseRow + ds273F[DirBack];
+      Dec(Depth);
+    until Depth = $FF;
+    StepDisplay;
+  end;
+end;
 { ovl29:0E08. Loads the WALLDEF<TileSet>.DAX block BlockId (one to three wallsets of $30C
   bytes, whitepaper 4.2.4) into the wall tiles from wallset slot First (1..3) on; any other First
   does nothing. A missing block or one that does not fit in the slots left is fatal (Unable to
