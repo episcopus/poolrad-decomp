@@ -24,7 +24,7 @@ Approach: ADR-002 (SPEC 4), Pascal-first matching decompilation; the C track (AD
 | ovl11 | Loader | 2 | 2 | 1517 | clean | complete |
 | ovl26 | ovl26 | 6 | 6 | 677 | clean | complete |
 | ovl27 | ovl27 | 3 | 3 | 648 | clean | yes |
-| ovl33 | ovl33 | 2 | 2 | 248 | clean | complete |
+| ovl33 | DebugTrace | 2 | 2 | 248 | clean | complete |
 | res02 | res02 | 1 | 1 | 16 | clean | yes |
 | res04 | res04 | 5 | 5 | 336 | clean | yes |
 | res06 | res06 | 20 | 1 | 74 | clean | in progress |
