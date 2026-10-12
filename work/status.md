@@ -12,7 +12,7 @@ Approach: ADR-002 (SPEC 4), Pascal-first matching decompilation; the C track (AD
 | P1 Map | done (`make p1-check`): 50 units, 1441 routines, TP 6.0 June 1991 pinned |
 | P2 Oracle and data | done: goldens with recordings for 2 of 2 session scripts (boot-title, create-character); `make golden CHECK=1` |
 | P3 Match harness | done: `make match` (tools/match/match.py, tests/unit/test_match.py); gate `make check` |
-| P4 Match | 163 of 1242 game routines at L2 (39420 of 231429 bytes by re/symbols.toml sizes); 24 of 46 game units complete, 20 reviewed; main program `src/POOL.PAS` matched by `make match UNIT=main` |
+| P4 Match | 163 of 1242 game routines at L2 (39420 of 231429 bytes by re/symbols.toml sizes); 24 of 46 game units complete, 21 reviewed; main program `src/POOL.PAS` matched by `make match UNIT=main` |
 | P5 Rebuild | `make rebuild` links the whole game from `src/` (every unit has source: decompiled or skeleton) and reports identical segments |
 
 ### P4 units with matched routines
@@ -33,7 +33,7 @@ Approach: ADR-002 (SPEC 4), Pascal-first matching decompilation; the C track (AD
 | ovl26 | ovl26 | 6 | 6 | 677 | clean | yes |
 | ovl27 | ovl27 | 3 | 3 | 648 | clean | yes |
 | ovl28 | ovl28 | 10 | 10 | 1942 | clean | yes |
-| ovl29 | GeoLoad | 13 | 13 | 4619 | clean | complete |
+| ovl29 | GeoLoad | 13 | 13 | 4619 | clean | yes |
 | ovl30 | ovl30 | 8 | 8 | 3038 | clean | yes |
 | ovl31 | ovl31 | 23 | 13 | 2036 | clean | in progress |
 | ovl32 | PicLoad | 6 | 6 | 1571 | clean | yes |
