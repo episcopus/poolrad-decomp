@@ -39,7 +39,6 @@ overlays:         ## regenerate the overlay manifest and extract overlay code to
 
 map: overlays     ## fill units.toml ranges, enumerate routines, tag RTL/names (playbook 10)
 	$(PY) tools/re/update_units.py
-	$(PY) tools/re/forced_starts.py --write
 	$(PY) tools/re/enumerate_routines.py --merge
 	$(PY) tools/re/name_units.py
 	$(PY) tools/re/rtl_ident.py
