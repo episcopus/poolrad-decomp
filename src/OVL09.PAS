@@ -8,7 +8,7 @@ unit OVL09;
 interface
 uses POOLVARS;
 procedure ovl09_e1(Who: Pointer);
-procedure ovl09_fn_0203;
+function ovl09_fn_0203(Who: PCharacter): Boolean;
 procedure ovl09_fn_0255;
 function ovl09_fn_02EB(Who: Pointer; Spell, N: Byte): Boolean;
 procedure ovl09_fn_03E4;
@@ -58,8 +58,24 @@ uses RES04, RES06, RES12, OVL13, OVL19, OVL22, OVL24, OVL25, OVL30, OVL31;
 
 { ovl09:000F: retf 4: 4 bytes of parameters; 18 bytes of locals }
 {@stub} procedure ovl09_e1(Who: Pointer); begin end;
-{ ovl09:0203: retf 4: 4 bytes of parameters; 6 bytes of locals }
-{@stub} procedure ovl09_fn_0203; begin end;
+{ ovl09:0203. Purpose unknown: returns True and calls ovl13_e9 when the combatant may
+  still turn (Combat.Turned is 0), has a level in class 0 (ClassLevels[0] above 0) and
+  ovl13_e10 agrees; else returns False. Called by ovl09_e1 (ovl09:0169): a True result ends
+  the turn through res12_fn_2637. Unused fills the two frame bytes the code never reads
+  ([bp-2..-4]; B at [bp-5] is ovl13_e10's var parameter). }
+function ovl09_fn_0203(Who: PCharacter): Boolean;
+var
+  Unused: array[0..2] of Byte;
+  Done: Byte;
+begin
+  if (Who^.Combat^.Turned = 0) and (Who^.ClassLevels[0] > 0) and ovl13_e10(Who, Done) then
+  begin
+    ovl09_fn_0203 := True;
+    ovl13_e9(Who);
+  end
+  else
+    ovl09_fn_0203 := False;
+end;
 { ovl09:0255: retf 8: 8 bytes of parameters; 4 bytes of locals }
 {@stub} procedure ovl09_fn_0255; begin end;
 { ovl09:02EB: retf 8: 4 bytes of parameters; 8 bytes of locals }
