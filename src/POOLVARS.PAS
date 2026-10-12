@@ -646,6 +646,9 @@ var
     @ovl22_e4 at the end (ovl08:0069); who calls it is not known yet. }
   ds6B84: Pointer;                { see above }
   ds6814: Byte;                   { zero (or ds6815 zero) ends the combat (ovl08:009B, 095C); likely the count of one side }
+  { Per-side combatant counts (ds6814 side 0, ds6815 side 1, ovl08:009B): UseMagicItem indexes
+    them by the res12_fn_23B7 side. Only two count bytes are known; the bound is documentation. }
+  SideCounts: array[0..1] of Byte absolute ds6814;
   ds6825: Byte;                   { AI morale scratch (CheckMorale computes it from B84, compares percentages) }
   ds6E2F: Byte;                   { byte CheckMorale copies into ds6825; meaning unknown }
   ds6815: Byte;                   { see ds6814; likely the count of the other side }

@@ -33,7 +33,7 @@ procedure ovl19_fn_1734;
 procedure ovl19_fn_1758;
 procedure ovl19_fn_17ED;
 procedure ovl19_fn_189D;
-procedure ovl19_e8(var B: Byte; P: Pointer);
+procedure ovl19_e8(P: Pointer; var B: Byte);
 procedure ovl19_fn_1BA6;
 procedure ovl19_fn_1BD7;
 procedure ovl19_fn_1C13;
@@ -116,7 +116,7 @@ implementation
 { ovl19:189D: retf 4: 4 bytes of parameters; 14 bytes of locals }
 {@stub} procedure ovl19_fn_189D; begin end;
 { ovl19:1A8A: frame not read }
-{@stub} procedure ovl19_e8(var B: Byte; P: Pointer); begin end;
+{@stub} procedure ovl19_e8(P: Pointer; var B: Byte); begin end;
 { ovl19:1BA6: frame not read }
 {@stub} procedure ovl19_fn_1BA6; begin end;
 { ovl19:1BD7: frame not read }

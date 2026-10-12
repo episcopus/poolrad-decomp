@@ -11,7 +11,7 @@ procedure ovl09_e1(Who: Pointer);
 function ovl09_fn_0203(Who: PCharacter): Boolean;
 procedure ovl09_fn_0255;
 function ovl09_fn_02EB(Who: Pointer; Spell, N: Byte): Boolean;
-procedure ovl09_fn_03E4;
+function UseMagicItem(Who: PCharacter): Boolean;
 procedure ovl09_fn_0545;
 procedure ovl09_fn_0675;
 procedure ovl09_fn_06AA;
@@ -60,6 +60,8 @@ const
   KeyAltM = '2';                { Alt-M: Magic On / Magic Off (ovl08 calls it KeyAltM too) }
   KeyAltX = '-';                { Alt-X: ovl13_e24 decides }
   InitiativeQuickAll = $14;     { Initiative marking a quick-combat character (ovl08: InitiativeQuickAll) }
+  VarNoCasting = 229;           { game variable (+$1CA) that hides Cast (ovl08: VarNoCasting) }
+  MaxSpell = $38;               { highest spell number (ovl23: LastSpell) }
 
 { ovl09:000F: retf 4: 4 bytes of parameters; 18 bytes of locals }
 {@stub} procedure ovl09_e1(Who: Pointer); begin end;
@@ -85,8 +87,73 @@ end;
 {@stub} procedure ovl09_fn_0255; begin end;
 { ovl09:02EB: retf 8: 4 bytes of parameters; 8 bytes of locals }
 {@stub} function ovl09_fn_02EB(Who: Pointer; Spell, N: Byte): Boolean; begin end;
-{ ovl09:03E4: retf 4: 4 bytes of parameters; 22 bytes of locals }
-{@stub} procedure ovl09_fn_03E4; begin end;
+{ ovl09:03E4. Uses a magic item for the computer's turn (called by ovl09_e1; True ends
+  the turn through res12_fn_2637): rolls 1d7 rounds; each round walks Who^.Items for the first
+  item that passes (not ovl22_e6, Affects[3] below $80, Readied, level from Affects[2] in
+  1..MaxSpell adjusted down by $17 above it, and ovl09_fn_02EB in range) and remembers it as
+  Best. Afterwards a chosen Best is used through ovl19_e8 and the result is True. Early exits
+  (Pad2 zero, both SideCounts zero, VarNoCasting set) return False at once. QUIRK ovl09:049F:
+  RowByte (the RaceRow byte of the item kind) is computed but never read. QUIRK: the
+  [bp-5..-6] and [bp-9..-12] frame bytes are never read (UnusedA, UnusedB). Globals: SideCounts
+  (ds6814), GameVars, RaceRow. }
+function UseMagicItem(Who: PCharacter): Boolean;
+label
+  NextItem, Advance, NextRound, Done;
+var
+  Range: Byte;
+  Roll: Byte;
+  I: Byte;
+  UnusedA: array[0..1] of Byte;
+  RowByte: Byte;
+  Level: Byte;
+  UnusedB: array[0..3] of Byte;
+  Target: PItem;
+  Best: PItem;
+  E8Done: Byte;
+begin
+  UseMagicItem := False;
+  Best := nil;
+  Range := 7;
+  Roll := ovl24_e8(1, 7);
+  if Who^.Combat^.Pad2 = 0 then
+    goto Done;
+  if SideCounts[ShortInt(res12_fn_23B7(Who))] <= 0 then
+    goto Done;
+  if GameVars^[VarNoCasting] <> 0 then
+    goto Done;
+  for I := 1 to Roll do
+  begin
+    Target := Who^.Items;
+  NextItem:
+    if Target = nil then
+      goto NextRound;
+    if Best <> nil then
+      goto NextRound;
+    Level := Target^.Affects[2];
+    RowByte := RaceRow[Target^.ItemType][0];
+    if not ovl22_e6(Target) then
+      if Target^.Affects[3] < $80 then
+        if Target^.Readied then
+          if Level > 0 then
+          begin
+            if Level > MaxSpell then
+              Level := Level - $17;
+            if ovl09_fn_02EB(Who, Level, Range) then
+              Best := Target;
+          end;
+  Advance:
+    Target := Target^.Next;
+    goto NextItem;
+  NextRound:
+    Dec(Range);
+  end;
+Done:
+  if Best <> nil then
+  begin
+    ovl19_e8(Best, E8Done);
+    UseMagicItem := True;
+  end;
+end;
 { ovl09:0545: retf 4: 4 bytes of parameters; 36 bytes of locals }
 {@stub} procedure ovl09_fn_0545; begin end;
 { ovl09:0675: frame not read }

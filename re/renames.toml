@@ -1457,3 +1457,10 @@ kind = "routine"
 why = "ovl09:10D7 runs the morale gauntlet for the AI turn (flees in panic, surrenders) showing 'is forced to flee' and 'Surrenders' through res12_fn_16EC and ovl24_e11; caller ovl09_e1"
 date = "2026-10-12"
 
+[[rename]]
+old = "ovl09_fn_03E4"
+new = "UseMagicItem"
+kind = "routine"
+why = "ovl09:03E4 walks Who Items for a castable item (Affects and 02EB range checks), uses it through ovl19_e8 and ends the turn; caller ovl09_e1"
+date = "2026-10-12"
+
