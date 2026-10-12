@@ -137,12 +137,13 @@ var
   ds557D: Boolean;                { heap error retry gate; see above }
   { Globals of the loader (StartGame, src/OVL11.PAS); the address in each comment is the write or
     read that shows it. }
-  { Table of 30-byte entries the loader copies into the file path (ovl11:0564, indexed by TileSet);
-    its contents are the save directory names (save/load). }
-  ds2614: array[0..9] of string[29];  { save directory name table; see above }
+  { Table of 30-byte entries indexed by TileSet: entries 1..8 hold 'Insert disk N in drive ' in the
+    image (entry 0 is not a string). With the drive letter DS:547D and ':' appended it is the prompt
+    OpenGameFile shows while a file is missing (OpenDaxFile 0802:061A, StartGame ovl11:0564). }
+  InsertDiskPrompts: array[0..9] of string[29];  { the insert-disk prompts; see above }
   ds465C: Byte;                   { loop counter of the loader's three fill loops (ovl11:0130, 02CA, 035E) }
-  ds4660: Byte;                   { result of res05_fn_025D (the file open state) read at ovl11:05A6 }
-  ds4661: string[40];             { the save game name; the loader copies ds547C here and back (ovl11:0469, 05EA) }
+  ds4660: Byte;                   { result of OpenGameFile (the file open state) read at ovl11:05A6 }
+  ds4661: string[40];             { the save game name; the loader copies GameDir here and back (ovl11:0469, 05EA) }
   ds468C: file;                   { the untyped file the loader reads the block from (ovl11:05A1..05E5) }
   { Second $800-byte word block the loader allocates (ovl11:0044); it zeroes word 830 (ovl11:03F5). }
   ds49D6: ^TGameVars;             { second game word block; see above }
@@ -220,5 +221,17 @@ var
   TileSet: Byte;                  { the 8X8D file number: Load8x8Bank loads 8x8d<TileSet> }
   TileBanks: array[0..4] of PT8x8Bank;  { the loaded 8x8 banks, indexed by bank; nil when the load failed }
   TileBuf: PT8x8Bank;             { the tile staging buffer: Put8x8Symbol Moves one tile to +$17 }
+
+  { Globals of the DOS file and BIOS text layer (res05); evidence in re/dseg.toml where named. }
+  ds4A1A: Byte;                   { the second display page WriteCharsAt writes to when VideoAdapter is 1 (BH of INT 10h) }
+  ds4A1B: Byte;                   { the display page WriteCharsAt writes to first (BH of INT 10h, 0802:0048) }
+  { 16 entries, the colours 0..15 mapped to 0..3 (0,0,0,1,2,2,2,3,3,1,1,1,2,2,3,3 in the image);
+    WriteCharsAt maps the text colour through it when VideoAdapter is 0 (0802:0086). }
+  ds25D5: array[0..15] of Byte;   { four-colour map of the text colours; see above }
+  ds49CE: Word;                   { IOResult of the last FileExists file probe (0802:0334) }
+  { The ten characters MakeDosFileName removes from a file name are entries 1..10 (DS:0D1A..0D23);
+    entry 0 is the byte before them, never read (declared so the index base DS:0D19 names it). }
+  BadNameChars: array[0..10] of Char;  { characters not allowed in a file name; see above }
+  PackedBuf: Pointer;             { the packed bytes of the DAX block LoadDaxBlock is reading }
 implementation
 end.
