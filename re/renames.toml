@@ -659,3 +659,24 @@ kind = "routine"
 why = "ovl28:00A2 (matched): loads block Bank of <Name><TileSet>.dax through LoadDaxBlock into the sprite list it is given, allocating each picture with res07_fn_248E and decoding it with res07_fn_02A5"
 date = "2026-10-11"
 
+[[rename]]
+old = "ovl29_fn_05F3"
+new = "StepDisplay"
+kind = "routine"
+why = "steps the picture display through res07_fn_1B52, the same call ovl34 uses after a direct blit (ovl29:05F3)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl29_fn_031F"
+new = "CellInRange"
+kind = "routine"
+why = "returns True when both map cell coordinates X and Y are in 0..15 (a cell inside the 16x16 block); used by ovl29_e3/e2/e4/e5 (ovl29:031F)"
+date = "2026-10-11"
+
+[[rename]]
+old = "ovl29_e1"
+new = "SetWallDescriptors"
+kind = "routine"
+why = "stores the four wall view descriptors Wall1..Wall4 into ds6A60..ds6A63 (descriptor 1..4); called by ovl26 ShowAreaView (ovl29:0155)"
+date = "2026-10-11"
+
