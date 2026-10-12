@@ -756,5 +756,41 @@ var
   DeathAffects: array[0..16] of Byte;  { affects removed when a combatant dies; see above }
   { The two affects ovl24_e14 removes are entries 1..2 at DS:0C24 ($4A $4B); entry 0 is the byte before. }
   ds0C23: array[0..2] of Byte;    { entries 1..2 ($4A $4B) are the affects ovl24_e14 removes }
+  { Globals of the camp unit ovl15 (whitepaper 5.22). }
+  CampMenuText: string[40];             { 'Save View Magic Rest Alter Exit': the Camp menu MakeCamp shows (ovl15:1F06) }
+  CampMagicMenuText: string[40];             { 'Cast Memorize Scribe Display Rest Exit': the camp Magic menu (ovl15:1429) }
+  AlterMenuText: string[40];             { 'Order Drop Speed Icon Pics Exit': the camp Alter menu (ovl15:1C86) }
+  PartyOrderMenuTexts: array[0..1] of string[40];  { 'Select Exit' and 'Place Exit': the Party Order menu before and after a
+                                    character is picked (ovl15:17B0) }
+  { The time a rest lasts, one word per digit of the game clock (ovl20 indexes it, ovl20:04A7): the
+    camp's Rest command sets [1] minutes, [2] tens of minutes and [3] hours from the longest study
+    time of the party (ovl15:07CA) before ovl20_e2 runs the rest, and clears all seven words after. }
+  RestTime: array[0..6] of Word;
+  ds6DB5: Pointer;                { set to nil when the camp opens and closes and before casting (ovl15:04B0, 1FB6) }
+  ds6DD8: Word;                   { cleared when the camp opens (ovl15:1E80); meaning unknown }
+  { The spell names, string[40] per spell 1..$38 at DS:2912 ('Bless' .. 'Restoration' in the image,
+    the rows of SpellTable); entry 0 is the index base (ovl15:10EE), never read. }
+  SpellNames: array[0..$38] of string[40];
+  { Globals of the combat map builder ovl10 (whitepaper 5.5.2). }
+  CombatBlock: Byte;              { the area map block code the battle is fought on (ovl10:1215) }
+  { The combat direction (an index of ds2736/ds273F) of a facing 0..3; PrepareCombatants also
+    uses it as the starting icon set (ovl10:1363, 15EA). }
+  FacingCombatDir: array[0..3] of Byte;
+  { Per side (PlacingSide): 4 groups of 6 rows of 11 placement cells, 1 while free (ovl10:1480). }
+  PlacementCells: array[0..1, 0..3, 0..5, 0..10] of Byte;
+  SideOriginCol: array[0..1] of ShortInt;   { per side: the grid origin column in area map steps (ovl10:1597) }
+  SideOriginRow: array[0..1] of ShortInt;   { per side: the grid origin row in area map steps (ovl10:15A4) }
+  FirstRingCells: array[0..1] of ShortInt;  { per side: the cells of its first placement ring (ovl10:17DB) }
+  SideFacing: array[0..1] of ShortInt;      { per side: the facing 0..3 (ovl10:1A3D) }
+  { Per side facing: the area map directions (entries 1..3) FindStartCell tests for walls (ovl10:1879). }
+  FacingWallDirs: array[0..3, 0..3] of Byte;
+  { Per side facing: twice the facing of each placement group 0..3 (ovl10:15C5). }
+  GroupFacing: array[0..3, 0..3] of Byte;
+  RingStartCol: array[Boolean, 0..3] of ShortInt;  { a ring's first column, per group > 0 and facing (ovl10:1640) }
+  RingStartRow: array[Boolean, 0..3] of ShortInt;  { a ring's first row, per group > 0 and facing (ovl10:1672) }
+  { The column span (Lo..Hi) of each of the 6 rows of a placement shape: shapes 0..3 per facing,
+    4 for group 1 (ovl10:1B38). }
+  PlacementShapes: array[0..4, 0..5] of TColSpan;
+  PlacingSide: ShortInt;          { the side being placed on the combat map (ovl10:1C41) }
 implementation
 end.
