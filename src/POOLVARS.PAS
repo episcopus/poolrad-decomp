@@ -207,10 +207,6 @@ var
   { Five words, one per 8x8 tile bank, subtracted from the symbol number to index within the
     bank (Put8x8Symbol, ovl34:020F); evidence in re/dseg.toml. }
   SymbolBase: array[0..4] of Word;  { per-bank base symbol numbers; see above }
-  ds2736: array[0..7] of ShortInt; { per-icon-set column step for the party }
-    { ClampPartyPosition adds it; cbw at ovl14:06D0; extent uncertain. }
-  ds273F: array[0..7] of ShortInt; { per-icon-set row step for the party }
-    { ClampPartyPosition adds it; cbw at ovl14:06DB; extent uncertain. }
   AreaMap: array[0..35, 0..43] of Byte;  { the area map: one block code per 3x3-tile block, one more
                                           than the code DrawCellPicture draws; byte 0x4E (the letter N)
                                           where no block is drawn (all of rows 34 and 35 in the
@@ -310,6 +306,8 @@ var
   ds4712: Byte;                   { the DS:49F3 value ShowEndingNarrative saves at the start and restores at the end }
   ds4713: string[1];              { Str(TileSet): the picture number ShowEndingNarrative appends to FINAL }
   ds25C0: array[0..2, 0..2] of Byte;  { the 3x3 line pattern table StepLine reads at [SY+1, SX+1] }
+  { ds2736 and ds273F: nine entries each (ds273F starts 9 bytes after ds2736). ovl14's
+    ClampPartyPosition also adds them as the party's column and row step (cbw at ovl14:06D0, 06DB). }
   ds2736: array[0..8] of ShortInt;  { the x step per direction; see above }
   ds273F: array[0..8] of ShortInt;  { the y step per direction; see above }
   ds2745: array[0..255] of TTileEntry;  { the tile table WalkLine reads; see above }
