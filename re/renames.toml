@@ -848,3 +848,24 @@ kind = "routine"
 why = "walks a Bresenham line over the map rows with tile gating (stops False at blocking tiles or past Limit steps, else True with steps in StepCount); called for line-of-sight by ovl09/ovl12/ovl13 and ScanTargets"
 date = "2026-10-12"
 
+[[rename]]
+old = "ovl29_e2"
+new = "WallIdAt"
+kind = "routine"
+why = "ovl29:047B returns the wall id nibble of map cell (X,Y) for direction 0/2/4/6 (N,E,S,W) from the first two GEO planes (whitepaper 4.2.1)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl29_e3"
+new = "DoorKindAt"
+kind = "routine"
+why = "ovl29:0350 returns 1 when the cell side has no wall, else the door bit pair of the fourth GEO plane for direction 0/2/4/6; ovl14 DoWildernessMenu treats 1 as open, 2 and 3 as locked kinds (Bash/Pick/Knock)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl29_e4"
+new = "EventByteAt"
+kind = "routine"
+why = "ovl29:057A returns the event plane byte (third GEO plane, +200h) of the wrapped map cell; ShowAreaView tests bit 7 (interior)"
+date = "2026-10-12"
+

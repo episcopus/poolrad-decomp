@@ -46,12 +46,17 @@ type
     (New with the size $800 at ovl11:0034 and the FillChar of $800 at ovl11:0271), so the array has
     1024 words; the words above 465 are simply not read. }
   TGameVars = array[0..1023] of Word;
-  { $400-byte map data block at DS:6A5C (also ^TBlock400): the first $300 bytes are not
-    read here; the plane at +$300 holds one byte per 16x16-map cell (row * 16 + col)
-    with a bit pair per icon set that ovl14 clears on exit. Full structure uncertain. }
+  { $400-byte map data block at DS:6A5C (also ^TBlock400): the four 256-byte planes of a GEO
+    block (whitepaper 4.2.1), each indexed [Row, Col] of the 16x16 area map. WallsNE and WallsSW
+    hold two wall ids per cell (WallIdAt: direction 0 north = high nibble of WallsNE, 2 east = low
+    nibble, 4 south = high nibble of WallsSW, 6 west = low nibble); Events the event byte
+    (EventByteAt; bit 7 = interior); Cells the door plane, a bit pair per direction (DoorKindAt: 0 =
+    bits 0-1, 2 = bits 2-3, 4 = bits 4-5, 6 = bits 6-7), which ovl14 also changes. }
   TGeoCellBlock = record
-    Unknown: array[0..$2FF] of Byte;
-    Cells: array[0..15, 0..15] of Byte;
+    WallsNE: array[0..15, 0..15] of Byte;   { +$000 }
+    WallsSW: array[0..15, 0..15] of Byte;   { +$100 }
+    Events: array[0..15, 0..15] of Byte;    { +$200 }
+    Cells: array[0..15, 0..15] of Byte;     { +$300 }
   end;
   PGeoCellBlock = ^TGeoCellBlock;
   { Heap blocks the loader (StartGame) allocates with New; the size is the argument of each New
@@ -240,14 +245,14 @@ var
     ShowAreaView (when GameVars^[VarShowWallOverlays] is set) and ovl07_e8 clear it. }
   ds6AAC: Byte;                   { wall view overlay gate; see above }
   ds6AAD: ShortInt;               { the party's column in the 16x16 area map (GEO) }
-    { ShortInt, not Byte: ovl14 widens it with cbw (ovl14:0696); ovl29_e4/e5 take it. }
+    { ShortInt, not Byte: ovl14 widens it with cbw (ovl14:0696); EventByteAt/e5 take it. }
   ds6AAE: ShortInt;               { the party's row in the 16x16 area map }
-    { ShortInt, not Byte: ovl14 widens it with cbw (ovl14:069D); ovl29_e4/e5 take it; set to 1 by StartGame. }
+    { ShortInt, not Byte: ovl14 widens it with cbw (ovl14:069D); EventByteAt/e5 take it; set to 1 by StartGame. }
   { The marker's icon set (DrawIcon's third parameter): the wilderness keys H, M, P and K set 0,
     2, 4 and 6 (HandleWildernessKeys, HandleWildernessKeys); ovl07_e10 maps a script value 0..3 to the same 0/2/4/6. }
   ds6AAF: Byte;                   { the marker's icon set; see above }
-  ds6AB0: Byte;                   { ovl29_e2's result for the party cell and icon set (MoveParty); meaning unknown }
-  ds6AB1: Byte;                   { the event byte of the party's map cell, from ovl29_e4; bit 7 = interior }
+  ds6AB0: Byte;                   { WallIdAt's result for the party cell and icon set (MoveParty); meaning unknown }
+  ds6AB1: Byte;                   { the event byte of the party's map cell, from EventByteAt; bit 7 = interior }
   MarkerFrame: Byte;              { the party marker's animation frame 0..5; evidence in re/dseg.toml }
   ds6F68: Byte;                   { special view code 2; set with ds84E5 := 1 by ovl07_e3 ($41) and ovl11_fn_0435 ($DB) }
   ds6F69: Byte;                   { special view code 1; set with ds84E5 := 1 by ovl07_e3 (9) and ovl11_fn_0435 ($E8) }
@@ -360,7 +365,7 @@ var
   ds6810: PMenuLine;              { head of the shop's item list, a far pointer the loader clears (ovl11:031A) }
   ds6A58: ^TBlock924;             { $924-byte block the loader allocates (ovl11:0084) }
   ds6A5C: ^TBlock400;             { $400-byte block the loader allocates (ovl11:0094) }
-  ds84DC: Byte;                   { the wall view / outdoor mode ovl29_e4 tests (0 and $A both skip) }
+  ds84DC: Byte;                   { the wall view / outdoor mode EventByteAt tests (0 and $A both skip) }
   GeoCells: PGeoCellBlock absolute ds6A5C; { cell-byte view of the $400 block for ovl14 }
   ds6AAEWords: array[0..3] of TPresenceSlot;  { the 4-byte element table at DS:6AAE; the loader sets
                                     elements 2 and 3 to $FFFF (ovl11:035E..0390) }

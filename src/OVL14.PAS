@@ -97,7 +97,7 @@ begin
   HasRecFlag := Found;
 end;
 { ovl14:0294. The Bash command (the B key): walks the ds5D96 records and tries to force
-  the first one whose lock answers the ovl29_e3 cell test with 3 (or another value,
+  the first one whose lock answers the DoorKindAt cell test with 3 (or another value,
   below): each lock type wants its own 1d6/1d8 roll (ovl24_e8), setting Done on success
   and clearing ds6DDE[0] on some failures. On success it sets the icon bits like Pick
   and returns 1, else 0. }
@@ -112,7 +112,7 @@ begin
   begin
     with Rec^ do
     begin
-      if ovl29_e3(ds6AAD, ds6AAE, ds6AAF) = 3 then
+      if DoorKindAt(ds6AAD, ds6AAE, ds6AAF) = 3 then
         case LockType of
           $12:
             case Strength of
@@ -248,7 +248,7 @@ begin
     DoKnock := False;
 end;
 { ovl14:068D. Steps the party one cell in the current icon set's direction when
-  ovl29_e3 allows it, clamping the result into the 16x16 area map: each clamped
+  DoorKindAt allows it, clamping the result into the 16x16 area map: each clamped
   coordinate is written back and the edge flag ds49D6^[725] (+$5AA) is set. Called
   by the movement driver HandleWildernessKeys. The direction tables ds2736/ds273F are indexed
   by the icon set. }
@@ -261,7 +261,7 @@ begin
   Row := ds6AAE;
   Icon := ds6AAF;
   ds49D6^[725] := 0;
-  if ovl29_e3(Col, Row, Icon) <> 0 then
+  if DoorKindAt(Col, Row, Icon) <> 0 then
   begin
     Inc(Col, ds2736[Icon]);
     Inc(Row, ds273F[Icon]);
@@ -289,7 +289,7 @@ begin
 end;
 { ovl14:073B. Moves the party one cell in the current icon set's direction, wrapping
   the 16x16 area map ($F steps to 0, 0 steps to $F), then refreshes the cell bytes
-  ds6AB0 (through ovl29_e2) and ds6AB1 (through ovl29_e4), resets the ds6DDE..ds6DE0
+  ds6AB0 (through WallIdAt) and ds6AB1 (through EventByteAt), resets the ds6DDE..ds6DE0
   menu flags to 1, and steps
   the sound through ovl20_e1 (mode 2 when ds49D6^[714] has bit 0, else mode 1).
   Called by DoWildernessMenu. }
@@ -306,9 +306,9 @@ begin
     ds6AAE := $F;
   if ds6AAE > $F then
     ds6AAE := 0;
-  ds6AB0 := ovl29_e2(ds6AAD, ds6AAE, ds6AAF);
+  ds6AB0 := WallIdAt(ds6AAD, ds6AAE, ds6AAF);
   FillChar(ds6DDE, 3, 1);
-  ds6AB1 := ovl29_e4(ds6AAD, ds6AAE);
+  ds6AB1 := EventByteAt(ds6AAD, ds6AAE);
   if ds49D6^[714] and 1 > 0 then
     ovl20_e1(1, 2)
   else
@@ -411,21 +411,21 @@ begin
           'P':
             begin
               ds6AAF := (ds6AAF + 4) mod 8;
-              ds6AB0 := ovl29_e2(ds6AAD, ds6AAE, ds6AAF);
+              ds6AB0 := WallIdAt(ds6AAD, ds6AAE, ds6AAF);
               ovl29_e5(ds6AAD, ds6AAE, ds6AAF);
             end;
           'K':
             begin
               ds6AAF := (ds6AAF + 6) mod 8;
               res03_fn_00DC(ds2628);
-              ds6AB0 := ovl29_e2(ds6AAD, ds6AAE, ds6AAF);
+              ds6AB0 := WallIdAt(ds6AAD, ds6AAE, ds6AAF);
               ovl29_e5(ds6AAD, ds6AAE, ds6AAF);
             end;
           'M':
             begin
               ds6AAF := (ds6AAF + 2) mod 8;
               res03_fn_00DC(ds2628);
-              ds6AB0 := ovl29_e2(ds6AAD, ds6AAE, ds6AAF);
+              ds6AB0 := WallIdAt(ds6AAD, ds6AAE, ds6AAF);
               ovl29_e5(ds6AAD, ds6AAE, ds6AAF);
             end;
         else
@@ -497,7 +497,7 @@ begin
 end;
 { ovl14:0D6D. The wilderness command menu (called by ovl03_fn_3379): in the 3D view it
   builds the Bash/Pick/Knock/Exit menu from the ds6DDE/ds6DDF/ds6DE0 flags and the
-  record flag checks, prompts through ovl25_e2 and dispatches the key: in the ovl29_e3 = 2
+  record flag checks, prompts through ovl25_e2 and dispatches the key: in the DoorKindAt = 2
   arm 'B' calls DoBash, 'P' calls DoPick (ovl14:0ED6) and 'K' calls DoKnock, with Knock
   offered when FindCodeRecord($1F) finds a record (ovl14:0E14), while in the = 3 arm 'B'
   calls DoBash and 'K' calls DoKnock, with Knock offered when HasRecFlag(5) is set
@@ -517,7 +517,7 @@ begin
     begin
       if ds49D6^[713] < $FF then
       begin
-      case ovl29_e3(ds6AAD, ds6AAE, ds6AAF) of
+      case DoorKindAt(ds6AAD, ds6AAE, ds6AAF) of
         1:
           Done := 1;
         2:
