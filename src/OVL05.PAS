@@ -343,28 +343,28 @@ begin
   begin
     if (DuelMode <> 0) and (BattleWon = 0) then
     begin
-      res06_fn_0626(1, 3, $A, 'You have lost the duel.');
+      DrawTextAt(1, 3, $A, 'You have lost the duel.');
       Xp := 0;
     end
     else if DuelMode <> 0 then
-      res06_fn_0626(1, 3, $A, 'You have won the duel.')
+      DrawTextAt(1, 3, $A, 'You have won the duel.')
     else
-      res06_fn_0626(1, 3, $A, 'The party has won.');
+      DrawTextAt(1, 3, $A, 'The party has won.');
   end
   else if PartyFled <> 0 then
   begin
-    res06_fn_0626(1, 3, $A, 'The party has fled.');
+    DrawTextAt(1, 3, $A, 'The party has fled.');
     Xp := 0;
   end
   else
-    res06_fn_0626(1, 3, $A, 'The party has found Treasure!');
+    DrawTextAt(1, 3, $A, 'The party has found Treasure!');
   Str(Xp, XpText);
   if DuelMode <> 0 then
     Line := 'The duelist receives ' + XpText
   else
     Line := 'Each character receives ' + XpText;
-  res06_fn_0626(1, 5, $A, Line);
-  res06_fn_0626(1, 7, $A, 'experience points.');
+  DrawTextAt(1, 5, $A, Line);
+  DrawTextAt(1, 7, $A, 'experience points.');
   Key := ReadPromptChoice(Title, 'press <enter>/<return> to continue', 15, 15, 15, 1, 0, ExtKey);
 end;
 

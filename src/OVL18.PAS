@@ -86,12 +86,12 @@ begin
     res07_fn_0D71(0, 9, 0, 0, ds470E, DrawBuf);
   end;
   ClearRect(1, $11, $26, $16);
-  res06_fn_0626(1, $11, $A, '"Fools, you have but slain the body');
-  res06_fn_0626(1, $12, $A, 'I possessed.  I cannot be defeated!"');
-  res06_fn_0626(1, $13, $A, 'With the power of the pool of radiance');
-  res06_fn_0626(1, $14, $A, 'which I moved here, to my lair,');
-  res06_fn_0626(1, $15, $A, 'I will still rule, by possessing one');
-  res06_fn_0626(1, $16, $A, 'of you!"');
+  DrawTextAt(1, $11, $A, '"Fools, you have but slain the body');
+  DrawTextAt(1, $12, $A, 'I possessed.  I cannot be defeated!"');
+  DrawTextAt(1, $13, $A, 'With the power of the pool of radiance');
+  DrawTextAt(1, $14, $A, 'which I moved here, to my lair,');
+  DrawTextAt(1, $15, $A, 'I will still rule, by possessing one');
+  DrawTextAt(1, $16, $A, 'of you!"');
   AnimateFinalPicture(3, 1, 7, (10 - GameSpeed) * 5 div 2);
   ClearRect(1, $11, $26, $16);
   DrawTextAt(1, $11, $A, '"No Lord Bane!  I can still rule here!');

@@ -141,11 +141,11 @@ end;
 {@stub} function ReadPromptChoice(Title, Prompt: String40; TitleColor, WordColor, HotColor, ExtKeys,
   Animate: Byte; var ExtKey: Byte): Char; begin end;
 
-{ ovl25:06FB. Blanks the prompt line: res06_fn_05EB over the 40 columns of text row 24. Called by
+{ ovl25:06FB. Blanks the prompt line: ClearTextCells over the 40 columns of text row 24. Called by
   the loader (ovl07, ovl11), the area keys and many other units before they draw a new prompt. }
 procedure ClearPromptLine;
 begin
-  res06_fn_05EB(0, PromptRow, 0, TextCols);
+  ClearTextCells(0, PromptRow, 0, TextCols);
 end;
 
 { ovl25:0711 (nested in ChooseFromList): the last heading line among the first lines of the list.

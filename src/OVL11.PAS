@@ -143,7 +143,7 @@ begin
   GameDir := '';
   LoadGameFont;
   ClearPromptLine;
-  res06_fn_0626(0, $18, $A, 'Loading...Please Wait');
+  DrawTextAt(0, $18, $A, 'Loading...Please Wait');
   Load8x8Bank($CA, 4);
   Load8x8Bank($CB, 0);
   res07_fn_0111('sqrpaci', 1, 0, 0, ds5E52);
