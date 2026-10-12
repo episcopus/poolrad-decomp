@@ -64,6 +64,27 @@ type
     Kind: Byte;
     Addr: Pointer;
   end;
+  { A 3-byte record of the ovl30 sort table (whitepaper 5.x): the table DS:6718 is an array of
+    these, element 0 holding the count in Val (SortTable reads and writes Key and Val). }
+  { The line drawing state SetupLine fills and ovl30_e3/e5 step (whitepaper 5.x): the endpoints, the
+    three Bresenham steps and the current position. }
+  TLineState = record
+    X1, Y1: Integer;               { +$0, +$2: the start point }
+    X2, Y2: Integer;               { +$4, +$6: the end point }
+    D1: Integer;                   { +$8: the first Bresenham step }
+    DX, DY: Integer;               { +$A, +$C: |X2-X1| and |Y2-Y1| }
+    D2: Integer;                   { +$E: the second step }
+    D3: Integer;                   { +$10: the third step }
+    SX, SY: ShortInt;              { +$12, +$13: the x and y step direction }
+    X, Y: Word;                    { +$14, +$16: the current position, starts at X1, Y1 }
+    First: Byte;                   { +$18: 0 while the line has not been stepped }
+  end;
+  PLineState = ^TLineState;
+  TSortRec = record
+    Head: Byte;                    { +0: never read by the sort }
+    Key: Byte;                     { +1: the first sort key }
+    Val: Byte;                     { +2: the second sort key }
+  end;
 const
   { Words of GameVars^ whose meaning is proven (word n is at byte offset 2n of the block; the
     matched reads in ovl26 are at +$186, +$188, +$1CC, +$1F6, +$1FA and +$1FC). }
@@ -173,6 +194,7 @@ var
   ds470E: Pointer;                { the FINAL picture bank ShowEndingNarrative loads through res07_fn_0111 and draws }
   ds4712: Byte;                   { the DS:49F3 value ShowEndingNarrative saves at the start and restores at the end }
   ds4713: string[1];              { Str(TileSet): the picture number ShowEndingNarrative appends to FINAL }
+  ds6718: array[0..255] of TSortRec;  { the ovl30 sort table (element 0 holds the count, SortTable) }
   ds49ED: Word;                   { set to $9900 by the loader (ovl11:03C0) }
   ds49F4: Byte;                   { cleared by the loader (ovl11:03CB) }
   ds49F5: Byte;                   { set to 1 by the loader (ovl11:0392) }

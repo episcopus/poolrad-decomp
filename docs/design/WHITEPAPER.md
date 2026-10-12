@@ -666,6 +666,23 @@ structure in the `re/symbols.toml` notes.
 
 ---
 
+### 5.17 The screen support unit ovl30 **[V]** (`src/OVL30.PAS`, `make match UNIT=ovl30`: 3 of 7 routines at L2)
+
+Overlay 30 is a screen support unit:
+
+- `SignOf(N)` (`ovl30:0000`) returns -1, 1 or 0 for the sign of N. Also called from ovl22 and res12.
+- `SortTable` (`ovl30:002E`) sorts the 3-byte record table DS:6718 in place (element 0 holds the
+  count in its Val field): for every I < J it swaps the records when Key[J] < Key[I], or when the
+  keys are equal and Val[J] < Val[I] and Val[J] mod 2 <= Val[I] mod 2.
+- `SetupLine(Line)` (`ovl30:01A0`) fills the line drawing state (the `TLineState` type of
+  `src/POOLVARS.PAS`: two endpoints, the three Bresenham steps, the current position and the x and y
+  step directions) from the two endpoints.
+
+Still to decompile: `ovl30_e3` (`ovl30:02CC`, the line stepper), `ovl30_e5` (`ovl30:0422`),
+`ovl30_e4` (`ovl30:057B`) and `ovl30_e6` (`ovl30:0909`).
+
+---
+
 ## 6. Open questions
 
 1. Remaining compiler directives (`$A`, `$B`, `$V`, `$X`) and which game unit is the 16-byte unit at `0A31` (2.2). The version is pinned: Turbo Pascal 6.0, June 1991 release.
