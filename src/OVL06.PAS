@@ -68,7 +68,7 @@ begin
 end;
 
 { ovl06:0239 (AddInventoryItem). Appends a clone of Item to the list at SelectedCharacter^.Items
-  while the inventory has room. ovl19_e9 (Inventory) checks the list against the item and returns
+  while the inventory has room. WouldOverloadInventory (Inventory) checks the list against the item and returns
   True when it is overloaded: Overloaded is then 1 and "OverLoaded" is shown. Otherwise Overloaded is
   0 and a new TMenuLine is allocated (New), the item copied into it (record assignment of $3F bytes)
   and the node linked at the end of SelectedCharacter^.Items; res12_fn_0BB8 then redraws the list.
@@ -78,7 +78,7 @@ procedure AddInventoryItem(Item: PMenuLine; var Overloaded: Byte);
 var
   Tail, NewItem: PMenuLine;
 begin
-  if ovl19_e9(SelectedCharacter, Item) then
+  if WouldOverloadInventory(SelectedCharacter, Item) then
   begin
     res12_fn_1693('OverLoaded');
     Overloaded := 1;
@@ -110,12 +110,12 @@ end;
 { ovl06:0361 (BuyItems). The shop's Buy flow, called from ShopMain on the 'B' menu key. It loops on
   ChooseShopItem until the player cancels (any key other than 'B' or Enter). For a chosen entry the
   Price is its Value (+$3A, ovl06:0361). It first reads the selected character's money
-  (ovl19_e11); if the Price fits it adds the item to the character's items (AddInventoryItem) and,
+  (CharacterMoneyValueInGold); if the Price fits it adds the item to the character's items (AddInventoryItem) and,
   when that worked, stores the money less the Price (SetCharacterGold). Otherwise it reads the money pooled
   in the shop (MoneyValueInGold on PooledMoney); if the Price fits it adds the item and stores the pool less the
   Price (SetPooledGold), else it shows "Not enough Money." (res12_fn_1693). No parameters; side effects:
   the character's items, the money and the screen.
-  QUIRK ovl06:03C7: ovl19_e11 returns a LongInt, but Money is a Word, so only AX is kept and a
+  QUIRK ovl06:03C7: CharacterMoneyValueInGold returns a LongInt, but Money is a Word, so only AX is kept and a
   character with 65536 or more is compared and charged modulo 65536 (a price can fit when only the
   low word does, or the pool pays when it does not, and SetCharacterGold then stores the low word less the
   price, ovl06:03E7..03F3). QUIRK ovl06:0449: the pool path computes Pooled - Price as a LongInt
@@ -143,7 +143,7 @@ begin
     begin
       Cancelled := False;
       Price := Selected^.Value;
-      Money := ovl19_e11(SelectedCharacter);   { QUIRK ovl06:03C7: a LongInt kept in a Word }
+      Money := CharacterMoneyValueInGold(SelectedCharacter);   { QUIRK ovl06:03C7: a LongInt kept in a Word }
       if Price <= Money then
       begin
         AddInventoryItem(Selected, Overloaded);
@@ -178,7 +178,7 @@ end;
   menu (ReadPromptChoice) with a text chosen by TreasureLeft (the Take/Share entries appear only while
   MoneyPooled says money lies in the pool) and dispatches the key: B BuyItems, V ovl19_e5, T TakeMoney,
   P PoolMoney (when MenuFlag is 0), S ShareMoney, A AppraiseGems (Appraise), E leaves, and G and O, which
-  neither menu text shows, call ovl19_e10 with the key. With money left in the pool, E first asks
+  neither menu text shows, call UpdateSelectedCharacter with the key. With money left in the pool, E first asks
   "Do you want to go back and get your Money?" ('~Yes ~No' through AskMenu, which returns the
   0-based hotkey position) and the party leaves on No (AnswerNo); Yes clears the message window
   (ClearRect) and stays. A second case redraws the screen (res12_fn_27D9) after B and T, and
@@ -244,8 +244,8 @@ begin
           else
             Done := 1;
         end;
-      'G': ovl19_e10(Key);
-      'O': ovl19_e10(Key);
+      'G': UpdateSelectedCharacter(Key);
+      'O': UpdateSelectedCharacter(Key);
     end;
     case Key of
       'B', 'T': res12_fn_27D9;

@@ -102,11 +102,11 @@ begin
 end;
 
 { ovl04:00BF. Tells what Service costs ("<service> will only cost <price> gold pieces."), asks
-  "pay for cure", and on Yes takes Price from the selected character's money (ovl19_e11, then
+  "pay for cure", and on Yes takes Price from the selected character's money (CharacterMoneyValueInGold, then
   SetCharacterGold) or else from the pooled money DS:67F4 (MoneyValueInGold, then SetPooledGold). When neither
   covers the price it says "Not enough money." and the answer becomes No. On Yes it shows
   "is cured.". Returns the answer.
-  QUIRK ovl04:0177: ovl19_e11 returns a LongInt, but Money is a Word, so only AX is kept and a
+  QUIRK ovl04:0177: CharacterMoneyValueInGold returns a LongInt, but Money is a Word, so only AX is kept and a
   character with 65536 or more is compared and charged modulo 65536 (a price can fit when only the
   low word does, and SetCharacterGold then stores the low word less the price). QUIRK ovl04:01C8: the pool
   path computes Pooled - Price as a LongInt but SetPooledGold(Amount: Word) receives only the low word,
@@ -124,7 +124,7 @@ begin
   Answer := AskYesNo('pay for cure ', PromptTitleColor, CostPromptWordColor, CostPromptHotColor);
   if Answer = Yes then
   begin
-    Money := ovl19_e11(SelectedCharacter);   { QUIRK ovl04:0177: a LongInt kept in a Word }
+    Money := CharacterMoneyValueInGold(SelectedCharacter);   { QUIRK ovl04:0177: a LongInt kept in a Word }
     if Price <= Money then
     begin
       Dec(Money, Price);
@@ -459,7 +459,7 @@ end;
 
 { ovl04:0D09. The Temple menu offers Heal, View, Take, Pool, Share, Appraise and Exit (Take and Share
   only while TreasureLeft reports pooled money). Heal and Pool run only when ExtKey is 0; View receives
-  ExtKey, and G/O scan letters (Home/End, or keypad 7/1) go to ovl19_e10. The trailing B redraw arm at
+  ExtKey, and G/O scan letters (Home/End, or keypad 7/1) go to UpdateSelectedCharacter. The trailing B redraw arm at
   ovl04:0F02 is not in the menu text. ReadPromptChoice can return scan letters for extended keys, but
   the physical key that yields B is unknown. Exit with money in the pool asks "Do you want to go back
   and retrieve your money?" ('~Yes ~No') and leaves on No (AskMenu returns position 1); Yes keeps the
@@ -518,8 +518,8 @@ begin
           else
             Done := True;
         end;
-      'G': ovl19_e10(Key);
-      'O': ovl19_e10(Key);
+      'G': UpdateSelectedCharacter(Key);
+      'O': UpdateSelectedCharacter(Key);
     end;
     case Key of
       'B', 'T': res12_fn_27D9;

@@ -9211,12 +9211,12 @@ id = "ovl19:275B"
 unit = "ovl19"
 addr = "ovl19:275B"
 size = 132
-name = "ovl19_e9"
-signature = "function ovl19_e9(Shop: Pointer; Item: Pointer): Boolean"
+name = "WouldOverloadInventory"
+signature = "function WouldOverloadInventory(Character: PCharacter; Item: PMenuLine): Boolean"
 c_name = "ovl19_e9"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl19_e9 (ovl19:275B checks the character item count and compares added item weight against the strength-based carry limit plus 1500; ovl06:0239 refuses when true); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -9224,12 +9224,12 @@ id = "ovl19:27DF"
 unit = "ovl19"
 addr = "ovl19:27DF"
 size = 223
-name = "ovl19_e10"
-signature = "procedure ovl19_e10(Key: Char)"
+name = "UpdateSelectedCharacter"
+signature = "procedure UpdateSelectedCharacter(Key: Char)"
 c_name = "ovl19_e10"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_10"
+notes = "renamed from ovl19_e10 (ovl19:27DF writes SelectedCharacter from the party head; G selects the previous member with wraparound, O selects the next or wraps to the head); auto:entry_10"
 evidence = ["prologue"]
 
 [[routine]]
@@ -9237,12 +9237,12 @@ id = "ovl19:28BE"
 unit = "ovl19"
 addr = "ovl19:28BE"
 size = 222
-name = "ovl19_e11"
-signature = "function ovl19_e11(Who: Pointer): LongInt"
+name = "CharacterMoneyValueInGold"
+signature = "function CharacterMoneyValueInGold(Who: PCharacter): LongInt"
 c_name = "ovl19_e11"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl19_e11 (ovl19:28BE sums Who.Money[0..4] times CoinCopperValues, adds 100 copper for rounding, divides by the 200-copper gold entry, and returns a LongInt); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -9250,12 +9250,12 @@ id = "ovl19:299C"
 unit = "ovl19"
 addr = "ovl19:299C"
 size = 369
-name = "ovl19_e12"
-signature = "function ovl19_e12(Kind, Mode: Byte; var Choice: Word; var Listed: Byte): Byte"
+name = "ChooseSpellFromList"
+signature = "function ChooseSpellFromList(SpellListKind, DisplayMode: Byte; var Choice: Word; var Listed: Byte): Byte"
 c_name = "ovl19_e12"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl19_e12 (ovl19:299C prepares the mode-specific spell-list heading and delegates the spell/choice selection to ovl22; callers in ovl15 use it for casting, memorizing, learning and scribing); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -9780,7 +9780,7 @@ unit = "ovl22"
 addr = "ovl22:008A"
 size = 515
 name = "ovl22_e1"
-signature = ""
+signature = "function ovl22_e1(Mode: Byte; var Choice: Word): Byte"
 c_name = "ovl22_e1"
 level = "none"
 justification = ""
@@ -9832,7 +9832,7 @@ unit = "ovl22"
 addr = "ovl22:059C"
 size = 397
 name = "ovl22_e2"
-signature = ""
+signature = "function ovl22_e2(Kind: Byte): Byte"
 c_name = "ovl22_e2"
 level = "none"
 justification = ""

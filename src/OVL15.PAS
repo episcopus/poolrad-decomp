@@ -71,8 +71,8 @@ const
   KeyEnter = #13;
   ViewModeCamp = 2;              { the view mode (ds49F3) while the party camps }
   MaxGameSpeed = 9;              { GameSpeed runs 0 (fastest) .. 9 (slowest) }
-  NoChoice = $FFFF;              { the list position ovl19_e12 starts from }
-  { Spell lists of ovl19_e12 (its first argument) as the camp uses them: 0 the memorized spells to
+  NoChoice = $FFFF;              { the list position ChooseSpellFromList starts from }
+  { Spell lists of ChooseSpellFromList (its first argument) as the camp uses them: 0 the memorized spells to
     cast, 1 the spells to memorize, 3 the scroll spells to scribe, 5 and 6 the spells being
     memorized and scribed. }
   ListMemorized = 0;
@@ -243,7 +243,7 @@ begin
   end;
 end;
 { ovl15:04A1. The Cast command: when MayUseMagic allows it, repeatedly lists SelectedCharacter's memorized
-  spells (ovl19_e12) and casts the chosen one in a cleared text window (ovl22_e5), until the list
+  spells (ChooseSpellFromList) and casts the chosen one in a cleared text window (ovl22_e5), until the list
   is left; 'has no spells memorized' when there is none. Clears ds6DB5 first and redraws the screen
   (res12_fn_27D9) when something was shown. The camp's Magic menu and ovl14's wilderness keys. }
 procedure CastSpells;
@@ -256,7 +256,7 @@ begin
   ds6DB5 := nil;
   if MayUseMagic(ActionCast) then
     repeat
-      Spell := ovl19_e12(ListMemorized, 1, Choice, Listed);
+      Spell := ChooseSpellFromList(ListMemorized, 1, Choice, Listed);
       if Spell <> 0 then
       begin
         Redraw := 1;
@@ -365,7 +365,7 @@ begin
 end;
 { ovl15:090A. The Memorize command. When spells are still being memorized from before, asks
   'Memorize These Spells? ' (No cancels them, Yes leaves). Then, while slots are left
-  (ShowSpellSlotsLeft, else 'cannot memorize any spells'), the chosen spell (ovl19_e12) goes into
+  (ShowSpellSlotsLeft, else 'cannot memorize any spells'), the chosen spell (ChooseSpellFromList) goes into
   the first empty Spells slot with bit 7 set (being memorized) if its class and level has a slot
   left, and the slots are sorted. After a choice was made it asks 'Memorize these spells? ' over
   the list of spells being memorized; No cancels them. }
@@ -378,7 +378,7 @@ begin
   if not MayUseMagic(ActionMemorize) then Exit;
   Done := False;
   Choice := NoChoice;
-  Spell := ovl19_e12(ListMemorizing, 0, Choice, Listed);
+  Spell := ChooseSpellFromList(ListMemorizing, 0, Choice, Listed);
   Redraw := 1;
   if Listed <> 0 then
   begin
@@ -397,7 +397,7 @@ begin
       res12_fn_16EC(SelectedCharacter, 'cannot memorize any spells', MessageColor, 1)
     else
     begin
-      Spell := ovl19_e12(ListLearnable, 2, Choice, Listed);
+      Spell := ChooseSpellFromList(ListLearnable, 2, Choice, Listed);
       Redraw := 1;
       if Spell = 0 then
         Done := True
@@ -413,7 +413,7 @@ begin
   if Choice <> NoChoice then
   begin
     Choice := NoChoice;
-    Spell := ovl19_e12(ListMemorizing, 0, Choice, Listed);
+    Spell := ChooseSpellFromList(ListMemorizing, 0, Choice, Listed);
     if Listed <> 0 then
       if AskYesNo('Memorize these spells? ', AskColor, WordColor, HotColor) = No then
         CancelMemorizing(SelectedCharacter);
@@ -422,7 +422,7 @@ begin
 end;
 { ovl15:0B5B. The Scribe command (a magic-user copying scroll spells into the spell book). When
   scroll spells are still being scribed, asks 'Scribe These Spells? ' (No cancels them, Yes
-  leaves). Then, for each scroll spell chosen (ovl19_e12; 'has no copyable scrolls' when there is
+  leaves). Then, for each scroll spell chosen (ChooseSpellFromList; 'has no copyable scrolls' when there is
   none): 'You already know that spell' when it is in KnownSpells, 'You are already scibing that
   spell' (sic) when a scroll spell byte already has it with bit 7, 'You can not scribe that
   spell.' when the character has no slot of its class and level, else bit 7 is set on the first
@@ -438,7 +438,7 @@ begin
   if not MayUseMagic(ActionScribe) then Exit;
   Done := False;
   Choice := NoChoice;
-  Spell := ovl19_e12(ListScribing, 0, Choice, Listed);
+  Spell := ChooseSpellFromList(ListScribing, 0, Choice, Listed);
   Redraw := 1;
   if Listed <> 0 then
   begin
@@ -452,7 +452,7 @@ begin
   Choice := NoChoice;
   while not Done do
   begin
-    Spell := ovl19_e12(ListScrolls, 3, Choice, Listed);
+    Spell := ChooseSpellFromList(ListScrolls, 3, Choice, Listed);
     if Spell = 0 then
     begin
       Done := True;
@@ -507,7 +507,7 @@ begin
   if Choice <> NoChoice then
   begin
     Choice := NoChoice;
-    Spell := ovl19_e12(ListScribing, 0, Choice, Listed);
+    Spell := ChooseSpellFromList(ListScribing, 0, Choice, Listed);
     if Listed <> 0 then
       if AskYesNo('Scribe these spells? ', AskColor, WordColor, HotColor) = No then
         CancelScribing(SelectedCharacter);
@@ -627,7 +627,7 @@ begin
 end;
 { ovl15:13F1. The camp's Magic menu 'Cast Memorize Scribe Display Rest Exit' (CampMagicMenuText)
   until Exit or the rest ends the camp (EndCamp): C CastSpells, M MemorizeSpells, S ScribeScrolls,
-  D DisplaySpellEffects, R RestParty; an extended key goes to ovl19_e10 (the character keys) and
+  D DisplaySpellEffects, R RestParty; an extended key goes to UpdateSelectedCharacter (the character keys) and
   redraws the character (res12_fn_0767). }
 procedure CampMagicMenu(var EndCamp: Byte);
 var
@@ -640,7 +640,7 @@ begin
     Key := ReadPromptChoice('', CampMagicMenuText, TitleColor, WordColor, HotColor, 1, 1, ExtKey);
     if ExtKey <> 0 then
     begin
-      ovl19_e10(Key);
+      UpdateSelectedCharacter(Key);
       res12_fn_0767(SelectedCharacter);
     end
     else
@@ -715,7 +715,7 @@ begin
 end;
 { ovl15:1780. The Party Order menu 'Party Order: ' with 'Select Exit', then 'Place Exit' once a
   character is picked (Enter, P or S toggle it: 'has been selected'). Before picking, the G and O
-  keys choose another character (ovl19_e10); after, they move the picked one up (MoveMemberUp) or
+  keys choose another character (UpdateSelectedCharacter); after, they move the picked one up (MoveMemberUp) or
   down (MoveMemberDown). }
 procedure PartyOrderMenu;
 var
@@ -732,7 +732,7 @@ begin
     begin
       if not Picked then
       begin
-        ovl19_e10(Key);
+        UpdateSelectedCharacter(Key);
         res12_fn_0767(SelectedCharacter);
       end
       else
@@ -835,7 +835,7 @@ begin
     Key := ReadPromptChoice('Alter: ', AlterMenuText, TitleColor, WordColor, HotColor, 1, 1, ExtKey);
     if ExtKey <> 0 then
     begin
-      ovl19_e10(Key);
+      UpdateSelectedCharacter(Key);
       res12_fn_0767(SelectedCharacter);
     end
     else
@@ -895,7 +895,7 @@ begin
     Key := ReadPromptChoice('Camp: ', CampMenuText, TitleColor, WordColor, HotColor, 1, 1, ExtKey);
     if ExtKey <> 0 then
     begin
-      ovl19_e10(Key);
+      UpdateSelectedCharacter(Key);
       res12_fn_0767(SelectedCharacter);
     end
     else

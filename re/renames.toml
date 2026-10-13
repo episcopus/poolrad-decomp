@@ -3287,3 +3287,31 @@ kind = "routine"
 why = "the routine is Delay(GameSpeed * 225): 225 milliseconds per GameSpeed step, no counter involved"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl19_e11"
+new = "CharacterMoneyValueInGold"
+kind = "routine"
+why = "ovl19:28BE sums Who.Money[0..4] times CoinCopperValues, adds 100 copper for rounding, divides by the 200-copper gold entry, and returns a LongInt"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_e9"
+new = "WouldOverloadInventory"
+kind = "routine"
+why = "ovl19:275B checks the character item count and compares added item weight against the strength-based carry limit plus 1500; ovl06:0239 refuses when true"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_e10"
+new = "UpdateSelectedCharacter"
+kind = "routine"
+why = "ovl19:27DF writes SelectedCharacter from the party head; G selects the previous member with wraparound, O selects the next or wraps to the head"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_e12"
+new = "ChooseSpellFromList"
+kind = "routine"
+why = "ovl19:299C prepares the mode-specific spell-list heading and delegates the spell/choice selection to ovl22; callers in ovl15 use it for casting, memorizing, learning and scribing"
+date = "2026-10-13"
+

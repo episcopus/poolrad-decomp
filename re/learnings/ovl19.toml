@@ -1,0 +1,37 @@
+# Lessons from ovl19, backed by TP 6.0 probes or matched routines.
+
+[[lesson]]
+id = "money-conversion-expression-order"
+confidence = "V"
+units = ["*"]
+tags = ["compiler", "expression-order", "LongInt", "array"]
+title = "Use the reversed multiplication operands and Inc for a LongInt accumulator"
+lesson = "In the TP 6.0 probe, `Total := Total + Who^.Money[I] * CoinValues[I]` evaluates CoinValues first and adds the product into AX. `Total := Total + CoinValues[I] * Who^.Money[I]` loads the Money word first, then CoinValues. Wrapping the second product in `Inc(Total, CoinValues[I] * Who^.Money[I])` keeps that operand order and emits add/adc directly into the LongInt Total, as required by ovl19:28BE."
+evidence = ["tools/re/tp_idioms/ovl19/PRB19MNY.PAS"]
+
+[[lesson]]
+id = "inventory-overload-weight-check"
+confidence = "V"
+units = ["ovl19"]
+tags = ["inventory", "weight", "word-arithmetic"]
+title = "Keep the overload check's word-sized added weight"
+lesson = "WouldOverloadInventory first rejects a character whose +$C7 byte is above 15. It initializes AddedWeight from Item^.Weight and multiplies by Item^.Count only when Count is nonzero, then compares CarriedWeight + AddedWeight with res12_fn_13AB(Character) + 1500. Preserve these Word expressions: the matched code multiplies into AX and adds the two weight words before zero-extending for the LongInt comparison."
+evidence = ["src/OVL19.PAS#WouldOverloadInventory", "re/symbols.toml#ovl19:275B"]
+
+[[lesson]]
+id = "selected-character-party-key-navigation"
+confidence = "V"
+units = ["ovl19"]
+tags = ["party", "selection", "linked-list"]
+title = "G and O select adjacent party members with wraparound"
+lesson = "UpdateSelectedCharacter starts from the party head in ds5D96. G walks to the predecessor of SelectedCharacter, wrapping from the head to the tail; O selects SelectedCharacter^.Next when present and otherwise keeps the head; every other key selects the head. A nil party head leaves SelectedCharacter nil."
+evidence = ["src/OVL19.PAS#UpdateSelectedCharacter", "re/symbols.toml#ovl19:27DF"]
+
+[[lesson]]
+id = "spell-list-display-bridge"
+confidence = "V"
+units = ["ovl19"]
+tags = ["spell-list", "selection", "window"]
+title = "The spell-list selector separates list kind from selection mode"
+lesson = "ChooseSpellFromList uses its first byte to select the heading suffix and to call ovl22_e2; its second byte is passed with Choice to ovl22_e1. A zero Listed result returns zero. For a negative Choice, it opens the one-row Spells window, redraws SelectedCharacter, and draws the combined `Spells ` plus suffix heading."
+evidence = ["src/OVL19.PAS#ChooseSpellFromList", "re/symbols.toml#ovl19:299C"]

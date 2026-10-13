@@ -442,7 +442,7 @@ end;
 { ovl05:0D38. The Take command of the treasure menu. MoneyLeft and ItemsLeft are TreasureLeft's two
   results (money in the pool, items in the loot). With only items it goes to TakeLootItems, with
   only money it takes the money (TakeMoney); with both it loops on 'Take: Money Items Exit' until
-  Exit or one of them runs out (G and O, in no menu text, go to ovl19_e10 as in the shop). }
+  Exit or one of them runs out (G and O, in no menu text, go to UpdateSelectedCharacter as in the shop). }
 procedure TakeTreasure(var MoneyLeft, ItemsLeft: Byte);
 var
   Key: Char;
@@ -464,8 +464,8 @@ begin
             end;
           'I': TakeLootItems;
           'E', KeyNone: Done := True;
-          'G': ovl19_e10(Key);
-          'O': ovl19_e10(Key);
+          'G': UpdateSelectedCharacter(Key);
+          'O': UpdateSelectedCharacter(Key);
         end;
         res12_fn_0767(SelectedCharacter);
         TreasureLeft(MoneyLeft, ItemsLeft);
@@ -558,12 +558,12 @@ begin
         end;
       'G':
         begin
-          ovl19_e10(Key);
+          UpdateSelectedCharacter(Key);
           res12_fn_0767(SelectedCharacter);
         end;
       'O':
         begin
-          ovl19_e10(Key);
+          UpdateSelectedCharacter(Key);
           res12_fn_0767(SelectedCharacter);
         end;
     end;
