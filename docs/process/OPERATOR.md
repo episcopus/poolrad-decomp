@@ -12,7 +12,24 @@ make merge-driver && make hooks                 # record-level merge of the shar
 make check                                      # a receipt for the current main
 ```
 
-## Starting a run
+## The short way: one command each way
+
+```sh
+make start-run        # admits the run and opens one iTerm tab per session of work/roster.toml
+make run-status       # heartbeats, processes, locks, inbox
+make stop-run         # drains, integrates, releases every lock, resets the state, closes the tabs
+```
+
+`work/roster.toml` lists the sessions (name, role, OpenCode model id, which prompt block of
+docs/process/START-AGENT.md they start with); edit it to change the roster or the models. The first
+entry is the orchestrator session, which runs the loop below and decides what the inbox lists (its
+limits are in its KICKOFF.md prompt: the spec, ADRs, the session set and `poolrad/` stay yours). With
+it running, your own involvement is reading its reports in its tab and answering what it leaves for you.
+`make stop-run` waits up to `WAIT=20` minutes for the sessions to hand off, lands what they handed off,
+releases the rest with an operator record (branches with commits are kept for the next claimer and
+listed), and leaves control `stopped`, so `make start-run` can follow immediately.
+
+## Starting a run by hand
 
 ```sh
 make agent-control STATE=running OPERATOR=1 REASON="human approved: 3 decompilers, 1 reviewer"

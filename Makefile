@@ -13,7 +13,7 @@ q = '$(subst ','\'',$(1))'
 
 .PHONY: help setup doctor inputs unexepack overlays map dax smoke status next ghidra p1-check \
         tp-install tp-probe tp-compare tp-pin tpc emu2 \
-        packet claim lock locks unlock handoff handoffs handoff-done integrate heartbeat agents watch-agents worker inbox \
+        packet claim lock locks unlock handoff handoffs handoff-done integrate start-run stop-run run-status heartbeat agents watch-agents worker inbox \
         agent-control agent-step safety-check merge-check hooks match-gate merge-driver \
         agent-register agent-usage agent-meter performance learn learning-check expert-budget expert-request expert-take expert-step expert-finish expert-result experts expert-scan expert-candidates task-approve \
         oracle-run oracle-dosbox timing-scan golden match test test-slow check review-pass rebuild skeleton stubs readability rename host coco3
@@ -115,6 +115,15 @@ locks:            ## list the units locked by agents (shared by every worktree o
 
 handoff:          ## to the orchestrator: AGENT=<you> UNIT=<id> STATE=complete|partial|blocked|review-passed|review-failed|escalate NOTE="..." [CHANGELOG="<section> | <change> | <evidence>"]
 	$(PY) tools/agent/handoff.py --agent $(call q,$(value AGENT)) --unit $(call q,$(value UNIT)) --state $(call q,$(value STATE)) --note $(call q,$(value NOTE)) --changelog $(call q,$(value CHANGELOG))
+
+start-run:        ## admit the run and open one iTerm tab per session of work/roster.toml with its START-AGENT prompt [DRY=1]
+	$(PY) tools/agent/run.py start $(if $(filter 1,$(DRY)),--dry)
+
+stop-run:         ## graceful shutdown: drain, integrate what is handed off, release locks, reset state, close the sessions [WAIT=<minutes>]
+	$(PY) tools/agent/run.py stop $(if $(WAIT),--wait $(call q,$(value WAIT)))
+
+run-status:       ## the roster's sessions: heartbeat state, process, locks, inbox
+	$(PY) tools/agent/run.py status
 
 integrate:        ## merge every waiting branch hand-off into main mechanically (temp worktree, check, fast-forward): [KEY=<hand-off key>] [DRY=1]
 	$(PY) tools/agent/integrate.py $(if $(KEY),--key $(call q,$(value KEY))) $(if $(filter 1,$(DRY)),--dry)

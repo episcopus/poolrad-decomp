@@ -1,0 +1,46 @@
+# The roster `make start-run` launches: one OpenCode session per entry, each in its own iTerm tab,
+# started with the matching prompt block of docs/process/START-AGENT.md (`heading` is the text after
+# "## The prompt for"). `model` is the OpenCode model id (`opencode models`); edit freely.
+# `make stop-run` drains, integrates, releases and closes exactly these sessions.
+
+[[session]]
+name = "orch-gpt-6-1"
+role = "orchestrator"
+model = "openai/gpt-6.1-sol"
+heading = "orchestator gpt 6.1 sol"
+
+[[session]]
+name = "dec-mimo"
+role = "decompiler"
+model = "openrouter/xiaomi/mimo-v2.6-pro"
+heading = "decompiler mimo"
+
+[[session]]
+name = "dec-luna"
+role = "decompiler"
+model = "openai/gpt-6-luna"
+heading = "decompiler luna"
+
+[[session]]
+name = "dec-haiku"
+role = "decompiler"
+model = "openrouter/anthropic/claude-haiku-5.5"
+heading = "decompiler haiku"
+
+[[session]]
+name = "dec-deepseek"
+role = "decompiler"
+model = "openrouter/deepseek/deepseek-v4.1-flash"
+heading = "decompiler deepseek"
+
+[[session]]
+name = "rev-sonnet"
+role = "reviewer"
+model = "anthropic/claude-sonnet-5-5"
+heading = "reviewer sonnet"
+
+[[session]]
+name = "exp-opus"
+role = "expert"
+model = "anthropic/claude-opus-5-5"
+heading = "expert opus"
