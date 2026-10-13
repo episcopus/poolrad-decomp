@@ -8,7 +8,7 @@ procedure ovl22_fn_028D;
 procedure ovl22_fn_044E;
 procedure ovl22_fn_051C;
 procedure ovl22_e2;
-function ovl22_e3(B: Byte): Byte;
+procedure ovl22_e3;
 procedure ovl22_fn_07D6;
 procedure ovl22_fn_08C3;
 procedure ovl22_e4;
@@ -123,7 +123,7 @@ implementation
 { ovl22:059C: retf 2: 2 bytes of parameters; 2 bytes of locals }
 {@stub} procedure ovl22_e2; begin end;
 { ovl22:0729: retf 2: 2 bytes of parameters; 2 bytes of locals }
-{@stub} function ovl22_e3(B: Byte): Byte; begin end;
+{@stub} procedure ovl22_e3; begin end;
 { ovl22:07D6: retf 2: 2 bytes of parameters; 4 bytes of locals }
 {@stub} procedure ovl22_fn_07D6; begin end;
 { ovl22:08C3: retf 14: 14 bytes of parameters; 50 bytes of locals }

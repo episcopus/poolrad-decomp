@@ -49,10 +49,10 @@ procedure res12_fn_1FEB(Who: Pointer; Flag: Byte; Text: String40);
 function res12_fn_2199(Who: Pointer; AffectId: Byte; var Affect: Pointer): Boolean;
 procedure res12_fn_2228(Who: Pointer; Damage: Byte);
 procedure res12_fn_234A;
-function res12_fn_23B7(Who: Pointer): Byte;
+procedure res12_fn_23B7;
 procedure res12_fn_23DB;
-function res12_fn_2433(P: Pointer; B: Byte): Byte;
-function res12_fn_255B(Who, Target: Pointer): Byte;
+procedure res12_fn_2433;
+procedure res12_fn_255B;
 procedure res12_fn_2571;
 function res12_fn_2637(Who: Pointer): Byte;
 function res12_fn_2686(Who: Pointer): Byte;
@@ -65,7 +65,7 @@ procedure res12_fn_2B88;
 procedure res12_fn_2C48;
 function res12_fn_2E03(Who: Pointer): Boolean;
 function res12_fn_2E46(Who: Pointer): Boolean;
-function res12_fn_2E8B(Who: Pointer; var W: Word): Byte;
+procedure res12_fn_2E8B;
 procedure res12_fn_2F57;
 implementation
 
@@ -164,13 +164,13 @@ implementation
 { 00BA:234A: retf 4: 4 bytes of parameters; 42 bytes of locals }
 {@stub} procedure res12_fn_234A; begin end;
 { 00BA:23B7: retf 4: 4 bytes of parameters; 2 bytes of locals }
-{@stub} function res12_fn_23B7(Who: Pointer): Byte; begin end;
+{@stub} procedure res12_fn_23B7; begin end;
 { 00BA:23DB: retf 0: 0 bytes of parameters; 4 bytes of locals }
 {@stub} procedure res12_fn_23DB; begin end;
 { 00BA:2433: retf 6: 6 bytes of parameters; 6 bytes of locals }
-{@stub} function res12_fn_2433(P: Pointer; B: Byte): Byte; begin end;
+{@stub} procedure res12_fn_2433; begin end;
 { 00BA:255B: frame not read }
-{@stub} function res12_fn_255B(Who, Target: Pointer): Byte; begin end;
+{@stub} procedure res12_fn_255B; begin end;
 { 00BA:2571: retf 8: 8 bytes of parameters; 0 bytes of locals }
 {@stub} procedure res12_fn_2571; begin end;
 { 00BA:2637: retf 4: 4 bytes of parameters; 2 bytes of locals }
@@ -196,7 +196,7 @@ implementation
 { 00BA:2E46: retf 4: 4 bytes of parameters; 2 bytes of locals }
 {@stub} function res12_fn_2E46(Who: Pointer): Boolean; begin end;
 { 00BA:2E8B: retf 8: 8 bytes of parameters; 6 bytes of locals }
-{@stub} function res12_fn_2E8B(Who: Pointer; var W: Word): Byte; begin end;
+{@stub} procedure res12_fn_2E8B; begin end;
 { 00BA:2F57: retf 6: 6 bytes of parameters; 6 bytes of locals }
 {@stub} procedure res12_fn_2F57; begin end;
 

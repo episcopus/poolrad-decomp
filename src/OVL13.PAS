@@ -4,7 +4,7 @@ unit OVL13;
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 procedure ovl13_e1(Who: Pointer);
-function ovl13_e2(Who: Pointer): Byte;
+procedure ovl13_e2;
 procedure ovl13_fn_0191;
 procedure ovl13_fn_02F9;
 procedure ovl13_fn_0627;
@@ -31,10 +31,10 @@ procedure ovl13_fn_0E52;
 function ovl13_e7(Who, Target: Pointer): Boolean;
 procedure ovl13_fn_0FBF;
 procedure ovl13_fn_104E;
-function ovl13_e8(Who, Target: Pointer): Boolean;
+procedure ovl13_e8;
 procedure ovl13_e9(Who: Pointer);
 procedure ovl13_fn_11D8;
-function ovl13_e10(Who: Pointer; var B: Byte): Boolean;
+procedure ovl13_e10;
 procedure ovl13_fn_1406;
 procedure ovl13_fn_14A1;
 procedure ovl13_fn_1583;
@@ -44,7 +44,7 @@ procedure ovl13_e11(Who, Target: Pointer);
 procedure ovl13_e12(Who, Target: Pointer; A: Byte; P: Pointer; var Done: Byte);
 procedure ovl13_fn_1B1E;
 procedure ovl13_fn_1BD7;
-function ovl13_e13(P: Pointer; var B: Byte): Boolean;
+procedure ovl13_e13;
 procedure ovl13_fn_1C13;
 procedure ovl13_fn_1D08;
 procedure ovl13_fn_1E16;
@@ -60,10 +60,10 @@ procedure ovl13_fn_2432;
 procedure ovl13_fn_2574;
 procedure ovl13_fn_257E;
 procedure ovl13_fn_25C9;
-function ovl13_e18(Who, Target: Pointer): Byte;
+procedure ovl13_e18;
 procedure ovl13_fn_26B0;
 procedure ovl13_e19;
-function ovl13_e20(Who: Pointer): Byte;
+procedure ovl13_e20;
 function ovl13_e16(Who, Target: Pointer): Boolean;
 procedure ovl13_fn_2AA0;
 procedure ovl13_fn_2B8B;
@@ -80,7 +80,7 @@ procedure ovl13_fn_32E6;
 procedure ovl13_fn_3389;
 procedure ovl13_e17(Who: Pointer; A, B, C: Byte; var Done: Byte; var Aim);
 procedure ovl13_fn_3728;
-function ovl13_e21(Who: Pointer; A, B, C: Byte): Boolean;
+procedure ovl13_e21;
 procedure ovl13_fn_39A3;
 procedure ovl13_e22;
 procedure ovl13_fn_39E6;
@@ -92,7 +92,7 @@ implementation
 { ovl13:0000: retf 4: 4 bytes of parameters; 6 bytes of locals }
 {@stub} procedure ovl13_e1(Who: Pointer); begin end;
 { ovl13:0123: retf 4: 4 bytes of parameters; 2 bytes of locals }
-{@stub} function ovl13_e2(Who: Pointer): Byte; begin end;
+{@stub} procedure ovl13_e2; begin end;
 { ovl13:0191: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl13_fn_0191; begin end;
 { ovl13:02F9: retf 16: 16 bytes of parameters; 594 bytes of locals }
@@ -146,13 +146,13 @@ implementation
 { ovl13:104E: retf 8: 8 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl13_fn_104E; begin end;
 { ovl13:1085: retf 8: 8 bytes of parameters; 6 bytes of locals }
-{@stub} function ovl13_e8(Who, Target: Pointer): Boolean; begin end;
+{@stub} procedure ovl13_e8; begin end;
 { ovl13:116A: frame not read }
 {@stub} procedure ovl13_e9(Who: Pointer); begin end;
 { ovl13:11D8: retf 4: 4 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl13_fn_11D8; begin end;
 { ovl13:1351: retf 8: 8 bytes of parameters; 10 bytes of locals }
-{@stub} function ovl13_e10(Who: Pointer; var B: Byte): Boolean; begin end;
+{@stub} procedure ovl13_e10; begin end;
 { ovl13:1406: frame not read }
 {@stub} procedure ovl13_fn_1406; begin end;
 { ovl13:14A1: frame not read }
@@ -172,7 +172,7 @@ implementation
 { ovl13:1BD7: frame not read }
 {@stub} procedure ovl13_fn_1BD7; begin end;
 { ovl13:1BF8: frame not read }
-{@stub} function ovl13_e13(P: Pointer; var B: Byte): Boolean; begin end;
+{@stub} procedure ovl13_e13; begin end;
 { ovl13:1C13: frame not read }
 {@stub} procedure ovl13_fn_1C13; begin end;
 { ovl13:1D08: retf 8: 8 bytes of parameters; 0 bytes of locals }
@@ -204,13 +204,13 @@ implementation
 { ovl13:25C9: retf 8: 8 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl13_fn_25C9; begin end;
 { ovl13:263D: retf 8: 8 bytes of parameters; 6 bytes of locals }
-{@stub} function ovl13_e18(Who, Target: Pointer): Byte; begin end;
+{@stub} procedure ovl13_e18; begin end;
 { ovl13:26B0: retf 12: 12 bytes of parameters; 6 bytes of locals }
 {@stub} procedure ovl13_fn_26B0; begin end;
 { ovl13:2879: retf 0: 0 bytes of parameters; 8 bytes of locals }
 {@stub} procedure ovl13_e19; begin end;
 { ovl13:2908: retf 4: 4 bytes of parameters; 8 bytes of locals }
-{@stub} function ovl13_e20(Who: Pointer): Byte; begin end;
+{@stub} procedure ovl13_e20; begin end;
 { ovl13:2998: retf 8: 8 bytes of parameters; 20 bytes of locals }
 {@stub} function ovl13_e16(Who, Target: Pointer): Boolean; begin end;
 { ovl13:2AA0: frame not read }
@@ -244,7 +244,7 @@ implementation
 { ovl13:3728: retf 18: 18 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl13_fn_3728; begin end;
 { ovl13:37E4: frame not read }
-{@stub} function ovl13_e21(Who: Pointer; A, B, C: Byte): Boolean; begin end;
+{@stub} procedure ovl13_e21; begin end;
 { ovl13:39A3: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl13_fn_39A3; begin end;
 { ovl13:39D2: frame not read }
