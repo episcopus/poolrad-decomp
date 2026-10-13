@@ -310,8 +310,9 @@ type
     { +$10C: the health status: 0 after Raise Dead and Stone to Flesh, 1 and 6 count as dead for
       Raise Dead, 7 as stoned for Stone to Flesh (ovl04:0539, 093D). }
     Status: Byte;
-    Flag10D: Byte;                { +$10D: Raise Dead and Stone to Flesh set it to 1; MoveCombatCursor
-                                    redraws only combatants with it set; meaning unknown }
+    Flag10D: Byte;                { +$10D: combat participation and experience eligibility: AwardExperience
+                                    grants XP only when set (ovl05:0355); Raise Dead and Stone to Flesh set it;
+                                    MoveCombatCursor redraws only combatants with it set }
     { +$10E: the side: SetQuickCombat compares it between attacker and target (ovl08:125D), and
       BandageDying only bandages characters with 0 (the party). }
     Side: Byte;
