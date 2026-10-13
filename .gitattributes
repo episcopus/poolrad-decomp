@@ -1,0 +1,6 @@
+# Shared files merge record by record (tools/agent/merge_shared.py); `make merge-driver` registers the driver.
+re/symbols.toml merge=poolrad-shared
+re/dseg.toml merge=poolrad-shared
+re/renames.toml merge=poolrad-shared
+re/learnings/*.toml merge=poolrad-shared
+src/POOLVARS.PAS merge=poolrad-shared

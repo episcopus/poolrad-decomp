@@ -14,9 +14,9 @@ q = '$(subst ','\'',$(1))'
 .PHONY: help setup doctor inputs unexepack overlays map dax smoke status next ghidra p1-check \
         tp-install tp-probe tp-compare tp-pin tpc emu2 \
         packet claim lock locks unlock handoff handoffs handoff-done heartbeat agents watch-agents \
-        agent-control agent-step safety-check merge-check \
+        agent-control agent-step safety-check merge-check merge-driver \
         agent-register agent-usage agent-meter performance learn learning-check expert-budget expert-request expert-take expert-step expert-finish expert-result experts expert-scan expert-candidates task-approve \
-        oracle-run oracle-dosbox timing-scan golden match test test-slow check review-pass rebuild skeleton readability rename host coco3
+        oracle-run oracle-dosbox timing-scan golden match test test-slow check review-pass rebuild skeleton stubs readability rename host coco3
 
 help:
 	@echo "Available now:  setup doctor inputs unexepack overlays map dax smoke"
@@ -25,7 +25,7 @@ help:
 	@echo "Data codecs:    make dax (all playbook-20 formats); make test (pytest)"
 	@echo "Phase 2:        oracle-run oracle-dosbox golden timing-scan"
 	@echo "Phase 3/4:      match (UNIT= FN= WRITE=1) check test test-slow (review-pass in P4)"
-	@echo "Agent safety:   agent-control agent-step safety-check merge-check (docs/process/SAFETY.md)"
+	@echo "Agent safety:   agent-control agent-step safety-check merge-check merge-driver (docs/process/SAFETY.md)"
 	@echo "Throughput:     agent-register agent-meter performance learn experts (docs/process/THROUGHPUT.md)"
 	@echo "Later:          rebuild (P5) host (P7, branch track-c-hybrid) coco3 (P8)"
 	@echo "See AGENTS.md and docs/spec/SPEC.md."
@@ -194,6 +194,11 @@ safety-check:     ## check branch ownership and registry preservation, without m
 merge-check:      ## check HEAD merge, COMMIT=<sha> or STAGED=1 before committing a resolved merge
 	$(PY) tools/agent/safety.py --merge-only $(if $(COMMIT),--commit $(call q,$(value COMMIT))) $(if $(STAGED),--staged)
 
+merge-driver:     ## register the record-level merge driver for the shared files of .gitattributes (git config is per clone)
+	git config merge.poolrad-shared.name "record-level merge of the shared registries and POOLVARS (tools/agent/merge_shared.py)"
+	git config merge.poolrad-shared.driver "$(PY) tools/agent/merge_shared.py %O %A %B %P"
+	@echo "merge-driver: registered merge.poolrad-shared in $$(git rev-parse --git-common-dir)/config"
+
 define todo
 	@echo "make $@: not built yet; delivered in $(1) (docs/spec/SPEC.md section $(2))."; exit 2
 endef
@@ -234,5 +239,8 @@ rename:            ## give a routine or global its real name everywhere: OLD=<na
 
 skeleton:          ## write src/<ID>.PAS for a unit with no source yet: UNIT=<id> (no UNIT: every game unit)
 	$(PY) tools/match/skeleton.py $(if $(UNIT),$(UNIT),--all)
+
+stubs:             ## check every {@stub} header against re/symbols.toml (signature, name): UNIT="<id ...>" (no UNIT: every unit); WRITE=1 rewrites
+	$(PY) tools/match/stubs.py $(if $(WRITE),--write) $(UNIT)
 host:        ; $(call todo,Phase 7 (C translation; see branch track-c-hybrid),7.4)
 coco3:       ; $(call todo,Phase 8,11)
