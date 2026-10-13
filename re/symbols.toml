@@ -6921,11 +6921,11 @@ id = "ovl15:0E37"
 unit = "ovl15"
 addr = "ovl15:0E37"
 size = 135
-name = "ovl15_fn_0e37"
+name = "AddDisplayLine"
 c_name = "ovl15_fn_0e37"
 level = "L2"
 justification = ""
-notes = "nested in DisplaySpellEffects (ovl15:0FBC), proven by the parent's match"
+notes = "nested in DisplaySpellEffects (ovl15:0FBC), declared so in the unit source and proven by the parent's match (NESTED line); recorded by make match WRITE=1"
 evidence = ["compiler"]
 
 [[routine]]
@@ -16128,11 +16128,11 @@ id = "0709:06A7"
 unit = "res06"
 addr = "0709:06A7"
 size = 109
-name = "res06_fn_06a7"
+name = "DrawTextRun"
 c_name = "res06_fn_06a7"
 level = "L2"
 justification = ""
-notes = "nested in ShowPagedText (0709:0768), proven by the parent's match"
+notes = "nested in ShowPagedText (0709:0768), declared so in the unit source and proven by the parent's match (NESTED line); recorded by make match WRITE=1"
 evidence = ["compiler"]
 
 [[routine]]
@@ -16140,11 +16140,11 @@ id = "0709:0714"
 unit = "res06"
 addr = "0709:0714"
 size = 58
-name = "res06_fn_0714"
+name = "SkipSpaces"
 c_name = "res06_fn_0714"
 level = "L2"
 justification = ""
-notes = "nested in ShowPagedText (0709:0768), proven by the parent's match"
+notes = "nested in ShowPagedText (0709:0768), declared so in the unit source and proven by the parent's match (NESTED line); recorded by make match WRITE=1"
 evidence = ["compiler"]
 
 [[routine]]
