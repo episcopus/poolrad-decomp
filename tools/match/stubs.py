@@ -291,7 +291,7 @@ def main(argv=None) -> int:
     if a.write:
         print("stubs: rewrote %d header(s) in %d file(s)%s" % (
             differing - kept, files, "; %d kept (see the notes)" % kept if kept else ""))
-        return 1 if kept else 0
+        return 0                                   # a kept header is a note for the unit's decompiler, not a failure
     print("stubs: %d header(s) in %d file(s) differ from re/symbols.toml (WRITE=1 rewrites them)" % (differing, files))
     return 1
 

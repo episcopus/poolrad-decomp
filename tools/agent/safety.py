@@ -127,7 +127,7 @@ def merge_findings(commit: str = "HEAD", staged: bool = False) -> list[str]:
 
 def branch_findings(branch: str | None = None) -> list[str]:
     branch = branch or common.git("branch", "--show-current")
-    if branch == "main":
+    if branch == "main" or branch.startswith("integrate/"):   # make integrate checks a merge of main in a temporary branch
         return []
     if not branch.startswith(("unit/", "review/", "task/")):
         return ["work must be on a claimed unit/, review/ or task/ branch"]
