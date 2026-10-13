@@ -3002,3 +3002,10 @@ kind = "routine"
 why = "ovl20:047A takes Amount off RestTime digit Index, borrowing from the next higher nonzero digit; called by ovl20:0721 (the Dec key of the Rest menu) and by ovl20_e2 with Index 1 and Amount 5 (ovl20:0D9D), the minutes spent in each step of the rest"
 date = "2026-10-12"
 
+[[rename]]
+old = "ovl20_fn_05F0"
+new = "ShowRestTime"
+kind = "routine"
+why = "ovl20:05F0 draws the rest time on row 17: the Rest Time: label (string at DS:05E3), days and hours as two digits (TwoDigitText of RestTime[4] and [3]) and the minutes (10*RestTime[2]+RestTime[1]); the field Selected is drawn in colour 15; called by ovl20:0721 (ovl20:0734) and by ovl20_e2 (ovl20:0D13)"
+date = "2026-10-12"
+

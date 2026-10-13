@@ -9697,7 +9697,7 @@ size = 165
 name = "ovl20_e1"
 signature = "procedure ovl20_e1(A, B: Byte)"
 c_name = "ovl20_e1"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:near_call"
 evidence = ["prologue"]
@@ -9733,12 +9733,12 @@ id = "ovl20:05F0"
 unit = "ovl20"
 addr = "ovl20:05F0"
 size = 305
-name = "ovl20_fn_05F0"
+name = "ShowRestTime"
 signature = ""
 c_name = "ovl20_fn_05F0"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl20_fn_05F0 (ovl20:05F0 draws the rest time on row 17: the Rest Time: label (string at DS:05E3), days and hours as two digits (TwoDigitText of RestTime[4] and [3]) and the minutes (10*RestTime[2]+RestTime[1]); the field Selected is drawn in colour 15; called by ovl20:0721 (ovl20:0734) and by ovl20_e2 (ovl20:0D13)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

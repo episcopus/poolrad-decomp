@@ -5,13 +5,13 @@ unit OVL20;
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 uses POOLVARS, RES06;
-procedure ovl20_fn_0000;
+procedure ovl20_fn_0000(Amount: Byte; Index: ShortInt);
 procedure CarryRestClock(var Clock: TRestClock);
 procedure NormalizeRestTime;
-procedure ovl20_e1(A, B: Byte);
+procedure ovl20_e1(Amount: Byte; Index: ShortInt);
 procedure SpendRestTime(Amount: Byte; Index: ShortInt);
 function TwoDigitText(Number: Byte): String40;
-procedure ovl20_fn_05F0;
+procedure ShowRestTime(Selected: ShortInt);
 procedure ovl20_fn_0721;
 procedure ovl20_fn_0871;
 procedure ovl20_fn_0925;
@@ -27,9 +27,15 @@ procedure ovl20_fn_0BB2;
 function ovl20_e2: Byte;
 implementation
 uses RES12;
+const
+  RestLabelColumn = 1;      { the column of the "Rest Time:" label }
+  RestFirstColumn = 11;     { the column where the days field starts }
+  RestRow = 17;             { the text row of the rest time line }
+  RestTextColour = 10;      { EGA colour of the rest time }
+  RestSelectedColour = 15;  { EGA colour of the field the player is changing }
 
 { ovl20:0000: retf 4: 4 bytes of parameters; 28 bytes of locals }
-{@stub} procedure ovl20_fn_0000; begin end;
+{@stub} procedure ovl20_fn_0000(Amount: Byte; Index: ShortInt); begin end;
 { ovl20:02F2: retf 4: a var pointer to the rest clock (4 bytes of parameters); 6 bytes of locals.
   Carries the clock up its digits: digit I at or above its radix (ClockRadix[I], DS:363A) gives one
   unit to digit I+1 and loses the radix, for digits 0..5. The top digit has no next digit: while it is
@@ -71,8 +77,30 @@ begin
       RestTime[4] := 99;
   end;
 end;
-{ ovl20:03D5: retf 4: 4 bytes of parameters; 18 bytes of locals }
-{@stub} procedure ovl20_e1(A, B: Byte); begin end;
+{ ovl20:03D5: retf 4: Amount and Index (4 bytes of parameters); 18 bytes of locals. Advances the game clock by
+  Amount units of digit Index: the seven game variables at 49C6h..49CCh (VarsAt4900, the digits CarryRestClock
+  works on) are copied to a local clock, each unit is added and carried, and the clock is written back; then
+  ovl20_fn_0000 runs with the same arguments. The camp's rest advances it 5 minutes at a time (ovl20_e2 calls
+  it with Index 1 and Amount 5). Purpose unknown: the name stays as the entry other units call (OVL14, OVL15,
+  OVL08 and ovl20_e2 reference it, so a rename is a cross-unit change); what the passing time changes is in
+  ovl20_fn_0000, not decompiled yet. }
+procedure ovl20_e1(Amount: Byte; Index: ShortInt);
+var
+  Clock: TRestClock;
+  Digit: ShortInt;
+  Step: Byte;
+begin
+  for Digit := 0 to 6 do
+    Clock[Digit] := VarsAt4900^[$49C6 + Digit];
+  for Step := 1 to Amount do
+  begin
+    Inc(Clock[Index]);
+    CarryRestClock(Clock);
+  end;
+  for Digit := 0 to 6 do
+    VarsAt4900^[$49C6 + Digit] := Clock[Digit];
+  ovl20_fn_0000(Amount, Index);
+end;
 { ovl20:047A: retf 4: Amount and Index (4 bytes of parameters); 4 bytes of locals. Takes Amount off the
   rest clock digit Index (the Dec key of the Rest menu, ovl20:0721, and the rest's countdown, ovl20_e2).
   Nothing happens when the minutes, tens, hours and days (RestTime[1..4]) are all zero. Otherwise, while
@@ -119,8 +147,29 @@ begin
     Digits := '0' + Digits;
   TwoDigitText := Copy(Digits, 1, 2);
 end;
-{ ovl20:05F0: retf 2: 2 bytes of parameters; 272 bytes of locals }
-{@stub} procedure ovl20_fn_05F0; begin end;
+{ ovl20:05F0: retf 2: Selected (2 bytes of parameters); 272 bytes of locals. Draws the rest time on row 17:
+  "Rest Time:" and then days and hours as two digits with colons between them, and the minutes (the tens
+  and the minutes of RestTime, 10 * RestTime[2] + RestTime[1]). The field Selected is drawn in colour 15,
+  the others in 10. }
+procedure ShowRestTime(Selected: ShortInt);
+var
+  Digit: ShortInt;
+  Colors: array[0..6] of Word;
+  Col: Byte;
+begin
+  for Digit := 0 to 6 do
+    Colors[Digit] := RestTextColour;
+  Colors[Selected] := RestSelectedColour;
+  DrawTextAt(RestLabelColumn, RestRow, RestTextColour, 'Rest Time:');
+  Col := RestFirstColumn;
+  for Digit := 4 downto 3 do
+  begin
+    DrawTextAt(Col + 1, RestRow, Colors[Digit], TwoDigitText(RestTime[Digit]));
+    DrawTextAt(Col + 1 + 1 + 1, RestRow, RestTextColour, ':');
+    Inc(Col, 3);
+  end;
+  DrawTextAt(Col + 1, RestRow, Colors[2], TwoDigitText(10 * RestTime[2] + RestTime[1]));
+end;
 { ovl20:0721: retf 0: 0 bytes of parameters; 46 bytes of locals }
 {@stub} procedure ovl20_fn_0721; begin end;
 { ovl20:0871: retf 0: 0 bytes of parameters; 32 bytes of locals }
