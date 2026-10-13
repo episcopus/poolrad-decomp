@@ -9,28 +9,10 @@ interface
 uses POOLVARS;
 procedure ovl09_e1(Who: Pointer);
 function ovl09_fn_0203(Who: PCharacter): Boolean;
-procedure ovl09_fn_0255;
-function ovl09_fn_02EB(Who: Pointer; Spell, N: Byte): Boolean;
+function SpellAccepted(Who: PCharacter; Spell, Range: Byte): Boolean;
 function UseMagicItem(Who: PCharacter): Boolean;
 function CastMemorizedSpell(Who: PCharacter): Byte;
 function CanAffordStep(Who: PCharacter; Column, BaseDir: Byte; var OffMap: Byte): Boolean;
-procedure ovl09_fn_06AA;
-procedure ovl09_fn_06AF;
-procedure ovl09_fn_06B4;
-procedure ovl09_fn_06B9;
-procedure ovl09_fn_06BE;
-procedure ovl09_fn_06C3;
-procedure ovl09_fn_06C8;
-procedure ovl09_fn_06CD;
-procedure ovl09_fn_06D2;
-procedure ovl09_fn_06D7;
-procedure ovl09_fn_06DC;
-procedure ovl09_fn_06E1;
-procedure ovl09_fn_06EB;
-procedure ovl09_fn_06FA;
-procedure ovl09_fn_0704;
-procedure ovl09_fn_0709;
-procedure ovl09_fn_0718;
 procedure ovl09_fn_07F2;
 procedure ovl09_fn_0893;
 procedure ovl09_fn_0898;
@@ -93,14 +75,66 @@ begin
   else
     ovl09_fn_0203 := False;
 end;
-{ ovl09:0255: retf 8: 8 bytes of parameters; 4 bytes of locals }
-{@stub} procedure ovl09_fn_0255; begin end;
-{ ovl09:02EB: retf 8: 4 bytes of parameters; 8 bytes of locals }
-{@stub} function ovl09_fn_02EB(Who: Pointer; Spell, N: Byte): Boolean; begin end;
+{ ovl09:02EB (SpellAccepted). Decides whether the AI accepts spell Spell cast at Range by Who
+  (UseMagicItem 03E4 and CastMemorizedSpell 0545 keep what it accepts). Refuses at once when the
+  spell row's +$D byte is below Range. A spell other than 3 whose +$E byte is 0, and spell 3 when
+  ovl13_e13(Who, Done) agrees, are accepted at once. Otherwise res12_fn_2433 collects Who's
+  enemies the area pattern of ovl22_e3(Spell) reaches (ds6DE4, count Tries): a zero count refuses,
+  a zero +$F byte accepts; else each collected enemy is asked through the nested
+  DifferentSideInArea, a Yes refuses the spell and a No (or no enemy at all) accepts it.
+  The +$D..+$F bytes are the spell row's last three bytes of SpellTable (16-byte stride).
+  QUIRK: the [bp-2..-4] frame bytes are never read (Unused). Globals: SpellTable, ds6DE4,
+  CombatantTable, ds6718, CombatantRecord, SelectedCharacter, CombatMap. }
+function SpellAccepted(Who: PCharacter; Spell, Range: Byte): Boolean;
+var
+  Unused: array[0..2] of Byte;
+  Done: Byte;
+  Tries: Byte;
+  I: Byte;
+
+  { Nested in SpellAccepted (ovl09:0255): scans the DS:5F27 map entities around (X, Y) with the
+    area pattern of spell Spell (its +$F byte is the line budget, direction omni, footprint base
+    1) into ds6718, then answers True when one of the found combatants has a Side different from
+    res12_fn_23B7(SelectedCharacter) (that is 1 for the party side 0). Purpose unknown. }
+  function DifferentSideInArea(X, Y: ShortInt; Spell: Byte): Boolean;
+  var
+    I: Byte;
+  begin
+    DifferentSideInArea := False;
+    ScanTargets(X, Y, SpellTable[Spell].PadB[$F], $FF, 1, CombatMap);
+    for I := 1 to ds6718[0].Val do
+      if CombatantRecord[ds6718[I].Head]^.Side <> res12_fn_23B7(SelectedCharacter) then
+        DifferentSideInArea := True;
+  end;
+
+begin
+  SpellAccepted := False;
+  if SpellTable[Spell].PadB[$D] < Range then
+    Exit;
+  if ((Spell <> 3) and (SpellTable[Spell].PadB[$E] = 0)) or
+     ((Spell = 3) and ovl13_e13(Who, Done)) then
+  begin
+    SpellAccepted := True;
+    Exit;
+  end;
+  Tries := res12_fn_2433(Who, ovl22_e3(Spell));
+  if Tries > 0 then
+  begin
+    if SpellTable[Spell].PadB[$F] = 0 then
+    begin
+      SpellAccepted := True;
+      Exit;
+    end;
+    for I := 1 to Tries do
+      if DifferentSideInArea(CombatantTable[ds6DE4[I]].X, CombatantTable[ds6DE4[I]].Y, Spell) then
+        Exit;
+    SpellAccepted := True;
+  end;
+end;
 { ovl09:03E4. Uses a magic item for the computer's turn (called by ovl09_e1; True ends
   the turn through res12_fn_2637): rolls 1d7 rounds; each round walks Who^.Items for the first
   item that passes (not ovl22_e6, Affects[3] below $80, Readied, level from Affects[2] in
-  1..MaxSpell adjusted down by $17 above it, and ovl09_fn_02EB in range) and remembers it as
+  1..MaxSpell adjusted down by $17 above it, and SpellAccepted in range) and remembers it as
   Best. Afterwards a chosen Best is used through ovl19_e8 and the result is True. Early exits
   (Pad2 zero, both ds6814Sides zero, VarNoCasting set) return False at once. QUIRK ovl09:049F:
   RowByte (the RaceRow byte of the item kind) is computed but never read. QUIRK: the
@@ -148,7 +182,7 @@ begin
           begin
             if Level > MaxSpell then
               Level := Level - $17;
-            if ovl09_fn_02EB(Who, Level, Range) then
+            if SpellAccepted(Who, Level, Range) then
               Best := Target;
           end;
   Advance:
@@ -167,7 +201,7 @@ end;
 { ovl09:0545. Casts a memorized spell for the computer's turn (called by ovl09_e1; the
   nonzero result ends the turn): collects Who's nonzero memorized Spells (when CanCast allows),
   rolls rounds with a shrinking level, tries up to three random spells per round through
-  ovl09_fn_02EB (Who, Spell, Level) and casts the first in range through ovl13_e15 (the Cast of
+  SpellAccepted (Who, Spell, Level) and casts the first in range through ovl13_e15 (the Cast of
   CombatMenu). Skips everything when no spell is memorized. QUIRK: the [bp-0x17..-0x1A] and
   [bp-0x24] frame bytes are never read (UnusedC, UnusedD). Globals: ds6814Sides (ds6814),
   ds6E30, GameVars (word 710). }
@@ -213,7 +247,7 @@ begin
         begin
           I := RollDice(1, Count) - 1;
           Spell := SpellList[I];
-          if ovl09_fn_02EB(Who, Spell, Level) then
+          if SpellAccepted(Who, Spell, Level) then
             Chosen := Spell;
           Inc(J);
         end;
@@ -274,40 +308,6 @@ begin
         CanAffordStep := True;
     end;
 end;
-{ ovl09:06AA: frame not read }
-{@stub} procedure ovl09_fn_06AA; begin end;
-{ ovl09:06AF: frame not read }
-{@stub} procedure ovl09_fn_06AF; begin end;
-{ ovl09:06B4: frame not read }
-{@stub} procedure ovl09_fn_06B4; begin end;
-{ ovl09:06B9: retf 47513: 47513 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl09_fn_06B9; begin end;
-{ ovl09:06BE: frame not read }
-{@stub} procedure ovl09_fn_06BE; begin end;
-{ ovl09:06C3: frame not read }
-{@stub} procedure ovl09_fn_06C3; begin end;
-{ ovl09:06C8: frame not read }
-{@stub} procedure ovl09_fn_06C8; begin end;
-{ ovl09:06CD: frame not read }
-{@stub} procedure ovl09_fn_06CD; begin end;
-{ ovl09:06D2: frame not read }
-{@stub} procedure ovl09_fn_06D2; begin end;
-{ ovl09:06D7: frame not read }
-{@stub} procedure ovl09_fn_06D7; begin end;
-{ ovl09:06DC: frame not read }
-{@stub} procedure ovl09_fn_06DC; begin end;
-{ ovl09:06E1: frame not read }
-{@stub} procedure ovl09_fn_06E1; begin end;
-{ ovl09:06EB: frame not read }
-{@stub} procedure ovl09_fn_06EB; begin end;
-{ ovl09:06FA: frame not read }
-{@stub} procedure ovl09_fn_06FA; begin end;
-{ ovl09:0704: frame not read }
-{@stub} procedure ovl09_fn_0704; begin end;
-{ ovl09:0709: frame not read }
-{@stub} procedure ovl09_fn_0709; begin end;
-{ ovl09:0718: retf 12: 12 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl09_fn_0718; begin end;
 { ovl09:07F2: frame not read }
 {@stub} procedure ovl09_fn_07F2; begin end;
 { ovl09:0893: frame not read }

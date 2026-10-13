@@ -774,6 +774,11 @@ var
   ds6E30: Boolean;                { the Alt-M Magic On/Off toggle of the combat keys (ovl08:04A7) }
   ds6E31: Byte;                   { the key flag the ovl08 menus pass to ReadPromptChoice }
   ds6DE3: Byte;                   { counted up once per combat round (ovl08:0891) }
+  { The combatant order the AI works through: one DS:5F27 combatant index per entry, read from
+    entry 1 (ovl09:02EB loops 1..res12_fn_2433(Who, ovl22_e3(Spell)) over it; ovl13:0F90 moves
+    the character at entry 1 to another entry). Entry 0 is never read. Extent not proven; the
+    next named byte after it is ds6E2F. }
+  ds6DE4: array[0..73] of Byte;
   { Class tables of ovl23 (whitepaper 5.6). Their extents are not known (only the rows the
     characters reach are read). A table whose columns count from 1 is addressed from the byte
     before it ([row, column] is base - 1 + row * width + column), so that byte is declared just

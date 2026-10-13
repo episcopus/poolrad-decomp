@@ -3162,3 +3162,17 @@ kind = "global"
 why = "7 rows of 5 direction offsets: CanAffordStep adds ds02AE[Combat+15h, Column] to the base direction mod 8 before ProbeStep (ovl09:068B..06C2); ovl09_fn_0898 sets the row to RollDice(1, 2) (ovl09:08CD)"
 date = "2026-10-12"
 
+[[rename]]
+old = "ovl09_fn_02EB"
+new = "SpellAccepted"
+kind = "routine"
+why = "ovl09:02EB decides whether the AI accepts spell Spell at Range for Who: refuses below the spell row byte +$D, accepts a zero +$E byte or spell 3 through ovl13_e13, else counts Who's enemies in the area with res12_fn_2433 and refuses when ovl09_fn_0255 finds a side unlike res12_fn_23B7(SelectedCharacter) near one; callers UseMagicItem (03E4) and CastMemorizedSpell (0545) keep what it accepts"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl09_fn_0255"
+new = "DifferentSideInArea"
+kind = "routine"
+why = "ovl09:0255 (nested in SpellAccepted): scans the map entities around (X, Y) with the spell's line budget and answers True when one of them has a Side unlike res12_fn_23B7(SelectedCharacter)"
+date = "2026-10-13"
+
