@@ -14,22 +14,24 @@ type
   { an 8-byte, 16-entry 4-bit colour palette; a picture holds it at +9 }
   TPalette = array[0..7] of Byte;
   PPalette = ^TPalette;
+  { the pixel-buffer pointer at +$13 is indexed byte-wise (the array bound is
+    only there so the index compiles, like the picture record's tail) }
+  TByteArray = array[0..0] of Byte;
+  PByteArray = ^TByteArray;
 
   { An in-memory picture (whitepaper 4.2.3): the DAX header fields at +0..+$10,
     then ByteSize (the bytes per item), the pixel-buffer pointer at +$13 and the
     packed pixel data from +$17 on (variable length, so the last field is a
     one-byte array indexed with $R- off, like ovl32's TMemPic). }
   TPicture = record
-    { Height and WidthCols are signed in res07's own view of the record: 1951's
-      arithmetic (FirstRow + Height, the jg/jle loop compares) is 16-bit signed. }
-    Height: Integer;              { +0 }
-    WidthCols: Integer;           { +2 }
+    Height: Word;                 { +0 }
+    WidthCols: Word;              { +2 }
     XPos: Word;                   { +4 }
     YPos: Word;                   { +6 }
     ItemCount: Byte;              { +8 }
     Palette: TPalette;            { +9, 8 bytes }
     ByteSize: Word;               { +$11 }
-    Pixels: ^Byte;                { +$13 }
+    Pixels: PByteArray;           { +$13 }
     Data: array[0..0] of Byte;    { +$17, the packed pixel data }
   end;
   PPicture = ^TPicture;
@@ -45,7 +47,7 @@ procedure res07_fn_0D71(Col, Row: Integer; PicIndex, Flags: Byte; Source, Dest: 
 function MirrorByte(Value: Byte): Byte;
 function MirrorWord(Value: Word): Word;
 function SwapNibbles(Value: Byte): Byte;
-procedure res07_fn_15C7(Source, Dest: Pointer);
+procedure MirrorPicture(Source, Dest: Pointer);
 procedure ShowPicture(PicCol, PicRow: Integer; Buf: Pointer);
 procedure res07_fn_1B52;
 procedure res07_fn_1E5C(P1, P2: Pointer; A: Word; B: Byte; P3: Pointer);
@@ -206,8 +208,102 @@ begin
   Inc(Swapped, (Value and $F0) shr 4);
   SwapNibbles := Swapped;
 end;
-{ 0464:15C7: retf 8: two Pointers. Returns at once when either is nil. }
-{@stub} procedure res07_fn_15C7(Source, Dest: Pointer); begin end;
+{ 0464:15C7: copies the picture Source into Dest mirrored: the palette is copied
+  as is, then the pixel data of every row is reversed (each 16-bit unit through
+  MirrorWord for adapter 0, each byte through MirrorByte in 4-byte groups for
+  adapter 1, each byte through SwapNibbles for adapter 2). The pixel buffer at
+  +$13 is mirrored too when it is not nil: word by word in mode 0, byte by byte
+  within the row in mode 1, and in place in mode 2. Called by ovl32 DrawIcon
+  (icon sets above 3) and res12. }
+procedure MirrorPicture(Source, Dest: Pointer);
+var
+  DestOfs, SrcLastOfs, RowOfs, RowBytes: Word;
+  Col, Row: Word;
+  I: Byte;
+  PixelWord: Word;    { one 16-bit pixel unit, mirrored through MirrorWord }
+begin
+  if (Source = nil) or (Dest = nil) then Exit;
+  with PPicture(Source)^ do
+  begin
+    Move(Palette, PPicture(Dest)^.Palette, 8);
+    case VideoAdapter of
+      0:
+        begin
+          RowBytes := WidthCols * 2;
+          SrcLastOfs := RowBytes - 2;
+          DestOfs := 0;
+          for Row := 1 to Height do
+          begin
+            RowOfs := DestOfs;
+            for Col := 0 to WidthCols - 1 do
+            begin
+              Move(Data[SrcLastOfs - DestOfs + RowOfs], PixelWord, 2);
+              PixelWord := MirrorWord(PixelWord);
+              Move(PixelWord, PPicture(Dest)^.Data[DestOfs], 2);
+              if Pixels <> nil then
+              begin
+                Move(Pixels^[SrcLastOfs - DestOfs + RowOfs], PixelWord, 2);
+                PixelWord := MirrorWord(PixelWord);
+                Move(PixelWord, PPicture(Dest)^.Pixels^[DestOfs], 2);
+              end;
+              Inc(DestOfs, 2);
+            end;
+            Inc(SrcLastOfs, RowBytes);
+          end;
+        end;
+      1:
+        begin
+          RowBytes := WidthCols * 4;
+          SrcLastOfs := RowBytes - 4;
+          DestOfs := 0;
+          for Row := 1 to Height do
+          begin
+            RowOfs := DestOfs;
+            for Col := 1 to WidthCols do
+            begin
+              for I := 0 to 3 do
+                PPicture(Dest)^.Data[DestOfs + I] :=
+                  MirrorByte(Data[SrcLastOfs - DestOfs + RowOfs + I]);
+              Inc(DestOfs, 4);
+            end;
+            Inc(SrcLastOfs, RowBytes);
+          end;
+          if Pixels <> nil then
+          begin
+            SrcLastOfs := 0;
+            for Row := 1 to Height do
+            begin
+              for Col := 0 to WidthCols - 1 do
+                PPicture(Dest)^.Pixels^[SrcLastOfs + WidthCols - Col - 1] :=
+                  MirrorByte(Pixels^[SrcLastOfs + Col]);
+              Inc(SrcLastOfs, WidthCols);
+            end;
+          end;
+        end;
+      2:
+        begin
+          RowBytes := WidthCols * 4;
+          SrcLastOfs := RowBytes - 1;
+          DestOfs := 0;
+          for Row := 1 to Height do
+          begin
+            RowOfs := DestOfs;
+            for Col := 1 to RowBytes do
+            begin
+              PPicture(Dest)^.Data[DestOfs] :=
+                SwapNibbles(Data[SrcLastOfs - DestOfs + RowOfs]);
+              if Pixels <> nil then
+                PPicture(Dest)^.Pixels^[DestOfs] :=
+                  SwapNibbles(Pixels^[SrcLastOfs - DestOfs + RowOfs]);
+              Inc(DestOfs);
+            end;
+            Inc(SrcLastOfs, RowBytes);
+          end;
+        end;
+    end;
+  end;
+end;
+
 { 0464:1951: shows a picture at (X, Y) by copying its packed pixel data
   straight to the video hardware, one branch per video adapter: adapter 0 moves a
   WidthCols*2-byte row per screen row to the segment ds4EC0[Row] at column X*2;
@@ -218,8 +314,8 @@ end;
 procedure ShowPicture(PicCol, PicRow: Integer; Buf: Pointer);
 var
   Col, Row: Integer;
-  FirstCol, FirstRow: Integer;
-  LastCol, LastRow: Integer;
+  FirstCol, FirstRow: Word;
+  LastCol, LastRow: Word;
   RowBytes, SourceOfs: Word;
   Plane: Byte;
 begin

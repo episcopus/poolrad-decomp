@@ -3058,3 +3058,10 @@ kind = "routine"
 why = "0464:0111 loads DAX picture block A of the set Text (with the dax extension) into the caller's picture pointer: frees any old picture, copies the header into locals, AllocatePicture, stores X/Y and the palette, unpacks the pixels through 02A5, frees the DAX block; called by ovl01/ovl11/ovl18/ovl28/ovl32/ovl34"
 date = "2026-10-12"
 
+[[rename]]
+old = "res07_fn_15C7"
+new = "MirrorPicture"
+kind = "routine"
+why = "0464:15C7 copies the picture Source into Dest mirrored: palette as is, then each pixel row reversed per VideoAdapter (MirrorWord units, MirrorByte groups, SwapNibbles bytes) and the pixel buffer at +$13 mirrored too; called by ovl32 DrawIcon for icon sets above 3 and by res12"
+date = "2026-10-12"
+

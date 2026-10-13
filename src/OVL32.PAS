@@ -16,7 +16,7 @@ uses POOLVARS, RES04, RES07;
 const
   PicIndexMask = $7F;         { bit 7 of the picture code selects the source pointer }
   NoBlitFlags = 0;            { the flags byte this routine passes to the blitter }
-  IconSetCopyLimit = 3;       { icon sets above this are copied by res07_fn_15C7 }
+  IconSetCopyLimit = 3;       { icon sets above this are copied by MirrorPicture }
   OneItem = 1;                { item count stored in the allocated picture }
   AllocatePixels = 1;         { bit 0 of AllocFlags asks AllocatePicture for a pixel buffer }
   NoPicIndex = 0;             { picture index this routine passes to res07_fn_0D71 }
@@ -130,7 +130,7 @@ begin
 end;
 { ovl32:04FC. Draws the picture PicIndex, mirror half Mirror, from the table at ds5E5A.
   Nothing happens when that pointer is nil. Otherwise a picture of the same height and
-  width is allocated, the bytes are copied (res07_fn_15C7 when IconSet is above
+  width is allocated, the bytes are copied (MirrorPicture when IconSet is above
   IconSetCopyLimit, otherwise Move of the tail and the pixels), and res07_fn_0D71 draws
   it at the cell times CellStep. The copy is then freed. DrawPartyMarker passes the
   marker cell, the icon set ds6AAF, and the walk frame split into half and picture. }
@@ -144,7 +144,7 @@ begin
     begin
       AllocatePicture(Height, WidthCols, OneItem, AllocatePixels, Dest);
       if IconSet > IconSetCopyLimit then
-        res07_fn_15C7(ds5E5A[PicIndex].Pics[Mirror], Dest)
+        MirrorPicture(ds5E5A[PicIndex].Pics[Mirror], Dest)
       else
       begin
         Move(Tail, PMemPic(Dest)^.Tail, ByteSize);

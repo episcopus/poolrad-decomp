@@ -16629,12 +16629,12 @@ id = "0464:15C7"
 unit = "res07"
 addr = "0464:15C7"
 size = 906
-name = "res07_fn_15C7"
-signature = "procedure res07_fn_15C7(Source, Dest: Pointer)"
+name = "MirrorPicture"
+signature = "procedure MirrorPicture(Source, Dest: Pointer)"
 c_name = "res07_fn_15C7"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:far_call; map deepseek-dec 2026-10-12: ends 1951 (was 321); bogus entry 1708 deleted"
+notes = "renamed from res07_fn_15C7 (0464:15C7 copies the picture Source into Dest mirrored: palette as is, then each pixel row reversed per VideoAdapter (MirrorWord units, MirrorByte groups, SwapNibbles bytes) and the pixel buffer at +$13 mirrored too; called by ovl32 DrawIcon for icon sets above 3 and by res12); auto:far_call; map deepseek-dec 2026-10-12: ends 1951 (was 321); bogus entry 1708 deleted"
 evidence = ["prologue"]
 
 [[routine]]
