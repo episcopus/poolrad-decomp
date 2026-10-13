@@ -19,10 +19,7 @@ function ovl09_fn_0F4F(Who: PCharacter): Byte;
 function HandleCombatKey(Who: PCharacter): Boolean;
 function CheckMorale(Who: PCharacter): Byte;
 function ScoreTarget(Actor, Foe: PCharacter): Byte;
-procedure ovl09_fn_13CA(Who: PCharacter);
-procedure ovl09_fn_1583;
-procedure ovl09_fn_1713;
-procedure ovl09_fn_1758;
+procedure UseBestItem(Who: PCharacter);
 implementation
 uses Crt, RES04, RES05, RES06, RES12, OVL13, OVL19, OVL22, OVL24, OVL25, OVL30, OVL31;
 
@@ -409,10 +406,10 @@ end;
   0, and loops (Done = 0 and CanAct <> 0): while panicking (+$14) it steps MoveStep until the
   moves run out, initiative leaves 1..$13 or the panic clears; then it stumbles ($14 set: no
   step) or attacks. After 20 turns it gives up; the attack range comes from the race row byte
-  +12 of the character's AttackTarget (+$CC, minus 1, clamped). The remembered Combat^.Target is
+  +12 of the item in slot 0 (+$CC, minus 1, clamped). The remembered Combat^.Target is
   dropped when it is not dying or is on the party side, and a target is attacked when line of
   sight (WalkLine) reaches it within Range and ovl13_e8 allows it; otherwise a random enemy of
-  the res12_fn_2433(Who, Range) scan (ds6DE4) is picked (or ovl09_fn_13CA chooses one when
+  the res12_fn_2433(Who, Range) scan (ds6DE4) is picked (or UseBestItem chooses one when
   res12_fn_2E03 says to). The attack runs ovl13_e7/e11/e12 and ends the turn through
   res12_fn_2637. Result: 1 when the turn is over (CanAct = 0). QUIRK: [bp-3] is reused for
   res12_fn_2E8B's dead result; the +$CC deref runs before its nil test. Globals: ds443C, ds443D,
@@ -467,8 +464,8 @@ Loop:
   end;
   Flag := 0;
   Range := 1;
-  if Who^.AttackTarget <> nil then
-    Range := RaceRow[Byte(Who^.AttackTarget^.Race)][12] - 1;
+  if Who^.SlotItems[0] <> nil then
+    Range := RaceRow[Byte(Who^.SlotItems[0]^.ItemType)][12] - 1;
   if (Range = 0) or (Range = $FF) then
     Range := 1;
   Target := Who^.Combat^.Target;
@@ -502,7 +499,7 @@ Loop:
     if not res12_fn_2E46(Who) then
       if res12_fn_2433(Who, 1) > 0 then
       begin
-        ovl09_fn_13CA(Who);
+        UseBestItem(Who);
         Done := 1;
         goto Attack;
       end;
@@ -660,7 +657,7 @@ begin
 end;
 { ovl09:128D. Scores a potential target for the computer's combat turn: copies the
   sixteen-byte RaceRow of the foe's race and builds a score from it, the foe's hit points and
-  known-spell bytes, and the actor's combat state. ovl09_fn_13CA calls it for each candidate and
+  known-spell bytes, and the actor's combat state. UseBestItem calls it for each candidate and
   keeps the highest score (ovl09:1543). Actor is 13CA's character (its Combat, PadCC[$100] and
   ByteA0 bytes are read); Foe is the candidate (its Race, HpMax and KnownSpells bytes are
   read). Result: the target score. Globals: RaceRow (ds5582). The $55 race and the $84/$53
@@ -685,7 +682,7 @@ begin
     Score := Score + (Row[5] - 1) * 2;
   if Row[1] <= 1 then
     Score := Score + 3;
-  if Row[1] + Actor^.PadD0[$100] > 3 then
+  if Row[1] + Actor^.ds100 > 3 then
     Score := 0;
   if Foe^.KnownSpells[$0C] = $84 then
     if (Foe^.KnownSpells[$0B] and $0F) <> Byte(Actor^.ByteA0) then
@@ -696,14 +693,169 @@ begin
     Score := 0;
   ScoreTarget := Score;
 end;
-{ ovl09:13CA: frame not read }
-{@stub} procedure ovl09_fn_13CA(Who: PCharacter); begin end;
-{ ovl09:1583: frame not read }
-{@stub} procedure ovl09_fn_1583; begin end;
-{ ovl09:1713: frame not read }
-{@stub} procedure ovl09_fn_1713; begin end;
-{ ovl09:1758: retf 4: 4 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl09_fn_1758; begin end;
+{ ovl09:13CA. The AI's item step for Who (called by ovl09_e1 every turn and by AiTurn before
+  attacking): it pays the two per-kind slot items (RaceRow[item type][1] off Who^.ds100), scores
+  the carried items (ScoreTarget on the item record: its type indexes RaceRow) and keeps the best
+  'attack' item (row[14] bit 3 or bit $10; AttackPick/Best), the best other item (bit 3 clear;
+  OtherPick/Score2) and the best type-1 item by its Plus (row[0] = 1; PlusPick/Best2). The item
+  to use is AttackPick when it beats half of Score2 and the row-14 bits point at a slot item,
+  else OtherPick. It then uses the slot-0 item (unless it is the pick or cursed), the slot-1
+  item (when not cursed, also paying its row[1] again) and the pick through ovl19_e7, and when
+  Who^.ds100 is above 2 uses the slot-1 item or the pick, below 2 the slot-1 item, then PlusPick;
+  every use runs res12_fn_0BB8 (and ovl13_e6 once), and a use ends with res12_fn_09E3. Globals:
+  RaceRow; TCharacter slots SlotItems and ds100/dsA3/dsA5/dsA7/dsB0. QUIRK: the [bp-1b] and
+  [bp-20] frame bytes are never read. }
+procedure UseBestItem(Who: PCharacter);
+label
+  AfterFirst, SkipSlotUse;
+var
+  AttackPick: PItem;
+  OtherPick: PItem;
+  PlusPick: PItem;
+  Pick: PItem;
+  SlotPick: PItem;
+  Best: Byte;
+  Score2: Byte;
+  Best2: Byte;
+  Score: Byte;
+  ItemType: Byte;
+  Row14: Byte;
+  Unused1: Byte;
+  SlotUsable: Byte;
+  Used: Byte;
+  BothKinds: Byte;
+  SlotFound: Byte;
+  Unused2: Byte;
+begin
+  if Who^.SlotItems[0] <> nil then
+    Who^.ds100 := Who^.ds100 - RaceRow[Byte(Who^.SlotItems[0]^.ItemType)][1];
+  if Who^.SlotItems[1] <> nil then
+    Who^.ds100 := Who^.ds100 - RaceRow[Byte(Who^.SlotItems[1]^.ItemType)][1];
+  AttackPick := nil;
+  OtherPick := nil;
+  PlusPick := nil;
+  Best := 1;
+  Score2 := Who^.dsA5 * Who^.dsA3;
+  if Who^.dsA7 > 0 then
+    Score2 := Score2 + Who^.dsA7 * 2;
+  Best2 := 0;
+  Pick := Who^.Items;
+  while Pick <> nil do
+  begin
+    ItemType := Pick^.ItemType;
+    if RaceRow[ItemType][0] = 0 then
+    begin
+      if (RaceRow[ItemType][13] and Who^.PadB0) = 0 then
+        goto AfterFirst;
+      Score := ScoreTarget(Who, PCharacter(Pick));
+      if ((RaceRow[ItemType][14] and 8) <> 0) or
+         ((RaceRow[ItemType][14] and $10) <> 0) then
+        if Score > Best then
+        begin
+          AttackPick := Pick;
+          Best := Score;
+        end;
+      if (RaceRow[ItemType][14] and 8) = 0 then
+        if Score > Score2 then
+        begin
+          OtherPick := Pick;
+          Score2 := Score;
+        end;
+    end;
+  AfterFirst:
+    if RaceRow[ItemType][0] = 1 then
+      if (RaceRow[ItemType][13] and Who^.PadB0) > 0 then
+      begin
+        if Pick^.Plus >= 0 then
+          Score := Byte(Pick^.Plus + 1)
+        else
+          Score := 0;
+        if Score > Best2 then
+        begin
+          PlusPick := Pick;
+          Best2 := Score;
+        end;
+      end;
+    Pick := Pick^.Next;
+  end;
+  if (AttackPick <> nil) and (RaceRow[Byte(AttackPick^.ItemType)][12] > 1) and
+     ((RaceRow[Byte(AttackPick^.ItemType)][14] and $14) = $14) then
+    BothKinds := 1
+  else
+    BothKinds := 0;
+  SlotFound := 0;
+  SlotPick := nil;
+  Row14 := 0;
+  if AttackPick <> nil then
+  begin
+    Row14 := RaceRow[Byte(AttackPick^.ItemType)][14];
+    if (Row14 and $10) <> 0 then
+      SlotPick := AttackPick;
+    if (Row14 and 8) <> 0 then
+    begin
+      if (Row14 and 1) <> 0 then
+        SlotPick := Who^.SlotItems[11];
+      if (Row14 and $80) <> 0 then
+        SlotPick := Who^.SlotItems[12];
+    end;
+  end;
+  if (SlotPick <> nil) or (Row14 = $0A) then
+    SlotFound := 1;
+  if (AttackPick <> nil) and (Best > Score2 shr 1) and (SlotFound <> 0) and
+     ((BothKinds <> 0) or (res12_fn_2433(Who, 1) = 0)) then
+    Pick := AttackPick
+  else
+    Pick := OtherPick;
+  Used := 0;
+  SlotUsable := 1;
+  if Who^.SlotItems[0] <> nil then
+    if (Who^.SlotItems[0] = Pick) or Who^.SlotItems[0]^.Cursed then
+      SlotUsable := 0;
+  if SlotUsable = 0 then
+    goto SkipSlotUse;
+  if Who^.SlotItems[0] <> nil then
+    ovl19_e7(Who^.SlotItems[0]);
+  res12_fn_0BB8(Who);
+  if Who^.SlotItems[1] <> nil then
+    if not Who^.SlotItems[1]^.Cursed then
+      Who^.ds100 := Who^.ds100 - RaceRow[Byte(Who^.SlotItems[1]^.ItemType)][1];
+  if Pick <> nil then
+    ovl19_e7(Pick);
+  Used := 1;
+SkipSlotUse:
+  res12_fn_0BB8(Who);
+  ovl13_e6(Who);
+  SlotUsable := 1;
+  if Who^.SlotItems[1] <> nil then
+    if (Who^.SlotItems[1] = PlusPick) or Who^.SlotItems[1]^.Cursed then
+      SlotUsable := 0;
+  if Who^.ds100 > 2 then
+  begin
+    if (Who^.SlotItems[1] = nil) or Who^.SlotItems[1]^.Cursed then
+    begin
+      ovl19_e7(Pick);
+      Used := 1;
+    end
+    else
+    begin
+      ovl19_e7(Who^.SlotItems[1]);
+      Used := 1;
+    end;
+  end
+  else if Who^.ds100 < 2 then
+    if SlotUsable <> 0 then
+    begin
+      if Who^.SlotItems[1] <> nil then
+        ovl19_e7(Who^.SlotItems[1]);
+      res12_fn_0BB8(Who);
+      if PlusPick <> nil then
+        ovl19_e7(PlusPick);
+      Used := 1;
+    end;
+  res12_fn_0BB8(Who);
+  if Used <> 0 then
+    res12_fn_09E3(Who);
+end;
 
 begin
 end.

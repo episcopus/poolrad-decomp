@@ -3190,3 +3190,10 @@ kind = "routine"
 why = "ovl09:0B3C is the AI's whole turn for Who (called by ovl09_e1 at 01E6 when the initiative allows): it runs affect hook 0E, loops movement (MoveStep while panicking) and attacks, picks an attack target from the remembered Combat^.Target or a random enemy of the res12_fn_2433 scan (or ovl09_fn_13CA), attacks through ovl13_e7/e11/e12 and ends the turn through res12_fn_2637; result 1 when the turn is over"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl09_fn_13CA"
+new = "UseBestItem"
+kind = "routine"
+why = "ovl09:13CA is the AI's item step (called by ovl09_e1 every turn and by AiTurn before attacking): it pays the per-kind slot items off Who^.ds100, scores the carried items with ScoreTarget and keeps the best row-14-bit-3/$10 item, the best other item and the best type-1 item by Plus, then uses the slot-0, slot-1 and picked items through ovl19_e7 (res12_fn_0BB8/ovl13_e6/res12_fn_09E3), branching on ds100 above or below 2"
+date = "2026-10-13"
+

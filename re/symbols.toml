@@ -2731,53 +2731,14 @@ evidence = ["prologue"]
 id = "ovl09:13CA"
 unit = "ovl09"
 addr = "ovl09:13CA"
-size = 441
-name = "ovl09_fn_13CA"
-signature = "procedure ovl09_fn_13CA(Who: PCharacter)"
+size = 1368
+name = "UseBestItem"
+signature = "procedure UseBestItem(Who: PCharacter)"
 c_name = "ovl09_fn_13CA"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl09_fn_13CA (ovl09:13CA is the AI's item step (called by ovl09_e1 every turn and by AiTurn before attacking): it pays the per-kind slot items off Who^.ds100, scores the carried items with ScoreTarget and keeps the best row-14-bit-3/$10 item, the best other item and the best type-1 item by Plus, then uses the slot-0, slot-1 and picked items through ovl19_e7 (res12_fn_0BB8/ovl13_e6/res12_fn_09E3), branching on ds100 above or below 2); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl09:1583"
-unit = "ovl09"
-addr = "ovl09:1583"
-size = 400
-name = "ovl09_fn_1583"
-signature = ""
-c_name = "ovl09_fn_1583"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl09:1713"
-unit = "ovl09"
-addr = "ovl09:1713"
-size = 69
-name = "ovl09_fn_1713"
-signature = ""
-c_name = "ovl09_fn_1713"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl09:1758"
-unit = "ovl09"
-addr = "ovl09:1758"
-size = 458
-name = "ovl09_fn_1758"
-signature = ""
-c_name = "ovl09_fn_1758"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl09:1922"

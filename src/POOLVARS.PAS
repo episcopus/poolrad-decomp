@@ -277,7 +277,15 @@ type
     { +$A1: RecalcClassStats sets 3 when the fighter level (ClassLevels[2]) is above 6, else 2
       (ovl23:0083): likely attacks per two rounds [I]. }
     Attacks: Byte;
-    PadA2: array[$A2..$AB] of Byte;
+    { +$A2..+$AB: three bytes the AI item chooser reads (ovl09:13CA): it multiplies +$A3 and +$A5
+      into its item score and, when the signed +$A7 is above 0, adds twice it. The rest is unknown. }
+    PadA2: Byte;
+    dsA3: Byte;                   { +$A3 }
+    PadA4: Byte;                  { +$A4 }
+    dsA5: Byte;                   { +$A5 }
+    PadA6: Byte;                  { +$A6 }
+    dsA7: ShortInt;               { +$A7 }
+    PadA8: array[$A8..$AB] of Byte;
     Experience: LongInt;          { +$AC: experience points; AwardExperience adds a battle's share (ovl05:04A3) }
     PadB0: Byte;
     { +$B1: Raise Dead subtracts it from HpMax to get the hit points its constitution
@@ -300,11 +308,15 @@ type
     PadC0: array[$C0..$C6] of Byte;
     ItemCountC7: Byte;            { +$C7: nonzero offers Use in the combat menu (ovl08:06E1); likely the item count }
     Items: PItem;                 { +$C8: the list of carried items }
-    { +$CC: a far pointer to another character record whose race (+$2E) ovl09's AI, ovl13 and ovl19
-      read (an attack range from RaceRow[Race][12], ovl09:0C3B); 0 when none. No writer is known
-      in the overlays yet, so the name is provisional. }
-    AttackTarget: PCharacter;     { +$CC }
-    PadD0: array[$D0..$100] of Byte;
+    { +$CC..+$FF: the per-kind items the character remembers (13 pointer slots): ovl09:13CA
+      compares the item it picked with slots 0 and 1 and checks their Cursed flag, ovl09:0B3C and
+      ovl13 read RaceRow[ItemType] of slot 0, and ovl19 indexes the slots by RaceRow[ItemType][0]
+      and reads the slots of item types $49 and $1C at +$F8 and +$FC (11 and 12). The writer is
+      not in the overlays (ovl19_e7?). }
+    SlotItems: array[0..12] of PItem;  { +$CC }
+    ds100: Byte;                  { +$100: an AI counter: ScoreTarget refuses a row[1] above 3 minus
+                                    it, ovl09:13CA lowers it by RaceRow[item type][1] per slot item
+                                    and branches on it being 2, ovl19 adds it to row[1] }
     SaveBonus: ShortInt;          { +$101: added to the d20 of every saving throw (SavingThrow, ovl24:0D96) }
     { +$102: the weight the character carries; every coin counts one (ovl21:0020, 003A), and it may
       not exceed CarryLimit, 1500 plus the strength allowance res12_fn_13AB (ovl21:0000, 0054). }
