@@ -2,9 +2,9 @@
 
 decompiler: dec-6
 reviewer: rev-6
-rounds: 1 rev-5 at e3614ee; 2 rev-6 at 8962b79
-date: 2026-10-12
-commit: 8962b79
+rounds: 1 rev-5 at e3614ee; 2 rev-6 at 8962b79; 3 rev-sonnet at f1c0c8b
+date: 2026-10-13
+commit: f1c0c8b
 
 Checklist: docs/process/playbooks/70-review.md (every item, every routine).
 
@@ -56,8 +56,25 @@ Round 2 (rev-6, at 8962b79): the round-1 fixes in 63f6c84 are verified (TempleMe
 - [x] should-fix VisitTemple: the comment says it "clears the pooled money DS:67F4 on entry" but leaves out the other entry writes: `ds49F3 := 1` (the view mode, whitepaper 5.19 says so) and `ds6DC0 := 0` (ovl04:0D37), and the first `res12_fn_27D9`/`res12_fn_0767` redraw. List the globals it changes. (fixed in cd780a5)
 - [x] note (outside the unit, escalated): whitepaper 5.4 (ovl06, line 576) says `BuyItems` pays "first from the party's pool (`ovl19_e11`) and then from its money (`ovl21_e12` on `DS:67F4`)", the opposite of 5.19 and of this unit: `ovl21_e10`, the writer paired with `ovl19_e11`, stores into `DS:5D92^` +$88..+$90 (the selected character, whitepaper line 580), and `DS:67F4` is the pool the Temple clears on entry. ovl04's reading (character's money, then the pool) is the consistent one. (escalation resolved by the orchestrator, 0906962)
 
+Round 3 (rev-sonnet, at f1c0c8b): `make match UNIT=ovl04` says `unit: complete` (12 matched, 0 differ), `make readability UNIT=ovl04` is clean. Since round 2 the source changed only by the name substitution that came with merging ovl07, ovl21, ovl24 and ovl25 (cd780a5 fixed round 2, then the merges renamed the stubs); no code changed. The round-2 fixes still hold. I re-read every routine against the packet disassembly (`ChargeForCure` 0177 and 01C8 truncations, the Raise Dead constitution loop, the menu arms) and against the now-decompiled callees. The substitution left false text behind, and the callees now give evidence that settles three comments that were hedged:
+
+- [ ] must-fix OVL04 unit comment: "add or remove the affect through RemoveAffect/e5" and "heals through RollDice/e21" are leftovers of the mechanical rename of `ovl24_e2/e5` and `ovl24_e8/e21`. The unit calls no `e5` and no `e21`: it removes affects with RemoveAffect (ovl24_e2) only, rolls with RollDice (ovl24_e8) and heals with HealCharacter (ovl24_e21). Write "removes the affect through RemoveAffect" and "heals through RollDice and HealCharacter".
+- [ ] must-fix KeyNone: the comment says "ReadPromptChoice/e4 are still stubs, so this comes from the callers (...), not from the callee's own bytes". That is false now: `ReadPromptChoice` (ovl25:03BD) and `ChooseFromList` (ovl25:0D9A) are decompiled in `src/OVL25.PAS` (unit state draft, so cite it as a draft, not L2) and say "Escape returns #0" and "Escape, E and #0 return #0 with Selected nil". That also explains HealMenu's hotkey: the `E` of `'Heal Exit'` returns #0 and ends the menu. Replace the comment with that evidence.
+- [ ] should-fix HealMenu `MenuFlag`: the comment calls it "the var Flag of ChooseFromList". The parameter is `Redraw` (ovl25:0D9A: the page is redrawn on entry only when Redraw is nonzero; it is cleared by the callee). So `MenuFlag := 1` asks for a redraw on entry and the value is never read back. Rename to `RedrawList` (or keep the name and say so).
+- [ ] should-fix VisitTemple `MenuFlag`: the comment guesses ("when the menu did not take it [I]"). `ReadPromptChoice`'s last parameter is `var ExtKey` (ovl25:03BD): 1 when an extended key or keypad digit was returned (the Temple passes ExtKeys = 1), as its scan code letter (`KeypadScanLetters` 'OPQK MGHI', whitepaper 5.8). So `'H'` and `'P'` from an arrow key (scan letters Up = H, Down = P) must not run Heal or Pool, and `'G'` and `'O'` (Home and End, or keypad 7 and 1), which neither menu text has, reach ovl19_e10 as scan letters. Rename the local `ExtKey`, update the comment and the "what produces 'B' is unknown" sentence (a scan letter too, not a typed 'B'; say which key if it can be told, else keep the hedge with this evidence). Whitepaper 5.4 (ovl06) has the same gap for G and O.
+- [ ] should-fix RaiseDead and StoneToFlesh `Flag10D`/`Flag11B`: the comments say both "become 1" and nothing more, and whitepaper 5.19 says "meaning open". POOLVARS and 5.20 already know more: `Flag11B` is the current hit points [I] (HealCharacter adds to it up to HpMax; unconscious characters with it become okay, 5.20) and `Flag10D` is read as "took part in the battle, gets experience". Say in the routine comments that a raised or restored character stands with 1 hit point [I], and drop "meaning open" from 5.19.
+- [ ] should-fix CureWounds, RaiseDead, StoneToFlesh: frame-only locals are not marked like `Unused: string`. `Healed` in CureWounds is assigned from HealCharacter and never read (ovl04:0401 case arms); `Affect: Pointer` is declared and unused in RaiseDead and StoneToFlesh (the frame size needs it). Say so in a QUIRK or a local comment.
+- [ ] should-fix `AffectPoison2` ($16), `AffectPoison3` ($0F), `AffectDeath` ($20): the evidence is only that Neutralize Poison and Raise Dead remove them together with $37; nothing says $16 and $0F are poisons or $20 is a death affect. Other units name neighbours differently: ovl09 has `AffectKeptA` = $20, ovl24 `AffectNausea` = $1F (the first `DiseaseAffects` entry) and `AffectHealingBlock` = $32 (ovl15 `AffectMummyDisease`), ovl15 `AffectPoisoned` = $37 and `AffectCauseDisease` = $2C. Either use neutral names (`AffectRemovedWithPoison1`) with a "Purpose unknown" note, or cite what shows the meaning; list the cross-unit names for Phase 6.
+- [ ] should-fix the prompt-line and window numbers are bare: 13, 10, 15 (title, word, hotkey colours; `13, 15, 10` in ChargeForCure), $A, $11, $26, $16, $F, the `2, 4, $26, $F` list rectangle and `ClearRect(0, 24, 39, 24)`. ovl08 (`MenuColors`) and ovl15 (prompt colours) name theirs. Name the three prompt colours, the text-window rectangle ($11..$16 rows, 1..$26 columns) and the list rectangle.
+- [ ] should-fix whitepaper 5.19: say `MoneyInPool` (`DS:6DC0`) instead of the bare address (named in re/dseg.toml), and add that the Raise Dead constitution test uses the constitution after the decrement and that a bonus of 0 leaves the loss undivided (`if Bonus > 0`, ovl04:0701).
+- [ ] note RaiseDead: the routine comment does not say that the constitution thresholds (14, 15, 17) apply after the decrement; the code order shows it (`Dec` at ovl04:0610..061D before the test at 0652). Worth one clause when the comment is next touched.
+
+Everything else checked out: prices, affect ids, status values, the quirks at ovl04:0177, 01C8, 0250 and the `AnswerNo` rule, the `TreasureLeft` menu switch, the signatures recorded in re/symbols.toml, no raw machine code.
+
 ## Verdict
 
 Not passed. TempleMenuText is declared and commented as entries 1..9, but HealMenu reads indices 1..10 and DS:028B holds 'Exit'.
 
 Round 2 (rev-6, at 8962b79): not passed. One must-fix: VisitTemple's comment says the party leaves on the first choice of the retrieve-your-money question; `ovl07_e13` returns the 0-based hotkey position, so 1 is No (ovl07:1775).
+
+Round 3 (rev-sonnet, at f1c0c8b): not passed. Two must-fix: the unit comment still says `RemoveAffect/e5` and `RollDice/e21` (rename leftovers for routines the unit never calls), and the `KeyNone` comment says `ReadPromptChoice/e4` are still stubs although `ReadPromptChoice` and `ChooseFromList` are decompiled in OVL25.PAS and give the evidence.
