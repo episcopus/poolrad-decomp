@@ -9707,12 +9707,12 @@ id = "ovl20:047A"
 unit = "ovl20"
 addr = "ovl20:047A"
 size = 235
-name = "ovl20_fn_047A"
+name = "SpendRestTime"
 signature = ""
 c_name = "ovl20_fn_047A"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl20_fn_047A (ovl20:047A takes Amount off RestTime digit Index, borrowing from the next higher nonzero digit; called by ovl20:0721 (the Dec key of the Rest menu) and by ovl20_e2 with Index 1 and Amount 5 (ovl20:0D9D), the minutes spent in each step of the rest); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -9720,12 +9720,12 @@ id = "ovl20:0565"
 unit = "ovl20"
 addr = "ovl20:0565"
 size = 139
-name = "ovl20_fn_0565"
+name = "TwoDigitText"
 signature = ""
 c_name = "ovl20_fn_0565"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl20_fn_0565 (ovl20:0565 returns a number as two characters (res12_fn_1037 gives its text, a 0 goes in front below 10); called by ovl20:05F0 with RestTime digits (ovl20:0674 and 06CA, 10*RestTime[2]+RestTime[1])); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
