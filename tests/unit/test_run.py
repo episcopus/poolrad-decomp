@@ -1,4 +1,5 @@
 """make start-run / stop-run: the roster and the prompt blocks of START-AGENT.md."""
+import re
 import sys
 from pathlib import Path
 
@@ -34,6 +35,13 @@ def test_prompt_blocks_are_cut_by_heading():
     assert run.prompt_block(TEXT, "reviewer sonnet") == "You are a reviewer.\n"
     with pytest.raises(ValueError):
         run.prompt_block(TEXT, "expert opus")
+
+
+def test_open_session_keeps_the_v2_tui_in_the_foreground():
+    """The top-level `opencode` command rejects --model and exits, which closes the iTerm tab."""
+    text = (ROOT / "tools/agent/open_session.sh").read_text()
+    assert 'exec opencode mini --model "$model" --prompt "$(cat "$prompt")"' in text
+    assert re.search(r"^opencode\b.*&", text, re.M) is None
 
 
 def test_the_real_roster_resolves_every_prompt_block():

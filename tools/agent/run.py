@@ -9,7 +9,7 @@
 block in docs/process/START-AGENT.md (`## The prompt for <heading>`). `start` writes each prompt to
 build/run/<name>.prompt.md, sets the shared control to `running` (the human's admission: this command
 is the human's), and opens an iTerm tab per session running tools/agent/open_session.sh, which starts
-`opencode --model <model> --prompt "<the block>"` in the main checkout. Session pids and iTerm ids go to
+`opencode mini --model <model> --prompt "<the block>"` in the main checkout. Session pids and iTerm ids go to
 build/run/<name>.json so `stop` can close exactly what `start` opened.
 
 `stop` is the graceful shutdown: control `draining` (no new claims; holders finish and hand off), wait
