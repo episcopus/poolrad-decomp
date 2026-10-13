@@ -2975,6 +2975,104 @@ why = "SkipCommand stores the opcode at EclPC in it and dispatches on it (ovl07:
 date = "2026-10-12"
 
 [[rename]]
+old = "res07_fn_0000"
+new = "ColorMatchMask"
+kind = "routine"
+why = "0464:0000 returns a bit mask of the eight 4-bit pixels of a 4-byte cell that equal Color; its only caller 02A5 (0464:0358, 0464:067B) uses the bits to set single pixels of a picture's pixel buffer"
+date = "2026-10-12"
+
+[[rename]]
+old = "res07_fn_007B"
+new = "PaletteColor"
+kind = "routine"
+why = "0464:007B returns the palette colour for a pixel value from an 8-byte palette: even index high nibble, odd index low nibble of Pal[Index shr 1]; called by 02A5 at 0464:03F7 and 0464:04F7..0550 to map a cell pixel through the picture palette"
+date = "2026-10-12"
+
+[[rename]]
+old = "res07_fn_00CF"
+new = "SetVideoMode"
+kind = "routine"
+why = "0464:00CF sets INT 10h function 0 (set video mode) with AL=A after saving the current mode (ds4A1D) in SavedVideoMode, then records A as current; called by res08_init (042B:00E0 with 0Dh) and by RestoreVideoMode"
+date = "2026-10-12"
+
+[[rename]]
+old = "res07_fn_00FF"
+new = "RestoreVideoMode"
+kind = "routine"
+why = "0464:00FF calls SetVideoMode(SavedVideoMode) to go back to the mode saved at the last mode set; called by the picture loaders ovl28/ovl29/ovl32/ovl34 before their error messages and by ovl28 Show3DSprite"
+date = "2026-10-12"
+
+[[rename]]
+old = "res07_fn_1484"
+new = "MirrorByte"
+kind = "routine"
+why = "0464:1484 reverses the eight bits of a byte (bit 0 to bit 7 ...); called by 15C7 (0464:18xx) to flip a byte of a picture row"
+date = "2026-10-12"
+
+[[rename]]
+old = "res07_fn_1509"
+new = "MirrorWord"
+kind = "routine"
+why = "0464:1509 reverses the order of the eight 2-bit groups of a word using GlyphPixelMasks (DS:25E5..25F3); called by 15C7 for every 2-byte unit of a picture row"
+date = "2026-10-12"
+
+[[rename]]
+old = "res07_fn_1596"
+new = "SwapNibbles"
+kind = "routine"
+why = "0464:1596 swaps the two nibbles of a byte (X shl 4 + high nibble); companion of MirrorByte for flipping an 8-pixel byte"
+date = "2026-10-12"
+
+[[rename]]
+old = "res07_fn_248E"
+new = "AllocatePicture"
+kind = "routine"
+why = "0464:248E allocates and zeroes a picture block of ItemCount * Height * WidthCols * 2 (x2 for a non-zero VideoAdapter) + $17 bytes plus an optional pixel buffer, and stores the header fields; called by ovl10 StartBattle, ovl11 StartGame, ovl28 LoadSpriteList, ovl32 DrawIcon, res12 and 0111/1E5C"
+date = "2026-10-12"
+
+[[rename]]
+old = "res07_fn_2595"
+new = "ReleasePicture"
+kind = "routine"
+why = "0464:2595 frees the pixel buffer (a quarter of the size for VideoAdapter 1) and the picture block (ItemCount * ByteSize + 17), then nils the caller's variable; called by ovl01/ovl08/ovl10/ovl14/ovl28/ovl32, res12 and 0111/1E5C"
+date = "2026-10-12"
+
+[[rename]]
+old = "res07_fn_2A0D"
+new = "SetPaletteRegister"
+kind = "routine"
+why = "0464:2A0D writes one EGA palette register: INT 10h AH=10h AL=0 with BH=Color (mapped: below 8 as is, else +8) and BL=Register; called by ovl31_e2/e3 and ShowTitleScreen"
+date = "2026-10-12"
+
+[[rename]]
+old = "res07_fn_1951"
+new = "ShowPicture"
+kind = "routine"
+why = "0464:1951 copies a picture's packed pixel data straight to the video hardware at (X,Y), one branch per VideoAdapter; called by ShowTitleScreen, ovl28 DrawSprite and ovl34 Put8x8Symbol"
+date = "2026-10-12"
+
+[[rename]]
+old = "res07_fn_0111"
+new = "LoadPicture"
+kind = "routine"
+why = "0464:0111 loads DAX picture block A of the set Text (with the dax extension) into the caller's picture pointer: frees any old picture, copies the header into locals, AllocatePicture, stores X/Y and the palette, unpacks the pixels through 02A5, frees the DAX block; called by ovl01/ovl11/ovl18/ovl28/ovl32/ovl34"
+date = "2026-10-12"
+
+[[rename]]
+old = "res07_fn_15C7"
+new = "MirrorPicture"
+kind = "routine"
+why = "0464:15C7 copies the picture Source into Dest mirrored: palette as is, then each pixel row reversed per VideoAdapter (MirrorWord units, MirrorByte groups, SwapNibbles bytes) and the pixel buffer at +$13 mirrored too; called by ovl32 DrawIcon for icon sets above 3 and by res12"
+date = "2026-10-12"
+
+[[rename]]
+old = "res07_fn_1B52"
+new = "FlushPictureChanges"
+kind = "routine"
+why = "0464:1B52 presents the changed regions the blitters marked in ds4A28/ds4AD0/ds4C20/ds4D70 to the screen per VideoAdapter (row moves to the ds4EC0/ds51E0 segment tables, or the four EGA planes through port 3C5 plus a GC-mode-1 copy), then resets the trackers; called by the sprite, combat-view and area-view units after a blit"
+date = "2026-10-12"
+
+[[rename]]
 old = "ovl17_fn_02AE"
 new = "CreateSaveDir"
 kind = "routine"

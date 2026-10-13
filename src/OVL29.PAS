@@ -237,11 +237,11 @@ begin
     EventByteAt := GeoCells^.Events[Row, Col];
   end;
 end;
-{ ovl29:05F3. Steps the picture display (res07_fn_1B52, the same call ovl34 uses after a
+{ ovl29:05F3. Steps the picture display (FlushPictureChanges, the same call ovl34 uses after a
   direct blit). No parameters. Called by DrawWallMap and DrawWallView. }
 procedure StepDisplay;
 begin
-  res07_fn_1B52;
+  FlushPictureChanges;
 end;
 { ovl29:05FD. Draws the 3D view for the party at map cell (Col0, Row0) facing Dir (0, 2, 4, 6):
   while WallMapMode is set it draws the overhead wall map (DrawWallMap) instead. Otherwise it draws
@@ -505,10 +505,10 @@ begin
   LoadDaxBlock('WALLDEF' + Num, '.dax', BlockId, Size, Block);
   if (Size = 0) or (Size div WallSetSize + First > LastWallSlot + 1) then
   begin
-    res07_fn_00FF;
+    RestoreVideoMode;
     WriteLn(Output, 'Unable to load wallset in LoadWallSet.');
     Key := ReadGameKey;
-    res07_fn_00FF;
+    RestoreVideoMode;
     QuitGame;
   end;
   Delta := SymbolBase[First] - SymbolBase[1];
@@ -558,10 +558,10 @@ begin
   LoadDaxBlock('GEO' + Num, '.dax', BlockId, Size, Block);
   if (Size = 0) or (Size <> GeoBlockSize) then
   begin
-    res07_fn_00FF;
+    RestoreVideoMode;
     WriteLn(Output, 'Unable to load geo in Load3DMap.');
     Key := ReadGameKey;
-    res07_fn_00FF;
+    RestoreVideoMode;
     QuitGame;
   end;
   Offset := 2;

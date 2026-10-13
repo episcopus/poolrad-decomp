@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-12 | 5.23 | new section: the picture unit res07 (14 of 19 routines at L2, O+ finding, map corrections, the picture record, the mirrors, ShowPicture, FlushPictureChanges, the changed-region trackers) | make match UNIT=res07 |
 | 2026-10-12 | 5.15 | ShowPagedText, the word-wrapping pager with its nested DrawTextRun and SkipSpaces, matched; res06 complete | make match UNIT=res06 |
 | 2026-10-12 | 5.22 | Display (DisplaySpellEffects) matched with its nested AddDisplayLine; unit complete | make match UNIT=ovl15 |
 | 2026-10-12 | 5.22.1 | The camp's rest clock: the radix table, the carry, the age at the top digit, normalizing, spending, the game clock entry ovl20_e1, TwoDigitText and ShowRestTime (6 of 21 ovl20 routines at L2) | make match UNIT=ovl20 (6 matched, 0 differ); make check receipt 389de2adb494 |

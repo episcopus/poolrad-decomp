@@ -44,7 +44,7 @@ const
   MarkerFrame (MarkerFrame mod 2 picks the mirrored half, MarkerFrame div 2 + 9 the picture 9 to
   11); the frame then steps to the next of its six values.
   Reads and changes: MapBaseX, AreaViewKind, GameVars^, ds6AAF, MarkerFrame. Side effect: the view
-  on the screen, through DrawIcon and the display step res07_fn_1B52 that drawing units call. }
+  on the screen, through DrawIcon and the display step FlushPictureChanges that drawing units call. }
 procedure DrawPartyMarker;
 var
   MarkerCol: ShortInt;      { the marker cell column in the 5x5 window (0 to 4) }
@@ -63,7 +63,7 @@ begin
   DrawIcon(MarkerCol, MarkerRow, ds6AAF, MarkerFrame mod 2,
            MarkerFrame div 2 + FirstMarkerPicture);
   MarkerFrame := (MarkerFrame + 1) mod MarkerFrames;
-  res07_fn_1B52;
+  FlushPictureChanges;
 end;
 
 { ovl26:016D. Shows the current area view, the way the view dispatcher of the resident unit asks

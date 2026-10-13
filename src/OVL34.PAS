@@ -1,7 +1,7 @@
 unit OVL34;
 { The 8x8 tile loader (whitepaper 4.2.3): Load8x8Bank loads one bank of 8x8 tiles from an 8X8D
   file through res07, and Put8x8Symbol draws one tile at a column and row, either through
-  res07_fn_08D4 or by copying it into the staging buffer and showing it with res07_fn_1951. }
+  res07_fn_08D4 or by copying it into the staging buffer and showing it with ShowPicture. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 procedure Load8x8Bank(BlockId, Bank: Byte);
@@ -12,13 +12,13 @@ uses POOLVARS, RES04, RES07;
 const
   FirstBank = 0;                { lowest 8x8 bank Load8x8Bank takes }
   LastBank = 4;                 { highest 8x8 bank }
-  { Purpose unknown: the B and C arguments of res07_fn_0111 for an 8x8 bank; the whole-picture
+  { Purpose unknown: the B and C arguments of LoadPicture for an 8x8 bank; the whole-picture
     loads (TITLE in ovl01, SQRPACI in ovl11, FINAL in ovl18) pass 0 and 0 there. }
   TileLoadB = 1;
   TileLoadC = $D;
 
 { ovl34:003B. Loads block BlockId of the file 8x8d<TileSet> into 8x8 bank Bank (0..4) through
-  res07_fn_0111 (its first number is the DAX block id, as TITLE 1 and 2 in ovl01 and FINAL 1..6 in
+  LoadPicture (its first number is the DAX block id, as TITLE 1 and 2 in ovl01 and FINAL 1..6 in
   ovl18 show; LoadWallSet passes its WALLDEF block id). On a failure (the bank pointer stays nil)
   it announces Unable to load 8x8D<set>-<block> on Output, waits for a key and ends the game;
   otherwise it flushes the keyboard. Any other Bank does nothing. Called by LoadWallSet and
@@ -34,13 +34,13 @@ begin
   begin
     Str(TileSet, NumSet);
     Str(BlockId, NumBlock);
-    res07_fn_0111('8x8d' + NumSet, BlockId, TileLoadB, TileLoadC, TileBanks[Bank]);
+    LoadPicture('8x8d' + NumSet, BlockId, TileLoadB, TileLoadC, TileBanks[Bank]);
     if TileBanks[Bank] = nil then
     begin
-      res07_fn_00FF;
+      RestoreVideoMode;
       WriteLn(Output, 'Unable to load 8x8D' + NumSet + '-' + NumBlock);
       Key := ReadGameKey;
-      res07_fn_00FF;
+      RestoreVideoMode;
       QuitGame;
     end;
     FlushKeyboard;
@@ -53,7 +53,7 @@ end;
   ends). QUIRK ovl34:01C0: symbols above $7FFF skip the check and run on with an unset bank.
   A nil bank pointer draws nothing. Otherwise Symbol is made bank relative and the tile is
   drawn through res07_fn_08D4 when Direct is nonzero (the 3D view) or copied into the staging
-  buffer TileBuf and shown with res07_fn_1951 (window frames). Called by DrawWindowFrame and
+  buffer TileBuf and shown with ShowPicture (window frames). Called by DrawWindowFrame and
   ovl29 (three times): DrawWindowFrame passes Direct 0, the ovl29 calls (the 3D view and the
   overhead wall map) pass 1 (ovl29:010C, 0146, 02FB). }
 procedure Put8x8Symbol(XPos, YPos: ShortInt; Symbol: Word; Direct: Byte; Attr: Byte);
@@ -69,7 +69,7 @@ begin
     $100..$11E: Bank := 4;
     0, $11F..$7FFF:
     begin
-      res07_fn_00FF;
+      RestoreVideoMode;
       WriteLn(Output, 'Bad symbol number in Put8x8Symbol.');
       Key := ReadGameKey;
       QuitGame;
@@ -84,7 +84,7 @@ begin
       with TileBanks[Bank]^ do
       begin
         Move(Data[Symbol * Stride], TileBuf^.Data[0], Stride);
-        res07_fn_1951(XPos, YPos, TileBuf);
+        ShowPicture(XPos, YPos, TileBuf);
       end;
   end;
 end;

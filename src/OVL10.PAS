@@ -642,8 +642,8 @@ var
   Who: PCharacter;
 begin
   FreeSpriteList(@PictureAnimation);
-  res07_fn_2595(ds6B01);
-  res07_fn_2595(ds6B06);
+  ReleasePicture(ds6B01);
+  ReleasePicture(ds6B06);
   ds6B00 := $FF;
   ds6B05 := $FF;
   ClearPromptLine;
@@ -664,7 +664,7 @@ begin
   DiscardWaitingKey;
   PlaceAllCombatants;
   DiscardWaitingKey;
-  res07_fn_248E($18, 3, 4, 1, ds6E36);
+  AllocatePicture($18, 3, 4, 1, ds6E36);
   CombatMap^.ViewX := CombatantX(PCharacter(ds5D96)) - 3;
   CombatMap^.ViewY := CombatantY(PCharacter(ds5D96)) - 3;
   res12_fn_2B88;

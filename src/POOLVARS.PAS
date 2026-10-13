@@ -29,7 +29,7 @@ type
       0: (FirstPic, SecondPic: Pointer);
       1: (Pics: array[0..1] of Pointer);
   end;
-  { One bank of 8x8 tiles as res07_fn_0111 loads it: a picture record (whitepaper 4.x; its
+  { One bank of 8x8 tiles as LoadPicture loads it: a picture record (whitepaper 4.x; its
     header carries the height at +0 and the item count at +8), Stride bytes per tile at +$11,
     the tile data at +$17. Only Stride and Data are read by this unit. }
   T8x8Bank = record
@@ -549,7 +549,7 @@ var
   ds093D: array[0..$F] of Byte;   { the third 16-byte record AnimateAreaDoors passes to res07_fn_1E5C }
   ds094D: array[0..8] of Word;    { the per-step DrawAreaView columns of AnimateAreaDoors (indexed 0..8) }
   ds095F: array[0..8] of Word;    { the per-step DrawAreaView rows of AnimateAreaDoors (indexed 0..8) }
-  ds470E: Pointer;                { the FINAL picture bank ShowEndingNarrative loads through res07_fn_0111 and draws }
+  ds470E: Pointer;                { the FINAL picture bank ShowEndingNarrative loads through LoadPicture and draws }
   ds4712: Byte;                   { the DS:49F3 value ShowEndingNarrative saves at the start and restores at the end }
   ds4713: string[1];              { Str(TileSet): the picture number ShowEndingNarrative appends to FINAL }
   ds25C0: array[0..2, 0..2] of Byte;  { the 3x3 line pattern table StepLine reads at [SY+1, SX+1] }
@@ -590,11 +590,16 @@ var
   ds49FB: Word;                   { cleared by the loader (ovl11:03AD) }
   PartyDestroyed: Byte;           { 1 when no player-run member is left (SettleBattleOutcome); loader clears it }
   ds4A00: Byte;                   { set to 1 by the loader (ovl11:03A1) and by EndBattle (ovl05:1631) }
-  ds4A24: Pointer;                { screen buffer the loader allocates through res07_fn_248E (ovl11:00D4) }
+  ds4A24: Pointer;                { screen buffer the loader allocates through AllocatePicture (ovl11:00D4) }
   ds4A28: array[0..$A7] of Byte;  { $A8-byte buffer the loader clears (ovl11:00EC) }
-  ds4AD0: array[0..$14F] of Byte; { $150-byte buffer the loader clears (ovl11:00FD) }
-  ds4C20: array[0..$14F] of Byte; { $150-byte buffer the loader fills with $FF (ovl11:010E) }
-  ds4D70: array[0..$14F] of Byte; { $150-byte buffer the loader clears (ovl11:011F) }
+  { The changed-region trackers the blitters (res07 08D4/0D71) fill and res07
+    ShowChanges (1B52) flushes: per changed screen row, ds4AD0 and ds4C20 hold
+    the first and last changed byte offset and ds4D70 the last; indexed by word
+    (row*2), so 168 word entries. The loader clears/fills the same $150 bytes
+    through FillChar (ovl11:00FD, 010E, 011F). }
+  ds4AD0: array[0..$A7] of Word;  { first changed offset of the row }
+  ds4C20: array[0..$A7] of Word;  { last changed offset of the row (starts $FFFF) }
+  ds4D70: array[0..$A7] of Word;  { last changed offset of the row (starts 0) }
   { Per-cell screen address table the loader fills (ovl11:0130..0163): $B800 (even cell) or $BA00
     (odd cell) plus 5*(I div 2). }
   ds4EC0: array[0..$C7] of Word;  { cell text scanline address; see above }
@@ -678,7 +683,7 @@ var
 
   { The 8x8 tile world of ovl34 (whitepaper 4.x): which 8X8D file to take the bank from, the five
     loaded banks, the staging buffer tiles are copied through, the buffer res07_fn_08D4 draws
-    into, and a word res07_fn_1951 takes. Evidence in re/dseg.toml. }
+    into, and a word ShowPicture takes. Evidence in re/dseg.toml. }
   TileSet: Byte;                  { the 8X8D file number: Load8x8Bank loads 8x8d<TileSet> }
   TileBanks: array[0..4] of PT8x8Bank;  { the loaded 8x8 banks, indexed by bank; nil when the load failed }
   TileBuf: PT8x8Bank;             { the tile staging buffer: Put8x8Symbol Moves one tile to +$17 }
@@ -712,6 +717,9 @@ var
   { Per-column words DrawGlyph mode 0 ANDs with the colour word (0709:02B0):
     indexed by the bit column 0..7. }
   GlyphPixelMasks: array[0..7] of Word;
+  { Plane bit masks 1, 2, 4, 8 that res07's direct picture blit writes to the Sequencer Map Mask
+    (port 3C5h) for plane 0..3 when it copies one byte per plane (0464:1A6E). }
+  EgaPlaneBitMasks: array[0..3] of Byte;
   ds49CE: Word;                   { IOResult of the last FileExists file probe (0802:0334) }
   { Characters 0768's word scanner tests (0709:0822..08F0): the leading run is skipped,
     the word run stops at them or space, the trailing run is skipped. Storage descriptor
@@ -742,7 +750,7 @@ var
   ds0CF2: array[0..15] of Byte;   { colour 13 to 0; see above }
   { Globals of the combat unit ovl08 (whitepaper 5.5). }
   ds6DBB: PCombatNode;            { a list of $13-byte records EndCombat frees (ovl08:0006); meaning unknown }
-  ds6E36: Pointer;                { a picture EndCombat frees through res07_fn_2595 (ovl08:005A) }
+  ds6E36: Pointer;                { a picture EndCombat frees through ReleasePicture (ovl08:005A) }
   { A routine pointer: RunCombat sets @ovl13_e14 at the start (ovl08:0085) and EndCombat
     @ovl22_e4 at the end (ovl08:0069); who calls it is not known yet. }
   ds6B84: Pointer;                { routine RunCombat stores at ovl08:0085 and EndCombat at ovl08:0069 }

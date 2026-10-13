@@ -592,8 +592,8 @@ begin
   end;
   end;
   FreeSpriteList(@PictureAnimation);
-  res07_fn_2595(ds6B01);
-  res07_fn_2595(ds6B06);
+  ReleasePicture(ds6B01);
+  ReleasePicture(ds6B06);
   ds6B00 := $FF;
   ds6B05 := $FF;
 end;

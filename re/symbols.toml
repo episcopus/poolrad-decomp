@@ -16467,12 +16467,12 @@ id = "0464:0000"
 unit = "res07"
 addr = "0464:0000"
 size = 123
-name = "res07_fn_0000"
+name = "ColorMatchMask"
 signature = ""
 c_name = "res07_fn_0000"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res07_fn_0000 (0464:0000 returns a bit mask of the eight 4-bit pixels of a 4-byte cell that equal Color; its only caller 02A5 (0464:0358, 0464:067B) uses the bits to set single pixels of a picture's pixel buffer); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16480,12 +16480,12 @@ id = "0464:007B"
 unit = "res07"
 addr = "0464:007B"
 size = 84
-name = "res07_fn_007B"
+name = "PaletteColor"
 signature = ""
 c_name = "res07_fn_007B"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res07_fn_007B (0464:007B returns the palette colour for a pixel value from an 8-byte palette: even index high nibble, odd index low nibble of Pal[Index shr 1]; called by 02A5 at 0464:03F7 and 0464:04F7..0550 to map a cell pixel through the picture palette); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16493,12 +16493,12 @@ id = "0464:00CF"
 unit = "res07"
 addr = "0464:00CF"
 size = 48
-name = "res07_fn_00CF"
-signature = "procedure res07_fn_00CF(A: Byte)"
+name = "SetVideoMode"
+signature = "procedure SetVideoMode(A: Byte)"
 c_name = "res07_fn_00CF"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res07_fn_00CF (0464:00CF sets INT 10h function 0 (set video mode) with AL=A after saving the current mode (ds4A1D) in SavedVideoMode, then records A as current; called by res08_init (042B:00E0 with 0Dh) and by RestoreVideoMode); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16506,12 +16506,12 @@ id = "0464:00FF"
 unit = "res07"
 addr = "0464:00FF"
 size = 18
-name = "res07_fn_00FF"
-signature = "procedure res07_fn_00FF"
+name = "RestoreVideoMode"
+signature = "procedure RestoreVideoMode"
 c_name = "res07_fn_00FF"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:far_call"
+notes = "renamed from res07_fn_00FF (0464:00FF calls SetVideoMode(SavedVideoMode) to go back to the mode saved at the last mode set; called by the picture loaders ovl28/ovl29/ovl32/ovl34 before their error messages and by ovl28 Show3DSprite); auto:far_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16519,376 +16519,129 @@ id = "0464:0111"
 unit = "res07"
 addr = "0464:0111"
 size = 404
-name = "res07_fn_0111"
-signature = "procedure res07_fn_0111(Text: string; A, B, C: Byte; var Target)"
+name = "LoadPicture"
+signature = "procedure LoadPicture(Text: string; A, B, C: Byte; var Target)"
 c_name = "res07_fn_0111"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res07_fn_0111 (0464:0111 loads DAX picture block A of the set Text (with the dax extension) into the caller's picture pointer: frees any old picture, copies the header into locals, AllocatePicture, stores X/Y and the palette, unpacks the pixels through 02A5, frees the DAX block; called by ovl01/ovl11/ovl18/ovl28/ovl32/ovl34); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
 id = "0464:02A5"
 unit = "res07"
 addr = "0464:02A5"
-size = 970
+size = 1583
 name = "res07_fn_02A5"
-signature = "procedure res07_fn_02A5(Data: Pointer; Offset: Word; A, B: Byte; Sprite: Pointer)"
+signature = "procedure res07_fn_02A5(Source: Pointer; Offset: Word; A, Color: Byte; Data: Pointer)"
 c_name = "res07_fn_02A5"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; map deepseek-dec 2026-10-12: ends 08D4 (was 970); bogus entries 066F, 0710 deleted (mid-routine, no 55 89 E5 prologue)"
 evidence = ["prologue"]
-
-[[routine]]
-id = "0464:066F"
-unit = "res07"
-addr = "0464:066F"
-size = 161
-name = "res07_fn_066F"
-signature = ""
-c_name = "res07_fn_066F"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "0464:0710"
-unit = "res07"
-addr = "0464:0710"
-size = 452
-name = "res07_fn_0710"
-signature = ""
-c_name = "res07_fn_0710"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "0464:08D4"
 unit = "res07"
 addr = "0464:08D4"
-size = 351
+size = 1181
 name = "res07_fn_08D4"
 signature = "procedure res07_fn_08D4(Col, Row: Integer; PicIndex, Flags: Byte; Source, Dest: Pointer)"
 c_name = "res07_fn_08D4"
 level = "none"
 justification = ""
-notes = "auto:prologue"
+notes = "auto:prologue; map deepseek-dec 2026-10-12: ends 0D71 (was 351); bogus entries 0A33, 0C0C, 0D6C deleted"
 evidence = ["prologue"]
-
-[[routine]]
-id = "0464:0A33"
-unit = "res07"
-addr = "0464:0A33"
-size = 473
-name = "res07_fn_0A33"
-signature = ""
-c_name = "res07_fn_0A33"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "0464:0C0C"
-unit = "res07"
-addr = "0464:0C0C"
-size = 352
-name = "res07_fn_0C0C"
-signature = ""
-c_name = "res07_fn_0C0C"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "0464:0D6C"
-unit = "res07"
-addr = "0464:0D6C"
-size = 5
-name = "res07_fn_0D6C"
-signature = ""
-c_name = "res07_fn_0D6C"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "0464:0D71"
 unit = "res07"
 addr = "0464:0D71"
-size = 144
+size = 1811
 name = "res07_fn_0D71"
 signature = "procedure res07_fn_0D71(Col, Row: Integer; PicIndex, Flags: Byte; Source, Dest: Pointer)"
 c_name = "res07_fn_0D71"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; map deepseek-dec 2026-10-12: ends 1484 (was 144); bogus entries 0E01..140E (11) deleted"
 evidence = ["prologue"]
-
-[[routine]]
-id = "0464:0E01"
-unit = "res07"
-addr = "0464:0E01"
-size = 39
-name = "res07_fn_0E01"
-signature = ""
-c_name = "res07_fn_0E01"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "0464:0E28"
-unit = "res07"
-addr = "0464:0E28"
-size = 11
-name = "res07_fn_0E28"
-signature = ""
-c_name = "res07_fn_0E28"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "0464:0E33"
-unit = "res07"
-addr = "0464:0E33"
-size = 21
-name = "res07_fn_0E33"
-signature = ""
-c_name = "res07_fn_0E33"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "0464:0E48"
-unit = "res07"
-addr = "0464:0E48"
-size = 120
-name = "res07_fn_0E48"
-signature = ""
-c_name = "res07_fn_0E48"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "0464:0EC0"
-unit = "res07"
-addr = "0464:0EC0"
-size = 34
-name = "res07_fn_0EC0"
-signature = ""
-c_name = "res07_fn_0EC0"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "0464:0EE2"
-unit = "res07"
-addr = "0464:0EE2"
-size = 116
-name = "res07_fn_0EE2"
-signature = ""
-c_name = "res07_fn_0EE2"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "0464:0F56"
-unit = "res07"
-addr = "0464:0F56"
-size = 215
-name = "res07_fn_0F56"
-signature = ""
-c_name = "res07_fn_0F56"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "0464:102D"
-unit = "res07"
-addr = "0464:102D"
-size = 21
-name = "res07_fn_102D"
-signature = ""
-c_name = "res07_fn_102D"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "0464:1042"
-unit = "res07"
-addr = "0464:1042"
-size = 154
-name = "res07_fn_1042"
-signature = ""
-c_name = "res07_fn_1042"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "0464:10DC"
-unit = "res07"
-addr = "0464:10DC"
-size = 818
-name = "res07_fn_10DC"
-signature = ""
-c_name = "res07_fn_10DC"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "0464:140E"
-unit = "res07"
-addr = "0464:140E"
-size = 118
-name = "res07_fn_140E"
-signature = ""
-c_name = "res07_fn_140E"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "0464:1484"
 unit = "res07"
 addr = "0464:1484"
 size = 133
-name = "res07_fn_1484"
+name = "MirrorByte"
 signature = ""
 c_name = "res07_fn_1484"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res07_fn_1484 (0464:1484 reverses the eight bits of a byte (bit 0 to bit 7 ...); called by 15C7 (0464:18xx) to flip a byte of a picture row); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "0464:1509"
 unit = "res07"
 addr = "0464:1509"
-size = 11
-name = "res07_fn_1509"
+size = 141
+name = "MirrorWord"
 signature = ""
 c_name = "res07_fn_1509"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res07_fn_1509 (0464:1509 reverses the order of the eight 2-bit groups of a word using GlyphPixelMasks (DS:25E5..25F3); called by 15C7 for every 2-byte unit of a picture row); auto:near_call; map deepseek-dec 2026-10-12: ends 1596 (was 11); bogus entry 1514 deleted"
 evidence = ["prologue"]
-
-[[routine]]
-id = "0464:1514"
-unit = "res07"
-addr = "0464:1514"
-size = 130
-name = "res07_fn_1514"
-signature = ""
-c_name = "res07_fn_1514"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "0464:1596"
 unit = "res07"
 addr = "0464:1596"
 size = 49
-name = "res07_fn_1596"
+name = "SwapNibbles"
 signature = ""
 c_name = "res07_fn_1596"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res07_fn_1596 (0464:1596 swaps the two nibbles of a byte (X shl 4 + high nibble); companion of MirrorByte for flipping an 8-pixel byte); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "0464:15C7"
 unit = "res07"
 addr = "0464:15C7"
-size = 321
-name = "res07_fn_15C7"
-signature = "procedure res07_fn_15C7(Source, Dest: Pointer)"
+size = 906
+name = "MirrorPicture"
+signature = "procedure MirrorPicture(Source, Dest: Pointer)"
 c_name = "res07_fn_15C7"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:far_call"
+notes = "renamed from res07_fn_15C7 (0464:15C7 copies the picture Source into Dest mirrored: palette as is, then each pixel row reversed per VideoAdapter (MirrorWord units, MirrorByte groups, SwapNibbles bytes) and the pixel buffer at +$13 mirrored too; called by ovl32 DrawIcon for icon sets above 3 and by res12); auto:far_call; map deepseek-dec 2026-10-12: ends 1951 (was 321); bogus entry 1708 deleted"
 evidence = ["prologue"]
-
-[[routine]]
-id = "0464:1708"
-unit = "res07"
-addr = "0464:1708"
-size = 585
-name = "res07_fn_1708"
-signature = ""
-c_name = "res07_fn_1708"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "0464:1951"
 unit = "res07"
 addr = "0464:1951"
-size = 200
-name = "res07_fn_1951"
-signature = "procedure res07_fn_1951(X, Y: Integer; Buf: Pointer)"
+size = 513
+name = "ShowPicture"
+signature = "procedure ShowPicture(X, Y: Integer; Buf: Pointer)"
 c_name = "res07_fn_1951"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res07_fn_1951 (0464:1951 copies a picture's packed pixel data straight to the video hardware at (X,Y), one branch per VideoAdapter; called by ShowTitleScreen, ovl28 DrawSprite and ovl34 Put8x8Symbol); auto:prologue; map deepseek-dec 2026-10-12: ends 1B52 (was 200); bogus entry 1A19 deleted"
 evidence = ["prologue"]
-
-[[routine]]
-id = "0464:1A19"
-unit = "res07"
-addr = "0464:1A19"
-size = 313
-name = "res07_fn_1A19"
-signature = ""
-c_name = "res07_fn_1A19"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "0464:1B52"
 unit = "res07"
 addr = "0464:1B52"
 size = 778
-name = "res07_fn_1B52"
+name = "FlushPictureChanges"
 signature = ""
 c_name = "res07_fn_1B52"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:far_call"
+notes = "renamed from res07_fn_1B52 (0464:1B52 presents the changed regions the blitters marked in ds4A28/ds4AD0/ds4C20/ds4D70 to the screen per VideoAdapter (row moves to the ds4EC0/ds51E0 segment tables, or the four EGA planes through port 3C5 plus a GC-mode-1 copy), then resets the trackers; called by the sprite, combat-view and area-view units after a blit); auto:far_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16909,12 +16662,12 @@ id = "0464:248E"
 unit = "res07"
 addr = "0464:248E"
 size = 263
-name = "res07_fn_248E"
-signature = "procedure res07_fn_248E(Height, Width: Word; ItemCount, AllocFlags: Byte; var Pic)"
+name = "AllocatePicture"
+signature = "procedure AllocatePicture(Height, Width: Word; ItemCount, AllocFlags: Byte; var Pic)"
 c_name = "res07_fn_248E"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res07_fn_248E (0464:248E allocates and zeroes a picture block of ItemCount * Height * WidthCols * 2 (x2 for a non-zero VideoAdapter) + $17 bytes plus an optional pixel buffer, and stores the header fields; called by ovl10 StartBattle, ovl11 StartGame, ovl28 LoadSpriteList, ovl32 DrawIcon, res12 and 0111/1E5C); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16922,12 +16675,12 @@ id = "0464:2595"
 unit = "res07"
 addr = "0464:2595"
 size = 157
-name = "res07_fn_2595"
-signature = "procedure res07_fn_2595(var Pic)"
+name = "ReleasePicture"
+signature = "procedure ReleasePicture(var Pic)"
 c_name = "res07_fn_2595"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res07_fn_2595 (0464:2595 frees the pixel buffer (a quarter of the size for VideoAdapter 1) and the picture block (ItemCount * ByteSize + 17), then nils the caller's variable; called by ovl01/ovl08/ovl10/ovl14/ovl28/ovl32, res12 and 0111/1E5C); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16948,12 +16701,12 @@ id = "0464:2A0D"
 unit = "res07"
 addr = "0464:2A0D"
 size = 61
-name = "res07_fn_2A0D"
-signature = "procedure res07_fn_2A0D(A, B: Byte)"
+name = "SetPaletteRegister"
+signature = "procedure SetPaletteRegister(A, B: Byte)"
 c_name = "res07_fn_2A0D"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res07_fn_2A0D (0464:2A0D writes one EGA palette register: INT 10h AH=10h AL=0 with BH=Color (mapped: below 8 as is, else +8) and BL=Register; called by ovl31_e2/e3 and ShowTitleScreen); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]

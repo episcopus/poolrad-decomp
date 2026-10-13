@@ -87,29 +87,29 @@ begin
   end;
 end;
 
-{ ovl31:00E3. Purpose unknown: when VideoAdapter is 1 it calls res07_fn_2A0D(0, 8) and then
-  res07_fn_2A0D(8, 0); ovl31_e3 makes the calls (0, 0) and (8, 8). Called by ovl16_e3, ovl19 and
+{ ovl31:00E3. Purpose unknown: when VideoAdapter is 1 it calls SetPaletteRegister(0, 8) and then
+  SetPaletteRegister(8, 0); ovl31_e3 makes the calls (0, 0) and (8, 8). Called by ovl16_e3, ovl19 and
   res12_fn_2B88. }
 procedure ovl31_e2;
 begin
   case VideoAdapter of
     1:
       begin
-        res07_fn_2A0D(0, 8);
-        res07_fn_2A0D(8, 0);
+        SetPaletteRegister(0, 8);
+        SetPaletteRegister(8, 0);
       end;
   end;
 end;
 
-{ ovl31:0105. Purpose unknown: when VideoAdapter is 1 it calls res07_fn_2A0D(0, 0) and then
-  res07_fn_2A0D(8, 8), the counterpart of ovl31_e2. Called by ovl08, ovl16 and ovl19_e5. }
+{ ovl31:0105. Purpose unknown: when VideoAdapter is 1 it calls SetPaletteRegister(0, 0) and then
+  SetPaletteRegister(8, 8), the counterpart of ovl31_e2. Called by ovl08, ovl16 and ovl19_e5. }
 procedure ovl31_e3;
 begin
   case VideoAdapter of
     1:
       begin
-        res07_fn_2A0D(0, 0);
-        res07_fn_2A0D(8, 8);
+        SetPaletteRegister(0, 0);
+        SetPaletteRegister(8, 8);
       end;
   end;
 end;
@@ -324,7 +324,7 @@ end;
   DirNone stays): scrolls the view when the new cell is more than Margin cells from the centre
   (ScrollViewTo) and then redraws every combatant in view whose record has Flag10D set, repaints the
   old cell (RedrawMapCell), clamps the new cell to the map when it is out of view, draws the cursor
-  there (DrawCursorAt) and shows the frame (res07_fn_1B52). Called by the combat code (ovl08, ovl09,
+  there (DrawCursorAt) and shows the frame (FlushPictureChanges). Called by the combat code (ovl08, ovl09,
   ovl13, ovl22) and here. }
 procedure MoveCombatCursor(CellX, CellY: ShortInt; Margin, Dir: Byte);
 var
@@ -351,7 +351,7 @@ begin
     if NewY < 0 then NewY := 0;
   end;
   DrawCursorAt(NewX, NewY);
-  res07_fn_1B52;
+  FlushPictureChanges;
 end;
 
 { ovl31:0AF8. Turns combatant Who to the icon set IconSet: brings it into view first when part of
@@ -373,7 +373,7 @@ begin
     if IsCombatantInView(Who, 1) then
     begin
       DrawIcon(CombatantViewCol[Index], CombatantViewRow[Index], IconSet, Mirror, Who^.CombatIcon);
-      res07_fn_1B52;
+      FlushPictureChanges;
     end;
 end;
 
@@ -489,7 +489,7 @@ begin
       if FootprintCell(CombatantTable[Index].Kind, I, DX, DY) then
         res07_fn_0D71((CombatantViewCol[Index] + DX) * CellStep, (CombatantViewRow[Index] + DY) * CellStep,
           0, DyingFlags, DyingPicture, DrawBuf);
-    res07_fn_1B52;
+    FlushPictureChanges;
     if Who^.Combat^.NoBody = 0 then
     begin
       Inc(BodyCount);
