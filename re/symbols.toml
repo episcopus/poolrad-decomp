@@ -16512,12 +16512,12 @@ id = "0464:00CF"
 unit = "res07"
 addr = "0464:00CF"
 size = 48
-name = "res07_fn_00CF"
-signature = "procedure res07_fn_00CF(A: Byte)"
+name = "SetVideoMode"
+signature = "procedure SetVideoMode(A: Byte)"
 c_name = "res07_fn_00CF"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res07_fn_00CF (0464:00CF sets INT 10h function 0 (set video mode) with AL=A after saving the current mode (ds4A1D) in SavedVideoMode, then records A as current; called by res08_init (042B:00E0 with 0Dh) and by RestoreVideoMode); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16525,12 +16525,12 @@ id = "0464:00FF"
 unit = "res07"
 addr = "0464:00FF"
 size = 18
-name = "res07_fn_00FF"
-signature = "procedure res07_fn_00FF"
+name = "RestoreVideoMode"
+signature = "procedure RestoreVideoMode"
 c_name = "res07_fn_00FF"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:far_call"
+notes = "renamed from res07_fn_00FF (0464:00FF calls SetVideoMode(SavedVideoMode) to go back to the mode saved at the last mode set; called by the picture loaders ovl28/ovl29/ovl32/ovl34 before their error messages and by ovl28 Show3DSprite); auto:far_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16590,12 +16590,12 @@ id = "0464:1484"
 unit = "res07"
 addr = "0464:1484"
 size = 133
-name = "res07_fn_1484"
+name = "MirrorByte"
 signature = ""
 c_name = "res07_fn_1484"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res07_fn_1484 (0464:1484 reverses the eight bits of a byte (bit 0 to bit 7 ...); called by 15C7 (0464:18xx) to flip a byte of a picture row); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16603,12 +16603,12 @@ id = "0464:1509"
 unit = "res07"
 addr = "0464:1509"
 size = 141
-name = "res07_fn_1509"
+name = "MirrorWord"
 signature = ""
 c_name = "res07_fn_1509"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call; map deepseek-dec 2026-10-12: ends 1596 (was 11); bogus entry 1514 deleted"
+notes = "renamed from res07_fn_1509 (0464:1509 reverses the order of the eight 2-bit groups of a word using GlyphPixelMasks (DS:25E5..25F3); called by 15C7 for every 2-byte unit of a picture row); auto:near_call; map deepseek-dec 2026-10-12: ends 1596 (was 11); bogus entry 1514 deleted"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16616,12 +16616,12 @@ id = "0464:1596"
 unit = "res07"
 addr = "0464:1596"
 size = 49
-name = "res07_fn_1596"
+name = "SwapNibbles"
 signature = ""
 c_name = "res07_fn_1596"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res07_fn_1596 (0464:1596 swaps the two nibbles of a byte (X shl 4 + high nibble); companion of MirrorByte for flipping an 8-pixel byte); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16681,12 +16681,12 @@ id = "0464:248E"
 unit = "res07"
 addr = "0464:248E"
 size = 263
-name = "res07_fn_248E"
-signature = "procedure res07_fn_248E(Height, Width: Word; ItemCount, AllocFlags: Byte; var Pic)"
+name = "AllocatePicture"
+signature = "procedure AllocatePicture(Height, Width: Word; ItemCount, AllocFlags: Byte; var Pic)"
 c_name = "res07_fn_248E"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res07_fn_248E (0464:248E allocates and zeroes a picture block of ItemCount * Height * WidthCols * 2 (x2 for a non-zero VideoAdapter) + $17 bytes plus an optional pixel buffer, and stores the header fields; called by ovl10 StartBattle, ovl11 StartGame, ovl28 LoadSpriteList, ovl32 DrawIcon, res12 and 0111/1E5C); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16694,12 +16694,12 @@ id = "0464:2595"
 unit = "res07"
 addr = "0464:2595"
 size = 157
-name = "res07_fn_2595"
-signature = "procedure res07_fn_2595(var Pic)"
+name = "ReleasePicture"
+signature = "procedure ReleasePicture(var Pic)"
 c_name = "res07_fn_2595"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res07_fn_2595 (0464:2595 frees the pixel buffer (a quarter of the size for VideoAdapter 1) and the picture block (ItemCount * ByteSize + 17), then nils the caller's variable; called by ovl01/ovl08/ovl10/ovl14/ovl28/ovl32, res12 and 0111/1E5C); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

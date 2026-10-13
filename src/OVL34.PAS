@@ -37,10 +37,10 @@ begin
     res07_fn_0111('8x8d' + NumSet, BlockId, TileLoadB, TileLoadC, TileBanks[Bank]);
     if TileBanks[Bank] = nil then
     begin
-      res07_fn_00FF;
+      RestoreVideoMode;
       WriteLn(Output, 'Unable to load 8x8D' + NumSet + '-' + NumBlock);
       Key := ReadGameKey;
-      res07_fn_00FF;
+      RestoreVideoMode;
       QuitGame;
     end;
     FlushKeyboard;
@@ -69,7 +69,7 @@ begin
     $100..$11E: Bank := 4;
     0, $11F..$7FFF:
     begin
-      res07_fn_00FF;
+      RestoreVideoMode;
       WriteLn(Output, 'Bad symbol number in Put8x8Symbol.');
       Key := ReadGameKey;
       QuitGame;

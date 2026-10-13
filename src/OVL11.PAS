@@ -1,7 +1,7 @@
 unit OVL11;
 { Loader: the game's start-up (whitepaper 5.2.1, 5.12). The main program runs StartGame once, before
   the title screens and the copy protection (src/POOL.PAS: `StartGame;`). It allocates the game's
-  main heap blocks, sets up the screen buffers (through res07_fn_248E), fills the three 200-entry
+  main heap blocks, sets up the screen buffers (through AllocatePicture), fills the three 200-entry
   cell address tables, initialises the screen and game globals, then builds the save game file path
   and reads its data file (OpenGameFile, Reset/Seek/BlockRead/Close) before handing over to
   ovl22_e10 (the character/party loader) and ovl12_e1 (the training and rewards unit). }
@@ -29,7 +29,7 @@ const
 
 { ovl11:002D. The start-up loader. Allocates the game's heap blocks (New at ovl11:0034..00A3: the
   game variables at DS:49D2, a second $800-byte word block at DS:49D6, and the $400, $1E00, $588,
-  $924 and $400 byte blocks), then the three screen buffers through res07_fn_248E (ovl11:00A4,
+  $924 and $400 byte blocks), then the three screen buffers through AllocatePicture (ovl11:00A4,
   00BC, 00D4), clears the fixed buffers, fills the three cell address tables DS:4EC0 (the text
   scanline address, ovl11:0130), DS:5050 (the row offset I*40, ovl11:0186) and DS:51E0 (the plane
   address used with VideoAdapter 2, ovl11:019F), and finally sets the screen and game globals
@@ -51,9 +51,9 @@ begin
   New(GameFont);
   New(WallTiles);
   New(ds6A5C);
-  res07_fn_248E(8, 1, 1, 0, TileBuf);
-  res07_fn_248E($A8, $15, 1, 0, DrawBuf);
-  res07_fn_248E($18, 3, 1, 0, ds4A24);
+  AllocatePicture(8, 1, 1, 0, TileBuf);
+  AllocatePicture($A8, $15, 1, 0, DrawBuf);
+  AllocatePicture($18, 3, 1, 0, ds4A24);
   FillChar(ds4A28, $A8, 0);
   FillChar(ds4AD0, $150, 0);
   FillChar(ds4C20, $150, $FF);

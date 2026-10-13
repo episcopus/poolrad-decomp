@@ -2988,3 +2988,52 @@ kind = "routine"
 why = "0464:007B returns the palette colour for a pixel value from an 8-byte palette: even index high nibble, odd index low nibble of Pal[Index shr 1]; called by 02A5 at 0464:03F7 and 0464:04F7..0550 to map a cell pixel through the picture palette"
 date = "2026-10-12"
 
+[[rename]]
+old = "res07_fn_00CF"
+new = "SetVideoMode"
+kind = "routine"
+why = "0464:00CF sets INT 10h function 0 (set video mode) with AL=A after saving the current mode (ds4A1D) in SavedVideoMode, then records A as current; called by res08_init (042B:00E0 with 0Dh) and by RestoreVideoMode"
+date = "2026-10-12"
+
+[[rename]]
+old = "res07_fn_00FF"
+new = "RestoreVideoMode"
+kind = "routine"
+why = "0464:00FF calls SetVideoMode(SavedVideoMode) to go back to the mode saved at the last mode set; called by the picture loaders ovl28/ovl29/ovl32/ovl34 before their error messages and by ovl28 Show3DSprite"
+date = "2026-10-12"
+
+[[rename]]
+old = "res07_fn_1484"
+new = "MirrorByte"
+kind = "routine"
+why = "0464:1484 reverses the eight bits of a byte (bit 0 to bit 7 ...); called by 15C7 (0464:18xx) to flip a byte of a picture row"
+date = "2026-10-12"
+
+[[rename]]
+old = "res07_fn_1509"
+new = "MirrorWord"
+kind = "routine"
+why = "0464:1509 reverses the order of the eight 2-bit groups of a word using GlyphPixelMasks (DS:25E5..25F3); called by 15C7 for every 2-byte unit of a picture row"
+date = "2026-10-12"
+
+[[rename]]
+old = "res07_fn_1596"
+new = "SwapNibbles"
+kind = "routine"
+why = "0464:1596 swaps the two nibbles of a byte (X shl 4 + high nibble); companion of MirrorByte for flipping an 8-pixel byte"
+date = "2026-10-12"
+
+[[rename]]
+old = "res07_fn_248E"
+new = "AllocatePicture"
+kind = "routine"
+why = "0464:248E allocates and zeroes a picture block of ItemCount * Height * WidthCols * 2 (x2 for a non-zero VideoAdapter) + $17 bytes plus an optional pixel buffer, and stores the header fields; called by ovl10 StartBattle, ovl11 StartGame, ovl28 LoadSpriteList, ovl32 DrawIcon, res12 and 0111/1E5C"
+date = "2026-10-12"
+
+[[rename]]
+old = "res07_fn_2595"
+new = "ReleasePicture"
+kind = "routine"
+why = "0464:2595 frees the pixel buffer (a quarter of the size for VideoAdapter 1) and the picture block (ItemCount * ByteSize + 17), then nils the caller's variable; called by ovl01/ovl08/ovl10/ovl14/ovl28/ovl32, res12 and 0111/1E5C"
+date = "2026-10-12"
+

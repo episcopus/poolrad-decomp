@@ -12,24 +12,24 @@ const
   Last3DSpriteSlot = 3;     { the highest legal slot Show3DSprite draws (ovl28:0727) }
   NoBank = $FF;             { LoadHeadBodySprites: no HEAD/BODY picture number loaded }
 type
-  { One loaded sprite picture: what res07_fn_248E allocates and res07_fn_2595 frees (the same record
+  { One loaded sprite picture: what AllocatePicture allocates and ReleasePicture frees (the same record
     ovl32 draws: height and width at +0 and +2, item count at +8, byte size at +$11, pixels at +$13,
     whitepaper 4.2.3). LoadSpriteList reads the sprite's base screen column and row from +4 and +6
     (Show3DSprite adds 2 to each and passes them to res07_fn_0D71) and the byte size from +$11. The
     height, width and item count are set by the allocator and not read here; the pixel pointer at
     +$13 is not declared because this unit never reads it. }
   TSpritePicture = record
-    Height, WidthCols: Word;      { +0, +2: set by res07_fn_248E, not read here }
+    Height, WidthCols: Word;      { +0, +2: set by AllocatePicture, not read here }
     X: Word;                      { +4: the sprite's base column }
     Y: Word;                      { +6: the sprite's base row }
-    ItemCount: Byte;              { +8: res07_fn_248E's item count (1 for a sprite) }
+    ItemCount: Byte;              { +8: AllocatePicture's item count (1 for a sprite) }
     Palette: array[0..7] of Byte; { +9..+$10: 8 palette bytes LoadSpriteList Moves in }
     ByteSize: Word;               { +$11: the pixel byte count of one sprite }
   end;
   PSpritePicture = ^TSpritePicture;
   { One 8-byte slot of the sprite list LoadSpriteList builds and FreeSpriteList frees. The 4 bytes at +0
     are copied from the picture data and the picture pointer is at +4 (FreeSpriteList frees
-    Rec + 8*I - 2, slot I's +4, which is where LoadSpriteList's res07_fn_248E stores it). }
+    Rec + 8*I - 2, slot I's +4, which is where LoadSpriteList's AllocatePicture stores it). }
   TSpriteSlot = record
     Data: array[0..3] of Byte;    { +0: 4 bytes of picture data LoadSpriteList Moves in }
     Sprite: PSpritePicture;       { +4: the allocated picture (nil when empty) }
@@ -96,7 +96,7 @@ end;
   block does not reload. It frees the old list first (FreeSpriteList), reads the block (LoadDaxBlock)
   and walks it: a count byte (at most PicBlock1Sprites for PIC block 1), then per sprite 4 bytes into
   the slot, the Height and WidthCols words, and when at least FreeMemoryFloor bytes of heap are free
-  (MaxAvail) it allocates the picture (res07_fn_248E(Height, WidthCols, 1, Mode, slot)), reads its X
+  (MaxAvail) it allocates the picture (AllocatePicture(Height, WidthCols, 1, Mode, slot)), reads its X
   and Y words (one byte after Y is skipped) and 8 palette bytes, and decodes Row + 1 bytes of pixel
   data (res07_fn_02A5), Row being the picture's ByteSize (twice the byte size when VideoAdapter is 0)
   minus one. PIC and FINAL pictures are stored as differences: the first picture's data is kept in
@@ -159,7 +159,7 @@ begin
       if MaxAvail >= FreeMemoryFloor then
       begin
         Inc(Loaded);
-        res07_fn_248E(Height, WidthCols, 1, Mode, Slots[I].Sprite);
+        AllocatePicture(Height, WidthCols, 1, Mode, Slots[I].Sprite);
         with Slots[I].Sprite^ do
         begin
           Move(PByteArray(Block)^[Offset], X, 2);
@@ -200,14 +200,14 @@ begin
 end;
 
 { ovl28:048F. Frees the sprite list Rec^: it frees the picture of every used slot (through
-  res07_fn_2595), then zeroes the whole SizeOf(TSpriteList)-byte record, clears the picture name
+  ReleasePicture), then zeroes the whole SizeOf(TSpriteList)-byte record, clears the picture name
   DS:6B0A and sets the current bank DS:6B1C to NoBank. Called by ovl10, ovl14, ovl18 and
   LoadSpriteList. }
 procedure FreeSpriteList(Rec: PSpriteList);
 begin
   with Rec^ do
     for ds70C7 := 1 to Count do
-      res07_fn_2595(Slots[ds70C7].Sprite);
+      ReleasePicture(Slots[ds70C7].Sprite);
   FillChar(Rec^, SizeOf(TSpriteList), 0);
   ds6B0A := '';
   ds6B1C := NoBank;
@@ -272,8 +272,8 @@ begin
     DrawSprite(Col, Row, 0, ds6B01);
 end;
 { ovl28:0708. Copies the sprite list Rec^ into a local record and shows slot Slot (only 1..3 are
-  legal; another slot restores the saved video mode with res07_fn_00FF, which calls
-  res07_fn_00CF(SavedVideoMode) so the range message is readable, then ends the game with
+  legal; another slot restores the saved video mode with RestoreVideoMode, which calls
+  SetVideoMode(SavedVideoMode) so the range message is readable, then ends the game with
   'Illegal range in Show3DSprite.'): the sprite is drawn at its base column and row plus 2 (X + 3 -
   1, Y + 3 - 1) through res07_fn_0D71 onto the screen buffer DrawBuf and the display is stepped.
   A nil slot leaves early. Called by ShowEncounterPicture. }
@@ -284,7 +284,7 @@ begin
   List := Rec^;
   if (Slot < 1) or (Slot > Last3DSpriteSlot) then
   begin
-    res07_fn_00FF;
+    RestoreVideoMode;
     WriteLn(Output, 'Illegal range in Show3DSprite.');
     QuitGame;
   end;

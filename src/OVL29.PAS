@@ -505,10 +505,10 @@ begin
   LoadDaxBlock('WALLDEF' + Num, '.dax', BlockId, Size, Block);
   if (Size = 0) or (Size div WallSetSize + First > LastWallSlot + 1) then
   begin
-    res07_fn_00FF;
+    RestoreVideoMode;
     WriteLn(Output, 'Unable to load wallset in LoadWallSet.');
     Key := ReadGameKey;
-    res07_fn_00FF;
+    RestoreVideoMode;
     QuitGame;
   end;
   Delta := SymbolBase[First] - SymbolBase[1];
@@ -558,10 +558,10 @@ begin
   LoadDaxBlock('GEO' + Num, '.dax', BlockId, Size, Block);
   if (Size = 0) or (Size <> GeoBlockSize) then
   begin
-    res07_fn_00FF;
+    RestoreVideoMode;
     WriteLn(Output, 'Unable to load geo in Load3DMap.');
     Key := ReadGameKey;
-    res07_fn_00FF;
+    RestoreVideoMode;
     QuitGame;
   end;
   Offset := 2;
