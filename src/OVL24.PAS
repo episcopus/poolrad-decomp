@@ -535,7 +535,7 @@ begin
     if Who^.Status <> StatusFled then
       Who^.Flag11B := 0;
     RedrawGround(0, 0, Index);
-    res07_fn_1B52;
+    FlushPictureChanges;
     CombatantTable[Index].Kind := 0;
     RebuildOccupancy;
     if res12_fn_2637(Who) <> 0 then

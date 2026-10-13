@@ -49,7 +49,7 @@ function MirrorWord(Value: Word): Word;
 function SwapNibbles(Value: Byte): Byte;
 procedure MirrorPicture(Source, Dest: Pointer);
 procedure ShowPicture(PicCol, PicRow: Integer; Buf: Pointer);
-procedure res07_fn_1B52;
+procedure FlushPictureChanges;
 procedure res07_fn_1E5C(P1, P2: Pointer; A: Word; B: Byte; P3: Pointer);
 procedure AllocatePicture(Height, WidthCols: Word; ItemCount, AllocFlags: Byte; var Pic);
 procedure ReleasePicture(var Pic);
@@ -372,8 +372,91 @@ begin
     end;
   end;
 end;
-{ 0464:1B52: retf 0: 0 bytes of parameters; 10 bytes of locals }
-{@stub} procedure res07_fn_1B52; begin end;
+{ 0464:1B52: presents the changed regions the blitters marked in ds4A28
+  (row-changed flags), ds4AD0/ds4C20 (the first and last changed offset of the
+  row) and ds4D70 (the last offset), one branch per video adapter: adapter 0
+  moves each changed span from the staging buffer DrawBuf to the segment
+  ds4EC0[Row+8]; adapter 1 writes the four EGA planes byte by byte through port
+  3C5 (stride 4 in the source) into $A200, then copies $A000 to $A200 in GC
+  write mode 1; adapter 2 moves the spans to the ds51E0 segments. Finally the
+  trackers are reset. Called after every sprite or picture blit. }
+procedure FlushPictureChanges;
+var
+  Row: Word;
+  SrcOfs, DestOfs, BaseOfs: Word;
+  Unused: Word;    { QUIRK 0464:1B55: the original frame has one word the locals never use }
+begin
+  case VideoAdapter of
+    0:
+      for Row := 0 to $A7 do
+        if ds4A28[Row] <> 0 then
+          Move(PPicture(DrawBuf)^.Data[ds4C20[Row]],
+            Mem[ds4EC0[Row + 8]:ds4AD0[Row] + 2],
+            ds4D70[Row] - ds4C20[Row] + 1);
+    1:
+      begin
+        Port[$3C4] := 2;
+        for Row := 0 to $A7 do
+          if ds4A28[Row] <> 0 then
+          begin
+            BaseOfs := ds5050[Row + 8] + ds4AD0[Row] + 1;
+            Port[$3C5] := EgaPlaneBitMasks[0];
+            SrcOfs := ds4C20[Row];
+            DestOfs := BaseOfs;
+            repeat
+              Mem[$A200:DestOfs] := PPicture(DrawBuf)^.Data[SrcOfs];
+              Inc(SrcOfs, 4);
+              Inc(DestOfs);
+            until SrcOfs > ds4D70[Row];
+            Port[$3C5] := EgaPlaneBitMasks[1];
+            SrcOfs := ds4C20[Row] + 1;
+            DestOfs := BaseOfs;
+            repeat
+              Mem[$A200:DestOfs] := PPicture(DrawBuf)^.Data[SrcOfs];
+              Inc(SrcOfs, 4);
+              Inc(DestOfs);
+            until SrcOfs > ds4D70[Row];
+            Port[$3C5] := EgaPlaneBitMasks[2];
+            SrcOfs := ds4C20[Row] + 2;
+            DestOfs := BaseOfs;
+            repeat
+              Mem[$A200:DestOfs] := PPicture(DrawBuf)^.Data[SrcOfs];
+              Inc(SrcOfs, 4);
+              Inc(DestOfs);
+            until SrcOfs > ds4D70[Row];
+            Port[$3C5] := EgaPlaneBitMasks[3];
+            SrcOfs := ds4C20[Row] + 3;
+            DestOfs := BaseOfs;
+            repeat
+              Mem[$A200:DestOfs] := PPicture(DrawBuf)^.Data[SrcOfs];
+              Inc(SrcOfs, 4);
+              Inc(DestOfs);
+            until SrcOfs > ds4D70[Row];
+          end;
+        Port[$3C5] := $0F;
+        DestOfs := ds5050[8] + 1;
+        Port[$3CE] := 5;
+        Port[$3CF] := 1;
+        for Row := 0 to $A7 do
+        begin
+          if ds4A28[Row] <> 0 then
+            Move(Mem[$A200:DestOfs + ds4AD0[Row]], Mem[$A000:DestOfs + ds4AD0[Row]],
+              (ds4D70[Row] - ds4C20[Row]) shr 1 shr 1 + 1);
+          Inc(DestOfs, $28);
+        end;
+        Port[$3CF] := 0;
+      end;
+    2:
+      for Row := 0 to $A7 do
+        if ds4A28[Row] <> 0 then
+          Move(PPicture(DrawBuf)^.Data[ds4C20[Row]],
+            Mem[ds51E0[Row + 8]:ds4AD0[Row] + 4],
+            ds4D70[Row] - ds4C20[Row] + 1);
+  end;
+  FillChar(ds4A28, $A8, 0);
+  FillChar(ds4C20, $150, $FF);
+  FillChar(ds4D70, $150, 0);
+end;
 { 0464:1E5C: retf 16: 16 bytes of parameters; 68 bytes of locals }
 {@stub} procedure res07_fn_1E5C(P1, P2: Pointer; A: Word; B: Byte; P3: Pointer); begin end;
 { 0464:248E: allocates a picture record of Height * WidthCols * 2 bytes per

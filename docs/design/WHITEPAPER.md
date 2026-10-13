@@ -796,7 +796,7 @@ The parts proven so far:
 - `DrawSprite(Col, Row: Integer; Direct: Byte; Sprite: Pointer)` (`ovl28:0000`): a nil sprite draws
   nothing; with `Direct` set it blits the sprite one column and one row up and left (`Col - 1`,
   `Row - 1`) onto the screen buffer
-  `DS:4A20` through `res07_fn_0D71` (mode 0, flag 1) and steps the display (`res07_fn_1B52`);
+  `DS:4A20` through `res07_fn_0D71` (mode 0, flag 1) and steps the display (`FlushPictureChanges`);
   otherwise it copies the sprite into the staging buffer with `ShowPicture`.
 - `DrawHeadSprite` and `DrawBodySprite` (`ovl28:0050`, `ovl28:0070`): draw a sprite at (column,
   row) and at (column, row + 5); `ShowHeadBodySprites` (`ovl28:0697`) uses them to draw the HEAD

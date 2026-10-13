@@ -16655,12 +16655,12 @@ id = "0464:1B52"
 unit = "res07"
 addr = "0464:1B52"
 size = 778
-name = "res07_fn_1B52"
+name = "FlushPictureChanges"
 signature = ""
 c_name = "res07_fn_1B52"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:far_call"
+notes = "renamed from res07_fn_1B52 (0464:1B52 presents the changed regions the blitters marked in ds4A28/ds4AD0/ds4C20/ds4D70 to the screen per VideoAdapter (row moves to the ds4EC0/ds51E0 segment tables, or the four EGA planes through port 3C5 plus a GC-mode-1 copy), then resets the trackers; called by the sprite, combat-view and area-view units after a blit); auto:far_call"
 evidence = ["prologue"]
 
 [[routine]]

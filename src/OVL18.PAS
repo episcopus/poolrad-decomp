@@ -30,7 +30,7 @@ begin
   FillChar(Sprites, SizeOf(TSpriteList), 0);
   LoadSpriteList('FINAL', Bank, 2, @Sprites);
   res07_fn_0D71(Col - 1, Row - 1, 0, 0, Sprites.Slots[1].Sprite, DrawBuf);
-  res07_fn_1B52;
+  FlushPictureChanges;
   repeat
     DrawSprite(Col, Row, 1, Sprites.Slots[Sprites.Flag].Sprite);
     NowTick := GameClock;
@@ -118,7 +118,7 @@ begin
   if Flag <> 0 then
   begin
     DrawAreaView($11, $F);
-    res07_fn_1B52;
+    FlushPictureChanges;
     for DoorRow := 0 to 8 do
     begin
       for DoorCol := 0 to $A do
@@ -132,7 +132,7 @@ begin
         else
           res07_fn_1E5C(@ds091D, @ds093D, ds090B[DoorCol], 1, Pointer(ds5E52));
       DrawAreaView(ds094D[DoorRow], ds095F[DoorRow]);
-      res07_fn_1B52;
+      FlushPictureChanges;
     end;
   end;
   for DoorCol := 0 to $A do
@@ -148,7 +148,7 @@ begin
   if Flag <> 0 then
   begin
     DrawAreaView($17, $19);
-    res07_fn_1B52;
+    FlushPictureChanges;
     DelayCounted;
     DelayCounted;
   end;

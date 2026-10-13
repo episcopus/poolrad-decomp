@@ -3065,3 +3065,10 @@ kind = "routine"
 why = "0464:15C7 copies the picture Source into Dest mirrored: palette as is, then each pixel row reversed per VideoAdapter (MirrorWord units, MirrorByte groups, SwapNibbles bytes) and the pixel buffer at +$13 mirrored too; called by ovl32 DrawIcon for icon sets above 3 and by res12"
 date = "2026-10-12"
 
+[[rename]]
+old = "res07_fn_1B52"
+new = "FlushPictureChanges"
+kind = "routine"
+why = "0464:1B52 presents the changed regions the blitters marked in ds4A28/ds4AD0/ds4C20/ds4D70 to the screen per VideoAdapter (row moves to the ds4EC0/ds51E0 segment tables, or the four EGA planes through port 3C5 plus a GC-mode-1 copy), then resets the trackers; called by the sprite, combat-view and area-view units after a blit"
+date = "2026-10-12"
+

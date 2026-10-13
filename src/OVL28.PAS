@@ -58,7 +58,7 @@ uses RES04, RES05, RES09, RES07;
 { ovl28:0000. Draws the 8x8 sprite Sprite at column Col and row Row. A nil Sprite draws nothing. When
   Direct is set it blits the sprite one column and one row up and left (Col - 1, Row - 1) onto the
   screen buffer DrawBuf through
-  res07_fn_0D71 (mode 0, the flag 1) and steps the display through res07_fn_1B52; otherwise it
+  res07_fn_0D71 (mode 0, the flag 1) and steps the display through FlushPictureChanges; otherwise it
   copies it into the staging buffer with ShowPicture. Called by DrawHeadSprite, DrawBodySprite and
   ShowHeadBodySprites inside this unit, and from ovl03, ShowEncounterPicture, ovl18 and ovl25 (the packet's callers). }
 procedure DrawSprite(Col, Row: Integer; Direct: Byte; Sprite: Pointer);
@@ -68,7 +68,7 @@ begin
     if Direct <> 0 then
     begin
       res07_fn_0D71(Col - 1, Row - 1, 0, 1, Sprite, DrawBuf);
-      res07_fn_1B52;
+      FlushPictureChanges;
     end
     else
       ShowPicture(Col, Row, Sprite);
@@ -293,7 +293,7 @@ begin
       res07_fn_0D71(X + 3 - 1, Y + 3 - 1, 0, 1, List.Slots[Slot].Sprite, DrawBuf)
   else
     Exit;
-  res07_fn_1B52;
+  FlushPictureChanges;
 end;
 
 begin

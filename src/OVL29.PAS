@@ -237,11 +237,11 @@ begin
     EventByteAt := GeoCells^.Events[Row, Col];
   end;
 end;
-{ ovl29:05F3. Steps the picture display (res07_fn_1B52, the same call ovl34 uses after a
+{ ovl29:05F3. Steps the picture display (FlushPictureChanges, the same call ovl34 uses after a
   direct blit). No parameters. Called by DrawWallMap and DrawWallView. }
 procedure StepDisplay;
 begin
-  res07_fn_1B52;
+  FlushPictureChanges;
 end;
 { ovl29:05FD. Draws the 3D view for the party at map cell (Col0, Row0) facing Dir (0, 2, 4, 6):
   while WallMapMode is set it draws the overhead wall map (DrawWallMap) instead. Otherwise it draws

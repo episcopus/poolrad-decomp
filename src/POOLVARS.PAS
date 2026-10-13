@@ -586,9 +586,14 @@ var
   ds4A00: Byte;                   { set to 1 by the loader (ovl11:03A1) and by EndBattle (ovl05:1631) }
   ds4A24: Pointer;                { screen buffer the loader allocates through AllocatePicture (ovl11:00D4) }
   ds4A28: array[0..$A7] of Byte;  { $A8-byte buffer the loader clears (ovl11:00EC) }
-  ds4AD0: array[0..$14F] of Byte; { $150-byte buffer the loader clears (ovl11:00FD) }
-  ds4C20: array[0..$14F] of Byte; { $150-byte buffer the loader fills with $FF (ovl11:010E) }
-  ds4D70: array[0..$14F] of Byte; { $150-byte buffer the loader clears (ovl11:011F) }
+  { The changed-region trackers the blitters (res07 08D4/0D71) fill and res07
+    ShowChanges (1B52) flushes: per changed screen row, ds4AD0 and ds4C20 hold
+    the first and last changed byte offset and ds4D70 the last; indexed by word
+    (row*2), so 168 word entries. The loader clears/fills the same $150 bytes
+    through FillChar (ovl11:00FD, 010E, 011F). }
+  ds4AD0: array[0..$A7] of Word;  { first changed offset of the row }
+  ds4C20: array[0..$A7] of Word;  { last changed offset of the row (starts $FFFF) }
+  ds4D70: array[0..$A7] of Word;  { last changed offset of the row (starts 0) }
   { Per-cell screen address table the loader fills (ovl11:0130..0163): $B800 (even cell) or $BA00
     (odd cell) plus 5*(I div 2). }
   ds4EC0: array[0..$C7] of Word;  { cell text scanline address; see above }
