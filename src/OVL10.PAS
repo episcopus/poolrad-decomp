@@ -11,11 +11,6 @@ unit OVL10;
 interface
 procedure ScatterRareTiles;
 function PassageKind(Col, Row: ShortInt; Dir: Byte): Byte;
-procedure SetDungeonCell;
-procedure DrawFloorAndWest;
-procedure DrawNorthSide;
-procedure DrawNorthWestCorner;
-procedure DrawNorthEastCorner;
 procedure BuildDungeonMap;
 function BlockTerrainFlags: Byte;
 procedure PlaceRiver;
@@ -152,26 +147,267 @@ begin
   There := WallSideKind(Col + ds2736[Dir], Row + ds273F[Dir], OppositeDir);
   PassageKind := Here or There;
 end;
-{ ovl10:0221. Nested in BuildDungeonMap (blocked with it, see there): stores Picture + 1 at the
-  combat map cell of sub-cell (SubCol, SubRow) of the area cell being drawn. }
-{@stub} procedure SetDungeonCell; begin end;
-{ ovl10:02BA. Nested in BuildDungeonMap: the floor and the west side of an area cell. }
-{@stub} procedure DrawFloorAndWest; begin end;
-{ ovl10:0377. Nested in BuildDungeonMap: the north side of an area cell. }
-{@stub} procedure DrawNorthSide; begin end;
-{ ovl10:040F. Nested in BuildDungeonMap: the north-west corner pictures of an area cell. }
-{@stub} procedure DrawNorthWestCorner; begin end;
-{ ovl10:0615. Nested in BuildDungeonMap: the north-east corner pictures of an area cell. }
-{@stub} procedure DrawNorthEastCorner; begin end;
-{ ovl10:0810. Builds the combat map of a dungeon battle: every area map cell within 6 columns and
-  2 rows of the party becomes a skewed block of the combat map (6 columns right and 5 rows down
-  per area column and row) drawn from its west, north and east passages (PassageKind), then
-  ScatterRareTiles. Blocked (dec-r10, 2026-10-12): the draft in re/symbols.toml notes compiles to
-  the original's bytes except CombatMap's address inside the nested SetDungeonCell (02AA), which
-  only its sibling nested routines call (push word ptr [bp+6]; push cs; call at 02DD); the strict
-  nested rule (escalate-general-20261012012957) proves a nested routine only through a push bp
-  call from the parent or a proven nested routine, so that field stays byte-exact. }
-{@stub} procedure BuildDungeonMap; begin end;
+{ ovl10:0810. Builds the combat map of a dungeon battle (CreateCombatMap calls it when
+  AreaViewKind is AreaViewDungeon): every area map cell within 6 columns and 2 rows of the party
+  (ds6AAD, ds6AAE) becomes a skewed block of the combat map, 6 columns right and 5 rows down per
+  area column and row from the party's block at (21, 10), drawn from its west, north and east
+  passages (PassageKind) by the four nested drawers below, then ScatterRareTiles. Globals: reads
+  ds6AAD, ds6AAE and the area map (through PassageKind), writes CombatMap^.Cells. }
+procedure BuildDungeonMap;
+var
+  CellCol, CellRow: ShortInt;   { area cell offset from the party: -6..6, -2..2 }
+  MapX, MapY: ShortInt;         { the area map cell being drawn }
+  Unused: array[0..1] of Byte;  { frame slots the compiler keeps (no use in 0221..08A4) }
+  North, West, East: Byte;      { PassageKind of the three drawn sides of the cell }
+  Unused2: Byte;
+
+  { ovl10:0221. Stores Picture + 1 (a CombatTiles index) at the combat map cell of sub-cell
+    (SubCol, SubRow) of the area cell being drawn, when that cell is on the 50x25 map. The block
+    skews 6 columns right per area column and a further 5 right per area row. }
+  procedure SetDungeonCell(SubCol, SubRow, Picture: Byte);
+  var
+    Col, Row: ShortInt;
+  begin
+    Col := CellCol * 6 + CellRow * 5 + $15 + SubCol;
+    Row := CellRow * 5 + $A + SubRow;
+    if (Col >= 0) and (Col <= MapLastCol) and (Row >= 0) and (Row <= MapLastRow) then
+      CombatMap^.Cells[Row, Col] := Picture + 1;
+  end;
+
+  { ovl10:02BA. The floor of the area cell (sub-rows 2..4 of sub-columns 0..5, GroundPicture) and
+    its west side: a wall is a diagonal of pictures 4, 3, $D down sub-rows 2..4, a door two
+    pictures at (1, 2) and (5, 4). }
+  procedure DrawFloorAndWest;
+  var
+    SubCol, SubRow: Byte;
+  begin
+    for SubRow := 2 to 4 do
+      for SubCol := 0 to 5 do
+        SetDungeonCell(SubCol, SubRow, GroundPicture);
+    if West = SideWall then
+      for SubRow := 2 to 4 do
+      begin
+        SetDungeonCell(SubRow - 1, SubRow, 4);
+        SetDungeonCell(SubRow, SubRow, 3);
+        SetDungeonCell(SubRow + 1, SubRow, $D);
+      end
+    else if West = SideDoor then
+    begin
+      SetDungeonCell(1, 2, 8);
+      SetDungeonCell(5, 4, 0);
+    end;
+  end;
+
+  { ovl10:0377. The north side of the area cell: sub-columns 3..4 of sub-rows 0..1 are a wall
+    (pictures 5 over $A) when North is SideWall, else floor. }
+  procedure DrawNorthSide;
+  var
+    Unused: array[0..1] of Byte;  { a frame slot the compiler keeps (sub sp, 2; no use) }
+  begin
+    if North = SideWall then
+    begin
+      SetDungeonCell(3, 0, 5);
+      SetDungeonCell(4, 0, 5);
+      SetDungeonCell(3, 1, $A);
+      SetDungeonCell(4, 1, $A);
+    end
+    else
+    begin
+      SetDungeonCell(3, 0, GroundPicture);
+      SetDungeonCell(4, 0, GroundPicture);
+      SetDungeonCell(3, 1, GroundPicture);
+      SetDungeonCell(4, 1, GroundPicture);
+    end;
+  end;
+
+  { ovl10:040F. The north-west corner of the area cell: the four pictures of sub-columns 1..2,
+    sub-rows 0..1, chosen from North, West and whether the corner is open on the far side (the
+    west passage of the cell to the north and the north passage of the cell to the west both
+    open: OpenCorner). The four cases of K pick the top-left, top-right, bottom-left and
+    bottom-right picture in turn. }
+  procedure DrawNorthWestCorner;
+  var
+    K: Byte;
+    TopLeft, BottomLeft, TopRight, BottomRight: Byte;
+    OpenCorner: Byte;
+  begin
+    if (PassageKind(MapX, MapY - 1, DirWest) = SideOpen)
+      and (PassageKind(MapX - 1, MapY, DirNorth) = SideOpen) then
+      OpenCorner := 1
+    else
+      OpenCorner := 0;
+    for K := 1 to 4 do
+      case K of
+        1:
+          case North of
+            SideOpen:
+              case West of
+                SideOpen: TopLeft := GroundPicture;
+                SideDoor: TopLeft := $D;
+                SideWall:
+                  if OpenCorner <> 0 then
+                    TopLeft := 0
+                  else
+                    TopLeft := $D;
+              end;
+            SideDoor, SideWall:
+              if West = SideOpen then
+                if OpenCorner <> 0 then
+                  TopLeft := $F
+                else
+                  TopLeft := 5
+              else if OpenCorner <> 0 then
+                TopLeft := $12
+              else
+                TopLeft := 2;
+          end;
+        2:
+          case North of
+            SideOpen: TopRight := GroundPicture;
+            SideDoor: TopRight := $11;
+            SideWall: TopRight := 5;
+          end;
+        3:
+          case West of
+            SideOpen:
+              if North = SideOpen then
+                BottomLeft := GroundPicture
+              else if OpenCorner <> 0 then
+                BottomLeft := $10
+              else
+                BottomLeft := $A;
+            SideDoor:
+              if OpenCorner <> 0 then
+                BottomLeft := $14
+              else
+                BottomLeft := 7;
+            SideWall:
+              if OpenCorner <> 0 then
+                BottomLeft := 1
+              else
+                BottomLeft := 3;
+          end;
+        4:
+          case West of
+            SideOpen, SideDoor:
+              case North of
+                SideOpen: BottomRight := GroundPicture;
+                SideDoor: BottomRight := $17;
+                SideWall: BottomRight := $A;
+              end;
+            SideWall:
+              case North of
+                SideOpen: BottomRight := $D;
+                SideDoor: BottomRight := $15;
+                SideWall: BottomRight := 6;
+              end;
+          end;
+      end;
+    SetDungeonCell(1, 0, TopLeft);
+    SetDungeonCell(2, 0, TopRight);
+    SetDungeonCell(1, 1, BottomLeft);
+    SetDungeonCell(2, 1, BottomRight);
+  end;
+
+  { ovl10:0615. The north-east corner of the area cell: the four pictures of sub-columns 5..6,
+    sub-rows 0..1, chosen from North, East, the east passage of the cell to the north (NorthEast),
+    the north passage of the cell to the east (EastNorth) and OpenCorner (both open). The four
+    cases of K pick the top-left, top-right, bottom-left and bottom-right picture in turn. }
+  procedure DrawNorthEastCorner;
+  var
+    K: Byte;
+    TopLeft, BottomLeft, TopRight, BottomRight: Byte;
+    OpenCorner: Byte;
+    NorthEast, EastNorth: Byte;
+  begin
+    NorthEast := PassageKind(MapX, MapY - 1, DirEast);
+    EastNorth := PassageKind(MapX + 1, MapY, DirNorth);
+    if (NorthEast = SideOpen) and (EastNorth = SideOpen) then
+      OpenCorner := 1
+    else
+      OpenCorner := 0;
+    for K := 1 to 4 do
+      case K of
+        1:
+          case North of
+            SideOpen:
+              if NorthEast = SideWall then
+                TopLeft := 4
+              else
+                TopLeft := GroundPicture;
+            SideDoor: TopLeft := $F;
+            SideWall: TopLeft := 5;
+          end;
+        2:
+          if North = SideOpen then
+            case NorthEast of
+              SideOpen: TopRight := GroundPicture;
+              SideDoor:
+                if (East = SideOpen) and (EastNorth <> SideOpen) then
+                  TopRight := $18
+                else
+                  TopRight := 1;
+              SideWall:
+                if (East = SideOpen) and (EastNorth <> SideOpen) then
+                  TopRight := $B
+                else
+                  TopRight := 3;
+            end
+          else if East <> SideOpen then
+            TopRight := 9
+          else if EastNorth <> SideOpen then
+            TopRight := 5
+          else if OpenCorner <> 0 then
+            TopRight := $11
+          else
+            TopRight := $13;
+        3:
+          case North of
+            SideOpen: BottomLeft := GroundPicture;
+            SideDoor: BottomLeft := $10;
+            SideWall: BottomLeft := $A;
+          end;
+        4:
+          if North = SideOpen then
+          begin
+            if NorthEast = SideOpen then
+              BottomRight := GroundPicture
+            else if East <> SideOpen then
+              BottomRight := 4
+            else if EastNorth = SideOpen then
+              BottomRight := 8
+            else
+              BottomRight := $C;
+          end
+          else if East <> SideOpen then
+            BottomRight := $E
+          else if EastNorth = SideOpen then
+            BottomRight := $17
+          else
+            BottomRight := $A;
+      end;
+    SetDungeonCell(5, 0, TopLeft);
+    SetDungeonCell(6, 0, TopRight);
+    SetDungeonCell(5, 1, BottomLeft);
+    SetDungeonCell(6, 1, BottomRight);
+  end;
+
+begin
+  for CellRow := -2 to 2 do
+    for CellCol := -6 to 6 do
+    begin
+      MapX := ds6AAD + CellCol;
+      MapY := ds6AAE + CellRow;
+      West := PassageKind(MapX, MapY, DirWest);
+      North := PassageKind(MapX, MapY, DirNorth);
+      East := PassageKind(MapX, MapY, DirEast);
+      DrawFloorAndWest;
+      DrawNorthSide;
+      DrawNorthWestCorner;
+      DrawNorthEastCorner;
+    end;
+  ScatterRareTiles;
+end;
 
 { ovl10:08A4. The terrain flags of the area map block the battle is fought on (CombatBlock): a
   fixed table of block code ranges, each giving a set of the Flag bits above. A code no range
