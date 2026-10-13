@@ -807,7 +807,7 @@ end;
   three colours, Animate passed on) and waits for one of its '~' hotkeys (ParseHotkeys); Return
   also answers when AcceptEnter is set. Returns the 0-based position of the hotkey in the menu
   (so '~Yes ~No' gives 0 or 1), 0 for Return, $FF for a letter or digit that is not a hotkey.
-  An extended key goes to ovl19_e10 and the selected character is redrawn (res12_fn_0767)
+  An extended key goes to UpdateSelectedCharacter and the selected character is redrawn (res12_fn_0767)
   before asking again. Callers: ovl03, the Temple, the treasure menu and the shop. }
 function AskMenu(Title: String40; Text: string; TitleColor, WordColor, HotColor, AcceptEnter,
   Animate: Byte): Byte;
@@ -822,7 +822,7 @@ begin
     Key := ReadPromptChoice(Title, Text, TitleColor, WordColor, HotColor, 1, Animate, ExtKey);
     if ExtKey <> 0 then
     begin
-      ovl19_e10(Key);
+      UpdateSelectedCharacter(Key);
       res12_fn_0767(SelectedCharacter);
       Key := #0;
     end;

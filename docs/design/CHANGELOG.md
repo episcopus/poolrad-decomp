@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-13 | 5.4 and 5.22 | decompiled inventory overload, party selection, character money conversion and spell-list selection helpers; documented verified behavior and updated cross-unit names/signatures | make match UNIT=ovl19 WRITE=1; make check passed |
 | 2026-10-13 | 5.5.2 | corrected terrain-table, morale, placement and battle-sequence documentation | make check, ovl10 match |
 | 2026-10-13 | 5.23 | res07 assessment: res07_fn_1E5C's derived signature and structure plus the picture record fields recorded for the next session; no routine decompiled in this commit | re/learnings/res07.toml; make match UNIT=res07: 17 matched, 2 stubs; make check green (receipt b7feea18c1ce) |
 | 2026-10-13 | 5.15 | res06 review fixes: SetPageSegment and DelayByGameSpeed renames, MoreKeyColor, TextSet/Bank and WordStart/WordEnd names, unit-level screen and EGA port constants, the page/bank wording and the QUIRK addresses the review asked for | make match UNIT=res06: unit: complete (18 matched, 2 nested); work/reviews/res06.md; make check green |

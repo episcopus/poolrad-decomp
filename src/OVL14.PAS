@@ -354,7 +354,7 @@ begin
 end;
 { ovl14:0989. The wilderness key driver (called by ovl03_fn_3379): in the 3D view it
   reads menu and movement keys through ReadPromptChoice and dispatches them (A/C/V/E/S/L
-  menu keys, H/M/P/K movement with the icon sets, anything else through ovl19_e10),
+  menu keys, H/M/P/K movement with the icon sets, anything else through UpdateSelectedCharacter),
   otherwise it loads the ICON pictures for map pages 2..4 and runs a smaller key loop;
   either loop repeats through res12_fn_290B until Redraw is set, then it tidies the
   window and returns the key. Also clears ds49D6^[713] on entry. }
@@ -429,7 +429,7 @@ begin
               DrawWallView(PartyMapColumn, PartyMapRow, PartyFacing);
             end;
         else
-          ovl19_e10(Key);
+          UpdateSelectedCharacter(Key);
           res12_fn_0767(SelectedCharacter);
         end;
       res12_fn_290B;
@@ -478,7 +478,7 @@ begin
           'K':
             PartyFacing := 6;
         else
-          ovl19_e10(Key);
+          UpdateSelectedCharacter(Key);
           res12_fn_0767(SelectedCharacter);
           Redraw := 0;
         end;

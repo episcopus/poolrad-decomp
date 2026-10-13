@@ -1,8 +1,8 @@
 unit OVL19;
-{ Inventory: overlay unit, 11026 bytes of code. Skeleton by tools/match/skeleton.py: every routine is a stub
-  until decompiled (playbook 30). }
+{ Inventory: the party's carried-item menus and selection/transfer routines (whitepaper 5.4; strings at ovl19:0AB3). }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
+uses POOLVARS;
 procedure ovl19_e1;
 procedure ovl19_fn_031E;
 procedure ovl19_e4;
@@ -49,11 +49,13 @@ procedure ovl19_fn_228C;
 procedure ovl19_fn_2383;
 procedure ovl19_fn_23B6;
 procedure ovl19_fn_24A7;
-function ovl19_e9(Shop: Pointer; Item: Pointer): Boolean;
-procedure ovl19_e10(Key: Char);
-function ovl19_e11(Who: Pointer): LongInt;
-function ovl19_e12(Kind, Mode: Byte; var Choice: Word; var Listed: Byte): Byte;
+function WouldOverloadInventory(Character: PCharacter; Item: PMenuLine): Boolean;
+procedure UpdateSelectedCharacter(Key: Char);
+function CharacterMoneyValueInGold(Who: PCharacter): LongInt;
+function ChooseSpellFromList(SpellListKind, DisplayMode: Byte; var Choice: Word;
+  var Listed: Byte): Byte;
 implementation
+uses RES06, RES09, RES12, OVL22;
 
 { ovl19:004A: frame not read }
 {@stub} procedure ovl19_e1; begin end;
@@ -147,14 +149,126 @@ implementation
 {@stub} procedure ovl19_fn_23B6; begin end;
 { ovl19:24A7: retf 0: 0 bytes of parameters; 558 bytes of locals }
 {@stub} procedure ovl19_fn_24A7; begin end;
-{ ovl19:275B: retf 8: 8 bytes of parameters; 4 bytes of locals }
-{@stub} function ovl19_e9(Shop: Pointer; Item: Pointer): Boolean; begin end;
-{ ovl19:27DF: retf 2; the Temple passes the key G or O. }
-{@stub} procedure ovl19_e10(Key: Char); begin end;
-{ ovl19:28BE: retf 4; returns a LongInt summed over the character's money words; the Temple keeps the low word. }
-{@stub} function ovl19_e11(Who: Pointer): LongInt; begin end;
-{ ovl19:299C: retf 12: 12 bytes of parameters; 298 bytes of locals }
-{@stub} function ovl19_e12(Kind, Mode: Byte; var Choice: Word; var Listed: Byte): Byte; begin end;
+{ ovl19:275B: rejects an item when the character already has more than 15 items or when its added
+  weight exceeds the character's strength-based capacity plus 1500. The item weight is multiplied
+  by its count only when the count is nonzero. The call to res12_fn_0BB8 occurs before the checks. }
+function WouldOverloadInventory(Character: PCharacter; Item: PMenuLine): Boolean;
+const
+  MaximumItemCount = 15;
+  BaseCarryAllowance = 1500;
+var
+  Overloaded: Boolean;
+  AddedWeight: Word;
+begin
+  res12_fn_0BB8(Character);
+  Overloaded := False;
+  if Character^.ItemCountC7 > MaximumItemCount then
+    Overloaded := True;
+  AddedWeight := Item^.Weight;
+  if Item^.Count > 0 then
+    AddedWeight := AddedWeight * Item^.Count;
+  if Character^.CarriedWeight + AddedWeight >
+    res12_fn_13AB(Character) + BaseCarryAllowance then
+    Overloaded := True;
+  WouldOverloadInventory := Overloaded;
+end;
+{ ovl19:27DF. Updates SelectedCharacter from the party list: G selects the previous member, wrapping
+  from the first member to the last; O selects the next member, wrapping to the head; other keys
+  select the head. }
+procedure UpdateSelectedCharacter(Key: Char);
+var
+  Character: PCharacter;
+begin
+  Character := PCharacter(ds5D96);
+  if Character <> nil then
+  begin
+    case Key of
+      'G':
+        begin
+          if Character = SelectedCharacter then
+          begin
+            while Character^.Next <> nil do
+              Character := Character^.Next;
+          end
+          else
+          begin
+            while (Character <> nil) and
+              (Character^.Next <> SelectedCharacter) do
+              Character := Character^.Next;
+          end;
+        end;
+      'O':
+        begin
+          if SelectedCharacter^.Next <> nil then
+            Character := SelectedCharacter^.Next;
+        end;
+    else
+      Character := PCharacter(ds5D96);
+    end;
+  end;
+  SelectedCharacter := Character;
+end;
+{ ovl19:28BE: converts Who's five coin words (+$88..+$90) to gold using CoinCopperValues, adds half a
+  gold piece in copper before division, and returns the rounded total as a LongInt. The Temple keeps
+  only its low word (ovl04:0177). QUIRK ovl19:28BE: the frame reserves [bp-$A], which is never accessed. }
+function CharacterMoneyValueInGold(Who: PCharacter): LongInt;
+const
+  LastCoinIndex = 4;
+  GoldCoinIndex = 3;
+  HalfGoldCopperValue = 100;
+var
+  TotalCopper: LongInt;
+  CoinIndex: ShortInt;
+  UnusedFrameByte: Byte;
+begin
+  TotalCopper := 0;
+  for CoinIndex := 0 to LastCoinIndex do
+    Inc(TotalCopper, CoinCopperValues[CoinIndex] * Who^.Money[CoinIndex]);
+  CharacterMoneyValueInGold := (TotalCopper + HalfGoldCopperValue) div CoinCopperValues[GoldCoinIndex];
+end;
+{ ovl19:299C. Sets Listed from the requested spell list. If Choice is negative it opens and titles the
+  spell window; it then delegates selection to ovl22. }
+function ChooseSpellFromList(SpellListKind, DisplayMode: Byte; var Choice: Word;
+  var Listed: Byte): Byte;
+const
+  SpellListInMemory = 0;
+  SpellListInSpellBook = 1;
+  SpellListOnScroll = 2;
+  SpellListOnScrolls = 3;
+  SpellListToChooseFrom = 4;
+  SpellListToMemorize = 5;
+  SpellListToScribe = 6;
+  TitleRow = 1;
+  TitleColor = 10;
+var
+  ModeDescription: String40;
+begin
+  case SpellListKind of
+    SpellListInMemory: ModeDescription := 'in Memory';
+    SpellListInSpellBook: ModeDescription := 'in Spell Book';
+    SpellListOnScroll: ModeDescription := 'on Scroll';
+    SpellListOnScrolls: ModeDescription := 'on Scrolls';
+    SpellListToChooseFrom: ModeDescription := 'to choose from';
+    SpellListToMemorize: ModeDescription := 'to be memorized';
+    SpellListToScribe: ModeDescription := 'to be scribed';
+  else
+    ModeDescription[0] := #0;
+  end;
+  Listed := ovl22_e2(SpellListKind);
+  if Listed <> 0 then
+  begin
+    if Integer(Choice) < 0 then
+    begin
+      DrawWindow(1, 1, $26, 1, 0, 0, '');
+      res12_fn_1816(SelectedCharacter, 1, 1, 1);
+      DrawTextAt(Length(SelectedCharacter^.Name) + 4, TitleRow,
+        TitleColor, 'Spells ' + ModeDescription);
+    end;
+    ChooseSpellFromList := ovl22_e1(DisplayMode, Choice);
+  end
+  else
+    ChooseSpellFromList := 0;
+end;
 
 begin
 end.

@@ -484,7 +484,7 @@ Each section will cover: purpose, units and routines, data, algorithm, quirks, e
 | 5.1 | ECL script interpreter: opcodes, variables, events | coab `engine/ovr003.cs`, `VmOpp.cs` **[H]**; wicanr2 places Pool's interpreter in overlay 3 of the 1988 build **[H]** |
 | 5.2 | Areas, maps and movement (GEO, walls, 3D view) | OpenGoldBox `docs/MAPS.md` **[H]**; the area view, ovl26 (below) |
 | 5.3 | Party and characters (creation, attributes, classes, levels) | wicanr2 `docs/spec/003`, `004` **[H]** |
-| 5.4 | Items, money, shops | ovl06 Shop (below, **[V]**); ovl19 Inventory (still stubs), ovl21 Money (5.4.1, **[V]**) |
+| 5.4 | Items, money, shops | ovl06 Shop (below, **[V]**); ovl19 Inventory (partially matched); ovl21 Money (5.4.1, **[V]**) |
 | 5.5 | Combat (tactical map, initiative, movement, attacks) | wicanr2 `ida-overlay08-*`, `ida-overlay13-*` **[H]** |
 | 5.6 | Magic and effects (spells, memorisation, durations) | |
 | 5.7 | Rest, time and healing | |
@@ -595,8 +595,9 @@ the 28-byte money block at `DS:67F4` and `DS:6DC0`, redraws the shop (`res12:27D
   nothing to take or share, the shorter "Buy View Pool Appraise Exit" is shown. One `case`
   dispatches the key: B buys, V views an entry (`ovl19_e5`), T takes (`TakeMoney`), P pools
   when the flag is clear (`PoolMoney`), S shares (`ShareMoney`), A appraises (`AppraiseGems`), E
-  leaves, and two keys that are in neither menu text (G and O) call `ovl19_e10` with the key
-  as an amount. Leaving while money lies in the pool asks through `AskMenu` ("Do you want to
+  leaves, and G/O update the selected party member through `UpdateSelectedCharacter`. G selects the
+  preceding member (wrapping from the head to the tail); O selects the next member, wrapping to the
+  head. Other keys select the head **[V]** (`ovl19:27DF`). Leaving while money lies in the pool asks through `AskMenu` ("Do you want to
   go back and get your Money?", '~Yes ~No'); `AskMenu` returns the 0-based hotkey position, so
   the party leaves on No (1) and stays on Yes **[V]** (`dec ax` at `ovl07:1775`, `ovl06:053E`).
 - The shop stock is the linked list at `DS:6810` of 63-byte item records, the `TMenuLine` type
@@ -608,25 +609,28 @@ the 28-byte money block at `DS:67F4` and `DS:6DC0`, redraws the shop (`res12:27D
   the left and `Value` right-justified (a zero value becomes 1, `ovl06:0068`); it then runs the item
   picker `ChooseFromList` ("Items: " with a "Buy" button).
 - `BuyItems` (`ovl06:0361`) takes the chosen item's `Value` as the price. It pays first from the
-  selected character's money (`ovl19_e11(SelectedCharacter)`, a LongInt) and then from the money
+  selected character's money (`CharacterMoneyValueInGold(SelectedCharacter)`, a LongInt) and then from the money
   pooled in the shop (`MoneyValueInGold` on `DS:67F4`); if the price fits, the item is added to the
   character's items and the amount is deducted (`SetCharacterGold` for the character, `SetPooledGold` for the
-  pool), otherwise it shows "Not enough Money.". `ovl19_e11` and `MoneyValueInGold` both sum five coin
+  pool), otherwise it shows "Not enough Money.". `CharacterMoneyValueInGold` and `MoneyValueInGold` both sum five coin
   amounts, each multiplied by its LongInt rate from the table at `DS:0D24`, add 100 and divide by
   the LongInt at `DS:0D30` (`ovl19:28BE`, `ovl21:00A8`); the character's coins are five words at
   +$88..+$90, the pool's five LongInts at the start of the 28-byte block `DS:67F4`. Both deduction
   routines divide the amount by 5 and write five coin amounts (`SetCharacterGold` into the character,
   `SetPooledGold` into `DS:67F4`), and the money blocks hold seven kinds, the five coins first (5.4.1). Two 16-bit truncations are kept (QUIRKs): `BuyItems` keeps only the low word of
-  `ovl19_e11`'s LongInt (`ovl06:03C7`), so a character with 65536 or more is compared and charged
+  `CharacterMoneyValueInGold`'s LongInt (`ovl06:03C7`), so a character with 65536 or more is compared and charged
   modulo 65536, and it passes only the low word of the pool's LongInt remainder to
   `SetPooledGold(Amount: Word)` (`ovl06:0449`), so a pool above 65535 is rewritten truncated; ovl04's
   `ChargeForCure` does the same (5.19).
 - `AddInventoryItem` (`ovl06:0239`) appends a clone of an item to `SelectedCharacter^.Items`
   (+$C8, the character's carried items) and sets its var `Overloaded` to 1 when the item was
-  refused, 0 when it was added (`ovl06:026D`, `ovl06:0277`). `ovl19_e9` (`ovl19:275B`, not decompiled) refuses it, and
-  "OverLoaded" is shown, when the character already has more than 15 items (the byte at +$C7) or
-  when the item's `Weight` times its `Count` (when the count is not 0) plus the character's load
-  (the word at +$102) exceeds `res12_fn_13AB` + 1500 **[I]** (code read).
+  refused, 0 when it was added (`ovl06:026D`, `ovl06:0277`). The matched `WouldOverloadInventory`
+  (`ovl19:275B`) first calls `res12_fn_0BB8`, then returns true when the character's byte at +$C7
+  exceeds 15 or when `CarriedWeight` (+$102) plus the item's added weight exceeds
+  `res12_fn_13AB(Character) + 1500`. Added weight starts at `Item^.Weight`; the code multiplies it
+  by `Item^.Count` only when the count is nonzero. `AddInventoryItem` refuses the item and shows
+  "OverLoaded" when the function returns true **[V]** (`make match UNIT=ovl19 FN=WouldOverloadInventory`,
+  `ovl06:026D..0277`). The strength-capacity interpretation of `res12_fn_13AB` remains **[I]**.
 
 Map note: `re/symbols.toml` had split `ovl06:0239` at `ovl06:0311`; `0311` is one byte into a
 `les di, [bp-8]` instruction, not a routine entry, and its stub was removed.
@@ -951,7 +955,7 @@ All seven routines are decompiled and matched.
 ### 5.19 The Temple **[V]** (`src/OVL04.PAS`, `make match UNIT=ovl04`: unit complete)
 
 - **The shop menu** **[V]** (`VisitTemple`, `ovl04:0D09`): `Heal View Take Pool Share Appraise Exit`, or `Heal View Pool Appraise Exit` while `TreasureLeft` reports no pooled money. On entry it sets the view mode `DS:49F3` to 1, redraws the view (`res12_fn_27D9`), reshows the character (`res12_fn_0767`), clears `PooledMoney` (28 bytes at `DS:67F4`, which `MoneyValueInGold` sums into a `LongInt`) and sets `MoneyInPool` (`DS:6DC0`) to 0. Exit with money left in the pool shows the priest's `As you leave a priest says, "Excuse me but you have left some money here"` and `Do you want to go back and retrieve your money?` (`AskMenu`) and leaves when that returns 1 (No: `AskMenu` returns the 0-based hotkey position of `'~Yes ~No'`), so Yes keeps the money in the Temple.
-- **The services** **[V]** (`HealMenu`, `ovl04:09D7`, ten names from the `string[40]` table at `DS:011A`: the nine services plus `Exit` at entry 10, `DS:028B`): services act on `SelectedCharacter` (`DS:5D92`). CureBlindness, CureDisease, RaiseDead, NeutralizePoison, RemoveCurse and StoneToFlesh ask `cast cure anyway:` when their condition is absent; CureWounds is always offered and never asks (`ovl04:0401`). `ChargeForCure` shows `<service> will only cost <n> gold pieces.`, takes the price from the character's money (`ovl19_e11`, `SetCharacterGold`) or else from the pool (`MoneyValueInGold`, `SetPooledGold`), and says `Not enough money.` when neither covers it. QUIRK `ovl04:0177`, `ovl04:01C8`: `ovl19_e11` returns a `LongInt` but `Money` is a `Word` and `SetPooledGold(Amount: Word)` takes only the low word of the pooled `LongInt`, so money or a pool of 65536 or more is compared and rewritten modulo 65536 (the same truncations as ovl06's `BuyItems`).
+- **The services** **[V]** (`HealMenu`, `ovl04:09D7`, ten names from the `string[40]` table at `DS:011A`: the nine services plus `Exit` at entry 10, `DS:028B`): services act on `SelectedCharacter` (`DS:5D92`). CureBlindness, CureDisease, RaiseDead, NeutralizePoison, RemoveCurse and StoneToFlesh ask `cast cure anyway:` when their condition is absent; CureWounds is always offered and never asks (`ovl04:0401`). `ChargeForCure` shows `<service> will only cost <n> gold pieces.`, takes the price from the character's money (`CharacterMoneyValueInGold`, `SetCharacterGold`) or else from the pool (`MoneyValueInGold`, `SetPooledGold`), and says `Not enough money.` when neither covers it. QUIRK `ovl04:0177`, `ovl04:01C8`: `CharacterMoneyValueInGold` returns a `LongInt` but `Money` is a `Word` and `SetPooledGold(Amount: Word)` takes only the low word of the pooled `LongInt`, so money or a pool of 65536 or more is compared and rewritten modulo 65536 (the same truncations as ovl06's `BuyItems`).
 
   | Service | Price | Needed when | Effect |
   |---|---:|---|---|
@@ -992,7 +996,8 @@ Overlay 24 holds the rules affects and rolls go through; its 22 entries (e1..e22
 
 ### 5.22 The camp: studying spells, resting and the Alter menu **[V]** (`src/OVL15.PAS`, `make match UNIT=ovl15`: unit complete)
 
-- **The camp** **[V]**: `MakeCamp` (`ovl15:1E6F`, entry 1, called by ovl03) sets the view mode `ds49F3` to 2 (restored on leaving), shows "The party makes camp..." and runs the menu "Save View Magic Rest Alter Exit" (`CampMenuText`, `DS:0508`, a string[40] in the data segment like the other menu texts `CampMagicMenuText` `DS:0531`, `AlterMenuText` `DS:055A` and `PartyOrderMenuTexts` `DS:0584`). Save is `ovl17_e9` followed by "Quit TO DOS "; View is `ovl19_e5`. Extended keys (G and O) go to `ovl19_e10`, which picks another character, in every camp menu.
+- **The camp** **[V]**: `MakeCamp` (`ovl15:1E6F`, entry 1, called by ovl03) sets the view mode `ds49F3` to 2 (restored on leaving), shows "The party makes camp..." and runs the menu "Save View Magic Rest Alter Exit" (`CampMenuText`, `DS:0508`, a string[40] in the data segment like the other menu texts `CampMagicMenuText` `DS:0531`, `AlterMenuText` `DS:055A` and `PartyOrderMenuTexts` `DS:0584`). Save is `ovl17_e9` followed by "Quit TO DOS "; View is `ovl19_e5`. Extended keys (G and O) go to `UpdateSelectedCharacter`, which picks another character, in every camp menu.
+- **Spell-list selection** **[V]** (`ChooseSpellFromList`, `ovl19:299C`): the first argument chooses both the list label ("in Memory", "in Spell Book", "on Scroll", "on Scrolls", "to choose from", "to be memorized", "to be scribed") and the list passed to `ovl22_e2`; the second argument and `Choice` go to `ovl22_e1`. A zero `Listed` result returns zero. When `Choice` is negative, it opens a one-row window with an empty frame title, redraws the selected character, and draws "Spells " plus the list label at row 1. The function returns the spell byte from `ovl22_e1` **[V]** (`make match UNIT=ovl19 FN=ChooseSpellFromList`).
 - **Studying is pending until the rest** **[V]**: memorizing puts the spell number with bit 7 set into the first empty slot of `TCharacter.Spells` (+$17..+$2B, then sorted by `SortMemorizedSpells`); scribing sets bit 7 on a spell byte of a scroll (`TMenuLine.Affects[1..3]` of an item `ovl22_e6` accepts). `CancelPartyStudy` clears every pending spell and mark when the camp opens and again when it closes, and No to "Memorize/Scribe These Spells?" cancels them. During `RunRestPeriod`, `ProcessPendingScribedSpell` and `ProcessMemorizedSpell` clear the pending bit when their rest conditions are met and pass the spell and its message text to ovl22_e7/e8.
 - **Rest time** **[V]**: `StudyRestMinutes` (`ovl15:0000`) is 15 minutes per spell level of every pending spell and scroll spell, plus 4 hours when there is one (6 hours when one is above level 2); the hours go to `TCharacter.RestHours` (+$2C). `RestParty` puts the party's largest value into `RestTime` (`DS:6DC2`, seven words: [1] minutes, [2] tens of minutes, [3] hours) for `RunRestPeriod`, whose byte result ends the camp when nonzero, and clears it afterwards.
 - **Spell slots** **[V]**: `TCharacter.SpellSlots[class, level]` (+$B2..+$B7, class 0 cleric and 1 magic-user, the `SpellClass` byte of `SpellTable`, signed) less the spells of that class and level in `Spells` are the slots left (`SpellSlotsLeft`); `ShowSpellSlotsLeft` prints them under "Cleric Spells:" and "Magic-User Spells:". `MayUseMagic` refuses casting where game variable 229 is nonzero ("cannot cast spells in this area") and any study when `Status` is 1 or `Flag10D` is 0 ("is in no condition to ...").

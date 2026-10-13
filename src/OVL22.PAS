@@ -4,11 +4,11 @@ unit OVL22;
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 uses POOLVARS, RES06;
-procedure ovl22_e1;
+function ovl22_e1(Mode: Byte; var Choice: Word): Byte;
 procedure ovl22_fn_028D;
 procedure ovl22_fn_044E;
 procedure ovl22_fn_051C;
-procedure ovl22_e2;
+function ovl22_e2(Kind: Byte): Byte;
 function ovl22_e3(B: Byte): Byte;
 procedure ovl22_fn_07D6;
 procedure ovl22_fn_08C3;
@@ -114,7 +114,7 @@ procedure ovl22_e10;
 implementation
 
 { ovl22:008A: retf 6: 6 bytes of parameters; 98 bytes of locals }
-{@stub} procedure ovl22_e1; begin end;
+{@stub} function ovl22_e1(Mode: Byte; var Choice: Word): Byte; begin end;
 { ovl22:028D: retf 2: 2 bytes of parameters; 262 bytes of locals }
 {@stub} procedure ovl22_fn_028D; begin end;
 { ovl22:044E: retf 2: 2 bytes of parameters; 6 bytes of locals }
@@ -122,7 +122,7 @@ implementation
 { ovl22:051C: retf 2: 2 bytes of parameters; 2 bytes of locals }
 {@stub} procedure ovl22_fn_051C; begin end;
 { ovl22:059C: retf 2: 2 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl22_e2; begin end;
+{@stub} function ovl22_e2(Kind: Byte): Byte; begin end;
 { ovl22:0729: retf 2: 2 bytes of parameters; 2 bytes of locals }
 {@stub} function ovl22_e3(B: Byte): Byte; begin end;
 { ovl22:07D6: retf 2: 2 bytes of parameters; 4 bytes of locals }
