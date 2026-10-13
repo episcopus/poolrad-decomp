@@ -349,7 +349,13 @@ end;
   the Temple (HealMenu), the shops (ChooseShopItem) and ovl05, ovl07, ovl15, ovl16, ovl19, ovl21.
   QUIRK ovl25:0E5F: the lines are counted twice (CountMenuLines into LineCount, then a loop into
   Total) and the two counts are used for different checks.
-  BLOCKED: a stub, for the same reason as ReadPromptChoice (draft in commit 3c8dac5). }
+  BLOCKED: a stub. The draft (commit 3c8dac5, with DrawTextAt, DrawGlyph and ClearTextCells for
+  the res06 names) compiles to the original's 1673-byte pre-entry region and body except 34 far
+  calls and ListMenuTop operands; the matcher resolves them only in nested routines the parent
+  calls directly, and FirstNonBlank (08D7), LastNonBlank (0923) and SkipHeadingLines (0B03) are
+  called only by sibling nested routines (push word ptr [bp+6]; push cs; call), which the strict
+  rule of nested_routines excludes (escalate-general-20261012012957). Waits for a decision on that
+  rule (hand-off escalation by dec-r25, 2026-10-12). }
 {@stub} function ChooseFromList(Title, Prompt: String40; HeadingColor, LineColor, HighlightColor: Byte;
   Left, Top, Right, Bottom: ShortInt; List: PMenuLine; WithExit: Byte; var Redraw: Byte;
   var Choice: Integer; var Selected: PMenuLine): Char; begin end;
