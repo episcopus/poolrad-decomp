@@ -2974,3 +2974,17 @@ kind = "global"
 why = "SkipCommand stores the opcode at EclPC in it and dispatches on it (ovl07:1EB7)"
 date = "2026-10-12"
 
+[[rename]]
+old = "res07_fn_0000"
+new = "ColorMatchMask"
+kind = "routine"
+why = "0464:0000 returns a bit mask of the eight 4-bit pixels of a 4-byte cell that equal Color; its only caller 02A5 (0464:0358, 0464:067B) uses the bits to set single pixels of a picture's pixel buffer"
+date = "2026-10-12"
+
+[[rename]]
+old = "res07_fn_007B"
+new = "PaletteColor"
+kind = "routine"
+why = "0464:007B returns the palette colour for a pixel value from an 8-byte palette: even index high nibble, odd index low nibble of Pal[Index shr 1]; called by 02A5 at 0464:03F7 and 0464:04F7..0550 to map a cell pixel through the picture palette"
+date = "2026-10-12"
+

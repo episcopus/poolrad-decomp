@@ -1,11 +1,22 @@
 unit RES07;
-{ res07: resident unit, 10832 bytes of code. Skeleton by tools/match/skeleton.py: every routine is a stub
-  until decompiled (playbook 30). }
+{ The picture unit: loads a DAX picture block into a picture record (LoadPicture,
+  0111), unpacks the 4-bit pixel data of a picture for the active video adapter
+  (02A5), blits pictures, cells and sprites with clipping (08D4, 0D71, 15C7,
+  1951) and builds the 8x8 tile and sprite banks that combat, the 3D view and
+  the title draw from. Evidence: callers ovl32 LoadPictureSlot/Load24x24Set,
+  ovl34 Load8x8Bank, ovl28 DrawSprite, ovl01 ShowTitleScreen
+  (build/packets/res07.md); picture format and roles: whitepaper 4.2.3, 5.16. }
 {$A-,F+,S-,R-,G-,I-}
 interface
 uses POOLVARS;
-procedure res07_fn_0000;
-procedure res07_fn_007B;
+
+type
+  { an 8-byte, 16-entry 4-bit colour palette; a picture holds it at +9 }
+  TPalette = array[0..7] of Byte;
+  PPalette = ^TPalette;
+
+function ColorMatchMask(Color: Byte; Data: LongInt): Byte;
+function PaletteColor(Index: Byte; Source: PPalette): Byte;
 procedure res07_fn_00CF(A: Byte);
 procedure res07_fn_00FF;
 procedure res07_fn_0111(Text: string; A, B, C: Byte; var Target);
@@ -25,10 +36,40 @@ procedure res07_fn_2632(A, B, C, D: Word; E: Byte; F, G: Pointer);
 procedure res07_fn_2A0D(A, B: Byte);
 implementation
 
-{ 0464:0000: retf 6: 6 bytes of parameters; 6 bytes of locals }
-{@stub} procedure res07_fn_0000; begin end;
-{ 0464:007B: retf 6: 6 bytes of parameters; 10 bytes of locals }
-{@stub} procedure res07_fn_007B; begin end;
+{ 0464:0000: retf 6: one Byte and one LongInt parameter; 6 bytes of locals.
+  Returns a bit mask of the eight nibbles of Data (four bytes) that equal Color:
+  bit 7 is the high nibble of Data[0], bit 0 the low nibble of Data[3]. }
+function ColorMatchMask(Color: Byte; Data: LongInt): Byte;
+var
+  { the four bytes of Data (one picture cell), indexed as bytes }
+  CellBytes: array[0..3] of Byte absolute Data;
+  Sum, Target, Mask, I: Byte;
+begin
+  Sum := 0;
+  Target := Color shl 4;
+  Mask := $80;
+  for I := 0 to 3 do
+  begin
+    if (CellBytes[I] and $F0) = Target then Inc(Sum, Mask);
+    Mask := Mask shr 1;
+    if (CellBytes[I] and $0F) = Color then Inc(Sum, Mask);
+    Mask := Mask shr 1;
+  end;
+  ColorMatchMask := Sum;
+end;
+{ 0464:007B: retf 6: a palette pointer and a nibble index. Copies the eight
+  palette bytes to a local and returns the palette colour for pixel value Index:
+  even Index takes the high nibble, odd Index the low nibble of Pal[Index shr 1]. }
+function PaletteColor(Index: Byte; Source: PPalette): Byte;
+var
+  Pal: TPalette;
+begin
+  Pal := Source^;
+  if Odd(Index) then
+    PaletteColor := Pal[Index shr 1] and $0F
+  else
+    PaletteColor := (Pal[Index shr 1] and $F0) shr 4;
+end;
 { 0464:00CF: retf 2: 2 bytes of parameters; 2 bytes of locals }
 {@stub} procedure res07_fn_00CF(A: Byte); begin end;
 { 0464:00FF: retf 0: 0 bytes of parameters; 0 bytes of locals }
