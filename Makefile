@@ -13,7 +13,7 @@ q = '$(subst ','\'',$(1))'
 
 .PHONY: help setup doctor inputs unexepack overlays map dax smoke status next ghidra p1-check \
         tp-install tp-probe tp-compare tp-pin tpc emu2 \
-        packet claim lock locks unlock handoff handoffs handoff-done heartbeat agents watch-agents \
+        packet claim lock locks unlock handoff handoffs handoff-done integrate heartbeat agents watch-agents \
         agent-control agent-step safety-check merge-check \
         agent-register agent-usage agent-meter performance learn learning-check expert-budget expert-request expert-take expert-step expert-finish expert-result experts expert-scan expert-candidates task-approve \
         oracle-run oracle-dosbox timing-scan golden match test test-slow check review-pass rebuild skeleton readability rename host coco3
@@ -115,6 +115,9 @@ locks:            ## list the units locked by agents (shared by every worktree o
 
 handoff:          ## to the orchestrator: AGENT=<you> UNIT=<id> STATE=complete|partial|blocked|review-passed|review-failed|escalate NOTE="..." [CHANGELOG="<section> | <change> | <evidence>"]
 	$(PY) tools/agent/handoff.py --agent $(call q,$(value AGENT)) --unit $(call q,$(value UNIT)) --state $(call q,$(value STATE)) --note $(call q,$(value NOTE)) --changelog $(call q,$(value CHANGELOG))
+
+integrate:        ## merge every waiting branch hand-off into main mechanically (temp worktree, check, fast-forward): [KEY=<hand-off key>] [DRY=1]
+	$(PY) tools/agent/integrate.py $(if $(KEY),--key $(call q,$(value KEY))) $(if $(filter 1,$(DRY)),--dry)
 
 handoffs:         ## list what waits for the orchestrator: escalations first, then branches to merge
 	$(PY) tools/agent/handoff.py --list
