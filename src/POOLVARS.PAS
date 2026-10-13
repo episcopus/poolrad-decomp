@@ -211,6 +211,8 @@ type
     AffectId: Byte;
     PadB: array[$B..15] of Byte;
   end;
+  { The seven digits of the camp's rest clock RestTime (ovl20:02F2). }
+  TRestClock = array[0..6] of Word;
   TCharacter = record
     Name: string[15];             { +$00 }
     Strength, Intelligence, Wisdom, Dexterity: Byte;  { +$10..$13 }
@@ -232,7 +234,9 @@ type
       multi-class combinations (AwardExperience splits the experience by 2 or 3, ovl05:0454);
       signed (the case at ovl05:045A compares with jl). }
     ClassMask: ShortInt;
-    Pad30: array[$30..$31] of Byte;
+    { +$30: the age in years; the saved record holds it at 0x30 (whitepaper 4.2.5); CarryClock adds one
+      to every character when the rest clock's top digit reaches its radix (ovl20:037B). }
+    Age: Word;
     HpMax: Byte;                  { +$32: maximum hit points }
     { +$33..+$6A: one byte per spell 1..$38 (the rows of the spell table SpellTable): RecalcClassStats sets it to 1
       for every cleric spell (table class 0) of a level the character has a cleric spell slot
@@ -768,6 +772,11 @@ var
   ThiefRaceTable: array[0..7, 1..8] of ShortInt;  { the race adjustment of the eight thief skills }
   ds3D4E: Byte;                   { the byte before ThiefDexTable; see above }
   ThiefDexTable: array[0..18, 1..5] of ShortInt;  { the dexterity adjustment of the first five thief skills }
+  { Globals of the camp's rest clock, ovl20 (whitepaper 5.22). }
+  { The radix of each digit of RestTime (ovl20:02F2): a digit that reaches its radix gives one unit to the next
+    digit. Seven words in the image at DS:363A, 10, 10, 6, 24, 30, 12, 256: minutes, tens of minutes, hours,
+    days, months, years [I]. }
+  ClockRadix: array[0..6] of Word;
   { Globals of the battle's aftermath ovl05 (whitepaper 5.20). }
   MonstersLooted: Byte;           { 1 when a defeated monster gave up its money and items (ovl05:0088) }
   PartyFled: Byte;                { 1 when the party fled the battle (a member with Status 3, ovl05:050D) }
@@ -800,7 +809,7 @@ var
   { The time a rest lasts, one word per digit of the game clock (ovl20 indexes it, ovl20:04A7): the
     camp's Rest command sets [1] minutes, [2] tens of minutes and [3] hours from the longest study
     time of the party (ovl15:07CA) before ovl20_e2 runs the rest, and clears all seven words after. }
-  RestTime: array[0..6] of Word;
+  RestTime: TRestClock;
   ds6DB5: Pointer;                { set to nil when the camp opens and closes and before casting (ovl15:04B0, 1FB6) }
   ds6DD8: Word;                   { cleared when the camp opens (ovl15:1E80); meaning unknown }
   { The spell names, string[40] per spell 1..$38 at DS:2912 ('Bless' .. 'Restoration' in the image,
