@@ -760,6 +760,28 @@ Overlay 23 recomputes what a character draws from its eight class levels (`TChar
     from ovl01, ovl02 (the code wheel), ovl03, ovl04, ovl05 and ovl06; the frame and clear
     routines are also called directly from ovl08, ovl13, ovl14, ovl15, ovl16, ovl19 and res12.
 
+### 5.11 Saving and loading (in progress: ovl17 SaveLoad)
+
+Unit ovl17 reads and writes the saved-game files of section 4.4: the per-character
+`CHRDAT<slot><n>.SAV/.ITM/.SPC` (character 285, item 63, affect 9 bytes) and the roster
+`charlist.txt`. Most of its routines are still stubs; the one matched so far is how a loaded
+character joins the party.
+
+- **Adding a party member** **[V]** (`AddPartyMember`, `ovl17:1446`, `make match UNIT=ovl17`): given a
+  `TCharacter`, it clears its `CombatIcon` (`+$BF`) to $FF, links it at the tail of the party list
+  `ds5D96` (or makes it the head when the list is empty, setting `SelectedCharacter` too), then marks
+  which of the eight combat map icon numbers 0..7 are already held by a member and gives the new
+  member the lowest free one (`SelectedCharacter^.CombatIcon`). Finally it counts the member in the
+  party size word (`ds49D6^[VarPartySize]`, word 830) and recalculates its class statistics
+  (`RecalcClassStats`, ovl23). So every party member carries a distinct combat icon 0..7, and the
+  party list `ds5D96` is the single list the combat and camp units walk **[V]** (5.5, 5.20).
+
+**Boundary note** **[V]** (`make packet UNIT=ovl17`): the map splits several ovl17 routines into
+mid-instruction entries (`ovl17_fn_0818/084A/0865` inside `ovl17_e4`, `ovl17_fn_0B48` inside
+`ovl17_e5`, `ovl17_fn_0F99` inside `ovl17_e6`, `ovl17_fn_0AE5` a literal pool). Each real routine has
+one `push bp; mov bp, sp` prologue and one `retf`; the phantom entries share the parent frame. Scan
+for the real prologues before drafting, and let `make match WRITE=1` retire the phantom map entries.
+
 ### 5.12 Copy protection: the code wheel
 
 - The check is `CheckCodeWheel` (`ovl02:00FD`, entry point of overlay 2, matched as a whole: `src/OVL02.PAS`, `make match UNIT=ovl02`: unit complete) **[V]**. At most three times it picks `r = Random(13)` (`System_Random`, `0AF8:11C0`), draws two rune glyphs and a path pattern from a table at the very start of DGROUP (`DS:0000`, 13 records of 21 bytes, the `TCodeWheelEntry` type in `src/POOLVARS.PAS`), calls the keyboard flush `res04:0104` (which does nothing, 5.8) and asks "INPUT THE CODE WORD:" **[V]**. The question window is drawn by `DrawWindow(1, 1, $26, $16, 0, 0, '')` and the instructions, the runes and the path by `DrawTextAt`, `DrawGlyph` (the runes as font characters at the four corners of a small grid) and one concatenation of five spaces with the record path **[V]** (code).
