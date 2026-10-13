@@ -978,3 +978,43 @@ evidence = "7 rows of 5 direction offsets: CanAffordStep adds ds02AE[Combat+15h,
 offset = 0x6DCF
 name = "RestStudyCountdowns"
 evidence = "ovl20:0B33..0B91 decrements this per-member byte each rest step, then stores three times the next pending spell level from ProcessPendingScribedSpell or ProcessMemorizedSpell"
+
+[[global]]
+offset = 0x6AAD
+name = "PartyMapColumn"
+evidence = "DS:6AAD is the party's column in the 16x16 area map; ovl10:0399 adds CellCol and ovl10:0807 builds group origins from it"
+
+[[global]]
+offset = 0x6AAE
+name = "PartyMapRow"
+evidence = "DS:6AAE is the party's row in the 16x16 area map; ovl10:0400 adds CellRow and ovl10:0808 builds group origins from it"
+
+[[global]]
+offset = 0x6AAF
+name = "PartyFacing"
+evidence = "ovl10:0673 and 0876 use DS:6AAF as the party's direction, converting 0,2,4,6 to facing 0..3; ovl14 wilderness keys set the same values for the marker"
+
+[[global]]
+offset = 0x2736
+name = "DirStepX"
+evidence = "DS:2736 has one signed X step per area-map direction; ovl10:0147 and FindStartCell 0765..0834 index it for neighbor and group positions"
+
+[[global]]
+offset = 0x273F
+name = "DirStepY"
+evidence = "DS:273F has one signed Y step per area-map direction; ovl10:0147 and FindStartCell 0765..0834 index it for neighbor and group positions"
+
+[[global]]
+offset = 0x84DC
+name = "WallViewMode"
+evidence = "POOLVARS and EventByteAt identify DS:84DC as wall-view/outdoor mode; ovl10:0104 suppresses rare tiles when it is 10"
+
+[[global]]
+offset = 0x6B00
+name = "HeadBankIndex"
+evidence = "DS:6B00 is the bank index for the HEAD sprite pointer at DS:6B01, when none; StartBattle resets it after ReleasePicture at ovl10:0967"
+
+[[global]]
+offset = 0x6B05
+name = "BodyBankIndex"
+evidence = "DS:6B05 is the bank index for the BODY sprite pointer at DS:6B06, set to sentinel value 255 when none; StartBattle resets it after ReleasePicture at ovl10:0968"

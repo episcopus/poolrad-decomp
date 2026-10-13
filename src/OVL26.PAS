@@ -40,10 +40,10 @@ const
   plus GameVars^[VarMapX] (the column) and GameVars^[VarMapY] (the row), folded with the same edge
   limits ShowAreaView clamps the window to (ovl26:0253..0285): columns and rows 0 and 1 stay at the
   edges, 2 to 41 (rows 2 to 33) become the centre cell 2, 42 (row 34) cell 3 and 43 (row 35) or more
-  cell 4. PicLoad draws the marker itself (DrawIcon) with the icon set ds6AAF and the walk animation
+  cell 4. PicLoad draws the marker itself (DrawIcon) with the icon set PartyFacing and the walk animation
   MarkerFrame (MarkerFrame mod 2 picks the mirrored half, MarkerFrame div 2 + 9 the picture 9 to
   11); the frame then steps to the next of its six values.
-  Reads and changes: MapBaseX, AreaViewKind, GameVars^, ds6AAF, MarkerFrame. Side effect: the view
+  Reads and changes: MapBaseX, AreaViewKind, GameVars^, PartyFacing, MarkerFrame. Side effect: the view
   on the screen, through DrawIcon and the display step FlushPictureChanges that drawing units call. }
 procedure DrawPartyMarker;
 var
@@ -60,7 +60,7 @@ begin
   else if GameVars^[VarMapY] < Cell3Row then MarkerRow := CentreCell
   else if GameVars^[VarMapY] < Cell4Row then MarkerRow := 3
   else MarkerRow := 4;
-  DrawIcon(MarkerCol, MarkerRow, ds6AAF, MarkerFrame mod 2,
+  DrawIcon(MarkerCol, MarkerRow, PartyFacing, MarkerFrame mod 2,
            MarkerFrame div 2 + FirstMarkerPicture);
   MarkerFrame := (MarkerFrame + 1) mod MarkerFrames;
   FlushPictureChanges;
@@ -75,7 +75,7 @@ end;
   four descriptors to SetWallDescriptors, clears WallMapMode when VarShowWallOverlays asks, and lets DrawWallView draw
   the rest. Kinds 2 to 4 draw the 5x5 map window (DrawAreaView) around the party position minus 2,
   clamped to columns 0..39 and rows 0..31, then DrawPartyMarker. Reads: AreaViewKind, GameVars^,
-  ds6AAD, ds6AAE, ds6AAF, ds6F68, ds6F69, ds84E5, ds0C26, MapBaseX. Changes: ds6A60 to ds6A63,
+  PartyMapColumn, PartyMapRow, PartyFacing, ds6F68, ds6F69, ds84E5, ds0C26, MapBaseX. Changes: ds6A60 to ds6A63,
   ds6AB1, WallMapMode. Side effect: the view on the screen.
   QUIRK ovl26:018C: the three helpers below are nested functions of this routine: the caller
   pushes its frame as their static link (push bp at ovl26:01D7, 01E3, 01EF), which is why they
@@ -135,7 +135,7 @@ begin
   case ViewKind of
     1:
       begin
-        ds6AB1 := EventByteAt(ds6AAD, ds6AAE);
+        ds6AB1 := EventByteAt(PartyMapColumn, PartyMapRow);
         if ds6AB1 > InteriorBit then
           ds6A60 := ds0C26[GameVars^[VarWallIndexInside]]
         else
@@ -148,7 +148,7 @@ begin
         end;
         SetWallDescriptors(ds6A60, ds6A61, ds6A62, ds6A63);
         if GameVars^[VarShowWallOverlays] <> 0 then WallMapMode := 0;
-        DrawWallView(ds6AAD, ds6AAE, ds6AAF);
+        DrawWallView(PartyMapColumn, PartyMapRow, PartyFacing);
       end;
     2..4:
       begin

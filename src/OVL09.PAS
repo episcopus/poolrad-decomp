@@ -30,7 +30,7 @@ const
   InitiativeQuickAll = $14;     { Initiative marking a quick-combat character (ovl08: InitiativeQuickAll) }
   VarNoCasting = 229;           { game variable (+$1CA) that hides Cast (ovl08: VarNoCasting) }
   MaxSpell = $38;               { highest spell number (ovl23: LastSpell) }
-  Directions = 8;               { the eight combat directions (ds2736/ds273F) }
+  Directions = 8;               { the eight combat directions (DirStepX/DirStepY) }
   StraightCost = 2;             { a straight step costs twice the tile cost in half squares (ovl09:0718) }
   DiagonalCost = 3;             { a diagonal step (odd direction) three times (ovl09:0723) }
   TileKept = $1E;               { the tile ProbeStep always answers when a cell has it (ovl31: TileKept) }
@@ -367,14 +367,14 @@ end;
   up on the same NoStep path when no half-move is left, the initiative is gone, or a magic-user
   (ClassMask 5) is not panicking. A clear Panic byte +$14 asks ovl13_e18(Who, Combat^.Target) for
   the direction; a panicking one rerolls the step pattern (+$15, RollDice(1, 2)) and derives a
-  direction from the party marker facing ds6AAF (+ 4 on the party side, mod 8). The step then tries
+  direction from the party marker facing PartyFacing (+ 4 on the party side, mod 8). The step then tries
   patterns Step = 1..5 while CanAffordStep refuses them (a panicking actor that is off the map ends
   through ovl13_e5); with no affordable step, or one that would step back (ds443C = (Turn + 4)
   mod 8), the pattern is advanced (ds443D counts the turns) and the actor may instead end the turn
   through ovl09_fn_0F4F or ovl13_e21. A step taken sets the icon (SetCombatantIcon with the turn),
   runs ovl13_e4 (or ovl13_e3 once Flag10D is set past it) and ApplyCloudTile; an ending turn runs
   res12_fn_2637. QUIRK: the jumps to MoveEnd and from there to Finish (ovl09:0B27) are the
-  original's; NoStep only computes ovl09_fn_0F4F. Globals: ds6AAF, ds443C, ds443D. }
+  original's; NoStep only computes ovl09_fn_0F4F. Globals: PartyFacing, ds443C, ds443D. }
 procedure MoveStep(Who: PCharacter);
 label
   TryTurn, CheckStep, AfterMove, MoveEnd, NoStep, Finish;
@@ -400,7 +400,7 @@ begin
   else
   begin
     PByteArray(Who^.Combat)^[$15] := RollDice(1, 2);
-    Dir := ds6AAF - (((ds6AAF + 2) mod 4) div 2);
+    Dir := PartyFacing - (((PartyFacing + 2) mod 4) div 2);
     if Who^.Side = 0 then
       Dir := Dir + 4;
     Dir := Dir mod Directions;

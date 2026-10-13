@@ -197,7 +197,7 @@ end;
   direction Dir from (FromX, FromY): 0 is north then clockwise to 7 (north-west), 8 (and the
   $FF default) is omni and always true. Points outside X 0..49 or Y 0..24 fail; a point equal
   to the from point or to the base point passes. Otherwise the base point steps once towards
-  Dir (ds2736, ds273F) and the case body checks the two half-planes of that direction's wedge
+  Dir (DirStepX, DirStepY) and the case body checks the two half-planes of that direction's wedge
   (each shared with the neighbouring direction). Returns True when the point is in the arc.
   Called by ovl13_e18, ovl22_e5 (which loops Dir upward to aim at a point) and ScanTargets. }
 function InDirArc(FromX, FromY, ToX, ToY: ShortInt; Dir: Byte): Boolean;
@@ -210,8 +210,8 @@ begin
   else begin
     if Dir = $FF then
       Dir := 8;
-    BaseX := FromX + ds2736[Dir];
-    BaseY := FromY + ds273F[Dir];
+    BaseX := FromX + DirStepX[Dir];
+    BaseY := FromY + DirStepY[Dir];
     if ((FromX = ToX) and (FromY = ToY)) or ((BaseX = ToX) and (BaseY = ToY)) then
       InDirArc := True
     else case Dir of
