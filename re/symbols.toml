@@ -9668,12 +9668,12 @@ id = "ovl20:02F2"
 unit = "ovl20"
 addr = "ovl20:02F2"
 size = 177
-name = "ovl20_fn_02F2"
+name = "CarryRestClock"
 signature = ""
 c_name = "ovl20_fn_02F2"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl20_fn_02F2 (ovl20:02F2 compares each digit of RestTime (the clock, ds6DC2) with its radix (ClockRadix, DS:363A) and carries a full digit into the next one; the top digit (6) ages every party member at +$30 (Age, whitepaper 4.2.5 record at 0x30); called by ovl20:03A3 on RestTime and by ovl20:03D5 (ovl20_e1) on a copy); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -9681,12 +9681,12 @@ id = "ovl20:03A3"
 unit = "ovl20"
 addr = "ovl20:03A3"
 size = 50
-name = "ovl20_fn_03A3"
+name = "NormalizeRestTime"
 signature = ""
 c_name = "ovl20_fn_03A3"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl20_fn_03A3 (ovl20:03A3 carries the rest clock (CarryRestClock) and turns months into days (RestTime[5] into RestTime[4], 30 a month); called after each change of the rest time: by ovl20:0721 (the Inc and Dec keys of the Rest menu) and ovl20:047A); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

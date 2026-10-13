@@ -1,11 +1,13 @@
 unit OVL20;
-{ PartyHeal: overlay unit, 3685 bytes of code. Skeleton by tools/match/skeleton.py: every routine is a stub
-  until decompiled (playbook 30). }
+{ PartyHeal (re/units.toml): the camp's rest, 3685 bytes of code. ovl20_e2 is the rest that RestParty (ovl15)
+  starts: it keeps the rest clock RestTime, shows the "Rest daYs Hours Mins Inc Dec Exit" menu, heals the party
+  and reports interruptions (whitepaper 5.22). }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
+uses POOLVARS;
 procedure ovl20_fn_0000;
-procedure ovl20_fn_02F2;
-procedure ovl20_fn_03A3;
+procedure CarryRestClock(var Clock: TRestClock);
+procedure NormalizeRestTime;
 procedure ovl20_e1(A, B: Byte);
 procedure ovl20_fn_047A;
 procedure ovl20_fn_0565;
@@ -27,10 +29,47 @@ implementation
 
 { ovl20:0000: retf 4: 4 bytes of parameters; 28 bytes of locals }
 {@stub} procedure ovl20_fn_0000; begin end;
-{ ovl20:02F2: retf 4: 4 bytes of parameters; 6 bytes of locals }
-{@stub} procedure ovl20_fn_02F2; begin end;
-{ ovl20:03A3: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl20_fn_03A3; begin end;
+{ ovl20:02F2: retf 4: a var pointer to the rest clock (4 bytes of parameters); 6 bytes of locals.
+  Carries the clock up its digits: digit I at or above its radix (ClockRadix[I], DS:363A) gives one
+  unit to digit I+1 and loses the radix, for digits 0..5. The top digit has no next digit: while it is
+  at or above its radix, every character on the party list gains one year of age (TCharacter.Age,
+  +$30) and the radix is kept [I]. }
+procedure CarryRestClock(var Clock: TRestClock);
+var
+  Digit: ShortInt;
+  Who: PCharacter;
+begin
+  for Digit := 0 to 6 do
+    if Clock[Digit] >= ClockRadix[Digit] then
+      if Digit <> 6 then
+      begin
+        Inc(Clock[Succ(Digit)]);
+        Clock[Digit] := Clock[Digit] - ClockRadix[Digit];
+      end
+      else
+      begin
+        Who := PCharacter(ds5D96);
+        while Who <> nil do
+        begin
+          Inc(Who^.Age);
+          Who := Who^.Next;
+        end;
+      end;
+end;
+{ ovl20:03A3: retf 0: no parameters, no locals. Settles the rest time after a change (ovl20:0721 and
+  ovl20:047A call it): carries the clock, then turns the months (RestTime[5]) into days at ClockRadix[4],
+  30 days a month, and keeps the days (RestTime[4]) at 99 (0x63) or less. }
+procedure NormalizeRestTime;
+begin
+  CarryRestClock(RestTime);
+  if RestTime[5] > 0 then
+  begin
+    Inc(RestTime[4], ClockRadix[4] * RestTime[5]);
+    RestTime[5] := 0;
+    if RestTime[4] > 99 then
+      RestTime[4] := 99;
+  end;
+end;
 { ovl20:03D5: retf 4: 4 bytes of parameters; 18 bytes of locals }
 {@stub} procedure ovl20_e1(A, B: Byte); begin end;
 { ovl20:047A: retf 4: 4 bytes of parameters; 4 bytes of locals }

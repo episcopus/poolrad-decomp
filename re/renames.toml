@@ -2974,3 +2974,17 @@ kind = "global"
 why = "SkipCommand stores the opcode at EclPC in it and dispatches on it (ovl07:1EB7)"
 date = "2026-10-12"
 
+[[rename]]
+old = "ovl20_fn_02F2"
+new = "CarryRestClock"
+kind = "routine"
+why = "ovl20:02F2 compares each digit of RestTime (the clock, ds6DC2) with its radix (ClockRadix, DS:363A) and carries a full digit into the next one; the top digit (6) ages every party member at +$30 (Age, whitepaper 4.2.5 record at 0x30); called by ovl20:03A3 on RestTime and by ovl20:03D5 (ovl20_e1) on a copy"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl20_fn_03A3"
+new = "NormalizeRestTime"
+kind = "routine"
+why = "ovl20:03A3 carries the rest clock (CarryRestClock) and turns months into days (RestTime[5] into RestTime[4], 30 a month); called after each change of the rest time: by ovl20:0721 (the Inc and Dec keys of the Rest menu) and ovl20:047A"
+date = "2026-10-12"
+
