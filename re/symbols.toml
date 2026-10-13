@@ -8650,12 +8650,12 @@ id = "ovl17:1446"
 unit = "ovl17"
 addr = "ovl17:1446"
 size = 444
-name = "ovl17_e10"
-signature = ""
+name = "AddPartyMember"
+signature = "procedure AddPartyMember(Member: PCharacter)"
 c_name = "ovl17_e10"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl17_e10 (ovl17:1446 links one TCharacter into the party list ds5D96 (tail, or head when empty), gives it the lowest free combat map icon 0..7, counts it in ds49D6^[VarPartySize] and calls RecalcClassStats; matches ovl16 and ovl17 load-game callers); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
