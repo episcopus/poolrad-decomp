@@ -64,8 +64,6 @@ You are working on a **matching decompilation of SSI's Pool of Radiance (DOS) in
 | `make rebuild` | Link the whole game from `src/` and compare it with the original, segment by segment |
 | `make locks` / `make lock UNIT=` / `make unlock UNIT=` | List, take or release locks (shared by every worktree of the clone); `make integrate` releases merged ones, a worker releases its own empty one |
 | `make heartbeat AGENT=<you> NOTE="..." [DONE=1]` / `make agents` | Say what you are doing now (rule 9); list every agent's last heartbeat and who has gone quiet |
-| `make worker AGENT=<name> ROLE=decompiler\|reviewer [UNIT=<id>]` | A supervisor that owns the lock, posts the heartbeats and runs one disposable model session per batch of routines (`docs/process/WORKER.md`) |
-| `make inbox` | Everything waiting for a human (escalations, rejected integrations, branches to merge, abandoned locks, the frontier, the main check), each with the command that resolves it |
 | `make agent-control [STATE=<state> OPERATOR=1 REASON="..."]` | Display shared run control; only the human changes it |
 | `make agent-step AGENT=<you>` | Check shared pause/stop control before a routine and after a wait |
 | `make safety-check` / `make merge-check [STAGED=1]` | Check branch ownership and detect lost registry fields/declarations in a merge |
