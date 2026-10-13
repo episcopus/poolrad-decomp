@@ -779,6 +779,11 @@ var
     the character at entry 1 to another entry). Entry 0 is never read. Extent not proven; the
     next named byte after it is ds6E2F. }
   ds6DE4: array[0..73] of Byte;
+  { Scratch of the combat AI (ovl09). }
+  ds443C: Byte;                   { the direction the AI chose last; 8 before its first step
+                                    (ovl09:0B3C clears it, the 07F2 step reads and sets it) }
+  ds443D: Byte;                   { counts the turns the AI spent looking for a step (ovl09:07F2) }
+  ds443E: Byte;                   { cleared with ds443C at the start of the AI turn (ovl09:0B3C); meaning unknown }
   { Class tables of ovl23 (whitepaper 5.6). Their extents are not known (only the rows the
     characters reach are read). A table whose columns count from 1 is addressed from the byte
     before it ([row, column] is base - 1 + row * width + column), so that byte is declared just

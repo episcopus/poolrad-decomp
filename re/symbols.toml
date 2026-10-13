@@ -2594,7 +2594,7 @@ signature = ""
 c_name = "ovl09_fn_0255"
 level = "L2"
 justification = ""
-notes = "renamed from ovl09_fn_0255 (ovl09:0255 (nested in SpellAccepted): scans the map entities around (X, Y) with the spell's line budget and answers True when one of them has a Side unlike res12_fn_23B7(SelectedCharacter)); auto:near_call; nested in ovl09_fn_02EB (ovl09:02EB), proven by the parent's match"
+notes = "renamed from ovl09_fn_0255 (ovl09:0255 (nested in SpellAccepted): scans the map entities around (X, Y) with the spell's line budget and answers True when one of them has a Side unlike res12_fn_23B7(SelectedCharacter)); auto:near_call; nested in SpellAccepted (ovl09:02EB), proven by the parent's match"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2640,7 +2640,7 @@ evidence = ["prologue"]
 id = "ovl09:0675"
 unit = "ovl09"
 addr = "ovl09:0675"
-size = 353
+size = 381
 name = "CanAffordStep"
 signature = ""
 c_name = "ovl09_fn_0675"
@@ -2653,118 +2653,14 @@ evidence = ["prologue"]
 id = "ovl09:07F2"
 unit = "ovl09"
 addr = "ovl09:07F2"
-size = 161
-name = "ovl09_fn_07F2"
-signature = ""
+size = 842
+name = "MoveStep"
+signature = "procedure MoveStep(Who: PCharacter)"
 c_name = "ovl09_fn_07F2"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl09_fn_07F2 (ovl09:07F2 is one step of the AI's move for Who (called from the AI turn loop at 0B3C, ovl09:0BD3 and 0D7C): it shows the move prompt, lets HandleCombatKey interrupt, picks a direction (ovl13_e18 or the party facing) and a step pattern, tries CanAffordStep, and moves or attacks through ovl13_e4/ovl13_e3 and ApplyCloudTile; with no affordable step it turns the pattern (ds443D)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl09:0893"
-unit = "ovl09"
-addr = "ovl09:0893"
-size = 5
-name = "ovl09_fn_0893"
-signature = ""
-c_name = "ovl09_fn_0893"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl09:0898"
-unit = "ovl09"
-addr = "ovl09:0898"
-size = 247
-name = "ovl09_fn_0898"
-signature = ""
-c_name = "ovl09_fn_0898"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl09:098F"
-unit = "ovl09"
-addr = "ovl09:098F"
-size = 10
-name = "ovl09_fn_098F"
-signature = ""
-c_name = "ovl09_fn_098F"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl09:0999"
-unit = "ovl09"
-addr = "ovl09:0999"
-size = 5
-name = "ovl09_fn_0999"
-signature = ""
-c_name = "ovl09_fn_0999"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl09:099E"
-unit = "ovl09"
-addr = "ovl09:099E"
-size = 396
-name = "ovl09_fn_099E"
-signature = ""
-c_name = "ovl09_fn_099E"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl09:0B2A"
-unit = "ovl09"
-addr = "ovl09:0B2A"
-size = 5
-name = "ovl09_fn_0B2A"
-signature = ""
-c_name = "ovl09_fn_0B2A"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl09:0B2F"
-unit = "ovl09"
-addr = "ovl09:0B2F"
-size = 5
-name = "ovl09_fn_0B2F"
-signature = ""
-c_name = "ovl09_fn_0B2F"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl09:0B34"
-unit = "ovl09"
-addr = "ovl09:0B34"
-size = 8
-name = "ovl09_fn_0B34"
-signature = ""
-c_name = "ovl09_fn_0B34"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl09:0B3C"

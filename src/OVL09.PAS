@@ -13,15 +13,7 @@ function SpellAccepted(Who: PCharacter; Spell, Range: Byte): Boolean;
 function UseMagicItem(Who: PCharacter): Boolean;
 function CastMemorizedSpell(Who: PCharacter): Byte;
 function CanAffordStep(Who: PCharacter; Column, BaseDir: Byte; var OffMap: Byte): Boolean;
-procedure ovl09_fn_07F2;
-procedure ovl09_fn_0893;
-procedure ovl09_fn_0898;
-procedure ovl09_fn_098F;
-procedure ovl09_fn_0999;
-procedure ovl09_fn_099E;
-procedure ovl09_fn_0B2A;
-procedure ovl09_fn_0B2F;
-procedure ovl09_fn_0B34;
+procedure MoveStep(Who: PCharacter);
 procedure ovl09_fn_0B3C;
 procedure ovl09_fn_0B48;
 procedure ovl09_fn_0B57;
@@ -269,8 +261,8 @@ end;
   and the result False at once (ovl09:06EC). Otherwise the result is True when no combatant is
   in the way, the tile cost is below the moves left and the
   step's cost (tile cost times 2, or 3 on a diagonal) is at or below the moves left; a TileKept
-  tile is unaffordable unless Who has one of the four AffectKept affects. Called by
-  ovl09_fn_0898 (ovl09:094B). Globals: StepTurnOffsets, CombatTiles. Affect receives the affect
+  tile is unaffordable unless Who has one of the four AffectKept affects. Called by MoveStep
+  (ovl09:094B). Globals: StepTurnOffsets, CombatTiles. Affect receives the affect
   res12_fn_2199 finds and is never read. }
 function CanAffordStep(Who: PCharacter; Column, BaseDir: Byte; var OffMap: Byte): Boolean;
 var
@@ -308,24 +300,114 @@ begin
         CanAffordStep := True;
     end;
 end;
-{ ovl09:07F2: frame not read }
-{@stub} procedure ovl09_fn_07F2; begin end;
-{ ovl09:0893: frame not read }
-{@stub} procedure ovl09_fn_0893; begin end;
-{ ovl09:0898: frame not read }
-{@stub} procedure ovl09_fn_0898; begin end;
-{ ovl09:098F: frame not read }
-{@stub} procedure ovl09_fn_098F; begin end;
-{ ovl09:0999: frame not read }
-{@stub} procedure ovl09_fn_0999; begin end;
-{ ovl09:099E: frame not read }
-{@stub} procedure ovl09_fn_099E; begin end;
-{ ovl09:0B2A: frame not read }
-{@stub} procedure ovl09_fn_0B2A; begin end;
-{ ovl09:0B2F: frame not read }
-{@stub} procedure ovl09_fn_0B2F; begin end;
-{ ovl09:0B34: retf 4: 4 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl09_fn_0B34; begin end;
+{ ovl09:07F2 (MoveStep). One step of the AI's move for Who (called by the turn loop at ovl09:0B3C,
+  ovl09:0BD3 and 0D7C; the caller loops while the turn lasts): shows 'Move/Attack, Move Left = n'
+  with DrawTextAt(0, 24, 10, ...), lets HandleCombatKey interrupt (True ends the step), then gives
+  up on the same NoStep path when no half-move is left, the initiative is gone, or a magic-user
+  (ClassMask 5) is not panicking. A clear Panic byte +$14 asks ovl13_e18(Who, Combat^.Target) for
+  the direction; a panicking one rerolls the step pattern (+$15, RollDice(1, 2)) and derives a
+  direction from the party marker facing ds6AAF (+ 4 on the party side, mod 8). The step then tries
+  patterns Step = 1..5 while CanAffordStep refuses them (a panicking actor that is off the map ends
+  through ovl13_e5); with no affordable step, or one that would step back (ds443C = (Turn + 4)
+  mod 8), the pattern is advanced (ds443D counts the turns) and the actor may instead end the turn
+  through ovl09_fn_0F4F or ovl13_e21. A step taken sets the icon (SetCombatantIcon with the turn),
+  runs ovl13_e4 (or ovl13_e3 once Flag10D is set past it) and ApplyCloudTile; an ending turn runs
+  res12_fn_2637. QUIRK: the jumps to MoveEnd and from there to Finish (ovl09:0B27) are the
+  original's; NoStep only computes ovl09_fn_0F4F. Globals: ds6AAF, ds443C, ds443D. }
+procedure MoveStep(Who: PCharacter);
+label
+  TryTurn, CheckStep, AfterMove, MoveEnd, NoStep, Finish;
+var
+  Dir: Byte;
+  Turn: Byte;
+  Step: Byte;
+  OffMap: Byte;
+  Done: Byte;
+begin
+  DrawTextAt(0, 24, 10, 'Move/Attack, Move Left = ' +
+    res12_fn_1037(Who^.Combat^.Moves shr 1) + ' ');
+  if HandleCombatKey(Who) then
+    Exit;
+  if Who^.Combat^.Moves shr 1 <= 0 then
+    goto NoStep;
+  if Who^.Combat^.Initiative <= 0 then
+    goto NoStep;
+  if (PByteArray(Who^.Combat)^[$14] = 0) and (Who^.ClassMask = 5) then
+    goto NoStep;
+  if PByteArray(Who^.Combat)^[$14] = 0 then
+    Dir := ovl13_e18(Who, Who^.Combat^.Target)
+  else
+  begin
+    PByteArray(Who^.Combat)^[$15] := RollDice(1, 2);
+    Dir := ds6AAF - (((ds6AAF + 2) mod 4) div 2);
+    if Who^.Side = 0 then
+      Dir := Dir + 4;
+    Dir := Dir mod Directions;
+  end;
+  OffMap := 0;
+  Done := 0;
+  Step := 1;
+  while (Step < 6) and (Done = 0) and
+        not CanAffordStep(Who, Step, Dir, OffMap) do
+  begin
+    if (PByteArray(Who^.Combat)^[$14] <> 0) and (OffMap <> 0) then
+      Done := ovl13_e5(Who)
+    else
+      Inc(Step);
+  end;
+  if Done <> 0 then
+  begin
+    Who^.Combat^.Moves := 0;
+    PByteArray(Who^.Combat)^[$14] := 0;
+    Done := res12_fn_2637(Who);
+    goto AfterMove;
+  end;
+  Turn := (Dir + StepTurnOffsets[PByteArray(Who^.Combat)^[$15], Step])
+    mod Directions;
+  if (Step = 6) or (ds443C = ((Turn + 4) mod Directions)) then
+  begin
+    Inc(ds443D);
+    PByteArray(Who^.Combat)^[$15] := PByteArray(Who^.Combat)^[$15] mod 6 + 1;
+    if ds443D > 1 then
+    begin
+      Who^.Combat^.Target := nil;
+      if ds443D > 2 then
+      begin
+        Who^.Combat^.Moves := 0;
+        Done := 1;
+        goto CheckStep;
+      end;
+      if not ovl13_e21(Who, $FF, 1, 0) then
+        Done := ovl09_fn_0F4F(Who);
+    end;
+  end;
+CheckStep:
+  if Step < 6 then
+    ds443C := Turn
+  else
+    Done := 1;
+AfterMove:
+  if Done <> 0 then
+    goto MoveEnd;
+  SetCombatantIcon(Who, Turn, 0, 0);
+  ovl13_e4(Who, Who^.Combat^.IconSet);
+  if Who^.Flag10D = 0 then
+  begin
+    Done := res12_fn_2637(Who);
+    goto MoveEnd;
+  end;
+  ovl13_e3(Who, Who^.Combat^.IconSet);
+  if Who^.Flag10D = 0 then
+    Done := res12_fn_2637(Who);
+  ApplyCloudTile(Who);
+MoveEnd:
+  goto Finish;
+  { QUIRK: the original jumps to MoveEnd and from there to Finish (ovl09:0B27), then runs the
+    NoStep block before the epilogue. }
+NoStep:
+  Done := ovl09_fn_0F4F(Who);
+Finish:
+end;
 { ovl09:0B3C: frame not read }
 {@stub} procedure ovl09_fn_0B3C; begin end;
 { ovl09:0B48: frame not read }

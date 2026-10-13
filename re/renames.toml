@@ -3176,3 +3176,10 @@ kind = "routine"
 why = "ovl09:0255 (nested in SpellAccepted): scans the map entities around (X, Y) with the spell's line budget and answers True when one of them has a Side unlike res12_fn_23B7(SelectedCharacter)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl09_fn_07F2"
+new = "MoveStep"
+kind = "routine"
+why = "ovl09:07F2 is one step of the AI's move for Who (called from the AI turn loop at 0B3C, ovl09:0BD3 and 0D7C): it shows the move prompt, lets HandleCombatKey interrupt, picks a direction (ovl13_e18 or the party facing) and a step pattern, tries CanAffordStep, and moves or attacks through ovl13_e4/ovl13_e3 and ApplyCloudTile; with no affordable step it turns the pattern (ds443D)"
+date = "2026-10-13"
+
