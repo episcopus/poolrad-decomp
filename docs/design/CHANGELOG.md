@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-13 | 5.19 | corrected Temple review findings and documented menu, flag, and Raise Dead evidence | make match UNIT=ovl04; make check |
 | 2026-10-13 | 5.5.3 | ovl09 (CombatAI) complete: QuickTurn, AiTurn, MoveStep, UseBestItem, SpellAccepted with the nested DifferentSideInArea decompiled, named and documented; the AI's turn, movement, item and target logic written into the whitepaper; TCharacter gained the item-slot table (+\$CC), ds100 and dsA3/dsA5/dsA7, plus ds443C/D/E and ds6DE4 | make match UNIT=ovl09: unit: complete (14 matched, 1 nested); re/symbols.toml ovl09:*; re/learnings/ovl09.toml |
 | 2026-10-13 | 5.23 The picture unit res07 | 17 of 19 routines at L2: FillPictureRect (0464:2632), UnpackPicturePixels (0464:02A5), DrawPictureItem (0464:08D4); fill tables ds0D02, ds0D06, ds25FA described from the image bytes; picture-unit TP idiom lessons | make match UNIT=res07 (17 matched, 2 stubs, 0 differ); make check receipt 1d381ee8bda9 |
 | 2026-10-13 | 5.22.1 | rest loop, study timing and spell completion | make check, 12 ovl20 L2 routines, TP 6.0 probe |

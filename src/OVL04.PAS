@@ -1,13 +1,9 @@
 unit OVL04;
-{ Temple: the temple shop of a town (whitepaper 5.19). The entry (VisitTemple) offers Heal, View,
-  Take, Pool, Share, Appraise and Exit; HealMenu lists nine cleric services plus Exit, each a
-  routine here
-  (CureBlindness, CureDisease, CureWounds, NeutralizePoison, RaiseDead, RemoveCurse,
-  StoneToFlesh). Most of them check the selected character, ask for confirmation when the service
-  is not needed (AskCastAnyway), take the price (ChargeForCure) and add or remove the affect
-  through RemoveAffect/e5; the ones that differ: CureWounds never asks (ovl04:0401) and heals through
-  RollDice/e21, and RemoveCurse applies through ovl22_e9 (ovl04:083A), not the ovl24 affect
-  routines. }
+{ Temple: the town service shop (whitepaper 5.19). VisitTemple offers Heal, View, Take, Pool, Share,
+  Appraise and Exit; HealMenu lists nine cleric services plus Exit. Most services check the selected
+  character, ask for confirmation when unnecessary (AskCastAnyway), charge through ChargeForCure and
+  remove affects through RemoveAffect. CureWounds does not ask and heals through RollDice and
+  HealCharacter (ovl04:0401); RemoveCurse delegates to ovl22_e9 (ovl04:083A), not the ovl24 handlers. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 function AskCastAnyway(Reason: string): Char;
@@ -31,9 +27,9 @@ const
   AffectBlind = $21;            { Cure Blindness checks and removes it (ovl04:0262) }
   AffectCurse = $24;            { Remove Curse accepts it as a reason to cast (ovl04:08A0) }
   AffectPoison = $37;           { Neutralize Poison checks it; Raise Dead also removes it }
-  AffectPoison2 = $16;          { removed with AffectPoison by Neutralize Poison (ovl04:07F1) }
-  AffectPoison3 = $0F;          { removed with AffectPoison by Neutralize Poison (ovl04:0807) }
-  AffectDeath = $20;            { removed by Raise Dead before AffectPoison (ovl04:05B8) }
+  AffectRemovedAtNeutralizePoison2 = $16; { purpose unknown; removed with $37 (ovl04:07F1) }
+  AffectRemovedAtNeutralizePoison3 = $0F; { purpose unknown; removed with $37 (ovl04:0807) }
+  AffectRemovedAtRaiseDead = $20;         { purpose unknown; removed before $37 (ovl04:05B8) }
   { Status values of TCharacter.Status. }
   StatusOkay = 0;
   StatusDead = 1;               { Raise Dead accepts 1 and 6 (ovl04:0539) }
@@ -58,18 +54,50 @@ const
   LastClass = 7;
   HealMenuLines = 10;           { lines NewMenuList builds for the Heal menu }
   KeyEnter = #13;
-  KeyNone = #0;                 { treated as Escape/Cancel; ReadPromptChoice/e4 are still stubs, so this comes
-                                  from the callers (an extended key returns #0 first, whitepaper 5.8), not
-                                  from the callee's own bytes }
+  KeyNone = #0;                 { Escape returns #0 from ReadPromptChoice (ovl25:0235..0238); Escape, E and #0
+                                  return #0 from ChooseFromList (ovl25:0589..0593), ending HealMenu }
   AnswerNo = 1;                 { AskMenu returns the 0-based hotkey position: for '~Yes ~No' the
-                                  second key (No) is 1, the value VisitTemple leaves on }
+                                   second key (No) is 1, the value VisitTemple leaves on }
+  PromptTitleColor = 13;         { title, word and hotkey colours of AskCastAnyway and VisitTemple }
+  PromptWordColor = 10;
+  PromptHotColor = 15;
+  CostPromptWordColor = 15;      { ChargeForCure's pay prompt uses the latter two in reverse }
+  CostPromptHotColor = 10;
+  TempleTitleColor = $F;
+  TempleFrameSet = 0;
+  TempleLeft = 1;
+  TempleRight = $26;
+  TempleTop = 1;
+  TempleBottom = $16;
+  TempleHeaderBottom = 1;
+  TextWindowLeft = 1;
+  TextWindowTop = $11;
+  TextWindowRight = $26;
+  TextWindowBottom = $16;
+  TextWindowColor = $A;          { the body text colour passed to ShowPagedText }
+  HealListLeft = 2;
+  HealListTop = 4;
+  HealListRight = $26;
+  HealListBottom = $F;
+  HealListHeadingColor = 13;
+  HealListLineColor = 10;
+  HealListHighlightColor = 15;
+  PromptClearLeft = 0;
+  PromptClearRow = 24;
+  PromptClearRight = 39;
+  ScreenTopRow = 0;
+  ScreenBottomRow = 24;
+  AcceptExtendedKeys = 1;
+  NoExtendedKeys = 0;
+  NoAnimation = 0;
+  ClearTextBeforeMessage = 1;    { ShowPagedText's ClearFirst parameter }
 
 { ovl04:0013. Shows Reason for the selected character (res12_fn_16EC, e.g. "is not blind.") and
   asks "cast cure anyway: "; returns the key (Yes or not). res12_fn_17E3 clears the prompt. }
 function AskCastAnyway(Reason: string): Char;
 begin
   res12_fn_16EC(SelectedCharacter, Reason, 0, 0);
-  AskCastAnyway := AskYesNo('cast cure anyway: ', 13, 10, 15);
+  AskCastAnyway := AskYesNo('cast cure anyway: ', PromptTitleColor, PromptWordColor, PromptHotColor);
   res12_fn_17E3;
 end;
 
@@ -91,8 +119,9 @@ var
   Pooled: LongInt;
 begin
   Service := Service + ' will only cost ' + res12_fn_1073(Price) + ' gold pieces.';
-  ShowPagedText(1, $11, $26, $16, $A, 1, Service);
-  Answer := AskYesNo('pay for cure ', 13, 15, 10);
+  ShowPagedText(TextWindowLeft, TextWindowTop, TextWindowRight, TextWindowBottom,
+                TextWindowColor, 1, Service);
+  Answer := AskYesNo('pay for cure ', PromptTitleColor, CostPromptWordColor, CostPromptHotColor);
   if Answer = Yes then
   begin
     Money := ovl19_e11(SelectedCharacter);   { QUIRK ovl04:0177: a LongInt kept in a Word }
@@ -179,7 +208,7 @@ procedure CureWounds(Strength: Byte);
 var
   Amount: Byte;
   Answer: Char;
-  Healed: Boolean;
+  Healed: Boolean; { QUIRK ovl04:0401: HealCharacter's Boolean result is stored but never read }
 begin
   case Strength of
     1:
@@ -212,17 +241,18 @@ begin
   end;
 end;
 
-{ ovl04:0510. Raise Dead: the character is dead when its Status is StatusDead or StatusGone;
-  otherwise asks first. Charges PriceRaiseDead; only a dead character is raised: AffectDeath
-  and AffectPoison are removed, Status becomes StatusOkay, Flag10D and Flag11B become 1, and the
-  character loses a point of constitution. From constitution 14 up the hit points above HpB1 are
-  divided by the constitution bonus of all its class levels (a fighter level counts
-  constitution - 14; a non-fighter level counts twice once the constitution is above 15, else 1),
-  and that share is taken off HpMax unless the constitution is 17 or more and the character has
-  no fighter level. }
+{ ovl04:0510. Raise Dead: the character is dead when Status is StatusDead or StatusGone; otherwise it
+  asks first. Charges PriceRaiseDead; only a dead character is raised: AffectRemovedAtRaiseDead and
+  AffectPoison are removed, Status becomes StatusOkay, Flag10D becomes 1 (battle participant eligible
+  for experience, ovl05:0355), and Flag11B becomes 1. Flag11B is the current hit points [I], so this
+  restores one hit point [I] (ovl24:175D). Constitution is reduced by one before the constitution
+  thresholds are tested; from 14 up the hit points above HpB1 are divided by the bonus over all class
+  levels (fighter levels count constitution - 14; non-fighter levels count twice above constitution 15,
+  else 1). A bonus of 0 leaves the loss undivided. The loss is skipped at constitution 17 or more when
+  the character has no fighter level. }
 procedure RaiseDead;
 var
-  Affect: Pointer;
+  Affect: Pointer; { QUIRK ovl04:0510: frame pointer is never read or written }
   Unused: string;
   Answer: Char;
   Dead: Boolean;
@@ -244,7 +274,7 @@ begin
       if Dead then
       begin
         ds681F := 1;
-        RemoveAffect(Who, AffectDeath, nil);
+        RemoveAffect(Who, AffectRemovedAtRaiseDead, nil);
         RemoveAffect(Who, AffectPoison, nil);
         ds681F := 0;
         Who^.Flag11B := 1;
@@ -275,7 +305,7 @@ begin
 end;
 
 { ovl04:0751. Neutralize Poison: asks first when the character has no AffectPoison; charges
-  PriceNeutralizePoison and removes AffectPoison, AffectPoison2 and AffectPoison3. }
+  PriceNeutralizePoison and removes AffectPoison plus values $16 and $0F (their meanings are unknown). }
 procedure NeutralizePoison;
 var
   Affect: Pointer;
@@ -295,8 +325,8 @@ begin
     begin
       ds681F := 1;
       RemoveAffect(SelectedCharacter, AffectPoison, nil);
-      RemoveAffect(SelectedCharacter, AffectPoison2, nil);
-      RemoveAffect(SelectedCharacter, AffectPoison3, nil);
+      RemoveAffect(SelectedCharacter, AffectRemovedAtNeutralizePoison2, nil);
+      RemoveAffect(SelectedCharacter, AffectRemovedAtNeutralizePoison3, nil);
       ds681F := 0;
     end;
   end;
@@ -335,12 +365,13 @@ begin
   end;
 end;
 
-{ ovl04:0928. Stone to Flesh: asks first when the character's Status is not StatusStoned;
-  charges PriceStoneToFlesh and, for a stoned character, sets Status to StatusOkay and Flag10D
-  and Flag11B to 1. }
+{ ovl04:0928. Stone to Flesh: asks first when Status is not StatusStoned; charges PriceStoneToFlesh
+  and, for a stoned character, sets Status to StatusOkay, Flag10D to 1 (experience eligible,
+  ovl05:0355) and Flag11B to 1. Flag11B is the current hit points [I], so this restores one hit point [I]
+  (ovl24:175D). }
 procedure StoneToFlesh;
 var
-  Affect: Pointer;
+  Affect: Pointer; { QUIRK ovl04:0928: frame pointer is never read or written }
   Unused: string;
   Answer: Char;
 begin
@@ -360,17 +391,16 @@ begin
   end;
 end;
 
-{ ovl04:09D7. The Heal menu: fills ten menu lines (NewMenuList) with TempleMenuText, draws the
-  windows and "<name>, how can we help you?", and runs the menu (ChooseFromList, keys "Heal Exit")
-  until Exit or Escape; Heal or Enter on lines 0..8 runs that service, line 9 is Exit. Frees the
-  lines (FreeMenuList), clears the text area (ClearRect(0, 0, 39, 24)), redraws the view
-  (res12_fn_27D9) and reshows the character (res12_fn_0767(SelectedCharacter)). }
+{ ovl04:09D7. The Heal menu: fills ten menu lines with TempleMenuText, draws the windows and
+  "<name>, how can we help you?", and runs ChooseFromList with "Heal Exit" until Exit or Escape.
+  Heal or Enter on lines 0..8 runs that service; line 9 is Exit. RedrawList requests the initial page
+  draw and is cleared by ChooseFromList. Frees the lines, clears columns 0..39 of row 24, redraws the
+  view and reshows SelectedCharacter. }
 procedure HealMenu;
 var
   List: PMenuLine;
   First: PMenuLine;
-  MenuFlag: Byte;                 { the var Flag of ChooseFromList: set to 1 before the menu and never
-                                    read here (VisitTemple gates on its own MenuFlag) }
+  RedrawList: Byte;               { ChooseFromList's var Redraw: requests the entry-page draw }
   I: Byte;
   Choice: Integer;
   Done: Boolean;
@@ -391,15 +421,19 @@ begin
     Inc(I);
   end;
   List := First;
-  ClearRect(0, 24, 39, 24);
-  MenuFlag := 1;
-  DrawWindow(1, 1, $26, $16, 0, $F, '');
-  DrawWindow(1, 1, $26, 1, 0, $F, '');
+  ClearRect(PromptClearLeft, PromptClearRow, PromptClearRight, PromptClearRow);
+  RedrawList := 1;
+  DrawWindow(TempleLeft, TempleTop, TempleRight, TempleBottom, TempleFrameSet, TempleTitleColor, '');
+  DrawWindow(TempleLeft, TempleTop, TempleRight, TempleHeaderBottom,
+             TempleFrameSet, TempleTitleColor, '');
   repeat
     Prompt := SelectedCharacter^.Name + ', how can we help you?';
-    DrawTextAt(1, 1, $F, Prompt);
-    DrawWindow(1, $11, $26, $16, 0, $F, '');
-    Key := ChooseFromList('', 'Heal Exit', 13, 10, 15, 2, 4, $26, $F, List, 0, MenuFlag, Choice, First);
+    DrawTextAt(TempleLeft, TempleTop, TempleTitleColor, Prompt);
+    DrawWindow(TextWindowLeft, TextWindowTop, TextWindowRight, TextWindowBottom,
+               TempleFrameSet, TempleTitleColor, '');
+    Key := ChooseFromList('', 'Heal Exit', HealListHeadingColor, HealListLineColor,
+                          HealListHighlightColor, HealListLeft, HealListTop, HealListRight,
+                          HealListBottom, List, 0, RedrawList, Choice, First);
     case Key of
       'H', KeyEnter:
         case Choice of
@@ -418,28 +452,24 @@ begin
     end;
   until Done;
   FreeMenuList(List);
-  ClearRect(0, 0, 39, 24);
+  ClearRect(PromptClearLeft, ScreenTopRow, PromptClearRight, ScreenBottomRow);
   res12_fn_27D9;
   res12_fn_0767(SelectedCharacter);
 end;
 
-{ ovl04:0D09. The Temple: the menu Heal, View, Take, Pool, Share, Appraise, Exit (Take and
-  Share only while TreasureLeft reports pooled money). Heal opens HealMenu and Pool runs only when
-  MenuFlag is 0; View ovl19_e5 receives MenuFlag, Take
-  TakeMoney, Pool PoolMoney, Share ShareMoney, Appraise AppraiseGems, G and O ovl19_e10. Exit with
-  money left in the pool asks "Do you want to go back and retrieve your money?" ('~Yes ~No') and
-  leaves on No (AskMenu returns the 0-based hotkey position, 1 = No = AnswerNo); Yes keeps the
-  money in the Temple. The trailing case (ovl04:0F02) also runs res12_fn_27D9 for a 'B'
-  key with 'T' and for 'A' when Appraised is set, but neither menu text offers 'B'; what produces
-  it is unknown. On entry it sets the view mode ds49F3 := 1, redraws the view (res12_fn_27D9) and
-  reshows the character (res12_fn_0767), clears the pooled money DS:67F4 and sets MoneyInPool := 0. }
+{ ovl04:0D09. The Temple menu offers Heal, View, Take, Pool, Share, Appraise and Exit (Take and Share
+  only while TreasureLeft reports pooled money). Heal and Pool run only when ExtKey is 0; View receives
+  ExtKey, and G/O scan letters (Home/End, or keypad 7/1) go to ovl19_e10. The trailing B redraw arm at
+  ovl04:0F02 is not in the menu text. ReadPromptChoice can return scan letters for extended keys, but
+  the physical key that yields B is unknown. Exit with money in the pool asks "Do you want to go back
+  and retrieve your money?" ('~Yes ~No') and leaves on No (AskMenu returns position 1); Yes keeps the
+  money in the Temple. On entry it sets ds49F3 to 1, redraws the view and character, clears PooledMoney
+  and sets MoneyInPool to 0. }
 procedure VisitTemple;
 var
   Key: Char;
   Done: Boolean;
-  MenuFlag: Byte;         { the var Flag of ReadPromptChoice: 0 when the key was a menu choice, nonzero
-                            when the menu did not take it (then H and P are skipped and View gets
-                            it) [I] }
+  ExtKey: Byte;            { ReadPromptChoice sets this for extended scan letters and keypad digits (ovl25:0224..0287) }
   Prompt: String40;
   MoneyPooled: Byte;      { nonzero while money lies in the pool (TreasureLeft's first result) }
   PoolSecond: Byte;       { TreasureLeft's second result; not read here }
@@ -458,12 +488,13 @@ begin
       Prompt := 'Heal View Take Pool Share Appraise Exit'
     else
       Prompt := 'Heal View Pool Appraise Exit';
-    Key := ReadPromptChoice('', Prompt, 13, 10, 15, 1, 0, MenuFlag);
+    Key := ReadPromptChoice('', Prompt, PromptTitleColor, PromptWordColor, PromptHotColor,
+                            AcceptExtendedKeys, NoAnimation, ExtKey);
     case Key of
-      'H': if MenuFlag = 0 then HealMenu;
-      'V': ovl19_e5(MenuFlag);
+      'H': if ExtKey = 0 then HealMenu;
+      'V': ovl19_e5(ExtKey);
       'T': TakeMoney;
-      'P': if MenuFlag = 0 then PoolMoney;
+      'P': if ExtKey = 0 then PoolMoney;
       'S': ShareMoney;
       'A': AppraiseGems(Appraised);
       'E':
@@ -472,14 +503,17 @@ begin
           if MoneyPooled <> 0 then
           begin
             Prompt := '~Yes ~No';
-            ShowPagedText(1, $11, $26, $16, $A, 1,
+            ShowPagedText(TextWindowLeft, TextWindowTop, TextWindowRight, TextWindowBottom,
+              TextWindowColor, ClearTextBeforeMessage,
               'As you leave a priest says, "Excuse me but you have left some money here" ');
-            ShowPagedText(1, $11, $26, $16, $A, 1, 'Do you want to go back and retrieve your money?');
-            LeaveAnswer := AskMenu('', Prompt, 13, 10, 15, 0, 0);
+            ShowPagedText(TextWindowLeft, TextWindowTop, TextWindowRight, TextWindowBottom,
+              TextWindowColor, ClearTextBeforeMessage, 'Do you want to go back and retrieve your money?');
+            LeaveAnswer := AskMenu('', Prompt, PromptTitleColor, PromptWordColor, PromptHotColor,
+                                   NoExtendedKeys, NoAnimation);
             if LeaveAnswer = AnswerNo then
               Done := True
             else
-              ClearRect(1, $11, $26, $16);
+              ClearRect(TextWindowLeft, TextWindowTop, TextWindowRight, TextWindowBottom);
           end
           else
             Done := True;
