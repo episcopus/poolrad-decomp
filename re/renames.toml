@@ -3162,3 +3162,51 @@ kind = "global"
 why = "7 rows of 5 direction offsets: CanAffordStep adds ds02AE[Combat+15h, Column] to the base direction mod 8 before ProbeStep (ovl09:068B..06C2); ovl09_fn_0898 sets the row to RollDice(1, 2) (ovl09:08CD)"
 date = "2026-10-12"
 
+[[rename]]
+old = "ovl20_e2"
+new = "RunRestPeriod"
+kind = "routine"
+why = "ovl20:0C9A runs the five-minute rest loop, asks whether to stop, and returns 1 on random interruption; ovl15:077A RestParty uses the result to end camp"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl20_fn_0871"
+new = "CheckRestHealing"
+kind = "routine"
+why = "ovl20:0871 increments ds6DD8 to threshold 288 (0x120), calls HealCharacter over the party list, and displays 'The Whole Party Is Healed'"
+date = "2026-10-13"
+[[rename]]
+old = "ovl20_fn_0925"
+new = "ProcessMemorizedSpell"
+kind = "routine"
+why = "ovl20:0925 scans Who.Spells for entries with bit 7 set, clears the bit and reports the first completed spell as 'has memorized'; the ovl20:0BB2 rest routine calls it and uses the returned spell level"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl20_fn_09E7"
+new = "ProcessPendingScribedSpell"
+kind = "routine"
+why = "ovl20:09E7 scans Who.Items for pending scroll spell bytes, marks the spell known, calls ovl22_e7 and displays 'has scribed'; ovl20:0BB2 uses its returned spell level"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl20_fn_0B0A"
+new = "AdvanceRestStudies"
+kind = "routine"
+why = "ovl20:0B0A walks the party list, decrements ds6DCF, and when a member's counter and RestHours are zero completes a pending scribed or memorized spell and stores three times the next spell level"
+date = "2026-10-13"
+
+[[rename]]
+old = "ds6DCF"
+new = "RestStudyCountdowns"
+kind = "global"
+why = "ovl20:0B33..0B91 decrements this per-member byte each rest step, then stores three times the next pending spell level from ProcessPendingScribedSpell or ProcessMemorizedSpell"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl20_fn_0BB2"
+new = "AdvanceRestHour"
+kind = "routine"
+why = "ovl20:0BB2 increments the shared step counter, processes the party every twelve rest calls, decrements positive RestHours and refreshes the next spell countdown when an hour completes"
+date = "2026-10-13"
+

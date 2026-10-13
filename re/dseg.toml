@@ -973,3 +973,8 @@ evidence = "seven words in the image at DS:363A: 10, 10, 6, 24, 30, 12, 256 (sta
 offset = 0x02AE
 name = "StepTurnOffsets"
 evidence = "7 rows of 5 direction offsets: CanAffordStep adds ds02AE[Combat+15h, Column] to the base direction mod 8 before ProbeStep (ovl09:068B..06C2); ovl09_fn_0898 sets the row to RollDice(1, 2) (ovl09:08CD)"
+
+[[global]]
+offset = 0x6DCF
+name = "RestStudyCountdowns"
+evidence = "ovl20:0B33..0B91 decrements this per-member byte each rest step, then stores three times the next pending spell level from ProcessPendingScribedSpell or ProcessMemorizedSpell"

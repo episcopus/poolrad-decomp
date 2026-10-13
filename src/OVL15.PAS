@@ -7,7 +7,7 @@ unit OVL15;
   MoveMemberDown), drops a member (DropPartyMember), sets the game speed (CampSpeedMenu) and switches
   the monster pictures and portraits. A spell being memorized is a Spells slot with bit 7 set, a
   scroll spell being scribed an item spell byte with bit 7 set; both are cancelled when the camp
-  opens and closes (CancelPartyStudy) and become real only through the rest (ovl20_e2). }
+  opens and closes (CancelPartyStudy) and become real only through the rest (RunRestPeriod). }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 uses POOLVARS;
@@ -326,7 +326,7 @@ begin
 end;
 { ovl15:077A. The Rest command: sets RestTime to the longest StudyRestMinutes of the party (hours,
   tens of minutes, minutes; the call also stores each member's RestHours), runs the rest
-  (ovl20_e2, whose result goes to EndCamp, ending the camp when nonzero), then clears RestTime and
+  (RunRestPeriod, whose result goes to EndCamp, ending the camp when nonzero), then clears RestTime and
   calls res12_fn_290B. }
 procedure RestParty(var EndCamp: Byte);
 var
@@ -344,7 +344,7 @@ begin
   RestTime[3] := MaxMinutes div 60;
   RestTime[2] := (MaxMinutes - RestTime[3] * 60) div 10;
   RestTime[1] := MaxMinutes mod 10;
-  EndCamp := ovl20_e2;
+  EndCamp := RunRestPeriod;
   FillChar(RestTime, SizeOf(RestTime), 0);
   res12_fn_290B;
 end;
@@ -873,7 +873,7 @@ end;
   unfinished study (CancelPartyStudy, again on leaving) and runs the Camp menu 'Save View Magic
   Rest Alter Exit' (CampMenuText) until Exit or EndCamp: S saves (ovl17_e9) and offers 'Quit TO
   DOS ', V ovl19_e5 (the view), M CampMagicMenu, R RestParty, A AlterMenu. EndCamp is set by a rest
-  that ends the camp (ovl20_e2). }
+  that ends the camp (RunRestPeriod). }
 procedure MakeCamp(var EndCamp: Byte);
 var
   SavedMode: Byte;
