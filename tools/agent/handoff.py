@@ -93,8 +93,8 @@ def archive(key: str, text: str) -> None:
 
 def finish(key: str, agent: str, decision: str) -> int:
     common.require_main("handoff-done")
-    if agent != "orch":
-        raise ValueError("handoff-done needs AGENT=orch in the main checkout")
+    if not identity.is_orchestrator(agent):
+        raise ValueError("handoff-done needs AGENT=orch, or an agent registered as orchestrator, in the main checkout")
     path = handoff_dir() / ("%s.md" % key)
     if not path.exists():
         print("handoff: no pending record for %s" % key)

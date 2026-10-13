@@ -179,6 +179,16 @@ def test_handoff_cleanup_requires_merge_and_check_receipt_and_archives(repo, mon
     assert wt.exists()                                                           # no cleanup deletes work
 
 
+def test_a_registered_orchestrator_may_clear_an_escalation(repo):
+    identity.register("haiku-orch", "orchestrator", "test-harness", "test/model", "test-session-orch")
+    assert handoff.main(["--agent", "dec-1", "--unit", "general", "--state", "escalate", "--note", "question"]) == 0
+    key = next(handoff.handoff_dir().glob("escalate-*.md")).stem
+    assert handoff.main(["--agent", "dec-1", "--unit", key, "--done", "--decision", "no"]) == 2
+    assert handoff.main(["--agent", "haiku-orch", "--unit", key, "--done",
+                         "--decision", "human: this label is the orchestrator"]) == 0
+    assert not (handoff.handoff_dir() / ("%s.md" % key)).exists()
+
+
 def test_escalation_cleanup_requires_human_decision(repo):
     assert handoff.main(["--agent", "dec-1", "--unit", "general", "--state", "escalate", "--note", "question"]) == 0
     key = next(handoff.handoff_dir().glob("escalate-*.md")).stem

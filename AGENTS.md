@@ -14,7 +14,7 @@ You are working on a **matching decompilation of SSI's Pool of Radiance (DOS) in
 
 - The original program is **Turbo Pascal 6.0 (June 1991 release)**, 16-bit real mode, with **35 overlay units** in `GAME.OVR` (`FBOV`) and **15 known resident units**: 13 in the init chain plus the Borland Dos (`res13`, `0A32`) and Overlay (`res14`, `0AA2`) units, which have no init.
 - **The runtime units are library.** System (`res00`), Crt (`res01`), Dos (`res13`) and Overlay (`res14`) are the compiler's own units from `TURBO.TPL`: linked, never decompiled.
-- **Compiler switches:** `{$A-,F+,S-,R-,G-,I-}` for every unit, `O+` added for overlay units, `I+` only in res05 (whitepaper 2.2). Not TP 7.0 and not the October 1990 TP 6.0 (`make tp-compare`). TP 6.0 has no `const` parameters and no `$Q`.
+- **Compiler switches:** `{$A-,F+,S-,R-,G-,I-}` for every unit, `O+` added for overlay units and for resident res08 (its `OvrInit('GAME.OVR')` copies the literal first; whitepaper 2.2), `I+` only in res05. Not TP 7.0 and not the October 1990 TP 6.0 (`make tp-compare`). TP 6.0 has no `const` parameters and no `$Q`.
 - **The compiler is on the critical path but proprietary:** it lives in `build/toolchain/` (ignored by git; `make tp-pin`, `docs/setup/SETUP-tp.md`) and is never committed, pushed or copied into `src/`.
 - Analyse `poolrad/start-unpack.exe` (the unpacked image), not `START.EXE` (EXEPACK packed).
 - `re/symbols.toml` boundaries are approximate: a routine's size often includes the next routine's literal pool, and the map can merge two routines. `make match WRITE=1` reports the compiler's boundaries.

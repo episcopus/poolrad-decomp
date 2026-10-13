@@ -23,6 +23,10 @@ sides:
                 (runtime library targets are identified through tp_toolchain.runtime_names).
   literal       an offset into the code segment (a string or set constant): same distance from the entry
                 on both sides, and the pool bytes are compared as they are.
+  routine ofs   `mov ax, ofs; mov dx, seg` of a routine in another unit (`ds6B84 := @ovl22_e4`).
+                The offset moves by the padding procedure, like an offset in this unit. It names the
+                public at that offset in the segment the following relocated word selects. The original's
+                word is that routine's address (an overlay stub offset for an overlay unit).
   segment       a segment fixup: the same unit (or DGROUP) on both sides.
 
 An immediate counts as an address only if it moves when the layout moves: the unit is compiled a
@@ -35,10 +39,13 @@ and the paragraph padding cover the original segment exactly.
 `--write` records level L2 (matched) for each matched routine in re/symbols.toml (only tools write
 levels, AGENTS.md rule 2) and prints where re/symbols.toml's boundaries disagree with the compiler's.
 
-Nested routines have no map symbol; TP 6.0 puts their code in the parent's pre-entry region, which is
-compared exactly. A matched parent proves a nested routine (reported `NESTED`, L2 with a note saying so)
-only by the strict rule of nested_routines(): called as `push bp; push cs; call` from the parent or an
-already proven nested routine, and wholly inside that region (escalate-general-20261012012957).
+Nested routines have no map symbol; TP 6.0 puts their code in the parent's pre-entry region. A range
+proven nested by nested_routines() is compared instruction by instruction, with the same address
+resolution as a top-level routine; every other pre-entry byte stays byte-exact
+(escalate-res06-20261012110841). A matched parent proves a nested routine (reported `NESTED`, L2 with
+a note saying so) only by the strict rule of nested_routines(): called as `push bp; push cs; call`
+from the parent or an already proven nested routine, and wholly inside that region
+(escalate-general-20261012012957).
 
 Conventions for the sources (playbook 30): one file per original unit, named after its id (RES04.PAS
 is unit RES04); every routine is declared in the interface (the map lists only interface symbols);
@@ -456,8 +463,9 @@ def nested_routines(seg_bytes: bytes, region_start: int, parent_entry: int,
                     parent_end: int) -> dict[int, tuple[int, int]]:
     """Nested routines of a matched parent, proven by the parent's match: {entry: (end, caller entry)}.
 
-    Turbo Pascal 6.0 puts a nested routine's code before its parent's body, inside the bytes the matcher
-    compares exactly as the parent's pre-entry region [region_start, parent_entry). The map has no symbol
+    Turbo Pascal 6.0 puts a nested routine's code before its parent's body, inside the parent's
+    pre-entry region [region_start, parent_entry). The matcher compares a proven nested range
+    instruction by instruction and keeps every other pre-entry byte exact. The map has no symbol
     for it, so its entry is proven by how it is called. A routine counts only when ALL hold (operator
     decision on escalation escalate-general-20261012012957, the strict rule):
       1. its entry is the target of a near call inside the parent, or inside a nested routine already
@@ -558,11 +566,12 @@ class Comparer:
         O = self.obytes[o0: orig_entry + (ra.end - ra.entry)]
         if len(A) != len(B):
             return False, "our code changes length with the layout (%d vs %d bytes)" % (len(A), len(B)), 0
-        if A[:ra.pool] != O[:ra.pool]:
-            k = next(i for i in range(ra.pool) if A[i] != O[i])
-            return False, "literal pool byte %d before the entry: ours %02X, original %02X" % (
-                ra.pool - k, A[k], O[k]), 0
         symbols = 0
+        if A[:ra.pool] != O[:ra.pool]:
+            ok, why, n = self.pre_entry(A, B, O, ra, orig_entry)
+            if not ok:
+                return False, why, n
+            symbols += n
         insns_a = list(md.disasm(A[ra.pool:], ra.entry))
         insns_o = {i.address: i for i in md.disasm(O[ra.pool:], ra.entry)}
         if sum(i.size for i in insns_a) != len(A) - ra.pool:
@@ -581,7 +590,64 @@ class Comparer:
                 return False, self.diff(ia, io, why), symbols
         return True, "", symbols
 
-    def fields(self, ia, io, sa, so, sb, ra: Region, orig_entry: int, p: int):
+    def pre_entry(self, A: bytes, B: bytes, O: bytes, ra: Region, orig_entry: int) -> tuple[bool, str, int]:
+        """Compare the parent's pre-entry bytes. Proven nested ranges use fields(); the rest stay exact.
+
+        Only ranges nested_routines() proves from the original parent are carved out. A nested range
+        with a wrong global or a wrong callee fails here, the same way a top-level routine does.
+        """
+        region_start = orig_entry - ra.pool
+        body_end = orig_entry + (len(A) - ra.pool)
+        found = nested_routines(self.obytes, region_start, orig_entry, body_end)
+        spans = []
+        for entry, (end, _caller) in sorted(found.items()):
+            a, b = entry - region_start, end - region_start
+            if 0 <= a < b <= ra.pool:
+                spans.append((a, b, entry))
+        nested_ours = {entry: (ra.entry - ra.pool) + (entry - region_start) for entry, _rest in found.items()}
+        covered = bytearray(ra.pool)
+        symbols = 0
+        for a, b, entry in spans:
+            ok, why, n = self.compare_slice(A[a:b], B[a:b], O[a:b], entry, nested_ours)
+            if not ok:
+                return False, why, symbols + n
+            symbols += n
+            covered[a:b] = b"\x01" * (b - a)
+        for i in range(ra.pool):
+            if not covered[i] and A[i] != O[i]:
+                return False, "literal pool byte %d before the entry: ours %02X, original %02X" % (
+                    ra.pool - i, A[i], O[i]), symbols
+        return True, "", symbols
+
+    def compare_slice(self, sa_all: bytes, sb_all: bytes, so_all: bytes, entry: int,
+                      nested_ours: dict[int, int]) -> tuple[bool, str, int]:
+        """Instruction-compare one proven nested range.
+
+        `entry` is the original address. Both sides are disassembled at our address (nested_ours),
+        the same way compare() disassembles a top-level body at our entry, so a near call's target
+        is an address in our build and fields() can name it."""
+        ours_entry = nested_ours[entry]
+        insns_a = list(md.disasm(sa_all, ours_entry))
+        insns_o = {i.address: i for i in md.disasm(so_all, ours_entry)}
+        if sum(i.size for i in insns_a) != len(sa_all) or len(sb_all) != len(sa_all):
+            return False, "nested routine at %04X does not disassemble cleanly" % entry, 0
+        ra = Region("nested", ours_entry, 0, ours_entry + len(sa_all))
+        symbols = 0
+        for ia in insns_a:
+            p = ia.address - ours_entry
+            sa, so, sb = sa_all[p:p + ia.size], so_all[p:p + ia.size], sb_all[p:p + ia.size]
+            io = insns_o.get(ia.address)
+            if sa == so:
+                continue
+            if io is None or io.size != ia.size or io.bytes[0] != ia.bytes[0]:
+                return False, self.diff(ia, io, "nested instruction differs"), symbols
+            ok, why, n = self.fields(ia, io, sa, so, sb, ra, entry, p, nested_ours)
+            symbols += n
+            if not ok:
+                return False, self.diff(ia, io, why), symbols
+        return True, "", symbols
+
+    def fields(self, ia, io, sa, so, sb, ra: Region, orig_entry: int, p: int, nested_ours=None):
         """Check that every differing byte of one instruction is an address field naming the same thing."""
         covered = set()
         n = 0
@@ -590,10 +656,14 @@ class Comparer:
         if op0 == 0xE8:
             ta = (ia.address + 3 + int.from_bytes(sa[1:3], "little", signed=True)) & 0xFFFF
             to = (ia.address - ra.entry + orig_entry + 3 + int.from_bytes(so[1:3], "little", signed=True)) & 0xFFFF
-            want = self.expect_routine(self.a, self.seg, ta)
-            got = self.orig.routine_id(self.unit, to)
-            if want != got:
-                return False, "near call: ours goes to %s, the original to %s" % (want, got), n
+            if nested_ours and to in nested_ours:
+                if ta != nested_ours[to]:
+                    return False, "near call: nested target ours %04X, original %04X" % (ta, to), n
+            else:
+                want = self.expect_routine(self.a, self.seg, ta)
+                got = self.orig.routine_id(self.unit, to)
+                if want != got:
+                    return False, "near call: ours goes to %s, the original to %s" % (want, got), n
             covered |= {1, 2}
             n += 1
         elif op0 == 0x9A:
@@ -653,14 +723,21 @@ class Comparer:
             if want != so.lower() and not (want == "data" and so == "DATA"):
                 return False, "segment: ours is %s, the original %s" % (sa, so)
             return True, ""
-        if vb - va == CODE_PAD:                      # an offset in our code segment
+        if vb - va == CODE_PAD:                      # an offset that the padding procedure shifts
             routine = self.a.public_at(self.seg, va)
-            if routine is not None:                  # @Routine: the same routine on both sides
-                want = self.orig.id_of_name(routine)
-                got = self.orig.code_address(self.unit, vo)
-                if want is None or want != got:
-                    return False, "routine address: ours is %s (%s), the original names %s" % (routine, want, got)
+            if routine is not None:                  # @Routine in this unit
+                ok, why = self.routine_address(routine, self.unit, vo)
+                if ok:
+                    return True, ""
+            else:
+                ok, why = False, ""
+            cross = self.cross_unit_address(va, vb, abs_a, vo)
+            if cross[0]:
                 return True, ""
+            if routine is not None:
+                return False, why
+            if cross[1]:
+                return False, cross[1]
             if va - ra.entry != vo - orig_entry:     # a literal of the pool
                 return False, "literal at entry%+d (ours) vs entry%+d (original)" % (va - ra.entry, vo - orig_entry)
             return True, ""
@@ -669,6 +746,45 @@ class Comparer:
             return False, "address immediate: ours %s (DS:%04X expected), the original DS:%04X" % (
                 e[1] if e else "%04X" % va, e[0] if e else va, vo)
         return True, ""
+
+    def routine_address(self, routine: str, uid: str, vo: int) -> tuple[bool, str]:
+        """True when `routine` is the original routine whose address immediate is `vo`."""
+        want = self.orig.id_of_name(routine)
+        got = self.orig.code_address(uid, vo) if uid in getattr(self.orig, "units", {uid: None}) else None
+        if want is None or want != got:
+            return False, "routine address: ours is %s (%s), the original names %s" % (routine, want, got)
+        return True, ""
+
+    def cross_unit_address(self, va: int, vb: int, abs_a: int, vo: int) -> tuple[bool, str]:
+        """`@Routine` in another unit: ofs in ax, that unit's segment in the next relocated word.
+
+        Several units can have a routine at the same offset (each is padded by one procedure, so
+        every offset moves by CODE_PAD). The `mov dx, seg` immediately after `mov ax, ofs`
+        (probe build/probe-ptr; the original does the same at ovl08:0069 and ovl08:0085) names
+        which one. The original word is a stub offset for an overlay and a code offset for a
+        resident unit; code_address accepts either.
+        """
+        bpubs = {n.upper(): pair for n, pair in self.b.pubs.items()}
+        hits = []
+        for n, (para, off) in self.a.pubs.items():
+            other = bpubs.get(n.upper())
+            if off == va and other and other[0] == para and other[1] == vb:
+                hits.append((n, para))
+        if not hits:
+            return False, ""
+        chosen = hits
+        seg_abs = abs_a + 3
+        if seg_abs in self.a.relocs and seg_abs + 2 <= len(self.a.img):
+            sega = int.from_bytes(self.a.img[seg_abs:seg_abs + 2], "little")
+            chosen = [(n, para) for n, para in hits if para == sega]
+        if len(chosen) != 1:
+            return False, "routine address: offset %04X is shared by %s" % (
+                va, ", ".join(sorted(n for n, _p in hits)))
+        name, para = chosen[0]
+        segname = self.a.seg_of_para(para)
+        if segname is None or segname.upper() == self.seg.upper():
+            return False, ""
+        return self.routine_address(name, segname.lower(), vo)
 
     def diff(self, ia, io, why: str) -> str:
         a = "%04X  %-16s %s %s" % (ia.address, ia.bytes.hex(), ia.mnemonic, ia.op_str)

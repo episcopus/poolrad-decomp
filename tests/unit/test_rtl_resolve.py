@@ -38,6 +38,25 @@ def test_entry_glue_does_not_shift_a_routine():
     assert tp.runtime_entries(U, R, entries) == {0: 0, len(tail): len(tail) + len(assign)}
 
 
+def test_masked_body_finds_randomize_when_the_vote_loses_its_address_words():
+    """Randomize's two RandSeed words sit in an unequal-length difference once the linker drops
+    the bytes after it, so the alignment vote sees 6 of 13 bytes. The body still occurs once."""
+    body = bytes.fromhex("b42ccd21890e284489162a44cb")
+    fresh = bytes.fromhex("b42ccd21890e4e0089165000cb")
+    extra = bytes(range(20))
+    U = body + extra
+    R = b"XXXX" + fresh
+    assert tp.runtime_entries(U, R, [0, len(body)]) == {4: 0}
+
+
+def test_a_body_that_occurs_twice_is_not_a_runtime_entry():
+    body = bytes.fromhex("b42ccd21890e284489162a44cb")
+    fresh = bytes.fromhex("b42ccd21890e4e0089165000cb")
+    U = body + bytes(range(20))
+    R = fresh + fresh
+    assert tp.runtime_entries(U, R, [0, len(body)]) == {}
+
+
 def compile_program(tmp_path: Path, name: str, text: str):
     ver = tp.pinned_version()
     bin_dir = tp.TC / ver / "BIN"

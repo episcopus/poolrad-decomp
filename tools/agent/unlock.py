@@ -17,6 +17,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import common
 import control
+import identity
 
 
 def releasable(record: dict) -> None:
@@ -48,8 +49,9 @@ def main(argv=None) -> int:
             if not a.force or not a.reason.strip():
                 raise ValueError("operator recovery needs FORCE=1 and REASON=<human instruction>")
             common.single_line(a.reason, "reason")
-        elif a.agent != "orch" or a.force:
-            raise ValueError("normal release needs AGENT=orch; workers never unlock, and FORCE requires OPERATOR=1")
+        elif not identity.is_orchestrator(a.agent) or a.force:
+            raise ValueError("normal release needs AGENT=orch, or an agent registered as orchestrator; "
+                             "workers never unlock, and FORCE requires OPERATOR=1")
         with control.coordination_lock():
             path = common.lock_path(key)
             if not path.exists():
