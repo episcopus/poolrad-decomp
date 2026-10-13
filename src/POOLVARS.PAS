@@ -332,7 +332,7 @@ type
       BandageDying only bandages characters with 0 (the party). }
     Side: Byte;
     { +$10F: nonzero while the computer fights for the character (quick combat): CombatTurn hands the
-      turn to ovl09_e1 (ovl08:02B3); Quick sets it, the Space command clears it. }
+      turn to QuickTurn (ovl08:02B3); Quick sets it, the Space command clears it. }
     Quick: Byte;
     { +$110: added to the d20 an attack roll (RollToHit) must bring to the needed value (ovl24:0D41) [I]. }
     HitAdjust: Byte;

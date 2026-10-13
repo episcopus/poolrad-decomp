@@ -1,13 +1,14 @@
 unit OVL09;
-{ CombatAI (whitepaper 5.5): the computer's share of the combat turn. ovl09_e1 acts for a
-  quick-combat character (called by CombatTurn, ovl08:01F6): morale and panic, spell use,
-  movement and attacks through the routines below. ScoreTarget rates a candidate victim for
-  the target choice. Partly decompiled; the map's entries from 0675 to 1758 need a mapper pass
-  (several real routines were split into far-call fragments, see the hand-off note). }
+{ CombatAI (whitepaper 5.5.3): the computer's share of the combat turn. QuickTurn (called by
+  CombatTurn/PlayerTurn, ovl08:01F6/031A, for a character with Quick set) reads keys, runs morale
+  and the pending-spell finish, then loops into AiTurn: the turn loop that moves (MoveStep while
+  panicking) and attacks (UseBestItem, the ovl13 attack routines), with ScoreTarget rating the
+  victims and HandleCombatKey and CheckMorale as the interruptions.
+  Complete: make match UNIT=ovl09 says unit: complete (14 routines and one proven nested). }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 uses POOLVARS;
-procedure ovl09_e1(Who: Pointer);
+procedure QuickTurn(Who: PCharacter);
 function ovl09_fn_0203(Who: PCharacter): Boolean;
 function SpellAccepted(Who: PCharacter; Spell, Range: Byte): Boolean;
 function UseMagicItem(Who: PCharacter): Boolean;
@@ -40,11 +41,78 @@ const
   AffectKeptC = $6F;
   AffectKeptD = $7D;
 
-{ ovl09:000F: retf 4: 4 bytes of parameters; 18 bytes of locals }
-{@stub} procedure ovl09_e1(Who: Pointer); begin end;
+{ ovl09:000F. The computer's turn for Who (called by CombatTurn ovl08:01F6 and PlayerTurn
+  ovl08:031A when the character is quick): it reads a key (HandleCombatKey), clears the prompt
+  line, and ends the turn through res12_fn_2637 when Who is not dying (Flag10D 0). It rerolls the
+  step pattern (+$15) when the current one is 1..4 and a d4 comes up 1: a d8 gives the new
+  pattern, an 8 rerolls a d2 + 4, anything else a d4. Morale runs when no key was pressed; a
+  panicking character (+$14 set) that is not stuck (+$10 0) shows 'flees in panic' (unit offset 0)
+  through res12_fn_16EC. Then, while the turn is not over: use a magic item (UseMagicItem, ending
+  through res12_fn_2637), finish a pending spell (Combat^.PendingSpell; ovl22_e5, end of turn),
+  take the level-0 turn (ovl09_fn_0203, end of turn), cast a memorized spell (CastMemorizedSpell,
+  Done := 1), use the best item (UseBestItem) and read keys again (HandleCombatKey); with Done
+  clear it loops on ovl13_e21(Who, $FF, 1, 0): an initiative above 0 runs AiTurn, else the turn
+  ends through ovl09_fn_0F4F. Globals: none. QUIRK: ovl22_e5's var result is overwritten at once. }
+procedure QuickTurn(Who: PCharacter);
+var
+  Step: Byte;
+  Done: Byte;
+begin
+  Done := Ord(HandleCombatKey(Who));
+  ClearPromptLine;
+  res12_fn_17E3;
+  if Who^.Flag10D = 0 then
+    Done := res12_fn_2637(Who);
+  Step := PByteArray(Who^.Combat)^[$15];
+  if (Step = 0) or (Step > 4) or (RollDice(1, 4) = 1) then
+  begin
+    Step := RollDice(1, 8);
+    if Step = 8 then
+      Step := RollDice(1, 2) + 4
+    else
+      Step := RollDice(1, 4);
+  end;
+  PByteArray(Who^.Combat)^[$15] := Step;
+  if Done = 0 then
+    Done := CheckMorale(Who);
+  if (PByteArray(Who^.Combat)^[$14] <> 0) and (PByteArray(Who^.Combat)^[$10] = 0) then
+    res12_fn_16EC(Who, 'flees in panic', $0A, 1);
+  if Done <> 0 then
+    Exit;
+  if UseMagicItem(Who) then
+  begin
+    Done := res12_fn_2637(Who);
+    Exit;
+  end;
+  if Who^.Combat^.PendingSpell > 0 then
+  begin
+    ovl22_e5(Who^.Combat^.PendingSpell, 1, 1, Done);
+    Done := res12_fn_2637(Who);
+    Exit;
+  end;
+  if ovl09_fn_0203(Who) then
+  begin
+    Done := res12_fn_2637(Who);
+    Exit;
+  end;
+  if CastMemorizedSpell(Who) <> 0 then
+  begin
+    Done := 1;
+    Exit;
+  end;
+  UseBestItem(Who);
+  Done := Ord(HandleCombatKey(Who));
+  while Done = 0 do
+  begin
+    if ovl13_e21(Who, $FF, 1, 0) and (Who^.Combat^.Initiative > 0) then
+      Done := AiTurn(Who)
+    else
+      Done := ovl09_fn_0F4F(Who);
+  end;
+end;
 { ovl09:0203. Purpose unknown: returns True and calls ovl13_e9 when the combatant may
   still turn (Combat.Turned is 0), has a level in class 0 (ClassLevels[0] above 0) and
-  ovl13_e10 agrees; else returns False. Called by ovl09_e1 (ovl09:0169): a True result ends
+  ovl13_e10 agrees; else returns False. Called by QuickTurn (ovl09:0169): a True result ends
   the turn through res12_fn_2637. Unused fills the two frame bytes the code never reads
   ([bp-2..-4]; B at [bp-5] is ovl13_e10's var parameter). }
 function ovl09_fn_0203(Who: PCharacter): Boolean;
@@ -116,7 +184,7 @@ begin
     SpellAccepted := True;
   end;
 end;
-{ ovl09:03E4. Uses a magic item for the computer's turn (called by ovl09_e1; True ends
+{ ovl09:03E4. Uses a magic item for the computer's turn (called by QuickTurn; True ends
   the turn through res12_fn_2637): rolls 1d7 rounds; each round walks Who^.Items for the first
   item that passes (not ovl22_e6, Affects[3] below $80, Readied, level from Affects[2] in
   1..MaxSpell adjusted down by $17 above it, and SpellAccepted in range) and remembers it as
@@ -183,7 +251,7 @@ Done:
     UseMagicItem := True;
   end;
 end;
-{ ovl09:0545. Casts a memorized spell for the computer's turn (called by ovl09_e1; the
+{ ovl09:0545. Casts a memorized spell for the computer's turn (called by QuickTurn; the
   nonzero result ends the turn): collects Who's nonzero memorized Spells (when CanCast allows),
   rolls rounds with a shrinking level, tries up to three random spells per round through
   SpellAccepted (Who, Spell, Level) and casts the first in range through ovl13_e15 (the Cast of
@@ -401,7 +469,7 @@ NoStep:
   Done := ovl09_fn_0F4F(Who);
 Finish:
 end;
-{ ovl09:0B3C. The AI's whole turn for Who (called by ovl09_e1 when the initiative allows): it
+{ ovl09:0B3C. The AI's whole turn for Who (called by QuickTurn when the initiative allows): it
   clears the AI scratch (ds443C/D/E), runs affect hook $0E, ends at once when the initiative is
   0, and loops (Done = 0 and CanAct <> 0): while panicking (+$14) it steps MoveStep until the
   moves run out, initiative leaves 1..$13 or the panic clears; then it stumbles ($14 set: no
@@ -539,7 +607,7 @@ Finish:
 end;
 { ovl09:0F4F. Purpose unknown: returns res12_fn_2637(Who) when res12_fn_0B73(Who) or
   res12_fn_2E03(Who) is true or the combatant's Initiative is 0, else res12_fn_2686(Who).
-  Called by ovl09_e1 (ovl09:01EE) and from the 07F2 and 0B3C regions. res12_fn_17E3 runs first
+  Called by QuickTurn (ovl09:01EE) and from the 07F2 and 0B3C regions. res12_fn_17E3 runs first
   (parameterless). }
 function ovl09_fn_0F4F(Who: PCharacter): Byte;
 begin
@@ -550,7 +618,7 @@ begin
     ovl09_fn_0F4F := res12_fn_2686(Who);
 end;
 { ovl09:0FC1. Handles a key pressed during the computer's combat turn (called by
-  ovl09_e1 and the 07F2 region, who act when it returns True). Alt-M toggles the ds6E30 Magic
+  QuickTurn and the 07F2 region, who act when it returns True). Alt-M toggles the ds6E30 Magic
   flag with the same 'Magic On'/'Magic Off' message as PlayerTurn (ovl08:031A); Space clears
   Quick on every party member (B84 below $80, Status not 1) and, when Who is not quick yet,
   marks Who quick (Initiative := InitiativeQuickAll) and returns True; Alt-X asks ovl13_e24.
@@ -601,7 +669,7 @@ begin
   end;
   FlushKeyboard;
 end;
-{ ovl09:10D7. The morale gauntlet for the computer's turn (called by ovl09_e1 when
+{ ovl09:10D7. The morale gauntlet for the computer's turn (called by QuickTurn when
   HandleCombatKey is false): clears the combat byte at +$14, then walks a chain of early exits
   to the end (result 0). A nonzero Combat^.Pad10 forces flight ('is forced to flee' through
   res12_fn_16EC); B84 at or below $7F ends it; otherwise ds6825 ((B84 and $7F) * 2, zeroed above
@@ -693,7 +761,7 @@ begin
     Score := 0;
   ScoreTarget := Score;
 end;
-{ ovl09:13CA. The AI's item step for Who (called by ovl09_e1 every turn and by AiTurn before
+{ ovl09:13CA. The AI's item step for Who (called by QuickTurn every turn and by AiTurn before
   attacking): it pays the two per-kind slot items (RaceRow[item type][1] off Who^.ds100), scores
   the carried items (ScoreTarget on the item record: its type indexes RaceRow) and keeps the best
   'attack' item (row[14] bit 3 or bit $10; AttackPick/Best), the best other item (bit 3 clear;

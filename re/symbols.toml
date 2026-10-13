@@ -2563,12 +2563,12 @@ id = "ovl09:000F"
 unit = "ovl09"
 addr = "ovl09:000F"
 size = 500
-name = "ovl09_e1"
-signature = "procedure ovl09_e1(Who: Pointer)"
+name = "QuickTurn"
+signature = "procedure QuickTurn(Who: PCharacter)"
 c_name = "ovl09_e1"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_1"
+notes = "renamed from ovl09_e1 (ovl09:000F is the computer's turn for a quick-combat character (called by ovl08 CombatTurn/PlayerTurn when Quick is set): it reads a key, ends the turn through res12_fn_2637 when the character is not dying, rerolls the step pattern, runs morale (fleeing in panic through res12_fn_16EC), then in a loop uses a magic item, finishes a pending spell through ovl22_e5, takes the level-0 turn, casts a memorized spell, uses the best item and loops through ovl13_e21 into AiTurn or ovl09_fn_0F4F); auto:entry_1"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2748,7 +2748,7 @@ size = 5
 name = "ovl09_init"
 signature = ""
 c_name = "ovl09_init"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_0"
 evidence = ["prologue"]
