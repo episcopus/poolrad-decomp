@@ -16,4 +16,4 @@ units = ["*"]
 tags = ["frame", "locals", "index", "inc ax", "sub sp"]
 title = "Check a parked draft's frame size and every array index before trusting it"
 lesson = "dec-1's ShowPagedText draft was two bytes short in sub sp (the original frame has a never-referenced byte local after J at [bp-105h], declared last) and one byte short in the body: an `inc ax` between the zero extension and `mov di, ax` means the index is Text[J + 1], not Text[J] (0709:08C9). Diff the whole routine against the packet disassembly, not only the matcher's first difference."
-evidence = ["src/RES06.PAS#ShowPagedText", "build/packets/res06.md"]
+evidence = ["src/RES06.PAS#ShowPagedText", "re/symbols.toml#0709:0768", "docs/design/WHITEPAPER.md#5.15"]
