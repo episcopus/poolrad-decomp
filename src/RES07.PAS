@@ -50,7 +50,7 @@ function SwapNibbles(Value: Byte): Byte;
 procedure MirrorPicture(Source, Dest: Pointer);
 procedure ShowPicture(PicCol, PicRow: Integer; Buf: Pointer);
 procedure FlushPictureChanges;
-procedure res07_fn_1E5C(P1, P2: Pointer; A: Word; B: Byte; P3: Pointer);
+procedure res07_fn_1E5C(FromMap, ToMap: Pointer; FirstRow: Integer; Flicker: Byte; Pic: Pointer);
 procedure AllocatePicture(Height, WidthCols: Word; ItemCount, AllocFlags: Byte; var Pic);
 procedure ReleasePicture(var Pic);
 procedure FillPictureRect(FirstCol, FirstRow: Integer; Width, Height: Word; Colour: Byte; Palette: Pointer; Target: Pointer);
@@ -716,7 +716,7 @@ begin
   FillChar(ds4D70, $150, 0);
 end;
 { 0464:1E5C: retf 16: 16 bytes of parameters; 68 bytes of locals }
-{@stub} procedure res07_fn_1E5C(P1, P2: Pointer; A: Word; B: Byte; P3: Pointer); begin end;
+{@stub} procedure res07_fn_1E5C(FromMap, ToMap: Pointer; FirstRow: Integer; Flicker: Byte; Pic: Pointer); begin end;
 { 0464:248E: allocates a picture record of Height * WidthCols * 2 bytes per
   item (times 2 again when the video adapter is not 0, the EGA planar case) times
   ItemCount, plus $17 header bytes, zeroes it, stores the header fields and, when
