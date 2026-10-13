@@ -2969,7 +2969,7 @@ size = 130
 name = "WallSideKind"
 signature = ""
 c_name = "ovl10_fn_012B"
-level = "none"
+level = "L2"
 justification = ""
 notes = "nested in PassageKind (ovl10:01AD), proven by the parent's match (NESTED line of make match UNIT=ovl10, dec-r10 2026-10-12); level not written: make match WRITE=1 deletes this record as a map entry inside the matched parent before its nested loop would set L2 (tools/match/match.py write_levels, reported in the hand-off); renamed from ovl10_fn_012B (ovl10:012B (nested in PassageKind): for an area map cell in 0..15 answers 1 when DoorKindAt is 0 (a solid wall), 0 when WallIdAt is 0 (no wall), else 3 (a door); off the map 0 for the west and east sides on the party row, else 1); auto:near_call"
 evidence = ["prologue"]
@@ -2978,13 +2978,13 @@ evidence = ["prologue"]
 id = "ovl10:01AD"
 unit = "ovl10"
 addr = "ovl10:01AD"
-size = 116
+size = 1635
 name = "PassageKind"
 signature = "function PassageKind(Col, Row: ShortInt; Dir: Byte): Byte"
 c_name = "ovl10_fn_01AD"
 level = "L2"
 justification = ""
-notes = "blocked (dec-16, 2026-10-12): the draft compiles to the original's bytes except the address fields of its nested WallSideKind (lcalls to DoorKindAt and WallIdAt, ds6AAE at 018A), which the matcher compares byte for byte in the parent's pre-entry region (held limit escalate-res06-20261012110841); every other byte of 012B..0220 is equal (byte diff of a probe build). Draft: function PassageKind(Col, Row: ShortInt; Dir: Byte): Byte; var Here, There: Byte; OppositeDir: Byte; function WallSideKind(Col, Row: ShortInt; Dir: Byte): Byte; begin if (Col >= 0) and (Col <= 15) and (Row >= 0) and (Row <= 15) then begin if DoorKindAt(Col, Row, Dir) = 0 then WallSideKind := 1 else if WallIdAt(Col, Row, Dir) = 0 then WallSideKind := 0 else WallSideKind := 3; end else if (Row = ds6AAE) and ((Dir = 2) or (Dir = 6)) then WallSideKind := 0 else WallSideKind := 1; end; begin OppositeDir := (Dir + 4) mod 8; Here := WallSideKind(Col, Row, Dir); There := WallSideKind(Col + ds2736[Dir], Row + ds273F[Dir], OppositeDir); PassageKind := Here or There; end;; renamed from ovl10_fn_01AD (ovl10:01AD ORs WallSideKind of side Dir of the area map cell with WallSideKind of the opposite side of the neighbour that way (ds2736/ds273F): 1 a wall, 0 open, 3 with a door); auto:near_call"
+notes = "matched at L2 (merged in 53ceaec after the nested-routine rule of c7265b6; note kept for history). Earlier: blocked (dec-16, 2026-10-12): the draft compiles to the original's bytes except the address fields of its nested WallSideKind (lcalls to DoorKindAt and WallIdAt, ds6AAE at 018A), which the matcher compares byte for byte in the parent's pre-entry region (held limit escalate-res06-20261012110841); every other byte of 012B..0220 is equal (byte diff of a probe build). Draft: function PassageKind(Col, Row: ShortInt; Dir: Byte): Byte; var Here, There: Byte; OppositeDir: Byte; function WallSideKind(Col, Row: ShortInt; Dir: Byte): Byte; begin if (Col >= 0) and (Col <= 15) and (Row >= 0) and (Row <= 15) then begin if DoorKindAt(Col, Row, Dir) = 0 then WallSideKind := 1 else if WallIdAt(Col, Row, Dir) = 0 then WallSideKind := 0 else WallSideKind := 3; end else if (Row = ds6AAE) and ((Dir = 2) or (Dir = 6)) then WallSideKind := 0 else WallSideKind := 1; end; begin OppositeDir := (Dir + 4) mod 8; Here := WallSideKind(Col, Row, Dir); There := WallSideKind(Col + ds2736[Dir], Row + ds273F[Dir], OppositeDir); PassageKind := Here or There; end;; renamed from ovl10_fn_01AD (ovl10:01AD ORs WallSideKind of side Dir of the area map cell with WallSideKind of the opposite side of the neighbour that way (ds2736/ds273F): 1 a wall, 0 open, 3 with a door); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2995,9 +2995,9 @@ size = 153
 name = "SetDungeonCell"
 signature = ""
 c_name = "ovl10_fn_0221"
-level = "none"
+level = "L2"
 justification = ""
-notes = "blocked with its parent BuildDungeonMap (nested routine, draft in BuildDungeonMap's notes); renamed from ovl10_fn_0221 (ovl10:0221 (nested in BuildDungeonMap) stores picture+1 at combat map cell (I*6 + J*5 + 21 + SubCol, J*5 + 10 + SubRow) of the area cell offset (I, J) when it is on the map); auto:near_call"
+notes = "matched (dec-s10, 2026-10-13) as a nested routine of BuildDungeonMap once the matcher proved a nested routine called only by a sibling (commit 82cbb26); renamed from ovl10_fn_0221 (ovl10:0221 (nested in BuildDungeonMap) stores picture+1 at combat map cell (I*6 + J*5 + 21 + SubCol, J*5 + 10 + SubRow) of the area cell offset (I, J) when it is on the map); auto:near_call; nested in BuildDungeonMap (ovl10:0810), proven by the parent's match"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3008,9 +3008,9 @@ size = 189
 name = "DrawFloorAndWest"
 signature = ""
 c_name = "ovl10_fn_02BA"
-level = "none"
+level = "L2"
 justification = ""
-notes = "blocked with its parent BuildDungeonMap (nested routine, draft in BuildDungeonMap's notes); renamed from ovl10_fn_02BA (ovl10:02BA (nested in BuildDungeonMap) fills sub-rows 2..4 of the area cell with picture 16h and draws the west side as a wall (West 1) or a door (West 3)); auto:near_call"
+notes = "matched (dec-s10, 2026-10-13) as a nested routine of BuildDungeonMap once the matcher proved a nested routine called only by a sibling (commit 82cbb26); renamed from ovl10_fn_02BA (ovl10:02BA (nested in BuildDungeonMap) fills sub-rows 2..4 of the area cell with picture 16h and draws the west side as a wall (West 1) or a door (West 3)); auto:near_call; nested in BuildDungeonMap (ovl10:0810), proven by the parent's match"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3021,9 +3021,9 @@ size = 152
 name = "DrawNorthSide"
 signature = ""
 c_name = "ovl10_fn_0377"
-level = "none"
+level = "L2"
 justification = ""
-notes = "blocked with its parent BuildDungeonMap (nested routine, draft in BuildDungeonMap's notes); renamed from ovl10_fn_0377 (ovl10:0377 (nested in BuildDungeonMap) draws sub-cells 3..4 of rows 0..1 as a wall (pictures 5 and 0Ah) when North is 1, else as floor (16h)); auto:near_call"
+notes = "matched (dec-s10, 2026-10-13) as a nested routine of BuildDungeonMap once the matcher proved a nested routine called only by a sibling (commit 82cbb26); renamed from ovl10_fn_0377 (ovl10:0377 (nested in BuildDungeonMap) draws sub-cells 3..4 of rows 0..1 as a wall (pictures 5 and 0Ah) when North is 1, else as floor (16h)); auto:near_call; nested in BuildDungeonMap (ovl10:0810), proven by the parent's match"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3034,9 +3034,9 @@ size = 518
 name = "DrawNorthWestCorner"
 signature = ""
 c_name = "ovl10_fn_040F"
-level = "none"
+level = "L2"
 justification = ""
-notes = "blocked with its parent BuildDungeonMap (nested routine, draft in BuildDungeonMap's notes); renamed from ovl10_fn_040F (ovl10:040F (nested in BuildDungeonMap) picks the four corner pictures of sub-cells 1..2, rows 0..1, from North, West and the walls of the neighbouring cells (PassageKind)); auto:near_call"
+notes = "matched (dec-s10, 2026-10-13) as a nested routine of BuildDungeonMap once the matcher proved a nested routine called only by a sibling (commit 82cbb26); renamed from ovl10_fn_040F (ovl10:040F (nested in BuildDungeonMap) picks the four corner pictures of sub-cells 1..2, rows 0..1, from North, West and the walls of the neighbouring cells (PassageKind)); auto:near_call; nested in BuildDungeonMap (ovl10:0810), proven by the parent's match"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3047,9 +3047,9 @@ size = 507
 name = "DrawNorthEastCorner"
 signature = ""
 c_name = "ovl10_fn_0615"
-level = "none"
+level = "L2"
 justification = ""
-notes = "blocked with its parent BuildDungeonMap (nested routine, draft in BuildDungeonMap's notes); renamed from ovl10_fn_0615 (ovl10:0615 (nested in BuildDungeonMap) picks the four corner pictures of sub-cells 5..6, rows 0..1, from North, East and the walls of the neighbouring cells (PassageKind)); auto:near_call; map dec-16 2026-10-12: ends 0810 (was 234); 06FF, 07AA were mid-routine, entries deleted"
+notes = "matched (dec-s10, 2026-10-13) as a nested routine of BuildDungeonMap once the matcher proved a nested routine called only by a sibling (commit 82cbb26); renamed from ovl10_fn_0615 (ovl10:0615 (nested in BuildDungeonMap) picks the four corner pictures of sub-cells 5..6, rows 0..1, from North, East and the walls of the neighbouring cells (PassageKind)); auto:near_call; map dec-16 2026-10-12: ends 0810 (was 234); 06FF, 07AA were mid-routine, entries deleted; nested in BuildDungeonMap (ovl10:0810), proven by the parent's match"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3060,9 +3060,9 @@ size = 148
 name = "BuildDungeonMap"
 signature = ""
 c_name = "ovl10_fn_0810"
-level = "none"
+level = "L2"
 justification = ""
-notes = "blocked (dec-r10, 2026-10-12): the draft compiles to the original's bytes except CombatMap's address inside its nested SetDungeonCell (02AA..02AB; byte diff of build A against build/re/overlays/ovl10.bin: those two bytes are the only difference in 0221..0810). SetDungeonCell is called only by its sibling nested routines (push word ptr [bp+6]; push cs; call at 02DD, 0320, ...), never by the parent, so the strict nested rule (escalate-general-20261012012957, nested_routines() condition 2) does not prove it and its address field stays byte-exact; dec-16's earlier note attributed this to escalate-res06-20261012110841, which is now in (commit c7265b6) and proves the other four nested routines. Needs the human: extend condition 2 to a sibling call from a proven nested routine (static link push word ptr [bp+6]), or leave blocked. Draft (readable, matches except that field): procedure BuildDungeonMap; var CellCol, CellRow: ShortInt; MapX, MapY: ShortInt; Unused: array[0..1] of Byte; North, West, East: Byte; Unused2: Byte; procedure SetDungeonCell(SubCol, SubRow, Picture: Byte); var Col, Row: ShortInt; begin Col := CellCol * 6 + CellRow * 5 + $15 + SubCol; Row := CellRow * 5 + $A + SubRow; if (Col >= 0) and (Col <= MapLastCol) and (Row >= 0) and (Row <= MapLastRow) then CombatMap^.Cells[Row, Col] := Picture + 1; end; procedure DrawFloorAndWest; var SubCol, SubRow: Byte; begin for SubRow := 2 to 4 do for SubCol := 0 to 5 do SetDungeonCell(SubCol, SubRow, GroundPicture); if West = SideWall then for SubRow := 2 to 4 do begin SetDungeonCell(SubRow - 1, SubRow, 4); SetDungeonCell(SubRow, SubRow, 3); SetDungeonCell(SubRow + 1, SubRow, $D); end else if West = SideDoor then begin SetDungeonCell(1, 2, 8); SetDungeonCell(5, 4, 0); end; end; procedure DrawNorthSide; var Unused: array[0..1] of Byte; begin if North = SideWall then begin SetDungeonCell(3, 0, 5); SetDungeonCell(4, 0, 5); SetDungeonCell(3, 1, $A); SetDungeonCell(4, 1, $A); end else begin SetDungeonCell(3, 0, GroundPicture); SetDungeonCell(4, 0, GroundPicture); SetDungeonCell(3, 1, GroundPicture); SetDungeonCell(4, 1, GroundPicture); end; end; procedure DrawNorthWestCorner; var K: Byte; TopLeft, BottomLeft, TopRight, BottomRight: Byte; OpenCorner: Byte; begin if (PassageKind(MapX, MapY - 1, DirWest) = SideOpen) and (PassageKind(MapX - 1, MapY, DirNorth) = SideOpen) then OpenCorner := 1 else OpenCorner := 0; for K := 1 to 4 do case K of 1: case North of SideOpen: case West of SideOpen: TopLeft := GroundPicture; SideDoor: TopLeft := $D; SideWall: if OpenCorner <> 0 then TopLeft := 0 else TopLeft := $D; end; SideDoor, SideWall: if West = SideOpen then if OpenCorner <> 0 then TopLeft := $F else TopLeft := 5 else if OpenCorner <> 0 then TopLeft := $12 else TopLeft := 2; end; 2: case North of SideOpen: TopRight := GroundPicture; SideDoor: TopRight := $11; SideWall: TopRight := 5; end; 3: case West of SideOpen: if North = SideOpen then BottomLeft := GroundPicture else if OpenCorner <> 0 then BottomLeft := $10 else BottomLeft := $A; SideDoor: if OpenCorner <> 0 then BottomLeft := $14 else BottomLeft := 7; SideWall: if OpenCorner <> 0 then BottomLeft := 1 else BottomLeft := 3; end; 4: case West of SideOpen, SideDoor: case North of SideOpen: BottomRight := GroundPicture; SideDoor: BottomRight := $17; SideWall: BottomRight := $A; end; SideWall: case North of SideOpen: BottomRight := $D; SideDoor: BottomRight := $15; SideWall: BottomRight := 6; end; end; end; SetDungeonCell(1, 0, TopLeft); SetDungeonCell(2, 0, TopRight); SetDungeonCell(1, 1, BottomLeft); SetDungeonCell(2, 1, BottomRight); end; procedure DrawNorthEastCorner; var K: Byte; TopLeft, BottomLeft, TopRight, BottomRight: Byte; OpenCorner: Byte; NorthEast, EastNorth: Byte; begin NorthEast := PassageKind(MapX, MapY - 1, DirEast); EastNorth := PassageKind(MapX + 1, MapY, DirNorth); if (NorthEast = SideOpen) and (EastNorth = SideOpen) then OpenCorner := 1 else OpenCorner := 0; for K := 1 to 4 do case K of 1: case North of SideOpen: if NorthEast = SideWall then TopLeft := 4 else TopLeft := GroundPicture; SideDoor: TopLeft := $F; SideWall: TopLeft := 5; end; 2: if North = SideOpen then case NorthEast of SideOpen: TopRight := GroundPicture; SideDoor: if (East = SideOpen) and (EastNorth <> SideOpen) then TopRight := $18 else TopRight := 1; SideWall: if (East = SideOpen) and (EastNorth <> SideOpen) then TopRight := $B else TopRight := 3; end else if East <> SideOpen then TopRight := 9 else if EastNorth <> SideOpen then TopRight := 5 else if OpenCorner <> 0 then TopRight := $11 else TopRight := $13; 3: case North of SideOpen: BottomLeft := GroundPicture; SideDoor: BottomLeft := $10; SideWall: BottomLeft := $A; end; 4: if North = SideOpen then begin if NorthEast = SideOpen then BottomRight := GroundPicture else if East <> SideOpen then BottomRight := 4 else if EastNorth = SideOpen then BottomRight := 8 else BottomRight := $C; end else if East <> SideOpen then BottomRight := $E else if EastNorth = SideOpen then BottomRight := $17 else BottomRight := $A; end; SetDungeonCell(5, 0, TopLeft); SetDungeonCell(6, 0, TopRight); SetDungeonCell(5, 1, BottomLeft); SetDungeonCell(6, 1, BottomRight); end; begin for CellRow := -2 to 2 do for CellCol := -6 to 6 do begin MapX := ds6AAD + CellCol; MapY := ds6AAE + CellRow; West := PassageKind(MapX, MapY, DirWest); North := PassageKind(MapX, MapY, DirNorth); East := PassageKind(MapX, MapY, DirEast); DrawFloorAndWest; DrawNorthSide; DrawNorthWestCorner; DrawNorthEastCorner; end; ScatterRareTiles; end;; renamed from ovl10_fn_0810 (ovl10:0810 (CreateCombatMap calls it when AreaViewKind is 1) draws the combat map from the walls (PassageKind) of the area map cells within 6 columns and 2 rows of the party (ds6AAD, ds6AAE), then ScatterRareTiles); auto:near_call"
+notes = "matched (dec-s10, 2026-10-13): dec-r10's draft (2026-10-12) landed unchanged once the matcher proved a nested routine called only by a sibling nested routine (push word ptr [bp+6]; push cs; call, commit 82cbb26); its nested SetDungeonCell (0221), DrawFloorAndWest (02BA), DrawNorthSide (0377), DrawNorthWestCorner (040F) and DrawNorthEastCorner (0615) are proven by the parent's match; renamed from ovl10_fn_0810 (ovl10:0810 (CreateCombatMap calls it when AreaViewKind is 1) draws the combat map from the walls (PassageKind) of the area map cells within 6 columns and 2 rows of the party (ds6AAD, ds6AAE), then ScatterRareTiles); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3086,7 +3086,7 @@ size = 71
 name = "PlaceBridge"
 signature = ""
 c_name = "ovl10_fn_0B97"
-level = "none"
+level = "L2"
 justification = ""
 notes = "nested in PlaceRiver (ovl10:0BDE), proven by the parent's match (NESTED line of make match UNIT=ovl10, dec-r10 2026-10-12); level not written: make match WRITE=1 deletes this record as a map entry inside the matched parent before its nested loop would set L2 (tools/match/match.py write_levels, reported in the hand-off); renamed from ovl10_fn_0B97 (ovl10:0B97 (nested in PlaceRiver) puts tiles 34h and 35h on two neighbouring cells of a river row and counts the bridge pieces); auto:near_call"
 evidence = ["prologue"]
@@ -3101,7 +3101,7 @@ signature = ""
 c_name = "ovl10_fn_0BDE"
 level = "L2"
 justification = ""
-notes = "blocked (dec-16, 2026-10-12): the draft compiles to the original's bytes except the address fields of its nested PlaceBridge (CombatMap at 0BAB, 0BC8), compared byte for byte in the pre-entry region (held limit escalate-res06-20261012110841); the body differs only in CombatMap and RollDice addresses. Draft: procedure PlaceRiver; var Chance: Byte; Bridges: Byte; StartCol: ShortInt; Col, Row: ShortInt; Unused: Byte; procedure PlaceBridge(Row, Col: ShortInt); begin CombatMap^.Cells[Row, Col] := $34; CombatMap^.Cells[Row, Col + 1] := $35; Inc(Bridges); end; begin Chance := 0; Bridges := 0; if (BlockTerrainFlags and FlagRiverSometimes) <> 0 then Chance := $23; if (BlockTerrainFlags and FlagRiverOften) <> 0 then Chance := $4B; if RollDice(1, 100) <= Chance then begin Col := $22 - RollDice(5, 4); while (Col + 2) mod 7 > 0 do Dec(Col); StartCol := Col; for Row := 0 to MapLastRow do if Col <= MapLastCol then begin CombatMap^.Cells[Row, Col] := $32; CombatMap^.Cells[Row, Col + 1] := $33; if (RollDice(1, $14) = 1) or Odd(Bridges) then PlaceBridge(Row, Col); Inc(Col); end; if Bridges = 0 then begin Row := $C - RollDice(1, 9) + 4; Col := StartCol + Row; PlaceBridge(Row, Col); PlaceBridge(Row + 1, Col + 1); end; end; end;; renamed from ovl10_fn_0BDE (ovl10:0BDE draws a diagonal river (tiles 32h, 33h) down the wilderness combat map with 35 or 75 in 100 for the BlockTerrainFlags bits 20h and 10h, with bridge pieces (PlaceBridge) at random rows or at least one); auto:near_call; map dec-16 2026-10-12: ends 0D13 (was 16); 0BEE was mid-routine, entry deleted"
+notes = "matched at L2 (merged in 53ceaec after the nested-routine rule of c7265b6; note kept for history). Earlier: blocked (dec-16, 2026-10-12): the draft compiles to the original's bytes except the address fields of its nested PlaceBridge (CombatMap at 0BAB, 0BC8), compared byte for byte in the pre-entry region (held limit escalate-res06-20261012110841); the body differs only in CombatMap and RollDice addresses. Draft: procedure PlaceRiver; var Chance: Byte; Bridges: Byte; StartCol: ShortInt; Col, Row: ShortInt; Unused: Byte; procedure PlaceBridge(Row, Col: ShortInt); begin CombatMap^.Cells[Row, Col] := $34; CombatMap^.Cells[Row, Col + 1] := $35; Inc(Bridges); end; begin Chance := 0; Bridges := 0; if (BlockTerrainFlags and FlagRiverSometimes) <> 0 then Chance := $23; if (BlockTerrainFlags and FlagRiverOften) <> 0 then Chance := $4B; if RollDice(1, 100) <= Chance then begin Col := $22 - RollDice(5, 4); while (Col + 2) mod 7 > 0 do Dec(Col); StartCol := Col; for Row := 0 to MapLastRow do if Col <= MapLastCol then begin CombatMap^.Cells[Row, Col] := $32; CombatMap^.Cells[Row, Col + 1] := $33; if (RollDice(1, $14) = 1) or Odd(Bridges) then PlaceBridge(Row, Col); Inc(Col); end; if Bridges = 0 then begin Row := $C - RollDice(1, 9) + 4; Col := StartCol + Row; PlaceBridge(Row, Col); PlaceBridge(Row + 1, Col + 1); end; end; end;; renamed from ovl10_fn_0BDE (ovl10:0BDE draws a diagonal river (tiles 32h, 33h) down the wilderness combat map with 35 or 75 in 100 for the BlockTerrainFlags bits 20h and 10h, with bridge pieces (PlaceBridge) at random rows or at least one); auto:near_call; map dec-16 2026-10-12: ends 0D13 (was 16); 0BEE was mid-routine, entry deleted"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3242,7 +3242,7 @@ size = 5
 name = "ovl10_init"
 signature = ""
 c_name = "ovl10_init"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_0"
 evidence = ["prologue"]
