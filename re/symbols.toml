@@ -12077,7 +12077,7 @@ signature = ""
 c_name = "ovl25_fn_00CB"
 level = "none"
 justification = ""
-notes = "renamed from ovl25_fn_00CB (ovl25:00CB nested in ovl25:03BD: fills the parent's word spans from the capital letters and digits of the prompt text); auto:near_call; nested in ReadPromptChoice (static link pushed by its callers); drafted in commit 3c8dac5, blocked with its parent (see the parent's notes)"
+notes = "nested in ReadPromptChoice (ovl25:03BD), proven by the parent's match (make match UNIT=ovl25: NESTED); its caller pushes the parent frame as the static link (push bp; push cs; call). Level not recorded by make match WRITE=1: it removes a non-L2 map entry inside the matched parent before it writes the nested L2 (tool defect reported by dec-r25, 2026-10-12)"
 evidence = ["prologue"]
 
 [[routine]]
@@ -12090,7 +12090,7 @@ signature = ""
 c_name = "ovl25_fn_01DA"
 level = "none"
 justification = ""
-notes = "renamed from ovl25_fn_01DA (ovl25:01DA nested in ovl25:03BD: draws the prompt text on row 24 with res06_fn_01DF, the chosen word and the capitals in the highlight colour); auto:near_call; nested in ReadPromptChoice (static link pushed by its callers); drafted in commit 3c8dac5, blocked with its parent (see the parent's notes)"
+notes = "nested in ReadPromptChoice (ovl25:03BD), proven by the parent's match (make match UNIT=ovl25: NESTED); its caller pushes the parent frame as the static link (push bp; push cs; call). Level not recorded by make match WRITE=1: it removes a non-L2 map entry inside the matched parent before it writes the nested L2 (tool defect reported by dec-r25, 2026-10-12)"
 evidence = ["prologue"]
 
 [[routine]]
@@ -12101,9 +12101,9 @@ size = 830
 name = "ReadPromptChoice"
 signature = "function ReadPromptChoice(Title, Prompt: String40; TitleColor, WordColor, HotColor, ExtKeys, Animate: Byte; var ExtKey: Byte): Char"
 c_name = "ovl25_e2"
-level = "none"
+level = "L2"
 justification = ""
-notes = "renamed from ovl25_e2 (ovl25:03BD shows Title and the words of Prompt on row 24, highlights the chosen word (, and . move it, its capital letter picks it) and returns the key chosen (draft, address fields only differ)); auto:near_call; blocked (dec-8, 2026-10-12): the full draft is in commit 3c8dac5 (unit/ovl25, src/OVL25.PAS). Its body and its nested routines compile to the original's bytes except address fields: make match reports 'literal pool byte N before the entry' because the nested routines (TP 6.0 puts them in the parent's pre-entry region) hold far calls (System, res06, GameClock, DrawSprite) and DS operands, and the matcher compares that region byte-exact. A capstone diff of both builds (every differing instruction is an lcall or a DS displacement naming the same global, e.g. ListMenuTop, PromptWordChoice, PictureAnimation) shows no other difference. Waits for the nested-routine address comparison held in work/blockers.md (escalate-res06-20261012110841); restore the draft from 3c8dac5 once it lands; nested: SplitPromptWords (ovl25:00CB), DrawPromptWords (ovl25:01DA)"
+notes = "renamed from ovl25_e2 (ovl25:03BD shows Title and the words of Prompt on row 24, highlights the chosen word (, and . move it, its capital letter picks it) and returns the key chosen); auto:near_call; matched (dec-r25, 2026-10-12) from the draft of commit 3c8dac5 once the matcher compared proven nested routines with address resolution (c7265b6); the one remaining difference was the frame base of PictureAnimation.Frames[I] (ovl25:04C8, 8 bytes below the record), resolved by declaring the bytes DS:6AB6..6ABD in POOLVARS; nested: SplitPromptWords (ovl25:00CB) and DrawPromptWords (ovl25:01DA), proven by the parent's match"
 evidence = ["prologue"]
 
 [[routine]]
