@@ -77,6 +77,7 @@ BUILD = ROOT / "build/match"
 RTL_UNITS = ("SYSTEM", "CRT", "DOS", "OVERLAY")
 DATA_PAD = 64                      # bytes of padding variable per unit in variant B
 CODE_PAD = 5                       # `procedure P; begin end;` = push bp; mov bp,sp; pop bp; retf
+PUSH_LINK = bytes([0xFF, 0x76, 0x06])   # push word ptr [bp+6]: a nested routine passing its static link on
 NAME_RE = re.compile(r"^(res|ovl)(\d\d)_(?:fn_([0-9a-f]{4})|init)$", re.I)
 DS_RE = re.compile(r"^ds([0-9a-f]{4})$", re.I)
 STUB_INIT = "{@stub-init}"          # on the line before the `begin` of an initialisation part not decompiled yet
@@ -488,24 +489,31 @@ def nested_routines(seg_bytes: bytes, region_start: int, parent_entry: int,
       1. its entry is the target of a near call inside the parent, or inside a nested routine already
          proven this way; with {$F+} (every unit) TP 6.0 calls a nested routine as `push cs; call near`
          (probe: `make tpc` of a parent with nested routines; ovl26:01D7 calls ovl26:00C7 the same way);
-      2. that call is preceded by the static link push `push bp`, so the bytes are 55 0E E8 rel16;
-         a sibling call pushes the caller's own static link (`push word ptr [bp+6]`) and does not count;
+      2. that call is preceded by a static link push: from the parent `push bp` (bytes 55 0E E8 rel16);
+         from a nested routine already proven, `push bp` (its own frame, for a routine nested in it) or
+         `push word ptr [bp+6]` (its own static link passed on, bytes FF 76 06 0E E8 rel16: a sibling
+         nested at the same level, which shares that link). A call from the parent's body with
+         `push word ptr [bp+6]` is not a nested call (that is the parent's own link) and does not count;
       3. the routine, from its entry to its return, lies wholly inside the pre-entry region.
-    Never by address range alone: the region also holds string and set literals."""
+    Never by address range alone: the region also holds string and set literals.
+    (Rule 2's sibling form was added 2026-10-13 for routines called only by their siblings, such as
+    ovl10's SetDungeonCell and ovl25's FirstNonBlank; proven by `make match-gate` and the probe tests.)"""
     found: dict[int, tuple[int, int]] = {}
-    work = [(parent_entry, parent_end)]
+    work = [(parent_entry, parent_end, False)]
     while work:
-        start, end = work.pop()
+        start, end, inside = work.pop()
         prev: list = []
         for i in md.disasm(seg_bytes[start:end], start):
+            link = bytes(prev[-2].bytes) if len(prev) >= 2 else b""
             if (i.bytes[0] == CALL_NEAR and i.size == 3 and len(prev) >= 2
-                    and bytes(prev[-1].bytes) == bytes([PUSH_CS]) and bytes(prev[-2].bytes) == bytes([PUSH_BP])):
+                    and bytes(prev[-1].bytes) == bytes([PUSH_CS])
+                    and (link == bytes([PUSH_BP]) or (inside and link == PUSH_LINK))):
                 target = (i.address + 3 + int.from_bytes(i.bytes[1:3], "little", signed=True)) & 0xFFFF
                 if region_start <= target < parent_entry and target not in found:
                     t_end = return_end(seg_bytes[:parent_entry], target, parent_entry)
                     if t_end is not None and t_end <= parent_entry:
                         found[target] = (t_end, start)
-                        work.append((target, t_end))
+                        work.append((target, t_end, True))
             prev.append(i)
     return found
 
