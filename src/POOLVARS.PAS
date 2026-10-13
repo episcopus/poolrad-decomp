@@ -259,8 +259,9 @@ type
     ThiefSkills: array[1..8] of Byte;
     Affects: Pointer;             { +$7F: the list of affects (res12_fn_2199, RemoveAffect walk it) }
     Pad83: Byte;
-    { +$84: below $80 the party's Space command takes the character out of quick combat
-      (ovl08:0504); meaning otherwise unknown. }
+    { +$84: for computer-run members, low seven bits are morale and high bit $80 marks the AI
+      (PrepareCombatants, ovl10:0675; CheckMorale, ovl09:10D7). Below $80, the party's Space
+      command takes the character out of quick combat (ovl08:0504) [I]. }
     B84: Byte;
     { +$85: the low three bits are the shares of the treasure a computer-run member (B84 $80 and up)
       takes for himself after a battle (TakeHirelingShares, ovl05:1329). }
@@ -482,13 +483,15 @@ var
     GameVars^[VarShowWallOverlays] is 0 (ovl14:0380); ShowAreaView (when that variable is set),
     ShowEncounterPicture and StartGame clear it. }
   WallMapMode: Byte;              { overhead wall map shown instead of the 3D view; see above }
-  ds6AAD: ShortInt;               { the party's column in the 16x16 area map (GEO) }
+  PartyMapColumn: ShortInt;               { the party's column in the 16x16 area map (GEO) }
     { ShortInt, not Byte: ovl14 widens it with cbw (ovl14:0696); EventByteAt/DrawWallView take it. }
-  ds6AAE: ShortInt;               { the party's row in the 16x16 area map }
+  PartyMapRow: ShortInt;               { the party's row in the 16x16 area map }
     { ShortInt, not Byte: ovl14 widens it with cbw (ovl14:069D); EventByteAt/DrawWallView take it; set to 1 by StartGame. }
-  { The marker's icon set (DrawIcon's third parameter): the wilderness keys H, M, P and K set 0,
-    2, 4 and 6 (HandleWildernessKeys, HandleWildernessKeys); WriteVmWord maps a script value 0..3 to the same 0/2/4/6. }
-  ds6AAF: Byte;                   { the marker's icon set; see above }
+  { PartyFacing is the party's eight-way direction code: the wilderness keys H, M, P and K set
+    0, 2, 4 and 6 (HandleWildernessKeys); WriteVmWord maps script values 0..3 to those values. The
+    combat builder indexes direction steps with it and halves it for the four facing icons
+    (ovl10:0673, 0876..0879). The same values select DrawIcon's marker icon set. }
+  PartyFacing: Byte;              { see above }
   ds6AB0: Byte;                   { WallIdAt's result for the party cell and icon set (MoveParty); meaning unknown }
   ds6AB1: Byte;                   { the event byte of the party's map cell, from EventByteAt; bit 7 = interior }
   MarkerFrame: Byte;              { the party marker's animation frame 0..5; evidence in re/dseg.toml }
@@ -556,10 +559,10 @@ var
   ds4713: string[1];              { Str(TileSet): the picture number ShowEndingNarrative appends to FINAL }
   ds471E: array[0..$47] of Byte;  { 72 bytes reset to 1 when rest starts (ovl20:0CE5) }
   ds25C0: array[0..2, 0..2] of Byte;  { the 3x3 line pattern table StepLine reads at [SY+1, SX+1] }
-  { ds2736 and ds273F: nine entries each (ds273F starts 9 bytes after ds2736). ovl14's
+  { DirStepX and DirStepY: nine entries each (DirStepY starts 9 bytes after DirStepX). ovl14's
     ClampPartyPosition also adds them as the party's column and row step (cbw at ovl14:06D0, 06DB). }
-  ds2736: array[0..8] of ShortInt;  { the x step per direction; see above }
-  ds273F: array[0..8] of ShortInt;  { the y step per direction; see above }
+  DirStepX: array[0..8] of ShortInt;  { the x step per direction; see above }
+  DirStepY: array[0..8] of ShortInt;  { the y step per direction; see above }
   ds2745: array[0..255] of TTileEntry;  { the tile table WalkLine reads; see above }
   CombatantTable: array[0..72] of TMapEntry;  { the combatants on the combat map; entry 0's Kind is the count
                                     (72 entries fit before CombatantViewCol) }
@@ -640,11 +643,11 @@ var
   ds6810: PMenuLine;              { head of the shop's item list, a far pointer the loader clears (ovl11:031A) }
   WallTiles: ^TWallTiles;            { the wall tiles, $924 bytes the loader allocates (ovl11:0084) }
   ds6A5C: ^TBlock400;             { $400-byte block the loader allocates (ovl11:0094) }
-  ds84DC: Byte;                   { the wall view / outdoor mode EventByteAt tests (0 and $A both skip) }
+  WallViewMode: Byte;                   { the wall view / outdoor mode EventByteAt tests (0 and $A both skip) }
   GeoCells: PGeoCellBlock absolute ds6A5C; { cell-byte view of the $400 block for ovl14 }
   WallSets: ^TWallSets absolute WallTiles; { the wall tiles by wallset slot and wall (LoadWallSet) }
-  ds6AAEWords: array[0..3] of TPresenceSlot;  { the 4-byte element table at DS:6AAE; the loader sets
-                                    elements 2 and 3 to $FFFF (ovl11:035E..0390) }
+  ds6AAEWords: array[0..3] of TPresenceSlot;  { the 4-byte element table shares its base with PartyMapRow at
+                                    DS:6AAE; the loader sets entries 2 and 3 to $FFFF (ovl11:035E..0390) }
   ds6AB2: Word;                   { cleared by the loader (ovl11:0353) }
   ds6AB4: Word;                   { set to 1 by the loader (ovl11:0358) }
   ds6AB6: array[0..7] of Byte;    { DS:6AB6..6ABD, 8 bytes no decompiled routine reads; declared so that the
@@ -655,9 +658,9 @@ var
   PictureAnimation: TAnimation;
   { The loader sets entries 1 and 2 to Kind $FF and Addr nil (ovl11:02CA..0302). }
   ds6AFB: array[0..2] of TLoadSlot;  { 5-byte slot table; see TLoadSlot }
-  ds6B00: Byte;                   { the bank index of the HEAD sprite in DS:6B01; $FF when none (LoadHeadBodySprites) }
+  HeadBankIndex: Byte;                   { the bank index of the HEAD sprite in DS:6B01; $FF when none (LoadHeadBodySprites) }
   ds6B01: Pointer;                { the loaded HEAD sprite bank (ShowHeadBodySprites, LoadHeadBodySprites) }
-  ds6B05: Byte;                   { the bank index of the BODY sprite in DS:6B06; $FF when none (LoadHeadBodySprites) }
+  BodyBankIndex: Byte;                   { the bank index of the BODY sprite in DS:6B06; $FF when none (LoadHeadBodySprites) }
   ds6B06: Pointer;                { the loaded BODY sprite bank (ShowHeadBodySprites, LoadHeadBodySprites) }
   ds6B0A: string[8];              { the last picture file loaded (LoadSpriteList); cleared by the loader (ovl11:043D) }
   ds6B1C: Byte;                   { set to $FF by the loader (ovl11:0442) and by FreeSpriteList }
@@ -853,7 +856,7 @@ var
   SpellNames: array[0..$38] of string[40];
   { Globals of the combat map builder ovl10 (whitepaper 5.5.2). }
   CombatBlock: Byte;              { the area map block code the battle is fought on (ovl10:1215) }
-  { The combat direction (an index of ds2736/ds273F) of a facing 0..3; PrepareCombatants also
+  { The combat direction (an index of DirStepX/DirStepY) of a facing 0..3; PrepareCombatants also
     uses it as the starting icon set (ovl10:1363, 15EA). }
   FacingCombatDir: array[0..3] of Byte;
   { Per side (PlacingSide): 4 groups of 6 rows of 11 placement cells, 1 while free (ovl10:1480). }

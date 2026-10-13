@@ -22,7 +22,7 @@ procedure Load3DMap(BlockId: Byte);
 implementation
 uses POOLVARS, RES04, RES05, RES07, OVL34;
 const
-  { The facing directions the map routines take (the step tables ds2736/ds273F are indexed by
+  { The facing directions the map routines take (the step tables DirStepX/DirStepY are indexed by
     them); which wall nibble and door bit pair each one selects is whitepaper 4.2.1. }
   DirNorth = 0;
   DirEast = 2;
@@ -175,13 +175,13 @@ end;
   has no wall (WallIdAt 0), else the door bit pair of the door plane GeoCells^.Cells (bits 0-1
   north, 2-3 east, 4-5 south, 6-7 west). The ovl14 movement code takes 0 as a solid wall, 1 as
   open and 2 or 3 as two kinds of locked door (DoWildernessMenu offers Bash, Pick and Knock).
-  A cell outside the 16x16 map answers 0 while ds84DC is 0 or $A; otherwise the coordinates wrap
+  A cell outside the 16x16 map answers 0 while WallViewMode is 0 or $A; otherwise the coordinates wrap
   to the opposite edge (Col > 15 becomes 0, Col < 0 becomes 15, the same for Row). }
 function DoorKindAt(Col, Row: ShortInt; Dir: Byte): Byte;
 var
   Kind: Byte;
 begin
-  if not CellInRange(Col, Row) and ((ds84DC = 0) or (ds84DC = $A)) then
+  if not CellInRange(Col, Row) and ((WallViewMode = 0) or (WallViewMode = $A)) then
     DoorKindAt := 0
   else begin
     if Col > MapLast then Col := 0;
@@ -201,12 +201,12 @@ begin
 end;
 { ovl29:047B. The wall id (0..15, 0 = no wall) on the side Dir of map cell (Col, Row): the high
   nibble of WallsNE for north, its low nibble for east, the high nibble of WallsSW for south and
-  its low nibble for west (whitepaper 4.2.1). Off-map cells answer 0 while ds84DC is 0 or $A and
+  its low nibble for west (whitepaper 4.2.1). Off-map cells answer 0 while WallViewMode is 0 or $A and
   wrap otherwise, as in DoorKindAt. QUIRK ovl29:047B: a Dir other than 0, 2, 4, 6 leaves the
   result unassigned. }
 function WallIdAt(Col, Row: ShortInt; Dir: Byte): Byte;
 begin
-  if not CellInRange(Col, Row) and ((ds84DC = 0) or (ds84DC = $A)) then
+  if not CellInRange(Col, Row) and ((WallViewMode = 0) or (WallViewMode = $A)) then
     WallIdAt := 0
   else begin
     if Col > MapLast then Col := 0;
@@ -223,11 +223,11 @@ begin
 end;
 { ovl29:057A. The event byte of map cell (Col, Row) from the event plane GeoCells^.Events (bit 7 =
   interior cell, whitepaper 4.2.1); ShowAreaView asks for the party cell and tests bit 7, MoveParty
-  keeps it in ds6AB1. Off-map cells answer 0 while ds84DC is 0 or $A and wrap otherwise, as in
+  keeps it in ds6AB1. Off-map cells answer 0 while WallViewMode is 0 or $A and wrap otherwise, as in
   DoorKindAt. }
 function EventByteAt(Col, Row: ShortInt): Byte;
 begin
-  if not CellInRange(Col, Row) and ((ds84DC = 0) or (ds84DC = $A)) then
+  if not CellInRange(Col, Row) and ((WallViewMode = 0) or (WallViewMode = $A)) then
     EventByteAt := 0
   else begin
     if Col > MapLast then Col := 0;
@@ -254,7 +254,7 @@ end;
   from two to the right, front (3) and side walls (4, 5), MidCellStep tiles per cell; near row, two cells
   each side, front (6) and side walls (7, 8), NearCellStep tiles per cell. Wall ids come from WallIdAt with
   the facing direction for front walls and the left (Dir + 6) or right (Dir + 2) direction for
-  side walls; the step tables ds2736/ds273F move one cell. Called by ShowAreaView and the
+  side walls; the step tables DirStepX/DirStepY move one cell. Called by ShowAreaView and the
   movement loop (A key). QUIRK ovl29:05FD: two locals (Unused1, Unused2) are never used. }
 procedure DrawWallView(Col0, Row0: ShortInt; Dir: Byte);
 var
@@ -286,8 +286,8 @@ begin
     DirRight := (Dir + 2) mod 8;
     BaseCol := Col0;
     BaseRow := Row0;
-    StepCol := ds2736[Dir];
-    StepRow := ds273F[Dir];
+    StepCol := DirStepX[Dir];
+    StepRow := DirStepY[Dir];
     Depth := ViewDepth;
     Inc(BaseCol, Depth * StepCol);
     Inc(BaseRow, Depth * StepRow);
@@ -316,14 +316,14 @@ begin
             else
             begin
               if EdgeWall > 0 then
-                if WallIdAt(Col - ds2736[DirLeft], Row - ds273F[DirLeft], DirLeft) <> 0 then
+                if WallIdAt(Col - DirStepX[DirLeft], Row - DirStepY[DirLeft], DirLeft) <> 0 then
                   DrawWallPiece(WallPieceCol[PieceFarEdge] + Shift + 1, WallPieceRow[PieceFarEdge], EdgeWall, PieceFarEdge);
               EdgeWall := 0;
             end;
             Inc(Count);
             Dec(Shift, FarCellStep);
-            Col := Col + ds2736[DirLeft];
-            Row := Row + ds273F[DirLeft];
+            Col := Col + DirStepX[DirLeft];
+            Row := Row + DirStepY[DirLeft];
           end;
           Col := BaseCol;
           Row := BaseRow;
@@ -346,14 +346,14 @@ begin
             else
             begin
               if EdgeWall > 0 then
-                if WallIdAt(Col - ds2736[DirRight], Row - ds273F[DirRight], DirRight) <> 0 then
+                if WallIdAt(Col - DirStepX[DirRight], Row - DirStepY[DirRight], DirRight) <> 0 then
                   DrawWallPiece(WallPieceCol[PieceFarEdge] + Shift - 1, WallPieceRow[PieceFarEdge], EdgeWall, PieceFarEdge);
               EdgeWall := 0;
             end;
             Inc(Count);
             Inc(Shift, FarCellStep);
-            Col := Col + ds2736[DirRight];
-            Row := Row + ds273F[DirRight];
+            Col := Col + DirStepX[DirRight];
+            Row := Row + DirStepY[DirRight];
           end;
           Col := BaseCol;
           Row := BaseRow;
@@ -369,8 +369,8 @@ begin
                 DrawWallPiece(WallPieceCol[PieceFarLeft] + Shift - 1, WallPieceRow[PieceFarLeft], SideWall, PieceFarLeft);
             Inc(Count);
             Dec(Shift, FarCellStep);
-            Col := Col + ds2736[DirLeft];
-            Row := Row + ds273F[DirLeft];
+            Col := Col + DirStepX[DirLeft];
+            Row := Row + DirStepY[DirLeft];
           end;
           Col := BaseCol;
           Row := BaseRow;
@@ -386,16 +386,16 @@ begin
                 DrawWallPiece(WallPieceCol[PieceFarRight] + Shift + 1, WallPieceRow[PieceFarRight], SideWall, PieceFarRight);
             Inc(Count);
             Inc(Shift, FarCellStep);
-            Col := Col + ds2736[DirRight];
-            Row := Row + ds273F[DirRight];
+            Col := Col + DirStepX[DirRight];
+            Row := Row + DirStepY[DirRight];
           end;
         end;
         1:  { the middle row }
         begin
-          Col := BaseCol + ds2736[DirLeft];
-          Col := Col + ds2736[DirLeft];
-          Row := BaseRow + ds273F[DirLeft];
-          Row := Row + ds273F[DirLeft];
+          Col := BaseCol + DirStepX[DirLeft];
+          Col := Col + DirStepX[DirLeft];
+          Row := BaseRow + DirStepY[DirLeft];
+          Row := Row + DirStepY[DirLeft];
           Count := 0;
           Shift := -2 * MidCellStep;
           while Count < 3 do
@@ -408,13 +408,13 @@ begin
               DrawWallPiece(WallPieceCol[PieceMidLeft] + Shift, WallPieceRow[PieceMidLeft], SideWall, PieceMidLeft);
             Inc(Count);
             Inc(Shift, MidCellStep);
-            Col := Col + ds2736[DirRight];
-            Row := Row + ds273F[DirRight];
+            Col := Col + DirStepX[DirRight];
+            Row := Row + DirStepY[DirRight];
           end;
-          Col := BaseCol + ds2736[DirRight];
-          Col := Col + ds2736[DirRight];
-          Row := BaseRow + ds273F[DirRight];
-          Row := Row + ds273F[DirRight];
+          Col := BaseCol + DirStepX[DirRight];
+          Col := Col + DirStepX[DirRight];
+          Row := BaseRow + DirStepY[DirRight];
+          Row := Row + DirStepY[DirRight];
           Count := 0;
           Shift := 2 * MidCellStep;
           while Count < 3 do
@@ -427,14 +427,14 @@ begin
               DrawWallPiece(WallPieceCol[PieceMidRight] + Shift, WallPieceRow[PieceMidRight], SideWall, PieceMidRight);
             Inc(Count);
             Dec(Shift, MidCellStep);
-            Col := Col + ds2736[DirLeft];
-            Row := Row + ds273F[DirLeft];
+            Col := Col + DirStepX[DirLeft];
+            Row := Row + DirStepY[DirLeft];
           end;
         end;
         0:  { the party's row }
         begin
-          Col := BaseCol + ds2736[DirLeft];
-          Row := BaseRow + ds273F[DirLeft];
+          Col := BaseCol + DirStepX[DirLeft];
+          Row := BaseRow + DirStepY[DirLeft];
           Count := 0;
           Shift := -NearCellStep;
           while Count < 2 do
@@ -447,11 +447,11 @@ begin
               DrawWallPiece(WallPieceCol[PieceNearLeft] + Shift, WallPieceRow[PieceNearLeft], SideWall, PieceNearLeft);
             Inc(Count);
             Inc(Shift, NearCellStep);
-            Col := Col + ds2736[DirRight];
-            Row := Row + ds273F[DirRight];
+            Col := Col + DirStepX[DirRight];
+            Row := Row + DirStepY[DirRight];
           end;
-          Col := BaseCol + ds2736[DirRight];
-          Row := BaseRow + ds273F[DirRight];
+          Col := BaseCol + DirStepX[DirRight];
+          Row := BaseRow + DirStepY[DirRight];
           Count := 0;
           Shift := NearCellStep;
           while Count < 2 do
@@ -464,13 +464,13 @@ begin
               DrawWallPiece(WallPieceCol[PieceNearRight] + Shift, WallPieceRow[PieceNearRight], SideWall, PieceNearRight);
             Inc(Count);
             Dec(Shift, NearCellStep);
-            Col := Col + ds2736[DirLeft];
-            Row := Row + ds273F[DirLeft];
+            Col := Col + DirStepX[DirLeft];
+            Row := Row + DirStepY[DirLeft];
           end;
         end;
       end;
-      BaseCol := BaseCol + ds2736[DirBack];
-      BaseRow := BaseRow + ds273F[DirBack];
+      BaseCol := BaseCol + DirStepX[DirBack];
+      BaseRow := BaseRow + DirStepY[DirBack];
       Dec(Depth);
     until Depth = $FF;
     StepDisplay;

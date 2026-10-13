@@ -3231,3 +3231,72 @@ kind = "routine"
 why = "ovl20:0BB2 increments the shared step counter, processes the party every twelve rest calls, decrements positive RestHours and refreshes the next spell countdown when an hour completes"
 date = "2026-10-13"
 
+[[rename]]
+old = "ds6AAD"
+new = "PartyMapColumn"
+kind = "global"
+why = "DS:6AAD is the party's column in the 16x16 area map; ovl10:0399 adds CellCol and ovl10:0807 builds group origins from it"
+date = "2026-10-13"
+
+[[rename]]
+old = "ds6AAE"
+new = "PartyMapRow"
+kind = "global"
+why = "DS:6AAE is the party's row in the 16x16 area map; ovl10:0400 adds CellRow and ovl10:0808 builds group origins from it"
+date = "2026-10-13"
+
+[[rename]]
+old = "ds6AAF"
+new = "PartyFacing"
+kind = "global"
+why = "ovl10:0673 and 0876 use DS:6AAF as the party's direction, converting 0,2,4,6 to facing 0..3; ovl14 wilderness keys set the same values for the marker"
+date = "2026-10-13"
+
+[[rename]]
+old = "ds2736"
+new = "DirectionStepX"
+kind = "global"
+why = "DS:2736 has one signed X step per area-map direction; ovl10:0147 and FindStartCell 0765..0834 index it for neighbor and group positions"
+date = "2026-10-13"
+
+[[rename]]
+old = "ds273F"
+new = "DirectionStepY"
+kind = "global"
+why = "DS:273F has one signed Y step per area-map direction; ovl10:0147 and FindStartCell 0765..0834 index it for neighbor and group positions"
+date = "2026-10-13"
+
+[[rename]]
+old = "ds84DC"
+new = "WallViewMode"
+kind = "global"
+why = "POOLVARS and EventByteAt identify DS:84DC as wall-view/outdoor mode; ovl10:0104 suppresses rare tiles when it is 10"
+date = "2026-10-13"
+
+[[rename]]
+old = "ds6B00"
+new = "HeadBankIndex"
+kind = "global"
+why = "DS:6B00 is the bank index for the HEAD sprite pointer at DS:6B01, set to sentinel value 255 when none; StartBattle resets it after ReleasePicture at ovl10:0967"
+date = "2026-10-13"
+[[rename]]
+old = "ds6B05"
+new = "BodyBankIndex"
+kind = "global"
+why = "DS:6B05 is the bank index for the BODY sprite pointer at DS:6B06, set to sentinel value 255 when none; StartBattle resets it after ReleasePicture at ovl10:0968"
+date = "2026-10-13"
+
+[[rename]]
+old = "DirectionStepX"
+new = "DirStepX"
+kind = "global"
+why = "DS:2736 is the X step per direction; ovl10:0147 and FindStartCell index it for neighbor and group positions"
+date = "2026-10-13"
+
+[[rename]]
+old = "DirectionStepY"
+new = "DirStepY"
+kind = "global"
+why = "DS:273F is the Y step per direction; ovl10:0147 and FindStartCell index it for neighbor and group positions"
+date = "2026-10-13"
+

@@ -62,7 +62,7 @@ const
   InitiativeQuickAll = $14;     { Initiative marking a quick-combat character (ovl08: InitiativeQuickAll) }
   VarNoCasting = 229;           { game variable (+$1CA) that hides Cast (ovl08: VarNoCasting) }
   MaxSpell = $38;               { highest spell number (ovl23: LastSpell) }
-  Directions = 8;               { the eight combat directions (ds2736/ds273F) }
+  Directions = 8;               { the eight combat directions (DirStepX/DirStepY) }
   StraightCost = 2;             { a straight step costs twice the tile cost in half squares (ovl09:0718) }
   DiagonalCost = 3;             { a diagonal step (odd direction) three times (ovl09:0723) }
   TileKept = $1E;               { the tile ProbeStep always answers when a cell has it (ovl31: TileKept) }

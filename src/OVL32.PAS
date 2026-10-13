@@ -133,7 +133,7 @@ end;
   width is allocated, the bytes are copied (MirrorPicture when IconSet is above
   IconSetCopyLimit, otherwise Move of the tail and the pixels), and res07_fn_0D71 draws
   it at the cell times CellStep. The copy is then freed. DrawPartyMarker passes the
-  marker cell, the icon set ds6AAF, and the walk frame split into half and picture. }
+  marker cell, the icon set PartyFacing, and the walk frame split into half and picture. }
 procedure DrawIcon(CellCol, CellRow: Shortint; IconSet, Mirror, PicIndex: Byte);
 var
   Dest: Pointer;

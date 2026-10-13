@@ -55,8 +55,13 @@ const
   BridgeEast = $35;
   GridLastCol = 10;             { a placement grid is 11 cells wide }
   GridLastRow = 5;              { and 6 cells high }
+  CombatantClearLoopLast = $FF; { QUIRK ovl10:0872: clear loop reaches 255, though the party has 72 combatants }
+  LaterRingLastCellCount = 11;  { later placement rings contain 12 cells (ovl10:0802) }
   DirNone = 8;                  { the direction with no step: ProbeStep looks at the cell itself }
-  DirNorth = 0;                 { the area map directions PassageKind takes (ds2736/ds273F steps) }
+  FacingOffsetRight = 1;       { placement-search offsets relative to the current facing }
+  FacingOffsetBack = 2;
+  FacingOffsetLeft = 3;
+  DirNorth = 0;                 { the area map directions PassageKind takes (DirStepX/DirStepY steps) }
   DirEast = 2;
   DirWest = 6;
   MapEdge = 15;                 { the 16x16 area map's last column and row }
@@ -68,15 +73,16 @@ const
   CombatRecordSize = $16;       { the bytes PrepareCombatants allocates for TCharacter.Combat }
   CombatMapSize = $4E9;         { the bytes of CombatMap^: the 7-byte header and 25 rows of 50 tiles }
   AreaViewDungeon = 1;          { AreaViewKind of the 3D wall view: the battle is fought in a dungeon }
-  KindMask = $7F;               { TCharacter.B84 without its computer-run bit }
-  ComputerRun = $80;            { TCharacter.B84 bit: the computer runs the character (ovl05) }
+  MoraleMask = $7F;             { low seven bits of B84 carry the computer's morale value (ovl09:10D7) }
+  ComputerRunFlag = $80;        { high bit of B84: the computer runs the character }
+  MaxComputerMorale = $66;      { CheckMorale zeroes thresholds above this (ovl09:0431) }
   SideParty = 0;
   SideEnemy = 1;
   ViewModeCombat = 5;           { ds49F3 during combat (ovl31) }
   HookBattleStart = 8;          { the RunAffectHooks kind StartBattle runs for every character }
   { Words of ds49D6^ (the second game word block) this unit reads or writes. }
   Var2SideDistance = 705;       { area map steps between the two sides' placement origins (ovl10:1A44) }
-  Var2Morale = 710;             { at most 100 (StartBattle); plus $80 the B84 of a computer-run member [I] }
+  Var2Morale = 710;             { at most 100 (StartBattle); B84 morale source for computer-run members [I] }
   Var2BattleWord = 819;         { cleared when a battle starts; meaning unknown }
   VarPartySize = 830;           { the members (ovl05); later list entries get NoBody }
   { A word of GameVars^: while it is $FF, Flag3DTiles is replaced by FlagPlain (ovl10:0B75);
@@ -84,7 +90,7 @@ const
   VarBlock8Gate = 435;
 
 { ovl10:0000. Scatters rare tiles over the plain ground (GroundPicture cells) of the combat map:
-  on a d100 roll of 98 tile $1A, of 99 tile $1B, and on 100, unless ds84DC is $A, one time in 100
+  on a d100 roll of 98 tile $1A, of 99 tile $1B, and on 100, unless WallViewMode is $A, one time in 100
   tile $1C (d10 of 1..6) or $1D (7..10). Called last by both map builders. }
 procedure ScatterRareTiles;
 var
@@ -101,7 +107,7 @@ begin
           98: CombatMap^.Cells[Row, Col] := $1A;
           99: CombatMap^.Cells[Row, Col] := $1B;
           100:
-            if ds84DC <> $A then
+            if WallViewMode <> $A then
               if RollDice(1, 100) = 1 then
                 case RollDice(1, 10) of
                   1..6: CombatMap^.Cells[Row, Col] := $1C;
@@ -111,7 +117,7 @@ begin
       end;
 end;
 { ovl10:01AD. The passage between area map cell (Col, Row) and its neighbour in direction Dir
-  (0 north, 2 east, 4 south, 6 west, steps ds2736/ds273F): WallSideKind of this side of the cell
+  (0 north, 2 east, 4 south, 6 west, steps DirStepX/DirStepY): WallSideKind of this side of the cell
   OR WallSideKind of the opposite side of the neighbour: 0 open, 1 a wall, 3 a door. Called by
   BuildDungeonMap for the three drawn sides of every cell and by FindStartCell to find open
   directions for the placement groups. }
@@ -122,7 +128,7 @@ var
 
   { ovl10:012B. Nested in PassageKind: the kind of side Dir of area map cell (Col, Row): 1 a solid
     wall (DoorKindAt 0), 0 no wall (WallIdAt 0), 3 a door. Off the 16x16 map: 0 for the west and
-    east sides (Dir 2 or 6) on the party's row (ds6AAE), else 1, so a corridor the party stands in
+    east sides (Dir 2 or 6) on the party's row (PartyMapRow), else 1, so a corridor the party stands in
     stays open beyond the map's edge. }
   function WallSideKind(Col, Row: ShortInt; Dir: Byte): Byte;
   begin
@@ -135,7 +141,7 @@ var
       else
         WallSideKind := SideDoor;
     end
-    else if (Row = ds6AAE) and ((Dir = DirEast) or (Dir = DirWest)) then
+    else if (Row = PartyMapRow) and ((Dir = DirEast) or (Dir = DirWest)) then
       WallSideKind := SideOpen
     else
       WallSideKind := SideWall;
@@ -144,15 +150,15 @@ var
 begin
   OppositeDir := (Dir + 4) mod 8;
   Here := WallSideKind(Col, Row, Dir);
-  There := WallSideKind(Col + ds2736[Dir], Row + ds273F[Dir], OppositeDir);
+  There := WallSideKind(Col + DirStepX[Dir], Row + DirStepY[Dir], OppositeDir);
   PassageKind := Here or There;
 end;
 { ovl10:0810. Builds the combat map of a dungeon battle (CreateCombatMap calls it when
   AreaViewKind is AreaViewDungeon): every area map cell within 6 columns and 2 rows of the party
-  (ds6AAD, ds6AAE) becomes a skewed block of the combat map, 6 columns right and 5 rows down per
+  (PartyMapColumn, PartyMapRow) becomes a skewed block of the combat map, 6 columns right and 5 rows down per
   area column and row from the party's block at (21, 10), drawn from its west, north and east
   passages (PassageKind) by the four nested drawers below, then ScatterRareTiles. Globals: reads
-  ds6AAD, ds6AAE and the area map (through PassageKind), writes CombatMap^.Cells. }
+  PartyMapColumn, PartyMapRow and the area map (through PassageKind), writes CombatMap^.Cells. }
 procedure BuildDungeonMap;
 var
   CellCol, CellRow: ShortInt;   { area cell offset from the party: -6..6, -2..2 }
@@ -220,6 +226,11 @@ var
     end;
   end;
 
+  { Picture table for the corner drawers, raw CombatTiles picture ids with artwork meaning not viewed
+    (Purpose unknown): NorthWest top-left $0/$D/$F/5/$12/2, top-right $0/$11/5, bottom-left
+    $0/$10/$A/$14/7/1/3, bottom-right $0/$17/$A/$D/$15/6. NorthEast top-left 4/$0/$F/5,
+    top-right $0/$18/1/$B/3/9/5/$11/$13, bottom-left $0/$10/$A, bottom-right
+    $0/4/8/$C/$E/$17/$A (ovl10:040F, 0615). The case tables below map side conditions to each position. }
   { ovl10:040F. The north-west corner of the area cell: the four pictures of sub-columns 1..2,
     sub-rows 0..1, chosen from North, West and whether the corner is open on the far side (the
     west passage of the cell to the north and the north passage of the cell to the west both
@@ -396,8 +407,8 @@ begin
   for CellRow := -2 to 2 do
     for CellCol := -6 to 6 do
     begin
-      MapX := ds6AAD + CellCol;
-      MapY := ds6AAE + CellRow;
+      MapX := PartyMapColumn + CellCol;
+      MapY := PartyMapRow + CellRow;
       West := PassageKind(MapX, MapY, DirWest);
       North := PassageKind(MapX, MapY, DirNorth);
       East := PassageKind(MapX, MapY, DirEast);
@@ -409,11 +420,12 @@ begin
   ScatterRareTiles;
 end;
 
-{ ovl10:08A4. The terrain flags of the area map block the battle is fought on (CombatBlock): a
-  fixed table of block code ranges, each giving a set of the Flag bits above. A code no range
-  lists leaves the result unset. QUIRK ovl10:08AA: codes 3 and 4 are listed twice; the first
-  entry (3) wins. QUIRK ovl10:0B6B: when Flag3DTiles is set and game word VarBlock8Gate is $FF,
-  that bit is replaced by FlagPlain. Called by the wilderness builders for every test. }
+{ ovl10:08A4. Maps the wilderness block code (CombatBlock) through an ordered table of terrain flags.
+  QUIRK ovl10:08AA..0B14: the first matching range wins for overlapping codes 3, 4 and 7 (value 3),
+  $28, $29 and $2B (value 1), $7C (value 8), and $F5 (value $20). QUIRK ovl10:0B68: a code in no
+  range leaves local Flags unassigned, so the returned byte is unset. QUIRK ovl10:0B6B: when
+  Flag3DTiles is set and game word VarBlock8Gate is $FF, that bit is replaced by FlagPlain. Called by
+  the wilderness builders for every test. }
 function BlockTerrainFlags: Byte;
 var
   Flags: Byte;
@@ -629,10 +641,10 @@ begin
   ScatterRareTiles;
 end;
 
-{ ovl10:1244. Loads the combat picture sets (DungCom in a dungeon, AreaViewKind 1, else WildCom,
-  then RandCom from index $22), allocates CombatMap^ (CombatMapSize bytes), hides the cursor
-  (ShowCursor 0, CursorKind 1, Head6 0) and builds the dungeon or the wilderness map. The last
-  Load24x24Set argument ($18, $21, 5) is not read by it. }
+{ ovl10:1244. Loads DungCom (AreaViewKind 1) or WildCom and then RandCom at index $22, allocates
+  CombatMap^ (CombatMapSize bytes), clears ShowCursor, sets CursorKind to 1 and clears the Head6
+  tile gate before building the dungeon or wilderness map. QUIRK ovl10:1244: Load24x24Set's final
+  argument ($18, $21 or 5) is not read by that routine. }
 procedure CreateCombatMap;
 begin
   if AreaViewKind = AreaViewDungeon then
@@ -653,13 +665,14 @@ end;
 { ovl10:12E1. Walks the party list (ds5D96) and readies each character for the battle: calls
   res12_fn_0BB8 on it, allocates and zeroes its Combat record, sets NoBody for list entries past
   game word VarPartySize, gives it the icon set FacingCombatDir of the party facing (turned half
-  round, + 4 mod 8, for side 1), and makes a party-side NoBody member whose B84 kind is 0 or above
-  $66 computer-run with B84 = game word Var2Morale + $80. }
+  round, + 4 mod 8, for side 1), and marks a party-side NoBody member computer-run when B84's
+  low-seven-bit morale is 0 or above MaxComputerMorale. It then stores Var2Morale plus
+  ComputerRunFlag in B84; Var2Morale is the morale source [I] (ovl09:10D7 reads B84 as morale). }
 procedure PrepareCombatants;
 var
   Who: PCharacter;
   Count: Byte;
-  Kind: Byte;
+  Morale: Byte;
 begin
   Who := PCharacter(ds5D96);
   Count := 0;
@@ -670,11 +683,12 @@ begin
     GetMem(Who^.Combat, CombatRecordSize);
     FillChar(Who^.Combat^, CombatRecordSize, 0);
     if Count > ds49D6^[VarPartySize] then Who^.Combat^.NoBody := 1;
-    Who^.Combat^.IconSet := FacingCombatDir[ds6AAF shr 1];
+    Who^.Combat^.IconSet := FacingCombatDir[PartyFacing shr 1];
     if Who^.Side = SideEnemy then Who^.Combat^.IconSet := (Who^.Combat^.IconSet + 4) mod 8;
-    Kind := Who^.B84 and KindMask;
-    if (Who^.Side = SideParty) and (Who^.Combat^.NoBody = 1) and ((Kind = 0) or (Kind > $66)) then
-      Who^.B84 := ds49D6^[Var2Morale] + ComputerRun;
+    Morale := Who^.B84 and MoraleMask;
+    if (Who^.Side = SideParty) and (Who^.Combat^.NoBody = 1) and
+       ((Morale = 0) or (Morale > MaxComputerMorale)) then
+      Who^.B84 := ds49D6^[Var2Morale] + ComputerRunFlag;
     Who := Who^.Next;
   end;
 end;
@@ -695,7 +709,8 @@ end;
   must be on the grid and free in PlacementCells; the combatant's map cell is then column
   Col + 6 OriginCol + 5 OriginRow + 22, row Row + 5 OriginRow + 10 (CombatantTable[Index]). True,
   and the grid cell used, when ProbeStep finds no occupant there and a tile that is not off the
-  map or blocked. }
+  map or blocked. QUIRK ovl10:1434: X and Y are stored before ProbeStep; if ProbeStep rejects an
+  otherwise valid cell, the attempted coordinates remain in CombatantTable[Index]. }
 function TryPlaceAt(Index: Byte; Col, Row, OriginCol, OriginRow: ShortInt; Group: Byte): Boolean;
 var
   Occupant, Tile: Byte;
@@ -761,9 +776,9 @@ begin
     Facing := GroupFacing[SideFacing[PlacingSide], Group] shr 1;
     case Phase of
       1:
-        begin
-          StepX := ds2736[FacingCombatDir[(Facing + 2) mod 4]];
-          StepY := ds273F[FacingCombatDir[(Facing + 2) mod 4]];
+        begin { begin a ring at its facing edge, offset backwards by Ring cells }
+          StepX := DirStepX[FacingCombatDir[(Facing + FacingOffsetBack) mod 4]];
+          StepY := DirStepY[FacingCombatDir[(Facing + FacingOffsetBack) mod 4]];
           RingCol := RingStartCol[Group > 0, Facing] + StepX * Ring;
           RingRow := RingStartRow[Group > 0, Facing] + StepY * Ring;
           Col := RingCol;
@@ -773,18 +788,18 @@ begin
           RingCells := 1;
         end;
       2:
-        begin
-          StepX := ds2736[FacingCombatDir[(Facing + 1) mod 4]];
-          StepY := ds273F[FacingCombatDir[(Facing + 1) mod 4]];
+        begin { take the next cell on one side of the ring }
+          StepX := DirStepX[FacingCombatDir[(Facing + FacingOffsetRight) mod 4]];
+          StepY := DirStepY[FacingCombatDir[(Facing + FacingOffsetRight) mod 4]];
           Col := RingCol + StepX * Reach;
           Row := RingRow + StepY * Reach;
           Phase := 3;
           Inc(RingCells);
         end;
       3:
-        begin
-          StepX := ds2736[FacingCombatDir[(Facing + 3) mod 4]];
-          StepY := ds273F[FacingCombatDir[(Facing + 3) mod 4]];
+        begin { take the opposite side and increase the distance from the ring start }
+          StepX := DirStepX[FacingCombatDir[(Facing + FacingOffsetLeft) mod 4]];
+          StepY := DirStepY[FacingCombatDir[(Facing + FacingOffsetLeft) mod 4]];
           Col := RingCol + StepX * Reach;
           Row := RingRow + StepY * Reach;
           Phase := 2;
@@ -799,18 +814,18 @@ begin
     if Phase > 1 then
       if ((OutOfGrid <> 0) and not IsBeyondGrid(Col, Row))
         or ((First <> 0) and (RingCells >= FirstRingCells[PlacingSide]))
-        or ((First = 0) and (RingCells > 11)) then
+        or ((First = 0) and (RingCells > LaterRingLastCellCount)) then
       begin
         Inc(Ring);
         if (PlacingSide = SideParty) and Odd(SideFacing[SideParty]) and (Group = 0) and (Ring = 1) then
         begin
-          MapX := SideOriginCol[PlacingSide] + ds6AAD;
-          MapY := SideOriginRow[PlacingSide] + ds6AAE;
+          MapX := SideOriginCol[PlacingSide] + PartyMapColumn;
+          MapY := SideOriginRow[PlacingSide] + PartyMapRow;
           OpenSide := 0;
           for I := 1 to 3 do
           begin
             Dir := FacingWallDirs[SideFacing[PlacingSide], I];
-            if (AreaViewKind > AreaViewDungeon) or (PassageKind(MapX, MapY, Dir) <> 1) then OpenSide := 1;
+            if (AreaViewKind > AreaViewDungeon) or (PassageKind(MapX, MapY, Dir) <> SideWall) then OpenSide := 1;
           end;
           if OpenSide <> 0 then Inc(Ring);
         end;
@@ -822,16 +837,16 @@ begin
       begin
         Placed := False;
         Phase := 0;
-        while (Group < 3) and (Phase <> 1) do
+        while (Group < 3) and (Phase <> 1) do { find the next open side group }
         begin
           Inc(Group);
-          MapX := SideOriginCol[PlacingSide] + ds6AAD;
-          MapY := SideOriginRow[PlacingSide] + ds6AAE;
+          MapX := SideOriginCol[PlacingSide] + PartyMapColumn;
+          MapY := SideOriginRow[PlacingSide] + PartyMapRow;
           Dir := FacingWallDirs[SideFacing[PlacingSide], Group];
-          if (AreaViewKind > AreaViewDungeon) or (PassageKind(MapX, MapY, Dir) <> 1) then
+          if (AreaViewKind > AreaViewDungeon) or (PassageKind(MapX, MapY, Dir) <> SideWall) then
           begin
-            OriginCol := SideOriginCol[PlacingSide] + ds2736[Dir];
-            OriginRow := SideOriginRow[PlacingSide] + ds273F[Dir];
+            OriginCol := SideOriginCol[PlacingSide] + DirStepX[Dir];
+            OriginRow := SideOriginRow[PlacingSide] + DirStepY[Dir];
             Ring := 0;
             Phase := 1;
           end;
@@ -847,7 +862,7 @@ begin
 end;
 
 { ovl10:19F5. Puts every character of the party list on the combat map. It clears CombatantTable,
-  sets the two sides' grids: side 0 at the origin facing the party facing (ds6AAF), side 1
+  sets the two sides' grids: side 0 at the origin facing the party facing (PartyFacing), side 1
   Var2SideDistance area map steps ahead facing back; the first ring of a side holds half its
   combatants (ds6814/ds6815, rounded up); each of the 4 groups of a side's PlacementCells is the
   shape PlacementShapes of the side's facing (group 1: shape 4). Then every character becomes
@@ -869,14 +884,14 @@ begin
   res12_fn_23DB;
   DroppedCount := 0;
   PlacedCount := 0;
-  for Index := 1 to $FF do CombatantTable[Index].Kind := 0;
+  for Index := 1 to CombatantClearLoopLast do CombatantTable[Index].Kind := 0;
   RebuildOccupancy;
   SideOriginCol[SideParty] := 0;
   SideOriginRow[SideParty] := 0;
-  SideFacing[SideParty] := ds6AAF shr 1;
-  SideOriginCol[SideEnemy] := SideOriginCol[SideParty] + ds2736[ds6AAF] * ds49D6^[Var2SideDistance];
-  SideOriginRow[SideEnemy] := SideOriginRow[SideParty] + ds273F[ds6AAF] * ds49D6^[Var2SideDistance];
-  SideFacing[SideEnemy] := ((ds6AAF + 4) mod 8) shr 1;
+  SideFacing[SideParty] := PartyFacing shr 1;
+  SideOriginCol[SideEnemy] := SideOriginCol[SideParty] + DirStepX[PartyFacing] * ds49D6^[Var2SideDistance];
+  SideOriginRow[SideEnemy] := SideOriginRow[SideParty] + DirStepY[PartyFacing] * ds49D6^[Var2SideDistance];
+  SideFacing[SideEnemy] := ((PartyFacing + 4) mod 8) shr 1;
   for PlacingSide := SideParty to SideEnemy do
     FirstRingCells[PlacingSide] := (ds6814Sides[PlacingSide] + 1) shr 1;
   for PlacingSide := SideParty to SideEnemy do
@@ -951,11 +966,12 @@ begin
 end;
 
 { ovl10:1E31 (entry 1, called by RunCombat). Starts a battle: frees the picture animation and the
-  HEAD/BODY sprites, prints 'A battle begins...' on row 24, resets the round state (ds6E30,
-  ds6DE3, AttackRoll, the bodies, the lists ds6DBB and ds5D9A, game word Var2BattleWord), caps
-  game word Var2Morale at 100, creates the map and places the combatants, allocates the picture
-  ds6E36, centres the view on the first character of the party list, runs the HookBattleStart
-  affect hooks for every character, calls ovl13_e19 and enters view mode ViewModeCombat. }
+  HEAD/BODY sprites, then sets HeadBankIndex and BodyBankIndex to $FF (no sprite loaded). It prints
+  'A battle begins...' on row 24, resets the round state (ds6E30, ds6DE3, AttackRoll, the bodies,
+  the lists ds6DBB and ds5D9A, game word Var2BattleWord), caps Var2Morale at 100, creates the map,
+  discards waiting keys, prepares combatants, discards waiting keys again, places them, and discards
+  waiting keys once more. It allocates ds6E36, centres the view on the first party character, calls
+  res12_fn_2B88, runs HookBattleStart for each character, calls ovl13_e19 and enters ViewModeCombat. }
 procedure StartBattle;
 var
   Unused: array[0..9] of Byte;  { QUIRK ovl10:1E34: ten bytes of the frame nothing uses }
@@ -964,8 +980,8 @@ begin
   FreeSpriteList(@PictureAnimation);
   ReleasePicture(ds6B01);
   ReleasePicture(ds6B06);
-  ds6B00 := $FF;
-  ds6B05 := $FF;
+  HeadBankIndex := $FF;
+  BodyBankIndex := $FF;
   ClearPromptLine;
   DelayCounted;
   DrawTextAt(0, $18, $A, 'A battle begins...');

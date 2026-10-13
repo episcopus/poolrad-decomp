@@ -45,7 +45,7 @@ const
   CellStep = 3;                 { a cell is 3 picture units wide and high (DrawCellPicture) }
   FootprintCells = 3;           { footprint cells are numbered 0..3 }
   CursorIcon = $19;             { the DrawIcon picture of the cursor (ovl31:0236) }
-  DirNone = 8;                  { the direction with no step (ds2736[8] = ds273F[8] = 0) }
+  DirNone = 8;                  { the direction with no step (DirStepX[8] = DirStepY[8] = 0) }
   CentreMargin = 3;             { how far from the centre a cell may be before the view scrolls }
   NoReach = $FF;                { ScrollViewTo's Margin that always scrolls and redraws }
   ViewModeCombat = 5;           { ds49F3 during combat (RemoveCombatant, PlaceCombatant) }
@@ -320,7 +320,7 @@ begin
   ScrollViewTo := True;
 end;
 
-{ ovl31:0996. Moves the cursor from map cell (CellX, CellY) one step in direction Dir (ds2736/ds273F;
+{ ovl31:0996. Moves the cursor from map cell (CellX, CellY) one step in direction Dir (DirStepX/DirStepY;
   DirNone stays): scrolls the view when the new cell is more than Margin cells from the centre
   (ScrollViewTo) and then redraws every combatant in view whose record has Flag10D set, repaints the
   old cell (RedrawMapCell), clamps the new cell to the map when it is out of view, draws the cursor
@@ -332,8 +332,8 @@ var
   I: Byte;
   NewX, NewY: ShortInt;
 begin
-  NewX := CellX + ds2736[Dir];
-  NewY := CellY + ds273F[Dir];
+  NewX := CellX + DirStepX[Dir];
+  NewY := CellY + DirStepY[Dir];
   if ScrollViewTo(NewX, NewY, Margin) then
     for I := 1 to CombatantTable[0].Kind do
     begin
@@ -433,8 +433,8 @@ begin
   for J := 0 to FootprintCells do
     if FootprintCell(CombatantTable[Index].Kind, J, DX, DY) then
     begin
-      NewX := CellX + DX + ds2736[Dir];
-      NewY := CellY + DY + ds273F[Dir];
+      NewX := CellX + DX + DirStepX[Dir];
+      NewY := CellY + DY + DirStepY[Dir];
       GetMapCell(NewX, NewY, CellWho, CellTile);
       if CellWho = Index then CellWho := 0;
       if CellWho > 0 then Occupant := CellWho;

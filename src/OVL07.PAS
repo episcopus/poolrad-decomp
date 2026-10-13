@@ -60,7 +60,7 @@ const
   RegionSpecial = 4;
   HotkeyMark = '~';              { marks the hotkey letter in a menu text (ParseHotkeys) }
   KeyReturn = #13;
-  { The party's facing (ds6AAF) and the directions WallIdAt takes. }
+  { The party's facing (PartyFacing) and the directions WallIdAt takes. }
   DirNorth = 0;
   DirEast = 2;
   DirSouth = 4;
@@ -558,11 +558,11 @@ begin
           $E3:
             begin
               ds84E6 := 1;
-              ds6AAD := Value;
+              PartyMapColumn := Value;
             end;
           $E4:
             begin
-              ds6AAE := Value;
+              PartyMapRow := Value;
               ds84E6 := 1;
             end;
           $E5:
@@ -570,10 +570,10 @@ begin
               repeat
                 Done := 1;
                 case Value of
-                  0: ds6AAF := 0;
-                  1: ds6AAF := 2;
-                  2: ds6AAF := 4;
-                  3: ds6AAF := 6;
+                  0: PartyFacing := 0;
+                  1: PartyFacing := 2;
+                  2: PartyFacing := 4;
+                  3: PartyFacing := 6;
                 else
                   Done := 0;
                   Dec(Value, 4);
@@ -624,16 +624,16 @@ begin
           $B1: ReadVmWord := ds6F6E;
           $FB: ReadVmWord := ds6F6A;
           $FC: ReadVmWord := ds6F6C;
-          $33D: ReadVmWord := ds6AAF;
+          $33D: ReadVmWord := PartyFacing;
           $35F: ;
         end
       else
       begin
         Addr := Addr - $C04B;
         case Addr of
-          0: ReadVmWord := ds6AAD;
-          1: ReadVmWord := ds6AAE;
-          2: ReadVmWord := ds6AAF shr 1;
+          0: ReadVmWord := PartyMapColumn;
+          1: ReadVmWord := PartyMapRow;
+          2: ReadVmWord := PartyFacing shr 1;
           3: ReadVmWord := ds6AB0;
           4: ReadVmWord := ds6AB1;
           $E: ;
@@ -894,35 +894,35 @@ begin
   ReturnStack^.ReturnPC := EclPC;
   EclPC := MakeWord(OperandLow[N], OperandHigh[N]);
 end;
-{ ovl07:19DB. StepPartyForward: moves the party one cell in the direction it faces (ds6AAF: 0, 2,
+{ ovl07:19DB. StepPartyForward: moves the party one cell in the direction it faces (PartyFacing: 0, 2,
   4, 6) on the 16 x 16 area map, wrapping at the edges, then reads the new cell's event byte
   (EventByteAt into ds6AB1) and the wall it faces (WallIdAt into ds6AB0). }
 procedure StepPartyForward;
 begin
-  case ds6AAF of
+  case PartyFacing of
     DirNorth:
-      if ds6AAE > 0 then
-        Dec(ds6AAE)
+      if PartyMapRow > 0 then
+        Dec(PartyMapRow)
       else
-        ds6AAE := LastMapCell;
+        PartyMapRow := LastMapCell;
     DirEast:
-      if ds6AAD < LastMapCell then
-        Inc(ds6AAD)
+      if PartyMapColumn < LastMapCell then
+        Inc(PartyMapColumn)
       else
-        ds6AAD := 0;
+        PartyMapColumn := 0;
     DirSouth:
-      if ds6AAE < LastMapCell then
-        Inc(ds6AAE)
+      if PartyMapRow < LastMapCell then
+        Inc(PartyMapRow)
       else
-        ds6AAE := 0;
+        PartyMapRow := 0;
     DirWest:
-      if ds6AAD > 0 then
-        Dec(ds6AAD)
+      if PartyMapColumn > 0 then
+        Dec(PartyMapColumn)
       else
-        ds6AAD := LastMapCell;
+        PartyMapColumn := LastMapCell;
   end;
-  ds6AB1 := EventByteAt(ds6AAD, ds6AAE);
-  ds6AB0 := WallIdAt(ds6AAD, ds6AAE, ds6AAF);
+  ds6AB1 := EventByteAt(PartyMapColumn, PartyMapRow);
+  ds6AB0 := WallIdAt(PartyMapColumn, PartyMapRow, PartyFacing);
 end;
 { ovl07:1A6F. SetupDuel: starts a duel (DuelMode 1, word $2E6 of ds49D6 := WithCopy): every party
   member other than the selected character (by name) gets Flag10D 0; when WithCopy is nonzero,

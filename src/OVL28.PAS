@@ -243,16 +243,16 @@ var
 begin
   Str(TileSet, Num);
   if HeadBank <> NoBank then
-    if (ds6B00 = NoBank) or (ds6B00 <> HeadBank) then
+    if (HeadBankIndex = NoBank) or (HeadBankIndex <> HeadBank) then
     begin
       LoadPicture('HEAD' + Num, HeadBank, 0, 0, ds6B01);
-      ds6B00 := HeadBank;
+      HeadBankIndex := HeadBank;
     end;
   if BodyBank <> NoBank then
-    if (ds6B05 = NoBank) or (ds6B05 <> BodyBank) then
+    if (BodyBankIndex = NoBank) or (BodyBankIndex <> BodyBank) then
     begin
       LoadPicture('BODY' + Num, BodyBank, 0, 0, ds6B06);
-      ds6B05 := BodyBank;
+      BodyBankIndex := BodyBank;
     end;
   FlushKeyboard;
 end;

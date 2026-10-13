@@ -112,7 +112,7 @@ begin
   begin
     with Rec^ do
     begin
-      if DoorKindAt(ds6AAD, ds6AAE, ds6AAF) = 3 then
+      if DoorKindAt(PartyMapColumn, PartyMapRow, PartyFacing) = 3 then
         case LockType of
           $12:
             case Strength of
@@ -171,8 +171,8 @@ begin
   end;
   if Done <> 0 then
   begin
-    SetIconBits(ds6AAD, ds6AAE, ds6AAF);
-    SetIconBits(ds6AAD + ds2736[ds6AAF], ds6AAE + ds273F[ds6AAF], (ds6AAF + 4) mod 8);
+    SetIconBits(PartyMapColumn, PartyMapRow, PartyFacing);
+    SetIconBits(PartyMapColumn + DirStepX[PartyFacing], PartyMapRow + DirStepY[PartyFacing], (PartyFacing + 4) mod 8);
   end;
   DoBash := Done;
 end;
@@ -200,8 +200,8 @@ begin
   ds6DDF := 0;
   if Done <> 0 then
   begin
-    SetIconBits(ds6AAD, ds6AAE, ds6AAF);
-    SetIconBits(ds6AAD + ds2736[ds6AAF], ds6AAE + ds273F[ds6AAF], (ds6AAF + 4) mod 8);
+    SetIconBits(PartyMapColumn, PartyMapRow, PartyFacing);
+    SetIconBits(PartyMapColumn + DirStepX[PartyFacing], PartyMapRow + DirStepY[PartyFacing], (PartyFacing + 4) mod 8);
   end;
   DoPick := Done;
 end;
@@ -250,39 +250,39 @@ end;
 { ovl14:068D. Steps the party one cell in the current icon set's direction when
   DoorKindAt allows it, clamping the result into the 16x16 area map: each clamped
   coordinate is written back and the edge flag ds49D6^[725] (+$5AA) is set. Called
-  by the movement driver HandleWildernessKeys. The direction tables ds2736/ds273F are indexed
+  by the movement driver HandleWildernessKeys. The direction tables DirStepX/DirStepY are indexed
   by the icon set. }
 procedure ClampPartyPosition;
 var
   Col, Row: Integer;
   Icon: Integer;
 begin
-  Col := ds6AAD;
-  Row := ds6AAE;
-  Icon := ds6AAF;
+  Col := PartyMapColumn;
+  Row := PartyMapRow;
+  Icon := PartyFacing;
   ds49D6^[725] := 0;
   if DoorKindAt(Col, Row, Icon) <> 0 then
   begin
-    Inc(Col, ds2736[Icon]);
-    Inc(Row, ds273F[Icon]);
+    Inc(Col, DirStepX[Icon]);
+    Inc(Row, DirStepY[Icon]);
     if Col > $F then
     begin
-      ds6AAD := $F;
+      PartyMapColumn := $F;
       ds49D6^[725] := 1;
     end;
     if Col < 0 then
     begin
-      ds6AAD := 0;
+      PartyMapColumn := 0;
       ds49D6^[725] := 1;
     end;
     if Row > $F then
     begin
-      ds6AAE := $F;
+      PartyMapRow := $F;
       ds49D6^[725] := 1;
     end;
     if Row < 0 then
     begin
-      ds6AAE := 0;
+      PartyMapRow := 0;
       ds49D6^[725] := 1;
     end;
   end;
@@ -296,19 +296,19 @@ end;
 procedure MoveParty;
 begin
   PlaySound(ds2628);
-  Inc(ds6AAD, ds2736[ds6AAF]);
-  Inc(ds6AAE, ds273F[ds6AAF]);
-  if ds6AAD < 0 then
-    ds6AAD := $F;
-  if ds6AAD > $F then
-    ds6AAD := 0;
-  if ds6AAE < 0 then
-    ds6AAE := $F;
-  if ds6AAE > $F then
-    ds6AAE := 0;
-  ds6AB0 := WallIdAt(ds6AAD, ds6AAE, ds6AAF);
+  Inc(PartyMapColumn, DirStepX[PartyFacing]);
+  Inc(PartyMapRow, DirStepY[PartyFacing]);
+  if PartyMapColumn < 0 then
+    PartyMapColumn := $F;
+  if PartyMapColumn > $F then
+    PartyMapColumn := 0;
+  if PartyMapRow < 0 then
+    PartyMapRow := $F;
+  if PartyMapRow > $F then
+    PartyMapRow := 0;
+  ds6AB0 := WallIdAt(PartyMapColumn, PartyMapRow, PartyFacing);
   FillChar(ds6DDE, 3, 1);
-  ds6AB1 := EventByteAt(ds6AAD, ds6AAE);
+  ds6AB1 := EventByteAt(PartyMapColumn, PartyMapRow);
   if ds49D6^[714] and 1 > 0 then
     ovl20_e1(1, 2)
   else
@@ -323,8 +323,8 @@ procedure CheckMapCell;
 var
   MapCol, GridCol, GridRow: ShortInt;
 begin
-  GridCol := GameVars^[VarMapX] + ds2736[ds6AAF];
-  GridRow := GameVars^[VarMapY] + ds273F[ds6AAF];
+  GridCol := GameVars^[VarMapX] + DirStepX[PartyFacing];
+  GridRow := GameVars^[VarMapY] + DirStepY[PartyFacing];
   if GridCol < 0 then
     GridCol := 0;
   if GridCol > $F then
@@ -380,7 +380,7 @@ begin
             if GameVars^[VarShowWallOverlays] = 0 then
             begin
               WallMapMode := Ord(WallMapMode = 0);
-              DrawWallView(ds6AAD, ds6AAE, ds6AAF);
+              DrawWallView(PartyMapColumn, PartyMapRow, PartyFacing);
             end
             else
               FlashMessageLine('Not Here', $E);
@@ -410,23 +410,23 @@ begin
             end;
           'P':
             begin
-              ds6AAF := (ds6AAF + 4) mod 8;
-              ds6AB0 := WallIdAt(ds6AAD, ds6AAE, ds6AAF);
-              DrawWallView(ds6AAD, ds6AAE, ds6AAF);
+              PartyFacing := (PartyFacing + 4) mod 8;
+              ds6AB0 := WallIdAt(PartyMapColumn, PartyMapRow, PartyFacing);
+              DrawWallView(PartyMapColumn, PartyMapRow, PartyFacing);
             end;
           'K':
             begin
-              ds6AAF := (ds6AAF + 6) mod 8;
+              PartyFacing := (PartyFacing + 6) mod 8;
               PlaySound(ds2628);
-              ds6AB0 := WallIdAt(ds6AAD, ds6AAE, ds6AAF);
-              DrawWallView(ds6AAD, ds6AAE, ds6AAF);
+              ds6AB0 := WallIdAt(PartyMapColumn, PartyMapRow, PartyFacing);
+              DrawWallView(PartyMapColumn, PartyMapRow, PartyFacing);
             end;
           'M':
             begin
-              ds6AAF := (ds6AAF + 2) mod 8;
+              PartyFacing := (PartyFacing + 2) mod 8;
               PlaySound(ds2628);
-              ds6AB0 := WallIdAt(ds6AAD, ds6AAE, ds6AAF);
-              DrawWallView(ds6AAD, ds6AAE, ds6AAF);
+              ds6AB0 := WallIdAt(PartyMapColumn, PartyMapRow, PartyFacing);
+              DrawWallView(PartyMapColumn, PartyMapRow, PartyFacing);
             end;
         else
           ovl19_e10(Key);
@@ -470,13 +470,13 @@ begin
         Redraw := 1;
         case Key of
           'H':
-            ds6AAF := 0;
+            PartyFacing := 0;
           'M':
-            ds6AAF := 2;
+            PartyFacing := 2;
           'P':
-            ds6AAF := 4;
+            PartyFacing := 4;
           'K':
-            ds6AAF := 6;
+            PartyFacing := 6;
         else
           ovl19_e10(Key);
           res12_fn_0767(SelectedCharacter);
@@ -517,7 +517,7 @@ begin
     begin
       if ds49D6^[713] < $FF then
       begin
-      case DoorKindAt(ds6AAD, ds6AAE, ds6AAF) of
+      case DoorKindAt(PartyMapColumn, PartyMapRow, PartyFacing) of
         1:
           Done := 1;
         2:
@@ -531,7 +531,7 @@ begin
             Menu := Menu + ' Knock';
           Menu := Menu + ' Exit';
           if Menu = ' Exit' then
-            ClearIconBits(ds6AAD, ds6AAE, ds6AAF)
+            ClearIconBits(PartyMapColumn, PartyMapRow, PartyFacing)
           else
           begin
             Key2 := ReadPromptChoice('Locked. ', Menu, $D, $A, $F, 0, 0, MenuFlag);
@@ -556,7 +556,7 @@ begin
             Menu := Menu + ' Knock';
           Menu := Menu + ' Exit';
           if Menu = ' Exit' then
-            ClearIconBits(ds6AAD, ds6AAE, ds6AAF)
+            ClearIconBits(PartyMapColumn, PartyMapRow, PartyFacing)
           else
           begin
             Key2 := ReadPromptChoice('Locked. ', Menu, $D, $A, $F, 0, 0, MenuFlag);
@@ -594,8 +594,8 @@ begin
   FreeSpriteList(@PictureAnimation);
   ReleasePicture(ds6B01);
   ReleasePicture(ds6B06);
-  ds6B00 := $FF;
-  ds6B05 := $FF;
+  HeadBankIndex := $FF;
+  BodyBankIndex := $FF;
 end;
 
 { ovl14:10A7. The unit's initialisation part is empty: the compiler emits only `55 89 E5 5D CB`

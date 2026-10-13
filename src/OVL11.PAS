@@ -86,10 +86,10 @@ begin
   end;
   FillChar(PictureAnimation, $42, 0);
   ds6810 := nil;
-  FillChar(ds6AAD, 5, 0);
-  ds6AAD := $F;
-  ds6AAE := 1;
-  ds6AAF := 6;
+  FillChar(PartyMapColumn, 5, 0);
+  PartyMapColumn := $F;
+  PartyMapRow := 1;
+  PartyFacing := 6;
   FillChar(ds6DDE, 3, 1);
   ds6AB2 := 0;
   ds6AB4 := 1;
