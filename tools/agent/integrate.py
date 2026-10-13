@@ -50,6 +50,10 @@ class Rejected(Exception):
     pass
 
 
+class AlreadyMerged(Exception):
+    """The branch tip is already in main (merged by hand earlier): only the bookkeeping is left."""
+
+
 def handoff_dir() -> Path:
     return common.common_dir() / "poolrad-handoffs"
 
@@ -154,6 +158,15 @@ def integrate_one(path: Path, main_dir: Path, dry: bool, py: str) -> bool:
                 common.git("merge-base", "--is-ancestor", commit, branch, cwd=main_dir)
             except RuntimeError:
                 raise Rejected("pinned commit %s is not on %s" % (commit, branch))
+            tip = common.git("rev-parse", branch, cwd=main_dir)
+            if subprocess.run(["git", "merge-base", "--is-ancestor", tip, "main"], cwd=main_dir,
+                              capture_output=True).returncode == 0:
+                # Merged earlier by hand and never cleared: only the bookkeeping below is left.
+                log.write("branch tip %s is already in main; nothing to merge\n" % tip)
+                print("integrate: %s was already merged (%s); clearing its record" % (key, tip[:12]))
+                if dry:
+                    return True
+                raise AlreadyMerged()
             # The temporary worktree: always fresh, always from main.
             if wt.exists():
                 subprocess.run(["git", "worktree", "remove", "--force", str(wt)], cwd=main_dir, capture_output=True)
@@ -173,8 +186,11 @@ def integrate_one(path: Path, main_dir: Path, dry: bool, py: str) -> bool:
             if (wt / "tools/match/stubs.py").exists() and make("stubs", wt, log, "WRITE=1"):
                 raise Rejected("make stubs WRITE=1 failed")
             common.git("add", "-u", cwd=wt)
-            if make("merge-check", wt, log, "STAGED=1"):
+            rc = make("merge-check", wt, log, "STAGED=1")
+            if rc == 1:
                 raise Rejected("make merge-check STAGED=1 found lost records (see log)")
+            if rc:
+                raise Rejected("make merge-check STAGED=1 could not run (see log)")
             if make("status", wt, log):
                 raise Rejected("make status failed")
             if f.get("changelog"):
@@ -195,6 +211,8 @@ def integrate_one(path: Path, main_dir: Path, dry: bool, py: str) -> bool:
             common.git("merge", "--ff-only", merged, cwd=main_dir)
             print("integrate: main is now %s (%s)" % (merged[:12], msg))
             control.event("integrate", agent=AGENT, key=key, branch=branch, commit=commit, merged=merged)
+        except AlreadyMerged:
+            pass
         except Rejected as e:
             reject(path, str(e), log_path)
             return False
