@@ -12045,7 +12045,7 @@ evidence = ["prologue"]
 id = "ovl25:0067"
 unit = "ovl25"
 addr = "ovl25:0067"
-size = 100
+size = 854
 name = "CountMenuLines"
 signature = "function CountMenuLines(List: PMenuLine): Integer"
 c_name = "ovl25_fn_0067"
@@ -12062,7 +12062,7 @@ size = 271
 name = "SplitPromptWords"
 signature = ""
 c_name = "ovl25_fn_00CB"
-level = "none"
+level = "L2"
 justification = ""
 notes = "nested in ReadPromptChoice (ovl25:03BD), proven by the parent's match (make match UNIT=ovl25: NESTED); its caller pushes the parent frame as the static link (push bp; push cs; call). Level not recorded by make match WRITE=1: it removes a non-L2 map entry inside the matched parent before it writes the nested L2 (tool defect reported by dec-r25, 2026-10-12)"
 evidence = ["prologue"]
@@ -12075,7 +12075,7 @@ size = 483
 name = "DrawPromptWords"
 signature = ""
 c_name = "ovl25_fn_01DA"
-level = "none"
+level = "L2"
 justification = ""
 notes = "nested in ReadPromptChoice (ovl25:03BD), proven by the parent's match (make match UNIT=ovl25: NESTED); its caller pushes the parent frame as the static link (push bp; push cs; call). Level not recorded by make match WRITE=1: it removes a non-L2 map entry inside the matched parent before it writes the nested L2 (tool defect reported by dec-r25, 2026-10-12)"
 evidence = ["prologue"]
@@ -12097,7 +12097,7 @@ evidence = ["prologue"]
 id = "ovl25:06FB"
 unit = "ovl25"
 addr = "ovl25:06FB"
-size = 22
+size = 1695
 name = "ClearPromptLine"
 signature = "procedure ClearPromptLine"
 c_name = "ovl25_e3"
@@ -12114,9 +12114,9 @@ size = 147
 name = "LastHeadingBefore"
 signature = ""
 c_name = "ovl25_fn_0711"
-level = "none"
+level = "L2"
 justification = ""
-notes = "renamed from ovl25_fn_0711 (ovl25:0711 nested in ovl25:0D9A: the last line with Flag29 set among the first Count lines of List); auto:near_call; nested in ChooseFromList (static link pushed by its callers); drafted in commit 3c8dac5, blocked with its parent (see the parent's notes)"
+notes = "renamed from ovl25_fn_0711 (ovl25:0711 nested in ovl25:0D9A: the last line with Flag29 set among the first Count lines of List); auto:near_call; nested in ChooseFromList (static link pushed by its callers); drafted in commit 3c8dac5; nested in ChooseFromList (ovl25:0D9A), proven by the parent's match (make match UNIT=ovl25: NESTED; dec-s25, 2026-10-13, once the matcher of 82cbb26 proved a nested routine called only by a sibling with push word ptr [bp+6]; push cs; call)"
 evidence = ["prologue"]
 
 [[routine]]
@@ -12127,9 +12127,9 @@ size = 307
 name = "DrawListPage"
 signature = ""
 c_name = "ovl25_fn_07A4"
-level = "none"
+level = "L2"
 justification = ""
-notes = "renamed from ovl25_fn_07A4 (ovl25:07A4 nested in ovl25:0D9A: clears the list window and draws the lines from TopLine on, headings in colour A, others in B); auto:near_call; nested in ChooseFromList (static link pushed by its callers); drafted in commit 3c8dac5, blocked with its parent (see the parent's notes)"
+notes = "renamed from ovl25_fn_07A4 (ovl25:07A4 nested in ovl25:0D9A: clears the list window and draws the lines from TopLine on, headings in colour A, others in B); auto:near_call; nested in ChooseFromList (static link pushed by its callers); drafted in commit 3c8dac5; nested in ChooseFromList (ovl25:0D9A), proven by the parent's match (make match UNIT=ovl25: NESTED; dec-s25, 2026-10-13, once the matcher of 82cbb26 proved a nested routine called only by a sibling with push word ptr [bp+6]; push cs; call)"
 evidence = ["prologue"]
 
 [[routine]]
@@ -12140,9 +12140,9 @@ size = 76
 name = "FirstNonBlank"
 signature = ""
 c_name = "ovl25_fn_08D7"
-level = "none"
+level = "L2"
 justification = ""
-notes = "renamed from ovl25_fn_08D7 (ovl25:08D7 nested in ovl25:0D9A: the index of the first non-space character of a string[40]); auto:near_call; nested in ChooseFromList (static link pushed by its callers); drafted in commit 3c8dac5, blocked with its parent (see the parent's notes)"
+notes = "renamed from ovl25_fn_08D7 (ovl25:08D7 nested in ovl25:0D9A: the index of the first non-space character of a string[40]); auto:near_call; nested in ChooseFromList (static link pushed by its callers); drafted in commit 3c8dac5; nested in ChooseFromList (ovl25:0D9A), proven by the parent's match (make match UNIT=ovl25: NESTED; dec-s25, 2026-10-13, once the matcher of 82cbb26 proved a nested routine called only by a sibling with push word ptr [bp+6]; push cs; call)"
 evidence = ["prologue"]
 
 [[routine]]
@@ -12153,9 +12153,9 @@ size = 70
 name = "LastNonBlank"
 signature = ""
 c_name = "ovl25_fn_0923"
-level = "none"
+level = "L2"
 justification = ""
-notes = "renamed from ovl25_fn_0923 (ovl25:0923 nested in ovl25:0D9A: the index of the last non-space character of a string[40]); auto:near_call; nested in ChooseFromList (static link pushed by its callers); drafted in commit 3c8dac5, blocked with its parent (see the parent's notes)"
+notes = "renamed from ovl25_fn_0923 (ovl25:0923 nested in ovl25:0D9A: the index of the last non-space character of a string[40]); auto:near_call; nested in ChooseFromList (static link pushed by its callers); drafted in commit 3c8dac5; nested in ChooseFromList (ovl25:0D9A), proven by the parent's match (make match UNIT=ovl25: NESTED; dec-s25, 2026-10-13, once the matcher of 82cbb26 proved a nested routine called only by a sibling with push word ptr [bp+6]; push cs; call)"
 evidence = ["prologue"]
 
 [[routine]]
@@ -12166,9 +12166,9 @@ size = 159
 name = "HighlightListLine"
 signature = ""
 c_name = "ovl25_fn_0969"
-level = "none"
+level = "L2"
 justification = ""
-notes = "renamed from ovl25_fn_0969 (ovl25:0969 nested in ovl25:0D9A: redraws the trimmed text of line Line in the highlight colour C); auto:near_call; nested in ChooseFromList (static link pushed by its callers); drafted in commit 3c8dac5, blocked with its parent (see the parent's notes)"
+notes = "renamed from ovl25_fn_0969 (ovl25:0969 nested in ovl25:0D9A: redraws the trimmed text of line Line in the highlight colour C); auto:near_call; nested in ChooseFromList (static link pushed by its callers); drafted in commit 3c8dac5; nested in ChooseFromList (ovl25:0D9A), proven by the parent's match (make match UNIT=ovl25: NESTED; dec-s25, 2026-10-13, once the matcher of 82cbb26 proved a nested routine called only by a sibling with push word ptr [bp+6]; push cs; call)"
 evidence = ["prologue"]
 
 [[routine]]
@@ -12179,9 +12179,9 @@ size = 251
 name = "UnhighlightListLine"
 signature = ""
 c_name = "ovl25_fn_0A08"
-level = "none"
+level = "L2"
 justification = ""
-notes = "renamed from ovl25_fn_0A08 (ovl25:0A08 nested in ovl25:0D9A: redraws the trimmed text of line Line in its normal colour (A for a heading, B otherwise)); auto:near_call; nested in ChooseFromList (static link pushed by its callers); drafted in commit 3c8dac5, blocked with its parent (see the parent's notes)"
+notes = "renamed from ovl25_fn_0A08 (ovl25:0A08 nested in ovl25:0D9A: redraws the trimmed text of line Line in its normal colour (A for a heading, B otherwise)); auto:near_call; nested in ChooseFromList (static link pushed by its callers); drafted in commit 3c8dac5; nested in ChooseFromList (ovl25:0D9A), proven by the parent's match (make match UNIT=ovl25: NESTED; dec-s25, 2026-10-13, once the matcher of 82cbb26 proved a nested routine called only by a sibling with push word ptr [bp+6]; push cs; call)"
 evidence = ["prologue"]
 
 [[routine]]
@@ -12192,9 +12192,9 @@ size = 304
 name = "SkipHeadingLines"
 signature = ""
 c_name = "ovl25_fn_0B03"
-level = "none"
+level = "L2"
 justification = ""
-notes = "renamed from ovl25_fn_0B03 (ovl25:0B03 nested in ovl25:0D9A: moves Choice past lines with Flag29 set, down or up, wrapping inside the shown page); auto:near_call; nested in ChooseFromList (static link pushed by its callers); drafted in commit 3c8dac5, blocked with its parent (see the parent's notes)"
+notes = "renamed from ovl25_fn_0B03 (ovl25:0B03 nested in ovl25:0D9A: moves Choice past lines with Flag29 set, down or up, wrapping inside the shown page); auto:near_call; nested in ChooseFromList (static link pushed by its callers); drafted in commit 3c8dac5; nested in ChooseFromList (ovl25:0D9A), proven by the parent's match (make match UNIT=ovl25: NESTED; dec-s25, 2026-10-13, once the matcher of 82cbb26 proved a nested routine called only by a sibling with push word ptr [bp+6]; push cs; call)"
 evidence = ["prologue"]
 
 [[routine]]
@@ -12205,9 +12205,9 @@ size = 146
 name = "ScrollListPage"
 signature = ""
 c_name = "ovl25_fn_0C33"
-level = "none"
+level = "L2"
 justification = ""
-notes = "renamed from ovl25_fn_0C33 (ovl25:0C33 nested in ovl25:0D9A: moves the first shown line (DS:6B29) a page down or up, keeps the cursor's place on the page and redraws); auto:near_call; nested in ChooseFromList (static link pushed by its callers); drafted in commit 3c8dac5, blocked with its parent (see the parent's notes)"
+notes = "renamed from ovl25_fn_0C33 (ovl25:0C33 nested in ovl25:0D9A: moves the first shown line (DS:6B29) a page down or up, keeps the cursor's place on the page and redraws); auto:near_call; nested in ChooseFromList (static link pushed by its callers); drafted in commit 3c8dac5; nested in ChooseFromList (ovl25:0D9A), proven by the parent's match (make match UNIT=ovl25: NESTED; dec-s25, 2026-10-13, once the matcher of 82cbb26 proved a nested routine called only by a sibling with push word ptr [bp+6]; push cs; call)"
 evidence = ["prologue"]
 
 [[routine]]
@@ -12218,9 +12218,9 @@ size = 213
 name = "MoveListCursor"
 signature = ""
 c_name = "ovl25_fn_0CC5"
-level = "none"
+level = "L2"
 justification = ""
-notes = "renamed from ovl25_fn_0CC5 (ovl25:0CC5 nested in ovl25:0D9A: moves Choice one line down or up, wrapping inside the shown page, then skips headings); auto:near_call; nested in ChooseFromList (static link pushed by its callers); drafted in commit 3c8dac5, blocked with its parent (see the parent's notes)"
+notes = "renamed from ovl25_fn_0CC5 (ovl25:0CC5 nested in ovl25:0D9A: moves Choice one line down or up, wrapping inside the shown page, then skips headings); auto:near_call; nested in ChooseFromList (static link pushed by its callers); drafted in commit 3c8dac5; nested in ChooseFromList (ovl25:0D9A), proven by the parent's match (make match UNIT=ovl25: NESTED; dec-s25, 2026-10-13, once the matcher of 82cbb26 proved a nested routine called only by a sibling with push word ptr [bp+6]; push cs; call)"
 evidence = ["prologue"]
 
 [[routine]]
@@ -12231,9 +12231,9 @@ size = 823
 name = "ChooseFromList"
 signature = "function ChooseFromList(Title, Prompt: String40; HeadingColor, LineColor, HighlightColor: Byte; Left, Top, Right, Bottom: ShortInt; List: PMenuLine; WithExit: Byte; var Redraw: Byte; var Choice: Integer; var Selected: PMenuLine): Char"
 c_name = "ovl25_e4"
-level = "none"
+level = "L2"
 justification = ""
-notes = "renamed from ovl25_e4 (ovl25:0D9A a list menu: draws List in the window D..G, highlights line Choice, reads the key through the prompt line with Next/Prev/Exit words and returns it with the chosen line (draft, address fields only differ)); auto:entry_4; blocked (dec-r25, 2026-10-12, after dec-8): the full draft is in commit 3c8dac5 (src/OVL25.PAS; apply the renames res06_fn_0626 DrawTextAt, res06_fn_01DF DrawGlyph, res06_fn_05EB ClearTextCells). With the nested-routine comparison of c7265b6 the draft's whole pre-entry region (ovl25:0711..0D9A, 1673 bytes) and body differ from the original in 34 instructions only, every one a far call (ClearWindow, DrawTextAt, DrawGlyph, System StrLCopy 0AF8:0B25 and 0AF8:0B57) or an operand naming ListMenuTop (DS:6B29); capstone diff of build A against the original. The matcher resolves those only inside nested routines proven by a direct call from the parent (push bp; push cs; call); FirstNonBlank (ovl25:08D7), LastNonBlank (ovl25:0923) and SkipHeadingLines (ovl25:0B03) are called only by sibling nested routines (HighlightListLine, UnhighlightListLine, ScrollListPage, MoveListCursor: push word ptr [bp+6]; push cs; call), which the strict rule excludes (escalate-general-20261012012957), so their lcall StrLCopy (08EB, 0937) and ListMenuTop operands (0B54..0BEF) are compared byte-exact and can never match. Escalated: count a near call made from inside an already proven nested routine with that routine's own static link (push word ptr [bp+6]) as proof of the callee too (the link passed is still the parent's frame); nested: LastHeadingBefore (0711), DrawListPage (07A4), FirstNonBlank (08D7), LastNonBlank (0923), HighlightListLine (0969), UnhighlightListLine (0A08), SkipHeadingLines (0B03), ScrollListPage (0C33), MoveListCursor (0CC5)"
+notes = "renamed from ovl25_e4 (ovl25:0D9A a list menu: draws List in the window D..G, highlights line Choice, reads the key through the prompt line with Next/Prev/Exit words and returns it with the chosen line); auto:entry_4; matched (dec-s25, 2026-10-13) from the draft of commit 3c8dac5 (dec-8, dec-r25) with the renames res06_fn_0626 DrawTextAt, res06_fn_01DF DrawGlyph, res06_fn_05EB ClearTextCells, unchanged otherwise, once the matcher (82cbb26) proved a nested routine called only by a sibling nested routine (push word ptr [bp+6]; push cs; call): FirstNonBlank (08D7), LastNonBlank (0923) and SkipHeadingLines (0B03) have no direct call from the parent, and their lcall StrLCopy and ListMenuTop (DS:6B29) operands were the 34 instructions that differed before (escalate-general-20261012012957); nested: LastHeadingBefore (0711), DrawListPage (07A4), FirstNonBlank (08D7), LastNonBlank (0923), HighlightListLine (0969), UnhighlightListLine (0A08), SkipHeadingLines (0B03), ScrollListPage (0C33), MoveListCursor (0CC5)"
 evidence = ["prologue"]
 
 [[routine]]
@@ -12283,9 +12283,9 @@ size = 5
 name = "ovl25_init"
 signature = ""
 c_name = "ovl25_init"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_0; blocked: the original is the empty initialisation part (push bp; mov bp,sp; pop bp; retf at ovl25:1245, packet), which src/OVL25.PAS already has (begin end., no {@stub-init}); make match checks an init part only in the whole-unit comparison, which runs when no stub is left, so it waits for ReadPromptChoice and ChooseFromList (escalate-res06-20261012110841, nested-routine comparison) (dec-10)"
+notes = "auto:entry_0; the empty initialisation part (push bp; mov bp,sp; pop bp; retf at ovl25:1245, packet): src/OVL25.PAS ends with begin end.; matched in the whole-unit comparison once no stub was left (make match UNIT=ovl25: unit: complete; dec-s25, 2026-10-13)"
 evidence = ["prologue"]
 
 [[routine]]
