@@ -16550,248 +16550,40 @@ evidence = ["prologue"]
 id = "0464:02A5"
 unit = "res07"
 addr = "0464:02A5"
-size = 970
+size = 1583
 name = "res07_fn_02A5"
 signature = "procedure res07_fn_02A5(Data: Pointer; Offset: Word; A, B: Byte; Sprite: Pointer)"
 c_name = "res07_fn_02A5"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; map deepseek-dec 2026-10-12: ends 08D4 (was 970); bogus entries 066F, 0710 deleted (mid-routine, no 55 89 E5 prologue)"
 evidence = ["prologue"]
-
-[[routine]]
-id = "0464:066F"
-unit = "res07"
-addr = "0464:066F"
-size = 161
-name = "res07_fn_066F"
-signature = ""
-c_name = "res07_fn_066F"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "0464:0710"
-unit = "res07"
-addr = "0464:0710"
-size = 452
-name = "res07_fn_0710"
-signature = ""
-c_name = "res07_fn_0710"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "0464:08D4"
 unit = "res07"
 addr = "0464:08D4"
-size = 351
+size = 1181
 name = "res07_fn_08D4"
 signature = "procedure res07_fn_08D4(Col, Row: Integer; PicIndex, Flags: Byte; Source, Dest: Pointer)"
 c_name = "res07_fn_08D4"
 level = "none"
 justification = ""
-notes = "auto:prologue"
+notes = "auto:prologue; map deepseek-dec 2026-10-12: ends 0D71 (was 351); bogus entries 0A33, 0C0C, 0D6C deleted"
 evidence = ["prologue"]
-
-[[routine]]
-id = "0464:0A33"
-unit = "res07"
-addr = "0464:0A33"
-size = 473
-name = "res07_fn_0A33"
-signature = ""
-c_name = "res07_fn_0A33"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "0464:0C0C"
-unit = "res07"
-addr = "0464:0C0C"
-size = 352
-name = "res07_fn_0C0C"
-signature = ""
-c_name = "res07_fn_0C0C"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "0464:0D6C"
-unit = "res07"
-addr = "0464:0D6C"
-size = 5
-name = "res07_fn_0D6C"
-signature = ""
-c_name = "res07_fn_0D6C"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "0464:0D71"
 unit = "res07"
 addr = "0464:0D71"
-size = 144
+size = 1811
 name = "res07_fn_0D71"
 signature = "procedure res07_fn_0D71(Col, Row: Integer; PicIndex, Flags: Byte; Source, Dest: Pointer)"
 c_name = "res07_fn_0D71"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; map deepseek-dec 2026-10-12: ends 1484 (was 144); bogus entries 0E01..140E (11) deleted"
 evidence = ["prologue"]
-
-[[routine]]
-id = "0464:0E01"
-unit = "res07"
-addr = "0464:0E01"
-size = 39
-name = "res07_fn_0E01"
-signature = ""
-c_name = "res07_fn_0E01"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "0464:0E28"
-unit = "res07"
-addr = "0464:0E28"
-size = 11
-name = "res07_fn_0E28"
-signature = ""
-c_name = "res07_fn_0E28"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "0464:0E33"
-unit = "res07"
-addr = "0464:0E33"
-size = 21
-name = "res07_fn_0E33"
-signature = ""
-c_name = "res07_fn_0E33"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "0464:0E48"
-unit = "res07"
-addr = "0464:0E48"
-size = 120
-name = "res07_fn_0E48"
-signature = ""
-c_name = "res07_fn_0E48"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "0464:0EC0"
-unit = "res07"
-addr = "0464:0EC0"
-size = 34
-name = "res07_fn_0EC0"
-signature = ""
-c_name = "res07_fn_0EC0"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "0464:0EE2"
-unit = "res07"
-addr = "0464:0EE2"
-size = 116
-name = "res07_fn_0EE2"
-signature = ""
-c_name = "res07_fn_0EE2"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "0464:0F56"
-unit = "res07"
-addr = "0464:0F56"
-size = 215
-name = "res07_fn_0F56"
-signature = ""
-c_name = "res07_fn_0F56"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "0464:102D"
-unit = "res07"
-addr = "0464:102D"
-size = 21
-name = "res07_fn_102D"
-signature = ""
-c_name = "res07_fn_102D"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "0464:1042"
-unit = "res07"
-addr = "0464:1042"
-size = 154
-name = "res07_fn_1042"
-signature = ""
-c_name = "res07_fn_1042"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "0464:10DC"
-unit = "res07"
-addr = "0464:10DC"
-size = 818
-name = "res07_fn_10DC"
-signature = ""
-c_name = "res07_fn_10DC"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "0464:140E"
-unit = "res07"
-addr = "0464:140E"
-size = 118
-name = "res07_fn_140E"
-signature = ""
-c_name = "res07_fn_140E"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "0464:1484"
@@ -16810,27 +16602,14 @@ evidence = ["prologue"]
 id = "0464:1509"
 unit = "res07"
 addr = "0464:1509"
-size = 11
+size = 141
 name = "res07_fn_1509"
 signature = ""
 c_name = "res07_fn_1509"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; map deepseek-dec 2026-10-12: ends 1596 (was 11); bogus entry 1514 deleted"
 evidence = ["prologue"]
-
-[[routine]]
-id = "0464:1514"
-unit = "res07"
-addr = "0464:1514"
-size = 130
-name = "res07_fn_1514"
-signature = ""
-c_name = "res07_fn_1514"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "0464:1596"
@@ -16849,53 +16628,27 @@ evidence = ["prologue"]
 id = "0464:15C7"
 unit = "res07"
 addr = "0464:15C7"
-size = 321
+size = 906
 name = "res07_fn_15C7"
 signature = "procedure res07_fn_15C7(Source, Dest: Pointer)"
 c_name = "res07_fn_15C7"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; map deepseek-dec 2026-10-12: ends 1951 (was 321); bogus entry 1708 deleted"
 evidence = ["prologue"]
-
-[[routine]]
-id = "0464:1708"
-unit = "res07"
-addr = "0464:1708"
-size = 585
-name = "res07_fn_1708"
-signature = ""
-c_name = "res07_fn_1708"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "0464:1951"
 unit = "res07"
 addr = "0464:1951"
-size = 200
+size = 513
 name = "res07_fn_1951"
 signature = "procedure res07_fn_1951(X, Y: Integer; Buf: Pointer)"
 c_name = "res07_fn_1951"
 level = "none"
 justification = ""
-notes = "auto:prologue"
+notes = "auto:prologue; map deepseek-dec 2026-10-12: ends 1B52 (was 200); bogus entry 1A19 deleted"
 evidence = ["prologue"]
-
-[[routine]]
-id = "0464:1A19"
-unit = "res07"
-addr = "0464:1A19"
-size = 313
-name = "res07_fn_1A19"
-signature = ""
-c_name = "res07_fn_1A19"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "0464:1B52"
