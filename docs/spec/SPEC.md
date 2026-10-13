@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| Version | 0.5 (ADR-002 with attributed tasks, shared learning and a bounded pre-started expert advice queue) |
-| Date | 2026-10-11 |
+| Version | 0.6 (ADR-002; integration, worker lifecycle and matcher gate made mechanical after the 2026-10-12 system review, `docs/process/SYSTEM-REVIEW-2026-10-12.md`) |
+| Date | 2026-10-12 |
 | Target | SSI *Pool of Radiance*, DOS, the build in `poolrad/` (hashes in section 2) |
 | Output | Turbo Pascal 6.0 source in `src/` that compiles to the original's machine code, a rebuild of the game from it, a living design doc in `docs/design/`; later a C translation for other platforms |
 | Execution | AI-agent driven, harness agnostic (Claude Code, Cursor, OpenCode), human supervised |
@@ -63,7 +63,7 @@ Each item was checked against our files; details and evidence are in the whitepa
 3. **Packing.** The shipped `START.EXE` is EXEPACK compressed; `make unexepack` unpacks it to the pinned `start-unpack.exe`.
 4. **Data.** All 113 `.DAX` files are block archives with one header layout, and all 1,245 blocks decompress to their declared size with one RLE scheme (whitepaper, section 4.1).
 5. **Memory.** DGROUP is paragraph `0C7C` in the load image (set by the System unit init), the stack segment is `14F2` with SP `4000`.
-6. **Compiler switches** (whitepaper section 2.2): `$A-` (no word alignment of data and locals: proven by `make match` on res06), `$F+` (every routine far), `$S-`, `$R-`, `$G-`, no floating point; `$I+` only in resident unit res05; overlay units `$O+` (string and set constants passed to routines are copied to the stack first, which the overlay code shows). TP 6.0 has no `$Q` and no `const` parameters.
+6. **Compiler switches** (whitepaper section 2.2): `$A-` (no word alignment of data and locals: proven by `make match` on res06), `$F+` (every routine far), `$S-`, `$R-`, `$G-`, no floating point; `$I+` only in resident unit res05; `$O+` is per unit: every overlay unit (string and set constants passed to routines are copied to the stack first, which the overlay code shows) and the resident units whose code shows the same copy, res08 (`OvrInit('GAME.OVR')`, `042B:00AF`) and res07 (`'.dax'` in `LoadDaxBlock`, `0464:0152`), proven by `make match`. TP 6.0 has no `$Q` and no `const` parameters.
 7. **Code generation is simple and deterministic.** Turbo Pascal 6.0 does not optimise across statements, emits one prologue and one epilogue per routine, puts a routine's string and set constants in the code segment right before it, and lays out a unit's routines in source order. A routine written in the right Pascal compiles to the original's instructions exactly (section 8.3; proven on res04, ovl00 and res06).
 
 Consequences:
@@ -188,7 +188,7 @@ build/                    everything generated (ignored by git); build/toolchain
 
 - **One unit, one file.** `src/<ID>.PAS` holds unit `<ID>` (for example `RES04.PAS`, `unit RES04`). File and unit names stay the ids (8.3 names, and the matcher maps them to `re/units.toml`); the real name of a unit goes in its header comment and in `re/units.toml`.
 - **The original's order.** Routines appear in the implementation part in the order of their addresses, since Turbo Pascal lays them out in source order. Each routine is declared in the interface (the compiler's map lists only interface symbols; declaring it there changes no code).
-- **Directives.** Every unit starts with `{$A-,F+,S-,R-,G-,I-}`; overlay units add `O+` (`{$A-,O+,F+,S-,R-,G-,I-}`); res05 has `I+`. A unit whose evidence shows another switch documents it in its header comment.
+- **Directives.** Every unit starts with `{$A-,F+,S-,R-,G-,I-}`; overlay units add `O+` (`{$A-,O+,F+,S-,R-,G-,I-}`); res05 has `I+`; resident res08 also has `O+` (whitepaper 2.2). A unit whose evidence shows another switch documents it in its header comment.
 - **Names.** A routine keeps its `re/symbols.toml` name (`res04_fn_0059`, `ovl00_e1`) until renamed there; a global is `dsXXXX` (its DS offset) until named in `re/dseg.toml`. The matcher resolves both forms (section 8.3), so renaming is a change in `re/` plus the source, never in the proof.
 - **Skeletons and stubs.** Every game unit has source from the start: `make skeleton` wrote each one with every routine of `re/symbols.toml` declared in address order and a stub body (`{@stub}` at the start of the header line, an empty body, a comment with the frame the code shows). Decompiling replaces a stub by the routine. A stub's signature is evidence (the callers' pushes and the callee's `retf n`), recorded in `re/symbols.toml` `signature` (the full Pascal header, for example `procedure res06_fn_0BF5(Color: Byte; Text: String40)`) so that regenerated skeletons keep it. An initialisation part that does real work and is not decompiled yet is marked `{@stub-init}` on the line before its `begin`; an empty one (`begin end.`, 44 of the 46 game units) is already decompiled.
 - **The main program** is `src/POOL.PAS`: its `uses` clause lists the units in the original initialisation order (the compiler emits one initialisation call per unit in that order), and its main block is the game's. `make match UNIT=main` proves it.
@@ -249,9 +249,11 @@ In ADR-002 the oracle verifies whole programs: the original (goldens) and the re
    - an offset into the code segment must be the same literal, at the same distance from the entry;
    - a segment fixup must name the same unit or DGROUP.
    An immediate counts as an address only if it moves between variants A and B; constants never move.
-4. With no stubs left in the unit, also checks that routines, pools, the initialisation part and the paragraph padding cover the original segment exactly.
+4. With no stubs left in the unit, also checks that routines, pools, the initialisation part and the paragraph padding cover the original segment exactly. A unit with an external object file (`re/units.toml` `external_from`: code the original linked from an `.OBJ` after its initialisation part, as res03's sound driver) is complete when its Pascal part tiles the original up to the object; the object's routines are flagged `external = true` in the registry, declared as stubs for their callers, and kept as the original's bytes until Phase 5 rebuilds them from an assembly source.
 
-The first difference is reported with both instructions. `WRITE=1` records L2 for each matched routine and lists where `re/symbols.toml`'s boundaries disagree with the compiler's (map corrections).
+The first difference is reported with both instructions. `WRITE=1` records L2 for each matched routine and writes the compiler's boundaries into `re/symbols.toml` (a size the compiler disproves, a map entry inside matched code, a routine the map lacked), which retires the mapper role for boundaries.
+
+**Changing the matcher** (`tools/match/`, `tools/re/tp_toolchain.py`) is a tooling task gated by `make match-gate`: every L2 routine still matched, together and alone, every negative fixture still rejected, a negative fixture for every new address kind. The human reads the diff after it merges. Worker sessions cannot edit the matcher: the pre-commit hook and the harness edit guard (`tools/agent/hooks/`) refuse it.
 
 ### 8.4 The rebuild (L3, Phase 5)
 
@@ -286,8 +288,9 @@ Every loader for game data (DAX blocks, maps, ECL scripts, monsters, items, save
 | Role | Does | Must not |
 |---|---|---|
 | Human operator | Starts and stops every agent in the harness of its choice; answers escalations; approves spec, ADR and `poolrad/` changes | |
-| Orchestrator | Merges hand-offs one at a time, runs `make check`, adds changelog rows, keeps `work/status.md` current, brings escalations and staffing suggestions to the human | Start or stop agents; decompile, review or document while orchestrating |
-| Mapper | Ghidra analysis, names, types, signatures, boundaries in `re/` | Write unit source |
+| Integrator (`make integrate`, a script) | Merges hand-offs one at a time in a temporary worktree, runs `make check`, writes status and changelog row into one merge commit, fast-forwards `main`, releases locks, rejects what fails with the reason (`make inbox`) | Decide anything: an escalation is cleared only with a human's `DECISION=` |
+| Worker supervisor (`make worker`, a script) | Claims, holds the lock, posts heartbeats, runs one fresh model session per batch of routines, hands off or releases when it stops | Reason about code: the model session does that, and only inside its batch |
+| Mapper | Phase 1 mapping (Ghidra, units, runtime identification); boundaries are written by `make match WRITE=1` from Phase 4 on | Write unit source |
 | Decompiler | Writes Pascal for one unit until `make match` passes | Edit another unit's routines (stub signatures excepted, 9.6); write levels by hand |
 | Verifier | Sessions, goldens, oracle features, the rebuild; bisects failures | Change source to make a check pass without understanding why |
 | Reviewer | Independent review of a complete unit with the checklist (playbook 70); files findings; `make review-pass` | Edit the code it reviews; review a unit it decompiled |
@@ -310,7 +313,9 @@ not make another agent rediscover an already accepted result. Playbook 80 advice
 - `re/symbols.toml` holds per routine: `id`, `unit`, `addr`, `size`, `name`, `signature`, `level`, `notes`, `evidence`.
 - `work/status.md` is generated by `make status`: per unit counts by level, bytes covered.
 - `work/queue.toml` orders units. The runtime units are library and never queued. Order: small and leaf units first (they build the stub signatures and global names others need), then data loaders, text and graphics primitives, the ECL interpreter, maps and movement, menus and character screens, items and shops, combat, magic, the rest. `make next` proposes the next item.
-- Locks prevent two agents taking the same unit or review. They live in the clone's git directory (`$(git rev-parse --git-common-dir)/poolrad-locks/`), shared by every worktree of the clone and never committed, and are created atomically. `make claim AGENT=<name> [REVIEW=1]` takes the next unit (or review), locks it and creates its worktree; `make locks` lists them; stale locks older than 24 hours may be broken by the orchestrator (`make unlock UNIT=<id> FORCE=1`). Parallel agents therefore share one machine and one clone; agents on several machines would need a shared lock store (not built).
+- Locks prevent two agents taking the same unit or review. They live in the clone's git directory (`$(git rev-parse --git-common-dir)/poolrad-locks/`), shared by every worktree of the clone and never committed, and are created atomically. `make claim AGENT=<name> [REVIEW=1]` takes the next unit (or review), locks it and creates its worktree; the same agent reclaiming its own lock reuses them. `make locks` lists them. A lock is released by `make integrate` when its branch is merged, by the worker's supervisor when its branch has no commits beyond `main`, or by the human (`make unlock UNIT=<id> OPERATOR=1 FORCE=1 REASON=`) for an agent that stopped with work on its branch; `make inbox` lists those. Parallel agents therefore share one machine and one clone; agents on several machines would need a shared lock store (not built).
+- A hand-off that `make integrate` could not merge is marked `integrate = rejected` with the reason and a log; the unit goes back to its owner through `make claim`. Routines a worker's sessions failed twice go to the frontier (`.git/poolrad-frontier/`), which the scheduler skips until released.
+- The shared files (`re/symbols.toml`, `re/dseg.toml`, `re/renames.toml`, `re/learnings/*.toml`, `src/POOLVARS.PAS`) merge record by record (`tools/agent/merge_shared.py`, `.gitattributes`); stub lines are regenerated from `signature` by `make stubs`; renames are applied at integration. Two branches therefore conflict only on the same record.
 - At creation, register the actual role, harness, full model id/variant and harness session id. An
   immutable agent incarnation and per-claim task id bind locks, heartbeats, hand-offs and activity to
   that configuration and base commit. Changes of role/model/session require a new incarnation and
@@ -342,19 +347,19 @@ No missing-usage estimate is substituted. See playbook 80 and `docs/process/THRO
 
 ### 9.5 The per-routine loop (summary; full detail in playbook 30)
 
-1. `make claim AGENT=<name>`: the next unit is locked and its worktree created on branch `unit/<id>`.
+1. `make worker AGENT=<name> ROLE=decompiler` runs the loop below with a fresh model session per batch of routines (`docs/process/WORKER.md`); by hand: `make claim AGENT=<name>`, the next unit is locked and its worktree created on branch `unit/<id>`.
 2. `make packet UNIT=<id>`; read it and the relevant whitepaper sections.
 3. Replace stubs in `src/<ID>.PAS` by routines; fix callee stub signatures (in any unit's file) and add names for new globals.
 4. `make match UNIT=<id> FN=<name>` until it passes; when the compiler's choice is unclear, probe the idiom with `make tpc`. After 5 failed attempts on one routine, stop and write a `blocked` note with what was tried.
 5. Make the routine readable (names with evidence through `make rename`, named constants, its comment), `make match` again and `make readability UNIT=<id>` clean.
 6. `make match UNIT=<id> WRITE=1` records L2; commit with the routine id in the message.
-7. When the unit is complete, or when stopping: update the whitepaper (playbook 60), commit on the unit branch, hand the branch to the orchestrator, who merges it, runs `make check` and releases the lock (playbook 90).
+7. When the unit is complete, or when stopping: update the whitepaper (playbook 60), commit on the unit branch, hand the branch off; `make integrate` merges it, runs `make check` and releases the lock, or rejects it with the reason (playbook 90).
 8. A complete unit merged on `main` is reviewed by another agent (`make claim REVIEW=1`, playbook 70); must-fix findings send it back to step 1 (`make claim UNIT=<id>`).
 
 ### 9.6 Guardrails
 
 - Never edit `poolrad/`. Never commit generated files from `build/`, never commit the compiler. Never paste code from repositories whose licence does not allow it (section 13).
-- Never mark levels by hand; only tools write verdicts. Never weaken the matcher (a new address kind, a looser rule) without a written reason in the same commit, reviewed by a human.
+- Never mark levels by hand; only tools write verdicts. A matcher change is a tooling task that passes `make match-gate` (8.3) with a written reason in the commit; worker sessions cannot make one (hooks).
 - Shared files: `src/POOLVARS.PAS` (one declaration per line, kept in offset order), stub declarations in other units' files and `re/symbols.toml` `signature`/`notes` take small edits; the orchestrator resolves merge conflicts there (playbook 90). A stub's signature change must keep every matched caller matching (`make check`). `work/status.md` and `docs/design/CHANGELOG.md` are written by the orchestrator only (changelog rows come with the hand-offs).
 - Escalation: a question an agent cannot settle from evidence, or a decision reserved for the human, goes to the orchestrator as `make handoff STATE=escalate`; the orchestrator takes it to the human and never merges it.
 - No inline machine code (`inline(...)`, `asm` blocks of raw bytes) to force a match. Hand-written assembly routines of the original are written as Turbo Pascal `assembler` routines with real instructions, and say so in their header comment.
@@ -384,7 +389,7 @@ Every phase has the human operator (starts and stops the agents, answers escalat
 
 | Phase | Produces (outcome) | Does the work | Proves or accepts | Ready? |
 |---|---|---|---|---|
-| P4 Match | O1, O3 (unit facts), O4 (unit by unit) | Decompilers (playbook 30), including readability (`docs/process/READABILITY.md`); documentarians for chapters across units (playbook 60); a mapper for map corrections (playbook 10) | `make match` (L2), `make readability`, reviewers judging names and comments (`make review-pass`, playbook 70), the orchestrator's `make check` | Yes |
+| P4 Match | O1, O3 (unit facts), O4 (unit by unit) | Decompilers (playbook 30, run by `make worker`), including readability (`docs/process/READABILITY.md`); documentarians for chapters across units (playbook 60); boundaries written by `make match WRITE=1` | `make match` (L2), `make readability`, reviewers judging names and comments (`make review-pass`, playbook 70), `make integrate`'s `make check` | Yes |
 | P5 Rebuild | O2 | **Placeholder:** a verifier. Moves globals from `src/POOLVARS.PAS` into their owning units in the original order, puts the overlay directives into `src/POOL.PAS`, matches the original link order and the layout of `GAME.OVR` | `make rebuild` byte-identical (or every difference explained in the whitepaper); goldens passing on the rebuild | **No:** needs a verifier playbook, and `make golden CHECK=1` against the rebuilt EXE (the oracle runs only the original today). Due before P4 ends |
 | P6 Consistency | O4 (across units) | **Placeholder:** decompilers and a documentarian, per subsystem: one name for one thing across units, shared record types | Every routine still L2 (`make check`); a reviewer signs off each subsystem | Partly: `make rename` and `make readability` exist; a consistency playbook is due late in P4 |
 | P7 C translation | O5 | **Open decision for the human:** agents translating by hand, or a mechanical Pascal to C translator that agents then clean up. Either way it starts from branch `track-c-hybrid` (memory model, runtime, platform layer) | The oracle's record/replay sessions against the rebuild (`tools/oracle/replay.py`, on `main`) | **No:** decide late in P4 |
@@ -441,8 +446,9 @@ Game data and the original executables are copyrighted; they stay in this privat
 |---|---|---|
 | A routine that no Pascal reproduces (hand-written assembly, compiler quirks) | Cannot reach L2 in plain Pascal | Turbo Pascal `assembler` routines with real instructions (9.6); evidence in the whitepaper |
 | The compiler is on the critical path and not redistributable | A new machine cannot match without it | Archive hashes and sources in `tools/re/tp_toolchain.toml` and `docs/setup/SETUP-tp.md` |
-| Map boundaries wrong (`re/symbols.toml` merges routines, gives literal pools to the wrong routine, misses routines) | Wrong ids for routines | The matcher reports the compiler's boundaries; `make map` learns the TP 6.0 prologue `55 89 E5` |
-| Shared files (`POOLVARS.PAS`, stub declarations) | Merge conflicts between agents | Additive edits, orchestrator merges, `make check` after every merge |
+| Map boundaries wrong (`re/symbols.toml` merges routines, gives literal pools to the wrong routine, misses routines) | Wrong ids for routines | `make match WRITE=1` writes the compiler's boundaries; `make map` learns the TP 6.0 prologue `55 89 E5` |
+| Shared files (`POOLVARS.PAS`, registries, stub declarations) | Merge conflicts between agents | Record-level merge driver, stubs regenerated from signatures, `make integrate` with `make check` before anything lands |
+| A routine no Pascal reproduces because it was never Pascal (an `.OBJ` linked with `{$L}`) | Unit cannot be complete | `external_from` in `re/units.toml`: kept as the original's bytes, rebuilt from an assembly source in Phase 5 (res03) |
 | A byte-identical link is out of reach (link order, overlay file layout) | O2 is "identical up to explained differences" | Sessions on the rebuild prove behaviour; every difference is documented |
 | Agents drift or hallucinate | Bad names, wrong claims | Packets, evidence tags, tool-written verdicts, independent review |
 | Scope (about 236 KB of game code) | Long project | Units in parallel worktrees; small units first |

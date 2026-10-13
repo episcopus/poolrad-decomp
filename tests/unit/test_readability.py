@@ -128,3 +128,22 @@ def test_rename_evidence_with_backslashes_and_quotes_stays_valid_toml(tree):
         tomllib.loads((tree / name).read_text())                        # still parses
     log = tomllib.loads((tree / "renames.toml").read_text())["rename"]
     assert log[-1]["why"] == "prompt 'Insert disk' at C:\\GAME\\ costs $5"
+
+
+def test_a_global_comment_may_sit_on_the_line_above_its_declaration(tmp_path, monkeypatch):
+    """Turbo Pascal lines are limited to 127 characters, so a long comment goes above the declaration."""
+    import readability
+    src = tmp_path / "src"
+    src.mkdir()
+    (src / "POOLVARS.PAS").write_text(
+        "unit POOLVARS;\ninterface\nvar\n"
+        "  ds1000: Byte;                   { on the line }\n"
+        "  { above the line, over\n    two lines }\n"
+        "  ds1001: Byte;\n"
+        "  ds1002: Byte;\n"
+        "implementation\nend.\n")
+    monkeypatch.setattr(readability.match, "SRC", src)
+    got = readability.poolvars_comments()
+    assert "on the line" in got["ds1000"]
+    assert "above the line" in got["ds1001"] and "two lines" in got["ds1001"]
+    assert got["ds1002"] == ""

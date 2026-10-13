@@ -23,6 +23,10 @@ sides:
                 (runtime library targets are identified through tp_toolchain.runtime_names).
   literal       an offset into the code segment (a string or set constant): same distance from the entry
                 on both sides, and the pool bytes are compared as they are.
+  routine ofs   `mov ax, ofs; mov dx, seg` of a routine in another unit (`ds6B84 := @ovl22_e4`).
+                The offset moves by the padding procedure, like an offset in this unit. It names the
+                public at that offset in the segment the following relocated word selects. The original's
+                word is that routine's address (an overlay stub offset for an overlay unit).
   segment       a segment fixup: the same unit (or DGROUP) on both sides.
 
 An immediate counts as an address only if it moves when the layout moves: the unit is compiled a
@@ -35,10 +39,13 @@ and the paragraph padding cover the original segment exactly.
 `--write` records level L2 (matched) for each matched routine in re/symbols.toml (only tools write
 levels, AGENTS.md rule 2) and prints where re/symbols.toml's boundaries disagree with the compiler's.
 
-Nested routines have no map symbol; TP 6.0 puts their code in the parent's pre-entry region, which is
-compared exactly. A matched parent proves a nested routine (reported `NESTED`, L2 with a note saying so)
-only by the strict rule of nested_routines(): called as `push bp; push cs; call` from the parent or an
-already proven nested routine, and wholly inside that region (escalate-general-20261012012957).
+Nested routines have no map symbol; TP 6.0 puts their code in the parent's pre-entry region. A range
+proven nested by nested_routines() is compared instruction by instruction, with the same address
+resolution as a top-level routine; every other pre-entry byte stays byte-exact
+(escalate-res06-20261012110841). A matched parent proves a nested routine (reported `NESTED`, L2 with
+a note saying so) only by the strict rule of nested_routines(): called as `push bp; push cs; call`
+from the parent or an already proven nested routine, and wholly inside that region
+(escalate-general-20261012012957).
 
 Conventions for the sources (playbook 30): one file per original unit, named after its id (RES04.PAS
 is unit RES04); every routine is declared in the interface (the map lists only interface symbols);
@@ -112,6 +119,23 @@ class Original:
             a = int(u["code_start"].split(":")[0], 16)
             b = int(u["code_end"].split(":")[0], 16)
             self.res_ranges.append((a, b, u["id"]))
+        # An external object file (`{$L X.OBJ}`, code Turbo Pascal links after the initialisation part):
+        # from `external_from` to the end of the unit the bytes are not Pascal and stay as the original's.
+        self.external = {uid: int(u["external_from"].split(":")[1], 16)
+                         for uid, u in self.units.items() if u.get("external_from")}
+
+    def external_names(self, uid: str) -> set[str]:
+        """Upper-case names of the unit's routines inside its external object (registry `external = true`,
+        or an address at or after `external_from`)."""
+        ext = self.external.get(uid)
+        out = set()
+        for r in self.routines:
+            if r["unit"] != uid:
+                continue
+            off = int(r["addr"].split(":")[1], 16)
+            if r.get("external") or (ext is not None and off >= ext):
+                out.add(r["name"].upper())
+        return out
 
     def segment(self, uid: str) -> tuple[bytes, int | None]:
         """(code bytes of the unit, paragraph of the unit in the image or None for an overlay)."""
@@ -456,8 +480,9 @@ def nested_routines(seg_bytes: bytes, region_start: int, parent_entry: int,
                     parent_end: int) -> dict[int, tuple[int, int]]:
     """Nested routines of a matched parent, proven by the parent's match: {entry: (end, caller entry)}.
 
-    Turbo Pascal 6.0 puts a nested routine's code before its parent's body, inside the bytes the matcher
-    compares exactly as the parent's pre-entry region [region_start, parent_entry). The map has no symbol
+    Turbo Pascal 6.0 puts a nested routine's code before its parent's body, inside the parent's
+    pre-entry region [region_start, parent_entry). The matcher compares a proven nested range
+    instruction by instruction and keeps every other pre-entry byte exact. The map has no symbol
     for it, so its entry is proven by how it is called. A routine counts only when ALL hold (operator
     decision on escalation escalate-general-20261012012957, the strict rule):
       1. its entry is the target of a near call inside the parent, or inside a nested routine already
@@ -558,11 +583,12 @@ class Comparer:
         O = self.obytes[o0: orig_entry + (ra.end - ra.entry)]
         if len(A) != len(B):
             return False, "our code changes length with the layout (%d vs %d bytes)" % (len(A), len(B)), 0
-        if A[:ra.pool] != O[:ra.pool]:
-            k = next(i for i in range(ra.pool) if A[i] != O[i])
-            return False, "literal pool byte %d before the entry: ours %02X, original %02X" % (
-                ra.pool - k, A[k], O[k]), 0
         symbols = 0
+        if A[:ra.pool] != O[:ra.pool]:
+            ok, why, n = self.pre_entry(A, B, O, ra, orig_entry)
+            if not ok:
+                return False, why, n
+            symbols += n
         insns_a = list(md.disasm(A[ra.pool:], ra.entry))
         insns_o = {i.address: i for i in md.disasm(O[ra.pool:], ra.entry)}
         if sum(i.size for i in insns_a) != len(A) - ra.pool:
@@ -581,7 +607,64 @@ class Comparer:
                 return False, self.diff(ia, io, why), symbols
         return True, "", symbols
 
-    def fields(self, ia, io, sa, so, sb, ra: Region, orig_entry: int, p: int):
+    def pre_entry(self, A: bytes, B: bytes, O: bytes, ra: Region, orig_entry: int) -> tuple[bool, str, int]:
+        """Compare the parent's pre-entry bytes. Proven nested ranges use fields(); the rest stay exact.
+
+        Only ranges nested_routines() proves from the original parent are carved out. A nested range
+        with a wrong global or a wrong callee fails here, the same way a top-level routine does.
+        """
+        region_start = orig_entry - ra.pool
+        body_end = orig_entry + (len(A) - ra.pool)
+        found = nested_routines(self.obytes, region_start, orig_entry, body_end)
+        spans = []
+        for entry, (end, _caller) in sorted(found.items()):
+            a, b = entry - region_start, end - region_start
+            if 0 <= a < b <= ra.pool:
+                spans.append((a, b, entry))
+        nested_ours = {entry: (ra.entry - ra.pool) + (entry - region_start) for entry, _rest in found.items()}
+        covered = bytearray(ra.pool)
+        symbols = 0
+        for a, b, entry in spans:
+            ok, why, n = self.compare_slice(A[a:b], B[a:b], O[a:b], entry, nested_ours)
+            if not ok:
+                return False, why, symbols + n
+            symbols += n
+            covered[a:b] = b"\x01" * (b - a)
+        for i in range(ra.pool):
+            if not covered[i] and A[i] != O[i]:
+                return False, "literal pool byte %d before the entry: ours %02X, original %02X" % (
+                    ra.pool - i, A[i], O[i]), symbols
+        return True, "", symbols
+
+    def compare_slice(self, sa_all: bytes, sb_all: bytes, so_all: bytes, entry: int,
+                      nested_ours: dict[int, int]) -> tuple[bool, str, int]:
+        """Instruction-compare one proven nested range.
+
+        `entry` is the original address. Both sides are disassembled at our address (nested_ours),
+        the same way compare() disassembles a top-level body at our entry, so a near call's target
+        is an address in our build and fields() can name it."""
+        ours_entry = nested_ours[entry]
+        insns_a = list(md.disasm(sa_all, ours_entry))
+        insns_o = {i.address: i for i in md.disasm(so_all, ours_entry)}
+        if sum(i.size for i in insns_a) != len(sa_all) or len(sb_all) != len(sa_all):
+            return False, "nested routine at %04X does not disassemble cleanly" % entry, 0
+        ra = Region("nested", ours_entry, 0, ours_entry + len(sa_all))
+        symbols = 0
+        for ia in insns_a:
+            p = ia.address - ours_entry
+            sa, so, sb = sa_all[p:p + ia.size], so_all[p:p + ia.size], sb_all[p:p + ia.size]
+            io = insns_o.get(ia.address)
+            if sa == so:
+                continue
+            if io is None or io.size != ia.size or io.bytes[0] != ia.bytes[0]:
+                return False, self.diff(ia, io, "nested instruction differs"), symbols
+            ok, why, n = self.fields(ia, io, sa, so, sb, ra, entry, p, nested_ours)
+            symbols += n
+            if not ok:
+                return False, self.diff(ia, io, why), symbols
+        return True, "", symbols
+
+    def fields(self, ia, io, sa, so, sb, ra: Region, orig_entry: int, p: int, nested_ours=None):
         """Check that every differing byte of one instruction is an address field naming the same thing."""
         covered = set()
         n = 0
@@ -590,10 +673,14 @@ class Comparer:
         if op0 == 0xE8:
             ta = (ia.address + 3 + int.from_bytes(sa[1:3], "little", signed=True)) & 0xFFFF
             to = (ia.address - ra.entry + orig_entry + 3 + int.from_bytes(so[1:3], "little", signed=True)) & 0xFFFF
-            want = self.expect_routine(self.a, self.seg, ta)
-            got = self.orig.routine_id(self.unit, to)
-            if want != got:
-                return False, "near call: ours goes to %s, the original to %s" % (want, got), n
+            if nested_ours and to in nested_ours:
+                if ta != nested_ours[to]:
+                    return False, "near call: nested target ours %04X, original %04X" % (ta, to), n
+            else:
+                want = self.expect_routine(self.a, self.seg, ta)
+                got = self.orig.routine_id(self.unit, to)
+                if want != got:
+                    return False, "near call: ours goes to %s, the original to %s" % (want, got), n
             covered |= {1, 2}
             n += 1
         elif op0 == 0x9A:
@@ -653,14 +740,21 @@ class Comparer:
             if want != so.lower() and not (want == "data" and so == "DATA"):
                 return False, "segment: ours is %s, the original %s" % (sa, so)
             return True, ""
-        if vb - va == CODE_PAD:                      # an offset in our code segment
+        if vb - va == CODE_PAD:                      # an offset that the padding procedure shifts
             routine = self.a.public_at(self.seg, va)
-            if routine is not None:                  # @Routine: the same routine on both sides
-                want = self.orig.id_of_name(routine)
-                got = self.orig.code_address(self.unit, vo)
-                if want is None or want != got:
-                    return False, "routine address: ours is %s (%s), the original names %s" % (routine, want, got)
+            if routine is not None:                  # @Routine in this unit
+                ok, why = self.routine_address(routine, self.unit, vo)
+                if ok:
+                    return True, ""
+            else:
+                ok, why = False, ""
+            cross_ok, cross_why = self.cross_unit_address(va, vb, abs_a, vo)
+            if cross_ok:
                 return True, ""
+            if cross_why:
+                return False, cross_why
+            if routine is not None:
+                return False, why
             if va - ra.entry != vo - orig_entry:     # a literal of the pool
                 return False, "literal at entry%+d (ours) vs entry%+d (original)" % (va - ra.entry, vo - orig_entry)
             return True, ""
@@ -669,6 +763,52 @@ class Comparer:
             return False, "address immediate: ours %s (DS:%04X expected), the original DS:%04X" % (
                 e[1] if e else "%04X" % va, e[0] if e else va, vo)
         return True, ""
+
+    def routine_address(self, routine: str, uid: str, vo: int) -> tuple[bool, str]:
+        """True when `routine` is the original routine whose address immediate is `vo`."""
+        want = self.orig.id_of_name(routine)
+        got = self.orig.code_address(uid, vo) if uid in getattr(self.orig, "units", {uid: None}) else None
+        if want is None or want != got:
+            return False, "routine address: ours is %s (%s), the original names %s" % (routine, want, got)
+        return True, ""
+
+    def cross_unit_address(self, va: int, vb: int, abs_a: int, vo: int) -> tuple[bool, str]:
+        """`@Routine` in another unit: ofs in ax, that unit's segment in the next relocated word.
+
+        Several units can have a routine at the same offset (each is padded by one procedure, so
+        every offset moves by CODE_PAD). The `mov dx, seg` immediately after `mov ax, ofs`
+        (probe build/probe-ptr; the original does the same at ovl08:0069 and ovl08:0085) names
+        which one. The original word is a stub offset for an overlay and a code offset for a
+        resident unit; code_address accepts either.
+        """
+        bpubs = {n.upper(): pair for n, pair in self.b.pubs.items()}
+        hits = []
+        for n, (para, off) in self.a.pubs.items():
+            other = bpubs.get(n.upper())
+            if off != va or not other or other[1] != vb:
+                continue
+            # Padding shifts later units to new paragraphs; the segment name is what stays.
+            if self.a.seg_of_para(para) != self.b.seg_of_para(other[0]):
+                continue
+            hits.append((n, para))
+        if not hits:
+            return False, ""
+        # Only `mov ax, ofs; mov dx, seg` is a cross-unit routine address. Any other immediate
+        # that happens to equal a public's offset stays on the literal or same-unit rule.
+        seg_abs = abs_a + 3
+        mov_dx = seg_abs >= 1 and seg_abs + 2 <= len(self.a.img) and self.a.img[seg_abs - 1] == 0xBA
+        if not (mov_dx and seg_abs in self.a.relocs):
+            return False, ""
+        sega = int.from_bytes(self.a.img[seg_abs:seg_abs + 2], "little")
+        chosen = [(n, para) for n, para in hits if para == sega]
+        if len(chosen) != 1:
+            return False, "routine address: offset %04X is shared by %s" % (
+                va, ", ".join(sorted(n for n, _p in hits)))
+        name, para = chosen[0]
+        segname = self.a.seg_of_para(para)
+        if segname is None or segname.upper() == self.seg.upper():
+            return False, ""
+        return self.routine_address(name, segname.lower(), vo)
 
     def diff(self, ia, io, why: str) -> str:
         a = "%04X  %-16s %s %s" % (ia.address, ia.bytes.hex(), ia.mnemonic, ia.op_str)
@@ -687,12 +827,16 @@ def compare_unit(orig: Original, unit: str, a: Build, b: Build, only: list[str] 
     by_a, by_b = {r.name.upper(): r for r in ra}, {r.name.upper(): r for r in rb}
     cmp = Comparer(orig, unit, a, b, by_a, by_b)
     results = []
-    stubs = {n.upper() for n, s in routines if s}
+    externals = orig.external_names(unit)
+    stubs = {n.upper() for n, s in routines if s} - externals
     for n, _s in routines:
         if only and n.upper() not in {x.upper() for x in only}:
             continue
         rid = orig.id_of_name(n)
         r = by_a[n.upper()]
+        if n.upper() in externals:                 # declared for its callers; its code is the object's
+            results.append(Result(n, rid, "external"))
+            continue
         if n.upper() in stubs:
             results.append(Result(n, rid, "stub"))
             continue
@@ -801,8 +945,17 @@ def whole_unit(cmp: Comparer, a: Build, b: Build, ra: list[Region], rb: list[Reg
     elif cmp.orig.init_id(cmp.unit):
         return "unit: the original has an initialization part (%s), ours has none" % cmp.orig.init_id(cmp.unit)
     seglen = a.segs[seg][1]
-    if any(r.status != "matched" for r in results):
+    if any(r.status not in ("matched", "external") for r in results):
         return "unit: not every routine matches"
+    ext = cmp.orig.external.get(cmp.unit)
+    if ext is not None:
+        # The Pascal part must tile the original up to the object; the object is the original's bytes.
+        ends = [int(r.id.split(":")[1], 16) + r.size for r in results if r.status == "matched" and r.id]
+        covered = max(ends) if ends else 0
+        if covered != ext:
+            return "unit: the Pascal part ends at %04X, the external object starts at %04X" % (covered, ext)
+        return "unit: complete, %d bytes of Pascal code; external object of %d bytes from %04X (%s)" % (
+            ext, len(cmp.obytes) - ext, ext, cmp.orig.units[cmp.unit].get("external_note", "not Pascal"))
     if last_a != seglen:
         return "unit: %d bytes of ours after the last routine are not accounted for" % (seglen - last_a)
     tail = cmp.obytes[seglen:]
@@ -812,37 +965,133 @@ def whole_unit(cmp: Comparer, a: Build, b: Build, ra: list[Region], rb: list[Reg
         seglen, len(tail))
 
 
-def write_levels(results: list[Result], orig: Original) -> list[str]:
-    """Record L2 for matched routines; return notes on boundaries re/symbols.toml has wrong."""
+# --------------------------------------------------------------------------- the registry
+def registry_blocks(text: str) -> list[tuple[int, int, str | None]]:
+    """(start, end, id) of every `[[routine]]` block of re/symbols.toml, in file order; `end` is the start of
+    the next block (or the end of the text), so a block carries its trailing blank line."""
+    starts = [m.start() for m in re.finditer(r"^\[\[routine\]\]\n", text, re.M)]
+    out = []
+    for k, s in enumerate(starts):
+        e = starts[k + 1] if k + 1 < len(starts) else len(text)
+        m = re.search(r'^id = "([^"]*)"', text[s:e], re.M)
+        out.append((s, e, m.group(1) if m else None))
+    return out
+
+
+def set_field(text: str, rid: str, key: str, raw: str) -> str:
+    """Set `key = raw` in the record of `rid` (replacing the line, or appending it before the trailing blank)."""
+    for s, e, i in registry_blocks(text):
+        if i != rid:
+            continue
+        block = text[s:e]
+        line = "%s = %s\n" % (key, raw)
+        block, k = re.subn(r"^%s = .*\n" % re.escape(key), line, block, count=1, flags=re.M)
+        if not k:
+            body = block.rstrip("\n") + "\n"
+            block = body + line + block[len(body):]
+        return text[:s] + block + text[e:]
+    return text
+
+
+def delete_record(text: str, rid: str) -> str:
+    for s, e, i in registry_blocks(text):
+        if i == rid:
+            return text[:s] + text[e:]
+    return text
+
+
+def insert_record(text: str, unit: str, record: str) -> str:
+    """Insert a record in address order among the unit's records (after the last one when it is the highest)."""
+    off = int(re.search(r'^addr = "[^:]+:([0-9A-Fa-f]+)"', record, re.M).group(1), 16)
+    blocks = registry_blocks(text)
+    unit_blocks = [(s, e, i) for s, e, i in blocks
+                   if re.search(r'^unit = "%s"' % re.escape(unit), text[s:e], re.M)]
+    if not unit_blocks:
+        return text.rstrip("\n") + "\n\n" + record.rstrip("\n") + "\n"
+    for s, e, i in unit_blocks:
+        here = int(i.split(":")[1], 16) if i and ":" in i else -1
+        if here > off:
+            return text[:s] + record.rstrip("\n") + "\n\n" + text[s:]
+    s, e, i = unit_blocks[-1]
+    block = text[s:e].rstrip("\n") + "\n\n"
+    return text[:s] + block + record.rstrip("\n") + "\n" + ("\n" if e < len(text) else "") + text[e:]
+
+
+def write_levels(results: list[Result], orig: Original, unit: str) -> list[str]:
+    """Record L2 for matched routines, and the compiler's boundaries: a map size the compiler disproves is
+    corrected, a map entry that lies inside a matched routine (or its literal pool) is removed, a routine
+    the map lacks is added, and routines inside an external object are flagged `external`. Returns notes
+    on what was written (the mapper role of playbook 10 is this function, SYSTEM-REVIEW 6.8)."""
     path = ROOT / "re/symbols.toml"
     text = path.read_text()
     notes = []
-    for r in results:
-        if r.status not in ("matched", "nested") or r.id is None:
-            continue
+    ordered = [r for r in results if r.status == "matched" and r.id]
+    ext = orig.external.get(unit)
+    unit_records = [r for r in orig.routines if r["unit"] == unit]
+    for k, r in enumerate(ordered):
+        entry = int(r.id.split(":")[1], 16)
         known = orig.by_id.get(r.id)
+        nxt = ordered[k + 1] if k + 1 < len(ordered) else None
+        gap = None
+        if nxt is not None:
+            n_entry = int(nxt.id.split(":")[1], 16)
+            if n_entry - nxt.pool == entry + r.size:            # contiguous: the pool between is the next's
+                gap = r.size + nxt.pool
+        elif r.name.lower().endswith("_init"):                   # the last routine: to the object or the end
+            gap = (ext if ext is not None else len(orig_segment(orig, unit))) - entry
         if known is None:
-            notes.append("%s (%s, %d bytes) is not in re/symbols.toml" % (r.name, r.id, r.size))
+            size = gap if gap is not None else r.size
+            record = ('[[routine]]\nid = "%s"\nunit = "%s"\naddr = "%s"\nsize = %d\nname = "%s"\n'
+                      'c_name = "%s_fn_%04x"\nlevel = "L2"\njustification = ""\n'
+                      'notes = "added by make match WRITE=1: a routine the map lacked, boundaries from the compiler"\n'
+                      'evidence = ["compiler"]\n' % (r.id, unit, r.id, size, r.name, unit, entry))
+            text = insert_record(text, unit, record)
+            notes.append("%s (%s, %d bytes) was not in re/symbols.toml: added" % (r.name, r.id, size))
             continue
-        if known["size"] != r.size:
-            notes.append("%s: re/symbols.toml says %d bytes, the compiler %d (plus a %d-byte literal pool before it)"
-                         % (r.id, known["size"], r.size, r.pool))
+        if gap is not None and known["size"] != gap:
+            text = set_field(text, r.id, "size", str(gap))
+            notes.append("%s: size %d corrected to %d (the compiler: %d bytes of code plus the next %d-byte literal pool)"
+                         % (r.id, known["size"], gap, r.size, gap - r.size))
+        elif gap is None and known["size"] < r.size:
+            text = set_field(text, r.id, "size", str(r.size))
+            notes.append("%s: size %d corrected to at least %d (the compiler's code bytes)" % (r.id, known["size"], r.size))
+        for other in unit_records:
+            o = int(other["addr"].split(":")[1], 16)
+            if other["id"] != r.id and entry - r.pool <= o < entry + r.size and other.get("level") not in ("L2", "L3"):
+                text = delete_record(text, other["id"])
+                notes.append("%s (%s) lies inside %s (%s..%04X): removed from the map" % (
+                    other["name"], other["id"], r.name, r.id, entry + r.size))
         block = re.compile(r'(\[\[routine\]\]\nid = "%s"\n(?:(?!\[\[routine\]\]).)*?\nlevel = )"[^"]*"' % re.escape(r.id),
                            re.S)
-        text, k = block.subn(r'\1"L2"', text, count=1)
-        if not k:
+        text, k2 = block.subn(r'\1"L2"', text, count=1)
+        if not k2:
             notes.append("%s: no level field found" % r.id)
-        if r.status == "nested":                   # how it was proven, once
-            nb = re.compile(r'(\[\[routine\]\]\nid = "%s"\n(?:(?!\[\[routine\]\]).)*?\nnotes = ")([^"]*)"' % re.escape(r.id),
-                            re.S)
-            m = nb.search(text)
-            if m is None:
-                notes.append("%s: no notes field found" % r.id)
-            elif r.detail not in m.group(2):
-                joined = (m.group(2) + "; " if m.group(2) else "") + r.detail
-                text = text[:m.start(2)] + joined + text[m.end(2):]
+    for r in results:
+        if r.status != "nested" or r.id is None:
+            continue
+        if orig.by_id.get(r.id) is None:
+            notes.append("%s (%s, %d bytes) is not in re/symbols.toml" % (r.name, r.id, r.size))
+            continue
+        text = set_field(text, r.id, "level", '"L2"')
+        nb = re.compile(r'(\[\[routine\]\]\nid = "%s"\n(?:(?!\[\[routine\]\]).)*?\nnotes = ")([^"]*)"' % re.escape(r.id),
+                        re.S)
+        m = nb.search(text)
+        if m is None:
+            text = set_field(text, r.id, "notes", '"%s"' % r.detail)
+        elif r.detail not in m.group(2):
+            joined = (m.group(2) + "; " if m.group(2) else "") + r.detail
+            text = text[:m.start(2)] + joined + text[m.end(2):]
+    if ext is not None:
+        for other in unit_records:
+            if int(other["addr"].split(":")[1], 16) >= ext and not other.get("external"):
+                text = set_field(text, other["id"], "external", "true")
+                notes.append("%s (%s) is inside the external object: flagged external" % (other["name"], other["id"]))
     path.write_text(text)
     return notes
+
+
+def orig_segment(orig: Original, unit: str) -> bytes:
+    return orig.segment(unit)[0]
 
 
 def units_with_source() -> list[str]:
@@ -871,6 +1120,8 @@ def report(unit: str, results: list[Result], whole: str) -> int:
             print("NESTED  %-16s %-12s %4d bytes code, %s" % (r.name, r.id, r.size, r.detail))
         elif r.status == "stub":
             print("stub    %-16s %s" % (r.name, r.id or ""))
+        elif r.status == "external":
+            print("extern  %-16s %s  (external object, not Pascal)" % (r.name, r.id or ""))
         else:
             bad += 1
             print("DIFF    %-16s %-12s %s" % (r.name, r.id or "?", r.detail))
@@ -905,8 +1156,12 @@ def main(argv=None) -> int:
         bad += report(u, results, whole)
         total += [r for r in results if r.name != "main"]
     if a.write:
-        for n in write_levels(total, Original()):
-            print("note: " + n)
+        orig = Original()
+        for u in units:
+            if u == "main":                          # the main program has no registry record
+                continue
+            for n in write_levels(done[u][0], orig, u):
+                print("note: " + n)
     if a.all:
         print("match --all: %d units, %d routines matched, %d nested, %s" % (
             len(units), sum(r.status == "matched" for r in total), sum(r.status == "nested" for r in total),

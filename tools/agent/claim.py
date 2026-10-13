@@ -95,6 +95,7 @@ def claim(argv=None) -> int:
         print("claim: %s is not complete on this checkout; review a unit after it is merged complete" % unit,
               file=sys.stderr)
         return 1
+    a.reused = False
     for _attempt in range(50):
         if not unit:
             n = nxt.next_review() if a.review else nxt.next_unit()
@@ -102,7 +103,12 @@ def claim(argv=None) -> int:
                 print("claim: nothing to claim (queue empty, or every unit locked or complete)")
                 return 1
             unit = n[0]
-        if common.pending_handoff(prefix + unit):
+        if owned(prefix + unit, a.agent):
+            # The owner comes back to its own lock (after a stop, or after `make integrate` rejected its
+            # hand-off): the worktree and branch are reused, nothing is duplicated.
+            a.reused = True
+            break
+        if common.pending_handoff(prefix + unit) and not rejected_owner(prefix + unit, a.agent):
             raise ValueError("%s has a hand-off waiting; do not duplicate unmerged work" % unit)
         if common.try_lock(prefix + unit, lock.body(prefix + unit, a.agent,
                                                     "%s/%s" % ("review" if a.review else "unit", unit))):
@@ -117,6 +123,38 @@ def claim(argv=None) -> int:
         return 1
     branch = "%s/%s" % ("review" if a.review else "unit", unit)
     return setup(main_dir, prefix + unit, branch, a, unit)
+
+
+def owned(key: str, agent: str) -> bool:
+    """True when `agent` already holds the lock on `key` (its own earlier claim)."""
+    path = common.lock_path(key)
+    if not path.exists():
+        return False
+    try:
+        return common.fields(path.read_text()).get("agent") == agent
+    except ValueError:
+        return False
+
+
+def rejected_owner(key: str, agent: str) -> bool:
+    """True when the pending hand-off of `key` was rejected by `make integrate` and belongs to `agent`:
+    the owner may take the unit back (the lock may have been released meanwhile)."""
+    path = common.common_dir() / "poolrad-handoffs" / (key + ".md")
+    if not path.exists():
+        return False
+    f = common.fields(path.read_text())
+    return f.get("integrate") == "rejected" and f.get("agent") == agent
+
+
+def rejection(key: str) -> str:
+    """The reason `make integrate` rejected this key's hand-off, or an empty string."""
+    path = common.common_dir() / "poolrad-handoffs" / (key + ".md")
+    if not path.exists():
+        return ""
+    f = common.fields(path.read_text())
+    if f.get("integrate") != "rejected":
+        return ""
+    return "%s (log %s)" % (f.get("integrate_reason", ""), f.get("integrate_log", ""))
 
 
 def blocker_notes(main_dir: Path, unit: str) -> list[str]:
@@ -151,17 +189,24 @@ def setup(main_dir: Path, key: str, branch: str, a, unit: str) -> int:
             if src.exists() and not dst.exists():
                 dst.parent.mkdir(parents=True, exist_ok=True)
                 dst.symlink_to(src)
+        common.git("config", "core.hooksPath", "tools/agent/hooks", cwd=main_dir)   # the pre-commit guard
     except (RuntimeError, ValueError, OSError) as e:
         common.lock_path(key).unlink(missing_ok=True)
         print("claim: %s (lock released)" % e, file=sys.stderr)
         return 1
-    print("claim: %s locked for %s" % (key, a.agent))
-    task = identity.task_snapshot(key, unit, a.identity, branch)
-    path = common.lock_path(key)
-    common.atomic_write(path, path.read_text() + "agent_id = %s\ntask_id = %s\n" % (
-        a.identity["agent_id"], task["task_id"]))
-    control.event("claim", agent=a.agent, key=key, branch=branch, worktree=str(wt), task_id=task["task_id"],
-                  agent_id=a.identity["agent_id"], base=task["base"])
+    if getattr(a, "reused", False):
+        print("claim: %s is already locked for %s; reusing its worktree and branch" % (key, a.agent))
+        why = rejection(key)
+        if why:
+            print("claim: the last hand-off of %s was rejected by make integrate: %s" % (key, why))
+    else:
+        print("claim: %s locked for %s" % (key, a.agent))
+        task = identity.task_snapshot(key, unit, a.identity, branch)
+        path = common.lock_path(key)
+        common.atomic_write(path, path.read_text() + "agent_id = %s\ntask_id = %s\n" % (
+            a.identity["agent_id"], task["task_id"]))
+        control.event("claim", agent=a.agent, key=key, branch=branch, worktree=str(wt), task_id=task["task_id"],
+                      agent_id=a.identity["agent_id"], base=task["base"])
     heartbeat.beat(a.agent, "claimed %s, worktree %s (branch %s)" % (key, wt, branch))
     print("claim: worktree %s (branch %s)" % (wt, branch))
     if a.task:

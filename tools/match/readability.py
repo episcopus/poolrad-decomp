@@ -88,13 +88,22 @@ def names_in(header: str, body: list[str]) -> list[str]:
 
 
 def poolvars_comments() -> dict[str, str]:
+    """The comment of every dsXXXX declaration in POOLVARS.PAS: on its line, or in the `{ ... }` comment
+    block right above it (Turbo Pascal lines are limited to 127 characters, so long comments go above)."""
     p = match.SRC / "POOLVARS.PAS"
     out = {}
     if p.exists():
+        above = []                                    # the comment block directly above the current line
         for line in p.read_text().splitlines():
+            s = line.strip()
             m = re.match(r"\s*(ds[0-9A-F]{4})\s*:[^;]*;\s*(\{.*\})?", line, re.I)
             if m:
-                out[m.group(1).lower()] = m.group(2) or ""
+                out[m.group(1).lower()] = (m.group(2) or "") + " ".join(above)
+                above = []
+            elif s.startswith("{") or (above and not above[-1].rstrip().endswith("}")):
+                above.append(s)
+            else:
+                above = []
     return out
 
 

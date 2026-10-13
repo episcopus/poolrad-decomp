@@ -338,7 +338,69 @@ def runtime_entries(U: bytes, R: bytes, entries: list[int]) -> dict[int, int]:
         here = sum(1 for x in range(e, end) if x in present)
         if 2 * c > sum(votes.values()) and 2 * here > end - e and 0 <= t < len(R):
             found[t].append(e)
+    # A short routine whose address words sit in an unequal-length difference (the smart linker
+    # dropped the bytes after it) loses the vote above: Randomize is 13 bytes and only its 6
+    # opcode bytes stay aligned. Search the fresh unit for that body with those address words
+    # masked. This does not count unequal-difference bytes as present, and it never overrides a
+    # vote or shares a target with one (escalate-ovl11-20261012040806; the recorded decision on
+    # task/tools-rtl2).
+    taken_targets = set(found)
+    taken_entries = {e for es in found.values() for e in es}
+    for e, end in zip(entries, entries[1:] + [len(U)]):
+        if e in taken_entries:
+            continue
+        hit = masked_body_at(U[e:end], R)
+        if hit is None or hit in taken_targets:
+            continue
+        found[hit].append(e)
+        taken_targets.add(hit)
+        taken_entries.add(e)
     return {t: es[0] for t, es in found.items() if len(es) == 1}
+
+
+def masked_body_at(body: bytes, image: bytes) -> int | None:
+    """The single offset of `body` in `image`, with DS/default disp16 address words ignored.
+
+    Returns None unless the body disassembles cleanly, at least half of its bytes are fixed
+    opcodes, and exactly one place in `image` matches. A second hit is not a routine."""
+    if len(body) < 8 or len(body) > len(image):
+        return None
+    try:
+        from capstone import Cs, CS_ARCH_X86, CS_MODE_16
+        from capstone.x86 import X86_OP_MEM, X86_REG_BP, X86_REG_DS, X86_REG_ES, X86_REG_SS
+    except ImportError:
+        return None
+    md = Cs(CS_ARCH_X86, CS_MODE_16)
+    md.detail = True
+    wild = set()
+    covered = 0
+    for insn in md.disasm(body, 0):
+        if insn.address != covered:
+            return None
+        covered = insn.address + insn.size
+        if insn.disp_size != 2:
+            continue
+        for op in insn.operands:
+            if op.type != X86_OP_MEM or not op.mem.disp:
+                continue
+            if op.mem.base == X86_REG_BP or op.mem.segment in (X86_REG_ES, X86_REG_SS):
+                continue
+            if op.mem.segment not in (0, X86_REG_DS):
+                continue
+            k = insn.address + insn.disp_offset
+            if 0 <= k and k + 1 < len(body):
+                wild.add(k)
+                wild.add(k + 1)
+    if covered != len(body) or 2 * (len(body) - len(wild)) < len(body):
+        return None
+    hits = []
+    n = len(body)
+    for i in range(len(image) - n + 1):
+        if all(k in wild or image[i + k] == body[k] for k in range(n)):
+            hits.append(i)
+            if len(hits) > 1:
+                return None
+    return hits[0] if len(hits) == 1 else None
 
 
 def cmd_probe(args) -> int:

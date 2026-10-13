@@ -34,6 +34,20 @@ def namespace(name: str) -> Path:
     return p
 
 
+def is_orchestrator(agent: str) -> bool:
+    """The orchestrator may be named orch, or any agent registered with role orchestrator.
+
+    handoff-done and unlock accept that registration. A decompiler name never passes.
+    """
+    if agent == "orch":
+        return True
+    try:
+        record = profile(agent)
+    except ValueError:
+        return False
+    return bool(record and record.get("role") == "orchestrator")
+
+
 def profile(agent: str) -> dict | None:
     agent = common.identifier(agent, "agent")
     for p in (namespace("by-name") / (agent + ".json"), directory() / (agent + ".json")):

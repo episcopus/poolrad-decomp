@@ -1,6 +1,6 @@
 """Nested routines in the matcher (tools/match/match.py nested_routines): a nested routine gets L2 from its
 parent's match only when the parent calls it as TP 6.0 calls a nested routine (`push bp; push cs; call`,
-static link first) and it lies wholly inside the parent's exactly compared pre-entry region (operator
+static link first) and it lies wholly inside the parent's pre-entry region (operator
 decision on escalation escalate-general-20261012012957).
 
 The probe is compiled with the pinned TP 6.0; skipped without it."""
@@ -144,6 +144,80 @@ def test_a_static_link_call_outside_the_pre_entry_region_proves_nothing(probe):
     assert other not in found and entries["B"] not in found
 
 
+def _nested_pool():
+    """A 5-byte nested `mov bx,[disp]; ret`, one literal, and a parent that calls the nested routine."""
+    nested = bytes.fromhex("8b1e0002c3")          # mov bx, [0200]; ret
+    parent_at = 6
+    e8_at = parent_at + 2
+    seg = bytearray(nested + bytes([0x41]))
+    seg += bytes([0x55, 0x0E, 0xE8]) + ((0 - (e8_at + 3)) & 0xFFFF).to_bytes(2, "little") + bytes([0xC3])
+    return bytes(seg), parent_at
+
+
+class _Orig:
+    def routine_id(self, unit, off):
+        return "RES06:01DF"
+
+    def far_target(self, seg, off):
+        return None
+
+
+def test_a_nested_pool_accepts_the_right_global_and_rejects_the_wrong_one():
+    seg, parent = _nested_pool()
+    ours = bytearray(seg)
+    ours[2:4] = (0x0100).to_bytes(2, "little")     # our GlyphCol
+    literal = bytearray(ours)
+    literal[5] = 0x42                              # the byte outside the nested range
+    cmp = match.Comparer.__new__(match.Comparer)
+    cmp.obytes = seg
+    cmp.unit = "res06"
+    cmp.seg = "RES06"
+    cmp.a = None
+    cmp.orig = _Orig()
+    ra = match.Region("ShowPagedText", parent, parent, parent + 6)
+
+    def run(answers, pool):
+        cmp.expect_global = lambda build, value: answers.get(value)
+        return cmp.pre_entry(pool, pool, seg, ra, parent)
+
+    ok, why, _n = run({0x0100: (0x0200, "GlyphCol")}, bytes(ours))
+    assert ok, why
+    ok, why, _n = run({0x0100: (0x9999, "GlyphCol")}, bytes(ours))
+    assert not ok and "GlyphCol" in why
+    ok, why, _n = run({0x0100: (0x0200, "GlyphCol")}, bytes(literal))
+    assert not ok and "literal pool byte" in why
+
+
+def test_a_nested_near_call_is_resolved_at_our_address():
+    """Our parent sits at a different offset than the original, so the call displacement differs."""
+    nested = bytes([0xE8]) + ((0x0100 - 3) & 0xFFFF).to_bytes(2, "little") + bytes([0xC3])
+    parent_at = 5
+    seg = bytearray(nested + bytes([0x41]))
+    seg += bytes([0x55, 0x0E, 0xE8]) + ((0 - (parent_at + 5)) & 0xFFFF).to_bytes(2, "little") + bytes([0xC3])
+    ours_entry = 0x0200
+    nested_at = ours_entry - parent_at          # the nested routine sits at the start of the pool
+    our_target = 0x0350                         # not the same displacement as the original's 0100
+    ours = bytearray(seg)
+    ours[1:3] = ((our_target - (nested_at + 3)) & 0xFFFF).to_bytes(2, "little")
+    seen = []
+
+    cmp = match.Comparer.__new__(match.Comparer)
+    cmp.obytes = bytes(seg)
+    cmp.unit = "res06"
+    cmp.seg = "RES06"
+    cmp.a = None
+    cmp.orig = _Orig()
+    cmp.orig.routine_id = lambda unit, off: "RES06:%04X" % off
+    cmp.expect_routine = lambda build, seg, off: seen.append(off) or "RES06:0100"
+    ra = match.Region("ShowPagedText", ours_entry, parent_at, ours_entry + 6)
+    ok, why, _n = cmp.pre_entry(bytes(ours), bytes(ours), bytes(seg), ra, parent_at)
+    assert ok, why
+    assert seen == [our_target]
+    cmp.expect_routine = lambda build, seg, off: "RES06:FFFF"
+    ok, why, _n = cmp.pre_entry(bytes(ours), bytes(ours), bytes(seg), ra, parent_at)
+    assert not ok and "near call" in why
+
+
 def test_write_levels_records_l2_and_how_it_was_proven(tmp_path, monkeypatch):
     orig = match.Original()
     (tmp_path / "re").mkdir()
@@ -152,8 +226,9 @@ def test_write_levels_records_l2_and_how_it_was_proven(tmp_path, monkeypatch):
     rid = orig.routines[0]["id"]
     why = "nested in Parent (x:0000), proven by the parent's match"
     r = match.Result("n", rid, "nested", why, orig.routines[0]["size"])
-    match.write_levels([r], orig)
-    match.write_levels([r], orig)                              # a second run adds nothing
+    unit = orig.routines[0]["unit"]
+    match.write_levels([r], orig, unit)
+    match.write_levels([r], orig, unit)                        # a second run adds nothing
     text = (tmp_path / "re/symbols.toml").read_text()
     block = text.split('id = "%s"' % rid, 1)[1].split("[[routine]]", 1)[0]
     assert 'level = "L2"' in block and block.count(why) == 1

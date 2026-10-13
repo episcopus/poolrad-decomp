@@ -50,6 +50,8 @@ code_start = "08AE:0000"
 code_end = "0A31:0000"
 code_bytes = 6192
 evidence = ""
+external_from = "08AE:01D7"
+external_note = "TASM-assembled sound driver linked with {$L} after the empty initialisation part (dec-14, dec-15, whitepaper 5.14): not Pascal, kept as the original's bytes; Phase 5 rebuilds it from an assembly source"
 source = ""
 
 [[resident]]

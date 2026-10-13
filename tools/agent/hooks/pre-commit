@@ -1,0 +1,13 @@
+#!/bin/sh
+# Git pre-commit hook (installed per clone by `make hooks`, `make claim` and `make integrate` through
+# core.hooksPath): on a unit/ or review/ branch, refuse a commit that changes what that role may not
+# change (tools/agent/safety.py branch_findings: tooling, tests, poolrad/, the orchestrator's files,
+# the spec). Other branches pass. SYSTEM-REVIEW 6.4: the rule lives in code, not in prose.
+branch=$(git branch --show-current 2>/dev/null)
+case "$branch" in
+  unit/*|review/*) ;;
+  *) exit 0 ;;
+esac
+py=.venv/bin/python
+[ -x "$py" ] || py=python3
+exec "$py" tools/agent/hooks/guard_commit.py

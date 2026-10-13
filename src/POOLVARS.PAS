@@ -211,6 +211,8 @@ type
     AffectId: Byte;
     PadB: array[$B..15] of Byte;
   end;
+  { The seven digits of the camp's rest clock RestTime (ovl20:02F2). }
+  TRestClock = array[0..6] of Word;
   TCharacter = record
     Name: string[15];             { +$00 }
     Strength, Intelligence, Wisdom, Dexterity: Byte;  { +$10..$13 }
@@ -232,7 +234,9 @@ type
       multi-class combinations (AwardExperience splits the experience by 2 or 3, ovl05:0454);
       signed (the case at ovl05:045A compares with jl). }
     ClassMask: ShortInt;
-    Pad30: array[$30..$31] of Byte;
+    { +$30: the age in years; the saved record holds it at 0x30 (whitepaper 4.2.5); CarryClock adds one
+      to every character when the rest clock's top digit reaches its radix (ovl20:037B). }
+    Age: Word;
     HpMax: Byte;                  { +$32: maximum hit points }
     { +$33..+$6A: one byte per spell 1..$38 (the rows of the spell table SpellTable): RecalcClassStats sets it to 1
       for every cleric spell (table class 0) of a level the character has a cleric spell slot
@@ -486,8 +490,10 @@ var
   ds6AB0: Byte;                   { WallIdAt's result for the party cell and icon set (MoveParty); meaning unknown }
   ds6AB1: Byte;                   { the event byte of the party's map cell, from EventByteAt; bit 7 = interior }
   MarkerFrame: Byte;              { the party marker's animation frame 0..5; evidence in re/dseg.toml }
-  ds6F68: Byte;                   { special view code 2; set with ds84E5 := 1 by InitScript ($41) and ovl11_fn_0435 ($DB) }
-  ds6F69: Byte;                   { special view code 1; set with ds84E5 := 1 by InitScript (9) and ovl11_fn_0435 ($E8) }
+  { special view code 2: StartGame sets $DB (ovl11:0435, inside StartGame); InitScript sets $41 and ds84E5 }
+  ds6F68: Byte;
+  { special view code 1: StartGame sets $E8; InitScript sets 9 and ds84E5 }
+  ds6F69: Byte;
   ds84E5: Byte;                   { special view gate: ShowAreaView uses ds6F68/ds6F69 only while it is nonzero }
   ds84F0: Byte;                   { set to 0 in res08_init after closing pool.cfg; meaning unknown }
   Regs: Registers;                { registers for Intr calls (QuitGame) }
@@ -747,7 +753,7 @@ var
   ds6E36: Pointer;                { a picture EndCombat frees through ReleasePicture (ovl08:005A) }
   { A routine pointer: RunCombat sets @ovl13_e14 at the start (ovl08:0085) and EndCombat
     @ovl22_e4 at the end (ovl08:0069); who calls it is not known yet. }
-  ds6B84: Pointer;                { see above }
+  ds6B84: Pointer;                { routine RunCombat stores at ovl08:0085 and EndCombat at ovl08:0069 }
   ds6814: Byte;                   { zero (or ds6815 zero) ends the combat (ovl08:009B, 095C); likely the count of one side }
   ds6815: Byte;                   { see ds6814; likely the count of the other side }
   ds6814Sides: array[0..1] of Byte absolute ds6814;  { ds6814 and ds6815 indexed by side (ovl10:1AC7) }
@@ -774,6 +780,11 @@ var
   ThiefRaceTable: array[0..7, 1..8] of ShortInt;  { the race adjustment of the eight thief skills }
   ds3D4E: Byte;                   { the byte before ThiefDexTable; see above }
   ThiefDexTable: array[0..18, 1..5] of ShortInt;  { the dexterity adjustment of the first five thief skills }
+  { Globals of the camp's rest clock, ovl20 (whitepaper 5.22). }
+  { The radix of each digit of RestTime (ovl20:02F2): a digit that reaches its radix gives one unit to the next
+    digit. Seven words in the image at DS:363A, 10, 10, 6, 24, 30, 12, 256: minutes, tens of minutes, hours,
+    days, months, years [I]. }
+  ClockRadix: array[0..6] of Word;
   { Globals of the battle's aftermath ovl05 (whitepaper 5.20). }
   MonstersLooted: Byte;           { 1 when a defeated monster gave up its money and items (ovl05:0088) }
   PartyFled: Byte;                { 1 when the party fled the battle (a member with Status 3, ovl05:050D) }
@@ -806,7 +817,7 @@ var
   { The time a rest lasts, one word per digit of the game clock (ovl20 indexes it, ovl20:04A7): the
     camp's Rest command sets [1] minutes, [2] tens of minutes and [3] hours from the longest study
     time of the party (ovl15:07CA) before ovl20_e2 runs the rest, and clears all seven words after. }
-  RestTime: array[0..6] of Word;
+  RestTime: TRestClock;
   ds6DB5: Pointer;                { set to nil when the camp opens and closes and before casting (ovl15:04B0, 1FB6) }
   ds6DD8: Word;                   { cleared when the camp opens (ovl15:1E80); meaning unknown }
   { The spell names, string[40] per spell 1..$38 at DS:2912 ('Bless' .. 'Restoration' in the image,

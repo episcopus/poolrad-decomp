@@ -1563,7 +1563,7 @@ evidence = ["prologue"]
 id = "ovl04:02ED"
 unit = "ovl04"
 addr = "ovl04:02ED"
-size = 36
+size = 276
 name = "CureDisease"
 signature = "procedure CureDisease"
 c_name = "ovl04_fn_02ED"
@@ -1615,7 +1615,7 @@ evidence = ["prologue"]
 id = "ovl04:083A"
 unit = "ovl04"
 addr = "ovl04:083A"
-size = 79
+size = 238
 name = "RemoveCurse"
 signature = "procedure RemoveCurse"
 c_name = "ovl04_fn_083A"
@@ -1628,7 +1628,7 @@ evidence = ["prologue"]
 id = "ovl04:0928"
 unit = "ovl04"
 addr = "ovl04:0928"
-size = 21
+size = 175
 name = "StoneToFlesh"
 signature = "procedure StoneToFlesh"
 c_name = "ovl04_fn_0928"
@@ -1641,7 +1641,7 @@ evidence = ["prologue"]
 id = "ovl04:09D7"
 unit = "ovl04"
 addr = "ovl04:09D7"
-size = 339
+size = 818
 name = "HealMenu"
 signature = "procedure HealMenu"
 c_name = "ovl04_fn_09D7"
@@ -1862,7 +1862,7 @@ evidence = ["prologue"]
 id = "ovl06:0239"
 unit = "ovl06"
 addr = "ovl06:0239"
-size = 216
+size = 296
 name = "AddInventoryItem"
 signature = "procedure AddInventoryItem(Item: PMenuLine; var Overloaded: Byte)"
 c_name = "ovl06_e2"
@@ -2002,7 +2002,7 @@ evidence = ["prologue"]
 id = "ovl07:0511"
 unit = "ovl07"
 addr = "ovl07:0511"
-size = 51
+size = 61
 name = "ShowHeadBody"
 signature = "procedure ShowHeadBody(HeadBank, BodyBank: Byte)"
 c_name = "ovl07_e7"
@@ -2170,7 +2170,7 @@ evidence = ["prologue"]
 id = "ovl07:12FB"
 unit = "ovl07"
 addr = "ovl07:12FB"
-size = 594
+size = 626
 name = "ReadVmString"
 signature = "procedure ReadVmString(Index: Byte; Addr: Word)"
 c_name = "ovl07_fn_12FB"
@@ -2338,7 +2338,7 @@ evidence = ["prologue"]
 id = "ovl07:1FB1"
 unit = "ovl07"
 addr = "ovl07:1FB1"
-size = 248
+size = 283
 name = "MovementRange"
 signature = "procedure MovementRange(var Fastest, Slowest: Byte)"
 c_name = "ovl07_e23"
@@ -2384,9 +2384,9 @@ size = 122
 name = "EndCombat"
 signature = ""
 c_name = "ovl08_fn_0000"
-level = "none"
+level = "L2"
 justification = ""
-notes = "blocked (dec-9, 2026-10-12): matches except ds6B84 := @ovl22_e4, a cross-unit routine address the matcher reads as ovl08:0000 (escalated). Draft: var Next: PCombatNode; Unused: Word; begin while ds6DBB <> nil do begin Next := ds6DBB^.Next; FreeMem(ds6DBB, $13); ds6DBB := Next; end; FreeMem(ds6716, $4E9); ds6716 := nil; res07_fn_2595(ds6E36); ovl31_e3; ds6B84 := @ovl22_e4; end; renamed from ovl08_fn_0000 (ovl08:0000 frees the combat data (the DS:6DBB list, the $4E9 block DS:6716, the picture DS:6E36) and calls ovl31_e3; called once by RunCombat after the last round); auto:near_call"
+notes = "renamed from ovl08_fn_0000 (ovl08:0000 frees the combat data (the DS:6DBB list, the CombatMap block, the picture DS:6E36) and calls ovl31_e3; called once by RunCombat after the last round); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2397,9 +2397,9 @@ size = 183
 name = "RunCombat"
 signature = ""
 c_name = "ovl08_e1"
-level = "none"
+level = "L2"
 justification = ""
-notes = "blocked (dec-9, 2026-10-12): matches except ds6B84 := @ovl13_e14 (cross-unit routine address, escalated). Draft: var Done: Byte; Who: PCharacter; Unused: Byte; begin ds49F3 := 5; ds6B84 := @ovl13_e14; ovl10_e1; Done := 0; if (ds6814 = 0) or (ds6815 = 0) then Done := 1; while Done = 0 do begin res12_fn_23DB; Who := PCharacter(ds5D96); while Who <> nil do begin ovl13_e1(Who); Who := Who^.Next; end; ds49D6^[715] := 0; PickNextCombatant(Who); while Who <> nil do begin CombatTurn(Who); PickNextCombatant(Who); end; EndCombatRound(Done); end; EndCombat; end; renamed from ovl08_e1 (ovl08:007A the combat loop: rounds of ovl13_e1 per character, turns in initiative order (PickNextCombatant, CombatTurn), EndCombatRound until one side is gone; called by ovl03_fn_179B); auto:entry_1"
+notes = "renamed from ovl08_e1 (ovl08:007A the combat loop: rounds of ovl13_e1 per character, turns in initiative order (PickNextCombatant, CombatTurn), EndCombatRound until one side is gone; called by ovl03_fn_179B); auto:entry_1"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2432,7 +2432,7 @@ evidence = ["prologue"]
 id = "ovl08:031A"
 unit = "ovl08"
 addr = "ovl08:031A"
-size = 139
+size = 844
 name = "PlayerTurn"
 signature = ""
 c_name = "ovl08_fn_031A"
@@ -2445,7 +2445,7 @@ evidence = ["prologue"]
 id = "ovl08:0666"
 unit = "ovl08"
 addr = "ovl08:0666"
-size = 63
+size = 538
 name = "CombatMenu"
 signature = ""
 c_name = "ovl08_fn_0666"
@@ -2458,7 +2458,7 @@ evidence = ["prologue"]
 id = "ovl08:0880"
 unit = "ovl08"
 addr = "ovl08:0880"
-size = 9
+size = 351
 name = "EndCombatRound"
 signature = ""
 c_name = "ovl08_fn_0880"
@@ -2471,7 +2471,7 @@ evidence = ["prologue"]
 id = "ovl08:09DF"
 unit = "ovl08"
 addr = "ovl08:09DF"
-size = 336
+size = 870
 name = "MoveCharacter"
 signature = ""
 c_name = "ovl08_fn_09DF"
@@ -2553,9 +2553,9 @@ size = 5
 name = "ovl08_init"
 signature = ""
 c_name = "ovl08_init"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_0; blocked: the original is the empty initialisation part (push bp; mov bp,sp; pop bp; retf at ovl08:127A, packet), which src/OVL08.PAS already has (begin end., no {@stub-init}); make match checks an init part only in the whole-unit comparison, which runs when no stub is left, so it waits for EndCombat and RunCombat (escalate-ovl08-20261012113252) (dec-10)"
+notes = "auto:entry_0"
 evidence = ["prologue"]
 
 [[routine]]
@@ -6915,7 +6915,7 @@ evidence = ["prologue"]
 id = "ovl14:073B"
 unit = "ovl14"
 addr = "ovl14:073B"
-size = 185
+size = 221
 name = "MoveParty"
 signature = "procedure MoveParty"
 c_name = "ovl14_fn_073B"
@@ -6929,7 +6929,7 @@ evidence = ["prologue"]
 id = "ovl14:0818"
 unit = "ovl14"
 addr = "ovl14:0818"
-size = 354
+size = 369
 name = "CheckMapCell"
 signature = "procedure CheckMapCell"
 c_name = "ovl14_fn_0818"
@@ -6943,7 +6943,7 @@ evidence = ["prologue"]
 id = "ovl14:0989"
 unit = "ovl14"
 addr = "ovl14:0989"
-size = 963
+size = 996
 name = "HandleWildernessKeys"
 signature = "function HandleWildernessKeys: Char"
 c_name = "ovl14_e2"
@@ -8702,12 +8702,12 @@ id = "ovl17:02AE"
 unit = "ovl17"
 addr = "ovl17:02AE"
 size = 129
-name = "ovl17_fn_02AE"
+name = "CreateSaveDir"
 signature = ""
 c_name = "ovl17_fn_02AE"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl17_fn_02AE (ovl17:02AE: MkDir of SaveDir minus its trailing backslash (System MkDir = 0AF8:17D6, INT 21h/39), then loops showing 'Put save disk in <drive>:' until IOResult is 0 or 5; called by ovl17_e1/e2/e4/e8/e9 before they touch save files); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -9656,7 +9656,7 @@ unit = "ovl20"
 addr = "ovl20:0000"
 size = 754
 name = "ovl20_fn_0000"
-signature = ""
+signature = "procedure ovl20_fn_0000(Amount: Byte; Index: ShortInt)"
 c_name = "ovl20_fn_0000"
 level = "none"
 justification = ""
@@ -9668,12 +9668,12 @@ id = "ovl20:02F2"
 unit = "ovl20"
 addr = "ovl20:02F2"
 size = 177
-name = "ovl20_fn_02F2"
-signature = ""
+name = "CarryRestClock"
+signature = "procedure CarryRestClock(var Clock: TRestClock)"
 c_name = "ovl20_fn_02F2"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl20_fn_02F2 (ovl20:02F2 compares each digit of RestTime (the clock, ds6DC2) with its radix (ClockRadix, DS:363A) and carries a full digit into the next one; the top digit (6) ages every party member at +$30 (Age, whitepaper 4.2.5 record at 0x30); called by ovl20:03A3 on RestTime and by ovl20:03D5 (ovl20_e1) on a copy); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -9681,12 +9681,12 @@ id = "ovl20:03A3"
 unit = "ovl20"
 addr = "ovl20:03A3"
 size = 50
-name = "ovl20_fn_03A3"
-signature = ""
+name = "NormalizeRestTime"
+signature = "procedure NormalizeRestTime"
 c_name = "ovl20_fn_03A3"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl20_fn_03A3 (ovl20:03A3 carries the rest clock (CarryRestClock) and turns months into days (RestTime[5] into RestTime[4], 30 a month); called after each change of the rest time: by ovl20:0721 (the Inc and Dec keys of the Rest menu) and ovl20:047A); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -9695,9 +9695,9 @@ unit = "ovl20"
 addr = "ovl20:03D5"
 size = 165
 name = "ovl20_e1"
-signature = "procedure ovl20_e1(A, B: Byte)"
+signature = "procedure ovl20_e1(Amount: Byte; Index: ShortInt)"
 c_name = "ovl20_e1"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:near_call"
 evidence = ["prologue"]
@@ -9707,12 +9707,12 @@ id = "ovl20:047A"
 unit = "ovl20"
 addr = "ovl20:047A"
 size = 235
-name = "ovl20_fn_047A"
-signature = ""
+name = "SpendRestTime"
+signature = "procedure SpendRestTime(Amount: Byte; Index: ShortInt)"
 c_name = "ovl20_fn_047A"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl20_fn_047A (ovl20:047A takes Amount off RestTime digit Index, borrowing from the next higher nonzero digit; called by ovl20:0721 (the Dec key of the Rest menu) and by ovl20_e2 with Index 1 and Amount 5 (ovl20:0D9D), the minutes spent in each step of the rest); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -9720,12 +9720,12 @@ id = "ovl20:0565"
 unit = "ovl20"
 addr = "ovl20:0565"
 size = 139
-name = "ovl20_fn_0565"
-signature = ""
+name = "TwoDigitText"
+signature = "function TwoDigitText(Number: Byte): String40"
 c_name = "ovl20_fn_0565"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl20_fn_0565 (ovl20:0565 returns a number as two characters (res12_fn_1037 gives its text, a 0 goes in front below 10); called by ovl20:05F0 with RestTime digits (ovl20:0674 and 06CA, 10*RestTime[2]+RestTime[1])); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -9733,12 +9733,12 @@ id = "ovl20:05F0"
 unit = "ovl20"
 addr = "ovl20:05F0"
 size = 305
-name = "ovl20_fn_05F0"
-signature = ""
+name = "ShowRestTime"
+signature = "procedure ShowRestTime(Selected: ShortInt)"
 c_name = "ovl20_fn_05F0"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl20_fn_05F0 (ovl20:05F0 draws the rest time on row 17: the Rest Time: label (string at DS:05E3), days and hours as two digits (TwoDigitText of RestTime[4] and [3]) and the minutes (10*RestTime[2]+RestTime[1]); the field Selected is drawn in colour 15; called by ovl20:0721 (ovl20:0734) and by ovl20_e2 (ovl20:0D13)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -10123,7 +10123,7 @@ evidence = ["prologue"]
 id = "ovl21:0A88"
 unit = "ovl21"
 addr = "ovl21:0A88"
-size = 210
+size = 267
 name = "TakeFromPool"
 signature = "procedure TakeFromPool(Who: PCharacter; Amount: Word; Kind: ShortInt)"
 c_name = "ovl21_fn_0A88"
@@ -10193,7 +10193,7 @@ evidence = ["prologue"]
 id = "ovl21:1010"
 unit = "ovl21"
 addr = "ovl21:1010"
-size = 2256
+size = 2466
 name = "BuildTreasureItem"
 signature = "procedure BuildTreasureItem(Kind: Byte; var Item: TMenuLine)"
 c_name = "ovl21_e13"
@@ -12305,7 +12305,7 @@ evidence = ["prologue"]
 id = "ovl26:0000"
 unit = "ovl26"
 addr = "ovl26:0000"
-size = 199
+size = 365
 name = "DrawPartyMarker"
 signature = ""
 c_name = "ovl26_e2"
@@ -12459,7 +12459,7 @@ evidence = ["prologue"]
 id = "ovl28:0070"
 unit = "ovl28"
 addr = "ovl28:0070"
-size = 35
+size = 50
 name = "DrawBodySprite"
 signature = ""
 c_name = "ovl28_fn_0070"
@@ -12487,7 +12487,7 @@ evidence = ["prologue"]
 id = "ovl28:048F"
 unit = "ovl28"
 addr = "ovl28:048F"
-size = 105
+size = 106
 name = "FreeSpriteList"
 signature = ""
 c_name = "ovl28_e3"
@@ -12529,7 +12529,7 @@ evidence = ["prologue"]
 id = "ovl28:0697"
 unit = "ovl28"
 addr = "ovl28:0697"
-size = 82
+size = 113
 name = "ShowHeadBodySprites"
 signature = ""
 c_name = "ovl28_e5"
@@ -13299,7 +13299,7 @@ evidence = ["prologue"]
 id = "ovl34:003B"
 unit = "ovl34"
 addr = "ovl34:003B"
-size = 255
+size = 290
 name = "Load8x8Bank"
 signature = "procedure Load8x8Bank(BlockId, Bank: Byte)"
 c_name = "ovl34_e1"
@@ -15630,11 +15630,11 @@ evidence = ["prologue"]
 id = "08AE:01D2"
 unit = "res03"
 addr = "08AE:01D2"
-size = 2065
+size = 5
 name = "res03_init"
 signature = ""
 c_name = "res03_init"
-level = "none"
+level = "L2"
 justification = ""
 notes = "blocked (dec-15, 2026-10-12): part of the TASM-assembled sound driver linked from an .OBJ after the init (08AE:01D7 to the segment end), held for the human in escalate-res03-20261012120732; auto:init"
 evidence = ["prologue"]
@@ -15651,6 +15651,7 @@ level = "none"
 justification = ""
 notes = "blocked (dec-15, 2026-10-12): part of the TASM-assembled sound driver linked from an .OBJ after the init (08AE:01D7 to the segment end), held for the human in escalate-res03-20261012120732; auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
 evidence = ["near_call"]
+external = true
 
 [[routine]]
 id = "08AE:0A27"
@@ -15664,6 +15665,7 @@ level = "none"
 justification = ""
 notes = "blocked (dec-15, 2026-10-12): part of the TASM-assembled sound driver linked from an .OBJ after the init (08AE:01D7 to the segment end), held for the human in escalate-res03-20261012120732; auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
 evidence = ["near_call"]
+external = true
 
 [[routine]]
 id = "08AE:0AD3"
@@ -15677,6 +15679,7 @@ level = "none"
 justification = ""
 notes = "blocked (dec-15, 2026-10-12): part of the TASM-assembled sound driver linked from an .OBJ after the init (08AE:01D7 to the segment end), held for the human in escalate-res03-20261012120732; auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
 evidence = ["near_call"]
+external = true
 
 [[routine]]
 id = "08AE:0C8F"
@@ -15690,6 +15693,7 @@ level = "none"
 justification = ""
 notes = "blocked (dec-15, 2026-10-12): part of the TASM-assembled sound driver linked from an .OBJ after the init (08AE:01D7 to the segment end), held for the human in escalate-res03-20261012120732; auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
 evidence = ["near_call"]
+external = true
 
 [[routine]]
 id = "08AE:0DB1"
@@ -15703,6 +15707,7 @@ level = "none"
 justification = ""
 notes = "blocked (dec-15, 2026-10-12): part of the TASM-assembled sound driver linked from an .OBJ after the init (08AE:01D7 to the segment end), held for the human in escalate-res03-20261012120732; auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
 evidence = ["near_call"]
+external = true
 
 [[routine]]
 id = "08AE:0DCC"
@@ -15716,6 +15721,7 @@ level = "none"
 justification = ""
 notes = "blocked (dec-15, 2026-10-12): part of the TASM-assembled sound driver linked from an .OBJ after the init (08AE:01D7 to the segment end), held for the human in escalate-res03-20261012120732; auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
 evidence = ["near_call"]
+external = true
 
 [[routine]]
 id = "08AE:0DEB"
@@ -15729,6 +15735,7 @@ level = "none"
 justification = ""
 notes = "blocked (dec-15, 2026-10-12): part of the TASM-assembled sound driver linked from an .OBJ after the init (08AE:01D7 to the segment end), held for the human in escalate-res03-20261012120732; auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
 evidence = ["near_call"]
+external = true
 
 [[routine]]
 id = "08AE:0E06"
@@ -15742,6 +15749,7 @@ level = "none"
 justification = ""
 notes = "blocked (dec-15, 2026-10-12): part of the TASM-assembled sound driver linked from an .OBJ after the init (08AE:01D7 to the segment end), held for the human in escalate-res03-20261012120732; auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
 evidence = ["near_call"]
+external = true
 
 [[routine]]
 id = "08AE:0F5B"
@@ -15755,6 +15763,7 @@ level = "none"
 justification = ""
 notes = "blocked (dec-15, 2026-10-12): part of the TASM-assembled sound driver linked from an .OBJ after the init (08AE:01D7 to the segment end), held for the human in escalate-res03-20261012120732; auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
 evidence = ["near_call"]
+external = true
 
 [[routine]]
 id = "08AE:1091"
@@ -15768,6 +15777,7 @@ level = "none"
 justification = ""
 notes = "blocked (dec-15, 2026-10-12): part of the TASM-assembled sound driver linked from an .OBJ after the init (08AE:01D7 to the segment end), held for the human in escalate-res03-20261012120732; auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
 evidence = ["near_call"]
+external = true
 
 [[routine]]
 id = "08AE:1221"
@@ -15781,6 +15791,7 @@ level = "none"
 justification = ""
 notes = "blocked (dec-15, 2026-10-12): part of the TASM-assembled sound driver linked from an .OBJ after the init (08AE:01D7 to the segment end), held for the human in escalate-res03-20261012120732; auto:near_call; map error (dec-14): not a routine; data inside the assembly driver (tune tables, voice records) between 08AE:01D7 and 08AE:137C"
 evidence = ["near_call"]
+external = true
 
 [[routine]]
 id = "08AE:137C"
@@ -15794,6 +15805,7 @@ level = "none"
 justification = ""
 notes = "renamed from res03_fn_137C (saves INT 08h, installs handler 08AE:13EA, PIT divisor 13B1h (08AE:1383..13AC; whitepaper 5.14)); auto:near_call; blocked (dec-14): hand-written assembly from an external .OBJ linked after the initialisation part (TASM prologue 8B EC, DS loaded with the unit's own segment 08AE, data at CS offsets); Turbo Pascal places BASM routines before the init, and the tables need raw bytes, so it cannot be written in Pascal without breaking the rules; escalated"
 evidence = ["near_call"]
+external = true
 
 [[routine]]
 id = "08AE:13B1"
@@ -15807,6 +15819,7 @@ level = "none"
 justification = ""
 notes = "renamed from res03_fn_13B1 (restores INT 08h, divisor FFFFh, speaker off, Tandy silenced (08AE:13B8..13E6; whitepaper 5.14)); auto:near_call; blocked (dec-14): hand-written assembly from an external .OBJ linked after the initialisation part (TASM prologue 8B EC, DS loaded with the unit's own segment 08AE, data at CS offsets); Turbo Pascal places BASM routines before the init, and the tables need raw bytes, so it cannot be written in Pascal without breaking the rules; escalated"
 evidence = ["near_call"]
+external = true
 
 [[routine]]
 id = "08AE:1477"
@@ -15820,6 +15833,7 @@ level = "none"
 justification = ""
 notes = "auto:near_call; blocked (dec-14): hand-written assembly from an external .OBJ linked after the initialisation part (TASM prologue 8B EC, DS loaded with the unit's own segment 08AE, data at CS offsets); Turbo Pascal places BASM routines before the init, and the tables need raw bytes, so it cannot be written in Pascal without breaking the rules; escalated"
 evidence = ["near_call"]
+external = true
 
 [[routine]]
 id = "08AE:14EC"
@@ -15833,6 +15847,7 @@ level = "none"
 justification = ""
 notes = "auto:near_call; blocked (dec-14): hand-written assembly from an external .OBJ linked after the initialisation part (TASM prologue 8B EC, DS loaded with the unit's own segment 08AE, data at CS offsets); Turbo Pascal places BASM routines before the init, and the tables need raw bytes, so it cannot be written in Pascal without breaking the rules; escalated"
 evidence = ["near_call"]
+external = true
 
 [[routine]]
 id = "08AE:157A"
@@ -15846,6 +15861,7 @@ level = "none"
 justification = ""
 notes = "auto:near_call; blocked (dec-14): hand-written assembly from an external .OBJ linked after the initialisation part (TASM prologue 8B EC, DS loaded with the unit's own segment 08AE, data at CS offsets); Turbo Pascal places BASM routines before the init, and the tables need raw bytes, so it cannot be written in Pascal without breaking the rules; escalated"
 evidence = ["near_call"]
+external = true
 
 [[routine]]
 id = "08AE:160B"
@@ -15859,6 +15875,7 @@ level = "none"
 justification = ""
 notes = "auto:near_call; blocked (dec-14): hand-written assembly from an external .OBJ linked after the initialisation part (TASM prologue 8B EC, DS loaded with the unit's own segment 08AE, data at CS offsets); Turbo Pascal places BASM routines before the init, and the tables need raw bytes, so it cannot be written in Pascal without breaking the rules; escalated"
 evidence = ["near_call"]
+external = true
 
 [[routine]]
 id = "08AE:1742"
@@ -15872,6 +15889,7 @@ level = "none"
 justification = ""
 notes = "renamed from res03_fn_1742 (loads tune n from table CS:055F into the four voices at CS:022D, which the stepper 08AE:1477 plays on port 42h (PC speaker) (08AE:174F..179E)); auto:prologue; blocked (dec-14): hand-written assembly from an external .OBJ linked after the initialisation part (TASM prologue 8B EC, DS loaded with the unit's own segment 08AE, data at CS offsets); Turbo Pascal places BASM routines before the init, and the tables need raw bytes, so it cannot be written in Pascal without breaking the rules; escalated"
 evidence = ["prologue"]
+external = true
 
 [[routine]]
 id = "08AE:17AE"
@@ -15885,6 +15903,7 @@ level = "none"
 justification = ""
 notes = "renamed from res03_fn_17AE (loads tune n from table CS:0607 into the four voices at CS:03C7, which the stepper 08AE:14EC plays on port C0h (Tandy SN76489) (08AE:17BB..180A)); auto:prologue; blocked (dec-14): hand-written assembly from an external .OBJ linked after the initialisation part (TASM prologue 8B EC, DS loaded with the unit's own segment 08AE, data at CS offsets); Turbo Pascal places BASM routines before the init, and the tables need raw bytes, so it cannot be written in Pascal without breaking the rules; escalated"
 evidence = ["prologue"]
+external = true
 
 [[routine]]
 id = "08AE:181A"
@@ -15898,6 +15917,7 @@ level = "none"
 justification = ""
 notes = "renamed from res03_fn_181A (stores the byte at CS:020D which both voice steppers test before writing the speaker (08AE:14C0) or the Tandy chip (08AE:1519) (08AE:1824..1827)); auto:prologue; blocked (dec-14): hand-written assembly from an external .OBJ linked after the initialisation part (TASM prologue 8B EC, DS loaded with the unit's own segment 08AE, data at CS offsets); Turbo Pascal places BASM routines before the init, and the tables need raw bytes, so it cannot be written in Pascal without breaking the rules; escalated"
 evidence = ["prologue"]
+external = true
 
 [[routine]]
 id = "0899:0000"
@@ -18047,3 +18067,4 @@ level = "none"
 justification = ""
 notes = "auto:near_call"
 evidence = ["near_call"]
+

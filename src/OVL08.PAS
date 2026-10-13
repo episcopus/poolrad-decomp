@@ -46,21 +46,70 @@ const
   KeyLeft = 'K';
   KeyHome = 'G';
   CombatNodeSize = $13;   { FreeMem size of a DS:6DBB list record }
-  CombatMapSize = $4E9;   { FreeMem size of the DS:6716 block }
+  CombatMapSize = $4E9;   { FreeMem size of the CombatMap block }
+  ViewModeCombat = 5;     { ds49F3 while a combat is running (ovl08:0080) }
   MaxGameSpeed = 9;
   VarNoCasting = 229;     { the game variable (+$1CA) that hides Cast in the combat menu }
   VarCombatWord715 = 715; { a word of ds49D6^ RunCombat clears every round (+$596); meaning unknown }
   MenuColors = $F;        { the last ReadPromptChoice/AskYesNo argument of every menu here }
 
-{ ovl08:0000. Purpose: frees the combat data at the end of a combat (the DS:6DBB list of $13-byte
-  records, the $4E9-byte block DS:6716, the picture DS:6E36), calls ovl31_e3 and stores @ovl22_e4
-  in DS:6B84. A stub: the draft matches except the @ovl22_e4 immediate, which the matcher cannot
-  resolve across units yet (escalated; draft in re/symbols.toml notes). }
-{@stub} procedure EndCombat; begin end;
-{ ovl08:007A. The combat: sets the view mode 5 and DS:6B84 := @ovl13_e14, sets up through
-  StartBattle, then runs rounds until EndCombatRound says done and calls EndCombat. A stub for the
-  same matcher reason as EndCombat (draft in re/symbols.toml notes). }
-{@stub} procedure RunCombat; begin end;
+{ ovl08:0000. Frees the combat data after the last round: the DS:6DBB list of $13-byte records,
+  the CombatMap block, and the picture DS:6E36 (res07_fn_2595). Then ovl31_e3, and DS:6B84 becomes
+  @ovl22_e4. Called once by RunCombat. The word local is unused; it is there so the frame matches. }
+procedure EndCombat;
+var
+  Next: PCombatNode;
+  Unused: Word;
+begin
+  while ds6DBB <> nil do
+  begin
+    Next := ds6DBB^.Next;
+    FreeMem(ds6DBB, CombatNodeSize);
+    ds6DBB := Next;
+  end;
+  FreeMem(CombatMap, CombatMapSize);
+  CombatMap := nil;
+  res07_fn_2595(ds6E36);
+  ovl31_e3;
+  ds6B84 := @ovl22_e4;
+end;
+{ ovl08:007A. The combat loop. Sets the view mode and DS:6B84 := @ovl13_e14, runs StartBattle,
+  then rounds until one side's count (ds6814 or ds6815) is zero or EndCombatRound says so.
+  Each round calls res12_fn_23DB, ovl13_e1 for every combatant on the party list, then turns in
+  initiative order (PickNextCombatant, CombatTurn). EndCombat frees the combat data. The byte
+  local is unused; it is there so the frame matches. Called by ovl03_fn_179B. }
+procedure RunCombat;
+var
+  Done: Byte;
+  Who: PCharacter;
+  Unused: Byte;
+begin
+  ds49F3 := ViewModeCombat;
+  ds6B84 := @ovl13_e14;
+  StartBattle;
+  Done := 0;
+  if (ds6814 = 0) or (ds6815 = 0) then
+    Done := 1;
+  while Done = 0 do
+  begin
+    res12_fn_23DB;
+    Who := PCharacter(ds5D96);
+    while Who <> nil do
+    begin
+      ovl13_e1(Who);
+      Who := Who^.Next;
+    end;
+    ds49D6^[VarCombatWord715] := 0;
+    PickNextCombatant(Who);
+    while Who <> nil do
+    begin
+      CombatTurn(Who);
+      PickNextCombatant(Who);
+    end;
+    EndCombatRound(Done);
+  end;
+  EndCombat;
+end;
 { ovl08:0131. Picks the character who acts next: of the party list (ds5D96, which holds every
   combatant) the one with the highest positive Combat^.Initiative; each candidate rolls 1d100
   (RollDice) and among equal initiatives the higher roll wins. Best is nil when nobody has an

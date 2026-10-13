@@ -1,5 +1,5 @@
 unit OVL11;
-{ Loader: the game's start-up (whitepaper 5.2.1, 5.12). The main program runs StartGame once, before
+{ Loader: the game's start-up (whitepaper 3.2.2). The main program runs StartGame once, before
   the title screens and the copy protection (src/POOL.PAS: `StartGame;`). It allocates the game's
   main heap blocks, sets up the screen buffers (through AllocatePicture), fills the three 200-entry
   cell address tables, initialises the screen and game globals, then builds the save game file path

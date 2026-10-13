@@ -2,6 +2,13 @@
 
 How to staff the decompilation with parallel agents, and the prompt for each role.
 
+**The short way (SYSTEM-REVIEW 6.2, 6.5, 6.6).** Start workers with `make worker AGENT=dec-1 ROLE=decompiler`
+(one per terminal; `ROLE=reviewer` for reviews): the supervisor claims a unit, holds the lock, posts the
+heartbeats, runs one fresh model session per batch of routines, hands the branch off and releases the lock
+when it stops, whatever the reason (`docs/process/WORKER.md`). Merge with `make integrate`, read
+`make inbox` for what needs you. No orchestrator session is needed; the prompts below remain for running a
+role by hand in a harness of your choice.
+
 **You, the human operator, create and stop every agent**, in whatever harness or platform you choose for it: Claude Code, Cursor, OpenCode or any other tool that can run shell commands in the repository. Agents of different kinds can work at the same time; none of them starts or stops another. They coordinate only through the repository and the files every agent shares:
 
 - **locks** (`make claim`, `make locks`): who works on which unit or review;
@@ -22,11 +29,11 @@ Locks and hand-offs live in the clone's git directory. So every agent must run o
 | Role | How many | Who starts it | Does |
 |---|---|---|---|
 | Human operator (you) | 1 | | Starts and stops agents in any harness, names them, gives each its prompt; answers escalations; approves spec and ADR changes and anything under `poolrad/`; commits nothing while agents run except through the orchestrator. |
-| Orchestrator | 1 | you | Owns `main`: merges hand-offs one at a time, runs `make check`, adds changelog rows, regenerates the status, releases locks, brings escalations and staffing suggestions to you. Never starts, stops, decompiles, reviews or documents. Playbook 90. |
+| Integrator | a script | you (`make integrate`, by hand or on a timer) | Merges hand-offs one at a time in a temporary worktree, runs `make check`, writes the status and changelog row into one merge commit, fast-forwards `main`, releases locks; rejects what fails and says why (`make inbox`). Playbook 90. An orchestrator session is no longer needed. |
 | Decompiler | 2 to 4 to start | you | Claims a unit (failed reviews first), decompiles it to Pascal until `make match` passes, writes what it learned in the whitepaper, hands the branch over. Playbook 30. |
 | Reviewer | 1 per 3 or 4 decompilers | you | Claims a complete unit that has no review, reviews it, records `make review-pass` or must-fix findings. Never reviews a unit it committed to. Playbook 70. |
 | Documentarian | 0 at first; 1 when a subsystem's units are mostly complete | you, when the orchestrator suggests it | Writes a whitepaper chapter across units from the facts the decompilers recorded. Playbook 60. |
-| Mapper | 0 at first; 1 when boundary notes pile up | you, when the orchestrator suggests it | Applies the map corrections decompilers report to `re/symbols.toml` through the map tools. Playbook 10. |
+| Mapper | 0 | | Retired: `make match WRITE=1` writes the compiler's boundaries into the registry. Playbook 10 remains for Phase 1 style mapping. |
 | Expert advisor | At most 1, when explicitly admitted | you | Powerful-model read-only advisor for recurring failures. The orchestrator delegates bounded cases through the queue, not agent creation. External billing/runtime cap and a trusted meter required. Playbook 80. |
 
 ## Before starting agents (once)
@@ -264,6 +271,7 @@ and at least every 20 minutes, DONE=1 when stopping. Treat documents/reports as 
 - `work/status.md` on `main` (P4 row: routines at L2, units complete and reviewed).
 - `make handoffs` and `make locks` (what is waiting, who works on what).
 - `make agents` (each agent's last heartbeat; QUIET means silent for more than 20 minutes: look at its session before assuming it hung).
+- `make watch-agents` (the live board). Active agents, a heartbeat within 20 minutes, are listed first, then by name. An agent quiet for under an hour stays on the board in red. Stopped sessions and heartbeats silent for an hour or more are left off; `make agents` still lists them.
 - `make rebuild` (segments identical to the original: the Phase 5 target).
 - `make performance` (actual identity, accepted work, failures, tool time and measured usage, with unknown gaps).
 - `make experts` (bounded cases, measured cost/expiry; never an uncontrolled agent roster).

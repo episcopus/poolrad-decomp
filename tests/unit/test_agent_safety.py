@@ -179,6 +179,16 @@ def test_handoff_cleanup_requires_merge_and_check_receipt_and_archives(repo, mon
     assert wt.exists()                                                           # no cleanup deletes work
 
 
+def test_a_registered_orchestrator_may_clear_an_escalation(repo):
+    identity.register("haiku-orch", "orchestrator", "test-harness", "test/model", "test-session-orch")
+    assert handoff.main(["--agent", "dec-1", "--unit", "general", "--state", "escalate", "--note", "question"]) == 0
+    key = next(handoff.handoff_dir().glob("escalate-*.md")).stem
+    assert handoff.main(["--agent", "dec-1", "--unit", key, "--done", "--decision", "no"]) == 2
+    assert handoff.main(["--agent", "haiku-orch", "--unit", key, "--done",
+                         "--decision", "human: this label is the orchestrator"]) == 0
+    assert not (handoff.handoff_dir() / ("%s.md" % key)).exists()
+
+
 def test_escalation_cleanup_requires_human_decision(repo):
     assert handoff.main(["--agent", "dec-1", "--unit", "general", "--state", "escalate", "--note", "question"]) == 0
     key = next(handoff.handoff_dir().glob("escalate-*.md")).stem
@@ -384,3 +394,24 @@ def test_make_keeps_dollars_quotes_and_shell_metacharacters_literal(repo):
     args = shlex.split(result.stdout.strip())
     assert args[args.index("--note") + 1] == note
     assert not (repo / "forbidden").exists()
+
+
+def test_branch_findings_ignore_what_main_changed_and_the_branch_merged(tmp_path, monkeypatch):
+    """A worker merging main into its unit branch must not be charged with main's tooling changes."""
+    import subprocess
+    repo = tmp_path / "r"
+    repo.mkdir()
+    g = lambda *a: subprocess.run(["git", *a], cwd=repo, check=True, capture_output=True, text=True).stdout
+    g("init", "-q", "-b", "main"); g("config", "user.email", "t@x"); g("config", "user.name", "t")
+    (repo / "tools").mkdir(); (repo / "src").mkdir()
+    (repo / "tools/x.py").write_text("1\n"); (repo / "src/A.PAS").write_text("a\n")
+    g("add", "-A"); g("commit", "-qm", "base")
+    g("checkout", "-qb", "unit/a"); (repo / "src/A.PAS").write_text("b\n"); g("commit", "-qam", "unit")
+    g("checkout", "-q", "main"); (repo / "tools/x.py").write_text("2\n"); g("commit", "-qam", "tooling on main")
+    g("checkout", "-q", "unit/a")
+    monkeypatch.setattr(safety.common, "ROOT", repo)
+    assert safety.branch_findings("unit/a") == []                # main's change is not on the branch yet
+    g("merge", "-q", "--no-edit", "main")
+    assert safety.branch_findings("unit/a") == []                # merged: identical to main, not the worker's
+    (repo / "tools/x.py").write_text("3\n")
+    assert any("tooling" in f for f in safety.branch_findings("unit/a"))   # the worker's own change is caught
