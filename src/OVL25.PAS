@@ -14,15 +14,6 @@ function CountMenuLines(List: PMenuLine): Integer;
 function ReadPromptChoice(Title, Prompt: String40; TitleColor, WordColor, HotColor, ExtKeys,
   Animate: Byte; var ExtKey: Byte): Char;
 procedure ClearPromptLine;
-procedure LastHeadingBefore;
-procedure DrawListPage;
-procedure FirstNonBlank;
-procedure LastNonBlank;
-procedure HighlightListLine;
-procedure UnhighlightListLine;
-procedure SkipHeadingLines;
-procedure ScrollListPage;
-procedure MoveListCursor;
 function ChooseFromList(Title, Prompt: String40; HeadingColor, LineColor, HighlightColor: Byte;
   Left, Top, Right, Bottom: ShortInt; List: PMenuLine; WithExit: Byte; var Redraw: Byte;
   var Choice: Integer; var Selected: PMenuLine): Char;
@@ -310,33 +301,6 @@ begin
   ClearTextCells(0, PromptRow, 0, TextCols);
 end;
 
-{ ovl25:0711 (nested in ChooseFromList): the last heading line among the first lines of the list.
-  A stub until ChooseFromList can match (draft in commit 3c8dac5). }
-{@stub} procedure LastHeadingBefore; begin end;
-{ ovl25:07A4 (nested in ChooseFromList): clears the list window and draws one page of lines.
-  A stub until ChooseFromList can match (draft in commit 3c8dac5). }
-{@stub} procedure DrawListPage; begin end;
-{ ovl25:08D7 (nested in ChooseFromList): the position of the first non-blank character of a line.
-  A stub until ChooseFromList can match (draft in commit 3c8dac5). }
-{@stub} procedure FirstNonBlank; begin end;
-{ ovl25:0923 (nested in ChooseFromList): the position of the last non-blank character of a line.
-  A stub until ChooseFromList can match (draft in commit 3c8dac5). }
-{@stub} procedure LastNonBlank; begin end;
-{ ovl25:0969 (nested in ChooseFromList): redraws a line's trimmed text in the highlight colour.
-  A stub until ChooseFromList can match (draft in commit 3c8dac5). }
-{@stub} procedure HighlightListLine; begin end;
-{ ovl25:0A08 (nested in ChooseFromList): redraws a line's trimmed text in its own colour.
-  A stub until ChooseFromList can match (draft in commit 3c8dac5). }
-{@stub} procedure UnhighlightListLine; begin end;
-{ ovl25:0B03 (nested in ChooseFromList): moves the highlight past heading lines.
-  A stub until ChooseFromList can match (draft in commit 3c8dac5). }
-{@stub} procedure SkipHeadingLines; begin end;
-{ ovl25:0C33 (nested in ChooseFromList): turns the page of the list down or up and redraws it.
-  A stub until ChooseFromList can match (draft in commit 3c8dac5). }
-{@stub} procedure ScrollListPage; begin end;
-{ ovl25:0CC5 (nested in ChooseFromList): moves the highlight one line down or up inside the page.
-  A stub until ChooseFromList can match (draft in commit 3c8dac5). }
-{@stub} procedure MoveListCursor; begin end;
 { ovl25:0D9A. The list menu: shows the lines of List in the window Left..Right, Top..Bottom (lines
   with Flag29 set are headings: drawn in HeadingColor and skipped by the highlight, the others in
   LineColor), highlights line Choice (0-based) in HighlightColor and asks through ReadPromptChoice
@@ -348,17 +312,294 @@ end;
   reset; Redraw is cleared. A nil List returns #0 at once with Choice 0 and Selected nil. Called by
   the Temple (HealMenu), the shops (ChooseShopItem) and ovl05, ovl07, ovl15, ovl16, ovl19, ovl21.
   QUIRK ovl25:0E5F: the lines are counted twice (CountMenuLines into LineCount, then a loop into
-  Total) and the two counts are used for different checks.
-  BLOCKED: a stub. The draft (commit 3c8dac5, with DrawTextAt, DrawGlyph and ClearTextCells for
-  the res06 names) compiles to the original's 1673-byte pre-entry region and body except 34 far
-  calls and ListMenuTop operands; the matcher resolves them only in nested routines the parent
-  calls directly, and FirstNonBlank (08D7), LastNonBlank (0923) and SkipHeadingLines (0B03) are
-  called only by sibling nested routines (push word ptr [bp+6]; push cs; call), which the strict
-  rule of nested_routines excludes (escalate-general-20261012012957). Waits for a decision on that
-  rule (hand-off escalation by dec-r25, 2026-10-12). }
-{@stub} function ChooseFromList(Title, Prompt: String40; HeadingColor, LineColor, HighlightColor: Byte;
+  Total) and the two counts are used for different checks. }
+function ChooseFromList(Title, Prompt: String40; HeadingColor, LineColor, HighlightColor: Byte;
   Left, Top, Right, Bottom: ShortInt; List: PMenuLine; WithExit: Byte; var Redraw: Byte;
-  var Choice: Integer; var Selected: PMenuLine): Char; begin end;
+  var Choice: Integer; var Selected: PMenuLine): Char;
+var
+  Width: Byte;
+  LineCount: Integer;
+  ExtKey: Byte;
+  Height: Integer;
+  Key: Char;
+  Words: String40;
+  HasNext, HasPrev: Byte;
+  Line: PMenuLine;
+  HeadingCount, Total: Integer;
+
+  { ovl25:0711 (nested). Returns the last heading line among the first Count lines of List; when
+    there is none, List itself if its first line is a heading, else nil. Its only caller, DrawListPage,
+    stores the result and never reads it. }
+  function LastHeadingBefore(Count: Integer; List: PMenuLine): PMenuLine;
+  var
+    Line, Found: PMenuLine;
+    I: Integer;
+  begin
+    I := 0;
+    Line := List;
+    Found := nil;
+    while (Line <> nil) and (I < Count) do
+    begin
+      if Line^.Flag29 <> 0 then
+        Found := Line;
+      Line := Line^.Next;
+      Inc(I);
+    end;
+    if (Found = nil) and (List^.Flag29 <> 0) then
+      LastHeadingBefore := List
+    else
+      LastHeadingBefore := Found;
+  end;
+
+  { ovl25:07A4 (nested). Clears the window and draws the lines from line TopLine on, one per row
+    from Top to Bottom, headings in HeadingColor and the others in LineColor, each padded with
+    blanks to the window width.
+    QUIRK ovl25:07F9: the heading found by LastHeadingBefore is never used. }
+  procedure DrawListPage(TopLine: Integer);
+  var
+    Line, Heading: PMenuLine;
+    Row: ShortInt;
+  begin
+    ClearWindow(Left, Top, Right, Bottom);
+    Line := GetMenuLine(TopLine, List);
+    Heading := LastHeadingBefore(TopLine, List);
+    Row := Top;
+    while (Line <> nil) and (Row <= Bottom) do
+    begin
+      if Line^.Flag29 <> 0 then
+        DrawTextAt(Left, Row, HeadingColor, Line^.Text)
+      else
+        DrawTextAt(Left, Row, LineColor, Line^.Text);
+      if Length(Line^.Text) < Width then
+        DrawGlyph(Left + Length(Line^.Text), Row, 0, Width - Length(Line^.Text), Space, 1);
+      Line := Line^.Next;
+      Inc(Row);
+    end;
+  end;
+
+  { ovl25:08D7 (nested). Returns the position of the first non-blank character of Text (the length
+    when all but the last are blanks). }
+  function FirstNonBlank(Text: String40): Byte;
+  var
+    I, Len: Byte;
+  begin
+    I := 1;
+    Len := Length(Text);
+    while (I < Len) and (Text[I] = ' ') do
+      Inc(I);
+    FirstNonBlank := I;
+  end;
+
+  { ovl25:0923 (nested). Returns the position of the last non-blank character of Text (1 when all
+    are blanks). }
+  function LastNonBlank(Text: String40): Byte;
+  var
+    I: Byte;
+  begin
+    I := Length(Text);
+    while (I > 1) and (Text[I] = ' ') do
+      Dec(I);
+    LastNonBlank := I;
+  end;
+
+  { ovl25:0969 (nested). Redraws the text of line LineNo, without its leading and trailing blanks,
+    in HighlightColor at its row of the page (Top plus LineNo minus ListMenuTop). }
+  procedure HighlightListLine(LineNo: Integer);
+  var
+    Line: PMenuLine;
+    First, Len: Byte;
+  begin
+    Line := GetMenuLine(LineNo, List);
+    First := FirstNonBlank(Line^.Text);
+    Len := LastNonBlank(Line^.Text) - First + 1;
+    DrawTextAt(Left + First - 1, Top + (LineNo - ListMenuTop), HighlightColor,
+      Copy(Line^.Text, First, Len));
+  end;
+
+  { ovl25:0A08 (nested). Redraws the trimmed text of line LineNo in its own colour (HeadingColor for
+    a heading, LineColor otherwise): the highlight is taken off. }
+  procedure UnhighlightListLine(LineNo: Integer);
+  var
+    Line: PMenuLine;
+    First, Len: Byte;
+  begin
+    Line := GetMenuLine(LineNo, List);
+    First := FirstNonBlank(Line^.Text);
+    Len := LastNonBlank(Line^.Text) - First + 1;
+    if Line^.Flag29 <> 0 then
+      DrawTextAt(Left + First - 1, Top + (LineNo - ListMenuTop), HeadingColor,
+        Copy(Line^.Text, First, Len))
+    else
+      DrawTextAt(Left + First - 1, Top + (LineNo - ListMenuTop), LineColor,
+        Copy(Line^.Text, First, Len));
+  end;
+
+  { ovl25:0B03 (nested). While line Choice is a heading (at most Height times), moves Choice one
+    line down (Down) or up, wrapping inside the page shown and the list. }
+  procedure SkipHeadingLines(Down: Boolean);
+  var
+    N: Integer;
+  begin
+    N := 0;
+    if Down then
+    begin
+      while (N < Height) and (GetMenuLine(Choice, List)^.Flag29 <> 0) do
+      begin
+        Inc(N);
+        Inc(Choice);
+        if ListMenuTop + Height - 1 < Choice then
+          Choice := ListMenuTop;
+        if LineCount - 1 < Choice then
+          Choice := ListMenuTop;
+      end;
+    end
+    else
+      while (N < Height) and (GetMenuLine(Choice, List)^.Flag29 <> 0) do
+      begin
+        Inc(N);
+        Dec(Choice);
+        if Choice < ListMenuTop then
+          Choice := ListMenuTop + Height - 1;
+        if LineCount - 1 < Choice then
+          Choice := LineCount - 1;
+      end;
+  end;
+
+  { ovl25:0C33 (nested). Turns the page down (Down) or up: moves ListMenuTop by Height (not past the
+    last page or the first line), keeps the highlight at the same row of the page, skips headings
+    and redraws the page. }
+  procedure ScrollListPage(Down: Boolean);
+  var
+    RowOnPage: Integer;
+  begin
+    RowOnPage := Choice - ListMenuTop;
+    if Down then
+    begin
+      Inc(ListMenuTop, Height);
+      if LineCount - Height < ListMenuTop then
+        ListMenuTop := LineCount - Height;
+    end
+    else
+    begin
+      Dec(ListMenuTop, Height);
+      if ListMenuTop < 0 then
+        ListMenuTop := 0;
+    end;
+    Choice := ListMenuTop + RowOnPage;
+    SkipHeadingLines(Down);
+    DrawListPage(ListMenuTop);
+  end;
+
+  { ovl25:0CC5 (nested). Moves the highlight one line down (Down, the End key) or up (Home), wrapping
+    inside the page shown, then skips headings in the same direction. }
+  procedure MoveListCursor(Down: Boolean);
+  var
+    Spare: array[0..1] of PMenuLine;  { 8 bytes the original reserves and never uses }
+  begin
+    if Down then
+    begin
+      Inc(Choice);
+      if ListMenuTop + Height - 1 < Choice then
+        Choice := ListMenuTop;
+      if LineCount - 1 < Choice then
+        Choice := ListMenuTop;
+    end
+    else
+    begin
+      Dec(Choice);
+      if Choice < ListMenuTop then
+        Choice := ListMenuTop + Height - 1;
+      if LineCount - 1 < Choice then
+        Choice := LineCount - 1;
+    end;
+    SkipHeadingLines(Down);
+  end;
+
+begin
+  if List = nil then
+  begin
+    Choice := 0;
+    Selected := nil;
+    ChooseFromList := KeyNone;
+    Exit;
+  end;
+  PromptWordChoice := 1;
+  Width := Right - Left + 1;
+  LineCount := CountMenuLines(List);
+  Height := Bottom - Top + 1;
+  Line := List;
+  HeadingCount := 0;
+  while (Line <> nil) and (Line^.Flag29 <> 0) do
+  begin
+    Line := Line^.Next;
+    Inc(HeadingCount);
+  end;
+  Line := List;
+  Total := 0;
+  while Line <> nil do
+  begin
+    Line := Line^.Next;
+    Inc(Total);
+  end;
+  if ListMenuTop > Choice then
+  begin
+    ListMenuTop := Choice;
+    Redraw := 1;
+  end;
+  if ListMenuTop > Total then
+  begin
+    ListMenuTop := 0;
+    Redraw := 1;
+  end;
+  Inc(Choice);
+  MoveListCursor(False);
+  if Redraw <> 0 then
+    DrawListPage(ListMenuTop);
+  Redraw := 0;
+  repeat
+    HighlightListLine(Choice);
+    Words := Prompt;
+    HasNext := 0;
+    HasPrev := 0;
+    if LineCount - Height > ListMenuTop then
+    begin
+      Words := Words + ' Next';
+      HasNext := 1;
+    end;
+    if ListMenuTop > HeadingCount then
+    begin
+      Words := Words + ' Prev';
+      HasPrev := 1;
+    end;
+    if WithExit <> 0 then
+      Words := Words + ' Exit';
+    Key := ReadPromptChoice(Title, Words, HeadingColor, LineColor, HighlightColor, 1, 0, ExtKey);
+    UnhighlightListLine(Choice);
+    if ExtKey <> 0 then
+      case Key of
+        ScanHome: MoveListCursor(False);
+        ScanEnd: MoveListCursor(True);
+        ScanPgUp: if HasPrev <> 0 then ScrollListPage(False);
+        ScanPgDn: if HasNext <> 0 then ScrollListPage(True);
+      end
+    else
+      case Key of
+        KeyPrevPage: ScrollListPage(False);
+        KeyNextPage: ScrollListPage(True);
+        KeyEscape, KeyExitList, KeyNone:
+          begin
+            Selected := nil;
+            ChooseFromList := KeyNone;
+            Exit;
+          end;
+      else
+        Selected := GetMenuLine(Choice, List);
+        ChooseFromList := Key;
+        Exit;
+      end;
+  until False;
+end;
+
 
 { ovl25:10D1. Asks Prompt with the words "Yes No" (the highlight starts on No) through
   ReadPromptChoice until the key is Y or N and returns it; Escape asks again. Called by the Temple

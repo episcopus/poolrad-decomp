@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-12 | 5.8 | ChooseFromList matched with its nine nested routines; ovl25 complete | make match UNIT=ovl25 |
 | 2026-10-12 | 5.5.3 | ovl09 computer's turn: 8 routines at L2 (reverted merge restored, CanAffordStep new); StepTurnOffsets (DS:02AE) named; 12 phantom map entries removed | make match UNIT=ovl09 |
 | 2026-10-12 | 5.8 | ReadPromptChoice matched with its nested routines; ChooseFromList blocked on sibling-called nested routines (escalated); lessons in re/learnings/ovl25.toml | make match UNIT=ovl25 |
 | 2026-10-12 | 5.5.2 | PassageKind and PlaceRiver matched with their nested routines; BuildDungeonMap blocked by the strict nested rule (sibling-only calls) | make match UNIT=ovl10 |
