@@ -255,7 +255,7 @@ def integrate_one(path: Path, main_dir: Path, dry: bool, py: str) -> bool:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("--key", default=os.environ.get("KEY", ""))
+    ap.add_argument("--key", default="")                 # never from the environment: a nested make check would inherit it
     ap.add_argument("--dry", action="store_true")
     a = ap.parse_args(argv)
     try:
