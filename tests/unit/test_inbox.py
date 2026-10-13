@@ -72,7 +72,7 @@ def test_inbox_lists_every_pending_decision_with_its_command(coordination, capsy
     assert esc[0]["command"] == 'make handoff-done AGENT=orch UNIT=escalate-res06-20261012110841 DECISION="<decision>"'
     rej = s["Rejected"]
     assert len(rej) == 1 and "readability ovl20" in rej[0]["what"]
-    assert rej[0]["command"].startswith("make claim AGENT=haiku-dec UNIT=ovl20") and "/tmp/integrate/ovl20.log" in rej[0]["command"]
+    assert rej[0]["command"].startswith("make worker AGENT=haiku-dec ROLE=decompiler UNIT=ovl20") and "/tmp/integrate/ovl20.log" in rej[0]["command"]
     merge = s["To merge"]
     assert [m["what"].split(" ")[0] for m in merge] == ["unit/res07", "review/ovl11"]        # newest last
     assert all(m["command"] == "make integrate" for m in merge)

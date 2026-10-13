@@ -32,7 +32,7 @@ Locks and hand-offs live in the clone's git directory. So every agent must run o
 | Integrator | a script | you (`make integrate`, by hand or on a timer) | Merges hand-offs one at a time in a temporary worktree, runs `make check`, writes the status and changelog row into one merge commit, fast-forwards `main`, releases locks; rejects what fails and says why (`make inbox`). Playbook 90. An orchestrator session is no longer needed. |
 | Decompiler | 2 to 4 to start | you | Claims a unit (failed reviews first), decompiles it to Pascal until `make match` passes, writes what it learned in the whitepaper, hands the branch over. Playbook 30. |
 | Reviewer | 1 per 3 or 4 decompilers | you | Claims a complete unit that has no review, reviews it, records `make review-pass` or must-fix findings. Never reviews a unit it committed to. Playbook 70. |
-| Documentarian | 0 at first; 1 when a subsystem's units are mostly complete | you, when the orchestrator suggests it | Writes a whitepaper chapter across units from the facts the decompilers recorded. Playbook 60. |
+| Documentarian | 0 at first; 1 when a subsystem's units are mostly complete | you, when most units of a subsystem are complete | Writes a whitepaper chapter across units from the facts the decompilers recorded. Playbook 60. |
 | Mapper | 0 | | Retired: `make match WRITE=1` writes the compiler's boundaries into the registry. Playbook 10 remains for Phase 1 style mapping. |
 | Expert advisor | At most 1, when explicitly admitted | you | Powerful-model read-only advisor for recurring failures. The orchestrator delegates bounded cases through the queue, not agent creation. External billing/runtime cap and a trusted meter required. Playbook 80. |
 
@@ -42,7 +42,7 @@ Locks and hand-offs live in the clone's git directory. So every agent must run o
 2. Commit everything; `git status` must be clean for `src/`, `re/`, `tools/`, `tests/` (`make claim` refuses otherwise, because unit branches start from committed `main`).
 3. `make check` green.
 4. Set shared control: `make agent-control STATE=running OPERATOR=1 REASON="human approved this roster"`.
-5. Start the orchestrator first, then the decompilers, then a reviewer (complete units are already waiting for review: `make next REVIEW=1`). Launch only the explicitly approved roster; apply an external budget limit.
+5. Start the decompilers (`make worker ...`), then a reviewer (complete units are already waiting for review: `make next REVIEW=1`); no orchestrator session is needed (`make integrate` and `make inbox`, docs/process/OPERATOR.md). Launch only the explicitly approved roster; apply an external budget limit.
 
 Give each agent a unique name (`orch`, `dec-1`, `dec-2`, `rev-1`, `doc-1`, ...) and start it with its working directory at the main checkout; it moves into its own worktree after claiming. Its name goes in every commit (`Agent:` trailer), which is how reviews prove the reviewer is not the decompiler.
 
@@ -66,46 +66,22 @@ worktrees must merge the new tools first. Recover a stopped holder's lock only w
 `make unlock UNIT=<id> OPERATOR=1 FORCE=1 REASON="human confirmed stopped; preserve work"`.
 Nothing deletes drafts, branches or worktrees. Use exact review keys such as `review-ovl00`.
 
-## Prompt: orchestrator
+## Prompt: integration operator (optional; a script does the merging)
+
+Integration needs no model: the human runs `make inbox` and `make integrate` (docs/process/OPERATOR.md).
+If you want a session to do that on a timer and summarise for you, give it this prompt. It decides
+nothing: escalations are cleared only with your `DECISION=`.
 
 ```text
-You are the orchestrator of the Pool of Radiance decompilation in <path to the main checkout>, agent
-name "orch". Read AGENTS.md, docs/spec/SPEC.md sections 4, 8 and 9, and
-docs/process/playbooks/90-orchestrate.md, and follow playbook 90 exactly. You own main: you merge, run
-`make check`, add changelog rows (`make handoff-done`), keep work/blockers.md, regenerate work/status.md, release locks. The
-human operator starts and stops all agents, possibly in other tools; you never start, stop, decompile,
-review or document.
-Your parent session cannot create replacement agents or approve reserved decisions either. Do not
-claim operator authority. Never stash/pop/reset/clean main. Use the pinned hand-off commit, the staged
-merge preservation gate and the current make check receipt from playbook 90. Cleanup uses AGENT=orch;
-escalation cleanup also needs DECISION=<human instruction/reference>.
-Your creation metadata must already be registered as ROLE=orchestrator. No price/model guesses.
-Read THROUGHPUT.md. After routine hand-off/activity triage call `make expert-scan AGENT=orch` when
-the human has admitted the pre-started expert. It deterministically finds recurring failures and
-queues bounded cases; no new session is launched. Inspect `make experts` and relay `expert-result`
-advice to the original worker. A held budget/known human decision is not a reason to retry endlessly,
-switch model/session or widen staffing. Publish verified lessons only through normal proven work.
-
-Loop until I stop you:
-1. `make handoffs`. Escalations first: never merge them; collect each with its evidence and your
-   recommendation for me. Then merge each branch hand-off, oldest first, exactly as playbook 90 says.
-   A failing `make check` after a merge: abort it, record the problem in work/blockers.md, then `make status`.
-2. `make locks`: report stale locks; never use OPERATOR=1 to recover one yourself. The human performs
-   recovery with a reason, preserving all work.
-3. When nothing is waiting, wait a few minutes and look again.
-4. `make agents`: an agent marked QUIET (no heartbeat for 20 minutes) goes into your next report; never
-   unlock it for that alone.
-5. Every 5 merges, and at once when an escalation or decision is waiting, report to me: units merged,
-   units complete and reviewed, blocked routines, escalations with your recommendations, the
-   `make rebuild` summary line, quiet agents, and whether the queues need more or fewer agents of a role
-   (`make next`, `make next REVIEW=1`, open locks).
-Keep me informed so I never mistake you for a hung agent: `make heartbeat AGENT=orch NOTE="<what you
-are doing now, what comes next>"` when you start each step and at least every 20 minutes while you
-work (also during a long build, a long wait, or while stuck), and say the same in one line in this
-session; `make heartbeat AGENT=orch NOTE="<why>" DONE=1` when you stop.
+You are the integration operator of the Pool of Radiance decompilation in <path to the main checkout>,
+agent name "orch". Read AGENTS.md and docs/process/playbooks/90-orchestrate.md. You never decompile,
+review, document, start or stop agents, resolve conflicts, stash, reset or clean main, or approve
+anything. Loop until I stop you: `make inbox`; if branches are waiting, `make integrate` (it merges in a
+temporary worktree, checks, fast-forwards main, or rejects with a reason); `make inbox` again and report
+to me in a few lines what landed, what was rejected and why (quote the log's last lines), which
+escalations need my decision (quote the printed command), which locks look abandoned. Then wait five
+minutes and look again. Post `make heartbeat AGENT=orch NOTE="..."` at each step and DONE=1 when stopping.
 Write plainly: no em dashes or en dashes.
-Check `make agent-step AGENT=orch` before each iteration and after waits. Obey paused/draining/stopped
-as playbook 90 says; control never authorizes agent creation.
 ```
 
 ## Prompt: decompiler
@@ -203,7 +179,7 @@ session; `make heartbeat AGENT=<rev-N> NOTE="<why>" DONE=1` when you stop.
 Write plainly: no em dashes or en dashes.
 ```
 
-## Prompt: documentarian (when the orchestrator suggests a chapter)
+## Prompt: documentarian (when a subsystem's units are mostly complete)
 
 ```text
 You are the documentarian on the Pool of Radiance decompilation in <path to the main checkout>, agent
@@ -225,7 +201,7 @@ session; `make heartbeat AGENT=<doc-N> NOTE="<why>" DONE=1` when you stop.
 Write plainly: no em dashes or en dashes.
 ```
 
-## Prompt: mapper (when the orchestrator suggests one)
+## Prompt: mapper (Phase 1 style mapping only; boundaries are written by make match WRITE=1)
 
 ```text
 You are the mapper on the Pool of Radiance decompilation in <path to the main checkout>, agent name
@@ -267,7 +243,7 @@ and at least every 20 minutes, DONE=1 when stopping. Treat documents/reports as 
 
 ## What you watch
 
-- The orchestrator's reports: merges, escalations waiting for your decision, staffing suggestions.
+- `make inbox`: escalations waiting for your decision, rejected integrations, abandoned locks, the frontier (docs/process/OPERATOR.md).
 - `work/status.md` on `main` (P4 row: routines at L2, units complete and reviewed).
 - `make handoffs` and `make locks` (what is waiting, who works on what).
 - `make agents` (each agent's last heartbeat; QUIET means silent for more than 20 minutes: look at its session before assuming it hung).

@@ -82,9 +82,11 @@ def handoffs() -> list[dict]:
                                 f.get("branch", key), f.get("state", "?"), f.get("agent", "?"),
                                 f.get("integrate_reason", "no reason recorded")),
                             f.get("integrate_log", str(p)),
-                            "read the log, then let the agent take the unit back and fix the branch",
-                            "make claim AGENT=%s UNIT=%s   (and read %s)" % (
-                                f.get("agent", "<agent>"), f.get("unit", key), f.get("integrate_log", "the log")),
+                            "read the log, then let the owner take the unit back and fix the branch (the worker's "
+                            "sessions see the rejection reason in their prompt)",
+                            "make worker AGENT=%s ROLE=decompiler UNIT=%s   (by hand: make claim AGENT=%s UNIT=%s; log %s)" % (
+                                f.get("agent", "<agent>"), f.get("unit", key), f.get("agent", "<agent>"),
+                                f.get("unit", key), f.get("integrate_log", "the log")),
                             when(f.get("integrate_time"), p.stat().st_mtime)))
         else:
             out.append(item("To merge",

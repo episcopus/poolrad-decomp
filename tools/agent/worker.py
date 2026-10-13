@@ -405,7 +405,7 @@ def batch_prompt(wt: Path, unit: str, agent: str, items: list[Item], number: int
     (claim.blocker_notes), which a session would otherwise never see."""
     text = ""
     if notes:
-        text = ("The orchestrator left notes on this unit in work/blockers.md; do what they say first:\n" +
+        text = ("Notes on this unit (work/blockers.md, or why make integrate rejected the last hand-off); do what they say first:\n" +
                 "\n".join("  " + n for n in notes) + "\n")
     return render(HERE / "worker_prompt.md", dict(
         worktree=str(wt), unit=unit, unit_file="%s.PAS" % unit.upper(), unit_init="%s_init" % unit,
@@ -603,6 +603,10 @@ class Worker:
         prompt_file.parent.mkdir(parents=True, exist_ok=True)
         import claim as claim_tool
         notes = claim_tool.blocker_notes(self.main, run.unit)
+        why = claim_tool.rejection(run.unit)
+        if why:
+            notes = list(notes) + ["make integrate rejected this unit's last hand-off: %s. Fix that first "
+                                   "(merge main into the branch if it is behind, resolve, make check), then continue." % why]
         prompt_file.write_text(batch_prompt(run.wt, run.unit, self.agent, batch, run.batch, notes))
         start = head_of(run.wt)
         note = "unit %s batch %d: routines %s" % (run.unit, run.batch, ", ".join(i.name for i in batch))
