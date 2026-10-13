@@ -2,7 +2,7 @@ unit OVL08;
 { CombatAI: the combat round loop and the player's combat commands (whitepaper 5.5). RunCombat runs
   rounds until one side is gone; each round every character with a positive initiative gets a turn
   in initiative order (PickNextCombatant, CombatTurn), the computer playing quick characters
-  (ovl09_e1) and the player the others (PlayerTurn with CombatMenu, MoveCharacter, MeleeAttack,
+  (QuickTurn) and the player the others (PlayerTurn with CombatMenu, MoveCharacter, MeleeAttack,
   EndTurnMenu, GameSpeedMenu). EndCombatRound bleeds dying characters and asks Continue Battle,
   BandageDying and SetQuickCombat serve the commands, EndCombat frees the combat data. }
 {$A-,O+,F+,S-,R-,G-,I-}
@@ -141,7 +141,7 @@ begin
 end;
 { ovl08:01F6. One combat turn of Who: clears the per-turn fields BF, B12 and B7, runs the
   RunAffectHooks hook 7 and, while Who still has an initiative, selects it (SelectedCharacter), shows it
-  (ShowCursorOn, res12_fn_0BB8, res12_fn_09E3), runs hook $F and lets the computer (ovl09_e1, quick
+  (ShowCursorOn, res12_fn_0BB8, res12_fn_09E3), runs hook $F and lets the computer (QuickTurn, quick
   combat) or the player (PlayerTurn) act; then RedrawMapCell at its position (CombatantX, CombatantY).
   An initiative of InitiativeQuickAll (the Alt-Q fight) counts as $13. }
 procedure CombatTurn(Who: PCharacter);
@@ -162,7 +162,7 @@ begin
     RunAffectHooks($F, Who);
     if Who^.Combat^.Initiative > 0 then
       if Who^.Quick <> 0 then
-        ovl09_e1(Who)
+        QuickTurn(Who)
       else
         PlayerTurn(Who);
     RedrawMapCell(CombatantX(Who), CombatantY(Who));
@@ -227,7 +227,7 @@ begin
             FlushKeyboard;
             Delay(200);
             Done := 1;
-            ovl09_e1(Who);
+            QuickTurn(Who);
           end;
           'D': EndTurnMenu(Who, Done);
           KeyAltM:

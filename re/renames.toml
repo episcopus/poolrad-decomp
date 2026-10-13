@@ -3163,6 +3163,48 @@ why = "7 rows of 5 direction offsets: CanAffordStep adds ds02AE[Combat+15h, Colu
 date = "2026-10-12"
 
 [[rename]]
+old = "ovl09_fn_02EB"
+new = "SpellAccepted"
+kind = "routine"
+why = "ovl09:02EB decides whether the AI accepts spell Spell at Range for Who: refuses below the spell row byte +$D, accepts a zero +$E byte or spell 3 through ovl13_e13, else counts Who's enemies in the area with res12_fn_2433 and refuses when ovl09_fn_0255 finds a side unlike res12_fn_23B7(SelectedCharacter) near one; callers UseMagicItem (03E4) and CastMemorizedSpell (0545) keep what it accepts"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl09_fn_0255"
+new = "DifferentSideInArea"
+kind = "routine"
+why = "ovl09:0255 (nested in SpellAccepted): scans the map entities around (X, Y) with the spell's line budget and answers True when one of them has a Side unlike res12_fn_23B7(SelectedCharacter)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl09_fn_07F2"
+new = "MoveStep"
+kind = "routine"
+why = "ovl09:07F2 is one step of the AI's move for Who (called from the AI turn loop at 0B3C, ovl09:0BD3 and 0D7C): it shows the move prompt, lets HandleCombatKey interrupt, picks a direction (ovl13_e18 or the party facing) and a step pattern, tries CanAffordStep, and moves or attacks through ovl13_e4/ovl13_e3 and ApplyCloudTile; with no affordable step it turns the pattern (ds443D)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl09_fn_0B3C"
+new = "AiTurn"
+kind = "routine"
+why = "ovl09:0B3C is the AI's whole turn for Who (called by ovl09_e1 at 01E6 when the initiative allows): it runs affect hook 0E, loops movement (MoveStep while panicking) and attacks, picks an attack target from the remembered Combat^.Target or a random enemy of the res12_fn_2433 scan (or ovl09_fn_13CA), attacks through ovl13_e7/e11/e12 and ends the turn through res12_fn_2637; result 1 when the turn is over"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl09_fn_13CA"
+new = "UseBestItem"
+kind = "routine"
+why = "ovl09:13CA is the AI's item step (called by ovl09_e1 every turn and by AiTurn before attacking): it pays the per-kind slot items off Who^.ds100, scores the carried items with ScoreTarget and keeps the best row-14-bit-3/$10 item, the best other item and the best type-1 item by Plus, then uses the slot-0, slot-1 and picked items through ovl19_e7 (res12_fn_0BB8/ovl13_e6/res12_fn_09E3), branching on ds100 above or below 2"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl09_e1"
+new = "QuickTurn"
+kind = "routine"
+why = "ovl09:000F is the computer's turn for a quick-combat character (called by ovl08 CombatTurn/PlayerTurn when Quick is set): it reads a key, ends the turn through res12_fn_2637 when the character is not dying, rerolls the step pattern, runs morale (fleeing in panic through res12_fn_16EC), then in a loop uses a magic item, finishes a pending spell through ovl22_e5, takes the level-0 turn, casts a memorized spell, uses the best item and loops through ovl13_e21 into AiTurn or ovl09_fn_0F4F"
+date = "2026-10-13"
+
+[[rename]]
 old = "res07_fn_2632"
 new = "FillPictureRect"
 kind = "routine"

@@ -1,0 +1,28 @@
+# Lessons from unit ovl09 (CombatAI). Leads with evidence, not matcher verdicts.
+
+[[lesson]]
+id = "for-loop-bound-temporary"
+confidence = "V"
+units = ["*"]
+tags = ["for", "loop", "bound", "temporary", "frame", "codegen"]
+title = "TP 6.0 keeps a for loop's bound in a hidden temporary"
+lesson = "TP 6.0 evaluates every non-constant for-loop bound once into a hidden temporary, which costs a frame slot: a variable bound (local, parameter or global) is copied into that slot (one extra store), while an expression bound (an indexed byte, a call) is evaluated straight into it. The frame and the stores tell the source form apart: ovl09:0255's loop is `for I := 1 to ds6718[0].Val do` (one declared local I, bound at [bp-3], sub sp,4, the evaluation at 028C is the only store), not `Count := ds6718[0].Val; for I := 1 to Count do`, which needs a Count slot plus the temporary and shows a second copy. ovl09:02EB is the variable form there: `for I := 1 to Tries do` with Tries at [bp-6], the bound at [bp-8] and sub sp,8. The hidden bound slot and the frame padding to an even size are what the matcher sees."
+evidence = ["tools/re/tp_idioms/ovl09/FORBOUND.PAS", "src/OVL09.PAS#DifferentSideInArea", "src/OVL09.PAS#SpellAccepted", "re/symbols.toml#ovl09:0255", "re/symbols.toml#ovl09:02EB"]
+
+[[lesson]]
+id = "early-exit-vs-wrapper-if"
+confidence = "V"
+units = ["*"]
+tags = ["if", "Exit", "codegen", "branch", "epilogue"]
+title = "`if C then Exit` is not folded into a branch to the tail"
+lesson = "TP 6.0 compiles `if C then Exit;` as `eval C; j!C skip; jmp epilogue; skip:` (two branches), so an original single conditional branch to the tail is not that statement: the rest of the routine was wrapped in `if not C then begin ... end;` as the last statement (or the empty-then-else quirk). ovl09:02EB shows both: `if SpellTable[Spell].PadB[$D] < Range then Exit;` gives jae + jmp (0307, 0309), and `if Tries > 0 then begin <rest> end` gives the single jbe 03DB (0361)."
+evidence = ["tools/re/tp_idioms/ovl09/EXITFORM.PAS", "src/OVL09.PAS#SpellAccepted", "re/symbols.toml#ovl09:02EB"]
+
+[[lesson]]
+id = "spell-row-tail-bytes"
+confidence = "I"
+units = ["ovl09"]
+tags = ["spell", "SpellTable", "TSpellEntry", "field"]
+title = "The last three SpellTable bytes feed the AI's spell acceptance"
+lesson = "ovl09:02EB reads bytes +$D, +$E and +$F of the 16-byte SpellTable row of the spell (declared as SpellTable[Spell].PadB[$D..$F]): +$D below the requested Range refuses, +$E zero accepts without a scan, +$F is the ScanTargets line budget and zero accepts. What the three bytes mean beyond that is not proven."
+evidence = ["src/OVL09.PAS#SpellAccepted", "src/OVL09.PAS#DifferentSideInArea", "src/POOLVARS.PAS#TSpellEntry"]

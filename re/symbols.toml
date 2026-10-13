@@ -2577,19 +2577,19 @@ id = "ovl09:000F"
 unit = "ovl09"
 addr = "ovl09:000F"
 size = 500
-name = "ovl09_e1"
-signature = "procedure ovl09_e1(Who: Pointer)"
+name = "QuickTurn"
+signature = "procedure QuickTurn(Who: PCharacter)"
 c_name = "ovl09_e1"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_1"
+notes = "renamed from ovl09_e1 (ovl09:000F is the computer's turn for a quick-combat character (called by ovl08 CombatTurn/PlayerTurn when Quick is set): it reads a key, ends the turn through res12_fn_2637 when the character is not dying, rerolls the step pattern, runs morale (fleeing in panic through res12_fn_16EC), then in a loop uses a magic item, finishes a pending spell through ovl22_e5, takes the level-0 turn, casts a memorized spell, uses the best item and loops through ovl13_e21 into AiTurn or ovl09_fn_0F4F); auto:entry_1"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl09:0203"
 unit = "ovl09"
 addr = "ovl09:0203"
-size = 82
+size = 232
 name = "ovl09_fn_0203"
 signature = ""
 c_name = "ovl09_fn_0203"
@@ -2603,12 +2603,12 @@ id = "ovl09:0255"
 unit = "ovl09"
 addr = "ovl09:0255"
 size = 150
-name = "ovl09_fn_0255"
+name = "DifferentSideInArea"
 signature = ""
 c_name = "ovl09_fn_0255"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl09_fn_0255 (ovl09:0255 (nested in SpellAccepted): scans the map entities around (X, Y) with the spell's line budget and answers True when one of them has a Side unlike res12_fn_23B7(SelectedCharacter)); auto:near_call; nested in SpellAccepted (ovl09:02EB), proven by the parent's match"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2616,12 +2616,12 @@ id = "ovl09:02EB"
 unit = "ovl09"
 addr = "ovl09:02EB"
 size = 249
-name = "ovl09_fn_02EB"
-signature = "function ovl09_fn_02EB(Who: Pointer; Spell, N: Byte): Boolean"
+name = "SpellAccepted"
+signature = "function SpellAccepted(Who: PCharacter; Spell, Range: Byte): Boolean"
 c_name = "ovl09_fn_02EB"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl09_fn_02EB (ovl09:02EB decides whether the AI accepts spell Spell at Range for Who: refuses below the spell row byte +$D, accepts a zero +$E byte or spell 3 through ovl13_e13, else counts Who's enemies in the area with res12_fn_2433 and refuses when ovl09_fn_0255 finds a side unlike res12_fn_23B7(SelectedCharacter) near one; callers UseMagicItem (03E4) and CastMemorizedSpell (0545) keep what it accepts); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2654,7 +2654,7 @@ evidence = ["prologue"]
 id = "ovl09:0675"
 unit = "ovl09"
 addr = "ovl09:0675"
-size = 353
+size = 381
 name = "CanAffordStep"
 signature = ""
 c_name = "ovl09_fn_0675"
@@ -2667,183 +2667,27 @@ evidence = ["prologue"]
 id = "ovl09:07F2"
 unit = "ovl09"
 addr = "ovl09:07F2"
-size = 161
-name = "ovl09_fn_07F2"
-signature = ""
+size = 842
+name = "MoveStep"
+signature = "procedure MoveStep(Who: PCharacter)"
 c_name = "ovl09_fn_07F2"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl09_fn_07F2 (ovl09:07F2 is one step of the AI's move for Who (called from the AI turn loop at 0B3C, ovl09:0BD3 and 0D7C): it shows the move prompt, lets HandleCombatKey interrupt, picks a direction (ovl13_e18 or the party facing) and a step pattern, tries CanAffordStep, and moves or attacks through ovl13_e4/ovl13_e3 and ApplyCloudTile; with no affordable step it turns the pattern (ds443D)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl09:0893"
-unit = "ovl09"
-addr = "ovl09:0893"
-size = 5
-name = "ovl09_fn_0893"
-signature = ""
-c_name = "ovl09_fn_0893"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl09:0898"
-unit = "ovl09"
-addr = "ovl09:0898"
-size = 247
-name = "ovl09_fn_0898"
-signature = ""
-c_name = "ovl09_fn_0898"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl09:098F"
-unit = "ovl09"
-addr = "ovl09:098F"
-size = 10
-name = "ovl09_fn_098F"
-signature = ""
-c_name = "ovl09_fn_098F"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl09:0999"
-unit = "ovl09"
-addr = "ovl09:0999"
-size = 5
-name = "ovl09_fn_0999"
-signature = ""
-c_name = "ovl09_fn_0999"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl09:099E"
-unit = "ovl09"
-addr = "ovl09:099E"
-size = 396
-name = "ovl09_fn_099E"
-signature = ""
-c_name = "ovl09_fn_099E"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl09:0B2A"
-unit = "ovl09"
-addr = "ovl09:0B2A"
-size = 5
-name = "ovl09_fn_0B2A"
-signature = ""
-c_name = "ovl09_fn_0B2A"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl09:0B2F"
-unit = "ovl09"
-addr = "ovl09:0B2F"
-size = 5
-name = "ovl09_fn_0B2F"
-signature = ""
-c_name = "ovl09_fn_0B2F"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl09:0B34"
-unit = "ovl09"
-addr = "ovl09:0B34"
-size = 8
-name = "ovl09_fn_0B34"
-signature = ""
-c_name = "ovl09_fn_0B34"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl09:0B3C"
 unit = "ovl09"
 addr = "ovl09:0B3C"
-size = 12
-name = "ovl09_fn_0B3C"
-signature = ""
+size = 1043
+name = "AiTurn"
+signature = "function AiTurn(Who: PCharacter): Byte"
 c_name = "ovl09_fn_0B3C"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl09_fn_0B3C (ovl09:0B3C is the AI's whole turn for Who (called by ovl09_e1 at 01E6 when the initiative allows): it runs affect hook 0E, loops movement (MoveStep while panicking) and attacks, picks an attack target from the remembered Combat^.Target or a random enemy of the res12_fn_2433 scan (or ovl09_fn_13CA), attacks through ovl13_e7/e11/e12 and ends the turn through res12_fn_2637; result 1 when the turn is over); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl09:0B48"
-unit = "ovl09"
-addr = "ovl09:0B48"
-size = 15
-name = "ovl09_fn_0B48"
-signature = ""
-c_name = "ovl09_fn_0B48"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl09:0B57"
-unit = "ovl09"
-addr = "ovl09:0B57"
-size = 15
-name = "ovl09_fn_0B57"
-signature = ""
-c_name = "ovl09_fn_0B57"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl09:0B66"
-unit = "ovl09"
-addr = "ovl09:0B66"
-size = 48
-name = "ovl09_fn_0B66"
-signature = ""
-c_name = "ovl09_fn_0B66"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl09:0B96"
-unit = "ovl09"
-addr = "ovl09:0B96"
-size = 953
-name = "ovl09_fn_0B96"
-signature = ""
-c_name = "ovl09_fn_0B96"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl09:0F4F"
@@ -2901,53 +2745,14 @@ evidence = ["prologue"]
 id = "ovl09:13CA"
 unit = "ovl09"
 addr = "ovl09:13CA"
-size = 441
-name = "ovl09_fn_13CA"
-signature = ""
+size = 1368
+name = "UseBestItem"
+signature = "procedure UseBestItem(Who: PCharacter)"
 c_name = "ovl09_fn_13CA"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl09_fn_13CA (ovl09:13CA is the AI's item step (called by ovl09_e1 every turn and by AiTurn before attacking): it pays the per-kind slot items off Who^.ds100, scores the carried items with ScoreTarget and keeps the best row-14-bit-3/$10 item, the best other item and the best type-1 item by Plus, then uses the slot-0, slot-1 and picked items through ovl19_e7 (res12_fn_0BB8/ovl13_e6/res12_fn_09E3), branching on ds100 above or below 2); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl09:1583"
-unit = "ovl09"
-addr = "ovl09:1583"
-size = 400
-name = "ovl09_fn_1583"
-signature = ""
-c_name = "ovl09_fn_1583"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl09:1713"
-unit = "ovl09"
-addr = "ovl09:1713"
-size = 69
-name = "ovl09_fn_1713"
-signature = ""
-c_name = "ovl09_fn_1713"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl09:1758"
-unit = "ovl09"
-addr = "ovl09:1758"
-size = 458
-name = "ovl09_fn_1758"
-signature = ""
-c_name = "ovl09_fn_1758"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl09:1922"
@@ -2957,7 +2762,7 @@ size = 5
 name = "ovl09_init"
 signature = ""
 c_name = "ovl09_init"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_0"
 evidence = ["prologue"]
@@ -17416,7 +17221,7 @@ unit = "res12"
 addr = "00BA:2E8B"
 size = 204
 name = "res12_fn_2E8B"
-signature = "function res12_fn_2E8B(Who: Pointer; var W: Word): Byte"
+signature = "function res12_fn_2E8B(Who: Pointer; var W: Pointer): Byte"
 c_name = "res12_fn_2E8B"
 level = "none"
 justification = ""

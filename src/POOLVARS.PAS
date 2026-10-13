@@ -277,7 +277,15 @@ type
     { +$A1: RecalcClassStats sets 3 when the fighter level (ClassLevels[2]) is above 6, else 2
       (ovl23:0083): likely attacks per two rounds [I]. }
     Attacks: Byte;
-    PadA2: array[$A2..$AB] of Byte;
+    { +$A2..+$AB: three bytes the AI item chooser reads (ovl09:13CA): it multiplies +$A3 and +$A5
+      into its item score and, when the signed +$A7 is above 0, adds twice it. The rest is unknown. }
+    PadA2: Byte;
+    dsA3: Byte;                   { +$A3 }
+    PadA4: Byte;                  { +$A4 }
+    dsA5: Byte;                   { +$A5 }
+    PadA6: Byte;                  { +$A6 }
+    dsA7: ShortInt;               { +$A7 }
+    PadA8: array[$A8..$AB] of Byte;
     Experience: LongInt;          { +$AC: experience points; AwardExperience adds a battle's share (ovl05:04A3) }
     PadB0: Byte;
     { +$B1: Raise Dead subtracts it from HpMax to get the hit points its constitution
@@ -300,7 +308,15 @@ type
     PadC0: array[$C0..$C6] of Byte;
     ItemCountC7: Byte;            { +$C7: nonzero offers Use in the combat menu (ovl08:06E1); likely the item count }
     Items: PItem;                 { +$C8: the list of carried items }
-    PadCC: array[$CC..$100] of Byte;
+    { +$CC..+$FF: the per-kind items the character remembers (13 pointer slots): ovl09:13CA
+      compares the item it picked with slots 0 and 1 and checks their Cursed flag, ovl09:0B3C and
+      ovl13 read RaceRow[ItemType] of slot 0, and ovl19 indexes the slots by RaceRow[ItemType][0]
+      and reads the slots of item types $49 and $1C at +$F8 and +$FC (11 and 12). The writer is
+      not in the overlays (ovl19_e7?). }
+    SlotItems: array[0..12] of PItem;  { +$CC }
+    ds100: Byte;                  { +$100: an AI counter: ScoreTarget refuses a row[1] above 3 minus
+                                    it, ovl09:13CA lowers it by RaceRow[item type][1] per slot item
+                                    and branches on it being 2, ovl19 adds it to row[1] }
     SaveBonus: ShortInt;          { +$101: added to the d20 of every saving throw (SavingThrow, ovl24:0D96) }
     { +$102: the weight the character carries; every coin counts one (ovl21:0020, 003A), and it may
       not exceed CarryLimit, 1500 plus the strength allowance res12_fn_13AB (ovl21:0000, 0054). }
@@ -316,7 +332,7 @@ type
       BandageDying only bandages characters with 0 (the party). }
     Side: Byte;
     { +$10F: nonzero while the computer fights for the character (quick combat): CombatTurn hands the
-      turn to ovl09_e1 (ovl08:02B3); Quick sets it, the Space command clears it. }
+      turn to QuickTurn (ovl08:02B3); Quick sets it, the Space command clears it. }
     Quick: Byte;
     { +$110: added to the d20 an attack roll (RollToHit) must bring to the needed value (ovl24:0D41) [I]. }
     HitAdjust: Byte;
@@ -785,6 +801,16 @@ var
   ds6E30: Boolean;                { the Alt-M Magic On/Off toggle of the combat keys (ovl08:04A7) }
   ds6E31: Byte;                   { the key flag the ovl08 menus pass to ReadPromptChoice }
   ds6DE3: Byte;                   { counted up once per combat round (ovl08:0891) }
+  { The combatant order the AI works through: one DS:5F27 combatant index per entry, read from
+    entry 1 (ovl09:02EB loops 1..res12_fn_2433(Who, ovl22_e3(Spell)) over it; ovl13:0F90 moves
+    the character at entry 1 to another entry). Entry 0 is never read. Extent not proven; the
+    next named byte after it is ds6E2F. }
+  ds6DE4: array[0..73] of Byte;
+  { Scratch of the combat AI (ovl09). }
+  ds443C: Byte;                   { the direction the AI chose last; 8 before its first step
+                                    (ovl09:0B3C clears it, the 07F2 step reads and sets it) }
+  ds443D: Byte;                   { counts the turns the AI spent looking for a step (ovl09:07F2) }
+  ds443E: Byte;                   { cleared with ds443C at the start of the AI turn (ovl09:0B3C); meaning unknown }
   { Class tables of ovl23 (whitepaper 5.6). Their extents are not known (only the rows the
     characters reach are read). A table whose columns count from 1 is addressed from the byte
     before it ([row, column] is base - 1 + row * width + column), so that byte is declared just
