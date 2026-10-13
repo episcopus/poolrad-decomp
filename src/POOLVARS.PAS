@@ -500,15 +500,17 @@ var
   ds84F0: Byte;                   { set to 0 in res08_init after closing pool.cfg; meaning unknown }
   Regs: Registers;                { registers for Intr calls (QuitGame) }
   { The second display page WriteCharsAt writes to when VideoAdapter is 1 (BH of INT 10h);
-    res08_init sets it to 0 for EGA and passes it to SetPlaneSegment. }
+    res08_init sets it to 0 for EGA and passes it to SetPageSegment. }
   ds4A1A: Byte;                   { display page; see above }
   { The display page WriteCharsAt writes to first (BH of INT 10h, 0802:0048); res08_init sets it
     to 0 for EGA and passes it to SetActivePage. }
   ds4A1B: Byte;                   { display page; see above }
   SavedVideoMode: Byte;           { video mode QuitGame passes to INT 10h; no writer is in the decompiled units }
   ds4A1D: Byte;                   { copy of SavedVideoMode taken in res08_init; reader unknown }
-  VideoAdapter: Byte;                   { video mode flag read by ClearWindow (03F1:0137): 0 fills the EGA planes,
-                                    1 draws through FillPlaneRect, 2 fills four planes; meaning unknown }
+  VideoAdapter: Byte;             { the video mode read by ClearWindow (03F1:0137) and res06: 0 fills
+                                    the text-scanline banks, 1 draws through FillPlaneRect on the EGA
+                                    display pages, 2 fills the four graphics banks; POOL.CFG 'E'
+                                    selects 1 (whitepaper 2.3) }
   DrawBuf: Pointer;                { far pointer DrawCellPicture passes to DrawPictureItem; what it points at is unknown }
   SoundMode: Byte;                { sound setting; 2 while a Ctrl-S pause is in effect (ReadGameKey) }
   SoundModeBeforePause: Byte;     { SoundMode saved by a Ctrl-S pause; copied back only when it is 0 or 1 }
@@ -539,8 +541,8 @@ var
   ds49DA: ^TBlock400;             { $400-byte block the loader allocates (ovl11:0054) }
   EclCode: ^TEclCode;              { $1E00-byte block the loader allocates (ovl11:0064) }
   GameSpeed: Byte;                   { set to 1 by the loader; a count the ovl18 narratives read }
-  ds4A16: Word;                   { EGA/VGA plane segment SetActivePage sets to AIndex shl 9 + $A000 }
-  ds4A18: Word;                   { EGA/VGA plane segment SetPlaneSegment sets to AIndex shl 9 + $A000 }
+  ds4A16: Word;                   { EGA display page segment SetActivePage selects (Page shl 9 + $A000) }
+  ds4A18: Word;                   { EGA display page segment SetPageSegment stores for FillPlaneRect }
   { The view mode: ShowEndingNarrative saves it, sets 7, restores it; VisitTemple sets 1 (ovl04:0D0F);
     5 during combat (ovl31 changes the combat map only then). }
   ds49F3: Byte;                   { the view mode; see above }

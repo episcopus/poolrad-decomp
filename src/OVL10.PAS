@@ -967,7 +967,7 @@ begin
   ds6B00 := $FF;
   ds6B05 := $FF;
   ClearPromptLine;
-  DelayCounted;
+  DelayByGameSpeed;
   DrawTextAt(0, $18, $A, 'A battle begins...');
   ds6E30 := False;
   ds6DE3 := 0;

@@ -3231,3 +3231,17 @@ kind = "routine"
 why = "ovl20:0BB2 increments the shared step counter, processes the party every twelve rest calls, decrements positive RestHours and refreshes the next spell countdown when an hour completes"
 date = "2026-10-13"
 
+[[rename]]
+old = "SetPlaneSegment"
+new = "SetPageSegment"
+kind = "routine"
+why = "its argument is the display page the video BIOS selects (INT 10h AH=5) and the segment ds4A18 it stores is $A000 + page * $200; the page is not an EGA plane"
+date = "2026-10-13"
+
+[[rename]]
+old = "DelayCounted"
+new = "DelayByGameSpeed"
+kind = "routine"
+why = "the routine is Delay(GameSpeed * 225): 225 milliseconds per GameSpeed step, no counter involved"
+date = "2026-10-13"
+

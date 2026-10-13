@@ -49,7 +49,7 @@ begin
         ds4A1B := 0;
         ds4A1A := 0;
         SetActivePage(ds4A1B);
-        SetPlaneSegment(ds4A1A);
+        SetPageSegment(ds4A1A);
       end;
     'T':
       begin

@@ -99,9 +99,9 @@ begin
   DrawTextAt(1, $13, $A, 'through the pool!"');
   DrawTextAt(1, $14, $A, 'Noooo...');
   AnimateFinalPicture(3, 1, 8, 1);
-  DelayCounted;
-  DelayCounted;
-  DelayCounted;
+  DelayByGameSpeed;
+  DelayByGameSpeed;
+  DelayByGameSpeed;
   ds49F3 := ds4712;
   res12_fn_27D9;
 end;
@@ -149,8 +149,8 @@ begin
   begin
     DrawAreaView($17, $19);
     FlushPictureChanges;
-    DelayCounted;
-    DelayCounted;
+    DelayByGameSpeed;
+    DelayByGameSpeed;
   end;
 end;
 
