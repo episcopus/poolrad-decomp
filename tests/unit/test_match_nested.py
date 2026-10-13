@@ -226,8 +226,9 @@ def test_write_levels_records_l2_and_how_it_was_proven(tmp_path, monkeypatch):
     rid = orig.routines[0]["id"]
     why = "nested in Parent (x:0000), proven by the parent's match"
     r = match.Result("n", rid, "nested", why, orig.routines[0]["size"])
-    match.write_levels([r], orig)
-    match.write_levels([r], orig)                              # a second run adds nothing
+    unit = orig.routines[0]["unit"]
+    match.write_levels([r], orig, unit)
+    match.write_levels([r], orig, unit)                        # a second run adds nothing
     text = (tmp_path / "re/symbols.toml").read_text()
     block = text.split('id = "%s"' % rid, 1)[1].split("[[routine]]", 1)[0]
     assert 'level = "L2"' in block and block.count(why) == 1

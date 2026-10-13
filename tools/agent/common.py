@@ -130,7 +130,9 @@ def routines() -> list[dict]:
 
 
 def unit_complete(unit: str, rs: list[dict] | None = None) -> bool:
-    rs = [r for r in (rs or routines()) if r["unit"] == unit]
+    """Every Pascal routine of the unit at L2 or L3; routines inside an external object (`external = true`,
+    code Turbo Pascal links from an .OBJ file, matched by bytes) need no Pascal."""
+    rs = [r for r in (rs or routines()) if r["unit"] == unit and not r.get("external")]
     return bool(rs) and all(r.get("level") in ("L2", "L3") for r in rs)
 
 

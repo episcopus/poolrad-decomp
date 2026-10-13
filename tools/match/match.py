@@ -119,6 +119,23 @@ class Original:
             a = int(u["code_start"].split(":")[0], 16)
             b = int(u["code_end"].split(":")[0], 16)
             self.res_ranges.append((a, b, u["id"]))
+        # An external object file (`{$L X.OBJ}`, code Turbo Pascal links after the initialisation part):
+        # from `external_from` to the end of the unit the bytes are not Pascal and stay as the original's.
+        self.external = {uid: int(u["external_from"].split(":")[1], 16)
+                         for uid, u in self.units.items() if u.get("external_from")}
+
+    def external_names(self, uid: str) -> set[str]:
+        """Upper-case names of the unit's routines inside its external object (registry `external = true`,
+        or an address at or after `external_from`)."""
+        ext = self.external.get(uid)
+        out = set()
+        for r in self.routines:
+            if r["unit"] != uid:
+                continue
+            off = int(r["addr"].split(":")[1], 16)
+            if r.get("external") or (ext is not None and off >= ext):
+                out.add(r["name"].upper())
+        return out
 
     def segment(self, uid: str) -> tuple[bytes, int | None]:
         """(code bytes of the unit, paragraph of the unit in the image or None for an overlay)."""
@@ -810,12 +827,16 @@ def compare_unit(orig: Original, unit: str, a: Build, b: Build, only: list[str] 
     by_a, by_b = {r.name.upper(): r for r in ra}, {r.name.upper(): r for r in rb}
     cmp = Comparer(orig, unit, a, b, by_a, by_b)
     results = []
-    stubs = {n.upper() for n, s in routines if s}
+    externals = orig.external_names(unit)
+    stubs = {n.upper() for n, s in routines if s} - externals
     for n, _s in routines:
         if only and n.upper() not in {x.upper() for x in only}:
             continue
         rid = orig.id_of_name(n)
         r = by_a[n.upper()]
+        if n.upper() in externals:                 # declared for its callers; its code is the object's
+            results.append(Result(n, rid, "external"))
+            continue
         if n.upper() in stubs:
             results.append(Result(n, rid, "stub"))
             continue
@@ -924,8 +945,17 @@ def whole_unit(cmp: Comparer, a: Build, b: Build, ra: list[Region], rb: list[Reg
     elif cmp.orig.init_id(cmp.unit):
         return "unit: the original has an initialization part (%s), ours has none" % cmp.orig.init_id(cmp.unit)
     seglen = a.segs[seg][1]
-    if any(r.status != "matched" for r in results):
+    if any(r.status not in ("matched", "external") for r in results):
         return "unit: not every routine matches"
+    ext = cmp.orig.external.get(cmp.unit)
+    if ext is not None:
+        # The Pascal part must tile the original up to the object; the object is the original's bytes.
+        ends = [int(r.id.split(":")[1], 16) + r.size for r in results if r.status == "matched" and r.id]
+        covered = max(ends) if ends else 0
+        if covered != ext:
+            return "unit: the Pascal part ends at %04X, the external object starts at %04X" % (covered, ext)
+        return "unit: complete, %d bytes of Pascal code; external object of %d bytes from %04X (%s)" % (
+            ext, len(cmp.obytes) - ext, ext, cmp.orig.units[cmp.unit].get("external_note", "not Pascal"))
     if last_a != seglen:
         return "unit: %d bytes of ours after the last routine are not accounted for" % (seglen - last_a)
     tail = cmp.obytes[seglen:]
@@ -935,37 +965,133 @@ def whole_unit(cmp: Comparer, a: Build, b: Build, ra: list[Region], rb: list[Reg
         seglen, len(tail))
 
 
-def write_levels(results: list[Result], orig: Original) -> list[str]:
-    """Record L2 for matched routines; return notes on boundaries re/symbols.toml has wrong."""
+# --------------------------------------------------------------------------- the registry
+def registry_blocks(text: str) -> list[tuple[int, int, str | None]]:
+    """(start, end, id) of every `[[routine]]` block of re/symbols.toml, in file order; `end` is the start of
+    the next block (or the end of the text), so a block carries its trailing blank line."""
+    starts = [m.start() for m in re.finditer(r"^\[\[routine\]\]\n", text, re.M)]
+    out = []
+    for k, s in enumerate(starts):
+        e = starts[k + 1] if k + 1 < len(starts) else len(text)
+        m = re.search(r'^id = "([^"]*)"', text[s:e], re.M)
+        out.append((s, e, m.group(1) if m else None))
+    return out
+
+
+def set_field(text: str, rid: str, key: str, raw: str) -> str:
+    """Set `key = raw` in the record of `rid` (replacing the line, or appending it before the trailing blank)."""
+    for s, e, i in registry_blocks(text):
+        if i != rid:
+            continue
+        block = text[s:e]
+        line = "%s = %s\n" % (key, raw)
+        block, k = re.subn(r"^%s = .*\n" % re.escape(key), line, block, count=1, flags=re.M)
+        if not k:
+            body = block.rstrip("\n") + "\n"
+            block = body + line + block[len(body):]
+        return text[:s] + block + text[e:]
+    return text
+
+
+def delete_record(text: str, rid: str) -> str:
+    for s, e, i in registry_blocks(text):
+        if i == rid:
+            return text[:s] + text[e:]
+    return text
+
+
+def insert_record(text: str, unit: str, record: str) -> str:
+    """Insert a record in address order among the unit's records (after the last one when it is the highest)."""
+    off = int(re.search(r'^addr = "[^:]+:([0-9A-Fa-f]+)"', record, re.M).group(1), 16)
+    blocks = registry_blocks(text)
+    unit_blocks = [(s, e, i) for s, e, i in blocks
+                   if re.search(r'^unit = "%s"' % re.escape(unit), text[s:e], re.M)]
+    if not unit_blocks:
+        return text.rstrip("\n") + "\n\n" + record.rstrip("\n") + "\n"
+    for s, e, i in unit_blocks:
+        here = int(i.split(":")[1], 16) if i and ":" in i else -1
+        if here > off:
+            return text[:s] + record.rstrip("\n") + "\n\n" + text[s:]
+    s, e, i = unit_blocks[-1]
+    block = text[s:e].rstrip("\n") + "\n\n"
+    return text[:s] + block + record.rstrip("\n") + "\n" + ("\n" if e < len(text) else "") + text[e:]
+
+
+def write_levels(results: list[Result], orig: Original, unit: str) -> list[str]:
+    """Record L2 for matched routines, and the compiler's boundaries: a map size the compiler disproves is
+    corrected, a map entry that lies inside a matched routine (or its literal pool) is removed, a routine
+    the map lacks is added, and routines inside an external object are flagged `external`. Returns notes
+    on what was written (the mapper role of playbook 10 is this function, SYSTEM-REVIEW 6.8)."""
     path = ROOT / "re/symbols.toml"
     text = path.read_text()
     notes = []
-    for r in results:
-        if r.status not in ("matched", "nested") or r.id is None:
-            continue
+    ordered = [r for r in results if r.status == "matched" and r.id]
+    ext = orig.external.get(unit)
+    unit_records = [r for r in orig.routines if r["unit"] == unit]
+    for k, r in enumerate(ordered):
+        entry = int(r.id.split(":")[1], 16)
         known = orig.by_id.get(r.id)
+        nxt = ordered[k + 1] if k + 1 < len(ordered) else None
+        gap = None
+        if nxt is not None:
+            n_entry = int(nxt.id.split(":")[1], 16)
+            if n_entry - nxt.pool == entry + r.size:            # contiguous: the pool between is the next's
+                gap = r.size + nxt.pool
+        elif r.name.lower().endswith("_init"):                   # the last routine: to the object or the end
+            gap = (ext if ext is not None else len(orig_segment(orig, unit))) - entry
         if known is None:
-            notes.append("%s (%s, %d bytes) is not in re/symbols.toml" % (r.name, r.id, r.size))
+            size = gap if gap is not None else r.size
+            record = ('[[routine]]\nid = "%s"\nunit = "%s"\naddr = "%s"\nsize = %d\nname = "%s"\n'
+                      'c_name = "%s_fn_%04x"\nlevel = "L2"\njustification = ""\n'
+                      'notes = "added by make match WRITE=1: a routine the map lacked, boundaries from the compiler"\n'
+                      'evidence = ["compiler"]\n' % (r.id, unit, r.id, size, r.name, unit, entry))
+            text = insert_record(text, unit, record)
+            notes.append("%s (%s, %d bytes) was not in re/symbols.toml: added" % (r.name, r.id, size))
             continue
-        if known["size"] != r.size:
-            notes.append("%s: re/symbols.toml says %d bytes, the compiler %d (plus a %d-byte literal pool before it)"
-                         % (r.id, known["size"], r.size, r.pool))
+        if gap is not None and known["size"] != gap:
+            text = set_field(text, r.id, "size", str(gap))
+            notes.append("%s: size %d corrected to %d (the compiler: %d bytes of code plus the next %d-byte literal pool)"
+                         % (r.id, known["size"], gap, r.size, gap - r.size))
+        elif gap is None and known["size"] < r.size:
+            text = set_field(text, r.id, "size", str(r.size))
+            notes.append("%s: size %d corrected to at least %d (the compiler's code bytes)" % (r.id, known["size"], r.size))
+        for other in unit_records:
+            o = int(other["addr"].split(":")[1], 16)
+            if other["id"] != r.id and entry - r.pool <= o < entry + r.size and other.get("level") not in ("L2", "L3"):
+                text = delete_record(text, other["id"])
+                notes.append("%s (%s) lies inside %s (%s..%04X): removed from the map" % (
+                    other["name"], other["id"], r.name, r.id, entry + r.size))
         block = re.compile(r'(\[\[routine\]\]\nid = "%s"\n(?:(?!\[\[routine\]\]).)*?\nlevel = )"[^"]*"' % re.escape(r.id),
                            re.S)
-        text, k = block.subn(r'\1"L2"', text, count=1)
-        if not k:
+        text, k2 = block.subn(r'\1"L2"', text, count=1)
+        if not k2:
             notes.append("%s: no level field found" % r.id)
-        if r.status == "nested":                   # how it was proven, once
-            nb = re.compile(r'(\[\[routine\]\]\nid = "%s"\n(?:(?!\[\[routine\]\]).)*?\nnotes = ")([^"]*)"' % re.escape(r.id),
-                            re.S)
-            m = nb.search(text)
-            if m is None:
-                notes.append("%s: no notes field found" % r.id)
-            elif r.detail not in m.group(2):
-                joined = (m.group(2) + "; " if m.group(2) else "") + r.detail
-                text = text[:m.start(2)] + joined + text[m.end(2):]
+    for r in results:
+        if r.status != "nested" or r.id is None:
+            continue
+        if orig.by_id.get(r.id) is None:
+            notes.append("%s (%s, %d bytes) is not in re/symbols.toml" % (r.name, r.id, r.size))
+            continue
+        text = set_field(text, r.id, "level", '"L2"')
+        nb = re.compile(r'(\[\[routine\]\]\nid = "%s"\n(?:(?!\[\[routine\]\]).)*?\nnotes = ")([^"]*)"' % re.escape(r.id),
+                        re.S)
+        m = nb.search(text)
+        if m is None:
+            text = set_field(text, r.id, "notes", '"%s"' % r.detail)
+        elif r.detail not in m.group(2):
+            joined = (m.group(2) + "; " if m.group(2) else "") + r.detail
+            text = text[:m.start(2)] + joined + text[m.end(2):]
+    if ext is not None:
+        for other in unit_records:
+            if int(other["addr"].split(":")[1], 16) >= ext and not other.get("external"):
+                text = set_field(text, other["id"], "external", "true")
+                notes.append("%s (%s) is inside the external object: flagged external" % (other["name"], other["id"]))
     path.write_text(text)
     return notes
+
+
+def orig_segment(orig: Original, unit: str) -> bytes:
+    return orig.segment(unit)[0]
 
 
 def units_with_source() -> list[str]:
@@ -994,6 +1120,8 @@ def report(unit: str, results: list[Result], whole: str) -> int:
             print("NESTED  %-16s %-12s %4d bytes code, %s" % (r.name, r.id, r.size, r.detail))
         elif r.status == "stub":
             print("stub    %-16s %s" % (r.name, r.id or ""))
+        elif r.status == "external":
+            print("extern  %-16s %s  (external object, not Pascal)" % (r.name, r.id or ""))
         else:
             bad += 1
             print("DIFF    %-16s %-12s %s" % (r.name, r.id or "?", r.detail))
@@ -1028,8 +1156,10 @@ def main(argv=None) -> int:
         bad += report(u, results, whole)
         total += [r for r in results if r.name != "main"]
     if a.write:
-        for n in write_levels(total, Original()):
-            print("note: " + n)
+        orig = Original()
+        for u in units:
+            for n in write_levels(done[u][0], orig, u):
+                print("note: " + n)
     if a.all:
         print("match --all: %d units, %d routines matched, %d nested, %s" % (
             len(units), sum(r.status == "matched" for r in total), sum(r.status == "nested" for r in total),

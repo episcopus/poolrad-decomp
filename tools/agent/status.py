@@ -142,13 +142,15 @@ def main(argv: list[str]) -> int:
     routine_bytes = sum(int(r.get("size") or 0) for r in routines)
 
     library = {u["id"] for u in residents if u.get("name") in ("System", "Crt", "Dos", "Overlay")}
-    game = [r for r in routines if r.get("unit") not in library]
+    external = [r for r in routines if r.get("unit") not in library and r.get("external")]
+    game = [r for r in routines if r.get("unit") not in library and not r.get("external")]
     game_units = [u for u in residents + overlays if u["id"] not in library]
     sources = {f.stem.lower() for f in (ROOT / "src").glob("*.PAS")}
     p4 = {"routines": len(game), "bytes": sum(int(r.get("size") or 0) for r in game),
           "matched": sum(1 for r in game if r.get("level") in ("L2", "L3")),
           "matched_bytes": sum(int(r.get("size") or 0) for r in game if r.get("level") in ("L2", "L3")),
-          "units": len(game_units), "complete": 0, "reviewed": 0, "rows": []}
+          "units": len(game_units), "complete": 0, "reviewed": 0, "rows": [],
+          "external": len(external), "external_bytes": sum(int(r.get("size") or 0) for r in external)}
     for u in sorted(game_units, key=lambda u: u["id"]):
         rs = [r for r in game if r.get("unit") == u["id"]]
         ok = [r for r in rs if r.get("level") in ("L2", "L3")]
@@ -178,8 +180,9 @@ def main(argv: list[str]) -> int:
         "| P1 Map | done (`make p1-check`): %d units, %d routines, TP 6.0 June 1991 pinned |" % (len(residents) + len(overlays), len(routines)),
         "| P2 Oracle and data | done: goldens with recordings for %d of %d session scripts (%s); `make golden CHECK=1` |" % (len(goldens), len(scripts), ", ".join(goldens) or "none"),
         "| P3 Match harness | done: `make match` (tools/match/match.py, tests/unit/test_match.py); gate `make check` |",
-        "| P4 Match | %d of %d game routines at L2 (%d of %d bytes by re/symbols.toml sizes); %d of %d game units complete, %d reviewed; main program `src/POOL.PAS` matched by `make match UNIT=main` |" % (
-            p4["matched"], p4["routines"], p4["matched_bytes"], p4["bytes"], p4["complete"], p4["units"], p4["reviewed"]),
+        "| P4 Match | %d of %d game routines at L2 (%d of %d bytes by re/symbols.toml sizes); %d of %d game units complete, %d reviewed; %d routines (%d bytes) inside external object files are not Pascal and are matched by bytes; main program `src/POOL.PAS` matched by `make match UNIT=main` |" % (
+            p4["matched"], p4["routines"], p4["matched_bytes"], p4["bytes"], p4["complete"], p4["units"], p4["reviewed"],
+            p4["external"], p4["external_bytes"]),
         "| P5 Rebuild | `make rebuild` links the whole game from `src/` (every unit has source: decompiled or skeleton) and reports identical segments |",
         "",
         "### P4 units with matched routines",

@@ -486,8 +486,10 @@ var
   ds6AB0: Byte;                   { WallIdAt's result for the party cell and icon set (MoveParty); meaning unknown }
   ds6AB1: Byte;                   { the event byte of the party's map cell, from EventByteAt; bit 7 = interior }
   MarkerFrame: Byte;              { the party marker's animation frame 0..5; evidence in re/dseg.toml }
-  ds6F68: Byte;                   { special view code 2: StartGame sets $DB (ovl11:0435, inside StartGame); InitScript sets $41 and ds84E5 }
-  ds6F69: Byte;                   { special view code 1: StartGame sets $E8; InitScript sets 9 and ds84E5 }
+  { special view code 2: StartGame sets $DB (ovl11:0435, inside StartGame); InitScript sets $41 and ds84E5 }
+  ds6F68: Byte;
+  { special view code 1: StartGame sets $E8; InitScript sets 9 and ds84E5 }
+  ds6F69: Byte;
   ds84E5: Byte;                   { special view gate: ShowAreaView uses ds6F68/ds6F69 only while it is nonzero }
   ds84F0: Byte;                   { set to 0 in res08_init after closing pool.cfg; meaning unknown }
   Regs: Registers;                { registers for Intr calls (QuitGame) }
