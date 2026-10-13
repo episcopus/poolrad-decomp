@@ -1,8 +1,8 @@
 unit RES06;
 { Screen text output (whitepaper 5.15): the 8 by 8 font (LoadGameFont, DrawGlyph), text on cells
   (ClearTextCells, DrawTextAt), the bottom message line (ShowMessageLine, FlashMessageLine), the
-  line editor (ReadInputLine, ReadNumber), screen clearing and the game clock. ShowPagedText, the
-  word-wrapping pager, is still a stub (held: nested routines). }
+  line editor (ReadInputLine, ReadNumber), the word-wrapping pager (ShowPagedText, with its nested
+  DrawTextRun and SkipSpaces), screen clearing and the game clock. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 type
@@ -301,11 +301,103 @@ begin
     Inc(Col);
   end;
 end;
-{ 0709:0768: retf 16; six bytes and a string; ovl04 passes (1, $11, $26, $16, $A, 1, message). }
-{ DRAFT STASHED (dec-1): full ShowPagedText with nested DrawTextRun/SkipSpaces is in
-  scratch/SHOWPAGEDTEXT.DRAFT.PAS and matches except the nested pool bytes (escalated:
-  nested code with globals/calls needs address-aware pool compare). }
-{@stub} procedure ShowPagedText(Left, Top, Right, Bottom, Color, ClearFirst: Byte; Text: string); begin end;
+{ 0709:0768. Shows Text with word wrap in the Left..Right by Top..Bottom rectangle, paging
+  with 'Press any key to continue' when the GlyphRow cursor passes Bottom. The Text value
+  parameter (which the compiler materializes to a hidden stack copy on entry, the StrLCopy
+  at 076F) is scanned word by word: leading BreakChars are skipped, the word run stops
+  at a blank or a BreakChar, trailing BreakChars (Text[J + 1], 0709:08C9) are absorbed, and the word is drawn when
+  (J - I) + GlyphCol still fits in Right, else a new line starts. Out-of-range coordinates
+  exit at once, as does empty text. A nonzero ClearFirst clears the rectangle first.
+  The GlyphCol/GlyphRow cursor is kept inside the rectangle, reset to (Left, Top) when it
+  leaves. Color passes through to the glyph drawer. Width is computed but never read.
+  QUIRK 0709:0919: the (J - I) + GlyphCol = Right and blank test is dead (the outer test
+  already took M > Right). Side effects: video memory, the keyboard on paging. Called by
+  the menu, shop, temple, credit and script screens.
+  06A7 draws the Text[I..J] run glyph by glyph at advancing GlyphCol with the Crt delay;
+  0714 skips blank Text chars while I stays below Len. Both are nested (they reach the
+  parent frame through the frame link, push bp; push cs; call) and get L2 with their parent. }
+procedure ShowPagedText(Left, Top, Right, Bottom, Color, ClearFirst: Byte; Text: string);
+const
+  MaxCol = $27;  { widest byte column; Bottom is loosely checked against it too }
+  MaxRow = $18;  { deepest text row }
+  MoreKeyLine = $0D;  { ShowMessageLine row for the paging prompt }
+var
+  Len: Byte;         { Length(Text); the scan stops past it }
+  Width: Byte;       { Right - Left + 1; written but never read }
+  I: Byte;           { first Text char of the word being measured }
+  J: Byte;           { Text char past the word end }
+  Unused: Byte;      { never referenced; the original frame has this byte at [bp-105h] }
+  { 0709:06A7. Draws Text[I..J] glyph by glyph through DrawGlyph at (GlyphCol,
+    GlyphRow) in Color, waiting the Crt delay after each glyph when ds4A00 is set,
+    advancing I and GlyphCol. Nested in ShowPagedText. }
+  procedure DrawTextRun;
+  begin
+    while I <= J do
+    begin
+      DrawGlyph(GlyphCol, GlyphRow, Color, 1, Ord(Text[I]), 1);
+      if ds4A00 <> 0 then Delay(GameSpeed * 10);
+      Inc(I);
+      Inc(GlyphCol);
+    end;
+  end;
+  { 0709:0714. Skips blank Text chars while I stays below Len. Nested in ShowPagedText. }
+  procedure SkipSpaces;
+  begin
+    while (I < Len) and (Text[I] = ' ') do Inc(I);
+  end;
+begin
+  if (Left > MaxCol) or (Top > MaxRow) or (Right > MaxCol) or (Bottom > MaxCol) then Exit;
+  if (GlyphCol < Left) or (GlyphCol > Right) or (GlyphRow < Top) or (GlyphRow > Bottom) then
+  begin
+    GlyphCol := Left;
+    GlyphRow := Top;
+  end;
+  if ClearFirst <> 0 then
+  begin
+    ClearRect(Left, Top, Right, Bottom);
+    GlyphCol := Left;
+    GlyphRow := Top;
+  end;
+  I := 1;
+  Len := Length(Text);
+  if Len = 0 then Exit;
+  Width := Right - Left + 1;
+  repeat
+    J := I;
+    while (J < Len) and (Text[J] in BreakChars) do Inc(J);
+    while (J < Len) and not (Text[J] in BreakChars) and (Text[J] <> ' ') do Inc(J);
+    if Text[J] <> ' ' then
+      while (J + 1 < Len) and (Text[J + 1] in BreakChars) do Inc(J);
+    if (J - I) + GlyphCol > Right then
+    begin
+      if ((J - I) + GlyphCol = Right) and (Text[J] = ' ') then
+      begin
+        Dec(J);
+        DrawTextRun;
+      end;
+      GlyphCol := Left;
+      Inc(GlyphRow);
+      SkipSpaces;
+      if GlyphRow > Bottom then
+        if I < Len then
+        begin
+          GlyphCol := Left;
+          GlyphRow := Top;
+          ShowMessageLine(MoreKeyLine, 'Press any key to continue');
+          FlushKeyboard;
+          ClearRect(Left, Top, Right, Bottom);
+          DrawTextRun;
+        end;
+    end
+    else
+      DrawTextRun;
+  until I > Len;
+  if GlyphCol > Right then
+  begin
+    GlyphCol := Left;
+    Inc(GlyphRow);
+  end;
+end;
 { 0709:09E3. The line reader: shows Prompt in Color on the bottom line (row 24) and lets the
   player type up to MaxLen characters after it, echoed in white: ' '..'z' are added, Backspace
   removes the last one; Enter or Esc ends. Returns the line in upper case (Esc returns what was

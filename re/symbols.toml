@@ -16336,39 +16336,13 @@ evidence = ["prologue"]
 id = "0709:0626"
 unit = "res06"
 addr = "0709:0626"
-size = 129
+size = 322
 name = "DrawTextAt"
 signature = "procedure DrawTextAt(Col, Row, Color: Byte; Text: string)"
 c_name = "res06_fn_0626"
 level = "L2"
 justification = ""
 notes = "renamed from res06_fn_0626 (for each character of the string calls DrawGlyph(Col, Row, Color, 1, char, 1) and advances Col (0709:0671..069F); ShowMessageLine writes its message with it); auto:near_call"
-evidence = ["prologue"]
-
-[[routine]]
-id = "0709:06A7"
-unit = "res06"
-addr = "0709:06A7"
-size = 109
-name = "DrawTextRun"
-signature = ""
-c_name = "res06_fn_06A7"
-level = "none"
-justification = ""
-notes = "renamed from res06_fn_06A7 (nested in ShowPagedText (0709:06A7): draws Buf[I..J] glyph by glyph through res06_fn_01DF at advancing GlyphCol with the Crt delay); auto:near_call; blocked: nested in ShowPagedText (0709:0768); a nested routine gets L2 only through its matched parent, which waits for the human on escalate-res06-20261012110841 (nested routines with globals and calls); draft in dec-1's scratch/SHOWPAGEDTEXT.DRAFT.PAS (dec-12)"
-evidence = ["prologue"]
-
-[[routine]]
-id = "0709:0714"
-unit = "res06"
-addr = "0709:0714"
-size = 84
-name = "SkipSpaces"
-signature = ""
-c_name = "res06_fn_0714"
-level = "none"
-justification = ""
-notes = "renamed from res06_fn_0714 (nested in ShowPagedText (0709:0714): skips blank Buf chars while I is below Len); auto:near_call; blocked: nested in ShowPagedText (0709:0768); a nested routine gets L2 only through its matched parent, which waits for the human on escalate-res06-20261012110841 (nested routines with globals and calls); draft in dec-1's scratch/SHOWPAGEDTEXT.DRAFT.PAS (dec-12)"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16379,9 +16353,9 @@ size = 635
 name = "ShowPagedText"
 signature = "procedure ShowPagedText(Left, Top, Right, Bottom, Color, ClearFirst: Byte; Text: string)"
 c_name = "res06_fn_0768"
-level = "none"
+level = "L2"
 justification = ""
-notes = "renamed from res06_fn_0768 (word-wrapping text pager (0709:0768): shows Text in the Left..Bottom rect with BreakChars word scan, GlyphCol/GlyphRow cursor, FillPlaneRect/ClearRect clear and 'Press any key to continue' paging; called by ChargeForCure, VisitTemple, ShopMain, LoadEcl, ShowCredits); auto:far_call; dec-1 draft stashed in scratch/SHOWPAGEDTEXT.DRAFT.PAS: parent body plus nested DrawTextRun/SkipSpaces written, matches except nested pool bytes (nested code with globals and calls needs address-aware pool compare, escalated); blocked: waiting for the human on escalate-res06-20261012110841 (nested routines with globals and calls), draft in scratch/SHOWPAGEDTEXT.DRAFT.PAS"
+notes = "renamed from res06_fn_0768 (word-wrapping text pager (0709:0768): shows Text in the Left..Bottom rect with BreakChars word scan, GlyphCol/GlyphRow cursor, FillPlaneRect/ClearRect clear and 'Press any key to continue' paging; called by ChargeForCure, VisitTemple, ShopMain, LoadEcl, ShowCredits); auto:far_call; matched with its nested DrawTextRun (0709:06A7) and SkipSpaces (0709:0714) once the matcher compared proven nested ranges by address (commit c7265b6); dec-1's draft needed two fixes: the trailing-break scan indexes Text[J + 1] (0709:08C9) and the frame has an unused byte local at [bp-105h] (dec-r06)"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16496,9 +16470,9 @@ size = 14
 name = "res06_init"
 signature = ""
 c_name = "res06_init"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:init; blocked: the original is the empty initialisation part (push bp; mov bp,sp; pop bp; retf at 0709:0F82), which src/RES06.PAS already has (begin end., no {@stub-init}); make match checks an init part only in the whole-unit comparison, which runs when no stub is left, so it waits for ShowPagedText (escalate-res06-20261012110841) (dec-12)"
+notes = "auto:init; the empty initialisation part (push bp; mov bp,sp; pop bp; retf at 0709:0F82): begin end. in src/RES06.PAS, matched by the whole-unit comparison (dec-r06)"
 evidence = ["prologue"]
 
 [[routine]]
