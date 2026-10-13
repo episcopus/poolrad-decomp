@@ -120,6 +120,31 @@ def test_a_heartbeat_is_shared_and_a_silent_agent_shows_as_quiet(tmp_path, monke
     assert heartbeat.heartbeat_dir is not None and common.common_dir().exists()
 
 
+def test_the_watch_omits_stopped_and_lapsed_and_lists_active_first(tmp_path, monkeypatch):
+    import datetime as dt
+    import heartbeat
+    import watch
+    beats = tmp_path / "beats"
+    beats.mkdir()
+    monkeypatch.setattr(heartbeat, "heartbeat_dir", lambda: beats)
+
+    def stamp(agent, state, minutes_ago, note):
+        when = (dt.datetime.now(dt.timezone.utc) - dt.timedelta(minutes=minutes_ago)).isoformat(timespec="seconds")
+        (beats / ("%s.txt" % agent)).write_text(
+            "agent = %s\ntime = %s\nbranch = main\nstate = %s\nnote = %s\n" % (agent, when, state, note))
+
+    stamp("dec-b", "working", 1, "second")
+    stamp("dec-a", "working", 1, "first")
+    stamp("aaa-quiet", "working", heartbeat.QUIET_MINUTES + 5, "still in the quiet window")
+    stamp("mmm-stop", "stopped", 1, "done")
+    stamp("zzz-lapse", "working", heartbeat.LAPSED_MINUTES + 5, "run over")
+    now = dt.datetime.now(dt.timezone.utc)
+    text = "\n".join(watch.agents(now, 120))
+    assert text.find("dec-a") < text.find("dec-b") < text.find("aaa-quiet")
+    assert "mmm-stop" not in text and "zzz-lapse" not in text
+    assert "no active agents" not in text
+
+
 def test_the_watch_screen_shows_agents_handoffs_and_locks(tmp_path, monkeypatch):
     import handoff
     import heartbeat

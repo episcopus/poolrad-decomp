@@ -28,6 +28,8 @@ import control  # noqa: E402
 import identity  # noqa: E402
 
 QUIET_MINUTES = 20
+# watch.py drops a working agent after this much silence. `make agents` lists every heartbeat.
+LAPSED_MINUTES = 60
 
 
 def heartbeat_dir() -> Path:

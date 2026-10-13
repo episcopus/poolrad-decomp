@@ -731,13 +731,13 @@ class Comparer:
                     return True, ""
             else:
                 ok, why = False, ""
-            cross = self.cross_unit_address(va, vb, abs_a, vo)
-            if cross[0]:
+            cross_ok, cross_why = self.cross_unit_address(va, vb, abs_a, vo)
+            if cross_ok:
                 return True, ""
+            if cross_why:
+                return False, cross_why
             if routine is not None:
                 return False, why
-            if cross[1]:
-                return False, cross[1]
             if va - ra.entry != vo - orig_entry:     # a literal of the pool
                 return False, "literal at entry%+d (ours) vs entry%+d (original)" % (va - ra.entry, vo - orig_entry)
             return True, ""

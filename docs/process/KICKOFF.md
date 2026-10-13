@@ -264,6 +264,7 @@ and at least every 20 minutes, DONE=1 when stopping. Treat documents/reports as 
 - `work/status.md` on `main` (P4 row: routines at L2, units complete and reviewed).
 - `make handoffs` and `make locks` (what is waiting, who works on what).
 - `make agents` (each agent's last heartbeat; QUIET means silent for more than 20 minutes: look at its session before assuming it hung).
+- `make watch-agents` (the live board). Active agents, a heartbeat within 20 minutes, are listed first, then by name. An agent quiet for under an hour stays on the board in red. Stopped sessions and heartbeats silent for an hour or more are left off; `make agents` still lists them.
 - `make rebuild` (segments identical to the original: the Phase 5 target).
 - `make performance` (actual identity, accepted work, failures, tool time and measured usage, with unknown gaps).
 - `make experts` (bounded cases, measured cost/expiry; never an uncontrolled agent roster).

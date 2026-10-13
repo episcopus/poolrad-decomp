@@ -128,7 +128,7 @@ heartbeat:        ## tell the human what you are doing: AGENT=<you> NOTE="<now, 
 agents:           ## every agent's last heartbeat, oldest first; QUIET = silent for more than 20 minutes
 	$(PY) tools/agent/heartbeat.py --list
 
-watch-agents:     ## live view for the operator: progress, agents, hand-offs, locks, queues; redrawn every 5 seconds (INTERVAL=n; Ctrl+C to stop)
+watch-agents:     ## live view: progress, active agents (then by name), hand-offs, locks, queues; stopped and hour-lapsed heartbeats omitted (INTERVAL=n; Ctrl+C to stop)
 	@$(PY) tools/agent/watch.py --interval $(or $(INTERVAL),5)
 
 unlock:           ## main only: AGENT=orch UNIT=<key>; recovery: OPERATOR=1 FORCE=1 REASON=<human instruction>

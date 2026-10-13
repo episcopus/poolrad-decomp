@@ -3,8 +3,11 @@
 
   make watch-agents [INTERVAL=5]          redraw every INTERVAL seconds until Ctrl+C
 
-One screen: progress, every agent's last heartbeat (QUIET in red after heartbeat.QUIET_MINUTES), the
-hand-offs waiting for the orchestrator (escalations first), the locks, and what the queues offer next.
+One screen: progress, agents still in the run, the hand-offs waiting for the orchestrator
+(escalations first), the locks, and what the queues offer next. Active agents (a heartbeat within
+heartbeat.QUIET_MINUTES) come first, then any agent quiet for less than heartbeat.LAPSED_MINUTES,
+each group by name. A stopped session, and a heartbeat silent for LAPSED_MINUTES or more, is left
+off this screen; `make agents` still lists every heartbeat file.
 It only reads the shared files next to the locks (tools/agent/common.py) and the registry of the
 checkout it runs in, so it is safe to leave running while agents work.
 """
@@ -58,26 +61,23 @@ def progress() -> str:
 
 
 def agents(now: dt.datetime, width: int) -> list[str]:
+    """Active agents first, then by name. Stopped sessions and lapsed heartbeats are omitted."""
     rows = []
     for p in heartbeat.heartbeat_dir().glob("*.txt"):
         f = heartbeat.fields(p.read_text())
         age = int((now - dt.datetime.fromisoformat(f["time"])).total_seconds() // 60)
-        stopped = f.get("state") == "stopped"
+        if f.get("state") == "stopped" or age >= heartbeat.LAPSED_MINUTES:
+            continue
         note = f.get("note", "") + (" | last: %s" % f["activity"] if f.get("activity") else "")
-        rows.append((stopped, f["agent"], age, f.get("branch", "?"), note))
-    rows.sort(key=lambda r: (r[0], r[1]))                     # working agents first, then by name
+        active = age <= heartbeat.QUIET_MINUTES
+        rows.append((not active, f["agent"], age, f.get("branch", "?"), note))
+    rows.sort(key=lambda r: (r[0], r[1]))                     # active first, then by name
     out = []
-    for stopped, agent, age, branch, note in rows:
-        if stopped:
-            flag, paint = "stopped", DIM
-        elif age > heartbeat.QUIET_MINUTES:
-            flag, paint = "QUIET", RED
-        else:
-            flag, paint = "ok", GREEN
+    for quiet, agent, age, branch, note in rows:
+        flag, paint = ("QUIET", RED) if quiet else ("ok", GREEN)
         head = "%-8s %-9s %6s  %-22s " % (flag, agent, ago(age), cut(branch, 22))
-        line = c(paint, "%-8s" % flag) + head[8:] + cut(note, width - len(head))
-        out.append(c(DIM, line) if stopped else line)
-    return out or [c(DIM, "no heartbeat yet")]
+        out.append(c(paint, "%-8s" % flag) + head[8:] + cut(note, width - len(head)))
+    return out or [c(DIM, "no active agents")]
 
 
 def handoffs(width: int) -> list[str]:
