@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-12 | 5.15 | ShowPagedText, the word-wrapping pager with its nested DrawTextRun and SkipSpaces, matched; res06 complete | make match UNIT=res06 |
 | 2026-10-12 | 5.22 | Display (DisplaySpellEffects) matched with its nested AddDisplayLine; unit complete | make match UNIT=ovl15 |
 | 2026-10-12 | 5.22.1 | The camp's rest clock: the radix table, the carry, the age at the top digit, normalizing, spending, the game clock entry ovl20_e1, TwoDigitText and ShowRestTime (6 of 21 ovl20 routines at L2) | make match UNIT=ovl20 (6 matched, 0 differ); make check receipt 389de2adb494 |
 | 2026-10-12 | process | Share evidence and failed experiments, attribute agent/task outcomes, and add bounded pre-started expert advice with unchanged byte proof | make check (206 tests, 316 matches); stale-learning, identity, budget and cache regressions |
