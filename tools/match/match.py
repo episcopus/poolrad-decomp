@@ -1158,6 +1158,8 @@ def main(argv=None) -> int:
     if a.write:
         orig = Original()
         for u in units:
+            if u == "main":                          # the main program has no registry record
+                continue
             for n in write_levels(done[u][0], orig, u):
                 print("note: " + n)
     if a.all:

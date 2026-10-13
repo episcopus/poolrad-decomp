@@ -14,7 +14,7 @@ q = '$(subst ','\'',$(1))'
 .PHONY: help setup doctor inputs unexepack overlays map dax smoke status next ghidra p1-check \
         tp-install tp-probe tp-compare tp-pin tpc emu2 \
         packet claim lock locks unlock handoff handoffs handoff-done integrate heartbeat agents watch-agents \
-        agent-control agent-step safety-check merge-check \
+        agent-control agent-step safety-check merge-check hooks match-gate \
         agent-register agent-usage agent-meter performance learn learning-check expert-budget expert-request expert-take expert-step expert-finish expert-result experts expert-scan expert-candidates task-approve \
         oracle-run oracle-dosbox timing-scan golden match test test-slow check review-pass rebuild skeleton readability rename host coco3
 
@@ -193,6 +193,12 @@ agent-step:       ## agents: check shared stop/pause state before each routine a
 
 safety-check:     ## check branch ownership and registry preservation, without modifying anything
 	$(PY) tools/agent/safety.py
+
+hooks:            ## install the per-clone git hooks (pre-commit guard for unit/ and review/ branches); make claim and make integrate do it too
+	git config core.hooksPath tools/agent/hooks
+
+match-gate:       ## the regression gate for a matcher change: every L2 routine still matched together and alone, negative fixtures still fail
+	$(PY) tools/match/gate.py
 
 merge-check:      ## check HEAD merge, COMMIT=<sha> or STAGED=1 before committing a resolved merge
 	$(PY) tools/agent/safety.py --merge-only $(if $(COMMIT),--commit $(call q,$(value COMMIT))) $(if $(STAGED),--staged)

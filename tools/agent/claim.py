@@ -179,6 +179,7 @@ def setup(main_dir: Path, key: str, branch: str, a, unit: str) -> int:
             if src.exists() and not dst.exists():
                 dst.parent.mkdir(parents=True, exist_ok=True)
                 dst.symlink_to(src)
+        common.git("config", "core.hooksPath", "tools/agent/hooks", cwd=main_dir)   # the pre-commit guard
     except (RuntimeError, ValueError, OSError) as e:
         common.lock_path(key).unlink(missing_ok=True)
         print("claim: %s (lock released)" % e, file=sys.stderr)

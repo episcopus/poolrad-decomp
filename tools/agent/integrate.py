@@ -102,7 +102,9 @@ def link_tools(main_dir: Path, wt: Path) -> None:
 
 
 def install_driver(main_dir: Path) -> None:
-    """The record-level merge driver for the shared files (tools/agent/merge_shared.py), when present."""
+    """The record-level merge driver for the shared files (tools/agent/merge_shared.py), when present, and
+    the pre-commit hook (tools/agent/hooks); both are per-clone git configuration shared by every worktree."""
+    common.git("config", "core.hooksPath", "tools/agent/hooks", cwd=main_dir)
     if (main_dir / "tools/agent/merge_shared.py").exists():
         common.git("config", "merge.poolrad-shared.name", "record-level merge of the shared files", cwd=main_dir)
         common.git("config", "merge.poolrad-shared.driver",
