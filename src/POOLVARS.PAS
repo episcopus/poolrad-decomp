@@ -639,6 +639,9 @@ var
                                     elements 2 and 3 to $FFFF (ovl11:035E..0390) }
   ds6AB2: Word;                   { cleared by the loader (ovl11:0353) }
   ds6AB4: Word;                   { set to 1 by the loader (ovl11:0358) }
+  ds6AB6: array[0..7] of Byte;    { DS:6AB6..6ABD, 8 bytes no decompiled routine reads; declared so that the
+                                    frame indexing of ReadPromptChoice (PictureAnimation.Frames[I], a base 8 bytes
+                                    below the record, ovl25:04C8) resolves to the original offsets }
   { The $42-byte sprite list the loader clears (ovl11:0309) and ShowEncounterPicture loads; ReadPromptChoice
     animates it while it waits for a key. }
   PictureAnimation: TAnimation;

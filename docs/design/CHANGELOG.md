@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-12 | 5.8 | ReadPromptChoice matched with its nested routines; ChooseFromList blocked on sibling-called nested routines (escalated); lessons in re/learnings/ovl25.toml | make match UNIT=ovl25 |
 | 2026-10-12 | 5.5.2 | PassageKind and PlaceRiver matched with their nested routines; BuildDungeonMap blocked by the strict nested rule (sibling-only calls) | make match UNIT=ovl10 |
 | 2026-10-12 | 5.23 | new section: the picture unit res07 (14 of 19 routines at L2, O+ finding, map corrections, the picture record, the mirrors, ShowPicture, FlushPictureChanges, the changed-region trackers) | make match UNIT=res07 |
 | 2026-10-12 | 5.15 | ShowPagedText, the word-wrapping pager with its nested DrawTextRun and SkipSpaces, matched; res06 complete | make match UNIT=res06 |
