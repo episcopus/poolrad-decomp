@@ -1,0 +1,37 @@
+# Lessons from ovl17 (the SaveLoad unit). Leads extracted from verified evidence, not matcher verdicts.
+
+[[lesson]]
+id = "with-temp-below-named-locals"
+confidence = "V"
+units = ["*"]
+tags = ["with", "temp", "frame", "layout", "les", "pointer"]
+title = "A `with X^ do` block caches X in an anonymous pointer temp placed below the named locals"
+lesson = "TP 6.0 compiles `with X^ do <field writes>` by loading the far pointer X once into a compiler temp and then accessing fields through it: `les di, [X]; mov [bp-temp], di; mov [bp-temp+2], es`, then each access reloads `les di, [bp-temp]`. The temp is allocated at the BOTTOM of the frame (most negative offset), after every named local, so it does not disturb their layout. Distinguish it from an explicit local assignment `Sel := X`: that compiles to word moves `mov ax,[X]; mov dx,[X+2]; mov [bp-sel],ax; mov [bp-sel+2],dx`, never `les`. When a routine's field accesses go through a lone pointer temp with no matching named local, the source is a `with`, not a temporary variable. Probes tools/re/tp_idioms/ovl17/SELASSN.PAS (both shapes side by side) and WITHTEMP.PAS (temp lands below P and Used)."
+evidence = ["tools/re/tp_idioms/ovl17/WITHTEMP.PAS", "tools/re/tp_idioms/ovl17/SELASSN.PAS", "src/OVL17.PAS#AddPartyMember"]
+
+[[lesson]]
+id = "ds5d96-party-list-longint-cast"
+confidence = "V"
+units = ["*"]
+tags = ["ds5D96", "party", "pointer", "longint", "cast", "nil"]
+title = "The party list head ds5D96 is a LongInt read through a PCharacter cast"
+lesson = "ds5D96 (POOLVARS) is declared LongInt because the loader clears it with `ds5D96 := 0` (Error 26 for a Pointer). Code reads it as the party list head via `PCharacter(ds5D96)` and writes it with `ds5D96 := LongInt(Char)`. Both `if ds5D96 = 0` and `if PCharacter(ds5D96) = nil` compile to the identical `mov ax,low; or ax,high; jne`, so the nil test is byte-for-byte the same either way. A far pointer value is stored offset first (low word at the lower DS offset), segment second."
+evidence = ["src/POOLVARS.PAS#ds5D96", "src/OVL17.PAS#AddPartyMember", "tools/re/tp_idioms/ovl17/DSNIL.PAS", "src/OVL05.PAS#AwardExperience"]
+
+[[lesson]]
+id = "local-declaration-order-top-down"
+confidence = "V"
+units = ["*"]
+tags = ["locals", "frame", "layout", "declaration", "order"]
+title = "Locals are laid out first-declared nearest bp (top of frame), last-declared lowest"
+lesson = "Turbo Pascal 6.0 assigns local variables in declaration order starting just below bp: the first declared lands at the highest address (smallest negative offset), later declarations further down. A routine with a pointer, an 8-byte array and another pointer in that order gets the pointer at [bp-4], the array at [bp-0xc], the second pointer at [bp-0x10]. Use this to place named locals to match an original frame, then let a with-temp or function-result temp fall below them."
+evidence = ["tools/re/tp_idioms/ovl17/LOCORDER.PAS", "src/OVL17.PAS#AddPartyMember"]
+
+[[lesson]]
+id = "map-phantom-entries-split-one-routine"
+confidence = "V"
+units = ["*"]
+tags = ["map", "boundary", "phantom", "pool", "routine", "split"]
+title = "The map can split one routine into several entries at mid-instruction or literal-pool addresses"
+lesson = "re/symbols.toml boundaries are approximate: an entry can start mid-instruction (no push bp prologue) or inside the previous routine's literal pool, so several map entries can tile one real routine. In ovl17 the real routines each have one push bp; mov bp,sp prologue and one retf; entries ovl17_fn_0818/084A/0865 are mid-ovl17_e4 (which really runs 069E..0AC1, one frame, one retf 8), ovl17_fn_0B48 is mid-ovl17_e5 (0AEC..0E95), ovl17_fn_0F99 is mid-ovl17_e6 (0EC4..125F), and ovl17_fn_0AE5 is inside ovl17_e5's pre-entry literal pool. Find every real prologue by scanning for push bp before drafting: decompile the whole real routine, then make match WRITE=1 removes the phantom entries inside the matched range. Do not decompile a mid-instruction entry as its own routine (its frame fields are the parent's)."
+evidence = ["src/OVL17.PAS", "re/symbols.toml#ovl17:0818", "re/symbols.toml#ovl17:0B48", "re/symbols.toml#ovl17:0F99", "docs/design/WHITEPAPER.md#5.11"]

@@ -3163,6 +3163,13 @@ why = "7 rows of 5 direction offsets: CanAffordStep adds ds02AE[Combat+15h, Colu
 date = "2026-10-12"
 
 [[rename]]
+old = "ovl17_e10"
+new = "AddPartyMember"
+kind = "routine"
+why = "ovl17:1446 links one TCharacter into the party list ds5D96 (tail, or head when empty), gives it the lowest free combat map icon 0..7, counts it in ds49D6^[VarPartySize] and calls RecalcClassStats; matches ovl16 and ovl17 load-game callers"
+date = "2026-10-13"
+
+[[rename]]
 old = "ovl09_fn_02EB"
 new = "SpellAccepted"
 kind = "routine"

@@ -6,6 +6,7 @@ unit OVL17;
   the "Put save disk in <drive>:" prompt shows while that disk is missing. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
+uses POOLVARS;
 procedure ovl17_e1;
 procedure ovl17_e2;
 procedure CreateSaveDir;
@@ -21,12 +22,12 @@ procedure ovl17_fn_0B48;
 procedure ovl17_e6(Kind: Byte; Who: Pointer);
 procedure ovl17_fn_0F99;
 procedure ovl17_e7;
-procedure ovl17_e10;
+procedure AddPartyMember(Member: PCharacter);
 procedure ovl17_e8;
 procedure ovl17_e9;
 procedure ovl17_e11;
 implementation
-uses POOLVARS, RES06;
+uses RES06, OVL23;
 
 const
   Yellow = $0E;        { EGA text colour of the disk prompt (the message colour OVL00 also uses) }
@@ -77,8 +78,53 @@ end;
 {@stub} procedure ovl17_fn_0F99; begin end;
 { ovl17:1262: retf 2: 2 bytes of parameters; 18 bytes of locals }
 {@stub} procedure ovl17_e7; begin end;
-{ ovl17:1446: retf 4: 4 bytes of parameters; 16 bytes of locals }
-{@stub} procedure ovl17_e10; begin end;
+{ ovl17:1446. Adds one character to the party list (ds5D96) and gives it a combat map icon. Member
+  points to the TCharacter to add: its Next is left nil. When the list is empty it becomes the head
+  and SelectedCharacter; otherwise it is linked at the tail. Then every icon number 0..7 a member
+  already holds is marked Used[], and SelectedCharacter (set to Member) gets the lowest number no one
+  holds. Finally the party size word is counted up and the character's class statistics are
+  recalculated. Reads the party list and SelectedCharacter; side effects: the party list,
+  SelectedCharacter^.CombatIcon, ds49D6^[VarPartySize], and whatever RecalcClassStats writes. }
+procedure AddPartyMember(Member: PCharacter);
+const
+  FirstIcon = 0;                { lowest combat map icon number a party member can hold }
+  IconCount = 8;                { the icon numbers run 0..IconCount-1 (the free-icon loop bound) }
+  VarPartySize = 830;           { party member count, a word of the ds49D6 game variable block }
+var
+  Who: PCharacter;              { walks the party list }
+  Used: array[FirstIcon..IconCount - 1] of Boolean;  { icon numbers already held by a member }
+begin
+  Member^.CombatIcon := $FF;    { no icon until one is picked below (QUIRK ovl17:1446) }
+  if PCharacter(ds5D96) = nil then
+  begin
+    ds5D96 := LongInt(Member);
+    SelectedCharacter := Member;
+  end
+  else
+  begin
+    Who := PCharacter(ds5D96);
+    while Who^.Next <> nil do
+      Who := Who^.Next;
+    Who^.Next := Member;
+  end;
+  FillChar(Used, SizeOf(Used), 0);
+  Who := PCharacter(ds5D96);
+  while Who <> nil do
+  begin
+    if Who^.CombatIcon in [FirstIcon..IconCount - 1] then
+      Used[Who^.CombatIcon] := True;
+    Who := Who^.Next;
+  end;
+  SelectedCharacter := Member;
+  with SelectedCharacter^ do
+  begin
+    CombatIcon := FirstIcon;
+    while (CombatIcon < IconCount) and Used[CombatIcon] do
+      Inc(CombatIcon);
+  end;
+  Inc(ds49D6^[VarPartySize]);
+  RecalcClassStats(Member);
+end;
 { ovl17:1602: retf 0: 0 bytes of parameters; 1554 bytes of locals }
 {@stub} procedure ovl17_e8; begin end;
 { ovl17:1D58: retf 0: 0 bytes of parameters; 1278 bytes of locals }
