@@ -6917,6 +6917,18 @@ notes = "renamed from ovl15_fn_0B5B (ovl15:0B5B strings 'Scribe These Spells?', 
 evidence = ["prologue"]
 
 [[routine]]
+id = "ovl15:0E37"
+unit = "ovl15"
+addr = "ovl15:0E37"
+size = 135
+name = "ovl15_fn_0e37"
+c_name = "ovl15_fn_0e37"
+level = "L2"
+justification = ""
+notes = "nested in DisplaySpellEffects (ovl15:0FBC), proven by the parent's match"
+evidence = ["compiler"]
+
+[[routine]]
 id = "ovl15:0FBC"
 unit = "ovl15"
 addr = "ovl15:0FBC"
@@ -16110,6 +16122,30 @@ level = "L2"
 justification = ""
 notes = "renamed from res06_fn_0626 (for each character of the string calls DrawGlyph(Col, Row, Color, 1, char, 1) and advances Col (0709:0671..069F); ShowMessageLine writes its message with it); auto:near_call"
 evidence = ["prologue"]
+
+[[routine]]
+id = "0709:06A7"
+unit = "res06"
+addr = "0709:06A7"
+size = 109
+name = "res06_fn_06a7"
+c_name = "res06_fn_06a7"
+level = "L2"
+justification = ""
+notes = "nested in ShowPagedText (0709:0768), proven by the parent's match"
+evidence = ["compiler"]
+
+[[routine]]
+id = "0709:0714"
+unit = "res06"
+addr = "0709:0714"
+size = 58
+name = "res06_fn_0714"
+c_name = "res06_fn_0714"
+level = "L2"
+justification = ""
+notes = "nested in ShowPagedText (0709:0768), proven by the parent's match"
+evidence = ["compiler"]
 
 [[routine]]
 id = "0709:0768"
