@@ -59,7 +59,7 @@ uses RES04, RES05, RES09, RES07;
   Direct is set it blits the sprite one column and one row up and left (Col - 1, Row - 1) onto the
   screen buffer DrawBuf through
   res07_fn_0D71 (mode 0, the flag 1) and steps the display through res07_fn_1B52; otherwise it
-  copies it into the staging buffer with res07_fn_1951. Called by DrawHeadSprite, DrawBodySprite and
+  copies it into the staging buffer with ShowPicture. Called by DrawHeadSprite, DrawBodySprite and
   ShowHeadBodySprites inside this unit, and from ovl03, ShowEncounterPicture, ovl18 and ovl25 (the packet's callers). }
 procedure DrawSprite(Col, Row: Integer; Direct: Byte; Sprite: Pointer);
 begin
@@ -71,7 +71,7 @@ begin
       res07_fn_1B52;
     end
     else
-      res07_fn_1951(Col, Row, Sprite);
+      ShowPicture(Col, Row, Sprite);
   end;
 end;
 
@@ -260,7 +260,7 @@ end;
   arms draw through the staging buffer (DrawHeadSprite and DrawBodySprite pass Direct 0 to
   DrawSprite): when WithBody is not 0 it draws the HEAD sprite DS:6B01 and the BODY sprite DS:6B06
   (5 rows lower), otherwise only the HEAD sprite. WithBody is not a Direct flag; every path goes
-  through res07_fn_1951. Called by ShowHeadBody, res12_fn_27D9 and ShowHeadBodyWindow. }
+  through ShowPicture. Called by ShowHeadBody, res12_fn_27D9 and ShowHeadBodyWindow. }
 procedure ShowHeadBodySprites(Col, Row: Byte; WithBody: Byte);
 begin
   if WithBody <> 0 then

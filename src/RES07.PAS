@@ -20,8 +20,10 @@ type
     packed pixel data from +$17 on (variable length, so the last field is a
     one-byte array indexed with $R- off, like ovl32's TMemPic). }
   TPicture = record
-    Height: Word;                 { +0 }
-    WidthCols: Word;              { +2 }
+    { Height and WidthCols are signed in res07's own view of the record: 1951's
+      arithmetic (FirstRow + Height, the jg/jle loop compares) is 16-bit signed. }
+    Height: Integer;              { +0 }
+    WidthCols: Integer;           { +2 }
     XPos: Word;                   { +4 }
     YPos: Word;                   { +6 }
     ItemCount: Byte;              { +8 }
@@ -44,13 +46,13 @@ function MirrorByte(Value: Byte): Byte;
 function MirrorWord(Value: Word): Word;
 function SwapNibbles(Value: Byte): Byte;
 procedure res07_fn_15C7(Source, Dest: Pointer);
-procedure res07_fn_1951(X, Y: Integer; Buf: Pointer);
+procedure ShowPicture(PicCol, PicRow: Integer; Buf: Pointer);
 procedure res07_fn_1B52;
 procedure res07_fn_1E5C(P1, P2: Pointer; A: Word; B: Byte; P3: Pointer);
 procedure AllocatePicture(Height, WidthCols: Word; ItemCount, AllocFlags: Byte; var Pic);
 procedure ReleasePicture(var Pic);
 procedure res07_fn_2632(A, B, C, D: Word; E: Byte; F, G: Pointer);
-procedure res07_fn_2A0D(A, B: Byte);
+procedure SetPaletteRegister(Register, Color: Byte);
 implementation
 
 { 0464:0000: retf 6: one Byte and one LongInt parameter; 6 bytes of locals.
@@ -170,8 +172,74 @@ begin
 end;
 { 0464:15C7: retf 8: two Pointers. Returns at once when either is nil. }
 {@stub} procedure res07_fn_15C7(Source, Dest: Pointer); begin end;
-{ 0464:1951: frame not read }
-{@stub} procedure res07_fn_1951(X, Y: Integer; Buf: Pointer); begin end;
+{ 0464:1951: shows a picture at (X, Y) by copying its packed pixel data
+  straight to the video hardware, one branch per video adapter: adapter 0 moves a
+  WidthCols*2-byte row per screen row to the segment ds4EC0[Row] at column X*2;
+  adapter 1 writes one byte per pixel through the four EGA planes (map mask from
+  EgaPlaneBitMasks, address ds5050[Row] + Col in segment $A000); adapter 2 is the
+  adapter-0 move with four bytes per column and the ds51E0 segment table. Called
+  by ShowTitleScreen, ovl28 DrawSprite and ovl34 Put8x8Symbol. }
+procedure ShowPicture(PicCol, PicRow: Integer; Buf: Pointer);
+var
+  Col, Row: Integer;
+  FirstCol, FirstRow: Integer;
+  LastCol, LastRow: Integer;
+  RowBytes, SourceOfs: Word;
+  Plane: Byte;
+begin
+  if Buf = nil then Exit;
+  with PPicture(Buf)^ do
+  begin
+    case VideoAdapter of
+      0:
+        begin
+          RowBytes := WidthCols * 2;
+          SourceOfs := 0;
+          FirstRow := PicRow * 8;
+          LastRow := FirstRow + Height - 1;
+          FirstCol := PicCol * 2;
+          for Row := FirstRow to LastRow do
+          begin
+            Move(PPicture(Buf)^.Data[SourceOfs], Mem[ds4EC0[Row]:FirstCol], RowBytes);
+            Inc(SourceOfs, RowBytes);
+          end;
+        end;
+      1:
+        begin
+          SourceOfs := 0;
+          FirstRow := PicRow * 8;
+          LastRow := FirstRow + Height - 1;
+          FirstCol := PicCol;
+          LastCol := FirstCol + WidthCols - 1;
+          Port[$3C4] := 2;
+          for Row := FirstRow to LastRow do
+            for Col := FirstCol to LastCol do
+            begin
+              for Plane := 0 to 3 do
+              begin
+                Port[$3C5] := EgaPlaneBitMasks[Plane];
+                Mem[$A000:ds5050[Row] + Col] := PPicture(Buf)^.Data[SourceOfs];
+                Inc(SourceOfs);
+              end;
+            end;
+          Port[$3C5] := $0F;
+        end;
+      2:
+        begin
+          RowBytes := WidthCols * 4;
+          SourceOfs := 0;
+          FirstRow := PicRow * 8;
+          LastRow := FirstRow + Height - 1;
+          FirstCol := PicCol * 4;
+          for Row := FirstRow to LastRow do
+          begin
+            Move(PPicture(Buf)^.Data[SourceOfs], Mem[ds51E0[Row]:FirstCol], RowBytes);
+            Inc(SourceOfs, RowBytes);
+          end;
+        end;
+    end;
+  end;
+end;
 { 0464:1B52: retf 0: 0 bytes of parameters; 10 bytes of locals }
 {@stub} procedure res07_fn_1B52; begin end;
 { 0464:1E5C: retf 16: 16 bytes of parameters; 68 bytes of locals }
@@ -236,8 +304,21 @@ begin
 end;
 { 0464:2632: retf 18: 18 bytes of parameters; 36 bytes of locals }
 {@stub} procedure res07_fn_2632(A, B, C, D: Word; E: Byte; F, G: Pointer); begin end;
-{ 0464:2A0D: retf 4: 4 bytes of parameters; 0 bytes of locals }
-{@stub} procedure res07_fn_2A0D(A, B: Byte); begin end;
+{ 0464:2A0D: sets one EGA palette register through INT 10h function $10
+  (AL=0): Register is the palette register and Color the colour value, mapped from
+  the 0..15 palette range to the hardware's 0..7 and 16..23. Called by ovl31_e2/e3
+  (0,8)/(8,0) and (0,0)/(8,8) and by ShowTitleScreen (1,9). }
+procedure SetPaletteRegister(Register, Color: Byte);
+begin
+  Regs.AH := $10;                    { INT 10h function $10: set palette register }
+  Regs.AL := 0;
+  if Color < 8 then
+    Regs.BH := Color
+  else
+    Regs.BH := Color + 8;
+  Regs.BL := Register;
+  Intr($10, Regs);
+end;
 
 begin
 end.

@@ -3037,3 +3037,17 @@ kind = "routine"
 why = "0464:2595 frees the pixel buffer (a quarter of the size for VideoAdapter 1) and the picture block (ItemCount * ByteSize + 17), then nils the caller's variable; called by ovl01/ovl08/ovl10/ovl14/ovl28/ovl32, res12 and 0111/1E5C"
 date = "2026-10-12"
 
+[[rename]]
+old = "res07_fn_2A0D"
+new = "SetPaletteRegister"
+kind = "routine"
+why = "0464:2A0D writes one EGA palette register: INT 10h AH=10h AL=0 with BH=Color (mapped: below 8 as is, else +8) and BL=Register; called by ovl31_e2/e3 and ShowTitleScreen"
+date = "2026-10-12"
+
+[[rename]]
+old = "res07_fn_1951"
+new = "ShowPicture"
+kind = "routine"
+why = "0464:1951 copies a picture's packed pixel data straight to the video hardware at (X,Y), one branch per VideoAdapter; called by ShowTitleScreen, ovl28 DrawSprite and ovl34 Put8x8Symbol"
+date = "2026-10-12"
+

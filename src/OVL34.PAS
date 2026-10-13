@@ -1,7 +1,7 @@
 unit OVL34;
 { The 8x8 tile loader (whitepaper 4.2.3): Load8x8Bank loads one bank of 8x8 tiles from an 8X8D
   file through res07, and Put8x8Symbol draws one tile at a column and row, either through
-  res07_fn_08D4 or by copying it into the staging buffer and showing it with res07_fn_1951. }
+  res07_fn_08D4 or by copying it into the staging buffer and showing it with ShowPicture. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 procedure Load8x8Bank(BlockId, Bank: Byte);
@@ -53,7 +53,7 @@ end;
   ends). QUIRK ovl34:01C0: symbols above $7FFF skip the check and run on with an unset bank.
   A nil bank pointer draws nothing. Otherwise Symbol is made bank relative and the tile is
   drawn through res07_fn_08D4 when Direct is nonzero (the 3D view) or copied into the staging
-  buffer TileBuf and shown with res07_fn_1951 (window frames). Called by DrawWindowFrame and
+  buffer TileBuf and shown with ShowPicture (window frames). Called by DrawWindowFrame and
   ovl29 (three times): DrawWindowFrame passes Direct 0, the ovl29 calls (the 3D view and the
   overhead wall map) pass 1 (ovl29:010C, 0146, 02FB). }
 procedure Put8x8Symbol(XPos, YPos: ShortInt; Symbol: Word; Direct: Byte; Attr: Byte);
@@ -84,7 +84,7 @@ begin
       with TileBanks[Bank]^ do
       begin
         Move(Data[Symbol * Stride], TileBuf^.Data[0], Stride);
-        res07_fn_1951(XPos, YPos, TileBuf);
+        ShowPicture(XPos, YPos, TileBuf);
       end;
   end;
 end;

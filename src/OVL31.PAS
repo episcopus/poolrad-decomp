@@ -87,29 +87,29 @@ begin
   end;
 end;
 
-{ ovl31:00E3. Purpose unknown: when VideoAdapter is 1 it calls res07_fn_2A0D(0, 8) and then
-  res07_fn_2A0D(8, 0); ovl31_e3 makes the calls (0, 0) and (8, 8). Called by ovl16_e3, ovl19 and
+{ ovl31:00E3. Purpose unknown: when VideoAdapter is 1 it calls SetPaletteRegister(0, 8) and then
+  SetPaletteRegister(8, 0); ovl31_e3 makes the calls (0, 0) and (8, 8). Called by ovl16_e3, ovl19 and
   res12_fn_2B88. }
 procedure ovl31_e2;
 begin
   case VideoAdapter of
     1:
       begin
-        res07_fn_2A0D(0, 8);
-        res07_fn_2A0D(8, 0);
+        SetPaletteRegister(0, 8);
+        SetPaletteRegister(8, 0);
       end;
   end;
 end;
 
-{ ovl31:0105. Purpose unknown: when VideoAdapter is 1 it calls res07_fn_2A0D(0, 0) and then
-  res07_fn_2A0D(8, 8), the counterpart of ovl31_e2. Called by ovl08, ovl16 and ovl19_e5. }
+{ ovl31:0105. Purpose unknown: when VideoAdapter is 1 it calls SetPaletteRegister(0, 0) and then
+  SetPaletteRegister(8, 8), the counterpart of ovl31_e2. Called by ovl08, ovl16 and ovl19_e5. }
 procedure ovl31_e3;
 begin
   case VideoAdapter of
     1:
       begin
-        res07_fn_2A0D(0, 0);
-        res07_fn_2A0D(8, 8);
+        SetPaletteRegister(0, 0);
+        SetPaletteRegister(8, 8);
       end;
   end;
 end;

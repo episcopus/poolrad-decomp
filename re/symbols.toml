@@ -16642,12 +16642,12 @@ id = "0464:1951"
 unit = "res07"
 addr = "0464:1951"
 size = 513
-name = "res07_fn_1951"
-signature = "procedure res07_fn_1951(X, Y: Integer; Buf: Pointer)"
+name = "ShowPicture"
+signature = "procedure ShowPicture(X, Y: Integer; Buf: Pointer)"
 c_name = "res07_fn_1951"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue; map deepseek-dec 2026-10-12: ends 1B52 (was 200); bogus entry 1A19 deleted"
+notes = "renamed from res07_fn_1951 (0464:1951 copies a picture's packed pixel data straight to the video hardware at (X,Y), one branch per VideoAdapter; called by ShowTitleScreen, ovl28 DrawSprite and ovl34 Put8x8Symbol); auto:prologue; map deepseek-dec 2026-10-12: ends 1B52 (was 200); bogus entry 1A19 deleted"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16720,12 +16720,12 @@ id = "0464:2A0D"
 unit = "res07"
 addr = "0464:2A0D"
 size = 61
-name = "res07_fn_2A0D"
-signature = "procedure res07_fn_2A0D(A, B: Byte)"
+name = "SetPaletteRegister"
+signature = "procedure SetPaletteRegister(A, B: Byte)"
 c_name = "res07_fn_2A0D"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res07_fn_2A0D (0464:2A0D writes one EGA palette register: INT 10h AH=10h AL=0 with BH=Color (mapped: below 8 as is, else +8) and BL=Register; called by ovl31_e2/e3 and ShowTitleScreen); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
