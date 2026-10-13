@@ -1026,6 +1026,8 @@ def write_levels(results: list[Result], orig: Original, unit: str) -> list[str]:
     text = path.read_text()
     notes = []
     ordered = [r for r in results if r.status == "matched" and r.id]
+    nested = [r for r in results if r.status == "nested" and r.id]
+    nested_ids = {r.id for r in nested}
     ext = orig.external.get(unit)
     unit_records = [r for r in orig.routines if r["unit"] == unit]
     for k, r in enumerate(ordered):
@@ -1057,7 +1059,8 @@ def write_levels(results: list[Result], orig: Original, unit: str) -> list[str]:
             notes.append("%s: size %d corrected to at least %d (the compiler's code bytes)" % (r.id, known["size"], r.size))
         for other in unit_records:
             o = int(other["addr"].split(":")[1], 16)
-            if other["id"] != r.id and entry - r.pool <= o < entry + r.size and other.get("level") not in ("L2", "L3"):
+            if other["id"] != r.id and other["id"] not in nested_ids and entry - r.pool <= o < entry + r.size \
+                    and other.get("level") not in ("L2", "L3"):
                 text = delete_record(text, other["id"])
                 notes.append("%s (%s) lies inside %s (%s..%04X): removed from the map" % (
                     other["name"], other["id"], r.name, r.id, entry + r.size))
@@ -1066,11 +1069,14 @@ def write_levels(results: list[Result], orig: Original, unit: str) -> list[str]:
         text, k2 = block.subn(r'\1"L2"', text, count=1)
         if not k2:
             notes.append("%s: no level field found" % r.id)
-    for r in results:
-        if r.status != "nested" or r.id is None:
-            continue
-        if orig.by_id.get(r.id) is None:
-            notes.append("%s (%s, %d bytes) is not in re/symbols.toml" % (r.name, r.id, r.size))
+    for r in nested:
+        if orig.by_id.get(r.id) is None:            # a nested routine the map lacked: recorded like any other
+            entry = int(r.id.split(":")[1], 16)
+            record = ('[[routine]]\nid = "%s"\nunit = "%s"\naddr = "%s"\nsize = %d\nname = "%s"\n'
+                      'c_name = "%s_fn_%04x"\nlevel = "L2"\njustification = ""\nnotes = "%s"\n'
+                      'evidence = ["compiler"]\n' % (r.id, unit, r.id, r.size, r.name, unit, entry, r.detail))
+            text = insert_record(text, unit, record)
+            notes.append("%s (%s, %d bytes) was not in re/symbols.toml: added as nested" % (r.name, r.id, r.size))
             continue
         text = set_field(text, r.id, "level", '"L2"')
         nb = re.compile(r'(\[\[routine\]\]\nid = "%s"\n(?:(?!\[\[routine\]\]).)*?\nnotes = ")([^"]*)"' % re.escape(r.id),
