@@ -10,7 +10,6 @@ unit OVL10;
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 procedure ScatterRareTiles;
-procedure WallSideKind;
 function PassageKind(Col, Row: ShortInt; Dir: Byte): Byte;
 procedure SetDungeonCell;
 procedure DrawFloorAndWest;
@@ -19,7 +18,6 @@ procedure DrawNorthWestCorner;
 procedure DrawNorthEastCorner;
 procedure BuildDungeonMap;
 function BlockTerrainFlags: Byte;
-procedure PlaceBridge;
 procedure PlaceRiver;
 procedure PlaceTallFeatures;
 procedure ScatterTerrainFeatures;
@@ -54,9 +52,23 @@ const
   { No tall features, tiles $3D..$41 on 15 of 255 rolls; BlockTerrainFlags turns it into
     FlagPlain while game word 435 is $FF. }
   Flag3DTiles = $80;
+  { The river tiles (PlaceRiver): a river row is RiverWest beside RiverEast, a bridge row
+    BridgeWest beside BridgeEast. }
+  RiverWest = $32;
+  RiverEast = $33;
+  BridgeWest = $34;
+  BridgeEast = $35;
   GridLastCol = 10;             { a placement grid is 11 cells wide }
   GridLastRow = 5;              { and 6 cells high }
   DirNone = 8;                  { the direction with no step: ProbeStep looks at the cell itself }
+  DirNorth = 0;                 { the area map directions PassageKind takes (ds2736/ds273F steps) }
+  DirEast = 2;
+  DirWest = 6;
+  MapEdge = 15;                 { the 16x16 area map's last column and row }
+  { What PassageKind and WallSideKind answer for a side of an area map cell. }
+  SideOpen = 0;
+  SideWall = 1;
+  SideDoor = 3;
   CostBlocked = $FF;            { a CombatTiles cost no combatant may stand on }
   CombatRecordSize = $16;       { the bytes PrepareCombatants allocates for TCharacter.Combat }
   CombatMapSize = $4E9;         { the bytes of CombatMap^: the 7-byte header and 25 rows of 50 tiles }
@@ -103,18 +115,45 @@ begin
         end;
       end;
 end;
-{ ovl10:012B. Nested in PassageKind (blocked with it, see there): the kind of side Dir of area map
-  cell (Col, Row): 1 a solid wall (DoorKindAt 0), 0 no wall (WallIdAt 0), 3 a door; off the 16x16
-  map 0 for the west and east sides on the party row (ds6AAE), else 1. }
-{@stub} procedure WallSideKind; begin end;
-{ ovl10:01AD. The passage between area map cell (Col, Row) and its neighbour in direction Dir:
-  WallSideKind of this side OR that of the neighbour's opposite side (1 a wall, 0 open, 3 a door).
-  Blocked (escalate-res06-20261012110841): the draft in re/symbols.toml notes matches except the
-  address fields of its nested WallSideKind (DoorKindAt, WallIdAt, ds6AAE), which the matcher
-  compares byte for byte. }
-{@stub} function PassageKind(Col, Row: ShortInt; Dir: Byte): Byte; begin end;
-{ ovl10:0221. Nested in BuildDungeonMap: stores Picture + 1 at the combat map cell of sub-cell
-  (SubCol, SubRow) of the area cell being drawn. }
+{ ovl10:01AD. The passage between area map cell (Col, Row) and its neighbour in direction Dir
+  (0 north, 2 east, 4 south, 6 west, steps ds2736/ds273F): WallSideKind of this side of the cell
+  OR WallSideKind of the opposite side of the neighbour: 0 open, 1 a wall, 3 a door. Called by
+  BuildDungeonMap for the three drawn sides of every cell and by FindStartCell to find open
+  directions for the placement groups. }
+function PassageKind(Col, Row: ShortInt; Dir: Byte): Byte;
+var
+  Here, There: Byte;
+  OppositeDir: Byte;
+
+  { ovl10:012B. Nested in PassageKind: the kind of side Dir of area map cell (Col, Row): 1 a solid
+    wall (DoorKindAt 0), 0 no wall (WallIdAt 0), 3 a door. Off the 16x16 map: 0 for the west and
+    east sides (Dir 2 or 6) on the party's row (ds6AAE), else 1, so a corridor the party stands in
+    stays open beyond the map's edge. }
+  function WallSideKind(Col, Row: ShortInt; Dir: Byte): Byte;
+  begin
+    if (Col >= 0) and (Col <= MapEdge) and (Row >= 0) and (Row <= MapEdge) then
+    begin
+      if DoorKindAt(Col, Row, Dir) = 0 then
+        WallSideKind := SideWall
+      else if WallIdAt(Col, Row, Dir) = 0 then
+        WallSideKind := SideOpen
+      else
+        WallSideKind := SideDoor;
+    end
+    else if (Row = ds6AAE) and ((Dir = DirEast) or (Dir = DirWest)) then
+      WallSideKind := SideOpen
+    else
+      WallSideKind := SideWall;
+  end;
+
+begin
+  OppositeDir := (Dir + 4) mod 8;
+  Here := WallSideKind(Col, Row, Dir);
+  There := WallSideKind(Col + ds2736[Dir], Row + ds273F[Dir], OppositeDir);
+  PassageKind := Here or There;
+end;
+{ ovl10:0221. Nested in BuildDungeonMap (blocked with it, see there): stores Picture + 1 at the
+  combat map cell of sub-cell (SubCol, SubRow) of the area cell being drawn. }
 {@stub} procedure SetDungeonCell; begin end;
 { ovl10:02BA. Nested in BuildDungeonMap: the floor and the west side of an area cell. }
 {@stub} procedure DrawFloorAndWest; begin end;
@@ -127,8 +166,11 @@ end;
 { ovl10:0810. Builds the combat map of a dungeon battle: every area map cell within 6 columns and
   2 rows of the party becomes a skewed block of the combat map (6 columns right and 5 rows down
   per area column and row) drawn from its west, north and east passages (PassageKind), then
-  ScatterRareTiles. Blocked (escalate-res06-20261012110841): the draft in re/symbols.toml notes
-  matches except CombatMap's address in the nested SetDungeonCell. }
+  ScatterRareTiles. Blocked (dec-r10, 2026-10-12): the draft in re/symbols.toml notes compiles to
+  the original's bytes except CombatMap's address inside the nested SetDungeonCell (02AA), which
+  only its sibling nested routines call (push word ptr [bp+6]; push cs; call at 02DD); the strict
+  nested rule (escalate-general-20261012012957) proves a nested routine only through a push bp
+  call from the parent or a proven nested routine, so that field stays byte-exact. }
 {@stub} procedure BuildDungeonMap; begin end;
 
 { ovl10:08A4. The terrain flags of the area map block the battle is fought on (CombatBlock): a
@@ -175,14 +217,56 @@ begin
     end;
   BlockTerrainFlags := Flags;
 end;
-{ ovl10:0B97. Nested in PlaceRiver: puts the bridge tiles $34, $35 on a river row and counts them. }
-{@stub} procedure PlaceBridge; begin end;
-{ ovl10:0BDE. Draws a river on the wilderness combat map (35 in 100 with FlagRiverSometimes, 75
-  with FlagRiverOften): tiles $32, $33 down a diagonal from a column near 34 - 5d4, with bridge
-  pieces (PlaceBridge) on random rows, at least one bridge. Blocked
-  (escalate-res06-20261012110841): the draft in re/symbols.toml notes matches except the address
-  fields of its nested PlaceBridge (CombatMap). }
-{@stub} procedure PlaceRiver; begin end;
+{ ovl10:0BDE. Draws a river on the wilderness combat map: with FlagRiverSometimes 35 in 100,
+  with FlagRiverOften 75 in 100, otherwise never. The river runs down a diagonal, one column
+  right per row, as the tile pair RiverWest, RiverEast; its top column is 34 - 5d4 moved left to
+  the next column with (Col + 2) mod 7 = 0. Each row gets a bridge (PlaceBridge) on a d20 of 1,
+  and the row after a bridge always (the odd count), so a bridge is two rows high; a river with
+  no bridge gets one on rows 7..15. }
+procedure PlaceRiver;
+var
+  Chance: Byte;                 { in 100 }
+  Bridges: Byte;                { the bridge rows placed so far }
+  StartCol: ShortInt;           { the river's column on row 0 }
+  Col, Row: ShortInt;
+  Unused: Byte;                 { QUIRK ovl10:0BE1: a byte of the frame nothing uses }
+
+  { ovl10:0B97. Puts the bridge tiles BridgeWest, BridgeEast on the river cells of (Row, Col)
+    and counts the bridge rows. }
+  procedure PlaceBridge(Row, Col: ShortInt);
+  begin
+    CombatMap^.Cells[Row, Col] := BridgeWest;
+    CombatMap^.Cells[Row, Col + 1] := BridgeEast;
+    Inc(Bridges);
+  end;
+
+begin
+  Chance := 0;
+  Bridges := 0;
+  if (BlockTerrainFlags and FlagRiverSometimes) <> 0 then Chance := 35;
+  if (BlockTerrainFlags and FlagRiverOften) <> 0 then Chance := 75;
+  if RollDice(1, 100) <= Chance then
+  begin
+    Col := 34 - RollDice(5, 4);
+    while (Col + 2) mod 7 > 0 do Dec(Col);
+    StartCol := Col;
+    for Row := 0 to MapLastRow do
+      if Col <= MapLastCol then
+      begin
+        CombatMap^.Cells[Row, Col] := RiverWest;
+        CombatMap^.Cells[Row, Col + 1] := RiverEast;
+        if (RollDice(1, 20) = 1) or Odd(Bridges) then PlaceBridge(Row, Col);
+        Inc(Col);
+      end;
+    if Bridges = 0 then
+    begin
+      Row := 12 - RollDice(1, 9) + 4;
+      Col := StartCol + Row;
+      PlaceBridge(Row, Col);
+      PlaceBridge(Row + 1, Col + 1);
+    end;
+  end;
+end;
 
 { ovl10:0D13. Puts two-cell features on the plain ground: for every ground cell whose northern
   neighbour is ground too, with Chance in 100 (1 by default and for FlagMany2ATiles, 3 for
