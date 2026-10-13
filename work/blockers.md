@@ -7,6 +7,12 @@ newest first, then run `make status`: it copies this file into the "Blockers and
 section of work/status.md. Remove an item when it is resolved.
 -->
 
+- Hand-off unit/ovl09 (partial, dec-1) is NOT merged: its merge (c892063) broke make check and was reverted (2b9557e). Cause: ScoreTarget (ovl09_fn_128D, OVL09.PAS line 434) reads Actor^.Pad9E[$A0], but ovl07 (1f4ba12) narrowed TCharacter's Pad9E to $9E..$9F and gave +$A0 its own field ByteA0 (ShortInt). The ovl09 owner must rebase unit/ovl09 onto main, use the field that main names, prove it with make match, and hand off again. Git gotcha: a merge reverted with git revert will not re-merge its branch's changes until the revert itself is reverted, so the next merge needs that step first. Also, the ovl09 rename (ovl09_fn_128D to ScoreTarget and the other ovl09_fn_ names) lives in re/renames.toml; carry those entries over when rebasing.
+
+- Waiting for the human (orch, 2026-10-12): task/tools-rtl2 (1acdcc9) changes runtime_entries in tools/re/tp_toolchain.py so that bytes in an unequal-length difference count as present (a weaker matcher rule, AGENTS.md rule 2). Its approval came from the acting operator via the coordinator, not the human directly. Not merged. Facts checked by orch: on main `make match UNIT=ovl11` already reports 2 matched and complete, so review-ovl11 does not depend on it.
+
+- Hand-offs cannot be cleared by this orchestrator session: tools/agent/handoff.py and unlock.py require AGENT=orch literally, but this session registered as haiku-orch (session ses_ecd7e2d3fffeYt4Q5D7MVfIX9g). Merged but not cleared: review-ovl11 (merge 6b4729a). Needs the human's decision: restart the orchestrator as name orch, or allow another label for the orchestrator role.
+
 - Waiting for the human (acting operator held it, 2026-10-12): res08 is a resident unit but its code shows it was compiled with O+ (dec-2, res08 hand-off note), which AGENTS.md's compiler-switch facts do not allow for resident units. A spec question; nothing to do until the human decides.
 
 - escalate-ovl11-20261012040806 (runtime_entries, single unit vs --all): fix ready on task/tools-rtl2 (op-rtl, 1acdcc9), held for the human: it relaxes when a byte counts as present (AGENTS.md rule 2). Do not merge it, and do not rerun `make map` for it, until the human confirms.
