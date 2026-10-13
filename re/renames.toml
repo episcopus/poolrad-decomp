@@ -2974,3 +2974,37 @@ kind = "global"
 why = "SkipCommand stores the opcode at EclPC in it and dispatches on it (ovl07:1EB7)"
 date = "2026-10-12"
 
+[[rename]]
+old = "ovl09_fn_128D"
+new = "ScoreTarget"
+kind = "routine"
+why = "ovl09:128D returns a Byte score that ovl09_fn_13CA maximizes (ovl09:1543 keeps the candidate with the highest value)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl09_fn_0FC1"
+new = "HandleCombatKey"
+kind = "routine"
+why = "ovl09:0FC1 reads a key during the AI turn and dispatches Alt-M magic toggle, Space quick marking and Alt-X (callers ovl09_e1, ovl09_fn_07F2 region)"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl09_fn_10D7"
+new = "CheckMorale"
+kind = "routine"
+why = "ovl09:10D7 runs the morale gauntlet for the AI turn (flees in panic, surrenders) showing 'is forced to flee' and 'Surrenders' through res12_fn_16EC and ovl24_e11; caller ovl09_e1"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl09_fn_03E4"
+new = "UseMagicItem"
+kind = "routine"
+why = "ovl09:03E4 walks Who Items for a castable item (Affects and 02EB range checks), uses it through ovl19_e8 and ends the turn; caller ovl09_e1"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl09_fn_0545"
+new = "CastMemorizedSpell"
+kind = "routine"
+why = "ovl09:0545 casts a memorized spell for the AI turn (collects Who Spells, picks one in 02EB range, casts through ovl13_e15 which CombatMenu calls Cast); caller ovl09_e1"
+date = "2026-10-12"
