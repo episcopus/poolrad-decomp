@@ -1,0 +1,19 @@
+# Lessons from unit ovl10 (BattleStart). Leads with evidence, not matcher verdicts.
+
+[[lesson]]
+id = "nested-sibling-calls-unproven"
+confidence = "V"
+units = ["*"]
+tags = ["nested", "static link", "sibling", "pre-entry", "address field", "matcher rule"]
+title = "A nested routine only its siblings call stays byte-exact"
+lesson = "The matcher proves a nested routine (NESTED line, address fields resolved) only through a `push bp; push cs; call` from the parent or an already proven nested routine. A nested routine that only sibling nested routines call is reached with `push word ptr [bp+6]; push cs; call` (the caller passes its own static link on), so the strict rule never proves it and every address field in it (a DS operand, a far call) stays byte-exact. PassageKind and PlaceRiver (parent calls) match; BuildDungeonMap does not: SetDungeonCell (ovl10:0221) is called only from DrawFloorAndWest and the other sibling helpers (02DD) and holds CombatMap's address (02AA). Before drafting a parent with helpers, check who calls each nested routine in the packet; a sibling-only helper with a global or a far call blocks the parent until the human extends the rule."
+evidence = ["re/symbols.toml#ovl10:0810", "src/OVL10.PAS#PassageKind", "src/OVL10.PAS#PlaceRiver", "tools/match/match.py#nested_routines", "re/symbols.toml#ovl10:02BA"]
+
+[[lesson]]
+id = "nested-record-deleted-on-write"
+confidence = "V"
+units = ["*"]
+tags = ["nested", "WRITE=1", "registry", "symbols.toml", "tooling"]
+title = "WRITE=1 removes a nested routine's map record before marking it L2"
+lesson = "make match WRITE=1 handles matched parents first and deletes every record inside a matched range whose level is not L2/L3 (`lies inside ...: removed from the map`), then tries to set L2 on the nested results, which are gone by then. The nested routine's name and notes vanish from re/symbols.toml (seen for WallSideKind ovl10:012B and PlaceBridge ovl10:0B97; restored by hand at level none with a note). Check the registry diff after WRITE=1 on a parent with nested routines; a tooling task should mark nested results before deleting map entries."
+evidence = ["re/symbols.toml#ovl10:012B", "re/symbols.toml#ovl10:0B97", "tools/match/match.py#write_levels", "tests/unit/test_match_nested.py#test_write_levels_records_l2_and_how_it_was_proven"]
