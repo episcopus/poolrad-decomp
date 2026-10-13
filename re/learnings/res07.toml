@@ -68,9 +68,11 @@ evidence = ["src/RES07.PAS#DrawPictureItem"]
 [[lesson]]
 id = "colour-remap-structure"
 confidence = "V"
+units = ["res07"]
+tags = ["colour remap", "picture", "VideoAdapter", "maps"]
 title = "res07_fn_1E5C recolours a picture through a temporary copy with two 16-byte maps"
 lesson = "res07_fn_1E5C (0464:1E5C, 1586 bytes, 16 parameter bytes, 68 locals) is `procedure (FromMap, ToMap: Pointer; FirstRow: Integer; Flicker: Byte; Pic: Pointer)`: it copies FromMap and ToMap (16 bytes each, the first two locals at [bp-0x10] and [bp-0x20]) into the frame, AllocatePictures a scratch copy of Pic, copies the 8 palette bytes (Pic+9) and the pixel data (Pic+$17, Pic^.[8] * Pic^.[$11] bytes from row FirstRow), then walks the picture per VideoAdapter remapping pixels whose colour equals FromMap[I] to ToMap[I]: adapter 0 walks 4-bit nibbles in 2-byte groups (ds25FA through GlyphPixelMasks), adapter 1 walks the EGA plane bits of all four planes through EgaPlaneBitMasks and the plane bit masks in the [bp-0x2e..-0x2b] array, adapter 2 walks the high nibble of 4-byte groups; with the Flicker byte nonzero (and a QUIRK double test at 2375/237B) a Random(4) = 0 gate makes the change random, and every colour index I whose two map entries are equal is skipped (212B). The scratch copy's pixel data is moved back over Pic and the copy is released (2462, 2484). Called by ovl32's LoadPictureSlot (from the identity map ds0CD2), ovl28's LoadSpriteList, ovl17_e3, ovl16_fn_35BE and ovl18's AnimateAreaDoors."
-evidence = ["build/packets/res07.md#0464:1E5C", "src/OVL32.PAS#LoadPictureSlot", "re/symbols.toml#res07:1E5C", "docs/design/WHITEPAPER.md#5.23"]
+evidence = ["src/RES07.PAS#res07_fn_1E5C", "src/OVL32.PAS#LoadPictureSlot", "re/symbols.toml#res07:1E5C", "docs/design/WHITEPAPER.md#5.23"]
 
 [[lesson]]
 id = "picture-record-fields"
@@ -79,4 +81,4 @@ units = ["res07"]
 tags = ["picture", "record", "TPicture", "layout"]
 title = "The picture record fields res07 uses"
 lesson = "The res07 picture record (AllocatePicture, 0464:248E, and every blitter): +0 a word (the row/item count res07_fn_1E5C loops over), +2 the width in cells (shifted left 1 in the adapter-0 code and twice for adapter 2), +8 the height in rows (copy of +0 when the flag byte is negative), +9..+0x10 the 8 palette bytes (copied by res07_fn_1E5C), +$11 the bytes per row (Pic^.[8] * Pic^.[$11] is the pixel data size), +$13/+$15 the pixel buffer far pointer, +$17 the first pixel byte. Name them from AllocatePicture's matched source (src/RES07.PAS) before adding a second name."
-evidence = ["src/RES07.PAS#AllocatePicture", "build/packets/res07.md#0464:1E5C", "re/symbols.toml#res07:248E"]
+evidence = ["src/RES07.PAS#AllocatePicture", "re/symbols.toml#res07:1E5C", "re/symbols.toml#res07:248E"]
