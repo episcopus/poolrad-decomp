@@ -2974,3 +2974,10 @@ kind = "global"
 why = "SkipCommand stores the opcode at EclPC in it and dispatches on it (ovl07:1EB7)"
 date = "2026-10-12"
 
+[[rename]]
+old = "ovl17_fn_02AE"
+new = "CreateSaveDir"
+kind = "routine"
+why = "ovl17:02AE: MkDir of SaveDir minus its trailing backslash (System MkDir = 0AF8:17D6, INT 21h/39), then loops showing 'Put save disk in <drive>:' until IOResult is 0 or 5; called by ovl17_e1/e2/e4/e8/e9 before they touch save files"
+date = "2026-10-12"
+

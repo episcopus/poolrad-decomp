@@ -8702,12 +8702,12 @@ id = "ovl17:02AE"
 unit = "ovl17"
 addr = "ovl17:02AE"
 size = 129
-name = "ovl17_fn_02AE"
+name = "CreateSaveDir"
 signature = ""
 c_name = "ovl17_fn_02AE"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl17_fn_02AE (ovl17:02AE: MkDir of SaveDir minus its trailing backslash (System MkDir = 0AF8:17D6, INT 21h/39), then loops showing 'Put save disk in <drive>:' until IOResult is 0 or 5; called by ovl17_e1/e2/e4/e8/e9 before they touch save files); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
