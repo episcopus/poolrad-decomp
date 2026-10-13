@@ -41,7 +41,7 @@ function PaletteColor(Index: Byte; Source: PPalette): Byte;
 procedure SetVideoMode(Mode: Byte);
 procedure RestoreVideoMode;
 procedure LoadPicture(Text: string; BlockId, AllocFlags, Color: Byte; var Target);
-procedure res07_fn_02A5(Source: Pointer; Offset: Word; A, Color: Byte; Data: Pointer);
+procedure UnpackPicturePixels(Source: Pointer; Offset: Word; AllocFlags, Color: Byte; Data: Pointer);
 procedure res07_fn_08D4(Col, Row: Integer; PicIndex, Flags: Byte; Source, Dest: Pointer);
 procedure res07_fn_0D71(Col, Row: Integer; PicIndex, Flags: Byte; Source, Dest: Pointer);
 function MirrorByte(Value: Byte): Byte;
@@ -149,14 +149,136 @@ begin
       YPos := DaxYPos;
       Palette := DaxPalette;
       PixelOfs := $11;
-      res07_fn_02A5(PPicture(Block), PixelOfs, AllocFlags, Color, PPicture(Pointer(Target)));
+      UnpackPicturePixels(PPicture(Block), PixelOfs, AllocFlags, Color, PPicture(Pointer(Target)));
     end;
     FreeMem(Block, Size);
     FlushKeyboard;
   end;
 end;
-{ 0464:02A5: frame not read }
-{@stub} procedure res07_fn_02A5(Source: Pointer; Offset: Word; A, Color: Byte; Data: Pointer); begin end;
+{ 0464:02A5: unpacks the pixel data of the DAX block Source (its pixels start at Offset,
+  $11) into Data, the picture LoadPicture allocated, one item and one cell (four source
+  bytes, eight pixels) at a time. Per VideoAdapter: 0 writes two bytes per cell, the
+  palette colour of each pixel in 2-bit form (ds25FA), and, when the picture has a pixel
+  buffer (Pixels, AllocFlags bit 0), the mask of the pixels equal to Color; 1 writes the
+  four EGA plane bytes of each cell (a pixel's colour bits select its planes) and the
+  mask; 2 copies ByteSize bytes of each item unchanged and builds the mask from them.
+  AllocFlags is never read. Called by LoadPicture (0464:0111) and by ovl28 LoadSpriteList.
+  QUIRK 0464:02A5: the frame has 17 bytes above Cell that the code never touches. }
+procedure UnpackPicturePixels(Source: Pointer; Offset: Word; AllocFlags, Color: Byte; Data: Pointer);
+var
+  Unused: array[0..16] of Byte;
+  Cell: LongInt;
+  CellBytes: array[0..3] of Byte absolute Cell;
+  I: Byte;
+  Col, Row, OutOfs, PixIndex: Word;
+  Mask, Index: Byte;
+  Pass, Bit, Plane, Nibble: Byte;
+begin
+  if Data = nil then Exit;
+  with PPicture(Data)^ do
+  begin
+    OutOfs := 0;
+    PixIndex := 0;
+    case VideoAdapter of
+    0:
+    begin
+      for I := 1 to ItemCount do
+        for Row := 0 to Height - 1 do
+          for Col := 0 to WidthCols - 1 do
+          begin
+            Move(PByteArray(Source)^[Offset], Cell, 4);
+            if Pixels <> nil then
+            begin
+              Mask := ColorMatchMask(Color, Cell);
+              Bit := $80;
+              for Pass := 1 to 2 do
+              begin
+                for Index := 4 to 7 do
+                begin
+                  if (Bit and Mask) > 0 then
+                    Pixels^[PixIndex] := Pixels^[PixIndex] or GlyphPixelMasks[Index];
+                  Bit := Bit shr 1;
+                end;
+                Inc(PixIndex);
+              end;
+            end;
+            for Index := 0 to 3 do
+            begin
+              if Odd(Index) then
+                Data[OutOfs] := Data[OutOfs] or
+                  ds25FA[PaletteColor(CellBytes[Index shr 1] and $0F, @Palette), Index]
+              else
+                Data[OutOfs] := Data[OutOfs] or
+                  ds25FA[PaletteColor((CellBytes[Index shr 1] and $F0) shr 4, @Palette), Index];
+            end;
+            if Pixels <> nil then
+              Data[OutOfs] := Data[OutOfs] and not Pixels^[PixIndex - 2];
+            Inc(OutOfs);
+            for Index := 4 to 7 do
+            begin
+              if Odd(Index) then
+                Data[OutOfs] := Data[OutOfs] or
+                  ds25FA[PaletteColor(CellBytes[Index shr 1] and $0F, @Palette), Index - 4]
+              else
+                Data[OutOfs] := Data[OutOfs] or
+                  ds25FA[PaletteColor((CellBytes[Index shr 1] and $F0) shr 4, @Palette), Index - 4];
+            end;
+            if Pixels <> nil then
+              Data[OutOfs] := Data[OutOfs] and not Pixels^[PixIndex - 1];
+            Inc(OutOfs);
+            Inc(Offset, 4);
+          end;
+    end;
+    1:
+    begin
+      for I := 1 to ItemCount do
+        for Row := 0 to Height - 1 do
+          for Col := 0 to WidthCols - 1 do
+          begin
+            Move(PByteArray(Source)^[Offset], Cell, 4);
+            if Pixels <> nil then
+            begin
+              Pixels^[PixIndex] := ColorMatchMask(Color, Cell);
+              Inc(PixIndex);
+            end;
+            Bit := $80;
+            for Index := 0 to 7 do
+            begin
+              if Odd(Index) then
+                Nibble := CellBytes[Index shr 1] and $0F
+              else
+                Nibble := CellBytes[Index shr 1] shr 4;
+              for Plane := 0 to 3 do
+                if (EgaPlaneBitMasks[Plane] and Nibble) > 0 then
+                  Data[OutOfs + Plane] := Data[OutOfs + Plane] or Bit;
+              Bit := Bit shr 1;
+            end;
+            if Pixels <> nil then
+              for Plane := 0 to 3 do
+                Data[OutOfs + Plane] := Data[OutOfs + Plane] and not Pixels^[PixIndex - 1];
+            Inc(OutOfs, 4);
+            Inc(Offset, 4);
+          end;
+    end;
+    2:
+    begin
+      for I := 1 to ItemCount do
+      begin
+        Move(PByteArray(Source)^[Offset], Data[OutOfs], ByteSize);
+        if Pixels <> nil then
+          for Col := OutOfs to OutOfs + ByteSize - 1 do
+          begin
+            if (Data[Col] shr 4) = Color then Pixels^[Col] := $F0;
+            if (Data[Col] and $0F) = Color then Inc(Pixels^[Col], $0F);
+            Data[Col] := Data[Col] and not Pixels^[Col];
+          end;
+        Inc(OutOfs, ByteSize);
+        Inc(Offset, ByteSize);
+      end;
+    end;
+  end;
+  end;
+end;
 { 0464:08D4: retf 16: two Integers, two Bytes, two Pointers. DrawCellPicture passes the cell,
   the picture index, flags 0, a picture pointer and DrawBuf. }
 {@stub} procedure res07_fn_08D4(Col, Row: Integer; PicIndex, Flags: Byte; Source, Dest: Pointer); begin end;

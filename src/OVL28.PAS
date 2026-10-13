@@ -98,7 +98,7 @@ end;
   the slot, the Height and WidthCols words, and when at least FreeMemoryFloor bytes of heap are free
   (MaxAvail) it allocates the picture (AllocatePicture(Height, WidthCols, 1, Mode, slot)), reads its X
   and Y words (one byte after Y is skipped) and 8 palette bytes, and decodes Row + 1 bytes of pixel
-  data (res07_fn_02A5), Row being the picture's ByteSize (twice the byte size when VideoAdapter is 0)
+  data (UnpackPicturePixels), Row being the picture's ByteSize (twice the byte size when VideoAdapter is 0)
   minus one. PIC and FINAL pictures are stored as differences: the first picture's data is kept in
   Prev and every later picture's bytes are xored with it before decoding. When bit 0 of Mode is set
   and VideoAdapter is not 0, the picture also goes through res07_fn_1E5C with the two 16-byte tables
@@ -185,7 +185,7 @@ begin
             for J := Offset to Offset + Row do
               PByteArray(Block)^[J] := PByteArray(Block)^[J] xor Prev^[J - Offset];
         end;
-        res07_fn_02A5(Block, Offset, Mode, 0, Slots[I].Sprite);
+        UnpackPicturePixels(Block, Offset, Mode, 0, Slots[I].Sprite);
         if ((Mode and 1) > 0) and (VideoAdapter <> 0) then
           res07_fn_1E5C(@ds0C6C, @ds0C7C, 0, 0, Slots[I].Sprite);
         Inc(Offset, Row + 1);

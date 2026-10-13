@@ -850,7 +850,7 @@ The parts proven so far:
   `Count` (QUIRK `ovl28:0269`); the final `FreeMem(Prev, Row + 1)` frees with the last picture's
   `Row` (QUIRK `ovl28:046C`). `PIC` and
   `FINAL` pictures after the first are stored xored with the first one's data, which the loader
-  undoes before decoding (`res07_fn_02A5`); bit 0 of `Mode` adds a pass through `res07_fn_1E5C` on
+  undoes before decoding (`UnpackPicturePixels`); bit 0 of `Mode` adds a pass through `res07_fn_1E5C` on
   non-zero video adapters **[V]** (matched). Callers: `ovl03`, `ShowEncounterPicture`, `ovl18` (FINAL) and
   `res12_fn_27D9`.
 

@@ -730,6 +730,11 @@ var
   { Plane bit masks 1, 2, 4, 8 that res07's direct picture blit writes to the Sequencer Map Mask
     (port 3C5h) for plane 0..3 when it copies one byte per plane (0464:1A6E). }
   EgaPlaneBitMasks: array[0..3] of Byte;
+  { Per palette colour C (0..15) and pixel position K (0..3): the byte UnpackPicturePixels ORs
+    into a picture byte for VideoAdapter 0. For C 0..3 it is C's 2-bit value in pixel K's bit pair
+    (C = 1, K = 0 gives $40); the entries for C 4..15 do not follow that pattern (image bytes
+    from DS:25FA: 00 00 00 00 40 10 04 01 80 20 08 02 C0 30 0C 03 00 11 22 12 ...). }
+  ds25FA: array[0..15, 0..3] of Byte;
   ds49CE: Word;                   { IOResult of the last FileExists file probe (0802:0334) }
   { Characters 0768's word scanner tests (0709:0822..08F0): the leading run is skipped,
     the word run stops at them or space, the trailing run is skipped. Storage descriptor

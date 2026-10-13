@@ -16350,12 +16350,12 @@ id = "0464:02A5"
 unit = "res07"
 addr = "0464:02A5"
 size = 1583
-name = "res07_fn_02A5"
-signature = "procedure res07_fn_02A5(Source: Pointer; Offset: Word; A, Color: Byte; Data: Pointer)"
+name = "UnpackPicturePixels"
+signature = "procedure UnpackPicturePixels(Source: Pointer; Offset: Word; AllocFlags, Color: Byte; Data: Pointer)"
 c_name = "res07_fn_02A5"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call; map deepseek-dec 2026-10-12: ends 08D4 (was 970); bogus entries 066F, 0710 deleted (mid-routine, no 55 89 E5 prologue)"
+notes = "renamed from res07_fn_02A5 (LoadPicture (0464:0111) passes it a DAX block (pixels from offset $11) and its new picture; it unpacks the block's packed 4-bit pixels into the picture's data per VideoAdapter, building the pixel buffer (0464:02A5, L2)); auto:near_call; map deepseek-dec 2026-10-12: ends 08D4 (was 970); bogus entries 066F, 0710 deleted (mid-routine, no 55 89 E5 prologue)"
 evidence = ["prologue"]
 
 [[routine]]
