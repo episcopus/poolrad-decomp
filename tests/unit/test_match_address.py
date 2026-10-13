@@ -33,19 +33,19 @@ class _Orig:
         return None
 
 
-def _build(img, relocs, pubs):
+def _build(img, relocs, pubs, shift=0):
     segs = {
-        "OVL08": (0x100, 0x80, "CODE"),
-        "OVL22": (0x220, 0x80, "CODE"),
-        "OVL13": (0x680, 0x80, "CODE"),
+        "OVL08": (0x100 + shift, 0x80, "CODE"),
+        "OVL22": (0x220 + shift, 0x80, "CODE"),
+        "OVL13": (0x680 + shift, 0x80, "CODE"),
     }
     return match.Build(bytes(img), relocs, segs, pubs)
 
 
-def _pair(img, relocs, pubs_a, pubs_b):
+def _pair(img, relocs, pubs_a, pubs_b, shift_b=0):
     cmp = match.Comparer.__new__(match.Comparer)
     cmp.a = _build(img, relocs, pubs_a)
-    cmp.b = _build(b"", set(), pubs_b)
+    cmp.b = _build(b"", set(), pubs_b, shift_b)
     cmp.orig = _Orig()
     cmp.unit = "ovl08"
     cmp.seg = "OVL08"
@@ -57,8 +57,8 @@ def test_an_offset_shared_with_this_unit_names_the_other_units_routine():
     img = bytearray(0x200)
     img[0x100:0x106] = bytes.fromhex("b80000ba2200")
     pubs_a = {"ENDCOMBAT": (0x10, 0x0000), "OVL22_E4": (0x22, 0x0000)}
-    pubs_b = {"ENDCOMBAT": (0x10, 0x0005), "OVL22_E4": (0x22, 0x0005)}
-    cmp = _pair(img, {0x104}, pubs_a, pubs_b)
+    pubs_b = {"ENDCOMBAT": (0x20, 0x0005), "OVL22_E4": (0x32, 0x0005)}
+    cmp = _pair(img, {0x104}, pubs_a, pubs_b, shift_b=0x100)
     ok, why = cmp.immediate(0, 5, 0x34, match.Region("EndCombat", 0, 0, 0x10), 0, 1)
     assert ok, why
 
@@ -67,8 +67,8 @@ def test_the_same_offset_is_rejected_when_the_original_names_another_routine():
     img = bytearray(0x200)
     img[0x100:0x106] = bytes.fromhex("b80000ba2200")
     pubs_a = {"ENDCOMBAT": (0x10, 0x0000), "OVL22_E4": (0x22, 0x0000)}
-    pubs_b = {"ENDCOMBAT": (0x10, 0x0005), "OVL22_E4": (0x22, 0x0005)}
-    cmp = _pair(img, {0x104}, pubs_a, pubs_b)
+    pubs_b = {"ENDCOMBAT": (0x20, 0x0005), "OVL22_E4": (0x32, 0x0005)}
+    cmp = _pair(img, {0x104}, pubs_a, pubs_b, shift_b=0x100)
     ok, why = cmp.immediate(0, 5, 0x66, match.Region("EndCombat", 0, 0, 0x10), 0, 1)
     assert not ok and "OVL22_E4" in why
 

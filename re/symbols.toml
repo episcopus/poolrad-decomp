@@ -2384,9 +2384,9 @@ size = 122
 name = "EndCombat"
 signature = ""
 c_name = "ovl08_fn_0000"
-level = "none"
+level = "L2"
 justification = ""
-notes = "blocked (dec-9, 2026-10-12): matches except ds6B84 := @ovl22_e4, a cross-unit routine address the matcher reads as ovl08:0000 (escalated). Draft: var Next: PCombatNode; Unused: Word; begin while ds6DBB <> nil do begin Next := ds6DBB^.Next; FreeMem(ds6DBB, $13); ds6DBB := Next; end; FreeMem(ds6716, $4E9); ds6716 := nil; res07_fn_2595(ds6E36); ovl31_e3; ds6B84 := @ovl22_e4; end; renamed from ovl08_fn_0000 (ovl08:0000 frees the combat data (the DS:6DBB list, the $4E9 block DS:6716, the picture DS:6E36) and calls ovl31_e3; called once by RunCombat after the last round); auto:near_call"
+notes = "renamed from ovl08_fn_0000 (ovl08:0000 frees the combat data (the DS:6DBB list, the CombatMap block, the picture DS:6E36) and calls ovl31_e3; called once by RunCombat after the last round); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2397,9 +2397,9 @@ size = 183
 name = "RunCombat"
 signature = ""
 c_name = "ovl08_e1"
-level = "none"
+level = "L2"
 justification = ""
-notes = "blocked (dec-9, 2026-10-12): matches except ds6B84 := @ovl13_e14 (cross-unit routine address, escalated). Draft: var Done: Byte; Who: PCharacter; Unused: Byte; begin ds49F3 := 5; ds6B84 := @ovl13_e14; ovl10_e1; Done := 0; if (ds6814 = 0) or (ds6815 = 0) then Done := 1; while Done = 0 do begin res12_fn_23DB; Who := PCharacter(ds5D96); while Who <> nil do begin ovl13_e1(Who); Who := Who^.Next; end; ds49D6^[715] := 0; PickNextCombatant(Who); while Who <> nil do begin CombatTurn(Who); PickNextCombatant(Who); end; EndCombatRound(Done); end; EndCombat; end; renamed from ovl08_e1 (ovl08:007A the combat loop: rounds of ovl13_e1 per character, turns in initiative order (PickNextCombatant, CombatTurn), EndCombatRound until one side is gone; called by ovl03_fn_179B); auto:entry_1"
+notes = "renamed from ovl08_e1 (ovl08:007A the combat loop: rounds of ovl13_e1 per character, turns in initiative order (PickNextCombatant, CombatTurn), EndCombatRound until one side is gone; called by ovl03_fn_179B); auto:entry_1"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2553,9 +2553,9 @@ size = 5
 name = "ovl08_init"
 signature = ""
 c_name = "ovl08_init"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_0; blocked: the original is the empty initialisation part (push bp; mov bp,sp; pop bp; retf at ovl08:127A, packet), which src/OVL08.PAS already has (begin end., no {@stub-init}); make match checks an init part only in the whole-unit comparison, which runs when no stub is left, so it waits for EndCombat and RunCombat (escalate-ovl08-20261012113252) (dec-10)"
+notes = "auto:entry_0"
 evidence = ["prologue"]
 
 [[routine]]

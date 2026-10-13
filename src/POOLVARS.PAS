@@ -741,7 +741,7 @@ var
   ds6E36: Pointer;                { a picture EndCombat frees through res07_fn_2595 (ovl08:005A) }
   { A routine pointer: RunCombat sets @ovl13_e14 at the start (ovl08:0085) and EndCombat
     @ovl22_e4 at the end (ovl08:0069); who calls it is not known yet. }
-  ds6B84: Pointer;                { see above }
+  ds6B84: Pointer;                { routine RunCombat stores at ovl08:0085 and EndCombat at ovl08:0069 }
   ds6814: Byte;                   { zero (or ds6815 zero) ends the combat (ovl08:009B, 095C); likely the count of one side }
   ds6815: Byte;                   { see ds6814; likely the count of the other side }
   ds6814Sides: array[0..1] of Byte absolute ds6814;  { ds6814 and ds6815 indexed by side (ovl10:1AC7) }

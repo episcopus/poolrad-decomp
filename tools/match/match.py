@@ -768,15 +768,22 @@ class Comparer:
         hits = []
         for n, (para, off) in self.a.pubs.items():
             other = bpubs.get(n.upper())
-            if off == va and other and other[0] == para and other[1] == vb:
-                hits.append((n, para))
+            if off != va or not other or other[1] != vb:
+                continue
+            # Padding shifts later units to new paragraphs; the segment name is what stays.
+            if self.a.seg_of_para(para) != self.b.seg_of_para(other[0]):
+                continue
+            hits.append((n, para))
         if not hits:
             return False, ""
-        chosen = hits
+        # Only `mov ax, ofs; mov dx, seg` is a cross-unit routine address. Any other immediate
+        # that happens to equal a public's offset stays on the literal or same-unit rule.
         seg_abs = abs_a + 3
-        if seg_abs in self.a.relocs and seg_abs + 2 <= len(self.a.img):
-            sega = int.from_bytes(self.a.img[seg_abs:seg_abs + 2], "little")
-            chosen = [(n, para) for n, para in hits if para == sega]
+        mov_dx = seg_abs >= 1 and seg_abs + 2 <= len(self.a.img) and self.a.img[seg_abs - 1] == 0xBA
+        if not (mov_dx and seg_abs in self.a.relocs):
+            return False, ""
+        sega = int.from_bytes(self.a.img[seg_abs:seg_abs + 2], "little")
+        chosen = [(n, para) for n, para in hits if para == sega]
         if len(chosen) != 1:
             return False, "routine address: offset %04X is shared by %s" % (
                 va, ", ".join(sorted(n for n, _p in hits)))
