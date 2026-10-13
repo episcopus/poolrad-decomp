@@ -90,6 +90,26 @@ def test_unknown_stubs_are_reported_not_rewritten():
     assert any("ovl12_fn_0058" in n for n in notes)
 
 
+def test_a_signature_whose_type_is_not_visible_in_the_interface_is_reported_not_applied(tmp_path):
+    registry = [routine(0x0000, "ovl12_fn_0000", "procedure ovl12_fn_0000(List: PMenuLine)"),
+                routine(0x001F, "ovl12_e2"), routine(0x0058, "ovl12_fn_0058", "function ovl12_fn_0058(A: Byte): Word")]
+    src = tmp_path / "src"
+    src.mkdir()
+    changes, notes = stubs.plan(UNIT, "ovl12", registry, src)
+    assert [c.new == c.old for c in changes] == [True]
+    assert stubs.apply(UNIT, changes) == UNIT
+    assert any("needs PMenuLine, not visible" in n for n in notes)
+    # Visible through the interface uses clause of a unit with source: applied.
+    (src / "OVL25.PAS").write_text("unit OVL25;\ninterface\ntype\n  PMenuLine = ^Byte;\nimplementation\nend.\n")
+    text = UNIT.replace("interface\n", "interface\nuses OVL25;\n")
+    changes, notes = stubs.plan(text, "ovl12", registry, src)
+    assert "{@stub} procedure ovl12_fn_0000(List: PMenuLine); begin end;" in stubs.apply(text, changes) and notes == []
+    # A library unit without source (Dos) is trusted to declare what it declares.
+    text = UNIT.replace("interface\n", "interface\nuses Dos;\n")
+    changes, notes = stubs.plan(text, "ovl12", registry, src)
+    assert "(List: PMenuLine); begin end;" in stubs.apply(text, changes)
+
+
 def test_cli_gates_and_writes(tmp_path, monkeypatch, capsys):
     src = tmp_path / "src"
     src.mkdir()

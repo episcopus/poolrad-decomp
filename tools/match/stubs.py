@@ -140,6 +140,43 @@ def interface_span(lines: list[str], first: int, last: int, name: str) -> tuple[
     return None
 
 
+BUILTIN_TYPES = {"byte", "shortint", "word", "integer", "longint", "boolean", "char", "string", "pointer",
+                 "real", "single", "double", "extended", "comp", "text", "file"}
+
+
+def declared_in_interface(lines: list[str]) -> tuple[set[str], list[str]]:
+    """(lower-case identifiers declared `Name = ...` in the interface part, units of its uses clause)."""
+    try:
+        iface, impl = parts(lines)
+    except ValueError:
+        return set(), []
+    names, units = set(), []
+    for l in lines[iface:impl]:
+        m = re.match(r"^\s*([A-Za-z_]\w*)\s*=", l)
+        if m:
+            names.add(m.group(1).lower())
+        m = re.match(r"^\s*uses\s+([^;]+);", l, re.I)
+        if m:
+            units += [u.strip().lower() for u in m.group(1).split(",")]
+    return names, units
+
+
+def invisible_types(signature: str, lines: list[str], src: Path | None = None) -> list[str]:
+    """Type names of `signature` that neither the unit's interface part nor the interface part of a
+    unit it uses declares (a used unit without source, a library unit, is trusted)."""
+    names, units = declared_in_interface(lines)
+    visible = BUILTIN_TYPES | names
+    trusted = False
+    for u in units:
+        path = (src or SRC) / (u.upper() + ".PAS")
+        if not path.exists():
+            trusted = True
+            continue
+        visible |= declared_in_interface(path.read_text(encoding="utf-8").split("\n"))[0]
+    wanted = {m.group(1) for m in re.finditer(r":\s*([A-Za-z_]\w*)", signature)}
+    return [] if trusted else sorted(t for t in wanted if t.lower() not in visible)
+
+
 def parts(lines: list[str]) -> tuple[int, int]:
     """(index of the interface line, index of the implementation line)."""
     iface = next((i for i, l in enumerate(lines) if re.match(r"\s*interface\b", l, re.I)), None)
@@ -149,9 +186,10 @@ def parts(lines: list[str]) -> tuple[int, int]:
     return iface, impl
 
 
-def plan(text: str, uid: str, routines: list[dict]) -> tuple[list[Change], list[str]]:
-    """The edits that make every stub of `text` (unit `uid`) equal to its registry record, and the
-    notes about stubs that could not be checked."""
+def plan(text: str, uid: str, routines: list[dict], src: Path | None = None) -> tuple[list[Change], list[str]]:
+    """The edits that make every stub of `text` (unit `uid`) equal to its registry record (a header
+    whose signature cannot be applied is listed with `old == new`), and the notes about stubs that
+    could not be checked or applied. `src` is the directory of the unit sources (SRC)."""
     lines = text.split("\n")
     iface, impl = parts(lines)
     changes, notes = [], []
@@ -170,6 +208,13 @@ def plan(text: str, uid: str, routines: list[dict]) -> tuple[list[Change], list[
             continue
         why = "%s %s: " % (r["id"], want_name)
         why += "renamed from %s" % name if want_name != name else "signature"
+        missing = invisible_types(want, lines, src)
+        if missing:
+            notes.append("%s: stub %s keeps its header: the registry signature needs %s, not visible in the "
+                         "interface part (add the unit declaring it to the interface uses clause first)"
+                         % (uid, name, ", ".join(missing)))
+            changes.append(Change(start, end, lines[start:end], lines[start:end], why + " (not applied)"))
+            continue
         if want_name != name:
             others = len(re.findall(r"(?<![\w@])%s(?!\w)" % re.escape(name), text, re.I)) - 2
             if others > 0:
@@ -211,14 +256,14 @@ def main(argv=None) -> int:
     ap.add_argument("--write", action="store_true", help="rewrite the differing headers")
     a = ap.parse_args(argv)
     routines = registry()
-    differing, files, notes = 0, 0, []
+    differing, kept, files, notes = 0, 0, 0, []
     for path in unit_files(a.units):
         if not path.exists():
             print("stubs: %s does not exist" % rel(path))
             return 2
         text = path.read_text(encoding="utf-8")
         try:
-            changes, unit_notes = plan(text, path.stem.lower(), routines)
+            changes, unit_notes = plan(text, path.stem.lower(), routines, SRC)
         except ValueError as e:
             print("stubs: %s: %s" % (rel(path), e))
             return 2
@@ -230,12 +275,13 @@ def main(argv=None) -> int:
             if "(interface)" in c.why:
                 continue
             differing += 1
+            kept += c.new == c.old
             print("stubs: %s line %d: %s" % (rel(path), c.start + 1, c.why))
             for l in c.old:
                 print("  - " + l)
-            for l in c.new:
+            for l in (c.new if c.new != c.old else []):
                 print("  + " + l)
-        if a.write:
+        if a.write and any(c.new != c.old for c in changes):
             path.write_text(apply(text, changes), encoding="utf-8")
     for note in notes:
         print("stubs: note: " + note)
@@ -243,8 +289,9 @@ def main(argv=None) -> int:
         print("stubs: every stub header matches re/symbols.toml")
         return 0
     if a.write:
-        print("stubs: rewrote %d header(s) in %d file(s)" % (differing, files))
-        return 0
+        print("stubs: rewrote %d header(s) in %d file(s)%s" % (
+            differing - kept, files, "; %d kept (see the notes)" % kept if kept else ""))
+        return 1 if kept else 0
     print("stubs: %d header(s) in %d file(s) differ from re/symbols.toml (WRITE=1 rewrites them)" % (differing, files))
     return 1
 
