@@ -3008,3 +3008,17 @@ new = "CastMemorizedSpell"
 kind = "routine"
 why = "ovl09:0545 casts a memorized spell for the AI turn (collects Who Spells, picks one in 02EB range, casts through ovl13_e15 which CombatMenu calls Cast); caller ovl09_e1"
 date = "2026-10-12"
+[[rename]]
+old = "ovl09_fn_0675"
+new = "CanAffordStep"
+kind = "routine"
+why = "ovl09:0675 probes the step BaseDir plus the pattern offset through ProbeStep and returns True only when the step's cost (tile cost times 2, 3 on a diagonal; Moves + 1 on a TileKept tile without one of four affects) is at or below Combat.Moves (ovl09:07B8..07C9); caller ovl09_fn_0898"
+date = "2026-10-12"
+
+[[rename]]
+old = "ds02AE"
+new = "StepTurnOffsets"
+kind = "global"
+why = "7 rows of 5 direction offsets: CanAffordStep adds ds02AE[Combat+15h, Column] to the base direction mod 8 before ProbeStep (ovl09:068B..06C2); ovl09_fn_0898 sets the row to RollDice(1, 2) (ovl09:08CD)"
+date = "2026-10-12"
+

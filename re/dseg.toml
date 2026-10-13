@@ -958,3 +958,8 @@ evidence = "CompareStrings and CompareWords clear its six bytes and set [0..5] f
 offset = 0x6F7F
 name = "SkippedOpcode"
 evidence = "SkipCommand stores the opcode at EclPC in it and dispatches on it (ovl07:1EB7)"
+
+[[global]]
+offset = 0x02AE
+name = "StepTurnOffsets"
+evidence = "7 rows of 5 direction offsets: CanAffordStep adds ds02AE[Combat+15h, Column] to the base direction mod 8 before ProbeStep (ovl09:068B..06C2); ovl09_fn_0898 sets the row to RollDice(1, 2) (ovl09:08CD)"

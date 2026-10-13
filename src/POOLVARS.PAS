@@ -828,6 +828,10 @@ var
   SideOriginRow: array[0..1] of ShortInt;   { per side: the grid origin row in area map steps (ovl10:15A4) }
   FirstRingCells: array[0..1] of ShortInt;  { per side: the cells of its first placement ring (ovl10:17DB) }
   SideFacing: array[0..1] of ShortInt;      { per side: the facing 0..3 (ovl10:1A3D) }
+  { Combat AI step patterns (ovl09): row Combat+$15 (RollDice(1, 2) in ovl09:08CD), column the
+    attempt 0..4; the byte is added to the base direction mod 8 before ProbeStep (ovl09:068B..06C2).
+    Rows of 5 from DS:02AE up to FacingWallDirs (DS:02D2) give 7 rows; row 0 is all zero [I]. }
+  StepTurnOffsets: array[0..6, 0..4] of Byte;
   { Per side facing: the area map directions (entries 1..3) FindStartCell tests for walls (ovl10:1879). }
   FacingWallDirs: array[0..3, 0..3] of Byte;
   { Per side facing: twice the facing of each placement group 0..3 (ovl10:15C5). }

@@ -13,7 +13,7 @@ procedure ovl09_fn_0255;
 function ovl09_fn_02EB(Who: Pointer; Spell, N: Byte): Boolean;
 function UseMagicItem(Who: PCharacter): Boolean;
 function CastMemorizedSpell(Who: PCharacter): Byte;
-procedure ovl09_fn_0675;
+function CanAffordStep(Who: PCharacter; Column, BaseDir: Byte; var OffMap: Byte): Boolean;
 procedure ovl09_fn_06AA;
 procedure ovl09_fn_06AF;
 procedure ovl09_fn_06B4;
@@ -62,6 +62,16 @@ const
   InitiativeQuickAll = $14;     { Initiative marking a quick-combat character (ovl08: InitiativeQuickAll) }
   VarNoCasting = 229;           { game variable (+$1CA) that hides Cast (ovl08: VarNoCasting) }
   MaxSpell = $38;               { highest spell number (ovl23: LastSpell) }
+  Directions = 8;               { the eight combat directions (ds2736/ds273F) }
+  StraightCost = 2;             { a straight step costs twice the tile cost in half squares (ovl09:0718) }
+  DiagonalCost = 3;             { a diagonal step (odd direction) three times (ovl09:0723) }
+  TileKept = $1E;               { the tile ProbeStep always answers when a cell has it (ovl31: TileKept) }
+  { The four affects that let a combatant step onto a TileKept cell (ovl09:0744..07A4); which
+    spells leave them is not known. }
+  AffectKeptA = $20;
+  AffectKeptB = $1E;
+  AffectKeptC = $6F;
+  AffectKeptD = $7D;
 
 { ovl09:000F: retf 4: 4 bytes of parameters; 18 bytes of locals }
 {@stub} procedure ovl09_e1(Who: Pointer); begin end;
@@ -219,8 +229,51 @@ Done:
     CastDone := 0;
   CastMemorizedSpell := CastDone;
 end;
-{ ovl09:0675: frame not read }
-{@stub} procedure ovl09_fn_0675; begin end;
+{ ovl09:0675. Decides whether the computer's combatant Who can afford the step of attempt
+  Column of its step pattern: the direction is BaseDir plus StepTurnOffsets[Combat+$15, Column] mod 8,
+  ProbeStep looks at the cells; when the probed tile is 0 (off the map, GetMapCell) OffMap is 1
+  and the result False at once (ovl09:06EC). Otherwise the result is True when no combatant is
+  in the way, the tile cost is below the moves left and the
+  step's cost (tile cost times 2, or 3 on a diagonal) is at or below the moves left; a TileKept
+  tile is unaffordable unless Who has one of the four AffectKept affects. Called by
+  ovl09_fn_0898 (ovl09:094B). Globals: StepTurnOffsets, CombatTiles. Affect receives the affect
+  res12_fn_2199 finds and is never read. }
+function CanAffordStep(Who: PCharacter; Column, BaseDir: Byte; var OffMap: Byte): Boolean;
+var
+  Affect: Pointer;
+  Turn: Byte;
+  Dir: Byte;
+  Occupant: Byte;
+  Tile: Byte;
+  Cost: Byte;
+begin
+  OffMap := 0;
+  CanAffordStep := False;
+  Turn := StepTurnOffsets[PByteArray(Who^.Combat)^[$15], Column];
+  Dir := (BaseDir + Turn) mod Directions;
+  ProbeStep(Who, Dir, Occupant, Tile);
+  if Tile = 0 then
+  begin
+    OffMap := 1;
+    Exit;
+  end;
+  if Occupant = 0 then
+    if CombatTiles[Tile].Cost < Who^.Combat^.Moves then
+    begin
+      Cost := StraightCost;
+      if Odd(Dir) then
+        Cost := DiagonalCost;
+      Cost := Cost * CombatTiles[Tile].Cost;
+      if Tile = TileKept then
+        if not res12_fn_2199(Who, AffectKeptA, Affect) then
+          if not res12_fn_2199(Who, AffectKeptB, Affect) then
+            if not res12_fn_2199(Who, AffectKeptC, Affect) then
+              if not res12_fn_2199(Who, AffectKeptD, Affect) then
+                Cost := Who^.Combat^.Moves + 1;
+      if Who^.Combat^.Moves >= Cost then
+        CanAffordStep := True;
+    end;
+end;
 { ovl09:06AA: frame not read }
 {@stub} procedure ovl09_fn_06AA; begin end;
 { ovl09:06AF: frame not read }
