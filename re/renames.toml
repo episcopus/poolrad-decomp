@@ -2974,3 +2974,45 @@ kind = "global"
 why = "SkipCommand stores the opcode at EclPC in it and dispatches on it (ovl07:1EB7)"
 date = "2026-10-12"
 
+[[rename]]
+old = "ovl17_fn_02AE"
+new = "CreateSaveDir"
+kind = "routine"
+why = "ovl17:02AE: MkDir of SaveDir minus its trailing backslash (System MkDir = 0AF8:17D6, INT 21h/39), then loops showing 'Put save disk in <drive>:' until IOResult is 0 or 5; called by ovl17_e1/e2/e4/e8/e9 before they touch save files"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl20_fn_02F2"
+new = "CarryRestClock"
+kind = "routine"
+why = "ovl20:02F2 compares each digit of RestTime (the clock, ds6DC2) with its radix (ClockRadix, DS:363A) and carries a full digit into the next one; the top digit (6) ages every party member at +$30 (Age, whitepaper 4.2.5 record at 0x30); called by ovl20:03A3 on RestTime and by ovl20:03D5 (ovl20_e1) on a copy"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl20_fn_03A3"
+new = "NormalizeRestTime"
+kind = "routine"
+why = "ovl20:03A3 carries the rest clock (CarryRestClock) and turns months into days (RestTime[5] into RestTime[4], 30 a month); called after each change of the rest time: by ovl20:0721 (the Inc and Dec keys of the Rest menu) and ovl20:047A"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl20_fn_0565"
+new = "TwoDigitText"
+kind = "routine"
+why = "ovl20:0565 returns a number as two characters (res12_fn_1037 gives its text, a 0 goes in front below 10); called by ovl20:05F0 with RestTime digits (ovl20:0674 and 06CA, 10*RestTime[2]+RestTime[1])"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl20_fn_047A"
+new = "SpendRestTime"
+kind = "routine"
+why = "ovl20:047A takes Amount off RestTime digit Index, borrowing from the next higher nonzero digit; called by ovl20:0721 (the Dec key of the Rest menu) and by ovl20_e2 with Index 1 and Amount 5 (ovl20:0D9D), the minutes spent in each step of the rest"
+date = "2026-10-12"
+
+[[rename]]
+old = "ovl20_fn_05F0"
+new = "ShowRestTime"
+kind = "routine"
+why = "ovl20:05F0 draws the rest time on row 17: the Rest Time: label (string at DS:05E3), days and hours as two digits (TwoDigitText of RestTime[4] and [3]) and the minutes (10*RestTime[2]+RestTime[1]); the field Selected is drawn in colour 15; called by ovl20:0721 (ovl20:0734) and by ovl20_e2 (ovl20:0D13)"
+date = "2026-10-12"
+

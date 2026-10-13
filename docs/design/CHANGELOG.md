@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-12 | 5.22.1 | The camp's rest clock: the radix table, the carry, the age at the top digit, normalizing, spending, the game clock entry ovl20_e1, TwoDigitText and ShowRestTime (6 of 21 ovl20 routines at L2) | make match UNIT=ovl20 (6 matched, 0 differ); make check receipt 389de2adb494 |
 | 2026-10-12 | process | Share evidence and failed experiments, attribute agent/task outcomes, and add bounded pre-started expert advice with unchanged byte proof | make check (206 tests, 316 matches); stale-learning, identity, budget and cache regressions |
 | 2026-10-12 | process | Harden agent coordination, run admission and integration evidence; require explicit human staffing authority | make check (175 tests, 316 matches); historical merge preservation checks |
 | 2026-10-12 | 4.2.2, 5.1, 5.2.1 | ovl07 script machine: address space, character window, operands, packed strings, helpers; header read at 9900h; DS:6AAF is the party facing | make match UNIT=ovl07 (unit complete, 33 routines) |

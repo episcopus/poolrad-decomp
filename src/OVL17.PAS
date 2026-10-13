@@ -1,11 +1,14 @@
 unit OVL17;
-{ SaveLoad: overlay unit, 9189 bytes of code. Skeleton by tools/match/skeleton.py: every routine is a stub
-  until decompiled (playbook 30). }
+{ SaveLoad: the save and load unit (whitepaper 4.4). Its entry points write and read the files of a
+  saved game on the save disk: the per-character CHRDAT<slot><n>.SAV/.ITM/.SPC files with their
+  character (285 bytes), item (63 bytes) and affect (9 bytes) records. The file names are built
+  from SaveDir and the game directory, CreateSaveDir makes the save directory on the save disk, and
+  the "Put save disk in <drive>:" prompt shows while that disk is missing. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 procedure ovl17_e1;
 procedure ovl17_e2;
-procedure ovl17_fn_02AE;
+procedure CreateSaveDir;
 procedure ovl17_fn_032F;
 procedure ovl17_e3;
 procedure ovl17_e4;
@@ -23,13 +26,33 @@ procedure ovl17_e8;
 procedure ovl17_e9;
 procedure ovl17_e11;
 implementation
+uses POOLVARS, RES06;
+
+const
+  Yellow = $0E;        { EGA text colour of the disk prompt (the message colour OVL00 also uses) }
+  IoSuccess = 0;       { IOResult of a MkDir that created the directory }
+  IoDirExists = 5;     { IOResult of a MkDir when the directory is already there (DOS access denied) }
 
 { ovl17:0010: retf 4: 4 bytes of parameters; 524 bytes of locals }
 {@stub} procedure ovl17_e1; begin end;
 { ovl17:01B8: retf 4: 4 bytes of parameters; 774 bytes of locals }
 {@stub} procedure ovl17_e2; begin end;
-{ ovl17:02AE: retf 0: 0 bytes of parameters; 514 bytes of locals }
-{@stub} procedure ovl17_fn_02AE; begin end;
+{ ovl17:02AE. Makes sure the save directory exists on the save disk: MkDir of SaveDir without its
+  trailing backslash, and while that fails with anything but success or "already there" it shows
+  "Put save disk in <drive>:" (the drive letter SaveDir starts with) and tries again. Reads SaveDir,
+  creates the directory on the save disk as a side effect. Called before the save files are touched
+  by ovl17_e1, ovl17_e2, ovl17_e4, ovl17_e8 and ovl17_e9. }
+procedure CreateSaveDir;
+var
+  ErrCode: Word;
+begin
+  repeat
+    MkDir(Copy(SaveDir, 1, Length(SaveDir) - 1));
+    ErrCode := IOResult;
+    if (ErrCode <> IoSuccess) and (ErrCode <> IoDirExists) then
+      ShowMessageLine(Yellow, 'Put save disk in ' + SaveDir[1] + ':');
+  until (ErrCode = IoSuccess) or (ErrCode = IoDirExists);
+end;
 { ovl17:032F: retf 8: 8 bytes of parameters; 6 bytes of locals }
 {@stub} procedure ovl17_fn_032F; begin end;
 { ovl17:0482: retf 2: 2 bytes of parameters; 554 bytes of locals }

@@ -958,3 +958,8 @@ evidence = "CompareStrings and CompareWords clear its six bytes and set [0..5] f
 offset = 0x6F7F
 name = "SkippedOpcode"
 evidence = "SkipCommand stores the opcode at EclPC in it and dispatches on it (ovl07:1EB7)"
+
+[[global]]
+offset = 0x363A
+name = "ClockRadix"
+evidence = "seven words in the image at DS:363A: 10, 10, 6, 24, 30, 12, 256 (start-unpack.exe, read by a Python script); ovl20:02F2 compares digit I with ClockRadix[I] and carries at the radix, ds3642 is its element 4 (ovl20:03A3)"

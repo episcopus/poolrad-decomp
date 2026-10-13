@@ -108,7 +108,7 @@ def claim(argv=None) -> int:
             # hand-off): the worktree and branch are reused, nothing is duplicated.
             a.reused = True
             break
-        if common.pending_handoff(prefix + unit):
+        if common.pending_handoff(prefix + unit) and not rejected_owner(prefix + unit, a.agent):
             raise ValueError("%s has a hand-off waiting; do not duplicate unmerged work" % unit)
         if common.try_lock(prefix + unit, lock.body(prefix + unit, a.agent,
                                                     "%s/%s" % ("review" if a.review else "unit", unit))):
@@ -134,6 +134,16 @@ def owned(key: str, agent: str) -> bool:
         return common.fields(path.read_text()).get("agent") == agent
     except ValueError:
         return False
+
+
+def rejected_owner(key: str, agent: str) -> bool:
+    """True when the pending hand-off of `key` was rejected by `make integrate` and belongs to `agent`:
+    the owner may take the unit back (the lock may have been released meanwhile)."""
+    path = common.common_dir() / "poolrad-handoffs" / (key + ".md")
+    if not path.exists():
+        return False
+    f = common.fields(path.read_text())
+    return f.get("integrate") == "rejected" and f.get("agent") == agent
 
 
 def rejection(key: str) -> str:

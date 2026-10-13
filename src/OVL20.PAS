@@ -1,15 +1,17 @@
 unit OVL20;
-{ PartyHeal: overlay unit, 3685 bytes of code. Skeleton by tools/match/skeleton.py: every routine is a stub
-  until decompiled (playbook 30). }
+{ PartyHeal (re/units.toml): the camp's rest, 3685 bytes of code. ovl20_e2 is the rest that RestParty (ovl15)
+  starts: it keeps the rest clock RestTime, shows the "Rest daYs Hours Mins Inc Dec Exit" menu, heals the party
+  and reports interruptions (whitepaper 5.22). }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
-procedure ovl20_fn_0000;
-procedure ovl20_fn_02F2;
-procedure ovl20_fn_03A3;
-procedure ovl20_e1(A, B: Byte);
-procedure ovl20_fn_047A;
-procedure ovl20_fn_0565;
-procedure ovl20_fn_05F0;
+uses POOLVARS, RES06;
+procedure ovl20_fn_0000(Amount: Byte; Index: ShortInt);
+procedure CarryRestClock(var Clock: TRestClock);
+procedure NormalizeRestTime;
+procedure ovl20_e1(Amount: Byte; Index: ShortInt);
+procedure SpendRestTime(Amount: Byte; Index: ShortInt);
+function TwoDigitText(Number: Byte): String40;
+procedure ShowRestTime(Selected: ShortInt);
 procedure ovl20_fn_0721;
 procedure ovl20_fn_0871;
 procedure ovl20_fn_0925;
@@ -24,21 +26,150 @@ procedure ovl20_fn_0B89;
 procedure ovl20_fn_0BB2;
 function ovl20_e2: Byte;
 implementation
+uses RES12;
+const
+  RestLabelColumn = 1;      { the column of the "Rest Time:" label }
+  RestFirstColumn = 11;     { the column where the days field starts }
+  RestRow = 17;             { the text row of the rest time line }
+  RestTextColour = 10;      { EGA colour of the rest time }
+  RestSelectedColour = 15;  { EGA colour of the field the player is changing }
 
 { ovl20:0000: retf 4: 4 bytes of parameters; 28 bytes of locals }
-{@stub} procedure ovl20_fn_0000; begin end;
-{ ovl20:02F2: retf 4: 4 bytes of parameters; 6 bytes of locals }
-{@stub} procedure ovl20_fn_02F2; begin end;
-{ ovl20:03A3: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl20_fn_03A3; begin end;
-{ ovl20:03D5: retf 4: 4 bytes of parameters; 18 bytes of locals }
-{@stub} procedure ovl20_e1(A, B: Byte); begin end;
-{ ovl20:047A: retf 4: 4 bytes of parameters; 4 bytes of locals }
-{@stub} procedure ovl20_fn_047A; begin end;
-{ ovl20:0565: retf 2: 2 bytes of parameters; 298 bytes of locals }
-{@stub} procedure ovl20_fn_0565; begin end;
-{ ovl20:05F0: retf 2: 2 bytes of parameters; 272 bytes of locals }
-{@stub} procedure ovl20_fn_05F0; begin end;
+{@stub} procedure ovl20_fn_0000(Amount: Byte; Index: ShortInt); begin end;
+{ ovl20:02F2: retf 4: a var pointer to the rest clock (4 bytes of parameters); 6 bytes of locals.
+  Carries the clock up its digits: digit I at or above its radix (ClockRadix[I], DS:363A) gives one
+  unit to digit I+1 and loses the radix, for digits 0..5. The top digit has no next digit: while it is
+  at or above its radix, every character on the party list gains one year of age (TCharacter.Age,
+  +$30) and the radix is kept [I]. }
+procedure CarryRestClock(var Clock: TRestClock);
+var
+  Digit: ShortInt;
+  Who: PCharacter;
+begin
+  for Digit := 0 to 6 do
+    if Clock[Digit] >= ClockRadix[Digit] then
+      if Digit <> 6 then
+      begin
+        Inc(Clock[Succ(Digit)]);
+        Clock[Digit] := Clock[Digit] - ClockRadix[Digit];
+      end
+      else
+      begin
+        Who := PCharacter(ds5D96);
+        while Who <> nil do
+        begin
+          Inc(Who^.Age);
+          Who := Who^.Next;
+        end;
+      end;
+end;
+{ ovl20:03A3: retf 0: no parameters, no locals. Settles the rest time after a change (ovl20:0721 and
+  ovl20:047A call it): carries the clock, then turns the months (RestTime[5]) into days at ClockRadix[4],
+  30 days a month, and keeps the days (RestTime[4]) at 99 (0x63) or less. }
+procedure NormalizeRestTime;
+begin
+  CarryRestClock(RestTime);
+  if RestTime[5] > 0 then
+  begin
+    Inc(RestTime[4], ClockRadix[4] * RestTime[5]);
+    RestTime[5] := 0;
+    if RestTime[4] > 99 then
+      RestTime[4] := 99;
+  end;
+end;
+{ ovl20:03D5: retf 4: Amount and Index (4 bytes of parameters); 18 bytes of locals. Advances the game clock by
+  Amount units of digit Index: the seven game variables at 49C6h..49CCh (VarsAt4900, the digits CarryRestClock
+  works on) are copied to a local clock, each unit is added and carried, and the clock is written back; then
+  ovl20_fn_0000 runs with the same arguments. The camp's rest advances it 5 minutes at a time (ovl20_e2 calls
+  it with Index 1 and Amount 5). Purpose unknown: the name stays as the entry other units call (OVL14, OVL15,
+  OVL08 and ovl20_e2 reference it, so a rename is a cross-unit change); what the passing time changes is in
+  ovl20_fn_0000, not decompiled yet. }
+procedure ovl20_e1(Amount: Byte; Index: ShortInt);
+var
+  Clock: TRestClock;
+  Digit: ShortInt;
+  Step: Byte;
+begin
+  for Digit := 0 to 6 do
+    Clock[Digit] := VarsAt4900^[$49C6 + Digit];
+  for Step := 1 to Amount do
+  begin
+    Inc(Clock[Index]);
+    CarryRestClock(Clock);
+  end;
+  for Digit := 0 to 6 do
+    VarsAt4900^[$49C6 + Digit] := Clock[Digit];
+  ovl20_fn_0000(Amount, Index);
+end;
+{ ovl20:047A: retf 4: Amount and Index (4 bytes of parameters); 4 bytes of locals. Takes Amount off the
+  rest clock digit Index (the Dec key of the Rest menu, ovl20:0721, and the rest's countdown, ovl20_e2).
+  Nothing happens when the minutes, tens, hours and days (RestTime[1..4]) are all zero. Otherwise, while
+  Amount is more than the digit, the next higher digit that is not zero lends one unit to the digits below
+  it (each gets its radix, ClockRadix); when no such digit below the months is left, the clock is cleared
+  and Amount becomes 0. The digit then loses Amount and the clock is normalized (NormalizeRestTime). }
+procedure SpendRestTime(Amount: Byte; Index: ShortInt);
+var
+  Lender: ShortInt;
+  Digit: ShortInt;
+begin
+  if (RestTime[4] <> 0) or (RestTime[3] <> 0) or (RestTime[2] <> 0) or (RestTime[1] <> 0) then
+  begin
+    while Amount > RestTime[Index] do
+    begin
+      Lender := Succ(Index);
+      while (RestTime[Lender] = 0) and (Lender < 5) do
+        Lender := Succ(Lender);
+      if Lender = 5 then
+      begin
+        FillChar(RestTime, 14, 0);
+        Amount := 0;
+      end
+      else
+        for Digit := Lender downto Succ(Index) do
+        begin
+          Dec(RestTime[Digit]);
+          Inc(RestTime[Pred(Digit)], ClockRadix[Pred(Digit)]);
+        end;
+    end;
+    Dec(RestTime[Index], Amount);
+    NormalizeRestTime;
+  end;
+end;
+{ ovl20:0565: retf 2: Number (2 bytes of parameters) and the String40 result, which the caller pushes
+  before Number; 298 bytes of locals (S and the compiler's string temporary). The result is Number as
+  two characters: res12_fn_1037 gives its text, a '0' goes in front below 10, the first two are kept. }
+function TwoDigitText(Number: Byte): String40;
+var
+  Digits: String40;
+begin
+  Digits := res12_fn_1037(Number);
+  if Number < 10 then
+    Digits := '0' + Digits;
+  TwoDigitText := Copy(Digits, 1, 2);
+end;
+{ ovl20:05F0: retf 2: Selected (2 bytes of parameters); 272 bytes of locals. Draws the rest time on row 17:
+  "Rest Time:" and then days and hours as two digits with colons between them, and the minutes (the tens
+  and the minutes of RestTime, 10 * RestTime[2] + RestTime[1]). The field Selected is drawn in colour 15,
+  the others in 10. }
+procedure ShowRestTime(Selected: ShortInt);
+var
+  Digit: ShortInt;
+  Colors: array[0..6] of Word;
+  Col: Byte;
+begin
+  for Digit := 0 to 6 do
+    Colors[Digit] := RestTextColour;
+  Colors[Selected] := RestSelectedColour;
+  DrawTextAt(RestLabelColumn, RestRow, RestTextColour, 'Rest Time:');
+  Col := RestFirstColumn;
+  for Digit := 4 downto 3 do
+  begin
+    DrawTextAt(Col + 1, RestRow, Colors[Digit], TwoDigitText(RestTime[Digit]));
+    DrawTextAt(Col + 1 + 1 + 1, RestRow, RestTextColour, ':');
+    Inc(Col, 3);
+  end;
+  DrawTextAt(Col + 1, RestRow, Colors[2], TwoDigitText(10 * RestTime[2] + RestTime[1]));
+end;
 { ovl20:0721: retf 0: 0 bytes of parameters; 46 bytes of locals }
 {@stub} procedure ovl20_fn_0721; begin end;
 { ovl20:0871: retf 0: 0 bytes of parameters; 32 bytes of locals }
