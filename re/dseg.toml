@@ -781,6 +781,11 @@ name = "GlyphPixelMasks"
 evidence = "DrawGlyph mode 0 picks ds25E5[Bit] for pixel column Bit 0..7 of the 16-bit text-scanline word (0709:02B0)"
 
 [[global]]
+offset = 0x25F6
+name = "EgaPlaneBitMasks"
+evidence = "res07_fn_1951 (0464:1A6E) writes ds25F6[Plane] (1, 2, 4, 8) to the Sequencer Map Mask (port 3C5h) for plane 0..3 when it copies one byte per plane at DS:5050[Row]+Col in segment A000"
+
+[[global]]
 offset = 0x0508
 name = "CampMenuText"
 evidence = "DS:0508 holds string[40] 'Save View Magic Rest Alter Exit' (image); MakeCamp passes it to ReadPromptChoice (ovl15:1F06) and dispatches S, V, M, R, A on it"
@@ -958,6 +963,11 @@ evidence = "CompareStrings and CompareWords clear its six bytes and set [0..5] f
 offset = 0x6F7F
 name = "SkippedOpcode"
 evidence = "SkipCommand stores the opcode at EclPC in it and dispatches on it (ovl07:1EB7)"
+
+[[global]]
+offset = 0x363A
+name = "ClockRadix"
+evidence = "seven words in the image at DS:363A: 10, 10, 6, 24, 30, 12, 256 (start-unpack.exe, read by a Python script); ovl20:02F2 compares digit I with ClockRadix[I] and carries at the radix, ds3642 is its element 4 (ovl20:03A3)"
 
 [[global]]
 offset = 0x02AE

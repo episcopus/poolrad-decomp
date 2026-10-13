@@ -2952,7 +2952,7 @@ evidence = ["prologue"]
 id = "ovl10:0000"
 unit = "ovl10"
 addr = "ovl10:0000"
-size = 299
+size = 429
 name = "ScatterRareTiles"
 signature = ""
 c_name = "ovl10_fn_0000"
@@ -2971,7 +2971,7 @@ signature = ""
 c_name = "ovl10_fn_012B"
 level = "none"
 justification = ""
-notes = "blocked with its parent PassageKind (nested routine, draft in PassageKind's notes); renamed from ovl10_fn_012B (ovl10:012B (nested in PassageKind): for an area map cell in 0..15 answers 1 when DoorKindAt is 0 (a solid wall), 0 when WallIdAt is 0 (no wall), else 3 (a door); off the map 0 for the west and east sides on the party row, else 1); auto:near_call"
+notes = "nested in PassageKind (ovl10:01AD), proven by the parent's match (NESTED line of make match UNIT=ovl10, dec-r10 2026-10-12); level not written: make match WRITE=1 deletes this record as a map entry inside the matched parent before its nested loop would set L2 (tools/match/match.py write_levels, reported in the hand-off); renamed from ovl10_fn_012B (ovl10:012B (nested in PassageKind): for an area map cell in 0..15 answers 1 when DoorKindAt is 0 (a solid wall), 0 when WallIdAt is 0 (no wall), else 3 (a door); off the map 0 for the west and east sides on the party row, else 1); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2982,7 +2982,7 @@ size = 116
 name = "PassageKind"
 signature = "function PassageKind(Col, Row: ShortInt; Dir: Byte): Byte"
 c_name = "ovl10_fn_01AD"
-level = "none"
+level = "L2"
 justification = ""
 notes = "blocked (dec-16, 2026-10-12): the draft compiles to the original's bytes except the address fields of its nested WallSideKind (lcalls to DoorKindAt and WallIdAt, ds6AAE at 018A), which the matcher compares byte for byte in the parent's pre-entry region (held limit escalate-res06-20261012110841); every other byte of 012B..0220 is equal (byte diff of a probe build). Draft: function PassageKind(Col, Row: ShortInt; Dir: Byte): Byte; var Here, There: Byte; OppositeDir: Byte; function WallSideKind(Col, Row: ShortInt; Dir: Byte): Byte; begin if (Col >= 0) and (Col <= 15) and (Row >= 0) and (Row <= 15) then begin if DoorKindAt(Col, Row, Dir) = 0 then WallSideKind := 1 else if WallIdAt(Col, Row, Dir) = 0 then WallSideKind := 0 else WallSideKind := 3; end else if (Row = ds6AAE) and ((Dir = 2) or (Dir = 6)) then WallSideKind := 0 else WallSideKind := 1; end; begin OppositeDir := (Dir + 4) mod 8; Here := WallSideKind(Col, Row, Dir); There := WallSideKind(Col + ds2736[Dir], Row + ds273F[Dir], OppositeDir); PassageKind := Here or There; end;; renamed from ovl10_fn_01AD (ovl10:01AD ORs WallSideKind of side Dir of the area map cell with WallSideKind of the opposite side of the neighbour that way (ds2736/ds273F): 1 a wall, 0 open, 3 with a door); auto:near_call"
 evidence = ["prologue"]
@@ -3062,14 +3062,14 @@ signature = ""
 c_name = "ovl10_fn_0810"
 level = "none"
 justification = ""
-notes = "blocked (dec-16, 2026-10-12): the draft compiles to the original's bytes except CombatMap's address in its nested SetDungeonCell (02AA), compared byte for byte in the pre-entry region (held limit escalate-res06-20261012110841); every other byte of 0221..08A3 is equal apart from ds6AAD/ds6AAE in the body. Draft: procedure BuildDungeonMap; var I, J: ShortInt; MapX, MapY: ShortInt; Unused: array[0..1] of Byte; North, West, East: Byte; Unused2: Byte; procedure SetDungeonCell(SubCol, SubRow, Picture: Byte); var Col, Row: ShortInt; begin Col := I * 6 + J * 5 + $15 + SubCol; Row := J * 5 + $A + SubRow; if (Col >= 0) and (Col <= MapLastCol) and (Row >= 0) and (Row <= MapLastRow) then CombatMap^.Cells[Row, Col] := Picture + 1; end; procedure DrawFloorAndWest; var SubCol, SubRow: Byte; begin for SubRow := 2 to 4 do for SubCol := 0 to 5 do SetDungeonCell(SubCol, SubRow, $16); if West = 1 then for SubRow := 2 to 4 do begin SetDungeonCell(SubRow - 1, SubRow, 4); SetDungeonCell(SubRow, SubRow, 3); SetDungeonCell(SubRow + 1, SubRow, $D); end else if West = 3 then begin SetDungeonCell(1, 2, 8); SetDungeonCell(5, 4, 0); end; end; procedure DrawNorthSide; var Unused: array[0..1] of Byte; begin if North = 1 then begin SetDungeonCell(3, 0, 5); SetDungeonCell(4, 0, 5); SetDungeonCell(3, 1, $A); SetDungeonCell(4, 1, $A); end else begin SetDungeonCell(3, 0, $16); SetDungeonCell(4, 0, $16); SetDungeonCell(3, 1, $16); SetDungeonCell(4, 1, $16); end; end; procedure DrawNorthWestCorner; var K: Byte; TopLeft, BottomLeft, TopRight, BottomRight: Byte; Corner: Byte; begin if (PassageKind(MapX, MapY - 1, 6) = 0) and (PassageKind(MapX - 1, MapY, 0) = 0) then Corner := 1 else Corner := 0; for K := 1 to 4 do case K of 1: case North of 0: case West of 0: TopLeft := $16; 3: TopLeft := $D; 1: if Corner <> 0 then TopLeft := 0 else TopLeft := $D; end; 3, 1: if West = 0 then if Corner <> 0 then TopLeft := $F else TopLeft := 5 else if Corner <> 0 then TopLeft := $12 else TopLeft := 2; end; 2: case North of 0: TopRight := $16; 3: TopRight := $11; 1: TopRight := 5; end; 3: case West of 0: if North = 0 then BottomLeft := $16 else if Corner <> 0 then BottomLeft := $10 else BottomLeft := $A; 3: if Corner <> 0 then BottomLeft := $14 else BottomLeft := 7; 1: if Corner <> 0 then BottomLeft := 1 else BottomLeft := 3; end; 4: case West of 0, 3: case North of 0: BottomRight := $16; 3: BottomRight := $17; 1: BottomRight := $A; end; 1: case North of 0: BottomRight := $D; 3: BottomRight := $15; 1: BottomRight := 6; end; end; end; SetDungeonCell(1, 0, TopLeft); SetDungeonCell(2, 0, TopRight); SetDungeonCell(1, 1, BottomLeft); SetDungeonCell(2, 1, BottomRight); end; procedure DrawNorthEastCorner; var K: Byte; TopLeft, BottomLeft, TopRight, BottomRight: Byte; Corner: Byte; NorthEast, EastNorth: Byte; begin NorthEast := PassageKind(MapX, MapY - 1, 2); EastNorth := PassageKind(MapX + 1, MapY, 0); if (NorthEast = 0) and (EastNorth = 0) then Corner := 1 else Corner := 0; for K := 1 to 4 do case K of 1: case North of 0: if NorthEast = 1 then TopLeft := 4 else TopLeft := $16; 3: TopLeft := $F; 1: TopLeft := 5; end; 2: if North = 0 then case NorthEast of 0: TopRight := $16; 3: if (East = 0) and (EastNorth <> 0) then TopRight := $18 else TopRight := 1; 1: if (East = 0) and (EastNorth <> 0) then TopRight := $B else TopRight := 3; end else if East <> 0 then TopRight := 9 else if EastNorth <> 0 then TopRight := 5 else if Corner <> 0 then TopRight := $11 else TopRight := $13; 3: case North of 0: BottomLeft := $16; 3: BottomLeft := $10; 1: BottomLeft := $A; end; 4: if North = 0 then begin if NorthEast = 0 then BottomRight := $16 else if East <> 0 then BottomRight := 4 else if EastNorth = 0 then BottomRight := 8 else BottomRight := $C; end else if East <> 0 then BottomRight := $E else if EastNorth = 0 then BottomRight := $17 else BottomRight := $A; end; SetDungeonCell(5, 0, TopLeft); SetDungeonCell(6, 0, TopRight); SetDungeonCell(5, 1, BottomLeft); SetDungeonCell(6, 1, BottomRight); end; begin for J := -2 to 2 do for I := -6 to 6 do begin MapX := ds6AAD + I; MapY := ds6AAE + J; West := PassageKind(MapX, MapY, 6); North := PassageKind(MapX, MapY, 0); East := PassageKind(MapX, MapY, 2); DrawFloorAndWest; DrawNorthSide; DrawNorthWestCorner; DrawNorthEastCorner; end; ScatterRareTiles; end;; renamed from ovl10_fn_0810 (ovl10:0810 (CreateCombatMap calls it when AreaViewKind is 1) draws the combat map from the walls (PassageKind) of the area map cells within 6 columns and 2 rows of the party (ds6AAD, ds6AAE), then ScatterRareTiles); auto:near_call"
+notes = "blocked (dec-r10, 2026-10-12): the draft compiles to the original's bytes except CombatMap's address inside its nested SetDungeonCell (02AA..02AB; byte diff of build A against build/re/overlays/ovl10.bin: those two bytes are the only difference in 0221..0810). SetDungeonCell is called only by its sibling nested routines (push word ptr [bp+6]; push cs; call at 02DD, 0320, ...), never by the parent, so the strict nested rule (escalate-general-20261012012957, nested_routines() condition 2) does not prove it and its address field stays byte-exact; dec-16's earlier note attributed this to escalate-res06-20261012110841, which is now in (commit c7265b6) and proves the other four nested routines. Needs the human: extend condition 2 to a sibling call from a proven nested routine (static link push word ptr [bp+6]), or leave blocked. Draft (readable, matches except that field): procedure BuildDungeonMap; var CellCol, CellRow: ShortInt; MapX, MapY: ShortInt; Unused: array[0..1] of Byte; North, West, East: Byte; Unused2: Byte; procedure SetDungeonCell(SubCol, SubRow, Picture: Byte); var Col, Row: ShortInt; begin Col := CellCol * 6 + CellRow * 5 + $15 + SubCol; Row := CellRow * 5 + $A + SubRow; if (Col >= 0) and (Col <= MapLastCol) and (Row >= 0) and (Row <= MapLastRow) then CombatMap^.Cells[Row, Col] := Picture + 1; end; procedure DrawFloorAndWest; var SubCol, SubRow: Byte; begin for SubRow := 2 to 4 do for SubCol := 0 to 5 do SetDungeonCell(SubCol, SubRow, GroundPicture); if West = SideWall then for SubRow := 2 to 4 do begin SetDungeonCell(SubRow - 1, SubRow, 4); SetDungeonCell(SubRow, SubRow, 3); SetDungeonCell(SubRow + 1, SubRow, $D); end else if West = SideDoor then begin SetDungeonCell(1, 2, 8); SetDungeonCell(5, 4, 0); end; end; procedure DrawNorthSide; var Unused: array[0..1] of Byte; begin if North = SideWall then begin SetDungeonCell(3, 0, 5); SetDungeonCell(4, 0, 5); SetDungeonCell(3, 1, $A); SetDungeonCell(4, 1, $A); end else begin SetDungeonCell(3, 0, GroundPicture); SetDungeonCell(4, 0, GroundPicture); SetDungeonCell(3, 1, GroundPicture); SetDungeonCell(4, 1, GroundPicture); end; end; procedure DrawNorthWestCorner; var K: Byte; TopLeft, BottomLeft, TopRight, BottomRight: Byte; OpenCorner: Byte; begin if (PassageKind(MapX, MapY - 1, DirWest) = SideOpen) and (PassageKind(MapX - 1, MapY, DirNorth) = SideOpen) then OpenCorner := 1 else OpenCorner := 0; for K := 1 to 4 do case K of 1: case North of SideOpen: case West of SideOpen: TopLeft := GroundPicture; SideDoor: TopLeft := $D; SideWall: if OpenCorner <> 0 then TopLeft := 0 else TopLeft := $D; end; SideDoor, SideWall: if West = SideOpen then if OpenCorner <> 0 then TopLeft := $F else TopLeft := 5 else if OpenCorner <> 0 then TopLeft := $12 else TopLeft := 2; end; 2: case North of SideOpen: TopRight := GroundPicture; SideDoor: TopRight := $11; SideWall: TopRight := 5; end; 3: case West of SideOpen: if North = SideOpen then BottomLeft := GroundPicture else if OpenCorner <> 0 then BottomLeft := $10 else BottomLeft := $A; SideDoor: if OpenCorner <> 0 then BottomLeft := $14 else BottomLeft := 7; SideWall: if OpenCorner <> 0 then BottomLeft := 1 else BottomLeft := 3; end; 4: case West of SideOpen, SideDoor: case North of SideOpen: BottomRight := GroundPicture; SideDoor: BottomRight := $17; SideWall: BottomRight := $A; end; SideWall: case North of SideOpen: BottomRight := $D; SideDoor: BottomRight := $15; SideWall: BottomRight := 6; end; end; end; SetDungeonCell(1, 0, TopLeft); SetDungeonCell(2, 0, TopRight); SetDungeonCell(1, 1, BottomLeft); SetDungeonCell(2, 1, BottomRight); end; procedure DrawNorthEastCorner; var K: Byte; TopLeft, BottomLeft, TopRight, BottomRight: Byte; OpenCorner: Byte; NorthEast, EastNorth: Byte; begin NorthEast := PassageKind(MapX, MapY - 1, DirEast); EastNorth := PassageKind(MapX + 1, MapY, DirNorth); if (NorthEast = SideOpen) and (EastNorth = SideOpen) then OpenCorner := 1 else OpenCorner := 0; for K := 1 to 4 do case K of 1: case North of SideOpen: if NorthEast = SideWall then TopLeft := 4 else TopLeft := GroundPicture; SideDoor: TopLeft := $F; SideWall: TopLeft := 5; end; 2: if North = SideOpen then case NorthEast of SideOpen: TopRight := GroundPicture; SideDoor: if (East = SideOpen) and (EastNorth <> SideOpen) then TopRight := $18 else TopRight := 1; SideWall: if (East = SideOpen) and (EastNorth <> SideOpen) then TopRight := $B else TopRight := 3; end else if East <> SideOpen then TopRight := 9 else if EastNorth <> SideOpen then TopRight := 5 else if OpenCorner <> 0 then TopRight := $11 else TopRight := $13; 3: case North of SideOpen: BottomLeft := GroundPicture; SideDoor: BottomLeft := $10; SideWall: BottomLeft := $A; end; 4: if North = SideOpen then begin if NorthEast = SideOpen then BottomRight := GroundPicture else if East <> SideOpen then BottomRight := 4 else if EastNorth = SideOpen then BottomRight := 8 else BottomRight := $C; end else if East <> SideOpen then BottomRight := $E else if EastNorth = SideOpen then BottomRight := $17 else BottomRight := $A; end; SetDungeonCell(5, 0, TopLeft); SetDungeonCell(6, 0, TopRight); SetDungeonCell(5, 1, BottomLeft); SetDungeonCell(6, 1, BottomRight); end; begin for CellRow := -2 to 2 do for CellCol := -6 to 6 do begin MapX := ds6AAD + CellCol; MapY := ds6AAE + CellRow; West := PassageKind(MapX, MapY, DirWest); North := PassageKind(MapX, MapY, DirNorth); East := PassageKind(MapX, MapY, DirEast); DrawFloorAndWest; DrawNorthSide; DrawNorthWestCorner; DrawNorthEastCorner; end; ScatterRareTiles; end;; renamed from ovl10_fn_0810 (ovl10:0810 (CreateCombatMap calls it when AreaViewKind is 1) draws the combat map from the walls (PassageKind) of the area map cells within 6 columns and 2 rows of the party (ds6AAD, ds6AAE), then ScatterRareTiles); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl10:08A4"
 unit = "ovl10"
 addr = "ovl10:08A4"
-size = 755
+size = 826
 name = "BlockTerrainFlags"
 signature = "function BlockTerrainFlags: Byte"
 c_name = "ovl10_fn_08A4"
@@ -3088,7 +3088,7 @@ signature = ""
 c_name = "ovl10_fn_0B97"
 level = "none"
 justification = ""
-notes = "blocked with its parent PlaceRiver (nested routine, draft in PlaceRiver's notes); renamed from ovl10_fn_0B97 (ovl10:0B97 (nested in PlaceRiver) puts tiles 34h and 35h on two neighbouring cells of a river row and counts the bridge pieces); auto:near_call"
+notes = "nested in PlaceRiver (ovl10:0BDE), proven by the parent's match (NESTED line of make match UNIT=ovl10, dec-r10 2026-10-12); level not written: make match WRITE=1 deletes this record as a map entry inside the matched parent before its nested loop would set L2 (tools/match/match.py write_levels, reported in the hand-off); renamed from ovl10_fn_0B97 (ovl10:0B97 (nested in PlaceRiver) puts tiles 34h and 35h on two neighbouring cells of a river row and counts the bridge pieces); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3099,7 +3099,7 @@ size = 309
 name = "PlaceRiver"
 signature = ""
 c_name = "ovl10_fn_0BDE"
-level = "none"
+level = "L2"
 justification = ""
 notes = "blocked (dec-16, 2026-10-12): the draft compiles to the original's bytes except the address fields of its nested PlaceBridge (CombatMap at 0BAB, 0BC8), compared byte for byte in the pre-entry region (held limit escalate-res06-20261012110841); the body differs only in CombatMap and RollDice addresses. Draft: procedure PlaceRiver; var Chance: Byte; Bridges: Byte; StartCol: ShortInt; Col, Row: ShortInt; Unused: Byte; procedure PlaceBridge(Row, Col: ShortInt); begin CombatMap^.Cells[Row, Col] := $34; CombatMap^.Cells[Row, Col + 1] := $35; Inc(Bridges); end; begin Chance := 0; Bridges := 0; if (BlockTerrainFlags and FlagRiverSometimes) <> 0 then Chance := $23; if (BlockTerrainFlags and FlagRiverOften) <> 0 then Chance := $4B; if RollDice(1, 100) <= Chance then begin Col := $22 - RollDice(5, 4); while (Col + 2) mod 7 > 0 do Dec(Col); StartCol := Col; for Row := 0 to MapLastRow do if Col <= MapLastCol then begin CombatMap^.Cells[Row, Col] := $32; CombatMap^.Cells[Row, Col + 1] := $33; if (RollDice(1, $14) = 1) or Odd(Bridges) then PlaceBridge(Row, Col); Inc(Col); end; if Bridges = 0 then begin Row := $C - RollDice(1, 9) + 4; Col := StartCol + Row; PlaceBridge(Row, Col); PlaceBridge(Row + 1, Col + 1); end; end; end;; renamed from ovl10_fn_0BDE (ovl10:0BDE draws a diagonal river (tiles 32h, 33h) down the wilderness combat map with 35 or 75 in 100 for the BlockTerrainFlags bits 20h and 10h, with bridge pieces (PlaceBridge) at random rows or at least one); auto:near_call; map dec-16 2026-10-12: ends 0D13 (was 16); 0BEE was mid-routine, entry deleted"
 evidence = ["prologue"]
@@ -6907,26 +6907,13 @@ evidence = ["prologue"]
 id = "ovl15:0B5B"
 unit = "ovl15"
 addr = "ovl15:0B5B"
-size = 732
+size = 1121
 name = "ScribeScrolls"
 signature = "procedure ScribeScrolls"
 c_name = "ovl15_fn_0B5B"
 level = "L2"
 justification = ""
 notes = "renamed from ovl15_fn_0B5B (ovl15:0B5B strings 'Scribe These Spells?', 'has no copyable scrolls', 'You can not scribe that spell.': marks a scroll spell with bit 7 for scribing); auto:near_call"
-evidence = ["prologue"]
-
-[[routine]]
-id = "ovl15:0E37"
-unit = "ovl15"
-addr = "ovl15:0E37"
-size = 389
-name = "AddDisplayLine"
-signature = "procedure AddDisplayLine(Flag: Byte; Text: String40)"
-c_name = "ovl15_fn_0E37"
-level = "none"
-justification = ""
-notes = "blocked (dec-15, 2026-10-12): nested in DisplaySpellEffects (static link at [bp+6], the parent pushes bp, ovl15:102A); matches byte for byte except its far runtime calls, the held nested-routine limit (escalate-res06-20261012110841); its draft is in the parent notes; renamed from ovl15_fn_0E37 (ovl15:0E37 nested in DisplaySpellEffects: allocates a 46-byte menu line after the parent's last line and sets its text and heading flag); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -6937,9 +6924,9 @@ size = 1077
 name = "DisplaySpellEffects"
 signature = "procedure DisplaySpellEffects"
 c_name = "ovl15_fn_0FBC"
-level = "none"
+level = "L2"
 justification = ""
-notes = "blocked (dec-15, 2026-10-12): the draft below matches the original except inside its nested AddDisplayLine (ovl15:0E37), whose far calls to the runtime (System StrLCopy, GetMem) lie in the byte-exact pre-entry region: the held nested-routine limit of escalate-res06-20261012110841; the parent body after the entry is the same instruction for instruction (only the SpellNames address differs, a DS address the matcher resolves). Draft: procedure DisplaySpellEffects; var Affect: PAffect; List, Last: PMenuLine; Who: PCharacter; AffectId, Spell, Count, Unused: Byte; Found, Known, Redraw: Byte; Name: String40; Choice: Integer; Key: Char; procedure AddDisplayLine(Flag: Byte; Text: String40); begin GetMem(Last^.Next, $2E); Last := Last^.Next; Last^.Next := nil; Last^.Text := Text; Last^.Flag29 := Flag; end; begin GetMem(List, $2E); Last := List; Last^.Flag29 := 0; Last^.Text := ' '; Last^.Next := nil; Who := PCharacter(ds5D96); while Who <> nil do begin Count := 0; AddDisplayLine(1, Who^.Name); Affect := Who^.Affects; while Affect <> nil do begin Known := 1; AffectId := Affect^.Id; case AffectId of 1, 2, 5, 8..$E, $10, $11, $13..$19, $1C, $1D, $20..$22, $24..$27, $29, $2A, $2D, $2E, $31, $33..$35: begin Spell := 1; Found := 0; while (Spell <= $38) and (Found = 0) do if SpellTable[Spell].AffectId = AffectId then begin Name := SpellNames[Spell]; Found := 1; end else Inc(Spell); if Found = 0 then Name := 'Funky--' + res12_fn_1037(AffectId); end; 4: Name := 'Studying Manual of Bodily Health'; 7: Name := 'Training with Manual of Bodily Health'; $1B: Name := 'Feather Fall'; $1F: Name := 'Helpless'; $23: Name := 'Prayer'; $2C: Name := 'Cause Disease'; $32: Name := 'Dreaded Mummy Disease'; $36: Name := 'Repulsed'; $37: Name := 'Poisoned'; $3B: Name := 'Regenerating'; $3D: Name := 'Fire Resistance'; $47: Name := 'Invisible'; $48: Name := 'Camouflaged'; $59: Name := 'Displaced'; else Known := 0; end; if Known <> 0 then begin Inc(Count); AddDisplayLine(0, ' ' + Name); end; Affect := Affect^.Next; end; if Count = 0 then AddDisplayLine(0, ' <No Spell Effects>'); AddDisplayLine(0, ' '); Who := Who^.Next; end; Redraw := 1; Choice := 0; DrawWindow(1, 1, $26, $16, 0, $F, 'Display'); Key := ChooseFromList('', '', $B, $A, $F, 1, 4, $26, $16, List, 1, Redraw, Choice, Last); FreeMenuList(List); res12_fn_27D9; end;; renamed from ovl15_fn_0FBC (ovl15:0FBC builds a list of every member's affects by name (spell names, 'Prayer', 'Poisoned', ' <No Spell Effects>') and shows it with ChooseFromList titled 'Display'); auto:near_call; map dec-15 2026-10-12: 1307 was mid-routine, entry deleted (size 1077, was 843)"
+notes = "matched by dec-r15 2026-10-12 with its nested AddDisplayLine (ovl15:0E37, 135 bytes in the pre-entry region, static link pushed at ovl15:102A; NESTED line of make match UNIT=ovl15) once the matcher compared nested routines with address resolution (c7265b6); the frame keeps one unused byte at [bp-$14] (QUIRK); WRITE=1 removed the AddDisplayLine map entry as lying inside the parent; renamed from ovl15_fn_0FBC (ovl15:0FBC builds a list of every member's affects by name (spell names, 'Prayer', 'Poisoned', ' <No Spell Effects>') and shows it with ChooseFromList titled 'Display'); auto:near_call; map dec-15 2026-10-12: 1307 was mid-routine, entry deleted (size 1077, was 843)"
 evidence = ["prologue"]
 
 [[routine]]
@@ -7054,7 +7041,7 @@ size = 5
 name = "ovl15_init"
 signature = ""
 c_name = "ovl15_init"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_0"
 evidence = ["prologue"]
@@ -8481,12 +8468,12 @@ id = "ovl17:02AE"
 unit = "ovl17"
 addr = "ovl17:02AE"
 size = 129
-name = "ovl17_fn_02AE"
+name = "CreateSaveDir"
 signature = ""
 c_name = "ovl17_fn_02AE"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl17_fn_02AE (ovl17:02AE: MkDir of SaveDir minus its trailing backslash (System MkDir = 0AF8:17D6, INT 21h/39), then loops showing 'Put save disk in <drive>:' until IOResult is 0 or 5; called by ovl17_e1/e2/e4/e8/e9 before they touch save files); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -9435,7 +9422,7 @@ unit = "ovl20"
 addr = "ovl20:0000"
 size = 754
 name = "ovl20_fn_0000"
-signature = ""
+signature = "procedure ovl20_fn_0000(Amount: Byte; Index: ShortInt)"
 c_name = "ovl20_fn_0000"
 level = "none"
 justification = ""
@@ -9447,12 +9434,12 @@ id = "ovl20:02F2"
 unit = "ovl20"
 addr = "ovl20:02F2"
 size = 177
-name = "ovl20_fn_02F2"
-signature = ""
+name = "CarryRestClock"
+signature = "procedure CarryRestClock(var Clock: TRestClock)"
 c_name = "ovl20_fn_02F2"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl20_fn_02F2 (ovl20:02F2 compares each digit of RestTime (the clock, ds6DC2) with its radix (ClockRadix, DS:363A) and carries a full digit into the next one; the top digit (6) ages every party member at +$30 (Age, whitepaper 4.2.5 record at 0x30); called by ovl20:03A3 on RestTime and by ovl20:03D5 (ovl20_e1) on a copy); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -9460,12 +9447,12 @@ id = "ovl20:03A3"
 unit = "ovl20"
 addr = "ovl20:03A3"
 size = 50
-name = "ovl20_fn_03A3"
-signature = ""
+name = "NormalizeRestTime"
+signature = "procedure NormalizeRestTime"
 c_name = "ovl20_fn_03A3"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl20_fn_03A3 (ovl20:03A3 carries the rest clock (CarryRestClock) and turns months into days (RestTime[5] into RestTime[4], 30 a month); called after each change of the rest time: by ovl20:0721 (the Inc and Dec keys of the Rest menu) and ovl20:047A); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -9474,9 +9461,9 @@ unit = "ovl20"
 addr = "ovl20:03D5"
 size = 165
 name = "ovl20_e1"
-signature = "procedure ovl20_e1(A, B: Byte)"
+signature = "procedure ovl20_e1(Amount: Byte; Index: ShortInt)"
 c_name = "ovl20_e1"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:near_call"
 evidence = ["prologue"]
@@ -9486,12 +9473,12 @@ id = "ovl20:047A"
 unit = "ovl20"
 addr = "ovl20:047A"
 size = 235
-name = "ovl20_fn_047A"
-signature = ""
+name = "SpendRestTime"
+signature = "procedure SpendRestTime(Amount: Byte; Index: ShortInt)"
 c_name = "ovl20_fn_047A"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl20_fn_047A (ovl20:047A takes Amount off RestTime digit Index, borrowing from the next higher nonzero digit; called by ovl20:0721 (the Dec key of the Rest menu) and by ovl20_e2 with Index 1 and Amount 5 (ovl20:0D9D), the minutes spent in each step of the rest); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -9499,12 +9486,12 @@ id = "ovl20:0565"
 unit = "ovl20"
 addr = "ovl20:0565"
 size = 139
-name = "ovl20_fn_0565"
-signature = ""
+name = "TwoDigitText"
+signature = "function TwoDigitText(Number: Byte): String40"
 c_name = "ovl20_fn_0565"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl20_fn_0565 (ovl20:0565 returns a number as two characters (res12_fn_1037 gives its text, a 0 goes in front below 10); called by ovl20:05F0 with RestTime digits (ovl20:0674 and 06CA, 10*RestTime[2]+RestTime[1])); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -9512,12 +9499,12 @@ id = "ovl20:05F0"
 unit = "ovl20"
 addr = "ovl20:05F0"
 size = 305
-name = "ovl20_fn_05F0"
-signature = ""
+name = "ShowRestTime"
+signature = "procedure ShowRestTime(Selected: ShortInt)"
 c_name = "ovl20_fn_05F0"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl20_fn_05F0 (ovl20:05F0 draws the rest time on row 17: the Rest Time: label (string at DS:05E3), days and hours as two digits (TwoDigitText of RestTime[4] and [3]) and the minutes (10*RestTime[2]+RestTime[1]); the field Selected is drawn in colour 15; called by ovl20:0721 (ovl20:0734) and by ovl20_e2 (ovl20:0D13)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -11856,7 +11843,7 @@ signature = ""
 c_name = "ovl25_fn_00CB"
 level = "none"
 justification = ""
-notes = "renamed from ovl25_fn_00CB (ovl25:00CB nested in ovl25:03BD: fills the parent's word spans from the capital letters and digits of the prompt text); auto:near_call; nested in ReadPromptChoice (static link pushed by its callers); drafted in commit 3c8dac5, blocked with its parent (see the parent's notes)"
+notes = "nested in ReadPromptChoice (ovl25:03BD), proven by the parent's match (make match UNIT=ovl25: NESTED); its caller pushes the parent frame as the static link (push bp; push cs; call). Level not recorded by make match WRITE=1: it removes a non-L2 map entry inside the matched parent before it writes the nested L2 (tool defect reported by dec-r25, 2026-10-12)"
 evidence = ["prologue"]
 
 [[routine]]
@@ -11869,7 +11856,7 @@ signature = ""
 c_name = "ovl25_fn_01DA"
 level = "none"
 justification = ""
-notes = "renamed from ovl25_fn_01DA (ovl25:01DA nested in ovl25:03BD: draws the prompt text on row 24 with res06_fn_01DF, the chosen word and the capitals in the highlight colour); auto:near_call; nested in ReadPromptChoice (static link pushed by its callers); drafted in commit 3c8dac5, blocked with its parent (see the parent's notes)"
+notes = "nested in ReadPromptChoice (ovl25:03BD), proven by the parent's match (make match UNIT=ovl25: NESTED); its caller pushes the parent frame as the static link (push bp; push cs; call). Level not recorded by make match WRITE=1: it removes a non-L2 map entry inside the matched parent before it writes the nested L2 (tool defect reported by dec-r25, 2026-10-12)"
 evidence = ["prologue"]
 
 [[routine]]
@@ -11880,9 +11867,9 @@ size = 830
 name = "ReadPromptChoice"
 signature = "function ReadPromptChoice(Title, Prompt: String40; TitleColor, WordColor, HotColor, ExtKeys, Animate: Byte; var ExtKey: Byte): Char"
 c_name = "ovl25_e2"
-level = "none"
+level = "L2"
 justification = ""
-notes = "renamed from ovl25_e2 (ovl25:03BD shows Title and the words of Prompt on row 24, highlights the chosen word (, and . move it, its capital letter picks it) and returns the key chosen (draft, address fields only differ)); auto:near_call; blocked (dec-8, 2026-10-12): the full draft is in commit 3c8dac5 (unit/ovl25, src/OVL25.PAS). Its body and its nested routines compile to the original's bytes except address fields: make match reports 'literal pool byte N before the entry' because the nested routines (TP 6.0 puts them in the parent's pre-entry region) hold far calls (System, res06, GameClock, DrawSprite) and DS operands, and the matcher compares that region byte-exact. A capstone diff of both builds (every differing instruction is an lcall or a DS displacement naming the same global, e.g. ListMenuTop, PromptWordChoice, PictureAnimation) shows no other difference. Waits for the nested-routine address comparison held in work/blockers.md (escalate-res06-20261012110841); restore the draft from 3c8dac5 once it lands; nested: SplitPromptWords (ovl25:00CB), DrawPromptWords (ovl25:01DA)"
+notes = "renamed from ovl25_e2 (ovl25:03BD shows Title and the words of Prompt on row 24, highlights the chosen word (, and . move it, its capital letter picks it) and returns the key chosen); auto:near_call; matched (dec-r25, 2026-10-12) from the draft of commit 3c8dac5 once the matcher compared proven nested routines with address resolution (c7265b6); the one remaining difference was the frame base of PictureAnimation.Frames[I] (ovl25:04C8, 8 bytes below the record), resolved by declaring the bytes DS:6AB6..6ABD in POOLVARS; nested: SplitPromptWords (ovl25:00CB) and DrawPromptWords (ovl25:01DA), proven by the parent's match"
 evidence = ["prologue"]
 
 [[routine]]
@@ -12025,7 +12012,7 @@ signature = "function ChooseFromList(Title, Prompt: String40; HeadingColor, Line
 c_name = "ovl25_e4"
 level = "none"
 justification = ""
-notes = "renamed from ovl25_e4 (ovl25:0D9A a list menu: draws List in the window D..G, highlights line Choice, reads the key through the prompt line with Next/Prev/Exit words and returns it with the chosen line (draft, address fields only differ)); auto:entry_4; blocked (dec-8, 2026-10-12): the full draft is in commit 3c8dac5 (unit/ovl25, src/OVL25.PAS). Its body and its nested routines compile to the original's bytes except address fields: make match reports 'literal pool byte N before the entry' because the nested routines (TP 6.0 puts them in the parent's pre-entry region) hold far calls (System, res06, GameClock, DrawSprite) and DS operands, and the matcher compares that region byte-exact. A capstone diff of both builds (every differing instruction is an lcall or a DS displacement naming the same global, e.g. ListMenuTop, PromptWordChoice, PictureAnimation) shows no other difference. Waits for the nested-routine address comparison held in work/blockers.md (escalate-res06-20261012110841); restore the draft from 3c8dac5 once it lands; nested: LastHeadingBefore 0711, DrawListPage 07A4, FirstNonBlank 08D7, LastNonBlank 0923, HighlightListLine 0969, UnhighlightListLine 0A08, SkipHeadingLines 0B03, ScrollListPage 0C33, MoveListCursor 0CC5"
+notes = "renamed from ovl25_e4 (ovl25:0D9A a list menu: draws List in the window D..G, highlights line Choice, reads the key through the prompt line with Next/Prev/Exit words and returns it with the chosen line (draft, address fields only differ)); auto:entry_4; blocked (dec-r25, 2026-10-12, after dec-8): the full draft is in commit 3c8dac5 (src/OVL25.PAS; apply the renames res06_fn_0626 DrawTextAt, res06_fn_01DF DrawGlyph, res06_fn_05EB ClearTextCells). With the nested-routine comparison of c7265b6 the draft's whole pre-entry region (ovl25:0711..0D9A, 1673 bytes) and body differ from the original in 34 instructions only, every one a far call (ClearWindow, DrawTextAt, DrawGlyph, System StrLCopy 0AF8:0B25 and 0AF8:0B57) or an operand naming ListMenuTop (DS:6B29); capstone diff of build A against the original. The matcher resolves those only inside nested routines proven by a direct call from the parent (push bp; push cs; call); FirstNonBlank (ovl25:08D7), LastNonBlank (ovl25:0923) and SkipHeadingLines (ovl25:0B03) are called only by sibling nested routines (HighlightListLine, UnhighlightListLine, ScrollListPage, MoveListCursor: push word ptr [bp+6]; push cs; call), which the strict rule excludes (escalate-general-20261012012957), so their lcall StrLCopy (08EB, 0937) and ListMenuTop operands (0B54..0BEF) are compared byte-exact and can never match. Escalated: count a near call made from inside an already proven nested routine with that routine's own static link (push word ptr [bp+6]) as proof of the callee too (the link passed is still the parent's frame); nested: LastHeadingBefore (0711), DrawListPage (07A4), FirstNonBlank (08D7), LastNonBlank (0923), HighlightListLine (0969), UnhighlightListLine (0A08), SkipHeadingLines (0B03), ScrollListPage (0C33), MoveListCursor (0CC5)"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16115,39 +16102,13 @@ evidence = ["prologue"]
 id = "0709:0626"
 unit = "res06"
 addr = "0709:0626"
-size = 129
+size = 322
 name = "DrawTextAt"
 signature = "procedure DrawTextAt(Col, Row, Color: Byte; Text: string)"
 c_name = "res06_fn_0626"
 level = "L2"
 justification = ""
 notes = "renamed from res06_fn_0626 (for each character of the string calls DrawGlyph(Col, Row, Color, 1, char, 1) and advances Col (0709:0671..069F); ShowMessageLine writes its message with it); auto:near_call"
-evidence = ["prologue"]
-
-[[routine]]
-id = "0709:06A7"
-unit = "res06"
-addr = "0709:06A7"
-size = 109
-name = "DrawTextRun"
-signature = ""
-c_name = "res06_fn_06A7"
-level = "none"
-justification = ""
-notes = "renamed from res06_fn_06A7 (nested in ShowPagedText (0709:06A7): draws Buf[I..J] glyph by glyph through res06_fn_01DF at advancing GlyphCol with the Crt delay); auto:near_call; blocked: nested in ShowPagedText (0709:0768); a nested routine gets L2 only through its matched parent, which waits for the human on escalate-res06-20261012110841 (nested routines with globals and calls); draft in dec-1's scratch/SHOWPAGEDTEXT.DRAFT.PAS (dec-12)"
-evidence = ["prologue"]
-
-[[routine]]
-id = "0709:0714"
-unit = "res06"
-addr = "0709:0714"
-size = 84
-name = "SkipSpaces"
-signature = ""
-c_name = "res06_fn_0714"
-level = "none"
-justification = ""
-notes = "renamed from res06_fn_0714 (nested in ShowPagedText (0709:0714): skips blank Buf chars while I is below Len); auto:near_call; blocked: nested in ShowPagedText (0709:0768); a nested routine gets L2 only through its matched parent, which waits for the human on escalate-res06-20261012110841 (nested routines with globals and calls); draft in dec-1's scratch/SHOWPAGEDTEXT.DRAFT.PAS (dec-12)"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16158,9 +16119,9 @@ size = 635
 name = "ShowPagedText"
 signature = "procedure ShowPagedText(Left, Top, Right, Bottom, Color, ClearFirst: Byte; Text: string)"
 c_name = "res06_fn_0768"
-level = "none"
+level = "L2"
 justification = ""
-notes = "renamed from res06_fn_0768 (word-wrapping text pager (0709:0768): shows Text in the Left..Bottom rect with BreakChars word scan, GlyphCol/GlyphRow cursor, FillPlaneRect/ClearRect clear and 'Press any key to continue' paging; called by ChargeForCure, VisitTemple, ShopMain, LoadEcl, ShowCredits); auto:far_call; dec-1 draft stashed in scratch/SHOWPAGEDTEXT.DRAFT.PAS: parent body plus nested DrawTextRun/SkipSpaces written, matches except nested pool bytes (nested code with globals and calls needs address-aware pool compare, escalated); blocked: waiting for the human on escalate-res06-20261012110841 (nested routines with globals and calls), draft in scratch/SHOWPAGEDTEXT.DRAFT.PAS"
+notes = "renamed from res06_fn_0768 (word-wrapping text pager (0709:0768): shows Text in the Left..Bottom rect with BreakChars word scan, GlyphCol/GlyphRow cursor, FillPlaneRect/ClearRect clear and 'Press any key to continue' paging; called by ChargeForCure, VisitTemple, ShopMain, LoadEcl, ShowCredits); auto:far_call; matched with its nested DrawTextRun (0709:06A7) and SkipSpaces (0709:0714) once the matcher compared proven nested ranges by address (commit c7265b6); dec-1's draft needed two fixes: the trailing-break scan indexes Text[J + 1] (0709:08C9) and the frame has an unused byte local at [bp-105h] (dec-r06)"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16275,9 +16236,9 @@ size = 14
 name = "res06_init"
 signature = ""
 c_name = "res06_init"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:init; blocked: the original is the empty initialisation part (push bp; mov bp,sp; pop bp; retf at 0709:0F82), which src/RES06.PAS already has (begin end., no {@stub-init}); make match checks an init part only in the whole-unit comparison, which runs when no stub is left, so it waits for ShowPagedText (escalate-res06-20261012110841) (dec-12)"
+notes = "auto:init; the empty initialisation part (push bp; mov bp,sp; pop bp; retf at 0709:0F82): begin end. in src/RES06.PAS, matched by the whole-unit comparison (dec-r06)"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16285,12 +16246,12 @@ id = "0464:0000"
 unit = "res07"
 addr = "0464:0000"
 size = 123
-name = "res07_fn_0000"
+name = "ColorMatchMask"
 signature = ""
 c_name = "res07_fn_0000"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res07_fn_0000 (0464:0000 returns a bit mask of the eight 4-bit pixels of a 4-byte cell that equal Color; its only caller 02A5 (0464:0358, 0464:067B) uses the bits to set single pixels of a picture's pixel buffer); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16298,12 +16259,12 @@ id = "0464:007B"
 unit = "res07"
 addr = "0464:007B"
 size = 84
-name = "res07_fn_007B"
+name = "PaletteColor"
 signature = ""
 c_name = "res07_fn_007B"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res07_fn_007B (0464:007B returns the palette colour for a pixel value from an 8-byte palette: even index high nibble, odd index low nibble of Pal[Index shr 1]; called by 02A5 at 0464:03F7 and 0464:04F7..0550 to map a cell pixel through the picture palette); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16311,12 +16272,12 @@ id = "0464:00CF"
 unit = "res07"
 addr = "0464:00CF"
 size = 48
-name = "res07_fn_00CF"
-signature = "procedure res07_fn_00CF(A: Byte)"
+name = "SetVideoMode"
+signature = "procedure SetVideoMode(A: Byte)"
 c_name = "res07_fn_00CF"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res07_fn_00CF (0464:00CF sets INT 10h function 0 (set video mode) with AL=A after saving the current mode (ds4A1D) in SavedVideoMode, then records A as current; called by res08_init (042B:00E0 with 0Dh) and by RestoreVideoMode); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16324,12 +16285,12 @@ id = "0464:00FF"
 unit = "res07"
 addr = "0464:00FF"
 size = 18
-name = "res07_fn_00FF"
-signature = "procedure res07_fn_00FF"
+name = "RestoreVideoMode"
+signature = "procedure RestoreVideoMode"
 c_name = "res07_fn_00FF"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:far_call"
+notes = "renamed from res07_fn_00FF (0464:00FF calls SetVideoMode(SavedVideoMode) to go back to the mode saved at the last mode set; called by the picture loaders ovl28/ovl29/ovl32/ovl34 before their error messages and by ovl28 Show3DSprite); auto:far_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16337,376 +16298,129 @@ id = "0464:0111"
 unit = "res07"
 addr = "0464:0111"
 size = 404
-name = "res07_fn_0111"
-signature = "procedure res07_fn_0111(Text: string; A, B, C: Byte; var Target)"
+name = "LoadPicture"
+signature = "procedure LoadPicture(Text: string; A, B, C: Byte; var Target)"
 c_name = "res07_fn_0111"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res07_fn_0111 (0464:0111 loads DAX picture block A of the set Text (with the dax extension) into the caller's picture pointer: frees any old picture, copies the header into locals, AllocatePicture, stores X/Y and the palette, unpacks the pixels through 02A5, frees the DAX block; called by ovl01/ovl11/ovl18/ovl28/ovl32/ovl34); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
 id = "0464:02A5"
 unit = "res07"
 addr = "0464:02A5"
-size = 970
+size = 1583
 name = "res07_fn_02A5"
-signature = "procedure res07_fn_02A5(Data: Pointer; Offset: Word; A, B: Byte; Sprite: Pointer)"
+signature = "procedure res07_fn_02A5(Source: Pointer; Offset: Word; A, Color: Byte; Data: Pointer)"
 c_name = "res07_fn_02A5"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; map deepseek-dec 2026-10-12: ends 08D4 (was 970); bogus entries 066F, 0710 deleted (mid-routine, no 55 89 E5 prologue)"
 evidence = ["prologue"]
-
-[[routine]]
-id = "0464:066F"
-unit = "res07"
-addr = "0464:066F"
-size = 161
-name = "res07_fn_066F"
-signature = ""
-c_name = "res07_fn_066F"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "0464:0710"
-unit = "res07"
-addr = "0464:0710"
-size = 452
-name = "res07_fn_0710"
-signature = ""
-c_name = "res07_fn_0710"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "0464:08D4"
 unit = "res07"
 addr = "0464:08D4"
-size = 351
+size = 1181
 name = "res07_fn_08D4"
 signature = "procedure res07_fn_08D4(Col, Row: Integer; PicIndex, Flags: Byte; Source, Dest: Pointer)"
 c_name = "res07_fn_08D4"
 level = "none"
 justification = ""
-notes = "auto:prologue"
+notes = "auto:prologue; map deepseek-dec 2026-10-12: ends 0D71 (was 351); bogus entries 0A33, 0C0C, 0D6C deleted"
 evidence = ["prologue"]
-
-[[routine]]
-id = "0464:0A33"
-unit = "res07"
-addr = "0464:0A33"
-size = 473
-name = "res07_fn_0A33"
-signature = ""
-c_name = "res07_fn_0A33"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "0464:0C0C"
-unit = "res07"
-addr = "0464:0C0C"
-size = 352
-name = "res07_fn_0C0C"
-signature = ""
-c_name = "res07_fn_0C0C"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "0464:0D6C"
-unit = "res07"
-addr = "0464:0D6C"
-size = 5
-name = "res07_fn_0D6C"
-signature = ""
-c_name = "res07_fn_0D6C"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "0464:0D71"
 unit = "res07"
 addr = "0464:0D71"
-size = 144
+size = 1811
 name = "res07_fn_0D71"
 signature = "procedure res07_fn_0D71(Col, Row: Integer; PicIndex, Flags: Byte; Source, Dest: Pointer)"
 c_name = "res07_fn_0D71"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; map deepseek-dec 2026-10-12: ends 1484 (was 144); bogus entries 0E01..140E (11) deleted"
 evidence = ["prologue"]
-
-[[routine]]
-id = "0464:0E01"
-unit = "res07"
-addr = "0464:0E01"
-size = 39
-name = "res07_fn_0E01"
-signature = ""
-c_name = "res07_fn_0E01"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "0464:0E28"
-unit = "res07"
-addr = "0464:0E28"
-size = 11
-name = "res07_fn_0E28"
-signature = ""
-c_name = "res07_fn_0E28"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "0464:0E33"
-unit = "res07"
-addr = "0464:0E33"
-size = 21
-name = "res07_fn_0E33"
-signature = ""
-c_name = "res07_fn_0E33"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "0464:0E48"
-unit = "res07"
-addr = "0464:0E48"
-size = 120
-name = "res07_fn_0E48"
-signature = ""
-c_name = "res07_fn_0E48"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "0464:0EC0"
-unit = "res07"
-addr = "0464:0EC0"
-size = 34
-name = "res07_fn_0EC0"
-signature = ""
-c_name = "res07_fn_0EC0"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "0464:0EE2"
-unit = "res07"
-addr = "0464:0EE2"
-size = 116
-name = "res07_fn_0EE2"
-signature = ""
-c_name = "res07_fn_0EE2"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "0464:0F56"
-unit = "res07"
-addr = "0464:0F56"
-size = 215
-name = "res07_fn_0F56"
-signature = ""
-c_name = "res07_fn_0F56"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "0464:102D"
-unit = "res07"
-addr = "0464:102D"
-size = 21
-name = "res07_fn_102D"
-signature = ""
-c_name = "res07_fn_102D"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "0464:1042"
-unit = "res07"
-addr = "0464:1042"
-size = 154
-name = "res07_fn_1042"
-signature = ""
-c_name = "res07_fn_1042"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "0464:10DC"
-unit = "res07"
-addr = "0464:10DC"
-size = 818
-name = "res07_fn_10DC"
-signature = ""
-c_name = "res07_fn_10DC"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "0464:140E"
-unit = "res07"
-addr = "0464:140E"
-size = 118
-name = "res07_fn_140E"
-signature = ""
-c_name = "res07_fn_140E"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "0464:1484"
 unit = "res07"
 addr = "0464:1484"
 size = 133
-name = "res07_fn_1484"
+name = "MirrorByte"
 signature = ""
 c_name = "res07_fn_1484"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res07_fn_1484 (0464:1484 reverses the eight bits of a byte (bit 0 to bit 7 ...); called by 15C7 (0464:18xx) to flip a byte of a picture row); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "0464:1509"
 unit = "res07"
 addr = "0464:1509"
-size = 11
-name = "res07_fn_1509"
+size = 141
+name = "MirrorWord"
 signature = ""
 c_name = "res07_fn_1509"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res07_fn_1509 (0464:1509 reverses the order of the eight 2-bit groups of a word using GlyphPixelMasks (DS:25E5..25F3); called by 15C7 for every 2-byte unit of a picture row); auto:near_call; map deepseek-dec 2026-10-12: ends 1596 (was 11); bogus entry 1514 deleted"
 evidence = ["prologue"]
-
-[[routine]]
-id = "0464:1514"
-unit = "res07"
-addr = "0464:1514"
-size = 130
-name = "res07_fn_1514"
-signature = ""
-c_name = "res07_fn_1514"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "0464:1596"
 unit = "res07"
 addr = "0464:1596"
 size = 49
-name = "res07_fn_1596"
+name = "SwapNibbles"
 signature = ""
 c_name = "res07_fn_1596"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res07_fn_1596 (0464:1596 swaps the two nibbles of a byte (X shl 4 + high nibble); companion of MirrorByte for flipping an 8-pixel byte); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "0464:15C7"
 unit = "res07"
 addr = "0464:15C7"
-size = 321
-name = "res07_fn_15C7"
-signature = "procedure res07_fn_15C7(Source, Dest: Pointer)"
+size = 906
+name = "MirrorPicture"
+signature = "procedure MirrorPicture(Source, Dest: Pointer)"
 c_name = "res07_fn_15C7"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:far_call"
+notes = "renamed from res07_fn_15C7 (0464:15C7 copies the picture Source into Dest mirrored: palette as is, then each pixel row reversed per VideoAdapter (MirrorWord units, MirrorByte groups, SwapNibbles bytes) and the pixel buffer at +$13 mirrored too; called by ovl32 DrawIcon for icon sets above 3 and by res12); auto:far_call; map deepseek-dec 2026-10-12: ends 1951 (was 321); bogus entry 1708 deleted"
 evidence = ["prologue"]
-
-[[routine]]
-id = "0464:1708"
-unit = "res07"
-addr = "0464:1708"
-size = 585
-name = "res07_fn_1708"
-signature = ""
-c_name = "res07_fn_1708"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "0464:1951"
 unit = "res07"
 addr = "0464:1951"
-size = 200
-name = "res07_fn_1951"
-signature = "procedure res07_fn_1951(X, Y: Integer; Buf: Pointer)"
+size = 513
+name = "ShowPicture"
+signature = "procedure ShowPicture(X, Y: Integer; Buf: Pointer)"
 c_name = "res07_fn_1951"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res07_fn_1951 (0464:1951 copies a picture's packed pixel data straight to the video hardware at (X,Y), one branch per VideoAdapter; called by ShowTitleScreen, ovl28 DrawSprite and ovl34 Put8x8Symbol); auto:prologue; map deepseek-dec 2026-10-12: ends 1B52 (was 200); bogus entry 1A19 deleted"
 evidence = ["prologue"]
-
-[[routine]]
-id = "0464:1A19"
-unit = "res07"
-addr = "0464:1A19"
-size = 313
-name = "res07_fn_1A19"
-signature = ""
-c_name = "res07_fn_1A19"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "0464:1B52"
 unit = "res07"
 addr = "0464:1B52"
 size = 778
-name = "res07_fn_1B52"
+name = "FlushPictureChanges"
 signature = ""
 c_name = "res07_fn_1B52"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:far_call"
+notes = "renamed from res07_fn_1B52 (0464:1B52 presents the changed regions the blitters marked in ds4A28/ds4AD0/ds4C20/ds4D70 to the screen per VideoAdapter (row moves to the ds4EC0/ds51E0 segment tables, or the four EGA planes through port 3C5 plus a GC-mode-1 copy), then resets the trackers; called by the sprite, combat-view and area-view units after a blit); auto:far_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16727,12 +16441,12 @@ id = "0464:248E"
 unit = "res07"
 addr = "0464:248E"
 size = 263
-name = "res07_fn_248E"
-signature = "procedure res07_fn_248E(Height, Width: Word; ItemCount, AllocFlags: Byte; var Pic)"
+name = "AllocatePicture"
+signature = "procedure AllocatePicture(Height, Width: Word; ItemCount, AllocFlags: Byte; var Pic)"
 c_name = "res07_fn_248E"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res07_fn_248E (0464:248E allocates and zeroes a picture block of ItemCount * Height * WidthCols * 2 (x2 for a non-zero VideoAdapter) + $17 bytes plus an optional pixel buffer, and stores the header fields; called by ovl10 StartBattle, ovl11 StartGame, ovl28 LoadSpriteList, ovl32 DrawIcon, res12 and 0111/1E5C); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16740,12 +16454,12 @@ id = "0464:2595"
 unit = "res07"
 addr = "0464:2595"
 size = 157
-name = "res07_fn_2595"
-signature = "procedure res07_fn_2595(var Pic)"
+name = "ReleasePicture"
+signature = "procedure ReleasePicture(var Pic)"
 c_name = "res07_fn_2595"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res07_fn_2595 (0464:2595 frees the pixel buffer (a quarter of the size for VideoAdapter 1) and the picture block (ItemCount * ByteSize + 17), then nils the caller's variable; called by ovl01/ovl08/ovl10/ovl14/ovl28/ovl32, res12 and 0111/1E5C); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16766,12 +16480,12 @@ id = "0464:2A0D"
 unit = "res07"
 addr = "0464:2A0D"
 size = 61
-name = "res07_fn_2A0D"
-signature = "procedure res07_fn_2A0D(A, B: Byte)"
+name = "SetPaletteRegister"
+signature = "procedure SetPaletteRegister(A, B: Byte)"
 c_name = "res07_fn_2A0D"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res07_fn_2A0D (0464:2A0D writes one EGA palette register: INT 10h AH=10h AL=0 with BH=Color (mapped: below 8 as is, else +8) and BL=Register; called by ovl31_e2/e3 and ShowTitleScreen); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]

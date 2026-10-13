@@ -45,7 +45,7 @@ begin
     'E':
       begin
         VideoAdapter := 1;
-        res07_fn_00CF($0D);
+        SetVideoMode($0D);
         ds4A1B := 0;
         ds4A1A := 0;
         SetActivePage(ds4A1B);
@@ -56,26 +56,26 @@ begin
         VideoAdapter := 2;
         NewHeapEnd := Ptr(HeapWords[1] - $400, HeapWords[0]);
         HeapEnd := NewHeapEnd;
-        res07_fn_00CF(9);
+        SetVideoMode(9);
       end;
   else
     begin
       VideoAdapter := 0;
-      res07_fn_00CF(4);
+      SetVideoMode(4);
     end;
   end;
   if $18800 - OvrGetBuf <= MemAvail then
     OvrSetBuf($18800)
   else
   begin
-    res07_fn_00FF;
+    RestoreVideoMode;
     WriteLn(Output, 'Not enough memory to run game.  You need ', $18800 - OvrGetBuf,
       ' more bytes.');
     Halt;
   end;
   if ds43DC <> 0 then
   begin
-    res07_fn_00FF;
+    RestoreVideoMode;
     WriteLn(Output, 'Overlay error, program abort!');
     Halt;
   end;

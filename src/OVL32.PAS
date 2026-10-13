@@ -16,9 +16,9 @@ uses POOLVARS, RES04, RES07;
 const
   PicIndexMask = $7F;         { bit 7 of the picture code selects the source pointer }
   NoBlitFlags = 0;            { the flags byte this routine passes to the blitter }
-  IconSetCopyLimit = 3;       { icon sets above this are copied by res07_fn_15C7 }
+  IconSetCopyLimit = 3;       { icon sets above this are copied by MirrorPicture }
   OneItem = 1;                { item count stored in the allocated picture }
-  AllocatePixels = 1;         { bit 0 of AllocFlags asks res07_fn_248E for a pixel buffer }
+  AllocatePixels = 1;         { bit 0 of AllocFlags asks AllocatePicture for a pixel buffer }
   NoPicIndex = 0;             { picture index this routine passes to res07_fn_0D71 }
   BlitFlagBit = 1;            { res07_fn_0D71 tests bit 0 of the flags byte }
   CellStep = 3;               { the cell column and row are multiplied by 3 for the blit }
@@ -52,17 +52,17 @@ var
 begin
   if Index > PicIndexMask then
   begin
-    res07_fn_00FF;
+    RestoreVideoMode;
     WriteLn('Start range error in Load24x24Set');
     QuitGame;
   end;
   Loaded := nil;
-  res07_fn_0111(SetName, 1, 0, 0, Loaded);
+  LoadPicture(SetName, 1, 0, 0, Loaded);
   CopyBytes := PMemPic(Loaded)^.ItemCount * PMemPic(Loaded)^.ByteSize;
   DestOfs := Index * PMemPic(Loaded)^.ByteSize;
   if ds5E52 <> nil then
     Move(PMemPic(Loaded)^.Tail, PMemPic(ds5E52)^.Tail[DestOfs], CopyBytes);
-  res07_fn_2595(Loaded);
+  ReleasePicture(Loaded);
   FlushKeyboard;
 end;
 
@@ -78,14 +78,14 @@ begin
     res07_fn_08D4(PicCol, PicRow, PicCode, NoBlitFlags, ds5E52, DrawBuf);
 end;
 { ovl32:014E. Frees both pictures of one slot in ds5E5A, when the pointer is not nil,
-  through res07_fn_2595 (FreeMem, then the pointer is set nil). Slot selects the
+  through ReleasePicture (FreeMem, then the pointer is set nil). Slot selects the
   record, stride 8. QUIRK ovl32:0151: UnusedWord is allocated and never read or written. }
 procedure FreePictureSlot(Slot: Byte);
 var
   UnusedWord: Word;
 begin
-  if ds5E5A[Slot].FirstPic <> nil then res07_fn_2595(ds5E5A[Slot].FirstPic);
-  if ds5E5A[Slot].SecondPic <> nil then res07_fn_2595(ds5E5A[Slot].SecondPic);
+  if ds5E5A[Slot].FirstPic <> nil then ReleasePicture(ds5E5A[Slot].FirstPic);
+  if ds5E5A[Slot].SecondPic <> nil then ReleasePicture(ds5E5A[Slot].SecondPic);
 end;
 { ovl32:01C8. Loads picture Block of the set SetName into the first pointer of slot Slot of
   the picture table ds5E5A and picture Block + $80 (its mirrored half) into the second.
@@ -104,14 +104,14 @@ begin
     if UpCase(SetName[Length(SetName)]) = 'T' then Inc(Block, AltPictures);
     SetName := Copy(SetName, 1, Length(SetName) - 1);
     Suffix := '';
-    res07_fn_0111(SetName + Suffix, Block, 1, 0, ds5E5A[Slot].FirstPic);
-    res07_fn_0111(SetName + Suffix, Block + MirrorPictures, 1, 0, ds5E5A[Slot].SecondPic);
+    LoadPicture(SetName + Suffix, Block, 1, 0, ds5E5A[Slot].FirstPic);
+    LoadPicture(SetName + Suffix, Block + MirrorPictures, 1, 0, ds5E5A[Slot].SecondPic);
   end
   else if (SetName = 'COMSPR') or (SetName = 'ICON') then
   begin
     Suffix := '';
-    res07_fn_0111(SetName + Suffix, Block, 1, 0, ds5E5A[Slot].FirstPic);
-    res07_fn_0111(SetName + Suffix, Block + MirrorPictures, 1, 0, ds5E5A[Slot].SecondPic);
+    LoadPicture(SetName + Suffix, Block, 1, 0, ds5E5A[Slot].FirstPic);
+    LoadPicture(SetName + Suffix, Block + MirrorPictures, 1, 0, ds5E5A[Slot].SecondPic);
     if SetName = 'ICON' then
     begin
       res07_fn_1E5C(@ds0CD2, @ds0CF2, 0, 0, ds5E5A[Slot].FirstPic);
@@ -121,16 +121,16 @@ begin
   else
   begin
     Str(TileSet, Suffix);
-    res07_fn_0111(SetName + Suffix, Block, 1, 0, ds5E5A[Slot].FirstPic);
+    LoadPicture(SetName + Suffix, Block, 1, 0, ds5E5A[Slot].FirstPic);
     res07_fn_1E5C(@ds0CD2, @ds0CE2, 0, 0, ds5E5A[Slot].FirstPic);
-    res07_fn_0111(SetName + Suffix, Block + MirrorPictures, 1, 0, ds5E5A[Slot].SecondPic);
+    LoadPicture(SetName + Suffix, Block + MirrorPictures, 1, 0, ds5E5A[Slot].SecondPic);
     res07_fn_1E5C(@ds0CD2, @ds0CE2, 0, 0, ds5E5A[Slot].SecondPic);
   end;
   FlushKeyboard;
 end;
 { ovl32:04FC. Draws the picture PicIndex, mirror half Mirror, from the table at ds5E5A.
   Nothing happens when that pointer is nil. Otherwise a picture of the same height and
-  width is allocated, the bytes are copied (res07_fn_15C7 when IconSet is above
+  width is allocated, the bytes are copied (MirrorPicture when IconSet is above
   IconSetCopyLimit, otherwise Move of the tail and the pixels), and res07_fn_0D71 draws
   it at the cell times CellStep. The copy is then freed. DrawPartyMarker passes the
   marker cell, the icon set ds6AAF, and the walk frame split into half and picture. }
@@ -142,9 +142,9 @@ begin
   begin
     with PMemPic(ds5E5A[PicIndex].Pics[Mirror])^ do
     begin
-      res07_fn_248E(Height, WidthCols, OneItem, AllocatePixels, Dest);
+      AllocatePicture(Height, WidthCols, OneItem, AllocatePixels, Dest);
       if IconSet > IconSetCopyLimit then
-        res07_fn_15C7(ds5E5A[PicIndex].Pics[Mirror], Dest)
+        MirrorPicture(ds5E5A[PicIndex].Pics[Mirror], Dest)
       else
       begin
         Move(Tail, PMemPic(Dest)^.Tail, ByteSize);
@@ -155,7 +155,7 @@ begin
       end;
     end;
     res07_fn_0D71(CellCol * CellStep, CellRow * CellStep, NoPicIndex, BlitFlagBit, Dest, DrawBuf);
-    res07_fn_2595(Dest);
+    ReleasePicture(Dest);
   end;
 end;
 

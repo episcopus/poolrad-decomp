@@ -135,3 +135,11 @@ def test_a_dirty_main_or_a_missing_branch_is_refused(clone, capsys):
     (repo / "src/A.PAS").write_text("dirty\n")
     assert integrate.main([]) == 2
     assert "uncommitted" in capsys.readouterr().err
+
+
+def test_a_branch_already_in_main_only_gets_its_bookkeeping(clone):
+    repo, handoffs, cleared, tip = clone
+    git("merge", "--no-ff", "-q", "-m", "merged by hand", "unit/a", cwd=repo)
+    before = git("rev-parse", "HEAD", cwd=repo)
+    assert integrate.main([]) == 0
+    assert cleared == ["a"] and git("rev-parse", "HEAD", cwd=repo) == before

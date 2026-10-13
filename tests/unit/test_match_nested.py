@@ -54,9 +54,15 @@ var
 
   procedure B;
 
+    procedure D;
+    begin {D}
+      H := 2;
+    end;
+
     procedure C;
     begin {C}
       L := A(L);
+      D;
     end;
 
   begin {B}
@@ -85,7 +91,7 @@ def probe(tmp_path_factory):
     seg = b.img[start:start + length]
     src_lines = PROBE.split("\n")
     entries = {}
-    for name in ("A", "Unused", "C", "B"):
+    for name in ("A", "Unused", "C", "B", "D"):
         line = next(k + 1 for k, t in enumerate(src_lines) if t.strip() == "begin {%s}" % name)
         code = [o for o, ln in b.lines["NESTPRB"] if ln == line]
         entries[name] = min(code) if code else None
@@ -98,18 +104,22 @@ def test_nested_routines_are_proven_by_their_calls(probe):
     found = match.nested_routines(seg, top.entry - top.pool, top.entry, top.end)
     # A and B are called by Top with `push bp; push cs; call`, C by B the same way (a nested routine
     # already proven); every one ends with its return inside Top's pre-entry region.
-    assert set(found) == {entries["A"], entries["B"], entries["C"]}
+    # D is called only by its sibling C, with C's own static link passed on (`push word ptr [bp+6]`).
+    assert set(found) == {entries["A"], entries["B"], entries["C"], entries["D"]}
     for t, (end, _caller) in found.items():
         assert top.entry - top.pool <= t < end <= top.entry
         assert seg[t:t + 3] == bytes([0x55, 0x89, 0xE5])
     assert found[entries["C"]][1] == entries["B"]
+    assert found[entries["D"]][1] == entries["C"]
+    k = seg.find(bytes([0xFF, 0x76, 0x06, 0x0E, 0xE8]), entries["C"], found[entries["C"]][0])
+    assert k > 0, "C calls D as a sibling: push word ptr [bp+6]; push cs; call"
 
 
 def test_uncalled_and_literal_shapes_get_nothing(probe):
     seg, entries, top = probe
     found = match.nested_routines(seg, top.entry - top.pool, top.entry, top.end)
     assert entries["Unused"] is None                          # never called: not even emitted
-    assert len(found) == 3
+    assert len(found) == 4
     shaped = seg.find(bytes([0x05, 0x55, 0x89, 0xE5, 0x5D, 0xCB]), top.entry - top.pool, top.entry)
     assert shaped > 0 and shaped + 1 not in found              # the string literal of the pool
 
@@ -131,6 +141,7 @@ def test_a_call_without_the_static_link_proves_nothing(probe):
         patched[k] = 0x90                                      # nop instead of push bp
     found = match.nested_routines(bytes(patched), top.entry - top.pool, top.entry, top.end)
     assert entries["B"] not in found and entries["C"] not in found   # C was proven only through B
+    assert entries["D"] not in found                                 # and D only through C
     assert entries["A"] in found
 
 

@@ -132,7 +132,11 @@ def branch_findings(branch: str | None = None) -> list[str]:
     if not branch.startswith(("unit/", "review/", "task/")):
         return ["work must be on a claimed unit/, review/ or task/ branch"]
     base = common.git("merge-base", "main", "HEAD")
-    paths = common.git("diff", "--name-only", base, "--").splitlines()
+    # The branch's own changes: files that differ both from the merge base and from main's tip. A file
+    # main changed and the branch merged (identical to main now) is not the worker's change; a file main
+    # changed that the branch has not merged yet is not either (identical to the base).
+    paths = sorted(set(common.git("diff", "--name-only", base, "--").splitlines())
+                   & set(common.git("diff", "--name-only", "main", "--").splitlines()))
     approved = set()
     if branch.startswith("task/"):
         grant = common.common_dir() / "poolrad-task-approvals" / (common.identifier(branch[5:]) + ".json")

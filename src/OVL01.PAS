@@ -75,11 +75,11 @@ begin
 end;
 { ovl01:0627. Shows the title sequence: backs up GameDir (into a String40, so a directory of
   more than 40 characters comes back cut: StrLCopy limit $28 at ovl01:0647) and clears it, loads
-  the title picture (res07_fn_0111) and shows it (res07_fn_1951), waits (WaitKeyOrTimeout), then,
-  when the F flag (ds49D1) is set, reloads, reshows, frees the title picture (res07_fn_2595) and
+  the title picture (LoadPicture) and shows it (ShowPicture), waits (WaitKeyOrTimeout), then,
+  when the F flag (ds49D1) is set, reloads, reshows, frees the title picture (ReleasePicture) and
   waits for a key or a deadline (GameClock ticks, 500 after the start). On EGA each pass of
   that wait adds Random(4) to the running sum Total (ovl01:0721..0726); when the sum passes 50000
-  the palette animation runs (res07_fn_2A0D with Delay) and the sum starts again from 0
+  the palette animation runs (SetPaletteRegister with Delay) and the sum starts again from 0
   (ovl01:073E..0743). QUIRK ovl01:0729: whether the animation ever fires depends on how many
   passes the loop makes before the deadline, so on the CPU speed (about 33,000 passes at the
   mean of 1.5); it did not fire in the oracle run (whitepaper 5.8), on period hardware it is not
@@ -98,17 +98,17 @@ begin
   Pic := nil;
   DirBackup := GameDir;
   GameDir := '';
-  res07_fn_0111('title', 1, 0, 0, Pic);
-  res07_fn_1951(0, 0, Pic);
+  LoadPicture('title', 1, 0, 0, Pic);
+  ShowPicture(0, 0, Pic);
   WaitKeyOrTimeout(5);
   if ds49D1 = 0 then
     GameDir := DirBackup
   else
   begin
-    res07_fn_0111('title', 2, 0, 0, Pic);
+    LoadPicture('title', 2, 0, 0, Pic);
     GameDir := DirBackup;
-    res07_fn_1951(0, 0, Pic);
-    res07_fn_2595(Pic);
+    ShowPicture(0, 0, Pic);
+    ReleasePicture(Pic);
     Deadline := GameClock + 500;
     repeat
       if VideoAdapter = 1 then
@@ -119,17 +119,17 @@ begin
           Total := 0;
           for I := 0 to Random(3) + 1 do
           begin
-            res07_fn_2A0D(1, 9);
+            SetPaletteRegister(1, 9);
             Delay($96);
-            res07_fn_2A0D(1, $0B);
+            SetPaletteRegister(1, $0B);
             Delay($64);
-            res07_fn_2A0D(1, $0F);
+            SetPaletteRegister(1, $0F);
             Delay($32);
-            res07_fn_2A0D(1, $0B);
+            SetPaletteRegister(1, $0B);
             Delay($64);
-            res07_fn_2A0D(1, 9);
+            SetPaletteRegister(1, 9);
             Delay($96);
-            res07_fn_2A0D(1, 1);
+            SetPaletteRegister(1, 1);
           end;
         end;
       end;

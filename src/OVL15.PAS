@@ -23,7 +23,6 @@ procedure RestParty(var EndCamp: Byte);
 procedure SortMemorizedSpells;
 procedure MemorizeSpells;
 procedure ScribeScrolls;
-procedure AddDisplayLine;
 procedure DisplaySpellEffects;
 procedure CampMagicMenu(var EndCamp: Byte);
 procedure MoveMemberUp;
@@ -81,6 +80,39 @@ const
   ListScrolls = 3;
   ListMemorizing = 5;
   ListScribing = 6;
+  { The Display list (DisplaySpellEffects): NewMenuList's 46-byte lines (Text, Flag29, Next of
+    TMenuLine, as ovl25 allocates them), the member heading flag, the window ChooseFromList shows
+    them in (the full text window, as the Loot window of ovl05) and its colours. }
+  MenuLineBytes = $2E;
+  HeadingLine = 1;               { Flag29 of a member's name line: a heading ChooseFromList skips }
+  PlainLine = 0;
+  ListLeft = 1;
+  ListTop = 1;
+  ListRight = $26;
+  ListBottom = $16;
+  ListFirstRow = 4;              { the first list row, under the title }
+  ListFrameSet = 0;
+  ListTitleColor = 15;
+  ListHeadingColor = 11;
+  ListLineColor = 10;
+  ListHighlightColor = 15;
+  ListWithExit = 1;
+  { The affects the Display names without a spell (the literals of ovl15:0FBC); every other named
+    affect is a spell affect looked up in SpellTable (AffectId, byte +$A). }
+  AffectStudyingManual = 4;
+  AffectTrainingManual = 7;
+  AffectFeatherFall = $1B;
+  AffectHelpless = $1F;
+  AffectPrayer = $23;
+  AffectCauseDisease = $2C;
+  AffectMummyDisease = $32;
+  AffectRepulsed = $36;
+  AffectPoisoned = $37;
+  AffectRegenerating = $3B;
+  AffectFireResistance = $3D;
+  AffectInvisible = $47;
+  AffectCamouflaged = $48;
+  AffectDisplaced = $59;
 
 
 { ovl15:0000. Returns the minutes of rest Who's study needs and stores its hours in RestHours: 15
@@ -482,13 +514,117 @@ begin
   end;
   if Redraw <> 0 then res12_fn_27D9;
 end;
-{ ovl15:0FBC. The Display command: lists every party member's name and the affects on it by name
-  ('Funky--' and the number for an unknown spell affect, ' <No Spell Effects>' when none) in a
-  46-byte menu line list and shows it with ChooseFromList titled 'Display'.
-  Not decompiled yet: blocked, see the notes in re/symbols.toml (its nested AddDisplayLine,
-  ovl15:0E37, calls the runtime, escalate-res06-20261012110841). }
-{@stub} procedure AddDisplayLine; begin end;
-{@stub} procedure DisplaySpellEffects; begin end;
+{ ovl15:0FBC. The camp's Display command: lists every party member (the party list ds5D96, linked
+  by Next) as a heading line followed by one line per affect on the member that the game can name,
+  or ' <No Spell Effects>' when it names none, then a blank line, and shows the list in the full
+  text window titled 'Display' with ChooseFromList (heading colour 11, lines 10, highlight 15,
+  with Exit); the list is freed and the screen redrawn (res12_fn_27D9) afterwards. A spell affect
+  (the first case list) is named by the first spell 1..$38 whose SpellTable.AffectId is the affect
+  (SpellNames), or 'Funky--n' (res12_fn_1037 writes the number) when no spell has it; fourteen
+  other affects have fixed names (the Affect* constants); any other affect is left out. The
+  list begins with a blank line (line 0, where the highlight starts: Choice 0), so the first
+  member's name is line 1. Reads: ds5D96, SpellTable, SpellNames.
+  Side effects: the heap (the lines, freed by FreeMenuList), the screen, the key pressed is ignored.
+  QUIRK ovl15:0FBC: the local Unused ([bp-$14]) is never read or written; the frame needs its
+  byte (Count is at [bp-$13], Found at [bp-$15]). }
+procedure DisplaySpellEffects;
+var
+  Affect: PAffect;              { the affect of Who being named }
+  List, Last: PMenuLine;        { the Display lines and the last one (AddDisplayLine appends) }
+  Who: PCharacter;              { the party member being listed }
+  AffectId: Byte;               { Affect^.Id }
+  Spell: Byte;                  { the SpellTable row being searched for AffectId }
+  Count: Byte;                  { the lines added for Who; 0 gives ' <No Spell Effects>' }
+  Unused: Byte;                 { QUIRK: never used (see above) }
+  Found: Byte;                  { 1 once a spell with AffectId is found }
+  Known: Byte;                  { 1 when the affect has a name (0 in the case's else) }
+  Redraw: Byte;                 { ChooseFromList's redraw flag, set before the call }
+  Name: String40;               { the affect's name }
+  Choice: Integer;              { the line ChooseFromList starts on (0) }
+  Key: Char;                    { the key that left ChooseFromList; ignored }
+
+  { ovl15:0E37. Nested in DisplaySpellEffects (the static link at [bp+6], pushed by the parent):
+    allocates a 46-byte menu line after Last, makes it the last line (Next nil) and sets its text
+    and heading flag (Flag29: HeadingLine for a member's name, PlainLine for an affect). }
+  procedure AddDisplayLine(Flag: Byte; Text: String40);
+  begin
+    GetMem(Last^.Next, MenuLineBytes);
+    Last := Last^.Next;
+    Last^.Next := nil;
+    Last^.Text := Text;
+    Last^.Flag29 := Flag;
+  end;
+
+begin
+  GetMem(List, MenuLineBytes);
+  Last := List;
+  Last^.Flag29 := PlainLine;
+  Last^.Text := ' ';
+  Last^.Next := nil;
+  Who := PCharacter(ds5D96);
+  while Who <> nil do
+  begin
+    Count := 0;
+    AddDisplayLine(HeadingLine, Who^.Name);
+    Affect := Who^.Affects;
+    while Affect <> nil do
+    begin
+      Known := 1;
+      AffectId := Affect^.Id;
+      case AffectId of
+        { The affects spells leave: named by the first spell whose SpellTable.AffectId matches. }
+        1, 2, 5, 8..$E, $10, $11, $13..$19, $1C, $1D, $20..$22, $24..$27, $29, $2A, $2D, $2E,
+        $31, $33..$35:
+          begin
+            Spell := 1;
+            Found := 0;
+            while (Spell <= LastSpell) and (Found = 0) do
+              if SpellTable[Spell].AffectId = AffectId then
+              begin
+                Name := SpellNames[Spell];
+                Found := 1;
+              end
+              else
+                Inc(Spell);
+            if Found = 0 then Name := 'Funky--' + res12_fn_1037(AffectId);
+          end;
+        AffectStudyingManual: Name := 'Studying Manual of Bodily Health';
+        AffectTrainingManual: Name := 'Training with Manual of Bodily Health';
+        AffectFeatherFall: Name := 'Feather Fall';
+        AffectHelpless: Name := 'Helpless';
+        AffectPrayer: Name := 'Prayer';
+        AffectCauseDisease: Name := 'Cause Disease';
+        AffectMummyDisease: Name := 'Dreaded Mummy Disease';
+        AffectRepulsed: Name := 'Repulsed';
+        AffectPoisoned: Name := 'Poisoned';
+        AffectRegenerating: Name := 'Regenerating';
+        AffectFireResistance: Name := 'Fire Resistance';
+        AffectInvisible: Name := 'Invisible';
+        AffectCamouflaged: Name := 'Camouflaged';
+        AffectDisplaced: Name := 'Displaced';
+      else
+        Known := 0;
+      end;
+      if Known <> 0 then
+      begin
+        Inc(Count);
+        AddDisplayLine(PlainLine, ' ' + Name);
+      end;
+      Affect := Affect^.Next;
+    end;
+    if Count = 0 then AddDisplayLine(PlainLine, ' <No Spell Effects>');
+    AddDisplayLine(PlainLine, ' ');
+    Who := Who^.Next;
+  end;
+  Redraw := 1;
+  Choice := 0;
+  DrawWindow(ListLeft, ListTop, ListRight, ListBottom, ListFrameSet, ListTitleColor, 'Display');
+  Key := ChooseFromList('', '', ListHeadingColor, ListLineColor, ListHighlightColor,
+                        ListLeft, ListFirstRow, ListRight, ListBottom, List, ListWithExit,
+                        Redraw, Choice, Last);
+  FreeMenuList(List);
+  res12_fn_27D9;
+end;
 { ovl15:13F1. The camp's Magic menu 'Cast Memorize Scribe Display Rest Exit' (CampMagicMenuText)
   until Exit or the rest ends the camp (EndCamp): C CastSpells, M MemorizeSpells, S ScribeScrolls,
   D DisplaySpellEffects, R RestParty; an extended key goes to ovl19_e10 (the character keys) and

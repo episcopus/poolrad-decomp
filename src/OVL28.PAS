@@ -12,24 +12,24 @@ const
   Last3DSpriteSlot = 3;     { the highest legal slot Show3DSprite draws (ovl28:0727) }
   NoBank = $FF;             { LoadHeadBodySprites: no HEAD/BODY picture number loaded }
 type
-  { One loaded sprite picture: what res07_fn_248E allocates and res07_fn_2595 frees (the same record
+  { One loaded sprite picture: what AllocatePicture allocates and ReleasePicture frees (the same record
     ovl32 draws: height and width at +0 and +2, item count at +8, byte size at +$11, pixels at +$13,
     whitepaper 4.2.3). LoadSpriteList reads the sprite's base screen column and row from +4 and +6
     (Show3DSprite adds 2 to each and passes them to res07_fn_0D71) and the byte size from +$11. The
     height, width and item count are set by the allocator and not read here; the pixel pointer at
     +$13 is not declared because this unit never reads it. }
   TSpritePicture = record
-    Height, WidthCols: Word;      { +0, +2: set by res07_fn_248E, not read here }
+    Height, WidthCols: Word;      { +0, +2: set by AllocatePicture, not read here }
     X: Word;                      { +4: the sprite's base column }
     Y: Word;                      { +6: the sprite's base row }
-    ItemCount: Byte;              { +8: res07_fn_248E's item count (1 for a sprite) }
+    ItemCount: Byte;              { +8: AllocatePicture's item count (1 for a sprite) }
     Palette: array[0..7] of Byte; { +9..+$10: 8 palette bytes LoadSpriteList Moves in }
     ByteSize: Word;               { +$11: the pixel byte count of one sprite }
   end;
   PSpritePicture = ^TSpritePicture;
   { One 8-byte slot of the sprite list LoadSpriteList builds and FreeSpriteList frees. The 4 bytes at +0
     are copied from the picture data and the picture pointer is at +4 (FreeSpriteList frees
-    Rec + 8*I - 2, slot I's +4, which is where LoadSpriteList's res07_fn_248E stores it). }
+    Rec + 8*I - 2, slot I's +4, which is where LoadSpriteList's AllocatePicture stores it). }
   TSpriteSlot = record
     Data: array[0..3] of Byte;    { +0: 4 bytes of picture data LoadSpriteList Moves in }
     Sprite: PSpritePicture;       { +4: the allocated picture (nil when empty) }
@@ -58,8 +58,8 @@ uses RES04, RES05, RES09, RES07;
 { ovl28:0000. Draws the 8x8 sprite Sprite at column Col and row Row. A nil Sprite draws nothing. When
   Direct is set it blits the sprite one column and one row up and left (Col - 1, Row - 1) onto the
   screen buffer DrawBuf through
-  res07_fn_0D71 (mode 0, the flag 1) and steps the display through res07_fn_1B52; otherwise it
-  copies it into the staging buffer with res07_fn_1951. Called by DrawHeadSprite, DrawBodySprite and
+  res07_fn_0D71 (mode 0, the flag 1) and steps the display through FlushPictureChanges; otherwise it
+  copies it into the staging buffer with ShowPicture. Called by DrawHeadSprite, DrawBodySprite and
   ShowHeadBodySprites inside this unit, and from ovl03, ShowEncounterPicture, ovl18 and ovl25 (the packet's callers). }
 procedure DrawSprite(Col, Row: Integer; Direct: Byte; Sprite: Pointer);
 begin
@@ -68,10 +68,10 @@ begin
     if Direct <> 0 then
     begin
       res07_fn_0D71(Col - 1, Row - 1, 0, 1, Sprite, DrawBuf);
-      res07_fn_1B52;
+      FlushPictureChanges;
     end
     else
-      res07_fn_1951(Col, Row, Sprite);
+      ShowPicture(Col, Row, Sprite);
   end;
 end;
 
@@ -96,7 +96,7 @@ end;
   block does not reload. It frees the old list first (FreeSpriteList), reads the block (LoadDaxBlock)
   and walks it: a count byte (at most PicBlock1Sprites for PIC block 1), then per sprite 4 bytes into
   the slot, the Height and WidthCols words, and when at least FreeMemoryFloor bytes of heap are free
-  (MaxAvail) it allocates the picture (res07_fn_248E(Height, WidthCols, 1, Mode, slot)), reads its X
+  (MaxAvail) it allocates the picture (AllocatePicture(Height, WidthCols, 1, Mode, slot)), reads its X
   and Y words (one byte after Y is skipped) and 8 palette bytes, and decodes Row + 1 bytes of pixel
   data (res07_fn_02A5), Row being the picture's ByteSize (twice the byte size when VideoAdapter is 0)
   minus one. PIC and FINAL pictures are stored as differences: the first picture's data is kept in
@@ -159,7 +159,7 @@ begin
       if MaxAvail >= FreeMemoryFloor then
       begin
         Inc(Loaded);
-        res07_fn_248E(Height, WidthCols, 1, Mode, Slots[I].Sprite);
+        AllocatePicture(Height, WidthCols, 1, Mode, Slots[I].Sprite);
         with Slots[I].Sprite^ do
         begin
           Move(PByteArray(Block)^[Offset], X, 2);
@@ -200,14 +200,14 @@ begin
 end;
 
 { ovl28:048F. Frees the sprite list Rec^: it frees the picture of every used slot (through
-  res07_fn_2595), then zeroes the whole SizeOf(TSpriteList)-byte record, clears the picture name
+  ReleasePicture), then zeroes the whole SizeOf(TSpriteList)-byte record, clears the picture name
   DS:6B0A and sets the current bank DS:6B1C to NoBank. Called by ovl10, ovl14, ovl18 and
   LoadSpriteList. }
 procedure FreeSpriteList(Rec: PSpriteList);
 begin
   with Rec^ do
     for ds70C7 := 1 to Count do
-      res07_fn_2595(Slots[ds70C7].Sprite);
+      ReleasePicture(Slots[ds70C7].Sprite);
   FillChar(Rec^, SizeOf(TSpriteList), 0);
   ds6B0A := '';
   ds6B1C := NoBank;
@@ -234,7 +234,7 @@ begin
 end;
 { ovl28:05D9. Loads the HEAD and the BODY 8x8 sprite bank for the picture number TileSet: for each
   bank that is asked for (not NoBank) and not already loaded (DS:6B00, DS:6B05) it loads the picture
-  through res07_fn_0111 from the file HEAD<number> or BODY<number> into DS:6B01 or DS:6B06, then
+  through LoadPicture from the file HEAD<number> or BODY<number> into DS:6B01 or DS:6B06, then
   records the loaded number. Calls FlushKeyboard at the end, which does nothing (QUIRK 0899:010A).
   Called by ShowHeadBody, ShowHeadBodyWindow and res12_fn_27D9. }
 procedure LoadHeadBodySprites(HeadBank, BodyBank: Byte);
@@ -245,13 +245,13 @@ begin
   if HeadBank <> NoBank then
     if (ds6B00 = NoBank) or (ds6B00 <> HeadBank) then
     begin
-      res07_fn_0111('HEAD' + Num, HeadBank, 0, 0, ds6B01);
+      LoadPicture('HEAD' + Num, HeadBank, 0, 0, ds6B01);
       ds6B00 := HeadBank;
     end;
   if BodyBank <> NoBank then
     if (ds6B05 = NoBank) or (ds6B05 <> BodyBank) then
     begin
-      res07_fn_0111('BODY' + Num, BodyBank, 0, 0, ds6B06);
+      LoadPicture('BODY' + Num, BodyBank, 0, 0, ds6B06);
       ds6B05 := BodyBank;
     end;
   FlushKeyboard;
@@ -260,7 +260,7 @@ end;
   arms draw through the staging buffer (DrawHeadSprite and DrawBodySprite pass Direct 0 to
   DrawSprite): when WithBody is not 0 it draws the HEAD sprite DS:6B01 and the BODY sprite DS:6B06
   (5 rows lower), otherwise only the HEAD sprite. WithBody is not a Direct flag; every path goes
-  through res07_fn_1951. Called by ShowHeadBody, res12_fn_27D9 and ShowHeadBodyWindow. }
+  through ShowPicture. Called by ShowHeadBody, res12_fn_27D9 and ShowHeadBodyWindow. }
 procedure ShowHeadBodySprites(Col, Row: Byte; WithBody: Byte);
 begin
   if WithBody <> 0 then
@@ -272,8 +272,8 @@ begin
     DrawSprite(Col, Row, 0, ds6B01);
 end;
 { ovl28:0708. Copies the sprite list Rec^ into a local record and shows slot Slot (only 1..3 are
-  legal; another slot restores the saved video mode with res07_fn_00FF, which calls
-  res07_fn_00CF(SavedVideoMode) so the range message is readable, then ends the game with
+  legal; another slot restores the saved video mode with RestoreVideoMode, which calls
+  SetVideoMode(SavedVideoMode) so the range message is readable, then ends the game with
   'Illegal range in Show3DSprite.'): the sprite is drawn at its base column and row plus 2 (X + 3 -
   1, Y + 3 - 1) through res07_fn_0D71 onto the screen buffer DrawBuf and the display is stepped.
   A nil slot leaves early. Called by ShowEncounterPicture. }
@@ -284,7 +284,7 @@ begin
   List := Rec^;
   if (Slot < 1) or (Slot > Last3DSpriteSlot) then
   begin
-    res07_fn_00FF;
+    RestoreVideoMode;
     WriteLn(Output, 'Illegal range in Show3DSprite.');
     QuitGame;
   end;
@@ -293,7 +293,7 @@ begin
       res07_fn_0D71(X + 3 - 1, Y + 3 - 1, 0, 1, List.Slots[Slot].Sprite, DrawBuf)
   else
     Exit;
-  res07_fn_1B52;
+  FlushPictureChanges;
 end;
 
 begin

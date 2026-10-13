@@ -11,8 +11,6 @@ interface
 uses POOLVARS, RES06;
 function GetMenuLine(Index: Integer; List: PMenuLine): PMenuLine;
 function CountMenuLines(List: PMenuLine): Integer;
-procedure SplitPromptWords;
-procedure DrawPromptWords;
 function ReadPromptChoice(Title, Prompt: String40; TitleColor, WordColor, HotColor, ExtKeys,
   Animate: Byte; var ExtKey: Byte): Char;
 procedure ClearPromptLine;
@@ -112,12 +110,6 @@ begin
   CountMenuLines := N;
 end;
 
-{ ovl25:00CB (nested in ReadPromptChoice). Splits the prompt into words at its capital letters and
-  digits. A stub until ReadPromptChoice can match (draft in commit 3c8dac5). }
-{@stub} procedure SplitPromptWords; begin end;
-{ ovl25:01DA (nested in ReadPromptChoice). Draws the prompt's words on row 24, the chosen word and
-  the capitals in the highlight colour. A stub until ReadPromptChoice can match. }
-{@stub} procedure DrawPromptWords; begin end;
 { ovl25:03BD. The prompt line: shows Title in TitleColor at the left of text row 24 and the words of
   Prompt after it, then waits for the player's choice and returns the key. A word is a run starting
   with a capital letter or digit; capitals are drawn in HotColor, other letters in WordColor, and the
@@ -134,12 +126,182 @@ end;
   QUIRK ovl25:043D: two more clock values (Start plus 30 and plus 80) are computed and never read.
   QUIRK ovl25:0662: a hotkey that is a capital inside a word, not its first letter, searches the
   word spans past their end (the loop has no bound).
-  QUIRK ovl25:0530: the timeout counts from the last animation frame, not from the start.
-  BLOCKED: a stub. The draft (commit 3c8dac5, notes in re/symbols.toml) differs from the original
-  only in address fields inside its nested routines, which the matcher compares byte-exact
-  (work/blockers.md, escalate-res06-20261012110841). }
-{@stub} function ReadPromptChoice(Title, Prompt: String40; TitleColor, WordColor, HotColor, ExtKeys,
-  Animate: Byte; var ExtKey: Byte): Char; begin end;
+  QUIRK ovl25:0530: the timeout counts from the last animation frame, not from the start. }
+function ReadPromptChoice(Title, Prompt: String40; TitleColor, WordColor, HotColor, ExtKeys,
+  Animate: Byte; var ExtKey: Byte): Char;
+type
+  { One word of the prompt: the positions of its first and last character in Prompt. }
+  TWordSpan = record
+    Start, Stop: Byte;
+  end;
+var
+  Start: Longint;               { GameClock at the start or at the last animation frame }
+  Unused30, Unused80: Longint;  { QUIRK ovl25:043D: computed, never read }
+  Key: Char;
+  J, I: Byte;
+  Done: Boolean;
+  PromptLen, WordsCol: Byte;
+  Words: array[1..MaxPromptWords] of TWordSpan;
+  WordCount: Byte;
+  AcceptsEnter: Boolean;
+
+  { ovl25:00CB (nested). Splits Text (the prompt) into Words: every capital letter or digit after
+    the first word's start begins a new word whose previous one ends two characters earlier (one
+    separator assumed); the last word ends at the end of the text. Sets WordCount. }
+  procedure SplitPromptWords(Text: String40);
+  var
+    Count, I, Len, Spare: Byte;   { Spare: a byte the original reserves and never uses }
+  begin
+    FillChar(Words, SizeOf(Words), 0);
+    Count := 1;
+    Len := Length(Text);
+    for I := 1 to Len do
+      if Text[I] in ['0'..'9', 'A'..'Z'] then
+        if Words[Count].Start = 0 then
+          Words[Count].Start := I
+        else
+        begin
+          Words[Count].Stop := I - 2;
+          Inc(Count);
+          Words[Count].Start := I;
+        end;
+    Words[Count].Stop := Len;
+    WordCount := Count;
+  end;
+
+  { ovl25:01DA (nested). Draws the prompt's words on row 24 from column WordsCol, one character at a
+    time through DrawGlyph: the characters of word Chosen (when HotColor is nonzero) and every
+    capital or digit in HotColor, the rest in WordColor; then blanks the row to column 39. }
+  procedure DrawPromptWords(Chosen: Byte);
+  var
+    I: Byte;
+  begin
+    if PromptLen > 0 then
+    begin
+      for I := 1 to PromptLen do
+        if (Words[Chosen].Start <= I) and (Words[Chosen].Stop >= I) and (HotColor <> 0) then
+          DrawGlyph(WordsCol + I - 1, PromptRow, HotColor, 1, Ord(Prompt[I]), 1)
+        else if Prompt[I] in ['0'..'9', 'A'..'Z'] then
+          DrawGlyph(WordsCol + I - 1, PromptRow, HotColor, 1, Ord(Prompt[I]), 1)
+        else
+          DrawGlyph(WordsCol + I - 1, PromptRow, WordColor, 1, Ord(Prompt[I]), 1);
+      if WordsCol + PromptLen < LastTextCol then
+        DrawGlyph(WordsCol + PromptLen, PromptRow, 0, LastTextCol - PromptLen - WordsCol + 1,
+          Space, 1);
+    end;
+  end;
+
+begin
+  LastPromptExtKey := 0;
+  AcceptsEnter := (WordColor <> 0) or (HotColor <> 0);
+  SplitPromptWords(Prompt);
+  if PromptWordChoice > WordCount then
+    PromptWordChoice := 1;
+  PromptLen := Length(Prompt);
+  Key := KeyNone;
+  ExtKey := 0;
+  Done := False;
+  Start := GameClock;
+  Unused30 := GameClock + 30;
+  Unused80 := Unused30 + 50;
+  if Length(Title) <> 0 then
+    DrawTextAt(PromptLeftCol, PromptRow, TitleColor, Title);
+  WordsCol := Length(Title) + PromptLeftCol;
+  DrawPromptWords(PromptWordChoice);
+  repeat
+    if ((GameVars^[VarAnimateNow] <> 0) or (Animate <> 0)) and (PictureAnimation.Current > 0) then
+    begin
+      DrawSprite(PictureCol, PictureRow, Animate,
+        PictureAnimation.Frames[PictureAnimation.Current].Sprite);
+      if (GameClock - Start >= PictureAnimation.Frames[PictureAnimation.Current].Delay * TicksPerDelay)
+        or (GameVars^[VarAnimateNow] <> 0) then
+      begin
+        Inc(PictureAnimation.Current);
+        if PictureAnimation.Current > PictureAnimation.Count then
+          PictureAnimation.Current := 1;
+        Start := GameClock;
+      end;
+    end;
+    if (PromptTimeout > 0) and (GameClock - Start >= PromptTimeout) then
+    begin
+      Key := PromptTimeoutKey;
+      Done := True;
+    end
+    else if KeyPressed then
+    begin
+      Key := ReadGameKey;
+      if Key = KeyNone then
+      begin
+        Key := ReadGameKey;
+        if ExtKeys <> 0 then
+        begin
+          ExtKey := 1;
+          Done := True;
+        end;
+      end
+      else
+        case Key of
+          KeyEscape:
+            begin
+              Done := True;
+              Key := KeyNone;
+            end;
+          KeyEnter:
+            if AcceptsEnter then
+            begin
+              Key := KeyEnter;
+              Done := True;
+            end;
+          KeyPrevWord:
+            begin
+              if PromptWordChoice = 1 then
+                PromptWordChoice := WordCount
+              else
+                Dec(PromptWordChoice);
+              DrawPromptWords(PromptWordChoice);
+            end;
+          KeyNextWord:
+            begin
+              if PromptWordChoice = WordCount then
+                PromptWordChoice := 1
+              else
+                Inc(PromptWordChoice);
+              DrawPromptWords(PromptWordChoice);
+            end;
+        else
+          Key := UpCase(Key);
+          if Key in [' ', '0'..'9', 'A'..'Z'] then
+            if Key = ' ' then
+              Done := True
+            else
+              for I := 1 to PromptLen do
+                if Prompt[I] = Key then
+                begin
+                  Done := True;
+                  J := 1;
+                  while Words[J].Start <> I do
+                    Inc(J);
+                  PromptWordChoice := J;
+                  DrawPromptWords(PromptWordChoice);
+                end;
+          if ExtKeys <> 0 then
+            if Key in ['1'..'9', KeypadBackslash] then
+            begin
+              if Key = KeypadBackslash then
+                Key := KeypadBackslashKey
+              else
+                Key := KeypadScanLetters[Ord(Key) - Ord('1')];
+              ExtKey := 1;
+              Done := True;
+            end;
+        end;
+    end;
+  until Done;
+  GameVars^[VarAnimateNow] := 0;
+  ReadPromptChoice := Key;
+  LastPromptExtKey := ExtKey;
+end;
+
 
 { ovl25:06FB. Blanks the prompt line: ClearTextCells over the 40 columns of text row 24. Called by
   the loader (ovl07, ovl11), the area keys and many other units before they draw a new prompt. }
@@ -187,7 +349,13 @@ end;
   the Temple (HealMenu), the shops (ChooseShopItem) and ovl05, ovl07, ovl15, ovl16, ovl19, ovl21.
   QUIRK ovl25:0E5F: the lines are counted twice (CountMenuLines into LineCount, then a loop into
   Total) and the two counts are used for different checks.
-  BLOCKED: a stub, for the same reason as ReadPromptChoice (draft in commit 3c8dac5). }
+  BLOCKED: a stub. The draft (commit 3c8dac5, with DrawTextAt, DrawGlyph and ClearTextCells for
+  the res06 names) compiles to the original's 1673-byte pre-entry region and body except 34 far
+  calls and ListMenuTop operands; the matcher resolves them only in nested routines the parent
+  calls directly, and FirstNonBlank (08D7), LastNonBlank (0923) and SkipHeadingLines (0B03) are
+  called only by sibling nested routines (push word ptr [bp+6]; push cs; call), which the strict
+  rule of nested_routines excludes (escalate-general-20261012012957). Waits for a decision on that
+  rule (hand-off escalation by dec-r25, 2026-10-12). }
 {@stub} function ChooseFromList(Title, Prompt: String40; HeadingColor, LineColor, HighlightColor: Byte;
   Left, Top, Right, Bottom: ShortInt; List: PMenuLine; WithExit: Byte; var Redraw: Byte;
   var Choice: Integer; var Selected: PMenuLine): Char; begin end;

@@ -1,0 +1,19 @@
+# Lessons from ovl25 (the menu unit). Leads extracted from verified evidence, not matcher verdicts.
+
+[[lesson]]
+id = "array-field-base-below-record"
+confidence = "V"
+units = ["*"]
+tags = ["array", "record", "global", "operand", "poolvars", "layout"]
+title = "A 1-based array field indexed by a scaled register has its base below the record"
+lesson = "For Frames: array[1..8] of 8-byte records at +2 of a global record, TP 6.0 addresses Frames[I].Sprite as [di + Record + 2 + 4 - 8] with di = I * 8: a base 2 bytes below the record. The matcher resolves such an operand against the nearest declared global at or below it, so when the bytes just before the record are not declared in POOLVARS the operand resolves to the wrong global (ReadPromptChoice, ovl25:04C8: ds6AB4 instead of DS:6ABC). Declare the bytes in between (ds6AB6: array[0..7] of Byte) and the operand resolves to the original offset."
+evidence = ["src/POOLVARS.PAS#ds6AB6", "src/OVL25.PAS#ReadPromptChoice", "re/symbols.toml#ovl25:03BD"]
+
+[[lesson]]
+id = "sibling-called-nested-routines"
+confidence = "V"
+units = ["*"]
+tags = ["nested", "static link", "sibling", "matcher", "pre-entry"]
+title = "A nested routine called only by sibling nested routines is not proven by the parent's match"
+lesson = "A nested routine called from its parent gets push bp; push cs; call (the parent's frame as the static link); one called from a sibling nested routine gets push word ptr [bp+6]; push cs; call (the caller passes its own link on). The matcher's strict rule counts only the first shape, so a nested routine no parent statement calls directly (ovl25 FirstNonBlank 08D7, LastNonBlank 0923, SkipHeadingLines 0B03) stays compared byte-exact, and any far call or DS operand in it (StrLCopy at 08EB and 0937, ListMenuTop at 0B54..0BEF) can never match. Check the call shapes of every nested routine before drafting a parent: with a sibling-only callee that holds a far call or a global, the parent is blocked until the rule changes (escalated by dec-r25)."
+evidence = ["src/OVL25.PAS#ChooseFromList", "tools/match/match.py#nested_routines", "re/symbols.toml#ovl25:0D9A", "tests/unit/test_match_nested.py"]

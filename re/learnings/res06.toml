@@ -1,0 +1,19 @@
+# Lessons from res06 (text and window primitives, 0709). Not matcher verdicts.
+
+[[lesson]]
+id = "res06-nested-pager-landed"
+confidence = "V"
+units = ["res06", "ovl25", "ovl15", "ovl10"]
+tags = ["nested", "pool", "matcher", "address"]
+title = "Proven nested routines are compared by address: land the parked drafts"
+lesson = "Since commit c7265b6 the matcher compares a nested routine it has proven (push bp; push cs; call from the parent, inside the parent's pre-entry region) instruction by instruction with address resolution, so a draft parked only for globals or calls inside a nested routine can match as is. ShowPagedText landed this way; its map entries for DrawTextRun and SkipSpaces were removed by WRITE=1 and their L2 is reported as NESTED lines through the parent. The known-nested-limit lesson in shared.toml is superseded."
+evidence = ["src/RES06.PAS#ShowPagedText", "re/symbols.toml#0709:0768", "tools/match/match.py"]
+
+[[lesson]]
+id = "res06-draft-index-and-frame-byte"
+confidence = "V"
+units = ["*"]
+tags = ["frame", "locals", "index", "inc ax", "sub sp"]
+title = "Check a parked draft's frame size and every array index before trusting it"
+lesson = "dec-1's ShowPagedText draft was two bytes short in sub sp (the original frame has a never-referenced byte local after J at [bp-105h], declared last) and one byte short in the body: an `inc ax` between the zero extension and `mov di, ax` means the index is Text[J + 1], not Text[J] (0709:08C9). Diff the whole routine against the packet disassembly, not only the matcher's first difference."
+evidence = ["src/RES06.PAS#ShowPagedText", "re/symbols.toml#0709:0768", "docs/design/WHITEPAPER.md#5.15"]

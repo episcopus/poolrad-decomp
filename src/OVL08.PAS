@@ -54,7 +54,7 @@ const
   MenuColors = $F;        { the last ReadPromptChoice/AskYesNo argument of every menu here }
 
 { ovl08:0000. Frees the combat data after the last round: the DS:6DBB list of $13-byte records,
-  the CombatMap block, and the picture DS:6E36 (res07_fn_2595). Then ovl31_e3, and DS:6B84 becomes
+  the CombatMap block, and the picture DS:6E36 (ReleasePicture). Then ovl31_e3, and DS:6B84 becomes
   @ovl22_e4. Called once by RunCombat. The word local is unused; it is there so the frame matches. }
 procedure EndCombat;
 var
@@ -69,7 +69,7 @@ begin
   end;
   FreeMem(CombatMap, CombatMapSize);
   CombatMap := nil;
-  res07_fn_2595(ds6E36);
+  ReleasePicture(ds6E36);
   ovl31_e3;
   ds6B84 := @ovl22_e4;
 end;
