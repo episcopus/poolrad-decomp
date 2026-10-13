@@ -1,14 +1,14 @@
 unit RES07;
-{ The picture unit: loads a DAX picture block into a picture record (LoadPicture,
+{ The picture unit: loads a DAX picture block into a picture record (routine
   0111), unpacks the 4-bit pixel data of a picture for the active video adapter
   (02A5), blits pictures, cells and sprites with clipping (08D4, 0D71, 15C7,
   1951) and builds the 8x8 tile and sprite banks that combat, the 3D view and
   the title draw from. Evidence: callers ovl32 LoadPictureSlot/Load24x24Set,
   ovl34 Load8x8Bank, ovl28 DrawSprite, ovl01 ShowTitleScreen
   (build/packets/res07.md); picture format and roles: whitepaper 4.2.3, 5.16. }
-{$A-,F+,S-,R-,G-,I-}
+{$A-,O+,F+,S-,R-,G-,I-}
 interface
-uses Dos, POOLVARS;
+uses Dos, POOLVARS, RES04, RES05;
 
 type
   { an 8-byte, 16-entry 4-bit colour palette; a picture holds it at +9 }
@@ -38,8 +38,8 @@ function ColorMatchMask(Color: Byte; Data: LongInt): Byte;
 function PaletteColor(Index: Byte; Source: PPalette): Byte;
 procedure SetVideoMode(Mode: Byte);
 procedure RestoreVideoMode;
-procedure res07_fn_0111(Text: string; A, B, C: Byte; var Target);
-procedure res07_fn_02A5(Data: Pointer; Offset: Word; A, B: Byte; Sprite: Pointer);
+procedure LoadPicture(Text: string; BlockId, AllocFlags, Color: Byte; var Target);
+procedure res07_fn_02A5(Source: Pointer; Offset: Word; A, Color: Byte; Data: Pointer);
 procedure res07_fn_08D4(Col, Row: Integer; PicIndex, Flags: Byte; Source, Dest: Pointer);
 procedure res07_fn_0D71(Col, Row: Integer; PicIndex, Flags: Byte; Source, Dest: Pointer);
 function MirrorByte(Value: Byte): Byte;
@@ -113,12 +113,48 @@ procedure RestoreVideoMode;
 begin
   SetVideoMode(SavedVideoMode);
 end;
-{ 0464:0111: retf 14. Text is a string value. Target is untyped var so ovl32, ovl34,
-  ovl28 and ovl11 can each pass their pointer variable: the routine frees it when it is not
-  nil, then loads the picture there. }
-{@stub} procedure res07_fn_0111(Text: string; A, B, C: Byte; var Target); begin end;
+{ 0464:0111: loads DAX picture block A of the set Text (with the '.dax'
+  extension) into the caller's picture pointer: frees any picture already there,
+  copies the header fields into locals, AllocatePicture (B = the pixel-buffer
+  flag), stores the X/Y position and palette into the new picture, unpacks the
+  pixels through 02A5 (C = the colour key, offset $11 = the pixel data), frees
+  the DAX block and flushes the keyboard. Target is untyped so ovl32, ovl34,
+  ovl28 and ovl11 can each pass their own pointer variable. }
+procedure LoadPicture(Text: string; BlockId, AllocFlags, Color: Byte; var Target);
+var
+  DaxHeight, DaxWidthCols, DaxXPos, DaxYPos: Word;
+  DaxItemCount: Byte;
+  DaxPalette: TPalette;
+  Size: Word;
+  PixelOfs: Word;
+  Block: Pointer;
+  Unused: Byte;    { QUIRK 0464:0114: the original frame has one byte the locals never use }
+begin
+  if Pointer(Target) <> nil then ReleasePicture(Target);
+  LoadDaxBlock(Text, '.dax', BlockId, Size, Block);
+  if Size <> 0 then
+  begin
+    Move(PPicture(Block)^.Height, DaxHeight, 2);
+    Move(PPicture(Block)^.WidthCols, DaxWidthCols, 2);
+    Move(PPicture(Block)^.XPos, DaxXPos, 2);
+    Move(PPicture(Block)^.YPos, DaxYPos, 2);
+    Move(PPicture(Block)^.ItemCount, DaxItemCount, 1);
+    Move(PPicture(Block)^.Palette, DaxPalette, 8);
+    AllocatePicture(DaxHeight, DaxWidthCols, DaxItemCount, AllocFlags, Target);
+    with PPicture(Pointer(Target))^ do
+    begin
+      XPos := DaxXPos;
+      YPos := DaxYPos;
+      Palette := DaxPalette;
+      PixelOfs := $11;
+      res07_fn_02A5(PPicture(Block), PixelOfs, AllocFlags, Color, PPicture(Pointer(Target)));
+    end;
+    FreeMem(Block, Size);
+    FlushKeyboard;
+  end;
+end;
 { 0464:02A5: frame not read }
-{@stub} procedure res07_fn_02A5(Data: Pointer; Offset: Word; A, B: Byte; Sprite: Pointer); begin end;
+{@stub} procedure res07_fn_02A5(Source: Pointer; Offset: Word; A, Color: Byte; Data: Pointer); begin end;
 { 0464:08D4: retf 16: two Integers, two Bytes, two Pointers. DrawCellPicture passes the cell,
   the picture index, flags 0, a picture pointer and DrawBuf. }
 {@stub} procedure res07_fn_08D4(Col, Row: Integer; PicIndex, Flags: Byte; Source, Dest: Pointer); begin end;

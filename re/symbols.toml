@@ -16538,12 +16538,12 @@ id = "0464:0111"
 unit = "res07"
 addr = "0464:0111"
 size = 404
-name = "res07_fn_0111"
-signature = "procedure res07_fn_0111(Text: string; A, B, C: Byte; var Target)"
+name = "LoadPicture"
+signature = "procedure LoadPicture(Text: string; A, B, C: Byte; var Target)"
 c_name = "res07_fn_0111"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res07_fn_0111 (0464:0111 loads DAX picture block A of the set Text (with the dax extension) into the caller's picture pointer: frees any old picture, copies the header into locals, AllocatePicture, stores X/Y and the palette, unpacks the pixels through 02A5, frees the DAX block; called by ovl01/ovl11/ovl18/ovl28/ovl32/ovl34); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16552,7 +16552,7 @@ unit = "res07"
 addr = "0464:02A5"
 size = 1583
 name = "res07_fn_02A5"
-signature = "procedure res07_fn_02A5(Data: Pointer; Offset: Word; A, B: Byte; Sprite: Pointer)"
+signature = "procedure res07_fn_02A5(Source: Pointer; Offset: Word; A, Color: Byte; Data: Pointer)"
 c_name = "res07_fn_02A5"
 level = "none"
 justification = ""

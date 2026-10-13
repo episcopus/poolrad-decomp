@@ -57,7 +57,7 @@ begin
     QuitGame;
   end;
   Loaded := nil;
-  res07_fn_0111(SetName, 1, 0, 0, Loaded);
+  LoadPicture(SetName, 1, 0, 0, Loaded);
   CopyBytes := PMemPic(Loaded)^.ItemCount * PMemPic(Loaded)^.ByteSize;
   DestOfs := Index * PMemPic(Loaded)^.ByteSize;
   if ds5E52 <> nil then
@@ -104,14 +104,14 @@ begin
     if UpCase(SetName[Length(SetName)]) = 'T' then Inc(Block, AltPictures);
     SetName := Copy(SetName, 1, Length(SetName) - 1);
     Suffix := '';
-    res07_fn_0111(SetName + Suffix, Block, 1, 0, ds5E5A[Slot].FirstPic);
-    res07_fn_0111(SetName + Suffix, Block + MirrorPictures, 1, 0, ds5E5A[Slot].SecondPic);
+    LoadPicture(SetName + Suffix, Block, 1, 0, ds5E5A[Slot].FirstPic);
+    LoadPicture(SetName + Suffix, Block + MirrorPictures, 1, 0, ds5E5A[Slot].SecondPic);
   end
   else if (SetName = 'COMSPR') or (SetName = 'ICON') then
   begin
     Suffix := '';
-    res07_fn_0111(SetName + Suffix, Block, 1, 0, ds5E5A[Slot].FirstPic);
-    res07_fn_0111(SetName + Suffix, Block + MirrorPictures, 1, 0, ds5E5A[Slot].SecondPic);
+    LoadPicture(SetName + Suffix, Block, 1, 0, ds5E5A[Slot].FirstPic);
+    LoadPicture(SetName + Suffix, Block + MirrorPictures, 1, 0, ds5E5A[Slot].SecondPic);
     if SetName = 'ICON' then
     begin
       res07_fn_1E5C(@ds0CD2, @ds0CF2, 0, 0, ds5E5A[Slot].FirstPic);
@@ -121,9 +121,9 @@ begin
   else
   begin
     Str(TileSet, Suffix);
-    res07_fn_0111(SetName + Suffix, Block, 1, 0, ds5E5A[Slot].FirstPic);
+    LoadPicture(SetName + Suffix, Block, 1, 0, ds5E5A[Slot].FirstPic);
     res07_fn_1E5C(@ds0CD2, @ds0CE2, 0, 0, ds5E5A[Slot].FirstPic);
-    res07_fn_0111(SetName + Suffix, Block + MirrorPictures, 1, 0, ds5E5A[Slot].SecondPic);
+    LoadPicture(SetName + Suffix, Block + MirrorPictures, 1, 0, ds5E5A[Slot].SecondPic);
     res07_fn_1E5C(@ds0CD2, @ds0CE2, 0, 0, ds5E5A[Slot].SecondPic);
   end;
   FlushKeyboard;

@@ -146,8 +146,8 @@ begin
   DrawTextAt(0, $18, $A, 'Loading...Please Wait');
   Load8x8Bank($CA, 4);
   Load8x8Bank($CB, 0);
-  res07_fn_0111('sqrpaci', 1, 0, 0, ds5E52);
-  res07_fn_0111('sqrpaci', 2, 0, 0, ds5E56);
+  LoadPicture('sqrpaci', 1, 0, 0, ds5E52);
+  LoadPicture('sqrpaci', 2, 0, 0, ds5E56);
   for ds465C := 0 to $B do
     LoadPictureSlot('COMSPR', ds465C, ds465C + $D);
   LoadPictureSlot('COMSPR', $19, $19);

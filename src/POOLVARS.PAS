@@ -29,7 +29,7 @@ type
       0: (FirstPic, SecondPic: Pointer);
       1: (Pics: array[0..1] of Pointer);
   end;
-  { One bank of 8x8 tiles as res07_fn_0111 loads it: a picture record (whitepaper 4.x; its
+  { One bank of 8x8 tiles as LoadPicture loads it: a picture record (whitepaper 4.x; its
     header carries the height at +0 and the item count at +8), Stride bytes per tile at +$11,
     the tile data at +$17. Only Stride and Data are read by this unit. }
   T8x8Bank = record
@@ -543,7 +543,7 @@ var
   ds093D: array[0..$F] of Byte;   { the third 16-byte record AnimateAreaDoors passes to res07_fn_1E5C }
   ds094D: array[0..8] of Word;    { the per-step DrawAreaView columns of AnimateAreaDoors (indexed 0..8) }
   ds095F: array[0..8] of Word;    { the per-step DrawAreaView rows of AnimateAreaDoors (indexed 0..8) }
-  ds470E: Pointer;                { the FINAL picture bank ShowEndingNarrative loads through res07_fn_0111 and draws }
+  ds470E: Pointer;                { the FINAL picture bank ShowEndingNarrative loads through LoadPicture and draws }
   ds4712: Byte;                   { the DS:49F3 value ShowEndingNarrative saves at the start and restores at the end }
   ds4713: string[1];              { Str(TileSet): the picture number ShowEndingNarrative appends to FINAL }
   ds25C0: array[0..2, 0..2] of Byte;  { the 3x3 line pattern table StepLine reads at [SY+1, SX+1] }

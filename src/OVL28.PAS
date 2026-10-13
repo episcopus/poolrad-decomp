@@ -234,7 +234,7 @@ begin
 end;
 { ovl28:05D9. Loads the HEAD and the BODY 8x8 sprite bank for the picture number TileSet: for each
   bank that is asked for (not NoBank) and not already loaded (DS:6B00, DS:6B05) it loads the picture
-  through res07_fn_0111 from the file HEAD<number> or BODY<number> into DS:6B01 or DS:6B06, then
+  through LoadPicture from the file HEAD<number> or BODY<number> into DS:6B01 or DS:6B06, then
   records the loaded number. Calls FlushKeyboard at the end, which does nothing (QUIRK 0899:010A).
   Called by ShowHeadBody, ShowHeadBodyWindow and res12_fn_27D9. }
 procedure LoadHeadBodySprites(HeadBank, BodyBank: Byte);
@@ -245,13 +245,13 @@ begin
   if HeadBank <> NoBank then
     if (ds6B00 = NoBank) or (ds6B00 <> HeadBank) then
     begin
-      res07_fn_0111('HEAD' + Num, HeadBank, 0, 0, ds6B01);
+      LoadPicture('HEAD' + Num, HeadBank, 0, 0, ds6B01);
       ds6B00 := HeadBank;
     end;
   if BodyBank <> NoBank then
     if (ds6B05 = NoBank) or (ds6B05 <> BodyBank) then
     begin
-      res07_fn_0111('BODY' + Num, BodyBank, 0, 0, ds6B06);
+      LoadPicture('BODY' + Num, BodyBank, 0, 0, ds6B06);
       ds6B05 := BodyBank;
     end;
   FlushKeyboard;

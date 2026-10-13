@@ -12,13 +12,13 @@ uses POOLVARS, RES04, RES07;
 const
   FirstBank = 0;                { lowest 8x8 bank Load8x8Bank takes }
   LastBank = 4;                 { highest 8x8 bank }
-  { Purpose unknown: the B and C arguments of res07_fn_0111 for an 8x8 bank; the whole-picture
+  { Purpose unknown: the B and C arguments of LoadPicture for an 8x8 bank; the whole-picture
     loads (TITLE in ovl01, SQRPACI in ovl11, FINAL in ovl18) pass 0 and 0 there. }
   TileLoadB = 1;
   TileLoadC = $D;
 
 { ovl34:003B. Loads block BlockId of the file 8x8d<TileSet> into 8x8 bank Bank (0..4) through
-  res07_fn_0111 (its first number is the DAX block id, as TITLE 1 and 2 in ovl01 and FINAL 1..6 in
+  LoadPicture (its first number is the DAX block id, as TITLE 1 and 2 in ovl01 and FINAL 1..6 in
   ovl18 show; LoadWallSet passes its WALLDEF block id). On a failure (the bank pointer stays nil)
   it announces Unable to load 8x8D<set>-<block> on Output, waits for a key and ends the game;
   otherwise it flushes the keyboard. Any other Bank does nothing. Called by LoadWallSet and
@@ -34,7 +34,7 @@ begin
   begin
     Str(TileSet, NumSet);
     Str(BlockId, NumBlock);
-    res07_fn_0111('8x8d' + NumSet, BlockId, TileLoadB, TileLoadC, TileBanks[Bank]);
+    LoadPicture('8x8d' + NumSet, BlockId, TileLoadB, TileLoadC, TileBanks[Bank]);
     if TileBanks[Bank] = nil then
     begin
       RestoreVideoMode;

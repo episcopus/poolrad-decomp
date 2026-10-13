@@ -3051,3 +3051,10 @@ kind = "routine"
 why = "0464:1951 copies a picture's packed pixel data straight to the video hardware at (X,Y), one branch per VideoAdapter; called by ShowTitleScreen, ovl28 DrawSprite and ovl34 Put8x8Symbol"
 date = "2026-10-12"
 
+[[rename]]
+old = "res07_fn_0111"
+new = "LoadPicture"
+kind = "routine"
+why = "0464:0111 loads DAX picture block A of the set Text (with the dax extension) into the caller's picture pointer: frees any old picture, copies the header into locals, AllocatePicture, stores X/Y and the palette, unpacks the pixels through 02A5, frees the DAX block; called by ovl01/ovl11/ovl18/ovl28/ovl32/ovl34"
+date = "2026-10-12"
+
