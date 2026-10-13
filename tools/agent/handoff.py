@@ -91,7 +91,10 @@ def archive(key: str, text: str) -> None:
     common.atomic_write(directory / ("%s-%s.md" % (key, digest)), text)
 
 
-def finish(key: str, agent: str, decision: str) -> int:
+def finish(key: str, agent: str, decision: str, changelog: bool = True) -> int:
+    """Clear a hand-off after its branch is in main. `changelog=False` when the row is already in the
+    merge commit (make integrate writes it there; writing it again here, with a date that may have
+    changed since, would dirty main)."""
     common.require_main("handoff-done")
     if not identity.is_orchestrator(agent):
         raise ValueError("handoff-done needs AGENT=orch, or an agent registered as orchestrator, in the main checkout")
@@ -114,7 +117,7 @@ def finish(key: str, agent: str, decision: str) -> int:
         import check
         check_record = check.require_receipt()
     # Preserve the record before removing it. A malformed changelog must leave the hand-off pending.
-    if f.get("changelog") and f.get("state") != "escalate":
+    if changelog and f.get("changelog") and f.get("state") != "escalate":
         print("handoff: changelog row added: %s" % add_changelog_row(f["changelog"]))
     archive(key, text)
     if f.get("state") != "escalate":

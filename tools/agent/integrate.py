@@ -237,7 +237,7 @@ def integrate_one(path: Path, main_dir: Path, dry: bool, py: str) -> bool:
                 return False
     try:
         with control.coordination_lock():
-            handoff.finish(key, AGENT, "")
+            handoff.finish(key, AGENT, "", changelog=False)   # the row is in the merge commit already
     except (ValueError, RuntimeError) as e:
         print("integrate: %s merged but its hand-off could not be cleared: %s" % (key, e))
         return True

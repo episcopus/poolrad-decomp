@@ -63,7 +63,7 @@ def clone(tmp_path, monkeypatch):
                                    "time = 2026-10-12T00:00:00+00:00\nnote = X matched\n"
                                    "changelog = 5.1 | X decompiled | make match UNIT=a\n" % tip)
     cleared = []
-    monkeypatch.setattr(handoff, "finish", lambda key, agent, decision: cleared.append(key) or (handoffs / (key + ".md")).unlink())
+    monkeypatch.setattr(handoff, "finish", lambda key, agent, decision, **kw: cleared.append(key) or (handoffs / (key + ".md")).unlink())
     monkeypatch.setattr(unlock, "main", lambda argv: 0)
     monkeypatch.setattr(handoff, "CHANGELOG", repo / "docs/design/CHANGELOG.md")
     monkeypatch.delenv("POOLRAD_TEST_CHECK_FAIL", raising=False)
