@@ -750,13 +750,12 @@ var
     @ovl22_e4 at the end (ovl08:0069); who calls it is not known yet. }
   ds6B84: Pointer;                { routine RunCombat stores at ovl08:0085 and EndCombat at ovl08:0069 }
   ds6814: Byte;                   { zero (or ds6815 zero) ends the combat (ovl08:009B, 095C); likely the count of one side }
-  { Per-side combatant counts (ds6814 side 0, ds6815 side 1, ovl08:009B): UseMagicItem indexes
-    them by the res12_fn_23B7 side. Only two count bytes are known; the bound is documentation. }
-  SideCounts: array[0..1] of Byte absolute ds6814;
+  ds6815: Byte;                   { see ds6814; likely the count of the other side }
+  { ds6814 and ds6815 indexed by side (ovl10:1AC7); the combat AI indexes them by the
+    res12_fn_23B7 side of the actor (UseMagicItem, CastMemorizedSpell, ovl09:049F, 05C6). }
+  ds6814Sides: array[0..1] of Byte absolute ds6814;
   ds6825: Byte;                   { AI morale scratch (CheckMorale computes it from B84, compares percentages) }
   ds6E2F: Byte;                   { byte CheckMorale copies into ds6825; meaning unknown }
-  ds6815: Byte;                   { see ds6814; likely the count of the other side }
-  ds6814Sides: array[0..1] of Byte absolute ds6814;  { ds6814 and ds6815 indexed by side (ovl10:1AC7) }
   ds6E30: Boolean;                { the Alt-M Magic On/Off toggle of the combat keys (ovl08:04A7) }
   ds6E31: Byte;                   { the key flag the ovl08 menus pass to ReadPromptChoice }
   ds6DE3: Byte;                   { counted up once per combat round (ovl08:0891) }

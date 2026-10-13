@@ -92,9 +92,9 @@ end;
   item that passes (not ovl22_e6, Affects[3] below $80, Readied, level from Affects[2] in
   1..MaxSpell adjusted down by $17 above it, and ovl09_fn_02EB in range) and remembers it as
   Best. Afterwards a chosen Best is used through ovl19_e8 and the result is True. Early exits
-  (Pad2 zero, both SideCounts zero, VarNoCasting set) return False at once. QUIRK ovl09:049F:
+  (Pad2 zero, both ds6814Sides zero, VarNoCasting set) return False at once. QUIRK ovl09:049F:
   RowByte (the RaceRow byte of the item kind) is computed but never read. QUIRK: the
-  [bp-5..-6] and [bp-9..-12] frame bytes are never read (UnusedA, UnusedB). Globals: SideCounts
+  [bp-5..-6] and [bp-9..-12] frame bytes are never read (UnusedA, UnusedB). Globals: ds6814Sides
   (ds6814), GameVars, RaceRow. }
 function UseMagicItem(Who: PCharacter): Boolean;
 label
@@ -114,10 +114,10 @@ begin
   UseMagicItem := False;
   Best := nil;
   Range := 7;
-  Roll := ovl24_e8(1, 7);
+  Roll := RollDice(1, 7);
   if Who^.Combat^.Pad2 = 0 then
     goto Done;
-  if SideCounts[ShortInt(res12_fn_23B7(Who))] <= 0 then
+  if ds6814Sides[ShortInt(res12_fn_23B7(Who))] <= 0 then
     goto Done;
   if GameVars^[VarNoCasting] <> 0 then
     goto Done;
@@ -159,7 +159,7 @@ end;
   rolls rounds with a shrinking level, tries up to three random spells per round through
   ovl09_fn_02EB (Who, Spell, Level) and casts the first in range through ovl13_e15 (the Cast of
   CombatMenu). Skips everything when no spell is memorized. QUIRK: the [bp-0x17..-0x1A] and
-  [bp-0x24] frame bytes are never read (UnusedC, UnusedD). Globals: SideCounts (ds6814),
+  [bp-0x24] frame bytes are never read (UnusedC, UnusedD). Globals: ds6814Sides (ds6814),
   ds6E30, GameVars (word 710). }
 function CastMemorizedSpell(Who: PCharacter): Byte;
 label
@@ -188,20 +188,20 @@ begin
       end;
   Chosen := 0;
   Level := 7;
-  Roll := ovl24_e8(1, 7);
+  Roll := RollDice(1, 7);
   Round := 1;
   if Count <= 0 then
     goto Done;
   if (Who^.B84 > $7F) or ds6E30 then
   begin
-    if SideCounts[ShortInt(res12_fn_23B7(Who))] > 0 then
+    if ds6814Sides[ShortInt(res12_fn_23B7(Who))] > 0 then
     begin
       while (Round <= Roll) and (Chosen = 0) do
       begin
         J := 1;
         while (J < 4) and (Chosen = 0) do
         begin
-          I := ovl24_e8(1, Count) - 1;
+          I := RollDice(1, Count) - 1;
           Spell := SpellList[I];
           if ovl09_fn_02EB(Who, Spell, Level) then
             Chosen := Spell;
@@ -353,8 +353,8 @@ end;
   res12_fn_16EC); B84 at or below $7F ends it; otherwise ds6825 ((B84 and $7F) * 2, zeroed above
   $66) is compared against two hit-point percentages (Who's Flag11B loss and game word 710),
   each failure ending it. Survivors with a good ovl13_e20 roll against half the ovl13_e2 roll
-  and Intelligence above 5 offer surrender ('Surrenders' through ovl24_e11) and return
-  res12_fn_2637(Who); the rest get two ovl24_e2 affects ($4A, $4B) and also end it.
+  and Intelligence above 5 offer surrender ('Surrenders' through DropCombatant) and return
+  res12_fn_2637(Who); the rest get two RemoveAffect affects ($4A, $4B) and also end it.
   QUIRK ovl09:1141: the B84 gate is an inverted test with an empty then-branch. QUIRK
   ovl09:11AD: Saved6825 is saved from ds6825 and never used. The +$14 combat byte lies past
   TCombatant (NoBody at +$13). Globals: ds6825, ds6E2F. }
@@ -377,24 +377,24 @@ begin
     ds6825 := (Who^.B84 and $7F) * 2;
     if ds6825 > $66 then
       ds6825 := 0;
-    ovl24_e3($11, Who);
+    RunAffectHooks($11, Who);
     if (ds6825 < 100 - Who^.Flag11B * 100 div Who^.HpMax) or (ds6825 = 0) then
     begin
       Saved6825 := ds6825;
       ds6825 := ds6E2F;
-      ovl24_e3($11, Who);
+      RunAffectHooks($11, Who);
       if (ds6825 < 100 - ds49D6^[710]) or (ds6825 = 0) or (Who^.Side = 0) then
       begin
         E20Result := ovl13_e20(Who);
         if E20Result <= ovl13_e2(Who) div 2 then
         begin
           PByteArray(Who^.Combat)^[$14] := 1;
-          ovl24_e2(Who, $4A, nil);
-          ovl24_e2(Who, $4B, nil);
+          RemoveAffect(Who, $4A, nil);
+          RemoveAffect(Who, $4B, nil);
         end
         else if Who^.Intelligence > 5 then
         begin
-          ovl24_e11(Who, 4, 'Surrenders');
+          DropCombatant(Who, 4, 'Surrenders');
           CheckMorale := res12_fn_2637(Who);
         end;
       end;
@@ -405,7 +405,7 @@ end;
   sixteen-byte RaceRow of the foe's race and builds a score from it, the foe's hit points and
   known-spell bytes, and the actor's combat state. ovl09_fn_13CA calls it for each candidate and
   keeps the highest score (ovl09:1543). Actor is 13CA's character (its Combat, PadCC[$100] and
-  Pad9E[$A0] bytes are read); Foe is the candidate (its Race, HpMax and KnownSpells bytes are
+  ByteA0 bytes are read); Foe is the candidate (its Race, HpMax and KnownSpells bytes are
   read). Result: the target score. Globals: RaceRow (ds5582). The $55 race and the $84/$53
   known-spell values have no proven meaning yet; the ShortInt conversions of HpMax and the row
   bytes are the original's (signed compares and cbw, ovl09:12CA..12F2). }
@@ -431,7 +431,7 @@ begin
   if Row[1] + Actor^.PadCC[$100] > 3 then
     Score := 0;
   if Foe^.KnownSpells[$0C] = $84 then
-    if (Foe^.KnownSpells[$0B] and $0F) <> Actor^.Pad9E[$A0] then
+    if (Foe^.KnownSpells[$0B] and $0F) <> Byte(Actor^.ByteA0) then
       Score := 0;
   if Foe^.KnownSpells[$0B] = $53 then
     Score := 0;
