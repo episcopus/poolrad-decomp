@@ -3070,7 +3070,9 @@ old = "res07_fn_1B52"
 new = "FlushPictureChanges"
 kind = "routine"
 why = "0464:1B52 presents the changed regions the blitters marked in ds4A28/ds4AD0/ds4C20/ds4D70 to the screen per VideoAdapter (row moves to the ds4EC0/ds51E0 segment tables, or the four EGA planes through port 3C5 plus a GC-mode-1 copy), then resets the trackers; called by the sprite, combat-view and area-view units after a blit"
+date = "2026-10-12"
 
+[[rename]]
 old = "ovl17_fn_02AE"
 new = "CreateSaveDir"
 kind = "routine"
