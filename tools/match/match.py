@@ -1052,7 +1052,7 @@ def write_levels(results: list[Result], orig: Original, unit: str) -> list[str]:
         if known is None:
             size = gap if gap is not None else r.size
             record = ('[[routine]]\nid = "%s"\nunit = "%s"\naddr = "%s"\nsize = %d\nname = "%s"\n'
-                      'c_name = "%s_fn_%04x"\nlevel = "L2"\njustification = ""\n'
+                      'signature = ""\nc_name = "%s_fn_%04x"\nlevel = "L2"\njustification = ""\n'
                       'notes = "added by make match WRITE=1: a routine the map lacked, boundaries from the compiler"\n'
                       'evidence = ["compiler"]\n' % (r.id, unit, r.id, size, r.name, unit, entry))
             text = insert_record(text, unit, record)
@@ -1081,7 +1081,7 @@ def write_levels(results: list[Result], orig: Original, unit: str) -> list[str]:
         if orig.by_id.get(r.id) is None:            # a nested routine the map lacked: recorded like any other
             entry = int(r.id.split(":")[1], 16)
             record = ('[[routine]]\nid = "%s"\nunit = "%s"\naddr = "%s"\nsize = %d\nname = "%s"\n'
-                      'c_name = "%s_fn_%04x"\nlevel = "L2"\njustification = ""\nnotes = "%s"\n'
+                      'signature = ""\nc_name = "%s_fn_%04x"\nlevel = "L2"\njustification = ""\nnotes = "%s"\n'
                       'evidence = ["compiler"]\n' % (r.id, unit, r.id, r.size, r.name, unit, entry, r.detail))
             text = insert_record(text, unit, record)
             notes.append("%s (%s, %d bytes) was not in re/symbols.toml: added as nested" % (r.name, r.id, r.size))
