@@ -53,7 +53,7 @@ procedure FlushPictureChanges;
 procedure res07_fn_1E5C(P1, P2: Pointer; A: Word; B: Byte; P3: Pointer);
 procedure AllocatePicture(Height, WidthCols: Word; ItemCount, AllocFlags: Byte; var Pic);
 procedure ReleasePicture(var Pic);
-procedure res07_fn_2632(A, B, C, D: Word; E: Byte; F, G: Pointer);
+procedure FillPictureRect(FirstCol, FirstRow: Integer; Width, Height: Word; Colour: Byte; Palette: Pointer; Target: Pointer);
 procedure SetPaletteRegister(Register, Color: Byte);
 implementation
 
@@ -517,8 +517,131 @@ begin
     end;
   end;
 end;
-{ 0464:2632: retf 18: 18 bytes of parameters; 36 bytes of locals }
-{@stub} procedure res07_fn_2632(A, B, C, D: Word; E: Byte; F, G: Pointer); begin end;
+{ 0464:2632: fills the Width x Height cells of picture Target whose top-left cell is
+  (FirstCol, FirstRow) with palette colour Colour (Palette is the 8-byte PPalette). FirstCol and FirstRow may be
+  negative: the rectangle is clipped at the picture's left, top, right and bottom edges.
+  VideoAdapter 0 writes two bytes per cell (ds0D02[PaletteColor(Colour)]), 2 writes four
+  bytes per cell (ds0D06[Colour]) and 1 writes one byte per EGA plane through the plane
+  mask of Colour (EgaPlaneBitMasks). Every row it touches is marked in ds4A28 and in the
+  trackers ds4C20, ds4AD0 and ds4D70 for FlushPictureChanges. Called by DrawWallDescriptors
+  (ovl29:0174) with FirstCol = 2 and the four wall descriptors.
+  QUIRK 0464:2707: a rectangle that starts above row 0 is drawn one row too far: the row
+  bound is Height - |FirstRow| and the loop includes it. }
+procedure FillPictureRect(FirstCol, FirstRow: Integer; Width, Height: Word; Colour: Byte; Palette: Pointer; Target: Pointer);
+var
+  Pal: TPalette;
+  ClipLeft, RightOver, StartCol, RightRoom, Count, LastRow, DestOfs, Row: Word;
+  Mask: array[0..3] of Byte;
+  TrackRow, StartBytes: Word;
+  PlaneIndex: Byte;
+begin
+  Pal := PPalette(Palette)^;
+  if Target = nil then Exit;
+  if FirstCol < 0 then
+  begin
+    ClipLeft := Abs(FirstCol);
+    StartCol := 0;
+  end
+  else
+  begin
+    ClipLeft := 0;
+    StartCol := FirstCol;
+  end;
+  if FirstCol + Width > PPicture(Target)^.WidthCols then
+  begin
+    RightOver := FirstCol + Width - PPicture(Target)^.WidthCols;
+    RightRoom := 0;
+  end
+  else
+  begin
+    RightOver := 0;
+    RightRoom := PPicture(Target)^.WidthCols - (FirstCol + Width);
+  end;
+  if FirstRow < 0 then
+  begin
+    DestOfs := 0;
+    TrackRow := 0;
+    LastRow := Height - Abs(FirstRow);
+  end
+  else
+  begin
+    TrackRow := FirstRow;
+    DestOfs := TrackRow * PPicture(Target)^.WidthCols;
+    LastRow := Height - 1;
+    if FirstRow + Height > PPicture(Target)^.Height then
+      LastRow := PPicture(Target)^.Height - 1 - FirstRow
+    else
+      LastRow := Height - 1;
+  end;
+  case VideoAdapter of
+    0, 2:
+    begin
+      if VideoAdapter = 0 then
+      begin
+        StartBytes := StartCol * 2;
+        Count := (Width - ClipLeft - RightOver) * 2;
+        StartCol := StartCol * 2;
+        RightRoom := RightRoom * 2;
+        DestOfs := DestOfs * 2;
+      end
+      else
+      begin
+        Count := (Width - ClipLeft - RightOver) * 4;
+        StartCol := StartCol * 4;
+        RightRoom := RightRoom * 4;
+        DestOfs := DestOfs * 4;
+        StartBytes := StartCol;
+      end;
+      for Row := 0 to LastRow do
+      begin
+        ds4A28[TrackRow] := 1;
+        Inc(DestOfs, StartCol);
+        if ds4C20[TrackRow] > DestOfs then
+        begin
+          ds4AD0[TrackRow] := StartBytes;
+          ds4C20[TrackRow] := DestOfs;
+        end;
+        if VideoAdapter = 0 then
+          FillChar(PPicture(Target)^.Data[DestOfs], Count, ds0D02[PaletteColor(Colour, @Pal)])
+        else
+          FillChar(PPicture(Target)^.Data[DestOfs], Count, ds0D06[Colour]);
+        Inc(DestOfs, Count);
+        if DestOfs - 1 > ds4D70[TrackRow] then ds4D70[TrackRow] := DestOfs - 1;
+        Inc(DestOfs, RightRoom);
+        Inc(TrackRow);
+      end;
+    end;
+    1:
+    begin
+      StartBytes := StartCol;
+      Count := Width - ClipLeft - RightOver;
+      StartCol := StartCol * 4;
+      RightRoom := RightRoom * 4;
+      DestOfs := DestOfs * 4;
+      FillChar(Mask, 4, 0);
+      for PlaneIndex := 0 to 3 do
+        if (EgaPlaneBitMasks[PlaneIndex] and Colour) > 0 then Mask[PlaneIndex] := $FF;
+      for Row := 0 to LastRow do
+      begin
+        ds4A28[TrackRow] := 1;
+        Inc(DestOfs, StartCol);
+        if ds4C20[TrackRow] > DestOfs then
+        begin
+          ds4AD0[TrackRow] := StartBytes;
+          ds4C20[TrackRow] := DestOfs;
+        end;
+        for ds70C7 := 1 to Count do
+        begin
+          Move(Mask, PPicture(Target)^.Data[DestOfs], 4);
+          Inc(DestOfs, 4);
+        end;
+        if DestOfs - 1 > ds4D70[TrackRow] then ds4D70[TrackRow] := DestOfs - 1;
+        Inc(DestOfs, RightRoom);
+        Inc(TrackRow);
+      end;
+    end;
+  end;
+end;
 { 0464:2A0D: sets one EGA palette register through INT 10h function $10
   (AL=0): Register is the palette register and Color the colour value, mapped from
   the 0..15 palette range to the hardware's 0..7 and 16..23. Called by ovl31_e2/e3

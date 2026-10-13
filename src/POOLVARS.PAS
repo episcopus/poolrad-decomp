@@ -443,7 +443,7 @@ var
   ds0C26: array[0..15] of Byte;  { wall view id table, two equal groups of 8; see above }
   SpecialBlocks: array[0..9] of TSpecialBlock;  { entries 1..9 tested; only 3..9 replace the map block }
   ds2612: Word;                   { word passed to PlaySound by QuitGame and the Ctrl-S pause path; meaning unknown }
-  ds260A: array[0..7] of Byte;    { 8-byte structure res07_fn_2632 copies from @ds260A (DrawWallDescriptors) }
+  ds260A: array[0..7] of Byte;    { 8-byte structure FillPictureRect copies from @ds260A (DrawWallDescriptors) }
   ds2622: Word;                   { word e1 passes to PlaySound when Done is 0; meaning unknown }
   ds2628: Word;                   { word the ovl14 movement code passes to PlaySound; meaning unknown }
   { Five words, one per 8x8 tile bank, subtracted from the symbol number to index within the
@@ -758,6 +758,11 @@ var
   ds0CD2: array[0..15] of Byte;   { identity colour map; see above }
   ds0CE2: array[0..15] of Byte;   { colour 13 to 8; see above }
   ds0CF2: array[0..15] of Byte;   { colour 13 to 0; see above }
+  { Fill bytes of FillPictureRect (the image: 00 55 AA FF then 00 11 .. BB at ds0D06..). ds0D02[C] is
+    the byte of four 2-bit pixels of colour C (C 0..3); ds0D06[C] the byte of two 4-bit pixels of
+    colour C (C * $11). The two tables overlap: ds0D02[C + 4] is ds0D06[C]. }
+  ds0D02: array[0..15] of Byte;   { four 2-bit pixels of colour C; see above }
+  ds0D06: array[0..15] of Byte;   { two 4-bit pixels of colour C (C * $11); see above }
   { Globals of the combat unit ovl08 (whitepaper 5.5). }
   ds6DBB: PCombatNode;            { a list of $13-byte records EndCombat frees (ovl08:0006); meaning unknown }
   ds6E36: Pointer;                { a picture EndCombat frees through ReleasePicture (ovl08:005A) }

@@ -3162,3 +3162,10 @@ kind = "global"
 why = "7 rows of 5 direction offsets: CanAffordStep adds ds02AE[Combat+15h, Column] to the base direction mod 8 before ProbeStep (ovl09:068B..06C2); ovl09_fn_0898 sets the row to RollDice(1, 2) (ovl09:08CD)"
 date = "2026-10-12"
 
+[[rename]]
+old = "res07_fn_2632"
+new = "FillPictureRect"
+kind = "routine"
+why = "DrawWallDescriptors (ovl29:0174) calls it four times with X=2, the wall descriptor rows and Colour from ds6A60..ds6A63; the routine fills Width x Height cells of the picture Target with the palette colour, clipping at all four edges (0464:2632, L2)"
+date = "2026-10-13"
+
