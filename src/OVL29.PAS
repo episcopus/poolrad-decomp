@@ -57,8 +57,8 @@ const
   FarCellStep = 2;       { the far row (two cells ahead) }
   MidCellStep = 3;       { the middle row (one cell ahead) }
   NearCellStep = 7;      { the party's row }
-  { Put8x8Symbol's last two arguments: Direct 1 draws through res07_fn_08D4 into the 3D view;
-    Attr goes on to res07_fn_08D4 (its meaning is not known yet): 0 for the overhead map's
+  { Put8x8Symbol's last two arguments: Direct 1 draws through DrawPictureItem into the 3D view;
+    Attr goes on to DrawPictureItem (its meaning is not known yet): 0 for the overhead map's
     symbols, 1 for the wall tiles. }
   DrawDirect = 1;
   MapSymbolAttr = 0;

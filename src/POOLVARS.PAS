@@ -509,7 +509,7 @@ var
   ds4A1D: Byte;                   { copy of SavedVideoMode taken in res08_init; reader unknown }
   VideoAdapter: Byte;                   { video mode flag read by ClearWindow (03F1:0137): 0 fills the EGA planes,
                                     1 draws through FillPlaneRect, 2 fills four planes; meaning unknown }
-  DrawBuf: Pointer;                { far pointer DrawCellPicture passes to res07_fn_08D4; what it points at is unknown }
+  DrawBuf: Pointer;                { far pointer DrawCellPicture passes to DrawPictureItem; what it points at is unknown }
   SoundMode: Byte;                { sound setting; 2 while a Ctrl-S pause is in effect (ReadGameKey) }
   SoundModeBeforePause: Byte;     { SoundMode saved by a Ctrl-S pause; copied back only when it is 0 or 1 }
   SaveDir: string;                { POOL.CFG line 4: the save directory with trailing backslash (2.3) }
@@ -692,7 +692,7 @@ var
   ds84E9: Byte;                   { cleared by the loader (ovl11:0456) }
 
   { The 8x8 tile world of ovl34 (whitepaper 4.x): which 8X8D file to take the bank from, the five
-    loaded banks, the staging buffer tiles are copied through, the buffer res07_fn_08D4 draws
+    loaded banks, the staging buffer tiles are copied through, the buffer DrawPictureItem draws
     into, and a word ShowPicture takes. Evidence in re/dseg.toml. }
   TileSet: Byte;                  { the 8X8D file number: Load8x8Bank loads 8x8d<TileSet> }
   TileBanks: array[0..4] of PT8x8Bank;  { the loaded 8x8 banks, indexed by bank; nil when the load failed }

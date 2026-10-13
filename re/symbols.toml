@@ -16363,12 +16363,12 @@ id = "0464:08D4"
 unit = "res07"
 addr = "0464:08D4"
 size = 1181
-name = "res07_fn_08D4"
-signature = "procedure res07_fn_08D4(Col, Row: Integer; PicIndex, Flags: Byte; Source, Dest: Pointer)"
+name = "DrawPictureItem"
+signature = "procedure DrawPictureItem(Col, Row: Integer; PicIndex, Flags: Byte; Source, Dest: Pointer)"
 c_name = "res07_fn_08D4"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue; map deepseek-dec 2026-10-12: ends 0D71 (was 351); bogus entries 0A33, 0C0C, 0D6C deleted"
+notes = "renamed from res07_fn_08D4 (DrawCellPicture (ovl32:00F1) and Put8x8Symbol (ovl34:015D) call it with a picture item and the staging buffer DrawBuf; it copies item PicIndex of the picture Source into Dest at column Col and pixel row Row * 8, masked when Flags bit 0 is set and Source has a pixel buffer (0464:08D4, L2)); auto:prologue; map deepseek-dec 2026-10-12: ends 0D71 (was 351); bogus entries 0A33, 0C0C, 0D6C deleted"
 evidence = ["prologue"]
 
 [[routine]]

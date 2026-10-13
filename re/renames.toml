@@ -3176,3 +3176,10 @@ kind = "routine"
 why = "LoadPicture (0464:0111) passes it a DAX block (pixels from offset $11) and its new picture; it unpacks the block's packed 4-bit pixels into the picture's data per VideoAdapter, building the pixel buffer (0464:02A5, L2)"
 date = "2026-10-13"
 
+[[rename]]
+old = "res07_fn_08D4"
+new = "DrawPictureItem"
+kind = "routine"
+why = "DrawCellPicture (ovl32:00F1) and Put8x8Symbol (ovl34:015D) call it with a picture item and the staging buffer DrawBuf; it copies item PicIndex of the picture Source into Dest at column Col and pixel row Row * 8, masked when Flags bit 0 is set and Source has a pixel buffer (0464:08D4, L2)"
+date = "2026-10-13"
+
