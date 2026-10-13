@@ -67,6 +67,7 @@ You are working on a **matching decompilation of SSI's Pool of Radiance (DOS) in
 | `make agent-control [STATE=<state> OPERATOR=1 REASON="..."]` | Display shared run control; only the human changes it |
 | `make agent-step AGENT=<you>` | Check shared pause/stop control before a routine and after a wait |
 | `make safety-check` / `make merge-check [STAGED=1]` | Check branch ownership and detect lost registry fields/declarations in a merge |
+| `make merge-driver` | Register the record-level merge driver (`.gitattributes`, `tools/agent/merge_shared.py`) once per clone: the shared registries and `src/POOLVARS.PAS` then conflict only on the same record |
 | `make agent-register AGENT= ROLE= HARNESS= MODEL= SESSION= [VARIANT=]` | Register actual creation metadata, without launching anything |
 | `make learn UNIT= QUERY="..."` | Retrieve prior learning and accepted main's relevant whitepaper evidence |
 | `make performance [JSON=1]` / `make agent-meter AGENT=` | Attributed task/tool outcomes and measured harness usage, unknown when missing |
