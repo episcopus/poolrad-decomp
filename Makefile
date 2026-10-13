@@ -13,7 +13,7 @@ q = '$(subst ','\'',$(1))'
 
 .PHONY: help setup doctor inputs unexepack overlays map dax smoke status next ghidra p1-check \
         tp-install tp-probe tp-compare tp-pin tpc emu2 \
-        packet claim lock locks unlock handoff handoffs handoff-done integrate heartbeat agents watch-agents \
+        packet claim lock locks unlock handoff handoffs handoff-done integrate heartbeat agents watch-agents worker inbox \
         agent-control agent-step safety-check merge-check hooks match-gate \
         agent-register agent-usage agent-meter performance learn learning-check expert-budget expert-request expert-take expert-step expert-finish expert-result experts expert-scan expert-candidates task-approve \
         oracle-run oracle-dosbox timing-scan golden match test test-slow check review-pass rebuild skeleton readability rename host coco3
@@ -133,6 +133,12 @@ agents:           ## every agent's last heartbeat, oldest first; QUIET = silent 
 
 watch-agents:     ## live view: progress, active agents (then by name), hand-offs, locks, queues; stopped and hour-lapsed heartbeats omitted (INTERVAL=n; Ctrl+C to stop)
 	@$(PY) tools/agent/watch.py --interval $(or $(INTERVAL),5)
+
+worker:           ## supervisor owning a lock, one model session per batch (docs/process/WORKER.md): AGENT=<name> ROLE=decompiler|reviewer [UNIT=] [BATCH=6] [SESSION_CMD=] [SESSION_MODEL=] [MAX_SESSIONS=] [TIMEOUT=min] [MAX_ATTEMPTS=2] [IDLE=300] [HARNESS= MODEL= SESSION= VARIANT=]
+	$(PY) tools/agent/worker.py --agent $(call q,$(value AGENT)) --role $(call q,$(value ROLE)) $(if $(UNIT),--unit $(call q,$(value UNIT))) $(if $(BATCH),--batch $(call q,$(value BATCH))) $(if $(SESSION_CMD),--session-cmd $(call q,$(value SESSION_CMD))) $(if $(SESSION_MODEL),--session-model $(call q,$(value SESSION_MODEL))) $(if $(MAX_SESSIONS),--max-sessions $(call q,$(value MAX_SESSIONS))) $(if $(TIMEOUT),--timeout $(call q,$(value TIMEOUT))) $(if $(MAX_ATTEMPTS),--max-attempts $(call q,$(value MAX_ATTEMPTS))) $(if $(IDLE),--idle $(call q,$(value IDLE))) $(if $(HARNESS),--harness $(call q,$(value HARNESS))) $(if $(MODEL),--model $(call q,$(value MODEL))) $(if $(SESSION),--session $(call q,$(value SESSION))) $(if $(VARIANT),--variant $(call q,$(value VARIANT)))
+
+inbox:            ## everything waiting for a human, newest last, each with the command that resolves it [JSON=1]
+	@$(PY) tools/agent/inbox.py $(if $(filter 1,$(JSON)),--json)
 
 unlock:           ## main only: AGENT=orch UNIT=<key>; recovery: OPERATOR=1 FORCE=1 REASON=<human instruction>
 	$(PY) tools/agent/unlock.py $(call q,$(value UNIT)) --agent $(call q,$(value AGENT)) $(if $(filter 1,$(OPERATOR)),--operator) $(if $(filter 1,$(FORCE)),--force) --reason $(call q,$(value REASON))
