@@ -57,8 +57,8 @@ const
   FarCellStep = 2;       { the far row (two cells ahead) }
   MidCellStep = 3;       { the middle row (one cell ahead) }
   NearCellStep = 7;      { the party's row }
-  { Put8x8Symbol's last two arguments: Direct 1 draws through res07_fn_08D4 into the 3D view;
-    Attr goes on to res07_fn_08D4 (its meaning is not known yet): 0 for the overhead map's
+  { Put8x8Symbol's last two arguments: Direct 1 draws through DrawPictureItem into the 3D view;
+    Attr goes on to DrawPictureItem (its meaning is not known yet): 0 for the overhead map's
     symbols, 1 for the wall tiles. }
   DrawDirect = 1;
   MapSymbolAttr = 0;
@@ -125,15 +125,15 @@ begin
   ds6A62 := Wall3;
   ds6A63 := Wall4;
 end;
-{ ovl29:0174. Draws the four wall view descriptors ds6A60..ds6A63 through res07_fn_2632 (A=2,
+{ ovl29:0174. Draws the four wall view descriptors ds6A60..ds6A63 through FillPictureRect (A=2,
   B and D the descriptor's screen position/size, C=$B, E the descriptor, F=@ds260A's 8-byte
   structure, G=DrawBuf). Called by DrawWallView. }
 procedure DrawWallDescriptors;
 begin
-  res07_fn_2632(2, $10, $B, $2B, ds6A60, @ds260A, DrawBuf);
-  res07_fn_2632(2, $3B, $B, 1, ds6A61, @ds260A, DrawBuf);
-  res07_fn_2632(2, $3C, $B, 2, ds6A62, @ds260A, DrawBuf);
-  res07_fn_2632(2, $3E, $B, $2A, ds6A63, @ds260A, DrawBuf);
+  FillPictureRect(2, $10, $B, $2B, ds6A60, @ds260A, DrawBuf);
+  FillPictureRect(2, $3B, $B, 1, ds6A61, @ds260A, DrawBuf);
+  FillPictureRect(2, $3C, $B, 2, ds6A62, @ds260A, DrawBuf);
+  FillPictureRect(2, $3E, $B, $2A, ds6A63, @ds260A, DrawBuf);
 end;
 { ovl29:0211. Draws piece Piece (0..9) of wall Wall (a wall id 1..15) in the 3D view: the piece's
   Width x Height tiles (WallPieceWidth, WallPieceHeight), taken in order from the wall's tile list WallTiles^[Wall]

@@ -443,7 +443,7 @@ var
   ds0C26: array[0..15] of Byte;  { wall view id table, two equal groups of 8; see above }
   SpecialBlocks: array[0..9] of TSpecialBlock;  { entries 1..9 tested; only 3..9 replace the map block }
   ds2612: Word;                   { word passed to PlaySound by QuitGame and the Ctrl-S pause path; meaning unknown }
-  ds260A: array[0..7] of Byte;    { 8-byte structure res07_fn_2632 copies from @ds260A (DrawWallDescriptors) }
+  ds260A: array[0..7] of Byte;    { 8-byte structure FillPictureRect copies from @ds260A (DrawWallDescriptors) }
   ds2622: Word;                   { word e1 passes to PlaySound when Done is 0; meaning unknown }
   ds2628: Word;                   { word the ovl14 movement code passes to PlaySound; meaning unknown }
   { Five words, one per 8x8 tile bank, subtracted from the symbol number to index within the
@@ -509,7 +509,7 @@ var
   ds4A1D: Byte;                   { copy of SavedVideoMode taken in res08_init; reader unknown }
   VideoAdapter: Byte;                   { video mode flag read by ClearWindow (03F1:0137): 0 fills the EGA planes,
                                     1 draws through FillPlaneRect, 2 fills four planes; meaning unknown }
-  DrawBuf: Pointer;                { far pointer DrawCellPicture passes to res07_fn_08D4; what it points at is unknown }
+  DrawBuf: Pointer;                { far pointer DrawCellPicture passes to DrawPictureItem; what it points at is unknown }
   SoundMode: Byte;                { sound setting; 2 while a Ctrl-S pause is in effect (ReadGameKey) }
   SoundModeBeforePause: Byte;     { SoundMode saved by a Ctrl-S pause; copied back only when it is 0 or 1 }
   SaveDir: string;                { POOL.CFG line 4: the save directory with trailing backslash (2.3) }
@@ -693,7 +693,7 @@ var
   ds84E9: Byte;                   { cleared by the loader (ovl11:0456) }
 
   { The 8x8 tile world of ovl34 (whitepaper 4.x): which 8X8D file to take the bank from, the five
-    loaded banks, the staging buffer tiles are copied through, the buffer res07_fn_08D4 draws
+    loaded banks, the staging buffer tiles are copied through, the buffer DrawPictureItem draws
     into, and a word ShowPicture takes. Evidence in re/dseg.toml. }
   TileSet: Byte;                  { the 8X8D file number: Load8x8Bank loads 8x8d<TileSet> }
   TileBanks: array[0..4] of PT8x8Bank;  { the loaded 8x8 banks, indexed by bank; nil when the load failed }
@@ -731,6 +731,11 @@ var
   { Plane bit masks 1, 2, 4, 8 that res07's direct picture blit writes to the Sequencer Map Mask
     (port 3C5h) for plane 0..3 when it copies one byte per plane (0464:1A6E). }
   EgaPlaneBitMasks: array[0..3] of Byte;
+  { Per palette colour C (0..15) and pixel position K (0..3): the byte UnpackPicturePixels ORs
+    into a picture byte for VideoAdapter 0. For C 0..3 it is C's 2-bit value in pixel K's bit pair
+    (C = 1, K = 0 gives $40); the entries for C 4..15 do not follow that pattern (image bytes
+    from DS:25FA: 00 00 00 00 40 10 04 01 80 20 08 02 C0 30 0C 03 00 11 22 12 ...). }
+  ds25FA: array[0..15, 0..3] of Byte;
   ds49CE: Word;                   { IOResult of the last FileExists file probe (0802:0334) }
   { Characters 0768's word scanner tests (0709:0822..08F0): the leading run is skipped,
     the word run stops at them or space, the trailing run is skipped. Storage descriptor
@@ -759,6 +764,11 @@ var
   ds0CD2: array[0..15] of Byte;   { identity colour map; see above }
   ds0CE2: array[0..15] of Byte;   { colour 13 to 8; see above }
   ds0CF2: array[0..15] of Byte;   { colour 13 to 0; see above }
+  { Fill bytes of FillPictureRect (the image: 00 55 AA FF then 00 11 .. BB at ds0D06..). ds0D02[C] is
+    the byte of four 2-bit pixels of colour C (C 0..3); ds0D06[C] the byte of two 4-bit pixels of
+    colour C (C * $11). The two tables overlap: ds0D02[C + 4] is ds0D06[C]. }
+  ds0D02: array[0..15] of Byte;   { four 2-bit pixels of colour C; see above }
+  ds0D06: array[0..15] of Byte;   { two 4-bit pixels of colour C (C * $11); see above }
   { Globals of the combat unit ovl08 (whitepaper 5.5). }
   ds6DBB: PCombatNode;            { a list of $13-byte records EndCombat frees (ovl08:0006); meaning unknown }
   ds6E36: Pointer;                { a picture EndCombat frees through ReleasePicture (ovl08:005A) }

@@ -69,13 +69,13 @@ end;
 { ovl32:00F1. Draws the picture PicCode at cell (PicCol, PicRow). When PicCode is above
   PicIndexMask, bit 7 is cleared and the source is ds5E56; otherwise the source is ds5E52
   and the code is passed whole. Both paths pass NoBlitFlags and the destination DrawBuf to
-  res07_fn_08D4. Unused is never read (DrawAreaView passes 1, ovl31 passes 0). }
+  DrawPictureItem. Unused is never read (DrawAreaView passes 1, ovl31 passes 0). }
 procedure DrawCellPicture(PicCol, PicRow: Shortint; PicCode, Unused: Byte);
 begin
   if PicCode > PicIndexMask then
-    res07_fn_08D4(PicCol, PicRow, PicCode and PicIndexMask, NoBlitFlags, ds5E56, DrawBuf)
+    DrawPictureItem(PicCol, PicRow, PicCode and PicIndexMask, NoBlitFlags, ds5E56, DrawBuf)
   else
-    res07_fn_08D4(PicCol, PicRow, PicCode, NoBlitFlags, ds5E52, DrawBuf);
+    DrawPictureItem(PicCol, PicRow, PicCode, NoBlitFlags, ds5E52, DrawBuf);
 end;
 { ovl32:014E. Frees both pictures of one slot in ds5E5A, when the pointer is not nil,
   through ReleasePicture (FreeMem, then the pointer is set nil). Slot selects the

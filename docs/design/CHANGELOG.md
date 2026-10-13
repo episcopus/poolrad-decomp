@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-13 | 5.23 The picture unit res07 | 17 of 19 routines at L2: FillPictureRect (0464:2632), UnpackPicturePixels (0464:02A5), DrawPictureItem (0464:08D4); fill tables ds0D02, ds0D06, ds25FA described from the image bytes; picture-unit TP idiom lessons | make match UNIT=res07 (17 matched, 2 stubs, 0 differ); make check receipt 1d381ee8bda9 |
 | 2026-10-13 | 5.22.1 | rest loop, study timing and spell completion | make check, 12 ovl20 L2 routines, TP 6.0 probe |
 | 2026-10-13 | 5.5.2 | BuildDungeonMap matched with its five nested routines; ovl10 complete | make match UNIT=ovl10 |
 | 2026-10-12 | 5.8 | ChooseFromList matched with its nine nested routines; ovl25 complete | make match UNIT=ovl25 |

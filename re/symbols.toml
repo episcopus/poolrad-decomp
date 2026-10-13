@@ -16329,12 +16329,12 @@ id = "0464:02A5"
 unit = "res07"
 addr = "0464:02A5"
 size = 1583
-name = "res07_fn_02A5"
-signature = "procedure res07_fn_02A5(Source: Pointer; Offset: Word; A, Color: Byte; Data: Pointer)"
+name = "UnpackPicturePixels"
+signature = "procedure UnpackPicturePixels(Source: Pointer; Offset: Word; AllocFlags, Color: Byte; Data: Pointer)"
 c_name = "res07_fn_02A5"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call; map deepseek-dec 2026-10-12: ends 08D4 (was 970); bogus entries 066F, 0710 deleted (mid-routine, no 55 89 E5 prologue)"
+notes = "renamed from res07_fn_02A5 (LoadPicture (0464:0111) passes it a DAX block (pixels from offset $11) and its new picture; it unpacks the block's packed 4-bit pixels into the picture's data per VideoAdapter, building the pixel buffer (0464:02A5, L2)); auto:near_call; map deepseek-dec 2026-10-12: ends 08D4 (was 970); bogus entries 066F, 0710 deleted (mid-routine, no 55 89 E5 prologue)"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16342,12 +16342,12 @@ id = "0464:08D4"
 unit = "res07"
 addr = "0464:08D4"
 size = 1181
-name = "res07_fn_08D4"
-signature = "procedure res07_fn_08D4(Col, Row: Integer; PicIndex, Flags: Byte; Source, Dest: Pointer)"
+name = "DrawPictureItem"
+signature = "procedure DrawPictureItem(Col, Row: Integer; PicIndex, Flags: Byte; Source, Dest: Pointer)"
 c_name = "res07_fn_08D4"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue; map deepseek-dec 2026-10-12: ends 0D71 (was 351); bogus entries 0A33, 0C0C, 0D6C deleted"
+notes = "renamed from res07_fn_08D4 (DrawCellPicture (ovl32:00F1) and Put8x8Symbol (ovl34:015D) call it with a picture item and the staging buffer DrawBuf; it copies item PicIndex of the picture Source into Dest at column Col and pixel row Row * 8, masked when Flags bit 0 is set and Source has a pixel buffer (0464:08D4, L2)); auto:prologue; map deepseek-dec 2026-10-12: ends 0D71 (was 351); bogus entries 0A33, 0C0C, 0D6C deleted"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16485,12 +16485,12 @@ id = "0464:2632"
 unit = "res07"
 addr = "0464:2632"
 size = 987
-name = "res07_fn_2632"
-signature = "procedure res07_fn_2632(A, B, C, D: Word; E: Byte; F, G: Pointer)"
+name = "FillPictureRect"
+signature = "procedure FillPictureRect(FirstCol, FirstRow: Integer; Width, Height: Word; Colour: Byte; Palette: Pointer; Target: Pointer)"
 c_name = "res07_fn_2632"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res07_fn_2632 (DrawWallDescriptors (ovl29:0174) calls it four times with X=2, the wall descriptor rows and Colour from ds6A60..ds6A63; the routine fills Width x Height cells of the picture Target with the palette colour, clipping at all four edges (0464:2632, L2)); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]

@@ -1,0 +1,64 @@
+# Lessons from res07 (the picture unit, 0464). Not matcher verdicts; probes in tools/re/tp_idioms/res07/.
+
+[[lesson]]
+id = "res07-two-dim-index-pushes"
+confidence = "V"
+units = ["res07", "*"]
+tags = ["index", "array", "push", "call", "codegen"]
+title = "A two-dimensional array index with a call pushes its second subscript before the call"
+lesson = "T[F(x), K] on a two-dimensional array pushes K before F is called, then multiplies the call result in DI and pops K (the 02A5 colour lookup ds25FA[PaletteColor(...), K]). The same value written as one flat index T[F(x) * 4 + K] is compiled with the call first and K loaded afterwards, which does not match. Probe: tools/re/tp_idioms/res07/two_dim_index_pushes.pas (pushes) and flat_index_no_push.pas (no push)."
+evidence = ["src/RES07.PAS#UnpackPicturePixels", "src/POOLVARS.PAS#ds25FA", "tools/re/tp_idioms/res07/two_dim_index_pushes.pas", "tools/re/tp_idioms/res07/flat_index_no_push.pas"]
+
+[[lesson]]
+id = "res07-inc-form-of-add"
+confidence = "V"
+units = ["res07", "*"]
+tags = ["assignment", "add", "inc", "codegen"]
+title = "X := X + N compiles to load and store, Inc(X, N) to add in memory"
+lesson = "X := X + Y compiles to mov ax, X; add ax, Y; store the result. Inc(X, Y) compiles to mov ax, Y; add [X], ax, which is the original form of the FillPictureRect DestOfs updates (probe-free: the first mismatch showed it). Write such statements as Inc(X, N) and read the first differing instruction."
+evidence = ["src/RES07.PAS#FillPictureRect", "re/symbols.toml#0464:2632"]
+
+[[lesson]]
+id = "res07-positive-test-form"
+confidence = "V"
+units = ["res07", "*"]
+tags = ["boolean", "test", "jump", "codegen"]
+title = "(a and b) > 0 and (a and b) <> 0 compile to different jumps"
+lesson = "A byte test of an and-result written as <> 0 compiles to or al,al; je; the same test written as > 0 compiles to or al,al; jbe. The original used > 0 (FillPictureRect plane mask). Both skip the same way; only the opcode differs, so the matcher reports the jump."
+evidence = ["src/RES07.PAS#FillPictureRect", "re/symbols.toml#0464:2632"]
+
+[[lesson]]
+id = "res07-shift-two-forms"
+confidence = "V"
+units = ["res07", "*"]
+tags = ["shift", "codegen"]
+title = "x shr 2 and x shr 1 shr 1 are different code"
+lesson = "x shr 2 compiles to mov cx, 2; shr ax, cl, while x shr 1 shr 1 compiles to two shr ax, 1, as the original does (DrawPictureItem MaskOfs; AllocatePicture uses the same form). Probe: tools/re/tp_idioms/res07/shift_forms.pas."
+evidence = ["src/RES07.PAS#DrawPictureItem", "src/RES07.PAS#AllocatePicture", "tools/re/tp_idioms/res07/shift_forms.pas"]
+
+[[lesson]]
+id = "res07-with-pointer-temp"
+confidence = "V"
+units = ["res07", "ovl28", "ovl32", "ovl34", "*"]
+tags = ["with", "pointer", "frame", "temp"]
+title = "A with statement over a pointer keeps the pointer in a hidden four-byte temporary"
+lesson = "with PPicture(Data)^ do stores the pointer in a 4-byte temporary below the declared locals and reads every field through it (les di, [temp]); a plain Pic := Data assignment compiles to two word moves and no temporary. UnpackPicturePixels matched only with the with form, and its frame then has no Pic local (the temporary takes its place)."
+evidence = ["src/RES07.PAS#UnpackPicturePixels", "src/RES07.PAS#ShowPicture"]
+
+[[lesson]]
+id = "res07-global-loop-counter"
+confidence = "V"
+units = ["res07", "ovl28"]
+tags = ["loop", "global", "shortint"]
+title = "A for loop may use the global ds70C7 as its control variable"
+lesson = "The inner byte loops of FillPictureRect, UnpackPicturePixels and DrawPictureItem count with the global ShortInt at DS:70C7 (mov [70C7], al; jg to exit); POOLVARS names it as the FreeSpriteList counter. The loop bound is a hidden byte temporary in the frame. Declare it as the global ds70C7 in POOLVARS, not as a local."
+evidence = ["src/RES07.PAS#FillPictureRect", "src/POOLVARS.PAS#ds70C7", "re/symbols.toml#0464:2632"]
+
+[[lesson]]
+id = "res07-line-length"
+confidence = "V"
+units = ["*"]
+tags = ["source", "line", "tp6"]
+title = "TP 6.0 rejects source lines longer than 127 characters"
+lesson = "make tpc and make match report Error 11 (Line too long) for a source line over 127 characters. Split the expression after an operator; the code does not change (DrawPictureItem copy statements)."
+evidence = ["src/RES07.PAS#DrawPictureItem"]
