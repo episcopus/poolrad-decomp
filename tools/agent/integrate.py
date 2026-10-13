@@ -224,8 +224,17 @@ def integrate_one(path: Path, main_dir: Path, dry: bool, py: str) -> bool:
             shutil.rmtree(wt, ignore_errors=True)
             subprocess.run(["git", "branch", "-D", tmp_branch], cwd=main_dir, capture_output=True)
     # The record, the lock and the worker's worktree (the usual orchestrator steps, now mechanical).
+    import check
     import handoff
     import unlock
+    try:
+        check.require_receipt()
+    except ValueError:
+        # Only the already-merged path gets here without a receipt (main moved by hand): check main itself.
+        with log_path.open("a") as log:
+            if make("check", main_dir, log):
+                print("integrate: %s is in main but make check on main fails (see %s)" % (key, log_path))
+                return False
     try:
         with control.coordination_lock():
             handoff.finish(key, AGENT, "")
