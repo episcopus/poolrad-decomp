@@ -2666,66 +2666,14 @@ evidence = ["prologue"]
 id = "ovl09:0B3C"
 unit = "ovl09"
 addr = "ovl09:0B3C"
-size = 12
-name = "ovl09_fn_0B3C"
-signature = ""
+size = 1043
+name = "AiTurn"
+signature = "function AiTurn(Who: PCharacter): Byte"
 c_name = "ovl09_fn_0B3C"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl09_fn_0B3C (ovl09:0B3C is the AI's whole turn for Who (called by ovl09_e1 at 01E6 when the initiative allows): it runs affect hook 0E, loops movement (MoveStep while panicking) and attacks, picks an attack target from the remembered Combat^.Target or a random enemy of the res12_fn_2433 scan (or ovl09_fn_13CA), attacks through ovl13_e7/e11/e12 and ends the turn through res12_fn_2637; result 1 when the turn is over); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl09:0B48"
-unit = "ovl09"
-addr = "ovl09:0B48"
-size = 15
-name = "ovl09_fn_0B48"
-signature = ""
-c_name = "ovl09_fn_0B48"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl09:0B57"
-unit = "ovl09"
-addr = "ovl09:0B57"
-size = 15
-name = "ovl09_fn_0B57"
-signature = ""
-c_name = "ovl09_fn_0B57"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl09:0B66"
-unit = "ovl09"
-addr = "ovl09:0B66"
-size = 48
-name = "ovl09_fn_0B66"
-signature = ""
-c_name = "ovl09_fn_0B66"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl09:0B96"
-unit = "ovl09"
-addr = "ovl09:0B96"
-size = 953
-name = "ovl09_fn_0B96"
-signature = ""
-c_name = "ovl09_fn_0B96"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl09:0F4F"
@@ -2785,7 +2733,7 @@ unit = "ovl09"
 addr = "ovl09:13CA"
 size = 441
 name = "ovl09_fn_13CA"
-signature = ""
+signature = "procedure ovl09_fn_13CA(Who: PCharacter)"
 c_name = "ovl09_fn_13CA"
 level = "none"
 justification = ""
@@ -17333,7 +17281,7 @@ unit = "res12"
 addr = "00BA:2E8B"
 size = 204
 name = "res12_fn_2E8B"
-signature = "function res12_fn_2E8B(Who: Pointer; var W: Word): Byte"
+signature = "function res12_fn_2E8B(Who: Pointer; var W: Pointer): Byte"
 c_name = "res12_fn_2E8B"
 level = "none"
 justification = ""

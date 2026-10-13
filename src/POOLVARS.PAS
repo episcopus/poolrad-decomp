@@ -300,7 +300,11 @@ type
     PadC0: array[$C0..$C6] of Byte;
     ItemCountC7: Byte;            { +$C7: nonzero offers Use in the combat menu (ovl08:06E1); likely the item count }
     Items: PItem;                 { +$C8: the list of carried items }
-    PadCC: array[$CC..$100] of Byte;
+    { +$CC: a far pointer to another character record whose race (+$2E) ovl09's AI, ovl13 and ovl19
+      read (an attack range from RaceRow[Race][12], ovl09:0C3B); 0 when none. No writer is known
+      in the overlays yet, so the name is provisional. }
+    AttackTarget: PCharacter;     { +$CC }
+    PadD0: array[$D0..$100] of Byte;
     SaveBonus: ShortInt;          { +$101: added to the d20 of every saving throw (SavingThrow, ovl24:0D96) }
     { +$102: the weight the character carries; every coin counts one (ovl21:0020, 003A), and it may
       not exceed CarryLimit, 1500 plus the strength allowance res12_fn_13AB (ovl21:0000, 0054). }

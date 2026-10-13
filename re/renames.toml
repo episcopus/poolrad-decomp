@@ -3183,3 +3183,10 @@ kind = "routine"
 why = "ovl09:07F2 is one step of the AI's move for Who (called from the AI turn loop at 0B3C, ovl09:0BD3 and 0D7C): it shows the move prompt, lets HandleCombatKey interrupt, picks a direction (ovl13_e18 or the party facing) and a step pattern, tries CanAffordStep, and moves or attacks through ovl13_e4/ovl13_e3 and ApplyCloudTile; with no affordable step it turns the pattern (ds443D)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl09_fn_0B3C"
+new = "AiTurn"
+kind = "routine"
+why = "ovl09:0B3C is the AI's whole turn for Who (called by ovl09_e1 at 01E6 when the initiative allows): it runs affect hook 0E, loops movement (MoveStep while panicking) and attacks, picks an attack target from the remembered Combat^.Target or a random enemy of the res12_fn_2433 scan (or ovl09_fn_13CA), attacks through ovl13_e7/e11/e12 and ends the turn through res12_fn_2637; result 1 when the turn is over"
+date = "2026-10-13"
+

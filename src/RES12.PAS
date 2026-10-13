@@ -65,7 +65,7 @@ procedure res12_fn_2B88;
 procedure res12_fn_2C48;
 function res12_fn_2E03(Who: Pointer): Boolean;
 function res12_fn_2E46(Who: Pointer): Boolean;
-function res12_fn_2E8B(Who: Pointer; var W: Word): Byte;
+function res12_fn_2E8B(Who: Pointer; var W: Pointer): Byte;
 procedure res12_fn_2F57;
 implementation
 
@@ -196,7 +196,7 @@ implementation
 { 00BA:2E46: retf 4: 4 bytes of parameters; 2 bytes of locals }
 {@stub} function res12_fn_2E46(Who: Pointer): Boolean; begin end;
 { 00BA:2E8B: retf 8: 8 bytes of parameters; 6 bytes of locals }
-{@stub} function res12_fn_2E8B(Who: Pointer; var W: Word): Byte; begin end;
+{@stub} function res12_fn_2E8B(Who: Pointer; var W: Pointer): Byte; begin end;
 { 00BA:2F57: retf 6: 6 bytes of parameters; 6 bytes of locals }
 {@stub} procedure res12_fn_2F57; begin end;
 

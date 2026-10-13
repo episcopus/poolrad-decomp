@@ -14,16 +14,12 @@ function UseMagicItem(Who: PCharacter): Boolean;
 function CastMemorizedSpell(Who: PCharacter): Byte;
 function CanAffordStep(Who: PCharacter; Column, BaseDir: Byte; var OffMap: Byte): Boolean;
 procedure MoveStep(Who: PCharacter);
-procedure ovl09_fn_0B3C;
-procedure ovl09_fn_0B48;
-procedure ovl09_fn_0B57;
-procedure ovl09_fn_0B66;
-procedure ovl09_fn_0B96;
+function AiTurn(Who: PCharacter): Byte;
 function ovl09_fn_0F4F(Who: PCharacter): Byte;
 function HandleCombatKey(Who: PCharacter): Boolean;
 function CheckMorale(Who: PCharacter): Byte;
 function ScoreTarget(Actor, Foe: PCharacter): Byte;
-procedure ovl09_fn_13CA;
+procedure ovl09_fn_13CA(Who: PCharacter);
 procedure ovl09_fn_1583;
 procedure ovl09_fn_1713;
 procedure ovl09_fn_1758;
@@ -408,16 +404,142 @@ NoStep:
   Done := ovl09_fn_0F4F(Who);
 Finish:
 end;
-{ ovl09:0B3C: frame not read }
-{@stub} procedure ovl09_fn_0B3C; begin end;
-{ ovl09:0B48: frame not read }
-{@stub} procedure ovl09_fn_0B48; begin end;
-{ ovl09:0B57: frame not read }
-{@stub} procedure ovl09_fn_0B57; begin end;
-{ ovl09:0B66: frame not read }
-{@stub} procedure ovl09_fn_0B66; begin end;
-{ ovl09:0B96: retf 4: 4 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl09_fn_0B96; begin end;
+{ ovl09:0B3C. The AI's whole turn for Who (called by ovl09_e1 when the initiative allows): it
+  clears the AI scratch (ds443C/D/E), runs affect hook $0E, ends at once when the initiative is
+  0, and loops (Done = 0 and CanAct <> 0): while panicking (+$14) it steps MoveStep until the
+  moves run out, initiative leaves 1..$13 or the panic clears; then it stumbles ($14 set: no
+  step) or attacks. After 20 turns it gives up; the attack range comes from the race row byte
+  +12 of the character's AttackTarget (+$CC, minus 1, clamped). The remembered Combat^.Target is
+  dropped when it is not dying or is on the party side, and a target is attacked when line of
+  sight (WalkLine) reaches it within Range and ovl13_e8 allows it; otherwise a random enemy of
+  the res12_fn_2433(Who, Range) scan (ds6DE4) is picked (or ovl09_fn_13CA chooses one when
+  res12_fn_2E03 says to). The attack runs ovl13_e7/e11/e12 and ends the turn through
+  res12_fn_2637. Result: 1 when the turn is over (CanAct = 0). QUIRK: [bp-3] is reused for
+  res12_fn_2E8B's dead result; the +$CC deref runs before its nil test. Globals: ds443C, ds443D,
+  ds443E, RaceRow, ds6DE4, CombatantRecord, CombatMap. }
+function AiTurn(Who: PCharacter): Byte;
+label
+  Loop, Next, Attack, Finish;
+var
+  Done: Byte;
+  Flag: Byte;
+  CanAct: Byte;
+  Range: Byte;
+  StepCount: Word;
+  Count: Byte;
+  Index: Byte;
+  Aim: Pointer;
+  Target: PCharacter;
+  TargetX, TargetY: ShortInt;
+  I: Byte;
+begin
+  ds443C := 8;
+  ds443D := 0;
+  ds443E := 0;
+  I := 0;
+  CanAct := 1;
+  Done := 0;
+  RunAffectHooks($0E, Who);
+  if Who^.Combat^.Initiative = 0 then
+    CanAct := 0;
+Loop:
+  if Done <> 0 then
+    goto Finish;
+  if CanAct = 0 then
+    goto Finish;
+  if PByteArray(Who^.Combat)^[$14] <> 0 then
+    while (Who^.Combat^.Moves > 0) and (Who^.Combat^.Initiative > 0) and
+          (Who^.Combat^.Initiative < $14) do
+      MoveStep(Who);
+  if (Who^.Combat^.Initiative = 0) or (Who^.Combat^.Initiative = $14) then
+    CanAct := 0
+  else
+    Done := 0;
+  if Done <> 0 then
+    goto Next;
+  if CanAct = 0 then
+    goto Next;
+  Inc(I);
+  if I > $14 then
+  begin
+    Done := 1;
+    CanAct := Ord(ovl09_fn_0F4F(Who) = 0);
+  end;
+  Flag := 0;
+  Range := 1;
+  if Who^.AttackTarget <> nil then
+    Range := RaceRow[Byte(Who^.AttackTarget^.Race)][12] - 1;
+  if (Range = 0) or (Range = $FF) then
+    Range := 1;
+  Target := Who^.Combat^.Target;
+  if (Target^.Flag10D = 0) or (Target^.Side = 0) then
+    Target := nil;
+  if Target <> nil then
+    if ovl13_e8(Who, Target) then
+    begin
+      TargetX := CombatantX(Target);
+      TargetY := CombatantY(Target);
+      StepCount := Range;
+      if WalkLine(CombatantX(Who), CombatantY(Who), TargetX, TargetY, StepCount,
+                  Pointer(CombatMap)) then
+        if StepCount shr 1 <= Range then
+          Flag := 1;
+    end;
+  if Flag <> 0 then
+    goto Attack;
+  Count := res12_fn_2433(Who, Range);
+  if Count = 0 then
+  begin
+    if ovl13_e21(Who, $FF, 0, 0) then
+      MoveStep(Who)
+    else
+      Done := ovl09_fn_0F4F(Who);
+    goto Attack;
+  end;
+  Index := RollDice(1, Count);
+  Target := CombatantRecord[ds6DE4[Index]];
+  if res12_fn_2E03(Who) then
+    if not res12_fn_2E46(Who) then
+      if res12_fn_2433(Who, 1) > 0 then
+      begin
+        ovl09_fn_13CA(Who);
+        Done := 1;
+        goto Attack;
+      end;
+  if (res12_fn_255B(Who, Target) = 1) or ovl13_e8(Who, Target) then
+    Flag := 1;
+Attack:
+  if Flag <> 0 then
+    MoveCombatCursor(CombatantX(Who), CombatantY(Who), 2,
+      ovl13_e18(Who, Target));
+  if Flag = 0 then
+    goto Next;
+  if ovl13_e7(Who, Target) then
+  begin
+    Done := res12_fn_2637(Who);
+    goto Next;
+  end;
+  ovl13_e11(Who, Target);
+  Aim := nil;
+  if res12_fn_2E03(Who) then
+  begin
+    Flag := res12_fn_2E8B(Who, Aim);
+    if res12_fn_2E46(Who) and (res12_fn_255B(Who, Target) = 1) then
+      Aim := nil;
+  end;
+  ovl13_e12(Who, Target, 0, Aim, Done);
+  if Done <> 0 then
+  begin
+    CanAct := 0;
+    goto Next;
+  end;
+  if Target^.Flag10D = 0 then
+    Done := 1;
+Next:
+  goto Loop;
+Finish:
+  AiTurn := Ord(CanAct = 0);
+end;
 { ovl09:0F4F. Purpose unknown: returns res12_fn_2637(Who) when res12_fn_0B73(Who) or
   res12_fn_2E03(Who) is true or the combatant's Initiative is 0, else res12_fn_2686(Who).
   Called by ovl09_e1 (ovl09:01EE) and from the 07F2 and 0B3C regions. res12_fn_17E3 runs first
@@ -563,7 +685,7 @@ begin
     Score := Score + (Row[5] - 1) * 2;
   if Row[1] <= 1 then
     Score := Score + 3;
-  if Row[1] + Actor^.PadCC[$100] > 3 then
+  if Row[1] + Actor^.PadD0[$100] > 3 then
     Score := 0;
   if Foe^.KnownSpells[$0C] = $84 then
     if (Foe^.KnownSpells[$0B] and $0F) <> Byte(Actor^.ByteA0) then
@@ -575,7 +697,7 @@ begin
   ScoreTarget := Score;
 end;
 { ovl09:13CA: frame not read }
-{@stub} procedure ovl09_fn_13CA; begin end;
+{@stub} procedure ovl09_fn_13CA(Who: PCharacter); begin end;
 { ovl09:1583: frame not read }
 {@stub} procedure ovl09_fn_1583; begin end;
 { ovl09:1713: frame not read }
