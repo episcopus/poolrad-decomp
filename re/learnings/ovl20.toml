@@ -1,0 +1,10 @@
+# Lessons from ovl20, backed by TP 6.0 probes or matched routines.
+
+[[lesson]]
+id = "dec-byte-array-element"
+confidence = "V"
+units = ["*"]
+tags = ["compiler", "byte", "array", "dec"]
+title = "Dec on a byte array element subtracts directly from memory"
+lesson = "With TP 6.0 and $A-, Dec(Who^.Spells[SpellIndex], $80) compiles to a zero-extend and indexed address calculation followed by sub byte ptr es:[di], 0x80. This matches clearing the pending-spell bit without widening the assignment to a word."
+evidence = ["tools/re/tp_idioms/ovl20/PRB20_DEC.PAS", "src/OVL20.PAS#ProcessMemorizedSpell", "re/symbols.toml#ovl20:0925"]

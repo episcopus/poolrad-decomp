@@ -554,6 +554,7 @@ var
   ds470E: Pointer;                { the FINAL picture bank ShowEndingNarrative loads through LoadPicture and draws }
   ds4712: Byte;                   { the DS:49F3 value ShowEndingNarrative saves at the start and restores at the end }
   ds4713: string[1];              { Str(TileSet): the picture number ShowEndingNarrative appends to FINAL }
+  ds471E: array[0..$47] of Byte;  { 72 bytes reset to 1 when rest starts (ovl20:0CE5) }
   ds25C0: array[0..2, 0..2] of Byte;  { the 3x3 line pattern table StepLine reads at [SY+1, SX+1] }
   { ds2736 and ds273F: nine entries each (ds273F starts 9 bytes after ds2736). ovl14's
     ClampPartyPosition also adds them as the party's column and row step (cbw at ovl14:06D0, 06DB). }
@@ -830,9 +831,12 @@ var
                                     character is picked (ovl15:17B0) }
   { The time a rest lasts, one word per digit of the game clock (ovl20 indexes it, ovl20:04A7): the
     camp's Rest command sets [1] minutes, [2] tens of minutes and [3] hours from the longest study
-    time of the party (ovl15:07CA) before ovl20_e2 runs the rest, and clears all seven words after. }
+    time of the party (ovl15:07CA) before RunRestPeriod runs the rest, and clears all seven words after. }
   RestTime: TRestClock;
   ds6DB5: Pointer;                { set to nil when the camp opens and closes and before casting (ovl15:04B0, 1FB6) }
+  { Per-member rest-study delay, decremented each rest step (ovl20:0B33..0B91). When it reaches zero,
+    the next pending spell's level resets it to three times that level (ovl20:0B80..0B91). }
+  RestStudyCountdowns: array[0..6] of Byte;
   ds6DD8: Word;                   { cleared when the camp opens (ovl15:1E80); meaning unknown }
   { The spell names, string[40] per spell 1..$38 at DS:2912 ('Bless' .. 'Restoration' in the image,
     the rows of SpellTable); entry 0 is the index base (ovl15:10EE), never read. }

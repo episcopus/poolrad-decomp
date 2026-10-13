@@ -9476,7 +9476,7 @@ signature = "procedure ovl20_fn_0000(Amount: Byte; Index: ShortInt)"
 c_name = "ovl20_fn_0000"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "blocked: five match attempts. The draft covered the camp-mode gate, active-affect scan, conversion of Amount and Index to capped elapsed units, and duration decrement/removal through RemoveAffect. Attempts 1-2 adjusted the mode branch and party-flag scan; attempt 3 changed the scan to repeat-until; attempt 4 added affect-tail and list-resynchronization walks; attempt 5 failed compilation at Break (Error 3, unknown identifier). The observed original traversal uses four affect pointers and contains separate tail and post-removal scans. Per bounded effort, the draft is parked in notes and the source is a stub again."
 evidence = ["prologue"]
 
 [[routine]]
@@ -9563,11 +9563,11 @@ unit = "ovl20"
 addr = "ovl20:0721"
 size = 336
 name = "ovl20_fn_0721"
-signature = ""
+signature = "function ovl20_fn_0721: Byte"
 c_name = "ovl20_fn_0721"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "blocked: five match attempts. Draft reconstructed the rest menu from ovl20:0721: title and prompt strings, ExtendedKey handling H/P/K/M, field selection, Inc/Dec updates to RestTime and NormalizeRestTime, and exit result. Attempts addressed the literal pool by removing named string constants, using an empty title (DS:06D8), and matching the set as [#0,'E','R'] from bytes at 0701; adjusted ReadPromptChoice colors to push 13,10,15 and Selected to ShortInt. Final mismatch at 0721-relative byte 04E4: branch displacement ours 08, original 06. Per bounded effort, no further attempts in this session; source is a stub again."
 evidence = ["prologue"]
 
 [[routine]]
@@ -9575,142 +9575,64 @@ id = "ovl20:0871"
 unit = "ovl20"
 addr = "ovl20:0871"
 size = 180
-name = "ovl20_fn_0871"
-signature = ""
+name = "CheckRestHealing"
+signature = "procedure CheckRestHealing"
 c_name = "ovl20_fn_0871"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl20_fn_0871 (ovl20:0871 increments ds6DD8 to , calls HealCharacter over the party list at threshold, and displays 'The Whole Party Is Healed'); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl20:0925"
 unit = "ovl20"
 addr = "ovl20:0925"
-size = 121
-name = "ovl20_fn_0925"
-signature = ""
+size = 194
+name = "ProcessMemorizedSpell"
+signature = "function ProcessMemorizedSpell(Who: PCharacter; var Handled: Byte): Byte"
 c_name = "ovl20_fn_0925"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl20_fn_0925 (ovl20:0925 scans Who.Spells for entries with bit 7 set, clears the bit and reports the first completed spell as 'has memorized'; the ovl20:0BB2 rest routine calls it and uses the returned spell level); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl20:099E"
-unit = "ovl20"
-addr = "ovl20:099E"
-size = 5
-name = "ovl20_fn_099E"
-signature = ""
-c_name = "ovl20_fn_099E"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl20:09A3"
-unit = "ovl20"
-addr = "ovl20:09A3"
-size = 5
-name = "ovl20_fn_09A3"
-signature = ""
-c_name = "ovl20_fn_09A3"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl20:09A8"
-unit = "ovl20"
-addr = "ovl20:09A8"
-size = 63
-name = "ovl20_fn_09A8"
-signature = ""
-c_name = "ovl20_fn_09A8"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl20:09E7"
 unit = "ovl20"
 addr = "ovl20:09E7"
 size = 291
-name = "ovl20_fn_09E7"
-signature = ""
+name = "ProcessPendingScribedSpell"
+signature = "function ProcessPendingScribedSpell(Who: PCharacter; var Handled: Byte): Byte"
 c_name = "ovl20_fn_09E7"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl20_fn_09E7 (ovl20:09E7 scans Who.Items for pending scroll spell bytes, marks the spell known, calls ovl22_e7 and displays 'has scribed'; ovl20:0BB2 uses its returned spell level); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl20:0B0A"
 unit = "ovl20"
 addr = "ovl20:0B0A"
-size = 32
-name = "ovl20_fn_0B0A"
-signature = ""
+size = 168
+name = "AdvanceRestStudies"
+signature = "procedure AdvanceRestStudies"
 c_name = "ovl20_fn_0B0A"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl20_fn_0B0A (ovl20:0B0A walks the party list, decrements ds6DCF, and when a member's counter and RestHours are zero completes a pending scribed or memorized spell and stores three times the next spell level); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl20:0B2A"
-unit = "ovl20"
-addr = "ovl20:0B2A"
-size = 30
-name = "ovl20_fn_0B2A"
-signature = ""
-c_name = "ovl20_fn_0B2A"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl20:0B48"
-unit = "ovl20"
-addr = "ovl20:0B48"
-size = 65
-name = "ovl20_fn_0B48"
-signature = ""
-c_name = "ovl20_fn_0B48"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl20:0B89"
-unit = "ovl20"
-addr = "ovl20:0B89"
-size = 41
-name = "ovl20_fn_0B89"
-signature = ""
-c_name = "ovl20_fn_0B89"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl20:0BB2"
 unit = "ovl20"
 addr = "ovl20:0BB2"
 size = 232
-name = "ovl20_fn_0BB2"
-signature = ""
+name = "AdvanceRestHour"
+signature = "procedure AdvanceRestHour(var State: Byte)"
 c_name = "ovl20_fn_0BB2"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl20_fn_0BB2 (ovl20:0BB2 increments the shared step counter, processes the party every twelve rest calls, decrements positive RestHours and refreshes the next spell countdown when an hour completes); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -9718,12 +9640,12 @@ id = "ovl20:0C9A"
 unit = "ovl20"
 addr = "ovl20:0C9A"
 size = 454
-name = "ovl20_e2"
-signature = "function ovl20_e2: Byte"
+name = "RunRestPeriod"
+signature = "function RunRestPeriod: Byte"
 c_name = "ovl20_e2"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_2"
+notes = "renamed from ovl20_e2 (ovl20:0C9A runs the five-minute rest loop, asks whether to stop, and returns 1 on random interruption; ovl15:077A RestParty uses the result to end camp); auto:entry_2"
 evidence = ["prologue"]
 
 [[routine]]
@@ -11392,7 +11314,7 @@ unit = "ovl22"
 addr = "ovl22:328A"
 size = 144
 name = "ovl22_e7"
-signature = ""
+signature = "procedure ovl22_e7(Who: PCharacter; Item: PItem; Spell: Byte)"
 c_name = "ovl22_e7"
 level = "none"
 justification = ""
@@ -11405,7 +11327,7 @@ unit = "ovl22"
 addr = "ovl22:331A"
 size = 95
 name = "ovl22_e8"
-signature = ""
+signature = "procedure ovl22_e8(Who: PCharacter; Message: String40; Spell: Byte)"
 c_name = "ovl22_e8"
 level = "none"
 justification = ""
@@ -17903,4 +17825,3 @@ level = "none"
 justification = ""
 notes = "auto:near_call"
 evidence = ["near_call"]
-

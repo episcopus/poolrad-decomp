@@ -3,6 +3,7 @@ unit OVL22;
   until decompiled (playbook 30). }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
+uses POOLVARS, RES06;
 procedure ovl22_e1;
 procedure ovl22_fn_028D;
 procedure ovl22_fn_044E;
@@ -106,8 +107,8 @@ procedure ovl22_e63;
 procedure ovl22_fn_31D7;
 function ovl22_e6(Item: Pointer): Boolean;
 procedure ovl22_fn_3262;
-procedure ovl22_e7;
-procedure ovl22_e8;
+procedure ovl22_e7(Who: PCharacter; Item: PItem; Spell: Byte);
+procedure ovl22_e8(Who: PCharacter; Message: String40; Spell: Byte);
 procedure ovl22_fn_3379;
 procedure ovl22_e10;
 implementation
@@ -319,9 +320,9 @@ implementation
 { ovl22:3262: retf 4: 4 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl22_fn_3262; begin end;
 { ovl22:328A: retf 10: 10 bytes of parameters; 4 bytes of locals }
-{@stub} procedure ovl22_e7; begin end;
+{@stub} procedure ovl22_e7(Who: PCharacter; Item: PItem; Spell: Byte); begin end;
 { ovl22:331A: frame not read }
-{@stub} procedure ovl22_e8; begin end;
+{@stub} procedure ovl22_e8(Who: PCharacter; Message: String40; Spell: Byte); begin end;
 { ovl22:3379: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl22_fn_3379; begin end;
 { ovl22:3413: retf 0: 0 bytes of parameters; 0 bytes of locals }
