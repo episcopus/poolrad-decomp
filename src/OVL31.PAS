@@ -451,7 +451,7 @@ begin
 end;
 
 { ovl31:0E11. Takes combatant Who off the combat map (it dies or leaves). Outside view mode 5 it only
-  makes the PlaySound(ds261E) call and waits (DelayCounted). In combat it does nothing when Who
+  makes the PlaySound(ds261E) call and waits (DelayByGameSpeed). In combat it does nothing when Who
   already has a body record; otherwise it brings Who into view, erases it, draws DyingPicture on
   each of its cells, and unless Who^.Combat^.NoBody is set adds a body record (BodyTable: who, cell,
   the tile under it) and puts TileBody on its cell (a TileKept cell stays). Then the res03 call and
@@ -471,7 +471,7 @@ begin
   if ds49F3 <> ViewModeCombat then
   begin
     PlaySound(ds261E);
-    DelayCounted;
+    DelayByGameSpeed;
   end
   else
   begin
@@ -501,7 +501,7 @@ begin
       BodyTable[BodyCount].Y := CellY;
     end;
     PlaySound(ds261E);
-    DelayCounted;
+    DelayByGameSpeed;
     RedrawGround(0, 0, Index);
     CombatantTable[CombatantIndex(Who)].Kind := 0;
     RebuildOccupancy;

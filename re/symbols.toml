@@ -15835,12 +15835,12 @@ id = "0709:00A0"
 unit = "res06"
 addr = "0709:00A0"
 size = 23
-name = "SetPlaneSegment"
-signature = "procedure SetPlaneSegment(A: Byte)"
+name = "SetPageSegment"
+signature = "procedure SetPageSegment(A: Byte)"
 c_name = "res06_fn_00A0"
 level = "L2"
 justification = ""
-notes = "renamed from res06_fn_00A0 (stores the plane segment A shl 9 + A000 in ds4A18, 0709:00A0); auto:near_call"
+notes = "renamed from SetPlaneSegment (its argument is the display page the video BIOS selects (INT 10h AH=5) and the segment ds4A18 it stores is $A000 + page * $200; the page is not an EGA plane); renamed from res06_fn_00A0 (stores the plane segment A shl 9 + A000 in ds4A18, 0709:00A0); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16030,12 +16030,12 @@ id = "0709:0DBE"
 unit = "res06"
 addr = "0709:0DBE"
 size = 21
-name = "DelayCounted"
+name = "DelayByGameSpeed"
 signature = ""
 c_name = "res06_fn_0DBE"
 level = "L2"
 justification = ""
-notes = "renamed from res06_fn_0DBE (delays ds49E2 * 225 ms through Crt.Delay, 0709:0DBE); auto:near_call"
+notes = "renamed from DelayCounted (the routine is Delay(GameSpeed * 225): 225 milliseconds per GameSpeed step, no counter involved); renamed from res06_fn_0DBE (delays ds49E2 * 225 ms through Crt.Delay, 0709:0DBE); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

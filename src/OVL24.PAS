@@ -709,7 +709,7 @@ begin
         Msg := 'is killed';
       res12_fn_16EC(Who, Msg, GlyphRow + 1, 0);
       if ds49F3 <> CombatViewMode then
-        DelayCounted
+        DelayByGameSpeed
       else
       begin
         RemoveDeathAffects(Who);
@@ -717,7 +717,7 @@ begin
         if Who^.Flag10D = 0 then
           RemoveCombatant(Who)
         else
-          DelayCounted;
+          DelayByGameSpeed;
       end;
     end;
     res12_fn_17E3;
