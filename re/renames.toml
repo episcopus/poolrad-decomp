@@ -3875,3 +3875,10 @@ kind = "routine"
 why = "ovl12:1BA8 walks the party list (ds5D96), removes affect $52 from every member, then gives each member on the actor's side with Flag10D a paralysis for 1d4 rounds (AffectParalysis, Data FearData) after a SaveKindParalysis save, with the message 'is paralyzed with fear' (the message of FrightenSideWithFear, ovl12:1AAA); matched at L2 (make match FN=ovl12_e68)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e69"
+new = "GazeStonesTarget"
+kind = "routine"
+why = "ovl12:1CAD shows 'gazes...' on Who, draws the gaze line from Who to AttackTarget (res12_fn_1A29), lets a readied item with a NameNum of $76 turn it back on Who ('reflects it!', colour 12), then makes a stone save (SavingThrow kind 1) and DropFromFight with StatusStoned and 'is Stoned' (status 7 is stone, ovl12:0058 and ovl04:093D); matched at L2 (make match FN=ovl12_e69)"
+date = "2026-10-13"
+

@@ -79,8 +79,7 @@ procedure FireAttackTargetFor2d10(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure AcidAttackTargetFor1d4(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure FrightenSideWithFear(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ParalyzeSideWithFear(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_fn_1C98;
-procedure ovl12_e69;
+procedure GazeStonesTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e70;
 procedure ovl12_fn_1F9B;
 procedure ovl12_fn_2002;
@@ -265,6 +264,12 @@ const
   AffectUnknown52 = $52;        { purpose unknown [?]: ovl12:1BA8 takes it off every party member first (RemoveAffect) }
   RaceHuman = 7;                { TCharacter.Race of a human (whitepaper 4.2.5: the character sheet of a human, race 7) }
   FearDieSides = 4;             { ovl12:1BA8 paralyses a member with fear for 1d4 rounds }
+  SaveKindStone = 1;            { SavingThrow kind 1, the second of the five saves: the stone save of ovl12:1CAD [I] }
+  AffectUnknown7F = $7F;        { purpose unknown [?]: the gazer must have it (ovl12:1CAD) for a reflection to be looked for }
+  ReflectingNameNum = $76;      { a NameNum of a readied item that turns a gaze back (ovl12:1CAD) [?] }
+  GazeAnimation = $12;          { the argument of res12_fn_19DE that ovl12:1CAD shows the gaze with [?] }
+  GazeLineKind = 4;             { the Kind and Flag of the gaze lines res12_fn_1A29 draws (ovl12:1CAD) [?] }
+  GazeLineFlag = $2D;
 
 { ovl12:0000. Cancels the hook of an affect: when AffectId is 0 or is the affect the hooks are offering
   (HookAffectId), HookAffectId and DamageAmount are cleared. HookAffectId 0 reads as "is Unaffected"
@@ -1372,10 +1377,46 @@ begin
     Scan := Scan^.Next;
   end;
 end;
-{ ovl12:1C98: frame not read }
-{@stub} procedure ovl12_fn_1C98; begin end;
-{ ovl12:1CAD: retf 10: 10 bytes of parameters; 22 bytes of locals }
-{@stub} procedure ovl12_e69; begin end;
+{ ovl12:1CAD. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000): a stoning gaze
+  [I]. "gazes..." is shown on Who (colour 10), and the gaze line is drawn from Who to the character Who attacked last
+  (AttackTarget, a copy of Combat^.Target). When Who has affect AffectUnknown7F (res12_fn_2199), the readied items of
+  AttackTarget are walked: a readied item with a NameNum of ReflectingNameNum turns the gaze back: "reflects it!" is shown
+  on AttackTarget (colour 12), the line is drawn back, and the gaze falls on Who (AttackTarget := Who). The gaze target
+  then makes a stone save (SaveKindStone, no bonus); when it fails, DropFromFight takes it out of the fight with StatusStoned
+  and "is Stoned". Which affect runs it is not known yet [?]. }
+procedure GazeStonesTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
+var
+  Item: PItem;                  { the items of AttackTarget, walked from its first }
+  Reflected: Boolean;           { a readied reflecting item was found: the gaze turns back on Who }
+  FoundAffect: Pointer;         { the affect res12_fn_2199 gives back for AffectUnknown7F }
+begin
+  AttackTarget := Who^.Combat^.Target;
+  res12_fn_16EC(Who, 'gazes...', $A, 0);
+  res12_fn_19DE(GazeAnimation);
+  res12_fn_1A29(CombatantX(Who), CombatantY(Who), CombatantX(AttackTarget), CombatantY(AttackTarget),
+    GazeLineKind, GazeLineFlag);
+  if res12_fn_2199(Who, AffectUnknown7F, FoundAffect) then
+  begin
+    Reflected := False;
+    Item := AttackTarget^.Items;
+    while (Item <> nil) and not Reflected do
+    begin
+      if Item^.Readied then
+        if (Item^.NameNum[1] = ReflectingNameNum) or (Item^.NameNum[2] = ReflectingNameNum) or
+          (Item^.NameNum[3] = ReflectingNameNum) then
+        begin
+          res12_fn_16EC(AttackTarget, 'reflects it!', $C, 0);
+          res12_fn_1A29(CombatantX(AttackTarget), CombatantY(AttackTarget), CombatantX(Who), CombatantY(Who),
+            GazeLineKind, GazeLineFlag);
+          Reflected := True;
+          AttackTarget := Who;
+        end;
+      Item := Item^.Next;
+    end;
+  end;
+  if not SavingThrow(AttackTarget, SaveKindStone, 0) then
+    DropFromFight(AttackTarget, StatusStoned, 'is Stoned');
+end;
 { ovl12:1E77: frame not read }
 {@stub} procedure ovl12_e70; begin end;
 { ovl12:1F9B: retf 10: 10 bytes of parameters; 0 bytes of locals }

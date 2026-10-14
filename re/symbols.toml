@@ -4070,7 +4070,7 @@ evidence = ["prologue"]
 id = "ovl12:1BA8"
 unit = "ovl12"
 addr = "ovl12:1BA8"
-size = 229
+size = 261
 name = "ParalyzeSideWithFear"
 signature = "procedure ParalyzeSideWithFear(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e68"
@@ -4080,29 +4080,16 @@ notes = "renamed from ovl12_e68 (ovl12:1BA8 walks the party list (ds5D96), remov
 evidence = ["prologue"]
 
 [[routine]]
-id = "ovl12:1C98"
-unit = "ovl12"
-addr = "ovl12:1C98"
-size = 21
-name = "ovl12_fn_1C98"
-signature = ""
-c_name = "ovl12_fn_1C98"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
 id = "ovl12:1CAD"
 unit = "ovl12"
 addr = "ovl12:1CAD"
 size = 458
-name = "ovl12_e69"
-signature = ""
+name = "GazeStonesTarget"
+signature = "procedure GazeStonesTarget(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e69"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_69"
+notes = "renamed from ovl12_e69 (ovl12:1CAD shows 'gazes...' on Who, draws the gaze line from Who to AttackTarget (res12_fn_1A29), lets a readied item with a NameNum of $76 turn it back on Who ('reflects it!', colour 12), then makes a stone save (SavingThrow kind 1) and DropFromFight with StatusStoned and 'is Stoned' (status 7 is stone, ovl12:0058 and ovl04:093D); matched at L2 (make match FN=ovl12_e69)); auto:entry_69"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16659,7 +16646,7 @@ unit = "res12"
 addr = "00BA:19DE"
 size = 75
 name = "res12_fn_19DE"
-signature = ""
+signature = "procedure res12_fn_19DE(Arg: Byte)"
 c_name = "res12_fn_19DE"
 level = "none"
 justification = ""
@@ -16672,7 +16659,7 @@ unit = "res12"
 addr = "00BA:1A29"
 size = 657
 name = "res12_fn_1A29"
-signature = ""
+signature = "procedure res12_fn_1A29(X1, Y1, X2, Y2: ShortInt; Kind, Flag: Byte)"
 c_name = "res12_fn_1A29"
 level = "none"
 justification = ""

@@ -41,8 +41,8 @@ procedure res12_fn_1892;
 procedure res12_fn_18A3;
 procedure res12_fn_18CF;
 procedure res12_fn_190D;
-procedure res12_fn_19DE;
-procedure res12_fn_1A29;
+procedure res12_fn_19DE(Arg: Byte);
+procedure res12_fn_1A29(X1, Y1, X2, Y2: ShortInt; Kind, Flag: Byte);
 procedure res12_fn_1CBA;
 procedure res12_fn_1CE0;
 procedure res12_fn_1FEB(Who: Pointer; Flag: Byte; Text: String40);
@@ -146,9 +146,9 @@ implementation
 { 00BA:190D: retf 8: 8 bytes of parameters; 0 bytes of locals }
 {@stub} procedure res12_fn_190D; begin end;
 { 00BA:19DE: retf 2: 2 bytes of parameters; 0 bytes of locals }
-{@stub} procedure res12_fn_19DE; begin end;
+{@stub} procedure res12_fn_19DE(Arg: Byte); begin end;
 { 00BA:1A29: frame not read }
-{@stub} procedure res12_fn_1A29; begin end;
+{@stub} procedure res12_fn_1A29(X1, Y1, X2, Y2: ShortInt; Kind, Flag: Byte); begin end;
 { 00BA:1CBA: frame not read }
 {@stub} procedure res12_fn_1CBA; begin end;
 { 00BA:1CE0: retf 12: 12 bytes of parameters; 0 bytes of locals }
