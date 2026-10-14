@@ -151,7 +151,7 @@ units = ["*"]
 tags = ["map", "boundary", "entry", "write", "tooling"]
 title = "The map invents an entry on the displacement byte of an instruction inside a matched routine"
 lesson = "ovl12:0AE5 (`auto:far_call`, 54 bytes) is the last byte of `mov al, byte ptr es:[di+112h]` (26 8A 85 12 01 at ovl12:0AE1) inside CoughStopsCasting (ovl12:0A65). `make match UNIT=ovl12 WRITE=1` removed it when CoughStopsCasting matched at 172 bytes. As with ovl12:06C8, no caller can enter there, and the source had to lose its interface declaration and stub line afterwards. Check the first byte of an invented entry against the instruction before it before any probe."
-evidence = ["re/symbols.toml#ovl12:0A65", "src/OVL12.PAS#CoughStopsCasting", "build/packets/ovl12_0A65.md"]
+evidence = ["re/symbols.toml#ovl12:0A65", "src/OVL12.PAS#CoughStopsCasting"]
 
 [[lesson]]
 id = "div-16-byte-high-nibble"
