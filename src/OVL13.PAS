@@ -49,7 +49,7 @@ function BearingTo(Who, Target: Pointer): Byte;
 procedure ShowAttackAnimation(Who, Target: PCharacter; Item: PItem);
 procedure UpdateMonsterMorale;
 function FastestEnemyMovement(Who: Pointer): Byte;
-function ovl13_e16(Who, Target: Pointer): Boolean;
+function ConfirmAttackTarget(Who, Target: PCharacter): Boolean;
 procedure ovl13_fn_2AA0;
 procedure ovl13_fn_2B8B;
 procedure ovl13_fn_2C3D;
@@ -115,6 +115,8 @@ const
   StatusDying = 5;
   { The status a fleeing combatant is dropped with (ovl13:0CE1; the same 3 as ovl24's StatusFled). }
   StatusFled = 3;
+  { The health status of a combatant still standing (TCharacter.Status 0; ovl05's StatusOkay). }
+  StatusOkay = 0;
   { The statuses that show 'is killed': the set [6, 7, 8] at ovl13:02CF (the original bytes
     c0 01 00.. at that address are bits 6, 7 and 8). Status 5 (dying) gets 'and is Dying' instead. }
   StatusKilled = [6, 7, 8];
@@ -130,6 +132,10 @@ const
     ovl13:00C2 a combatant whose (Side + 1) shares a bit with it loses InitiativePenalty; what
     the word is filled with is not settled (named VarCombatWord715 in ovl08). }
   VarCombatWord715 = 715;
+  { Word 819 of ds49D6^: set to 1 with ds6DE2 when the player confirms attacking an ally
+    (ovl13:2998); ovl10's StartBattle clears it every battle as Var2BattleWord, so its meaning is
+    not settled beyond that. }
+  Var2AllyAttack = 819;
   { The two affects an enemy must not carry to take a parting shot (ovl13:0A91, 0AAB). ovl24
     removes the same pair when a combatant goes down or panics (ovl24:0322, 0336) and ovl24_e14
     removes them too, so what they mean is not settled (whitepaper 5.5). }
@@ -1570,8 +1576,42 @@ begin
   end;
   FastestEnemyMovement := Best;
 end;
-{ ovl13:2998: retf 8: 8 bytes of parameters; 20 bytes of locals }
-{@stub} function ovl13_e16(Who, Target: Pointer): Boolean; begin end;
+{ ovl13:2998. Tells whether an attack on Target may go ahead: it is allowed without asking when Target
+  is on the side opposing Who (OpposingSide) or is run by the computer (Quick), otherwise the player
+  is asked 'Attack Ally: ' (AskYesNo) and that answer decides. On a yes it also turns the fight into
+  a brawl: ds6DE2 and word 819 of ds49D6^ are set, every party member the computer runs (StatusOkay,
+  B84 above $7F) is moved to the monster side (Side 1) and loses its remembered target, and the side
+  counts are recomputed (RecountCombatSides). Called by MeleeAttack (ovl08:0D45) and ovl13_fn_2C3D.
+  Globals: ds6DE2, ds49D6 and ds5D96 (read and written). }
+function ConfirmAttackTarget(Who, Target: PCharacter): Boolean;
+var
+  Member: PCharacter;            { [bp-5] the combatant walked in ds5D96 }
+begin
+  if (OpposingSide(Target) = Who^.Side) or (Who^.Quick <> 0) then
+    ConfirmAttackTarget := True
+  else
+  begin
+    if AskYesNo('Attack Ally: ', $D, $A, $F) <> 'Y' then
+      ConfirmAttackTarget := False
+    else
+    begin
+      ConfirmAttackTarget := True;
+      ds6DE2 := 1;
+      ds49D6^[Var2AllyAttack] := 1;
+      Member := PCharacter(ds5D96);
+      while Member <> nil do
+      begin
+        if (Member^.Status = StatusOkay) and (Member^.B84 > $7F) then
+        begin
+          Member^.Side := 1;
+          Member^.Combat^.Target := nil;
+        end;
+        Member := Member^.Next;
+      end;
+      RecountCombatSides;
+    end;
+  end;
+end;
 { ovl13:2AA0: frame not read }
 {@stub} procedure ovl13_fn_2AA0; begin end;
 { ovl13:2B8B: retf 14: 14 bytes of parameters; 0 bytes of locals }

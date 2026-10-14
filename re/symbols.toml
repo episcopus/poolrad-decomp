@@ -5684,12 +5684,12 @@ id = "ovl13:2998"
 unit = "ovl13"
 addr = "ovl13:2998"
 size = 264
-name = "ovl13_e16"
-signature = "function ovl13_e16(Who, Target: Pointer): Boolean"
+name = "ConfirmAttackTarget"
+signature = "function ConfirmAttackTarget(Who, Target: PCharacter): Boolean"
 c_name = "ovl13_e16"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_e16 (ovl13:2998 decides whether an attack on Target may proceed: allowed when Target is on the side opposing Who (OpposingSide) or Who is computer-run (Quick), else it asks 'Attack Ally: ' (AskYesNo) and on a yes sets ds6DE2 and word 819 of ds49D6^, moves every computer-run party member to the monster side and clears its target, then recounts the sides; called by MeleeAttack (ovl08:0D45)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

@@ -971,6 +971,7 @@ var
   ds6E30: Boolean;                { the Alt-M Magic On/Off toggle of the combat keys (ovl08:04A7) }
   ds6E31: Byte;                   { the key flag the ovl08 menus pass to ReadPromptChoice }
   ds6DE3: Byte;                   { counted up once per combat round (ovl08:0891) }
+  ds6DE2: Byte;                   { set to 1 when the player confirms attacking an ally (ovl13:2998) }
   { The combatant order the AI works through: one DS:5F27 combatant index per entry, read from
     entry 1 (ovl09:02EB loops 1..CollectEnemiesInRange(Who, ovl22_e3(Spell)) over it; ovl13:0F90 moves
     the character at entry 1 to another entry). Entry 0 is never read. Extent not proven; the

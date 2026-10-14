@@ -4197,3 +4197,10 @@ kind = "routine"
 why = "ovl13:2908 walks the battle character list ds5D96 and returns half of the largest round Movement (ComputeMovement div 2) among the combatants on the side opposing Who that are still in the fight (Flag10D set); TryFlee compares it with half of Who's Movement to decide the escape and CheckMorale uses it as the panic threshold"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl13_e16"
+new = "ConfirmAttackTarget"
+kind = "routine"
+why = "ovl13:2998 decides whether an attack on Target may proceed: allowed when Target is on the side opposing Who (OpposingSide) or Who is computer-run (Quick), else it asks 'Attack Ally: ' (AskYesNo) and on a yes sets ds6DE2 and word 819 of ds49D6^, moves every computer-run party member to the monster side and clears its target, then recounts the sides; called by MeleeAttack (ovl08:0D45)"
+date = "2026-10-14"
+
