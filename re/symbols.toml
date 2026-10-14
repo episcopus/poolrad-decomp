@@ -5787,27 +5787,14 @@ evidence = ["far_call"]
 id = "ovl13:37E4"
 unit = "ovl13"
 addr = "ovl13:37E4"
-size = 447
-name = "ovl13_e21"
-signature = "function ovl13_e21(Who: Pointer; A, B, C: Byte): Boolean"
+size = 485
+name = "ChooseCombatTarget"
+signature = "function ChooseCombatTarget(Who: PCharacter; Range, ThroughWalls, ForgetTarget: Byte): Boolean"
 c_name = "ovl13_e21"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_e21 (ovl13:37E4 picks a random in-range enemy (CollectEnemiesInRange) as Who's Combat^.Target for the automatic spell aim and the AI, with a second pass that opens the WalkLine tile gate; called by FindSpellTarget and ovl09 QuickTurn/MoveStep/AiTurn); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl13:39A3"
-unit = "ovl13"
-addr = "ovl13:39A3"
-size = 47
-name = "ovl13_fn_39A3"
-signature = ""
-c_name = "ovl13_fn_39A3"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl13:39D2"

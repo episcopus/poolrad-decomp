@@ -65,7 +65,7 @@ const
   pending spell (Combat^.PendingSpell; ovl22_e5, end of turn), take the Turn action (TryTurnUndead,
   Turn Undead for a cleric, end of turn), cast a memorized spell (CastMemorizedSpell, Done := 1), use
   the best item (UseBestItem) and read keys again (HandleCombatKey); with Done clear it loops on
-  ovl13_e21(Who, $FF, 1, 0): an initiative above 0 runs AiTurn, else the turn ends through
+  ChooseCombatTarget(Who, $FF, 1, 0): an initiative above 0 runs AiTurn, else the turn ends through
   ovl09_fn_0F4F. Globals: none. QUIRK: ovl22_e5's var result is overwritten at once. }
 procedure QuickTurn(Who: PCharacter);
 var
@@ -118,7 +118,7 @@ begin
   Done := Ord(HandleCombatKey(Who));
   while Done = 0 do
   begin
-    if ovl13_e21(Who, $FF, 1, 0) and (Who^.Combat^.Initiative > 0) then
+    if ChooseCombatTarget(Who, $FF, 1, 0) and (Who^.Combat^.Initiative > 0) then
       Done := AiTurn(Who)
     else
       Done := ovl09_fn_0F4F(Who);
@@ -390,7 +390,7 @@ end;
   patterns Step = 1..5 while CanAffordStep refuses them (a panicking actor that is off the map ends
   through TryFlee); with no affordable step, or one that would step back (ds443C = (Turn + 4)
   mod 8), the pattern is advanced (ds443D counts the turns) and the actor may instead end the turn
-  through ovl09_fn_0F4F or ovl13_e21. A step taken sets the icon (SetCombatantIcon with the turn),
+  through ovl09_fn_0F4F or ChooseCombatTarget. A step taken sets the icon (SetCombatantIcon with the turn),
   runs PartingShots (or StepCombatant once Flag10D is set past it) and ApplyCloudTile; an ending turn runs
   EndCombatTurn. QUIRK: the jumps to MoveEnd and from there to Finish (ovl09:0B27) are the
   original's; NoStep only computes ovl09_fn_0F4F. Globals: PartyFacing, ds443C, ds443D. }
@@ -457,7 +457,7 @@ begin
         Done := 1;
         goto CheckStep;
       end;
-      if not ovl13_e21(Who, $FF, 1, 0) then
+      if not ChooseCombatTarget(Who, $FF, 1, 0) then
         Done := ovl09_fn_0F4F(Who);
     end;
   end;
@@ -501,7 +501,7 @@ end;
   and AttackTargetAllowed allows it; otherwise a random enemy of the CollectEnemiesInRange(Who, Range) scan (ds6DE4) is
   picked, or UseBestItem chooses one when IsRangedWeapon holds, RangedWeaponCanMelee does not and a 1-step
   scan finds an enemy. The attack runs SweepEnemies/e11/e12 and ends the turn through EndCombatTurn.
-  Result: 1 when the turn is over (CanAct = 0). The arguments of ovl13_e21 ($FF, 0, 0) are Purpose unknown.
+  Result: 1 when the turn is over (CanAct = 0). The arguments of ChooseCombatTarget ($FF, 0, 0) are Purpose unknown.
   QUIRK ovl09:0C8E: Target := Combat^.Target is
   dereferenced (Target^.Flag10D at 0C91, Target^.Side at 0C9C) before its nil test at 0CAC, so a
   character with no remembered target reads through a nil pointer. QUIRK: [bp-3] is reused for
@@ -580,7 +580,7 @@ Loop:
   Count := CollectEnemiesInRange(Who, Range);
   if Count = 0 then
   begin
-    if ovl13_e21(Who, $FF, 0, 0) then
+    if ChooseCombatTarget(Who, $FF, 0, 0) then
       MoveStep(Who)
     else
       Done := ovl09_fn_0F4F(Who);

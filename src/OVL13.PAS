@@ -58,8 +58,7 @@ procedure ovl13_fn_32E6;
 procedure ovl13_fn_3389;
 procedure ovl13_e17(Who: Pointer; A, B, C: Byte; var Done: Byte; var Aim);
 procedure ovl13_fn_3728;
-function ovl13_e21(Who: Pointer; A, B, C: Byte): Boolean;
-procedure ovl13_fn_39A3;
+function ChooseCombatTarget(Who: PCharacter; Range, ThroughWalls, ForgetTarget: Byte): Boolean;
 procedure ovl13_e22;
 procedure ovl13_fn_39E6;
 procedure ovl13_fn_3A2B;
@@ -166,6 +165,10 @@ const
   { An affect hook ResolveCombatantAttacks runs on the target after RecalcCombatValues (ovl13:1591); ovl24's
     table names kinds 6, 9, $A, $C, $D and $10, not this one. }
   HookAttackSetup = $B;
+  { The random picks ChooseCombatTarget gets in one pass of its target search (ovl13:38A0). }
+  AimSearchTries = $14;
+  { The combat picture CopyPictureItem draws when the aim cursor is reset (ovl13:355F, 36D6, 371D). }
+  AimCursorPicture = $19;
 
 { ovl13:0000. Sets up Who's turn at the start of a combat round: clears and re-arms its combat
   state Combat^ (PendingSpell 0, Cast and Use-magic allowed), refreshes it through RefreshAttacks, lets
@@ -1115,7 +1118,7 @@ end;
   untyped var Target (a TSpellTarget: the combatant and its cell).
     - Automatic = 0 lets ovl13_e17 pick (the player's cursor); else the spell row's own data picks it:
       when the row's byte +6 (Pad2[6]) is 0 the caster itself is taken (and FindNearbyTarget is asked
-      when Spell is 3); otherwise up to 20 times ovl13_e21 offers the next aim (ovl22_e3(Spell) is the
+      when Spell is 3); otherwise up to 20 times ChooseCombatTarget offers the next aim (ovl22_e3(Spell) is the
       spell's range) and the aim is accepted while the spell's area (ScanTargets with the row's +$F
       byte as the line budget) holds only the caster's enemies and the target is either not helpless or
       the row's AffectId (+$A) is not one of HelplessAffects.
@@ -1154,7 +1157,7 @@ begin
       while (Attempts > 0) and (Chosen = 0) do
       begin
         Valid := 1;
-        if ovl13_e21(SelectedCharacter, ovl22_e3(Spell), 0, 1) then
+        if ChooseCombatTarget(SelectedCharacter, ovl22_e3(Spell), 0, 1) then
         begin
           SavedTarget := SelectedCharacter^.Combat^.Target;
           if SpellTable[Spell].PadB[$F] > 0 then
@@ -1842,9 +1845,76 @@ end;
 { ovl13:3728: retf 18: 18 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl13_fn_3728; begin end;
 { ovl13:37E4: frame not read }
-{@stub} function ovl13_e21(Who: Pointer; A, B, C: Byte): Boolean; begin end;
-{ ovl13:39A3: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl13_fn_39A3; begin end;
+{ ovl13:37E4. Picks an enemy inside Range for Who, the target search the automatic spell aim and the
+  AI movement use: it first drops Who's remembered Combat^.Target unless ForgetTarget is 0 and the
+  remembered target still fights (Flag10D set) on the other side and AttackTargetAllowed accepts it,
+  in which case the result is True at once. Otherwise it searches in two passes: while no target is
+  Found and the second pass has not been taken, it lists the enemies CollectEnemiesInRange(Who,
+  Range) holds and, up to AimSearchTries times, picks one at random (RollDice); a pick is accepted
+  when ThroughWalls and CombatMap^.Head6 are both set or AttackTargetAllowed allows it, and then
+  Who^.Combat^.Target takes it; a refused pick is zeroed in ds6DE4 and the pass goes on only while
+  another entry is left. The first pass leaves CombatMap^.Head6 as it is, the second opens it when
+  ForgetTarget is 0, so it can see through a blocking tile; Head6 is cleared again at the end.
+  Returns whether a target was set. Called by FindSpellTarget (aim, ForgetTarget 1) and ovl09
+  QuickTurn, MoveStep and AiTurn. Globals: ds6DE4 (the scan list), CombatantRecord, CombatMap (Head6). }
+function ChooseCombatTarget(Who: PCharacter; Range, ThroughWalls, ForgetTarget: Byte): Boolean;
+var
+  Count: Byte;                   { enemies the scan listed }
+  Attempts: Byte;                { random picks left in this pass }
+  Index: Byte;                   { the picked entry in ds6DE4 }
+  Retry: Boolean;                { the second (open-gate) pass was taken }
+  Found: Boolean;                { a target was accepted }
+  Searched: Boolean;             { the open-gate pass already ran }
+  Target: PCharacter;            { the remembered or picked target }
+begin
+  Searched := False;
+  Found := False;
+  Retry := False;
+  Target := Who^.Combat^.Target;
+  if (ForgetTarget <> 0) or ((Target <> nil) and ((Target^.Side = Who^.Side) or
+     (Target^.Flag10D = 0) or not AttackTargetAllowed(Who, Target))) then
+    Who^.Combat^.Target := nil;
+  if Who^.Combat^.Target <> nil then
+    Found := True;
+  while (not Found) and (not Retry) do
+  begin
+    Retry := Searched;
+    if Searched and (ForgetTarget = 0) then
+      CombatMap^.Head6 := 1;
+    Attempts := AimSearchTries;
+    Count := CollectEnemiesInRange(Who, Range);
+    while (Attempts > 0) and (not Found) and (Count > 0) do
+    begin
+      Dec(Attempts);
+      Index := RollDice(1, Count);
+      if ds6DE4[Index] > 0 then
+      begin
+        Target := CombatantRecord[ds6DE4[Index]];
+        if ((ThroughWalls <> 0) and (CombatMap^.Head6 <> 0)) or
+           AttackTargetAllowed(Who, Target) then
+        begin
+          Found := True;
+          Who^.Combat^.Target := Target;
+        end
+        else
+        begin
+          ds6DE4[Index] := 0;
+          for Index := 1 to Count do
+            if ds6DE4[Index] > 0 then
+              Found := True;
+          if Found then
+            Found := False
+          else
+            Count := 0;
+        end;
+      end;
+    end;
+    if not Searched then
+      Searched := True;
+  end;
+  CombatMap^.Head6 := 0;
+  ChooseCombatTarget := Found;
+end;
 { ovl13:39D2: frame not read }
 {@stub} procedure ovl13_e22; begin end;
 { ovl13:39E6: frame not read }
