@@ -23,7 +23,7 @@ procedure ShowTextCommand;
 procedure ReturnCommand;
 procedure ComparePairsCommand;
 procedure RunIfCompared;
-procedure ovl03_fn_0BD1;
+procedure StartEclBlock;
 procedure ovl03_fn_0C74;
 procedure ovl03_fn_0D7B;
 procedure ovl03_fn_0DEF;
@@ -73,7 +73,7 @@ procedure ovl03_e1;
 procedure ovl03_fn_3379;
 procedure ovl03_fn_34AB;
 implementation
-uses OVL26, OVL28, OVL32, RES06;
+uses OVL17, OVL26, OVL28, OVL32, RES06;
 
 const
   { The operand types from this one up are strings: $80 a packed string, $81 the address of a
@@ -598,8 +598,28 @@ begin
     OpIfGreaterOrEqual: if CompareFlags[5] = 0 then SkipCommand;
   end;
 end;
-{ ovl03:0BD1: retf 0: 0 bytes of parameters; 260 bytes of locals }
-{@stub} procedure ovl03_fn_0BD1; begin end;
+{ ovl03:0BD1. ECL command 32 (dispatcher ovl03:2F2D, SkippedOpcode $20): starts ECL block Block of the
+  area's script file. The operand is the block number: the WallViewMode of the area is saved in
+  VarSavedWallView, then WallViewMode takes the block number. The file is GameDir + 'ECL' + the
+  TileSet number + '.dax' (its path goes to ovl17_e11 first), LoadEcl loads the block and InitScript
+  resets the script machine. ds442E and ds442F are set to 1 and ds4431 is cleared. }
+procedure StartEclBlock;
+var
+  Block: Byte;
+  TileSetText: string[1];
+begin
+  DecodeOperands(1);
+  GameVars^[VarSavedWallView] := WallViewMode;
+  Block := OperandValue(1);
+  WallViewMode := Block;
+  Str(TileSet, TileSetText);
+  ovl17_e11(GameDir + 'ECL' + TileSetText + '.dax');
+  LoadEcl(Block);
+  InitScript;
+  ds442E := 1;
+  ds442F := 1;
+  ds4431 := 0;
+end;
 { ovl03:0C74: frame not read }
 {@stub} procedure ovl03_fn_0C74; begin end;
 { ovl03:0D7B: retf 0: 0 bytes of parameters; 0 bytes of locals }

@@ -25,7 +25,7 @@ procedure ovl17_e7;
 procedure AddPartyMember(Member: PCharacter);
 procedure ovl17_e8;
 procedure ovl17_e9;
-procedure ovl17_e11;
+procedure ovl17_e11(Path: string);
 implementation
 uses RES06, OVL23;
 
@@ -130,7 +130,7 @@ end;
 { ovl17:1D58: retf 0: 0 bytes of parameters; 1278 bytes of locals }
 {@stub} procedure ovl17_e9; begin end;
 { ovl17:22D5: retf 4: 4 bytes of parameters; 342 bytes of locals }
-{@stub} procedure ovl17_e11; begin end;
+{@stub} procedure ovl17_e11(Path: string); begin end;
 
 begin
 end.

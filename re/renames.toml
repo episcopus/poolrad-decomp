@@ -3560,3 +3560,10 @@ kind = "routine"
 why = "ECL commands 22 to 27 (dispatcher ovl03:2F2D): each runs the next command only when the CompareFlags entry of its comparison is set, else SkipCommand steps over it (ovl03:0B52, matched); the flags are the ones CompareCommand and ComparePairsCommand set"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl03_fn_0BD1"
+new = "StartEclBlock"
+kind = "routine"
+why = "ECL command 32 (dispatcher ovl03:2F2D, opcode 20h): starts ECL block Block of the area's ECL#.DAX file: WallViewMode is saved and set to the block, the file path goes to ovl17_e11, LoadEcl loads the block, InitScript resets the machine (ovl03:0BD1, matched)"
+date = "2026-10-13"
+

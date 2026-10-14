@@ -355,12 +355,12 @@ id = "ovl03:0BD1"
 unit = "ovl03"
 addr = "ovl03:0BD1"
 size = 163
-name = "ovl03_fn_0BD1"
+name = "StartEclBlock"
 signature = ""
 c_name = "ovl03_fn_0BD1"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_0BD1 (ECL command 32 (dispatcher ovl03:2F2D, opcode 20h): starts ECL block Block of the area's ECL#.DAX file: WallViewMode is saved and set to the block, the file path goes to ovl17_e11, LoadEcl loads the block, InitScript resets the machine (ovl03:0BD1, matched)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8035,7 +8035,7 @@ unit = "ovl17"
 addr = "ovl17:22D5"
 size = 267
 name = "ovl17_e11"
-signature = ""
+signature = "procedure ovl17_e11(Path: string)"
 c_name = "ovl17_e11"
 level = "none"
 justification = ""

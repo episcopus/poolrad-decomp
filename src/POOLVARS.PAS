@@ -443,6 +443,7 @@ const
   VarMapY = 196;                  { the party's row in the area map grid }
   VarGeoBlock = 197;              { the GEO block id of the loaded 3D area map (Load3DMap, ovl29:11FB) }
   VarForceWallView = 230;         { nonzero: ShowAreaView shows the wall view whatever AreaViewKind says }
+  VarSavedWallView = 242;         { WallViewMode before ECL command 32 (ovl03:0BD1) set it; no reader yet }
   { Nonzero: the overhead wall map is off (ShowAreaView clears WallMapMode, the A key cannot set
     it, ovl14:0380); the name predates that evidence. }
   VarShowWallOverlays = 251;
@@ -815,7 +816,9 @@ var
     next named byte after it is ds6E2F. }
   ds6DE4: array[0..73] of Byte;
   ds442E: Byte;                   { set to 1 by the ECL command 0 (ovl03:0001); meaning unknown }
+  ds442F: Byte;                   { set to 1 by ECL command 32 (ovl03:0BD1); meaning unknown }
   ds4430: Byte;                   { when nonzero, the ECL command 0 (ovl03:0001) selects the character at ds4436 }
+  ds4431: Byte;                   { cleared by ECL command 32 (ovl03:0BD1), set by 33 and 55 (ovl03:0C74) }
   { The members ECL command 11 (ovl03:0450) has added to the party list; it adds none at
     MaxEncounterMembers (63). }
   EncounterMemberCount: Byte;
