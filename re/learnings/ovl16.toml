@@ -97,7 +97,7 @@ units = ["ovl16", "*"]
 tags = ["with", "scope", "local", "field", "codegen", "29AE"]
 title = "A local named like a TCharacter field resolves to the field inside `with`"
 lesson = "ovl16:29AE declares a local ClassBits, but inside `with SelectedCharacter^ do` the name resolves to TCharacter.ClassBits (+$B0), so `ClassBits := ...` compiled to `les di,[bp-0x21]; mov es:[di+0xb0],...` while the original writes the local [bp-0xb]. Renaming the local to ClassBitMask made the target [bp-0xb]. Check every local name against the with record's fields before trusting the offsets."
-evidence = ["src/OVL16.PAS#ovl16_fn_29AE", "tools/re/tp_idioms/ovl16/TRAIN_DRAFT.PAS"]
+evidence = ["src/OVL16.PAS#TrainCharacter", "tools/re/tp_idioms/ovl16/TRAIN_DRAFT.PAS"]
 
 [[lesson]]
 id = "ovl16-byte-add-compiles-16-bit"
@@ -106,7 +106,7 @@ units = ["ovl16", "*"]
 tags = ["byte", "add", "inc", "codegen", "29AE"]
 title = "A := A + B on two Bytes is a 16-bit add in TP 6.0; Inc(A, B) is the 8-bit add"
 lesson = "In ovl16:29AE the original's class-bit accumulation is `mov al,[di+0x5de]; add byte [bp-0xb],al` (8-bit). `ClassBitMask := ClassBitMask + ds05DE[I]` compiled instead to `mov al,..; xor ah,ah; mov dx,ax; mov al,[bp-0xb]; xor ah,ah; add ax,dx; mov [bp-0xb],al` (16-bit, one byte per operand), which made the routine 15 bytes longer. `Inc(ClassBitMask, ds05DE[I])` gives the original's 8-bit `add [bp-0xb],al`. The same holds for TrainableBits and for HpB1/HpMax (+HpGain): the original uses `add byte [mem],al`, so use Inc."
-evidence = ["src/OVL16.PAS#ovl16_fn_29AE", "tools/re/tp_idioms/ovl16/TRAIN_DRAFT.PAS", "re/symbols.toml#ovl16:29AE"]
+evidence = ["src/OVL16.PAS#TrainCharacter", "tools/re/tp_idioms/ovl16/TRAIN_DRAFT.PAS", "re/symbols.toml#ovl16:29AE"]
 
 [[lesson]]
 id = "ovl16-nested-routine-as-top-level-with-static-link"
@@ -188,3 +188,12 @@ tags = ["map", "runtime", "res00", "System", "rtl_ident", "0AFC", "Abs", "42ED"]
 title = "System 0AF8:0AFC (LongInt Abs) was missing from the registry because rtl_ident.py scans only the base EXE"
 lesson = "ovl16:42ED calls 0AF8:0AFC (9a fc 0a f8 0a at ovl16:43D2) for `Amount := Abs(Amount)` on a LongInt, but re/symbols.toml had no entry there: res00_fn_0AF0 carried size 27 (the gap to 0B0B) and swallowed 0AFC, and tools/re/rtl_ident.py builds the runtime far-call graph from poolrad/start-unpack.exe only, so a call from an overlay (GAME.OVR) is never seen. A Pascal call always targets a routine entry, so 0AFC is its own routine: the entry was added with size 15 and res00_fn_0AF0's size corrected to 12. The fix is safe for every existing unit (make match: 43 units, 474 routines, all match). A complete fix would have rtl_ident.py scan the overlay binaries too."
 evidence = ["re/symbols.toml#0AF8:0AFC", "re/symbols.toml#0AF8:0AF0", "src/OVL16.PAS#PayGold", "tools/re/tp_idioms/ovl16/PAYPRB2.PAS"]
+
+[[lesson]]
+id = "ovl16-succ-shortint-index-incs-before-sign-extend"
+confidence = "V"
+units = ["ovl16", "*"]
+tags = ["succ", "shortint", "index", "cbw", "array", "codegen", "29AE"]
+title = "Succ(ShortInt) used as a subscript increments the byte before sign-extending; Level + 1 sign-extends first"
+lesson = "TrainCharacter (ovl16:29AE) indexes ds409B[I, next level] with `mov al,[bp-0x18]; inc al; cwde; shl ax,1; shl ax,1`, and the level after that with two `inc al` before the cwde. `Level + 1` on a ShortInt is `cwde; inc ax` (and `Level + 2` is `cwde; inc ax; inc ax`), which is what blocked the earlier drafts. `Succ(Level)` as the subscript, not assigned back to a ShortInt, is the inc-then-sign-extend form; `Succ(Succ(Level))` is two inc al. Assigning Succ back (`Level := Succ(Level)`) is a different sequence (`cwde; inc ax; mov`), so the subscript must be the Succ expression itself. The > 0 test on the next level's threshold compares the array element in memory (`cmp word [di+high],0; jg; jge; jmp; cmp word [di+low],0; ja`), which a direct `ds409B[I, Succ(Level)] > 0` gives; loading it into a LongInt local first does not. Probe tools/re/tp_idioms/ovl16/LVLIDX.PAS."
+evidence = ["src/OVL16.PAS#TrainCharacter", "re/symbols.toml#ovl16:29AE", "tools/re/tp_idioms/ovl16/LVLIDX.PAS"]

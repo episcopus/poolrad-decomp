@@ -5191,3 +5191,10 @@ kind = "routine"
 why = "ovl13:3B93 is the Alt-X debug command: it returns False unless the program was started with the STING argument (ParamStr(1); res04's DebugMode switch), then flashes 'The Gods intervene!' and takes every monster out of the fight (Flag10D 0, Status StatusDead, CombatantTable Kind 0); ovl08:0264 and ovl09:0690 call it for Alt-X and show 'That doesn't work' on False; make match UNIT=ovl13 FN=GodsIntervene MATCH."
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl16_fn_29AE"
+new = "TrainCharacter"
+kind = "routine"
+why = "ovl16:29AE is the T item of RunCharacterMenu (ovl16:0161): it trains the selected character, refusing the unconscious and those short of 1000 gold; its strings are Do you wish to train?, Training costs 1000 gp. and we only train conscious people"
+date = "2026-10-14"
+
