@@ -10295,27 +10295,14 @@ evidence = ["prologue"]
 id = "ovl22:1F41"
 unit = "ovl22"
 addr = "ovl22:1F41"
-size = 234
-name = "ovl22_e38"
+size = 290
+name = "CastStrength"
 signature = ""
 c_name = "ovl22_e38"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_38"
+notes = "renamed from ovl22_e38 (cast handler of spell 35 (SpellNames[35] is 'Strength' at DS:28E9); rolls a class bonus die (d4 magic-user, d6 cleric/thief, d8 fighter), raises the target's Strength, clamps at 18 with a fighter percentile, and adds the strength affect $26 (RaiseStrength keeps the earlier strength in affect 0Ch or 26h, whitepaper 5.22.2)); auto:entry_38"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl22:202B"
-unit = "ovl22"
-addr = "ovl22:202B"
-size = 68
-name = "ovl22_fn_202B"
-signature = ""
-c_name = "ovl22_fn_202B"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl22:206F"

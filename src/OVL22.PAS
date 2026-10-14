@@ -44,7 +44,7 @@ procedure CastKnock;
 procedure CastMirrorImage;
 procedure CastRayOfEnfeeblement;
 procedure CastStinkingCloud;
-procedure ovl22_e38;
+procedure CastStrength;
 procedure ovl22_fn_202B;
 procedure ovl22_e39;
 procedure ovl22_fn_20A9;
@@ -1095,8 +1095,67 @@ begin
     if Occupant[I] > 0 then
       ApplyCloudTile(CombatantRecord[Occupant[I]]);
 end;
-{ ovl22:1F41: frame not read }
-{@stub} procedure ovl22_e38; begin end;
+{ ovl22:1F41. Cast handler that raises the chosen target ds6C95's Strength (the Strength spell):
+  it rolls the class bonus die (1d4 for a magic-user level, 1d6 for a cleric or thief level, 1d8
+  for a fighter level; the later class wins) and adds it to the target's Strength. A result above
+  18 is clamped to 18; for a fighter level the overflow becomes the exceptional-strength percentile
+  (10 per point above 18 plus the target's StrengthPercent, capped at 100). RaiseStrength applies the
+  new Strength (showing 'is stronger' when it rose) and the strength affect $26 is added for the
+  spell's duration. Reads ds6C95 and ds681B. }
+procedure CastStrength;
+const
+  ExceptionalStrength = 18;       { 18, the largest plain Strength; the overflow becomes the percentile }
+  MaxPercent = 100;               { the exceptional-strength percentile ceiling }
+  PercentStep = 10;               { each point of Strength above 18 is 10 percent }
+  StrengthAffect = $26;           { the strength affect this spell leaves (same vehicle RaiseStrength updates) }
+  { The class whose level picks the bonus die: magic-user (d4), cleric or thief (d6), fighter (d8). }
+  MagicUserClass = 5;
+  ClericClass = 0;
+  ThiefClass = 6;
+  FighterClass = 2;
+  { The bonus die by class. }
+  MagicUserSides = 4;
+  ClericSides = 6;
+  FighterSides = 8;
+  MessageColour = $A;             { the colour res12_fn_16EC shows 'is stronger' in }
+  TimedMessage = 1;               { nonzero: res12_fn_16EC delays by the game speed and clears it }
+  RunHandlerOnRemoval = 1;        { AddAffect Flag: the affect's handler runs when the affect is removed }
+var
+  Target: PCharacter;             { ds6C95, the chosen target whose Strength is raised }
+  Percent: Byte;                  { the exceptional-strength percentile passed to RaiseStrength }
+  Bonus: Byte;                    { the class bonus die roll (unset when the target has no class: QUIRK ovl22:1F47) }
+  Strength: Byte;                 { the new Strength, the sum of the target's Strength and the roll }
+  Code: Byte;                     { RaiseStrength's earlier-strength code, passed to AddAffect as Data }
+begin
+  Percent := 0;
+  Target := ds6C95;
+  if Target^.ClassLevels[MagicUserClass] > 0 then
+    Bonus := RollDice(1, MagicUserSides);
+  if (Target^.ClassLevels[ClericClass] > 0) or (Target^.ClassLevels[ThiefClass] > 0) then
+    Bonus := RollDice(1, ClericSides);
+  if Target^.ClassLevels[FighterClass] > 0 then
+    Bonus := RollDice(1, FighterSides);
+  Strength := Target^.Strength + Bonus;
+  { QUIRK ovl22:1FFB: the cap is repeated in both branches (Strength 18 in each); the compiler keeps
+    one store per branch instead of hoisting it, which is the original's layout. }
+  if Strength > ExceptionalStrength then
+  begin
+    if Target^.ClassLevels[FighterClass] > 0 then
+    begin
+      { QUIRK ovl22:1FD4: TP 6.0 evaluates the right operand of `+` first, so the percentile sum is
+        written target-first to keep the product on the left of the add in the original. }
+      Percent := Target^.StrengthPercent + (Strength - ExceptionalStrength) * PercentStep;
+      if Percent > MaxPercent then
+        Percent := MaxPercent;
+      Strength := ExceptionalStrength;
+    end
+    else
+      Strength := ExceptionalStrength;
+  end;
+  if RaiseStrength(Target, Strength, Percent, Code) then
+    res12_fn_16EC(Target, 'is stronger', MessageColour, TimedMessage);
+  AddAffect(Target, StrengthAffect, SpellAffectDuration(ds681B), Code, RunHandlerOnRemoval);
+end;
 { ovl22:202B: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl22_fn_202B; begin end;
 { ovl22:206F: frame not read }
