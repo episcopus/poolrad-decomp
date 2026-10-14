@@ -3504,3 +3504,10 @@ kind = "routine"
 why = "ovl19:1CEE is the Sell action: RunItemMenu's S key (ovl19:0EF8) after CanGiveUpItem; it shows 'I'll give you <offer> gold pieces for your <item>', asks 'Is It a Deal?' and on Y shows 'Sold!', removes the item (res12_fn_1509) and pays the offer in platinum and gold (matched, ovl19:1CEE)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl19_fn_1F52"
+new = "IdentifyItem"
+kind = "routine"
+why = "ovl19:1F52 is the Id action of the item menu: RunItemMenu's I key calls it (ovl19:0EF8) and its strings are 'For 200 gold pieces I''ll identify your ' (1EC8), 'Is It a Deal? ' (1EF0), 'Not Enough Money' (1EFF), 'I can''t tell anything new about your ' (1F10) and 'It looks like some sort of ' (1F36); it charges IdentifyPrice 200 gold from the character or the pool and clears TMenuLine.HiddenNames of the item (matched, ovl19:1F52)"
+date = "2026-10-13"
+

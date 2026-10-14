@@ -16,9 +16,7 @@ procedure HalveItem(Item: PMenuLine);
 procedure JoinItem(Item: PMenuLine);
 procedure UseItem(Item: PMenuLine; var Done: Byte);
 procedure SellItem(Item: PMenuLine);
-procedure ovl19_fn_1F4B;
-procedure ovl19_fn_1F52(Item: PMenuLine; var Redraw: Byte);
-procedure ovl19_fn_20A9;
+procedure IdentifyItem(Item: PMenuLine; var Redraw: Byte);
 procedure ovl19_fn_2156;
 procedure ovl19_fn_2197;
 procedure ovl19_fn_2233;
@@ -393,7 +391,7 @@ end;
   that ovl22_e6 accepts, or one with Affects[2] above 0 and Affects[3] below $80; then it runs UseItem.
   Trade and Sell ask CanGiveUpItem, then run TradeItem or SellItem. Drop asks CanGiveUpItem,
   shows "Your <item> will be gone forever" and then "Drop It?", and on Y calls res12_fn_1509 with
-  SelectedCharacter and the item. Halve, Join and Id run HalveItem, JoinItem and ovl19_fn_1F52.
+  SelectedCharacter and the item. Halve, Join and Id run HalveItem, JoinItem and IdentifyItem.
   Done: the stop flag shared with ViewSelectedCharacter; UseItem may set it. The item menu is drawn
   only when the character carries items; the Items window (rows 1 to 22) is drawn when DrawItemWindow
   is set or ds6821 is nonzero. The view mode ds49F3 decides which words are offered: 1 (set by
@@ -515,7 +513,7 @@ begin
               SellItem(Selected)
             else
               Key := ' ';
-          'I': ovl19_fn_1F52(Selected, Redraw);
+          'I': IdentifyItem(Selected, Redraw);
         end;
       res12_fn_0BB8(Character);
     end;
@@ -868,12 +866,75 @@ begin
   end;
   ClearWindow(MessageLeft, MessageTop, MessageRight, MessageBottom);
 end;
-{ ovl19:1F4B: frame not read }
-{@stub} procedure ovl19_fn_1F4B; begin end;
-{ ovl19:1F52: frame not read }
-{@stub} procedure ovl19_fn_1F52(Item: PMenuLine; var Redraw: Byte); begin end;
-{ ovl19:20A9: retf 8: 8 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl19_fn_20A9; begin end;
+{ ovl19:1F52. The Id action of the item menu (RunItemMenu's I key, ovl19:0EF8; whitepaper 5.4): identifies Item
+  for 200 gold pieces. It shows "For 200 gold pieces I'll identify your <item>" and asks "Is It a Deal? ". On Y
+  the price comes from SelectedCharacter's money (CharacterMoneyValueInGold, SetCharacterGold) or else from the
+  pooled money (PooledMoney, SetPooledGold); when neither covers it, "Not Enough Money" is shown. A paid item
+  whose HiddenNames is set is identified: HiddenNames is cleared, its line is drawn again (res12_fn_0442), "It
+  looks like some sort of <item>" is shown and Redraw is set. Otherwise "I can't tell anything new about your
+  <item>" is shown. Parameters: Item, the item; Redraw, the var flag of the item list (1: draw it again).
+  Side effects: rows 21 and 22 (columns 1 to 38) are cleared at the end; DelayByGameSpeed after a payment. }
+procedure IdentifyItem(Item: PMenuLine; var Redraw: Byte);
+const
+  MessageLeft = 1;
+  MessageTop = 21;
+  MessageRight = 38;
+  MessageBottom = 22;
+  MessageColor = 14;
+  ClearTextBeforeMessage = 1;
+  IdentifyPrice = 200;
+  PromptTitleColor = 13;
+  PromptWordColor = 10;
+  PromptHotColor = 15;
+var
+  CharacterGold: LongInt;       { the gold value of SelectedCharacter's money }
+  PooledGold: LongInt;          { the gold value of the pooled money }
+  Paid: Boolean;                { the price was taken from the character's money or from the pool }
+begin
+  Paid := False;
+  res12_fn_0442(LongInt(SheetCharacter), Item, 0, 0, 0, 0);
+  ShowPagedText(MessageLeft, MessageTop, MessageRight, MessageBottom, MessageColor, ClearTextBeforeMessage,
+    'For 200 gold pieces I''ll identify your ' + Item^.Text);
+  if AskYesNo('Is It a Deal? ', PromptTitleColor, PromptWordColor, PromptHotColor) = 'Y' then
+  begin
+    CharacterGold := CharacterMoneyValueInGold(SelectedCharacter);
+    if CharacterGold >= IdentifyPrice then
+    begin
+      Paid := True;
+      Dec(CharacterGold, IdentifyPrice);
+      SetCharacterGold(CharacterGold);
+    end
+    else
+    begin
+      PooledGold := MoneyValueInGold(PooledMoney);
+      if PooledGold >= IdentifyPrice then
+      begin
+        Paid := True;
+        Dec(PooledGold, IdentifyPrice);
+        SetPooledGold(PooledGold);
+      end
+      else
+        res12_fn_1693('Not Enough Money');
+    end;
+  end;
+  if Paid then
+  begin
+    if Item^.HiddenNames = 0 then
+      ShowPagedText(MessageLeft, MessageTop, MessageRight, MessageBottom, MessageColor, ClearTextBeforeMessage,
+        'I can''t tell anything new about your ' + Item^.Text)
+    else
+    begin
+      Item^.HiddenNames := 0;
+      res12_fn_0442(LongInt(SheetCharacter), Item, 0, 0, 0, 0);
+      ShowPagedText(MessageLeft, MessageTop, MessageRight, MessageBottom, MessageColor, ClearTextBeforeMessage,
+        'It looks like some sort of ' + Item^.Text);
+      Redraw := 1;
+    end;
+  end;
+  if Paid then
+    DelayByGameSpeed;
+  ClearWindow(MessageLeft, MessageTop, MessageRight, MessageBottom);
+end;
 { ovl19:2156: frame not read }
 {@stub} procedure ovl19_fn_2156; begin end;
 { ovl19:2197: frame not read }

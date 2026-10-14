@@ -8768,7 +8768,7 @@ evidence = ["prologue"]
 id = "ovl19:1CEE"
 unit = "ovl19"
 addr = "ovl19:1CEE"
-size = 605
+size = 612
 name = "SellItem"
 signature = "procedure SellItem(Item: PMenuLine)"
 c_name = "ovl19_fn_1CEE"
@@ -8778,43 +8778,17 @@ notes = "renamed from ovl19_fn_1CEE (ovl19:1CEE is the Sell action: RunItemMenu'
 evidence = ["prologue"]
 
 [[routine]]
-id = "ovl19:1F4B"
-unit = "ovl19"
-addr = "ovl19:1F4B"
-size = 7
-name = "ovl19_fn_1F4B"
-signature = ""
-c_name = "ovl19_fn_1F4B"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
 id = "ovl19:1F52"
 unit = "ovl19"
 addr = "ovl19:1F52"
-size = 343
-name = "ovl19_fn_1F52"
-signature = "procedure ovl19_fn_1F52(Item: PMenuLine; var Redraw: Byte)"
+size = 456
+name = "IdentifyItem"
+signature = "procedure IdentifyItem(Item: PMenuLine; var Redraw: Byte)"
 c_name = "ovl19_fn_1F52"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl19_fn_1F52 (ovl19:1F52 is the Id action of the item menu: RunItemMenu's I key calls it (ovl19:0EF8) and its strings are 'For 200 gold pieces I''ll identify your ' (1EC8), 'Is It a Deal? ' (1EF0), 'Not Enough Money' (1EFF), 'I can''t tell anything new about your ' (1F10) and 'It looks like some sort of ' (1F36); it charges IdentifyPrice 200 gold from the character or the pool and clears TMenuLine.HiddenNames of the item (matched, ovl19:1F52)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl19:20A9"
-unit = "ovl19"
-addr = "ovl19:20A9"
-size = 173
-name = "ovl19_fn_20A9"
-signature = ""
-c_name = "ovl19_fn_20A9"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl19:2156"
