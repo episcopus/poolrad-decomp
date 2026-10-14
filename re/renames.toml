@@ -3511,3 +3511,10 @@ kind = "routine"
 why = "ovl12:05D6 is an affect handler (AffectHandlers shape, Mode not read) that copies the affect's Data byte into Who's Charisma (TCharacter +hex 15, POOLVARS Charisma); applying and removing run the same code"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e14"
+new = "AddAffectAndDamage"
+kind = "routine"
+why = "ovl12:05EB is an affect handler (AffectHandlers shape, Mode not read) that calls TryAddAffect with affect hex 0F for 10 and the affect's Data, then deals 1 plain point of damage (DealDamage, DamageKind 0) while Flag11B is above 1; the meaning of affect 0F is not known (ovl04 AffectRemovedAtNeutralizePoison3)"
+date = "2026-10-13"
+

@@ -20,7 +20,7 @@ procedure HalveColdDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ComputerTakesOver(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ExchangeStrengthWithAffect(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure SetCharismaFromAffect(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e14;
+procedure AddAffectAndDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e15;
 procedure ovl12_e16;
 procedure ovl12_e17;
@@ -206,6 +206,8 @@ const
   StrengthKept = $80;           { bit 7 of a strength affect's Data: an earlier strength is kept in it (ovl24:115C) }
   AffectStrength1 = $0C;        { the two strength affects (ovl24:115C keeps the earlier strength in them) }
   AffectStrength2 = $26;
+  AffectUnknown0F = $0F;        { purpose unknown; ovl04 removes it with the poison affect $37 (ovl04:0807) }
+  AffectUnknown0FDuration = 10; { the Duration ovl12:05EB gives affect $0F }
 
 { ovl12:0000. Cancels the hook of an affect: when AffectId is 0 or is the affect the hooks are offering
   (HookAffectId), HookAffectId and DamageAmount are cleared. HookAffectId 0 reads as "is Unaffected"
@@ -478,8 +480,22 @@ procedure SetCharismaFromAffect(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   Who^.Charisma := Affect^.Data;
 end;
-{ ovl12:05EB: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e14; begin end;
+{ 05EB. Purpose unknown: an affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000).
+  It adds affect $0F (AffectUnknown0F) to Who for AffectUnknown0FDuration with the Data byte of Affect, when
+  TryAddAffect allows it. Then, while Who has more than one hit point (Flag11B, the current hit points [I]), it
+  deals 1 point of plain damage (DamageKind 0, no save, DealDamage) and, outside combat, redraws the selected
+  character (ds49F3 is not CombatViewMode). Which affect id runs it is not known yet [?]. }
+procedure AddAffectAndDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  if TryAddAffect(Who, AffectUnknown0F, Affect^.Data, AffectUnknown0FDuration) then
+    if Who^.Flag11B > 1 then
+    begin
+      DamageKind := 0;
+      DealDamage(Who, 1, 0, False);
+      if ds49F3 <> CombatViewMode then
+        res12_fn_0767(SelectedCharacter);
+    end;
+end;
 { ovl12:0647: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e15; begin end;
 { ovl12:064E: retf 10: 10 bytes of parameters; 0 bytes of locals }
