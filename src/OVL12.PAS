@@ -107,7 +107,7 @@ procedure CancelCharmAndUnknown35HighChance(Who: PCharacter; Affect: PAffect; Mo
 procedure CancelCharmAndUnknown35(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure CancelParalysisHook(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure CancelColdDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e95;
+procedure CancelPoisonAndParalysisHooks(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e96;
 procedure ovl12_e97;
 procedure ovl12_e98;
@@ -230,6 +230,7 @@ const
   AffectNausea = $1F;           { the affect of a failed save against the cloud: nausea (ovl24:0AE7) }
   WeakeningDuration = $3C;      { the Duration ovl12:10DE gives the affect AffectUnknown2B }
   AlwaysAvoids = 100;           { the Chance that avoids every roll of 1d100 (ovl12:1086) }
+  AlwaysSaves = 100;            { the SaveRoll that makes a saving throw succeed (ovl24:0D63 succeeds when it reaches) [I] }
   DistantAvoidChance = 60;      { the Chance ovl12:2901 gives AvoidDistantAttack }
   HookChanceHalf = 50;          { the Chance ovl12:2976 gives ovl12:2915 (the hook cancel with a roll) }
   HookChanceLow = 15;           { the Chance ovl12:2984 gives ovl12:2915 }
@@ -1867,8 +1868,17 @@ begin
   if (DamageKind and KindCold) <> 0 then
     CancelPendingHook(0);
 end;
-{ ovl12:29F0: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e95; begin end;
+{ ovl12:29F0. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none of them is read, ovl24:0000). It cancels
+  the pending hooks of the poison affect (AffectPoisoned, $37) and of the paralysis affect (AffectParalysis, $34). Then,
+  when the saving throw in progress is the poison save (SaveKind 0, SaveKindPoison), SaveRoll becomes AlwaysSaves, so that
+  save succeeds. Purpose unknown: which affect runs it is not known yet [?]. }
+procedure CancelPoisonAndParalysisHooks(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  CancelPendingHook(AffectPoisoned);
+  CancelPendingHook(AffectParalysis);
+  if SaveKind = SaveKindPoison then
+    SaveRoll := AlwaysSaves;
+end;
 { ovl12:2A11: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e96; begin end;
 { ovl12:2A28: retf 10: 10 bytes of parameters; 2 bytes of locals }

@@ -4461,12 +4461,12 @@ id = "ovl12:29F0"
 unit = "ovl12"
 addr = "ovl12:29F0"
 size = 33
-name = "ovl12_e95"
+name = "CancelPoisonAndParalysisHooks"
 signature = ""
 c_name = "ovl12_e95"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_95"
+notes = "renamed from ovl12_e95 (ovl12:29F0 calls CancelPendingHook(AffectPoisoned) and CancelPendingHook(AffectParalysis), then sets SaveRoll to 100 when SaveKind is 0 (the poison save, ovl12:2A01)); auto:entry_95"
 evidence = ["prologue"]
 
 [[routine]]
