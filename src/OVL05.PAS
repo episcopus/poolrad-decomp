@@ -83,7 +83,7 @@ const
   In a duel with VarFixedXpBattle set, Xp is 100 per level (HighestLevel) of SelectedCharacter.
   Otherwise every monster (Side 1) that did not flee adds its money to PooledMoney, its XpValue plus
   HpB1 times XpPerHp to the total, and, unless VarNoItemLoot is 1, its items as clones to the loot
-  list ds6810 (res12_fn_0442 first): every item with a Value, but worthless items only while fewer
+  list ds6810 (FormatItemLine first): every item with a Value, but worthless items only while fewer
   than 8 items were taken and with a 1d10 of 3 or less. Then the pooled money adds its value
   (copper / 200 ... jewels * 2200) and each looted item before ds5D9A adds 400 per point of Plus.
   Xp is the total divided by the party size (VarPartySize) less NoExperienceCount. Sets
@@ -124,7 +124,7 @@ begin
               if ds6810 = nil then
               begin
                 New(ds6810);
-                res12_fn_0442(LongInt(Who), Item, 0, 0, 0, 0);
+                FormatItemLine(LongInt(Who), Item, 0, 0, 0, 0);
                 ds6810^ := Item^;
                 ds6810^.Readied := False;
                 ds6810^.Next := nil;
@@ -133,7 +133,7 @@ begin
               begin
                 Entry := ds6810;
                 New(ds6810);
-                res12_fn_0442(LongInt(Who), Item, 0, 0, 0, 0);
+                FormatItemLine(LongInt(Who), Item, 0, 0, 0, 0);
                 ds6810^ := Item^;
                 ds6810^.Readied := False;
                 ds6810^.Next := Entry;
@@ -369,7 +369,7 @@ begin
 end;
 
 { ovl05:0B14. Draws the 'Loot' window, prepares every entry of the loot list ds6810 for display
-  (res12_fn_0442) and lets the player pick one (ChooseFromList, 'Items: ' with a 'Take' button).
+  (FormatItemLine) and lets the player pick one (ChooseFromList, 'Items: ' with a 'Take' button).
   Key is the key of the choice, Item the chosen entry; Selected and Choice carry the list
   position between calls. }
 procedure ChooseLootItem(var Key: Char; var Item: PMenuLine; var Selected: PMenuLine; var Choice: Integer);
@@ -384,7 +384,7 @@ begin
   Entry := ds6810;
   while Entry <> nil do
   begin
-    res12_fn_0442(0, Entry, 0, 0, 0, 0);
+    FormatItemLine(0, Entry, 0, 0, 0, 0);
     Entry := Entry^.Next;
   end;
   List := ds6810;

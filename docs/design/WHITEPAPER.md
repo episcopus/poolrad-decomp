@@ -1184,10 +1184,11 @@ Overlay 24 holds the rules affects and rolls go through; its 22 entries (e1..e22
 - **Clipped blit** **[V]** (`DrawPictureItemClipped`, `0464:0D71`, 1811 bytes, matched): the clipping version of `DrawPictureItem`. While `ds5370` is set (the loader sets it) it cuts the item to `Dest` on all four sides (source cells cut on the left or right, pixel rows cut above or below), and returns without drawing when a cut is larger than the picture; with `ds5370` zero it draws with no check. Flags bit 2 first copies the destination bytes it is about to overwrite into the screen buffer `ds4A24` (save under; the reader is not decompiled yet). The matched code shows the checks as one `or` per exit, and an `if ... else` whose default is stored twice (`SrcLastRow`).
 - **Colour remap** **[V]** (`RemapPictureColours`, `0464:1E5C`, 1586 bytes, matched): recolours a picture for every colour index I whose `FromMap` and `ToMap` entries differ: each pixel whose palette colour is `FromMap[I]` becomes `ToMap[I]`, computed into a scratch copy (`AllocatePicture`) that is copied back at the end. Adapter 0 compares 2-bit pixel pairs through `ds25FA` and `GlyphPixelMasks`, adapter 1 the four EGA planes through `EgaPlaneBitMasks` (a random subset of the matching pixels of a cell when flicker is on), adapter 2 the two nibbles of each byte. QUIRK `0464:1F51`: the header inside the colour loop tests the first item again, so a negative first item recolours item 0 only. Callers: `LoadPictureSlot` (`ovl32:01C8`), `LoadSpriteList` (`ovl28:00A2`), `AnimateAreaDoors` (`ovl18:06B3`), `CopyPictureSlot` and `BuildCharacterIcon`.
 
-### 5.24 The resident character and item helper unit res12 (in progress)
+### 5.24 The resident character and item helper unit res12 **[V]** (`src/RES12.PAS`, `make match UNIT=res12`: unit complete)
 
-res12 is the resident helper the overlays call for character, item and view work. Forty
-routines are matched so far **[V]** (`make match UNIT=res12`): `RecalcCombatValues` recomputes a character's
+res12 is the resident helper the overlays call for character, item and view work. The unit is
+complete **[V]** (`make match UNIT=res12`: 52 routines, code and padding cover the segment).
+`RecalcCombatValues` recomputes a character's
 combat values and calls `SetArmourMovement` (`00BA:01FB`), `AddReadiedItemBonus` (`00BA:0282`),
 `ApplyWeaponBonuses` (`00BA:0000`) and `CapMovementByLoad` (`00BA:03A0`); `IsHelpless`
 (`00BA:0B73`) tests the four affects that leave a character helpless; the four panel routines
@@ -1251,10 +1252,13 @@ matched only with the copy.
   (`HasAffect`). ovl13:1FC3 compares the same entries with the 16-byte combat table at DS:3204;
   `DrawCharacterPanel` shows "(Helpless)" for a True answer.
 - **The item name table** **[V]**: 256 strings of at most 20 characters at DS:10A7 (the image:
-  entry 1 `Battle Axe` through entry 255 `Cursed`, entry 0 unused); the menu-line formatter
-  `res12_fn_0442` indexes it with a line's NameNum. That formatter is blocked (its plural rule
-  is two bytes short of a match, see `re/symbols.toml`); the rest of the unit (the shop, view
-  and message routines) is still stubs. The item field at +$33 (`PlusSave`) is signed.
+  entry 1 `Battle Axe` through entry 255 `Cursed`, entry 0 unused). `FormatItemLine` (`00BA:0442`)
+  builds a menu line's Text from NameNum[1..3] (part 3 down to 1, skipping a part whose HiddenNames
+  bit is set), with the readied Yes/No, a '* ' when a party member has affect 5 and the item is
+  plus or cursed, the count, and one plural 's ' on the head name part. It draws the line in green
+  when ShowText is set. The plural test at 00BA:06A6 is `not Odd(Mask)` (bit 0 of the shown-parts
+  mask: `mov al,Mask; shr al,1; jae`), not a test of bit 1. QUIRK 00BA:0442: the LongInt Value
+  parameter is never read. The item field at +$33 (`PlusSave`) is signed.
 - **The character panels** **[V]**: `DrawPartyRoster` (`00BA:0767`) draws the
   "Name / AC  HP" header and one line per party member (the list `ds5D96`, linked by
   TCharacter.Next +$104), clearing each line and drawing the selected member in white and the
@@ -1263,7 +1267,7 @@ matched only with the copy.
   the name line (`ShowCharacterMessage`), the "Hitpoints" value (`DrawHitPoints`, current hit points
   +$11B coloured Yellow below HpMax +$32, Green at it, LightMagenta on a highlight flag), the
   "AC" value (`DrawArmourClass`, `Abs(+$111 - 60)` signed in Green), the readied weapon's text
-  (`res12_fn_0442` then `ShowPagedText`), and the status name `StatusNames[Status]` (+$10C, the
+  (`FormatItemLine` then `ShowPagedText`), and the status name `StatusNames[Status]` (+$10C, the
   eight string[12] entries at DS:1047: Okay Animated tempgone Running Unconscious Dying Dead
   Stoned), or "(Helpless)" when `IsHelpless` says so. The value at +$111 is the one
   `ovl24`'s `RollBeatsResistance` compares a d20+level against.
@@ -1303,9 +1307,10 @@ matched only with the copy.
   unassigned.
 - **Map artifacts** **[V]**: `00BA:2571` was not a routine but the middle of `DistanceToTarget`
   (`00BA:255B`, whose real size is 220 bytes); `make match WRITE=1` removed it. `00BA:06D5` and
-  `00BA:0712` are not routines but labels inside the
-  blocked `res12_fn_0442` (06D5 even starts one byte late, under an `es:` prefix), and
-  `00BA:0B4F` was the same inside `DrawCharacterPanel` (removed by `make match WRITE=1`).
+  `00BA:0712` were not routines but labels inside `FormatItemLine` (`00BA:0442` to `00BA:075A`,
+  793 bytes; 06D5 starts one byte late, under an `es:` prefix the map dropped);
+  `make match WRITE=1` removed them. `00BA:0B4F` was the same inside `DrawCharacterPanel`
+  (removed by `make match WRITE=1`).
   `00BA:1857` and `00BA:187D` were the same inside `DrawCharacterName` (`00BA:1816`, whose real size
   is 124 bytes, not the 65 the map guessed; `make match WRITE=1` removed both).
 - **The view dispatcher and the screens** **[V]**: `RedrawView` (`00BA:27D9`) redraws the whole

@@ -5240,3 +5240,10 @@ kind = "global"
 why = "ovl20:0C9A sets it to 1 while the rest screen is up and clears it on exit; RES12:0886 reads it to pick the top row of the message window. Nonzero says the rest screen is up. The loader clears it (ovl11:0410)."
 date = "2026-10-14"
 
+[[rename]]
+old = "res12_fn_0442"
+new = "FormatItemLine"
+kind = "routine"
+why = "00BA:0442 builds an item menu line's Text from the DS:10A7 name parts, the count, the readied Yes/No and a magic marker, and draws it at (Col, Row) in green when ShowText is set (make match UNIT=res12; callers in ovl06 ChooseShopItem, ovl19 ShowCharacterSheet and DrawCharacterPanel)"
+date = "2026-10-14"
+
