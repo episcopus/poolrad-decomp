@@ -3655,12 +3655,12 @@ id = "ovl12:1168"
 unit = "ovl12"
 addr = "ovl12:1168"
 size = 145
-name = "ovl12_e38"
-signature = ""
+name = "CauseDiseaseAndDamage"
+signature = "procedure CauseDiseaseAndDamage(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e38"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_38"
+notes = "renamed from ovl12_e38 (ovl12:1168 gives Who the disease affect AffectCauseDisease ($2C, ovl15/ovl04 name it) for 10 rounds with Affect's Data, deals one point of damage when Flag11B is above 1, else gives nausea (AffectNausea) unless present); auto:entry_38"
 evidence = ["prologue"]
 
 [[routine]]

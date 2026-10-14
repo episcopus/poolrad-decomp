@@ -3693,3 +3693,10 @@ kind = "routine"
 why = "ovl12:10DE gives Who the disease affect 2B for 60 rounds; while Strength is above 3 it shows 'is weakened' and takes one off Strength, at 3 or less it adds nausea (affect 1F); affect handler, nothing but Who and Affect's Data read; which affect runs it is not known"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e38"
+new = "CauseDiseaseAndDamage"
+kind = "routine"
+why = "ovl12:1168 gives Who the disease affect AffectCauseDisease ($2C, ovl15/ovl04 name it) for 10 rounds with Affect's Data, deals one point of damage when Flag11B is above 1, else gives nausea (AffectNausea) unless present"
+date = "2026-10-13"
+

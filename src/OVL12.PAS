@@ -46,8 +46,8 @@ function FirstSlotItem(Who: PCharacter): PItem;
 procedure AvoidIfSelectedItemPlusZero(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure HalveAgeDoubling(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure WeakenStrength(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e38;
-procedure ovl12_e39;
+procedure CauseDiseaseAndDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure ovl12_e39(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e40;
 procedure ovl12_e41;
 procedure ovl12_e42;
@@ -202,6 +202,10 @@ const
   AffectImages = $1C;           { the images affect: runs on the damage hook (kind 6, ovl24:02FA); Data counts the images [I] }
   AffectUnknown2B = $2B;        { purpose unknown; a Cure Disease affect (ovl04:031E), run by RunDiseaseHandlers }
   AffectCauseDisease = $2C;     { named in ovl15 (ovl15:0FBC); a Cure Disease affect (ovl04:031E) }
+  AffectCauseDiseaseDuration = 10; { the Duration ovl12:1168 gives affect AffectCauseDisease }
+  AffectHealingBlock = $32;     { HealCharacter with Flag 0 does nothing while the character has it (ovl24:175D) }
+  AffectHealingBlockDuration = 14400; { $3840: the Duration ovl12:12FB gives affect AffectHealingBlock }
+  SideDataBit = $10;            { Affect.Data bit 4: a side, 0 or 1, compared with Who's Side (ovl12:12B2) }
   CoughResistLimit = 52;        { ovl12:0A65: TCharacter.Pad112[$112] above this steps down by CoughResistStep,
                                   else it is set to CoughResistReset }
   CoughResistReset = 50;
@@ -895,8 +899,26 @@ begin
     else if not res12_fn_2199(Who, AffectNausea, FoundAffect) then
       AddAffect(Who, AffectNausea, 0, $FF, 0);
 end;
-{ ovl12:1168: retf 10: 10 bytes of parameters; 4 bytes of locals }
-{@stub} procedure ovl12_e38; begin end;
+{ ovl12:1168. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000). It gives Who
+  the disease affect AffectCauseDisease for AffectCauseDiseaseDuration rounds, with the Data of Affect, when TryAddAffect
+  allows it. Then, while Who has more than one hit point (Flag11B), it deals 1 point of plain damage (DamageKind 0, no
+  save, DealDamage) and, outside combat, redraws the selected character. Otherwise Who gets AffectNausea unless it has
+  it already. Which affect id runs it is not known yet [?]. }
+procedure CauseDiseaseAndDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
+var
+  FoundAffect: Pointer;
+begin
+  if TryAddAffect(Who, AffectCauseDisease, Affect^.Data, AffectCauseDiseaseDuration) then
+    if Who^.Flag11B > 1 then
+    begin
+      DamageKind := 0;
+      DealDamage(Who, 1, 0, False);
+      if ds49F3 <> CombatViewMode then
+        res12_fn_0767(SelectedCharacter);
+    end
+    else if not res12_fn_2199(Who, AffectNausea, FoundAffect) then
+      AddAffect(Who, AffectNausea, 0, $FF, 0);
+end;
 { ovl12:11F9: retf 10: 10 bytes of parameters; 2 bytes of locals }
 {@stub} procedure ovl12_e39; begin end;
 { ovl12:1276: retf 10: 10 bytes of parameters; 0 bytes of locals }
