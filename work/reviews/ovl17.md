@@ -25,7 +25,7 @@ One line per finding: `- [ ] <severity> <routine name>: <what and why, with the 
 Severity: must-fix (blocks review-pass), should-fix, note. When the decompiler fixes one, mark it
 `- [x]` and add `(fixed in <commit>)`. Do not delete findings.
 
-- [ ] must-fix SaveGame (ovl17:1D58, the `for Count := 1 to 3` loop at the start): the comment says it
+- [x] must-fix SaveGame (ovl17:1D58, the `for Count := 1 to 3` loop at the start): the comment says it
   "copies the party's map cell into the ECL variable block", and whitepaper 5.11 repeats it ("It first
   copies the party's map cell ..."). `ds6AAEWords[1..3]` is not the party's map cell: it is the table of
   loaded wall sets, one (BlockId, First) pair per slot (`LoadWallSet`, ovl29: "ds6AAEWords[First]
@@ -34,8 +34,8 @@ Severity: must-fix (blocks review-pass), should-fix, note. When the decompiler f
   The party's cell (PartyMapColumn/PartyMapRow) is written to the file separately, in the 5-byte
   block. Say "the three loaded wall-set slots (block id and slot) into the ECL variable words at
   $4AF9 + I and $4AFC + I", in the routine comment and in the whitepaper, and fix the same wording
-  wherever else it appears.
-- [ ] must-fix LoadGame (ovl17:1602, the tail of the routine, `if AreaViewKind < 2 ... LoadPictureSlot('ICON',
+  wherever else it appears. (fixed in 7ae850a)
+- [x] must-fix LoadGame (ovl17:1602, the tail of the routine, `if AreaViewKind < 2 ... LoadPictureSlot('ICON',
   0, 11) ... for I := 1 to 3`): the comment says "restores TileSet and the 3D map (Load3DMap or, for a
   map view, the wall sets through LoadWallSet)". The code does three things that the comment turns into
   an either/or: `AreaViewKind < 2` runs Load3DMap; independently `AreaViewKind > 1` (a map view)
@@ -44,13 +44,13 @@ Severity: must-fix (blocks review-pass), should-fix, note. When the decompiler f
   picture and neither of the others; the ICON load is not mentioned anywhere (nor in whitepaper 5.11,
   which has the same either/or and omits the picture). A porter reading the comment would load the wall
   sets for the wrong view kind. Rewrite the sentence from the code, and give the ICON picture its
-  meaning if the evidence allows (slot 11 is the same scratch slot BuildCharacterIcon uses).
-- [ ] must-fix AddMonsterToParty (ovl17:1262, `ds49D6^[PartySize] > 7`): the routine comment says
+  meaning if the evidence allows (slot 11 is the same scratch slot BuildCharacterIcon uses). (fixed in 7ae850a)
+- [x] must-fix AddMonsterToParty (ovl17:1262, `ds49D6^[PartySize] > 7`): the routine comment says
   "(GameVars^[PartySize] > 7)" but the code, `re/symbols.toml` notes and whitepaper 5.11 (`ds49D6^[830]`)
   read word 830 of the SECOND word block `ds49D6` (the $6B00..$6EFF block), not of `GameVars`. Word 830
   of GameVars is a different variable. AddPartyMember increments the same `ds49D6^[830]`, so the
   comment makes the two routines look as if they used two different counters. Fix the comment (the
-  same error was a must-fix in ovl08 CheckMorale).
+  same error was a must-fix in ovl08 CheckMorale). (fixed in 7ae850a)
 - [ ] should-fix ReadSavedCharacterList, AddMonsterToParty, SaveCharacter, SaveGame, LoadGame and every
   other routine naming the party list: `ds5D96` is the head of the PARTY list (a chain of TCharacter
   through `Next`), proven by AddPartyMember, LoadGame, SaveGame, ovl05 and ovl07, yet POOLVARS still
