@@ -39,7 +39,7 @@ function WordToText(Value: Word): string;
 function LongIntToText(Value: LongInt): string;
 function DexterityAdjustment(Who: PCharacter): Byte;
 function DexterityAttackAdjustment(Who: PCharacter): ShortInt;
-procedure res12_fn_11EA;
+function StrengthRowIndex(Who: PCharacter): Byte;
 function res12_fn_1282(Who: PCharacter): ShortInt;
 function res12_fn_1325(Who: PCharacter): ShortInt;
 function res12_fn_13AB(Who: Pointer): Integer;
@@ -647,8 +647,30 @@ begin
     DexterityAttackAdjustment := 0;
   end;
 end;
-{ 00BA:11EA: retf 4: 4 bytes of parameters; 2 bytes of locals }
-{@stub} procedure res12_fn_11EA; begin end;
+{ 00BA:11EA. Maps a character's strength (Strength, +$10) to a 0..30 row of the strength table:
+  strength 0..17 is itself, strength 18 is 18 plus the exceptional strength (StrengthPercent,
+  +$16: 0 gives 18, 1..50 gives 19, 51..75 gives 20, 76..90 gives 21, 91..99 gives 22 and 100
+  gives 23), and strength 19..25 gives 24..30. res12_fn_1282, res12_fn_1325 and res12_fn_13AB
+  use it to look up the reaction, damage and weight allowances of a strength.
+  QUIRK 00BA:1258: a strength above 25, or a strength-18 percentage above 100, leaves the result
+  unassigned (the original returns whatever the frame held).
+  Globals: none. }
+function StrengthRowIndex(Who: PCharacter): Byte;
+begin
+  case Who^.Strength of
+    0..$11: StrengthRowIndex := Who^.Strength;
+    $12:
+      case Who^.StrengthPercent of
+        0: StrengthRowIndex := $12;
+        1..$32: StrengthRowIndex := $13;
+        $33..$4B: StrengthRowIndex := $14;
+        $4C..$5A: StrengthRowIndex := $15;
+        $5B..$63: StrengthRowIndex := $16;
+        $64: StrengthRowIndex := $17;
+      end;
+    $13..$19: StrengthRowIndex := Who^.Strength + 5;
+  end;
+end;
 { 00BA:1282: retf 4: 4 bytes of parameters; 2 bytes of locals }
 {@stub} function res12_fn_1282(Who: PCharacter): ShortInt; begin end;
 { 00BA:1325: retf 4: 4 bytes of parameters; 2 bytes of locals }

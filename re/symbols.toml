@@ -16661,12 +16661,12 @@ id = "00BA:11EA"
 unit = "res12"
 addr = "00BA:11EA"
 size = 152
-name = "res12_fn_11EA"
+name = "StrengthRowIndex"
 signature = ""
 c_name = "res12_fn_11EA"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_11EA (00BA:11EA: maps Strength (+0x10) plus the exceptional StrengthPercent (+0x16) to a 0..30 row of the strength table (strength 18 + percent bands become 18..23, 19..25 become 24..30); the only callers, res12_fn_1282, res12_fn_1325 and res12_fn_13AB, look up reaction, damage and weight allowances with it.); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
