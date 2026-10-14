@@ -3791,3 +3791,10 @@ kind = "routine"
 why = "cast handler of spell 44 Bestow Curse: ovl22_e10 maps DS:6B84+44*4 to stub 0096:0106, SpellNames[44] is 'Bestow Curse' and it applies the spell with 'has been cursed!'"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl22_e47"
+new = "CastBlink"
+kind = "routine"
+why = "cast handler of spell 45 Blink: ovl22_e10 maps DS:6B84+45*4 to stub 0096:010B, SpellNames[45] is 'Blink' and it applies the spell with 'is blinking'"
+date = "2026-10-13"
+

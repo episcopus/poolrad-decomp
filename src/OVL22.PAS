@@ -55,7 +55,7 @@ procedure CastDispelMagic;
 procedure CastPrayer;
 procedure CastRemoveCurse;
 procedure CastBestowCurse;
-procedure ovl22_e47;
+procedure CastBlink;
 procedure ovl22_e48;
 procedure ovl22_fn_2764;
 procedure ovl22_e49;
@@ -1421,7 +1421,7 @@ end;
   SpellNames[45] is 'Blink' at DS:301E and SpellTable[45].AffectId is the blink affect $25). It only
   applies the current spell ds681B to the chosen targets with the message 'is blinking'; the spell's
   own affect does the blinking, so the handler has nothing else to do. Reads ds681B. }
-procedure ovl22_e47;
+procedure CastBlink;
 begin
   ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is blinking');
 end;
