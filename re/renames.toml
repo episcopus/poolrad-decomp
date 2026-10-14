@@ -3567,3 +3567,10 @@ kind = "routine"
 why = "ovl12:07E0 is an affect handler (Who, Affect, Mode): on apply it gives Who an item of type $14 (NameNum $F3, Plus 1, Affects $17 and $89) unless Who has one or ItemCountC7 is $10 or more, shows 'Gains an item' (res12_fn_16EC) and on removal takes that item off Who's list (res12_fn_1509); Mode is read, Affect not"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e22"
+new = "LowerAttackRollByFour"
+kind = "routine"
+why = "ovl12:093C subtracts 4 from AttackRoll (sub byte [6822],4) on every call; the frame is the AffectHandlers shape (Who, Affect, Mode), none read; it sets ds681E only when res12_fn_2199(SelectedCharacter, $18) finds no affect (ovl12:0933..0937)"
+date = "2026-10-13"
+

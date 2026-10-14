@@ -3421,12 +3421,12 @@ id = "ovl12:0918"
 unit = "ovl12"
 addr = "ovl12:0918"
 size = 47
-name = "ovl12_e22"
-signature = ""
+name = "LowerAttackRollByFour"
+signature = "procedure LowerAttackRollByFour(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e22"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_22"
+notes = "renamed from ovl12_e22 (ovl12:093C subtracts 4 from AttackRoll (sub byte [6822],4) on every call; the frame is the AffectHandlers shape (Who, Affect, Mode), none read; it sets ds681E only when res12_fn_2199(SelectedCharacter, $18) finds no affect (ovl12:0933..0937)); auto:entry_22"
 evidence = ["prologue"]
 
 [[routine]]

@@ -864,6 +864,7 @@ var
   { Purpose unknown: ovl12:064E clears DamageAmount when this byte is $0F; nothing else in src/ reads it yet. }
   ds681B: Byte;
   ds681C: Byte;                   { the dice count of the last RollDiceCounted roll (ovl24:0E37) }
+  ds681E: Byte;                   { set to 1 by ovl12:0918 when SelectedCharacter lacks affect $18; nothing reads it yet [?] }
   AttackRoll: ShortInt;           { the d20 attack or resistance roll (20 counts 100) the hooks may change (ovl24:0C63) }
   SaveKind: Byte;                 { the saving throw kind SavingThrow offers to the hooks (ovl24:0DAD) }
   { The handler of every affect number, called through CallAffectHandler (ovl24:001E); extent unknown. Entry 0

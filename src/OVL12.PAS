@@ -28,7 +28,7 @@ procedure HalveFireDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ShowSilenceAndStopCasting(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure DieIfPoisoned(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure GiveAffectItem(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e22;
+procedure LowerAttackRollByFour(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e23;
 procedure ovl12_e24;
 procedure ovl12_e25;
@@ -210,6 +210,8 @@ const
   AffectPoisoned = $37;         { the Poisoned affect (ovl15 names it 'Poisoned'; ovl04 calls it AffectPoison) }
   AffectUnknown0F = $0F;        { purpose unknown; ovl04 removes it with the poison affect $37 (ovl04:0807) }
   AffectUnknown0FDuration = 10; { the Duration ovl12:05EB gives affect $0F }
+  AffectUnknown18 = $18;        { purpose unknown: the affect SelectedCharacter must have for ds681E to stay 0 (ovl12:0918) }
+  AttackPenalty = 4;            { what ovl12:0918 takes off AttackRoll }
   MinimumResistance = $39;      { ovl12:064E raises ResistValue (+$111) to at least this (57) }
   ClearDamageValue = $0F;       { ovl12:064E clears DamageAmount when ds681B is this }
   GivenItemType = $14;          { TMenuLine.ItemType of the item the affect gives (ovl12:07E0) }
@@ -618,8 +620,18 @@ begin
       end;
   res12_fn_0BB8(Who);
 end;
-{ ovl12:0918: retf 10: 10 bytes of parameters; 4 bytes of locals }
-{@stub} procedure ovl12_e22; begin end;
+{ ovl12:0918. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none of them is read). It takes
+  AttackPenalty (4) off AttackRoll. When SelectedCharacter has no affect AffectUnknown18 ($18), ds681E is set to 1
+  (res12_fn_2199 looks the affect up in the affect list and gives the found affect in FoundAffect). Purpose unknown:
+  which affect runs it is not known yet [?]. }
+procedure LowerAttackRollByFour(Who: PCharacter; Affect: PAffect; Mode: Byte);
+var
+  FoundAffect: Pointer;
+begin
+  if not res12_fn_2199(SelectedCharacter, AffectUnknown18, FoundAffect) then
+    ds681E := 1;
+  Dec(AttackRoll, AttackPenalty);
+end;
 { ovl12:0947: retf 10: 10 bytes of parameters; 2 bytes of locals }
 {@stub} procedure ovl12_e23; begin end;
 { ovl12:09C0: retf 10: 10 bytes of parameters; 14 bytes of locals }
