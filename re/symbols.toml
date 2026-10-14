@@ -7663,7 +7663,7 @@ signature = ""
 c_name = "ovl16_fn_1E5A"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 10: not a routine. 0x1E5A is an instruction boundary inside the single routine ovl16:056C (the lcall 0x0709:0x09E3 ReadInputLine, bytes 9a e3 09 09 07). The near_call evidence is a false positive: the E8 byte at ovl16:2654 is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:2652) followed by add di,ax (03 f8), read as a call whose bogus rel16 (-2045) targets 0x1E5A. 056C has one prologue at 0x056C and one retf at 0x1ED1 (verified on build/re/overlays/ovl16.bin), so it is one routine 056C..1ED1. Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -7676,7 +7676,7 @@ signature = ""
 c_name = "ovl16_fn_1E7D"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 10: not a routine. 0x1E7D is an instruction boundary inside the single routine ovl16:056C (mov [bp-8],ax, bytes 89 46 f8). The near_call evidence is a false positive: the E8 byte at ovl16:2677 is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:2675) followed by add di,ax (03 f8); the bogus rel16 targets 0x1E7D. 056C is one routine 056C..1ED1 (one prologue at 0x056C, one retf at 0x1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -7689,7 +7689,7 @@ signature = ""
 c_name = "ovl16_fn_1EA3"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 10: not a routine. 0x1EA3 is an instruction boundary inside the single routine ovl16:056C (mov di,0x4FE, bytes bf fe 04). The near_call evidence is a false positive: the E8 byte at ovl16:269D is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:269B) followed by add di,ax (03 f8); the bogus rel16 targets 0x1EA3. 056C is one routine 056C..1ED1 (one prologue at 0x056C, one retf at 0x1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -7702,7 +7702,7 @@ signature = ""
 c_name = "ovl16_fn_1EB9"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 10: not a routine. 0x1EB9 is mid-instruction inside the single routine ovl16:056C: it is the 0x92 byte of mov [0x5D92],ax (a3 92 5d at ovl16:1EB8). The near_call evidence is a false positive: the E8 byte at ovl16:35E5 is the ModRM of shr ax,1 (d1 e8 at ovl16:35E4) inside ovl16:35BE; the following bytes d1 e8 are read as rel16 (-5935), targeting 0x1EB9. 056C is one routine 056C..1ED1 (one prologue at 0x056C, one retf at 0x1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -7715,7 +7715,7 @@ signature = ""
 c_name = "ovl16_fn_1EC6"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 10: not a routine. 0x1EC6 is mid-instruction inside the single routine ovl16:056C: it is the 0x1D immediate byte of mov ax,0x11D (b8 1d 01 at ovl16:1EC5). The near_call evidence is a false positive: the E8 byte at ovl16:26C0 is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:26BE) followed by add di,ax (03 f8); the bogus rel16 targets 0x1EC6. 056C is one routine 056C..1ED1 (one prologue at 0x056C, one retf at 0x1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -7728,7 +7728,7 @@ signature = ""
 c_name = "ovl16_fn_1F0D"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 10: not a routine. 0x1F0D lies in the string-literal pool 0x1ED2..0x1F36 after 056C's retf at 0x1ED1; it is inside the literal ' bids you farewell.' (the packet decodes 1F07 ' bids you farewell.'). The near_call evidence is a false positive: the E8 byte at ovl16:2707 is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:2705) inside 056C, followed by add di,ax (03 f8); the bogus rel16 targets 0x1F0D. Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
