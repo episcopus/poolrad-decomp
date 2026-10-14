@@ -80,3 +80,39 @@ tags = ["string", "literal", "local", "frame", "O+"]
 title = "An empty literal passed directly is copied to a temporary; assigned to a local it is only a length store"
 lesson = "In the overlay, DrawWindow(3, 3, $D, $D, 0, $F, '') copies the literal '' into a stack temporary with 0AF8:0B0B before the call (ovl03:0856). `Prompt := ''` with a local `Prompt: string[1]` compiles to one `mov byte [bp-2], 0` and no copy (ovl03:0951); the local is then passed by address to ReadNumber's String40 value parameter (lea di, push ss, push di). The locals take their places in declaration order from bp-1 downward: Prompt (2 bytes) at bp-2, Number at bp-4, Target at bp-6, which gives the 6-byte frame. Declaring Target before Number moves the stored target to bp-4 and fails the match."
 evidence = ["src/OVL03.PAS#ReadNumberCommand", "src/OVL03.PAS#ShowCloseUpCommand", "re/symbols.toml#ovl03:0951"]
+
+[[lesson]]
+id = "string-length-zero-test-byte-compare"
+confidence = "V"
+units = ["*"]
+tags = ["string", "length", "compare", "codegen"]
+title = "`if Length(S) = 0` on a string variable is one byte compare, not a string comparison call"
+lesson = "After `Answer := ReadInputLine(...)` the test `if Length(Answer) = 0 then Answer := ' '` compiles to cmp byte [bp-0x104],0; jne, with no call to System_StrCompare (0AF8:0C10). The literal ' ' is then copied with 0AF8:0B25 from the code segment, three pushes (source, destination, max 255). Writing `Answer = ''` is the string compare the original does not make (ovl03:0994, matched)."
+evidence = ["src/OVL03.PAS#ReadStringCommand", "re/symbols.toml#ovl03:0994"]
+
+[[lesson]]
+id = "sizeof-constants-match-literal-sizes"
+confidence = "V"
+units = ["*"]
+tags = ["SizeOf", "FreeMem", "FillChar", "constant", "codegen"]
+title = "SizeOf(record) and SizeOf(array) compile to the literal sizes the original pushes"
+lesson = "FreeMem(ReturnStack, SizeOf(TReturnEntry)) pushes 6 and FillChar(CompareFlags, SizeOf(CompareFlags), 0) pushes 6, exactly as the original's literal sizes (ovl03:0A9F, 0AED). The size of a record or an array is a compile-time constant, so readable sizes cost nothing in the match."
+evidence = ["src/OVL03.PAS#ReturnCommand", "src/OVL03.PAS#ComparePairsCommand", "re/symbols.toml#ovl03:0A9F"]
+
+[[lesson]]
+id = "map-entry-inside-routine-is-removed-with-its-stub"
+confidence = "V"
+units = ["*"]
+tags = ["map", "boundary", "stub", "write"]
+title = "A map entry inside a matched routine is removed by WRITE, but its stub lines stay until the source is cleaned"
+lesson = "ovl03:0B39, 0B43 and 0B48 were map entries inside ComparePairsCommand (0AED..0B51): the first was the displacement of a jne, the second sat inside a mov, the third was the displacement of a jmp. The map's size of 76 for 0AED was short by 25 bytes. `make match UNIT=ovl03 WRITE=1` corrected the size to 101 and removed the three entries, but it does not touch src/OVL03.PAS: their stub lines and interface declarations had to be deleted by hand. Look for an entry that starts with a byte that is an operand of the routine before it (a jump displacement, a mov immediate) before writing a stub for it."
+evidence = ["src/OVL03.PAS#ComparePairsCommand", "re/symbols.toml#ovl03:0AED"]
+
+[[lesson]]
+id = "byte-loop-index-over-array-1-to-4"
+confidence = "V"
+units = ["*"]
+tags = ["for", "Byte", "ShortInt", "index", "codegen"]
+title = "A Byte loop index subscripting array[1..4] of Word matches; the ShortInt rule is not general"
+lesson = "`for I := 1 to 4 do Values[I] := OperandValue(I);` with I: Byte matches ovl03:0AED, where the index is loaded with mov al,[bp-9]; xor ah,ah before shl di,1. The for-index-signed-cwde lesson (ShortInt for `for I := 1 to 2` in ArithmeticCommand) therefore depends on the code around the loop. Try Byte first and change to ShortInt only when the first differing byte is a cwde where the original has xor ah,ah."
+evidence = ["src/OVL03.PAS#ComparePairsCommand", "src/OVL03.PAS#ArithmeticCommand", "re/symbols.toml#ovl03:0AED"]
