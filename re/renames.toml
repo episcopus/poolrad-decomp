@@ -4085,3 +4085,10 @@ kind = "routine"
 why = "ovl12:29F0 calls CancelPendingHook(AffectPoisoned) and CancelPendingHook(AffectParalysis), then sets SaveRoll to 100 when SaveKind is 0 (the poison save, ovl12:2A01)"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl12_e96"
+new = "CancelFireDamage"
+kind = "routine"
+why = "ovl12:2A11 tests DamageKind bit 1 (KindFire, ds6819 and 1) and then calls CancelPendingHook(0), which drops the damage (ovl12:2A11, matched)"
+date = "2026-10-14"
+

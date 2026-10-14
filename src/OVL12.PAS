@@ -108,7 +108,7 @@ procedure CancelCharmAndUnknown35(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure CancelParalysisHook(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure CancelColdDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure CancelPoisonAndParalysisHooks(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e96;
+procedure CancelFireDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e97;
 procedure ovl12_e98;
 procedure ovl12_e99;
@@ -1879,8 +1879,14 @@ begin
   if SaveKind = SaveKindPoison then
     SaveRoll := AlwaysSaves;
 end;
-{ ovl12:2A11: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e96; begin end;
+{ ovl12:2A11. Damage hook (the AffectHandlers shape: Who, Affect and Mode; none of them is read, ovl24:0000). While the
+  damage being dealt is fire (DamageKind bit KindFire, DS:6819), CancelPendingHook(0) drops it: DamageAmount and the
+  hook offered are cleared. Purpose unknown: which affect runs it is not known yet [?]. }
+procedure CancelFireDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  if (DamageKind and KindFire) <> 0 then
+    CancelPendingHook(0);
+end;
 { ovl12:2A28: retf 10: 10 bytes of parameters; 2 bytes of locals }
 {@stub} procedure ovl12_e97; begin end;
 { ovl12:2A6D: retf 10: 10 bytes of parameters; 0 bytes of locals }

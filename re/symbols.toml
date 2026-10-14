@@ -4474,12 +4474,12 @@ id = "ovl12:2A11"
 unit = "ovl12"
 addr = "ovl12:2A11"
 size = 23
-name = "ovl12_e96"
+name = "CancelFireDamage"
 signature = ""
 c_name = "ovl12_e96"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_96"
+notes = "renamed from ovl12_e96 (ovl12:2A11 tests DamageKind bit 1 (KindFire, ds6819 and 1) and then calls CancelPendingHook(0), which drops the damage (ovl12:2A11, matched)); auto:entry_96"
 evidence = ["prologue"]
 
 [[routine]]
