@@ -5787,40 +5787,14 @@ evidence = ["prologue"]
 id = "ovl13:39D2"
 unit = "ovl13"
 addr = "ovl13:39D2"
-size = 20
-name = "ovl13_e22"
+size = 180
+name = "RakeAttack"
 signature = ""
 c_name = "ovl13_e22"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_22"
+notes = "renamed from ovl13_e22 (ovl13:39D2 is the round's rake: the ovl12 initialiser (store at ovl12 code 0x354D) puts it in AffectHandlers[$49] (DS:694C), and it shows 'Rakes...' and attacks again with the second attack form (WeaponAttacks[2]/WeaponDamage[2]) after the last attack resolution landed both slot-1 hits (ds6822[1] = 2, ovl13:16F2); make match UNIT=ovl13 FN=RakeAttack MATCH.); auto:entry_22"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl13:39E6"
-unit = "ovl13"
-addr = "ovl13:39E6"
-size = 69
-name = "ovl13_fn_39E6"
-signature = ""
-c_name = "ovl13_fn_39E6"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:3A2B"
-unit = "ovl13"
-addr = "ovl13:3A2B"
-size = 91
-name = "ovl13_fn_3A2B"
-signature = ""
-c_name = "ovl13_fn_3A2B"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl13:3A86"

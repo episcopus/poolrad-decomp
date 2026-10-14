@@ -4253,3 +4253,10 @@ kind = "routine"
 why = "ovl13:3558 is the Aim command's target loop: it lists the reachable targets (ListAimTargets), steps the cursor (StepAimCursor), shows ShowAimPrompt, lets the player move the cursor or resolve the aimed attack (RunAimCursor, ResolveAimedAttack), and clears the range line; called by PlayerTurn (ovl08:0310) and FindSpellTarget"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl13_e22"
+new = "RakeAttack"
+kind = "routine"
+why = "ovl13:39D2 is the round's rake: the ovl12 initialiser (store at ovl12 code 0x354D) puts it in AffectHandlers[$49] (DS:694C), and it shows 'Rakes...' and attacks again with the second attack form (WeaponAttacks[2]/WeaponDamage[2]) after the last attack resolution landed both slot-1 hits (ds6822[1] = 2, ovl13:16F2); make match UNIT=ovl13 FN=RakeAttack MATCH."
+date = "2026-10-14"
+

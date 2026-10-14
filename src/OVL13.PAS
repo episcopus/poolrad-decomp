@@ -56,10 +56,8 @@ procedure RunAimCursor(Who, Target: PCharacter; Range, Automatic,
   AimFlag: Byte; var Done: Byte; var Aim: TSpellTarget);
 procedure RunAimTargets(Who: PCharacter; Range, Automatic, AimFlag: Byte; var Done: Byte; var Aim);
 function ChooseCombatTarget(Who: PCharacter; Range, ThroughWalls, ForgetTarget: Byte): Boolean;
-procedure ovl13_e22;
-procedure ovl13_fn_39E6;
-procedure ovl13_fn_3A2B;
-procedure ovl13_e23;
+procedure RakeAttack(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure ovl13_e23(Who: PCharacter; Affect: PAffect; Mode: Byte);
 function ovl13_e24: Boolean;
 implementation
 uses RES03, RES04, RES06, RES09, RES12, OVL19, OVL22, OVL24, OVL25, OVL30, OVL31, Crt;
@@ -2037,14 +2035,43 @@ begin
   CombatMap^.Head6 := 0;
   ChooseCombatTarget := Found;
 end;
-{ ovl13:39D2: frame not read }
-{@stub} procedure ovl13_e22; begin end;
-{ ovl13:39E6: frame not read }
-{@stub} procedure ovl13_fn_39E6; begin end;
-{ ovl13:3A2B: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl13_fn_3A2B; begin end;
-{ ovl13:3A86: retf 10: 10 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl13_e23; begin end;
+{ ovl13:39D2. The affect $49 handler, the rake: the ovl12 initialiser that fills AffectHandlers
+  (the store at ovl12 code 0x354D) puts this routine in AffectHandlers[$49]. When Who's last attack
+  resolution landed both of its slot-1 attacks (ds6822[1] = 2, counted in ResolveCombatantAttacks)
+  and the target it remembers (Combat^.Target) is still in the fight (Flag10D set), Who rakes it:
+  the readied second attack form is armed in attack slot 2 (AttackSlots[2] 2, WeaponAttacks[2] 2,
+  WeaponDamage[2] 4), slot 1 is emptied so only that form fires, 'Rakes...' is shown, and
+  PerformAttack resolves the rake against the remembered target; the turn then ends through
+  EndCombatTurn. Called through the affect hooks (affect $49 is in the kind 2 list, ovl24:02FA)
+  or when the affect is removed, so Affect and Mode are not read. Globals: ds6822 (read). }
+procedure RakeAttack(Who: PCharacter; Affect: PAffect; Mode: Byte);
+var
+  Done: Byte;                    { [bp-1] the turn-done flag PerformAttack fills in }
+begin
+  if ds6822[1] <> 2 then
+    Exit;
+  if Who^.Combat^.Target^.Flag10D = 0 then
+    Exit;
+  Who^.Combat^.Pad4[4] := 2;
+  Who^.AttackSlots[2] := 2;
+  Who^.WeaponAttacks[2] := 2;
+  Who^.WeaponDamage[2] := 4;
+  Who^.AttackSlots[1] := 0;
+  ShowCharacterMessage(Who, 'Rakes...', 10, 1);
+  PerformAttack(Who, Who^.Combat^.Target, 0, nil, Done);
+  Done := EndCombatTurn(Who);
+end;
+{ ovl13:3A86. The affect $4A handler: the ovl12 initialiser that fills AffectHandlers (the store at
+  ovl12 code 0x354D) puts this routine in AffectHandlers[$4A]. While Who carries it and both Who and
+  the combatant its affect records (CombatantRecord[Affect^.Data], the affect's +3 byte) are in the
+  fight (Flag10D set), Who is made to attack that combatant: slot 1 takes the second attack form
+  (AttackSlots[1] 1, AttackSlots[2] 0, WeaponAttacks[1] 3, WeaponDamage[1] 4), PerformAttack is
+  called from behind (attack kind 1) and the turn ends through EndCombatTurn; the affect is removed
+  from Who when the attack left the combatant out of the fight. Otherwise the combatant loses affect
+  $3A, and (mode 0 only) the affect's removal flag is cleared and it is removed from Who, which runs
+  this handler again with mode 1 and so does not recurse. Globals: ds6826 (the recorded combatant),
+  CombatantRecord. }
+{@stub} procedure ovl13_e23(Who: PCharacter; Affect: PAffect; Mode: Byte); begin end;
 { ovl13:3B93: retf 0: 0 bytes of parameters; 262 bytes of locals }
 {@stub} function ovl13_e24: Boolean; begin end;
 
