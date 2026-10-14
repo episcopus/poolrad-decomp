@@ -31,7 +31,7 @@ const
   { Nonzero: a duel gives 100 experience per level of the selected character (ovl05:000D), and a
     non-duel battle counts every player-run member as standing (ovl05:058D). Cleared by EndBattle. }
   VarFixedXpBattle = 742;
-  VarPartySize = 830;           { the members; ovl16_e2 decrements it when it removes a counted one }
+  VarPartySize = 830;           { the members; RemoveSelectedCharacter decrements it when it removes a counted one }
   VarAfterBattle1 = 880;        { three words EndBattle clears (ovl05:163C..1652); meaning unknown }
   VarAfterBattle2 = 881;
   VarAfterBattle3 = 882;
@@ -199,7 +199,7 @@ end;
   dead. A won battle computes and awards BattleExperience. A surviving party gets its fled members
   back (Status 0, Flag10D 1), dying ones unconscious, unconscious ones with Flag11B back to okay; a
   fled party (VarBattleOutcome $81) keeps only its fled members, the others leave the list
-  (ovl16_e2). A destroyed party leaves the list entirely and VarPartySize becomes 0. In a duel the
+  (RemoveSelectedCharacter). A destroyed party leaves the list entirely and VarPartySize becomes 0. In a duel the
   duelist (Flag10D 1, okay, not a monster) wins the experience, every okay or dead combatant gets
   Flag10D and the dying become unconscious. }
 procedure SettleBattleOutcome;
@@ -276,7 +276,7 @@ begin
           else
           begin
             SelectedCharacter := Who;
-            ovl16_e2(False, True);
+            RemoveSelectedCharacter(False, True);
           end;
         end;
         Who := Who^.Next;
@@ -291,7 +291,7 @@ begin
         if Who^.Combat^.NoBody <> ExtraCombatant then
         begin
           SelectedCharacter := Who;
-          ovl16_e2(False, True);
+          RemoveSelectedCharacter(False, True);
         end
         else
           Stop := True;
@@ -571,7 +571,7 @@ begin
 end;
 
 { ovl05:11AC. Takes the monsters (Side 1) and the extra combatants (TCombatant.NoBody = 1) out of the
-  party list (ovl16_e2 on SelectedCharacter; an extra combatant does not lower VarPartySize) and
+  party list (RemoveSelectedCharacter on SelectedCharacter; an extra combatant does not lower VarPartySize) and
   counts in VarRemovedCount the removed ones whose Flag10D is not 1; the remaining members' combat
   state is freed. SelectedCharacter is the first member afterwards. }
 procedure RemoveBattleCombatants;
@@ -589,7 +589,7 @@ begin
         Inc(ds49D6^[VarRemovedCount]);
       NextWho := Who^.Next;
       SelectedCharacter := Who;
-      ovl16_e2(Who^.Combat^.NoBody = ExtraCombatant, True);
+      RemoveSelectedCharacter(Who^.Combat^.NoBody = ExtraCombatant, True);
       Who := NextWho;
     end
     else

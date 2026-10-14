@@ -4043,3 +4043,10 @@ kind = "routine"
 why = "ovl16:33E7 shows the selected character's head and body pictures (ShowHeadBodyWindow) and its prompt 'Head Body Keep' cycles HeadBank (+BB) and BodyBank (+BC); the head/body step of the create flow (whitepaper 5.8)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl16_e2"
+new = "RemoveSelectedCharacter"
+kind = "routine"
+why = "ovl16:3291 unlinks SelectedCharacter from the party list ds5D96 (TCharacter.Next +104) and frees its record with FreeCharacter; it lowers the party size ds49D6^[830] unless Uncounted, and frees the CombatIcon picture slot unless FreePicture is false; the removal counterpart of AddPartyMember (ovl17:1446)"
+date = "2026-10-13"
+

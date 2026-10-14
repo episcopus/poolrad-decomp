@@ -6,7 +6,7 @@ unit OVL16;
   are still stubs. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
-uses POOLVARS, RES04, RES06, RES09, RES12, OVL17, OVL19, OVL23, OVL25, OVL28;
+uses POOLVARS, RES04, RES06, RES09, RES12, OVL17, OVL19, OVL23, OVL25, OVL28, OVL32;
 procedure FreeCharacter(Who: PCharacter);
 procedure RunCharacterMenu;
 procedure ovl16_fn_056C;
@@ -71,7 +71,7 @@ procedure ModifyCharacter;
 procedure ovl16_fn_295B;
 procedure ovl16_fn_29AE;
 procedure ovl16_fn_306D;
-procedure ovl16_e2(Uncounted, FreePicture: Boolean);
+procedure RemoveSelectedCharacter(Uncounted, FreePicture: Boolean);
 procedure ChooseHeadAndBody;
 procedure ovl16_fn_34DF;
 procedure ovl16_fn_35BE;
@@ -151,7 +151,7 @@ end;
   DrawTextAt). It then asks ReadPromptChoice for a function key (prompt line 'C D M T V A R L S B E J')
   and dispatches it: C create (ovl16_fn_056C), D drop (DropCharacter), M modify (ModifyCharacter),
   T train (ovl16_fn_29AE), V view (ViewSelectedCharacter), A add (ovl16_fn_306D), R remove
-  (SaveCharacter then ovl16_e2), L load (LoadGame), S save (SaveGame), B buy/finish (sets ds49F3 to
+  (SaveCharacter then RemoveSelectedCharacter), L load (LoadGame), S save (SaveGame), B buy/finish (sets ds49F3 to
   Mode 4 and leaves), E exit (AskYesNo, then save and QuitGame), J the STING cheat. An extended key
   G or O selects another party member (UpdateSelectedCharacter); E or S clears the heap retry gate
   ds557D. Mode (4) is the value stored in the view mode ds49F3 on B. Local at [bp-5] is unused; the
@@ -249,7 +249,7 @@ begin
             if SelectedCharacter <> nil then
             begin
               SaveCharacter(SelectedCharacter, '');
-              ovl16_e2(False, True);
+              RemoveSelectedCharacter(False, True);
             end;
         'L':
           if ds0619[7].Present <> 0 then
@@ -415,7 +415,7 @@ end;
   prompt shows the flash message "<name> breathes a sigh of relief." and does nothing else.
   Otherwise it shows "<name> bids you farewell." when the character still counts for combat and
   experience (Flag10D set; whitepaper 5.8) or "You dump <name> out back." when it does not, then
-  removes it from the party through ovl16_e2(False, True). No parameters; reads the global
+  removes it from the party through RemoveSelectedCharacter(False, True). No parameters; reads the global
   SelectedCharacter (nothing happens while it is nil); side effects: a flash message and the drop. }
 procedure DropCharacter;
 var
@@ -431,7 +431,7 @@ begin
         ShowFlashMessage('You dump ' + Name + ' out back.')
       else
         ShowFlashMessage(Name + ' bids you farewell.');
-      ovl16_e2(False, True);
+      RemoveSelectedCharacter(False, True);
     end
     else
       ShowFlashMessage(Name + ' breathes a sigh of relief.');
@@ -714,8 +714,49 @@ end;
 {@stub} procedure ovl16_fn_29AE; begin end;
 { ovl16:306D: retf 0: 0 bytes of parameters; 278 bytes of locals }
 {@stub} procedure ovl16_fn_306D; begin end;
-{ ovl16:3291: retf 4: 4 bytes of parameters; 4 bytes of locals }
-{@stub} procedure ovl16_e2(Uncounted, FreePicture: Boolean); begin end;
+{ ovl16:3291. Removes a character from the party list (the head is ds5D96, linked by TCharacter.Next
+  at +$104) and frees its record. It walks the list from the head to the member before
+  SelectedCharacter (or finds SelectedCharacter itself at the head). When Uncounted is false (the
+  member counted in the party size), it lowers the party size ds49D6^[VarPartySize]; an extra combatant
+  passes Uncounted true and leaves the count alone. FreePicture frees the member's combat icon picture
+  slot (CombatIcon, +$BF) first. The head is replaced by its Next; a middle member is unlinked from its
+  predecessor, and SelectedCharacter becomes the member that took its place (its successor at the head,
+  its predecessor otherwise). Called on drop, load, battle removal and party reorder. }
+procedure RemoveSelectedCharacter(Uncounted, FreePicture: Boolean);
+const
+  VarPartySize = 830;   { the party member count, a word of the ds49D6 game variable block }
+var
+  Cur: PCharacter;      { [bp-4]: the list node examined; the predecessor when the member is found }
+begin
+  if PCharacter(ds5D96) = nil then Exit;
+  Cur := PCharacter(ds5D96);
+  if Cur <> SelectedCharacter then
+  begin
+    while (Cur^.Next <> SelectedCharacter) and (Cur^.Next <> nil) do
+      Cur := Cur^.Next;
+    if Cur^.Next <> nil then
+    begin
+      if FreePicture then
+        FreePictureSlot(SelectedCharacter^.CombatIcon);
+      Cur^.Next := SelectedCharacter^.Next;
+      FreeCharacter(SelectedCharacter);
+      SelectedCharacter := Cur;
+      if not Uncounted then
+        Dec(ds49D6^[VarPartySize]);
+    end;
+  end
+  else
+  begin
+    if FreePicture then
+      FreePictureSlot(SelectedCharacter^.CombatIcon);
+    PCharacter(ds5D96) := SelectedCharacter^.Next;
+    Cur := SelectedCharacter^.Next;
+    FreeCharacter(SelectedCharacter);
+    SelectedCharacter := Cur;
+    if not Uncounted then
+      Dec(ds49D6^[VarPartySize]);
+  end;
+end;
 { ovl16:33E7. The head/body step of character creation (the "Head Body Keep" prompt of the create
   flow, whitepaper 5.8): it shows the selected character's HEAD and BODY pictures (ShowHeadBodyWindow)
   and asks ReadPromptChoice for a key. H or B steps the HeadBank (+$BB) or the BodyBank (+$BC) through

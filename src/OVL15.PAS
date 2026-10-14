@@ -755,9 +755,9 @@ begin
   end;
 end;
 { ovl15:18E5. The Drop command: with only one member left it asks 'quit TO DOS: ' and quits the
-  game on Yes (after removing the member, ovl16_e2). Otherwise 'will be gone' and 'Drop from
+  game on Yes (after removing the member, RemoveSelectedCharacter). Otherwise 'will be gone' and 'Drop from
   party? ': on Yes the member 'bids you farewell' (Flag10D set) or 'is dumped in a ditch', leaves
-  the party (ovl16_e2) and the window at columns $11..$26, rows 1..$B (the portrait) is
+  the party (RemoveSelectedCharacter) and the window at columns $11..$26, rows 1..$B (the portrait) is
   cleared; on No 'Breathes A sigh of relief'. }
 procedure DropPartyMember;
 begin
@@ -765,7 +765,7 @@ begin
   begin
     if AskYesNo('quit TO DOS: ', AskColor, WordColor, HotColor) = Yes then
     begin
-      ovl16_e2(False, True);
+      RemoveSelectedCharacter(False, True);
       QuitGame;
     end
     else
@@ -780,7 +780,7 @@ begin
         ShowCharacterMessage(SelectedCharacter, 'bids you farewell', MessageColor, 1)
       else
         ShowCharacterMessage(SelectedCharacter, 'is dumped in a ditch', MessageColor, 1);
-      ovl16_e2(False, True);
+      RemoveSelectedCharacter(False, True);
       ClearWindow($11, 1, $26, $0B);
       DrawPartyRoster(SelectedCharacter);
     end

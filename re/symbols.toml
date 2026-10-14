@@ -7801,12 +7801,12 @@ id = "ovl16:3291"
 unit = "ovl16"
 addr = "ovl16:3291"
 size = 342
-name = "ovl16_e2"
-signature = "procedure ovl16_e2(Uncounted, FreePicture: Boolean)"
+name = "RemoveSelectedCharacter"
+signature = "procedure RemoveSelectedCharacter(Uncounted, FreePicture: Boolean)"
 c_name = "ovl16_e2"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl16_e2 (ovl16:3291 unlinks SelectedCharacter from the party list ds5D96 (TCharacter.Next +104) and frees its record with FreeCharacter; it lowers the party size ds49D6^[830] unless Uncounted, and frees the CombatIcon picture slot unless FreePicture is false; the removal counterpart of AddPartyMember (ovl17:1446)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
