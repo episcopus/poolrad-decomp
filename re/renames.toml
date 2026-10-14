@@ -4127,3 +4127,801 @@ kind = "routine"
 why = "ovl16:42ED takes Amount gold pieces from Who's money for the training hall (ovl16:29AE calls it with the training cost): it converts the amount to copper, hands coins over from copper up (one more coin than the remainder needs) and gives the overshoot back as change from platinum down; the enum coin kind and Succ/Pred are proven by tools/re/tp_idioms/ovl16/PAYPRB2.PAS"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl12_fn_0000"
+new = "CancelPendingHook"
+kind = "routine"
+why = "ovl12:0000 clears HookAffectId and DamageAmount when its AffectId is 0 or is the affect the hooks offer (HookAffectId, set by ApplyAffect; zero means 'is Unaffected', ovl24:1672, 1682; DamageAmount is the damage DealDamage offers, ovl24:134E)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_fn_001F"
+new = "TryAddAffect"
+kind = "routine"
+why = "ovl12:001F adds an affect through AddAffect (ovl24:0E52) with Flag 1 (the handler runs when it is removed, TAffect.Flag) and returns True, but returns False and adds nothing while ds681F is set (the Temple removes affects: RemoveAffect callers ovl04:0386, 05AB, 07CE)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_fn_0058"
+new = "DropFromFight"
+kind = "routine"
+why = "ovl12:0058 shows Msg on Who (res12_fn_16EC, colour 10) unless Who's Status is 6, 7 or 8 already; then it sets Status to NewStatus, clears Flag10D and Flag11B, removes the death affects (ovl24:100A), runs the hooks of kind $D (a combatant going down, ovl24:02FA), removes Who from the map when Flag10D is clear (ovl31:0E11), and outside combat (ds49F3 not 5) redraws the selected character; the same steps as DropCombatant (ovl24:0F06) without its ground redraw"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e2"
+new = "RaiseAttackAndMorale"
+kind = "routine"
+why = "ovl12:010D adds 5 to ds6825 (the AI morale scratch that ovl09 CheckMorale computes) and 1 to AttackRoll; its frame (Who, Affect, Mode, retf 10) is the AffectHandlers shape (TAffectHandler, CallAffectHandler ovl24:0000), Mode not read"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e3"
+new = "LowerAttackAndMorale"
+kind = "routine"
+why = "ovl12:011D takes MoraleStep off the morale scratch ds6825 (to 0 when it is less) and 1 off AttackRoll: the undo of RaiseAttackAndMorale (ovl12:010D); the AffectHandlers shape (Who, Affect, Mode), Mode not read"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e4"
+new = "BoostAttackAgainstTarget"
+kind = "routine"
+why = "ovl12:013B copies Who's combat record's Target (+$A of the TCombatant at +$108, the character attacked last, ovl08) into DS:6826, and when that character's byte +$9F is 4 adds 2 to AttackRoll and to DamageAmount; the AffectHandlers shape (Who, Affect, Mode), Mode not read"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e5"
+new = "StartTrainingWithManual"
+kind = "routine"
+why = "ovl12:017F shows 'starts to train' on Who (res12_fn_16EC, colour 10) and gives Who affect 7, AffectTrainingManual ('Training with Manual of Bodily Health', named in ovl15:0FBC), duration 43200, data 255, Flag 1 (AddAffect, ovl24:0E52); AffectHandlers frame (Who, Affect, Mode), entry 5 of ovl12 (auto:entry_5)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e6"
+new = "BoostFireAttackByTarget"
+kind = "routine"
+why = "ovl12:01C3 is an affect handler (AffectHandlers shape, entry 6 of ovl12): it copies Who's combat Target into AttackTarget like BoostAttackAgainstTarget (ovl12:013B), adds a bonus of 1, 2 or 3 (by the target's byte +$9F: 10, 9 or 12, 4) to AttackRoll and DamageAmount and sets DamageKind to 9 (fire and the magic bit, ovl24:13E4, whose text says 'from Fire'); the affect that runs it is not known yet"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e7"
+new = "TrainConstitution"
+kind = "routine"
+why = "ovl12:0233 shows 'is hardier' on Who (res12_fn_16EC), increments Constitution (+$14), and adds to HpMax (+$32) and the current hit points Flag11B (+$11B) the share of HpMax - HpB1 (+$B1) by the class weights of ovl04:0510 (Raise Dead's loss, mirrored); at Constitution 20 it gives affect $3E instead; AffectHandlers frame, entry 7 of ovl12 (auto:entry_7)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e8"
+new = "ShiftAttackToSave"
+kind = "routine"
+why = "ovl12:0377 adds 2 to SaveRoll (DS:6816) and takes 2 from AttackRoll (DS:6822) for SelectedCharacter when its +$A0 (ByteA0) is 2, 5 or 8 (SelectedCharacter DS:5D92); the purpose is not known, the mechanism is the code's; entry 8 of ovl12 (auto:entry_8)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e10"
+new = "HalveColdDamage"
+kind = "routine"
+why = "ovl12:03E1 halves DamageAmount (DS:6818) and adds 3 to SaveRoll (DS:6816) when DamageKind (DS:6819) has bit 2, cold (POOLVARS DamageKind comment; ovl24:13E4 says 'from Cold'); AffectHandlers frame, entry 10 of ovl12 (auto:entry_10); the affect that runs it is not known yet"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e11"
+new = "ComputerTakesOver"
+kind = "routine"
+why = "ovl12:0400 is an affect handler (AffectHandlers shape, Mode 0 applies): on apply it sets Quick (+$10F, the computer plays the turn, whitepaper 5.5 Who plays), marks B84 with the computer-run flag and morale $33, clears Combat^.Target and sets the side from Data bit 7; on removal it gives the side back from Data bit 6"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e12"
+new = "ExchangeStrengthWithAffect"
+kind = "routine"
+why = "ovl12:04BA is an affect handler (AffectHandlers shape, Mode not read) of a strength affect: Who's Strength and StrengthPercent take the affect's strength (DecodeStrength, ovl24:110D), then the strongest other affect with id hex 0C or 26 gives Who its strength and takes the affect's encoded strength (EncodeStrength, ovl24:10E4); RaiseStrength (ovl24:115C) keeps the earlier strength in the same two affects"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e13"
+new = "SetCharismaFromAffect"
+kind = "routine"
+why = "ovl12:05D6 is an affect handler (AffectHandlers shape, Mode not read) that copies the affect's Data byte into Who's Charisma (TCharacter +hex 15, POOLVARS Charisma); applying and removing run the same code"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e14"
+new = "AddAffectAndDamage"
+kind = "routine"
+why = "ovl12:05EB is an affect handler (AffectHandlers shape, Mode not read) that calls TryAddAffect with affect hex 0F for 10 and the affect's Data, then deals 1 plain point of damage (DealDamage, DamageKind 0) while Flag11B is above 1; the meaning of affect 0F is not known (ovl04 AffectRemovedAtNeutralizePoison3)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e15"
+new = "IgnoreAffect"
+kind = "routine"
+why = "ovl12:0647 is push bp, mov bp,sp, pop bp, retf 10: an affect handler (AffectHandlers shape) with an empty body, so it ignores the affect when called"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e16"
+new = "RaiseResistanceAndSave"
+kind = "routine"
+why = "ovl12:064E is an affect handler (AffectHandlers shape, Affect and Mode not read): it raises ResistValue (TCharacter +hex 111) to at least 57, adds one to SaveRoll, and clears DamageAmount when ds681B is hex 0F"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e17"
+new = "BoostAttackVsListedTarget"
+kind = "routine"
+why = "ovl12:0679 is an affect handler (Who, Affect, Mode) that copies Who's combat Target into AttackTarget like BoostAttackAgainstTarget (ovl12:013B), and adds 1 to AttackRoll per name ds0332[1..4] equal to the target's name when its Pad9E[$9F] and CombatSize are 1"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e18"
+new = "HalveFireDamage"
+kind = "routine"
+why = "ovl12:06E4 halves DamageAmount and adds FireSaveBonus (3) to SaveRoll when DamageKind has the fire bit KindFire (1, POOLVARS DamageKind comment), the fire twin of HalveColdDamage (ovl12:03E1, same code with the bit changed)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e19"
+new = "ShowSilenceAndStopCasting"
+kind = "routine"
+why = "ovl12:070F shows 'is silenced' in colour 10 when the combat byte Pad2 (+2) of Who's combatant is set, then clears Pad2 and CanCast (+1, hides Cast): an affect handler (Who, Affect, Mode) reading only Who"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e20"
+new = "DieIfPoisoned"
+kind = "routine"
+why = "ovl12:0775 finds the Poisoned affect (affect $37, ovl15 'Poisoned') with res12_fn_2199 and, when Who has it, drops Who with StatusGone and 'dies from poison' (DropFromFight, ovl12:0058); then removes affect $0F inside the ds681F bracket (ovl04:0386); an affect handler reading only Who"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e21"
+new = "GiveAffectItem"
+kind = "routine"
+why = "ovl12:07E0 is an affect handler (Who, Affect, Mode): on apply it gives Who an item of type $14 (NameNum $F3, Plus 1, Affects $17 and $89) unless Who has one or ItemCountC7 is $10 or more, shows 'Gains an item' (res12_fn_16EC) and on removal takes that item off Who's list (res12_fn_1509); Mode is read, Affect not"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e22"
+new = "LowerAttackRollByFour"
+kind = "routine"
+why = "ovl12:093C subtracts 4 from AttackRoll (sub byte [6822],4) on every call; the frame is the AffectHandlers shape (Who, Affect, Mode), none read; it sets ds681E only when res12_fn_2199(SelectedCharacter, $18) finds no affect (ovl12:0933..0937)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e23"
+new = "BoostAttackVsEightListed"
+kind = "routine"
+why = "ovl12:0947 is BoostAttackVsListedTarget (ovl12:0679) with eight names: the same Pad9E[$9F] and CombatSize tests, then AttackRoll gains 1 per equal name of ds0382[1..8] (loop bound 8, base 0x372 + 16*I, against 0x332 + 16*I for ds0332 in ovl12:0679); the AffectHandlers shape with only Who read"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e24"
+new = "ImageAbsorbsHit"
+kind = "routine"
+why = "ovl12:09C0 is the handler of the images affect $1C, which runs on the damage hook (kind 6, ovl24:02FA, the hook list of ovl24:0000 kinds 5 and 6): when 1d(Data+1) is above 1 it cancels the damage (CancelPendingHook(0)), shows lost an image (res12_fn_16EC, colour 10) and takes one off Data, removing the affect at 0 (RemoveAffect with nil); the message and the Data count support a mirror-image style affect [I]"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e25"
+new = "ReduceDamageByQuarter"
+kind = "routine"
+why = "ovl12:0A3D takes a quarter off DamageAmount (DS:6818): DamageAmount := DamageAmount - DamageAmount div 4 (two shr ax,1, sub, store byte); the AffectHandlers shape with no parameter read, so it runs as a damage hook handler (kind 6); the affect that runs it is not known"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e26"
+new = "CoughStopsCasting"
+kind = "routine"
+why = "ovl12:0A65 clears the combat byte Pad2 (+$2) and CanCast (+$1) of the character (the stop-casting pair of ShowSilenceAndStopCasting, ovl12:070F), and shows is coughing (colour 10) when Pad2 was set; the message text (literal pool 0A59) and the Pad2 test are the evidence"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e27"
+new = "CollapseAndChangeSide"
+kind = "routine"
+why = "ovl12:0B1B is an affect handler (AffectHandlers shape, Mode not read): it clears the affect's Flag, drops Who with the text 'collapses' and StatusGone unless ds681F is set (the Temple removing affects), then sets Who's Side from the high nibble of the affect's Data and Quick (computer plays, as ComputerTakesOver ovl12:0400)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e28"
+new = "LowerAttackSaveAndResistance"
+kind = "routine"
+why = "ovl12:0BAC is an affect handler (AffectHandlers shape, Mode not read): it takes 4 off AttackRoll and SaveRoll and off Who's ResistValue (+$111) and Pad112[$112] (+$112, the byte CoughStopsCasting copies into ResistValue, ovl12:0A65); which affect runs it is not known yet"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e29"
+new = "RunDiseaseHandlers"
+kind = "routine"
+why = "ovl12:0BCF calls CallAffectHandler (ovl24:0000) twice with the same Who, Affect and Mode: first affect $2B, then $2C (AffectCauseDisease, named in ovl15:0FBC's table); both ids are in the Cure Disease list (DiseaseAffects, ovl04:031E, whitepaper 5.19), so it runs the disease handlers; which affect runs it is not known yet"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e30"
+new = "RaiseAttackAndSave"
+kind = "routine"
+why = "ovl12:0C06 adds 1 to SaveRoll and to AttackRoll and uses neither parameter (AffectHandlers shape, Mode not read); the twin of LowerAttackAndSave (ovl12:0C15); it is called by ovl12:12B2 (ovl12_e41, not decompiled yet)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e31"
+new = "LowerAttackAndSave"
+kind = "routine"
+why = "ovl12:0C15 takes 4 off AttackRoll and 4 off SaveRoll and reads neither parameter (AffectHandlers shape, Mode not read); the minus of RaiseAttackAndSave (ovl12:0C06), which adds 1 to each"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e32"
+new = "SetAttackMissIfTurnPending"
+kind = "routine"
+why = "ovl12:0C26 tests Who's combatant Initiative (TCombatant +$3, above 0 while CombatTurn still has its turn to take, ovl08); when it is above 0 it sets ds681E to 1 and AttackRoll to -1, a negative roll that RollToHit counts as a miss (AttackRoll comment, ovl24:0CD5); reads only Who (AffectHandlers shape, Mode and Affect not read)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e33"
+new = "AgeCharacterOnce"
+kind = "routine"
+why = "ovl12:0C4B is an affect handler (AffectHandlers shape, Mode not read): when the affect's Data bit 4 is clear it sets it, shows 'ages' on Who (res12_fn_16EC, colour 10, the message copied to a stack temporary as in StartTrainingWithManual) and adds one year to Who's Age (TCharacter +$30, the age in years, POOLVARS); it then doubles ds681A (shl 1) every time it runs; which affect runs it is not known yet"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e34"
+new = "ClearCloud"
+kind = "routine"
+why = "ovl12:0CC3 is the cloud affect handler: it finds the cloud of Who with the kind of Affect's Data (ds6DBB list, TCombatNode), shows 'The air clears a little...', restores each arm's tile (body cells keep CloudBodyTile), unlinks and frees the cloud and repaints the others"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_fn_0FAC"
+new = "AvoidDistantAttack"
+kind = "routine"
+why = "ovl12:0FAC: 'Avoids it' dodge: with an item in SelectedCharacter's first slot and the attacker (SelectedCharacter, distance from res12_fn_255B above 1) away, a 1d100 roll at or below Chance avoids the attack and zeroes the damage; called by ovl12:1086 (AvoidIfSelectedItemPlusZero) with Chance 100"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_fn_101D"
+new = "FirstSlotItem"
+kind = "routine"
+why = "ovl12:101D returns the item in Who's first remembered slot (SlotItems[0], TCharacter +$CC), or nil; res12_fn_2E8B may pick another item first; its callers test the item's Plus (ovl12:1086)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e35"
+new = "AvoidIfSelectedItemPlusZero"
+kind = "routine"
+why = "ovl12:1086 is an affect handler (AffectHandlers shape, nothing read): when FirstSlotItem of SelectedCharacter has Plus 0, Who avoids the attack in progress (AvoidDistantAttack with AlwaysAvoids); which affect runs it is not known"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e36"
+new = "HalveAgeDoubling"
+kind = "routine"
+why = "ovl12:10C1 halves ds681A, the byte AgeCharacterOnce (ovl12:0C4B) doubles every time it runs; affect handler (AffectHandlers shape, nothing read); which affect runs it is not known"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e37"
+new = "WeakenStrength"
+kind = "routine"
+why = "ovl12:10DE gives Who the disease affect 2B for 60 rounds; while Strength is above 3 it shows 'is weakened' and takes one off Strength, at 3 or less it adds nausea (affect 1F); affect handler, nothing but Who and Affect's Data read; which affect runs it is not known"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e38"
+new = "CauseDiseaseAndDamage"
+kind = "routine"
+why = "ovl12:1168 gives Who the disease affect AffectCauseDisease ($2C, ovl15/ovl04 name it) for 10 rounds with Affect's Data, deals one point of damage when Flag11B is above 1, else gives nausea (AffectNausea) unless present"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e39"
+new = "LowerAttackVsEightListed"
+kind = "routine"
+why = "ovl12:11F9 takes AttackPenalty (4) off AttackRoll once for each of the eight names ds0402[1..8] that the attacked character's name equals, when the selected character has Pad9E[$9F]=1 and CombatSize kind 2: the twin of BoostAttackVsEightListed (ovl12:0947), with the condition on the selected character"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e40"
+new = "LowerAttackIfSelectedIsBugbearOrGnoll"
+kind = "routine"
+why = "ovl12:1276 compares the selected character's name with the literals 'BUGBEAR' (ovl12:1268) and 'GNOLL' (ovl12:1270) by System_StrCompare (0AF8:0C10) when its Pad9E[$9F] is 1, and gives AttackRoll AttackPenalty off for either"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e41"
+new = "RaiseOrLowerAttackAndSave"
+kind = "routine"
+why = "ovl12:12B2 runs RaiseAttackAndSave (ovl12:0C06) when Who's Side (+$10E) equals bit 4 of Affect's Data, else takes one off AttackRoll and one off SaveRoll (inline sub byte, not LowerAttackAndSave's penalty)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e42"
+new = "AddHealingBlockAndHeal"
+kind = "routine"
+why = "ovl12:12FB gives Who the healing block affect $32 (AffectHealingBlock, ovl24:175D) for 14400 rounds, then HealCharacter (Amount 1, Flag 1) heals one point and res12_fn_234A runs on Who when it healed"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e47"
+new = "ProgressRot"
+kind = "routine"
+why = "ovl12:1399 is the rot handler of affect 39h (AffectRot, which Cure Disease removes, whitepaper 5.19): on each run it shows 'Rots...' on Who (res12_fn_16EC, colour 10) and takes Charisma down to 3 at most 2 at a time; then, while the stage in the affect's Data high nibble is above 1, it gives the rot again one stage lower (TryAddAffect, duration 43200); at stage 1 Who dies with 'Dies rots away' (DropFromFight, status 8)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e50"
+new = "ReduceFireDamageByRoll"
+kind = "routine"
+why = "ovl12:1490 is a damage hook (AffectHandlers shape): while the damage is fire (DamageKind bit 1) it takes 2 per die of the last roll (ds681C) off DamageAmount, never below ds681C, adds 4 to SaveRoll, and cancels non-magical damage (CancelPendingHook 0)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e51"
+new = "AddTrainedOutAndHeal"
+kind = "routine"
+why = "ovl12:14EB is the AddHealingBlockAndHeal shape (ovl12:12FB) with AffectTrainedOut: TryAddAffect(Who, AffectTrainedOut, Affect^.Data, TrainedOutDuration), then HealCharacter(Who, 1, 1) and res12_fn_234A when it healed"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_fn_1545"
+new = "PoisonAttackTarget"
+kind = "routine"
+why = "ovl12:1545 (153 bytes, its literal pool 152F-1544): the attacked character (Who's Combat^.Target) makes a poison save (SavingThrow kind 0 with Bonus, ovl12_e52 passes 0); on failure it shows 'is Poisoned', gets AffectPoisoned for good and DropFromFight kills it (StatusGone, 'is killed')"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_fn_15EB"
+new = "ParalyzeAttackTarget"
+kind = "routine"
+why = "paralyses the character Who attacked last (AttackTarget := Who^.Combat^.Target, ovl12:15EB): SavingThrow kind 0 first, then 'is Paralyzed' (literal at ovl12:15DE) and AddAffect with affect 34h; both handlers ovl12:1699 and ovl12:16BB call it with (Who, Duration, 0)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e52"
+new = "PoisonAttackTargetBonus0"
+kind = "routine"
+why = "affect handler at ovl12:165D whose whole body is PoisonAttackTarget(Who, 0) (ovl12:1545 with save bonus 0); the affect that runs it is not known yet"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e53"
+new = "PoisonAttackTargetBonus4"
+kind = "routine"
+why = "affect handler at ovl12:1671 whose whole body is PoisonAttackTarget(Who, 4) (ovl12:1545 with save bonus 4); the affect that runs it is not known yet"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e54"
+new = "PoisonAttackTargetBonus2"
+kind = "routine"
+why = "affect handler at ovl12:1685 whose whole body is PoisonAttackTarget(Who, 2) (ovl12:1545 with save bonus 2); the affect that runs it is not known yet"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e55"
+new = "ParalyzeAttackTargetFor2d8"
+kind = "routine"
+why = "affect handler at ovl12:1699 whose body is ParalyzeAttackTarget(Who, RollDice(2, 8), 0) (ovl12:15EB); the map finds no direct caller (auto:entry_55), so the affect that runs it is not known yet"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e56"
+new = "ParalyzeAttackTargetUnlessImmune"
+kind = "routine"
+why = "affect handler at ovl12:16BB: ParalyzeAttackTarget(Who, 63, 0) (ovl12:15EB) unless Who^.Combat^.Target^.Race (+$2E) is 2; the map finds no direct caller, so the affect that runs it is not known yet"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e57"
+new = "ParalyzeAttackTargetFor1d9Plus10"
+kind = "routine"
+why = "affect handler at ovl12:16E6 whose body is ParalyzeAttackTarget(Who, RollDice(1, 9) + 10, $FE) (ovl12:15EB): paralysis for 1d9 plus 10 rounds, the same shape as ParalyzeAttackTargetFor2d8 (ovl12:1699)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e58"
+new = "PoisonAttackTargetBonusMinus2"
+kind = "routine"
+why = "affect handler at ovl12:170B that calls PoisonAttackTarget (ovl12:1545) with Bonus -2 (pushed as 0FEh): the poison hook with a negative save bonus, the twin of PoisonAttackTargetBonus0/2/4"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e59"
+new = "SetFlagAndLowerAttackRollByFour"
+kind = "routine"
+why = "affect handler at ovl12:171F: ds681E := 1, then Dec(AttackRoll, AttackPenalty) with no res12_fn_2199 test; the unconditional form of LowerAttackRollByFour (ovl12:0918)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e61"
+new = "DrainBloodFromCombatant"
+kind = "routine"
+why = "affect handler at ovl12:176F: when Mode is 0 and Who and the combatant whose index is the affect Data (CombatantRecord) both take part, it shows Sucks some Blood on Who (res12_fn_16EC) and deals 1d4 to that combatant (RollDiceCounted, DealDamage), then takes 16 times the damage off the affect Duration; the other branch removes the affects and sets Pad10 (forces flight in CheckMorale, ovl09:10D7)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e62"
+new = "StartBloodDrain"
+kind = "routine"
+why = "ovl12:18B5 gives the drinker affect 4B (AffectBloodDrain, whose removal runs DrainBloodFromCombatant ovl12:176F, which reads the victim index from its Data) and the victim affect 3A (AffectHeldFast, which ovl12:1935 announces as 'is held fast'); it starts the blood drain"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e63"
+new = "HoldWeakTargetFast"
+kind = "routine"
+why = "ovl12:1935 is the weak-target twin of StartBloodDrain (ovl12:18B5): when the target's Strength (+$10) is below 19 it gives the drinker affect 4A (AffectBloodDrainWeak, Duration 0, DrainBloodFromCombatant on removal) and the victim affect 3A (AffectHeldFast) and shows 'is held fast' on the victim in colour 10"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e64"
+new = "ReviveOrRetryRevival"
+kind = "routine"
+why = "ovl12:19D9 calls ReviveCombatant (ovl24:1869) on Who at Flag11B and, when that returns False, gives Who the revival affect 4E (AffectRevival, ovl24:175D) for one round with Affect's Data through TryAddAffect"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e65"
+new = "FireAttackTargetFor2d10"
+kind = "routine"
+why = "ovl12:1A19 sets DamageKind 9 (POOLVARS: 1 fire, bit 3 magic) and deals RollDiceCounted(2, 10) to Who's combat Target with no save through DealDamage (ovl24:1344)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e66"
+new = "AcidAttackTargetFor1d4"
+kind = "routine"
+why = "ovl12:1A4C sets DamageKind to $10 (POOLVARS DamageKind: $10 acid) and deals RollDiceCounted(1, 4) to Who's combat Target with no save through DealDamage (ovl24:1344)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e67"
+new = "FrightenSideWithFear"
+kind = "routine"
+why = "ovl12:1AAA walks the party list (ds5D96, +$104 next) and, for each member with Flag10D on the side of Who (res12_fn_23B7), makes a fear save (SavingThrow kind 4) and gives AffectParalysis ($34) or AffectWeakened ($02) by HighestLevel 0..3 or 4..5, with the messages 'is paralyzed with fear' and 'is weakened by fear' (ovl12:1B91 and 1A96 pool strings)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e68"
+new = "ParalyzeSideWithFear"
+kind = "routine"
+why = "ovl12:1BA8 walks the party list (ds5D96), removes affect $52 from every member, then gives each member on the actor's side with Flag10D a paralysis for 1d4 rounds (AffectParalysis, Data FearData) after a SaveKindParalysis save, with the message 'is paralyzed with fear' (the message of FrightenSideWithFear, ovl12:1AAA); matched at L2 (make match FN=ovl12_e68)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e69"
+new = "GazeStonesTarget"
+kind = "routine"
+why = "ovl12:1CAD shows 'gazes...' on Who, draws the gaze line from Who to AttackTarget (res12_fn_1A29), lets a readied item with a NameNum of $76 turn it back on Who ('reflects it!', colour 12), then makes a stone save (SavingThrow kind 1) and DropFromFight with StatusStoned and 'is Stoned' (status 7 is stone, ovl12:0058 and ovl04:093D); matched at L2 (make match FN=ovl12_e69)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e70"
+new = "GazeCharmsTarget"
+kind = "routine"
+why = "ovl12:1E77 is the charm gaze: 'Gazes...' on Who, the gaze line to AttackTarget (res12_fn_1A29), ds681B 10, then the charm affect $0B ('is charmed', Data = Who's side in bit 7 plus $0C, negated by a fear save with bonus -2) and its handler at once (CallAffectHandler); the same walk and gaze as GazeStonesTarget (ovl12:1CAD) with a charm for the stone; matched at L2 (make match FN=ovl12_e70)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_fn_2122"
+new = "DrainLevels"
+kind = "routine"
+why = "message is drained with N levels or a level (res12_fn_16EC, pool 20DF..20FB), the victim goes dead forever or killed through DropFromFight, Count levels come off the highest class (ovl12:2122); callers ovl12:23A4 and ovl12:23C2 are not decompiled yet"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_fn_2002"
+new = "HighestLevelClass"
+kind = "routine"
+why = "nested in ovl12:2122 (DrainLevels): returns the class with the highest level, which DrainLevels reads for HighestLevel (+$73) and Experience (+$AC) at ovl12:235E..2383; the value it compares is ClassXpTable"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e71"
+new = "DrainAttackTargetLevel"
+kind = "routine"
+why = "ovl12:23A4 calls DrainLevels(Who^.Combat^.Target, 1): an affect handler that drains one level from the character Who attacked last (the AttackTarget of BoostAttackAgainstTarget, ovl12:013B)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e72"
+new = "DrainAttackTargetTwoLevels"
+kind = "routine"
+why = "ovl12:23C2 calls DrainLevels(Who^.Combat^.Target, 2): the two-level twin of DrainAttackTargetLevel (ovl12:23A4), an affect handler that drains the character Who attacked last"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e73"
+new = "CauseRotOnAttackTarget"
+kind = "routine"
+why = "ovl12:23EC gives AttackTarget (Who's Combat Target) the healing block AffectHealingBlock and then the rot AffectRot with stage RollDice(1,6) (ProgressRot reads the stage as Data div 16), shows 'is Diseased': an affect handler that inflicts a rot on the character Who attacked last"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e75"
+new = "AddConstitutionSaveBonus"
+kind = "routine"
+why = "ovl12:24D9 adds to SaveRoll a bonus from Who's Constitution (TCharacter +$14, POOLVARS: 1 for 4..6 up to 5 for 18..20), only when SaveKind is 0 (the first save, SaveKindPoison [I])"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e77"
+new = "HalveFireDamageNoSave"
+kind = "routine"
+why = "ovl12:25A2 halves DamageAmount when DamageKind has the fire bit (KindFire); it is HalveFireDamage (ovl12:06E4) without the SaveRoll bonus; matched [V]"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e78"
+new = "HalveDamageForFirstSlotItem"
+kind = "routine"
+why = "ovl12:25BC halves DamageAmount when the first slot item of SelectedCharacter has bits of byte 7 of its RaceRow row (RaceRow[ItemType][7]); the affect that runs it is not known; matched [V]"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e79"
+new = "FallDeadIfInFight"
+kind = "routine"
+why = "ovl12:2610 clears the affect's Flag and, when Who's Flag10D (combat participation, TCharacter +10D) is set, DropFromFight takes Who out with StatusGone and 'Falls dead'; matched [V]"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e80"
+new = "CancelDamageUnlessMagicSlotItem"
+kind = "routine"
+why = "ovl12:264B sets DamageAmount to 0 unless the first slot item of SelectedCharacter is a magic item (Plus <> 0) or has NameNum[3] $B1 [?]; matched [V]"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e81"
+new = "AddConstitutionSaveBonusKind2Or4"
+kind = "routine"
+why = "ovl12:268A adds the Constitution bonus of AddConstitutionSaveBonus (ovl12:24D9) to SaveRoll when SaveKind is 2 or 4 (4 is the fear save [I]); matched [V]"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e82"
+new = "RegainHitPoints"
+kind = "routine"
+why = "ovl12:2700 adds RegainedHitPoints (3) to Flag11B, the current hit points (TCharacter +$11B), and caps it at HpMax (+$32); AffectHandlers shape, Affect and Mode not read"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e84"
+new = "GiveAffectUnlessFireOrAcid"
+kind = "routine"
+why = "ovl12:27D9 adds affect $66 for RollDice(3, 6) rounds unless DamageKind has the fire bit (1) or the acid bit ($10), POOLVARS DamageKind"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e83"
+new = "ReviveDyingCharacter"
+kind = "routine"
+why = "ovl12:2730 revives a dying (Status 5) or unconscious (Status 4) character with the hit points left after its DyingRounds (TCombatant +$E) via ReviveCombatant (ovl24:1869), then gives affect $5F and removes its own affect $63 (RemoveAffect with the Affect)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e86"
+new = "RetryRevivalAtFullHitPoints"
+kind = "routine"
+why = "ovl12:2866 calls ReviveCombatant with Who's HpMax (+$32); when it fails it stores TryAddAffect of affect $66 for 1 round with the Data of Affect, the result never read"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e85"
+new = "GiveRegeneratingUnlessAffected"
+kind = "routine"
+why = "ovl12:2814 gives affect $3B (Regenerating, named in ovl15:0FBC) for 3 rounds unless res12_fn_2199 finds affect $62 or $3B on Who"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e87"
+new = "TurnGaseousAndEscape"
+kind = "routine"
+why = "ovl12:28BF clears the Flag of the affect, shows the cursor on Who (ShowCursorOn, ovl31:1298) and drops Who with Status 3 (fled, ovl05:050D) and the text 'Turns gaseous and escapes' (DropCombatant, ovl24:0F06)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e88"
+new = "AvoidDistantAttackByChance"
+kind = "routine"
+why = "ovl12:2901 is an affect handler (AffectHandlers shape, nothing read): it calls AvoidDistantAttack (ovl12:0FAC) for Who with chance 60; which affect runs it is not known"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_fn_2915"
+new = "CancelHookOnChance"
+kind = "routine"
+why = "ovl12:2915 (callers ovl12:2976 and 2984): with a hook offered (HookAffectId) or magic damage (DamageKind bit 8), a 1d100 roll at or below Chance less 5 for each point that res12_fn_26C2 of ds681B falls short of 11 cancels the hook (CancelPendingHook 0)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e89"
+new = "CancelHookByHalfChance"
+kind = "routine"
+why = "ovl12:2976 is an affect handler (AffectHandlers shape, nothing read) that calls CancelHookOnChance (ovl12:2915) with chance 50; which affect runs it is not known"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e92"
+new = "CancelCharmAndUnknown35"
+kind = "routine"
+why = "ovl12:29B6 is an affect handler (AffectHandlers shape, nothing read) that cancels the offered hooks of the charm (affect $0B) and of affect $35 (CancelPendingHook) without a roll; which affect runs it is not known"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e90"
+new = "CancelHookByLowChance"
+kind = "routine"
+why = "ovl12:2984 is an affect handler (AffectHandlers shape, nothing read) that calls CancelHookOnChance (ovl12:2915) with chance 15; which affect runs it is not known"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e91"
+new = "CancelCharmAndUnknown35HighChance"
+kind = "routine"
+why = "ovl12:2992 is an affect handler (AffectHandlers shape, nothing read): a 1d100 roll at or below 90 cancels the offered hooks of affect $35 and of the charm (affect $0B) (CancelPendingHook); which affect runs it is not known"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e93"
+new = "CancelParalysisHook"
+kind = "routine"
+why = "ovl12:29CB is an affect handler whose whole body is CancelPendingHook(AffectParalysis) (ovl12:29CB, matched)"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl12_e94"
+new = "CancelColdDamage"
+kind = "routine"
+why = "ovl12:29D9 tests DamageKind bit 2 (KindCold, ds6819 and 2) and then calls CancelPendingHook(0), which drops the damage (ovl12:29D9, matched)"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl12_e95"
+new = "CancelPoisonAndParalysisHooks"
+kind = "routine"
+why = "ovl12:29F0 calls CancelPendingHook(AffectPoisoned) and CancelPendingHook(AffectParalysis), then sets SaveRoll to 100 when SaveKind is 0 (the poison save, ovl12:2A01)"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl12_e96"
+new = "CancelFireDamage"
+kind = "routine"
+why = "ovl12:2A11 tests DamageKind bit 1 (KindFire, ds6819 and 1) and then calls CancelPendingHook(0), which drops the damage (ovl12:2A11, matched)"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl12_e97"
+new = "ReduceFireDamageOnePerDie"
+kind = "routine"
+why = "ovl12:2A28 is the loop of ReduceFireDamageByRoll (ovl12:1490) with Dec(DamageAmount) (one point, fe 0e 18 68) per die of ds681C, and no save bonus or cancel"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl12_e98"
+new = "HalveElectricityDamage"
+kind = "routine"
+why = "ovl12:2A6D tests DamageKind bit 4 (KindElectricity, ds6819 and 4) and halves DamageAmount (shr 1), the electricity twin of HalveColdDamage (ovl12:03E1)"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl12_e99"
+new = "HalveDamageByFirstSlotItemRow"
+kind = "routine"
+why = "ovl12:2A87 takes FirstSlotItem(SelectedCharacter) and, when there is one, halves DamageAmount when its RaceRow byte 7 (DS:5589) is 0 or odd; the frame and the caller-less entry match HalveDamageForFirstSlotItem (ovl12:25BC)"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl12_e100"
+new = "HalveDamageForEnchantedSlotItem"
+kind = "routine"
+why = "ovl12:2AE6 takes FirstSlotItem(SelectedCharacter) and halves DamageAmount when that item's Plus (+$32, a signed byte, compared with jle) is above 0; the same frame and caller-less entry as the other damage hooks"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl12_e101"
+new = "SetDamageFromSlotItemType55"
+kind = "routine"
+why = "ovl12:2B20 reads SelectedCharacter^.SlotItems[0] and, when its ItemType is $55, sets DamageAmount to RollDiceCounted(1, 6) + 1; the item type's name is not known"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl12_e102"
+new = "HalveColdDamageNoSave"
+kind = "routine"
+why = "ovl12:2B63 halves DamageAmount while DamageKind has KindCold (bit 2); it is HalveColdDamage (ovl12:03E1) without the SaveRoll bonus, the cold twin of HalveFireDamageNoSave (ovl12:25A2)"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl12_e103"
+new = "CancelDamageUnlessEnchantedSlotItem"
+kind = "routine"
+why = "ovl12:2B7D cancels DamageAmount unless FirstSlotItem(SelectedCharacter) exists with Plus not 0, and then only when Race (+$2E) is above 0 or HighestLevel (+$73) is below 4; the name gives the first exception, the comment the second"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl12_e104"
+new = "AvoidDistantAttackForItemType57Or58"
+kind = "routine"
+why = "ovl12:2BC8 calls AvoidDistantAttack (ovl12:0FAC, chance 50) only when SelectedCharacter's first slot item (SlotItems[0]) has ItemType $57 or $58; an affect handler, no direct caller"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl12_e105"
+new = "SpitAcidAtTarget"
+kind = "routine"
+why = "ovl12:2C1C shows 'Spits Acid' on Who (string in the pool at ovl12:2C11), draws the spit to Who's combat target and deals 8d4 to it with a half-on-save; a handler, no direct caller"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl12_e106"
+new = "SetDamageFromSlotItemType56"
+kind = "routine"
+why = "ovl12:2D38 sets DamageAmount to 3d8 (RollDiceCounted 3, 8) when SelectedCharacter's first slot item has ItemType $56, the sibling of SetDamageFromSlotItemType55 (ovl12:2B20); no direct caller"
+date = "2026-10-14"
+
+[[rename]]
+old = "ds681C"
+new = "LastDiceCount"
+kind = "global"
+why = "the dice count of the last RollDiceCounted roll (ovl24:0E37 stores it); ovl12:2D38 adds it to DamageAmount for fire or magic damage"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl12_e107"
+new = "HalveOrCancelDamageForUnenchantedSlotItem"
+kind = "routine"
+why = "ovl12:2D88 halves DamageAmount for a first slot item with Plus 0 and NameNum[3] $B1 (SlotItemNameNum3), cancels it for other Plus-0 items and with no item, and leaves it for Plus not 0; no direct caller"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl12_e108"
+new = "CancelCharmAndUnknown35ModerateChance"
+kind = "routine"
+why = "ovl12:2DE4 cancels the hooks of the charm (AffectCharm) and of AffectUnknown35 when a 1d100 roll is at or below 30; the sibling of CancelCharmAndUnknown35HighChance (ovl12:2992, 90), no direct caller"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl12_e109"
+new = "CancelCharmUnknown35PoisonAndParalysisHooks"
+kind = "routine"
+why = "ovl12:2E08 cancels the hooks of affects $0B (charm), $35, $34 (paralysis) and $37 (poison) with CancelPendingHook, then sets SaveRoll to AlwaysSaves when SaveKind is the poison save (SaveKind 0)"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl12_e110"
+new = "SetFlagIfTargetReflects"
+kind = "routine"
+why = "ovl12:2E37 walks the readied items (+$34) of AttackTarget and sets ds681E when one of their names is ReflectingNameNum $76 (the item that turns a gaze back, GazeStonesTarget ovl12:1CAD)"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl12_e111"
+new = "ApplyItemSecondAffect"
+kind = "routine"
+why = "ovl12:2EDA gives Who the affect named by Item^.Affects[2] (+$3D of TMenuLine) with AddAffect and CallAffectHandler for Mode 0 and removes it with RemoveAffect otherwise; its Affect parameter is read as an item"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl12_e112"
+new = "GiveExceptionalStrength"
+kind = "routine"
+why = "ovl12:2F57 raises Who to 18/100 with RaiseStrength (ovl24:115C) and adds affect $26 (AffectStrength2) when applied; any other Mode removes a $26 strength affect (DecodeStrength, ovl24:110D) and shows nothing"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl12_e114"
+new = "ShowMustHaveGiantStrength"
+kind = "routine"
+why = "ovl12:3134 shows 'Must have Giant Strength' (res12_fn_1693 with the literal) when Who's Strength is below 19; the handler's own effect is that message"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl12_e115"
+new = "RemoveAffect17WhenRemoved"
+kind = "routine"
+why = "ovl12:317A calls RemoveAffect(Who, $17, nil) only when Mode is not 0, the removal of the affect (table entry 137, affect $89)"
+date = "2026-10-14"
+

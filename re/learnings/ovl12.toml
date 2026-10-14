@@ -1,0 +1,694 @@
+# Lessons from unit ovl12 (TrainRewards). Leads with evidence, not matcher verdicts.
+
+[[lesson]]
+id = "case-loads-selector-once"
+confidence = "V"
+units = ["*"]
+tags = ["case", "if", "or", "field", "codegen", "compare"]
+title = "A case on a field loads it once; or-ed comparisons reload it"
+lesson = "TP 6.0 loads the selector of a case statement once into AL and compares AL with each label (`mov al, byte ptr es:[di+10Ch]; cmp al, 7; je; cmp al, 6; je; cmp al, 8; jne`). The same test written as `if (F = 7) or (F = 6) or (F = 8) then Exit` compares the field in memory each time (`cmp byte ptr es:[di+10Ch], 7`), which does not match. ovl12:0058 matched only with the case form, and the match diff showed the two instructions side by side."
+evidence = ["src/OVL12.PAS#DropFromFight", "re/symbols.toml#ovl12:0058"]
+
+[[lesson]]
+id = "inc-with-step-is-memory-add"
+confidence = "V"
+units = ["*"]
+tags = ["Inc", "Dec", "add", "byte", "codegen"]
+title = "Inc(X, N) on a byte global is one memory add"
+lesson = "The matched forms are `Inc(ds6825, MoraleStep)` with MoraleStep = 5, which compiles to `add byte ptr [6825h], 5` with no load into AL, and `Inc(AttackRoll)` on a ShortInt, `inc byte ptr [6822h]` (ovl12:010D). The same Inc and Dec forms with a step match `sub byte ptr [6825h], 5` (ovl12:011D) and `add byte ptr [6822h], 2` (ovl12:013B). The plain assignment `X := X + N` was not probed; the Inc form is the one that matched."
+evidence = ["src/OVL12.PAS#RaiseAttackAndMorale", "src/OVL12.PAS#BoostAttackAgainstTarget", "re/symbols.toml#ovl12:010D"]
+
+[[lesson]]
+id = "far-pointer-global-overlaps-table"
+confidence = "V"
+units = ["*"]
+tags = ["global", "pointer", "absolute", "dseg", "AffectHandlers", "overlap"]
+title = "A far-pointer global may overlap the next global; the matcher checks its second word by name"
+lesson = "The original keeps a far pointer at DS:6826 whose segment word is DS:6828, where the AffectHandlers table starts (entry 0, which is not a handler). ovl12:013B stores the pointer with `mov [6826h], ax` and `mov [6828h], dx`. Declared as `AttackTarget: PCharacter` (dseg 6826, a name in re/dseg.toml), the second store is that variable plus 2, so the matcher maps it to DS:6828 and the routine matches without an `absolute` alias."
+evidence = ["src/POOLVARS.PAS#AttackTarget", "re/dseg.toml#AttackTarget", "src/OVL12.PAS#BoostAttackAgainstTarget"]
+
+[[lesson]]
+id = "handler-shape-ignores-mode"
+confidence = "V"
+units = ["*"]
+tags = ["AffectHandlers", "handler", "Mode", "retf", "frame"]
+title = "An affect handler with the (Who, Affect, Mode) frame and no use of Mode"
+lesson = "Three ovl12 routines take the TAffectHandler frame (retf 10: Who at +$C, Affect at +$8, Mode at +$6) and never read Mode or Affect: ovl12:010D, ovl12:011D and ovl12:013B. Declaring the parameters with the handler's full signature keeps the frame; the unused names are kept. Whether a given affect id calls them for apply, remove or both is a question for the hook lists, not for these bytes."
+evidence = ["src/OVL12.PAS#RaiseAttackAndMorale", "src/OVL12.PAS#LowerAttackAndMorale", "src/OVL12.PAS#BoostAttackAgainstTarget", "src/POOLVARS.PAS#TAffectHandler"]
+
+[[lesson]]
+id = "signed-loop-index-cwde"
+confidence = "V"
+units = ["*"]
+tags = ["for", "index", "ShortInt", "Byte", "cwde", "codegen"]
+title = "A loop counter indexing an array is extended by its own type: ShortInt gives cwde, Byte gives xor ah, ah"
+lesson = "The class loop of ovl12:0233 indexes ClassLevels (a ShortInt array) by its counter. With `I: Byte` each index is `mov al,[bp-3]; xor ah,ah` (two bytes); with `I: ShortInt` it is `mov al,[bp-3]; cwde` (one byte). The first build was four bytes longer, the first diff was the jmp to the epilogue at 0282, and the four index uses account for it. The same convention is in src/OVL04.PAS (RaiseDead, `I: ShortInt`). Declare a counter with the type the original uses, not with the range it runs over."
+evidence = ["src/OVL12.PAS#TrainConstitution", "src/OVL04.PAS#RaiseDead", "re/symbols.toml#ovl12:0233"]
+
+[[lesson]]
+id = "bit-test-compare-with-zero"
+confidence = "V"
+units = ["*"]
+tags = ["and", "bit", "Boolean", "codegen", "compare", "constant"]
+title = "A bit test (X and mask) <> 0 compiles to and al, mask; or al, al; je"
+lesson = "`if (DamageKind and KindCold) <> 0 then` matches ovl12:03E1 as `mov al,[DamageKind]; and al,2; or al,al; je`: the named constant KindCold (2) compiles like the literal, so the mask can be named."
+evidence = ["src/OVL12.PAS#HalveColdDamage", "re/symbols.toml#ovl12:03E1"]
+
+[[lesson]]
+id = "div-by-power-of-two-is-mov-cl"
+confidence = "V"
+units = ["*"]
+tags = ["div", "shr", "shift", "codegen", "constant", "cl"]
+title = "X div 2^n compiles to mov cl, n; shr ax, cl, while X shr n compiles to mov cx, n; shr ax, cl"
+lesson = "ovl12:0400 has `mov cl, 6; shr ax, cl` and `mov cl, 7; shr ax, cl` where the source has `div 64` and `div 128`. With `shr 6` or `shr 7` (any constant shift, Byte, Word or ShortInt operand, typed count or not) TP 6.0 emits `mov cx, n; shr ax, cl`, three bytes instead of two, and the first diff of the routine is the je after it. Write a power-of-two division as `div` when the original does, and let the match show which form it wrote. Probe tools/re/tp_idioms/ovl12/E11SHIFT.PAS (both shapes, and the shl form of `ShortInt(X) * 64`)."
+evidence = ["src/OVL12.PAS#ComputerTakesOver", "tools/re/tp_idioms/ovl12/E11SHIFT.PAS", "re/symbols.toml#ovl12:0400"]
+
+[[lesson]]
+id = "signed-field-read-by-cast-cwde"
+confidence = "V"
+units = ["*"]
+tags = ["ShortInt", "Byte", "cast", "cwde", "field", "codegen", "sign"]
+title = "A Byte field read as ShortInt(field) sign-extends with cwde; read as Byte it is xor ah, ah"
+lesson = "ovl12:0400 reads TCharacter.Side (+$10E, declared Byte) and multiplies it by 64: `mov al, es:[di+10Eh]; cwde; mov cl, 6; shl ax, cl`. The original reads the side signed. Writing `ShortInt(Who^.Side) * ControlSavedSideBit` on the Byte field reproduces the cwde and keeps POOLVARS's Byte declaration, so other routines that compare the field keep their code. The probe shows the same cwde for `ShortInt(X) * 64` on a Byte parameter."
+evidence = ["src/OVL12.PAS#ComputerTakesOver", "tools/re/tp_idioms/ovl12/E11SHIFT.PAS", "src/POOLVARS.PAS#TCharacter"]
+
+[[lesson]]
+id = "less-or-equal-7f-is-the-cmp-form"
+confidence = "V"
+units = ["*"]
+tags = ["compare", "Byte", "constant", "codegen", "jump"]
+title = "`X <= $7F` compiles to cmp 7Fh; ja, while `X < $80` compiles to cmp 80h; jae"
+lesson = "ovl12:0400 tests whether a character's B84 has its computer-run high bit clear: `if Who^.B84 <= $7F then`. TP 6.0 emits `cmp byte ptr es:[di+84h], 7Fh; ja skip`, which is the original's bytes. The same test written `< $80` emits `cmp ..., 80h; jae`, the same meaning but other bytes, so the written form decides the match. A named constant works in either form: `ComputerRunFlag - 1` gives the 7Fh form. The same holds for `X > $7F` (`if Data > StrengthKept - 1 then Exit` in ovl12:04BA, `cmp 7Fh; jbe` plus a jump to the epilogue) against `X >= $80`, which compiles to `cmp 80h`."
+evidence = ["src/OVL12.PAS#ComputerTakesOver", "tools/re/tp_idioms/ovl12/E11SHIFT.PAS", "re/symbols.toml#ovl12:0400"]
+
+[[lesson]]
+id = "case-label-list-with-else-on-field"
+confidence = "V"
+units = ["*"]
+tags = ["case", "else", "label", "field", "codegen"]
+title = "A case with a label list and else on a field: one cmp/je per label, every arm jumps to the common end"
+lesson = "`case AttackTarget^.Pad9E[$9F] of 10: Bonus := 1; 9, 12: Bonus := 2; 4: Bonus := 3; else Bonus := 0; end` matches ovl12:01C3: the selector is loaded once into AL, each label is a cmp with a je to its arm (a label list shares the arm, 9 and 12), the chain falls to the else arm, and each arm stores the local and jumps to the statement after the case."
+evidence = ["src/OVL12.PAS#BoostFireAttackByTarget", "re/symbols.toml#ovl12:01C3"]
+
+[[lesson]]
+id = "separate-ifs-over-far-jumps"
+confidence = "V"
+units = ["*"]
+tags = ["if", "else", "jump", "codegen", "nested"]
+title = "A routine whose if tests jump past 127 bytes: separate ifs match, if/else-if does not"
+lesson = "ovl12:07E0 first went `if Mode <> 0 then ... else if not Found and (count < limit) then ...`; the match differed at 083C (`je 0x85a` where the original has `je 0x857`). The original is three separate statements: `if Mode <> 0 then` (the removal), then `if Mode = 0 then if not Found then if count < limit then begin ... end`. A conditional jump over more than 127 bytes is compiled as a short `je` over a `jmp near`, so the listing shows pairs like `je +2; jmp 0907`. The nested form matched at 312 bytes. When a diff shows a jump target a few bytes off, check whether the source is an if/else chain."
+evidence = ["src/OVL12.PAS#GiveAffectItem", "re/symbols.toml#ovl12:07E0"]
+
+[[lesson]]
+id = "name-table-index-base-row"
+confidence = "V"
+units = ["*"]
+tags = ["array", "string", "index", "global", "compare", "dseg"]
+title = "A table of 16-byte names indexed from 1: declare the row 0 as the index base"
+lesson = "ovl12:0679 compares the attacked character's name (the string at offset 0 of TCharacter, passed as the record pointer) with rows 1..4 of a table at DS:0332. `ds0332: array[0..4] of string[15]` gives the 16-byte stride and the base address the code adds (`shl di, 4; add di, 332h`, the loop from 1 to 4). Row 0 is never read and is declared only so that the index base names DS:0332. The matcher maps the `dsXXXX` name to its original offset, so the declaration's place in POOLVARS does not matter."
+evidence = ["src/OVL12.PAS#BoostAttackVsListedTarget", "src/POOLVARS.PAS#ds0332", "re/symbols.toml#ovl12:0679"]
+
+[[lesson]]
+id = "invented-map-entry-inside-routine"
+confidence = "V"
+units = ["*"]
+tags = ["map", "boundary", "entry", "write", "tooling"]
+title = "A map entry inside a routine that matched is removed by make match WRITE=1"
+lesson = "The map invented ovl12_fn_06C8 (28 bytes, `auto:far_call`) inside ovl12:0679. Its first byte is in the middle of an instruction (`add di, 332h` at 06C7), so no caller can exist. When BoostAttackVsListedTarget (ovl12:0679) matched at 107 bytes, `make match UNIT=ovl12 WRITE=1` removed the entry and printed `lies inside ... removed from the map`. Do not write a stub for such an entry: drop its interface declaration and stub line in the source after the routine is written."
+evidence = ["re/symbols.toml#ovl12:0679", "src/OVL12.PAS#BoostAttackVsListedTarget"]
+
+[[lesson]]
+id = "div-four-two-single-shifts"
+confidence = "V"
+units = ["*"]
+tags = ["div", "shift", "byte", "codegen"]
+title = "X div 4 on a Byte compiles to two single shifts, not to mov cl"
+lesson = "`DamageAmount := DamageAmount - DamageAmount div 4` (ovl12:0A3D) matched with `mov al, [6818h]; xor ah, ah; shr ax, 1; shr ax, 1` for the quotient, then `sub ax, dx` and the byte store. The `mov cl, n; shr ax, cl` form seen for div 64 and div 128 (ovl12:0400) is therefore not the rule for every power of two: a quotient by 4 is two `shr ax, 1`. Measured here for n = 2, 6 and 7 only; n = 3 to 5 were not probed."
+evidence = ["src/OVL12.PAS#ReduceDamageByQuarter", "re/symbols.toml#ovl12:0A3D", "re/learnings/ovl12.toml#div-by-power-of-two-is-mov-cl"]
+
+[[lesson]]
+id = "array-lower-bound-folds-into-displacement"
+confidence = "V"
+units = ["*"]
+tags = ["array", "index", "dseg", "string", "codegen"]
+title = "An array declared from 1 at DS:0382 adds 0372h: the lower bound is folded into the displacement"
+lesson = "ovl12:0947 indexes eight 16-byte names with `for I := 1 to 8` as `shl di, 4; add di, 372h`, the same stride as ovl12:0679 (`add di, 332h` for rows of `ds0332: array[0..4]`). `ds0382: array[1..8] of string[15]` declared at DS:0382 (directly after ds0332, which ends at 0382) reproduces that displacement: the displacement 372h is the declared start 382h minus one row (16), the compiler's folding of the lower bound 1. The other lower bound was not probed."
+evidence = ["src/OVL12.PAS#BoostAttackVsEightListed", "src/POOLVARS.PAS#ds0382", "re/symbols.toml#ovl12:0947"]
+
+[[lesson]]
+id = "if-not-boolean-call-tests-al"
+confidence = "V"
+units = ["*"]
+tags = ["if", "not", "Boolean", "function", "codegen"]
+title = "if not Boolean-function(...) then assignment tests AL with or al, al and jumps over the store"
+lesson = "`if not res12_fn_2199(SelectedCharacter, $18, FoundAffect) then ds681E := 1;` (ovl12:0918) compiles to `call; or al, al; jne skip; mov byte [681Eh], 1`. The `not` costs no instruction: the jump is taken when the result is non-zero. The var Pointer local is pushed as `push ss; push di` (lea di, [bp-4])."
+evidence = ["src/OVL12.PAS#LowerAttackRollByFour", "re/symbols.toml#ovl12:0918"]
+
+[[lesson]]
+id = "map-entry-at-displacement-byte"
+confidence = "V"
+units = ["*"]
+tags = ["map", "boundary", "entry", "write", "tooling"]
+title = "The map invents an entry on the displacement byte of an instruction inside a matched routine"
+lesson = "ovl12:0AE5 (`auto:far_call`, 54 bytes) is the last byte of `mov al, byte ptr es:[di+112h]` (26 8A 85 12 01 at ovl12:0AE1) inside CoughStopsCasting (ovl12:0A65). `make match UNIT=ovl12 WRITE=1` removed it when CoughStopsCasting matched at 172 bytes. As with ovl12:06C8, no caller can enter there, and the source had to lose its interface declaration and stub line afterwards. Check the first byte of an invented entry against the instruction before it before any probe."
+evidence = ["re/symbols.toml#ovl12:0A65", "src/OVL12.PAS#CoughStopsCasting"]
+
+[[lesson]]
+id = "div-16-byte-high-nibble"
+confidence = "V"
+units = ["ovl12"]
+tags = ["div", "shr", "nibble", "shift", "codegen", "constant", "cl"]
+title = "A Byte's high nibble written as div 16 compiles to mov cl, 4; shr ax, cl, where shr 4 gives mov cx, 4"
+lesson = "`Who^.Side := Affect^.Data div 16` (CollapseAndChangeSide, ovl12:0B1B) matches the original's `xor ah, ah; mov cl, 4; shr ax, cl` at 0B53..0B57. `Affect^.Data shr 4` compiled to `mov cx, 4; shr ax, cl` and first differed at 0B55. This extends the div/shr rule above to n = 4; n = 2, 6 and 7 are in tools/re/tp_idioms/ovl12/E11SHIFT.PAS."
+evidence = ["src/OVL12.PAS#CollapseAndChangeSide", "re/symbols.toml#ovl12:0B1B"]
+
+[[lesson]]
+id = "dec-byte-field-through-pointer-param"
+confidence = "V"
+units = ["ovl12"]
+tags = ["dec", "field", "pointer", "record", "les", "codegen", "byte"]
+title = "Dec on a Byte field reached through a pointer parameter reloads the pointer for each statement"
+lesson = "`Dec(Who^.ResistValue, ResistPenalty); Dec(Who^.Pad112[$112], ResistPenalty);` (LowerAttackSaveAndResistance, ovl12:0BAC) matches `les di, [bp+0Ch]; sub byte ptr es:[di+111h], 4` and then the same `les di` again before the second store. The pointer parameter is read from its frame slot for every statement. A constant Dec on a Byte global is one `sub byte ptr [..], n`. Write one statement per field through a pointer parameter; the match proves the form."
+evidence = ["src/OVL12.PAS#LowerAttackSaveAndResistance", "re/symbols.toml#ovl12:0BAC"]
+
+[[lesson]]
+id = "negative-constant-to-shortint-global"
+confidence = "V"
+units = ["ovl12"]
+tags = ["shortint", "negative", "constant", "store", "signed", "codegen"]
+title = "A negative constant stored in a ShortInt global is one byte store of its two's complement"
+lesson = "`AttackRoll := MissRoll` with `MissRoll = -1` (SetAttackMissIfTurnPending, ovl12:0C26) matches `mov byte ptr [6822h], 0FFh`: one byte store, no word store and no sign extension. The guard `Who^.Combat^.Initiative > 0` on the ShortInt field compares with `cmp byte ptr es:[di+3], 0; jle`, a signed test."
+evidence = ["src/OVL12.PAS#SetAttackMissIfTurnPending", "re/symbols.toml#ovl12:0C26"]
+
+[[lesson]]
+id = "and-mask-zero-test-then-add-bit"
+confidence = "V"
+units = ["ovl12"]
+tags = ["and", "mask", "bit", "if", "add", "byte", "field"]
+title = "if (x and mask) = 0 then x := x + mask compiles to and al, mask; or al, al; jne, then add ax, mask"
+lesson = "AgeCharacterOnce (ovl12:0C4B) matches `mov al, es:[di+3]; and al, 10h; or al, al; jne skip` for `if (Affect^.Data and AgedBit) = 0 then`, and `mov al, es:[di+3]; xor ah, ah; add ax, 10h; mov es:[di+3], al` for `Affect^.Data := Affect^.Data + AgedBit`. The `= 0` test costs only the jump over the body, the same as `not` in LowerAttackRollByFour (ovl12:0918). Adding a bit known to be clear is written as `+ mask`; the `or` form was not probed."
+evidence = ["src/OVL12.PAS#AgeCharacterOnce", "re/symbols.toml#ovl12:0C4B"]
+
+[[lesson]]
+id = "shl-one-of-byte-global"
+confidence = "V"
+units = ["ovl12"]
+tags = ["shl", "shift", "byte", "global", "codegen", "count"]
+title = "ds681A := ds681A shl 1 on a Byte global is one shl ax, 1 between a load and a store"
+lesson = "AgeCharacterOnce (ovl12:0C4B) ends with `ds681A := ds681A shl 1;` and matches `mov al, [681Ah]; xor ah, ah; shl ax, 1; mov [681Ah], al`. A shift by 1 needs no cl register, unlike the shifts by 4, 6 and 7 (div-16-byte-high-nibble, div-by-power-of-two-is-mov-cl)."
+evidence = ["src/OVL12.PAS#AgeCharacterOnce", "re/symbols.toml#ovl12:0C4B"]
+
+[[lesson]]
+id = "rename-refuses-name-used-in-comment"
+confidence = "V"
+units = ["ovl12"]
+tags = ["rename", "tooling", "comment", "name"]
+title = "make rename refuses a new name that appears anywhere in src, comments included"
+lesson = "`make rename OLD=ovl12_e31 NEW=LowerAttackAndSave` stopped with `LowerAttackAndSave is already used in src/` because the comment of RaiseAttackAndSave (ovl12:0C06) named it. The comment was reworded to give the address (`the plus of the routine at ovl12:0C15`) and the rename then went through. Before renaming, grep src for the new name and reword any comment that uses it."
+evidence = ["src/OVL12.PAS#RaiseAttackAndSave", "tools/match/rename.py"]
+
+[[lesson]]
+id = "readability-r5-comment-on-declaration-line"
+confidence = "V"
+units = ["ovl12"]
+tags = ["readability", "R5", "global", "comment", "poolvars"]
+title = "The R5 check reads a global's comment on its declaration line only"
+lesson = "A comment on `ds681E: Byte;` that wrapped onto a second line failed `make readability` (R5, SetAttackMissIfTurnPending) with 'needs a comment in POOLVARS.PAS'. On one line it passes. Keep a global's comment on its declaration line, and keep the line within 127 characters."
+evidence = ["src/POOLVARS.PAS#ds681E"]
+
+[[lesson]]
+id = "line-too-long-127"
+confidence = "V"
+units = ["ovl12"]
+tags = ["compile", "line", "length", "error", "127"]
+title = "Turbo Pascal stops at a source line over 127 characters with Error 11, Line too long"
+lesson = "`make match` failed with `OVL12.PAS(201): Error 11: Line too long` for a constant declaration with a long comment. Keep every source line, comments included, within 127 characters, and keep a declaration's comment short enough to stay on its line."
+evidence = ["src/OVL12.PAS#AffectUnknown2B"]
+
+[[lesson]]
+id = "learning-evidence-no-build-paths"
+confidence = "V"
+units = ["ovl12"]
+tags = ["learning", "packet", "build", "evidence", "tooling"]
+title = "A learning row may not cite a build/ path: make packet stops on it"
+lesson = "`make packet` failed with `durable lessons must not depend on ignored build logs` for the row map-entry-at-displacement-byte, whose evidence named build/packets/ovl12_0A65.md. The build packet is regenerated by make packet, so the row cites only committed files (the routine's symbols entry and its source)."
+evidence = ["tools/agent/learning.py", "re/symbols.toml#ovl12:0A65"]
+
+[[lesson]]
+id = "frame-one-slot-for-two-jobs"
+confidence = "V"
+units = ["ovl12"]
+tags = ["frame", "locals", "loop", "match"]
+title = "A matched routine may use one local for two jobs: the frame keeps one slot (ClearCloud)"
+lesson = "ClearCloud (ovl12:0CC3) matches only when one byte does two jobs: the cloud kind (Affect^.Data div 16) during the search, then the body loop index of the arm loop; the Found flag is reset and reused as the per-arm body flag; and the list cursor Node is the predecessor while unlinking and then the repaint cursor. Turbo Pascal gives each declared local its own slot, so the source declares the variable once and reuses it with a comment."
+evidence = ["src/OVL12.PAS#ClearCloud", "re/symbols.toml#ovl12:0CC3"]
+
+[[lesson]]
+id = "frame-declaration-order"
+confidence = "V"
+units = ["ovl12"]
+tags = ["frame", "locals", "match"]
+title = "Locals take the frame slots in declaration order: the first declared is nearest bp"
+lesson = "FirstSlotItem (ovl12:101D) matched only after its Pointer local Item was declared before the Byte Found: Item took bp-8 and Found bp-9, and the function result copy took bp-4. Turbo Pascal allocates each declared local in turn from the top of the frame down, and the literal temporary of a call sits at the bottom."
+evidence = ["src/OVL12.PAS#FirstSlotItem", "re/symbols.toml#ovl12:101D"]
+
+[[lesson]]
+id = "var-pointer-parameter-cast-result"
+confidence = "V"
+units = ["ovl12"]
+tags = ["pointer", "var-parameter", "function", "match"]
+title = "A var Pointer parameter takes a Pointer local, returned as the typed pointer by a cast"
+lesson = "res12_fn_2E8B has a var Pointer parameter, so the local must be exactly Pointer. FirstSlotItem (ovl12:101D) declares Item: Pointer and returns PItem(Item); the cast compiles to the same code as the original, which keeps the item's typed result."
+evidence = ["src/OVL12.PAS#FirstSlotItem", "re/symbols.toml#ovl12:101D"]
+
+[[lesson]]
+id = "freemem-typed-pointer-size"
+confidence = "V"
+units = ["ovl12"]
+tags = ["freemem", "pointer", "record-size", "match"]
+title = "FreeMem of a typed record pointer pushes the pointer value and the record size"
+lesson = "FreeMem(Cloud, SizeOf(TCombatNode)) in ClearCloud (ovl12:0CC3) matches the original's push of the pointer's two words and the constant $13 (the record size, also CombatNodeSize in ovl08:0029): SizeOf gives the same constant as the original's literal."
+evidence = ["src/OVL12.PAS#ClearCloud", "src/POOLVARS.PAS#TCombatNode"]
+
+[[lesson]]
+id = "map-entry-inside-routine-removed"
+confidence = "V"
+units = ["*"]
+tags = ["map", "phantom", "far_call", "entry", "match-write"]
+title = "A map entry in the middle of a routine (no prologue, pushes straddle it) is not a routine"
+lesson = "The map listed ovl12:1307 as a routine (auto:far_call) and ovl12:12FB as a 12-byte routine. The bytes at 12FB push Who and 50, and the bytes at 1307 push Data and 14400 for the same TryAddAffect call, with no push bp at 1307 and no caller of 1307. Matched as one routine (AddHealingBlockAndHeal, 68 bytes), `make match WRITE=1` removed the 1307 entry; no separate Pascal can produce its bytes. Look for a prologue and for a call's argument pushes split across an entry before writing a `_fn_` routine."
+evidence = ["src/OVL12.PAS#AddHealingBlockAndHeal", "re/symbols.toml#ovl12:12FB"]
+
+[[lesson]]
+id = "literal-compare-no-copy-in-overlay"
+confidence = "V"
+units = ["ovl12"]
+tags = ["string", "literal", "compare", "overlay", "O+", "codegen"]
+title = "A string literal compared with a string field is passed by address, not copied, under $O+"
+lesson = "LowerAttackIfSelectedIsBugbearOrGnoll (ovl12:1276) compares SelectedCharacter^.Name with 'BUGBEAR' and 'GNOLL'. The original pushes the literal's code-segment address directly (`push cs; mov di, 1268h; push di`) before System_StrCompare (0AF8:0C10), with no 0AF8:0B0B copy into a stack temporary, unlike a literal passed to a string parameter (res12_fn_16EC). The two literal pools (14 bytes) sit right before the routine. Matched on the first try with the plain `=` form."
+evidence = ["src/OVL12.PAS#LowerAttackIfSelectedIsBugbearOrGnoll", "re/symbols.toml#ovl12:1276"]
+
+[[lesson]]
+id = "array-index-constant-gives-base"
+confidence = "V"
+units = ["ovl12"]
+tags = ["array", "index", "base", "dseg", "codegen", "string"]
+title = "An array[1..8] of string[15] index compiles to base - 16 plus 16*I"
+lesson = "For ds0382: array[1..8] of string[15] at DS:0382, BoostAttackVsEightListed (ovl12:0947) adds the constant 372h and shl 4 of I, which is 382h - 16 + 16*I. ovl12:11F9 uses 3F2h + 16*I, so its table starts at DS:0402, the byte after ds0382 (declared as ds0402 in POOLVARS.PAS, its text not read yet). Reading the constant of the index gives the table's base without the map."
+evidence = ["src/POOLVARS.PAS#ds0402", "src/OVL12.PAS#LowerAttackVsEightListed", "re/symbols.toml#ovl12:0947"]
+
+[[lesson]]
+id = "function-result-tested-for-effect"
+confidence = "V"
+units = ["ovl12"]
+tags = ["function", "statement", "if", "empty", "Byte", "codegen", "call"]
+title = "A Byte function called only for its effect is an if with an empty branch"
+lesson = "Turbo Pascal 6.0 rejects a bare function call as a statement (Error 122, probe tools/re/tp_idioms/ovl12/FNSTMT.PAS). The original calls res12_fn_2637(Who) and drops the result: it compiles to a push of Who, the call, `or al, al` and `je` to the next instruction (ovl12:133F, 22 bytes). The source that matched is `if res12_fn_2637(Who) <> 0 then ;` with an empty statement. The Exit form was not probed."
+evidence = ["src/OVL12.PAS#ovl12_e43", "re/symbols.toml#ovl12:133F", "tools/re/tp_idioms/ovl12/FNSTMT.PAS"]
+
+[[lesson]]
+id = "then-else-swapped-shows-ja-for-jbe"
+confidence = "V"
+units = ["ovl12"]
+tags = ["if", "else", "compare", "branch", "codegen", "jbe", "ja"]
+title = "A diff of ja where the original has jbe means the branches of the if are swapped"
+lesson = "ProgressRot (ovl12:1399) first wrote `if Who^.Charisma <= 2 then Who^.Charisma := 0 else Dec(Who^.Charisma, 2)`: the match showed `ja 0x13dd` where the original has `jbe 0x13dd`, the jump to the zero assignment. The original tests `> 2` first and its then branch is the subtraction, so the matched form is `if Who^.Charisma > RotCharismaLoss then Dec(...) else Who^.Charisma := 0`. Check the jump sense in the packet before reversing the test."
+evidence = ["src/OVL12.PAS#ProgressRot", "re/symbols.toml#ovl12:1399"]
+
+[[lesson]]
+id = "map-entry-in-literal-pool"
+confidence = "V"
+units = ["ovl12"]
+tags = ["map", "boundary", "pool", "entry", "write", "tooling"]
+title = "A map entry in a routine's literal pool or inside its code is not a routine (ovl12:1543, ovl12:1583)"
+lesson = "The map listed ovl12:1543 (2 bytes, auto:near_call) and ovl12:1583 (104 bytes, auto:far_call). The bytes at 1543 are the tail `ed` of the string 'is killed' in the literal pool of ovl12:1545, followed by the push bp of 1545; the bytes at 1583 are the displacement byte of `lea di, [bp-0Ch]` (8D 7E F4 at 1582). When PoisonAttackTarget (ovl12:1545, 153 bytes, 22 bytes of pool) matched, `make match UNIT=ovl12 WRITE=1` removed both entries and corrected the size of ovl12:14EB from 88 to 90 (its 68 bytes plus the next routine's 22-byte pool). The source lost their stub lines and interface declarations afterwards; a declaration left behind fails with 'Undefined forward'. Compare the first byte of an invented entry with the bytes before it before any probe."
+evidence = ["src/OVL12.PAS#PoisonAttackTarget", "re/symbols.toml#ovl12:1545", "re/symbols.toml#ovl12:14EB"]
+
+[[lesson]]
+id = "for-global-bound-copied-to-frame"
+confidence = "V"
+units = ["ovl12"]
+tags = ["for", "loop", "bound", "frame", "Byte", "global", "codegen"]
+title = "for I := 1 to G with a Byte global G: the bound is copied into a frame slot below the counter"
+lesson = "ReduceFireDamageByRoll (ovl12:1490) has `sub sp, 2` and matches `for I := 1 to ds681C do` with `var I: Byte`: the bound is copied first (`mov al, [681Ch]; mov [bp-2], al`), the counter starts at `mov [bp-1], 1` after a `cmp al, [bp-2]; ja` skip over the body, and the loop ends with `cmp al, [bp-2]; jne` after `inc byte ptr [bp-1]`. The two frame bytes are exactly the counter and the bound copy, so no other local is declared. The body reads the global again, not the copy."
+evidence = ["src/OVL12.PAS#ReduceFireDamageByRoll", "re/symbols.toml#ovl12:1490"]
+
+[[lesson]]
+id = "readability-r3-address-form"
+confidence = "V"
+units = ["ovl12"]
+tags = ["readability", "R3", "comment", "address", "tooling"]
+title = "R3 accepts a routine comment only when it cites an address as ovl12:XXXX; a bare '1490.' fails"
+lesson = "After `make rename` gave ovl12_e50 its name, `make readability UNIT=ovl12` failed R3 for ReduceFireDamageByRoll: its comment began '{ 1490.' and the check looks for an address of the form XXXX:XXXX (tools/match/readability.py ADDRESS). ovl12_e49's comment passed only because it cites ovl24:0E52 in its text. Write the routine's own address as `ovl12:1490.` at the start of its comment."
+evidence = ["tools/match/readability.py", "src/OVL12.PAS#ReduceFireDamageByRoll"]
+
+[[lesson]]
+id = "global-rename-edits-other-units"
+confidence = "V"
+units = ["ovl12"]
+tags = ["rename", "global", "tooling", "unit", "ownership"]
+title = "make rename of a global used by another unit edits that unit's source (ds681C, set in ovl24)"
+lesson = "`make rename OLD=ds681C NEW=LastDiceCount` changed src/OVL24.PAS (RollDiceCounted, which sets it), src/POOLVARS.PAS and re/dseg.toml as well as ovl12. A unit branch may not edit another unit's file (AGENTS rule 3), so it was reverted with `git checkout` for the three files and the renames.toml record removed, and ds681C keeps its dsXXXX name (its POOLVARS comment carries what is known, which satisfies R5). A global read in several units should be renamed by the orchestrator or the owner of the unit that sets it."
+evidence = ["src/OVL24.PAS#RollDiceCounted", "src/POOLVARS.PAS#ds681C", "re/dseg.toml"]
+
+[[lesson]]
+id = "byte-function-result-to-word-parameter"
+confidence = "V"
+units = ["ovl12"]
+tags = ["RollDice", "Byte", "Word", "parameter", "xor", "codegen", "call"]
+title = "A Byte function result passed to a Word value parameter is zero-extended: xor ah, ah; push ax"
+lesson = "ParalyzeAttackTargetFor2d8 (ovl12:1699) passes `RollDice(2, 8)`, a Byte function result, as the Word Duration of ParalyzeAttackTarget (ovl12:15EB). The original calls RollDice, then `xor ah, ah; push ax` (ovl12:16AD) before the call, and the match holds with the Word parameter. A constant 0 for the Byte parameter is `mov al, 0; push ax`."
+evidence = ["src/OVL12.PAS#ParalyzeAttackTargetFor2d8", "re/symbols.toml#ovl12:1699"]
+
+[[lesson]]
+id = "times-16-byte-word-is-mov-cl-4"
+confidence = "V"
+units = ["ovl12"]
+tags = ["shl", "Dec", "Word", "field", "codegen", "shift", "mul"]
+title = "Dice * 16 compiles to mov cl, 4; shl ax, cl (the original's form); Dice shl 4 compiles to mov cx, 4"
+lesson = "Dec(Affect^.Duration, Dice * 16) with Dice a Byte local matches the original's `xor ah, ah; mov cl, 4; shl ax, cl; sub word ptr es:[di+1], ax` (ovl12:176F). The probe tools/re/tp_idioms/ovl12/E61SHL.PAS shows that `Dice shl 4`, `Word(Dice) shl 4` and `(Dice shl 4) div 1` each give `mov cx, 4` (one byte longer), and that the multiplication by 16 is the spelling that the optimiser turns into the two-byte cl form. The first diff was a jmp one byte off, which is how the longer shift showed."
+evidence = ["tools/re/tp_idioms/ovl12/E61SHL.PAS", "src/OVL12.PAS#DrainBloodFromCombatant", "re/symbols.toml#ovl12:176F"]
+
+[[lesson]]
+id = "or-chain-puts-else-part-first"
+confidence = "V"
+units = ["ovl12"]
+tags = ["if", "or", "and", "layout", "codegen", "jump"]
+title = "if A or B or C then X else Y lays out Y before X; the and-chain form lays out X first"
+lesson = "The original of DrainBloodFromCombatant (ovl12:176F) tests `Mode <> 0` with jne to the non-blood code, `Who^.Flag10D = 0` with je to it, and `AttackTarget^.Flag10D <> 0` with jne to the blood code placed after it. That is what `if (Mode <> 0) or (Who^.Flag10D = 0) or (AttackTarget^.Flag10D = 0) then <non-blood> else <blood>` compiles to. The source `if (Mode = 0) and (...) and (...) then <blood> else <non-blood>` gave je to the next test and a different layout (the first diff at 179C). Write the negated or-chain when the original puts the blood code last."
+evidence = ["src/OVL12.PAS#DrainBloodFromCombatant", "re/symbols.toml#ovl12:176F"]
+
+[[lesson]]
+id = "unread-call-result-stored-to-local"
+confidence = "V"
+units = ["ovl12"]
+tags = ["function", "result", "discard", "local", "codegen", "call"]
+title = "A function result the original never reads is stored to a local byte (Turn := res12_fn_2637(Who))"
+lesson = "ovl12:176F calls res12_fn_2637(Who) and stores the Byte result at [bp-1] without ever testing it (`call; mov [bp-1], al`). A bare call is rejected by TP 6.0 (FNSTMT probe), and `if f(Who) <> 0 then ;` (ovl12:133F) has no store. The matched form is an assignment to a local Byte that is declared first (nearest bp) and never read; the local is named for what the value is, with a comment that it is not read."
+evidence = ["src/OVL12.PAS#DrainBloodFromCombatant", "tools/re/tp_idioms/ovl12/FNSTMT.PAS", "re/symbols.toml#ovl12:176F"]
+
+[[lesson]]
+id = "map-entry-in-call-segment-word"
+confidence = "V"
+units = ["ovl12"]
+tags = ["map", "entry", "lcall", "segment", "routine-boundary"]
+title = "A map entry inside a far call's segment word is not a routine (ovl12:1758 in ovl12:1730)"
+lesson = "The map listed ovl12:1758 (23 bytes, auto:far_call). Its bytes `b0 00` are the segment word of the `lcall 00B0:0052` to AddAffect at ovl12:1755 in ovl12_e60 (ovl12:1730), so the disassembly `mov al, 0; pop bp; retf 0Ah` at 1758 is a misreading of the call's tail. Once ovl12_e60 matched, `make match UNIT=ovl12 WRITE=1` removed the entry and corrected ovl12_e60 from 40 to 46 bytes. The declaration and the stub line were not removed by the tool: delete them by hand, or the unit does not compile (Undefined forward)."
+evidence = ["src/OVL12.PAS#ovl12_e60", "re/symbols.toml#ovl12:1730"]
+
+[[lesson]]
+id = "case-ranges-reuse-the-loaded-selector"
+confidence = "V"
+units = ["ovl12"]
+tags = ["case", "range", "if", "layout", "codegen", "jump"]
+title = "A case on a signed field with ranges loads the selector once; if (x >= a) and (x <= b) with a second test reloads it (ovl12:1AAA)"
+lesson = "ovl12:1AAA branches on Scan^.HighestLevel (+$73, ShortInt): `mov al, es:[di+73h]` once, then `cmp al,0; jl; cmp al,3; jg` for 0..3 and `cmp al,4; je; cmp al,5; jne` for 4, 5, the second test reusing AL. `case Scan^.HighestLevel of 0..3: ...; 4, 5: ...; end;` matches. The two-if form `if (x >= 0) and (x <= 3) then ... else if (x = 4) or (x = 5) then ...` gave the same first jump but a body 17 bytes longer (the first diff is the displacement of the loop exit jump). Write a multi-way branch on a field as a case with ranges when the original shows one load."
+evidence = ["src/OVL12.PAS#FrightenSideWithFear", "re/symbols.toml#ovl12:1AAA"]
+
+[[lesson]]
+id = "boolean-local-frame-two-bytes"
+confidence = "V"
+units = ["ovl12"]
+tags = ["local", "boolean", "frame", "function", "result", "codegen"]
+title = "One Boolean local that stores a function result gives a two-byte frame (sub sp, 2) in ovl12:19D9"
+lesson = "ReviveOrRetryRevival (ovl12:19D9) declares one local Boolean, `Added: Boolean`, and assigns it the TryAddAffect result that is never read. The original has `sub sp, 2` with the result at [bp-1], and the source with that one Boolean matches, so the frame of 2 bytes came from the declaration without a probe. Check the packet's frame size against the matcher rather than counting the declared bytes by hand."
+evidence = ["src/OVL12.PAS#ReviveOrRetryRevival", "re/symbols.toml#ovl12:19D9"]
+
+[[lesson]]
+id = "outer-call-pushes-before-inner-call"
+confidence = "V"
+units = ["ovl12"]
+tags = ["call", "argument", "packet", "nested", "RollDice", "ApplyAffect"]
+title = "Arguments pushed before a function argument belong to the outer call, not to the inner one (ovl12:1BA8)"
+lesson = "The packet of ovl12:1BA8 shows `push Who; push 34h; push 1; push 4; lcall 00B0:0048` where RollDice takes only (1, 4). The Who pointer and AffectId 34h are the first two arguments of the enclosing ApplyAffect, pushed before its third argument RollDice(1, 4) is evaluated; the call's result is then pushed as the Duration word. Count a call's pushes against the callee's frame (retf n) before reading a 4-argument call, and find the outer call's remaining pushes after the inner call returns. ParalyzeSideWithFear matched with the Pascal `ApplyAffect(Scan, AffectParalysis, RollDice(1, FearDieSides), ...)`."
+evidence = ["src/OVL12.PAS#ParalyzeSideWithFear", "re/symbols.toml#ovl12:1BA8"]
+
+[[lesson]]
+id = "map-entry-in-call-offset-word"
+confidence = "V"
+units = ["ovl12"]
+tags = ["map", "entry", "lcall", "offset", "pool", "modrm", "routine-boundary", "write"]
+title = "Map entries inside a far call's offset word, a literal pool and a modrm byte are not routines (ovl12:1BD7, 1C98, 1F9B)"
+lesson = "The map listed three entries that are not routines. ovl12:1BD7 is the high byte of the offset word 002Ah of `lcall 00B0:002A` (RemoveAffect) at ovl12:1BD5 inside ovl12:1BA8. ovl12:1C98 is inside the string 'reflects it!' of the literal pool that GazeStonesTarget (ovl12:1CAD) reads from 1C8Dh. ovl12:1F9B is the modrm byte of `les di, [bp+0Ch]` at ovl12:1F9A inside ovl12:1E77. `make match UNIT=ovl12 WRITE=1` removed each one when its enclosing routine matched; the stub lines and declarations stayed and were deleted by hand. The first byte of an invented entry, read against the bytes before it, shows which case it is."
+evidence = ["src/OVL12.PAS#ParalyzeSideWithFear", "src/OVL12.PAS#GazeStonesTarget", "src/OVL12.PAS#GazeCharmsTarget", "re/symbols.toml#ovl12:1CAD"]
+
+[[lesson]]
+id = "reload-the-field-the-source-names"
+confidence = "V"
+units = ["ovl12"]
+tags = ["pointer", "field", "reload", "codegen", "epilogue", "first-diff"]
+title = "Passing Who^.Combat^.Target again reloads it from the record; a copy in AttackTarget is 8 bytes shorter (ovl12:1E77)"
+lesson = "GazeCharmsTarget first wrote `SavingThrow(AttackTarget, SaveKindFear, CharmSaveBonus)` with AttackTarget copied from Who^.Combat^.Target at the top. The match's first difference was the `jmp` to the epilogue after an earlier Exit (0x1FF4 against 0x1FFC): the rest of the body was 8 bytes shorter. The original reloads the target for the save: `les di, [bp+0Ch]; les di, es:[di+108h]; push es:[di+0Ch]; push es:[di+0Ah]`, 16 bytes against the 8 of the global. Written as `SavingThrow(Who^.Combat^.Target, ...)` it matched. When the first difference is an epilogue jump, compare the body lengths in the packet first, and write the expression as the source names it, even when a variable holds the same value."
+evidence = ["src/OVL12.PAS#GazeCharmsTarget", "re/symbols.toml#ovl12:1E77"]
+
+[[lesson]]
+id = "rename-edits-other-units-comments"
+confidence = "V"
+units = ["ovl12"]
+tags = ["rename", "tooling", "comment", "whitepaper", "unit", "ownership"]
+title = "make rename of a routine also rewrites its name in another unit's comment and in the whitepaper (ovl12_e70)"
+lesson = "`make rename OLD=ovl12_e70 NEW=GazeCharmsTarget` changed a comment in src/OVL30.PAS (WalkLine's 'Called by ... ovl12_e70') and a line of docs/design/WHITEPAPER.md. A unit branch may not edit another unit's file or the whitepaper beyond its own paragraph (AGENTS rules 3 and 4), so both were reverted with `git checkout` and only src/OVL12.PAS, re/symbols.toml and re/renames.toml were committed. The rename record in re/renames.toml lets `make rename APPLY=1` restore the new name in those files after the merge. Check `git status` after every rename of a routine that another unit names."
+evidence = ["src/OVL30.PAS", "re/renames.toml", "tools/match/rename.py"]
+
+[[lesson]]
+id = "shortint-index-of-byte-field-sign-extends"
+confidence = "V"
+units = ["ovl12"]
+tags = ["array", "index", "ShortInt", "Byte", "cwde", "field", "codegen"]
+title = "ds6814Sides[ShortInt(Scan^.Side)] reads the Byte side with cwde, as the original does (ovl12:1BA8)"
+lesson = "The original of ParalyzeSideWithFear (ovl12:1BA8) reads the side count of a member with `mov al, es:[di+10Eh]; cwde; mov di, ax; cmp byte [di+6814h], 6`, so the index is sign-extended. The Pascal `ds6814Sides[ShortInt(Scan^.Side)] >= 6` matched it, the same form OVL09 uses for the same array. The unsigned index was not probed here."
+evidence = ["src/OVL12.PAS#ParalyzeSideWithFear", "src/OVL09.PAS", "src/POOLVARS.PAS#ds6814Sides"]
+
+[[lesson]]
+id = "nested-routine-reads-parent-frame-through-static-link"
+confidence = "V"
+units = ["ovl12"]
+tags = ["nested", "static-link", "frame", "map-entry", "pre-entry"]
+title = "The nested function ovl12:2002 is the parent's pre-entry code: its hidden argument is the parent's bp (ovl12:2122)"
+lesson = "The caller ovl12:2122 pushes bp before `push cs; call near` to ovl12:2002, which then reads the parent's locals and parameters at [bp+6]-relative offsets: BestXp at [P-31h], CurXp at [P-2Dh] and the parent's Who at [P+8]. Nested code sits before the parent's entry, with the parent's string pool between them (20DFh..2121h). The map split the region into five false routines (20A9, 2197, 2233, 228C, 2383) whose first bytes are inside instructions (a jne tail, a les displacement, a push di, a jbe displacement). `make match UNIT=ovl12 WRITE=1` removed all five; their stub lines and declarations had to be deleted by hand. Write the nested routine inside the parent's declaration part (indented, not in the interface); it matches with the parent (NESTED), not on its own."
+evidence = ["src/OVL12.PAS#DrainLevels", "re/symbols.toml#ovl12:2122", "re/symbols.toml#ovl12:2002", "tools/match/match.py"]
+
+[[lesson]]
+id = "overlapping-table-needs-storage-buffer-and-absolute-view"
+confidence = "V"
+units = ["ovl12"]
+tags = ["POOLVARS", "absolute", "overlap", "table", "layout"]
+title = "A table whose bytes overlap other tables (ClassXpTable at DS:409B, 56 bytes a class) is declared as a storage buffer plus an absolute view (ovl12:2002)"
+lesson = "ovl12:2002 reads longints at DS:409B + 56*class + 4*level, which runs over ClericSlotTable (DS:40BD) and MageSlotTable (DS:41D5). Declaring `ds409B: Byte` and `ClassXpTable: array[0..7, 0..13] of LongInt absolute ds409B` gave the first two bytes of ClassXpTable the right name, but the high word of each entry (DS:409D) landed on the next declared variable (ClericSlotTable) in our layout, and the matcher reported 'ours is CLERICSLOTTABLE (DS:40BD expected)'. Declaring the storage as `ds409B: array[0..447] of Byte` (the whole table, as RaceRow does with ds5582) made every word of the table resolve to ClassXpTable. The matcher checks names, not our layout addresses: a field must name the same variable on both sides with the same delta. The overlap itself is data the game reads twice; its meaning is not known [?]."
+evidence = ["src/POOLVARS.PAS#ClassXpTable", "src/POOLVARS.PAS#RaceRow", "re/symbols.toml#ovl12:2002"]
+
+[[lesson]]
+id = "shortint-loop-index-sign-extends-before-the-table-add"
+confidence = "V"
+units = ["ovl12"]
+tags = ["ShortInt", "for", "index", "cwde", "first-diff"]
+title = "A for-loop counter used as a class index is ShortInt: mov al,[bp-32h]; cwde before the table add (ovl12:2122)"
+lesson = "The class-total loop of ovl12:2122 indexes ClassLevels with its counter; the original sign-extends the counter (`mov al, [bp-32h]; cwde; add di, ax`). The first match attempt used a Byte counter and failed at the epilogue jump (21C5) because the matcher reports the first difference in address order and the loop lies later. Declare a loop counter ShortInt when it is an index into a ShortInt-indexed field (ClassLevels, HighestLevel); the for-loop check itself has no cwde."
+evidence = ["src/OVL12.PAS#DrainLevels", "re/symbols.toml#ovl12:2122"]
+
+[[lesson]]
+id = "multiply-by-16-is-shl-cl"
+confidence = "V"
+units = ["*"]
+tags = ["mul", "shl", "codegen", "constant", "Byte", "probe"]
+title = "x * 16 compiles to mov cl,4; shl ax,cl, while x shl 4 compiles to mov cx,4; shl ax,cl"
+lesson = "A Byte function result times 16 plus a constant (`(RollDice(1, 6) * RotStage) + RotDataLow`, ovl12:23EC) compiles to `xor ah, ah; mov cl, 4; shl ax, cl; add ax, 0Fh` (the 2-byte `mov cl, 4`). The same value written `RollDice(1, 6) shl 4` compiles to `mov cx, 4` (3 bytes) and does not match; the probe tools/re/tp_idioms/ovl12/E73MUL16.PAS shows the four forms side by side. Write the multiplication when the original shows `mov cl`, and name the factor by its meaning (RotStage = $10)."
+evidence = ["tools/re/tp_idioms/ovl12/E73MUL16.PAS", "src/OVL12.PAS#CauseRotOnAttackTarget", "re/symbols.toml#ovl12:23EC"]
+
+[[lesson]]
+id = "assign-widens-inc-does-not-byte-local"
+confidence = "V"
+units = ["*"]
+tags = ["Inc", "assign", "Byte", "local", "codegen", "probe"]
+title = "X := X + Local widens both to words; Inc(X, Local) with a Byte local is one byte add"
+lesson = "With a Byte local Bonus, `Inc(SaveRoll, Bonus)` compiles to `mov al, [bp-1]; add byte ptr [6816h], al` and does not match the original. `SaveRoll := SaveRoll + Bonus` compiles to the original's `mov al, [6816h]; xor ah, ah; mov dx, ax; ...; add ax, dx; mov [6816h], al` (ovl12:24D9). The Inc form with a constant step (lesson inc-with-step-is-memory-add) is still one memory add; the assignment form is the one for two variables."
+evidence = ["tools/re/tp_idioms/ovl12/E75INC.PAS", "src/OVL12.PAS#AddConstitutionSaveBonus", "re/symbols.toml#ovl12:24D9"]
+
+[[lesson]]
+id = "case-without-else-leaves-the-local"
+confidence = "V"
+units = ["*"]
+tags = ["case", "else", "QUIRK", "local", "uninitialised"]
+title = "A case with ranges and no else leaves the result local unset for the other values"
+lesson = "ovl12:24D9 sets its Byte local in five ranged branches and has no else: a value outside every range jumps past the stores with the local untouched (its stack slot is then added, a quirk the source marks). The matched Pascal has no else, `case Who^.Constitution of 4..6: Bonus := 1; ... 18..20: Bonus := 5; end;`, and the matcher agreed on the jump chain. Do not add an else: it changes the code. Mark the quirk in the routine's comment."
+evidence = ["src/OVL12.PAS#AddConstitutionSaveBonus", "re/symbols.toml#ovl12:24D9"]
+
+[[lesson]]
+id = "after-write-check-map-entry-in-call"
+confidence = "V"
+units = ["*"]
+tags = ["WRITE", "map-entry", "far_call", "declaration", "tool-gap"]
+title = "make match WRITE=1 removes a map entry inside the matched code, not its declaration or stub"
+lesson = "Writing ovl12_e76 (ovl12:2556, 76 bytes) removed the map entry ovl12:257E (ovl12_fn_257E): its byte is the segment word of the lcall at 257A, inside e76. The registry entry went, but `procedure ovl12_fn_257E;` in the interface and its `{@stub}` line stayed, so the unit would not compile. After WRITE=1, search the source for each removed name (git diff re/symbols.toml shows the '-' lines) and delete its declaration and stub by hand."
+evidence = ["src/OVL12.PAS#ovl12_e76", "re/symbols.toml#ovl12:2556"]
+
+[[lesson]]
+id = "mask-test-and-or-matches"
+confidence = "V"
+units = ["*"]
+tags = ["and", "or", "bit", "mask", "codegen"]
+title = "(Data and $10) = 0 then Data := Data or $10 matches; the or form is no longer unprobed"
+lesson = "ovl12:2490 tests bit 4 of Affect.Data with `and al, 10h; or al, al; jne` and sets it with `mov al, es:[di+3]; or al, 10h; mov es:[di+3], al`. `Affect^.Data := Affect^.Data and DataLowNibble` (mask $0F) matched the other branch. This settles the or form that lesson and-mask-zero-test-then-add-bit left open for setting a bit that is known to be clear."
+evidence = ["src/OVL12.PAS#ovl12_e74", "re/symbols.toml#ovl12:2490"]
+
+[[lesson]]
+id = "row-indexed-by-item-type-field"
+confidence = "V"
+units = ["*"]
+tags = ["absolute", "array", "index", "RaceRow", "field", "codegen"]
+title = "`[di + 5589h]` with di = item type shl 4 is RaceRow[ItemType][7], the absolute array's row field"
+lesson = "ovl12:25BC indexes the absolute RaceRow (base DS:5582, 16-byte rows) by the item's ItemType (+$2E): `mov di, ax; shl di, 4; mov al, [di+5589h]`. The displacement minus the base gives the field: 5589 - 5582 = 7, so the routine reads RaceRow[ItemType][7]. The matched Pascal `RaceRow[Item^.ItemType][7] and ItemRowFlags` gives the same code. Subtract the absolute base from a displacement before naming a table field; the meaning of byte 7 is still open [?]."
+evidence = ["src/OVL12.PAS#HalveDamageForFirstSlotItem", "re/symbols.toml#ovl12:25BC"]
+
+[[lesson]]
+id = "nil-test-first-in-one-or"
+confidence = "V"
+units = ["*"]
+tags = ["nil", "or", "and", "Exit", "pointer", "codegen"]
+title = "`if (Item = nil) or (...) then` matches an original that tests nil first and skips to the body, with no Exit"
+lesson = "ovl12:264B takes the first slot item, cancels the damage when it is nil or when Plus is 0 and NameNum[3] is not $B1: `je body` for nil, `jne skip` for Plus, `je skip` for NameNum[3], then the body. The one-if form `if (Item = nil) or ((Item^.Plus = 0) and (Item^.NameNum[3] <> $B1)) then DamageAmount := 0;` matched on the first attempt. Writing the early-out with Exit was not tried, since the single condition already matched; keep the test order of the original."
+evidence = ["src/OVL12.PAS#CancelDamageUnlessMagicSlotItem", "re/symbols.toml#ovl12:264B"]
+
+[[lesson]]
+id = "literal-argument-frame-under-O"
+confidence = "V"
+units = ["*"]
+tags = ["literal", "String", "O+", "frame", "temporary", "sub-sp"]
+title = "A 10-character literal passed to a String40 parameter under $O+ leaves a 12-byte frame: the copy temporary sits at [bp-0Bh]"
+lesson = "ovl12:2610 passes 'Falls dead' to DropFromFight (String40) under $O+: `lea di, [bp-0Bh]; push ss; push di; ... lcall System_StrCopy(0AF8:0B0B)` copies the literal to the temporary, and the routine's `sub sp, 0Ch` (12 bytes) holds it. The matched source is `DropFromFight(Who, StatusGone, 'Falls dead');` with no local declared, so the frame comes from the compiler. Only this one literal length is measured here: why the frame is 12 and not 11 bytes is not known [?]."
+evidence = ["src/OVL12.PAS#FallDeadIfInFight", "re/symbols.toml#ovl12:2610"]
+
+[[lesson]]
+id = "or-of-two-tests-jumps-to-end-not-body"
+confidence = "V"
+units = ["*"]
+tags = ["if", "or", "and", "Exit", "codegen", "jump"]
+title = "if (A) or (B) then <roll> compiles B as je past the body; the Exit guard form matches"
+lesson = "`if (HookAffectId <> 0) or ((DamageKind and KindMagic) <> 0) then if RollDice(...) <= T then CancelPendingHook(0)` compiles the second test as `and al,8; or al,al; je end` (tp probe tools/re/tp_idioms/ovl12/or_condition_jump.pas), while ovl12:2915 has `jne body; jmp end` for that test. The `not (...)` form gives the same bytes, a nested if-else gives other bytes. The guard `if (HookAffectId = 0) and ((DamageKind and KindMagic) = 0) then Exit;` followed by the roll matched at once (MATCH CancelHookOnChance, 97 bytes). Write a bail-out condition as an Exit guard when the original shows a jump to the epilogue after a second test."
+evidence = ["src/OVL12.PAS#CancelHookOnChance", "re/symbols.toml#ovl12:2915", "tools/re/tp_idioms/ovl12/or_condition_jump.pas"]
+
+[[lesson]]
+id = "racerow-index-is-absolute-base"
+confidence = "V"
+units = ["*"]
+tags = ["array", "absolute", "RaceRow", "index", "dseg", "codegen"]
+title = "RaceRow[item][n] compiles to DS:5582 + 16*item + n: the packet's address is the row's byte n, not row 0"
+lesson = "RaceRow is declared `array[0..128] of TRaceRow absolute ds5582`, so RaceRow[item][0] is at DS:5582, and the packet of ovl12:2A87 shows the test at `cmp byte ptr [di+5589h], 0` with di = 16*item. That is byte 7 of the row, not byte 0: the first draft with [0] reported `[di+34CEh]` against the original's `[di+5589h]` and the diff showed the 7. The packet's displacement is the absolute address; subtract 5582h and divide the rest by 16 to get the row byte (here 7). Two routines of the unit read byte 7 of the same row (ovl12:25BC and ovl12:2A87)."
+evidence = ["src/OVL12.PAS#HalveDamageByFirstSlotItemRow", "src/POOLVARS.PAS#RaceRow", "re/symbols.toml#ovl12:2A87"]
+
+[[lesson]]
+id = "nil-test-else-tail-layout"
+confidence = "V"
+units = ["*"]
+tags = ["if", "nil", "else", "layout", "codegen", "jump"]
+title = "The nil test with the body first and the nil case as the else part matches; the nil case first does not"
+lesson = "For `Item := FirstSlotItem(...); if Item <> nil then begin <tests on Item> end else DamageAmount := 0`, TP 6.0 emits `je` to a store of 0 placed after the body (ovl12:2DA6 to 2DD9). The form `if Item = nil then DamageAmount := 0 else if ...` placed the first conditional jump the other way (`jne`), and the match diff stopped at that instruction. The begin..end before the else keeps the original order; no semicolon before the else is allowed."
+evidence = ["src/OVL12.PAS#HalveOrCancelDamageForUnenchantedSlotItem", "re/symbols.toml#ovl12:2D88"]
+
+[[lesson]]
+id = "inc-with-byte-variable-loads-al"
+confidence = "V"
+units = ["*"]
+tags = ["Inc", "byte", "codegen", "global", "add"]
+title = "Inc(X, Y) with a byte variable Y loads Y into AL and adds it to X in memory"
+lesson = "`Inc(DamageAmount, LastDiceCount)` compiles to `mov al, [LastDiceCount]; add [DamageAmount], al` (ovl12:2D38, after the 3d8 roll), the form the original shows at ovl12:2D7B. It is the variable counterpart of the constant form in the lesson inc-with-step-is-memory-add; the plain `X := X + Y` is not what this matched."
+evidence = ["src/OVL12.PAS#SetDamageFromSlotItemType56", "re/symbols.toml#ovl12:2D38"]
+
+[[lesson]]
+id = "boolean-from-and-test-is-if-then-else"
+confidence = "V"
+units = ["*"]
+tags = ["Boolean", "and", "if", "codegen", "jump"]
+title = "A Boolean set from an and-test of two compares matches as if-then-else with True and False"
+lesson = "`IsExceptional := (A = 18) and (B = 100)` compiled to two compares, a `mov al, 0 / mov al, 1` pair and a store of AL, while the original stores the flag directly: `cmp; jne else; cmp; jne else; mov byte [bp-4], 1; jmp end; else: mov byte [bp-4], 0`. The form `if (A = 18) and (B = 100) then IsExceptional := True else IsExceptional := False;` matched it (ovl12:2F57, GiveExceptionalStrength)."
+evidence = ["src/OVL12.PAS#GiveExceptionalStrength", "re/symbols.toml#ovl12:2F57"]
+
+[[lesson]]
+id = "then-part-is-laid-out-first"
+confidence = "V"
+units = ["*"]
+tags = ["if", "else", "layout", "jump", "codegen"]
+title = "The original lays out the then-part of an if-else first, so the test jumps to the else-part"
+lesson = "For `if Mode <> 0 then RemoveAffect(...) else begin AddAffect(...); CallAffectHandler(...) end` the original tests Mode with `jne` to the removal code that follows, and the apply part comes after the `jmp` that ends the removal. Writing `if Mode = 0 then` with the apply part first gave `jne` to the other branch and a diff at the jump (ovl12:2EDA matched only in the `<> 0` form; ovl12:2F57 the same). Put the branch that the original tests second in the else-part."
+evidence = ["src/OVL12.PAS#ApplyItemSecondAffect", "src/OVL12.PAS#GiveExceptionalStrength", "re/symbols.toml#ovl12:2EDA"]
+
+[[lesson]]
+id = "statement-order-shows-in-the-loads"
+confidence = "V"
+units = ["*"]
+tags = ["order", "load", "codegen", "pointer"]
+title = "Statement order is visible: a pointer loaded before a flag test must be loaded first"
+lesson = "In GiveExceptionalStrength (ovl12:2F57) the original loads `Who^.Affects` (+$7F, ovl12:2F6A) before it computes the exceptional-strength flag (+$10 and +$16, ovl12:2F7C). The Pascal follows that order (`Scan := Who^.Affects` first); the flag was written first in the first draft, and the packet's load order is the order to copy."
+evidence = ["src/OVL12.PAS#GiveExceptionalStrength", "re/symbols.toml#ovl12:2F57"]
+
+[[lesson]]
+id = "pointer-parameter-copied-to-local-is-a-cast"
+confidence = "V"
+units = ["*"]
+tags = ["pointer", "cast", "local", "frame", "codegen"]
+title = "A handler that reads its Affect parameter as an item copies it to a local PItem (sub sp, 4)"
+lesson = "ApplyItemSecondAffect (ovl12:2EDA) receives its second parameter in the AffectHandlers shape but reads it as a TMenuLine: the original copies it with `mov ax, [bp+8]; mov dx, [bp+0Ah]; mov [bp-4], ax; mov [bp-2], dx` under `sub sp, 4`. The Pascal `var Item: PItem` and `Item := PItem(Affect);` gives that copy and matched."
+evidence = ["src/OVL12.PAS#ApplyItemSecondAffect", "re/symbols.toml#ovl12:2EDA"]
+
+[[lesson]]
+id = "procedural-assignment-takes-bare-name"
+confidence = "V"
+units = ["*"]
+tags = ["procedural", "AffectHandlers", "address", "type", "codegen"]
+title = "A procedural-typed array element takes the bare routine name, and only a routine with the same parameters"
+lesson = "AffectHandlers[k] := RaiseAttackAndMorale; compiles to the stub address the original stores. `AffectHandlers[1] := @RaiseAttackAndMorale;` is rejected (Error 122, Invalid variable reference, the first draft of ovl12_e1). TP 6.0 also rejects a routine whose parameters differ from the procedural type (Error 143, Invalid procedure or function reference; tools/re/tp_idioms/ovl12/PROCTYPE.PAS: a PC, PC, Byte routine into a PC, PA, Byte type). A Pointer variable takes `:= @Routine`, which the absolute alias AffectHandlerPointers uses for the two OVL13 entries."
+evidence = ["src/OVL12.PAS#ovl12_e1", "tools/re/tp_idioms/ovl12/PROCTYPE.PAS"]
+
+[[lesson]]
+id = "affect-table-value-is-stub-entry"
+confidence = "V"
+units = ["*"]
+tags = ["stub", "AffectHandlers", "overlay", "table", "entry"]
+title = "A stub address stored in a table names its overlay entry: entry = (value - 20h) / 5"
+lesson = "Each overlay stub is five bytes from offset 20h (entry 0), so a value stored in AffectHandlers by ovl12_e1 identifies its entry: 2Ah is entry 2 (RaiseAttackAndMorale), 264h is entry 116 (ovl12_e116), 255h is entry 113 (ovl12_e113). build/re/overlays.json gives each entry's code offset (ovl12 entry 113 at 12453 = 30A5). An entry of another unit carries that unit's stub segment: 0068 is ovl13 (entries 22 and 23, at AffectHandlers[73] and [74]). Decode such a table from the manifest, not from the map's entry notes: some ovl12 entries (30 and 112) have no auto:entry note."
+evidence = ["src/OVL12.PAS#ovl12_e1", "re/symbols.toml#ovl12:30A5"]
+
+[[lesson]]
+id = "div-16-compiles-with-mov-cl"
+confidence = "V"
+units = ["*"]
+tags = ["shift", "div", "codegen", "count"]
+title = "Byte x div 16 compiles to mov cl, 4; shr ax, cl, where x shr 4 gives mov cx, 4"
+lesson = "In a word shift of a Byte field (after xor ah, ah), TP 6.0 compiles `x shr 4` with the three-byte `mov cx, 4` and `x div 16` with the two-byte `mov cl, 4`. The original of ovl12_e113 (ovl12:30A5) has the second form for the high nibble of a spell byte. The probe SHRDIV16.PAS shows both listings; the match needed div 16."
+evidence = ["tools/re/tp_idioms/ovl12/SHRDIV16.PAS", "src/OVL12.PAS#ovl12_e113"]
+
+[[lesson]]
+id = "byte-compare-with-shortint-needs-byte-cast"
+confidence = "V"
+units = ["*"]
+tags = ["compare", "ShortInt", "Byte", "codegen", "cast"]
+title = "A Byte compared with a ShortInt field is widened (cwde, word compare) unless the field is cast to Byte"
+lesson = "`(x and $0F) = Who^.ByteA0` with ByteA0 a ShortInt compiled to `mov al, es:[di+0A0h]; cwde; mov dx, ax` and a word compare; the original does `cmp al, byte ptr es:[di+0A0h]`, with the left side computed first. `Byte(Who^.ByteA0)` on the right gives the byte compare (ovl12_e113, first attempt). Signed and unsigned equality agree because the nibble is 0..15."
+evidence = ["src/OVL12.PAS#ovl12_e113", "re/symbols.toml#ovl12:30A5"]
+
+[[lesson]]
+id = "guarded-last-body-jumps-to-epilogue"
+confidence = "V"
+units = ["*"]
+tags = ["if", "Exit", "jump", "codegen"]
+title = "`if cond then Exit;` jumps over a jmp; `if not cond then begin ... end;` last in the routine jumps straight to the epilogue"
+lesson = "`if cond then Exit;` compiles to `j(not cond) skip; jmp epilogue`. The same test written as `if not cond then begin ... end;` as the last statement of the routine compiles to one conditional jump to the epilogue. ovl12_e113 (ovl12:30A5) has the second form for its Who/ByteA0 test and the first form for its `if Mode <> 0 then Exit;`."
+evidence = ["src/OVL12.PAS#ovl12_e113", "src/OVL12.PAS#ovl12_e115"]
+
+[[lesson]]
+id = "handler-affect-argument-read-as-character"
+confidence = "V"
+units = ["*"]
+tags = ["AffectHandlers", "cast", "parameter", "QUIRK"]
+title = "ovl12_e113 reads its Affect argument as a character (QUIRK ovl12:30A5)"
+lesson = "The AffectHandlers shape gives the handler a PAffect second parameter, but ovl12:30A5 copies it to a local pointer and reads the character bytes KnownSpells[2] (+$34), KnownSpells[11] (+$3D) and ByteA0 (+$A0) of Who. `Other := PCharacter(Affect)` with Who as the first parameter matches. Whether any caller passes a character as Affect is not known [?]; the table entry 132 ($84) is only stored, not called from the code read so far."
+evidence = ["src/OVL12.PAS#ovl12_e113", "re/symbols.toml#ovl12:30A5"]
+
+[[lesson]]
+id = "cross-unit-handler-needs-handler-shape"
+confidence = "V"
+units = ["*"]
+tags = ["AffectHandlers", "signature", "cross-unit", "stub"]
+title = "A table entry from another unit needs that unit's stub in the handler shape"
+lesson = "OVL13 declares ovl13_e22 and ovl13_e23 as `procedure ovl13_e22;` with no parameters, yet their frames take 10 bytes of parameters (packets ovl13_39D2 and ovl13_3A86, the handler shape), and AffectHandlers[73] and [74] store them. OVL13 has no uses clause, so it cannot name PCharacter or PAffect. Until OVL13 declares them with the handler shape, ovl12_e1 stores them through the absolute alias AffectHandlerPointers (Pointer). The stores are the same four bytes, and the match proves them. Replace the alias with typed assignments when OVL13 declares the shape."
+evidence = ["src/OVL12.PAS#ovl12_e1", "src/OVL13.PAS#ovl13_e22"]

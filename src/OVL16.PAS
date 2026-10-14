@@ -4,7 +4,7 @@ unit OVL16;
   'Pick Alignment' in the literal pools at ovl16:04F1..0516), roll the six ability scores and build
   a TCharacter. FreeCharacter frees a character and everything it owns. In progress: most routines
   are still stubs. }
-{$A-,O+,F+,S-,R-,G-,I-}
+{$A-,O+,F+,S-,R-,G-,I-,L-}
 interface
 uses POOLVARS, RES04, RES06, RES07, RES09, RES12, OVL17, OVL19, OVL23, OVL24, OVL25, OVL28, OVL32;
 procedure FreeCharacter(Who: PCharacter);

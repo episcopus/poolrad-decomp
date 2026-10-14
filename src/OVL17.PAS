@@ -4,7 +4,7 @@ unit OVL17;
   character (285 bytes), item (63 bytes) and affect (9 bytes) records. The file names are built
   from SaveDir and the game directory, CreateSaveDir makes the save directory on the save disk, and
   the "Put save disk in <drive>:" prompt shows while that disk is missing. }
-{$A-,O+,F+,S-,R-,G-,I-}
+{$A-,O+,F+,S-,R-,G-,I-,L-}
 interface
 uses POOLVARS;
 type

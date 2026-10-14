@@ -4,7 +4,7 @@ unit OVL21;
   SetPooledGold), the carried weight and its limit (CarryLimit, WouldOverload), the Take, Pool, Share
   and Appraise commands the shop, the Temple and the treasure menu share (TakeMoney, PoolMoney,
   ShareMoney, AppraiseGems), and BuildTreasureItem, which makes the items a treasure holds. }
-{$A-,O+,F+,S-,R-,G-,I-}
+{$A-,O+,F+,S-,R-,G-,I-,L-}
 interface
 uses POOLVARS, RES06;
 function CarryLimit(Who: PCharacter): Word;

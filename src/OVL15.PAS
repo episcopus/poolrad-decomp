@@ -8,7 +8,7 @@ unit OVL15;
   the monster pictures and portraits. A spell being memorized is a Spells slot with bit 7 set, a
   scroll spell being scribed an item spell byte with bit 7 set; both are cancelled when the camp
   opens and closes (CancelPartyStudy) and become real only through the rest (RunRestPeriod). }
-{$A-,O+,F+,S-,R-,G-,I-}
+{$A-,O+,F+,S-,R-,G-,I-,L-}
 interface
 uses POOLVARS;
 function StudyRestMinutes(Who: PCharacter): Word;

@@ -3149,12 +3149,12 @@ id = "ovl12:0000"
 unit = "ovl12"
 addr = "ovl12:0000"
 size = 31
-name = "ovl12_fn_0000"
-signature = ""
+name = "CancelPendingHook"
+signature = "procedure CancelPendingHook(AffectId: Byte)"
 c_name = "ovl12_fn_0000"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl12_fn_0000 (ovl12:0000 clears HookAffectId and DamageAmount when its AffectId is 0 or is the affect the hooks offer (HookAffectId, set by ApplyAffect; zero means 'is Unaffected', ovl24:1672, 1682; DamageAmount is the damage DealDamage offers, ovl24:134E)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3162,12 +3162,12 @@ id = "ovl12:001F"
 unit = "ovl12"
 addr = "ovl12:001F"
 size = 57
-name = "ovl12_fn_001F"
-signature = ""
+name = "TryAddAffect"
+signature = "function TryAddAffect(Who: PCharacter; AffectId, Data: Byte; Duration: Word): Boolean"
 c_name = "ovl12_fn_001F"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl12_fn_001F (ovl12:001F adds an affect through AddAffect (ovl24:0E52) with Flag 1 (the handler runs when it is removed, TAffect.Flag) and returns True, but returns False and adds nothing while ds681F is set (the Temple removes affects: RemoveAffect callers ovl04:0386, 05AB, 07CE)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3175,12 +3175,12 @@ id = "ovl12:0058"
 unit = "ovl12"
 addr = "ovl12:0058"
 size = 181
-name = "ovl12_fn_0058"
-signature = ""
+name = "DropFromFight"
+signature = "procedure DropFromFight(Who: PCharacter; NewStatus: Byte; Msg: String40)"
 c_name = "ovl12_fn_0058"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl12_fn_0058 (ovl12:0058 shows Msg on Who (res12_fn_16EC, colour 10) unless Who's Status is 6, 7 or 8 already; then it sets Status to NewStatus, clears Flag10D and Flag11B, removes the death affects (ovl24:100A), runs the hooks of kind $D (a combatant going down, ovl24:02FA), removes Who from the map when Flag10D is clear (ovl31:0E11), and outside combat (ds49F3 not 5) redraws the selected character; the same steps as DropCombatant (ovl24:0F06) without its ground redraw); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3188,12 +3188,12 @@ id = "ovl12:010D"
 unit = "ovl12"
 addr = "ovl12:010D"
 size = 16
-name = "ovl12_e2"
-signature = ""
+name = "RaiseAttackAndMorale"
+signature = "procedure RaiseAttackAndMorale(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e2"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_2"
+notes = "renamed from ovl12_e2 (ovl12:010D adds 5 to ds6825 (the AI morale scratch that ovl09 CheckMorale computes) and 1 to AttackRoll; its frame (Who, Affect, Mode, retf 10) is the AffectHandlers shape (TAffectHandler, CallAffectHandler ovl24:0000), Mode not read); auto:entry_2"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3201,12 +3201,12 @@ id = "ovl12:011D"
 unit = "ovl12"
 addr = "ovl12:011D"
 size = 30
-name = "ovl12_e3"
-signature = ""
+name = "LowerAttackAndMorale"
+signature = "procedure LowerAttackAndMorale(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e3"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_3"
+notes = "renamed from ovl12_e3 (ovl12:011D takes MoraleStep off the morale scratch ds6825 (to 0 when it is less) and 1 off AttackRoll: the undo of RaiseAttackAndMorale (ovl12:010D); the AffectHandlers shape (Who, Affect, Mode), Mode not read); auto:entry_3"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3214,12 +3214,12 @@ id = "ovl12:013B"
 unit = "ovl12"
 addr = "ovl12:013B"
 size = 68
-name = "ovl12_e4"
-signature = ""
+name = "BoostAttackAgainstTarget"
+signature = "procedure BoostAttackAgainstTarget(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e4"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_4"
+notes = "renamed from ovl12_e4 (ovl12:013B copies Who's combat record's Target (+$A of the TCombatant at +$108, the character attacked last, ovl08) into DS:6826, and when that character's byte +$9F is 4 adds 2 to AttackRoll and to DamageAmount; the AffectHandlers shape (Who, Affect, Mode), Mode not read); auto:entry_4"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3227,12 +3227,12 @@ id = "ovl12:017F"
 unit = "ovl12"
 addr = "ovl12:017F"
 size = 68
-name = "ovl12_e5"
-signature = ""
+name = "StartTrainingWithManual"
+signature = "procedure StartTrainingWithManual(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e5"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_5"
+notes = "renamed from ovl12_e5 (ovl12:017F shows 'starts to train' on Who (res12_fn_16EC, colour 10) and gives Who affect 7, AffectTrainingManual ('Training with Manual of Bodily Health', named in ovl15:0FBC), duration 43200, data 255, Flag 1 (AddAffect, ovl24:0E52); AffectHandlers frame (Who, Affect, Mode), entry 5 of ovl12 (auto:entry_5)); auto:entry_5"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3240,12 +3240,12 @@ id = "ovl12:01C3"
 unit = "ovl12"
 addr = "ovl12:01C3"
 size = 112
-name = "ovl12_e6"
-signature = ""
+name = "BoostFireAttackByTarget"
+signature = "procedure BoostFireAttackByTarget(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e6"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_6"
+notes = "renamed from ovl12_e6 (ovl12:01C3 is an affect handler (AffectHandlers shape, entry 6 of ovl12): it copies Who's combat Target into AttackTarget like BoostAttackAgainstTarget (ovl12:013B), adds a bonus of 1, 2 or 3 (by the target's byte +$9F: 10, 9 or 12, 4) to AttackRoll and DamageAmount and sets DamageKind to 9 (fire and the magic bit, ovl24:13E4, whose text says 'from Fire'); the affect that runs it is not known yet); auto:entry_6"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3253,12 +3253,12 @@ id = "ovl12:0233"
 unit = "ovl12"
 addr = "ovl12:0233"
 size = 324
-name = "ovl12_e7"
-signature = ""
+name = "TrainConstitution"
+signature = "procedure TrainConstitution(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e7"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_7"
+notes = "renamed from ovl12_e7 (ovl12:0233 shows 'is hardier' on Who (res12_fn_16EC), increments Constitution (+$14), and adds to HpMax (+$32) and the current hit points Flag11B (+$11B) the share of HpMax - HpB1 (+$B1) by the class weights of ovl04:0510 (Raise Dead's loss, mirrored); at Constitution 20 it gives affect $3E instead; AffectHandlers frame, entry 7 of ovl12 (auto:entry_7)); auto:entry_7"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3266,12 +3266,12 @@ id = "ovl12:0377"
 unit = "ovl12"
 addr = "ovl12:0377"
 size = 53
-name = "ovl12_e8"
-signature = ""
+name = "ShiftAttackToSave"
+signature = "procedure ShiftAttackToSave(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e8"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_8"
+notes = "renamed from ovl12_e8 (ovl12:0377 adds 2 to SaveRoll (DS:6816) and takes 2 from AttackRoll (DS:6822) for SelectedCharacter when its +$A0 (ByteA0) is 2, 5 or 8 (SelectedCharacter DS:5D92); the purpose is not known, the mechanism is the code's; entry 8 of ovl12 (auto:entry_8)); auto:entry_8"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3280,9 +3280,9 @@ unit = "ovl12"
 addr = "ovl12:03AC"
 size = 53
 name = "ovl12_e9"
-signature = ""
+signature = "procedure ovl12_e9(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e9"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_9"
 evidence = ["prologue"]
@@ -3292,12 +3292,12 @@ id = "ovl12:03E1"
 unit = "ovl12"
 addr = "ovl12:03E1"
 size = 31
-name = "ovl12_e10"
-signature = ""
+name = "HalveColdDamage"
+signature = "procedure HalveColdDamage(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e10"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_10"
+notes = "renamed from ovl12_e10 (ovl12:03E1 halves DamageAmount (DS:6818) and adds 3 to SaveRoll (DS:6816) when DamageKind (DS:6819) has bit 2, cold (POOLVARS DamageKind comment; ovl24:13E4 says 'from Cold'); AffectHandlers frame, entry 10 of ovl12 (auto:entry_10); the affect that runs it is not known yet); auto:entry_10"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3305,12 +3305,12 @@ id = "ovl12:0400"
 unit = "ovl12"
 addr = "ovl12:0400"
 size = 186
-name = "ovl12_e11"
-signature = ""
+name = "ComputerTakesOver"
+signature = "procedure ComputerTakesOver(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e11"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_11"
+notes = "renamed from ovl12_e11 (ovl12:0400 is an affect handler (AffectHandlers shape, Mode 0 applies): on apply it sets Quick (+$10F, the computer plays the turn, whitepaper 5.5 Who plays), marks B84 with the computer-run flag and morale $33, clears Combat^.Target and sets the side from Data bit 7; on removal it gives the side back from Data bit 6); auto:entry_11"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3318,12 +3318,12 @@ id = "ovl12:04BA"
 unit = "ovl12"
 addr = "ovl12:04BA"
 size = 284
-name = "ovl12_e12"
-signature = ""
+name = "ExchangeStrengthWithAffect"
+signature = "procedure ExchangeStrengthWithAffect(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e12"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_12"
+notes = "renamed from ovl12_e12 (ovl12:04BA is an affect handler (AffectHandlers shape, Mode not read) of a strength affect: Who's Strength and StrengthPercent take the affect's strength (DecodeStrength, ovl24:110D), then the strongest other affect with id hex 0C or 26 gives Who its strength and takes the affect's encoded strength (EncodeStrength, ovl24:10E4); RaiseStrength (ovl24:115C) keeps the earlier strength in the same two affects); auto:entry_12"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3331,12 +3331,12 @@ id = "ovl12:05D6"
 unit = "ovl12"
 addr = "ovl12:05D6"
 size = 21
-name = "ovl12_e13"
-signature = ""
+name = "SetCharismaFromAffect"
+signature = "procedure SetCharismaFromAffect(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e13"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_13"
+notes = "renamed from ovl12_e13 (ovl12:05D6 is an affect handler (AffectHandlers shape, Mode not read) that copies the affect's Data byte into Who's Charisma (TCharacter +hex 15, POOLVARS Charisma); applying and removing run the same code); auto:entry_13"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3344,12 +3344,12 @@ id = "ovl12:05EB"
 unit = "ovl12"
 addr = "ovl12:05EB"
 size = 92
-name = "ovl12_e14"
-signature = ""
+name = "AddAffectAndDamage"
+signature = "procedure AddAffectAndDamage(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e14"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_14"
+notes = "renamed from ovl12_e14 (ovl12:05EB is an affect handler (AffectHandlers shape, Mode not read) that calls TryAddAffect with affect hex 0F for 10 and the affect's Data, then deals 1 plain point of damage (DealDamage, DamageKind 0) while Flag11B is above 1; the meaning of affect 0F is not known (ovl04 AffectRemovedAtNeutralizePoison3)); auto:entry_14"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3357,12 +3357,12 @@ id = "ovl12:0647"
 unit = "ovl12"
 addr = "ovl12:0647"
 size = 7
-name = "ovl12_e15"
-signature = ""
+name = "IgnoreAffect"
+signature = "procedure IgnoreAffect(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e15"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_15"
+notes = "renamed from ovl12_e15 (ovl12:0647 is push bp, mov bp,sp, pop bp, retf 10: an affect handler (AffectHandlers shape) with an empty body, so it ignores the affect when called); auto:entry_15"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3370,51 +3370,38 @@ id = "ovl12:064E"
 unit = "ovl12"
 addr = "ovl12:064E"
 size = 43
-name = "ovl12_e16"
-signature = ""
+name = "RaiseResistanceAndSave"
+signature = "procedure RaiseResistanceAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e16"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_16"
+notes = "renamed from ovl12_e16 (ovl12:064E is an affect handler (AffectHandlers shape, Affect and Mode not read): it raises ResistValue (TCharacter +hex 111) to at least 57, adds one to SaveRoll, and clears DamageAmount when ds681B is hex 0F); auto:entry_16"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl12:0679"
 unit = "ovl12"
 addr = "ovl12:0679"
-size = 79
-name = "ovl12_e17"
+size = 107
+name = "BoostAttackVsListedTarget"
 signature = ""
 c_name = "ovl12_e17"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_17"
+notes = "renamed from ovl12_e17 (ovl12:0679 is an affect handler (Who, Affect, Mode) that copies Who's combat Target into AttackTarget like BoostAttackAgainstTarget (ovl12:013B), and adds 1 to AttackRoll per name ds0332[1..4] equal to the target's name when its Pad9E[$9F] and CombatSize are 1); auto:entry_17"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:06C8"
-unit = "ovl12"
-addr = "ovl12:06C8"
-size = 28
-name = "ovl12_fn_06C8"
-signature = ""
-c_name = "ovl12_fn_06C8"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:06E4"
 unit = "ovl12"
 addr = "ovl12:06E4"
 size = 43
-name = "ovl12_e18"
+name = "HalveFireDamage"
 signature = ""
 c_name = "ovl12_e18"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_18"
+notes = "renamed from ovl12_e18 (ovl12:06E4 halves DamageAmount and adds FireSaveBonus (3) to SaveRoll when DamageKind has the fire bit KindFire (1, POOLVARS DamageKind comment), the fire twin of HalveColdDamage (ovl12:03E1, same code with the bit changed)); auto:entry_18"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3422,12 +3409,12 @@ id = "ovl12:070F"
 unit = "ovl12"
 addr = "ovl12:070F"
 size = 102
-name = "ovl12_e19"
+name = "ShowSilenceAndStopCasting"
 signature = ""
 c_name = "ovl12_e19"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_19"
+notes = "renamed from ovl12_e19 (ovl12:070F shows 'is silenced' in colour 10 when the combat byte Pad2 (+2) of Who's combatant is set, then clears Pad2 and CanCast (+1, hides Cast): an affect handler (Who, Affect, Mode) reading only Who); auto:entry_19"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3435,12 +3422,12 @@ id = "ovl12:0775"
 unit = "ovl12"
 addr = "ovl12:0775"
 size = 107
-name = "ovl12_e20"
+name = "DieIfPoisoned"
 signature = ""
 c_name = "ovl12_e20"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_20"
+notes = "renamed from ovl12_e20 (ovl12:0775 finds the Poisoned affect (affect $37, ovl15 'Poisoned') with res12_fn_2199 and, when Who has it, drops Who with StatusGone and 'dies from poison' (DropFromFight, ovl12:0058); then removes affect $0F inside the ds681F bracket (ovl04:0386); an affect handler reading only Who); auto:entry_20"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3448,12 +3435,12 @@ id = "ovl12:07E0"
 unit = "ovl12"
 addr = "ovl12:07E0"
 size = 312
-name = "ovl12_e21"
+name = "GiveAffectItem"
 signature = ""
 c_name = "ovl12_e21"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_21"
+notes = "renamed from ovl12_e21 (ovl12:07E0 is an affect handler (Who, Affect, Mode): on apply it gives Who an item of type $14 (NameNum $F3, Plus 1, Affects $17 and $89) unless Who has one or ItemCountC7 is $10 or more, shows 'Gains an item' (res12_fn_16EC) and on removal takes that item off Who's list (res12_fn_1509); Mode is read, Affect not); auto:entry_21"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3461,12 +3448,12 @@ id = "ovl12:0918"
 unit = "ovl12"
 addr = "ovl12:0918"
 size = 47
-name = "ovl12_e22"
-signature = ""
+name = "LowerAttackRollByFour"
+signature = "procedure LowerAttackRollByFour(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e22"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_22"
+notes = "renamed from ovl12_e22 (ovl12:093C subtracts 4 from AttackRoll (sub byte [6822],4) on every call; the frame is the AffectHandlers shape (Who, Affect, Mode), none read; it sets ds681E only when res12_fn_2199(SelectedCharacter, $18) finds no affect (ovl12:0933..0937)); auto:entry_22"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3474,12 +3461,12 @@ id = "ovl12:0947"
 unit = "ovl12"
 addr = "ovl12:0947"
 size = 121
-name = "ovl12_e23"
-signature = ""
+name = "BoostAttackVsEightListed"
+signature = "procedure BoostAttackVsEightListed(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e23"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_23"
+notes = "renamed from ovl12_e23 (ovl12:0947 is BoostAttackVsListedTarget (ovl12:0679) with eight names: the same Pad9E[$9F] and CombatSize tests, then AttackRoll gains 1 per equal name of ds0382[1..8] (loop bound 8, base 0x372 + 16*I, against 0x332 + 16*I for ds0332 in ovl12:0679); the AffectHandlers shape with only Who read); auto:entry_23"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3487,12 +3474,12 @@ id = "ovl12:09C0"
 unit = "ovl12"
 addr = "ovl12:09C0"
 size = 125
-name = "ovl12_e24"
-signature = ""
+name = "ImageAbsorbsHit"
+signature = "procedure ImageAbsorbsHit(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e24"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_24"
+notes = "renamed from ovl12_e24 (ovl12:09C0 is the handler of the images affect $1C, which runs on the damage hook (kind 6, ovl24:02FA, the hook list of ovl24:0000 kinds 5 and 6): when 1d(Data+1) is above 1 it cancels the damage (CancelPendingHook(0)), shows lost an image (res12_fn_16EC, colour 10) and takes one off Data, removing the affect at 0 (RemoveAffect with nil); the message and the Data count support a mirror-image style affect [I]); auto:entry_24"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3500,272 +3487,51 @@ id = "ovl12:0A3D"
 unit = "ovl12"
 addr = "ovl12:0A3D"
 size = 40
-name = "ovl12_e25"
-signature = ""
+name = "ReduceDamageByQuarter"
+signature = "procedure ReduceDamageByQuarter(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e25"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_25"
+notes = "renamed from ovl12_e25 (ovl12:0A3D takes a quarter off DamageAmount (DS:6818): DamageAmount := DamageAmount - DamageAmount div 4 (two shr ax,1, sub, store byte); the AffectHandlers shape with no parameter read, so it runs as a damage hook handler (kind 6); the affect that runs it is not known); auto:entry_25"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl12:0A65"
 unit = "ovl12"
 addr = "ovl12:0A65"
-size = 128
-name = "ovl12_e26"
-signature = ""
+size = 182
+name = "CoughStopsCasting"
+signature = "procedure CoughStopsCasting(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e26"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_26"
+notes = "renamed from ovl12_e26 (ovl12:0A65 clears the combat byte Pad2 (+$2) and CanCast (+$1) of the character (the stop-casting pair of ShowSilenceAndStopCasting, ovl12:070F), and shows is coughing (colour 10) when Pad2 was set; the message text (literal pool 0A59) and the Pad2 test are the evidence); auto:entry_26"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:0AE5"
-unit = "ovl12"
-addr = "ovl12:0AE5"
-size = 54
-name = "ovl12_fn_0AE5"
-signature = ""
-c_name = "ovl12_fn_0AE5"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:0B1B"
 unit = "ovl12"
 addr = "ovl12:0B1B"
-size = 10
-name = "ovl12_e27"
-signature = ""
+size = 145
+name = "CollapseAndChangeSide"
+signature = "procedure CollapseAndChangeSide(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e27"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_27"
+notes = "renamed from ovl12_e27 (ovl12:0B1B is an affect handler (AffectHandlers shape, Mode not read): it clears the affect's Flag, drops Who with the text 'collapses' and StatusGone unless ds681F is set (the Temple removing affects), then sets Who's Side from the high nibble of the affect's Data and Quick (computer plays, as ComputerTakesOver ovl12:0400)); auto:entry_27"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:0B25"
-unit = "ovl12"
-addr = "ovl12:0B25"
-size = 5
-name = "ovl12_fn_0B25"
-signature = ""
-c_name = "ovl12_fn_0B25"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:0B2A"
-unit = "ovl12"
-addr = "ovl12:0B2A"
-size = 5
-name = "ovl12_fn_0B2A"
-signature = ""
-c_name = "ovl12_fn_0B2A"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:0B2F"
-unit = "ovl12"
-addr = "ovl12:0B2F"
-size = 20
-name = "ovl12_fn_0B2F"
-signature = ""
-c_name = "ovl12_fn_0B2F"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:0B43"
-unit = "ovl12"
-addr = "ovl12:0B43"
-size = 5
-name = "ovl12_fn_0B43"
-signature = ""
-c_name = "ovl12_fn_0B43"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:0B48"
-unit = "ovl12"
-addr = "ovl12:0B48"
-size = 5
-name = "ovl12_fn_0B48"
-signature = ""
-c_name = "ovl12_fn_0B48"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:0B4D"
-unit = "ovl12"
-addr = "ovl12:0B4D"
-size = 5
-name = "ovl12_fn_0B4D"
-signature = ""
-c_name = "ovl12_fn_0B4D"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:0B52"
-unit = "ovl12"
-addr = "ovl12:0B52"
-size = 5
-name = "ovl12_fn_0B52"
-signature = ""
-c_name = "ovl12_fn_0B52"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:0B57"
-unit = "ovl12"
-addr = "ovl12:0B57"
-size = 10
-name = "ovl12_fn_0B57"
-signature = ""
-c_name = "ovl12_fn_0B57"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:0B61"
-unit = "ovl12"
-addr = "ovl12:0B61"
-size = 15
-name = "ovl12_fn_0B61"
-signature = ""
-c_name = "ovl12_fn_0B61"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:0B70"
-unit = "ovl12"
-addr = "ovl12:0B70"
-size = 5
-name = "ovl12_fn_0B70"
-signature = ""
-c_name = "ovl12_fn_0B70"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:0B75"
-unit = "ovl12"
-addr = "ovl12:0B75"
-size = 5
-name = "ovl12_fn_0B75"
-signature = ""
-c_name = "ovl12_fn_0B75"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:0B7A"
-unit = "ovl12"
-addr = "ovl12:0B7A"
-size = 5
-name = "ovl12_fn_0B7A"
-signature = ""
-c_name = "ovl12_fn_0B7A"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:0B7F"
-unit = "ovl12"
-addr = "ovl12:0B7F"
-size = 5
-name = "ovl12_fn_0B7F"
-signature = ""
-c_name = "ovl12_fn_0B7F"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:0B84"
-unit = "ovl12"
-addr = "ovl12:0B84"
-size = 5
-name = "ovl12_fn_0B84"
-signature = ""
-c_name = "ovl12_fn_0B84"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:0B89"
-unit = "ovl12"
-addr = "ovl12:0B89"
-size = 5
-name = "ovl12_fn_0B89"
-signature = ""
-c_name = "ovl12_fn_0B89"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:0B8E"
-unit = "ovl12"
-addr = "ovl12:0B8E"
-size = 30
-name = "ovl12_fn_0B8E"
-signature = ""
-c_name = "ovl12_fn_0B8E"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:0BAC"
 unit = "ovl12"
 addr = "ovl12:0BAC"
 size = 35
-name = "ovl12_e28"
-signature = ""
+name = "LowerAttackSaveAndResistance"
+signature = "procedure LowerAttackSaveAndResistance(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e28"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_28"
+notes = "renamed from ovl12_e28 (ovl12:0BAC is an affect handler (AffectHandlers shape, Mode not read): it takes 4 off AttackRoll and SaveRoll and off Who's ResistValue (+$111) and Pad112[$112] (+$112, the byte CoughStopsCasting copies into ResistValue, ovl12:0A65); which affect runs it is not known yet); auto:entry_28"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3773,12 +3539,12 @@ id = "ovl12:0BCF"
 unit = "ovl12"
 addr = "ovl12:0BCF"
 size = 55
-name = "ovl12_e29"
-signature = ""
+name = "RunDiseaseHandlers"
+signature = "procedure RunDiseaseHandlers(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e29"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_29"
+notes = "renamed from ovl12_e29 (ovl12:0BCF calls CallAffectHandler (ovl24:0000) twice with the same Who, Affect and Mode: first affect $2B, then $2C (AffectCauseDisease, named in ovl15:0FBC's table); both ids are in the Cure Disease list (DiseaseAffects, ovl04:031E, whitepaper 5.19), so it runs the disease handlers; which affect runs it is not known yet); auto:entry_29"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3786,12 +3552,12 @@ id = "ovl12:0C06"
 unit = "ovl12"
 addr = "ovl12:0C06"
 size = 15
-name = "ovl12_e30"
-signature = ""
+name = "RaiseAttackAndSave"
+signature = "procedure RaiseAttackAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e30"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl12_e30 (ovl12:0C06 adds 1 to SaveRoll and to AttackRoll and uses neither parameter (AffectHandlers shape, Mode not read); the twin of LowerAttackAndSave (ovl12:0C15); it is called by ovl12:12B2 (ovl12_e41, not decompiled yet)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3799,12 +3565,12 @@ id = "ovl12:0C15"
 unit = "ovl12"
 addr = "ovl12:0C15"
 size = 17
-name = "ovl12_e31"
-signature = ""
+name = "LowerAttackAndSave"
+signature = "procedure LowerAttackAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e31"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_31"
+notes = "renamed from ovl12_e31 (ovl12:0C15 takes 4 off AttackRoll and 4 off SaveRoll and reads neither parameter (AffectHandlers shape, Mode not read); the minus of RaiseAttackAndSave (ovl12:0C06), which adds 1 to each); auto:entry_31"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3812,12 +3578,12 @@ id = "ovl12:0C26"
 unit = "ovl12"
 addr = "ovl12:0C26"
 size = 37
-name = "ovl12_e32"
-signature = ""
+name = "SetAttackMissIfTurnPending"
+signature = "procedure SetAttackMissIfTurnPending(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e32"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_32"
+notes = "renamed from ovl12_e32 (ovl12:0C26 tests Who's combatant Initiative (TCombatant +$3, above 0 while CombatTurn still has its turn to take, ovl08); when it is above 0 it sets ds681E to 1 and AttackRoll to -1, a negative roll that RollToHit counts as a miss (AttackRoll comment, ovl24:0CD5); reads only Who (AffectHandlers shape, Mode and Affect not read)); auto:entry_32"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3825,12 +3591,12 @@ id = "ovl12:0C4B"
 unit = "ovl12"
 addr = "ovl12:0C4B"
 size = 120
-name = "ovl12_e33"
-signature = ""
+name = "AgeCharacterOnce"
+signature = "procedure AgeCharacterOnce(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e33"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_33"
+notes = "renamed from ovl12_e33 (ovl12:0C4B is an affect handler (AffectHandlers shape, Mode not read): when the affect's Data bit 4 is clear it sets it, shows 'ages' on Who (res12_fn_16EC, colour 10, the message copied to a stack temporary as in StartTrainingWithManual) and adds one year to Who's Age (TCharacter +$30, the age in years, POOLVARS); it then doubles ds681A (shl 1) every time it runs; which affect runs it is not known yet); auto:entry_33"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3838,12 +3604,12 @@ id = "ovl12:0CC3"
 unit = "ovl12"
 addr = "ovl12:0CC3"
 size = 745
-name = "ovl12_e34"
-signature = ""
+name = "ClearCloud"
+signature = "procedure ClearCloud(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e34"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_34"
+notes = "renamed from ovl12_e34 (ovl12:0CC3 is the cloud affect handler: it finds the cloud of Who with the kind of Affect's Data (ds6DBB list, TCombatNode), shows 'The air clears a little...', restores each arm's tile (body cells keep CloudBodyTile), unlinks and frees the cloud and repaints the others); auto:entry_34"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3851,12 +3617,12 @@ id = "ovl12:0FAC"
 unit = "ovl12"
 addr = "ovl12:0FAC"
 size = 113
-name = "ovl12_fn_0FAC"
-signature = ""
+name = "AvoidDistantAttack"
+signature = "procedure AvoidDistantAttack(Who: PCharacter; Chance: Byte)"
 c_name = "ovl12_fn_0FAC"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl12_fn_0FAC (ovl12:0FAC: 'Avoids it' dodge: with an item in SelectedCharacter's first slot and the attacker (SelectedCharacter, distance from res12_fn_255B above 1) away, a 1d100 roll at or below Chance avoids the attack and zeroes the damage; called by ovl12:1086 (AvoidIfSelectedItemPlusZero) with Chance 100); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3864,12 +3630,12 @@ id = "ovl12:101D"
 unit = "ovl12"
 addr = "ovl12:101D"
 size = 105
-name = "ovl12_fn_101D"
-signature = ""
+name = "FirstSlotItem"
+signature = "function FirstSlotItem(Who: PCharacter): PItem"
 c_name = "ovl12_fn_101D"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl12_fn_101D (ovl12:101D returns the item in Who's first remembered slot (SlotItems[0], TCharacter +$CC), or nil; res12_fn_2E8B may pick another item first; its callers test the item's Plus (ovl12:1086)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3877,12 +3643,12 @@ id = "ovl12:1086"
 unit = "ovl12"
 addr = "ovl12:1086"
 size = 59
-name = "ovl12_e35"
-signature = ""
+name = "AvoidIfSelectedItemPlusZero"
+signature = "procedure AvoidIfSelectedItemPlusZero(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e35"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_35"
+notes = "renamed from ovl12_e35 (ovl12:1086 is an affect handler (AffectHandlers shape, nothing read): when FirstSlotItem of SelectedCharacter has Plus 0, Who avoids the attack in progress (AvoidDistantAttack with AlwaysAvoids); which affect runs it is not known); auto:entry_35"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3890,12 +3656,12 @@ id = "ovl12:10C1"
 unit = "ovl12"
 addr = "ovl12:10C1"
 size = 29
-name = "ovl12_e36"
-signature = ""
+name = "HalveAgeDoubling"
+signature = "procedure HalveAgeDoubling(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e36"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_36"
+notes = "renamed from ovl12_e36 (ovl12:10C1 halves ds681A, the byte AgeCharacterOnce (ovl12:0C4B) doubles every time it runs; affect handler (AffectHandlers shape, nothing read); which affect runs it is not known); auto:entry_36"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3903,12 +3669,12 @@ id = "ovl12:10DE"
 unit = "ovl12"
 addr = "ovl12:10DE"
 size = 138
-name = "ovl12_e37"
-signature = ""
+name = "WeakenStrength"
+signature = "procedure WeakenStrength(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e37"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_37"
+notes = "renamed from ovl12_e37 (ovl12:10DE gives Who the disease affect 2B for 60 rounds; while Strength is above 3 it shows 'is weakened' and takes one off Strength, at 3 or less it adds nausea (affect 1F); affect handler, nothing but Who and Affect's Data read; which affect runs it is not known); auto:entry_37"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3916,12 +3682,12 @@ id = "ovl12:1168"
 unit = "ovl12"
 addr = "ovl12:1168"
 size = 145
-name = "ovl12_e38"
-signature = ""
+name = "CauseDiseaseAndDamage"
+signature = "procedure CauseDiseaseAndDamage(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e38"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_38"
+notes = "renamed from ovl12_e38 (ovl12:1168 gives Who the disease affect AffectCauseDisease ($2C, ovl15/ovl04 name it) for 10 rounds with Affect's Data, deals one point of damage when Flag11B is above 1, else gives nausea (AffectNausea) unless present); auto:entry_38"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3929,12 +3695,12 @@ id = "ovl12:11F9"
 unit = "ovl12"
 addr = "ovl12:11F9"
 size = 125
-name = "ovl12_e39"
-signature = ""
+name = "LowerAttackVsEightListed"
+signature = "procedure LowerAttackVsEightListed(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e39"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_39"
+notes = "renamed from ovl12_e39 (ovl12:11F9 takes AttackPenalty (4) off AttackRoll once for each of the eight names ds0402[1..8] that the attacked character's name equals, when the selected character has Pad9E[$9F]=1 and CombatSize kind 2: the twin of BoostAttackVsEightListed (ovl12:0947), with the condition on the selected character); auto:entry_39"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3942,12 +3708,12 @@ id = "ovl12:1276"
 unit = "ovl12"
 addr = "ovl12:1276"
 size = 60
-name = "ovl12_e40"
-signature = ""
+name = "LowerAttackIfSelectedIsBugbearOrGnoll"
+signature = "procedure LowerAttackIfSelectedIsBugbearOrGnoll(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e40"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_40"
+notes = "renamed from ovl12_e40 (ovl12:1276 compares the selected character's name with the literals 'BUGBEAR' (ovl12:1268) and 'GNOLL' (ovl12:1270) by System_StrCompare (0AF8:0C10) when its Pad9E[$9F] is 1, and gives AttackRoll AttackPenalty off for either); auto:entry_40"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3955,39 +3721,26 @@ id = "ovl12:12B2"
 unit = "ovl12"
 addr = "ovl12:12B2"
 size = 73
-name = "ovl12_e41"
-signature = ""
+name = "RaiseOrLowerAttackAndSave"
+signature = "procedure RaiseOrLowerAttackAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e41"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_41"
+notes = "renamed from ovl12_e41 (ovl12:12B2 runs RaiseAttackAndSave (ovl12:0C06) when Who's Side (+$10E) equals bit 4 of Affect's Data, else takes one off AttackRoll and one off SaveRoll (inline sub byte, not LowerAttackAndSave's penalty)); auto:entry_41"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl12:12FB"
 unit = "ovl12"
 addr = "ovl12:12FB"
-size = 12
-name = "ovl12_e42"
-signature = ""
+size = 68
+name = "AddHealingBlockAndHeal"
+signature = "procedure AddHealingBlockAndHeal(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e42"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_42"
+notes = "renamed from ovl12_e42 (ovl12:12FB gives Who the healing block affect $32 (AffectHealingBlock, ovl24:175D) for 14400 rounds, then HealCharacter (Amount 1, Flag 1) heals one point and res12_fn_234A runs on Who when it healed); auto:entry_42"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:1307"
-unit = "ovl12"
-addr = "ovl12:1307"
-size = 56
-name = "ovl12_fn_1307"
-signature = ""
-c_name = "ovl12_fn_1307"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:133F"
@@ -3995,9 +3748,9 @@ unit = "ovl12"
 addr = "ovl12:133F"
 size = 22
 name = "ovl12_e43"
-signature = ""
+signature = "procedure ovl12_e43(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e43"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_43"
 evidence = ["prologue"]
@@ -4008,9 +3761,9 @@ unit = "ovl12"
 addr = "ovl12:1355"
 size = 7
 name = "ovl12_e44"
-signature = ""
+signature = "procedure ovl12_e44(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e44"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_44"
 evidence = ["prologue"]
@@ -4021,9 +3774,9 @@ unit = "ovl12"
 addr = "ovl12:135C"
 size = 7
 name = "ovl12_e45"
-signature = ""
+signature = "procedure ovl12_e45(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e45"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_45"
 evidence = ["prologue"]
@@ -4034,9 +3787,9 @@ unit = "ovl12"
 addr = "ovl12:1363"
 size = 54
 name = "ovl12_e46"
-signature = ""
+signature = "procedure ovl12_e46(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e46"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_46"
 evidence = ["prologue"]
@@ -4046,12 +3799,12 @@ id = "ovl12:1399"
 unit = "ovl12"
 addr = "ovl12:1399"
 size = 185
-name = "ovl12_e47"
-signature = ""
+name = "ProgressRot"
+signature = "procedure ProgressRot(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e47"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_47"
+notes = "renamed from ovl12_e47 (ovl12:1399 is the rot handler of affect 39h (AffectRot, which Cure Disease removes, whitepaper 5.19): on each run it shows 'Rots...' on Who (res12_fn_16EC, colour 10) and takes Charisma down to 3 at most 2 at a time; then, while the stage in the affect's Data high nibble is above 1, it gives the rot again one stage lower (TryAddAffect, duration 43200); at stage 1 Who dies with 'Dies rots away' (DropFromFight, status 8)); auto:entry_47"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4060,9 +3813,9 @@ unit = "ovl12"
 addr = "ovl12:1452"
 size = 32
 name = "ovl12_e48"
-signature = ""
+signature = "procedure ovl12_e48(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e48"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_48"
 evidence = ["prologue"]
@@ -4073,9 +3826,9 @@ unit = "ovl12"
 addr = "ovl12:1472"
 size = 30
 name = "ovl12_e49"
-signature = ""
+signature = "procedure ovl12_e49(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e49"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_49"
 evidence = ["prologue"]
@@ -4085,77 +3838,51 @@ id = "ovl12:1490"
 unit = "ovl12"
 addr = "ovl12:1490"
 size = 91
-name = "ovl12_e50"
-signature = ""
+name = "ReduceFireDamageByRoll"
+signature = "procedure ReduceFireDamageByRoll(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e50"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_50"
+notes = "renamed from ovl12_e50 (ovl12:1490 is a damage hook (AffectHandlers shape): while the damage is fire (DamageKind bit 1) it takes 2 per die of the last roll (ds681C) off DamageAmount, never below ds681C, adds 4 to SaveRoll, and cancels non-magical damage (CancelPendingHook 0)); auto:entry_50"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl12:14EB"
 unit = "ovl12"
 addr = "ovl12:14EB"
-size = 88
-name = "ovl12_e51"
-signature = ""
+size = 90
+name = "AddTrainedOutAndHeal"
+signature = "procedure AddTrainedOutAndHeal(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e51"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_51"
+notes = "renamed from ovl12_e51 (ovl12:14EB is the AddHealingBlockAndHeal shape (ovl12:12FB) with AffectTrainedOut: TryAddAffect(Who, AffectTrainedOut, Affect^.Data, TrainedOutDuration), then HealCharacter(Who, 1, 1) and res12_fn_234A when it healed); auto:entry_51"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:1543"
-unit = "ovl12"
-addr = "ovl12:1543"
-size = 2
-name = "ovl12_fn_1543"
-signature = ""
-c_name = "ovl12_fn_1543"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl12:1545"
 unit = "ovl12"
 addr = "ovl12:1545"
-size = 62
-name = "ovl12_fn_1545"
-signature = ""
+size = 166
+name = "PoisonAttackTarget"
+signature = "procedure PoisonAttackTarget(Who: PCharacter; Bonus: ShortInt)"
 c_name = "ovl12_fn_1545"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl12_fn_1545 (ovl12:1545 (153 bytes, its literal pool 152F-1544): the attacked character (Who's Combat^.Target) makes a poison save (SavingThrow kind 0 with Bonus, ovl12_e52 passes 0); on failure it shows 'is Poisoned', gets AffectPoisoned for good and DropFromFight kills it (StatusGone, 'is killed')); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:1583"
-unit = "ovl12"
-addr = "ovl12:1583"
-size = 104
-name = "ovl12_fn_1583"
-signature = ""
-c_name = "ovl12_fn_1583"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:15EB"
 unit = "ovl12"
 addr = "ovl12:15EB"
 size = 114
-name = "ovl12_fn_15EB"
-signature = ""
+name = "ParalyzeAttackTarget"
+signature = "procedure ParalyzeAttackTarget(Who: PCharacter; Duration: Word; Unused: Byte)"
 c_name = "ovl12_fn_15EB"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl12_fn_15EB (paralyses the character Who attacked last (AttackTarget := Who^.Combat^.Target, ovl12:15EB): SavingThrow kind 0 first, then 'is Paralyzed' (literal at ovl12:15DE) and AddAffect with affect 34h; both handlers ovl12:1699 and ovl12:16BB call it with (Who, Duration, 0)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4163,12 +3890,12 @@ id = "ovl12:165D"
 unit = "ovl12"
 addr = "ovl12:165D"
 size = 20
-name = "ovl12_e52"
-signature = ""
+name = "PoisonAttackTargetBonus0"
+signature = "procedure PoisonAttackTargetBonus0(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e52"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_52"
+notes = "renamed from ovl12_e52 (affect handler at ovl12:165D whose whole body is PoisonAttackTarget(Who, 0) (ovl12:1545 with save bonus 0); the affect that runs it is not known yet); auto:entry_52"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4176,12 +3903,12 @@ id = "ovl12:1671"
 unit = "ovl12"
 addr = "ovl12:1671"
 size = 20
-name = "ovl12_e53"
-signature = ""
+name = "PoisonAttackTargetBonus4"
+signature = "procedure PoisonAttackTargetBonus4(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e53"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_53"
+notes = "renamed from ovl12_e53 (affect handler at ovl12:1671 whose whole body is PoisonAttackTarget(Who, 4) (ovl12:1545 with save bonus 4); the affect that runs it is not known yet); auto:entry_53"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4189,12 +3916,12 @@ id = "ovl12:1685"
 unit = "ovl12"
 addr = "ovl12:1685"
 size = 20
-name = "ovl12_e54"
-signature = ""
+name = "PoisonAttackTargetBonus2"
+signature = "procedure PoisonAttackTargetBonus2(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e54"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_54"
+notes = "renamed from ovl12_e54 (affect handler at ovl12:1685 whose whole body is PoisonAttackTarget(Who, 2) (ovl12:1545 with save bonus 2); the affect that runs it is not known yet); auto:entry_54"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4202,12 +3929,12 @@ id = "ovl12:1699"
 unit = "ovl12"
 addr = "ovl12:1699"
 size = 34
-name = "ovl12_e55"
-signature = ""
+name = "ParalyzeAttackTargetFor2d8"
+signature = "procedure ParalyzeAttackTargetFor2d8(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e55"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_55"
+notes = "renamed from ovl12_e55 (affect handler at ovl12:1699 whose body is ParalyzeAttackTarget(Who, RollDice(2, 8), 0) (ovl12:15EB); the map finds no direct caller (auto:entry_55), so the affect that runs it is not known yet); auto:entry_55"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4215,12 +3942,12 @@ id = "ovl12:16BB"
 unit = "ovl12"
 addr = "ovl12:16BB"
 size = 43
-name = "ovl12_e56"
-signature = ""
+name = "ParalyzeAttackTargetUnlessImmune"
+signature = "procedure ParalyzeAttackTargetUnlessImmune(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e56"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_56"
+notes = "renamed from ovl12_e56 (affect handler at ovl12:16BB: ParalyzeAttackTarget(Who, 63, 0) (ovl12:15EB) unless Who^.Combat^.Target^.Race (+$2E) is 2; the map finds no direct caller, so the affect that runs it is not known yet); auto:entry_56"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4228,12 +3955,12 @@ id = "ovl12:16E6"
 unit = "ovl12"
 addr = "ovl12:16E6"
 size = 37
-name = "ovl12_e57"
-signature = ""
+name = "ParalyzeAttackTargetFor1d9Plus10"
+signature = "procedure ParalyzeAttackTargetFor1d9Plus10(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e57"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_57"
+notes = "renamed from ovl12_e57 (affect handler at ovl12:16E6 whose body is ParalyzeAttackTarget(Who, RollDice(1, 9) + 10, $FE) (ovl12:15EB): paralysis for 1d9 plus 10 rounds, the same shape as ParalyzeAttackTargetFor2d8 (ovl12:1699)); auto:entry_57"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4241,12 +3968,12 @@ id = "ovl12:170B"
 unit = "ovl12"
 addr = "ovl12:170B"
 size = 20
-name = "ovl12_e58"
-signature = ""
+name = "PoisonAttackTargetBonusMinus2"
+signature = "procedure PoisonAttackTargetBonusMinus2(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e58"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_58"
+notes = "renamed from ovl12_e58 (affect handler at ovl12:170B that calls PoisonAttackTarget (ovl12:1545) with Bonus -2 (pushed as 0FEh): the poison hook with a negative save bonus, the twin of PoisonAttackTargetBonus0/2/4); auto:entry_58"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4254,51 +3981,38 @@ id = "ovl12:171F"
 unit = "ovl12"
 addr = "ovl12:171F"
 size = 17
-name = "ovl12_e59"
-signature = ""
+name = "SetFlagAndLowerAttackRollByFour"
+signature = "procedure SetFlagAndLowerAttackRollByFour(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e59"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_59"
+notes = "renamed from ovl12_e59 (affect handler at ovl12:171F: ds681E := 1, then Dec(AttackRoll, AttackPenalty) with no res12_fn_2199 test; the unconditional form of LowerAttackRollByFour (ovl12:0918)); auto:entry_59"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl12:1730"
 unit = "ovl12"
 addr = "ovl12:1730"
-size = 40
+size = 63
 name = "ovl12_e60"
-signature = ""
+signature = "procedure ovl12_e60(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e60"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_60"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:1758"
-unit = "ovl12"
-addr = "ovl12:1758"
-size = 23
-name = "ovl12_fn_1758"
-signature = ""
-c_name = "ovl12_fn_1758"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:176F"
 unit = "ovl12"
 addr = "ovl12:176F"
 size = 326
-name = "ovl12_e61"
-signature = ""
+name = "DrainBloodFromCombatant"
+signature = "procedure DrainBloodFromCombatant(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e61"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_61"
+notes = "renamed from ovl12_e61 (affect handler at ovl12:176F: when Mode is 0 and Who and the combatant whose index is the affect Data (CombatantRecord) both take part, it shows Sucks some Blood on Who (res12_fn_16EC) and deals 1d4 to that combatant (RollDiceCounted, DealDamage), then takes 16 times the damage off the affect Duration; the other branch removes the affects and sets Pad10 (forces flight in CheckMorale, ovl09:10D7)); auto:entry_61"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4306,12 +4020,12 @@ id = "ovl12:18B5"
 unit = "ovl12"
 addr = "ovl12:18B5"
 size = 128
-name = "ovl12_e62"
+name = "StartBloodDrain"
 signature = ""
 c_name = "ovl12_e62"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_62"
+notes = "renamed from ovl12_e62 (ovl12:18B5 gives the drinker affect 4B (AffectBloodDrain, whose removal runs DrainBloodFromCombatant ovl12:176F, which reads the victim index from its Data) and the victim affect 3A (AffectHeldFast, which ovl12:1935 announces as 'is held fast'); it starts the blood drain); auto:entry_62"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4319,12 +4033,12 @@ id = "ovl12:1935"
 unit = "ovl12"
 addr = "ovl12:1935"
 size = 164
-name = "ovl12_e63"
+name = "HoldWeakTargetFast"
 signature = ""
 c_name = "ovl12_e63"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_63"
+notes = "renamed from ovl12_e63 (ovl12:1935 is the weak-target twin of StartBloodDrain (ovl12:18B5): when the target's Strength (+$10) is below 19 it gives the drinker affect 4A (AffectBloodDrainWeak, Duration 0, DrainBloodFromCombatant on removal) and the victim affect 3A (AffectHeldFast) and shows 'is held fast' on the victim in colour 10); auto:entry_63"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4332,12 +4046,12 @@ id = "ovl12:19D9"
 unit = "ovl12"
 addr = "ovl12:19D9"
 size = 64
-name = "ovl12_e64"
+name = "ReviveOrRetryRevival"
 signature = ""
 c_name = "ovl12_e64"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_64"
+notes = "renamed from ovl12_e64 (ovl12:19D9 calls ReviveCombatant (ovl24:1869) on Who at Flag11B and, when that returns False, gives Who the revival affect 4E (AffectRevival, ovl24:175D) for one round with Affect's Data through TryAddAffect); auto:entry_64"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4345,12 +4059,12 @@ id = "ovl12:1A19"
 unit = "ovl12"
 addr = "ovl12:1A19"
 size = 51
-name = "ovl12_e65"
+name = "FireAttackTargetFor2d10"
 signature = ""
 c_name = "ovl12_e65"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_65"
+notes = "renamed from ovl12_e65 (ovl12:1A19 sets DamageKind 9 (POOLVARS: 1 fire, bit 3 magic) and deals RollDiceCounted(2, 10) to Who's combat Target with no save through DealDamage (ovl24:1344)); auto:entry_65"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4358,12 +4072,12 @@ id = "ovl12:1A4C"
 unit = "ovl12"
 addr = "ovl12:1A4C"
 size = 94
-name = "ovl12_e66"
+name = "AcidAttackTargetFor1d4"
 signature = ""
 c_name = "ovl12_e66"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_66"
+notes = "renamed from ovl12_e66 (ovl12:1A4C sets DamageKind to $10 (POOLVARS DamageKind: $10 acid) and deals RollDiceCounted(1, 4) to Who's combat Target with no save through DealDamage (ovl24:1344)); auto:entry_66"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4371,194 +4085,90 @@ id = "ovl12:1AAA"
 unit = "ovl12"
 addr = "ovl12:1AAA"
 size = 254
-name = "ovl12_e67"
+name = "FrightenSideWithFear"
 signature = ""
 c_name = "ovl12_e67"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_67"
+notes = "renamed from ovl12_e67 (ovl12:1AAA walks the party list (ds5D96, +$104 next) and, for each member with Flag10D on the side of Who (res12_fn_23B7), makes a fear save (SavingThrow kind 4) and gives AffectParalysis ($34) or AffectWeakened ($02) by HighestLevel 0..3 or 4..5, with the messages 'is paralyzed with fear' and 'is weakened by fear' (ovl12:1B91 and 1A96 pool strings)); auto:entry_67"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl12:1BA8"
 unit = "ovl12"
 addr = "ovl12:1BA8"
-size = 47
-name = "ovl12_e68"
-signature = ""
+size = 261
+name = "ParalyzeSideWithFear"
+signature = "procedure ParalyzeSideWithFear(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e68"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_68"
+notes = "renamed from ovl12_e68 (ovl12:1BA8 walks the party list (ds5D96), removes affect $52 from every member, then gives each member on the actor's side with Flag10D a paralysis for 1d4 rounds (AffectParalysis, Data FearData) after a SaveKindParalysis save, with the message 'is paralyzed with fear' (the message of FrightenSideWithFear, ovl12:1AAA); matched at L2 (make match FN=ovl12_e68)); auto:entry_68"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:1BD7"
-unit = "ovl12"
-addr = "ovl12:1BD7"
-size = 193
-name = "ovl12_fn_1BD7"
-signature = ""
-c_name = "ovl12_fn_1BD7"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:1C98"
-unit = "ovl12"
-addr = "ovl12:1C98"
-size = 21
-name = "ovl12_fn_1C98"
-signature = ""
-c_name = "ovl12_fn_1C98"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl12:1CAD"
 unit = "ovl12"
 addr = "ovl12:1CAD"
 size = 458
-name = "ovl12_e69"
-signature = ""
+name = "GazeStonesTarget"
+signature = "procedure GazeStonesTarget(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e69"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_69"
+notes = "renamed from ovl12_e69 (ovl12:1CAD shows 'gazes...' on Who, draws the gaze line from Who to AttackTarget (res12_fn_1A29), lets a readied item with a NameNum of $76 turn it back on Who ('reflects it!', colour 12), then makes a stone save (SavingThrow kind 1) and DropFromFight with StatusStoned and 'is Stoned' (status 7 is stone, ovl12:0058 and ovl04:093D); matched at L2 (make match FN=ovl12_e69)); auto:entry_69"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl12:1E77"
 unit = "ovl12"
 addr = "ovl12:1E77"
-size = 292
-name = "ovl12_e70"
-signature = ""
+size = 683
+name = "GazeCharmsTarget"
+signature = "procedure GazeCharmsTarget(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e70"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_70"
+notes = "renamed from ovl12_e70 (ovl12:1E77 is the charm gaze: 'Gazes...' on Who, the gaze line to AttackTarget (res12_fn_1A29), ds681B 10, then the charm affect $0B ('is charmed', Data = Who's side in bit 7 plus $0C, negated by a fear save with bonus -2) and its handler at once (CallAffectHandler); the same walk and gaze as GazeStonesTarget (ovl12:1CAD) with a charm for the stone; matched at L2 (make match FN=ovl12_e70)); auto:entry_70"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:1F9B"
-unit = "ovl12"
-addr = "ovl12:1F9B"
-size = 103
-name = "ovl12_fn_1F9B"
-signature = ""
-c_name = "ovl12_fn_1F9B"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl12:2002"
 unit = "ovl12"
 addr = "ovl12:2002"
 size = 167
-name = "ovl12_fn_2002"
+name = "HighestLevelClass"
 signature = ""
 c_name = "ovl12_fn_2002"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl12_fn_2002 (nested in ovl12:2122 (DrainLevels): returns the class with the highest level, which DrainLevels reads for HighestLevel (+$73) and Experience (+$AC) at ovl12:235E..2383; the value it compares is ClassXpTable); auto:near_call; nested in DrainLevels (ovl12:2122), proven by the parent's match"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:20A9"
-unit = "ovl12"
-addr = "ovl12:20A9"
-size = 121
-name = "ovl12_fn_20A9"
-signature = ""
-c_name = "ovl12_fn_20A9"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:2122"
 unit = "ovl12"
 addr = "ovl12:2122"
-size = 117
-name = "ovl12_fn_2122"
-signature = ""
+size = 642
+name = "DrainLevels"
+signature = "procedure DrainLevels(Who: PCharacter; Count: Byte)"
 c_name = "ovl12_fn_2122"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl12_fn_2122 (message is drained with N levels or a level (res12_fn_16EC, pool 20DF..20FB), the victim goes dead forever or killed through DropFromFight, Count levels come off the highest class (ovl12:2122); callers ovl12:23A4 and ovl12:23C2 are not decompiled yet); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:2197"
-unit = "ovl12"
-addr = "ovl12:2197"
-size = 156
-name = "ovl12_fn_2197"
-signature = ""
-c_name = "ovl12_fn_2197"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:2233"
-unit = "ovl12"
-addr = "ovl12:2233"
-size = 89
-name = "ovl12_fn_2233"
-signature = ""
-c_name = "ovl12_fn_2233"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:228C"
-unit = "ovl12"
-addr = "ovl12:228C"
-size = 247
-name = "ovl12_fn_228C"
-signature = ""
-c_name = "ovl12_fn_228C"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:2383"
-unit = "ovl12"
-addr = "ovl12:2383"
-size = 33
-name = "ovl12_fn_2383"
-signature = ""
-c_name = "ovl12_fn_2383"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:23A4"
 unit = "ovl12"
 addr = "ovl12:23A4"
 size = 30
-name = "ovl12_e71"
-signature = ""
+name = "DrainAttackTargetLevel"
+signature = "procedure DrainAttackTargetLevel(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e71"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_71"
+notes = "renamed from ovl12_e71 (ovl12:23A4 calls DrainLevels(Who^.Combat^.Target, 1): an affect handler that drains one level from the character Who attacked last (the AttackTarget of BoostAttackAgainstTarget, ovl12:013B)); auto:entry_71"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4566,12 +4176,12 @@ id = "ovl12:23C2"
 unit = "ovl12"
 addr = "ovl12:23C2"
 size = 42
-name = "ovl12_e72"
-signature = ""
+name = "DrainAttackTargetTwoLevels"
+signature = "procedure DrainAttackTargetTwoLevels(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e72"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_72"
+notes = "renamed from ovl12_e72 (ovl12:23C2 calls DrainLevels(Who^.Combat^.Target, 2): the two-level twin of DrainAttackTargetLevel (ovl12:23A4), an affect handler that drains the character Who attacked last); auto:entry_72"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4579,12 +4189,12 @@ id = "ovl12:23EC"
 unit = "ovl12"
 addr = "ovl12:23EC"
 size = 164
-name = "ovl12_e73"
-signature = ""
+name = "CauseRotOnAttackTarget"
+signature = "procedure CauseRotOnAttackTarget(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e73"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_73"
+notes = "renamed from ovl12_e73 (ovl12:23EC gives AttackTarget (Who's Combat Target) the healing block AffectHealingBlock and then the rot AffectRot with stage RollDice(1,6) (ProgressRot reads the stage as Data div 16), shows 'is Diseased': an affect handler that inflicts a rot on the character Who attacked last); auto:entry_73"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4593,9 +4203,9 @@ unit = "ovl12"
 addr = "ovl12:2490"
 size = 73
 name = "ovl12_e74"
-signature = ""
+signature = "procedure ovl12_e74(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e74"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_74"
 evidence = ["prologue"]
@@ -4605,90 +4215,64 @@ id = "ovl12:24D9"
 unit = "ovl12"
 addr = "ovl12:24D9"
 size = 125
-name = "ovl12_e75"
-signature = ""
+name = "AddConstitutionSaveBonus"
+signature = "procedure AddConstitutionSaveBonus(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e75"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_75"
+notes = "renamed from ovl12_e75 (ovl12:24D9 adds to SaveRoll a bonus from Who's Constitution (TCharacter +$14, POOLVARS: 1 for 4..6 up to 5 for 18..20), only when SaveKind is 0 (the first save, SaveKindPoison [I])); auto:entry_75"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl12:2556"
 unit = "ovl12"
 addr = "ovl12:2556"
-size = 40
+size = 76
 name = "ovl12_e76"
-signature = ""
+signature = "procedure ovl12_e76(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e76"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_76"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:257E"
-unit = "ovl12"
-addr = "ovl12:257E"
-size = 36
-name = "ovl12_fn_257E"
-signature = ""
-c_name = "ovl12_fn_257E"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:25A2"
 unit = "ovl12"
 addr = "ovl12:25A2"
 size = 26
-name = "ovl12_e77"
+name = "HalveFireDamageNoSave"
 signature = ""
 c_name = "ovl12_e77"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_77"
+notes = "renamed from ovl12_e77 (ovl12:25A2 halves DamageAmount when DamageKind has the fire bit (KindFire); it is HalveFireDamage (ovl12:06E4) without the SaveRoll bonus; matched [V]); auto:entry_77"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl12:25BC"
 unit = "ovl12"
 addr = "ovl12:25BC"
-size = 13
-name = "ovl12_e78"
+size = 84
+name = "HalveDamageForFirstSlotItem"
 signature = ""
 c_name = "ovl12_e78"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_78"
+notes = "renamed from ovl12_e78 (ovl12:25BC halves DamageAmount when the first slot item of SelectedCharacter has bits of byte 7 of its RaceRow row (RaceRow[ItemType][7]); the affect that runs it is not known; matched [V]); auto:entry_78"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:25C9"
-unit = "ovl12"
-addr = "ovl12:25C9"
-size = 71
-name = "ovl12_fn_25C9"
-signature = ""
-c_name = "ovl12_fn_25C9"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:2610"
 unit = "ovl12"
 addr = "ovl12:2610"
 size = 59
-name = "ovl12_e79"
+name = "FallDeadIfInFight"
 signature = ""
 c_name = "ovl12_e79"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_79"
+notes = "renamed from ovl12_e79 (ovl12:2610 clears the affect's Flag and, when Who's Flag10D (combat participation, TCharacter +10D) is set, DropFromFight takes Who out with StatusGone and 'Falls dead'; matched [V]); auto:entry_79"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4696,12 +4280,12 @@ id = "ovl12:264B"
 unit = "ovl12"
 addr = "ovl12:264B"
 size = 63
-name = "ovl12_e80"
+name = "CancelDamageUnlessMagicSlotItem"
 signature = ""
 c_name = "ovl12_e80"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_80"
+notes = "renamed from ovl12_e80 (ovl12:264B sets DamageAmount to 0 unless the first slot item of SelectedCharacter is a magic item (Plus <> 0) or has NameNum[3] $B1 [?]; matched [V]); auto:entry_80"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4709,12 +4293,12 @@ id = "ovl12:268A"
 unit = "ovl12"
 addr = "ovl12:268A"
 size = 118
-name = "ovl12_e81"
+name = "AddConstitutionSaveBonusKind2Or4"
 signature = ""
 c_name = "ovl12_e81"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_81"
+notes = "renamed from ovl12_e81 (ovl12:268A adds the Constitution bonus of AddConstitutionSaveBonus (ovl12:24D9) to SaveRoll when SaveKind is 2 or 4 (4 is the fear save [I]); matched [V]); auto:entry_81"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4722,12 +4306,12 @@ id = "ovl12:2700"
 unit = "ovl12"
 addr = "ovl12:2700"
 size = 48
-name = "ovl12_e82"
+name = "RegainHitPoints"
 signature = ""
 c_name = "ovl12_e82"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_82"
+notes = "renamed from ovl12_e82 (ovl12:2700 adds RegainedHitPoints (3) to Flag11B, the current hit points (TCharacter +$11B), and caps it at HpMax (+$32); AffectHandlers shape, Affect and Mode not read); auto:entry_82"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4735,12 +4319,12 @@ id = "ovl12:2730"
 unit = "ovl12"
 addr = "ovl12:2730"
 size = 169
-name = "ovl12_e83"
+name = "ReviveDyingCharacter"
 signature = ""
 c_name = "ovl12_e83"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_83"
+notes = "renamed from ovl12_e83 (ovl12:2730 revives a dying (Status 5) or unconscious (Status 4) character with the hit points left after its DyingRounds (TCombatant +$E) via ReviveCombatant (ovl24:1869), then gives affect $5F and removes its own affect $63 (RemoveAffect with the Affect)); auto:entry_83"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4748,12 +4332,12 @@ id = "ovl12:27D9"
 unit = "ovl12"
 addr = "ovl12:27D9"
 size = 59
-name = "ovl12_e84"
+name = "GiveAffectUnlessFireOrAcid"
 signature = ""
 c_name = "ovl12_e84"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_84"
+notes = "renamed from ovl12_e84 (ovl12:27D9 adds affect $66 for RollDice(3, 6) rounds unless DamageKind has the fire bit (1) or the acid bit ($10), POOLVARS DamageKind); auto:entry_84"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4761,12 +4345,12 @@ id = "ovl12:2814"
 unit = "ovl12"
 addr = "ovl12:2814"
 size = 82
-name = "ovl12_e85"
+name = "GiveRegeneratingUnlessAffected"
 signature = ""
 c_name = "ovl12_e85"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_85"
+notes = "renamed from ovl12_e85 (ovl12:2814 gives affect $3B (Regenerating, named in ovl15:0FBC) for 3 rounds unless res12_fn_2199 finds affect $62 or $3B on Who); auto:entry_85"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4774,12 +4358,12 @@ id = "ovl12:2866"
 unit = "ovl12"
 addr = "ovl12:2866"
 size = 89
-name = "ovl12_e86"
+name = "RetryRevivalAtFullHitPoints"
 signature = ""
 c_name = "ovl12_e86"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_86"
+notes = "renamed from ovl12_e86 (ovl12:2866 calls ReviveCombatant with Who's HpMax (+$32); when it fails it stores TryAddAffect of affect $66 for 1 round with the Data of Affect, the result never read); auto:entry_86"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4787,12 +4371,12 @@ id = "ovl12:28BF"
 unit = "ovl12"
 addr = "ovl12:28BF"
 size = 66
-name = "ovl12_e87"
+name = "TurnGaseousAndEscape"
 signature = ""
 c_name = "ovl12_e87"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_87"
+notes = "renamed from ovl12_e87 (ovl12:28BF clears the Flag of the affect, shows the cursor on Who (ShowCursorOn, ovl31:1298) and drops Who with Status 3 (fled, ovl05:050D) and the text 'Turns gaseous and escapes' (DropCombatant, ovl24:0F06)); auto:entry_87"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4800,12 +4384,12 @@ id = "ovl12:2901"
 unit = "ovl12"
 addr = "ovl12:2901"
 size = 20
-name = "ovl12_e88"
+name = "AvoidDistantAttackByChance"
 signature = ""
 c_name = "ovl12_e88"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_88"
+notes = "renamed from ovl12_e88 (ovl12:2901 is an affect handler (AffectHandlers shape, nothing read): it calls AvoidDistantAttack (ovl12:0FAC) for Who with chance 60; which affect runs it is not known); auto:entry_88"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4813,12 +4397,12 @@ id = "ovl12:2915"
 unit = "ovl12"
 addr = "ovl12:2915"
 size = 97
-name = "ovl12_fn_2915"
+name = "CancelHookOnChance"
 signature = ""
 c_name = "ovl12_fn_2915"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl12_fn_2915 (ovl12:2915 (callers ovl12:2976 and 2984): with a hook offered (HookAffectId) or magic damage (DamageKind bit 8), a 1d100 roll at or below Chance less 5 for each point that res12_fn_26C2 of ds681B falls short of 11 cancels the hook (CancelPendingHook 0)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4826,12 +4410,12 @@ id = "ovl12:2976"
 unit = "ovl12"
 addr = "ovl12:2976"
 size = 14
-name = "ovl12_e89"
+name = "CancelHookByHalfChance"
 signature = ""
 c_name = "ovl12_e89"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_89"
+notes = "renamed from ovl12_e89 (ovl12:2976 is an affect handler (AffectHandlers shape, nothing read) that calls CancelHookOnChance (ovl12:2915) with chance 50; which affect runs it is not known); auto:entry_89"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4839,12 +4423,12 @@ id = "ovl12:2984"
 unit = "ovl12"
 addr = "ovl12:2984"
 size = 14
-name = "ovl12_e90"
+name = "CancelHookByLowChance"
 signature = ""
 c_name = "ovl12_e90"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_90"
+notes = "renamed from ovl12_e90 (ovl12:2984 is an affect handler (AffectHandlers shape, nothing read) that calls CancelHookOnChance (ovl12:2915) with chance 15; which affect runs it is not known); auto:entry_90"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4852,12 +4436,12 @@ id = "ovl12:2992"
 unit = "ovl12"
 addr = "ovl12:2992"
 size = 36
-name = "ovl12_e91"
+name = "CancelCharmAndUnknown35HighChance"
 signature = ""
 c_name = "ovl12_e91"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_91"
+notes = "renamed from ovl12_e91 (ovl12:2992 is an affect handler (AffectHandlers shape, nothing read): a 1d100 roll at or below 90 cancels the offered hooks of affect $35 and of the charm (affect $0B) (CancelPendingHook); which affect runs it is not known); auto:entry_91"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4865,12 +4449,12 @@ id = "ovl12:29B6"
 unit = "ovl12"
 addr = "ovl12:29B6"
 size = 21
-name = "ovl12_e92"
+name = "CancelCharmAndUnknown35"
 signature = ""
 c_name = "ovl12_e92"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_92"
+notes = "renamed from ovl12_e92 (ovl12:29B6 is an affect handler (AffectHandlers shape, nothing read) that cancels the offered hooks of the charm (affect $0B) and of affect $35 (CancelPendingHook) without a roll; which affect runs it is not known); auto:entry_92"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4878,12 +4462,12 @@ id = "ovl12:29CB"
 unit = "ovl12"
 addr = "ovl12:29CB"
 size = 14
-name = "ovl12_e93"
+name = "CancelParalysisHook"
 signature = ""
 c_name = "ovl12_e93"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_93"
+notes = "renamed from ovl12_e93 (ovl12:29CB is an affect handler whose whole body is CancelPendingHook(AffectParalysis) (ovl12:29CB, matched)); auto:entry_93"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4891,12 +4475,12 @@ id = "ovl12:29D9"
 unit = "ovl12"
 addr = "ovl12:29D9"
 size = 23
-name = "ovl12_e94"
+name = "CancelColdDamage"
 signature = ""
 c_name = "ovl12_e94"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_94"
+notes = "renamed from ovl12_e94 (ovl12:29D9 tests DamageKind bit 2 (KindCold, ds6819 and 2) and then calls CancelPendingHook(0), which drops the damage (ovl12:29D9, matched)); auto:entry_94"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4904,12 +4488,12 @@ id = "ovl12:29F0"
 unit = "ovl12"
 addr = "ovl12:29F0"
 size = 33
-name = "ovl12_e95"
+name = "CancelPoisonAndParalysisHooks"
 signature = ""
 c_name = "ovl12_e95"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_95"
+notes = "renamed from ovl12_e95 (ovl12:29F0 calls CancelPendingHook(AffectPoisoned) and CancelPendingHook(AffectParalysis), then sets SaveRoll to 100 when SaveKind is 0 (the poison save, ovl12:2A01)); auto:entry_95"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4917,12 +4501,12 @@ id = "ovl12:2A11"
 unit = "ovl12"
 addr = "ovl12:2A11"
 size = 23
-name = "ovl12_e96"
+name = "CancelFireDamage"
 signature = ""
 c_name = "ovl12_e96"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_96"
+notes = "renamed from ovl12_e96 (ovl12:2A11 tests DamageKind bit 1 (KindFire, ds6819 and 1) and then calls CancelPendingHook(0), which drops the damage (ovl12:2A11, matched)); auto:entry_96"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4930,12 +4514,12 @@ id = "ovl12:2A28"
 unit = "ovl12"
 addr = "ovl12:2A28"
 size = 69
-name = "ovl12_e97"
+name = "ReduceFireDamageOnePerDie"
 signature = ""
 c_name = "ovl12_e97"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_97"
+notes = "renamed from ovl12_e97 (ovl12:2A28 is the loop of ReduceFireDamageByRoll (ovl12:1490) with Dec(DamageAmount) (one point, fe 0e 18 68) per die of ds681C, and no save bonus or cancel); auto:entry_97"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4943,12 +4527,12 @@ id = "ovl12:2A6D"
 unit = "ovl12"
 addr = "ovl12:2A6D"
 size = 26
-name = "ovl12_e98"
+name = "HalveElectricityDamage"
 signature = ""
 c_name = "ovl12_e98"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_98"
+notes = "renamed from ovl12_e98 (ovl12:2A6D tests DamageKind bit 4 (KindElectricity, ds6819 and 4) and halves DamageAmount (shr 1), the electricity twin of HalveColdDamage (ovl12:03E1)); auto:entry_98"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4956,12 +4540,12 @@ id = "ovl12:2A87"
 unit = "ovl12"
 addr = "ovl12:2A87"
 size = 95
-name = "ovl12_e99"
+name = "HalveDamageByFirstSlotItemRow"
 signature = ""
 c_name = "ovl12_e99"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_99"
+notes = "renamed from ovl12_e99 (ovl12:2A87 takes FirstSlotItem(SelectedCharacter) and, when there is one, halves DamageAmount when its RaceRow byte 7 (DS:5589) is 0 or odd; the frame and the caller-less entry match HalveDamageForFirstSlotItem (ovl12:25BC)); auto:entry_99"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4969,12 +4553,12 @@ id = "ovl12:2AE6"
 unit = "ovl12"
 addr = "ovl12:2AE6"
 size = 58
-name = "ovl12_e100"
-signature = ""
+name = "HalveDamageForEnchantedSlotItem"
+signature = "procedure HalveDamageForEnchantedSlotItem(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e100"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_100"
+notes = "renamed from ovl12_e100 (ovl12:2AE6 takes FirstSlotItem(SelectedCharacter) and halves DamageAmount when that item's Plus (+$32, a signed byte, compared with jle) is above 0; the same frame and caller-less entry as the other damage hooks); auto:entry_100"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4982,77 +4566,51 @@ id = "ovl12:2B20"
 unit = "ovl12"
 addr = "ovl12:2B20"
 size = 67
-name = "ovl12_e101"
-signature = ""
+name = "SetDamageFromSlotItemType55"
+signature = "procedure SetDamageFromSlotItemType55(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e101"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_101"
+notes = "renamed from ovl12_e101 (ovl12:2B20 reads SelectedCharacter^.SlotItems[0] and, when its ItemType is $55, sets DamageAmount to RollDiceCounted(1, 6) + 1; the item type's name is not known); auto:entry_101"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl12:2B63"
 unit = "ovl12"
 addr = "ovl12:2B63"
-size = 12
-name = "ovl12_e102"
-signature = ""
+size = 26
+name = "HalveColdDamageNoSave"
+signature = "procedure HalveColdDamageNoSave(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e102"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_102"
+notes = "renamed from ovl12_e102 (ovl12:2B63 halves DamageAmount while DamageKind has KindCold (bit 2); it is HalveColdDamage (ovl12:03E1) without the SaveRoll bonus, the cold twin of HalveFireDamageNoSave (ovl12:25A2)); auto:entry_102"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:2B6F"
-unit = "ovl12"
-addr = "ovl12:2B6F"
-size = 14
-name = "ovl12_fn_2B6F"
-signature = ""
-c_name = "ovl12_fn_2B6F"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl12:2B7D"
 unit = "ovl12"
 addr = "ovl12:2B7D"
-size = 14
-name = "ovl12_e103"
-signature = ""
+size = 75
+name = "CancelDamageUnlessEnchantedSlotItem"
+signature = "procedure CancelDamageUnlessEnchantedSlotItem(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e103"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_103"
+notes = "renamed from ovl12_e103 (ovl12:2B7D cancels DamageAmount unless FirstSlotItem(SelectedCharacter) exists with Plus not 0, and then only when Race (+$2E) is above 0 or HighestLevel (+$73) is below 4; the name gives the first exception, the comment the second); auto:entry_103"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:2B8B"
-unit = "ovl12"
-addr = "ovl12:2B8B"
-size = 61
-name = "ovl12_fn_2B8B"
-signature = ""
-c_name = "ovl12_fn_2B8B"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:2BC8"
 unit = "ovl12"
 addr = "ovl12:2BC8"
 size = 84
-name = "ovl12_e104"
+name = "AvoidDistantAttackForItemType57Or58"
 signature = ""
 c_name = "ovl12_e104"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_104"
+notes = "renamed from ovl12_e104 (ovl12:2BC8 calls AvoidDistantAttack (ovl12:0FAC, chance 50) only when SelectedCharacter's first slot item (SlotItems[0]) has ItemType $57 or $58; an affect handler, no direct caller); auto:entry_104"
 evidence = ["prologue"]
 
 [[routine]]
@@ -5060,51 +4618,38 @@ id = "ovl12:2C1C"
 unit = "ovl12"
 addr = "ovl12:2C1C"
 size = 284
-name = "ovl12_e105"
+name = "SpitAcidAtTarget"
 signature = ""
 c_name = "ovl12_e105"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_105"
+notes = "renamed from ovl12_e105 (ovl12:2C1C shows 'Spits Acid' on Who (string in the pool at ovl12:2C11), draws the spit to Who's combat target and deals 8d4 to it with a half-on-save; a handler, no direct caller); auto:entry_105"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl12:2D38"
 unit = "ovl12"
 addr = "ovl12:2D38"
-size = 1
-name = "ovl12_e106"
+size = 80
+name = "SetDamageFromSlotItemType56"
 signature = ""
 c_name = "ovl12_e106"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_106"
+notes = "renamed from ovl12_e106 (ovl12:2D38 sets DamageAmount to 3d8 (RollDiceCounted 3, 8) when SelectedCharacter's first slot item has ItemType $56, the sibling of SetDamageFromSlotItemType55 (ovl12:2B20); no direct caller); auto:entry_106"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:2D39"
-unit = "ovl12"
-addr = "ovl12:2D39"
-size = 79
-name = "ovl12_fn_2D39"
-signature = ""
-c_name = "ovl12_fn_2D39"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:2D88"
 unit = "ovl12"
 addr = "ovl12:2D88"
 size = 92
-name = "ovl12_e107"
+name = "HalveOrCancelDamageForUnenchantedSlotItem"
 signature = ""
 c_name = "ovl12_e107"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_107"
+notes = "renamed from ovl12_e107 (ovl12:2D88 halves DamageAmount for a first slot item with Plus 0 and NameNum[3] $B1 (SlotItemNameNum3), cancels it for other Plus-0 items and with no item, and leaves it for Plus not 0; no direct caller); auto:entry_107"
 evidence = ["prologue"]
 
 [[routine]]
@@ -5112,12 +4657,12 @@ id = "ovl12:2DE4"
 unit = "ovl12"
 addr = "ovl12:2DE4"
 size = 36
-name = "ovl12_e108"
+name = "CancelCharmAndUnknown35ModerateChance"
 signature = ""
 c_name = "ovl12_e108"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_108"
+notes = "renamed from ovl12_e108 (ovl12:2DE4 cancels the hooks of the charm (AffectCharm) and of AffectUnknown35 when a 1d100 roll is at or below 30; the sibling of CancelCharmAndUnknown35HighChance (ovl12:2992, 90), no direct caller); auto:entry_108"
 evidence = ["prologue"]
 
 [[routine]]
@@ -5125,12 +4670,12 @@ id = "ovl12:2E08"
 unit = "ovl12"
 addr = "ovl12:2E08"
 size = 47
-name = "ovl12_e109"
+name = "CancelCharmUnknown35PoisonAndParalysisHooks"
 signature = ""
 c_name = "ovl12_e109"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_109"
+notes = "renamed from ovl12_e109 (ovl12:2E08 cancels the hooks of affects /bin/zshB (charm), , (paralysis) and (poison) with CancelPendingHook, then sets SaveRoll to AlwaysSaves when SaveKind is the poison save (SaveKind 0)); auto:entry_109"
 evidence = ["prologue"]
 
 [[routine]]
@@ -5138,103 +4683,64 @@ id = "ovl12:2E37"
 unit = "ovl12"
 addr = "ovl12:2E37"
 size = 163
-name = "ovl12_e110"
+name = "SetFlagIfTargetReflects"
 signature = ""
 c_name = "ovl12_e110"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_110"
+notes = "renamed from ovl12_e110 (ovl12:2E37 walks the readied items (+$34) of AttackTarget and sets ds681E when one of their names is ReflectingNameNum $76 (the item that turns a gaze back, GazeStonesTarget ovl12:1CAD)); auto:entry_110"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl12:2EDA"
 unit = "ovl12"
 addr = "ovl12:2EDA"
-size = 16
-name = "ovl12_e111"
+size = 125
+name = "ApplyItemSecondAffect"
 signature = ""
 c_name = "ovl12_e111"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_111"
+notes = "renamed from ovl12_e111 (ovl12:2EDA gives Who the affect named by Item^.Affects[2] (+$3D of TMenuLine) with AddAffect and CallAffectHandler for Mode 0 and removes it with RemoveAffect otherwise; its Affect parameter is read as an item); auto:entry_111"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:2EEA"
-unit = "ovl12"
-addr = "ovl12:2EEA"
-size = 109
-name = "ovl12_fn_2EEA"
-signature = ""
-c_name = "ovl12_fn_2EEA"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:2F57"
 unit = "ovl12"
 addr = "ovl12:2F57"
-size = 36
-name = "ovl12_e112"
+size = 334
+name = "GiveExceptionalStrength"
 signature = ""
 c_name = "ovl12_e112"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:far_call"
+notes = "renamed from ovl12_e112 (ovl12:2F57 raises Who to 18/100 with RaiseStrength (ovl24:115C) and adds affect $26 (AffectStrength2) when applied; any other Mode removes a $26 strength affect (DecodeStrength, ovl24:110D) and shows nothing); auto:far_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:2F7B"
-unit = "ovl12"
-addr = "ovl12:2F7B"
-size = 298
-name = "ovl12_fn_2F7B"
-signature = ""
-c_name = "ovl12_fn_2F7B"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:30A5"
 unit = "ovl12"
 addr = "ovl12:30A5"
-size = 86
+size = 143
 name = "ovl12_e113"
 signature = ""
 c_name = "ovl12_e113"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_113"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:30FB"
-unit = "ovl12"
-addr = "ovl12:30FB"
-size = 57
-name = "ovl12_fn_30FB"
-signature = ""
-c_name = "ovl12_fn_30FB"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:3134"
 unit = "ovl12"
 addr = "ovl12:3134"
 size = 70
-name = "ovl12_e114"
+name = "ShowMustHaveGiantStrength"
 signature = ""
 c_name = "ovl12_e114"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_114"
+notes = "renamed from ovl12_e114 (ovl12:3134 shows 'Must have Giant Strength' (res12_fn_1693 with the literal) when Who's Strength is below 19; the handler's own effect is that message); auto:entry_114"
 evidence = ["prologue"]
 
 [[routine]]
@@ -5242,12 +4748,12 @@ id = "ovl12:317A"
 unit = "ovl12"
 addr = "ovl12:317A"
 size = 33
-name = "ovl12_e115"
+name = "RemoveAffect17WhenRemoved"
 signature = ""
 c_name = "ovl12_e115"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_115"
+notes = "renamed from ovl12_e115 (ovl12:317A calls RemoveAffect(Who, $17, nil) only when Mode is not 0, the removal of the affect (table entry 137, affect $89)); auto:entry_115"
 evidence = ["prologue"]
 
 [[routine]]
@@ -5258,7 +4764,7 @@ size = 7
 name = "ovl12_e116"
 signature = ""
 c_name = "ovl12_e116"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_116"
 evidence = ["prologue"]
@@ -5267,53 +4773,14 @@ evidence = ["prologue"]
 id = "ovl12:31A2"
 unit = "ovl12"
 addr = "ovl12:31A2"
-size = 53
+size = 1799
 name = "ovl12_e1"
 signature = ""
 c_name = "ovl12_e1"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_1"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:31D7"
-unit = "ovl12"
-addr = "ovl12:31D7"
-size = 139
-name = "ovl12_fn_31D7"
-signature = ""
-c_name = "ovl12_fn_31D7"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:3262"
-unit = "ovl12"
-addr = "ovl12:3262"
-size = 1222
-name = "ovl12_fn_3262"
-signature = ""
-c_name = "ovl12_fn_3262"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:3728"
-unit = "ovl12"
-addr = "ovl12:3728"
-size = 385
-name = "ovl12_fn_3728"
-signature = ""
-c_name = "ovl12_fn_3728"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:38A9"
@@ -5323,7 +4790,7 @@ size = 5
 name = "ovl12_init"
 signature = ""
 c_name = "ovl12_init"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_0"
 evidence = ["prologue"]

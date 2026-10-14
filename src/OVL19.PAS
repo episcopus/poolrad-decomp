@@ -1,6 +1,6 @@
 unit OVL19;
 { Inventory: the party's carried-item menus and selection/transfer routines (whitepaper 5.4; strings at ovl19:0AB3). }
-{$A-,O+,F+,S-,R-,G-,I-}
+{$A-,O+,F+,S-,R-,G-,I-,L-}
 interface
 uses POOLVARS;
 procedure ShowCharacterSheet;

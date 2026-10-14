@@ -761,6 +761,11 @@ name = "AffectHandlers"
 evidence = "the far procedure table CallAffectHandler calls by affect id (lcall [di+6828h], ovl24:001E)"
 
 [[global]]
+offset = 0x6826
+name = "AttackTarget"
+evidence = "BoostAttackAgainstTarget (ovl12:013B) stores Who's combat Target here (a far pointer, ovl12:0147..014E); its segment word is DS:6828, where AffectHandlers starts"
+
+[[global]]
 offset = 0x5374
 name = "SoundDriverIdle"
 evidence = "SetSoundDriverIdle stores it (08AE:01CB); nonzero: the timer driver is stopped and PlaySound runs it only around one sound, waiting 0.1 s (08AE:00E9, 0156); StartGame sets 100 (ovl11)"
@@ -1100,3 +1105,8 @@ evidence = "ovl16:4235 pushes ds08B6[Class] as RollDice's Count and ds08BE[Class
 offset = 0x08BE
 name = "ClassHitDieSides"
 evidence = "ovl16:4235 pushes ds08BE[Class] as RollDice's Sides and raises a first-level roll to (ds08BE[Class] * 2) div 3; the image at DS:08BE holds 8,8,10,10,8,4,6,4 sides (its entry 7 is the first byte of the CHEAD suffix table ds08C5)"
+
+[[global]]
+offset = 0x681C
+name = "LastDiceCount"
+evidence = "the dice count of the last RollDiceCounted roll (ovl24:0E37 stores it); ovl12:2D38 adds it to DamageAmount for fire or magic damage"

@@ -5,7 +5,7 @@ unit OVL09;
   panicking) and attacks (UseBestItem, the ovl13 attack routines), with ScoreItem rating the
   items for the item step, and HandleCombatKey and CheckMorale as the interruptions.
   Complete: make match UNIT=ovl09 says unit: complete (14 routines and one proven nested). }
-{$A-,O+,F+,S-,R-,G-,I-}
+{$A-,O+,F+,S-,R-,G-,I-,L-}
 interface
 uses POOLVARS;
 procedure QuickTurn(Who: PCharacter);

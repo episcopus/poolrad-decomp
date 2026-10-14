@@ -6,7 +6,7 @@ unit OVL07;
   GetCharacterVar and SetCharacterVar overlay the selected character's fields on the second block.
   It also loads the script (LoadEcl), resets the machine for a new area, shows the HEAD and BODY
   pictures (ShowHeadBody) and asks the menus and questions the scripts pose. }
-{$A-,O+,F+,S-,R-,G-,I-}
+{$A-,O+,F+,S-,R-,G-,I-,L-}
 interface
 uses POOLVARS, RES05, RES06;
 type

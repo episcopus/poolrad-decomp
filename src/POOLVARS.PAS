@@ -209,12 +209,17 @@ type
       QuickTurn and MoveStep reroll it (ovl09:000F, 07F2). }
     StepPattern: Byte;
   end;
-  { One $13-byte record of the list at DS:6DBB (FreeMem size, ovl08:0029); only Next is known. }
+  { One $13-byte record of the list at DS:6DBB (FreeMem size, ovl08:0029): a cloud on the combat map
+    (ovl12:0CC3). Its centre is (X, Y); arm i is one step from it in direction ds290D[i], and Tiles[i]
+    is the tile that arm covered before the cloud came. }
   PCombatNode = ^TCombatNode;
   TCombatNode = record
-    Pad0: array[0..3] of Byte;
+    Owner: PCharacter;            { +$0: the character the cloud belongs to }
     Next: PCombatNode;            { +$4 }
-    Pad8: array[8..$12] of Byte;
+    Tiles: array[1..4] of Byte;   { +$8..$B: the tile each arm covered }
+    Arms: array[1..4] of Byte;    { +$C..$F: nonzero while the arm is still in place }
+    X, Y: ShortInt;               { +$10, +$11: the centre cell }
+    Kind: Byte;                   { +$12: the high nibble of the Data of the affect that made it }
   end;
   { One 16-byte row of the spell table DS:320A (SpellTable): RecalcClassStats reads the class
     and the level (ovl23:0110, 0119); the other bytes are not known yet. }
@@ -533,6 +538,16 @@ var
   { The 13 code wheel records of the copy protection (whitepaper 5.12): the answer, the rune
     indices and the path pattern. CheckCodeWheel picks one at random. }
   ds0000: array[0..12] of TCodeWheelEntry;  { the code wheel records; see above }
+  { Five 16-byte names at DS:0332 (rows 0 to 4; row 0 is the index base and is never read). The rows 1 to 4
+    are the names the affect handler at ovl12:0679 compares with the attacked character's name; their text
+    is not read yet [?]. }
+  ds0332: array[0..4] of string[15];
+  { Eight 16-byte names at DS:0382 (rows 1 to 8), directly after ds0332: the names the affect handler at ovl12:0947
+    compares with the attacked character's name. Their text is not read yet [?]. }
+  ds0382: array[1..8] of string[15];
+  { Eight 16-byte names at DS:0402 (rows 1 to 8), directly after ds0382: the names the affect handler at ovl12:11F9
+    compares with the attacked character's name. Their text is not read yet [?]. }
+  ds0402: array[1..8] of string[15];
   ds04DF: string[40];             { prompt string HandleWildernessKeys passes to ReadPromptChoice; filled elsewhere }
   { One bit per class 0..7 (the value is added to a class-bit mask): ovl16:29AE builds the character's
     class bits from the classes with a level above 0 (DS:05DE[ClassLevels]) and the bits it may train. }
@@ -962,7 +977,7 @@ var
   ds0D02: array[0..15] of Byte;   { four 2-bit pixels of colour C; see above }
   ds0D06: array[0..15] of Byte;   { two 4-bit pixels of colour C (C * $11); see above }
   { Globals of the combat unit ovl08 (whitepaper 5.5). }
-  ds6DBB: PCombatNode;            { a list of $13-byte records EndCombat frees (ovl08:0006); meaning unknown }
+  ds6DBB: PCombatNode;            { the list of clouds (TCombatNode): EndCombat frees them (ovl08:0006); ovl12:0CC3 }
   ItemAffectUse: Boolean;         { True while the Use action (UseItem, ovl19:1BC2..1BE2) casts a spell through ovl22_e5,
                                     and set (ovl19:1AE7) for an item whose Affects[2] gives the spell (not a scroll);
                                     what ovl22_e5 does with it is not known yet. 0 in the spell setup paths
@@ -979,6 +994,9 @@ var
     OpposingSide side of the actor (UseMagicItem, CastMemorizedSpell, ovl09:049F, 05C6). }
   ds6814Sides: array[0..1] of Byte absolute ds6814;
   ds6825: Byte;                   { AI morale scratch (CheckMorale computes it from B84, compares percentages) }
+  { The character Who attacked last (Who^.Combat^.Target), copied by BoostAttackAgainstTarget (ovl12:013B).
+    A far pointer: its segment word is DS:6828, the start of AffectHandlers, which overlaps it. }
+  AttackTarget: PCharacter;
   ds6E2F: Byte;                   { byte CheckMorale copies into ds6825; meaning unknown }
   ds6E30: Boolean;                { the Alt-M Magic On/Off toggle of the combat keys (ovl08:04A7) }
   ds6E31: Byte;                   { the key flag the ovl08 menus pass to ReadPromptChoice }
@@ -1006,6 +1024,8 @@ var
     at DS:409B: ovl16:29AE reads ds409B[class, level+1] (the next level's threshold) and
     ds409B[class, level+2] (that of the level after, 0 when the class is capped). }
   ds409B: array[0..7, 0..13] of LongInt;
+  { ClassXpTable is the same storage under the name ovl12:2122 uses (the nested routine for the highest class level). }
+  ClassXpTable: array[0..7, 0..13] of LongInt absolute ds409B;
   ds40BC: Byte;                   { the byte before ClericSlotTable; see above }
   ClericSlotTable: array[0..12, 1..3] of Byte;  { cleric spell slots of levels 1..3 per cleric level }
   ds41D4: Byte;                   { the byte before MageSlotTable; see above }
@@ -1034,9 +1054,21 @@ var
   HookAffectId: Byte;             { the affect ApplyAffect offers to the hooks; 0 afterwards: unaffected (ovl24:1672) }
   DamageAmount: Byte;             { the damage DealDamage offers to the hooks and then deals (ovl24:134E) }
   DamageKind: Byte;               { the kind of damage: 1 fire, 2 cold, 4 electricity, $10 acid, bit 3 magic (ovl24:13E4) }
-  ds681C: Byte;                   { the dice count of the last RollDiceCounted roll (ovl24:0E37) }
-  ds6821: Byte;                   { nonzero: the Items window is drawn even if its flag is clear (ovl19:1194) }
+  ds681A: Byte;                   { shl 1 every time ovl12:0C4B runs, shr 1 in ovl12:10C1; no other use known [?] }
+  { Purpose unknown: ovl12:064E clears DamageAmount when this byte is $0F; ovl12:2556 cancels the damage hook then too;
+    ovl12:09C0 (ImageAbsorbsHit) needs it above 0. }
+  ds681B: Byte;
+  LastDiceCount: Byte;            { the dice count of the last RollDiceCounted roll (ovl24:0E37) }
+  ds681D: Byte;                   { Purpose unknown [?]: ovl12:1452 (ovl12_e48) clears ds681A while it is not 0 }
+  ds681E: Byte;                   { set to 1 by ovl12:0918 and ovl12:0C26 (turn pending); nothing reads it yet [?] }
+  { Purpose unknown: ovl12:09C0 (ImageAbsorbsHit) lets an image take a hit only while this byte is 0;
+    nothing else reads it yet [?]. }
+  ds6820: Byte;
+  { Set to 1 by ovl12:2F57 when it adds a strength affect; nonzero: the Items window is drawn even if
+    its flag is clear (ovl19:1194). }
+  ds6821: Byte;
   AttackRoll: ShortInt;           { the d20 attack or resistance roll (20 counts 100) the hooks may change (ovl24:0C63) }
+  ds6823: Byte;                   { decremented every time an attack is avoided (ovl12:0FAC); meaning unknown [?] }
   SaveKind: Byte;                 { the saving throw kind SavingThrow offers to the hooks (ovl24:0DAD) }
   { The handler of every affect number, called through CallAffectHandler (ovl24:001E); extent unknown. Entry 0
     is not a handler: SaveKind lies in it. }
@@ -1061,6 +1093,9 @@ var
     the next pending spell's level resets it to three times that level (ovl20:0B80..0B91). }
   RestStudyCountdowns: array[0..6] of Byte;
   ds6DD8: Word;                   { cleared when the camp opens (ovl15:1E80); meaning unknown }
+  { The direction of each cloud arm 1..4 (ovl12:0CC3): DirStepX[ds290D[Arm]] and DirStepY[ds290D[Arm]] give the
+    arm's step from the centre. The values are not read yet [?]. }
+  ds290D: array[0..4] of Byte;
   { The spell names, string[40] per spell 1..$38 at DS:2912 ('Bless' .. 'Restoration' in the image,
     the rows of SpellTable); entry 0 is the index base (ovl15:10EE), never read. }
   SpellNames: array[0..$38] of string[40];

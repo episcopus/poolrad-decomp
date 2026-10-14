@@ -6,7 +6,7 @@ unit OVL05;
   computer-run members take their share of the money; ShowBattleResult shows the result and the
   experience; TreasureMenu (View Take Pool Share Detect Exit) hands out the loot, with TakeTreasure,
   TakeLootItems and ChooseLootItem for the items. A destroyed party gets "The END!" instead. }
-{$A-,O+,F+,S-,R-,G-,I-}
+{$A-,O+,F+,S-,R-,G-,I-,L-}
 interface
 uses POOLVARS;
 procedure ComputeBattleExperience(var Xp: LongInt);
