@@ -12,7 +12,7 @@ procedure ovl20_e1(Amount: Byte; Index: ShortInt);
 procedure SpendRestTime(Amount: Byte; Index: ShortInt);
 function TwoDigitText(Number: Byte): String40;
 procedure ShowRestTime(Selected: ShortInt);
-function ovl20_fn_0721: Byte;
+function RestTimeMenu: Byte;
 procedure CheckRestHealing;
 function ProcessMemorizedSpell(Who: PCharacter; var Handled: Byte): Byte;
 function ProcessPendingScribedSpell(Who: PCharacter; var Handled: Byte): Byte;
@@ -37,7 +37,10 @@ const
   RestMessageRow = $13;
   RestMessageColour = 15;
   RestStepsPerSpellLevel = 3; { ovl20:0B80 multiplies the returned level by three }
-  RestMenuInitialSelection = 2;
+  RestMenuInitialSelection = 2; { the minutes field, which RestTimeMenu starts on and wraps to }
+  RestHoursField = 3;           { RestTime digit of the hours, the field after the minutes }
+  RestDaysField = 4;            { RestTime digit of the days, the last field }
+  RestMinuteStep = 5;           { Inc and Dec on the minutes field move five minutes }
   RestTitleColour = 13;
   RestWordColour = 10;
   RestHotColour = 15;
@@ -184,8 +187,70 @@ begin
   end;
   DrawTextAt(Col + 1, RestRow, Colors[2], TwoDigitText(10 * RestTime[2] + RestTime[1]));
 end;
-{ ovl20:0721: retf 0, 46 bytes of locals; the rest-menu draft and five failed match attempts are in re/symbols.toml. }
-{@stub} function ovl20_fn_0721: Byte; begin end;
+{ ovl20:0721: retf 0, 46 bytes of locals. The rest menu: "Rest daYs Hours Mins Inc Dec Exit" under the
+  rest time line, until the player picks Rest (result 1) or Exit or Escape (result 0). Selected is the
+  RestTime field being changed (2 minutes, 3 hours, 4 days), drawn highlighted by ShowRestTime. Y, H and
+  M choose the field; the left and right arrows move between the fields (wrapping); Inc and Dec, or the
+  up and down arrows, change it (five minutes at a time on the minutes field, through SpendRestTime for
+  a decrease) and NormalizeRestTime carries the clock. Enter is Rest. Any other extended key does
+  nothing. Matched from the expert's diagnosis (case-e3e08f09): the R arm sets the result and falls
+  through to the until test, which ends the loop (07D5 jumps to 083D, not to the epilogue). }
+function RestTimeMenu: Byte;
+var
+  ExtendedKey: Byte;
+  Key: Char;
+  Selected: ShortInt;
+begin
+  RestTimeMenu := 0;
+  Selected := RestMenuInitialSelection;
+  repeat
+    ShowRestTime(Selected);
+    Key := ReadPromptChoice('', 'Rest   daYs Hours Mins   Inc Dec   Exit',
+                            RestTitleColour, RestWordColour, RestHotColour, 1, 0, ExtendedKey);
+    if ExtendedKey <> 0 then
+      case Key of
+        'H': Key := 'I';
+        'P': Key := 'D';
+        'K':
+          begin
+            Inc(Selected);
+            if Selected > RestDaysField then Selected := RestMenuInitialSelection;
+            Key := 'X';
+          end;
+        'M':
+          begin
+            Dec(Selected);
+            if Selected < RestMenuInitialSelection then Selected := RestDaysField;
+            Key := 'X';
+          end;
+      else
+        Key := 'X';
+      end;
+    if Key = #13 then Key := 'R';
+    case Key of
+      'R': RestTimeMenu := 1;
+      'Y': Selected := RestDaysField;
+      'H': Selected := RestHoursField;
+      'M': Selected := RestMenuInitialSelection;
+      'I':
+        begin
+          if Selected = RestMenuInitialSelection then
+            Inc(RestTime[1], RestMinuteStep)
+          else
+            Inc(RestTime[Selected]);
+          NormalizeRestTime;
+        end;
+      'D':
+        begin
+          if Selected = RestMenuInitialSelection then
+            SpendRestTime(RestMinuteStep, 1)
+          else
+            SpendRestTime(1, Selected);
+          NormalizeRestTime;
+        end;
+    end;
+  until Key in [#0, 'E', 'R'];
+end;
 { ovl20:0871: checks the party's healing once ds6DD8 reaches $120 rest steps. It calls HealCharacter for
   every party member, shows "The Whole Party Is Healed", redraws SelectedCharacter if anyone changed,
   delays, clears the message and resets ds6DD8. Reads the party list; changes ds6DD8 and character health;
@@ -379,7 +444,7 @@ begin
   ClearRect(1, $11, $26, $16);
   ShowRestTime(0);
   ds6DDA := 1;
-  EndRest := Ord(ovl20_fn_0721 = 0);
+  EndRest := Ord(RestTimeMenu = 0);
   while (EndRest = 0) and
         ((RestTime[4] > 0) or (RestTime[3] > 0) or (RestTime[2] > 0) or (RestTime[1] > 0)) do
   begin

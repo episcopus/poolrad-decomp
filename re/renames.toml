@@ -3392,3 +3392,10 @@ kind = "routine"
 why = "ovl19:299C prepares the mode-specific spell-list heading and delegates the spell/choice selection to ovl22; callers in ovl15 use it for casting, memorizing, learning and scribing"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl20_fn_0721"
+new = "RestTimeMenu"
+kind = "routine"
+why = "ovl20:0721 draws the 'Rest daYs Hours Mins Inc Dec Exit' menu through ReadPromptChoice, adjusts RestTime and returns 1 for Rest; RunRestPeriod (ovl20:0C9A) rests only when it returns nonzero"
+date = "2026-10-13"
+
