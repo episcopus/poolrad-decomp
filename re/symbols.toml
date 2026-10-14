@@ -7195,7 +7195,7 @@ signature = ""
 c_name = "ovl16_fn_08A7"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x0085 * 16 + 0x0057 = 0x08A7) of the inter-overlay stub call lcall 0x0085:0x0057 (bytes 9a 57 00 85 00) at ovl16:29EA; stub 0x85:0x57 is ovl19:28BE CharacterMoneyValueInGold (build/re/overlays.json). 0x08A7 is byte 0x52, the low offset byte of the lcall AddAffect (ovl24:0E52) at 08A6 (bytes 9a 52 00 b0 00), mid-instruction inside ovl16:056C. 056C is one routine: its only prologue in the region is 55 89 e5 at 056C and its single retf is at 1ED1, so every map entry inside it (056C..1ED1) is a stub/fixup artefact. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -7208,7 +7208,7 @@ signature = ""
 c_name = "ovl16_fn_08AC"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x0085 * 16 + 0x005C = 0x08AC) of the inter-overlay stub call lcall 0x0085:0x005C (bytes 9a 5c 00 85 00) at ovl16:2F81; stub 0x85:0x5C is ovl19:299C ChooseSpellFromList (build/re/overlays.json). 0x08AC is byte 0x76, the opcode of push word ptr [bp-2] at 08AB (bytes ff 76 fe), mid-instruction inside ovl16:056C. 056C is one routine: its only prologue in the region is 55 89 e5 at 056C and its single retf is at 1ED1, so every map entry inside it (056C..1ED1) is a stub/fixup artefact. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -7221,7 +7221,7 @@ signature = ""
 c_name = "ovl16_fn_0AE5"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x00AC * 16 + 0x0025 = 0x0AE5) of the inter-overlay stub call lcall 0x00AC:0x0025 (bytes 9a 25 00 ac 00) at ovl16:2F5A; stub 0xAC:0x25 is ovl23:0000 RecalcClassStats, reached via the ovl23 stub segment 0x00AC (build/re/overlays.json). 0x0AE5 starts les di, [bp-0x10] (bytes c4 7e f0), which the linear disassembler shows as an instruction boundary, but it is still mid-routine inside ovl16:056C. 056C is one routine: its only prologue in the region is 55 89 e5 at 056C and its single retf is at 1ED1, so every map entry inside it (056C..1ED1) is a stub/fixup artefact. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -7234,7 +7234,7 @@ signature = ""
 c_name = "ovl16_fn_0AEA"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x00AC * 16 + 0x002A = 0x0AEA) of the inter-overlay stub call lcall 0x00AC:0x002A (bytes 9a 2a 00 ac 00) at ovl16:1C9B, also at ovl16:2381 and ovl16:26E3; stub 0xAC:0x2A is ovl23:01AF AddWisdomBonusSpells, reached via the ovl23 stub segment 0x00AC (build/re/overlays.json). 0x0AEA starts mov ax,0x28 (bytes b8 28 00), which the linear disassembler shows as an instruction boundary, but it is still mid-routine inside ovl16:056C. 056C is one routine: its only prologue in the region is 55 89 e5 at 056C and its single retf is at 1ED1, so every map entry inside it (056C..1ED1) is a stub/fixup artefact. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -7247,7 +7247,7 @@ signature = ""
 c_name = "ovl16_fn_0AEF"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x00AC * 16 + 0x002F = 0x0AEF) of the inter-overlay stub call lcall 0x00AC:0x002F (bytes 9a 2f 00 ac 00) at ovl16:0D6B; stub 0xAC:0x2F is ovl23:0255 ComputeSavingThrows, reached via the ovl23 stub segment 0x00AC (build/re/overlays.json). 0x0AEF is byte 0x25, the low offset byte of the lcall System_StrLCopy (0AF8:0B25) at 0AEE (bytes 9a 25 0b f8 0a), mid-instruction inside ovl16:056C. 056C is one routine: its only prologue in the region is 55 89 e5 at 056C and its single retf is at 1ED1, so every map entry inside it (056C..1ED1) is a stub/fixup artefact. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -7260,7 +7260,7 @@ signature = ""
 c_name = "ovl16_fn_0AF4"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x00AC * 16 + 0x0034 = 0x0AF4) of the inter-overlay stub call lcall 0x00AC:0x0034 (bytes 9a 34 00 ac 00) at ovl16:0CC9; stub 0xAC:0x34 is ovl23:0329 ComputeThiefSkills, reached via the ovl23 stub segment 0x00AC (build/re/overlays.json). 0x0AF4 is byte 0x46, the ModRM byte of mov al,[bp-0x13] at 0AF3 (bytes 8a 46 ed), mid-instruction inside ovl16:056C. 056C is one routine: its only prologue in the region is 55 89 e5 at 056C and its single retf is at 1ED1, so every map entry inside it (056C..1ED1) is a stub/fixup artefact. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
