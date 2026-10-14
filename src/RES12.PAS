@@ -51,7 +51,7 @@ procedure ShowCharacterMessage(Who: PCharacter; Text: string; Row, Wait: Byte);
 procedure ClearCharacterMessage;
 procedure DrawCharacterName(Who: PCharacter; Col, Row, Mode: Byte);
 procedure CopyPictureItem(PicIndex, Half, Row, Mirror: Byte);
-procedure res12_fn_19DE;
+procedure DrawCombatIcon(PicIndex: Byte);
 procedure res12_fn_1A29;
 procedure res12_fn_1CBA;
 procedure res12_fn_1CE0;
@@ -899,7 +899,7 @@ end;
   blitted, otherwise the table picture is blitted directly. In both cases the bitmap (Data, +$17)
   is copied with RowBytes bytes and the pixel buffer (Pixels, +$13) with the quartered PixelBytes
   count for the text video adapter (VideoAdapter = 1). ReleasePicture frees the temporary.
-  Called in a loop by res12_fn_19DE and by ovl13.
+  Called in a loop by DrawCombatIcon and by ovl13.
   Globals: ds6E36 (read), ds5E5A (read), VideoAdapter (read). }
 procedure CopyPictureItem(PicIndex, Half, Row, Mirror: Byte);
 var
@@ -924,8 +924,17 @@ begin
     Move(PPicture(ds5E5A[PicIndex].Pics[Half])^.Pixels^[0], PPicture(ds6E36)^.Pixels^[Row * PixelBytes], PixelBytes);
   end;
 end;
-{ 00BA:19DE: retf 2: 2 bytes of parameters; 0 bytes of locals }
-{@stub} procedure res12_fn_19DE; begin end;
+{ 00BA:19DE. Draws the four items of a 2-wide combat icon into the combat picture ds6E36: it calls
+  CopyPictureItem four times with Half 0, 0, 1, 1 and Row 0, 1, 2, 3, mirroring the second and
+  third item (Mirror 0, 1, 1, 0). PicIndex is the source slot in the picture table ds5E5A.
+  Called by ovl12, ovl13 and ovl22 (a combatant's icon into the battle picture). Globals: none. }
+procedure DrawCombatIcon(PicIndex: Byte);
+begin
+  CopyPictureItem(PicIndex, 0, 0, 0);
+  CopyPictureItem(PicIndex, 0, 1, 1);
+  CopyPictureItem(PicIndex, 1, 2, 1);
+  CopyPictureItem(PicIndex, 1, 3, 0);
+end;
 { 00BA:1A29: frame not read }
 {@stub} procedure res12_fn_1A29; begin end;
 { 00BA:1CBA: frame not read }

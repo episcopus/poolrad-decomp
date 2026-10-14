@@ -16817,12 +16817,12 @@ id = "00BA:19DE"
 unit = "res12"
 addr = "00BA:19DE"
 size = 75
-name = "res12_fn_19DE"
+name = "DrawCombatIcon"
 signature = ""
 c_name = "res12_fn_19DE"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_19DE (00BA:19DE composes four items of the combat picture ds6E36 from the two halves of the icon slot ds5E5A[PicIndex] by calling CopyPictureItem four times (Half 0,0,1,1; Row 0,1,2,3; Mirror 0,1,1,0); called by ovl12, ovl13 and ovl22); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
