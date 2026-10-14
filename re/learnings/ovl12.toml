@@ -413,3 +413,48 @@ tags = ["local", "boolean", "frame", "function", "result", "codegen"]
 title = "One Boolean local that stores a function result gives a two-byte frame (sub sp, 2) in ovl12:19D9"
 lesson = "ReviveOrRetryRevival (ovl12:19D9) declares one local Boolean, `Added: Boolean`, and assigns it the TryAddAffect result that is never read. The original has `sub sp, 2` with the result at [bp-1], and the source with that one Boolean matches, so the frame of 2 bytes came from the declaration without a probe. Check the packet's frame size against the matcher rather than counting the declared bytes by hand."
 evidence = ["src/OVL12.PAS#ReviveOrRetryRevival", "re/symbols.toml#ovl12:19D9"]
+
+[[lesson]]
+id = "outer-call-pushes-before-inner-call"
+confidence = "V"
+units = ["ovl12"]
+tags = ["call", "argument", "packet", "nested", "RollDice", "ApplyAffect"]
+title = "Arguments pushed before a function argument belong to the outer call, not to the inner one (ovl12:1BA8)"
+lesson = "The packet of ovl12:1BA8 shows `push Who; push 34h; push 1; push 4; lcall 00B0:0048` where RollDice takes only (1, 4). The Who pointer and AffectId 34h are the first two arguments of the enclosing ApplyAffect, pushed before its third argument RollDice(1, 4) is evaluated; the call's result is then pushed as the Duration word. Count a call's pushes against the callee's frame (retf n) before reading a 4-argument call, and find the outer call's remaining pushes after the inner call returns. ParalyzeSideWithFear matched with the Pascal `ApplyAffect(Scan, AffectParalysis, RollDice(1, FearDieSides), ...)`."
+evidence = ["src/OVL12.PAS#ParalyzeSideWithFear", "re/symbols.toml#ovl12:1BA8"]
+
+[[lesson]]
+id = "map-entry-in-call-offset-word"
+confidence = "V"
+units = ["ovl12"]
+tags = ["map", "entry", "lcall", "offset", "pool", "modrm", "routine-boundary", "write"]
+title = "Map entries inside a far call's offset word, a literal pool and a modrm byte are not routines (ovl12:1BD7, 1C98, 1F9B)"
+lesson = "The map listed three entries that are not routines. ovl12:1BD7 is the high byte of the offset word 002Ah of `lcall 00B0:002A` (RemoveAffect) at ovl12:1BD5 inside ovl12:1BA8. ovl12:1C98 is inside the string 'reflects it!' of the literal pool that GazeStonesTarget (ovl12:1CAD) reads from 1C8Dh. ovl12:1F9B is the modrm byte of `les di, [bp+0Ch]` at ovl12:1F9A inside ovl12:1E77. `make match UNIT=ovl12 WRITE=1` removed each one when its enclosing routine matched; the stub lines and declarations stayed and were deleted by hand. The first byte of an invented entry, read against the bytes before it, shows which case it is."
+evidence = ["src/OVL12.PAS#ParalyzeSideWithFear", "src/OVL12.PAS#GazeStonesTarget", "src/OVL12.PAS#GazeCharmsTarget", "re/symbols.toml#ovl12:1CAD"]
+
+[[lesson]]
+id = "reload-the-field-the-source-names"
+confidence = "V"
+units = ["ovl12"]
+tags = ["pointer", "field", "reload", "codegen", "epilogue", "first-diff"]
+title = "Passing Who^.Combat^.Target again reloads it from the record; a copy in AttackTarget is 8 bytes shorter (ovl12:1E77)"
+lesson = "GazeCharmsTarget first wrote `SavingThrow(AttackTarget, SaveKindFear, CharmSaveBonus)` with AttackTarget copied from Who^.Combat^.Target at the top. The match's first difference was the `jmp` to the epilogue after an earlier Exit (0x1FF4 against 0x1FFC): the rest of the body was 8 bytes shorter. The original reloads the target for the save: `les di, [bp+0Ch]; les di, es:[di+108h]; push es:[di+0Ch]; push es:[di+0Ah]`, 16 bytes against the 8 of the global. Written as `SavingThrow(Who^.Combat^.Target, ...)` it matched. When the first difference is an epilogue jump, compare the body lengths in the packet first, and write the expression as the source names it, even when a variable holds the same value."
+evidence = ["src/OVL12.PAS#GazeCharmsTarget", "re/symbols.toml#ovl12:1E77"]
+
+[[lesson]]
+id = "rename-edits-other-units-comments"
+confidence = "V"
+units = ["ovl12"]
+tags = ["rename", "tooling", "comment", "whitepaper", "unit", "ownership"]
+title = "make rename of a routine also rewrites its name in another unit's comment and in the whitepaper (ovl12_e70)"
+lesson = "`make rename OLD=ovl12_e70 NEW=GazeCharmsTarget` changed a comment in src/OVL30.PAS (WalkLine's 'Called by ... ovl12_e70') and a line of docs/design/WHITEPAPER.md. A unit branch may not edit another unit's file or the whitepaper beyond its own paragraph (AGENTS rules 3 and 4), so both were reverted with `git checkout` and only src/OVL12.PAS, re/symbols.toml and re/renames.toml were committed. The rename record in re/renames.toml lets `make rename APPLY=1` restore the new name in those files after the merge. Check `git status` after every rename of a routine that another unit names."
+evidence = ["src/OVL30.PAS", "re/renames.toml", "tools/match/rename.py"]
+
+[[lesson]]
+id = "shortint-index-of-byte-field-sign-extends"
+confidence = "V"
+units = ["ovl12"]
+tags = ["array", "index", "ShortInt", "Byte", "cwde", "field", "codegen"]
+title = "ds6814Sides[ShortInt(Scan^.Side)] reads the Byte side with cwde, as the original does (ovl12:1BA8)"
+lesson = "The original of ParalyzeSideWithFear (ovl12:1BA8) reads the side count of a member with `mov al, es:[di+10Eh]; cwde; mov di, ax; cmp byte [di+6814h], 6`, so the index is sign-extended. The Pascal `ds6814Sides[ShortInt(Scan^.Side)] >= 6` matched it, the same form OVL09 uses for the same array. The unsigned index was not probed here."
+evidence = ["src/OVL12.PAS#ParalyzeSideWithFear", "src/OVL09.PAS", "src/POOLVARS.PAS#ds6814Sides"]
