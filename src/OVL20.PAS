@@ -27,6 +27,7 @@ const
   RestLabelColumn = 1;      { the column of the "Rest Time:" label }
   RestFirstColumn = 11;     { the column where the days field starts }
   RestRow = 17;             { the text row of the rest time line }
+  TopClockDigit = 6;        { the top digit of the clock (years); its carry ages the party instead of carrying }
   RestTextColour = 10;      { EGA colour of the rest time }
   RestSelectedColour = 15;  { EGA colour of the field the player is changing }
   RestCounterBytes = $48;   { bytes reset at ovl20:0CE5 }
@@ -174,17 +175,19 @@ begin
 end;
 { ovl20:02F2: retf 4: a var pointer to the rest clock (4 bytes of parameters); 6 bytes of locals.
   Carries the clock up its digits: digit I at or above its radix (ClockRadix[I], DS:363A) gives one
-  unit to digit I+1 and loses the radix, for digits 0..5. The top digit has no next digit: while it is
-  at or above its radix, every character on the party list gains one year of age (TCharacter.Age,
-  +$30) and the radix is kept [I]. }
+  unit to digit I+1 and loses the radix, for digits 0..5. The top digit has no next digit: at or above
+  its radix it ages every character on the party list by one year (TCharacter.Age, +$30) and the radix
+  is kept [I]. QUIRK ovl20:037B: the top digit is never reduced, so once Clock[TopClockDigit] is at or
+  above its radix every later carry call ages the party again (whether the game can reach that is not
+  proven). }
 procedure CarryRestClock(var Clock: TRestClock);
 var
   Digit: ShortInt;
   Who: PCharacter;
 begin
-  for Digit := 0 to 6 do
+  for Digit := 0 to TopClockDigit do
     if Clock[Digit] >= ClockRadix[Digit] then
-      if Digit <> 6 then
+      if Digit <> TopClockDigit then
       begin
         Inc(Clock[Succ(Digit)]);
         Clock[Digit] := Clock[Digit] - ClockRadix[Digit];
