@@ -7351,7 +7351,7 @@ signature = ""
 c_name = "ovl16_fn_19FB"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:21F5 is the disp8 of les di,[bp-0x18] (c4 7e e8 at 21F3), not a call opcode, and its bogus target (0x19FB) lies inside ovl16:056C (single routine 056C..1ED1, prologue 55 89 e5, one retf at 1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["near_call"]
 
 [[routine]]
@@ -7364,7 +7364,7 @@ signature = ""
 c_name = "ovl16_fn_1A2A"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:2224 is the disp8 of les di,[bp-0x18] (c4 7e e8 at 2222), not a call opcode, and its bogus target (0x1A2A) lies inside ovl16:056C (single routine 056C..1ED1, prologue 55 89 e5, one retf at 1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["near_call"]
 
 [[routine]]
@@ -7377,7 +7377,7 @@ signature = ""
 c_name = "ovl16_fn_1A51"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:224B is the disp8 of les di,[bp-0x18] (c4 7e e8 at 2249), not a call opcode, and its bogus target (0x1A51) lies inside ovl16:056C (single routine 056C..1ED1, prologue 55 89 e5, one retf at 1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["near_call"]
 
 [[routine]]
@@ -7390,7 +7390,7 @@ signature = ""
 c_name = "ovl16_fn_1A81"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:227B is the disp8 of les di,[bp-0x18] (c4 7e e8 at 2279), not a call opcode, and its bogus target (0x1A81) lies inside ovl16:056C (single routine 056C..1ED1, prologue 55 89 e5, one retf at 1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["near_call"]
 
 [[routine]]
@@ -7403,7 +7403,7 @@ signature = ""
 c_name = "ovl16_fn_1AA7"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:22A1 is the disp8 of les di,[bp-0x18] (c4 7e e8 at 229F), not a call opcode, and its bogus target (0x1AA7) lies inside ovl16:056C (single routine 056C..1ED1, prologue 55 89 e5, one retf at 1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["near_call"]
 
 [[routine]]
@@ -7416,7 +7416,7 @@ signature = ""
 c_name = "ovl16_fn_1ACE"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:22C8 is the disp8 of les di,[bp-0x18] (c4 7e e8 at 22C6), not a call opcode, and its bogus target (0x1ACE) lies inside ovl16:056C (single routine 056C..1ED1, prologue 55 89 e5, one retf at 1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["near_call"]
 
 [[routine]]
