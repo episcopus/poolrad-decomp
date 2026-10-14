@@ -7117,7 +7117,7 @@ signature = ""
 c_name = "ovl16_fn_0875"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x0085 * 16 + 0x0025 = 0x0875) of the inter-overlay stub call lcall 0x0085:0x0025 (bytes 9a 25 00 85 00) at ovl16:11FB, also at ovl16:1E2D and ovl16:20E2; stub 0x85:0x25 is ovl19:004A ShowCharacterSheet (build/re/overlays.json). 0x0875 is mov al,0 (b0 00), mid argument sequence of the AddAffect call at 0878 inside ovl16:056C. 056C is one routine: its only prologue in the region is 55 89 e5 at 056C and its single retf is at 1ED1, so every map entry inside it (0875..1ED1) is a stub/fixup artefact. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -7130,7 +7130,7 @@ signature = ""
 c_name = "ovl16_fn_087A"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x0085 * 16 + 0x002A = 0x087A) of the inter-overlay stub call lcall 0x0085:0x002A (bytes 9a 2a 00 85 00) at ovl16:1DFA, also at ovl16:28C1; stub 0x85:0x2A is ovl19:0608 ShowCombatStats. 0x087A is the high operand byte of the lcall AddAffect at 0878 (9a 52 00 b0 00), mid-instruction, inside ovl16:056C. 056C is one routine (single prologue 55 89 e5 at 056C, single retf at 1ED1), so this entry is an artefact inside it. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -7143,7 +7143,7 @@ signature = ""
 c_name = "ovl16_fn_087F"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x0085 * 16 + 0x002F = 0x087F) of the inter-overlay stub call lcall 0x0085:0x002F (bytes 9a 2f 00 85 00) at ovl16:1BD3, also at ovl16:204C; stub 0x85:0x2F is ovl19:0901 ShowAbilityScore. 0x087F is the third byte (fe) of push word ptr [bp-2] at 087D (ff 76 fe), mid-instruction, inside ovl16:056C. 056C is one routine (single prologue 55 89 e5 at 056C, single retf at 1ED1), so this entry is an artefact inside it. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -7156,7 +7156,7 @@ signature = ""
 c_name = "ovl16_fn_0884"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x0085 * 16 + 0x0034 = 0x0884) of the inter-overlay stub call lcall 0x0085:0x0034 (bytes 9a 34 00 85 00) at ovl16:1DFF; stub 0x85:0x34 is ovl19:050D ShowCharacterMoney. 0x0884 is the operand byte 12 of mov al,0x12 at 0883 (b0 12), mid-instruction, in the AddAffect argument sequence of ovl16:056C. 056C is one routine (single prologue 55 89 e5 at 056C, single retf at 1ED1), so this entry is an artefact inside it. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -7169,7 +7169,7 @@ signature = ""
 c_name = "ovl16_fn_0889"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x0085 * 16 + 0x0039 = 0x0889) of the inter-overlay stub call lcall 0x0085:0x0039 (bytes 9a 39 00 85 00) at ovl16:03A4; stub 0x85:0x39 is ovl19:0AB3 ViewSelectedCharacter. 0x0889 is mov al,0xff (b0 ff), one of the argument pushes of the AddAffect call at 088F inside ovl16:056C; it starts an instruction but is not a routine entry. 056C is one routine (single prologue 55 89 e5 at 056C, single retf at 1ED1), so this entry is an artefact inside it. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -7182,7 +7182,7 @@ signature = ""
 c_name = "ovl16_fn_08A2"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x0085 * 16 + 0x0052 = 0x08A2) of the inter-overlay stub call lcall 0x0085:0x0052 (bytes 9a 52 00 85 00) at ovl16:031F; stub 0x85:0x52 is ovl19:27DF UpdateSelectedCharacter. 0x08A2 is push ax (50), one of the argument pushes of the AddAffect call at 08A6, inside ovl16:056C. 056C is one routine (single prologue 55 89 e5 at 056C, single retf at 1ED1), so this entry is an artefact inside it. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
