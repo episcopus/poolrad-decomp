@@ -769,7 +769,7 @@ Overlay 23 recomputes what a character draws from its eight class levels (`TChar
     from ovl01, ovl02 (the code wheel), ovl03, ovl04, ovl05 and ovl06; the frame and clear
     routines are also called directly from ovl08, ovl13, ovl14, ovl15, ovl16, ovl19 and res12.
 
-### 5.11 Saving and loading (in progress: ovl17 SaveLoad)
+### 5.11 Saving and loading (ovl17 SaveLoad, complete)
 
 Unit ovl17 reads and writes the saved-game files of section 4.4: the per-character
 `CHRDAT<slot><n>.SAV/.ITM/.SPC` (character 285, item 63, affect 9 bytes) and the roster
@@ -831,6 +831,37 @@ character joins the party.
   halves (OR the tail tile bytes, AND the pixel bytes) so the head masks the body; when asked it also
   builds a 16-entry colour map from the six nibble pairs `Sel^.Figure[1..6]` through `ds3CF5` and
   applies it to both halves.
+- **Saving the game** **[V]** (`SaveGame`, `ovl17:1D58`; `make match UNIT=ovl17`): prompts
+  `'Save Which Game: '` for a slot letter A..J (a set of `[#0, 'A'..'J']`, Escape cancels), makes the
+  save directory and `Rewrite`s `SaveDir + 'savgam<slot>.dat'` (prompting for the disk while the open
+  fails). It first copies the party's map cell into the ECL variable block: `ds6AAEWords[I].A/.B` into
+  the words at `$4AF9 + I` / `$4AFC + I` (I = 1..3), `GameSpeed` to `$49FC`, the packed picture flags
+  (`ShowMonsterPics * 2 + ShowPortraits`) to `$49FF`, and `TileSet` to `$6E12`. Then it `BlockWrite`s
+  `TileSet` (1), `GameVars^`, `ds49D6^` ($800 each), `ds49DA^` ($400), `EclCode^` ($1E00), the five
+  party-map bytes `PartyMapColumn..`, `AreaViewKind` and `ds49F3` (1 each), a one-byte member count and
+  the eight 41-byte `'CHRDAT<slot><n>'` names. It closes the file, then for each party member calls
+  `SaveCharacter(member, 'CHRDAT<slot><n>')` and erases the member's standalone `.cha/.itm/.spc` files
+  (nested under the `.cha` test), and ends with `ds557D := True` and a cleared prompt line. Reads the
+  slot key, `SaveDir`, the game state and the party list `ds5D96`; called by the heap error handler,
+  ovl15 `MakeCamp`, ovl16_e1 and SaveAndExit.
+- **Loading the game** **[V]** (`LoadGame`, `ovl17:1602`; `make match UNIT=ovl17`): the read
+  counterpart of SaveGame. Inside `'Load Which Game: '` it repeats until the player picks a letter
+  A..J whose `SaveDir + 'savgam<letter>.dat'` exists (or Escape), then `OpenGameFile`s the slot and
+  `BlockRead`s the state back in the same order, restoring `ShowMonsterPics := word shr 1`,
+  `ShowPortraits := word and 1` and `GameSpeed` from the ECL block and zeroing `$6E3E`. For the
+  member count it loads each name (`MakeDosFileName(DeleteAllOccurrences(name, '.'))`) with
+  `LoadCharacterFile(name, Who, 1, 1)` into a fresh 285-byte `GetMem` record and adds it with
+  `AddPartyMember`, then erases the members' standalone `.cha/.itm/.spc` files and rebuilds every
+  member's combat icon (`BuildCharacterIcon(True)`). Finally it restores `TileSet` from `$6E12`,
+  loads the 3D map (`Load3DMap(GameVars^[VarGeoBlock])` when `AreaViewKind < 2`) or the three wall
+  sets (`LoadWallSet`), animates the doors when `GameVars^[VarRiverGate] <> 0`, and flushes the
+  keyboard. Called by ovl16_e1.
+- **Save and exit** **[V]** (`SaveAndExit`, `ovl17:22D5`; `make match UNIT=ovl17`): called by
+  ovl03:0BD1 with the current area's ECL file name. When that file exists (a normal area) it returns
+  at once; otherwise it shows `'Save and exit  Insert disk #<TileSet>'` and, when the player presses
+  its hotkey S, steps the party one cell back in its facing (`Dec` of `DirStepX/DirStepY[PartyFacing]`,
+  clamped into the 16x16 map), restores the tile set through `RestoreTileSet`, calls SaveGame and
+  quits. So the "Save and exit" path is the end of the game, when the next area has no ECL script.
 
 **Boundary note** **[V]** (`make packet UNIT=ovl17`, before the routines were matched): the map split
 several ovl17 routines into mid-instruction entries (`ovl17_fn_0818/084A/0865` inside `SaveCharacter`,
