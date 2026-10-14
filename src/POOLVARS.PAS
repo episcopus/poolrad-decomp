@@ -283,7 +283,12 @@ type
     { +$96..$9D: the level in each of the eight classes; Raise Dead treats index 2 apart (class 2
       is the fighter in the create-character run, whitepaper 5.8). Signed: only levels above 0 count. }
     ClassLevels: array[0..7] of ShortInt;
-    Pad9E: array[$9E..$9F] of Byte;
+    { +$9E: Sign-extended row index LoadMonster's caller (ovl17:1262) and the create menus (ovl16)
+      use to pick the character's picture banks: ovl17:1262 reads ds08C5[2 + B9E*8 + roll] and
+      ds08C5[18/28/38/48 + B9E*5 + roll], and ovl16:13CB reads ds3DA3[B9E + (Race shl 4)].
+      ovl16:0A29 sets it to (the create menu's selection - 1); its meaning is not settled. }
+    B9E: ShortInt;
+    Pad9F: Byte;
     { +$A0: the script reads it signed (GetCharacterVar, ovl07:08C5). Purpose unknown: ScoreItem (ovl09:128D)
       refuses an item whose Affects[3] is $84 when the low nibble of its Affects[2] differs from this byte. }
     ByteA0: ShortInt;
@@ -299,7 +304,10 @@ type
     AttackFactorB: Byte;          { +$A5 }
     PadA6: Byte;                  { +$A6 }
     AttackBonus: ShortInt;        { +$A7 }
-    PadA8: array[$A8..$AB] of Byte;
+    PadA8: array[$A8..$AA] of Byte;
+    { +$AB: LoadMonster's caller gives a new monster the value Random(256) here (ovl17:1262);
+      the rest of the byte's use is not known. }
+    BAB: Byte;
     Experience: LongInt;          { +$AC: experience points; AwardExperience adds a battle's share (ovl05:04A3) }
     { +$B0: the character's class bits [I]: UseBestItem skips an item whose ClassMask (TItemRow) shares
       no bit with it (ovl09:13CA). Purpose unknown beyond that. }
@@ -319,9 +327,13 @@ type
     XpPerHp: Byte;
     HeadBank: Byte;               { +$BB: the HEAD picture bank number, 0 when none (ShowHeadBodyWindow) }
     BodyBank: Byte;               { +$BC: the BODY picture bank number, 0 when none (ShowHeadBodyWindow) }
-    PadBD: array[$BD..$BE] of Byte;
+    CHeadBlock: Byte;             { +$BD: the CHEAD picture block BuildCharacterIcon loads for the combat icon }
+    CBodyBlock: Byte;             { +$BE: the CBODY picture block BuildCharacterIcon loads for the combat icon }
     CombatIcon: Byte;             { +$BF: the icon picture DrawIcon draws for it on the combat map (ovl31) }
-    PadC0: array[$C0..$C6] of Byte;
+    { +$C0..+$C6: the character's figure descriptor as BuildCharacterIcon reads it. Figure[0] indexes ds08C5
+      for the CHEAD/CBODY name suffix; Figure[1..6] are six colour pairs (low nibble the source
+      colour's destination in the icon colour map, high nibble the source colour's + 8 slot). }
+    Figure: array[0..6] of Byte;
     ItemCountC7: Byte;            { +$C7: nonzero offers Use in the combat menu (ovl08:06E1); likely the item count }
     Items: PItem;                 { +$C8: the list of carried items }
     { +$CC..+$FF: the per-kind items the character remembers (13 pointer slots): ovl09:13CA
@@ -493,6 +505,10 @@ var
     indices and the path pattern. CheckCodeWheel picks one at random. }
   ds0000: array[0..12] of TCodeWheelEntry;  { the code wheel records; see above }
   ds04DF: string[40];             { prompt string HandleWildernessKeys passes to ReadPromptChoice; filled elsewhere }
+  { The CHEAD/CBODY character-picture name suffix table: the byte ds08C5[FigureIndex] is the
+    character BuildCharacterIcon appends to 'CHEAD'/'CBODY' (index 1 gives 'S', 2 gives 'T'). Its extent is
+    unverified: the region runs to the door table at DS:0900. }
+  ds08C5: array[0..$3A] of Char;
   { The wall view's id table: two equal groups of eight ids (0,15,12,11,13,10,9,14). ShowAreaView
     indexes it with the game variables VarWallIndexOutside and VarWallIndexInside. Its last six
     bytes are also entry 0 of SpecialBlocks, which DrawAreaView never reads. }
@@ -513,6 +529,10 @@ var
   { The base column of the map window page, indexed by AreaViewKind: entries 2..4 hold 0, 13 and
     26 (the pages of the 44-column map grid), entry 1 holds 78; evidence in re/dseg.toml. }
   MapBaseX: array[0..5] of Byte;  { map window page base column per AreaViewKind; see above }
+  { The colour-slot table BuildCharacterIcon reads to build the character icon's colour map: ds3CF5[I] for
+    I 1..6 holds 1, 2, 3, 4, 6, 7 (the destination colour of the I-th of the six colour pairs, and
+    plus 8 for the high nibble). It sits inside the ThiefSkillTable region (DS:3CF4). }
+  ds3CF5: array[0..$F] of Byte;
   ds43DC: Word;                   { nonzero after overlay sizing means the overlay manager failed: res08_init
                                     shows 'Overlay error, program abort!' and halts (probably OvrResult) }
   NewHeapEnd: Pointer;            { DS:$4848: HeapEnd cut by $400 paragraphs; assigned to HeapEnd }
@@ -522,7 +542,7 @@ var
   CfgProbeResult: Byte;                   { IOResult of probing pool.cfg (Reset); res08_init retries while nonzero }
   HeapWords: array[0..1] of Word absolute HeapEnd;
   { the offset (0) and segment (1) words of the heap end (res08_init cuts it by $400 paragraphs) }
-  ds49D0: Boolean;                { when set, HeapErrorHandler offers ovl17_e9 (save and load unit) before quitting }
+  ds49D0: Boolean;                { when set, HeapErrorHandler offers SaveGame (save and load unit) before quitting }
   ds49D1: Byte;                   { 1 when POOL.CFG line 5 is 'F', 0 otherwise (meaning of F/N unknown, 2.3) }
   GameVars: ^TGameVars;           { the game variables (see TGameVars) }
   CfgProbe: File;                 { pool.cfg opened untyped (128-byte records) to probe its existence }
@@ -577,7 +597,7 @@ var
     saves it in ds4661, empties it, builds a file path in it (ovl11:0564) for OpenGameFile and
     restores it (ovl11:0469, 05EA). }
   GameDir: string;                { the game directory; see above }
-  { True ends HeapErrorHandler's retry loop: it is read after ovl17_e9 runs (ovl00:0075),
+  { True ends HeapErrorHandler's retry loop: it is read after SaveGame runs (ovl00:0075),
     and who sets it is not shown until ovl17 is decompiled. }
   ds557D: Boolean;                { heap error retry gate; see above }
   ds5E52: PT8x8Bank;              { SQRPACI bank 1 (ovl11:04D6); DrawCellPicture source (PicCode <= 127) }
@@ -655,14 +675,18 @@ var
   ds4A00: Byte;                   { set to 1 by the loader (ovl11:03A1) and by EndBattle (ovl05:1631) }
   ds4A24: Pointer;                { screen buffer the loader allocates through AllocatePicture (ovl11:00D4) }
   ds4A28: array[0..$A7] of Byte;  { $A8-byte buffer the loader clears (ovl11:00EC) }
-  { The changed-region trackers the blitters (res07 08D4/0D71) fill and res07
-    ShowChanges (1B52) flushes: per changed screen row, ds4AD0 and ds4C20 hold
-    the first and last changed byte offset and ds4D70 the last; indexed by word
-    (row*2), so 168 word entries. The loader clears/fills the same $150 bytes
-    through FillChar (ovl11:00FD, 010E, 011F). }
-  ds4AD0: array[0..$A7] of Word;  { first changed offset of the row }
-  ds4C20: array[0..$A7] of Word;  { last changed offset of the row (starts $FFFF) }
-  ds4D70: array[0..$A7] of Word;  { last changed offset of the row (starts 0) }
+  { The changed-region trackers the blitters (res07 08D4/0D71/2632) fill and res07
+    FlushPictureChanges (1B52) flushes: per changed screen row, ds4C20 holds the
+    first (lowest) changed byte offset in the staging buffer DrawBuf (a minimum, so
+    it starts at $FFFF) and ds4D70 the last (highest, it starts at 0); ds4AD0 holds
+    the screen-side byte column of that first changed byte (LeftCol * 2 on adapter
+    0, LeftCol * 1 on adapter 1, LeftCol * 4 on adapter 2). FlushPictureChanges
+    moves DrawBuf^.Data[ds4C20[Row] .. ds4D70[Row]] to the screen at that column.
+    Indexed by word (row*2), so 168 word entries. The loader clears/fills the same
+    $150 bytes through FillChar (ovl11:00FD, 010E, 011F). }
+  ds4AD0: array[0..$A7] of Word;  { screen-side byte column of the row's first changed byte }
+  ds4C20: array[0..$A7] of Word;  { first (lowest) changed byte offset in DrawBuf (a minimum, starts $FFFF) }
+  ds4D70: array[0..$A7] of Word;  { last (highest) changed byte offset in DrawBuf (starts 0) }
   { Per-cell screen address table the loader fills (ovl11:0130..0163): $B800 (even cell) or $BA00
     (odd cell) plus 5*(I div 2). }
   ds4EC0: array[0..$C7] of Word;  { cell text scanline address; see above }
@@ -676,7 +700,9 @@ var
   ds5378: Word;                   { set to 1 by the loader (ovl11:03E0) }
   ds547A: Word;                   { set to 1 by the loader (ovl11:03DA) }
   ds547D: Byte;                   { a character the loader appends to the path through System_MemOp_0C3B (ovl11:0581) }
-  ds557C: Byte;                   { cleared by the loader (ovl11:0438) }
+  { set to 1 while LoadMonster reads the MON*.DAX affect and item lists and to 0 after
+    (ovl17:107B, 1252); cleared by the loader (ovl11:0438) }
+  ds557C: Byte;
   ds5582: array[0..$80F] of Byte;   { $810-byte buffer the loader reads the file block into (ovl11:05CD) }
   { The ITEMS type table (whitepaper 4.3): 129 sixteen-byte rows, one per item type, indexed by an item's
     ItemType (ScoreItem, UseBestItem, AiTurn and UseMagicItem read them). The loader (ovl11:05CD) reads the
