@@ -10101,12 +10101,12 @@ id = "ovl22:1439"
 unit = "ovl22"
 addr = "ovl22:1439"
 size = 96
-name = "ovl22_e23"
+name = "CastMagicMissile"
 signature = ""
 c_name = "ovl22_e23"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_23"
+notes = "renamed from ovl22_e23 (cast handler of spell 15 Magic Missile (SpellHandlers[15]; ovl22_e10 fills the table at DS:6B84, whitepaper 5.22.2): deals one d4 plus one point per two caster levels through RollDiceCounted (count in ds681C), no message (ovl22:1439)); auto:entry_23"
 evidence = ["prologue"]
 
 [[routine]]

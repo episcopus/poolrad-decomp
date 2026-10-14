@@ -3609,3 +3609,10 @@ kind = "routine"
 why = "cast handler of spell 14 Friends (SpellHandlers[14]; ovl22_e10 fills the table at DS:6B84, whitepaper 5.22.2): raises the target ds6C95 Charisma by 2d4 capped at 25 and passes the old Charisma as the affect data with the restore flag, message 'is friendly' (ovl22:13D8)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl22_e23"
+new = "CastMagicMissile"
+kind = "routine"
+why = "cast handler of spell 15 Magic Missile (SpellHandlers[15]; ovl22_e10 fills the table at DS:6B84, whitepaper 5.22.2): deals one d4 plus one point per two caster levels through RollDiceCounted (count in ds681C), no message (ovl22:1439)"
+date = "2026-10-13"
+

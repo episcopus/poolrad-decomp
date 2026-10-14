@@ -29,7 +29,7 @@ procedure CastCharmPerson;
 procedure CastEnlarge;
 procedure CastReduce;
 procedure CastFriends;
-procedure ovl22_e23;
+procedure CastMagicMissile;
 procedure ovl22_e24;
 procedure ovl22_e25;
 procedure ovl22_e26;
@@ -709,8 +709,23 @@ begin
     ds6C95^.Charisma := CharismaCap;
   ApplySpellToTargets(ds681B, OldCharisma, RestoreOnRemoval, 0, 0, 'is friendly');
 end;
-{ ovl22:1439: retf 0: 0 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl22_e23; begin end;
+{ ovl22:1439 (e23). Cast handler of spell 15, Magic Missile (SpellHandlers[15]; ovl22_e10 fills the
+  table, whitepaper 5.22.2): the caster level from res12_fn_26C2 gives one missile per two levels, so
+  it deals RollDiceCounted(Level div 2, 4) (a d4 per missile, its count kept in ds681C) plus Level div 2
+  (one point per missile) to the chosen targets, with no message. Reads ds681B. }
+procedure CastMagicMissile;
+const
+  LevelsPerMissile = 2;           { one magic missile per two caster levels }
+  MissileSides = 4;               { each missile does 1d4, plus 1 per missile }
+  DamageKind = 8;                 { DealDamage's kind for the missiles (as Cause Light Wounds, ovl22:10A7) }
+var
+  Level: Byte;                    { the caster level, res12_fn_26C2(ds681B) }
+begin
+  Level := res12_fn_26C2(ds681B);
+  ApplySpellToTargets(ds681B, 0, 0,
+    RollDiceCounted(Level div LevelsPerMissile, MissileSides) + Level div LevelsPerMissile,
+    DamageKind, '');
+end;
 { ovl22:1499: retf 0: 0 bytes of parameters; 12 bytes of locals }
 {@stub} procedure ovl22_e24; begin end;
 { ovl22:14C7: retf 0: 0 bytes of parameters; 2 bytes of locals }
