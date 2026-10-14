@@ -7,7 +7,7 @@ unit RES12;
   Many routines are still stubs. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
-uses Crt, POOLVARS, RES06, RES07, RES09, OVL30, OVL31;
+uses Crt, POOLVARS, RES03, RES06, RES07, RES09, OVL30, OVL31;
 type
   { The readied-item bonus accumulator AddReadiedItemBonus fills for RecalcCombatValues: the four signed
     bytes it combines into the character's +$112 value (with the flag byte the second var
@@ -53,7 +53,7 @@ procedure DrawCharacterName(Who: PCharacter; Col, Row, Mode: Byte);
 procedure CopyPictureItem(PicIndex, Half, Row, Mirror: Byte);
 procedure DrawCombatIcon(PicIndex: Byte);
 procedure WalkCombatLine(FromX, FromY, ToX, ToY: ShortInt; Count, Mode: Byte);
-procedure res12_fn_1FEB(Who: Pointer; Flag: Byte; Text: String40);
+procedure ShowHitMessage(Who: Pointer; Flag: Byte; Text: String40);
 function res12_fn_2199(Who: Pointer; AffectId: Byte; var Affect: Pointer): Boolean;
 procedure res12_fn_2228(Who: Pointer; Damage: Byte);
 procedure res12_fn_234A;
@@ -1089,8 +1089,63 @@ begin
   until LoopFlag;
   FlushPictureChanges;
 end;
-{ 00BA:1FEB: retf 10: 10 bytes of parameters; 48 bytes of locals }
-{@stub} procedure res12_fn_1FEB(Who: Pointer; Flag: Byte; Text: String40); begin end;
+{ 00BA:1FEB. Shows a per-character combat message and flashes the character's combat icon over
+  its view cell. Outside the combat view (view mode 5) it only shows the message Text with a wait
+  and returns. In the combat view: silences the sound driver, draws the combat icon slot $16 when
+  Flag is set and $17 otherwise, puts the combat cursor on the character when it is off screen,
+  plays the sound ds261C when Flag is set and ds261A otherwise, and shows Text without waiting.
+  It then flashes the character's icon: for FlashCount + 1 passes it draws the four picture items
+  (0..3) of the combat picture ds6E36 at the character's pixel position (three pixels per view
+  cell, CombatantViewCol/CombatantViewRow), flushes and waits $46 ms, and restores the cell from
+  ds4A24. Finally it resumes the sound driver and flushes; with Flag clear (FlashCount 0) it waits
+  DelayByGameSpeed instead. DealDamage calls it with Flag 0 for the damage message, ApplyAffect
+  with Flag 1 for an affect message, and the training code uses it too.
+  Globals: ds49F3 (view mode), GameSpeed (FlashCount), ds261A/ds261C (sounds), ds6E36, ds4A24,
+  DrawBuf, CombatantViewCol, CombatantViewRow. Side effects: video memory, sound, timing. }
+procedure ShowHitMessage(Who: Pointer; Flag: Byte; Text: String40);
+var
+  Col, Row: ShortInt;
+  Icon: Byte;
+  Frame, Pass: Byte;
+  FlashCount: Byte;
+begin
+  if ds49F3 = 5 then
+  begin
+    SetSoundDriverIdle(0);
+    if Flag <> 0 then
+      Icon := $16
+    else
+      Icon := $17;
+    DrawCombatIcon(Icon);
+    if not IsCombatantInView(Who, 1) then
+      MoveCombatCursor(CombatantX(Who), CombatantY(Who), 3, 8);
+    if Flag <> 0 then
+      PlaySound(ds261C)
+    else
+      PlaySound(ds261A);
+    ShowCharacterMessage(Who, Text, $A, 0);
+    if Flag <> 0 then
+      FlashCount := GameSpeed
+    else
+      FlashCount := 0;
+    Col := CombatantViewCol[CombatantIndex(Who)] * 3;
+    Row := CombatantViewRow[CombatantIndex(Who)] * 3;
+    for Pass := 0 to FlashCount do
+      for Frame := 0 to 3 do
+      begin
+        res07_fn_0D71(Col, Row, Frame, 5, ds6E36, DrawBuf);
+        FlushPictureChanges;
+        Delay($46);
+        res07_fn_0D71(Col, Row, 0, 0, ds4A24, DrawBuf);
+      end;
+    SetSoundDriverIdle($A);
+    FlushPictureChanges;
+    if FlashCount = 0 then
+      DelayByGameSpeed;
+  end
+  else
+    ShowCharacterMessage(Who, Text, $A, 1);
+end;
 { 00BA:2199: retf 10; walks the affect list of Who (+$7F) for AffectId, leaves the affect in
   Affect and returns 1 when found. }
 {@stub} function res12_fn_2199(Who: Pointer; AffectId: Byte; var Affect: Pointer): Boolean;

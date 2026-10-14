@@ -71,3 +71,12 @@ tags = ["with", "frame", "pointer", "codegen"]
 title = "A with over a pointer parameter adds a hidden frame temporary"
 lesson = "Drafting res12:0BB8 with `with Who^ do` gave sub sp, 0x16 while the original is sub sp, 0x14; rewriting every field access as Who^.field gave sub sp, 0x12. The four-byte gap fits a hidden far-pointer temporary the compiler keeps for the with expression (the original reloads les di,[bp+6] before each field, so it used explicit Who^.field). Marked [I]: inferred from the frame size, not probed in isolation."
 evidence = ["src/RES12.PAS#RecalcCombatValues", "re/symbols.toml#00BA:0BB8"]
+
+[[lesson]]
+id = "res12-nested-byte-for-loop-and-bound-temp"
+confidence = "V"
+units = ["res12", "*"]
+tags = ["for", "loop", "byte", "jne", "temp", "locals", "codegen"]
+title = "A Byte for-loop compares against the final value with jne; a variable bound gets a hidden byte temp"
+lesson = "TP6 compiles for I := 0 to 3 do (I a Byte local) as mov I,0; jmp body; inc I; body: ...; cmp I,3; jne inc, so the body runs for I = 0,1,2,3 and the loop exits on I = 3 (the final value is compared directly). A for whose bound is a variable first copies the bound into a hidden byte temporary: for Outer := 0 to Count do becomes mov al,Count; mov [bp-temp],al; mov al,0; cmp al,[bp-temp]; ja end; mov Outer,al; ...; inc Outer; cmp Outer,[bp-temp]; jne inc. res12:1FEB matched with for Pass := 0 to FlashCount do for Frame := 0 to 3 do and the original temp [bp-0x30]. Probe: tools/re/tp_idioms/res12/PRB18.PAS. Also: with a value String40 parameter the compiler's copy occupies [bp-N..bp-1] above the declared locals, and the declared locals keep declaration order with the FIRST declared nearest bp (res12:1FEB declares Col,Row,Icon,Frame,Pass,FlashCount at [bp-0x2a..bp-0x2f]). Probe: tools/re/tp_idioms/res12/PRB19.PAS."
+evidence = ["src/RES12.PAS#ShowHitMessage", "re/symbols.toml#00BA:1FEB", "tools/re/tp_idioms/res12/PRB18.PAS", "tools/re/tp_idioms/res12/PRB19.PAS"]

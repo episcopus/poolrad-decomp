@@ -16843,12 +16843,12 @@ id = "00BA:1FEB"
 unit = "res12"
 addr = "00BA:1FEB"
 size = 430
-name = "res12_fn_1FEB"
-signature = "procedure res12_fn_1FEB(Who: Pointer; Flag: Byte; Text: String40)"
+name = "ShowHitMessage"
+signature = "procedure ShowHitMessage(Who: Pointer; Flag: Byte; Text: String40)"
 c_name = "res12_fn_1FEB"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_1FEB (00BA:1FEB shows a per-character combat message and flashes the character's icon (DrawCombatIcon $16/$17), plays a sound and animates over the character's view cell; DealDamage calls it with Flag 0 and ApplyAffect with Flag 1); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]

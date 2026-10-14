@@ -482,6 +482,8 @@ var
   ds0C26: array[0..15] of Byte;  { wall view id table, two equal groups of 8; see above }
   SpecialBlocks: array[0..9] of TSpecialBlock;  { entries 1..9 tested; only 3..9 replace the map block }
   ds2612: Word;                   { word passed to PlaySound by QuitGame and the Ctrl-S pause path; meaning unknown }
+  ds261A: Word;                   { the sound ShowHitMessage plays when Flag is clear; meaning unknown }
+  ds261C: Word;                   { the sound ShowHitMessage plays when Flag is set (a hit); meaning unknown }
   ds260A: array[0..7] of Byte;    { 8-byte structure FillPictureRect copies from @ds260A (DrawWallDescriptors) }
   ds2622: Word;                   { word e1 passes to PlaySound when Done is 0; meaning unknown }
   ds2628: Word;                   { word the ovl14 movement code passes to PlaySound; meaning unknown }

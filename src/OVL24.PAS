@@ -688,7 +688,7 @@ begin
     end;
     if DamageKind and 8 = DamageKind then
       Msg := Msg + 'from Magic';
-    res12_fn_1FEB(Who, 0, Msg);
+    ShowHitMessage(Who, 0, Msg);
     res12_fn_2228(Who, DamageAmount);
     if ds49F3 = CombatViewMode then
     begin
@@ -747,7 +747,7 @@ begin
     AddAffect(Who, AffectId, Duration, Data, Flag);
     if Msg <> '' then
     begin
-      res12_fn_1FEB(Who, 1, Msg);
+      ShowHitMessage(Who, 1, Msg);
       ClearCharacterMessage;
     end;
   end;
