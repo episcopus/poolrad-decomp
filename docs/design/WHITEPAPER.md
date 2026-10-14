@@ -1122,7 +1122,7 @@ matched only with the copy.
   two-element arrays.
 - **Helpless** **[V]**: `IsHelpless` (`00BA:0B73`) returns True when any of the four affects in
   `HelplessAffects` (DS:286B, entries 1..4 = $33, $34, $35, $1F) is on the character's affect list
-  (`res12_fn_2199`). ovl13:1FC3 compares the same entries with the 16-byte combat table at DS:3204;
+  (`HasAffect`). ovl13:1FC3 compares the same entries with the 16-byte combat table at DS:3204;
   `DrawCharacterPanel` shows "(Helpless)" for a True answer.
 - **The item name table** **[V]**: 256 strings of at most 20 characters at DS:10A7 (the image:
   entry 1 `Battle Axe` through entry 255 `Cursed`, entry 0 unused); the menu-line formatter

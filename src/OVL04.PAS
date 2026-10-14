@@ -23,7 +23,7 @@ uses POOLVARS, RES06, RES09, RES12, OVL07, OVL19, OVL21, OVL22, OVL24, OVL25;
 const
   Yes = 'Y';                    { the answer key AskYesNo returns for yes }
   No = 'N';
-  { Affect numbers (the ids res12_fn_2199 and RemoveAffect look for in a character's affect list). }
+  { Affect numbers (the ids HasAffect and RemoveAffect look for in a character's affect list). }
   AffectBlind = $21;            { Cure Blindness checks and removes it (ovl04:0262) }
   AffectCurse = $24;            { Remove Curse accepts it as a reason to cast (ovl04:08A0) }
   AffectPoison = $37;           { Neutralize Poison checks it; Raise Dead also removes it }
@@ -164,7 +164,7 @@ var
 begin
   Unused := '';
   Answer := Yes;
-  if not res12_fn_2199(SelectedCharacter, AffectBlind, Affect) then
+  if not HasAffect(SelectedCharacter, AffectBlind, Affect) then
     Answer := AskCastAnyway('is not blind.');
   if Answer = Yes then
   begin
@@ -188,7 +188,7 @@ begin
   Unused := '';
   Answer := Yes;
   for I := 1 to DiseaseCount do
-    if res12_fn_2199(SelectedCharacter, DiseaseAffects[I], Affect) then Diseased := True;
+    if HasAffect(SelectedCharacter, DiseaseAffects[I], Affect) then Diseased := True;
   if not Diseased then Answer := AskCastAnyway('is not Diseased.');
   if Answer = Yes then
   begin
@@ -316,7 +316,7 @@ begin
   Poisoned := False;
   Unused := '';
   Answer := Yes;
-  if res12_fn_2199(SelectedCharacter, AffectPoison, Affect) then Poisoned := True;
+  if HasAffect(SelectedCharacter, AffectPoison, Affect) then Poisoned := True;
   if not Poisoned then Answer := AskCastAnyway('is not poisoned.');
   if Answer = Yes then
   begin
@@ -352,7 +352,7 @@ begin
     if Item^.Cursed then Cursed := True;
     Item := Item^.Next;
   end;
-  if not Cursed and not res12_fn_2199(SelectedCharacter, AffectCurse, Affect) then
+  if not Cursed and not HasAffect(SelectedCharacter, AffectCurse, Affect) then
     Answer := AskCastAnyway('is not cursed.');
   if Answer = Yes then
   begin

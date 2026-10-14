@@ -1053,7 +1053,7 @@ begin
   end;
 end;
 { ovl07:1FB1. MovementRange: the highest and lowest Movement of the party members (ds5D96),
-  each doubled by affect $27 or else halved by affect $2A (res12_fn_2199). }
+  each doubled by affect $27 or else halved by affect $2A (HasAffect). }
 procedure MovementRange(var Fastest, Slowest: Byte);
 var
   Member: PCharacter;
@@ -1066,9 +1066,9 @@ begin
   while Member <> nil do
   begin
     Value := Member^.Movement;
-    if res12_fn_2199(Member, $27, Affect) then
+    if HasAffect(Member, $27, Affect) then
       Value := Value shl 1
-    else if res12_fn_2199(Member, $2A, Affect) then
+    else if HasAffect(Member, $2A, Affect) then
       Value := Value shr 1;
     if Value > Fastest then
       Fastest := Value;

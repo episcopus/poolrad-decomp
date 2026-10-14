@@ -324,7 +324,7 @@ end;
   step's cost (tile cost times 2, or 3 on a diagonal) is at or below the moves left; a TileKept
   tile is unaffordable unless Who has one of the four AffectKept affects. Called by MoveStep
   (ovl09:094B). Globals: StepTurnOffsets, CombatTiles. Affect receives the affect
-  res12_fn_2199 finds and is never read. }
+  HasAffect finds and is never read. }
 function CanAffordStep(Who: PCharacter; Column, BaseDir: Byte; var OffMap: Byte): Boolean;
 var
   Affect: Pointer;
@@ -352,10 +352,10 @@ begin
         Cost := DiagonalCost;
       Cost := Cost * CombatTiles[Tile].Cost;
       if Tile = TileKept then
-        if not res12_fn_2199(Who, AffectKeptA, Affect) then
-          if not res12_fn_2199(Who, AffectKeptB, Affect) then
-            if not res12_fn_2199(Who, AffectKeptC, Affect) then
-              if not res12_fn_2199(Who, AffectKeptD, Affect) then
+        if not HasAffect(Who, AffectKeptA, Affect) then
+          if not HasAffect(Who, AffectKeptB, Affect) then
+            if not HasAffect(Who, AffectKeptC, Affect) then
+              if not HasAffect(Who, AffectKeptD, Affect) then
                 Cost := Who^.Combat^.Moves + 1;
       if Who^.Combat^.Moves >= Cost then
         CanAffordStep := True;

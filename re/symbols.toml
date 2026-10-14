@@ -16856,12 +16856,12 @@ id = "00BA:2199"
 unit = "res12"
 addr = "00BA:2199"
 size = 143
-name = "res12_fn_2199"
-signature = "function res12_fn_2199(Who: Pointer; AffectId: Byte; var Affect: Pointer): Boolean"
+name = "HasAffect"
+signature = "function HasAffect(Who: Pointer; AffectId: Byte; var Affect: Pointer): Boolean"
 c_name = "res12_fn_2199"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_2199 (00BA:2199 returns whether AffectId is on Who's affect list and leaves the matching TAffect in the caller's Affect (callers read it as a question: if HasAffect(...) then)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

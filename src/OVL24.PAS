@@ -129,14 +129,14 @@ var
 begin
   Found := False;
   Other := PCharacter(ds5D96);
-  if res12_fn_2199(Who, AffectId, Affect) then
+  if HasAffect(Who, AffectId, Affect) then
     Found := True
   else if AffectId in [$15, $2D, $2E, $31] then
   begin
     Move(ds6718[1], Saved, SizeOf(Saved));
     while (Other <> nil) and not Found do
     begin
-      if res12_fn_2199(Other, AffectId, Affect) then
+      if HasAffect(Other, AffectId, Affect) then
       begin
         if ds49F3 = CombatViewMode then
         begin
@@ -384,11 +384,11 @@ begin
   begin
     ProbeStep(Who, 8, Occupant, Tile);
     if Tile = CloudTile then
-      if not res12_fn_2199(Who, $1E, Affect) then
-        if not res12_fn_2199(Who, $1F, Affect) then
-          if not res12_fn_2199(Who, $20, Affect) then
-            if not res12_fn_2199(Who, $6F, Affect) then
-              if not res12_fn_2199(Who, $7D, Affect) then
+      if not HasAffect(Who, $1E, Affect) then
+        if not HasAffect(Who, $1F, Affect) then
+          if not HasAffect(Who, $20, Affect) then
+            if not HasAffect(Who, $6F, Affect) then
+              if not HasAffect(Who, $7D, Affect) then
               begin
                 Saved := SavingThrow(Who, 0, 0);
                 if Saved then
@@ -549,7 +549,7 @@ procedure ClearAttackerAffect(Who: PCharacter);
 var
   Affect: Pointer;
 begin
-  while res12_fn_2199(Who, AffectAttackerLoses, Affect) do
+  while HasAffect(Who, AffectAttackerLoses, Affect) do
     RemoveAffect(Who, AffectAttackerLoses, Affect);
 end;
 
@@ -580,7 +580,7 @@ var
   Affect: Pointer;
 begin
   CureAffect := False;
-  if res12_fn_2199(Who, AffectId, Affect) then
+  if HasAffect(Who, AffectId, Affect) then
   begin
     ShowCharacterMessage(Who, 'is Cured', $A, 1);
     RemoveAffect(Who, AffectId, Affect);
@@ -741,7 +741,7 @@ begin
     ShowCharacterMessage(Who, 'is Unaffected', $A, 1)
   else
   begin
-    if res12_fn_2199(Who, AffectId, Existing) then
+    if HasAffect(Who, AffectId, Existing) then
       if ((PAffect(Existing)^.Duration > 0) and (Duration > PAffect(Existing)^.Duration)) or (Duration = 0) then
         RemoveAffect(Who, AffectId, Existing);
     AddAffect(Who, AffectId, Duration, Data, Flag);
@@ -765,7 +765,7 @@ begin
   HealCharacter := False;
   if Who^.Status in [0, 1, 4, 5] then
     if ((Who^.Flag11B < Who^.HpMax) and (Flag <> 0)) or
-      (not res12_fn_2199(Who, AffectHealingBlock, Affect) and (Flag = 0)) then
+      (not HasAffect(Who, AffectHealingBlock, Affect) and (Flag = 0)) then
     begin
       Who^.Flag11B := Who^.Flag11B + Amount;
       if Who^.Flag11B > Who^.HpMax then

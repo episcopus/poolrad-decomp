@@ -259,7 +259,7 @@ type
     { +$77..+$7E: the eight values ComputeThiefSkills builds from the thief level, the race and
       (for the first five) the dexterity: the thief skills [I] (ovl23:0329). }
     ThiefSkills: array[1..8] of Byte;
-    Affects: Pointer;             { +$7F: the list of affects (res12_fn_2199, RemoveAffect walk it) }
+    Affects: Pointer;             { +$7F: the list of affects (HasAffect, RemoveAffect walk it) }
     Pad83: Byte;
     { +$84: for computer-run members, low seven bits are morale and high bit $80 marks the AI
       (PrepareCombatants, ovl10:0675; CheckMorale, ovl09:10D7). Below $80, the party's Space
@@ -676,7 +676,7 @@ var
     shows its HEAD and BODY pictures (ovl28:04F9); the loader sets it nil (ovl11:03B8). }
   SelectedCharacter: PCharacter;  { see above }
   HelplessAffects: array[0..4] of Byte;   { the affects that leave a character helpless (IsHelpless tests
-                                    entries 1..4 through res12_fn_2199; ovl13:1FC3 compares the same
+                                    entries 1..4 through HasAffect; ovl13:1FC3 compares the same
                                     entries with the 16-byte combat table at DS:3204). Entry 0 (DS:286B)
                                     is never read. }
   ds286F: array[0..13] of Byte;   { the HEAD picture number per bank (SelectedCharacter^.HeadBank, ShowHeadBodyWindow) }

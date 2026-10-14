@@ -3623,3 +3623,10 @@ kind = "routine"
 why = "00BA:1FEB shows a per-character combat message and flashes the character's icon (DrawCombatIcon $16/$17), plays a sound and animates over the character's view cell; DealDamage calls it with Flag 0 and ApplyAffect with Flag 1"
 date = "2026-10-13"
 
+[[rename]]
+old = "res12_fn_2199"
+new = "HasAffect"
+kind = "routine"
+why = "00BA:2199 returns whether AffectId is on Who's affect list and leaves the matching TAffect in the caller's Affect (callers read it as a question: if HasAffect(...) then)"
+date = "2026-10-13"
+

@@ -54,7 +54,7 @@ procedure CopyPictureItem(PicIndex, Half, Row, Mirror: Byte);
 procedure DrawCombatIcon(PicIndex: Byte);
 procedure WalkCombatLine(FromX, FromY, ToX, ToY: ShortInt; Count, Mode: Byte);
 procedure ShowHitMessage(Who: Pointer; Flag: Byte; Text: String40);
-function res12_fn_2199(Who: Pointer; AffectId: Byte; var Affect: Pointer): Boolean;
+function HasAffect(Who: Pointer; AffectId: Byte; var Affect: Pointer): Boolean;
 procedure res12_fn_2228(Who: Pointer; Damage: Byte);
 procedure res12_fn_234A;
 function res12_fn_23B7(Who: Pointer): Byte;
@@ -435,7 +435,7 @@ begin
       DrawTextAt($17, Row + 1, White, '(Helpless)');
 end;
 { 00BA:0B73. Returns whether Who is helpless: True when any of the four affects in
-  HelplessAffects (DS:286B, entries 1..4) is on Who's affect list (res12_fn_2199). DrawCharacterPanel
+  HelplessAffects (DS:286B, entries 1..4) is on Who's affect list (HasAffect). DrawCharacterPanel
   shows '(Helpless)' when it is True; ovl13 skips a helpless combatant. Called by eight
   overlay routines and DrawCharacterPanel.
   Globals: HelplessAffects (read). }
@@ -446,7 +446,7 @@ var
 begin
   IsHelpless := False;
   for I := 1 to 4 do
-    if res12_fn_2199(Who, HelplessAffects[I], Affect) then
+    if HasAffect(Who, HelplessAffects[I], Affect) then
       IsHelpless := True;
 end;
 { 00BA:0BB8. Recomputes every combat value of Who from the items it carries and has readied.
@@ -1146,10 +1146,26 @@ begin
   else
     ShowCharacterMessage(Who, Text, $A, 1);
 end;
-{ 00BA:2199: retf 10; walks the affect list of Who (+$7F) for AffectId, leaves the affect in
-  Affect and returns 1 when found. }
-{@stub} function res12_fn_2199(Who: Pointer; AffectId: Byte; var Affect: Pointer): Boolean;
-  begin end;
+{ 00BA:2199. Returns whether Who has the affect AffectId on its affect list (TCharacter.Affects, +$7F).
+  It leaves in the caller's Affect the matching affect record when found, or the nil end of the list
+  otherwise (the callers only test the result). The list is walked until Found or the end. Called by
+  CureBlindness, CureDisease, NeutralizePoison, RemoveCurse and the movement, step and campaign code.
+  Globals: none. }
+function HasAffect(Who: Pointer; AffectId: Byte; var Affect: Pointer): Boolean;
+var
+  Found: Boolean;
+begin
+  Found := False;
+  Affect := PCharacter(Who)^.Affects;
+  while (Affect <> nil) and not Found do
+  begin
+    if PAffect(Affect)^.Id = AffectId then
+      Found := True
+    else
+      Affect := PAffect(Affect)^.Next;
+  end;
+  HasAffect := Found;
+end;
 { 00BA:2228: retf 6: 6 bytes of parameters; 2 bytes of locals }
 {@stub} procedure res12_fn_2228(Who: Pointer; Damage: Byte); begin end;
 { 00BA:234A: retf 4: 4 bytes of parameters; 42 bytes of locals }
