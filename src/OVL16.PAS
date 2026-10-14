@@ -92,7 +92,6 @@ procedure ovl16_fn_3EC9;
 function ConstitutionHitPointAdjustment(Who: PCharacter): ShortInt;
 function MinHitPoints(Who: PCharacter): Byte;
 function MaxHitPoints(Who: PCharacter): Byte;
-procedure ovl16_fn_41F8;
 function RollHitPoints(Who: PCharacter; ClassBits: Byte): Byte;
 procedure ovl16_fn_42ED(Amount: LongInt; Who: PCharacter);
 implementation
@@ -1122,8 +1121,6 @@ begin
     Total := (Total + Adjustment) div Count;
   MaxHitPoints := Total;
 end;
-{ ovl16:41F8: retf 4: 4 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl16_fn_41F8; begin end;
 { ovl16:4235. Rolls the hit points a level gains for the classes in ClassBits: over the eight classes
    it adds, for each class the character has a level in (ClassLevels, +$96, signed, above 0) whose
    bit is in ClassBits (ds05DE, one bit per class), a roll of ClassHitDiceCount[I] dice of
