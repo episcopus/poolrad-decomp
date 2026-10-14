@@ -35,3 +35,57 @@ tags = ["spell-list", "selection", "window"]
 title = "The spell-list selector separates list kind from selection mode"
 lesson = "ChooseSpellFromList uses its first byte to select the heading suffix and to call ovl22_e2; its second byte is passed with Choice to ovl22_e1. A zero Listed result returns zero. For a negative Choice, it opens the one-row Spells window, redraws SelectedCharacter, and draws the combined `Spells ` plus suffix heading."
 evidence = ["src/OVL19.PAS#ChooseSpellFromList", "re/symbols.toml#ovl19:299C"]
+
+[[lesson]]
+id = "sheet-field-views"
+confidence = "V"
+units = ["ovl19"]
+tags = ["record", "cast", "fields", "pool-variables"]
+title = "Read TCharacter bytes that have no Pascal name with a view record"
+lesson = "Ability scores (+$10..+$15, indexed by a variable), the damage dice and bonus (+$115, +$117, +$119 inside POOLVARS' Pad112) and the sex (+$9E) are read through local record views in OVL19: a Filler array up to the offset, then the field or array. `PAbilityBlock(SelectedCharacter)^.Scores[Index]` compiles to les di, ptr; add di, ax; es:[di+$10], the original's shape, so POOLVARS' TCharacter needs no change. The same view holds the signed indexes (sex, alignment, status) of ovl19_e1."
+evidence = ["src/OVL19.PAS#TAbilityBlock", "src/OVL19.PAS#TDamageDice", "src/OVL19.PAS#TSheetFields", "re/symbols.toml#ShowAbilityScore"]
+
+[[lesson]]
+id = "signed-table-index-cwde"
+confidence = "V"
+units = ["ovl19"]
+tags = ["index", "signed", "cwde"]
+title = "A cwde before an index means a ShortInt, not a Byte"
+lesson = "The original sign-extends an index with cwde (the row arithmetic of ShowAbilityScore, offset 003F of its code; the race, class, alignment and status tables in ovl19_e1). With a Byte index TP emits xor ah, ah, which was the first mismatch of ShowAbilityScore. Declare the index ShortInt when the packet shows cwde, and a Byte when it shows xor ah, ah."
+evidence = ["src/OVL19.PAS#ShowAbilityScore", "src/OVL19.PAS#ShowCharacterSheet"]
+
+[[lesson]]
+id = "map-entries-inside-matched-routine"
+confidence = "V"
+units = ["ovl19"]
+tags = ["map", "boundaries", "stubs"]
+title = "Map entries inside a matched routine are decoding artefacts"
+lesson = "ovl19_fn_031E (inside ShowCharacterSheet) and ovl19_fn_0915..ovl19_fn_09A3 (inside ShowAbilityScore) were mid-instruction decodes of the bodies of ovl19_e1 and ovl19_e3. Once the enclosing routine matches, make match WRITE=1 removes their entries from re/symbols.toml, but their stub lines and interface declarations stay in src/ until removed by hand; a stub for a removed entry gives a note from make stubs."
+evidence = ["re/symbols.toml#ovl19:0901", "re/symbols.toml#ovl19:004A", "src/OVL19.PAS#ShowAbilityScore"]
+
+[[lesson]]
+id = "two-spare-frame-bytes"
+confidence = "V"
+units = ["ovl19"]
+tags = ["frame", "locals", "padding"]
+title = "A frame two bytes larger than the code's locals holds two declared, unused bytes"
+lesson = "ovl19_e1's frame is 0x308 bytes; the code reads [bp-2] (row), [bp-3] (column), [bp-5], [bp-6], the text at [bp-0x106] and the flag at [bp-0x107], and never [bp-1] or [bp-4]. Declaring two one-byte locals before Row and between Col and Stat (TP allocates the first declared at [bp-1] and downward) reproduces every offset and the frame size. Declare the spares only when the frame and offsets prove them."
+evidence = ["src/OVL19.PAS#ShowCharacterSheet", "build/packets/ovl19_004A.md"]
+
+[[lesson]]
+id = "string-function-result-argument"
+confidence = "V"
+units = ["ovl19"]
+tags = ["string", "temporary", "function-result"]
+title = "A string function result passed on is not copied; a concatenated assignment builds a temporary"
+lesson = "DrawTextAt(Col, Row, Color, res12_fn_1037(x)) pushes the callee's result pointer and passes it on with no copy. `Text := SexNames[i]` copies with 0AF8:0B25 (max 255). `Text := Text + '/'` copies Text into a temporary (0AF8:0B0B), appends (0AF8:0B98) and copies back (0AF8:0B25). The temporary sizes give the frame: two 256-byte function temporaries sit under the Text local."
+evidence = ["src/OVL19.PAS#ShowCharacterSheet", "src/OVL19.PAS#ShowAbilityScore", "docs/design/WHITEPAPER.md#2.2"]
+
+[[lesson]]
+id = "string-table-from-the-image"
+confidence = "V"
+units = ["ovl19"]
+tags = ["data", "image", "tables", "dseg"]
+title = "Read a DS string table from the unpacked image by calibrating on a known name"
+lesson = "The image's data segment base is found from a known entry: MoneyKindNames (DS:0FFA) gives the file offset of its 'Copper' string, base = file offset - 0FFB. The same base gives RaceNames (DS:0F03), ClassNames (DS:0D38), AlignmentNames (DS:0F53) and StatusNames (DS:1047), each read with its stride. Record the name, stride and count in re/dseg.toml with the image as evidence."
+evidence = ["re/dseg.toml#MoneyKindNames", "re/dseg.toml#RaceNames", "re/dseg.toml#StatusNames"]
