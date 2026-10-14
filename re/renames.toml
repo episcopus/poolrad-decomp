@@ -3574,3 +3574,10 @@ kind = "routine"
 why = "cast handler of spell 8 Resist Cold (SpellHandlers[8]; ovl22_e10 fills the table, whitepaper 5.22.2): applies the current spell ds681B to the chosen targets with 'is cold-resistant' (ovl22:1162)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl22_e18"
+new = "CastBurningHands"
+kind = "routine"
+why = "cast handler of spell 9 Burning Hands (SpellHandlers[9]; ovl22_e10 fills the table, whitepaper 5.22.2): deals the caster level in fire damage to the chosen targets (ovl22:1190)"
+date = "2026-10-13"
+

@@ -10036,12 +10036,12 @@ id = "ovl22:1190"
 unit = "ovl22"
 addr = "ovl22:1190"
 size = 77
-name = "ovl22_e18"
+name = "CastBurningHands"
 signature = ""
 c_name = "ovl22_e18"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_18"
+notes = "renamed from ovl22_e18 (cast handler of spell 9 Burning Hands (SpellHandlers[9]; ovl22_e10 fills the table, whitepaper 5.22.2): deals the caster level in fire damage to the chosen targets (ovl22:1190)); auto:entry_18"
 evidence = ["prologue"]
 
 [[routine]]

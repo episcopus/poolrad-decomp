@@ -24,7 +24,7 @@ procedure CastCauseLightWounds;
 procedure CastDetectionSpell;
 procedure CastProtection;
 procedure CastResistCold;
-procedure ovl22_e18;
+procedure CastBurningHands;
 procedure ovl22_e19;
 procedure ovl22_e20;
 procedure ovl22_e21;
@@ -590,7 +590,18 @@ begin
   ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is cold-resistant');
 end;
 { ovl22:1190: retf 0: 0 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl22_e18; begin end;
+{ ovl22:1190 (e18). Cast handler of spell 9, Burning Hands: deals res12_fn_26C2(ds681B) (the caster
+  level) damage of kind DamageKindFire to the chosen targets with no message (ApplySpellToTargets;
+  DealDamage classifies kind 9 as fire, ovl24:1389). One of the per-spell handlers in SpellHandlers
+  (SpellHandlers[9], filled by ovl22_e10). }
+procedure CastBurningHands;
+const
+  { The kind of damage Burning Hands deals: DealDamage names kind 9 'from Fire' (its test is
+    DamageKind and $F7 = 1, ovl24:1389). }
+  DamageKindFire = 9;
+begin
+  ApplySpellToTargets(ds681B, 0, 0, res12_fn_26C2(ds681B), DamageKindFire, '');
+end;
 { ovl22:11DD: retf 0: 0 bytes of parameters; 22 bytes of locals }
 {@stub} procedure ovl22_e19; begin end;
 { ovl22:12A5: retf 0: 0 bytes of parameters; 14 bytes of locals }
