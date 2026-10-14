@@ -791,13 +791,16 @@ begin
   end;
 end;
 
-{ 0464:1951: shows a picture at (X, Y) by copying its packed pixel data
-  straight to the video hardware, one branch per video adapter: adapter 0 moves a
-  WidthCols*2-byte row per screen row to the segment ds4EC0[Row] at column X*2;
-  adapter 1 writes one byte per pixel through the four EGA planes (map mask from
-  EgaPlaneBitMasks, address ds5050[Row] + Col in segment $A000); adapter 2 is the
-  adapter-0 move with four bytes per column and the ds51E0 segment table. Called
-  by ShowTitleScreen, ovl28 DrawSprite and ovl34 Put8x8Symbol. }
+{ 0464:1951: shows a picture at (PicCol, PicRow) by copying its packed pixel data
+  straight to the video hardware, one branch per video adapter. PicRow * 8 is the
+  first pixel row, and PicCol the first cell column. Adapter 0 moves a
+  WidthCols*2-byte row per screen row to the segment ds4EC0[Row] at column
+  PicCol*2; adapter 1 writes, per row and per cell column, the four plane bytes of
+  the source cell (the plane-interleaved layout, 4 bytes per cell, one byte per
+  EGA plane: each byte holds eight pixels of that plane, written through the map
+  mask EgaPlaneBitMasks[Plane] on port 3C5 to Mem[$A000:ds5050[Row] + Col]);
+  adapter 2 is the adapter-0 move with four bytes per column and the ds51E0
+  segment table. Called by ShowTitleScreen, ovl28 DrawSprite and ovl34 Put8x8Symbol. }
 procedure ShowPicture(PicCol, PicRow: Integer; Buf: Pointer);
 var
   Col, Row: Integer;
