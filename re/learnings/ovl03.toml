@@ -17,3 +17,21 @@ tags = ["for", "ShortInt", "cwde", "index", "codegen"]
 title = "A loop index that the original sign-extends with cwde is a ShortInt"
 lesson = "The index of a for loop that feeds an array subscript is loaded with mov al,[I]; cwde before the scaling shl di,1 when it is declared ShortInt. Declared Byte, the same index compiles to xor ah,ah (the first mismatch in ArithmeticCommand). With the ShortInt declaration, `for I := 1 to 2 do Values[I] := OperandValue(I);` matches (the loop stays a loop; the index is a sign-extended byte)."
 evidence = ["src/OVL03.PAS#ArithmeticCommand", "re/symbols.toml#ovl03:01A3"]
+
+[[lesson]]
+id = "word-function-to-byte-local-and-frame-hole"
+confidence = "V"
+units = ["*"]
+tags = ["Byte", "Word", "frame", "unused", "locals", "codegen"]
+title = "A Word function result stored in a Byte keeps only AL; a frame byte nothing reads is a declared unused Byte"
+lesson = "Position := OperandValue(1) with a Byte Position stores only AL (mov [bp-6],al), with no widening, and Position := Position and $7F stays a byte operation. In SelectCharacterCommand the locals are Member (a pointer at [bp-4]), a byte at [bp-5] that no statement reads, then Position, I and RemoveFlag at [bp-6..-8]. The gap is a declared unused Byte (QUIRK ovl03:02E0), placed between the pointer and the byte locals so that the later locals keep their original offsets. Probe the offsets with make match, not by guessing the declaration order."
+evidence = ["src/OVL03.PAS#SelectCharacterCommand", "src/OVL03.PAS#ArithmeticCommand", "re/symbols.toml#ovl03:02E0"]
+
+[[lesson]]
+id = "guard-before-while-compound"
+confidence = "V"
+units = ["*"]
+tags = ["while", "guard", "and", "loop", "codegen"]
+title = "A guard before a while with a compound condition is an if around the loop"
+lesson = "The original tests Position > 0 once before the loop (cmp byte [bp-6],0; jbe exit), then the loop head tests I < Position and Member <> nil and jumps back to that head. Writing `if Position > 0 then while (I < Position) and (Member <> nil) do ...` reproduces that layout exactly (proven by make match; the variant without the guard was not probed)."
+evidence = ["src/OVL03.PAS#SelectCharacterCommand", "re/symbols.toml#ovl03:02E0"]
