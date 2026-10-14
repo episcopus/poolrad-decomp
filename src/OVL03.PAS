@@ -46,7 +46,7 @@ procedure ComparePartyItemCommand;
 procedure PauseCommand;
 procedure DamagePartyCommand;
 procedure RedrawAreaViewCommand;
-procedure ovl03_fn_2AC1;
+procedure PassTimeCommand;
 procedure ovl03_fn_2AEB;
 procedure ovl03_fn_2B14;
 procedure ovl03_fn_2B33;
@@ -66,7 +66,7 @@ procedure ovl03_e1;
 procedure ovl03_fn_3379;
 procedure ovl03_fn_34AB;
 implementation
-uses OVL04, OVL05, OVL06, OVL08, OVL17, OVL21, OVL24, OVL25, OVL26, OVL28, OVL29, OVL32, RES04, RES05, RES06, Crt;
+uses OVL04, OVL05, OVL06, OVL08, OVL17, OVL20, OVL21, OVL24, OVL25, OVL26, OVL28, OVL29, OVL32, RES04, RES05, RES06, Crt;
 
 const
   { The operand types from this one up are strings: $80 a packed string, $81 the address of a
@@ -1600,8 +1600,20 @@ begin
     ds84E0 := 0;
   end;
 end;
-{ ovl03:2AC1: retf 0: 0 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl03_fn_2AC1; begin end;
+{ ovl03:2AC1. ECL command 52 (dispatcher ovl03:2F2D, SkippedOpcode 34h): passes time. Operand 1 is the
+  amount, and ovl20_e1 advances the game clock by that many units of digit 1 (the digit the camp's
+  rest, RunRestPeriod in ovl20, advances in steps of 5). QUIRK ovl03:2AC1: Amount is passed to
+  OperandValue as the operand number before the routine has set it, so the operand read is whatever
+  byte the frame held on entry; the compiled code does exactly this. }
+procedure PassTimeCommand;
+var
+  Amount: Byte;
+  Unused: Byte;                 { QUIRK ovl03:2AC1: a byte of the frame nothing uses }
+begin
+  DecodeOperands(1);
+  Amount := OperandValue(Amount);
+  ovl20_e1(Amount, 1);
+end;
 { ovl03:2AEB: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl03_fn_2AEB; begin end;
 { ovl03:2B14: retf 0: 0 bytes of parameters; 0 bytes of locals }

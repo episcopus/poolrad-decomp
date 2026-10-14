@@ -3714,3 +3714,10 @@ kind = "routine"
 why = "dispatcher ovl03:2F2D sends SkippedOpcode 31h (49) here (cmp al,31h); it calls ShowAreaView (ovl26:016D) when ds84E3 (3D encounter sprite loaded) is set, then clears ds84E3 and ds84E0 (match ovl03:2AA2)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl03_fn_2AC1"
+new = "PassTimeCommand"
+kind = "routine"
+why = "ovl03:2AC1 is the handler of ECL opcode 52 (dispatcher ovl03:2F2D, cmp al,34h): its one operand is passed to ovl20_e1(Amount, 1), which advances the game clock's digit 1 by Amount (ovl20:03D5); the camp rest (RunRestPeriod, ovl20) makes the same call with Index 1 and Amount 5"
+date = "2026-10-13"
+

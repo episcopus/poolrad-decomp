@@ -667,12 +667,12 @@ id = "ovl03:2AC1"
 unit = "ovl03"
 addr = "ovl03:2AC1"
 size = 42
-name = "ovl03_fn_2AC1"
+name = "PassTimeCommand"
 signature = ""
 c_name = "ovl03_fn_2AC1"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_2AC1 (ovl03:2AC1 is the handler of ECL opcode 52 (dispatcher ovl03:2F2D, cmp al,34h): its one operand is passed to ovl20_e1(Amount, 1), which advances the game clock's digit 1 by Amount (ovl20:03D5); the camp rest (RunRestPeriod, ovl20) makes the same call with Index 1 and Amount 5); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
