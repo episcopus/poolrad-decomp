@@ -148,7 +148,7 @@ var
   { Nested in SpellAccepted (ovl09:0255): scans the DS:5F27 map entities around (X, Y) with the
     area pattern of spell Spell (its +$F byte is the line budget, direction omni, footprint base
     1) into ds6718, then answers True when one of the found combatants has a Side different from
-    res12_fn_23B7(SelectedCharacter) (that is 1 for the party side 0). Purpose unknown. }
+    OpposingSide(SelectedCharacter) (that is 1 for the party side 0). Purpose unknown. }
   function DifferentSideInArea(X, Y: ShortInt; Spell: Byte): Boolean;
   var
     I: Byte;
@@ -156,7 +156,7 @@ var
     DifferentSideInArea := False;
     ScanTargets(X, Y, SpellTable[Spell].PadB[$F], $FF, 1, CombatMap);
     for I := 1 to ds6718[0].Val do
-      if CombatantRecord[ds6718[I].Head]^.Side <> res12_fn_23B7(SelectedCharacter) then
+      if CombatantRecord[ds6718[I].Head]^.Side <> OpposingSide(SelectedCharacter) then
         DifferentSideInArea := True;
   end;
 
@@ -214,7 +214,7 @@ begin
   Roll := RollDice(1, 7);
   if Who^.Combat^.Pad2 = 0 then
     goto Done;
-  if ds6814Sides[ShortInt(res12_fn_23B7(Who))] <= 0 then
+  if ds6814Sides[ShortInt(OpposingSide(Who))] <= 0 then
     goto Done;
   if GameVars^[VarNoCasting] <> 0 then
     goto Done;
@@ -291,7 +291,7 @@ begin
     goto Done;
   if (Who^.B84 > $7F) or ds6E30 then
   begin
-    if ds6814Sides[ShortInt(res12_fn_23B7(Who))] > 0 then
+    if ds6814Sides[ShortInt(OpposingSide(Who))] > 0 then
     begin
       while (Round <= Roll) and (Chosen = 0) do
       begin

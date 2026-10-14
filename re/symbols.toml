@@ -16895,12 +16895,12 @@ id = "00BA:23B7"
 unit = "res12"
 addr = "00BA:23B7"
 size = 36
-name = "res12_fn_23B7"
-signature = "function res12_fn_23B7(Who: Pointer): Byte"
+name = "OpposingSide"
+signature = "function OpposingSide(Who: Pointer): Byte"
 c_name = "res12_fn_23B7"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_23B7 (00BA:23B7 returns the side opposite Who's Side (1 for a party member, 0 for a monster); the AI indexes ds6814Sides with it and ShortInt(res12_fn_23B7(Who)) counts Who's enemies); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

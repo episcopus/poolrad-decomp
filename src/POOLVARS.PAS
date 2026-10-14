@@ -840,7 +840,7 @@ var
   ds6814: Byte;                   { zero (or ds6815 zero) ends the combat (ovl08:009B, 095C); likely the count of one side }
   ds6815: Byte;                   { see ds6814; likely the count of the other side }
   { ds6814 and ds6815 indexed by side (ovl10:1AC7); the combat AI indexes them by the
-    res12_fn_23B7 side of the actor (UseMagicItem, CastMemorizedSpell, ovl09:049F, 05C6). }
+    OpposingSide side of the actor (UseMagicItem, CastMemorizedSpell, ovl09:049F, 05C6). }
   ds6814Sides: array[0..1] of Byte absolute ds6814;
   ds6825: Byte;                   { AI morale scratch (CheckMorale computes it from B84, compares percentages) }
   ds6E2F: Byte;                   { byte CheckMorale copies into ds6825; meaning unknown }

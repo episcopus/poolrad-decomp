@@ -57,7 +57,7 @@ procedure ShowHitMessage(Who: Pointer; Flag: Byte; Text: String40);
 function HasAffect(Who: Pointer; AffectId: Byte; var Affect: Pointer): Boolean;
 procedure ApplyDamage(Who: Pointer; Damage: Byte);
 procedure ShowHealResult(Who: Pointer);
-function res12_fn_23B7(Who: Pointer): Byte;
+function OpposingSide(Who: Pointer): Byte;
 procedure res12_fn_23DB;
 function res12_fn_2433(P: Pointer; B: Byte): Byte;
 function res12_fn_255B(Who, Target: Pointer): Byte;
@@ -170,6 +170,8 @@ const
   StatusUnconscious = 4;
   StatusDying = 5;
   StatusDead = 6;
+  { TCharacter.Side values: the party is 0, the monsters 1 (SetQuickCombat compares them). }
+  SideParty = 0;
 
 { 00BA:0000. Applies the readied weapon to Who's attack values; RecalcCombatValues calls it after it
   has copied the character's base values. With no readied weapon (SlotItems[0], +$CC) it does
@@ -1236,8 +1238,17 @@ begin
   if ds49F3 <> 5 then
     DrawPartyRoster(SelectedCharacter);
 end;
-{ 00BA:23B7: retf 4: 4 bytes of parameters; 2 bytes of locals }
-{@stub} function res12_fn_23B7(Who: Pointer): Byte; begin end;
+{ 00BA:23B7. Returns the side opposite Who's (Side, +$10E): 1 when Who is on the party side (0) and
+  0 otherwise. The combat AI indexes the per-side counts ds6814Sides with it to count Who's
+  enemies (UseMagicItem, CastMemorizedSpell, DifferentSideInArea) and ovl12/ovl13/ovl22 use it
+  too. Globals: none. }
+function OpposingSide(Who: Pointer): Byte;
+begin
+  if PCharacter(Who)^.Side = SideParty then
+    OpposingSide := 1
+  else
+    OpposingSide := 0;
+end;
 { 00BA:23DB: retf 0: 0 bytes of parameters; 4 bytes of locals }
 {@stub} procedure res12_fn_23DB; begin end;
 { 00BA:2433: retf 6: 6 bytes of parameters; 6 bytes of locals }
