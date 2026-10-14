@@ -42,7 +42,7 @@ function DexterityAttackAdjustment(Who: PCharacter): ShortInt;
 function StrengthRowIndex(Who: PCharacter): Byte;
 function StrengthAttackAdjustment(Who: PCharacter): ShortInt;
 function StrengthDamageAdjustment(Who: PCharacter): ShortInt;
-function res12_fn_13AB(Who: Pointer): Integer;
+function StrengthWeightAllowance(Who: PCharacter): Integer;
 procedure res12_fn_148B(Spell: Byte);
 procedure res12_fn_1509(Who: Pointer; Item: Pointer);
 procedure res12_fn_15F7;
@@ -279,7 +279,7 @@ end;
 
 { 00BA:03A0. Caps Who's movement by the weight the character carries above its strength
   allowance; RecalcCombatValues calls it once after the readied-item loop. Weight is
-  CarriedWeight (+$102) minus res12_fn_13AB(Who) (the strength weight allowance), clamped at 0
+  CarriedWeight (+$102) minus StrengthWeightAllowance(Who) (the strength weight allowance), clamped at 0
   from below. The excess picks the cap: up to $200 the movement is left alone, up to $300 it is
   9, up to $400 6, and above that 3; the movement only falls, never rises.
   Globals: none beyond Who. }
@@ -288,7 +288,7 @@ var
   Weight: Integer;
   NewMovement: Byte;
 begin
-  Weight := Who^.CarriedWeight - res12_fn_13AB(Who);
+  Weight := Who^.CarriedWeight - StrengthWeightAllowance(Who);
   if Weight < 0 then
     Weight := 0;
   case Weight of
@@ -650,7 +650,7 @@ end;
 { 00BA:11EA. Maps a character's strength (Strength, +$10) to a 0..30 row of the strength table:
   strength 0..17 is itself, strength 18 is 18 plus the exceptional strength (StrengthPercent,
   +$16: 0 gives 18, 1..50 gives 19, 51..75 gives 20, 76..90 gives 21, 91..99 gives 22 and 100
-  gives 23), and strength 19..25 gives 24..30. StrengthAttackAdjustment, StrengthDamageAdjustment and res12_fn_13AB
+  gives 23), and strength 19..25 gives 24..30. StrengthAttackAdjustment, StrengthDamageAdjustment and StrengthWeightAllowance
   use it to look up the reaction, damage and weight allowances of a strength.
   QUIRK 00BA:1258: a strength above 25, or a strength-18 percentage above 100, leaves the result
   unassigned (the original returns whatever the frame held).
@@ -715,8 +715,33 @@ begin
       $1E: StrengthDamageAdjustment := 14;
     end;
 end;
-{ 00BA:13AB: retf 4: 4 bytes of parameters; 4 bytes of locals }
-{@stub} function res12_fn_13AB(Who: Pointer): Integer; begin end;
+{ 00BA:13AB. Returns the weight a character of Who's strength can carry, in coins: StrengthRowIndex
+  (00BA:11EA) maps the strength to a 0..30 table row and the row picks the allowance (rows 1..3
+  give -350, 4..5 -250, 6..7 -150, 12..13 100, 14..15 200, 16 350, 17..21 (row-17)*250+500,
+  22..26 (row-22)*1000+2000, 27 7500, 28..30 (row-28)*3000+9000, every other row 0).
+  CapMovementByLoad subtracts it from the carried weight; ovl21's CarryLimit adds 1500 to it.
+  Globals: none. }
+function StrengthWeightAllowance(Who: PCharacter): Integer;
+var
+  Row: Byte;
+  Unused: Byte;   { the original frame carries one byte here that the code never reads }
+begin
+  Row := StrengthRowIndex(Who);
+  case Row of
+    1..3: StrengthWeightAllowance := -350;
+    4..5: StrengthWeightAllowance := -250;
+    6..7: StrengthWeightAllowance := -150;
+    $C..$D: StrengthWeightAllowance := 100;
+    $E..$F: StrengthWeightAllowance := 200;
+    $10: StrengthWeightAllowance := 350;
+    $11..$15: StrengthWeightAllowance := (Row - $11) * $FA + $1F4;
+    $16..$1A: StrengthWeightAllowance := (Row - $16) * $3E8 + $7D0;
+    $1B: StrengthWeightAllowance := $1D4C;
+    $1C..$1E: StrengthWeightAllowance := (Row - $1C) * $BB8 + $2328;
+  else
+    StrengthWeightAllowance := 0;
+  end;
+end;
 { 00BA:148B: retf 2: 2 bytes of parameters; 2 bytes of locals }
 {@stub} procedure res12_fn_148B(Spell: Byte); begin end;
 { 00BA:1509: retf 8: 8 bytes of parameters; 44 bytes of locals }

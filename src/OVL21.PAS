@@ -61,11 +61,11 @@ const
   GemItemType = $46;    { the item type of a kept gem or jewel }
   HalfGoldInCopper = 100;  { added before dividing by the gold value: rounds to the nearest gold piece }
 
-{ ovl21:0000. The most weight Who may carry: 1500 plus the strength allowance res12_fn_13AB
+{ ovl21:0000. The most weight Who may carry: 1500 plus the strength allowance StrengthWeightAllowance
   (negative for a weak character). }
 function CarryLimit(Who: PCharacter): Word;
 begin
-  CarryLimit := res12_fn_13AB(Who) + BaseLoad;
+  CarryLimit := StrengthWeightAllowance(Who) + BaseLoad;
 end;
 { ovl21:0020. Takes Amount off the weight Who carries (coins handed away). }
 procedure RemoveCarriedWeight(Who: PCharacter; Amount: Word);

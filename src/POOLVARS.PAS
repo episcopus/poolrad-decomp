@@ -328,7 +328,7 @@ type
                                     and branches on it being 2, ovl19 adds it to row[1] }
     SaveBonus: ShortInt;          { +$101: added to the d20 of every saving throw (SavingThrow, ovl24:0D96) }
     { +$102: the weight the character carries; every coin counts one (ovl21:0020, 003A), and it may
-      not exceed CarryLimit, 1500 plus the strength allowance res12_fn_13AB (ovl21:0000, 0054). }
+      not exceed CarryLimit, 1500 plus the strength allowance StrengthWeightAllowance (ovl21:0000, 0054). }
     CarriedWeight: Word;
     Next: PCharacter;             { +$104: the next character of the party list (ds5D96), nil ends it }
     Combat: PCombatant;           { +$108: the character's combat state (ovl08, ovl31) }

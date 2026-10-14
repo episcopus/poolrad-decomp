@@ -16700,12 +16700,12 @@ id = "00BA:13AB"
 unit = "res12"
 addr = "00BA:13AB"
 size = 224
-name = "res12_fn_13AB"
-signature = "function res12_fn_13AB(Who: Pointer): Integer"
+name = "StrengthWeightAllowance"
+signature = "function StrengthWeightAllowance(Who: PCharacter): Integer"
 c_name = "res12_fn_13AB"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_13AB (00BA:13AB: returns the strength weight allowance in coins (StrengthRowIndex row -> coins); CapMovementByLoad (00BA:03A0) subtracts it from Who^.CarriedWeight and ovl21's CarryLimit adds 1500 to it.); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

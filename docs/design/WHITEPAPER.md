@@ -627,10 +627,10 @@ the 28-byte money block at `DS:67F4` and `DS:6DC0`, redraws the shop (`res12:27D
   refused, 0 when it was added (`ovl06:026D`, `ovl06:0277`). The matched `WouldOverloadInventory`
   (`ovl19:275B`) first calls `RecalcCombatValues`, then returns true when the character's byte at +$C7
   exceeds 15 or when `CarriedWeight` (+$102) plus the item's added weight exceeds
-  `res12_fn_13AB(Character) + 1500`. Added weight starts at `Item^.Weight`; the code multiplies it
+  `StrengthWeightAllowance(Character) + 1500`. Added weight starts at `Item^.Weight`; the code multiplies it
   by `Item^.Count` only when the count is nonzero. `AddInventoryItem` refuses the item and shows
   "OverLoaded" when the function returns true **[V]** (`make match UNIT=ovl19 FN=WouldOverloadInventory`,
-  `ovl06:026D..0277`). The strength-capacity interpretation of `res12_fn_13AB` remains **[I]**.
+  `ovl06:026D..0277`). The strength-capacity interpretation of `StrengthWeightAllowance` remains **[I]**.
 
 Map note: `re/symbols.toml` had split `ovl06:0239` at `ovl06:0311`; `0311` is one byte into a
 `les di, [bp-8]` instruction, not a routine entry, and its stub was removed.
@@ -648,7 +648,7 @@ and the treasure menu (5.20) share.
   money until appraised. `SetCharacterGold` and `SetPooledGold` rewrite a gold amount as
   `Amount div 5` platinum plus `Amount mod 5` gold, clearing the other coins.
 - **Weight.** Every coin weighs one unit of the carried weight `TCharacter.CarriedWeight` (+$102);
-  `CarryLimit` is 1500 plus the strength allowance `res12_fn_13AB` (a table on the strength
+  `CarryLimit` is 1500 plus the strength allowance `StrengthWeightAllowance` (a table on the strength
   class: -350 for the weakest, up to several thousand), and `WouldOverload` tells whether Amount more fits and how much
   room is left. QUIRK `ovl21:04DB`: `TransferMoney` adds the coins' weight back to the giver instead
   of the taker.
@@ -1076,7 +1076,7 @@ matched only with the copy.
   `SetArmourMovement` copies it to Movement (+$11C) for an armour (item kind 2) below weight
   $97, uses 9 up to $18F and 6 above, and adds 3 for a magic armour while the movement is at
   most 9. `CapMovementByLoad` then caps Movement by the carried weight (+$102) above the
-  strength allowance `res12_fn_13AB`: excess up to $200 keeps it, up to $300 caps at 9, up to
+  strength allowance `StrengthWeightAllowance`: excess up to $200 keeps it, up to $300 caps at 9, up to
   $400 at 6, above at 3, and the cap never raises it.
 - **Readied items** **[V]**: `AddReadiedItemBonus` reads the item kind's RaceRow byte 6: bit 7
   clear means the item contributes nothing; with it set the low seven bits are a bonus class.

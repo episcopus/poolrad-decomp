@@ -168,7 +168,7 @@ begin
   if Item^.Count > 0 then
     AddedWeight := AddedWeight * Item^.Count;
   if Character^.CarriedWeight + AddedWeight >
-    res12_fn_13AB(Character) + BaseCarryAllowance then
+    StrengthWeightAllowance(Character) + BaseCarryAllowance then
     Overloaded := True;
   WouldOverloadInventory := Overloaded;
 end;
