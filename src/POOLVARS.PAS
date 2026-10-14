@@ -793,8 +793,8 @@ var
   ds094D: array[0..8] of Word;    { the per-step DrawAreaView columns of AnimateAreaDoors (indexed 0..8) }
   ds095F: array[0..8] of Word;    { the per-step DrawAreaView rows of AnimateAreaDoors (indexed 0..8) }
   { Set to 1 by the RunCharacterMenu STING cheat (the J key, ovl16:0161). While set, the menu
-    offers Modify, and TrainCharacter (ovl16:29AE) skips the consciousness, gold, class and
-    experience checks and does not charge the 1000 gold. }
+    offers Train (ds0619 slot 3), and TrainCharacter (ovl16:29AE) skips the consciousness, gold,
+    class and experience checks and does not charge the 1000 gold. }
   ds470C: Byte;
   ds470E: Pointer;                { the FINAL picture bank ShowEndingNarrative loads through LoadPicture and draws }
   ds4712: Byte;                   { the DS:49F3 value ShowEndingNarrative saves at the start and restores at the end }

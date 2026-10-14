@@ -40,7 +40,12 @@ const
   HotKeyColour = $F;        { white: the function name's first (hotkey) letter }
   NameColour = $A;          { green: the rest of the function name }
   ChoiceTitleColour = $D;   { the ReadPromptChoice title colour of the menu }
-  Var2OfferModify = 680;    { ds49D6^ word: the modify function is offered while it is above 0; unknown }
+  { ds49D6^ word 680: the set of classes this training hall trains, a mask over the ds05DE class
+    bits (only its low byte is tested). RunCharacterMenu offers Train (slot 3) while it is nonzero,
+    or while the STING cheat ds470C is set; TrainCharacter needs it to share a bit with the
+    character's classes and with a trainable class, else 'We don't train that class here'. Who
+    writes it is not found yet [I]. }
+  TrainableClassesWord = 680;
   GoldInCopper = 200;       { one gold piece is 200 copper (CoinCopperValues[GoldCoin]) }
   { the column of each ability's minimum and maximum in a 16-byte row of the per-race limits
     ds3DA3 (ModifyCharacter, CreateCharacter): the Strength columns +0/+2/+4 are RaceStrengthMax and
@@ -105,7 +110,11 @@ type
 
 { ovl16:0000. Frees a character and everything it owns: its combat state (Combat, size $16), its
   carried items (the list at Items, size $3F) and its affects (the list at Affects, size 9), then
-  the character record itself (size $11D) and clears the caller's pointer (Char := nil). }
+  the character record itself (size $11D). The last statement, `Who := nil`, is a dead store: Who
+  is a by-value parameter, so it only clears this routine's own copy and no caller's pointer
+  changes (RemoveSelectedCharacter reassigns SelectedCharacter itself right after the call).
+  QUIRK ovl16:00D4: the by-value `Who := nil` stores nil into the callee's own parameter copy and
+  does not clear the caller's pointer. }
 procedure FreeCharacter(Who: PCharacter);
 var
   CurItem: PItem;
@@ -133,20 +142,41 @@ begin
     end;
   end;
   FreeMem(Who, CharacterSize);
-  Who := nil;
+  Who := nil;   { QUIRK ovl16:00D4: a dead store, Who is a by-value parameter (no caller changes) }
 end;
 { ovl16:0161. The main menu of the character-creation / training hall (called by ovl03:2E10). It
   draws the window (DrawWindow) and, when a character is selected, its roster (DrawPartyRoster) and
   the eleven function names of the menu at DS:0619 (the first letter in white, the rest in green,
-  DrawTextAt). It then asks ReadPromptChoice for a function key (prompt line 'C D M T V A R L S B E J')
-  and dispatches it: C create (CreateCharacter), D drop (DropCharacter), M modify (ModifyCharacter),
-  T train (TrainCharacter), V view (ViewSelectedCharacter), A add (AddSavedCharacters), R remove
-  (SaveCharacter then RemoveSelectedCharacter), L load (LoadGame), S save (SaveGame), B buy/finish (sets ds49F3 to
-  Mode 4 and leaves), E exit (AskYesNo, then save and QuitGame), J the STING cheat. An extended key
-  G or O selects another party member (UpdateSelectedCharacter); E or S clears the heap retry gate
-  ds557D. Mode (4) is the value stored in the view mode ds49F3 on B. Local at [bp-5] is unused; the
-  frame needs its 9 bytes. }
+  DrawTextAt). The eleven slots, in the order of the hotkey line ds05F0 'C D M T V A R L S B E J',
+  hold the texts at DS:0619: SlotCreate 0 'Create New Character', SlotDrop 1 'Drop Character',
+  SlotModify 2 'Modify Character', SlotTrain 3 'Train Character', SlotView 4 'View Character',
+  SlotAdd 5 'Add Character to Party', SlotRemove 6 'Remove Character from Party', SlotLoad 7
+  'Load Saved Game', SlotSave 8 'Save Current Game', SlotBegin 9 'BEGIN Adventuring' and SlotExit
+  10 'Exit to DOS'. It then asks ReadPromptChoice for a function key and dispatches it: C create
+  (CreateCharacter), D drop (DropCharacter), M modify (ModifyCharacter), T train (TrainCharacter),
+  V view (ViewSelectedCharacter), A add (AddSavedCharacters), R remove (SaveCharacter then
+  RemoveSelectedCharacter), L load (LoadGame), S save (SaveGame), B BEGIN Adventuring (it needs a
+  non-empty party, ds5D96, and stores the view mode Mode 4 in ds49F3 before it leaves), E exit
+  (AskYesNo, then save and QuitGame), J the STING cheat. An extended key G or O selects another
+  party member (UpdateSelectedCharacter); every other key (all except E and S) clears the heap
+  retry gate ds557D, and E and S leave it alone: the E path's SaveGame retry loop reads ds557D to
+  end the retry (POOLVARS). Mode (4) is the value stored in the view mode ds49F3 on B. Local at
+  [bp-5] is unused; the frame needs its 9 bytes. }
 procedure RunCharacterMenu;
+const
+  { The eleven slots of the menu at ds0619, in the order of the hotkey line ds05F0
+    'C D M T V A R L S B E J' (the slot text is listed in the routine comment above). }
+  SlotCreate = 0;
+  SlotDrop = 1;
+  SlotModify = 2;
+  SlotTrain = 3;
+  SlotView = 4;
+  SlotAdd = 5;
+  SlotRemove = 6;
+  SlotLoad = 7;
+  SlotSave = 8;
+  SlotBegin = 9;
+  SlotExit = 10;
 var
   I: Byte;
   Key: Char;
@@ -170,26 +200,26 @@ begin
       if SelectedCharacter <> nil then
       begin
         DrawPartyRoster(SelectedCharacter);
-        ds0619[1].Present := 1;
-        ds0619[2].Present := 1;
-        if (ds49D6^[Var2OfferModify] > 0) or (ds470C <> 0) then
-          ds0619[3].Present := 1;
-        ds0619[4].Present := 1;
-        ds0619[6].Present := 1;
-        ds0619[7].Present := 0;
-        ds0619[8].Present := 1;
-        ds0619[9].Present := 1;
+        ds0619[SlotDrop].Present := 1;
+        ds0619[SlotModify].Present := 1;
+        if (ds49D6^[TrainableClassesWord] > 0) or (ds470C <> 0) then
+          ds0619[SlotTrain].Present := 1;
+        ds0619[SlotView].Present := 1;
+        ds0619[SlotRemove].Present := 1;
+        ds0619[SlotLoad].Present := 0;
+        ds0619[SlotSave].Present := 1;
+        ds0619[SlotBegin].Present := 1;
       end
       else
       begin
-        ds0619[1].Present := 0;
-        ds0619[2].Present := 0;
-        ds0619[3].Present := 0;
-        ds0619[4].Present := 0;
-        ds0619[6].Present := 0;
-        ds0619[7].Present := 1;
-        ds0619[8].Present := 0;
-        ds0619[9].Present := 0;
+        ds0619[SlotDrop].Present := 0;
+        ds0619[SlotModify].Present := 0;
+        ds0619[SlotTrain].Present := 0;
+        ds0619[SlotView].Present := 0;
+        ds0619[SlotRemove].Present := 0;
+        ds0619[SlotLoad].Present := 1;
+        ds0619[SlotSave].Present := 0;
+        ds0619[SlotBegin].Present := 0;
       end;
       Row := 0;
       for I := 0 to 10 do
@@ -217,32 +247,32 @@ begin
         ds557D := False;
       case Key of
         'C':
-          if ds0619[0].Present <> 0 then
+          if ds0619[SlotCreate].Present <> 0 then
             CreateCharacter;
         'D':
-          if ds0619[1].Present <> 0 then
+          if ds0619[SlotDrop].Present <> 0 then
             DropCharacter;
         'M':
-          if ds0619[2].Present <> 0 then
+          if ds0619[SlotModify].Present <> 0 then
             ModifyCharacter;
         'T':
-          if ds0619[3].Present <> 0 then
+          if ds0619[SlotTrain].Present <> 0 then
             TrainCharacter;
         'V':
-          if ds0619[4].Present <> 0 then
+          if ds0619[SlotView].Present <> 0 then
             ViewSelectedCharacter(Done);
         'A':
-          if ds0619[5].Present <> 0 then
+          if ds0619[SlotAdd].Present <> 0 then
             AddSavedCharacters;
         'R':
-          if ds0619[6].Present <> 0 then
+          if ds0619[SlotRemove].Present <> 0 then
             if SelectedCharacter <> nil then
             begin
               SaveCharacter(SelectedCharacter, '');
               RemoveSelectedCharacter(False, True);
             end;
         'L':
-          if ds0619[7].Present <> 0 then
+          if ds0619[SlotLoad].Present <> 0 then
           begin
             LoadGame;
             if ds49F3 <> 0 then
@@ -252,11 +282,11 @@ begin
             end;
           end;
         'S':
-          if ds0619[8].Present <> 0 then
+          if ds0619[SlotSave].Present <> 0 then
             if ds5D96 <> 0 then
               SaveGame;
         'B':
-          if ds0619[9].Present <> 0 then
+          if ds0619[SlotBegin].Present <> 0 then
             if ds5D96 <> 0 then
             begin
               ds49F3 := Mode;
@@ -264,7 +294,7 @@ begin
               Exit;
             end;
         'E':
-          if ds0619[10].Present <> 0 then
+          if ds0619[SlotExit].Present <> 0 then
           begin
             Key := AskYesNo('Quit to DOS ', $E, $A, $F);
             if Key = 'Y' then
@@ -304,8 +334,11 @@ end;
     item-usage ClassBits (ds05D6) and ComputeSavingThrows.
   - Alignment: the row of the class in ds3FE7 lists the alignments it may pick (ByteA0).
   The age comes next: the roll of the race and class entry in ds3E5B (a single class) or, for a
-  multi-class, its maximum, from the first of the combined classes in the entry order cleric,
-  fighter, magic-user.
+  multi-class, the maximum of one class's entry (Base + Sides * Count, not a roll). The class whose
+  entry is used is not simply the first of the combined classes in the order cleric, fighter,
+  magic-user: it is the Cleric entry for masks 8, 9, $B and $C, the Fighter entry for $E, and the
+  Magic-User entry for $D (Fighter/Magic-User), $F and $10 (a first-in-order rule would wrongly
+  give Fighter for $D and Cleric for $F).
   Then, until the player answers Y to 'Keep this character? ', it makes the character the
   SelectedCharacter, shows the sheet and rolls each ability score: the best of six RollDice(3, 6),
   raised or lowered by the race's age brackets (ds3F31), clamped to the race's limits for the gender
@@ -1143,27 +1176,36 @@ begin
   end;
 end;
 { ovl16:29AE. The Train (T) function of the training hall, dispatched by RunCharacterMenu
-  (ovl16:0161) when ds0619[3] is present. It refuses an unconscious character (Status at
-  +$10C not 0, 'we only train conscious people') and one with less than 1000 gold
+  (ovl16:0161) when SlotTrain (ds0619[3]) is present. It refuses an unconscious character (Status
+  at +$10C not 0, 'we only train conscious people') and one with less than 1000 gold
   (CharacterMoneyValueInGold, 'Training costs 1000 gp.'), unless the STING cheat ds470C is
   set (the J key, ovl16:0306). For each class with a level it adds that class's bit (ds05DE)
   and, unless the race has reached the level cap IsMaxClassLevel (res12:2F57) inlines for
   that class, marks the class trainable when Experience has reached ds409B[class, level+1]
   and that threshold is above 0 (0 means the class has no further level). Experience already
   at ds409B[class, level+2] is cut to one below it, so one visit raises one level. Unless
-  ds470C is set, the hall's word ds49D6^[Var2OfferModify] (680) must share a bit with the
+  ds470C is set, the hall's word ds49D6^[TrainableClassesWord] (680) must share a bit with the
   character's classes and with a trainable class; only its low byte is tested. The window
   then lists the levels the character will become, AskYesNo confirms, PayGold takes the
   1000 gold, each trainable class rises by one and RecalcClassStats rebuilds the derived
-  stats. A magic-user who rose (class 5) picks one spell (ChooseSpellFromList, list kind 4,
-  'to choose from') and marks it known. The hit points gained are RollHitPoints of the
-  trained classes, shared across every class with a level, with a floor of 1, added to HpB1
-  (+$B1) and, after the constitution adjustment, to HpMax; Flag11B (the current hit points)
-  keeps the same gap below HpMax. No parameters. Globals: SelectedCharacter, ds470C, ds05DE,
-  ds409B, ds49D6, ClassNames. Side effects: the function window, the flash line, the
-  character's experience, levels, spells, hit points and money.
+  stats. Raising a class (once per class that rises) also gives back one level DrainLevels
+  (ovl12:2122) took: while Pad74[$74] (the drained level count) is above 0 it subtracts
+  Pad74[$75] div Pad74[$74] hit points from Pad74[$75] (the hit points lost with them,
+  CastRestoration in ovl22) and decrements Pad74[$74] [I] (ovl12 and ovl22 are the evidence
+  for the two fields). A magic-user who rose (class 5) picks one spell
+  (ChooseSpellFromList, list kind 4, 'to choose from') and marks it known. The hit points
+  gained are RollHitPoints of the trained classes, shared across every class with a level,
+  with a floor of 1, added to HpB1 (+$B1) and, after the constitution adjustment, to HpMax;
+  Flag11B (the current hit points) keeps the same gap below HpMax. No parameters. Globals:
+  SelectedCharacter, ds470C, ds05DE, ds409B, ds49D6, ClassNames. Side effects: the function
+  window, the flash line, the character's experience, levels, spells, hit points and money.
   QUIRK ovl16:2CDA: the first refusal's Exit is followed by a jump the compiler keeps, the
-  skip of the else branch, which nothing reaches. }
+  skip of the else branch, which nothing reaches.
+  QUIRK ovl16:2F95: the `KnownSpells[ChosenSpell] := 1` after the magic-user rise also runs if
+  the repeat ended because Listed = 0 with ChosenSpell = 0; KnownSpells is declared index 1..$38
+  (+$33..+$6A), so index 0 is the byte at +$32, HpMax, and HpMax becomes 1 before the hit-point
+  gain is added (range checks are off in this build). Whether Listed = 0 can be reached is for
+  ChooseSpellFromList (ovl19) to say. }
 procedure TrainCharacter;
 const
   MessageColour = $E;           { yellow: the flash messages of the refusals }
@@ -1179,6 +1221,9 @@ const
   ClericClass = 0;              { ClassLevels index; a half-elf cleric caps at 5 }
   FighterClass = 2;             { the class the racial level caps apply to }
   MageClass = 5;                { a rise here asks for a new spell }
+  { TCharacter.Pad74 index of the drained-level state the class rise restores (the routine comment). }
+  DrainedLevels = $74;          { the count of levels DrainLevels (ovl12:2122) drained }
+  LostHitPoints = $75;          { the hit points lost with them (CastRestoration, ovl22) }
   SpellListToChoose = 4;        { ChooseSpellFromList's 'to choose from' list (ovl19:299C) }
   SpellDisplayMode = 4;         { the display mode the call pushes; ovl22 reads it }
   NoSpellChoice = $FFFF;        { negative, so ChooseSpellFromList opens the spell window }
@@ -1273,19 +1318,19 @@ begin
       Experience := NewExperience;
     if ds470C = 0 then
     begin
-      if Byte(ds49D6^[Var2OfferModify] and ClassBitMask) = 0 then
+      if Byte(ds49D6^[TrainableClassesWord] and ClassBitMask) = 0 then
       begin
         FlashMessageLine('We don''t train that class here', MessageColour);
         Exit;
       end
-      else if Byte(ds49D6^[Var2OfferModify] and TrainableBits) = 0 then
+      else if Byte(ds49D6^[TrainableClassesWord] and TrainableBits) = 0 then
       begin
         FlashMessageLine('Not Enough Experience', MessageColour);
         Exit;
       end;
     end;
     if ds470C = 0 then
-      AllowedBits := Byte(ds49D6^[Var2OfferModify] and TrainableBits)
+      AllowedBits := Byte(ds49D6^[TrainableClassesWord] and TrainableBits)
     else
       AllowedBits := TrainableBits;
     ClearWindow(MenuLeft, MenuTop, MenuRight, MenuBottom);
@@ -1318,10 +1363,12 @@ begin
         if (ds05DE[I] and AllowedBits) > 0 then
         begin
           Inc(ClassLevels[I]);
-          if Pad74[$74] > 0 then
+          { the rise also restores one level DrainLevels (ovl12:2122) took: give back that
+            level's share of the lost hit points and drop the count of drained levels [I] }
+          if Pad74[DrainedLevels] > 0 then
           begin
-            Dec(Pad74[$75], Pad74[$75] div Pad74[$74]);
-            Dec(Pad74[$74]);
+            Dec(Pad74[LostHitPoints], Pad74[LostHitPoints] div Pad74[DrainedLevels]);
+            Dec(Pad74[DrainedLevels]);
           end;
         end;
       end;
@@ -1332,6 +1379,8 @@ begin
       repeat
         ChosenSpell := ChooseSpellFromList(SpellListToChoose, SpellDisplayMode, Choice, Listed);
       until (ChosenSpell > 0) or (Listed = 0);
+      { QUIRK ovl16:2F95: also runs if Listed = 0 chose no spell, then ChosenSpell 0 writes HpMax
+        (+$32) because KnownSpells is declared [1..$38], so index 0 is the byte below it }
       KnownSpells[ChosenSpell] := 1;
     end;
     HpRoll := RollHitPoints(SelectedCharacter, AllowedBits);
