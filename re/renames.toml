@@ -3434,3 +3434,10 @@ kind = "routine"
 why = "ECL command 2: the dispatcher ovl03:2F2D calls it for SkippedOpcode 2 (cmp al,2 then call 0111); it decodes one operand and calls ScriptGosub(1), which pushes the return address (ovl07:1951)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl03_fn_0126"
+new = "CompareCommand"
+kind = "routine"
+why = "ECL command 3: the dispatcher ovl03:2F2D calls it for SkippedOpcode 3 (cmp al,3 then call 0126); it compares two operands with CompareStrings or CompareWords, which set the flags the conditional commands test (ovl07:1815, 18EB)"
+date = "2026-10-13"
+

@@ -160,12 +160,12 @@ id = "ovl03:0126"
 unit = "ovl03"
 addr = "ovl03:0126"
 size = 125
-name = "ovl03_fn_0126"
+name = "CompareCommand"
 signature = ""
 c_name = "ovl03_fn_0126"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_0126 (ECL command 3: the dispatcher ovl03:2F2D calls it for SkippedOpcode 3 (cmp al,3 then call 0126); it compares two operands with CompareStrings or CompareWords, which set the flags the conditional commands test (ovl07:1815, 18EB)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

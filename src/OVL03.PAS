@@ -8,7 +8,7 @@ uses POOLVARS, RES09, OVL07;
 procedure EndCommand;
 procedure GotoCommand;
 procedure GosubCommand;
-procedure ovl03_fn_0126;
+procedure CompareCommand;
 procedure ovl03_fn_01A3;
 procedure ovl03_fn_0234;
 procedure ovl03_fn_0245;
@@ -114,6 +114,11 @@ procedure ovl03_fn_3379;
 procedure ovl03_fn_34AB;
 implementation
 
+const
+  { The operand types from this one up are strings: $80 a packed string, $81 the address of a
+    stored one (DecodeOperands in OVL07). }
+  FirstStringOperandType = $80;
+
 { ovl03:0001. The ECL command 0, the only command that takes no operands (the dispatcher at
   ovl03:2F2D calls it for SkippedOpcode 0). It clears the text windows when ds84E2 is set (the
   second one only when the game variable VarForceWallView is set, since the code reads that same
@@ -164,8 +169,31 @@ begin
   DecodeOperands(1);
   ScriptGosub(1);
 end;
-{ ovl03:0126: retf 0: 0 bytes of parameters; 516 bytes of locals }
-{@stub} procedure ovl03_fn_0126; begin end;
+{ ovl03:0126. ECL command 3 (dispatcher ovl03:2F2D, SkippedOpcode 3): compares its two operands
+  and sets CompareFlags for the conditional commands. When either operand is a string (type bit 7
+  set) both strings are taken from EclStrings[1] and [2], whatever the types, and compared with
+  CompareStrings; otherwise the two word values are compared with CompareWords. }
+procedure CompareCommand;
+var
+  LeftWord: Word;
+  RightWord: Word;
+  Left: string;
+  Right: string;
+begin
+  DecodeOperands(2);
+  if (OperandType[1] >= FirstStringOperandType) or (OperandType[2] >= FirstStringOperandType) then
+  begin
+    Left := EclStrings[1];
+    Right := EclStrings[2];
+    CompareStrings(Left, Right);
+  end
+  else
+  begin
+    LeftWord := OperandValue(1);
+    RightWord := OperandValue(2);
+    CompareWords(LeftWord, RightWord);
+  end;
+end;
 { ovl03:01A3: retf 0: 0 bytes of parameters; 10 bytes of locals }
 {@stub} procedure ovl03_fn_01A3; begin end;
 { ovl03:0234: frame not read }
