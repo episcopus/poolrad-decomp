@@ -4967,11 +4967,11 @@ unit = "ovl13"
 addr = "ovl13:02F9"
 size = 814
 name = "ShowAttackResult"
-signature = "procedure ShowAttackResult(Attacker: PCharacter; Target: PCharacter; Kind, SpellFlag, Damage, Hit: Byte)"
+signature = "procedure ShowAttackResult(Attacker: PCharacter; Target: PCharacter; Kind, DamageDealt, Damage, Hit: Byte)"
 c_name = "ovl13_fn_02F9"
 level = "L2"
 justification = ""
-notes = "renamed from ovl13_fn_02F9 (ovl13:02F9 shows one melee attack's result in the combat window: it builds 'Attacks'/' -Backstabs-'/'slays helpless' text, draws Target's name, on a hit adds 'Hitting for N point(s) of damage' and calls ApplyDamage, on a miss adds 'and Misses', pages the text through ShowPagedText, and then, when SpellFlag is set, makes Target lose its pending spell and, when Target is out of the fight (Flag10D 0), shows goes down/dying/killed, runs the death hooks and removes Target from the map; called from ovl13_fn_14A1/1713/1758); auto:near_call"
+notes = "renamed from ovl13_fn_02F9 (ovl13:02F9 shows one melee attack's result in the combat window: it builds 'Attacks'/' -Backstabs-'/'slays helpless' text, draws Target's name, on a hit adds 'Hitting for N point(s) of damage' and calls ApplyDamage with DamageDealt, on a miss adds 'and Misses', pages the text through ShowPagedText, and then, when the damage dealt is above 0, makes Target lose its pending spell and, when Target is out of the fight (Flag10D 0), shows goes down/dying/killed, runs the death hooks and removes Target from the map; called from ResolveCombatantAttacks (ovl13:1406)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
