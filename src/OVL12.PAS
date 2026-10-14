@@ -56,7 +56,7 @@ procedure ovl12_e44(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e45(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e46(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ProgressRot(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e48;
+procedure ovl12_e48(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e49;
 procedure ovl12_e50;
 procedure ovl12_e51;
@@ -1036,8 +1036,15 @@ begin
   else
     DropFromFight(Who, StatusRotted, 'Dies rots away');
 end;
-{ ovl12:1452: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e48; begin end;
+{ ovl12:1452. Affect handler (the AffectHandlers shape: Who, Affect and Mode; only Who is read). It stops Who's
+  movement: the combat record's Moves (+$6 of TCombatant, the movement left) goes to 0. When ds681D is not 0 it also
+  clears ds681A, the byte AgeCharacterOnce doubles. Purpose unknown: which affect runs it is not known yet [?]. }
+procedure ovl12_e48(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  Who^.Combat^.Moves := 0;
+  if ds681D <> 0 then
+    ds681A := 0;
+end;
 { ovl12:1472: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e49; begin end;
 { ovl12:1490: retf 10: 10 bytes of parameters; 2 bytes of locals }
