@@ -3735,3 +3735,10 @@ kind = "routine"
 why = "00BA:290B builds and draws the party location line (column,row, facing, hours:minutes, and a camping/search suffix) on row 15 of the side window; called by the camp and wilderness screens"
 date = "2026-10-13"
 
+[[rename]]
+old = "res12_fn_2E03"
+new = "IsRangedWeapon"
+kind = "routine"
+why = "00BA:2E03 returns True when Who has a readied weapon (SlotItems[0]) whose RaceRow byte $C (the attack range, ovl09:536) is above 1 (a missile weapon); ovl08 gates the melee attack on it"
+date = "2026-10-13"
+

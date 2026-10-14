@@ -430,12 +430,12 @@ begin
   if Who^.Combat^.Moves < 2 then Who^.Combat^.Moves := 0;
 end;
 { ovl08:0D45. Attacker attacks Target in melee: refused with Not with that weapon when
-  res12_fn_2E03 holds and res12_fn_2E46 does not (a weapon that cannot strike in melee, by the
+  IsRangedWeapon holds and res12_fn_2E46 does not (a weapon that cannot strike in melee, by the
   message); otherwise when ovl13_e16 allows the attack Target becomes Attacker's Combat^.Target and
   either ovl13_e7 ends the turn (Done := 1) or ovl13_e11 and ovl13_e12 carry the attack out. }
 procedure MeleeAttack(Attacker, Target: PCharacter; var Done: Byte);
 begin
-  if res12_fn_2E03(Attacker) and not res12_fn_2E46(Attacker) then
+  if IsRangedWeapon(Attacker) and not res12_fn_2E46(Attacker) then
     ShowFlashMessage('Not with that weapon')
   else if ovl13_e16(Attacker, Target) then
   begin
@@ -460,7 +460,7 @@ var
 begin
   Done := 0;
   Menu := '';
-  if not res12_fn_2E03(Who) or res12_fn_2E46(Who) then Menu := Menu + 'Guard ';
+  if not IsRangedWeapon(Who) or res12_fn_2E46(Who) then Menu := Menu + 'Guard ';
   Menu := Menu + 'Delay Quit ';
   if BandageDying(0) <> 0 then Menu := Menu + 'Bandage ';
   Menu := Menu + 'Speed Exit';

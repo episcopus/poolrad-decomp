@@ -478,7 +478,7 @@ end;
   dropped when it is not dying or is on the party side, and a target is attacked when line of
   sight (WalkLine) reaches it within Range and ovl13_e8 allows it; otherwise a random enemy of
   the CollectEnemiesInRange(Who, Range) scan (ds6DE4) is picked (or UseBestItem chooses one when
-  res12_fn_2E03 says to). The attack runs ovl13_e7/e11/e12 and ends the turn through
+  IsRangedWeapon says to). The attack runs ovl13_e7/e11/e12 and ends the turn through
   EndCombatTurn. Result: 1 when the turn is over (CanAct = 0). QUIRK: [bp-3] is reused for
   res12_fn_2E8B's dead result; the +$CC deref runs before its nil test. Globals: ds443C, ds443D,
   ds443E, RaceRow, ds6DE4, CombatantRecord, CombatMap. }
@@ -563,7 +563,7 @@ Loop:
   end;
   Index := RollDice(1, Count);
   Target := CombatantRecord[ds6DE4[Index]];
-  if res12_fn_2E03(Who) then
+  if IsRangedWeapon(Who) then
     if not res12_fn_2E46(Who) then
       if CollectEnemiesInRange(Who, 1) > 0 then
       begin
@@ -586,7 +586,7 @@ Attack:
   end;
   ovl13_e11(Who, Target);
   Aim := nil;
-  if res12_fn_2E03(Who) then
+  if IsRangedWeapon(Who) then
   begin
     Flag := res12_fn_2E8B(Who, Aim);
     if res12_fn_2E46(Who) and (DistanceToTarget(Who, Target) = 1) then
@@ -606,13 +606,13 @@ Finish:
   AiTurn := Ord(CanAct = 0);
 end;
 { ovl09:0F4F. Purpose unknown: returns EndCombatTurn(Who) when IsHelpless(Who) or
-  res12_fn_2E03(Who) is true or the combatant's Initiative is 0, else GuardTurn(Who).
+  IsRangedWeapon(Who) is true or the combatant's Initiative is 0, else GuardTurn(Who).
   Called by QuickTurn (ovl09:01EE) and from the 07F2 and 0B3C regions. ClearCharacterMessage runs first
   (parameterless). }
 function ovl09_fn_0F4F(Who: PCharacter): Byte;
 begin
   ClearCharacterMessage;
-  if IsHelpless(Who) or res12_fn_2E03(Who) or (Who^.Combat^.Initiative = 0) then
+  if IsHelpless(Who) or IsRangedWeapon(Who) or (Who^.Combat^.Initiative = 0) then
     ovl09_fn_0F4F := EndCombatTurn(Who)
   else
     ovl09_fn_0F4F := GuardTurn(Who);

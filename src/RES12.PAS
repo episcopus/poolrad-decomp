@@ -70,7 +70,7 @@ procedure DrawLocationLine;
 procedure DrawWildernessScreen;
 procedure DrawCombatScreen;
 procedure SelectPartyMember(Title: String40; WithExit: Byte; var Selected: PCharacter);
-function res12_fn_2E03(Who: Pointer): Boolean;
+function IsRangedWeapon(Who: Pointer): Boolean;
 function res12_fn_2E46(Who: Pointer): Boolean;
 function res12_fn_2E8B(Who: Pointer; var W: Pointer): Byte;
 procedure res12_fn_2F57;
@@ -82,6 +82,7 @@ const
   RaceRowWeaponDice = 9;        { +$9: the item kind's damage dice count [I] }
   RaceRowWeaponDieSize = $A;    { +$A: the item kind's damage die size [I] }
   RaceRowWeaponBonus = $B;      { +$B: the item kind's base damage bonus }
+  RaceRowWeaponRange = $C;      { +$C: the item kind's attack range in map cells (ovl09:536 reads it) }
   RaceRowAttackFlags = $E;      { +$E: which attack bonuses the item kind gets, see below }
   { Bits of RaceRow[item kind][RaceRowAttackFlags]. }
   WeaponFlagSlot11Plus = 1;     { add the plus of slot item 11 (+$F8) }
@@ -1598,8 +1599,19 @@ begin
     Selected := PartyMember;
   end;
 end;
-{ 00BA:2E03: retf 4: 4 bytes of parameters; 2 bytes of locals }
-{@stub} function res12_fn_2E03(Who: Pointer): Boolean; begin end;
+{ 00BA:2E03. Returns whether Who's readied weapon (SlotItems[0], +$CC) is a missile weapon: False
+  with no readied weapon, otherwise True when the weapon kind's RaceRow attack range (byte $C) is
+  above 1 (a melee weapon has range 1). ovl08's MeleeAttack refuses a missile-only weapon
+  (IsRangedWeapon and not RangedWeaponCanMelee); the combat AI and ovl13 test it too.
+  Globals: RaceRow (read). }
+function IsRangedWeapon(Who: Pointer): Boolean;
+begin
+  if (PCharacter(Who)^.SlotItems[0] <> nil) and
+     (RaceRow[PCharacter(Who)^.SlotItems[0]^.ItemType][RaceRowWeaponRange] > 1) then
+    IsRangedWeapon := True
+  else
+    IsRangedWeapon := False;
+end;
 { 00BA:2E46: retf 4: 4 bytes of parameters; 2 bytes of locals }
 {@stub} function res12_fn_2E46(Who: Pointer): Boolean; begin end;
 { 00BA:2E8B: retf 8: 8 bytes of parameters; 6 bytes of locals }

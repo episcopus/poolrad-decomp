@@ -17064,12 +17064,12 @@ id = "00BA:2E03"
 unit = "res12"
 addr = "00BA:2E03"
 size = 67
-name = "res12_fn_2E03"
-signature = "function res12_fn_2E03(Who: Pointer): Boolean"
+name = "IsRangedWeapon"
+signature = "function IsRangedWeapon(Who: Pointer): Boolean"
 c_name = "res12_fn_2E03"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_2E03 (00BA:2E03 returns True when Who has a readied weapon (SlotItems[0]) whose RaceRow byte $C (the attack range, ovl09:536) is above 1 (a missile weapon); ovl08 gates the melee attack on it); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
