@@ -1,10 +1,14 @@
 unit RES12;
-{ res12: resident unit, 12464 bytes of code. Skeleton by tools/match/skeleton.py: every routine is a stub
-  until decompiled (playbook 30). }
+{ res12: the resident helper unit the overlays call for characters, items and combat. It
+  recomputes the combat values (res12_fn_0BB8 and ApplyWeaponBonuses) and the strength,
+  dexterity, weight and damage figures (1168, 1282, 1325, 13AB, 2228, 2199); it draws the shop
+  screen and its item prompts (27D9, 0767, called by ShopMain, whitepaper 5.4), shows the
+  per-character messages (16EC, 1FEB) and dispatches the area view (27D9, 2B5E, whitepaper 5.2.1).
+  Many routines are still stubs. }
 {$A-,F+,S-,R-,G-,I-}
 interface
-uses RES06;
-procedure res12_fn_0000;
+uses POOLVARS, RES06;
+procedure ApplyWeaponBonuses(Who: PCharacter);
 procedure res12_fn_0188;
 procedure res12_fn_01FB;
 procedure res12_fn_0282;
@@ -23,10 +27,10 @@ function res12_fn_1037(N: Byte): string;
 function res12_fn_1073(Value: Word): string;
 procedure res12_fn_10AD;
 procedure res12_fn_10E6;
-procedure res12_fn_1168;
+function res12_fn_1168(Who: PCharacter): ShortInt;
 procedure res12_fn_11EA;
-procedure res12_fn_1282;
-procedure res12_fn_1325;
+function res12_fn_1282(Who: PCharacter): ShortInt;
+function res12_fn_1325(Who: PCharacter): ShortInt;
 function res12_fn_13AB(Who: Pointer): Integer;
 procedure res12_fn_148B(Spell: Byte);
 procedure res12_fn_1509(Who: Pointer; Item: Pointer);
@@ -69,8 +73,72 @@ function res12_fn_2E8B(Who: Pointer; var W: Pointer): Byte;
 procedure res12_fn_2F57;
 implementation
 
-{ 00BA:0000: frame not read }
-{@stub} procedure res12_fn_0000; begin end;
+const
+  { Byte offsets into a RaceRow (DS:5582; 129 sixteen-byte rows indexed by item kind, POOLVARS).
+    The readied weapon's item kind picks the row. }
+  RaceRowWeaponDice = 9;        { +$9: the item kind's damage dice count [I] }
+  RaceRowWeaponDieSize = $A;    { +$A: the item kind's damage die size [I] }
+  RaceRowWeaponBonus = $B;      { +$B: the item kind's base damage bonus }
+  RaceRowAttackFlags = $E;      { +$E: which attack bonuses the item kind gets, see below }
+  { Bits of RaceRow[item kind][RaceRowAttackFlags]. }
+  WeaponFlagSlot11Plus = 1;     { add the plus of slot item 11 (+$F8) }
+  WeaponFlagDexToHit = 2;       { the attack adds the dexterity roll adjustment }
+  WeaponFlagStrength = 4;       { the attack adds the strength roll and damage adjustments }
+  WeaponFlagSlot12Plus = $80;   { add the plus of slot item 12 (+$FC) }
+  { The race value (Race, +$2E) that gets one more point with the item kinds $24, $25 and $29..$2C
+    (the bows and the long and short swords of AD&D); which race that is is not proven here. }
+  BonusRace = 2;
+  BonusKindRangeLow = $28;      { the kinds above it and below the next value get the point }
+  BonusKindRangeHigh = $2D;
+  BonusKindLow = $25;
+  BonusKindLower = $24;
+
+{ 00BA:0000. Applies the readied weapon to Who's attack values; res12_fn_0BB8 calls it after it
+  has copied the character's base values. With no readied weapon (SlotItems[0], +$CC) it does
+  nothing. Otherwise the weapon's item kind picks a RaceRow row (DS:5582): its byte 9 becomes
+  Who^.WeaponAttacks (+$115), byte $A Who^.WeaponDamage (+$117) and byte $B the base of the
+  signed Who^.WeaponDamageBonus (+$119). The attack flags byte $E adds the dexterity roll
+  adjustment (res12_fn_1168, bit 2) to HitAdjust (+$110, reset to Thac0 +$2D first) and the
+  strength roll (res12_fn_1282) to HitAdjust and the strength damage (res12_fn_1325) to the
+  damage bonus (bit 4); bit 0 adds the plus of slot item 11 (+$F8) and bit 7 the plus of slot
+  item 12 (+$FC) to the weapon's own plus. Race 2 gets one more point with the bonus kinds.
+  Globals: RaceRow. }
+procedure ApplyWeaponBonuses(Who: PCharacter);
+var
+  Weapon: PItem;
+  ItemType: Byte;
+  WeaponPlus: ShortInt;
+begin
+  Weapon := Who^.SlotItems[0];
+  if Weapon = nil then
+    Exit;
+  ItemType := Weapon^.ItemType;
+  Who^.HitAdjust := Who^.Thac0;
+  if (RaceRow[ItemType][RaceRowAttackFlags] and WeaponFlagDexToHit) <> 0 then
+    Who^.HitAdjust := Who^.HitAdjust + res12_fn_1168(Who);
+  Who^.WeaponDamageBonus := RaceRow[ItemType][RaceRowWeaponBonus];
+  if (RaceRow[ItemType][RaceRowAttackFlags] and WeaponFlagStrength) <> 0 then
+  begin
+    Who^.HitAdjust := Who^.HitAdjust + res12_fn_1282(Who);
+    Who^.WeaponDamageBonus := Who^.WeaponDamageBonus + res12_fn_1325(Who);
+  end;
+  WeaponPlus := Weapon^.Plus;
+  if RaceRow[ItemType][RaceRowAttackFlags] > $7F then
+    if Who^.SlotItems[12] <> nil then
+      WeaponPlus := WeaponPlus + Who^.SlotItems[12]^.Plus;
+  if (RaceRow[ItemType][RaceRowAttackFlags] and WeaponFlagSlot11Plus) > 0 then
+    if Who^.SlotItems[11] <> nil then
+      WeaponPlus := WeaponPlus + Who^.SlotItems[11]^.Plus;
+  Who^.WeaponDamageBonus := Who^.WeaponDamageBonus + WeaponPlus;
+  if (Who^.Race = BonusRace) and
+     ((Weapon^.ItemType > BonusKindRangeLow) and (Weapon^.ItemType < BonusKindRangeHigh) or
+      (Weapon^.ItemType = BonusKindLow) or (Weapon^.ItemType = BonusKindLower)) then
+    Inc(WeaponPlus);
+  Who^.HitAdjust := Who^.HitAdjust + WeaponPlus;
+  Who^.WeaponAttacks := RaceRow[ItemType][RaceRowWeaponDice];
+  Who^.WeaponDamage := RaceRow[ItemType][RaceRowWeaponDieSize];
+end;
+
 { 00BA:0188: retf 4: 4 bytes of parameters; 0 bytes of locals }
 {@stub} procedure res12_fn_0188; begin end;
 { 00BA:01FB: retf 8: 8 bytes of parameters; 0 bytes of locals }
@@ -110,13 +178,13 @@ implementation
 { 00BA:10E6: retf 4: 4 bytes of parameters; 2 bytes of locals }
 {@stub} procedure res12_fn_10E6; begin end;
 { 00BA:1168: retf 4: 4 bytes of parameters; 2 bytes of locals }
-{@stub} procedure res12_fn_1168; begin end;
+{@stub} function res12_fn_1168(Who: PCharacter): ShortInt; begin end;
 { 00BA:11EA: retf 4: 4 bytes of parameters; 2 bytes of locals }
 {@stub} procedure res12_fn_11EA; begin end;
 { 00BA:1282: retf 4: 4 bytes of parameters; 2 bytes of locals }
-{@stub} procedure res12_fn_1282; begin end;
+{@stub} function res12_fn_1282(Who: PCharacter): ShortInt; begin end;
 { 00BA:1325: retf 4: 4 bytes of parameters; 2 bytes of locals }
-{@stub} procedure res12_fn_1325; begin end;
+{@stub} function res12_fn_1325(Who: PCharacter): ShortInt; begin end;
 { 00BA:13AB: retf 4: 4 bytes of parameters; 4 bytes of locals }
 {@stub} function res12_fn_13AB(Who: Pointer): Integer; begin end;
 { 00BA:148B: retf 2: 2 bytes of parameters; 2 bytes of locals }

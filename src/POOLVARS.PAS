@@ -341,7 +341,23 @@ type
     { +$111: the d20 roll (20 counts 100) plus the level RollBeatsResistance is given must exceed it
       (ovl24:0C90); likely the magic resistance [I]. }
     ResistValue: Byte;
-    Pad112: array[$112..$11A] of Byte;
+    { +$112: res12_fn_0BB8 computes it (the sum of its frame bytes [bp-$B]..[bp-9] minus two);
+      not read by a decompiled routine yet, meaning unknown. }
+    ds112: Byte;
+    { +$113, +$114: part of the block res12_fn_0BB8 copies from the base block +$A2..+$A8 into
+      +$114..+$11A; not read by a decompiled routine yet, meaning unknown. }
+    Pad113: array[$113..$114] of Byte;
+    { +$115, +$117, +$119: the readied weapon's attack triple, filled by ApplyWeaponBonuses from the
+      RaceRow row of the weapon's item kind (bytes 9, $A and $B; the base values live at +$A3,
+      +$A5 and +$A7). The AI's item score multiplies +$A5 by +$A3 and adds twice +$A7, so the
+      three read as the attacks per round, the damage and a signed damage bonus [I]. The bytes
+      between them (+$116, +$118, +$11A) belong to the same block, not read here. }
+    WeaponAttacks: Byte;          { +$115 }
+    Pad116: Byte;                 { +$116 }
+    WeaponDamage: Byte;           { +$117 }
+    Pad118: Byte;                 { +$118 }
+    WeaponDamageBonus: ShortInt;  { +$119: signed; the strength and item plus bonus goes here }
+    Pad11A: Byte;                 { +$11A }
     { +$11B: Raise Dead and Stone to Flesh set it to 1; HealCharacter adds to it up to HpMax,
       ReviveCombatant sets it and DropCombatant clears it: the current hit points [I] (ovl24:17B9). }
     Flag11B: Byte;

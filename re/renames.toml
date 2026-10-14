@@ -3399,3 +3399,10 @@ kind = "routine"
 why = "ovl20:0721 draws the 'Rest daYs Hours Mins Inc Dec Exit' menu through ReadPromptChoice, adjusts RestTime and returns 1 for Rest; RunRestPeriod (ovl20:0C9A) rests only when it returns nonzero"
 date = "2026-10-13"
 
+[[rename]]
+old = "res12_fn_0000"
+new = "ApplyWeaponBonuses"
+kind = "routine"
+why = "applies the readied weapon (SlotItems[0], +CC) to the character's HitAdjust, WeaponAttacks, WeaponDamage and WeaponDamageBonus from the RaceRow row of the weapon's item kind, plus the dexterity (1168) and strength (1282/1325) adjustments and the slot-item pluses; called by res12_fn_0BB8 (make match UNIT=res12, 00BA:0000)"
+date = "2026-10-13"
+
