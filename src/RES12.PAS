@@ -1545,7 +1545,58 @@ begin
   MoveCombatCursor(CombatMap^.ViewX + ViewCentreCell, CombatMap^.ViewY + ViewCentreCell,
                    CursorMargin, CursorNoStep);
 end;
-{@stub} procedure SelectPartyMember(Title: String40; WithExit: Byte; var Selected: PCharacter); begin end;
+{ 00BA:2C48. The party-member picker: it loops showing the character roster (DrawPartyRoster) and
+  a ReadPromptChoice prompt titled Text with the word "Select" (and " Exit" when WithExit is set),
+  updating the caller's Selected pointer. G steps to the previous member and O to the next (both
+  wrap around the party list ds5D96), E (or the extended-key prefix #0) clears the selection, and
+  Enter, Escape or E end the loop. Animate for ReadPromptChoice is 1 in the camp (ViewModeCamp) and
+  loot (ViewModeLoot) screens. Called by ovl03, ovl19 and ovl22.
+  Globals: ds49F3 (read), ds5D96 (read). Side effects: the screen, the keyboard. }
+procedure SelectPartyMember(Title: String40; WithExit: Byte; var Selected: PCharacter);
+var
+  Key: Char;                        { the key ReadPromptChoice returns }
+  ExtKey: Byte;                     { ReadPromptChoice's extended-key flag }
+  Animate: Byte;                    { 1 in the camp and loot screens }
+  PartyMember: PCharacter;          { the member the key selects }
+  Extra: string[40];                { " Exit" when WithExit is set, else empty }
+begin
+  Key := ' ';
+  Extra := '';
+  if WithExit <> 0 then
+    Extra := ' Exit';
+  while not (Key in [KeyEnter, KeyEscape, 'E', 'S']) do
+  begin
+    DrawPartyRoster(Selected);
+    if (ds49F3 = ViewModeCamp) or (ds49F3 = ViewModeLoot) then
+      Animate := 1
+    else
+      Animate := 0;
+    Key := ReadPromptChoice(Title + ' ', 'Select' + Extra, $D, $A, $F, 1, Animate, ExtKey);
+    PartyMember := Selected;
+    if ExtKey <> 0 then
+      case Key of
+        'O':
+          begin
+            PartyMember := PartyMember^.Next;
+            if PartyMember = nil then
+              PartyMember := PCharacter(ds5D96);
+          end;
+        'G':
+          begin
+            PartyMember := PCharacter(ds5D96);
+            if Selected <> PCharacter(ds5D96) then
+              while PartyMember^.Next <> Selected do
+                PartyMember := PartyMember^.Next
+            else
+              while PartyMember^.Next <> nil do
+                PartyMember := PartyMember^.Next;
+          end;
+      end
+    else if (Key = 'E') or (Key = #0) then
+      PartyMember := nil;
+    Selected := PartyMember;
+  end;
+end;
 { 00BA:2E03: retf 4: 4 bytes of parameters; 2 bytes of locals }
 {@stub} function res12_fn_2E03(Who: Pointer): Boolean; begin end;
 { 00BA:2E46: retf 4: 4 bytes of parameters; 2 bytes of locals }
