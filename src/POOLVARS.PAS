@@ -929,7 +929,7 @@ var
   ds6814: Byte;                   { zero (or ds6815 zero) ends the combat (ovl08:009B, 095C); likely the count of one side }
   ds6815: Byte;                   { see ds6814; likely the count of the other side }
   { The round's Movement in half squares ComputeMovement computes for a combatant (it stores it
-    before the movement affect hooks and reads it back); ovl13_e1 also seeds it from Who^.PadA2. }
+    before the movement affect hooks and reads it back); StartCombatantRound also seeds it from Who^.PadA2. }
   ds681A: Byte;
   { Set while ComputeMovement runs the movement affect hooks and cleared around them; what reads
     it is not known yet. }

@@ -4015,3 +4015,10 @@ kind = "routine"
 why = "ovl13:0123 works out a combatant's round Movement from Movement (+0x11C), clamped to 1..0x60 and doubled into half squares; RunCombat calls it at the start of every round (ovl08:0063) and its result is stored in Combat^.Moves (+6, half squares)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl13_e1"
+new = "StartCombatantRound"
+kind = "routine"
+why = "ovl13:0000 is RunCombat's per-round setup of a combatant: RunCombat calls it for every combatant on the party list at the start of each round (ovl08:0063) before turns; it clears and re-arms Combat^, refreshes it (ovl13_e6, the movement hooks), rolls Initiative and sets Combat^.Moves"
+date = "2026-10-13"
+

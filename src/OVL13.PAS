@@ -1,12 +1,12 @@
 unit OVL13;
 { CombatSpells: the combat actions overlay (whitepaper 5.5). RunCombat calls it to set up every
-  combatant's round (ComputeMovement and ovl13_e1), to move a combatant on the combat map (ovl13_e3
+  combatant's round (ComputeMovement and StartCombatantRound), to move a combatant on the combat map (ovl13_e3
   and ovl13_e4), and to resolve what a combat action does; the ovl13_eN entry points are the ones
   the combat menu and the combat AI call. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 uses POOLVARS;
-procedure ovl13_e1(Who: PCharacter);
+procedure StartCombatantRound(Who: PCharacter);
 function ComputeMovement(Who: PCharacter): Byte;
 procedure ovl13_fn_0191;
 procedure ovl13_fn_02F9;
@@ -26,11 +26,11 @@ procedure ovl13_fn_0B5C;
 procedure ovl13_fn_0B61;
 function ovl13_e5(Who: Pointer): Byte;
 procedure ovl13_fn_0CEE;
-procedure ovl13_e6(Who: Pointer);
+procedure ovl13_e6(Who: PCharacter);
 procedure ovl13_fn_0D92;
 procedure ovl13_fn_0D99;
 procedure ovl13_fn_0E08;
-procedure ovl13_fn_0E52;
+function ovl13_fn_0E52(Value: Byte): Byte;
 function ovl13_e7(Who, Target: Pointer): Boolean;
 procedure ovl13_fn_0FBF;
 procedure ovl13_fn_104E;
@@ -104,9 +104,60 @@ const
   VarPartyMovementBonus = 882;
   { RunAffectHooks kinds (ovl24:02FA). }
   HookComputeMovement = $12;   { run while a combatant's round Movement is worked out }
+  { The initiative a round setup rolls: 1d6 plus the dexterity adjustment, then clamped. }
+  InitiativeDieSides = 6;
+  InitiativePenalty = 6;       { when the round penalty word matches the side, ovl13:00D9 }
+  MaxInitiative = $14;
+  { Word 715 of ds49D6^ (byte offset $596): RunCombat clears it every round (ovl08:00A2). In
+    ovl13:00C2 a combatant whose (Side + 1) shares a bit with it loses InitiativePenalty; what
+    the word is filled with is not settled (named VarCombatWord715 in ovl08). }
+  VarCombatWord715 = 715;
 
-{ ovl13:0000: retf 4: 4 bytes of parameters; 6 bytes of locals }
-{@stub} procedure ovl13_e1(Who: PCharacter); begin end;
+{ ovl13:0000. Sets up Who's turn at the start of a combat round: clears and re-arms its combat
+  state Combat^ (PendingSpell 0, Cast and Use-magic allowed), refreshes it through ovl13_e6, lets
+  the hooks change the attack byte ds681A (RunAffectHooks $12) and stores the result in the
+  readied-weapon block (+$114); then, for a character still in the fight (Flag10D set), rolls its
+  initiative (1d6 plus DexterityAttackAdjustment, at least 1, 6 lower when the round penalty word
+  matches its side, else 0 outside 0..$14), and finally gives it this round's move budget
+  (ComputeMovement). Called for every combatant at the start of each round (RunCombat ovl08:0063).
+  The body is a `with Who^.Combat^ do` block (the compiler caches the pointer in a hidden temp
+  below the locals, reloaded before every field access). QUIRK ovl13:0093: the one named byte
+  local is declared and never read; it is what makes the frame 6 bytes. }
+procedure StartCombatantRound(Who: PCharacter);
+var
+  Unused: Byte;                  { QUIRK ovl13:0093: declared, never read }
+begin
+  with Who^.Combat^ do
+  begin
+    PendingSpell := 0;
+    CanCast := 1;
+    CanUseMagicItem := 1;
+    Pad8 := 0;
+    Pad4[4] := 2;
+    ovl13_e6(Who);
+    ds681A := Who^.PadA2;
+    ds681D := False;
+    RunAffectHooks(HookComputeMovement, Who);
+    Who^.Pad113[$114] := ovl13_fn_0E52(ds681A);
+    Pad4[5] := Who^.Pad6B;
+    if Who^.Flag10D <> 0 then
+    begin
+      Initiative := RollDice(1, InitiativeDieSides) + DexterityAttackAdjustment(Who);
+      if Initiative < 1 then
+        Initiative := 1;
+      { QUIRK ovl13:00C5: the original widens Side with cbw (a sign extend) and ANDs it with a
+        16-bit signed word, then tests the low byte only; the casts reproduce that shape (Side is
+        a Byte elsewhere: ovl09 and res12 compare it unsigned). }
+      if Byte((ShortInt(Who^.Side) + 1) and Integer(ds49D6^[VarCombatWord715])) <> 0 then
+        Dec(Initiative, InitiativePenalty);
+      if (Initiative < 0) or (Initiative > MaxInitiative) then
+        Initiative := 0;
+    end
+    else
+      Initiative := 0;
+  end;
+  Who^.Combat^.Moves := ComputeMovement(Who);
+end;
 { ovl13:0123. Works out how far Who may move this round: its Movement (+$11C), raised by the
   party movement word during combat, is clamped to 1..$60, doubled into half squares and offered
   to the movement affect hooks (RunAffectHooks $12, which may still change it), and the doubled
@@ -164,7 +215,7 @@ end;
 { ovl13:0CEE: retf 4: 4 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl13_fn_0CEE; begin end;
 { ovl13:0D23: frame not read }
-{@stub} procedure ovl13_e6(Who: Pointer); begin end;
+{@stub} procedure ovl13_e6(Who: PCharacter); begin end;
 { ovl13:0D92: frame not read }
 {@stub} procedure ovl13_fn_0D92; begin end;
 { ovl13:0D99: frame not read }
@@ -172,7 +223,7 @@ end;
 { ovl13:0E08: retf 4: 4 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl13_fn_0E08; begin end;
 { ovl13:0E52: retf 2: 2 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl13_fn_0E52; begin end;
+{@stub} function ovl13_fn_0E52(Value: Byte): Byte; begin end;
 { ovl13:0E82: frame not read }
 {@stub} function ovl13_e7(Who, Target: Pointer): Boolean; begin end;
 { ovl13:0FBF: frame not read }

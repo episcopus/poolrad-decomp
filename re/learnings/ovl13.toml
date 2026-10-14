@@ -1,0 +1,19 @@
+# Lessons from unit ovl13 (CombatSpells). Leads with evidence, not matcher verdicts.
+
+[[lesson]]
+id = "with-temp-odd-offset-named-local"
+confidence = "V"
+units = ["*"]
+tags = ["with", "pointer", "temporary", "frame", "A-", "codegen"]
+title = "A with over a pointer puts its hidden temp at an odd offset under $A-"
+lesson = "TP 6.0 compiles `with Who^.Combat^ do` by loading the far pointer once into a hidden temp (`les di,es:[di+off]; mov [bp-t],di; mov [bp-t+2],es`) and reloading `les di,[bp-t]` before every field access. The temp sits below the named locals. Under the default alignment it lands on an even offset, so a routine with one named byte local gets its temp at [bp-6] and an unused byte at [bp-2]. Under `$A-` (every POOL unit) the byte stays at [bp-1] and the temp lands at the odd offset [bp-5], which is what ovl13:0000 shows (sub sp,6, temp offset word at [bp-5], [bp-1] never read). An explicit local assignment `P := Who^.Combat` always compiles to word moves (mov ax/mov dx), never les, so a lone pointer temp with no matching named local proves a with."
+evidence = ["tools/re/tp_idioms/ovl13/PRBFAR.PAS", "src/OVL13.PAS#StartCombatantRound", "re/symbols.toml#ovl13:0000"]
+
+[[lesson]]
+id = "signed-and-of-byte-and-word"
+confidence = "V"
+units = ["*"]
+tags = ["and", "signed", "ShortInt", "cbw", "cwde", "codegen", "branch"]
+title = "`(ShortInt + 1) and Word` grows to a 32-bit and; `and Integer` stays 16-bit"
+lesson = "ovl13:00C5 is `mov al,Side; cbw; inc ax; and ax, word; or al,al`: the field at +$10E is widened with cbw (a sign extend), so the source reads it signed, and the AND is 16-bit signed. In TP 6.0, `(S + 1) and W` with S: ShortInt and W: Word promotes the whole thing to LongInt (`cwde; cdq; and ax,cx; and dx,bx`), 8 bytes too long; casting the word to Integer keeps the 16-bit `and ax, word`. The `<> 0` test then picks `or ax,ax` for a 16-bit result; wrapping the expression in Byte() (the value fits a byte here) gives the original `or al,al`. Side itself stays a Byte in POOLVARS: ovl09 and res12 compare it unsigned, so the signedness lives only in this expression's casts. A one-byte branch-target shift in a later `je` (0x100 vs 0xFF) was the tell that the then-body was one byte long."
+evidence = ["tools/re/tp_idioms/ovl13/PRBSIDE.PAS", "tools/re/tp_idioms/ovl13/PRBIF.PAS", "src/OVL13.PAS#StartCombatantRound", "re/symbols.toml#ovl13:0000"]
