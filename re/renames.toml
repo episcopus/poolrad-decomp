@@ -3924,3 +3924,10 @@ kind = "routine"
 why = "ovl22:30A2 calls ApplySpellToTargets(ds681B, $FF, 1, 0, 0, 'is Reading'); the handler table element 67 (whitepaper 5.22.2), a monster-only spell with its own reading affect"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl22_e6"
+new = "IsScroll"
+kind = "routine"
+why = "ovl22:323D returns True when the far pointer is not nil and RaceRow[Item^.ItemType][0] is in $B..$D; every caller (AddScrollSpells, UseMagicItem, StudyRestMinutes, CancelScribing, ScribeScrolls, ProcessPendingScribedSpell) uses it to find the items whose Affects carry scroll spells"
+date = "2026-10-14"
+

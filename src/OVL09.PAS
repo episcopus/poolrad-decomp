@@ -186,7 +186,7 @@ begin
 end;
 { ovl09:03E4. Uses a magic item for the computer's turn (called by QuickTurn; True ends
   the turn through res12_fn_2637): rolls 1d7 rounds; each round walks Who^.Items for the first
-  item that passes (not ovl22_e6, Affects[3] below $80, Readied, level from Affects[2] in
+  item that passes (not IsScroll, Affects[3] below $80, Readied, level from Affects[2] in
   1..MaxSpell adjusted down by $17 above it, and SpellAccepted in range) and remembers it as
   Best. Afterwards a chosen Best is used through ovl19_e8 and the result is True. Early exits
   (Pad2 zero, both ds6814Sides zero, VarNoCasting set) return False at once. QUIRK ovl09:049F:
@@ -228,7 +228,7 @@ begin
       goto NextRound;
     Level := Target^.Affects[2];
     RowByte := RaceRow[Target^.ItemType][0];
-    if not ovl22_e6(Target) then
+    if not IsScroll(Target) then
       if Target^.Affects[3] < $80 then
         if Target^.Readied then
           if Level > 0 then

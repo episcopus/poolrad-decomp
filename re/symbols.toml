@@ -10711,27 +10711,14 @@ evidence = ["far_call"]
 id = "ovl22:323D"
 unit = "ovl22"
 addr = "ovl22:323D"
-size = 37
-name = "ovl22_e6"
-signature = "function ovl22_e6(Item: Pointer): Boolean"
+size = 77
+name = "IsScroll"
+signature = "function IsScroll(Item: PItem): Boolean"
 c_name = "ovl22_e6"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl22_e6 (ovl22:323D returns True when the far pointer is not nil and RaceRow[Item^.ItemType][0] is in $B..$D; every caller (AddScrollSpells, UseMagicItem, StudyRestMinutes, CancelScribing, ScribeScrolls, ProcessPendingScribedSpell) uses it to find the items whose Affects carry scroll spells); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl22:3262"
-unit = "ovl22"
-addr = "ovl22:3262"
-size = 40
-name = "ovl22_fn_3262"
-signature = ""
-c_name = "ovl22_fn_3262"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl22:328A"

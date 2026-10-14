@@ -322,7 +322,7 @@ begin
   while (Item <> nil) and (SpellLevel = 0) do
   begin
     SpellIndex := 1;
-    if ovl22_e6(Item) then
+    if IsScroll(Item) then
     begin
       while (SpellIndex <= LastScrollSpellSlot) and (SpellLevel = 0) do
       begin

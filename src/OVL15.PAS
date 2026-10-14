@@ -117,7 +117,7 @@ const
 
 { ovl15:0000. Returns the minutes of rest Who's study needs and stores its hours in RestHours: 15
   minutes per spell level of every spell being memorized (a Spells slot with bit 7) and of every
-  scroll spell being scribed (bit 7 of a spell byte of an item ovl22_e6 accepts, a scroll), plus
+  scroll spell being scribed (bit 7 of a spell byte of an item IsScroll accepts, a scroll), plus
   4 hours when there is any (6 when one of them is above level 2). RestParty rests the party for
   the largest value. }
 function StudyRestMinutes(Who: PCharacter): Word;
@@ -140,7 +140,7 @@ begin
   Item := Who^.Items;
   while Item <> nil do
   begin
-    if ovl22_e6(Item) then
+    if IsScroll(Item) then
       for I := 1 to ScrollSpells do
         if Item^.Affects[I] > SpellMask then
         begin
@@ -167,7 +167,7 @@ begin
   Who^.RestHours := 0;
 end;
 { ovl15:019C. Cancels Who's scribing: bit 7 is cleared from the three spell bytes of every scroll
-  Who carries (an item ovl22_e6 accepts). The answer No to 'Scribe These Spells?' and
+  Who carries (an item IsScroll accepts). The answer No to 'Scribe These Spells?' and
   CancelPartyStudy. }
 procedure CancelScribing(Who: PCharacter);
 var
@@ -177,7 +177,7 @@ begin
   Item := Who^.Items;
   while Item <> nil do
   begin
-    if ovl22_e6(Item) then
+    if IsScroll(Item) then
       for I := 1 to ScrollSpells do
         Item^.Affects[I] := Item^.Affects[I] and SpellMask;
     Item := Item^.Next;
@@ -472,7 +472,7 @@ begin
         Found := False;
         while (Item <> nil) and not Found do
         begin
-          if ovl22_e6(Item) then
+          if IsScroll(Item) then
             for I := 1 to ScrollSpells do
               if (Item^.Affects[I] > SpellMask) and ((Item^.Affects[I] and SpellMask) = Spell) then
               begin

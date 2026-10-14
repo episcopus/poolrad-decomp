@@ -76,8 +76,7 @@ procedure CastMonsterNoEffect;
 procedure CastMonsterReadMagic;
 procedure ovl22_e63;
 procedure ovl22_fn_31D7;
-function ovl22_e6(Item: Pointer): Boolean;
-procedure ovl22_fn_3262;
+function IsScroll(Item: PItem): Boolean;
 procedure ovl22_e7(Who: PCharacter; Item: PItem; Spell: Byte);
 procedure ovl22_e8(Who: PCharacter; Message: String40; Spell: Byte);
 procedure ovl22_fn_3379;
@@ -169,7 +168,7 @@ end;
 { ovl22:051C: retf 2: 2 bytes of parameters; 2 bytes of locals }
 { ovl22:051C. Builds the spell menu list from the selected character's carried items: it clears
   SpellMenuItems and SpellMenuItemCount, then walks SelectedCharacter^.Items and, for every scroll
-  (ovl22_e6), calls AddItemSpells with its Pending argument. Called by BuildSpellList for the "on Scrolls"
+  (IsScroll), calls AddItemSpells with its Pending argument. Called by BuildSpellList for the "on Scrolls"
   (Pending 0) and "to be scribed" (Pending 1) lists. }
 procedure AddScrollSpells(Pending: Byte);
 var
@@ -181,7 +180,7 @@ begin
   CurrentItem := SelectedCharacter^.Items;
   while CurrentItem <> nil do
   begin
-    if ovl22_e6(CurrentItem) then
+    if IsScroll(CurrentItem) then
       AddItemSpells(Pending);
     CurrentItem := CurrentItem^.Next;
   end;
@@ -1879,10 +1878,24 @@ end;
 {@stub} procedure ovl22_e63; begin end;
 { ovl22:31D7: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl22_fn_31D7; begin end;
-{ ovl22:323D: frame not read }
-{@stub} function ovl22_e6(Item: Pointer): Boolean; begin end;
-{ ovl22:3262: retf 4: 4 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl22_fn_3262; begin end;
+{ ovl22:323D. IsScroll: whether Item is a spell scroll. It rejects a nil item first, then tests the
+  item's class byte RaceRow[Item^.ItemType][0] (the first byte of the 16-byte row for the item type
+  in the RaceRow table at DS:5582): the three values $B, $C and $D are the spell scrolls whose
+  Affects[1..3] hold spell numbers (AddItemSpells and the scribing helpers read them). Callers use it
+  to find the carried scrolls: AddScrollSpells, ScribeScrolls, StudyRestMinutes, CancelScribing,
+  ProcessPendingScribedSpell, UseMagicItem and the inventory. }
+function IsScroll(Item: PItem): Boolean;
+const
+  { RaceRow[ItemType][0] is the item class; a scroll's class is above $A and below $E. }
+  NotAScrollBelow = $A;           { the scroll classes start above this }
+  NotAScrollAbove = $E;           { ... and end below this }
+begin
+  if (Item <> nil) and (RaceRow[Item^.ItemType][0] > NotAScrollBelow) and
+     (RaceRow[Item^.ItemType][0] < NotAScrollAbove) then
+    IsScroll := True
+  else
+    IsScroll := False;
+end;
 { ovl22:328A: retf 10: 10 bytes of parameters; 4 bytes of locals }
 {@stub} procedure ovl22_e7(Who: PCharacter; Item: PItem; Spell: Byte); begin end;
 { ovl22:331A: frame not read }
