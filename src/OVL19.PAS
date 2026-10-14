@@ -254,7 +254,7 @@ begin
   else
     ModeDescription[0] := #0;
   end;
-  Listed := ovl22_e2(SpellListKind);
+  Listed := BuildSpellList(SpellListKind);
   if Listed <> 0 then
   begin
     if Integer(Choice) < 0 then

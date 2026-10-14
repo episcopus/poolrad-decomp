@@ -9854,12 +9854,12 @@ id = "ovl22:059C"
 unit = "ovl22"
 addr = "ovl22:059C"
 size = 397
-name = "ovl22_e2"
-signature = "function ovl22_e2(Kind: Byte): Byte"
+name = "BuildSpellList"
+signature = "function BuildSpellList(Kind: Byte): Byte"
 c_name = "ovl22_e2"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_2"
+notes = "renamed from ovl22_e2 (ovl22:059C builds the spell menu list SpellMenuList for ChooseSpellFromList's list kind (0 memorized, 5 pending memorized, 1 spell book, 2 first scroll, 3 scrolls, 6 pending scrolls, 4 learnable) and returns whether it is not empty; called by ovl19:299C); auto:entry_2"
 evidence = ["prologue"]
 
 [[routine]]

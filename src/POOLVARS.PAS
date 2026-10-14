@@ -577,11 +577,11 @@ var
   ds4712: Byte;                   { the DS:49F3 value ShowEndingNarrative saves at the start and restores at the end }
   ds4713: string[1];              { Str(TileSet): the picture number ShowEndingNarrative appends to FINAL }
   ds471E: array[0..$47] of Byte;  { 72 bytes reset to 1 when rest starts (ovl20:0CE5) }
-  { The spell lists of the CastSpell overlay (ovl22, whitepaper 5.22): ovl22_e2 builds one and
+  { The spell lists of the CastSpell overlay (ovl22, whitepaper 5.22): BuildSpellList builds one and
     ovl22_e1 runs the picker over it. }
   SpellLevelNames: array[0..3] of string[40];  { the heading of each spell level in the spell menu: entries
                                     1..3 are '1st Level', '2nd Level', '3rd Level'; entry 0 is empty }
-  SpellMenuList: PMenuLine;              { head of the spell menu list ovl22_e2/fn_028D build and ovl22_e1 frees }
+  SpellMenuList: PMenuLine;              { head of the spell menu list BuildSpellList/fn_028D build and ovl22_e1 frees }
   SpellMenuSpells: array[0..$14] of Byte;  { the spell number (bit 7 = pending) of each menu line, in list order }
   SpellMenuItems: array[0..$30] of PMenuLine;  { for each scribed/learned line, the item (scroll) it came from }
   SpellMenuItemCount: Byte;                   { the number of entries SpellMenuItems holds (AddItemSpells, fn_051C) }

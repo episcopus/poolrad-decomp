@@ -3483,3 +3483,10 @@ kind = "routine"
 why = "ovl22:051C walks SelectedCharacter^.Items, and for every scroll (ovl22_e6) adds its spell affects to the spell menu list through AddItemSpells; Pending picks the plain or the pending affects; called by ovl22_e2"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl22_e2"
+new = "BuildSpellList"
+kind = "routine"
+why = "ovl22:059C builds the spell menu list SpellMenuList for ChooseSpellFromList's list kind (0 memorized, 5 pending memorized, 1 spell book, 2 first scroll, 3 scrolls, 6 pending scrolls, 4 learnable) and returns whether it is not empty; called by ovl19:299C"
+date = "2026-10-13"
+

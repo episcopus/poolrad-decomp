@@ -1,6 +1,6 @@
 unit OVL22;
 { CastSpell: the spell study and casting overlay. It builds the spell lists the camp's
-  ChooseSpellFromList shows (ovl22_e2 and its helpers, whitepaper 5.22), runs the picker
+  ChooseSpellFromList shows (BuildSpellList and its helpers, whitepaper 5.22), runs the picker
   (ovl22_e1), gives a spell's area pattern size (SpellAreaSize) and casts, scribes, memorizes
   and learns spells for combat (ovl09) and the camp (ovl15). }
 {$A-,O+,F+,S-,R-,G-,I-}
@@ -10,7 +10,7 @@ function ovl22_e1(Mode: Byte; var Choice: Word): Byte;
 procedure AddSpellMenuLine(Spell: Byte);
 procedure AddItemSpells(Pending: Byte);
 procedure AddScrollSpells(Pending: Byte);
-function ovl22_e2(Kind: Byte): Byte;
+function BuildSpellList(Kind: Byte): Byte;
 function SpellAreaSize(Spell: Byte): Byte;
 procedure ovl22_fn_07D6;
 procedure ovl22_fn_08C3;
@@ -118,11 +118,11 @@ implementation
 { ovl22:008A: retf 6: 6 bytes of parameters; 98 bytes of locals }
 {@stub} function ovl22_e1(Mode: Byte; var Choice: Word): Byte; begin end;
 { ovl22:028D: retf 2: 2 bytes of parameters; 262 bytes of locals }
-{ ovl22:028D. Appends one line for spell Spell to the spell menu list SpellMenuList (ovl22_e2 calls this
+{ ovl22:028D. Appends one line for spell Spell to the spell menu list SpellMenuList (BuildSpellList calls this
   once per spell, in list order). The line's text is ' *' when the pending bit $80 of Spell is set,
   else '  ', followed by SpellNames[Spell and $7F]; when the spell's level differs from the level of
   the previous line a heading line (SpellLevelNames[level]: '1st Level' and so on) is inserted first.
-  SpellMenuSpells[Count] keeps the spell number (pending bit cleared) of the line added. Called by ovl22_e2
+  SpellMenuSpells[Count] keeps the spell number (pending bit cleared) of the line added. Called by BuildSpellList
   and AddItemSpells. }
 procedure AddSpellMenuLine(Spell: Byte);
 const
@@ -178,7 +178,7 @@ end;
   takes the pending ones (bit $80 set, > $80), zero the plain ones (> 0). First it clears the item's
   HiddenNames when res12_fn_2199(SelectedCharacter, $10) reports the affect, or when the character is
   a cleric (ClassLevels[0] > 0) and RaceRow[ItemType][0] is $0C; a hidden item is skipped. Called by
-  ovl22_e2 (Kind 2) and AddScrollSpells. }
+  BuildSpellList (Kind 2) and AddScrollSpells. }
 procedure AddItemSpells(Pending: Byte);
 var
   I: Byte;
@@ -200,7 +200,7 @@ end;
 { ovl22:051C: retf 2: 2 bytes of parameters; 2 bytes of locals }
 { ovl22:051C. Builds the spell menu list from the selected character's carried items: it clears
   SpellMenuItems and SpellMenuItemCount, then walks SelectedCharacter^.Items and, for every scroll
-  (ovl22_e6), calls AddItemSpells with its Pending argument. Called by ovl22_e2 for the "on Scrolls"
+  (ovl22_e6), calls AddItemSpells with its Pending argument. Called by BuildSpellList for the "on Scrolls"
   (Pending 0) and "to be scribed" (Pending 1) lists. }
 procedure AddScrollSpells(Pending: Byte);
 var
@@ -218,7 +218,45 @@ begin
   end;
 end;
 { ovl22:059C: retf 2: 2 bytes of parameters; 2 bytes of locals }
-{@stub} function ovl22_e2(Kind: Byte): Byte; begin end;
+{ ovl22:059C. Builds the spell menu list SpellMenuList for the requested list kind and returns whether it
+  is not empty. Kind (ChooseSpellFromList's SpellListKind): 0 the memorized spells (Spells[0..$14], plain),
+  5 the pending memorized ones (bit $80), 1 the spell book (KnownSpells[1..$37]), 2 the selected
+  character's first scroll item, 3 all scroll items plain, 6 all scroll items pending, 4 the spells the
+  character has a slot for and does not know yet (SpellTable 1..$38). It clears SpellMenuSpells first.
+  Called by ovl19:299C ChooseSpellFromList. }
+function BuildSpellList(Kind: Byte): Byte;
+var
+  I: Byte;
+begin
+  BuildSpellList := 0;
+  SpellMenuList := nil;
+  for I := 0 to $14 do
+    SpellMenuSpells[I] := 0;
+  case Kind of
+    0:
+      for I := 0 to $14 do
+        if (SelectedCharacter^.Spells[I] > 0) and (SelectedCharacter^.Spells[I] < $80) then
+          AddSpellMenuLine(SelectedCharacter^.Spells[I]);
+    5:
+      for I := 0 to $14 do
+        if SelectedCharacter^.Spells[I] > $7F then
+          AddSpellMenuLine(SelectedCharacter^.Spells[I]);
+    1:
+      for I := 1 to $37 do
+        if SelectedCharacter^.KnownSpells[I] <> 0 then
+          AddSpellMenuLine(I);
+    2: AddItemSpells(0);
+    3: AddScrollSpells(0);
+    6: AddScrollSpells(1);
+    4:
+      for I := 1 to $38 do
+        if (SelectedCharacter^.SpellSlots[SpellTable[I].SpellClass, SpellTable[I].Level] > 0) and
+           (SelectedCharacter^.KnownSpells[I] = 0) then
+          AddSpellMenuLine(I);
+  end;
+  if SpellMenuList <> nil then
+    BuildSpellList := 1;
+end;
 { ovl22:0729: retf 2: 2 bytes of parameters; 2 bytes of locals }
 { ovl22:0729. The size of the area pattern of spell Spell: res12_fn_2433 collects the targets it
   reaches. A 16-byte SpellTable row gives a base (row +2) and a per-level byte (row +3), so the
