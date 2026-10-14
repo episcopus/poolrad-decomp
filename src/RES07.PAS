@@ -1155,14 +1155,17 @@ begin
     end;
   end;
 end;
-{ 0464:2632: fills the Width x Height cells of picture Target whose top-left cell is
-  (FirstCol, FirstRow) with palette colour Colour (Palette is the 8-byte PPalette). FirstCol and FirstRow may be
-  negative: the rectangle is clipped at the picture's left, top, right and bottom edges.
-  VideoAdapter 0 writes two bytes per cell (ds0D02[PaletteColor(Colour)]), 2 writes four
-  bytes per cell (ds0D06[Colour]) and 1 writes one byte per EGA plane through the plane
-  mask of Colour (EgaPlaneBitMasks). Every row it touches is marked in ds4A28 and in the
-  trackers ds4C20, ds4AD0 and ds4D70 for FlushPictureChanges. Called by DrawWallDescriptors
-  (ovl29:0174) with FirstCol = 2 and the four wall descriptors.
+{ 0464:2632: fills a rectangle of picture Target with palette colour Colour (Palette is
+  the 8-byte PPalette). Width and FirstCol are in cells of 8 pixels (2, 4 or 1x4 bytes per
+  cell), but FirstRow and Height are PIXEL rows: the loop runs once per pixel row, from
+  row FirstRow for Height rows, with no * 8. FirstCol and FirstRow may be negative: the
+  rectangle is clipped at the picture's left, top, right and bottom edges. VideoAdapter 0
+  writes two bytes per cell (ds0D02[PaletteColor(Colour)]), 2 writes four bytes per cell
+  (ds0D06[Colour]) and 1 writes one byte per EGA plane through the plane mask of Colour
+  (EgaPlaneBitMasks). Every row it touches is marked in ds4A28 and in the trackers ds4C20,
+  ds4AD0 and ds4D70 for FlushPictureChanges. Called by DrawWallDescriptors (ovl29:0174,
+  four times, FirstCol = 2, the wall descriptors' pixel rows and the ds6A60..ds6A63
+  colours) and by ovl16_fn_34DF (ovl16:34DF).
   QUIRK 0464:2707: a rectangle that starts above row 0 is drawn one row too far: the row
   bound is Height - |FirstRow| and the loop includes it. }
 procedure FillPictureRect(FirstCol, FirstRow: Integer; Width, Height: Word; Colour: Byte; Palette: Pointer; Target: Pointer);
