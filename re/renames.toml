@@ -3721,3 +3721,10 @@ kind = "routine"
 why = "cast handler of spell 35 (SpellNames[35] is 'Strength' at DS:28E9); rolls a class bonus die (d4 magic-user, d6 cleric/thief, d8 fighter), raises the target's Strength, clamps at 18 with a fighter percentile, and adds the strength affect $26 (RaiseStrength keeps the earlier strength in affect 0Ch or 26h, whitepaper 5.22.2)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl22_e39"
+new = "CastAnimateDead"
+kind = "routine"
+why = "cast handler of spell 36 (SpellNames[36] is 'Animate Dead' at DS:28E9): walks the party list ds5D96, turns up to the caster level corpses (Status 6, CreatureType 0) into undead on the caster's side and leaves the animate affect $20 with 'is animated' (make match UNIT=ovl22 FN=CastAnimateDead)"
+date = "2026-10-13"
+

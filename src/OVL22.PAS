@@ -46,7 +46,7 @@ procedure CastRayOfEnfeeblement;
 procedure CastStinkingCloud;
 procedure CastStrength;
 procedure ovl22_fn_202B;
-procedure ovl22_e39;
+procedure CastAnimateDead;
 procedure ovl22_fn_20A9;
 procedure ovl22_e40;
 procedure ovl22_fn_2233;
@@ -1158,8 +1158,80 @@ begin
 end;
 { ovl22:202B: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl22_fn_202B; begin end;
-{ ovl22:206F: frame not read }
-{@stub} procedure ovl22_e39; begin end;
+{ ovl22:206F. Cast handler of spell 36, Animate Dead: for up to the caster level corpses still in the
+  party list ds5D96 (Status 6, CreatureType 0) it places the body on the combat map at its own cell
+  (PlaceCombatant) and turns it into an undead creature under the caster's side: CreatureType 4, Quick
+  set, the memorized spells, the AI state and the combat target cleared, B84 $B2 when it was already a
+  computer-run member (above $7F) else $B3, and Side copied from SelectedCharacter. The corpse is then
+  revived (ReviveCombatant at HpMax) and, on success, carries the animate affect $20 (Data: the caster's
+  Side in bits 4..7 plus the caster level) with the message 'is animated'. Reads ds681B, ds5D96,
+  SelectedCharacter and ds49F3; changes ds6820, ds6C94 and the corpse records. }
+procedure CastAnimateDead;
+const
+  DeadStatus = 6;                 { TCharacter.Status 6: a corpse Animate Dead can raise }
+  HumanType = 0;                  { CreatureType 0: the party's (human) corpses }
+  UndeadType = 4;                 { CreatureType 4 marks the undead (whitepaper 5.22.2) }
+  AnimateAffect = $20;            { the affect Animate Dead leaves on the animated corpse }
+  MaxSpellSlot = $14;             { Spells is array[0..$14] }
+  { B84 (whitepaper 4.2.5): above $7F marks a computer-run member, which keeps its higher morale. }
+  AiThreshold = $7F;
+  HirelingMorale = $B2;           { the animated member was computer-run }
+  CreatureMorale = $B3;           { the animated member was player-run }
+  { The caster's Side goes into bits 4..7 of the affect's data. Written as a multiply, not `shl 4`:
+    TP 6.0 compiles `X * 16` to `mov cl,4; shl ax,cl` (b1 04) but `X shl 4` to `mov cx,4; shl ax,cl`
+    (b9 04 00), and the original at ovl22:210B has the byte form (probe PRB27.PAS). }
+  SideScale = 16;
+  AnimatedMark = 2;               { the byte at +$76 Animate Dead sets (ScoreTarget reads it, ovl09:128D) }
+  CombatViewMode = 5;             { ds49F3 during combat (whitepaper 5.5) }
+  RunHandlerOnRemoval = 1;        { ApplyAffect Flag: the affect's handler runs when it is removed }
+  NoSaveNegates = 0;              { ApplyAffect SaveNegates }
+  NotSaved = False;               { ApplyAffect Saved }
+  RestoreCell = 1;                { PlaceCombatant Restore }
+var
+  I: Byte;                        { the spell slot index, 0..$14 }
+  SaveData: Byte;                 { the affect data: the caster's Side in bits 4..7 plus the level }
+  Level: Byte;                    { the caster level, one corpse per level, counted down }
+  Current: PCharacter;            { the walker of the party list ds5D96 }
+begin
+  ds6820 := 1;
+  Level := res12_fn_26C2(ds681B);
+  ds6C94 := 0;
+  Current := PCharacter(ds5D96);
+  while (Current <> nil) and (Level > 0) do
+  begin
+    if Current^.Status = DeadStatus then
+      if Current^.CreatureType = HumanType then
+        if PlaceCombatant(Current, CombatantX(Current), CombatantY(Current), RestoreCell) then
+        begin
+          { The caster's Side goes into bits 4..7 of the affect data, the caster level into the low
+            nibble (QUIRK ovl22:2105: the original sign-extends Side with cwde, so it is treated as a
+            ShortInt here even though TCharacter.Side is a Byte). }
+          SaveData := ShortInt(Current^.Side) * SideScale + res12_fn_26C2(ds681B);
+          Current^.Side := SelectedCharacter^.Side;
+          Current^.Quick := 1;
+          Current^.Pad74[$76] := AnimatedMark;
+          Current^.Pad6B := 0;
+          Current^.Pad72 := 6;
+          for I := 0 to MaxSpellSlot do
+            Current^.Spells[I] := 0;
+          if Current^.B84 > AiThreshold then
+            Current^.B84 := HirelingMorale
+          else
+            Current^.B84 := CreatureMorale;
+          Current^.CreatureType := UndeadType;
+          if ds49F3 = CombatViewMode then
+            Current^.Combat^.Target := nil;
+          Dec(Level);
+          if ReviveCombatant(Current, Current^.HpMax) then
+          begin
+            ApplyAffect(Current, AnimateAffect, 0, SaveData, RunHandlerOnRemoval, NoSaveNegates,
+              NotSaved, 'is animated');
+            Current^.Status := 1;
+          end;
+        end;
+    Current := Current^.Next;
+  end;
+end;
 { ovl22:20A9: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl22_fn_20A9; begin end;
 { ovl22:2217: frame not read }
