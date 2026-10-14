@@ -8,9 +8,20 @@ unit RES12;
 {$A-,F+,S-,R-,G-,I-}
 interface
 uses POOLVARS, RES06;
+type
+  { The readied-item bonus accumulator AddReadiedItemBonus fills for res12_fn_0BB8: the four signed
+    bytes it combines into the character's +$112 value (with the flag byte the second var
+    parameter points at). Only the fields this unit reads are named. }
+  TBonus = record
+    Pad0: Byte;            { +0: cleared by the caller, not read by AddReadiedItemBonus }
+    KindBonus: ShortInt;   { +1: Value + Plus of a kind-1 item }
+    PlusSum: ShortInt;     { +2: the plus of every other non-kind-9 item }
+    BestPlus: ShortInt;    { +3: the largest plus of a kind-9 item }
+    BestValue: ShortInt;   { +4: the largest Value + Plus of a Value <> 0 item }
+  end;
 procedure ApplyWeaponBonuses(Who: PCharacter);
 procedure SetArmourMovement(Who: PCharacter; Item: PItem);
-procedure res12_fn_0282;
+procedure AddReadiedItemBonus(Who: PCharacter; Item: PItem; var Bonus: TBonus; var Flag: Byte);
 procedure res12_fn_03A0;
 procedure res12_fn_0442(Value: LongInt; P: Pointer; A, B, C, D: Byte);
 procedure res12_fn_06D5;
@@ -101,6 +112,11 @@ const
   MediumArmourMove = 9;
   HeavyArmourMove = 6;
   MagicArmourMoveBonus = 3;
+  { RaceRow byte offsets AddReadiedItemBonus reads. }
+  RaceRowItemKind = 0;      { +0: the item kind: 0 weapon, 1 plus item, 2 armour, 9 special }
+  RaceRowBonusClass = 6;    { +6: bit 7 set means the item has a bonus class (byte and $7F) }
+  PlusItemKind = 1;         { item kind whose bonus is assigned, not accumulated }
+  SpecialItemKind = 9;      { item kind whose plus is kept as a maximum }
 
 { 00BA:0000. Applies the readied weapon to Who's attack values; res12_fn_0BB8 calls it after it
   has copied the character's base values. With no readied weapon (SlotItems[0], +$CC) it does
@@ -170,8 +186,52 @@ begin
   end;
 end;
 
-{ 00BA:0282: retf 16: 16 bytes of parameters; 2 bytes of locals }
-{@stub} procedure res12_fn_0282; begin end;
+{ 00BA:0282. Adds one readied item's bonuses into the accumulator Bonus (TBonus) that
+  res12_fn_0BB8 keeps; called for every readied item after SetArmourMovement. Value is the item
+  kind's bonus class (RaceRow[item type][6]); with bit 7 clear the item contributes nothing. The
+  item kind (RaceRow[item type][0]) and Value pick what happens: a kind-1 item assigns
+  Value + Plus to Bonus.KindBonus; otherwise Value 0 adds Plus to Bonus.PlusSum (a kind-9 item
+  keeps the larger Plus in Bonus.BestPlus instead) and always adds the item's PlusSave (+$33) to
+  Who^.SaveBonus; a Value above 0 keeps Value + Plus as the larger Bonus.BestValue and, for a
+  positive plus on a kind-2 (armour) item, sets Flag.
+  Globals: RaceRow. }
+procedure AddReadiedItemBonus(Who: PCharacter; Item: PItem; var Bonus: TBonus; var Flag: Byte);
+var
+  Value: Byte;
+  Kind: Byte;
+begin
+  Value := RaceRow[Item^.ItemType][RaceRowBonusClass];
+  if Value <= $7F then
+    Exit;
+  Value := Value and $7F;
+  Kind := RaceRow[Item^.ItemType][RaceRowItemKind];
+  if Kind = PlusItemKind then
+  begin
+    Bonus.KindBonus := Value + Item^.Plus;
+    Exit;
+  end;
+  if Value = 0 then
+  begin
+    if Kind = SpecialItemKind then
+    begin
+      if Item^.Plus > Bonus.BestPlus then
+        Bonus.BestPlus := Item^.Plus;
+    end
+    else
+      Bonus.PlusSum := Bonus.PlusSum + Item^.Plus;
+    Who^.SaveBonus := Who^.SaveBonus + Item^.PlusSave;
+  end
+  else
+  begin
+    if Value + Item^.Plus > Bonus.BestValue then
+    begin
+      Bonus.BestValue := Value + Item^.Plus;
+      if (Item^.Plus > 0) and (Kind = ArmourItemKind) then
+        Flag := 1;
+    end;
+  end;
+end;
+
 { 00BA:03A0: retf 4: 4 bytes of parameters; 4 bytes of locals }
 {@stub} procedure res12_fn_03A0; begin end;
 { 00BA:0442: frame not read }

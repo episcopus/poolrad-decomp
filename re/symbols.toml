@@ -16453,12 +16453,12 @@ id = "00BA:0282"
 unit = "res12"
 addr = "00BA:0282"
 size = 286
-name = "res12_fn_0282"
-signature = ""
+name = "AddReadiedItemBonus"
+signature = "procedure AddReadiedItemBonus(Who: PCharacter; Item: PItem; var Bonus: TBonus; var Flag: Byte)"
 c_name = "res12_fn_0282"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_0282 (accumulates one readied item's bonuses (RaceRow[item type][6] and [0] pick the branch) into the TBonus a res12_fn_0BB8 caller keeps, and adds the item's PlusSave to Who^.SaveBonus (make match UNIT=res12, 00BA:0282)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

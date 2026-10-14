@@ -115,7 +115,7 @@ type
     ItemType: Byte;               { +$2E }
     NameNum: array[1..3] of Byte; { +$2F..$31 }
     Plus: ShortInt;               { +$32 }
-    PlusSave: Byte;               { +$33 }
+    PlusSave: ShortInt;           { +$33: signed (AddReadiedItemBonus sign-extends it) }
     Readied: Boolean;             { +$34 }
     HiddenNames: Byte;            { +$35 }
     Cursed: Boolean;              { +$36: the item is cursed (Remove Curse looks for one, ovl04:0874) }

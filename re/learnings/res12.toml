@@ -8,3 +8,12 @@ tags = ["case", "word", "codegen", "jump", "bounds"]
 title = "A case on a Word keeps the selector in AX; a range starting at 0 adds cmp ax,0 / jb"
 lesson = "case V of 0..$96: ...; $97..$18F: ...; else ...; end (V a 16-bit selector) loads the selector once (mov ax, es:[di+37h]) and then checks each range with cmp ax, imm plus jb/ja, including a leading cmp ax,0; jb for the lower bound of the range that starts at 0. The same ranges written as if (V >= 0) and (V <= $96) ... else if (V >= $97) and (V <= $18F) ... reload the operand for every test (cmp word ptr es:[di+37h], imm, with a les di before each) and compile 12 bytes longer. SetArmourMovement matched only with the case form. Probe: tools/re/tp_idioms/res12/PRB01.PAS."
 evidence = ["src/RES12.PAS#SetArmourMovement", "re/symbols.toml#00BA:01FB", "tools/re/tp_idioms/res12/PRB01.PAS"]
+
+[[lesson]]
+id = "res12-sign-extension-reveals-field-type"
+confidence = "V"
+units = ["res12", "*"]
+tags = ["type", "signed", "shortint", "byte", "codegen", "record"]
+title = "A cwde (sign extend) where a xor ah,ah (zero extend) is expected proves the operand is signed"
+lesson = "In X + Y with X and Y one-byte fields, Turbo Pascal widens Byte with xor ah,ah and ShortInt with cwde. res12:0282's nearly matched output differed only in one widening: Who^.SaveBonus := Who^.SaveBonus + Item^.PlusSave compiled the field at TMenuLine +$33 with cwde, while POOLVARS had it Byte. Changing PlusSave to ShortInt matched. Read the first differing instruction's extension opcode to recover a field's signedness; the assignments in ovl21 (PlusSave := 0/1/2) do not change code either way. Probe: tools/re/tp_idioms/res12/PRB02.PAS."
+evidence = ["src/RES12.PAS#AddReadiedItemBonus", "src/POOLVARS.PAS#TMenuLine", "re/symbols.toml#00BA:0282", "tools/re/tp_idioms/res12/PRB02.PAS"]

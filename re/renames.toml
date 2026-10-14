@@ -3413,3 +3413,10 @@ kind = "routine"
 why = "sets Who's Movement (+11C) from a readied armour item: when RaceRow[item type][0] is 2 (an armour) the item's Weight (+37) picks base movement/9/6 and a magic plus adds 3; called by res12_fn_0BB8 for every readied item (make match UNIT=res12, 00BA:01FB)"
 date = "2026-10-13"
 
+[[rename]]
+old = "res12_fn_0282"
+new = "AddReadiedItemBonus"
+kind = "routine"
+why = "accumulates one readied item's bonuses (RaceRow[item type][6] and [0] pick the branch) into the TBonus a res12_fn_0BB8 caller keeps, and adds the item's PlusSave to Who^.SaveBonus (make match UNIT=res12, 00BA:0282)"
+date = "2026-10-13"
+
