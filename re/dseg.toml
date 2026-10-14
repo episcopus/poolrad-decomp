@@ -1120,3 +1120,18 @@ evidence = "the dice count of the last RollDiceCounted roll (ovl24:0E37 stores i
 offset = 0x471D
 name = "TimedAffectFlags"
 evidence = "ovl20:002F indexes DS:471D by the 1-based party index: AdvanceAffectDurations clears the flag, then sets it again while that member still has an affect whose Duration is above 0 (ovl20:01C2, ovl20:02A7); index 0 is never read"
+
+[[global]]
+offset = 0x49FB
+name = "RestInterruptCounter"
+evidence = "ovl20:0C9A counts rest steps in it (Inc) and resets it when it reaches the threshold in ds49D6 word $2D2 (VarRestInterruptSteps), then checks for an interruption; the loader clears it (ovl11:03AD, POOLVARS). Rest's interruption counter (whitepaper 5.22.1)."
+
+[[global]]
+offset = 0x6DD8
+name = "RestHealCounter"
+evidence = "ovl20:0871 increments it once per five-minute rest step and, at $120 (288 steps, 24 hours, RestHealCheckInterval), calls HealCharacter for every party member and resets it; MakeCamp clears it when the camp opens (ovl15:1E80). Whitepaper 5.22.1."
+
+[[global]]
+offset = 0x6DDA
+name = "RestWindowActive"
+evidence = "ovl20:0C9A sets it to 1 while the rest screen is up and clears it on exit; RES12:0886 reads it to pick the top row of the message window. Nonzero says the rest screen is up. The loader clears it (ovl11:0410)."

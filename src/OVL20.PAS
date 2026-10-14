@@ -54,6 +54,8 @@ const
   RestHealCheckInterval = $120; { ovl20:0877 waits this many five-minute rest steps }
   ViewModeCamp = 2;          { ds49F3 while the party camps (MakeCamp sets it, ovl15:1E6F) }
   VarPartySize = 830;        { party member count, a word of the ds49D6 block (whitepaper 5.5) }
+  VarRestInterruptSteps = $2D2;  { ds49D6 word: rest steps between checks (ovl07:0160 clears it) }
+  VarRestInterruptChance = $2D3; { ds49D6 word: percent chance per check, 1d100 (ovl07:0160 clears it) }
   MaxAffectStep = 10;        { ovl20:0097 spends elapsed affect time in passes of at most ten units }
   { The first of the seven game-clock words AdvanceGameClock advances, as a VarsAt4900 VM word address:
     the words at 49C6h..49CCh, that is GameVars^[198..204] (whitepaper 5.22.1). }
@@ -370,17 +372,19 @@ begin
     end;
   until Key in [#0, 'E', 'R'];
 end;
-{ ovl20:0871: checks the party's healing once ds6DD8 reaches $120 rest steps. It calls HealCharacter for
-  every party member, shows "The Whole Party Is Healed", redraws SelectedCharacter if anyone changed,
-  delays, clears the message and resets ds6DD8. Reads the party list; changes ds6DD8 and character health;
-  side effects are the screen and delay. }
+{ ovl20:0871: the whole-party heal of the rest. RestHealCounter counts five-minute rest steps; at
+  RestHealCheckInterval ($120, 288 steps, 24 hours) every party member is healed one hit point
+  (HealCharacter with amount 1 and flag 0, so a member with affect $32 is skipped) and the message
+  "The Whole Party Is Healed" is shown. The roster is redrawn only when someone actually healed. It then
+  delays, clears the message and resets RestHealCounter. Reads the party list; changes RestHealCounter and
+  character health; side effects are the screen and delay. }
 procedure CheckRestHealing;
 var
   Healed: Boolean;
   Who: PCharacter;
 begin
-  Inc(ds6DD8);
-  if ds6DD8 >= RestHealCheckInterval then
+  Inc(RestHealCounter);
+  if RestHealCounter >= RestHealCheckInterval then
   begin
     Healed := False;
     Who := PCharacter(ds5D96);
@@ -394,7 +398,7 @@ begin
     if Healed then DrawPartyRoster(SelectedCharacter);
     DelayByGameSpeed;
     ClearCharacterMessage;
-    ds6DD8 := 0;
+    RestHealCounter := 0;
   end;
 end;
 { ovl20:0925: scans Who's 21 spell slots. When Handled is 0, the first spell with bit 7 set is completed:
@@ -533,10 +537,13 @@ begin
   end;
 end;
 { ovl20:0C9A: rest countdown and interruptions. RestParty (ovl15:077A) calls this with no parameters and
-  uses the byte result to decide whether the camp ends. It reads RestTime, the party list, ds49D6 game
-  variables and ds49FB, and changes RestStudyCountdowns, ds471E and ds6DDA. Each five-minute step advances the game
-  clock, runs rest effects and may trigger a random interruption. It draws the rest line and messages,
-  asks whether to stop when a key is pending, and clears its window on exit. Result 1 means interrupted. }
+  uses the byte result to decide whether the camp ends. It reads RestTime, the party list, the ds49D6 game
+  words and RestInterruptCounter, and changes RestStudyCountdowns, ds471E and RestWindowActive. Each
+  five-minute step spends rest time, advances the game clock, runs the rest's healing and study, and may
+  trigger a random interruption: while ds49D6 word VarRestInterruptSteps is nonzero it counts the rest
+  steps in RestInterruptCounter; at that threshold the counter resets and a 1d100 RollDice no greater than
+  ds49D6 word VarRestInterruptChance interrupts. It draws the rest line and messages, asks whether to stop
+  when a key is pending, and clears its window on exit. Result 1 means interrupted. }
 function RunRestPeriod: Byte;
 var
   Who: PCharacter;
@@ -562,7 +569,7 @@ begin
   DisplayCounter := 0;
   ClearRect(1, $11, $26, $16);
   ShowRestTime(0);
-  ds6DDA := 1;
+  RestWindowActive := 1;
   EndRest := Ord(RestTimeMenu = 0);
   while (EndRest = 0) and
         ((RestTime[4] > 0) or (RestTime[3] > 0) or (RestTime[2] > 0) or (RestTime[1] > 0)) do
@@ -588,13 +595,13 @@ begin
       CheckRestHealing;
       AdvanceRestStudies;
       AdvanceRestHour(RestCycleCounter);
-      if ds49D6^[$2D2] > 0 then
+      if ds49D6^[VarRestInterruptSteps] > 0 then
       begin
-        Inc(ds49FB);
-        if ds49FB >= ds49D6^[$2D2] then
+        Inc(RestInterruptCounter);
+        if RestInterruptCounter >= ds49D6^[VarRestInterruptSteps] then
         begin
-          ds49FB := 0;
-          if RollDice(RestInterruptDice, RestInterruptSides) <= ds49D6^[$2D3] then
+          RestInterruptCounter := 0;
+          if RollDice(RestInterruptDice, RestInterruptSides) <= ds49D6^[VarRestInterruptChance] then
           begin
             ClearCharacterMessage;
             ShowRestTime(0);
@@ -609,7 +616,7 @@ begin
     end;
   end;
   ClearRect(1, $11, $26, $16);
-  ds6DDA := 0;
+  RestWindowActive := 0;
 end;
 
 begin

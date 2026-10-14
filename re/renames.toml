@@ -5212,3 +5212,24 @@ kind = "routine"
 why = "ovl20:03D5 adds Amount units of game-clock digit Index to the seven game variables at VarsAt4900 $49C6..$49CC, carries the local clock and spends that elapsed time through AdvanceAffectDurations (the game clock of the rest, whitepaper 5.22.1); callers ovl03:2AC1, ovl08:0880 EndCombatRound (1, 1), ovl14:073B MoveParty, ovl14:0818 CheckMapCell, ovl14:0989 HandleWildernessKeys and ovl20:0C9A RunRestPeriod (5, 1)"
 date = "2026-10-14"
 
+[[rename]]
+old = "ds49FB"
+new = "RestInterruptCounter"
+kind = "global"
+why = "ovl20:0C9A counts rest steps in it (Inc) and resets it when it reaches the threshold in ds49D6 word $2D2 (VarRestInterruptSteps), then checks for an interruption; the loader clears it (ovl11:03AD, POOLVARS). Rest's interruption counter (whitepaper 5.22.1)."
+date = "2026-10-14"
+
+[[rename]]
+old = "ds6DD8"
+new = "RestHealCounter"
+kind = "global"
+why = "ovl20:0871 increments it once per five-minute rest step and, at $120 (288 steps, 24 hours, RestHealCheckInterval), calls HealCharacter for every party member and resets it; MakeCamp clears it when the camp opens (ovl15:1E80). Whitepaper 5.22.1."
+date = "2026-10-14"
+
+[[rename]]
+old = "ds6DDA"
+new = "RestWindowActive"
+kind = "global"
+why = "ovl20:0C9A sets it to 1 while the rest screen is up and clears it on exit; RES12:0886 reads it to pick the top row of the message window. Nonzero says the rest screen is up. The loader clears it (ovl11:0410)."
+date = "2026-10-14"
+
