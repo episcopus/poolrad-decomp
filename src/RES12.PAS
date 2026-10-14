@@ -1517,7 +1517,20 @@ begin
   ClearWindow($11, $F, $26, $F);
   DrawTextAt($11, $F, $0A, Line);
 end;
-{@stub} procedure DrawWildernessScreen; begin end;
+{ 00BA:2B5E. Draws the wilderness map screen: it sets the view mode to ViewModeMap (3), draws the
+  adventure screen's three windows (DrawAdventureScreen), the area view (ShowAreaView), the party
+  marker (DrawPartyMarker), the location line and the character roster. Called by ovl14's
+  HandleWildernessKeys when the party moves in the wilderness.
+  Globals: ds49F3 (write). Side effect: the screen. }
+procedure DrawWildernessScreen;
+begin
+  ds49F3 := ViewModeMap;
+  DrawAdventureScreen;
+  ShowAreaView;
+  DrawPartyMarker;
+  DrawLocationLine;
+  DrawPartyRoster(SelectedCharacter);
+end;
 {@stub} procedure DrawCombatScreen; begin end;
 {@stub} procedure SelectPartyMember(Title: String40; WithExit: Byte; var Selected: PCharacter); begin end;
 { 00BA:2E03: retf 4: 4 bytes of parameters; 2 bytes of locals }
