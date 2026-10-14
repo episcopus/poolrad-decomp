@@ -74,7 +74,7 @@ procedure AddSavedCharacters;
 procedure RemoveSelectedCharacter(Uncounted, FreePicture: Boolean);
 procedure ChooseHeadAndBody;
 procedure DrawIconCell(CellCol, CellRow: Byte; StaticLink: Word);
-procedure ovl16_fn_35BE;
+procedure CopyPictureSlot(Source, Dest, Recolor: Byte; StaticLink: Word);
 procedure ovl16_e3;
 procedure ovl16_fn_3C75;
 procedure ovl16_fn_3C7A;
@@ -112,6 +112,18 @@ const
   NameColour = $A;          { green: the rest of the function name }
   ChoiceTitleColour = $D;   { the ReadPromptChoice title colour of the menu }
   Var2OfferModify = 680;    { ds49D6^ word: the modify function is offered while it is above 0; unknown }
+
+type
+  { An in-memory picture as ovl32 loads it: the tile byte size at +$11, the pointer to the packed
+    pixel buffer at +$13 and the copied tile bytes (the tail) at +$17. The same layout as ovl32's
+    private TMemPic, declared here because ovl16 needs it too (like ovl17's copy). }
+  PMemPic = ^TMemPic;
+  TMemPic = record
+    Head: array[0..$10] of Byte;    { +0..+$10: the picture header (height, width, item count) }
+    ByteSize: Word;                 { +$11: bytes per tile }
+    Pixels: ^Byte;                  { +$13: the packed pixel bytes }
+    Tail: array[0..20000] of Byte;  { +$17: the tile bytes, indexed by a byte times ByteSize }
+  end;
 
 { ovl16:0000. Frees a character and everything it owns: its combat state (Combat, size $16), its
   carried items (the list at Items, size $3F) and its affects (the list at Affects, size 9), then
@@ -923,8 +935,49 @@ begin
   DrawIcon(CellCol + SecondHalfCol, CellRow, IconSet, 1, HeadPicIndex);
   FlushPictureChanges;
 end;
-{ ovl16:35BE: retf 8: 8 bytes of parameters; 40 bytes of locals }
-{@stub} procedure ovl16_fn_35BE; begin end;
+{ ovl16:35BE. Copies one picture slot of the character-icon table DS:5E5A into another: both halves
+  (the identical half at FirstPic and the mirrored half at SecondPic) get their tile bytes (the tail
+  at +$17) and their packed pixel bytes (the buffer Pixels points at, +$13) copied from Source into
+  Dest. ByteSize (the word at +$11) gives the tile size; on the EGA adapter (VideoAdapter 1) the
+  pixel buffer holds a quarter of that. When Recolor is set the copied destination icon is recoloured
+  with the selected character's six colour pairs (Figure[1..6] through ds3CF5), exactly the
+  recolouring BuildCharacterIcon (ovl17:0482) applies. Called by the icon editor ovl16_e3 (its Source
+  is the character's CombatIcon) and by ovl16_fn_3E2F. The original reaches it through a nested call
+  (push bp; push cs; call), so its last parameter is a static link the body never reads. }
+procedure CopyPictureSlot(Source, Dest, Recolor: Byte; StaticLink: Word);
+var
+  I: Byte;                          { [bp-1]: loop index over the colour map }
+  Spare: Byte;                      { [bp-2]: the original frame reserves this byte, never read }
+  MapFrom: array[0..15] of Byte;    { [bp-0x12..bp-3]: the icon's source colours (the identity map) }
+  MapTo: array[0..15] of Byte;      { [bp-0x22..bp-0x13]: the destination colour of each source colour }
+  PixelBytes: Word;                 { [bp-0x24]: the pixel-buffer size copied }
+begin
+  PixelBytes := PMemPic(ds5E5A[Dest].FirstPic)^.ByteSize;
+  if VideoAdapter = 1 then
+    PixelBytes := PixelBytes shr 1 shr 1;
+  Move(PMemPic(ds5E5A[Source].FirstPic)^.Tail, PMemPic(ds5E5A[Dest].FirstPic)^.Tail,
+    PMemPic(ds5E5A[Dest].FirstPic)^.ByteSize);
+  Move(PMemPic(ds5E5A[Source].SecondPic)^.Tail, PMemPic(ds5E5A[Dest].SecondPic)^.Tail,
+    PMemPic(ds5E5A[Dest].SecondPic)^.ByteSize);
+  Move(PMemPic(ds5E5A[Source].FirstPic)^.Pixels^, PMemPic(ds5E5A[Dest].FirstPic)^.Pixels^, PixelBytes);
+  Move(PMemPic(ds5E5A[Source].SecondPic)^.Pixels^, PMemPic(ds5E5A[Dest].SecondPic)^.Pixels^, PixelBytes);
+  if Recolor <> 0 then
+    with SelectedCharacter^ do
+    begin
+      for I := 0 to 15 do
+      begin
+        MapFrom[I] := I;
+        MapTo[I] := I;
+      end;
+      for I := 1 to 6 do
+      begin
+        MapTo[ds3CF5[I]] := Figure[I] and $0F;
+        MapTo[ds3CF5[I] + 8] := (Figure[I] and $F0) shr 4;
+      end;
+      RemapPictureColours(@MapFrom, @MapTo, 0, 0, ds5E5A[Dest].FirstPic);
+      RemapPictureColours(@MapFrom, @MapTo, 0, 0, ds5E5A[Dest].SecondPic);
+    end;
+end;
 { ovl16:382D: frame not read }
 {@stub} procedure ovl16_e3; begin end;
 { ovl16:3C75: frame not read }

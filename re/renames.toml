@@ -4064,3 +4064,10 @@ kind = "routine"
 why = "ovl16:34DF fills one icon-editor cell (FillPictureRect over 12 cells x 24 rows from @ds260A into DrawBuf) and draws the two mirrored halves of the character's icon (DrawIcon, indices $19 and $C) at CellCol and CellCol+3; called by the icon editor ovl16_e3"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl16_fn_35BE"
+new = "CopyPictureSlot"
+kind = "routine"
+why = "ovl16:35BE copies one picture slot of DS:5E5A into another (both halves' tile bytes and packed pixel buffers through Move) and, when its third parameter is set, recolours the destination with the selected character's Figure[1..6] colour pairs, the same recolouring BuildCharacterIcon (ovl17:0482) applies"
+date = "2026-10-14"
+
