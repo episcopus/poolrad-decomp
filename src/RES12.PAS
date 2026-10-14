@@ -820,8 +820,17 @@ begin
     Prev^.Next := NewItem;
   end;
 end;
-{ 00BA:1693: implementation pending in this batch }
-{@stub} procedure ShowFlashMessage(Text: String40); begin end;
+{ 00BA:1693. Flashes Text on the bottom message line (row 24, columns 0..39) in green: clears the
+  row, writes the text, waits DelayByGameSpeed, and clears the row again. No key is waited for.
+  Called with 'Not enough money.', 'OverLoaded' and similar combat and shop notices.
+  Globals: none. }
+procedure ShowFlashMessage(Text: String40);
+begin
+  ClearWindow(0, BottomRow, ScreenLastCol, BottomRow);
+  DrawTextAt(0, BottomRow, Green, Text);
+  DelayByGameSpeed;
+  ClearWindow(0, BottomRow, ScreenLastCol, BottomRow);
+end;
 { 00BA:16EC: implementation pending in this batch }
 {@stub} procedure ShowCharacterMessage(Who: PCharacter; Text: string; Row, Wait: Byte); begin end;
 { 00BA:17E3: implementation pending in this batch }
