@@ -4551,27 +4551,14 @@ evidence = ["prologue"]
 id = "ovl12:2B63"
 unit = "ovl12"
 addr = "ovl12:2B63"
-size = 12
-name = "ovl12_e102"
-signature = "procedure ovl12_e102(Who: PCharacter; Affect: PAffect; Mode: Byte)"
+size = 26
+name = "HalveColdDamageNoSave"
+signature = "procedure HalveColdDamageNoSave(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e102"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_102"
+notes = "renamed from ovl12_e102 (ovl12:2B63 halves DamageAmount while DamageKind has KindCold (bit 2); it is HalveColdDamage (ovl12:03E1) without the SaveRoll bonus, the cold twin of HalveFireDamageNoSave (ovl12:25A2)); auto:entry_102"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:2B6F"
-unit = "ovl12"
-addr = "ovl12:2B6F"
-size = 14
-name = "ovl12_fn_2B6F"
-signature = ""
-c_name = "ovl12_fn_2B6F"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl12:2B7D"

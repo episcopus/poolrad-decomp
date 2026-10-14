@@ -114,8 +114,7 @@ procedure HalveElectricityDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure HalveDamageByFirstSlotItemRow(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure HalveDamageForEnchantedSlotItem(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure SetDamageFromSlotItemType55(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e102(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_fn_2B6F;
+procedure HalveColdDamageNoSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e103(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_fn_2B8B;
 procedure ovl12_e104;
@@ -1950,10 +1949,14 @@ begin
     if Item^.ItemType = $55 then
       DamageAmount := RollDiceCounted(1, 6) + 1;
 end;
-{ ovl12:2B63: frame not read }
-{@stub} procedure ovl12_e102(Who: PCharacter; Affect: PAffect; Mode: Byte); begin end;
-{ ovl12:2B6F: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_fn_2B6F; begin end;
+{ ovl12:2B63. Damage hook (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). While the damage is
+  cold (DamageKind bit KindCold, DS:6819), DamageAmount is halved: HalveColdDamage (ovl12:03E1) without its SaveRoll
+  bonus, the cold twin of HalveFireDamageNoSave (ovl12:25A2). Purpose unknown: which affect runs it is not known yet [?]. }
+procedure HalveColdDamageNoSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  if (DamageKind and KindCold) <> 0 then
+    DamageAmount := DamageAmount shr 1;
+end;
 { ovl12:2B7D: frame not read }
 {@stub} procedure ovl12_e103(Who: PCharacter; Affect: PAffect; Mode: Byte); begin end;
 { ovl12:2B8B: retf 10: 10 bytes of parameters; 0 bytes of locals }

@@ -4127,3 +4127,10 @@ kind = "routine"
 why = "ovl12:2B20 reads SelectedCharacter^.SlotItems[0] and, when its ItemType is $55, sets DamageAmount to RollDiceCounted(1, 6) + 1; the item type's name is not known"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl12_e102"
+new = "HalveColdDamageNoSave"
+kind = "routine"
+why = "ovl12:2B63 halves DamageAmount while DamageKind has KindCold (bit 2); it is HalveColdDamage (ovl12:03E1) without the SaveRoll bonus, the cold twin of HalveFireDamageNoSave (ovl12:25A2)"
+date = "2026-10-14"
+
