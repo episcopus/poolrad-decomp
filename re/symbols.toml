@@ -316,12 +316,12 @@ id = "ovl03:0A9F"
 unit = "ovl03"
 addr = "ovl03:0A9F"
 size = 78
-name = "ovl03_fn_0A9F"
+name = "ReturnCommand"
 signature = ""
 c_name = "ovl03_fn_0A9F"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_0A9F (ECL command 19 (dispatcher ovl03:2F2D, opcode 13h): pops the script's return stack (ReturnStack, 6-byte entries with ReturnPC and Next) into EclPC, the return that ScriptGosub's entries call for (ovl03:0A9F, matched)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

@@ -20,7 +20,7 @@ procedure ShowCloseUpCommand;
 procedure ReadNumberCommand;
 procedure ReadStringCommand;
 procedure ShowTextCommand;
-procedure ovl03_fn_0A9F;
+procedure ReturnCommand;
 procedure ovl03_fn_0AED;
 procedure ovl03_fn_0B39;
 procedure ovl03_fn_0B43;
@@ -539,8 +539,22 @@ begin
   end;
   ds4A00 := 0;
 end;
-{ ovl03:0A9F: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl03_fn_0A9F; begin end;
+{ ovl03:0A9F. ECL command 19 (dispatcher ovl03:2F2D, SkippedOpcode $13): returns from a subroutine
+  that ScriptGosub (ovl07:1951) called. EclPC moves past the command. When the return stack
+  ReturnStack is not empty, EclPC takes the return address of its top entry (ReturnPC), the entry is
+  freed and ReturnStack moves to the entry below it (Next, which ReturnPrev holds while the entry is
+  freed). An empty stack leaves EclPC just past the command. }
+procedure ReturnCommand;
+begin
+  Inc(EclPC);
+  if ReturnStack <> nil then
+  begin
+    EclPC := ReturnStack^.ReturnPC;
+    ReturnPrev := ReturnStack^.Next;
+    FreeMem(ReturnStack, SizeOf(TReturnEntry));
+    ReturnStack := ReturnPrev;
+  end;
+end;
 { ovl03:0AED: frame not read }
 {@stub} procedure ovl03_fn_0AED; begin end;
 { ovl03:0B39: frame not read }
