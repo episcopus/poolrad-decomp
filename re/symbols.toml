@@ -10620,27 +10620,14 @@ evidence = ["prologue"]
 id = "ovl22:2FD0"
 unit = "ovl22"
 addr = "ovl22:2FD0"
-size = 3
-name = "ovl22_e58"
+size = 77
+name = "CastMonsterHealWounds"
 signature = ""
 c_name = "ovl22_e58"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_58"
+notes = "renamed from ovl22_e58 (handler of the monster-only spell 62 (SpellHandlers element 62, overlay entry 58, stub 0096:0142): heals the first chosen target 2d4 + 2 hit points and reports 'is Healed'); auto:entry_58"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl22:2FD3"
-unit = "ovl22"
-addr = "ovl22:2FD3"
-size = 87
-name = "ovl22_fn_2FD3"
-signature = ""
-c_name = "ovl22_fn_2FD3"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl22:302A"

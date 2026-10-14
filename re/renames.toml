@@ -3889,3 +3889,10 @@ kind = "routine"
 why = "handler of the monster-only spell 61 (SpellHandlers element 61, overlay entry 57, stub 0096:013D): applies the current spell with the message 'is paralyzed'"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl22_e58"
+new = "CastMonsterHealWounds"
+kind = "routine"
+why = "handler of the monster-only spell 62 (SpellHandlers element 62, overlay entry 58, stub 0096:0142): heals the first chosen target 2d4 + 2 hit points and reports 'is Healed'"
+date = "2026-10-14"
+

@@ -69,8 +69,7 @@ procedure CastMonsterHeal;
 procedure CastMonsterStrength;
 procedure CastMonsterBeam;
 procedure CastMonsterParalyze;
-procedure ovl22_e58;
-procedure ovl22_fn_2FD3;
+procedure CastMonsterHealWounds;
 procedure ovl22_e59;
 procedure ovl22_e60;
 procedure ovl22_e61;
@@ -1822,10 +1821,18 @@ procedure CastMonsterParalyze;
 begin
   ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is paralyzed');
 end;
-{ ovl22:2FD0: frame not read }
-{@stub} procedure ovl22_e58; begin end;
-{ ovl22:2FD3: retf 0: 0 bytes of parameters; 10 bytes of locals }
-{@stub} procedure ovl22_fn_2FD3; begin end;
+{ ovl22:2FD0 (e58). Cast handler of spell 62, a monster-only spell: SpellNames[62] is empty and the
+  ovl22_e10 handler table points element 62 of SpellHandlers at this stub. It heals the first chosen
+  target ds6C95 through HealCharacter for 2d4 + 2 hit points (RollDice, no flag) and reports
+  'is Healed' when the heal went through (res12_fn_1FEB, its Flag 1). The map read the routine's
+  own prologue as a separate 3-byte routine ovl22_fn_2FD3 at the sub sp word; make match WRITE=1
+  removed that entry (nothing calls it, and the entry stubs point at 2FD0, overlay entry 58).
+  Reads ds6C95. }
+procedure CastMonsterHealWounds;
+begin
+  if HealCharacter(ds6C95, RollDice(2, 4) + 2, 0) then
+    res12_fn_1FEB(ds6C95, 1, 'is Healed');
+end;
 { ovl22:302A: retf 0: 0 bytes of parameters; 14 bytes of locals }
 {@stub} procedure ovl22_e59; begin end;
 { ovl22:3058: retf 0: 0 bytes of parameters; 2 bytes of locals }
