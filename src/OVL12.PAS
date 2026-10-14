@@ -29,7 +29,7 @@ procedure ShowSilenceAndStopCasting(Who: PCharacter; Affect: PAffect; Mode: Byte
 procedure DieIfPoisoned(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure GiveAffectItem(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure LowerAttackRollByFour(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e23;
+procedure BoostAttackVsEightListed(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e24;
 procedure ovl12_e25;
 procedure ovl12_e26;
@@ -632,8 +632,20 @@ begin
     ds681E := 1;
   Dec(AttackRoll, AttackPenalty);
 end;
-{ ovl12:0947: retf 10: 10 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl12_e23; begin end;
+{ ovl12:0947. Affect handler (the AffectHandlers shape: Who, Affect and Mode; only Who is read). The twin of
+  BoostAttackVsListedTarget (ovl12:0679) with eight names: when the character Who attacked last (Who's combat
+  Target, copied into AttackTarget) has Pad9E[$9F] and CombatSize (+$6C) both 1, AttackRoll gains 1 for each of
+  the names ds0382[1..8] that the character's name equals. Which affect runs it is not known yet [?]. }
+procedure BoostAttackVsEightListed(Who: PCharacter; Affect: PAffect; Mode: Byte);
+var
+  I: Byte;
+begin
+  AttackTarget := Who^.Combat^.Target;
+  if (AttackTarget^.Pad9E[$9F] = 1) and (AttackTarget^.CombatSize = 1) then
+    for I := 1 to 8 do
+      if AttackTarget^.Name = ds0382[I] then
+        Inc(AttackRoll);
+end;
 { ovl12:09C0: retf 10: 10 bytes of parameters; 14 bytes of locals }
 {@stub} procedure ovl12_e24; begin end;
 { ovl12:0A3D: retf 10: 10 bytes of parameters; 0 bytes of locals }

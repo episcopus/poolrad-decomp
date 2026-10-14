@@ -3574,3 +3574,10 @@ kind = "routine"
 why = "ovl12:093C subtracts 4 from AttackRoll (sub byte [6822],4) on every call; the frame is the AffectHandlers shape (Who, Affect, Mode), none read; it sets ds681E only when res12_fn_2199(SelectedCharacter, $18) finds no affect (ovl12:0933..0937)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e23"
+new = "BoostAttackVsEightListed"
+kind = "routine"
+why = "ovl12:0947 is BoostAttackVsListedTarget (ovl12:0679) with eight names: the same Pad9E[$9F] and CombatSize tests, then AttackRoll gains 1 per equal name of ds0382[1..8] (loop bound 8, base 0x372 + 16*I, against 0x332 + 16*I for ds0332 in ovl12:0679); the AffectHandlers shape with only Who read"
+date = "2026-10-13"
+

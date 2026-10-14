@@ -3434,12 +3434,12 @@ id = "ovl12:0947"
 unit = "ovl12"
 addr = "ovl12:0947"
 size = 121
-name = "ovl12_e23"
-signature = ""
+name = "BoostAttackVsEightListed"
+signature = "procedure BoostAttackVsEightListed(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e23"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_23"
+notes = "renamed from ovl12_e23 (ovl12:0947 is BoostAttackVsListedTarget (ovl12:0679) with eight names: the same Pad9E[$9F] and CombatSize tests, then AttackRoll gains 1 per equal name of ds0382[1..8] (loop bound 8, base 0x372 + 16*I, against 0x332 + 16*I for ds0332 in ovl12:0679); the AffectHandlers shape with only Who read); auto:entry_23"
 evidence = ["prologue"]
 
 [[routine]]

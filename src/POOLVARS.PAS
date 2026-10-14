@@ -458,6 +458,9 @@ var
     are the names the affect handler at ovl12:0679 compares with the attacked character's name; their text
     is not read yet [?]. }
   ds0332: array[0..4] of string[15];
+  { Eight 16-byte names at DS:0382 (rows 1 to 8), directly after ds0332: the names the affect handler at ovl12:0947
+    compares with the attacked character's name. Their text is not read yet [?]. }
+  ds0382: array[1..8] of string[15];
   ds04DF: string[40];             { prompt string HandleWildernessKeys passes to ReadPromptChoice; filled elsewhere }
   { The wall view's id table: two equal groups of eight ids (0,15,12,11,13,10,9,14). ShowAreaView
     indexes it with the game variables VarWallIndexOutside and VarWallIndexInside. Its last six
