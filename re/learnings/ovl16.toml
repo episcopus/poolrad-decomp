@@ -116,3 +116,12 @@ tags = ["nested", "static-link", "frame", "34DF"]
 title = "A nested routine whose parent is still a stub can be matched as a top-level routine with a trailing static-link parameter"
 lesson = "ovl16:34DF is called only by ovl16_e3 with `push <CellRow>; push <CellCol>; push bp; push cs; call` (the nested shape), and its body reads [bp+8] and [bp+0xa] because the two-byte static link sits at [bp+6]. With e3 still a stub it cannot be declared nested, so it is declared top level as `procedure DrawIconCell(CellCol, CellRow: Byte; StaticLink: Word)` (the trailing Word takes [bp+6] and the unused link is never read): the bytes match (retf 6, no locals). When e3 is decompiled, move DrawIconCell inside it and drop StaticLink. e3 also calls the same-shaped ovl16:35BE."
 evidence = ["src/OVL16.PAS#DrawIconCell", "re/symbols.toml#ovl16:34DF", "re/symbols.toml#ovl16:382D"]
+
+[[lesson]]
+id = "ovl16-e3-map-entries-are-ovl25-stub-flats"
+confidence = "V"
+units = ["ovl16", "*"]
+tags = ["map", "boundaries", "stubs", "far-call", "overlay", "382D", "e3"]
+title = "The ovl16 382D icon-editor entries 3C75..3EC9 are ovl25 and ovl31 stub flats inside e3"
+lesson = "ovl16_e3 (382D) has its only prologue (55 89 e5) at 382D and its single retf at 3F30 (the next prologue is 3F31), so it runs 382D..3F30, 1796 bytes, and every map entry inside it is an artefact, not a routine. Six of them are flat-linear readings of the ovl25 stub segment 0x03C5 (from build/re/overlays.json, stub 0x3C5 -> overlay 25): stub offset 0x25 (unknown ovl25 routine) reads flat 0x3C75, 0x2A ReadPromptChoice -> 0x3C7A, 0x2F ClearPromptLine -> 0x3C7F, 0x34 LoadPictureSlot -> 0x3C84, 0x39 AskYesNo -> 0x3C89, 0x3E (unknown) -> 0x3C8E. The rest are ovl31 (stub 0x03E0) and ovl32 (stub 0x03E9) flats: 0x03E0:0x2A ovl31_e2 -> 0x3E2A, 0x03E0:0x2F ovl31_e3 -> 0x3E2F, 0x03E9:0x2F FreePictureSlot -> 0x3EBF, 0x03E9:0x34 LoadPictureSlot -> 0x3EC4. 3C93 and 3D34 are mid-instruction boundaries inside e3's state machine. e3 is the icon editor entered from AlterMenu (ovl15:1C59) and is too large for one batch; make match UNIT=ovl16 WRITE=1 removes all of these when e3 matches. CopyPictureSlot (35BE) and DrawIconCell (34DF) are e3's nested routines, emitted before it."
+evidence = ["re/symbols.toml#ovl16:382D", "re/symbols.toml#ovl16:3C75", "re/symbols.toml#ovl16:3C7A", "re/symbols.toml#ovl16:3C7F", "re/symbols.toml#ovl16:3C84", "build/re/overlays.json"]
