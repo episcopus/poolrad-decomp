@@ -3553,3 +3553,10 @@ kind = "routine"
 why = "ovl12:070F shows 'is silenced' in colour 10 when the combat byte Pad2 (+2) of Who's combatant is set, then clears Pad2 and CanCast (+1, hides Cast): an affect handler (Who, Affect, Mode) reading only Who"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e20"
+new = "DieIfPoisoned"
+kind = "routine"
+why = "ovl12:0775 finds the Poisoned affect (affect $37, ovl15 'Poisoned') with res12_fn_2199 and, when Who has it, drops Who with StatusGone and 'dies from poison' (DropFromFight, ovl12:0058); then removes affect $0F inside the ds681F bracket (ovl04:0386); an affect handler reading only Who"
+date = "2026-10-13"
+

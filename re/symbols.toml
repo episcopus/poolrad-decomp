@@ -3395,12 +3395,12 @@ id = "ovl12:0775"
 unit = "ovl12"
 addr = "ovl12:0775"
 size = 107
-name = "ovl12_e20"
+name = "DieIfPoisoned"
 signature = ""
 c_name = "ovl12_e20"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_20"
+notes = "renamed from ovl12_e20 (ovl12:0775 finds the Poisoned affect (affect $37, ovl15 'Poisoned') with res12_fn_2199 and, when Who has it, drops Who with StatusGone and 'dies from poison' (DropFromFight, ovl12:0058); then removes affect $0F inside the ds681F bracket (ovl04:0386); an affect handler reading only Who); auto:entry_20"
 evidence = ["prologue"]
 
 [[routine]]

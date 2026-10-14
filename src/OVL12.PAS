@@ -26,7 +26,7 @@ procedure RaiseResistanceAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure BoostAttackVsListedTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure HalveFireDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ShowSilenceAndStopCasting(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e20;
+procedure DieIfPoisoned(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e21;
 procedure ovl12_e22;
 procedure ovl12_e23;
@@ -207,6 +207,7 @@ const
   StrengthKept = $80;           { bit 7 of a strength affect's Data: an earlier strength is kept in it (ovl24:115C) }
   AffectStrength1 = $0C;        { the two strength affects (ovl24:115C keeps the earlier strength in them) }
   AffectStrength2 = $26;
+  AffectPoisoned = $37;         { the Poisoned affect (ovl15 names it 'Poisoned'; ovl04 calls it AffectPoison) }
   AffectUnknown0F = $0F;        { purpose unknown; ovl04 removes it with the poison affect $37 (ovl04:0807) }
   AffectUnknown0FDuration = 10; { the Duration ovl12:05EB gives affect $0F }
   MinimumResistance = $39;      { ovl12:064E raises ResistValue (+$111) to at least this (57) }
@@ -554,8 +555,21 @@ begin
   Who^.Combat^.Pad2 := 0;
   Who^.Combat^.CanCast := 0;
 end;
-{ ovl12:0775: retf 10: 10 bytes of parameters; 22 bytes of locals }
-{@stub} procedure ovl12_e20; begin end;
+{ ovl12:0775. Affect handler (the AffectHandlers shape: Who, Affect and Mode; only Who is read): a poisoned
+  character dies. When Who has the Poisoned affect (AffectPoisoned, ovl15 names it 'Poisoned'), DropFromFight takes
+  Who out of the fight with StatusGone and the text 'dies from poison'. Then AffectUnknown0F is removed from Who
+  inside the ds681F bracket the Temple uses around RemoveAffect (ovl04:0386), so TryAddAffect adds nothing while
+  it runs. Which affect runs it is not known yet [?]. }
+procedure DieIfPoisoned(Who: PCharacter; Affect: PAffect; Mode: Byte);
+var
+  PoisonAffect: Pointer;
+begin
+  if res12_fn_2199(Who, AffectPoisoned, PoisonAffect) then
+    DropFromFight(Who, StatusGone, 'dies from poison');
+  ds681F := 1;
+  RemoveAffect(Who, AffectUnknown0F, nil);
+  ds681F := 0;
+end;
 { ovl12:07E0: retf 10: 10 bytes of parameters; 20 bytes of locals }
 {@stub} procedure ovl12_e21; begin end;
 { ovl12:0918: retf 10: 10 bytes of parameters; 4 bytes of locals }
