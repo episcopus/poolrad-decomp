@@ -3,7 +3,7 @@
 decompiler: dec-1, dec-9, dec-deepseek, dec-luna, dec-r09 (plus integrator and orch merge commits)
 reviewer: rev-sonnet
 date: 2026-10-13
-commit: 1315f47
+commit: 1315f47 (round 1), 0b408b4 (round 2)
 
 Checklist: docs/process/playbooks/70-review.md (every item, every routine).
 
@@ -52,6 +52,36 @@ class mask tested against the character's PadB0, Row[14] the flags.
 - [ ] note Stub signatures: `make stubs` reports every stub header equal to re/symbols.toml, nothing to add. Parameter names of the stubs this unit calls (`ovl13_e10(Who, B)`, `ovl13_e12(..., A, P, Done)`, `ovl22_e5(A, B, C, Done)`) are still placeholders in their units, not this unit's job.
 - [ ] note Whitepaper 5.5.3: besides the points above, it says `ovl09_fn_0F4F` "gives up" and "level-0 turn" (see ovl09_fn_0203) and repeats the RaceRow-as-races reading in two paragraphs (Choosing a target, The AI's item step). They must be rewritten after the renames (playbook 60), and the map section and the 4.3 ITEMS section should point to each other.
 
+## Round 2 (reviewer rev-sonnet, commit 0b408b4)
+
+Reran at 0b408b4: `make match UNIT=ovl09` says `unit: complete` (14 matched, 1 nested, 0 differ),
+`make readability UNIT=ovl09` is clean, no `inline`/`db`/`assembler`. All eleven round 1 must-fix findings
+were checked against the source, POOLVARS, re/dseg.toml, re/renames.toml and the whitepaper, and each fix
+holds: `ItemTable`/`TItemRow` replace RaceRow with the ITEMS row meaning (Slot, Hands, Attacks, Range,
+ClassMask, Flags, with POOLVARS evidence and no RaceRow left in src/ or the whitepaper); `ScoreItem(Actor,
+Item: PItem)` is described through item fields and its unknown rules carry `Purpose unknown:`;
+`UseBestItem` has named flags, slot indexes and thresholds and its picks are explained; the TCharacter
+fields are `HandsInUse`, `ClassBits`, `AttackFactorA/B`, `AttackBonus`; `TryTurnUndead` is named and
+justified by ovl08:0795/220; the CheckMorale and CastMemorizedSpell comments now follow the control flow
+and the gates (`ds49D6^[Var2Morale]`, Combat^.CanCast, B84, ds6E30); the AiTurn quirk is the real one at
+0C8E..0CAC and `InitiativeQuickAll`/`AiTurnLimit`/`HookTurnStart`/`RangeWrapped` replace the bare numbers;
+`Panic`, `StepPattern`, `ForcedFlight`, `Turned`, `CanCast`, `CanUseMagicItem`, `PendingSpell` are TCombatant
+fields. The code and comments I re-read agree with each other (SpellAccepted, CanAffordStep, MoveStep,
+HandleCombatKey, QuickTurn, TryTurnUndead). No new must-fix. The round 1 should-fix lines above that still
+apply (none was ticked; the decompiler may tick them when fixed) are re-stated with what is left:
+
+- [ ] should-fix UseMagicItem (03E4): still open from round 1: `Level` holds the item's spell number (Affects[2]) and is passed as SpellAccepted's `Spell`; the comment still says "level from Affects[2]" and "ds6814Sides zero" where the code tests one signed entry with `<= 0`; Range starting at 7 and falling by one per round is not in the comment; the `- $17` and `Affects[3] < $80` are unexplained.
+- [ ] should-fix SpellAccepted (02EB): `SpellTable[Spell].PadB[$D..$F]` are still unnamed fields (learning "spell-row-tail-bytes" has the evidence), `Spell <> 3`/`= 3` is a bare spell number, `Tries` is an enemy count, and the nested routine's "Purpose unknown." is stale since its comment already says what it answers.
+- [ ] should-fix ScoreItem (128D): the bare numbers 3 (hand limit; also the `> 3` and `<= 1` hand tests), $55, $84, $53, 8, 2 and 8 are left in the code beside a `Purpose unknown` comment; name at least the hand limit and the item type $55 (`ItemTypeXX`) so a port can search for them. `Actor^.Combat^.Target^.Pad74[$76]` reads a TCharacter byte at +$76 through a pad array; give +$76 a field (even `B76` with the comment) in POOLVARS.
+- [ ] should-fix MoveStep (07F2): still open: the facing arithmetic, `Step < 6`/`Step = 6`/`mod 6 + 1`, `ClassMask = 5` (magic-user) and the `ds443C/D` game meaning are bare or only half explained.
+- [ ] should-fix HandleCombatKey, CheckMorale, CastMemorizedSpell: still open: `$7F`/`$80` computer-run flag and morale mask, `$66`, `' '`, `$14` last spell slot are bare; CheckMorale still uses `Flag11B` for the current hit points, `$11` hook, `4`, `$4A`, `$4B` are bare.
+- [ ] should-fix AiTurn (0B3C) and whitepaper 5.5.3 line "AI's turn loop": "is dropped when it is not dying (Flag10D)" repeats the Flag10D mistake that QuickTurn's comment already fixed; POOLVARS says Flag10D is combat participation, so say "has left the fight". MoveStep's "once Flag10D is set past it" has the same weak wording.
+- [ ] should-fix ovl09_fn_0F4F (0F4F): still `Purpose unknown`, acceptable while res12_fn_0B73/2E03/2637/2686 are unnamed, but say that it is the "give up the turn" exit of QuickTurn, MoveStep and AiTurn.
+- [ ] should-fix POOLVARS TCharacter PadA2..AttackBonus comment: it still says "(Score2)", a local that no longer exists (it is OtherScore in UseBestItem), and HandsInUse says "gives the slot-1 hands back" where the code subtracts them again (ovl09:13CA). Make both agree with the source.
+- [ ] note UseBestItem (13CA): the name stays general (it picks and readies the weapon/armour slot items, ReadyItem); acceptable because the comment says what it does and the slot-kind meaning is marked unproven. UseMagicItem's goto structure and TryTurnUndead's comment (it calls the local `Done` "B") are small leftovers.
+- [ ] note Whitepaper 4.3 (line 467, the ITEMS section) does not mention `ItemTable`/DS:5582, the `TItemRow` fields or that ovl09 reads rows 0, 1, 5, 9..$E; add a pointer to 5.5.3 (the 5.5.3 side already points to it).
+- [ ] note re/renames.toml and re/symbols.toml notes of QuickTurn/UseBestItem still carry the old reading ("takes the level-0 turn", "ScoreTarget", "RaceRow") as history; the current names and text are in src and the whitepaper, so nothing to change.
+
 ## Verdict
 
-Not passed: the item table is called RaceRow and ScoreTarget/UseBestItem are described as scoring foes by race and known spells, the Turn action routine is called "purpose unknown", CheckMorale's and CastMemorizedSpell's comments misstate the code and several meaningful numbers and record offsets are bare; the bytes match and the unit is complete, but a port from the source would be misled.
+Passed (round 2): the eleven round 1 must-fix findings are fixed and verified on the source, the unit is complete and readable, and no new must-fix was found; the should-fix findings above are improvements, not blockers.
