@@ -3499,12 +3499,12 @@ id = "ovl12:0BAC"
 unit = "ovl12"
 addr = "ovl12:0BAC"
 size = 35
-name = "ovl12_e28"
-signature = ""
+name = "LowerAttackSaveAndResistance"
+signature = "procedure LowerAttackSaveAndResistance(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e28"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_28"
+notes = "renamed from ovl12_e28 (ovl12:0BAC is an affect handler (AffectHandlers shape, Mode not read): it takes 4 off AttackRoll and SaveRoll and off Who's ResistValue (+$111) and Pad112[$112] (+$112, the byte CoughStopsCasting copies into ResistValue, ovl12:0A65); which affect runs it is not known yet); auto:entry_28"
 evidence = ["prologue"]
 
 [[routine]]

@@ -3609,3 +3609,10 @@ kind = "routine"
 why = "ovl12:0B1B is an affect handler (AffectHandlers shape, Mode not read): it clears the affect's Flag, drops Who with the text 'collapses' and StatusGone unless ds681F is set (the Temple removing affects), then sets Who's Side from the high nibble of the affect's Data and Quick (computer plays, as ComputerTakesOver ovl12:0400)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e28"
+new = "LowerAttackSaveAndResistance"
+kind = "routine"
+why = "ovl12:0BAC is an affect handler (AffectHandlers shape, Mode not read): it takes 4 off AttackRoll and SaveRoll and off Who's ResistValue (+$111) and Pad112[$112] (+$112, the byte CoughStopsCasting copies into ResistValue, ovl12:0A65); which affect runs it is not known yet"
+date = "2026-10-13"
+

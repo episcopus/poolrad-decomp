@@ -34,7 +34,7 @@ procedure ImageAbsorbsHit(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ReduceDamageByQuarter(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure CoughStopsCasting(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure CollapseAndChangeSide(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e28;
+procedure LowerAttackSaveAndResistance(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e29;
 procedure ovl12_e30;
 procedure ovl12_e31;
@@ -194,7 +194,9 @@ const
   AffectUnknown0F = $0F;        { purpose unknown; ovl04 removes it with the poison affect $37 (ovl04:0807) }
   AffectUnknown0FDuration = 10; { the Duration ovl12:05EB gives affect $0F }
   AffectUnknown18 = $18;        { purpose unknown: the affect SelectedCharacter must have for ds681E to stay 0 (ovl12:0918) }
-  AttackPenalty = 4;            { what ovl12:0918 takes off AttackRoll }
+  AttackPenalty = 4;            { what ovl12:0918, 0BAC and 0C15 take off AttackRoll }
+  SavePenalty = 4;              { what ovl12:0BAC and 0C15 take off SaveRoll }
+  ResistPenalty = 4;            { what ovl12:0BAC takes off Who's ResistValue and Pad112[$112] }
   AffectImages = $1C;           { the images affect: runs on the damage hook (kind 6, ovl24:02FA); Data counts the images [I] }
   CoughResistLimit = 52;        { ovl12:0A65: TCharacter.Pad112[$112] above this steps down by CoughResistStep,
                                   else it is set to CoughResistReset }
@@ -701,8 +703,16 @@ begin
     Who^.B84 := 0;
   Who^.Pad9E[$9F] := 0;
 end;
-{ ovl12:0BAC: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e28; begin end;
+{ 0BAC. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). Takes AttackPenalty
+  off AttackRoll, ResistPenalty off Who's ResistValue (+$111) and off Pad112[$112] (+$112, the byte CoughStopsCasting
+  copies into ResistValue, ovl12:0A65), and SavePenalty off SaveRoll. The affect that runs it is not known yet [?]. }
+procedure LowerAttackSaveAndResistance(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  Dec(AttackRoll, AttackPenalty);
+  Dec(Who^.ResistValue, ResistPenalty);
+  Dec(Who^.Pad112[$112], ResistPenalty);
+  Dec(SaveRoll, SavePenalty);
+end;
 { ovl12:0BCF: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e29; begin end;
 { ovl12:0C06: retf 10: 10 bytes of parameters; 0 bytes of locals }
