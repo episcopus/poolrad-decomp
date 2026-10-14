@@ -91,6 +91,15 @@ lesson = "ViewSelectedCharacter (ovl19:0AE3, 0CF2) matches with `while not (Key 
 evidence = ["re/symbols.toml#ovl19:0AB3", "src/OVL19.PAS#ViewSelectedCharacter"]
 
 [[lesson]]
+id = "frame-temp-block-and-even-size"
+confidence = "V"
+units = ["ovl19"]
+tags = ["frame", "temporary", "padding", "locals"]
+title = "String temporaries are 256-byte blocks under the locals; the frame is rounded to even"
+lesson = "The concatenation temporary of ViewSelectedCharacter sits at [bp-0x132], 256 bytes just below its last local Choice at [bp-0x32], and the frame is sub sp 0x132. RunItemMenu's locals end at [bp-0x41] (one spare byte after OldCount), its temporary is at [bp-0x141], and the frame is 0x141 rounded up to sub sp 0x142. To find a missing spare byte, compare the first temporary's address with the lowest local: temporary = lowest local - 0x100 - spares."
+evidence = ["src/OVL19.PAS#ViewSelectedCharacter", "src/OVL19.PAS#RunItemMenu"]
+
+[[lesson]]
 id = "string-function-result-argument"
 confidence = "V"
 units = ["ovl19"]
