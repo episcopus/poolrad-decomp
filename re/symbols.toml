@@ -10386,7 +10386,7 @@ evidence = ["prologue"]
 id = "ovl22:2385"
 unit = "ovl22"
 addr = "ovl22:2385"
-size = 326
+size = 337
 name = "CastDispelMagic"
 signature = ""
 c_name = "ovl22_e44"
@@ -10400,12 +10400,12 @@ id = "ovl22:24D6"
 unit = "ovl22"
 addr = "ovl22:24D6"
 size = 106
-name = "ovl22_e45"
+name = "CastPrayer"
 signature = ""
 c_name = "ovl22_e45"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_45"
+notes = "renamed from ovl22_e45 (ovl22_e10 fills SpellHandlers[42] (DS:6B84+42*4) with overlay stub 0096:0101 = ovl22:24D6; SpellNames[42] is 'Prayer' (DS:2FA3). The routine applies the spell to the targets with the caster's Side in the affect data and the message 'is praying'); auto:entry_45"
 evidence = ["prologue"]
 
 [[routine]]

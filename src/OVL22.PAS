@@ -52,7 +52,7 @@ function CureDiseaseAffects: Boolean;
 procedure CastCureDisease;
 procedure CastCauseDisease;
 procedure CastDispelMagic;
-procedure ovl22_e45;
+procedure CastPrayer;
 procedure ovl22_e9;
 procedure ovl22_fn_257E;
 procedure ovl22_fn_25C9;
@@ -1358,8 +1358,24 @@ begin
       res12_fn_1FEB(Target, ShowAbout, 'is affected');
   end;
 end;
-{ ovl22:24D6: retf 0: 0 bytes of parameters; 12 bytes of locals }
-{@stub} procedure ovl22_e45; begin end;
+{ ovl22:24D6 (e45). Cast handler of spell 42, Prayer (ovl22_e10 maps DS:6B84+42*4 to overlay stub
+  0096:00... ; SpellNames[42] is 'Prayer'). It applies the current spell ds681B to the chosen targets
+  with no flag, damage or kind of its own and the message 'is praying'; the caster level it passes as
+  the affect's Data is the caster level (res12_fn_26C2(ds681B)) plus the caster's Side scaled by 16, so
+  the affect's handler can tell whose side the prayer favours (the same Side-in-the-data trick as
+  Charm Person and Animate Dead). Reads ds681B and SelectedCharacter; changes the targets' affects. }
+procedure CastPrayer;
+const
+  { The caster's Side goes above the caster level in the affect's data (Side * SideScale). Written as
+    a multiply, not `shl 4`: TP 6.0 compiles `X * 16` to `mov cl,4; shl ax,cl` but `X shl 4` to
+    `mov cx,4; shl ax,cl` (probe PRB27.PAS). }
+  SideScale = 16;
+begin
+  { QUIRK ovl22:24F1: the original sign-extends Side with cwde, so it is read as a ShortInt even
+    though TCharacter.Side is a Byte. }
+  ApplySpellToTargets(ds681B, res12_fn_26C2(ds681B) + ShortInt(SelectedCharacter^.Side) * SideScale,
+    0, 0, 0, 'is praying');
+end;
 { ovl22:2540: frame not read }
 {@stub} procedure ovl22_e9; begin end;
 { ovl22:257E: frame not read }
