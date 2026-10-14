@@ -3455,3 +3455,10 @@ kind = "routine"
 why = "ECL command 8: the dispatcher ovl03:2F2D calls it for SkippedOpcode 8 (cmp al,8 then call 0234); it rolls Random over the first operand and writes the roll with WriteVmWord (ovl07:0C77)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl03_fn_0292"
+new = "StoreCommand"
+kind = "routine"
+why = "ECL command 9: the dispatcher ovl03:2F2D calls it for SkippedOpcode 9 (cmp al,9; call 0292); it stores operand 1 (a value by WriteVmWord, a string by WriteVmString from EclStrings[1]) at the address operand 2 names (match ovl03:0292)"
+date = "2026-10-13"
+

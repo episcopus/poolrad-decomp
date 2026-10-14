@@ -11,11 +11,7 @@ procedure GosubCommand;
 procedure CompareCommand;
 procedure ArithmeticCommand;
 procedure RandomCommand;
-procedure ovl03_fn_0292;
-procedure ovl03_fn_02A5;
-procedure ovl03_fn_02D5;
-procedure ovl03_fn_02DA;
-procedure ovl03_fn_02DF;
+procedure StoreCommand;
 procedure ovl03_fn_02E0;
 procedure ovl03_fn_02E4;
 procedure ovl03_fn_02E9;
@@ -242,16 +238,24 @@ begin
   Roll := Trunc(Random(Range));
   WriteVmWord(Target, Roll);
 end;
-{ ovl03:0292: frame not read }
-{@stub} procedure ovl03_fn_0292; begin end;
-{ ovl03:02A5: frame not read }
-{@stub} procedure ovl03_fn_02A5; begin end;
-{ ovl03:02D5: frame not read }
-{@stub} procedure ovl03_fn_02D5; begin end;
-{ ovl03:02DA: frame not read }
-{@stub} procedure ovl03_fn_02DA; begin end;
-{ ovl03:02DF: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl03_fn_02DF; begin end;
+{ ovl03:0292. ECL command 9 (dispatcher ovl03:2F2D, SkippedOpcode 9): stores its first operand at
+  the script address its second operand names. A string operand (type bit 7 set) is stored with
+  WriteVmString from EclStrings[1]; a value is stored as a word with WriteVmWord. }
+procedure StoreCommand;
+var
+  Value: Word;
+  Target: Word;
+begin
+  DecodeOperands(2);
+  Target := MakeWord(OperandLow[2], OperandHigh[2]);
+  if OperandType[1] < FirstStringOperandType then
+  begin
+    Value := OperandValue(1);
+    WriteVmWord(Target, Value);
+  end
+  else
+    WriteVmString(Target, EclStrings[1]);
+end;
 { ovl03:02E0: frame not read }
 {@stub} procedure ovl03_fn_02E0; begin end;
 { ovl03:02E4: frame not read }

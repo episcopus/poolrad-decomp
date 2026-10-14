@@ -198,66 +198,14 @@ evidence = ["prologue"]
 id = "ovl03:0292"
 unit = "ovl03"
 addr = "ovl03:0292"
-size = 19
-name = "ovl03_fn_0292"
+size = 78
+name = "StoreCommand"
 signature = ""
 c_name = "ovl03_fn_0292"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_0292 (ECL command 9: the dispatcher ovl03:2F2D calls it for SkippedOpcode 9 (cmp al,9; call 0292); it stores operand 1 (a value by WriteVmWord, a string by WriteVmString from EclStrings[1]) at the address operand 2 names (match ovl03:0292)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl03:02A5"
-unit = "ovl03"
-addr = "ovl03:02A5"
-size = 48
-name = "ovl03_fn_02A5"
-signature = ""
-c_name = "ovl03_fn_02A5"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:02D5"
-unit = "ovl03"
-addr = "ovl03:02D5"
-size = 5
-name = "ovl03_fn_02D5"
-signature = ""
-c_name = "ovl03_fn_02D5"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:02DA"
-unit = "ovl03"
-addr = "ovl03:02DA"
-size = 5
-name = "ovl03_fn_02DA"
-signature = ""
-c_name = "ovl03_fn_02DA"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:02DF"
-unit = "ovl03"
-addr = "ovl03:02DF"
-size = 1
-name = "ovl03_fn_02DF"
-signature = ""
-c_name = "ovl03_fn_02DF"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl03:02E0"
