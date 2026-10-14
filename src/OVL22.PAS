@@ -67,8 +67,7 @@ procedure CastRestoration;
 procedure CastMonsterHaste;
 procedure CastMonsterHeal;
 procedure CastMonsterStrength;
-procedure ovl22_e56;
-procedure ovl22_fn_2F57;
+procedure CastMonsterBeam;
 procedure ovl22_e57;
 procedure ovl22_e58;
 procedure ovl22_fn_2FD3;
@@ -1541,7 +1540,7 @@ begin
   end;
 end;
 { ovl22:295B. The line-beam helper of the line spells: it draws the beam of the Lightning Bolt handler
-  CastLightningBolt and of the paralysis beams ovl22_fn_2F57 and ovl22_fn_31D7 and damages every combatant it
+  CastLightningBolt and of the monster beams (CastMonsterBeam, the dragon breath ovl22_e63) and damages every combatant it
   passes. It starts at the aim cell ds6DB9/ds6DBA (playing the zap animation res12_fn_19DE($13)) and
   walks a line away from the caster for Range * 2 steps (a TLineState filled by SetupLine and advanced
   by StepLine); it draws each step through res12_fn_1A29 and deals Damage (electrical, SavingThrow kind
@@ -1553,7 +1552,7 @@ end;
   Parameters: Range the spell's reach (the line walks Range * 2 cells); Damage the damage dealt per
   cell; SaveKind the SavingThrow kind; Bounce nonzero lets the beam reflect off a wall once. Globals:
   ds6DB9/ds6DBA (the aim cell, moved to the bounce point), ds6820, SelectedCharacter and CombatTiles.
-  Called by CastLightningBolt (Lightning Bolt), ovl22_fn_2F57 and ovl22_fn_31D7. }
+  Called by CastLightningBolt (Lightning Bolt), CastMonsterBeam and ovl22_e63 (the dragon breath). }
 procedure CastLineBeam(Range, Damage, SaveKind, Bounce: Byte);
 const
   LineStep = 4;                   { res12_fn_1A29's step: it walks the beam line in steps of 4 }
@@ -1793,10 +1792,28 @@ begin
     res12_fn_16EC(ds6C95, 'is stronger', MessageColour, TimedMessage);
   AddAffect(ds6C95, StrengthAffect, SpellAffectDuration(ds681B), Code, RunHandlerOnRemoval);
 end;
-{ ovl22:2F4D: frame not read }
-{@stub} procedure ovl22_e56; begin end;
-{ ovl22:2F57: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl22_fn_2F57; begin end;
+{ ovl22:2F4D. Cast handler of spell 60, a monster-only spell: SpellNames[60] is empty, and the
+  ovl22_e10 table points element 60 of SpellHandlers at this stub. It strikes the combatant on the aim
+  cell ds6DB9/ds6DBA for 1d6 + 20 points (DamageTargetInCell: the spell's saving throw kind 4, half
+  damage on a save, and the zap animation) and then runs a short beam CastLineBeam(3, 20, 4, 0): six
+  cells of 20 points away from the caster, no bounce. }
+procedure CastMonsterBeam;
+const
+  { The strike on the aim cell and the beam's per-cell damage: a flat 20, the direct hit rolls 1d6
+    more (the two numbers are separate in the original). }
+  StrikeDiceCount = 1;
+  StrikeDiceSides = 6;
+  StrikeBase = 20;
+  BeamReach = 3;                  { CastLineBeam walks Range * 2 cells }
+  BeamDamage = 20;
+  SaveKindSpell = 4;              { SavingThrow's kind for a spell }
+  NoBounce = 0;                   { the beam does not reflect off a wall }
+var
+  Blocked: Boolean;               { DamageTargetInCell's out flag: the aim cell's tile refuses the beam (not read) }
+begin
+  DamageTargetInCell(ds6DB9, ds6DBA, RollDice(StrikeDiceCount, StrikeDiceSides) + StrikeBase, SaveKindSpell, Blocked);
+  CastLineBeam(BeamReach, BeamDamage, SaveKindSpell, NoBounce);
+end;
 { ovl22:2F99: retf 0: 0 bytes of parameters; 14 bytes of locals }
 {@stub} procedure ovl22_e57; begin end;
 { ovl22:2FD0: frame not read }

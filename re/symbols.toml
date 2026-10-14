@@ -10594,27 +10594,14 @@ evidence = ["prologue"]
 id = "ovl22:2F4D"
 unit = "ovl22"
 addr = "ovl22:2F4D"
-size = 10
-name = "ovl22_e56"
+size = 63
+name = "CastMonsterBeam"
 signature = ""
 c_name = "ovl22_e56"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_56"
+notes = "renamed from ovl22_e56 (the ovl22_e10 handler table points SpellHandlers[60] at stub 0096:0138 (overlay entry 56, ovl22:2F4D); the routine strikes the aim cell ds6DB9/ds6DBA for 1d6+20 through DamageTargetInCell (save kind 4, half damage) and then runs a short CastLineBeam(3, 20, 4, 0) away from the caster; the beam handler of the monster-only spell 60 (SpellNames[60] is empty); make match UNIT=ovl22: 63 bytes matched); auto:entry_56"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl22:2F57"
-unit = "ovl22"
-addr = "ovl22:2F57"
-size = 66
-name = "ovl22_fn_2F57"
-signature = ""
-c_name = "ovl22_fn_2F57"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl22:2F99"

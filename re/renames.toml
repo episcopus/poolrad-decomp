@@ -3875,3 +3875,10 @@ kind = "routine"
 why = "the ovl22_e10 handler table points SpellHandlers[59] at stub 0096:0133 (overlay entry 55, ovl22:2EE5); the routine gives the first chosen target a plain Strength 21 through RaiseStrength (no percentile), shows 'is stronger' and adds the strength affect $26 for SpellAffectDuration; the strength handler of the monster-only spell 59 (SpellNames[59] is empty); make match UNIT=ovl22: 104 bytes matched"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl22_e56"
+new = "CastMonsterBeam"
+kind = "routine"
+why = "the ovl22_e10 handler table points SpellHandlers[60] at stub 0096:0138 (overlay entry 56, ovl22:2F4D); the routine strikes the aim cell ds6DB9/ds6DBA for 1d6+20 through DamageTargetInCell (save kind 4, half damage) and then runs a short CastLineBeam(3, 20, 4, 0) away from the caster; the beam handler of the monster-only spell 60 (SpellNames[60] is empty); make match UNIT=ovl22: 63 bytes matched"
+date = "2026-10-14"
+
