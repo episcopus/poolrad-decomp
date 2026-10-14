@@ -175,11 +175,13 @@ const
   FightResult = 1;              { a fight, or a flee the movement check refuses }
   PartyFleesResult = 2;         { a flee the check allows, and the flee choice in kinds 1, 3 and 4 }
   ParlayResult = 3;             { a parlay path with no step left }
-  { ECL command 46 (ovl03:2775). Operand 1: bit 7 picks one target (clear: the number of hits, each on a
-    random member), bit 6 hits the whole party, bit 5 is a hit no saving throw stops; the low five bits are
-    the saving throw kind. Operand 5: bit 7 picks the selected character as the target (else a random
-    member); its low three bits are the saving throw bonus. }
-  TrapOneTargetBit = $80;
+  { ECL command 46 (ovl03:2775). Operand 1: bit 7 (TrapSavingThrowBit) is the saving-throw mode, a targeted
+    trap whose target saves; with it clear Flags is the number of hits, each on a random member that only
+    ResistValue stops. In the saving-throw mode bit 6 (TrapWholePartyBit) hits the whole party and bit 5
+    (TrapUnsavedBit) is a hit no saving throw stops; the low five bits are the saving throw kind. Operand 5:
+    bit 7 picks the selected character as the target (else a random member); its low three bits are the
+    saving throw bonus. }
+  TrapSavingThrowBit = $80;
   TrapWholePartyBit = $40;
   TrapUnsavedBit = $20;
   TrapKindMask = $1F;
@@ -265,8 +267,8 @@ begin
     FreeMem(ReturnStack, 6);
     ReturnStack := ReturnPrev;
   end;
-  GlyphRow := $11;
-  GlyphCol := 1;
+  GlyphRow := EclTextTop;
+  GlyphCol := EclTextLeft;
   ds84DE := 0;
 end;
 { ovl03:00F4. ECL command 1 (dispatcher ovl03:2F2D, SkippedOpcode 1): an unconditional jump. Its
@@ -1195,8 +1197,9 @@ begin
   WriteVmWord(RollResultAddr, Kind);
 end;
 { ovl03:179B. ECL command 36 (dispatcher ovl03:2F2D, SkippedOpcode $24): the area logic. ShopMain
-  (ovl06:053E) and RunCombat (ovl08:007A) name ovl03 as their caller. It counts its calls in EclPC
-  (purpose unknown). An encounter is pending when ds84E7 (set by ECL command 11) or DuelMode is set.
+  (ovl06:053E) and RunCombat (ovl08:007A) name ovl03 as their caller. It has no operands; Inc(EclPC)
+  steps the program counter past the opcode so RunScriptFrom (ovl03:3171) reads the next command (see
+  EclPC). An encounter is pending when ds84E7 (set by ECL command 11) or DuelMode is set.
   Without one, a shop or temple the script asked for comes first: when word VarShopRequest of ds49D6
   is 1 it is cleared and ShopMain runs, else when VarTempleRequest is 1 it is cleared and VisitTemple
   runs; with neither request EndBattle runs. With an encounter, VarStepsAhead becomes the lower of its
@@ -1243,9 +1246,9 @@ begin
       DuelMode := 0;
   end;
   if AreaViewKind = 1 then
-    ds49F3 := 4
+    ds49F3 := ViewModeWall
   else
-    ds49F3 := 3;
+    ds49F3 := ViewModeMap;
   ds49D6^[VarWord714] := ds49D6^[VarWord714] and 1;
   FillChar(ds84C8, 2, 0);
   ds84E0 := 0;
@@ -1745,8 +1748,9 @@ begin
   end;
 end;
 { ovl03:271F. ECL command 58 (dispatcher ovl03:2F2D, SkippedOpcode 3Ah): pauses the script for the game
-  speed (DelayByGameSpeed, RES06: GameSpeed * 225 milliseconds). It has no operands, counts EclPC up as
-  ECL command 36 does, and does not move EclPC itself. Purpose unknown: why the script waits here. }
+  speed (DelayByGameSpeed, RES06: GameSpeed * 225 milliseconds). It has no operands; Inc(EclPC) steps the
+  program counter past the opcode so RunScriptFrom (ovl03:3171) reads the next command (see EclPC).
+  Purpose unknown: why the script waits here. }
 procedure PauseCommand;
 begin
   Inc(EclPC);
@@ -1754,17 +1758,19 @@ begin
 end;
 { ovl03:2775. ECL command 46 (dispatcher ovl03:2F2D, SkippedOpcode 2Eh): damages the party, a trap or an
   ambush. Operands 2 to 4 are the damage (RollDice(DamageDice, DamageSides) + DamageBonus, rolled again for each
-  hit of the random mode). Operand 1 (Flags) bit 7 (TrapOneTargetBit) picks one target; when it is clear, the
-  value is the number of hits, each on a random member (RollDice over the party size VarPartySize, walking the
-  party list ds5D96) that takes the damage unless RollBeatsResistance (operand 5) fails for it. When bit 7 is set,
-  bit 6 hits the whole party, each member saving with SavingThrow (kind: the low five bits of Flags, bonus: the
-  low three bits of operand 5) unless bit 5 makes the hit unsaveable; with bit 6 clear, operand 5 bit 7 picks
-  the selected character as the target (saving with its bonus minus one, no save at bonus 0), else one random
-  member saves. DamageWithMessage
-  (ovl07:20CC) does the damage. Then PartyDestroyed (PartyDestroyed) is 1 unless a member has Flag10D (combat
-  participation) set; if it is 1 the screen 'The END!' shows 'The entire party is killed!' and the game waits 3
-  seconds. The selected character is restored and 'press <enter>/<return> to continue' is shown.
-  Purpose unknown: which events use it. }
+  hit of the random mode). Operand 1 (Flags) bit 7 (TrapSavingThrowBit) is the saving-throw mode: the target
+  takes the damage unless SavingThrow (kind: the low five bits of Flags, bonus: the low three bits of operand
+  5) succeeds for it, or unconditionally when bit 5 (TrapUnsavedBit) is set. In that mode the target is the
+  whole party when bit 6 (TrapWholePartyBit) is set (each member saves), else the selected character when
+  operand 5 bit 7 (TrapSelectedBit) is set (it saves with its bonus minus one, no save at bonus 0), else one
+  random member (RollDice over the party size VarPartySize). With bit 7 clear, Flags is the number of hits,
+  each on a random member of the party list ds5D96, that takes the damage when RollBeatsResistance (operand 5)
+  succeeds for it. QUIRK ovl03:2775: with bit 7 clear bit 6 is not a mode here and counts into that number:
+  MemberNumber is not rolled and the loop `for I := 1 to Flags` runs once per bit, so Flags $40 or more means
+  64 or more hits. DamageWithMessage (ovl07:20CC) does the damage. Then PartyDestroyed is 1 unless a member has
+  Flag10D (combat participation) set; when it is 1 the window 'The END!' shows 'The entire party is killed!'
+  and the game waits 3 seconds. The selected character is restored and 'press <enter>/<return> to continue'
+  is shown. Purpose unknown: which events use it. }
 procedure DamagePartyCommand;
 var
   Flags: Byte;
@@ -1799,7 +1805,7 @@ begin
     WholePartyHit := True
   else
     MemberNumber := RollDice(1, Byte(ds49D6^[VarPartySize]));
-  if (Flags and TrapOneTargetBit) <> 0 then
+  if (Flags and TrapSavingThrowBit) <> 0 then
   begin
     SaveKind := Flags and TrapKindMask;
     SaveBonus := Resistance and TrapBonusMask;
@@ -1829,6 +1835,8 @@ begin
   end
   else
   begin
+    { QUIRK ovl03:2775: bit 7 clear, so Flags is the number of hits, counted per bit: bit 6 (and bit 5)
+      adds to it here, and when bit 6 is set MemberNumber was not rolled above. }
     for I := 1 to Flags do
     begin
       Who := PCharacter(ds5D96);
@@ -1864,11 +1872,11 @@ begin
   SelectedCharacter := SavedCharacter;
   ShowMessageLine(ContinueColor, 'press <enter>/<return> to continue');
 end;
-{ ovl03:2AA2: retf 0: 0 bytes of parameters; 0 bytes of locals }
 { ovl03:2AA2. ECL command 49 (dispatcher ovl03:2F2D, SkippedOpcode 31h): redraws the area view when the 3D
   encounter sprite is loaded (ds84E3, set by ShowEncounterPicture), as the hiding path of ShowCloseUpCommand
-  does, then clears the sprite flag and the close-up flag ds84E0. It has no operands, counts EclPC up as ECL
-  commands 36 and 58 do, and does not move EclPC itself. Purpose unknown: why the script redraws the area. }
+  does, then clears the sprite flag and the close-up flag ds84E0. It has no operands; Inc(EclPC) steps the
+  program counter past the opcode so RunScriptFrom (ovl03:3171) reads the next command (see EclPC).
+  Purpose unknown: why the script redraws the area. }
 procedure RedrawAreaViewCommand;
 begin
   Inc(EclPC);
@@ -1896,26 +1904,28 @@ end;
 { ovl03:2AEB. ECL command 51 (dispatcher ovl03:2F2D, SkippedOpcode 33h): starts a new line of text. The
   text cursor (GlyphCol, GlyphRow, the glyph position ShowPagedText keeps) goes to column 1 of the next
   row. ds84DF is cleared when it is set; the cursor moves the same way on both branches, which the
-  original compiles as two branches. Inc(EclPC) counts the command (see EclPC). }
+  original compiles as two branches. Inc(EclPC) steps the program counter past the opcode so RunScriptFrom
+  (ovl03:3171) reads the next command (see EclPC). }
 procedure NewLineCommand;
 begin
   Inc(EclPC);
   if ds84DF <> 0 then
   begin
-    GlyphCol := 1;
+    GlyphCol := EclTextLeft;
     Inc(GlyphRow);
     ds84DF := 0;
   end
   else
   begin
-    GlyphCol := 1;
+    GlyphCol := EclTextLeft;
     Inc(GlyphRow);
   end;
 end;
 { ovl03:2B14. ECL command 61 (dispatcher ovl03:2F2D, SkippedOpcode 3Dh): clears the picture window, the
   box at columns 1 to 15 and rows 1 to 15 that frames the encounter picture (ShowCloseUpCommand draws
   the close-up inside the box at 3 to 13, and EndCommand draws this box as a frame). Then ds84DE is set
-  (its meaning is not traced; EndCommand clears it). Inc(EclPC) counts the command (see EclPC). }
+  (its meaning is not traced; EndCommand clears it). Inc(EclPC) steps the program counter past the opcode
+  so RunScriptFrom (ovl03:3171) reads the next command (see EclPC). }
 procedure ClearPictureWindowCommand;
 begin
   Inc(EclPC);
@@ -2247,25 +2257,25 @@ begin
     ds49F9 := AreaViewKind;
     AreaViewKind := 1;
     RunScriptFrom(ds49EB);
-    ds49F3 := 4;
+    ds49F3 := ViewModeWall;
     if GameVars^[VarForceWallView] = 0 then
       case WallViewMode of
         WallModeMapPage2:
           begin
             AreaViewKind := 2;
-            ds49F3 := 3;
+            ds49F3 := ViewModeMap;
           end;
         WallModeMapPage3:
           begin
             AreaViewKind := 3;
-            ds49F3 := 3;
+            ds49F3 := ViewModeMap;
             if (GameVars^[VarAreaDoors] = AreaDoorsOpen) and (GameVars^[VarAreaDoorsLatch] = 0) then
               AnimateAreaDoors(1);
           end;
         WallModeMapPage4:
           begin
             AreaViewKind := 4;
-            ds49F3 := 3;
+            ds49F3 := ViewModeMap;
           end;
       end;
     if (ds49F9 > 1) and (AreaViewKind = 1) then
