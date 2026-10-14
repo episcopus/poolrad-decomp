@@ -5346,12 +5346,12 @@ id = "ovl13:0123"
 unit = "ovl13"
 addr = "ovl13:0123"
 size = 110
-name = "ovl13_e2"
-signature = "function ovl13_e2(Who: Pointer): Byte"
+name = "ComputeMovement"
+signature = "function ComputeMovement(Who: Pointer): Byte"
 c_name = "ovl13_e2"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_e2 (ovl13:0123 works out a combatant's round Movement from Movement (+0x11C), clamped to 1..0x60 and doubled into half squares; RunCombat calls it at the start of every round (ovl08:0063) and its result is stored in Combat^.Moves (+6, half squares)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

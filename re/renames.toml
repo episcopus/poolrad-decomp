@@ -4008,3 +4008,10 @@ kind = "routine"
 why = "00BA:2F57 returns True when Who's level in one class (ClassLevels[ClassIndex], +$96) has reached the maximum its race (+$2E) and strength (+$10) allow, so the trainers (ovl22:2D39) must not raise that class level further"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl13_e2"
+new = "ComputeMovement"
+kind = "routine"
+why = "ovl13:0123 works out a combatant's round Movement from Movement (+0x11C), clamped to 1..0x60 and doubled into half squares; RunCombat calls it at the start of every round (ovl08:0063) and its result is stored in Combat^.Moves (+6, half squares)"
+date = "2026-10-13"
+

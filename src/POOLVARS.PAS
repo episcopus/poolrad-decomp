@@ -928,6 +928,12 @@ var
   ds6B84: Pointer;                { routine RunCombat stores at ovl08:0085 and EndCombat at ovl08:0069 }
   ds6814: Byte;                   { zero (or ds6815 zero) ends the combat (ovl08:009B, 095C); likely the count of one side }
   ds6815: Byte;                   { see ds6814; likely the count of the other side }
+  { The round's Movement in half squares ComputeMovement computes for a combatant (it stores it
+    before the movement affect hooks and reads it back); ovl13_e1 also seeds it from Who^.PadA2. }
+  ds681A: Byte;
+  { Set while ComputeMovement runs the movement affect hooks and cleared around them; what reads
+    it is not known yet. }
+  ds681D: Boolean;
   { ds6814 and ds6815 indexed by side (ovl10:1AC7); the combat AI indexes them by the
     OpposingSide side of the actor (UseMagicItem, CastMemorizedSpell, ovl09:049F, 05C6). }
   ds6814Sides: array[0..1] of Byte absolute ds6814;
