@@ -3,7 +3,7 @@
 decompiler: dec-1, dec-9, dec-15, dec-deepseek-2, dec-luna, esc-sonnet (Agent trailers; int-loop and orch only integrated)
 reviewer: rev-sonnet
 date: 2026-10-14
-commit: 54245da
+commit: 54245da (round 1), 8bcff12 (round 2)
 
 Checklist: docs/process/playbooks/70-review.md (every item, every routine).
 
@@ -77,6 +77,24 @@ Severity: must-fix (blocks review-pass), should-fix, note. When the decompiler f
 4. Target modes (row +7) match the three branches of ChooseSpellTargets and the combat-only test of CastChosenSpell.
 5. No raw machine code, no `assembler`, no `{@stub}`; 21 QUIRK marks with addresses.
 
+## Round 2 (commit 8bcff12, fixes in bcd4c9c)
+
+`make match UNIT=ovl22` rerun: 74 matched, 0 differ, `unit: complete, 14261 bytes of code`.
+`make readability UNIT=ovl22`: clean. Packet rebuilt. Each of the 12 must-fix lines was checked against
+the source, the whitepaper diff and the image:
+
+- SpellAffectDuration: header and constants now speak of spell numbers (40, 57, 59, 61, 63, 67); the names match the handlers in InitSpellHandlers (SpellHandlers[57], [59], [61], [63], [67]).
+- CastCureBlindness, CastInvisibility, CastKnock: row 37 and 31 are 0, row 30 is $19, the comments and whitepaper 5.22.2 now say so; the Knock door effect is backed by POOLVARS (ovl14 looks for Knock among the memorized spells) and `DoKnock` (ovl14:0648).
+- CastSleep, CastSlowPoison: `StatusAnimated`, whitepaper sentence corrected; Race 0 comment now says a monster.
+- CastPrayer: header says 0096:0101, as the whitepaper does.
+- CastMonsterStrength: $26 is attributed to CastStrength and this routine, Enlarge's is $0C.
+- CastStinkingCloud: no ds5D96, `BodyTile` replaces `CloudEdgeTile`.
+- ConsumeScrollSpell: `UsedUpScrollBelow`; evidence confirmed in BuildTreasureItem (ovl21:1010, `NameNum[2] := NumAffects + $D1` for types $3D and $3E); the scroll is removed, not redrawn.
+- InitSpellHandlers: `ItemAffectUse` described as the item-cast flag.
+- AddItemSpells: `ReadMagicAffect`, `ClericScrollClass`, `PendingSpell`, `SpellMask` named. I checked `ClericScrollClass = $0C` against the ITEMS file: the row of type $3E has Slot $0C (type $3D has $0B), as the comment says.
+
+The should-fix and note lines of round 1 are unchanged and still open; none blocks. Whitepaper 5.22.2 now agrees with the source on every claim above.
+
 ## Verdict
 
-Not passed: 12 must-fix findings, mostly comments and names that state something the image contradicts (affect ids of spells 30, 31, 37, the meaning of Status 1, Race 0, the "redraw" of a consumed scroll, spell numbers called affects) plus one unfinished address and one set of bare numbers; the should-fix list is the readability work behind them.
+Passed: all 12 must-fix findings of round 1 are fixed and verified (match complete, readability clean); the should-fix findings stay open as readability work.
