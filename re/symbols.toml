@@ -3355,27 +3355,14 @@ evidence = ["prologue"]
 id = "ovl12:0679"
 unit = "ovl12"
 addr = "ovl12:0679"
-size = 79
-name = "ovl12_e17"
+size = 107
+name = "BoostAttackVsListedTarget"
 signature = ""
 c_name = "ovl12_e17"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_17"
+notes = "renamed from ovl12_e17 (ovl12:0679 is an affect handler (Who, Affect, Mode) that copies Who's combat Target into AttackTarget like BoostAttackAgainstTarget (ovl12:013B), and adds 1 to AttackRoll per name ds0332[1..4] equal to the target's name when its Pad9E[$9F] and CombatSize are 1); auto:entry_17"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:06C8"
-unit = "ovl12"
-addr = "ovl12:06C8"
-size = 28
-name = "ovl12_fn_06C8"
-signature = ""
-c_name = "ovl12_fn_06C8"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:06E4"

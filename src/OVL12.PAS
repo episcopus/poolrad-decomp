@@ -23,8 +23,7 @@ procedure SetCharismaFromAffect(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure AddAffectAndDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure IgnoreAffect(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure RaiseResistanceAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e17;
-procedure ovl12_fn_06C8;
+procedure BoostAttackVsListedTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e18;
 procedure ovl12_e19;
 procedure ovl12_e20;
@@ -516,10 +515,20 @@ begin
   if ds681B = ClearDamageValue then
     DamageAmount := 0;
 end;
-{ ovl12:0679: frame not read }
-{@stub} procedure ovl12_e17; begin end;
-{ ovl12:06C8: frame not read }
-{@stub} procedure ovl12_fn_06C8; begin end;
+{ ovl12:0679. Affect handler (the AffectHandlers shape: Who, Affect and Mode; only Who is read). It copies the
+  character Who attacked last (Who's combat Target) into AttackTarget, as BoostAttackAgainstTarget does. When that
+  character's +$9F (Pad9E[$9F]) and CombatSize (+$6C) are both 1, AttackRoll gains 1 for each of the names
+  ds0332[1..4] the character's name equals. Which affect runs it is not known yet [?]. }
+procedure BoostAttackVsListedTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
+var
+  I: Byte;
+begin
+  AttackTarget := Who^.Combat^.Target;
+  if (AttackTarget^.Pad9E[$9F] = 1) and (AttackTarget^.CombatSize = 1) then
+    for I := 1 to 4 do
+      if AttackTarget^.Name = ds0332[I] then
+        Inc(AttackRoll);
+end;
 { ovl12:06E4: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e18; begin end;
 { ovl12:070F: retf 10: 10 bytes of parameters; 12 bytes of locals }

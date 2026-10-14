@@ -3532,3 +3532,10 @@ kind = "routine"
 why = "ovl12:064E is an affect handler (AffectHandlers shape, Affect and Mode not read): it raises ResistValue (TCharacter +hex 111) to at least 57, adds one to SaveRoll, and clears DamageAmount when ds681B is hex 0F"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e17"
+new = "BoostAttackVsListedTarget"
+kind = "routine"
+why = "ovl12:0679 is an affect handler (Who, Affect, Mode) that copies Who's combat Target into AttackTarget like BoostAttackAgainstTarget (ovl12:013B), and adds 1 to AttackRoll per name ds0332[1..4] equal to the target's name when its Pad9E[$9F] and CombatSize are 1"
+date = "2026-10-13"
+

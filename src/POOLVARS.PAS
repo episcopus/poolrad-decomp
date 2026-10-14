@@ -454,6 +454,10 @@ var
   { The 13 code wheel records of the copy protection (whitepaper 5.12): the answer, the rune
     indices and the path pattern. CheckCodeWheel picks one at random. }
   ds0000: array[0..12] of TCodeWheelEntry;  { the code wheel records; see above }
+  { Five 16-byte names at DS:0332 (rows 0 to 4; row 0 is the index base and is never read). The rows 1 to 4
+    are the names the affect handler at ovl12:0679 compares with the attacked character's name; their text
+    is not read yet [?]. }
+  ds0332: array[0..4] of string[15];
   ds04DF: string[40];             { prompt string HandleWildernessKeys passes to ReadPromptChoice; filled elsewhere }
   { The wall view's id table: two equal groups of eight ids (0,15,12,11,13,10,9,14). ShowAreaView
     indexes it with the game variables VarWallIndexOutside and VarWallIndexInside. Its last six
