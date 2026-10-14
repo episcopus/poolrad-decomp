@@ -312,6 +312,9 @@ const
   SpellDamageIndex = 11;        { KnownSpells index of the byte ovl12:30A5 reads: its high nibble is the damage [?] }
   SpellClearedIndex = 2;        { KnownSpells index ovl12:30A5 clears }
   LowNibble = $0F;              { the low nibble of a byte }
+  MessageRow = $A;              { the Row ShowCharacterMessage shows a message at: the top row of the combat message
+                                  window (RES12 00BA:16EC); ClearCharacterMessage clears from it (00BA:17E3) }
+  ReflectRow = $C;              { the row of the message and the gaze line when a gaze is reflected (ovl12:1CAD) }
   PermanentDuration = 0;        { the Duration of an affect that lasts for good (AddAffect, ApplyAffect) }
   DataFF = $FF;                 { a Data byte of $FF that several affects here are given; its meaning is not known [?] }
   TargetCodeFour = 4;           { a Pad9F value of a target (TCharacter +$9F, purpose unknown [?]): BoostAttackAgainstTarget
@@ -362,7 +365,7 @@ end;
   redraw. }
 procedure DropFromFight(Who: PCharacter; NewStatus: Byte; Msg: String40);
 begin
-  ShowCharacterMessage(Who, Msg, $A, 0);
+  ShowCharacterMessage(Who, Msg, MessageRow, 0);
   case Who^.Status of
     StatusStoned, StatusDead, StatusGone: Exit;
   end;
@@ -410,13 +413,13 @@ begin
     Inc(DamageAmount, TargetBonus);
   end;
 end;
-{ ovl12:017F. Shows "starts to train" on Who in colour 10 (ShowCharacterMessage, the message is copied to a
+{ ovl12:017F. Shows "starts to train" on Who at row MessageRow (ShowCharacterMessage, the message is copied to a
   stack temporary by 0AF8:0B0B first) and gives Who the training manual affect (AffectTrainingManual,
   duration TrainingManualDuration, data TrainingManualData), whose handler runs when it is removed.
   It has the AffectHandlers frame (Who, Affect, Mode); Affect and Mode are not read here. }
 procedure StartTrainingWithManual(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
-  ShowCharacterMessage(Who, 'starts to train', $A, 1);
+  ShowCharacterMessage(Who, 'starts to train', MessageRow, 1);
   AddAffect(Who, AffectTrainingManual, TrainingManualDuration, TrainingManualData, RunsHandlerOnRemove);
 end;
 { ovl12:01C3. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000).
@@ -441,7 +444,7 @@ begin
   Inc(DamageAmount, Bonus);
   DamageKind := KindFire or KindMagic;
 end;
-{ ovl12:0233. Training of Who's constitution: shows "is hardier" on Who (colour 10), Constitution goes up by one,
+{ ovl12:0233. Training of Who's constitution: shows "is hardier" on Who (row MessageRow), Constitution goes up by one,
   and Who's hit points gain: the hit points above HpB1 (HpMax - HpB1) are divided by the class weight (fighter
   levels count Constitution - 15, non-fighter levels count twice above 15, else 1; 1 when the weight is 0),
   and the gain goes to HpMax and to the current hit points Flag11B. Nothing is gained below Constitution 15,
@@ -453,7 +456,7 @@ var
   Weight: Byte;                 { the class weights summed (ovl04:0510) }
   I: ShortInt;
 begin
-  ShowCharacterMessage(Who, 'is hardier', $A, 1);
+  ShowCharacterMessage(Who, 'is hardier', MessageRow, 1);
   Inc(Who^.Constitution);
   if Who^.Constitution >= ConstitutionLimit then
   begin
@@ -662,13 +665,13 @@ begin
   end;
 end;
 { ovl12:070F. Affect handler (the AffectHandlers shape: Who, Affect and Mode; only Who is read). When Who's combat
-  byte CanUseMagicItem (+$2 of TCombatant) is set, Who shows "is silenced" in colour 10 (ShowCharacterMessage). Then
+  byte CanUseMagicItem (+$2 of TCombatant) is set, Who shows "is silenced" at row MessageRow (ShowCharacterMessage). Then
   CanUseMagicItem and CanCast (+$1, zero hides Cast in the combat menu, ovl08:0747) are both cleared. Which affect runs it is
   not known yet [?]. }
 procedure ShowSilenceAndStopCasting(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   if Who^.Combat^.CanUseMagicItem <> 0 then
-    ShowCharacterMessage(Who, 'is silenced', $A, 1);
+    ShowCharacterMessage(Who, 'is silenced', MessageRow, 1);
   Who^.Combat^.CanUseMagicItem := 0;
   Who^.Combat^.CanCast := 0;
 end;
@@ -690,7 +693,7 @@ end;
 { ovl12:07E0. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Affect is not read). When the affect
   is applied (Mode 0) and Who has no item of GivenItemType with NameNum[3] GivenItemNameNum3 yet, and Who's
   ItemCountC7 (+$C7, likely the item count [I]) is below ItemCountLimit, Who gets such an item (AddItemCopy adds
-  it to the list, the temporary is freed) and "Gains an item" is shown in colour 10. When it is removed (Mode not
+  it to the list, the temporary is freed) and "Gains an item" is shown at row MessageRow. When it is removed (Mode not
   0) the item Who has is taken off the list (RemoveInventoryItem). Then RecalcCombatValues redraws Who. Purpose unknown: which
   affect id runs it is not known yet [?]. }
 procedure GiveAffectItem(Who: PCharacter; Affect: PAffect; Mode: Byte);
@@ -724,7 +727,7 @@ begin
         Item^.Affects[3] := GivenItemAffect3;
         AddItemCopy(Who, Item);
         Dispose(Item);
-        ShowCharacterMessage(Who, 'Gains an item', $A, 1);
+        ShowCharacterMessage(Who, 'Gains an item', MessageRow, 1);
       end;
   RecalcCombatValues(Who);
 end;
@@ -757,7 +760,7 @@ end;
 { ovl12:09C0. Affect handler of the images affect (AffectImages, $1C; it runs on the damage hook, kind 6,
   ovl24:02FA; the AffectHandlers shape, Who, Affect and Mode, Mode not read). When a hit is about to land,
   one image may take it: with 1d(Data+1) (Data counts the images [I]) above 1, ds681B not 0 and ds6820 0,
-  CancelPendingHook(0) drops the damage, Who shows "lost an image" in colour 10 (ShowCharacterMessage) and Data goes
+  CancelPendingHook(0) drops the damage, Who shows "lost an image" at row MessageRow (ShowCharacterMessage) and Data goes
   down by one. When no image is left (Data 0) affect AffectImages is removed. A roll of 1 lets the hit through
   [I]. }
 procedure ImageAbsorbsHit(Who: PCharacter; Affect: PAffect; Mode: Byte);
@@ -765,7 +768,7 @@ begin
   if (RollDice(1, Affect^.Data + 1) > 1) and (ds681B > 0) and (ds6820 = 0) then
   begin
     CancelPendingHook(0);
-    ShowCharacterMessage(Who, 'lost an image', $A, 1);
+    ShowCharacterMessage(Who, 'lost an image', MessageRow, 1);
     Dec(Affect^.Data);
     if Affect^.Data = 0 then
       RemoveAffect(Who, AffectImages, nil);
@@ -780,8 +783,8 @@ begin
   DamageAmount := DamageAmount - DamageAmount div 4;
 end;
 { ovl12:0A65. Affect handler (the AffectHandlers shape: Who, Affect and Mode; only Who is read). It stops Who
-  casting: when Who's combat byte CanUseMagicItem (TCombatant +$2) is set, Who shows "is coughing" in colour
-  10 (ShowCharacterMessage), then CanUseMagicItem and CanCast (+$1, zero hides Cast in the combat menu, ovl08:0747)
+  casting: when Who's combat byte CanUseMagicItem (TCombatant +$2) is set, Who shows "is coughing" at row MessageRow
+  (ShowCharacterMessage), then CanUseMagicItem and CanCast (+$1, zero hides Cast in the combat menu, ovl08:0747)
   are cleared and Who is redrawn (RecalcCombatValues). Then TCharacter.ds112 (+$112, not named yet) steps down by
   CoughResistStep while above CoughResistLimit and is set to CoughResistReset otherwise, and that value becomes
   ResistValue (+$111). When Who is the selected character, DrawCharacterPanel runs (not named yet). Which affect runs
@@ -789,7 +792,7 @@ end;
 procedure CoughStopsCasting(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   if Who^.Combat^.CanUseMagicItem <> 0 then
-    ShowCharacterMessage(Who, 'is coughing', $A, 1);
+    ShowCharacterMessage(Who, 'is coughing', MessageRow, 1);
   Who^.Combat^.CanUseMagicItem := 0;
   Who^.Combat^.CanCast := 0;
   RecalcCombatValues(Who);
@@ -868,7 +871,8 @@ begin
   end;
 end;
 { 0C4B. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000). The first run
-  with AgedBit clear in the affect's Data sets the bit, shows "ages" on Who in colour 10 (ShowCharacterMessage) and adds one
+  with AgedBit clear in the affect's Data sets the bit, shows "ages" on Who at row MessageRow (ShowCharacterMessage) and adds
+  one
   year to Who's Age (+$30). Every run doubles ds681A (shl 1), whether or not Who was aged. Which affect runs it is not
   known yet [?]. }
 procedure AgeCharacterOnce(Who: PCharacter; Affect: PAffect; Mode: Byte);
@@ -876,7 +880,7 @@ begin
   if (Affect^.Data and AgedBit) = 0 then
   begin
     Affect^.Data := Affect^.Data + AgedBit;
-    ShowCharacterMessage(Who, 'ages', $A, 1);
+    ShowCharacterMessage(Who, 'ages', MessageRow, 1);
     Inc(Who^.Age);
   end;
   ds681A := ds681A shl 1;
@@ -940,7 +944,7 @@ end;
 { ovl12:0FAC. Called by ovl12:1086 (AvoidIfSelectedItemPlusZero) and two more routines (ovl12:2901, 2BC8).
   When SelectedCharacter has an item in its first slot (SlotItems[0]) and DistanceToTarget (the distance from
   SelectedCharacter to Who, 1 when adjacent [I]) is above 1, a roll of 1d100 at or below Chance avoids the attack:
-  "Avoids it" is shown on Who (colour 10), the damage becomes 0, the attack roll MissRoll and ds6823 goes
+  "Avoids it" is shown on Who (row MessageRow), the damage becomes 0, the attack roll MissRoll and ds6823 goes
   down by one. Purpose unknown: the kind of attack is not known [?]. }
 procedure AvoidDistantAttack(Who: PCharacter; Chance: Byte);
 begin
@@ -948,7 +952,7 @@ begin
     if DistanceToTarget(SelectedCharacter, Who) > 1 then
       if RollDice(1, 100) <= Chance then
       begin
-        ShowCharacterMessage(Who, 'Avoids it', $A, 1);
+        ShowCharacterMessage(Who, 'Avoids it', MessageRow, 1);
         DamageAmount := 0;
         AttackRoll := MissRoll;
         Dec(ds6823);
@@ -990,7 +994,7 @@ begin
 end;
 { ovl12:10DE. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000). It gives Who
   the affect AffectUnknown2B (a Cure Disease affect, ovl04:031E) for WeakeningDuration rounds with the Data of Affect,
-  when TryAddAffect allows it. While Who's Strength is above 3 each run shows "is weakened" (colour 10) and takes one
+  when TryAddAffect allows it. While Who's Strength is above 3 each run shows "is weakened" (row MessageRow) and takes one
   off Strength; at 3 or less Who gets AffectNausea unless it has it already. Which affect runs it is not known yet [?]. }
 procedure WeakenStrength(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
@@ -999,7 +1003,7 @@ begin
   if TryAddAffect(Who, AffectUnknown2B, Affect^.Data, WeakeningDuration) then
     if Who^.Strength > 3 then
     begin
-      ShowCharacterMessage(Who, 'is weakened', $A, 1);
+      ShowCharacterMessage(Who, 'is weakened', MessageRow, 1);
       Dec(Who^.Strength);
     end
     else if not HasAffect(Who, AffectNausea, FoundAffect) then
@@ -1108,7 +1112,7 @@ begin
 end;
 { ovl12:1399. Affect handler of the rot (AffectHandlers shape: Who, Affect and Mode; Mode not read; the affect is
   AffectRot, $39, which Cure Disease removes, whitepaper 5.19). Does nothing while the Temple removes affects (ds681F
-  is not 0, ovl04:0386). Otherwise it shows "Rots..." on Who (colour 10) and takes RotCharismaLoss off Who's Charisma
+  is not 0, ovl04:0386). Otherwise it shows "Rots..." on Who (row MessageRow) and takes RotCharismaLoss off Who's Charisma
   (+$15), never below RotMinimumCharisma. Then the rot moves on: while the stage (the high nibble of the affect's
   Data) is above RotLastStage, the stage drops by one (RotStage) and TryAddAffect gives Who the rot again with that
   Data for RotDuration rounds. At the last stage Who dies: DropFromFight takes Who out with StatusGone and the
@@ -1116,7 +1120,7 @@ end;
 procedure ProgressRot(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   if ds681F <> 0 then Exit;
-  ShowCharacterMessage(Who, 'Rots...', $A, 1);
+  ShowCharacterMessage(Who, 'Rots...', MessageRow, 1);
   if Who^.Charisma > RotCharismaLoss then
     Dec(Who^.Charisma, RotCharismaLoss)
   else
@@ -1183,7 +1187,7 @@ end;
 { ovl12:1545. Poison hook of an attack (the frame is Who and Bonus; Bonus is the save bonus, 0 in
   PoisonAttackTargetBonus0's call at ovl12:166A). AttackTarget becomes Who's Combat^.Target, the character Who
   attacked last. That character makes a poison save (SaveKindPoison, with Bonus). When it fails, "is Poisoned"
-  (colour 10) is shown on it, DelayByGameSpeed waits, it
+  (row MessageRow) is shown on it, DelayByGameSpeed waits, it
   gets AffectPoisoned for good (AddAffect with Duration 0, Data $FF, no handler on removal) and DropFromFight kills it
   with StatusDead and "is killed". The map split this routine at ovl12:1543 and ovl12:1583, which are inside its
   literal pool and inside its code. Which affect runs it is not known yet [?]. }
@@ -1192,7 +1196,7 @@ begin
   AttackTarget := Who^.Combat^.Target;
   if not SavingThrow(AttackTarget, SaveKindPoison, Bonus) then
   begin
-    ShowCharacterMessage(AttackTarget, 'is Poisoned', $A, 0);
+    ShowCharacterMessage(AttackTarget, 'is Poisoned', MessageRow, 0);
     DelayByGameSpeed;
     AddAffect(AttackTarget, AffectPoisoned, PermanentDuration, DataFF, NoRemoveHandler);
     DropFromFight(AttackTarget, StatusDead, 'is killed');
@@ -1285,7 +1289,7 @@ end;
 { ovl12:176F. Affect handler of the blood drain (the AffectHandlers shape: Who, Affect and Mode; Mode 0 applies, any other
   value removes, ovl24:0000). AttackTarget becomes the combatant whose index is the affect's Data (CombatantRecord,
   DS:65BD). When Mode is 0 and Who and that combatant both still take part (Flag10D), Who sucks blood from it: "Sucks some
-  Blood" is shown on Who (colour 10), 1d4 damage is dealt to the combatant without a save (RollDiceCounted, DealDamage),
+  Blood" is shown on Who (row MessageRow), 1d4 damage is dealt to the combatant without a save (RollDiceCounted, DealDamage),
   Who's turn is ended (EndCombatTurn, its result is not read), then the affect's Duration div 16 must stay above the
   damage, which is taken off the Duration (times 16) while the combatant is still in the fight; otherwise AffectBloodDrain
   ($4B) is removed from Who. Else AffectHeldFast ($3A) is removed from the combatant and, when Mode is 0, the affect's
@@ -1312,7 +1316,7 @@ begin
   end
   else
   begin
-    ShowCharacterMessage(Who, 'Sucks some Blood', $A, 1);
+    ShowCharacterMessage(Who, 'Sucks some Blood', MessageRow, 1);
     Dice := RollDiceCounted(1, 4);
     DamageKind := 0;
     DealDamage(AttackTarget, Dice, 0, False);
@@ -1339,7 +1343,8 @@ end;
   Mode are not read, ovl24:0000). The character Who attacked last (Who's combat Target) is copied into AttackTarget. When
   AttackTarget's Strength (TCharacter +$10) is below HeldFastStrengthLimit, Who gets AffectBloodDrainWeak (Duration 0, its
   Data the combatant index of AttackTarget, so DrainBloodFromCombatant (ovl12:176F) runs on it when it is removed),
-  AttackTarget gets AffectHeldFast and that affect's handler runs, and "is held fast" is shown on AttackTarget in colour 10
+  AttackTarget gets AffectHeldFast and that affect's handler runs, and "is held fast" is shown on AttackTarget at row
+  MessageRow
   (ShowCharacterMessage). Which affect runs it is not known yet [?]. }
 procedure HoldWeakTargetFast(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
@@ -1349,7 +1354,7 @@ begin
     AddAffect(Who, AffectBloodDrainWeak, BloodDrainWeakDuration, CombatantIndex(AttackTarget), RunsHandlerOnRemove);
     AddAffect(AttackTarget, AffectHeldFast, HeldFastDuration, HeldFastData, NoRemoveHandler);
     CallAffectHandler(AffectHeldFast, AttackTarget, nil, 0);
-    ShowCharacterMessage(AttackTarget, 'is held fast', $A, 1);
+    ShowCharacterMessage(AttackTarget, 'is held fast', MessageRow, 1);
   end;
 end;
 { ovl12:19D9. Affect handler that revives Who (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000).
@@ -1440,10 +1445,10 @@ begin
   end;
 end;
 { ovl12:1CAD. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000): a stoning gaze
-  [I]. "gazes..." is shown on Who (colour 10), and the gaze line is drawn from Who to the character Who attacked last
+  [I]. "gazes..." is shown on Who (row MessageRow), and the gaze line is drawn from Who to the character Who attacked last
   (AttackTarget, a copy of Combat^.Target). When Who has affect AffectUnknown7F (HasAffect), the readied items of
   AttackTarget are walked: a readied item with a NameNum of ReflectingNameNum turns the gaze back: "reflects it!" is shown
-  on AttackTarget (colour 12), the line is drawn back, and the gaze falls on Who (AttackTarget := Who). The gaze target
+  on AttackTarget (row ReflectRow), the line is drawn back, and the gaze falls on Who (AttackTarget := Who). The gaze target
   then makes a stone save (SaveKindStone, no bonus); when it fails, DropFromFight takes it out of the fight with StatusStoned
   and "is Stoned". Which affect runs it is not known yet [?]. }
 procedure GazeStonesTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
@@ -1453,7 +1458,7 @@ var
   FoundAffect: Pointer;         { the affect HasAffect gives back for AffectUnknown7F }
 begin
   AttackTarget := Who^.Combat^.Target;
-  ShowCharacterMessage(Who, 'gazes...', $A, 0);
+  ShowCharacterMessage(Who, 'gazes...', MessageRow, 0);
   DrawCombatIcon(GazeAnimation);
   WalkCombatLine(CombatantX(Who), CombatantY(Who), CombatantX(AttackTarget), CombatantY(AttackTarget),
     GazeLineKind, GazeLineFlag);
@@ -1467,7 +1472,7 @@ begin
         if (Item^.NameNum[1] = ReflectingNameNum) or (Item^.NameNum[2] = ReflectingNameNum) or
           (Item^.NameNum[3] = ReflectingNameNum) then
         begin
-          ShowCharacterMessage(AttackTarget, 'reflects it!', $C, 0);
+          ShowCharacterMessage(AttackTarget, 'reflects it!', ReflectRow, 0);
           WalkCombatLine(CombatantX(AttackTarget), CombatantY(AttackTarget), CombatantX(Who), CombatantY(Who),
             GazeLineKind, GazeLineFlag);
           Reflected := True;
@@ -1482,7 +1487,7 @@ end;
 { ovl12:1E77. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000): a charm gaze
   [I]. Who's gaze reaches the character Who attacked last (AttackTarget) when ovl13_e8 allows it and WalkLine walks the
   line from Who to AttackTarget's cell (WalkLine may move the end cell, EndX and EndY). "Gazes..." is shown on Who
-  (colour 10), the gaze line is drawn to AttackTarget as GazeStonesTarget draws it (WalkCombatLine), ds681B becomes 10,
+  (row MessageRow), the gaze line is drawn to AttackTarget as GazeStonesTarget draws it (WalkCombatLine), ds681B becomes 10,
   and AttackTarget gets the charm affect AffectCharm for good with Data: Who's side in bit 7 (ControlSideBit) and
   CharmData. A successful fear save (SavingThrow kind 4, CharmSaveBonus) negates it, and "is charmed" is shown on it.
   Then, when AttackTarget has the affect, its handler runs at once (CallAffectHandler, Mode 0). Which affect runs this
@@ -1500,7 +1505,7 @@ begin
     Exit;
   if not WalkLine(CombatantX(Who), CombatantY(Who), EndX, EndY, StepCount, Pointer(CombatMap)) then
     Exit;
-  ShowCharacterMessage(Who, 'Gazes...', $A, 0);
+  ShowCharacterMessage(Who, 'Gazes...', MessageRow, 0);
   DrawCombatIcon(GazeAnimation);
   WalkCombatLine(CombatantX(Who), CombatantY(Who), CombatantX(AttackTarget), CombatantY(AttackTarget),
     GazeLineKind, GazeLineFlag);
@@ -1512,7 +1517,7 @@ begin
     CallAffectHandler(AffectCharm, AttackTarget, FoundAffect, 0);
 end;
 { ovl12:2122. Level drain: Who loses Count levels (the callers ovl12:23A4 and ovl12:23C2 are not decompiled yet [?]).
-  Shows "is drained " followed by "N levels" or "a level" on Who in colour 10 (ShowCharacterMessage). When Who's
+  Shows "is drained " followed by "N levels" or "a level" on Who at row MessageRow (ShowCharacterMessage). When Who's
   Status is StatusAnimated (1, "Animated" in StatusNames, not Dead: the test reads that value [I]) Who is dead forever:
   DropFromFight with StatusGone, and HpMax is 0. Otherwise,
   for each of the Count levels: the counter Pad74[$74] (+$74, not named yet) goes up; the total of all class
@@ -1572,7 +1577,7 @@ begin
     Msg := ByteToText(Count) + ' levels'
   else
     Msg := 'a level';
-  ShowCharacterMessage(Who, 'is drained ' + Msg, $A, 1);
+  ShowCharacterMessage(Who, 'is drained ' + Msg, MessageRow, 1);
   if Who^.Status = StatusAnimated then
   begin
     DropFromFight(Who, StatusGone, 'is dead forever');
@@ -1637,7 +1642,7 @@ end;
   that gives the rot to the character Who attacked last (Who's combat Target, copied into AttackTarget). Unless that
   character already has the healing block AffectHealingBlock (HasAffect finds it), it gets the block for
   AffectHealingBlockDuration rounds, then AffectRot for RotDuration rounds with the Data (1d6 * RotStage) + RotDataLow: the
-  rot stage is the high nibble (ProgressRot, ovl12:1399). "is Diseased" is shown on it in colour 10. Which affect runs
+  rot stage is the high nibble (ProgressRot, ovl12:1399). "is Diseased" is shown on it at row MessageRow. Which affect runs
   it is not known yet [?]. }
 procedure CauseRotOnAttackTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
@@ -1648,7 +1653,7 @@ begin
   begin
     AddAffect(AttackTarget, AffectHealingBlock, AffectHealingBlockDuration, HealingBlockData, RunsHandlerOnRemove);
     AddAffect(AttackTarget, AffectRot, RotDuration, (RollDice(1, 6) * RotStage) + RotDataLow, RunsHandlerOnRemove);
-    ShowCharacterMessage(AttackTarget, 'is Diseased', $A, 1);
+    ShowCharacterMessage(AttackTarget, 'is Diseased', MessageRow, 1);
   end;
 end;
 { ovl12:2490. Purpose unknown: an affect handler (the AffectHandlers shape: Who, Affect and Mode; Who and Mode are not
@@ -1688,7 +1693,7 @@ begin
 end;
 { ovl12:2556. Purpose unknown: an affect handler on the damage hook (the AffectHandlers shape: Who, Affect and Mode; Affect
   and Mode are not read, ovl24:0000; Who is read for its message). When ds681B is ClearDamageValue the pending hook is
-  cancelled (CancelPendingHook(0): the damage is dropped) and "is unaffected" is shown on Who in colour 10. Otherwise,
+  cancelled (CancelPendingHook(0): the damage is dropped) and "is unaffected" is shown on Who at row MessageRow. Otherwise,
   when the damage is electricity (KindElectricity in DamageKind), the hook is cancelled without the message. Which
   affect runs it is not known yet [?]. }
 procedure ovl12_e76(Who: PCharacter; Affect: PAffect; Mode: Byte);
@@ -1696,7 +1701,7 @@ begin
   if ds681B = ClearDamageValue then
   begin
     CancelPendingHook(0);
-    ShowCharacterMessage(Who, 'is unaffected', $A, 1);
+    ShowCharacterMessage(Who, 'is unaffected', MessageRow, 1);
   end
   else if (DamageKind and KindElectricity) <> 0 then
     CancelPendingHook(0);
@@ -2036,7 +2041,7 @@ end;
 { ovl12:2C1C. Affect handler that spits acid at the character Who attacked last (the AffectHandlers shape: Who, Affect
   and Mode; Mode is not read, ovl24:0000). AttackTarget becomes Who's combat Target (Who^.Combat^.Target). On a 1d100 roll at
   or below SpitChance, when DistanceToTarget (the distance to AttackTarget [I]) is below SpitMaxDistance: Who's turn ends
-  (EndCombatTurn, its result is not read), "Spits Acid" is shown on Who in colour 10, the spit is drawn from Who to
+  (EndCombatTurn, its result is not read), "Spits Acid" is shown on Who at row MessageRow, the spit is drawn from Who to
   AttackTarget (DrawCombatIcon with SpitAnimation, WalkCombatLine with CombatantX and CombatantY), and AttackTarget takes 8d4
   damage (DealDamage, half when its save of kind SaveKindSpit succeeds). Then AffectUnknown79 and AffectUnknown50 are removed
   from Who (RemoveAffect; Affect is the affect handled).
@@ -2051,7 +2056,7 @@ begin
     if DistanceToTarget(Who, AttackTarget) < SpitMaxDistance then
     begin
       Turn := EndCombatTurn(Who);
-      ShowCharacterMessage(Who, 'Spits Acid', $A, 1);
+      ShowCharacterMessage(Who, 'Spits Acid', MessageRow, 1);
       DrawCombatIcon(SpitAnimation);
       WalkCombatLine(CombatantX(Who), CombatantY(Who), CombatantX(AttackTarget), CombatantY(AttackTarget),
         SpitLineKind, SpitLineFlag);
@@ -2165,7 +2170,7 @@ begin
 end;
 { ovl12:2F57. Affect handler of the exceptional strength (the AffectHandlers shape: Who, Affect and Mode; Affect is not
   read). Mode 0 (applying) raises Who's strength to ExceptionalStrength with ExceptionalPercent (18/100) with
-  RaiseStrength (ovl24:115C). When that gives True (Who was not stronger), "is stronger" is shown on Who in colour 10
+  RaiseStrength (ovl24:115C). When that gives True (Who was not stronger), "is stronger" is shown on Who at row MessageRow
   (ShowCharacterMessage); in combat the view mode is set to StrengthMessageView while the text shows and back to
   CombatViewMode after. Then ds6821 becomes 1 and affect AffectStrength2 is added with duration 0, Data Code (what
   RaiseStrength wrote: the strength Who had before, encoded, when it gave True) and its handler on removal
@@ -2215,11 +2220,11 @@ begin
       if ds49F3 = CombatViewMode then
       begin
         ds49F3 := StrengthMessageView;
-        ShowCharacterMessage(Who, 'is stronger', $A, 1);
+        ShowCharacterMessage(Who, 'is stronger', MessageRow, 1);
         ds49F3 := CombatViewMode;
       end
       else
-        ShowCharacterMessage(Who, 'is stronger', $A, 1);
+        ShowCharacterMessage(Who, 'is stronger', MessageRow, 1);
     end;
     ds6821 := 1;
     AddAffect(Who, AffectStrength2, PermanentDuration, Code, RunsHandlerOnRemove);
