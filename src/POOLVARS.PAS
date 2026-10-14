@@ -577,6 +577,12 @@ var
   ds4712: Byte;                   { the DS:49F3 value ShowEndingNarrative saves at the start and restores at the end }
   ds4713: string[1];              { Str(TileSet): the picture number ShowEndingNarrative appends to FINAL }
   ds471E: array[0..$47] of Byte;  { 72 bytes reset to 1 when rest starts (ovl20:0CE5) }
+  { The spell lists of the CastSpell overlay (ovl22, whitepaper 5.7): ovl22_e2 builds one and ovl22_e1
+    runs the picker over it. }
+  ds4766: PMenuLine;              { head of the spell menu list ovl22_e2/fn_028D build and ovl22_e1 frees }
+  ds476A: array[0..$14] of Byte;  { the spell number (bit 7 = pending) of each menu line, in list order }
+  ds477F: array[0..$30] of PMenuLine;  { for each scribed/learned line, the item (scroll) it came from }
+  ds4843: Byte;                   { the number of entries ds477F holds (ovl22_fn_044E, fn_051C) }
   ds25C0: array[0..2, 0..2] of Byte;  { the 3x3 line pattern table StepLine reads at [SY+1, SX+1] }
   { DirStepX and DirStepY: nine entries each (DirStepY starts 9 bytes after DirStepX). ovl14's
     ClampPartyPosition also adds them as the party's column and row step (cbw at ovl14:06D0, 06DB). }
@@ -793,6 +799,12 @@ var
   ds0D06: array[0..15] of Byte;   { two 4-bit pixels of colour C (C * $11); see above }
   { Globals of the combat unit ovl08 (whitepaper 5.5). }
   ds6DBB: PCombatNode;            { a list of $13-byte records EndCombat frees (ovl08:0006); meaning unknown }
+  { nonzero: SpellAreaSize and res12_fn_26C2 use a fixed caster level 6 (a spell's area is then
+    its per-level byte times 6); the writer is not found yet }
+  ds6DBF: Byte;
+  { the current item of the ovl22 spell lists (ovl22_e1, fn_044E, fn_051C); no decompiled routine
+    outside ovl22 reads it }
+  ds6B80: PItem;
   ds6E36: Pointer;                { a picture EndCombat frees through ReleasePicture (ovl08:005A) }
   { A routine pointer: RunCombat sets @ovl13_e14 at the start (ovl08:0085) and EndCombat
     @ovl22_e4 at the end (ovl08:0069); who calls it is not known yet. }
@@ -808,7 +820,7 @@ var
   ds6E31: Byte;                   { the key flag the ovl08 menus pass to ReadPromptChoice }
   ds6DE3: Byte;                   { counted up once per combat round (ovl08:0891) }
   { The combatant order the AI works through: one DS:5F27 combatant index per entry, read from
-    entry 1 (ovl09:02EB loops 1..res12_fn_2433(Who, ovl22_e3(Spell)) over it; ovl13:0F90 moves
+    entry 1 (ovl09:02EB loops 1..res12_fn_2433(Who, SpellAreaSize(Spell)) over it; ovl13:0F90 moves
     the character at entry 1 to another entry). Entry 0 is never read. Extent not proven; the
     next named byte after it is ds6E2F. }
   ds6DE4: array[0..73] of Byte;

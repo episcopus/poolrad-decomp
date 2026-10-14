@@ -132,7 +132,7 @@ end;
   (UseMagicItem 03E4 and CastMemorizedSpell 0545 keep what it accepts). Refuses at once when the
   spell row's +$D byte is below Range. A spell other than 3 whose +$E byte is 0, and spell 3 when
   ovl13_e13(Who, Done) agrees, are accepted at once. Otherwise res12_fn_2433 collects Who's
-  enemies the area pattern of ovl22_e3(Spell) reaches (ds6DE4, count Tries): a zero count refuses,
+  enemies the area pattern of SpellAreaSize(Spell) reaches (ds6DE4, count Tries): a zero count refuses,
   a zero +$F byte accepts; else each collected enemy is asked through the nested
   DifferentSideInArea, a Yes refuses the spell and a No (or no enemy at all) accepts it.
   The +$D..+$F bytes are the spell row's last three bytes of SpellTable (16-byte stride).
@@ -170,7 +170,7 @@ begin
     SpellAccepted := True;
     Exit;
   end;
-  Tries := res12_fn_2433(Who, ovl22_e3(Spell));
+  Tries := res12_fn_2433(Who, SpellAreaSize(Spell));
   if Tries > 0 then
   begin
     if SpellTable[Spell].PadB[$F] = 0 then

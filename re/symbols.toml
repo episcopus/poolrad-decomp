@@ -9867,12 +9867,12 @@ id = "ovl22:0729"
 unit = "ovl22"
 addr = "ovl22:0729"
 size = 173
-name = "ovl22_e3"
-signature = "function ovl22_e3(B: Byte): Byte"
+name = "SpellAreaSize"
+signature = "function SpellAreaSize(Spell: Byte): Byte"
 c_name = "ovl22_e3"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_3"
+notes = "renamed from ovl22_e3 (ovl22:0729 returns the area size of a spell: base byte (row +2) plus the per-level byte (row +3) times the caster level from res12_fn_26C2, or times 6 while ds6DBF is set; res12_fn_2433 passes it to ScanTargets as the pattern budget (ovl09:02EB SpellAccepted)); auto:entry_3"
 evidence = ["prologue"]
 
 [[routine]]
@@ -17153,7 +17153,7 @@ unit = "res12"
 addr = "00BA:26C2"
 size = 104
 name = "res12_fn_26C2"
-signature = ""
+signature = "function res12_fn_26C2(Spell: Byte): Byte"
 c_name = "res12_fn_26C2"
 level = "none"
 justification = ""

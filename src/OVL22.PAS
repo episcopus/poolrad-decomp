@@ -1,15 +1,17 @@
 unit OVL22;
-{ CastSpell: overlay unit, 14261 bytes of code. Skeleton by tools/match/skeleton.py: every routine is a stub
-  until decompiled (playbook 30). }
+{ CastSpell: the spell study and casting overlay. It builds the spell lists the camp's
+  ChooseSpellFromList shows (ovl22_e2 and its helpers, whitepaper 5.22), runs the picker
+  (ovl22_e1), gives a spell's area pattern size (SpellAreaSize) and casts, scribes, memorizes
+  and learns spells for combat (ovl09) and the camp (ovl15). }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
-uses POOLVARS, RES06;
+uses POOLVARS, RES06, RES12;
 function ovl22_e1(Mode: Byte; var Choice: Word): Byte;
 procedure ovl22_fn_028D;
 procedure ovl22_fn_044E;
 procedure ovl22_fn_051C;
 function ovl22_e2(Kind: Byte): Byte;
-function ovl22_e3(B: Byte): Byte;
+function SpellAreaSize(Spell: Byte): Byte;
 procedure ovl22_fn_07D6;
 procedure ovl22_fn_08C3;
 procedure ovl22_e4;
@@ -124,7 +126,26 @@ implementation
 { ovl22:059C: retf 2: 2 bytes of parameters; 2 bytes of locals }
 {@stub} function ovl22_e2(Kind: Byte): Byte; begin end;
 { ovl22:0729: retf 2: 2 bytes of parameters; 2 bytes of locals }
-{@stub} function ovl22_e3(B: Byte): Byte; begin end;
+{ ovl22:0729. The size of the area pattern of spell Spell: res12_fn_2433 collects the targets it
+  reaches. A 16-byte SpellTable row gives a base (row +2) and a per-level byte (row +3), so the
+  result is base + per-level * caster level, the level from res12_fn_26C2 (or * 6 while ds6DBF is
+  set). A zero base with row +6 set becomes 1, and $FF (omni) becomes 1 too. Called by SpellAccepted
+  (ovl09:02EB) and ovl13:1E16. }
+function SpellAreaSize(Spell: Byte): Byte;
+var
+  Area: Byte;
+begin
+  if ds6DBF = 0 then
+    Area := SpellTable[Spell].Pad2[2] + SpellTable[Spell].Pad2[3] * res12_fn_26C2(Spell)
+  else
+    Area := SpellTable[Spell].Pad2[3] * 6 + SpellTable[Spell].Pad2[2];
+  if Area = 0 then
+    if SpellTable[Spell].Pad2[6] <> 0 then
+      Area := 1;
+  if Area = $FF then
+    Area := 1;
+  SpellAreaSize := Area;
+end;
 { ovl22:07D6: retf 2: 2 bytes of parameters; 4 bytes of locals }
 {@stub} procedure ovl22_fn_07D6; begin end;
 { ovl22:08C3: retf 14: 14 bytes of parameters; 50 bytes of locals }

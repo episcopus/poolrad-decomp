@@ -3413,3 +3413,10 @@ kind = "routine"
 why = "0464:1E5C maps the colours of a picture: for each colour index I whose FromMap and ToMap entries differ, every pixel of the picture with palette colour FromMap[I] becomes ToMap[I] (through a scratch copy, adapters 0, 1 and 2; src/RES07.PAS, MATCH); LoadPictureSlot (ovl32) passes the identity map, AnimateAreaDoors (ovl18) and LoadSpriteList (ovl28) pass the door and sprite maps"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl22_e3"
+new = "SpellAreaSize"
+kind = "routine"
+why = "ovl22:0729 returns the area size of a spell: base byte (row +2) plus the per-level byte (row +3) times the caster level from res12_fn_26C2, or times 6 while ds6DBF is set; res12_fn_2433 passes it to ScanTargets as the pattern budget (ovl09:02EB SpellAccepted)"
+date = "2026-10-13"
+
