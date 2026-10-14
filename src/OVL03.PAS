@@ -29,7 +29,7 @@ procedure BitwiseCommand;
 procedure CopyIndexedWordCommand;
 procedure StoreIndexedWordCommand;
 procedure ChooseFromListCommand;
-procedure ovl03_fn_10D1;
+procedure AskMenuCommand;
 procedure ovl03_fn_125D;
 procedure ovl03_fn_12C6;
 procedure ovl03_fn_1307;
@@ -124,7 +124,7 @@ const
   MenuTitleColor = 13;
   MenuTextColor = 10;
   MenuHotColor = 15;
-  { The prompt line is text row $18; AskMenuCommand (ovl03:10D1) clears it, columns 0 to $27. }
+  { The prompt line is text row $18; the menu command at ovl03:10D1 clears it, columns 0 to $27. }
   PromptRow = $18;
   PromptLeftCol = 0;
   PromptLastCol = $27;
@@ -810,7 +810,7 @@ end;
   'PRESS <RETURN> OR BUTTON TO CONTINUE' becomes 'PRESS <ENTER>/<RETURN> TO CONTINUE' and Return
   answers it (AcceptEnter). Animate is set when the close-up is up (ds84E0) and ds84E1 is set. The
   prompt line is cleared afterwards. }
-procedure ovl03_fn_10D1;
+procedure AskMenuCommand;
 var
   Count: Byte;
   Choice: Byte;

@@ -433,12 +433,12 @@ id = "ovl03:10D1"
 unit = "ovl03"
 addr = "ovl03:10D1"
 size = 396
-name = "ovl03_fn_10D1"
+name = "AskMenuCommand"
 signature = ""
 c_name = "ovl03_fn_10D1"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_10D1 (ECL command 43: dispatcher ovl03:2F2D calls it for SkippedOpcode 2Bh (cmp al,2Bh, call at ovl03:30C4); it joins the EclStrings operands into a ~ hotkey text and asks it with AskMenu (ovl07:1684), writing the choice to operand 1); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

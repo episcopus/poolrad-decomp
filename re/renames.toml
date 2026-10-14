@@ -3602,3 +3602,10 @@ kind = "routine"
 why = "ECL command 21: dispatcher ovl03:2F2D calls it for SkippedOpcode 15h (cmp al,15h, call at ovl03:3003); it builds a TMenuLine list of the string operands and shows it with AskListMenu (ChooseFromList, OVL25) under the prompt, writing the chosen index to operand 1"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl03_fn_10D1"
+new = "AskMenuCommand"
+kind = "routine"
+why = "ECL command 43: dispatcher ovl03:2F2D calls it for SkippedOpcode 2Bh (cmp al,2Bh, call at ovl03:30C4); it joins the EclStrings operands into a ~ hotkey text and asks it with AskMenu (ovl07:1684), writing the choice to operand 1"
+date = "2026-10-13"
+
