@@ -65,7 +65,7 @@ procedure CastLightningBolt;
 procedure CastSlow;
 procedure CastRestoration;
 procedure CastMonsterHaste;
-procedure ovl22_e54;
+procedure CastMonsterHeal;
 procedure ovl22_e55;
 procedure ovl22_fn_2EEA;
 procedure ovl22_e56;
@@ -1740,8 +1740,39 @@ begin
   if not CureAffect(ds6C95, SlowAffect) then
     ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is Speedy');
 end;
-{ ovl22:2E4D: retf 0: 0 bytes of parameters; 12 bytes of locals }
-{@stub} procedure ovl22_e54; begin end;
+{ ovl22:2E4D. Cast handler of spell 58, a monster-only spell: SpellNames[58] is empty, and the
+  ovl22_e10 table points element 58 of SpellHandlers at this stub. It cures the first chosen target
+  ds6C95: when the target carries the Poisoned affect $37 (CureAffect) it also removes the affect $16
+  that the poison leaves behind, with ds681F set so the removals do not run ovl04's own cure handlers.
+  A target that is not poisoned is cured of disease instead (CureDiseaseAffects) and, when neither
+  cure applies, heals 1d4 + 8 hit points through HealCharacter and reports 'is Healed'. }
+procedure CastMonsterHeal;
+const
+  PoisonedAffect = $37;           { the Poisoned affect CureAffect removes (ovl15 names $37 Poisoned) }
+  { The affect removed together with the Poisoned one, meaning unknown: ovl04's Neutralize Poison
+    removes the same pair (ovl04:07F1, its AffectRemovedAtNeutralizePoison2). }
+  PoisonAidAffect = $16;
+  HealDiceCount = 1;              { the cure heals 1d4 hit points }
+  HealDiceSides = 4;
+  HealBase = 8;                   { ...plus this flat amount }
+  NoFlag = 0;                     { HealCharacter's Flag: no side effect }
+  ShowAbout = 1;                  { res12_fn_1FEB's Flag argument }
+var
+  { Never read: the original frame reserves one byte no instruction touches (QUIRK ovl22:2E4D); it is
+    declared so the 'is Healed' string temporary below it lands where the original put it. }
+  Spare: Byte;
+begin
+  if CureAffect(ds6C95, PoisonedAffect) then
+  begin
+    ds681F := 1;
+    RemoveAffect(ds6C95, PoisonAidAffect, nil);
+    ds681F := 0;
+  end
+  else
+    if not CureDiseaseAffects then
+      if HealCharacter(ds6C95, RollDice(HealDiceCount, HealDiceSides) + HealBase, NoFlag) then
+        res12_fn_1FEB(ds6C95, ShowAbout, 'is Healed');
+end;
 { ovl22:2EE5: frame not read }
 {@stub} procedure ovl22_e55; begin end;
 { ovl22:2EEA: retf 0: 0 bytes of parameters; 0 bytes of locals }

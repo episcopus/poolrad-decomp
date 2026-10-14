@@ -10569,12 +10569,12 @@ id = "ovl22:2E4D"
 unit = "ovl22"
 addr = "ovl22:2E4D"
 size = 152
-name = "ovl22_e54"
+name = "CastMonsterHeal"
 signature = ""
 c_name = "ovl22_e54"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_54"
+notes = "renamed from ovl22_e54 (the ovl22_e10 handler table points SpellHandlers[58] at stub 0096:012E (overlay entry 54, ovl22:2E4D); the routine cures the Poisoned affect $37 plus its companion $16 from the first chosen target, else cures disease, else heals 1d4+8 with 'is Healed'; the heal handler of the monster-only spell 58 (SpellNames[58] is empty); make match UNIT=ovl22: 140 bytes matched); auto:entry_54"
 evidence = ["prologue"]
 
 [[routine]]
