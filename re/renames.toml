@@ -4022,3 +4022,45 @@ kind = "routine"
 why = "ovl12:2866 calls ReviveCombatant with Who's HpMax (+$32); when it fails it stores TryAddAffect of affect $66 for 1 round with the Data of Affect, the result never read"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e88"
+new = "AvoidDistantAttackByChance"
+kind = "routine"
+why = "ovl12:2901 is an affect handler (AffectHandlers shape, nothing read): it calls AvoidDistantAttack (ovl12:0FAC) for Who with chance 60; which affect runs it is not known"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_fn_2915"
+new = "CancelHookOnChance"
+kind = "routine"
+why = "ovl12:2915 (callers ovl12:2976 and 2984): with a hook offered (HookAffectId) or magic damage (DamageKind bit 8), a 1d100 roll at or below Chance less 5 for each point that res12_fn_26C2 of ds681B falls short of 11 cancels the hook (CancelPendingHook 0)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e89"
+new = "CancelHookByHalfChance"
+kind = "routine"
+why = "ovl12:2976 is an affect handler (AffectHandlers shape, nothing read) that calls CancelHookOnChance (ovl12:2915) with chance 50; which affect runs it is not known"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e92"
+new = "CancelCharmAndUnknown35"
+kind = "routine"
+why = "ovl12:29B6 is an affect handler (AffectHandlers shape, nothing read) that cancels the offered hooks of the charm (affect $0B) and of affect $35 (CancelPendingHook) without a roll; which affect runs it is not known"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e90"
+new = "CancelHookByLowChance"
+kind = "routine"
+why = "ovl12:2984 is an affect handler (AffectHandlers shape, nothing read) that calls CancelHookOnChance (ovl12:2915) with chance 15; which affect runs it is not known"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e91"
+new = "CancelCharmAndUnknown35HighChance"
+kind = "routine"
+why = "ovl12:2992 is an affect handler (AffectHandlers shape, nothing read): a 1d100 roll at or below 90 cancels the offered hooks of affect $35 and of the charm (affect $0B) (CancelPendingHook); which affect runs it is not known"
+date = "2026-10-13"
+

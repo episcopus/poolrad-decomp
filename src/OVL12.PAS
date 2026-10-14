@@ -99,12 +99,12 @@ procedure GiveAffectUnlessFireOrAcid(Who: PCharacter; Affect: PAffect; Mode: Byt
 procedure GiveRegeneratingUnlessAffected(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure RetryRevivalAtFullHitPoints(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure TurnGaseousAndEscape(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e88;
-procedure ovl12_fn_2915;
-procedure ovl12_e89;
-procedure ovl12_e90;
-procedure ovl12_e91;
-procedure ovl12_e92;
+procedure AvoidDistantAttackByChance(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure CancelHookOnChance(Chance: Byte);
+procedure CancelHookByHalfChance(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure CancelHookByLowChance(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure CancelCharmAndUnknown35HighChance(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure CancelCharmAndUnknown35(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e93;
 procedure ovl12_e94;
 procedure ovl12_e95;
@@ -230,6 +230,10 @@ const
   AffectNausea = $1F;           { the affect of a failed save against the cloud: nausea (ovl24:0AE7) }
   WeakeningDuration = $3C;      { the Duration ovl12:10DE gives the affect AffectUnknown2B }
   AlwaysAvoids = 100;           { the Chance that avoids every roll of 1d100 (ovl12:1086) }
+  DistantAvoidChance = 60;      { the Chance ovl12:2901 gives AvoidDistantAttack }
+  HookChanceHalf = 50;          { the Chance ovl12:2976 gives ovl12:2915 (the hook cancel with a roll) }
+  HookChanceLow = 15;           { the Chance ovl12:2984 gives ovl12:2915 }
+  HookChanceHigh = 90;          { the 1d100 roll at or below which ovl12:2992 cancels its hooks }
   AffectUnknown19 = $19;        { purpose unknown [I]: RollToHit clears it from the attacker (ovl24:0CB7) }
   AffectUnknown19Duration = 1;  { the Duration ovl12:1363 gives affect AffectUnknown19 }
   AffectUnknown19Data = $0C;    { the Data byte ovl12:1363 gives affect AffectUnknown19 }
@@ -272,6 +276,7 @@ const
   AffectCharm = $0B;            { the affect of "is charmed" (ovl12:1E77 gives it) [I] }
   CharmData = $0C;              { the low bits of the charm's Data (ovl12:1E77); bit 7 is the side of the gazer [?] }
   CharmSaveBonus = -2;          { what ovl12:1E77 takes off the fear save of the charmed character }
+  AffectUnknown35 = $35;        { purpose unknown [?]: its offered hook is cancelled with the charm's (ovl12:2992, 29B6) }
   StatusFled = 3;               { TCharacter.Status 3: the combatant fled (ovl05:050D, ovl24 StatusFled) }
   StatusUnconscious = 4;        { TCharacter.Status 4: unconscious, what Bandage gives (ovl05 StatusUnconscious) }
   StatusDying = 5;              { TCharacter.Status 5: dying, the combatant bleeds (DyingRounds, ovl08:0FFF) }
@@ -1791,18 +1796,62 @@ begin
   ShowCursorOn(Who, 3, 0);
   DropCombatant(Who, StatusFled, 'Turns gaseous and escapes');
 end;
-{ ovl12:2901: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e88; begin end;
-{ ovl12:2915: retf 2: 2 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl12_fn_2915; begin end;
-{ ovl12:2976: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e89; begin end;
-{ ovl12:2984: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e90; begin end;
-{ ovl12:2992: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e91; begin end;
-{ ovl12:29B6: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e92; begin end;
+{ ovl12:2901. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). It runs
+  AvoidDistantAttack on Who with DistantAvoidChance (60): a 1d100 roll of 60 or less avoids the attack in progress.
+  Which affect runs it is not known yet [?]. }
+procedure AvoidDistantAttackByChance(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  AvoidDistantAttack(Who, DistantAvoidChance);
+end;
+{ ovl12:2915. Helper of the two hook cancels ovl12:2976 and ovl12:2984, which pass Chance. Only when a hook is offered
+  (HookAffectId is not 0) or the damage is magical (DamageKind bit KindMagic), a 1d100 roll at or below a threshold
+  cancels the pending hook (CancelPendingHook(0): the damage is dropped). The threshold is Chance less 5 for each
+  point that res12_fn_26C2 of ds681B falls short of 11. Purpose unknown: what that value measures is not known [?]. }
+procedure CancelHookOnChance(Chance: Byte);
+var
+  Level: Byte;                  { res12_fn_26C2 of ds681B; the threshold falls 5 for each point below 11 [?] }
+  Threshold: Byte;              { Chance less 5 for each point Level falls short of 11 }
+begin
+  Level := res12_fn_26C2(ds681B);
+  Threshold := Chance - 5 * (11 - Level);
+  if (HookAffectId = 0) and ((DamageKind and KindMagic) = 0) then
+    Exit;
+  if RollDice(1, 100) <= Threshold then
+    CancelPendingHook(0);
+end;
+{ ovl12:2976. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). It calls
+  CancelHookOnChance with HookChanceHalf (50): the pending hook may be cancelled by a roll. Which affect runs it is
+  not known yet [?]. }
+procedure CancelHookByHalfChance(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  CancelHookOnChance(HookChanceHalf);
+end;
+{ ovl12:2984. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). It calls
+  CancelHookOnChance with HookChanceLow (15): the pending hook is cancelled by a roll less often than at 50.
+  Which affect runs it is not known yet [?]. }
+procedure CancelHookByLowChance(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  CancelHookOnChance(HookChanceLow);
+end;
+{ ovl12:2992. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). A 1d100
+  roll at or below HookChanceHigh (90) cancels the pending hook of affect AffectUnknown35, then the one of the charm
+  (AffectCharm), each through CancelPendingHook. Which affect runs it is not known yet [?]. }
+procedure CancelCharmAndUnknown35HighChance(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  if RollDice(1, 100) <= HookChanceHigh then
+  begin
+    CancelPendingHook(AffectUnknown35);
+    CancelPendingHook(AffectCharm);
+  end;
+end;
+{ ovl12:29B6. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). It cancels
+  the pending hook of the charm (AffectCharm) and then the one of affect AffectUnknown35, without a roll. Which
+  affect runs it is not known yet [?]. }
+procedure CancelCharmAndUnknown35(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  CancelPendingHook(AffectCharm);
+  CancelPendingHook(AffectUnknown35);
+end;
 { ovl12:29CB: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e93; begin end;
 { ovl12:29D9: retf 10: 10 bytes of parameters; 0 bytes of locals }

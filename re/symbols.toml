@@ -4357,12 +4357,12 @@ id = "ovl12:2901"
 unit = "ovl12"
 addr = "ovl12:2901"
 size = 20
-name = "ovl12_e88"
+name = "AvoidDistantAttackByChance"
 signature = ""
 c_name = "ovl12_e88"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_88"
+notes = "renamed from ovl12_e88 (ovl12:2901 is an affect handler (AffectHandlers shape, nothing read): it calls AvoidDistantAttack (ovl12:0FAC) for Who with chance 60; which affect runs it is not known); auto:entry_88"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4370,12 +4370,12 @@ id = "ovl12:2915"
 unit = "ovl12"
 addr = "ovl12:2915"
 size = 97
-name = "ovl12_fn_2915"
+name = "CancelHookOnChance"
 signature = ""
 c_name = "ovl12_fn_2915"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl12_fn_2915 (ovl12:2915 (callers ovl12:2976 and 2984): with a hook offered (HookAffectId) or magic damage (DamageKind bit 8), a 1d100 roll at or below Chance less 5 for each point that res12_fn_26C2 of ds681B falls short of 11 cancels the hook (CancelPendingHook 0)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4383,12 +4383,12 @@ id = "ovl12:2976"
 unit = "ovl12"
 addr = "ovl12:2976"
 size = 14
-name = "ovl12_e89"
+name = "CancelHookByHalfChance"
 signature = ""
 c_name = "ovl12_e89"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_89"
+notes = "renamed from ovl12_e89 (ovl12:2976 is an affect handler (AffectHandlers shape, nothing read) that calls CancelHookOnChance (ovl12:2915) with chance 50; which affect runs it is not known); auto:entry_89"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4396,12 +4396,12 @@ id = "ovl12:2984"
 unit = "ovl12"
 addr = "ovl12:2984"
 size = 14
-name = "ovl12_e90"
+name = "CancelHookByLowChance"
 signature = ""
 c_name = "ovl12_e90"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_90"
+notes = "renamed from ovl12_e90 (ovl12:2984 is an affect handler (AffectHandlers shape, nothing read) that calls CancelHookOnChance (ovl12:2915) with chance 15; which affect runs it is not known); auto:entry_90"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4409,12 +4409,12 @@ id = "ovl12:2992"
 unit = "ovl12"
 addr = "ovl12:2992"
 size = 36
-name = "ovl12_e91"
+name = "CancelCharmAndUnknown35HighChance"
 signature = ""
 c_name = "ovl12_e91"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_91"
+notes = "renamed from ovl12_e91 (ovl12:2992 is an affect handler (AffectHandlers shape, nothing read): a 1d100 roll at or below 90 cancels the offered hooks of affect $35 and of the charm (affect $0B) (CancelPendingHook); which affect runs it is not known); auto:entry_91"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4422,12 +4422,12 @@ id = "ovl12:29B6"
 unit = "ovl12"
 addr = "ovl12:29B6"
 size = 21
-name = "ovl12_e92"
+name = "CancelCharmAndUnknown35"
 signature = ""
 c_name = "ovl12_e92"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_92"
+notes = "renamed from ovl12_e92 (ovl12:29B6 is an affect handler (AffectHandlers shape, nothing read) that cancels the offered hooks of the charm (affect $0B) and of affect $35 (CancelPendingHook) without a roll; which affect runs it is not known); auto:entry_92"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16737,7 +16737,7 @@ unit = "res12"
 addr = "00BA:26C2"
 size = 104
 name = "res12_fn_26C2"
-signature = ""
+signature = "function res12_fn_26C2(Value: Byte): Byte"
 c_name = "res12_fn_26C2"
 level = "none"
 justification = ""

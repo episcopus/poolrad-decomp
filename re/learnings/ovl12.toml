@@ -557,3 +557,12 @@ tags = ["literal", "String", "O+", "frame", "temporary", "sub-sp"]
 title = "A 10-character literal passed to a String40 parameter under $O+ leaves a 12-byte frame: the copy temporary sits at [bp-0Bh]"
 lesson = "ovl12:2610 passes 'Falls dead' to DropFromFight (String40) under $O+: `lea di, [bp-0Bh]; push ss; push di; ... lcall System_StrCopy(0AF8:0B0B)` copies the literal to the temporary, and the routine's `sub sp, 0Ch` (12 bytes) holds it. The matched source is `DropFromFight(Who, StatusGone, 'Falls dead');` with no local declared, so the frame comes from the compiler. Only this one literal length is measured here: why the frame is 12 and not 11 bytes is not known [?]."
 evidence = ["src/OVL12.PAS#FallDeadIfInFight", "re/symbols.toml#ovl12:2610"]
+
+[[lesson]]
+id = "or-of-two-tests-jumps-to-end-not-body"
+confidence = "V"
+units = ["*"]
+tags = ["if", "or", "and", "Exit", "codegen", "jump"]
+title = "if (A) or (B) then <roll> compiles B as je past the body; the Exit guard form matches"
+lesson = "`if (HookAffectId <> 0) or ((DamageKind and KindMagic) <> 0) then if RollDice(...) <= T then CancelPendingHook(0)` compiles the second test as `and al,8; or al,al; je end` (tp probe tools/re/tp_idioms/ovl12/or_condition_jump.pas), while ovl12:2915 has `jne body; jmp end` for that test. The `not (...)` form gives the same bytes, a nested if-else gives other bytes. The guard `if (HookAffectId = 0) and ((DamageKind and KindMagic) = 0) then Exit;` followed by the roll matched at once (MATCH CancelHookOnChance, 97 bytes). Write a bail-out condition as an Exit guard when the original shows a jump to the epilogue after a second test."
+evidence = ["src/OVL12.PAS#CancelHookOnChance", "re/symbols.toml#ovl12:2915", "tools/re/tp_idioms/ovl12/or_condition_jump.pas"]

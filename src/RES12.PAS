@@ -56,7 +56,7 @@ function res12_fn_255B(Who, Target: Pointer): Byte;
 procedure res12_fn_2571;
 function res12_fn_2637(Who: Pointer): Byte;
 function res12_fn_2686(Who: Pointer): Byte;
-procedure res12_fn_26C2;
+function res12_fn_26C2(Value: Byte): Byte;
 procedure res12_fn_272A;
 procedure res12_fn_27D9;
 procedure res12_fn_290B;
@@ -178,7 +178,7 @@ implementation
 { 00BA:2686: retf 4: 4 bytes of parameters; 10 bytes of locals }
 {@stub} function res12_fn_2686(Who: Pointer): Byte; begin end;
 { 00BA:26C2: retf 2: 2 bytes of parameters; 2 bytes of locals }
-{@stub} procedure res12_fn_26C2; begin end;
+{@stub} function res12_fn_26C2(Value: Byte): Byte; begin end;
 { 00BA:272A: retf 2: 2 bytes of parameters; 2 bytes of locals }
 {@stub} procedure res12_fn_272A; begin end;
 { 00BA:27D9: retf 0: 0 bytes of parameters; 4 bytes of locals }
