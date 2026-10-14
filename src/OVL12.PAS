@@ -15,7 +15,7 @@ procedure StartTrainingWithManual(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure BoostFireAttackByTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure TrainConstitution(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ShiftAttackToSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e9;
+procedure ovl12_e9(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e10;
 procedure ovl12_e11;
 procedure ovl12_e12;
@@ -356,8 +356,17 @@ begin
     Dec(AttackRoll, 2);
   end;
 end;
-{ ovl12:03AC: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e9; begin end;
+{ ovl12:03AC. Purpose unknown: the twin of ShiftAttackToSave (ovl12:0377) with the ByteA0 values 0, 3 and 6
+  (+$A0 of the selected character) in place of 2, 5 and 8: SaveRoll (DS:6816) gains 2 and AttackRoll (DS:6822)
+  loses 2. Who, Affect and Mode are not read. }
+procedure ovl12_e9(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  if (SelectedCharacter^.ByteA0 = 0) or (SelectedCharacter^.ByteA0 = 3) or (SelectedCharacter^.ByteA0 = 6) then
+  begin
+    Inc(SaveRoll, 2);
+    Dec(AttackRoll, 2);
+  end;
+end;
 { ovl12:03E1: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e10; begin end;
 { ovl12:0400: retf 10: 10 bytes of parameters; 0 bytes of locals }
