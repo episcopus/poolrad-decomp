@@ -17,15 +17,24 @@ make check                                      # a receipt for the current main
 ```sh
 make start-run        # admits the run and opens one iTerm tab per session of work/roster.toml
 make run-status       # heartbeats, processes, locks, inbox
-make stop-run         # drains, integrates, releases every lock, resets the state, closes the tabs
+make stop-run         # drains, lets workers hand off, integrates, releases every lock, resets, closes the tabs
 ```
 
-`work/roster.toml` lists the sessions (name, role, OpenCode model id, which prompt block of
-docs/process/START-AGENT.md they start with); edit it to change the roster or the models. The first
+`work/roster.toml` lists the sessions (name, role, OpenCode model id); edit it to change the roster or
+the models. Decompilers and reviewers run as workers by default: their tab runs the supervisor
+(`make worker`, below and docs/process/WORKER.md), which starts a fresh `opencode run` session for each
+batch of routines or each review and claims again until the run is stopped. Optional per-worker fields:
+`variant` (the OpenCode model variant), `batch` (routines per session) and `timeout` (minutes per
+session); the supervisor's own output is also in build/run/<name>.log and each session's in
+build/worker/<name>/. Every other role (orchestrator, expert) is an interactive OpenCode session started
+with the prompt block of docs/process/START-AGENT.md that its `heading` names; `mode = "interactive"`
+makes a decompiler or reviewer one too, but then it lasts only as long as its model keeps working in one
+turn (on 2026-10-13 every such session stopped on its own within 90 minutes, work still queued). The first
 entry is the orchestrator session, which runs the loop below and decides what the inbox lists (its
 limits are in its KICKOFF.md prompt: the spec, ADRs, the session set and `poolrad/` stay yours). With
 it running, your own involvement is reading its reports in its tab and answering what it leaves for you.
-`make stop-run` waits up to `WAIT=20` minutes for the sessions to hand off, lands what they handed off,
+`make stop-run` waits up to `WAIT=20` minutes for the sessions to hand off, then sends SIGTERM to what
+still runs (a worker answers with a hand-off of what it committed; stop-run waits for it), lands what they handed off,
 releases the rest with an operator record (branches with commits are kept for the next claimer and
 listed), and leaves control `stopped`, so `make start-run` can follow immediately.
 

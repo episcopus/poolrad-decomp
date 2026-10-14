@@ -51,7 +51,9 @@ Arguments and environment (the Makefile passes the variables as options):
   --role ROLE                   decompiler or reviewer
   --unit UNIT                   claim this unit (or review) once and stop after it; default: the queue
   --batch BATCH                 routines per session (default 6)
-  --session-cmd SESSION_CMD     shell template with {prompt_file}, {worktree} and {model_flag}; default
+  --session-cmd SESSION_CMD     shell template with {prompt_file}, {worktree}, {model_flag} and {title}
+                                (`<agent> <unit>-batch<N>`, quoted: OpenCode's session title, so each
+                                session's cost can be found again); default
                                 DEFAULT_SESSION_CMD below
   --session-model SESSION_MODEL model passed as {model_flag} (` --model <m>`), empty by default
   --max-sessions MAX_SESSIONS   stop after this many sessions in this run (default unlimited)
@@ -66,7 +68,7 @@ The default session command runs the installed opencode (v2: `opencode run [flag
 directory flag, so the template changes directory first; `--standalone` keeps the server inside the
 process group the supervisor kills on timeout, `--auto` approves tool use in a non-interactive run):
 
-  cd {worktree} && opencode run --standalone --auto{model_flag} "$(cat {prompt_file})"
+  cd {worktree} && opencode run --standalone --auto --title {title}{model_flag} "$(cat {prompt_file})"
 
 An alternative for the Claude CLI (not installed on the machine this was written on):
 
@@ -98,7 +100,7 @@ import control  # noqa: E402
 import heartbeat  # noqa: E402
 import identity  # noqa: E402
 
-DEFAULT_SESSION_CMD = 'cd {worktree} && opencode run --standalone --auto{model_flag} "$(cat {prompt_file})"'
+DEFAULT_SESSION_CMD = 'cd {worktree} && opencode run --standalone --auto --title {title}{model_flag} "$(cat {prompt_file})"'
 DEFAULT_BATCH = 6
 DEFAULT_TIMEOUT_MINUTES = 90
 DEFAULT_MAX_ATTEMPTS = 2
@@ -338,11 +340,11 @@ def kill_group(proc: subprocess.Popen) -> None:
 
 
 def run_session(cmd_template: str, prompt_file: Path, wt: Path, log: Path, timeout_s: float,
-                model_flag: str = "") -> SessionResult:
+                model_flag: str = "", title: str = "") -> SessionResult:
     """Run one model session (a shell command built from the template) in its own process group, its
     output appended to `log`; the whole group is killed when `timeout_s` passes or on interruption."""
     cmd = cmd_template.format(prompt_file=shlex.quote(str(prompt_file)), worktree=shlex.quote(str(wt)),
-                              model_flag=model_flag)
+                              model_flag=model_flag, title=shlex.quote(title or prompt_file.stem))
     log.parent.mkdir(parents=True, exist_ok=True)
     start = time.monotonic()
     with log.open("a") as f:
@@ -614,7 +616,7 @@ class Worker:
         run.sessions += 1
         with Pulse(self.agent, note):
             result = run_session(self.cfg.session_cmd, prompt_file, run.wt, log,
-                                 self.cfg.timeout_minutes * 60, self.model_flag())
+                                 self.cfg.timeout_minutes * 60, self.model_flag(), "%s %s" % (self.agent, tag))
         self.say("%s: session ended (exit %d%s); verifying" % (
             note, result.returncode, ", timed out" if result.timed_out else ""))
         self.verify_batch(run, batch, start, log)
@@ -697,7 +699,7 @@ class Worker:
         run.sessions += 1
         with Pulse(self.agent, "review %s: session running" % run.unit):
             result = run_session(self.cfg.session_cmd, prompt_file, run.wt, log,
-                                 self.cfg.timeout_minutes * 60, self.model_flag())
+                                 self.cfg.timeout_minutes * 60, self.model_flag(), "%s %s" % (self.agent, tag))
         self.say("review %s: session ended (exit %d%s)" % (
             run.unit, result.returncode, ", timed out" if result.timed_out else ""))
         if salvage(run.wt, self.logs / (tag + ".patch")):

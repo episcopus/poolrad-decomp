@@ -18,8 +18,10 @@ worker takes the queue's next unit again and again until the shared control is n
 routine goes to the frontier (2), `IDLE` seconds to wait when nothing is claimable (300), and
 `SESSION_CMD`, the shell template that starts a session with `{worktree}`, `{prompt_file}` and
 `{model_flag}` placeholders. The default is the installed opencode in a non-interactive run:
-`cd {worktree} && opencode run --standalone --auto{model_flag} "$(cat {prompt_file})"`; `SESSION_MODEL=`
-fills `{model_flag}` with ` --model <m>`. For the Claude CLI use
+`cd {worktree} && opencode run --standalone --auto --title {title}{model_flag} "$(cat {prompt_file})"`;
+`SESSION_MODEL=` fills `{model_flag}` with ` --model <m>` (OpenCode takes `provider/model#variant`) and
+`{title}` is `<agent> <unit>-batch<N>`, so each session's cost can be found in OpenCode afterwards.
+`make start-run` starts this supervisor for every decompiler and reviewer of work/roster.toml. For the Claude CLI use
 `SESSION_CMD='cd {worktree} && claude -p "$(cat {prompt_file})"'`. Stop a worker with Ctrl+C or
 SIGTERM: it kills the running session, saves and discards uncommitted changes, hands off the branch (or
 gives back an untouched claim) and posts a `stopped` heartbeat. It never leaves a lock behind.
