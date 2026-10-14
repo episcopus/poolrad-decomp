@@ -7273,7 +7273,7 @@ signature = ""
 c_name = "ovl16_fn_0B48"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return at this address. 0B48 is the flat-linear reading (stub segment 0x00B0 * 16 + 0x0048) of the inter-overlay stub call lcall 0x00B0:0x0048 at ovl16:0F26 (also 122E, 1C83, 4280); stub 0xB0:0x48 is ovl24:0DE3 RollDice (build/re/overlays.json). The byte at 0B48 is 0x76 (jbe), mid-instruction inside ovl16:056C. 056C is one routine: single prologue 55 89 e5 at 056C and single retf at 1ED1, so every map entry in 056C..1ED1 is a stub/fixup artefact. Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -7286,7 +7286,7 @@ signature = ""
 c_name = "ovl16_fn_0B52"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return. 0B52 is the flat reading (stub segment 0x00B0 * 16 + 0x0052) of the inter-overlay stub call lcall 0x00B0:0x0052 (12 call sites, first at ovl16:07CE); stub 0xB0:0x52 is ovl24:0E52 AddAffect (build/re/overlays.json). The byte at 0B52 is 0x7E (jle), mid-instruction inside ovl16:056C (one routine: prologue 55 89 e5 at 056C, retf at 1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -7299,7 +7299,7 @@ signature = ""
 c_name = "ovl16_fn_1307"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return. 1307 is the flat reading (0x00BA * 16 + 0x0767) of the lcall 0x00BA:0x0767 DrawPartyRoster (res12:0767) at ovl16:01BF and 032C; it lands mid-instruction (byte 0x7E) inside ovl16:056C, the single routine from 056C (prologue 55 89 e5) to its retf at 1ED1. Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -7312,7 +7312,7 @@ signature = ""
 c_name = "ovl16_fn_1513"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return. 1513 is the flat reading (0x00BA * 16 + 0x0973) of the lcall 0x00BA:0x0973 DrawHitPoints (res12:0973) at ovl16:2065; it lands mid-instruction (byte 0x8B) inside ovl16:056C (single routine 056C..1ED1, prologue 55 89 e5, retf at 1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -7325,7 +7325,7 @@ signature = ""
 c_name = "ovl16_fn_1758"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return. 1758 is the flat reading (0x00BA * 16 + 0x0BB8) of the lcall 0x00BA:0x0BB8 RecalcCombatValues (res12:0BB8) at ovl16:28AD and 28BC; it lands mid-instruction (byte 0x1F) inside ovl16:056C (single routine 056C..1ED1, prologue 55 89 e5, retf at 1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -7338,7 +7338,7 @@ signature = ""
 c_name = "ovl16_fn_19D3"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:21CD is the disp8 of les di,[bp-0x18] (c4 7e e8 at 21CB), not a call opcode; its bogus target (0x19D3) lands on the byte 0x98 mid-instruction inside ovl16:056C (single routine 056C..1ED1, prologue 55 89 e5, retf at 1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["near_call"]
 
 [[routine]]
