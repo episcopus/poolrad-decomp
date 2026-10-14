@@ -10023,12 +10023,12 @@ id = "ovl22:1162"
 unit = "ovl22"
 addr = "ovl22:1162"
 size = 46
-name = "ovl22_e17"
+name = "CastResistCold"
 signature = ""
 c_name = "ovl22_e17"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_17"
+notes = "renamed from ovl22_e17 (cast handler of spell 8 Resist Cold (SpellHandlers[8]; ovl22_e10 fills the table, whitepaper 5.22.2): applies the current spell ds681B to the chosen targets with 'is cold-resistant' (ovl22:1162)); auto:entry_17"
 evidence = ["prologue"]
 
 [[routine]]

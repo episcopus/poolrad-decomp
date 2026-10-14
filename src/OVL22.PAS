@@ -23,7 +23,7 @@ procedure CastCureLightWounds;
 procedure CastCauseLightWounds;
 procedure CastDetectionSpell;
 procedure CastProtection;
-procedure ovl22_e17;
+procedure CastResistCold;
 procedure ovl22_e18;
 procedure ovl22_e19;
 procedure ovl22_e20;
@@ -581,7 +581,14 @@ begin
   ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is protected');
 end;
 { ovl22:1162: retf 0: 0 bytes of parameters; 18 bytes of locals }
-{@stub} procedure ovl22_e17; begin end;
+{ ovl22:1162 (e17). Cast handler of spell 8, Resist Cold: applies the current spell ds681B to the
+  chosen targets with the message 'is cold-resistant' and no damage of its own (ApplySpellToTargets;
+  the spell's own AffectId does the work). One of the per-spell handlers in SpellHandlers
+  (SpellHandlers[8], filled by ovl22_e10). }
+procedure CastResistCold;
+begin
+  ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is cold-resistant');
+end;
 { ovl22:1190: retf 0: 0 bytes of parameters; 2 bytes of locals }
 {@stub} procedure ovl22_e18; begin end;
 { ovl22:11DD: retf 0: 0 bytes of parameters; 22 bytes of locals }

@@ -3567,3 +3567,10 @@ kind = "routine"
 why = "cast handler of the protection spells (SpellHandlers[6],[7],[16],[17]; ovl22_e10 fills the table, whitepaper 5.22.2): applies the current spell ds681B to the chosen targets with 'is protected' (ovl22:1123)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl22_e17"
+new = "CastResistCold"
+kind = "routine"
+why = "cast handler of spell 8 Resist Cold (SpellHandlers[8]; ovl22_e10 fills the table, whitepaper 5.22.2): applies the current spell ds681B to the chosen targets with 'is cold-resistant' (ovl22:1162)"
+date = "2026-10-13"
+
