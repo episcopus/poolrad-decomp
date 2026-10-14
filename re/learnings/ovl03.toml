@@ -116,3 +116,30 @@ tags = ["for", "Byte", "ShortInt", "index", "codegen"]
 title = "A Byte loop index subscripting array[1..4] of Word matches; the ShortInt rule is not general"
 lesson = "`for I := 1 to 4 do Values[I] := OperandValue(I);` with I: Byte matches ovl03:0AED, where the index is loaded with mov al,[bp-9]; xor ah,ah before shl di,1. The for-index-signed-cwde lesson (ShortInt for `for I := 1 to 2` in ArithmeticCommand) therefore depends on the code around the loop. Try Byte first and change to ShortInt only when the first differing byte is a cwde where the original has xor ah,ah."
 evidence = ["src/OVL03.PAS#ComparePairsCommand", "src/OVL03.PAS#ArithmeticCommand", "re/symbols.toml#ovl03:0AED"]
+
+[[lesson]]
+id = "opcode-test-chain-is-a-case"
+confidence = "V"
+units = ["*"]
+tags = ["case", "if", "dispatch", "SkippedOpcode", "codegen"]
+title = "A run of opcode tests on one variable is a case statement: the variable is loaded into AL once"
+lesson = "Written as `if SkippedOpcode = OpIfEqual then ... else if SkippedOpcode = OpIfNotEqual then ...`, the routine reloads the global before every compare (cmp byte [SkippedOpcode], n). The original loads SkippedOpcode into AL once (mov al, [6F7F]) and compares AL with each label (cmp al, 16h; jne ...). Writing the six opcodes of RunIfCompared (ovl03:0B52) as one case statement with one if per arm matched. Use case for a dispatch on one byte; keep the arms as single statements."
+evidence = ["src/OVL03.PAS#RunIfCompared", "re/symbols.toml#ovl03:0B52"]
+
+[[lesson]]
+id = "literal-argument-temp-sized-by-literal"
+confidence = "V"
+units = ["*"]
+tags = ["string", "literal", "temp", "frame", "O+", "codegen"]
+title = "A string literal passed directly under $O+ gets a temp of its length plus one; the frame pad is the compiler's, not a declared byte"
+lesson = "Load24x24Set('BACPAC', 0, 40) in an overlay unit puts the copy in a 7-byte temp (bp-0Bh..bp-05h) with no local string declared. The routine's frame is 12 bytes (sub sp, 0Ch) with three Byte locals and the loop index, and the compiler supplies the extra byte. A declared `Unused: Byte` moved the temp to bp-0Ch and failed the match; without it LoadAreaGraphics (ovl03:0C74) matches. Do not declare a pad when the frame already matches; probe the offset first."
+evidence = ["src/OVL03.PAS#LoadAreaGraphics", "re/symbols.toml#ovl03:0C74"]
+
+[[lesson]]
+id = "concat-argument-stays-on-stack"
+confidence = "V"
+units = ["*"]
+tags = ["string", "concat", "argument", "O+", "retf"]
+title = "A string expression passed as a value argument is built in the argument temp: StrCopy and StrConcat leave the destination on the stack"
+lesson = "ovl17_e11(GameDir + 'ECL' + TileSetText + '.dax') in an overlay unit compiles to a 256-byte argument temp at bp-103h: the address of the temp is pushed first, then GameDir is copied into it (System_StrCopy, retf 4, pops only the source), then each piece is appended with System_StrConcat, which also pops only its source. The temp's address is then the 4-byte argument of ovl17_e11 (retf 4), so the callee's parameter is a `string` value parameter. StartEclBlock (ovl03:0BD1) matched with this form and the number from Str(TileSet, TileSetText) in a string[1] local."
+evidence = ["src/OVL03.PAS#StartEclBlock", "src/OVL17.PAS#ovl17_e11", "re/symbols.toml#ovl03:0BD1"]
