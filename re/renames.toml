@@ -3525,3 +3525,10 @@ kind = "global"
 why = "ds471A is the character the View command was started for: ViewSelectedCharacter stores SelectedCharacter in it (ovl19:0AD1), and the two Trade commands start 'Trade to?' from it and store the recipient in it (ovl19:1734 TradeItem, ovl19:2156 TradeMoney)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl19_fn_24A7"
+new = "ChooseAndDropMoney"
+kind = "routine"
+why = "the View prompt's D key (ovl19:0AB3 calls it, followed by ShowCharacterMoney) lists the coin kinds SelectedCharacter holds under 'Select type of coin' (ChooseFromList), asks 'How much <kind> will you drop? ' (ReadAmount) and calls DropMoney (ovl21:0A01); ovl19:24A7 is the Drop twin of TradeMoney (ovl19:2156)"
+date = "2026-10-13"
+

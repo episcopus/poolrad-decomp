@@ -18,7 +18,7 @@ procedure UseItem(Item: PMenuLine; var Done: Byte);
 procedure SellItem(Item: PMenuLine);
 procedure IdentifyItem(Item: PMenuLine; var Redraw: Byte);
 procedure TradeMoney;
-procedure ovl19_fn_24A7;
+procedure ChooseAndDropMoney;
 function WouldOverloadInventory(Character: PCharacter; Item: PMenuLine): Boolean;
 procedure UpdateSelectedCharacter(Key: Char);
 function CharacterMoneyValueInGold(Who: PCharacter): LongInt;
@@ -288,7 +288,7 @@ end;
 { ovl19:0AB3. The View command (whitepaper 5.4; the shop's V key, the Temple's and the camp's View): draws
   the sheet of SelectedCharacter and shows the prompt "View:" with the words Items (I), Spells (S), Trade
   (T), Drop (D) and Exit (E) until Exit or Escape (#0) is chosen or Done is set. Items runs RunItemMenu,
-  Spells runs ChooseSpellFromList, Trade runs TradeMoney and Drop runs ovl19_fn_24A7 and then
+  Spells runs ChooseSpellFromList, Trade runs TradeMoney and Drop runs ChooseAndDropMoney and then
   ShowCharacterMoney. The sheet is drawn again after Items, Spells and Trade. In view mode 5 (combat)
   ovl31_e3 runs on entry and ovl31_e2 on exit. Done: the stop flag, 0 keeps the view going; RunItemMenu gets
   it too. ViewedCharacter keeps a copy of SelectedCharacter (ovl19:0AD1). }
@@ -340,7 +340,7 @@ begin
       'T': TradeMoney;
       'D':
         begin
-          ovl19_fn_24A7;
+          ChooseAndDropMoney;
           ShowCharacterMoney;
         end;
     end;
@@ -1044,8 +1044,98 @@ begin
     end;
   until Finished;
 end;
-{ ovl19:24A7: retf 0: 0 bytes of parameters; 558 bytes of locals }
-{@stub} procedure ovl19_fn_24A7; begin end;
+{ ovl19:24A7. The Drop command for money of the View prompt (ViewSelectedCharacter's D key, whitepaper 5.4; the
+  Drop entry shows only while the character holds money): draws the money window (ShowCharacterMoney), then lists
+  the coin kinds SelectedCharacter holds under "Select type of coin", each with its amount, and asks for one
+  (ChooseFromList). "How much <kind> will you drop? " asks for the amount (ReadAmount, at most the money of that kind)
+  and DropMoney takes it away (ovl21:0A01). The list is built again while money is left; the menu ends when the
+  list is left or no money is left. Parameters: none. Globals: SelectedCharacter (the giver). Side effects: the
+  screen (the list, the prompt) and the list lines (GetMem, FreeMenuList).
+  QUIRK ovl19:24EF: Kinds is incremented for every listed kind and never read. }
+procedure ChooseAndDropMoney;
+const
+  MenuLineBytes = $2E;          { the Text, Flag29 and Next fields of a menu line, as NewMenuList allocates }
+  LastMoneyKind = 6;
+  NameColumnWidth = 8;          { the coin names are right-aligned in this many columns }
+  ListHeadingColor = 13;
+  ListLineColor = 10;
+  ListHighlightColor = 15;
+  ListLeft = 12;
+  ListTop = 7;
+  ListRight = 25;
+  ListBottom = 13;
+  AmountColor = 10;
+var
+  Kind: ShortInt;               { the coin kind of the loops }
+  CoinKind: ShortInt;           { the coin kind the list gave }
+  Pad: Byte;                    { the spaces that right-align a coin name }
+  I: Byte;                      { the padding loop counter }
+  Kinds: Word;                  { the count of listed kinds }
+  Choice: Integer;              { ChooseFromList's highlighted line }
+  List: PMenuLine;              { the coin lines, passed to ChooseFromList }
+  Chosen: PMenuLine;            { the line ChooseFromList returns; also the old first line while the list grows }
+  Head: PMenuLine;              { the first line of the list, freed with FreeMenuList }
+  Done: Boolean;                { the menu ends: no money is left, or the list was left }
+  Redraw: Byte;                 { ChooseFromList's Redraw }
+  Num: string[15];              { the amount of a coin kind as text }
+  Spaces: string[4];            { the padding of a coin name }
+  Text: string;                 { the coin name, then the prompt "How much <kind> will you drop? " }
+  Key: Char;                    { the key ChooseFromList returned; never read }
+  Amount: Word;                 { the amount given }
+begin
+  repeat
+    ShowCharacterMoney;
+    List := nil;
+    Chosen := nil;
+    Head := nil;
+    Kinds := 0;
+    for Kind := 0 to LastMoneyKind do
+      if SelectedCharacter^.Money[Kind] <> 0 then
+      begin
+        Inc(Kinds);
+        if List = nil then
+        begin
+          GetMem(List, MenuLineBytes);
+          List^.Next := nil;
+        end
+        else
+        begin
+          Chosen := List;
+          GetMem(List, MenuLineBytes);
+          List^.Next := Chosen;
+        end;
+        Str(SelectedCharacter^.Money[Kind], Num);
+        Pad := NameColumnWidth - Length(MoneyKindNames[Kind]);
+        Spaces := '';
+        Spaces[0] := Chr(Pad);
+        for I := 1 to Pad do
+          Spaces[I] := ' ';
+        List^.Text := Spaces + MoneyKindNames[Kind] + ' ' + Num;
+        List^.Flag29 := 0;
+      end;
+    Head := List;
+    Choice := 0;
+    Redraw := 1;
+    Key := ChooseFromList('Select type of coin', '', ListHeadingColor, ListLineColor, ListHighlightColor,
+      ListLeft, ListTop, ListRight, ListBottom, List, 1, Redraw, Choice, Chosen);
+    if Chosen = nil then
+      Done := True
+    else
+    begin
+      Text := '';
+      CoinKind := MoneyKindOfLine(Chosen^.Text, Text);
+      Text := 'How much ' + Text + 'will you drop? ';
+      Amount := ReadAmount(SelectedCharacter^.Money[CoinKind], Text, AmountColor);
+      DropMoney(SelectedCharacter, Amount, CoinKind);
+      Done := True;
+      for Kind := 0 to LastMoneyKind do
+        if SelectedCharacter^.Money[Kind] > 0 then
+          Done := False;
+    end;
+    if Head <> nil then
+      FreeMenuList(Head);
+  until Done;
+end;
 { ovl19:275B: rejects an item when the character already has more than 15 items or when its added
   weight exceeds the character's strength-based capacity plus 1500. The item weight is multiplied
   by its count only when the count is nonzero. The call to res12_fn_0BB8 occurs before the checks. }
