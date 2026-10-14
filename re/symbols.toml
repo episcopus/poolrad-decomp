@@ -5709,27 +5709,14 @@ evidence = ["prologue"]
 id = "ovl13:2C3D"
 unit = "ovl13"
 addr = "ovl13:2C3D"
-size = 252
-name = "ovl13_fn_2C3D"
+size = 362
+name = "ResolveAimedAttack"
 signature = ""
 c_name = "ovl13_fn_2C3D"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_fn_2C3D (ovl13:2C3D records Target in the aim record (Who/X/Y from CombatantX/CombatantY), puts the combat cursor on its cell, and, when the Automatic byte is 1, asks ConfirmAttackTarget and resolves the attack through SweepEnemies or PerformAttack; called by the manual aim cursor ovl13_e17 via ovl13:2DFA and by ovl13:31D7 (whitepaper 5.5)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl13:2D39"
-unit = "ovl13"
-addr = "ovl13:2D39"
-size = 143
-name = "ovl13_fn_2D39"
-signature = ""
-c_name = "ovl13_fn_2D39"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl13:2DC8"

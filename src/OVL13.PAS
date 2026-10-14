@@ -51,8 +51,7 @@ procedure UpdateMonsterMorale;
 function FastestEnemyMovement(Who: Pointer): Byte;
 function ConfirmAttackTarget(Who, Target: PCharacter): Boolean;
 function ShowAimPrompt(Who, Target: PCharacter; Range: Byte; ShowRange: Byte; Unused: Byte): Char;
-procedure ovl13_fn_2C3D;
-procedure ovl13_fn_2D39;
+procedure ResolveAimedAttack(Who, Target: PCharacter; Automatic: Byte; var Done: Byte; var Aim: TSpellTarget);
 procedure ovl13_fn_2DC8;
 procedure ovl13_fn_2DFA;
 procedure ovl13_fn_2F57;
@@ -1580,7 +1579,7 @@ end;
   is asked 'Attack Ally: ' (AskYesNo) and that answer decides. On a yes it also turns the fight into
   a brawl: ds6DE2 and word 819 of ds49D6^ are set, every party member the computer runs (StatusOkay,
   B84 above $7F) is moved to the monster side (Side 1) and loses its remembered target, and the side
-  counts are recomputed (RecountCombatSides). Called by MeleeAttack (ovl08:0D45) and ovl13_fn_2C3D.
+  counts are recomputed (RecountCombatSides). Called by MeleeAttack (ovl08:0D45) and ResolveAimedAttack.
   Globals: ds6DE2, ds49D6 and ds5D96 (read and written). }
 function ConfirmAttackTarget(Who, Target: PCharacter): Boolean;
 var
@@ -1648,10 +1647,52 @@ begin
   DrawCharacterPanel(Target);
   ShowAimPrompt := ReadPromptChoice('Aim:', Aim, $D, $A, $F, 0, 0, ExtKey);
 end;
-{ ovl13:2C3D: frame not read }
-{@stub} procedure ovl13_fn_2C3D; begin end;
-{ ovl13:2D39: retf 18: 18 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl13_fn_2D39; begin end;
+{ ovl13:2C3D. Records the aim on Target and, when Automatic is 1, attacks it: it sets Done and, in
+  attack mode, first asks ConfirmAttackTarget (an attack on an ally is confirmed by the player) and
+  clears Done on a no. When Done is still set it stores Target in the aim record Aim (Who, and the
+  cell from CombatantX/CombatantY), clears CombatMap's show-cursor and centres the combat cursor on
+  the target's cell (margin 3, the no-step direction 8); in attack mode it then sweeps the adjacent
+  level-0 enemies (SweepEnemies, ending the turn when it swept) or names the ranged weapon's ammo
+  (ChooseAttackItem, dropped to nil in melee range) and resolves the attack through PerformAttack.
+  When Done was cleared the aim record is cleared (FillChar 7). Called by the manual aim cursor
+  (ovl13_e17 through ovl13:2DFA) and ovl13:31D7. Globals: CombatMap (write).
+  QUIRK ovl13:2C3D: the byte local is declared and never read; it makes the frame 6 bytes. }
+procedure ResolveAimedAttack(Who, Target: PCharacter; Automatic: Byte; var Done: Byte; var Aim: TSpellTarget);
+var
+  Unused: Byte;                  { QUIRK ovl13:2C3D: declared, never read (the frame is 6 bytes) }
+  AimItem: Pointer;              { [bp-5] the ammo ChooseAttackItem picks for a ranged attack }
+begin
+  AimItem := nil;
+  Done := 1;
+  if Automatic = 1 then
+    if not ConfirmAttackTarget(Who, Target) then
+      Done := 0;
+  if Done <> 0 then
+  begin
+    Aim.Who := Target;
+    Aim.X := CombatantX(Target);
+    Aim.Y := CombatantY(Target);
+    CombatMap^.ShowCursor := 0;
+    MoveCombatCursor(CombatMap^.ViewX + 3, CombatMap^.ViewY + 3, 3, 8);
+    if Automatic = 1 then
+    begin
+      if SweepEnemies(Who, Target) then
+        Done := EndCombatTurn(Who)
+      else
+      begin
+        NoteAttackBearing(Who, Target);
+        if IsRangedWeapon(Who) then
+          if ChooseAttackItem(Who, AimItem) <> 0 then
+            if RangedWeaponCanMelee(Who) then
+              if DistanceToTarget(Who, Target) = 1 then
+                AimItem := nil;
+        PerformAttack(Who, Target, 0, AimItem, Done);
+      end;
+    end;
+  end
+  else
+    FillChar(Aim, SizeOf(Aim), 0);
+end;
 { ovl13:2DC8: frame not read }
 {@stub} procedure ovl13_fn_2DC8; begin end;
 { ovl13:2DFA: frame not read }

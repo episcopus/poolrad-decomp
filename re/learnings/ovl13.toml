@@ -143,3 +143,12 @@ tags = ["string", "temp", "StrCopy", "StrConcat", "StrLCopy", "O+", "overlay", "
 title = "Under $O+ a string literal argument is copied into a stack temp whose address is the push, and a concatenation takes a 256-byte string[255] temp"
 lesson = "ovl13:2AA0 calls ReadPromptChoice('Aim:', Aim, $D, $A, $F, 0, 0, ExtKey) but pushes only 9 words: the literal's temp (System_StrCopy writes it into a 5-byte local, `mov di,'Aim:'; push cs; push di; lcall StrCopy`), then Prompt, the five bytes and @ExtKey. The StrCopy's destination is the argument push, so the push count is 4 bytes short of the declared parameters (probe PRB2AA0 shows the same). A concatenation `S := 'a' + T + 'c'` (S: string[40]) compiles to StrCopy(temp, 'a'); StrConcat(temp, T); StrConcat(temp, 'c'); StrLCopy(S, temp, 40) with one 256-byte string[255] temp per concatenation expression, allocated just below the named locals, and the frame rounds up to an even size. `DrawTextAt(0, $17, $A, 'Range = ' + ByteToText(D) + '  ')` uses another such temp. Evidence: the packet's `sub sp,0x232` and the -$131/-$231 offsets."
 evidence = ["tools/re/tp_idioms/ovl13/PRB2AA0.PAS", "src/OVL13.PAS#ShowAimPrompt", "re/symbols.toml#ovl13:2AA0"]
+
+[[lesson]]
+id = "odd-offset-pointer-slot-named-local-vs-with-temp"
+confidence = "V"
+units = ["*"]
+tags = ["local", "pointer", "temporary", "frame", "A-", "with", "codegen"]
+title = "The odd-offset 4-byte slot at [bp-5] under $A- is a named Pointer local declared after a byte local as often as a with temp; the store tells them apart"
+lesson = "ovl13:2C3D has sub sp,6 and touches only a 4-byte slot at [bp-5]/[bp-3], never [bp-1]. Probe PRB2C3D with {$A-} shows `X: Byte; A: Pointer;` gives exactly that (X at [bp-1], A off at [bp-5], seg at [bp-3], frame 6), while `A: Pointer; X: Byte;` puts A at [bp-4]/[bp-2]. So the same frame as the with-temp case (with-temp-odd-offset-named-local) is produced by a named Pointer local declared after a one-byte local. Read the store: `xor ax,ax; mov [bp-5],ax; mov [bp-3],ax` (or mov ax/mov dx of a value) is a named local assignment (here AimItem := nil), while `les di,[...]; mov [bp-5],di; mov [bp-3],es` reloaded by `les di,[bp-5]` before each field is a with temp. Declare the spare byte (QUIRK) only when the frame and the untouched offset prove it."
+evidence = ["tools/re/tp_idioms/ovl13/PRB2C3D.PAS", "src/OVL13.PAS#ResolveAimedAttack", "re/symbols.toml#ovl13:2C3D"]
