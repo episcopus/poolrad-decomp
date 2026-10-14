@@ -5709,7 +5709,7 @@ evidence = ["prologue"]
 id = "ovl13:2C3D"
 unit = "ovl13"
 addr = "ovl13:2C3D"
-size = 362
+size = 445
 name = "ResolveAimedAttack"
 signature = ""
 c_name = "ovl13_fn_2C3D"
@@ -5719,95 +5719,17 @@ notes = "renamed from ovl13_fn_2C3D (ovl13:2C3D records Target in the aim record
 evidence = ["prologue"]
 
 [[routine]]
-id = "ovl13:2DC8"
-unit = "ovl13"
-addr = "ovl13:2DC8"
-size = 50
-name = "ovl13_fn_2DC8"
-signature = ""
-c_name = "ovl13_fn_2DC8"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
 id = "ovl13:2DFA"
 unit = "ovl13"
 addr = "ovl13:2DFA"
-size = 349
-name = "ovl13_fn_2DFA"
+size = 1260
+name = "RunAimCursor"
 signature = ""
 c_name = "ovl13_fn_2DFA"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_fn_2DFA (ovl13:2DFA is the manual aim cursor: it moves a cursor over the combat map (MoveCombatCursor/DirStepX), walks a line of sight from Who (WalkLine), finds the combatant or body under the cursor (CombatantRecord/BodyTable), draws the panel, builds the 'Center Exit' prompt (ReadPromptChoice '(Use Cursor keys) '), and on Enter/'T' records the cell in Aim and, when Automatic, resolves the attack through ResolveAimedAttack; called by the aim wrapper ovl13_e17 (whitepaper 5.5)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl13:2F57"
-unit = "ovl13"
-addr = "ovl13:2F57"
-size = 36
-name = "ovl13_fn_2F57"
-signature = ""
-c_name = "ovl13_fn_2F57"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:2F7B"
-unit = "ovl13"
-addr = "ovl13:2F7B"
-size = 88
-name = "ovl13_fn_2F7B"
-signature = ""
-c_name = "ovl13_fn_2F7B"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:2FD3"
-unit = "ovl13"
-addr = "ovl13:2FD3"
-size = 296
-name = "ovl13_fn_2FD3"
-signature = ""
-c_name = "ovl13_fn_2FD3"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:30FB"
-unit = "ovl13"
-addr = "ovl13:30FB"
-size = 220
-name = "ovl13_fn_30FB"
-signature = ""
-c_name = "ovl13_fn_30FB"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:31D7"
-unit = "ovl13"
-addr = "ovl13:31D7"
-size = 271
-name = "ovl13_fn_31D7"
-signature = ""
-c_name = "ovl13_fn_31D7"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl13:32E6"

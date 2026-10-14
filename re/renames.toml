@@ -4218,3 +4218,10 @@ kind = "routine"
 why = "ovl13:2C3D records Target in the aim record (Who/X/Y from CombatantX/CombatantY), puts the combat cursor on its cell, and, when the Automatic byte is 1, asks ConfirmAttackTarget and resolves the attack through SweepEnemies or PerformAttack; called by the manual aim cursor ovl13_e17 via ovl13:2DFA and by ovl13:31D7 (whitepaper 5.5)"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl13_fn_2DFA"
+new = "RunAimCursor"
+kind = "routine"
+why = "ovl13:2DFA is the manual aim cursor: it moves a cursor over the combat map (MoveCombatCursor/DirStepX), walks a line of sight from Who (WalkLine), finds the combatant or body under the cursor (CombatantRecord/BodyTable), draws the panel, builds the 'Center Exit' prompt (ReadPromptChoice '(Use Cursor keys) '), and on Enter/'T' records the cell in Aim and, when Automatic, resolves the attack through ResolveAimedAttack; called by the aim wrapper ovl13_e17 (whitepaper 5.5)"
+date = "2026-10-14"
+

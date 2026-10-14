@@ -152,3 +152,21 @@ tags = ["local", "pointer", "temporary", "frame", "A-", "with", "codegen"]
 title = "The odd-offset 4-byte slot at [bp-5] under $A- is a named Pointer local declared after a byte local as often as a with temp; the store tells them apart"
 lesson = "ovl13:2C3D has sub sp,6 and touches only a 4-byte slot at [bp-5]/[bp-3], never [bp-1]. Probe PRB2C3D with {$A-} shows `X: Byte; A: Pointer;` gives exactly that (X at [bp-1], A off at [bp-5], seg at [bp-3], frame 6), while `A: Pointer; X: Byte;` puts A at [bp-4]/[bp-2]. So the same frame as the with-temp case (with-temp-odd-offset-named-local) is produced by a named Pointer local declared after a one-byte local. Read the store: `xor ax,ax; mov [bp-5],ax; mov [bp-3],ax` (or mov ax/mov dx of a value) is a named local assignment (here AimItem := nil), while `les di,[...]; mov [bp-5],di; mov [bp-3],es` reloaded by `les di,[bp-5]` before each field is a with temp. Declare the spare byte (QUIRK) only when the frame and the untouched offset prove it."
 evidence = ["tools/re/tp_idioms/ovl13/PRB2C3D.PAS", "src/OVL13.PAS#ResolveAimedAttack", "re/symbols.toml#ovl13:2C3D"]
+
+[[lesson]]
+id = "inc-shortint-inplace-add-byte-vs-assign-widened-add"
+confidence = "V"
+units = ["*"]
+tags = ["inc", "ShortInt", "array", "add", "cwde", "codegen"]
+title = "`Inc(X, A[I])` is an 8-bit in-place `add byte [X],al` where `X := X + A[I]` widens to a 16-bit signed add"
+lesson = "ovl13:2DFA moves its cursor with `Inc(CurX, DirStepX[Dir])` and `Inc(CurY, DirStepY[Dir])`; the original reads `mov al,[DirStepX[Dir]]; add byte [bp-0x33],al` with no sign extension. Written as `CurX := CurX + DirStepX[Dir]` (CurX and DirStepX both ShortInt) the compiler sign-extends both operands and adds 16-bit (`mov al,[...]; cwde; mov dx,ax; mov al,[CurX]; cwde; add ax,dx; mov [CurX],al`), 10 bytes longer, which is what ovl13:0712's `NewX := OldX + DirStepX[Dir]` shows. So an 8-bit `add byte [local],al` reading a ShortInt array element is `Inc`, not `+`. Probe: tools/re/tp_idioms/ovl13/PRBDIRS.PAS."
+evidence = ["tools/re/tp_idioms/ovl13/PRBDIRS.PAS", "src/OVL13.PAS#RunAimCursor", "re/symbols.toml#ovl13:2DFA", "src/OVL13.PAS#StepCombatant"]
+
+[[lesson]]
+id = "sparse-case-loads-selector-once-if-chain-compares-memory"
+confidence = "V"
+units = ["*"]
+tags = ["case", "if", "selector", "compare", "codegen"]
+title = "A sparse `case` on a Char/Byte selector loads it once into AL (`mov al,[sel]; cmp al,..`); an if-chain compares the memory each time (`cmp byte [sel],..`)"
+lesson = "ovl13:2DFA handles the aim key with `case Key of #13,'T': ...; 'H': ...; ...; #0,'E': ...; 'C': ...; else Dir := 8; end`. The original emits `mov al,[bp-0x2a]; cmp al,0xd; je ...; cmp al,0x54; je ...; jmp ...` (the selector is loaded once and every comparison is on AL), while an `if (Key = #13) or (Key = 'T') then ... else if Key = 'H' ...` chain emits `cmp byte [bp-0x2a],0xd` on the memory each time. So a `mov al,[sel]` before a run of `cmp al,imm` is a `case`, not an if-chain."
+evidence = ["src/OVL13.PAS#RunAimCursor", "re/symbols.toml#ovl13:2DFA"]

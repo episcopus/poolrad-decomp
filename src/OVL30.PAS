@@ -152,7 +152,7 @@ end;
   line from the start tile's table height, then steps Bound and Line together, stopping with
   False at a blocking tile (the tile gate) or past Limit steps, else with True. Ex, Ey and
   StepCount carry the end point and the steps used. Called by ovl09_fn_0B96, ovl12_e70,
-  ovl13_fn_2DFA and ScanTargets. }
+  RunAimCursor and ScanTargets. }
 function WalkLine(X1, Y1: ShortInt; var Ex, Ey: ShortInt; var StepCount: Word;
   Map: PMapRows): Boolean;
 var

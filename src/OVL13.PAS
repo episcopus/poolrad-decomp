@@ -52,13 +52,8 @@ function FastestEnemyMovement(Who: Pointer): Byte;
 function ConfirmAttackTarget(Who, Target: PCharacter): Boolean;
 function ShowAimPrompt(Who, Target: PCharacter; Range: Byte; ShowRange: Byte; Unused: Byte): Char;
 procedure ResolveAimedAttack(Who, Target: PCharacter; Automatic: Byte; var Done: Byte; var Aim: TSpellTarget);
-procedure ovl13_fn_2DC8;
-procedure ovl13_fn_2DFA;
-procedure ovl13_fn_2F57;
-procedure ovl13_fn_2F7B;
-procedure ovl13_fn_2FD3;
-procedure ovl13_fn_30FB;
-procedure ovl13_fn_31D7;
+procedure RunAimCursor(Who, Target: PCharacter; Range, Automatic,
+  AimFlag: Byte; var Done: Byte; var Aim: TSpellTarget);
 procedure ovl13_fn_32E6;
 procedure ovl13_fn_3389;
 procedure ovl13_e17(Who: Pointer; A, B, C: Byte; var Done: Byte; var Aim);
@@ -71,7 +66,7 @@ procedure ovl13_fn_3A2B;
 procedure ovl13_e23;
 function ovl13_e24: Boolean;
 implementation
-uses RES03, RES06, RES12, OVL19, OVL22, OVL24, OVL25, OVL30, OVL31, Crt;
+uses RES03, RES04, RES06, RES09, RES12, OVL19, OVL22, OVL24, OVL25, OVL30, OVL31, Crt;
 type
   { A view of the two bytes ResolveCombatantAttacks selects between with the from-behind flag: TCharacter
     +$111 (ResistValue) and +$112 (ds112), accessed as a signed-indexed pair. }
@@ -1693,20 +1688,151 @@ begin
   else
     FillChar(Aim, SizeOf(Aim), 0);
 end;
-{ ovl13:2DC8: frame not read }
-{@stub} procedure ovl13_fn_2DC8; begin end;
-{ ovl13:2DFA: frame not read }
-{@stub} procedure ovl13_fn_2DFA; begin end;
-{ ovl13:2F57: frame not read }
-{@stub} procedure ovl13_fn_2F57; begin end;
-{ ovl13:2F7B: frame not read }
-{@stub} procedure ovl13_fn_2F7B; begin end;
-{ ovl13:2FD3: frame not read }
-{@stub} procedure ovl13_fn_2FD3; begin end;
-{ ovl13:30FB: frame not read }
-{@stub} procedure ovl13_fn_30FB; begin end;
-{ ovl13:31D7: retf 22: 22 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl13_fn_31D7; begin end;
+{ ovl13:2DFA. The manual aim cursor: clears the aim record Aim and starts the cursor on Target's cell
+  (CombatantX/CombatantY), shows the combat cursor and loops until the player presses a key that ends
+  the aim ([#0, #13, 'E', 'T']). Each pass moves the cursor one step in Dir (MoveCombatCursor, clamped
+  to the 50x25 map), reads the cell (GetMapCell), walks a line of sight from Who (WalkLine, its step
+  count halved) and, with Automatic set, shows 'Range = ' with the halved distance (WordToText,
+  DrawTextAt) or clears the line when the walk is blocked. The combatant on the cell or the body left
+  there becomes Target (CombatantRecord / BodyTable) and its panel is drawn. The aim is legal (Valid)
+  only when the distance is within Range, the tile is passable (CombatTiles[Tile].Cost <> $FF), an
+  existing Target passes AttackTargetAllowed and, for a ranged weapon with Automatic set,
+  ChooseAttackItem finds usable ammo that can melee any adjacent enemy; with no target, AimFlag 0
+  makes the aim illegal. It builds the prompt 'Center Exit', prefixed 'Target ' when legal, and reads
+  a key under the title '(Use Cursor keys) ' (ReadPromptChoice, ds6E31): Enter or 'T' confirms (the
+  cell and Target go into Aim and, when Automatic, ResolveAimedAttack resolves the attack, else Done
+  is set; a failed aim redraws the cell and clears Aim), H/I/M/Q/P/O/K/G set Dir 0..7, #0 or 'E'
+  cancels, 'C' centres the cursor (Dir 8) and any other key clears Dir. Called by the aim wrapper e17.
+  Globals: CombatMap, BodyCount, BodyTable, CombatantRecord, CombatTiles, DirStepX, DirStepY, ds6E31. }
+procedure RunAimCursor(Who, Target: PCharacter; Range, Automatic, AimFlag: Byte; var Done: Byte; var Aim: TSpellTarget);
+var
+  AimText: string[40];           { [bp-$29] the prompt text 'Center Exit' / 'Target Center Exit' }
+  Key: Char;                     { [bp-$2A] the key ReadPromptChoice returns (space to start) }
+  AimItem: Pointer;              { [bp-$2E] the ammo ChooseAttackItem picks for a ranged aim }
+  Dir: Byte;                     { [bp-$2F] the cursor's step direction }
+  I: Byte;                       { [bp-$30] walk of BodyTable }
+  WalkX, WalkY: ShortInt;        { [bp-$31], [bp-$32] the walk's endpoint }
+  CurX, CurY: ShortInt;          { [bp-$33], [bp-$34] the cursor's cell }
+  Occupant, Tile: Byte;          { [bp-$35], [bp-$36] the cursor cell's occupant and tile }
+  Distance: Word;                { [bp-$38] the walk's step count }
+  Valid: Boolean;                { [bp-$39] the cursor is on a legal aim }
+begin
+  FillChar(Aim, SizeOf(Aim), 0);
+  CurX := CombatantX(Target);
+  CurY := CombatantY(Target);
+  Key := ' ';
+  Dir := 8;
+  Done := 0;
+  CombatMap^.ShowCursor := 1;
+  CombatMap^.CursorKind := 1;
+  while not (Key in [#0, #13, 'E', 'T']) do
+  begin
+    MoveCombatCursor(CurX, CurY, 3, Dir);
+    Inc(CurX, DirStepX[Dir]);
+    Inc(CurY, DirStepY[Dir]);
+    if CurX < 0 then
+      CurX := 0;
+    if CurY < 0 then
+      CurY := 0;
+    if CurX > $31 then
+      CurX := $31;
+    if CurY > $18 then
+      CurY := $18;
+    GetMapCell(CurX, CurY, Occupant, Tile);
+    FlushKeyboard;
+    Valid := False;
+    Distance := $FF;
+    WalkX := CurX;
+    WalkY := CurY;
+    if WalkLine(CombatantX(Who), CombatantY(Who), WalkX, WalkY, Distance, PMapRows(CombatMap)) then
+    begin
+      Valid := True;
+      if Automatic <> 0 then
+        DrawTextAt(0, $17, $A, 'Range = ' + WordToText(Distance shr 1) + '  ');
+    end
+    else if Automatic <> 0 then
+      ClearWindow(0, $17, $27, $17);
+    Distance := Distance shr 1;
+    Target := nil;
+    if Valid then
+      if Occupant > 0 then
+        Target := CombatantRecord[Occupant]
+      else if Tile = $1F then
+        for I := 1 to BodyCount do
+          if (BodyTable[I].X = CurX) and (BodyTable[I].Y = CurY) then
+            Target := BodyTable[I].Who;
+    if Target <> nil then
+      DrawCharacterPanel(Target)
+    else
+      ClearWindow($17, 1, $26, $15);
+    if (Range < Distance) or (CombatTiles[Tile].Cost = $FF) then
+      Valid := False;
+    if Target <> nil then
+    begin
+      if not AttackTargetAllowed(Who, Target) then
+        Valid := False;
+      if Automatic = 1 then
+        if (Who = Target) or ((Occupant = 0) and (Tile = $1F)) then
+          Valid := False
+        else if IsRangedWeapon(Who) then
+          if (ChooseAttackItem(Who, AimItem) = 0) or
+             ((CollectEnemiesInRange(Who, 1) > 0) and not RangedWeaponCanMelee(Who)) then
+            Valid := False;
+    end
+    else if AimFlag = 0 then
+      Valid := False;
+    AimText := 'Center Exit';
+    if Valid then
+      AimText := 'Target ' + AimText;
+    Key := ReadPromptChoice('(Use Cursor keys) ', AimText, $D, $A, $F, 1, 0, ds6E31);
+    case Key of
+      #13, 'T':
+        begin
+          CombatMap^.ShowCursor := 0;
+          if Valid then
+          begin
+            Aim.X := CurX;
+            Aim.Y := CurY;
+            if Target <> nil then
+              Aim.Who := Target
+            else
+              Aim.Who := nil;
+            if Automatic = 1 then
+              ResolveAimedAttack(Who, Aim.Who, Automatic, Done, Aim)
+            else
+              Done := 1;
+          end;
+          if (not Valid) or (Done = 0) then
+          begin
+            RedrawMapCell(CurX, CurY);
+            Done := 0;
+            FillChar(Aim, SizeOf(Aim), 0);
+          end;
+        end;
+      'H': Dir := 0;
+      'I': Dir := 1;
+      'M': Dir := 2;
+      'Q': Dir := 3;
+      'P': Dir := 4;
+      'O': Dir := 5;
+      'K': Dir := 6;
+      'G': Dir := 7;
+      #0, 'E':
+        begin
+          RedrawMapCell(CurX, CurY);
+          FillChar(Aim, SizeOf(Aim), 0);
+          Done := 0;
+        end;
+      'C':
+        begin
+          MoveCombatCursor(CurX, CurY, 0, 8);
+          Dir := 8;
+        end;
+    else
+      Dir := 8;
+    end;
+  end;
+end;
 { ovl13:32E6: retf 6: 6 bytes of parameters; 2 bytes of locals }
 {@stub} procedure ovl13_fn_32E6; begin end;
 { ovl13:3389: retf 6: 6 bytes of parameters; 8 bytes of locals }
