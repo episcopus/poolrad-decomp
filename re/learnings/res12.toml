@@ -143,3 +143,12 @@ tags = ["with", "pointer", "parameter", "frame", "temp", "codegen"]
 title = "with Who^ do over a pointer parameter keeps a hidden 4-byte temp and reuses it; explicit Who^.field reloads the parameter"
 lesson = "For a Who: PCharacter value parameter, `with Who^ do` stores Who once into a hidden 4-byte frame temporary (les di,[bp+8]; mov [bp-6],di; mov [bp-4],es) and every field access then loads that temp (les di,[bp-6]), so the parameter is read once. Writing every access as Who^.field instead reloads les di,[bp+8] before each field and adds no temp. res12:2F57's frame (sub sp,6, the temp at [bp-6..-3], the declared Level at [bp-2] and the result at [bp-1]) matched only with `with Who^ do`, and the local Level must be the first declared so it sits nearest bp. This is the counterpart of res12-with-pointer-parameter-frame (0BB8, which used explicit Who^.field). Probe: tools/re/tp_idioms/res12/PRB33.PAS."
 evidence = ["src/RES12.PAS#IsMaxClassLevel", "re/symbols.toml#00BA:2F57", "tools/re/tp_idioms/res12/PRB33.PAS"]
+
+[[lesson]]
+id = "res12-not-odd-is-byte-shr-jae"
+confidence = "V"
+units = ["res12", "*"]
+tags = ["Odd", "boolean", "shr", "carry", "or", "codegen"]
+title = "not Odd(Mask) in an OR chain is mov al,Mask; shr al,1; jae Then (bit 0, not bit 1)"
+lesson = "FormatItemLine (00BA:0442) plural term at 00BA:06A6 is cmp byte [I],2; jne next; mov al,[Mask]; shr al,1; jae Then. That is bit 0 of Mask clear, the Odd idiom (ovl13 odd-is-shr-carry-not-test), written ((I = 2) and not Odd(Mask)) in the middle of an OR chain: a true term jumps to the then-body, so not Odd jumps with jae. A bit-1 test does not: (Mask and 2) = 0 compiles to and al,2; or al,al; je (+2 bytes), and (Mask shr 1) widens to a word shift (+7). The earlier blocked note misread the byte shr as bit 1; inside the loop body bit 1 is already known set, so a bit-1-clear test would be dead. Probe: tools/re/tp_idioms/res12/PRB34.PAS."
+evidence = ["src/RES12.PAS#FormatItemLine", "re/symbols.toml#00BA:0442", "tools/re/tp_idioms/res12/PRB34.PAS"]

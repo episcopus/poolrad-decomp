@@ -754,7 +754,7 @@ var
   ds4712: Byte;                   { the DS:49F3 value ShowEndingNarrative saves at the start and restores at the end }
   ds4713: string[1];              { Str(TileSet): the picture number ShowEndingNarrative appends to FINAL }
   { The character whose sheet ShowCharacterSheet draws: a copy of SelectedCharacter taken at its start (ovl19:0051).
-    The Sell action (ovl19:1CEE) passes it to res12_fn_0442 for the item's line (ovl19:1D59); no other routine reads it yet. }
+    The Sell action (ovl19:1CEE) passes it to FormatItemLine for the item's line (ovl19:1D59); no other routine reads it yet. }
   SheetCharacter: PCharacter;
   { The character the View command was started for: a copy of SelectedCharacter that ViewSelectedCharacter
     stores (ovl19:0AD1). The two Trade commands start their "Trade to?" from it and store the recipient in it
@@ -953,9 +953,13 @@ var
     $2C, $32, $39 in the image; ovl04:031E, 03A6). Entry 0, the byte before, is never read. }
   DiseaseAffects: array[0..6] of Byte;  { see above }
   ds681F: Byte;                   { 1 while the Temple removes affects (RemoveAffect; ovl04:0386, 05AB, 07CE), 0 after }
+  { A flag the spell code shares: ApplySpellToSide sets it to 1 and CastChosenSpell and SelectSpellTargets clear it;
+    SelectSpellTargets sets it to 1 once it has filled the target list ds6C91 from a spell's area scan
+    (ovl13:2205), never cleared by ovl13; ovl12:09C0 (ImageAbsorbsHit) lets an image take a hit only while
+    this byte is 0. It is touched by ovl04, ovl05, ovl06, ovl18, ovl19 and ovl21. The meaning is not
+    settled. DS:6820. }
+  ds6820: Byte;
   PooledMoney: TPartyMoney;       { the Temple clears it on entry (ovl04:0D32) and passes it to MoneyValueInGold }
-  { The first spell target, also the character Remove Curse hands to CastRemoveCurse (ovl04:08FA). }
-  ds6C95: PCharacter;
   { Globals of the spell target picker (CastSpell, whitepaper 5.22). The spell targets SelectSpellTargets
     (ovl13) and ChooseSpellTargets (ovl22) collect while a spell is aimed: entry I holds the PCharacter of a
     target at DS:6C91 + (I-1)*4, entry 1 is the global ds6C95 above; entry 0 is never read (its fourth byte
@@ -964,37 +968,8 @@ var
   { The number of chosen targets: the target pickers set it to 1 for a single target and higher for an area
     spell (SelectSpellTargets, ChooseSpellTargets); ApplySpellToTargets loops 1..ds6C94. DS:6C94. }
   ds6C94: Byte;
-  { The spell currently being cast: ApplySpellToTargets reads its SpellTable row byte +2 to decide whether
-    the spell needs a roll to hit. DS:681B. ovl12:064E also clears DamageAmount when this byte is $0F;
-    ovl12:2556 cancels the damage hook then too; ovl12:09C0 (ImageAbsorbsHit) needs it above 0. }
-  ds681B: Byte;
-  LastDiceCount: Byte;            { the dice count of the last RollDiceCounted roll (ovl24:0E37) }
-  { Set while ComputeMovement runs the movement affect hooks and cleared around them; what reads
-    it is not known yet (ovl12:1452 (ovl12_e48) clears ds681A while it is not 0). }
-  ds681D: Boolean;
-  { Cleared before and tested after RunAffectHooks kinds 1 (on the target) and 0 (on the attacker)
-    around an attack's target check (ovl13:1085); a hook that sets it rejects the attack. ovl12:0918 and
-    ovl12:0C26 also set it to 1 (turn pending). }
-  ds681E: Byte;
-  { The Turn Undead table (ovl13:122F): a row per undead type (TCharacter +$76) and a column per
-    cleric level band (0..9, the code passes 1..10 with bounds checks off); a positive entry turns
-    the undead, a nonpositive one destroys it, and the d20 turning check must reach the entry's
-    absolute value. The image holds the rows from DS:0447; the menu string after it begins at
-    DS:04B6. }
-  ds0447: array[0..10, 0..9] of Byte;
-  { A flag the spell code shares: ApplySpellToSide sets it to 1 and CastChosenSpell and SelectSpellTargets clear it;
-    SelectSpellTargets sets it to 1 once it has filled the target list ds6C91 from a spell's area scan
-    (ovl13:2205), never cleared by ovl13; ovl12:09C0 (ImageAbsorbsHit) lets an image take a hit only while
-    this byte is 0. It is touched by ovl04, ovl05, ovl06, ovl18, ovl19 and ovl21. The meaning is not
-    settled. DS:6820. }
-  ds6820: Byte;
-  { Set to 1 by InitSpellHandlers (ovl22:3435) at start-up, next byte after ds6820, and by ovl12:2F57 when
-    it adds a strength affect; nonzero: the Items window is drawn even if its flag is clear (ovl19:1194). DS:6821. }
-  ds6821: Byte;
-  { Byte DS:6822 as the three bytes ResolveCombatantAttacks addresses by attack slot: element 0 is the scalar
-    AttackRoll that RollToHit and RollBeatsResistance write, elements 1 and 2 (DS:6823/6824) are the
-    per-slot rolls the attack loop counts. }
-  AttackSlotRolls: array[0..2] of ShortInt;
+  { The first spell target, also the character Remove Curse hands to CastRemoveCurse (ovl04:08FA). }
+  ds6C95: PCharacter;
   { 1 while money lies in the pool: PoolMoney sets it, ShareMoney sets it when some is left; the
     Temple and the shop clear it with the pool (ovl04:0D37). }
   MoneyInPool: Byte;
@@ -1056,7 +1031,7 @@ var
     string[12] at DS:1047, 13 bytes apart (the image: 0 Okay, 1 Animated, 2 tempgone, 3 Running,
     4 Unconscious, 5 Dying, 6 Dead, 7 Stoned, 8 Gone), indexed by TCharacter.Status. }
   StatusNames: array[0..8] of string[12];
-  { The item name parts res12_fn_0442 appends to a menu line: 256 strings of at most 20
+  { The item name parts FormatItemLine appends to a menu line: 256 strings of at most 20
     characters (21 bytes each) at DS:10A7 (the image: entry 1 'Battle Axe' through entry 255
     'Cursed'; entry 0 overlaps the tail of the preceding status string and is never used).
     Indexed by TMenuLine.NameNum. }
@@ -1074,15 +1049,6 @@ var
   ds0D02: array[0..15] of Byte;   { four 2-bit pixels of colour C; see above }
   ds0D06: array[0..15] of Byte;   { two 4-bit pixels of colour C (C * $11); see above }
   { Globals of the combat unit ovl08 (whitepaper 5.5). }
-  { The list of clouds (TCombatNode, the Stinking Cloud markers): EndCombat frees them (ovl08:0006); ovl12:0CC3. }
-  ds6DBB: PCombatNode;
-  { True while the Use action (UseItem, ovl19:1BC2..1BE2) casts a spell through CastChosenSpell, and set
-    (ovl19:1AE7) for an item whose Affects[2] gives the spell (not a scroll); what CastChosenSpell does
-    with it is not known yet. 0 in the spell setup paths (ovl22:3413 clears it); when set,
-    SpellCasterLevel (00BA:26C2) returns a fixed level 6, and SpellAreaSize (ovl22:0729) multiplies its
-    per-level byte by 6 instead of the caster level (ovl22:072F, ovl19:1B1E). }
-  ItemAffectUse: Boolean;
-  { Globals of the combat unit ovl08 (whitepaper 5.5). }
   { The combat cell a spell being cast is aimed at (X here, Y in ds6DBA): FindSpellTarget writes the chosen
     target's cell together with the target (ovl13:207C/2086), SelectSpellTargets fills it from CombatantX of the
     selected character, and CastChosenSpell uses it as a line endpoint of the cast animation and as part of
@@ -1095,6 +1061,15 @@ var
     stores the scroll it takes its spell from here, when IsScroll accepts the item (main named it CurrentItem
     for that store; the ovl22 routines use it as their working item). }
   CurrentItem: PItem;
+  { Globals of the combat unit ovl08 (whitepaper 5.5). }
+  { The list of clouds (TCombatNode, the Stinking Cloud markers): EndCombat frees them (ovl08:0006); ovl12:0CC3. }
+  ds6DBB: PCombatNode;
+  { True while the Use action (UseItem, ovl19:1BC2..1BE2) casts a spell through CastChosenSpell, and set
+    (ovl19:1AE7) for an item whose Affects[2] gives the spell (not a scroll); what CastChosenSpell does
+    with it is not known yet. 0 in the spell setup paths (ovl22:3413 clears it); when set,
+    SpellCasterLevel (00BA:26C2) returns a fixed level 6, and SpellAreaSize (ovl22:0729) multiplies its
+    per-level byte by 6 instead of the caster level (ovl22:072F, ovl19:1B1E). }
+  ItemAffectUse: Boolean;
   ds6E36: Pointer;                { a picture EndCombat frees through ReleasePicture (ovl08:005A) }
   { The DS:6B84 block InitSpellHandlers fills: element 0 (DS:6B84) is the target picker and elements
     1..$43 are the per-spell cast handlers, one per spell number 1..$43 (68 elements, DS:6B84..6C93,
@@ -1117,6 +1092,24 @@ var
     before the movement affect hooks and reads it back); StartCombatantRound also seeds it from Who^.PadA2.
     ovl12:0C4B shifts it left by 1 every time it runs and ovl12:10C1 shifts it right by 1 [?]. }
   ds681A: Byte;
+  { The spell currently being cast: ApplySpellToTargets reads its SpellTable row byte +2 to decide whether
+    the spell needs a roll to hit. DS:681B. ovl12:064E also clears DamageAmount when this byte is $0F;
+    ovl12:2556 cancels the damage hook then too; ovl12:09C0 (ImageAbsorbsHit) needs it above 0. }
+  ds681B: Byte;
+  LastDiceCount: Byte;            { the dice count of the last RollDiceCounted roll (ovl24:0E37) }
+  { Set while ComputeMovement runs the movement affect hooks and cleared around them; what reads
+    it is not known yet (ovl12:1452 (ovl12_e48) clears ds681A while it is not 0). }
+  ds681D: Boolean;
+  { Cleared before and tested after RunAffectHooks kinds 1 (on the target) and 0 (on the attacker)
+    around an attack's target check (ovl13:1085); a hook that sets it rejects the attack. ovl12:0918 and
+    ovl12:0C26 also set it to 1 (turn pending). }
+  ds681E: Byte;
+  { The Turn Undead table (ovl13:122F): a row per undead type (TCharacter +$76) and a column per
+    cleric level band (0..9, the code passes 1..10 with bounds checks off); a positive entry turns
+    the undead, a nonpositive one destroys it, and the d20 turning check must reach the entry's
+    absolute value. The image holds the rows from DS:0447; the menu string after it begins at
+    DS:04B6. }
+  ds0447: array[0..10, 0..9] of Byte;
   { ds6814 and ds6815 indexed by side (ovl10:1AC7); the combat AI indexes them by the
     OpposingSide side of the actor (UseMagicItem, CastMemorizedSpell, ovl09:049F, 05C6). }
   ds6814Sides: array[0..1] of Byte absolute ds6814;
@@ -1197,6 +1190,13 @@ var
   HookAffectId: Byte;             { the affect ApplyAffect offers to the hooks; 0 afterwards: unaffected (ovl24:1672) }
   DamageAmount: Byte;             { the damage DealDamage offers to the hooks and then deals (ovl24:134E) }
   DamageKind: Byte;               { the kind of damage: 1 fire, 2 cold, 4 electricity, $10 acid, bit 3 magic (ovl24:13E4) }
+  { Set to 1 by InitSpellHandlers (ovl22:3435) at start-up, next byte after ds6820, and by ovl12:2F57 when
+    it adds a strength affect; nonzero: the Items window is drawn even if its flag is clear (ovl19:1194). DS:6821. }
+  ds6821: Byte;
+  { Byte DS:6822 as the three bytes ResolveCombatantAttacks addresses by attack slot: element 0 is the scalar
+    AttackRoll that RollToHit and RollBeatsResistance write, elements 1 and 2 (DS:6823/6824) are the
+    per-slot rolls the attack loop counts. }
+  AttackSlotRolls: array[0..2] of ShortInt;
   AttackRoll: ShortInt absolute AttackSlotRolls;   { the scalar attack or resistance roll (ovl24:0C63) }
   ds6823: Byte;                   { decremented every time an attack is avoided (ovl12:0FAC); meaning unknown [?] }
   SaveKind: Byte;                 { the saving throw kind SavingThrow offers to the hooks (ovl24:0DAD) }

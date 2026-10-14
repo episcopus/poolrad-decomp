@@ -5794,3 +5794,10 @@ kind = "routine"
 why = "ovl22:008A shows SpellMenuList through ChooseFromList (ovl25:0D9A) with the button word Cast/Memorize/Scribe/Learn per Mode and returns the chosen line's spell number from SpellMenuSpells, or 0 when the player left; called only by ChooseSpellFromList (ovl19:299C)"
 date = "2026-10-14"
 
+[[rename]]
+old = "res12_fn_0442"
+new = "FormatItemLine"
+kind = "routine"
+why = "00BA:0442 builds an item menu line's Text from the DS:10A7 name parts, the count, the readied Yes/No and a magic marker, and draws it at (Col, Row) in green when ShowText is set (make match UNIT=res12; callers in ovl06 ChooseShopItem, ovl19 ShowCharacterSheet and DrawCharacterPanel)"
+date = "2026-10-14"
+

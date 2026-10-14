@@ -167,14 +167,14 @@ begin
   if SheetCharacter^.SlotItems[0] <> nil then
   begin
     DrawTextAt(1, Row, TextColor, 'Weapon');
-    res12_fn_0442(LongInt(SheetCharacter), SheetCharacter^.SlotItems[0], 8, Row, 0, 1);
+    FormatItemLine(LongInt(SheetCharacter), SheetCharacter^.SlotItems[0], 8, Row, 0, 1);
   end;
   Inc(Row);
   if SheetCharacter^.SlotItems[2] <> nil then
   begin
     { QUIRK ovl19:0467: the Armor label is drawn in column 2, one column right of Weapon and Status }
     DrawTextAt(2, Row, TextColor, 'Armor');
-    res12_fn_0442(LongInt(SheetCharacter), SheetCharacter^.SlotItems[2], 8, Row, 0, 1);
+    FormatItemLine(LongInt(SheetCharacter), SheetCharacter^.SlotItems[2], 8, Row, 0, 1);
   end;
   Inc(Row);
   DrawTextAt(1, Row, TextColor, 'Status');
@@ -471,7 +471,7 @@ begin
       Cursor := Character^.Items;
       while Cursor <> nil do
       begin
-        res12_fn_0442(LongInt(Character), Cursor, 0, 0, 1, 0);
+        FormatItemLine(LongInt(Character), Cursor, 0, 0, 1, 0);
         Cursor := Cursor^.Next;
       end;
       if DrawItemWindow or (ds6821 <> 0) then
@@ -516,7 +516,7 @@ begin
           'D':
             if CanGiveUpItem(Selected) then
             begin
-              res12_fn_0442(LongInt(Character), Selected, 0, 0, 0, 0);
+              FormatItemLine(LongInt(Character), Selected, 0, 0, 0, 0);
               ShowPagedText(1, 21, 38, 22, 14, 1, 'Your ' + Selected^.Text + 'will be gone forever');
               if AskYesNo('Drop It? ', 13, 10, 15) = 'Y' then
               begin
@@ -554,7 +554,7 @@ end;
   and removes the affect. The routine never stores the item in SlotItems.
   Parameter: Item, the item. Globals: SelectedCharacter, ds49F3 (the view mode, 5 for combat), ItemTable
   (indexed by item type, not by race). Side effects: messages (ShowFlashMessage); the "already using" case
-  first redraws the slot item (res12_fn_0442). QUIRK ovl19:15BB: slot 9 is tested at SlotItems[10]
+  first redraws the slot item (FormatItemLine). QUIRK ovl19:15BB: slot 9 is tested at SlotItems[10]
   (+$F4) but the message names SlotItems[9] (+$F0). }
 procedure ReadyItem(Item: PMenuLine);
 const
@@ -623,7 +623,7 @@ begin
         ShowFlashMessage('Wrong Class');
       ReadySlotUsed:
         begin
-          res12_fn_0442(LongInt(Character), Character^.SlotItems[ShortInt(Slot)], 0, 0, 0, 0);
+          FormatItemLine(LongInt(Character), Character^.SlotItems[ShortInt(Slot)], 0, 0, 0, 0);
           ShowFlashMessage('already using ' + Character^.SlotItems[ShortInt(Slot)]^.Text);
         end;
       ReadyHandsFull:
@@ -741,7 +741,7 @@ end;
   Affects[3] below AffectFlag gives the spell Affects[2] and sets ItemAffectUse. No spell (0, or none chosen) sets
   Done to 0. Otherwise, in combat (view mode 5) for a character the computer does not fight for (Quick 0),
   DrawCombatScreen runs first. An affect item's use shows "uses an item" and the item's line (ShowCharacterMessage,
-  res12_fn_0442, a delay). CastChosenSpell casts the spell and sets Done; in combat a spell whose SpellTable row has byte
+  FormatItemLine, a delay). CastChosenSpell casts the spell and sets Done; in combat a spell whose SpellTable row has byte
   +$B set takes Done from EndCombatTurn instead. With Done set, a scroll is used up through ConsumeScrollSpell; an item that
   is not a scroll and has Affects[1] above 0 loses one of its Count when the count is above 1, else one charge
   (Affects[1]), and leaves the character (RemoveInventoryItem) with its last charge. Parameters: Item, Done. Globals:
@@ -787,10 +787,10 @@ begin
       if ds49F3 = ViewModeCombat then
       begin
         DrawTextAt(0, ItemPromptRow, TitleColor, 'Item:');
-        res12_fn_0442(LongInt(SelectedCharacter), Item, 5, ItemPromptRow, 0, 1);
+        FormatItemLine(LongInt(SelectedCharacter), Item, 5, ItemPromptRow, 0, 1);
       end
       else
-        res12_fn_0442(LongInt(SelectedCharacter), Item, 1, 22, 0, 1);
+        FormatItemLine(LongInt(SelectedCharacter), Item, 1, 22, 0, 1);
       DelayByGameSpeed;
       ClearCharacterMessage;
     end;
@@ -825,7 +825,7 @@ end;
   gold (Offer mod 5). Every coin weighs one, so WouldOverload (ovl21:0054) may refuse them: then "Overloaded.
   Money will be put in pool." is shown, Room (what he can still carry) limits the platinum that goes to him, and
   the rest goes to PooledMoney[PlatinumKind]. Parameter: Item. Globals: SelectedCharacter (the seller),
-  SheetCharacter (the item line res12_fn_0442 draws at ovl19:1D55), PooledMoney. Side effects: messages, the
+  SheetCharacter (the item line FormatItemLine draws at ovl19:1D55), PooledMoney. Side effects: messages, the
   window rows 21 and 22 (cleared at the end). QUIRK ovl19:1D1A: the test for kind $49 is followed by a test of the
   same kind for $1C, so the $1C branch (ovl19:1D46, the stack offer without the division) is never taken. }
 procedure SellItem(Item: PMenuLine);
@@ -855,7 +855,7 @@ begin
       Offer := (Offer * Item^.Count) div StackDivisor
     else
       Offer := Offer * Item^.Count;
-  res12_fn_0442(LongInt(SheetCharacter), Item, 0, 0, 0, 0);
+  FormatItemLine(LongInt(SheetCharacter), Item, 0, 0, 0, 0);
   ShowPagedText(MessageLeft, MessageTop, MessageRight, MessageBottom, MessageColor, 1,
     'I''ll give you ' + WordToText(Offer) + ' gold pieces for your ' + Item^.Text);
   if AskYesNo('Is It a Deal? ', 13, 10, 15) = 'Y' then
@@ -888,7 +888,7 @@ end;
   for 200 gold pieces. It shows "For 200 gold pieces I'll identify your <item>" and asks "Is It a Deal? ". On Y
   the price comes from SelectedCharacter's money (CharacterMoneyValueInGold, SetCharacterGold) or else from the
   pooled money (PooledMoney, SetPooledGold); when neither covers it, "Not Enough Money" is shown. A paid item
-  whose HiddenNames is set is identified: HiddenNames is cleared, its line is drawn again (res12_fn_0442), "It
+  whose HiddenNames is set is identified: HiddenNames is cleared, its line is drawn again (FormatItemLine), "It
   looks like some sort of <item>" is shown and Redraw is set. Otherwise "I can't tell anything new about your
   <item>" is shown. Parameters: Item, the item; Redraw, the var flag of the item list (1: draw it again).
   Side effects: rows 21 and 22 (columns 1 to 38) are cleared at the end; DelayByGameSpeed after a payment. }
@@ -910,7 +910,7 @@ var
   Paid: Boolean;                { the price was taken from the character's money or from the pool }
 begin
   Paid := False;
-  res12_fn_0442(LongInt(SheetCharacter), Item, 0, 0, 0, 0);
+  FormatItemLine(LongInt(SheetCharacter), Item, 0, 0, 0, 0);
   ShowPagedText(MessageLeft, MessageTop, MessageRight, MessageBottom, MessageColor, ClearTextBeforeMessage,
     'For 200 gold pieces I''ll identify your ' + Item^.Text);
   if AskYesNo('Is It a Deal? ', PromptTitleColor, PromptWordColor, PromptHotColor) = 'Y' then
@@ -943,7 +943,7 @@ begin
     else
     begin
       Item^.HiddenNames := 0;
-      res12_fn_0442(LongInt(SheetCharacter), Item, 0, 0, 0, 0);
+      FormatItemLine(LongInt(SheetCharacter), Item, 0, 0, 0, 0);
       ShowPagedText(MessageLeft, MessageTop, MessageRight, MessageBottom, MessageColor, ClearTextBeforeMessage,
         'It looks like some sort of ' + Item^.Text);
       Redraw := 1;

@@ -4,7 +4,7 @@ unit RES12;
   dexterity, weight and damage figures (1168, 1282, 1325, 13AB, 2228, 2199); it draws the shop
   screen and its item prompts (27D9, 0767, called by ShopMain, whitepaper 5.4), shows the
   per-character messages (16EC, 1FEB) and dispatches the area view (27D9, 2B5E, whitepaper 5.2.1).
-  Many routines are still stubs. }
+  FormatItemLine (0442) builds an item menu line's text from the DS:10A7 name parts (whitepaper 5.24). }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 uses Crt, POOLVARS, RES03, RES06, RES07, RES09, OVL25, OVL26, OVL27, OVL28, OVL30, OVL31;
@@ -25,9 +25,7 @@ procedure ApplyWeaponBonuses(Who: PCharacter);
 procedure SetArmourMovement(Who: PCharacter; Item: PItem);
 procedure AddReadiedItemBonus(Who: PCharacter; Item: PItem; var Bonus: TBonus; var Flag: Byte);
 procedure CapMovementByLoad(Who: PCharacter);
-procedure res12_fn_0442(Value: LongInt; P: Pointer; A, B, C, D: Byte);
-procedure res12_fn_06D5;
-procedure res12_fn_0712;
+procedure FormatItemLine(Value: LongInt; Item: PItem; Col, Row, ShowReadied, ShowText: Byte);
 procedure DrawPartyRoster(Who: PCharacter);
 procedure DrawArmourClass(Who: PCharacter; Col, Row: Byte);
 procedure DrawHitPoints(Who: PCharacter; Col, Row, Flag: Byte);
@@ -116,9 +114,25 @@ const
   { RecalcCombatValues: the readied item kinds whose slot index equals the kind, 0..LastDirectSlotKind;
     kind SpecialItemKind goes to the first free of slots 9 and 10. }
   LastDirectSlotKind = 8;
-  { RecalcCombatValues: the item types it files into SlotItems[11] and SlotItems[12]. }
+  { RecalcCombatValues: the item types it files into SlotItems[11] and SlotItems[12].
+    00BA:0442 also treats these two kinds as the ones whose plural 's' is suppressed when
+    NameNum[3] is NoPluralNameNum (00BA:06BD). }
   Slot11ItemType = $49;
   Slot12ItemType = $1C;
+  { 00BA:0442: a party member with this affect makes a Plus, PlusSave or Cursed item show '* '
+    before its name. Which spell or item grants affect 5 is not proven here. }
+  MagicMarkAffect = 5;
+  { 00BA:0442: the item type whose plural 's' attaches to name part 3 (00BA:06B6); name part 1
+    does not take the plural for this type (00BA:0699). ovl12:2D38 and the attack animation also
+    special-case $56; which item it is is not proven. }
+  PluralOnThirdPartType = $56;
+  { 00BA:0442: NameNum[3] that keeps a slot-11 or slot-12 item from taking the plural 's'
+    (00BA:06D4). The same index keeps an unenchanted slot item's damage (ovl12:264B, ovl12:2D88);
+    which name it is is not proven. }
+  NoPluralNameNum = $B1;
+  { 00BA:0442: the mask bit of name part 3 (1 shl 2). A mask above this means part 3 is shown,
+    because the part-1 and part-2 bits sum to at most 3 (00BA:0690, jbe). }
+  ThirdNameBit = 4;
   { RecalcCombatValues: a readied item whose NameNum[1] is $BA instead counts ExcludedWeight (5000 less)
     in the carried weight. $BA is an index of the DS:10A7 name table; which item it is is not proven. }
   BagNameNum = $BA;
@@ -344,17 +358,81 @@ begin
     Who^.Movement := NewMovement;
 end;
 
-{ 00BA:0442: retf 16: 16 bytes of parameters; 524 bytes of locals. BLOCKED (see re/symbols.toml
-  notes): it builds an item menu line's display text (the name parts from the DS:10A7 table, a
-  magic marker, the count and a plural) and optionally draws it. The draft matches everything but
-  the plural rule's "bit 1 of the mask is clear" term, which is two bytes short of it. }
-{@stub} procedure res12_fn_0442(Value: LongInt; P: Pointer; A, B, C, D: Byte); begin end;
+{ 00BA:0442. Builds an item menu line's display text in Item^.Text and, when ShowText is set,
+  draws it at (Col, Row) in Green. Clears Text, then, when ShowReadied is set, prefixes ' Yes  '
+  or ' No   ' from Readied. When any member of the party list ds5D96 has MagicMarkAffect (affect
+  5, HasAffect), a Plus, PlusSave or Cursed item is marked '* '. A Count above 0 is written in
+  front of the name. The three NameNum parts (ds10A7, 256 string[20] at DS:10A7) are appended
+  from part 3 down to 1, skipping a part whose HiddenNames bit is set, and each shown part is
+  followed by 's ' or ' '. The 's ' is used, once, when Count is at least 2 and this part is the
+  only one shown, or part 1 is shown with part 3 also shown (Mask > ThirdNameBit) and the item
+  type is not PluralOnThirdPartType ($56), or part 2 is shown while part 1 is not (not Odd(Mask):
+  bit 0 of the mask is clear, 00BA:06A6), or part 3 is shown for PluralOnThirdPartType, or the
+  item type is Slot11ItemType or Slot12ItemType and NameNum[3] is not NoPluralNameNum ($B1).
+  Callers: the shop, loot and inventory lists (ShowText 0, they draw Text themselves) and the
+  character sheet (ShowText 1).
+  QUIRK 00BA:0442: the LongInt Value is never read (callers pass LongInt(the character) or 0).
+  Globals: ds5D96 (read), ds10A7 (read). Side effects: Item^.Text, and the screen when ShowText
+  is set. }
+procedure FormatItemLine(Value: LongInt; Item: PItem; Col, Row, ShowReadied, ShowText: Byte);
+var
+  I: Byte;
+  Mask: Byte;
+  Affect: Pointer;
+  Found: Byte;
+  Plural: Byte;
+  Member: PCharacter;
+begin
+  Item^.Text := '';
+  if ShowReadied <> 0 then
+  begin
+    if Item^.Readied then
+      Item^.Text := ' Yes  '
+    else
+      Item^.Text := ' No   ';
+  end;
+  Found := 0;
+  Member := PCharacter(ds5D96);
+  while (Member <> nil) and (Found = 0) do
+  begin
+    if HasAffect(Member, MagicMarkAffect, Affect) then
+      Found := 1;
+    Member := Member^.Next;
+  end;
+  if Found <> 0 then
+    if (Item^.Plus > 0) or (Item^.PlusSave > 0) or Item^.Cursed then
+      Item^.Text := Item^.Text + '*' + ' ';
+  if Item^.Count > 0 then
+    Item^.Text := Item^.Text + ByteToText(Item^.Count) + ' ';
+  Mask := 0;
+  for I := 1 to 3 do
+    if (Item^.NameNum[I] <> 0) and (((Item^.HiddenNames shr (3 - I)) and 1) = 0) then
+      Inc(Mask, 1 shl (I - 1));
+  Plural := 0;
+  for I := 3 downto 1 do
+    if ((Mask shr (I - 1)) and 1) > 0 then
+    begin
+      Item^.Text := Item^.Text + ds10A7[Item^.NameNum[I]];
+      if (Item^.Count < 2) or (Plural <> 0) then
+        Item^.Text := Item^.Text + ' '
+      else if ((1 shl (I - 1)) = Mask) or
+              ((I = 1) and (Mask > ThirdNameBit) and
+               (Item^.ItemType <> PluralOnThirdPartType)) or
+              ((I = 2) and not Odd(Mask)) or
+              ((I = 3) and (Item^.ItemType = PluralOnThirdPartType)) or
+              (((Item^.ItemType = Slot11ItemType) or (Item^.ItemType = Slot12ItemType)) and
+               (Item^.NameNum[3] <> NoPluralNameNum)) then
+      begin
+        Item^.Text := Item^.Text + 's ';
+        Plural := 1;
+      end
+      else
+        Item^.Text := Item^.Text + ' ';
+    end;
+  if ShowText <> 0 then
+    DrawTextAt(Col, Row, Green, Item^.Text);
+end;
 
-{ 00BA:06D5: not a routine but a label inside res12_fn_0442 (0442 is blocked); see its re/symbols.toml
-  note. Kept a stub until 0442 matches, when make match WRITE=1 removes both entries. }
-{@stub} procedure res12_fn_06D5; begin end;
-{ 00BA:0712: not a routine but the else-branch label of res12_fn_0442; see its re/symbols.toml note. }
-{@stub} procedure res12_fn_0712; begin end;
 { 00BA:0767. Draws the roster panel the shop and the Temple show (whitepaper 5.24): a
   "Name / AC  HP" header and one line per party member of the list ds5D96. The member Who is
   drawn white from its Name, every other member through DrawCharacterName. Each line's armour value
@@ -440,7 +518,7 @@ end;
 { 00BA:09E3. Draws the character panel the combat and inventory screens show (whitepaper 5.24): it
   clears the box ($17,1)-($26,$15), writes the name line through ShowCharacterMessage, the "Hitpoints" and
   "AC" headings with their values (DrawHitPoints, DrawArmourClass), the readied weapon's paged text
-  (res12_fn_0442 then ShowPagedText) when a weapon is readied, and finally the status name
+  (FormatItemLine then ShowPagedText) when a weapon is readied, and finally the status name
   (StatusNames[Status], +$10c) when the character takes no part in combat (Flag10D = 0), else
   "(Helpless)" when IsHelpless says so. Side effects: video memory, the keyboard through
   ShowPagedText's paging. }
@@ -463,7 +541,7 @@ begin
   begin
     Inc(Row, 2);
     Color := $17;   { QUIRK 00BA:0AAE: the original stores Color here and never reads it }
-    res12_fn_0442(LongInt(Who), Who^.SlotItems[0], 0, 0, 0, 0);
+    FormatItemLine(LongInt(Who), Who^.SlotItems[0], 0, 0, 0, 0);
     { QUIRK 00BA:0AE2: the bottom row is the three additions Row + 1 + 1 + 1 (three inc ax); the
       folded Row + 3 compiles to add ax, 3 and does not match the original }
     ShowPagedText($17, Row + 1, $26, Row + 1 + 1 + 1, Green, 1, Who^.SlotItems[0]^.Text);
