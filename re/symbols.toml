@@ -7923,8 +7923,8 @@ signature = ""
 c_name = "ovl16_fn_3C89"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 15: not a routine. 3C89 is the instruction boundary c6 85 be 00 1f (mov byte ptr [di+0xbe],0x1f, one of e3's bank assignments) with no prologue. The entry is the flat-linear reading (seg 0x03C5 * 16 + 0x0039 = 0x3C89) of the ovl25 AskYesNo stub call at 3F17 (lcall 0x3C5:0x39, also at 1E1C, 1F81, 1FA6, 2E98). e3 has its only prologue (55 89 e5) at 382D and its single retf at 3F30 (byte scan of build/re/overlays/ovl16.bin, re/learnings/ovl16.toml), so 3C89 lies inside e3, and a make tpc probe (tools/re/tp_idioms/ovl16/NOPROC.PAS) shows even a parameterless, local-less far procedure starts with 55 89 e5, so c6 cannot start a routine. Removed when e3 matches (make match UNIT=ovl16 WRITE=1 corrects e3's size to 1796 and deletes the entries inside it)"
+evidence = ["far_call", "tools/re/tp_idioms/ovl16/NOPROC.PAS", "re/learnings/ovl16.toml#ovl16-e3-map-entries-are-ovl25-stub-flats"]
 
 [[routine]]
 id = "ovl16:3C8E"
@@ -7936,8 +7936,8 @@ signature = ""
 c_name = "ovl16_fn_3C8E"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 15: not a routine. 3C8E is the instruction boundary eb 66 (jmp 0x3CF6) with no prologue. The entry is the flat-linear reading (seg 0x03C5 * 16 + 0x003E = 0x3C8E) of the ovl25 stub call lcall 0x3C5:0x3E at 0x0638, 0x092C, 0x0A5A, 0x0D9C. e3 has its only prologue (55 89 e5) at 382D and its single retf at 3F30 (byte scan of build/re/overlays/ovl16.bin, re/learnings/ovl16.toml), so 3C8E lies inside e3, and a make tpc probe (tools/re/tp_idioms/ovl16/NOPROC.PAS) shows a far procedure always starts with 55 89 e5, so eb cannot start one. Removed when e3 matches (make match UNIT=ovl16 WRITE=1 corrects e3's size to 1796 and deletes the entries inside it)"
+evidence = ["far_call", "tools/re/tp_idioms/ovl16/NOPROC.PAS", "re/learnings/ovl16.toml#ovl16-e3-map-entries-are-ovl25-stub-flats"]
 
 [[routine]]
 id = "ovl16:3C93"
@@ -7949,8 +7949,8 @@ signature = ""
 c_name = "ovl16_fn_3C93"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 15: not a routine. 3C93 is the byte 0x20, the rel8 of jne 0x3CB4 (75 20 at 3C92), mid-instruction, with no prologue. The entry is the flat-linear reading (seg 0x03C5 * 16 + 0x0043 = 0x3C93) of the ovl25 stub call lcall 0x3C5:0x43 at 0x091E, 0x0A33, 0x0D75, 0x0EDE, 0x3288. e3 has its only prologue (55 89 e5) at 382D and its single retf at 3F30 (byte scan of build/re/overlays/ovl16.bin, re/learnings/ovl16.toml), so 3C93 lies inside e3; its size 161 is only the gap to the next map entry (3D34). Removed when e3 matches (make match UNIT=ovl16 WRITE=1 corrects e3's size to 1796 and deletes the entries inside it)"
+evidence = ["far_call", "tools/re/tp_idioms/ovl16/NOPROC.PAS", "re/learnings/ovl16.toml#ovl16-e3-map-entries-are-ovl25-stub-flats"]
 
 [[routine]]
 id = "ovl16:3D34"
@@ -7962,8 +7962,8 @@ signature = ""
 c_name = "ovl16_fn_3D34"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 15: not a routine. 3D34 is the instruction boundary 88 46 e7 (mov byte ptr [bp-0x19],al) with no prologue. The entry is the flat-linear reading (seg 0x03D0 * 16 + 0x0034 = 0x3D34) of the ovl28 stub call lcall 0x3D0:0x34 at 0x340D (re/units.toml: stub 0x03D0 -> ovl28). e3 has its only prologue (55 89 e5) at 382D and its single retf at 3F30 (byte scan of build/re/overlays/ovl16.bin, re/learnings/ovl16.toml), so 3D34 lies inside e3; its size 246 is only the gap to the next map entry (3E2A). Removed when e3 matches (make match UNIT=ovl16 WRITE=1 corrects e3's size to 1796 and deletes the entries inside it)"
+evidence = ["far_call", "re/units.toml#ovl28", "tools/re/tp_idioms/ovl16/NOPROC.PAS", "re/learnings/ovl16.toml#ovl16-e3-map-entries-are-ovl25-stub-flats"]
 
 [[routine]]
 id = "ovl16:3E2A"
@@ -7975,8 +7975,8 @@ signature = ""
 c_name = "ovl16_fn_3E2A"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 15: not a routine. 3E2A is the instruction boundary 26 8a 85 bf 00 (mov al,es:[di+0xbf], the CombatIcon byte e3 hands to CopyPictureSlot) with no prologue. The entry is the flat-linear reading (seg 0x03E0 * 16 + 0x002A = 0x3E2A) of the ovl31_e2 stub call lcall 0x3E0:0x2A at 0x385A. e3 has its only prologue (55 89 e5) at 382D and its single retf at 3F30 (byte scan of build/re/overlays/ovl16.bin, re/learnings/ovl16.toml), so 3E2A lies inside e3, and a make tpc probe (tools/re/tp_idioms/ovl16/NOPROC.PAS) shows a far procedure always starts with 55 89 e5, so 26 cannot start one. Removed when e3 matches (make match UNIT=ovl16 WRITE=1 corrects e3's size to 1796 and deletes the entries inside it)"
+evidence = ["far_call", "re/units.toml#ovl31", "tools/re/tp_idioms/ovl16/NOPROC.PAS", "re/learnings/ovl16.toml#ovl16-e3-map-entries-are-ovl25-stub-flats"]
 
 [[routine]]
 id = "ovl16:3E2F"
@@ -7988,8 +7988,8 @@ signature = ""
 c_name = "ovl16_fn_3E2F"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 15: not a routine. 3E2F is the instruction boundary 50 (push ax, the CombatIcon argument of e3's nested CopyPictureSlot call at 3E38) with no prologue. The entry is the flat-linear reading (seg 0x03E0 * 16 + 0x002F = 0x3E2F) of the ovl31_e3 stub call lcall 0x3E0:0x2F at 3F28. e3 has its only prologue (55 89 e5) at 382D and its single retf at 3F30 (byte scan of build/re/overlays/ovl16.bin, re/learnings/ovl16.toml), so 3E2F lies inside e3; its size 144 is only the gap to the next map entry (3EBF). Removed when e3 matches (make match UNIT=ovl16 WRITE=1 corrects e3's size to 1796 and deletes the entries inside it)"
+evidence = ["far_call", "re/units.toml#ovl31", "tools/re/tp_idioms/ovl16/NOPROC.PAS", "re/learnings/ovl16.toml#ovl16-e3-map-entries-are-ovl25-stub-flats"]
 
 [[routine]]
 id = "ovl16:3EBF"
