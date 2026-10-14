@@ -537,12 +537,12 @@ id = "ovl03:18F8"
 unit = "ovl03"
 addr = "ovl03:18F8"
 size = 184
-name = "ovl03_fn_18F8"
+name = "SelectCaseCommand"
 signature = ""
 c_name = "ovl03_fn_18F8"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_18F8 (dispatcher ovl03:2F2D sends SkippedOpcode 37 and 38 here (cmp al,25h / 26h); the code picks the address of operand choice+1 and runs it (38, ScriptGosub) or stores it in ds49ED (37)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

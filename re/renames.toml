@@ -3658,3 +3658,10 @@ kind = "routine"
 why = "dispatcher ovl03:2F2D calls it for SkippedOpcode $24 (ECL command 36); ShopMain (ovl06:053E) and RunCombat (ovl08:007A) name ovl03 as the area logic that calls them: it runs the pending encounter or the requested shop or temple"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl03_fn_18F8"
+new = "SelectCaseCommand"
+kind = "routine"
+why = "dispatcher ovl03:2F2D sends SkippedOpcode 37 and 38 here (cmp al,25h / 26h); the code picks the address of operand choice+1 and runs it (38, ScriptGosub) or stores it in ds49ED (37)"
+date = "2026-10-13"
+

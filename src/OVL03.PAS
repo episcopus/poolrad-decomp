@@ -36,7 +36,7 @@ procedure ScanPartyCommand;
 procedure CheckPartyClassCommand;
 procedure RollRangeCommand;
 procedure RunAreaEventCommand;
-procedure ovl03_fn_18F8;
+procedure SelectCaseCommand;
 procedure ovl03_fn_19B0;
 procedure ovl03_fn_1B42;
 procedure ovl03_fn_1C13;
@@ -90,6 +90,8 @@ const
   { The opcodes of the bitwise commands (ovl03:0DEF). }
   OpAnd = 47;
   OpOr = 48;
+  { The opcode of the case command that stores the chosen address in ds49ED (ovl03:18F8); 38 runs it. }
+  OpChooseAddress = 37;
   { The bit of ECL command 10's operand that removes the member from the party, and the mask of
     the party position (ovl03:02E0). }
   RemoveMemberBit = $80;
@@ -1159,8 +1161,42 @@ begin
   ds84E0 := 0;
   res12_fn_27D9;
 end;
-{ ovl03:18F8: retf 0: 0 bytes of parameters; 6 bytes of locals }
-{@stub} procedure ovl03_fn_18F8; begin end;
+{ ovl03:18F8. ECL commands 37 and 38 (dispatcher ovl03:2F2D, SkippedOpcode OpChooseAddress or 38):
+  choose one of the script addresses that follow the command. Operand 1 is the choice and operand 2
+  the number of addresses; a second DecodeOperands reads them, so operand I+1 is the address for choice
+  I. Nothing is chosen when the choice is not below the count. Command 37 stores the chosen address in
+  ds49ED (its readers are not traced yet), command 38 runs it as a subroutine (ScriptGosub). ds49ED goes
+  down by one on every call, before the choice is made. }
+procedure SelectCaseCommand;
+var
+  Choice: Byte;
+  Count: Byte;
+  Unused: Byte;                 { QUIRK ovl03:18F8: a byte of the frame nothing uses }
+  I: Byte;
+  Taken: Boolean;
+  Unused2: Byte;                { QUIRK ovl03:18F8: a byte of the frame nothing uses }
+begin
+  Taken := False;
+  DecodeOperands(2);
+  Choice := OperandValue(1);
+  Count := OperandValue(2);
+  Dec(ds49ED);
+  DecodeOperands(Count);
+  I := 0;
+  while (I < Count) and (not Taken) do
+  begin
+    if Choice = I then
+    begin
+      if SkippedOpcode = OpChooseAddress then
+        ds49ED := MakeWord(OperandLow[I + 1], OperandHigh[I + 1])
+      else
+        ScriptGosub(I + 1);
+      Taken := True;
+    end
+    else
+      Inc(I);
+  end;
+end;
 { ovl03:19B0: frame not read }
 {@stub} procedure ovl03_fn_19B0; begin end;
 { ovl03:1B42: frame not read }
