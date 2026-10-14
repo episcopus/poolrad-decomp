@@ -492,7 +492,7 @@ begin
                             AcceptExtendedKeys, NoAnimation, ExtKey);
     case Key of
       'H': if ExtKey = 0 then HealMenu;
-      'V': ovl19_e5(ExtKey);
+      'V': ViewSelectedCharacter(ExtKey);
       'T': TakeMoney;
       'P': if ExtKey = 0 then PoolMoney;
       'S': ShareMoney;

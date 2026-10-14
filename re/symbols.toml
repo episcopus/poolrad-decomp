@@ -8557,39 +8557,26 @@ evidence = ["prologue"]
 id = "ovl19:004A"
 unit = "ovl19"
 addr = "ovl19:004A"
-size = 724
-name = "ovl19_e1"
+size = 1219
+name = "ShowCharacterSheet"
 signature = ""
 c_name = "ovl19_e1"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl19_e1 (Called by ovl19_e5 (the View command, ovl19:0AB3) and ovl16 (ovl16_fn_0B52, ovl16_fn_1DCB, ovl16_fn_209F). Draws the sheet window with the name, sex, race, age, alignment, class, abilities, levels, experience, combat block, weapon, armor, status and portraits of SelectedCharacter (ovl19:004A).); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl19:031E"
-unit = "ovl19"
-addr = "ovl19:031E"
-size = 495
-name = "ovl19_fn_031E"
-signature = ""
-c_name = "ovl19_fn_031E"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl19:050D"
 unit = "ovl19"
 addr = "ovl19:050D"
 size = 251
-name = "ovl19_e4"
+name = "ShowCharacterMoney"
 signature = ""
 c_name = "ovl19_e4"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl19_e4 (Called by ovl19_e1 (ovl19:004A, near call 050D after the Level line). Lists the Money[0..6] entries of SelectedCharacter (+$88) with their MoneyKindNames (DS:0FFA, ovl21:0DDF) in the window 12..26 x 7..14 (ovl19:050D code).); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8597,337 +8584,103 @@ id = "ovl19:0608"
 unit = "ovl19"
 addr = "ovl19:0608"
 size = 761
-name = "ovl19_e2"
+name = "ShowCombatStats"
 signature = ""
 c_name = "ovl19_e2"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl19_e2 (Draws the AC, HP, THAC0, Damage, Encumbrance and Movement labels of the sheet (literal strings at ovl19:05BE..05FC, the labels of the combat block), with the values of the selected character. Called by ovl19_e1 (ovl19:03F5) and from ovl16 (ovl16_fn_1DCB, ovl16_fn_2639).); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl19:0901"
 unit = "ovl19"
 addr = "ovl19:0901"
-size = 20
-name = "ovl19_e3"
-signature = ""
+size = 434
+name = "ShowAbilityScore"
+signature = "procedure ShowAbilityScore(Index: ShortInt; Highlight: Boolean)"
 c_name = "ovl19_e3"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl19_e3 (called by ovl19_e1 for rows 7..12 (STR..CHA labels, ovl19:004A loop, [bp-5] = 0..5 with Highlight 0); draws the score at offset 10h plus Index of SelectedCharacter; Strength 18 adds the percentile in parentheses (ovl19:0901 code)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl19:0915"
-unit = "ovl19"
-addr = "ovl19:0915"
-size = 20
-name = "ovl19_fn_0915"
-signature = ""
-c_name = "ovl19_fn_0915"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl19:0929"
-unit = "ovl19"
-addr = "ovl19:0929"
-size = 5
-name = "ovl19_fn_0929"
-signature = ""
-c_name = "ovl19_fn_0929"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl19:092E"
-unit = "ovl19"
-addr = "ovl19:092E"
-size = 5
-name = "ovl19_fn_092E"
-signature = ""
-c_name = "ovl19_fn_092E"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl19:0933"
-unit = "ovl19"
-addr = "ovl19:0933"
-size = 5
-name = "ovl19_fn_0933"
-signature = ""
-c_name = "ovl19_fn_0933"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl19:0938"
-unit = "ovl19"
-addr = "ovl19:0938"
-size = 10
-name = "ovl19_fn_0938"
-signature = ""
-c_name = "ovl19_fn_0938"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl19:0942"
-unit = "ovl19"
-addr = "ovl19:0942"
-size = 5
-name = "ovl19_fn_0942"
-signature = ""
-c_name = "ovl19_fn_0942"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl19:0947"
-unit = "ovl19"
-addr = "ovl19:0947"
-size = 5
-name = "ovl19_fn_0947"
-signature = ""
-c_name = "ovl19_fn_0947"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl19:094C"
-unit = "ovl19"
-addr = "ovl19:094C"
-size = 57
-name = "ovl19_fn_094C"
-signature = ""
-c_name = "ovl19_fn_094C"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl19:0985"
-unit = "ovl19"
-addr = "ovl19:0985"
-size = 5
-name = "ovl19_fn_0985"
-signature = ""
-c_name = "ovl19_fn_0985"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl19:098A"
-unit = "ovl19"
-addr = "ovl19:098A"
-size = 15
-name = "ovl19_fn_098A"
-signature = ""
-c_name = "ovl19_fn_098A"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl19:0999"
-unit = "ovl19"
-addr = "ovl19:0999"
-size = 5
-name = "ovl19_fn_0999"
-signature = ""
-c_name = "ovl19_fn_0999"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl19:099E"
-unit = "ovl19"
-addr = "ovl19:099E"
-size = 5
-name = "ovl19_fn_099E"
-signature = ""
-c_name = "ovl19_fn_099E"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl19:09A3"
-unit = "ovl19"
-addr = "ovl19:09A3"
-size = 272
-name = "ovl19_fn_09A3"
-signature = ""
-c_name = "ovl19_fn_09A3"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl19:0AB3"
 unit = "ovl19"
 addr = "ovl19:0AB3"
-size = 114
-name = "ovl19_e5"
-signature = "procedure ovl19_e5(var Flag: Byte)"
+size = 701
+name = "ViewSelectedCharacter"
+signature = "procedure ViewSelectedCharacter(var Done: Byte)"
 c_name = "ovl19_e5"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_5"
+notes = "renamed from ovl19_e5 (the View command: draws the sheet and the View: prompt with Items, Spells, Trade, Drop and Exit; the Temple, the shop and the camp call it for their V key (ovl19:0AB3; whitepaper 5.4, 5.22)); auto:entry_5"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl19:0B25"
-unit = "ovl19"
-addr = "ovl19:0B25"
-size = 587
-name = "ovl19_fn_0B25"
-signature = ""
-c_name = "ovl19_fn_0B25"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl19:0D70"
 unit = "ovl19"
 addr = "ovl19:0D70"
 size = 392
-name = "ovl19_fn_0D70"
-signature = ""
+name = "CanGiveUpItem"
+signature = "function CanGiveUpItem(Item: PMenuLine): Boolean"
 c_name = "ovl19_fn_0D70"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl19_fn_0D70 (the Items menu's guard: False for a readied item (Must be unreadied) and for a scroll with a pending scribe the player does not give up (ovl19:0D70; whitepaper 5.22)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl19:0EF8"
 unit = "ovl19"
 addr = "ovl19:0EF8"
-size = 234
-name = "ovl19_e6"
-signature = "procedure ovl19_e6(var Done: Byte)"
+size = 1496
+name = "RunItemMenu"
+signature = "procedure RunItemMenu(var Done: Byte)"
 c_name = "ovl19_e6"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl19_e6 (the Items command of the View prompt: the Ready, Use, Trade, Drop, Halve, Join, Sell and Id menu over the carried items (ovl19:0EF8; whitepaper 5.4); called by ViewSelectedCharacter for I and by the Use command (ovl08:031A)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl19:0FE2"
-unit = "ovl19"
-addr = "ovl19:0FE2"
-size = 1197
-name = "ovl19_fn_0FE2"
-signature = ""
-c_name = "ovl19_fn_0FE2"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl19:148F"
-unit = "ovl19"
-addr = "ovl19:148F"
-size = 65
-name = "ovl19_fn_148F"
-signature = ""
-c_name = "ovl19_fn_148F"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl19:14D0"
 unit = "ovl19"
 addr = "ovl19:14D0"
-size = 67
-name = "ovl19_e7"
-signature = "procedure ovl19_e7(P: Pointer)"
+size = 612
+name = "ReadyItem"
+signature = "procedure ReadyItem(Item: PMenuLine)"
 c_name = "ovl19_e7"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl19_e7 (ovl19:14D0 is the Ready action: RunItemMenu's R key (ovl19:0EF8) and the AI's item step (ovl09 calls it on SlotItems[0], SlotItems[1] and its picks). It marks the item Readied and applies its affect (CallAffectHandler, Affects[3] above $7F), or refuses with 'Wrong Class', 'already using <name>' or 'Your hands are full!' (RaceRow[ItemType] rows 0, 1 and 13 and PadB0)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl19:1513"
-unit = "ovl19"
-addr = "ovl19:1513"
-size = 545
-name = "ovl19_fn_1513"
-signature = ""
-c_name = "ovl19_fn_1513"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl19:1734"
 unit = "ovl19"
 addr = "ovl19:1734"
-size = 36
-name = "ovl19_fn_1734"
-signature = ""
+size = 185
+name = "TradeItem"
+signature = "procedure TradeItem(Item: PMenuLine)"
 c_name = "ovl19_fn_1734"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl19_fn_1734 (ovl19:1734 is the Trade action of RunItemMenu's T key (ovl19:0EF8, after CanGiveUpItem): 'Trade with Whom?' picks the recipient (res12_fn_2C48), the item is added to the recipient (res12_fn_15F7) and taken from SelectedCharacter (res12_fn_1509), or 'Overloaded' is shown when WouldOverloadInventory refuses the recipient); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl19:1758"
-unit = "ovl19"
-addr = "ovl19:1758"
-size = 149
-name = "ovl19_fn_1758"
-signature = ""
-c_name = "ovl19_fn_1758"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl19:17ED"
 unit = "ovl19"
 addr = "ovl19:17ED"
 size = 176
-name = "ovl19_fn_17ED"
-signature = ""
+name = "HalveItem"
+signature = "procedure HalveItem(Item: PMenuLine)"
 c_name = "ovl19_fn_17ED"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl19_fn_17ED (ovl19:17ED is the Halve action of RunItemMenu's H key (ovl19:0EF8, line H calls it): Count div 2 goes to a new 63-byte record copied from the item (Move, New), that record takes the item's Next, the item keeps the rest of the count, and 'Can''t halve that' is shown when the half is zero); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8935,220 +8688,77 @@ id = "ovl19:189D"
 unit = "ovl19"
 addr = "ovl19:189D"
 size = 493
-name = "ovl19_fn_189D"
-signature = ""
+name = "JoinItem"
+signature = "procedure JoinItem(Item: PMenuLine)"
 c_name = "ovl19_fn_189D"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl19_fn_189D (ovl19:189D is the Join action of RunItemMenu's J key (ovl19:0EF8, line J calls it): it adds the counts of the matching stacks of SelectedCharacter (same NameNum, ItemType, Plus, Cursed, Weight, Affects[1] below 2) to Item up to 255, taking each match off the character (res12_fn_1509) and carrying the rest into the next stack); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl19:1A8A"
 unit = "ovl19"
 addr = "ovl19:1A8A"
-size = 284
-name = "ovl19_e8"
-signature = "procedure ovl19_e8(P: Pointer; var B: Byte)"
+size = 612
+name = "UseItem"
+signature = "procedure UseItem(Item: PMenuLine; var Done: Byte)"
 c_name = "ovl19_e8"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl19_e8 (ovl19:1A8A is the Use action: RunItemMenu's U key (ovl19:0EF8) and UseMagicItem (ovl09:03E4, the computer's magic-item step) pass it an item; a scroll (ovl22_e6 true) gives its spell by ChooseSpellFromList, an item with Affects[2] gives it directly, and the spell is cast through ovl22_e5 (matched, ovl19:1A8A)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl19:1BA6"
-unit = "ovl19"
-addr = "ovl19:1BA6"
-size = 49
-name = "ovl19_fn_1BA6"
-signature = ""
-c_name = "ovl19_fn_1BA6"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl19:1BD7"
-unit = "ovl19"
-addr = "ovl19:1BD7"
-size = 60
-name = "ovl19_fn_1BD7"
-signature = ""
-c_name = "ovl19_fn_1BD7"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl19:1C13"
-unit = "ovl19"
-addr = "ovl19:1C13"
-size = 58
-name = "ovl19_fn_1C13"
-signature = ""
-c_name = "ovl19_fn_1C13"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl19:1C4D"
-unit = "ovl19"
-addr = "ovl19:1C4D"
-size = 161
-name = "ovl19_fn_1C4D"
-signature = ""
-c_name = "ovl19_fn_1C4D"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl19:1CEE"
 unit = "ovl19"
 addr = "ovl19:1CEE"
-size = 605
-name = "ovl19_fn_1CEE"
-signature = ""
+size = 612
+name = "SellItem"
+signature = "procedure SellItem(Item: PMenuLine)"
 c_name = "ovl19_fn_1CEE"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl19_fn_1CEE (ovl19:1CEE is the Sell action: RunItemMenu's S key (ovl19:0EF8) after CanGiveUpItem; it shows 'I'll give you <offer> gold pieces for your <item>', asks 'Is It a Deal?' and on Y shows 'Sold!', removes the item (res12_fn_1509) and pays the offer in platinum and gold (matched, ovl19:1CEE)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl19:1F4B"
-unit = "ovl19"
-addr = "ovl19:1F4B"
-size = 7
-name = "ovl19_fn_1F4B"
-signature = ""
-c_name = "ovl19_fn_1F4B"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl19:1F52"
 unit = "ovl19"
 addr = "ovl19:1F52"
-size = 343
-name = "ovl19_fn_1F52"
-signature = ""
+size = 516
+name = "IdentifyItem"
+signature = "procedure IdentifyItem(Item: PMenuLine; var Redraw: Byte)"
 c_name = "ovl19_fn_1F52"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl19_fn_1F52 (ovl19:1F52 is the Id action of the item menu: RunItemMenu's I key calls it (ovl19:0EF8) and its strings are 'For 200 gold pieces I''ll identify your ' (1EC8), 'Is It a Deal? ' (1EF0), 'Not Enough Money' (1EFF), 'I can''t tell anything new about your ' (1F10) and 'It looks like some sort of ' (1F36); it charges IdentifyPrice 200 gold from the character or the pool and clears TMenuLine.HiddenNames of the item (matched, ovl19:1F52)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl19:20A9"
-unit = "ovl19"
-addr = "ovl19:20A9"
-size = 173
-name = "ovl19_fn_20A9"
-signature = ""
-c_name = "ovl19_fn_20A9"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl19:2156"
 unit = "ovl19"
 addr = "ovl19:2156"
-size = 65
-name = "ovl19_fn_2156"
+size = 849
+name = "TradeMoney"
 signature = ""
 c_name = "ovl19_fn_2156"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl19_fn_2156 (ovl19:2156 is the Trade command of the View prompt for money: ViewSelectedCharacter's T key calls it (ovl19:0AB3); it asks 'Trade to?' (res12_fn_2C48), lists the coin kinds under 'Select type of coin' with ChooseFromList, asks 'How much <kind> will you trade? ' (ReadAmount) and moves the money with TransferMoney (ovl21:044C); its list is the one ovl21's TakeMoney builds (matched, ovl19:2156)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl19:2197"
-unit = "ovl19"
-addr = "ovl19:2197"
-size = 156
-name = "ovl19_fn_2197"
-signature = ""
-c_name = "ovl19_fn_2197"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl19:2233"
-unit = "ovl19"
-addr = "ovl19:2233"
-size = 89
-name = "ovl19_fn_2233"
-signature = ""
-c_name = "ovl19_fn_2233"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl19:228C"
-unit = "ovl19"
-addr = "ovl19:228C"
-size = 247
-name = "ovl19_fn_228C"
-signature = ""
-c_name = "ovl19_fn_228C"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl19:2383"
-unit = "ovl19"
-addr = "ovl19:2383"
-size = 51
-name = "ovl19_fn_2383"
-signature = ""
-c_name = "ovl19_fn_2383"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl19:23B6"
-unit = "ovl19"
-addr = "ovl19:23B6"
-size = 241
-name = "ovl19_fn_23B6"
-signature = ""
-c_name = "ovl19_fn_23B6"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl19:24A7"
 unit = "ovl19"
 addr = "ovl19:24A7"
 size = 692
-name = "ovl19_fn_24A7"
+name = "ChooseAndDropMoney"
 signature = ""
 c_name = "ovl19_fn_24A7"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl19_fn_24A7 (the View prompt's D key (ovl19:0AB3 calls it, followed by ShowCharacterMoney) lists the coin kinds SelectedCharacter holds under 'Select type of coin' (ChooseFromList), asks 'How much <kind> will you drop? ' (ReadAmount) and calls DropMoney (ovl21:0A01); ovl19:24A7 is the Drop twin of TradeMoney (ovl19:2156)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -9211,7 +8821,7 @@ size = 5
 name = "ovl19_init"
 signature = ""
 c_name = "ovl19_init"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_0"
 evidence = ["prologue"]
@@ -16516,7 +16126,7 @@ unit = "res12"
 addr = "00BA:08EF"
 size = 132
 name = "res12_fn_08EF"
-signature = ""
+signature = "procedure res12_fn_08EF(Who: Pointer; Col: Byte; Row: Byte)"
 c_name = "res12_fn_08EF"
 level = "none"
 justification = ""
@@ -16529,7 +16139,7 @@ unit = "res12"
 addr = "00BA:0973"
 size = 112
 name = "res12_fn_0973"
-signature = ""
+signature = "procedure res12_fn_0973(Who: Pointer; Col: Byte; Row: Byte; Mode: Byte)"
 c_name = "res12_fn_0973"
 level = "none"
 justification = ""
@@ -16620,7 +16230,7 @@ unit = "res12"
 addr = "00BA:10AD"
 size = 57
 name = "res12_fn_10AD"
-signature = ""
+signature = "function res12_fn_10AD(Experience: LongInt): string"
 c_name = "res12_fn_10AD"
 level = "none"
 justification = ""
@@ -16737,7 +16347,7 @@ unit = "res12"
 addr = "00BA:15F7"
 size = 156
 name = "res12_fn_15F7"
-signature = ""
+signature = "procedure res12_fn_15F7(Who: Pointer; Item: Pointer)"
 c_name = "res12_fn_15F7"
 level = "none"
 justification = ""
@@ -17153,7 +16763,7 @@ unit = "res12"
 addr = "00BA:2C48"
 size = 443
 name = "res12_fn_2C48"
-signature = ""
+signature = "procedure res12_fn_2C48(Prompt: String40; Mode: Byte; var Who: Pointer)"
 c_name = "res12_fn_2C48"
 level = "none"
 justification = ""

@@ -204,7 +204,7 @@ end;
   the turn through res12_fn_2637): rolls 1d7 rounds; each round walks Who^.Items for the first
   item that passes (not ovl22_e6, Affects[3] below $80, Readied, level from Affects[2] in
   1..MaxSpell adjusted down by $17 above it, and SpellAccepted in range) and remembers it as
-  Best. Afterwards a chosen Best is used through ovl19_e8 and the result is True. Early exits
+  Best. Afterwards a chosen Best is used through UseItem and the result is True. Early exits
   (CanUseMagicItem zero, the actor's side count ds6814Sides zero, VarNoCasting set) return False at
   once. QUIRK ovl09:049F: RowByte (the Slot byte of the item's ItemTable row) is computed but never read. QUIRK: the
   [bp-5..-6] and [bp-9..-12] frame bytes are never read (UnusedA, UnusedB). Globals: ds6814Sides
@@ -263,7 +263,7 @@ begin
 Done:
   if Best <> nil then
   begin
-    ovl19_e8(Best, E8Done);
+    UseItem(Best, E8Done);
     UseMagicItem := True;
   end;
 end;
@@ -810,7 +810,7 @@ end;
   a slot: FlagSlotItem makes the pick its own slot, FlagSlot11 with FlagAttack picks SlotItems[SlotType49]
   and FlagSlot12 with FlagAttack picks SlotItems[SlotType1C]; the exact flags FlagsSlotless also count.
   When SlotItems[0] holds the pick or a cursed item the whole slot block is skipped. Otherwise the
-  slot-0 item is readied through ovl19_e7 (the Ready Item entry that the whitepaper's overlay table
+  slot-0 item is readied through ReadyItem (the Ready Item entry that the whitepaper's overlay table
   lists for ovl19), the slot-1 item's Hands are taken off again when it is not cursed, and the pick is
   readied. After that
   (SkipSlotUse) res12_fn_0BB8 and ovl13_e6 run, and HandsInUse decides: above HandThreshold (2) the
@@ -929,13 +929,13 @@ begin
   if SlotUsable = 0 then
     goto SkipSlotUse;
   if Who^.SlotItems[0] <> nil then
-    ovl19_e7(Who^.SlotItems[0]);
+    ReadyItem(Who^.SlotItems[0]);
   res12_fn_0BB8(Who);
   if Who^.SlotItems[1] <> nil then
     if not Who^.SlotItems[1]^.Cursed then
       Who^.HandsInUse := Who^.HandsInUse - ItemTable[Byte(Who^.SlotItems[1]^.ItemType)].Hands;
   if Candidate <> nil then
-    ovl19_e7(Candidate);
+    ReadyItem(Candidate);
   Used := 1;
 SkipSlotUse:
   res12_fn_0BB8(Who);
@@ -948,12 +948,12 @@ SkipSlotUse:
   begin
     if (Who^.SlotItems[1] = nil) or Who^.SlotItems[1]^.Cursed then
     begin
-      ovl19_e7(Candidate);
+      ReadyItem(Candidate);
       Used := 1;
     end
     else
     begin
-      ovl19_e7(Who^.SlotItems[1]);
+      ReadyItem(Who^.SlotItems[1]);
       Used := 1;
     end;
   end
@@ -961,10 +961,10 @@ SkipSlotUse:
     if SlotUsable <> 0 then
     begin
       if Who^.SlotItems[1] <> nil then
-        ovl19_e7(Who^.SlotItems[1]);
+        ReadyItem(Who^.SlotItems[1]);
       res12_fn_0BB8(Who);
       if PlusPick <> nil then
-        ovl19_e7(PlusPick);
+        ReadyItem(PlusPick);
       Used := 1;
     end;
   res12_fn_0BB8(Who);
