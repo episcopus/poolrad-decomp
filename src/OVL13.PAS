@@ -209,7 +209,7 @@ begin
     ds681D := False;
     RunAffectHooks(HookComputeMovement, Who);
     Who^.AttackSlots[2] := AttacksThisRound(ds681A);
-    Pad4[5] := Who^.Pad6B;
+    Pad4[5] := Who^.SweepAttacks;
     if Who^.Flag10D <> 0 then
     begin
       Initiative := RollDice(1, InitiativeDieSides) + DexterityAttackAdjustment(Who);

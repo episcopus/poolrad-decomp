@@ -9,12 +9,13 @@ unit RES12;
 interface
 uses Crt, POOLVARS, RES03, RES06, RES07, RES09, OVL25, OVL26, OVL27, OVL28, OVL30, OVL31;
 type
-  { The readied-item bonus accumulator AddReadiedItemBonus fills for RecalcCombatValues: the four signed
-    bytes it combines into the character's +$112 value (with the flag byte the second var
-    parameter points at). RecalcCombatValues clears and sums all five bytes as Values. }
+  { The readied-item bonus accumulator AddReadiedItemBonus fills for RecalcCombatValues: five signed
+    bytes (with the flag byte the second var parameter points at). RecalcCombatValues clears all five,
+    stores the dexterity adjustment in DexAdjust, and sums all five as Values into ResistValue (+$111);
+    only BestValue, PlusSum and BestPlus (minus two) go into ds112 (+$112). }
   TBonus = record
     case Integer of
-      0: (Pad0: Byte;          { +0: cleared by the caller, not read by AddReadiedItemBonus }
+      0: (DexAdjust: Byte;     { +0: the dexterity adjustment RecalcCombatValues stores }
           KindBonus: ShortInt; { +1: Value + Plus of a kind-1 item }
           PlusSum: ShortInt;   { +2: the plus of every other non-kind-9 item }
           BestPlus: ShortInt;  { +3: the largest plus of a kind-9 item }
@@ -101,13 +102,16 @@ const
   HeavyArmourMove = 6;
   MagicArmourMoveBonus = 3;
   { The load limits of CapMovementByLoad (the excess carried weight): up to LightLoadLimit the
-    movement is left alone, up to MediumLoadLimit it is 9, up to HeavyLoadLimit 6, and above
-    that 3. }
+    movement is left alone, up to MediumLoadLimit it is MediumLoadMove, up to HeavyLoadLimit
+    HeavyLoadMove, and above that OverloadMove. }
   LightLoadLimit = $200;
   MediumLoadFrom = $201;
   MediumLoadLimit = $300;
   HeavyLoadFrom = $301;
   HeavyLoadLimit = $400;
+  MediumLoadMove = 9;
+  HeavyLoadMove = 6;
+  OverloadMove = 3;
   { Item kinds AddReadiedItemBonus tells apart (ItemTable[item kind].Slot): 0 weapon, 2 armour. }
   PlusItemKind = 1;         { item kind whose bonus is assigned, not accumulated }
   SpecialItemKind = 9;      { item kind whose plus is kept as a maximum }
@@ -165,6 +169,9 @@ const
   LightMagenta = $0D;
   Yellow = $0E;
   White = $0F;
+  { CopyPictureItem reads VideoAdapter: 1 is the EGA display pages, where the pixel buffer holds one
+    plane byte per four data bytes of the EGA layout (whitepaper 5.23). }
+  VideoAdapterEga = 1;
   { SizeOf(TMenuLine): the item record GetMem allocates and FreeMem frees in 1509 and 15F7
     (the original pushes $3f) and ovl05 frees with ItemListSize. }
   ItemListSize = $3F;
@@ -181,6 +188,27 @@ const
   { TCharacter.Side values: the party is 0, the monsters 1 (SetQuickCombat compares them). }
   SideParty = 0;
   SideMonsters = 1;
+  { IsMaxClassLevel's race values (Race, +$2E, the RaceNames table DS:0F03) and the strength scores
+    at which a demihuman's level limit in a class rises (the AD&D demihuman level limits [H]). }
+  RaceDwarf = 1;
+  RaceElf = 2;
+  RaceGnome = 3;
+  RaceHalfElf = 4;
+  RaceHalfling = 5;
+  Strength17 = $11;   { 17, raises the fighter limit by one }
+  Strength18 = $12;   { 18, raises it by two }
+  { The ClassLevels indices IsMaxClassLevel and SpellCasterLevel test (ClassNames DS:0D38). }
+  ClassCleric = 0;
+  ClassFighter = 2;
+  ClassMagicUser = 5;
+  { SpellCasterLevel: the SpellTable.SpellClass values (ClassNames order: 0 cleric, 1 magic-user, 2
+    a fixed level) and the fixed levels it returns for class 2 and while ItemAffectUse is set. What
+    spell class 2 and ItemAffectUse are is not proven [?]. }
+  SpellClassCleric = 0;
+  SpellClassMagicUser = 1;
+  SpellClassFixed = 2;
+  SpecialSpellLevel = $0C;   { 12 }
+  ItemSpellLevel = 6;
   { The most records the ScanTargets table ds6718 can hold: one per combatant of CombatantTable
     (72 plus its count at entry 0), times the 3 bytes of a TSortRec. 255B saves and restores exactly
     this many records of ds6718 around its scan. }
@@ -195,39 +223,76 @@ const
     bit 0 with the S (search) key and sets bit 1 with L). The location line (00BA:290B) appends
     ' search' while bit 0 is set. }
   VarTravelMode = 714;
-  { The ds49F3 view modes RedrawView dispatches on (the setters are in the other units): 1 is set
-    by the Temple (ovl04:0D0F) and the shop, 2 by the camp (MakeCamp, ovl15:1E6F), 3 and 4 select
-    the area view (ShowAreaView; whitepaper 5.2.1) and 6 by the end of battle (EndBattle,
-    ovl05:1527). 0 is the plain full-window layout the shop leaves. }
+  { The ds49F3 view modes RedrawView dispatches on (the setters are in the other units): 0 is the
+    plain full-window layout of the create-character and training screens (RunCharacterMenu,
+    ovl16:0161, sets it); 1 is set by the Temple (VisitTemple, ovl04:0D09) and the shop (ShopMain,
+    ovl06:053E), 2 by the camp (MakeCamp, ovl15:1E6F), 3 and 4 select the area view (ShowAreaView;
+    whitepaper 5.2.1), 5 by combat (StartBattle and RunCombat) and 6 by the end of battle (EndBattle,
+    ovl05:1527). }
   ViewModePlain = 0;
   ViewModePortrait = 1;
   ViewModeCamp = 2;
   ViewModeMap = 3;
   ViewModeView = 4;
+  ViewModeCombat = 5;
   ViewModeLoot = 6;
   { The width of one area map page: DrawLocationLine adds this many columns of the 44-wide map grid
     per map page for AreaViewKind 3 (one page, added once) and 4 (two pages, added twice). }
   MapPageWidth = $D;
-  { The keys SelectPartyMember's loop ends on: Enter and Escape return immediately and E exits the
-    screen (the prompt's Exit hotkey). }
+  { The keys SelectPartyMember's loop ends on: Enter and Escape leave the selection as it is, S does
+    too (the hotkey of the prompt's "Select" word), and E exits the screen (the "Exit" hotkey,
+    WithExit) and clears the selection. }
   KeyEnter = #13;
   KeyEscape = #27;
+  KeyExit = 'E';
+  KeySelect = 'S';
   { DrawCombatScreen: MoveCombatCursor's margin ($FF passes its view-scroll test) and direction
     (index 8 of DirStepX/DirStepY is (0,0), so the cursor stays on its cell), and the view origin's
     centre cell (the 7x7 view's middle, three cells from the origin). }
   CursorMargin = $FF;
   CursorNoStep = 8;
   ViewCentreCell = 3;
+  { DrawArmourClass shows the armour class as the distance from ArmourClassBase (60): the stored
+    ResistValue is 60 minus the AC (whitepaper 5.24; where the 60 comes from is not proven [?]). }
+  ArmourClassBase = 60;
+  { ShowHitMessage: the combat picture slots of an affect message (Flag set) and a damage message,
+    and the delay after each drawn animation frame. }
+  AffectHitIcon = $16;
+  DamageHitIcon = $17;
+  FlashDelay = $46;
+  { The two per-character message boxes ShowCharacterMessage and ClearCharacterMessage write: in the
+    combat view (ViewModeCombat) the box (CombatMessageLeft,CombatMessageRow) down to
+    (CombatMessageRight,CombatMessageBottom), and elsewhere the box
+    (MessageLeft,MessageTop)-(MessageRight,MessageBottom) with MessageFrameTop as the top when
+    ShowCharacterMessage draws the frame. }
+  CombatMessageLeft = $17;
+  CombatMessageRight = $26;
+  CombatMessageBottom = $15;
+  CombatMessageRow = $A;
+  MessageLeft = 1;
+  MessageRight = $26;
+  MessageTop = $12;
+  MessageFrameTop = $11;
+  MessageBottom = $16;
+  { WalkCombatLine: a view cell is CellPitch (3) pixels (the 24x24 icon pitch); the view reaches
+    ViewLimit (6) cells and ViewPixelLimit ($12) pixels from its origin, and a cursor more than
+    CursorCentreMargin (3) cells from a cell scrolls the view (ovl31's CentreMargin). }
+  CellPitch = 3;
+  ViewLimit = 6;
+  ViewPixelLimit = $12;
+  CursorCentreMargin = 3;
 
 { 00BA:0000. Applies the readied weapon to Who's attack values; RecalcCombatValues calls it after it
   has copied the character's base values. With no readied weapon (SlotItems[0], +$CC) it does
   nothing. Otherwise the weapon's item kind picks a ItemTable row (DS:5582): its byte 9 becomes
   Who^.WeaponAttacks (+$115), byte $A Who^.WeaponDamage (+$117) and byte $B the base of the
   signed Who^.WeaponDamageBonus (+$119). The attack flags byte $E adds the dexterity roll
-  adjustment (DexterityAttackAdjustment, bit 2) to HitAdjust (+$110, reset to Thac0 +$2D first) and the
-  strength roll (StrengthAttackAdjustment) to HitAdjust and the strength damage (StrengthDamageAdjustment) to the
-  damage bonus (bit 4); bit 0 adds the plus of slot item 11 (+$F8) and bit 7 the plus of slot
-  item 12 (+$FC) to the weapon's own plus. Race 2 gets one more point with the bonus kinds.
+  adjustment (DexterityAttackAdjustment) to HitAdjust (+$110, reset to Thac0 +$2D first) when mask
+  WeaponFlagDexToHit (2) is set, and the strength roll (StrengthAttackAdjustment) to HitAdjust and the
+  strength damage (StrengthDamageAdjustment) to the damage bonus when mask WeaponFlagStrength (4) is set;
+  mask WeaponFlagSlot11Plus (1) adds the plus of slot item 11 (+$F8) and mask WeaponFlagSlot12Plus
+  ($80) the plus of slot item 12 (+$FC) to the weapon's own plus. Race BonusRace (2) gets one more
+  point with the bonus kinds.
   Globals: ItemTable. }
 procedure ApplyWeaponBonuses(Who: PCharacter);
 var
@@ -336,8 +401,9 @@ end;
 { 00BA:03A0. Caps Who's movement by the weight the character carries above its strength
   allowance; RecalcCombatValues calls it once after the readied-item loop. Weight is
   CarriedWeight (+$102) minus StrengthWeightAllowance(Who) (the strength weight allowance), clamped at 0
-  from below. The excess picks the cap: up to $200 the movement is left alone, up to $300 it is
-  9, up to $400 6, and above that 3; the movement only falls, never rises.
+  from below. The excess picks the cap: up to LightLoadLimit the movement is left alone, up to
+  MediumLoadLimit it is MediumLoadMove (9), up to HeavyLoadLimit HeavyLoadMove (6), and above that
+  OverloadMove (3); the movement only falls, never rises.
   Globals: none beyond Who. }
 procedure CapMovementByLoad(Who: PCharacter);
 var
@@ -349,10 +415,10 @@ begin
     Weight := 0;
   case Weight of
     0..LightLoadLimit: NewMovement := Who^.Movement;
-    MediumLoadFrom..MediumLoadLimit: NewMovement := MediumArmourMove;
-    HeavyLoadFrom..HeavyLoadLimit: NewMovement := HeavyArmourMove;
+    MediumLoadFrom..MediumLoadLimit: NewMovement := MediumLoadMove;
+    HeavyLoadFrom..HeavyLoadLimit: NewMovement := HeavyLoadMove;
   else
-    NewMovement := 3;
+    NewMovement := OverloadMove;
   end;
   if NewMovement < Who^.Movement then
     Who^.Movement := NewMovement;
@@ -433,12 +499,15 @@ begin
     DrawTextAt(Col, Row, Green, Item^.Text);
 end;
 
-{ 00BA:0767. Draws the roster panel the shop and the Temple show (whitepaper 5.24): a
-  "Name / AC  HP" header and one line per party member of the list ds5D96. The member Who is
-  drawn white from its Name, every other member through DrawCharacterName. Each line's armour value
-  (DrawArmourClass) and current hit points (DrawHitPoints) are drawn in one of three columns picked
-  by the value's range, and each line is cleared first. The left column is 1 while the shop is
-  open (ds49F3 = 0) and $11 otherwise. Globals: ds49F3 (read), ds5D96 (read). }
+{ 00BA:0767. Draws the roster panel the view screens show (whitepaper 5.24): a "Name / AC  HP"
+  header and one line per party member of the list ds5D96. The member Who is drawn white from its
+  Name, every other member through DrawCharacterName. Each line's armour value (DrawArmourClass) and
+  current hit points (DrawHitPoints) are drawn in one of three columns picked by the value's range,
+  and each line is cleared first. The left column is 1 in the plain full-window layout (ViewModePlain,
+  the create-character and training screens, RunCharacterMenu ovl16:0161) and $11 in every other view: the shop and the
+  Temple (ViewModePortrait, beside the portrait window), the camp and area views (RedrawView) and the
+  loot screen. Callers: the shop, the Temple, RedrawView (camp, area view and loot), SelectPartyMember
+  and DrawWildernessScreen. Globals: ds49F3 (read), ds5D96 (read). }
 procedure DrawPartyRoster(Who: PCharacter);
 var
   Member: PCharacter;
@@ -446,7 +515,7 @@ var
   Row: Byte;
   ValueShift: Byte;
 begin
-  if ds49F3 = 0 then
+  if ds49F3 = ViewModePlain then
     Left := 1
   else
     Left := $11;
@@ -484,15 +553,16 @@ begin
 end;
 { 00BA:08EF. Draws the character's armour value (the byte +$111 ovl24's RollBeatsResistance compares a
   d20+level against; DrawCharacterPanel shows it under the "AC" heading) as text at (Col, Row) in
-  Green: the distance from 60, Abs(Value - 60), written with a leading '-' when the value is
-  above 60 (a negative armour class). Called by DrawPartyRoster and DrawCharacterPanel. }
+  Green: the distance from ArmourClassBase, Abs(Value - ArmourClassBase), written with a leading '-'
+  when the value is above ArmourClassBase (a negative armour class). Called by DrawPartyRoster and
+  DrawCharacterPanel. }
 procedure DrawArmourClass(Who: PCharacter; Col, Row: Byte);
 var
   ValueText: string;
   Unused: Byte;   { the original frame carries one byte here that the code never reads }
 begin
-  ValueText := ByteToText(Abs(Who^.ResistValue - 60));
-  if Who^.ResistValue > 60 then
+  ValueText := ByteToText(Abs(Who^.ResistValue - ArmourClassBase));
+  if Who^.ResistValue > ArmourClassBase then
     ValueText := '-' + ValueText;
   DrawTextAt(Col, Row, Green, ValueText);
 end;
@@ -568,21 +638,35 @@ begin
     if HasAffect(Who, HelplessAffects[I], Affect) then
       IsHelpless := True;
 end;
-{ 00BA:0BB8. Recomputes every combat value of Who from the items it carries and has readied.
+{ 00BA:0BB8. Recomputes every combat value of Who from the items it carries and has readied; called
+  whenever a character's equipment or status changes (ovl03, ovl06, ovl08..ovl10, ovl12, ovl13,
+  ovl16, ovl19, ovl21, ovl24).
   It clears the 13 per-kind slots (SlotItems, +$CC); walks the carried item list (Items, +$C8) to
-  count the items (ItemCountC7), add every item's weight times its Count to CarriedWeight (+$102)
-  and to the readied weight ReadiedItemWeight (DS:4846), and file each readied item into its slot (kind 0..8
-  into SlotItems[kind], kind 9 into the first free of slots 9 and 10, item type $49 into slot 11,
-  $1C into slot 12), raising HandsInUse (+$100) by the kind's ItemTable[item type].Hands. It then adds the
-  carried money to the weight, copies the base attack triple (+$A3..+$A8) into the readied weapon
-  triple (+$115..+$11A) and the base resistance (+$A9) into ResistValue (+$111), resets SaveBonus,
-  Movement and HitAdjust, adds the unarmed strength bonuses (StrengthAttackAdjustment, StrengthDamageAdjustment) when no
-  weapon is readied, and runs ApplyWeaponBonuses. For every readied item it runs SetArmourMovement
-  and AddReadiedItemBonus; it then cuts the weight-excluding item's 5000, floors the weight at
-  ReadiedItemWeight, sets ResistValue to the sum of the accumulator, ds112 (+$112) to its best three values
-  minus two, and Movement through CapMovementByLoad. Called whenever a character's equipment or
-  status changes.
-  Globals: ItemTable, ReadiedItemWeight (write). }
+  count the items (ItemCountC7, +$C7), add every item's Weight (+$37) times its Count (+$39) to
+  CarriedWeight (+$102) and to the readied weight ReadiedItemWeight (DS:4846), and file each readied
+  item into its slot (kind 0..8 into SlotItems[kind], kind 9 into the first free of slots 9 and 10,
+  item type $49 into slot 11 and $1C into slot 12), raising HandsInUse (+$100) by the kind's
+  ItemTable[item type].Hands. It adds the seven carried money words (Money, +$88, coins count one
+  each) to the weight, copies the base attack triple (+$A3..+$A8) into the readied weapon triple
+  (+$115..+$11A) and the base resistance (ResistBase, +$A9) into ResistValue (+$111), then clears the
+  five accumulator bytes (TBonus), SaveBonus (+$101) and the armour-plus flag, sets Movement (+$11C)
+  to BaseMovement (+$72) and HitAdjust (+$110) to Thac0 (+$2D), and stores the dexterity adjustment
+  (DexterityAdjustment) in DexAdjust. With no readied weapon it adds the unarmed strength bonuses
+  (StrengthAttackAdjustment, StrengthDamageAdjustment) to HitAdjust and the damage bonus, then runs
+  ApplyWeaponBonuses. For every readied item it runs SetArmourMovement and AddReadiedItemBonus; a
+  positive plus on a kind-2 (armour) item sets ArmourPlusFlag, and after the loop that flag clears
+  Bonus.BestPlus (a magic armour drops the largest kind-9 plus; why is not proven [?]). A readied item
+  whose NameNum[1] is BagNameNum instead counts ExcludedWeight (5000) less, floored at
+  ReadiedItemWeight. CapMovementByLoad then caps Movement by the load, and only after that does
+  BestValue reach its final value: it is first raised to the base ResistValue (so the armour base
+  counts once), ResistValue becomes the sum of all five accumulator bytes (DexAdjust, KindBonus,
+  PlusSum, BestPlus and BestValue), and ds112 (+$112) becomes BestValue + PlusSum + BestPlus - 2
+  (DexAdjust and KindBonus do not go into it). Finally SweepAttacks (+$6B) is set: the fighter level
+  (ClassLevels[2]) when it is above 0 and Race (+$2E) is above 0, else 1.
+  Globals: reads ItemTable, writes ReadiedItemWeight, and reads and writes Who's Race, ClassLevels,
+  Money and the fields SlotItems, ItemCountC7, HandsInUse, CarriedWeight,
+  WeaponAttacks/WeaponDamage/WeaponDamageBonus, SaveBonus, ResistValue, Movement, HitAdjust, ds112
+  and SweepAttacks. }
 procedure RecalcCombatValues(Who: PCharacter);
 var
   TripleIndex: Byte;
@@ -654,7 +738,7 @@ begin
   Who^.ResistValue := Who^.ResistBase;
   Who^.Movement := Who^.BaseMovement;
   Who^.HitAdjust := Who^.Thac0;
-  Bonus.Pad0 := DexterityAdjustment(Who);
+  Bonus.DexAdjust := DexterityAdjustment(Who);
   if Who^.SlotItems[0] = nil then
   begin
     Who^.HitAdjust := Who^.HitAdjust + StrengthAttackAdjustment(Who);
@@ -690,9 +774,9 @@ begin
     Who^.ResistValue := Who^.ResistValue + Bonus.Values[BonusIndex];
   Who^.ds112 := Bonus.BestValue + Bonus.PlusSum + Bonus.BestPlus - 2;
   if (Who^.ClassLevels[2] > 0) and (Who^.Race > 0) then
-    Who^.Pad6B := Who^.ClassLevels[2]
+    Who^.SweepAttacks := Who^.ClassLevels[2]
   else
-    Who^.Pad6B := 1;
+    Who^.SweepAttacks := 1;
 end;
 { 00BA:1037. Formats the byte N as its decimal text: it writes N into a 255-character local through
   Str and copies that into the string result. DrawArmourClass and DrawHitPoints show the AC and
@@ -749,8 +833,8 @@ end;
 { 00BA:1168. Maps Who's dexterity (Dexterity, +$13) to its AD&D reaction/attack adjustment:
   dexterity 0..2 gives -4, 3..5 the dexterity minus 6, 6..15 gives 0, 16..18 the dexterity
   minus 15, 19..20 gives 3, 21..23 gives 4 and 24..25 gives 5. ApplyWeaponBonuses adds it to
-  the attack value (HitAdjust) for a weapon kind whose attack flags have bit 2. ovl13 also calls
-  it. Globals: none. }
+  the attack value (HitAdjust) for a weapon kind whose attack flags carry mask WeaponFlagDexToHit
+  (2). ovl13 also calls it. Globals: none. }
 function DexterityAttackAdjustment(Who: PCharacter): ShortInt;
 var
   Dex: Byte;
@@ -944,7 +1028,7 @@ begin
   ClearWindow(0, BottomRow, ScreenLastCol, BottomRow);
 end;
 { 00BA:16EC. Shows a message about Who in a small window, its top Row in the combat view (view
-  mode 5) and a fixed window otherwise; draws Who's name (DrawCharacterName) and the paged text Text
+  mode ViewModeCombat) and a fixed window otherwise; draws Who's name (DrawCharacterName) and the paged text Text
   (ShowPagedText) and, when Wait is set, delays DelayByGameSpeed and clears the window again
   (ClearCharacterMessage). Used for the per-character combat and camp messages ('is bandaged',
   'flees in panic', 'is cured'). Globals: ds49F3 (view mode), RestWindowActive (picks the window top).
@@ -953,24 +1037,24 @@ procedure ShowCharacterMessage(Who: PCharacter; Text: string; Row, Wait: Byte);
 var
   Top: Byte;
 begin
-  if ds49F3 = 5 then
+  if ds49F3 = ViewModeCombat then
   begin
-    ClearWindow($17, Row, $26, $15);
-    DrawCharacterName(Who, $17, Row, 0);
-    ShowPagedText($17, Row + 1, $26, $15, Green, 1, Text);
+    ClearWindow(CombatMessageLeft, Row, CombatMessageRight, CombatMessageBottom);
+    DrawCharacterName(Who, CombatMessageLeft, Row, 0);
+    ShowPagedText(CombatMessageLeft, Row + 1, CombatMessageRight, CombatMessageBottom, Green, 1, Text);
   end
   else
   begin
     if RestWindowActive <> 0 then
-      Top := $12
+      Top := MessageTop
     else
     begin
-      Top := $11;
-      DrawWindowFrame(1, Top, $26, $16, 0);
+      Top := MessageFrameTop;
+      DrawWindowFrame(MessageLeft, Top, MessageRight, MessageBottom, 0);
     end;
-    ClearWindow(1, Top, $26, $16);
-    DrawCharacterName(Who, 1, Top + 1, 0);
-    ShowPagedText(1, Top + 1 + 1, $26, $16, Green, 1, Text);
+    ClearWindow(MessageLeft, Top, MessageRight, MessageBottom);
+    DrawCharacterName(Who, MessageLeft, Top + 1, 0);
+    ShowPagedText(MessageLeft, Top + 1 + 1, MessageRight, MessageBottom, Green, 1, Text);
   end;
   if Wait <> 0 then
   begin
@@ -978,19 +1062,20 @@ begin
     ClearCharacterMessage;
   end;
 end;
-{ 00BA:17E3. Clears the message window ShowCharacterMessage wrote in: in the combat view (view mode 5)
-  the box ($17,$A)-($26,$15), otherwise the box (1,$12)-($26,$16). Called after the wait flag of
+{ 00BA:17E3. Clears the message window ShowCharacterMessage wrote in: in the combat view (ViewModeCombat)
+  the box (CombatMessageLeft,CombatMessageRow)-(CombatMessageRight,CombatMessageBottom), otherwise the
+  box (MessageLeft,MessageTop)-(MessageRight,MessageBottom). Called after the wait flag of
   ShowCharacterMessage and by the camp, temple and resting screens to wipe a message. Globals: ds49F3. }
 procedure ClearCharacterMessage;
 begin
-  if ds49F3 = 5 then
-    ClearWindow($17, $A, $26, $15)
+  if ds49F3 = ViewModeCombat then
+    ClearWindow(CombatMessageLeft, CombatMessageRow, CombatMessageRight, CombatMessageBottom)
   else
-    ClearWindow(1, $12, $26, $16);
+    ClearWindow(MessageLeft, MessageTop, MessageRight, MessageBottom);
 end;
 { 00BA:1816. Draws Who's name (Name, +0) as text at (Col, Row) in the colour of Who's state:
-  LightRed when Who takes no part in combat (Flag10D, +$10d = 0), Yellow for the party side
-  (Side, +$10e = 1) and LightCyan otherwise. When Mode is set it appends "'s" after the name
+  LightRed when Who takes no part in combat (Flag10D, +$10d = 0), Yellow for a monster
+  (SideMonsters = 1) and LightCyan otherwise (the party, SideParty = 0). When Mode is set it appends "'s" after the name
   (at Col + Length(Name)). Called by the roster, the character panel and ovl13, ovl16, ovl19,
   ovl21 and ovl22. Globals: none. }
 procedure DrawCharacterName(Who: PCharacter; Col, Row, Mode: Byte);
@@ -1000,7 +1085,7 @@ begin
   if Who^.Flag10D = 0 then
     Color := LightRed
   else
-    if Who^.Side = 1 then
+    if Who^.Side = SideMonsters then
       Color := Yellow
     else
       Color := LightCyan;
@@ -1014,8 +1099,9 @@ end;
   picture's bytes-per-item (ByteSize, +$11). When Mirror is not 0 the source picture is first
   mirrored into a temporary 24x3 picture (AllocatePicture then MirrorPicture) and that copy is
   blitted, otherwise the table picture is blitted directly. In both cases the bitmap (Data, +$17)
-  is copied with RowBytes bytes and the pixel buffer (Pixels, +$13) with the quartered PixelBytes
-  count for the text video adapter (VideoAdapter = 1). ReleasePicture frees the temporary.
+  is copied with RowBytes bytes and the pixel buffer (Pixels, +$13) with PixelBytes, a quarter of
+  RowBytes on the EGA (VideoAdapterEga, 1: the EGA layout holds one plane byte per four data bytes,
+  whitepaper 5.23). ReleasePicture frees the temporary.
   Called in a loop by DrawCombatIcon and by ovl13.
   Globals: ds6E36 (read), ds5E5A (read), VideoAdapter (read). }
 procedure CopyPictureItem(PicIndex, Half, Row, Mirror: Byte);
@@ -1025,7 +1111,7 @@ var
 begin
   RowBytes := PPicture(ds6E36)^.ByteSize;
   PixelBytes := RowBytes;
-  if VideoAdapter = 1 then
+  if VideoAdapter = VideoAdapterEga then
     PixelBytes := PixelBytes div 4;
   if Mirror <> 0 then
   begin
@@ -1054,7 +1140,7 @@ begin
 end;
 { 00BA:1A29. Walks the line from cell (FromX, FromY) to cell (ToX, ToY) and animates the combat cursor
   along it (whitepaper 5.18, combat movement). It builds the Bresenham path between the two cells
-  (multiplied by 3, the 24x24 icon pitch) through SetupLine/StepLine, collecting each step's
+  (multiplied by CellPitch, 3, the 24x24 icon pitch) through SetupLine/StepLine, collecting each step's
   direction Pattern into Path. It then walks that path: it computes the screen cell (PX, PY), draws
   the combat picture ds6E36 onto the staging buffer DrawBuf through DrawPictureItemClipped (frame Frame of
   Count), flushes and delays, steps PX/PY by DirStepX/DirStepY[Path[I]], and keeps the cursor on
@@ -1087,10 +1173,10 @@ begin
   FillChar(Line, $1a, 0);
   PathLen := 0;
   Frame := 0;
-  Line.X1 := FromX * 3;
-  Line.Y1 := FromY * 3;
-  Line.X2 := ToX * 3;
-  Line.Y2 := ToY * 3;
+  Line.X1 := FromX * CellPitch;
+  Line.Y1 := FromY * CellPitch;
+  Line.X2 := ToX * CellPitch;
+  Line.Y2 := ToY * CellPitch;
   SetupLine(@Line);
   repeat
     Done := not StepLine(@Line);
@@ -1105,7 +1191,7 @@ begin
   if not (IsInView(FromX - CombatMap^.ViewX, FromY - CombatMap^.ViewY) and
           IsInView(ToX - CombatMap^.ViewX, ToY - CombatMap^.ViewY)) then
   begin
-    if (Abs(DeltaX) <= 6) and (Abs(DeltaY) <= 6) then
+    if (Abs(DeltaX) <= ViewLimit) and (Abs(DeltaY) <= ViewLimit) then
     begin
       LoopFlag := True;
       CursorX := FromX + DeltaX div 2;
@@ -1114,28 +1200,28 @@ begin
     else
     begin
       LoopFlag := False;
-      CursorX := CombatMap^.ViewX + 3;
-      CursorY := CombatMap^.ViewY + 3;
+      CursorX := CombatMap^.ViewX + ViewCentreCell;
+      CursorY := CombatMap^.ViewY + ViewCentreCell;
     end;
   end
   else
   begin
     LoopFlag := True;
-    CursorX := CombatMap^.ViewX + 3;
-    CursorY := CombatMap^.ViewY + 3;
+    CursorX := CombatMap^.ViewX + ViewCentreCell;
+    CursorY := CombatMap^.ViewY + ViewCentreCell;
   end;
-  MoveCombatCursor(CursorX, CursorY, $ff, 8);
+  MoveCombatCursor(CursorX, CursorY, CursorMargin, CursorNoStep);
   PathLen := 0;
   AccX := 0;
   AccY := 0;
   repeat
-    PX := (FromX - CombatMap^.ViewX) * 3 + AccX;
-    PY := (FromY - CombatMap^.ViewY) * 3 + AccY;
+    PX := (FromX - CombatMap^.ViewX) * CellPitch + AccX;
+    PY := (FromY - CombatMap^.ViewY) * CellPitch + AccY;
     StartX := FromX;
     StartY := FromY;
     Done := False;
     repeat
-      if (Mode > 0) or (PX mod 3 = 0) or (PY mod 3 = 0) then
+      if (Mode > 0) or (PX mod CellPitch = 0) or (PY mod CellPitch = 0) then
       begin
         DrawPictureItemClipped(PX, PY, Frame, 5, ds6E36, DrawBuf);
         FlushPictureChanges;
@@ -1150,19 +1236,19 @@ begin
       DYStep := DirStepY[Path[PathLen]];
       Inc(PX, DXStep);
       Inc(PY, DYStep);
-      if (PX < 0) or (PX > $12) or (PY < 0) or (PY > $12) then
+      if (PX < 0) or (PX > ViewPixelLimit) or (PY < 0) or (PY > ViewPixelLimit) then
         Done := True;
       if (not Done) and (PathLen < PathCount) then
       begin
         Inc(AccX, DXStep);
         Inc(AccY, DYStep);
-        if Abs(AccX) = 3 then
+        if Abs(AccX) = CellPitch then
         begin
           Inc(FromX, SignOf(AccX));
           Inc(CursorX, SignOf(AccX));
           AccX := 0;
         end;
-        if Abs(AccY) = 3 then
+        if Abs(AccY) = CellPitch then
         begin
           Inc(FromY, SignOf(AccY));
           Inc(CursorY, SignOf(AccY));
@@ -1176,27 +1262,27 @@ begin
       DeltaY := SignOf(StartY - FromY);
       if DeltaX <> 0 then
       begin
-        if FromX >= CombatMap^.ViewX + 6 then
-          CursorX := FromX + 3
+        if FromX >= CombatMap^.ViewX + ViewLimit then
+          CursorX := FromX + CursorCentreMargin
         else if FromX <= CombatMap^.ViewX then
-          CursorX := FromX - 3;
+          CursorX := FromX - CursorCentreMargin;
       end;
       if DeltaY <> 0 then
       begin
-        if FromY >= CombatMap^.ViewY + 6 then
-          CursorY := FromY + 3
+        if FromY >= CombatMap^.ViewY + ViewLimit then
+          CursorY := FromY + CursorCentreMargin
         else if FromY <= CombatMap^.ViewY then
-          CursorY := FromY - 3;
+          CursorY := FromY - CursorCentreMargin;
       end;
-      MoveCombatCursor(CursorX, CursorY, $ff, 8);
+      MoveCombatCursor(CursorX, CursorY, CursorMargin, CursorNoStep);
     end
     else
     begin
       LoopFlag := True;
       if not IsInView(ToX - CombatMap^.ViewX, ToY - CombatMap^.ViewY) then
-        MoveCombatCursor(ToX, ToY, 3, 8);
-      PX := (ToX - CombatMap^.ViewX) * 3;
-      PY := (ToY - CombatMap^.ViewY) * 3;
+        MoveCombatCursor(ToX, ToY, CursorCentreMargin, CursorNoStep);
+      PX := (ToX - CombatMap^.ViewX) * CellPitch;
+      PY := (ToY - CombatMap^.ViewY) * CellPitch;
       DrawPictureItemClipped(PX, PY, Frame, 5, ds6E36, DrawBuf);
       if Mode > 0 then
       begin
@@ -1209,16 +1295,16 @@ begin
   FlushPictureChanges;
 end;
 { 00BA:1FEB. Shows a per-character combat message and flashes the character's combat icon over
-  its view cell. Outside the combat view (view mode 5) it only shows the message Text with a wait
-  and returns. In the combat view: silences the sound driver, draws the combat icon slot $16 when
-  Flag is set and $17 otherwise, puts the combat cursor on the character when it is off screen,
-  plays the sound ds261C when Flag is set and ds261A otherwise, and shows Text without waiting.
-  It then flashes the character's icon: for FlashCount + 1 passes it draws the four picture items
-  (0..3) of the combat picture ds6E36 at the character's pixel position (three pixels per view
-  cell, CombatantViewCol/CombatantViewRow), flushes and waits $46 ms, and restores the cell from
-  ds4A24. Finally it resumes the sound driver and flushes; with Flag clear (FlashCount 0) it waits
-  DelayByGameSpeed instead. DealDamage calls it with Flag 0 for the damage message, ApplyAffect
-  with Flag 1 for an affect message, and the training code uses it too.
+  its view cell. Outside the combat view (ViewModeCombat) it only shows the message Text with a wait
+  and returns. In the combat view: silences the sound driver, draws the combat icon slot AffectHitIcon
+  ($16) when Flag is set and DamageHitIcon ($17) otherwise, puts the combat cursor on the character
+  when it is off screen, plays the sound ds261C when Flag is set and ds261A otherwise, and shows Text
+  without waiting. It then flashes the character's icon: for FlashCount + 1 passes it draws the four
+  picture items (0..3) of the combat picture ds6E36 at the character's pixel position (CellPitch, 3,
+  pixels per view cell, CombatantViewCol/CombatantViewRow), flushes and waits FlashDelay ($46) ms, and
+  restores the cell from ds4A24. Finally it resumes the sound driver and flushes; with Flag clear
+  (FlashCount 0) it waits DelayByGameSpeed instead. DealDamage calls it with Flag 0 for the damage
+  message, ApplyAffect with Flag 1 for an affect message, and the training code uses it too.
   Globals: ds49F3 (view mode), GameSpeed (FlashCount), ds261A/ds261C (sounds), ds6E36, ds4A24,
   DrawBuf, CombatantViewCol, CombatantViewRow. Side effects: video memory, sound, timing. }
 procedure ShowHitMessage(Who: Pointer; Flag: Byte; Text: String40);
@@ -1228,33 +1314,33 @@ var
   Frame, Pass: Byte;
   FlashCount: Byte;
 begin
-  if ds49F3 = 5 then
+  if ds49F3 = ViewModeCombat then
   begin
     SetSoundDriverIdle(0);
     if Flag <> 0 then
-      Icon := $16
+      Icon := AffectHitIcon
     else
-      Icon := $17;
+      Icon := DamageHitIcon;
     DrawCombatIcon(Icon);
     if not IsCombatantInView(Who, 1) then
-      MoveCombatCursor(CombatantX(Who), CombatantY(Who), 3, 8);
+      MoveCombatCursor(CombatantX(Who), CombatantY(Who), CursorCentreMargin, CursorNoStep);
     if Flag <> 0 then
       PlaySound(ds261C)
     else
       PlaySound(ds261A);
-    ShowCharacterMessage(Who, Text, $A, 0);
+    ShowCharacterMessage(Who, Text, CombatMessageRow, 0);
     if Flag <> 0 then
       FlashCount := GameSpeed
     else
       FlashCount := 0;
-    Col := CombatantViewCol[CombatantIndex(Who)] * 3;
-    Row := CombatantViewRow[CombatantIndex(Who)] * 3;
+    Col := CombatantViewCol[CombatantIndex(Who)] * CellPitch;
+    Row := CombatantViewRow[CombatantIndex(Who)] * CellPitch;
     for Pass := 0 to FlashCount do
       for Frame := 0 to 3 do
       begin
         DrawPictureItemClipped(Col, Row, Frame, 5, ds6E36, DrawBuf);
         FlushPictureChanges;
-        Delay($46);
+        Delay(FlashDelay);
         DrawPictureItemClipped(Col, Row, 0, 0, ds4A24, DrawBuf);
       end;
     SetSoundDriverIdle($A);
@@ -1263,7 +1349,7 @@ begin
       DelayByGameSpeed;
   end
   else
-    ShowCharacterMessage(Who, Text, $A, 1);
+    ShowCharacterMessage(Who, Text, CombatMessageRow, 1);
 end;
 { 00BA:2199. Returns whether Who has the affect AffectId on its affect list (TCharacter.Affects, +$7F).
   It leaves in the caller's Affect the matching affect record when found, or the nil end of the list
@@ -1313,7 +1399,7 @@ begin
   else if Overkill > 0 then
   begin
     PCharacter(Who)^.Status := StatusDying;
-    if ds49F3 = 5 then
+    if ds49F3 = ViewModeCombat then
       PCharacter(Who)^.Combat^.DyingRounds := Overkill;
   end
   else if Remaining = 0 then
@@ -1322,7 +1408,7 @@ begin
   begin
     PCharacter(Who)^.Flag10D := 0;
     PCharacter(Who)^.Flag11B := 0;
-    if ds49F3 = 5 then
+    if ds49F3 = ViewModeCombat then
     begin
       Dec(ds6814Sides[ShortInt(PCharacter(Who)^.Side)]);
       PCharacter(Who)^.Combat^.Initiative := 0;
@@ -1344,8 +1430,8 @@ begin
     Message := 'is fully healed'
   else
     Message := 'is partially healed';
-  ShowCharacterMessage(Who, Message, $A, 1);
-  if ds49F3 <> 5 then
+  ShowCharacterMessage(Who, Message, CombatMessageRow, 1);
+  if ds49F3 <> ViewModeCombat then
     DrawPartyRoster(SelectedCharacter);
 end;
 { 00BA:23B7. Returns the side opposite Who's (Side, +$10E): 1 when Who is on the party side (0) and
@@ -1355,9 +1441,9 @@ end;
 function OpposingSide(Who: Pointer): Byte;
 begin
   if PCharacter(Who)^.Side = SideParty then
-    OpposingSide := 1
+    OpposingSide := SideMonsters
   else
-    OpposingSide := 0;
+    OpposingSide := SideParty;
 end;
 { 00BA:23DB. Recounts the living combatants of each side: it clears both per-side counts
   (ds6814Sides) and walks the character list (ds5D96) adding one for every member that takes part
@@ -1465,24 +1551,25 @@ begin
   ShowFlashMessage('Guarding');
 end;
 { 00BA:26C2. Returns the level the selected character casts a spell at: the spell's class
-  (SpellTable[Spell].SpellClass, byte 0 of the 16-byte row; 0 is cleric, 1 magic-user) picks the
-  character's level in that class (ClassLevels: 0 cleric, 5 magic-user; whitepaper 5.6), and a spell
-  class 2 gives 12. When ItemAffectUse is set every class except 2 gives 6 instead. SpellAreaSize multiplies the
+  (SpellTable[Spell].SpellClass, byte 0 of the 16-byte row; SpellClassCleric 0, SpellClassMagicUser 1) picks the
+  character's level in that class (ClassLevels: ClassCleric 0, ClassMagicUser 5; whitepaper 5.6), and a spell
+  class SpellClassFixed (2) gives SpecialSpellLevel (12). When ItemAffectUse is set every class except
+  SpellClassFixed gives ItemSpellLevel (6) instead. SpellAreaSize multiplies the
   spell row's +3 byte by the result, so this is the power the spell is cast with; the res12 wrapper
   takes the spell number. Called by the ovl22 casting routines.
-  Purpose unknown: what spell class 2 and ItemAffectUse are.
-  QUIRK 00BA:26FB: a spell class other than 0, 1 or 2 leaves the result unassigned (the frame byte
-  is returned).
+  Purpose unknown: what spell class SpellClassFixed and ItemAffectUse are.
+  QUIRK 00BA:26FB: a spell class other than SpellClassCleric, SpellClassMagicUser or SpellClassFixed
+  leaves the result unassigned (the frame byte is returned).
   Globals: SpellTable, SelectedCharacter (read), ItemAffectUse (read). }
 function SpellCasterLevel(Spell: Byte): Byte;
 begin
   case SpellTable[Spell].SpellClass of
-    0: SpellCasterLevel := SelectedCharacter^.ClassLevels[0];
-    1: SpellCasterLevel := SelectedCharacter^.ClassLevels[5];
-    2: SpellCasterLevel := $0C;
+    SpellClassCleric: SpellCasterLevel := SelectedCharacter^.ClassLevels[ClassCleric];
+    SpellClassMagicUser: SpellCasterLevel := SelectedCharacter^.ClassLevels[ClassMagicUser];
+    SpellClassFixed: SpellCasterLevel := SpecialSpellLevel;
   end;
-  if ItemAffectUse and (SpellTable[Spell].SpellClass <> 2) then
-    SpellCasterLevel := 6;
+  if ItemAffectUse and (SpellTable[Spell].SpellClass <> SpellClassFixed) then
+    SpellCasterLevel := ItemSpellLevel;
 end;
 { 00BA:272A. Draws the window frames of a view screen (one DrawWindow each): the full screen
   (1,1)-(38,22), the bottom text window (1,17)-(38,22) and the upper-left window (1,1)-(15,15);
@@ -1620,11 +1707,15 @@ begin
                    CursorMargin, CursorNoStep);
 end;
 { 00BA:2C48. The party-member picker: it loops showing the character roster (DrawPartyRoster) and
-  a ReadPromptChoice prompt titled Text with the word "Select" (and " Exit" when WithExit is set),
-  updating the caller's Selected pointer. G steps to the previous member and O to the next (both
-  wrap around the party list ds5D96), E (or the extended-key prefix #0) clears the selection, and
-  Enter, Escape or E end the loop. Animate for ReadPromptChoice is 1 in the camp (ViewModeCamp) and
-  loot (ViewModeLoot) screens. Called by ovl03, ovl19 and ovl22.
+  a ReadPromptChoice prompt titled Title with the word "Select" (and " Exit" when WithExit is set),
+  updating the caller's Selected pointer. When ReadPromptChoice sets its extended-key flag ExtKey,
+  the scan code 'O' (End) steps to the next member and 'G' (Home) to the previous (both wrap around
+  the party list ds5D96); with ExtKey clear a typed G or O does nothing. A typed 'E', or a key code
+  #0 with ExtKey clear, clears the selection. QUIRK 00BA:2C48: the #0 test runs only when ExtKey is
+  clear, so #0 is not an extended-key prefix but the key code 0 returned with the flag clear. The
+  loop ends on Enter, Escape, 'E' or 'S'; Enter, Escape and 'S' (the hotkey of the prompt's "Select"
+  word) keep the current selection, 'E' clears it. Animate for ReadPromptChoice is 1 in the camp
+  (ViewModeCamp) and loot (ViewModeLoot) screens. Called by ovl03, ovl19 and ovl22.
   Globals: ds49F3 (read), ds5D96 (read). Side effects: the screen, the keyboard. }
 procedure SelectPartyMember(Title: String40; WithExit: Byte; var Selected: PCharacter);
 var
@@ -1638,7 +1729,7 @@ begin
   Extra := '';
   if WithExit <> 0 then
     Extra := ' Exit';
-  while not (Key in [KeyEnter, KeyEscape, 'E', 'S']) do
+  while not (Key in [KeyEnter, KeyEscape, KeyExit, KeySelect]) do
   begin
     DrawPartyRoster(Selected);
     if (ds49F3 = ViewModeCamp) or (ds49F3 = ViewModeLoot) then
@@ -1666,7 +1757,7 @@ begin
                 PartyMember := PartyMember^.Next;
           end;
       end
-    else if (Key = 'E') or (Key = #0) then
+    else if (Key = KeyExit) or (Key = #0) then
       PartyMember := nil;
     Selected := PartyMember;
   end;
@@ -1733,10 +1824,12 @@ end;
 { 00BA:2F57. Returns whether Who's level in one class has reached the maximum its race allows, so
   the trainers (ovl22:2D39 raises ClassLevels[ClassIndex], +$96, only when this is False) must not
   raise that class level further. False when the level is 0; otherwise Who's race (+$2E) and
-  strength (+$10) pick the limit: race 1 class 2 stops at level 8 with strength 17, at 7 with
-  less; race 2 class 2 stops at 7, at 6 with strength 17, at 5 with less; race 3 class 2 stops at
-  6, at 5 with strength below 18; race 4 class 0 stops at 5 and class 2 stops at 8, at 7 with
-  strength 17, at 6 with less; race 5 class 2 stops at 6, at 5 with strength 17, at 4 with less.
+  strength (+$10) pick the limit (the AD&D demihuman level limits [H]): a dwarf (RaceDwarf 1) in the
+  fighter class (ClassFighter 2) stops at level 8 with Strength17 (17), at 7 with less; an elf
+  (RaceElf 2) stops at 7, at 6 with Strength17, at 5 with less; a gnome (RaceGnome 3) stops at 6, at
+  5 with strength below Strength18 (18); a half-elf (RaceHalfElf 4) stops at 5 in the cleric class
+  (ClassCleric 0) and at 8 in the fighter class, at 7 with Strength17, at 6 with less; a halfling
+  (RaceHalfling 5) stops at 6, at 5 with Strength17, at 4 with less.
   ClassIndex is the class index 0..7. Globals: none. }
 function IsMaxClassLevel(Who: PCharacter; ClassIndex: ShortInt): Boolean;
 var
@@ -1748,35 +1841,35 @@ begin
     Level := ClassLevels[ClassIndex];
     if Level > 0 then
       case Race of
-        1:
-          if (ClassIndex = 2) and
-             ((Level = 8) and (Strength = $11) or
-              (Level = 7) and (Strength < $11)) then
+        RaceDwarf:
+          if (ClassIndex = ClassFighter) and
+             ((Level = 8) and (Strength = Strength17) or
+              (Level = 7) and (Strength < Strength17)) then
             IsMaxClassLevel := True;
-        2:
-          if (ClassIndex = 2) and
+        RaceElf:
+          if (ClassIndex = ClassFighter) and
              ((Level = 7) or
-              (Level = 6) and (Strength = $11) or
-              (Level = 5) and (Strength < $11)) then
+              (Level = 6) and (Strength = Strength17) or
+              (Level = 5) and (Strength < Strength17)) then
             IsMaxClassLevel := True;
-        3:
-          if (ClassIndex = 2) and
+        RaceGnome:
+          if (ClassIndex = ClassFighter) and
              ((Level = 6) or
-              (Level = 5) and (Strength < $12)) then
+              (Level = 5) and (Strength < Strength18)) then
             IsMaxClassLevel := True;
-        4:
-          if (ClassIndex = 0) and (Level = 5) then
+        RaceHalfElf:
+          if (ClassIndex = ClassCleric) and (Level = 5) then
             IsMaxClassLevel := True
-          else if (ClassIndex = 2) and
+          else if (ClassIndex = ClassFighter) and
                   ((Level = 8) or
-                   (Level = 7) and (Strength = $11) or
-                   (Level = 6) and (Strength < $11)) then
+                   (Level = 7) and (Strength = Strength17) or
+                   (Level = 6) and (Strength < Strength17)) then
             IsMaxClassLevel := True;
-        5:
-          if (ClassIndex = 2) and
+        RaceHalfling:
+          if (ClassIndex = ClassFighter) and
              ((Level = 6) or
-              (Level = 5) and (Strength = $11) or
-              (Level = 4) and (Strength < $11)) then
+              (Level = 5) and (Strength = Strength17) or
+              (Level = 4) and (Strength < Strength17)) then
             IsMaxClassLevel := True;
       end;
   end;

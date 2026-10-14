@@ -286,7 +286,11 @@ type
       for every cleric spell (table class 0) of a level the character has a cleric spell slot
       for (ovl23:0135); likely the spells the character can learn [I]. }
     KnownSpells: array[1..$38] of Byte;
-    Pad6B: Byte;                  { +$6B }
+    { +$6B: the sweep-attack limit RecalcCombatValues (00BA:0BB8) sets: the fighter level
+      (ClassLevels[2]) when it is above 0 and the race is above 0, else 1; StartCombatantRound
+      (ovl13:0000) copies it into the combatant's attack-slot limit (Combat^.Pad4[5]) which
+      SweepEnemies reads, and CollapseAndChangeSide (ovl12:0B1B) sets it from the fighter level too. }
+    SweepAttacks: Byte;
     { +$6C: bits 0..6 are the combat footprint kind (PlaceCombatant copies them into CombatantTable[].Kind); bit 7
       is not part of it. }
     CombatSize: Byte;
