@@ -6,7 +6,7 @@ unit OVL12;
 interface
 uses POOLVARS;
 procedure CancelPendingHook(AffectId: Byte);
-procedure ovl12_fn_001F;
+function TryAddAffect(Who: PCharacter; AffectId, Data: Byte; Duration: Word): Boolean;
 procedure ovl12_fn_0058;
 procedure ovl12_e2;
 procedure ovl12_e3;
@@ -174,6 +174,8 @@ procedure ovl12_fn_3262;
 procedure ovl12_fn_3728;
 implementation
 uses RES06, RES12, OVL24, OVL31;
+const
+  RunsHandlerOnRemove = 1;      { TAffect.Flag: the affect's handler runs when the affect is removed }
 
 { ovl12:0000. Cancels the hook of an affect: when AffectId is 0 or is the affect the hooks are offering
   (HookAffectId), HookAffectId and DamageAmount are cleared. HookAffectId 0 reads as "is Unaffected"
@@ -186,8 +188,20 @@ begin
     HookAffectId := 0;
   end;
 end;
-{ ovl12:001F: retf 10: 10 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl12_fn_001F; begin end;
+{ ovl12:001F. Gives Who the affect AffectId with Duration and Data unless the Temple is removing affects
+  (ds681F is 1 then, set by the Temple's RemoveAffect calls, ovl04:0386): then the result is False and
+  nothing is added. Otherwise AddAffect (ovl24:0E52) appends the affect with its handler marked to run
+  when the affect is removed, and the result is True. }
+function TryAddAffect(Who: PCharacter; AffectId, Data: Byte; Duration: Word): Boolean;
+begin
+  if ds681F <> 0 then
+    TryAddAffect := False
+  else
+  begin
+    TryAddAffect := True;
+    AddAffect(Who, AffectId, Duration, Data, RunsHandlerOnRemove);
+  end;
+end;
 { ovl12:0058: retf 10: 10 bytes of parameters; 42 bytes of locals }
 {@stub} procedure ovl12_fn_0058; begin end;
 { ovl12:010D: retf 10: 10 bytes of parameters; 0 bytes of locals }

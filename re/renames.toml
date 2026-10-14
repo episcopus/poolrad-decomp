@@ -3420,3 +3420,10 @@ kind = "routine"
 why = "ovl12:0000 clears HookAffectId and DamageAmount when its AffectId is 0 or is the affect the hooks offer (HookAffectId, set by ApplyAffect; zero means 'is Unaffected', ovl24:1672, 1682; DamageAmount is the damage DealDamage offers, ovl24:134E)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_fn_001F"
+new = "TryAddAffect"
+kind = "routine"
+why = "ovl12:001F adds an affect through AddAffect (ovl24:0E52) with Flag 1 (the handler runs when it is removed, TAffect.Flag) and returns True, but returns False and adds nothing while ds681F is set (the Temple removes affects: RemoveAffect callers ovl04:0386, 05AB, 07CE)"
+date = "2026-10-13"
+

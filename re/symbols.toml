@@ -3135,12 +3135,12 @@ id = "ovl12:001F"
 unit = "ovl12"
 addr = "ovl12:001F"
 size = 57
-name = "ovl12_fn_001F"
-signature = ""
+name = "TryAddAffect"
+signature = "function TryAddAffect(Who: PCharacter; AffectId, Data: Byte; Duration: Word): Boolean"
 c_name = "ovl12_fn_001F"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl12_fn_001F (ovl12:001F adds an affect through AddAffect (ovl24:0E52) with Flag 1 (the handler runs when it is removed, TAffect.Flag) and returns True, but returns False and adds nothing while ds681F is set (the Temple removes affects: RemoveAffect callers ovl04:0386, 05AB, 07CE)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
