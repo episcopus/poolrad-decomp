@@ -773,10 +773,10 @@ var
     three-byte string[2] at DS:25A8: N, NE, E, SE, S, SW, W, NW (the bytes are in the image). }
   FacingNames: array[0..7] of string[2];
   { The spell lists of the CastSpell overlay (ovl22, whitepaper 5.22): BuildSpellList builds one and
-    ovl22_e1 runs the picker over it. }
+    PickSpellFromMenu runs the picker over it. }
   SpellLevelNames: array[0..3] of string[40];  { the heading of each spell level in the spell menu: entries
                                     1..3 are '1st Level', '2nd Level', '3rd Level'; entry 0 is empty }
-  SpellMenuList: PMenuLine;              { head of the spell menu list BuildSpellList/fn_028D build and ovl22_e1 frees }
+  SpellMenuList: PMenuLine;              { head of the spell menu list BuildSpellList builds, PickSpellFromMenu frees }
   SpellMenuSpells: array[0..$14] of Byte;  { the spell number (bit 7 = pending) of each menu line, in list order }
   SpellMenuItems: array[0..$30] of PMenuLine;  { for each scribed/learned line, the item (scroll) it came from }
   SpellMenuItemCount: Byte;                   { the number of entries SpellMenuItems holds (AddItemSpells, fn_051C) }
@@ -1069,7 +1069,7 @@ var
   ds6DB9: ShortInt;
   { The Y of the cell a spell being cast is aimed at, the companion of DS:6DB9; see its comment. DS:6DBA. }
   ds6DBA: ShortInt;
-  { The current item the ovl22 spell lists work on (ovl22_e1, fn_044E, fn_051C); UseItem (ovl19:1AB3) also
+  { The current item the ovl22 spell lists work on (PickSpellFromMenu, fn_044E, fn_051C); UseItem (ovl19:1AB3) also
     stores the scroll it takes its spell from here, when IsScroll accepts the item (main named it CurrentItem
     for that store; the ovl22 routines use it as their working item). }
   CurrentItem: PItem;

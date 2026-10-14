@@ -752,7 +752,7 @@ const
   TitleColor = 10;
   ItemPromptRow = 23;
   SpellListOnScroll = 2;
-  UseListMode = 1;              { ChooseSpellFromList's DisplayMode for a use; ovl22_e1 receives it, meaning not known yet }
+  UseListMode = 1;              { ChooseSpellFromList's DisplayMode for a use: PickSpellFromMenu's Cast mode }
   LastSpell = $38;              { the last row of SpellTable; an affect value above it is shifted down by SpellShift }
   SpellShift = $17;
 var
@@ -1274,7 +1274,7 @@ begin
       DrawTextAt(Length(SelectedCharacter^.Name) + 4, TitleRow,
         TitleColor, 'Spells ' + ModeDescription);
     end;
-    ChooseSpellFromList := ovl22_e1(DisplayMode, Choice);
+    ChooseSpellFromList := PickSpellFromMenu(DisplayMode, Choice);
   end
   else
     ChooseSpellFromList := 0;

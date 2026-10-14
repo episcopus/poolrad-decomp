@@ -5788,6 +5788,13 @@ why = "ovl22:3413 fills SpellHandlers at DS:6B84 (element 0 the target picker vi
 date = "2026-10-14"
 
 [[rename]]
+old = "ovl22_e1"
+new = "PickSpellFromMenu"
+kind = "routine"
+why = "ovl22:008A shows SpellMenuList through ChooseFromList (ovl25:0D9A) with the button word Cast/Memorize/Scribe/Learn per Mode and returns the chosen line's spell number from SpellMenuSpells, or 0 when the player left; called only by ChooseSpellFromList (ovl19:299C)"
+date = "2026-10-14"
+
+[[rename]]
 old = "ovl03_fn_0001"
 new = "EndCommand"
 kind = "routine"

@@ -1,12 +1,12 @@
 unit OVL22;
 { CastSpell: the spell study and casting overlay. It builds the spell lists the camp's
   ChooseSpellFromList shows (BuildSpellList and its helpers, whitepaper 5.22), runs the picker
-  (ovl22_e1), gives a spell's area pattern size (SpellAreaSize) and casts, scribes, memorizes
+  (PickSpellFromMenu), gives a spell's area pattern size (SpellAreaSize) and casts, scribes, memorizes
   and learns spells for combat (ovl09) and the camp (ovl15). }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 uses POOLVARS, RES03, RES06, RES09, RES12, OVL23, OVL24, OVL25, OVL30, OVL31;
-function ovl22_e1(Mode: Byte; var Choice: Word): Byte;
+function PickSpellFromMenu(Mode: Byte; var Choice: Word): Byte;
 procedure AddSpellMenuLine(Spell: Byte);
 procedure AddItemSpells(Pending: Byte);
 procedure AddScrollSpells(Pending: Byte);
@@ -82,7 +82,106 @@ procedure InitSpellHandlers;
 implementation
 
 { ovl22:008A: retf 6: 6 bytes of parameters; 98 bytes of locals }
-{@stub} function ovl22_e1(Mode: Byte; var Choice: Word): Byte; begin end;
+{ ovl22:008A. The spell menu picker ChooseSpellFromList (ovl19:299C) calls once BuildSpellList has filled
+  SpellMenuList: it shows the list in the spell window through ChooseFromList, asking again until the player
+  picks a word (Cast, Learn, Memorize or Scribe), presses Enter or leaves, and returns the spell number of the
+  chosen line, or 0 when the player left (Exit or Escape). Mode (ChooseSpellFromList's DisplayMode) picks the
+  button word: 1 'Cast', 2 'Memorize', 3 'Scribe', 4 'Learn' (any other Mode: no button and no title); the
+  title is 'Choose Spell: ' for Modes 1 to 4. Mode 2 uses the short window (bottom row $0F, else $16) and
+  Mode 4 offers no Exit. Choice is the list position the picker starts on and receives the position it ends
+  on; a negative Choice (-1 from UseItem) first draws the spell window frame (rows 3 to the bottom) and
+  restarts at 0. The page is redrawn on entry for a new window, and always for Learn and Cast. Mode 3 (Scribe)
+  copies the item the chosen line came from, SpellMenuItems[index of the line], to CurrentItem. The list is
+  freed (FreeMenuList) before returning. Globals: SpellMenuList (freed), SpellMenuSpells, SpellMenuItems,
+  CurrentItem. Side effects: the screen, the heap.
+  Choice stays the Word its callers declare and reaches ChooseFromList (var Choice: Integer) through the
+  typecast Integer(Choice), a variable reference TP 6.0 accepts (probe VARCAST.PAS; WDTOIN.PAS shows the
+  plain Word is refused).
+  QUIRK ovl22:0194: the byte at [bp-5C] is allocated but never read or written.
+  QUIRK ovl22:0230: with a left picker (Key #0) Selected is nil, the walk ends at the list's end and SpellIndex
+  is the count of spell lines; Mode 3 then still copies SpellMenuItems[SpellIndex] to CurrentItem.
+  QUIRK ovl22:01E8: the loop ends on the Key set [#0, Enter, 'C', 'E', 'L', 'M', 'S'] (the first letters of the
+  buttons Cast, Exit, Learn, Memorize and Scribe), although ChooseFromList itself returns #0 for E and
+  Escape. }
+function PickSpellFromMenu(Mode: Byte; var Choice: Word): Byte;
+const
+  CastMode = 1;
+  MemorizeMode = 2;
+  ScribeMode = 3;
+  LearnMode = 4;
+  KeyNone = #0;
+  KeyEnter = #13;
+  ShortWindowBottom = $0F;      { the Memorize window ends on row 15 }
+  TallWindowBottom = $16;       { the other windows end on row 22 }
+  WindowLeft = 1;
+  WindowFrameTop = 3;           { the frame drawn on a negative Choice starts two rows above the list }
+  ListTop = 5;
+  WindowRight = $26;
+  HeadingColor = $0D;
+  LineColor = $0A;
+  HighlightColor = $0F;
+var
+  Selected: PMenuLine;          { the line ChooseFromList left highlighted, nil when the player left }
+  WalkPtr: PMenuLine;           { walks the list up to Selected, counting the spell lines }
+  Title: String40;              { the window title, 'Choose Spell: ' for Modes 1 to 4 }
+  Prompt: String40;             { the button word list: 'Cast', 'Memorize', 'Scribe', 'Learn' or '' }
+  UnusedByte: Byte;
+  SpellIndex: Byte;             { the position of the chosen line among the spell lines (headings not counted) }
+  Bottom: ShortInt;             { the window's bottom row }
+  Key: Char;                    { the key ChooseFromList returned }
+  WithExit: Byte;               { 1 shows the Exit word, 0 for Learn }
+  Redraw: Byte;                 { ChooseFromList's var Redraw: 1 draws the entry page }
+begin
+  case Mode of
+    CastMode: Prompt := 'Cast';
+    MemorizeMode: Prompt := 'Memorize';
+    ScribeMode: Prompt := 'Scribe';
+    LearnMode: Prompt := 'Learn';
+  else
+    Prompt := '';
+  end;
+  if Mode in [CastMode..LearnMode] then
+    Title := 'Choose Spell: '
+  else
+    Title := '';
+  if Mode = MemorizeMode then
+    Bottom := ShortWindowBottom
+  else
+    Bottom := TallWindowBottom;
+  if Mode = LearnMode then
+    WithExit := 0
+  else
+    WithExit := 1;
+  Redraw := 0;
+  if Integer(Choice) < 0 then
+  begin
+    DrawWindow(WindowLeft, WindowFrameTop, WindowRight, Bottom, 0, 0, '');
+    Redraw := 1;
+    Choice := 0;
+  end;
+  if (Mode = LearnMode) or (Mode = CastMode) then
+    Redraw := 1;
+  Selected := nil;
+  repeat
+    Key := ChooseFromList(Title, Prompt, HeadingColor, LineColor, HighlightColor, WindowLeft, ListTop,
+      WindowRight, Bottom, SpellMenuList, WithExit, Redraw, Integer(Choice), Selected);
+  until Key in [KeyNone, KeyEnter, 'C', 'E', 'L', 'M', 'S'];
+  WalkPtr := SpellMenuList;
+  SpellIndex := 0;
+  while WalkPtr <> Selected do
+  begin
+    if WalkPtr^.Flag29 = 0 then
+      Inc(SpellIndex);
+    WalkPtr := WalkPtr^.Next;
+  end;
+  if Key in [KeyNone, 'E'] then
+    PickSpellFromMenu := 0
+  else
+    PickSpellFromMenu := SpellMenuSpells[SpellIndex];
+  if Mode = ScribeMode then
+    CurrentItem := SpellMenuItems[SpellIndex];
+  FreeMenuList(SpellMenuList);
+end;
 { ovl22:028D: retf 2: 2 bytes of parameters; 262 bytes of locals }
 { ovl22:028D. Appends one line for spell Spell to the spell menu list SpellMenuList (BuildSpellList calls this
   once per spell, in list order). The line's text is ' *' when the pending bit $80 of Spell is set,

@@ -7562,12 +7562,12 @@ id = "ovl22:008A"
 unit = "ovl22"
 addr = "ovl22:008A"
 size = 515
-name = "ovl22_e1"
-signature = "function ovl22_e1(Mode: Byte; var Choice: Word): Byte"
+name = "PickSpellFromMenu"
+signature = "function PickSpellFromMenu(Mode: Byte; var Choice: Word): Byte"
 c_name = "ovl22_e1"
-level = "none"
+level = "L2"
 justification = ""
-notes = "blocked (dec-deepseek-2): the routine is fully drafted and its frame (98 bytes: Selected/WalkPtr, Title/Prompt String40, an unused byte, J, Bottom, Key, WithExit, Redraw + the empty-string temp at [bp-62]) is derived from the disassembly, but it cannot compile. ovl22_e1 passes its Choice straight to ChooseFromList (ovl25:0D9A, var Choice: Integer; OVL05/OVL06/OVL07 pass Integer), so e1's Choice must be Integer; ovl19's ChooseSpellFromList (L2) and ovl15's three Choice variables declare Word. TP 6.0 rejects both Word->Integer and Integer->Word var parameters (probes tools/re/tp_idioms/ovl22/WDTOIN.PAS and INTOWD.PAS) and NoChoice=$FFFF cannot be assigned to an Integer (NOCONST.PAS). Fix: change ovl19:299C's and ovl15's Choice to Integer with NoChoice=-1, then the draft matches. Draft: { ovl22:008A (the CastSpell entry). The spell chooser ChooseSpellFromList (ovl19:299C) calls this: it shows the list BuildSpellList prepared (SpellMenuList) through ChooseFromList and returns the chosen spell byte, or 0 when the player left with Exit/Escape. Mode (ChooseSpellFromList's DisplayMode) selects the button Prompt and the window: 1 'Cast', 2 'Memorize', 3 'Scribe', 4 'Learn'; 2 and 3 use the shorter window. Choice is the list position passed in (negative opens the title window and the character's spells) and the position after the choice; CurrentItem receives the item a Mode-3 line came from. Side effects: the screen, the heap (the list, freed through FreeMenuList). } function ovl22_e1(Mode: Byte; var Choice: Word): Byte; var Selected: PMenuLine;            { the line ChooseFromList returns as chosen } WalkPtr: PMenuLine;             { walks the list counting the non-heading lines } Title: String40;                { the window title, 'Choose Spell: ' } Prompt: String40;               { the action button: 'Cast', 'Memorize', 'Scribe', 'Learn' or '' } Unused: Byte;                   { QUIRK ovl22:0194: the byte at [bp-5C] is never read } J: Byte;                        { the index of the chosen line among the non-heading lines } Bottom: ShortInt;               { the window bottom row, $0F or $16 } Key: Char;                      { the key ChooseFromList returns } WithExit: Byte;                 { the picker's Exit button flag (1 except Learn) } Redraw: Byte;                   { the picker's redraw flag } Result: Byte;                   { the function's result byte } begin case Mode of 1: Prompt := 'Cast'; 2: Prompt := 'Memorize'; 3: Prompt := 'Scribe'; 4: Prompt := 'Learn'; else Prompt := ''; end; if Mode in [1..4] then Title := 'Choose Spell: ' else Title := ''; if Mode = 2 then Bottom := $0F else Bottom := $16; if Mode = 4 then WithExit := 0 else WithExit := 1; Redraw := 0; if Integer(Choice) < 0 then begin DrawWindow(1, 3, $26, Bottom, 0, 0, ''); Redraw := 1; Choice := 0; end; if (Mode = 4) or (Mode = 1) then Redraw := 1; Selected := nil; repeat Key := ChooseFromList(Title, Prompt, $0D, $0A, $0F, 1, 5, $26, Bottom, SpellMenuList, WithExit, Redraw, Choice, Selected); until Key in [#0, #13]; WalkPtr := SpellMenuList; J := 0; while WalkPtr <> Selected do begin if WalkPtr^.Flag29 = 0 then Inc(J); WalkPtr := WalkPtr^.Next; end; if Key in [#0, 'E'] then Result := 0 else Result := SpellMenuSpells[J]; if Mode = 3 then CurrentItem := SpellMenuItems[J]; FreeMenuList(SpellMenuList); ovl22_e1 := Result; end;"
+notes = "renamed from ovl22_e1 (ovl22:008A shows SpellMenuList through ChooseFromList (ovl25:0D9A) with the button word Cast/Memorize/Scribe/Learn per Mode and returns the chosen line's spell number from SpellMenuSpells, or 0 when the player left; called only by ChooseSpellFromList (ovl19:299C)); escalation: matched. The earlier block (Word Choice cannot reach ChooseFromList's var Integer) is solved by the variable typecast Integer(Choice) at the call (probe tools/re/tp_idioms/ovl22/VARCAST.PAS), so ovl19 and ovl15 keep Word. The Key set of the repeat loop is [#0, #13, C, E, L, M, S] (set pool at ovl22:004A), the leave test [#0, E] (ovl22:006A); the empty string for DrawWindow shares a zero byte of the set [1..4] at ovl22:001B."
 evidence = ["prologue"]
 
 [[routine]]
@@ -8514,7 +8514,7 @@ size = 5
 name = "ovl22_init"
 signature = ""
 c_name = "ovl22_init"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_0"
 evidence = ["prologue"]
