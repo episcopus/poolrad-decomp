@@ -7858,7 +7858,7 @@ signature = ""
 c_name = "ovl16_e3"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-14 by dec-deepseek-3 batch 14: the map boundary is wrong. e3 has its only prologue (55 89 e5) at 382D and its single retf at 3F30 (the next prologue is 3F31), so it runs 382D..3F30, 1796 bytes, not 1096; the size stays 1096 until e3 matches (make match UNIT=ovl16 WRITE=1 then corrects it). The map entries inside it (3C75, 3C7A, 3C7F, 3C84, 3C89, 3C8E, 3C93, 3D34, 3E2A, 3E2F, 3EBF, 3EC4, 3EC9) are its own code, not routines; several are flat-linear readings of the ovl25 stub segment 0x03C5 (0x25, 0x2A ReadPromptChoice, 0x2F ClearPromptLine, 0x34 LoadPictureSlot, 0x39 AskYesNo, 0x3E) landing inside e3, and the rest are ovl31 (0x03E0:0x2A/0x2F) stub flats. e3 is the character-icon editor entered from AlterMenu (ovl15:1C59): it draws the window and BuildCharacterIcon, then a repeat loop over ReadPromptChoice runs a case on the state local [bp-8] (states 1 pick head/body bank or Hair/Face, 2 pick head bank, 3 pick body bank, 4 Size/colour-pair/FaceSelect, 5 the colour-nibble editor) with nested `with SelectedCharacter^` scopes (temps at [bp-0x1f] and [bp-0x23]), a 288-byte frame of string temporaries (the 'new'/'Small'/'Large'/'Hair'/'Face' prompts, a third-page string at [bp-0x120], a 6-byte Figure[1..6] copy at [bp-0x15]), and it ends by asking AskYesNo 'Is this icon ok? '. Its nested routines DrawIconCell (34DF) and CopyPictureSlot (35BE) are emitted before it and already matched. Too large and string-temporary heavy for one batch: no draft committed (src left as {@stub}); a later decompiler should derive it from the same codegen as BuildCharacterIcon (ovl17:0482) and ModifyCharacter (ovl16:209F)"
 evidence = ["prologue"]
 
 [[routine]]
@@ -7871,7 +7871,7 @@ signature = ""
 c_name = "ovl16_fn_3C75"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 14: not a routine. 3C75 is the ModRM byte 0xbd of `cmp byte ptr es:[di+0xbe],0` (bytes 26 80 bd be 00 00 at 3C73) inside ovl16_e3's CBodyBlock case arm, mid-instruction; no prologue. The entry is the flat-linear reading (seg 0x03C5 * 16 + 0x0025 = 0x3C75) of an ovl25 stub call (lcall 0x03C5:0x0025, e.g. at 0x0677 and 0x0961; 0x3C5 is the ovl25 stub segment). e3 has its only prologue (55 89 e5) at 382D and its single retf at 3F30, so it runs 382D..3F30 and every map entry inside it is an artefact. Removed when e3 matches (make match UNIT=ovl16 WRITE=1 corrects e3's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -7884,7 +7884,7 @@ signature = ""
 c_name = "ovl16_fn_3C7A"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 14: not a routine. 3C7A is the displacement byte 0x0a of `jbe 3C85h` (bytes 76 0a at 3C79) inside ovl16_e3, mid-instruction; no prologue. The entry is the flat-linear reading (seg 0x03C5 * 16 + 0x002A = 0x3C7A) of the ovl25 ReadPromptChoice stub call (lcall 0x03C5:0x002A, e.g. at 0x0300 and at 39F9 inside e3 itself). e3's only prologue is 55 89 e5 at 382D and its single retf is at 3F30, so the entry is inside it. Removed when e3 matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -7897,7 +7897,7 @@ signature = ""
 c_name = "ovl16_fn_3C7F"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 14: not a routine. 3C7F is the opcode byte 0xfe of `dec byte ptr es:[di+0xbe]` (bytes 26 fe 8d be 00 at 3C7E) inside ovl16_e3, mid-instruction (the 0x26 segment prefix at 3C7E starts the instruction); no prologue. The entry is the flat-linear reading (seg 0x03C5 * 16 + 0x002F = 0x3C7F) of the ovl25 ClearPromptLine stub call (lcall 0x03C5:0x002F, e.g. at 0x0300 and at 3EB7 inside e3). e3's only prologue is 55 89 e5 at 382D and its single retf is at 3F30. Removed when e3 matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -7910,7 +7910,7 @@ signature = ""
 c_name = "ovl16_fn_3C84"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 14: not a routine. 3C84 is the displacement byte 0x09 of `jmp 3C8Eh` (bytes eb 09 at 3C83) inside ovl16_e3, mid-instruction; no prologue. The entry is the flat-linear reading (seg 0x03C5 * 16 + 0x0034 = 0x3C84) of the ovl25 LoadPictureSlot stub call (lcall 0x03C5:0x0034, e.g. at 0x0775 and at 0x30FB). e3's only prologue is 55 89 e5 at 382D and its single retf is at 3F30, so the entry is inside it. Removed when e3 matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["far_call"]
 
 [[routine]]
