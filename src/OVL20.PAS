@@ -1,14 +1,16 @@
 unit OVL20;
 { PartyHeal (re/units.toml): the camp's rest, 3685 bytes of code. RunRestPeriod is the rest that RestParty (ovl15)
   starts: it keeps the rest clock RestTime, shows the "Rest daYs Hours Mins Inc Dec Exit" menu, heals the party
-  and reports interruptions. AdvanceAffectDurations spends elapsed game time on timed affects (whitepaper 5.22.1). }
+  and reports interruptions. AdvanceAffectDurations spends elapsed game time on timed affects (whitepaper 5.22.1).
+  AdvanceGameClock is the unit's main entry for other units: OVL03, OVL08, OVL14 and RunRestPeriod advance the
+  game clock with it. }
 {$A-,O+,F+,S-,R-,G-,I-,L-}
 interface
 uses POOLVARS, RES06;
 procedure AdvanceAffectDurations(Amount: Byte; Index: ShortInt);
 procedure CarryRestClock(var Clock: TRestClock);
 procedure NormalizeRestTime;
-procedure ovl20_e1(Amount: Byte; Index: ShortInt);
+procedure AdvanceGameClock(Amount: Byte; Index: ShortInt);
 procedure SpendRestTime(Amount: Byte; Index: ShortInt);
 function TwoDigitText(Number: Byte): String40;
 procedure ShowRestTime(Selected: ShortInt);
@@ -53,8 +55,11 @@ const
   ViewModeCamp = 2;          { ds49F3 while the party camps (MakeCamp sets it, ovl15:1E6F) }
   VarPartySize = 830;        { party member count, a word of the ds49D6 block (whitepaper 5.5) }
   MaxAffectStep = 10;        { ovl20:0097 spends elapsed affect time in passes of at most ten units }
+  { The first of the seven game-clock words AdvanceGameClock advances, as a VarsAt4900 VM word address:
+    the words at 49C6h..49CCh, that is GameVars^[198..204] (whitepaper 5.22.1). }
+  GameClockWord = $49C6;
 
-{ ovl20:0000. Spends elapsed game time on the party's timed affects. ovl20_e1 calls it with the Amount
+{ ovl20:0000. Spends elapsed game time on the party's timed affects. AdvanceGameClock calls it with the Amount
   and Index just added to the game clock. Those units are scaled down to the smallest digit (each higher
   digit multiplied by ClockRadix), then spent in passes of at most MaxAffectStep. Outside camp every
   member is marked due (FillChar of ds471E). In camp it returns at once when no TimedAffectFlags entry is set. A
@@ -207,27 +212,29 @@ begin
   end;
 end;
 { ovl20:03D5: retf 4: Amount and Index (4 bytes of parameters); 18 bytes of locals. Advances the game clock by
-  Amount units of digit Index: the seven game variables at 49C6h..49CCh (VarsAt4900, the digits CarryRestClock
-  works on) are copied to a local clock, each unit is added and carried, and the clock is written back; then
-  AdvanceAffectDurations runs with the same arguments and spends that elapsed time on timed affects. The camp's rest
-  advances it 5 minutes at a time (RunRestPeriod calls it with Index 1 and Amount 5). Purpose unknown: the name
-  stays as the entry other units call (OVL14, OVL15, OVL08 and RunRestPeriod reference it, so a rename is a
-  cross-unit change). }
-procedure ovl20_e1(Amount: Byte; Index: ShortInt);
+  Amount units of digit Index: copies the seven game-clock words into a local clock, adds one unit per step
+  and carries it (CarryRestClock), writes the clock back, then spends the elapsed time on timed affects
+  (AdvanceAffectDurations with the same arguments). GameClockWord is the first of the seven words: the VM
+  words at 49C6h..49CCh, that is GameVars^[198..204] (whitepaper 5.22.1). This is the unit's main entry for
+  other units: EndCombatRound (ovl08:0880) advances it one unit of digit 1 at the end of a combat round,
+  MoveParty, CheckMapCell and HandleWildernessKeys (ovl14) advance it during movement, and RunRestPeriod
+  five minutes (Index 1) per rest step. Reads and writes VarsAt4900 and, through CarryRestClock, ClockRadix;
+  side effects through AdvanceAffectDurations. }
+procedure AdvanceGameClock(Amount: Byte; Index: ShortInt);
 var
   Clock: TRestClock;
   Digit: ShortInt;
   Step: Byte;
 begin
   for Digit := 0 to 6 do
-    Clock[Digit] := VarsAt4900^[$49C6 + Digit];
+    Clock[Digit] := VarsAt4900^[GameClockWord + Digit];
   for Step := 1 to Amount do
   begin
     Inc(Clock[Index]);
     CarryRestClock(Clock);
   end;
   for Digit := 0 to 6 do
-    VarsAt4900^[$49C6 + Digit] := Clock[Digit];
+    VarsAt4900^[GameClockWord + Digit] := Clock[Digit];
   AdvanceAffectDurations(Amount, Index);
 end;
 { ovl20:047A: retf 4: Amount and Index (4 bytes of parameters); 4 bytes of locals. Takes Amount off the
@@ -577,7 +584,7 @@ begin
         ShowRestTime(0);
         DisplayCounter := 0;
       end;
-      ovl20_e1(5, 1);
+      AdvanceGameClock(5, 1);
       CheckRestHealing;
       AdvanceRestStudies;
       AdvanceRestHour(RestCycleCounter);

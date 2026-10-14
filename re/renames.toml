@@ -5205,3 +5205,10 @@ kind = "global"
 why = "ovl20:002F indexes DS:471D by the 1-based party index: AdvanceAffectDurations clears the flag, then sets it again while that member still has an affect whose Duration is above 0 (ovl20:01C2, ovl20:02A7); index 0 is never read"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl20_e1"
+new = "AdvanceGameClock"
+kind = "routine"
+why = "ovl20:03D5 adds Amount units of game-clock digit Index to the seven game variables at VarsAt4900 $49C6..$49CC, carries the local clock and spends that elapsed time through AdvanceAffectDurations (the game clock of the rest, whitepaper 5.22.1); callers ovl03:2AC1, ovl08:0880 EndCombatRound (1, 1), ovl14:073B MoveParty, ovl14:0818 CheckMapCell, ovl14:0989 HandleWildernessKeys and ovl20:0C9A RunRestPeriod (5, 1)"
+date = "2026-10-14"
+

@@ -172,7 +172,7 @@ const
     this many records of ds6718 around its scan. }
   SavedScanBytes = $D8;
   { The game clock is a seven-digit mixed-radix count in the game variables (VarsAt4900^[$49C6+Digit];
-    ovl20_e1 advances it and ShowRestTime reads the same digits). The location line (00BA:290B) reads
+    AdvanceGameClock advances it and ShowRestTime reads the same digits). The location line (00BA:290B) reads
     digit 1 and 2 (the minute ones and tens) and digit 3 (the hours) to show the time as hours:minutes. }
   ClockMinutes = $49C7;
   ClockTenMinutes = $49C8;
