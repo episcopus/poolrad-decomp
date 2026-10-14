@@ -1,0 +1,37 @@
+# Lessons from ovl22, backed by TP 6.0 probes or matched routines.
+
+[[lesson]]
+id = "spellhandlers-element-is-spell-number"
+confidence = "V"
+units = ["ovl22"]
+tags = ["spell", "handler-table", "global"]
+title = "SpellHandlers[Spell] is built from the ovl22 entry stubs in spell order"
+lesson = "ovl22_e10 (ovl22:3413) fills the table at DS:6B84 with far pointers: element N at DS:6B84+N*4 is the overlay stub 0096:(0x20+5*entry) of the handler for spell N (element 0 is the target picker, entry 4). The stub offset gives the overlay entry index, so the handler routine of spell N is the routine the map names ovl22_e(entry). Several spells share one handler: spells 5, 11, 18, 22 and 29 (Detect Magic, Read Magic, Find Traps, Detect Invisibility) all point at entry 15 CastDetectionSpell, and spells 6, 7, 16 and 17 (the Protection From Evil/Good spells) all point at entry 16 CastProtection. SpellNames (DS:28E9) gives the spell names: 1 Bless, 2 Curse, 3 Cure Light Wounds, 4 Cause Light Wounds, 5 Detect Magic, 6 Protection From Evil, 7 Protection from Good, 8 Resist Cold, 9 Burning Hands, 10 Charm Person, 11 Detect Magic, 12 Enlarge."
+evidence = ["src/OVL22.PAS#ovl22_e10", "re/symbols.toml#ovl22:3413", "re/symbols.toml#ovl22:10E9"]
+
+[[lesson]]
+id = "signed-byte-times-128-not-shl-7"
+confidence = "V"
+units = ["*"]
+tags = ["compiler", "shl", "sign-extension", "byte"]
+title = "A byte shifted by 7 compiles differently from a signed byte times 128"
+lesson = "For a Word destination, `X shl 7` on a Byte gives `xor ah,ah; mov cx,7; shl ax,cl`, and `ShortInt(X) shl 7` gives `cbw; mov cx,7`. The original ovl22:1241..1246 has `cbw; mov cl,7; shl ax,cl`: only a signed byte times a constant, `ShortInt(X) * 128`, gives that exact sequence (`mov cl,7`, not `mov cx,7`). ovl12:1f8b uses the same `cbw; mov cl,7; shl ax,cl` shape on TCharacter.Side (+$10E), so Side is read as signed there too. Prefer `* 128` over `shl 7` when the shift result is a Word and a signed byte is involved."
+evidence = ["tools/re/tp_idioms/ovl22/PRB19A.PAS", "tools/re/tp_idioms/ovl22/PRB19B.PAS", "src/OVL22.PAS#CastCharmPerson", "re/symbols.toml#ovl22:11DD"]
+
+[[lesson]]
+id = "character-creature-type-9f"
+confidence = "V"
+units = ["ovl22"]
+tags = ["character", "record", "spell-target"]
+title = "TCharacter +$9F is the creature type a spell tests a target by"
+lesson = "TCharacter +$9F is the byte after Sex (+$9E); coab leaves it field_9F. Charm Person and the shared ovl22:1760 check require it to be 1 or less, Snake Charm (ovl22_e31) requires $E, and ovl12 compares it with 4 and $A. MON*CHA has the humanoids at 0 or 1, the undead (Giant Skeleton, Vampire) at 4, a giant snake at $E, and a saved party member at 0. src/POOLVARS.PAS names it CreatureType."
+evidence = ["src/POOLVARS.PAS#TCharacter", "src/OVL22.PAS#CastCharmPerson", "re/symbols.toml#ovl22:11DD"]
+
+[[lesson]]
+id = "spell-handler-working-globals-4844"
+confidence = "V"
+units = ["ovl22"]
+tags = ["global", "spell", "working-value"]
+title = "DS:4844 and DS:4845 are two working bytes the ovl22 cast handlers share"
+lesson = "The ovl22 cast handlers keep two scratch bytes in the globals at DS:4844 and DS:4845 (between SpellMenuItemCount and NewHeapEnd): Enlarge (ovl22_e20) puts its strength 18 and its percentile there for RaiseStrength, Sleep (ovl22_e26) its 4d4 hit-point pool and per-target cost, Snake Charm (ovl22_e31) a hit-point pool, and ovl24_fn_23B6 a value and a duration. They are declared ds4844/ds4845 in src/POOLVARS.PAS."
+evidence = ["src/OVL22.PAS#CastEnlarge", "re/symbols.toml#ovl22:12A5"]

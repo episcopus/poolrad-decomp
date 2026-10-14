@@ -3588,3 +3588,10 @@ kind = "routine"
 why = "cast handler of spell 12 Enlarge (SpellHandlers[12]; ovl22_e10 fills the table, whitepaper 5.22.2): gives the target strength 18 by caster level through RaiseStrength and adds the strength affect /bin/zshC (ovl22:12A5)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl22_e19"
+new = "CastCharmPerson"
+kind = "routine"
+why = "cast handler of spell 10 Charm Person (SpellHandlers[10]; ovl22_e10 fills the table, whitepaper 5.22.2): refuses a non-person target (CreatureType or CombatSize above 1), else applies the charm affect $0B with the caster's side in bit 7 of its data (ovl22:11DD)"
+date = "2026-10-13"
+

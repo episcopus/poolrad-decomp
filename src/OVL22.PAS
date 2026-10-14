@@ -25,7 +25,7 @@ procedure CastDetectionSpell;
 procedure CastProtection;
 procedure CastResistCold;
 procedure CastBurningHands;
-procedure ovl22_e19;
+procedure CastCharmPerson;
 procedure CastEnlarge;
 procedure ovl22_e21;
 procedure ovl22_e22;
@@ -603,7 +603,42 @@ begin
   ApplySpellToTargets(ds681B, 0, 0, res12_fn_26C2(ds681B), DamageKindFire, '');
 end;
 { ovl22:11DD: retf 0: 0 bytes of parameters; 22 bytes of locals }
-{@stub} procedure ovl22_e19; begin end;
+{ ovl22:11DD (e19). Cast handler of spell 10, Charm Person: it first refuses a target that is not a
+  person, i.e. one whose CreatureType is above 1 or whose combat footprint kind (CombatSize, bits 0..6)
+  is above 1, showing 'is unaffected' (res12_fn_16EC). Otherwise it applies the current spell ds681B
+  to the targets with the charm affect's data (the caster level res12_fn_26C2(ds681B) plus the
+  caster's Side in bit 7, so the charmed creature joins that side) and runs the affect through
+  CallAffectHandler ($0B, the charm affect id). One of the per-spell handlers in SpellHandlers
+  (SpellHandlers[10], filled by ovl22_e10). Reads ds6C95 (the first chosen target), SelectedCharacter;
+  changes the affect list of the target through CallAffectHandler. }
+procedure CastCharmPerson;
+const
+  CharmAffect = $0B;              { the charm affect CallAffectHandler runs and res12_fn_2199 finds }
+  CharmableType = 1;              { the largest CreatureType Charm Person can affect (a person) }
+  CharmableSize = 1;              { the largest CombatSize (combat footprint kind) it can affect }
+  { The caster's side goes into bit 7 of the affect's data (Side * SideScale). }
+  SideScale = 128;
+  { Charm Person's side effect: the affect handler runs when the affect is removed (Flag 1). }
+  RunHandlerOnRemoval = 1;
+  ModeApply = 0;                  { CallAffectHandler's mode: apply (not remove) the affect }
+  MessageColour = $A;             { the colour res12_fn_16EC shows the message in }
+  TimedMessage = 1;               { nonzero: res12_fn_16EC delays by the game speed and clears it }
+var
+  Affect: Pointer;                { the charm affect res12_fn_2199 finds on the target }
+  Target: PCharacter;             { the first chosen target ds6C95, tested and charmed }
+begin
+  Target := ds6C95;
+  if (Target^.CreatureType > CharmableType) or (Target^.CombatSize > CharmableSize) then
+    res12_fn_16EC(Target, 'is unaffected', MessageColour, TimedMessage)
+  else
+  begin
+    ApplySpellToTargets(ds681B,
+      res12_fn_26C2(ds681B) + ShortInt(SelectedCharacter^.Side) * SideScale, RunHandlerOnRemoval, 0, 0,
+      'is charmed');
+    if res12_fn_2199(Target, CharmAffect, Affect) then
+      CallAffectHandler(CharmAffect, ds6C95, PAffect(Affect), ModeApply);
+  end;
+end;
 { ovl22:12A5: retf 0: 0 bytes of parameters; 14 bytes of locals }
 { ovl22:12A5 (e20). Cast handler of spell 12, Enlarge: gives the first chosen target ds6C95 the
   strength 18 (ExceptionalStrength) with the percentile for the caster level (res12_fn_26C2(ds681B):

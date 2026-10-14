@@ -10049,12 +10049,12 @@ id = "ovl22:11DD"
 unit = "ovl22"
 addr = "ovl22:11DD"
 size = 200
-name = "ovl22_e19"
+name = "CastCharmPerson"
 signature = ""
 c_name = "ovl22_e19"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_19"
+notes = "renamed from ovl22_e19 (cast handler of spell 10 Charm Person (SpellHandlers[10]; ovl22_e10 fills the table, whitepaper 5.22.2): refuses a non-person target (CreatureType or CombatSize above 1), else applies the charm affect $0B with the caster's side in bit 7 of its data (ovl22:11DD)); auto:entry_19"
 evidence = ["prologue"]
 
 [[routine]]
