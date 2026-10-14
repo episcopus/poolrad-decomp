@@ -19,7 +19,7 @@ procedure ApproachEncounterCommand;
 procedure ShowCloseUpCommand;
 procedure ReadNumberCommand;
 procedure ReadStringCommand;
-procedure ovl03_fn_0A09;
+procedure ShowTextCommand;
 procedure ovl03_fn_0A9F;
 procedure ovl03_fn_0AED;
 procedure ovl03_fn_0B39;
@@ -107,6 +107,14 @@ const
   { The colour and the longest line of the text ECL command 16 asks for (ovl03:0994). }
   EclTextColor = 10;
   EclInputMaxLength = 40;
+  { The ECL text window of ECL commands 17 and 18 (ovl03:0A09): columns 1 to 38, rows 17 to 22. The
+    cursor starts at its top left corner, the one EndCommand (ovl03:0001) also puts it at. }
+  EclTextLeft = 1;
+  EclTextTop = $11;
+  EclTextRight = $26;
+  EclTextBottom = $16;
+  { ECL command 17: the text goes on after the text already in the window; command 18 clears it first. }
+  OpContinueText = $11;
 var
   { ds84C8 (POOLVARS) under the type ShowEncounterPicture takes: TPictureShown is declared in OVL07,
     and Turbo Pascal accepts a var argument only of the identical type. }
@@ -507,8 +515,30 @@ begin
     Answer := ' ';
   WriteVmString(Target, Answer);
 end;
-{ ovl03:0A09: retf 0: 0 bytes of parameters; 256 bytes of locals }
-{@stub} procedure ovl03_fn_0A09; begin end;
+{ ovl03:0A09. ECL commands 17 and 18 (dispatcher ovl03:2F2D, SkippedOpcode $11 or $12): show the text
+  of operand 1 in the ECL text window (EclTextLeft to EclTextRight, EclTextTop to EclTextBottom) with
+  ShowPagedText. A number operand is turned into its text by res12_fn_1073 and stored in EclStrings[1];
+  a string operand is already there (DecodeOperands). Command 17 (OpContinueText) leaves the window and
+  the cursor as they are; command 18 clears the window and puts the cursor at its top left corner first.
+  ds84E4 is cleared, and ds4A00 is set while the text is shown: DrawTextRun then waits after each
+  glyph. }
+procedure ShowTextCommand;
+begin
+  DecodeOperands(1);
+  ds84E4 := 0;
+  ds4A00 := 1;
+  if OperandType[1] < FirstStringOperandType then
+    EclStrings[1] := res12_fn_1073(OperandValue(1));
+  if SkippedOpcode = OpContinueText then
+    ShowPagedText(EclTextLeft, EclTextTop, EclTextRight, EclTextBottom, EclTextColor, 0, EclStrings[1])
+  else
+  begin
+    GlyphRow := EclTextTop;
+    GlyphCol := EclTextLeft;
+    ShowPagedText(EclTextLeft, EclTextTop, EclTextRight, EclTextBottom, EclTextColor, 1, EclStrings[1]);
+  end;
+  ds4A00 := 0;
+end;
 { ovl03:0A9F: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl03_fn_0A9F; begin end;
 { ovl03:0AED: frame not read }

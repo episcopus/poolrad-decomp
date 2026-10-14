@@ -3532,3 +3532,10 @@ kind = "routine"
 why = "ECL command 16 (opcode 10h in the dispatcher ovl03:2F2D, the string twin of ReadNumberCommand): reads a line with ReadInputLine and stores it with WriteVmString at operand 2's address (ovl03:0994, matched)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl03_fn_0A09"
+new = "ShowTextCommand"
+kind = "routine"
+why = "ECL commands 17 and 18 (dispatcher ovl03:2F2D, opcodes 11h and 12h): show operand 1's text in the ECL text window with ShowPagedText (RES06); 11h keeps the window, 12h clears it and resets GlyphCol/GlyphRow (ovl03:0A09, matched)"
+date = "2026-10-13"
+
