@@ -269,3 +269,39 @@ tags = ["string", "char", "overlay", "temp", "frame", "codegen"]
 title = "A Char passed where a String40 value parameter is expected becomes a 256-byte temporary, not a copy in a local"
 lesson = "AskMenu(Blank, '~HAUGHTY ...', ...) with a Char local Blank: the caller pushes a 256-byte temporary, calls 0AF8:0C3B (char to string, which leaves its destination on the stack as 0AF8:0B0B does) and passes the temporary's address as Title. A literal Text argument in an overlay unit ($O+) is copied to a temporary sized by its length (34 characters give 35 bytes). Assigning the same Char to a string local (Title := Blank) adds a second 256-byte temporary and a StrLCopy, so the frame grows by 0x100. ChooseAttitudeCommand (ovl03:25CB) matched with the direct form, frame sub sp 0x12e. Probe tools/re/tp_idioms/ovl03/CHARTIT.PAS."
 evidence = ["src/OVL03.PAS#ChooseAttitudeCommand", "tools/re/tp_idioms/ovl03/CHARTIT.PAS", "re/symbols.toml#ovl03:25CB"]
+
+[[lesson]]
+id = "operand-argument-read-from-unset-local"
+confidence = "V"
+units = ["*"]
+tags = ["argument", "uninitialised", "local", "codegen", "quirk"]
+title = "A local passed as an argument before it is set is pushed from its frame byte"
+lesson = "Amount := OperandValue(Amount) followed by ovl20_e1(Amount, 1) compiles to push [bp-1] (the unset local) before the OperandValue call, then the store of AL back to [bp-1]. The original (ECL 52, ovl03:2AC1) reads the frame byte as the operand number, so the compiled behaviour depends on what the stack held on entry. The matched Pascal states that read as a QUIRK rather than a constant operand 1, which would not match. Probe the shape with make match, not by reasoning about the declaration."
+evidence = ["src/OVL03.PAS#PassTimeCommand", "re/symbols.toml#ovl03:2AC1"]
+
+[[lesson]]
+id = "untyped-var-for-type-invisible-in-callee-unit"
+confidence = "V"
+units = ["*"]
+tags = ["var", "untyped", "Pointer", "unit", "uses", "signature"]
+title = "A var parameter whose type the callee's unit cannot see is declared untyped"
+lesson = "res12_fn_2C48 takes the address of SelectedCharacter (a PCharacter from POOLVARS), but RES12 uses only RES06, so PCharacter is not visible there. A var parameter of type Pointer rejects a PCharacter variable (Error 26, Type mismatch), so the stub declares the parameter untyped: procedure res12_fn_2C48(Prompt: String40; Mode: Byte; var Who). Untyped var accepts any variable and pushes its address, which is exactly the caller's push ds; push di. The callee's own decompiler may later declare a typed parameter once its unit uses POOLVARS."
+evidence = ["src/OVL03.PAS#ChoosePartyMemberCommand", "src/RES12.PAS", "re/symbols.toml#00BA:2C48"]
+
+[[lesson]]
+id = "byte-shr-widens-through-ax"
+confidence = "V"
+units = ["*"]
+tags = ["shr", "Byte", "codegen", "widen"]
+title = "Morale := Morale shr 1 on a Byte local widens through AX"
+lesson = "A byte local shifted right by one compiles to mov al,[x]; xor ah,ah; shr ax,1; mov [x],al, and or with $80 stays a byte operation (mov al,[x]; or al,80h; mov [x],al). Writing Morale := OperandValue(2) shr 1 with the Word result in a Byte gives the same bytes as the two-statement form (ECL 54, ovl03:2B7E, matched)."
+evidence = ["src/OVL03.PAS#AddComputerMemberCommand", "re/symbols.toml#ovl03:2B7E"]
+
+[[lesson]]
+id = "search-loop-runs-once-when-inner-sets-found"
+confidence = "V"
+units = ["*"]
+tags = ["while", "repeat", "loop", "quirk", "flag"]
+title = "A search loop whose inner repeat sets its exit flag on both exits walks only the first element"
+lesson = "FindMemorizedSpellCommand (ovl03:2C03) has a while over the party with an inner repeat over the slots. The inner loop sets Found both when the value matches and when the slots run out (I := $FF), so after the first pass Found is always set and the outer while ends. The matched Pascal keeps this shape; it is recorded as a QUIRK, not as a search of the whole party. Read the exit flag's writers on every path before assuming a walk covers the list."
+evidence = ["src/OVL03.PAS#FindMemorizedSpellCommand", "re/symbols.toml#ovl03:2C03"]
