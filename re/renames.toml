@@ -4085,3 +4085,10 @@ kind = "global"
 why = "DS:408E is the AD&D 1e constitution hit-point adjustment table read by ovl16:3F31 (ConstitutionHitPointAdjustment): signed byte per constitution, -2 at 3, -1 at 4..6, 0 at 7..14, +1 at 15, +2 at 16..18; indexed by TCharacter.Constitution (+0x14), read as a signed byte (tools/re/tp_idioms/ovl16/CONHP.PAS)"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl16_fn_3FB3"
+new = "MinHitPoints"
+kind = "routine"
+why = "ovl16:3FB3 is the floor ModifyCharacter (ovl16:209F) clamps a lowered HpMax to ('if ovl16:3FB3(SelectedCharacter) > HpMax then HpMax := ...'): over the classes with a level it counts the hit dice and totals their levels (one extra for class 4 and 7, whose maximum die is one higher, ovl16:408C), then divides by the class count after adding the constitution adjustment (ConstitutionHitPointAdjustment ovl16:3F31) and never returns below 1; the minimum-roll counterpart of the ceiling ovl16:408C"
+date = "2026-10-14"
+

@@ -90,7 +90,7 @@ procedure ovl16_fn_3EBF;
 procedure ovl16_fn_3EC4;
 procedure ovl16_fn_3EC9;
 function ConstitutionHitPointAdjustment(Who: PCharacter): ShortInt;
-function ovl16_fn_3FB3(Who: PCharacter): Byte;
+function MinHitPoints(Who: PCharacter): Byte;
 procedure ovl16_fn_4047;
 function ovl16_fn_408C(Who: PCharacter): Byte;
 procedure ovl16_fn_41F8;
@@ -639,8 +639,8 @@ begin
         else
         begin
           Dec(HpMax);
-          if ovl16_fn_3FB3(SelectedCharacter) > HpMax then
-            HpMax := ovl16_fn_3FB3(SelectedCharacter);
+          if MinHitPoints(SelectedCharacter) > HpMax then
+            HpMax := MinHitPoints(SelectedCharacter);
           Flag11B := HpMax;
         end;
       end;
@@ -678,8 +678,8 @@ begin
                 begin
                   if Scores[Stat] > ds3DA3[Race, ConMaxOffset] then
                     Scores[Stat] := ds3DA3[Race, ConMaxOffset];
-                  if ovl16_fn_3FB3(SelectedCharacter) > HpMax then
-                    HpMax := ovl16_fn_3FB3(SelectedCharacter);
+                  if MinHitPoints(SelectedCharacter) > HpMax then
+                    HpMax := MinHitPoints(SelectedCharacter);
                   Flag11B := HpMax;
                   StatIndex := HitPointIndex;
                   ShowStat(False);
@@ -1006,7 +1006,7 @@ end;
 {@stub} procedure ovl16_fn_3EC4; begin end;
 { ovl16:3EC9: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl16_fn_3EC9; begin end;
-{ ovl16:3F31. The constitution hit-point adjustment shared by the hit-point floor ovl16_fn_3FB3 and
+{ ovl16:3F31. The constitution hit-point adjustment shared by the hit-point floor MinHitPoints and
   the ceiling ovl16_fn_408C of ModifyCharacter (ovl16:209F). It sums ConstitutionHitPointTable[Constitution] over the
   eight classes the character has a level in (ClassLevels[I], +$96, signed, above 0), then adds the
   fighter bonus: one more for a fighter (ClassMask = 2) above constitution 16 and a second above 17
@@ -1033,8 +1033,48 @@ begin
       end;
   ConstitutionHitPointAdjustment := Sum;
 end;
-{ ovl16:3FB3: frame not read }
-{@stub} function ovl16_fn_3FB3(Who: PCharacter): Byte; begin end;
+{ ovl16:3FB3. The minimum hit points a character's HpMax may be trained down to; the floor
+  counterpart of the ceiling ovl16_fn_408C, both called by ModifyCharacter (ovl16:209F). Over the
+  eight classes the character has a level in (ClassLevels[I], +$96, signed, above 0) it counts the
+  hit dice (Count) and totals their levels into Total, adding one level for class 4 and class 7
+  (whose maximum die is one higher, see ovl16:408C). It then divides Total plus the constitution
+  adjustment (ConstitutionHitPointAdjustment, which may be negative) by Count; a negative adjustment
+  Total cannot absorb (Total at most its magnitude plus Count) clamps the result to 1, so the floor
+  is never below 1. The `with Who^` evaluates the parameter once. No side effects. }
+function MinHitPoints(Who: PCharacter): Byte;
+var
+  Count: Byte;         { [bp-2]: the classes the character has a level in }
+  Adjustment: ShortInt;{ [bp-3]: the constitution hit-point adjustment (ConstitutionHitPointAdjustment) }
+  Total: Byte;         { [bp-4]: the summed hit-dice levels, then the divided result }
+  I: ShortInt;         { [bp-5]: class index 0..7 }
+begin
+  with Who^ do
+  begin
+    Count := 0;
+    Total := 0;
+    for I := 0 to 7 do
+      if ClassLevels[I] > 0 then
+      begin
+        Inc(Total, ClassLevels[I]);
+        Inc(Count);
+        case I of
+          4: Inc(Total);
+          7: Inc(Total);
+        end;
+      end;
+  end;
+  Adjustment := ConstitutionHitPointAdjustment(Who);
+  if Adjustment < 0 then
+  begin
+    if Total > Abs(Adjustment) + Count then
+      Total := (Total + Adjustment) div Count
+    else
+      Total := 1;
+  end
+  else
+    Total := (Total + Adjustment) div Count;
+  MinHitPoints := Total;
+end;
 { ovl16:4047: retf 4: 4 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl16_fn_4047; begin end;
 { ovl16:408C: frame not read }

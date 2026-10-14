@@ -8047,27 +8047,14 @@ evidence = ["prologue"]
 id = "ovl16:3FB3"
 unit = "ovl16"
 addr = "ovl16:3FB3"
-size = 148
-name = "ovl16_fn_3FB3"
-signature = "function ovl16_fn_3FB3(Who: PCharacter): Byte"
+size = 217
+name = "MinHitPoints"
+signature = "function MinHitPoints(Who: PCharacter): Byte"
 c_name = "ovl16_fn_3FB3"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl16_fn_3FB3 (ovl16:3FB3 is the floor ModifyCharacter (ovl16:209F) clamps a lowered HpMax to ('if ovl16:3FB3(SelectedCharacter) > HpMax then HpMax := ...'): over the classes with a level it counts the hit dice and totals their levels (one extra for class 4 and 7, whose maximum die is one higher, ovl16:408C), then divides by the class count after adding the constitution adjustment (ConstitutionHitPointAdjustment ovl16:3F31) and never returns below 1; the minimum-roll counterpart of the ceiling ovl16:408C); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl16:4047"
-unit = "ovl16"
-addr = "ovl16:4047"
-size = 69
-name = "ovl16_fn_4047"
-signature = ""
-c_name = "ovl16_fn_4047"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl16:408C"
