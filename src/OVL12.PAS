@@ -8,7 +8,7 @@ uses POOLVARS, RES06;
 procedure CancelPendingHook(AffectId: Byte);
 function TryAddAffect(Who: PCharacter; AffectId, Data: Byte; Duration: Word): Boolean;
 procedure DropFromFight(Who: PCharacter; NewStatus: Byte; Msg: String40);
-procedure ovl12_e2;
+procedure RaiseAttackAndMorale(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e3;
 procedure ovl12_e4;
 procedure ovl12_e5;
@@ -180,6 +180,7 @@ const
   CombatViewMode = 5;           { ds49F3 during a combat (RunCombat sets it, whitepaper 5.5) }
   StatusGone = 6;               { TCharacter.Status 6, dead for good (ovl04:0510) }
   StatusStoned = 7;             { TCharacter.Status 7, stone (ovl04:093D) }
+  MoraleStep = 5;               { what the affect handlers add to or take from the morale scratch ds6825 }
 
 { ovl12:0000. Cancels the hook of an affect: when AffectId is 0 or is the affect the hooks are offering
   (HookAffectId), HookAffectId and DamageAmount are cleared. HookAffectId 0 reads as "is Unaffected"
@@ -230,8 +231,14 @@ begin
   if ds49F3 <> CombatViewMode then
     res12_fn_0767(SelectedCharacter);
 end;
-{ ovl12:010D: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e2; begin end;
+{ ovl12:010D. Affect handler of an affect (the AffectHandlers shape: Who, Affect and Mode; Mode is not read,
+  so applying and removing run the same code, ovl24:0000): adds MoraleStep to the morale scratch ds6825 (ovl09 CheckMorale
+  computes it) and 1 to AttackRoll. LowerAttackAndMorale (ovl12:011D) takes both back. }
+procedure RaiseAttackAndMorale(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  Inc(ds6825, MoraleStep);
+  Inc(AttackRoll);
+end;
 { ovl12:011D: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e3; begin end;
 { ovl12:013B: retf 10: 10 bytes of parameters; 0 bytes of locals }

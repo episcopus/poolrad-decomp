@@ -3161,12 +3161,12 @@ id = "ovl12:010D"
 unit = "ovl12"
 addr = "ovl12:010D"
 size = 16
-name = "ovl12_e2"
-signature = ""
+name = "RaiseAttackAndMorale"
+signature = "procedure RaiseAttackAndMorale(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e2"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_2"
+notes = "renamed from ovl12_e2 (ovl12:010D adds 5 to ds6825 (the AI morale scratch that ovl09 CheckMorale computes) and 1 to AttackRoll; its frame (Who, Affect, Mode, retf 10) is the AffectHandlers shape (TAffectHandler, CallAffectHandler ovl24:0000), Mode not read); auto:entry_2"
 evidence = ["prologue"]
 
 [[routine]]

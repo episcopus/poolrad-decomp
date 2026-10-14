@@ -3434,3 +3434,10 @@ kind = "routine"
 why = "ovl12:0058 shows Msg on Who (res12_fn_16EC, colour 10) unless Who's Status is 6, 7 or 8 already; then it sets Status to NewStatus, clears Flag10D and Flag11B, removes the death affects (ovl24:100A), runs the hooks of kind $D (a combatant going down, ovl24:02FA), removes Who from the map when Flag10D is clear (ovl31:0E11), and outside combat (ds49F3 not 5) redraws the selected character; the same steps as DropCombatant (ovl24:0F06) without its ground redraw"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e2"
+new = "RaiseAttackAndMorale"
+kind = "routine"
+why = "ovl12:010D adds 5 to ds6825 (the AI morale scratch that ovl09 CheckMorale computes) and 1 to AttackRoll; its frame (Who, Affect, Mode, retf 10) is the AffectHandlers shape (TAffectHandler, CallAffectHandler ovl24:0000), Mode not read"
+date = "2026-10-13"
+
