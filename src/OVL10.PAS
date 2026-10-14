@@ -971,7 +971,7 @@ end;
   the lists ds6DBB and ds5D9A, game word Var2BattleWord), caps Var2Morale at 100, creates the map,
   discards waiting keys, prepares combatants, discards waiting keys again, places them, and discards
   waiting keys once more. It allocates ds6E36, centres the view on the first party character, calls
-  DrawCombatScreen, runs HookBattleStart for each character, calls ovl13_e19 and enters ViewModeCombat. }
+  DrawCombatScreen, runs HookBattleStart for each character, calls UpdateMonsterMorale and enters ViewModeCombat. }
 procedure StartBattle;
 var
   Unused: array[0..9] of Byte;  { QUIRK ovl10:1E34: ten bytes of the frame nothing uses }
@@ -1010,7 +1010,7 @@ begin
     RunAffectHooks(HookBattleStart, Who);
     Who := Who^.Next;
   end;
-  ovl13_e19;
+  UpdateMonsterMorale;
   ds49F3 := ViewModeCombat;
 end;
 

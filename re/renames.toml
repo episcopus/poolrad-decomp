@@ -4183,3 +4183,10 @@ kind = "routine"
 why = "ovl13:26B0 draws the attack's picture at Who's cell (CopyPictureItem/DrawCombatIcon selected by the item kind) and animates it along the line to Target (WalkCombatLine) with a launch (ds2620) and an impact (ds262C) sound; PerformAttack calls it for the aimed item and a readied bow"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl13_e19"
+new = "UpdateMonsterMorale"
+kind = "routine"
+why = "ovl13:2879 walks the battle character list ds5D96 and totals the monster side's (Side = SideMonsters) maximum and current hit points, then stores 20 * current div maximum * 5 in the morale byte ds6E2F that CheckMorale (ovl09:10D7) reads as a monster's second morale base; called by StartBattle and EndCombatRound"
+date = "2026-10-14"
+

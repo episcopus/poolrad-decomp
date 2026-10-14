@@ -309,7 +309,7 @@ begin
     if (Flag <> 0) and not (Cmd in [KeyQuickAll, KeyAltR, KeyAltX, KeyAltM]) then Cmd := #0;
   until Cmd in [KeyQuickAll, KeyAltR, ' ', KeyAltX, KeyAltM, 'A', 'C', 'D', 'M', 'Q', 'T', 'U', 'V'];
 end;
-{ ovl08:0880. The end of a combat round: ovl20_e1(1, 1), the round counter ds6DE3, ovl13_e19,
+{ ovl08:0880. The end of a combat round: ovl20_e1(1, 1), the round counter ds6DE3, UpdateMonsterMorale,
   then for each character the RunAffectHooks hook $13 and ApplyCloudTile; a dying character (StatusDying)
   bleeds one more round and after LastDyingRound rounds is StatusBledOut. Warns Your Teammate is
   Dying while a party member can be bandaged, redraws the map around the CombatMap view position
@@ -324,7 +324,7 @@ var
 begin
   ovl20_e1(1, 1);
   Inc(ds6DE3);
-  ovl13_e19;
+  UpdateMonsterMorale;
   Who := PCharacter(ds5D96);
   Index := 1;
   while Who <> nil do

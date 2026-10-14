@@ -5658,12 +5658,12 @@ id = "ovl13:2879"
 unit = "ovl13"
 addr = "ovl13:2879"
 size = 143
-name = "ovl13_e19"
+name = "UpdateMonsterMorale"
 signature = ""
 c_name = "ovl13_e19"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_19"
+notes = "renamed from ovl13_e19 (ovl13:2879 walks the battle character list ds5D96 and totals the monster side's (Side = SideMonsters) maximum and current hit points, then stores 20 * current div maximum * 5 in the morale byte ds6E2F that CheckMorale (ovl09:10D7) reads as a monster's second morale base; called by StartBattle and EndCombatRound); auto:entry_19"
 evidence = ["prologue"]
 
 [[routine]]

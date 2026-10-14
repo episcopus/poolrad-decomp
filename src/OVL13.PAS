@@ -47,7 +47,7 @@ procedure ovl13_fn_257E;
 procedure ovl13_fn_25C9;
 function BearingTo(Who, Target: Pointer): Byte;
 procedure ShowAttackAnimation(Who, Target: PCharacter; Item: PItem);
-procedure ovl13_e19;
+procedure UpdateMonsterMorale;
 function ovl13_e20(Who: Pointer): Byte;
 function ovl13_e16(Who, Target: Pointer): Boolean;
 procedure ovl13_fn_2AA0;
@@ -93,6 +93,9 @@ type
 const
   { The two sides of a combat (POOLVARS, ovl24:0D96). }
   SideParty = 0;
+  { The monster side (ovl05's SideMonsters and ovl10's SideEnemy): the combatants ovl13:2879 totals
+    the hit points of into ds6E2F. }
+  SideMonsters = 1;
   { The round's Movement is capped at this before it is doubled into the half-square move
     budget (ovl13:0155..0165). }
   MaxMovement = $60;
@@ -1509,8 +1512,37 @@ begin
   PlaySound(ds262C);
   SetSoundDriverIdle(10);
 end;
-{ ovl13:2879: retf 0: 0 bytes of parameters; 8 bytes of locals }
-{@stub} procedure ovl13_e19; begin end;
+{ ovl13:2879. Works out the monster side's remaining hit points as a percentage and stores it in the
+  morale byte ds6E2F, the value CheckMorale reads for a monster's second morale test: it walks the
+  battle's character list ds5D96 and, for every combatant on the monster side (Side = SideMonsters),
+  adds its maximum hit points (HpMax, +$32) and, when it is still in the fight (Flag10D set), its
+  current hit points (Flag11B, +$11B). A monster whose Flag10D is clear keeps its maximum counted
+  while its current hit points fall out of the sum, so damage lowers the percentage. The result is
+  20 * current div maximum * 5 (0 when the monster side has no maximum hit points at all, which
+  leaves ds6E2F unchanged). Called by StartBattle (ovl10:1E31, before the first round) and
+  EndCombatRound (ovl08:0880, every round). Globals: ds5D96 (read), ds6E2F (written). }
+procedure UpdateMonsterMorale;
+var
+  TotalMaxHp: Word;              { [bp-2] the monster side's total maximum hit points }
+  TotalCurrentHp: Word;          { [bp-4] their total current hit points (the Flag10D combatants) }
+  Who: PCharacter;               { [bp-8] the combatant walked in ds5D96 }
+begin
+  TotalMaxHp := 0;
+  TotalCurrentHp := 0;
+  Who := PCharacter(ds5D96);
+  while Who <> nil do
+  begin
+    if Who^.Side = SideMonsters then
+    begin
+      if Who^.Flag10D <> 0 then
+        TotalCurrentHp := TotalCurrentHp + Who^.Flag11B;
+      TotalMaxHp := TotalMaxHp + Who^.HpMax;
+    end;
+    Who := Who^.Next;
+  end;
+  if TotalMaxHp > 0 then
+    ds6E2F := 20 * TotalCurrentHp div TotalMaxHp * 5;
+end;
 { ovl13:2908: retf 4: 4 bytes of parameters; 8 bytes of locals }
 {@stub} function ovl13_e20(Who: Pointer): Byte; begin end;
 { ovl13:2998: retf 8: 8 bytes of parameters; 20 bytes of locals }
