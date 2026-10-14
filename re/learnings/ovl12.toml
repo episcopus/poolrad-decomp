@@ -593,3 +593,39 @@ tags = ["Inc", "byte", "codegen", "global", "add"]
 title = "Inc(X, Y) with a byte variable Y loads Y into AL and adds it to X in memory"
 lesson = "`Inc(DamageAmount, LastDiceCount)` compiles to `mov al, [LastDiceCount]; add [DamageAmount], al` (ovl12:2D38, after the 3d8 roll), the form the original shows at ovl12:2D7B. It is the variable counterpart of the constant form in the lesson inc-with-step-is-memory-add; the plain `X := X + Y` is not what this matched."
 evidence = ["src/OVL12.PAS#SetDamageFromSlotItemType56", "re/symbols.toml#ovl12:2D38"]
+
+[[lesson]]
+id = "boolean-from-and-test-is-if-then-else"
+confidence = "V"
+units = ["*"]
+tags = ["Boolean", "and", "if", "codegen", "jump"]
+title = "A Boolean set from an and-test of two compares matches as if-then-else with True and False"
+lesson = "`IsExceptional := (A = 18) and (B = 100)` compiled to two compares, a `mov al, 0 / mov al, 1` pair and a store of AL, while the original stores the flag directly: `cmp; jne else; cmp; jne else; mov byte [bp-4], 1; jmp end; else: mov byte [bp-4], 0`. The form `if (A = 18) and (B = 100) then IsExceptional := True else IsExceptional := False;` matched it (ovl12:2F57, GiveExceptionalStrength)."
+evidence = ["src/OVL12.PAS#GiveExceptionalStrength", "re/symbols.toml#ovl12:2F57"]
+
+[[lesson]]
+id = "then-part-is-laid-out-first"
+confidence = "V"
+units = ["*"]
+tags = ["if", "else", "layout", "jump", "codegen"]
+title = "The original lays out the then-part of an if-else first, so the test jumps to the else-part"
+lesson = "For `if Mode <> 0 then RemoveAffect(...) else begin AddAffect(...); CallAffectHandler(...) end` the original tests Mode with `jne` to the removal code that follows, and the apply part comes after the `jmp` that ends the removal. Writing `if Mode = 0 then` with the apply part first gave `jne` to the other branch and a diff at the jump (ovl12:2EDA matched only in the `<> 0` form; ovl12:2F57 the same). Put the branch that the original tests second in the else-part."
+evidence = ["src/OVL12.PAS#ApplyItemSecondAffect", "src/OVL12.PAS#GiveExceptionalStrength", "re/symbols.toml#ovl12:2EDA"]
+
+[[lesson]]
+id = "statement-order-shows-in-the-loads"
+confidence = "V"
+units = ["*"]
+tags = ["order", "load", "codegen", "pointer"]
+title = "Statement order is visible: a pointer loaded before a flag test must be loaded first"
+lesson = "In GiveExceptionalStrength (ovl12:2F57) the original loads `Who^.Affects` (+$7F, ovl12:2F6A) before it computes the exceptional-strength flag (+$10 and +$16, ovl12:2F7C). The Pascal follows that order (`Scan := Who^.Affects` first); the flag was written first in the first draft, and the packet's load order is the order to copy."
+evidence = ["src/OVL12.PAS#GiveExceptionalStrength", "re/symbols.toml#ovl12:2F57"]
+
+[[lesson]]
+id = "pointer-parameter-copied-to-local-is-a-cast"
+confidence = "V"
+units = ["*"]
+tags = ["pointer", "cast", "local", "frame", "codegen"]
+title = "A handler that reads its Affect parameter as an item copies it to a local PItem (sub sp, 4)"
+lesson = "ApplyItemSecondAffect (ovl12:2EDA) receives its second parameter in the AffectHandlers shape but reads it as a TMenuLine: the original copies it with `mov ax, [bp+8]; mov dx, [bp+0Ah]; mov [bp-4], ax; mov [bp-2], dx` under `sub sp, 4`. The Pascal `var Item: PItem` and `Item := PItem(Affect);` gives that copy and matched."
+evidence = ["src/OVL12.PAS#ApplyItemSecondAffect", "re/symbols.toml#ovl12:2EDA"]
