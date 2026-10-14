@@ -95,7 +95,7 @@ procedure CancelDamageUnlessMagicSlotItem(Who: PCharacter; Affect: PAffect; Mode
 procedure AddConstitutionSaveBonusKind2Or4(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure RegainHitPoints(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ReviveDyingCharacter(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure GiveAffectUnlessFireOrAcid;
+procedure GiveAffectUnlessFireOrAcid(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure GiveRegeneratingUnlessAffected;
 procedure RetryRevivalAtFullHitPoints;
 procedure TurnGaseousAndEscape;
@@ -1750,8 +1750,15 @@ begin
       RemoveAffect(Who, AffectUnknown63, Affect);
     end;
 end;
-{ ovl12:27D9: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure GiveAffectUnlessFireOrAcid; begin end;
+{ ovl12:27D9. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read). Unless the damage being dealt
+  (DamageKind, DS:6819) has the fire bit (KindFire) or the acid bit (KindAcid), Who gets AffectUnknown66 for 3d6 rounds
+  with the Data $FF, and its handler runs when it is removed. Which affect runs it is not known yet [?]. }
+procedure GiveAffectUnlessFireOrAcid(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  if (DamageKind and KindFire) = 0 then
+    if (DamageKind and KindAcid) = 0 then
+      AddAffect(Who, AffectUnknown66, RollDice(AffectUnknown66Dice, AffectUnknown66Sides), $FF, RunsHandlerOnRemove);
+end;
 { ovl12:2814: retf 10: 10 bytes of parameters; 4 bytes of locals }
 {@stub} procedure GiveRegeneratingUnlessAffected; begin end;
 { ovl12:2866: retf 10: 10 bytes of parameters; 2 bytes of locals }
