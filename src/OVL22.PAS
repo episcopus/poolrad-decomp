@@ -560,7 +560,6 @@ procedure CastCauseLightWounds;
 begin
   ApplySpellToTargets(ds681B, 0, 0, RollDiceCounted(1, 8), 8, '');
 end;
-{ ovl22:10E9: retf 0: 0 bytes of parameters; 12 bytes of locals }
 { ovl22:10E9 (e15). Cast handler of the detection spells, spells 5 and 11 (Detect Magic), 18 (Read
   Magic), 22 (Find Traps) and 29 (Detect Invisibility): applies the current spell ds681B to the
   chosen targets with the message 'is affected' and no damage of its own (ApplySpellToTargets; the
@@ -570,7 +569,6 @@ procedure CastDetectionSpell;
 begin
   ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is affected');
 end;
-{ ovl22:1123: retf 0: 0 bytes of parameters; 14 bytes of locals }
 { ovl22:1123 (e16). Cast handler of the protection spells, spells 6 and 16 (Protection From Evil) and
   7 and 17 (Protection From Good): applies the current spell ds681B to the chosen targets with the
   message 'is protected' and no damage of its own (ApplySpellToTargets; the spell's own AffectId does
@@ -580,7 +578,6 @@ procedure CastProtection;
 begin
   ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is protected');
 end;
-{ ovl22:1162: retf 0: 0 bytes of parameters; 18 bytes of locals }
 { ovl22:1162 (e17). Cast handler of spell 8, Resist Cold: applies the current spell ds681B to the
   chosen targets with the message 'is cold-resistant' and no damage of its own (ApplySpellToTargets;
   the spell's own AffectId does the work). One of the per-spell handlers in SpellHandlers
@@ -589,7 +586,6 @@ procedure CastResistCold;
 begin
   ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is cold-resistant');
 end;
-{ ovl22:1190: retf 0: 0 bytes of parameters; 2 bytes of locals }
 { ovl22:1190 (e18). Cast handler of spell 9, Burning Hands: deals res12_fn_26C2(ds681B) (the caster
   level) damage of kind DamageKindFire to the chosen targets with no message (ApplySpellToTargets;
   DealDamage classifies kind 9 as fire, ovl24:1389). One of the per-spell handlers in SpellHandlers
@@ -602,7 +598,6 @@ const
 begin
   ApplySpellToTargets(ds681B, 0, 0, res12_fn_26C2(ds681B), DamageKindFire, '');
 end;
-{ ovl22:11DD: retf 0: 0 bytes of parameters; 22 bytes of locals }
 { ovl22:11DD (e19). Cast handler of spell 10, Charm Person: it first refuses a target that is not a
   person, i.e. one whose CreatureType is above 1 or whose combat footprint kind (CombatSize, bits 0..6)
   is above 1, showing 'is unaffected' (res12_fn_16EC). Otherwise it applies the current spell ds681B
@@ -639,7 +634,6 @@ begin
       CallAffectHandler(CharmAffect, ds6C95, PAffect(Affect), ModeApply);
   end;
 end;
-{ ovl22:12A5: retf 0: 0 bytes of parameters; 14 bytes of locals }
 { ovl22:12A5 (e20). Cast handler of spell 12, Enlarge: gives the first chosen target ds6C95 the
   strength 18 (ExceptionalStrength) with the percentile for the caster level (res12_fn_26C2(ds681B):
   0 at level 1 up to 100 at level 6), through RaiseStrength, and shows 'is stronger' when the
