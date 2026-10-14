@@ -14,17 +14,20 @@ No `inline`, `db` or `assembler` anywhere; the unused frame bytes and the unused
 
 ## Findings
 
-- [ ] must-fix RestCounterBytes, RestCounterInitial (constants): the names say "rest counter", but the
+- [x] must-fix RestCounterBytes, RestCounterInitial (constants): the names say "rest counter", but the
   only uses are `FillChar(ds471E, RestCounterBytes, RestCounterInitial)` at ovl20:0000 (outside camp) and
   ovl20:0CE5 (start of RunRestPeriod). ds471E is the TimedAffectFlags array (72 flags, one per member),
   and the call marks every member as due (value 1). Nothing there is a counter. The comments ("bytes
   reset at ovl20:0CE5", "initial value stored by that FillChar") do not say what the bytes are either.
   Rename to what they are (for example TimedAffectFlagCount = $48 and TimedAffectDue = 1) and say so in
   the comment. (A port reading the constants would look for a rest counter that does not exist.)
-- [ ] must-fix RestFirstColumn (constant): the comment says "the column where the days field starts", but
+  (fixed in 0d4abf9: renamed to TimedAffectFlagCount and TimedAffectDue, with comments saying the bytes
+  are the 72 TimedAffectFlags entries and the due value)
+- [x] must-fix RestFirstColumn (constant): the comment says "the column where the days field starts", but
   ShowRestTime draws the days at Col + 1 = 12 (whitepaper 5.22.1 says column 12), then the colon at 14,
   the hours at 15, the colon at 17 and the minutes at 18. 11 is the column before the days field, so the
   comment is wrong. Fix the comment (or fold the +1 into the constant) so the layout can be read off.
+  (fixed in 0d4abf9: comment now says 11 is the column before the days field, days at 11 + 1 = 12)
 - [ ] should-fix ShowRestTime: the comment says days and hours are drawn "with a colon between them", but
   the loop draws a colon after each of days and hours, so the line is `dd:hh:mm` (days at column 12, hours
   at 15, minutes at 18). Say the format and the three columns.
