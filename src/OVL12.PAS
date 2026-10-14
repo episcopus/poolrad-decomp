@@ -4,10 +4,10 @@ unit OVL12;
   AttackRoll, DamageAmount and the morale scratch ds6825; each routine's comment says what it does. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
-uses POOLVARS;
+uses POOLVARS, RES06;
 procedure CancelPendingHook(AffectId: Byte);
 function TryAddAffect(Who: PCharacter; AffectId, Data: Byte; Duration: Word): Boolean;
-procedure ovl12_fn_0058;
+procedure DropFromFight(Who: PCharacter; NewStatus: Byte; Msg: String40);
 procedure ovl12_e2;
 procedure ovl12_e3;
 procedure ovl12_e4;
@@ -173,9 +173,13 @@ procedure ovl12_fn_31D7;
 procedure ovl12_fn_3262;
 procedure ovl12_fn_3728;
 implementation
-uses RES06, RES12, OVL24, OVL31;
+uses RES12, OVL24, OVL31;
 const
   RunsHandlerOnRemove = 1;      { TAffect.Flag: the affect's handler runs when the affect is removed }
+  HookGoesDown = $D;            { RunAffectHooks kind: a combatant going down (DealDamage, DropCombatant) }
+  CombatViewMode = 5;           { ds49F3 during a combat (RunCombat sets it, whitepaper 5.5) }
+  StatusGone = 6;               { TCharacter.Status 6, dead for good (ovl04:0510) }
+  StatusStoned = 7;             { TCharacter.Status 7, stone (ovl04:093D) }
 
 { ovl12:0000. Cancels the hook of an affect: when AffectId is 0 or is the affect the hooks are offering
   (HookAffectId), HookAffectId and DamageAmount are cleared. HookAffectId 0 reads as "is Unaffected"
@@ -202,8 +206,30 @@ begin
     AddAffect(Who, AffectId, Duration, Data, RunsHandlerOnRemove);
   end;
 end;
-{ ovl12:0058: retf 10: 10 bytes of parameters; 42 bytes of locals }
-{@stub} procedure ovl12_fn_0058; begin end;
+{ ovl12:0058. Puts Who out of the fight, with Msg shown on Who in colour 10 (res12_fn_16EC). Unless Who's
+  Status is 6, 7 or 8 already, its Status becomes NewStatus, its Flag10D and Flag11B are cleared, its
+  death affects are removed (RemoveDeathAffects), the hooks of a combatant going down run, and Who leaves
+  the map (RemoveCombatant) when Flag10D is clear. Then DelayByGameSpeed, the prompt is cleared and,
+  outside combat, the selected character is redrawn. Like DropCombatant (ovl24:0F06) without the ground
+  redraw. }
+procedure DropFromFight(Who: PCharacter; NewStatus: Byte; Msg: String40);
+begin
+  res12_fn_16EC(Who, Msg, $A, 0);
+  case Who^.Status of
+    StatusStoned, StatusGone, 8: Exit;
+  end;
+  Who^.Status := NewStatus;
+  Who^.Flag10D := 0;
+  Who^.Flag11B := 0;
+  RemoveDeathAffects(Who);
+  RunAffectHooks(HookGoesDown, Who);
+  if Who^.Flag10D = 0 then
+    RemoveCombatant(Who);
+  DelayByGameSpeed;
+  res12_fn_17E3;
+  if ds49F3 <> CombatViewMode then
+    res12_fn_0767(SelectedCharacter);
+end;
 { ovl12:010D: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e2; begin end;
 { ovl12:011D: retf 10: 10 bytes of parameters; 0 bytes of locals }

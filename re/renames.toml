@@ -3427,3 +3427,10 @@ kind = "routine"
 why = "ovl12:001F adds an affect through AddAffect (ovl24:0E52) with Flag 1 (the handler runs when it is removed, TAffect.Flag) and returns True, but returns False and adds nothing while ds681F is set (the Temple removes affects: RemoveAffect callers ovl04:0386, 05AB, 07CE)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_fn_0058"
+new = "DropFromFight"
+kind = "routine"
+why = "ovl12:0058 shows Msg on Who (res12_fn_16EC, colour 10) unless Who's Status is 6, 7 or 8 already; then it sets Status to NewStatus, clears Flag10D and Flag11B, removes the death affects (ovl24:100A), runs the hooks of kind $D (a combatant going down, ovl24:02FA), removes Who from the map when Flag10D is clear (ovl31:0E11), and outside combat (ds49F3 not 5) redraws the selected character; the same steps as DropCombatant (ovl24:0F06) without its ground redraw"
+date = "2026-10-13"
+
