@@ -10075,12 +10075,12 @@ id = "ovl22:136E"
 unit = "ovl22"
 addr = "ovl22:136E"
 size = 106
-name = "ovl22_e21"
+name = "CastReduce"
 signature = ""
 c_name = "ovl22_e21"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_21"
+notes = "renamed from ovl22_e21 (cast handler of spell 13 Reduce (SpellHandlers[13]; ovl22_e10 fills the table at DS:6B84, whitepaper 5.22.2): a target that fails its saving throw (kind 4) loses the strength affect $0C Enlarge adds and is told 'has been reduced' (ovl22:136E)); auto:entry_21"
 evidence = ["prologue"]
 
 [[routine]]

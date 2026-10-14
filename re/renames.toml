@@ -3595,3 +3595,10 @@ kind = "routine"
 why = "cast handler of spell 10 Charm Person (SpellHandlers[10]; ovl22_e10 fills the table, whitepaper 5.22.2): refuses a non-person target (CreatureType or CombatSize above 1), else applies the charm affect $0B with the caster's side in bit 7 of its data (ovl22:11DD)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl22_e21"
+new = "CastReduce"
+kind = "routine"
+why = "cast handler of spell 13 Reduce (SpellHandlers[13]; ovl22_e10 fills the table at DS:6B84, whitepaper 5.22.2): a target that fails its saving throw (kind 4) loses the strength affect $0C Enlarge adds and is told 'has been reduced' (ovl22:136E)"
+date = "2026-10-13"
+

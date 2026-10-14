@@ -35,3 +35,12 @@ tags = ["global", "spell", "working-value"]
 title = "DS:4844 and DS:4845 are two working bytes the ovl22 cast handlers share"
 lesson = "The ovl22 cast handlers keep two scratch bytes in the globals at DS:4844 and DS:4845 (between SpellMenuItemCount and NewHeapEnd): Enlarge (ovl22_e20) puts its strength 18 and its percentile there for RaiseStrength, Sleep (ovl22_e26) its 4d4 hit-point pool and per-target cost, Snake Charm (ovl22_e31) a hit-point pool, and ovl24_fn_23B6 a value and a duration. They are declared ds4844/ds4845 in src/POOLVARS.PAS."
 evidence = ["src/OVL22.PAS#CastEnlarge", "re/symbols.toml#ovl22:12A5"]
+
+[[lesson]]
+id = "early-exit-vs-nested-if-direct-jump"
+confidence = "V"
+units = ["ovl22"]
+tags = ["compiler", "control-flow", "exit", "if"]
+title = "An early Exit compiles to je+jmp; a nested positive if jumps straight to the epilogue"
+lesson = "TP 6.0 compiles `if C then Exit;` followed by more code as `je skip; jmp epilogue` (a conditional over an unconditional jump), even when Exit is the only statement. A nested positive `if` whose true branch is the last statement of its enclosing block instead negates the test and jumps straight to the epilogue: `if not R(...) then ...` gives `or al,al; jne epilogue`, and `if Q(...) then ...` gives `or al,al; je epilogue`. ovl22:136E (CastReduce) shows the direct form twice, so its source is `if ds6C94 > 0 then if not SavingThrow(...) then if CureAffect(...) then res12_fn_16EC(...)`, not the early-Exit draft (which was 4 bytes longer and failed on the first jbe displacement). A comparison guard with no other code after it uses `cmp; jbe epilogue` for `if X > 0 then`."
+evidence = ["tools/re/tp_idioms/ovl22/PRB21.PAS", "tools/re/tp_idioms/ovl22/EXITFN.PAS", "tools/re/tp_idioms/ovl22/CMPZERO.PAS", "src/OVL22.PAS#CastReduce", "re/symbols.toml#ovl22:136E"]

@@ -27,7 +27,7 @@ procedure CastResistCold;
 procedure CastBurningHands;
 procedure CastCharmPerson;
 procedure CastEnlarge;
-procedure ovl22_e21;
+procedure CastReduce;
 procedure ovl22_e22;
 procedure ovl22_e23;
 procedure ovl22_e24;
@@ -671,8 +671,22 @@ begin
     res12_fn_16EC(ds6C95, 'is stronger', MessageColour, TimedMessage);
   AddAffect(ds6C95, StrengthAffect, SpellAffectDuration(ds681B), Code, 1);
 end;
-{ ovl22:136E: retf 0: 0 bytes of parameters; 18 bytes of locals }
-{@stub} procedure ovl22_e21; begin end;
+{ ovl22:136E (e21). Cast handler of spell 13, Reduce (SpellHandlers[13]; ovl22_e10 fills the table,
+  whitepaper 5.22.2): when targets were chosen, a target that fails its saving throw (SavingThrow kind 4,
+  a spell) loses the strength affect $0C that Enlarge adds (CureAffect) and is told 'has been reduced'.
+  A target that saves, or that carries no strength affect, is left alone. Reads ds6C94 and ds6C95. }
+procedure CastReduce;
+const
+  SaveKind = 4;                   { SavingThrow's kind for a spell (whitepaper 5.22.2) }
+  StrengthAffect = $0C;           { the strength affect Enlarge adds; Reduce cancels it (ovl22:12A5) }
+  MessageColour = $A;             { the colour res12_fn_16EC shows the message in }
+  TimedMessage = 1;               { nonzero: res12_fn_16EC delays by the game speed and clears it }
+begin
+  if ds6C94 > 0 then
+    if not SavingThrow(ds6C95, SaveKind, 0) then
+      if CureAffect(ds6C95, StrengthAffect) then
+        res12_fn_16EC(ds6C95, 'has been reduced', MessageColour, TimedMessage);
+end;
 { ovl22:13D8: retf 0: 0 bytes of parameters; 14 bytes of locals }
 {@stub} procedure ovl22_e22; begin end;
 { ovl22:1439: retf 0: 0 bytes of parameters; 2 bytes of locals }
