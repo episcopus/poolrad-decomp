@@ -4162,3 +4162,10 @@ kind = "routine"
 why = "ovl13:263D returns the compass direction from Who's cell to Target's cell (walks Dir 0..8 until InDirArc(WhoX,WhoY,TargetX,TargetY,Dir)); ovl09 uses it as the AI move direction and PerformAttack and NoteAttackBearing use it to face a combatant"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl13_fn_2574"
+new = "IsBackstab"
+kind = "routine"
+why = "ovl13:2574 returns True when Who's attack on Target is a thief backstab: thief level (ClassLevels[6]) above 0, a backstab-capable readied weapon and an allowed slot-2 item, Target attacked (Combat^.BF above 1) and facing Who (BearingTo(Who,Target)=IconSet); RollAttackDamage applies the thief damage multiplier and ResolveCombatantAttacks uses ds112-2 and attack kind 2"
+date = "2026-10-14"
+

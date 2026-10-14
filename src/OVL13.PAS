@@ -42,7 +42,7 @@ function FindSpellTarget(Spell, Automatic, AimFlag: Byte; var Target: TSpellTarg
 procedure SelectSpellTargets(Spell, Automatic: Byte; var Done: Byte);
 procedure ovl13_e15(A, B: Byte; var Done: Byte);
 procedure ovl13_fn_2432;
-function ovl13_fn_2574(Who: PCharacter; Target: PCharacter): Boolean;
+function IsBackstab(Who: PCharacter; Target: PCharacter): Boolean;
 procedure ovl13_fn_257E;
 procedure ovl13_fn_25C9;
 function BearingTo(Who, Target: Pointer): Byte;
@@ -225,7 +225,7 @@ end;
 { ovl13:0191. Rolls the damage of one attack of Attacker against Target: entry Index (1 or 2)
   of the readied weapon's attack triple gives the dice count and die size (RollDiceCounted) and the
   signed bonus (WeaponDamageBonus). The total goes to DamageAmount, a nonsensical negative clamp
-  (QUIRK ovl13:01D2) is kept, a special attack (ovl13_fn_2574, the backstab) multiplies the damage
+  (QUIRK ovl13:01D2) is kept, a special attack (IsBackstab, the backstab) multiplies the damage
   by the thief level div 4 + 2, DamageKind becomes 0 and the damage hooks run for the attacker (4)
   and the target (5). Called for each of a combatant's attacks. }
 procedure RollAttackDamage(Attacker: PCharacter; Target: PCharacter; Index: Byte);
@@ -234,7 +234,7 @@ begin
     + Attacker^.WeaponDamageBonus[Index];
   if DamageAmount < 0 then
     DamageAmount := 0;
-  if ovl13_fn_2574(Attacker, Target) then
+  if IsBackstab(Attacker, Target) then
     DamageAmount := DamageAmount * ((Attacker^.ClassLevels[6] shr BackstabLevelStep
       shr BackstabLevelStep) + BackstabMultiplierBase);
   DamageKind := 0;
@@ -850,7 +850,7 @@ begin
     RecalcCombatValues(Target);
     RunAffectHooks(HookAttackSetup, Target);
     RearAttack := 0;
-    if ovl13_fn_2574(Attacker, Target) then
+    if IsBackstab(Attacker, Target) then
       NeededRoll := Target^.ds112 - 2
     else
     begin
@@ -866,7 +866,7 @@ begin
     HitKind := 0;
     if Behind <> 0 then
       HitKind := 1;
-    if ovl13_fn_2574(Attacker, Target) then
+    if IsBackstab(Attacker, Target) then
       HitKind := 2;
     SlotCount := Attacker^.Combat^.Pad4[4];
     for SlotIndex := SlotCount downto 1 do
@@ -1287,8 +1287,46 @@ end;
 {@stub} procedure ovl13_e15(A, B: Byte; var Done: Byte); begin end;
 { ovl13:2432: retf 8: 8 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl13_fn_2432; begin end;
-{ ovl13:2574: frame not read }
-{@stub} function ovl13_fn_2574(Who: PCharacter; Target: PCharacter): Boolean; begin end;
+{ ovl13:2574. Reports whether Who's attack on Target is a thief's backstab: Who's thief level
+  (ClassLevels[6]) must be above 0 and Who must carry no slot-2 item but the one type below, with a
+  backstab-capable readied weapon (SlotItems[0] empty or an item kind in the set below); then Target
+  must have been attacked (Combat^.BF above 1) and must face Who (the direction from Who to Target,
+  BearingTo, equals Target's Combat^.IconSet). The item kinds are read from ItemTable: 7 and 8 and
+  $23..$25 are one-handed weapons, $22 and $26 are two-handed (excluded). RollAttackDamage applies
+  the thief-level damage multiplier and ResolveCombatantAttacks uses it for the ds112 - 2 to-hit and
+  attack kind 2. Globals: none. }
+function IsBackstab(Who: PCharacter; Target: PCharacter): Boolean;
+const
+  { The readied-weapon (slot 0) item kinds that may backstab (ItemTable: kinds 7 and 8 and the
+    one-handed weapons $23..$25; $22 and $26 are two-handed). }
+  BackstabWeaponKind1 = 7;
+  BackstabWeaponKind2 = 8;
+  BackstabWeaponKindLow = $22;   { weapon kinds above this ... (ovl13:25E7) }
+  BackstabWeaponKindHigh = $26;  { ... and below this are one-handed }
+  { The only slot-2 item kind a backstab allows (ItemTable type 0, an armour). }
+  BackstabSlotTwoKind = $32;
+var
+  Weapon: PItem;                 { Who's readied slot-0 item, SlotItems[0] }
+  SlotTwo: PItem;                { Who's slot-2 item, SlotItems[2] }
+  ItemKind: Byte;                { Weapon^.ItemType, only defined when Weapon is not nil }
+  FromBehind: Byte;              { nonzero once the thief's backstab setup passes }
+begin
+  FromBehind := 0;
+  Weapon := Who^.SlotItems[0];
+  if Weapon <> nil then
+    ItemKind := Weapon^.ItemType;
+  SlotTwo := Who^.SlotItems[2];
+  if Who^.ClassLevels[6] > 0 then
+    if (SlotTwo = nil) or (SlotTwo^.ItemType = BackstabSlotTwoKind) then
+      if (Weapon = nil) or (ItemKind = BackstabWeaponKind1) or (ItemKind = BackstabWeaponKind2) or
+         ((ItemKind > BackstabWeaponKindLow) and (ItemKind < BackstabWeaponKindHigh)) then
+        FromBehind := 1;
+  if (FromBehind <> 0) and (Target^.Combat^.BF > 1) and
+     (BearingTo(Who, Target) = Target^.Combat^.IconSet) then
+    IsBackstab := True
+  else
+    IsBackstab := False;
+end;
 { ovl13:257E: frame not read }
 {@stub} procedure ovl13_fn_257E; begin end;
 { ovl13:25C9: retf 8: 8 bytes of parameters; 0 bytes of locals }

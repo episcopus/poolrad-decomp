@@ -5631,40 +5631,14 @@ evidence = ["far_call"]
 id = "ovl13:2574"
 unit = "ovl13"
 addr = "ovl13:2574"
-size = 10
-name = "ovl13_fn_2574"
-signature = "function ovl13_fn_2574(Who: PCharacter; Target: PCharacter): Boolean"
+size = 201
+name = "IsBackstab"
+signature = "function IsBackstab(Who: PCharacter; Target: PCharacter): Boolean"
 c_name = "ovl13_fn_2574"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_fn_2574 (ovl13:2574 returns True when Who's attack on Target is a thief backstab: thief level (ClassLevels[6]) above 0, a backstab-capable readied weapon and an allowed slot-2 item, Target attacked (Combat^.BF above 1) and facing Who (BearingTo(Who,Target)=IconSet); RollAttackDamage applies the thief damage multiplier and ResolveCombatantAttacks uses ds112-2 and attack kind 2); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl13:257E"
-unit = "ovl13"
-addr = "ovl13:257E"
-size = 75
-name = "ovl13_fn_257E"
-signature = ""
-c_name = "ovl13_fn_257E"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:25C9"
-unit = "ovl13"
-addr = "ovl13:25C9"
-size = 116
-name = "ovl13_fn_25C9"
-signature = ""
-c_name = "ovl13_fn_25C9"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl13:263D"
