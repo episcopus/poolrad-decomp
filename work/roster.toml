@@ -69,6 +69,19 @@ timeout = 150
 cost_cap = 8
 max_attempts = 2
 
+# A/B test (2026-10-14): the same escalation settings as the Grok workers, with Claude Sonnet 5.5, to
+# compare the cost per matched routine on the hard tail.
+[[session]]
+name = "esc-sonnet"
+role = "decompiler"
+tier = 2
+model = "openrouter/anthropic/claude-sonnet-5.5"
+variant = "xhigh"
+batch = 1
+timeout = 150
+cost_cap = 8
+max_attempts = 2
+
 [[session]]
 name = "rev-sonnet"
 role = "reviewer"

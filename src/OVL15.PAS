@@ -117,7 +117,7 @@ const
 
 { ovl15:0000. Returns the minutes of rest Who's study needs and stores its hours in RestHours: 15
   minutes per spell level of every spell being memorized (a Spells slot with bit 7) and of every
-  scroll spell being scribed (bit 7 of a spell byte of an item ovl22_e6 accepts, a scroll), plus
+  scroll spell being scribed (bit 7 of a spell byte of an item IsScroll accepts, a scroll), plus
   4 hours when there is any (6 when one of them is above level 2). RestParty rests the party for
   the largest value. }
 function StudyRestMinutes(Who: PCharacter): Word;
@@ -140,7 +140,7 @@ begin
   Item := Who^.Items;
   while Item <> nil do
   begin
-    if ovl22_e6(Item) then
+    if IsScroll(Item) then
       for I := 1 to ScrollSpells do
         if Item^.Affects[I] > SpellMask then
         begin
@@ -167,7 +167,7 @@ begin
   Who^.RestHours := 0;
 end;
 { ovl15:019C. Cancels Who's scribing: bit 7 is cleared from the three spell bytes of every scroll
-  Who carries (an item ovl22_e6 accepts). The answer No to 'Scribe These Spells?' and
+  Who carries (an item IsScroll accepts). The answer No to 'Scribe These Spells?' and
   CancelPartyStudy. }
 procedure CancelScribing(Who: PCharacter);
 var
@@ -177,7 +177,7 @@ begin
   Item := Who^.Items;
   while Item <> nil do
   begin
-    if ovl22_e6(Item) then
+    if IsScroll(Item) then
       for I := 1 to ScrollSpells do
         Item^.Affects[I] := Item^.Affects[I] and SpellMask;
     Item := Item^.Next;
@@ -243,7 +243,7 @@ begin
   end;
 end;
 { ovl15:04A1. The Cast command: when MayUseMagic allows it, repeatedly lists SelectedCharacter's memorized
-  spells (ChooseSpellFromList) and casts the chosen one in a cleared text window (ovl22_e5), until the list
+  spells (ChooseSpellFromList) and casts the chosen one in a cleared text window (CastChosenSpell), until the list
   is left; 'has no spells memorized' when there is none. Clears ds6DB5 first and redraws the screen
   (RedrawView) when something was shown. The camp's Magic menu and ovl14's wilderness keys. }
 procedure CastSpells;
@@ -262,7 +262,7 @@ begin
         Redraw := 1;
         DrawWindowFrame(1, $11, $26, $16, 0);
         ClearWindow(1, $11, $26, $16);
-        ovl22_e5(Spell, 0, 1, Done);
+        CastChosenSpell(Spell, 0, 1, Done);
         Choice := NoChoice;
       end
       else if Listed <> 0 then
@@ -472,7 +472,7 @@ begin
         Found := False;
         while (Item <> nil) and not Found do
         begin
-          if ovl22_e6(Item) then
+          if IsScroll(Item) then
             for I := 1 to ScrollSpells do
               if (Item^.Affects[I] > SpellMask) and ((Item^.Affects[I] and SpellMask) = Spell) then
               begin

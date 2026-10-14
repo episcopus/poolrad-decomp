@@ -3575,11 +3575,68 @@ why = "ovl19:1A8A is the Use action: RunItemMenu's U key (ovl19:0EF8) and UseMag
 date = "2026-10-13"
 
 [[rename]]
+old = "ovl22_e3"
+new = "SpellAreaSize"
+kind = "routine"
+why = "ovl22:0729 returns the area size of a spell: base byte (row +2) plus the per-level byte (row +3) times the caster level from res12_fn_26C2, or times 6 while ds6DBF is set; res12_fn_2433 passes it to ScanTargets as the pattern budget (ovl09:02EB SpellAccepted)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_fn_028D"
+new = "AddSpellMenuLine"
+kind = "routine"
+why = "ovl22:028D appends one line for a spell to the spell menu list ds4766, inserting a level heading when the level changes; called by ovl22_e2 and ovl22_fn_044E"
+date = "2026-10-13"
+
+[[rename]]
+old = "ds4766"
+new = "SpellMenuList"
+kind = "global"
+why = "DS:4766: the head of the spell menu list ovl22_e2 builds with AddSpellMenuLine and ovl22_e1 shows and frees (ovl22:059C, 008A)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ds476A"
+new = "SpellMenuSpells"
+kind = "global"
+why = "DS:476A: the spell number of each spell menu line in list order, bit 7 = pending (ovl22:028D writes, 008A reads); array[0..]"
+date = "2026-10-13"
+
+[[rename]]
+old = "ds0A79"
+new = "SpellLevelNames"
+kind = "global"
+why = "DS:0A79: the heading of each spell level in the spell menu, entries 1..3 are '1st Level', '2nd Level', '3rd Level' (ovl22:028D)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ds477F"
+new = "SpellMenuItems"
+kind = "global"
+why = "DS:477F: for each spell line ovl22_fn_044E adds, the item (scroll) it came from; ovl22_e1 copies the entry of the chosen line to ds6B80 (ovl22:044E, 051C, 008A); array[0..] of PMenuLine"
+date = "2026-10-13"
+
+[[rename]]
+old = "ds4843"
+new = "SpellMenuItemCount"
+kind = "global"
+why = "DS:4843: the number of entries SpellMenuItems holds (ovl22:044E writes, 051C clears)"
+date = "2026-10-13"
+
+[[rename]]
 old = "ds6B80"
 new = "UsedScroll"
 kind = "global"
 why = "ds6B80 is the far pointer ovl19:1AB3 stores the item in when ovl22_e6 accepts it (a scroll), before ChooseSpellFromList reads the scroll's spell; no other reader is decompiled yet"
 date = "2026-10-13"
+
+[[rename]]
+old = "UsedScroll"
+new = "CurrentItem"
+kind = "global"
+why = "Same variable as UsedScroll (main named it from ovl19:1AB3, which only stores into it); DS:6B80: the current item the ovl22 spell lists work on (ovl22_fn_051C walks SelectedCharacter^.Items into it, ovl22_fn_044E reads its affects, ovl22_e1 copies a chosen line's SpellMenuItems entry into it)"
+date = "2026-10-13"
+
 
 [[rename]]
 old = "ds6DBF"
@@ -5238,6 +5295,496 @@ old = "ds6DDA"
 new = "RestWindowActive"
 kind = "global"
 why = "ovl20:0C9A sets it to 1 while the rest screen is up and clears it on exit; RES12:0886 reads it to pick the top row of the message window. Nonzero says the rest screen is up. The loader clears it (ovl11:0410)."
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl22_fn_044E"
+new = "AddItemSpells"
+kind = "routine"
+why = "ovl22:044E adds the spell affects of the current item (CurrentItem) to the spell menu list through AddSpellMenuLine, recording the item in SpellMenuItems; Pending selects the pending (bit 7) or the plain affects; called by ovl22_e2 and ovl22_fn_051C"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_fn_051C"
+new = "AddScrollSpells"
+kind = "routine"
+why = "ovl22:051C walks SelectedCharacter^.Items, and for every scroll (ovl22_e6) adds its spell affects to the spell menu list through AddItemSpells; Pending picks the plain or the pending affects; called by ovl22_e2"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e2"
+new = "BuildSpellList"
+kind = "routine"
+why = "ovl22:059C builds the spell menu list SpellMenuList for ChooseSpellFromList's list kind (0 memorized, 5 pending memorized, 1 spell book, 2 first scroll, 3 scrolls, 6 pending scrolls, 4 learnable) and returns whether it is not empty; called by ovl19:299C"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_fn_07D6"
+new = "SpellAffectDuration"
+kind = "routine"
+why = "ovl22:07D6 returns the affect duration; 08C3 passes it as ApplyAffect Duration (ovl24:1656)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_fn_08C3"
+new = "ApplySpellToTargets"
+kind = "routine"
+why = "ovl22:08C3 applies a spell to every chosen target in ds6C91[1..ds6C94]: saving throw, damage and, when the spell has an AffectId, ApplyAffect (ovl24:1656)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e4"
+new = "ChooseSpellTargets"
+kind = "routine"
+why = "ovl22:0A91 picks the spell targets (ds6C91): self, one through res12_fn_2C48, or the whole party, and reports through Done; the DS:6B84 combat callback"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_fn_0F4F"
+new = "ApplySpellToSide"
+kind = "routine"
+why = "applies the current spell ds681B to the targets on one side, shared by the Bless and Curse cast handlers (ovl22:0F4F)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e13"
+new = "CastCureLightWounds"
+kind = "routine"
+why = "cast handler of spell 3 Cure Light Wounds: heals the first target 1d8 (SpellHandlers[3], ovl22:106B)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e14"
+new = "CastCauseLightWounds"
+kind = "routine"
+why = "cast handler of spell 4 Cause Light Wounds: deals 1d8 damage to the targets (SpellHandlers[4], ovl22:10A7)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e11"
+new = "CastBless"
+kind = "routine"
+why = "cast handler of spell 1 Bless: applies the spell to the caster side with 'is Blessed' (SpellHandlers[1], ovl22:100F)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e12"
+new = "CastCurse"
+kind = "routine"
+why = "cast handler of spell 2 Curse: applies the spell to the opposite side with 'is Cursed' (SpellHandlers[2], ovl22:1040)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e5"
+new = "CastChosenSpell"
+kind = "routine"
+why = "the CastSpell entry: picks the spell's targets through the DS:6B84 picker, animates the cast and runs the spell's handler SpellHandlers[Spell] (ovl22:0C20)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e15"
+new = "CastDetectionSpell"
+kind = "routine"
+why = "cast handler of the detection spells (SpellHandlers[5],[11],[18],[22],[29]; ovl22_e10 fills the table, whitepaper 5.22.2): applies the current spell ds681B to the chosen targets with 'is affected' (ovl22:10E9)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e16"
+new = "CastProtection"
+kind = "routine"
+why = "cast handler of the protection spells (SpellHandlers[6],[7],[16],[17]; ovl22_e10 fills the table, whitepaper 5.22.2): applies the current spell ds681B to the chosen targets with 'is protected' (ovl22:1123)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e17"
+new = "CastResistCold"
+kind = "routine"
+why = "cast handler of spell 8 Resist Cold (SpellHandlers[8]; ovl22_e10 fills the table, whitepaper 5.22.2): applies the current spell ds681B to the chosen targets with 'is cold-resistant' (ovl22:1162)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e18"
+new = "CastBurningHands"
+kind = "routine"
+why = "cast handler of spell 9 Burning Hands (SpellHandlers[9]; ovl22_e10 fills the table, whitepaper 5.22.2): deals the caster level in fire damage to the chosen targets (ovl22:1190)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e20"
+new = "CastEnlarge"
+kind = "routine"
+why = "cast handler of spell 12 Enlarge (SpellHandlers[12]; ovl22_e10 fills the table, whitepaper 5.22.2): gives the target strength 18 by caster level through RaiseStrength and adds the strength affect /bin/zshC (ovl22:12A5)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e19"
+new = "CastCharmPerson"
+kind = "routine"
+why = "cast handler of spell 10 Charm Person (SpellHandlers[10]; ovl22_e10 fills the table, whitepaper 5.22.2): refuses a non-person target (CreatureType or CombatSize above 1), else applies the charm affect $0B with the caster's side in bit 7 of its data (ovl22:11DD)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e21"
+new = "CastReduce"
+kind = "routine"
+why = "cast handler of spell 13 Reduce (SpellHandlers[13]; ovl22_e10 fills the table at DS:6B84, whitepaper 5.22.2): a target that fails its saving throw (kind 4) loses the strength affect $0C Enlarge adds and is told 'has been reduced' (ovl22:136E)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e22"
+new = "CastFriends"
+kind = "routine"
+why = "cast handler of spell 14 Friends (SpellHandlers[14]; ovl22_e10 fills the table at DS:6B84, whitepaper 5.22.2): raises the target ds6C95 Charisma by 2d4 capped at 25 and passes the old Charisma as the affect data with the restore flag, message 'is friendly' (ovl22:13D8)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e23"
+new = "CastMagicMissile"
+kind = "routine"
+why = "cast handler of spell 15 Magic Missile (SpellHandlers[15]; ovl22_e10 fills the table at DS:6B84, whitepaper 5.22.2): deals one d4 plus one point per two caster levels through RollDiceCounted (count in ds681C), no message (ovl22:1439)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e24"
+new = "CastShield"
+kind = "routine"
+why = "cast handler of spell 19 Shield (SpellHandlers[19]; ovl22_e10 fills the table at DS:6B84, whitepaper 5.22.2): applies the current spell ds681B (its own affect does the work) to the chosen targets with 'is shielded' (ovl22:1499)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e25"
+new = "CastShockingGrasp"
+kind = "routine"
+why = "cast handler of spell 20 Shocking Grasp (SpellHandlers[20]; ovl22_e10 fills the table at DS:6B84, whitepaper 5.22.2): deals the caster level plus 1d8 electrical damage to the chosen targets, no message (ovl22:14C7)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e26"
+new = "CastSleep"
+kind = "routine"
+why = "cast handler of spell 21 Sleep (SpellHandlers[21]; ovl22_e10 fills the table at DS:6B84, whitepaper 5.22.2): rolls the 4d4 pool ds4844 and charges each target a cost ds4845 by HighestLevel and Race, dropping targets that are dead, already affected $35, or too costly, then applies the spell to the survivors with 'falls asleep' (ovl22:151B)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e27"
+new = "CastHoldPerson"
+kind = "routine"
+why = "ovl22:1658 applies spell 23 to the chosen targets with the message 'is held'; ovl22_e10 maps DS:6B84+23*4 to its stub 0096:00A7 and SpellNames[23] (DS:2C98) is 'Hold Person'"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e28"
+new = "CastResistFire"
+kind = "routine"
+why = "ovl22:17E9 applies spell 24 to the chosen targets with the message 'is fire resistant'; ovl22_e10 maps DS:6B84+24*4 to its stub 0096:00AC and SpellNames[24] (DS:2CC1) is 'Resist Fire'"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e29"
+new = "CastSilence"
+kind = "routine"
+why = "ovl22:1822 applies spell 25 to the chosen targets with the message 'is silenced'; ovl22_e10 maps DS:6B84+25*4 to its stub 0096:00B1 and SpellNames[25] (DS:2CEA) is 'Silence, 15' Radius'"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e30"
+new = "CastSlowPoison"
+kind = "routine"
+why = "ovl22:185B applies spell 26 with the message 'is affected', needs the target's Poisoned affect, revives it to 1 hit point and adds the poison-slowing affect; ovl22_e10 maps DS:6B84+26*4 to its stub 0096:00B6 and SpellNames[26] (DS:2D13) is 'Slow Poison'"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e31"
+new = "CastSnakeCharm"
+kind = "routine"
+why = "ovl22:190F picks the giant snakes (CreatureType $E) of the party list whose hit points fit the caster's, then applies spell 27 with the message 'is charmed'; ovl22_e10 maps DS:6B84+27*4 to its stub 0096:00BB and SpellNames[27] (DS:2D3C) is 'Snake Charm'"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e32"
+new = "CastSpiritualHammer"
+kind = "routine"
+why = "ovl22:19C3 applies spell 28 with Flag 1 then runs affect $17's handler on the first target; ovl22_e10 maps DS:6B84+28*4 to its stub 0096:00C0 and SpellNames[28] (DS:2D65) is 'Spiritual Hammer'"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e33"
+new = "CastInvisibility"
+kind = "routine"
+why = "ovl22:1A16 applies spell 30 to the chosen targets with the message 'is invisible'; ovl22_e10 maps DS:6B84+30*4 to its stub 0096:00C5 and SpellNames[30] (DS:2DB7) is 'Invisibility'"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e34"
+new = "CastKnock"
+kind = "routine"
+why = "ovl22:1A4F applies spell 31 to the chosen targets with the message 'Knock-Knock'; ovl22_e10 maps DS:6B84+31*4 to its stub 0096:00CA and SpellNames[31] (DS:2DE0) is 'Knock'"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e35"
+new = "CastMirrorImage"
+kind = "routine"
+why = "ovl22:1A8A applies spell 32 with a 1d4 caster level and the message 'is duplicated'; ovl22_e10 maps DS:6B84+32*4 to its stub 0096:00CF and SpellNames[32] (DS:2E09) is 'Mirror Image'"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e36"
+new = "CastRayOfEnfeeblement"
+kind = "routine"
+why = "ovl22:1ACC applies spell 33 to the chosen targets with the message 'is weakened'; ovl22_e10 maps DS:6B84+33*4 to its stub 0096:00D4 and SpellNames[33] (DS:2E32) is 'Ray of Enfeeblement'"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e37"
+new = "CastStinkingCloud"
+kind = "routine"
+why = "ovl22:1B11 places a cloud marker in the DS:6DBB list (caster, aim ds6DB9/ds6DBA, four aim tiles and flags, affect $28), paints the cloud into the combat map and runs ApplyCloudTile (the stinking cloud affect) on the combatants of the four cells; ovl22_e10 maps DS:6B84+34*4 to its stub 0096:00D9 and SpellNames[34] (DS:2E5B) is 'Stinking Cloud'"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e38"
+new = "CastStrength"
+kind = "routine"
+why = "cast handler of spell 35 (SpellNames[35] is 'Strength' at DS:28E9); rolls a class bonus die (d4 magic-user, d6 cleric/thief, d8 fighter), raises the target's Strength, clamps at 18 with a fighter percentile, and adds the strength affect $26 (RaiseStrength keeps the earlier strength in affect 0Ch or 26h, whitepaper 5.22.2)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e39"
+new = "CastAnimateDead"
+kind = "routine"
+why = "cast handler of spell 36 (SpellNames[36] is 'Animate Dead' at DS:28E9): walks the party list ds5D96, turns up to the caster level corpses (Status 6, CreatureType 0) into undead on the caster's side and leaves the animate affect $20 with 'is animated' (make match UNIT=ovl22 FN=CastAnimateDead)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e40"
+new = "CastCureBlindness"
+kind = "routine"
+why = "cast handler of spell 37 (SpellNames[37] is 'Cure Blindness' at DS:28E9): removes the blindness affect $21 (SpellTable[37].AffectId) from the first chosen target ds6C95 and shows 'can see' when it was there (make match UNIT=ovl22 FN=CastCureBlindness)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e41"
+new = "CastCauseBlindness"
+kind = "routine"
+why = "spell 38 Cause Blindness handler: applies ds681B to the targets with the message 'is blind' (ovl22_e10 maps DS:6B84+38*4 to overlay stub 0096:00ED; SpellNames[38]='Cause Blindness'; its affect $21 is the blindness Cure Blindness removes)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e43"
+new = "CastCauseDisease"
+kind = "routine"
+why = "spell 40 Cause Disease handler: applies ds681B to the targets with the message 'is diseased' and Flag 1 (ovl22_e10 maps DS:6B84+40*4 to overlay stub 0096:00F7; SpellNames[40]='Cause Disease'; the affect is one ovl22_fn_228A clears)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_fn_228A"
+new = "CureDiseaseAffects"
+kind = "routine"
+why = "the helper ovl22_e42 (spell 39 Cure Disease) and ovl22_e54 call: cures the six DiseaseAffects[1..6] ($1F,$22,$2B,$2C,$32,$39) with their companions from ds6C95 and returns whether it cured any (make match UNIT=ovl22 FN=CureDiseaseAffects: 165 bytes)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e42"
+new = "CastCureDisease"
+kind = "routine"
+why = "spell 39 Cure Disease handler: calls CureDiseaseAffects on ds6C95 and drops the result (ovl22_e10 maps DS:6B84+39*4 to overlay stub 0096:00F2; SpellNames[39]='Cure Disease' at DS:2F28; SpellTable[39].AffectId is 0); make match UNIT=ovl22 FN=CastCureDisease: 17 bytes"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e44"
+new = "CastDispelMagic"
+kind = "routine"
+why = "ovl22_e10 fills SpellHandlers[41] and SpellHandlers[46] (DS:6B84+41*4, DS:6B84+46*4) with overlay stub 0096:00FC = ovl22:2385; SpellNames[41] and SpellNames[46] are both 'Dispel Magic' (DS:2F7A, DS:3047). The routine dispels the target's affects by a caster-level chance, which is Dispel Magic"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e45"
+new = "CastPrayer"
+kind = "routine"
+why = "ovl22_e10 fills SpellHandlers[42] (DS:6B84+42*4) with overlay stub 0096:0101 = ovl22:24D6; SpellNames[42] is 'Prayer' (DS:2FA3). The routine applies the spell to the targets with the caster's Side in the affect data and the message 'is praying'"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e9"
+new = "CastRemoveCurse"
+kind = "routine"
+why = "ovl22_e10 fills SpellHandlers[43] (DS:6B84+43*4) with overlay stub 0096:004D = ovl22:2540; SpellNames[43] is 'Remove Curse' (DS:2FCC), and the Temple's RemoveCurse (ovl04:083A) stores the character in ds6C95 and calls it. It cures the curse affect 24h or clears the Cursed flag of the character's first cursed item, saying 'is un-cursed' or ''s item is un-cursed'"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e46"
+new = "CastBestowCurse"
+kind = "routine"
+why = "cast handler of spell 44 Bestow Curse: ovl22_e10 maps DS:6B84+44*4 to stub 0096:0106, SpellNames[44] is 'Bestow Curse' and it applies the spell with 'has been cursed!'"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e47"
+new = "CastBlink"
+kind = "routine"
+why = "cast handler of spell 45 Blink: ovl22_e10 maps DS:6B84+45*4 to stub 0096:010B, SpellNames[45] is 'Blink' and it applies the spell with 'is blinking'"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e48"
+new = "CastFireball"
+kind = "routine"
+why = "cast handler of spells 47 and 64 Fireball: ovl22_e10 maps DS:6B84+47*4 and +64*4 to stub 0096:0110, SpellNames[47] is 'Fireball', it scans two steps around the aim point and deals d6 per level of fire damage with no message"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_fn_2764"
+new = "ApplySpellToSideUpToLevel"
+kind = "routine"
+why = "applies the current spell to up to caster-level chosen targets on one side, first curing the opposite spell's affect; called by the Haste and Slow handlers"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e49"
+new = "CastHaste"
+kind = "routine"
+why = "cast handler of spell 48 Haste: ovl22_e10 maps DS:6B84+48*4 to stub 0096:0115, SpellNames[48] is 'Haste', it removes the slow affect 2Ah from the caster's side up to the caster level and applies the spell with is Hasted"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_fn_28BC"
+new = "DamageTargetInCell"
+kind = "routine"
+why = "deals a line spell's damage to the combatant in one map cell and reports whether the tile blocks the beam; called by the Lightning Bolt helpers (ovl22_e50, ovl22_fn_295B)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_fn_295B"
+new = "CastLineBeam"
+kind = "routine"
+why = "line spells' beam helper: draws the beam line and damages each cell with DamageTargetInCell, called by the Lightning Bolt handler and the paralysis beams (ovl22_e50, ovl22_fn_2F57, ovl22_fn_31D7)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e50"
+new = "CastLightningBolt"
+kind = "routine"
+why = "cast handler of spell 51 Lightning Bolt: one d6 per caster level, dealt to the aim cell and along the beam with the bounce flag (whitepaper 5.22.2)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e51"
+new = "CastSlow"
+kind = "routine"
+why = "cast handler of spell 55 Slow: removes the haste affect from the opposite side then applies Slow (whitepaper 5.22.2)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e52"
+new = "CastRestoration"
+kind = "routine"
+why = "cast handler of spell 56 Restoration: gives back one drained level and its hit points and advances a class (whitepaper 5.22.2)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e53"
+new = "CastMonsterHaste"
+kind = "routine"
+why = "the ovl22_e10 handler table points SpellHandlers[57] at stub 0096:0129 (overlay entry 53, ovl22:2E02); the routine cancels the slow affect $2A from the first chosen target (CureAffect) and otherwise applies the current spell with 'is Speedy', so it is the single-target haste handler of the monster-only spell 57 (SpellNames[57] is empty); make match UNIT=ovl22: 65 bytes matched"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl22_e54"
+new = "CastMonsterHeal"
+kind = "routine"
+why = "the ovl22_e10 handler table points SpellHandlers[58] at stub 0096:012E (overlay entry 54, ovl22:2E4D); the routine cures the Poisoned affect $37 plus its companion $16 from the first chosen target, else cures disease, else heals 1d4+8 with 'is Healed'; the heal handler of the monster-only spell 58 (SpellNames[58] is empty); make match UNIT=ovl22: 140 bytes matched"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl22_e55"
+new = "CastMonsterStrength"
+kind = "routine"
+why = "the ovl22_e10 handler table points SpellHandlers[59] at stub 0096:0133 (overlay entry 55, ovl22:2EE5); the routine gives the first chosen target a plain Strength 21 through RaiseStrength (no percentile), shows 'is stronger' and adds the strength affect $26 for SpellAffectDuration; the strength handler of the monster-only spell 59 (SpellNames[59] is empty); make match UNIT=ovl22: 104 bytes matched"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl22_e56"
+new = "CastMonsterBeam"
+kind = "routine"
+why = "the ovl22_e10 handler table points SpellHandlers[60] at stub 0096:0138 (overlay entry 56, ovl22:2F4D); the routine strikes the aim cell ds6DB9/ds6DBA for 1d6+20 through DamageTargetInCell (save kind 4, half damage) and then runs a short CastLineBeam(3, 20, 4, 0) away from the caster; the beam handler of the monster-only spell 60 (SpellNames[60] is empty); make match UNIT=ovl22: 63 bytes matched"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl22_e57"
+new = "CastMonsterParalyze"
+kind = "routine"
+why = "handler of the monster-only spell 61 (SpellHandlers element 61, overlay entry 57, stub 0096:013D): applies the current spell with the message 'is paralyzed'"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl22_e58"
+new = "CastMonsterHealWounds"
+kind = "routine"
+why = "handler of the monster-only spell 62 (SpellHandlers element 62, overlay entry 58, stub 0096:0142): heals the first chosen target 2d4 + 2 hit points and reports 'is Healed'"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl22_e59"
+new = "CastMonsterInvisibility"
+kind = "routine"
+why = "handler of the monster-only spell 63 (SpellHandlers element 63, overlay entry 59, stub 0096:0147): applies the current spell with the message 'is invisible'"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl22_e60"
+new = "CastMonsterMagicDamage"
+kind = "routine"
+why = "handler of the monster-only spell 65 (SpellHandlers element 65, overlay entry 60, stub 0096:014C): applies the current spell for 2d4 + 2 magic damage (kind 8) with no message"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl22_e61"
+new = "CastMonsterNoEffect"
+kind = "routine"
+why = "handler of the monster-only spell 66 (SpellHandlers element 66, overlay entry 61, stub 0096:0151): the handler body is empty, so the cast does nothing after the picker"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl22_e62"
+new = "CastMonsterReadMagic"
+kind = "routine"
+why = "ovl22:30A2 calls ApplySpellToTargets(ds681B, $FF, 1, 0, 0, 'is Reading'); the handler table element 67 (whitepaper 5.22.2), a monster-only spell with its own reading affect"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl22_e6"
+new = "IsScroll"
+kind = "routine"
+why = "ovl22:323D returns True when the far pointer is not nil and RaceRow[Item^.ItemType][0] is in $B..$D; every caller (AddScrollSpells, UseMagicItem, StudyRestMinutes, CancelScribing, ScribeScrolls, ProcessPendingScribedSpell) uses it to find the items whose Affects carry scroll spells"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl22_e7"
+new = "ConsumeScrollSpell"
+kind = "routine"
+why = "ovl22:328A clears the first of Item^.Affects[1..3] whose low seven bits equal the scribed spell (Spell and $7F), decrements Item^.NameNum[2] and hands the item to res12_fn_1509 when it falls below $D2; ProcessPendingScribedSpell calls it to consume a spell from a scroll after it is marked known"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl22_e63"
+new = "MonsterBreath"
+kind = "routine"
+why = "ovl22:30D9 shows 'Breathes!' and runs a breath attack: a 1d100 chance check on ds6DE3, the target picker, the zap animation, a line beam (CastLineBeam) and DamageTargetInCell for the breather's maximum hit points; Share the monster breath attack (called with a character and its breath affect)"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl22_e8"
+new = "ShowSpellMessage"
+kind = "routine"
+why = "ovl22:331A draws Who's name (res12_fn_1816), then Message right after it, then the spell's name; in combat it shows the timed message 'Casts a Spell' and 'Spell:NAME'. Callers pass 'casts' (CastChosenSpell), 'has memorized' (ProcessMemorizedSpell) and 'has scribed' (ProcessPendingScribedSpell), so it announces a named character's spell event."
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl22_e10"
+new = "InitSpellHandlers"
+kind = "routine"
+why = "ovl22:3413 fills SpellHandlers at DS:6B84 (element 0 the target picker via SpellTargetPicker, elements 1..$43 the per-spell cast handlers, all overlay stubs of this unit) and stores @MonsterBreath in DS:6988; ovl11:002D StartGame calls it once at start-up. It initialises the spell-casting handlers and globals."
 date = "2026-10-14"
 
 [[rename]]

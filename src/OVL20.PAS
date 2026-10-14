@@ -443,7 +443,7 @@ begin
   end;
 end;
 { ovl20:0925: scans Who's 21 spell slots. When Handled is 0, the first spell with bit 7 set is completed:
-  the bit is cleared, the rest-time line is redrawn, and ovl22_e8 receives Who, "has memorized" and the
+  the bit is cleared, the rest-time line is redrawn, and ShowSpellMessage receives Who, "has memorized" and the
   spell byte; Handled becomes 1. Once one is handled, the function returns the level of the next pending
   spell, or 0 when none remains. Reads SpellTable and changes Who^.Spells and Handled; also draws text. }
 function ProcessMemorizedSpell(Who: PCharacter; var Handled: Byte): Byte;
@@ -462,7 +462,7 @@ begin
       begin
         Dec(Who^.Spells[SpellIndex], PendingSpellFlag);
         ShowRestTime(0);
-        ovl22_e8(Who, 'has memorized', Who^.Spells[SpellIndex]);
+        ShowSpellMessage(Who, 'has memorized', Who^.Spells[SpellIndex]);
         Handled := 1;
       end;
     Inc(SpellIndex);
@@ -470,8 +470,8 @@ begin
   ProcessMemorizedSpell := SpellLevel;
 end;
 { ovl20:09E7: for Who, scans carried scrolls and their three spell bytes for pending scribing (bit 7 set).
-  When Handled is 0, it marks the first pending spell known, calls ovl22_e7 to consume it, redraws the
-  rest-time line and reports "has scribed" through ovl22_e8; Handled becomes 1. When already handled, it
+  When Handled is 0, it marks the first pending spell known, calls ConsumeScrollSpell to consume it, redraws the
+  rest-time line and reports "has scribed" through ShowSpellMessage; Handled becomes 1. When already handled, it
   returns the level of the next pending scroll spell, or 0. Reads Who^.Items and SpellTable; changes
   Who^.KnownSpells, the scroll and Handled; also changes the screen. }
 function ProcessPendingScribedSpell(Who: PCharacter; var Handled: Byte): Byte;
@@ -486,7 +486,7 @@ begin
   while (Item <> nil) and (SpellLevel = 0) do
   begin
     SpellIndex := 1;
-    if ovl22_e6(Item) then
+    if IsScroll(Item) then
     begin
       while (SpellIndex <= LastScrollSpellSlot) and (SpellLevel = 0) do
       begin
@@ -497,9 +497,9 @@ begin
           begin
             SpellNumber := Item^.Affects[SpellIndex] and SpellNumberMask;
             Who^.KnownSpells[SpellNumber] := 1;
-            ovl22_e7(Who, Item, SpellNumber);
+            ConsumeScrollSpell(Who, Item, SpellNumber);
             ShowRestTime(0);
-            ovl22_e8(Who, 'has scribed', SpellNumber);
+            ShowSpellMessage(Who, 'has scribed', SpellNumber);
             Handled := 1;
           end;
         Inc(SpellIndex);

@@ -1,0 +1,154 @@
+# Lessons from ovl22, backed by TP 6.0 probes or matched routines.
+
+[[lesson]]
+id = "spellhandlers-element-is-spell-number"
+confidence = "V"
+units = ["ovl22"]
+tags = ["spell", "handler-table", "global"]
+title = "SpellHandlers[Spell] is built from the ovl22 entry stubs in spell order"
+lesson = "ovl22_e10 (ovl22:3413) fills the table at DS:6B84 with far pointers: element N at DS:6B84+N*4 is the overlay stub 0096:(0x20+5*entry) of the handler for spell N (element 0 is the target picker, entry 4). The stub offset gives the overlay entry index, so the handler routine of spell N is the routine the map names ovl22_e(entry). Several spells share one handler: spells 5, 11, 18, 22 and 29 (Detect Magic, Read Magic, Find Traps, Detect Invisibility) all point at entry 15 CastDetectionSpell, and spells 6, 7, 16 and 17 (the Protection From Evil/Good spells) all point at entry 16 CastProtection. SpellNames (DS:28E9) gives the spell names: 1 Bless, 2 Curse, 3 Cure Light Wounds, 4 Cause Light Wounds, 5 Detect Magic, 6 Protection From Evil, 7 Protection from Good, 8 Resist Cold, 9 Burning Hands, 10 Charm Person, 11 Detect Magic, 12 Enlarge."
+evidence = ["src/OVL22.PAS#ovl22_e10", "re/symbols.toml#ovl22:3413", "re/symbols.toml#ovl22:10E9"]
+
+[[lesson]]
+id = "signed-byte-times-128-not-shl-7"
+confidence = "V"
+units = ["*"]
+tags = ["compiler", "shl", "sign-extension", "byte"]
+title = "A byte shifted by 7 compiles differently from a signed byte times 128"
+lesson = "For a Word destination, `X shl 7` on a Byte gives `xor ah,ah; mov cx,7; shl ax,cl`, and `ShortInt(X) shl 7` gives `cbw; mov cx,7`. The original ovl22:1241..1246 has `cbw; mov cl,7; shl ax,cl`: only a signed byte times a constant, `ShortInt(X) * 128`, gives that exact sequence (`mov cl,7`, not `mov cx,7`). ovl12:1f8b uses the same `cbw; mov cl,7; shl ax,cl` shape on TCharacter.Side (+$10E), so Side is read as signed there too. Prefer `* 128` over `shl 7` when the shift result is a Word and a signed byte is involved."
+evidence = ["tools/re/tp_idioms/ovl22/PRB19A.PAS", "tools/re/tp_idioms/ovl22/PRB19B.PAS", "src/OVL22.PAS#CastCharmPerson", "re/symbols.toml#ovl22:11DD"]
+
+[[lesson]]
+id = "character-creature-type-9f"
+confidence = "V"
+units = ["ovl22"]
+tags = ["character", "record", "spell-target"]
+title = "TCharacter +$9F is the creature type a spell tests a target by"
+lesson = "TCharacter +$9F is the byte after Sex (+$9E); coab leaves it field_9F. Charm Person and the shared ovl22:1760 check require it to be 1 or less, Snake Charm (ovl22_e31) requires $E, and ovl12 compares it with 4 and $A. MON*CHA has the humanoids at 0 or 1, the undead (Giant Skeleton, Vampire) at 4, a giant snake at $E, and a saved party member at 0. src/POOLVARS.PAS names it CreatureType."
+evidence = ["src/POOLVARS.PAS#TCharacter", "src/OVL22.PAS#CastCharmPerson", "re/symbols.toml#ovl22:11DD"]
+
+[[lesson]]
+id = "spell-handler-working-globals-4844"
+confidence = "V"
+units = ["ovl22"]
+tags = ["global", "spell", "working-value"]
+title = "DS:4844 and DS:4845 are two working bytes the ovl22 cast handlers share"
+lesson = "The ovl22 cast handlers keep two scratch bytes in the globals at DS:4844 and DS:4845 (between SpellMenuItemCount and NewHeapEnd): Enlarge (ovl22_e20) puts its strength 18 and its percentile there for RaiseStrength, Sleep (ovl22_e26) its 4d4 hit-point pool and per-target cost, Snake Charm (ovl22_e31) a hit-point pool, and ovl24_fn_23B6 a value and a duration. They are declared ds4844/ds4845 in src/POOLVARS.PAS."
+evidence = ["src/OVL22.PAS#CastEnlarge", "re/symbols.toml#ovl22:12A5"]
+
+[[lesson]]
+id = "early-exit-vs-nested-if-direct-jump"
+confidence = "V"
+units = ["ovl22"]
+tags = ["compiler", "control-flow", "exit", "if"]
+title = "An early Exit compiles to je+jmp; a nested positive if jumps straight to the epilogue"
+lesson = "TP 6.0 compiles `if C then Exit;` followed by more code as `je skip; jmp epilogue` (a conditional over an unconditional jump), even when Exit is the only statement. A nested positive `if` whose true branch is the last statement of its enclosing block instead negates the test and jumps straight to the epilogue: `if not R(...) then ...` gives `or al,al; jne epilogue`, and `if Q(...) then ...` gives `or al,al; je epilogue`. ovl22:136E (CastReduce) shows the direct form twice, so its source is `if ds6C94 > 0 then if not SavingThrow(...) then if CureAffect(...) then res12_fn_16EC(...)`, not the early-Exit draft (which was 4 bytes longer and failed on the first jbe displacement). A comparison guard with no other code after it uses `cmp; jbe epilogue` for `if X > 0 then`."
+evidence = ["tools/re/tp_idioms/ovl22/PRB21.PAS", "tools/re/tp_idioms/ovl22/EXITFN.PAS", "tools/re/tp_idioms/ovl22/CMPZERO.PAS", "src/OVL22.PAS#CastReduce", "re/symbols.toml#ovl22:136E"]
+
+[[lesson]]
+id = "two-arg-inc-in-place-byte-add"
+confidence = "V"
+units = ["ovl22"]
+tags = ["compiler", "inc", "byte", "pointer-field"]
+title = "Two-argument Inc on a pointed-to byte field gives an in-place add"
+lesson = "For a pointed-to byte field, `P^.F := P^.F + R` compiles to a word add (xor ah,ah; mov dx,ax; load the field; add ax,dx; store), but the two-argument `Inc(P^.F, R)` yields exactly `call R; les di,[P]; add byte ptr es:[di+off], al`. ovl22:13D8 (CastFriends) uses the in-place byte add for the 2d4 Charisma increment, so its source is `Inc(ds6C95^.Charisma, RollDice(2, 4))`. TP 6.0 supports the second argument to Inc/Dec on an ordinal. Probe tools/re/tp_idioms/ovl22/PRB22B.PAS shows all three shapes (assignment, Inc, with block)."
+evidence = ["tools/re/tp_idioms/ovl22/PRB22B.PAS", "src/OVL22.PAS#CastFriends", "re/symbols.toml#ovl22:13D8"]
+
+[[lesson]]
+id = "sum-of-two-calls-evaluates-right-operand-first"
+confidence = "V"
+units = ["ovl22"]
+tags = ["compiler", "expression", "evaluation-order", "call"]
+title = "A sum of two function calls evaluates the right operand first"
+lesson = "TP 6.0 compiles `F(...) + G(...)` by calling G (the right operand) first, pushing its result, then calling F, then `xor ah,ah; pop dx; add ax,dx`. So the source that produced ovl22:14C7 (CastShockingGrasp)'s `res12_fn_26C2(ds681B)`-then-`RollDiceCounted(1,8)` order is `RollDiceCounted(1, 8) + res12_fn_26C2(ds681B)`, with the level on the right; the natural reading order gives the other call first and does not match. This differs from `F(...) + <memory expr>`, where the left call is evaluated first (CastMagicMissile, ovl22:1439). Probe tools/re/tp_idioms/ovl22/PRB25.PAS shows both orders side by side."
+evidence = ["tools/re/tp_idioms/ovl22/PRB25.PAS", "src/OVL22.PAS#CastShockingGrasp", "re/symbols.toml#ovl22:14C7"]
+
+[[lesson]]
+id = "two-arg-dec-and-positive-guard-layout"
+confidence = "V"
+units = ["ovl22"]
+tags = ["compiler", "dec", "byte", "branch-layout", "guard"]
+title = "Two-argument Dec is an in-place byte subtract; a positive and-guard fixes the branch layout"
+lesson = "Two-argument `Dec(X, Y)` on Byte globals compiles to `mov al,[Y]; sub [X],al`, while `X := X - Y` compiles to a longer word sequence (mov al,[Y]; xor ah,ah; mov dx,ax; mov al,[X]; xor ah,ah; sub ax,dx; mov [X],al). ovl22:151B (CastSleep) subtracts the Sleep pool in place, so its source is `Dec(ds4844, ds4845)`. The same routine also shows a branch-layout effect: the guard `if (Status = 1) or res12(...) or (pool < cost) then drop else Dec(...)` compiles with the drop placed first (jae to the else), but the positive `if (Status <> 1) and not res12(...) and (pool >= cost) then Dec(...) else drop` compiles with the else placed first (jb to the drop), which is the original's layout. So the source is the positive and-guard even though the negative or-guard reads more naturally."
+evidence = ["tools/re/tp_idioms/ovl22/PRB26.PAS", "src/OVL22.PAS#CastSleep", "re/symbols.toml#ovl22:151B"]
+
+[[lesson]]
+id = "spellhandlers-continues-past-spell-40"
+confidence = "V"
+units = ["ovl22"]
+tags = ["spell", "handler-table", "global", "stub", "naming"]
+title = "The DS:6B84 cast handler table runs past the 40 cast spells, one element per spell number"
+lesson = "ovl22_e10 (ovl22:3413) fills SpellHandlers at DS:6B84 with 68 far pointers (elements 0..67): element 0 is the target picker, element N the overlay stub 0096:(0x20 + 5*entry) of spell N's handler, so the handler routine the map calls ovl22_e<entry> has entry = (stub_offset - 0x20) / 5. The 40 cast spells occupy elements 1..40; elements 41..56 are the remaining named spells, since SpellNames (DS:28E9) is a string[40] array of 41 bytes per entry with entries 1..$38 = 'Bless'..'Restoration'. Element 41 Dispel Magic and element 46 Dispel Magic share ovl22:2385 (CastDispelMagic), element 42 Prayer is ovl22:24D6 (CastPrayer), element 43 Remove Curse is ovl22:2540 (CastRemoveCurse). To name a handler whose entry is above 40, read SpellNames[N] at DS:28E9 + N*41. The file offset of SpellNames[1] (DS:2912) in poolrad/start-unpack.exe is 0xFAD2 (the byte 05 then 'Bless'), so a handler's name is decoded straight from the image."
+evidence = ["re/symbols.toml#ovl22:3413", "poolrad/start-unpack.exe#DS:2912", "src/OVL22.PAS#CastDispelMagic", "src/OVL22.PAS#CastPrayer", "src/OVL22.PAS#CastRemoveCurse", "re/symbols.toml#ovl22:2385"]
+
+[[lesson]]
+id = "or-guard-without-else-gives-direct-jumps"
+confidence = "V"
+units = ["ovl22"]
+tags = ["compiler", "control-flow", "if", "guard", "loop"]
+title = "An if/or guard without an else gives `jne body; je after`; with an else it adds two jmps"
+lesson = "For a `repeat` whose stepping must be skipped when the line endpoints coincide, TP 6.0 compiles `if (X1 <> X2) or (Y1 <> Y2) then <repeat>;` (no else) to `cmp X1,X2; jne body; cmp Y1,Y2; je after; body: ...`, placing the direct exit jumps at the end. The same guard written `if (X1 = X2) and (Y1 = Y2) then goto EndOfStep;` compiles to `jne body; jne body; jmp after`, and writing the guard with an explicit `else goto EndOfStep` adds a `jmp` over the else and a `jmp` for the else (4 extra bytes). The beam stops inside the repeat are the `until` disjunction `(not StepDone) or ((Occupant > 0) and (Occupant <> PrevOccupant)) or (Tile = 0) or (Cost > 1) or (Line.First >= Length)`, whose terms compile to direct jumps to the after label. Probe tools/re/tp_idioms/ovl22/GUARD.PAS."
+evidence = ["tools/re/tp_idioms/ovl22/GUARD.PAS", "src/OVL22.PAS#CastLineBeam", "re/symbols.toml#ovl22:295B"]
+
+[[lesson]]
+id = "signed-negation-zero-minus-gives-sub-form"
+confidence = "V"
+units = ["ovl22"]
+tags = ["compiler", "negation", "expression", "byte"]
+title = "`0 - X` on a signed byte local gives `mov dx,ax; xor ax,ax; sub ax,dx`, not `neg ax`"
+lesson = "TP 6.0 compiles `X := -X` for a ShortInt to `mov al,X; cwde; neg ax`, but the equivalent `X := 0 - X;` to `mov al,X; cwde; mov dx,ax; xor ax,ax; sub ax,dx; mov X,al`. ovl22:2B71 (CastLineBeam) turns the beam around with the subtraction form, so its source is `DirSign := 0 - DirSign;`. Probe tools/re/tp_idioms/ovl22/NEG.PAS."
+evidence = ["tools/re/tp_idioms/ovl22/NEG.PAS", "src/OVL22.PAS#CastLineBeam", "re/symbols.toml#ovl22:295B"]
+
+[[lesson]]
+id = "succ-shortint-gives-inc-al-cwde"
+confidence = "V"
+units = ["ovl22"]
+tags = ["compiler", "expression", "succ", "index"]
+title = "`Succ(Level)` on a ShortInt local gives `inc al; cwde` where `Level + 1` gives `cwde; inc ax`"
+lesson = "In an array index, `ExperienceTable[Class, Level + 1]` with Level a ShortInt local compiles `mov al,[bp-k]; cwde; inc ax` (because `Level + 1` is evaluated as an Integer), but `ExperienceTable[Class, Succ(Level)]` compiles `mov al,[bp-k]; inc al; cwde` (the byte is incremented in place, then sign-extended). ovl22:2CF0 (CastRestoration) uses the Succ form three times, so its source is `ExperienceTable[Class, Succ(Level)]`. Probe tools/re/tp_idioms/ovl22/INDEX.PAS."
+evidence = ["tools/re/tp_idioms/ovl22/INDEX.PAS", "src/OVL22.PAS#CastRestoration", "re/symbols.toml#ovl22:2C43"]
+
+[[lesson]]
+id = "small-add-to-byte-function-uses-inc-ax"
+confidence = "V"
+units = ["*"]
+tags = ["compiler", "expression", "add", "byte"]
+title = "A small constant added to a Byte function result uses `inc ax` for 1 and 2, `add ax,n` from 3 on"
+lesson = "For a Word destination and a Byte-valued function call, `G + 1` compiles to `xor ah,ah; inc ax`, `G + 2` to `xor ah,ah; inc ax; inc ax`, but `G + 3` to `xor ah,ah; add ax,3` and `G + 8` to `xor ah,ah; add ax,8`. The original increments in place only for one and two, so ovl22:2FD0 (CastMonsterHealWounds) is `RollDice(2, 4) + 2` (the `inc ax` twice at ovl22:2FE9) while ovl22:2E4D (CastMonsterHeal) is `RollDice(1, 4) + 8` (the `add ax,8` at ovl22:2EA4). Probe tools/re/tp_idioms/ovl22/SMALLC.PAS."
+evidence = ["tools/re/tp_idioms/ovl22/SMALLC.PAS", "src/OVL22.PAS#CastMonsterHealWounds", "src/OVL22.PAS#CastMonsterHeal", "re/symbols.toml#ovl22:2FD0"]
+
+[[lesson]]
+id = "boolean-cast-of-byte-function-keeps-plain-store"
+confidence = "V"
+units = ["ovl22"]
+tags = ["compiler", "typecast", "boolean", "byte", "var-parameter"]
+title = "A Boolean var passed to a routine and then set from a Byte function needs `Boolean(Fn)` and keeps a plain `mov [bp-1],al`"
+lesson = "TP 6.0 rejects passing a Byte variable to a `var Boolean` parameter (Error 26: Type mismatch), so ovl22:30D9's local [bp-1], which it hands to DamageTargetInCell (var Blocked: Boolean) and later sets from the Byte function res12_fn_2637, must be declared Boolean. `Blocked := Boolean(res12_fn_2637(Who));` casts the same-size Byte to Boolean and compiles to the plain `call; mov byte [bp-1],al` the original has (ovl22:3234), while `Blocked := res12_fn_2637(Who) <> 0;` would add a compare. Probe tools/re/tp_idioms/ovl22/BOOLCAST.PAS."
+evidence = ["tools/re/tp_idioms/ovl22/BOOLCAST.PAS", "src/OVL22.PAS#MonsterBreath", "re/symbols.toml#ovl22:30D9"]
+
+[[lesson]]
+id = "string40-value-param-copy-slot-is-reused"
+confidence = "V"
+units = ["ovl22"]
+tags = ["compiler", "frame", "string", "parameter"]
+title = "A String40 value parameter is copied into a frame slot and that slot is reused when the parameter is passed on"
+lesson = "A `Message: String40` value parameter gets a prologue `StrLCopy(@copy, @param, 40)` copy in the frame (ovl22:331A copies into [bp-0x29]); passing the parameter on to another string parameter reuses that same slot (the DrawTextAt argument is [bp-0x29]), so no extra local is needed. Declaring a local `Text: String40; Text := Message;` adds a second copy and enlarges the frame by 41 bytes (sub sp 0x152 instead of the original's 0x12a), which the matcher reports as the `sub sp` constant differing. Probe tools/re/tp_idioms/ovl22/E8FRAME.PAS."
+evidence = ["tools/re/tp_idioms/ovl22/E8FRAME.PAS", "src/OVL22.PAS#ShowSpellMessage", "re/symbols.toml#ovl22:331A"]
+
+[[lesson]]
+id = "procedural-typed-destination-takes-a-bare-assignment"
+confidence = "V"
+units = ["ovl22"]
+tags = ["compiler", "assignment", "pointer", "procedural-type"]
+title = "A procedural-typed destination takes a bare `:= Routine;`; `:= @Routine` is Error 122, and @ is only for a Pointer destination"
+lesson = "ovl22:3413 (InitSpellHandlers) assigns one far routine per element of SpellHandlers. `SpellHandlers[N] := CastBless;` (no @) compiles to `mov ax, OFFSET; mov dx, SEG; mov [base+4N], ax; mov [base+4N+2], dx`, exactly the original's two stores, but `SpellHandlers[N] := @CastBless;` is Error 122 (Invalid variable reference) because a procedural-typed destination does not accept @. @ is needed only for a Pointer destination, as ovl08's `ds6B84 := @ChooseSpellTargets;` (ds6B84: Pointer). Probe tools/re/tp_idioms/ovl22/HANDLRTB.PAS."
+evidence = ["tools/re/tp_idioms/ovl22/HANDLRTB.PAS", "src/OVL22.PAS#InitSpellHandlers", "re/symbols.toml#ovl22:3413"]
+
+[[lesson]]
+id = "constant-index-into-an-absolute-block-needs-a-real-array-and-a-dseg-name"
+confidence = "V"
+units = ["ovl22"]
+tags = ["matcher", "dsgroup", "absolute", "array", "global"]
+title = "A constant-index write into an `absolute` block needs the block to be a real array with a dseg.toml name, not an absolute over a 4-byte pointer"
+lesson = "make match resolves a DS operand by the nearest preceding public variable (Build.data_var), then maps that name to the original offset (original_global + delta). So `SpellHandlers[k] := H;` with SpellHandlers declared `array[0..$43] of TSpellHandler absolute ds6B84` (ds6B84 a 4-byte Pointer) failed: the address ds6B84+4k sat inside the unrelated variable ds6988, so the matcher read it as DS:6988 instead of DS:6B88. Declaring the block as a real array (`SpellHandlers: array[0..$43] of TSpellHandler;` plus a re/dseg.toml entry offset 0x6B84 name SpellHandlers, and `ds6B84: Pointer absolute SpellHandlers;` / `SpellTargetPicker: TSpellTargetPicker absolute SpellHandlers;` for the other views) makes the element resolve to 6B84+4k; the alias views resolve to the same base, so ovl08's `ds6B84 := @...` still matches. src/POOLVARS.PAS#SpellHandlers."
+evidence = ["src/POOLVARS.PAS#SpellHandlers", "re/dseg.toml#SpellHandlers", "src/OVL22.PAS#InitSpellHandlers", "re/symbols.toml#ovl22:3413"]

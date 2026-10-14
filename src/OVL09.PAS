@@ -62,11 +62,11 @@ const
   when no key was pressed; a panicking character (Panic, +$14) that is not forced to flee (ForcedFlight,
   +$10 zero) shows 'flees in panic' (the unit's string at offset 0) through ShowCharacterMessage. Then, while
   the turn is not over: use a magic item (UseMagicItem, ending through EndCombatTurn), finish a
-  pending spell (Combat^.PendingSpell; ovl22_e5, end of turn), take the Turn action (TryTurnUndead,
+  pending spell (Combat^.PendingSpell; CastChosenSpell, end of turn), take the Turn action (TryTurnUndead,
   Turn Undead for a cleric, end of turn), cast a memorized spell (CastMemorizedSpell, Done := 1), use
   the best item (UseBestItem) and read keys again (HandleCombatKey); with Done clear it loops on
   ChooseCombatTarget(Who, $FF, 1, 0): an initiative above 0 runs AiTurn, else the turn ends through
-  ovl09_fn_0F4F. Globals: none. QUIRK: ovl22_e5's var result is overwritten at once. }
+  ovl09_fn_0F4F. Globals: none. QUIRK: CastChosenSpell's var result is overwritten at once. }
 procedure QuickTurn(Who: PCharacter);
 var
   Pattern: Byte;
@@ -100,7 +100,7 @@ begin
   end;
   if Who^.Combat^.PendingSpell > 0 then
   begin
-    ovl22_e5(Who^.Combat^.PendingSpell, 1, 1, Done);
+    CastChosenSpell(Who^.Combat^.PendingSpell, 1, 1, Done);
     Done := EndCombatTurn(Who);
     Exit;
   end;
@@ -148,7 +148,7 @@ end;
   (UseMagicItem 03E4 and CastMemorizedSpell 0545 keep what it accepts). Refuses at once when the
   spell row's +$D byte is below Range. A spell other than 3 whose +$E byte is 0, and spell 3 when
   FindNearbyTarget(Who, Done) agrees, are accepted at once. Otherwise CollectEnemiesInRange collects Who's
-  enemies the area pattern of ovl22_e3(Spell) reaches (ds6DE4, count Tries): a zero count refuses,
+  enemies the area pattern of SpellAreaSize(Spell) reaches (ds6DE4, count Tries): a zero count refuses,
   a zero +$F byte accepts; else each collected enemy is asked through the nested
   DifferentSideInArea, a Yes refuses the spell and a No (or no enemy at all) accepts it.
   The +$D..+$F bytes are the spell row's last three bytes of SpellTable (16-byte stride).
@@ -186,7 +186,7 @@ begin
     SpellAccepted := True;
     Exit;
   end;
-  Tries := CollectEnemiesInRange(Who, ovl22_e3(Spell));
+  Tries := CollectEnemiesInRange(Who, SpellAreaSize(Spell));
   if Tries > 0 then
   begin
     if SpellTable[Spell].PadB[$F] = 0 then
@@ -202,7 +202,7 @@ begin
 end;
 { ovl09:03E4. Uses a magic item for the computer's turn (called by QuickTurn; True ends
   the turn through EndCombatTurn): rolls 1d7 rounds; each round walks Who^.Items for the first
-  item that passes (not ovl22_e6, Affects[3] below $80, Readied, level from Affects[2] in
+  item that passes (not IsScroll, Affects[3] below $80, Readied, level from Affects[2] in
   1..MaxSpell adjusted down by $17 above it, and SpellAccepted in range) and remembers it as
   Best. Afterwards a chosen Best is used through UseItem and the result is True. Early exits
   (CanUseMagicItem zero, the actor's side count ds6814Sides zero, VarNoCasting set) return False at
@@ -244,7 +244,7 @@ begin
       goto NextRound;
     Level := Target^.Affects[2];
     RowByte := ItemTable[Target^.ItemType].Slot;
-    if not ovl22_e6(Target) then
+    if not IsScroll(Target) then
       if Target^.Affects[3] < $80 then
         if Target^.Readied then
           if Level > 0 then
