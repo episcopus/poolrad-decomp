@@ -859,15 +859,20 @@ begin
     end;
   end;
 end;
-{ 0464:1B52: presents the changed regions the blitters marked in ds4A28
-  (row-changed flags), ds4AD0/ds4C20 (the first and last changed offset of the
-  row) and ds4D70 (the last offset), one branch per video adapter: adapter 0
-  moves each changed span from the staging buffer DrawBuf to the segment
-  ds4EC0[Row+8]; adapter 1 writes the four EGA planes byte by byte through port
-  3C5 (stride 4 in the source) into the off-screen page $A200, then copies $A200
-  onto the visible page $A000 in GC write mode 1 (GC register 5 := 1, restored to
-  0); adapter 2 moves the spans to the ds51E0 segments. Finally the
-  trackers are reset. Called after every sprite or picture blit. }
+{ 0464:1B52: presents the changed regions the blitters marked in ds4A28 (the
+  per-row changed flag) and the tracker arrays, one branch per video adapter. Per
+  changed row the staging buffer DrawBuf holds the changed bytes at
+  Data[ds4C20[Row] .. ds4D70[Row]]: ds4C20 is the first (lowest) changed byte
+  offset, a minimum that starts at $FFFF, and ds4D70 the last (highest), which
+  starts at 0. ds4AD0[Row] is the screen-side byte column of that first changed
+  byte (LeftCol * 2 on adapter 0, LeftCol * 1 on adapter 1, LeftCol * 4 on
+  adapter 2). Adapter 0 moves each changed span to the segment ds4EC0[Row+8] at
+  column ds4AD0[Row]+2; adapter 1 writes the four EGA planes byte by byte through
+  port 3C5 (stride 4 in the source) into the off-screen page $A200, then copies
+  $A200 onto the visible page $A000 in GC write mode 1 (GC register 5 := 1,
+  restored to 0); adapter 2 moves the spans to the ds51E0 segments at column
+  ds4AD0[Row]+4. Finally the trackers are reset. Called after every sprite or
+  picture blit. }
 procedure FlushPictureChanges;
 var
   Row: Word;
