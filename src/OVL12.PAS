@@ -70,8 +70,7 @@ procedure ParalyzeAttackTargetUnlessImmune(Who: PCharacter; Affect: PAffect; Mod
 procedure ParalyzeAttackTargetFor1d9Plus10(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure PoisonAttackTargetBonusMinus2(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure SetFlagAndLowerAttackRollByFour(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e60;
-procedure ovl12_fn_1758;
+procedure ovl12_e60(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e61;
 procedure ovl12_e62;
 procedure ovl12_e63;
@@ -237,6 +236,7 @@ const
   AffectUnknown19 = $19;        { purpose unknown [I]: RollToHit clears it from the attacker (ovl24:0CB7) }
   AffectUnknown19Duration = 1;  { the Duration ovl12:1363 gives affect AffectUnknown19 }
   AffectUnknown19Data = $0C;    { the Data byte ovl12:1363 gives affect AffectUnknown19 }
+  AffectUnknown19Chance = 95;   { ovl12:1730 gives affect AffectUnknown19 when a 1d100 roll is at or below this }
   AffectUnknown62 = $62;        { purpose unknown [?]: ovl12:1472 gives it; ovl24 also runs its hook (RunAffectHook $62) }
   AffectUnknown62Data = $FF;    { the Data byte ovl12:1472 gives affect AffectUnknown62 }
   AffectRot = $39;              { the rot affect: Cure Disease removes it (whitepaper 5.19 table, DS:0114) }
@@ -1189,10 +1189,15 @@ begin
   ds681E := 1;
   Dec(AttackRoll, AttackPenalty);
 end;
-{ ovl12:1730: frame not read }
-{@stub} procedure ovl12_e60; begin end;
-{ ovl12:1758: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_fn_1758; begin end;
+{ ovl12:1730. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). When a 1d100 roll
+  is at or below AffectUnknown19Chance it gives Who affect AffectUnknown19 (AddAffect, ovl24:0E52) for
+  AffectUnknown19Duration rounds with the Data AffectUnknown19Data and no handler when it is removed: the same AddAffect
+  as ovl12_e46 (ovl12:1363), but with the roll. Purpose unknown: which affect runs it is not known yet [?]. }
+procedure ovl12_e60(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  if RollDice(1, 100) <= AffectUnknown19Chance then
+    AddAffect(Who, AffectUnknown19, AffectUnknown19Duration, AffectUnknown19Data, NoRemoveHandler);
+end;
 { ovl12:176F: retf 10: 10 bytes of parameters; 20 bytes of locals }
 {@stub} procedure ovl12_e61; begin end;
 { ovl12:18B5: retf 10: 10 bytes of parameters; 0 bytes of locals }

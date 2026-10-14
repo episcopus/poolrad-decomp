@@ -3966,27 +3966,14 @@ evidence = ["prologue"]
 id = "ovl12:1730"
 unit = "ovl12"
 addr = "ovl12:1730"
-size = 40
+size = 46
 name = "ovl12_e60"
-signature = ""
+signature = "procedure ovl12_e60(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e60"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_60"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:1758"
-unit = "ovl12"
-addr = "ovl12:1758"
-size = 23
-name = "ovl12_fn_1758"
-signature = ""
-c_name = "ovl12_fn_1758"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:176F"
