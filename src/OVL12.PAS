@@ -33,23 +33,7 @@ procedure BoostAttackVsEightListed(Who: PCharacter; Affect: PAffect; Mode: Byte)
 procedure ImageAbsorbsHit(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ReduceDamageByQuarter(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure CoughStopsCasting(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e27;
-procedure ovl12_fn_0B25;
-procedure ovl12_fn_0B2A;
-procedure ovl12_fn_0B2F;
-procedure ovl12_fn_0B43;
-procedure ovl12_fn_0B48;
-procedure ovl12_fn_0B4D;
-procedure ovl12_fn_0B52;
-procedure ovl12_fn_0B57;
-procedure ovl12_fn_0B61;
-procedure ovl12_fn_0B70;
-procedure ovl12_fn_0B75;
-procedure ovl12_fn_0B7A;
-procedure ovl12_fn_0B7F;
-procedure ovl12_fn_0B84;
-procedure ovl12_fn_0B89;
-procedure ovl12_fn_0B8E;
+procedure CollapseAndChangeSide(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e28;
 procedure ovl12_e29;
 procedure ovl12_e30;
@@ -697,40 +681,26 @@ begin
   if Who = SelectedCharacter then
     res12_fn_09E3(Who);
 end;
-{ ovl12:0B1B: frame not read }
-{@stub} procedure ovl12_e27; begin end;
-{ ovl12:0B25: frame not read }
-{@stub} procedure ovl12_fn_0B25; begin end;
-{ ovl12:0B2A: frame not read }
-{@stub} procedure ovl12_fn_0B2A; begin end;
-{ ovl12:0B2F: frame not read }
-{@stub} procedure ovl12_fn_0B2F; begin end;
-{ ovl12:0B43: frame not read }
-{@stub} procedure ovl12_fn_0B43; begin end;
-{ ovl12:0B48: frame not read }
-{@stub} procedure ovl12_fn_0B48; begin end;
-{ ovl12:0B4D: frame not read }
-{@stub} procedure ovl12_fn_0B4D; begin end;
-{ ovl12:0B52: frame not read }
-{@stub} procedure ovl12_fn_0B52; begin end;
-{ ovl12:0B57: frame not read }
-{@stub} procedure ovl12_fn_0B57; begin end;
-{ ovl12:0B61: frame not read }
-{@stub} procedure ovl12_fn_0B61; begin end;
-{ ovl12:0B70: frame not read }
-{@stub} procedure ovl12_fn_0B70; begin end;
-{ ovl12:0B75: frame not read }
-{@stub} procedure ovl12_fn_0B75; begin end;
-{ ovl12:0B7A: frame not read }
-{@stub} procedure ovl12_fn_0B7A; begin end;
-{ ovl12:0B7F: frame not read }
-{@stub} procedure ovl12_fn_0B7F; begin end;
-{ ovl12:0B84: frame not read }
-{@stub} procedure ovl12_fn_0B84; begin end;
-{ ovl12:0B89: frame not read }
-{@stub} procedure ovl12_fn_0B89; begin end;
-{ ovl12:0B8E: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_fn_0B8E; begin end;
+{ ovl12:0B1B. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000). It clears
+  the affect's Flag, so the handler does not run again when the affect is removed. Unless the Temple is removing
+  affects (ds681F is not 0), Who collapses: DropFromFight takes Who out of the fight with StatusGone and the text
+  'collapses'. Then Who's side becomes the high nibble of the affect's Data, Quick is set so the computer plays
+  Who (as ComputerTakesOver does, ovl12:0400), the morale of a computer-run member is cleared, and Who's +$6B gets
+  the fighter level, +$72 gets 12, +$76 and +$9F get 0. Purpose unknown: which affect runs it is not known yet [?]. }
+procedure CollapseAndChangeSide(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  Affect^.Flag := 0;
+  if ds681F = 0 then
+    DropFromFight(Who, StatusGone, 'collapses');
+  Who^.Side := Affect^.Data div 16;
+  Who^.Quick := 1;
+  Who^.Pad74[$76] := 0;
+  Who^.Pad6B := Who^.ClassLevels[FighterClass];
+  Who^.Pad72 := 12;
+  if Who^.B84 = ComputerRunMorale then
+    Who^.B84 := 0;
+  Who^.Pad9E[$9F] := 0;
+end;
 { ovl12:0BAC: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e28; begin end;
 { ovl12:0BCF: retf 10: 10 bytes of parameters; 0 bytes of locals }
