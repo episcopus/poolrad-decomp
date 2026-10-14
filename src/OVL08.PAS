@@ -169,7 +169,7 @@ begin
   end;
 end;
 { ovl08:031A. The player's turn for Who: a character with Flag10D clear ends it at once
-  (res12_fn_2637). A pending spell (Combat^.PendingSpell) is cast through ovl22_e5 and ends the
+  (res12_fn_2637). A pending spell (Combat^.PendingSpell) is cast through CastChosenSpell and ends the
   turn. Otherwise the CombatMenu key is carried out until Done: M Move (MoveCharacter), V View
   (ovl19_e5), A Aim (ovl13_e17), U Use (ovl19_e6), C Cast (ovl13_e15), T Turn (ovl13_e9), Q
   Quick (SetQuickCombat, the computer finishes the turn), D Done (EndTurnMenu), Space takes
@@ -190,7 +190,7 @@ begin
     begin
       Spell := Who^.Combat^.PendingSpell;
       Who^.Combat^.PendingSpell := 0;
-      ovl22_e5(Spell, 0, 1, Done);
+      CastChosenSpell(Spell, 0, 1, Done);
       Done := res12_fn_2637(Who);
     end
     else

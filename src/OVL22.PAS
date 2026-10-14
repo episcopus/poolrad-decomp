@@ -5,7 +5,7 @@ unit OVL22;
   and learns spells for combat (ovl09) and the camp (ovl15). }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
-uses POOLVARS, RES06, RES12, OVL24;
+uses POOLVARS, RES03, RES06, RES09, RES12, OVL24, OVL25, OVL30, OVL31;
 function ovl22_e1(Mode: Byte; var Choice: Word): Byte;
 procedure AddSpellMenuLine(Spell: Byte);
 procedure AddItemSpells(Pending: Byte);
@@ -15,7 +15,7 @@ function SpellAreaSize(Spell: Byte): Byte;
 function SpellAffectDuration(Spell: Byte): Word;
 procedure ApplySpellToTargets(Spell, CasterLevel, Flag, Damage, Kind: Byte; Message: String40);
 procedure ChooseSpellTargets(Spell: Byte; Unused: Byte; var Done: Byte);
-procedure ovl22_e5(A, B, C: Byte; var Done: Byte);
+procedure CastChosenSpell(Spell, Quick, Announce: Byte; var Done: Byte);
 procedure ApplySpellToSide(Side: Byte; Message: String40);
 procedure CastBless;
 procedure CastCurse;
@@ -402,8 +402,115 @@ begin
     Done := 0;
   end;
 end;
-{ ovl22:0C20: retf 10: 10 bytes of parameters; 38 bytes of locals }
-{@stub} procedure ovl22_e5(A, B, C: Byte; var Done: Byte); begin end;
+{ ovl22:0C20 (e5). Casts a spell. Spell is the spell number, Quick (nonzero in quick combat)
+  means the computer plays the cast so the player is not asked to give it up, and Announce
+  (nonzero normally) is whether 'NAME casts SPELL' is shown; it is cleared when the spell is
+  refused. Done is the target picker's out flag.
+  Outside combat a spell with no target mode (SpellTable[Spell].Pad2[7] = 0) is combat-only: in
+  the camp the player is asked to lose it, in the wilds to use the item that holds it. Then the
+  target picker stored in DS:6B84 (SpellTargetPicker) fills Done; when it picked nothing the
+  player may try again ('Abort Spell? ' in combat, or directly in quick combat) or the cast is
+  given up. On a cast the caster is animated (res12_fn_19DE, faced towards the aim point ds6DB9/
+  ds6DBA through InDirArc, a sound and a res12_fn_1A29 line) and the spell's handler
+  SpellHandlers[Spell] runs with ds681B set. res12_fn_17E3 clears the prompt afterwards. Called
+  by the combat and camp cast paths (ovl08:031A, ovl09:000F, ovl05:0ECD, ovl13:2432, ovl15:04A1,
+  ovl19:1BD7). Globals: SelectedCharacter, ds49F3, ds6DBF, ds6DB9/ds6DBA, ds681B, ds6820 and the
+  SpellHandlers table. }
+procedure CastChosenSpell(Spell, Quick, Announce: Byte; var Done: Byte);
+const
+  CombatViewMode = 5;             { ds49F3 while a combat runs (whitepaper 5.5) }
+  Fireball = $2F;                 { the two spells whose cast has its own sound }
+  LightningBolt = $33;
+  AimStep = 4;                    { the line res12_fn_1A29 walks for the cast animation }
+  AimWidth = $1E;
+  AnimationKind = $12;            { res12_fn_19DE's argument that starts the cast animation }
+var
+  OK: Boolean;                    { True while the cast should be tried again }
+  { QUIRK ovl22:0C20: the byte at [bp-2] is allocated but never referenced; it is declared so the
+    later locals land where the original put them. }
+  Unused: Byte;
+  CasterX, CasterY: ShortInt;                 { the caster's combat position (CombatantX/CombatantY) }
+  Dir: Byte;                      { the direction the caster is turned towards the aim point }
+  Caster: PCharacter;             { the caster: SelectedCharacter copied at entry }
+begin
+  Caster := SelectedCharacter;
+  OK := True;
+  if (ds49F3 <> CombatViewMode) and (SpellTable[Spell].Pad2[7] = 0) then
+  begin
+    if ds6DBF = 0 then
+    begin
+      DrawTextAt(1, $13, $A, SpellNames[Spell]);
+      DrawTextAt(1, $14, $A, 'is a combat-only spell...');
+      if AskYesNo('Lose it? ', $D, $F, $A) = 'Y' then
+        res12_fn_148B(Spell);
+    end
+    else
+    begin
+      DrawTextAt(1, $13, $A, 'That Item');
+      DrawTextAt(1, $14, $A, 'is a combat-only item...');
+      if AskYesNo('Use it? ', $D, $F, $A) = 'Y' then
+        Done := 1;
+    end;
+    Announce := 0;
+    OK := False;
+  end;
+  if (Announce <> 0) and (ds6DBF = 0) then
+    ovl22_e8(Caster, 'casts', Spell);
+  while OK do
+  begin
+    SpellTargetPicker(Spell, Quick, Done);
+    if Done <> 0 then
+    begin
+      OK := False;
+      if ds49F3 = CombatViewMode then
+      begin
+        res12_fn_19DE(AnimationKind);
+        CasterX := CombatantX(Caster);
+        CasterY := CombatantY(Caster);
+        Dir := 0;
+        while not InDirArc(CasterX, CasterY, ds6DB9, ds6DBA, Dir) do
+          Inc(Dir);
+        SetCombatantIcon(Caster, Dir, 1, 0);
+        SetSoundDriverIdle(0);
+        case Spell of
+          Fireball: PlaySound(ds262A);
+          LightningBolt: PlaySound(ds2624);
+        else
+          PlaySound(ds2618);
+        end;
+        res12_fn_1A29(CasterX, CasterY, ds6DB9, ds6DBA, AimStep, AimWidth);
+        SetSoundDriverIdle($A);
+        if IsCombatantInView(Caster, 0) then
+        begin
+          SetCombatantIcon(Caster, Caster^.Combat^.IconSet, 1, 1);
+          SetCombatantIcon(Caster, Caster^.Combat^.IconSet, 0, 0);
+        end;
+      end;
+      ClearAttackerAffect(Caster);
+      if ds6DBF = 0 then
+        res12_fn_148B(Spell);
+      ds681B := Spell;
+      SpellHandlers[ds681B];
+      ds681B := 0;
+      ds6820 := 0;
+    end
+    else
+    begin
+      if ds49F3 <> CombatViewMode then
+        OK := False
+      else if (Quick <> 0) or (AskYesNo('Abort Spell? ', $E, $A, $F) = 'Y') then
+      begin
+        res12_fn_1693('Spell Aborted');
+        if ds6DBF = 0 then
+          res12_fn_148B(Spell);
+        OK := False;
+      end;
+    end;
+  end;
+  res12_fn_17E3;
+  if ds49F3 = CombatViewMode then
+    ClearWindow(0, $17, $27, $17);
+end;
 { ovl22:0F4F. Applies the current spell ds681B to the chosen targets (ds6C91[1..ds6C94]) but keeps
   only those on Side: a target whose TCharacter.Side differs is dropped (set nil) and, for spell 1
   (Bless) in combat, a target the spell's area already reaches (res12_fn_2433 nonzero) is dropped

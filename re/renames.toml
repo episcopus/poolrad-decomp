@@ -3546,3 +3546,10 @@ kind = "routine"
 why = "cast handler of spell 2 Curse: applies the spell to the opposite side with 'is Cursed' (SpellHandlers[2], ovl22:1040)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl22_e5"
+new = "CastChosenSpell"
+kind = "routine"
+why = "the CastSpell entry: picks the spell's targets through the DS:6B84 picker, animates the cast and runs the spell's handler SpellHandlers[Spell] (ovl22:0C20)"
+date = "2026-10-13"
+

@@ -485,7 +485,7 @@ end;
 
 { ovl05:0ECD. The treasure menu after a won battle: 'View Pool Exit', with Take while there is loot
   and Share while there is pooled money, and Detect when SelectedCharacter has Detect Magic
-  memorized and there are items (Detect casts it through ovl22_e5). V views (ovl19_e5), T takes
+  memorized and there are items (Detect casts it through CastChosenSpell). V views (ovl19_e5), T takes
   (TakeTreasure), P pools (PoolMoney) when the key flag is clear, S shares (ShareMoney). Exit with
   treasure left asks 'There is still treasure left.  Do you want to go back and claim your
   treasure?' and leaves on No. }
@@ -538,7 +538,7 @@ begin
       'T': TakeTreasure(MoneyLeft, ItemsLeft);
       'P': if ExtKey = 0 then PoolMoney;
       'S': ShareMoney;
-      'D': ovl22_e5(DetectSpell, 0, 0, ExtKey);
+      'D': CastChosenSpell(DetectSpell, 0, 0, ExtKey);
       'E', KeyNone:
         begin
           TreasureLeft(MoneyLeft, ItemsLeft);

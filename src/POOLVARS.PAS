@@ -159,17 +159,17 @@ type
   { The handler of an affect number (the table AffectHandlers): Mode 0 applies it, 1 removes it. }
   TAffectHandler = procedure(Who: PCharacter; Affect: PAffect; Mode: Byte);
   { The combat target picker stored in DS:6B84: the spell number, an unused byte and Done in/out
-    (ChooseSpellTargets, ovl22:0A91; ovl08 stores it and ovl22_e5 calls it). }
+    (ChooseSpellTargets, ovl22:0A91; ovl08 stores it and CastChosenSpell calls it). }
   TSpellTargetPicker = procedure(Spell: Byte; Unused: Byte; var Done: Byte);
   { A cast handler: SpellHandlers holds one parameterless far routine per spell number; it reads the
     current spell from ds681B and applies it (ovl22_e10 fills entries 1.. from overlay stub 0096:0057
-    on; ovl22_e5 calls SpellHandlers[Spell] after the picker, whitepaper 5.22). }
+    on; CastChosenSpell calls SpellHandlers[Spell] after the picker, whitepaper 5.22). }
   TSpellHandler = procedure;
   { The combat state of a character (TCharacter.Combat, +$108), read and written by the combat
     units ovl08 and ovl31; only the fields they use are named. }
   PCombatant = ^TCombatant;
   TCombatant = record
-    { +$0: nonzero: the turn finishes this spell through ovl22_e5 (ovl08:0336); cleared when the
+    { +$0: nonzero: the turn finishes this spell through CastChosenSpell (ovl08:0336); cleared when the
       combatant leaves the map (RemoveCombatant). }
     PendingSpell: Byte;
     CanCast: Byte;                { +$1: zero hides Cast in the combat menu (ovl08:0747) }
@@ -468,9 +468,12 @@ var
   ds0C26: array[0..15] of Byte;  { wall view id table, two equal groups of 8; see above }
   SpecialBlocks: array[0..9] of TSpecialBlock;  { entries 1..9 tested; only 3..9 replace the map block }
   ds2612: Word;                   { word passed to PlaySound by QuitGame and the Ctrl-S pause path; meaning unknown }
+  ds2618: Word;                   { PlaySound argument of CastChosenSpell for a spell without its own sound }
   ds260A: array[0..7] of Byte;    { 8-byte structure FillPictureRect copies from @ds260A (DrawWallDescriptors) }
   ds2622: Word;                   { word e1 passes to PlaySound when Done is 0; meaning unknown }
+  ds2624: Word;                   { sound passed to PlaySound by CastChosenSpell when spell $33 is cast; meaning unknown }
   ds2628: Word;                   { word the ovl14 movement code passes to PlaySound; meaning unknown }
+  ds262A: Word;                   { sound passed to PlaySound by CastChosenSpell when spell $2F is cast; meaning unknown }
   { Five words, one per 8x8 tile bank, subtracted from the symbol number to index within the
     bank (Put8x8Symbol, ovl34:020F); evidence in re/dseg.toml. }
   SymbolBase: array[0..4] of Word;  { per-bank base symbol numbers; see above }
@@ -760,7 +763,7 @@ var
   { The spell currently being cast: ApplySpellToTargets reads its SpellTable row byte +2 to decide whether
     the spell needs a roll to hit. DS:681B. }
   ds681B: Byte;
-  { A flag the spell code shares: ApplySpellToSide sets it to 1 and ovl22_e5 and ovl13_e14 clear it;
+  { A flag the spell code shares: ApplySpellToSide sets it to 1 and CastChosenSpell and ovl13_e14 clear it;
     ovl12 reads it too, and it is touched by ovl04, ovl05, ovl06, ovl18, ovl19 and ovl21. The meaning
     is not settled. DS:6820. }
   ds6820: Byte;
@@ -823,6 +826,12 @@ var
   ds0D06: array[0..15] of Byte;   { two 4-bit pixels of colour C (C * $11); see above }
   { Globals of the combat unit ovl08 (whitepaper 5.5). }
   ds6DBB: PCombatNode;            { a list of $13-byte records EndCombat frees (ovl08:0006); meaning unknown }
+  { The X of the tile a spell being cast is aimed at: ovl13_e14 fills it from CombatantX of the
+    selected character, and CastChosenSpell uses it as a line endpoint of the cast animation and
+    as part of the point to face (InDirArc). DS:6DB9. }
+  ds6DB9: Byte;
+  { The Y of the tile a spell being cast is aimed at, the companion of DS:6DB9; see its comment. DS:6DBA. }
+  ds6DBA: Byte;
   { nonzero: SpellAreaSize and res12_fn_26C2 use a fixed caster level 6 (a spell's area is then
     its per-level byte times 6); the writer is not found yet }
   ds6DBF: Byte;
@@ -831,10 +840,10 @@ var
   CurrentItem: PItem;
   ds6E36: Pointer;                { a picture EndCombat frees through ReleasePicture (ovl08:005A) }
   { The combat target picker: RunCombat sets @ovl13_e14 at the start (ovl08:0085) and EndCombat
-    @ChooseSpellTargets at the end (ovl08:0069); ovl22_e5 calls it as (spell, B, Done). }
+    @ChooseSpellTargets at the end (ovl08:0069); CastChosenSpell calls it as (spell, B, Done). }
   ds6B84: Pointer;                { routine RunCombat stores at ovl08:0085 and EndCombat at ovl08:0069 }
   { DS:6B84 is a block ovl22_e10 fills: element 0 (DS:6B84) is the target picker and elements 1.. are
-    the per-spell cast handlers, so ovl22_e5's [Spell*4 + DS:6B84] reaches SpellHandlers[Spell].
+    the per-spell cast handlers, so CastChosenSpell's [Spell*4 + DS:6B84] reaches SpellHandlers[Spell].
     SpellHandlers is 0-based over the same base so that SpellHandlers[Spell] is that operand. }
   SpellTargetPicker: TSpellTargetPicker absolute ds6B84;
   SpellHandlers: array[0..$38] of TSpellHandler absolute ds6B84;

@@ -48,11 +48,11 @@ const
   pattern, an 8 rerolls a d2 + 4, anything else a d4. Morale runs when no key was pressed; a
   panicking character (+$14 set) that is not stuck (+$10 0) shows 'flees in panic' (unit offset 0)
   through res12_fn_16EC. Then, while the turn is not over: use a magic item (UseMagicItem, ending
-  through res12_fn_2637), finish a pending spell (Combat^.PendingSpell; ovl22_e5, end of turn),
+  through res12_fn_2637), finish a pending spell (Combat^.PendingSpell; CastChosenSpell, end of turn),
   take the level-0 turn (ovl09_fn_0203, end of turn), cast a memorized spell (CastMemorizedSpell,
   Done := 1), use the best item (UseBestItem) and read keys again (HandleCombatKey); with Done
   clear it loops on ovl13_e21(Who, $FF, 1, 0): an initiative above 0 runs AiTurn, else the turn
-  ends through ovl09_fn_0F4F. Globals: none. QUIRK: ovl22_e5's var result is overwritten at once. }
+  ends through ovl09_fn_0F4F. Globals: none. QUIRK: CastChosenSpell's var result is overwritten at once. }
 procedure QuickTurn(Who: PCharacter);
 var
   Step: Byte;
@@ -86,7 +86,7 @@ begin
   end;
   if Who^.Combat^.PendingSpell > 0 then
   begin
-    ovl22_e5(Who^.Combat^.PendingSpell, 1, 1, Done);
+    CastChosenSpell(Who^.Combat^.PendingSpell, 1, 1, Done);
     Done := res12_fn_2637(Who);
     Exit;
   end;

@@ -243,7 +243,7 @@ begin
   end;
 end;
 { ovl15:04A1. The Cast command: when MayUseMagic allows it, repeatedly lists SelectedCharacter's memorized
-  spells (ChooseSpellFromList) and casts the chosen one in a cleared text window (ovl22_e5), until the list
+  spells (ChooseSpellFromList) and casts the chosen one in a cleared text window (CastChosenSpell), until the list
   is left; 'has no spells memorized' when there is none. Clears ds6DB5 first and redraws the screen
   (res12_fn_27D9) when something was shown. The camp's Magic menu and ovl14's wilderness keys. }
 procedure CastSpells;
@@ -262,7 +262,7 @@ begin
         Redraw := 1;
         DrawWindowFrame(1, $11, $26, $16, 0);
         ClearWindow(1, $11, $26, $16);
-        ovl22_e5(Spell, 0, 1, Done);
+        CastChosenSpell(Spell, 0, 1, Done);
         Choice := NoChoice;
       end
       else if Listed <> 0 then
