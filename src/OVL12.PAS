@@ -77,7 +77,7 @@ procedure HoldWeakTargetFast(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ReviveOrRetryRevival(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure FireAttackTargetFor2d10(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure AcidAttackTargetFor1d4(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e67;
+procedure FrightenSideWithFear(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e68;
 procedure ovl12_fn_1BD7;
 procedure ovl12_fn_1C98;
@@ -259,6 +259,10 @@ const
   BloodDrainWeakDuration = 0;   { the Duration ovl12:1935 gives AffectBloodDrainWeak }
   AffectRevival = $4E;          { the affect ovl24:175D calls (mode 1) for an unconscious character healed outside combat }
   RevivalRetryDuration = 1;     { the Duration ovl12:19D9 gives AffectRevival }
+  SaveKindFear = 4;             { SavingThrow kind 4, the fifth of the five saves: the save against fear (ovl12:1AAA) [I] }
+  AffectWeakened = $02;         { the affect ovl12:1AAA gives for 'is weakened by fear' (its name is not known yet [?]) }
+  FearData = $0C;               { the Data byte ovl12:1AAA gives both fear affects }
+  SaveNegatesAffect = 1;        { ApplyAffect's SaveNegates: a successful save makes the affect fail (ovl24:1656) }
 
 { ovl12:0000. Cancels the hook of an affect: when AffectId is 0 or is the affect the hooks are offering
   (HookAffectId), HookAffectId and DamageAmount are cleared. HookAffectId 0 reads as "is Unaffected"
@@ -1307,8 +1311,34 @@ begin
   DamageKind := KindAcid;
   DealDamage(Who^.Combat^.Target, RollDiceCounted(1, 4), 0, False);
 end;
-{ ovl12:1AAA: retf 10: 10 bytes of parameters; 28 bytes of locals }
-{@stub} procedure ovl12_e67; begin end;
+{ ovl12:1AAA. Affect handler that frightens the side of Who (the AffectHandlers shape: Who, Affect and Mode; Affect and
+  Mode are not read, ovl24:0000). It walks the party list from ds5D96 (TCharacter +$104 is the next member). Every member
+  with Flag10D set on the side of Who (res12_fn_23B7, the side of the actor) makes a SavingThrow of kind SaveKindFear. Its
+  HighestLevel (+$73) decides the affect: 0 to 3 gives AffectParalysis with the message 'is paralyzed with fear', 4 or 5
+  gives AffectWeakened with 'is weakened by fear'; the Duration is 0 for both, and a successful save negates the affect
+  (ApplyAffect, ovl24:1656). Other levels get nothing. Which affect runs it is not known yet [?]. }
+procedure FrightenSideWithFear(Who: PCharacter; Affect: PAffect; Mode: Byte);
+var
+  Scan: PCharacter;             { walks the party list: first member, then Next }
+  FearSaved: Boolean;           { the fear save of Scan }
+begin
+  Scan := PCharacter(ds5D96);
+  while Scan <> nil do
+  begin
+    if Scan^.Flag10D <> 0 then
+      if res12_fn_23B7(Who) = Scan^.Side then
+      begin
+        FearSaved := SavingThrow(Scan, SaveKindFear, 0);
+        case Scan^.HighestLevel of
+          0..3: ApplyAffect(Scan, AffectParalysis, 0, FearData, NoRemoveHandler, SaveNegatesAffect, FearSaved,
+            'is paralyzed with fear');
+          4, 5: ApplyAffect(Scan, AffectWeakened, 0, FearData, NoRemoveHandler, SaveNegatesAffect, FearSaved,
+            'is weakened by fear');
+        end;
+      end;
+    Scan := Scan^.Next;
+  end;
+end;
 { ovl12:1BA8: frame not read }
 {@stub} procedure ovl12_e68; begin end;
 { ovl12:1BD7: retf 10: 10 bytes of parameters; 0 bytes of locals }

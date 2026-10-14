@@ -3861,3 +3861,10 @@ kind = "routine"
 why = "ovl12:1A4C sets DamageKind to $10 (POOLVARS DamageKind: $10 acid) and deals RollDiceCounted(1, 4) to Who's combat Target with no save through DealDamage (ovl24:1344)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e67"
+new = "FrightenSideWithFear"
+kind = "routine"
+why = "ovl12:1AAA walks the party list (ds5D96, +$104 next) and, for each member with Flag10D on the side of Who (res12_fn_23B7), makes a fear save (SavingThrow kind 4) and gives AffectParalysis ($34) or AffectWeakened ($02) by HighestLevel 0..3 or 4..5, with the messages 'is paralyzed with fear' and 'is weakened by fear' (ovl12:1B91 and 1A96 pool strings)"
+date = "2026-10-13"
+

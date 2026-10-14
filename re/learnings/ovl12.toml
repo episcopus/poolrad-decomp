@@ -395,3 +395,21 @@ tags = ["map", "entry", "lcall", "segment", "routine-boundary"]
 title = "A map entry inside a far call's segment word is not a routine (ovl12:1758 in ovl12:1730)"
 lesson = "The map listed ovl12:1758 (23 bytes, auto:far_call). Its bytes `b0 00` are the segment word of the `lcall 00B0:0052` to AddAffect at ovl12:1755 in ovl12_e60 (ovl12:1730), so the disassembly `mov al, 0; pop bp; retf 0Ah` at 1758 is a misreading of the call's tail. Once ovl12_e60 matched, `make match UNIT=ovl12 WRITE=1` removed the entry and corrected ovl12_e60 from 40 to 46 bytes. The declaration and the stub line were not removed by the tool: delete them by hand, or the unit does not compile (Undefined forward)."
 evidence = ["src/OVL12.PAS#ovl12_e60", "re/symbols.toml#ovl12:1730"]
+
+[[lesson]]
+id = "case-ranges-reuse-the-loaded-selector"
+confidence = "V"
+units = ["ovl12"]
+tags = ["case", "range", "if", "layout", "codegen", "jump"]
+title = "A case on a signed field with ranges loads the selector once; if (x >= a) and (x <= b) with a second test reloads it (ovl12:1AAA)"
+lesson = "ovl12:1AAA branches on Scan^.HighestLevel (+$73, ShortInt): `mov al, es:[di+73h]` once, then `cmp al,0; jl; cmp al,3; jg` for 0..3 and `cmp al,4; je; cmp al,5; jne` for 4, 5, the second test reusing AL. `case Scan^.HighestLevel of 0..3: ...; 4, 5: ...; end;` matches. The two-if form `if (x >= 0) and (x <= 3) then ... else if (x = 4) or (x = 5) then ...` gave the same first jump but a body 17 bytes longer (the first diff is the displacement of the loop exit jump). Write a multi-way branch on a field as a case with ranges when the original shows one load."
+evidence = ["src/OVL12.PAS#FrightenSideWithFear", "re/symbols.toml#ovl12:1AAA"]
+
+[[lesson]]
+id = "boolean-local-frame-two-bytes"
+confidence = "V"
+units = ["ovl12"]
+tags = ["local", "boolean", "frame", "function", "result", "codegen"]
+title = "One Boolean local that stores a function result gives a two-byte frame (sub sp, 2) in ovl12:19D9"
+lesson = "ReviveOrRetryRevival (ovl12:19D9) declares one local Boolean, `Added: Boolean`, and assigns it the TryAddAffect result that is never read. The original has `sub sp, 2` with the result at [bp-1], and the source with that one Boolean matches, so the frame of 2 bytes came from the declaration without a probe. Check the packet's frame size against the matcher rather than counting the declared bytes by hand."
+evidence = ["src/OVL12.PAS#ReviveOrRetryRevival", "re/symbols.toml#ovl12:19D9"]

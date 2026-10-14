@@ -4058,12 +4058,12 @@ id = "ovl12:1AAA"
 unit = "ovl12"
 addr = "ovl12:1AAA"
 size = 254
-name = "ovl12_e67"
+name = "FrightenSideWithFear"
 signature = ""
 c_name = "ovl12_e67"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_67"
+notes = "renamed from ovl12_e67 (ovl12:1AAA walks the party list (ds5D96, +$104 next) and, for each member with Flag10D on the side of Who (res12_fn_23B7), makes a fear save (SavingThrow kind 4) and gives AffectParalysis ($34) or AffectWeakened ($02) by HighestLevel 0..3 or 4..5, with the messages 'is paralyzed with fear' and 'is weakened by fear' (ovl12:1B91 and 1A96 pool strings)); auto:entry_67"
 evidence = ["prologue"]
 
 [[routine]]
