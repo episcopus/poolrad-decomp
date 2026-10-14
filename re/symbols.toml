@@ -458,27 +458,14 @@ evidence = ["prologue"]
 id = "ovl03:12C6"
 unit = "ovl03"
 addr = "ovl03:12C6"
-size = 65
-name = "ovl03_fn_12C6"
+size = 273
+name = "ComputePartyValueCommand"
 signature = ""
 c_name = "ovl03_fn_12C6"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_12C6 (ECL command 29: dispatcher ovl03:2F2D calls it for SkippedOpcode 1Dh (cmp al,1Dh, call at ovl03:3038); it sums over the party list ds5D96 a byte from hit points, ResistValue, HitAdjust and ClassLevels[0] and [5] and writes it to operand 1; purpose unknown); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl03:1307"
-unit = "ovl03"
-addr = "ovl03:1307"
-size = 208
-name = "ovl03_fn_1307"
-signature = ""
-c_name = "ovl03_fn_1307"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl03:13D7"

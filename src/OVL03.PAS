@@ -31,8 +31,7 @@ procedure StoreIndexedWordCommand;
 procedure ChooseFromListCommand;
 procedure AskMenuCommand;
 procedure ClearEncounterCommand;
-procedure ovl03_fn_12C6;
-procedure ovl03_fn_1307;
+procedure ComputePartyValueCommand;
 procedure ovl03_fn_13D7;
 procedure ovl03_fn_1435;
 procedure ovl03_fn_1629;
@@ -106,6 +105,10 @@ const
   MaxEncounterMembers = 63;
   { The icon slot ds6F83 starts at: InitScript (ovl07:01F0) and ECL command 28 (ovl03:125D) set it. }
   FirstEncounterIcon = 8;
+  { ECL command 29 (ovl03:12C6) counts only what is above these: ResistValue above 60 and HitAdjust
+    above 39. Purpose unknown. }
+  ResistThreshold = 60;
+  HitAdjustThreshold = 39;
   { The word of ds49D6 that ECL command 14 (ovl03:0856) reads: NoHeadBank when the close-up is the PIC
     picture, else the HEAD bank of the HEAD and BODY close-up (ShowEncounterPicture, ovl07:054E). }
   VarCloseUpHead = 737;
@@ -876,10 +879,49 @@ begin
     ds6810 := Next;
   end;
 end;
-{ ovl03:12C6: frame not read }
-{@stub} procedure ovl03_fn_12C6; begin end;
-{ ovl03:1307: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl03_fn_1307; begin end;
+{ ovl03:12C6. ECL command 29 (dispatcher ovl03:2F2D, SkippedOpcode $1D): stores in operand 1 one byte
+  computed over the whole party, the list ds5D96 followed through TCharacter.Next (+$104). For each
+  member it reads the current hit points (Flag11B, +$11B), ResistValue (+$111), HitAdjust (+$110) and
+  the class levels 0 and 5 (ClassLevels, +$96 and +$9B). ResistValue is lowered by ResistThreshold and
+  HitAdjust by HitAdjustThreshold (0 when they are not above it). The member's share is
+  HitPoints + 5 * ResistValue + 5 * HitAdjust + 8 * ClassLevel5 + 4 * ClassLevel0, divided by 10; the low
+  byte of that quotient is added to the byte, which WriteVmWord stores at operand 1. Purpose unknown:
+  what the script does with the value. }
+procedure ComputePartyValueCommand;
+var
+  HitPoints: Byte;
+  HitAdjust: Byte;
+  ClassLevel5: Byte;
+  ClassLevel0: Byte;
+  ResistValue: Byte;
+  Checksum: Byte;
+  Target: Word;
+  Member: PCharacter;
+begin
+  DecodeOperands(1);
+  Checksum := 0;
+  Member := PCharacter(ds5D96);
+  while Member <> nil do
+  begin
+    HitPoints := Member^.Flag11B;
+    ResistValue := Member^.ResistValue;
+    HitAdjust := Member^.HitAdjust;
+    ClassLevel5 := Member^.ClassLevels[5];
+    ClassLevel0 := Member^.ClassLevels[0];
+    if ResistValue > ResistThreshold then
+      ResistValue := ResistValue - ResistThreshold
+    else
+      ResistValue := 0;
+    if HitAdjust > HitAdjustThreshold then
+      HitAdjust := HitAdjust - HitAdjustThreshold
+    else
+      HitAdjust := 0;
+    Inc(Checksum, (HitPoints + 5 * ResistValue + 5 * HitAdjust + 8 * ClassLevel5 + 4 * ClassLevel0) div 10);
+    Member := Member^.Next;
+  end;
+  Target := MakeWord(OperandLow[1], OperandHigh[1]);
+  WriteVmWord(Target, Checksum);
+end;
 { ovl03:13D7: retf 2: 2 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl03_fn_13D7; begin end;
 { ovl03:1435: retf 0: 0 bytes of parameters; 26 bytes of locals }

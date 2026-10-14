@@ -3616,3 +3616,10 @@ kind = "routine"
 why = "ECL command 28: dispatcher ovl03:2F2D calls it for SkippedOpcode 1Ch (cmp al,1Ch, call at ovl03:302D); it zeroes EncounterMemberCount and ds84E7 (the members of ECL command 11), sets the icon slot ds6F83 back to 8 (as InitScript), clears PooledMoney and frees the item list ds6810"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl03_fn_12C6"
+new = "ComputePartyValueCommand"
+kind = "routine"
+why = "ECL command 29: dispatcher ovl03:2F2D calls it for SkippedOpcode 1Dh (cmp al,1Dh, call at ovl03:3038); it sums over the party list ds5D96 a byte from hit points, ResistValue, HitAdjust and ClassLevels[0] and [5] and writes it to operand 1; purpose unknown"
+date = "2026-10-13"
+
