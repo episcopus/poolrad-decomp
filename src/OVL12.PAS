@@ -119,7 +119,7 @@ procedure CancelDamageUnlessEnchantedSlotItem(Who: PCharacter; Affect: PAffect; 
 procedure AvoidDistantAttackForItemType57Or58(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure SpitAcidAtTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure SetDamageFromSlotItemType56(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e107;
+procedure HalveOrCancelDamageForUnenchantedSlotItem(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e108;
 procedure ovl12_e109;
 procedure ovl12_e110;
@@ -221,7 +221,7 @@ const
   GivenItemAffect3 = $89;       { Affects[3] of that item }
   ItemCountLimit = $10;         { no item is given once ItemCountC7 is this or more (ovl12:07E0 at 0869) [I] }
   ItemRowFlags = $81;           { bits 0 and 7 of byte 7 of an item type's RaceRow row, tested by ovl12:25BC [?] }
-  SlotItemNameNum3 = $B1;       { NameNum[3] of the item that keeps the damage at ovl12:264B [?] }
+  SlotItemNameNum3 = $B1;       { NameNum[3] of the item that keeps the damage at ovl12:264B and ovl12:2D88 [?] }
   CloudTile = $1E;              { the cloud tile ApplyCloudTile (ovl24:0AE7) tests for; ovl12:0F14 repaints the arms with it }
   CloudBodyTile = $1F;          { the tile a cloud arm gets where a body lies when the cloud clears (ovl12:0CC3) [?] }
   AffectNausea = $1F;           { the affect of a failed save against the cloud: nausea (ovl24:0AE7) }
@@ -2033,8 +2033,26 @@ begin
   if (DamageKind and (KindFire or KindMagic)) <> 0 then
     Inc(DamageAmount, LastDiceCount);
 end;
-{ ovl12:2D88: retf 10: 10 bytes of parameters; 4 bytes of locals }
-{@stub} procedure ovl12_e107; begin end;
+{ ovl12:2D88. Affect handler for damage (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). The
+  first slot item of SelectedCharacter (FirstSlotItem, ovl12:101D) decides the damage. With no item, DamageAmount is
+  cancelled (0). With an item whose Plus (+$32) is 0, DamageAmount is halved when its NameNum[3] (+$31) is SlotItemNameNum3
+  and cancelled otherwise. An item with Plus not 0 leaves the damage alone. Purpose unknown: which affect runs it is not
+  known yet [?]. }
+procedure HalveOrCancelDamageForUnenchantedSlotItem(Who: PCharacter; Affect: PAffect; Mode: Byte);
+var
+  Item: PItem;                  { the first slot item of SelectedCharacter (FirstSlotItem), nil when there is none }
+begin
+  Item := FirstSlotItem(SelectedCharacter);
+  if Item <> nil then
+  begin
+    if (Item^.Plus = 0) and (Item^.NameNum[3] = SlotItemNameNum3) then
+      DamageAmount := DamageAmount shr 1
+    else if Item^.Plus = 0 then
+      DamageAmount := 0
+  end
+  else
+    DamageAmount := 0;
+end;
 { ovl12:2DE4: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e108; begin end;
 { ovl12:2E08: retf 10: 10 bytes of parameters; 0 bytes of locals }

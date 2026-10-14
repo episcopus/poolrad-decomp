@@ -4169,3 +4169,10 @@ kind = "global"
 why = "the dice count of the last RollDiceCounted roll (ovl24:0E37 stores it); ovl12:2D38 adds it to DamageAmount for fire or magic damage"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl12_e107"
+new = "HalveOrCancelDamageForUnenchantedSlotItem"
+kind = "routine"
+why = "ovl12:2D88 halves DamageAmount for a first slot item with Plus 0 and NameNum[3] $B1 (SlotItemNameNum3), cancels it for other Plus-0 items and with no item, and leaves it for Plus not 0; no direct caller"
+date = "2026-10-14"
+

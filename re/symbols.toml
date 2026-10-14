@@ -4617,12 +4617,12 @@ id = "ovl12:2D88"
 unit = "ovl12"
 addr = "ovl12:2D88"
 size = 92
-name = "ovl12_e107"
+name = "HalveOrCancelDamageForUnenchantedSlotItem"
 signature = ""
 c_name = "ovl12_e107"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_107"
+notes = "renamed from ovl12_e107 (ovl12:2D88 halves DamageAmount for a first slot item with Plus 0 and NameNum[3] $B1 (SlotItemNameNum3), cancels it for other Plus-0 items and with no item, and leaves it for Plus not 0; no direct caller); auto:entry_107"
 evidence = ["prologue"]
 
 [[routine]]
