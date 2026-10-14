@@ -6969,12 +6969,12 @@ id = "ovl16:0161"
 unit = "ovl16"
 addr = "ovl16:0161"
 size = 1035
-name = "ovl16_e1"
+name = "RunCharacterMenu"
 signature = ""
 c_name = "ovl16_e1"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_1"
+notes = "renamed from ovl16_e1 (ovl16:0161 entry point (called by ovl03:2E10): draws the training-hall window and its 11-function menu at DS:0619 and dispatches C create, D drop, M modify, T train, V view, A add, R remove, L load, S save, B finish, E exit, J the STING cheat); auto:entry_1"
 evidence = ["prologue"]
 
 [[routine]]

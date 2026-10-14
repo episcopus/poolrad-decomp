@@ -221,7 +221,7 @@ The main program **[V]** (`src/POOL.PAS`, `make match UNIT=main`: matched comple
 ```pascal
 StartGame;
 if ParamStr(1) <> 'STING' then begin ShowTitleScreen; CheckCodeWheel; end;   { title screens, code wheel (5.12) }
-ovl16_e1;
+RunCharacterMenu;
 SetWallDescriptors(11, 0, 7, 6);
 ovl03_e1;
 QuitGame;                                                    { quit (5.8) }
@@ -855,7 +855,7 @@ character joins the party.
   `SaveCharacter(member, 'CHRDAT<slot><n>')` and erases the member's standalone `.cha/.itm/.spc` files
   (nested under the `.cha` test), and ends with `ds557D := True` and a cleared prompt line. Reads the
   slot key, `SaveDir`, the game state and the party list `ds5D96`; called by the heap error handler,
-  ovl15 `MakeCamp`, ovl16_e1 and SaveAndExit.
+  ovl15 `MakeCamp`, RunCharacterMenu and SaveAndExit.
 - **Loading the game** **[V]** (`LoadGame`, `ovl17:1602`; `make match UNIT=ovl17`): the read
   counterpart of SaveGame. Inside `'Load Which Game: '` it repeats until the player picks a letter
   A..J whose `SaveDir + 'savgam<letter>.dat'` exists (or Escape), then `OpenGameFile`s the slot and
@@ -869,7 +869,7 @@ character joins the party.
   wall sets (`LoadWallSet` of the `ds6AAEWords` pairs whose block id is not negative); a map view
   (`AreaViewKind > 1`) gets the party marker picture instead (`LoadPictureSlot('ICON', 0, 11)` into
   picture slot 11, the scratch slot `BuildCharacterIcon` freed). It then animates the doors when
-  `GameVars^[VarRiverGate] <> 0` and flushes the keyboard. Called by ovl16_e1.
+  `GameVars^[VarRiverGate] <> 0` and flushes the keyboard. Called by RunCharacterMenu.
 - **Save and exit** **[V]** (`SaveAndExit`, `ovl17:22D5`; `make match UNIT=ovl17`): called by
   ovl03:0BD1 with the current area's ECL file name. When that file exists (a normal area) it returns
   at once; otherwise it shows `'Save and exit  Insert disk #<TileSet>'` and, when the player presses

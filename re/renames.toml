@@ -4015,3 +4015,10 @@ kind = "routine"
 why = "ovl16:0000 frees a character: Combat (+108h, size 16h), the Items list (+C8h, size 3Fh) and the Affects list (+7Fh, size 9), frees the record (size 11Dh) and clears the caller pointer; called by ovl16_e2"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl16_e1"
+new = "RunCharacterMenu"
+kind = "routine"
+why = "ovl16:0161 entry point (called by ovl03:2E10): draws the training-hall window and its 11-function menu at DS:0619 and dispatches C create, D drop, M modify, T train, V view, A add, R remove, L load, S save, B finish, E exit, J the STING cheat"
+date = "2026-10-13"
+

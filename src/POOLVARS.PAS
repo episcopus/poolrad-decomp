@@ -141,6 +141,13 @@ type
     Frames: array[1..8] of TAnimFrame;  { +2 }
   end;
   TItem = TMenuLine;
+  { One slot of the training-hall function menu at DS:0619 (11 records, stride 42): the line the
+    create-character overlay (ovl16) draws and whether the function is offered. RunCharacterMenu reads
+    Name[I] with I = 0..10 and gates the hotkey 'C'..'J' on Present. }
+  TFunctionSlot = record
+    Name: string[40];
+    Present: Byte;               { +$29: nonzero: the function is drawn and its hotkey works }
+  end;
   { A character in memory: the 285-byte record of whitepaper 4.2.5 (name, abilities and hp_max
     [V] by tools/re/records.py). Only the fields a decompiled unit uses are named; the Pad
     arrays keep the offsets. }
@@ -527,6 +534,10 @@ var
     indices and the path pattern. CheckCodeWheel picks one at random. }
   ds0000: array[0..12] of TCodeWheelEntry;  { the code wheel records; see above }
   ds04DF: string[40];             { prompt string HandleWildernessKeys passes to ReadPromptChoice; filled elsewhere }
+  { The 'C D M T V A R L S B E J' hotkey line: the prompt RunCharacterMenu (ovl16:0161) passes to
+    ReadPromptChoice under the title 'Choose a function '. }
+  ds05F0: string[23];
+  ds0619: array[0..10] of TFunctionSlot;  { the training-hall function menu (see TFunctionSlot) }
   { The CHEAD/CBODY character-picture name suffix table: the byte ds08C5[FigureIndex] is the
     character BuildCharacterIcon appends to 'CHEAD'/'CBODY' (index 1 gives 'S', 2 gives 'T'). Its extent is
     unverified: the region runs to the door table at DS:0900. }
@@ -659,6 +670,9 @@ var
   ds093D: array[0..$F] of Byte;   { the third 16-byte record AnimateAreaDoors passes to RemapPictureColours }
   ds094D: array[0..8] of Word;    { the per-step DrawAreaView columns of AnimateAreaDoors (indexed 0..8) }
   ds095F: array[0..8] of Word;    { the per-step DrawAreaView rows of AnimateAreaDoors (indexed 0..8) }
+  { Set to 1 by the RunCharacterMenu STING cheat (ovl16:0161) and read there to offer the modify
+    function; its meaning beyond that is unknown. }
+  ds470C: Byte;
   ds470E: Pointer;                { the FINAL picture bank ShowEndingNarrative loads through LoadPicture and draws }
   ds4712: Byte;                   { the DS:49F3 value ShowEndingNarrative saves at the start and restores at the end }
   ds4713: string[1];              { Str(TileSet): the picture number ShowEndingNarrative appends to FINAL }

@@ -59,7 +59,7 @@ begin
     ShowTitleScreen;
     CheckCodeWheel;
   end;
-  ovl16_e1;
+  RunCharacterMenu;
   SetWallDescriptors(11, 0, 7, 6);
   ovl03_e1;
   QuitGame;

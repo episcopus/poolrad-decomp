@@ -6,9 +6,9 @@ unit OVL16;
   are still stubs. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
-uses POOLVARS;
+uses POOLVARS, RES04, RES06, RES09, RES12, OVL17, OVL19, OVL25;
 procedure FreeCharacter(Who: PCharacter);
-procedure ovl16_e1;
+procedure RunCharacterMenu;
 procedure ovl16_fn_056C;
 procedure ovl16_fn_07E1;
 procedure ovl16_fn_07E5;
@@ -120,6 +120,15 @@ const
   ItemListSize = $3F;       { FreeMem size of one item of TCharacter.Items (TMenuLine) }
   AffectSize = 9;           { FreeMem size of one affect of TCharacter.Affects (TAffect) }
   CharacterSize = $11D;     { FreeMem size of a whole TCharacter }
+  MenuLeft = 1;             { the function menu window, drawn by DrawWindow in RunCharacterMenu }
+  MenuTop = 1;
+  MenuRight = $26;
+  MenuBottom = $16;
+  MenuFirstRow = $C;        { text row of the first function name in the menu }
+  HotKeyColour = $F;        { white: the function name's first (hotkey) letter }
+  NameColour = $A;          { green: the rest of the function name }
+  ChoiceTitleColour = $D;   { the ReadPromptChoice title colour of the menu }
+  Var2OfferModify = 680;    { ds49D6^ word: the modify function is offered while it is above 0; unknown }
 
 { ovl16:0000. Frees a character and everything it owns: its combat state (Combat, size $16), its
   carried items (the list at Items, size $3F) and its affects (the list at Affects, size 9), then
@@ -153,8 +162,156 @@ begin
   FreeMem(Who, CharacterSize);
   Who := nil;
 end;
-{ ovl16:0161: retf 0: 0 bytes of parameters; 296 bytes of locals }
-{@stub} procedure ovl16_e1; begin end;
+{ ovl16:0161. The main menu of the character-creation / training hall (called by ovl03:2E10). It
+  draws the window (DrawWindow) and, when a character is selected, its roster (DrawPartyRoster) and
+  the eleven function names of the menu at DS:0619 (the first letter in white, the rest in green,
+  DrawTextAt). It then asks ReadPromptChoice for a function key (prompt line 'C D M T V A R L S B E J')
+  and dispatches it: C create (ovl16_fn_056C), D drop (ovl16_fn_1F37), M modify (ovl16_fn_209F),
+  T train (ovl16_fn_29AE), V view (ViewSelectedCharacter), A add (ovl16_fn_306D), R remove
+  (SaveCharacter then ovl16_e2), L load (LoadGame), S save (SaveGame), B buy/finish (sets ds49F3 to
+  Mode 4 and leaves), E exit (AskYesNo, then save and QuitGame), J the STING cheat. An extended key
+  G or O selects another party member (UpdateSelectedCharacter); E or S clears the heap retry gate
+  ds557D. Mode (4) is the value stored in the view mode ds49F3 on B. Local at [bp-5] is unused; the
+  frame needs its 9 bytes. }
+procedure RunCharacterMenu;
+var
+  I: Byte;
+  Key: Char;
+  ExtKey: Byte;
+  Done: Byte;
+  Unused: string[8];
+  Row: ShortInt;
+  Show: Byte;
+  Mode: Byte;
+begin
+  TileSet := 3;
+  Mode := 4;
+  Show := 1;
+  ds470C := 0;
+  ds49F3 := 0;
+  while True do
+  begin
+    if Show <> 0 then
+    begin
+      DrawWindow(MenuLeft, MenuTop, MenuRight, MenuBottom, 0, 0, '');
+      if SelectedCharacter <> nil then
+      begin
+        DrawPartyRoster(SelectedCharacter);
+        ds0619[1].Present := 1;
+        ds0619[2].Present := 1;
+        if (ds49D6^[Var2OfferModify] > 0) or (ds470C <> 0) then
+          ds0619[3].Present := 1;
+        ds0619[4].Present := 1;
+        ds0619[6].Present := 1;
+        ds0619[7].Present := 0;
+        ds0619[8].Present := 1;
+        ds0619[9].Present := 1;
+      end
+      else
+      begin
+        ds0619[1].Present := 0;
+        ds0619[2].Present := 0;
+        ds0619[3].Present := 0;
+        ds0619[4].Present := 0;
+        ds0619[6].Present := 0;
+        ds0619[7].Present := 1;
+        ds0619[8].Present := 0;
+        ds0619[9].Present := 0;
+      end;
+      Row := 0;
+      for I := 0 to 10 do
+        if ds0619[I].Present <> 0 then
+        begin
+          DrawTextAt(2, Row + MenuFirstRow, HotKeyColour, ds0619[I].Name[1]);
+          DrawTextAt(3, Row + MenuFirstRow, NameColour, Copy(ds0619[I].Name, 2, Length(ds0619[I].Name) - 1));
+          Inc(Row);
+        end;
+      Show := 0;
+    end;
+    Key := ReadPromptChoice('Choose a function ', ds05F0, ChoiceTitleColour, 0, 0, 1, 0, ExtKey);
+    ClearPromptLine;
+    if ExtKey <> 0 then
+    begin
+      if Key in ['G', 'O'] then
+      begin
+        UpdateSelectedCharacter(Key);
+        DrawPartyRoster(SelectedCharacter);
+      end;
+    end
+    else
+    begin
+      if not (Key in ['E', 'S']) then
+        ds557D := False;
+      case Key of
+        'C':
+          if ds0619[0].Present <> 0 then
+            ovl16_fn_056C;
+        'D':
+          if ds0619[1].Present <> 0 then
+            ovl16_fn_1F37;
+        'M':
+          if ds0619[2].Present <> 0 then
+            ovl16_fn_209F;
+        'T':
+          if ds0619[3].Present <> 0 then
+            ovl16_fn_29AE;
+        'V':
+          if ds0619[4].Present <> 0 then
+            ViewSelectedCharacter(Done);
+        'A':
+          if ds0619[5].Present <> 0 then
+            ovl16_fn_306D;
+        'R':
+          if ds0619[6].Present <> 0 then
+            if SelectedCharacter <> nil then
+            begin
+              SaveCharacter(SelectedCharacter, '');
+              ovl16_e2(False, True);
+            end;
+        'L':
+          if ds0619[7].Present <> 0 then
+          begin
+            LoadGame;
+            if ds49F3 <> 0 then
+            begin
+              ds49F8 := 1;
+              Exit;
+            end;
+          end;
+        'S':
+          if ds0619[8].Present <> 0 then
+            if ds5D96 <> 0 then
+              SaveGame;
+        'B':
+          if ds0619[9].Present <> 0 then
+            if ds5D96 <> 0 then
+            begin
+              ds49F3 := Mode;
+              ClearPromptLine;
+              Exit;
+            end;
+        'E':
+          if ds0619[10].Present <> 0 then
+          begin
+            Key := AskYesNo('Quit to DOS ', $E, $A, $F);
+            if Key = 'Y' then
+            begin
+              while (not ds557D) and (ds5D96 <> 0) do
+                SaveGame;
+              QuitGame;
+            end;
+          end;
+        'J':
+          if ParamStr(1) = 'STING' then
+          begin
+            ds470C := 1;
+            ShowFlashMessage('I Understand, master...');
+          end;
+      end;
+      Show := 1;
+    end;
+  end;
+end;
 { ovl16:056C: frame not read }
 {@stub} procedure ovl16_fn_056C; begin end;
 { ovl16:07E1: frame not read }
