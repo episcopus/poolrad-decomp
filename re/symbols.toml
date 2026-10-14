@@ -16622,12 +16622,12 @@ id = "00BA:10AD"
 unit = "res12"
 addr = "00BA:10AD"
 size = 57
-name = "res12_fn_10AD"
-signature = ""
+name = "LongIntToText"
+signature = "function LongIntToText(Value: LongInt): string"
 c_name = "res12_fn_10AD"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_10AD (res12_fn_10AD (00BA:10AD) returns the decimal text of the LongInt it is given through Str, the LongInt twin of ByteToText and WordToText); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]

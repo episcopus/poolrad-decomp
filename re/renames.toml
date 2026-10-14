@@ -3497,3 +3497,10 @@ kind = "routine"
 why = "res12_fn_1073 (00BA:1073) returns the decimal text of the word it is given through Str, the word twin of ByteToText; the shops and the Temple put prices and amounts into messages with it"
 date = "2026-10-13"
 
+[[rename]]
+old = "res12_fn_10AD"
+new = "LongIntToText"
+kind = "routine"
+why = "res12_fn_10AD (00BA:10AD) returns the decimal text of the LongInt it is given through Str, the LongInt twin of ByteToText and WordToText"
+date = "2026-10-13"
+

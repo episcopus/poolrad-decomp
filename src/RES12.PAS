@@ -36,7 +36,7 @@ function IsHelpless(Who: Pointer): Boolean;
 procedure RecalcCombatValues(Who: PCharacter);
 function ByteToText(Value: Byte): string;
 function WordToText(Value: Word): string;
-procedure res12_fn_10AD;
+function LongIntToText(Value: LongInt): string;
 function res12_fn_10E6(Who: PCharacter): Byte;
 function res12_fn_1168(Who: PCharacter): ShortInt;
 procedure res12_fn_11EA;
@@ -574,8 +574,17 @@ begin
   Str(Value, Text);
   WordToText := Text;
 end;
-{ 00BA:10AD: retf 4: 4 bytes of parameters; 256 bytes of locals }
-{@stub} procedure res12_fn_10AD; begin end;
+{ 00BA:10AD. Formats the LongInt Value as its decimal text, the same way ByteToText and WordToText
+  do: Str into a 255-character local, copied into the string result. Its only caller is in
+  ovl19 (the pool of treasure shows an amount with it).
+  Globals: none. }
+function LongIntToText(Value: LongInt): string;
+var
+  Text: string[255];
+begin
+  Str(Value, Text);
+  LongIntToText := Text;
+end;
 { 00BA:10E6: retf 4: 4 bytes of parameters; 2 bytes of locals }
 {@stub} function res12_fn_10E6(Who: PCharacter): Byte; begin end;
 { 00BA:1168: retf 4: 4 bytes of parameters; 2 bytes of locals }
