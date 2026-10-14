@@ -1115,3 +1115,8 @@ evidence = "ovl16:4235 pushes ds08BE[Class] as RollDice's Sides and raises a fir
 offset = 0x681C
 name = "LastDiceCount"
 evidence = "the dice count of the last RollDiceCounted roll (ovl24:0E37 stores it); ovl12:2D38 adds it to DamageAmount for fire or magic damage"
+
+[[global]]
+offset = 0x471D
+name = "TimedAffectFlags"
+evidence = "ovl20:002F indexes DS:471D by the 1-based party index: AdvanceAffectDurations clears the flag, then sets it again while that member still has an affect whose Duration is above 0 (ovl20:01C2, ovl20:02A7); index 0 is never read"

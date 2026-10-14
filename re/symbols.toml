@@ -7655,12 +7655,12 @@ id = "ovl20:0000"
 unit = "ovl20"
 addr = "ovl20:0000"
 size = 754
-name = "ovl20_fn_0000"
-signature = "procedure ovl20_fn_0000(Amount: Byte; Index: ShortInt)"
+name = "AdvanceAffectDurations"
+signature = "procedure AdvanceAffectDurations(Amount: Byte; Index: ShortInt)"
 c_name = "ovl20_fn_0000"
-level = "none"
+level = "L2"
 justification = ""
-notes = "blocked: five match attempts. The draft covered the camp-mode gate, active-affect scan, conversion of Amount and Index to capped elapsed units, and duration decrement/removal through RemoveAffect. Attempts 1-2 adjusted the mode branch and party-flag scan; attempt 3 changed the scan to repeat-until; attempt 4 added affect-tail and list-resynchronization walks; attempt 5 failed compilation at Break (Error 3, unknown identifier). The observed original traversal uses four affect pointers and contains separate tail and post-removal scans. Per bounded effort, the draft is parked in notes and the source is a stub again."
+notes = "renamed from ovl20_fn_0000 (ovl20:0000, called by ovl20_e1 after the game clock advances: scales Amount of digit Index down by ClockRadix and subtracts that elapsed time from each timed affect Duration, removing the affect through RemoveAffect when the duration does not outlast the pass (ovl20:01B7, ovl20:01FE)). Escalation matched the routine the cheap tier parked. The outer loop spends the scaled count in passes of at most 10 (the drafts stopped after one pass). ShortInt Pred, not Dec, scales the digit (tools/re/tp_idioms/ovl20/PRB20_A.PAS). The affect walk uses four pointers, and the tail test is in the while condition: TP 6.0 has no Break. QUIRK ovl20:0118 reads Next through a possibly nil head."
 evidence = ["prologue"]
 
 [[routine]]
@@ -7840,7 +7840,7 @@ size = 5
 name = "ovl20_init"
 signature = ""
 c_name = "ovl20_init"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_0"
 evidence = ["prologue"]

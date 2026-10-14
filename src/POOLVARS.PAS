@@ -730,6 +730,10 @@ var
     stores (ovl19:0AD1). The two Trade commands start their "Trade to?" from it and store the recipient in it
     (TradeItem, ovl19:1734; TradeMoney, ovl19:2156). }
   ViewedCharacter: PCharacter;
+  { Per-member timed-affect flags, indexed from 1 (member 1 is DS:471E). ovl20:0000 clears a member's
+    flag, spends elapsed time on that member's affects, and sets the flag again while a timed affect
+    remains. Index 0 (this byte) is never read. ds471E is the same table from index 1. }
+  TimedAffectFlags: array[0..$48] of Byte;
   ds471E: array[0..$47] of Byte;  { 72 bytes reset to 1 when rest starts (ovl20:0CE5) }
   { The eight compass names the location line of res12 (00BA:290B) indexes with PartyFacing, each a
     three-byte string[2] at DS:25A8: N, NE, E, SE, S, SW, W, NW (the bytes are in the image). }
