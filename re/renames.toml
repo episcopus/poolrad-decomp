@@ -3784,3 +3784,10 @@ kind = "routine"
 why = "ovl22_e10 fills SpellHandlers[43] (DS:6B84+43*4) with overlay stub 0096:004D = ovl22:2540; SpellNames[43] is 'Remove Curse' (DS:2FCC), and the Temple's RemoveCurse (ovl04:083A) stores the character in ds6C95 and calls it. It cures the curse affect 24h or clears the Cursed flag of the character's first cursed item, saying 'is un-cursed' or ''s item is un-cursed'"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl22_e46"
+new = "CastBestowCurse"
+kind = "routine"
+why = "cast handler of spell 44 Bestow Curse: ovl22_e10 maps DS:6B84+44*4 to stub 0096:0106, SpellNames[44] is 'Bestow Curse' and it applies the spell with 'has been cursed!'"
+date = "2026-10-13"
+

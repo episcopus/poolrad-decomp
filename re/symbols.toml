@@ -10426,12 +10426,12 @@ id = "ovl22:2604"
 unit = "ovl22"
 addr = "ovl22:2604"
 size = 57
-name = "ovl22_e46"
+name = "CastBestowCurse"
 signature = ""
 c_name = "ovl22_e46"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_46"
+notes = "renamed from ovl22_e46 (cast handler of spell 44 Bestow Curse: ovl22_e10 maps DS:6B84+44*4 to stub 0096:0106, SpellNames[44] is 'Bestow Curse' and it applies the spell with 'has been cursed!'); auto:entry_46"
 evidence = ["prologue"]
 
 [[routine]]

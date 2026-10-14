@@ -54,7 +54,7 @@ procedure CastCauseDisease;
 procedure CastDispelMagic;
 procedure CastPrayer;
 procedure CastRemoveCurse;
-procedure ovl22_e46;
+procedure CastBestowCurse;
 procedure ovl22_e47;
 procedure ovl22_e48;
 procedure ovl22_fn_2764;
@@ -1408,10 +1408,23 @@ begin
       res12_fn_1FEB(ds6C95, ShowAbout, '''s item is un-cursed');
   end;
 end;
-{ ovl22:2604: retf 0: 0 bytes of parameters; 18 bytes of locals }
-{@stub} procedure ovl22_e46; begin end;
-{ ovl22:263D: retf 0: 0 bytes of parameters; 12 bytes of locals }
-{@stub} procedure ovl22_e47; begin end;
+{ ovl22:2604. Cast handler of spell 44, Bestow Curse (ovl22_e10 maps DS:6B84+44*4 to overlay
+  stub 0096:0106; SpellNames[44] is 'Bestow Curse' at DS:2FF5 and SpellTable[44].AffectId is the curse
+  affect $24). It only applies the current spell ds681B to the chosen targets with the message
+  'has been cursed!'; the spell's own affect does the cursing, so the handler has nothing else to do.
+  Reads ds681B. }
+procedure CastBestowCurse;
+begin
+  ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'has been cursed!');
+end;
+{ ovl22:263D. Cast handler of spell 45, Blink (ovl22_e10 maps DS:6B84+45*4 to overlay stub 0096:010B;
+  SpellNames[45] is 'Blink' at DS:301E and SpellTable[45].AffectId is the blink affect $25). It only
+  applies the current spell ds681B to the chosen targets with the message 'is blinking'; the spell's
+  own affect does the blinking, so the handler has nothing else to do. Reads ds681B. }
+procedure ovl22_e47;
+begin
+  ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is blinking');
+end;
 { ovl22:266B: retf 0: 0 bytes of parameters; 4 bytes of locals }
 {@stub} procedure ovl22_e48; begin end;
 { ovl22:2764: retf 8: 8 bytes of parameters; 44 bytes of locals }
