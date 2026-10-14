@@ -6200,3 +6200,10 @@ kind = "routine"
 why = "dispatcher ovl03:2F2D calls it for opcode 41; the menu literals at ovl03:1E9B are COMBAT, WAIT, FLEE and PARLAY or ADVANCE, and the outcome word is written to operand 4"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl03_e1"
+new = "RunWilderness"
+kind = "routine"
+why = "the main program calls it after the character menu (src/POOL.PAS) and quits when it returns; it loops on HandleWildernessKeys and DoWildernessMenu until the party is destroyed (ovl03:32F8)"
+date = "2026-10-14"
+

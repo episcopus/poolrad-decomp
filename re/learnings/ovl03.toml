@@ -312,14 +312,32 @@ confidence = "V"
 units = ["*"]
 tags = ["while", "repeat", "loop", "join", "codegen", "jmp"]
 title = "while True compiles like repeat until False; an if/else that ends a loop body costs a join jump"
-lesson = "In TP 6.0 `while True do` and `repeat ... until False` compile to the same bytes: no test at the head, and the loop ends with one jmp to its head. An if/else that is the last statement of the loop body adds a jmp at the end of the then-branch to the else's join, and the join jumps to the head: two jumps where an original whose normal path jumps straight to the head has one. Probe the loop shape (WHILETRU.PAS: the then-branch jmp to the join, then the join's jmp to the head) before writing such a loop. ovl03_e1 (ovl03:32F8) is blocked on this shape: its compiled code is 38 bytes longer than the original."
-evidence = ["tools/re/tp_idioms/ovl03/WHILETRU.PAS", "re/symbols.toml#ovl03:32F8"]
+lesson = "In TP 6.0 `while True do` and `repeat ... until False` compile to the same bytes: no test at the head, and the loop ends with one jmp to its head. An if/else that is the last statement of the loop body adds a jmp at the end of the then-branch to the else's join, and the join jumps to the head: two jumps where an original whose normal path jumps straight to the head has one. Probe the loop shape (WHILETRU.PAS: the then-branch jmp to the join, then the join's jmp to the head) before writing such a loop. RunWilderness (ovl03:32F8) matched only when that shape was not used: the original is repeat until PartyDestroyed <> 0 with an inner while, and a while True around an if/else duplicated the key restart and compiled 38 bytes longer."
+evidence = ["tools/re/tp_idioms/ovl03/WHILETRU.PAS", "tools/re/tp_idioms/ovl03/WILDLOOP.PAS", "src/OVL03.PAS#RunWilderness", "re/symbols.toml#ovl03:32F8"]
 
 [[lesson]]
 id = "match-too-short-is-longer-code"
 confidence = "V"
 units = ["*"]
 tags = ["match", "segment", "too short", "boundary", "map"]
-title = "'the original segment is too short here' means our routine is longer than the original bytes up to the next map entry"
-lesson = "tools/match/match.py compares our compiled routine with the original bytes from the routine's entry to the next map entry. A longer compiled routine reports 'the original segment is too short here', even when its first instructions agree. A map entry inside the routine shortens the original segment in the same way, so the two causes look alike (ovl03:3379 and ovl03:34AB lie inside ovl03_e1). Measure both before editing a boundary: our routine is the gap between OVL03_E1 and the next public symbol in build/match/<unit>/A/match.map, and its bytes are in build/match/<unit>/A/match.exe (read with tp_toolchain.read_mz and read_map, disassembled with capstone in 16-bit mode)."
-evidence = ["tools/match/match.py", "re/symbols.toml#ovl03:32F8", "re/symbols.toml#ovl03:3379"]
+title = "'the original segment is too short here' means our routine runs past the end of the original segment"
+lesson = "tools/match/match.py compares our compiled routine, from its entry to its return, with the same number of original bytes starting at the registry entry. 'the original segment is too short here' means that span runs past the end of the original segment (compare() in tools/match/match.py), not that a later map entry cut the comparison short. A routine 38 bytes longer than the original (the failed RunWilderness draft, 566 against 528) overran the segment, which ends just after ovl03_init at 3508. A map entry inside the routine (ovl03:3379, ovl03:34AB) does not shorten those bytes; make match WRITE=1 removes it once the parent matches. Measure our length from the gap between the routine and the next public symbol in build/match/<unit>/A/match.map."
+evidence = ["tools/match/match.py", "re/symbols.toml#ovl03:32F8", "src/OVL03.PAS#RunWilderness"]
+
+[[lesson]]
+id = "shortint-ne-word-evaluates-word-first"
+confidence = "V"
+units = ["*"]
+tags = ["ShortInt", "Word", "LongInt", "compare", "evaluation-order", "codegen"]
+title = "ShortInt <> Word loads the Word first; Word <> ShortInt loads the ShortInt first"
+lesson = "A <> between a Word and a ShortInt is a LongInt compare (xor dx,dx on the Word, cwde then cdq on the ShortInt). TP 6.0 evaluates the right operand first and saves it in BX:CX, then loads the left into DX:AX and compares. ovl03:3497 loads GameVars word 240 first and PartyMapColumn second, so the source is PartyMapColumn <> GameVars^[240], not the other way around. An or of two such tests still emits the then after the tests and inverts the last compare (je over the then). Probe tools/re/tp_idioms/ovl03/WILDLOOP.PAS (CompareOrder)."
+evidence = ["tools/re/tp_idioms/ovl03/WILDLOOP.PAS", "src/OVL03.PAS#RunWilderness", "re/symbols.toml#ovl03:32F8"]
+
+[[lesson]]
+id = "until-far-head-jne-then-jmp"
+confidence = "V"
+units = ["*"]
+tags = ["repeat", "until", "jmp", "far", "codegen"]
+title = "until <> 0 with a far head is jne to the exit then jmp back; a near head is je back"
+lesson = "repeat ... until PartyDestroyed <> 0 compiles to cmp byte, 0; je head when the head is within a short jump (WILDLOOP.PAS OuterRepeat). When the head is further than 127 bytes, the same until is cmp; jne exit; jmp head, and the statement after the loop is the exit (RunWilderness, ovl03:34F5: jne 34FF, jmp 3395, then PartyDestroyed := 0 and the epilogue). until X = 0 with a far head is the inverted sense, je exit; jmp head (RunAreaStep, ovl03:32EA). Do not write while True with an if/Exit for that bottom test: Exit adds a jump to the epilogue that the original does not have."
+evidence = ["tools/re/tp_idioms/ovl03/WILDLOOP.PAS", "src/OVL03.PAS#RunWilderness", "src/OVL03.PAS#RunAreaStep", "re/symbols.toml#ovl03:32F8"]

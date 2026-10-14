@@ -1,7 +1,8 @@
 unit OVL03;
-{ Encounter: the command loop of the ECL script interpreter (whitepaper 5.1). DispatchCommand
+{ Encounter: the command loop of the ECL script interpreter (whitepaper 5.1), and the wilderness
+  loop the main program runs after the character menu (RunWilderness, ovl03:32F8). DispatchCommand
   dispatches each command by its opcode (SkippedOpcode) to a handler in this unit; the handlers
-  decode their operands through OVL07 and run them. The other routines are still stubs. }
+  decode their operands through OVL07 and run them. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 uses POOLVARS, RES09, OVL07, OVL16, RES12;
@@ -58,11 +59,9 @@ procedure DrawGlyphRunCommand;
 procedure DispatchCommand;
 procedure RunScriptFrom(Address: Word);
 procedure RunAreaStep;
-procedure ovl03_e1;
-procedure ovl03_fn_3379;
-procedure ovl03_fn_34AB;
+procedure RunWilderness;
 implementation
-uses OVL04, OVL05, OVL06, OVL08, OVL15, OVL17, OVL18, OVL20, OVL21, OVL24, OVL25, OVL26, OVL28, OVL29,
+uses OVL04, OVL05, OVL06, OVL08, OVL14, OVL15, OVL17, OVL18, OVL20, OVL21, OVL24, OVL25, OVL26, OVL28, OVL29,
   OVL32, RES03, RES04, RES05, RES06, Crt;
 
 const
@@ -141,6 +140,16 @@ const
   VarAreaDoorsLatch = 418;
   AreaDoorsOpen = $FE;
   VarWord725 = 725;
+  { ds49F3 values the wilderness loop (ovl03:32F8) writes: 4 for the 3D wall view, 3 for a map page.
+    RunAreaEventCommand sets the same pair from AreaViewKind (1 gives 4, anything else 3). }
+  ViewModeMap = 3;
+  ViewModeWall = 4;
+  { The GameVars words the wilderness loop saves the party's cell in before DoWildernessMenu, so a
+    cell that changed can play ds2628. }
+  VarSavedPartyColumn = 240;
+  VarSavedPartyRow = 241;
+  { UpCase of the key that makes camp (RunCamp) in the wilderness loop. }
+  KeyCamp = 'E';
   { The colours of the ECL menus (ovl03:0F08, ovl03:10D1): the title of AskMenu and the heading of a
     list, the words of AskMenu and the lines of a list, the hotkeys and the highlight. }
   MenuTitleColor = 13;
@@ -2049,7 +2058,7 @@ end;
 { ovl03:2DD3. Runs the camp (MakeCamp, OVL15) between two script entries: the script machine runs the
   third entry address, ds49E7, before the camp (through ovl03:3171, not decompiled yet). When the camp
   leaves EndCamp set, the area view is redrawn (RedrawView) and the fourth entry address, ds49E9, runs.
-  Callers: ECL command 56 with operand 9 (ovl03:2E10) and ovl03_e1 (ovl03:33E7, the E key of the wilderness
+  Callers: ECL command 56 with operand 9 (ovl03:2E10) and RunWilderness (ovl03:33E7, the E key of the wilderness
   loop). Then the area view is drawn again
   (ShowAreaView) and ds557D, the gate of the heap error retry, is cleared. }
 procedure RunCamp;
@@ -2225,7 +2234,7 @@ end;
   pages; page 3 also animates the area doors, AnimateAreaDoors ovl18:06B3). The picture window is cleared
   when the old kind was a map page, and the area is drawn (ShowAreaView). Then the script entries ds49E3 and
   ds49E5 run, and the step repeats while a script block was started (ds442F, StartEclBlock). SelectedCharacter
-  is saved and restored around the entries. Called from the area loop ovl03_e1 (ovl03:32F8). Purpose unknown
+  is saved and restored around the entries. Called from the area loop RunWilderness (ovl03:32F8). Purpose unknown
   in parts: what the entries and word VarWord725 do. }
 procedure RunAreaStep;
 var
@@ -2273,12 +2282,100 @@ begin
     end;
   until ds442F = 0;
 end;
-{ ovl03:32F8: frame not read }
-{@stub} procedure ovl03_e1; begin end;
-{ ovl03:3379: frame not read }
-{@stub} procedure ovl03_fn_3379; begin end;
-{ ovl03:34AB: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl03_fn_34AB; begin end;
+{ ovl03:32F8. The wilderness loop, entry 1 of this overlay: the main program calls it after the
+  character menu and quits when it returns. It clears the area flags, takes WallViewMode from
+  VarSavedWallView, and sets the view mode ds49F3 to ViewModeMap for map pages 2 to 4 when
+  VarForceWallView is clear, else ViewModeWall. Unless ds49F8 is set it loads the area script
+  (LoadEcl) and always resets the script machine (InitScript) and runs entry ds49EB. A view mode
+  other than the map page redraws once (RedrawView, while ds4432 is still 1) and draws the area
+  (ShowAreaView). Then it loops on HandleWildernessKeys. While word VarWord714 of ds49D6 is above 1
+  or the key is KeyCamp, and the party is not destroyed: KeyCamp makes camp (RunCamp); any other such
+  key saves the low bit of that word in ds84DD, forces the word to 1, draws the area, runs entry
+  ds49E5 and a step (RunAreaStep) if a script block started (ds442F), then restores the bit. Otherwise
+  entry ds49E3 runs, and a started block steps the area; if none started and the party lives, the
+  wilderness menu (DoWildernessMenu) runs and ds2628 plays when the party's cell changed. A destroyed
+  party clears PartyDestroyed and leaves the loop. The map entries ovl03:3379 and ovl03:34AB are
+  bytes of this routine (a call operand and a cmp), not routines. }
+procedure RunWilderness;
+var
+  Key: Char;                    { the key HandleWildernessKeys returned }
+  Unused: Byte;                 { QUIRK ovl03:32F8: a byte of the frame nothing uses }
+begin
+  ds4433 := 0;
+  ds4434 := 0;
+  ds4430 := 0;
+  ds4431 := 0;
+  ds4432 := 1;
+  ds49F3 := ViewModeWall;
+  ds442F := 0;
+  WallViewMode := GameVars^[VarSavedWallView];
+  case WallViewMode of
+    WallModeMapPage2, WallModeMapPage3, WallModeMapPage4:
+      if GameVars^[VarForceWallView] = 0 then
+        ds49F3 := ViewModeMap;
+  end;
+  if ds49F8 = 0 then
+    LoadEcl(WallViewMode);
+  InitScript;
+  RunScriptFrom(ds49EB);
+  if ds49F3 <> ViewModeMap then
+  begin
+    if ds4432 = 1 then
+    begin
+      RedrawView;
+      ds4432 := 0;
+    end;
+    ShowAreaView;
+  end;
+  GameVars^[VarSavedWallView] := WallViewMode;
+  repeat
+    Key := HandleWildernessKeys;
+    ds4436 := SelectedCharacter;
+    GameVars^[VarSavedWallView] := WallViewMode;
+    while ((ds49D6^[VarWord714] > 1) or (UpCase(Key) = KeyCamp)) and (PartyDestroyed = 0) do
+    begin
+      if UpCase(Key) = KeyCamp then
+        RunCamp
+      else
+      begin
+        ds84DD := ds49D6^[VarWord714] and 1;
+        ds49D6^[VarWord714] := 1;
+        ShowAreaView;
+        RunScriptFrom(ds49E5);
+        if ds442F <> 0 then
+          RunAreaStep;
+        ds49D6^[VarWord714] := ds84DD;
+      end;
+      if PartyDestroyed = 0 then
+      begin
+        Key := HandleWildernessKeys;
+        ds4436 := SelectedCharacter;
+      end;
+    end;
+    if PartyDestroyed = 0 then
+      RunScriptFrom(ds49E3);
+    if ds442F <> 0 then
+      RunAreaStep
+    else if PartyDestroyed = 0 then
+    begin
+      GameVars^[VarSavedPartyColumn] := PartyMapColumn;
+      GameVars^[VarSavedPartyRow] := PartyMapRow;
+      DoWildernessMenu;
+      ShowAreaView;
+      { ShortInt <> Word: the right operand is evaluated first, the original's load order (ovl03:3497). }
+      if (PartyMapColumn <> GameVars^[VarSavedPartyColumn]) or
+         (PartyMapRow <> GameVars^[VarSavedPartyRow]) then
+        PlaySound(ds2628);
+      ds84E0 := 0;
+      ds84E1 := 1;
+      RunScriptFrom(ds49E5);
+      if ds442F <> 0 then
+        RunAreaStep;
+    end;
+  until PartyDestroyed <> 0;
+  PartyDestroyed := 0;
+end;
 
+{ ovl03:3508. The initialisation part is empty: push bp, mov bp, sp, pop bp, retf. }
 begin
 end.

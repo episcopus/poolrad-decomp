@@ -551,7 +551,8 @@ const
   VarMapY = 196;                  { the party's row in the area map grid }
   VarGeoBlock = 197;              { the GEO block id of the loaded 3D area map (Load3DMap, ovl29:11FB) }
   VarForceWallView = 230;         { nonzero: ShowAreaView shows the wall view whatever AreaViewKind says }
-  VarSavedWallView = 242;         { WallViewMode before ECL command 32 (ovl03:0BD1) set it; no reader yet }
+  VarSavedWallView = 242;         { WallViewMode before ECL command 32 (ovl03:0BD1) set it; the wilderness
+                                    loop (ovl03:32F8) reads it back on entry and writes it after each key }
   { Nonzero: the overhead wall map is off (ShowAreaView clears WallMapMode, the A key cannot set
     it, ovl14:0380); the name predates that evidence. }
   VarShowWallOverlays = 251;
@@ -933,7 +934,9 @@ var
   ds6DDF: Byte;                   { pick/knock menu flag (e1 offers Pick/Knock while nonzero) }
     { DoPick clears it. Overlaps ds6DDE[1]; exact sharing uncertain. }
   DuelMode: Byte;                 { nonzero during a duel (EndBattle's duel texts); the loader clears it (ovl11:040B) }
-  ds84DD: Byte;                   { cleared by the loader (ovl11:0415) }
+  { The low bit of ds49D6 word 714, saved by the wilderness loop (ovl03:32F8) while that word is
+    forced to 1. The loader clears it (ovl11:0415). }
+  ds84DD: Byte;
   { cleared by the loader (ovl11:041A) and by EndCommand (ovl03:0001); set by ECL command 61
     (ovl03:2B14); while it is set, DrawGlyphRunCommand (ovl03:2E7D) starts a glyph run below row 13 at
     column 2, row 5; the rest is unknown }
