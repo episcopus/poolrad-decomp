@@ -8374,7 +8374,7 @@ evidence = ["prologue"]
 id = "ovl17:0AEC"
 unit = "ovl17"
 addr = "ovl17:0AEC"
-size = 940
+size = 984
 name = "LoadCharacterFile"
 signature = ""
 c_name = "ovl17_e5"
@@ -8387,27 +8387,14 @@ evidence = ["prologue"]
 id = "ovl17:0EC4"
 unit = "ovl17"
 addr = "ovl17:0EC4"
-size = 213
-name = "ovl17_e6"
-signature = "procedure ovl17_e6(Kind: Byte; Who: Pointer)"
+size = 926
+name = "LoadMonster"
+signature = "procedure LoadMonster(Kind: Byte; Who: Pointer)"
 c_name = "ovl17_e6"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl17_e6 (ovl17:0EC4 loads a monster: it builds MON<Str(TileSet)>CHA/SPC/ITM.DAX names, LoadDaxBlock block Kind from the poolrad MON<N>CHA/SPC/ITM.DAX archives, Moves the 285-byte record into Who^, clears its list links, builds the Figure descriptor with RollDice(1,6) nibble pairs and copies the 9-byte affects and 63-byte items into GetMem chains; called by ovl07 LoadCharacter and ovl17_e7); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl17:0F99"
-unit = "ovl17"
-addr = "ovl17:0F99"
-size = 713
-name = "ovl17_fn_0F99"
-signature = ""
-c_name = "ovl17_fn_0F99"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl17:1262"

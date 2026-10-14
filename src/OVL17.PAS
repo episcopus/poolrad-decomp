@@ -16,15 +16,14 @@ procedure MergePictureData(Source, Dest: Pointer);
 procedure BuildCharacterIcon(Recolor: Boolean);
 procedure SaveCharacter(Who: PCharacter; Name: String8);
 procedure LoadCharacterFile(FileName: string; Who: PCharacter; SavedGame: Byte; UseSaveDir: Byte);
-procedure ovl17_e6(Kind: Byte; Who: Pointer);
-procedure ovl17_fn_0F99;
+procedure LoadMonster(Kind: Byte; Who: Pointer);
 procedure ovl17_e7;
 procedure AddPartyMember(Member: PCharacter);
 procedure ovl17_e8;
 procedure ovl17_e9;
 procedure ovl17_e11;
 implementation
-uses RES04, RES05, RES06, RES07, OVL23, OVL25, OVL32;
+uses RES04, RES05, RES06, RES07, OVL23, OVL24, OVL25, OVL32;
 
 type
   { An in-memory picture as ovl32 loads it: the same layout as ovl32's private TMemPic, with the
@@ -371,10 +370,97 @@ begin
   end;
   FlushKeyboard;
 end;
-{ ovl17:0EC4: frame not read }
-{@stub} procedure ovl17_e6(Kind: Byte; Who: Pointer); begin end;
-{ ovl17:0F99: retf 6: 6 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl17_fn_0F99; begin end;
+{ ovl17:0EC4. Loads one monster character and its affect and item lists from the MON<TileSet>*.DAX
+  archives. CharSet is Str(TileSet). It loads MON<set>CHA.DAX block Kind into a buffer and, when the
+  block is missing, shows 'Unable to load monster' and quits; otherwise it Moves the 285-byte record
+  into Who^, clears the character's list links (Items, Affects, Next, Combat) and builds its figure
+  descriptor: Figure[0] is 1 for the races 1/3/5 and 2 for 2/4/6/7, Figure[1..3] and Figure[5..6] are
+  two random nibble pairs from RollDice(1, 6), and Figure[4] is $C4. Then it loads MON<set>SPC.DAX
+  and MON<set>ITM.DAX block Kind and copies their 9-byte affect and 63-byte item records out of the
+  buffer (the offset advances to the block size) into GetMem chains. Sets ds557C while the lists are
+  read and flushes the keyboard. Called by ovl07 LoadCharacter and ovl17_e7. }
+procedure LoadMonster(Kind: Byte; Who: Pointer);
+var
+  Size: Word;                   { the unpacked size of the loaded DAX block }
+  Block: Pointer;               { the DAX buffer LoadDaxBlock allocates }
+  Offset: Word;                 { the byte offset into Block while a list is copied }
+  Item: PItem;                  { walks the item chain while it is built }
+  Affect: PAffect;              { walks the affect chain while it is built }
+  CharSet: string[1];           { Str(TileSet): the monster set number in the file name }
+  I: Byte;                      { the Figure index one random nibble pair is written to }
+  Roll: Byte;                   { RollDice(1, 6) for one nibble pair }
+begin
+  Str(TileSet, CharSet);
+  LoadDaxBlock('MON' + CharSet + 'CHA', '.dax', Kind, Size, Block);
+  if Size = 0 then
+  begin
+    ShowMessageLine(15, 'Unable to load monster');
+    QuitGame;
+  end;
+  Move(Block^, Who^, 285);
+  with PCharacter(Who)^ do
+  begin
+    Items := nil;
+    Affects := nil;
+    Next := nil;
+    Combat := nil;
+    case Race of
+      1, 3, 5: Figure[0] := 1;
+      2, 4, 6, 7: Figure[0] := 2;
+    end;
+    for I := 1 to 3 do
+    begin
+      Roll := RollDice(1, 6);
+      Figure[I] := Roll + ((Roll + 8) shl 4);
+    end;
+    Figure[4] := $C4;
+    for I := 5 to 6 do
+    begin
+      Roll := RollDice(1, 6);
+      Figure[I] := Roll + ((Roll + 8) shl 4);
+    end;
+  end;
+  FreeMem(Block, Size);
+  ds557C := 1;
+  LoadDaxBlock('MON' + CharSet + 'SPC', '.dax', Kind, Size, Block);
+  if Size <> 0 then
+  begin
+    Offset := 0;
+    GetMem(PCharacter(Who)^.Affects, 9);
+    Affect := PCharacter(Who)^.Affects;
+    repeat
+      Move(PByteArray(Block)^[Offset], Affect^, 9);
+      Affect^.Next := nil;
+      Inc(Offset, 9);
+      if Offset < Size then
+      begin
+        GetMem(Affect^.Next, 9);
+        Affect := Affect^.Next;
+      end;
+    until Offset >= Size;
+    FreeMem(Block, Size);
+  end;
+  LoadDaxBlock('MON' + CharSet + 'ITM', '.dax', Kind, Size, Block);
+  if Size <> 0 then
+  begin
+    Offset := 0;
+    GetMem(PCharacter(Who)^.Items, 63);
+    Item := PCharacter(Who)^.Items;
+    repeat
+      Move(PByteArray(Block)^[Offset], Item^, 63);
+      Item^.Next := nil;
+      Inc(Offset, 63);
+      if Offset < Size then
+      begin
+        GetMem(Item^.Next, 63);
+        Item := Item^.Next;
+      end;
+    until Offset >= Size;
+    FreeMem(Block, Size);
+  end;
+  ds557C := 0;
+  FlushKeyboard;
+end;
 { ovl17:1262: retf 2: 2 bytes of parameters; 18 bytes of locals }
 {@stub} procedure ovl17_e7; begin end;
 { ovl17:1446. Adds one character to the party list (ds5D96) and gives it a combat map icon. Member

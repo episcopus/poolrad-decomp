@@ -807,6 +807,15 @@ character joins the party.
   285-byte character into `Who^`, clears `Who^.Next`, `.Items`, `.Affects` and `.Combat`, and, when
   `name.itm` / `name.spc` exist, reads the 63-byte item and 9-byte affect records to end of file into a
   `GetMem` chain, then flushes the keyboard.
+- **Loading a monster** **[V]** (`LoadMonster`, `ovl17:0EC4`; `make match UNIT=ovl17`): builds
+  `MON<Str(TileSet)>CHA.DAX` / `SPC` / `ITM` and reads block `Kind` from each `poolrad` archive through
+  `LoadDaxBlock`. A missing CHA block shows "Unable to load monster" and quits; otherwise it `Move`s
+  the 285-byte record into `Who^`, clears `Items`, `Affects`, `Next` and `Combat`, and builds
+  `Who^.Figure`: `Figure[0]` is 1 for the races 1/3/5 and 2 for 2/4/6/7, `Figure[1..3]` and
+  `Figure[5..6]` are random nibble pairs `Roll + ((Roll + 8) shl 4)` from `RollDice(1, 6)`, and
+  `Figure[4]` is `$C4`. The SPC and ITM records (9 and 63 bytes) are copied out of the buffer (offset
+  up to the block size) into `GetMem` chains while `ds557C` marks the load. Called by ovl07
+  `LoadCharacter` and ovl17_e7.
 - **The combat icon picture** **[V]** (`BuildCharacterIcon`, `ovl17:0482`; `MergePictureData`,
   `ovl17:032F`): with 8X8D tile set 3 selected, it loads the selected character's CHEAD picture (the
   name suffixed from `ds08C5[Sel^.Figure[0]]`, block `Sel^.CHeadBlock`) into slot 11 and its CBODY
@@ -815,11 +824,11 @@ character joins the party.
   builds a 16-entry colour map from the six nibble pairs `Sel^.Figure[1..6]` through `ds3CF5` and
   applies it to both halves.
 
-**Boundary note** **[V]** (`make packet UNIT=ovl17`): the map splits several ovl17 routines into
-mid-instruction entries (`ovl17_fn_0818/084A/0865` inside `SaveCharacter`, `ovl17_fn_0B48` inside
-`LoadCharacterFile`, `ovl17_fn_0F99` inside `ovl17_e6`, `ovl17_fn_0AE5` a literal pool). Each real routine has
-one `push bp; mov bp, sp` prologue and one `retf`; the phantom entries share the parent frame. Scan
-for the real prologues before drafting, and let `make match WRITE=1` retire the phantom map entries.
+**Boundary note** **[V]** (`make packet UNIT=ovl17`, before the routines were matched): the map split
+several ovl17 routines into mid-instruction entries (`ovl17_fn_0818/084A/0865` inside `SaveCharacter`,
+`ovl17_fn_0B48` inside `LoadCharacterFile`, `ovl17_fn_0F99` inside `LoadMonster`, `ovl17_fn_0AE5` a
+literal pool). Each real routine has one `push bp; mov bp, sp` prologue and one `retf`; the phantom
+entries share the parent frame. `make match WRITE=1` retires them as each real routine matches.
 
 ### 5.12 Copy protection: the code wheel
 

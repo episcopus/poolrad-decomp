@@ -650,7 +650,7 @@ var
   ds5378: Word;                   { set to 1 by the loader (ovl11:03E0) }
   ds547A: Word;                   { set to 1 by the loader (ovl11:03DA) }
   ds547D: Byte;                   { a character the loader appends to the path through System_MemOp_0C3B (ovl11:0581) }
-  ds557C: Byte;                   { cleared by the loader (ovl11:0438) }
+  ds557C: Byte;                   { set to 1 while LoadMonster reads the MON*.DAX affect and item lists and to 0 after (ovl17:107B, 1252); cleared by the loader (ovl11:0438) }
   ds5582: array[0..$80F] of Byte;   { $810-byte buffer the loader reads the file block into (ovl11:05CD) }
   { 129 sixteen-byte combat AI rows indexed by race (ScoreTarget copies the row of Who^.Race
     into a local and scores it): the same block the loader uses as its file buffer (load time

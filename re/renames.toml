@@ -3441,3 +3441,10 @@ kind = "routine"
 why = "ovl17:0AEC reads one character and its item/affect lists from the save or game disk: it opens FileName + '.sav'/'.cha' through OpenGameFile, BlockReads the 285-byte record into Who^ and reads the .itm (63) and .spc (9) lists to end of file; the read counterpart of SaveCharacter (ovl17:069E); called by ovl16_fn_306D and ovl17_e8"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl17_e6"
+new = "LoadMonster"
+kind = "routine"
+why = "ovl17:0EC4 loads a monster: it builds MON<Str(TileSet)>CHA/SPC/ITM.DAX names, LoadDaxBlock block Kind from the poolrad MON<N>CHA/SPC/ITM.DAX archives, Moves the 285-byte record into Who^, clears its list links, builds the Figure descriptor with RollDice(1,6) nibble pairs and copies the 9-byte affects and 63-byte items into GetMem chains; called by ovl07 LoadCharacter and ovl17_e7"
+date = "2026-10-13"
+
