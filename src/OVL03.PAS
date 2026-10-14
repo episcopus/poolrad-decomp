@@ -119,6 +119,15 @@ const
   EclTextTop = $11;
   EclTextRight = $26;
   EclTextBottom = $16;
+  { The colours of the ECL menus (ovl03:0F08, ovl03:10D1): the title of AskMenu and the heading of a
+    list, the words of AskMenu and the lines of a list, the hotkeys and the highlight. }
+  MenuTitleColor = 13;
+  MenuTextColor = 10;
+  MenuHotColor = 15;
+  { The prompt line is text row $18; AskMenuCommand (ovl03:10D1) clears it, columns 0 to $27. }
+  PromptRow = $18;
+  PromptLeftCol = 0;
+  PromptLastCol = $27;
   { ECL command 17: the text goes on after the text already in the window; command 18 clears it first. }
   OpContinueText = $11;
 var
@@ -785,13 +794,65 @@ begin
   end;
   Menu := MenuHead;
   Choice := 0;
-  AskListMenu(Empty, Empty, 13, 10, 15, 1, GlyphRow + 1, 38, 22, Menu, 0, Redraw, Choice, Menu);
+  { the list starts one row below GlyphRow, where ShowPagedText left the cursor }
+  AskListMenu(Empty, Empty, MenuTitleColor, MenuTextColor, MenuHotColor, EclTextLeft, GlyphRow + 1,
+    EclTextRight, EclTextBottom, Menu, 0, Redraw, Choice, Menu);
   WriteVmWord(Target, Choice);
   FreeMenuList(Menu);
   ClearRect(EclTextLeft, EclTextTop, EclTextRight, EclTextBottom);
 end;
-{ ovl03:10D1: retf 0: 0 bytes of parameters; 320 bytes of locals }
-{@stub} procedure ovl03_fn_10D1; begin end;
+{ ovl03:10D1. ECL command 43 (dispatcher ovl03:2F2D, SkippedOpcode $2B): asks the player a menu. Operand
+  1 is the address that receives the answer, operand 2 the number of options Count; the options are the
+  string operands EclStrings[1..Count], decoded again after Dec(EclPC) as in ChooseFromListCommand. They
+  become one text, each option after a '~' (the hotkey marker AskMenu reads, a space after all but the
+  last). AskMenu (ovl07:1684) shows it on the prompt line and returns the 0-based position of the key
+  pressed, $FF for a key that is no hotkey; WriteVmWord stores it. A single option
+  'PRESS <RETURN> OR BUTTON TO CONTINUE' becomes 'PRESS <ENTER>/<RETURN> TO CONTINUE' and Return
+  answers it (AcceptEnter). Animate is set when the close-up is up (ds84E0) and ds84E1 is set. The
+  prompt line is cleared afterwards. }
+procedure ovl03_fn_10D1;
+var
+  Count: Byte;
+  Choice: Byte;
+  I: Byte;
+  Title: string[1];
+  Options: string[50];
+  Target: Word;
+  AcceptEnter: Byte;
+  Animate: Byte;
+  HotColor: Byte;
+  WordColor: Byte;
+begin
+  Title := '';
+  Options := '';
+  DecodeOperands(2);
+  Target := MakeWord(OperandLow[1], OperandHigh[1]);
+  Count := OperandValue(2);
+  Dec(EclPC);
+  DecodeOperands(Count);
+  Options := '';
+  if Count = 1 then
+  begin
+    AcceptEnter := 1;
+    HotColor := MenuHotColor;
+    WordColor := MenuHotColor;
+    if EclStrings[1] = 'PRESS <RETURN> OR BUTTON TO CONTINUE' then
+      EclStrings[1] := 'PRESS <ENTER>/<RETURN> TO CONTINUE';
+  end
+  else
+  begin
+    AcceptEnter := 0;
+    HotColor := MenuHotColor;
+    WordColor := MenuTextColor;
+  end;
+  Animate := Ord((ds84E0 <> 0) and (ds84E1 <> 0));
+  for I := 1 to Count - 1 do
+    Options := Options + '~' + EclStrings[I] + ' ';
+  Options := Options + '~' + EclStrings[Count];
+  Choice := AskMenu(Title, Options, MenuTitleColor, WordColor, HotColor, AcceptEnter, Animate);
+  WriteVmWord(Target, Choice);
+  ClearRect(PromptLeftCol, PromptRow, PromptLastCol, PromptRow);
+end;
 { ovl03:125D: retf 0: 0 bytes of parameters; 6 bytes of locals }
 {@stub} procedure ovl03_fn_125D; begin end;
 { ovl03:12C6: frame not read }
