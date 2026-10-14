@@ -40,13 +40,36 @@ const
   RestMessageRow = $13;
   RestMessageColour = 15;
   RestStepsPerSpellLevel = 3; { ovl20:0B80 multiplies the returned level by three }
-  RestMenuInitialSelection = 2; { the minutes field, which RestTimeMenu starts on and wraps to }
-  RestHoursField = 3;           { RestTime digit of the hours, the field after the minutes }
-  RestDaysField = 4;            { RestTime digit of the days, the last field }
   RestMinuteStep = 5;           { Inc and Dec on the minutes field move five minutes }
+  RestHealAmount = 1;           { hit points HealCharacter restores at each whole-party heal (ovl20:0871) }
   RestTitleColour = 13;
   RestWordColour = 10;
   RestHotColour = 15;
+  { The RestTime digits, the mixed-radix clock ovl20:02F2 carries (whitepaper 5.22.1). These are digit
+    names, not menu fields: the menu's Selected is one of them. }
+  MinutesDigit = 1;             { RestTime[1]: the minutes, the bottom digit; RestMinuteStep edits it }
+  TensOfMinutesDigit = 2;       { RestTime[2]: the tens of minutes; ShowRestTime and the menu's minutes field }
+  HoursDigit = 3;               { RestTime[3]: the hours }
+  DaysDigit = 4;                { RestTime[4]: the days, kept at MaxRestDays or less }
+  MonthsDigit = 5;              { RestTime[5]: the months, turned into days by NormalizeRestTime }
+  MaxRestDays = 99;             { NormalizeRestTime keeps the days at this (0x63) or less }
+  MinutesPerTensDigit = 10;     { the radix of MinutesDigit (ClockRadix[1], DS:363C); see ShowRestTime }
+  { The rest window ovl20:0C9A clears and ShowRestTime draws in (ClearRect and DrawTextAt). }
+  RestWindowLeft = 1;
+  RestWindowTop = RestRow;
+  RestWindowRight = $26;
+  RestWindowBottom = $16;
+  { The keys of the rest menu (ovl20:0721): the arrows are extended keys and the letters are plain
+    keys, so ScanUp and the hours key both hold 'H' but mean different things. }
+  KeyEnter = #13;
+  KeyEscape = #0;               { the key ReadPromptChoice returns for Escape }
+  KeyExit = 'E';
+  KeyRest = 'R';
+  KeyIgnore = 'X';              { the menu's internal do-nothing key, for the arrows and unknown extended keys }
+  ScanUp = 'H';                 { extended key: up arrow, increases the selected field }
+  ScanDown = 'P';               { extended key: down arrow, decreases the selected field }
+  ScanLeft = 'K';               { extended key: left arrow, the field on the left (wraps) }
+  ScanRight = 'M';              { extended key: right arrow, the field on the right (wraps) }
   PendingSpellFlag = $80;
   SpellNumberMask = $7F;
   LastCharacterSpellSlot = 20;
@@ -203,17 +226,18 @@ begin
       end;
 end;
 { ovl20:03A3: retf 0: no parameters, no locals. Settles the rest time after a change (ovl20:0721 and
-  ovl20:047A call it): carries the clock, then turns the months (RestTime[5]) into days at ClockRadix[4],
-  30 days a month, and keeps the days (RestTime[4]) at 99 (0x63) or less. }
+  ovl20:047A call it): carries the clock, then turns the months (RestTime[MonthsDigit]) into days at
+  ClockRadix[DaysDigit], 30 days a month, and keeps the days (RestTime[DaysDigit]) at MaxRestDays or
+  less. }
 procedure NormalizeRestTime;
 begin
   CarryRestClock(RestTime);
-  if RestTime[5] > 0 then
+  if RestTime[MonthsDigit] > 0 then
   begin
-    Inc(RestTime[4], ClockRadix[4] * RestTime[5]);
-    RestTime[5] := 0;
-    if RestTime[4] > 99 then
-      RestTime[4] := 99;
+    Inc(RestTime[DaysDigit], ClockRadix[DaysDigit] * RestTime[MonthsDigit]);
+    RestTime[MonthsDigit] := 0;
+    if RestTime[DaysDigit] > MaxRestDays then
+      RestTime[DaysDigit] := MaxRestDays;
   end;
 end;
 { ovl20:03D5: retf 4: Amount and Index (4 bytes of parameters); 18 bytes of locals. Advances the game clock by
@@ -244,25 +268,27 @@ begin
 end;
 { ovl20:047A: retf 4: Amount and Index (4 bytes of parameters); 4 bytes of locals. Takes Amount off the
   rest clock digit Index (the Dec key of the Rest menu, ovl20:0721, and the rest's countdown, RunRestPeriod).
-  Nothing happens when the minutes, tens, hours and days (RestTime[1..4]) are all zero. Otherwise, while
-  Amount is more than the digit, the next higher digit that is not zero lends one unit to the digits below
-  it (each gets its radix, ClockRadix); when no such digit below the months is left, the clock is cleared
-  and Amount becomes 0. The digit then loses Amount and the clock is normalized (NormalizeRestTime). }
+  Nothing happens when the minutes, tens, hours and days (RestTime[MinutesDigit..DaysDigit]) are all zero.
+  Otherwise, while Amount is more than the digit, the next higher digit that is not zero lends one unit to
+  the digits below it (each gets its radix, ClockRadix); when no such digit below the months is left, the
+  clock is cleared and Amount becomes 0. The digit then loses Amount and the clock is normalized
+  (NormalizeRestTime). }
 procedure SpendRestTime(Amount: Byte; Index: ShortInt);
 var
   Lender: ShortInt;
   Digit: ShortInt;
 begin
-  if (RestTime[4] <> 0) or (RestTime[3] <> 0) or (RestTime[2] <> 0) or (RestTime[1] <> 0) then
+  if (RestTime[DaysDigit] <> 0) or (RestTime[HoursDigit] <> 0) or
+     (RestTime[TensOfMinutesDigit] <> 0) or (RestTime[MinutesDigit] <> 0) then
   begin
     while Amount > RestTime[Index] do
     begin
       Lender := Succ(Index);
-      while (RestTime[Lender] = 0) and (Lender < 5) do
+      while (RestTime[Lender] = 0) and (Lender < MonthsDigit) do
         Lender := Succ(Lender);
-      if Lender = 5 then
+      if Lender = MonthsDigit then
       begin
-        FillChar(RestTime, 14, 0);
+        FillChar(RestTime, SizeOf(RestTime), 0);
         Amount := 0;
       end
       else
@@ -289,9 +315,11 @@ begin
   TwoDigitText := Copy(Digits, 1, 2);
 end;
 { ovl20:05F0: retf 2: Selected (2 bytes of parameters); 272 bytes of locals. Draws the rest time on row 17:
-  "Rest Time:" and then days and hours as two digits with colons between them, and the minutes (the tens
-  and the minutes of RestTime, 10 * RestTime[2] + RestTime[1]). The field Selected is drawn in colour 15,
-  the others in 10. }
+  "Rest Time:" and then days and hours as two digits with a colon between them, and the minutes (the tens
+  and the minutes of RestTime, MinutesPerTensDigit * RestTime[TensOfMinutesDigit] +
+  RestTime[MinutesDigit]). The field Selected is drawn in RestSelectedColour, the others in RestTextColour.
+  Selected is a RestTime digit (TensOfMinutesDigit, HoursDigit or DaysDigit) or 0; Colors[0] is never
+  drawn, so Selected 0 (every caller but the menu) highlights nothing. }
 procedure ShowRestTime(Selected: ShortInt);
 var
   Digit: ShortInt;
@@ -303,22 +331,26 @@ begin
   Colors[Selected] := RestSelectedColour;
   DrawTextAt(RestLabelColumn, RestRow, RestTextColour, 'Rest Time:');
   Col := RestFirstColumn;
-  for Digit := 4 downto 3 do
+  for Digit := DaysDigit downto HoursDigit do
   begin
     DrawTextAt(Col + 1, RestRow, Colors[Digit], TwoDigitText(RestTime[Digit]));
+    { Col + 1 + 1 + 1 is the original's expression for the colon column, one past the two digits }
     DrawTextAt(Col + 1 + 1 + 1, RestRow, RestTextColour, ':');
     Inc(Col, 3);
   end;
-  DrawTextAt(Col + 1, RestRow, Colors[2], TwoDigitText(10 * RestTime[2] + RestTime[1]));
+  DrawTextAt(Col + 1, RestRow, Colors[TensOfMinutesDigit],
+             TwoDigitText(MinutesPerTensDigit * RestTime[TensOfMinutesDigit] +
+                          RestTime[MinutesDigit]));
 end;
 { ovl20:0721: retf 0, 46 bytes of locals. The rest menu: "Rest daYs Hours Mins Inc Dec Exit" under the
   rest time line, until the player picks Rest (result 1) or Exit or Escape (result 0). Selected is the
-  RestTime field being changed (2 minutes, 3 hours, 4 days), drawn highlighted by ShowRestTime. Y, H and
-  M choose the field; the left and right arrows move between the fields (wrapping); Inc and Dec, or the
-  up and down arrows, change it (five minutes at a time on the minutes field, through SpendRestTime for
-  a decrease) and NormalizeRestTime carries the clock. Enter is Rest. Any other extended key does
-  nothing. Matched from the expert's diagnosis (case-e3e08f09): the R arm sets the result and falls
-  through to the until test, which ends the loop (07D5 jumps to 083D, not to the epilogue). }
+  RestTime digit of the field being changed (TensOfMinutesDigit for the minutes, HoursDigit, DaysDigit),
+  drawn highlighted by ShowRestTime. Y, H and M choose the days, hours and minutes field; the arrow keys
+  move between the fields (wrapping); Inc and Dec, or the up and down arrows, change the field (five
+  minutes at a time on the minutes field, through SpendRestTime for a decrease) and NormalizeRestTime
+  carries the clock. Enter is Rest. The arrows and any unknown extended key set KeyIgnore 'X', which no
+  case arm handles, so nothing happens. The R arm sets the result and falls through to the until test,
+  which ends the loop (07D5 jumps to 083D, not to the epilogue). }
 function RestTimeMenu: Byte;
 var
   ExtendedKey: Byte;
@@ -326,58 +358,58 @@ var
   Selected: ShortInt;
 begin
   RestTimeMenu := 0;
-  Selected := RestMenuInitialSelection;
+  Selected := TensOfMinutesDigit;
   repeat
     ShowRestTime(Selected);
     Key := ReadPromptChoice('', 'Rest   daYs Hours Mins   Inc Dec   Exit',
                             RestTitleColour, RestWordColour, RestHotColour, 1, 0, ExtendedKey);
     if ExtendedKey <> 0 then
       case Key of
-        'H': Key := 'I';
-        'P': Key := 'D';
-        'K':
+        ScanUp: Key := 'I';
+        ScanDown: Key := 'D';
+        ScanLeft:
           begin
             Inc(Selected);
-            if Selected > RestDaysField then Selected := RestMenuInitialSelection;
-            Key := 'X';
+            if Selected > DaysDigit then Selected := TensOfMinutesDigit;
+            Key := KeyIgnore;
           end;
-        'M':
+        ScanRight:
           begin
             Dec(Selected);
-            if Selected < RestMenuInitialSelection then Selected := RestDaysField;
-            Key := 'X';
+            if Selected < TensOfMinutesDigit then Selected := DaysDigit;
+            Key := KeyIgnore;
           end;
       else
-        Key := 'X';
+        Key := KeyIgnore;
       end;
-    if Key = #13 then Key := 'R';
+    if Key = KeyEnter then Key := KeyRest;
     case Key of
-      'R': RestTimeMenu := 1;
-      'Y': Selected := RestDaysField;
-      'H': Selected := RestHoursField;
-      'M': Selected := RestMenuInitialSelection;
+      KeyRest: RestTimeMenu := 1;
+      'Y': Selected := DaysDigit;
+      'H': Selected := HoursDigit;
+      'M': Selected := TensOfMinutesDigit;
       'I':
         begin
-          if Selected = RestMenuInitialSelection then
-            Inc(RestTime[1], RestMinuteStep)
+          if Selected = TensOfMinutesDigit then
+            Inc(RestTime[MinutesDigit], RestMinuteStep)
           else
             Inc(RestTime[Selected]);
           NormalizeRestTime;
         end;
       'D':
         begin
-          if Selected = RestMenuInitialSelection then
-            SpendRestTime(RestMinuteStep, 1)
+          if Selected = TensOfMinutesDigit then
+            SpendRestTime(RestMinuteStep, MinutesDigit)
           else
             SpendRestTime(1, Selected);
           NormalizeRestTime;
         end;
     end;
-  until Key in [#0, 'E', 'R'];
+  until Key in [KeyEscape, KeyExit, KeyRest];
 end;
 { ovl20:0871: the whole-party heal of the rest. RestHealCounter counts five-minute rest steps; at
   RestHealCheckInterval ($120, 288 steps, 24 hours) every party member is healed one hit point
-  (HealCharacter with amount 1 and flag 0, so a member with affect $32 is skipped) and the message
+  (HealCharacter with RestHealAmount and flag 0, so a member with affect $32 is skipped) and the message
   "The Whole Party Is Healed" is shown. The roster is redrawn only when someone actually healed. It then
   delays, clears the message and resets RestHealCounter. Reads the party list; changes RestHealCounter and
   character health; side effects are the screen and delay. }
@@ -393,10 +425,13 @@ begin
     Who := PCharacter(ds5D96);
     while Who <> nil do
     begin
-      if HealCharacter(Who, 1, 0) then Healed := True;
+      { RestHealAmount hit points; flag 0, so HealCharacter skips a member with affect $32 (ovl24:175D) }
+      if HealCharacter(Who, RestHealAmount, 0) then Healed := True;
       Who := Who^.Next;
     end;
     ShowRestTime(0);
+    { the original draws this message in colour 10 (RestTextColour), not the interruption message's
+      RestMessageColour 15; the healing itself is what the message claims }
     DrawTextAt(RestMessageColumn, RestMessageRow, RestTextColour, 'The Whole Party Is Healed');
     if Healed then DrawPartyRoster(SelectedCharacter);
     DelayByGameSpeed;
@@ -570,31 +605,32 @@ begin
   FillChar(ds471E, RestCounterBytes, RestCounterInitial);
   RestCycleCounter := 0;
   DisplayCounter := 0;
-  ClearRect(1, $11, $26, $16);
+  ClearRect(RestWindowLeft, RestWindowTop, RestWindowRight, RestWindowBottom);
   ShowRestTime(0);
   RestWindowActive := 1;
   EndRest := Ord(RestTimeMenu = 0);
   while (EndRest = 0) and
-        ((RestTime[4] > 0) or (RestTime[3] > 0) or (RestTime[2] > 0) or (RestTime[1] > 0)) do
+        ((RestTime[DaysDigit] > 0) or (RestTime[HoursDigit] > 0) or
+         (RestTime[TensOfMinutesDigit] > 0) or (RestTime[MinutesDigit] > 0)) do
   begin
     if KeyPressed then
     begin
       ShowRestTime(0);
-      if AskYesNo('Stop Resting? ', 13, 10, 15) = 'Y' then
+      if AskYesNo('Stop Resting? ', RestTitleColour, RestWordColour, RestHotColour) = 'Y' then
         EndRest := 1
       else
         ClearPromptLine;
     end;
     if EndRest = 0 then
     begin
-      SpendRestTime(5, 1);
+      SpendRestTime(RestMinuteStep, MinutesDigit);
       Inc(DisplayCounter);
       if DisplayCounter >= RestDisplayInterval then
       begin
         ShowRestTime(0);
         DisplayCounter := 0;
       end;
-      AdvanceGameClock(5, 1);
+      AdvanceGameClock(RestMinuteStep, MinutesDigit);
       CheckRestHealing;
       AdvanceRestStudies;
       AdvanceRestHour(RestCycleCounter);
@@ -618,7 +654,7 @@ begin
       end;
     end;
   end;
-  ClearRect(1, $11, $26, $16);
+  ClearRect(RestWindowLeft, RestWindowTop, RestWindowRight, RestWindowBottom);
   RestWindowActive := 0;
 end;
 
