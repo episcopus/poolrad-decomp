@@ -1424,7 +1424,54 @@ begin
   if WithInner <> 0 then
     DrawWindow(3, 3, $D, $D, 0, $F, '');
 end;
-{@stub} procedure RedrawView; begin end;
+{ 00BA:27D9. Redraws the whole screen for the current view mode (ds49F3), the resident unit's view
+  dispatcher. Mode 0 is the plain full window; mode 1 the character portrait screen
+  (DrawViewWindows then the HEAD and BODY sprites at (3,3)); mode 2 the camp (the portrait
+  windows, the PIC sprite list and the roster); modes 3 and 4 the area view (DrawViewWindows,
+  ShowAreaView and the roster, the inner window drawn only for mode 4); mode 6 the loot screen
+  (the portrait windows, the PIC block 1 sprites and the roster). Every mode but 0 draws the
+  character roster and, except 1 and 6, the location line. Called by the shop, the Temple, the
+  loot, camp and combat menus to redraw their screen.
+  Globals: ds49F3 (read), ds49FD, ds49FE, PictureAnimation, SelectedCharacter (read). }
+procedure RedrawView;
+begin
+  case ds49F3 of
+    ViewModePlain: DrawWindow(1, 1, $26, $16, 0, $F, '');
+    ViewModePortrait:
+      begin
+        DrawViewWindows(1);
+        LoadHeadBodySprites(ds49FD, ds49FE);
+        ShowHeadBodySprites(3, 3, 1);
+      end;
+    ViewModeCamp:
+      begin
+        DrawViewWindows(1);
+        LoadSpriteList('PIC', $1D, 0, @PictureAnimation);
+        DrawPartyRoster(SelectedCharacter);
+        DrawLocationLine;
+      end;
+    ViewModeView:
+      begin
+        DrawViewWindows(1);
+        ShowAreaView;
+        DrawPartyRoster(SelectedCharacter);
+        DrawLocationLine;
+      end;
+    ViewModeMap:
+      begin
+        DrawViewWindows(0);
+        ShowAreaView;
+        DrawPartyRoster(SelectedCharacter);
+        DrawLocationLine;
+      end;
+    ViewModeLoot:
+      begin
+        DrawViewWindows(1);
+        LoadSpriteList('PIC', 1, 0, @PictureAnimation);
+        DrawPartyRoster(SelectedCharacter);
+      end;
+  end;
+end;
 {@stub} procedure DrawLocationLine; begin end;
 {@stub} procedure DrawWildernessScreen; begin end;
 {@stub} procedure DrawCombatScreen; begin end;
