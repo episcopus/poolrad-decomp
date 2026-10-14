@@ -90,7 +90,7 @@ procedure AddConstitutionSaveBonus(Who: PCharacter; Affect: PAffect; Mode: Byte)
 procedure ovl12_e76(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure HalveFireDamageNoSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure HalveDamageForFirstSlotItem(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e79(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure FallDeadIfInFight(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e80(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e81(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e82;
@@ -1659,8 +1659,16 @@ begin
     if (RaceRow[Item^.ItemType][7] and ItemRowFlags) <> 0 then
       DamageAmount := DamageAmount shr 1;
 end;
-{ ovl12:2610: retf 10: 10 bytes of parameters; 12 bytes of locals }
-{@stub} procedure ovl12_e79; begin end;
+{ ovl12:2610. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000). It clears the
+  affect's Flag, so the handler does not run again when the affect is removed. When Who still takes part in the fight
+  (Flag10D set), Who falls dead: DropFromFight takes Who out with StatusGone and the text 'Falls dead'. Which affect runs
+  it is not known yet [?]. }
+procedure FallDeadIfInFight(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  Affect^.Flag := 0;
+  if Who^.Flag10D <> 0 then
+    DropFromFight(Who, StatusGone, 'Falls dead');
+end;
 { ovl12:264B: retf 10: 10 bytes of parameters; 4 bytes of locals }
 {@stub} procedure ovl12_e80; begin end;
 { ovl12:268A: retf 10: 10 bytes of parameters; 2 bytes of locals }

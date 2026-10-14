@@ -3945,3 +3945,10 @@ kind = "routine"
 why = "ovl12:25BC halves DamageAmount when the first slot item of SelectedCharacter has bits of byte 7 of its RaceRow row (RaceRow[ItemType][7]); the affect that runs it is not known; matched [V]"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e79"
+new = "FallDeadIfInFight"
+kind = "routine"
+why = "ovl12:2610 clears the affect's Flag and, when Who's Flag10D (combat participation, TCharacter +10D) is set, DropFromFight takes Who out with StatusGone and 'Falls dead'; matched [V]"
+date = "2026-10-13"
+

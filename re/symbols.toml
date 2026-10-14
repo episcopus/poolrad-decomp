@@ -4226,7 +4226,7 @@ evidence = ["prologue"]
 id = "ovl12:25BC"
 unit = "ovl12"
 addr = "ovl12:25BC"
-size = 73
+size = 84
 name = "HalveDamageForFirstSlotItem"
 signature = ""
 c_name = "ovl12_e78"
@@ -4240,12 +4240,12 @@ id = "ovl12:2610"
 unit = "ovl12"
 addr = "ovl12:2610"
 size = 59
-name = "ovl12_e79"
+name = "FallDeadIfInFight"
 signature = ""
 c_name = "ovl12_e79"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_79"
+notes = "renamed from ovl12_e79 (ovl12:2610 clears the affect's Flag and, when Who's Flag10D (combat participation, TCharacter +10D) is set, DropFromFight takes Who out with StatusGone and 'Falls dead'; matched [V]); auto:entry_79"
 evidence = ["prologue"]
 
 [[routine]]
