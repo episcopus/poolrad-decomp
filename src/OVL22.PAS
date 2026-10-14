@@ -1656,8 +1656,18 @@ begin
   DamageTargetInCell(ds6DB9, ds6DBA, Damage, SaveKindSpell, Blocked);
   CastLineBeam(BeamReach, Damage, SaveKindSpell, BounceOnce);
 end;
-{ ovl22:2C09: retf 0: 0 bytes of parameters; 10 bytes of locals }
-{@stub} procedure CastSlow; begin end;
+{ ovl22:2C09 (e51). Cast handler of spell 55, Slow: hands the opposite side of the selected character
+  (res12_fn_23B7) and the haste affect $27 (SpellTable[48].AffectId) to ApplySpellToSideUpToLevel,
+  which cures Haste from up to caster-level members of that side and then applies Slow to the rest
+  with 'is Slowed'. One of the per-spell handlers in SpellHandlers (SpellHandlers[55], filled by
+  ovl22_e10; the Haste handler CastHaste does the mirror image with the slow affect $2A). Reads
+  SelectedCharacter. }
+procedure CastSlow;
+const
+  HasteAffect = $27;              { the haste affect Slow removes from the opposite side }
+begin
+  ApplySpellToSideUpToLevel(HasteAffect, res12_fn_23B7(SelectedCharacter), 'is Slowed');
+end;
 { ovl22:2C43: frame not read }
 {@stub} procedure CastRestoration; begin end;
 { ovl22:2E02: retf 0: 0 bytes of parameters; 10 bytes of locals }
