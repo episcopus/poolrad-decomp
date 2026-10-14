@@ -8204,7 +8204,7 @@ signature = "function ovl22_e1(Mode: Byte; var Choice: Word): Byte"
 c_name = "ovl22_e1"
 level = "none"
 justification = ""
-notes = "auto:entry_1"
+notes = "blocked (dec-deepseek-2): the routine is fully drafted and its frame (98 bytes: Selected/WalkPtr, Title/Prompt String40, an unused byte, J, Bottom, Key, WithExit, Redraw + the empty-string temp at [bp-62]) is derived from the disassembly, but it cannot compile. ovl22_e1 passes its Choice straight to ChooseFromList (ovl25:0D9A, var Choice: Integer; OVL05/OVL06/OVL07 pass Integer), so e1's Choice must be Integer; ovl19's ChooseSpellFromList (L2) and ovl15's three Choice variables declare Word. TP 6.0 rejects both Word->Integer and Integer->Word var parameters (probes tools/re/tp_idioms/ovl22/WDTOIN.PAS and INTOWD.PAS) and NoChoice=$FFFF cannot be assigned to an Integer (NOCONST.PAS). Fix: change ovl19:299C's and ovl15's Choice to Integer with NoChoice=-1, then the draft matches. Draft: { ovl22:008A (the CastSpell entry). The spell chooser ChooseSpellFromList (ovl19:299C) calls this: it shows the list BuildSpellList prepared (SpellMenuList) through ChooseFromList and returns the chosen spell byte, or 0 when the player left with Exit/Escape. Mode (ChooseSpellFromList's DisplayMode) selects the button Prompt and the window: 1 'Cast', 2 'Memorize', 3 'Scribe', 4 'Learn'; 2 and 3 use the shorter window. Choice is the list position passed in (negative opens the title window and the character's spells) and the position after the choice; CurrentItem receives the item a Mode-3 line came from. Side effects: the screen, the heap (the list, freed through FreeMenuList). } function ovl22_e1(Mode: Byte; var Choice: Word): Byte; var Selected: PMenuLine;            { the line ChooseFromList returns as chosen } WalkPtr: PMenuLine;             { walks the list counting the non-heading lines } Title: String40;                { the window title, 'Choose Spell: ' } Prompt: String40;               { the action button: 'Cast', 'Memorize', 'Scribe', 'Learn' or '' } Unused: Byte;                   { QUIRK ovl22:0194: the byte at [bp-5C] is never read } J: Byte;                        { the index of the chosen line among the non-heading lines } Bottom: ShortInt;               { the window bottom row, $0F or $16 } Key: Char;                      { the key ChooseFromList returns } WithExit: Byte;                 { the picker's Exit button flag (1 except Learn) } Redraw: Byte;                   { the picker's redraw flag } Result: Byte;                   { the function's result byte } begin case Mode of 1: Prompt := 'Cast'; 2: Prompt := 'Memorize'; 3: Prompt := 'Scribe'; 4: Prompt := 'Learn'; else Prompt := ''; end; if Mode in [1..4] then Title := 'Choose Spell: ' else Title := ''; if Mode = 2 then Bottom := $0F else Bottom := $16; if Mode = 4 then WithExit := 0 else WithExit := 1; Redraw := 0; if Integer(Choice) < 0 then begin DrawWindow(1, 3, $26, Bottom, 0, 0, ''); Redraw := 1; Choice := 0; end; if (Mode = 4) or (Mode = 1) then Redraw := 1; Selected := nil; repeat Key := ChooseFromList(Title, Prompt, $0D, $0A, $0F, 1, 5, $26, Bottom, SpellMenuList, WithExit, Redraw, Choice, Selected); until Key in [#0, #13]; WalkPtr := SpellMenuList; J := 0; while WalkPtr <> Selected do begin if WalkPtr^.Flag29 = 0 then Inc(J); WalkPtr := WalkPtr^.Next; end; if Key in [#0, 'E'] then Result := 0 else Result := SpellMenuSpells[J]; if Mode = 3 then CurrentItem := SpellMenuItems[J]; FreeMenuList(SpellMenuList); ovl22_e1 := Result; end;"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8212,12 +8212,12 @@ id = "ovl22:028D"
 unit = "ovl22"
 addr = "ovl22:028D"
 size = 449
-name = "ovl22_fn_028D"
-signature = ""
+name = "AddSpellMenuLine"
+signature = "procedure AddSpellMenuLine(Spell: Byte)"
 c_name = "ovl22_fn_028D"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl22_fn_028D (ovl22:028D appends one line for a spell to the spell menu list ds4766, inserting a level heading when the level changes; called by ovl22_e2 and ovl22_fn_044E); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8225,12 +8225,12 @@ id = "ovl22:044E"
 unit = "ovl22"
 addr = "ovl22:044E"
 size = 206
-name = "ovl22_fn_044E"
-signature = ""
+name = "AddItemSpells"
+signature = "procedure AddItemSpells(Pending: Byte)"
 c_name = "ovl22_fn_044E"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl22_fn_044E (ovl22:044E adds the spell affects of the current item (CurrentItem) to the spell menu list through AddSpellMenuLine, recording the item in SpellMenuItems; Pending selects the pending (bit 7) or the plain affects; called by ovl22_e2 and ovl22_fn_051C); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8238,12 +8238,12 @@ id = "ovl22:051C"
 unit = "ovl22"
 addr = "ovl22:051C"
 size = 128
-name = "ovl22_fn_051C"
-signature = ""
+name = "AddScrollSpells"
+signature = "procedure AddScrollSpells(Pending: Byte)"
 c_name = "ovl22_fn_051C"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl22_fn_051C (ovl22:051C walks SelectedCharacter^.Items, and for every scroll (ovl22_e6) adds its spell affects to the spell menu list through AddItemSpells; Pending picks the plain or the pending affects; called by ovl22_e2); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8251,12 +8251,12 @@ id = "ovl22:059C"
 unit = "ovl22"
 addr = "ovl22:059C"
 size = 397
-name = "ovl22_e2"
-signature = "function ovl22_e2(Kind: Byte): Byte"
+name = "BuildSpellList"
+signature = "function BuildSpellList(Kind: Byte): Byte"
 c_name = "ovl22_e2"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_2"
+notes = "renamed from ovl22_e2 (ovl22:059C builds the spell menu list SpellMenuList for ChooseSpellFromList's list kind (0 memorized, 5 pending memorized, 1 spell book, 2 first scroll, 3 scrolls, 6 pending scrolls, 4 learnable) and returns whether it is not empty; called by ovl19:299C); auto:entry_2"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8264,12 +8264,12 @@ id = "ovl22:0729"
 unit = "ovl22"
 addr = "ovl22:0729"
 size = 173
-name = "ovl22_e3"
-signature = "function ovl22_e3(B: Byte): Byte"
+name = "SpellAreaSize"
+signature = "function SpellAreaSize(Spell: Byte): Byte"
 c_name = "ovl22_e3"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_3"
+notes = "renamed from ovl22_e3 (ovl22:0729 returns the area size of a spell: base byte (row +2) plus the per-level byte (row +3) times the caster level from res12_fn_26C2, or times 6 while ds6DBF is set; res12_fn_2433 passes it to ScanTargets as the pattern budget (ovl09:02EB SpellAccepted)); auto:entry_3"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8277,12 +8277,12 @@ id = "ovl22:07D6"
 unit = "ovl22"
 addr = "ovl22:07D6"
 size = 237
-name = "ovl22_fn_07D6"
+name = "SpellAffectDuration"
 signature = ""
 c_name = "ovl22_fn_07D6"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl22_fn_07D6 (ovl22:07D6 returns the affect duration; 08C3 passes it as ApplyAffect Duration (ovl24:1656)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8290,259 +8290,38 @@ id = "ovl22:08C3"
 unit = "ovl22"
 addr = "ovl22:08C3"
 size = 462
-name = "ovl22_fn_08C3"
+name = "ApplySpellToTargets"
 signature = ""
 c_name = "ovl22_fn_08C3"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl22_fn_08C3 (ovl22:08C3 applies a spell to every chosen target in ds6C91[1..ds6C94]: saving throw, damage and, when the spell has an AffectId, ApplyAffect (ovl24:1656)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl22:0A91"
 unit = "ovl22"
 addr = "ovl22:0A91"
-size = 84
-name = "ovl22_e4"
+size = 399
+name = "ChooseSpellTargets"
 signature = ""
 c_name = "ovl22_e4"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_4"
+notes = "renamed from ovl22_e4 (ovl22:0A91 picks the spell targets (ds6C91): self, one through res12_fn_2C48, or the whole party, and reports through Done; the DS:6B84 combat callback); auto:entry_4"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl22:0AE5"
-unit = "ovl22"
-addr = "ovl22:0AE5"
-size = 64
-name = "ovl22_fn_0AE5"
-signature = ""
-c_name = "ovl22_fn_0AE5"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl22:0B25"
-unit = "ovl22"
-addr = "ovl22:0B25"
-size = 5
-name = "ovl22_fn_0B25"
-signature = ""
-c_name = "ovl22_fn_0B25"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl22:0B2A"
-unit = "ovl22"
-addr = "ovl22:0B2A"
-size = 5
-name = "ovl22_fn_0B2A"
-signature = ""
-c_name = "ovl22_fn_0B2A"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl22:0B2F"
-unit = "ovl22"
-addr = "ovl22:0B2F"
-size = 5
-name = "ovl22_fn_0B2F"
-signature = ""
-c_name = "ovl22_fn_0B2F"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl22:0B34"
-unit = "ovl22"
-addr = "ovl22:0B34"
-size = 10
-name = "ovl22_fn_0B34"
-signature = ""
-c_name = "ovl22_fn_0B34"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl22:0B3E"
-unit = "ovl22"
-addr = "ovl22:0B3E"
-size = 5
-name = "ovl22_fn_0B3E"
-signature = ""
-c_name = "ovl22_fn_0B3E"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl22:0B43"
-unit = "ovl22"
-addr = "ovl22:0B43"
-size = 5
-name = "ovl22_fn_0B43"
-signature = ""
-c_name = "ovl22_fn_0B43"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl22:0B48"
-unit = "ovl22"
-addr = "ovl22:0B48"
-size = 5
-name = "ovl22_fn_0B48"
-signature = ""
-c_name = "ovl22_fn_0B48"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl22:0B4D"
-unit = "ovl22"
-addr = "ovl22:0B4D"
-size = 5
-name = "ovl22_fn_0B4D"
-signature = ""
-c_name = "ovl22_fn_0B4D"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl22:0B52"
-unit = "ovl22"
-addr = "ovl22:0B52"
-size = 10
-name = "ovl22_fn_0B52"
-signature = ""
-c_name = "ovl22_fn_0B52"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl22:0B5C"
-unit = "ovl22"
-addr = "ovl22:0B5C"
-size = 15
-name = "ovl22_fn_0B5C"
-signature = ""
-c_name = "ovl22_fn_0B5C"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl22:0B6B"
-unit = "ovl22"
-addr = "ovl22:0B6B"
-size = 15
-name = "ovl22_fn_0B6B"
-signature = ""
-c_name = "ovl22_fn_0B6B"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl22:0B7A"
-unit = "ovl22"
-addr = "ovl22:0B7A"
-size = 5
-name = "ovl22_fn_0B7A"
-signature = ""
-c_name = "ovl22_fn_0B7A"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl22:0B7F"
-unit = "ovl22"
-addr = "ovl22:0B7F"
-size = 5
-name = "ovl22_fn_0B7F"
-signature = ""
-c_name = "ovl22_fn_0B7F"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl22:0B84"
-unit = "ovl22"
-addr = "ovl22:0B84"
-size = 5
-name = "ovl22_fn_0B84"
-signature = ""
-c_name = "ovl22_fn_0B84"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl22:0B89"
-unit = "ovl22"
-addr = "ovl22:0B89"
-size = 5
-name = "ovl22_fn_0B89"
-signature = ""
-c_name = "ovl22_fn_0B89"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl22:0B8E"
-unit = "ovl22"
-addr = "ovl22:0B8E"
-size = 146
-name = "ovl22_fn_0B8E"
-signature = ""
-c_name = "ovl22_fn_0B8E"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl22:0C20"
 unit = "ovl22"
 addr = "ovl22:0C20"
 size = 815
-name = "ovl22_e5"
-signature = "procedure ovl22_e5(A, B, C: Byte; var Done: Byte)"
+name = "CastChosenSpell"
+signature = "procedure CastChosenSpell(A, B, C: Byte; var Done: Byte)"
 c_name = "ovl22_e5"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_5"
+notes = "renamed from ovl22_e5 (the CastSpell entry: picks the spell's targets through the DS:6B84 picker, animates the cast and runs the spell's handler SpellHandlers[Spell] (ovl22:0C20)); auto:entry_5"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8550,12 +8329,12 @@ id = "ovl22:0F4F"
 unit = "ovl22"
 addr = "ovl22:0F4F"
 size = 192
-name = "ovl22_fn_0F4F"
+name = "ApplySpellToSide"
 signature = ""
 c_name = "ovl22_fn_0F4F"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl22_fn_0F4F (applies the current spell ds681B to the targets on one side, shared by the Bless and Curse cast handlers (ovl22:0F4F)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8563,12 +8342,12 @@ id = "ovl22:100F"
 unit = "ovl22"
 addr = "ovl22:100F"
 size = 49
-name = "ovl22_e11"
+name = "CastBless"
 signature = ""
 c_name = "ovl22_e11"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_11"
+notes = "renamed from ovl22_e11 (cast handler of spell 1 Bless: applies the spell to the caster side with 'is Blessed' (SpellHandlers[1], ovl22:100F)); auto:entry_11"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8576,12 +8355,12 @@ id = "ovl22:1040"
 unit = "ovl22"
 addr = "ovl22:1040"
 size = 43
-name = "ovl22_e12"
+name = "CastCurse"
 signature = ""
 c_name = "ovl22_e12"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_12"
+notes = "renamed from ovl22_e12 (cast handler of spell 2 Curse: applies the spell to the opposite side with 'is Cursed' (SpellHandlers[2], ovl22:1040)); auto:entry_12"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8589,12 +8368,12 @@ id = "ovl22:106B"
 unit = "ovl22"
 addr = "ovl22:106B"
 size = 60
-name = "ovl22_e13"
+name = "CastCureLightWounds"
 signature = ""
 c_name = "ovl22_e13"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_13"
+notes = "renamed from ovl22_e13 (cast handler of spell 3 Cure Light Wounds: heals the first target 1d8 (SpellHandlers[3], ovl22:106B)); auto:entry_13"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8602,12 +8381,12 @@ id = "ovl22:10A7"
 unit = "ovl22"
 addr = "ovl22:10A7"
 size = 66
-name = "ovl22_e14"
+name = "CastCauseLightWounds"
 signature = ""
 c_name = "ovl22_e14"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_14"
+notes = "renamed from ovl22_e14 (cast handler of spell 4 Cause Light Wounds: deals 1d8 damage to the targets (SpellHandlers[4], ovl22:10A7)); auto:entry_14"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8615,12 +8394,12 @@ id = "ovl22:10E9"
 unit = "ovl22"
 addr = "ovl22:10E9"
 size = 58
-name = "ovl22_e15"
+name = "CastDetectionSpell"
 signature = ""
 c_name = "ovl22_e15"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_15"
+notes = "renamed from ovl22_e15 (cast handler of the detection spells (SpellHandlers[5],[11],[18],[22],[29]; ovl22_e10 fills the table, whitepaper 5.22.2): applies the current spell ds681B to the chosen targets with 'is affected' (ovl22:10E9)); auto:entry_15"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8628,12 +8407,12 @@ id = "ovl22:1123"
 unit = "ovl22"
 addr = "ovl22:1123"
 size = 63
-name = "ovl22_e16"
+name = "CastProtection"
 signature = ""
 c_name = "ovl22_e16"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_16"
+notes = "renamed from ovl22_e16 (cast handler of the protection spells (SpellHandlers[6],[7],[16],[17]; ovl22_e10 fills the table, whitepaper 5.22.2): applies the current spell ds681B to the chosen targets with 'is protected' (ovl22:1123)); auto:entry_16"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8641,12 +8420,12 @@ id = "ovl22:1162"
 unit = "ovl22"
 addr = "ovl22:1162"
 size = 46
-name = "ovl22_e17"
+name = "CastResistCold"
 signature = ""
 c_name = "ovl22_e17"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_17"
+notes = "renamed from ovl22_e17 (cast handler of spell 8 Resist Cold (SpellHandlers[8]; ovl22_e10 fills the table, whitepaper 5.22.2): applies the current spell ds681B to the chosen targets with 'is cold-resistant' (ovl22:1162)); auto:entry_17"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8654,12 +8433,12 @@ id = "ovl22:1190"
 unit = "ovl22"
 addr = "ovl22:1190"
 size = 77
-name = "ovl22_e18"
+name = "CastBurningHands"
 signature = ""
 c_name = "ovl22_e18"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_18"
+notes = "renamed from ovl22_e18 (cast handler of spell 9 Burning Hands (SpellHandlers[9]; ovl22_e10 fills the table, whitepaper 5.22.2): deals the caster level in fire damage to the chosen targets (ovl22:1190)); auto:entry_18"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8667,12 +8446,12 @@ id = "ovl22:11DD"
 unit = "ovl22"
 addr = "ovl22:11DD"
 size = 200
-name = "ovl22_e19"
+name = "CastCharmPerson"
 signature = ""
 c_name = "ovl22_e19"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_19"
+notes = "renamed from ovl22_e19 (cast handler of spell 10 Charm Person (SpellHandlers[10]; ovl22_e10 fills the table, whitepaper 5.22.2): refuses a non-person target (CreatureType or CombatSize above 1), else applies the charm affect $0B with the caster's side in bit 7 of its data (ovl22:11DD)); auto:entry_19"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8680,12 +8459,12 @@ id = "ovl22:12A5"
 unit = "ovl22"
 addr = "ovl22:12A5"
 size = 201
-name = "ovl22_e20"
+name = "CastEnlarge"
 signature = ""
 c_name = "ovl22_e20"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_20"
+notes = "renamed from ovl22_e20 (cast handler of spell 12 Enlarge (SpellHandlers[12]; ovl22_e10 fills the table, whitepaper 5.22.2): gives the target strength 18 by caster level through RaiseStrength and adds the strength affect /bin/zshC (ovl22:12A5)); auto:entry_20"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8693,12 +8472,12 @@ id = "ovl22:136E"
 unit = "ovl22"
 addr = "ovl22:136E"
 size = 106
-name = "ovl22_e21"
+name = "CastReduce"
 signature = ""
 c_name = "ovl22_e21"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_21"
+notes = "renamed from ovl22_e21 (cast handler of spell 13 Reduce (SpellHandlers[13]; ovl22_e10 fills the table at DS:6B84, whitepaper 5.22.2): a target that fails its saving throw (kind 4) loses the strength affect $0C Enlarge adds and is told 'has been reduced' (ovl22:136E)); auto:entry_21"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8706,12 +8485,12 @@ id = "ovl22:13D8"
 unit = "ovl22"
 addr = "ovl22:13D8"
 size = 97
-name = "ovl22_e22"
+name = "CastFriends"
 signature = ""
 c_name = "ovl22_e22"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_22"
+notes = "renamed from ovl22_e22 (cast handler of spell 14 Friends (SpellHandlers[14]; ovl22_e10 fills the table at DS:6B84, whitepaper 5.22.2): raises the target ds6C95 Charisma by 2d4 capped at 25 and passes the old Charisma as the affect data with the restore flag, message 'is friendly' (ovl22:13D8)); auto:entry_22"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8719,12 +8498,12 @@ id = "ovl22:1439"
 unit = "ovl22"
 addr = "ovl22:1439"
 size = 96
-name = "ovl22_e23"
+name = "CastMagicMissile"
 signature = ""
 c_name = "ovl22_e23"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_23"
+notes = "renamed from ovl22_e23 (cast handler of spell 15 Magic Missile (SpellHandlers[15]; ovl22_e10 fills the table at DS:6B84, whitepaper 5.22.2): deals one d4 plus one point per two caster levels through RollDiceCounted (count in ds681C), no message (ovl22:1439)); auto:entry_23"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8732,12 +8511,12 @@ id = "ovl22:1499"
 unit = "ovl22"
 addr = "ovl22:1499"
 size = 46
-name = "ovl22_e24"
+name = "CastShield"
 signature = ""
 c_name = "ovl22_e24"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_24"
+notes = "renamed from ovl22_e24 (cast handler of spell 19 Shield (SpellHandlers[19]; ovl22_e10 fills the table at DS:6B84, whitepaper 5.22.2): applies the current spell ds681B (its own affect does the work) to the chosen targets with 'is shielded' (ovl22:1499)); auto:entry_24"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8745,12 +8524,12 @@ id = "ovl22:14C7"
 unit = "ovl22"
 addr = "ovl22:14C7"
 size = 84
-name = "ovl22_e25"
+name = "CastShockingGrasp"
 signature = ""
 c_name = "ovl22_e25"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_25"
+notes = "renamed from ovl22_e25 (cast handler of spell 20 Shocking Grasp (SpellHandlers[20]; ovl22_e10 fills the table at DS:6B84, whitepaper 5.22.2): deals the caster level plus 1d8 electrical damage to the chosen targets, no message (ovl22:14C7)); auto:entry_25"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8758,51 +8537,38 @@ id = "ovl22:151B"
 unit = "ovl22"
 addr = "ovl22:151B"
 size = 317
-name = "ovl22_e26"
+name = "CastSleep"
 signature = ""
 c_name = "ovl22_e26"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_26"
+notes = "renamed from ovl22_e26 (cast handler of spell 21 Sleep (SpellHandlers[21]; ovl22_e10 fills the table at DS:6B84, whitepaper 5.22.2): rolls the 4d4 pool ds4844 and charges each target a cost ds4845 by HighestLevel and Race, dropping targets that are dead, already affected $35, or too costly, then applies the spell to the survivors with 'falls asleep' (ovl22:151B)); auto:entry_26"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl22:1658"
 unit = "ovl22"
 addr = "ovl22:1658"
-size = 256
-name = "ovl22_e27"
+size = 401
+name = "CastHoldPerson"
 signature = ""
 c_name = "ovl22_e27"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_27"
+notes = "renamed from ovl22_e27 (ovl22:1658 applies spell 23 to the chosen targets with the message 'is held'; ovl22_e10 maps DS:6B84+23*4 to its stub 0096:00A7 and SpellNames[23] (DS:2C98) is 'Hold Person'); auto:entry_27"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl22:1758"
-unit = "ovl22"
-addr = "ovl22:1758"
-size = 145
-name = "ovl22_fn_1758"
-signature = ""
-c_name = "ovl22_fn_1758"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl22:17E9"
 unit = "ovl22"
 addr = "ovl22:17E9"
 size = 57
-name = "ovl22_e28"
+name = "CastResistFire"
 signature = ""
 c_name = "ovl22_e28"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_28"
+notes = "renamed from ovl22_e28 (ovl22:17E9 applies spell 24 to the chosen targets with the message 'is fire resistant'; ovl22_e10 maps DS:6B84+24*4 to its stub 0096:00AC and SpellNames[24] (DS:2CC1) is 'Resist Fire'); auto:entry_28"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8810,12 +8576,12 @@ id = "ovl22:1822"
 unit = "ovl22"
 addr = "ovl22:1822"
 size = 57
-name = "ovl22_e29"
+name = "CastSilence"
 signature = ""
 c_name = "ovl22_e29"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_29"
+notes = "renamed from ovl22_e29 (ovl22:1822 applies spell 25 to the chosen targets with the message 'is silenced'; ovl22_e10 maps DS:6B84+25*4 to its stub 0096:00B1 and SpellNames[25] (DS:2CEA) is 'Silence, 15' Radius'); auto:entry_29"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8823,12 +8589,12 @@ id = "ovl22:185B"
 unit = "ovl22"
 addr = "ovl22:185B"
 size = 180
-name = "ovl22_e30"
+name = "CastSlowPoison"
 signature = ""
 c_name = "ovl22_e30"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_30"
+notes = "renamed from ovl22_e30 (ovl22:185B applies spell 26 with the message 'is affected', needs the target's Poisoned affect, revives it to 1 hit point and adds the poison-slowing affect; ovl22_e10 maps DS:6B84+26*4 to its stub 0096:00B6 and SpellNames[26] (DS:2D13) is 'Slow Poison'); auto:entry_30"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8836,12 +8602,12 @@ id = "ovl22:190F"
 unit = "ovl22"
 addr = "ovl22:190F"
 size = 180
-name = "ovl22_e31"
+name = "CastSnakeCharm"
 signature = ""
 c_name = "ovl22_e31"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_31"
+notes = "renamed from ovl22_e31 (ovl22:190F picks the giant snakes (CreatureType $E) of the party list whose hit points fit the caster's, then applies spell 27 with the message 'is charmed'; ovl22_e10 maps DS:6B84+27*4 to its stub 0096:00BB and SpellNames[27] (DS:2D3C) is 'Snake Charm'); auto:entry_31"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8849,12 +8615,12 @@ id = "ovl22:19C3"
 unit = "ovl22"
 addr = "ovl22:19C3"
 size = 83
-name = "ovl22_e32"
+name = "CastSpiritualHammer"
 signature = ""
 c_name = "ovl22_e32"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_32"
+notes = "renamed from ovl22_e32 (ovl22:19C3 applies spell 28 with Flag 1 then runs affect $17's handler on the first target; ovl22_e10 maps DS:6B84+28*4 to its stub 0096:00C0 and SpellNames[28] (DS:2D65) is 'Spiritual Hammer'); auto:entry_32"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8862,12 +8628,12 @@ id = "ovl22:1A16"
 unit = "ovl22"
 addr = "ovl22:1A16"
 size = 57
-name = "ovl22_e33"
+name = "CastInvisibility"
 signature = ""
 c_name = "ovl22_e33"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_33"
+notes = "renamed from ovl22_e33 (ovl22:1A16 applies spell 30 to the chosen targets with the message 'is invisible'; ovl22_e10 maps DS:6B84+30*4 to its stub 0096:00C5 and SpellNames[30] (DS:2DB7) is 'Invisibility'); auto:entry_33"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8875,12 +8641,12 @@ id = "ovl22:1A4F"
 unit = "ovl22"
 addr = "ovl22:1A4F"
 size = 59
-name = "ovl22_e34"
+name = "CastKnock"
 signature = ""
 c_name = "ovl22_e34"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_34"
+notes = "renamed from ovl22_e34 (ovl22:1A4F applies spell 31 to the chosen targets with the message 'Knock-Knock'; ovl22_e10 maps DS:6B84+31*4 to its stub 0096:00CA and SpellNames[31] (DS:2DE0) is 'Knock'); auto:entry_34"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8888,12 +8654,12 @@ id = "ovl22:1A8A"
 unit = "ovl22"
 addr = "ovl22:1A8A"
 size = 66
-name = "ovl22_e35"
+name = "CastMirrorImage"
 signature = ""
 c_name = "ovl22_e35"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_35"
+notes = "renamed from ovl22_e35 (ovl22:1A8A applies spell 32 with a 1d4 caster level and the message 'is duplicated'; ovl22_e10 maps DS:6B84+32*4 to its stub 0096:00CF and SpellNames[32] (DS:2E09) is 'Mirror Image'); auto:entry_35"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8901,12 +8667,12 @@ id = "ovl22:1ACC"
 unit = "ovl22"
 addr = "ovl22:1ACC"
 size = 69
-name = "ovl22_e36"
+name = "CastRayOfEnfeeblement"
 signature = ""
 c_name = "ovl22_e36"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_36"
+notes = "renamed from ovl22_e36 (ovl22:1ACC applies spell 33 to the chosen targets with the message 'is weakened'; ovl22_e10 maps DS:6B84+33*4 to its stub 0096:00D4 and SpellNames[33] (DS:2E32) is 'Ray of Enfeeblement'); auto:entry_36"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8914,259 +8680,155 @@ id = "ovl22:1B11"
 unit = "ovl22"
 addr = "ovl22:1B11"
 size = 1072
-name = "ovl22_e37"
+name = "CastStinkingCloud"
 signature = ""
 c_name = "ovl22_e37"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_37"
+notes = "renamed from ovl22_e37 (ovl22:1B11 places a cloud marker in the DS:6DBB list (caster, aim ds6DB9/ds6DBA, four aim tiles and flags, affect $28), paints the cloud into the combat map and runs ApplyCloudTile (the stinking cloud affect) on the combatants of the four cells; ovl22_e10 maps DS:6B84+34*4 to its stub 0096:00D9 and SpellNames[34] (DS:2E5B) is 'Stinking Cloud'); auto:entry_37"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl22:1F41"
 unit = "ovl22"
 addr = "ovl22:1F41"
-size = 234
-name = "ovl22_e38"
+size = 302
+name = "CastStrength"
 signature = ""
 c_name = "ovl22_e38"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_38"
+notes = "renamed from ovl22_e38 (cast handler of spell 35 (SpellNames[35] is 'Strength' at DS:28E9); rolls a class bonus die (d4 magic-user, d6 cleric/thief, d8 fighter), raises the target's Strength, clamps at 18 with a fighter percentile, and adds the strength affect $26 (RaiseStrength keeps the earlier strength in affect 0Ch or 26h, whitepaper 5.22.2)); auto:entry_38"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl22:202B"
-unit = "ovl22"
-addr = "ovl22:202B"
-size = 68
-name = "ovl22_fn_202B"
-signature = ""
-c_name = "ovl22_fn_202B"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl22:206F"
 unit = "ovl22"
 addr = "ovl22:206F"
-size = 58
-name = "ovl22_e39"
+size = 424
+name = "CastAnimateDead"
 signature = ""
 c_name = "ovl22_e39"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_39"
+notes = "renamed from ovl22_e39 (cast handler of spell 36 (SpellNames[36] is 'Animate Dead' at DS:28E9): walks the party list ds5D96, turns up to the caster level corpses (Status 6, CreatureType 0) into undead on the caster's side and leaves the animate affect $20 with 'is animated' (make match UNIT=ovl22 FN=CastAnimateDead)); auto:entry_39"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl22:20A9"
-unit = "ovl22"
-addr = "ovl22:20A9"
-size = 366
-name = "ovl22_fn_20A9"
-signature = ""
-c_name = "ovl22_fn_20A9"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl22:2217"
 unit = "ovl22"
 addr = "ovl22:2217"
-size = 28
-name = "ovl22_e40"
+size = 70
+name = "CastCureBlindness"
 signature = ""
 c_name = "ovl22_e40"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_40"
+notes = "renamed from ovl22_e40 (cast handler of spell 37 (SpellNames[37] is 'Cure Blindness' at DS:28E9): removes the blindness affect $21 (SpellTable[37].AffectId) from the first chosen target ds6C95 and shows 'can see' when it was there (make match UNIT=ovl22 FN=CastCureBlindness)); auto:entry_40"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl22:2233"
-unit = "ovl22"
-addr = "ovl22:2233"
-size = 42
-name = "ovl22_fn_2233"
-signature = ""
-c_name = "ovl22_fn_2233"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl22:225D"
 unit = "ovl22"
 addr = "ovl22:225D"
 size = 45
-name = "ovl22_e41"
+name = "CastCauseBlindness"
 signature = ""
 c_name = "ovl22_e41"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_41"
+notes = "renamed from ovl22_e41 (spell 38 Cause Blindness handler: applies ds681B to the targets with the message 'is blind' (ovl22_e10 maps DS:6B84+38*4 to overlay stub 0096:00ED; SpellNames[38]='Cause Blindness'; its affect $21 is the blindness Cure Blindness removes)); auto:entry_41"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl22:228A"
 unit = "ovl22"
 addr = "ovl22:228A"
-size = 2
-name = "ovl22_fn_228A"
-signature = ""
+size = 165
+name = "CureDiseaseAffects"
+signature = "function CureDiseaseAffects: Boolean"
 c_name = "ovl22_fn_228A"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl22_fn_228A (the helper ovl22_e42 (spell 39 Cure Disease) and ovl22_e54 call: cures the six DiseaseAffects[1..6] ($1F,$22,$2B,$2C,$32,$39) with their companions from ds6C95 and returns whether it cured any (make match UNIT=ovl22 FN=CureDiseaseAffects: 165 bytes)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl22:228C"
-unit = "ovl22"
-addr = "ovl22:228C"
-size = 163
-name = "ovl22_fn_228C"
-signature = ""
-c_name = "ovl22_fn_228C"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl22:232F"
 unit = "ovl22"
 addr = "ovl22:232F"
 size = 29
-name = "ovl22_e42"
+name = "CastCureDisease"
 signature = ""
 c_name = "ovl22_e42"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_42"
+notes = "renamed from ovl22_e42 (spell 39 Cure Disease handler: calls CureDiseaseAffects on ds6C95 and drops the result (ovl22_e10 maps DS:6B84+39*4 to overlay stub 0096:00F2; SpellNames[39]='Cure Disease' at DS:2F28; SpellTable[39].AffectId is 0); make match UNIT=ovl22 FN=CastCureDisease: 17 bytes); auto:entry_42"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl22:234C"
 unit = "ovl22"
 addr = "ovl22:234C"
-size = 55
-name = "ovl22_e43"
+size = 57
+name = "CastCauseDisease"
 signature = ""
 c_name = "ovl22_e43"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_43"
+notes = "renamed from ovl22_e43 (spell 40 Cause Disease handler: applies ds681B to the targets with the message 'is diseased' and Flag 1 (ovl22_e10 maps DS:6B84+40*4 to overlay stub 0096:00F7; SpellNames[40]='Cause Disease'; the affect is one CureDiseaseAffects clears)); auto:entry_43"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl22:2383"
-unit = "ovl22"
-addr = "ovl22:2383"
-size = 2
-name = "ovl22_fn_2383"
-signature = ""
-c_name = "ovl22_fn_2383"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl22:2385"
 unit = "ovl22"
 addr = "ovl22:2385"
-size = 49
-name = "ovl22_e44"
+size = 337
+name = "CastDispelMagic"
 signature = ""
 c_name = "ovl22_e44"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_44"
+notes = "renamed from ovl22_e44 (ovl22_e10 fills SpellHandlers[41] and SpellHandlers[46] (DS:6B84+41*4, DS:6B84+46*4) with overlay stub 0096:00FC = ovl22:2385; SpellNames[41] and SpellNames[46] are both 'Dispel Magic' (DS:2F7A, DS:3047). The routine dispels the target's affects by a caster-level chance, which is Dispel Magic); auto:entry_44"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl22:23B6"
-unit = "ovl22"
-addr = "ovl22:23B6"
-size = 288
-name = "ovl22_fn_23B6"
-signature = ""
-c_name = "ovl22_fn_23B6"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl22:24D6"
 unit = "ovl22"
 addr = "ovl22:24D6"
 size = 106
-name = "ovl22_e45"
+name = "CastPrayer"
 signature = ""
 c_name = "ovl22_e45"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_45"
+notes = "renamed from ovl22_e45 (ovl22_e10 fills SpellHandlers[42] (DS:6B84+42*4) with overlay stub 0096:0101 = ovl22:24D6; SpellNames[42] is 'Prayer' (DS:2FA3). The routine applies the spell to the targets with the caster's Side in the affect data and the message 'is praying'); auto:entry_45"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl22:2540"
 unit = "ovl22"
 addr = "ovl22:2540"
-size = 62
-name = "ovl22_e9"
+size = 196
+name = "CastRemoveCurse"
 signature = ""
 c_name = "ovl22_e9"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_9"
+notes = "renamed from ovl22_e9 (ovl22_e10 fills SpellHandlers[43] (DS:6B84+43*4) with overlay stub 0096:004D = ovl22:2540; SpellNames[43] is 'Remove Curse' (DS:2FCC), and the Temple's RemoveCurse (ovl04:083A) stores the character in ds6C95 and calls it. It cures the curse affect 24h or clears the Cursed flag of the character's first cursed item, saying 'is un-cursed' or ''s item is un-cursed'); auto:entry_9"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl22:257E"
-unit = "ovl22"
-addr = "ovl22:257E"
-size = 75
-name = "ovl22_fn_257E"
-signature = ""
-c_name = "ovl22_fn_257E"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl22:25C9"
-unit = "ovl22"
-addr = "ovl22:25C9"
-size = 59
-name = "ovl22_fn_25C9"
-signature = ""
-c_name = "ovl22_fn_25C9"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl22:2604"
 unit = "ovl22"
 addr = "ovl22:2604"
 size = 57
-name = "ovl22_e46"
+name = "CastBestowCurse"
 signature = ""
 c_name = "ovl22_e46"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_46"
+notes = "renamed from ovl22_e46 (cast handler of spell 44 Bestow Curse: ovl22_e10 maps DS:6B84+44*4 to stub 0096:0106, SpellNames[44] is 'Bestow Curse' and it applies the spell with 'has been cursed!'); auto:entry_46"
 evidence = ["prologue"]
 
 [[routine]]
@@ -9174,12 +8836,12 @@ id = "ovl22:263D"
 unit = "ovl22"
 addr = "ovl22:263D"
 size = 46
-name = "ovl22_e47"
+name = "CastBlink"
 signature = ""
 c_name = "ovl22_e47"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_47"
+notes = "renamed from ovl22_e47 (cast handler of spell 45 Blink: ovl22_e10 maps DS:6B84+45*4 to stub 0096:010B, SpellNames[45] is 'Blink' and it applies the spell with 'is blinking'); auto:entry_47"
 evidence = ["prologue"]
 
 [[routine]]
@@ -9187,12 +8849,12 @@ id = "ovl22:266B"
 unit = "ovl22"
 addr = "ovl22:266B"
 size = 249
-name = "ovl22_e48"
+name = "CastFireball"
 signature = ""
 c_name = "ovl22_e48"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_48"
+notes = "renamed from ovl22_e48 (cast handler of spells 47 and 64 Fireball: ovl22_e10 maps DS:6B84+47*4 and +64*4 to stub 0096:0110, SpellNames[47] is 'Fireball', it scans two steps around the aim point and deals d6 per level of fire damage with no message); auto:entry_48"
 evidence = ["prologue"]
 
 [[routine]]
@@ -9200,12 +8862,12 @@ id = "ovl22:2764"
 unit = "ovl22"
 addr = "ovl22:2764"
 size = 302
-name = "ovl22_fn_2764"
-signature = ""
+name = "ApplySpellToSideUpToLevel"
+signature = "procedure ApplySpellToSideUpToLevel(Affect, Side: Byte; Message: String40)"
 c_name = "ovl22_fn_2764"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl22_fn_2764 (applies the current spell to up to caster-level chosen targets on one side, first curing the opposite spell's affect; called by the Haste and Slow handlers); auto:near_call; signature from the callers: ovl22:2892 (Haste) pushes the affect, the caster's side and the string, ovl22:2C09 (Slow) the opposite side ('is Slowed')"
 evidence = ["prologue"]
 
 [[routine]]
@@ -9213,12 +8875,12 @@ id = "ovl22:2892"
 unit = "ovl22"
 addr = "ovl22:2892"
 size = 42
-name = "ovl22_e49"
+name = "CastHaste"
 signature = ""
 c_name = "ovl22_e49"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_49"
+notes = "renamed from ovl22_e49 (cast handler of spell 48 Haste: ovl22_e10 maps DS:6B84+48*4 to stub 0096:0115, SpellNames[48] is 'Haste', it removes the slow affect 2Ah from the caster's side up to the caster level and applies the spell with is Hasted); auto:entry_49"
 evidence = ["prologue"]
 
 [[routine]]
@@ -9226,51 +8888,38 @@ id = "ovl22:28BC"
 unit = "ovl22"
 addr = "ovl22:28BC"
 size = 159
-name = "ovl22_fn_28BC"
-signature = ""
+name = "DamageTargetInCell"
+signature = "procedure DamageTargetInCell(CellX, CellY, Damage, SaveKind: Byte; var Blocked: Boolean)"
 c_name = "ovl22_fn_28BC"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl22_fn_28BC (deals a line spell's damage to the combatant in one map cell and reports whether the tile blocks the beam; called by the Lightning Bolt helpers (ovl22_e50, ovl22_fn_295B)); auto:near_call; signature from the callers: ovl22_e50 (Lightning Bolt) pushes the aim cell, the rolled damage, save kind 4 and a var flag; ovl22_fn_295B passes the walked cell, a damage, a save kind and its var flag"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl22:295B"
 unit = "ovl22"
 addr = "ovl22:295B"
-size = 560
-name = "ovl22_fn_295B"
+size = 604
+name = "CastLineBeam"
 signature = ""
 c_name = "ovl22_fn_295B"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl22_fn_295B (line spells' beam helper: draws the beam line and damages each cell with DamageTargetInCell, called by the Lightning Bolt handler and the paralysis beams (ovl22_e50, ovl22_fn_2F57, ovl22_fn_31D7)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl22:2B8B"
-unit = "ovl22"
-addr = "ovl22:2B8B"
-size = 44
-name = "ovl22_fn_2B8B"
-signature = ""
-c_name = "ovl22_fn_2B8B"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl22:2BB7"
 unit = "ovl22"
 addr = "ovl22:2BB7"
 size = 82
-name = "ovl22_e50"
+name = "CastLightningBolt"
 signature = ""
 c_name = "ovl22_e50"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_50"
+notes = "renamed from ovl22_e50 (cast handler of spell 51 Lightning Bolt: one d6 per caster level, dealt to the aim cell and along the beam with the bounce flag (whitepaper 5.22.2)); auto:entry_50"
 evidence = ["prologue"]
 
 [[routine]]
@@ -9278,51 +8927,38 @@ id = "ovl22:2C09"
 unit = "ovl22"
 addr = "ovl22:2C09"
 size = 58
-name = "ovl22_e51"
+name = "CastSlow"
 signature = ""
 c_name = "ovl22_e51"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_51"
+notes = "renamed from ovl22_e51 (cast handler of spell 55 Slow: removes the haste affect from the opposite side then applies Slow (whitepaper 5.22.2)); auto:entry_51"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl22:2C43"
 unit = "ovl22"
 addr = "ovl22:2C43"
-size = 246
-name = "ovl22_e52"
+size = 447
+name = "CastRestoration"
 signature = ""
 c_name = "ovl22_e52"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_52"
+notes = "renamed from ovl22_e52 (cast handler of spell 56 Restoration: gives back one drained level and its hit points and advances a class (whitepaper 5.22.2)); auto:entry_52"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl22:2D39"
-unit = "ovl22"
-addr = "ovl22:2D39"
-size = 201
-name = "ovl22_fn_2D39"
-signature = ""
-c_name = "ovl22_fn_2D39"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl22:2E02"
 unit = "ovl22"
 addr = "ovl22:2E02"
 size = 75
-name = "ovl22_e53"
+name = "CastMonsterHaste"
 signature = ""
 c_name = "ovl22_e53"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_53"
+notes = "renamed from ovl22_e53 (the ovl22_e10 handler table points SpellHandlers[57] at stub 0096:0129 (overlay entry 53, ovl22:2E02); the routine cancels the slow affect $2A from the first chosen target (CureAffect) and otherwise applies the current spell with 'is Speedy', so it is the single-target haste handler of the monster-only spell 57 (SpellNames[57] is empty); make match UNIT=ovl22: 65 bytes matched); auto:entry_53"
 evidence = ["prologue"]
 
 [[routine]]
@@ -9330,116 +8966,77 @@ id = "ovl22:2E4D"
 unit = "ovl22"
 addr = "ovl22:2E4D"
 size = 152
-name = "ovl22_e54"
+name = "CastMonsterHeal"
 signature = ""
 c_name = "ovl22_e54"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_54"
+notes = "renamed from ovl22_e54 (the ovl22_e10 handler table points SpellHandlers[58] at stub 0096:012E (overlay entry 54, ovl22:2E4D); the routine cures the Poisoned affect $37 plus its companion $16 from the first chosen target, else cures disease, else heals 1d4+8 with 'is Healed'; the heal handler of the monster-only spell 58 (SpellNames[58] is empty); make match UNIT=ovl22: 140 bytes matched); auto:entry_54"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl22:2EE5"
 unit = "ovl22"
 addr = "ovl22:2EE5"
-size = 5
-name = "ovl22_e55"
+size = 104
+name = "CastMonsterStrength"
 signature = ""
 c_name = "ovl22_e55"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_55"
+notes = "renamed from ovl22_e55 (the ovl22_e10 handler table points SpellHandlers[59] at stub 0096:0133 (overlay entry 55, ovl22:2EE5); the routine gives the first chosen target a plain Strength 21 through RaiseStrength (no percentile), shows 'is stronger' and adds the strength affect $26 for SpellAffectDuration; the strength handler of the monster-only spell 59 (SpellNames[59] is empty); make match UNIT=ovl22: 104 bytes matched); auto:entry_55"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl22:2EEA"
-unit = "ovl22"
-addr = "ovl22:2EEA"
-size = 99
-name = "ovl22_fn_2EEA"
-signature = ""
-c_name = "ovl22_fn_2EEA"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl22:2F4D"
 unit = "ovl22"
 addr = "ovl22:2F4D"
-size = 10
-name = "ovl22_e56"
+size = 76
+name = "CastMonsterBeam"
 signature = ""
 c_name = "ovl22_e56"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_56"
+notes = "renamed from ovl22_e56 (the ovl22_e10 handler table points SpellHandlers[60] at stub 0096:0138 (overlay entry 56, ovl22:2F4D); the routine strikes the aim cell ds6DB9/ds6DBA for 1d6+20 through DamageTargetInCell (save kind 4, half damage) and then runs a short CastLineBeam(3, 20, 4, 0) away from the caster; the beam handler of the monster-only spell 60 (SpellNames[60] is empty); make match UNIT=ovl22: 63 bytes matched); auto:entry_56"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl22:2F57"
-unit = "ovl22"
-addr = "ovl22:2F57"
-size = 66
-name = "ovl22_fn_2F57"
-signature = ""
-c_name = "ovl22_fn_2F57"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl22:2F99"
 unit = "ovl22"
 addr = "ovl22:2F99"
 size = 55
-name = "ovl22_e57"
+name = "CastMonsterParalyze"
 signature = ""
 c_name = "ovl22_e57"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_57"
+notes = "renamed from ovl22_e57 (handler of the monster-only spell 61 (SpellHandlers element 61, overlay entry 57, stub 0096:013D): applies the current spell with the message 'is paralyzed'); auto:entry_57"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl22:2FD0"
 unit = "ovl22"
 addr = "ovl22:2FD0"
-size = 3
-name = "ovl22_e58"
+size = 90
+name = "CastMonsterHealWounds"
 signature = ""
 c_name = "ovl22_e58"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_58"
+notes = "renamed from ovl22_e58 (handler of the monster-only spell 62 (SpellHandlers element 62, overlay entry 58, stub 0096:0142): heals the first chosen target 2d4 + 2 hit points and reports 'is Healed'); auto:entry_58"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl22:2FD3"
-unit = "ovl22"
-addr = "ovl22:2FD3"
-size = 87
-name = "ovl22_fn_2FD3"
-signature = ""
-c_name = "ovl22_fn_2FD3"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl22:302A"
 unit = "ovl22"
 addr = "ovl22:302A"
 size = 46
-name = "ovl22_e59"
+name = "CastMonsterInvisibility"
 signature = ""
 c_name = "ovl22_e59"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_59"
+notes = "renamed from ovl22_e59 (handler of the monster-only spell 63 (SpellHandlers element 63, overlay entry 59, stub 0096:0147): applies the current spell with the message 'is invisible'); auto:entry_59"
 evidence = ["prologue"]
 
 [[routine]]
@@ -9447,12 +9044,12 @@ id = "ovl22:3058"
 unit = "ovl22"
 addr = "ovl22:3058"
 size = 58
-name = "ovl22_e60"
+name = "CastMonsterMagicDamage"
 signature = ""
 c_name = "ovl22_e60"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_60"
+notes = "renamed from ovl22_e60 (handler of the monster-only spell 65 (SpellHandlers element 65, overlay entry 60, stub 0096:014C): applies the current spell for 2d4 + 2 magic damage (kind 8) with no message); auto:entry_60"
 evidence = ["prologue"]
 
 [[routine]]
@@ -9460,12 +9057,12 @@ id = "ovl22:3092"
 unit = "ovl22"
 addr = "ovl22:3092"
 size = 16
-name = "ovl22_e61"
+name = "CastMonsterNoEffect"
 signature = ""
 c_name = "ovl22_e61"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_61"
+notes = "renamed from ovl22_e61 (handler of the monster-only spell 66 (SpellHandlers element 66, overlay entry 61, stub 0096:0151): the handler body is empty, so the cast does nothing after the picker); auto:entry_61"
 evidence = ["prologue"]
 
 [[routine]]
@@ -9473,116 +9070,77 @@ id = "ovl22:30A2"
 unit = "ovl22"
 addr = "ovl22:30A2"
 size = 55
-name = "ovl22_e62"
+name = "CastMonsterReadMagic"
 signature = ""
 c_name = "ovl22_e62"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_62"
+notes = "renamed from ovl22_e62 (ovl22:30A2 calls ApplySpellToTargets(ds681B, $FF, 1, 0, 0, 'is Reading'); the handler table element 67 (whitepaper 5.22.2), a monster-only spell with its own reading affect); auto:entry_62"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl22:30D9"
 unit = "ovl22"
 addr = "ovl22:30D9"
-size = 254
-name = "ovl22_e63"
-signature = ""
+size = 356
+name = "MonsterBreath"
+signature = "procedure MonsterBreath(Who: PCharacter; Affect: PAffect; Unused: Byte)"
 c_name = "ovl22_e63"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_63"
+notes = "renamed from ovl22_e63 (ovl22:30D9 shows 'Breathes!' and runs a breath attack: a 1d100 chance check on ds6DE3, the target picker, the zap animation, a line beam (CastLineBeam) and DamageTargetInCell for the breather's maximum hit points; Share the monster breath attack (called with a character and its breath affect)); auto:entry_63"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl22:31D7"
-unit = "ovl22"
-addr = "ovl22:31D7"
-size = 102
-name = "ovl22_fn_31D7"
-signature = ""
-c_name = "ovl22_fn_31D7"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl22:323D"
 unit = "ovl22"
 addr = "ovl22:323D"
-size = 37
-name = "ovl22_e6"
-signature = "function ovl22_e6(Item: Pointer): Boolean"
+size = 77
+name = "IsScroll"
+signature = "function IsScroll(Item: PItem): Boolean"
 c_name = "ovl22_e6"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl22_e6 (ovl22:323D returns True when the far pointer is not nil and RaceRow[Item^.ItemType][0] is in $B..$D; every caller (AddScrollSpells, UseMagicItem, StudyRestMinutes, CancelScribing, ScribeScrolls, ProcessPendingScribedSpell) uses it to find the items whose Affects carry scroll spells); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl22:3262"
-unit = "ovl22"
-addr = "ovl22:3262"
-size = 40
-name = "ovl22_fn_3262"
-signature = ""
-c_name = "ovl22_fn_3262"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl22:328A"
 unit = "ovl22"
 addr = "ovl22:328A"
 size = 144
-name = "ovl22_e7"
-signature = "procedure ovl22_e7(Who: PCharacter; Item: PItem; Spell: Byte)"
+name = "ConsumeScrollSpell"
+signature = "procedure ConsumeScrollSpell(Who: PCharacter; Item: PItem; Spell: Byte)"
 c_name = "ovl22_e7"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_7"
+notes = "renamed from ovl22_e7 (ovl22:328A clears the first of Item^.Affects[1..3] whose low seven bits equal the scribed spell (Spell and $7F), decrements Item^.NameNum[2] and hands the item to res12_fn_1509 when it falls below $D2; ProcessPendingScribedSpell calls it to consume a spell from a scroll after it is marked known); auto:entry_7"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl22:331A"
 unit = "ovl22"
 addr = "ovl22:331A"
-size = 95
-name = "ovl22_e8"
-signature = "procedure ovl22_e8(Who: PCharacter; Message: String40; Spell: Byte)"
+size = 249
+name = "ShowSpellMessage"
+signature = "procedure ShowSpellMessage(Who: PCharacter; Message: String40; Spell: Byte)"
 c_name = "ovl22_e8"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl22_e8 (ovl22:331A draws Who's name (res12_fn_1816), then Message right after it, then the spell's name; in combat it shows the timed message 'Casts a Spell' and 'Spell:NAME'. Callers pass 'casts' (CastChosenSpell), 'has memorized' (ProcessMemorizedSpell) and 'has scribed' (ProcessPendingScribedSpell), so it announces a named character's spell event.); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl22:3379"
-unit = "ovl22"
-addr = "ovl22:3379"
-size = 154
-name = "ovl22_fn_3379"
-signature = ""
-c_name = "ovl22_fn_3379"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl22:3413"
 unit = "ovl22"
 addr = "ovl22:3413"
 size = 925
-name = "ovl22_e10"
+name = "InitSpellHandlers"
 signature = ""
 c_name = "ovl22_e10"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_10"
+notes = "renamed from ovl22_e10 (ovl22:3413 fills SpellHandlers at DS:6B84 (element 0 the target picker via SpellTargetPicker, elements 1..$43 the per-spell cast handlers, all overlay stubs of this unit) and stores @MonsterBreath in DS:6988; ovl11:002D StartGame calls it once at start-up. It initialises the spell-casting handlers and globals.); auto:entry_10"
 evidence = ["prologue"]
 
 [[routine]]
@@ -15607,7 +15165,7 @@ signature = "function IsMaxClassLevel(Who: PCharacter; ClassIndex: ShortInt): Bo
 c_name = "res12_fn_2F57"
 level = "L2"
 justification = ""
-notes = "renamed from res12_fn_2F57 (00BA:2F57 returns True when Who's level in one class (ClassLevels[ClassIndex], +$96) has reached the maximum its race (+$2E) and strength (+$10) allow, so the trainers (ovl22:2D39) must not raise that class level further); auto:prologue"
+notes = "signature from the caller: ovl22:2C43 (CastRestoration) pushes the character and the class index and skips the class when true; auto:prologue; renamed from res12_fn_2F57 (00BA:2F57 returns True when Who's level in one class (ClassLevels[ClassIndex], +$96) has reached the maximum its race (+$2E) and strength (+$10) allow, so the trainers (ovl22:2D39) must not raise that class level further); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]

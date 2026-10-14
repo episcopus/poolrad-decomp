@@ -333,11 +333,11 @@ const
   ReflectRow = $C;              { the row of the message and the gaze line when a gaze is reflected (ovl12:1CAD) }
   PermanentDuration = 0;        { the Duration of an affect that lasts for good (AddAffect, ApplyAffect) }
   DataFF = $FF;                 { a Data byte of $FF that several affects here are given; its meaning is not known [?] }
-  TargetCodeFour = 4;           { a Pad9F value of a target (TCharacter +$9F, purpose unknown [?]): BoostAttackAgainstTarget
+  TargetCodeFour = 4;           { a CreatureType value of a target (TCharacter +$9F): BoostAttackAgainstTarget
                                   gives it TargetBonus, BoostFireAttackByTarget gives it FireBonusForFour }
-  TargetCodeNine = 9;           { Pad9F 9 of a target (purpose unknown [?]), see FireBonusForNineTwelve }
-  TargetCodeTen = 10;           { Pad9F 10 of a target (purpose unknown [?]), see FireBonusForTen }
-  TargetCodeTwelve = 12;        { Pad9F 12 of a target (purpose unknown [?]), see FireBonusForNineTwelve }
+  TargetCodeNine = 9;           { CreatureType 9 of a target (purpose unknown [?]), see FireBonusForNineTwelve }
+  TargetCodeTen = 10;           { CreatureType 10 of a target (purpose unknown [?]), see FireBonusForTen }
+  TargetCodeTwelve = 12;        { CreatureType 12 of a target (purpose unknown [?]), see FireBonusForNineTwelve }
   FireBonusForTen = 1;          { what BoostFireAttackByTarget adds to AttackRoll and DamageAmount for TargetCodeTen }
   FireBonusForNineTwelve = 2;   { the same for TargetCodeNine and TargetCodeTwelve }
   FireBonusForFour = 3;         { the same for TargetCodeFour }
@@ -418,12 +418,12 @@ begin
 end;
 { ovl12:013B. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000).
   It copies the character Who attacked last (Who's combat Target, TCombatant at +$108 of Who, MeleeAttack
-  sets it in ovl08) into AttackTarget. When that character's byte +$9F (Pad9F of TCharacter, purpose unknown [?])
+  sets it in ovl08) into AttackTarget. When that character's byte +$9F (CreatureType of TCharacter, purpose unknown [?])
   is TargetCodeFour (4), the attack roll and the damage each gain TargetBonus. Runs for affect $03 (id 3, ovl12_e1 [V]). }
 procedure BoostAttackAgainstTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   AttackTarget := Who^.Combat^.Target;
-  if AttackTarget^.Pad9F = TargetCodeFour then
+  if AttackTarget^.CreatureType = TargetCodeFour then
   begin
     Inc(AttackRoll, TargetBonus);
     Inc(DamageAmount, TargetBonus);
@@ -441,7 +441,7 @@ begin
 end;
 { ovl12:01C3. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000).
   Like BoostAttackAgainstTarget (ovl12:013B) it copies Who's combat Target into AttackTarget, then gives
-  a bonus to the attack roll and to the damage from the target's byte +$9F (Pad9F of TCharacter, purpose unknown
+  a bonus to the attack roll and to the damage from the target's byte +$9F (CreatureType of TCharacter, purpose unknown
   [?]): TargetCodeTen gives FireBonusForTen (1), TargetCodeNine or TargetCodeTwelve give FireBonusForNineTwelve (2),
   TargetCodeFour gives FireBonusForFour (3), any other value gives 0. The damage kind becomes KindFire or KindMagic
   (fire, plus the magic bit 8, ovl24:13E4). Runs for affect $06 (id 6, ovl12_e1 [V]). }
@@ -450,7 +450,7 @@ var
   Bonus: Byte;
 begin
   AttackTarget := Who^.Combat^.Target;
-  case AttackTarget^.Pad9F of
+  case AttackTarget^.CreatureType of
     TargetCodeTen: Bonus := FireBonusForTen;
     TargetCodeNine, TargetCodeTwelve: Bonus := FireBonusForNineTwelve;
     TargetCodeFour: Bonus := FireBonusForFour;
@@ -657,14 +657,14 @@ begin
 end;
 { ovl12:0679. Affect handler (the AffectHandlers shape: Who, Affect and Mode; only Who is read). It copies the
   character Who attacked last (Who's combat Target) into AttackTarget, as BoostAttackAgainstTarget does. When that
-  character's +$9F (Pad9F) and CombatSize (+$6C) are both 1, AttackRoll gains 1 for each of the names
+  character's +$9F (CreatureType) and CombatSize (+$6C) are both 1, AttackRoll gains 1 for each of the names
   ds0332[1..4] the character's name equals. Runs for affect $12 (id 18, ovl12_e1 [V]). }
 procedure BoostAttackVsListedTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   I: Byte;
 begin
   AttackTarget := Who^.Combat^.Target;
-  if (AttackTarget^.Pad9F = 1) and (AttackTarget^.CombatSize = 1) then
+  if (AttackTarget^.CreatureType = 1) and (AttackTarget^.CombatSize = 1) then
     for I := 1 to 4 do
       if AttackTarget^.Name = ds0332[I] then
         Inc(AttackRoll);
@@ -762,14 +762,14 @@ begin
 end;
 { ovl12:0947. Affect handler (the AffectHandlers shape: Who, Affect and Mode; only Who is read). The twin of
   BoostAttackVsListedTarget (ovl12:0679) with eight names: when the character Who attacked last (Who's combat
-  Target, copied into AttackTarget) has Pad9F and CombatSize (+$6C) both 1, AttackRoll gains 1 for each of
+  Target, copied into AttackTarget) has CreatureType and CombatSize (+$6C) both 1, AttackRoll gains 1 for each of
   the names ds0382[1..8] that the character's name equals. Runs for affect $1A (id 26, ovl12_e1 [V]). }
 procedure BoostAttackVsEightListed(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   I: Byte;
 begin
   AttackTarget := Who^.Combat^.Target;
-  if (AttackTarget^.Pad9F = 1) and (AttackTarget^.CombatSize = 1) then
+  if (AttackTarget^.CreatureType = 1) and (AttackTarget^.CombatSize = 1) then
     for I := 1 to 8 do
       if AttackTarget^.Name = ds0382[I] then
         Inc(AttackRoll);
@@ -839,7 +839,7 @@ begin
   Who^.BaseMovement := 12;
   if Who^.B84 = ComputerRunMorale then
     Who^.B84 := 0;
-  Who^.Pad9F := 0;
+  Who^.CreatureType := 0;
 end;
 { 0BAC. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). Takes AttackPenalty
   off AttackRoll, ResistPenalty off Who's ResistValue (+$111) and off ds112 (+$112, the byte CoughStopsCasting
@@ -1047,7 +1047,7 @@ begin
 end;
 { ovl12:11F9. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000). It copies
   the character Who attacked last (Who's combat Target, TCombatant at +$108 of Who, MeleeAttack sets it in ovl08) into
-  AttackTarget. When the selected character has Pad9F (+$9F of TCharacter, not named yet) set to 1 and its
+  AttackTarget. When the selected character has CreatureType (+$9F of TCharacter, not named yet) set to 1 and its
   CombatSize has footprint kind 2 (bits 0..6 of +$6C), AttackRoll loses AttackPenalty for each of the names ds0402[1..8]
   that the target's name equals. Runs for affect $2F (id 47, ovl12_e1 [V]). }
 procedure LowerAttackVsEightListed(Who: PCharacter; Affect: PAffect; Mode: Byte);
@@ -1055,17 +1055,17 @@ var
   I: Byte;                      { the name row 1..8 of ds0402 }
 begin
   AttackTarget := Who^.Combat^.Target;
-  if (SelectedCharacter^.Pad9F = 1) and ((SelectedCharacter^.CombatSize and CombatKindMask) = 2) then
+  if (SelectedCharacter^.CreatureType = 1) and ((SelectedCharacter^.CombatSize and CombatKindMask) = 2) then
     for I := 1 to 8 do
       if AttackTarget^.Name = ds0402[I] then
         Dec(AttackRoll, AttackPenalty);
 end;
 { ovl12:1276. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). When the selected
-  character has Pad9F (+$9F of TCharacter, not named yet) set to 1 and its name is 'BUGBEAR' or 'GNOLL', AttackRoll
+  character has CreatureType (+$9F of TCharacter, not named yet) set to 1 and its name is 'BUGBEAR' or 'GNOLL', AttackRoll
   loses AttackPenalty. Runs for affect $30 (id 48, ovl12_e1 [V]). }
 procedure LowerAttackIfSelectedIsBugbearOrGnoll(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
-  if SelectedCharacter^.Pad9F = 1 then
+  if SelectedCharacter^.CreatureType = 1 then
     if (SelectedCharacter^.Name = 'BUGBEAR') or (SelectedCharacter^.Name = 'GNOLL') then
       Dec(AttackRoll, AttackPenalty);
 end;
