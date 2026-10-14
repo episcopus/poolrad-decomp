@@ -450,7 +450,7 @@ begin
   end;
 end;
 { ovl08:0E45. The Done command's menu for Who: Guard (offered unless Not with that weapon would
-  apply, res12_fn_2686), Delay (initiative InitiativeLast: act at the end of the round), Quit (end
+  apply, GuardTurn), Delay (initiative InitiativeLast: act at the end of the round), Quit (end
   the turn), Bandage (when BandageDying finds a dying party member), Speed (GameSpeedMenu) and
   Exit. Repeats until Exit, Esc or a command that ends the turn. }
 procedure EndTurnMenu(Who: PCharacter; var Done: Byte);
@@ -469,7 +469,7 @@ begin
   begin
     Key := ReadPromptChoice('', Menu, $D, $A, MenuColors, 0, 0, ds6E31);
     case Key of
-      'G': Done := res12_fn_2686(Who);
+      'G': Done := GuardTurn(Who);
       'D':
       begin
         Who^.Combat^.Initiative := InitiativeLast;

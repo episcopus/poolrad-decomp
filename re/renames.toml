@@ -3679,3 +3679,10 @@ kind = "routine"
 why = "00BA:2637 clears the pending spell, initiative, guard byte and movement left of Who's combat state and returns 1; ovl08/ovl09/ovl13 call it on every path that ends a combatant's turn (Quit, self-end checks, AI turn end)"
 date = "2026-10-13"
 
+[[rename]]
+old = "res12_fn_2686"
+new = "GuardTurn"
+kind = "routine"
+why = "00BA:2686 calls EndCombatTurn(Who), sets the combat guard byte B7 (+7) to 1 and flashes 'Guarding'; ovl08:0E45 binds it to the Guard menu key and ovl09_fn_0F4F uses it as the AI's fallback turn"
+date = "2026-10-13"
+

@@ -606,7 +606,7 @@ Finish:
   AiTurn := Ord(CanAct = 0);
 end;
 { ovl09:0F4F. Purpose unknown: returns EndCombatTurn(Who) when IsHelpless(Who) or
-  res12_fn_2E03(Who) is true or the combatant's Initiative is 0, else res12_fn_2686(Who).
+  res12_fn_2E03(Who) is true or the combatant's Initiative is 0, else GuardTurn(Who).
   Called by QuickTurn (ovl09:01EE) and from the 07F2 and 0B3C regions. ClearCharacterMessage runs first
   (parameterless). }
 function ovl09_fn_0F4F(Who: PCharacter): Byte;
@@ -615,7 +615,7 @@ begin
   if IsHelpless(Who) or res12_fn_2E03(Who) or (Who^.Combat^.Initiative = 0) then
     ovl09_fn_0F4F := EndCombatTurn(Who)
   else
-    ovl09_fn_0F4F := res12_fn_2686(Who);
+    ovl09_fn_0F4F := GuardTurn(Who);
 end;
 { ovl09:0FC1. Handles a key pressed during the computer's combat turn (called by
   QuickTurn and the 07F2 region, who act when it returns True). Alt-M toggles the ds6E30 Magic

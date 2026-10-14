@@ -16960,12 +16960,12 @@ id = "00BA:2686"
 unit = "res12"
 addr = "00BA:2686"
 size = 60
-name = "res12_fn_2686"
-signature = "function res12_fn_2686(Who: Pointer): Byte"
+name = "GuardTurn"
+signature = "function GuardTurn(Who: Pointer): Byte"
 c_name = "res12_fn_2686"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_2686 (00BA:2686 calls EndCombatTurn(Who), sets the combat guard byte B7 (+7) to 1 and flashes 'Guarding'; ovl08:0E45 binds it to the Guard menu key and ovl09_fn_0F4F uses it as the AI's fallback turn); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
