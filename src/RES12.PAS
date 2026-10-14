@@ -1,10 +1,21 @@
 unit RES12;
-{ res12: the resident helper unit the overlays call for characters, items and combat. It
-  recomputes the combat values (RecalcCombatValues and ApplyWeaponBonuses) and the strength,
-  dexterity, weight and damage figures (1168, 1282, 1325, 13AB, 2228, 2199); it draws the shop
-  screen and its item prompts (27D9, 0767, called by ShopMain, whitepaper 5.4), shows the
-  per-character messages (16EC, 1FEB) and dispatches the area view (27D9, 2B5E, whitepaper 5.2.1).
-  FormatItemLine (0442) builds an item menu line's text from the DS:10A7 name parts (whitepaper 5.24). }
+{ res12: the resident helper unit the overlays call for character, item, view and combat work
+  (whitepaper 5.24). It recomputes a character's combat values (RecalcCombatValues,
+  ApplyWeaponBonuses, SetArmourMovement, AddReadiedItemBonus, CapMovementByLoad), the strength
+  figures (StrengthRowIndex, StrengthAttackAdjustment, StrengthDamageAdjustment,
+  StrengthWeightAllowance), the dexterity figures (DexterityAdjustment,
+  DexterityAttackAdjustment), the race level cap (IsMaxClassLevel) and the spell caster level
+  (SpellCasterLevel), and formats numbers (ByteToText, WordToText, LongIntToText). It draws the
+  character panels (DrawPartyRoster, DrawArmourClass, DrawHitPoints, DrawCharacterPanel), the
+  view dispatcher and its screens (RedrawView, DrawViewWindows, DrawLocationLine,
+  DrawWildernessScreen, DrawCombatScreen) and the character messages and names
+  (ShowCharacterMessage, ClearCharacterMessage, ShowFlashMessage, DrawCharacterName), builds an
+  item menu line from the DS:10A7 name parts (FormatItemLine) and picks a party member
+  (SelectPartyMember). Its combat-side helpers are ApplyDamage, RecountCombatSides, OpposingSide,
+  CollectEnemiesInRange, DistanceToTarget, EndCombatTurn and GuardTurn; its weapon helpers
+  IsRangedWeapon, RangedWeaponCanMelee and ChooseAttackItem; its combat animation WalkCombatLine,
+  ShowHitMessage, CopyPictureItem and DrawCombatIcon; and its inventory list helpers
+  RemoveInventoryItem and AddItemCopy. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 uses Crt, POOLVARS, RES03, RES06, RES07, RES09, OVL25, OVL26, OVL27, OVL28, OVL30, OVL31;
