@@ -269,3 +269,30 @@ tags = ["freemem", "pointer", "record-size", "match"]
 title = "FreeMem of a typed record pointer pushes the pointer value and the record size"
 lesson = "FreeMem(Cloud, SizeOf(TCombatNode)) in ClearCloud (ovl12:0CC3) matches the original's push of the pointer's two words and the constant $13 (the record size, also CombatNodeSize in ovl08:0029): SizeOf gives the same constant as the original's literal."
 evidence = ["src/OVL12.PAS#ClearCloud", "src/POOLVARS.PAS#TCombatNode"]
+
+[[lesson]]
+id = "map-entry-inside-routine-removed"
+confidence = "V"
+units = ["*"]
+tags = ["map", "phantom", "far_call", "entry", "match-write"]
+title = "A map entry in the middle of a routine (no prologue, pushes straddle it) is not a routine"
+lesson = "The map listed ovl12:1307 as a routine (auto:far_call) and ovl12:12FB as a 12-byte routine. The bytes at 12FB push Who and 50, and the bytes at 1307 push Data and 14400 for the same TryAddAffect call, with no push bp at 1307 and no caller of 1307. Matched as one routine (AddHealingBlockAndHeal, 68 bytes), `make match WRITE=1` removed the 1307 entry; no separate Pascal can produce its bytes. Look for a prologue and for a call's argument pushes split across an entry before writing a `_fn_` routine."
+evidence = ["src/OVL12.PAS#AddHealingBlockAndHeal", "re/symbols.toml#ovl12:12FB"]
+
+[[lesson]]
+id = "literal-compare-no-copy-in-overlay"
+confidence = "V"
+units = ["ovl12"]
+tags = ["string", "literal", "compare", "overlay", "O+", "codegen"]
+title = "A string literal compared with a string field is passed by address, not copied, under $O+"
+lesson = "LowerAttackIfSelectedIsBugbearOrGnoll (ovl12:1276) compares SelectedCharacter^.Name with 'BUGBEAR' and 'GNOLL'. The original pushes the literal's code-segment address directly (`push cs; mov di, 1268h; push di`) before System_StrCompare (0AF8:0C10), with no 0AF8:0B0B copy into a stack temporary, unlike a literal passed to a string parameter (res12_fn_16EC). The two literal pools (14 bytes) sit right before the routine. Matched on the first try with the plain `=` form."
+evidence = ["src/OVL12.PAS#LowerAttackIfSelectedIsBugbearOrGnoll", "re/symbols.toml#ovl12:1276"]
+
+[[lesson]]
+id = "array-index-constant-gives-base"
+confidence = "V"
+units = ["ovl12"]
+tags = ["array", "index", "base", "dseg", "codegen", "string"]
+title = "An array[1..8] of string[15] index compiles to base - 16 plus 16*I"
+lesson = "For ds0382: array[1..8] of string[15] at DS:0382, BoostAttackVsEightListed (ovl12:0947) adds the constant 372h and shl 4 of I, which is 382h - 16 + 16*I. ovl12:11F9 uses 3F2h + 16*I, so its table starts at DS:0402, the byte after ds0382 (declared as ds0402 in POOLVARS.PAS, its text not read yet). Reading the constant of the index gives the table's base without the map."
+evidence = ["src/POOLVARS.PAS#ds0402", "src/OVL12.PAS#LowerAttackVsEightListed", "re/symbols.toml#ovl12:0947"]
