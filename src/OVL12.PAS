@@ -128,7 +128,7 @@ procedure GiveExceptionalStrength(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e113(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ShowMustHaveGiantStrength(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure RemoveAffect17WhenRemoved(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e116;
+procedure ovl12_e116(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e1;
 procedure ovl12_fn_31D7;
 procedure ovl12_fn_3262;
@@ -2243,8 +2243,13 @@ begin
   if Mode <> 0 then
     RemoveAffect(Who, AffectUnknown17, nil);
 end;
-{ ovl12:319B: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e116; begin end;
+{ ovl12:319B. Purpose unknown: an affect handler with the AffectHandlers shape (Who, Affect and Mode, ovl24:0000)
+  that does nothing: no parameter is read and no global is written, the same code as IgnoreAffect (ovl12:0647).
+  It is the handler (stub entry 116, value 0264) of the affects 5, 13, 19, 24, 27, 60, 63, 92 and 127 in the
+  AffectHandlers table (DS:6828). }
+procedure ovl12_e116(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+end;
 { ovl12:31A2: frame not read }
 {@stub} procedure ovl12_e1; begin end;
 { ovl12:31D7: frame not read }
