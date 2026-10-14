@@ -7429,7 +7429,7 @@ signature = ""
 c_name = "ovl16_fn_1AF1"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 7: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:22EB is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:22E9) followed by add di,ax (03 f8), read as a call whose bogus rel16 targets 0x1AF1; 0x1AF1 lies inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). 0x1AF1 is an instruction boundary but not a routine start. make match UNIT=ovl16 FN=ovl16_fn_1AF1 reports only the stub; there is no Pascal to write for a mid-routine instruction boundary. Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -7442,7 +7442,7 @@ signature = ""
 c_name = "ovl16_fn_1B1A"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 7: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:2314 is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:2312) followed by add di,ax (03 f8), read as a call whose bogus rel16 targets 0x1B1A; 0x1B1A is mid-instruction (the second byte of mov di,ax, 8b f8, at ovl16:1B19) and lies inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -7455,7 +7455,7 @@ signature = ""
 c_name = "ovl16_fn_1B41"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 7: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:233B is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:2339) followed by add di,ax (03 f8), read as a call whose bogus rel16 targets 0x1B41; 0x1B41 is mid-instruction (the last byte of mov dl,[di+0x3DB2], 8a 95 b2 3d, at ovl16:1B3E) and lies inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -7468,7 +7468,7 @@ signature = ""
 c_name = "ovl16_fn_1B64"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 7: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:235E is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:235C) followed by add di,ax (03 f8), read as a call whose bogus rel16 targets 0x1B64; 0x1B64 is mid-instruction (the last byte of mov dl,[di+0x3DB2], 8a 95 b2 3d, at ovl16:1B61) and lies inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -7481,7 +7481,7 @@ signature = ""
 c_name = "ovl16_fn_1BAB"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 7: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:23A5 is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:23A3) followed by add di,ax (03 f8), read as a call whose bogus rel16 targets 0x1BAB; 0x1BAB is mid-instruction (the second byte of mov al,es:[di+0x2F] (26 8a 45 2f) at ovl16:1BAA) and lies inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -7494,7 +7494,7 @@ signature = ""
 c_name = "ovl16_fn_1BD2"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 7: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:23CC is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:23CA) followed by add di,ax (03 f8), read as a call whose bogus rel16 targets 0x1BD2; 0x1BD2 lies inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). 0x1BD2 is an instruction boundary but not a routine start. Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
