@@ -3441,3 +3441,10 @@ kind = "routine"
 why = "ECL command 3: the dispatcher ovl03:2F2D calls it for SkippedOpcode 3 (cmp al,3 then call 0126); it compares two operands with CompareStrings or CompareWords, which set the flags the conditional commands test (ovl07:1815, 18EB)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl03_fn_01A3"
+new = "ArithmeticCommand"
+kind = "routine"
+why = "ECL commands 4 to 7: the dispatcher ovl03:2F2D calls it for SkippedOpcode 4 to 7 (cmp al,4..7 then call 01A3); it combines two operand values (add, sub, div, mul, ovl03:01E9..0222) and writes the answer with WriteVmWord (ovl07:0C77)"
+date = "2026-10-13"
+

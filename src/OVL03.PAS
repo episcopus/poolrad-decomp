@@ -9,7 +9,7 @@ procedure EndCommand;
 procedure GotoCommand;
 procedure GosubCommand;
 procedure CompareCommand;
-procedure ovl03_fn_01A3;
+procedure ArithmeticCommand;
 procedure ovl03_fn_0234;
 procedure ovl03_fn_0245;
 procedure ovl03_fn_0275;
@@ -118,6 +118,11 @@ const
   { The operand types from this one up are strings: $80 a packed string, $81 the address of a
     stored one (DecodeOperands in OVL07). }
   FirstStringOperandType = $80;
+  { The opcodes of the arithmetic commands (ovl03:01A3). }
+  OpAdd = 4;
+  OpSub = 5;
+  OpDiv = 6;
+  OpMul = 7;
 
 { ovl03:0001. The ECL command 0, the only command that takes no operands (the dispatcher at
   ovl03:2F2D calls it for SkippedOpcode 0). It clears the text windows when ds84E2 is set (the
@@ -194,8 +199,31 @@ begin
     CompareWords(LeftWord, RightWord);
   end;
 end;
-{ ovl03:01A3: retf 0: 0 bytes of parameters; 10 bytes of locals }
-{@stub} procedure ovl03_fn_01A3; begin end;
+{ ovl03:01A3. ECL commands 4 to 7 (dispatcher ovl03:2F2D, SkippedOpcode OpAdd, OpSub, OpDiv or
+  OpMul): the values of the first two operands are combined and the answer is written with
+  WriteVmWord to the script address the third operand names. Division and multiplication keep the
+  low word of the answer. QUIRK ovl03:01FC: subtraction takes the second value minus the first,
+  while division takes the first over the second. }
+procedure ArithmeticCommand;
+var
+  Target: Word;
+  Values: array[1..2] of Word;
+  I: ShortInt;
+  Answer: Word;
+  Unused: Byte;                 { QUIRK ovl03:01A3: a byte of the frame nothing uses }
+begin
+  DecodeOperands(3);
+  for I := 1 to 2 do
+    Values[I] := OperandValue(I);
+  Target := MakeWord(OperandLow[3], OperandHigh[3]);
+  case SkippedOpcode of
+    OpAdd: Answer := Values[1] + Values[2];
+    OpSub: Answer := Values[2] - Values[1];
+    OpDiv: Answer := Values[1] div Values[2];
+    OpMul: Answer := Values[1] * Values[2];
+  end;
+  WriteVmWord(Target, Answer);
+end;
 { ovl03:0234: frame not read }
 {@stub} procedure ovl03_fn_0234; begin end;
 { ovl03:0245: frame not read }

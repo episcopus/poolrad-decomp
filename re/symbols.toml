@@ -173,12 +173,12 @@ id = "ovl03:01A3"
 unit = "ovl03"
 addr = "ovl03:01A3"
 size = 145
-name = "ovl03_fn_01A3"
+name = "ArithmeticCommand"
 signature = ""
 c_name = "ovl03_fn_01A3"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_01A3 (ECL commands 4 to 7: the dispatcher ovl03:2F2D calls it for SkippedOpcode 4 to 7 (cmp al,4..7 then call 01A3); it combines two operand values (add, sub, div, mul, ovl03:01E9..0222) and writes the answer with WriteVmWord (ovl07:0C77)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
