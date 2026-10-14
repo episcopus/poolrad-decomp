@@ -26,7 +26,7 @@ uses Crt, RES04, RES05, RES06, RES12, OVL13, OVL19, OVL22, OVL24, OVL25, OVL30, 
 
 const
   KeyAltM = '2';                { Alt-M: Magic On / Magic Off (ovl08 calls it KeyAltM too) }
-  KeyAltX = '-';                { Alt-X: ovl13_e24 decides }
+  KeyAltX = '-';                { Alt-X: GodsIntervene decides }
   InitiativeQuickAll = $14;     { Initiative marking a quick-combat character (ovl08: InitiativeQuickAll) }
   VarNoCasting = 229;           { game variable (+$1CA) that hides Cast (ovl08: VarNoCasting) }
   MaxSpell = $38;               { highest spell number (ovl23: LastSpell) }
@@ -65,7 +65,7 @@ const
   pending spell (Combat^.PendingSpell; ovl22_e5, end of turn), take the Turn action (TryTurnUndead,
   Turn Undead for a cleric, end of turn), cast a memorized spell (CastMemorizedSpell, Done := 1), use
   the best item (UseBestItem) and read keys again (HandleCombatKey); with Done clear it loops on
-  ovl13_e21(Who, $FF, 1, 0): an initiative above 0 runs AiTurn, else the turn ends through
+  ChooseCombatTarget(Who, $FF, 1, 0): an initiative above 0 runs AiTurn, else the turn ends through
   ovl09_fn_0F4F. Globals: none. QUIRK: ovl22_e5's var result is overwritten at once. }
 procedure QuickTurn(Who: PCharacter);
 var
@@ -118,28 +118,28 @@ begin
   Done := Ord(HandleCombatKey(Who));
   while Done = 0 do
   begin
-    if ovl13_e21(Who, $FF, 1, 0) and (Who^.Combat^.Initiative > 0) then
+    if ChooseCombatTarget(Who, $FF, 1, 0) and (Who^.Combat^.Initiative > 0) then
       Done := AiTurn(Who)
     else
       Done := ovl09_fn_0F4F(Who);
   end;
 end;
 { ovl09:0203 (TryTurnUndead). The computer's Turn action, Turn Undead for a cleric: it returns True
-  and calls ovl13_e9 (the Turn of PlayerTurn's T case, src/OVL08.PAS:220) when the combatant has not
+  and calls TurnUndead (the Turn of PlayerTurn's T case, src/OVL08.PAS:220) when the combatant has not
   turned yet (Combat.Turned is 0), has a level in class 0 (ClassLevels[0] above 0; CombatMenu offers
-  Turn on the same two tests, ovl08:0795) and ovl13_e10 agrees (ovl13_e10 is not named yet); else it
+  Turn on the same two tests, ovl08:0795) and SelectTurnUndeadTarget agrees; else it
   returns False. Called by QuickTurn (ovl09:0170): a True result ends the turn through EndCombatTurn.
-  Unused fills the two frame bytes the code never reads ([bp-2..-4]; B at [bp-5] is ovl13_e10's var
-  parameter). }
+  Unused fills the two frame bytes the code never reads ([bp-2..-4]; Done at [bp-5] is
+  SelectTurnUndeadTarget's untyped var parameter). }
 function TryTurnUndead(Who: PCharacter): Boolean;
 var
   Unused: array[0..2] of Byte;
   Done: Byte;
 begin
-  if (Who^.Combat^.Turned = 0) and (Who^.ClassLevels[0] > 0) and ovl13_e10(Who, Done) then
+  if (Who^.Combat^.Turned = 0) and (Who^.ClassLevels[0] > 0) and SelectTurnUndeadTarget(Who, Done) then
   begin
     TryTurnUndead := True;
-    ovl13_e9(Who);
+    TurnUndead(Who);
   end
   else
     TryTurnUndead := False;
@@ -147,7 +147,7 @@ end;
 { ovl09:02EB (SpellAccepted). Decides whether the AI accepts spell Spell cast at Range by Who
   (UseMagicItem 03E4 and CastMemorizedSpell 0545 keep what it accepts). Refuses at once when the
   spell row's +$D byte is below Range. A spell other than 3 whose +$E byte is 0, and spell 3 when
-  ovl13_e13(Who, Done) agrees, are accepted at once. Otherwise CollectEnemiesInRange collects Who's
+  FindNearbyTarget(Who, Done) agrees, are accepted at once. Otherwise CollectEnemiesInRange collects Who's
   enemies the area pattern of ovl22_e3(Spell) reaches (ds6DE4, count Tries): a zero count refuses,
   a zero +$F byte accepts; else each collected enemy is asked through the nested
   DifferentSideInArea, a Yes refuses the spell and a No (or no enemy at all) accepts it.
@@ -181,7 +181,7 @@ begin
   if SpellTable[Spell].PadB[$D] < Range then
     Exit;
   if ((Spell <> 3) and (SpellTable[Spell].PadB[$E] = 0)) or
-     ((Spell = 3) and ovl13_e13(Who, Done)) then
+     ((Spell = 3) and FindNearbyTarget(Who, Done)) then
   begin
     SpellAccepted := True;
     Exit;
@@ -274,7 +274,7 @@ end;
   and the actor's side count ds6814Sides[OpposingSide(Who)] is above 0. Then RollDice(1, 7) rounds
   run with the level starting at 7 and falling by one per round: each round tries up to three random
   memorized spells through SpellAccepted (Who, Spell, Level) and casts the first accepted one through
-  ovl13_e15 (the Cast of CombatMenu). This routine does not read VarNoCasting (CombatMenu hides Cast
+  CastCombatSpell (the Cast of CombatMenu). This routine does not read VarNoCasting (CombatMenu hides Cast
   with it) or CanUseMagicItem (UseMagicItem's gate). QUIRK: the [bp-0x17..-0x1A] and [bp-0x24] frame
   bytes are never read (UnusedC, UnusedD). Globals: ds6814Sides (ds6814), ds6E30. }
 function CastMemorizedSpell(Who: PCharacter): Byte;
@@ -330,7 +330,7 @@ begin
   end;
 Done:
   if Chosen > 0 then
-    ovl13_e15(Chosen, 1, CastDone)
+    CastCombatSpell(Chosen, 1, CastDone)
   else
     CastDone := 0;
   CastMemorizedSpell := CastDone;
@@ -384,14 +384,14 @@ end;
   ovl09:0BD3 and 0D7C; the caller loops while the turn lasts): shows 'Move/Attack, Move Left = n'
   with DrawTextAt(0, 24, 10, ...), lets HandleCombatKey interrupt (True ends the step), then gives
   up on the same NoStep path when no half-move is left, the initiative is gone, or a magic-user
-  (ClassMask 5) is not panicking. A clear Panic byte +$14 asks ovl13_e18(Who, Combat^.Target) for
+  (ClassMask 5) is not panicking. A clear Panic byte +$14 asks BearingTo(Who, Combat^.Target) for
   the direction; a panicking one rerolls the step pattern (StepPattern, RollDice(1, 2)) and derives a
   direction from the party marker facing PartyFacing (+ 4 on the party side, mod 8). The step then tries
   patterns Step = 1..5 while CanAffordStep refuses them (a panicking actor that is off the map ends
-  through ovl13_e5); with no affordable step, or one that would step back (ds443C = (Turn + 4)
+  through TryFlee); with no affordable step, or one that would step back (ds443C = (Turn + 4)
   mod 8), the pattern is advanced (ds443D counts the turns) and the actor may instead end the turn
-  through ovl09_fn_0F4F or ovl13_e21. A step taken sets the icon (SetCombatantIcon with the turn),
-  runs ovl13_e4 (or ovl13_e3 once Flag10D is set past it) and ApplyCloudTile; an ending turn runs
+  through ovl09_fn_0F4F or ChooseCombatTarget. A step taken sets the icon (SetCombatantIcon with the turn),
+  runs PartingShots (or StepCombatant once Flag10D is set past it) and ApplyCloudTile; an ending turn runs
   EndCombatTurn. QUIRK: the jumps to MoveEnd and from there to Finish (ovl09:0B27) are the
   original's; NoStep only computes ovl09_fn_0F4F. Globals: PartyFacing, ds443C, ds443D. }
 procedure MoveStep(Who: PCharacter);
@@ -415,7 +415,7 @@ begin
   if (Who^.Combat^.Panic = 0) and (Who^.ClassMask = 5) then
     goto NoStep;
   if Who^.Combat^.Panic = 0 then
-    Dir := ovl13_e18(Who, Who^.Combat^.Target)
+    Dir := BearingTo(Who, Who^.Combat^.Target)
   else
   begin
     Who^.Combat^.StepPattern := RollDice(1, 2);
@@ -431,7 +431,7 @@ begin
         not CanAffordStep(Who, Step, Dir, OffMap) do
   begin
     if (Who^.Combat^.Panic <> 0) and (OffMap <> 0) then
-      Done := ovl13_e5(Who)
+      Done := TryFlee(Who)
     else
       Inc(Step);
   end;
@@ -457,7 +457,7 @@ begin
         Done := 1;
         goto CheckStep;
       end;
-      if not ovl13_e21(Who, $FF, 1, 0) then
+      if not ChooseCombatTarget(Who, $FF, 1, 0) then
         Done := ovl09_fn_0F4F(Who);
     end;
   end;
@@ -470,13 +470,13 @@ AfterMove:
   if Done <> 0 then
     goto MoveEnd;
   SetCombatantIcon(Who, Turn, 0, 0);
-  ovl13_e4(Who, Who^.Combat^.IconSet);
+  PartingShots(Who, Who^.Combat^.IconSet);
   if Who^.Flag10D = 0 then
   begin
     Done := EndCombatTurn(Who);
     goto MoveEnd;
   end;
-  ovl13_e3(Who, Who^.Combat^.IconSet);
+  StepCombatant(Who, Who^.Combat^.IconSet);
   if Who^.Flag10D = 0 then
     Done := EndCombatTurn(Who);
   ApplyCloudTile(Who);
@@ -498,10 +498,10 @@ end;
   Range byte (+$C) of the item in slot 0 (SlotItems[0], +$CC) minus 1; a result of 0 or $FF (a Range of
   0 or 1) becomes 1. The remembered Combat^.Target is dropped when it is not dying or is on the party
   side. A target is attacked when line of sight (WalkLine, step count halved) reaches it within Range
-  and ovl13_e8 allows it; otherwise a random enemy of the CollectEnemiesInRange(Who, Range) scan (ds6DE4) is
+  and AttackTargetAllowed allows it; otherwise a random enemy of the CollectEnemiesInRange(Who, Range) scan (ds6DE4) is
   picked, or UseBestItem chooses one when IsRangedWeapon holds, RangedWeaponCanMelee does not and a 1-step
-  scan finds an enemy. The attack runs ovl13_e7/e11/e12 and ends the turn through EndCombatTurn.
-  Result: 1 when the turn is over (CanAct = 0). The arguments of ovl13_e21 ($FF, 0, 0) are Purpose unknown.
+  scan finds an enemy. The attack runs SweepEnemies/e11/e12 and ends the turn through EndCombatTurn.
+  Result: 1 when the turn is over (CanAct = 0). The arguments of ChooseCombatTarget ($FF, 0, 0) are Purpose unknown.
   QUIRK ovl09:0C8E: Target := Combat^.Target is
   dereferenced (Target^.Flag10D at 0C91, Target^.Side at 0C9C) before its nil test at 0CAC, so a
   character with no remembered target reads through a nil pointer. QUIRK: [bp-3] is reused for
@@ -565,7 +565,7 @@ Loop:
   if (Target^.Flag10D = 0) or (Target^.Side = 0) then
     Target := nil;
   if Target <> nil then
-    if ovl13_e8(Who, Target) then
+    if AttackTargetAllowed(Who, Target) then
     begin
       TargetX := CombatantX(Target);
       TargetY := CombatantY(Target);
@@ -580,7 +580,7 @@ Loop:
   Count := CollectEnemiesInRange(Who, Range);
   if Count = 0 then
   begin
-    if ovl13_e21(Who, $FF, 0, 0) then
+    if ChooseCombatTarget(Who, $FF, 0, 0) then
       MoveStep(Who)
     else
       Done := ovl09_fn_0F4F(Who);
@@ -596,20 +596,20 @@ Loop:
         Done := 1;
         goto Attack;
       end;
-  if (DistanceToTarget(Who, Target) = 1) or ovl13_e8(Who, Target) then
+  if (DistanceToTarget(Who, Target) = 1) or AttackTargetAllowed(Who, Target) then
     Flag := 1;
 Attack:
   if Flag <> 0 then
     MoveCombatCursor(CombatantX(Who), CombatantY(Who), 2,
-      ovl13_e18(Who, Target));
+      BearingTo(Who, Target));
   if Flag = 0 then
     goto Next;
-  if ovl13_e7(Who, Target) then
+  if SweepEnemies(Who, Target) then
   begin
     Done := EndCombatTurn(Who);
     goto Next;
   end;
-  ovl13_e11(Who, Target);
+  NoteAttackBearing(Who, Target);
   Aim := nil;
   if IsRangedWeapon(Who) then
   begin
@@ -617,7 +617,7 @@ Attack:
     if RangedWeaponCanMelee(Who) and (DistanceToTarget(Who, Target) = 1) then
       Aim := nil;
   end;
-  ovl13_e12(Who, Target, 0, Aim, Done);
+  PerformAttack(Who, Target, 0, Aim, Done);
   if Done <> 0 then
   begin
     CanAct := 0;
@@ -646,7 +646,7 @@ end;
   QuickTurn and the 07F2 region, who act when it returns True). Alt-M toggles the ds6E30 Magic
   flag with the same 'Magic On'/'Magic Off' message as PlayerTurn (ovl08:031A); Space clears
   Quick on every party member (B84 below $80, Status not 1) and, when Who is not quick yet,
-  marks Who quick (Initiative := InitiativeQuickAll) and returns True; Alt-X asks ovl13_e24.
+  marks Who quick (Initiative := InitiativeQuickAll) and returns True; Alt-X asks GodsIntervene.
   QUIRK ovl09:10AA: the Alt-X answer is tested and nothing happens either way (empty then).
   QUIRK ovl09:0FD2: the KeyPressed test is inverted with an empty then-branch (if not
   KeyPressed then else). FlushKeyboard always runs at the end. }
@@ -687,7 +687,7 @@ begin
           end;
         end;
       KeyAltX:
-        if ovl13_e24 then
+        if GodsIntervene then
         begin
         end;
     end;
@@ -704,8 +704,8 @@ end;
   div HpMax; Flag11B is the current hit points) or is zero. Then ds6825 takes ds6E2F, the hook runs
   again, and the second test holds when it is below 100 minus ds49D6^[Var2Morale] (word 710 of the
   second game word block, $6B00..$6EFF, not GameVars; the morale source of ovl10), or is zero, or Who
-  is on the party side (Side 0). Only when both tests hold is there a roll: ovl13_e20 at or below half
-  of ovl13_e2's value sets Panic and removes affects $4A and $4B (the character panics and the turn
+  is on the party side (Side 0). Only when both tests hold is there a roll: FastestEnemyMovement at or below half
+  of ComputeMovement's value sets Panic and removes affects $4A and $4B (the character panics and the turn
   goes on); a higher roll with Intelligence above 5 surrenders (DropCombatant(Who, 4, 'Surrenders'),
   result EndCombatTurn(Who)); otherwise nothing happens. QUIRK ovl09:1141: the B84 gate is an inverted
   test with an empty then-branch. QUIRK ovl09:11AD: Saved6825 is saved from ds6825 and never used.
@@ -737,8 +737,8 @@ begin
       RunAffectHooks($11, Who);
       if (ds6825 < 100 - ds49D6^[Var2Morale]) or (ds6825 = 0) or (Who^.Side = 0) then
       begin
-        E20Result := ovl13_e20(Who);
-        if E20Result <= ovl13_e2(Who) div 2 then
+        E20Result := FastestEnemyMovement(Who);
+        if E20Result <= ComputeMovement(Who) div 2 then
         begin
           Who^.Combat^.Panic := 1;
           RemoveAffect(Who, $4A, nil);
@@ -813,7 +813,7 @@ end;
   slot-0 item is readied through ReadyItem (the Ready Item entry that the whitepaper's overlay table
   lists for ovl19), the slot-1 item's Hands are taken off again when it is not cursed, and the pick is
   readied. After that
-  (SkipSlotUse) RecalcCombatValues and ovl13_e6 run, and HandsInUse decides: above HandThreshold (2) the
+  (SkipSlotUse) RecalcCombatValues and RefreshAttacks run, and HandsInUse decides: above HandThreshold (2) the
   slot-1 item is readied, or the pick when slot 1 is empty or cursed; below it the slot-1 item and then
   PlusPick are readied, unless slot 1 holds PlusPick or a cursed item. A use runs RecalcCombatValues, and a
   use at all ends with DrawCharacterPanel. Purpose unknown: the game names of the slot-0 and slot-1 items
@@ -939,7 +939,7 @@ begin
   Used := 1;
 SkipSlotUse:
   RecalcCombatValues(Who);
-  ovl13_e6(Who);
+  RefreshAttacks(Who);
   SlotUsable := 1;
   if Who^.SlotItems[1] <> nil then
     if (Who^.SlotItems[1] = PlusPick) or Who^.SlotItems[1]^.Cursed then

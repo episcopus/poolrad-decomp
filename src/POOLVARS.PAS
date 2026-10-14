@@ -392,9 +392,11 @@ type
     { +$112: RecalcCombatValues computes it (the sum of its frame bytes [bp-$B]..[bp-9] minus two);
       not read by a decompiled routine yet, meaning unknown. }
     ds112: Byte;
-    { +$113, +$114: part of the block RecalcCombatValues copies from the base block +$A2..+$A8 into
-      +$114..+$11A; not read by a decompiled routine yet, meaning unknown. }
-    Pad113: array[$113..$114] of Byte;
+    { +$113, +$114: two bytes indexed 1..2 by PartingShots, which picks the higher one that is nonzero
+      as its attack slot and sets it to 1 (ovl13:0B80..0BBA); StartCombatantRound writes entry 2
+      from the attack byte (ovl13:006E). What the pair counts is not settled. The lower bound is 1
+      so the compiler emits the same `add di, ax` addressing as the original. }
+    AttackSlots: array[1..2] of Byte;
     { +$115, +$117, +$119: the readied weapon's attack triple, each a pair of entries 1..2. RecalcCombatValues
       copies the base triple (+$A3, +$A5, +$A7) in and ApplyWeaponBonuses then overwrites entry 1 from
       the ItemTable row of the weapon's item kind (bytes 9, $A and $B). The AI's item score multiplies
@@ -575,9 +577,12 @@ var
   ds2612: Word;                   { word passed to PlaySound by QuitGame and the Ctrl-S pause path; meaning unknown }
   ds261A: Word;                   { the sound ShowHitMessage plays when Flag is clear; meaning unknown }
   ds261C: Word;                   { the sound ShowHitMessage plays when Flag is set (a hit); meaning unknown }
+  ds2620: Word;                   { the sound PlaySound plays as an attack animation leaves the attacker (ovl13:26B0) }
   ds260A: array[0..7] of Byte;    { 8-byte structure FillPictureRect copies from @ds260A (DrawWallDescriptors) }
   ds2622: Word;                   { word e1 passes to PlaySound when Done is 0; meaning unknown }
+  ds2626: Word;                   { word ResolveCombatantAttacks passes to PlaySound when nothing landed (ovl13:1774) }
   ds2628: Word;                   { word the ovl14 movement code passes to PlaySound; meaning unknown }
+  ds262C: Word;                   { the sound PlaySound plays as an attack animation reaches the target (ovl13:26B0) }
   { Five words, one per 8x8 tile bank, subtracted from the symbol number to index within the
     bank (Put8x8Symbol, ovl34:020F); evidence in re/dseg.toml. }
   SymbolBase: array[0..4] of Word;  { per-bank base symbol numbers; see above }
@@ -896,8 +901,16 @@ var
     $2C, $32, $39 in the image; ovl04:031E, 03A6). Entry 0, the byte before, is never read. }
   DiseaseAffects: array[0..6] of Byte;  { see above }
   ds681F: Byte;                   { 1 while the Temple removes affects (RemoveAffect; ovl04:0386, 05AB, 07CE), 0 after }
+  { Set to 1 once SelectSpellTargets has filled the target list ds6C91 from a spell's area scan (ovl13:2205),
+    never cleared by ovl13; ovl12:09C0 (ImageAbsorbsHit) lets an image take a hit only while this byte is 0. }
+  ds6820: Byte;
   PooledMoney: TPartyMoney;       { the Temple clears it on entry (ovl04:0D32) and passes it to MoneyValueInGold }
-  ds6C95: PCharacter;             { the character Remove Curse hands to ovl22_e9 (ovl04:08FA) }
+  { The spell targets SelectSpellTargets collects while a spell is aimed: entry I holds the PCharacter of a
+    target at DS:6C91 + (I-1)*4, entry 1 is the global ds6C95 below; entry 0 is never read (its
+    fourth byte is the count ds6C94, which overlaps the array). }
+  ds6C91: array[0..73] of PCharacter;  { 1-based spell target list; see above }
+  ds6C94: Byte;                   { the number of targets in ds6C91 SelectSpellTargets collected }
+  ds6C95: PCharacter;             { the first spell target, also the character Remove Curse hands to ovl22_e9 (ovl04:08FA) }
   { 1 while money lies in the pool: PoolMoney sets it, ShareMoney sets it when some is left; the
     Temple and the shop clear it with the pool (ovl04:0D37). }
   MoneyInPool: Byte;
@@ -977,6 +990,11 @@ var
   ds0D02: array[0..15] of Byte;   { four 2-bit pixels of colour C; see above }
   ds0D06: array[0..15] of Byte;   { two 4-bit pixels of colour C (C * $11); see above }
   { Globals of the combat unit ovl08 (whitepaper 5.5). }
+  { The combat cell of the target FindSpellTarget last chose (its X and Y, written together with the
+    chosen target, ovl13:207C/2086); who reads them is not found yet. }
+  ds6DB9: Byte;                   { see above: the chosen target's combat column }
+  ds6DBA: Byte;                   { see above: the chosen target's combat row }
+  { Globals of the combat unit ovl08 (whitepaper 5.5). }
   ds6DBB: PCombatNode;            { the list of clouds (TCombatNode): EndCombat frees them (ovl08:0006); ovl12:0CC3 }
   ItemAffectUse: Boolean;         { True while the Use action (UseItem, ovl19:1BC2..1BE2) casts a spell through ovl22_e5,
                                     and set (ovl19:1AE7) for an item whose Affects[2] gives the spell (not a scroll);
@@ -985,22 +1003,52 @@ var
                                     fixed level 6 and ovl22_e3's spell-power path skips the caster level
                                     (ovl22:072F, ovl19:1B1E) }
   ds6E36: Pointer;                { a picture EndCombat frees through ReleasePicture (ovl08:005A) }
-  { A routine pointer: RunCombat sets @ovl13_e14 at the start (ovl08:0085) and EndCombat
+  { A routine pointer: RunCombat sets @SelectSpellTargets at the start (ovl08:0085) and EndCombat
     @ovl22_e4 at the end (ovl08:0069); who calls it is not known yet. }
   ds6B84: Pointer;                { routine RunCombat stores at ovl08:0085 and EndCombat at ovl08:0069 }
   ds6814: Byte;                   { zero (or ds6815 zero) ends the combat (ovl08:009B, 095C); likely the count of one side }
   ds6815: Byte;                   { see ds6814; likely the count of the other side }
+  { The round's Movement in half squares ComputeMovement computes for a combatant (it stores it
+    before the movement affect hooks and reads it back); StartCombatantRound also seeds it from Who^.PadA2.
+    ovl12:0C4B shifts it left by 1 every time it runs and ovl12:10C1 shifts it right by 1 [?]. }
+  ds681A: Byte;
+  { Purpose unknown: ovl12:064E clears DamageAmount when this byte is $0F; ovl12:2556 cancels the damage hook then too;
+    ovl12:09C0 (ImageAbsorbsHit) needs it above 0. }
+  ds681B: Byte;
+  LastDiceCount: Byte;            { the dice count of the last RollDiceCounted roll (ovl24:0E37) }
+  { Set while ComputeMovement runs the movement affect hooks and cleared around them; what reads
+    it is not known yet (ovl12:1452 (ovl12_e48) clears ds681A while it is not 0). }
+  ds681D: Boolean;
+  { Cleared before and tested after RunAffectHooks kinds 1 (on the target) and 0 (on the attacker)
+    around an attack's target check (ovl13:1085); a hook that sets it rejects the attack. ovl12:0918 and
+    ovl12:0C26 also set it to 1 (turn pending). }
+  ds681E: Byte;
+  { The Turn Undead table (ovl13:122F): a row per undead type (TCharacter +$76) and a column per
+    cleric level band (0..9, the code passes 1..10 with bounds checks off); a positive entry turns
+    the undead, a nonpositive one destroys it, and the d20 turning check must reach the entry's
+    absolute value. The image holds the rows from DS:0447; the menu string after it begins at
+    DS:04B6. }
+  ds0447: array[0..10, 0..9] of Byte;
   { ds6814 and ds6815 indexed by side (ovl10:1AC7); the combat AI indexes them by the
     OpposingSide side of the actor (UseMagicItem, CastMemorizedSpell, ovl09:049F, 05C6). }
   ds6814Sides: array[0..1] of Byte absolute ds6814;
+  { One counter per attack slot (1 and 2) of the attacks ovl13:1406 has made while resolving a
+    combatant's turn; entry 0 at DS:6E2C is the array base, never read. }
+  ds6E2C: array[0..2] of Byte;
   ds6825: Byte;                   { AI morale scratch (CheckMorale computes it from B84, compares percentages) }
   { The character Who attacked last (Who^.Combat^.Target), copied by BoostAttackAgainstTarget (ovl12:013B).
     A far pointer: its segment word is DS:6828, the start of AffectHandlers, which overlaps it. }
   AttackTarget: PCharacter;
+  { A combatant pointer the affect handlers share as scratch: ovl13:3A86 (the affect $4A handler)
+    stores the combatant the affect records (CombatantRecord[Affect^.Data]) here and attacks it, and
+    ovl12's handler at ovl12 code 0x138 stores Who^.Combat^.Target here before reading it. It
+    overlaps the offset word of AffectHandlers[0], which is never called (SaveKind lies in it). }
+  ds6826: PCharacter;
   ds6E2F: Byte;                   { byte CheckMorale copies into ds6825; meaning unknown }
   ds6E30: Boolean;                { the Alt-M Magic On/Off toggle of the combat keys (ovl08:04A7) }
   ds6E31: Byte;                   { the key flag the ovl08 menus pass to ReadPromptChoice }
   ds6DE3: Byte;                   { counted up once per combat round (ovl08:0891) }
+  ds6DE2: Byte;                   { set to 1 when the player confirms attacking an ally (ovl13:2998) }
   { The combatant order the AI works through: one DS:5F27 combatant index per entry, read from
     entry 1 (ovl09:02EB loops 1..CollectEnemiesInRange(Who, ovl22_e3(Spell)) over it; ovl13:0F90 moves
     the character at entry 1 to another entry). Entry 0 is never read. Extent not proven; the
@@ -1054,20 +1102,14 @@ var
   HookAffectId: Byte;             { the affect ApplyAffect offers to the hooks; 0 afterwards: unaffected (ovl24:1672) }
   DamageAmount: Byte;             { the damage DealDamage offers to the hooks and then deals (ovl24:134E) }
   DamageKind: Byte;               { the kind of damage: 1 fire, 2 cold, 4 electricity, $10 acid, bit 3 magic (ovl24:13E4) }
-  ds681A: Byte;                   { shl 1 every time ovl12:0C4B runs, shr 1 in ovl12:10C1; no other use known [?] }
-  { Purpose unknown: ovl12:064E clears DamageAmount when this byte is $0F; ovl12:2556 cancels the damage hook then too;
-    ovl12:09C0 (ImageAbsorbsHit) needs it above 0. }
-  ds681B: Byte;
-  LastDiceCount: Byte;            { the dice count of the last RollDiceCounted roll (ovl24:0E37) }
-  ds681D: Byte;                   { Purpose unknown [?]: ovl12:1452 (ovl12_e48) clears ds681A while it is not 0 }
-  ds681E: Byte;                   { set to 1 by ovl12:0918 and ovl12:0C26 (turn pending); nothing reads it yet [?] }
-  { Purpose unknown: ovl12:09C0 (ImageAbsorbsHit) lets an image take a hit only while this byte is 0;
-    nothing else reads it yet [?]. }
-  ds6820: Byte;
   { Set to 1 by ovl12:2F57 when it adds a strength affect; nonzero: the Items window is drawn even if
     its flag is clear (ovl19:1194). }
   ds6821: Byte;
-  AttackRoll: ShortInt;           { the d20 attack or resistance roll (20 counts 100) the hooks may change (ovl24:0C63) }
+  { Byte DS:6822 as the three bytes ResolveCombatantAttacks addresses by attack slot: element 0 is the scalar
+    AttackRoll that RollToHit and RollBeatsResistance write, elements 1 and 2 (DS:6823/6824) are the
+    per-slot rolls the attack loop counts. }
+  AttackSlotRolls: array[0..2] of ShortInt;
+  AttackRoll: ShortInt absolute AttackSlotRolls;   { the scalar attack or resistance roll (ovl24:0C63) }
   ds6823: Byte;                   { decremented every time an attack is avoided (ovl12:0FAC); meaning unknown [?] }
   SaveKind: Byte;                 { the saving throw kind SavingThrow offers to the hooks (ovl24:0DAD) }
   { The handler of every affect number, called through CallAffectHandler (ovl24:001E); extent unknown. Entry 0

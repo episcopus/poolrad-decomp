@@ -4925,3 +4925,269 @@ kind = "routine"
 why = "ovl12:317A calls RemoveAffect(Who, $17, nil) only when Mode is not 0, the removal of the affect (table entry 137, affect $89)"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl13_e2"
+new = "ComputeMovement"
+kind = "routine"
+why = "ovl13:0123 works out a combatant's round Movement from Movement (+0x11C), clamped to 1..0x60 and doubled into half squares; RunCombat calls it at the start of every round (ovl08:0063) and its result is stored in Combat^.Moves (+6, half squares)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl13_e1"
+new = "StartCombatantRound"
+kind = "routine"
+why = "ovl13:0000 is RunCombat's per-round setup of a combatant: RunCombat calls it for every combatant on the party list at the start of each round (ovl08:0063) before turns; it clears and re-arms Combat^, refreshes it (ovl13_e6, the movement hooks), rolls Initiative and sets Combat^.Moves"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl13_fn_0191"
+new = "RollAttackDamage"
+kind = "routine"
+why = "ovl13:0191 rolls one attack's damage for Attacker against Target: entry Index (1 or 2) of the readied weapon triple (WeaponAttacks/WeaponDamage/WeaponDamageBonus) through RollDiceCounted, stores it in DamageAmount, multiplies by the backstab factor when ovl13_fn_2574 says so, and runs the damage hooks (kinds 4 and 5); called per attack from ovl13:1713 which forwards it to ovl13_fn_02F9 with DamageAmount"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl13_fn_0627"
+new = "GuardedEnemiesAttack"
+kind = "routine"
+why = "ovl13:0627 is called by the move routine ovl13_e3 after Who moves: it collects Who's adjacent enemies (CollectEnemiesInRange(Who,1)) and lets each one that is guarding (Combat^.B7, the flag GuardTurn sets) and not helpless attack Who through ovl13_e11 and ovl13_e12; called as ovl13_fn_0627(Who) with the mover, cleared at the end of a move in ovl13_fn_08AC too (stub)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl13_e3"
+new = "StepCombatant"
+kind = "routine"
+why = "ovl13:0712 moves Who one map cell in direction Dir: charges Combat^.Moves two half squares (three on a diagonal), moves CombatantTable's cell by DirStepX/DirStepY, redraws ground and occupancy, moves the quick-combat cursor and clears BF/B12; called from MoveCharacter (ovl08:09DF) and MoveStep (ovl09:07F2)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl13_fn_02F9"
+new = "ShowAttackResult"
+kind = "routine"
+why = "ovl13:02F9 shows one melee attack's result in the combat window: it builds 'Attacks'/' -Backstabs-'/'slays helpless' text, draws Target's name, on a hit adds 'Hitting for N point(s) of damage' and calls ApplyDamage, on a miss adds 'and Misses', pages the text through ShowPagedText, and then, when SpellFlag is set, makes Target lose its pending spell and, when Target is out of the fight (Flag10D 0), shows goes down/dying/killed, runs the death hooks and removes Target from the map; called from ovl13_fn_14A1/1713/1758"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl13_e4"
+new = "PartingShots"
+kind = "routine"
+why = "ovl13:08B2 runs the attacks of the enemies Who is leaving behind when it moves (adjacent before the step, not at the destination; called by MoveCharacter ovl08:09DF and MoveStep ovl09:07F2 just before StepCombatant)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl13_e5"
+new = "TryFlee"
+kind = "routine"
+why = "ovl13:0C6A is the Flee answer of the Move command (ovl08:0410) and the panicking off-map step (ovl09:0434): it drops the combatant with StatusFled ('Got Away') or flashes 'Escape is blocked', then ends the turn through EndCombatTurn"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl13_e6"
+new = "RefreshAttacks"
+kind = "routine"
+why = "ovl13:0D23 recomputes Who's readied-weapon attack count into ds681A and AttackSlots[1] from the ranged weapon/ammo or the character's Attacks, running the attack affect hook $12 and ovl13_fn_0E52; called after StartCombatantRound (ovl13:0000) and whenever an item is readied (ovl08:0207, ovl09:0942)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl13_fn_0E52"
+new = "AttacksThisRound"
+kind = "routine"
+why = "ovl13:0E52 halves the doubled attack budget in ds681A (the character's Attacks is attacks per two rounds, POOLVARS +A1) into this round's count, adding the odd remainder on even-numbered combat rounds via the round counter ds6DE3; StartCombatantRound stores it in AttackSlots[2] and RefreshAttacks uses it as AttackCount"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl13_e7"
+new = "SweepEnemies"
+kind = "routine"
+why = "ovl13:0E82 is the melee sweep: when the attacker Who has attack slots left (AttackSlots[1] below Combat^.Pad4[5]), the target is a level-0 creature (HighestLevel 0) and stands in melee range, it shows 'sweeps' and attacks each level-0 adjacent enemy through ovl13_e11/ovl13_e12 until Extra attacks run out, moving Target to the front of ds6DE4; returns True so the caller (MeleeAttack ovl08:0D45, AI ovl09:0B3C) ends the turn"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl13_e8"
+new = "AttackTargetAllowed"
+kind = "routine"
+why = "ovl13:1085 runs the target's affect hooks (RunAffectHooks kind 1) and the attacker's (kind 0, with Combat^.Target swapped in) and returns whether none set ds681E; a nil target fails, attacking oneself always passes. Called before an attack by AiTurn, PartingShots, ovl12_e70 and ovl13 e17/e21/2FD3"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl13_e9"
+new = "TurnUndead"
+kind = "routine"
+why = "ovl13:116A is the Turn Undead action: it marks the cleric's turn used, rolls how many undead the turn reaches and the d20 check, maps the cleric level to a table band, then repeatedly takes an undead from ovl13_e10 and reads ds0447[type, band] to turn (positive) or destroy (nonpositive) it, up to six; called by PlayerTurn's T case (ovl08:031A) and TryTurnUndead (ovl09:0203)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl13_e10"
+new = "SelectTurnUndeadTarget"
+kind = "routine"
+why = "ovl13:1351 scans CollectEnemiesInRange(Who, $FF) and keeps the enemy with the lowest TCharacter.Pad74[$76] type row (the row ds0447 is indexed by) that is not ForcedFlight, returning it to TurnUndead (ovl13:116A) and TryTurnUndead (ovl09:0203)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl13_fn_1406"
+new = "ResolveCombatantAttacks"
+kind = "routine"
+why = "ovl13:1406 resolves one combatant's melee attacks for its turn (helpless auto-hit, large-foe dice, to-hit and damage rolls, the death hook) and covers 1406..17F6; called by e12 (ovl13:19D6)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl13_e11"
+new = "NoteAttackBearing"
+kind = "routine"
+why = "ovl13:17F6 raises Target^.Combat^.BF and adds the angular error between Target^.Combat^.IconSet and the bearing to the attacker into B12; called just before ovl13_e12 resolves an attack"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl13_e12"
+new = "PerformAttack"
+kind = "routine"
+why = "ovl13:1884 turns the two combatants to face each other, animates the attack item, resolves the attack via ResolveCombatantAttacks and ends the turn; it is the attack entry point ovl08, ovl09 and the ovl13 helpers call"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl13_fn_1B1E"
+new = "AddRangePenalty"
+kind = "routine"
+why = "ovl13:1B1E takes the distance to Target and the readied weapon's range band ItemTable[ItemType].Range div 3 and adds 2 then 3 to the to-hit value NeededRoll for each band the target is beyond; called by ResolveCombatantAttacks"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl13_e13"
+new = "FindNearbyTarget"
+kind = "routine"
+why = "ovl13:1BF8 scans the nine cells around Who and hands over the most-wounded same-side combatant (or a body on a body tile whose owner is not yet dead); called for spell 3 by ovl09 SpellAccepted and by ovl13_fn_1E16"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl13_fn_1E16"
+new = "FindSpellTarget"
+kind = "routine"
+why = "ovl13:1E16 picks the target a spell is aimed at: with Automatic=0 it lets ovl13_e17 choose (the player's cursor) and copies the choice into Combat^.Target, else it takes the spell row's own data (PadB[$E] zero means the caster itself, spell 3 asks FindNearbyTarget) or loops ovl13_e21 up to 20 times and keeps an aim whose area hits only the caster's enemies and whose target is not helpless by the row's AffectId; it returns whether a target was stored and leaves its cell in ds6DB9/ds6DBA. Called by ovl13_e14 only."
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl13_e14"
+new = "SelectSpellTargets"
+kind = "routine"
+why = "ovl13:20C3 is the routine RunCombat stores in ds6B84 (ovl08:0088) and ovl22_e5 calls after an aim: it fills the spell's target list ds6C91 (1-based, count ds6C94) with the caster alone (Pad2[6] nibble 0), with FindSpellTarget's aim or a ScanTargets area copy (nibble $F and 8..14), or with up to (Pad2[6] and 3)+1 distinct aims, and leaves the chosen cell in ds6DB9/ds6DBA; Done is 0 when nothing was collected."
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl13_e18"
+new = "BearingTo"
+kind = "routine"
+why = "ovl13:263D returns the compass direction from Who's cell to Target's cell (walks Dir 0..8 until InDirArc(WhoX,WhoY,TargetX,TargetY,Dir)); ovl09 uses it as the AI move direction and PerformAttack and NoteAttackBearing use it to face a combatant"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl13_fn_2574"
+new = "IsBackstab"
+kind = "routine"
+why = "ovl13:2574 returns True when Who's attack on Target is a thief backstab: thief level (ClassLevels[6]) above 0, a backstab-capable readied weapon and an allowed slot-2 item, Target attacked (Combat^.BF above 1) and facing Who (BearingTo(Who,Target)=IconSet); RollAttackDamage applies the thief damage multiplier and ResolveCombatantAttacks uses ds112-2 and attack kind 2"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl13_e15"
+new = "CastCombatSpell"
+kind = "routine"
+why = "ovl13:2414 is the combat Cast command and the AI memorized-spell cast: it chooses a spell (ChooseSpellFromList), rejects a camp-only spell, then either casts at once through ovl22_e5 or begins casting (Combat^.PendingSpell, Initiative) for the next turn; called by PlayerTurn's C key (ovl08:031A) and ovl09 CastMemorizedSpell"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl13_fn_26B0"
+new = "ShowAttackAnimation"
+kind = "routine"
+why = "ovl13:26B0 draws the attack's picture at Who's cell (CopyPictureItem/DrawCombatIcon selected by the item kind) and animates it along the line to Target (WalkCombatLine) with a launch (ds2620) and an impact (ds262C) sound; PerformAttack calls it for the aimed item and a readied bow"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl13_e19"
+new = "UpdateMonsterMorale"
+kind = "routine"
+why = "ovl13:2879 walks the battle character list ds5D96 and totals the monster side's (Side = SideMonsters) maximum and current hit points, then stores 20 * current div maximum * 5 in the morale byte ds6E2F that CheckMorale (ovl09:10D7) reads as a monster's second morale base; called by StartBattle and EndCombatRound"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl13_e20"
+new = "FastestEnemyMovement"
+kind = "routine"
+why = "ovl13:2908 walks the battle character list ds5D96 and returns half of the largest round Movement (ComputeMovement div 2) among the combatants on the side opposing Who that are still in the fight (Flag10D set); TryFlee compares it with half of Who's Movement to decide the escape and CheckMorale uses it as the panic threshold"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl13_e16"
+new = "ConfirmAttackTarget"
+kind = "routine"
+why = "ovl13:2998 decides whether an attack on Target may proceed: allowed when Target is on the side opposing Who (OpposingSide) or Who is computer-run (Quick), else it asks 'Attack Ally: ' (AskYesNo) and on a yes sets ds6DE2 and word 819 of ds49D6^, moves every computer-run party member to the monster side and clears its target, then recounts the sides; called by MeleeAttack (ovl08:0D45)"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl13_fn_2AA0"
+new = "ShowAimPrompt"
+kind = "routine"
+why = "ovl13:2AA0 draws the target's character panel and the combat cursor, shows 'Range = ' with the distance, builds the aim menu 'Next Prev Manual ' + the target name + 'Center Exit' and returns the key ReadPromptChoice reads under the title 'Aim:'; the target is named 'Target ' within Range when the aim is not ranged (ShowRange 0) or for a ranged weapon whose ammo can be used; called by ovl13_e17 (the player's aim cursor)"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl13_fn_2C3D"
+new = "ResolveAimedAttack"
+kind = "routine"
+why = "ovl13:2C3D records Target in the aim record (Who/X/Y from CombatantX/CombatantY), puts the combat cursor on its cell, and, when the Automatic byte is 1, asks ConfirmAttackTarget and resolves the attack through SweepEnemies or PerformAttack; called by the manual aim cursor ovl13_e17 via ovl13:2DFA and by ovl13:31D7 (whitepaper 5.5)"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl13_fn_2DFA"
+new = "RunAimCursor"
+kind = "routine"
+why = "ovl13:2DFA is the manual aim cursor: it moves a cursor over the combat map (MoveCombatCursor/DirStepX), walks a line of sight from Who (WalkLine), finds the combatant or body under the cursor (CombatantRecord/BodyTable), draws the panel, builds the 'Center Exit' prompt (ReadPromptChoice '(Use Cursor keys) '), and on Enter/'T' records the cell in Aim and, when Automatic, resolves the attack through ResolveAimedAttack; called by the aim wrapper ovl13_e17 (whitepaper 5.5)"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl13_e21"
+new = "ChooseCombatTarget"
+kind = "routine"
+why = "ovl13:37E4 picks a random in-range enemy (CollectEnemiesInRange) as Who's Combat^.Target for the automatic spell aim and the AI, with a second pass that opens the WalkLine tile gate; called by FindSpellTarget and ovl09 QuickTurn/MoveStep/AiTurn"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl13_fn_32E6"
+new = "ListAimTargets"
+kind = "routine"
+why = "ovl13:32E6 nested in ovl13_e17: ScanTargets over the whole map into ds6718 and copies ds6718[1..Count] into the aim target list Targets"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl13_fn_3389"
+new = "StepAimCursor"
+kind = "routine"
+why = "ovl13:3389 nested in ovl13_e17: steps the aim cursor through Targets by Delta, wraps it, redraws the old cell and draws the move with WalkCombatLine, returning the new target"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl13_e17"
+new = "RunAimTargets"
+kind = "routine"
+why = "ovl13:3558 is the Aim command's target loop: it lists the reachable targets (ListAimTargets), steps the cursor (StepAimCursor), shows ShowAimPrompt, lets the player move the cursor or resolve the aimed attack (RunAimCursor, ResolveAimedAttack), and clears the range line; called by PlayerTurn (ovl08:0310) and FindSpellTarget"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl13_e22"
+new = "RakeAttack"
+kind = "routine"
+why = "ovl13:39D2 is the round's rake: the ovl12 initialiser (store at ovl12 code 0x354D) puts it in AffectHandlers[$49] (DS:694C), and it shows 'Rakes...' and attacks again with the second attack form (WeaponAttacks[2]/WeaponDamage[2]) after the last attack resolution landed both slot-1 hits (ds6822[1] = 2, ovl13:16F2); make match UNIT=ovl13 FN=RakeAttack MATCH."
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl13_e23"
+new = "ForcedAttack"
+kind = "routine"
+why = "ovl13:3A86 is the affect $4A handler: the ovl12 initialiser (store at ovl12 code 0x354D) puts it in AffectHandlers[$4A] (DS:6950), and it makes Who attack the combatant its affect records with the second attack form (AttackSlots[1] 1, WeaponAttacks[1] 3, WeaponDamage[1] 4) and attack kind 1; make match UNIT=ovl13 FN=ForcedAttack MATCH."
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl13_e24"
+new = "GodsIntervene"
+kind = "routine"
+why = "ovl13:3B93 is the Alt-X debug command: it returns False unless the program was started with the STING argument (ParamStr(1); res04's DebugMode switch), then flashes 'The Gods intervene!' and takes every monster out of the fight (Flag10D 0, Status StatusDead, CombatantTable Kind 0); ovl08:0264 and ovl09:0690 call it for Alt-X and show 'That doesn't work' on False; make match UNIT=ovl13 FN=GodsIntervene MATCH."
+date = "2026-10-14"
+

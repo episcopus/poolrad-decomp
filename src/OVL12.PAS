@@ -283,7 +283,7 @@ const
   HeldFastDuration = 0;         { the Duration the blood drain gives AffectHeldFast }
   HeldFastStrengthLimit = $13;  { a target whose Strength (TCharacter +$10) is below this is held fast (ovl12:1935) }
   AffectBloodDrainWeak = $4A;  { the other blood drain affect, given to the drinker by ovl12:1935; its handler is the OVL13
-  stub ovl13_e23 (AffectHandlers[74], ovl12_e1 [V]) }
+  entry ForcedAttack (AffectHandlers[74], ovl12_e1 [V]) }
   BloodDrainWeakDuration = 0;   { the Duration ovl12:1935 gives AffectBloodDrainWeak }
   AffectRevival = $4E;          { the affect ovl24:175D calls (mode 1) for an unconscious character healed outside combat }
   RevivalRetryDuration = 1;     { the Duration ovl12:19D9 gives AffectRevival }
@@ -342,7 +342,7 @@ const
   FireBonusForNineTwelve = 2;   { the same for TargetCodeNine and TargetCodeTwelve }
   FireBonusForFour = 3;         { the same for TargetCodeFour }
 var
-  { The AffectHandlers table (DS:6828) as untyped pointers. ovl13_e22 and ovl13_e23 are declared without parameters in
+  { The AffectHandlers table (DS:6828) as untyped pointers. RakeAttack and ForcedAttack are declared without parameters in
     OVL13 (which has no PCharacter), so ovl12_e1 stores their addresses through this alias until OVL13 declares them
     with the handler shape. The stores are the same four bytes. }
   AffectHandlerPointers: array[0..$8B] of Pointer absolute AffectHandlers;
@@ -1155,12 +1155,12 @@ begin
     DropFromFight(Who, StatusGone, 'Dies rots away');
 end;
 { ovl12:1452. Affect handler (the AffectHandlers shape: Who, Affect and Mode; only Who is read). It stops Who's
-  movement: the combat record's Moves (+$6 of TCombatant, the movement left) goes to 0. When ds681D is not 0 it also
+  movement: the combat record's Moves (+$6 of TCombatant, the movement left) goes to 0. When ds681D is set it also
   clears ds681A, the byte AgeCharacterOnce doubles. Purpose unknown: runs for affect $3A (id 58, ovl12_e1 [V]). }
 procedure ovl12_e48(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   Who^.Combat^.Moves := 0;
-  if ds681D <> 0 then
+  if ds681D then
     ds681A := 0;
 end;
 { ovl12:1472. Affect handler (the AffectHandlers shape: Who, Affect and Mode; only Who is read). It gives Who the affect
@@ -1507,8 +1507,8 @@ begin
     DropFromFight(AttackTarget, StatusStoned, 'is Stoned');
 end;
 { ovl12:1E77. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000): a charm gaze
-  [I]. Who's gaze reaches the character Who attacked last (AttackTarget) when ovl13_e8 allows it and WalkLine walks the
-  line from Who to AttackTarget's cell (WalkLine may move the end cell, EndX and EndY). "Gazes..." is shown on Who
+  [I]. Who's gaze reaches the character Who attacked last (AttackTarget) when AttackTargetAllowed allows it and WalkLine
+  walks the line from Who to AttackTarget's cell (WalkLine may move the end cell, EndX and EndY). "Gazes..." is shown on Who
   (row MessageRow), the gaze line is drawn to AttackTarget as GazeStonesTarget draws it (WalkCombatLine), ds681B becomes 10,
   and AttackTarget gets the charm affect AffectCharm for good with Data: Who's side in bit 7 (ControlSideBit) and
   CharmData. A successful fear save (SavingThrow kind 4, CharmSaveBonus) negates it, and "is charmed" is shown on it.
@@ -1523,7 +1523,7 @@ begin
   AttackTarget := Who^.Combat^.Target;
   EndX := CombatantX(AttackTarget);
   EndY := CombatantY(AttackTarget);
-  if not ovl13_e8(Who, AttackTarget) then
+  if not AttackTargetAllowed(Who, AttackTarget) then
     Exit;
   if not WalkLine(CombatantX(Who), CombatantY(Who), EndX, EndY, StepCount, Pointer(CombatMap)) then
     Exit;
@@ -2397,8 +2397,8 @@ begin
   AffectHandlers[70] := PoisonAttackTargetBonusMinus2;
   AffectHandlers[71] := SetFlagAndLowerAttackRollByFour;
   AffectHandlers[72] := ovl12_e60;
-  AffectHandlerPointers[73] := @ovl13_e22;
-  AffectHandlerPointers[74] := @ovl13_e23;
+  AffectHandlerPointers[73] := @RakeAttack;
+  AffectHandlerPointers[74] := @ForcedAttack;
   AffectHandlers[75] := DrainBloodFromCombatant;
   AffectHandlers[76] := StartBloodDrain;
   AffectHandlers[77] := HoldWeakTargetFast;

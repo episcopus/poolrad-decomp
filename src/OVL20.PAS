@@ -2,7 +2,7 @@ unit OVL20;
 { PartyHeal (re/units.toml): the camp's rest, 3685 bytes of code. RunRestPeriod is the rest that RestParty (ovl15)
   starts: it keeps the rest clock RestTime, shows the "Rest daYs Hours Mins Inc Dec Exit" menu, heals the party
   and reports interruptions (whitepaper 5.22). }
-{$A-,O+,F+,S-,R-,G-,I-}
+{$A-,O+,F+,S-,R-,G-,I-,L-}
 interface
 uses POOLVARS, RES06;
 procedure ovl20_fn_0000(Amount: Byte; Index: ShortInt);
