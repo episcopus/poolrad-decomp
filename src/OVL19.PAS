@@ -7,8 +7,7 @@ procedure ShowCharacterSheet;
 procedure ShowCharacterMoney;
 procedure ShowCombatStats;
 procedure ShowAbilityScore(Index: ShortInt; Highlight: Boolean);
-procedure ovl19_e5(var Flag: Byte);
-procedure ovl19_fn_0B25;
+procedure ViewSelectedCharacter(var Done: Byte);
 procedure ovl19_fn_0D70;
 procedure ovl19_e6(var Done: Byte);
 procedure ovl19_fn_0FE2;
@@ -41,7 +40,7 @@ function CharacterMoneyValueInGold(Who: PCharacter): LongInt;
 function ChooseSpellFromList(SpellListKind, DisplayMode: Byte; var Choice: Word;
   var Listed: Byte): Byte;
 implementation
-uses RES06, RES09, RES12, OVL22, OVL28;
+uses RES06, RES09, RES12, OVL22, OVL25, OVL28, OVL31;
 
 type
   { The sheet reads three TCharacter bytes as signed table indexes (cwde at ovl19:00C6, 0198 and 04DE). }
@@ -76,7 +75,7 @@ type
   ability lines (ShowAbilityScore) with their labels from row 7, the money (ShowCharacterMoney), the
   class levels and experience on row 15, the combat block (ShowCombatStats) on rows 17 and 18, the weapon
   and armor on rows 20 and 21 and the status on row 22, and the head and body portraits when they are
-  on (ShowPortraits) and the tile set is 3. Called by ovl19_e5 (the View command), ovl19_fn_0B25,
+  on (ShowPortraits) and the tile set is 3. Called by ViewSelectedCharacter (the View command),
   ovl19_fn_2197 and ovl16 (ovl16_fn_0B52, ovl16_fn_1DCB, ovl16_fn_209F). SheetCharacter keeps the
   character for the whole drawing. }
 procedure ShowCharacterSheet;
@@ -301,10 +300,72 @@ begin
         DrawTextAt(PercentileColumn, ScoreRow, Color, '(' + Percentile + ')');
       end;
 end;
-{ ovl19:0AB3: one var parameter (the Temple's View command). }
-{@stub} procedure ovl19_e5(var Flag: Byte); begin end;
-{ ovl19:0B25: retf 4: 4 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl19_fn_0B25; begin end;
+{ ovl19:0AB3. The View command (whitepaper 5.4; the shop's V key, the Temple's and the camp's View): draws
+  the sheet of SelectedCharacter and shows the prompt "View:" with the words Items (I), Spells (S), Trade
+  (T), Drop (D) and Exit (E) until Exit or Escape (#0) is chosen or Done is set. Items runs ovl19_e6,
+  Spells runs ChooseSpellFromList, Trade runs ovl19_fn_2156 and Drop runs ovl19_fn_24A7 and then
+  ShowCharacterMoney. The sheet is drawn again after Items, Spells and Trade. In view mode 5 (combat)
+  ovl31_e3 runs on entry and ovl31_e2 on exit. Done: the stop flag, 0 keeps the view going; ovl19_e6 gets
+  it too. ds471A keeps a copy of SelectedCharacter (ovl19:0AD1). }
+procedure ViewSelectedCharacter(var Done: Byte);
+var
+  Key: Char;                    { the key of the View prompt; a space until the first one is read }
+  Spare: Byte;                  { the frame reserves this byte (ovl19:0AB3, [bp-2]); the code never reads it }
+  Menu: String40;               { the words of the View prompt, built from the character's contents }
+  HasMoney: Boolean;            { the character carries money of one of the seven kinds }
+  HasSpells: Byte;              { 1 when a spell is memorized; ChooseSpellFromList then overwrites it }
+  ExtKey: Byte;                 { the extended-key flag of the prompt; the View never reads it }
+  Spell: Byte;                  { the spell slot index of the scan, then the spell ChooseSpellFromList returns }
+  Kind: ShortInt;               { the money kind index of the scan (signed: cwde at ovl19:0B3F) }
+  Choice: Word;                 { -1: ChooseSpellFromList opens its window and asks for a spell }
+begin
+  if ds49F3 = 5 then
+    ovl31_e3;
+  Key := ' ';
+  Done := 0;
+  ds471A := SelectedCharacter;
+  ShowCharacterSheet;
+  while not (Key in [#0, 'E']) and (Done = 0) do
+  begin
+    Menu := '';
+    HasSpells := 0;
+    HasMoney := False;
+    for Spell := 0 to 20 do
+      if SheetCharacter^.Spells[Spell] > 0 then
+        HasSpells := 1;
+    for Kind := 0 to 6 do
+      if SheetCharacter^.Money[Kind] > 0 then
+        HasMoney := True;
+    if SheetCharacter^.Items <> nil then
+      Menu := Menu + 'Items ';
+    if HasSpells <> 0 then
+      Menu := Menu + 'Spells ';
+    if (SheetCharacter^.B84 < $80) or (SheetCharacter^.Flag10D = 0) or
+      (SheetCharacter^.Status = 1) then
+      if HasMoney and (ds49F3 <> 5) then
+        Menu := Menu + 'Trade ';
+    if HasMoney then
+      Menu := Menu + 'Drop ';
+    Menu := Menu + 'Exit';
+    Key := ReadPromptChoice('View:', Menu, 13, 10, 15, 0, 0, ExtKey);
+    Choice := $FFFF;
+    case Key of
+      'I': ovl19_e6(Done);
+      'S': Spell := ChooseSpellFromList(0, 0, Choice, HasSpells);
+      'T': ovl19_fn_2156;
+      'D':
+        begin
+          ovl19_fn_24A7;
+          ShowCharacterMoney;
+        end;
+    end;
+    if (Done = 0) and (Key in ['I', 'S', 'T']) then
+      ShowCharacterSheet;
+  end;
+  if ds49F3 = 5 then
+    ovl31_e2;
+  res12_fn_27D9;
+end;
 { ovl19:0D70: retf 4: 4 bytes of parameters; 40 bytes of locals }
 {@stub} procedure ovl19_fn_0D70; begin end;
 { ovl19:0EF8: frame not read }

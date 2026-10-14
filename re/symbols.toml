@@ -8651,7 +8651,7 @@ evidence = ["prologue"]
 id = "ovl19:0901"
 unit = "ovl19"
 addr = "ovl19:0901"
-size = 331
+size = 434
 name = "ShowAbilityScore"
 signature = "procedure ShowAbilityScore(Index: ShortInt; Highlight: Boolean)"
 c_name = "ovl19_e3"
@@ -8664,27 +8664,14 @@ evidence = ["prologue"]
 id = "ovl19:0AB3"
 unit = "ovl19"
 addr = "ovl19:0AB3"
-size = 114
-name = "ovl19_e5"
-signature = "procedure ovl19_e5(var Flag: Byte)"
+size = 621
+name = "ViewSelectedCharacter"
+signature = "procedure ViewSelectedCharacter(var Done: Byte)"
 c_name = "ovl19_e5"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_5"
+notes = "renamed from ovl19_e5 (the View command: draws the sheet and the View: prompt with Items, Spells, Trade, Drop and Exit; the Temple, the shop and the camp call it for their V key (ovl19:0AB3; whitepaper 5.4, 5.22)); auto:entry_5"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl19:0B25"
-unit = "ovl19"
-addr = "ovl19:0B25"
-size = 587
-name = "ovl19_fn_0B25"
-signature = ""
-c_name = "ovl19_fn_0B25"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl19:0D70"

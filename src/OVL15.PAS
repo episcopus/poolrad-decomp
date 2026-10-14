@@ -872,7 +872,7 @@ end;
   (restored on leaving), clears ds6DD8 and RestTime, shows 'The party makes camp...', cancels any
   unfinished study (CancelPartyStudy, again on leaving) and runs the Camp menu 'Save View Magic
   Rest Alter Exit' (CampMenuText) until Exit or EndCamp: S saves (ovl17_e9) and offers 'Quit TO
-  DOS ', V ovl19_e5 (the view), M CampMagicMenu, R RestParty, A AlterMenu. EndCamp is set by a rest
+  DOS ', V ViewSelectedCharacter (the view), M CampMagicMenu, R RestParty, A AlterMenu. EndCamp is set by a rest
   that ends the camp (RunRestPeriod). }
 procedure MakeCamp(var EndCamp: Byte);
 var
@@ -905,7 +905,7 @@ begin
             ovl17_e9;
             if AskYesNo('Quit TO DOS ', AskColor, WordColor, HotColor) = Yes then QuitGame;
           end;
-        'V': ovl19_e5(ViewFlag);
+        'V': ViewSelectedCharacter(ViewFlag);
         'M': CampMagicMenu(EndCamp);
         'R': RestParty(EndCamp);
         'A': AlterMenu;

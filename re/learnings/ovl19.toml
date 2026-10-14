@@ -70,7 +70,25 @@ units = ["ovl19"]
 tags = ["frame", "locals", "padding"]
 title = "A frame two bytes larger than the code's locals holds two declared, unused bytes"
 lesson = "ovl19_e1's frame is 0x308 bytes; the code reads [bp-2] (row), [bp-3] (column), [bp-5], [bp-6], the text at [bp-0x106] and the flag at [bp-0x107], and never [bp-1] or [bp-4]. Declaring two one-byte locals before Row and between Col and Stat (TP allocates the first declared at [bp-1] and downward) reproduces every offset and the frame size. Declare the spares only when the frame and offsets prove them."
-evidence = ["src/OVL19.PAS#ShowCharacterSheet", "build/packets/ovl19_004A.md"]
+evidence = ["src/OVL19.PAS#ShowCharacterSheet", "re/symbols.toml#ovl19:004A"]
+
+[[lesson]]
+id = "literal-title-argument-temp"
+confidence = "V"
+units = ["ovl19"]
+tags = ["string", "literal", "argument", "overlay", "prompt"]
+title = "A literal string argument is copied into a stack temporary before the call"
+lesson = "Under $O+, ReadPromptChoice('View:', Menu, ...) first pushes the address of a stack temporary, copies the literal into it with System_StrCopy (0AF8:0B0B), then pushes the Menu pointer and the five colour and flag bytes. The probe reproduces that shape and ViewSelectedCharacter (ovl19:0AB3) matches it. Write the literal inline in the call; the compiler makes the temporary."
+evidence = ["tools/re/tp_idioms/ovl19/PRB19TIT.PAS", "re/symbols.toml#ovl19:0AB3"]
+
+[[lesson]]
+id = "set-membership-branch-polarity"
+confidence = "V"
+units = ["ovl19"]
+tags = ["set", "in", "branch", "flags"]
+title = "After System_SetIn, `not (x in S)` continues with je"
+lesson = "ViewSelectedCharacter (ovl19:0AE3, 0CF2) matches with `while not (Key in [#0, 'E']) and (Done = 0)` and `if (Done = 0) and (Key in ['I', 'S', 'T'])`: System_SetIn (0AF8:0DC0) is followed by je to the path taken when the element is absent. The 32-byte set is bit n of byte n div 8 (element n): [#0, 'E'] is 01 at byte 0 and 20 at byte 8."
+evidence = ["re/symbols.toml#ovl19:0AB3", "src/OVL19.PAS#ViewSelectedCharacter"]
 
 [[lesson]]
 id = "string-function-result-argument"

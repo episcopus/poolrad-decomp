@@ -102,7 +102,7 @@ begin
 end;
 
 { ovl31:0105. Purpose unknown: when VideoAdapter is 1 it calls SetPaletteRegister(0, 0) and then
-  SetPaletteRegister(8, 8), the counterpart of ovl31_e2. Called by ovl08, ovl16 and ovl19_e5. }
+  SetPaletteRegister(8, 8), the counterpart of ovl31_e2. Called by ovl08, ovl16 and ViewSelectedCharacter. }
 procedure ovl31_e3;
 begin
   case VideoAdapter of
