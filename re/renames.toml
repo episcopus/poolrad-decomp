@@ -3427,3 +3427,10 @@ kind = "routine"
 why = "ECL command 1: the dispatcher ovl03:2F2D calls it for SkippedOpcode 1 (cmp al,1 then call 00F4); it decodes one operand and sets EclPC to MakeWord(OperandLow[1], OperandHigh[1]), the jump ScriptGosub and InitScript also read"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl03_fn_0111"
+new = "GosubCommand"
+kind = "routine"
+why = "ECL command 2: the dispatcher ovl03:2F2D calls it for SkippedOpcode 2 (cmp al,2 then call 0111); it decodes one operand and calls ScriptGosub(1), which pushes the return address (ovl07:1951)"
+date = "2026-10-13"
+

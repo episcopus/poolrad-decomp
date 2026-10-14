@@ -7,7 +7,7 @@ interface
 uses POOLVARS, RES09, OVL07;
 procedure EndCommand;
 procedure GotoCommand;
-procedure ovl03_fn_0111;
+procedure GosubCommand;
 procedure ovl03_fn_0126;
 procedure ovl03_fn_01A3;
 procedure ovl03_fn_0234;
@@ -156,8 +156,14 @@ begin
   DecodeOperands(1);
   EclPC := MakeWord(OperandLow[1], OperandHigh[1]);
 end;
-{ ovl03:0111: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl03_fn_0111; begin end;
+{ ovl03:0111. ECL command 2 (dispatcher ovl03:2F2D, SkippedOpcode 2): a subroutine call. Its one
+  operand is the script address of the subroutine; ScriptGosub pushes the return address and
+  jumps there. }
+procedure GosubCommand;
+begin
+  DecodeOperands(1);
+  ScriptGosub(1);
+end;
 { ovl03:0126: retf 0: 0 bytes of parameters; 516 bytes of locals }
 {@stub} procedure ovl03_fn_0126; begin end;
 { ovl03:01A3: retf 0: 0 bytes of parameters; 10 bytes of locals }

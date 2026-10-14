@@ -147,12 +147,12 @@ id = "ovl03:0111"
 unit = "ovl03"
 addr = "ovl03:0111"
 size = 21
-name = "ovl03_fn_0111"
+name = "GosubCommand"
 signature = ""
 c_name = "ovl03_fn_0111"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_0111 (ECL command 2: the dispatcher ovl03:2F2D calls it for SkippedOpcode 2 (cmp al,2 then call 0111); it decodes one operand and calls ScriptGosub(1), which pushes the return address (ovl07:1951)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
