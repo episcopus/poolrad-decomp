@@ -1078,6 +1078,17 @@ matched only with the copy.
   most 9. `CapMovementByLoad` then caps Movement by the carried weight (+$102) above the
   strength allowance `StrengthWeightAllowance`: excess up to $200 keeps it, up to $300 caps at 9, up to
   $400 at 6, above at 3, and the cap never raises it.
+- **Strength and its adjustments** **[V]**: `StrengthRowIndex` (`00BA:11EA`) turns a character's
+  Strength (+$10) plus its exceptional StrengthPercent (+$16) into a 0..30 row of the strength
+  table: strength 0..17 is itself, an 18 with percent 0, 1..50, 51..75, 76..90, 91..99 or 100
+  becomes 18..23, and strength 19..25 becomes 24..30. `StrengthAttackAdjustment` (`00BA:1282`)
+  and `StrengthDamageAdjustment` (`00BA:1325`) pick the to-hit and damage bonus from that row,
+  and `StrengthWeightAllowance` (`00BA:13AB`) picks the weight a character can carry in coins
+  from it (rows 1..3 give -350, 12..13 100, 16 350, 17..21 step by 250, 22..26 by 1000 and
+  28..30 by 3000 from 9000). The byte `StrengthBonusFlag` at +$AA gates only the attack and
+  damage adjustments (a 0 suppresses them); what it marks is not proven. `ForgetSpell`
+  (`00BA:148B`) clears the first memorized spell (`SelectedCharacter^.Spells`, +$17) equal to a
+  spell number; `DealDamage` calls it when a victim loses a pending spell.
 - **Readied items** **[V]**: `AddReadiedItemBonus` reads the item kind's RaceRow byte 6: bit 7
   clear means the item contributes nothing; with it set the low seven bits are a bonus class.
   A kind-1 item assigns bonus class plus Plus to a kind bonus; other items with class 0 sum
