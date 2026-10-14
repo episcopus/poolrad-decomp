@@ -6,7 +6,7 @@ uses POOLVARS;
 procedure ovl19_e1;
 procedure ovl19_fn_031E;
 procedure ShowCharacterMoney;
-procedure ovl19_e2;
+procedure ShowCombatStats;
 procedure ShowAbilityScore(Index: ShortInt; Highlight: Boolean);
 procedure ovl19_e5(var Flag: Byte);
 procedure ovl19_fn_0B25;
@@ -51,6 +51,16 @@ type
     Scores: array[0..5] of Byte;
   end;
   PAbilityBlock = ^TAbilityBlock;
+  { TCharacter's damage dice and bonus, bytes of its Pad112 field in POOLVARS (+$115, +$117, +$119). }
+  TDamageDice = record
+    Filler: array[0..$114] of Byte;
+    Count: Byte;                  { +$115 }
+    Pad116: Byte;
+    Sides: Byte;                  { +$117 }
+    Pad118: Byte;
+    Bonus: ShortInt;              { +$119 }
+  end;
+  PDamageDice = ^TDamageDice;
 
 { ovl19:004A: frame not read }
 {@stub} procedure ovl19_e1; begin end;
@@ -86,8 +96,62 @@ begin
       Inc(Row);
     end;
 end;
-{ ovl19:0608: retf 0: 0 bytes of parameters; 564 bytes of locals }
-{@stub} procedure ovl19_e2; begin end;
+{ ovl19:0608. Draws the combat block of SelectedCharacter on the sheet: on row 17, AC (res12_fn_08EF) and
+  THAC0 (60 minus HitAdjust, column 9 label, 15 value) and Encumbrance (CarriedWeight, column 22 label,
+  34 value); on row 18, HP (res12_fn_0973), Damage (dice count, d, sides, then the bonus with its sign)
+  and Movement (the Movement byte doubled by affect $2A and halved by affect $27, column 25 label,
+  34 value). Labels are drawn in bright white (15), values in bright green (10). Called by ovl19_e1
+  (its call at ovl19:03F5) and by ovl16 (ovl16_fn_1DCB, ovl16_fn_2639). }
+procedure ShowCombatStats;
+const
+  LabelColor = 15;
+  ValueColor = 10;
+  CombatRow = 17;
+  ArmorLabelColumn = 1;
+  ArmorValueColumn = 4;
+  { the displayed THAC0 counts 60 minus HitAdjust (the to-hit bonus of RollToHit, ovl24:0CB7); why 60 [I] }
+  ThacBase = 60;
+  { the code doubles the movement for affect $2A and halves it for $27; the POOLVARS comment on
+    Movement says the reverse, and the matched code is the evidence }
+  DoublingAffect = $2A;
+  HalvingAffect = $27;
+var
+  Character: PCharacter;
+  Row: Byte;
+  Col: Byte;
+  Move: Byte;
+  Damage: String40;
+  Affect: Pointer;
+begin
+  Character := SelectedCharacter;
+  res12_fn_0BB8(Character);
+  Row := CombatRow;
+  DrawTextAt(ArmorLabelColumn, Row, LabelColor, 'AC    ');
+  res12_fn_08EF(Character, ArmorValueColumn, Row);
+  DrawTextAt(ArmorLabelColumn, Row + 1, LabelColor, 'HP    ');
+  res12_fn_0973(Character, ArmorValueColumn, Row + 1, 0);
+  Col := 8;
+  DrawTextAt(Col + 1, Row, LabelColor, 'THAC0   ');
+  DrawTextAt(Col + 7, Row, ValueColor, res12_fn_1037(ThacBase - Character^.HitAdjust));
+  Damage := res12_fn_1037(PDamageDice(Character)^.Count) + 'd' +
+    res12_fn_1037(PDamageDice(Character)^.Sides);
+  if PDamageDice(Character)^.Bonus > 0 then
+    Damage := Damage + '+' + res12_fn_1037(PDamageDice(Character)^.Bonus);
+  if PDamageDice(Character)^.Bonus < 0 then
+    Damage := Damage + '-' + res12_fn_1037(Abs(PDamageDice(Character)^.Bonus));
+  DrawTextAt(Col, Row + 1, LabelColor, 'Damage        ');
+  DrawTextAt(Col + 7, Row + 1, ValueColor, Damage);
+  Col := 22;
+  DrawTextAt(Col, Row, LabelColor, 'Encumbrance      ');
+  DrawTextAt(Col + 12, Row, ValueColor, res12_fn_1073(Character^.CarriedWeight));
+  Move := Character^.Movement;
+  if res12_fn_2199(Character, DoublingAffect, Affect) then
+    Move := Move * 2;
+  if res12_fn_2199(Character, HalvingAffect, Affect) then
+    Move := Move div 2;
+  DrawTextAt(Col + 3, Row + 1, LabelColor, 'Movement   ');
+  DrawTextAt(Col + 12, Row + 1, ValueColor, res12_fn_1037(Move));
+end;
 { ovl19:0901. Draws ability score Index of SelectedCharacter (0 Strength .. 5 Charisma) on row 7 + Index,
   in columns 5 to 11 (a score below 10 is one column further right), in bright green, or bright magenta
   when Highlight is set. A Strength of 18 with a percentile also draws it in parentheses after the score

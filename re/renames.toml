@@ -3413,3 +3413,10 @@ kind = "routine"
 why = "Called by ovl19_e1 (ovl19:004A, near call 050D after the Level line). Lists the Money[0..6] entries of SelectedCharacter (+$88) with their MoneyKindNames (DS:0FFA, ovl21:0DDF) in the window 12..26 x 7..14 (ovl19:050D code)."
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl19_e2"
+new = "ShowCombatStats"
+kind = "routine"
+why = "Draws the AC, HP, THAC0, Damage, Encumbrance and Movement labels of the sheet (literal strings at ovl19:05BE..05FC, the labels of the combat block), with the values of the selected character. Called by ovl19_e1 (ovl19:03F5) and from ovl16 (ovl16_fn_1DCB, ovl16_fn_2639)."
+date = "2026-10-13"
+

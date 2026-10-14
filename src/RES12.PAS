@@ -13,8 +13,8 @@ procedure res12_fn_0442(Value: LongInt; P: Pointer; A, B, C, D: Byte);
 procedure res12_fn_06D5;
 procedure res12_fn_0712;
 procedure res12_fn_0767(Who: Pointer);
-procedure res12_fn_08EF;
-procedure res12_fn_0973;
+procedure res12_fn_08EF(Who: Pointer; Col: Byte; Row: Byte);
+procedure res12_fn_0973(Who: Pointer; Col: Byte; Row: Byte; Mode: Byte);
 procedure res12_fn_09E3(Who: Pointer);
 procedure res12_fn_0B4F;
 function res12_fn_0B73(Who: Pointer): Boolean;
@@ -89,9 +89,9 @@ implementation
   character. }
 {@stub} procedure res12_fn_0767(Who: Pointer); begin end;
 { 00BA:08EF: retf 8: 8 bytes of parameters; 514 bytes of locals }
-{@stub} procedure res12_fn_08EF; begin end;
+{@stub} procedure res12_fn_08EF(Who: Pointer; Col: Byte; Row: Byte); begin end;
 { 00BA:0973: retf 10: 10 bytes of parameters; 258 bytes of locals }
-{@stub} procedure res12_fn_0973; begin end;
+{@stub} procedure res12_fn_0973(Who: Pointer; Col: Byte; Row: Byte; Mode: Byte); begin end;
 { 00BA:09E3: frame not read }
 {@stub} procedure res12_fn_09E3(Who: Pointer); begin end;
 { 00BA:0B4F: retf 4: 4 bytes of parameters; 0 bytes of locals }
