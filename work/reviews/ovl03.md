@@ -1,9 +1,9 @@
 # Review: ovl03
 
-decompiler: dec-haiku, esc-grok, int-loop
+decompiler: dec-haiku, dec-deepseek-2, esc-grok, int-loop
 reviewer: rev-sonnet
 date: 2026-10-14
-commit: 3165044
+commit: e052339 (round 1 reviewed 3165044)
 
 Checklist: docs/process/playbooks/70-review.md (every item, every routine).
 
@@ -49,6 +49,44 @@ Severity: must-fix (blocks review-pass), should-fix, note. When the decompiler f
 
 What was verified: every routine comment starts with its address; every command number named in a comment matches the case arm of DispatchCommand (checked all arms; 31 and 62 up have none, as the comment says); the constants `CodeBias`/`Action*` add up; `VarShopRequest`, `VarTempleRequest`, `VarStepsAhead` and the other GameVars words are used with the offsets the comments give; every `QUIRK` marks a real frame byte or unreachable assignment (the `Unused` locals match the frame sizes in the packet); no `inline`, `db` or `assembler`; the only nested routine (WriteScanResults) is proven by the parent's match; stubs that this unit declares match `re/symbols.toml`.
 
+## Verdict (round 1)
+
+not passed: three must-fix findings (the misleading `TrapOneTargetBit`, the unused named constants, the "counts EclPC" comments); the rest of the unit was well documented.
+
+## Round 2 (rev-sonnet, commit e052339)
+
+`make match UNIT=ovl03` says `unit: complete` (55 matched, 1 nested, 0 differ, 0 stubs, 13581 bytes),
+`make readability UNIT=ovl03` is clean, `make stubs` finds every stub header matching `re/symbols.toml`.
+I re-read the fix commit 01ef132 against the code and the earlier must-fix findings:
+
+- DamagePartyCommand: `TrapOneTargetBit` is gone; `TrapSavingThrowBit` ($80) is used in the test at ovl03:2775 and the
+  constant comment and routine comment now describe the three saving-throw cases (whole party, selected character, one
+  random member) and the number-of-hits mode, in line with the code. The bit 6 / bit 5 counting quirk is marked
+  `QUIRK ovl03:2775` in the routine comment, inside the `else` branch and in whitepaper 5.1. The `TrapSelectedBit` and
+  `TrapBonusMask` constants exist and are used. Closed.
+- `ViewModeWall`/`ViewModeMap` are used in RunAreaStep and RunAreaEventCommand, `EclTextTop`/`EclTextLeft` in EndCommand
+  and NewLineCommand (grep shows no remaining bare `ds49F3 := 3/4` or `$11`/`1` text cursor writes in those routines).
+  Closed.
+- The five one-byte command comments (RunAreaEventCommand, PauseCommand, RedrawAreaViewCommand, NewLineCommand,
+  ClearPictureWindowCommand) now say that `Inc(EclPC)` steps past the opcode so RunScriptFrom reads the next command;
+  no "counts" or "does not move EclPC" text remains, and the stray skeleton comment before RedrawAreaViewCommand is
+  deleted. Closed.
+
+The bytes are unchanged by the fix (match still complete). New findings of this round:
+
+- [ ] should-fix RunAreaEventCommand, PauseCommand, RedrawAreaViewCommand, NewLineCommand, ClearPictureWindowCommand: the new
+  comments end with "(see EclPC)", but the POOLVARS comment of `EclPC` (line 860) says only "set to $9900 by the loader
+  (ovl11:03C0)". The pointer leads nowhere; add to the POOLVARS `EclPC` comment that it is the script program counter,
+  that the dispatcher reads the opcode at it and that handlers move it past the command (RunScriptFrom, ovl03:3171), or
+  drop "(see EclPC)".
+- [ ] note DamagePartyCommand (ovl03:2775): `GlyphCol := 2; GlyphRow := 2` and the `1` clear flag stay bare (already listed in
+  round 1); the old finding about "PartyDestroyed (PartyDestroyed)" is fixed in the text, the "window 'The END!'" wording
+  is now right.
+
+The open should-fix and note items of round 1 are unchanged and none is a must-fix: they are weak names, bare
+colours and window numbers, and thin comments, not wrong ones.
+
 ## Verdict
 
-not passed: three must-fix findings (the misleading `TrapOneTargetBit`, the unused named constants, the "counts EclPC" comments); the rest of the unit is well documented.
+passed: all three round 1 must-fix findings are fixed and verified against the code, no must-fix is open; the should-fix
+findings above stay for the decompiler.
