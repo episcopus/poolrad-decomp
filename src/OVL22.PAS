@@ -59,7 +59,7 @@ procedure CastBlink;
 procedure CastFireball;
 procedure ApplySpellToSideUpToLevel(Affect, Side: Byte; Message: String40);
 procedure CastHaste;
-procedure ovl22_fn_28BC;
+procedure DamageTargetInCell(CellX, CellY, Damage, SaveKind: Byte; var Blocked: Boolean);
 procedure ovl22_fn_295B;
 procedure ovl22_fn_2B8B;
 procedure ovl22_e50;
@@ -1507,8 +1507,42 @@ const
 begin
   ApplySpellToSideUpToLevel(SlowAffect, SelectedCharacter^.Side, 'is Hasted');
 end;
-{ ovl22:28BC: retf 12: 12 bytes of parameters; 8 bytes of locals }
-{@stub} procedure ovl22_fn_28BC; begin end;
+{ ovl22:28BC. One cell of a line spell's beam: it reads the cell (CellX, CellY) through GetMapCell
+  and reports in Blocked whether the tile refuses the beam (Tile > 0 with a CombatTiles cost of $FF,
+  the impassable cost). When a combatant stands in the cell (Occupant > 0) it deals Damage to it with
+  the spell's saving throw (SavingThrow with SaveKind and no bonus; the damage is halved on a save,
+  DealDamage's SaveEffect 2) as electrical damage (DamageKind $0C) and plays the zap animation
+  res12_fn_19DE($13). Called by the line-area helpers (ovl22_fn_295B and its callers, the Lightning
+  Bolt handler ovl22_e50 among them). }
+procedure DamageTargetInCell(CellX, CellY, Damage, SaveKind: Byte; var Blocked: Boolean);
+const
+  RefusedTileCost = $FF;          { TCombatTile.Cost this high refuses the cell (CastStinkingCloud names it) }
+  HalfOnSave = 2;                 { DealDamage's SaveEffect 2: a target that saves takes half damage }
+  DamageKindElectric = $0C;       { DealDamage: kind and $F7 = 4 names electricity (ovl24:1389) }
+  ZapAnimation = $13;             { res12_fn_19DE's argument for the line spell's zap animation }
+  NoBonus = 0;                    { SavingThrow's Bonus: the line spell gives none }
+var
+  Target: PCharacter;             { the combatant standing in the cell }
+  Occupant: Byte;                 { GetMapCell's out: the combatant index in the cell, 0 for none }
+  Tile: Byte;                     { GetMapCell's out: the cell's tile id, 0 off the map }
+  { QUIRK ovl22:28BF: the original frame reserves two bytes no instruction reads (sub sp, 8 with
+    only six bytes of locals in use); the original declared one more local, kept here so the frame
+    lands where it did. }
+  Unused: Boolean;
+begin
+  Blocked := False;
+  GetMapCell(CellX, CellY, Occupant, Tile);
+  if (Tile > 0) and (CombatTiles[Tile].Cost = RefusedTileCost) then
+    Blocked := True;
+  if Occupant > 0 then
+  begin
+    Target := CombatantRecord[Occupant];
+    DamageKind := DamageKindElectric;
+    DealDamage(Target, Damage, HalfOnSave, SavingThrow(Target, SaveKind, NoBonus));
+    res12_fn_19DE(ZapAnimation);
+    DamageKind := 0;
+  end;
+end;
 { ovl22:295B: frame not read }
 {@stub} procedure ovl22_fn_295B; begin end;
 { ovl22:2B8B: frame not read }

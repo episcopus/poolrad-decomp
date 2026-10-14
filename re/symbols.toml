@@ -10491,12 +10491,12 @@ id = "ovl22:28BC"
 unit = "ovl22"
 addr = "ovl22:28BC"
 size = 159
-name = "ovl22_fn_28BC"
-signature = ""
+name = "DamageTargetInCell"
+signature = "procedure DamageTargetInCell(CellX, CellY, Damage, SaveKind: Byte; var Blocked: Boolean)"
 c_name = "ovl22_fn_28BC"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl22_fn_28BC (deals a line spell's damage to the combatant in one map cell and reports whether the tile blocks the beam; called by the Lightning Bolt helpers (ovl22_e50, ovl22_fn_295B)); auto:near_call; signature from the callers: ovl22_e50 (Lightning Bolt) pushes the aim cell, the rolled damage, save kind 4 and a var flag; ovl22_fn_295B passes the walked cell, a damage, a save kind and its var flag"
 evidence = ["prologue"]
 
 [[routine]]

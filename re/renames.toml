@@ -3819,3 +3819,10 @@ kind = "routine"
 why = "cast handler of spell 48 Haste: ovl22_e10 maps DS:6B84+48*4 to stub 0096:0115, SpellNames[48] is 'Haste', it removes the slow affect 2Ah from the caster's side up to the caster level and applies the spell with is Hasted"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl22_fn_28BC"
+new = "DamageTargetInCell"
+kind = "routine"
+why = "deals a line spell's damage to the combatant in one map cell and reports whether the tile blocks the beam; called by the Lightning Bolt helpers (ovl22_e50, ovl22_fn_295B)"
+date = "2026-10-13"
+
