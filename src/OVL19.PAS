@@ -5,7 +5,7 @@ interface
 uses POOLVARS;
 procedure ovl19_e1;
 procedure ovl19_fn_031E;
-procedure ovl19_e4;
+procedure ShowCharacterMoney;
 procedure ovl19_e2;
 procedure ShowAbilityScore(Index: ShortInt; Highlight: Boolean);
 procedure ovl19_e5(var Flag: Byte);
@@ -56,8 +56,36 @@ type
 {@stub} procedure ovl19_e1; begin end;
 { ovl19:031E: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl19_fn_031E; begin end;
-{ ovl19:050D: retf 0: 0 bytes of parameters; 300 bytes of locals }
-{@stub} procedure ovl19_e4; begin end;
+{ ovl19:050D. Clears the money window (columns 12 to 26, rows 7 to 14) and lists the kinds of money
+  SelectedCharacter holds, from Jewelry (6) down to Copper (0): each kind with a nonzero Money entry gets
+  a row, its name ending in column 19 and its amount in column 21. The Money entries are Words at +$88. }
+procedure ShowCharacterMoney;
+const
+  MoneyWindowLeft = 12;
+  MoneyWindowTop = 7;
+  MoneyWindowRight = 26;
+  MoneyWindowBottom = 14;
+  MoneyNameRight = 20;
+  MoneyAmountColumn = 21;
+  MoneyColor = 10;
+  LastMoneyKind = 6;
+var
+  Row: Byte;
+  Kind: ShortInt;
+  Name: String40;
+begin
+  ClearWindow(MoneyWindowLeft, MoneyWindowTop, MoneyWindowRight, MoneyWindowBottom);
+  Row := MoneyWindowTop;
+  for Kind := LastMoneyKind downto 0 do
+    if SelectedCharacter^.Money[Kind] > 0 then
+    begin
+      Name := MoneyKindNames[Kind];
+      DrawTextAt(MoneyNameRight - Length(Name), Row, MoneyColor, Name);
+      DrawTextAt(MoneyAmountColumn, Row, MoneyColor,
+        res12_fn_1073(SelectedCharacter^.Money[Kind]));
+      Inc(Row);
+    end;
+end;
 { ovl19:0608: retf 0: 0 bytes of parameters; 564 bytes of locals }
 {@stub} procedure ovl19_e2; begin end;
 { ovl19:0901. Draws ability score Index of SelectedCharacter (0 Strength .. 5 Charisma) on row 7 + Index,

@@ -3406,3 +3406,10 @@ kind = "routine"
 why = "called by ovl19_e1 for rows 7..12 (STR..CHA labels, ovl19:004A loop, [bp-5] = 0..5 with Highlight 0); draws the score at offset 10h plus Index of SelectedCharacter; Strength 18 adds the percentile in parentheses (ovl19:0901 code)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl19_e4"
+new = "ShowCharacterMoney"
+kind = "routine"
+why = "Called by ovl19_e1 (ovl19:004A, near call 050D after the Level line). Lists the Money[0..6] entries of SelectedCharacter (+$88) with their MoneyKindNames (DS:0FFA, ovl21:0DDF) in the window 12..26 x 7..14 (ovl19:050D code)."
+date = "2026-10-13"
+

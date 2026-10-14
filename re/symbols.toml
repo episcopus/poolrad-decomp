@@ -8639,12 +8639,12 @@ id = "ovl19:050D"
 unit = "ovl19"
 addr = "ovl19:050D"
 size = 251
-name = "ovl19_e4"
+name = "ShowCharacterMoney"
 signature = ""
 c_name = "ovl19_e4"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl19_e4 (Called by ovl19_e1 (ovl19:004A, near call 050D after the Level line). Lists the Money[0..6] entries of SelectedCharacter (+$88) with their MoneyKindNames (DS:0FFA, ovl21:0DDF) in the window 12..26 x 7..14 (ovl19:050D code).); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
