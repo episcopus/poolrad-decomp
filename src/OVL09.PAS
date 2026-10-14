@@ -42,6 +42,7 @@ const
   AffectKeptD = $7D;
   AiTurnLimit = 20;             { AiTurn gives up after this many passes of its loop (ovl09:0B3C) }
   HookTurnStart = $0E;          { the affect hook kind AiTurn runs first, at the start of the turn [I] }
+  RangeWrapped = $FF;           { a Range of 0 minus one wraps to this byte (AiTurn) }
   HandThreshold = 2;            { hands in use: above it UseBestItem readies the slot-1 item or the pick }
   SlotType49 = 11;              { SlotItems index of item type $49 (+$F8; ovl19 reads it, TCharacter.SlotItems) [I] }
   SlotType1C = 12;              { SlotItems index of item type $1C (+$FC) [I] }
@@ -500,7 +501,8 @@ end;
   and ovl13_e8 allows it; otherwise a random enemy of the res12_fn_2433(Who, Range) scan (ds6DE4) is
   picked, or UseBestItem chooses one when res12_fn_2E03 holds, res12_fn_2E46 does not and a 1-step
   scan finds an enemy. The attack runs ovl13_e7/e11/e12 and ends the turn through res12_fn_2637.
-  Result: 1 when the turn is over (CanAct = 0). QUIRK ovl09:0C8E: Target := Combat^.Target is
+  Result: 1 when the turn is over (CanAct = 0). The arguments of ovl13_e21 ($FF, 0, 0) are Purpose unknown.
+  QUIRK ovl09:0C8E: Target := Combat^.Target is
   dereferenced (Target^.Flag10D at 0C91, Target^.Side at 0C9C) before its nil test at 0CAC, so a
   character with no remembered target reads through a nil pointer. QUIRK: [bp-3] is reused for
   res12_fn_2E8B's dead result. Globals: ds443C, ds443D, ds443E, ItemTable, ds6DE4, CombatantRecord,
@@ -557,7 +559,7 @@ Loop:
   Range := 1;
   if Who^.SlotItems[0] <> nil then
     Range := ItemTable[Byte(Who^.SlotItems[0]^.ItemType)].Range - 1;
-  if (Range = 0) or (Range = $FF) then
+  if (Range = 0) or (Range = RangeWrapped) then
     Range := 1;
   Target := Who^.Combat^.Target;
   if (Target^.Flag10D = 0) or (Target^.Side = 0) then
