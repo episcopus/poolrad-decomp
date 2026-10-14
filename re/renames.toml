@@ -4071,3 +4071,17 @@ kind = "routine"
 why = "ovl16:35BE copies one picture slot of DS:5E5A into another (both halves' tile bytes and packed pixel buffers through Move) and, when its third parameter is set, recolours the destination with the selected character's Figure[1..6] colour pairs, the same recolouring BuildCharacterIcon (ovl17:0482) applies"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl16_fn_3F31"
+new = "ConstitutionHitPointAdjustment"
+kind = "routine"
+why = "ovl16:3F31 computes the signed constitution hit-point adjustment shared by the hit-point floor ovl16:3FB3 and the ceiling ovl16:408C: it sums ds408E[Constitution] (the AD&D 1e table: -2 at 3, -1 at 4..6, 0 at 7..14, +1 at 15, +2 at 16..18) over the classes with a level and adds the fighter bonus (ClassMask 2 above constitution 16 and 17); callers ModifyCharacter ovl16:209F use it through 3FB3/408C"
+date = "2026-10-14"
+
+[[rename]]
+old = "ds408E"
+new = "ConstitutionHitPointTable"
+kind = "global"
+why = "DS:408E is the AD&D 1e constitution hit-point adjustment table read by ovl16:3F31 (ConstitutionHitPointAdjustment): signed byte per constitution, -2 at 3, -1 at 4..6, 0 at 7..14, +1 at 15, +2 at 16..18; indexed by TCharacter.Constitution (+0x14), read as a signed byte (tools/re/tp_idioms/ovl16/CONHP.PAS)"
+date = "2026-10-14"
+

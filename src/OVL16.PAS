@@ -89,7 +89,7 @@ procedure ovl16_fn_3E2F;
 procedure ovl16_fn_3EBF;
 procedure ovl16_fn_3EC4;
 procedure ovl16_fn_3EC9;
-function ovl16_fn_3F31(Who: PCharacter): ShortInt;
+function ConstitutionHitPointAdjustment(Who: PCharacter): ShortInt;
 function ovl16_fn_3FB3(Who: PCharacter): Byte;
 procedure ovl16_fn_4047;
 function ovl16_fn_408C(Who: PCharacter): Byte;
@@ -1006,8 +1006,33 @@ end;
 {@stub} procedure ovl16_fn_3EC4; begin end;
 { ovl16:3EC9: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl16_fn_3EC9; begin end;
-{ ovl16:3F31: retf 4: 4 bytes of parameters; 8 bytes of locals }
-{@stub} function ovl16_fn_3F31(Who: PCharacter): ShortInt; begin end;
+{ ovl16:3F31. The constitution hit-point adjustment shared by the hit-point floor ovl16_fn_3FB3 and
+  the ceiling ovl16_fn_408C of ModifyCharacter (ovl16:209F). It sums ConstitutionHitPointTable[Constitution] over the
+  eight classes the character has a level in (ClassLevels[I], +$96, signed, above 0), then adds the
+  fighter bonus: one more for a fighter (ClassMask = 2) above constitution 16 and a second above 17
+  (the AD&D 1e fighter constitution bonus). The `with Who^` evaluates the parameter once into a
+  hidden local; the result is the signed total (it can be negative for a low constitution). }
+function ConstitutionHitPointAdjustment(Who: PCharacter): ShortInt;
+var
+  Sum: ShortInt;
+  I: ShortInt;
+  Spare: Byte;   { [bp-4]: the original frame carries this byte, never read or written }
+begin
+  Sum := 0;
+  with Who^ do
+    for I := 0 to 7 do
+      if ClassLevels[I] > 0 then
+      begin
+        Inc(Sum, ConstitutionHitPointTable[Constitution]);
+        if Constitution > 16 then
+          if ClassMask = 2 then
+            Inc(Sum);
+        if Constitution > 17 then
+          if ClassMask = 2 then
+            Inc(Sum);
+      end;
+  ConstitutionHitPointAdjustment := Sum;
+end;
 { ovl16:3FB3: frame not read }
 {@stub} function ovl16_fn_3FB3(Who: PCharacter): Byte; begin end;
 { ovl16:4047: retf 4: 4 bytes of parameters; 0 bytes of locals }

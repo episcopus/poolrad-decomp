@@ -583,6 +583,11 @@ var
   { The per-class ability minimums ModifyCharacter clamps to: six columns per class (Strength ..
     Charisma), indexed by [ClassMask, Stat]. }
   ds3F81: array[0..$10, 0..5] of Byte;
+  { The constitution hit-point adjustment table (the AD&D 1e table): ConstitutionHitPointTable[Constitution] is the
+    hit-point adjustment a class with a level gets, signed (Constitution 3 gives -2, 4..6 -1,
+    7..14 0, 15 +1, 16..18 +2). ovl16:3F31 sums it over the classes the character has a level in
+    and adds the fighter bonus (Constitution above 16). Indexed by TCharacter.Constitution (+$14). }
+  ConstitutionHitPointTable: array[0..$12] of ShortInt;
   ds43DC: Word;                   { nonzero after overlay sizing means the overlay manager failed: res08_init
                                     shows 'Overlay error, program abort!' and halts (probably OvrResult) }
   NewHeapEnd: Pointer;            { DS:$4848: HeapEnd cut by $400 paragraphs; assigned to HeapEnd }

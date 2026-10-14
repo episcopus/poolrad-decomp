@@ -8035,12 +8035,12 @@ id = "ovl16:3F31"
 unit = "ovl16"
 addr = "ovl16:3F31"
 size = 130
-name = "ovl16_fn_3F31"
-signature = "function ovl16_fn_3F31(Who: PCharacter): ShortInt"
+name = "ConstitutionHitPointAdjustment"
+signature = "function ConstitutionHitPointAdjustment(Who: PCharacter): ShortInt"
 c_name = "ovl16_fn_3F31"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl16_fn_3F31 (ovl16:3F31 computes the signed constitution hit-point adjustment shared by the hit-point floor ovl16:3FB3 and the ceiling ovl16:408C: it sums ds408E[Constitution] (the AD&D 1e table: -2 at 3, -1 at 4..6, 0 at 7..14, +1 at 15, +2 at 16..18) over the classes with a level and adds the fighter bonus (ClassMask 2 above constitution 16 and 17); callers ModifyCharacter ovl16:209F use it through 3FB3/408C); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
