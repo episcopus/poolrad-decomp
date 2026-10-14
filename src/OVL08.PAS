@@ -55,7 +55,7 @@ const
 
 { ovl08:0000. Frees the combat data after the last round: the DS:6DBB list of $13-byte records,
   the CombatMap block, and the picture DS:6E36 (ReleasePicture). Then ovl31_e3, and DS:6B84 becomes
-  @ovl22_e4. Called once by RunCombat. The word local is unused; it is there so the frame matches. }
+  @ChooseSpellTargets. Called once by RunCombat. The word local is unused; it is there so the frame matches. }
 procedure EndCombat;
 var
   Next: PCombatNode;
@@ -71,7 +71,7 @@ begin
   CombatMap := nil;
   ReleasePicture(ds6E36);
   ovl31_e3;
-  ds6B84 := @ovl22_e4;
+  ds6B84 := @ChooseSpellTargets;
 end;
 { ovl08:007A. The combat loop. Sets the view mode and DS:6B84 := @ovl13_e14, runs StartBattle,
   then rounds until one side's count (ds6814 or ds6815) is zero or EndCombatRound says so.

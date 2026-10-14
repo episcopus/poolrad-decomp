@@ -3504,3 +3504,10 @@ kind = "routine"
 why = "ovl22:08C3 applies a spell to every chosen target in ds6C91[1..ds6C94]: saving throw, damage and, when the spell has an AffectId, ApplyAffect (ovl24:1656)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl22_e4"
+new = "ChooseSpellTargets"
+kind = "routine"
+why = "ovl22:0A91 picks the spell targets (ds6C91): self, one through res12_fn_2C48, or the whole party, and reports through Done; the DS:6B84 combat callback"
+date = "2026-10-13"
+

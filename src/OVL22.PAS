@@ -14,24 +14,7 @@ function BuildSpellList(Kind: Byte): Byte;
 function SpellAreaSize(Spell: Byte): Byte;
 function SpellAffectDuration(Spell: Byte): Word;
 procedure ApplySpellToTargets(Spell, CasterLevel, Flag, Damage, Kind: Byte; Message: String40);
-procedure ovl22_e4;
-procedure ovl22_fn_0AE5;
-procedure ovl22_fn_0B25;
-procedure ovl22_fn_0B2A;
-procedure ovl22_fn_0B2F;
-procedure ovl22_fn_0B34;
-procedure ovl22_fn_0B3E;
-procedure ovl22_fn_0B43;
-procedure ovl22_fn_0B48;
-procedure ovl22_fn_0B4D;
-procedure ovl22_fn_0B52;
-procedure ovl22_fn_0B5C;
-procedure ovl22_fn_0B6B;
-procedure ovl22_fn_0B7A;
-procedure ovl22_fn_0B7F;
-procedure ovl22_fn_0B84;
-procedure ovl22_fn_0B89;
-procedure ovl22_fn_0B8E;
+procedure ChooseSpellTargets(Spell: Byte; Unused: Byte; var Done: Byte);
 procedure ovl22_e5(A, B, C: Byte; var Done: Byte);
 procedure ovl22_fn_0F4F;
 procedure ovl22_e11;
@@ -319,7 +302,7 @@ begin
   SpellAffectDuration := Value;
 end;
 { ovl22:08C3. Applies the chosen spell Spell to every target in ds6C91[1..ds6C94] (the list the
-  picker ovl22_e4 filled). It first sets the global DamageKind (Kind when the spell deals Damage,
+  picker ChooseSpellTargets filled). It first sets the global DamageKind (Kind when the spell deals Damage,
   else 0) and returns at once with no targets. For each non-nil target: it rolls the spell's own
   saving throw (SpellTable row byte +8 nonzero, the save kind in +9) into Saved, and, when the
   current spell's row byte +2 is $FF, runs the affect hooks, and rolls to hit the target's
@@ -371,42 +354,54 @@ begin
     end;
   DamageKind := 0;
 end;
-{ ovl22:0A91: frame not read }
-{@stub} procedure ovl22_e4; begin end;
-{ ovl22:0AE5: frame not read }
-{@stub} procedure ovl22_fn_0AE5; begin end;
-{ ovl22:0B25: frame not read }
-{@stub} procedure ovl22_fn_0B25; begin end;
-{ ovl22:0B2A: frame not read }
-{@stub} procedure ovl22_fn_0B2A; begin end;
-{ ovl22:0B2F: frame not read }
-{@stub} procedure ovl22_fn_0B2F; begin end;
-{ ovl22:0B34: frame not read }
-{@stub} procedure ovl22_fn_0B34; begin end;
-{ ovl22:0B3E: frame not read }
-{@stub} procedure ovl22_fn_0B3E; begin end;
-{ ovl22:0B43: frame not read }
-{@stub} procedure ovl22_fn_0B43; begin end;
-{ ovl22:0B48: frame not read }
-{@stub} procedure ovl22_fn_0B48; begin end;
-{ ovl22:0B4D: frame not read }
-{@stub} procedure ovl22_fn_0B4D; begin end;
-{ ovl22:0B52: frame not read }
-{@stub} procedure ovl22_fn_0B52; begin end;
-{ ovl22:0B5C: frame not read }
-{@stub} procedure ovl22_fn_0B5C; begin end;
-{ ovl22:0B6B: frame not read }
-{@stub} procedure ovl22_fn_0B6B; begin end;
-{ ovl22:0B7A: frame not read }
-{@stub} procedure ovl22_fn_0B7A; begin end;
-{ ovl22:0B7F: frame not read }
-{@stub} procedure ovl22_fn_0B7F; begin end;
-{ ovl22:0B84: frame not read }
-{@stub} procedure ovl22_fn_0B84; begin end;
-{ ovl22:0B89: frame not read }
-{@stub} procedure ovl22_fn_0B89; begin end;
-{ ovl22:0B8E: retf 8: 8 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl22_fn_0B8E; begin end;
+{ ovl22:0A91. Picks the targets of a spell being cast and reports through Done whether the cast should
+  go ahead. It defaults the picker's chosen character ds6DB5 to the selected character, sets the
+  target count ds6C94 to 1 and the first target ds6C95 to the selected character, and Done to 1, then
+  switches on SpellTable[Spell].Level: level 1 keeps only the caster; level 2 asks 'Cast Spell on
+  whom' (res12_fn_2C48 picks into ds6DB5) and keeps the pick, or clears Done and the list when none
+  was picked; level 4 adds every character of the party list ds5D96, walking Next (+$104), to the
+  list; any other level clears Done. The second byte parameter is unused (QUIRK ovl22:0A91: the
+  original frame reserves it). Called as the DS:6B84 combat callback (ovl08 EndCombat stores
+  @ChooseSpellTargets). }
+procedure ChooseSpellTargets(Spell: Byte; Unused: Byte; var Done: Byte);
+var
+  { Never read: the original frame reserves one pointer (QUIRK ovl22:0A91); it is declared so the
+    frame and the string temporary below it land where the original put them. }
+  Spare: PCharacter;
+begin
+  if ds6DB5 = nil then
+    ds6DB5 := SelectedCharacter;
+  ds6C95 := SelectedCharacter;
+  ds6C94 := 1;
+  Done := 1;
+  case SpellTable[Spell].Pad2[7] of
+    1: ;
+    2:
+    begin
+      res12_fn_27D9;
+      res12_fn_2C48('Cast Spell on whom', 1, ds6DB5);
+      if ds6DB5 = nil then
+      begin
+        ds6C95 := nil;
+        ds6C94 := 0;
+        Done := 0;
+      end
+      else
+        ds6C95 := ds6DB5;
+    end;
+    4:
+      begin
+        ds6C91[ds6C94] := PCharacter(ds5D96);
+        while ds6C91[ds6C94]^.Next <> nil do
+        begin
+          ds6C91[ds6C94 + 1] := ds6C91[ds6C94]^.Next;
+          Inc(ds6C94);
+        end;
+      end;
+  else
+    Done := 0;
+  end;
+end;
 { ovl22:0C20: retf 10: 10 bytes of parameters; 38 bytes of locals }
 {@stub} procedure ovl22_e5(A, B, C: Byte; var Done: Byte); begin end;
 { ovl22:0F4F: retf 6: 6 bytes of parameters; 44 bytes of locals }

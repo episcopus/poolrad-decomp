@@ -743,11 +743,11 @@ var
   PooledMoney: TPartyMoney;       { the Temple clears it on entry (ovl04:0D32) and passes it to MoneyValueInGold }
   ds6C95: PCharacter;             { the character Remove Curse hands to ovl22_e9 (ovl04:08FA) }
   { Globals of the spell target picker ovl22 (CastSpell, whitepaper 5.22). }
-  { The chosen targets of a spell being cast: ovl22_e4 fills entries 1..ds6C94 (entry 0, at DS:6C91,
+  { The chosen targets of a spell being cast: ChooseSpellTargets fills entries 1..ds6C94 (entry 0, at DS:6C91,
     is never used as a pointer; ds6C94 sits in its high byte), and ApplySpellToTargets applies the spell to
     each of them. Element I is at DS:6C91 + I*4. }
   ds6C91: array[0..71] of PCharacter;  { see above }
-  { The number of chosen targets: ovl22_e4 sets it to 1 for a single target and higher for an area
+  { The number of chosen targets: ChooseSpellTargets sets it to 1 for a single target and higher for an area
     spell; ApplySpellToTargets loops 1..ds6C94. DS:6C94. }
   ds6C94: Byte;
   { The spell currently being cast: ApplySpellToTargets reads its SpellTable row byte +2 to decide whether
@@ -820,7 +820,7 @@ var
   CurrentItem: PItem;
   ds6E36: Pointer;                { a picture EndCombat frees through ReleasePicture (ovl08:005A) }
   { A routine pointer: RunCombat sets @ovl13_e14 at the start (ovl08:0085) and EndCombat
-    @ovl22_e4 at the end (ovl08:0069); who calls it is not known yet. }
+    @ChooseSpellTargets at the end (ovl08:0069); who calls it is not known yet. }
   ds6B84: Pointer;                { routine RunCombat stores at ovl08:0085 and EndCombat at ovl08:0069 }
   ds6814: Byte;                   { zero (or ds6815 zero) ends the combat (ovl08:009B, 095C); likely the count of one side }
   ds6815: Byte;                   { see ds6814; likely the count of the other side }
