@@ -1,13 +1,12 @@
 unit OVL03;
 { Encounter: the command loop of the ECL script interpreter (whitepaper 5.1). ovl03_fn_2F2D
   dispatches each command by its opcode (SkippedOpcode) to a handler in this unit; the handlers
-  decode their operands through OVL07 and run them (EndCommand, GotoCommand, GosubCommand,
-  CompareCommand, ArithmeticCommand, RandomCommand). The other routines are still stubs. }
+  decode their operands through OVL07 and run them. The other routines are still stubs. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 uses POOLVARS, RES09, OVL07;
 procedure EndCommand;
-procedure ovl03_fn_00F4;
+procedure GotoCommand;
 procedure ovl03_fn_0111;
 procedure ovl03_fn_0126;
 procedure ovl03_fn_01A3;
@@ -149,8 +148,14 @@ begin
   GlyphCol := 1;
   ds84DE := 0;
 end;
-{ ovl03:00F4: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl03_fn_00F4; begin end;
+{ ovl03:00F4. ECL command 1 (dispatcher ovl03:2F2D, SkippedOpcode 1): an unconditional jump. Its
+  one operand is a script address, and EclPC moves to it (the same jump ScriptGosub makes after
+  it pushes the return address). }
+procedure GotoCommand;
+begin
+  DecodeOperands(1);
+  EclPC := MakeWord(OperandLow[1], OperandHigh[1]);
+end;
 { ovl03:0111: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl03_fn_0111; begin end;
 { ovl03:0126: retf 0: 0 bytes of parameters; 516 bytes of locals }

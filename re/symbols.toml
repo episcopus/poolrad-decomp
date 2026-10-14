@@ -134,12 +134,12 @@ id = "ovl03:00F4"
 unit = "ovl03"
 addr = "ovl03:00F4"
 size = 29
-name = "ovl03_fn_00F4"
+name = "GotoCommand"
 signature = ""
 c_name = "ovl03_fn_00F4"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_00F4 (ECL command 1: the dispatcher ovl03:2F2D calls it for SkippedOpcode 1 (cmp al,1 then call 00F4); it decodes one operand and sets EclPC to MakeWord(OperandLow[1], OperandHigh[1]), the jump ScriptGosub and InitScript also read); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
