@@ -55,7 +55,7 @@ procedure DrawCombatIcon(PicIndex: Byte);
 procedure WalkCombatLine(FromX, FromY, ToX, ToY: ShortInt; Count, Mode: Byte);
 procedure ShowHitMessage(Who: Pointer; Flag: Byte; Text: String40);
 function HasAffect(Who: Pointer; AffectId: Byte; var Affect: Pointer): Boolean;
-procedure res12_fn_2228(Who: Pointer; Damage: Byte);
+procedure ApplyDamage(Who: Pointer; Damage: Byte);
 procedure res12_fn_234A;
 function res12_fn_23B7(Who: Pointer): Byte;
 procedure res12_fn_23DB;
@@ -163,6 +163,13 @@ const
   { The bottom message line 1509 reports a lost item on and 1693 flashes on. }
   BottomRow = 24;
   ScreenLastCol = 39;
+  { TCharacter.Status values this unit uses (the image names 0 Okay, 1 Animated, 4 Unconscious,
+    5 Dying, 6 Dead). ShowDamage uses the set StatusOkay + StatusAnimated as "still standing". }
+  StatusOkay = 0;
+  StatusAnimated = 1;
+  StatusUnconscious = 4;
+  StatusDying = 5;
+  StatusDead = 6;
 
 { 00BA:0000. Applies the readied weapon to Who's attack values; RecalcCombatValues calls it after it
   has copied the character's base values. With no readied weapon (SlotItems[0], +$CC) it does
@@ -1166,8 +1173,52 @@ begin
   end;
   HasAffect := Found;
 end;
-{ 00BA:2228: retf 6: 6 bytes of parameters; 2 bytes of locals }
-{@stub} procedure res12_fn_2228(Who: Pointer; Damage: Byte); begin end;
+{ 00BA:2228. Applies Damage hit points to Who and updates its status. It computes Overkill =
+  Damage - HpCurrent when the damage exceeds Who's current hit points (Flag11B, +$11B) and
+  Remaining = HpCurrent - Damage otherwise (the other stays 0), then sets the status: dead
+  (StatusDead) when the overkill is above 9 or when a hit exactly reaches 0 while Who was already
+  StatusAnimated; dying (StatusDying) when there is any overkill, recording the overkill in
+  Combat^.DyingRounds (+$E) in the combat view; unconscious (StatusUnconscious) when the hit
+  exactly reaches 0 otherwise. When the resulting status is not the standing set StatusOkay +
+  StatusAnimated Who leaves combat: Flag10D and the hit points are cleared and, in the combat
+  view, its side's count (ds6814Sides, by Side) and its initiative (Combat^.Initiative, +$3) drop;
+  a standing character just takes Remaining as its hit points. DealDamage, DamageWithMessage and
+  ovl13 call it. Globals: ds49F3 (view mode), ds6814Sides.
+  StatusDead (6): is the character dead, StatusAnimated (1): already dead-like (the heal code
+  counts 1 and 6); from the image status names. }
+procedure ApplyDamage(Who: Pointer; Damage: Byte);
+var
+  Overkill, Remaining: Byte;
+begin
+  Overkill := 0;
+  Remaining := 0;
+  if PCharacter(Who)^.Flag11B >= Damage then
+    Remaining := PCharacter(Who)^.Flag11B - Damage
+  else
+    Overkill := Damage - PCharacter(Who)^.Flag11B;
+  if (Overkill > 9) or ((Remaining = 0) and (PCharacter(Who)^.Status = StatusAnimated)) then
+    PCharacter(Who)^.Status := StatusDead
+  else if Overkill > 0 then
+  begin
+    PCharacter(Who)^.Status := StatusDying;
+    if ds49F3 = 5 then
+      PCharacter(Who)^.Combat^.DyingRounds := Overkill;
+  end
+  else if Remaining = 0 then
+    PCharacter(Who)^.Status := StatusUnconscious;
+  if not (PCharacter(Who)^.Status in [StatusOkay, StatusAnimated]) then
+  begin
+    PCharacter(Who)^.Flag10D := 0;
+    PCharacter(Who)^.Flag11B := 0;
+    if ds49F3 = 5 then
+    begin
+      Dec(ds6814Sides[ShortInt(PCharacter(Who)^.Side)]);
+      PCharacter(Who)^.Combat^.Initiative := 0;
+    end;
+  end
+  else
+    PCharacter(Who)^.Flag11B := Remaining;
+end;
 { 00BA:234A: retf 4: 4 bytes of parameters; 42 bytes of locals }
 {@stub} procedure res12_fn_234A; begin end;
 { 00BA:23B7: retf 4: 4 bytes of parameters; 2 bytes of locals }

@@ -3630,3 +3630,10 @@ kind = "routine"
 why = "00BA:2199 returns whether AffectId is on Who's affect list and leaves the matching TAffect in the caller's Affect (callers read it as a question: if HasAffect(...) then)"
 date = "2026-10-13"
 
+[[rename]]
+old = "res12_fn_2228"
+new = "ApplyDamage"
+kind = "routine"
+why = "00BA:2228 applies Damage hit points to Who, updates its health status (dead/dying/unconscious/standing) and drops it from combat when it falls; DealDamage, DamageWithMessage and ovl13 call it with a damage amount"
+date = "2026-10-13"
+

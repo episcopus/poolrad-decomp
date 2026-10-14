@@ -80,3 +80,12 @@ tags = ["for", "loop", "byte", "jne", "temp", "locals", "codegen"]
 title = "A Byte for-loop compares against the final value with jne; a variable bound gets a hidden byte temp"
 lesson = "TP6 compiles for I := 0 to 3 do (I a Byte local) as mov I,0; jmp body; inc I; body: ...; cmp I,3; jne inc, so the body runs for I = 0,1,2,3 and the loop exits on I = 3 (the final value is compared directly). A for whose bound is a variable first copies the bound into a hidden byte temporary: for Outer := 0 to Count do becomes mov al,Count; mov [bp-temp],al; mov al,0; cmp al,[bp-temp]; ja end; mov Outer,al; ...; inc Outer; cmp Outer,[bp-temp]; jne inc. res12:1FEB matched with for Pass := 0 to FlashCount do for Frame := 0 to 3 do and the original temp [bp-0x30]. Probe: tools/re/tp_idioms/res12/PRB18.PAS. Also: with a value String40 parameter the compiler's copy occupies [bp-N..bp-1] above the declared locals, and the declared locals keep declaration order with the FIRST declared nearest bp (res12:1FEB declares Col,Row,Icon,Frame,Pass,FlashCount at [bp-0x2a..bp-0x2f]). Probe: tools/re/tp_idioms/res12/PRB19.PAS."
 evidence = ["src/RES12.PAS#ShowHitMessage", "re/symbols.toml#00BA:1FEB", "tools/re/tp_idioms/res12/PRB18.PAS", "tools/re/tp_idioms/res12/PRB19.PAS"]
+
+[[lesson]]
+id = "res12-in-set-jump-direction"
+confidence = "V"
+units = ["res12", "*"]
+tags = ["set", "in", "System_SetIn", "codegen", "jump", "boolean"]
+title = "x in [set] calls System_SetIn and jumps je to the else; not (x in [set]) jumps jne to its else"
+lesson = "For `if X in [set] then A else B` TP6 emits `push X; mov di,<set>; push cs; push di; lcall System_SetIn; je B` (System_SetIn returns AL=1 when X is in the set, so je = not-in-set -> else). For `if not (X in [set]) then A else B` it emits `lcall System_SetIn; jne B`. The set constant (32 bytes) sits in the code segment before the routine. res12:2228's `if not (Status in [0,1])` matched with the jne form (00BA:22DC). Probe: tools/re/tp_idioms/res12/PRB24.PAS."
+evidence = ["src/RES12.PAS#ApplyDamage", "re/symbols.toml#00BA:2228", "tools/re/tp_idioms/res12/PRB24.PAS"]

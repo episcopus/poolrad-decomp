@@ -659,7 +659,7 @@ end;
 { ovl24:1344 (e19). Deals damage to Who: the damage hooks (6) may change DamageAmount; a save
   (Saved) makes it none (SaveEffect 1) or half (2). Shows 'takes <n> points of damage' (or 1
   point) with 'from Fire', 'from Cold', 'from Electricity', 'from Acid' or 'from Magic' by
-  DamageKind, deals it (res12_fn_2228); in combat the combatant cannot cast any more and a pending
+  DamageKind, deals it (ApplyDamage); in combat the combatant cannot cast any more and a pending
   spell is lost ('lost a spell'). A combatant that went down shows 'Goes Down', ', and is Dying'
   or 'is killed' (status 6..8); in combat it loses its death affects, the hooks $D run and it
   leaves the map (RemoveCombatant) unless they stood it up again. }
@@ -689,7 +689,7 @@ begin
     if DamageKind and 8 = DamageKind then
       Msg := Msg + 'from Magic';
     ShowHitMessage(Who, 0, Msg);
-    res12_fn_2228(Who, DamageAmount);
+    ApplyDamage(Who, DamageAmount);
     if ds49F3 = CombatViewMode then
     begin
       Who^.Combat^.CanCast := 0;

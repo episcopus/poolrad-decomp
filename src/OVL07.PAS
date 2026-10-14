@@ -1080,7 +1080,7 @@ end;
 { ovl07:20CC. DamageWithMessage: unless Who is already dead (Status 6), shows '<name> dies.' when
   Damage is more than its hit points (Flag11B) plus 10, else '<name> is hit FOR <n> points of
   Damage.' in the text window (rows $11..$16, starting a new page with a 'press <enter>' prompt
-  when the window is full), applies the damage (res12_fn_2228), clears the window and redraws
+  when the window is full), applies the damage (ApplyDamage), clears the window and redraws
   the selected character. }
 procedure DamageWithMessage(Damage: Word; Who: PCharacter);
 var
@@ -1107,7 +1107,7 @@ begin
     ClearFirst := 0;
   GlyphCol := $26;
   ShowPagedText(1, $11, $26, $16, $F, ClearFirst, Text);
-  res12_fn_2228(Who, Damage);
+  ApplyDamage(Who, Damage);
   ClearRect($11, 1, $26, $F);
   DrawPartyRoster(SelectedCharacter);
 end;
