@@ -16687,12 +16687,12 @@ id = "00BA:1325"
 unit = "res12"
 addr = "00BA:1325"
 size = 134
-name = "res12_fn_1325"
-signature = "function res12_fn_1325(Who: PCharacter): ShortInt"
+name = "StrengthDamageAdjustment"
+signature = "function StrengthDamageAdjustment(Who: PCharacter): ShortInt"
 c_name = "res12_fn_1325"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_1325 (00BA:1325: the strength damage adjustment; ApplyWeaponBonuses (00BA:0000) and RecalcCombatValues (00BA:0BB8) add it to Who^.WeaponDamageBonus[1] for WeaponFlagStrength, and it is 0 unless Who^.StrengthBonusFlag (+0xAA) is nonzero.); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

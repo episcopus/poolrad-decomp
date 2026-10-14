@@ -290,7 +290,7 @@ type
     BaseDamage: array[1..2] of Byte;       { +$A5, +$A6: damage (base) }
     BaseDamageBonus: array[1..2] of ShortInt;  { +$A7, +$A8: signed damage bonus (base) }
     ResistBase: Byte;             { +$A9: base magic resistance RecalcCombatValues copies into ResistValue }
-    { +$AA: the strength reaction and damage adjustments (StrengthAttackAdjustment, res12_fn_1325) apply only
+    { +$AA: the strength reaction and damage adjustments (StrengthAttackAdjustment, StrengthDamageAdjustment) apply only
       when this byte is nonzero; its meaning beyond that is not proven (it may mark a creature whose
       attacks use the strength tables). }
     StrengthBonusFlag: Byte;

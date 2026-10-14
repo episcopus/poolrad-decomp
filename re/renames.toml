@@ -3532,3 +3532,10 @@ kind = "routine"
 why = "00BA:1282: the strength reaction/attack adjustment; ApplyWeaponBonuses (00BA:0000) and RecalcCombatValues (00BA:0BB8) add it to Who^.HitAdjust (the to-hit value) for WeaponFlagStrength, and it is 0 unless Who^.StrengthBonusFlag (+0xAA) is nonzero."
 date = "2026-10-13"
 
+[[rename]]
+old = "res12_fn_1325"
+new = "StrengthDamageAdjustment"
+kind = "routine"
+why = "00BA:1325: the strength damage adjustment; ApplyWeaponBonuses (00BA:0000) and RecalcCombatValues (00BA:0BB8) add it to Who^.WeaponDamageBonus[1] for WeaponFlagStrength, and it is 0 unless Who^.StrengthBonusFlag (+0xAA) is nonzero."
+date = "2026-10-13"
+
