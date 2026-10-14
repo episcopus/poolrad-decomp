@@ -3,7 +3,7 @@
 decompiler: dec-haiku-2, int-loop (the `Agent:` trailers of the unit's commits)
 reviewer: rev-sonnet
 date: 2026-10-14
-commit: d542030
+commit: c528b6b (round 2; round 1 reviewed d542030)
 
 Checklist: docs/process/playbooks/70-review.md (every item, every routine).
 
@@ -56,6 +56,19 @@ Severity: must-fix (blocks review-pass), should-fix, note. When the decompiler f
 5. `ShowCharacterMessage` was checked against RES12 (00BA:16EC): its third parameter is `Row`, not a colour (first finding).
 6. `StatusNames` (re/dseg.toml, DS:1047) was checked for the status values (third finding).
 
+## Round 2 (c528b6b)
+
+Rerun: `make match UNIT=ovl12`: `unit: complete`, 126 matched, 1 nested, 0 differ, 0 stubs;
+`make readability UNIT=ovl12`: clean. Each of the eight round 1 must-fix findings was checked in the source:
+
+- `ShowCharacterMessage` callers: all 23 calls pass `MessageRow` (`$A`) or `ReflectRow`; no "colour 10" is left in the unit. The only "colour 10" in whitepaper line 996 is about the Tyranthraxus/Bane speech text, another unit.
+- Affect ids: handler comments cite the `ovl12_e1` index [V]; `AffectUnknown18` and `AffectUnknown7F` remain only for the two ids whose handler (`ovl12_e116`) does nothing, which the comments say.
+- Status names: `StatusDead`, `StatusGone`, `StatusAnimated` agree with `StatusNames` (DS:1047); no bare 6, 8 or 1 in DropFromFight and DrainLevels.
+- Constants in DrainBloodFromCombatant, BoostFireAttackByTarget (`TargetCodeFour`), WeakenStrength and CauseDiseaseAndDamage (`NoRemoveHandler`) are used; the byte wrap in CancelHookOnChance is marked `QUIRK ovl12:2915:`.
+- [x] note round 2: all eight must-fix findings are closed and no new must-fix was found. The should-fix findings above that are still unticked stay open for the decompiler (they do not block the pass), in particular the unit comment (no whitepaper citation, "training and rewards" name for a unit that is mostly the affect handler table), the `FirstSlotItem` name, the bare item types `$55` to `$58`, and the stale "not decompiled yet" wording.
+
 ## Verdict
 
-not passed: eight must-fix findings (the "colour 10" comments are false, the "which affect runs it is not known" claim is contradicted by the unit's own table, the status names contradict the game's name table, bare numbers where a constant exists, and a missing byte-wrap quirk); the rest are should-fix.
+Round 1: not passed: eight must-fix findings (the "colour 10" comments are false, the "which affect runs it is not known" claim is contradicted by the unit's own table, the status names contradict the game's name table, bare numbers where a constant exists, and a missing byte-wrap quirk); the rest are should-fix.
+
+Round 2: passed. The eight must-fix findings are fixed and verified; the should-fix and note findings remain open and do not block.
