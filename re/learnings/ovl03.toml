@@ -35,3 +35,39 @@ tags = ["while", "guard", "and", "loop", "codegen"]
 title = "A guard before a while with a compound condition is an if around the loop"
 lesson = "The original tests Position > 0 once before the loop (cmp byte [bp-6],0; jbe exit), then the loop head tests I < Position and Member <> nil and jumps back to that head. Writing `if Position > 0 then while (I < Position) and (Member <> nil) do ...` reproduces that layout exactly (proven by make match; the variant without the guard was not probed)."
 evidence = ["src/OVL03.PAS#SelectCharacterCommand", "re/symbols.toml#ovl03:02E0"]
+
+[[lesson]]
+id = "var-argument-needs-identical-type"
+confidence = "V"
+units = ["*"]
+tags = ["var", "absolute", "type", "identity", "cross-unit"]
+title = "A var argument must have the identical type: alias the global under the other unit's type"
+lesson = "ShowEncounterPicture takes `var Shown: TPictureShown` (TPictureShown is an anonymous-looking array[0..1] of Byte declared in OVL07), and POOLVARS declares ds84C8 as array[0..1] of Byte. Passing ds84C8 directly fails with Error 26 (Type mismatch): Turbo Pascal compares the named type, not the shape. The fix that matches is a unit-local alias of the same two bytes, `PictureShown: TPictureShown absolute ds84C8;`, passed as the argument; the code is the same direct address. The type cannot move into POOLVARS without editing OVL07."
+evidence = ["src/OVL03.PAS#ShowEncounterCommand", "src/OVL07.PAS#ShowEncounterPicture", "re/symbols.toml#ovl03:03B4"]
+
+[[lesson]]
+id = "literal-to-string12-local-frame"
+confidence = "V"
+units = ["*"]
+tags = ["string", "literal", "frame", "overlay", "O+"]
+title = "A literal assigned to a local string[12] copies with max 12 and keeps its 13 bytes in the frame"
+lesson = "`PictureSetName := 'CPIC'` with a local `string[12]` compiles to the copy 0AF8:0B25 with max 12 (push 0Ch) into the local, which is then passed by address to a string parameter. The same literal passed directly to LoadPictureSlot(string, ...) uses a 5-byte temporary instead, and the frame is 8 bytes short of the original's. The local must be declared right after the record local it follows (Template, 285 bytes, then the 13-byte string, then the item and affect cursors) for the offsets to match."
+evidence = ["src/OVL03.PAS#AddEncounterGroupCommand", "re/symbols.toml#ovl03:0450"]
+
+[[lesson]]
+id = "unsigned-le-zero-guard-ja"
+confidence = "V"
+units = ["*"]
+tags = ["byte", "compare", "guard", "codegen"]
+title = "`if Count <= 0 then Count := 1` compiles to the original's ja; `if Count = 0` to jne"
+lesson = "For a Byte counter, `if Count = 0 then Count := 1` compiles to cmp byte [x],0; jne, which skips the assignment on the other branch. The original's `cmp byte [bp-2],0; ja skip; mov byte [bp-2],1` (skip when Count > 0) is the source `if Count <= 0 then Count := 1`. The two sources mean the same for a Byte; when a compare with 0 differs only in its conditional jump, change the relation and keep the logic."
+evidence = ["src/OVL03.PAS#AddEncounterGroupCommand", "re/symbols.toml#ovl03:0450"]
+
+[[lesson]]
+id = "two-condition-while-matches-exit-shape"
+confidence = "V"
+units = ["*"]
+tags = ["while", "and", "loop", "short-circuit", "codegen"]
+title = "`while (I <= Count) and (N < Max) do` reproduces the original's loop exit jumps"
+lesson = "The original's member loop tests I <= Count with a jbe into the body and a jmp to the exit, then tests the count against 63 the same way (ovl03:0450, 05A2..05B4). Written as one short-circuit while condition, TP 6 generates that layout exactly (proven by make match), so a loop that adds members can keep its two exits without a Break (TP 6 has none)."
+evidence = ["src/OVL03.PAS#AddEncounterGroupCommand", "re/symbols.toml#ovl03:0450"]
