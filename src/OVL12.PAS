@@ -139,9 +139,13 @@ const
   NoRemoveHandler = 0;          { the same Flag, clear: the affect's handler does not run when the affect is removed }
   HookGoesDown = $D;            { RunAffectHooks kind: a combatant going down (DealDamage, DropCombatant) }
   CombatViewMode = 5;           { ds49F3 during a combat (RunCombat sets it, whitepaper 5.5) }
-  StatusGone = 6;               { TCharacter.Status 6, dead for good (ovl04:0510) }
+  StatusAnimated = 1;           { TCharacter.Status 1, "Animated" in StatusNames (DS:1047); DrainLevels tests it (ovl12:2122)
+  }
+  StatusDead = 6;               { TCharacter.Status 6, "Dead" in StatusNames (DS:1047): 'dies from poison', 'collapses',
+                                  'is killed' (ovl04:0510) }
   StatusStoned = 7;             { TCharacter.Status 7, stone (ovl04:093D) }
-  StatusDeadForever = 8;        { TCharacter.Status 8, with 'is dead forever' (ovl12:2122, 228C); StatusRotted is 8 too }
+  StatusGone = 8;               { TCharacter.Status 8, "Gone" in StatusNames (DS:1047): 'is dead forever' (ovl12:2122,
+                                  228C), 'Dies rots away' (ovl12:1399) }
   MoraleStep = 5;               { what the affect handlers add to or take from the morale scratch ds6825 }
   TargetBonus = 2;              { what BoostAttackAgainstTarget adds to AttackRoll and to DamageAmount }
   AffectTrainingManual = 7;     { the affect id of "Training with Manual of Bodily Health" (ovl15:0FBC names it) }
@@ -184,7 +188,8 @@ const
   AffectPoisoned = $37;         { the Poisoned affect (ovl15 names it 'Poisoned'; ovl04 calls it AffectPoison) }
   SaveKindPoison = 0;           { SavingThrow kind 0, the first of the five saves: the poison save [I] (ovl12:1545) }
   SaveKindParalysis = 0;        { the same kind 0 for the paralysis save of ovl12:15EB [I] (the first of the five saves) }
-  AffectParalysis = $34;        { the affect of "is Paralyzed" (ovl12:15EB): a spell affect that ovl15 names by its spell [I] }
+  AffectParalysis = $34;        { the affect of "is Paralyzed" (ovl12:15EB): a spell affect that ovl15 names by its spell [I]
+  }
   ParalysisData = $0C;          { the Data byte ovl12:15EB gives the paralysis affect }
   ParalysisImmuneRace = 2;      { TCharacter.Race (+$2E) that ovl12:16BB leaves unparalysed [?] }
   ParalysisDuration = $3F;      { the rounds ovl12:16BB paralyses for (63) }
@@ -200,7 +205,8 @@ const
   AgedBit = $10;                { Affect.Data bit 4: set once the affect has aged Who (ovl12:0C4B) }
   MissedBit = $10;              { Affect.Data bit 4 again, set by ovl12:2490 once it has made the attack roll a miss [?] }
   DataLowNibble = $0F;          { the low nibble of Affect.Data, the part ovl12:2490 keeps in the first case }
-  AffectImages = $1C;           { the images affect: runs on the damage hook (kind 6, ovl24:02FA); Data counts the images [I] }
+  AffectImages = $1C;           { the images affect: runs on the damage hook (kind 6, ovl24:02FA); Data counts the images [I]
+  }
   AffectUnknown17 = $17;        { purpose unknown [?]: the affect ovl12:317A removes from Who when its own affect is removed }
   AffectUnknown2B = $2B;        { purpose unknown; a Cure Disease affect (ovl04:031E), run by RunDiseaseHandlers }
   AffectCauseDisease = $2C;     { named in ovl15 (ovl15:0FBC); a Cure Disease affect (ovl04:031E) }
@@ -244,7 +250,8 @@ const
   HookChanceHalf = 50;          { the Chance ovl12:2976 gives ovl12:2915 (the hook cancel with a roll) }
   HookChanceLow = 15;           { the Chance ovl12:2984 gives ovl12:2915 }
   HookChanceHigh = 90;          { the 1d100 roll at or below which ovl12:2992 cancels its hooks }
-  HookChanceModerate = 30;      { the 1d100 roll at or below which ovl12:2DE4 cancels the charm's and AffectUnknown35's hooks }
+  HookChanceModerate = 30;      { the 1d100 roll at or below which ovl12:2DE4 cancels the charm's and AffectUnknown35's hooks
+  }
   AffectUnknown19 = $19;        { purpose unknown [I]: RollToHit clears it from the attacker (ovl24:0CB7) }
   AffectUnknown19Duration = 1;  { the Duration ovl12:1363 gives affect AffectUnknown19 }
   AffectUnknown19Data = $0C;    { the Data byte ovl12:1363 gives affect AffectUnknown19 }
@@ -258,11 +265,11 @@ const
   RotLastStage = 1;             { a rot whose stage is this or lower kills its victim (the rot handler, ovl12:1399) }
   RotCharismaLoss = 2;          { what each run of the rot handler (ovl12:1399) takes off Charisma }
   RotMinimumCharisma = 3;       { Charisma is not taken below this by the rot handler (ovl12:1399) }
-  StatusRotted = 8;             { TCharacter.Status 8: what the rot handler gives its victim, who dies of the rot }
   AffectBloodDrain = $4B;       { the affect of the blood drain on the drinker: its Data is the victim's combatant index and
                                   DrainBloodFromCombatant (ovl12:176F) runs when it is removed }
   BloodDrainDuration = $CF;     { the Duration ovl12:18B5 gives AffectBloodDrain (207) }
-  AffectHeldFast = $3A;         { the affect of the victim of a blood drain; ovl12:1935 shows "is held fast" when it gives it }
+  AffectHeldFast = $3A;         { the affect of the victim of a blood drain; ovl12:1935 shows "is held fast" when it gives it
+  }
   HeldFastData = $FF;           { the Data byte the blood drain gives AffectHeldFast }
   HeldFastDuration = 0;         { the Duration the blood drain gives AffectHeldFast }
   HeldFastStrengthLimit = $13;  { a target whose Strength (TCharacter +$10) is below this is held fast (ovl12:1935) }
@@ -336,9 +343,10 @@ begin
     AddAffect(Who, AffectId, Duration, Data, RunsHandlerOnRemove);
   end;
 end;
-{ ovl12:0058. Puts Who out of the fight, with Msg shown on Who in colour 10 (ShowCharacterMessage). Unless Who's
-  Status is 6, 7 or 8 already, its Status becomes NewStatus, its Flag10D and Flag11B are cleared, its
-  death affects are removed (RemoveDeathAffects), the hooks of a combatant going down run, and Who leaves
+{ ovl12:0058. Puts Who out of the fight, with Msg shown on Who at row MessageRow (ShowCharacterMessage).
+  Unless Who's Status is StatusDead, StatusStoned or StatusGone (6, 7 or 8) already, its Status becomes NewStatus,
+  its Flag10D and Flag11B are cleared, its death affects are removed (RemoveDeathAffects), the hooks of a combatant going
+  down run, and Who leaves
   the map (RemoveCombatant) when Flag10D is clear. Then DelayByGameSpeed, the prompt is cleared and,
   outside combat, the selected character is redrawn. Like DropCombatant (ovl24:0F06) without the ground
   redraw. }
@@ -346,7 +354,7 @@ procedure DropFromFight(Who: PCharacter; NewStatus: Byte; Msg: String40);
 begin
   ShowCharacterMessage(Who, Msg, $A, 0);
   case Who^.Status of
-    StatusStoned, StatusGone, 8: Exit;
+    StatusStoned, StatusDead, StatusGone: Exit;
   end;
   Who^.Status := NewStatus;
   Who^.Flag10D := 0;
@@ -655,7 +663,7 @@ begin
 end;
 { ovl12:0775. Affect handler (the AffectHandlers shape: Who, Affect and Mode; only Who is read): a poisoned
   character dies. When Who has the Poisoned affect (AffectPoisoned, ovl15 names it 'Poisoned'), DropFromFight takes
-  Who out of the fight with StatusGone and the text 'dies from poison'. Then AffectUnknown0F is removed from Who
+  Who out of the fight with StatusDead and the text 'dies from poison'. Then AffectUnknown0F is removed from Who
   inside the ds681F bracket the Temple uses around RemoveAffect (ovl04:0386), so TryAddAffect adds nothing while
   it runs. Which affect runs it is not known yet [?]. }
 procedure DieIfPoisoned(Who: PCharacter; Affect: PAffect; Mode: Byte);
@@ -663,7 +671,7 @@ var
   PoisonAffect: Pointer;
 begin
   if HasAffect(Who, AffectPoisoned, PoisonAffect) then
-    DropFromFight(Who, StatusGone, 'dies from poison');
+    DropFromFight(Who, StatusDead, 'dies from poison');
   ds681F := 1;
   RemoveAffect(Who, AffectUnknown0F, nil);
   ds681F := 0;
@@ -784,7 +792,7 @@ begin
 end;
 { ovl12:0B1B. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000). It clears
   the affect's Flag, so the handler does not run again when the affect is removed. Unless the Temple is removing
-  affects (ds681F is not 0), Who collapses: DropFromFight takes Who out of the fight with StatusGone and the text
+  affects (ds681F is not 0), Who collapses: DropFromFight takes Who out of the fight with StatusDead and the text
   'collapses'. Then Who's side becomes the high nibble of the affect's Data, Quick is set so the computer plays
   Who (as ComputerTakesOver does, ovl12:0400), the morale of a computer-run member is cleared, and Who's +$6B gets
   the fighter level, +$72 gets 12, +$76 and +$9F get 0. Purpose unknown: which affect runs it is not known yet [?]. }
@@ -792,7 +800,7 @@ procedure CollapseAndChangeSide(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   Affect^.Flag := 0;
   if ds681F = 0 then
-    DropFromFight(Who, StatusGone, 'collapses');
+    DropFromFight(Who, StatusDead, 'collapses');
   Who^.Side := Affect^.Data div 16;
   Who^.Quick := 1;
   Who^.Pad74[$76] := 0;
@@ -822,7 +830,8 @@ begin
   CallAffectHandler(AffectCauseDisease, Who, Affect, Mode);
 end;
 { 0C06. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). Adds 1 to SaveRoll and
-  to AttackRoll, the plus of the routine at ovl12:0C15. Called by ovl12:12B2 (RaiseOrLowerAttackAndSave, not decompiled yet). }
+  to AttackRoll, the plus of the routine at ovl12:0C15. Called by ovl12:12B2 (RaiseOrLowerAttackAndSave, not decompiled yet).
+  }
 procedure RaiseAttackAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   Inc(SaveRoll);
@@ -1091,7 +1100,7 @@ end;
   is not 0, ovl04:0386). Otherwise it shows "Rots..." on Who (colour 10) and takes RotCharismaLoss off Who's Charisma
   (+$15), never below RotMinimumCharisma. Then the rot moves on: while the stage (the high nibble of the affect's
   Data) is above RotLastStage, the stage drops by one (RotStage) and TryAddAffect gives Who the rot again with that
-  Data for RotDuration rounds. At the last stage Who dies: DropFromFight takes Who out with StatusRotted and the
+  Data for RotDuration rounds. At the last stage Who dies: DropFromFight takes Who out with StatusGone and the
   text "Dies rots away". }
 procedure ProgressRot(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
@@ -1109,7 +1118,7 @@ begin
     if TryAddAffect(Who, AffectRot, Affect^.Data, RotDuration) then ;
   end
   else
-    DropFromFight(Who, StatusRotted, 'Dies rots away');
+    DropFromFight(Who, StatusGone, 'Dies rots away');
 end;
 { ovl12:1452. Affect handler (the AffectHandlers shape: Who, Affect and Mode; only Who is read). It stops Who's
   movement: the combat record's Moves (+$6 of TCombatant, the movement left) goes to 0. When ds681D is not 0 it also
@@ -1165,7 +1174,7 @@ end;
   attacked last. That character makes a poison save (SaveKindPoison, with Bonus). When it fails, "is Poisoned"
   (colour 10) is shown on it, DelayByGameSpeed waits, it
   gets AffectPoisoned for good (AddAffect with Duration 0, Data $FF, no handler on removal) and DropFromFight kills it
-  with StatusGone and "is killed". The map split this routine at ovl12:1543 and ovl12:1583, which are inside its
+  with StatusDead and "is killed". The map split this routine at ovl12:1543 and ovl12:1583, which are inside its
   literal pool and inside its code. Which affect runs it is not known yet [?]. }
 procedure PoisonAttackTarget(Who: PCharacter; Bonus: ShortInt);
 begin
@@ -1175,7 +1184,7 @@ begin
     ShowCharacterMessage(AttackTarget, 'is Poisoned', $A, 0);
     DelayByGameSpeed;
     AddAffect(AttackTarget, AffectPoisoned, 0, $FF, NoRemoveHandler);
-    DropFromFight(AttackTarget, StatusGone, 'is killed');
+    DropFromFight(AttackTarget, StatusDead, 'is killed');
   end;
 end;
 { ovl12:15EB. Paralyses the character Who attacked last. AttackTarget takes Who's combat Target (TCombatant +$A) and
@@ -1269,7 +1278,8 @@ end;
   Who's turn is ended (EndCombatTurn, its result is not read), then the affect's Duration div 16 must stay above the
   damage, which is taken off the Duration (times 16) while the combatant is still in the fight; otherwise affect $4B is
   removed from Who. Else affect $3A is removed from the combatant and, when Mode is 0, the affect's Flag is cleared and
-  affect $4B is removed from Who. Last, when both still take part, Who's combat byte ForcedFlight becomes 1 (CheckMorale forces
+  affect $4B is removed from Who. Last, when both still take part, Who's combat byte ForcedFlight becomes 1 (CheckMorale
+  forces
   a combatant with it nonzero to flee, ovl09:10D7). Which affect runs it is not known yet [?]. }
 procedure DrainBloodFromCombatant(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
@@ -1490,14 +1500,15 @@ begin
 end;
 { ovl12:2122. Level drain: Who loses Count levels (the callers ovl12:23A4 and ovl12:23C2 are not decompiled yet [?]).
   Shows "is drained " followed by "N levels" or "a level" on Who in colour 10 (ShowCharacterMessage). When Who's
-  Status is 1 (dead) Who is dead forever: DropFromFight with StatusDeadForever, and HpMax is 0. Otherwise,
+  Status is StatusAnimated (1, "Animated" in StatusNames, not Dead: the test reads that value [I]) Who is dead forever:
+  DropFromFight with StatusGone, and HpMax is 0. Otherwise,
   for each of the Count levels: the counter Pad74[$74] (+$74, not named yet) goes up; the total of all class
   levels (Total) is taken; Quotient = HpMax div Total hit points are lost: for each of them HpMax, HpB1 and
   Flag11B (the current hit points) go down by one while above 0 and Pad74[$75] (the lost hit points, the
   third number of ShowDebugTrace, ovl33:0004) goes up. Then, when Who's HighestLevel is below 2, the
   character is dead forever (with a Count of 2 its highest class level is cleared too). Otherwise one level
   comes off the class that holds the highest level (nested HighestLevelClass), and when no hit points are
-  left (Flag11B 0) and Status is not 6 Who is killed (DropFromFight, "is killed"). RecalcClassStats (ovl23)
+  left (Flag11B 0) and Status is not StatusDead Who is killed (DropFromFight, "is killed"). RecalcClassStats (ovl23)
   runs, then HighestLevel becomes that class's level, Experience (+$AC) the experience floor the nested
   routine found, and RecalcCombatValues redraws Who. The trace line 'max,cur,lost' is shown in debug mode only.
   Parameters: Who (the victim, a far pointer), Count (the levels drained, 1 or more).
@@ -1549,15 +1560,15 @@ begin
   else
     Msg := 'a level';
   ShowCharacterMessage(Who, 'is drained ' + Msg, $A, 1);
-  if Who^.Status = 1 then
+  if Who^.Status = StatusAnimated then
   begin
-    DropFromFight(Who, StatusDeadForever, 'is dead forever');
+    DropFromFight(Who, StatusGone, 'is dead forever');
     Who^.HpMax := 0;
     Exit;
   end;
   for Step := 1 to Count do
   begin
-    if Who^.Status <> StatusDeadForever then
+    if Who^.Status <> StatusGone then
     begin
       Inc(Who^.Pad74[$74]);
       Total := 0;
@@ -1577,7 +1588,7 @@ begin
       end;
       if Who^.HighestLevel < 2 then
       begin
-        DropFromFight(Who, StatusDeadForever, 'is dead forever');
+        DropFromFight(Who, StatusGone, 'is dead forever');
         Who^.HpMax := 0;
         if (Who^.ClassLevels[HighestLevelClass] > 0) and (Count = 2) then
           Who^.ClassLevels[HighestLevelClass] := 0;
@@ -1585,8 +1596,8 @@ begin
       else
       begin
         Dec(Who^.ClassLevels[HighestLevelClass]);
-        if (Who^.Flag11B = 0) and (Who^.Status <> StatusGone) then
-          DropFromFight(Who, StatusGone, 'is killed');
+        if (Who^.Flag11B = 0) and (Who^.Status <> StatusDead) then
+          DropFromFight(Who, StatusDead, 'is killed');
         RecalcClassStats(Who);
       end;
       Who^.HighestLevel := Who^.ClassLevels[HighestLevelClass];
@@ -1701,13 +1712,13 @@ begin
 end;
 { ovl12:2610. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000). It clears the
   affect's Flag, so the handler does not run again when the affect is removed. When Who still takes part in the fight
-  (Flag10D set), Who falls dead: DropFromFight takes Who out with StatusGone and the text 'Falls dead'. Which affect runs
+  (Flag10D set), Who falls dead: DropFromFight takes Who out with StatusDead and the text 'Falls dead'. Which affect runs
   it is not known yet [?]. }
 procedure FallDeadIfInFight(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   Affect^.Flag := 0;
   if Who^.Flag10D <> 0 then
-    DropFromFight(Who, StatusGone, 'Falls dead');
+    DropFromFight(Who, StatusDead, 'Falls dead');
 end;
 { ovl12:264B. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). It cancels the
   damage (DamageAmount := 0) unless SelectedCharacter's first slot item (FirstSlotItem, ovl12:101D) is a magic item
