@@ -3910,3 +3910,10 @@ kind = "routine"
 why = "handler of the monster-only spell 65 (SpellHandlers element 65, overlay entry 60, stub 0096:014C): applies the current spell for 2d4 + 2 magic damage (kind 8) with no message"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl22_e61"
+new = "CastMonsterNoEffect"
+kind = "routine"
+why = "handler of the monster-only spell 66 (SpellHandlers element 66, overlay entry 61, stub 0096:0151): the handler body is empty, so the cast does nothing after the picker"
+date = "2026-10-14"
+

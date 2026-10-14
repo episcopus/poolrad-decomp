@@ -10660,12 +10660,12 @@ id = "ovl22:3092"
 unit = "ovl22"
 addr = "ovl22:3092"
 size = 16
-name = "ovl22_e61"
+name = "CastMonsterNoEffect"
 signature = ""
 c_name = "ovl22_e61"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_61"
+notes = "renamed from ovl22_e61 (handler of the monster-only spell 66 (SpellHandlers element 66, overlay entry 61, stub 0096:0151): the handler body is empty, so the cast does nothing after the picker); auto:entry_61"
 evidence = ["prologue"]
 
 [[routine]]

@@ -72,7 +72,7 @@ procedure CastMonsterParalyze;
 procedure CastMonsterHealWounds;
 procedure CastMonsterInvisibility;
 procedure CastMonsterMagicDamage;
-procedure ovl22_e61;
+procedure CastMonsterNoEffect;
 procedure ovl22_e62;
 procedure ovl22_e63;
 procedure ovl22_fn_31D7;
@@ -1857,8 +1857,15 @@ begin
   ApplySpellToTargets(ds681B, 0, 0,
     RollDiceCounted(DiceCount, DiceSides) + DamageBonus, DamageKind, '');
 end;
-{ ovl22:3092: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl22_e61; begin end;
+{ ovl22:3092 (e61). Cast handler of spell 66, a monster-only spell: SpellNames[66] is empty and the
+  ovl22_e10 handler table points element 66 of SpellHandlers at this stub. The handler is empty: the
+  picker has already chosen the targets (CastChosenSpell calls SpellTargetPicker before the handler,
+  the DS:6B84 callback) and
+  the spell then does nothing, since ApplySpellToTargets is never called here, unlike its neighbours
+  CastMonsterParalyze (spell 61) and CastMonsterMagicDamage (spell 65). }
+procedure CastMonsterNoEffect;
+begin
+end;
 { ovl22:30A2: retf 0: 0 bytes of parameters; 12 bytes of locals }
 {@stub} procedure ovl22_e62; begin end;
 { ovl22:30D9: frame not read }
