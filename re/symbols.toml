@@ -10335,51 +10335,38 @@ id = "ovl22:225D"
 unit = "ovl22"
 addr = "ovl22:225D"
 size = 45
-name = "ovl22_e41"
+name = "CastCauseBlindness"
 signature = ""
 c_name = "ovl22_e41"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_41"
+notes = "renamed from ovl22_e41 (spell 38 Cause Blindness handler: applies ds681B to the targets with the message 'is blind' (ovl22_e10 maps DS:6B84+38*4 to overlay stub 0096:00ED; SpellNames[38]='Cause Blindness'; its affect $21 is the blindness Cure Blindness removes)); auto:entry_41"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl22:228A"
 unit = "ovl22"
 addr = "ovl22:228A"
-size = 2
-name = "ovl22_fn_228A"
-signature = ""
+size = 165
+name = "CureDiseaseAffects"
+signature = "function CureDiseaseAffects: Boolean"
 c_name = "ovl22_fn_228A"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl22_fn_228A (the helper ovl22_e42 (spell 39 Cure Disease) and ovl22_e54 call: cures the six DiseaseAffects[1..6] ($1F,$22,$2B,$2C,$32,$39) with their companions from ds6C95 and returns whether it cured any (make match UNIT=ovl22 FN=CureDiseaseAffects: 165 bytes)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl22:228C"
-unit = "ovl22"
-addr = "ovl22:228C"
-size = 163
-name = "ovl22_fn_228C"
-signature = ""
-c_name = "ovl22_fn_228C"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl22:232F"
 unit = "ovl22"
 addr = "ovl22:232F"
 size = 29
-name = "ovl22_e42"
+name = "CastCureDisease"
 signature = ""
 c_name = "ovl22_e42"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_42"
+notes = "renamed from ovl22_e42 (spell 39 Cure Disease handler: calls CureDiseaseAffects on ds6C95 and drops the result (ovl22_e10 maps DS:6B84+39*4 to overlay stub 0096:00F2; SpellNames[39]='Cure Disease' at DS:2F28; SpellTable[39].AffectId is 0); make match UNIT=ovl22 FN=CastCureDisease: 17 bytes); auto:entry_42"
 evidence = ["prologue"]
 
 [[routine]]
@@ -10387,12 +10374,12 @@ id = "ovl22:234C"
 unit = "ovl22"
 addr = "ovl22:234C"
 size = 55
-name = "ovl22_e43"
+name = "CastCauseDisease"
 signature = ""
 c_name = "ovl22_e43"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_43"
+notes = "renamed from ovl22_e43 (spell 40 Cause Disease handler: applies ds681B to the targets with the message 'is diseased' and Flag 1 (ovl22_e10 maps DS:6B84+40*4 to overlay stub 0096:00F7; SpellNames[40]='Cause Disease'; the affect is one CureDiseaseAffects clears)); auto:entry_43"
 evidence = ["prologue"]
 
 [[routine]]

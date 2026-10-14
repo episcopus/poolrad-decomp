@@ -47,11 +47,10 @@ procedure CastStinkingCloud;
 procedure CastStrength;
 procedure CastAnimateDead;
 procedure CastCureBlindness;
-procedure ovl22_e41;
-procedure ovl22_fn_228A;
-procedure ovl22_fn_228C;
-procedure ovl22_e42;
-procedure ovl22_e43;
+procedure CastCauseBlindness;
+function CureDiseaseAffects: Boolean;
+procedure CastCureDisease;
+procedure CastCauseDisease;
 procedure ovl22_fn_2383;
 procedure ovl22_e44;
 procedure ovl22_fn_23B6;
@@ -1238,16 +1237,69 @@ begin
   if CureAffect(ds6C95, BlindnessAffect) then
     res12_fn_1FEB(ds6C95, ShowAbout, 'can see');
 end;
-{ ovl22:225D: retf 0: 0 bytes of parameters; 10 bytes of locals }
-{@stub} procedure ovl22_e41; begin end;
-{ ovl22:228A: frame not read }
-{@stub} procedure ovl22_fn_228A; begin end;
-{ ovl22:228C: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl22_fn_228C; begin end;
-{ ovl22:232F: retf 0: 0 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl22_e42; begin end;
-{ ovl22:234C: retf 0: 0 bytes of parameters; 12 bytes of locals }
-{@stub} procedure ovl22_e43; begin end;
+{ ovl22:225D. Cast handler of spell 38, Cause Blindness (SpellHandlers[38]: ovl22_e10 maps
+  DS:6B84+38*4 to overlay stub 0096:00ED; SpellNames[38] is 'Cause Blindness' at DS:2EFF). It only
+  applies the current spell ds681B to the chosen targets with the message 'is blind'; the spell's own
+  affect $21 does the blinding (the affect Cure Blindness removes, ovl22:2217), so the handler has
+  nothing else to do. Reads ds681B. }
+procedure CastCauseBlindness;
+begin
+  ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is blind');
+end;
+{ ovl22:228A. Cures the six disease affects of the Temple (DiseaseAffects[1..6] at DS:0114: $1F,
+  $22, $2B, $2C, $32, $39) from the chosen target ds6C95 and returns whether it cured any: it cures
+  the $22 spell affect on its own, and curing $2B clears its companions $2C (Cause Disease) and $1F
+  (Helpless) too, while curing $32 (Dreaded Mummy Disease) clears $39. ds681F is set while the
+  affects go so the removal does not trigger the Temple's own cure. Called by CastCureDisease (spell 39,
+  Cure Disease) and ovl22_e54. }
+function CureDiseaseAffects: Boolean;
+const
+  DiseaseAffectHelpless = $1F;     { the Display names it Helpless (ovl15 AffectHelpless) }
+  DiseaseAffectCured = $22;        { cured on its own; a spell affect (ovl15 names $20..$22 by their spell) }
+  DiseaseAffectCause = $2B;        { cured with its two companions below }
+  DiseaseAffectCauseDisease = $2C; { the Display names it Cause Disease (ovl15 AffectCauseDisease) }
+  DiseaseAffectMummy = $32;        { the Display names it Dreaded Mummy Disease (ovl15 AffectMummyDisease) }
+  DiseaseAffectMummyCleared = $39; { cleared with Dreaded Mummy Disease }
+begin
+  CureDiseaseAffects := False;
+  ds681F := 1;
+  if CureAffect(ds6C95, DiseaseAffectCured) then
+    CureDiseaseAffects := True;
+  if CureAffect(ds6C95, DiseaseAffectCause) then
+  begin
+    CureDiseaseAffects := True;
+    RemoveAffect(ds6C95, DiseaseAffectCauseDisease, nil);
+    RemoveAffect(ds6C95, DiseaseAffectHelpless, nil);
+  end;
+  if CureAffect(ds6C95, DiseaseAffectMummy) then
+  begin
+    CureDiseaseAffects := True;
+    RemoveAffect(ds6C95, DiseaseAffectMummyCleared, nil);
+  end;
+  ds681F := 0;
+end;
+{ ovl22:232F. Cast handler of spell 39, Cure Disease (SpellHandlers[39]: ovl22_e10 maps
+  DS:6B84+39*4 to overlay stub 0096:00F2; SpellNames[39] is 'Cure Disease' at DS:2F28). It calls
+  CureDiseaseAffects to cure the chosen target ds6C95 and stores the result in a local it never
+  reads, so the cure happens through that call alone (SpellHandlers is a table of procedures and
+  takes no result). QUIRK ovl22:232F: the Boolean local Cured is written and never read. }
+procedure CastCureDisease;
+var
+  Cured: Boolean;
+begin
+  Cured := CureDiseaseAffects;
+end;
+{ ovl22:234C. Cast handler of spell 40, Cause Disease (SpellHandlers[40]: ovl22_e10 maps
+  DS:6B84+40*4 to overlay stub 0096:00F7; SpellNames[40] is 'Cause Disease' at DS:2F51). It applies
+  the current spell ds681B to the chosen targets with the message 'is diseased' and no damage of its
+  own, but with Flag 1 so the spell's affect runs its handler when it is removed (the affect the
+  Temple's Cure Disease and CureDiseaseAffects clear). Reads ds681B. }
+procedure CastCauseDisease;
+const
+  RunHandlerOnRemoval = 1;        { ApplySpellToTargets' Flag: the affect's handler runs when it is removed }
+begin
+  ApplySpellToTargets(ds681B, 0, RunHandlerOnRemoval, 0, 0, 'is diseased');
+end;
 { ovl22:2383: frame not read }
 {@stub} procedure ovl22_fn_2383; begin end;
 { ovl22:2385: frame not read }
