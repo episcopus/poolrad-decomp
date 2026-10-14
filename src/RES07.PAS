@@ -791,13 +791,16 @@ begin
   end;
 end;
 
-{ 0464:1951: shows a picture at (X, Y) by copying its packed pixel data
-  straight to the video hardware, one branch per video adapter: adapter 0 moves a
-  WidthCols*2-byte row per screen row to the segment ds4EC0[Row] at column X*2;
-  adapter 1 writes one byte per pixel through the four EGA planes (map mask from
-  EgaPlaneBitMasks, address ds5050[Row] + Col in segment $A000); adapter 2 is the
-  adapter-0 move with four bytes per column and the ds51E0 segment table. Called
-  by ShowTitleScreen, ovl28 DrawSprite and ovl34 Put8x8Symbol. }
+{ 0464:1951: shows a picture at (PicCol, PicRow) by copying its packed pixel data
+  straight to the video hardware, one branch per video adapter. PicRow * 8 is the
+  first pixel row, and PicCol the first cell column. Adapter 0 moves a
+  WidthCols*2-byte row per screen row to the segment ds4EC0[Row] at column
+  PicCol*2; adapter 1 writes, per row and per cell column, the four plane bytes of
+  the source cell (the plane-interleaved layout, 4 bytes per cell, one byte per
+  EGA plane: each byte holds eight pixels of that plane, written through the map
+  mask EgaPlaneBitMasks[Plane] on port 3C5 to Mem[$A000:ds5050[Row] + Col]);
+  adapter 2 is the adapter-0 move with four bytes per column and the ds51E0
+  segment table. Called by ShowTitleScreen, ovl28 DrawSprite and ovl34 Put8x8Symbol. }
 procedure ShowPicture(PicCol, PicRow: Integer; Buf: Pointer);
 var
   Col, Row: Integer;
@@ -859,14 +862,20 @@ begin
     end;
   end;
 end;
-{ 0464:1B52: presents the changed regions the blitters marked in ds4A28
-  (row-changed flags), ds4AD0/ds4C20 (the first and last changed offset of the
-  row) and ds4D70 (the last offset), one branch per video adapter: adapter 0
-  moves each changed span from the staging buffer DrawBuf to the segment
-  ds4EC0[Row+8]; adapter 1 writes the four EGA planes byte by byte through port
-  3C5 (stride 4 in the source) into $A200, then copies $A000 to $A200 in GC
-  write mode 1; adapter 2 moves the spans to the ds51E0 segments. Finally the
-  trackers are reset. Called after every sprite or picture blit. }
+{ 0464:1B52: presents the changed regions the blitters marked in ds4A28 (the
+  per-row changed flag) and the tracker arrays, one branch per video adapter. Per
+  changed row the staging buffer DrawBuf holds the changed bytes at
+  Data[ds4C20[Row] .. ds4D70[Row]]: ds4C20 is the first (lowest) changed byte
+  offset, a minimum that starts at $FFFF, and ds4D70 the last (highest), which
+  starts at 0. ds4AD0[Row] is the screen-side byte column of that first changed
+  byte (LeftCol * 2 on adapter 0, LeftCol * 1 on adapter 1, LeftCol * 4 on
+  adapter 2). Adapter 0 moves each changed span to the segment ds4EC0[Row+8] at
+  column ds4AD0[Row]+2; adapter 1 writes the four EGA planes byte by byte through
+  port 3C5 (stride 4 in the source) into the off-screen page $A200, then copies
+  $A200 onto the visible page $A000 in GC write mode 1 (GC register 5 := 1,
+  restored to 0); adapter 2 moves the spans to the ds51E0 segments at column
+  ds4AD0[Row]+4. Finally the trackers are reset. Called after every sprite or
+  picture blit. }
 procedure FlushPictureChanges;
 var
   Row: Word;
@@ -944,16 +953,19 @@ begin
   FillChar(ds4C20, $150, $FF);
   FillChar(ds4D70, $150, 0);
 end;
-{ 0464:1E5C: recolours the picture Pic. For every colour index I whose FromMap and ToMap
-  entries differ, each pixel of Pic whose palette colour is FromMap[I] becomes ToMap[I].
-  The changes go to a scratch copy of Pic (AllocatePicture) that is copied back over the
-  items from FirstItem on at the end. FirstItem is an item index (the byte offset of an
-  item is FirstItem * ByteSize). Flicker (nonzero) makes each change random: adapters 0
-  and 2 change each matching pixel with chance 1 in 4, adapter 1 changes a random subset
-  of the matching pixels of each cell. Adapter 0 compares 2-bit pixel pairs (ds25FA,
+{ 0464:1E5C: recolours item FirstItem of picture Pic (item 0 when FirstItem is
+  negative). For every colour index I whose FromMap and ToMap entries differ, each pixel
+  whose palette colour is FromMap[I] becomes ToMap[I]. The changes go to a scratch copy
+  of Pic (AllocatePicture) that is copied back at the end: because of the QUIRK at 1F51
+  the colour loop and the copy back run over exactly one item, item FirstItem, never the
+  items from FirstItem on. The scratch copy of a negative FirstItem holds ItemCount items
+  but only item 0 is used. FirstItem is an item index (the byte offset of an item is
+  FirstItem * ByteSize). Flicker (nonzero) makes each change random: adapters 0 and 2
+  change each matching pixel with chance 1 in 4, adapter 1 changes a random subset of the
+  matching pixels of each cell. Adapter 0 compares 2-bit pixel pairs (ds25FA,
   GlyphPixelMasks), adapter 1 the four EGA planes (EgaPlaneBitMasks), adapter 2 the two
   nibbles of each byte. Called by LoadPictureSlot (ovl32), LoadSpriteList (ovl28),
-  AnimateAreaDoors (ovl18) and ovl16, ovl17.
+  AnimateAreaDoors (ovl18, the door frame index) and ovl16, ovl17 (the others 0).
   QUIRK 0464:1F51: the header inside the colour loop tests FirstItem again; the header
   before the loop has already set it to 0, so Items is 1 for every colour: a negative
   FirstItem recolours and copies back item 0 only. }
@@ -963,7 +975,7 @@ var
   ToMapCopy: TColorMap;              { ToMap, copied on entry }
   PicOfs: Word;                      { byte offset in Pic of the pixel byte being read }
   ScratchOfs: Word;                  { byte offset in the scratch copy of the byte being written }
-  Items: Byte;                       { items recoloured: ItemCount for a negative FirstItem before the loop, then 1 (QUIRK) }
+  Items: Byte;                       { items allocated and copied: ItemCount for a negative FirstItem, else 1 }
   ColByte: Word;                     { byte column loop variable }
   PixelRow: Word;                    { pixel row loop variable }
   Mask: Byte;                        { adapter 1: the pixels of the cell that have the colour }
@@ -1143,14 +1155,17 @@ begin
     end;
   end;
 end;
-{ 0464:2632: fills the Width x Height cells of picture Target whose top-left cell is
-  (FirstCol, FirstRow) with palette colour Colour (Palette is the 8-byte PPalette). FirstCol and FirstRow may be
-  negative: the rectangle is clipped at the picture's left, top, right and bottom edges.
-  VideoAdapter 0 writes two bytes per cell (ds0D02[PaletteColor(Colour)]), 2 writes four
-  bytes per cell (ds0D06[Colour]) and 1 writes one byte per EGA plane through the plane
-  mask of Colour (EgaPlaneBitMasks). Every row it touches is marked in ds4A28 and in the
-  trackers ds4C20, ds4AD0 and ds4D70 for FlushPictureChanges. Called by DrawWallDescriptors
-  (ovl29:0174) with FirstCol = 2 and the four wall descriptors.
+{ 0464:2632: fills a rectangle of picture Target with palette colour Colour (Palette is
+  the 8-byte PPalette). Width and FirstCol are in cells of 8 pixels (2, 4 or 1x4 bytes per
+  cell), but FirstRow and Height are PIXEL rows: the loop runs once per pixel row, from
+  row FirstRow for Height rows, with no * 8. FirstCol and FirstRow may be negative: the
+  rectangle is clipped at the picture's left, top, right and bottom edges. VideoAdapter 0
+  writes two bytes per cell (ds0D02[PaletteColor(Colour)]), 2 writes four bytes per cell
+  (ds0D06[Colour]) and 1 writes one byte per EGA plane through the plane mask of Colour
+  (EgaPlaneBitMasks). Every row it touches is marked in ds4A28 and in the trackers ds4C20,
+  ds4AD0 and ds4D70 for FlushPictureChanges. Called by DrawWallDescriptors (ovl29:0174,
+  four times, FirstCol = 2, the wall descriptors' pixel rows and the ds6A60..ds6A63
+  colours) and by DrawIconCell (ovl16:34DF).
   QUIRK 0464:2707: a rectangle that starts above row 0 is drawn one row too far: the row
   bound is Height - |FirstRow| and the loop includes it. }
 procedure FillPictureRect(FirstCol, FirstRow: Integer; Width, Height: Word; Colour: Byte; Palette: Pointer; Target: Pointer);

@@ -71,7 +71,7 @@ end;
   while the inventory has room. WouldOverloadInventory (Inventory) checks the list against the item and returns
   True when it is overloaded: Overloaded is then 1 and "OverLoaded" is shown. Otherwise Overloaded is
   0 and a new TMenuLine is allocated (New), the item copied into it (record assignment of $3F bytes)
-  and the node linked at the end of SelectedCharacter^.Items; res12_fn_0BB8 then redraws the list.
+  and the node linked at the end of SelectedCharacter^.Items; RecalcCombatValues then redraws the list.
   Item is the entry to add; Overloaded receives 1 when the item was refused (ovl06:026D) and 0 when
   it was added (ovl06:0277). Called from ovl05 (TreasureShare) and BuyItems (Buy). }
 procedure AddInventoryItem(Item: PMenuLine; var Overloaded: Byte);
@@ -80,7 +80,7 @@ var
 begin
   if WouldOverloadInventory(SelectedCharacter, Item) then
   begin
-    res12_fn_1693('OverLoaded');
+    ShowFlashMessage('OverLoaded');
     Overloaded := 1;
   end
   else
@@ -103,7 +103,7 @@ begin
       NewItem^.Next := nil;
       Tail^.Next := NewItem;
     end;
-    res12_fn_0BB8(SelectedCharacter);
+    RecalcCombatValues(SelectedCharacter);
   end;
 end;
 
@@ -113,7 +113,7 @@ end;
   (CharacterMoneyValueInGold); if the Price fits it adds the item to the character's items (AddInventoryItem) and,
   when that worked, stores the money less the Price (SetCharacterGold). Otherwise it reads the money pooled
   in the shop (MoneyValueInGold on PooledMoney); if the Price fits it adds the item and stores the pool less the
-  Price (SetPooledGold), else it shows "Not enough Money." (res12_fn_1693). No parameters; side effects:
+  Price (SetPooledGold), else it shows "Not enough Money." (ShowFlashMessage). No parameters; side effects:
   the character's items, the money and the screen.
   QUIRK ovl06:03C7: CharacterMoneyValueInGold returns a LongInt, but Money is a Word, so only AX is kept and a
   character with 65536 or more is compared and charged modulo 65536 (a price can fit when only the
@@ -166,22 +166,22 @@ begin
           end;
         end
         else
-          res12_fn_1693('Not enough Money.');
+          ShowFlashMessage('Not enough Money.');
       end;
     end;
   until Cancelled;
 end;
 
 { ovl06:053E (ShopMain). The shop's entry and main loop, called from ovl03 (the area logic) when the
-  party enters a shop. It marks the shop open (ds49F3), redraws the shop screen (res12_fn_27D9,
-  res12_fn_0767 on SelectedCharacter), clears the money block PooledMoney and clears MoneyInPool, then shows the
+  party enters a shop. It marks the shop open (ds49F3), redraws the shop screen (RedrawView,
+  DrawPartyRoster on SelectedCharacter), clears the money block PooledMoney and clears MoneyInPool, then shows the
   menu (ReadPromptChoice) with a text chosen by TreasureLeft (the Take/Share entries appear only while
-  MoneyPooled says money lies in the pool) and dispatches the key: B BuyItems, V ovl19_e5, T TakeMoney,
+  MoneyPooled says money lies in the pool) and dispatches the key: B BuyItems, V ViewSelectedCharacter, T TakeMoney,
   P PoolMoney (when MenuFlag is 0), S ShareMoney, A AppraiseGems (Appraise), E leaves, and G and O, which
   neither menu text shows, call UpdateSelectedCharacter with the key. With money left in the pool, E first asks
   "Do you want to go back and get your Money?" ('~Yes ~No' through AskMenu, which returns the
   0-based hotkey position) and the party leaves on No (AnswerNo); Yes clears the message window
-  (ClearRect) and stays. A second case redraws the screen (res12_fn_27D9) after B and T, and
+  (ClearRect) and stays. A second case redraws the screen (RedrawView) after B and T, and
   after A when Appraised is set. No parameters; side effects: the screen, the items and the money
   through the called routines. }
 procedure ShopMain;
@@ -198,8 +198,8 @@ var
   Entry: PMenuLine;
 begin
   ds49F3 := 1;
-  res12_fn_27D9;
-  res12_fn_0767(SelectedCharacter);
+  RedrawView;
+  DrawPartyRoster(SelectedCharacter);
   FillChar(PooledMoney, SizeOf(PooledMoney), 0);
   Title := '';
   MoneyInPool := 0;
@@ -219,7 +219,7 @@ begin
     Key := ReadPromptChoice(Title, MenuText, $D, $A, $F, 1, 0, MenuFlag);
     case Key of
       'B': BuyItems;
-      'V': ovl19_e5(MenuFlag);
+      'V': ViewSelectedCharacter(MenuFlag);
       'T': TakeMoney;
       'P': if MenuFlag = 0 then
              PoolMoney;
@@ -248,11 +248,11 @@ begin
       'O': UpdateSelectedCharacter(Key);
     end;
     case Key of
-      'B', 'T': res12_fn_27D9;
+      'B', 'T': RedrawView;
       'A': if Appraised <> 0 then
-             res12_fn_27D9;
+             RedrawView;
     end;
-    res12_fn_0767(SelectedCharacter);
+    DrawPartyRoster(SelectedCharacter);
   until Done <> 0;
 end;
 

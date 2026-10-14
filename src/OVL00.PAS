@@ -14,7 +14,7 @@ const
   returns at once with an unassigned Integer result (QUIRK ovl00:004C: jbe to ovl00:00A3, which
   loads AX from the result word at [bp-2] and returns without calling QuitGame). A non-zero
   size warns that memory is short; when ds49D0 is set it lets the player act through the save
-  and load unit (ovl17_e9) and asks again until ds557D says to stop, else it announces the
+  and load unit (SaveGame) and asks again until ds557D says to stop, else it announces the
   exit. Then it always ends the game through QuitGame, so that path never returns to the heap
   manager. }
 function HeapErrorHandler(Size: Word): Integer;
@@ -28,7 +28,7 @@ begin
       ShowMessageLine(Yellow, 'WARNING: Insufficient Memory');
       if ds49D0 then
       begin
-        ovl17_e9;
+        SaveGame;
         Quit := ds557D;
       end
       else

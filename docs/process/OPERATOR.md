@@ -38,6 +38,35 @@ still runs (a worker answers with a hand-off of what it committed; stop-run wait
 releases the rest with an operator record (branches with commits are kept for the next claimer and
 listed), and leaves control `stopped`, so `make start-run` can follow immediately.
 
+### Tiers, escalation and the end of a run
+
+Tier-1 decompilers (cheap models) take units from the queue; escalation workers (`tier = 2`, a stronger
+model, `cost_cap` and `timeout` per session) take only the routines tier 1 gave up on (WORKER.md, "The
+escalation tier"). What both tiers fail on appears in `make inbox` under "Escalation failed", with the
+routine's notes; that, rejected integrations the loop could not resolve, and failed reviews it could not
+fix are what the run leaves for you. When nothing is planned for `idle_stop` minutes (60 by default)
+the integrator loop starts `make stop-run` itself (log build/run/auto-stop.log), so an overnight run
+ends when its work does.
+
+### The integrator loop
+
+The roster entry with `role = "integrator"` (`int-loop`) is a script, not a model session
+(tools/agent/integrator.py): every `interval` seconds it runs `make integrate` when hand-offs wait,
+queues expert cases when you admitted an expert budget, and posts a heartbeat. A hand-off that
+`make integrate` rejects for a merge conflict or a red check gets up to two tries per pinned commit in the
+branch's worktree: first a plain `git merge main` with the recorded renames and `make check`, then, if
+that is not clean, one fresh `opencode run` session with the entry's model that resolves the conflict
+(keeping both sides, as tools/agent/resolve_prompt.md asks); its result must be a clean, committed merge
+of main or it is saved as patches and reset. Anything else (lost records, attempts spent) stays in
+`make inbox` for you. Logs: build/integrator/ and build/run/int-loop.log. `make integrate` holds an
+exclusive lock, so running it yourself or from an orchestrator session at the same time is harmless.
+On 2026-10-14 the interactive orchestrator ended its turn and hand-offs waited an hour: the loop is why
+the orchestrator session is now optional.
+
+`make run-add NAME=<name>` starts one roster entry in the running run without admitting it again: an
+entry added to work/roster.toml after `make start-run` (such as the integrator), or one whose tab was
+closed (a worker you stopped with Ctrl+C). It refuses a name whose process is still alive.
+
 ## Starting a run by hand
 
 ```sh

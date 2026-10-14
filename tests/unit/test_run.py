@@ -55,13 +55,13 @@ def test_a_variant_is_passed_as_a_model_suffix():
 
 
 def test_the_real_roster_resolves_every_prompt_block():
-    """Interactive sessions need their START-AGENT block; worker sessions need none."""
+    """Interactive sessions need their START-AGENT block; worker and script sessions need none."""
     text = run.START_AGENT.read_text()
     rows = run.roster()
     names = [r["name"] for r in rows]
-    assert len(names) == len(set(names)) and rows[0]["role"] == "orchestrator"
+    assert len(names) == len(set(names))
     for r in rows:
-        if run.mode_of(r) == "worker":
+        if run.mode_of(r) != "interactive":
             continue
         block = run.prompt_block(text, r["heading"])
         assert "Assigned role: `%s`" % r["role"] in block
@@ -118,3 +118,43 @@ def test_stop_signals_workers_before_integrating():
     import inspect
     src = inspect.getsource(run.stop)
     assert src.index("signal_sessions(names, signal.SIGTERM)") < src.index('["make", "integrate"]')
+
+
+def test_the_integrator_runs_as_a_script_with_its_resolver_model():
+    """2026-10-14: the interactive orchestrator ended its turn and hand-offs waited an hour."""
+    assert run.mode_of({"role": "integrator"}) == "script"
+    row = {"name": "int-loop", "role": "integrator", "model": "p/m", "variant": "high", "interval": 60}
+    run.check_session(row)                                   # no heading needed
+    argv = run.argv_of(row, "5c2d26e1abcd")
+    assert argv[:2] == ["--agent", "int-loop"] and argv[argv.index("--session-model") + 1] == "p/m#high"
+    assert argv[argv.index("--interval") + 1] == "60" and "--role" not in argv
+    with pytest.raises(ValueError, match="only it, runs as a script"):
+        run.check_session({**row, "role": "orchestrator", "mode": "script"})
+    text = (ROOT / "tools/agent/open_session.sh").read_text()
+    assert '[ "$mode" = script ]' in text
+
+
+def test_run_add_refuses_a_session_that_is_still_running(tmp_path, monkeypatch):
+    monkeypatch.setattr(run.control, "state", lambda: {"state": "running", "run_id": "r1"})
+    path = tmp_path / "roster.toml"
+    path.write_text('[[session]]\nname = "int-loop"\nrole = "integrator"\nmodel = "p/m"\nvariant = "high"\n')
+    monkeypatch.setattr(run, "ROSTER", path)
+    monkeypatch.setattr(run, "pid_of", lambda name: 4242)
+    monkeypatch.setattr(run, "alive", lambda pid: True)
+    with pytest.raises(ValueError, match="already running"):
+        run.add("int-loop")
+    with pytest.raises(ValueError, match="not in work/roster.toml"):
+        run.add("nobody")
+    monkeypatch.setattr(run.control, "state", lambda: {"state": "stopped"})
+    with pytest.raises(ValueError, match="running run"):
+        run.add("int-loop")
+
+
+def test_the_roster_has_an_integrator_and_an_escalation_tier():
+    """The run needs its integration loop and someone for the routines tier 1 gives up on."""
+    rows = run.roster()
+    assert [r["name"] for r in rows if run.mode_of(r) == "script"] == ["int-loop"]
+    tier2 = [r for r in rows if r.get("tier") == 2]
+    assert tier2 and all(run.mode_of(r) == "worker" and r.get("cost_cap") for r in tier2)
+    argv = run.argv_of(tier2[0], "abc12345")
+    assert argv[argv.index("--tier") + 1] == "2" and argv[argv.index("--cost-cap") + 1] == str(tier2[0]["cost_cap"])

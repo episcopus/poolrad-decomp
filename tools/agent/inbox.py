@@ -147,7 +147,18 @@ def frontier() -> list[dict]:
         except ValueError:
             continue
         unit = p.stem
-        hit = {rid: e for rid, e in data.items() if int(e.get("attempts", 0)) >= worker.DEFAULT_MAX_ATTEMPTS}
+        failed = {rid: e for rid, e in data.items() if e.get("escalation_exhausted")}
+        if failed:
+            last = max(when(e.get("last"), p.stat().st_mtime) for e in failed.values())
+            out.append(item("Escalation failed",
+                            "%s: the escalation tier could not match %d routine(s) either: %s" % (
+                                unit, len(failed), ", ".join(sorted(failed))),
+                            str(p), "read the routines' notes in re/symbols.toml (the escalation wrote what it "
+                            "established) and decide: a matcher or map fix, a probe, or more escalation attempts",
+                            ".venv/bin/python tools/agent/worker.py --release %s <routine>   (clears its attempts)" % unit,
+                            last))
+        hit = {rid: e for rid, e in data.items()
+               if int(e.get("attempts", 0)) >= worker.DEFAULT_MAX_ATTEMPTS and not e.get("escalation_exhausted")}
         if not hit:
             continue
         last = max(when(e.get("last"), p.stat().st_mtime) for e in hit.values())
@@ -155,7 +166,7 @@ def frontier() -> list[dict]:
                         "%s: %d routine(s) at the attempt limit: %s" % (
                             unit, len(hit), ", ".join("%s (%d)" % (rid, int(e.get("attempts", 0)))
                                                        for rid, e in sorted(hit.items()))),
-                        str(p), "fix what stopped them (a matcher gap, a wrong map boundary) and release them, or leave them",
+                        str(p), "the escalation tier (a tier-2 worker) takes them; without one, fix what stopped them and release them",
                         ".venv/bin/python tools/agent/worker.py --release %s   then   make worker AGENT=<name> ROLE=decompiler UNIT=%s" % (unit, unit),
                         last))
     return out

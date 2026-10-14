@@ -1,7 +1,7 @@
 unit OVL14;
 { Wilderness travel (whitepaper 5.3): the area-map movement keys and icon sets, the
   Bash/Pick/Knock/Exit command menu, and the code-table records behind Knock. }
-{$A-,O+,F+,S-,R-,G-,I-}
+{$A-,O+,F+,S-,R-,G-,I-,L-}
 interface
 uses POOLVARS;
 type
@@ -291,7 +291,7 @@ end;
   the 16x16 area map ($F steps to 0, 0 steps to $F), then refreshes the cell bytes
   ds6AB0 (through WallIdAt) and ds6AB1 (through EventByteAt), resets the ds6DDE..ds6DE0
   menu flags to 1, and steps
-  the sound through ovl20_e1 (mode 2 when ds49D6^[714] has bit 0, else mode 1).
+  the sound through AdvanceGameClock (mode 2 when ds49D6^[714] has bit 0, else mode 1).
   Called by DoWildernessMenu. }
 procedure MoveParty;
 begin
@@ -310,9 +310,9 @@ begin
   FillChar(ds6DDE, 3, 1);
   ds6AB1 := EventByteAt(PartyMapColumn, PartyMapRow);
   if ds49D6^[714] and 1 > 0 then
-    ovl20_e1(1, 2)
+    AdvanceGameClock(1, 2)
   else
-    ovl20_e1(1, 1);
+    AdvanceGameClock(1, 1);
 end;
 { ovl14:0818. Checks the area-map block ahead of the party: steps the GameVars area-map
   position by the icon set's direction, clamps it (columns 0..$F, rows 0..$23), and
@@ -344,19 +344,19 @@ begin
       begin
         GameVars^[VarMapX] := GridCol;
         GameVars^[VarMapY] := GridRow;
-        ovl20_e1($C, 3);
+        AdvanceGameClock($C, 3);
       end;
   else
     GameVars^[VarMapX] := GridCol;
     GameVars^[VarMapY] := GridRow;
-    ovl20_e1($C, 3);
+    AdvanceGameClock($C, 3);
   end;
 end;
 { ovl14:0989. The wilderness key driver (called by ovl03_fn_3379): in the 3D view it
   reads menu and movement keys through ReadPromptChoice and dispatches them (A/C/V/E/S/L
   menu keys, H/M/P/K movement with the icon sets, anything else through UpdateSelectedCharacter),
   otherwise it loads the ICON pictures for map pages 2..4 and runs a smaller key loop;
-  either loop repeats through res12_fn_290B until Redraw is set, then it tidies the
+  either loop repeats through DrawLocationLine until Redraw is set, then it tidies the
   window and returns the key. Also clears ds49D6^[713] on entry. }
 function HandleWildernessKeys: Char;
 var
@@ -364,7 +364,7 @@ var
   Key: Char;
   KeyFlag: Byte;
   SpareBuf: String[40];   { 41 frame-filling bytes, never read; purpose unknown }
-  ViewFlag: Byte;         { flag ovl19_e5 (View) takes }
+  ViewFlag: Byte;         { flag ViewSelectedCharacter (View) takes }
   SpareLong: LongInt;     { 4 frame-filling bytes, never read; purpose unknown }
 begin
   ds49D6^[713] := 0;
@@ -388,7 +388,7 @@ begin
             if SelectedCharacter^.Status = 0 then
               CastSpells;
           'V':
-            ovl19_e5(ViewFlag);
+            ViewSelectedCharacter(ViewFlag);
           'E':
             Redraw := 1;
           'S':
@@ -396,7 +396,7 @@ begin
           'L':
             begin
               ds49D6^[714] := ds49D6^[714] or 2;
-              ovl20_e1(1, 2);
+              AdvanceGameClock(1, 2);
               EclPC := ds49E5;
               Redraw := 1;
             end;
@@ -430,9 +430,9 @@ begin
             end;
         else
           UpdateSelectedCharacter(Key);
-          res12_fn_0767(SelectedCharacter);
+          DrawPartyRoster(SelectedCharacter);
         end;
-      res12_fn_290B;
+      DrawLocationLine;
     until Redraw <> 0;
   end;
   2..4:
@@ -442,7 +442,7 @@ begin
       LoadPictureSlot('ICON', 0, 9);
       LoadPictureSlot('ICON', 1, $A);
       LoadPictureSlot('ICON', 2, $B);
-      res12_fn_2B5E;
+      DrawWildernessScreen;
     end;
     Redraw := 0;
     repeat
@@ -452,7 +452,7 @@ begin
           'C':
             CastSpells;
           'V':
-            ovl19_e5(ViewFlag);
+            ViewSelectedCharacter(ViewFlag);
           'E':
             Redraw := 1;
           'S':
@@ -460,7 +460,7 @@ begin
           'L':
             begin
               ds49D6^[714] := ds49D6^[714] or 2;
-              ovl20_e1(1, 2);
+              AdvanceGameClock(1, 2);
               EclPC := ds49E5;
               Redraw := 1;
             end;
@@ -479,11 +479,11 @@ begin
             PartyFacing := 6;
         else
           UpdateSelectedCharacter(Key);
-          res12_fn_0767(SelectedCharacter);
+          DrawPartyRoster(SelectedCharacter);
           Redraw := 0;
         end;
       end;
-      res12_fn_290B;
+      DrawLocationLine;
     until Redraw <> 0;
     end;
   end;
@@ -575,7 +575,7 @@ begin
         MoveParty
       else
         PlaySound(ds2622);
-      res12_fn_290B;
+      DrawLocationLine;
     end
     else
       ds49D6^[713] := 0;
@@ -585,7 +585,7 @@ begin
     if ds49D6^[713] < $FF then
     begin
       CheckMapCell;
-      res12_fn_290B;
+      DrawLocationLine;
     end
     else
       ds49D6^[713] := 0;

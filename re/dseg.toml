@@ -751,6 +751,11 @@ name = "AttackRoll"
 evidence = "RollToHit and RollBeatsResistance: d20 with 20 counted as 100, hooks may change it, negative means a miss (ovl24:0C63, 0CD5)"
 
 [[global]]
+offset = 0x6822
+name = "AttackSlotRolls"
+evidence = "DS:6822 as three bytes indexed by attack slot: element 0 is AttackRoll, elements 1 and 2 are the per-slot counters ResolveCombatantAttacks increments (ovl13:1406, 16F2)"
+
+[[global]]
 offset = 0x682A
 name = "SaveKind"
 evidence = "SavingThrow stores the saving throw kind for the hooks of kind 0Ch (ovl24:0DAD)"
@@ -766,9 +771,19 @@ name = "AffectHandlers"
 evidence = "the far procedure table CallAffectHandler calls by affect id (lcall [di+6828h], ovl24:001E)"
 
 [[global]]
+offset = 0x6826
+name = "AttackTarget"
+evidence = "BoostAttackAgainstTarget (ovl12:013B) stores Who's combat Target here (a far pointer, ovl12:0147..014E); its segment word is DS:6828, where AffectHandlers starts"
+
+[[global]]
 offset = 0x5374
 name = "SoundDriverIdle"
 evidence = "SetSoundDriverIdle stores it (08AE:01CB); nonzero: the timer driver is stopped and PlaySound runs it only around one sound, waiting 0.1 s (08AE:00E9, 0156); StartGame sets 100 (ovl11)"
+
+[[global]]
+offset = 0x25A8
+name = "FacingNames"
+evidence = "the location line of res12 (00BA:290B) indexes DS:25A8 + PartyFacing*3 (a string[2] per entry) and appends it to the location line; the image bytes are N, NE, E, SE, S, SW, W, NW"
 
 [[global]]
 offset = 0x25C9
@@ -911,6 +926,38 @@ name = "MoneyKindNames"
 evidence = "seven string[10] Copper Silver Electrum Gold Platinum Gems Jewelry at DS:0FFA (the image); TakeMoney prefixes each pooled amount with MoneyKindNames[Kind] (ovl21:0DDF)"
 
 [[global]]
+offset = 0x0FEC
+name = "SexNames"
+evidence = "two string[6] at DS:0FEC, seven bytes apart: Male, Female (the image); ovl19_e1 draws SexNames[the sex byte at +$9E] on the sheet (ovl19:00C6)"
+
+[[global]]
+offset = 0x0F03
+name = "RaceNames"
+evidence = "eight string[9] at DS:0F03, ten bytes apart: Monster, Dwarf, Elf, Gnome, Half-Elf, Halfling, Half-Orc, Human (the image); ovl19_e1 draws RaceNames[Race] (+$2E, ovl19:0118)"
+
+[[global]]
+offset = 0x0D38
+name = "ClassNames"
+evidence = "17 string[26] at DS:0D38, 27 bytes apart (the image): Cleric, Druid, Fighter, Paladin, Ranger, Magic-User, Thief and Monk (0..7), then the real multi-class names Cleric/Fighter, Cleric/Fighter/Magic-User, Cleric/Ranger, Cleric/Magic-User, Cleric/Thief, Fighter/Magic-User, Fighter/Thief, Fighter/Magic-User/Thief and Magic-User/Thief (8..16; the table ends exactly at RaceNames, DS:0F03); ShowCharacterSheet draws ClassNames[ClassMask] (+$2F, ovl19:01D2) [V]"
+
+[[global]]
+offset = 0x0F53
+name = "AlignmentNames"
+evidence = "nine string[16] at DS:0F53, 17 bytes apart (the image): Lawful Good .. Chaotic Neutral (0..7) and Chaotic Evil (8; the table ends exactly at SexNames, DS:0FEC); ShowCharacterSheet draws AlignmentNames[the signed byte at +$A0] (ovl19:0198) [V]"
+
+[[global]]
+offset = 0x1047
+size = 104
+name = "StatusNames"
+evidence = "nine string[12] at DS:1047, 13 bytes apart (the image): Okay Animated tempgone Running Unconscious Dying Dead Stoned and Gone (the ninth ends at DS:10BB, so the last two bytes overlap the start of ds10A7; size stops at 104 so a packet does not misname ds10A7); ShowCharacterSheet draws StatusNames[+$10C] (ovl19:04D0); res12_fn_09E3 shows StatusNames[TCharacter.Status] as the character's status line (00BA:0B24, stride 13) [V]"
+
+
+[[global]]
+offset = 0x4716
+name = "SheetCharacter"
+evidence = "pointer ovl19_e1 stores SelectedCharacter in at ovl19:0051 and reads for every line of the sheet (ovl19:0051..04F6); no other code reads it"
+
+[[global]]
 offset = 0x0970
 name = "TreasureItemRows"
 evidence = "BuildTreasureItem copies the name numbers, weight, value and affects of a fixed item from eight words starting at the chosen row (ovl21:182F..18C2)"
@@ -1023,6 +1070,71 @@ evidence = "DS:6B00 is the bank index for the HEAD sprite pointer at DS:6B01, wh
 offset = 0x6B05
 name = "BodyBankIndex"
 evidence = "DS:6B05 is the bank index for the BODY sprite pointer at DS:6B06, set to sentinel value 255 when none; StartBattle resets it after ReleasePicture at ovl10:0968"
+
+[[global]]
+offset = 0x6DBF
+name = "ItemAffectUse"
+evidence = "ds6DBF is set (ovl19:1AE7) for an item whose Affects[2] gives the spell, and around the ovl22_e5 cast (ovl19:1BC2..1BE2); the 'uses an item' message follows the flag (ovl19:1B1E); what ovl22_e5 does with it is not known yet"
+
+[[global]]
+offset = 0x471A
+name = "ViewedCharacter"
+evidence = "ds471A is the character the View command was started for: ViewSelectedCharacter stores SelectedCharacter in it (ovl19:0AD1), and the two Trade commands start 'Trade to?' from it and store the recipient in it (ovl19:1734 TradeItem, ovl19:2156 TradeMoney)"
+
+[[global]]
+offset = 0x5582
+name = "ItemTable"
+evidence = "the ITEMS file block ovl11:05CD reads into DS:5582 (record 2 of ITEMS, $810 bytes = 129 rows of 16, whitepaper 4.3); the combat AI indexes it by ItemType in every routine of ovl09 (ScoreTarget, UseBestItem, AiTurn, UseMagicItem)"
+
+[[global]]
+offset = 0x286B
+name = "HelplessAffects"
+evidence = "res12_fn_0B73 (00BA:0B73) tests entries 1..4 through res12_fn_2199 and DrawCharacterPanel draws '(Helpless)' for a True answer; ovl13:1FC3 compares the same entries with the 16-byte table at DS:3204; entry 0 is never read"
+
+[[global]]
+offset = 0x4846
+name = "ReadiedItemWeight"
+evidence = "res12_fn_0BB8 (00BA:0BB8) resets it to 0, adds each readied item's Weight times Count, and floors the character's CarriedWeight at it when the weight-excluding item (NameNum[1] $BA) is readied (00BA:0F43)"
+
+[[global]]
+offset = 0x408E
+name = "ConstitutionHitPointTable"
+evidence = "DS:408E is the AD&D 1e constitution hit-point adjustment table read by ovl16:3F31 (ConstitutionHitPointAdjustment): signed byte per constitution, -2 at 3, -1 at 4..6, 0 at 7..14, +1 at 15, +2 at 16..18; indexed by TCharacter.Constitution (+0x14), read as a signed byte (tools/re/tp_idioms/ovl16/CONHP.PAS)"
+
+[[global]]
+offset = 0x08B6
+name = "ClassHitDiceCount"
+evidence = "ovl16:4235 pushes ds08B6[Class] as RollDice's Count and ds08BE[Class] as its Sides for every class the character has a level in; the image at DS:08B6 holds 1,1,1,1,2,1,1,2 (two dice for ranger and monk)"
+
+[[global]]
+offset = 0x08BE
+name = "ClassHitDieSides"
+evidence = "ovl16:4235 pushes ds08BE[Class] as RollDice's Sides and raises a first-level roll to (ds08BE[Class] * 2) div 3; the image at DS:08BE holds 8,8,10,10,8,4,6,4 sides (its entry 7 is the first byte of the CHEAD suffix table ds08C5)"
+
+[[global]]
+offset = 0x681C
+name = "LastDiceCount"
+evidence = "the dice count of the last RollDiceCounted roll (ovl24:0E37 stores it); ovl12:2D38 adds it to DamageAmount for fire or magic damage"
+
+[[global]]
+offset = 0x471D
+name = "TimedAffectFlags"
+evidence = "ovl20:002F indexes DS:471D by the 1-based party index: AdvanceAffectDurations clears the flag, then sets it again while that member still has an affect whose Duration is above 0 (ovl20:01C2, ovl20:02A7); index 0 is never read"
+
+[[global]]
+offset = 0x49FB
+name = "RestInterruptCounter"
+evidence = "ovl20:0C9A counts rest steps in it (Inc) and resets it when it reaches the threshold in ds49D6 word $2D2 (VarRestInterruptSteps), then checks for an interruption; the loader clears it (ovl11:03AD, POOLVARS). Rest's interruption counter (whitepaper 5.22.1)."
+
+[[global]]
+offset = 0x6DD8
+name = "RestHealCounter"
+evidence = "ovl20:0871 increments it once per five-minute rest step and, at $120 (288 steps, 24 hours, RestHealCheckInterval), calls HealCharacter for every party member and resets it; MakeCamp clears it when the camp opens (ovl15:1E80). Whitepaper 5.22.1."
+
+[[global]]
+offset = 0x6DDA
+name = "RestWindowActive"
+evidence = "ovl20:0C9A sets it to 1 while the rest screen is up and clears it on exit; RES12:0886 reads it to pick the top row of the message window. Nonzero says the rest screen is up. The loader clears it (ovl11:0410)."
 
 [[global]]
 offset = 0x4766

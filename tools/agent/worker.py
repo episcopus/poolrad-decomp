@@ -49,6 +49,20 @@ Decompiler role, per unit:
      no commits beyond main is given back with `unlock.py --owner` (lock, worktree and branch removed).
      MAX_SESSIONS reached: hand off what exists (partial) and stop.
 
+Escalation tier (`--tier 2`, a stronger model; docs/process/WORKER.md): claims with --escalate the
+unit whose routines the cheap tier gave up on (next.stuck(): out of frontier attempts or `blocked`,
+not a "not a routine" map artefact), plans only those, one per session by default, with
+tools/agent/escalate_prompt.md and the earlier attempts' history. Verification is the same; a routine
+it does not match counts one escalation attempt in its frontier entry (`escalations`), and at
+MAX_ATTEMPTS the entry is marked `escalation_exhausted`, which `make inbox` lists for the human. With
+COST_CAP (USD) a session is also interrupted once OpenCode reports that much spent in it.
+
+Both tiers first retire orphan stubs: a `{@stub}` line whose name has no registry record and whose
+address (`<unit>_fn_XXXX`) lies inside a routine already at L2 is a map artefact `make match WRITE=1`
+dropped from the registry; it is deleted (with its interface declaration) and the unit re-proven, so a
+unit is not held incomplete by stubs nobody can plan (2026-10-14: seven in ovl13 kept its
+initialisation part unproven and made workers claim and give it back all night).
+
 Reviewer role: claims with --review, runs one session from tools/agent/review_prompt.md; a committed
 work/reviews/<id>.md with no open must-fix and the review stamp written (`make review-pass CHECK=1`
 passes) is handed off as review-passed, otherwise review-failed with the must-fix lines in the note; a
@@ -116,12 +130,13 @@ import common  # noqa: E402
 import control  # noqa: E402
 import heartbeat  # noqa: E402
 import identity  # noqa: E402
+import next as nxt  # noqa: E402
 
 DEFAULT_SESSION_CMD = ('cd {worktree} && opencode run --auto --session {session_id} --title {title}{model_flag} '
                        '"$(cat {prompt_file})"')
 DEFAULT_BATCH = 6
 DEFAULT_TIMEOUT_MINUTES = 90
-DEFAULT_MAX_ATTEMPTS = 2
+DEFAULT_MAX_ATTEMPTS = nxt.TIER1_ATTEMPTS
 DEFAULT_IDLE_SECONDS = 300
 PULSE_SECONDS = 600                  # heartbeat period while a session or a check runs
 KILL_GRACE_SECONDS = 10
@@ -131,6 +146,15 @@ REVIEW_FIX = "review-fix"               # frontier entry `<unit>:review-fix`: at
 STUB_RE = re.compile(r"^\s*\{@stub\}\s*(?:procedure|function)\s+([A-Za-z_][A-Za-z0-9_]*)", re.I | re.M)
 STUB_INIT = "{@stub-init}"
 HERE = Path(__file__).resolve().parent
+COST_POLL_SECONDS = 30               # how often a capped session's spend is read from OpenCode
+PROVIDER_BACKOFF_SECONDS = 900       # wait after the model provider refused a session
+# The provider refused the session, whatever the model could have done: no attempt is counted. OpenCode's
+# `run` exits 0 even then (2026-10-14: OpenRouter credits ran out and three escalations were counted as
+# failed attempts on routines no session had really worked through).
+PROVIDER_ERROR = re.compile(r"exceed your available credits|insufficient credits|insufficient_quota|"
+                            r"credit balance is too low|payment required|Model unavailable", re.I)
+STUB_HEADER = r"^\s*\{@stub\}\s*(?:procedure|function)\s+%s\b[^\n]*\n"
+DECL_HEADER = r"^[ \t]*(?:procedure|function)\s+%s\b[^\n]*;[ \t]*\n"
 
 
 class Interrupted(Exception):
@@ -179,11 +203,21 @@ def addr_of(r: dict) -> int:
     return int(m.group(1), 16) if m else 0xFFFF
 
 
-def plan(root: Path, unit: str, frontier: dict, max_attempts: int) -> list[Item]:
-    """Everything of the unit a session could still work on, in address order, the init part last."""
+def plan(root: Path, unit: str, frontier: dict, max_attempts: int, tier: int = 1) -> list[Item]:
+    """Everything of the unit a session could still work on, in address order, the init part last.
+    Tier 2 (escalation): only the routines the cheap tier gave up on, never the init part."""
     source = root / "src" / ("%s.PAS" % unit.upper())
     text = source.read_text() if source.exists() else ""
     stubs = stub_names(text)
+    if tier == 2:
+        items = []
+        for r in unit_routines(root, unit):
+            entry = frontier.get(r["id"], {})
+            if not nxt.escalatable(r, entry) or int(entry.get("escalations", 0)) >= max_attempts:
+                continue
+            if str(r.get("name", "")).lower() in stubs:
+                items.append(Item(r["id"], r["name"], addr_of(r)))
+        return sorted(items, key=lambda i: i.addr)
     exhausted = {rid for rid, e in frontier.items() if int(e.get("attempts", 0)) >= max_attempts}
     rs = unit_routines(root, unit)
     items = []
@@ -242,6 +276,44 @@ def bump_frontier(unit: str, rid: str, agent: str, batch_log: str) -> int:
     data[rid] = entry
     save_frontier(unit, data)
     return entry["attempts"]
+
+
+def bump_escalation(unit: str, rid: str, agent: str, log: str, max_attempts: int) -> int:
+    data = load_frontier(unit)
+    entry = data.get(rid) or {"attempts": 0}
+    entry.update(escalations=int(entry.get("escalations", 0)) + 1, escalation_agent=agent, escalation_log=log,
+                 last=dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"))
+    if entry["escalations"] >= max_attempts:
+        entry["escalation_exhausted"] = True
+    data[rid] = entry
+    save_frontier(unit, data)
+    return entry["escalations"]
+
+
+def orphan_stubs(root: Path, unit: str) -> list[str]:
+    """`{@stub}` names with no registry record whose address lies inside a routine already at L2."""
+    source = root / "src" / ("%s.PAS" % unit.upper())
+    if not source.exists():
+        return []
+    rs = unit_routines(root, unit)
+    known = {str(r.get("name", "")).lower() for r in rs}
+    spans = [(addr_of(r), addr_of(r) + int(r.get("size") or 0)) for r in rs if done(r)]
+    out = []
+    for name in sorted(stub_names(source.read_text()) - known):
+        m = re.fullmatch(r"%s_fn_([0-9a-f]{4})" % re.escape(unit.lower()), name)
+        if m and any(lo <= int(m.group(1), 16) < hi for lo, hi in spans):
+            out.append(name)
+    return out
+
+
+def retire_stubs(root: Path, unit: str, names: list[str]) -> None:
+    """Delete each name's `{@stub}` line and its interface declaration from the unit's source."""
+    source = root / "src" / ("%s.PAS" % unit.upper())
+    text = source.read_text()
+    for name in names:
+        text = re.sub(STUB_HEADER % re.escape(name), "", text, count=1, flags=re.M | re.I)
+        text = re.sub(DECL_HEADER % re.escape(name), "", text, count=1, flags=re.M | re.I)
+    source.write_text(text)
 
 
 def release_frontier(unit: str, routine: str | None = None) -> int:
@@ -333,6 +405,11 @@ def salvage(wt: Path, patch: Path) -> bool:
             parts.append("# untracked: %s\n%s\n" % (rel, body))
     patch.parent.mkdir(parents=True, exist_ok=True)
     patch.write_text("".join(parts))
+    if subprocess.run(["git", "ls-files", "-u"], cwd=wt, capture_output=True, text=True).stdout.strip():
+        # A session that stopped inside a merge: `checkout -- .` refuses unmerged paths (2026-10-14: the
+        # integration loop crashed on such a worktree and then skipped it as "has uncommitted changes").
+        subprocess.run(["git", "merge", "--abort"], cwd=wt, capture_output=True)
+        git_out(wt, "reset", "-q", "--hard", "HEAD")
     git_out(wt, "checkout", "--", ".")
     git_out(wt, "clean", "-fd", "--", "src", "re", "docs", "work", "tools/re/tp_idioms")
     return True
@@ -367,10 +444,22 @@ class SessionResult:
     timed_out: bool
     seconds: float
     session_id: str = ""
+    capped: bool = False                            # interrupted at the cost cap
+    provider_error: str = ""                        # the provider refused the session (PROVIDER_ERROR)
 
 
 def new_session_id() -> str:
     return "ses_poolrad" + uuid.uuid4().hex[:16]
+
+
+def session_cost(session_id: str) -> float | None:
+    """What OpenCode reports spent in the session so far (USD), or None when it cannot say."""
+    try:
+        r = subprocess.run(["opencode", "api", "get", "/api/session/%s" % session_id], capture_output=True,
+                           text=True, timeout=20, stdin=subprocess.DEVNULL)
+        return float(json.loads(r.stdout)["data"]["cost"]) if r.returncode == 0 else None
+    except (OSError, subprocess.TimeoutExpired, ValueError, KeyError, TypeError):
+        return None
 
 
 def interrupt_session(session_id: str, log) -> None:
@@ -397,7 +486,7 @@ def kill_group(proc: subprocess.Popen) -> None:
 
 
 def run_session(cmd_template: str, prompt_file: Path, wt: Path, log: Path, timeout_s: float,
-                model_flag: str = "", title: str = "") -> SessionResult:
+                model_flag: str = "", title: str = "", cost_cap: float = 0.0) -> SessionResult:
     """Run one model session (a shell command built from the template) in its own process group, its
     output appended to `log`; the whole group is killed when `timeout_s` passes or on interruption."""
     session_id = new_session_id() if "{session_id}" in cmd_template else ""
@@ -406,30 +495,47 @@ def run_session(cmd_template: str, prompt_file: Path, wt: Path, log: Path, timeo
                               session_id=session_id)
     log.parent.mkdir(parents=True, exist_ok=True)
     start = time.monotonic()
+    offset = log.stat().st_size if log.exists() else 0
     with log.open("a") as f:
         f.write("\n$ %s   (%s)\n" % (cmd, dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")))
         f.flush()
         proc = subprocess.Popen(cmd, shell=True, cwd=wt, stdout=f, stderr=subprocess.STDOUT,
                                 stdin=subprocess.DEVNULL, start_new_session=True,
                                 env={**os.environ, "POOLRAD_WORKER": "1"})
-        timed_out = False
+        timed_out = capped = False
         try:
-            try:
-                proc.wait(timeout=timeout_s)
-            except subprocess.TimeoutExpired:
-                timed_out = True
+            deadline = time.monotonic() + timeout_s
+            while True:
+                step = min(COST_POLL_SECONDS, deadline - time.monotonic()) if cost_cap and session_id else deadline - time.monotonic()
+                try:
+                    proc.wait(timeout=max(step, 0.01))
+                    break
+                except subprocess.TimeoutExpired:
+                    pass
+                if time.monotonic() >= deadline:
+                    timed_out = True
+                elif cost_cap and session_id and (session_cost(session_id) or 0.0) >= cost_cap:
+                    capped = True
+                else:
+                    continue
                 kill_group(proc)
                 if session_id:
                     interrupt_session(session_id, f)
+                break
         except BaseException:                       # Interrupted, KeyboardInterrupt: never leave it running
             kill_group(proc)
             if session_id:
                 interrupt_session(session_id, f)
             raise
         rc = proc.returncode if proc.returncode is not None else -1
-        f.write("$ exit %d%s after %.0f s\n" % (rc, " (timed out, killed)" if timed_out else "",
+        f.write("$ exit %d%s after %.0f s\n" % (rc, " (timed out, killed)" if timed_out else
+                                                " (cost cap of USD %.2f reached, killed)" % cost_cap if capped else "",
                                                 time.monotonic() - start))
-    return SessionResult(rc, timed_out, time.monotonic() - start, session_id)
+    with log.open("rb") as f:
+        f.seek(offset)
+        refused = PROVIDER_ERROR.search(f.read().decode("utf-8", "replace"))
+    return SessionResult(rc, timed_out, time.monotonic() - start, session_id, capped,
+                         refused.group(0) if refused else "")
 
 
 class Pulse:
@@ -478,6 +584,28 @@ def batch_prompt(wt: Path, unit: str, agent: str, items: list[Item], number: int
         routines="\n".join("  %d. %s" % (k + 1, i.line()) for k, i in enumerate(items))))
 
 
+def escalate_prompt(wt: Path, unit: str, agent: str, items: list[Item], frontier: dict, notes: list[str] = ()) -> str:
+    """The escalation session's prompt: each routine with what the cheap tier left behind."""
+    text = ""
+    if notes:
+        text = ("Notes on this unit (work/blockers.md, or why make integrate rejected the last hand-off); do what they say first:\n" +
+                "\n".join("  " + n for n in notes) + "\n")
+    rows = {r["id"]: r for r in unit_routines(wt, unit)}
+    lines = []
+    for k, i in enumerate(items):
+        e = frontier.get(i.id, {})
+        lines.append("  %d. %s (registry size %s): %d cheap-tier attempt(s)%s%s" % (
+            k + 1, i.line(), rows.get(i.id, {}).get("size", "?"), int(e.get("attempts", 0)),
+            "; last session log %s" % e["batch_log"] if e.get("batch_log") else "",
+            "; %d earlier escalation(s), log %s" % (int(e["escalations"]), e.get("escalation_log", "?")) if e.get("escalations") else ""))
+        note = " ".join(str(rows.get(i.id, {}).get("notes", "")).split())
+        if note:
+            lines.append("     notes: " + note[:1500])
+    return render(HERE / "escalate_prompt.md", dict(
+        worktree=str(wt), unit=unit, unit_file="%s.PAS" % unit.upper(), agent=agent,
+        branch="unit/%s" % unit, notes=text, routines="\n".join(lines)))
+
+
 def fix_prompt(wt: Path, unit: str, agent: str, findings: list[str], notes: list[str] = ()) -> str:
     text = ""
     if notes:
@@ -512,6 +640,8 @@ class Config:
     model: str = ""
     session: str = ""
     variant: str = ""
+    tier: int = 1                                   # 2: the escalation tier (stuck routines only)
+    cost_cap: float = 0.0                           # USD per session; 0: no cap
     sleep: object = field(default=None)            # tests replace the bounded wait
 
 
@@ -526,6 +656,7 @@ class UnitRun:
     frontier: int = 0
     sessions: int = 0
     fix_sessions: int = 0                           # sessions spent on the unit's failed review
+    escalated: int = 0                              # routines the escalation tier did not match
     fixed: int = 0                                  # must-fix findings closed in this run
     fix_open: int = 0                               # must-fix findings still open after the last one
 
@@ -572,6 +703,8 @@ class Worker:
             args += ["--unit", unit]
         if self.cfg.role == "reviewer":
             args.append("--review")
+        elif self.cfg.tier == 2:
+            args.append("--escalate")
         for opt, value in (("--harness", self.cfg.harness), ("--model", self.cfg.model),
                            ("--session", self.cfg.session), ("--variant", self.cfg.variant)):
             if value:
@@ -669,9 +802,29 @@ class Worker:
             return False
         return True
 
+    def retire_orphans(self, run: UnitRun) -> None:
+        names = orphan_stubs(run.wt, run.unit)
+        if not names:
+            return
+        start = head_of(run.wt)
+        log = self.logs / ("%s-orphans.log" % run.unit)
+        retire_stubs(run.wt, run.unit, names)
+        git_out(run.wt, "commit", "-qam", "%s: retire map stubs inside matched routines (%s) (worker)" % (
+            run.unit, ", ".join(names)), "--trailer", "Agent: %s" % self.agent)
+        if run_make(run.wt, ["match", "UNIT=%s" % run.unit], log) != 0:
+            reset_batch(run.wt, start, self.logs / ("%s-orphans-commits" % run.unit))
+            print("worker: retiring %s broke make match; reset (log %s)" % (", ".join(names), log))
+            return
+        run_make(run.wt, ["match", "UNIT=%s" % run.unit, "WRITE=1"], log)
+        if git_out(run.wt, "status", "--porcelain", "--", "re/symbols.toml"):
+            git_out(run.wt, "add", "re/symbols.toml")
+            git_out(run.wt, "commit", "-q", "-m", "re: record L2 (worker)", "--trailer", "Agent: %s" % self.agent)
+        self.say("unit %s: retired %d orphan map stub(s) inside matched routines" % (run.unit, len(names)))
+
     def work_unit(self, run: UnitRun) -> None:
         os.chdir(run.wt)
-        findings = open_findings(run.wt, run.unit)
+        self.retire_orphans(run)
+        findings = open_findings(run.wt, run.unit) if self.cfg.tier == 1 else []
         if findings and not fix_exhausted(run.unit):
             if not self.may_start():
                 return
@@ -679,7 +832,7 @@ class Worker:
         while True:
             if not self.may_start():
                 return
-            items = plan(run.wt, run.unit, load_frontier(run.unit), self.cfg.max_attempts)
+            items = plan(run.wt, run.unit, load_frontier(run.unit), self.cfg.max_attempts, self.cfg.tier)
             if not items:
                 return
             batch = items[:self.cfg.batch]
@@ -710,12 +863,16 @@ class Worker:
         run.fix_sessions += 1
         with Pulse(self.agent, note):
             result = run_session(self.cfg.session_cmd, prompt_file, run.wt, log,
-                                 self.cfg.timeout_minutes * 60, self.model_flag(), "%s %s" % (self.agent, tag))
+                                 self.cfg.timeout_minutes * 60, self.model_flag(), "%s %s" % (self.agent, tag),
+                                 self.cfg.cost_cap)
         self.say("%s: session ended (exit %d%s); verifying" % (
-            note, result.returncode, ", timed out" if result.timed_out else ""))
-        self.verify_fix(run, findings, start, log, tag)
+            note, result.returncode, ", timed out" if result.timed_out else
+            ", provider refused it: %s" % result.provider_error if result.provider_error else ""))
+        self.verify_fix(run, findings, start, log, tag, count_attempts=not result.provider_error)
+        self.provider_backoff(result)
 
-    def verify_fix(self, run: UnitRun, findings: list[str], start: str, log: Path, tag: str) -> None:
+    def verify_fix(self, run: UnitRun, findings: list[str], start: str, log: Path, tag: str,
+                   count_attempts: bool = True) -> None:
         if salvage(run.wt, self.logs / (tag + ".patch")):
             print("worker: uncommitted changes saved to %s and discarded" % (self.logs / (tag + ".patch")))
         with Pulse(self.agent, "unit %s: verifying the review fixes" % run.unit):
@@ -732,6 +889,8 @@ class Worker:
         if not left:
             clear_fix(run.unit)
             return
+        if not count_attempts:
+            return
         attempts = bump_frontier(run.unit, fix_key(run.unit), self.agent, str(log))
         if attempts >= self.cfg.max_attempts:
             data = load_frontier(run.unit)
@@ -741,24 +900,37 @@ class Worker:
             len(left), run.unit, attempts, " (exhausted: make next stops offering it)" if attempts >= self.cfg.max_attempts else ""))
 
     def run_batch(self, run: UnitRun, batch: list[Item]) -> None:
-        tag = "%s-batch%d" % (run.unit, run.batch)
+        tag = "%s-%s%d" % (run.unit, "esc" if self.cfg.tier == 2 else "batch", run.batch)
         log = self.logs / (tag + ".log")
         prompt_file = self.logs / (tag + ".prompt.md")
         prompt_file.parent.mkdir(parents=True, exist_ok=True)
-        prompt_file.write_text(batch_prompt(run.wt, run.unit, self.agent, batch, run.batch, self.unit_notes(run)))
+        if self.cfg.tier == 2:
+            prompt_file.write_text(escalate_prompt(run.wt, run.unit, self.agent, batch, load_frontier(run.unit),
+                                                   self.unit_notes(run)))
+        else:
+            prompt_file.write_text(batch_prompt(run.wt, run.unit, self.agent, batch, run.batch, self.unit_notes(run)))
         start = head_of(run.wt)
         note = "unit %s batch %d: routines %s" % (run.unit, run.batch, ", ".join(i.name for i in batch))
         self.sessions += 1
         run.sessions += 1
         with Pulse(self.agent, note):
             result = run_session(self.cfg.session_cmd, prompt_file, run.wt, log,
-                                 self.cfg.timeout_minutes * 60, self.model_flag(), "%s %s" % (self.agent, tag))
+                                 self.cfg.timeout_minutes * 60, self.model_flag(), "%s %s" % (self.agent, tag),
+                                 self.cfg.cost_cap)
         self.say("%s: session ended (exit %d%s); verifying" % (
-            note, result.returncode, ", timed out" if result.timed_out else ""))
-        self.verify_batch(run, batch, start, log)
+            note, result.returncode, ", timed out" if result.timed_out else
+            ", provider refused it: %s" % result.provider_error if result.provider_error else ""))
+        self.verify_batch(run, batch, start, log, count_attempts=not result.provider_error)
+        self.provider_backoff(result)
 
-    def verify_batch(self, run: UnitRun, batch: list[Item], start: str, log: Path) -> None:
-        tag = "%s-batch%d" % (run.unit, run.batch)
+    def provider_backoff(self, result: SessionResult) -> None:
+        if result.provider_error:
+            self.say("idle: the model provider refused the session (%s); no attempt counted, retrying in %d s" % (
+                result.provider_error, PROVIDER_BACKOFF_SECONDS))
+            self.wait(PROVIDER_BACKOFF_SECONDS)
+
+    def verify_batch(self, run: UnitRun, batch: list[Item], start: str, log: Path, count_attempts: bool = True) -> None:
+        tag = "%s-%s%d" % (run.unit, "esc" if self.cfg.tier == 2 else "batch", run.batch)
         if salvage(run.wt, self.logs / (tag + ".patch")):
             print("worker: uncommitted changes saved to %s and discarded" % (self.logs / (tag + ".patch")))
         with Pulse(self.agent, "unit %s batch %d: make match" % (run.unit, run.batch)):
@@ -773,6 +945,17 @@ class Worker:
                     git_out(run.wt, "add", "re/symbols.toml")
                     git_out(run.wt, "commit", "-q", "-m", "re: record L2 (worker)", "--trailer", "Agent: %s" % self.agent)
         for item, outcome in self.outcomes(run, batch):
+            if not count_attempts and outcome != "matched":
+                print("worker: %s %s not matched; the provider refused the session, so no attempt is counted" % (
+                    item.id, item.name))
+                continue
+            if self.cfg.tier == 2 and outcome != "matched":
+                n = bump_escalation(run.unit, item.id, self.agent, str(log), self.cfg.max_attempts)
+                run.escalated += 1
+                print("worker: escalation of %s %s did not match (%d of %d)%s" % (
+                    item.id, item.name, n, self.cfg.max_attempts,
+                    "; it waits for the human (make inbox)" if n >= self.cfg.max_attempts else ""))
+                continue
             if outcome == "matched":
                 run.matched += 1
             elif outcome == "blocked":
@@ -835,7 +1018,8 @@ class Worker:
         run.sessions += 1
         with Pulse(self.agent, "review %s: session running" % run.unit):
             result = run_session(self.cfg.session_cmd, prompt_file, run.wt, log,
-                                 self.cfg.timeout_minutes * 60, self.model_flag(), "%s %s" % (self.agent, tag))
+                                 self.cfg.timeout_minutes * 60, self.model_flag(), "%s %s" % (self.agent, tag),
+                                 self.cfg.cost_cap)
         self.say("review %s: session ended (exit %d%s)" % (
             run.unit, result.returncode, ", timed out" if result.timed_out else ""))
         if salvage(run.wt, self.logs / (tag + ".patch")):
@@ -892,6 +1076,9 @@ class Worker:
             state = "complete" if rs and all(done(r) for r in rs) else "partial"
             note = "worker: %d matched this run, %d blocked, %d in frontier, check %s (%s); %s" % (
                 run.matched, run.blocked, run.frontier, "green" if green else "RED", check_log, why)
+            if self.cfg.tier == 2:
+                note = "worker: escalation tier: %d matched, %d not matched; %s" % (
+                    run.matched, run.escalated, note[len("worker: "):])
             if run.fix_sessions:
                 note = "worker: review fixes: %d must-fix closed, %d still open (%d session(s)); %s" % (
                     run.fixed, run.fix_open, run.fix_sessions, note[len("worker: "):])
@@ -947,6 +1134,10 @@ def main(argv=None) -> int:
     ap.add_argument("--model", default=env_default("MODEL") or env_default("POOLRAD_MODEL"))
     ap.add_argument("--session", default=env_default("SESSION") or env_default("POOLRAD_SESSION_ID"))
     ap.add_argument("--variant", default=env_default("VARIANT") or env_default("POOLRAD_VARIANT"))
+    ap.add_argument("--tier", type=int, choices=(1, 2), default=int(env_default("TIER", "1") or 1),
+                    help="2: the escalation tier, which takes only the routines tier 1 gave up on")
+    ap.add_argument("--cost-cap", type=float, default=float(env_default("COST_CAP", "0") or 0),
+                    help="USD per session; the session is interrupted once OpenCode reports that much")
     ap.add_argument("--frontier", nargs="?", const="", metavar="UNIT", help="print the frontier and exit")
     ap.add_argument("--release", nargs="+", metavar=("UNIT", "ROUTINE"), help="clear frontier entries and exit")
     a = ap.parse_args(argv)
@@ -967,7 +1158,7 @@ def main(argv=None) -> int:
         cfg = Config(agent=a.agent, role=a.role, unit=a.unit.lower(), batch=a.batch, session_cmd=a.session_cmd,
                      session_model=a.session_model, max_sessions=a.max_sessions, timeout_minutes=a.timeout,
                      max_attempts=a.max_attempts, idle_seconds=a.idle, harness=a.harness, model=a.model,
-                     session=a.session, variant=a.variant)
+                     session=a.session, variant=a.variant, tier=a.tier, cost_cap=a.cost_cap)
         worker = Worker(cfg)
     except (ValueError, RuntimeError, OSError) as e:
         print("worker: %s" % e, file=sys.stderr)

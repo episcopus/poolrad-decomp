@@ -23,7 +23,7 @@ uses POOLVARS, RES06, RES09, RES12, OVL07, OVL19, OVL21, OVL22, OVL24, OVL25;
 const
   Yes = 'Y';                    { the answer key AskYesNo returns for yes }
   No = 'N';
-  { Affect numbers (the ids res12_fn_2199 and RemoveAffect look for in a character's affect list). }
+  { Affect numbers (the ids HasAffect and RemoveAffect look for in a character's affect list). }
   AffectBlind = $21;            { Cure Blindness checks and removes it (ovl04:0262) }
   AffectCurse = $24;            { Remove Curse accepts it as a reason to cast (ovl04:08A0) }
   AffectPoison = $37;           { Neutralize Poison checks it; Raise Dead also removes it }
@@ -54,8 +54,8 @@ const
   LastClass = 7;
   HealMenuLines = 10;           { lines NewMenuList builds for the Heal menu }
   KeyEnter = #13;
-  KeyNone = #0;                 { Escape returns #0 from ReadPromptChoice (ovl25:0235..0238); Escape, E and #0
-                                  return #0 from ChooseFromList (ovl25:0589..0593), ending HealMenu }
+  KeyNone = #0;                 { Escape returns #0 from ReadPromptChoice (ovl25:059F..05A7); Escape, E and #0
+                                  return #0 from ChooseFromList (ovl25:105C..1074), ending HealMenu }
   AnswerNo = 1;                 { AskMenu returns the 0-based hotkey position: for '~Yes ~No' the
                                    second key (No) is 1, the value VisitTemple leaves on }
   PromptTitleColor = 13;         { title, word and hotkey colours of AskCastAnyway and VisitTemple }
@@ -92,13 +92,13 @@ const
   NoAnimation = 0;
   ClearTextBeforeMessage = 1;    { ShowPagedText's ClearFirst parameter }
 
-{ ovl04:0013. Shows Reason for the selected character (res12_fn_16EC, e.g. "is not blind.") and
-  asks "cast cure anyway: "; returns the key (Yes or not). res12_fn_17E3 clears the prompt. }
+{ ovl04:0013. Shows Reason for the selected character (ShowCharacterMessage, e.g. "is not blind.") and
+  asks "cast cure anyway: "; returns the key (Yes or not). ClearCharacterMessage clears the prompt. }
 function AskCastAnyway(Reason: string): Char;
 begin
-  res12_fn_16EC(SelectedCharacter, Reason, 0, 0);
+  ShowCharacterMessage(SelectedCharacter, Reason, 0, 0);
   AskCastAnyway := AskYesNo('cast cure anyway: ', PromptTitleColor, PromptWordColor, PromptHotColor);
-  res12_fn_17E3;
+  ClearCharacterMessage;
 end;
 
 { ovl04:00BF. Tells what Service costs ("<service> will only cost <price> gold pieces."), asks
@@ -118,7 +118,7 @@ var
   Money: Word;
   Pooled: LongInt;
 begin
-  Service := Service + ' will only cost ' + res12_fn_1073(Price) + ' gold pieces.';
+  Service := Service + ' will only cost ' + WordToText(Price) + ' gold pieces.';
   ShowPagedText(TextWindowLeft, TextWindowTop, TextWindowRight, TextWindowBottom,
                 TextWindowColor, 1, Service);
   Answer := AskYesNo('pay for cure ', PromptTitleColor, CostPromptWordColor, CostPromptHotColor);
@@ -140,15 +140,15 @@ begin
       end
       else
       begin
-        res12_fn_1693('Not enough money.');
+        ShowFlashMessage('Not enough money.');
         Answer := No;
       end;
     end;
   end;
   if Answer = Yes then
   begin
-    res12_fn_17E3;
-    res12_fn_16EC(SelectedCharacter, 'is cured.', 0, 1);
+    ClearCharacterMessage;
+    ShowCharacterMessage(SelectedCharacter, 'is cured.', 0, 1);
   end;
   ChargeForCure := Answer;
 end;
@@ -164,7 +164,7 @@ var
 begin
   Unused := '';
   Answer := Yes;
-  if not res12_fn_2199(SelectedCharacter, AffectBlind, Affect) then
+  if not HasAffect(SelectedCharacter, AffectBlind, Affect) then
     Answer := AskCastAnyway('is not blind.');
   if Answer = Yes then
   begin
@@ -188,7 +188,7 @@ begin
   Unused := '';
   Answer := Yes;
   for I := 1 to DiseaseCount do
-    if res12_fn_2199(SelectedCharacter, DiseaseAffects[I], Affect) then Diseased := True;
+    if HasAffect(SelectedCharacter, DiseaseAffects[I], Affect) then Diseased := True;
   if not Diseased then Answer := AskCastAnyway('is not Diseased.');
   if Answer = Yes then
   begin
@@ -316,7 +316,7 @@ begin
   Poisoned := False;
   Unused := '';
   Answer := Yes;
-  if res12_fn_2199(SelectedCharacter, AffectPoison, Affect) then Poisoned := True;
+  if HasAffect(SelectedCharacter, AffectPoison, Affect) then Poisoned := True;
   if not Poisoned then Answer := AskCastAnyway('is not poisoned.');
   if Answer = Yes then
   begin
@@ -352,7 +352,7 @@ begin
     if Item^.Cursed then Cursed := True;
     Item := Item^.Next;
   end;
-  if not Cursed and not res12_fn_2199(SelectedCharacter, AffectCurse, Affect) then
+  if not Cursed and not HasAffect(SelectedCharacter, AffectCurse, Affect) then
     Answer := AskCastAnyway('is not cursed.');
   if Answer = Yes then
   begin
@@ -391,11 +391,11 @@ begin
   end;
 end;
 
-{ ovl04:09D7. The Heal menu: fills ten menu lines with TempleMenuText, draws the windows and
+{ ovl04:09D7. The Heal menu: fills ten menu lines with TempleMenuText, clears row 24, draws the windows and
   "<name>, how can we help you?", and runs ChooseFromList with "Heal Exit" until Exit or Escape.
   Heal or Enter on lines 0..8 runs that service; line 9 is Exit. RedrawList requests the initial page
-  draw and is cleared by ChooseFromList. Frees the lines, clears columns 0..39 of row 24, redraws the
-  view and reshows SelectedCharacter. }
+  draw and is cleared by ChooseFromList. Frees the lines, clears the whole screen (columns 0..39, rows
+  0..24) and redraws the view and reshows SelectedCharacter. }
 procedure HealMenu;
 var
   List: PMenuLine;
@@ -453,8 +453,8 @@ begin
   until Done;
   FreeMenuList(List);
   ClearRect(PromptClearLeft, ScreenTopRow, PromptClearRight, ScreenBottomRow);
-  res12_fn_27D9;
-  res12_fn_0767(SelectedCharacter);
+  RedrawView;
+  DrawPartyRoster(SelectedCharacter);
 end;
 
 { ovl04:0D09. The Temple menu offers Heal, View, Take, Pool, Share, Appraise and Exit (Take and Share
@@ -469,7 +469,7 @@ procedure VisitTemple;
 var
   Key: Char;
   Done: Boolean;
-  ExtKey: Byte;            { ReadPromptChoice sets this for extended scan letters and keypad digits (ovl25:0224..0287) }
+  ExtKey: Byte;            { 1 for an extended key (ovl25:0580..0591) or a keypad digit (ovl25:0691..06C7) }
   Prompt: String40;
   MoneyPooled: Byte;      { nonzero while money lies in the pool (TreasureLeft's first result) }
   PoolSecond: Byte;       { TreasureLeft's second result; not read here }
@@ -477,8 +477,8 @@ var
   Appraised: Byte;        { set by Appraise (AppraiseGems); nonzero redraws the view }
 begin
   ds49F3 := 1;
-  res12_fn_27D9;
-  res12_fn_0767(SelectedCharacter);
+  RedrawView;
+  DrawPartyRoster(SelectedCharacter);
   FillChar(PooledMoney, SizeOf(PooledMoney), 0);
   MoneyInPool := 0;
   Done := False;
@@ -492,7 +492,7 @@ begin
                             AcceptExtendedKeys, NoAnimation, ExtKey);
     case Key of
       'H': if ExtKey = 0 then HealMenu;
-      'V': ovl19_e5(ExtKey);
+      'V': ViewSelectedCharacter(ExtKey);
       'T': TakeMoney;
       'P': if ExtKey = 0 then PoolMoney;
       'S': ShareMoney;
@@ -522,10 +522,10 @@ begin
       'O': UpdateSelectedCharacter(Key);
     end;
     case Key of
-      'B', 'T': res12_fn_27D9;
-      'A': if Appraised <> 0 then res12_fn_27D9;
+      'B', 'T': RedrawView;
+      'A': if Appraised <> 0 then RedrawView;
     end;
-    res12_fn_0767(SelectedCharacter);
+    DrawPartyRoster(SelectedCharacter);
   until Done;
 end;
 

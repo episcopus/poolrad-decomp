@@ -1,58 +1,89 @@
-# The roster `make start-run` launches, one iTerm tab per entry. Decompilers and reviewers run as
-# workers (`make worker`, docs/process/WORKER.md): a supervisor that starts one fresh `opencode run`
-# per batch of routines or per review and claims again until the run stops; `heading` is not used for
-# them. Every other role is one interactive OpenCode session started with the prompt block of
-# docs/process/START-AGENT.md named by `heading` (the text after "## The prompt for"); `mode =
-# "interactive"` makes a decompiler or reviewer one too. `model` is the OpenCode model id (`opencode
-# models`) and `variant` is its reasoning effort, passed as `model#variant` (`high` on every session
-# here). Optional for workers: `batch` (routines per session) and `timeout` (minutes per session).
+# The roster `make start-run` launches, one iTerm tab per entry (docs/process/OPERATOR.md).
+#
+# Decompilers and reviewers run as workers (`make worker`, docs/process/WORKER.md): a supervisor that
+# starts one fresh `opencode run` per batch of routines (or per review) and claims again until the run
+# stops. A decompiler is tier 1 (cheap, the default) or `tier = 2`, the escalation tier: a stronger model
+# that takes only the routines tier 1 gave up on (out of attempts or `blocked`), one per session, with
+# the earlier attempts' history; what it cannot match goes to `make inbox` for the human.
+# The integrator (`role = "integrator"`) is a script, tools/agent/integrator.py: it runs `make integrate`
+# every `interval` seconds, resolves a rejected merge with one fresh session of its model, and after
+# `idle_stop` minutes with no planned work it runs `make stop-run` itself.
+# `model` is the OpenCode model id (`opencode models`) and `variant` its reasoning effort, passed as
+# `model#variant`. Worker options: `batch` (routines per session), `timeout` (minutes per session),
+# `cost_cap` (USD per session, read from OpenCode while it runs), `max_attempts` (sessions per routine).
+# Any role can still be an interactive OpenCode session (`mode = "interactive"` with a `heading` of
+# docs/process/START-AGENT.md), but such a session works only as long as its model keeps going in one
+# turn. `make run-add NAME=<name>` starts or restarts one entry in a running run.
 # `make stop-run` drains, lets workers hand off, integrates, releases and closes exactly these sessions.
 
 [[session]]
-name = "orch-sonnet"
-role = "orchestrator"
+name = "int-loop"
+role = "integrator"
 model = "openrouter/anthropic/claude-sonnet-5.5"
 variant = "high"
-heading = "orchestator sonnet"
+interval = 120
+idle_stop = 60
+
+# Tier 1: DeepSeek matched the most bytes per dollar on 2026-10-14 ($0.34/KB against $1.06-1.39 for
+# Haiku at the same speed).
+[[session]]
+name = "dec-deepseek"
+role = "decompiler"
+model = "openrouter/deepseek/deepseek-v4.1-flash"
+variant = "high"
 
 [[session]]
 name = "dec-deepseek-2"
 role = "decompiler"
 model = "openrouter/deepseek/deepseek-v4.1-flash"
 variant = "high"
-heading = "decompiler deepseek 2"
 
 [[session]]
-name = "dec-haiku-2"
-role = "decompiler"
-model = "openrouter/anthropic/claude-haiku-5.5"
-variant = "high"
-heading = "decompiler haiku 2"
-
-[[session]]
-name = "dec-haiku"
-role = "decompiler"
-model = "openrouter/anthropic/claude-haiku-5.5"
-variant = "high"
-heading = "decompiler haiku"
-
-[[session]]
-name = "dec-deepseek"
+name = "dec-deepseek-3"
 role = "decompiler"
 model = "openrouter/deepseek/deepseek-v4.1-flash"
 variant = "high"
-heading = "decompiler deepseek"
+
+# Tier 2: the escalation decompilers, one hard routine per session, up to two sessions per routine,
+# each stopped at 150 minutes or USD 8. Two, not three: three Grok xhigh sessions at once outran
+# OpenRouter's per-request credit reservation on 2026-10-14 (about USD 1.50 a minute together).
+[[session]]
+name = "esc-grok"
+role = "decompiler"
+tier = 2
+model = "openrouter/x-ai/grok-4.7"
+variant = "xhigh"
+batch = 1
+timeout = 150
+cost_cap = 8
+max_attempts = 2
+
+[[session]]
+name = "esc-grok-2"
+role = "decompiler"
+tier = 2
+model = "openrouter/x-ai/grok-4.7"
+variant = "xhigh"
+batch = 1
+timeout = 150
+cost_cap = 8
+max_attempts = 2
+
+# A/B test (2026-10-14): the same escalation settings as the Grok workers, with Claude Sonnet 5.5, to
+# compare the cost per matched routine on the hard tail.
+[[session]]
+name = "esc-sonnet"
+role = "decompiler"
+tier = 2
+model = "openrouter/anthropic/claude-sonnet-5.5"
+variant = "xhigh"
+batch = 1
+timeout = 150
+cost_cap = 8
+max_attempts = 2
 
 [[session]]
 name = "rev-sonnet"
 role = "reviewer"
 model = "openrouter/anthropic/claude-sonnet-5.5"
 variant = "high"
-heading = "reviewer sonnet"
-
-[[session]]
-name = "exp-opus"
-role = "expert"
-model = "anthropic/claude-opus-5-5"
-variant = "high"
-heading = "expert opus"

@@ -7,7 +7,7 @@ unit OVL10;
   puts each one on the map: every side has an 11x6 placement grid in four groups (PlacementCells),
   laid on the map from an origin in area map steps, and FindStartCell walks rings of that grid
   until TryPlaceAt finds a free passable cell. }
-{$A-,O+,F+,S-,R-,G-,I-}
+{$A-,O+,F+,S-,R-,G-,I-,L-}
 interface
 procedure ScatterRareTiles;
 function PassageKind(Col, Row: ShortInt; Dir: Byte): Byte;
@@ -663,7 +663,7 @@ begin
 end;
 
 { ovl10:12E1. Walks the party list (ds5D96) and readies each character for the battle: calls
-  res12_fn_0BB8 on it, allocates and zeroes its Combat record, sets NoBody for list entries past
+  RecalcCombatValues on it, allocates and zeroes its Combat record, sets NoBody for list entries past
   game word VarPartySize, gives it the icon set FacingCombatDir of the party facing (turned half
   round, + 4 mod 8, for side 1), and marks a party-side NoBody member computer-run when B84's
   low-seven-bit morale is 0 or above MaxComputerMorale. It then stores Var2Morale plus
@@ -678,7 +678,7 @@ begin
   Count := 0;
   while Who <> nil do
   begin
-    res12_fn_0BB8(Who);
+    RecalcCombatValues(Who);
     Inc(Count);
     GetMem(Who^.Combat, CombatRecordSize);
     FillChar(Who^.Combat^, CombatRecordSize, 0);
@@ -869,7 +869,7 @@ end;
   combatant Index (CombatantRecord, CombatantTable Unk2 and Kind from CombatSize) and gets a cell
   from FindStartCell. A placed character with Flag10D 0 is taken off again and, outside a duel and
   unless NoBody, leaves a body (TileBody, BodyTable). One that finds no cell and has NoBody is cut
-  out of the list through ovl16_e2; the list ends after the last character kept. }
+  out of the list through RemoveSelectedCharacter; the list ends after the last character kept. }
 procedure PlaceAllCombatants;
 var
   Col, Row: ShortInt;
@@ -881,7 +881,7 @@ var
   PlacedCount: Byte;            { counted, never read }
   DroppedCount: Byte;           { counted, never read }
 begin
-  res12_fn_23DB;
+  RecountCombatSides;
   DroppedCount := 0;
   PlacedCount := 0;
   for Index := 1 to CombatantClearLoopLast do CombatantTable[Index].Kind := 0;
@@ -950,7 +950,7 @@ begin
         Inc(DroppedCount);
         CombatantRecord[Index] := nil;
         SelectedCharacter := Who;
-        ovl16_e2(True, False);
+        RemoveSelectedCharacter(True, False);
         Who := Prev;
       end
       else
@@ -971,7 +971,7 @@ end;
   the lists ds6DBB and ds5D9A, game word Var2BattleWord), caps Var2Morale at 100, creates the map,
   discards waiting keys, prepares combatants, discards waiting keys again, places them, and discards
   waiting keys once more. It allocates ds6E36, centres the view on the first party character, calls
-  res12_fn_2B88, runs HookBattleStart for each character, calls ovl13_e19 and enters ViewModeCombat. }
+  DrawCombatScreen, runs HookBattleStart for each character, calls UpdateMonsterMorale and enters ViewModeCombat. }
 procedure StartBattle;
 var
   Unused: array[0..9] of Byte;  { QUIRK ovl10:1E34: ten bytes of the frame nothing uses }
@@ -1003,14 +1003,14 @@ begin
   AllocatePicture($18, 3, 4, 1, ds6E36);
   CombatMap^.ViewX := CombatantX(PCharacter(ds5D96)) - 3;
   CombatMap^.ViewY := CombatantY(PCharacter(ds5D96)) - 3;
-  res12_fn_2B88;
+  DrawCombatScreen;
   Who := PCharacter(ds5D96);
   while Who <> nil do
   begin
     RunAffectHooks(HookBattleStart, Who);
     Who := Who^.Next;
   end;
-  ovl13_e19;
+  UpdateMonsterMorale;
   ds49F3 := ViewModeCombat;
 end;
 

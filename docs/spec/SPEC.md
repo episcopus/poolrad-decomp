@@ -329,23 +329,21 @@ not make another agent rediscover an already accepted result. Playbook 80 advice
   are never guessed from model names. Operator configuration, meter and budget files need protection
   outside workers' unrestricted shell access (THROUGHPUT.md); registry declarations are not authentication.
 
-### 9.4.1 Bounded expert consultation
+### 9.4.1 Escalation of hard routines
 
-The human admits one expert with a selected powerful model and an external provider/harness spend
-cap. The orchestrator's deterministic scan can queue advice after three distinct recorded failed
-codegen revisions or two consecutive failed review rounds. It never launches an agent. Defaults:
-one active case (at most two waiting), 50 cases/run, one consultation/problem/input revision, a
-15-minute lease, USD 10 case allocation and USD 500 run allocation (raised tenfold by the human on
-2026-10-13). A routine already at L2 on main or in its unit's worktree is never a codegen case; a
-queued case whose routine reaches L2 is retired as obsolete and does not count against the run. Cases contain bounded frozen source, failure history and
-retrieved prior learning. The original worker still proves the result; expert advice writes no level,
-review pass, source change or human approval. Known human-held rule decisions are not paid retry loops.
+Decompilers run in two tiers (`docs/process/WORKER.md`, "The escalation tier"). Tier 1 is a cheap
+model; a routine it cannot match (out of worker attempts, or given up with a `blocked` note) waits for
+tier 2, a stronger-model decompiler worker that writes and proves the Pascal itself under every rule of
+this section, one routine per session, with the earlier attempts' notes, logs and frozen drafts. Map
+entries that lie inside a real routine (notes "not a routine") are never tasks of their own: the
+routine that contains them is. Each tier-2 session is bounded by a timeout and by a dollar cap read from
+the harness while it runs; a routine tier 2 also fails on is listed in `make inbox` with what was
+established, for the human. Both tiers' attempt counts live in the worker frontier and are cleared by
+`worker.py --release`. Matched code, levels and reviews follow the same proof as any other routine.
 
-Real cumulative counters and reserved active allocations govern dispatch. Unknown/regressing usage,
-expired/unsettled cases and overages hold further spending; quotas cannot be reset in the same run or
-evaded by replacing the session. Dollar allocations and tool-boundary deadlines are not hard billing
-or process limits: the human must configure those in the harness/provider before enabling paid advice.
-No missing-usage estimate is substituted. See playbook 80 and `docs/process/THROUGHPUT.md`.
+This replaces the advisory expert of 2026-10-13 (human decision, 2026-10-14): its advice had to be
+re-proved by the cheap worker, one routine took six consultations, and its idle session was the run's
+largest cost. Its tools (`make expert-*`, playbook 80) remain for a human-started one-off diagnosis.
 
 ### 9.5 The per-routine loop (summary; full detail in playbook 30)
 

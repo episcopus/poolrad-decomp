@@ -1,10 +1,10 @@
 # Review: ovl04
 
 decompiler: dec-6
-reviewer: rev-6
-rounds: 1 rev-5 at e3614ee; 2 rev-6 at 8962b79; 3 rev-sonnet at f1c0c8b; 4 rev-sonnet at 1315f47
+reviewer: rev-sonnet
+rounds: 1 rev-5 at e3614ee; 2 rev-6 at 8962b79; 3 rev-sonnet at f1c0c8b; 4 rev-sonnet at 1315f47; 5 rev-sonnet at b25bc08
 date: 2026-10-13
-commit: 1315f47
+commit: b25bc08
 
 Checklist: docs/process/playbooks/70-review.md (every item, every routine).
 
@@ -73,13 +73,19 @@ Everything else checked out: prices, affect ids, status values, the quirks at ov
 
 Round 4 (rev-sonnet, at 1315f47): `make match UNIT=ovl04` says `unit: complete` (12 matched, 0 differ), `make readability UNIT=ovl04` is clean. The round 3 fixes in 3c99cee are in place (unit comment names RemoveAffect, RollDice and HealCharacter; named colours and rectangles; `AffectRemovedAt...` neutral names; Flag10D/Flag11B wording; `RedrawList`, `ExtKey`; the Unused and frame-only quirks). I re-checked every comment address against the packet disassembly and found two wrong statements:
 
-- [ ] must-fix KeyNone and VisitTemple `ExtKey`: the evidence addresses `ovl25:0235..0238`, `ovl25:0589..0593` and `ovl25:0224..0287` (OVL04.PAS lines 57, 58, 472) are not addresses. They are line numbers of the draft `src/OVL25.PAS` (line 235 is `KeyEscape:` in ReadPromptChoice, line 589 is `KeyEscape, KeyExitList, KeyNone:` in ChooseFromList, lines 227..285 are the `ExtKey := 1` arms), and they fall outside the routines they are cited for (ReadPromptChoice is ovl25:03BD..06FB, ChooseFromList ovl25:0D9A..10D1). The bytes say: ReadPromptChoice returns #0 for Escape at ovl25:059F..05A7 (`cmp al, 0x1b`, `mov byte [bp-0x60], 0`); ChooseFromList ends on Escape, E and #0 at ovl25:105C..1074 (`cmp al, 0x1b`, `cmp al, 0x45`, `cmp al, 0`, then the nil result and key 0); ReadPromptChoice stores ExtKey := 1 at ovl25:0580..0591 (extended key) and ovl25:0691..06C7 (keypad digits). Replace the three ranges by these addresses.
-- [ ] must-fix HealMenu: the routine comment says the epilogue "clears columns 0..39 of row 24", but the epilogue call is `ClearRect(PromptClearLeft, ScreenTopRow, PromptClearRight, ScreenBottomRow)` = (0, 0, 39, 24) (pushes 0, 0, $27, $18 at ovl04:0C18..0C24): rows 0 to 24, the whole text screen. Only the call at the start of HealMenu (ovl04:0A62..0A6E, `ClearRect(0, 24, 39, 24)`) clears row 24 alone. Say "clears the whole screen (columns 0..39, rows 0..24)" for the epilogue and keep "row 24" for the start. Naming the pair as one constant (for example `ScreenRight = 39`) is optional.
+- [x] must-fix KeyNone and VisitTemple `ExtKey`: the evidence addresses `ovl25:0235..0238`, `ovl25:0589..0593` and `ovl25:0224..0287` (OVL04.PAS lines 57, 58, 472) are not addresses. They are line numbers of the draft `src/OVL25.PAS` (line 235 is `KeyEscape:` in ReadPromptChoice, line 589 is `KeyEscape, KeyExitList, KeyNone:` in ChooseFromList, lines 227..285 are the `ExtKey := 1` arms), and they fall outside the routines they are cited for (ReadPromptChoice is ovl25:03BD..06FB, ChooseFromList ovl25:0D9A..10D1). The bytes say: ReadPromptChoice returns #0 for Escape at ovl25:059F..05A7 (`cmp al, 0x1b`, `mov byte [bp-0x60], 0`); ChooseFromList ends on Escape, E and #0 at ovl25:105C..1074 (`cmp al, 0x1b`, `cmp al, 0x45`, `cmp al, 0`, then the nil result and key 0); ReadPromptChoice stores ExtKey := 1 at ovl25:0580..0591 (extended key) and ovl25:0691..06C7 (keypad digits). Replace the three ranges by these addresses. (fixed in e6f2af3)
+- [x] must-fix HealMenu: the routine comment says the epilogue "clears columns 0..39 of row 24", but the epilogue call is `ClearRect(PromptClearLeft, ScreenTopRow, PromptClearRight, ScreenBottomRow)` = (0, 0, 39, 24) (pushes 0, 0, $27, $18 at ovl04:0C18..0C24): rows 0 to 24, the whole text screen. Only the call at the start of HealMenu (ovl04:0A62..0A6E, `ClearRect(0, 24, 39, 24)`) clears row 24 alone. Say "clears the whole screen (columns 0..39, rows 0..24)" for the epilogue and keep "row 24" for the start. Naming the pair as one constant (for example `ScreenRight = 39`) is optional. (fixed in e6f2af3)
 - [ ] should-fix CureBlindness QUIRK ovl04:0250 and whitepaper 5.19: "the same in every service routine" and "every service routine clears a 256-byte string local it never reads" are wrong for CureWounds (ovl04:0401, frame of 24 bytes, no string local, `sub sp, 0x18`) and AskCastAnyway/ChargeForCure. It holds for the six routines that ask (CureBlindness, CureDisease, RaiseDead, NeutralizePoison, RemoveCurse, StoneToFlesh; each starts with `mov byte [bp-0x104], 0`-style clears). Say "each of the six confirm-then-charge services" in both places.
 - [ ] should-fix re/dseg.toml TempleMenuText evidence: it still says "copies string[40] entries I = 1..9 ... the image holds ... Stone to Flesh, Exit at DS:011A + $29 * (I - 1)", but the loop reads 1..10 (ovl04:0A0C..0A54) and Exit is entry 10 at DS:028B, as POOLVARS and whitepaper 5.19 say. Change to "I = 1..10". An additive edit of a name's evidence in the shared registry, for the unit's decompiler.
 - [ ] note RaiseDead: "the hit points above HpB1 are divided by the bonus" leaves out that the quotient is then subtracted from HpMax (`Dec(HpMax, HpLoss)`, ovl04:0701..0710), so the character loses that many maximum hit points; one clause would make the comment self-contained.
 
 Everything else held up on re-reading: prices and affect ids against their pushes and compares, status tests (ovl04:0539, 093D), the `AnswerNo` rule, the quirks at ovl04:0177, 01C8, 0250, the constitution thresholds after the decrement (ovl04:060E before 0652), `ds681F`/`ds6C95`/`MoneyInPool` addresses (0386, 05AB, 07CE, 08FA, 0D37), signatures recorded in re/symbols.toml, no raw machine code, `ovl19_e5`, `ovl22_e9` and `res12_fn_*` correctly still unnamed stubs.
+
+Round 5 (rev-sonnet, at b25bc08): `make match UNIT=ovl04` says `unit: complete` (12 matched, 0 differ), `make readability UNIT=ovl04` is clean. The round 4 must-fix findings are verified fixed (e6f2af3, 97c5040). Checked against the ovl25 packet: Escape returns #0 in ReadPromptChoice at ovl25:059F..05A7 (`cmp al, 0x1b`, `mov byte [bp-0x60], 0`); ChooseFromList ends on Escape, E and #0 at ovl25:105C..1074; ExtKey := 1 is stored at ovl25:0591 and ovl25:06C7 (keypad branch from 0691). HealMenu's epilogue `ClearRect(0, 0, 39, 24)` (pushes at ovl04:0C18..0C24) matches the new comment "clears the whole screen". The unit source is otherwise unchanged since round 4, so every other verification of rounds 1 to 4 still stands. No new must-fix finding. The three open items of round 4 are wording only (a comment or registry sentence that overstates "every service routine" or says 1..9) and stay open for the decompiler; they do not block the pass:
+
+- [ ] should-fix CureBlindness QUIRK ovl04:0250 and whitepaper 5.19 line 1071 (still open, see round 4): say "each of the six confirm-then-charge services".
+- [ ] should-fix re/dseg.toml TempleMenuText evidence (still open, see round 4): "I = 1..9" should read "I = 1..10".
+- [ ] note RaiseDead (still open, see round 4): add that the quotient is subtracted from HpMax.
 
 ## Verdict
 
@@ -90,3 +96,5 @@ Round 2 (rev-6, at 8962b79): not passed. One must-fix: VisitTemple's comment say
 Round 3 (rev-sonnet, at f1c0c8b): not passed. Two must-fix: the unit comment still says `RemoveAffect/e5` and `RollDice/e21` (rename leftovers for routines the unit never calls), and the `KeyNone` comment says `ReadPromptChoice/e4` are still stubs although `ReadPromptChoice` and `ChooseFromList` are decompiled in OVL25.PAS and give the evidence.
 
 Round 4 (rev-sonnet, at 1315f47): not passed. Two must-fix: KeyNone/ExtKey cite OVL25.PAS source line numbers as ovl25 addresses (real: ovl25:059F, 105C, 0580, 0691), and HealMenu's comment says its epilogue clears row 24 when it clears rows 0..24.
+
+Round 5 (rev-sonnet, at b25bc08): passed. Both round 4 must-fix findings are fixed and verified on the bytes; only wording-level should-fix and note items remain.

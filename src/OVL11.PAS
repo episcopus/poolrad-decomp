@@ -104,7 +104,7 @@ begin
   DebugMode := False;
   ds4A00 := 1;
   ds49F8 := 0;
-  ds49FB := 0;
+  RestInterruptCounter := 0;
   ds5D96 := 0;
   SelectedCharacter := nil;
   EclPC := $9900;
@@ -121,7 +121,7 @@ begin
   MarkerFrame := 0;
   ListMenuTop := 1;
   DuelMode := 0;
-  ds6DDA := 0;
+  RestWindowActive := 0;
   ds84DD := 0;
   ds84DE := 0;
   ds84DF := 0;
