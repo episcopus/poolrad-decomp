@@ -57,7 +57,7 @@ procedure ovl12_e45(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e46(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ProgressRot(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e48(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e49;
+procedure ovl12_e49(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e50;
 procedure ovl12_e51;
 procedure ovl12_fn_1543;
@@ -228,6 +228,8 @@ const
   AffectUnknown19 = $19;        { purpose unknown [I]: RollToHit clears it from the attacker (ovl24:0CB7) }
   AffectUnknown19Duration = 1;  { the Duration ovl12:1363 gives affect AffectUnknown19 }
   AffectUnknown19Data = $0C;    { the Data byte ovl12:1363 gives affect AffectUnknown19 }
+  AffectUnknown62 = $62;        { purpose unknown [?]: ovl12:1472 gives it; ovl24 also runs its hook (RunAffectHook $62) }
+  AffectUnknown62Data = $FF;    { the Data byte ovl12:1472 gives affect AffectUnknown62 }
   AffectRot = $39;              { the rot affect: Cure Disease removes it (whitepaper 5.19 table, DS:0114) }
   RotDuration = 43200;          { $A8C0: the Duration the rot handler (ovl12:1399) gives the next rot }
   RotStage = $10;               { one stage of the rot: the rot handler takes it off the affect's Data high nibble }
@@ -1045,8 +1047,13 @@ begin
   if ds681D <> 0 then
     ds681A := 0;
 end;
-{ ovl12:1472: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e49; begin end;
+{ 1472. Affect handler (the AffectHandlers shape: Who, Affect and Mode; only Who is read). It gives Who the affect
+  AffectUnknown62 (AddAffect, ovl24:0E52) with Duration 0 (permanent), the Data AffectUnknown62Data and no handler
+  when it is removed (NoRemoveHandler). Purpose unknown: which affect runs it is not known yet [?]. }
+procedure ovl12_e49(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  AddAffect(Who, AffectUnknown62, 0, AffectUnknown62Data, NoRemoveHandler);
+end;
 { ovl12:1490: retf 10: 10 bytes of parameters; 2 bytes of locals }
 {@stub} procedure ovl12_e50; begin end;
 { ovl12:14EB: retf 10: 10 bytes of parameters; 0 bytes of locals }
