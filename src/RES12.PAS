@@ -48,7 +48,7 @@ procedure res12_fn_1CE0;
 procedure res12_fn_1FEB(Who: Pointer; Flag: Byte; Text: String40);
 function res12_fn_2199(Who: Pointer; AffectId: Byte; var Affect: Pointer): Boolean;
 procedure res12_fn_2228(Who: Pointer; Damage: Byte);
-procedure res12_fn_234A;
+procedure res12_fn_234A(Who: Pointer);
 function res12_fn_23B7(Who: Pointer): Byte;
 procedure res12_fn_23DB;
 function res12_fn_2433(P: Pointer; B: Byte): Byte;
@@ -162,7 +162,7 @@ implementation
 { 00BA:2228: retf 6: 6 bytes of parameters; 2 bytes of locals }
 {@stub} procedure res12_fn_2228(Who: Pointer; Damage: Byte); begin end;
 { 00BA:234A: retf 4: 4 bytes of parameters; 42 bytes of locals }
-{@stub} procedure res12_fn_234A; begin end;
+{@stub} procedure res12_fn_234A(Who: Pointer); begin end;
 { 00BA:23B7: retf 4: 4 bytes of parameters; 2 bytes of locals }
 {@stub} function res12_fn_23B7(Who: Pointer): Byte; begin end;
 { 00BA:23DB: retf 0: 0 bytes of parameters; 4 bytes of locals }

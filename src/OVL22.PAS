@@ -434,8 +434,17 @@ procedure CastCurse;
 begin
   ApplySpellToSide(res12_fn_23B7(SelectedCharacter), 'is Cursed');
 end;
-{ ovl22:106B: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure CastCureLightWounds; begin end;
+{ ovl22:106B (e13). Cast handler of spell 3, Cure Light Wounds: when a target was chosen (ds6C94
+  nonzero) it rolls 1d8 (RollDice) and heals the first target ds6C95 through HealCharacter (flag 0),
+  then reports through res12_fn_234A whether the target is fully or partially healed. One of the
+  per-spell handlers in SpellHandlers (SpellHandlers[3], filled by ovl22_e10). }
+procedure CastCureLightWounds;
+begin
+  if ds6C94 = 0 then
+    Exit;
+  if HealCharacter(ds6C95, RollDice(1, 8), 0) then
+    res12_fn_234A(ds6C95);
+end;
 { ovl22:10A7: retf 0: 0 bytes of parameters; 2 bytes of locals }
 {@stub} procedure CastCauseLightWounds; begin end;
 { ovl22:10E9: retf 0: 0 bytes of parameters; 12 bytes of locals }
