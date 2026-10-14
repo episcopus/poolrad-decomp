@@ -3966,7 +3966,7 @@ evidence = ["prologue"]
 id = "ovl12:1730"
 unit = "ovl12"
 addr = "ovl12:1730"
-size = 46
+size = 63
 name = "ovl12_e60"
 signature = "procedure ovl12_e60(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e60"
@@ -3980,12 +3980,12 @@ id = "ovl12:176F"
 unit = "ovl12"
 addr = "ovl12:176F"
 size = 326
-name = "ovl12_e61"
-signature = ""
+name = "DrainBloodFromCombatant"
+signature = "procedure DrainBloodFromCombatant(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e61"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_61"
+notes = "renamed from ovl12_e61 (affect handler at ovl12:176F: when Mode is 0 and Who and the combatant whose index is the affect Data (CombatantRecord) both take part, it shows Sucks some Blood on Who (res12_fn_16EC) and deals 1d4 to that combatant (RollDiceCounted, DealDamage), then takes 16 times the damage off the affect Duration; the other branch removes the affects and sets Pad10 (forces flight in CheckMorale, ovl09:10D7)); auto:entry_61"
 evidence = ["prologue"]
 
 [[routine]]

@@ -71,7 +71,7 @@ procedure ParalyzeAttackTargetFor1d9Plus10(Who: PCharacter; Affect: PAffect; Mod
 procedure PoisonAttackTargetBonusMinus2(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure SetFlagAndLowerAttackRollByFour(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e60(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e61;
+procedure DrainBloodFromCombatant(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e62;
 procedure ovl12_e63;
 procedure ovl12_e64;
@@ -1198,8 +1198,45 @@ begin
   if RollDice(1, 100) <= AffectUnknown19Chance then
     AddAffect(Who, AffectUnknown19, AffectUnknown19Duration, AffectUnknown19Data, NoRemoveHandler);
 end;
-{ ovl12:176F: retf 10: 10 bytes of parameters; 20 bytes of locals }
-{@stub} procedure ovl12_e61; begin end;
+{ ovl12:176F. Affect handler of the blood drain (the AffectHandlers shape: Who, Affect and Mode; Mode 0 applies, any other
+  value removes, ovl24:0000). AttackTarget becomes the combatant whose index is the affect's Data (CombatantRecord,
+  DS:65BD). When Mode is 0 and Who and that combatant both still take part (Flag10D), Who sucks blood from it: "Sucks some
+  Blood" is shown on Who (colour 10), 1d4 damage is dealt to the combatant without a save (RollDiceCounted, DealDamage),
+  Who's turn is ended (res12_fn_2637, its result is not read), then the affect's Duration div 16 must stay above the
+  damage, which is taken off the Duration (times 16) while the combatant is still in the fight; otherwise affect $4B is
+  removed from Who. Else affect $3A is removed from the combatant and, when Mode is 0, the affect's Flag is cleared and
+  affect $4B is removed from Who. Last, when both still take part, Who's combat byte Pad10 becomes 1 (CheckMorale forces
+  a combatant with it nonzero to flee, ovl09:10D7). Which affect runs it is not known yet [?]. }
+procedure DrainBloodFromCombatant(Who: PCharacter; Affect: PAffect; Mode: Byte);
+var
+  Turn: Byte;                   { the result of res12_fn_2637 (ends Who's turn), never read }
+  Dice: Byte;                   { the damage of the blood sucked }
+begin
+  AttackTarget := CombatantRecord[Affect^.Data];
+  if (Mode <> 0) or (Who^.Flag10D = 0) or (AttackTarget^.Flag10D = 0) then
+  begin
+    RemoveAffect(AttackTarget, $3A, nil);
+    if Mode = 0 then
+    begin
+      Affect^.Flag := 0;
+      RemoveAffect(Who, $4B, Affect);
+    end;
+    if (Who^.Flag10D <> 0) and (AttackTarget^.Flag10D <> 0) then
+      Who^.Combat^.Pad10 := 1;
+  end
+  else
+  begin
+    res12_fn_16EC(Who, 'Sucks some Blood', $A, 1);
+    Dice := RollDiceCounted(1, 4);
+    DamageKind := 0;
+    DealDamage(AttackTarget, Dice, 0, False);
+    Turn := res12_fn_2637(Who);
+    if (AttackTarget^.Flag10D <> 0) and (Affect^.Duration div 16 > Dice) then
+      Dec(Affect^.Duration, Dice * 16)
+    else
+      RemoveAffect(Who, $4B, Affect);
+  end;
+end;
 { ovl12:18B5: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e62; begin end;
 { ovl12:1935: retf 10: 10 bytes of parameters; 14 bytes of locals }

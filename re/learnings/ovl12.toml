@@ -359,3 +359,39 @@ tags = ["RollDice", "Byte", "Word", "parameter", "xor", "codegen", "call"]
 title = "A Byte function result passed to a Word value parameter is zero-extended: xor ah, ah; push ax"
 lesson = "ParalyzeAttackTargetFor2d8 (ovl12:1699) passes `RollDice(2, 8)`, a Byte function result, as the Word Duration of ParalyzeAttackTarget (ovl12:15EB). The original calls RollDice, then `xor ah, ah; push ax` (ovl12:16AD) before the call, and the match holds with the Word parameter. A constant 0 for the Byte parameter is `mov al, 0; push ax`."
 evidence = ["src/OVL12.PAS#ParalyzeAttackTargetFor2d8", "re/symbols.toml#ovl12:1699"]
+
+[[lesson]]
+id = "times-16-byte-word-is-mov-cl-4"
+confidence = "V"
+units = ["ovl12"]
+tags = ["shl", "Dec", "Word", "field", "codegen", "shift", "mul"]
+title = "Dice * 16 compiles to mov cl, 4; shl ax, cl (the original's form); Dice shl 4 compiles to mov cx, 4"
+lesson = "Dec(Affect^.Duration, Dice * 16) with Dice a Byte local matches the original's `xor ah, ah; mov cl, 4; shl ax, cl; sub word ptr es:[di+1], ax` (ovl12:176F). The probe tools/re/tp_idioms/ovl12/E61SHL.PAS shows that `Dice shl 4`, `Word(Dice) shl 4` and `(Dice shl 4) div 1` each give `mov cx, 4` (one byte longer), and that the multiplication by 16 is the spelling that the optimiser turns into the two-byte cl form. The first diff was a jmp one byte off, which is how the longer shift showed."
+evidence = ["tools/re/tp_idioms/ovl12/E61SHL.PAS", "src/OVL12.PAS#DrainBloodFromCombatant", "re/symbols.toml#ovl12:176F"]
+
+[[lesson]]
+id = "or-chain-puts-else-part-first"
+confidence = "V"
+units = ["ovl12"]
+tags = ["if", "or", "and", "layout", "codegen", "jump"]
+title = "if A or B or C then X else Y lays out Y before X; the and-chain form lays out X first"
+lesson = "The original of DrainBloodFromCombatant (ovl12:176F) tests `Mode <> 0` with jne to the non-blood code, `Who^.Flag10D = 0` with je to it, and `AttackTarget^.Flag10D <> 0` with jne to the blood code placed after it. That is what `if (Mode <> 0) or (Who^.Flag10D = 0) or (AttackTarget^.Flag10D = 0) then <non-blood> else <blood>` compiles to. The source `if (Mode = 0) and (...) and (...) then <blood> else <non-blood>` gave je to the next test and a different layout (the first diff at 179C). Write the negated or-chain when the original puts the blood code last."
+evidence = ["src/OVL12.PAS#DrainBloodFromCombatant", "re/symbols.toml#ovl12:176F"]
+
+[[lesson]]
+id = "unread-call-result-stored-to-local"
+confidence = "V"
+units = ["ovl12"]
+tags = ["function", "result", "discard", "local", "codegen", "call"]
+title = "A function result the original never reads is stored to a local byte (Turn := res12_fn_2637(Who))"
+lesson = "ovl12:176F calls res12_fn_2637(Who) and stores the Byte result at [bp-1] without ever testing it (`call; mov [bp-1], al`). A bare call is rejected by TP 6.0 (FNSTMT probe), and `if f(Who) <> 0 then ;` (ovl12:133F) has no store. The matched form is an assignment to a local Byte that is declared first (nearest bp) and never read; the local is named for what the value is, with a comment that it is not read."
+evidence = ["src/OVL12.PAS#DrainBloodFromCombatant", "tools/re/tp_idioms/ovl12/FNSTMT.PAS", "re/symbols.toml#ovl12:176F"]
+
+[[lesson]]
+id = "map-entry-in-call-segment-word"
+confidence = "V"
+units = ["ovl12"]
+tags = ["map", "entry", "lcall", "segment", "routine-boundary"]
+title = "A map entry inside a far call's segment word is not a routine (ovl12:1758 in ovl12:1730)"
+lesson = "The map listed ovl12:1758 (23 bytes, auto:far_call). Its bytes `b0 00` are the segment word of the `lcall 00B0:0052` to AddAffect at ovl12:1755 in ovl12_e60 (ovl12:1730), so the disassembly `mov al, 0; pop bp; retf 0Ah` at 1758 is a misreading of the call's tail. Once ovl12_e60 matched, `make match UNIT=ovl12 WRITE=1` removed the entry and corrected ovl12_e60 from 40 to 46 bytes. The declaration and the stub line were not removed by the tool: delete them by hand, or the unit does not compile (Undefined forward)."
+evidence = ["src/OVL12.PAS#ovl12_e60", "re/symbols.toml#ovl12:1730"]
