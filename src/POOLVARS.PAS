@@ -158,6 +158,13 @@ type
   end;
   { The handler of an affect number (the table AffectHandlers): Mode 0 applies it, 1 removes it. }
   TAffectHandler = procedure(Who: PCharacter; Affect: PAffect; Mode: Byte);
+  { The combat target picker stored in DS:6B84: the spell number, an unused byte and Done in/out
+    (ChooseSpellTargets, ovl22:0A91; ovl08 stores it and ovl22_e5 calls it). }
+  TSpellTargetPicker = procedure(Spell: Byte; Unused: Byte; var Done: Byte);
+  { A cast handler: SpellHandlers holds one parameterless far routine per spell number; it reads the
+    current spell from ds681B and applies it (ovl22_e10 fills entries 1.. from overlay stub 0096:0057
+    on; ovl22_e5 calls SpellHandlers[Spell] after the picker, whitepaper 5.22). }
+  TSpellHandler = procedure;
   { The combat state of a character (TCharacter.Combat, +$108), read and written by the combat
     units ovl08 and ovl31; only the fields they use are named. }
   PCombatant = ^TCombatant;
@@ -753,6 +760,10 @@ var
   { The spell currently being cast: ApplySpellToTargets reads its SpellTable row byte +2 to decide whether
     the spell needs a roll to hit. DS:681B. }
   ds681B: Byte;
+  { A flag the spell code shares: ApplySpellToSide sets it to 1 and ovl22_e5 and ovl13_e14 clear it;
+    ovl12 reads it too, and it is touched by ovl04, ovl05, ovl06, ovl18, ovl19 and ovl21. The meaning
+    is not settled. DS:6820. }
+  ds6820: Byte;
   { 1 while money lies in the pool: PoolMoney sets it, ShareMoney sets it when some is left; the
     Temple and the shop clear it with the pool (ovl04:0D37). }
   MoneyInPool: Byte;
@@ -819,9 +830,14 @@ var
     outside ovl22 reads it }
   CurrentItem: PItem;
   ds6E36: Pointer;                { a picture EndCombat frees through ReleasePicture (ovl08:005A) }
-  { A routine pointer: RunCombat sets @ovl13_e14 at the start (ovl08:0085) and EndCombat
-    @ChooseSpellTargets at the end (ovl08:0069); who calls it is not known yet. }
+  { The combat target picker: RunCombat sets @ovl13_e14 at the start (ovl08:0085) and EndCombat
+    @ChooseSpellTargets at the end (ovl08:0069); ovl22_e5 calls it as (spell, B, Done). }
   ds6B84: Pointer;                { routine RunCombat stores at ovl08:0085 and EndCombat at ovl08:0069 }
+  { DS:6B84 is a block ovl22_e10 fills: element 0 (DS:6B84) is the target picker and elements 1.. are
+    the per-spell cast handlers, so ovl22_e5's [Spell*4 + DS:6B84] reaches SpellHandlers[Spell].
+    SpellHandlers is 0-based over the same base so that SpellHandlers[Spell] is that operand. }
+  SpellTargetPicker: TSpellTargetPicker absolute ds6B84;
+  SpellHandlers: array[0..$38] of TSpellHandler absolute ds6B84;
   ds6814: Byte;                   { zero (or ds6815 zero) ends the combat (ovl08:009B, 095C); likely the count of one side }
   ds6815: Byte;                   { see ds6814; likely the count of the other side }
   { ds6814 and ds6815 indexed by side (ovl10:1AC7); the combat AI indexes them by the

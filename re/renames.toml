@@ -3511,3 +3511,38 @@ kind = "routine"
 why = "ovl22:0A91 picks the spell targets (ds6C91): self, one through res12_fn_2C48, or the whole party, and reports through Done; the DS:6B84 combat callback"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl22_fn_0F4F"
+new = "ApplySpellToSide"
+kind = "routine"
+why = "applies the current spell ds681B to the targets on one side, shared by the Bless and Curse cast handlers (ovl22:0F4F)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e13"
+new = "CastCureLightWounds"
+kind = "routine"
+why = "cast handler of spell 3 Cure Light Wounds: heals the first target 1d8 (SpellHandlers[3], ovl22:106B)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e14"
+new = "CastCauseLightWounds"
+kind = "routine"
+why = "cast handler of spell 4 Cause Light Wounds: deals 1d8 damage to the targets (SpellHandlers[4], ovl22:10A7)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e11"
+new = "CastBless"
+kind = "routine"
+why = "cast handler of spell 1 Bless: applies the spell to the caster side with 'is Blessed' (SpellHandlers[1], ovl22:100F)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e12"
+new = "CastCurse"
+kind = "routine"
+why = "cast handler of spell 2 Curse: applies the spell to the opposite side with 'is Cursed' (SpellHandlers[2], ovl22:1040)"
+date = "2026-10-13"
+

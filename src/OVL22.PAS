@@ -16,11 +16,11 @@ function SpellAffectDuration(Spell: Byte): Word;
 procedure ApplySpellToTargets(Spell, CasterLevel, Flag, Damage, Kind: Byte; Message: String40);
 procedure ChooseSpellTargets(Spell: Byte; Unused: Byte; var Done: Byte);
 procedure ovl22_e5(A, B, C: Byte; var Done: Byte);
-procedure ovl22_fn_0F4F;
-procedure ovl22_e11;
-procedure ovl22_e12;
-procedure ovl22_e13;
-procedure ovl22_e14;
+procedure ApplySpellToSide(Side: Byte; Message: String40);
+procedure CastBless;
+procedure CastCurse;
+procedure CastCureLightWounds;
+procedure CastCauseLightWounds;
 procedure ovl22_e15;
 procedure ovl22_e16;
 procedure ovl22_e17;
@@ -404,16 +404,30 @@ begin
 end;
 { ovl22:0C20: retf 10: 10 bytes of parameters; 38 bytes of locals }
 {@stub} procedure ovl22_e5(A, B, C: Byte; var Done: Byte); begin end;
-{ ovl22:0F4F: retf 6: 6 bytes of parameters; 44 bytes of locals }
-{@stub} procedure ovl22_fn_0F4F; begin end;
+{ ovl22:0F4F. Applies the current spell ds681B to the chosen targets (ds6C91[1..ds6C94]) but keeps
+  only those on Side: a target whose TCharacter.Side differs is dropped (set nil) and, for spell 1
+  (Bless) in combat, a target the spell's area already reaches (res12_fn_2433 nonzero) is dropped
+  too. Sets ds6820 and calls ApplySpellToTargets with Message and no damage or affect of its own.
+  Called by the cast handlers of spells 1 and 2 (Bless and Curse). }
+procedure ApplySpellToSide(Side: Byte; Message: String40);
+var
+  I: Byte;                        { the target index, 1..ds6C94 }
+begin
+  ds6820 := 1;
+  for I := 1 to ds6C94 do
+    if (ds6C91[I]^.Side <> Side) or
+       ((ds681B = 1) and (ds49F3 = 5) and (res12_fn_2433(ds6C91[I], 1) > 0)) then
+      ds6C91[I] := nil;
+  ApplySpellToTargets(ds681B, 0, 0, 0, 0, Message);
+end;
 { ovl22:100F: retf 0: 0 bytes of parameters; 12 bytes of locals }
-{@stub} procedure ovl22_e11; begin end;
+{@stub} procedure CastBless; begin end;
 { ovl22:1040: retf 0: 0 bytes of parameters; 10 bytes of locals }
-{@stub} procedure ovl22_e12; begin end;
+{@stub} procedure CastCurse; begin end;
 { ovl22:106B: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl22_e13; begin end;
+{@stub} procedure CastCureLightWounds; begin end;
 { ovl22:10A7: retf 0: 0 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl22_e14; begin end;
+{@stub} procedure CastCauseLightWounds; begin end;
 { ovl22:10E9: retf 0: 0 bytes of parameters; 12 bytes of locals }
 {@stub} procedure ovl22_e15; begin end;
 { ovl22:1123: retf 0: 0 bytes of parameters; 14 bytes of locals }

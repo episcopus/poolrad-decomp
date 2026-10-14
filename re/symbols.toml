@@ -9932,12 +9932,12 @@ id = "ovl22:0F4F"
 unit = "ovl22"
 addr = "ovl22:0F4F"
 size = 192
-name = "ovl22_fn_0F4F"
+name = "ApplySpellToSide"
 signature = ""
 c_name = "ovl22_fn_0F4F"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl22_fn_0F4F (applies the current spell ds681B to the targets on one side, shared by the Bless and Curse cast handlers (ovl22:0F4F)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -9945,12 +9945,12 @@ id = "ovl22:100F"
 unit = "ovl22"
 addr = "ovl22:100F"
 size = 49
-name = "ovl22_e11"
+name = "CastBless"
 signature = ""
 c_name = "ovl22_e11"
 level = "none"
 justification = ""
-notes = "auto:entry_11"
+notes = "renamed from ovl22_e11 (cast handler of spell 1 Bless: applies the spell to the caster side with 'is Blessed' (SpellHandlers[1], ovl22:100F)); auto:entry_11"
 evidence = ["prologue"]
 
 [[routine]]
@@ -9958,12 +9958,12 @@ id = "ovl22:1040"
 unit = "ovl22"
 addr = "ovl22:1040"
 size = 43
-name = "ovl22_e12"
+name = "CastCurse"
 signature = ""
 c_name = "ovl22_e12"
 level = "none"
 justification = ""
-notes = "auto:entry_12"
+notes = "renamed from ovl22_e12 (cast handler of spell 2 Curse: applies the spell to the opposite side with 'is Cursed' (SpellHandlers[2], ovl22:1040)); auto:entry_12"
 evidence = ["prologue"]
 
 [[routine]]
@@ -9971,12 +9971,12 @@ id = "ovl22:106B"
 unit = "ovl22"
 addr = "ovl22:106B"
 size = 60
-name = "ovl22_e13"
+name = "CastCureLightWounds"
 signature = ""
 c_name = "ovl22_e13"
 level = "none"
 justification = ""
-notes = "auto:entry_13"
+notes = "renamed from ovl22_e13 (cast handler of spell 3 Cure Light Wounds: heals the first target 1d8 (SpellHandlers[3], ovl22:106B)); auto:entry_13"
 evidence = ["prologue"]
 
 [[routine]]
@@ -9984,12 +9984,12 @@ id = "ovl22:10A7"
 unit = "ovl22"
 addr = "ovl22:10A7"
 size = 66
-name = "ovl22_e14"
+name = "CastCauseLightWounds"
 signature = ""
 c_name = "ovl22_e14"
 level = "none"
 justification = ""
-notes = "auto:entry_14"
+notes = "renamed from ovl22_e14 (cast handler of spell 4 Cause Light Wounds: deals 1d8 damage to the targets (SpellHandlers[4], ovl22:10A7)); auto:entry_14"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16828,7 +16828,7 @@ unit = "res12"
 addr = "00BA:234A"
 size = 109
 name = "res12_fn_234A"
-signature = ""
+signature = "procedure res12_fn_234A(Who: Pointer)"
 c_name = "res12_fn_234A"
 level = "none"
 justification = ""
