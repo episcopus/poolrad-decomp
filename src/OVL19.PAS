@@ -14,11 +14,7 @@ procedure ReadyItem(Item: PMenuLine);
 procedure TradeItem(Item: PMenuLine);
 procedure HalveItem(Item: PMenuLine);
 procedure JoinItem(Item: PMenuLine);
-procedure ovl19_e8(P: Pointer; var B: Byte);
-procedure ovl19_fn_1BA6;
-procedure ovl19_fn_1BD7;
-procedure ovl19_fn_1C13;
-procedure ovl19_fn_1C4D;
+procedure UseItem(Item: PMenuLine; var Done: Byte);
 procedure ovl19_fn_1CEE(Item: PMenuLine);
 procedure ovl19_fn_1F4B;
 procedure ovl19_fn_1F52(Item: PMenuLine; var Redraw: Byte);
@@ -394,11 +390,11 @@ end;
   lists the items of SelectedCharacter with ChooseFromList under the words Ready (R), Use (U), Trade (T),
   Drop (D), Halve (H), Join (J), Sell (S) and Id (I), runs the chosen action and repeats until Escape or E
   is pressed, or Done is set. Ready runs ReadyItem. Use needs a readied item ("Must be Readied" otherwise)
-  that ovl22_e6 accepts, or one with Affects[2] above 0 and Affects[3] below $80; then it runs ovl19_e8.
+  that ovl22_e6 accepts, or one with Affects[2] above 0 and Affects[3] below $80; then it runs UseItem.
   Trade and Sell ask CanGiveUpItem, then run TradeItem or ovl19_fn_1CEE. Drop asks CanGiveUpItem,
   shows "Your <item> will be gone forever" and then "Drop It?", and on Y calls res12_fn_1509 with
   SelectedCharacter and the item. Halve, Join and Id run HalveItem, JoinItem and ovl19_fn_1F52.
-  Done: the stop flag shared with ViewSelectedCharacter; ovl19_e8 may set it. The item menu is drawn
+  Done: the stop flag shared with ViewSelectedCharacter; UseItem may set it. The item menu is drawn
   only when the character carries items; the Items window (rows 1 to 22) is drawn when DrawItemWindow
   is set or ds6821 is nonzero. The view mode ds49F3 decides which words are offered: 1 (set by
   VisitTemple, ovl04:0D0F) offers Sell and Id; 2, 3 and 4 offer Use, and 5 (combat) offers Use only to
@@ -484,7 +480,7 @@ begin
             end
             else if ovl22_e6(Selected) or ((Selected^.Affects[2] > 0) and (Selected^.Affects[3] < $80)) then
             begin
-              ovl19_e8(Selected, Done);
+              UseItem(Selected, Done);
               if ds49F3 <> ViewCombat then
                 Done := 0;
               if Done = 0 then
@@ -720,16 +716,91 @@ begin
   end;
   Target^.Count := Total;
 end;
-{ ovl19:1A8A: frame not read }
-{@stub} procedure ovl19_e8(P: Pointer; var B: Byte); begin end;
-{ ovl19:1BA6: frame not read }
-{@stub} procedure ovl19_fn_1BA6; begin end;
-{ ovl19:1BD7: frame not read }
-{@stub} procedure ovl19_fn_1BD7; begin end;
-{ ovl19:1C13: frame not read }
-{@stub} procedure ovl19_fn_1C13; begin end;
-{ ovl19:1C4D: retf 8: 8 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl19_fn_1C4D; begin end;
+{ ovl19:1A8A. The Use action: Item, one of SelectedCharacter's items, is used and Done (the stop flag of the View
+  prompt and the item menu) is set to what the use ends with. Called by RunItemMenu (the U key, ovl19:0EF8) and by
+  UseMagicItem (ovl09:03E4). A scroll (ovl22_e6 true) gives its spell by ChooseSpellFromList ("on Scroll", with
+  Choice -1 it opens the Spells window) and is remembered in UsedScroll. Any other item with Affects[2] above 0 and
+  Affects[3] below AffectFlag gives the spell Affects[2] and sets ItemAffectUse. No spell (0, or none chosen) sets
+  Done to 0. Otherwise, in combat (view mode 5) for a character the computer does not fight for (Quick 0),
+  res12_fn_2B88 runs first. An affect item's use shows "uses an item" and the item's line (res12_fn_16EC,
+  res12_fn_0442, a delay). ovl22_e5 casts the spell and sets Done; in combat a spell whose SpellTable row has byte
+  +$B set takes Done from res12_fn_2637 instead. With Done set, a scroll is used up through ovl22_e7; an item that
+  is not a scroll and has Affects[1] above 0 loses one of its Count when the count is above 1, else one charge
+  (Affects[1]), and leaves the character (res12_fn_1509) with its last charge. Parameters: Item, Done. Globals:
+  SelectedCharacter, ds49F3 (the view mode, 5 for combat), SpellTable, UsedScroll, ItemAffectUse. Side effects:
+  messages, the screen (the item line is on row 22, or 23 in combat). }
+procedure UseItem(Item: PMenuLine; var Done: Byte);
+const
+  ViewCombat = 5;
+  TitleColor = 10;
+  ItemPromptRow = 23;
+  SpellListOnScroll = 2;
+  UseListMode = 1;              { ChooseSpellFromList's DisplayMode for a use; ovl22_e1 receives it, meaning not known yet }
+  LastSpell = $38;              { the last row of SpellTable; an affect value above it is shifted down by SpellShift }
+  SpellShift = $17;
+  AffectFlag = $80;             { Affects[3] at or above this marks an item with an affect (ReadyItem) }
+var
+  Spell: Byte;                  { the spell the use casts, from the scroll or Affects[2]; 0 when there is none }
+  Choice: Word;                 { -1: ChooseSpellFromList opens its window and asks for a spell }
+  Listed: Byte;                 { ChooseSpellFromList's Listed: nonzero when the list has spells }
+begin
+  Choice := $FFFF;
+  ItemAffectUse := False;
+  Spell := 0;
+  if ovl22_e6(Item) then
+  begin
+    UsedScroll := Item;
+    Spell := ChooseSpellFromList(SpellListOnScroll, UseListMode, Choice, Listed);
+  end
+  else if (Item^.Affects[2] > 0) and (Item^.Affects[3] < AffectFlag) then
+  begin
+    ItemAffectUse := True;
+    Spell := Item^.Affects[2];
+  end;
+  if Spell = 0 then
+    Done := 0
+  else
+  begin
+    if (ds49F3 = ViewCombat) and (SelectedCharacter^.Quick = 0) then
+      res12_fn_2B88;
+    if ItemAffectUse then
+    begin
+      if Spell > LastSpell then
+        Dec(Spell, SpellShift);
+      res12_fn_16EC(SelectedCharacter, 'uses an item', 10, 0);
+      if ds49F3 = ViewCombat then
+      begin
+        DrawTextAt(0, ItemPromptRow, TitleColor, 'Item:');
+        res12_fn_0442(LongInt(SelectedCharacter), Item, 5, ItemPromptRow, 0, 1);
+      end
+      else
+        res12_fn_0442(LongInt(SelectedCharacter), Item, 1, 22, 0, 1);
+      DelayByGameSpeed;
+      res12_fn_17E3;
+    end;
+    ItemAffectUse := True;
+    ovl22_e5(Spell, SelectedCharacter^.Quick, 0, Done);
+    ItemAffectUse := False;
+    if (ds49F3 = ViewCombat) and (SpellTable[Spell].PadB[$B] <> 0) then
+      Done := res12_fn_2637(SelectedCharacter);
+  end;
+  if Done <> 0 then
+  begin
+    if ovl22_e6(Item) then
+      ovl22_e7(SelectedCharacter, Item, Spell)
+    else if Item^.Affects[1] > 0 then
+    begin
+      if Item^.Count > 1 then
+        Dec(Item^.Count)
+      else
+      begin
+        Dec(Item^.Affects[1]);
+        if Item^.Affects[1] = 0 then
+          res12_fn_1509(SelectedCharacter, Item);
+      end;
+    end;
+  end;
+end;
 { ovl19:1CEE: retf 4: 4 bytes of parameters; 520 bytes of locals }
 {@stub} procedure ovl19_fn_1CEE(Item: PMenuLine); begin end;
 { ovl19:1F4B: frame not read }

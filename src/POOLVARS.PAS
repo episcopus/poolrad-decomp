@@ -689,6 +689,8 @@ var
   ds6B06: Pointer;                { the loaded BODY sprite bank (ShowHeadBodySprites, LoadHeadBodySprites) }
   ds6B0A: string[8];              { the last picture file loaded (LoadSpriteList); cleared by the loader (ovl11:043D) }
   ds6B1C: Byte;                   { set to $FF by the loader (ovl11:0442) and by FreeSpriteList }
+  UsedScroll: PMenuLine;          { the scroll the Use action (UseItem, ovl19:1AB3) takes its spell from: set when ovl22_e6
+                                    accepts the item; no other reader is decompiled yet }
   ds0C6C: array[0..$F] of Byte;   { 16-byte table LoadSpriteList passes to res07_fn_1E5C (with ds0C7C) }
   ds0C7C: array[0..$F] of Byte;   { second 16-byte table LoadSpriteList passes to res07_fn_1E5C }
   { The ten pieces a wall of the 3D view is drawn from (DrawWallPiece, DrawWallView): each piece is a
@@ -806,6 +808,9 @@ var
   ds0D06: array[0..15] of Byte;   { two 4-bit pixels of colour C (C * $11); see above }
   { Globals of the combat unit ovl08 (whitepaper 5.5). }
   ds6DBB: PCombatNode;            { a list of $13-byte records EndCombat frees (ovl08:0006); meaning unknown }
+  ItemAffectUse: Boolean;         { True while the Use action (UseItem, ovl19:1BC2..1BE2) casts a spell through ovl22_e5,
+                                    and set (ovl19:1AE7) for an item whose Affects[2] gives the spell (not a scroll);
+                                    what ovl22_e5 does with it is not known yet }
   ds6E36: Pointer;                { a picture EndCombat frees through ReleasePicture (ovl08:005A) }
   { A routine pointer: RunCombat sets @ovl13_e14 at the start (ovl08:0085) and EndCombat
     @ovl22_e4 at the end (ovl08:0069); who calls it is not known yet. }

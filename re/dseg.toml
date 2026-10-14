@@ -1048,3 +1048,13 @@ evidence = "DS:6B00 is the bank index for the HEAD sprite pointer at DS:6B01, wh
 offset = 0x6B05
 name = "BodyBankIndex"
 evidence = "DS:6B05 is the bank index for the BODY sprite pointer at DS:6B06, set to sentinel value 255 when none; StartBattle resets it after ReleasePicture at ovl10:0968"
+
+[[global]]
+offset = 0x6B80
+name = "UsedScroll"
+evidence = "ds6B80 is the far pointer ovl19:1AB3 stores the item in when ovl22_e6 accepts it (a scroll), before ChooseSpellFromList reads the scroll's spell; no other reader is decompiled yet"
+
+[[global]]
+offset = 0x6DBF
+name = "ItemAffectUse"
+evidence = "ds6DBF is set (ovl19:1AE7) for an item whose Affects[2] gives the spell, and around the ovl22_e5 cast (ovl19:1BC2..1BE2); the 'uses an item' message follows the flag (ovl19:1B1E); what ovl22_e5 does with it is not known yet"

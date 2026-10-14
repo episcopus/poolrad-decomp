@@ -8755,66 +8755,14 @@ evidence = ["prologue"]
 id = "ovl19:1A8A"
 unit = "ovl19"
 addr = "ovl19:1A8A"
-size = 284
-name = "ovl19_e8"
-signature = "procedure ovl19_e8(P: Pointer; var B: Byte)"
+size = 513
+name = "UseItem"
+signature = "procedure UseItem(Item: PMenuLine; var Done: Byte)"
 c_name = "ovl19_e8"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl19_e8 (ovl19:1A8A is the Use action: RunItemMenu's U key (ovl19:0EF8) and UseMagicItem (ovl09:03E4, the computer's magic-item step) pass it an item; a scroll (ovl22_e6 true) gives its spell by ChooseSpellFromList, an item with Affects[2] gives it directly, and the spell is cast through ovl22_e5 (matched, ovl19:1A8A)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl19:1BA6"
-unit = "ovl19"
-addr = "ovl19:1BA6"
-size = 49
-name = "ovl19_fn_1BA6"
-signature = ""
-c_name = "ovl19_fn_1BA6"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl19:1BD7"
-unit = "ovl19"
-addr = "ovl19:1BD7"
-size = 60
-name = "ovl19_fn_1BD7"
-signature = ""
-c_name = "ovl19_fn_1BD7"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl19:1C13"
-unit = "ovl19"
-addr = "ovl19:1C13"
-size = 58
-name = "ovl19_fn_1C13"
-signature = ""
-c_name = "ovl19_fn_1C13"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl19:1C4D"
-unit = "ovl19"
-addr = "ovl19:1C4D"
-size = 161
-name = "ovl19_fn_1C4D"
-signature = ""
-c_name = "ovl19_fn_1C4D"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl19:1CEE"

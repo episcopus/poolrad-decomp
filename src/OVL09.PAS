@@ -188,7 +188,7 @@ end;
   the turn through res12_fn_2637): rolls 1d7 rounds; each round walks Who^.Items for the first
   item that passes (not ovl22_e6, Affects[3] below $80, Readied, level from Affects[2] in
   1..MaxSpell adjusted down by $17 above it, and SpellAccepted in range) and remembers it as
-  Best. Afterwards a chosen Best is used through ovl19_e8 and the result is True. Early exits
+  Best. Afterwards a chosen Best is used through UseItem and the result is True. Early exits
   (Pad2 zero, both ds6814Sides zero, VarNoCasting set) return False at once. QUIRK ovl09:049F:
   RowByte (the RaceRow byte of the item kind) is computed but never read. QUIRK: the
   [bp-5..-6] and [bp-9..-12] frame bytes are never read (UnusedA, UnusedB). Globals: ds6814Sides
@@ -247,7 +247,7 @@ begin
 Done:
   if Best <> nil then
   begin
-    ovl19_e8(Best, E8Done);
+    UseItem(Best, E8Done);
     UseMagicItem := True;
   end;
 end;

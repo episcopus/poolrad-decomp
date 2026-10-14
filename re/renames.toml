@@ -3476,3 +3476,24 @@ kind = "routine"
 why = "ovl19:189D is the Join action of RunItemMenu's J key (ovl19:0EF8, line J calls it): it adds the counts of the matching stacks of SelectedCharacter (same NameNum, ItemType, Plus, Cursed, Weight, Affects[1] below 2) to Item up to 255, taking each match off the character (res12_fn_1509) and carrying the rest into the next stack"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl19_e8"
+new = "UseItem"
+kind = "routine"
+why = "ovl19:1A8A is the Use action: RunItemMenu's U key (ovl19:0EF8) and UseMagicItem (ovl09:03E4, the computer's magic-item step) pass it an item; a scroll (ovl22_e6 true) gives its spell by ChooseSpellFromList, an item with Affects[2] gives it directly, and the spell is cast through ovl22_e5 (matched, ovl19:1A8A)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ds6B80"
+new = "UsedScroll"
+kind = "global"
+why = "ds6B80 is the far pointer ovl19:1AB3 stores the item in when ovl22_e6 accepts it (a scroll), before ChooseSpellFromList reads the scroll's spell; no other reader is decompiled yet"
+date = "2026-10-13"
+
+[[rename]]
+old = "ds6DBF"
+new = "ItemAffectUse"
+kind = "global"
+why = "ds6DBF is set (ovl19:1AE7) for an item whose Affects[2] gives the spell, and around the ovl22_e5 cast (ovl19:1BC2..1BE2); the 'uses an item' message follows the flag (ovl19:1B1E); what ovl22_e5 does with it is not known yet"
+date = "2026-10-13"
+

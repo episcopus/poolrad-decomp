@@ -170,3 +170,30 @@ tags = ["data", "image", "tables", "dseg"]
 title = "Read a DS string table from the unpacked image by calibrating on a known name"
 lesson = "The image's data segment base is found from a known entry: MoneyKindNames (DS:0FFA) gives the file offset of its 'Copper' string, base = file offset - 0FFB. The same base gives RaceNames (DS:0F03), ClassNames (DS:0D38), AlignmentNames (DS:0F53) and StatusNames (DS:1047), each read with its stride. Record the name, stride and count in re/dseg.toml with the image as evidence."
 evidence = ["re/dseg.toml#MoneyKindNames", "re/dseg.toml#RaceNames", "re/dseg.toml#StatusNames"]
+
+[[lesson]]
+id = "dec-with-constant-stays-byte"
+confidence = "V"
+units = ["*"]
+tags = ["compiler", "byte", "dec", "constant", "arithmetic"]
+title = "Dec(byte, constant) stays a byte operation; x := x - constant widens through AX"
+lesson = "UseItem subtracts $17 from a spell byte above $38 with one `sub byte ptr [bp-1], 0x17` (ovl19:1B2E). `Spell := Spell - SpellShift` with the same constant compiles to `mov al,[bp-1]; xor ah,ah; sub ax,0x17; mov [bp-1],al`, four instructions and seven bytes longer, which shifted every later jump of the routine. Write Dec(x, constant) for a byte that is decremented in place. The probe reproduces both shapes."
+evidence = ["tools/re/tp_idioms/ovl19/PRB19DEC.PAS", "src/OVL19.PAS#UseItem"]
+
+[[lesson]]
+id = "constant-jump-difference-is-a-size-difference"
+confidence = "V"
+units = ["*"]
+tags = ["matcher", "debugging", "jump", "size"]
+title = "A jump that differs only in its displacement marks an earlier size difference"
+lesson = "make match reports a relative jump whose target differs as `constant ... (it does not move with the layout)`. The target is the first place where our code is longer or shorter than the original's before it: UseItem's `jmp 0x1c1a` against the original's `jmp 0x1c13` came from the 7-byte widened subtraction above, not from the jump. Find the first block whose length differs by disassembling our build (build/match/<unit>/A/match.exe, the segment named by the map) and fix that statement, not the jump."
+evidence = ["src/OVL19.PAS#UseItem", "re/symbols.toml#UseItem"]
+
+[[lesson]]
+id = "use-item-quick-not-flag10d"
+confidence = "V"
+units = ["ovl19"]
+tags = ["character", "offset", "combat", "quick"]
+title = "The combat checks in the Use action read Quick (+$10F), not Flag10D (+$10D)"
+lesson = "UseItem tests SelectedCharacter's byte at +$10F before res12_fn_2B88 (ovl19:1B11) and passes it as the second argument of ovl22_e5 (ovl19:1BCF). POOLVARS names +$10F Quick (nonzero while the computer fights for the character), so the reads are Quick and not Flag10D (+$10D, the experience eligibility). A field one byte off is still inside the same record, so check each offset against the disassembly."
+evidence = ["src/OVL19.PAS#UseItem", "src/POOLVARS.PAS#TCharacter"]
