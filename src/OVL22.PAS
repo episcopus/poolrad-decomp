@@ -1309,7 +1309,7 @@ begin
           Current^.Side := SelectedCharacter^.Side;
           Current^.Quick := 1;
           Current^.Pad74[$76] := AnimatedMark;
-          Current^.Pad6B := 0;
+          Current^.SweepAttacks := 0;
           Current^.BaseMovement := 6;
           for I := 0 to MaxSpellSlot do
             Current^.Spells[I] := 0;
