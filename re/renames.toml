@@ -3616,3 +3616,10 @@ kind = "routine"
 why = "ovl12:0BAC is an affect handler (AffectHandlers shape, Mode not read): it takes 4 off AttackRoll and SaveRoll and off Who's ResistValue (+$111) and Pad112[$112] (+$112, the byte CoughStopsCasting copies into ResistValue, ovl12:0A65); which affect runs it is not known yet"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e29"
+new = "RunDiseaseHandlers"
+kind = "routine"
+why = "ovl12:0BCF calls CallAffectHandler (ovl24:0000) twice with the same Who, Affect and Mode: first affect $2B, then $2C (AffectCauseDisease, named in ovl15:0FBC's table); both ids are in the Cure Disease list (DiseaseAffects, ovl04:031E, whitepaper 5.19), so it runs the disease handlers; which affect runs it is not known yet"
+date = "2026-10-13"
+

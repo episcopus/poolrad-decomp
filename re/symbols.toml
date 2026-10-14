@@ -3512,12 +3512,12 @@ id = "ovl12:0BCF"
 unit = "ovl12"
 addr = "ovl12:0BCF"
 size = 55
-name = "ovl12_e29"
-signature = ""
+name = "RunDiseaseHandlers"
+signature = "procedure RunDiseaseHandlers(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e29"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_29"
+notes = "renamed from ovl12_e29 (ovl12:0BCF calls CallAffectHandler (ovl24:0000) twice with the same Who, Affect and Mode: first affect $2B, then $2C (AffectCauseDisease, named in ovl15:0FBC's table); both ids are in the Cure Disease list (DiseaseAffects, ovl04:031E, whitepaper 5.19), so it runs the disease handlers; which affect runs it is not known yet); auto:entry_29"
 evidence = ["prologue"]
 
 [[routine]]

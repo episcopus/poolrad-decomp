@@ -35,7 +35,7 @@ procedure ReduceDamageByQuarter(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure CoughStopsCasting(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure CollapseAndChangeSide(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure LowerAttackSaveAndResistance(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e29;
+procedure RunDiseaseHandlers(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e30;
 procedure ovl12_e31;
 procedure ovl12_e32;
@@ -198,6 +198,8 @@ const
   SavePenalty = 4;              { what ovl12:0BAC and 0C15 take off SaveRoll }
   ResistPenalty = 4;            { what ovl12:0BAC takes off Who's ResistValue and Pad112[$112] }
   AffectImages = $1C;           { the images affect: runs on the damage hook (kind 6, ovl24:02FA); Data counts the images [I] }
+  AffectUnknown2B = $2B;        { purpose unknown; a Cure Disease affect (ovl04:031E), run by RunDiseaseHandlers }
+  AffectCauseDisease = $2C;     { named in ovl15 (ovl15:0FBC); a Cure Disease affect (ovl04:031E) }
   CoughResistLimit = 52;        { ovl12:0A65: TCharacter.Pad112[$112] above this steps down by CoughResistStep,
                                   else it is set to CoughResistReset }
   CoughResistReset = 50;
@@ -713,8 +715,15 @@ begin
   Dec(Who^.Pad112[$112], ResistPenalty);
   Dec(SaveRoll, SavePenalty);
 end;
-{ ovl12:0BCF: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e29; begin end;
+{ 0BCF. Affect handler (the AffectHandlers shape: Who, Affect and Mode, passed on unchanged). Runs the handler of
+  affect AffectUnknown2B and then the handler of AffectCauseDisease with the same Who, Affect and Mode (both through
+  CallAffectHandler, ovl24:0000). Both ids are in the list Cure Disease removes, so the routine runs the disease
+  handlers. Which affect runs it is not known yet [?]. }
+procedure RunDiseaseHandlers(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  CallAffectHandler(AffectUnknown2B, Who, Affect, Mode);
+  CallAffectHandler(AffectCauseDisease, Who, Affect, Mode);
+end;
 { ovl12:0C06: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e30; begin end;
 { ovl12:0C15: retf 10: 10 bytes of parameters; 0 bytes of locals }
