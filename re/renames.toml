@@ -3651,3 +3651,10 @@ kind = "routine"
 why = "ovl12:0C4B is an affect handler (AffectHandlers shape, Mode not read): when the affect's Data bit 4 is clear it sets it, shows 'ages' on Who (res12_fn_16EC, colour 10, the message copied to a stack temporary as in StartTrainingWithManual) and adds one year to Who's Age (TCharacter +$30, the age in years, POOLVARS); it then doubles ds681A (shl 1) every time it runs; which affect runs it is not known yet"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e34"
+new = "ClearCloud"
+kind = "routine"
+why = "ovl12:0CC3 is the cloud affect handler: it finds the cloud of Who with the kind of Affect's Data (ds6DBB list, TCombatNode), shows 'The air clears a little...', restores each arm's tile (body cells keep CloudBodyTile), unlinks and frees the cloud and repaints the others"
+date = "2026-10-13"
+

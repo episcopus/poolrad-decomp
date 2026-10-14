@@ -3577,12 +3577,12 @@ id = "ovl12:0CC3"
 unit = "ovl12"
 addr = "ovl12:0CC3"
 size = 745
-name = "ovl12_e34"
-signature = ""
+name = "ClearCloud"
+signature = "procedure ClearCloud(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e34"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_34"
+notes = "renamed from ovl12_e34 (ovl12:0CC3 is the cloud affect handler: it finds the cloud of Who with the kind of Affect's Data (ds6DBB list, TCombatNode), shows 'The air clears a little...', restores each arm's tile (body cells keep CloudBodyTile), unlinks and frees the cloud and repaints the others); auto:entry_34"
 evidence = ["prologue"]
 
 [[routine]]

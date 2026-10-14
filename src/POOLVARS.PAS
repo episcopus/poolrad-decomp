@@ -191,12 +191,17 @@ type
       and a dying character with it set is not bandaged (ovl08:1029). }
     NoBody: Byte;
   end;
-  { One $13-byte record of the list at DS:6DBB (FreeMem size, ovl08:0029); only Next is known. }
+  { One $13-byte record of the list at DS:6DBB (FreeMem size, ovl08:0029): a cloud on the combat map
+    (ovl12:0CC3). Its centre is (X, Y); arm i is one step from it in direction ds290D[i], and Tiles[i]
+    is the tile that arm covered before the cloud came. }
   PCombatNode = ^TCombatNode;
   TCombatNode = record
-    Pad0: array[0..3] of Byte;
+    Owner: PCharacter;            { +$0: the character the cloud belongs to }
     Next: PCombatNode;            { +$4 }
-    Pad8: array[8..$12] of Byte;
+    Tiles: array[1..4] of Byte;   { +$8..$B: the tile each arm covered }
+    Arms: array[1..4] of Byte;    { +$C..$F: nonzero while the arm is still in place }
+    X, Y: ShortInt;               { +$10, +$11: the centre cell }
+    Kind: Byte;                   { +$12: the high nibble of the Data of the affect that made it }
   end;
   { One 16-byte row of the spell table DS:320A (SpellTable): RecalcClassStats reads the class
     and the level (ovl23:0110, 0119); the other bytes are not known yet. }
@@ -799,7 +804,7 @@ var
   ds0D02: array[0..15] of Byte;   { four 2-bit pixels of colour C; see above }
   ds0D06: array[0..15] of Byte;   { two 4-bit pixels of colour C (C * $11); see above }
   { Globals of the combat unit ovl08 (whitepaper 5.5). }
-  ds6DBB: PCombatNode;            { a list of $13-byte records EndCombat frees (ovl08:0006); meaning unknown }
+  ds6DBB: PCombatNode;            { the list of clouds (TCombatNode): EndCombat frees them (ovl08:0006); ovl12:0CC3 }
   ds6E36: Pointer;                { a picture EndCombat frees through ReleasePicture (ovl08:005A) }
   { A routine pointer: RunCombat sets @ovl13_e14 at the start (ovl08:0085) and EndCombat
     @ovl22_e4 at the end (ovl08:0069); who calls it is not known yet. }
@@ -864,7 +869,7 @@ var
   HookAffectId: Byte;             { the affect ApplyAffect offers to the hooks; 0 afterwards: unaffected (ovl24:1672) }
   DamageAmount: Byte;             { the damage DealDamage offers to the hooks and then deals (ovl24:134E) }
   DamageKind: Byte;               { the kind of damage: 1 fire, 2 cold, 4 electricity, $10 acid, bit 3 magic (ovl24:13E4) }
-  ds681A: Byte;                   { shl 1 every time ovl12:0C4B runs; no other use known [?] }
+  ds681A: Byte;                   { shl 1 every time ovl12:0C4B runs, shr 1 in ovl12:10C1; no other use known [?] }
   { Purpose unknown: ovl12:064E clears DamageAmount when this byte is $0F; ovl12:09C0 (ImageAbsorbsHit) needs it above 0. }
   ds681B: Byte;
   ds681C: Byte;                   { the dice count of the last RollDiceCounted roll (ovl24:0E37) }
@@ -873,6 +878,7 @@ var
     nothing else reads it yet [?]. }
   ds6820: Byte;
   AttackRoll: ShortInt;           { the d20 attack or resistance roll (20 counts 100) the hooks may change (ovl24:0C63) }
+  ds6823: Byte;                   { decremented every time an attack is avoided (ovl12:0FAC); meaning unknown [?] }
   SaveKind: Byte;                 { the saving throw kind SavingThrow offers to the hooks (ovl24:0DAD) }
   { The handler of every affect number, called through CallAffectHandler (ovl24:001E); extent unknown. Entry 0
     is not a handler: SaveKind lies in it. }
@@ -897,6 +903,9 @@ var
     the next pending spell's level resets it to three times that level (ovl20:0B80..0B91). }
   RestStudyCountdowns: array[0..6] of Byte;
   ds6DD8: Word;                   { cleared when the camp opens (ovl15:1E80); meaning unknown }
+  { The direction of each cloud arm 1..4 (ovl12:0CC3): DirStepX[ds290D[Arm]] and DirStepY[ds290D[Arm]] give the
+    arm's step from the centre. The values are not read yet [?]. }
+  ds290D: array[0..4] of Byte;
   { The spell names, string[40] per spell 1..$38 at DS:2912 ('Bless' .. 'Restoration' in the image,
     the rows of SpellTable); entry 0 is the index base (ovl15:10EE), never read. }
   SpellNames: array[0..$38] of string[40];

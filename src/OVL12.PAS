@@ -40,8 +40,8 @@ procedure RaiseAttackAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure LowerAttackAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure SetAttackMissIfTurnPending(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure AgeCharacterOnce(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e34;
-procedure ovl12_fn_0FAC;
+procedure ClearCloud(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure ovl12_fn_0FAC(Who: PCharacter; Chance: Byte);
 procedure ovl12_fn_101D;
 procedure ovl12_e35;
 procedure ovl12_e36;
@@ -215,6 +215,11 @@ const
   GivenItemAffect2 = $17;       { Affects[2] of that item }
   GivenItemAffect3 = $89;       { Affects[3] of that item }
   ItemCountLimit = $10;         { no item is given once ItemCountC7 is this or more (ovl12:07E0 at 0869) [I] }
+  CloudTile = $1E;              { the cloud tile ApplyCloudTile (ovl24:0AE7) tests for; ovl12:0F14 repaints the arms with it }
+  CloudBodyTile = $1F;          { the tile a cloud arm gets where a body lies when the cloud clears (ovl12:0CC3) [?] }
+  AffectNausea = $1F;           { the affect of a failed save against the cloud: nausea (ovl24:0AE7) }
+  WeakeningDuration = $3C;      { the Duration ovl12:10DE gives the affect AffectUnknown2B }
+  AlwaysAvoids = 100;           { the Chance that avoids every roll of 1d100 (ovl12:1086) }
 
 { ovl12:0000. Cancels the hook of an affect: when AffectId is 0 or is the affect the hooks are offering
   (HookAffectId), HookAffectId and DamageAmount are cleared. HookAffectId 0 reads as "is Unaffected"
@@ -766,10 +771,64 @@ begin
   end;
   ds681A := ds681A shl 1;
 end;
-{ ovl12:0CC3: retf 10: 10 bytes of parameters; 40 bytes of locals }
-{@stub} procedure ovl12_e34; begin end;
+{ ovl12:0CC3. Affect handler of a cloud (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000).
+  The cloud is the TCombatNode of the list ds6DBB whose owner is Who and whose kind is the high nibble of Affect's
+  Data. Without one nothing happens. With one, "The air clears a little..." is shown (res12_fn_1693), and the
+  cloud goes: each arm still in place gets back the tile it covered, except that an arm where a body lies (BodyTable)
+  shows CloudBodyTile. The cloud is unlinked and freed, and every cloud left repaints its arms with CloudTile.
+  Which affect runs it is not known yet [?]. }
+procedure ClearCloud(Who: PCharacter; Affect: PAffect; Mode: Byte);
+var
+  Node: PCombatNode;            { walks the list: first to the cloud's predecessor, later over every cloud }
+  Cloud: PCombatNode;           { the cloud of Who with this kind }
+  Found: Boolean;               { a cloud was found; then, for each arm, a body stands on the arm's cell }
+  Index: Byte;                  { the cloud kind while the cloud is looked up, then the body index: one byte }
+  Arm: Byte;
+  CellX, CellY: Byte;           { the cell of an arm }
+begin
+  Index := Affect^.Data div 16;
+  Found := False;
+  Cloud := ds6DBB;
+  while (Cloud <> nil) and not Found do
+    if (Cloud^.Owner = Who) and (Cloud^.Kind = Index) then
+      Found := True
+    else
+      Cloud := Cloud^.Next;
+  if not Found then Exit;
+  res12_fn_1693('The air clears a little...');
+  for Arm := 1 to 4 do
+    if Cloud^.Arms[Arm] <> 0 then
+    begin
+      CellX := Cloud^.X + DirStepX[ds290D[Arm]];
+      CellY := Cloud^.Y + DirStepY[ds290D[Arm]];
+      Found := False;
+      for Index := 1 to BodyCount do
+        if (BodyTable[Index].Who <> nil) and (BodyTable[Index].X = CellX) and (BodyTable[Index].Y = CellY) then
+          Found := True;
+      if Found then
+        CombatMap^.Cells[CellY, CellX] := CloudBodyTile
+      else
+        CombatMap^.Cells[CellY, CellX] := Cloud^.Tiles[Arm];
+    end;
+  Node := ds6DBB;
+  if Node = Cloud then
+    ds6DBB := Node^.Next
+  else
+    while Node^.Next <> Cloud do
+      Node := Node^.Next;
+  Node^.Next := Cloud^.Next;
+  FreeMem(Cloud, SizeOf(TCombatNode));
+  Node := ds6DBB;
+  while Node <> nil do
+  begin
+    for Arm := 1 to 4 do
+      if Node^.Arms[Arm] <> 0 then
+        CombatMap^.Cells[Node^.Y + DirStepY[ds290D[Arm]], Node^.X + DirStepX[ds290D[Arm]]] := CloudTile;
+    Node := Node^.Next;
+  end;
+end;
 { ovl12:0FAC: retf 6: 6 bytes of parameters; 10 bytes of locals }
-{@stub} procedure ovl12_fn_0FAC; begin end;
+{@stub} procedure ovl12_fn_0FAC(Who: PCharacter; Chance: Byte); begin end;
 { ovl12:101D: retf 4: 4 bytes of parameters; 10 bytes of locals }
 {@stub} procedure ovl12_fn_101D; begin end;
 { ovl12:1086: retf 10: 10 bytes of parameters; 0 bytes of locals }
