@@ -1,0 +1,37 @@
+# Lessons from unit ovl12 (TrainRewards). Leads with evidence, not matcher verdicts.
+
+[[lesson]]
+id = "case-loads-selector-once"
+confidence = "V"
+units = ["*"]
+tags = ["case", "if", "or", "field", "codegen", "compare"]
+title = "A case on a field loads it once; or-ed comparisons reload it"
+lesson = "TP 6.0 loads the selector of a case statement once into AL and compares AL with each label (`mov al, byte ptr es:[di+10Ch]; cmp al, 7; je; cmp al, 6; je; cmp al, 8; jne`). The same test written as `if (F = 7) or (F = 6) or (F = 8) then Exit` compares the field in memory each time (`cmp byte ptr es:[di+10Ch], 7`), which does not match. ovl12:0058 matched only with the case form, and the match diff showed the two instructions side by side."
+evidence = ["src/OVL12.PAS#DropFromFight", "re/symbols.toml#ovl12:0058"]
+
+[[lesson]]
+id = "inc-with-step-is-memory-add"
+confidence = "V"
+units = ["*"]
+tags = ["Inc", "Dec", "add", "byte", "codegen"]
+title = "Inc(X, N) on a byte global is one memory add"
+lesson = "The matched forms are `Inc(ds6825, MoraleStep)` with MoraleStep = 5, which compiles to `add byte ptr [6825h], 5` with no load into AL, and `Inc(AttackRoll)` on a ShortInt, `inc byte ptr [6822h]` (ovl12:010D). The same Inc and Dec forms with a step match `sub byte ptr [6825h], 5` (ovl12:011D) and `add byte ptr [6822h], 2` (ovl12:013B). The plain assignment `X := X + N` was not probed; the Inc form is the one that matched."
+evidence = ["src/OVL12.PAS#RaiseAttackAndMorale", "src/OVL12.PAS#BoostAttackAgainstTarget", "re/symbols.toml#ovl12:010D"]
+
+[[lesson]]
+id = "far-pointer-global-overlaps-table"
+confidence = "V"
+units = ["*"]
+tags = ["global", "pointer", "absolute", "dseg", "AffectHandlers", "overlap"]
+title = "A far-pointer global may overlap the next global; the matcher checks its second word by name"
+lesson = "The original keeps a far pointer at DS:6826 whose segment word is DS:6828, where the AffectHandlers table starts (entry 0, which is not a handler). ovl12:013B stores the pointer with `mov [6826h], ax` and `mov [6828h], dx`. Declared as `AttackTarget: PCharacter` (dseg 6826, a name in re/dseg.toml), the second store is that variable plus 2, so the matcher maps it to DS:6828 and the routine matches without an `absolute` alias."
+evidence = ["src/POOLVARS.PAS#AttackTarget", "re/dseg.toml#AttackTarget", "src/OVL12.PAS#BoostAttackAgainstTarget"]
+
+[[lesson]]
+id = "handler-shape-ignores-mode"
+confidence = "V"
+units = ["*"]
+tags = ["AffectHandlers", "handler", "Mode", "retf", "frame"]
+title = "An affect handler with the (Who, Affect, Mode) frame and no use of Mode"
+lesson = "Three ovl12 routines take the TAffectHandler frame (retf 10: Who at +$C, Affect at +$8, Mode at +$6) and never read Mode or Affect: ovl12:010D, ovl12:011D and ovl12:013B. Declaring the parameters with the handler's full signature keeps the frame; the unused names are kept. Whether a given affect id calls them for apply, remove or both is a question for the hook lists, not for these bytes."
+evidence = ["src/OVL12.PAS#RaiseAttackAndMorale", "src/OVL12.PAS#LowerAttackAndMorale", "src/OVL12.PAS#BoostAttackAgainstTarget", "src/POOLVARS.PAS#TAffectHandler"]
