@@ -61,7 +61,7 @@ procedure ovl12_e49(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ReduceFireDamageByRoll(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure AddTrainedOutAndHeal(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure PoisonAttackTarget(Who: PCharacter; Bonus: ShortInt);
-procedure ovl12_fn_15EB;
+procedure ParalyzeAttackTarget(Who: PCharacter; Duration: Word; Unused: Byte);
 procedure ovl12_e52;
 procedure ovl12_e53;
 procedure ovl12_e54;
@@ -193,6 +193,10 @@ const
   AffectStrength2 = $26;
   AffectPoisoned = $37;         { the Poisoned affect (ovl15 names it 'Poisoned'; ovl04 calls it AffectPoison) }
   SaveKindPoison = 0;           { SavingThrow kind 0, the first of the five saves: the poison save [I] (ovl12:1545) }
+  SaveKindParalysis = 0;        { the same kind 0 for the paralysis save of ovl12:15EB [I] (the first of the five saves) }
+  AffectParalysis = $34;        { the affect of "is Paralyzed" (ovl12:15EB): a spell affect that ovl15 names by its spell [I] }
+  ParalysisData = $0C;          { the Data byte ovl12:15EB gives the paralysis affect }
+  ParalysisImmuneRace = 2;      { TCharacter.Race (+$2E) that ovl12:16BB leaves unparalysed [?] }
   AffectUnknown0F = $0F;        { purpose unknown; ovl04 removes it with the poison affect $37 (ovl04:0807) }
   AffectUnknown0FDuration = 10; { the Duration ovl12:05EB gives affect $0F }
   AffectUnknown18 = $18;        { purpose unknown: the affect SelectedCharacter must have for ds681E to stay 0 (ovl12:0918) }
@@ -1106,8 +1110,21 @@ begin
     DropFromFight(AttackTarget, StatusGone, 'is killed');
   end;
 end;
-{ ovl12:15EB: retf 8: 8 bytes of parameters; 14 bytes of locals }
-{@stub} procedure ovl12_fn_15EB; begin end;
+{ ovl12:15EB. Paralyses the character Who attacked last. AttackTarget takes Who's combat Target (TCombatant +$A) and
+  it makes the paralysis save (SavingThrow kind SaveKindParalysis, bonus 0). Unless it saves, "is Paralyzed" is shown
+  on it (res12_fn_1FEB, flag 1, as ApplyAffect shows an affect's message) and it gets the affect AffectParalysis for
+  Duration rounds with Data ParalysisData, with no handler when it is removed (NoRemoveHandler). Parameters: Who is the
+  attacker, Duration the rounds (the callers pass a roll or 63). Unused is the third byte: both callers push 0 and this
+  routine never reads it. }
+procedure ParalyzeAttackTarget(Who: PCharacter; Duration: Word; Unused: Byte);
+begin
+  AttackTarget := Who^.Combat^.Target;
+  if not SavingThrow(AttackTarget, SaveKindParalysis, 0) then
+  begin
+    res12_fn_1FEB(AttackTarget, 1, 'is Paralyzed');
+    AddAffect(AttackTarget, AffectParalysis, Duration, ParalysisData, NoRemoveHandler);
+  end;
+end;
 { ovl12:165D: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e52; begin end;
 { ovl12:1671: retf 10: 10 bytes of parameters; 0 bytes of locals }

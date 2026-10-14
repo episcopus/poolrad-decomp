@@ -3756,3 +3756,10 @@ kind = "routine"
 why = "ovl12:1545 (153 bytes, its literal pool 152F-1544): the attacked character (Who's Combat^.Target) makes a poison save (SavingThrow kind 0 with Bonus, ovl12_e52 passes 0); on failure it shows 'is Poisoned', gets AffectPoisoned for good and DropFromFight kills it (StatusGone, 'is killed')"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_fn_15EB"
+new = "ParalyzeAttackTarget"
+kind = "routine"
+why = "paralyses the character Who attacked last (AttackTarget := Who^.Combat^.Target, ovl12:15EB): SavingThrow kind 0 first, then 'is Paralyzed' (literal at ovl12:15DE) and AddAffect with affect 34h; both handlers ovl12:1699 and ovl12:16BB call it with (Who, Duration, 0)"
+date = "2026-10-13"
+
