@@ -13,7 +13,9 @@ For every branch hand-off (oldest first; escalations are never touched), in a te
   4. `make check` (the full gate, in the temporary worktree);
   5. one merge commit holding the merge, the status and the changelog row;
   6. `git merge --ff-only` of that commit into main, then the hand-off is archived and cleared, the
-     lock released and the worker's worktree removed when it is clean.
+     lock released and the worker's worktree removed when it is clean. When the fast-forward fails
+     because main moved during steps 1 to 5 (a human merge or commit), the hand-off is integrated once
+     more from the new main before it is rejected.
 
 `main` is never dirty: a failed step leaves it untouched, removes the temporary worktree, and marks
 the hand-off `integrate = rejected` with the reason and the log (`build/integrate/<key>.log`).
@@ -54,6 +56,10 @@ BRANCH_STATES = ("complete", "partial", "blocked", "review-passed", "review-fail
 
 class Rejected(Exception):
     pass
+
+
+class MainMoved(Exception):
+    """main moved (a human commit, a merge) while the hand-off was being checked: integrate it again."""
 
 
 class AlreadyMerged(Exception):
@@ -154,7 +160,10 @@ def make(target: str, cwd: Path, log, *extra: str) -> int:
     return run(["make", target, *extra], cwd, log, env={**os.environ, "POOLRAD_AGENT": AGENT})
 
 
-def integrate_one(path: Path, main_dir: Path, dry: bool, py: str) -> bool:
+RETRIES_WHEN_MAIN_MOVES = 1
+
+
+def integrate_one(path: Path, main_dir: Path, dry: bool, py: str, retries: int = RETRIES_WHEN_MAIN_MOVES) -> bool:
     key = path.stem
     f = common.fields(path.read_text())
     branch, commit, state = f.get("branch", ""), f.get("commit", ""), f.get("state", "")
@@ -165,7 +174,8 @@ def integrate_one(path: Path, main_dir: Path, dry: bool, py: str) -> bool:
     wt = logs / key
     tmp_branch = "integrate/%s" % key
     heartbeat.beat(AGENT, "integrating %s (%s, %s)" % (key, branch, state))
-    with log_path.open("w") as log:
+    moved = False
+    with log_path.open("w" if retries == RETRIES_WHEN_MAIN_MOVES else "a") as log:
         log.write("integrate %s: branch %s commit %s state %s agent %s at %s\n" % (
             key, branch, commit, state, agent, dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")))
         try:
@@ -190,7 +200,8 @@ def integrate_one(path: Path, main_dir: Path, dry: bool, py: str) -> bool:
                 shutil.rmtree(wt, ignore_errors=True)
             if common.git("branch", "--list", tmp_branch, cwd=main_dir):
                 common.git("branch", "-D", tmp_branch, cwd=main_dir)
-            common.git("worktree", "add", "-b", tmp_branch, str(wt), "main", cwd=main_dir)
+            base = common.git("rev-parse", "main", cwd=main_dir)
+            common.git("worktree", "add", "-b", tmp_branch, str(wt), base, cwd=main_dir)
             link_tools(main_dir, wt)
             r = subprocess.run(["git", "merge", "--no-ff", "--no-commit", branch], cwd=wt,
                                capture_output=True, text=True)
@@ -225,11 +236,21 @@ def integrate_one(path: Path, main_dir: Path, dry: bool, py: str) -> bool:
             if dry:
                 print("integrate: DRY %s would fast-forward main to %s" % (key, merged[:12]))
                 return True
-            common.git("merge", "--ff-only", merged, cwd=main_dir)
+            try:
+                common.git("merge", "--ff-only", merged, cwd=main_dir)
+            except RuntimeError:
+                # 2026-10-14: ovl22's integration was rejected because the human merged a tooling branch and
+                # a roster commit landed during its make check. The hand-off was fine; only main had moved.
+                if retries > 0 and common.git("rev-parse", "main", cwd=main_dir) != base:
+                    raise MainMoved()
+                raise
             print("integrate: main is now %s (%s)" % (merged[:12], msg))
             control.event("integrate", agent=AGENT, key=key, branch=branch, commit=commit, merged=merged)
         except AlreadyMerged:
             pass
+        except MainMoved:
+            moved = True
+            log.write("main moved from %s during the integration; integrating again from the new main\n" % base[:12])
         except Rejected as e:
             reject(path, str(e), log_path)
             return False
@@ -240,6 +261,9 @@ def integrate_one(path: Path, main_dir: Path, dry: bool, py: str) -> bool:
             subprocess.run(["git", "worktree", "remove", "--force", str(wt)], cwd=main_dir, capture_output=True)
             shutil.rmtree(wt, ignore_errors=True)
             subprocess.run(["git", "branch", "-D", tmp_branch], cwd=main_dir, capture_output=True)
+    if moved:
+        print("integrate: main moved while %s was being checked; integrating it again from the new main" % key)
+        return integrate_one(path, main_dir, dry, py, retries - 1)
     # The record, the lock and the worker's worktree (the usual orchestrator steps, now mechanical).
     import check
     import handoff
