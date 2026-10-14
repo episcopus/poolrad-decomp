@@ -43,7 +43,7 @@ procedure AgeCharacterOnce(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ClearCloud(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure AvoidDistantAttack(Who: PCharacter; Chance: Byte);
 function FirstSlotItem(Who: PCharacter): PItem;
-procedure ovl12_e35(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure AvoidIfSelectedItemPlusZero(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e36;
 procedure ovl12_e37;
 procedure ovl12_e38;
@@ -827,10 +827,11 @@ begin
     Node := Node^.Next;
   end;
 end;
-{ ovl12:0FAC. Called by ovl12:1086 (ovl12_e35) and two more routines (ovl12:2901, 2BC8). When SelectedCharacter has an item
-  in its first slot (SlotItems[0]) and res12_fn_255B (the distance from SelectedCharacter to Who, 1 when adjacent [I])
-  is above 1, a roll of 1d100 at or below Chance avoids the attack: "Avoids it" is shown on Who (colour 10), the damage
-  becomes 0, the attack roll MissRoll and ds6823 goes down by one. Purpose unknown: the kind of attack is not known [?]. }
+{ ovl12:0FAC. Called by ovl12:1086 (AvoidIfSelectedItemPlusZero) and two more routines (ovl12:2901, 2BC8).
+  When SelectedCharacter has an item in its first slot (SlotItems[0]) and res12_fn_255B (the distance from
+  SelectedCharacter to Who, 1 when adjacent [I]) is above 1, a roll of 1d100 at or below Chance avoids the attack:
+  "Avoids it" is shown on Who (colour 10), the damage becomes 0, the attack roll MissRoll and ds6823 goes
+  down by one. Purpose unknown: the kind of attack is not known [?]. }
 procedure AvoidDistantAttack(Who: PCharacter; Chance: Byte);
 begin
   if SelectedCharacter^.SlotItems[0] <> nil then
@@ -861,8 +862,15 @@ begin
   end;
   FirstSlotItem := PItem(Item);
 end;
-{ ovl12:1086: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e35; begin end;
+{ ovl12:1086. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). When the
+  selected character's first remembered item (FirstSlotItem) has Plus 0, Who avoids the attack in progress at once
+  (AvoidDistantAttack with AlwaysAvoids). Which affect runs it is not known yet [?]. }
+procedure AvoidIfSelectedItemPlusZero(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  if FirstSlotItem(SelectedCharacter) <> nil then
+    if FirstSlotItem(SelectedCharacter)^.Plus = 0 then
+      AvoidDistantAttack(Who, AlwaysAvoids);
+end;
 { ovl12:10C1: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e36; begin end;
 { ovl12:10DE: retf 10: 10 bytes of parameters; 16 bytes of locals }

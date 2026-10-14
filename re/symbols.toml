@@ -3616,12 +3616,12 @@ id = "ovl12:1086"
 unit = "ovl12"
 addr = "ovl12:1086"
 size = 59
-name = "ovl12_e35"
-signature = ""
+name = "AvoidIfSelectedItemPlusZero"
+signature = "procedure AvoidIfSelectedItemPlusZero(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e35"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_35"
+notes = "renamed from ovl12_e35 (ovl12:1086 is an affect handler (AffectHandlers shape, nothing read): when FirstSlotItem of SelectedCharacter has Plus 0, Who avoids the attack in progress (AvoidDistantAttack with AlwaysAvoids); which affect runs it is not known); auto:entry_35"
 evidence = ["prologue"]
 
 [[routine]]
