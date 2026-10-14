@@ -833,6 +833,10 @@ var
   ds0D06: array[0..15] of Byte;   { two 4-bit pixels of colour C (C * $11); see above }
   { Globals of the combat unit ovl08 (whitepaper 5.5). }
   ds6DBB: PCombatNode;            { a list of $13-byte records EndCombat frees (ovl08:0006); meaning unknown }
+  { Purpose unknown: 0 in the spell setup paths (ovl22:3413 clears it); when nonzero res12:26C2
+    returns a fixed level 6 and ovl22_e3's spell-power path skips the caster level (ovl22:072F,
+    ovl19:1B1E). }
+  ds6DBF: Byte;
   ds6E36: Pointer;                { a picture EndCombat frees through ReleasePicture (ovl08:005A) }
   { A routine pointer: RunCombat sets @ovl13_e14 at the start (ovl08:0085) and EndCombat
     @ovl22_e4 at the end (ovl08:0069); who calls it is not known yet. }

@@ -63,7 +63,7 @@ function CollectEnemiesInRange(Who: Pointer; Range: Byte): Byte;
 function DistanceToTarget(Who, Target: Pointer): Byte;
 function EndCombatTurn(Who: Pointer): Byte;
 function GuardTurn(Who: Pointer): Byte;
-procedure res12_fn_26C2;
+function SpellCasterLevel(Spell: Byte): Byte;
 procedure res12_fn_272A;
 procedure res12_fn_27D9;
 procedure res12_fn_290B;
@@ -1358,8 +1358,26 @@ begin
   PCharacter(Who)^.Combat^.B7 := 1;
   ShowFlashMessage('Guarding');
 end;
-{ 00BA:26C2: retf 2: 2 bytes of parameters; 2 bytes of locals }
-{@stub} procedure res12_fn_26C2; begin end;
+{ 00BA:26C2. Returns the level the selected character casts a spell at: the spell's class
+  (SpellTable[Spell].SpellClass, byte 0 of the 16-byte row; 0 is cleric, 1 magic-user) picks the
+  character's level in that class (ClassLevels: 0 cleric, 5 magic-user; whitepaper 5.6), and a spell
+  class 2 gives 12. When ds6DBF is set every class except 2 gives 6 instead. ovl22_e3 multiplies the
+  spell row's +3 byte by the result, so this is the power the spell is cast with; the res12 wrapper
+  takes the spell number. Called by the ovl22 casting routines.
+  Purpose unknown: what spell class 2 and ds6DBF are.
+  QUIRK 00BA:26FB: a spell class other than 0, 1 or 2 leaves the result unassigned (the frame byte
+  is returned).
+  Globals: SpellTable, SelectedCharacter (read), ds6DBF (read). }
+function SpellCasterLevel(Spell: Byte): Byte;
+begin
+  case SpellTable[Spell].SpellClass of
+    0: SpellCasterLevel := SelectedCharacter^.ClassLevels[0];
+    1: SpellCasterLevel := SelectedCharacter^.ClassLevels[5];
+    2: SpellCasterLevel := $0C;
+  end;
+  if (ds6DBF <> 0) and (SpellTable[Spell].SpellClass <> 2) then
+    SpellCasterLevel := 6;
+end;
 { 00BA:272A: retf 2: 2 bytes of parameters; 2 bytes of locals }
 {@stub} procedure res12_fn_272A; begin end;
 { 00BA:27D9: retf 0: 0 bytes of parameters; 4 bytes of locals }

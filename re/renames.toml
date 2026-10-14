@@ -3686,3 +3686,10 @@ kind = "routine"
 why = "00BA:2686 calls EndCombatTurn(Who), sets the combat guard byte B7 (+7) to 1 and flashes 'Guarding'; ovl08:0E45 binds it to the Guard menu key and ovl09_fn_0F4F uses it as the AI's fallback turn"
 date = "2026-10-13"
 
+[[rename]]
+old = "res12_fn_26C2"
+new = "SpellCasterLevel"
+kind = "routine"
+why = "00BA:26C2 maps a spell's SpellTable class (byte 0) to the selected character's level in that class (ClassLevels cleric 0, magic-user 5), 12 for spell class 2 and a forced 6 when ds6DBF is set; ovl22_e3 multiplies the spell row's +3 byte by it"
+date = "2026-10-13"
+

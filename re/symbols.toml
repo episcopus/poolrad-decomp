@@ -16973,12 +16973,12 @@ id = "00BA:26C2"
 unit = "res12"
 addr = "00BA:26C2"
 size = 104
-name = "res12_fn_26C2"
+name = "SpellCasterLevel"
 signature = ""
 c_name = "res12_fn_26C2"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_26C2 (00BA:26C2 maps a spell's SpellTable class (byte 0) to the selected character's level in that class (ClassLevels cleric 0, magic-user 5), 12 for spell class 2 and a forced 6 when ds6DBF is set; ovl22_e3 multiplies the spell row's +3 byte by it); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
