@@ -1,5 +1,5 @@
 unit OVL03;
-{ Encounter: the command loop of the ECL script interpreter (whitepaper 5.1). ovl03_fn_2F2D
+{ Encounter: the command loop of the ECL script interpreter (whitepaper 5.1). DispatchCommand
   dispatches each command by its opcode (SkippedOpcode) to a handler in this unit; the handlers
   decode their operands through OVL07 and run them. The other routines are still stubs. }
 {$A-,O+,F+,S-,R-,G-,I-}
@@ -56,7 +56,7 @@ procedure EngineActionCommand;
 procedure RunCamp;
 procedure ShowSpecialScreenCommand;
 procedure DrawGlyphRunCommand;
-procedure ovl03_fn_2F2D;
+procedure DispatchCommand;
 procedure ovl03_fn_3171(Address: Word);
 procedure ovl03_fn_31B4;
 procedure ovl03_e1;
@@ -1905,8 +1905,63 @@ begin
   until Done;
   Inc(GlyphRow);
 end;
-{ ovl03:2F2D: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl03_fn_2F2D; begin end;
+{ ovl03:2F2D. The ECL command dispatcher (called by ovl03:3171 for each command the script runs): it runs
+  the handler of SkippedOpcode, one case arm per opcode. Each handler decodes its own operands and moves
+  EclPC past the command. An opcode without an arm (31, and 62 and above) does nothing. }
+procedure DispatchCommand;
+begin
+  case SkippedOpcode of
+    0: EndCommand;
+    1: GotoCommand;
+    2: GosubCommand;
+    3: CompareCommand;
+    OpAdd, OpSub, OpDiv, OpMul: ArithmeticCommand;
+    8: RandomCommand;
+    9: StoreCommand;
+    10: SelectCharacterCommand;
+    11: AddEncounterGroupCommand;
+    12: ShowEncounterCommand;
+    13: ApproachEncounterCommand;
+    14: ShowCloseUpCommand;
+    15: ReadNumberCommand;
+    16: ReadStringCommand;
+    17, 18: ShowTextCommand;
+    19: ReturnCommand;
+    20: ComparePairsCommand;
+    21: ChooseFromListCommand;
+    OpIfEqual, OpIfNotEqual, OpIfLess, OpIfGreater, OpIfLessOrEqual, OpIfGreaterOrEqual: RunIfCompared;
+    28: ClearEncounterCommand;
+    29: ComputePartyValueCommand;
+    30: ScanPartyCommand;
+    32: StartEclBlock;
+    33, 55: LoadAreaGraphics;
+    34: CheckPartyClassCommand;
+    35: RollRangeCommand;
+    36: RunAreaEventCommand;
+    OpChooseAddress, 38: SelectCaseCommand;
+    39: AddLootCommand;
+    40: LoseMoneyAndItemsCommand;
+    41: ovl03_fn_1EF8;
+    42: CopyIndexedWordCommand;
+    43: AskMenuCommand;
+    44: ChooseAttitudeCommand;
+    45: EngineActionCommand;
+    46: DamagePartyCommand;
+    OpAnd, OpOr: BitwiseCommand;
+    49: RedrawAreaViewCommand;
+    50: ComparePartyItemCommand;
+    51: NewLineCommand;
+    52: PassTimeCommand;
+    53: StoreIndexedWordCommand;
+    54: AddComputerMemberCommand;
+    56: ShowSpecialScreenCommand;
+    57: ChoosePartyMemberCommand;
+    58: PauseCommand;
+    59: FindMemorizedSpellCommand;
+    60: DrawGlyphRunCommand;
+    61: ClearPictureWindowCommand;
+  end;
+end;
 { ovl03:3171: retf 2: 2 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl03_fn_3171(Address: Word); begin end;
 { ovl03:31B4: retf 0: 0 bytes of parameters; 6 bytes of locals }

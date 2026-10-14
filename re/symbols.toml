@@ -797,12 +797,12 @@ id = "ovl03:2F2D"
 unit = "ovl03"
 addr = "ovl03:2F2D"
 size = 580
-name = "ovl03_fn_2F2D"
+name = "DispatchCommand"
 signature = ""
 c_name = "ovl03_fn_2F2D"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_2F2D (the ECL command dispatcher: case on SkippedOpcode runs one handler per opcode; called by ovl03_fn_3171 (ovl03:3171) for each command; packet ovl03_2F2D, proven by make match); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
