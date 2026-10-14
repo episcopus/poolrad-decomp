@@ -3213,12 +3213,12 @@ id = "ovl12:01C3"
 unit = "ovl12"
 addr = "ovl12:01C3"
 size = 112
-name = "ovl12_e6"
-signature = ""
+name = "BoostFireAttackByTarget"
+signature = "procedure BoostFireAttackByTarget(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e6"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_6"
+notes = "renamed from ovl12_e6 (ovl12:01C3 is an affect handler (AffectHandlers shape, entry 6 of ovl12): it copies Who's combat Target into AttackTarget like BoostAttackAgainstTarget (ovl12:013B), adds a bonus of 1, 2 or 3 (by the target's byte +$9F: 10, 9 or 12, 4) to AttackRoll and DamageAmount and sets DamageKind to 9 (fire and the magic bit, ovl24:13E4, whose text says 'from Fire'); the affect that runs it is not known yet); auto:entry_6"
 evidence = ["prologue"]
 
 [[routine]]

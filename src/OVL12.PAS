@@ -12,7 +12,7 @@ procedure RaiseAttackAndMorale(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure LowerAttackAndMorale(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure BoostAttackAgainstTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure StartTrainingWithManual(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e6;
+procedure BoostFireAttackByTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e7;
 procedure ovl12_e8;
 procedure ovl12_e9;
@@ -276,8 +276,27 @@ begin
   res12_fn_16EC(Who, 'starts to train', $A, 1);
   AddAffect(Who, AffectTrainingManual, TrainingManualDuration, TrainingManualData, RunsHandlerOnRemove);
 end;
-{ ovl12:01C3: retf 10: 10 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl12_e6; begin end;
+{ ovl12:01C3. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000).
+  Like BoostAttackAgainstTarget (ovl12:013B) it copies Who's combat Target into AttackTarget, then gives
+  a bonus to the attack roll and to the damage from the target's byte +$9F (Pad9E[$9F] of TCharacter, not
+  named yet): 10 gives 1, 9 or 12 gives 2, 4 gives 3, any other value gives 0. The damage kind becomes 9
+  (fire, plus the magic bit 8, ovl24:13E4). Which affect runs it is not known yet [?]. }
+procedure BoostFireAttackByTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
+var
+  Bonus: Byte;
+begin
+  AttackTarget := Who^.Combat^.Target;
+  case AttackTarget^.Pad9E[$9F] of
+    10: Bonus := 1;
+    9, 12: Bonus := 2;
+    4: Bonus := 3;
+  else
+    Bonus := 0;
+  end;
+  Inc(AttackRoll, Bonus);
+  Inc(DamageAmount, Bonus);
+  DamageKind := 9;
+end;
 { ovl12:0233: retf 10: 10 bytes of parameters; 14 bytes of locals }
 {@stub} procedure ovl12_e7; begin end;
 { ovl12:0377: retf 10: 10 bytes of parameters; 0 bytes of locals }
