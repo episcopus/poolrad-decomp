@@ -334,8 +334,10 @@ not make another agent rediscover an already accepted result. Playbook 80 advice
 The human admits one expert with a selected powerful model and an external provider/harness spend
 cap. The orchestrator's deterministic scan can queue advice after three distinct recorded failed
 codegen revisions or two consecutive failed review rounds. It never launches an agent. Defaults:
-one active case, five cases/run, one consultation/problem/input revision, a 15-minute lease, USD 10
-case allocation and USD 50 run allocation. Cases contain bounded frozen source, failure history and
+one active case (at most two waiting), 50 cases/run, one consultation/problem/input revision, a
+15-minute lease, USD 10 case allocation and USD 500 run allocation (raised tenfold by the human on
+2026-10-13). A routine already at L2 on main or in its unit's worktree is never a codegen case; a
+queued case whose routine reaches L2 is retired as obsolete and does not count against the run. Cases contain bounded frozen source, failure history and
 retrieved prior learning. The original worker still proves the result; expert advice writes no level,
 review pass, source change or human approval. Known human-held rule decisions are not paid retry loops.
 
