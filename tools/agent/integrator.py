@@ -335,6 +335,15 @@ class Loop:
         dirty = worker.salvage(wt, self.logs / ("%s-resolve.patch" % key))
         markers = git_ok(["grep", "-q", "-E", r"^(<<<<<<<|>>>>>>>) ", "HEAD", "--"], wt)
         merged = git_ok(["merge-base", "--is-ancestor", "main", "HEAD"], wt)
+        if result.provider_error:                          # not a judgement on the merge: no attempt counted
+            self.abandon(wt, start, key, log)
+            data = load_state()
+            if key in data:
+                data[key]["attempts"] = max(0, int(data[key].get("attempts", 1)) - 1)
+                save_state(data)
+            self.say("idle: the model provider refused the resolver session for %s (%s); no attempt counted" % (
+                key, result.provider_error))
+            return ""
         if result.timed_out or unfinished or dirty or markers or not merged or worker.head_of(wt) == start:
             self.abandon(wt, start, key, log)
             return ""
@@ -342,6 +351,8 @@ class Loop:
 
     def abandon(self, wt: Path, start: str, key: str, log: Path) -> None:
         git_ok(["merge", "--abort"], wt)
+        if subprocess.run(["git", "ls-files", "-u"], cwd=wt, capture_output=True, text=True).stdout.strip():
+            git_ok(["reset", "-q", "--hard", "HEAD"], wt)
         n = worker.reset_batch(wt, start, self.logs / ("%s-resolve-commits" % key))
         with log.open("a") as fh:
             fh.write("$ abandoned: %d commit(s) saved and %s reset to %s\n" % (n, wt, start[:12]))

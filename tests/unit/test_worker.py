@@ -613,3 +613,39 @@ def test_a_session_is_interrupted_at_its_cost_cap(tmp_path, monkeypatch):
     r = worker.run_session("echo {session_id}; sleep 30", prompt, wt, tmp_path / "s.log", timeout_s=20, cost_cap=5.0)
     assert r.capped and not r.timed_out and interrupted == [r.session_id] and r.seconds < 10
     assert "cost cap of USD 5.00 reached" in (tmp_path / "s.log").read_text()
+
+
+def test_a_session_the_provider_refused_counts_no_attempt(repo, monkeypatch, tmp_path):
+    """2026-10-14: OpenRouter credits ran out, `opencode run` still exited 0, and three escalations were
+    counted as failed on routines no session had really worked through."""
+    stuck_registry(repo)
+    monkeypatch.setattr(worker, "run_make", FakeMake())
+    monkeypatch.setattr(worker, "PROVIDER_BACKOFF_SECONDS", 0)
+    refused = session_script(tmp_path, "echo 'Error: This request would exceed your available credits given your "
+                                       "current in-flight requests.'")
+    cfg = worker.Config(agent="dec-1", role="decompiler", unit="ovl00", batch=1, session_cmd=refused, timeout_minutes=1,
+                        max_attempts=1, max_sessions=2, idle_seconds=0, sleep=lambda s: None, tier=2)
+    assert worker.Worker(cfg).run() == 0
+    fr = worker.load_frontier("ovl00")
+    assert not fr.get("ovl00:0000", {}).get("escalations") and not fr["ovl00:0040"].get("escalations")
+    beat = common.fields((repo / ".git/poolrad-heartbeats/dec-1.txt").read_text())
+    assert beat["state"] == "stopped"
+
+
+def test_salvage_cleans_a_worktree_left_inside_a_merge(tmp_path):
+    main = tmp_path / "r"
+    main.mkdir()
+    git_at(main, "init", "-q", "-b", "main")
+    (main / "f.txt").write_text("base\n")
+    commit(main)
+    git_at(main, "checkout", "-qb", "side")
+    (main / "f.txt").write_text("side\n")
+    side = commit(main)
+    git_at(main, "checkout", "-q", "main")
+    (main / "f.txt").write_text("main\n")
+    head = commit(main)
+    subprocess.run(["git", "merge", "side"], cwd=main, capture_output=True)       # leaves a conflict
+    assert git_at(main, "ls-files", "-u")
+    assert worker.salvage(main, tmp_path / "x.patch")
+    assert not git_at(main, "status", "--porcelain") and git_at(main, "rev-parse", "HEAD") == head
+    assert "<<<<<<<" in (tmp_path / "x.patch").read_text() and side

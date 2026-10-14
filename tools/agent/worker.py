@@ -147,6 +147,12 @@ STUB_RE = re.compile(r"^\s*\{@stub\}\s*(?:procedure|function)\s+([A-Za-z_][A-Za-
 STUB_INIT = "{@stub-init}"
 HERE = Path(__file__).resolve().parent
 COST_POLL_SECONDS = 30               # how often a capped session's spend is read from OpenCode
+PROVIDER_BACKOFF_SECONDS = 900       # wait after the model provider refused a session
+# The provider refused the session, whatever the model could have done: no attempt is counted. OpenCode's
+# `run` exits 0 even then (2026-10-14: OpenRouter credits ran out and three escalations were counted as
+# failed attempts on routines no session had really worked through).
+PROVIDER_ERROR = re.compile(r"exceed your available credits|insufficient credits|insufficient_quota|"
+                            r"credit balance is too low|payment required|Model unavailable", re.I)
 STUB_HEADER = r"^\s*\{@stub\}\s*(?:procedure|function)\s+%s\b[^\n]*\n"
 DECL_HEADER = r"^[ \t]*(?:procedure|function)\s+%s\b[^\n]*;[ \t]*\n"
 
@@ -399,6 +405,11 @@ def salvage(wt: Path, patch: Path) -> bool:
             parts.append("# untracked: %s\n%s\n" % (rel, body))
     patch.parent.mkdir(parents=True, exist_ok=True)
     patch.write_text("".join(parts))
+    if subprocess.run(["git", "ls-files", "-u"], cwd=wt, capture_output=True, text=True).stdout.strip():
+        # A session that stopped inside a merge: `checkout -- .` refuses unmerged paths (2026-10-14: the
+        # integration loop crashed on such a worktree and then skipped it as "has uncommitted changes").
+        subprocess.run(["git", "merge", "--abort"], cwd=wt, capture_output=True)
+        git_out(wt, "reset", "-q", "--hard", "HEAD")
     git_out(wt, "checkout", "--", ".")
     git_out(wt, "clean", "-fd", "--", "src", "re", "docs", "work", "tools/re/tp_idioms")
     return True
@@ -434,6 +445,7 @@ class SessionResult:
     seconds: float
     session_id: str = ""
     capped: bool = False                            # interrupted at the cost cap
+    provider_error: str = ""                        # the provider refused the session (PROVIDER_ERROR)
 
 
 def new_session_id() -> str:
@@ -483,6 +495,7 @@ def run_session(cmd_template: str, prompt_file: Path, wt: Path, log: Path, timeo
                               session_id=session_id)
     log.parent.mkdir(parents=True, exist_ok=True)
     start = time.monotonic()
+    offset = log.stat().st_size if log.exists() else 0
     with log.open("a") as f:
         f.write("\n$ %s   (%s)\n" % (cmd, dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")))
         f.flush()
@@ -518,7 +531,11 @@ def run_session(cmd_template: str, prompt_file: Path, wt: Path, log: Path, timeo
         f.write("$ exit %d%s after %.0f s\n" % (rc, " (timed out, killed)" if timed_out else
                                                 " (cost cap of USD %.2f reached, killed)" % cost_cap if capped else "",
                                                 time.monotonic() - start))
-    return SessionResult(rc, timed_out, time.monotonic() - start, session_id, capped)
+    with log.open("rb") as f:
+        f.seek(offset)
+        refused = PROVIDER_ERROR.search(f.read().decode("utf-8", "replace"))
+    return SessionResult(rc, timed_out, time.monotonic() - start, session_id, capped,
+                         refused.group(0) if refused else "")
 
 
 class Pulse:
@@ -849,10 +866,13 @@ class Worker:
                                  self.cfg.timeout_minutes * 60, self.model_flag(), "%s %s" % (self.agent, tag),
                                  self.cfg.cost_cap)
         self.say("%s: session ended (exit %d%s); verifying" % (
-            note, result.returncode, ", timed out" if result.timed_out else ""))
-        self.verify_fix(run, findings, start, log, tag)
+            note, result.returncode, ", timed out" if result.timed_out else
+            ", provider refused it: %s" % result.provider_error if result.provider_error else ""))
+        self.verify_fix(run, findings, start, log, tag, count_attempts=not result.provider_error)
+        self.provider_backoff(result)
 
-    def verify_fix(self, run: UnitRun, findings: list[str], start: str, log: Path, tag: str) -> None:
+    def verify_fix(self, run: UnitRun, findings: list[str], start: str, log: Path, tag: str,
+                   count_attempts: bool = True) -> None:
         if salvage(run.wt, self.logs / (tag + ".patch")):
             print("worker: uncommitted changes saved to %s and discarded" % (self.logs / (tag + ".patch")))
         with Pulse(self.agent, "unit %s: verifying the review fixes" % run.unit):
@@ -868,6 +888,8 @@ class Worker:
         run.fix_open = len(left)
         if not left:
             clear_fix(run.unit)
+            return
+        if not count_attempts:
             return
         attempts = bump_frontier(run.unit, fix_key(run.unit), self.agent, str(log))
         if attempts >= self.cfg.max_attempts:
@@ -896,10 +918,18 @@ class Worker:
                                  self.cfg.timeout_minutes * 60, self.model_flag(), "%s %s" % (self.agent, tag),
                                  self.cfg.cost_cap)
         self.say("%s: session ended (exit %d%s); verifying" % (
-            note, result.returncode, ", timed out" if result.timed_out else ""))
-        self.verify_batch(run, batch, start, log)
+            note, result.returncode, ", timed out" if result.timed_out else
+            ", provider refused it: %s" % result.provider_error if result.provider_error else ""))
+        self.verify_batch(run, batch, start, log, count_attempts=not result.provider_error)
+        self.provider_backoff(result)
 
-    def verify_batch(self, run: UnitRun, batch: list[Item], start: str, log: Path) -> None:
+    def provider_backoff(self, result: SessionResult) -> None:
+        if result.provider_error:
+            self.say("idle: the model provider refused the session (%s); no attempt counted, retrying in %d s" % (
+                result.provider_error, PROVIDER_BACKOFF_SECONDS))
+            self.wait(PROVIDER_BACKOFF_SECONDS)
+
+    def verify_batch(self, run: UnitRun, batch: list[Item], start: str, log: Path, count_attempts: bool = True) -> None:
         tag = "%s-%s%d" % (run.unit, "esc" if self.cfg.tier == 2 else "batch", run.batch)
         if salvage(run.wt, self.logs / (tag + ".patch")):
             print("worker: uncommitted changes saved to %s and discarded" % (self.logs / (tag + ".patch")))
@@ -915,6 +945,10 @@ class Worker:
                     git_out(run.wt, "add", "re/symbols.toml")
                     git_out(run.wt, "commit", "-q", "-m", "re: record L2 (worker)", "--trailer", "Agent: %s" % self.agent)
         for item, outcome in self.outcomes(run, batch):
+            if not count_attempts and outcome != "matched":
+                print("worker: %s %s not matched; the provider refused the session, so no attempt is counted" % (
+                    item.id, item.name))
+                continue
             if self.cfg.tier == 2 and outcome != "matched":
                 n = bump_escalation(run.unit, item.id, self.agent, str(log), self.cfg.max_attempts)
                 run.escalated += 1
