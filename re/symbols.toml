@@ -5566,40 +5566,14 @@ evidence = ["prologue"]
 id = "ovl13:1BF8"
 unit = "ovl13"
 addr = "ovl13:1BF8"
-size = 27
-name = "ovl13_e13"
-signature = "function ovl13_e13(P: Pointer; var B: Byte): Boolean"
+size = 542
+name = "FindNearbyTarget"
+signature = "function FindNearbyTarget(Who: PCharacter; var Selected): Boolean"
 c_name = "ovl13_e13"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_e13 (ovl13:1BF8 scans the nine cells around Who and hands over the most-wounded same-side combatant (or a body on a body tile whose owner is not yet dead); called for spell 3 by ovl09 SpellAccepted and by ovl13_fn_1E16); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl13:1C13"
-unit = "ovl13"
-addr = "ovl13:1C13"
-size = 245
-name = "ovl13_fn_1C13"
-signature = ""
-c_name = "ovl13_fn_1C13"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:1D08"
-unit = "ovl13"
-addr = "ovl13:1D08"
-size = 270
-name = "ovl13_fn_1D08"
-signature = ""
-c_name = "ovl13_fn_1D08"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl13:1E16"

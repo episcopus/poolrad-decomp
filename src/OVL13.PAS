@@ -28,10 +28,7 @@ procedure ResolveCombatantAttacks(Attacker, Target: PCharacter; AttackKind: Byte
 procedure NoteAttackBearing(Attacker, Target: PCharacter);
 procedure PerformAttack(Who, Target: PCharacter; AttackKind: Byte; AimedItem: Pointer; var Done: Byte);
 procedure AddRangePenalty(Attacker: PCharacter; Target: PCharacter; var NeededRoll: Byte);
-procedure ovl13_fn_1BD7;
-function ovl13_e13(P: Pointer; var B: Byte): Boolean;
-procedure ovl13_fn_1C13;
-procedure ovl13_fn_1D08;
+function FindNearbyTarget(Who: PCharacter; var Selected): Boolean;
 procedure ovl13_fn_1E16;
 procedure ovl13_fn_202B;
 procedure ovl13_fn_20A9;
@@ -1032,14 +1029,75 @@ begin
     NeededRoll := NeededRoll + 3;
   end;
 end;
-{ ovl13:1BD7: frame not read }
-{@stub} procedure ovl13_fn_1BD7; begin end;
-{ ovl13:1BF8: frame not read }
-{@stub} function ovl13_e13(P: Pointer; var B: Byte): Boolean; begin end;
-{ ovl13:1C13: frame not read }
-{@stub} procedure ovl13_fn_1C13; begin end;
-{ ovl13:1D08: retf 8: 8 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl13_fn_1D08; begin end;
+{ ovl13:1BF8. Picks the combatant SelectTurnUndeadTarget's scan and the spell-3 area test work on, the
+  enemy standing next to Who: it walks the nine directions Dir 0..8 from Who (Dir 8 is Who's own
+  cell, DirStepX[8]/DirStepY[8] are 0,0), maps each with GetMapCell, and for an occupied cell keeps
+  the same-side combatant whose current hit points are below its maximum when it is the most wounded
+  so far (BestHp) or, for Who's own cell (the occupant is Who), when it is below half its maximum;
+  a body cell (tile $1F) with no occupant makes it walk BodyTable for a body standing on the scanned
+  cell whose owner is not yet dead (Status not in StatusKilled, 6..8). It then hands over the
+  chosen combatant: SelectedWho when an occupant was picked (BestHp below 8) or no body was found,
+  else the body's owner, and returns whether one was stored. Writes the 4-byte pointer through the
+  untyped var Selected, so a caller passing a 1-byte Done (ovl09 SpellAccepted) has the rest
+  clobbered. QUIRK ovl13:1DBB: BodyTable[FoundIndex] is read with FoundIndex 0 when nothing was
+  chosen, so the else reads the 7 bytes before BodyTable. Globals: CombatantRecord, BodyTable,
+  BodyCount. }
+function FindNearbyTarget(Who: PCharacter; var Selected): Boolean;
+const
+  { The map tile a body is drawn over; a cell with it and no combatant makes the scan look for a
+    body (ovl13:1D24). }
+  BodyTile = $1F;
+  { Below this picked hit point value the scan hands over an occupant instead of a body
+    (ovl13:1DBB). }
+  ChosenHpLimit = 8;
+var
+  SelectedWho: PCharacter;       { the most-wounded same-side occupant found }
+  CellX: ShortInt;               { the scanned cell column }
+  CellY: ShortInt;               { the scanned cell row }
+  FoundIndex: Byte;              { the BodyTable entry on the scanned cell, 0 for none }
+  BestHp: Byte;                  { the picked combatant's hit points, $FF before the first pick }
+  Dir: Byte;                     { the direction scanned, 0..8 (8 is no step, Who's own cell) }
+  BodyIndex: Byte;               { walk of BodyTable }
+  Occupant: Byte;                { the combatant GetMapCell finds on the scanned cell }
+  Tile: Byte;                    { the tile GetMapCell finds on the scanned cell }
+begin
+  SelectedWho := nil;
+  FoundIndex := 0;
+  BestHp := $FF;
+  for Dir := 0 to 8 do
+  begin
+    CellX := CombatantX(Who) + DirStepX[Dir];
+    CellY := CombatantY(Who) + DirStepY[Dir];
+    GetMapCell(CellX, CellY, Occupant, Tile);
+    if Occupant > 0 then
+    begin
+      PCharacter(Selected) := CombatantRecord[Occupant];
+      if (PCharacter(Selected)^.Side = Who^.Side) and
+         (PCharacter(Selected)^.Flag11B < PCharacter(Selected)^.HpMax) then
+        if (PCharacter(Selected)^.Flag11B < BestHp) or
+           ((PCharacter(Selected) = Who) and
+            (PCharacter(Selected)^.Flag11B < PCharacter(Selected)^.HpMax shr 1)) then
+        begin
+          SelectedWho := PCharacter(Selected);
+          BestHp := PCharacter(Selected)^.Flag11B;
+        end;
+    end
+    else if Tile = BodyTile then
+      for BodyIndex := 1 to BodyCount do
+        if BodyTable[BodyIndex].Who <> nil then
+          if not (BodyTable[BodyIndex].Who^.Status in StatusKilled) then
+            if (BodyTable[BodyIndex].X = CellX) and (BodyTable[BodyIndex].Y = CellY) then
+              FoundIndex := BodyIndex;
+  end;
+  if (BestHp < ChosenHpLimit) or (FoundIndex = 0) then
+    PCharacter(Selected) := SelectedWho
+  else
+    PCharacter(Selected) := BodyTable[FoundIndex].Who;
+  if PCharacter(Selected) <> nil then
+    FindNearbyTarget := True
+  else
+    FindNearbyTarget := False;
+end;
 { ovl13:1E16: frame not read }
 {@stub} procedure ovl13_fn_1E16; begin end;
 { ovl13:202B: frame not read }

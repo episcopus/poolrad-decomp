@@ -4134,3 +4134,10 @@ kind = "routine"
 why = "ovl13:1B1E takes the distance to Target and the readied weapon's range band ItemTable[ItemType].Range div 3 and adds 2 then 3 to the to-hit value NeededRoll for each band the target is beyond; called by ResolveCombatantAttacks"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl13_e13"
+new = "FindNearbyTarget"
+kind = "routine"
+why = "ovl13:1BF8 scans the nine cells around Who and hands over the most-wounded same-side combatant (or a body on a body tile whose owner is not yet dead); called for spell 3 by ovl09 SpellAccepted and by ovl13_fn_1E16"
+date = "2026-10-13"
+

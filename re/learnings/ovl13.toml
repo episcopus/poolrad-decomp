@@ -107,3 +107,21 @@ tags = ["for", "downto", "while", "loop", "codegen"]
 title = "A `for i := N downto 1 do while cond do body` compiles to the for's guard, the while's headed test and the for's test-then-dec"
 lesson = "ovl13:1406 walks the attack slots with `for SlotIndex := SlotCount downto 1 do while (AttackSlots[SlotIndex] > 0) and (TargetDown = 0) do begin ... end;`. TP 6.0 emits the for-loop's initial guard (`cmp SlotCount,1; jae`), assigns the counter, jumps to the while's headed test (167C), the while's body ends with a jump back to its test, and when the test fails control falls to the for-loop's `cmp SlotIndex,1; je done` and only then `dec SlotIndex`. So the decrement sits after the exit test, not before it."
 evidence = ["src/OVL13.PAS#ResolveCombatantAttacks", "re/symbols.toml#ovl13:1406"]
+
+[[lesson]]
+id = "map-artifact-stub-shifts-the-next-routines-pool"
+confidence = "V"
+units = ["*"]
+tags = ["matcher", "map", "stub", "literal", "pool", "layout", "boundary"]
+title = "A leftover {@stub} for a map entry the compiler merged into its neighbour is still compiled and shifts the next routine by its 5-byte body"
+lesson = "Resolving ovl13:1BD7/1C13/1D08 as entries inside their neighbours removed them from re/symbols.toml, but the `{@stub}` lines stayed in src/OVL13.PAS. The matcher still compiles them (`push bp; mov bp,sp; pop bp; retf`, 5 bytes), so they sit between AddRangePenalty and e13 and push e13 5 bytes later; the next routine's literal-pool alignment then shifts and the diff reports a bogus jump-target constant (`jmp 0x1dda` against `0x1db2`). Deleting the stub lines (and their interface declarations) restores the layout. A diff at a forward jump that is a few bytes off, after a boundary the map corrected, is this: an unmatched `{@stub}` is still code, not padding."
+evidence = ["src/OVL13.PAS#FindNearbyTarget", "re/symbols.toml#ovl13:1BF8", "re/symbols.toml#ovl13:1BD7"]
+
+[[lesson]]
+id = "negated-set-membership-and-shortint-field-compares"
+confidence = "V"
+units = ["*"]
+tags = ["set", "in", "System_SetIn", "ShortInt", "compare", "codegen"]
+title = "`not (x in S)` inverts the SetIn jump (`jne` where `x in S` gives `je`), and a ShortInt record field compared with a Byte local widens to a 16-bit compare"
+lesson = "ovl13:1BF8 (FindNearbyTarget) tests `BodyTable[i].Who^.Status in StatusKilled` and the original is `call System_SetIn; jne skip`, while the probe `if St in [6,7,8] then` gives `je skip` (SetIn clears ZF when the element is in the set). So the source is `if not (Status in StatusKilled) then` (a body whose owner is not yet dead). The same routine compares `BodyTable[i].X` (TBody.X: ShortInt) with the scanned cell column: with that local a Byte the compare widens (`mov al,[Byte]; xor ah,ah; mov cx,ax; ... cwde; cmp ax,cx`), but declaring it ShortInt gives the original 8-bit `mov al,[di+field]; cmp al,[bp-k]`. Probe tools/re/tp_idioms/ovl13/PRB_E13.PAS."
+evidence = ["tools/re/tp_idioms/ovl13/PRB_E13.PAS", "src/OVL13.PAS#FindNearbyTarget", "re/symbols.toml#ovl13:1BF8"]

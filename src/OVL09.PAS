@@ -147,7 +147,7 @@ end;
 { ovl09:02EB (SpellAccepted). Decides whether the AI accepts spell Spell cast at Range by Who
   (UseMagicItem 03E4 and CastMemorizedSpell 0545 keep what it accepts). Refuses at once when the
   spell row's +$D byte is below Range. A spell other than 3 whose +$E byte is 0, and spell 3 when
-  ovl13_e13(Who, Done) agrees, are accepted at once. Otherwise CollectEnemiesInRange collects Who's
+  FindNearbyTarget(Who, Done) agrees, are accepted at once. Otherwise CollectEnemiesInRange collects Who's
   enemies the area pattern of ovl22_e3(Spell) reaches (ds6DE4, count Tries): a zero count refuses,
   a zero +$F byte accepts; else each collected enemy is asked through the nested
   DifferentSideInArea, a Yes refuses the spell and a No (or no enemy at all) accepts it.
@@ -181,7 +181,7 @@ begin
   if SpellTable[Spell].PadB[$D] < Range then
     Exit;
   if ((Spell <> 3) and (SpellTable[Spell].PadB[$E] = 0)) or
-     ((Spell = 3) and ovl13_e13(Who, Done)) then
+     ((Spell = 3) and FindNearbyTarget(Who, Done)) then
   begin
     SpellAccepted := True;
     Exit;
