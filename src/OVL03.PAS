@@ -53,11 +53,11 @@ procedure ChoosePartyMemberCommand;
 procedure AddComputerMemberCommand;
 procedure FindMemorizedSpellCommand;
 procedure EngineActionCommand;
-procedure ovl03_fn_2DD3;
+procedure RunCamp;
 procedure ovl03_fn_2E10;
 procedure ovl03_fn_2E7D;
 procedure ovl03_fn_2F2D;
-procedure ovl03_fn_3171;
+procedure ovl03_fn_3171(Address: Word);
 procedure ovl03_fn_31B4;
 procedure ovl03_e1;
 procedure ovl03_fn_3379;
@@ -1799,8 +1799,27 @@ begin
         ds6AB0 := WallIdAt(PartyMapColumn, PartyMapRow, PartyFacing);
   end;
 end;
-{ ovl03:2DD3: retf 0: 0 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl03_fn_2DD3; begin end;
+{ ovl03:2DD3. Runs the camp (MakeCamp, OVL15) between two script entries: the script machine runs the
+  third entry address, ds49E7, before the camp (through ovl03:3171, not decompiled yet). When the camp
+  leaves EndCamp set, the area view is redrawn (res12_fn_27D9) and the fourth entry address, ds49E9, runs.
+  Callers: ECL command 56 with operand 9 (ovl03:2E10) and ovl03:3379. Then the area view is drawn again
+  (ShowAreaView) and ds557D, the gate of the heap error retry, is cleared. }
+procedure RunCamp;
+var
+  EndCamp: Byte;                { the camp sets it when it is closed }
+  Unused: Byte;                 { QUIRK ovl03:2DD3: a byte of the frame nothing uses }
+begin
+  EndCamp := 0;
+  ovl03_fn_3171(ds49E7);
+  MakeCamp(EndCamp);
+  if EndCamp <> 0 then
+  begin
+    res12_fn_27D9;
+    ovl03_fn_3171(ds49E9);
+  end;
+  ShowAreaView;
+  ds557D := False;
+end;
 { ovl03:2E10: retf 0: 0 bytes of parameters; 4 bytes of locals }
 {@stub} procedure ovl03_fn_2E10; begin end;
 { ovl03:2E7D: retf 0: 0 bytes of parameters; 8 bytes of locals }
@@ -1808,7 +1827,7 @@ end;
 { ovl03:2F2D: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl03_fn_2F2D; begin end;
 { ovl03:3171: retf 2: 2 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl03_fn_3171; begin end;
+{@stub} procedure ovl03_fn_3171(Address: Word); begin end;
 { ovl03:31B4: retf 0: 0 bytes of parameters; 6 bytes of locals }
 {@stub} procedure ovl03_fn_31B4; begin end;
 { ovl03:32F8: frame not read }

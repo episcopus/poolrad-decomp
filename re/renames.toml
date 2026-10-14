@@ -3763,3 +3763,10 @@ kind = "routine"
 why = "ECL opcode 45 (dispatcher ovl03:2F2D cmp al,2Dh calls it, ovl03:30DA); the operand word picks an engine action: area redraw (ds4431, ds84E0..), duel (SetupDuel), sound (ds84CC), StepPartyForward, WallIdAt (ds49FA)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl03_fn_2DD3"
+new = "RunCamp"
+kind = "routine"
+why = "runs MakeCamp (OVL15 camp menu) between script entries ds49E7 and ds49E9 (InitScript, ovl07:01B6); called by ECL opcode 56 with operand 9 (ovl03:2E10) and ovl03:3379"
+date = "2026-10-13"
+

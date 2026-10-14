@@ -758,12 +758,12 @@ id = "ovl03:2DD3"
 unit = "ovl03"
 addr = "ovl03:2DD3"
 size = 61
-name = "ovl03_fn_2DD3"
+name = "RunCamp"
 signature = ""
 c_name = "ovl03_fn_2DD3"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_2DD3 (runs MakeCamp (OVL15 camp menu) between script entries ds49E7 and ds49E9 (InitScript, ovl07:01B6); called by ECL opcode 56 with operand 9 (ovl03:2E10) and ovl03:3379); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -811,7 +811,7 @@ unit = "ovl03"
 addr = "ovl03:3171"
 size = 67
 name = "ovl03_fn_3171"
-signature = ""
+signature = "procedure ovl03_fn_3171(Address: Word)"
 c_name = "ovl03_fn_3171"
 level = "none"
 justification = ""
