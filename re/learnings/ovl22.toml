@@ -107,3 +107,12 @@ tags = ["compiler", "expression", "succ", "index"]
 title = "`Succ(Level)` on a ShortInt local gives `inc al; cwde` where `Level + 1` gives `cwde; inc ax`"
 lesson = "In an array index, `ExperienceTable[Class, Level + 1]` with Level a ShortInt local compiles `mov al,[bp-k]; cwde; inc ax` (because `Level + 1` is evaluated as an Integer), but `ExperienceTable[Class, Succ(Level)]` compiles `mov al,[bp-k]; inc al; cwde` (the byte is incremented in place, then sign-extended). ovl22:2CF0 (CastRestoration) uses the Succ form three times, so its source is `ExperienceTable[Class, Succ(Level)]`. Probe tools/re/tp_idioms/ovl22/INDEX.PAS."
 evidence = ["tools/re/tp_idioms/ovl22/INDEX.PAS", "src/OVL22.PAS#CastRestoration", "re/symbols.toml#ovl22:2C43"]
+
+[[lesson]]
+id = "small-add-to-byte-function-uses-inc-ax"
+confidence = "V"
+units = ["*"]
+tags = ["compiler", "expression", "add", "byte"]
+title = "A small constant added to a Byte function result uses `inc ax` for 1 and 2, `add ax,n` from 3 on"
+lesson = "For a Word destination and a Byte-valued function call, `G + 1` compiles to `xor ah,ah; inc ax`, `G + 2` to `xor ah,ah; inc ax; inc ax`, but `G + 3` to `xor ah,ah; add ax,3` and `G + 8` to `xor ah,ah; add ax,8`. The original increments in place only for one and two, so ovl22:2FD0 (CastMonsterHealWounds) is `RollDice(2, 4) + 2` (the `inc ax` twice at ovl22:2FE9) while ovl22:2E4D (CastMonsterHeal) is `RollDice(1, 4) + 8` (the `add ax,8` at ovl22:2EA4). Probe tools/re/tp_idioms/ovl22/SMALLC.PAS."
+evidence = ["tools/re/tp_idioms/ovl22/SMALLC.PAS", "src/OVL22.PAS#CastMonsterHealWounds", "src/OVL22.PAS#CastMonsterHeal", "re/symbols.toml#ovl22:2FD0"]
