@@ -162,7 +162,7 @@ type
     (ChooseSpellTargets, ovl22:0A91; ovl08 stores it and CastChosenSpell calls it). }
   TSpellTargetPicker = procedure(Spell: Byte; Unused: Byte; var Done: Byte);
   { A cast handler: SpellHandlers holds one parameterless far routine per spell number; it reads the
-    current spell from ds681B and applies it (ovl22_e10 fills entries 1.. from overlay stub 0096:0057
+    current spell from ds681B and applies it (InitSpellHandlers fills entries 1.. from overlay stub 0096:0057
     on; CastChosenSpell calls SpellHandlers[Spell] after the picker, whitepaper 5.22). }
   TSpellHandler = procedure;
   { The combat state of a character (TCharacter.Combat, +$108), read and written by the combat
@@ -792,6 +792,9 @@ var
     ovl12 reads it too, and it is touched by ovl04, ovl05, ovl06, ovl18, ovl19 and ovl21. The meaning
     is not settled. DS:6820. }
   ds6820: Byte;
+  { Set to 1 by InitSpellHandlers (ovl22:3435) at start-up, next byte after ds6820; no `make match` routine
+    reads it yet, so its purpose is not known. DS:6821. }
+  ds6821: Byte;
   { 1 while money lies in the pool: PoolMoney sets it, ShareMoney sets it when some is left; the
     Temple and the shop clear it with the pool (ovl04:0D37). }
   MoneyInPool: Byte;
@@ -865,14 +868,20 @@ var
     outside ovl22 reads it }
   CurrentItem: PItem;
   ds6E36: Pointer;                { a picture EndCombat frees through ReleasePicture (ovl08:005A) }
-  { The combat target picker: RunCombat sets @ovl13_e14 at the start (ovl08:0085) and EndCombat
-    @ChooseSpellTargets at the end (ovl08:0069); CastChosenSpell calls it as (spell, B, Done). }
-  ds6B84: Pointer;                { routine RunCombat stores at ovl08:0085 and EndCombat at ovl08:0069 }
-  { DS:6B84 is a block ovl22_e10 fills: element 0 (DS:6B84) is the target picker and elements 1.. are
-    the per-spell cast handlers, so CastChosenSpell's [Spell*4 + DS:6B84] reaches SpellHandlers[Spell].
-    SpellHandlers is 0-based over the same base so that SpellHandlers[Spell] is that operand. }
-  SpellTargetPicker: TSpellTargetPicker absolute ds6B84;
-  SpellHandlers: array[0..$38] of TSpellHandler absolute ds6B84;
+  { The DS:6B84 block InitSpellHandlers fills: element 0 (DS:6B84) is the target picker and elements
+    1..$43 are the per-spell cast handlers, one per spell number 1..$43 (68 elements, DS:6B84..6C93,
+    ending just before ds6C94), so CastChosenSpell's [Spell*4 + DS:6B84] reaches SpellHandlers[Spell].
+    It is the real array here (not an absolute over a 4-byte pointer) so that a constant index such as
+    SpellHandlers[1] resolves to DS:6B88 under `make match`; the DS:6B84 views below alias it. }
+  SpellHandlers: array[0..$43] of TSpellHandler;
+  { DS:6B84 as the combat target picker: RunCombat sets @ovl13_e14 at the start (ovl08:0085) and
+    EndCombat @ChooseSpellTargets at the end (ovl08:0069); CastChosenSpell calls it as (spell, B, Done). }
+  SpellTargetPicker: TSpellTargetPicker absolute SpellHandlers;
+  { DS:6B84 as a far pointer, the two stores above written through the pointer type. }
+  ds6B84: Pointer absolute SpellHandlers;
+  { Set to @MonsterBreath by InitSpellHandlers (ovl22:37A1). No routine in the image reads DS:6988 (no overlay,
+    the resident units or the main program has the address), so its purpose is not known. DS:6988. }
+  ds6988: Pointer;
   ds6814: Byte;                   { zero (or ds6815 zero) ends the combat (ovl08:009B, 095C); likely the count of one side }
   ds6815: Byte;                   { see ds6814; likely the count of the other side }
   { ds6814 and ds6815 indexed by side (ovl10:1AC7); the combat AI indexes them by the

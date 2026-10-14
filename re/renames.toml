@@ -3952,3 +3952,10 @@ kind = "routine"
 why = "ovl22:331A draws Who's name (res12_fn_1816), then Message right after it, then the spell's name; in combat it shows the timed message 'Casts a Spell' and 'Spell:NAME'. Callers pass 'casts' (CastChosenSpell), 'has memorized' (ProcessMemorizedSpell) and 'has scribed' (ProcessPendingScribedSpell), so it announces a named character's spell event."
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl22_e10"
+new = "InitSpellHandlers"
+kind = "routine"
+why = "ovl22:3413 fills SpellHandlers at DS:6B84 (element 0 the target picker via SpellTargetPicker, elements 1..$43 the per-spell cast handlers, all overlay stubs of this unit) and stores @MonsterBreath in DS:6988; ovl11:002D StartGame calls it once at start-up. It initialises the spell-casting handlers and globals."
+date = "2026-10-14"
+

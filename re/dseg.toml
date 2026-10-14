@@ -1053,3 +1053,8 @@ evidence = "DS:4843: the number of entries SpellMenuItems holds (ovl22:044E writ
 offset = 0x6B80
 name = "CurrentItem"
 evidence = "DS:6B80: the current item the ovl22 spell lists work on (ovl22_fn_051C walks SelectedCharacter^.Items into it, ovl22_fn_044E reads its affects, ovl22_e1 copies a chosen line's SpellMenuItems entry into it)"
+
+[[global]]
+offset = 0x6B84
+name = "SpellHandlers"
+evidence = "DS:6B84: the spell handler block InitSpellHandlers (ovl22:3413) fills at start-up, 68 far pointers DS:6B84..6C93 (element 0 the combat target picker, elements 1..$43 the cast handler of every spell number 1..$43; several spells share one handler); CastChosenSpell calls [Spell*4 + DS:6B84] as the current spell ds681B is cast, ovl08 stores @ChooseSpellTargets (EndCombat) and @ovl13_e14 (RunCombat) through the ds6B84 Pointer view"

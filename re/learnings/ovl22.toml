@@ -134,3 +134,21 @@ tags = ["compiler", "frame", "string", "parameter"]
 title = "A String40 value parameter is copied into a frame slot and that slot is reused when the parameter is passed on"
 lesson = "A `Message: String40` value parameter gets a prologue `StrLCopy(@copy, @param, 40)` copy in the frame (ovl22:331A copies into [bp-0x29]); passing the parameter on to another string parameter reuses that same slot (the DrawTextAt argument is [bp-0x29]), so no extra local is needed. Declaring a local `Text: String40; Text := Message;` adds a second copy and enlarges the frame by 41 bytes (sub sp 0x152 instead of the original's 0x12a), which the matcher reports as the `sub sp` constant differing. Probe tools/re/tp_idioms/ovl22/E8FRAME.PAS."
 evidence = ["tools/re/tp_idioms/ovl22/E8FRAME.PAS", "src/OVL22.PAS#ShowSpellMessage", "re/symbols.toml#ovl22:331A"]
+
+[[lesson]]
+id = "procedural-typed-destination-takes-a-bare-assignment"
+confidence = "V"
+units = ["ovl22"]
+tags = ["compiler", "assignment", "pointer", "procedural-type"]
+title = "A procedural-typed destination takes a bare `:= Routine;`; `:= @Routine` is Error 122, and @ is only for a Pointer destination"
+lesson = "ovl22:3413 (InitSpellHandlers) assigns one far routine per element of SpellHandlers. `SpellHandlers[N] := CastBless;` (no @) compiles to `mov ax, OFFSET; mov dx, SEG; mov [base+4N], ax; mov [base+4N+2], dx`, exactly the original's two stores, but `SpellHandlers[N] := @CastBless;` is Error 122 (Invalid variable reference) because a procedural-typed destination does not accept @. @ is needed only for a Pointer destination, as ovl08's `ds6B84 := @ChooseSpellTargets;` (ds6B84: Pointer). Probe tools/re/tp_idioms/ovl22/HANDLRTB.PAS."
+evidence = ["tools/re/tp_idioms/ovl22/HANDLRTB.PAS", "src/OVL22.PAS#InitSpellHandlers", "re/symbols.toml#ovl22:3413"]
+
+[[lesson]]
+id = "constant-index-into-an-absolute-block-needs-a-real-array-and-a-dseg-name"
+confidence = "V"
+units = ["ovl22"]
+tags = ["matcher", "dsgroup", "absolute", "array", "global"]
+title = "A constant-index write into an `absolute` block needs the block to be a real array with a dseg.toml name, not an absolute over a 4-byte pointer"
+lesson = "make match resolves a DS operand by the nearest preceding public variable (Build.data_var), then maps that name to the original offset (original_global + delta). So `SpellHandlers[k] := H;` with SpellHandlers declared `array[0..$43] of TSpellHandler absolute ds6B84` (ds6B84 a 4-byte Pointer) failed: the address ds6B84+4k sat inside the unrelated variable ds6988, so the matcher read it as DS:6988 instead of DS:6B88. Declaring the block as a real array (`SpellHandlers: array[0..$43] of TSpellHandler;` plus a re/dseg.toml entry offset 0x6B84 name SpellHandlers, and `ds6B84: Pointer absolute SpellHandlers;` / `SpellTargetPicker: TSpellTargetPicker absolute SpellHandlers;` for the other views) makes the element resolve to 6B84+4k; the alias views resolve to the same base, so ovl08's `ds6B84 := @...` still matches. src/POOLVARS.PAS#SpellHandlers."
+evidence = ["src/POOLVARS.PAS#SpellHandlers", "re/dseg.toml#SpellHandlers", "src/OVL22.PAS#InitSpellHandlers", "re/symbols.toml#ovl22:3413"]

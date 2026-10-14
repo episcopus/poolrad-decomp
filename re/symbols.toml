@@ -10738,12 +10738,12 @@ id = "ovl22:3413"
 unit = "ovl22"
 addr = "ovl22:3413"
 size = 925
-name = "ovl22_e10"
+name = "InitSpellHandlers"
 signature = ""
 c_name = "ovl22_e10"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_10"
+notes = "renamed from ovl22_e10 (ovl22:3413 fills SpellHandlers at DS:6B84 (element 0 the target picker via SpellTargetPicker, elements 1..$43 the per-spell cast handlers, all overlay stubs of this unit) and stores @MonsterBreath in DS:6988; ovl11:002D StartGame calls it once at start-up. It initialises the spell-casting handlers and globals.); auto:entry_10"
 evidence = ["prologue"]
 
 [[routine]]

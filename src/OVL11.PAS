@@ -4,7 +4,8 @@ unit OVL11;
   main heap blocks, sets up the screen buffers (through AllocatePicture), fills the three 200-entry
   cell address tables, initialises the screen and game globals, then builds the save game file path
   and reads its data file (OpenGameFile, Reset/Seek/BlockRead/Close) before handing over to
-  ovl22_e10 (the character/party loader) and ovl12_e1 (the training and rewards unit). }
+  InitSpellHandlers (which fills the spell cast handler table) and ovl12_e1 (the training and
+  rewards unit). }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 procedure StartGame;
@@ -38,7 +39,7 @@ const
   through LoadPictureSlot, builds the game file name from the InsertDiskPrompts name table plus the character in
   DS:547D (OpenGameFile opens it), reads one $810-byte block (Reset/Seek/BlockRead/Close,
   ovl11:05A9..05E5), restores the path, randomises the seed (System.Randomize, ovl11:0602) and
-  calls ovl22_e10 and ovl12_e1.
+  calls InitSpellHandlers and ovl12_e1.
   Reads and changes: the globals listed in POOLVARS.PAS (their comments name the write).
   Side effects: the heap, the screen (DrawTextAt, LoadPictureSlot, Load8x8Bank) and the disk (the file
   read). The loop counter is the global DS:465C, reused by the three fill loops. }
@@ -160,7 +161,7 @@ begin
   GameDir := ds4661;
   ClearPromptLine;
   Randomize;
-  ovl22_e10;
+  InitSpellHandlers;
   ovl12_e1;
 end;
 

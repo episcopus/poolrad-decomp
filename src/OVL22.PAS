@@ -78,7 +78,7 @@ procedure MonsterBreath(Who: PCharacter; Affect: PAffect; Unused: Byte);
 function IsScroll(Item: PItem): Boolean;
 procedure ConsumeScrollSpell(Who: PCharacter; Item: PItem; Spell: Byte);
 procedure ShowSpellMessage(Who: PCharacter; Message: String40; Spell: Byte);
-procedure ovl22_e10;
+procedure InitSpellHandlers;
 implementation
 
 { ovl22:008A: retf 6: 6 bytes of parameters; 98 bytes of locals }
@@ -512,7 +512,7 @@ begin
 end;
 { ovl22:100F (e11). Cast handler of spell 1, Bless: applies the current spell ds681B to the party
   side of the selected character (SelectedCharacter^.Side) with the message 'is Blessed'. One of the
-  per-spell handlers in SpellHandlers (SpellHandlers[1], filled by ovl22_e10). }
+  per-spell handlers in SpellHandlers (SpellHandlers[1], filled by InitSpellHandlers). }
 procedure CastBless;
 begin
   ApplySpellToSide(SelectedCharacter^.Side, 'is Blessed');
@@ -527,7 +527,7 @@ end;
 { ovl22:106B (e13). Cast handler of spell 3, Cure Light Wounds: when a target was chosen (ds6C94
   nonzero) it rolls 1d8 (RollDice) and heals the first target ds6C95 through HealCharacter (flag 0),
   then reports through res12_fn_234A whether the target is fully or partially healed. One of the
-  per-spell handlers in SpellHandlers (SpellHandlers[3], filled by ovl22_e10). }
+  per-spell handlers in SpellHandlers (SpellHandlers[3], filled by InitSpellHandlers). }
 procedure CastCureLightWounds;
 begin
   if ds6C94 = 0 then
@@ -538,7 +538,7 @@ end;
 { ovl22:10A7 (e14). Cast handler of spell 4, Cause Light Wounds: applies the current spell ds681B
   to the chosen targets with 1d8 damage of kind 8 and no message (ApplySpellToTargets; the dice go
   through RollDiceCounted, which also records their count in ds681C). One of the per-spell handlers
-  in SpellHandlers (SpellHandlers[4], filled by ovl22_e10). }
+  in SpellHandlers (SpellHandlers[4], filled by InitSpellHandlers). }
 procedure CastCauseLightWounds;
 begin
   ApplySpellToTargets(ds681B, 0, 0, RollDiceCounted(1, 8), 8, '');
@@ -547,7 +547,7 @@ end;
   Magic), 22 (Find Traps) and 29 (Detect Invisibility): applies the current spell ds681B to the
   chosen targets with the message 'is affected' and no damage of its own (ApplySpellToTargets; the
   spell's own AffectId does the work). One of the per-spell handlers in SpellHandlers
-  (SpellHandlers[5], [11], [18], [22] and [29]; the table is filled by ovl22_e10). }
+  (SpellHandlers[5], [11], [18], [22] and [29]; the table is filled by InitSpellHandlers). }
 procedure CastDetectionSpell;
 begin
   ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is affected');
@@ -556,7 +556,7 @@ end;
   7 and 17 (Protection From Good): applies the current spell ds681B to the chosen targets with the
   message 'is protected' and no damage of its own (ApplySpellToTargets; the spell's own AffectId does
   the work). One of the per-spell handlers in SpellHandlers (SpellHandlers[6], [7], [16] and [17];
-  filled by ovl22_e10). }
+  filled by InitSpellHandlers). }
 procedure CastProtection;
 begin
   ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is protected');
@@ -564,7 +564,7 @@ end;
 { ovl22:1162 (e17). Cast handler of spell 8, Resist Cold: applies the current spell ds681B to the
   chosen targets with the message 'is cold-resistant' and no damage of its own (ApplySpellToTargets;
   the spell's own AffectId does the work). One of the per-spell handlers in SpellHandlers
-  (SpellHandlers[8], filled by ovl22_e10). }
+  (SpellHandlers[8], filled by InitSpellHandlers). }
 procedure CastResistCold;
 begin
   ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is cold-resistant');
@@ -572,7 +572,7 @@ end;
 { ovl22:1190 (e18). Cast handler of spell 9, Burning Hands: deals res12_fn_26C2(ds681B) (the caster
   level) damage of kind DamageKindFire to the chosen targets with no message (ApplySpellToTargets;
   DealDamage classifies kind 9 as fire, ovl24:1389). One of the per-spell handlers in SpellHandlers
-  (SpellHandlers[9], filled by ovl22_e10). }
+  (SpellHandlers[9], filled by InitSpellHandlers). }
 procedure CastBurningHands;
 const
   { The kind of damage Burning Hands deals: DealDamage names kind 9 'from Fire' (its test is
@@ -587,7 +587,7 @@ end;
   to the targets with the charm affect's data (the caster level res12_fn_26C2(ds681B) plus the
   caster's Side in bit 7, so the charmed creature joins that side) and runs the affect through
   CallAffectHandler ($0B, the charm affect id). One of the per-spell handlers in SpellHandlers
-  (SpellHandlers[10], filled by ovl22_e10). Reads ds6C95 (the first chosen target), SelectedCharacter;
+  (SpellHandlers[10], filled by InitSpellHandlers). Reads ds6C95 (the first chosen target), SelectedCharacter;
   changes the affect list of the target through CallAffectHandler. }
 procedure CastCharmPerson;
 const
@@ -624,7 +624,7 @@ end;
   the spell's duration, RaiseStrength's earlier-strength code and flag 1 (on removal it restores the
   old strength, ovl24:AddAffect). The level and percentile go through the shared working globals
   ds4844/ds4845. One of the per-spell handlers in SpellHandlers (SpellHandlers[12], filled by
-  ovl22_e10). }
+  InitSpellHandlers). }
 procedure CastEnlarge;
 const
   ExceptionalStrength = 18;       { strength 18, whose RaiseStrength takes a percentile (ovl24) }
@@ -654,7 +654,7 @@ begin
     res12_fn_16EC(ds6C95, 'is stronger', MessageColour, TimedMessage);
   AddAffect(ds6C95, StrengthAffect, SpellAffectDuration(ds681B), Code, 1);
 end;
-{ ovl22:136E (e21). Cast handler of spell 13, Reduce (SpellHandlers[13]; ovl22_e10 fills the table,
+{ ovl22:136E (e21). Cast handler of spell 13, Reduce (SpellHandlers[13]; InitSpellHandlers fills the table,
   whitepaper 5.22.2): when targets were chosen, a target that fails its saving throw (SavingThrow kind 4,
   a spell) loses the strength affect $0C that Enlarge adds (CureAffect) and is told 'has been reduced'.
   A target that saves, or that carries no strength affect, is left alone. Reads ds6C94 and ds6C95. }
@@ -670,7 +670,7 @@ begin
       if CureAffect(ds6C95, StrengthAffect) then
         res12_fn_16EC(ds6C95, 'has been reduced', MessageColour, TimedMessage);
 end;
-{ ovl22:13D8 (e22). Cast handler of spell 14, Friends (SpellHandlers[14]; ovl22_e10 fills the table,
+{ ovl22:13D8 (e22). Cast handler of spell 14, Friends (SpellHandlers[14]; InitSpellHandlers fills the table,
   whitepaper 5.22.2): raises the chosen target ds6C95's Charisma by 2d4, capped at 25 ($19), and calls
   ApplySpellToTargets with the pre-roll Charisma as the affect's Data and the restore flag set, so the
   affect's handler puts the old Charisma back when the affect ends; the message is 'is friendly'.
@@ -692,7 +692,7 @@ begin
     ds6C95^.Charisma := CharismaCap;
   ApplySpellToTargets(ds681B, OldCharisma, RestoreOnRemoval, 0, 0, 'is friendly');
 end;
-{ ovl22:1439 (e23). Cast handler of spell 15, Magic Missile (SpellHandlers[15]; ovl22_e10 fills the
+{ ovl22:1439 (e23). Cast handler of spell 15, Magic Missile (SpellHandlers[15]; InitSpellHandlers fills the
   table, whitepaper 5.22.2): the caster level from res12_fn_26C2 gives one missile per two levels, so
   it deals RollDiceCounted(Level div 2, 4) (a d4 per missile, its count kept in ds681C) plus Level div 2
   (one point per missile) to the chosen targets, with no message. Reads ds681B. }
@@ -709,14 +709,14 @@ begin
     RollDiceCounted(Level div LevelsPerMissile, MissileSides) + Level div LevelsPerMissile,
     DamageKind, '');
 end;
-{ ovl22:1499 (e24). Cast handler of spell 19, Shield (SpellHandlers[19]; ovl22_e10 fills the table,
+{ ovl22:1499 (e24). Cast handler of spell 19, Shield (SpellHandlers[19]; InitSpellHandlers fills the table,
   whitepaper 5.22.2): applies the current spell ds681B (its own affect does the work) to the chosen
   targets with the message 'is shielded', no damage or flag of its own. Reads ds681B. }
 procedure CastShield;
 begin
   ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is shielded');
 end;
-{ ovl22:14C7 (e25). Cast handler of spell 20, Shocking Grasp (SpellHandlers[20]; ovl22_e10 fills the
+{ ovl22:14C7 (e25). Cast handler of spell 20, Shocking Grasp (SpellHandlers[20]; InitSpellHandlers fills the
   table, whitepaper 5.22.2): deals the caster level from res12_fn_26C2 plus 1d8 (RollDiceCounted, count
   kept in ds681C) of electrical damage to the chosen targets, with no message. Reads ds681B. }
 procedure CastShockingGrasp;
@@ -730,7 +730,7 @@ begin
   ApplySpellToTargets(ds681B, 0, 0,
     RollDiceCounted(1, DiceSides) + res12_fn_26C2(ds681B), DamageKindElectric, '');
 end;
-{ ovl22:151B (e26). Cast handler of spell 21, Sleep (SpellHandlers[21]; ovl22_e10 fills the table,
+{ ovl22:151B (e26). Cast handler of spell 21, Sleep (SpellHandlers[21]; InitSpellHandlers fills the table,
   whitepaper 5.22.2): sets ds6820 and rolls the 4d4 pool ds4844. For every chosen target ds6C91[I] it
   charges a cost in ds4845 by the target's HighestLevel (+$73, a monster's hit dice) and level 5's Race
   (+$2E). A target is slept (the cost comes off the pool) only when it is not dead (Status <> 1), does
@@ -782,7 +782,7 @@ begin
   end;
   ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'falls asleep');
 end;
-{ ovl22:1658. Cast handler of spell 23, Hold Person (entry 27: ovl22_e10 maps DS:6B84+23*4 to overlay
+{ ovl22:1658. Cast handler of spell 23, Hold Person (entry 27: InitSpellHandlers maps DS:6B84+23*4 to overlay
   stub 0096:00A7; SpellNames[23] is 'Hold Person' at DS:2C98): for every chosen target ds6C91[I]
   it rolls a saving throw whose bonus shrinks as more targets were picked (one target -3, or -2 when
   the spell is Hold Person itself, two targets -1, three or four none), drawing a beam from the caster
@@ -840,7 +840,7 @@ begin
         res12_fn_26C2(ds681B), 0, SpellTable[ds681B].Pad2[8], Saved, 'is held');
     end;
 end;
-{ ovl22:17E9. Cast handler of spell 24, Resist Fire (entry 28: ovl22_e10 maps DS:6B84+24*4 to overlay
+{ ovl22:17E9. Cast handler of spell 24, Resist Fire (entry 28: InitSpellHandlers maps DS:6B84+24*4 to overlay
   stub 0096:00AC; SpellNames[24] is 'Resist Fire' at DS:2CC1): applies the current spell ds681B to the
   chosen targets with the message 'is fire resistant' and no damage or flag of its own
   (ApplySpellToTargets; the spell's own affect does the work). One of the per-spell handlers in
@@ -849,7 +849,7 @@ procedure CastResistFire;
 begin
   ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is fire resistant');
 end;
-{ ovl22:1822. Cast handler of spell 25, Silence, 15' Radius (entry 29: ovl22_e10 maps DS:6B84+25*4 to
+{ ovl22:1822. Cast handler of spell 25, Silence, 15' Radius (entry 29: InitSpellHandlers maps DS:6B84+25*4 to
   overlay stub 0096:00B1; SpellNames[25] is "Silence, 15' Radius" at DS:2CEA): applies the current spell
   ds681B to the chosen targets with the message 'is silenced' and no damage or flag of its own
   (ApplySpellToTargets; the spell's own affect does the work). One of the per-spell handlers in
@@ -858,7 +858,7 @@ procedure CastSilence;
 begin
   ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is silenced');
 end;
-{ ovl22:185B. Cast handler of spell 26, Slow Poison (entry 30: ovl22_e10 maps DS:6B84+26*4 to overlay
+{ ovl22:185B. Cast handler of spell 26, Slow Poison (entry 30: InitSpellHandlers maps DS:6B84+26*4 to overlay
   stub 0096:00B6; SpellNames[26] is 'Slow Poison' at DS:2D13). It needs the first chosen target ds6C95
   to still be alive (Status is not 1) and to carry the Poisoned affect $37 (res12_fn_2199); anything
   else is dropped (ds6C95 := nil) and the cast does nothing. A poisoned target at 0 hit points is
@@ -898,7 +898,7 @@ begin
     AddAffect(Target, SlowPoisonAffect, SlowPoisonDuration, SlowPoisonData, RunHandlerOnRemoval);
   end;
 end;
-{ ovl22:190F. Cast handler of spell 27, Snake Charm (entry 31: ovl22_e10 maps DS:6B84+27*4 to overlay
+{ ovl22:190F. Cast handler of spell 27, Snake Charm (entry 31: InitSpellHandlers maps DS:6B84+27*4 to overlay
   stub 0096:00BB; SpellNames[27] is 'Snake Charm' at DS:2D3C). The caster's own current hit points
   (SelectedCharacter^.Flag11B) become the pool ds4844; it then walks the party list ds5D96 and, for
   every giant snake (CreatureType $E) whose hit points fit the remaining pool, subtracts them, counts
@@ -926,7 +926,7 @@ begin
   end;
   ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is charmed');
 end;
-{ ovl22:19C3 (e32). Cast handler of spell 28, Spiritual Hammer (SpellHandlers[28]: ovl22_e10 maps
+{ ovl22:19C3 (e32). Cast handler of spell 28, Spiritual Hammer (SpellHandlers[28]: InitSpellHandlers maps
   DS:6B84+28*4 to overlay stub 0096:00C0; SpellNames[28] is 'Spiritual Hammer' at DS:2D65, the
   spell's own affect is $17). It applies the current spell ds681B to the chosen targets with no
   message of its own and the affect set to run its handler on removal (ApplySpellToTargets, Flag 1),
@@ -941,7 +941,7 @@ begin
   ApplySpellToTargets(ds681B, 0, RunHandlerOnRemoval, 0, 0, '');
   CallAffectHandler(SpiritualHammerAffect, ds6C95, nil, ModeApply);
 end;
-{ ovl22:1A16 (e33). Cast handler of spell 30, Invisibility (SpellHandlers[30]: ovl22_e10 maps
+{ ovl22:1A16 (e33). Cast handler of spell 30, Invisibility (SpellHandlers[30]: InitSpellHandlers maps
   DS:6B84+30*4 to overlay stub 0096:00C5; SpellNames[30] is 'Invisibility' at DS:2DB7; its
   SpellTable affect byte is 0). It only applies the current spell ds681B to the chosen targets with
   the message 'is invisible'; the spell's own affect does the hiding, so the handler has nothing else
@@ -950,7 +950,7 @@ procedure CastInvisibility;
 begin
   ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is invisible');
 end;
-{ ovl22:1A4F (e34). Cast handler of spell 31, Knock (SpellHandlers[31]: ovl22_e10 maps
+{ ovl22:1A4F (e34). Cast handler of spell 31, Knock (SpellHandlers[31]: InitSpellHandlers maps
   DS:6B84+31*4 to overlay stub 0096:00CA; SpellNames[31] is 'Knock' at DS:2DE0). It only applies
   the current spell ds681B to the chosen targets with the message 'Knock-Knock'; the spell's own
   affect $1C opens the lock, so the handler has nothing else to do. Reads ds681B. }
@@ -958,7 +958,7 @@ procedure CastKnock;
 begin
   ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'Knock-Knock');
 end;
-{ ovl22:1A8A (e35). Cast handler of spell 32, Mirror Image (SpellHandlers[32]: ovl22_e10 maps
+{ ovl22:1A8A (e35). Cast handler of spell 32, Mirror Image (SpellHandlers[32]: InitSpellHandlers maps
   DS:6B84+32*4 to overlay stub 0096:00CF; SpellNames[32] is 'Mirror Image' at DS:2E09). It applies
   the current spell ds681B to the chosen targets with the message 'is duplicated' and the caster
   level set to 1d4 (RollDice(1, 4)); that roll is the number of images and becomes the affect's
@@ -970,7 +970,7 @@ const
 begin
   ApplySpellToTargets(ds681B, RollDice(ImagesCount, ImagesSides), 0, 0, 0, 'is duplicated');
 end;
-{ ovl22:1ACC (e36). Cast handler of spell 33, Ray of Enfeeblement (SpellHandlers[33]: ovl22_e10 maps
+{ ovl22:1ACC (e36). Cast handler of spell 33, Ray of Enfeeblement (SpellHandlers[33]: InitSpellHandlers maps
   DS:6B84+33*4 to overlay stub 0096:00D4; SpellNames[33] is 'Ray of Enfeeblement' at DS:2E32). It
   only applies the current spell ds681B to the chosen targets with the message 'is weakened'; the
   spell's own affect lowers the target's strength, so the handler has nothing else to do. Reads
@@ -979,7 +979,7 @@ procedure CastRayOfEnfeeblement;
 begin
   ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is weakened');
 end;
-{ ovl22:1B11 (e37). Cast handler of spell 34, Stinking Cloud (SpellHandlers[34]: ovl22_e10 maps
+{ ovl22:1B11 (e37). Cast handler of spell 34, Stinking Cloud (SpellHandlers[34]: InitSpellHandlers maps
   DS:6B84+34*4 to overlay stub 0096:00D9; SpellNames[34] is 'Stinking Cloud' at DS:2E5B). It leaves
   a marker in the list ds6DBB (a list of $13-byte TCombatNode records) for the aim point ds6DB9/
   ds6DBA: the caster, the aim cell, and for each of the four aim directions (SpellNamesPrefix.AimDirs,
@@ -1225,7 +1225,7 @@ begin
   if CureAffect(ds6C95, BlindnessAffect) then
     res12_fn_1FEB(ds6C95, ShowAbout, 'can see');
 end;
-{ ovl22:225D. Cast handler of spell 38, Cause Blindness (SpellHandlers[38]: ovl22_e10 maps
+{ ovl22:225D. Cast handler of spell 38, Cause Blindness (SpellHandlers[38]: InitSpellHandlers maps
   DS:6B84+38*4 to overlay stub 0096:00ED; SpellNames[38] is 'Cause Blindness' at DS:2EFF). It only
   applies the current spell ds681B to the chosen targets with the message 'is blind'; the spell's own
   affect $21 does the blinding (the affect Cure Blindness removes, ovl22:2217), so the handler has
@@ -1266,7 +1266,7 @@ begin
   end;
   ds681F := 0;
 end;
-{ ovl22:232F. Cast handler of spell 39, Cure Disease (SpellHandlers[39]: ovl22_e10 maps
+{ ovl22:232F. Cast handler of spell 39, Cure Disease (SpellHandlers[39]: InitSpellHandlers maps
   DS:6B84+39*4 to overlay stub 0096:00F2; SpellNames[39] is 'Cure Disease' at DS:2F28). It calls
   CureDiseaseAffects to cure the chosen target ds6C95 and stores the result in a local it never
   reads, so the cure happens through that call alone (SpellHandlers is a table of procedures and
@@ -1277,7 +1277,7 @@ var
 begin
   Cured := CureDiseaseAffects;
 end;
-{ ovl22:234C. Cast handler of spell 40, Cause Disease (SpellHandlers[40]: ovl22_e10 maps
+{ ovl22:234C. Cast handler of spell 40, Cause Disease (SpellHandlers[40]: InitSpellHandlers maps
   DS:6B84+40*4 to overlay stub 0096:00F7; SpellNames[40] is 'Cause Disease' at DS:2F51). It applies
   the current spell ds681B to the chosen targets with the message 'is diseased' and no damage of its
   own, but with Flag 1 so the spell's affect runs its handler when it is removed (the affect the
@@ -1288,7 +1288,7 @@ const
 begin
   ApplySpellToTargets(ds681B, 0, RunHandlerOnRemoval, 0, 0, 'is diseased');
 end;
-{ ovl22:2385 (e44). Cast handler of spells 41 and 46, Dispel Magic (ovl22_e10 maps both
+{ ovl22:2385 (e44). Cast handler of spells 41 and 46, Dispel Magic (InitSpellHandlers maps both
   DS:6B84+41*4 and DS:6B84+46*4 to overlay stub 0096:00FC; SpellNames[41] and SpellNames[46] are
   both 'Dispel Magic' at DS:2F7A and DS:3047). It tries to dispel the affects of the chosen target
   ds6C95: for every affect of the target's list whose Data byte is below $FF it takes the effect's
@@ -1348,7 +1348,7 @@ begin
       res12_fn_1FEB(Target, ShowAbout, 'is affected');
   end;
 end;
-{ ovl22:24D6 (e45). Cast handler of spell 42, Prayer (ovl22_e10 maps DS:6B84+42*4 to overlay stub
+{ ovl22:24D6 (e45). Cast handler of spell 42, Prayer (InitSpellHandlers maps DS:6B84+42*4 to overlay stub
   0096:00... ; SpellNames[42] is 'Prayer'). It applies the current spell ds681B to the chosen targets
   with no flag, damage or kind of its own and the message 'is praying'; the caster level it passes as
   the affect's Data is the caster level (res12_fn_26C2(ds681B)) plus the caster's Side scaled by 16, so
@@ -1367,7 +1367,7 @@ begin
     0, 0, 0, 'is praying');
 end;
 { ovl22:2540 (e9). Cast handler of spell 43, Remove Curse, and the routine the Temple's Remove
-  Curse service calls (ovl22_e10 maps DS:6B84+43*4 to overlay stub 0096:007E; SpellNames[43] is
+  Curse service calls (InitSpellHandlers maps DS:6B84+43*4 to overlay stub 0096:007E; SpellNames[43] is
   'Remove Curse' at DS:2FCC; the Temple's RemoveCurse ovl04:083A stores the character in ds6C95 and
   calls this). It first tries to cure the curse affect $24 from the character ds6C95 and, when it was
   there, says 'is un-cursed' (res12_fn_1FEB). Otherwise it walks the character's carried items
@@ -1400,7 +1400,7 @@ begin
       res12_fn_1FEB(ds6C95, ShowAbout, '''s item is un-cursed');
   end;
 end;
-{ ovl22:2604. Cast handler of spell 44, Bestow Curse (ovl22_e10 maps DS:6B84+44*4 to overlay
+{ ovl22:2604. Cast handler of spell 44, Bestow Curse (InitSpellHandlers maps DS:6B84+44*4 to overlay
   stub 0096:0106; SpellNames[44] is 'Bestow Curse' at DS:2FF5 and SpellTable[44].AffectId is the curse
   affect $24). It only applies the current spell ds681B to the chosen targets with the message
   'has been cursed!'; the spell's own affect does the cursing, so the handler has nothing else to do.
@@ -1409,7 +1409,7 @@ procedure CastBestowCurse;
 begin
   ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'has been cursed!');
 end;
-{ ovl22:263D. Cast handler of spell 45, Blink (ovl22_e10 maps DS:6B84+45*4 to overlay stub 0096:010B;
+{ ovl22:263D. Cast handler of spell 45, Blink (InitSpellHandlers maps DS:6B84+45*4 to overlay stub 0096:010B;
   SpellNames[45] is 'Blink' at DS:301E and SpellTable[45].AffectId is the blink affect $25). It only
   applies the current spell ds681B to the chosen targets with the message 'is blinking'; the spell's
   own affect does the blinking, so the handler has nothing else to do. Reads ds681B. }
@@ -1417,7 +1417,7 @@ procedure CastBlink;
 begin
   ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is blinking');
 end;
-{ ovl22:266B. Cast handler of spells 47 and 64, Fireball (ovl22_e10 maps both DS:6B84+47*4 and
+{ ovl22:266B. Cast handler of spells 47 and 64, Fireball (InitSpellHandlers maps both DS:6B84+47*4 and
   DS:6B84+64*4 to overlay stub 0096:0110; SpellNames[47] is 'Fireball', and spell 64 has an empty
   name, a monster's fireball). It sets ds6820 and takes the caster level from res12_fn_26C2 (the
   spell's d6-per-level damage) except for the monster's spell 64, whose level is the roll 1d3*2+1.
@@ -1488,7 +1488,7 @@ begin
     if ds6C91[I] <> nil then
       RunAffectHooks(AffectHooks, ds6C91[I]);
 end;
-{ ovl22:2892. Cast handler of spell 48, Haste (ovl22_e10 maps DS:6B84+48*4 to overlay stub
+{ ovl22:2892. Cast handler of spell 48, Haste (InitSpellHandlers maps DS:6B84+48*4 to overlay stub
   0096:0115; SpellNames[48] is 'Haste' and SpellTable[48].AffectId is the haste affect $27). It hands
   the caster's own side and the slow affect $2A (SpellTable[55].AffectId) to ApplySpellToSideUpToLevel,
   which cures Slow from up to caster-level members of the side and then applies Haste to the rest with
@@ -1635,7 +1635,7 @@ end;
   (res12_fn_26C2(ds681B), RollDice) as the damage, deals it to the combatant on the aim cell
   ds6DB9/ds6DBA (DamageTargetInCell, electrical, save kind 4) and then runs the beam CastLineBeam
   with reach 8, the same damage and save kind and the bounce flag 1, so the bolt reflects off a wall
-  once. Reads ds681B. Called through SpellHandlers[51] (ovl22_e10). }
+  once. Reads ds681B. Called through SpellHandlers[51] (InitSpellHandlers). }
 procedure CastLightningBolt;
 const
   LevelDiceSides = 6;             { one d6 per caster level (the AD&D Lightning Bolt) }
@@ -1654,7 +1654,7 @@ end;
   (res12_fn_23B7) and the haste affect $27 (SpellTable[48].AffectId) to ApplySpellToSideUpToLevel,
   which cures Haste from up to caster-level members of that side and then applies Slow to the rest
   with 'is Slowed'. One of the per-spell handlers in SpellHandlers (SpellHandlers[55], filled by
-  ovl22_e10; the Haste handler CastHaste does the mirror image with the slow affect $2A). Reads
+  InitSpellHandlers; the Haste handler CastHaste does the mirror image with the slow affect $2A). Reads
   SelectedCharacter. }
 procedure CastSlow;
 const
@@ -1723,7 +1723,7 @@ begin
   res12_fn_16EC(Target, 'is restored', MessageColour, TimedMessage);
 end;
 { ovl22:2E02. Cast handler of spell 57, a monster-only spell: SpellNames[57] is empty, and the
-  ovl22_e10 table points element 57 of SpellHandlers at this stub. It first cancels the slow affect
+  InitSpellHandlers table points element 57 of SpellHandlers at this stub. It first cancels the slow affect
   $2A from the first chosen target ds6C95 (CureAffect, which shows 'is Cured'); when the target was
   not slowed it applies the current spell ds681B to the chosen targets with 'is Speedy', so the
   affected target carries the spell's own (haste) affect. It is CastHaste's single-target sibling. }
@@ -1735,7 +1735,7 @@ begin
     ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is Speedy');
 end;
 { ovl22:2E4D. Cast handler of spell 58, a monster-only spell: SpellNames[58] is empty, and the
-  ovl22_e10 table points element 58 of SpellHandlers at this stub. It cures the first chosen target
+  InitSpellHandlers table points element 58 of SpellHandlers at this stub. It cures the first chosen target
   ds6C95: when the target carries the Poisoned affect $37 (CureAffect) it also removes the affect $16
   that the poison leaves behind, with ds681F set so the removals do not run ovl04's own cure handlers.
   A target that is not poisoned is cured of disease instead (CureDiseaseAffects) and, when neither
@@ -1768,7 +1768,7 @@ begin
         res12_fn_1FEB(ds6C95, ShowAbout, 'is Healed');
 end;
 { ovl22:2EE5. Cast handler of spell 59, a monster-only spell: SpellNames[59] is empty, and the
-  ovl22_e10 table points element 59 of SpellHandlers at this stub. It gives the first chosen target
+  InitSpellHandlers table points element 59 of SpellHandlers at this stub. It gives the first chosen target
   ds6C95 a fixed Strength of 21 with no exceptional percentile (RaiseStrength; a monster's strength),
   shows 'is stronger' when the strength actually rose (res12_fn_16EC) and adds the strength affect $26
   (the affect CastStrength and Enlarge keep the earlier strength in, ovl24 RaiseStrength) for the
@@ -1789,7 +1789,7 @@ begin
   AddAffect(ds6C95, StrengthAffect, SpellAffectDuration(ds681B), Code, RunHandlerOnRemoval);
 end;
 { ovl22:2F4D. Cast handler of spell 60, a monster-only spell: SpellNames[60] is empty, and the
-  ovl22_e10 table points element 60 of SpellHandlers at this stub. It strikes the combatant on the aim
+  InitSpellHandlers table points element 60 of SpellHandlers at this stub. It strikes the combatant on the aim
   cell ds6DB9/ds6DBA for 1d6 + 20 points (DamageTargetInCell: the spell's saving throw kind 4, half
   damage on a save, and the zap animation) and then runs a short beam CastLineBeam(3, 20, 4, 0): six
   cells of 20 points away from the caster, no bounce. }
@@ -1811,7 +1811,7 @@ begin
   CastLineBeam(BeamReach, BeamDamage, SaveKindSpell, NoBounce);
 end;
 { ovl22:2F99 (e57). Cast handler of spell 61, a monster-only spell: SpellNames[61] is empty and the
-  ovl22_e10 handler table points element 61 of SpellHandlers at this stub. It only applies the current
+  InitSpellHandlers handler table points element 61 of SpellHandlers at this stub. It only applies the current
   spell ds681B to the chosen targets with the message 'is paralyzed'; the spell's own affect does the
   paralyzing (as CastCauseBlindness does the blinding). Reads ds681B. }
 procedure CastMonsterParalyze;
@@ -1819,7 +1819,7 @@ begin
   ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is paralyzed');
 end;
 { ovl22:2FD0 (e58). Cast handler of spell 62, a monster-only spell: SpellNames[62] is empty and the
-  ovl22_e10 handler table points element 62 of SpellHandlers at this stub. It heals the first chosen
+  InitSpellHandlers handler table points element 62 of SpellHandlers at this stub. It heals the first chosen
   target ds6C95 through HealCharacter for 2d4 + 2 hit points (RollDice, no flag) and reports
   'is Healed' when the heal went through (res12_fn_1FEB, its Flag 1). The map read the routine's
   own prologue as a separate 3-byte routine ovl22_fn_2FD3 at the sub sp word; make match WRITE=1
@@ -1831,7 +1831,7 @@ begin
     res12_fn_1FEB(ds6C95, 1, 'is Healed');
 end;
 { ovl22:302A (e59). Cast handler of spell 63, a monster-only spell: SpellNames[63] is empty and the
-  ovl22_e10 handler table points element 63 of SpellHandlers at this stub. It only applies the current
+  InitSpellHandlers handler table points element 63 of SpellHandlers at this stub. It only applies the current
   spell ds681B to the chosen targets with the message 'is invisible'; the spell's own affect does the
   work (as CastDetectionSpell and CastCauseBlindness leave it to the affect). Reads ds681B. }
 procedure CastMonsterInvisibility;
@@ -1839,7 +1839,7 @@ begin
   ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is invisible');
 end;
 { ovl22:3058 (e60). Cast handler of spell 65, a monster-only spell: SpellNames[65] is empty and the
-  ovl22_e10 handler table points element 65 of SpellHandlers at this stub. It applies the current
+  InitSpellHandlers handler table points element 65 of SpellHandlers at this stub. It applies the current
   spell ds681B to the chosen targets for 2d4 + 2 points (RollDiceCounted, its count kept in ds681C)
   of magic damage with no message. The roll is the damage CastMagicMissile deals for a caster of
   level 3 or 4 (two missiles of 1d4 + 1, ovl22:1439), fixed here since a monster has no caster level.
@@ -1855,7 +1855,7 @@ begin
     RollDiceCounted(DiceCount, DiceSides) + DamageBonus, DamageKind, '');
 end;
 { ovl22:3092 (e61). Cast handler of spell 66, a monster-only spell: SpellNames[66] is empty and the
-  ovl22_e10 handler table points element 66 of SpellHandlers at this stub. The handler is empty: the
+  InitSpellHandlers handler table points element 66 of SpellHandlers at this stub. The handler is empty: the
   picker has already chosen the targets (CastChosenSpell calls SpellTargetPicker, the DS:6B84
   callback, before the handler) and the spell then does nothing, since ApplySpellToTargets is never
   called here, unlike its neighbours CastMonsterParalyze (spell 61) and CastMonsterMagicDamage
@@ -2010,8 +2010,89 @@ begin
     res12_fn_17E3;
   end;
 end;
-{ ovl22:3413: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl22_e10; begin end;
+{ ovl22:3413 (e10). Initialises the spell-casting tables and globals once at start-up (ovl11:002D
+  StartGame calls it). It fills the DS:6B84 block SpellHandlers: element 0 is the target picker
+  (@ChooseSpellTargets) and elements 1..$43 the cast handler of every spell number 1..$43, each an
+  overlay stub of this unit (several spells share one handler: elements 5, 11, 18, 22 and 29 are
+  CastDetectionSpell; 6, 7, 16, 17 and 52..54 are CastProtection; 46 is CastDispelMagic with 41).
+  Then it stores @MonsterBreath in DS:6988 (ds6988), clears the affect-removal flag ds681F, the
+  combat-only-spell flag ds6DBF and the picker's chosen character ds6DB5, and sets ds6821 to 1. }
+procedure InitSpellHandlers;
+begin
+  SpellTargetPicker := ChooseSpellTargets;
+  ds681F := 0;
+  ds6DBF := 0;
+  ds6DB5 := nil;
+  ds6821 := 1;
+  SpellHandlers[1] := CastBless;                { 1 Bless }
+  SpellHandlers[2] := CastCurse;                { 2 Curse }
+  SpellHandlers[3] := CastCureLightWounds;      { 3 Cure Light Wounds }
+  SpellHandlers[4] := CastCauseLightWounds;     { 4 Cause Light Wounds }
+  SpellHandlers[5] := CastDetectionSpell;       { 5 Detect Magic }
+  SpellHandlers[6] := CastProtection;           { 6 Protection From Evil }
+  SpellHandlers[7] := CastProtection;           { 7 Protection from Good }
+  SpellHandlers[8] := CastResistCold;           { 8 Resist Cold }
+  SpellHandlers[9] := CastBurningHands;         { 9 Burning Hands }
+  SpellHandlers[10] := CastCharmPerson;         { 10 Charm Person }
+  SpellHandlers[11] := CastDetectionSpell;      { 11 Detect Magic }
+  SpellHandlers[12] := CastEnlarge;             { 12 Enlarge }
+  SpellHandlers[13] := CastReduce;              { 13 Reduce }
+  SpellHandlers[14] := CastFriends;             { 14 Friends }
+  SpellHandlers[15] := CastMagicMissile;        { 15 Magic Missile }
+  SpellHandlers[16] := CastProtection;          { 16 Protection From Evil }
+  SpellHandlers[17] := CastProtection;          { 17 Protection From Good }
+  SpellHandlers[18] := CastDetectionSpell;      { 18 Read Magic }
+  SpellHandlers[19] := CastShield;              { 19 Shield }
+  SpellHandlers[20] := CastShockingGrasp;       { 20 Shocking Grasp }
+  SpellHandlers[21] := CastSleep;               { 21 Sleep }
+  SpellHandlers[22] := CastDetectionSpell;      { 22 Find Traps }
+  SpellHandlers[23] := CastHoldPerson;          { 23 Hold Person }
+  SpellHandlers[24] := CastResistFire;          { 24 Resist Fire }
+  SpellHandlers[25] := CastSilence;             { 25 Silence, 15' Radius }
+  SpellHandlers[26] := CastSlowPoison;          { 26 Slow Poison }
+  SpellHandlers[27] := CastSnakeCharm;          { 27 Snake Charm }
+  SpellHandlers[28] := CastSpiritualHammer;     { 28 Spiritual Hammer }
+  SpellHandlers[29] := CastDetectionSpell;      { 29 Detect Invisibility }
+  SpellHandlers[30] := CastInvisibility;        { 30 Invisibility }
+  SpellHandlers[31] := CastKnock;               { 31 Knock }
+  SpellHandlers[32] := CastMirrorImage;         { 32 Mirror Image }
+  SpellHandlers[33] := CastRayOfEnfeeblement;   { 33 Ray of Enfeeblement }
+  SpellHandlers[34] := CastStinkingCloud;       { 34 Stinking Cloud }
+  SpellHandlers[35] := CastStrength;            { 35 Strength }
+  SpellHandlers[36] := CastAnimateDead;         { 36 Animate Dead }
+  SpellHandlers[37] := CastCureBlindness;       { 37 Cure Blindness }
+  SpellHandlers[38] := CastCauseBlindness;      { 38 Cause Blindness }
+  SpellHandlers[39] := CastCureDisease;         { 39 Cure Disease }
+  SpellHandlers[40] := CastCauseDisease;        { 40 Cause Disease }
+  SpellHandlers[41] := CastDispelMagic;         { 41 Dispel Magic }
+  SpellHandlers[42] := CastPrayer;              { 42 Prayer }
+  SpellHandlers[43] := CastRemoveCurse;         { 43 Remove Curse }
+  SpellHandlers[44] := CastBestowCurse;         { 44 Bestow Curse }
+  SpellHandlers[45] := CastBlink;               { 45 Blink }
+  SpellHandlers[46] := CastDispelMagic;         { 46 Dispel Magic }
+  SpellHandlers[47] := CastFireball;            { 47 Fireball }
+  SpellHandlers[48] := CastHaste;               { 48 Haste }
+  SpellHandlers[49] := CastHoldPerson;          { 49 Hold Person }
+  SpellHandlers[50] := CastInvisibility;        { 50 Invisibility, 10' Radius }
+  SpellHandlers[51] := CastLightningBolt;        { 51 Lightning Bolt }
+  SpellHandlers[52] := CastProtection;          { 52 Protection From Evil }
+  SpellHandlers[53] := CastProtection;          { 53 Protection From Good, 10' Radius }
+  SpellHandlers[54] := CastProtection;          { 54 Protection From Normal Missiles }
+  SpellHandlers[55] := CastSlow;                { 55 Slow }
+  SpellHandlers[56] := CastRestoration;         { 56 Restoration }
+  SpellHandlers[57] := CastMonsterHaste;        { 57 (monster-only, no name) }
+  SpellHandlers[58] := CastMonsterHeal;         { 58 (monster-only, no name) }
+  SpellHandlers[59] := CastMonsterStrength;     { 59 (monster-only, no name) }
+  SpellHandlers[60] := CastMonsterBeam;         { 60 (monster-only, no name) }
+  SpellHandlers[61] := CastMonsterParalyze;     { 61 (monster-only, no name) }
+  SpellHandlers[62] := CastMonsterHealWounds;   { 62 (monster-only, no name) }
+  SpellHandlers[63] := CastMonsterInvisibility; { 63 (monster-only, no name) }
+  SpellHandlers[64] := CastFireball;            { 64 (monster-only, no name) }
+  SpellHandlers[65] := CastMonsterMagicDamage;  { 65 (monster-only, no name) }
+  SpellHandlers[66] := CastMonsterNoEffect;     { 66 (monster-only, no name) }
+  SpellHandlers[67] := CastMonsterReadMagic;    { 67 (monster-only, no name) }
+  ds6988 := @MonsterBreath;
+end;
 
 begin
 end.
