@@ -73,7 +73,7 @@ begin
   ovl31_e3;
   ds6B84 := @ovl22_e4;
 end;
-{ ovl08:007A. The combat loop. Sets the view mode and DS:6B84 := @ovl13_e14, runs StartBattle,
+{ ovl08:007A. The combat loop. Sets the view mode and DS:6B84 := @SelectSpellTargets, runs StartBattle,
   then rounds until one side's count (ds6814 or ds6815) is zero or EndCombatRound says so.
   Each round calls RecountCombatSides, StartCombatantRound for every combatant on the party list, then turns in
   initiative order (PickNextCombatant, CombatTurn). EndCombat frees the combat data. The byte
@@ -85,7 +85,7 @@ var
   Unused: Byte;
 begin
   ds49F3 := ViewModeCombat;
-  ds6B84 := @ovl13_e14;
+  ds6B84 := @SelectSpellTargets;
   StartBattle;
   Done := 0;
   if (ds6814 = 0) or (ds6815 = 0) then

@@ -843,15 +843,15 @@ var
     $2C, $32, $39 in the image; ovl04:031E, 03A6). Entry 0, the byte before, is never read. }
   DiseaseAffects: array[0..6] of Byte;  { see above }
   ds681F: Byte;                   { 1 while the Temple removes affects (RemoveAffect; ovl04:0386, 05AB, 07CE), 0 after }
-  { Set to 1 once ovl13_e14 has filled the target list ds6C91 from a spell's area scan (ovl13:2205),
+  { Set to 1 once SelectSpellTargets has filled the target list ds6C91 from a spell's area scan (ovl13:2205),
     never cleared by ovl13; a reader elsewhere is not found yet. }
   ds6820: Byte;
   PooledMoney: TPartyMoney;       { the Temple clears it on entry (ovl04:0D32) and passes it to MoneyValueInGold }
-  { The spell targets ovl13_e14 collects while a spell is aimed: entry I holds the PCharacter of a
+  { The spell targets SelectSpellTargets collects while a spell is aimed: entry I holds the PCharacter of a
     target at DS:6C91 + (I-1)*4, entry 1 is the global ds6C95 below; entry 0 is never read (its
     fourth byte is the count ds6C94, which overlaps the array). }
   ds6C91: array[0..73] of PCharacter;  { 1-based spell target list; see above }
-  ds6C94: Byte;                   { the number of targets in ds6C91 ovl13_e14 collected }
+  ds6C94: Byte;                   { the number of targets in ds6C91 SelectSpellTargets collected }
   ds6C95: PCharacter;             { the first spell target, also the character Remove Curse hands to ovl22_e9 (ovl04:08FA) }
   { 1 while money lies in the pool: PoolMoney sets it, ShareMoney sets it when some is left; the
     Temple and the shop clear it with the pool (ovl04:0D37). }
@@ -938,7 +938,7 @@ var
                                     fixed level 6 and ovl22_e3's spell-power path skips the caster level
                                     (ovl22:072F, ovl19:1B1E) }
   ds6E36: Pointer;                { a picture EndCombat frees through ReleasePicture (ovl08:005A) }
-  { A routine pointer: RunCombat sets @ovl13_e14 at the start (ovl08:0085) and EndCombat
+  { A routine pointer: RunCombat sets @SelectSpellTargets at the start (ovl08:0085) and EndCombat
     @ovl22_e4 at the end (ovl08:0069); who calls it is not known yet. }
   ds6B84: Pointer;                { routine RunCombat stores at ovl08:0085 and EndCombat at ovl08:0069 }
   ds6814: Byte;                   { zero (or ds6815 zero) ends the combat (ovl08:009B, 095C); likely the count of one side }

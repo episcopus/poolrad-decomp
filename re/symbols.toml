@@ -5592,66 +5592,14 @@ evidence = ["prologue"]
 id = "ovl13:20C3"
 unit = "ovl13"
 addr = "ovl13:20C3"
-size = 368
-name = "ovl13_e14"
-signature = "procedure ovl13_e14(Spell, Automatic: Byte; var Done: Byte)"
+size = 818
+name = "SelectSpellTargets"
+signature = "procedure SelectSpellTargets(Spell, Automatic: Byte; var Done: Byte)"
 c_name = "ovl13_e14"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_14"
+notes = "renamed from ovl13_e14 (ovl13:20C3 is the routine RunCombat stores in ds6B84 (ovl08:0088) and ovl22_e5 calls after an aim: it fills the spell's target list ds6C91 (1-based, count ds6C94) with the caster alone (Pad2[6] nibble 0), with FindSpellTarget's aim or a ScanTargets area copy (nibble $F and 8..14), or with up to (Pad2[6] and 3)+1 distinct aims, and leaves the chosen cell in ds6DB9/ds6DBA; Done is 0 when nothing was collected.); auto:entry_14"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl13:2233"
-unit = "ovl13"
-addr = "ovl13:2233"
-size = 89
-name = "ovl13_fn_2233"
-signature = ""
-c_name = "ovl13_fn_2233"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:228C"
-unit = "ovl13"
-addr = "ovl13:228C"
-size = 247
-name = "ovl13_fn_228C"
-signature = ""
-c_name = "ovl13_fn_228C"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:2383"
-unit = "ovl13"
-addr = "ovl13:2383"
-size = 51
-name = "ovl13_fn_2383"
-signature = ""
-c_name = "ovl13_fn_2383"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:23B6"
-unit = "ovl13"
-addr = "ovl13:23B6"
-size = 94
-name = "ovl13_fn_23B6"
-signature = ""
-c_name = "ovl13_fn_23B6"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl13:2414"

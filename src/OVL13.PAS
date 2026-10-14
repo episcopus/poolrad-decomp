@@ -7,7 +7,7 @@ unit OVL13;
 interface
 uses POOLVARS;
 type
-  { The record ovl13_e14 and FindSpellTarget pass as Target: one combatant a spell is aimed at and its
+  { The record SelectSpellTargets and FindSpellTarget pass as Target: one combatant a spell is aimed at and its
     combat-map cell. Seven bytes; the last is never read (System_FillChar clears seven, ovl13:2098). }
   TSpellTarget = record
     Who: PCharacter;               { +0: the combatant the spell is aimed at }
@@ -39,11 +39,7 @@ procedure PerformAttack(Who, Target: PCharacter; AttackKind: Byte; AimedItem: Po
 procedure AddRangePenalty(Attacker: PCharacter; Target: PCharacter; var NeededRoll: Byte);
 function FindNearbyTarget(Who: PCharacter; var Selected): Boolean;
 function FindSpellTarget(Spell, Automatic, AimFlag: Byte; var Target: TSpellTarget): Boolean;
-procedure ovl13_e14(Spell, Automatic: Byte; var Done: Byte);
-procedure ovl13_fn_2233;
-procedure ovl13_fn_228C;
-procedure ovl13_fn_2383;
-procedure ovl13_fn_23B6;
+procedure SelectSpellTargets(Spell, Automatic: Byte; var Done: Byte);
 procedure ovl13_e15(A, B: Byte; var Done: Byte);
 procedure ovl13_fn_2432;
 function ovl13_fn_2574(Who: PCharacter; Target: PCharacter): Boolean;
@@ -1187,16 +1183,106 @@ begin
     FillChar(Target, 7, 0);
   end;
 end;
-{ ovl13:20C3: the spell-target selection ds6B84 points at during combat; not decompiled yet }
-{@stub} procedure ovl13_e14(Spell, Automatic: Byte; var Done: Byte); begin end;
-{ ovl13:2233: frame not read }
-{@stub} procedure ovl13_fn_2233; begin end;
-{ ovl13:228C: frame not read }
-{@stub} procedure ovl13_fn_228C; begin end;
-{ ovl13:2383: frame not read }
-{@stub} procedure ovl13_fn_2383; begin end;
-{ ovl13:23B6: retf 8: 8 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl13_fn_23B6; begin end;
+{ ovl13:20C3, SelectSpellTargets. The spell window RunCombat sets ds6B84 to (ovl08:0088): it fills the target
+  list ds6C91 for the spell Spell (1-based, count ds6C94) and leaves the chosen target's cell in
+  ds6DB9/ds6DBA. The spell row's byte +6 (Pad2[6]) switches:
+    - nibble 0: the caster itself is the only target (ds6C95 := SelectedCharacter);
+    - nibble $F: FindSpellTarget aims (AimFlag 0); an aim on some combatant (Combat^.Target set) is
+      used alone, an empty one scans the spell's area (ScanTargets, line budget (Pad2[6] and $F) shr 4)
+      and copies every found combatant into ds6C91;
+    - nibble 8..14: FindSpellTarget aims (AimFlag 1) and the spell's area (line budget Pad2[6] and 7)
+      always fills ds6C91;
+    - any other nibble: up to (Pad2[6] and 3) + 1 aiming passes collect that many distinct targets;
+      a target already in the list only flashes 'Already been targeted' when Automatic is 0.
+  Done is set to 0 when nothing was collected (or an aim was refused). ds6820 is set to 1 once the
+  area scan filled the list. Globals: SelectedCharacter, ds6C91, ds6C94, ds6DB9, ds6DBA, ds6820. }
+procedure SelectSpellTargets(Spell, Automatic: Byte; var Done: Byte);
+var
+  TargetsLeft: Byte;             { the aiming passes the default branch still gets }
+  Count: Byte;                   { the number of targets collected }
+  J: Byte;                       { walk of the targets collected so far }
+  Target: TSpellTarget;          { one aim FindSpellTarget hands over }
+  Duplicate: Byte;               { nonzero when Target is already in ds6C91 }
+begin
+  Done := 1;
+  ds6C94 := 0;
+  ds6820 := 0;
+  ds6DB9 := CombatantX(SelectedCharacter);
+  ds6DBA := CombatantY(SelectedCharacter);
+  case SpellTable[Spell].Pad2[6] and $F of
+    0:
+      begin
+        ds6C95 := SelectedCharacter;
+        ds6C94 := 1;
+      end;
+    $F:
+      begin
+        if FindSpellTarget(Spell, Automatic, 0, Target) then
+        begin
+          if SelectedCharacter^.Combat^.Target <> nil then
+          begin
+            ds6C95 := SelectedCharacter^.Combat^.Target;
+            ds6C94 := 1;
+          end
+          else
+          begin
+            ScanTargets(ds6DB9, ds6DBA,
+              (SpellTable[Spell].Pad2[6] and $F) shr 4, $FF, 1, CombatMap);
+            for Count := 1 to ds6718[0].Val do
+              ds6C91[Count] := CombatantRecord[ds6718[Count].Head];
+            ds6C94 := ds6718[0].Val;
+            ds6820 := 1;
+          end;
+        end
+        else
+          Done := 0;
+      end;
+    8..14:
+      begin
+        if FindSpellTarget(Spell, Automatic, 1, Target) then
+        begin
+          ScanTargets(ds6DB9, ds6DBA, SpellTable[Spell].Pad2[6] and 7, $FF, 1, CombatMap);
+          for Count := 1 to ds6718[0].Val do
+            ds6C91[Count] := CombatantRecord[ds6718[Count].Head];
+          ds6C94 := ds6718[0].Val;
+          ds6820 := 1;
+        end
+        else
+          Done := 0;
+      end;
+  else
+    begin
+      TargetsLeft := (SpellTable[Spell].Pad2[6] and 3) + 1;
+      Count := 0;
+      while TargetsLeft > 0 do
+      begin
+        if FindSpellTarget(Spell, Automatic, 0, Target) then
+        begin
+          Duplicate := 0;
+          for J := 1 to Count do
+            if ds6C91[J] = Target.Who then
+              Duplicate := 1;
+          if Duplicate = 0 then
+          begin
+            Inc(Count);
+            ds6C91[Count] := Target.Who;
+            Dec(TargetsLeft);
+          end
+          else if Automatic = 0 then
+            ShowFlashMessage('Already been targeted')
+          else
+            Dec(TargetsLeft);
+          RedrawMapCell(CombatantX(ds6C91[Count]), CombatantY(ds6C91[Count]));
+        end
+        else
+          Dec(TargetsLeft);
+      end;
+      ds6C94 := Count;
+      if Count = 0 then
+        Done := 0;
+    end;
+  end;
+end;
 { ovl13:2414: frame not read }
 {@stub} procedure ovl13_e15(A, B: Byte; var Done: Byte); begin end;
 { ovl13:2432: retf 8: 8 bytes of parameters; 0 bytes of locals }
