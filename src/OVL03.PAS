@@ -48,7 +48,7 @@ procedure DamagePartyCommand;
 procedure RedrawAreaViewCommand;
 procedure PassTimeCommand;
 procedure NewLineCommand;
-procedure ovl03_fn_2B14;
+procedure ClearPictureWindowCommand;
 procedure ovl03_fn_2B33;
 procedure ovl03_fn_2B7E;
 procedure ovl03_fn_2C03;
@@ -165,6 +165,12 @@ const
   EndTextColor = 10;
   EndPauseMs = 3000;
   ContinueColor = 15;
+  { The picture frame of ECL commands 0 and 61 (ovl03:0001, ovl03:2B14): columns 1 to 15 and rows 1 to
+    15, a box the close-up picture is drawn inside (columns and rows 3 to 13). }
+  PictureFrameLeft = 1;
+  PictureFrameTop = 1;
+  PictureFrameRight = $F;
+  PictureFrameBottom = $F;
   { The party size: word 830 of ds49D6 (VarPartySize of ovl05, which is not visible here). }
   VarPartySize = 830;
 var
@@ -182,7 +188,7 @@ procedure EndCommand;
 begin
   if ds84E2 <> 0 then
   begin
-    DrawWindow(1, 1, $F, $F, 0, $F, '');
+    DrawWindow(PictureFrameLeft, PictureFrameTop, PictureFrameRight, PictureFrameBottom, 0, $F, '');
     if GameVars^[VarForceWallView] <> 0 then
       DrawWindow(3, 3, $D, $D, 0, $F, '');
   end;
@@ -1633,8 +1639,16 @@ begin
     Inc(GlyphRow);
   end;
 end;
-{ ovl03:2B14: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl03_fn_2B14; begin end;
+{ ovl03:2B14. ECL command 61 (dispatcher ovl03:2F2D, SkippedOpcode 3Dh): clears the picture window, the
+  box at columns 1 to 15 and rows 1 to 15 that frames the encounter picture (ShowCloseUpCommand draws
+  the close-up inside the box at 3 to 13, and EndCommand draws this box as a frame). Then ds84DE is set
+  (its meaning is not traced; EndCommand clears it). Inc(ds49ED) counts the command (see ds49ED). }
+procedure ClearPictureWindowCommand;
+begin
+  Inc(ds49ED);
+  ClearRect(PictureFrameLeft, PictureFrameTop, PictureFrameRight, PictureFrameBottom);
+  ds84DE := 1;
+end;
 { ovl03:2B33: retf 0: 0 bytes of parameters; 256 bytes of locals }
 {@stub} procedure ovl03_fn_2B33; begin end;
 { ovl03:2B7E: retf 0: 0 bytes of parameters; 6 bytes of locals }

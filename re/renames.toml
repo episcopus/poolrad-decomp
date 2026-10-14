@@ -3728,3 +3728,10 @@ kind = "routine"
 why = "ovl03:2AEB is the handler of ECL opcode 51 (dispatcher ovl03:2F2D, cmp al,33h): it moves the text cursor GlyphCol/GlyphRow to column 1 of the next row (the POOLVARS comment says GlyphRow is Inc per newline) and clears ds84DF when set"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl03_fn_2B14"
+new = "ClearPictureWindowCommand"
+kind = "routine"
+why = "ovl03:2B14 is the handler of ECL opcode 61 (dispatcher ovl03:2F2D, cmp al,3Dh): it clears the picture window box (1,1)-(15,15) with ClearRect and sets ds84DE; EndCommand (ovl03:0001) draws the same box and clears ds84DE"
+date = "2026-10-13"
+

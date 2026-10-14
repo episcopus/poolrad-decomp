@@ -709,7 +709,9 @@ var
     { DoPick clears it. Overlaps ds6DDE[1]; exact sharing uncertain. }
   DuelMode: Byte;                 { nonzero during a duel (EndBattle's duel texts); the loader clears it (ovl11:040B) }
   ds84DD: Byte;                   { cleared by the loader (ovl11:0415) }
-  ds84DE: Byte;                   { cleared by the loader (ovl11:041A) }
+  { cleared by the loader (ovl11:041A) and by EndCommand (ovl03:0001); set by ECL command 61
+    (ovl03:2B14); meaning unknown }
+  ds84DE: Byte;
   { cleared by the loader (ovl11:041F) and, when set, by ECL command 51 (NewLineCommand, ovl03:2AEB);
     meaning unknown }
   ds84DF: Byte;
@@ -966,7 +968,8 @@ var
   ds49E7: Word;                   { the third script entry address; see above }
   ds49E9: Word;                   { the fourth script entry address; see above }
   ds49EB: Word;                   { the fifth script entry address; see above }
-  ds49ED: Word;                   { up: ECL 36, 49, 58 (ovl03:179B, 2AA2, 271F); down: 37, 38 (ovl03:18F8); meaning unknown }
+  { up: ECL 36, 49, 51, 58 and 61 (ovl03:179B, 2AA2, 2AEB, 271F, 2B14); down: 37, 38 (ovl03:18F8); meaning unknown }
+  ds49ED: Word;
   ReturnStack: PReturnEntry;           { the top of the script's return stack (ScriptGosub); InitScript empties it }
   ReturnPrev: PReturnEntry;           { the previous top while ScriptGosub pushes; InitScript clears it }
   { The results of the script's last comparison (CompareStrings, CompareWords): 1 in [0] when

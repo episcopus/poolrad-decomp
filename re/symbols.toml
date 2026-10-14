@@ -693,12 +693,12 @@ id = "ovl03:2B14"
 unit = "ovl03"
 addr = "ovl03:2B14"
 size = 31
-name = "ovl03_fn_2B14"
+name = "ClearPictureWindowCommand"
 signature = ""
 c_name = "ovl03_fn_2B14"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_2B14 (ovl03:2B14 is the handler of ECL opcode 61 (dispatcher ovl03:2F2D, cmp al,3Dh): it clears the picture window box (1,1)-(15,15) with ClearRect and sets ds84DE; EndCommand (ovl03:0001) draws the same box and clears ds84DE); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
