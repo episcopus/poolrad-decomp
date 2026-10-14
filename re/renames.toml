@@ -3756,3 +3756,10 @@ kind = "routine"
 why = "ovl03:2C03 is the handler of ECL opcode 59 (dispatcher ovl03:2F2D, cmp al,3Bh): it compares operand 1 with the bytes from TCharacter.Spells[1] (+$18 on, the memorized spells of POOLVARS, which CombatMenu and ovl14 read) of the first party member and writes the slot found (or $FF) and the member count"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl03_fn_2CCF"
+new = "EngineActionCommand"
+kind = "routine"
+why = "ECL opcode 45 (dispatcher ovl03:2F2D cmp al,2Dh calls it, ovl03:30DA); the operand word picks an engine action: area redraw (ds4431, ds84E0..), duel (SetupDuel), sound (ds84CC), StepPartyForward, WallIdAt (ds49FA)"
+date = "2026-10-13"
+

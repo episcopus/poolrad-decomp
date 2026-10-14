@@ -52,10 +52,7 @@ procedure ClearPictureWindowCommand;
 procedure ChoosePartyMemberCommand;
 procedure AddComputerMemberCommand;
 procedure FindMemorizedSpellCommand;
-procedure ovl03_fn_2CCF;
-procedure ovl03_fn_2D39;
-procedure ovl03_fn_2DBA;
-procedure ovl03_fn_2DCB;
+procedure EngineActionCommand;
 procedure ovl03_fn_2DD3;
 procedure ovl03_fn_2E10;
 procedure ovl03_fn_2E7D;
@@ -66,7 +63,8 @@ procedure ovl03_e1;
 procedure ovl03_fn_3379;
 procedure ovl03_fn_34AB;
 implementation
-uses OVL04, OVL05, OVL06, OVL08, OVL17, OVL20, OVL21, OVL24, OVL25, OVL26, OVL28, OVL29, OVL32, RES04, RES05, RES06, Crt;
+uses OVL04, OVL05, OVL06, OVL08, OVL15, OVL17, OVL18, OVL20, OVL21, OVL24, OVL25, OVL26, OVL28, OVL29,
+  OVL32, RES03, RES04, RES05, RES06, Crt;
 
 const
   { The operand types from this one up are strings: $80 a packed string, $81 the address of a
@@ -181,6 +179,17 @@ const
   PictureFrameBottom = $F;
   { The party size: word 830 of ds49D6 (VarPartySize of ovl05, which is not visible here). }
   VarPartySize = 830;
+  { ECL command 45 (ovl03:2CCF) biases the operand word by CodeBias and tests the result against the
+    actions below; the comments give the word the script writes. }
+  CodeBias = $7FFF;
+  ActionRedrawArea = $AC91;     { word $2C90: redraw the area view when it is out of date }
+  ActionDuelWithCopy = 1;       { word $8000: a duel with the copy }
+  ActionDuelNoCopy = 2;         { word $8001: a duel without the copy }
+  ActionSound = $3A04;          { word $BA03: PlaySound by ds84CC }
+  ActionStepParty = $401F;      { word $C01E: StepPartyForward }
+  ActionWallProbe = $4019;      { word $C018: WallIdAt into ds6AB0 when ds49FA is 1 }
+  DuelWithCopy = 1;             { SetupDuel's WithCopy flag }
+  DuelNoCopy = 0;
 var
   { ds84C8 (POOLVARS) under the type ShowEncounterPicture takes: TPictureShown is declared in OVL07,
     and Turbo Pascal accepts a var argument only of the identical type. }
@@ -1744,14 +1753,52 @@ begin
   WriteVmWord(SlotAddr, I);
   WriteVmWord(CountAddr, Count);
 end;
-{ ovl03:2CCF: frame not read }
-{@stub} procedure ovl03_fn_2CCF; begin end;
-{ ovl03:2D39: frame not read }
-{@stub} procedure ovl03_fn_2D39; begin end;
-{ ovl03:2DBA: frame not read }
-{@stub} procedure ovl03_fn_2DBA; begin end;
-{ ovl03:2DCB: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl03_fn_2DCB; begin end;
+{ ovl03:2CCF. ECL command 45 (dispatcher ovl03:2F2D, SkippedOpcode 2Dh): runs the engine action that the
+  word of its operand picks (the two bytes of the operand, not its value). The word less CodeBias is
+  tested against the Action codes in turn; any other word does nothing. The actions:
+  - ActionRedrawArea: ds6AB1 takes the event byte of the party's cell (EventByteAt). When ds4431 is set
+    (ECL commands 33 and 55 set it, 32 clears it) and one of ds84E0, ds84E3, ds84E5, ds84E6 or ds84E8 is
+    set, the area view is drawn again (ShowAreaView), res12_fn_290B runs and those five flags are cleared.
+  - ActionDuelWithCopy and ActionDuelNoCopy: SetupDuel starts a duel with or without the copy.
+  - ActionSound: PlaySound of ds2628 when ds84CC is 8, of ds262A when ds84CC is 10.
+  - ActionStepParty: StepPartyForward moves the party one cell.
+  - ActionWallProbe: when ds49FA is 1, ds6AB0 takes the wall id of the party's cell (WallIdAt). }
+procedure EngineActionCommand;
+var
+  Code: Word;                   { the operand's word }
+  Action: Word;                 { Code less CodeBias: the action tested }
+begin
+  DecodeOperands(1);
+  Code := MakeWord(OperandLow[1], OperandHigh[1]);
+  Action := Code - CodeBias;
+  case Action of
+    ActionRedrawArea:
+      begin
+        ds6AB1 := EventByteAt(PartyMapColumn, PartyMapRow);
+        if (ds4431 <> 0) and ((ds84E0 <> 0) or (ds84E3 <> 0) or (ds84E5 <> 0) or (ds84E6 <> 0) or (ds84E8 <> 0)) then
+        begin
+          ShowAreaView;
+          res12_fn_290B;
+          ds84E8 := 0;
+          ds84E5 := 0;
+          ds84E6 := 0;
+          ds84E0 := 0;
+          ds84E3 := 0;
+        end;
+      end;
+    ActionDuelWithCopy: SetupDuel(DuelWithCopy);
+    ActionDuelNoCopy: SetupDuel(DuelNoCopy);
+    ActionSound:
+      case ds84CC of
+        8: PlaySound(ds2628);
+        10: PlaySound(ds262A);
+      end;
+    ActionStepParty: StepPartyForward;
+    ActionWallProbe:
+      if ds49FA = 1 then
+        ds6AB0 := WallIdAt(PartyMapColumn, PartyMapRow, PartyFacing);
+  end;
+end;
 { ovl03:2DD3: retf 0: 0 bytes of parameters; 2 bytes of locals }
 {@stub} procedure ovl03_fn_2DD3; begin end;
 { ovl03:2E10: retf 0: 0 bytes of parameters; 4 bytes of locals }

@@ -744,53 +744,14 @@ evidence = ["prologue"]
 id = "ovl03:2CCF"
 unit = "ovl03"
 addr = "ovl03:2CCF"
-size = 106
-name = "ovl03_fn_2CCF"
+size = 260
+name = "EngineActionCommand"
 signature = ""
 c_name = "ovl03_fn_2CCF"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_2CCF (ECL opcode 45 (dispatcher ovl03:2F2D cmp al,2Dh calls it, ovl03:30DA); the operand word picks an engine action: area redraw (ds4431, ds84E0..), duel (SetupDuel), sound (ds84CC), StepPartyForward, WallIdAt (ds49FA)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl03:2D39"
-unit = "ovl03"
-addr = "ovl03:2D39"
-size = 129
-name = "ovl03_fn_2D39"
-signature = ""
-c_name = "ovl03_fn_2D39"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:2DBA"
-unit = "ovl03"
-addr = "ovl03:2DBA"
-size = 17
-name = "ovl03_fn_2DBA"
-signature = ""
-c_name = "ovl03_fn_2DBA"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl03:2DCB"
-unit = "ovl03"
-addr = "ovl03:2DCB"
-size = 8
-name = "ovl03_fn_2DCB"
-signature = ""
-c_name = "ovl03_fn_2DCB"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl03:2DD3"
