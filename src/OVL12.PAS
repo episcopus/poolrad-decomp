@@ -115,8 +115,7 @@ procedure HalveDamageByFirstSlotItemRow(Who: PCharacter; Affect: PAffect; Mode: 
 procedure HalveDamageForEnchantedSlotItem(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure SetDamageFromSlotItemType55(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure HalveColdDamageNoSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e103(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_fn_2B8B;
+procedure CancelDamageUnlessEnchantedSlotItem(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e104;
 procedure ovl12_e105;
 procedure ovl12_e106;
@@ -1957,10 +1956,19 @@ begin
   if (DamageKind and KindCold) <> 0 then
     DamageAmount := DamageAmount shr 1;
 end;
-{ ovl12:2B7D: frame not read }
-{@stub} procedure ovl12_e103(Who: PCharacter; Affect: PAffect; Mode: Byte); begin end;
-{ ovl12:2B8B: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_fn_2B8B; begin end;
+{ ovl12:2B7D. Affect handler for damage (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000).
+  Unless the first slot item of SelectedCharacter (FirstSlotItem, ovl12:101D) exists and has Plus (+$32) not 0, the
+  damage is cancelled (DamageAmount := 0) when the character's Race (+$2E, a signed byte) is above 0 or its
+  HighestLevel (+$73) is below 4. Purpose unknown: which affect runs it is not known yet [?]. }
+procedure CancelDamageUnlessEnchantedSlotItem(Who: PCharacter; Affect: PAffect; Mode: Byte);
+var
+  Item: PItem;
+begin
+  Item := FirstSlotItem(SelectedCharacter);
+  if (Item = nil) or (Item^.Plus = 0) then
+    if (SelectedCharacter^.Race > 0) or (SelectedCharacter^.HighestLevel < 4) then
+      DamageAmount := 0;
+end;
 { ovl12:2BC8: retf 10: 10 bytes of parameters; 4 bytes of locals }
 {@stub} procedure ovl12_e104; begin end;
 { ovl12:2C1C: retf 10: 10 bytes of parameters; 12 bytes of locals }

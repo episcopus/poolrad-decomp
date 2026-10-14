@@ -4134,3 +4134,10 @@ kind = "routine"
 why = "ovl12:2B63 halves DamageAmount while DamageKind has KindCold (bit 2); it is HalveColdDamage (ovl12:03E1) without the SaveRoll bonus, the cold twin of HalveFireDamageNoSave (ovl12:25A2)"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl12_e103"
+new = "CancelDamageUnlessEnchantedSlotItem"
+kind = "routine"
+why = "ovl12:2B7D cancels DamageAmount unless FirstSlotItem(SelectedCharacter) exists with Plus not 0, and then only when Race (+$2E) is above 0 or HighestLevel (+$73) is below 4; the name gives the first exception, the comment the second"
+date = "2026-10-14"
+
