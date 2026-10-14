@@ -4092,3 +4092,10 @@ kind = "routine"
 why = "ovl12:2A11 tests DamageKind bit 1 (KindFire, ds6819 and 1) and then calls CancelPendingHook(0), which drops the damage (ovl12:2A11, matched)"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl12_e97"
+new = "ReduceFireDamageOnePerDie"
+kind = "routine"
+why = "ovl12:2A28 is the loop of ReduceFireDamageByRoll (ovl12:1490) with Dec(DamageAmount) (one point, fe 0e 18 68) per die of ds681C, and no save bonus or cancel"
+date = "2026-10-14"
+

@@ -109,7 +109,7 @@ procedure CancelParalysisHook(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure CancelColdDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure CancelPoisonAndParalysisHooks(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure CancelFireDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e97;
+procedure ReduceFireDamageOnePerDie(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e98;
 procedure ovl12_e99;
 procedure ovl12_e100;
@@ -1887,8 +1887,23 @@ begin
   if (DamageKind and KindFire) <> 0 then
     CancelPendingHook(0);
 end;
-{ ovl12:2A28: retf 10: 10 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl12_e97; begin end;
+{ ovl12:2A28. Damage hook (the AffectHandlers shape: Who, Affect and Mode; none of them is read, ovl24:0000). While the
+  damage is fire (DamageKind bit KindFire, DS:6819), each of the ds681C dice of the last roll takes one point off
+  DamageAmount, and it never goes below ds681C. The twin of ReduceFireDamageByRoll (ovl12:1490), which takes
+  FireReductionPerDie per die and also adds the save bonus and cancels a non-magic hit. Purpose unknown: which affect
+  runs it is not known yet [?]. }
+procedure ReduceFireDamageOnePerDie(Who: PCharacter; Affect: PAffect; Mode: Byte);
+var
+  I: Byte;
+begin
+  if (DamageKind and KindFire) <> 0 then
+    for I := 1 to ds681C do
+    begin
+      Dec(DamageAmount);
+      if DamageAmount < ds681C then
+        DamageAmount := ds681C;
+    end;
+end;
 { ovl12:2A6D: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e98; begin end;
 { ovl12:2A87: retf 10: 10 bytes of parameters; 4 bytes of locals }

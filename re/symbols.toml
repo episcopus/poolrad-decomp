@@ -4487,12 +4487,12 @@ id = "ovl12:2A28"
 unit = "ovl12"
 addr = "ovl12:2A28"
 size = 69
-name = "ovl12_e97"
+name = "ReduceFireDamageOnePerDie"
 signature = ""
 c_name = "ovl12_e97"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_97"
+notes = "renamed from ovl12_e97 (ovl12:2A28 is the loop of ReduceFireDamageByRoll (ovl12:1490) with Dec(DamageAmount) (one point, fe 0e 18 68) per die of ds681C, and no save bonus or cancel); auto:entry_97"
 evidence = ["prologue"]
 
 [[routine]]
