@@ -55,6 +55,15 @@ lesson = "res12:0BB8 copies six bytes (+$A3..+$A8) into +$115..+$11A with ONE fo
 evidence = ["src/RES12.PAS#RecalcCombatValues", "src/POOLVARS.PAS#TCharacter", "src/OVL09.PAS", "re/symbols.toml#00BA:0BB8"]
 
 [[lesson]]
+id = "res12-div4-word-two-shifts"
+confidence = "V"
+units = ["res12", "*"]
+tags = ["division", "shift", "codegen", "word", "locals"]
+title = "X div 4 on a Word compiles to two shr ax,1, while X shr 2 uses mov cl,2 / shr ax,cl"
+lesson = "Turbo Pascal 6.0 constant-folds `X div 4` for a Word local into two `shr ax,1` (00BA:18B3), but `X shr 2` compiles to `mov cl,2; shr ax,cl`. res12:1892's `PixelBytes := PixelBytes div 4` matched only with the div form. Also: locals are allocated in declaration order, the FIRST declared at the lowest offset from bp, so a routine using [bp-8], [bp-6] and [bp-4] declares Pic (Pointer, 4 bytes), then PixelBytes, then RowBytes. Probe: tools/re/tp_idioms/res12/PRB17.PAS."
+evidence = ["src/RES12.PAS#CopyPictureItem", "re/symbols.toml#00BA:1892", "tools/re/tp_idioms/res12/PRB17.PAS"]
+
+[[lesson]]
 id = "res12-with-pointer-parameter-frame"
 confidence = "I"
 units = ["res12", "*"]

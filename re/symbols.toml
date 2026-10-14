@@ -16803,53 +16803,14 @@ evidence = ["prologue"]
 id = "00BA:1892"
 unit = "res12"
 addr = "00BA:1892"
-size = 17
-name = "res12_fn_1892"
+size = 332
+name = "CopyPictureItem"
 signature = ""
 c_name = "res12_fn_1892"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_1892 (00BA:1892 copies item 0 of a source picture ds5E5A[PicIndex].Pics[Half] into item Row of the combat picture ds6E36 (ByteSize bytes at +17 and the pixel buffer at +13), mirroring through a temporary when Mirror is set; called in a loop by res12_fn_19DE and by ovl13); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "00BA:18A3"
-unit = "res12"
-addr = "00BA:18A3"
-size = 44
-name = "res12_fn_18A3"
-signature = ""
-c_name = "res12_fn_18A3"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "00BA:18CF"
-unit = "res12"
-addr = "00BA:18CF"
-size = 62
-name = "res12_fn_18CF"
-signature = ""
-c_name = "res12_fn_18CF"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "00BA:190D"
-unit = "res12"
-addr = "00BA:190D"
-size = 209
-name = "res12_fn_190D"
-signature = ""
-c_name = "res12_fn_190D"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "00BA:19DE"

@@ -3595,3 +3595,10 @@ kind = "routine"
 why = "00BA:1816 draws Who's Name at (Col,Row) in the state colour (LightRed no combat, Yellow party, LightCyan other) and appends '\\''s when Mode is set"
 date = "2026-10-13"
 
+[[rename]]
+old = "res12_fn_1892"
+new = "CopyPictureItem"
+kind = "routine"
+why = "00BA:1892 copies item 0 of a source picture ds5E5A[PicIndex].Pics[Half] into item Row of the combat picture ds6E36 (ByteSize bytes at +17 and the pixel buffer at +13), mirroring through a temporary when Mirror is set; called in a loop by res12_fn_19DE and by ovl13"
+date = "2026-10-13"
+

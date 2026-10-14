@@ -7,7 +7,7 @@ unit RES12;
   Many routines are still stubs. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
-uses POOLVARS, RES06, RES09;
+uses POOLVARS, RES06, RES07, RES09;
 type
   { The readied-item bonus accumulator AddReadiedItemBonus fills for RecalcCombatValues: the four signed
     bytes it combines into the character's +$112 value (with the flag byte the second var
@@ -50,10 +50,7 @@ procedure ShowFlashMessage(Text: String40);
 procedure ShowCharacterMessage(Who: PCharacter; Text: string; Row, Wait: Byte);
 procedure ClearCharacterMessage;
 procedure DrawCharacterName(Who: PCharacter; Col, Row, Mode: Byte);
-procedure res12_fn_1892;
-procedure res12_fn_18A3;
-procedure res12_fn_18CF;
-procedure res12_fn_190D;
+procedure CopyPictureItem(PicIndex, Half, Row, Mirror: Byte);
 procedure res12_fn_19DE;
 procedure res12_fn_1A29;
 procedure res12_fn_1CBA;
@@ -894,14 +891,39 @@ begin
   if Mode <> 0 then
     DrawTextAt(Col + Length(Who^.Name), Row, Color, '''s');
 end;
-{ 00BA:1892: frame not read }
-{@stub} procedure res12_fn_1892; begin end;
-{ 00BA:18A3: frame not read }
-{@stub} procedure res12_fn_18A3; begin end;
-{ 00BA:18CF: frame not read }
-{@stub} procedure res12_fn_18CF; begin end;
-{ 00BA:190D: retf 8: 8 bytes of parameters; 0 bytes of locals }
-{@stub} procedure res12_fn_190D; begin end;
+{ 00BA:1892. Copies one row of a 24x3 picture into the combat picture ds6E36. PicIndex selects a
+  slot of the picture table ds5E5A and Half picks one of the slot's two pointers
+  (ds5E5A[PicIndex].Pics[Half]); Row is the destination row, copied at byte offset Row times the
+  picture's bytes-per-item (ByteSize, +$11). When Mirror is not 0 the source picture is first
+  mirrored into a temporary 24x3 picture (AllocatePicture then MirrorPicture) and that copy is
+  blitted, otherwise the table picture is blitted directly. In both cases the bitmap (Data, +$17)
+  is copied with RowBytes bytes and the pixel buffer (Pixels, +$13) with the quartered PixelBytes
+  count for the text video adapter (VideoAdapter = 1). ReleasePicture frees the temporary.
+  Called in a loop by res12_fn_19DE and by ovl13.
+  Globals: ds6E36 (read), ds5E5A (read), VideoAdapter (read). }
+procedure CopyPictureItem(PicIndex, Half, Row, Mirror: Byte);
+var
+  Pic: Pointer;
+  PixelBytes, RowBytes: Word;
+begin
+  RowBytes := PPicture(ds6E36)^.ByteSize;
+  PixelBytes := RowBytes;
+  if VideoAdapter = 1 then
+    PixelBytes := PixelBytes div 4;
+  if Mirror <> 0 then
+  begin
+    AllocatePicture($18, 3, 1, 1, Pic);
+    MirrorPicture(ds5E5A[PicIndex].Pics[Half], Pic);
+    Move(PPicture(Pic)^.Data[0], PPicture(ds6E36)^.Data[Row * RowBytes], RowBytes);
+    Move(PPicture(Pic)^.Pixels^[0], PPicture(ds6E36)^.Pixels^[Row * PixelBytes], PixelBytes);
+    ReleasePicture(Pic);
+  end
+  else
+  begin
+    Move(PPicture(ds5E5A[PicIndex].Pics[Half])^.Data[0], PPicture(ds6E36)^.Data[Row * RowBytes], RowBytes);
+    Move(PPicture(ds5E5A[PicIndex].Pics[Half])^.Pixels^[0], PPicture(ds6E36)^.Pixels^[Row * PixelBytes], PixelBytes);
+  end;
+end;
 { 00BA:19DE: retf 2: 2 bytes of parameters; 0 bytes of locals }
 {@stub} procedure res12_fn_19DE; begin end;
 { 00BA:1A29: frame not read }
