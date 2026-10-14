@@ -281,9 +281,10 @@ type
       is the fighter in the create-character run, whitepaper 5.8). Signed: only levels above 0 count. }
     ClassLevels: array[0..7] of ShortInt;
     Sex: Byte;                    { +$9E: the sex, 0 male (whitepaper 4.2.5) }
-    { +$9F: the creature kind some spells test a target by: Charm Person and Sleep require 1 or less
-      (ovl22:11F3, 1760), Snake Charm $E (ovl22:193E) and ovl12 tests 4 and $A; MON*CHA has the
-      humanoids at 0 or 1, the undead at 4 and a giant snake at $E, and a saved party member at 0. }
+    { +$9F: the creature kind some spells test a target by: Charm Person and the shared helper
+      ovl22_fn_1758 require 1 or less (ovl22:11F3, 1760), Snake Charm $E (ovl22:193E) and ovl12
+      tests 4 and $A; MON*CHA has the humanoids at 0 or 1, the undead at 4 and a giant snake at $E,
+      and a saved party member at 0. }
     CreatureType: Byte;
     ByteA0: ShortInt;             { +$A0: the script reads it signed (GetCharacterVar, ovl07:08C5); meaning unknown }
     { +$A1: RecalcClassStats sets 3 when the fighter level (ClassLevels[2]) is above 6, else 2
