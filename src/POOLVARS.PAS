@@ -843,8 +843,16 @@ var
     $2C, $32, $39 in the image; ovl04:031E, 03A6). Entry 0, the byte before, is never read. }
   DiseaseAffects: array[0..6] of Byte;  { see above }
   ds681F: Byte;                   { 1 while the Temple removes affects (RemoveAffect; ovl04:0386, 05AB, 07CE), 0 after }
+  { Set to 1 once ovl13_e14 has filled the target list ds6C91 from a spell's area scan (ovl13:2205),
+    never cleared by ovl13; a reader elsewhere is not found yet. }
+  ds6820: Byte;
   PooledMoney: TPartyMoney;       { the Temple clears it on entry (ovl04:0D32) and passes it to MoneyValueInGold }
-  ds6C95: PCharacter;             { the character Remove Curse hands to ovl22_e9 (ovl04:08FA) }
+  { The spell targets ovl13_e14 collects while a spell is aimed: entry I holds the PCharacter of a
+    target at DS:6C91 + (I-1)*4, entry 1 is the global ds6C95 below; entry 0 is never read (its
+    fourth byte is the count ds6C94, which overlaps the array). }
+  ds6C91: array[0..73] of PCharacter;  { 1-based spell target list; see above }
+  ds6C94: Byte;                   { the number of targets in ds6C91 ovl13_e14 collected }
+  ds6C95: PCharacter;             { the first spell target, also the character Remove Curse hands to ovl22_e9 (ovl04:08FA) }
   { 1 while money lies in the pool: PoolMoney sets it, ShareMoney sets it when some is left; the
     Temple and the shop clear it with the pool (ovl04:0D37). }
   MoneyInPool: Byte;
@@ -918,6 +926,10 @@ var
   ds0D02: array[0..15] of Byte;   { four 2-bit pixels of colour C; see above }
   ds0D06: array[0..15] of Byte;   { two 4-bit pixels of colour C (C * $11); see above }
   { Globals of the combat unit ovl08 (whitepaper 5.5). }
+  { The combat cell of the target FindSpellTarget last chose (its X and Y, written together with the
+    chosen target, ovl13:207C/2086); who reads them is not found yet. }
+  ds6DB9: Byte;                   { see above: the chosen target's combat column }
+  ds6DBA: Byte;                   { see above: the chosen target's combat row }
   ds6DBB: PCombatNode;            { a list of $13-byte records EndCombat frees (ovl08:0006); meaning unknown }
   ItemAffectUse: Boolean;         { True while the Use action (UseItem, ovl19:1BC2..1BE2) casts a spell through ovl22_e5,
                                     and set (ovl19:1AE7) for an item whose Affects[2] gives the spell (not a scroll);

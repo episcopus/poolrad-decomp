@@ -5579,40 +5579,14 @@ evidence = ["prologue"]
 id = "ovl13:1E16"
 unit = "ovl13"
 addr = "ovl13:1E16"
-size = 533
-name = "ovl13_fn_1E16"
+size = 663
+name = "FindSpellTarget"
 signature = ""
 c_name = "ovl13_fn_1E16"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_fn_1E16 (ovl13:1E16 picks the target a spell is aimed at: with Automatic=0 it lets ovl13_e17 choose (the player's cursor) and copies the choice into Combat^.Target, else it takes the spell row's own data (PadB[$E] zero means the caster itself, spell 3 asks FindNearbyTarget) or loops ovl13_e21 up to 20 times and keeps an aim whose area hits only the caster's enemies and whose target is not helpless by the row's AffectId; it returns whether a target was stored and leaves its cell in ds6DB9/ds6DBA. Called by ovl13_e14 only.); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl13:202B"
-unit = "ovl13"
-addr = "ovl13:202B"
-size = 126
-name = "ovl13_fn_202B"
-signature = ""
-c_name = "ovl13_fn_202B"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:20A9"
-unit = "ovl13"
-addr = "ovl13:20A9"
-size = 26
-name = "ovl13_fn_20A9"
-signature = ""
-c_name = "ovl13_fn_20A9"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl13:20C3"
@@ -5620,7 +5594,7 @@ unit = "ovl13"
 addr = "ovl13:20C3"
 size = 368
 name = "ovl13_e14"
-signature = ""
+signature = "procedure ovl13_e14(Spell, Automatic: Byte; var Done: Byte)"
 c_name = "ovl13_e14"
 level = "none"
 justification = ""

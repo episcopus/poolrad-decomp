@@ -6,6 +6,15 @@ unit OVL13;
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 uses POOLVARS;
+type
+  { The record ovl13_e14 and FindSpellTarget pass as Target: one combatant a spell is aimed at and its
+    combat-map cell. Seven bytes; the last is never read (System_FillChar clears seven, ovl13:2098). }
+  TSpellTarget = record
+    Who: PCharacter;               { +0: the combatant the spell is aimed at }
+    X: Byte;                       { +4: its column, CombatantX(Who) }
+    Y: Byte;                       { +5: its row, CombatantY(Who) }
+    Pad6: Byte;                    { +6: never read }
+  end;
 procedure StartCombatantRound(Who: PCharacter);
 function ComputeMovement(Who: PCharacter): Byte;
 procedure RollAttackDamage(Attacker: PCharacter; Target: PCharacter; Index: Byte);
@@ -29,10 +38,8 @@ procedure NoteAttackBearing(Attacker, Target: PCharacter);
 procedure PerformAttack(Who, Target: PCharacter; AttackKind: Byte; AimedItem: Pointer; var Done: Byte);
 procedure AddRangePenalty(Attacker: PCharacter; Target: PCharacter; var NeededRoll: Byte);
 function FindNearbyTarget(Who: PCharacter; var Selected): Boolean;
-procedure ovl13_fn_1E16;
-procedure ovl13_fn_202B;
-procedure ovl13_fn_20A9;
-procedure ovl13_e14;
+function FindSpellTarget(Spell, Automatic, AimFlag: Byte; var Target: TSpellTarget): Boolean;
+procedure ovl13_e14(Spell, Automatic: Byte; var Done: Byte);
 procedure ovl13_fn_2233;
 procedure ovl13_fn_228C;
 procedure ovl13_fn_2383;
@@ -70,7 +77,7 @@ procedure ovl13_fn_3A2B;
 procedure ovl13_e23;
 function ovl13_e24: Boolean;
 implementation
-uses RES03, RES06, RES12, OVL24, OVL25, OVL30, OVL31, Crt;
+uses RES03, RES06, RES12, OVL22, OVL24, OVL25, OVL30, OVL31, Crt;
 type
   { A view of the two bytes ResolveCombatantAttacks selects between with the from-behind flag: TCharacter
     +$111 (ResistValue) and +$112 (ds112), accessed as a signed-indexed pair. }
@@ -1098,14 +1105,90 @@ begin
   else
     FindNearbyTarget := False;
 end;
-{ ovl13:1E16: frame not read }
-{@stub} procedure ovl13_fn_1E16; begin end;
-{ ovl13:202B: frame not read }
-{@stub} procedure ovl13_fn_202B; begin end;
-{ ovl13:20A9: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl13_fn_20A9; begin end;
-{ ovl13:20C3: frame not read }
-{@stub} procedure ovl13_e14; begin end;
+{ ovl13:1E16. Finds a target for the spell Spell while it is aimed, and hands it over through the
+  untyped var Target (a TSpellTarget: the combatant and its cell).
+    - Automatic = 0 lets ovl13_e17 pick (the player's cursor); else the spell row's own data picks it:
+      when the row's byte +6 (Pad2[6]) is 0 the caster itself is taken (and FindNearbyTarget is asked
+      when Spell is 3); otherwise up to 20 times ovl13_e21 offers the next aim (ovl22_e3(Spell) is the
+      spell's range) and the aim is accepted while the spell's area (ScanTargets with the row's +$F
+      byte as the line budget) holds only the caster's enemies and the target is either not helpless or
+      the row's AffectId (+$A) is not one of HelplessAffects.
+  Returns True when a target was stored, and then leaves its cell in ds6DB9/ds6DBA; False clears the
+  seven bytes of Target. AimFlag is passed to ovl13_e17 as its third flag (1 for the spell rows whose
+  Pad2[6] nibble is 8..14). Globals: SelectedCharacter, ds6DB9, ds6DBA. }
+function FindSpellTarget(Spell, Automatic, AimFlag: Byte; var Target: TSpellTarget): Boolean;
+var
+  Chosen: Byte;                  { nonzero once a target was stored }
+  Valid: Byte;                   { the current aim passes the area and affect checks }
+  SavedTarget: PCharacter;       { SelectedCharacter^.Combat^.Target around the aim checks }
+  I: Byte;                       { walk of the scanned area list }
+  Attempts: Byte;                { the 20 tries the automatic aim gets }
+begin
+  Chosen := 0;
+  if Automatic = 0 then
+  begin
+    ovl13_e17(SelectedCharacter, ovl22_e3(Spell), 0, AimFlag, Chosen, Target);
+    SelectedCharacter^.Combat^.Target := Target.Who;
+  end
+  else
+  begin
+    if SpellTable[Spell].PadB[$E] = 0 then
+    begin
+      Target.Who := SelectedCharacter;
+      if (Spell <> 3) or FindNearbyTarget(SelectedCharacter, Target) then
+      begin
+        Target.X := CombatantX(Target.Who);
+        Target.Y := CombatantY(Target.Who);
+        Chosen := 1;
+      end;
+    end
+    else
+    begin
+      Attempts := 20;
+      while (Attempts > 0) and (Chosen = 0) do
+      begin
+        Valid := 1;
+        if ovl13_e21(SelectedCharacter, ovl22_e3(Spell), 0, 1) then
+        begin
+          SavedTarget := SelectedCharacter^.Combat^.Target;
+          if SpellTable[Spell].PadB[$F] > 0 then
+          begin
+            ScanTargets(CombatantX(SavedTarget), CombatantY(SavedTarget),
+              SpellTable[Spell].PadB[$F], $FF, 1, CombatMap);
+            for I := 1 to ds6718[0].Val do
+              if CombatantRecord[ds6718[I].Head]^.Side <> OpposingSide(SelectedCharacter) then
+                Valid := 0;
+          end;
+          if IsHelpless(SavedTarget) then
+            for I := 1 to 4 do
+              if SpellTable[Spell].AffectId = HelplessAffects[I] then
+                Valid := 0;
+          if Valid <> 0 then
+          begin
+            Target.Who := SelectedCharacter^.Combat^.Target;
+            Target.X := CombatantX(Target.Who);
+            Target.Y := CombatantY(Target.Who);
+            Chosen := 1;
+          end;
+        end;
+        Dec(Attempts);
+      end;
+    end;
+  end;
+  if Chosen <> 0 then
+  begin
+    FindSpellTarget := True;
+    ds6DB9 := Target.X;
+    ds6DBA := Target.Y;
+  end
+  else
+  begin
+    FindSpellTarget := False;
+    FillChar(Target, 7, 0);
+  end;
+end;
+{ ovl13:20C3: the spell-target selection ds6B84 points at during combat; not decompiled yet }
+{@stub} procedure ovl13_e14(Spell, Automatic: Byte; var Done: Byte); begin end;
 { ovl13:2233: frame not read }
 {@stub} procedure ovl13_fn_2233; begin end;
 { ovl13:228C: frame not read }

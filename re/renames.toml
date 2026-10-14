@@ -4141,3 +4141,10 @@ kind = "routine"
 why = "ovl13:1BF8 scans the nine cells around Who and hands over the most-wounded same-side combatant (or a body on a body tile whose owner is not yet dead); called for spell 3 by ovl09 SpellAccepted and by ovl13_fn_1E16"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl13_fn_1E16"
+new = "FindSpellTarget"
+kind = "routine"
+why = "ovl13:1E16 picks the target a spell is aimed at: with Automatic=0 it lets ovl13_e17 choose (the player's cursor) and copies the choice into Combat^.Target, else it takes the spell row's own data (PadB[$E] zero means the caster itself, spell 3 asks FindNearbyTarget) or loops ovl13_e21 up to 20 times and keeps an aim whose area hits only the caster's enemies and whose target is not helpless by the row's AffectId; it returns whether a target was stored and leaves its cell in ds6DB9/ds6DBA. Called by ovl13_e14 only."
+date = "2026-10-13"
+
