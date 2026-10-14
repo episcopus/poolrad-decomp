@@ -30,7 +30,7 @@ procedure CastEnlarge;
 procedure CastReduce;
 procedure CastFriends;
 procedure CastMagicMissile;
-procedure ovl22_e24;
+procedure CastShield;
 procedure ovl22_e25;
 procedure ovl22_e26;
 procedure ovl22_e27;
@@ -726,8 +726,13 @@ begin
     RollDiceCounted(Level div LevelsPerMissile, MissileSides) + Level div LevelsPerMissile,
     DamageKind, '');
 end;
-{ ovl22:1499: retf 0: 0 bytes of parameters; 12 bytes of locals }
-{@stub} procedure ovl22_e24; begin end;
+{ ovl22:1499 (e24). Cast handler of spell 19, Shield (SpellHandlers[19]; ovl22_e10 fills the table,
+  whitepaper 5.22.2): applies the current spell ds681B (its own affect does the work) to the chosen
+  targets with the message 'is shielded', no damage or flag of its own. Reads ds681B. }
+procedure CastShield;
+begin
+  ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is shielded');
+end;
 { ovl22:14C7: retf 0: 0 bytes of parameters; 2 bytes of locals }
 {@stub} procedure ovl22_e25; begin end;
 { ovl22:151B: retf 0: 0 bytes of parameters; 18 bytes of locals }

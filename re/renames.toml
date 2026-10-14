@@ -3616,3 +3616,10 @@ kind = "routine"
 why = "cast handler of spell 15 Magic Missile (SpellHandlers[15]; ovl22_e10 fills the table at DS:6B84, whitepaper 5.22.2): deals one d4 plus one point per two caster levels through RollDiceCounted (count in ds681C), no message (ovl22:1439)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl22_e24"
+new = "CastShield"
+kind = "routine"
+why = "cast handler of spell 19 Shield (SpellHandlers[19]; ovl22_e10 fills the table at DS:6B84, whitepaper 5.22.2): applies the current spell ds681B (its own affect does the work) to the chosen targets with 'is shielded' (ovl22:1499)"
+date = "2026-10-13"
+

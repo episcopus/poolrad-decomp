@@ -10114,12 +10114,12 @@ id = "ovl22:1499"
 unit = "ovl22"
 addr = "ovl22:1499"
 size = 46
-name = "ovl22_e24"
+name = "CastShield"
 signature = ""
 c_name = "ovl22_e24"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_24"
+notes = "renamed from ovl22_e24 (cast handler of spell 19 Shield (SpellHandlers[19]; ovl22_e10 fills the table at DS:6B84, whitepaper 5.22.2): applies the current spell ds681B (its own affect does the work) to the chosen targets with 'is shielded' (ovl22:1499)); auto:entry_24"
 evidence = ["prologue"]
 
 [[routine]]
