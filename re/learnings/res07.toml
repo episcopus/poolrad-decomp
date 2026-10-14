@@ -82,3 +82,59 @@ tags = ["picture", "record", "TPicture", "layout"]
 title = "The picture record fields res07 uses"
 lesson = "The res07 picture record (AllocatePicture, 0464:248E, and every blitter): +0 a word (the row/item count res07_fn_1E5C loops over), +2 the width in cells (shifted left 1 in the adapter-0 code and twice for adapter 2), +8 the height in rows (copy of +0 when the flag byte is negative), +9..+0x10 the 8 palette bytes (copied by res07_fn_1E5C), +$11 the bytes per row (Pic^.[8] * Pic^.[$11] is the pixel data size), +$13/+$15 the pixel buffer far pointer, +$17 the first pixel byte. Name them from AllocatePicture's matched source (src/RES07.PAS) before adding a second name."
 evidence = ["src/RES07.PAS#AllocatePicture", "re/symbols.toml#res07:1E5C", "re/symbols.toml#res07:248E"]
+
+# Added by dec-haiku-2 2026-10-13 (DrawPictureItemClipped 0464:0D71 and RemapPictureColours 0464:1E5C, both L2).
+
+[[lesson]]
+id = "res07-combined-exit-test"
+confidence = "V"
+units = ["res07"]
+tags = ["control flow", "exit", "range checks", "or"]
+title = "Several range checks with one Exit compile to one shared jump"
+lesson = "`if (A < B) or (C < D) or (E > F) then Exit;` compiles to one jmp to the epilogue (the checks jump to it or fall through past it). Separate `if ... then Exit;` statements compile to a jmp each, so the first DrawPictureItemClipped attempt differed at 0464:0F0F. Keep the checks that the original ran in one `or` when they share an exit."
+evidence = ["src/RES07.PAS#DrawPictureItemClipped", "re/learnings/res07.toml#res07-default-then-else"]
+
+[[lesson]]
+id = "res07-default-then-else"
+confidence = "V"
+units = ["res07"]
+tags = ["control flow", "assignment", "if else"]
+title = "A default store before an if-else is stored again in the else"
+lesson = "The original of DrawPictureItemClipped stores SrcLastRow := Height - 1 before `if clipped then SrcLastRow := ... else SrcLastRow := Height - 1` (0464:0F3F and 0464:0F95). Writing the default once, before an `if ... then X;` with no else, does not match (the first attempt differed there). Keep both stores."
+evidence = ["src/RES07.PAS#DrawPictureItemClipped", "re/symbols.toml#0464:0D71"]
+
+[[lesson]]
+id = "res07-flicker-double-test"
+confidence = "V"
+units = ["res07"]
+tags = ["boolean", "short circuit", "random", "flicker"]
+title = "The flicker gate is written with a repeated test of the flag"
+lesson = "`if (Flicker = 0) or ((Flicker <> 0) and (Random(4) = 0)) then` compiles to cmp Flicker,0; je write; cmp Flicker,0; je skip; Random(4); or ax,ax; jne skip. The plain `if (Flicker = 0) or (Random(4) = 0)` lacks the second cmp and does not match (RemapPictureColours at 0464:2075, 237B and 23C9)."
+evidence = ["src/RES07.PAS#RemapPictureColours", "re/symbols.toml#0464:1E5C"]
+
+[[lesson]]
+id = "res07-with-in-loop"
+confidence = "V"
+units = ["res07"]
+tags = ["with", "loop", "temporary"]
+title = "A with statement inside a for loop reloads its pointer temporary on every pass"
+lesson = "RemapPictureColours repeats its `with PPicture(Pic)^ do` header inside the colour loop (0464:1F48: les di,[bp+6] into the 4-byte temporary at [bp-0x3e] on each pass), after the same header before the loop. The second with (Scratch) at 0464:1FA5 reuses the same temporary. Write the with where the original has it, not hoisted."
+evidence = ["src/RES07.PAS#RemapPictureColours", "re/symbols.toml#0464:1E5C"]
+
+[[lesson]]
+id = "res07-frame-hidden-temps"
+confidence = "V"
+units = ["res07"]
+tags = ["frame", "locals", "for loop", "temporaries"]
+title = "Declared locals come first from [bp-1] down, then the hidden for and with temporaries"
+lesson = "RemapPictureColours (68 bytes of locals) matched with its declared locals in order from [bp-1] (FromMapCopy, ToMapCopy, PicOfs, ScratchOfs, Items, ColByte, PixelRow, Mask, PlaneMask, Plane, Unused byte at [bp-0x30], Quad, RowBytes, FromHigh, ToHigh, Colour, Scratch) and then the hidden with pointer (4 bytes at [bp-0x3e]), a byte bound at [bp-0x3f] (computed as Items + FirstItem - 1), and word bounds at [bp-0x41] (Height) and [bp-0x43] (RowBytes or WidthCols). A Word field or variable as a for bound is copied to a word temporary; the byte item loop bound is computed into a byte temporary."
+evidence = ["src/RES07.PAS#RemapPictureColours", "re/symbols.toml#0464:1E5C"]
+
+[[lesson]]
+id = "res07-match-build-globals"
+confidence = "V"
+units = ["*"]
+tags = ["tooling", "match", "globals", "disassembly"]
+title = "Our build's data offsets differ from the original by a constant; read names, not raw bytes"
+lesson = "build/match/<unit>/A/match.exe (the matcher's own build) lays out DS differently from the original, so `cmp byte [0x3374]` in ours is `cmp byte [0x5370]` in the original (ds5370, the same global). The matcher maps globals by name, so raw text diffs of global operands and RTL calls (lcall 0494:0A14 vs 0AF8:0A5B) are noise; compare the rest of the instruction stream (jump targets masked) to find the first real difference. The matcher stops at its first difference, so the first reported one is often a displacement that follows an earlier mismatch."
+evidence = ["tools/match/match.py#data_var", "build/match/res07/A/match.map"]
