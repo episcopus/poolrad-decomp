@@ -4113,3 +4113,10 @@ kind = "routine"
 why = "ovl13:1406 resolves one combatant's melee attacks for its turn (helpless auto-hit, large-foe dice, to-hit and damage rolls, the death hook) and covers 1406..17F6; called by e12 (ovl13:19D6)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl13_e11"
+new = "NoteAttackBearing"
+kind = "routine"
+why = "ovl13:17F6 raises Target^.Combat^.BF and adds the angular error between Target^.Combat^.IconSet and the bearing to the attacker into B12; called just before ovl13_e12 resolves an attack"
+date = "2026-10-13"
+

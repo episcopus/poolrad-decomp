@@ -5528,12 +5528,12 @@ id = "ovl13:17F6"
 unit = "ovl13"
 addr = "ovl13:17F6"
 size = 142
-name = "ovl13_e11"
-signature = "procedure ovl13_e11(Who, Target: Pointer)"
+name = "NoteAttackBearing"
+signature = "procedure NoteAttackBearing(Attacker, Target: PCharacter)"
 c_name = "ovl13_e11"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_e11 (ovl13:17F6 raises Target^.Combat^.BF and adds the angular error between Target^.Combat^.IconSet and the bearing to the attacker into B12; called just before ovl13_e12 resolves an attack); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

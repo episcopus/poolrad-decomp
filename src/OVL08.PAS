@@ -432,7 +432,7 @@ end;
 { ovl08:0D45. Attacker attacks Target in melee: refused with Not with that weapon when
   IsRangedWeapon holds and RangedWeaponCanMelee does not (a weapon that cannot strike in melee, by the
   message); otherwise when ovl13_e16 allows the attack Target becomes Attacker's Combat^.Target and
-  either SweepEnemies ends the turn (Done := 1) or ovl13_e11 and ovl13_e12 carry the attack out. }
+  either SweepEnemies ends the turn (Done := 1) or NoteAttackBearing and ovl13_e12 carry the attack out. }
 procedure MeleeAttack(Attacker, Target: PCharacter; var Done: Byte);
 begin
   if IsRangedWeapon(Attacker) and not RangedWeaponCanMelee(Attacker) then
@@ -444,7 +444,7 @@ begin
       Done := 1
     else
     begin
-      ovl13_e11(Attacker, Target);
+      NoteAttackBearing(Attacker, Target);
       ovl13_e12(Attacker, Target, 0, nil, Done);
     end;
   end;

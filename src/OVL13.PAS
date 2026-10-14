@@ -25,7 +25,7 @@ procedure TurnUndead(Who: PCharacter);
 procedure ovl13_fn_11D8;
 function SelectTurnUndeadTarget(Who: Pointer; var Selected): Boolean;
 procedure ResolveCombatantAttacks(Attacker, Target: PCharacter; AttackKind: Byte; var Done: Byte);
-procedure ovl13_e11(Who, Target: Pointer);
+procedure NoteAttackBearing(Attacker, Target: PCharacter);
 procedure ovl13_e12(Who, Target: Pointer; A: Byte; P: Pointer; var Done: Byte);
 procedure ovl13_fn_1B1E(Attacker: PCharacter; Target: PCharacter; var NeededRoll: Byte);
 procedure ovl13_fn_1BD7;
@@ -324,7 +324,7 @@ begin
 end;
 { ovl13:0627. Lets every enemy next to Who that is watching (Combat^.B7) and not helpless strike
   back: for each combatant CollectEnemiesInRange(Who, 1) gathers, it puts the cursor on Who, clears
-  the enemy's watch flag and runs the attack through ovl13_e11 and ovl13_e12. Does nothing for a
+  the enemy's watch flag and runs the attack through NoteAttackBearing and ovl13_e12. Does nothing for a
   character that is out of the fight (Flag10D 0). Called after a move (StepCombatant). }
 procedure GuardedEnemiesAttack(Who: PCharacter);
 var
@@ -343,7 +343,7 @@ begin
       begin
         MoveCombatCursor(CombatantX(Who), CombatantY(Who), 2, 8);
         Enemy^.Combat^.B7 := 0;
-        ovl13_e11(Enemy, Who);
+        NoteAttackBearing(Enemy, Who);
         ovl13_e12(Enemy, Who, 0, nil, Done);
       end;
     end;
@@ -590,7 +590,7 @@ end;
   It collects Who's adjacent enemies (CollectEnemiesInRange), counts the level-0 ones into Extra
   (remembering where Target is in the list), and when Extra still beats Who's attack slots
   (capped at Combat^.Pad4[5]) it shows 'sweeps', moves Target to the front of ds6DE4 and attacks
-  each level-0 enemy in turn through ovl13_e11/ovl13_e12, spending one attack per enemy
+  each level-0 enemy in turn through NoteAttackBearing/ovl13_e12, spending one attack per enemy
   (AttackSlots[1] := 1 and Dec(Extra)) until Extra runs out. Returns True when the sweep
   happened, so the caller ends the turn. Called by MeleeAttack (ovl08:0D45) and the AI
   (ovl09:0B3C). Globals: ds6DE4 (the adjacent-enemy list), ds6E31 (the done flag e12 writes),
@@ -634,7 +634,7 @@ begin
               if CombatantRecord[ds6DE4[I]]^.HighestLevel = 0 then
               begin
                 Enemy := CombatantRecord[ds6DE4[I]];
-                ovl13_e11(Who, Enemy);
+                NoteAttackBearing(Who, Enemy);
                 Who^.AttackSlots[1] := 1;
                 ovl13_e12(Who, Enemy, 0, nil, ds6E31);
                 Dec(Extra);
@@ -902,8 +902,23 @@ begin
   if Done <> 0 then
     Done := EndCombatTurn(Attacker);
 end;
-{ ovl13:17F6: retf 8: 8 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl13_e11(Who, Target: Pointer); begin end;
+{ ovl13:17F6. Notes the attack Target is about to take from Attacker: Target's attack count Combat^.BF
+  is raised and Combat^.B12 gains the angular error between Target's facing (Combat^.IconSet) and
+  the bearing from Target to Attacker (ovl13_e18), wrapped into 0..4, modulo 8. Called with the
+  target as the second argument just before ovl13_e12 resolves the attack (ovl08 MeleeAttack,
+  ovl09 AiTurn, GuardedEnemiesAttack, SweepEnemies). }
+procedure NoteAttackBearing(Attacker, Target: PCharacter);
+var
+  Error: Byte;                   { Target's facing error, wrapped into 0..4 }
+  Bearing: Byte;                 { the direction from Target to Attacker (ovl13_e18) }
+begin
+  Inc(Target^.Combat^.BF);
+  Bearing := ovl13_e18(Target, Attacker);
+  Error := (Bearing - Target^.Combat^.IconSet + 8) mod 8;
+  if Error > 4 then
+    Error := 8 - Error;
+  Target^.Combat^.B12 := (Target^.Combat^.B12 + Error) mod 8;
+end;
 { ovl13:1884: retf 18: 18 bytes of parameters; 10 bytes of locals }
 {@stub} procedure ovl13_e12(Who, Target: Pointer; A: Byte; P: Pointer; var Done: Byte); begin end;
 { ovl13:1B1E: frame not read }

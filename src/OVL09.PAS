@@ -609,7 +609,7 @@ Attack:
     Done := EndCombatTurn(Who);
     goto Next;
   end;
-  ovl13_e11(Who, Target);
+  NoteAttackBearing(Who, Target);
   Aim := nil;
   if IsRangedWeapon(Who) then
   begin
