@@ -3770,3 +3770,10 @@ kind = "routine"
 why = "runs MakeCamp (OVL15 camp menu) between script entries ds49E7 and ds49E9 (InitScript, ovl07:01B6); called by ECL opcode 56 with operand 9 (ovl03:2E10) and ovl03:3379"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl03_fn_2E10"
+new = "ShowSpecialScreenCommand"
+kind = "routine"
+why = "ECL opcode 56 (dispatcher ovl03:2F2D cmp al,38h at ovl03:3135): operand 1 picks a screen: 8 ShowEndingNarrative (ovl18), 9 RunCamp then EndCommand"
+date = "2026-10-13"
+

@@ -771,12 +771,12 @@ id = "ovl03:2E10"
 unit = "ovl03"
 addr = "ovl03:2E10"
 size = 109
-name = "ovl03_fn_2E10"
+name = "ShowSpecialScreenCommand"
 signature = ""
 c_name = "ovl03_fn_2E10"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_2E10 (ECL opcode 56 (dispatcher ovl03:2F2D cmp al,38h at ovl03:3135): operand 1 picks a screen: 8 ShowEndingNarrative (ovl18), 9 RunCamp then EndCommand); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

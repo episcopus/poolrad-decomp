@@ -54,7 +54,7 @@ procedure AddComputerMemberCommand;
 procedure FindMemorizedSpellCommand;
 procedure EngineActionCommand;
 procedure RunCamp;
-procedure ovl03_fn_2E10;
+procedure ShowSpecialScreenCommand;
 procedure ovl03_fn_2E7D;
 procedure ovl03_fn_2F2D;
 procedure ovl03_fn_3171(Address: Word);
@@ -190,6 +190,9 @@ const
   ActionWallProbe = $4019;      { word $C018: WallIdAt into ds6AB0 when ds49FA is 1 }
   DuelWithCopy = 1;             { SetupDuel's WithCopy flag }
   DuelNoCopy = 0;
+  { ECL command 56 (ovl03:2E10) picks its screen by operand 1: 8 is the ending narrative, 9 the camp. }
+  ScreenEnding = 8;
+  ScreenCamp = 9;
 var
   { ds84C8 (POOLVARS) under the type ShowEncounterPicture takes: TPictureShown is declared in OVL07,
     and Turbo Pascal accepts a var argument only of the identical type. }
@@ -1820,8 +1823,40 @@ begin
   ShowAreaView;
   ds557D := False;
 end;
-{ ovl03:2E10: retf 0: 0 bytes of parameters; 4 bytes of locals }
-{@stub} procedure ovl03_fn_2E10; begin end;
+{ ovl03:2E10. ECL command 56 (dispatcher ovl03:2F2D, SkippedOpcode 38h, cmp al,38h at ovl03:3135): shows
+  the screen that operand 1 picks. 0 runs ovl16_e1 (not traced yet) and redraws the view (res12_fn_27D9);
+  ScreenEnding shows the ending narrative (ShowEndingNarrative, OVL18); ScreenCamp runs the camp (RunCamp),
+  keeps the script counter ds49ED across it, and then EndCommand (ovl03:0001) runs. A pending selection
+  (ds4430, set by ECL command 10) first selects the character at ds4436, as EndCommand does. }
+procedure ShowSpecialScreenCommand;
+var
+  Choice: Byte;                 { the screen the operand picks }
+  SavedCounter: Word;           { ds49ED, saved around RunCamp }
+  Unused: Byte;                 { QUIRK ovl03:2E10: a byte of the frame nothing uses }
+begin
+  if ds4430 <> 0 then
+  begin
+    SelectedCharacter := ds4436;
+    ds4430 := 0;
+  end;
+  DecodeOperands(1);
+  Choice := OperandValue(1);
+  case Choice of
+    0:
+      begin
+        ovl16_e1;
+        res12_fn_27D9;
+      end;
+    ScreenEnding: ShowEndingNarrative;
+    ScreenCamp:
+      begin
+        SavedCounter := ds49ED;
+        RunCamp;
+        ds49ED := SavedCounter;
+        EndCommand;
+      end;
+  end;
+end;
 { ovl03:2E7D: retf 0: 0 bytes of parameters; 8 bytes of locals }
 {@stub} procedure ovl03_fn_2E7D; begin end;
 { ovl03:2F2D: retf 0: 0 bytes of parameters; 0 bytes of locals }
