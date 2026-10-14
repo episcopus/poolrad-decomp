@@ -819,6 +819,9 @@ var
   ds442F: Byte;                   { set to 1 by ECL command 32 (ovl03:0BD1); meaning unknown }
   ds4430: Byte;                   { when nonzero, the ECL command 0 (ovl03:0001) selects the character at ds4436 }
   ds4431: Byte;                   { cleared by ECL command 32 (ovl03:0BD1), set by 33 and 55 (ovl03:0C74) }
+  ds4432: Byte;                   { with ds4433 and ds4434 set, ovl03:0C74 redraws the character; set elsewhere }
+  ds4433: Byte;                   { set by ECL command 55 (ovl03:0C74); meaning unknown }
+  ds4434: Byte;                   { set by ECL command 33 (ovl03:0C74); meaning unknown }
   { The members ECL command 11 (ovl03:0450) has added to the party list; it adds none at
     MaxEncounterMembers (63). }
   EncounterMemberCount: Byte;

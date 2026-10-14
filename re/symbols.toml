@@ -367,27 +367,14 @@ evidence = ["prologue"]
 id = "ovl03:0C74"
 unit = "ovl03"
 addr = "ovl03:0C74"
-size = 263
-name = "ovl03_fn_0C74"
+size = 379
+name = "LoadAreaGraphics"
 signature = ""
 c_name = "ovl03_fn_0C74"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_0C74 (ECL commands 33 and 55 (dispatcher ovl03:2F2D): command 33 loads the 3D map (Load3DMap) and the BACPAC picture set, command 55 the wall sets (LoadWallSet) and the ds6AAEWords slots, then redraws the selected character when ds4432 to ds4434 are set (ovl03:0C74, matched; it contains the label ovl03:0D7B)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl03:0D7B"
-unit = "ovl03"
-addr = "ovl03:0D7B"
-size = 116
-name = "ovl03_fn_0D7B"
-signature = ""
-c_name = "ovl03_fn_0D7B"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl03:0DEF"

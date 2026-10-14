@@ -24,8 +24,7 @@ procedure ReturnCommand;
 procedure ComparePairsCommand;
 procedure RunIfCompared;
 procedure StartEclBlock;
-procedure ovl03_fn_0C74;
-procedure ovl03_fn_0D7B;
+procedure LoadAreaGraphics;
 procedure ovl03_fn_0DEF;
 procedure ovl03_fn_0E5E;
 procedure ovl03_fn_0EBC;
@@ -73,7 +72,7 @@ procedure ovl03_e1;
 procedure ovl03_fn_3379;
 procedure ovl03_fn_34AB;
 implementation
-uses OVL17, OVL26, OVL28, OVL32, RES06;
+uses OVL17, OVL26, OVL28, OVL29, OVL32, RES06;
 
 const
   { The operand types from this one up are strings: $80 a packed string, $81 the address of a
@@ -620,10 +619,64 @@ begin
   ds442F := 1;
   ds4431 := 0;
 end;
-{ ovl03:0C74: frame not read }
-{@stub} procedure ovl03_fn_0C74; begin end;
-{ ovl03:0D7B: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl03_fn_0D7B; begin end;
+{ ovl03:0C74. ECL commands 33 and 55 (dispatcher ovl03:2F2D, SkippedOpcode $21 or $37): load the
+  graphics of the area for the three operands, the block numbers Blocks, where $FF means none.
+  Command 33 loads the 3D map Blocks[1] (Load3DMap, VarGeoBlock keeps its number) when
+  VarForceWallView is set, and the 'BACPAC' picture set (Load24x24Set) when Blocks[3] is given and
+  VarForceWallView is clear. Command 55 loads the wall sets: slot 1 gets wall set 0 when Blocks[1] is
+  $7F; when words 231 and 232 of GameVars are both set, slots 1 and 3 get Blocks[1] and Blocks[3],
+  else each slot I gets Blocks[I] or, for $FF, the two words of ds6AAEWords[I] become $FFFF. The
+  label ovl03:0D7B is the slot loop of this routine. ds4431 is set first. When ds4432, ds4433 and
+  ds4434 are all set, res12_fn_27D9 runs, the selected character is redrawn (res12_fn_0767) and
+  ds4432 is cleared. Words 231 and 232 of GameVars and word 713 of ds49D6 are not named yet. }
+procedure LoadAreaGraphics;
+var
+  Blocks: array[1..3] of Byte;
+  I: Byte;
+begin
+  DecodeOperands(3);
+  ds4431 := 1;
+  for I := 1 to 3 do
+    Blocks[I] := OperandValue(I);
+  if SkippedOpcode = $21 then
+  begin
+    ds4434 := 1;
+    if (Blocks[1] <> $FF) and (Blocks[1] <> $7F) and (GameVars^[VarForceWallView] <> 0) then
+    begin
+      GameVars^[VarGeoBlock] := Blocks[1];
+      Load3DMap(Blocks[1]);
+      ds49D6^[713] := 0;
+    end;
+    if (Blocks[3] <> $FF) and (GameVars^[VarForceWallView] = 0) then
+      Load24x24Set('BACPAC', 0, 40);
+  end
+  else
+  begin
+    ds4433 := 1;
+    if Blocks[1] = $7F then
+      LoadWallSet(0, 1)
+    else if (GameVars^[231] <> 0) and (GameVars^[232] <> 0) then
+    begin
+      LoadWallSet(Blocks[1], 1);
+      LoadWallSet(Blocks[3], 3);
+    end
+    else
+      for I := 1 to 3 do
+        if Blocks[I] <> $FF then
+          LoadWallSet(Blocks[I], I)
+        else
+        begin
+          ds6AAEWords[I].A := $FFFF;
+          ds6AAEWords[I].B := $FFFF;
+        end;
+  end;
+  if (ds4432 <> 0) and (ds4433 <> 0) and (ds4434 <> 0) then
+  begin
+    res12_fn_27D9;
+    res12_fn_0767(SelectedCharacter);
+    ds4432 := 0;
+  end;
+end;
 { ovl03:0DEF: retf 0: 0 bytes of parameters; 8 bytes of locals }
 {@stub} procedure ovl03_fn_0DEF; begin end;
 { ovl03:0E5E: retf 0: 0 bytes of parameters; 10 bytes of locals }
