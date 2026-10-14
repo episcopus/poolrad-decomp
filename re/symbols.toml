@@ -3706,27 +3706,14 @@ evidence = ["prologue"]
 id = "ovl12:12FB"
 unit = "ovl12"
 addr = "ovl12:12FB"
-size = 12
-name = "ovl12_e42"
-signature = ""
+size = 68
+name = "AddHealingBlockAndHeal"
+signature = "procedure AddHealingBlockAndHeal(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e42"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_42"
+notes = "renamed from ovl12_e42 (ovl12:12FB gives Who the healing block affect $32 (AffectHealingBlock, ovl24:175D) for 14400 rounds, then HealCharacter (Amount 1, Flag 1) heals one point and res12_fn_234A runs on Who when it healed); auto:entry_42"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:1307"
-unit = "ovl12"
-addr = "ovl12:1307"
-size = 56
-name = "ovl12_fn_1307"
-signature = ""
-c_name = "ovl12_fn_1307"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:133F"
@@ -16815,7 +16802,7 @@ unit = "res12"
 addr = "00BA:234A"
 size = 109
 name = "res12_fn_234A"
-signature = ""
+signature = "procedure res12_fn_234A(Who: Pointer)"
 c_name = "res12_fn_234A"
 level = "none"
 justification = ""

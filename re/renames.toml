@@ -3721,3 +3721,10 @@ kind = "routine"
 why = "ovl12:12B2 runs RaiseAttackAndSave (ovl12:0C06) when Who's Side (+$10E) equals bit 4 of Affect's Data, else takes one off AttackRoll and one off SaveRoll (inline sub byte, not LowerAttackAndSave's penalty)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e42"
+new = "AddHealingBlockAndHeal"
+kind = "routine"
+why = "ovl12:12FB gives Who the healing block affect $32 (AffectHealingBlock, ovl24:175D) for 14400 rounds, then HealCharacter (Amount 1, Flag 1) heals one point and res12_fn_234A runs on Who when it healed"
+date = "2026-10-13"
+

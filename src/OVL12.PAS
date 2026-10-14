@@ -50,8 +50,7 @@ procedure CauseDiseaseAndDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure LowerAttackVsEightListed(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure LowerAttackIfSelectedIsBugbearOrGnoll(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure RaiseOrLowerAttackAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e42;
-procedure ovl12_fn_1307;
+procedure AddHealingBlockAndHeal(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e43;
 procedure ovl12_e44;
 procedure ovl12_e45;
@@ -961,10 +960,18 @@ begin
     Dec(SaveRoll);
   end;
 end;
-{ ovl12:12FB: frame not read }
-{@stub} procedure ovl12_e42; begin end;
-{ ovl12:1307: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_fn_1307; begin end;
+{ ovl12:12FB. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000). It gives Who
+  the healing block AffectHealingBlock (ovl24:175D: HealCharacter with Flag 0 does nothing while it is there) for
+  AffectHealingBlockDuration rounds, with the Data of Affect, when TryAddAffect allows it. Then HealCharacter heals Who
+  by one hit point with Flag 1, which the block does not stop, and when that healed Who, res12_fn_234A (00BA:234A, not
+  named yet) runs on Who. The map also had an entry at ovl12:1307, which is the middle of this routine (its pushes
+  for the first call start at 12FB), so it has no routine of its own. Which affect runs it is not known yet [?]. }
+procedure AddHealingBlockAndHeal(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  if TryAddAffect(Who, AffectHealingBlock, Affect^.Data, AffectHealingBlockDuration) then
+    if HealCharacter(Who, 1, 1) then
+      res12_fn_234A(Who);
+end;
 { ovl12:133F: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e43; begin end;
 { ovl12:1355: retf 10: 10 bytes of parameters; 0 bytes of locals }
