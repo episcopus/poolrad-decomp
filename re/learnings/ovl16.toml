@@ -89,3 +89,30 @@ tags = ["frame", "with", "repeat", "case", "209F"]
 title = "ModifyCharacter's frame, with temp and loop shape"
 lesson = "ModifyCharacter (ovl16:209F) has a 276-byte frame (sub sp, 0x114): 20 bytes of named locals (SavedScores [bp-6..bp-1], SavedStrengthPercent, SavedHpMax, one spare byte at [bp-9], Stat, Key, ExtKey, StatIndex, and seven spare bytes the original reserves before the with temp), a 4-byte `with SelectedCharacter^ do` temp at [bp-0x15..bp-0x18], and the compiler string temporaries. The loop is `repeat ... until (ExtKey = 0) and (Key = KeyKeep)` followed by HirelingShare := 1 (the je+jmp form, not jne); the key dispatch and the ability adjust are `case` statements, and a large-bodied `case Stat of` alternates its je/jne by body size (the ==127 rel8 range). The exit path restores the saved scores."
 evidence = ["src/OVL16.PAS#ModifyCharacter", "re/symbols.toml#ovl16:209F"]
+
+[[lesson]]
+id = "ovl16-with-field-shadows-local"
+confidence = "V"
+units = ["ovl16", "*"]
+tags = ["with", "scope", "local", "field", "codegen", "29AE"]
+title = "A local named like a TCharacter field resolves to the field inside `with`"
+lesson = "ovl16:29AE declares a local ClassBits, but inside `with SelectedCharacter^ do` the name resolves to TCharacter.ClassBits (+$B0), so `ClassBits := ...` compiled to `les di,[bp-0x21]; mov es:[di+0xb0],...` while the original writes the local [bp-0xb]. Renaming the local to ClassBitMask made the target [bp-0xb]. Check every local name against the with record's fields before trusting the offsets."
+evidence = ["src/OVL16.PAS#ovl16_fn_29AE", "tools/re/tp_idioms/ovl16/TRAIN_DRAFT.PAS"]
+
+[[lesson]]
+id = "ovl16-byte-add-compiles-16-bit"
+confidence = "V"
+units = ["ovl16", "*"]
+tags = ["byte", "add", "inc", "codegen", "29AE"]
+title = "A := A + B on two Bytes is a 16-bit add in TP 6.0; Inc(A, B) is the 8-bit add"
+lesson = "In ovl16:29AE the original's class-bit accumulation is `mov al,[di+0x5de]; add byte [bp-0xb],al` (8-bit). `ClassBitMask := ClassBitMask + ds05DE[I]` compiled instead to `mov al,..; xor ah,ah; mov dx,ax; mov al,[bp-0xb]; xor ah,ah; add ax,dx; mov [bp-0xb],al` (16-bit, one byte per operand), which made the routine 15 bytes longer. `Inc(ClassBitMask, ds05DE[I])` gives the original's 8-bit `add [bp-0xb],al`. The same holds for TrainableBits and for HpB1/HpMax (+HpGain): the original uses `add byte [mem],al`, so use Inc."
+evidence = ["src/OVL16.PAS#ovl16_fn_29AE", "tools/re/tp_idioms/ovl16/TRAIN_DRAFT.PAS", "re/symbols.toml#ovl16:29AE"]
+
+[[lesson]]
+id = "ovl16-nested-routine-as-top-level-with-static-link"
+confidence = "V"
+units = ["ovl16", "*"]
+tags = ["nested", "static-link", "frame", "34DF"]
+title = "A nested routine whose parent is still a stub can be matched as a top-level routine with a trailing static-link parameter"
+lesson = "ovl16:34DF is called only by ovl16_e3 with `push <CellRow>; push <CellCol>; push bp; push cs; call` (the nested shape), and its body reads [bp+8] and [bp+0xa] because the two-byte static link sits at [bp+6]. With e3 still a stub it cannot be declared nested, so it is declared top level as `procedure DrawIconCell(CellCol, CellRow: Byte; StaticLink: Word)` (the trailing Word takes [bp+6] and the unused link is never read): the bytes match (retf 6, no locals). When e3 is decompiled, move DrawIconCell inside it and drop StaticLink. e3 also calls the same-shaped ovl16:35BE."
+evidence = ["src/OVL16.PAS#DrawIconCell", "re/symbols.toml#ovl16:34DF", "re/symbols.toml#ovl16:382D"]
