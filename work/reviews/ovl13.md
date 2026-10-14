@@ -3,7 +3,7 @@
 decompiler: dec-deepseek, dec-1, dec-9, int-loop, orch (the `Agent:` trailers of the unit's commits)
 reviewer: rev-sonnet
 date: 2026-10-14
-commit: b353983
+commit: 2d93f88 (round 2; round 1 reviewed b353983)
 
 Checklist: docs/process/playbooks/70-review.md (every item, every routine).
 
@@ -52,6 +52,33 @@ and a few names claim that the code does not do.
 - [ ] note stray map comments: `{ ovl13:08AC: retf 6 ... }` (line 413), `{ ovl13:0FBF ... }`, `{ ovl13:104E ... }`, `{ ovl13:11D8 ... }`, `{ ovl13:2432 ... }`, `{ ovl13:257E ... }`, `{ ovl13:25C9 ... }`, `{ ovl13:37E4: frame not read }` are leftovers of map entries now inside other routines (the whitepaper records them as map corrections). They are harmless but read as dangling; fold them into the owning routine's comment or delete them.
 - [ ] note CastCombatSpell (ovl13:2414): `CastMessageRow` is commented "colour/row", it is the row (ShowCharacterMessage's third argument is `Row`; the ovl12 review had the same slip); `SpellCastDelay`'s "div 3 gives the casting delay in rows" should read "in initiative points". AttacksThisRound: the comment's parenthesis "combat rounds are zero-based, so the extra unit lands on even-numbered rounds" is not checked against ds6DE3 in POOLVARS ("counted up once per combat round"); give the evidence or drop it.
 
+## Round 2 (rev-sonnet, commit 2d93f88)
+
+Rerun: `make match UNIT=ovl13` says `unit: complete`, 37 matched, 2 nested, 0 differ, 0 stubs;
+`make readability UNIT=ovl13` is clean; `make packet UNIT=ovl13` ran. I checked each of the eleven
+must-fix closures in 4b258a6 against the source, the packet disassembly and the registry:
+
+- ShowAttackResult: parameter is `DamageDealt` in the source, the registry signature and notes;
+  the comment separates it from `Damage` (displayed) and the helpless Flag11B + 5 / 1 case; the
+  caller's miss call at ovl13:1797 pushes 0, 0 as the new QUIRK text says.
+- ComputeMovement: the clamp comment, the `MaxMovement` comment, the QUIRK at ovl13:0161 (the
+  `mov [bp-2], 1` in the packet) and the whitepaper entry all say a value outside 1..$60 becomes 1.
+- RefreshAttacks: the AttackSlots[1] condition is rewritten from the code and `Pad8` is documented
+  in POOLVARS as the has-attacked-this-round flag.
+- FindNearbyTarget, FindSpellTarget, SelectSpellTargets (QUIRK ovl13:2198, the `shr cx` in the
+  packet), TurnUndead (QUIRK ovl13:1302, the `cmp [bp-4],0 / jge`), ResolveAimedAttack and
+  GodsIntervene (view centre, EndCombatTurn for every combatant), ConfirmAttackTarget (`SideMonsters`,
+  `BodyTile` lifted to the unit constants), StepCombatant (`StraightStepCost`, `DiagonalStepCost`,
+  `ViewCentre`, `StepCursorMargin`): all as the decompiler reports, and the new comments are true.
+- One small residue, not blocking: StepCombatant still reuses the one `Step` local for the cost and
+  then the margin (the comment says so, and it is needed for the same bytes).
+
+No new must-fix finding. The should-fix and note findings of round 1 above are still open (the
+decompiler did not take them); none of them states a falsehood that a port would follow, so they do
+not block `review-pass`. They are worth doing when the unit is next touched, in particular the pad
+field renames (`Pad4[4]`, `Pad4[5]`, `BF`, `B12`, `Flag11B`, `Flag10D`, `ResistValue`, `ds112`), the
+two readings of `Automatic`, and the stale `e17`/`e21`/`ovl13_fn_*` references in comments.
+
 ## Verdict
 
-not passed: eleven must-fix findings (wrong comments and names that a port would follow: ShowAttackResult's damage parameter, the Movement clamp, FindNearbyTarget, FindSpellTarget, RefreshAttacks, TurnUndead, the cursor-centre claims, unmarked quirks and bare constants whose names already exist).
+passed (round 2): the eleven round 1 must-fix findings are closed and verified against the bytes' packet and the registry; the open should-fix and note findings do not block.
