@@ -4096,7 +4096,7 @@ evidence = ["prologue"]
 id = "ovl12:1E77"
 unit = "ovl12"
 addr = "ovl12:1E77"
-size = 395
+size = 683
 name = "GazeCharmsTarget"
 signature = "procedure GazeCharmsTarget(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e70"
@@ -4110,91 +4110,26 @@ id = "ovl12:2002"
 unit = "ovl12"
 addr = "ovl12:2002"
 size = 167
-name = "ovl12_fn_2002"
+name = "HighestLevelClass"
 signature = ""
 c_name = "ovl12_fn_2002"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl12_fn_2002 (nested in ovl12:2122 (DrainLevels): returns the class with the highest level, which DrainLevels reads for HighestLevel (+$73) and Experience (+$AC) at ovl12:235E..2383; the value it compares is ClassXpTable); auto:near_call; nested in DrainLevels (ovl12:2122), proven by the parent's match"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:20A9"
-unit = "ovl12"
-addr = "ovl12:20A9"
-size = 121
-name = "ovl12_fn_20A9"
-signature = ""
-c_name = "ovl12_fn_20A9"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:2122"
 unit = "ovl12"
 addr = "ovl12:2122"
-size = 117
-name = "ovl12_fn_2122"
-signature = ""
+size = 642
+name = "DrainLevels"
+signature = "procedure DrainLevels(Who: PCharacter; Count: Byte)"
 c_name = "ovl12_fn_2122"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl12_fn_2122 (message is drained with N levels or a level (res12_fn_16EC, pool 20DF..20FB), the victim goes dead forever or killed through DropFromFight, Count levels come off the highest class (ovl12:2122); callers ovl12:23A4 and ovl12:23C2 are not decompiled yet); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:2197"
-unit = "ovl12"
-addr = "ovl12:2197"
-size = 156
-name = "ovl12_fn_2197"
-signature = ""
-c_name = "ovl12_fn_2197"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:2233"
-unit = "ovl12"
-addr = "ovl12:2233"
-size = 89
-name = "ovl12_fn_2233"
-signature = ""
-c_name = "ovl12_fn_2233"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:228C"
-unit = "ovl12"
-addr = "ovl12:228C"
-size = 247
-name = "ovl12_fn_228C"
-signature = ""
-c_name = "ovl12_fn_228C"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:2383"
-unit = "ovl12"
-addr = "ovl12:2383"
-size = 33
-name = "ovl12_fn_2383"
-signature = ""
-c_name = "ovl12_fn_2383"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:23A4"

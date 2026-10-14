@@ -3889,3 +3889,17 @@ kind = "routine"
 why = "ovl12:1E77 is the charm gaze: 'Gazes...' on Who, the gaze line to AttackTarget (res12_fn_1A29), ds681B 10, then the charm affect $0B ('is charmed', Data = Who's side in bit 7 plus $0C, negated by a fear save with bonus -2) and its handler at once (CallAffectHandler); the same walk and gaze as GazeStonesTarget (ovl12:1CAD) with a charm for the stone; matched at L2 (make match FN=ovl12_e70)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_fn_2122"
+new = "DrainLevels"
+kind = "routine"
+why = "message is drained with N levels or a level (res12_fn_16EC, pool 20DF..20FB), the victim goes dead forever or killed through DropFromFight, Count levels come off the highest class (ovl12:2122); callers ovl12:23A4 and ovl12:23C2 are not decompiled yet"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_fn_2002"
+new = "HighestLevelClass"
+kind = "routine"
+why = "nested in ovl12:2122 (DrainLevels): returns the class with the highest level, which DrainLevels reads for HighestLevel (+$73) and Experience (+$AC) at ovl12:235E..2383; the value it compares is ClassXpTable"
+date = "2026-10-13"
+

@@ -458,3 +458,30 @@ tags = ["array", "index", "ShortInt", "Byte", "cwde", "field", "codegen"]
 title = "ds6814Sides[ShortInt(Scan^.Side)] reads the Byte side with cwde, as the original does (ovl12:1BA8)"
 lesson = "The original of ParalyzeSideWithFear (ovl12:1BA8) reads the side count of a member with `mov al, es:[di+10Eh]; cwde; mov di, ax; cmp byte [di+6814h], 6`, so the index is sign-extended. The Pascal `ds6814Sides[ShortInt(Scan^.Side)] >= 6` matched it, the same form OVL09 uses for the same array. The unsigned index was not probed here."
 evidence = ["src/OVL12.PAS#ParalyzeSideWithFear", "src/OVL09.PAS", "src/POOLVARS.PAS#ds6814Sides"]
+
+[[lesson]]
+id = "nested-routine-reads-parent-frame-through-static-link"
+confidence = "V"
+units = ["ovl12"]
+tags = ["nested", "static-link", "frame", "map-entry", "pre-entry"]
+title = "The nested function ovl12:2002 is the parent's pre-entry code: its hidden argument is the parent's bp (ovl12:2122)"
+lesson = "The caller ovl12:2122 pushes bp before `push cs; call near` to ovl12:2002, which then reads the parent's locals and parameters at [bp+6]-relative offsets: BestXp at [P-31h], CurXp at [P-2Dh] and the parent's Who at [P+8]. Nested code sits before the parent's entry, with the parent's string pool between them (20DFh..2121h). The map split the region into five false routines (20A9, 2197, 2233, 228C, 2383) whose first bytes are inside instructions (a jne tail, a les displacement, a push di, a jbe displacement). `make match UNIT=ovl12 WRITE=1` removed all five; their stub lines and declarations had to be deleted by hand. Write the nested routine inside the parent's declaration part (indented, not in the interface); it matches with the parent (NESTED), not on its own."
+evidence = ["src/OVL12.PAS#DrainLevels", "re/symbols.toml#ovl12:2122", "re/symbols.toml#ovl12:2002", "tools/match/match.py"]
+
+[[lesson]]
+id = "overlapping-table-needs-storage-buffer-and-absolute-view"
+confidence = "V"
+units = ["ovl12"]
+tags = ["POOLVARS", "absolute", "overlap", "table", "layout"]
+title = "A table whose bytes overlap other tables (ClassXpTable at DS:409B, 56 bytes a class) is declared as a storage buffer plus an absolute view (ovl12:2002)"
+lesson = "ovl12:2002 reads longints at DS:409B + 56*class + 4*level, which runs over ClericSlotTable (DS:40BD) and MageSlotTable (DS:41D5). Declaring `ds409B: Byte` and `ClassXpTable: array[0..7, 0..13] of LongInt absolute ds409B` gave the first two bytes of ClassXpTable the right name, but the high word of each entry (DS:409D) landed on the next declared variable (ClericSlotTable) in our layout, and the matcher reported 'ours is CLERICSLOTTABLE (DS:40BD expected)'. Declaring the storage as `ds409B: array[0..447] of Byte` (the whole table, as RaceRow does with ds5582) made every word of the table resolve to ClassXpTable. The matcher checks names, not our layout addresses: a field must name the same variable on both sides with the same delta. The overlap itself is data the game reads twice; its meaning is not known [?]."
+evidence = ["src/POOLVARS.PAS#ClassXpTable", "src/POOLVARS.PAS#RaceRow", "re/symbols.toml#ovl12:2002"]
+
+[[lesson]]
+id = "shortint-loop-index-sign-extends-before-the-table-add"
+confidence = "V"
+units = ["ovl12"]
+tags = ["ShortInt", "for", "index", "cwde", "first-diff"]
+title = "A for-loop counter used as a class index is ShortInt: mov al,[bp-32h]; cwde before the table add (ovl12:2122)"
+lesson = "The class-total loop of ovl12:2122 indexes ClassLevels with its counter; the original sign-extends the counter (`mov al, [bp-32h]; cwde; add di, ax`). The first match attempt used a Byte counter and failed at the epilogue jump (21C5) because the matcher reports the first difference in address order and the loop lies later. Declare a loop counter ShortInt when it is an index into a ShortInt-indexed field (ClassLevels, HighestLevel); the for-loop check itself has no cwde."
+evidence = ["src/OVL12.PAS#DrainLevels", "re/symbols.toml#ovl12:2122"]

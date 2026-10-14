@@ -844,6 +844,12 @@ var
     read: it is declared so that the index base, which RecalcClassStats adds (ovl23:0103), names it. }
   SpellTable: array[0..$38] of TSpellEntry;  { see above }
   ClassThac0Table: array[0..7, 0..10] of Byte;  { the to-hit value per class 0..7 and level (RecalcClassStats) }
+  { The experience table of the classes at DS:409B: one LongInt per class 0..7 and level 0..13 (56 bytes a
+    class), read by the nested routine of ovl12:2122 for the highest class level. It overlaps the class
+    tables below (ClericSlotTable at DS:40BD), so the storage is the 448-byte buffer ds409B and
+    ClassXpTable is an absolute view of it [?]. }
+  ds409B: array[0..447] of Byte;
+  ClassXpTable: array[0..7, 0..13] of LongInt absolute ds409B;
   ds40BC: Byte;                   { the byte before ClericSlotTable; see above }
   ClericSlotTable: array[0..12, 1..3] of Byte;  { cleric spell slots of levels 1..3 per cleric level }
   ds41D4: Byte;                   { the byte before MageSlotTable; see above }

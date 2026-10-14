@@ -81,13 +81,7 @@ procedure FrightenSideWithFear(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ParalyzeSideWithFear(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure GazeStonesTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure GazeCharmsTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_fn_2002;
-procedure ovl12_fn_20A9;
-procedure ovl12_fn_2122;
-procedure ovl12_fn_2197;
-procedure ovl12_fn_2233;
-procedure ovl12_fn_228C;
-procedure ovl12_fn_2383;
+procedure DrainLevels(Who: PCharacter; Count: Byte);
 procedure ovl12_e71;
 procedure ovl12_e72;
 procedure ovl12_e73;
@@ -148,7 +142,7 @@ procedure ovl12_fn_31D7;
 procedure ovl12_fn_3262;
 procedure ovl12_fn_3728;
 implementation
-uses RES12, OVL13, OVL24, OVL30, OVL31;
+uses RES12, OVL13, OVL23, OVL24, OVL30, OVL31, OVL33;
 const
   RunsHandlerOnRemove = 1;      { TAffect.Flag: the affect's handler runs when the affect is removed }
   NoRemoveHandler = 0;          { the same Flag, clear: the affect's handler does not run when the affect is removed }
@@ -156,6 +150,7 @@ const
   CombatViewMode = 5;           { ds49F3 during a combat (RunCombat sets it, whitepaper 5.5) }
   StatusGone = 6;               { TCharacter.Status 6, dead for good (ovl04:0510) }
   StatusStoned = 7;             { TCharacter.Status 7, stone (ovl04:093D) }
+  StatusDeadForever = 8;        { TCharacter.Status 8, with 'is dead forever' (ovl12:2122, 228C); StatusRotted is 8 too }
   MoraleStep = 5;               { what the affect handlers add to or take from the morale scratch ds6825 }
   TargetBonus = 2;              { what BoostAttackAgainstTarget adds to AttackRoll and to DamageAmount }
   AffectTrainingManual = 7;     { the affect id of "Training with Manual of Bodily Health" (ovl15:0FBC names it) }
@@ -1450,20 +1445,113 @@ begin
   if res12_fn_2199(AttackTarget, AffectCharm, FoundAffect) then
     CallAffectHandler(AffectCharm, AttackTarget, FoundAffect, 0);
 end;
-{ ovl12:2002: frame not read }
-{@stub} procedure ovl12_fn_2002; begin end;
-{ ovl12:20A9: retf 2: 2 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_fn_20A9; begin end;
-{ ovl12:2122: frame not read }
-{@stub} procedure ovl12_fn_2122; begin end;
-{ ovl12:2197: frame not read }
-{@stub} procedure ovl12_fn_2197; begin end;
-{ ovl12:2233: frame not read }
-{@stub} procedure ovl12_fn_2233; begin end;
-{ ovl12:228C: frame not read }
-{@stub} procedure ovl12_fn_228C; begin end;
-{ ovl12:2383: retf 6: 6 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_fn_2383; begin end;
+{ ovl12:2122. Level drain: Who loses Count levels (the callers ovl12:23A4 and ovl12:23C2 are not decompiled yet [?]).
+  Shows "is drained " followed by "N levels" or "a level" on Who in colour 10 (res12_fn_16EC). When Who's
+  Status is 1 (dead) Who is dead forever: DropFromFight with StatusDeadForever, and HpMax is 0. Otherwise,
+  for each of the Count levels: the counter Pad74[$74] (+$74, not named yet) goes up; the total of all class
+  levels (Total) is taken; Quotient = HpMax div Total hit points are lost: for each of them HpMax, HpB1 and
+  Flag11B (the current hit points) go down by one while above 0 and Pad74[$75] (the lost hit points, the
+  third number of ShowDebugTrace, ovl33:0004) goes up. Then, when Who's HighestLevel is below 2, the
+  character is dead forever (with a Count of 2 its highest class level is cleared too). Otherwise one level
+  comes off the class that holds the highest level (nested HighestLevelClass), and when no hit points are
+  left (Flag11B 0) and Status is not 6 Who is killed (DropFromFight, "is killed"). RecalcClassStats (ovl23)
+  runs, then HighestLevel becomes that class's level, Experience (+$AC) the experience floor the nested
+  routine found, and res12_fn_0BB8 redraws Who. The trace line 'max,cur,lost' is shown in debug mode only.
+  Parameters: Who (the victim, a far pointer), Count (the levels drained, 1 or more).
+  QUIRK ovl12:2122: Total 0 (a character with no class level) divides by zero. }
+procedure DrainLevels(Who: PCharacter; Count: Byte);
+var
+  Msg: String40;                { the number of levels as text: "3 levels" or "a level" }
+  CurXp: LongInt;               { the experience floor of the class the nested routine looks at (written by it) }
+  BestXp: LongInt;              { the experience floor of the class found so far; Who's Experience after the drain }
+  ClassIndex: ShortInt;         { the class counter of the total of levels (sign-extended, as the class index is) }
+  Step: Byte;                   { the level being drained, 1..Count }
+  Total: Byte;                  { all class levels of Who added up }
+  Quotient: Byte;               { the hit points of one level: HpMax div Total }
+  Point: Byte;                  { the hit point of Quotient being lost }
+
+  { ovl12:2002 (nested in ovl12:2122, which passes its frame as the hidden parameter: push bp; push cs; call).
+    Returns the class of Who with the highest level: a class whose level is at least the best so far is
+    taken when its experience floor (ClassXpTable, 0 for level 1 or less) is at least BestXp or is -1
+    [?]; BestXp (of the parent) and BestLevel take its values. QUIRK ovl12:2002: -1 is taken whatever the
+    best so far. }
+  function HighestLevelClass: ShortInt;
+  var
+    J: ShortInt;
+    BestLevel: ShortInt;
+    Level: ShortInt;
+  begin
+    BestXp := 0;
+    BestLevel := 0;
+    for J := 0 to LastClass do
+    begin
+      Level := Who^.ClassLevels[J];
+      if Level > 1 then
+        CurXp := ClassXpTable[J, Level]
+      else
+        CurXp := 0;
+      if Level >= BestLevel then
+        if (CurXp >= BestXp) or (CurXp = -1) then
+        begin
+          BestXp := CurXp;
+          HighestLevelClass := J;
+          BestLevel := Level;
+        end;
+    end;
+  end;
+
+begin
+  if Count > 1 then
+    Msg := res12_fn_1037(Count) + ' levels'
+  else
+    Msg := 'a level';
+  res12_fn_16EC(Who, 'is drained ' + Msg, $A, 1);
+  if Who^.Status = 1 then
+  begin
+    DropFromFight(Who, StatusDeadForever, 'is dead forever');
+    Who^.HpMax := 0;
+    Exit;
+  end;
+  for Step := 1 to Count do
+  begin
+    if Who^.Status <> StatusDeadForever then
+    begin
+      Inc(Who^.Pad74[$74]);
+      Total := 0;
+      for ClassIndex := 0 to LastClass do
+        Inc(Total, Who^.ClassLevels[ClassIndex]);
+      Quotient := Who^.HpMax div Total;
+      ShowDebugTrace('max,cur,lost', Who^.HpMax, Who^.Flag11B, Who^.Pad74[$75]);
+      for Point := 1 to Quotient do
+      begin
+        if Who^.HpMax > 0 then
+          Dec(Who^.HpMax);
+        if Who^.HpB1 > 0 then
+          Dec(Who^.HpB1);
+        if Who^.Flag11B > 0 then
+          Dec(Who^.Flag11B);
+        Inc(Who^.Pad74[$75]);
+      end;
+      if Who^.HighestLevel < 2 then
+      begin
+        DropFromFight(Who, StatusDeadForever, 'is dead forever');
+        Who^.HpMax := 0;
+        if (Who^.ClassLevels[HighestLevelClass] > 0) and (Count = 2) then
+          Who^.ClassLevels[HighestLevelClass] := 0;
+      end
+      else
+      begin
+        Dec(Who^.ClassLevels[HighestLevelClass]);
+        if (Who^.Flag11B = 0) and (Who^.Status <> StatusGone) then
+          DropFromFight(Who, StatusGone, 'is killed');
+        RecalcClassStats(Who);
+      end;
+      Who^.HighestLevel := Who^.ClassLevels[HighestLevelClass];
+      Who^.Experience := BestXp;
+      res12_fn_0BB8(Who);
+    end;
+  end;
+end;
 { ovl12:23A4: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e71; begin end;
 { ovl12:23C2: retf 10: 10 bytes of parameters; 0 bytes of locals }
