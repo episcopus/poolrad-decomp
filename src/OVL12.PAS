@@ -37,7 +37,7 @@ procedure CollapseAndChangeSide(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure LowerAttackSaveAndResistance(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure RunDiseaseHandlers(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure RaiseAttackAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e31;
+procedure LowerAttackAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e32;
 procedure ovl12_e33;
 procedure ovl12_e34;
@@ -725,14 +725,20 @@ begin
   CallAffectHandler(AffectCauseDisease, Who, Affect, Mode);
 end;
 { 0C06. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). Adds 1 to SaveRoll and
-  to AttackRoll, the plus of LowerAttackAndSave (ovl12:0C15). Called by ovl12:12B2 (ovl12_e41, not decompiled yet). }
+  to AttackRoll, the plus of the routine at ovl12:0C15. Called by ovl12:12B2 (ovl12_e41, not decompiled yet). }
 procedure RaiseAttackAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   Inc(SaveRoll);
   Inc(AttackRoll);
 end;
-{ ovl12:0C15: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e31; begin end;
+{ 0C15. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). Takes AttackPenalty
+  off AttackRoll and SavePenalty off SaveRoll, the minus of RaiseAttackAndSave (ovl12:0C06). Which affect runs it is
+  not known yet [?]. }
+procedure LowerAttackAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  Dec(AttackRoll, AttackPenalty);
+  Dec(SaveRoll, SavePenalty);
+end;
 { ovl12:0C26: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e32; begin end;
 { ovl12:0C4B: retf 10: 10 bytes of parameters; 6 bytes of locals }

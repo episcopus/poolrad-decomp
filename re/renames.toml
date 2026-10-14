@@ -3630,3 +3630,10 @@ kind = "routine"
 why = "ovl12:0C06 adds 1 to SaveRoll and to AttackRoll and uses neither parameter (AffectHandlers shape, Mode not read); the twin of LowerAttackAndSave (ovl12:0C15); it is called by ovl12:12B2 (ovl12_e41, not decompiled yet)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e31"
+new = "LowerAttackAndSave"
+kind = "routine"
+why = "ovl12:0C15 takes 4 off AttackRoll and 4 off SaveRoll and reads neither parameter (AffectHandlers shape, Mode not read); the minus of RaiseAttackAndSave (ovl12:0C06), which adds 1 to each"
+date = "2026-10-13"
+

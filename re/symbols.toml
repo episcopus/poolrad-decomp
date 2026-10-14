@@ -3538,12 +3538,12 @@ id = "ovl12:0C15"
 unit = "ovl12"
 addr = "ovl12:0C15"
 size = 17
-name = "ovl12_e31"
-signature = ""
+name = "LowerAttackAndSave"
+signature = "procedure LowerAttackAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e31"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_31"
+notes = "renamed from ovl12_e31 (ovl12:0C15 takes 4 off AttackRoll and 4 off SaveRoll and reads neither parameter (AffectHandlers shape, Mode not read); the minus of RaiseAttackAndSave (ovl12:0C06), which adds 1 to each); auto:entry_31"
 evidence = ["prologue"]
 
 [[routine]]
