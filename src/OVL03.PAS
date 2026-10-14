@@ -38,7 +38,7 @@ procedure RollRangeCommand;
 procedure RunAreaEventCommand;
 procedure SelectCaseCommand;
 procedure AddLootCommand;
-procedure ovl03_fn_1DB1;
+procedure LoseMoneyAndItemsCommand;
 procedure ovl03_fn_1EF8;
 procedure ovl03_fn_238D;
 procedure ovl03_fn_25CB;
@@ -1341,8 +1341,44 @@ begin
     end;
   end;
 end;
-{ ovl03:1DB1: retf 0: 0 bytes of parameters; 18 bytes of locals }
-{@stub} procedure ovl03_fn_1DB1; begin end;
+{ ovl03:1DB1. ECL command 40 (dispatcher ovl03:2F2D, SkippedOpcode $28): takes a share of the money and
+  the items. Operand 1 is Mode: 0 takes it from the selected character only, any other value from every
+  member of the party (the list ds5D96, followed through TCharacter.Next, +$104). Operand 2 is the
+  percentage Percent: each member's money is scaled by (100 - Percent) / 100 (ScaleMoney), and each item
+  is lost on a d100 roll at most Percent (LoseItems). Operand 2 is read a second time for the chance, the
+  same value unless the operand is a variable that changed. Operand 3 is decoded and not read. }
+procedure LoseMoneyAndItemsCommand;
+var
+  Mode: Byte;
+  Percent: Byte;
+  Chance: Byte;
+  Member: PCharacter;
+  Items: PItem;                 { QUIRK ovl03:1DB1: the member's item list is read into Items and never used }
+  Factor: Real;
+  Unused: Byte;                 { QUIRK ovl03:1DB1: a byte of the frame nothing uses }
+begin
+  DecodeOperands(3);
+  Mode := OperandValue(1);
+  Percent := OperandValue(2);
+  Factor := (100 - Percent) / 100;
+  Chance := OperandValue(2);
+  if Mode = 0 then
+  begin
+    ScaleMoney(Factor, SelectedCharacter);
+    LoseItems(Chance, SelectedCharacter);
+  end
+  else
+  begin
+    Member := PCharacter(ds5D96);
+    while Member <> nil do
+    begin
+      Items := Member^.Items;
+      ScaleMoney(Factor, Member);
+      LoseItems(Chance, Member);
+      Member := Member^.Next;
+    end;
+  end;
+end;
 { ovl03:1EF8: frame not read }
 {@stub} procedure ovl03_fn_1EF8; begin end;
 { ovl03:238D: retf 0: 0 bytes of parameters; 0 bytes of locals }

@@ -563,12 +563,12 @@ id = "ovl03:1DB1"
 unit = "ovl03"
 addr = "ovl03:1DB1"
 size = 327
-name = "ovl03_fn_1DB1"
+name = "LoseMoneyAndItemsCommand"
 signature = ""
 c_name = "ovl03_fn_1DB1"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_1DB1 (dispatcher ovl03:2F2D sends SkippedOpcode 40 here (cmp al,28h); it calls ScaleMoney with (100-Percent)/100 and LoseItems with Percent, for the selected character or the party); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

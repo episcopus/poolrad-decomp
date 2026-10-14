@@ -3672,3 +3672,10 @@ kind = "routine"
 why = "dispatcher ovl03:2F2D sends SkippedOpcode 39 here (cmp al,27h); it fills ds6810, the loot list that ComputeBattleExperience (ovl05:0000) fills, from an item block or from rolls"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl03_fn_1DB1"
+new = "LoseMoneyAndItemsCommand"
+kind = "routine"
+why = "dispatcher ovl03:2F2D sends SkippedOpcode 40 here (cmp al,28h); it calls ScaleMoney with (100-Percent)/100 and LoseItems with Percent, for the selected character or the party"
+date = "2026-10-13"
+
