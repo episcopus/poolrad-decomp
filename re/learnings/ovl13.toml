@@ -67,7 +67,16 @@ evidence = ["src/OVL13.PAS#SweepEnemies", "re/symbols.toml#ovl13:0E82"]
 id = "untyped-var-parameter-bridges-callers"
 confidence = "V"
 units = ["*"]
-tags = ["var", "parameter", "untyped", "compilation", "codegen"]
-title = "An untyped `var B` parameter lets callers pass differently typed variables"
-lesson = "ovl13:1351 (ovl13_e10) writes 4 bytes through its second parameter (`xor ax,ax; mov es:[di],ax; mov es:[di+2],ax`), so it is a `var` far pointer. Its two callers pass different things: TurnUndead (ovl13:116A) passes a PCharacter local and TryTurnUndead (ovl09:0203) passes a 1-byte `Done` plus a 3-byte `Unused` array. A typed `var B: PCharacter` would not accept ovl09's Byte and a `var B: Byte` would not accept ovl13's PCharacter, but the untyped form `function ovl13_e10(Who: Pointer; var B): Boolean` compiles both and emits the same far address push, so the declaration bridges them (the callee alone knows the size). Probe tools/re/tp_idioms/ovl13/PRBTURN.PAS is for the table index, not this. The untyped parameter does not change the caller's code (the address pushed is the same)."
-evidence = ["src/OVL13.PAS#TurnUndead", "src/OVL09.PAS#TryTurnUndead", "re/symbols.toml#ovl13:1351"]
+tags = ["var", "parameter", "untyped", "typecast", "compilation", "codegen"]
+title = "An untyped `var` parameter lets callers pass differently typed variables; the callee writes through it with a value typecast"
+lesson = "ovl13:1351 (SelectTurnUndeadTarget) writes 4 bytes through its second parameter (`xor ax,ax; mov es:[di],ax; mov es:[di+2],ax`), so it is a `var` far pointer. Its two callers pass different things: TurnUndead (ovl13:116A) passes a PCharacter local and TryTurnUndead (ovl09:0203) passes a 1-byte `Done` plus a 3-byte `Unused` array. A typed `var B: PCharacter` would not accept ovl09's Byte and a `var B: Byte` would not accept ovl13's PCharacter, so the parameter stays untyped. Direct assignment is Error 43 ('Illegal assignment'); the callee writes through the untyped parameter with a value typecast, `PCharacter(Selected) := nil` and `PCharacter(Selected) := Enemy`, which the compiler turns into `les di,[bp+6]` plus the word stores (probes PRBUTYP, PRBUTYP2, PRBUTYP3; the `Move(P, Selected, 4)` form calls System_Move instead, 7 bytes more per store). The untyped parameter does not change the caller's code (the address pushed is the same)."
+evidence = ["tools/re/tp_idioms/ovl13/PRBUTYP.PAS", "tools/re/tp_idioms/ovl13/PRBUTYP3.PAS", "src/OVL13.PAS#SelectTurnUndeadTarget", "src/OVL13.PAS#TurnUndead", "src/OVL09.PAS#TryTurnUndead", "re/symbols.toml#ovl13:1351"]
+
+[[lesson]]
+id = "signed-field-comparison-uses-jle-jge"
+confidence = "V"
+units = ["*"]
+tags = ["ShortInt", "Byte", "compare", "jle", "jge", "codegen"]
+title = "A `> 0` (or `<`) on a byte field emits `jle`/`jge` only when the field is read signed"
+lesson = "ovl13:1351 compares TCharacter.Pad74[$76] (a Byte) twice: `cmp byte [..+0x76],0; jle skip` and `mov al,[..+0x76]; cmp al,Min; jge skip`. Both jumps are signed, so the field is read as a ShortInt even though POOLVARS declares Pad74 as Byte: writing `Enemy^.Pad74[$76] > 0` on the Byte gives `jbe`, but `ShortInt(Enemy^.Pad74[$76]) > 0` gives `jle`, and `ShortInt(Enemy^.Pad74[$76]) < MinRow` with `MinRow: ShortInt` gives `jge` matching `cmp al, byte [bp-4]`. The turn-undead table index reads the same field with `ShortInt(...)` (PRBTURN), so the field is signed throughout. Probe tools/re/tp_idioms/ovl13/PRBCMP2.PAS."
+evidence = ["tools/re/tp_idioms/ovl13/PRBCMP.PAS", "tools/re/tp_idioms/ovl13/PRBCMP2.PAS", "src/OVL13.PAS#SelectTurnUndeadTarget", "re/symbols.toml#ovl13:1351"]

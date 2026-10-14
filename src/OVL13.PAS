@@ -23,7 +23,7 @@ procedure ovl13_fn_104E;
 function AttackTargetAllowed(Who, Target: PCharacter): Boolean;
 procedure TurnUndead(Who: PCharacter);
 procedure ovl13_fn_11D8;
-function ovl13_e10(Who: Pointer; var B): Boolean;
+function SelectTurnUndeadTarget(Who: Pointer; var Selected): Boolean;
 procedure ovl13_fn_1406;
 procedure ovl13_fn_14A1;
 procedure ovl13_fn_1583;
@@ -141,6 +141,9 @@ const
   TurnBandOther = 10;
   { The status a destroyed undead is left with (TCharacter.Status; in StatusKilled with 6 and 7). }
   StatusDestroyed = 8;
+  { The starting smallest type row of the turn target scan (ovl13:1351), above every row of the
+    Turn Undead table ds0447 (rows 0..10), so the first in-range undead always replaces it. }
+  UndeadRowCeiling = 13;
 
 { ovl13:0000. Sets up Who's turn at the start of a combat round: clears and re-arms its combat
   state Combat^ (PendingSpell 0, Cast and Use-magic allowed), refreshes it through RefreshAttacks, lets
@@ -664,7 +667,7 @@ end;
 { ovl13:116A, TurnUndead. The Turn Undead action of a cleric Who: it shows 'turns undead...',
   marks Who's turn used (Combat^.Turned), then rolls how many undead the turn reaches
   (RollDice(1, 12)) and the d20 turning check. Who's cleric level (ClassLevels[0]) is mapped to a
-  table band (1..8 itself, 9..13 to 9, else 10). While ovl13_e10 hands over an undead in range and
+  table band (1..8 itself, 9..13 to 9, else 10). While SelectTurnUndeadTarget hands over an undead in range and
   the reach and the stop flag allow it, the table ds0447 gives the number to beat for that
   monster's row (Pad74[$76] times 10 plus the band); a d20 at or above its absolute value turns it.
   A positive entry forces flight (Combat^.ForcedFlight, 'is turned'); a nonpositive one destroys
@@ -681,7 +684,7 @@ var
   Result: ShortInt;              { the table entry: positive turns, nonpositive destroys }
   AnyTurned: Byte;               { nonzero once any undead was turned or destroyed }
   Stop: Byte;                    { set when the turning check fails, stops the loop }
-  Selected: PCharacter;          { the undead ovl13_e10 hands over }
+  Selected: PCharacter;          { the undead SelectTurnUndeadTarget hands over }
   LevelBand: ShortInt;           { Who's cleric level mapped to the table column }
 begin
   ShowCharacterMessage(Who, 'turns undead...', 10, 0);
@@ -701,7 +704,7 @@ begin
   else
     LevelBand := TurnBandOther;
   end;
-  while ovl13_e10(Who, Selected) and (Remaining > 0) and (Stop = 0) do
+  while SelectTurnUndeadTarget(Who, Selected) and (Remaining > 0) and (Stop = 0) do
   begin
     Result := ds0447[ShortInt(Selected^.Pad74[$76]), LevelBand];
     if Roll20 >= Abs(Result) then
@@ -739,8 +742,38 @@ begin
 end;
 { ovl13:11D8: retf 4: 4 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl13_fn_11D8; begin end;
-{ ovl13:1351: retf 8: 8 bytes of parameters; 10 bytes of locals }
-{@stub} function ovl13_e10(Who: Pointer; var B): Boolean; begin end;
+{ ovl13:1351. Picks the undead TurnUndead tries to turn next: of the enemies the range scan
+  CollectEnemiesInRange(Who, AllEnemiesRange) lists it keeps the one with the lowest signed type row
+  (TCharacter.Pad74[$76], above 0) whose combat state is not already forced to flee
+  (Combat^.ForcedFlight 0), clearing Selected first, and returns whether one was found. Pad74[$76]
+  is the monster row the Turn Undead table ds0447 is indexed by, so the scan picks the undead with
+  the lowest row first. QUIRK ovl13:135B: Selected is untyped, so TurnUndead passes a
+  PCharacter while ovl09 TryTurnUndead passes a 1-byte Done; the routine writes a 4-byte far pointer
+  through it either way. Globals: ds6DE4 (the scan's combatant list), CombatantRecord. }
+function SelectTurnUndeadTarget(Who: Pointer; var Selected): Boolean;
+var
+  Count: Byte;                   { enemies CollectEnemiesInRange listed }
+  I: Byte;                       { walk of the enemy list }
+  MinRow: ShortInt;              { the lowest type row kept so far }
+  Enemy: PCharacter;             { one listed enemy }
+begin
+  MinRow := UndeadRowCeiling;
+  PCharacter(Selected) := nil;
+  Count := CollectEnemiesInRange(Who, AllEnemiesRange);
+  SelectTurnUndeadTarget := False;
+  for I := 1 to Count do
+  begin
+    Enemy := CombatantRecord[ds6DE4[I]];
+    if Enemy^.Combat^.ForcedFlight = 0 then
+      if ShortInt(Enemy^.Pad74[$76]) > 0 then
+        if ShortInt(Enemy^.Pad74[$76]) < MinRow then
+        begin
+          MinRow := Enemy^.Pad74[$76];
+          PCharacter(Selected) := Enemy;
+          SelectTurnUndeadTarget := True;
+        end;
+  end;
+end;
 { ovl13:1406: frame not read }
 {@stub} procedure ovl13_fn_1406; begin end;
 { ovl13:14A1: frame not read }

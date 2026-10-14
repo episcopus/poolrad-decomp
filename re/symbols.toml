@@ -5502,12 +5502,12 @@ id = "ovl13:1351"
 unit = "ovl13"
 addr = "ovl13:1351"
 size = 181
-name = "ovl13_e10"
-signature = "function ovl13_e10(Who: Pointer; var B): Boolean"
+name = "SelectTurnUndeadTarget"
+signature = "function SelectTurnUndeadTarget(Who: Pointer; var Selected): Boolean"
 c_name = "ovl13_e10"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_e10 (ovl13:1351 scans CollectEnemiesInRange(Who, $FF) and keeps the enemy with the lowest TCharacter.Pad74[$76] type row (the row ds0447 is indexed by) that is not ForcedFlight, returning it to TurnUndead (ovl13:116A) and TryTurnUndead (ovl09:0203)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
