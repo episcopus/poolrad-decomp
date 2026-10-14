@@ -3,7 +3,7 @@
 decompiler: dec-12, dec-deepseek-3, esc-grok-3, esc-sonnet-ab, int-loop (the Agent: trailers of src/OVL16.PAS; 23 commits carry none; none is rev-sonnet)
 reviewer: rev-sonnet
 date: 2026-10-14
-commit: 6f3438f
+commit: 6f3438f (round 1), 6e04a30 (round 2)
 
 Checklist: docs/process/playbooks/70-review.md (every item, every routine).
 
@@ -37,6 +37,23 @@ First review. `make match UNIT=ovl16` (rerun): `unit: complete`, 16 matched (Fre
 
 What was verified: FreeCharacter's three free loops and sizes; RunCharacterMenu's dispatch, the Present logic, the J cheat and the Exit path; CreateCharacter's menus, affect table, class level assignment, THAC0, ClassBits, the age rule (found above), ability roll and bracket tables, gold and hit point arithmetic and the quirks listed; DropCharacter's prompts and messages; ModifyCharacter's limits per ability, the Strength percentile, the Constitution and Wisdom side effects and the restore on Exit; TrainCharacter's refusals, trainable classes, new-experience cut, charge, spell choice and hit points; AddSavedCharacters' refusal rules (six player-run members, eight in all, same Name and BAB); RemoveSelectedCharacter's unlinking and the new selection; ChooseHeadAndBody's wrap and K; EditCharacterIcon's state machine, saved values and exit; DrawIconCell and CopyPictureSlot (quarter pixel buffer on adapter 1, colour map from ds3CF5 and Figure); the arithmetic of the four hit-point routines; PayGold's two loops. No `inline`, no assembler routine. `PScoredCharacter` offsets agree with TCharacter (+$10 .. +$11B) field by field. The unit comment says what the unit is for and cites 5.8.
 
+## Round 2
+
+Reviewed at 6e04a30 (the decompiler's fixes are 3dc70f8, the ticks bceba8e). `make match UNIT=ovl16` (rerun): `unit: complete`, 16 matched, 3 nested, 0 differ, 17497 bytes. `make readability UNIT=ovl16`: clean. I checked each of the eight round 1 must-fix fixes against the source, the packet and the other units:
+
+- ds557D comment: now says every key except E and S clears it and the E path's SaveGame retry loop (OVL16 line 302, `while (not ds557D) and (ds5D96 <> 0)`) reads it. True.
+- B function: now 'BEGIN Adventuring', non-empty party (ds5D96), view mode 4 stored in ds49F3; the eleven menu texts are listed. True.
+- Slots: `SlotCreate .. SlotExit` (0..10) are used in the Present updates and in the dispatch; the mapping agrees with the hotkey line.
+- `TrainableClassesWord = 680`: the comment now says what TrainCharacter and RunCharacterMenu do with it and tags the writer [I]; the POOLVARS comment of ds470C now says the menu offers Train. True.
+- FreeCharacter: the comment and the inline QUIRK say the by-value `Who := nil` is a dead store. QUIRK address ovl16:00D4 is the `xor ax,ax` that starts the store (packet line 00D4..00D9). True.
+- CreateCharacter age rule: now Cleric for 8, 9, $B, $C, Fighter for $E, Magic-User for $D, $F, $10. Agrees with whitepaper 5.8 and the code.
+- TrainCharacter drained levels: `DrainedLevels = $74`, `LostHitPoints = $75`, tagged [I], with the ovl12 DrainLevels evidence (src/OVL12.PAS 1546..1628), a comment at the statement and a whitepaper 5.8 sentence.
+- TrainCharacter KnownSpells[0]: QUIRK ovl16:2F95 is the `mov al,[bp-0x19]` that starts the store `es:[di+0x32] := 1` (packet 2F95..2F9F), worded as "if". True, and it is in the whitepaper.
+
+All eight must-fix findings are closed and I found no new must-fix. The should-fix and note findings above are still open and do not block; the decompiler can take them on any later visit to the unit.
+
+- [ ] note ds557D (POOLVARS line 761): the comment still says who sets it "is not shown until ovl17 is decompiled"; OVL17 (line 706) now documents that SaveGame ends with `ds557D := 1`. Whoever owns the POOLVARS record can update it.
+
 ## Verdict
 
-Not passed. Eight must-fix findings: an inverted comment (the ds557D gate), a wrong menu name (B is BEGIN Adventuring), unnamed menu slots, a false constant name (Var2OfferModify is the trainable-class mask, and the slot it gates is Train), a false FreeCharacter claim (the by-value pointer is not cleared), a wrong age rule in CreateCharacter, and in TrainCharacter the undocumented drained-level restoration and the unmarked index-0 KnownSpells write.
+Passed (round 2): the eight must-fix findings of round 1 are fixed and verified against the code, the packet and the whitepaper; the should-fix findings stay open as advice.
