@@ -62,7 +62,7 @@ procedure ReduceFireDamageByRoll(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure AddTrainedOutAndHeal(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure PoisonAttackTarget(Who: PCharacter; Bonus: ShortInt);
 procedure ParalyzeAttackTarget(Who: PCharacter; Duration: Word; Unused: Byte);
-procedure ovl12_e52;
+procedure PoisonAttackTargetBonus0(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e53;
 procedure ovl12_e54;
 procedure ovl12_e55;
@@ -1093,9 +1093,10 @@ begin
     if HealCharacter(Who, 1, 1) then
       res12_fn_234A(Who);
 end;
-{ ovl12:1545. Poison hook of an attack (the frame is Who and Bonus; Bonus is the save bonus, 0 in ovl12_e52's call at
-  ovl12:166A). AttackTarget becomes Who's Combat^.Target, the character Who attacked last. That character makes a poison
-  save (SaveKindPoison, with Bonus). When it fails, "is Poisoned" (colour 10) is shown on it, DelayByGameSpeed waits, it
+{ ovl12:1545. Poison hook of an attack (the frame is Who and Bonus; Bonus is the save bonus, 0 in
+  PoisonAttackTargetBonus0's call at ovl12:166A). AttackTarget becomes Who's Combat^.Target, the character Who
+  attacked last. That character makes a poison save (SaveKindPoison, with Bonus). When it fails, "is Poisoned"
+  (colour 10) is shown on it, DelayByGameSpeed waits, it
   gets AffectPoisoned for good (AddAffect with Duration 0, Data $FF, no handler on removal) and DropFromFight kills it
   with StatusGone and "is killed". The map split this routine at ovl12:1543 and ovl12:1583, which are inside its
   literal pool and inside its code. Which affect runs it is not known yet [?]. }
@@ -1125,8 +1126,13 @@ begin
     AddAffect(AttackTarget, AffectParalysis, Duration, ParalysisData, NoRemoveHandler);
   end;
 end;
-{ ovl12:165D: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e52; begin end;
+{ ovl12:165D. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Affect and Mode are not read, ovl24:0000).
+  The poison hook of an attack with save bonus 0: PoisonAttackTarget (ovl12:1545) with Bonus 0. Which affect runs it
+  is not known yet [?]. }
+procedure PoisonAttackTargetBonus0(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  PoisonAttackTarget(Who, 0);
+end;
 { ovl12:1671: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e53; begin end;
 { ovl12:1685: retf 10: 10 bytes of parameters; 0 bytes of locals }

@@ -3863,12 +3863,12 @@ id = "ovl12:165D"
 unit = "ovl12"
 addr = "ovl12:165D"
 size = 20
-name = "ovl12_e52"
-signature = ""
+name = "PoisonAttackTargetBonus0"
+signature = "procedure PoisonAttackTargetBonus0(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e52"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_52"
+notes = "renamed from ovl12_e52 (affect handler at ovl12:165D whose whole body is PoisonAttackTarget(Who, 0) (ovl12:1545 with save bonus 0); the affect that runs it is not known yet); auto:entry_52"
 evidence = ["prologue"]
 
 [[routine]]

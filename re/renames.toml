@@ -3763,3 +3763,10 @@ kind = "routine"
 why = "paralyses the character Who attacked last (AttackTarget := Who^.Combat^.Target, ovl12:15EB): SavingThrow kind 0 first, then 'is Paralyzed' (literal at ovl12:15DE) and AddAffect with affect 34h; both handlers ovl12:1699 and ovl12:16BB call it with (Who, Duration, 0)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e52"
+new = "PoisonAttackTargetBonus0"
+kind = "routine"
+why = "affect handler at ovl12:165D whose whole body is PoisonAttackTarget(Who, 0) (ovl12:1545 with save bonus 0); the affect that runs it is not known yet"
+date = "2026-10-13"
+
