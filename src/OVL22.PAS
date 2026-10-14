@@ -1560,7 +1560,7 @@ const
   LineStep = 4;                   { res12_fn_1A29's step: it walks the beam line in steps of 4 }
   LineWidth = $32;                { res12_fn_1A29's width for the beam line }
   MaxPassableCost = 1;            { a tile the beam passes through has a CombatTiles cost at most this }
-  BouncePatternLimit = 8;         { the bounce line's pattern byte must be at most this to count }
+  BounceFirstLimit = 8;           { the bounce line's First step counter must be at most this to count }
   BounceExtraSteps = 8;           { steps the beam gains when it reflects (Line.First is advanced by 8) }
   ZapAnimation = $13;             { res12_fn_19DE's argument that plays the zap animation (as DamageTargetInCell) }
 var
@@ -1620,7 +1620,7 @@ begin
         Line2.Y2 := CasterY;
         SetupLine(@Line2);
         while StepLine(@Line2) do ;
-        if (Bouncing <> 0) and (Line2.First <= BouncePatternLimit) then
+        if (Bouncing <> 0) and (Line2.First <= BounceFirstLimit) then
           Inc(Line.First, BounceExtraSteps);
         { QUIRK ovl22:2B71: written `0 - DirSign`, not `-DirSign`: TP 6.0 compiles unary minus to
           `neg ax` but the subtraction to `mov dx,ax; xor ax,ax; sub ax,dx`, which is the original's
@@ -1674,8 +1674,8 @@ end;
   restored level gives back Pad74[$75] div Pad74[$74] hit points, added to HpMax (+$32), the current
   hit points (+$11B) and HpB1 (+$B1), then the drained-level count is decremented. It then picks the
   class to advance (ClassLevels, +$96): over the eight classes it takes the class whose current level
-  is not above the best so far and whose entry one level up in the experience table ds409B has the
-  smallest positive value, and keeps the class whose res12_fn_2F57 call is false; that class gains one
+  is not above the best so far and whose entry one level up in the experience table ExperienceTable
+  has the smallest positive value, and keeps the class whose res12_fn_2F57 call is false; that class gains one
   level, the character's Experience (+$AC) is raised to at least that entry, RecalcClassStats
   recomputes the derived values and the character is told 'is restored' (res12_fn_16EC). A character
   with no drained level (Pad74[$74] = 0) is left alone. Reads ds6C95; changes the character's drained
