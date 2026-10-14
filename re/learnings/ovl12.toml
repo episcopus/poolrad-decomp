@@ -566,3 +566,12 @@ tags = ["if", "or", "and", "Exit", "codegen", "jump"]
 title = "if (A) or (B) then <roll> compiles B as je past the body; the Exit guard form matches"
 lesson = "`if (HookAffectId <> 0) or ((DamageKind and KindMagic) <> 0) then if RollDice(...) <= T then CancelPendingHook(0)` compiles the second test as `and al,8; or al,al; je end` (tp probe tools/re/tp_idioms/ovl12/or_condition_jump.pas), while ovl12:2915 has `jne body; jmp end` for that test. The `not (...)` form gives the same bytes, a nested if-else gives other bytes. The guard `if (HookAffectId = 0) and ((DamageKind and KindMagic) = 0) then Exit;` followed by the roll matched at once (MATCH CancelHookOnChance, 97 bytes). Write a bail-out condition as an Exit guard when the original shows a jump to the epilogue after a second test."
 evidence = ["src/OVL12.PAS#CancelHookOnChance", "re/symbols.toml#ovl12:2915", "tools/re/tp_idioms/ovl12/or_condition_jump.pas"]
+
+[[lesson]]
+id = "racerow-index-is-absolute-base"
+confidence = "V"
+units = ["*"]
+tags = ["array", "absolute", "RaceRow", "index", "dseg", "codegen"]
+title = "RaceRow[item][n] compiles to DS:5582 + 16*item + n: the packet's address is the row's byte n, not row 0"
+lesson = "RaceRow is declared `array[0..128] of TRaceRow absolute ds5582`, so RaceRow[item][0] is at DS:5582, and the packet of ovl12:2A87 shows the test at `cmp byte ptr [di+5589h], 0` with di = 16*item. That is byte 7 of the row, not byte 0: the first draft with [0] reported `[di+34CEh]` against the original's `[di+5589h]` and the diff showed the 7. The packet's displacement is the absolute address; subtract 5582h and divide the rest by 16 to get the row byte (here 7). Two routines of the unit read byte 7 of the same row (ovl12:25BC and ovl12:2A87)."
+evidence = ["src/OVL12.PAS#HalveDamageByFirstSlotItemRow", "src/POOLVARS.PAS#RaceRow", "re/symbols.toml#ovl12:2A87"]
