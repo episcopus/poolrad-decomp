@@ -38,7 +38,7 @@ procedure LowerAttackSaveAndResistance(Who: PCharacter; Affect: PAffect; Mode: B
 procedure RunDiseaseHandlers(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure RaiseAttackAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure LowerAttackAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e32;
+procedure SetAttackMissIfTurnPending(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e33;
 procedure ovl12_e34;
 procedure ovl12_fn_0FAC;
@@ -197,6 +197,7 @@ const
   AttackPenalty = 4;            { what ovl12:0918, 0BAC and 0C15 take off AttackRoll }
   SavePenalty = 4;              { what ovl12:0BAC and 0C15 take off SaveRoll }
   ResistPenalty = 4;            { what ovl12:0BAC takes off Who's ResistValue and Pad112[$112] }
+  MissRoll = -1;                { AttackRoll below 0 is a miss (RollToHit, ovl24:0CD5); ovl12:0C26 sets it }
   AffectImages = $1C;           { the images affect: runs on the damage hook (kind 6, ovl24:02FA); Data counts the images [I] }
   AffectUnknown2B = $2B;        { purpose unknown; a Cure Disease affect (ovl04:031E), run by RunDiseaseHandlers }
   AffectCauseDisease = $2C;     { named in ovl15 (ovl15:0FBC); a Cure Disease affect (ovl04:031E) }
@@ -739,8 +740,17 @@ begin
   Dec(AttackRoll, AttackPenalty);
   Dec(SaveRoll, SavePenalty);
 end;
-{ ovl12:0C26: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e32; begin end;
+{ 0C26. Affect handler (the AffectHandlers shape: Who, Affect and Mode; only Who is read, ovl24:0000). When Who's combatant
+  still has its turn to take (Combat^.Initiative, TCombatant +$3, above 0: CombatTurn acts only above 0), ds681E is set to
+  1 and AttackRoll becomes MissRoll, a negative roll (a miss, ovl24:0CD5). Which affect runs it is not known yet [?]. }
+procedure SetAttackMissIfTurnPending(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  if Who^.Combat^.Initiative > 0 then
+  begin
+    ds681E := 1;
+    AttackRoll := MissRoll;
+  end;
+end;
 { ovl12:0C4B: retf 10: 10 bytes of parameters; 6 bytes of locals }
 {@stub} procedure ovl12_e33; begin end;
 { ovl12:0CC3: retf 10: 10 bytes of parameters; 40 bytes of locals }

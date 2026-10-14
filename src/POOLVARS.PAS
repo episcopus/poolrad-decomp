@@ -867,7 +867,7 @@ var
   { Purpose unknown: ovl12:064E clears DamageAmount when this byte is $0F; ovl12:09C0 (ImageAbsorbsHit) needs it above 0. }
   ds681B: Byte;
   ds681C: Byte;                   { the dice count of the last RollDiceCounted roll (ovl24:0E37) }
-  ds681E: Byte;                   { set to 1 by ovl12:0918 when SelectedCharacter lacks affect $18; nothing reads it yet [?] }
+  ds681E: Byte;                   { set to 1 by ovl12:0918 and ovl12:0C26 (turn pending); nothing reads it yet [?] }
   { Purpose unknown: ovl12:09C0 (ImageAbsorbsHit) lets an image take a hit only while this byte is 0;
     nothing else reads it yet [?]. }
   ds6820: Byte;
