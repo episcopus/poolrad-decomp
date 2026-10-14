@@ -3553,3 +3553,10 @@ kind = "routine"
 why = "the CastSpell entry: picks the spell's targets through the DS:6B84 picker, animates the cast and runs the spell's handler SpellHandlers[Spell] (ovl22:0C20)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl22_e15"
+new = "CastDetectionSpell"
+kind = "routine"
+why = "cast handler of the detection spells (SpellHandlers[5],[11],[18],[22],[29]; ovl22_e10 fills the table, whitepaper 5.22.2): applies the current spell ds681B to the chosen targets with 'is affected' (ovl22:10E9)"
+date = "2026-10-13"
+

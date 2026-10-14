@@ -9997,12 +9997,12 @@ id = "ovl22:10E9"
 unit = "ovl22"
 addr = "ovl22:10E9"
 size = 58
-name = "ovl22_e15"
+name = "CastDetectionSpell"
 signature = ""
 c_name = "ovl22_e15"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_15"
+notes = "renamed from ovl22_e15 (cast handler of the detection spells (SpellHandlers[5],[11],[18],[22],[29]; ovl22_e10 fills the table, whitepaper 5.22.2): applies the current spell ds681B to the chosen targets with 'is affected' (ovl22:10E9)); auto:entry_15"
 evidence = ["prologue"]
 
 [[routine]]

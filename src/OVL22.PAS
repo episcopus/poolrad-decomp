@@ -21,7 +21,7 @@ procedure CastBless;
 procedure CastCurse;
 procedure CastCureLightWounds;
 procedure CastCauseLightWounds;
-procedure ovl22_e15;
+procedure CastDetectionSpell;
 procedure ovl22_e16;
 procedure ovl22_e17;
 procedure ovl22_e18;
@@ -561,7 +561,15 @@ begin
   ApplySpellToTargets(ds681B, 0, 0, RollDiceCounted(1, 8), 8, '');
 end;
 { ovl22:10E9: retf 0: 0 bytes of parameters; 12 bytes of locals }
-{@stub} procedure ovl22_e15; begin end;
+{ ovl22:10E9 (e15). Cast handler of the detection spells, spells 5 and 11 (Detect Magic), 18 (Read
+  Magic), 22 (Find Traps) and 29 (Detect Invisibility): applies the current spell ds681B to the
+  chosen targets with the message 'is affected' and no damage of its own (ApplySpellToTargets; the
+  spell's own AffectId does the work). One of the per-spell handlers in SpellHandlers
+  (SpellHandlers[5], [11], [18], [22] and [29]; the table is filled by ovl22_e10). }
+procedure CastDetectionSpell;
+begin
+  ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is affected');
+end;
 { ovl22:1123: retf 0: 0 bytes of parameters; 14 bytes of locals }
 {@stub} procedure ovl22_e16; begin end;
 { ovl22:1162: retf 0: 0 bytes of parameters; 18 bytes of locals }
