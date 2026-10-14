@@ -3434,3 +3434,10 @@ kind = "routine"
 why = "the View command: draws the sheet and the View: prompt with Items, Spells, Trade, Drop and Exit; the Temple, the shop and the camp call it for their V key (ovl19:0AB3; whitepaper 5.4, 5.22)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl19_fn_0D70"
+new = "CanGiveUpItem"
+kind = "routine"
+why = "the Items menu's guard: False for a readied item (Must be unreadied) and for a scroll with a pending scribe the player does not give up (ovl19:0D70; whitepaper 5.22)"
+date = "2026-10-13"
+

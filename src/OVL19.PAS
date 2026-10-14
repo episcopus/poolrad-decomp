@@ -8,7 +8,7 @@ procedure ShowCharacterMoney;
 procedure ShowCombatStats;
 procedure ShowAbilityScore(Index: ShortInt; Highlight: Boolean);
 procedure ViewSelectedCharacter(var Done: Byte);
-procedure ovl19_fn_0D70;
+function CanGiveUpItem(Item: PMenuLine): Boolean;
 procedure ovl19_e6(var Done: Byte);
 procedure ovl19_fn_0FE2;
 procedure ovl19_fn_148F;
@@ -366,8 +366,34 @@ begin
     ovl31_e2;
   res12_fn_27D9;
 end;
-{ ovl19:0D70: retf 4: 4 bytes of parameters; 40 bytes of locals }
-{@stub} procedure ovl19_fn_0D70; begin end;
+{ ovl19:0D70. Asks whether Item may leave the character: ovl19:0EF8 calls it before its T, D and S
+  actions (the call sites at ovl19:1339, 1365 and 1443). False when the item is readied: "Must be
+  unreadied" is shown. True for an item that is not a scroll (ovl22_e6 is false). For a scroll
+  (ovl22_e6 true) with a pending scribe (bit 7 set in one of Affects[1..3], whitepaper 5.22) it shows
+  "<name> was going to scribe from that scroll" after the name and asks "is it Okay to lose it?";
+  True only on Y. Otherwise True. Result: whether the item may go.
+  Globals: SelectedCharacter (the name), GlyphCol and GlyphRow (the message follows the name on row 21).
+  Side effect: rows 21 and 22 (columns 1 to 38) are cleared on every path. }
+function CanGiveUpItem(Item: PMenuLine): Boolean;
+begin
+  CanGiveUpItem := False;
+  if Item^.Readied then
+    res12_fn_1693('Must be unreadied')
+  else if not ovl22_e6(Item) then
+    CanGiveUpItem := True
+  else if (Item^.Affects[1] > $7F) or (Item^.Affects[2] > $7F) or (Item^.Affects[3] > $7F) then
+  begin
+    res12_fn_1816(SelectedCharacter, 1, 21, 0);
+    GlyphCol := Length(SelectedCharacter^.Name) + 2;
+    GlyphRow := 21;
+    ShowPagedText(1, 21, 38, 22, 14, 0, ' was going to scribe from that scroll');
+    if AskYesNo('is it Okay to lose it? ', 13, 10, 15) = 'Y' then
+      CanGiveUpItem := True;
+  end
+  else
+    CanGiveUpItem := True;
+  ClearWindow(1, 21, 38, 22);
+end;
 { ovl19:0EF8: frame not read }
 {@stub} procedure ovl19_e6(var Done: Byte); begin end;
 { ovl19:0FE2: frame not read }

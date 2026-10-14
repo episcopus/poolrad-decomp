@@ -8664,7 +8664,7 @@ evidence = ["prologue"]
 id = "ovl19:0AB3"
 unit = "ovl19"
 addr = "ovl19:0AB3"
-size = 621
+size = 701
 name = "ViewSelectedCharacter"
 signature = "procedure ViewSelectedCharacter(var Done: Byte)"
 c_name = "ovl19_e5"
@@ -8678,12 +8678,12 @@ id = "ovl19:0D70"
 unit = "ovl19"
 addr = "ovl19:0D70"
 size = 392
-name = "ovl19_fn_0D70"
-signature = ""
+name = "CanGiveUpItem"
+signature = "function CanGiveUpItem(Item: PMenuLine): Boolean"
 c_name = "ovl19_fn_0D70"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl19_fn_0D70 (the Items menu's guard: False for a readied item (Must be unreadied) and for a scroll with a pending scribe the player does not give up (ovl19:0D70; whitepaper 5.22)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
