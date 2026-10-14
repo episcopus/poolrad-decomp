@@ -3728,3 +3728,10 @@ kind = "routine"
 why = "ovl12:12FB gives Who the healing block affect $32 (AffectHealingBlock, ovl24:175D) for 14400 rounds, then HealCharacter (Amount 1, Flag 1) heals one point and res12_fn_234A runs on Who when it healed"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e47"
+new = "ProgressRot"
+kind = "routine"
+why = "ovl12:1399 is the rot handler of affect 39h (AffectRot, which Cure Disease removes, whitepaper 5.19): on each run it shows 'Rots...' on Who (res12_fn_16EC, colour 10) and takes Charisma down to 3 at most 2 at a time; then, while the stage in the affect's Data high nibble is above 1, it gives the rot again one stage lower (TryAddAffect, duration 43200); at stage 1 Who dies with 'Dies rots away' (DropFromFight, status 8)"
+date = "2026-10-13"
+

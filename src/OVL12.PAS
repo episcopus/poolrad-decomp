@@ -55,7 +55,7 @@ procedure ovl12_e43(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e44(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e45(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e46(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e47;
+procedure ProgressRot(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e48;
 procedure ovl12_e49;
 procedure ovl12_e50;
@@ -228,6 +228,13 @@ const
   AffectUnknown19 = $19;        { purpose unknown [I]: RollToHit clears it from the attacker (ovl24:0CB7) }
   AffectUnknown19Duration = 1;  { the Duration ovl12:1363 gives affect AffectUnknown19 }
   AffectUnknown19Data = $0C;    { the Data byte ovl12:1363 gives affect AffectUnknown19 }
+  AffectRot = $39;              { the rot affect: Cure Disease removes it (whitepaper 5.19 table, DS:0114) }
+  RotDuration = 43200;          { $A8C0: the Duration the rot handler (ovl12:1399) gives the next rot }
+  RotStage = $10;               { one stage of the rot: the rot handler takes it off the affect's Data high nibble }
+  RotLastStage = 1;             { a rot whose stage is this or lower kills its victim (the rot handler, ovl12:1399) }
+  RotCharismaLoss = 2;          { what each run of the rot handler (ovl12:1399) takes off Charisma }
+  RotMinimumCharisma = 3;       { Charisma is not taken below this by the rot handler (ovl12:1399) }
+  StatusRotted = 8;             { TCharacter.Status 8: what the rot handler gives its victim, who dies of the rot }
 
 { ovl12:0000. Cancels the hook of an affect: when AffectId is 0 or is the affect the hooks are offering
   (HookAffectId), HookAffectId and DamageAmount are cleared. HookAffectId 0 reads as "is Unaffected"
@@ -1004,8 +1011,31 @@ procedure ovl12_e46(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   AddAffect(Who, AffectUnknown19, AffectUnknown19Duration, AffectUnknown19Data, NoRemoveHandler);
 end;
-{ ovl12:1399: retf 10: 10 bytes of parameters; 16 bytes of locals }
-{@stub} procedure ovl12_e47; begin end;
+{ ovl12:1399. Affect handler of the rot (AffectHandlers shape: Who, Affect and Mode; Mode not read; the affect is
+  AffectRot, $39, which Cure Disease removes, whitepaper 5.19). Does nothing while the Temple removes affects (ds681F
+  is not 0, ovl04:0386). Otherwise it shows "Rots..." on Who (colour 10) and takes RotCharismaLoss off Who's Charisma
+  (+$15), never below RotMinimumCharisma. Then the rot moves on: while the stage (the high nibble of the affect's
+  Data) is above RotLastStage, the stage drops by one (RotStage) and TryAddAffect gives Who the rot again with that
+  Data for RotDuration rounds. At the last stage Who dies: DropFromFight takes Who out with StatusRotted and the
+  text "Dies rots away". }
+procedure ProgressRot(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  if ds681F <> 0 then Exit;
+  res12_fn_16EC(Who, 'Rots...', $A, 1);
+  if Who^.Charisma > RotCharismaLoss then
+    Dec(Who^.Charisma, RotCharismaLoss)
+  else
+    Who^.Charisma := 0;
+  if Who^.Charisma < RotMinimumCharisma then
+    Who^.Charisma := RotMinimumCharisma;
+  if Affect^.Data div 16 > RotLastStage then
+  begin
+    Dec(Affect^.Data, RotStage);
+    if TryAddAffect(Who, AffectRot, Affect^.Data, RotDuration) then ;
+  end
+  else
+    DropFromFight(Who, StatusRotted, 'Dies rots away');
+end;
 { ovl12:1452: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e48; begin end;
 { ovl12:1472: retf 10: 10 bytes of parameters; 0 bytes of locals }
