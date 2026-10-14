@@ -3399,3 +3399,10 @@ kind = "routine"
 why = "ovl20:0721 draws the 'Rest daYs Hours Mins Inc Dec Exit' menu through ReadPromptChoice, adjusts RestTime and returns 1 for Rest; RunRestPeriod (ovl20:0C9A) rests only when it returns nonzero"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl17_e1"
+new = "ReadSavedCharacterList"
+kind = "routine"
+why = "ovl17:0010 reads charlist.txt (SaveDir + charlist.txt) and builds a 46-byte menu line per saved character, prefixing a star for a name already in the party list ds5D96; called by ovl16 character menu and ovl17_e4"
+date = "2026-10-13"
+

@@ -7,7 +7,7 @@ unit OVL17;
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 uses POOLVARS;
-procedure ovl17_e1;
+procedure ReadSavedCharacterList(var List: PMenuLine);
 procedure ovl17_e2;
 procedure CreateSaveDir;
 procedure ovl17_fn_032F;
@@ -27,22 +27,66 @@ procedure ovl17_e8;
 procedure ovl17_e9;
 procedure ovl17_e11;
 implementation
-uses RES06, OVL23;
+uses RES05, RES06, OVL23, OVL25;
 
 const
   Yellow = $0E;        { EGA text colour of the disk prompt (the message colour OVL00 also uses) }
   IoSuccess = 0;       { IOResult of a MkDir that created the directory }
   IoDirExists = 5;     { IOResult of a MkDir when the directory is already there (DOS access denied) }
+  { A menu line as the save and load lists allocate it: the Text, Flag29 and Next fields of
+    TMenuLine (46 bytes), not the whole item record. ovl25's NewMenuList and FreeMenuList use the
+    same size. }
+  MenuLineBytes = $2E;
 
-{ ovl17:0010: retf 4: 4 bytes of parameters; 524 bytes of locals }
-{@stub} procedure ovl17_e1; begin end;
+{ ovl17:0010. Reads the save disk's charlist.txt (SaveDir + 'charlist.txt') and builds List as the
+  menu list of the saved characters: one 46-byte menu line per line of that file, in file order.
+  A name a party member (the ds5D96 list) already carries is prefixed '* ', so the menu shows who
+  is already in the party. Does nothing (List stays nil) when the file is missing. Reads SaveDir
+  and the party list; writes List; side effects: the disk prompt (CreateSaveDir) and the heap (one
+  menu line per saved character). Called by ovl16's character menu and by ovl17_e4 (save one
+  character). }
+procedure ReadSavedCharacterList(var List: PMenuLine);
+var
+  SavedLine: PMenuLine;         { the menu line built for the line just read }
+  Last: PMenuLine;              { the last line appended, the list's tail }
+  Who: PCharacter;              { walks the party list ds5D96 }
+  Names: Text;                  { the opened charlist.txt }
+begin
+  List := nil;
+  CreateSaveDir;
+  if not FileExists(SaveDir + 'charlist.txt') then Exit;
+  Assign(Names, SaveDir + 'charlist.txt');
+  Reset(Names);
+  while not Eof(Names) do
+  begin
+    GetMem(SavedLine, MenuLineBytes);
+    FillChar(SavedLine^, MenuLineBytes, 0);
+    if List = nil then
+    begin
+      List := SavedLine;
+      Last := List;
+    end
+    else
+    begin
+      Last^.Next := SavedLine;
+      Last := Last^.Next;
+    end;
+    ReadLn(Names, Last^.Text);
+    Who := PCharacter(ds5D96);
+    while (Who <> nil) and (Who^.Name <> Last^.Text) do
+      Who := Who^.Next;
+    if Who <> nil then
+      Last^.Text := '* ' + Last^.Text;
+  end;
+  Close(Names);
+end;
 { ovl17:01B8: retf 4: 4 bytes of parameters; 774 bytes of locals }
 {@stub} procedure ovl17_e2; begin end;
 { ovl17:02AE. Makes sure the save directory exists on the save disk: MkDir of SaveDir without its
   trailing backslash, and while that fails with anything but success or "already there" it shows
   "Put save disk in <drive>:" (the drive letter SaveDir starts with) and tries again. Reads SaveDir,
   creates the directory on the save disk as a side effect. Called before the save files are touched
-  by ovl17_e1, ovl17_e2, ovl17_e4, ovl17_e8 and ovl17_e9. }
+  by ReadSavedCharacterList, ovl17_e2, ovl17_e4, ovl17_e8 and ovl17_e9. }
 procedure CreateSaveDir;
 var
   ErrCode: Word;

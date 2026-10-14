@@ -35,3 +35,21 @@ tags = ["map", "boundary", "phantom", "pool", "routine", "split"]
 title = "The map can split one routine into several entries at mid-instruction or literal-pool addresses"
 lesson = "re/symbols.toml boundaries are approximate: an entry can start mid-instruction (no push bp prologue) or inside the previous routine's literal pool, so several map entries can tile one real routine. In ovl17 the real routines each have one push bp; mov bp,sp prologue and one retf; entries ovl17_fn_0818/084A/0865 are mid-ovl17_e4 (which really runs 069E..0AC1, one frame, one retf 8), ovl17_fn_0B48 is mid-ovl17_e5 (0AEC..0E95), ovl17_fn_0F99 is mid-ovl17_e6 (0EC4..125F), and ovl17_fn_0AE5 is inside ovl17_e5's pre-entry literal pool. Find every real prologue by scanning for push bp before drafting: decompile the whole real routine, then make match WRITE=1 removes the phantom entries inside the matched range. Do not decompile a mid-instruction entry as its own routine (its frame fields are the parent's)."
 evidence = ["src/OVL17.PAS", "re/symbols.toml#ovl17:0818", "re/symbols.toml#ovl17:0B48", "re/symbols.toml#ovl17:0F99", "docs/design/WHITEPAPER.md#5.11"]
+
+[[lesson]]
+id = "text-file-runtime-entries"
+confidence = "V"
+units = ["*"]
+tags = ["text", "file", "assign", "reset", "eof", "readln", "close", "runtime", "System"]
+title = "The Text file statements name these System entries"
+lesson = "The TP 6.0 contract for `Text` files: `Assign(F, S)` calls 0AF8:04F7 (0AF8:13E2 is the other Assign entry used when the record is a typed file), `Reset(F)` calls 0AF8:0567, `Eof(F)` calls 0AF8:0A04 (Boolean in AL), `ReadLn(F, Target)` calls System_StrLCopy with the target's max length then 0AF8:081C, and `Close(F)` calls 0AF8:05C1. A `Text` local occupies $100 bytes of frame and is addressed at its base. Probe tools/re/tp_idioms/ovl17/TEXTPRB.PAS."
+evidence = ["tools/re/tp_idioms/ovl17/TEXTPRB.PAS", "src/OVL17.PAS#ReadSavedCharacterList"]
+
+[[lesson]]
+id = "guard-exit-shares-string-temp"
+confidence = "V"
+units = ["*"]
+tags = ["temp", "string", "frame", "if", "exit", "layout"]
+title = "`if not Cond then Exit;` lets the next statement reuse the condition's string temp"
+lesson = "An `if Cond then begin ... end` whose condition builds a string (for example `FileExists(Dir + Name)`) keeps that 256-byte string temp live through the whole if, so the body's string expressions get a second temp and the frame grows by $100. Rewriting it as a guard, `if not Cond then Exit;` followed by the body as separate statements, frees the condition's temp at the `;`, so the next `Dir + Name` reuses the same $20c slot: this is how ovl17:0010 keeps a single temp (frame $20c). The two arms compile to the same branch shape (`or al,al; jne body; jmp epilogue`), so only the frame size tells them apart. Probe tools/re/tp_idioms/ovl17/TEXTTEMP.PAS."
+evidence = ["tools/re/tp_idioms/ovl17/TEXTTEMP.PAS", "src/OVL17.PAS#ReadSavedCharacterList"]
