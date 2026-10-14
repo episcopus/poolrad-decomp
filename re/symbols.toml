@@ -6987,7 +6987,7 @@ signature = ""
 c_name = "ovl16_fn_056C"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3: the map boundary is wrong. 056C has its prologue at 056C and its retf epilogue at 1ED1 (a second prologue follows at 1F37), so the routine is 6501 bytes, not 629; the entries the map lists inside it (07E1, 07E5, 07EA and the rest up to 1F30) are fixup-table artifacts with no prologue (07E1 starts mid parameter-push of the AddAffect call at 07D3..07EA). Too large for one batch: decompiling it is what lets make match UNIT=ovl16 WRITE=1 delete those entries and correct its size"
 evidence = ["prologue"]
 
 [[routine]]
@@ -7000,7 +7000,7 @@ signature = ""
 c_name = "ovl16_fn_07E1"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3: not a routine. The 4 bytes at 07E1 (push ax; mov al,0; push ax) are the tail of the AddAffect parameter sequence that starts at 07D3 inside ovl16:056C; no prologue, no return. It is removed from the registry when 056C matches (make match UNIT=ovl16 WRITE=1 corrects its boundary to the retf at 1ED1)"
 evidence = ["near_call"]
 
 [[routine]]
@@ -7013,7 +7013,7 @@ signature = ""
 c_name = "ovl16_fn_07E5"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine. The 5 bytes at 07E5 are the lcall AddAffect (0B00:0052) of the call sequence at 07D3..07EA inside ovl16:056C; no prologue, no return. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects its boundary to the retf at 1ED1)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -7026,7 +7026,7 @@ signature = ""
 c_name = "ovl16_fn_07EA"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine. The bytes at 07EA are the jmp 0919h that ends the AddAffect case arm of ovl16:056C plus the first bytes of the following case test; no prologue, no return. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects its boundary to the retf at 1ED1)"
 evidence = ["far_call"]
 
 [[routine]]
