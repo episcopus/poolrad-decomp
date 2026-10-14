@@ -4050,3 +4050,10 @@ kind = "routine"
 why = "ovl16:3291 unlinks SelectedCharacter from the party list ds5D96 (TCharacter.Next +104) and frees its record with FreeCharacter; it lowers the party size ds49D6^[830] unless Uncounted, and frees the CombatIcon picture slot unless FreePicture is false; the removal counterpart of AddPartyMember (ovl17:1446)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl16_fn_306D"
+new = "AddSavedCharacters"
+kind = "routine"
+why = "ovl16:306D is the training hall's Add (A) function (RunCharacterMenu ovl16:0161): its menu 'Add a character: ' / 'Add Exit' lists the saved characters on disk (ReadSavedCharacterList), LoadCharacterFile loads the picked one and AddPartyMember puts it in the party"
+date = "2026-10-13"
+

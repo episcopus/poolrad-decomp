@@ -70,7 +70,7 @@ procedure DropCharacter;
 procedure ModifyCharacter;
 procedure ovl16_fn_295B;
 procedure ovl16_fn_29AE;
-procedure ovl16_fn_306D;
+procedure AddSavedCharacters;
 procedure RemoveSelectedCharacter(Uncounted, FreePicture: Boolean);
 procedure ChooseHeadAndBody;
 procedure ovl16_fn_34DF;
@@ -150,7 +150,7 @@ end;
   the eleven function names of the menu at DS:0619 (the first letter in white, the rest in green,
   DrawTextAt). It then asks ReadPromptChoice for a function key (prompt line 'C D M T V A R L S B E J')
   and dispatches it: C create (ovl16_fn_056C), D drop (DropCharacter), M modify (ModifyCharacter),
-  T train (ovl16_fn_29AE), V view (ViewSelectedCharacter), A add (ovl16_fn_306D), R remove
+  T train (ovl16_fn_29AE), V view (ViewSelectedCharacter), A add (AddSavedCharacters), R remove
   (SaveCharacter then RemoveSelectedCharacter), L load (LoadGame), S save (SaveGame), B buy/finish (sets ds49F3 to
   Mode 4 and leaves), E exit (AskYesNo, then save and QuitGame), J the STING cheat. An extended key
   G or O selects another party member (UpdateSelectedCharacter); E or S clears the heap retry gate
@@ -243,7 +243,7 @@ begin
             ViewSelectedCharacter(Done);
         'A':
           if ds0619[5].Present <> 0 then
-            ovl16_fn_306D;
+            AddSavedCharacters;
         'R':
           if ds0619[6].Present <> 0 then
             if SelectedCharacter <> nil then
@@ -712,8 +712,90 @@ end;
 {@stub} procedure ovl16_fn_295B; begin end;
 { ovl16:29AE: retf 0: 0 bytes of parameters; 546 bytes of locals }
 {@stub} procedure ovl16_fn_29AE; begin end;
-{ ovl16:306D: retf 0: 0 bytes of parameters; 278 bytes of locals }
-{@stub} procedure ovl16_fn_306D; begin end;
+{ ovl16:306D. The Add (A) function of the training hall, dispatched by RunCharacterMenu (ovl16:0161):
+  it clears the function window, lists the saved characters on disk (ReadSavedCharacterList) and runs
+  the menu "Add a character: " with "Add Exit" (ChooseFromList). Enter or A loads the highlighted
+  character's record (GetMem, LoadCharacterFile) and, when its menu line does not already start with
+  '*', prefixes '* ' and tries to put it in the party. A character already in the party (same Name and
+  BAB, +$AB) is refused; a player-run member (B84 below $80) is refused once six are in the party, and
+  a computer-run member (B84 $80 and up, a hireling) once the party size ds49D6^[VarPartySize] is
+  eight. A refused record is freed (FreeMem); the party records themselves are freed elsewhere. The
+  menu repeats until E, Escape or a full party. The edited list is written back
+  (RewriteSavedCharacterList, ovl17) and freed (FreeMenuList, ovl25). No parameters; side effects: the
+  function window, the menu, the heap and the saved-character list file.
+  QUIRK ovl16:30E8: the ChooseFromList WithExit argument is read from [bp-0x14], a local the routine
+  never assigns (whatever the previous frame left there). }
+procedure AddSavedCharacters;
+const
+  VarPartySize = 830;           { the party member count, a word of the ds49D6 game variable block }
+  ComputerRun = $80;            { high bit of B84: the computer runs the member (hireling) }
+  MaxPlayerMembers = 6;         { the menu stops once six player-run members are in the party }
+  MaxPartySize = 8;             { the menu stops once the party holds eight members }
+  KeyEnter = #13;               { ChooseFromList returns Enter, or the chosen word's letter }
+  KeyAdd = 'A';                 { the 'Add' word of the prompt }
+  KeyExit = 'E';                { the 'Exit' word of the prompt; Escape returns #0 }
+var
+  List: PMenuLine;              { [bp-4]: the saved-character list ReadSavedCharacterList built }
+  Selected: PMenuLine;          { [bp-8]: the highlighted line of that list }
+  NewChar: PCharacter;          { [bp-0xc]: the record GetMem allocated for the chosen character }
+  Who: PCharacter;              { [bp-0x10]: the party list walk }
+  Choice: Integer;              { [bp-0x12]: ChooseFromList's var Choice }
+  Key: Char;                    { [bp-0x13]: the key ChooseFromList returned }
+  WithExit: Byte;               { [bp-0x14]: ChooseFromList's WithExit (QUIRK: never assigned) }
+  Redraw: Byte;                 { [bp-0x15]: ChooseFromList's var Redraw }
+  Count: Byte;                  { [bp-0x16]: the player-run members found in the party list }
+begin
+  ClearWindow(1, 1, $26, $16);
+  ReadSavedCharacterList(List);
+  if List = nil then Exit;
+  Choice := 0;
+  Selected := List;
+  Redraw := 1;
+  repeat
+    Key := ChooseFromList('Add a character: ', 'Add Exit', $D, $A, $F, 1, 2, $26, $16,
+      List, WithExit, Redraw, Choice, Selected);
+    if (Key = KeyEnter) or (Key = KeyAdd) then
+      if Selected^.Text[1] <> '*' then
+      begin
+        GetMem(NewChar, CharacterSize);
+        LoadCharacterFile(Selected^.Text, NewChar, 0, 1);
+        Selected^.Text := '* ' + Selected^.Text;
+        Count := 0;
+        if PCharacter(ds5D96) = nil then
+        begin
+          ds49D6^[VarPartySize] := 0;
+          AddPartyMember(NewChar);
+          BuildCharacterIcon(True);
+        end
+        else
+        begin
+          Who := PCharacter(ds5D96);
+          while (Who <> nil)
+                and ((Who^.Name <> NewChar^.Name) or (Who^.BAB <> NewChar^.BAB)) do
+          begin
+            if Who^.B84 < ComputerRun then
+              Inc(Count);
+            Who := Who^.Next;
+          end;
+          if (Who = nil)
+             and (((NewChar^.B84 < ComputerRun) and (Count < MaxPlayerMembers))
+                  or ((NewChar^.B84 > ComputerRun - 1)
+                      and (ds49D6^[VarPartySize] < MaxPartySize))) then
+          begin
+            AddPartyMember(NewChar);
+            BuildCharacterIcon(True);
+            if NewChar^.B84 < ComputerRun then
+              Inc(Count);
+          end
+          else
+            FreeMem(NewChar, CharacterSize);
+        end;
+      end;
+  until (Key = KeyExit) or (Key = #0) or (Count > MaxPlayerMembers - 1)
+    or (ds49D6^[VarPartySize] > MaxPartySize - 1);
+  RewriteSavedCharacterList(List);
+  FreeMenuList(List);
+end;
 { ovl16:3291. Removes a character from the party list (the head is ds5D96, linked by TCharacter.Next
   at +$104) and frees its record. It walks the list from the head to the member before
   SelectedCharacter (or finds SelectedCharacter itself at the head). When Uncounted is false (the

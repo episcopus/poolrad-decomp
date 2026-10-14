@@ -7788,12 +7788,12 @@ id = "ovl16:306D"
 unit = "ovl16"
 addr = "ovl16:306D"
 size = 548
-name = "ovl16_fn_306D"
+name = "AddSavedCharacters"
 signature = ""
 c_name = "ovl16_fn_306D"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl16_fn_306D (ovl16:306D is the training hall's Add (A) function (RunCharacterMenu ovl16:0161): its menu 'Add a character: ' / 'Add Exit' lists the saved characters on disk (ReadSavedCharacterList), LoadCharacterFile loads the picked one and AddPartyMember puts it in the party); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

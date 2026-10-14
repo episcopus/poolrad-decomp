@@ -114,7 +114,7 @@ end;
   tries again while the open fails (IOResult non-zero). Writes one line per list entry whose text
   does not start with '*' (the party members are skipped, so they leave the available-character
   file), then closes it. Reads SaveDir and List; writes charlist.txt. Called by the ovl16 add-character
-  menu (ovl16_fn_306D) and by SaveCharacter. }
+  menu (AddSavedCharacters) and by SaveCharacter. }
 procedure RewriteSavedCharacterList(List: PMenuLine);
 var
   Line: PMenuLine;              { walks the list }
@@ -327,7 +327,7 @@ end;
   Who's list links (Next, Items, Affects, Combat), and, when FileName.itm / FileName.spc exist, reads
   the 63-byte item and 9-byte affect lists, each into a GetMem chain that runs to end of file. Reads
   SaveDir, GameDir, TileSet and InsertDiskPrompts; writes SaveFile, Who^ and the heap; then flushes the
-  keyboard. The read counterpart of SaveCharacter. Called by ovl16_fn_306D and LoadGame. }
+  keyboard. The read counterpart of SaveCharacter. Called by AddSavedCharacters and LoadGame. }
 procedure LoadCharacterFile(FileName: string; Who: PCharacter; SavedGame: Byte; UseSaveDir: Byte);
 var
   SaveFile: file;               { the character, item and affect files }
