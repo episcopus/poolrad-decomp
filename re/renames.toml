@@ -3966,3 +3966,59 @@ kind = "routine"
 why = "ovl12:268A adds the Constitution bonus of AddConstitutionSaveBonus (ovl12:24D9) to SaveRoll when SaveKind is 2 or 4 (4 is the fear save [I]); matched [V]"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e82"
+new = "RegainHitPoints"
+kind = "routine"
+why = "ovl12:2700 adds RegainedHitPoints (3) to Flag11B, the current hit points (TCharacter +$11B), and caps it at HpMax (+$32); AffectHandlers shape, Affect and Mode not read"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e84"
+new = "GiveAffectUnlessFireOrAcid"
+kind = "routine"
+why = "ovl12:27D9 adds affect $66 for RollDice(3, 6) rounds unless DamageKind has the fire bit (1) or the acid bit ($10), POOLVARS DamageKind"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e83"
+new = "ReviveDyingCharacter"
+kind = "routine"
+why = "ovl12:2730 revives a dying (Status 5) or unconscious (Status 4) character with the hit points left after its DyingRounds (TCombatant +$E) via ReviveCombatant (ovl24:1869), then gives affect $5F and removes its own affect $63 (RemoveAffect with the Affect)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e86"
+new = "RetryRevivalAtFullHitPoints"
+kind = "routine"
+why = "ovl12:2866 calls ReviveCombatant with Who's HpMax (+$32); when it fails it stores TryAddAffect of affect $66 for 1 round with the Data of Affect, the result never read"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e85"
+new = "GiveRegeneratingUnlessAffected"
+kind = "routine"
+why = "ovl12:2814 gives affect $3B (Regenerating, named in ovl15:0FBC) for 3 rounds unless res12_fn_2199 finds affect $62 or $3B on Who"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e87"
+new = "TurnGaseousAndEscape"
+kind = "routine"
+why = "ovl12:28BF clears the Flag of the affect, shows the cursor on Who (ShowCursorOn, ovl31:1298) and drops Who with Status 3 (fled, ovl05:050D) and the text 'Turns gaseous and escapes' (DropCombatant, ovl24:0F06)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e84"
+new = "GiveAffectUnlessFireOrAcid"
+kind = "routine"
+why = "ovl12:27D9 adds affect $66 for RollDice(3, 6) rounds unless DamageKind has the fire bit (1) or the acid bit ($10), POOLVARS DamageKind"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e86"
+new = "RetryRevivalAtFullHitPoints"
+kind = "routine"
+why = "ovl12:2866 calls ReviveCombatant with Who's HpMax (+$32); when it fails it stores TryAddAffect of affect $66 for 1 round with the Data of Affect, the result never read"
+date = "2026-10-13"
+

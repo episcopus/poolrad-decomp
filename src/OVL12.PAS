@@ -93,12 +93,12 @@ procedure HalveDamageForFirstSlotItem(Who: PCharacter; Affect: PAffect; Mode: By
 procedure FallDeadIfInFight(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure CancelDamageUnlessMagicSlotItem(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure AddConstitutionSaveBonusKind2Or4(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e82;
-procedure ovl12_e83;
-procedure ovl12_e84;
-procedure ovl12_e85;
-procedure ovl12_e86;
-procedure ovl12_e87;
+procedure RegainHitPoints(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure ReviveDyingCharacter;
+procedure GiveAffectUnlessFireOrAcid;
+procedure GiveRegeneratingUnlessAffected;
+procedure RetryRevivalAtFullHitPoints;
+procedure TurnGaseousAndEscape;
 procedure ovl12_e88;
 procedure ovl12_fn_2915;
 procedure ovl12_e89;
@@ -272,6 +272,20 @@ const
   AffectCharm = $0B;            { the affect of "is charmed" (ovl12:1E77 gives it) [I] }
   CharmData = $0C;              { the low bits of the charm's Data (ovl12:1E77); bit 7 is the side of the gazer [?] }
   CharmSaveBonus = -2;          { what ovl12:1E77 takes off the fear save of the charmed character }
+  StatusFled = 3;               { TCharacter.Status 3: the combatant fled (ovl05:050D, ovl24 StatusFled) }
+  StatusUnconscious = 4;        { TCharacter.Status 4: unconscious, what Bandage gives (ovl05 StatusUnconscious) }
+  StatusDying = 5;              { TCharacter.Status 5: dying, the combatant bleeds (DyingRounds, ovl08:0FFF) }
+  RegainedHitPoints = 3;        { what RegainHitPoints (ovl12:2700) adds to the current hit points }
+  DyingRevivalPoints = 6;       { ovl12:2730: a revived dying character gets this many hit points less its DyingRounds }
+  AffectRegenerating = $3B;     { the affect "Regenerating" (ovl15:0FBC names it; ovl12:2814 gives it) }
+  RegeneratingDuration = 3;     { the Duration ovl12:2814 gives AffectRegenerating }
+  AffectUnknown5F = $5F;        { purpose unknown [?]: ovl12:2730 gives it to a revived character (a death affect too) }
+  AffectUnknown5FDieSides = 4;  { ovl12:2730 gives AffectUnknown5F 1d4 plus one rounds }
+  AffectUnknown63 = $63;        { purpose unknown [?]: the id ovl12:2730 passes when it removes its own affect }
+  AffectUnknown66 = $66;        { purpose unknown [?]: ovl12:27D9 and ovl12:2866 give it }
+  AffectUnknown66Dice = 3;      { ovl12:27D9 gives AffectUnknown66 3d6 rounds: the number of dice }
+  AffectUnknown66Sides = 6;     { the sides of those dice }
+  AffectUnknown66RetryDuration = 1; { the Duration ovl12:2866 gives AffectUnknown66 }
 
 { ovl12:0000. Cancels the hook of an affect: when AffectId is 0 or is the affect the hooks are offering
   (HookAffectId), HookAffectId and DamageAmount are cleared. HookAffectId 0 reads as "is Unaffected"
@@ -1704,18 +1718,25 @@ begin
     SaveRoll := SaveRoll + Bonus;
   end;
 end;
-{ ovl12:2700: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e82; begin end;
+{ ovl12:2700. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Affect and Mode are not read). Who gets
+  RegainedHitPoints back on Flag11B (the current hit points [I], TCharacter +$11B), but never more than HpMax (+$32).
+  Which affect runs it is not known yet [?]. }
+procedure RegainHitPoints(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  Inc(Who^.Flag11B, RegainedHitPoints);
+  if Who^.Flag11B > Who^.HpMax then
+    Who^.Flag11B := Who^.HpMax;
+end;
 { ovl12:2730: retf 10: 10 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl12_e83; begin end;
+{@stub} procedure ReviveDyingCharacter; begin end;
 { ovl12:27D9: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e84; begin end;
+{@stub} procedure GiveAffectUnlessFireOrAcid; begin end;
 { ovl12:2814: retf 10: 10 bytes of parameters; 4 bytes of locals }
-{@stub} procedure ovl12_e85; begin end;
+{@stub} procedure GiveRegeneratingUnlessAffected; begin end;
 { ovl12:2866: retf 10: 10 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl12_e86; begin end;
+{@stub} procedure RetryRevivalAtFullHitPoints; begin end;
 { ovl12:28BF: retf 10: 10 bytes of parameters; 26 bytes of locals }
-{@stub} procedure ovl12_e87; begin end;
+{@stub} procedure TurnGaseousAndEscape; begin end;
 { ovl12:2901: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e88; begin end;
 { ovl12:2915: retf 2: 2 bytes of parameters; 2 bytes of locals }

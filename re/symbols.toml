@@ -4279,12 +4279,12 @@ id = "ovl12:2700"
 unit = "ovl12"
 addr = "ovl12:2700"
 size = 48
-name = "ovl12_e82"
+name = "RegainHitPoints"
 signature = ""
 c_name = "ovl12_e82"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_82"
+notes = "renamed from ovl12_e82 (ovl12:2700 adds RegainedHitPoints (3) to Flag11B, the current hit points (TCharacter +$11B), and caps it at HpMax (+$32); AffectHandlers shape, Affect and Mode not read); auto:entry_82"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4292,12 +4292,12 @@ id = "ovl12:2730"
 unit = "ovl12"
 addr = "ovl12:2730"
 size = 169
-name = "ovl12_e83"
+name = "ReviveDyingCharacter"
 signature = ""
 c_name = "ovl12_e83"
 level = "none"
 justification = ""
-notes = "auto:entry_83"
+notes = "renamed from ovl12_e83 (ovl12:2730 revives a dying (Status 5) or unconscious (Status 4) character with the hit points left after its DyingRounds (TCombatant +$E) via ReviveCombatant (ovl24:1869), then gives affect $5F and removes its own affect $63 (RemoveAffect with the Affect)); auto:entry_83"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4305,12 +4305,12 @@ id = "ovl12:27D9"
 unit = "ovl12"
 addr = "ovl12:27D9"
 size = 59
-name = "ovl12_e84"
+name = "GiveAffectUnlessFireOrAcid"
 signature = ""
 c_name = "ovl12_e84"
 level = "none"
 justification = ""
-notes = "auto:entry_84"
+notes = "renamed from ovl12_e84 (ovl12:27D9 adds affect $66 for RollDice(3, 6) rounds unless DamageKind has the fire bit (1) or the acid bit ($10), POOLVARS DamageKind); auto:entry_84"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4318,12 +4318,12 @@ id = "ovl12:2814"
 unit = "ovl12"
 addr = "ovl12:2814"
 size = 82
-name = "ovl12_e85"
+name = "GiveRegeneratingUnlessAffected"
 signature = ""
 c_name = "ovl12_e85"
 level = "none"
 justification = ""
-notes = "auto:entry_85"
+notes = "renamed from ovl12_e85 (ovl12:2814 gives affect $3B (Regenerating, named in ovl15:0FBC) for 3 rounds unless res12_fn_2199 finds affect $62 or $3B on Who); auto:entry_85"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4331,12 +4331,12 @@ id = "ovl12:2866"
 unit = "ovl12"
 addr = "ovl12:2866"
 size = 89
-name = "ovl12_e86"
+name = "RetryRevivalAtFullHitPoints"
 signature = ""
 c_name = "ovl12_e86"
 level = "none"
 justification = ""
-notes = "auto:entry_86"
+notes = "renamed from ovl12_e86 (ovl12:2866 calls ReviveCombatant with Who's HpMax (+$32); when it fails it stores TryAddAffect of affect $66 for 1 round with the Data of Affect, the result never read); auto:entry_86"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4344,12 +4344,12 @@ id = "ovl12:28BF"
 unit = "ovl12"
 addr = "ovl12:28BF"
 size = 66
-name = "ovl12_e87"
+name = "TurnGaseousAndEscape"
 signature = ""
 c_name = "ovl12_e87"
 level = "none"
 justification = ""
-notes = "auto:entry_87"
+notes = "renamed from ovl12_e87 (ovl12:28BF clears the Flag of the affect, shows the cursor on Who (ShowCursorOn, ovl31:1298) and drops Who with Status 3 (fled, ovl05:050D) and the text 'Turns gaseous and escapes' (DropCombatant, ovl24:0F06)); auto:entry_87"
 evidence = ["prologue"]
 
 [[routine]]
