@@ -519,7 +519,7 @@ end;
 
 { ovl24:0F06 (e11). Takes a standing combatant out of the fight: shows Msg on it, clears Flag10D,
   sets its Status (and its hit points to 0 unless it fled), redraws its ground, clears its entry
-  of CombatantTable and the occupancy; when res12_fn_2637 says so its death affects are removed
+  of CombatantTable and the occupancy; when EndCombatTurn says so its death affects are removed
   (RemoveDeathAffects). }
 procedure DropCombatant(Who: PCharacter; NewStatus: Byte; Msg: String40);
 var
@@ -538,7 +538,7 @@ begin
     FlushPictureChanges;
     CombatantTable[Index].Kind := 0;
     RebuildOccupancy;
-    if res12_fn_2637(Who) <> 0 then
+    if EndCombatTurn(Who) <> 0 then
       RemoveDeathAffects(Who);
   end;
 end;

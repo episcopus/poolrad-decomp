@@ -3672,3 +3672,10 @@ kind = "routine"
 why = "00BA:255B scans from Who with the WalkLine gate open and returns ds6718[I].Key shr 1 for the found Target, the fewest walk steps halved; ovl09:0B3C tests it = 1 as melee range and uses it to decide whether Who can attack Target"
 date = "2026-10-13"
 
+[[rename]]
+old = "res12_fn_2637"
+new = "EndCombatTurn"
+kind = "routine"
+why = "00BA:2637 clears the pending spell, initiative, guard byte and movement left of Who's combat state and returns 1; ovl08/ovl09/ovl13 call it on every path that ends a combatant's turn (Quit, self-end checks, AI turn end)"
+date = "2026-10-13"
+

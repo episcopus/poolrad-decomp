@@ -16947,12 +16947,12 @@ id = "00BA:2637"
 unit = "res12"
 addr = "00BA:2637"
 size = 79
-name = "res12_fn_2637"
-signature = "function res12_fn_2637(Who: Pointer): Byte"
+name = "EndCombatTurn"
+signature = "function EndCombatTurn(Who: Pointer): Byte"
 c_name = "res12_fn_2637"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_2637 (00BA:2637 clears the pending spell, initiative, guard byte and movement left of Who's combat state and returns 1; ovl08/ovl09/ovl13 call it on every path that ends a combatant's turn (Quit, self-end checks, AI turn end)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

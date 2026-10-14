@@ -61,7 +61,7 @@ function OpposingSide(Who: Pointer): Byte;
 procedure RecountCombatSides;
 function CollectEnemiesInRange(Who: Pointer; Range: Byte): Byte;
 function DistanceToTarget(Who, Target: Pointer): Byte;
-function res12_fn_2637(Who: Pointer): Byte;
+function EndCombatTurn(Who: Pointer): Byte;
 function res12_fn_2686(Who: Pointer): Byte;
 procedure res12_fn_26C2;
 procedure res12_fn_272A;
@@ -1333,8 +1333,19 @@ begin
   DistanceToTarget := ds6718[Index].Key shr 1;
   Move(Saved, ds6718[1], SavedScanBytes);
 end;
-{ 00BA:2637: retf 4: 4 bytes of parameters; 2 bytes of locals }
-{@stub} function res12_fn_2637(Who: Pointer): Byte; begin end;
+{ 00BA:2637. Ends Who's combat turn: it clears the pending spell (PendingSpell, +$0; ovl22_e5
+  casts it when the turn ends), the turn order (Initiative, +$3), the guard byte (B7, +$7; GuardTurn
+  sets it to 1) and the movement left (Moves, +$6), then returns 1 (the turn is over). The Done
+  menu's Quit command, every "the turn ends" path of the AI and the self-end checks call it
+  (ovl08:031A, 09DF, 0E45; ovl09:000F, 07F2, 0B3C, 10D7; ovl12; ovl13). Globals: none. }
+function EndCombatTurn(Who: Pointer): Byte;
+begin
+  PCharacter(Who)^.Combat^.Initiative := 0;
+  PCharacter(Who)^.Combat^.PendingSpell := 0;
+  PCharacter(Who)^.Combat^.B7 := 0;
+  PCharacter(Who)^.Combat^.Moves := 0;
+  EndCombatTurn := 1;
+end;
 { 00BA:2686: retf 4: 4 bytes of parameters; 10 bytes of locals }
 {@stub} function res12_fn_2686(Who: Pointer): Byte; begin end;
 { 00BA:26C2: retf 2: 2 bytes of parameters; 2 bytes of locals }

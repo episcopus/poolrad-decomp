@@ -169,7 +169,7 @@ begin
   end;
 end;
 { ovl08:031A. The player's turn for Who: a character with Flag10D clear ends it at once
-  (res12_fn_2637). A pending spell (Combat^.PendingSpell) is cast through ovl22_e5 and ends the
+  (EndCombatTurn). A pending spell (Combat^.PendingSpell) is cast through ovl22_e5 and ends the
   turn. Otherwise the CombatMenu key is carried out until Done: M Move (MoveCharacter), V View
   (ovl19_e5), A Aim (ovl13_e17), U Use (ovl19_e6), C Cast (ovl13_e15), T Turn (ovl13_e9), Q
   Quick (SetQuickCombat, the computer finishes the turn), D Done (EndTurnMenu), Space takes
@@ -191,7 +191,7 @@ begin
       Spell := Who^.Combat^.PendingSpell;
       Who^.Combat^.PendingSpell := 0;
       ovl22_e5(Spell, 0, 1, Done);
-      Done := res12_fn_2637(Who);
+      Done := EndCombatTurn(Who);
     end
     else
     begin
@@ -218,7 +218,7 @@ begin
           'T':
           begin
             ovl13_e9(Who);
-            Done := res12_fn_2637(Who);
+            Done := EndCombatTurn(Who);
           end;
           'Q':
           begin
@@ -278,7 +278,7 @@ begin
     end;
   end
   else
-    Done := res12_fn_2637(Who);
+    Done := EndCombatTurn(Who);
 end;
 { ovl08:0666. Shows the combat menu of Who and returns the key in Cmd: Move while it has moves
   left, View Aim, Use when it carries items, Cast when it has a memorized spell, may cast and the
@@ -351,7 +351,7 @@ end;
   combatant attacks it (MeleeAttack, CombatantRecord by the number ProbeStep returns); a step off the map
   asks Flee: (ovl13_e5 on Y); a step whose ground costs more than the moves left says Blocked;
   otherwise ovl13_e4 and ovl13_e3 move the character, and a character whose Flag10D clears or
-  for whom IsHelpless says so ends the turn (res12_fn_2637). Key #0 (Esc on the prompt) takes
+  for whom IsHelpless says so ends the turn (EndCombatTurn). Key #0 (Esc on the prompt) takes
   the move back: the saved moves, position (PlaceCombatant) and B9 return. Fewer than two half-moves
   left become 0. }
 procedure MoveCharacter(Who: PCharacter; var Done: Byte);
@@ -416,13 +416,13 @@ begin
       begin
         ovl13_e4(Who, Dir);
         if Who^.Flag10D = 0 then
-          Done := res12_fn_2637(Who)
+          Done := EndCombatTurn(Who)
         else
         begin
           ovl13_e3(Who, Dir);
-          if Who^.Flag10D = 0 then Done := res12_fn_2637(Who);
+          if Who^.Flag10D = 0 then Done := EndCombatTurn(Who);
           ApplyCloudTile(Who);
-          if IsHelpless(Who) then Done := res12_fn_2637(Who);
+          if IsHelpless(Who) then Done := EndCombatTurn(Who);
         end;
       end;
     end;
@@ -475,11 +475,11 @@ begin
         Who^.Combat^.Initiative := InitiativeLast;
         Done := 1;
       end;
-      'Q': Done := res12_fn_2637(Who);
+      'Q': Done := EndCombatTurn(Who);
       'B':
       begin
         Done := BandageDying(1);
-        Done := res12_fn_2637(Who);
+        Done := EndCombatTurn(Who);
       end;
       'S': GameSpeedMenu;
     end;

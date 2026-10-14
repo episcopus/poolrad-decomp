@@ -43,12 +43,12 @@ const
 
 { ovl09:000F. The computer's turn for Who (called by CombatTurn ovl08:01F6 and PlayerTurn
   ovl08:031A when the character is quick): it reads a key (HandleCombatKey), clears the prompt
-  line, and ends the turn through res12_fn_2637 when Who is not dying (Flag10D 0). It rerolls the
+  line, and ends the turn through EndCombatTurn when Who is not dying (Flag10D 0). It rerolls the
   step pattern (+$15) when the current one is 1..4 and a d4 comes up 1: a d8 gives the new
   pattern, an 8 rerolls a d2 + 4, anything else a d4. Morale runs when no key was pressed; a
   panicking character (+$14 set) that is not stuck (+$10 0) shows 'flees in panic' (unit offset 0)
   through ShowCharacterMessage. Then, while the turn is not over: use a magic item (UseMagicItem, ending
-  through res12_fn_2637), finish a pending spell (Combat^.PendingSpell; ovl22_e5, end of turn),
+  through EndCombatTurn), finish a pending spell (Combat^.PendingSpell; ovl22_e5, end of turn),
   take the level-0 turn (ovl09_fn_0203, end of turn), cast a memorized spell (CastMemorizedSpell,
   Done := 1), use the best item (UseBestItem) and read keys again (HandleCombatKey); with Done
   clear it loops on ovl13_e21(Who, $FF, 1, 0): an initiative above 0 runs AiTurn, else the turn
@@ -62,7 +62,7 @@ begin
   ClearPromptLine;
   ClearCharacterMessage;
   if Who^.Flag10D = 0 then
-    Done := res12_fn_2637(Who);
+    Done := EndCombatTurn(Who);
   Step := PByteArray(Who^.Combat)^[$15];
   if (Step = 0) or (Step > 4) or (RollDice(1, 4) = 1) then
   begin
@@ -81,18 +81,18 @@ begin
     Exit;
   if UseMagicItem(Who) then
   begin
-    Done := res12_fn_2637(Who);
+    Done := EndCombatTurn(Who);
     Exit;
   end;
   if Who^.Combat^.PendingSpell > 0 then
   begin
     ovl22_e5(Who^.Combat^.PendingSpell, 1, 1, Done);
-    Done := res12_fn_2637(Who);
+    Done := EndCombatTurn(Who);
     Exit;
   end;
   if ovl09_fn_0203(Who) then
   begin
-    Done := res12_fn_2637(Who);
+    Done := EndCombatTurn(Who);
     Exit;
   end;
   if CastMemorizedSpell(Who) <> 0 then
@@ -113,7 +113,7 @@ end;
 { ovl09:0203. Purpose unknown: returns True and calls ovl13_e9 when the combatant may
   still turn (Combat.Turned is 0), has a level in class 0 (ClassLevels[0] above 0) and
   ovl13_e10 agrees; else returns False. Called by QuickTurn (ovl09:0169): a True result ends
-  the turn through res12_fn_2637. Unused fills the two frame bytes the code never reads
+  the turn through EndCombatTurn. Unused fills the two frame bytes the code never reads
   ([bp-2..-4]; B at [bp-5] is ovl13_e10's var parameter). }
 function ovl09_fn_0203(Who: PCharacter): Boolean;
 var
@@ -185,7 +185,7 @@ begin
   end;
 end;
 { ovl09:03E4. Uses a magic item for the computer's turn (called by QuickTurn; True ends
-  the turn through res12_fn_2637): rolls 1d7 rounds; each round walks Who^.Items for the first
+  the turn through EndCombatTurn): rolls 1d7 rounds; each round walks Who^.Items for the first
   item that passes (not ovl22_e6, Affects[3] below $80, Readied, level from Affects[2] in
   1..MaxSpell adjusted down by $17 above it, and SpellAccepted in range) and remembers it as
   Best. Afterwards a chosen Best is used through ovl19_e8 and the result is True. Early exits
@@ -373,7 +373,7 @@ end;
   mod 8), the pattern is advanced (ds443D counts the turns) and the actor may instead end the turn
   through ovl09_fn_0F4F or ovl13_e21. A step taken sets the icon (SetCombatantIcon with the turn),
   runs ovl13_e4 (or ovl13_e3 once Flag10D is set past it) and ApplyCloudTile; an ending turn runs
-  res12_fn_2637. QUIRK: the jumps to MoveEnd and from there to Finish (ovl09:0B27) are the
+  EndCombatTurn. QUIRK: the jumps to MoveEnd and from there to Finish (ovl09:0B27) are the
   original's; NoStep only computes ovl09_fn_0F4F. Globals: PartyFacing, ds443C, ds443D. }
 procedure MoveStep(Who: PCharacter);
 label
@@ -420,7 +420,7 @@ begin
   begin
     Who^.Combat^.Moves := 0;
     PByteArray(Who^.Combat)^[$14] := 0;
-    Done := res12_fn_2637(Who);
+    Done := EndCombatTurn(Who);
     goto AfterMove;
   end;
   Turn := (Dir + StepTurnOffsets[PByteArray(Who^.Combat)^[$15], Step])
@@ -454,12 +454,12 @@ AfterMove:
   ovl13_e4(Who, Who^.Combat^.IconSet);
   if Who^.Flag10D = 0 then
   begin
-    Done := res12_fn_2637(Who);
+    Done := EndCombatTurn(Who);
     goto MoveEnd;
   end;
   ovl13_e3(Who, Who^.Combat^.IconSet);
   if Who^.Flag10D = 0 then
-    Done := res12_fn_2637(Who);
+    Done := EndCombatTurn(Who);
   ApplyCloudTile(Who);
 MoveEnd:
   goto Finish;
@@ -479,7 +479,7 @@ end;
   sight (WalkLine) reaches it within Range and ovl13_e8 allows it; otherwise a random enemy of
   the CollectEnemiesInRange(Who, Range) scan (ds6DE4) is picked (or UseBestItem chooses one when
   res12_fn_2E03 says to). The attack runs ovl13_e7/e11/e12 and ends the turn through
-  res12_fn_2637. Result: 1 when the turn is over (CanAct = 0). QUIRK: [bp-3] is reused for
+  EndCombatTurn. Result: 1 when the turn is over (CanAct = 0). QUIRK: [bp-3] is reused for
   res12_fn_2E8B's dead result; the +$CC deref runs before its nil test. Globals: ds443C, ds443D,
   ds443E, RaceRow, ds6DE4, CombatantRecord, CombatMap. }
 function AiTurn(Who: PCharacter): Byte;
@@ -581,7 +581,7 @@ Attack:
     goto Next;
   if ovl13_e7(Who, Target) then
   begin
-    Done := res12_fn_2637(Who);
+    Done := EndCombatTurn(Who);
     goto Next;
   end;
   ovl13_e11(Who, Target);
@@ -605,7 +605,7 @@ Next:
 Finish:
   AiTurn := Ord(CanAct = 0);
 end;
-{ ovl09:0F4F. Purpose unknown: returns res12_fn_2637(Who) when IsHelpless(Who) or
+{ ovl09:0F4F. Purpose unknown: returns EndCombatTurn(Who) when IsHelpless(Who) or
   res12_fn_2E03(Who) is true or the combatant's Initiative is 0, else res12_fn_2686(Who).
   Called by QuickTurn (ovl09:01EE) and from the 07F2 and 0B3C regions. ClearCharacterMessage runs first
   (parameterless). }
@@ -613,7 +613,7 @@ function ovl09_fn_0F4F(Who: PCharacter): Byte;
 begin
   ClearCharacterMessage;
   if IsHelpless(Who) or res12_fn_2E03(Who) or (Who^.Combat^.Initiative = 0) then
-    ovl09_fn_0F4F := res12_fn_2637(Who)
+    ovl09_fn_0F4F := EndCombatTurn(Who)
   else
     ovl09_fn_0F4F := res12_fn_2686(Who);
 end;
@@ -676,7 +676,7 @@ end;
   $66) is compared against two hit-point percentages (Who's Flag11B loss and game word 710),
   each failure ending it. Survivors with a good ovl13_e20 roll against half the ovl13_e2 roll
   and Intelligence above 5 offer surrender ('Surrenders' through DropCombatant) and return
-  res12_fn_2637(Who); the rest get two RemoveAffect affects ($4A, $4B) and also end it.
+  EndCombatTurn(Who); the rest get two RemoveAffect affects ($4A, $4B) and also end it.
   QUIRK ovl09:1141: the B84 gate is an inverted test with an empty then-branch. QUIRK
   ovl09:11AD: Saved6825 is saved from ds6825 and never used. The +$14 combat byte lies past
   TCombatant (NoBody at +$13). Globals: ds6825, ds6E2F. }
@@ -717,7 +717,7 @@ begin
         else if Who^.Intelligence > 5 then
         begin
           DropCombatant(Who, 4, 'Surrenders');
-          CheckMorale := res12_fn_2637(Who);
+          CheckMorale := EndCombatTurn(Who);
         end;
       end;
     end;
