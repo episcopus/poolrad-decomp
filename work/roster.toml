@@ -7,7 +7,7 @@
 [[session]]
 name = "orch-sonnet"
 role = "orchestrator"
-model = "openrouter/anthropic/claude-sonnet-5-5"
+model = "openrouter/anthropic/claude-sonnet-5.5"
 variant = "high"
 heading = "orchestator sonnet"
 
@@ -42,7 +42,7 @@ heading = "decompiler deepseek"
 [[session]]
 name = "rev-sonnet"
 role = "reviewer"
-model = "openrouter/anthropic/claude-sonnet-5-5"
+model = "openrouter/anthropic/claude-sonnet-5.5"
 variant = "high"
 heading = "reviewer sonnet"
 
