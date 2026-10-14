@@ -629,3 +629,66 @@ tags = ["pointer", "cast", "local", "frame", "codegen"]
 title = "A handler that reads its Affect parameter as an item copies it to a local PItem (sub sp, 4)"
 lesson = "ApplyItemSecondAffect (ovl12:2EDA) receives its second parameter in the AffectHandlers shape but reads it as a TMenuLine: the original copies it with `mov ax, [bp+8]; mov dx, [bp+0Ah]; mov [bp-4], ax; mov [bp-2], dx` under `sub sp, 4`. The Pascal `var Item: PItem` and `Item := PItem(Affect);` gives that copy and matched."
 evidence = ["src/OVL12.PAS#ApplyItemSecondAffect", "re/symbols.toml#ovl12:2EDA"]
+
+[[lesson]]
+id = "procedural-assignment-takes-bare-name"
+confidence = "V"
+units = ["*"]
+tags = ["procedural", "AffectHandlers", "address", "type", "codegen"]
+title = "A procedural-typed array element takes the bare routine name, and only a routine with the same parameters"
+lesson = "AffectHandlers[k] := RaiseAttackAndMorale; compiles to the stub address the original stores. `AffectHandlers[1] := @RaiseAttackAndMorale;` is rejected (Error 122, Invalid variable reference, the first draft of ovl12_e1). TP 6.0 also rejects a routine whose parameters differ from the procedural type (Error 143, Invalid procedure or function reference; tools/re/tp_idioms/ovl12/PROCTYPE.PAS: a PC, PC, Byte routine into a PC, PA, Byte type). A Pointer variable takes `:= @Routine`, which the absolute alias AffectHandlerPointers uses for the two OVL13 entries."
+evidence = ["src/OVL12.PAS#ovl12_e1", "tools/re/tp_idioms/ovl12/PROCTYPE.PAS"]
+
+[[lesson]]
+id = "affect-table-value-is-stub-entry"
+confidence = "V"
+units = ["*"]
+tags = ["stub", "AffectHandlers", "overlay", "table", "entry"]
+title = "A stub address stored in a table names its overlay entry: entry = (value - 20h) / 5"
+lesson = "Each overlay stub is five bytes from offset 20h (entry 0), so a value stored in AffectHandlers by ovl12_e1 identifies its entry: 2Ah is entry 2 (RaiseAttackAndMorale), 264h is entry 116 (ovl12_e116), 255h is entry 113 (ovl12_e113). build/re/overlays.json gives each entry's code offset (ovl12 entry 113 at 12453 = 30A5). An entry of another unit carries that unit's stub segment: 0068 is ovl13 (entries 22 and 23, at AffectHandlers[73] and [74]). Decode such a table from the manifest, not from the map's entry notes: some ovl12 entries (30 and 112) have no auto:entry note."
+evidence = ["src/OVL12.PAS#ovl12_e1", "build/re/overlays.json", "re/symbols.toml#ovl12:30A5"]
+
+[[lesson]]
+id = "div-16-compiles-with-mov-cl"
+confidence = "V"
+units = ["*"]
+tags = ["shift", "div", "codegen", "count"]
+title = "Byte x div 16 compiles to mov cl, 4; shr ax, cl, where x shr 4 gives mov cx, 4"
+lesson = "In a word shift of a Byte field (after xor ah, ah), TP 6.0 compiles `x shr 4` with the three-byte `mov cx, 4` and `x div 16` with the two-byte `mov cl, 4`. The original of ovl12_e113 (ovl12:30A5) has the second form for the high nibble of a spell byte. The probe SHRDIV16.PAS shows both listings; the match needed div 16."
+evidence = ["tools/re/tp_idioms/ovl12/SHRDIV16.PAS", "src/OVL12.PAS#ovl12_e113"]
+
+[[lesson]]
+id = "byte-compare-with-shortint-needs-byte-cast"
+confidence = "V"
+units = ["*"]
+tags = ["compare", "ShortInt", "Byte", "codegen", "cast"]
+title = "A Byte compared with a ShortInt field is widened (cwde, word compare) unless the field is cast to Byte"
+lesson = "`(x and $0F) = Who^.ByteA0` with ByteA0 a ShortInt compiled to `mov al, es:[di+0A0h]; cwde; mov dx, ax` and a word compare; the original does `cmp al, byte ptr es:[di+0A0h]`, with the left side computed first. `Byte(Who^.ByteA0)` on the right gives the byte compare (ovl12_e113, first attempt). Signed and unsigned equality agree because the nibble is 0..15."
+evidence = ["src/OVL12.PAS#ovl12_e113", "re/symbols.toml#ovl12:30A5"]
+
+[[lesson]]
+id = "guarded-last-body-jumps-to-epilogue"
+confidence = "V"
+units = ["*"]
+tags = ["if", "Exit", "jump", "codegen"]
+title = "`if cond then Exit;` jumps over a jmp; `if not cond then begin ... end;` last in the routine jumps straight to the epilogue"
+lesson = "`if cond then Exit;` compiles to `j(not cond) skip; jmp epilogue`. The same test written as `if not cond then begin ... end;` as the last statement of the routine compiles to one conditional jump to the epilogue. ovl12_e113 (ovl12:30A5) has the second form for its Who/ByteA0 test and the first form for its `if Mode <> 0 then Exit;`."
+evidence = ["src/OVL12.PAS#ovl12_e113", "src/OVL12.PAS#ovl12_e115"]
+
+[[lesson]]
+id = "handler-affect-argument-read-as-character"
+confidence = "V"
+units = ["*"]
+tags = ["AffectHandlers", "cast", "parameter", "QUIRK"]
+title = "ovl12_e113 reads its Affect argument as a character (QUIRK ovl12:30A5)"
+lesson = "The AffectHandlers shape gives the handler a PAffect second parameter, but ovl12:30A5 copies it to a local pointer and reads the character bytes KnownSpells[2] (+$34), KnownSpells[11] (+$3D) and ByteA0 (+$A0) of Who. `Other := PCharacter(Affect)` with Who as the first parameter matches. Whether any caller passes a character as Affect is not known [?]; the table entry 132 ($84) is only stored, not called from the code read so far."
+evidence = ["src/OVL12.PAS#ovl12_e113", "re/symbols.toml#ovl12:30A5"]
+
+[[lesson]]
+id = "cross-unit-handler-needs-handler-shape"
+confidence = "V"
+units = ["*"]
+tags = ["AffectHandlers", "signature", "cross-unit", "stub"]
+title = "A table entry from another unit needs that unit's stub in the handler shape"
+lesson = "OVL13 declares ovl13_e22 and ovl13_e23 as `procedure ovl13_e22;` with no parameters, yet their frames take 10 bytes of parameters (packets ovl13_39D2 and ovl13_3A86, the handler shape), and AffectHandlers[73] and [74] store them. OVL13 has no uses clause, so it cannot name PCharacter or PAffect. Until OVL13 declares them with the handler shape, ovl12_e1 stores them through the absolute alias AffectHandlerPointers (Pointer). The stores are the same four bytes, and the match proves them. Replace the alias with typed assignments when OVL13 declares the shape."
+evidence = ["src/OVL12.PAS#ovl12_e1", "src/OVL13.PAS#ovl13_e22", "build/packets/ovl13_39D2.md"]
