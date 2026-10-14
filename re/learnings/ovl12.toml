@@ -35,3 +35,30 @@ tags = ["AffectHandlers", "handler", "Mode", "retf", "frame"]
 title = "An affect handler with the (Who, Affect, Mode) frame and no use of Mode"
 lesson = "Three ovl12 routines take the TAffectHandler frame (retf 10: Who at +$C, Affect at +$8, Mode at +$6) and never read Mode or Affect: ovl12:010D, ovl12:011D and ovl12:013B. Declaring the parameters with the handler's full signature keeps the frame; the unused names are kept. Whether a given affect id calls them for apply, remove or both is a question for the hook lists, not for these bytes."
 evidence = ["src/OVL12.PAS#RaiseAttackAndMorale", "src/OVL12.PAS#LowerAttackAndMorale", "src/OVL12.PAS#BoostAttackAgainstTarget", "src/POOLVARS.PAS#TAffectHandler"]
+
+[[lesson]]
+id = "signed-loop-index-cwde"
+confidence = "V"
+units = ["*"]
+tags = ["for", "index", "ShortInt", "Byte", "cwde", "codegen"]
+title = "A loop counter indexing an array is extended by its own type: ShortInt gives cwde, Byte gives xor ah, ah"
+lesson = "The class loop of ovl12:0233 indexes ClassLevels (a ShortInt array) by its counter. With `I: Byte` each index is `mov al,[bp-3]; xor ah,ah` (two bytes); with `I: ShortInt` it is `mov al,[bp-3]; cwde` (one byte). The first build was four bytes longer, the first diff was the jmp to the epilogue at 0282, and the four index uses account for it. The same convention is in src/OVL04.PAS (RaiseDead, `I: ShortInt`). Declare a counter with the type the original uses, not with the range it runs over."
+evidence = ["src/OVL12.PAS#TrainConstitution", "src/OVL04.PAS#RaiseDead", "re/symbols.toml#ovl12:0233"]
+
+[[lesson]]
+id = "bit-test-compare-with-zero"
+confidence = "V"
+units = ["*"]
+tags = ["and", "bit", "Boolean", "codegen", "compare", "constant"]
+title = "A bit test (X and mask) <> 0 compiles to and al, mask; or al, al; je"
+lesson = "`if (DamageKind and KindCold) <> 0 then` matches ovl12:03E1 as `mov al,[DamageKind]; and al,2; or al,al; je`: the named constant KindCold (2) compiles like the literal, so the mask can be named."
+evidence = ["src/OVL12.PAS#HalveColdDamage", "re/symbols.toml#ovl12:03E1"]
+
+[[lesson]]
+id = "case-label-list-with-else-on-field"
+confidence = "V"
+units = ["*"]
+tags = ["case", "else", "label", "field", "codegen"]
+title = "A case with a label list and else on a field: one cmp/je per label, every arm jumps to the common end"
+lesson = "`case AttackTarget^.Pad9E[$9F] of 10: Bonus := 1; 9, 12: Bonus := 2; 4: Bonus := 3; else Bonus := 0; end` matches ovl12:01C3: the selector is loaded once into AL, each label is a cmp with a je to its arm (a label list shares the arm, 9 and 12), the chain falls to the else arm, and each arm stores the local and jumps to the statement after the case."
+evidence = ["src/OVL12.PAS#BoostFireAttackByTarget", "re/symbols.toml#ovl12:01C3"]
