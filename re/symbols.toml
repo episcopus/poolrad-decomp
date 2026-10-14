@@ -16674,12 +16674,12 @@ id = "00BA:1282"
 unit = "res12"
 addr = "00BA:1282"
 size = 163
-name = "res12_fn_1282"
-signature = "function res12_fn_1282(Who: PCharacter): ShortInt"
+name = "StrengthAttackAdjustment"
+signature = "function StrengthAttackAdjustment(Who: PCharacter): ShortInt"
 c_name = "res12_fn_1282"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_1282 (00BA:1282: the strength reaction/attack adjustment; ApplyWeaponBonuses (00BA:0000) and RecalcCombatValues (00BA:0BB8) add it to Who^.HitAdjust (the to-hit value) for WeaponFlagStrength, and it is 0 unless Who^.StrengthBonusFlag (+0xAA) is nonzero.); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

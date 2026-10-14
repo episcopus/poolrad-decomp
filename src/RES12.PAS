@@ -40,7 +40,7 @@ function LongIntToText(Value: LongInt): string;
 function DexterityAdjustment(Who: PCharacter): Byte;
 function DexterityAttackAdjustment(Who: PCharacter): ShortInt;
 function StrengthRowIndex(Who: PCharacter): Byte;
-function res12_fn_1282(Who: PCharacter): ShortInt;
+function StrengthAttackAdjustment(Who: PCharacter): ShortInt;
 function res12_fn_1325(Who: PCharacter): ShortInt;
 function res12_fn_13AB(Who: Pointer): Integer;
 procedure res12_fn_148B(Spell: Byte);
@@ -169,7 +169,7 @@ const
   Who^.WeaponAttacks (+$115), byte $A Who^.WeaponDamage (+$117) and byte $B the base of the
   signed Who^.WeaponDamageBonus (+$119). The attack flags byte $E adds the dexterity roll
   adjustment (DexterityAttackAdjustment, bit 2) to HitAdjust (+$110, reset to Thac0 +$2D first) and the
-  strength roll (res12_fn_1282) to HitAdjust and the strength damage (res12_fn_1325) to the
+  strength roll (StrengthAttackAdjustment) to HitAdjust and the strength damage (res12_fn_1325) to the
   damage bonus (bit 4); bit 0 adds the plus of slot item 11 (+$F8) and bit 7 the plus of slot
   item 12 (+$FC) to the weapon's own plus. Race 2 gets one more point with the bonus kinds.
   Globals: RaceRow. }
@@ -189,7 +189,7 @@ begin
   Who^.WeaponDamageBonus[1] := RaceRow[ItemType][RaceRowWeaponBonus];
   if (RaceRow[ItemType][RaceRowAttackFlags] and WeaponFlagStrength) <> 0 then
   begin
-    Who^.HitAdjust := Who^.HitAdjust + res12_fn_1282(Who);
+    Who^.HitAdjust := Who^.HitAdjust + StrengthAttackAdjustment(Who);
     Who^.WeaponDamageBonus[1] := Who^.WeaponDamageBonus[1] + res12_fn_1325(Who);
   end;
   WeaponPlus := Weapon^.Plus;
@@ -456,7 +456,7 @@ end;
   $1C into slot 12), raising ds100 (+$100) by the kind's RaceRow[item type][1]. It then adds the
   carried money to the weight, copies the base attack triple (+$A3..+$A8) into the readied weapon
   triple (+$115..+$11A) and the base resistance (+$A9) into ResistValue (+$111), resets SaveBonus,
-  Movement and HitAdjust, adds the unarmed strength bonuses (res12_fn_1282, res12_fn_1325) when no
+  Movement and HitAdjust, adds the unarmed strength bonuses (StrengthAttackAdjustment, res12_fn_1325) when no
   weapon is readied, and runs ApplyWeaponBonuses. For every readied item it runs SetArmourMovement
   and AddReadiedItemBonus; it then cuts the weight-excluding item's 5000, floors the weight at
   ReadiedItemWeight, sets ResistValue to the sum of the accumulator, ds112 (+$112) to its best three values
@@ -537,7 +537,7 @@ begin
   Bonus.Pad0 := DexterityAdjustment(Who);
   if Who^.SlotItems[0] = nil then
   begin
-    Who^.HitAdjust := Who^.HitAdjust + res12_fn_1282(Who);
+    Who^.HitAdjust := Who^.HitAdjust + StrengthAttackAdjustment(Who);
     Who^.WeaponDamageBonus[1] := Who^.WeaponDamageBonus[1] + res12_fn_1325(Who);
   end;
   ApplyWeaponBonuses(Who);
@@ -650,7 +650,7 @@ end;
 { 00BA:11EA. Maps a character's strength (Strength, +$10) to a 0..30 row of the strength table:
   strength 0..17 is itself, strength 18 is 18 plus the exceptional strength (StrengthPercent,
   +$16: 0 gives 18, 1..50 gives 19, 51..75 gives 20, 76..90 gives 21, 91..99 gives 22 and 100
-  gives 23), and strength 19..25 gives 24..30. res12_fn_1282, res12_fn_1325 and res12_fn_13AB
+  gives 23), and strength 19..25 gives 24..30. StrengthAttackAdjustment, res12_fn_1325 and res12_fn_13AB
   use it to look up the reaction, damage and weight allowances of a strength.
   QUIRK 00BA:1258: a strength above 25, or a strength-18 percentage above 100, leaves the result
   unassigned (the original returns whatever the frame held).
@@ -671,8 +671,29 @@ begin
     $13..$19: StrengthRowIndex := Who^.Strength + 5;
   end;
 end;
-{ 00BA:1282: retf 4: 4 bytes of parameters; 2 bytes of locals }
-{@stub} function res12_fn_1282(Who: PCharacter): ShortInt; begin end;
+{ 00BA:1282. Returns the strength reaction/attack adjustment of Who: StrengthRowIndex (00BA:11EA)
+  maps the strength to a 0..30 table row and the row picks the bonus (1..3 gives -3, 4..5 -2,
+  6..7 -1, 17..19 +1, 20..22 +2, 23..25 +3, 26..27 +4 and 28..30 the row minus 23; every other row
+  gives 0). ApplyWeaponBonuses and RecalcCombatValues add it to HitAdjust. The whole adjustment is 0
+  unless Who^.StrengthBonusFlag (+$AA) is nonzero. Globals: none. }
+function StrengthAttackAdjustment(Who: PCharacter): ShortInt;
+var
+  Row: Byte;
+begin
+  StrengthAttackAdjustment := 0;
+  Row := StrengthRowIndex(Who);
+  if Who^.StrengthBonusFlag <> 0 then
+    case Row of
+      1..3: StrengthAttackAdjustment := -3;
+      4..5: StrengthAttackAdjustment := -2;
+      6..7: StrengthAttackAdjustment := -1;
+      $11..$13: StrengthAttackAdjustment := 1;
+      $14..$16: StrengthAttackAdjustment := 2;
+      $17..$19: StrengthAttackAdjustment := 3;
+      $1A..$1B: StrengthAttackAdjustment := 4;
+      $1C..$1E: StrengthAttackAdjustment := Row - $17;
+    end;
+end;
 { 00BA:1325: retf 4: 4 bytes of parameters; 2 bytes of locals }
 {@stub} function res12_fn_1325(Who: PCharacter): ShortInt; begin end;
 { 00BA:13AB: retf 4: 4 bytes of parameters; 4 bytes of locals }

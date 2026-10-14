@@ -1086,7 +1086,7 @@ matched only with the copy.
   plus on an armour, sets a flag. `ApplyWeaponBonuses` builds the readied weapon's attack values
   from its RaceRow row: HitAdjust (+$110) is reset to Thac0 (+$2D), the flag byte $E adds the
   dexterity roll adjustment (`DexterityAttackAdjustment`, bit 2) and the strength roll adjustment
-  (`res12_fn_1282`, bit 4), WeaponAttacks (+$115) and WeaponDamage (+$117) come from bytes 9 and
+  (`StrengthAttackAdjustment`, bit 4), WeaponAttacks (+$115) and WeaponDamage (+$117) come from bytes 9 and
   $A, and the signed WeaponDamageBonus (+$119) from byte $B plus the strength damage adjustment
   (`res12_fn_1325`) and the plus of the weapon and, by flag bits 0 and 7, of slot items 11
   (+$F8) and 12 (+$FC). The RaceRow kind column is 0 weapon, 1 plus item, 2 armour, 9 special.
@@ -1101,7 +1101,7 @@ matched only with the copy.
   counts one), copies the base attack triple (+$A3, +$A5, +$A7) into the readied weapon triple
   (+$115, +$117, +$119) and the base value +$A9 (ovl16:05E4 sets 50) into `ResistValue` (+$111),
   resets `SaveBonus` (+$101), `Movement` (+$11C) and `HitAdjust` (+$110), adds the unarmed strength
-  bonuses (`res12_fn_1282`, `res12_fn_1325`) when no weapon is readied, and runs `ApplyWeaponBonuses`
+  bonuses (`StrengthAttackAdjustment`, `res12_fn_1325`) when no weapon is readied, and runs `ApplyWeaponBonuses`
   and, per readied item, `SetArmourMovement` and `AddReadiedItemBonus`. A readied item whose
   `NameNum[1]` is $BA (a weightless container) instead counts 5000 less and the weight is floored at
   `ReadiedItemWeight`. Finally `ResistValue` becomes the sum of the accumulator's five bytes, `ds112`

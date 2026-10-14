@@ -3525,3 +3525,10 @@ kind = "routine"
 why = "00BA:11EA: maps Strength (+0x10) plus the exceptional StrengthPercent (+0x16) to a 0..30 row of the strength table (strength 18 + percent bands become 18..23, 19..25 become 24..30); the only callers, res12_fn_1282, res12_fn_1325 and res12_fn_13AB, look up reaction, damage and weight allowances with it."
 date = "2026-10-13"
 
+[[rename]]
+old = "res12_fn_1282"
+new = "StrengthAttackAdjustment"
+kind = "routine"
+why = "00BA:1282: the strength reaction/attack adjustment; ApplyWeaponBonuses (00BA:0000) and RecalcCombatValues (00BA:0BB8) add it to Who^.HitAdjust (the to-hit value) for WeaponFlagStrength, and it is 0 unless Who^.StrengthBonusFlag (+0xAA) is nonzero."
+date = "2026-10-13"
+
