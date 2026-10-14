@@ -3476,3 +3476,10 @@ kind = "routine"
 why = "ovl22:044E adds the spell affects of the current item (CurrentItem) to the spell menu list through AddSpellMenuLine, recording the item in SpellMenuItems; Pending selects the pending (bit 7) or the plain affects; called by ovl22_e2 and ovl22_fn_051C"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl22_fn_051C"
+new = "AddScrollSpells"
+kind = "routine"
+why = "ovl22:051C walks SelectedCharacter^.Items, and for every scroll (ovl22_e6) adds its spell affects to the spell menu list through AddItemSpells; Pending picks the plain or the pending affects; called by ovl22_e2"
+date = "2026-10-13"
+

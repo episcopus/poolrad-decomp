@@ -9841,12 +9841,12 @@ id = "ovl22:051C"
 unit = "ovl22"
 addr = "ovl22:051C"
 size = 128
-name = "ovl22_fn_051C"
-signature = ""
+name = "AddScrollSpells"
+signature = "procedure AddScrollSpells(Pending: Byte)"
 c_name = "ovl22_fn_051C"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl22_fn_051C (ovl22:051C walks SelectedCharacter^.Items, and for every scroll (ovl22_e6) adds its spell affects to the spell menu list through AddItemSpells; Pending picks the plain or the pending affects; called by ovl22_e2); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

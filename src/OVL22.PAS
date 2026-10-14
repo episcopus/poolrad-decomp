@@ -9,7 +9,7 @@ uses POOLVARS, RES06, RES12;
 function ovl22_e1(Mode: Byte; var Choice: Word): Byte;
 procedure AddSpellMenuLine(Spell: Byte);
 procedure AddItemSpells(Pending: Byte);
-procedure ovl22_fn_051C;
+procedure AddScrollSpells(Pending: Byte);
 function ovl22_e2(Kind: Byte): Byte;
 function SpellAreaSize(Spell: Byte): Byte;
 procedure ovl22_fn_07D6;
@@ -172,13 +172,13 @@ begin
   SpellMenuSpells[Count] := Spell and $7F;
 end;
 { ovl22:044E: retf 2: 2 bytes of parameters; 6 bytes of locals }
-{ ovl22:044E. Adds the spell affects of the current item (CurrentItem, set by ovl22_fn_051C or by the
+{ ovl22:044E. Adds the spell affects of the current item (CurrentItem, set by AddScrollSpells or by the
   caller) to the spell menu list: for each of its three spell affects it calls AddSpellMenuLine and
   records the item in SpellMenuItems[SpellMenuItemCount]. Pending selects which affects count: nonzero
   takes the pending ones (bit $80 set, > $80), zero the plain ones (> 0). First it clears the item's
   HiddenNames when res12_fn_2199(SelectedCharacter, $10) reports the affect, or when the character is
   a cleric (ClassLevels[0] > 0) and RaceRow[ItemType][0] is $0C; a hidden item is skipped. Called by
-  ovl22_e2 (Kind 2) and ovl22_fn_051C. }
+  ovl22_e2 (Kind 2) and AddScrollSpells. }
 procedure AddItemSpells(Pending: Byte);
 var
   I: Byte;
@@ -198,7 +198,25 @@ begin
       end;
 end;
 { ovl22:051C: retf 2: 2 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl22_fn_051C; begin end;
+{ ovl22:051C. Builds the spell menu list from the selected character's carried items: it clears
+  SpellMenuItems and SpellMenuItemCount, then walks SelectedCharacter^.Items and, for every scroll
+  (ovl22_e6), calls AddItemSpells with its Pending argument. Called by ovl22_e2 for the "on Scrolls"
+  (Pending 0) and "to be scribed" (Pending 1) lists. }
+procedure AddScrollSpells(Pending: Byte);
+var
+  I: Byte;
+begin
+  for I := 0 to $30 do
+    SpellMenuItems[I] := nil;
+  SpellMenuItemCount := 0;
+  CurrentItem := SelectedCharacter^.Items;
+  while CurrentItem <> nil do
+  begin
+    if ovl22_e6(CurrentItem) then
+      AddItemSpells(Pending);
+    CurrentItem := CurrentItem^.Next;
+  end;
+end;
 { ovl22:059C: retf 2: 2 bytes of parameters; 2 bytes of locals }
 {@stub} function ovl22_e2(Kind: Byte): Byte; begin end;
 { ovl22:0729: retf 2: 2 bytes of parameters; 2 bytes of locals }
