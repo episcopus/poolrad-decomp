@@ -5191,3 +5191,17 @@ kind = "routine"
 why = "ovl13:3B93 is the Alt-X debug command: it returns False unless the program was started with the STING argument (ParamStr(1); res04's DebugMode switch), then flashes 'The Gods intervene!' and takes every monster out of the fight (Flag10D 0, Status StatusDead, CombatantTable Kind 0); ovl08:0264 and ovl09:0690 call it for Alt-X and show 'That doesn't work' on False; make match UNIT=ovl13 FN=GodsIntervene MATCH."
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl20_fn_0000"
+new = "AdvanceAffectDurations"
+kind = "routine"
+why = "ovl20:0000, called by ovl20_e1 after the game clock advances: scales Amount of digit Index down by ClockRadix and subtracts that elapsed time from each timed affect Duration, removing the affect through RemoveAffect when the duration does not outlast the pass (ovl20:01B7, ovl20:01FE)"
+date = "2026-10-14"
+
+[[rename]]
+old = "ds471D"
+new = "TimedAffectFlags"
+kind = "global"
+why = "ovl20:002F indexes DS:471D by the 1-based party index: AdvanceAffectDurations clears the flag, then sets it again while that member still has an affect whose Duration is above 0 (ovl20:01C2, ovl20:02A7); index 0 is never read"
+date = "2026-10-14"
+

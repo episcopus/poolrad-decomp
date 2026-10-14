@@ -1,11 +1,11 @@
 unit OVL20;
 { PartyHeal (re/units.toml): the camp's rest, 3685 bytes of code. RunRestPeriod is the rest that RestParty (ovl15)
   starts: it keeps the rest clock RestTime, shows the "Rest daYs Hours Mins Inc Dec Exit" menu, heals the party
-  and reports interruptions (whitepaper 5.22). }
+  and reports interruptions. AdvanceAffectDurations spends elapsed game time on timed affects (whitepaper 5.22.1). }
 {$A-,O+,F+,S-,R-,G-,I-,L-}
 interface
 uses POOLVARS, RES06;
-procedure ovl20_fn_0000(Amount: Byte; Index: ShortInt);
+procedure AdvanceAffectDurations(Amount: Byte; Index: ShortInt);
 procedure CarryRestClock(var Clock: TRestClock);
 procedure NormalizeRestTime;
 procedure ovl20_e1(Amount: Byte; Index: ShortInt);
@@ -50,9 +50,121 @@ const
   LastScrollSpellSlot = 3;
   RestStepsPerHour = 12; { ovl20:0BBE advances RestHours every twelve five-minute steps }
   RestHealCheckInterval = $120; { ovl20:0877 waits this many five-minute rest steps }
+  ViewModeCamp = 2;          { ds49F3 while the party camps (MakeCamp sets it, ovl15:1E6F) }
+  VarPartySize = 830;        { party member count, a word of the ds49D6 block (whitepaper 5.5) }
+  MaxAffectStep = 10;        { ovl20:0097 spends elapsed affect time in passes of at most ten units }
 
-{ ovl20:0000: retf 4: 4 bytes of parameters; 28 bytes of locals }
-{@stub} procedure ovl20_fn_0000(Amount: Byte; Index: ShortInt); begin end;
+{ ovl20:0000. Spends elapsed game time on the party's timed affects. ovl20_e1 calls it with the Amount
+  and Index just added to the game clock. Those units are scaled down to the smallest digit (each higher
+  digit multiplied by ClockRadix), then spent in passes of at most MaxAffectStep. Outside camp every
+  member is marked due (FillChar of ds471E). In camp it returns at once when no TimedAffectFlags entry is set. A
+  marked member's flag is cleared, then each affect loses the pass or is removed through RemoveAffect
+  when its duration does not outlast the pass. Duration 0 is permanent and is left. The flag is set
+  again while a timed affect remains. Reads ds49F3, ds49D6 word VarPartySize, ClockRadix and the party
+  list ds5D96; changes TimedAffectFlags, ds471E and the affect lists. QUIRK ovl20:0118: NextAffect is loaded from
+  the list head before the empty-list test, so a nil list reads through nil and the value is discarded. }
+procedure AdvanceAffectDurations(Amount: Byte; Index: ShortInt);
+var
+  UnitIndex: ShortInt;          { the clock digit still to scale down to the smallest unit }
+  PartyIndex: Byte;             { 1-based index of Who in the party list, and of TimedAffectFlags }
+  AffectTimeStep: Byte;         { units taken off durations in this pass, at most MaxAffectStep }
+  ScaledAmount: Word;           { elapsed time still to spend, in the smallest clock units }
+  Who: PCharacter;
+  AffectAtTail: Byte;           { 1 once the walk has reached the affect that was last at entry }
+  HasTimedAffect: Byte;         { 1 when a camp member already has a TimedAffectFlags flag set }
+  TailAffect: PAffect;          { the last affect on entry; removal can move the real tail }
+  PreviousAffect: PAffect;      { a node at or before TargetAffect, used after RemoveAffect }
+  NextAffect: PAffect;          { the node after the affect RemoveAffect is about to unlink }
+  TargetAffect: PAffect;        { the affect this pass is shortening or removing }
+begin
+  if ds49F3 <> ViewModeCamp then
+    FillChar(ds471E, RestCounterBytes, RestCounterInitial)
+  else
+  begin
+    HasTimedAffect := 0;
+    PartyIndex := FirstPartyIndex;
+    repeat
+      if TimedAffectFlags[PartyIndex] <> 0 then
+        HasTimedAffect := 1;
+      Inc(PartyIndex);
+    until (HasTimedAffect <> 0) or (PartyIndex > ds49D6^[VarPartySize]);
+    if HasTimedAffect = 0 then
+      Exit;
+  end;
+  ScaledAmount := Amount;
+  UnitIndex := Index;
+  { Pred, not Dec or minus: ShortInt Pred is mov/dec/mov, and Pred as an index is dec then cwde
+    (tools/re/tp_idioms/ovl20/PRB20_A.PAS). }
+  while UnitIndex > 1 do
+  begin
+    ScaledAmount := ScaledAmount * ClockRadix[Pred(UnitIndex)];
+    UnitIndex := Pred(UnitIndex);
+  end;
+  while ScaledAmount > 0 do
+  begin
+    if ScaledAmount > MaxAffectStep then
+      AffectTimeStep := MaxAffectStep
+    else
+      AffectTimeStep := ScaledAmount;
+    PartyIndex := FirstPartyIndex;
+    Who := PCharacter(ds5D96);
+    while Who <> nil do
+    begin
+      if TimedAffectFlags[PartyIndex] <> 0 then
+      begin
+        TimedAffectFlags[PartyIndex] := 0;
+        TargetAffect := Who^.Affects;
+        TailAffect := Who^.Affects;
+        PreviousAffect := Who^.Affects;
+        NextAffect := PreviousAffect^.Next;
+        if Who^.Affects <> nil then
+        begin
+          while TailAffect^.Next <> nil do
+            TailAffect := TailAffect^.Next;
+        end;
+        AffectAtTail := 0;
+        while (TargetAffect <> nil) and (AffectAtTail = 0) do
+        begin
+          if TargetAffect = TailAffect then
+            AffectAtTail := 1;
+          if TargetAffect^.Duration = 0 then
+            TargetAffect := TargetAffect^.Next
+          else if AffectTimeStep < TargetAffect^.Duration then
+          begin
+            Dec(TargetAffect^.Duration, AffectTimeStep);
+            TimedAffectFlags[PartyIndex] := 1;
+            TargetAffect := TargetAffect^.Next;
+          end
+          else
+          begin
+            NextAffect := TargetAffect^.Next;
+            RemoveAffect(Who, TargetAffect^.Id, TargetAffect);
+            if PreviousAffect = Who^.Affects then
+              TargetAffect := Who^.Affects
+            else
+              TargetAffect := NextAffect;
+          end;
+          PreviousAffect := Who^.Affects;
+          while (PreviousAffect <> nil) and (PreviousAffect <> TargetAffect) and
+                (PreviousAffect^.Next <> TargetAffect) do
+            PreviousAffect := PreviousAffect^.Next;
+        end;
+        while TargetAffect <> nil do
+        begin
+          if TargetAffect^.Duration > 0 then
+            TimedAffectFlags[PartyIndex] := 1;
+          TargetAffect := TargetAffect^.Next;
+        end;
+      end;
+      Inc(PartyIndex);
+      Who := Who^.Next;
+    end;
+    if ScaledAmount > MaxAffectStep then
+      Dec(ScaledAmount, MaxAffectStep)
+    else
+      ScaledAmount := 0;
+  end;
+end;
 { ovl20:02F2: retf 4: a var pointer to the rest clock (4 bytes of parameters); 6 bytes of locals.
   Carries the clock up its digits: digit I at or above its radix (ClockRadix[I], DS:363A) gives one
   unit to digit I+1 and loses the radix, for digits 0..5. The top digit has no next digit: while it is
@@ -97,10 +209,10 @@ end;
 { ovl20:03D5: retf 4: Amount and Index (4 bytes of parameters); 18 bytes of locals. Advances the game clock by
   Amount units of digit Index: the seven game variables at 49C6h..49CCh (VarsAt4900, the digits CarryRestClock
   works on) are copied to a local clock, each unit is added and carried, and the clock is written back; then
-  ovl20_fn_0000 runs with the same arguments. The camp's rest advances it 5 minutes at a time (RunRestPeriod calls
-  it with Index 1 and Amount 5). Purpose unknown: the name stays as the entry other units call (OVL14, OVL15,
-  OVL08 and RunRestPeriod reference it, so a rename is a cross-unit change); what the passing time changes is in
-  ovl20_fn_0000, not decompiled yet. }
+  AdvanceAffectDurations runs with the same arguments and spends that elapsed time on timed affects. The camp's rest
+  advances it 5 minutes at a time (RunRestPeriod calls it with Index 1 and Amount 5). Purpose unknown: the name
+  stays as the entry other units call (OVL14, OVL15, OVL08 and RunRestPeriod reference it, so a rename is a
+  cross-unit change). }
 procedure ovl20_e1(Amount: Byte; Index: ShortInt);
 var
   Clock: TRestClock;
@@ -116,7 +228,7 @@ begin
   end;
   for Digit := 0 to 6 do
     VarsAt4900^[$49C6 + Digit] := Clock[Digit];
-  ovl20_fn_0000(Amount, Index);
+  AdvanceAffectDurations(Amount, Index);
 end;
 { ovl20:047A: retf 4: Amount and Index (4 bytes of parameters); 4 bytes of locals. Takes Amount off the
   rest clock digit Index (the Dec key of the Rest menu, ovl20:0721, and the rest's countdown, RunRestPeriod).
