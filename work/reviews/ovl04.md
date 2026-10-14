@@ -1,10 +1,10 @@
 # Review: ovl04
 
 decompiler: dec-6
-reviewer: rev-6
-rounds: 1 rev-5 at e3614ee; 2 rev-6 at 8962b79; 3 rev-sonnet at f1c0c8b; 4 rev-sonnet at 1315f47
+reviewer: rev-sonnet
+rounds: 1 rev-5 at e3614ee; 2 rev-6 at 8962b79; 3 rev-sonnet at f1c0c8b; 4 rev-sonnet at 1315f47; 5 rev-sonnet at b25bc08
 date: 2026-10-13
-commit: 1315f47
+commit: b25bc08
 
 Checklist: docs/process/playbooks/70-review.md (every item, every routine).
 
@@ -81,6 +81,12 @@ Round 4 (rev-sonnet, at 1315f47): `make match UNIT=ovl04` says `unit: complete` 
 
 Everything else held up on re-reading: prices and affect ids against their pushes and compares, status tests (ovl04:0539, 093D), the `AnswerNo` rule, the quirks at ovl04:0177, 01C8, 0250, the constitution thresholds after the decrement (ovl04:060E before 0652), `ds681F`/`ds6C95`/`MoneyInPool` addresses (0386, 05AB, 07CE, 08FA, 0D37), signatures recorded in re/symbols.toml, no raw machine code, `ovl19_e5`, `ovl22_e9` and `res12_fn_*` correctly still unnamed stubs.
 
+Round 5 (rev-sonnet, at b25bc08): `make match UNIT=ovl04` says `unit: complete` (12 matched, 0 differ), `make readability UNIT=ovl04` is clean. The round 4 must-fix findings are verified fixed (e6f2af3, 97c5040). Checked against the ovl25 packet: Escape returns #0 in ReadPromptChoice at ovl25:059F..05A7 (`cmp al, 0x1b`, `mov byte [bp-0x60], 0`); ChooseFromList ends on Escape, E and #0 at ovl25:105C..1074; ExtKey := 1 is stored at ovl25:0591 and ovl25:06C7 (keypad branch from 0691). HealMenu's epilogue `ClearRect(0, 0, 39, 24)` (pushes at ovl04:0C18..0C24) matches the new comment "clears the whole screen". The unit source is otherwise unchanged since round 4, so every other verification of rounds 1 to 4 still stands. No new must-fix finding. The three open items of round 4 are wording only (a comment or registry sentence that overstates "every service routine" or says 1..9) and stay open for the decompiler; they do not block the pass:
+
+- [ ] should-fix CureBlindness QUIRK ovl04:0250 and whitepaper 5.19 line 1071 (still open, see round 4): say "each of the six confirm-then-charge services".
+- [ ] should-fix re/dseg.toml TempleMenuText evidence (still open, see round 4): "I = 1..9" should read "I = 1..10".
+- [ ] note RaiseDead (still open, see round 4): add that the quotient is subtracted from HpMax.
+
 ## Verdict
 
 Not passed. TempleMenuText is declared and commented as entries 1..9, but HealMenu reads indices 1..10 and DS:028B holds 'Exit'.
@@ -90,3 +96,5 @@ Round 2 (rev-6, at 8962b79): not passed. One must-fix: VisitTemple's comment say
 Round 3 (rev-sonnet, at f1c0c8b): not passed. Two must-fix: the unit comment still says `RemoveAffect/e5` and `RollDice/e21` (rename leftovers for routines the unit never calls), and the `KeyNone` comment says `ReadPromptChoice/e4` are still stubs although `ReadPromptChoice` and `ChooseFromList` are decompiled in OVL25.PAS and give the evidence.
 
 Round 4 (rev-sonnet, at 1315f47): not passed. Two must-fix: KeyNone/ExtKey cite OVL25.PAS source line numbers as ovl25 addresses (real: ovl25:059F, 105C, 0580, 0691), and HealMenu's comment says its epilogue clears row 24 when it clears rows 0..24.
+
+Round 5 (rev-sonnet, at b25bc08): passed. Both round 4 must-fix findings are fixed and verified on the bytes; only wording-level should-fix and note items remain.
