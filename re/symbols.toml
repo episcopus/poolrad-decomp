@@ -10581,27 +10581,14 @@ evidence = ["prologue"]
 id = "ovl22:2EE5"
 unit = "ovl22"
 addr = "ovl22:2EE5"
-size = 5
-name = "ovl22_e55"
+size = 104
+name = "CastMonsterStrength"
 signature = ""
 c_name = "ovl22_e55"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_55"
+notes = "renamed from ovl22_e55 (the ovl22_e10 handler table points SpellHandlers[59] at stub 0096:0133 (overlay entry 55, ovl22:2EE5); the routine gives the first chosen target a plain Strength 21 through RaiseStrength (no percentile), shows 'is stronger' and adds the strength affect $26 for SpellAffectDuration; the strength handler of the monster-only spell 59 (SpellNames[59] is empty); make match UNIT=ovl22: 104 bytes matched); auto:entry_55"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl22:2EEA"
-unit = "ovl22"
-addr = "ovl22:2EEA"
-size = 99
-name = "ovl22_fn_2EEA"
-signature = ""
-c_name = "ovl22_fn_2EEA"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl22:2F4D"

@@ -66,8 +66,7 @@ procedure CastSlow;
 procedure CastRestoration;
 procedure CastMonsterHaste;
 procedure CastMonsterHeal;
-procedure ovl22_e55;
-procedure ovl22_fn_2EEA;
+procedure CastMonsterStrength;
 procedure ovl22_e56;
 procedure ovl22_fn_2F57;
 procedure ovl22_e57;
@@ -255,7 +254,7 @@ end;
   5d4, $3B is 1d4*10+40, $3F is 2d10*10 in combat (view mode 5) else (1d10+10)*10, and $43 is a flat
   $5A0. Every other value uses the SpellTable row's duration base (byte +4) plus its per-level byte
   (byte +5) times the caster level from res12_fn_26C2. Called by ApplySpellToTargets (as ApplyAffect's
-  Duration) and CastEnlarge, CastHoldPerson, CastStrength, ovl22_fn_2EEA. }
+  Duration) and CastEnlarge, CastHoldPerson, CastStrength, CastMonsterStrength. }
 function SpellAffectDuration(Spell: Byte): Word;
 const
   { The few spells whose affect time is rolled for instead of read from SpellTable; the values
@@ -1773,10 +1772,27 @@ begin
       if HealCharacter(ds6C95, RollDice(HealDiceCount, HealDiceSides) + HealBase, NoFlag) then
         res12_fn_1FEB(ds6C95, ShowAbout, 'is Healed');
 end;
-{ ovl22:2EE5: frame not read }
-{@stub} procedure ovl22_e55; begin end;
-{ ovl22:2EEA: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl22_fn_2EEA; begin end;
+{ ovl22:2EE5. Cast handler of spell 59, a monster-only spell: SpellNames[59] is empty, and the
+  ovl22_e10 table points element 59 of SpellHandlers at this stub. It gives the first chosen target
+  ds6C95 a fixed Strength of 21 with no exceptional percentile (RaiseStrength; a monster's strength),
+  shows 'is stronger' when the strength actually rose (res12_fn_16EC) and adds the strength affect $26
+  (the affect CastStrength and Enlarge keep the earlier strength in, ovl24 RaiseStrength) for the
+  current spell's own duration (SpellAffectDuration). }
+procedure CastMonsterStrength;
+const
+  MonsterStrength = 21;           { the Strength RaiseStrength applies }
+  NoPercent = 0;                  { no exceptional-strength percentile }
+  StrengthAffect = $26;           { the strength affect left on the target (as CastStrength, ovl22:1F41) }
+  MessageColour = $A;             { the colour res12_fn_16EC shows 'is stronger' in }
+  TimedMessage = 1;               { nonzero: res12_fn_16EC delays by the game speed and clears it }
+  RunHandlerOnRemoval = 1;        { AddAffect Flag: the affect's handler runs when the affect is removed }
+var
+  Code: Byte;                     { RaiseStrength's earlier-strength code, passed to AddAffect as Data }
+begin
+  if RaiseStrength(ds6C95, MonsterStrength, NoPercent, Code) then
+    res12_fn_16EC(ds6C95, 'is stronger', MessageColour, TimedMessage);
+  AddAffect(ds6C95, StrengthAffect, SpellAffectDuration(ds681B), Code, RunHandlerOnRemoval);
+end;
 { ovl22:2F4D: frame not read }
 {@stub} procedure ovl22_e56; begin end;
 { ovl22:2F57: retf 0: 0 bytes of parameters; 0 bytes of locals }

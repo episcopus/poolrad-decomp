@@ -3868,3 +3868,10 @@ kind = "routine"
 why = "the ovl22_e10 handler table points SpellHandlers[58] at stub 0096:012E (overlay entry 54, ovl22:2E4D); the routine cures the Poisoned affect $37 plus its companion $16 from the first chosen target, else cures disease, else heals 1d4+8 with 'is Healed'; the heal handler of the monster-only spell 58 (SpellNames[58] is empty); make match UNIT=ovl22: 140 bytes matched"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl22_e55"
+new = "CastMonsterStrength"
+kind = "routine"
+why = "the ovl22_e10 handler table points SpellHandlers[59] at stub 0096:0133 (overlay entry 55, ovl22:2EE5); the routine gives the first chosen target a plain Strength 21 through RaiseStrength (no percentile), shows 'is stronger' and adds the strength affect $26 for SpellAffectDuration; the strength handler of the monster-only spell 59 (SpellNames[59] is empty); make match UNIT=ovl22: 104 bytes matched"
+date = "2026-10-14"
+
