@@ -637,14 +637,18 @@ var
   ds4A00: Byte;                   { set to 1 by the loader (ovl11:03A1) and by EndBattle (ovl05:1631) }
   ds4A24: Pointer;                { screen buffer the loader allocates through AllocatePicture (ovl11:00D4) }
   ds4A28: array[0..$A7] of Byte;  { $A8-byte buffer the loader clears (ovl11:00EC) }
-  { The changed-region trackers the blitters (res07 08D4/0D71) fill and res07
-    ShowChanges (1B52) flushes: per changed screen row, ds4AD0 and ds4C20 hold
-    the first and last changed byte offset and ds4D70 the last; indexed by word
-    (row*2), so 168 word entries. The loader clears/fills the same $150 bytes
-    through FillChar (ovl11:00FD, 010E, 011F). }
-  ds4AD0: array[0..$A7] of Word;  { first changed offset of the row }
-  ds4C20: array[0..$A7] of Word;  { last changed offset of the row (starts $FFFF) }
-  ds4D70: array[0..$A7] of Word;  { last changed offset of the row (starts 0) }
+  { The changed-region trackers the blitters (res07 08D4/0D71/2632) fill and res07
+    FlushPictureChanges (1B52) flushes: per changed screen row, ds4C20 holds the
+    first (lowest) changed byte offset in the staging buffer DrawBuf (a minimum, so
+    it starts at $FFFF) and ds4D70 the last (highest, it starts at 0); ds4AD0 holds
+    the screen-side byte column of that first changed byte (LeftCol * 2 on adapter
+    0, LeftCol * 1 on adapter 1, LeftCol * 4 on adapter 2). FlushPictureChanges
+    moves DrawBuf^.Data[ds4C20[Row] .. ds4D70[Row]] to the screen at that column.
+    Indexed by word (row*2), so 168 word entries. The loader clears/fills the same
+    $150 bytes through FillChar (ovl11:00FD, 010E, 011F). }
+  ds4AD0: array[0..$A7] of Word;  { screen-side byte column of the row's first changed byte }
+  ds4C20: array[0..$A7] of Word;  { first (lowest) changed byte offset in DrawBuf (a minimum, starts $FFFF) }
+  ds4D70: array[0..$A7] of Word;  { last (highest) changed byte offset in DrawBuf (starts 0) }
   { Per-cell screen address table the loader fills (ovl11:0130..0163): $B800 (even cell) or $BA00
     (odd cell) plus 5*(I div 2). }
   ds4EC0: array[0..$C7] of Word;  { cell text scanline address; see above }
