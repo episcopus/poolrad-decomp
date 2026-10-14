@@ -9,6 +9,7 @@ interface
 uses POOLVARS;
 type
   String8 = string[8];   { the short save-file base name SaveCharacter takes }
+  ScriptName = string[40];  { a value string parameter carrying a file name (SaveAndExit) }
 procedure ReadSavedCharacterList(var List: PMenuLine);
 procedure RewriteSavedCharacterList(List: PMenuLine);
 procedure CreateSaveDir;
@@ -21,7 +22,7 @@ procedure AddMonsterToParty(Kind: Byte);
 procedure AddPartyMember(Member: PCharacter);
 procedure ovl17_e8;
 procedure ovl17_e9;
-procedure ovl17_e11;
+procedure SaveAndExit(AreaScript: ScriptName);
 implementation
 uses RES04, RES05, RES06, RES07, OVL23, OVL24, OVL25, OVL32;
 
@@ -582,8 +583,42 @@ end;
 {@stub} procedure ovl17_e8; begin end;
 { ovl17:1D58: retf 0: 0 bytes of parameters; 1278 bytes of locals }
 {@stub} procedure ovl17_e9; begin end;
-{ ovl17:22D5: retf 4: 4 bytes of parameters; 342 bytes of locals }
-{@stub} procedure ovl17_e11; begin end;
+{ ovl17:22D5. Called by ovl03:0BD1 with the current area's ECL file name (GameDir + 'ECL' +
+  Str(TileSet) + '.dax') just before an area transition. When that file exists (a normal area) it
+  returns at once; otherwise it shows the 'Save and exit  Insert disk #N' line (N = TileSet)
+  through ReadPromptChoice and, when the player presses its hotkey S, steps the party one cell
+  back in its facing (wrapping the 16x16 area map), restores the tile set, saves the game
+  (ovl17_e9) and quits. Reads AreaScript, TileSet, PartyMapColumn, PartyMapRow and PartyFacing;
+  writes ExtKey and, on S, the party's map cell. Side effects: the prompt line, the save disk
+  and the game exit. }
+procedure SaveAndExit(AreaScript: ScriptName);
+var
+  Prompt: String40;             { the 'Save and exit  Insert disk #N' line }
+  NumText: string[1];           { Str(TileSet) }
+  Key: Char;                    { the key ReadPromptChoice returned }
+  ExtKey: Byte;                 { nonzero when an extended key was pressed }
+begin
+  if FileExists(AreaScript) then Exit;
+  Str(TileSet, NumText);
+  Prompt := 'Save and exit  Insert disk #' + NumText;
+  Key := ReadPromptChoice('', Prompt, 13, 10, 15, 0, 0, ExtKey);
+  if (ExtKey = 0) and (Key = 'S') then
+  begin
+    Dec(PartyMapColumn, DirStepX[PartyFacing]);
+    if PartyMapColumn < 0 then
+      PartyMapColumn := $F;
+    if PartyMapColumn > $F then
+      PartyMapColumn := 0;
+    Dec(PartyMapRow, DirStepY[PartyFacing]);
+    if PartyMapRow < 0 then
+      PartyMapRow := $F;
+    if PartyMapRow > $F then
+      PartyMapRow := 0;
+    RestoreTileSet;
+    ovl17_e9;
+    QuitGame;
+  end;
+end;
 
 begin
 end.

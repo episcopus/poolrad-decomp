@@ -8453,12 +8453,12 @@ id = "ovl17:22D5"
 unit = "ovl17"
 addr = "ovl17:22D5"
 size = 267
-name = "ovl17_e11"
+name = "SaveAndExit"
 signature = ""
 c_name = "ovl17_e11"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_11"
+notes = "renamed from ovl17_e11 (ovl17:22D5 shows the 'Save and exit Insert disk #N' prompt and, on the S hotkey, saves the game (ovl17_e9) and quits; called by ovl03:0BD1 with the area ECL file name, which gates it); auto:entry_11"
 evidence = ["prologue"]
 
 [[routine]]

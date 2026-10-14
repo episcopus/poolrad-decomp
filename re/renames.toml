@@ -3455,3 +3455,10 @@ kind = "routine"
 why = "ovl17:1262 adds a monster of Kind to the party: it returns at once when the party already holds eight members (ds49D6^[830] > 7), has LoadMonster build the record, gives it a random byte at +AB, picks one of the classes with a positive level (RollDice(1, Count)) and the body/head picture banks from the ds08C5-region tables by Who^.B9E and the roll, then AddPartyMember and BuildCharacterIcon(True); called by ovl03_fn_2B7E"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl17_e11"
+new = "SaveAndExit"
+kind = "routine"
+why = "ovl17:22D5 shows the 'Save and exit Insert disk #N' prompt and, on the S hotkey, saves the game (ovl17_e9) and quits; called by ovl03:0BD1 with the area ECL file name, which gates it"
+date = "2026-10-13"
+
