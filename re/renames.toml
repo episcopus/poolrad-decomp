@@ -4022,3 +4022,10 @@ kind = "routine"
 why = "ovl13:0000 is RunCombat's per-round setup of a combatant: RunCombat calls it for every combatant on the party list at the start of each round (ovl08:0063) before turns; it clears and re-arms Combat^, refreshes it (ovl13_e6, the movement hooks), rolls Initiative and sets Combat^.Moves"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl13_fn_0191"
+new = "RollAttackDamage"
+kind = "routine"
+why = "ovl13:0191 rolls one attack's damage for Attacker against Target: entry Index (1 or 2) of the readied weapon triple (WeaponAttacks/WeaponDamage/WeaponDamageBonus) through RollDiceCounted, stores it in DamageAmount, multiplies by the backstab factor when ovl13_fn_2574 says so, and runs the damage hooks (kinds 4 and 5); called per attack from ovl13:1713 which forwards it to ovl13_fn_02F9 with DamageAmount"
+date = "2026-10-13"
+

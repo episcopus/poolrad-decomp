@@ -8,7 +8,7 @@ interface
 uses POOLVARS;
 procedure StartCombatantRound(Who: PCharacter);
 function ComputeMovement(Who: PCharacter): Byte;
-procedure ovl13_fn_0191;
+procedure RollAttackDamage(Attacker: PCharacter; Target: PCharacter; Index: Byte);
 procedure ovl13_fn_02F9;
 procedure ovl13_fn_0627;
 procedure ovl13_e3(Who: PCharacter; Dir: Byte);
@@ -60,7 +60,7 @@ procedure ovl13_fn_2383;
 procedure ovl13_fn_23B6;
 procedure ovl13_e15(A, B: Byte; var Done: Byte);
 procedure ovl13_fn_2432;
-procedure ovl13_fn_2574;
+function ovl13_fn_2574(Who: PCharacter; Target: PCharacter): Boolean;
 procedure ovl13_fn_257E;
 procedure ovl13_fn_25C9;
 function ovl13_e18(Who, Target: Pointer): Byte;
@@ -104,6 +104,15 @@ const
   VarPartyMovementBonus = 882;
   { RunAffectHooks kinds (ovl24:02FA). }
   HookComputeMovement = $12;   { run while a combatant's round Movement is worked out }
+  { ovl13's attack damage runs kind 4 on the attacker and kind 5 on the target after DamageAmount
+    is rolled (ovl13:0212, 0220). ovl24's own table documents kinds 6, 9, $A, $C, $D and $10, so
+    what 4 and 5 change is not known there. }
+  HookAttackerDamage = 4;
+  HookTargetDamage = 5;
+  { The backstab multiplier is the thief level (ClassLevels[6]) div 4 plus 2 (ovl13:01F2). The
+    original shifts the level one bit at a time (shr 1 twice), not `shr 2`, so keep both shifts. }
+  BackstabLevelStep = 1;
+  BackstabMultiplierBase = 2;
   { The initiative a round setup rolls: 1d6 plus the dexterity adjustment, then clamped. }
   InitiativeDieSides = 6;
   InitiativePenalty = 6;       { when the round penalty word matches the side, ovl13:00D9 }
@@ -178,8 +187,25 @@ begin
   ds681D := False;
   ComputeMovement := ds681A;
 end;
-{ ovl13:0191: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl13_fn_0191; begin end;
+{ ovl13:0191. Rolls the damage of one attack of Attacker against Target: entry Index (1 or 2)
+  of the readied weapon's attack triple gives the dice count and die size (RollDiceCounted) and the
+  signed bonus (WeaponDamageBonus). The total goes to DamageAmount, a nonsensical negative clamp
+  (QUIRK ovl13:01D2) is kept, a special attack (ovl13_fn_2574, the backstab) multiplies the damage
+  by the thief level div 4 + 2, DamageKind becomes 0 and the damage hooks run for the attacker (4)
+  and the target (5). Called for each of a combatant's attacks. }
+procedure RollAttackDamage(Attacker: PCharacter; Target: PCharacter; Index: Byte);
+begin
+  DamageAmount := RollDiceCounted(Attacker^.WeaponAttacks[Index], Attacker^.WeaponDamage[Index])
+    + Attacker^.WeaponDamageBonus[Index];
+  if DamageAmount < 0 then
+    DamageAmount := 0;
+  if ovl13_fn_2574(Attacker, Target) then
+    DamageAmount := DamageAmount * ((Attacker^.ClassLevels[6] shr BackstabLevelStep
+      shr BackstabLevelStep) + BackstabMultiplierBase);
+  DamageKind := 0;
+  RunAffectHooks(HookAttackerDamage, Attacker);
+  RunAffectHooks(HookTargetDamage, Target);
+end;
 { ovl13:02F9: retf 16: 16 bytes of parameters; 594 bytes of locals }
 {@stub} procedure ovl13_fn_02F9; begin end;
 { ovl13:0627: retf 4: 4 bytes of parameters; 8 bytes of locals }
@@ -283,7 +309,7 @@ end;
 { ovl13:2432: retf 8: 8 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl13_fn_2432; begin end;
 { ovl13:2574: frame not read }
-{@stub} procedure ovl13_fn_2574; begin end;
+{@stub} function ovl13_fn_2574(Who: PCharacter; Target: PCharacter): Boolean; begin end;
 { ovl13:257E: frame not read }
 {@stub} procedure ovl13_fn_257E; begin end;
 { ovl13:25C9: retf 8: 8 bytes of parameters; 0 bytes of locals }

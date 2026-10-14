@@ -5359,12 +5359,12 @@ id = "ovl13:0191"
 unit = "ovl13"
 addr = "ovl13:0191"
 size = 360
-name = "ovl13_fn_0191"
-signature = ""
+name = "RollAttackDamage"
+signature = "procedure RollAttackDamage(Attacker: PCharacter; Target: PCharacter; Index: Byte)"
 c_name = "ovl13_fn_0191"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_fn_0191 (ovl13:0191 rolls one attack's damage for Attacker against Target: entry Index (1 or 2) of the readied weapon triple (WeaponAttacks/WeaponDamage/WeaponDamageBonus) through RollDiceCounted, stores it in DamageAmount, multiplies by the backstab factor when ovl13_fn_2574 says so, and runs the damage hooks (kinds 4 and 5); called per attack from ovl13:1713 which forwards it to ovl13_fn_02F9 with DamageAmount); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -6036,7 +6036,7 @@ unit = "ovl13"
 addr = "ovl13:2574"
 size = 10
 name = "ovl13_fn_2574"
-signature = ""
+signature = "function ovl13_fn_2574(Who: PCharacter; Target: PCharacter): Boolean"
 c_name = "ovl13_fn_2574"
 level = "none"
 justification = ""
