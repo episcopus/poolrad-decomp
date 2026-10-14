@@ -35,7 +35,7 @@ procedure ComputePartyValueCommand;
 procedure ScanPartyCommand;
 procedure CheckPartyClassCommand;
 procedure RollRangeCommand;
-procedure ovl03_fn_179B;
+procedure RunAreaEventCommand;
 procedure ovl03_fn_18F8;
 procedure ovl03_fn_19B0;
 procedure ovl03_fn_1B42;
@@ -68,7 +68,7 @@ procedure ovl03_e1;
 procedure ovl03_fn_3379;
 procedure ovl03_fn_34AB;
 implementation
-uses OVL17, OVL24, OVL25, OVL26, OVL28, OVL29, OVL32, RES06;
+uses OVL04, OVL05, OVL06, OVL08, OVL17, OVL24, OVL25, OVL26, OVL28, OVL29, OVL32, RES06;
 
 const
   { The operand types from this one up are strings: $80 a packed string, $81 the address of a
@@ -99,6 +99,11 @@ const
     ovl07:0482, which also stores them there). }
   VarEncounterLimit = 704;
   VarStepsAhead = 705;
+  { The words of ds49D6 ECL command 36 (ovl03:179B) reads: a shop and a temple visit the script asked
+    for (cleared when served), and word 714, of which it keeps only the low bit (meaning unknown). }
+  VarShopRequest = 876;
+  VarTempleRequest = 738;
+  VarWord714 = 714;
   { ECL command 11 (ovl03:0450) adds no encounter member once its count of members reaches this. }
   MaxEncounterMembers = 63;
   { The icon slot ds6F83 starts at: InitScript (ovl07:01F0) and ECL command 28 (ovl03:125D) set it. }
@@ -1097,8 +1102,63 @@ begin
     Kind := 2;
   WriteVmWord(RollResultAddr, Kind);
 end;
-{ ovl03:179B: retf 0: 0 bytes of parameters; 10 bytes of locals }
-{@stub} procedure ovl03_fn_179B; begin end;
+{ ovl03:179B. ECL command 36 (dispatcher ovl03:2F2D, SkippedOpcode $24): the area logic. ShopMain
+  (ovl06:053E) and RunCombat (ovl08:007A) name ovl03 as their caller. It counts its calls in ds49ED
+  (purpose unknown). An encounter is pending when ds84E7 (set by ECL command 11) or DuelMode is set.
+  Without one, a shop or temple the script asked for comes first: when word VarShopRequest of ds49D6
+  is 1 it is cleared and ShopMain runs, else when VarTempleRequest is 1 it is cleared and VisitTemple
+  runs; with neither request EndBattle runs. With an encounter, VarStepsAhead becomes the lower of its
+  value and the steps ahead (OpenStepsAhead), RunCombat and EndBattle run, and when VarForceWallView is
+  clear the BACPAC set (Load24x24Set) and the ICON pictures 0 to 2 are loaded into picture slots 9 to
+  11. DuelMode is then cleared. Both paths end by setting the view mode ds49F3 to 4 when ds49FA is 1,
+  else 3, keeping only the low bit of VarWord714, clearing PictureShown and ds84E0, and redrawing the
+  screen (res12_fn_27D9). }
+procedure RunAreaEventCommand;
+var
+  Steps: Word;                  { the steps ahead the party sees, from OpenStepsAhead }
+begin
+  Inc(ds49ED);
+  if (ds84E7 = 0) and (DuelMode = 0) then
+  begin
+    if ds49D6^[VarShopRequest] = 1 then
+    begin
+      ds49D6^[VarShopRequest] := 0;
+      ShopMain;
+    end
+    else if ds49D6^[VarTempleRequest] = 1 then
+    begin
+      ds49D6^[VarTempleRequest] := 0;
+      VisitTemple;
+    end
+    else
+      EndBattle;
+  end
+  else
+  begin
+    Steps := OpenStepsAhead(PartyMapColumn, PartyMapRow, PartyFacing);
+    if Steps < ds49D6^[VarStepsAhead] then
+      ds49D6^[VarStepsAhead] := Steps;
+    RunCombat;
+    EndBattle;
+    if GameVars^[VarForceWallView] = 0 then
+    begin
+      Load24x24Set('BACPAC', 0, 40);
+      LoadPictureSlot('ICON', 0, 9);
+      LoadPictureSlot('ICON', 1, 10);
+      LoadPictureSlot('ICON', 2, 11);
+    end;
+    if DuelMode <> 0 then
+      DuelMode := 0;
+  end;
+  if ds49FA = 1 then
+    ds49F3 := 4
+  else
+    ds49F3 := 3;
+  ds49D6^[VarWord714] := ds49D6^[VarWord714] and 1;
+  FillChar(ds84C8, 2, 0);
+  ds84E0 := 0;
+  res12_fn_27D9;
+end;
 { ovl03:18F8: retf 0: 0 bytes of parameters; 6 bytes of locals }
 {@stub} procedure ovl03_fn_18F8; begin end;
 { ovl03:19B0: frame not read }

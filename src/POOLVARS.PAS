@@ -613,6 +613,7 @@ var
                                     (ovl15:1D02, 1DE9); the loader sets it to 1 (ovl11:0397) }
   ds49F8: Byte;                   { cleared by the loader (ovl11:03A6) }
   ds49F9: Byte;                   { set to 1 by the loader (ovl11:03EB) }
+  ds49FA: Byte;                   { 1 makes ECL command 36 (ovl03:179B) set the view mode to 4 instead of 3; meaning unknown }
   ds49FB: Word;                   { cleared by the loader (ovl11:03AD) }
   PartyDestroyed: Byte;           { 1 when no player-run member is left (SettleBattleOutcome); loader clears it }
   ds4A00: Byte;                   { set to 1 by the loader (ovl11:03A1) and by EndBattle (ovl05:1631) }
@@ -963,6 +964,7 @@ var
   ds49E7: Word;                   { the third script entry address; see above }
   ds49E9: Word;                   { the fourth script entry address; see above }
   ds49EB: Word;                   { the fifth script entry address; see above }
+  ds49ED: Word;                   { counts the runs of ECL command 36 (ovl03:179B); meaning unknown }
   ReturnStack: PReturnEntry;           { the top of the script's return stack (ScriptGosub); InitScript empties it }
   ReturnPrev: PReturnEntry;           { the previous top while ScriptGosub pushes; InitScript clears it }
   { The results of the script's last comparison (CompareStrings, CompareWords): 1 in [0] when

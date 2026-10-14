@@ -3651,3 +3651,10 @@ kind = "routine"
 why = "dispatcher ovl03:2F2D calls it for SkippedOpcode $23 (ECL command 35); it rolls two d6 against two ranges made from operands 1 to 4 and writes the outcome 0 to 2 to script address $6DCB (word 715 of ds49D6)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl03_fn_179B"
+new = "RunAreaEventCommand"
+kind = "routine"
+why = "dispatcher ovl03:2F2D calls it for SkippedOpcode $24 (ECL command 36); ShopMain (ovl06:053E) and RunCombat (ovl08:007A) name ovl03 as the area logic that calls them: it runs the pending encounter or the requested shop or temple"
+date = "2026-10-13"
+

@@ -510,7 +510,7 @@ evidence = ["prologue"]
 id = "ovl03:16C9"
 unit = "ovl03"
 addr = "ovl03:16C9"
-size = 198
+size = 210
 name = "RollRangeCommand"
 signature = ""
 c_name = "ovl03_fn_16C9"
@@ -524,12 +524,12 @@ id = "ovl03:179B"
 unit = "ovl03"
 addr = "ovl03:179B"
 size = 349
-name = "ovl03_fn_179B"
+name = "RunAreaEventCommand"
 signature = ""
 c_name = "ovl03_fn_179B"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_179B (dispatcher ovl03:2F2D calls it for SkippedOpcode $24 (ECL command 36); ShopMain (ovl06:053E) and RunCombat (ovl08:007A) name ovl03 as the area logic that calls them: it runs the pending encounter or the requested shop or temple); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
