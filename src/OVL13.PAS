@@ -16,7 +16,7 @@ procedure ovl13_fn_08AC;
 procedure PartingShots(Who: PCharacter; Dir: Byte);
 function TryFlee(Who: PCharacter): Byte;
 procedure RefreshAttacks(Who: PCharacter);
-function ovl13_fn_0E52(Value: Byte): Byte;
+function AttacksThisRound(DoubledAttacks: Byte): Byte;
 function ovl13_e7(Who, Target: Pointer): Boolean;
 procedure ovl13_fn_0FBF;
 procedure ovl13_fn_104E;
@@ -154,7 +154,7 @@ begin
     ds681A := Who^.PadA2;
     ds681D := False;
     RunAffectHooks(HookComputeMovement, Who);
-    Who^.AttackSlots[2] := ovl13_fn_0E52(ds681A);
+    Who^.AttackSlots[2] := AttacksThisRound(ds681A);
     Pad4[5] := Who^.Pad6B;
     if Who^.Flag10D <> 0 then
     begin
@@ -499,7 +499,7 @@ end;
   AttackSlots[1] and seeds it from the character's Attacks (+$A1); with a ranged weapon readied
   (IsRangedWeapon and ChooseAttackItem passes) it takes the readied weapon's ItemTable attacks
   (at least 2) and remembers the aimed ammo item, else it keeps AttackSlots[1]. That attack count
-  goes to ds681A, the movement/attack affect hook $12 may change it, and ovl13_fn_0E52 turns the
+  goes to ds681A, the movement/attack affect hook $12 may change it, and AttacksThisRound turns the
   changed byte into the attack count. A ranged aim caps the count at the ammo stack's Count.
   AttackSlots[1] takes the result unless a ranged attack (Ranged, i.e. ds681A is not 0) would
   more than double the saved count. Called after StartCombatantRound and whenever the AI or the
@@ -528,7 +528,7 @@ begin
     ds681A := Who^.AttackSlots[1];
   ds681D := False;
   RunAffectHooks(HookComputeMovement, Who);
-  AttackCount := ovl13_fn_0E52(ds681A);
+  AttackCount := AttacksThisRound(ds681A);
   if Ranged and (Aim <> nil) then
   begin
     AmmoLimit := 1;
@@ -541,8 +541,21 @@ begin
      ((Who^.Combat^.Pad8 <> 0) and (AttackCount < SavedAttacks * 2) and not Ranged) then
     Who^.AttackSlots[1] := AttackCount;
 end;
-{ ovl13:0E52: retf 2: 2 bytes of parameters; 2 bytes of locals }
-{@stub} function ovl13_fn_0E52(Value: Byte): Byte; begin end;
+{ ovl13:0E52. Turns a doubled attack budget into the round's attack count: it copies
+  DoubledAttacks, adds 1 when the combat round counter ds6DE3 is odd (combat rounds are
+  zero-based, so the extra unit lands on even-numbered rounds), and halves the result. Called
+  with the hook-modifiable byte ds681A (the character's Attacks, attacks per two rounds, or the
+  readied weapon's halves); StartCombatantRound stores the result in AttackSlots[2] and
+  RefreshAttacks uses it as the round's attack count. }
+function AttacksThisRound(DoubledAttacks: Byte): Byte;
+var
+  RoundAttacks: Byte;
+begin
+  RoundAttacks := DoubledAttacks;
+  if Odd(ds6DE3) then
+    Inc(RoundAttacks);
+  AttacksThisRound := RoundAttacks shr 1;
+end;
 { ovl13:0E82: frame not read }
 {@stub} function ovl13_e7(Who, Target: Pointer): Boolean; begin end;
 { ovl13:0FBF: frame not read }

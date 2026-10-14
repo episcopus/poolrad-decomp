@@ -44,3 +44,12 @@ tags = ["inc", "dec", "ShortInt", "byte", "memory-add", "codegen"]
 title = "Inc/Dec on a one-byte field adds in place even when the field and the addend are ShortInt"
 lesson = "ovl13:0923 updates CombatantTable[Idx].X (a ShortInt field) by DirStepX[Dir] (a ShortInt). The original is the 8-bit `mov dl,[DirStepX+Dir]; mov al,Idx; xor ah,ah; ...; add byte [table+0],dl`. `Field := Field + ShortIntValue` is wrong: it widens both operands (cwde) and does a 16-bit load/add/store (ovl13's first draft, 16 bytes too long per update). `Inc(Field, ShortIntValue)` gives the byte memory add; `Dec(Field, ShortIntValue)` gives the matching `sub byte [table+0],dl`. So a one-byte field with a one-byte signed addend must be read as memory-inc/dec, not assignment (the Word counterpart is res12-inc-vs-assignment-adds-to-memory). Probe tools/re/tp_idioms/ovl13/PRBBYTE.PAS (SignedInc/ByteFieldInc give the add; all four assignment forms widen)."
 evidence = ["tools/re/tp_idioms/ovl13/PRBBYTE.PAS", "src/OVL13.PAS#PartingShots", "re/symbols.toml#ovl13:08B2"]
+
+[[lesson]]
+id = "odd-is-shr-carry-not-test"
+confidence = "V"
+units = ["*"]
+tags = ["Odd", "boolean", "shr", "carry", "codegen"]
+title = "`Odd(X)` compiles to `mov al,X; shr al,1; jae`, not `test al,1`"
+lesson = "ovl13:0E52 tests the low bit of the combat round counter ds6DE3 and conditionally increments a local. The original is `mov al,[ds6DE3]; shr al,1; jae skip; inc byte [bp-2]`, i.e. it reads bit 0 through the carry of a one-bit shift. TP 6.0 gives exactly that for `if Odd(ds6DE3) then Inc(Count);` (probe F1). The alternative `if (G and 1) <> 0 then Inc(Count)` compiles to `mov al,G; and al,1; or al,al; je` and `if Odd(G) then ... Ord(Odd(G))` builds a 16-bit value (`mov al,0; jae/inc ax`). So a `shr al,1` followed by a conditional increment is the source `Odd(X)`, and the trailing `mov al,Count; xor ah,ah; shr ax,1` is a byte `shr 1`."
+evidence = ["tools/re/tp_idioms/ovl13/PRBHALF.PAS", "src/OVL13.PAS#AttacksThisRound", "re/symbols.toml#ovl13:0E52"]

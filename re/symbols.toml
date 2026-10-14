@@ -5450,12 +5450,12 @@ id = "ovl13:0E52"
 unit = "ovl13"
 addr = "ovl13:0E52"
 size = 48
-name = "ovl13_fn_0E52"
-signature = "function ovl13_fn_0E52(Value: Byte): Byte"
+name = "AttacksThisRound"
+signature = "function AttacksThisRound(DoubledAttacks: Byte): Byte"
 c_name = "ovl13_fn_0E52"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_fn_0E52 (ovl13:0E52 halves the doubled attack budget in ds681A (the character's Attacks is attacks per two rounds, POOLVARS +A1) into this round's count, adding the odd remainder on even-numbered combat rounds via the round counter ds6DE3; StartCombatantRound stores it in AttackSlots[2] and RefreshAttacks uses it as AttackCount); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

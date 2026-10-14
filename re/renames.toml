@@ -4071,3 +4071,10 @@ kind = "routine"
 why = "ovl13:0D23 recomputes Who's readied-weapon attack count into ds681A and AttackSlots[1] from the ranged weapon/ammo or the character's Attacks, running the attack affect hook $12 and ovl13_fn_0E52; called after StartCombatantRound (ovl13:0000) and whenever an item is readied (ovl08:0207, ovl09:0942)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl13_fn_0E52"
+new = "AttacksThisRound"
+kind = "routine"
+why = "ovl13:0E52 halves the doubled attack budget in ds681A (the character's Attacks is attacks per two rounds, POOLVARS +A1) into this round's count, adding the odd remainder on even-numbered combat rounds via the round counter ds6DE3; StartCombatantRound stores it in AttackSlots[2] and RefreshAttacks uses it as AttackCount"
+date = "2026-10-13"
+
