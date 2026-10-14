@@ -116,3 +116,12 @@ tags = ["compiler", "expression", "add", "byte"]
 title = "A small constant added to a Byte function result uses `inc ax` for 1 and 2, `add ax,n` from 3 on"
 lesson = "For a Word destination and a Byte-valued function call, `G + 1` compiles to `xor ah,ah; inc ax`, `G + 2` to `xor ah,ah; inc ax; inc ax`, but `G + 3` to `xor ah,ah; add ax,3` and `G + 8` to `xor ah,ah; add ax,8`. The original increments in place only for one and two, so ovl22:2FD0 (CastMonsterHealWounds) is `RollDice(2, 4) + 2` (the `inc ax` twice at ovl22:2FE9) while ovl22:2E4D (CastMonsterHeal) is `RollDice(1, 4) + 8` (the `add ax,8` at ovl22:2EA4). Probe tools/re/tp_idioms/ovl22/SMALLC.PAS."
 evidence = ["tools/re/tp_idioms/ovl22/SMALLC.PAS", "src/OVL22.PAS#CastMonsterHealWounds", "src/OVL22.PAS#CastMonsterHeal", "re/symbols.toml#ovl22:2FD0"]
+
+[[lesson]]
+id = "boolean-cast-of-byte-function-keeps-plain-store"
+confidence = "V"
+units = ["ovl22"]
+tags = ["compiler", "typecast", "boolean", "byte", "var-parameter"]
+title = "A Boolean var passed to a routine and then set from a Byte function needs `Boolean(Fn)` and keeps a plain `mov [bp-1],al`"
+lesson = "TP 6.0 rejects passing a Byte variable to a `var Boolean` parameter (Error 26: Type mismatch), so ovl22:30D9's local [bp-1], which it hands to DamageTargetInCell (var Blocked: Boolean) and later sets from the Byte function res12_fn_2637, must be declared Boolean. `Blocked := Boolean(res12_fn_2637(Who));` casts the same-size Byte to Boolean and compiles to the plain `call; mov byte [bp-1],al` the original has (ovl22:3234), while `Blocked := res12_fn_2637(Who) <> 0;` would add a compare. Probe tools/re/tp_idioms/ovl22/BOOLCAST.PAS."
+evidence = ["tools/re/tp_idioms/ovl22/BOOLCAST.PAS", "src/OVL22.PAS#MonsterBreath", "re/symbols.toml#ovl22:30D9"]
