@@ -31,7 +31,7 @@ procedure GiveAffectItem(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure LowerAttackRollByFour(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure BoostAttackVsEightListed(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ImageAbsorbsHit(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e25;
+procedure ReduceDamageByQuarter(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e26;
 procedure ovl12_fn_0AE5;
 procedure ovl12_e27;
@@ -664,8 +664,14 @@ begin
       RemoveAffect(Who, AffectImages, nil);
   end;
 end;
-{ ovl12:0A3D: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e25; begin end;
+{ ovl12:0A3D. Affect handler for damage (the AffectHandlers shape: Who, Affect and Mode; none is read, so the
+  handler runs the same on applying and removing). It takes a quarter off the damage the hooks offer:
+  DamageAmount := DamageAmount - DamageAmount div 4, so three quarters of the damage (rounded down) remain
+  (the damage hook is kind 6, ovl24:02FA). Which affect runs it is not known yet [?]. }
+procedure ReduceDamageByQuarter(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  DamageAmount := DamageAmount - DamageAmount div 4;
+end;
 { ovl12:0A65: frame not read }
 {@stub} procedure ovl12_e26; begin end;
 { ovl12:0AE5: retf 10: 10 bytes of parameters; 0 bytes of locals }

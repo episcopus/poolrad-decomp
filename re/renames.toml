@@ -3588,3 +3588,10 @@ kind = "routine"
 why = "ovl12:09C0 is the handler of the images affect $1C, which runs on the damage hook (kind 6, ovl24:02FA, the hook list of ovl24:0000 kinds 5 and 6): when 1d(Data+1) is above 1 it cancels the damage (CancelPendingHook(0)), shows lost an image (res12_fn_16EC, colour 10) and takes one off Data, removing the affect at 0 (RemoveAffect with nil); the message and the Data count support a mirror-image style affect [I]"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e25"
+new = "ReduceDamageByQuarter"
+kind = "routine"
+why = "ovl12:0A3D takes a quarter off DamageAmount (DS:6818): DamageAmount := DamageAmount - DamageAmount div 4 (two shr ax,1, sub, store byte); the AffectHandlers shape with no parameter read, so it runs as a damage hook handler (kind 6); the affect that runs it is not known"
+date = "2026-10-13"
+
