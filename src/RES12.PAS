@@ -1,10 +1,21 @@
 unit RES12;
-{ res12: the resident helper unit the overlays call for characters, items and combat. It
-  recomputes the combat values (RecalcCombatValues and ApplyWeaponBonuses) and the strength,
-  dexterity, weight and damage figures (1168, 1282, 1325, 13AB, 2228, 2199); it draws the shop
-  screen and its item prompts (27D9, 0767, called by ShopMain, whitepaper 5.4), shows the
-  per-character messages (16EC, 1FEB) and dispatches the area view (27D9, 2B5E, whitepaper 5.2.1).
-  FormatItemLine (0442) builds an item menu line's text from the DS:10A7 name parts (whitepaper 5.24). }
+{ res12: the resident helper unit the overlays call for character, item, view and combat work
+  (whitepaper 5.24). It recomputes a character's combat values (RecalcCombatValues,
+  ApplyWeaponBonuses, SetArmourMovement, AddReadiedItemBonus, CapMovementByLoad), the strength
+  figures (StrengthRowIndex, StrengthAttackAdjustment, StrengthDamageAdjustment,
+  StrengthWeightAllowance), the dexterity figures (DexterityAdjustment,
+  DexterityAttackAdjustment), the race level cap (IsMaxClassLevel) and the spell caster level
+  (SpellCasterLevel), and formats numbers (ByteToText, WordToText, LongIntToText). It draws the
+  character panels (DrawPartyRoster, DrawArmourClass, DrawHitPoints, DrawCharacterPanel), the
+  view dispatcher and its screens (RedrawView, DrawViewWindows, DrawLocationLine,
+  DrawWildernessScreen, DrawCombatScreen) and the character messages and names
+  (ShowCharacterMessage, ClearCharacterMessage, ShowFlashMessage, DrawCharacterName), builds an
+  item menu line from the DS:10A7 name parts (FormatItemLine) and picks a party member
+  (SelectPartyMember). Its combat-side helpers are ApplyDamage, RecountCombatSides, OpposingSide,
+  CollectEnemiesInRange, DistanceToTarget, EndCombatTurn and GuardTurn; its weapon helpers
+  IsRangedWeapon, RangedWeaponCanMelee and ChooseAttackItem; its combat animation WalkCombatLine,
+  ShowHitMessage, CopyPictureItem and DrawCombatIcon; and its inventory list helpers
+  RemoveInventoryItem and AddItemCopy. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 uses Crt, POOLVARS, RES03, RES06, RES07, RES09, OVL25, OVL26, OVL27, OVL28, OVL30, OVL31;
@@ -590,8 +601,13 @@ end;
   "AC" headings with their values (DrawHitPoints, DrawArmourClass), the readied weapon's paged text
   (FormatItemLine then ShowPagedText) when a weapon is readied, and finally the status name
   (StatusNames[Status], +$10c) when the character takes no part in combat (Flag10D = 0), else
-  "(Helpless)" when IsHelpless says so. Side effects: video memory, the keyboard through
-  ShowPagedText's paging. }
+  "(Helpless)" when IsHelpless says so. The status row is not fixed: the routine stores
+  GlyphRow := Row + 1 before the weapon test, ShowPagedText leaves GlyphRow past the lines the
+  weapon text took, and the status is then drawn at GlyphRow + 2 (Row := GlyphRow + 1, then
+  Row + 1), so the row follows the weapon text and the assignment is what makes the no-weapon path
+  work.
+  Globals: GlyphRow (written, then read after ShowPagedText leaves it past the weapon text).
+  Side effects: video memory, the keyboard through ShowPagedText's paging. }
 procedure DrawCharacterPanel(Who: PCharacter);
 var
   Color: Byte;
@@ -800,8 +816,8 @@ begin
   WordToText := Text;
 end;
 { 00BA:10AD. Formats the LongInt Value as its decimal text, the same way ByteToText and WordToText
-  do: Str into a 255-character local, copied into the string result. Its only caller is in
-  ovl19 (the pool of treasure shows an amount with it).
+  do: Str into a 255-character local, copied into the string result. ovl19's character sheet
+  (ShowCharacterSheet) writes the character's experience points (Experience, +$AC) with it.
   Globals: none. }
 function LongIntToText(Value: LongInt): string;
 var
@@ -1373,17 +1389,17 @@ begin
 end;
 { 00BA:2228. Applies Damage hit points to Who and updates its status. It computes Overkill =
   Damage - HpCurrent when the damage exceeds Who's current hit points (Flag11B, +$11B) and
-  Remaining = HpCurrent - Damage otherwise (the other stays 0), then sets the status: dead
-  (StatusDead) when the overkill is above 9 or when a hit exactly reaches 0 while Who was already
-  StatusAnimated; dying (StatusDying) when there is any overkill, recording the overkill in
-  Combat^.DyingRounds (+$E) in the combat view; unconscious (StatusUnconscious) when the hit
-  exactly reaches 0 otherwise. When the resulting status is not the standing set StatusOkay +
-  StatusAnimated Who leaves combat: Flag10D and the hit points are cleared and, in the combat
-  view, its side's count (ds6814Sides, by Side) and its initiative (Combat^.Initiative, +$3) drop;
-  a standing character just takes Remaining as its hit points. DealDamage, DamageWithMessage and
-  ovl13 call it. Globals: ds49F3 (view mode), ds6814Sides.
-  StatusDead (6): is the character dead, StatusAnimated (1): already dead-like (the heal code
-  counts 1 and 6); from the image status names. }
+  Remaining = HpCurrent - Damage otherwise (the other stays 0, so Remaining = 0 whenever the
+  damage is at or above HpCurrent; that is the code's "reaches 0 or below"). The status tests run
+  in this order: dead (StatusDead) when the overkill is above 9, or when Remaining = 0 and Who was
+  already StatusAnimated (an animated character is Dead for every blow that reaches 0 or below,
+  never Dying); otherwise dying (StatusDying) when there is any overkill, recording the overkill in
+  Combat^.DyingRounds (+$E) in the combat view; otherwise unconscious (StatusUnconscious) when
+  Remaining = 0, that is an exact hit to 0. When the resulting status is not the standing set
+  StatusOkay + StatusAnimated Who leaves combat: Flag10D and the hit points are cleared and, in the
+  combat view, its side's count (ds6814Sides, by Side) and its initiative (Combat^.Initiative, +$3)
+  drop; a standing character just takes Remaining as its hit points. DealDamage, DamageWithMessage
+  and ovl13 call it. Globals: ds49F3 (view mode), ds6814Sides. }
 procedure ApplyDamage(Who: Pointer; Damage: Byte);
 var
   Overkill, Remaining: Byte;
@@ -1821,9 +1837,11 @@ begin
   if (Aim <> nil) or (Flags = $A) then
     ChooseAttackItem := 1;
 end;
-{ 00BA:2F57. Returns whether Who's level in one class has reached the maximum its race allows, so
-  the trainers (ovl22:2D39 raises ClassLevels[ClassIndex], +$96, only when this is False) must not
-  raise that class level further. False when the level is 0; otherwise Who's race (+$2E) and
+{ 00BA:2F57. Returns whether Who's level in one class has reached the maximum its race allows:
+  CastRestoration (ovl22:2C43, spell 56 Restoration) picks the class that regains a drained level
+  and skips a class this reaches, so it never raises ClassLevels[ClassIndex] (+$96) past the cap.
+  The training hall's TrainCharacter (ovl16:29AE) does not call this: it inlines the same race and
+  strength limits. False when the level is 0; otherwise Who's race (+$2E) and
   strength (+$10) pick the limit (the AD&D demihuman level limits [H]): a dwarf (RaceDwarf 1) in the
   fighter class (ClassFighter 2) stops at level 8 with Strength17 (17), at 7 with less; an elf
   (RaceElf 2) stops at 7, at 6 with Strength17, at 5 with less; a gnome (RaceGnome 3) stops at 6, at
