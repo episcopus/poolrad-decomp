@@ -78,8 +78,7 @@ procedure ReviveOrRetryRevival(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure FireAttackTargetFor2d10(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure AcidAttackTargetFor1d4(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure FrightenSideWithFear(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e68;
-procedure ovl12_fn_1BD7;
+procedure ParalyzeSideWithFear(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_fn_1C98;
 procedure ovl12_e69;
 procedure ovl12_e70;
@@ -263,6 +262,9 @@ const
   AffectWeakened = $02;         { the affect ovl12:1AAA gives for 'is weakened by fear' (its name is not known yet [?]) }
   FearData = $0C;               { the Data byte ovl12:1AAA gives both fear affects }
   SaveNegatesAffect = 1;        { ApplyAffect's SaveNegates: a successful save makes the affect fail (ovl24:1656) }
+  AffectUnknown52 = $52;        { purpose unknown [?]: ovl12:1BA8 takes it off every party member first (RemoveAffect) }
+  RaceHuman = 7;                { TCharacter.Race of a human (whitepaper 4.2.5: the character sheet of a human, race 7) }
+  FearDieSides = 4;             { ovl12:1BA8 paralyses a member with fear for 1d4 rounds }
 
 { ovl12:0000. Cancels the hook of an affect: when AffectId is 0 or is the affect the hooks are offering
   (HookAffectId), HookAffectId and DamageAmount are cleared. HookAffectId 0 reads as "is Unaffected"
@@ -1339,10 +1341,37 @@ begin
     Scan := Scan^.Next;
   end;
 end;
-{ ovl12:1BA8: frame not read }
-{@stub} procedure ovl12_e68; begin end;
-{ ovl12:1BD7: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_fn_1BD7; begin end;
+{ ovl12:1BA8. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000). It takes
+  affect AffectUnknown52 off every member of the party list (ds5D96, +$104 is the next member) first. Then each
+  member with Flag10D set on the side of Who (res12_fn_23B7) makes a paralysis save (SaveKindParalysis) with a bonus
+  of 1 when its side has six or more members (ds6814Sides, the side's count [?]) and 2 when it is a human,
+  and gets AffectParalysis for 1d4 rounds with Data FearData; "is paralyzed with fear" is shown on it, and a successful
+  save negates the affect. Which affect id runs it is not known yet [?]. }
+procedure ParalyzeSideWithFear(Who: PCharacter; Affect: PAffect; Mode: Byte);
+var
+  Scan: PCharacter;             { walks the party list: first member, then Next }
+  Bonus: Byte;                  { the save bonus of Scan }
+  Saved: Boolean;               { Scan's paralysis save }
+begin
+  Scan := PCharacter(ds5D96);
+  while Scan <> nil do
+  begin
+    RemoveAffect(Scan, AffectUnknown52, nil);
+    if Scan^.Flag10D <> 0 then
+      if res12_fn_23B7(Who) = Scan^.Side then
+      begin
+        Bonus := 0;
+        if ds6814Sides[ShortInt(Scan^.Side)] >= 6 then
+          Inc(Bonus);
+        if Scan^.Race = RaceHuman then
+          Inc(Bonus, 2);
+        Saved := SavingThrow(Scan, SaveKindParalysis, Bonus);
+        ApplyAffect(Scan, AffectParalysis, RollDice(1, FearDieSides), FearData, NoRemoveHandler, SaveNegatesAffect,
+          Saved, 'is paralyzed with fear');
+      end;
+    Scan := Scan^.Next;
+  end;
+end;
 { ovl12:1C98: frame not read }
 {@stub} procedure ovl12_fn_1C98; begin end;
 { ovl12:1CAD: retf 10: 10 bytes of parameters; 22 bytes of locals }
