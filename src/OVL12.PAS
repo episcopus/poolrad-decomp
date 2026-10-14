@@ -113,7 +113,7 @@ procedure ReduceFireDamageOnePerDie(Who: PCharacter; Affect: PAffect; Mode: Byte
 procedure HalveElectricityDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure HalveDamageByFirstSlotItemRow(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure HalveDamageForEnchantedSlotItem(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e101(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure SetDamageFromSlotItemType55(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e102(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_fn_2B6F;
 procedure ovl12_e103(Who: PCharacter; Affect: PAffect; Mode: Byte);
@@ -1938,7 +1938,18 @@ begin
       DamageAmount := DamageAmount shr 1;
 end;
 { ovl12:2B20: retf 10: 10 bytes of parameters; 4 bytes of locals }
-{@stub} procedure ovl12_e101(Who: PCharacter; Affect: PAffect; Mode: Byte); begin end;
+{ ovl12:2B20. Affect handler for damage (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000).
+  When the first slot item of SelectedCharacter (SlotItems[0], TCharacter +$CC) has ItemType $55, DamageAmount
+  becomes 1d6 plus one (RollDiceCounted, ovl24:0E2E). Purpose unknown: which affect runs it is not known yet [?]. }
+procedure SetDamageFromSlotItemType55(Who: PCharacter; Affect: PAffect; Mode: Byte);
+var
+  Item: PItem;
+begin
+  Item := SelectedCharacter^.SlotItems[0];
+  if Item <> nil then
+    if Item^.ItemType = $55 then
+      DamageAmount := RollDiceCounted(1, 6) + 1;
+end;
 { ovl12:2B63: frame not read }
 {@stub} procedure ovl12_e102(Who: PCharacter; Affect: PAffect; Mode: Byte); begin end;
 { ovl12:2B6F: retf 10: 10 bytes of parameters; 0 bytes of locals }

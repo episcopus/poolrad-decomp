@@ -4120,3 +4120,10 @@ kind = "routine"
 why = "ovl12:2AE6 takes FirstSlotItem(SelectedCharacter) and halves DamageAmount when that item's Plus (+$32, a signed byte, compared with jle) is above 0; the same frame and caller-less entry as the other damage hooks"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl12_e101"
+new = "SetDamageFromSlotItemType55"
+kind = "routine"
+why = "ovl12:2B20 reads SelectedCharacter^.SlotItems[0] and, when its ItemType is $55, sets DamageAmount to RollDiceCounted(1, 6) + 1; the item type's name is not known"
+date = "2026-10-14"
+

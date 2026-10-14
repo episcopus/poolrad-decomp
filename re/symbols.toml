@@ -4539,12 +4539,12 @@ id = "ovl12:2B20"
 unit = "ovl12"
 addr = "ovl12:2B20"
 size = 67
-name = "ovl12_e101"
-signature = "procedure ovl12_e101(Who: PCharacter; Affect: PAffect; Mode: Byte)"
+name = "SetDamageFromSlotItemType55"
+signature = "procedure SetDamageFromSlotItemType55(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e101"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_101"
+notes = "renamed from ovl12_e101 (ovl12:2B20 reads SelectedCharacter^.SlotItems[0] and, when its ItemType is $55, sets DamageAmount to RollDiceCounted(1, 6) + 1; the item type's name is not known); auto:entry_101"
 evidence = ["prologue"]
 
 [[routine]]
