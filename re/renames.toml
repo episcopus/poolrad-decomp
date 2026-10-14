@@ -3602,3 +3602,10 @@ kind = "routine"
 why = "cast handler of spell 13 Reduce (SpellHandlers[13]; ovl22_e10 fills the table at DS:6B84, whitepaper 5.22.2): a target that fails its saving throw (kind 4) loses the strength affect $0C Enlarge adds and is told 'has been reduced' (ovl22:136E)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl22_e22"
+new = "CastFriends"
+kind = "routine"
+why = "cast handler of spell 14 Friends (SpellHandlers[14]; ovl22_e10 fills the table at DS:6B84, whitepaper 5.22.2): raises the target ds6C95 Charisma by 2d4 capped at 25 and passes the old Charisma as the affect data with the restore flag, message 'is friendly' (ovl22:13D8)"
+date = "2026-10-13"
+

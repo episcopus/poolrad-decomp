@@ -28,7 +28,7 @@ procedure CastBurningHands;
 procedure CastCharmPerson;
 procedure CastEnlarge;
 procedure CastReduce;
-procedure ovl22_e22;
+procedure CastFriends;
 procedure ovl22_e23;
 procedure ovl22_e24;
 procedure ovl22_e25;
@@ -687,8 +687,28 @@ begin
       if CureAffect(ds6C95, StrengthAffect) then
         res12_fn_16EC(ds6C95, 'has been reduced', MessageColour, TimedMessage);
 end;
-{ ovl22:13D8: retf 0: 0 bytes of parameters; 14 bytes of locals }
-{@stub} procedure ovl22_e22; begin end;
+{ ovl22:13D8 (e22). Cast handler of spell 14, Friends (SpellHandlers[14]; ovl22_e10 fills the table,
+  whitepaper 5.22.2): raises the chosen target ds6C95's Charisma by 2d4, capped at 25 ($19), and calls
+  ApplySpellToTargets with the pre-roll Charisma as the affect's Data and the restore flag set, so the
+  affect's handler puts the old Charisma back when the affect ends; the message is 'is friendly'.
+  Reads ds6C95 and ds681B. }
+procedure CastFriends;
+const
+  DiceCount = 2;                  { 2d4 Charisma points (the AD&D Friends spell) }
+  DiceSides = 4;
+  CharismaCap = $19;              { Charisma's maximum, 25 }
+  RestoreOnRemoval = 1;           { Flag: the affect handler runs when the affect is removed }
+  MessageColour = $A;
+  TimedMessage = 1;
+var
+  OldCharisma: Byte;              { the target's Charisma before the roll, the affect's Data }
+begin
+  OldCharisma := ds6C95^.Charisma;
+  Inc(ds6C95^.Charisma, RollDice(DiceCount, DiceSides));
+  if ds6C95^.Charisma > CharismaCap then
+    ds6C95^.Charisma := CharismaCap;
+  ApplySpellToTargets(ds681B, OldCharisma, RestoreOnRemoval, 0, 0, 'is friendly');
+end;
 { ovl22:1439: retf 0: 0 bytes of parameters; 2 bytes of locals }
 {@stub} procedure ovl22_e23; begin end;
 { ovl22:1499: retf 0: 0 bytes of parameters; 12 bytes of locals }

@@ -10088,12 +10088,12 @@ id = "ovl22:13D8"
 unit = "ovl22"
 addr = "ovl22:13D8"
 size = 97
-name = "ovl22_e22"
+name = "CastFriends"
 signature = ""
 c_name = "ovl22_e22"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_22"
+notes = "renamed from ovl22_e22 (cast handler of spell 14 Friends (SpellHandlers[14]; ovl22_e10 fills the table at DS:6B84, whitepaper 5.22.2): raises the target ds6C95 Charisma by 2d4 capped at 25 and passes the old Charisma as the affect data with the restore flag, message 'is friendly' (ovl22:13D8)); auto:entry_22"
 evidence = ["prologue"]
 
 [[routine]]
