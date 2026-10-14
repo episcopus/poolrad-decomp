@@ -3462,3 +3462,10 @@ kind = "routine"
 why = "ECL command 9: the dispatcher ovl03:2F2D calls it for SkippedOpcode 9 (cmp al,9; call 0292); it stores operand 1 (a value by WriteVmWord, a string by WriteVmString from EclStrings[1]) at the address operand 2 names (match ovl03:0292)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl03_fn_02E0"
+new = "SelectCharacterCommand"
+kind = "routine"
+why = "ECL command 10: the dispatcher ovl03:2F2D calls it for SkippedOpcode 10 (cmp al,0xa; call 02E0); it selects the party member at the position operand 1 names as SelectedCharacter (ds5D96 walk, match ovl03:02E0)"
+date = "2026-10-13"
+

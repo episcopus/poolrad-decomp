@@ -4,7 +4,7 @@ unit OVL03;
   decode their operands through OVL07 and run them. The other routines are still stubs. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
-uses POOLVARS, RES09, OVL07;
+uses POOLVARS, RES09, OVL07, OVL16, RES12;
 procedure EndCommand;
 procedure GotoCommand;
 procedure GosubCommand;
@@ -12,29 +12,7 @@ procedure CompareCommand;
 procedure ArithmeticCommand;
 procedure RandomCommand;
 procedure StoreCommand;
-procedure ovl03_fn_02E0;
-procedure ovl03_fn_02E4;
-procedure ovl03_fn_02E9;
-procedure ovl03_fn_02EE;
-procedure ovl03_fn_02F3;
-procedure ovl03_fn_02F8;
-procedure ovl03_fn_02FD;
-procedure ovl03_fn_0302;
-procedure ovl03_fn_0307;
-procedure ovl03_fn_030C;
-procedure ovl03_fn_0311;
-procedure ovl03_fn_0316;
-procedure ovl03_fn_031B;
-procedure ovl03_fn_0320;
-procedure ovl03_fn_0325;
-procedure ovl03_fn_032A;
-procedure ovl03_fn_032F;
-procedure ovl03_fn_0334;
-procedure ovl03_fn_0339;
-procedure ovl03_fn_033E;
-procedure ovl03_fn_0343;
-procedure ovl03_fn_0348;
-procedure ovl03_fn_0375;
+procedure SelectCharacterCommand;
 procedure ovl03_fn_03B4;
 procedure ovl03_fn_0450;
 procedure ovl03_fn_0745;
@@ -117,6 +95,10 @@ const
   OpSub = 5;
   OpDiv = 6;
   OpMul = 7;
+  { The bit of ECL command 10's operand that removes the member from the party, and the mask of
+    the party position (ovl03:02E0). }
+  RemoveMemberBit = $80;
+  PositionMask = $7F;
 
 { ovl03:0001. The ECL command 0, the only command that takes no operands (the dispatcher at
   ovl03:2F2D calls it for SkippedOpcode 0). It clears the text windows when ds84E2 is set (the
@@ -256,52 +238,47 @@ begin
   else
     WriteVmString(Target, EclStrings[1]);
 end;
-{ ovl03:02E0: frame not read }
-{@stub} procedure ovl03_fn_02E0; begin end;
-{ ovl03:02E4: frame not read }
-{@stub} procedure ovl03_fn_02E4; begin end;
-{ ovl03:02E9: frame not read }
-{@stub} procedure ovl03_fn_02E9; begin end;
-{ ovl03:02EE: frame not read }
-{@stub} procedure ovl03_fn_02EE; begin end;
-{ ovl03:02F3: frame not read }
-{@stub} procedure ovl03_fn_02F3; begin end;
-{ ovl03:02F8: frame not read }
-{@stub} procedure ovl03_fn_02F8; begin end;
-{ ovl03:02FD: frame not read }
-{@stub} procedure ovl03_fn_02FD; begin end;
-{ ovl03:0302: frame not read }
-{@stub} procedure ovl03_fn_0302; begin end;
-{ ovl03:0307: frame not read }
-{@stub} procedure ovl03_fn_0307; begin end;
-{ ovl03:030C: frame not read }
-{@stub} procedure ovl03_fn_030C; begin end;
-{ ovl03:0311: frame not read }
-{@stub} procedure ovl03_fn_0311; begin end;
-{ ovl03:0316: frame not read }
-{@stub} procedure ovl03_fn_0316; begin end;
-{ ovl03:031B: frame not read }
-{@stub} procedure ovl03_fn_031B; begin end;
-{ ovl03:0320: frame not read }
-{@stub} procedure ovl03_fn_0320; begin end;
-{ ovl03:0325: frame not read }
-{@stub} procedure ovl03_fn_0325; begin end;
-{ ovl03:032A: frame not read }
-{@stub} procedure ovl03_fn_032A; begin end;
-{ ovl03:032F: frame not read }
-{@stub} procedure ovl03_fn_032F; begin end;
-{ ovl03:0334: frame not read }
-{@stub} procedure ovl03_fn_0334; begin end;
-{ ovl03:0339: frame not read }
-{@stub} procedure ovl03_fn_0339; begin end;
-{ ovl03:033E: frame not read }
-{@stub} procedure ovl03_fn_033E; begin end;
-{ ovl03:0343: frame not read }
-{@stub} procedure ovl03_fn_0343; begin end;
-{ ovl03:0348: frame not read }
-{@stub} procedure ovl03_fn_0348; begin end;
-{ ovl03:0375: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl03_fn_0375; begin end;
+{ ovl03:02E0. ECL command 10 (dispatcher ovl03:2F2D, SkippedOpcode 10): selects the party member at
+  the 0-based position its operand names as SelectedCharacter. The walk starts at ds5D96, the head
+  of the party list (Next at +$104), and stops at the position or at the end of the list; a
+  position past the end selects nothing. It sets ds4430 first, so the next EndCommand (ovl03:0001)
+  selects ds4436 again. When the operand's bit 7 is set and the script has just cleared the
+  character's name and status (ds84D2 and ds84D3, set by SetCharacterVar), the selected member
+  leaves the party (ovl16_e2, as ovl15:18E5 does) and is redrawn (res12_fn_0767), and ds4430 is
+  cleared when that member is ds4436. }
+procedure SelectCharacterCommand;
+var
+  Member: PCharacter;
+  Unused: Byte;                 { QUIRK ovl03:02E0: a byte of the frame nothing uses }
+  Position: Byte;
+  I: Byte;
+  RemoveFlag: Byte;
+begin
+  ds4430 := 1;
+  DecodeOperands(1);
+  I := 0;
+  Position := OperandValue(1);
+  Member := PCharacter(ds5D96);
+  RemoveFlag := Position and RemoveMemberBit;
+  Position := Position and PositionMask;
+  if Position > 0 then
+    while (I < Position) and (Member <> nil) do
+    begin
+      Member := Member^.Next;
+      Inc(I);
+    end;
+  if Member <> nil then
+    SelectedCharacter := Member;
+  if (RemoveFlag <> 0) and (ds84D2 <> 0) and (ds84D3 <> 0) then
+  begin
+    if ds4436 = SelectedCharacter then
+      ds4430 := 0;
+    ovl16_e2(False, True);
+    res12_fn_0767(SelectedCharacter);
+    ds84D2 := 0;
+    ds84D3 := 0;
+  end;
+end;
 { ovl03:03B4: retf 0: 0 bytes of parameters; 2 bytes of locals }
 {@stub} procedure ovl03_fn_03B4; begin end;
 { ovl03:0450: frame not read }
