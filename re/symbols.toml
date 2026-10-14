@@ -3642,12 +3642,12 @@ id = "ovl12:10DE"
 unit = "ovl12"
 addr = "ovl12:10DE"
 size = 138
-name = "ovl12_e37"
-signature = ""
+name = "WeakenStrength"
+signature = "procedure WeakenStrength(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e37"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_37"
+notes = "renamed from ovl12_e37 (ovl12:10DE gives Who the disease affect 2B for 60 rounds; while Strength is above 3 it shows 'is weakened' and takes one off Strength, at 3 or less it adds nausea (affect 1F); affect handler, nothing but Who and Affect's Data read; which affect runs it is not known); auto:entry_37"
 evidence = ["prologue"]
 
 [[routine]]

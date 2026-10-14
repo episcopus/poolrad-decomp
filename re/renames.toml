@@ -3686,3 +3686,10 @@ kind = "routine"
 why = "ovl12:10C1 halves ds681A, the byte AgeCharacterOnce (ovl12:0C4B) doubles every time it runs; affect handler (AffectHandlers shape, nothing read); which affect runs it is not known"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e37"
+new = "WeakenStrength"
+kind = "routine"
+why = "ovl12:10DE gives Who the disease affect 2B for 60 rounds; while Strength is above 3 it shows 'is weakened' and takes one off Strength, at 3 or less it adds nausea (affect 1F); affect handler, nothing but Who and Affect's Data read; which affect runs it is not known"
+date = "2026-10-13"
+

@@ -45,7 +45,7 @@ procedure AvoidDistantAttack(Who: PCharacter; Chance: Byte);
 function FirstSlotItem(Who: PCharacter): PItem;
 procedure AvoidIfSelectedItemPlusZero(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure HalveAgeDoubling(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e37(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure WeakenStrength(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e38;
 procedure ovl12_e39;
 procedure ovl12_e40;
@@ -878,8 +878,23 @@ procedure HalveAgeDoubling(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   ds681A := ds681A shr 1;
 end;
-{ ovl12:10DE: retf 10: 10 bytes of parameters; 16 bytes of locals }
-{@stub} procedure ovl12_e37; begin end;
+{ ovl12:10DE. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000). It gives Who
+  the affect AffectUnknown2B (a Cure Disease affect, ovl04:031E) for WeakeningDuration rounds with the Data of Affect,
+  when TryAddAffect allows it. While Who's Strength is above 3 each run shows "is weakened" (colour 10) and takes one
+  off Strength; at 3 or less Who gets AffectNausea unless it has it already. Which affect runs it is not known yet [?]. }
+procedure WeakenStrength(Who: PCharacter; Affect: PAffect; Mode: Byte);
+var
+  FoundAffect: Pointer;
+begin
+  if TryAddAffect(Who, AffectUnknown2B, Affect^.Data, WeakeningDuration) then
+    if Who^.Strength > 3 then
+    begin
+      res12_fn_16EC(Who, 'is weakened', $A, 1);
+      Dec(Who^.Strength);
+    end
+    else if not res12_fn_2199(Who, AffectNausea, FoundAffect) then
+      AddAffect(Who, AffectNausea, 0, $FF, 0);
+end;
 { ovl12:1168: retf 10: 10 bytes of parameters; 4 bytes of locals }
 {@stub} procedure ovl12_e38; begin end;
 { ovl12:11F9: retf 10: 10 bytes of parameters; 2 bytes of locals }
