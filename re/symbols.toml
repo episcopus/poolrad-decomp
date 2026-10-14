@@ -8657,7 +8657,7 @@ signature = "procedure ShowAbilityScore(Index: ShortInt; Highlight: Boolean)"
 c_name = "ovl19_e3"
 level = "L2"
 justification = ""
-notes = "renamed from ovl19_e3 (called by ovl19_e1 for rows 7..12 (STR..CHA labels, ovl19:004A loop, [bp-5] = 0..5 with Highlight 0); draws the score at ++Index of SelectedCharacter; Strength 18 adds the percentile in parentheses (ovl19:0901 code)); auto:near_call"
+notes = "renamed from ovl19_e3 (called by ovl19_e1 for rows 7..12 (STR..CHA labels, ovl19:004A loop, [bp-5] = 0..5 with Highlight 0); draws the score at offset 10h plus Index of SelectedCharacter; Strength 18 adds the percentile in parentheses (ovl19:0901 code)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
