@@ -814,6 +814,9 @@ var
   ds6DE4: array[0..73] of Byte;
   ds442E: Byte;                   { set to 1 by the ECL command 0 (ovl03:0001); meaning unknown }
   ds4430: Byte;                   { when nonzero, the ECL command 0 (ovl03:0001) selects the character at ds4436 }
+  { The members ECL command 11 (ovl03:0450) has added to the party list; it adds none at
+    MaxEncounterMembers (63). }
+  EncounterMemberCount: Byte;
   ds4436: PCharacter;             { and clears this flag; what sets the flag is not known }
   { Scratch of the combat AI (ovl09). }
   ds443C: Byte;                   { the direction the AI chose last; 8 before its first step
@@ -929,6 +932,8 @@ var
   ds84D3: Byte;                   { set to 1 when the script writes 0 to the character word $6B00 (ovl07:0A91) }
   ds84E1: Byte;                   { cleared by ShowHeadBody (ovl07:0514); meaning unknown }
   ds84E6: Byte;                   { set to 1 when the script moves the party or changes its marker (ovl07:0D6C..0DD6) }
+  { set to 1 by ECL command 11 (ovl03:0450) after it has added members to the party list; meaning unknown }
+  ds84E7: Byte;
   ds84E8: Byte;                   { set to 1 when the script writes game variable $49FD or $49FE (ovl07:0CAF) }
   { The decoded operands of the current script command (DecodeOperands, ovl07:0000): entries
     1..64 of each table; entry 0 is the byte before, never read (in the image it is the last entry
@@ -960,7 +965,10 @@ var
     ShowEncounterPicture as SpriteBank (SPRIT) and PicBank (PIC, or HEAD and BODY). }
   EncounterSpriteBank: Byte;      { the SPRIT bank the encounter sprites are loaded from (ovl07:054E) }
   EncounterPicBank: Byte;         { the PIC bank, or the HEAD and BODY bank, of the close-up (ovl07:054E) }
-  ds6F83: Byte;                   { set to 8 by InitScript (ovl07:01F0); meaning unknown }
+  { The icon slot of the encounter group being set up: InitScript sets 8 (ovl07:01F0). ECL command 11
+    (ovl03:0450) and SetupDuel (ovl07:1A6F) load the group's CPIC picture into it and give it to their
+    members as CombatIcon; ECL command 11 moves it on by one per group. }
+  ds6F83: Byte;
   ds70C6: Byte;                   { cleared by InitScript (ovl07:01FB); meaning unknown }
   ds84C8: array[0..1] of Byte;    { two bytes InitScript clears (ovl07:01DF); meaning unknown }
   ds84E2: Byte;                   { cleared by InitScript (ovl07:01C1); meaning unknown }

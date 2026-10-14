@@ -3490,3 +3490,17 @@ kind = "global"
 why = "operand 3 of ECL command 12 (ovl03:03B4), passed as PicBank: ShowEncounterPicture loads the PIC picture or the HEAD and BODY banks with it (ovl07:054E)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl03_fn_0450"
+new = "AddEncounterGroupCommand"
+kind = "routine"
+why = "ECL command 11 (dispatcher ovl03:2F2D, SkippedOpcode 11): loads a character of Kind with LoadCharacter (ovl17_e6) and appends Count copies to the party list ds5D96 with combat icons 8 and up (ovl07 InitScript sets ds6F83 to 8; ovl17_e10 uses icons 0..7 for party members), loading the CPIC picture of the group (ovl03:0450, matched)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ds4435"
+new = "EncounterMemberCount"
+kind = "global"
+why = "the members ECL command 11 (ovl03:0450) has added: incremented per member, the command adds none at 63 (MaxEncounterMembers)"
+date = "2026-10-13"
+

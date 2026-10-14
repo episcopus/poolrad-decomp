@@ -14,13 +14,7 @@ procedure RandomCommand;
 procedure StoreCommand;
 procedure SelectCharacterCommand;
 procedure ShowEncounterCommand;
-procedure ovl03_fn_0450;
-procedure ovl03_fn_0745;
-procedure ovl03_fn_074A;
-procedure ovl03_fn_0775;
-procedure ovl03_fn_07A5;
-procedure ovl03_fn_07AA;
-procedure ovl03_fn_0803;
+procedure AddEncounterGroupCommand;
 procedure ovl03_fn_0817;
 procedure ovl03_fn_0845;
 procedure ovl03_fn_084A;
@@ -85,6 +79,7 @@ procedure ovl03_e1;
 procedure ovl03_fn_3379;
 procedure ovl03_fn_34AB;
 implementation
+uses OVL32;
 
 const
   { The operand types from this one up are strings: $80 a packed string, $81 the address of a
@@ -104,6 +99,8 @@ const
     ovl07:0482, which also stores them there). }
   VarEncounterLimit = 704;
   VarStepsAhead = 705;
+  { ECL command 11 (ovl03:0450) adds no encounter member once its count of members reaches this. }
+  MaxEncounterMembers = 63;
 var
   { ds84C8 (POOLVARS) under the type ShowEncounterPicture takes: TPictureShown is declared in OVL07,
     and Turbo Pascal accepts a var argument only of the identical type. }
@@ -307,20 +304,114 @@ begin
     ds49D6^[VarStepsAhead] := ds49D6^[VarEncounterLimit];
   ShowEncounterPicture(EncounterSpriteBank, EncounterPicBank, Byte(ds49D6^[VarStepsAhead]), PictureShown);
 end;
-{ ovl03:0450: frame not read }
-{@stub} procedure ovl03_fn_0450; begin end;
-{ ovl03:0745: frame not read }
-{@stub} procedure ovl03_fn_0745; begin end;
-{ ovl03:074A: frame not read }
-{@stub} procedure ovl03_fn_074A; begin end;
-{ ovl03:0775: frame not read }
-{@stub} procedure ovl03_fn_0775; begin end;
-{ ovl03:07A5: frame not read }
-{@stub} procedure ovl03_fn_07A5; begin end;
-{ ovl03:07AA: frame not read }
-{@stub} procedure ovl03_fn_07AA; begin end;
-{ ovl03:0803: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl03_fn_0803; begin end;
+{ ovl03:0450. ECL command 11 (dispatcher ovl03:2F2D, SkippedOpcode 11): adds a group of encounter
+  members to the party list ds5D96 (icons from 8 up, so not the party's own members). Operand 1 is
+  the kind LoadCharacter loads (ovl17_e6, the save and load unit), operand 2 the number of members
+  (at least 1), operand 3 the block of the combat picture 'CPIC' loaded into the icon slot ds6F83.
+  The loaded character goes to the tail of the list first, then Count - 1 copies of it, each with
+  its own copies of the item and affect lists (the copies are prepended, so the lists come out in
+  reverse order). Every member gets CombatIcon := ds6F83, and the slot goes up by one afterwards.
+  Nothing is added once EncounterMemberCount reaches MaxEncounterMembers. SelectedCharacter is saved
+  and restored, and ds84E7 is set. }
+procedure AddEncounterGroupCommand;
+var
+  Kind: Byte;
+  Count: Byte;
+  PictureBlock: Byte;
+  I: Byte;
+  Last: PCharacter;
+  NewMember: PCharacter;
+  Who: PCharacter;
+  Saved: PCharacter;
+  Template: TCharacter;
+  PictureSetName: string[12];
+  Items: PItem;
+  OldItem: PItem;
+  ItemsHead: PItem;
+  Affects: Pointer;
+  OldAffect: PAffect;
+  AffectsHead: Pointer;
+begin
+  Saved := SelectedCharacter;
+  I := 1;
+  DecodeOperands(3);
+  if EncounterMemberCount >= MaxEncounterMembers then
+    Exit;
+  Last := nil;
+  NewMember := nil;
+  Kind := OperandValue(1);
+  LoadCharacter(Kind, Who, Items, Affects);
+  Template := Who^;
+  ItemsHead := Items;
+  AffectsHead := Affects;
+  Count := OperandValue(2);
+  if Count <= 0 then
+    Count := 1;
+  PictureBlock := OperandValue(3);
+  Last := PCharacter(ds5D96);
+  PictureSetName := 'CPIC';
+  LoadPictureSlot(PictureSetName, PictureBlock, ds6F83);
+  while Last^.Next <> nil do
+    Last := Last^.Next;
+  Last^.Next := Who;
+  Last := Last^.Next;
+  Last^.CombatIcon := ds6F83;
+  Last^.Next := nil;
+  Inc(EncounterMemberCount);
+  Inc(I);
+  while (I <= Count) and (EncounterMemberCount < MaxEncounterMembers) do
+  begin
+    New(NewMember);
+    Last^.Next := NewMember;
+    Last := Last^.Next;
+    Last^ := Template;
+    Last^.CombatIcon := ds6F83;
+    Last^.Next := nil;
+    Last^.Affects := nil;
+    Last^.Items := nil;
+    Inc(I);
+    Inc(EncounterMemberCount);
+    while Items <> nil do
+    begin
+      if Last^.Items = nil then
+      begin
+        New(Last^.Items);
+        Last^.Items^ := Items^;
+        Last^.Items^.Next := nil;
+      end
+      else
+      begin
+        OldItem := Last^.Items;
+        New(Last^.Items);
+        Last^.Items^ := Items^;
+        Last^.Items^.Next := OldItem;
+      end;
+      Items := Items^.Next;
+    end;
+    Items := ItemsHead;
+    while Affects <> nil do
+    begin
+      if PAffect(Last^.Affects) = nil then
+      begin
+        New(PAffect(Last^.Affects));
+        PAffect(Last^.Affects)^ := PAffect(Affects)^;
+        PAffect(Last^.Affects)^.Next := nil;
+      end
+      else
+      begin
+        OldAffect := PAffect(Last^.Affects);
+        New(PAffect(Last^.Affects));
+        PAffect(Last^.Affects)^ := PAffect(Affects)^;
+        PAffect(Last^.Affects)^.Next := OldAffect;
+      end;
+      Affects := PAffect(Affects)^.Next;
+    end;
+    Affects := AffectsHead;
+  end;
+  Inc(ds6F83);
+  ds84E7 := 1;
+  SelectedCharacter := Saved;
+end;
 { ovl03:0817: frame not read }
 {@stub} procedure ovl03_fn_0817; begin end;
 { ovl03:0845: frame not read }

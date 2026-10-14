@@ -1028,3 +1028,8 @@ evidence = "operand 1 of ECL command 12 (ovl03:03B4), passed as SpriteBank: Show
 offset = 0x6F82
 name = "EncounterPicBank"
 evidence = "operand 3 of ECL command 12 (ovl03:03B4), passed as PicBank: ShowEncounterPicture loads the PIC picture or the HEAD and BODY banks with it (ovl07:054E)"
+
+[[global]]
+offset = 0x4435
+name = "EncounterMemberCount"
+evidence = "the members ECL command 11 (ovl03:0450) has added: incremented per member, the command adds none at 63 (MaxEncounterMembers)"

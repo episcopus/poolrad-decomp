@@ -237,92 +237,14 @@ evidence = ["prologue"]
 id = "ovl03:0450"
 unit = "ovl03"
 addr = "ovl03:0450"
-size = 757
-name = "ovl03_fn_0450"
+size = 967
+name = "AddEncounterGroupCommand"
 signature = ""
 c_name = "ovl03_fn_0450"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_0450 (ECL command 11 (dispatcher ovl03:2F2D, SkippedOpcode 11): loads a character of Kind with LoadCharacter (ovl17_e6) and appends Count copies to the party list ds5D96 with combat icons 8 and up (ovl07 InitScript sets ds6F83 to 8; ovl17_e10 uses icons 0..7 for party members), loading the CPIC picture of the group (ovl03:0450, matched)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl03:0745"
-unit = "ovl03"
-addr = "ovl03:0745"
-size = 5
-name = "ovl03_fn_0745"
-signature = ""
-c_name = "ovl03_fn_0745"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:074A"
-unit = "ovl03"
-addr = "ovl03:074A"
-size = 43
-name = "ovl03_fn_074A"
-signature = ""
-c_name = "ovl03_fn_074A"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:0775"
-unit = "ovl03"
-addr = "ovl03:0775"
-size = 48
-name = "ovl03_fn_0775"
-signature = ""
-c_name = "ovl03_fn_0775"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:07A5"
-unit = "ovl03"
-addr = "ovl03:07A5"
-size = 5
-name = "ovl03_fn_07A5"
-signature = ""
-c_name = "ovl03_fn_07A5"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:07AA"
-unit = "ovl03"
-addr = "ovl03:07AA"
-size = 89
-name = "ovl03_fn_07AA"
-signature = ""
-c_name = "ovl03_fn_07AA"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:0803"
-unit = "ovl03"
-addr = "ovl03:0803"
-size = 20
-name = "ovl03_fn_0803"
-signature = ""
-c_name = "ovl03_fn_0803"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl03:0817"
