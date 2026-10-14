@@ -1,6 +1,6 @@
 unit OVL13;
 { CombatSpells: the combat actions overlay (whitepaper 5.5). RunCombat calls it to set up every
-  combatant's round (ComputeMovement and StartCombatantRound), to move a combatant on the combat map (ovl13_e3
+  combatant's round (ComputeMovement and StartCombatantRound), to move a combatant on the combat map (StepCombatant
   and ovl13_e4), and to resolve what a combat action does; the ovl13_eN entry points are the ones
   the combat menu and the combat AI call. }
 {$A-,O+,F+,S-,R-,G-,I-}
@@ -11,7 +11,7 @@ function ComputeMovement(Who: PCharacter): Byte;
 procedure RollAttackDamage(Attacker: PCharacter; Target: PCharacter; Index: Byte);
 procedure ovl13_fn_02F9;
 procedure GuardedEnemiesAttack(Who: PCharacter);
-procedure ovl13_e3(Who: PCharacter; Dir: Byte);
+procedure StepCombatant(Who: PCharacter; Dir: Byte);
 procedure ovl13_fn_08AC;
 procedure ovl13_e4(Who: Pointer; Dir: Byte);
 procedure ovl13_fn_098F;
@@ -211,7 +211,7 @@ end;
 { ovl13:0627. Lets every enemy next to Who that is watching (Combat^.B7) and not helpless strike
   back: for each combatant CollectEnemiesInRange(Who, 1) gathers, it puts the cursor on Who, clears
   the enemy's watch flag and runs the attack through ovl13_e11 and ovl13_e12. Does nothing for a
-  character that is out of the fight (Flag10D 0). Called after a move (ovl13_e3). }
+  character that is out of the fight (Flag10D 0). Called after a move (StepCombatant). }
 procedure GuardedEnemiesAttack(Who: PCharacter);
 var
   Count: Byte;
@@ -235,8 +235,57 @@ begin
     end;
   end;
 end;
-{ ovl13:0712: frame not read }
-{@stub} procedure ovl13_e3(Who: PCharacter; Dir: Byte); begin end;
+{ ovl13:0712. Moves Who one cell in direction Dir on the combat map: a straight step costs two half
+  squares and a diagonal three, and one that costs more than Combat^.Moves leaves it at 0 and gives
+  up. Otherwise it takes the cost off Moves, moves the combatant's cell in CombatantTable by the
+  DirStepX/DirStepY offset of Dir, and redraws and rebuilds the occupancy. A quick-fighting
+  character (Quick set) is drawn facing that way and, when the new cell is outside the view, has its
+  cursor moved too. Then Who's BF and B12 are cleared, the move sound plays, the guarded enemies
+  next to Who make their free attacks (GuardedEnemiesAttack) and, if Who is out of the fight or now
+  helpless, its Moves become 0. Called by MoveCharacter (ovl08) and MoveStep (ovl09). }
+procedure StepCombatant(Who: PCharacter; Dir: Byte);
+var
+  Step: Byte;                    { the step's cost in half squares, reused as the cursor margin }
+  Idx: Byte;
+  NewX: ShortInt;
+  NewY: ShortInt;
+  OldX: ShortInt;
+  OldY: ShortInt;
+begin
+  if Odd(Dir) then
+    Step := 3
+  else
+    Step := 2;
+  if Step > Who^.Combat^.Moves then
+  begin
+    Who^.Combat^.Moves := 0;
+    Exit;
+  end;
+  Dec(Who^.Combat^.Moves, Step);
+  Idx := CombatantIndex(Who);
+  OldX := CombatantTable[Idx].X;
+  OldY := CombatantTable[Idx].Y;
+  NewX := OldX + DirStepX[Dir];
+  NewY := OldY + DirStepY[Dir];
+  Step := 1;
+  if Who^.Quick <> 0 then
+  begin
+    Step := 3;
+    if not IsInView(NewX - CombatMap^.ViewX, NewY - CombatMap^.ViewY) then
+      MoveCombatCursor(OldX, OldY, 2, 8);
+  end;
+  RedrawGround(0, 0, Idx);
+  CombatantTable[Idx].X := NewX;
+  CombatantTable[Idx].Y := NewY;
+  RebuildOccupancy;
+  MoveCombatCursor(NewX, NewY, Step, 8);
+  Who^.Combat^.BF := 0;
+  Who^.Combat^.B12 := 0;
+  PlaySound(ds2628);
+  GuardedEnemiesAttack(Who);
+  if (Who^.Flag10D = 0) or IsHelpless(Who) then
+    Who^.Combat^.Moves := 0;
+end;
 { ovl13:08AC: retf 6: 6 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl13_fn_08AC; begin end;
 { ovl13:08B2: frame not read }

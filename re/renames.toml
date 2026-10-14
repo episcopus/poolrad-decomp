@@ -4036,3 +4036,10 @@ kind = "routine"
 why = "ovl13:0627 is called by the move routine ovl13_e3 after Who moves: it collects Who's adjacent enemies (CollectEnemiesInRange(Who,1)) and lets each one that is guarding (Combat^.B7, the flag GuardTurn sets) and not helpless attack Who through ovl13_e11 and ovl13_e12; called as ovl13_fn_0627(Who) with the mover, cleared at the end of a move in ovl13_fn_08AC too (stub)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl13_e3"
+new = "StepCombatant"
+kind = "routine"
+why = "ovl13:0712 moves Who one map cell in direction Dir: charges Combat^.Moves two half squares (three on a diagonal), moves CombatantTable's cell by DirStepX/DirStepY, redraws ground and occupancy, moves the quick-combat cursor and clears BF/B12; called from MoveCharacter (ovl08:09DF) and MoveStep (ovl09:07F2)"
+date = "2026-10-13"
+

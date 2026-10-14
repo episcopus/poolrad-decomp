@@ -5397,27 +5397,14 @@ evidence = ["prologue"]
 id = "ovl13:0712"
 unit = "ovl13"
 addr = "ovl13:0712"
-size = 410
-name = "ovl13_e3"
-signature = "procedure ovl13_e3(Who: Pointer; Dir: Byte)"
+size = 416
+name = "StepCombatant"
+signature = "procedure StepCombatant(Who: Pointer; Dir: Byte)"
 c_name = "ovl13_e3"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_3"
+notes = "renamed from ovl13_e3 (ovl13:0712 moves Who one map cell in direction Dir: charges Combat^.Moves two half squares (three on a diagonal), moves CombatantTable's cell by DirStepX/DirStepY, redraws ground and occupancy, moves the quick-combat cursor and clears BF/B12; called from MoveCharacter (ovl08:09DF) and MoveStep (ovl09:07F2)); auto:entry_3"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl13:08AC"
-unit = "ovl13"
-addr = "ovl13:08AC"
-size = 6
-name = "ovl13_fn_08AC"
-signature = ""
-c_name = "ovl13_fn_08AC"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl13:08B2"
