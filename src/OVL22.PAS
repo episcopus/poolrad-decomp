@@ -5,14 +5,14 @@ unit OVL22;
   and learns spells for combat (ovl09) and the camp (ovl15). }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
-uses POOLVARS, RES06, RES12;
+uses POOLVARS, RES06, RES12, OVL24;
 function ovl22_e1(Mode: Byte; var Choice: Word): Byte;
 procedure AddSpellMenuLine(Spell: Byte);
 procedure AddItemSpells(Pending: Byte);
 procedure AddScrollSpells(Pending: Byte);
 function BuildSpellList(Kind: Byte): Byte;
 function SpellAreaSize(Spell: Byte): Byte;
-procedure ovl22_fn_07D6;
+function SpellAffectDuration(Spell: Byte): Word;
 procedure ovl22_fn_08C3;
 procedure ovl22_e4;
 procedure ovl22_fn_0AE5;
@@ -278,8 +278,46 @@ begin
     Area := 1;
   SpellAreaSize := Area;
 end;
-{ ovl22:07D6: retf 2: 2 bytes of parameters; 4 bytes of locals }
-{@stub} procedure ovl22_fn_07D6; begin end;
+{ ovl22:07D6. The duration (in ApplyAffect's time unit) of the affect a spell leaves. A few
+  spells are rolled for instead of read from the table: spell or affect $28 is 1d6*10, $39 and $3D are
+  5d4, $3B is 1d4*10+40, $3F is 2d10*10 in combat (view mode 5) else (1d10+10)*10, and $43 is a flat
+  $5A0. Every other value uses the SpellTable row's duration base (byte +4) plus its per-level byte
+  (byte +5) times the caster level from res12_fn_26C2. Called by ovl22_fn_08C3 (as ApplyAffect's
+  Duration) and ovl22_e20, ovl22_fn_1758, ovl22_fn_202B, ovl22_fn_2EEA. }
+function SpellAffectDuration(Spell: Byte): Word;
+const
+  { The few spells whose affect time is rolled for instead of read from SpellTable; the values
+    are the spell or affect codes the callers pass (the codes above $38 are affects, not spells). }
+  RolledSpell28 = $28;             { 1d6 * 10 }
+  RolledSpell39 = $39;             { 5d4 }
+  RolledSpell3B = $3B;             { 1d4 * 10 + 40 }
+  RolledSpell3D = $3D;             { 5d4 }
+  RolledSpell3F = $3F;             { 2d10 * 10 in combat, else (1d10 + 10) * 10 }
+  FixedSpell43 = $43;              { a flat $5A0 }
+  CombatViewMode = 5;              { ds49F3 during combat (whitepaper 5.5) }
+  Scale = 10;
+var
+  Value: Word;
+begin
+  case Spell of
+    RolledSpell28:
+      Value := RollDice(1, 6) * Scale;
+    RolledSpell39, RolledSpell3D:
+      Value := RollDice(5, 4);
+    RolledSpell3B:
+      Value := RollDice(1, 4) * Scale + 40;
+    RolledSpell3F:
+      if ds49F3 = CombatViewMode then
+        Value := RollDice(2, 10) * Scale
+      else
+        Value := (RollDice(1, 10) + Scale) * Scale;
+    FixedSpell43:
+      Value := $5A0;
+  else
+    Value := SpellTable[Spell].Pad2[4] + SpellTable[Spell].Pad2[5] * res12_fn_26C2(Spell);
+  end;
+  SpellAffectDuration := Value;
+end;
 { ovl22:08C3: retf 14: 14 bytes of parameters; 50 bytes of locals }
 {@stub} procedure ovl22_fn_08C3; begin end;
 { ovl22:0A91: frame not read }

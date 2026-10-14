@@ -3490,3 +3490,10 @@ kind = "routine"
 why = "ovl22:059C builds the spell menu list SpellMenuList for ChooseSpellFromList's list kind (0 memorized, 5 pending memorized, 1 spell book, 2 first scroll, 3 scrolls, 6 pending scrolls, 4 learnable) and returns whether it is not empty; called by ovl19:299C"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl22_fn_07D6"
+new = "SpellAffectDuration"
+kind = "routine"
+why = "ovl22:07D6 returns the affect duration; 08C3 passes it as ApplyAffect Duration (ovl24:1656)"
+date = "2026-10-13"
+

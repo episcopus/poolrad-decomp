@@ -9880,12 +9880,12 @@ id = "ovl22:07D6"
 unit = "ovl22"
 addr = "ovl22:07D6"
 size = 237
-name = "ovl22_fn_07D6"
+name = "SpellAffectDuration"
 signature = ""
 c_name = "ovl22_fn_07D6"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl22_fn_07D6 (ovl22:07D6 returns the affect duration; 08C3 passes it as ApplyAffect Duration (ovl24:1656)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
