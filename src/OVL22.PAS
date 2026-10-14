@@ -7,7 +7,7 @@ unit OVL22;
 interface
 uses POOLVARS, RES06, RES12;
 function ovl22_e1(Mode: Byte; var Choice: Word): Byte;
-procedure ovl22_fn_028D;
+procedure AddSpellMenuLine(Spell: Byte);
 procedure ovl22_fn_044E;
 procedure ovl22_fn_051C;
 function ovl22_e2(Kind: Byte): Byte;
@@ -118,7 +118,59 @@ implementation
 { ovl22:008A: retf 6: 6 bytes of parameters; 98 bytes of locals }
 {@stub} function ovl22_e1(Mode: Byte; var Choice: Word): Byte; begin end;
 { ovl22:028D: retf 2: 2 bytes of parameters; 262 bytes of locals }
-{@stub} procedure ovl22_fn_028D; begin end;
+{ ovl22:028D. Appends one line for spell Spell to the spell menu list SpellMenuList (ovl22_e2 calls this
+  once per spell, in list order). The line's text is ' *' when the pending bit $80 of Spell is set,
+  else '  ', followed by SpellNames[Spell and $7F]; when the spell's level differs from the level of
+  the previous line a heading line (SpellLevelNames[level]: '1st Level' and so on) is inserted first.
+  SpellMenuSpells[Count] keeps the spell number (pending bit cleared) of the line added. Called by ovl22_e2
+  and ovl22_fn_044E. }
+procedure AddSpellMenuLine(Spell: Byte);
+const
+  MenuLineBytes = $2E;            { a menu line node: Text, Flag29 and Next, the used part of TMenuLine }
+var
+  Line: PMenuLine;
+  Count: ShortInt;                { ShortInt, not Byte: indexing SpellMenuSpells and the level compare
+                                    sign-extend with cwde (ovl22:0304, 035E) }
+  PrevLevel: ShortInt;
+begin
+  Line := SpellMenuList;
+  if SpellMenuList = nil then
+  begin
+    GetMem(Line, MenuLineBytes);
+    SpellMenuList := Line;
+    PrevLevel := 0;
+    Count := 0;
+  end
+  else
+  begin
+    Count := 1;
+    while Line^.Next <> nil do
+    begin
+      if Line^.Flag29 = 0 then
+        Inc(Count);
+      Line := Line^.Next;
+    end;
+    PrevLevel := SpellTable[SpellMenuSpells[Count - 1]].Level;
+    GetMem(Line^.Next, MenuLineBytes);
+    Line := Line^.Next;
+  end;
+  Line^.Next := nil;
+  if SpellTable[Spell and $7F].Level <> PrevLevel then
+  begin
+    Line^.Text := SpellLevelNames[SpellTable[Spell and $7F].Level];
+    Line^.Flag29 := 1;
+    GetMem(Line^.Next, MenuLineBytes);
+    Line := Line^.Next;
+    Line^.Next := nil;
+  end;
+  if Spell > $7F then
+    Line^.Text := ' *'
+  else
+    Line^.Text := '  ';
+  Line^.Text := Line^.Text + SpellNames[Spell and $7F];
+  Line^.Flag29 := 0;
+  SpellMenuSpells[Count] := Spell and $7F;
+end;
 { ovl22:044E: retf 2: 2 bytes of parameters; 6 bytes of locals }
 {@stub} procedure ovl22_fn_044E; begin end;
 { ovl22:051C: retf 2: 2 bytes of parameters; 2 bytes of locals }

@@ -9815,12 +9815,12 @@ id = "ovl22:028D"
 unit = "ovl22"
 addr = "ovl22:028D"
 size = 449
-name = "ovl22_fn_028D"
-signature = ""
+name = "AddSpellMenuLine"
+signature = "procedure AddSpellMenuLine(Spell: Byte)"
 c_name = "ovl22_fn_028D"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl22_fn_028D (ovl22:028D appends one line for a spell to the spell menu list ds4766, inserting a level heading when the level changes; called by ovl22_e2 and ovl22_fn_044E); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
