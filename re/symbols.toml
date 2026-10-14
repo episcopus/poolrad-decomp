@@ -16497,7 +16497,7 @@ signature = ""
 c_name = "res12_fn_06D5"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "blocked dec-deepseek 2026-10-13: not a routine. 00BA:06D5 is a label inside res12_fn_0442 (which is itself blocked): the instruction at 06D5 starts one byte late (the real cmp byte es:[di+31h],0B1h begins at 06D4, under the es: prefix the map dropped), and the code jumps across the boundary (00BA:0737 jmp 05D7, 00BA:05F2 jmp 0731) and ends at 0442's own retf 10 (00BA:0758). It cannot be a standalone procedure: any prologue would not match the mid-routine bytes. When res12_fn_0442 matches, make match WRITE=1 removes this entry (as it did for the phantom 00BA:0B4F inside DrawCharacterPanel). No caller: the map's near_call evidence is a false positive."
 evidence = ["near_call"]
 
 [[routine]]
@@ -16510,7 +16510,7 @@ signature = ""
 c_name = "res12_fn_0712"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "blocked dec-deepseek 2026-10-13: not a routine. 00BA:0712 is the else-branch label of res12_fn_0442 (00BA:05F2 jmp 0731 leads into it; 00BA:0737 jmp 05D7 leads back), inside 0442's single frame (prologue push bp/mov bp,sp/sub sp,20Ch at 00BA:0442, epilogue retf 10 at 00BA:0758). No procedure can start there. When res12_fn_0442 matches, make match WRITE=1 removes this entry. No caller: the map's near_call evidence is a false positive."
 evidence = ["near_call"]
 
 [[routine]]
@@ -16518,12 +16518,12 @@ id = "00BA:0767"
 unit = "res12"
 addr = "00BA:0767"
 size = 392
-name = "res12_fn_0767"
-signature = "procedure res12_fn_0767(Who: Pointer)"
+name = "DrawPartyRoster"
+signature = "procedure DrawPartyRoster(Who: PCharacter)"
 c_name = "res12_fn_0767"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_0767 (00BA:0767 draws the party roster panel (Name/AC/HP per member, whitepaper 5.24); called by the shop, temple and inventory screens); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16531,12 +16531,12 @@ id = "00BA:08EF"
 unit = "res12"
 addr = "00BA:08EF"
 size = 132
-name = "res12_fn_08EF"
-signature = ""
+name = "DrawArmourClass"
+signature = "procedure DrawArmourClass(Who: PCharacter; Col, Row: Byte)"
 c_name = "res12_fn_08EF"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_08EF (00BA:08EF draws a character's armour-class value Abs(+111h - 60) signed, the value res12_fn_09E3 shows under the AC heading and ovl24 RollBeatsResistance compares a roll against); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16544,39 +16544,26 @@ id = "00BA:0973"
 unit = "res12"
 addr = "00BA:0973"
 size = 112
-name = "res12_fn_0973"
-signature = ""
+name = "DrawHitPoints"
+signature = "procedure DrawHitPoints(Who: PCharacter; Col, Row, Flag: Byte)"
 c_name = "res12_fn_0973"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_0973 (00BA:0973 draws a character's current hit points (Flag11B +11Bh) in a range colour at (Col,Row); called by res12_fn_0767 and res12_fn_09E3); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "00BA:09E3"
 unit = "res12"
 addr = "00BA:09E3"
-size = 364
-name = "res12_fn_09E3"
-signature = "procedure res12_fn_09E3(Who: Pointer)"
+size = 400
+name = "DrawCharacterPanel"
+signature = "procedure DrawCharacterPanel(Who: PCharacter)"
 c_name = "res12_fn_09E3"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_09E3 (00BA:09E3 draws the character panel (name, Hitpoints, AC, readied weapon text, status) the combat and inventory screens show, whitepaper 5.24); auto:prologue"
 evidence = ["prologue"]
-
-[[routine]]
-id = "00BA:0B4F"
-unit = "res12"
-addr = "00BA:0B4F"
-size = 36
-name = "res12_fn_0B4F"
-signature = ""
-c_name = "res12_fn_0B4F"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "00BA:0B73"

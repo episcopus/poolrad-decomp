@@ -17,3 +17,12 @@ tags = ["type", "signed", "shortint", "byte", "codegen", "record"]
 title = "A cwde (sign extend) where a xor ah,ah (zero extend) is expected proves the operand is signed"
 lesson = "In X + Y with X and Y one-byte fields, Turbo Pascal widens Byte with xor ah,ah and ShortInt with cwde. res12:0282's nearly matched output differed only in one widening: Who^.SaveBonus := Who^.SaveBonus + Item^.PlusSave compiled the field at TMenuLine +$33 with cwde, while POOLVARS had it Byte. Changing PlusSave to ShortInt matched. Read the first differing instruction's extension opcode to recover a field's signedness; the assignments in ovl21 (PlusSave := 0/1/2) do not change code either way. Probe: tools/re/tp_idioms/res12/PRB02.PAS."
 evidence = ["src/RES12.PAS#AddReadiedItemBonus", "src/POOLVARS.PAS#TMenuLine", "re/symbols.toml#00BA:0282", "tools/re/tp_idioms/res12/PRB02.PAS"]
+
+[[lesson]]
+id = "res12-o-plus-copies-string-constants"
+confidence = "V"
+units = ["res12", "*"]
+tags = ["switch", "O+", "overlay", "string", "literal", "codegen", "frame"]
+title = "A resident unit can be compiled O+: a string literal passed to a string parameter is copied to a stack temporary"
+lesson = "res12 is resident but its routines copy every string literal to a stack temporary before the call (lea di,[bp-N]; push ss; push di; mov di,<literal>; push cs; push di; lcall System_StrCopy at 0AF8:0B0B). A make tpc probe shows this is the $O+ behaviour: with O- the literal's code-segment address is pushed directly, with O+ it is copied first. DrawPartyRoster (00BA:0767) and DrawCharacterPanel (00BA:09E3) could not match until the unit directive gained O+ ({$A-,O+,F+,S-,R-,G-,I-}); their frames grow by the string temporaries (0767: 8 -> 14 bytes). The other matched res12 routines use no string literals and were unaffected. Probes: tools/re/tp_idioms/res12/PRB11.PAS (O-) and PRB12.PAS (O+)."
+evidence = ["src/RES12.PAS#DrawPartyRoster", "src/RES12.PAS#DrawCharacterPanel", "re/symbols.toml#00BA:0767", "re/symbols.toml#00BA:09E3", "tools/re/tp_idioms/res12/PRB12.PAS"]

@@ -628,7 +628,7 @@ end;
 { ovl15:13F1. The camp's Magic menu 'Cast Memorize Scribe Display Rest Exit' (CampMagicMenuText)
   until Exit or the rest ends the camp (EndCamp): C CastSpells, M MemorizeSpells, S ScribeScrolls,
   D DisplaySpellEffects, R RestParty; an extended key goes to UpdateSelectedCharacter (the character keys) and
-  redraws the character (res12_fn_0767). }
+  redraws the character (DrawPartyRoster). }
 procedure CampMagicMenu(var EndCamp: Byte);
 var
   Key: Char;
@@ -641,7 +641,7 @@ begin
     if ExtKey <> 0 then
     begin
       UpdateSelectedCharacter(Key);
-      res12_fn_0767(SelectedCharacter);
+      DrawPartyRoster(SelectedCharacter);
     end
     else
       case Key of
@@ -733,7 +733,7 @@ begin
       if not Picked then
       begin
         UpdateSelectedCharacter(Key);
-        res12_fn_0767(SelectedCharacter);
+        DrawPartyRoster(SelectedCharacter);
       end
       else
       begin
@@ -741,7 +741,7 @@ begin
           'G': MoveMemberUp;
           'O': MoveMemberDown;
         end;
-        res12_fn_0767(SelectedCharacter);
+        DrawPartyRoster(SelectedCharacter);
       end;
     end
     else if Key in [KeyEnter, 'P', 'S'] then
@@ -782,7 +782,7 @@ begin
         res12_fn_16EC(SelectedCharacter, 'is dumped in a ditch', MessageColor, 1);
       ovl16_e2(False, True);
       ClearWindow($11, 1, $26, $0B);
-      res12_fn_0767(SelectedCharacter);
+      DrawPartyRoster(SelectedCharacter);
     end
     else
       res12_fn_16EC(SelectedCharacter, 'Breathes A sigh of relief', MessageColor, 1);
@@ -836,7 +836,7 @@ begin
     if ExtKey <> 0 then
     begin
       UpdateSelectedCharacter(Key);
-      res12_fn_0767(SelectedCharacter);
+      DrawPartyRoster(SelectedCharacter);
     end
     else
       case Key of
@@ -896,7 +896,7 @@ begin
     if ExtKey <> 0 then
     begin
       UpdateSelectedCharacter(Key);
-      res12_fn_0767(SelectedCharacter);
+      DrawPartyRoster(SelectedCharacter);
     end
     else
       case Key of

@@ -770,7 +770,7 @@ end;
   else OtherPick. It then uses the slot-0 item (unless it is the pick or cursed), the slot-1
   item (when not cursed, also paying its row[1] again) and the pick through ovl19_e7, and when
   Who^.ds100 is above 2 uses the slot-1 item or the pick, below 2 the slot-1 item, then PlusPick;
-  every use runs res12_fn_0BB8 (and ovl13_e6 once), and a use ends with res12_fn_09E3. Globals:
+  every use runs res12_fn_0BB8 (and ovl13_e6 once), and a use ends with DrawCharacterPanel. Globals:
   RaceRow; TCharacter slots SlotItems and ds100/dsA3/dsA5/dsA7/dsB0. QUIRK: the [bp-1b] and
   [bp-20] frame bytes are never read. }
 procedure UseBestItem(Who: PCharacter);
@@ -922,7 +922,7 @@ SkipSlotUse:
     end;
   res12_fn_0BB8(Who);
   if Used <> 0 then
-    res12_fn_09E3(Who);
+    DrawCharacterPanel(Who);
 end;
 
 begin

@@ -3427,3 +3427,31 @@ kind = "routine"
 why = "caps Who's Movement (+11C) by the carried weight above the strength allowance (CarriedWeight +102 minus res12_fn_13AB): excess up to 200h keeps it, up to 300h caps at 9, up to 400h at 6, above at 3, and it only falls; called once by res12_fn_0BB8 after the readied-item loop (make match UNIT=res12, 00BA:03A0)"
 date = "2026-10-13"
 
+[[rename]]
+old = "res12_fn_0767"
+new = "DrawPartyRoster"
+kind = "routine"
+why = "00BA:0767 draws the party roster panel (Name/AC/HP per member, whitepaper 5.24); called by the shop, temple and inventory screens"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_08EF"
+new = "DrawArmourClass"
+kind = "routine"
+why = "00BA:08EF draws a character's armour-class value Abs(+111h - 60) signed, the value res12_fn_09E3 shows under the AC heading and ovl24 RollBeatsResistance compares a roll against"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_0973"
+new = "DrawHitPoints"
+kind = "routine"
+why = "00BA:0973 draws a character's current hit points (Flag11B +11Bh) in a range colour at (Col,Row); called by res12_fn_0767 and res12_fn_09E3"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_09E3"
+new = "DrawCharacterPanel"
+kind = "routine"
+why = "00BA:09E3 draws the character panel (name, Hitpoints, AC, readied weapon text, status) the combat and inventory screens show, whitepaper 5.24"
+date = "2026-10-13"
+

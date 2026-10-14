@@ -5,9 +5,9 @@ unit RES12;
   screen and its item prompts (27D9, 0767, called by ShopMain, whitepaper 5.4), shows the
   per-character messages (16EC, 1FEB) and dispatches the area view (27D9, 2B5E, whitepaper 5.2.1).
   Many routines are still stubs. }
-{$A-,F+,S-,R-,G-,I-}
+{$A-,O+,F+,S-,R-,G-,I-}
 interface
-uses POOLVARS, RES06;
+uses POOLVARS, RES06, RES09;
 type
   { The readied-item bonus accumulator AddReadiedItemBonus fills for res12_fn_0BB8: the four signed
     bytes it combines into the character's +$112 value (with the flag byte the second var
@@ -26,11 +26,10 @@ procedure CapMovementByLoad(Who: PCharacter);
 procedure res12_fn_0442(Value: LongInt; P: Pointer; A, B, C, D: Byte);
 procedure res12_fn_06D5;
 procedure res12_fn_0712;
-procedure res12_fn_0767(Who: Pointer);
-procedure res12_fn_08EF;
-procedure res12_fn_0973;
-procedure res12_fn_09E3(Who: Pointer);
-procedure res12_fn_0B4F;
+procedure DrawPartyRoster(Who: PCharacter);
+procedure DrawArmourClass(Who: PCharacter; Col, Row: Byte);
+procedure DrawHitPoints(Who: PCharacter; Col, Row, Flag: Byte);
+procedure DrawCharacterPanel(Who: PCharacter);
 function res12_fn_0B73(Who: Pointer): Boolean;
 procedure res12_fn_0BB8(Who: Pointer);
 function res12_fn_1037(N: Byte): string;
@@ -125,6 +124,11 @@ const
   RaceRowBonusClass = 6;    { +6: bit 7 set means the item has a bonus class (byte and $7F) }
   PlusItemKind = 1;         { item kind whose bonus is assigned, not accumulated }
   SpecialItemKind = 9;      { item kind whose plus is kept as a maximum }
+  { EGA text colours DrawTextAt draws the character and shop panels in (whitepaper 5.24). }
+  Green = $0A;
+  LightMagenta = $0D;
+  Yellow = $0E;
+  White = $0F;
 
 { 00BA:0000. Applies the readied weapon to Who's attack values; res12_fn_0BB8 calls it after it
   has copied the character's base values. With no readied weapon (SlotItems[0], +$CC) it does
@@ -271,21 +275,131 @@ end;
   the plural rule's "bit 1 of the mask is clear" term, which is two bytes short of it. }
 {@stub} procedure res12_fn_0442(Value: LongInt; P: Pointer; A, B, C, D: Byte); begin end;
 
-{ 00BA:06D5: frame not read }
+{ 00BA:06D5: not a routine but a label inside res12_fn_0442 (0442 is blocked); see its re/symbols.toml
+  note. Kept a stub until 0442 matches, when make match WRITE=1 removes both entries. }
 {@stub} procedure res12_fn_06D5; begin end;
-{ 00BA:0712: retf 16: 16 bytes of parameters; 0 bytes of locals }
+{ 00BA:0712: not a routine but the else-branch label of res12_fn_0442; see its re/symbols.toml note. }
 {@stub} procedure res12_fn_0712; begin end;
-{ 00BA:0767: retf 4; compares its pointer parameter with other pointers. ovl04 passes the selected
-  character. }
-{@stub} procedure res12_fn_0767(Who: Pointer); begin end;
-{ 00BA:08EF: retf 8: 8 bytes of parameters; 514 bytes of locals }
-{@stub} procedure res12_fn_08EF; begin end;
-{ 00BA:0973: retf 10: 10 bytes of parameters; 258 bytes of locals }
-{@stub} procedure res12_fn_0973; begin end;
-{ 00BA:09E3: frame not read }
-{@stub} procedure res12_fn_09E3(Who: Pointer); begin end;
-{ 00BA:0B4F: retf 4: 4 bytes of parameters; 0 bytes of locals }
-{@stub} procedure res12_fn_0B4F; begin end;
+{ 00BA:0767. Draws the roster panel the shop and the Temple show (whitepaper 5.24): a
+  "Name / AC  HP" header and one line per party member of the list ds5D96. The member Who is
+  drawn white from its Name, every other member through res12_fn_1816. Each line's armour value
+  (DrawArmourClass) and current hit points (DrawHitPoints) are drawn in one of three columns picked
+  by the value's range, and each line is cleared first. The left column is 1 while the shop is
+  open (ds49F3 = 0) and $11 otherwise. Globals: ds49F3 (read), ds5D96 (read). }
+procedure DrawPartyRoster(Who: PCharacter);
+var
+  Member: PCharacter;
+  Left: Byte;
+  Row: Byte;
+  ValueShift: Byte;
+begin
+  if ds49F3 = 0 then
+    Left := 1
+  else
+    Left := $11;
+  Row := 2;
+  DrawTextAt(Left, Row, White, 'Name');
+  DrawTextAt($21, Row, White, 'AC  HP');
+  Inc(Row, 2);
+  Member := PCharacter(ds5D96);
+  while Member <> nil do
+  begin
+    ClearWindow(Left, Row, $26, Row);
+    if Member = Who then
+      DrawTextAt(Left, Row, White, Member^.Name)
+    else
+      res12_fn_1816(Member, Left, Row, 0);
+    case Member^.ResistValue of
+      0..$32: ValueShift := 1;
+      $33..$3C: ValueShift := 2;
+      $3D..$45: ValueShift := 1;
+    else
+      ValueShift := 0;
+    end;
+    DrawArmourClass(Member, ValueShift + $20, Row);
+    case Member^.Flag11B of
+      0..9: ValueShift := 2;
+      $A..$63: ValueShift := 1;
+    else
+      ValueShift := 0;
+    end;
+    DrawHitPoints(Member, ValueShift + $24, Row, 0);
+    Inc(Row);
+    Member := Member^.Next;
+  end;
+  ClearWindow(Left, Row, $26, Row);
+end;
+{ 00BA:08EF. Draws the character's armour value (the byte +$111 ovl24's RollBeatsResistance compares a
+  d20+level against; DrawCharacterPanel shows it under the "AC" heading) as text at (Col, Row) in
+  Green: the distance from 60, Abs(Value - 60), written with a leading '-' when the value is
+  above 60 (a negative armour class). Called by DrawPartyRoster and DrawCharacterPanel. }
+procedure DrawArmourClass(Who: PCharacter; Col, Row: Byte);
+var
+  ValueText: string;
+  Unused: Byte;   { the original frame carries one byte here that the code never reads }
+begin
+  ValueText := res12_fn_1037(Abs(Who^.ResistValue - 60));
+  if Who^.ResistValue > 60 then
+    ValueText := '-' + ValueText;
+  DrawTextAt(Col, Row, Green, ValueText);
+end;
+
+{ 00BA:0973. Draws Who's current hit points (Flag11B, +$11b) as text at (Col, Row). The colour is
+  Yellow while the hit points are below the maximum (HpMax, +$32), Green at the maximum, and
+  LightMagenta when Flag is set (the caller's highlight). Called by DrawPartyRoster and
+  DrawCharacterPanel. }
+procedure DrawHitPoints(Who: PCharacter; Col, Row, Flag: Byte);
+var
+  ValueColor: Byte;
+  Unused: Byte;   { the original frame carries one byte here that the code never reads }
+begin
+  if Who^.Flag11B < Who^.HpMax then
+    ValueColor := Yellow
+  else
+    ValueColor := Green;
+  if Flag <> 0 then
+    ValueColor := LightMagenta;
+  DrawTextAt(Col, Row, ValueColor, res12_fn_1037(Who^.Flag11B));
+end;
+
+{ 00BA:09E3. Draws the character panel the combat and inventory screens show (whitepaper 5.24): it
+  clears the box ($17,1)-($26,$15), writes the name line through res12_fn_16EC, the "Hitpoints" and
+  "AC" headings with their values (DrawHitPoints, DrawArmourClass), the readied weapon's paged text
+  (res12_fn_0442 then ShowPagedText) when a weapon is readied, and finally the status name
+  (StatusNames[Status], +$10c) when the character takes no part in combat (Flag10D = 0), else
+  "(Helpless)" when res12_fn_0B73 says so. Side effects: video memory, the keyboard through
+  ShowPagedText's paging. }
+procedure DrawCharacterPanel(Who: PCharacter);
+var
+  Color: Byte;
+  Row: Byte;
+begin
+  ClearWindow($17, 1, $26, $15);
+  Row := 1;
+  res12_fn_16EC(Who, ' ', Row, 0);
+  Inc(Row);
+  DrawTextAt($17, Row + 1, Green, 'Hitpoints');
+  DrawHitPoints(Who, $21, Row + 1, 0);
+  Inc(Row, 2);
+  DrawTextAt($17, Row + 1, Green, 'AC');
+  DrawArmourClass(Who, $1A, Row + 1);
+  GlyphRow := Row + 1;
+  if Who^.SlotItems[0] <> nil then
+  begin
+    Inc(Row, 2);
+    Color := $17;   { QUIRK 00BA:0AAE: the original stores Color here and never reads it }
+    res12_fn_0442(LongInt(Who), Who^.SlotItems[0], 0, 0, 0, 0);
+    { QUIRK 00BA:0AE2: the bottom row is the three additions Row + 1 + 1 + 1 (three inc ax); the
+      folded Row + 3 compiles to add ax, 3 and does not match the original }
+    ShowPagedText($17, Row + 1, $26, Row + 1 + 1 + 1, Green, 1, Who^.SlotItems[0]^.Text);
+  end;
+  Row := GlyphRow + 1;
+  if Who^.Flag10D = 0 then
+    DrawTextAt($17, Row + 1, White, StatusNames[ShortInt(Who^.Status)])
+  else
+    if res12_fn_0B73(Who) then
+      DrawTextAt($17, Row + 1, White, '(Helpless)');
+end;
 { 00BA:0B73: retf 4: 4 bytes of parameters; 6 bytes of locals }
 {@stub} function res12_fn_0B73(Who: Pointer): Boolean; begin end;
 { 00BA:0BB8: retf 4: 4 bytes of parameters; 20 bytes of locals }

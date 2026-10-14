@@ -467,7 +467,7 @@ begin
           'G': UpdateSelectedCharacter(Key);
           'O': UpdateSelectedCharacter(Key);
         end;
-        res12_fn_0767(SelectedCharacter);
+        DrawPartyRoster(SelectedCharacter);
         TreasureLeft(MoneyLeft, ItemsLeft);
         if (MoneyLeft = 0) or (ItemsLeft = 0) then
           Done := True;
@@ -559,12 +559,12 @@ begin
       'G':
         begin
           UpdateSelectedCharacter(Key);
-          res12_fn_0767(SelectedCharacter);
+          DrawPartyRoster(SelectedCharacter);
         end;
       'O':
         begin
           UpdateSelectedCharacter(Key);
-          res12_fn_0767(SelectedCharacter);
+          DrawPartyRoster(SelectedCharacter);
         end;
     end;
   until Done;

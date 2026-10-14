@@ -174,7 +174,7 @@ end;
 
 { ovl06:053E (ShopMain). The shop's entry and main loop, called from ovl03 (the area logic) when the
   party enters a shop. It marks the shop open (ds49F3), redraws the shop screen (res12_fn_27D9,
-  res12_fn_0767 on SelectedCharacter), clears the money block PooledMoney and clears MoneyInPool, then shows the
+  DrawPartyRoster on SelectedCharacter), clears the money block PooledMoney and clears MoneyInPool, then shows the
   menu (ReadPromptChoice) with a text chosen by TreasureLeft (the Take/Share entries appear only while
   MoneyPooled says money lies in the pool) and dispatches the key: B BuyItems, V ovl19_e5, T TakeMoney,
   P PoolMoney (when MenuFlag is 0), S ShareMoney, A AppraiseGems (Appraise), E leaves, and G and O, which
@@ -199,7 +199,7 @@ var
 begin
   ds49F3 := 1;
   res12_fn_27D9;
-  res12_fn_0767(SelectedCharacter);
+  DrawPartyRoster(SelectedCharacter);
   FillChar(PooledMoney, SizeOf(PooledMoney), 0);
   Title := '';
   MoneyInPool := 0;
@@ -252,7 +252,7 @@ begin
       'A': if Appraised <> 0 then
              res12_fn_27D9;
     end;
-    res12_fn_0767(SelectedCharacter);
+    DrawPartyRoster(SelectedCharacter);
   until Done <> 0;
 end;
 

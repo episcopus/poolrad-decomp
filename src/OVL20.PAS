@@ -272,7 +272,7 @@ begin
     end;
     ShowRestTime(0);
     DrawTextAt(RestMessageColumn, RestMessageRow, RestTextColour, 'The Whole Party Is Healed');
-    if Healed then res12_fn_0767(SelectedCharacter);
+    if Healed then DrawPartyRoster(SelectedCharacter);
     DelayByGameSpeed;
     res12_fn_17E3;
     ds6DD8 := 0;

@@ -141,7 +141,7 @@ begin
 end;
 { ovl08:01F6. One combat turn of Who: clears the per-turn fields BF, B12 and B7, runs the
   RunAffectHooks hook 7 and, while Who still has an initiative, selects it (SelectedCharacter), shows it
-  (ShowCursorOn, res12_fn_0BB8, res12_fn_09E3), runs hook $F and lets the computer (QuickTurn, quick
+  (ShowCursorOn, res12_fn_0BB8, DrawCharacterPanel), runs hook $F and lets the computer (QuickTurn, quick
   combat) or the player (PlayerTurn) act; then RedrawMapCell at its position (CombatantX, CombatantY).
   An initiative of InitiativeQuickAll (the Alt-Q fight) counts as $13. }
 procedure CombatTurn(Who: PCharacter);
@@ -158,7 +158,7 @@ begin
     SelectedCharacter := Who;
     ShowCursorOn(Who, 2, 1);
     res12_fn_0BB8(Who);
-    res12_fn_09E3(Who);
+    DrawCharacterPanel(Who);
     RunAffectHooks($F, Who);
     if Who^.Combat^.Initiative > 0 then
       if Who^.Quick <> 0 then
@@ -272,7 +272,7 @@ begin
         if Done = 0 then
         begin
           ShowCursorOn(Who, 2, 1);
-          res12_fn_09E3(Who);
+          DrawCharacterPanel(Who);
         end;
       end;
     end;

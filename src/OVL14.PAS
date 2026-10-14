@@ -430,7 +430,7 @@ begin
             end;
         else
           UpdateSelectedCharacter(Key);
-          res12_fn_0767(SelectedCharacter);
+          DrawPartyRoster(SelectedCharacter);
         end;
       res12_fn_290B;
     until Redraw <> 0;
@@ -479,7 +479,7 @@ begin
             PartyFacing := 6;
         else
           UpdateSelectedCharacter(Key);
-          res12_fn_0767(SelectedCharacter);
+          DrawPartyRoster(SelectedCharacter);
           Redraw := 0;
         end;
       end;

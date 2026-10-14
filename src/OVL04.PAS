@@ -454,7 +454,7 @@ begin
   FreeMenuList(List);
   ClearRect(PromptClearLeft, ScreenTopRow, PromptClearRight, ScreenBottomRow);
   res12_fn_27D9;
-  res12_fn_0767(SelectedCharacter);
+  DrawPartyRoster(SelectedCharacter);
 end;
 
 { ovl04:0D09. The Temple menu offers Heal, View, Take, Pool, Share, Appraise and Exit (Take and Share
@@ -478,7 +478,7 @@ var
 begin
   ds49F3 := 1;
   res12_fn_27D9;
-  res12_fn_0767(SelectedCharacter);
+  DrawPartyRoster(SelectedCharacter);
   FillChar(PooledMoney, SizeOf(PooledMoney), 0);
   MoneyInPool := 0;
   Done := False;
@@ -525,7 +525,7 @@ begin
       'B', 'T': res12_fn_27D9;
       'A': if Appraised <> 0 then res12_fn_27D9;
     end;
-    res12_fn_0767(SelectedCharacter);
+    DrawPartyRoster(SelectedCharacter);
   until Done;
 end;
 

@@ -797,6 +797,10 @@ var
   { The names of the seven kinds of money, string[10] at DS:0FFA: Copper, Silver, Electrum, Gold,
     Platinum, Gems, Jewelry (the image); the Take menu lists the pool with them (ovl21:0DDF). }
   MoneyKindNames: array[0..6] of string[10];
+  { The names of the eight character status values that DrawCharacterPanel shows as the status line:
+    string[12] at DS:1047 (the image: 0 Okay, 1 Animated, 2 tempgone, 3 Running, 4 Unconscious,
+    5 Dying, 6 Dead, 7 Stoned), indexed by TCharacter.Status. }
+  StatusNames: array[0..7] of string[12];
   { The item name parts res12_fn_0442 appends to a menu line: 256 strings of at most 20
     characters (21 bytes each) at DS:10A7 (the image: entry 1 'Battle Axe' through entry 255
     'Cursed'; entry 0 overlaps the tail of the preceding status string and is never used).
