@@ -5,11 +5,11 @@ unit OVL16;
   Class', 'Pick Alignment' in the literal pool at ovl16:04F1..0525), rolls the six ability scores
   and saves a TCharacter; ModifyCharacter, TrainCharacter, DropCharacter, AddSavedCharacters and
   RemoveSelectedCharacter are the other functions. FreeCharacter frees a character and everything
-  it owns. In progress: only the icon editor ovl16_e3 (and the map entries inside it) is still a
-  stub. }
+  it owns. EditCharacterIcon is the character-icon editor of the camp's Alter menu and of the end of
+  character creation (its nested DrawIconCell and CopyPictureSlot draw and recolour the icon). }
 {$A-,O+,F+,S-,R-,G-,I-,L-}
 interface
-uses POOLVARS, RES04, RES06, RES07, RES09, RES12, OVL17, OVL19, OVL23, OVL24, OVL25, OVL28, OVL32;
+uses POOLVARS, RES04, RES06, RES07, RES09, RES12, OVL17, OVL19, OVL23, OVL24, OVL25, OVL28, OVL31, OVL32;
 procedure FreeCharacter(Who: PCharacter);
 procedure RunCharacterMenu;
 procedure CreateCharacter;
@@ -19,22 +19,7 @@ procedure TrainCharacter;
 procedure AddSavedCharacters;
 procedure RemoveSelectedCharacter(Uncounted, FreePicture: Boolean);
 procedure ChooseHeadAndBody;
-procedure DrawIconCell(CellCol, CellRow: Byte; StaticLink: Word);
-procedure CopyPictureSlot(Source, Dest, Recolor: Byte; StaticLink: Word);
-procedure ovl16_e3;
-procedure ovl16_fn_3C75;
-procedure ovl16_fn_3C7A;
-procedure ovl16_fn_3C7F;
-procedure ovl16_fn_3C84;
-procedure ovl16_fn_3C89;
-procedure ovl16_fn_3C8E;
-procedure ovl16_fn_3C93;
-procedure ovl16_fn_3D34;
-procedure ovl16_fn_3E2A;
-procedure ovl16_fn_3E2F;
-procedure ovl16_fn_3EBF;
-procedure ovl16_fn_3EC4;
-procedure ovl16_fn_3EC9;
+procedure EditCharacterIcon;
 function ConstitutionHitPointAdjustment(Who: PCharacter): ShortInt;
 function MinHitPoints(Who: PCharacter): Byte;
 function MaxHitPoints(Who: PCharacter): Byte;
@@ -331,7 +316,7 @@ end;
   dice, ten times their total shared by the classes) and the hit points (RollHitPoints, the
   constitution adjustment and the class count; HpB1 keeps the roll per class) and shows the combat
   numbers and the money. The name is asked ('Character name: ', repeated until it is not empty), the
-  head and body pictures are chosen (ChooseHeadAndBody), the icon editor runs (ovl16_e3) and
+  head and body pictures are chosen (ChooseHeadAndBody), the icon editor runs (EditCharacterIcon) and
   SaveCharacter writes the character to its file; SelectedCharacter is restored and the record freed
   (the character joins the party later, through the A function that loads it from the file).
   No parameters; reads and temporarily replaces the global SelectedCharacter. Side effects: the menus,
@@ -895,7 +880,7 @@ begin
   SavedSelection := SelectedCharacter;
   SelectedCharacter := NewCharacter;
   ChooseHeadAndBody;
-  ovl16_e3;
+  EditCharacterIcon;
   SaveCharacter(NewCharacter, '');
   SelectedCharacter := SavedSelection;
   FreeMem(NewCharacter, CharacterSize);
@@ -1540,111 +1525,436 @@ begin
   end;
   ClearPromptLine;
 end;
-{ ovl16:34DF: retf 6: 6 bytes of parameters; 0 bytes of locals }
-{ ovl16:34DF. Draws one cell of the character-icon editor: it fills the cell (FillPictureRect, 12
-  cells wide and 24 pixel rows tall, from the palette at @ds260A into DrawBuf) and draws the two
-  mirrored halves of the character's icon (DrawIcon) at columns CellCol and CellCol + 3, row CellRow.
-  On the text-only adapter (VideoAdapter 0) the fill uses colour 3 (the icon's ground) and only the
-  head pictures (index $C) are drawn; on the other adapters the fill uses colour 0 and the body
-  pictures (index $19) are drawn first. FlushPictureChanges shows the result. Called by the icon
-  editor ovl16_e3. The original reaches the routine through a nested call (push bp; push cs; call), so
-  its last parameter is a static link the body never reads. }
-procedure DrawIconCell(CellCol, CellRow: Byte; StaticLink: Word);
-const
-  IconColsPerCell = 3;    { an icon cell is 3 text columns wide }
-  CellWidthCells = $C;    { FillPictureRect width, in 8-pixel cells }
-  CellHeightRows = $18;   { FillPictureRect height, in pixel rows }
-  SecondHalfCol = 3;      { the mirrored-half icon is 3 columns right }
-  GroundColour = 3;       { the icon's ground colour on VideoAdapter 0 }
-  BodyPicIndex = $19;     { the BODY picture block of the icon }
-  HeadPicIndex = $C;      { the HEAD picture block of the icon }
-  IconSet = 0;            { the icon set DrawIcon reads the pictures from }
-begin
-  if VideoAdapter = 0 then
-    FillPictureRect(CellCol * IconColsPerCell, CellRow * CellHeightRows, CellWidthCells,
-      CellHeightRows, GroundColour, @ds260A, DrawBuf)
-  else
-  begin
-    FillPictureRect(CellCol * IconColsPerCell, CellRow * CellHeightRows, CellWidthCells,
-      CellHeightRows, 0, @ds260A, DrawBuf);
-    DrawIcon(CellCol, CellRow, IconSet, 0, BodyPicIndex);
-    DrawIcon(CellCol + SecondHalfCol, CellRow, IconSet, 1, BodyPicIndex);
+{ ovl16:382D. The character-icon editor: the Icon function of the camp's Alter menu (AlterMenu,
+  ovl15:1C59) and the last step of CreateCharacter (after ChooseHeadAndBody). No parameters; it edits
+  SelectedCharacter in place: the CHEAD and CBODY picture blocks (CHeadBlock, CBodyBlock), the icon
+  size (Figure[0]: 1 small, 2 large) and the six colour pairs (Figure[1..6], low nibble colour 1,
+  high nibble colour 2) that BuildCharacterIcon (ovl17:0482) and CopyPictureSlot turn into the
+  character's combat icon (the picture slot CombatIcon of the table ds5E5A).
+  It draws the editor window, then the icon as it was on entry (icon cell row 2, caption 'old') and
+  the working icon (cell row 4, caption 'new'), each with the caption 'ready   action' below it (the
+  two halves DrawIconCell draws, the identical and the mirrored picture). The working icon lives in
+  scratch slot WorkSlot ($C): CopyPictureSlot recolours the combat icon into it after every key.
+  A prompt line (ReadPromptChoice, no title, the word list IconEditorPrompts[State]) offers the choices of the
+  current State: StateMain picks Parts, color-1, color-2 or Size (Exit or Escape leaves);
+  StateParts picks the Head or the Weapon picture; StateColourPart picks the part whose colour
+  changes (Weapon, Body, Hair or Face, Shield, Arm, Leg); StateSize picks Small or Large; StateStep
+  then steps the chosen block with Next and Prev, or the chosen colour nibble through the 16 colours.
+  Keep saves the value in the Saved... locals and returns to Mode, the state it came from; Exit or
+  Escape restores the saved value. Leaving StateMain restores the saved (last kept) values and
+  copies the working icon back into the combat icon slot. The editor then asks AskYesNo 'Is this
+  icon ok? ' and starts again on anything but Y; on a map-window area view (AreaViewKind above 1) it
+  first reloads the ICON pictures 0 and 1 into slots 11 and 12 (the slots it used as scratch).
+  Globals: reads and changes SelectedCharacter^ (CHeadBlock, CBodyBlock, CombatIcon, Figure) and the
+  prompt lines IconEditorPrompts (the word 'xxxx' of line 3 becomes 'Hair' or 'Face'); reads AreaViewKind.
+  ovl31_e2 and ovl31_e3 bracket the editor (palette register calls when VideoAdapter is 1, purpose
+  unknown).
+  QUIRK ovl16:39F9: ReadPromptChoice is called with ExtKeys 0, so ExtKey is always 0 and the `if
+  ExtKey = 0` guard never skips the key dispatch. QUIRK ovl16:3987: the size prompt names the size
+  the player can switch to: 'Small' is shown while Figure[0] is 2 (large), 'Large' otherwise. }
+procedure EditCharacterIcon;
+type
+  TFigureColours = array[1..6] of Byte;
+  TFigureBytes = record             { the character's Figure array: the size, then the six colour pairs }
+    Size: Byte;
+    Colours: TFigureColours;
   end;
-  DrawIcon(CellCol, CellRow, IconSet, 0, HeadPicIndex);
-  DrawIcon(CellCol + SecondHalfCol, CellRow, IconSet, 1, HeadPicIndex);
-  FlushPictureChanges;
-end;
-{ ovl16:35BE. Copies one picture slot of the character-icon table DS:5E5A into another: both halves
-  (the identical half at FirstPic and the mirrored half at SecondPic) get their tile bytes (the tail
-  at +$17) and their packed pixel bytes (the buffer Pixels points at, +$13) copied from Source into
-  Dest. ByteSize (the word at +$11) gives the tile size; on the EGA adapter (VideoAdapter 1) the
-  pixel buffer holds a quarter of that. When Recolor is set the copied destination icon is recoloured
-  with the selected character's six colour pairs (Figure[1..6] through ds3CF5), exactly the
-  recolouring BuildCharacterIcon (ovl17:0482) applies. Called by the icon editor ovl16_e3 (its Source
-  is the character's CombatIcon) and by ovl16_fn_3E2F. The original reaches it through a nested call
-  (push bp; push cs; call), so its last parameter is a static link the body never reads. }
-procedure CopyPictureSlot(Source, Dest, Recolor: Byte; StaticLink: Word);
+const
+  WindowLeft = 1;                 { the editor window, drawn by DrawWindow with no title }
+  WindowTop = 1;
+  WindowRight = $26;
+  WindowBottom = $16;
+  { The editor's states: the line of IconEditorPrompts the prompt shows. }
+  StateMain = 1;                  { 'Parts color-1 color-2 Size Exit' }
+  StateParts = 2;                 { 'Head Weapon Exit' }
+  StateColourPart = 3;            { 'Weapon Body Hair Shield Arm Leg Exit' ('Face' instead of 'Hair' for color-2) }
+  StateSize = 4;                  { 'Small Keep Exit' or 'Large Keep Exit' }
+  StateStep = 5;                  { 'Next Prev Keep Exit' }
+  ColourPromptLine = 3;           { the line of IconEditorPrompts holding the word 'xxxx' ... }
+  ColourWordColumn = 13;          { ... which starts at this column ... }
+  ColourWordLength = 4;           { ... and is this long ('Hair' or 'Face') }
+  { The pictures. }
+  WorkSlot = $C;                  { scratch picture slot of ds5E5A the editor draws the working icon from }
+  ReloadedSlot = $B;              { slot 11: BuildCharacterIcon's scratch slot, reloaded with ICON picture 0 }
+  OldCellRow = 2;                 { the icon cell of the icon as it was on entry }
+  NewCellRow = 4;                 { the icon cell of the working icon }
+  EditorCellCol = 1;
+  CaptionOldCol = 8;              { 'old' and 'new', beside the cells (text columns and rows) }
+  CaptionOldRow = 6;
+  CaptionNewRow = $C;
+  HalvesCol = 3;                  { 'ready   action', under each cell }
+  HalvesOldRow = $A;
+  HalvesNewRow = $10;
+  CaptionColour = $F;
+  { The icon's fields. }
+  IconSizeSmall = 1;              { Figure[0]: the CHEAD/CBODY suffix 'S' }
+  IconSizeLarge = 2;              { Figure[0]: the suffix 'T' }
+  MaxHeadBlock = 13;              { CHeadBlock runs 0..13 }
+  MaxBodyBlock = $1F;             { CBodyBlock runs 0..31 }
+  { The Figure[1..6] colour pairs, named by the prompt word that picks them. }
+  PartBody = 1;
+  PartArm = 2;
+  PartLeg = 3;
+  PartHairFace = 4;
+  PartShield = 5;
+  PartWeapon = 6;
+  { The prompt line (ReadPromptChoice of ovl25): title, word and hotkey colours; ExtKeys 0 and
+    Animate 0. }
+  PromptTitleColour = $D;
+  PromptWordColour = $A;
+  PromptHotColour = $F;
+  { The hotkeys of the prompt words. }
+  KeyEscape = #0;                 { what ReadPromptChoice returns on Escape }
+  KeySpace = ' ';                 { the key the editor stores to mean 'nothing pressed' }
+  KeyParts = 'P';
+  KeyColour1 = '1';
+  KeyColour2 = '2';
+  KeySize = 'S';
+  KeyHead = 'H';
+  KeyWeapon = 'W';
+  KeyBody = 'B';
+  KeyHair = 'H';
+  KeyFace = 'F';
+  KeyShield = 'S';
+  KeyArm = 'A';
+  KeyLeg = 'L';
+  KeyLarge = 'L';
+  KeySmall = 'S';
+  KeyNext = 'N';
+  KeyPrev = 'P';
+  KeyKeep = 'K';
+  KeyExit = 'E';
+  KeyYes = 'Y';
 var
-  I: Byte;                          { [bp-1]: loop index over the colour map }
-  Spare: Byte;                      { [bp-2]: the original frame reserves this byte, never read }
-  MapFrom: array[0..15] of Byte;    { [bp-0x12..bp-3]: the icon's source colours (the identity map) }
-  MapTo: array[0..15] of Byte;      { [bp-0x22..bp-0x13]: the destination colour of each source colour }
-  PixelBytes: Word;                 { [bp-0x24]: the pixel-buffer size copied }
+  UnusedTop: Byte;                    { [bp-1]: the original frame reserves this byte, never read }
+  Key: Char;                          { [bp-2]: the key ReadPromptChoice returned }
+  ExtKey: Byte;                       { [bp-3]: nonzero when Key is an extended key (the editor ignores those) }
+  SavedCHeadBlock: Byte;              { [bp-4]: CHeadBlock as last kept }
+  SavedCBodyBlock: Byte;              { [bp-5]: CBodyBlock as last kept }
+  SavedSize: Byte;                    { [bp-6]: Figure[0] as last kept }
+  SavedCombatIcon: Byte;              { [bp-7]: CombatIcon while BuildCharacterIcon builds into WorkSlot }
+  State: Byte;                        { [bp-8]: the prompt line shown (StateMain..StateStep) }
+  SizeName: string[5];                { [bp-0xe..bp-9]: 'Small' or 'Large' in StateSize, else empty }
+  UnusedMid: Byte;                    { [bp-0xf]: the original frame reserves this byte, never read }
+  SavedFigure: TFigureColours;        { [bp-0x15..bp-0x10]: Figure[1..6] as last kept }
+  ColourPart: Byte;                   { [bp-0x16]: the Figure index (PartBody..PartWeapon) whose colours change }
+  EditFace: Boolean;                  { [bp-0x17]: the high nibble (color-2, Face) is edited, not the low (color-1, Hair) }
+  LowNibble: Byte;                    { [bp-0x18]: colour 1 of Figure[ColourPart] }
+  HighNibble: Byte;                   { [bp-0x19]: colour 2 of Figure[ColourPart] }
+  Mode: Byte;                         { [bp-0x1a]: the state StateStep returns to (StateParts or StateColourPart) }
+  PartKey: Char;                      { [bp-0x1b]: the picture chosen in StateParts (KeyHead or KeyWeapon) }
+
+  { ovl16:34DF (nested). Draws one cell of the editor: it fills the cell (FillPictureRect, 12 cells
+    wide and 24 pixel rows tall, from the palette at @ds260A into DrawBuf) and draws the two mirrored
+    halves of the icon (DrawIcon) at columns CellCol and CellCol + 3, row CellRow. On the text-only
+    adapter (VideoAdapter 0) the fill uses colour 3 (the icon's ground) and only the head pictures
+    (index $C, WorkSlot) are drawn; on the other adapters the fill uses colour 0 and the body pictures
+    (index $19) are drawn first. FlushPictureChanges shows the result. It reads nothing of the
+    editor's own variables. }
+  procedure DrawIconCell(CellCol, CellRow: Byte);
+  const
+    IconColsPerCell = 3;    { an icon cell is 3 text columns wide }
+    CellWidthCells = $C;    { FillPictureRect width, in 8-pixel cells }
+    CellHeightRows = $18;   { FillPictureRect height, in pixel rows }
+    SecondHalfCol = 3;      { the mirrored-half icon is 3 columns right }
+    GroundColour = 3;       { the icon's ground colour on VideoAdapter 0 }
+    BodyPicIndex = $19;     { the BODY picture block of the icon }
+    HeadPicIndex = $C;      { the HEAD picture block of the icon }
+    IconSet = 0;            { the icon set DrawIcon reads the pictures from }
+  begin
+    if VideoAdapter = 0 then
+      FillPictureRect(CellCol * IconColsPerCell, CellRow * CellHeightRows, CellWidthCells,
+        CellHeightRows, GroundColour, @ds260A, DrawBuf)
+    else
+    begin
+      FillPictureRect(CellCol * IconColsPerCell, CellRow * CellHeightRows, CellWidthCells,
+        CellHeightRows, 0, @ds260A, DrawBuf);
+      DrawIcon(CellCol, CellRow, IconSet, 0, BodyPicIndex);
+      DrawIcon(CellCol + SecondHalfCol, CellRow, IconSet, 1, BodyPicIndex);
+    end;
+    DrawIcon(CellCol, CellRow, IconSet, 0, HeadPicIndex);
+    DrawIcon(CellCol + SecondHalfCol, CellRow, IconSet, 1, HeadPicIndex);
+    FlushPictureChanges;
+  end;
+
+  { ovl16:35BE (nested). Copies one picture slot of the character-icon table DS:5E5A into another:
+    both halves (the identical half at FirstPic and the mirrored half at SecondPic) get their tile
+    bytes (the tail at +$17) and their packed pixel bytes (the buffer Pixels points at, +$13) copied
+    from Source into Dest. ByteSize (the word at +$11) gives the tile size; on the EGA adapter
+    (VideoAdapter 1) the pixel buffer holds a quarter of that. When Recolor is set the copied
+    destination icon is recoloured with the selected character's six colour pairs (Figure[1..6]
+    through ds3CF5), exactly the recolouring BuildCharacterIcon (ovl17:0482) applies. The editor
+    calls it with the character's CombatIcon as Source and WorkSlot as Dest (and the other way round
+    at the end, without recolouring). It reads nothing of the editor's own variables. }
+  procedure CopyPictureSlot(Source, Dest, Recolor: Byte);
+  var
+    I: Byte;                          { [bp-1]: loop index over the colour map }
+    Spare: Byte;                      { [bp-2]: the original frame reserves this byte, never read }
+    MapFrom: array[0..15] of Byte;    { [bp-0x12..bp-3]: the icon's source colours (the identity map) }
+    MapTo: array[0..15] of Byte;      { [bp-0x22..bp-0x13]: the destination colour of each source colour }
+    PixelBytes: Word;                 { [bp-0x24]: the pixel-buffer size copied }
+  begin
+    PixelBytes := PMemPic(ds5E5A[Dest].FirstPic)^.ByteSize;
+    if VideoAdapter = 1 then
+      PixelBytes := PixelBytes shr 1 shr 1;
+    Move(PMemPic(ds5E5A[Source].FirstPic)^.Tail, PMemPic(ds5E5A[Dest].FirstPic)^.Tail,
+      PMemPic(ds5E5A[Dest].FirstPic)^.ByteSize);
+    Move(PMemPic(ds5E5A[Source].SecondPic)^.Tail, PMemPic(ds5E5A[Dest].SecondPic)^.Tail,
+      PMemPic(ds5E5A[Dest].SecondPic)^.ByteSize);
+    Move(PMemPic(ds5E5A[Source].FirstPic)^.Pixels^, PMemPic(ds5E5A[Dest].FirstPic)^.Pixels^, PixelBytes);
+    Move(PMemPic(ds5E5A[Source].SecondPic)^.Pixels^, PMemPic(ds5E5A[Dest].SecondPic)^.Pixels^, PixelBytes);
+    if Recolor <> 0 then
+      with SelectedCharacter^ do
+      begin
+        for I := 0 to 15 do
+        begin
+          MapFrom[I] := I;
+          MapTo[I] := I;
+        end;
+        for I := 1 to 6 do
+        begin
+          MapTo[ds3CF5[I]] := Figure[I] and $0F;
+          MapTo[ds3CF5[I] + 8] := (Figure[I] and $F0) shr 4;
+        end;
+        RemapPictureColours(@MapFrom, @MapTo, 0, 0, ds5E5A[Dest].FirstPic);
+        RemapPictureColours(@MapFrom, @MapTo, 0, 0, ds5E5A[Dest].SecondPic);
+      end;
+  end;
+
 begin
-  PixelBytes := PMemPic(ds5E5A[Dest].FirstPic)^.ByteSize;
-  if VideoAdapter = 1 then
-    PixelBytes := PixelBytes shr 1 shr 1;
-  Move(PMemPic(ds5E5A[Source].FirstPic)^.Tail, PMemPic(ds5E5A[Dest].FirstPic)^.Tail,
-    PMemPic(ds5E5A[Dest].FirstPic)^.ByteSize);
-  Move(PMemPic(ds5E5A[Source].SecondPic)^.Tail, PMemPic(ds5E5A[Dest].SecondPic)^.Tail,
-    PMemPic(ds5E5A[Dest].SecondPic)^.ByteSize);
-  Move(PMemPic(ds5E5A[Source].FirstPic)^.Pixels^, PMemPic(ds5E5A[Dest].FirstPic)^.Pixels^, PixelBytes);
-  Move(PMemPic(ds5E5A[Source].SecondPic)^.Pixels^, PMemPic(ds5E5A[Dest].SecondPic)^.Pixels^, PixelBytes);
-  if Recolor <> 0 then
+  DrawWindow(WindowLeft, WindowTop, WindowRight, WindowBottom, 0, 0, '');
+  ovl31_e2;
+  repeat
+    BuildCharacterIcon(False);
     with SelectedCharacter^ do
     begin
-      for I := 0 to 15 do
-      begin
-        MapFrom[I] := I;
-        MapTo[I] := I;
-      end;
-      for I := 1 to 6 do
-      begin
-        MapTo[ds3CF5[I]] := Figure[I] and $0F;
-        MapTo[ds3CF5[I] + 8] := (Figure[I] and $F0) shr 4;
-      end;
-      RemapPictureColours(@MapFrom, @MapTo, 0, 0, ds5E5A[Dest].FirstPic);
-      RemapPictureColours(@MapFrom, @MapTo, 0, 0, ds5E5A[Dest].SecondPic);
+      State := StateMain;
+      SavedFigure := TFigureBytes(Figure).Colours;
+      SavedCombatIcon := CombatIcon;
+      CombatIcon := WorkSlot;
+      BuildCharacterIcon(False);
+      CombatIcon := SavedCombatIcon;
+      SavedCHeadBlock := CHeadBlock;
+      SavedCBodyBlock := CBodyBlock;
+      SavedSize := Figure[0];
+      CopyPictureSlot(CombatIcon, WorkSlot, 1);
+      DrawIconCell(EditorCellCol, OldCellRow);
+      DrawTextAt(CaptionOldCol, CaptionOldRow, CaptionColour, 'old');
+      DrawTextAt(HalvesCol, HalvesOldRow, CaptionColour, 'ready   action');
+      DrawTextAt(CaptionOldCol, CaptionNewRow, CaptionColour, 'new');
+      DrawTextAt(HalvesCol, HalvesNewRow, CaptionColour, 'ready   action');
+      repeat
+        DrawIconCell(EditorCellCol, NewCellRow);
+        SizeName := '';
+        if State = StateSize then
+          if Figure[0] = IconSizeLarge then
+            SizeName := 'Small'
+          else
+            SizeName := 'Large';
+        Key := ReadPromptChoice('', SizeName + IconEditorPrompts[State], PromptTitleColour,
+          PromptWordColour, PromptHotColour, 0, 0, ExtKey);
+        if ExtKey = 0 then
+          case State of
+            StateMain:
+              begin
+                Mode := StateMain;
+                case Key of
+                  KeyParts: State := StateParts;
+                  KeyColour1:
+                    begin
+                      State := StateColourPart;
+                      EditFace := False;
+                      Delete(IconEditorPrompts[ColourPromptLine], ColourWordColumn, ColourWordLength);
+                      Insert('Hair', IconEditorPrompts[ColourPromptLine], ColourWordColumn);
+                    end;
+                  KeyColour2:
+                    begin
+                      State := StateColourPart;
+                      EditFace := True;
+                      Delete(IconEditorPrompts[ColourPromptLine], ColourWordColumn, ColourWordLength);
+                      Insert('Face', IconEditorPrompts[ColourPromptLine], ColourWordColumn);
+                    end;
+                  KeySize: State := StateSize;
+                end;
+              end;
+            StateParts:
+              begin
+                Mode := StateParts;
+                if Key in [KeyEscape, KeyExit] then
+                  State := StateMain
+                else
+                begin
+                  PartKey := Key;
+                  State := StateStep;
+                end;
+              end;
+            StateColourPart:
+              begin
+                Mode := StateColourPart;
+                case Key of
+                  KeyWeapon: ColourPart := PartWeapon;
+                  KeyBody: ColourPart := PartBody;
+                  KeyHair: ColourPart := PartHairFace;
+                  KeyFace: ColourPart := PartHairFace;
+                  KeyShield: ColourPart := PartShield;
+                  KeyArm: ColourPart := PartArm;
+                  KeyLeg: ColourPart := PartLeg;
+                else
+                  ColourPart := PartBody;
+                end;
+                if Key in [KeyEscape, KeyExit] then
+                  State := StateMain
+                else
+                  State := StateStep;
+              end;
+            StateSize:
+              begin
+                case Key of
+                  KeyLarge:
+                    begin
+                      Figure[0] := IconSizeLarge;
+                      BuildCharacterIcon(False);
+                    end;
+                  KeySmall:
+                    begin
+                      Figure[0] := IconSizeSmall;
+                      BuildCharacterIcon(False);
+                    end;
+                  KeyKeep:
+                    begin
+                      SavedSize := Figure[0];
+                      State := StateMain;
+                      Key := KeySpace;
+                    end;
+                  KeyExit, KeyEscape:
+                    begin
+                      Figure[0] := SavedSize;
+                      State := StateMain;
+                      Key := KeySpace;
+                    end;
+                end;
+                BuildCharacterIcon(False);
+              end;
+            StateStep:
+              case Mode of
+                StateParts:
+                  case PartKey of
+                    KeyHead:
+                      begin
+                        case Key of
+                          KeyPrev:
+                            if CHeadBlock > 0 then
+                              Dec(CHeadBlock)
+                            else
+                              CHeadBlock := MaxHeadBlock;
+                          KeyNext:
+                            if CHeadBlock < MaxHeadBlock then
+                              Inc(CHeadBlock)
+                            else
+                              CHeadBlock := 0;
+                          KeyKeep:
+                            with SelectedCharacter^ do
+                            begin
+                              SavedCHeadBlock := CHeadBlock;
+                              State := Mode;
+                              Key := KeySpace;
+                            end;
+                          KeyExit, KeyEscape:
+                            begin
+                              CHeadBlock := SavedCHeadBlock;
+                              State := Mode;
+                              Key := KeySpace;
+                            end;
+                        end;
+                        BuildCharacterIcon(False);
+                      end;
+                    KeyWeapon:
+                      begin
+                        case Key of
+                          KeyPrev:
+                            if CBodyBlock > 0 then
+                              Dec(CBodyBlock)
+                            else
+                              CBodyBlock := MaxBodyBlock;
+                          KeyNext:
+                            if CBodyBlock < MaxBodyBlock then
+                              Inc(CBodyBlock)
+                            else
+                              CBodyBlock := 0;
+                          KeyKeep:
+                            with SelectedCharacter^ do
+                            begin
+                              SavedCBodyBlock := CBodyBlock;
+                              State := Mode;
+                              Key := KeySpace;
+                            end;
+                          KeyExit, KeyEscape:
+                            begin
+                              CBodyBlock := SavedCBodyBlock;
+                              State := Mode;
+                              Key := KeySpace;
+                            end;
+                        end;
+                        BuildCharacterIcon(False);
+                      end;
+                  end;
+                StateColourPart:
+                  begin
+                    LowNibble := Figure[ColourPart] and $F;
+                    HighNibble := (Figure[ColourPart] and $F0) shr 4;
+                    case Key of
+                      KeyNext:
+                        begin
+                          if EditFace then
+                            HighNibble := (HighNibble + 1) mod 16
+                          else
+                            LowNibble := (LowNibble + 1) mod 16;
+                          Figure[ColourPart] := (HighNibble shl 4) + LowNibble;
+                        end;
+                      KeyPrev:
+                        begin
+                          if EditFace then
+                            HighNibble := (HighNibble - 1) and $F
+                          else
+                            LowNibble := (LowNibble - 1) and $F;
+                          Figure[ColourPart] := (HighNibble shl 4) + LowNibble;
+                        end;
+                      KeyKeep:
+                        begin
+                          SavedFigure := TFigureBytes(Figure).Colours;
+                          State := Mode;
+                          Key := KeySpace;
+                        end;
+                      KeyExit, KeyEscape:
+                        begin
+                          TFigureBytes(Figure).Colours := SavedFigure;
+                          State := Mode;
+                          Key := KeySpace;
+                        end;
+                    end;
+                  end;
+              end;
+          end;
+        CopyPictureSlot(CombatIcon, WorkSlot, 1);
+      until (Mode = StateMain) and (Key in [KeyEscape, KeyExit]);
+      CHeadBlock := SavedCHeadBlock;
+      CBodyBlock := SavedCBodyBlock;
+      Figure[0] := SavedSize;
+      TFigureBytes(Figure).Colours := SavedFigure;
+      CopyPictureSlot(CombatIcon, WorkSlot, 1);
+      CopyPictureSlot(WorkSlot, CombatIcon, 0);
     end;
+    ClearPromptLine;
+    FreePictureSlot(WorkSlot);
+    if AreaViewKind > 1 then
+    begin
+      LoadPictureSlot('ICON', 0, ReloadedSlot);
+      LoadPictureSlot('ICON', 1, WorkSlot);
+    end;
+    Key := AskYesNo('Is this icon ok? ', PromptTitleColour, PromptWordColour, PromptHotColour);
+  until Key = KeyYes;
+  ovl31_e3;
 end;
-{ ovl16:382D: frame not read }
-{@stub} procedure ovl16_e3; begin end;
-{ ovl16:3C75: frame not read }
-{@stub} procedure ovl16_fn_3C75; begin end;
-{ ovl16:3C7A: frame not read }
-{@stub} procedure ovl16_fn_3C7A; begin end;
-{ ovl16:3C7F: frame not read }
-{@stub} procedure ovl16_fn_3C7F; begin end;
-{ ovl16:3C84: frame not read }
-{@stub} procedure ovl16_fn_3C84; begin end;
-{ ovl16:3C89: frame not read }
-{@stub} procedure ovl16_fn_3C89; begin end;
-{ ovl16:3C8E: frame not read }
-{@stub} procedure ovl16_fn_3C8E; begin end;
-{ ovl16:3C93: frame not read }
-{@stub} procedure ovl16_fn_3C93; begin end;
-{ ovl16:3D34: frame not read }
-{@stub} procedure ovl16_fn_3D34; begin end;
-{ ovl16:3E2A: frame not read }
-{@stub} procedure ovl16_fn_3E2A; begin end;
-{ ovl16:3E2F: frame not read }
-{@stub} procedure ovl16_fn_3E2F; begin end;
-{ ovl16:3EBF: frame not read }
-{@stub} procedure ovl16_fn_3EBF; begin end;
-{ ovl16:3EC4: frame not read }
-{@stub} procedure ovl16_fn_3EC4; begin end;
-{ ovl16:3EC9: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl16_fn_3EC9; begin end;
 { ovl16:3F31. The constitution hit-point adjustment shared by the hit-point floor MinHitPoints and
   the ceiling MaxHitPoints of ModifyCharacter (ovl16:209F). It sums ConstitutionHitPointTable[Constitution] over the
   eight classes the character has a level in (ClassLevels[I], +$96, signed, above 0), then adds the

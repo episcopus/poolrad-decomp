@@ -596,6 +596,12 @@ var
     ReadPromptChoice under the title 'Choose a function '. }
   ds05F0: string[23];
   ds0619: array[0..10] of TFunctionSlot;  { the training-hall function menu (see TFunctionSlot) }
+  ds07E7: Byte;                   { the byte between the function menu and the icon editor prompts (never read) }
+  { The five prompt lines of the character-icon editor EditCharacterIcon (ovl16:382D), 1-based, indexed by
+    its State: the image holds 'Parts color-1 color-2 Size Exit', 'Head Weapon Exit',
+    'Weapon Body xxxx Shield Arm Leg Exit', ' Keep Exit' and 'Next Prev Keep Exit' (DS:07E8, stride 41).
+    The editor rewrites the 'xxxx' of line 3 (column 13) to 'Hair' or 'Face'. }
+  IconEditorPrompts: array[1..5] of string[40];
   { The hit dice of the eight classes 0..7, rolled by ovl16:4235: ClassHitDiceCount[Class] dice of
     ClassHitDieSides[Class] sides. The image holds 1,1,1,1,2,1,1,2 (cleric, druid, fighter, paladin,
     ranger, magic-user, thief, monk; two dice for the ranger and the monk) and 8,8,10,10,8,4,6,4

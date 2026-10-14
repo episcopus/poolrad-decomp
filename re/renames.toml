@@ -5801,3 +5801,17 @@ kind = "routine"
 why = "ovl16:056C allocates a TCharacter (GetMem 285, FillChar) and walks the menus 'Pick Race', 'Pick Gender', 'Pick Class', 'Pick Alignment' (literal pool 04F1..0525), rolls the six abilities (RollDice(3,6) best of six, age and race adjustments), asks 'Keep this character? ' and 'Character name: ', then SaveCharacter and FreeMem; RunCharacterMenu dispatches it on the C key"
 date = "2026-10-14"
 
+[[rename]]
+old = "ds07E8"
+new = "IconEditorPrompts"
+kind = "global"
+why = "ovl16:39F9 passes SizeName + DS:07E8[State] (State 1..5) as the ReadPromptChoice prompt of the icon editor and ovl16:3A31..3A8C Delete and Insert the word at column 13 of entry 3 (DS:083A); the image holds the five prompt lines 'Parts color-1 color-2 Size Exit', 'Head Weapon Exit', 'Weapon Body xxxx Shield Arm Leg Exit', ' Keep Exit' and 'Next Prev Keep Exit' at DS:07E8, stride 41"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl16_e3"
+new = "EditCharacterIcon"
+kind = "routine"
+why = "ovl16:382D is the character-icon editor: AlterMenu (ovl15:1C59) runs it for the Icon key I (then RedrawView) and CreateCharacter runs it after ChooseHeadAndBody; it draws the 'old' and 'new' icon cells, edits CHeadBlock, CBodyBlock, the icon size and the six Figure colour pairs through the prompt lines 'Parts color-1 color-2 Size Exit' ... and asks 'Is this icon ok? '"
+date = "2026-10-14"
+
