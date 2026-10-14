@@ -3406,3 +3406,10 @@ kind = "routine"
 why = "applies the readied weapon (SlotItems[0], +CC) to the character's HitAdjust, WeaponAttacks, WeaponDamage and WeaponDamageBonus from the RaceRow row of the weapon's item kind, plus the dexterity (1168) and strength (1282/1325) adjustments and the slot-item pluses; called by res12_fn_0BB8 (make match UNIT=res12, 00BA:0000)"
 date = "2026-10-13"
 
+[[rename]]
+old = "res12_fn_01FB"
+new = "SetArmourMovement"
+kind = "routine"
+why = "sets Who's Movement (+11C) from a readied armour item: when RaceRow[item type][0] is 2 (an armour) the item's Weight (+37) picks base movement/9/6 and a magic plus adds 3; called by res12_fn_0BB8 for every readied item (make match UNIT=res12, 00BA:01FB)"
+date = "2026-10-13"
+

@@ -249,7 +249,9 @@ type
     { +$6D..+$71: five values ComputeSavingThrows sets to 20 and lowers to the best entry of
       SaveTable over the character's classes (ovl23:026D..030D): the five saving throws [I]. }
     SavingThrows: array[0..4] of Byte;
-    Pad72: Byte;
+    { +$72: the character's base movement; res12_fn_0BB8 copies it into Movement (+$11C) and
+      SetArmourMovement restores it for light armour. }
+    BaseMovement: Byte;
     { +$73: raised to the highest class level by RecalcClassStats (ovl23:0066), never lowered
       there; signed. }
     HighestLevel: ShortInt;

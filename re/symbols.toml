@@ -16440,12 +16440,12 @@ id = "00BA:01FB"
 unit = "res12"
 addr = "00BA:01FB"
 size = 135
-name = "res12_fn_01FB"
-signature = ""
+name = "SetArmourMovement"
+signature = "procedure SetArmourMovement(Who: PCharacter; Item: PItem)"
 c_name = "res12_fn_01FB"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_01FB (sets Who's Movement (+11C) from a readied armour item: when RaceRow[item type][0] is 2 (an armour) the item's Weight (+37) picks base movement/9/6 and a magic plus adds 3; called by res12_fn_0BB8 for every readied item (make match UNIT=res12, 00BA:01FB)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

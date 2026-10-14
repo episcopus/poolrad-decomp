@@ -9,8 +9,7 @@ unit RES12;
 interface
 uses POOLVARS, RES06;
 procedure ApplyWeaponBonuses(Who: PCharacter);
-procedure res12_fn_0188;
-procedure res12_fn_01FB;
+procedure SetArmourMovement(Who: PCharacter; Item: PItem);
 procedure res12_fn_0282;
 procedure res12_fn_03A0;
 procedure res12_fn_0442(Value: LongInt; P: Pointer; A, B, C, D: Byte);
@@ -92,6 +91,16 @@ const
   BonusKindRangeHigh = $2D;
   BonusKindLow = $25;
   BonusKindLower = $24;
+  { Item kind (RaceRow[item kind][0]) of an armour, and the movement it allows: up to
+    LightArmourWeight the character keeps its BaseMovement, up to HeavyArmourWeight it is
+    MediumArmourMove, and above it HeavyArmourMove. A magic armour adds MagicArmourMoveBonus. }
+  ArmourItemKind = 2;
+  LightArmourWeight = $96;
+  MediumArmourWeight = $97;
+  HeavyArmourWeight = $18F;
+  MediumArmourMove = 9;
+  HeavyArmourMove = 6;
+  MagicArmourMoveBonus = 3;
 
 { 00BA:0000. Applies the readied weapon to Who's attack values; res12_fn_0BB8 calls it after it
   has copied the character's base values. With no readied weapon (SlotItems[0], +$CC) it does
@@ -139,10 +148,28 @@ begin
   Who^.WeaponDamage := RaceRow[ItemType][RaceRowWeaponDieSize];
 end;
 
-{ 00BA:0188: retf 4: 4 bytes of parameters; 0 bytes of locals }
-{@stub} procedure res12_fn_0188; begin end;
-{ 00BA:01FB: retf 8: 8 bytes of parameters; 0 bytes of locals }
-{@stub} procedure res12_fn_01FB; begin end;
+{ 00BA:01FB. Sets Who's movement (Movement, +$11C) from a readied armour; res12_fn_0BB8 calls it
+  for every readied item. It does nothing unless the item's kind (RaceRow[item type][0]) is 2, an
+  armour. Then the armour's weight (+$37) picks the movement: at most $96 keeps the character's
+  base movement (BaseMovement, +$72), $97..$18F gives 9 and anything else 6. A magic armour
+  (Plus, +$32, not 0) adds 3 while the movement is at most 9.
+  Globals: RaceRow. }
+procedure SetArmourMovement(Who: PCharacter; Item: PItem);
+begin
+  if RaceRow[Item^.ItemType][0] = ArmourItemKind then
+  begin
+    case Item^.Weight of
+      0..LightArmourWeight: Who^.Movement := Who^.BaseMovement;
+      MediumArmourWeight..HeavyArmourWeight: Who^.Movement := MediumArmourMove;
+    else
+      Who^.Movement := HeavyArmourMove;
+    end;
+    if Item^.Plus <> 0 then
+      if Who^.Movement <= MediumArmourMove then
+        Who^.Movement := Who^.Movement + MagicArmourMoveBonus;
+  end;
+end;
+
 { 00BA:0282: retf 16: 16 bytes of parameters; 2 bytes of locals }
 {@stub} procedure res12_fn_0282; begin end;
 { 00BA:03A0: retf 4: 4 bytes of parameters; 4 bytes of locals }
