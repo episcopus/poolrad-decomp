@@ -3643,3 +3643,11 @@ new = "CheckPartyClassCommand"
 kind = "routine"
 why = "dispatcher ovl03:2F2D calls it for SkippedOpcode $22 (ECL command 34); it sets operand 1 to 1 when a party member's ClassMask (TCharacter +$2F) is 4 or 10, and writes 0 to operand 2"
 date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_16C9"
+new = "RollRangeCommand"
+kind = "routine"
+why = "dispatcher ovl03:2F2D calls it for SkippedOpcode $23 (ECL command 35); it rolls two d6 against two ranges made from operands 1 to 4 and writes the outcome 0 to 2 to script address $6DCB (word 715 of ds49D6)"
+date = "2026-10-13"
+

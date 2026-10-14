@@ -34,8 +34,7 @@ procedure ClearEncounterCommand;
 procedure ComputePartyValueCommand;
 procedure ScanPartyCommand;
 procedure CheckPartyClassCommand;
-procedure ovl03_fn_16C9;
-procedure ovl03_fn_1758;
+procedure RollRangeCommand;
 procedure ovl03_fn_179B;
 procedure ovl03_fn_18F8;
 procedure ovl03_fn_19B0;
@@ -69,7 +68,7 @@ procedure ovl03_e1;
 procedure ovl03_fn_3379;
 procedure ovl03_fn_34AB;
 implementation
-uses OVL17, OVL25, OVL26, OVL28, OVL29, OVL32, RES06;
+uses OVL17, OVL24, OVL25, OVL26, OVL28, OVL29, OVL32, RES06;
 
 const
   { The operand types from this one up are strings: $80 a packed string, $81 the address of a
@@ -1059,10 +1058,45 @@ begin
   WriteVmWord(Target, Found);
   WriteVmWord(SecondTarget, Second);
 end;
-{ ovl03:16C9: frame not read }
-{@stub} procedure ovl03_fn_16C9; begin end;
-{ ovl03:1758: frame not read }
-{@stub} procedure ovl03_fn_1758; begin end;
+{ ovl03:16C9. ECL command 35 (dispatcher ovl03:2F2D, SkippedOpcode $23): rolls two six-sided dice and
+  writes an outcome, 0 to 2, to the script address $6DCB (word 715 of ds49D6, which RunCombat clears
+  every round, VarCombatWord715 in ovl08). Operands 1 to 4 are four values. Width is operand 4 + 2 -
+  operand 1 and Height is operand 2 + 2 - operand 3 (signed bytes). The first roll must not exceed
+  Width and the second must be above Height for outcome 1; a second roll at most Height gives outcome
+  2 whatever the first roll did; otherwise the outcome is 0. Purpose unknown: what the script does with
+  the outcome. QUIRK ovl03:175F: the value 3 is set when the first roll fits and the second is at most
+  Height, but the test that follows overwrites it with 2 (ovl03:1769), so 3 is never written. }
+procedure RollRangeCommand;
+const
+  RollResultAddr = $6DCB;
+var
+  RollA: Byte;                  { the first d6 }
+  RollB: Byte;                  { the second d6 }
+  I: Byte;
+  Kind: Byte;                   { the outcome written to RollResultAddr }
+  Values: array[1..4] of Byte;  { operands 1 to 4 }
+  Width: ShortInt;              { operand 4 + 2 - operand 1 }
+  Height: ShortInt;             { operand 2 + 2 - operand 3 }
+begin
+  DecodeOperands(4);
+  Kind := 0;
+  for I := 1 to 4 do
+    Values[I] := OperandValue(I);
+  Width := Values[4] + 2 - Values[1];
+  Height := Values[2] + 2 - Values[3];
+  RollA := RollDice(1, 6);
+  RollB := RollDice(1, 6);
+  if RollA <= Width then
+  begin
+    if RollB <= Height then
+      Kind := 3
+    else
+      Kind := 1;
+  end;
+  if RollB <= Height then
+    Kind := 2;
+  WriteVmWord(RollResultAddr, Kind);
+end;
 { ovl03:179B: retf 0: 0 bytes of parameters; 10 bytes of locals }
 {@stub} procedure ovl03_fn_179B; begin end;
 { ovl03:18F8: retf 0: 0 bytes of parameters; 6 bytes of locals }

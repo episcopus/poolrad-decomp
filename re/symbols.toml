@@ -510,27 +510,14 @@ evidence = ["prologue"]
 id = "ovl03:16C9"
 unit = "ovl03"
 addr = "ovl03:16C9"
-size = 143
-name = "ovl03_fn_16C9"
+size = 198
+name = "RollRangeCommand"
 signature = ""
 c_name = "ovl03_fn_16C9"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_16C9 (dispatcher ovl03:2F2D calls it for SkippedOpcode $23 (ECL command 35); it rolls two d6 against two ranges made from operands 1 to 4 and writes the outcome 0 to 2 to script address $6DCB (word 715 of ds49D6)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl03:1758"
-unit = "ovl03"
-addr = "ovl03:1758"
-size = 67
-name = "ovl03_fn_1758"
-signature = ""
-c_name = "ovl03_fn_1758"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl03:179B"
