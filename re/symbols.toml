@@ -3472,27 +3472,14 @@ evidence = ["prologue"]
 id = "ovl12:0A65"
 unit = "ovl12"
 addr = "ovl12:0A65"
-size = 128
-name = "ovl12_e26"
-signature = ""
+size = 172
+name = "CoughStopsCasting"
+signature = "procedure CoughStopsCasting(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e26"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_26"
+notes = "renamed from ovl12_e26 (ovl12:0A65 clears the combat byte Pad2 (+$2) and CanCast (+$1) of the character (the stop-casting pair of ShowSilenceAndStopCasting, ovl12:070F), and shows is coughing (colour 10) when Pad2 was set; the message text (literal pool 0A59) and the Pad2 test are the evidence); auto:entry_26"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:0AE5"
-unit = "ovl12"
-addr = "ovl12:0AE5"
-size = 54
-name = "ovl12_fn_0AE5"
-signature = ""
-c_name = "ovl12_fn_0AE5"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:0B1B"

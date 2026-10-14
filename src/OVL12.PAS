@@ -32,7 +32,7 @@ procedure LowerAttackRollByFour(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure BoostAttackVsEightListed(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ImageAbsorbsHit(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ReduceDamageByQuarter(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e26;
+procedure CoughStopsCasting(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_fn_0AE5;
 procedure ovl12_e27;
 procedure ovl12_fn_0B25;
@@ -213,6 +213,10 @@ const
   AffectUnknown18 = $18;        { purpose unknown: the affect SelectedCharacter must have for ds681E to stay 0 (ovl12:0918) }
   AttackPenalty = 4;            { what ovl12:0918 takes off AttackRoll }
   AffectImages = $1C;           { the images affect: runs on the damage hook (kind 6, ovl24:02FA); Data counts the images [I] }
+  CoughResistLimit = 52;        { ovl12:0A65: TCharacter.Pad112[$112] above this steps down by CoughResistStep,
+                                  else it is set to CoughResistReset }
+  CoughResistReset = 50;
+  CoughResistStep = 2;
   MinimumResistance = $39;      { ovl12:064E raises ResistValue (+$111) to at least this (57) }
   ClearDamageValue = $0F;       { ovl12:064E clears DamageAmount when ds681B is this }
   GivenItemType = $14;          { TMenuLine.ItemType of the item the affect gives (ovl12:07E0) }
@@ -672,8 +676,28 @@ procedure ReduceDamageByQuarter(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   DamageAmount := DamageAmount - DamageAmount div 4;
 end;
-{ ovl12:0A65: frame not read }
-{@stub} procedure ovl12_e26; begin end;
+{ ovl12:0A65. Affect handler (the AffectHandlers shape: Who, Affect and Mode; only Who is read). It stops Who
+  casting: when Who's combat byte Pad2 (TCombatant +$2, not named yet) is set, Who shows "is coughing" in colour
+  10 (res12_fn_16EC), then Pad2 and CanCast (+$1, zero hides Cast in the combat menu, ovl08:0747) are cleared and
+  Who is redrawn (res12_fn_0BB8). Then TCharacter.Pad112[$112] (+$112, not named yet) steps down by
+  CoughResistStep while above CoughResistLimit and is set to CoughResistReset otherwise, and that value becomes
+  ResistValue (+$111). When Who is the selected character, res12_fn_09E3 runs (not named yet). Which affect runs
+  it is not known yet [?]; the message suggests a gas or smoke affect [I]. }
+procedure CoughStopsCasting(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  if Who^.Combat^.Pad2 <> 0 then
+    res12_fn_16EC(Who, 'is coughing', $A, 1);
+  Who^.Combat^.Pad2 := 0;
+  Who^.Combat^.CanCast := 0;
+  res12_fn_0BB8(Who);
+  if Who^.Pad112[$112] > CoughResistLimit then
+    Dec(Who^.Pad112[$112], CoughResistStep)
+  else
+    Who^.Pad112[$112] := CoughResistReset;
+  Who^.ResistValue := Who^.Pad112[$112];
+  if Who = SelectedCharacter then
+    res12_fn_09E3(Who);
+end;
 { ovl12:0AE5: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_fn_0AE5; begin end;
 { ovl12:0B1B: frame not read }
