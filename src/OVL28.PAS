@@ -114,7 +114,7 @@ end;
   Note ovl28:00D9: FreeSpriteList is passed @List^ (les/push es/push di), the same pointer as List.
   Parameters: Name (the file base name), Bank (the DAX block), Mode (passed on to the allocator and
   the decoder; bit 0 enables res07_fn_1E5C), List (the sprite list to fill). Side effects: the heap,
-  ds6B0A, ds6B1C. Callers: ovl03:0856, ShowEncounterPicture, ovl18:0006, res12_fn_27D9 (packet). }
+  ds6B0A, ds6B1C. Callers: ovl03:0856, ShowEncounterPicture, ovl18:0006, RedrawView (packet). }
 procedure LoadSpriteList(Name: String8; Bank: Byte; Mode: Byte; List: PSpriteList);
 var
   Size: Word;
@@ -236,7 +236,7 @@ end;
   bank that is asked for (not NoBank) and not already loaded (DS:6B00, DS:6B05) it loads the picture
   through LoadPicture from the file HEAD<number> or BODY<number> into DS:6B01 or DS:6B06, then
   records the loaded number. Calls FlushKeyboard at the end, which does nothing (QUIRK 0899:010A).
-  Called by ShowHeadBody, ShowHeadBodyWindow and res12_fn_27D9. }
+  Called by ShowHeadBody, ShowHeadBodyWindow and RedrawView. }
 procedure LoadHeadBodySprites(HeadBank, BodyBank: Byte);
 var
   Num: string[1];                 { Str(TileSet): the picture number in the file name }
@@ -260,7 +260,7 @@ end;
   arms draw through the staging buffer (DrawHeadSprite and DrawBodySprite pass Direct 0 to
   DrawSprite): when WithBody is not 0 it draws the HEAD sprite DS:6B01 and the BODY sprite DS:6B06
   (5 rows lower), otherwise only the HEAD sprite. WithBody is not a Direct flag; every path goes
-  through ShowPicture. Called by ShowHeadBody, res12_fn_27D9 and ShowHeadBodyWindow. }
+  through ShowPicture. Called by ShowHeadBody, RedrawView and ShowHeadBodyWindow. }
 procedure ShowHeadBodySprites(Col, Row: Byte; WithBody: Byte);
 begin
   if WithBody <> 0 then

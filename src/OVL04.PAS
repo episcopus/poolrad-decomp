@@ -453,7 +453,7 @@ begin
   until Done;
   FreeMenuList(List);
   ClearRect(PromptClearLeft, ScreenTopRow, PromptClearRight, ScreenBottomRow);
-  res12_fn_27D9;
+  RedrawView;
   DrawPartyRoster(SelectedCharacter);
 end;
 
@@ -477,7 +477,7 @@ var
   Appraised: Byte;        { set by Appraise (AppraiseGems); nonzero redraws the view }
 begin
   ds49F3 := 1;
-  res12_fn_27D9;
+  RedrawView;
   DrawPartyRoster(SelectedCharacter);
   FillChar(PooledMoney, SizeOf(PooledMoney), 0);
   MoneyInPool := 0;
@@ -522,8 +522,8 @@ begin
       'O': UpdateSelectedCharacter(Key);
     end;
     case Key of
-      'B', 'T': res12_fn_27D9;
-      'A': if Appraised <> 0 then res12_fn_27D9;
+      'B', 'T': RedrawView;
+      'A': if Appraised <> 0 then RedrawView;
     end;
     DrawPartyRoster(SelectedCharacter);
   until Done;

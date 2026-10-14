@@ -205,14 +205,14 @@ begin
           begin
             ovl19_e5(Done);
             ovl13_e6(Who);
-            if Done = 0 then res12_fn_2B88;
+            if Done = 0 then DrawCombatScreen;
           end;
           'A': ovl13_e17(Who, $FF, 1, 0, Done, Aim);
           'U':
           begin
             ovl19_e6(Done);
             ovl13_e6(Who);
-            if Done = 0 then res12_fn_2B88;
+            if Done = 0 then DrawCombatScreen;
           end;
           'C': ovl13_e15(0, 0, Done);
           'T':

@@ -7,7 +7,7 @@ unit RES12;
   Many routines are still stubs. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
-uses Crt, POOLVARS, RES03, RES06, RES07, RES09, OVL30, OVL31;
+uses Crt, POOLVARS, RES03, RES06, RES07, RES09, OVL25, OVL26, OVL27, OVL28, OVL30, OVL31;
 type
   { The readied-item bonus accumulator AddReadiedItemBonus fills for RecalcCombatValues: the four signed
     bytes it combines into the character's +$112 value (with the flag byte the second var
@@ -64,12 +64,12 @@ function DistanceToTarget(Who, Target: Pointer): Byte;
 function EndCombatTurn(Who: Pointer): Byte;
 function GuardTurn(Who: Pointer): Byte;
 function SpellCasterLevel(Spell: Byte): Byte;
-procedure res12_fn_272A;
-procedure res12_fn_27D9;
-procedure res12_fn_290B;
-procedure res12_fn_2B5E;
-procedure res12_fn_2B88;
-procedure res12_fn_2C48;
+procedure DrawViewWindows(WithInner: Byte);
+procedure RedrawView;
+procedure DrawLocationLine;
+procedure DrawWildernessScreen;
+procedure DrawCombatScreen;
+procedure SelectPartyMember(Title: String40; WithExit: Byte; var Selected: PCharacter);
 function res12_fn_2E03(Who: Pointer): Boolean;
 function res12_fn_2E46(Who: Pointer): Boolean;
 function res12_fn_2E8B(Who: Pointer; var W: Pointer): Byte;
@@ -176,6 +176,39 @@ const
     (72 plus its count at entry 0), times the 3 bytes of a TSortRec. 255B saves and restores exactly
     this many records of ds6718 around its scan. }
   SavedScanBytes = $D8;
+  { The game clock is a seven-digit mixed-radix count in the game variables (VarsAt4900^[$49C6+Digit];
+    ovl20_e1 advances it and ShowRestTime reads the same digits). The location line (00BA:290B) reads
+    digit 1 and 2 (the minute ones and tens) and digit 3 (the hours) to show the time as hours:minutes. }
+  ClockMinutes = $49C7;
+  ClockTenMinutes = $49C8;
+  ClockHours = $49C9;
+  { The movement mode word of the second game word block (ds49D6^[714]; HandleWildernessKeys toggles
+    bit 0 with the S (search) key and sets bit 1 with L). The location line (00BA:290B) appends
+    ' search' while bit 0 is set. }
+  VarTravelMode = 714;
+  { The ds49F3 view modes RedrawView dispatches on (the setters are in the other units): 1 is set
+    by the Temple (ovl04:0D0F) and the shop, 2 by the camp (MakeCamp, ovl15:1E6F), 3 and 4 select
+    the area view (ShowAreaView; whitepaper 5.2.1) and 6 by the end of battle (EndBattle,
+    ovl05:1527). 0 is the plain full-window layout the shop leaves. }
+  ViewModePlain = 0;
+  ViewModePortrait = 1;
+  ViewModeCamp = 2;
+  ViewModeMap = 3;
+  ViewModeView = 4;
+  ViewModeLoot = 6;
+  { The width of one area map page: DrawLocationLine adds this many columns of the 44-wide map grid
+    per map page for AreaViewKind 3 (one page, added once) and 4 (two pages, added twice). }
+  MapPageWidth = $D;
+  { The keys SelectPartyMember's loop ends on: Enter and Escape return immediately and E exits the
+    screen (the prompt's Exit hotkey). }
+  KeyEnter = #13;
+  KeyEscape = #27;
+  { DrawCombatScreen: MoveCombatCursor's margin ($FF passes its view-scroll test) and direction
+    (index 8 of DirStepX/DirStepY is (0,0), so the cursor stays on its cell), and the view origin's
+    centre cell (the 7x7 view's middle, three cells from the origin). }
+  CursorMargin = $FF;
+  CursorNoStep = 8;
+  ViewCentreCell = 3;
 
 { 00BA:0000. Applies the readied weapon to Who's attack values; RecalcCombatValues calls it after it
   has copied the character's base values. With no readied weapon (SlotItems[0], +$CC) it does
@@ -1378,18 +1411,24 @@ begin
   if (ds6DBF <> 0) and (SpellTable[Spell].SpellClass <> 2) then
     SpellCasterLevel := 6;
 end;
-{ 00BA:272A: retf 2: 2 bytes of parameters; 2 bytes of locals }
-{@stub} procedure res12_fn_272A; begin end;
-{ 00BA:27D9: retf 0: 0 bytes of parameters; 4 bytes of locals }
-{@stub} procedure res12_fn_27D9; begin end;
-{ 00BA:290B: retf 0: 0 bytes of parameters; 562 bytes of locals }
-{@stub} procedure res12_fn_290B; begin end;
-{ 00BA:2B5E: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure res12_fn_2B5E; begin end;
-{ 00BA:2B88: retf 0: 0 bytes of parameters; 2 bytes of locals }
-{@stub} procedure res12_fn_2B88; begin end;
-{ 00BA:2C48: retf 10: 10 bytes of parameters; 602 bytes of locals }
-{@stub} procedure res12_fn_2C48; begin end;
+{ 00BA:272A. Draws the window frames of a view screen (one DrawWindow each): the full screen
+  (1,1)-(38,22), the bottom text window (1,17)-(38,22) and the upper-left window (1,1)-(15,15);
+  when WithInner is set it also draws the inner window (3,3)-(13,13) that frames the character
+  portrait or the 3D view. RedrawView calls it before drawing the portrait, the sprites or the
+  area view. Side effect: the screen (DrawWindow clears and frames each window). }
+procedure DrawViewWindows(WithInner: Byte);
+begin
+  DrawWindow(1, 1, $26, $16, 0, $F, '');
+  DrawWindow(1, $11, $26, $16, 0, $F, '');
+  DrawWindow(1, 1, $F, $F, 0, $F, '');
+  if WithInner <> 0 then
+    DrawWindow(3, 3, $D, $D, 0, $F, '');
+end;
+{@stub} procedure RedrawView; begin end;
+{@stub} procedure DrawLocationLine; begin end;
+{@stub} procedure DrawWildernessScreen; begin end;
+{@stub} procedure DrawCombatScreen; begin end;
+{@stub} procedure SelectPartyMember(Title: String40; WithExit: Byte; var Selected: PCharacter); begin end;
 { 00BA:2E03: retf 4: 4 bytes of parameters; 2 bytes of locals }
 {@stub} function res12_fn_2E03(Who: Pointer): Boolean; begin end;
 { 00BA:2E46: retf 4: 4 bytes of parameters; 2 bytes of locals }

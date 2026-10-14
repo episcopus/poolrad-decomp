@@ -971,7 +971,7 @@ end;
   the lists ds6DBB and ds5D9A, game word Var2BattleWord), caps Var2Morale at 100, creates the map,
   discards waiting keys, prepares combatants, discards waiting keys again, places them, and discards
   waiting keys once more. It allocates ds6E36, centres the view on the first party character, calls
-  res12_fn_2B88, runs HookBattleStart for each character, calls ovl13_e19 and enters ViewModeCombat. }
+  DrawCombatScreen, runs HookBattleStart for each character, calls ovl13_e19 and enters ViewModeCombat. }
 procedure StartBattle;
 var
   Unused: array[0..9] of Byte;  { QUIRK ovl10:1E34: ten bytes of the frame nothing uses }
@@ -1003,7 +1003,7 @@ begin
   AllocatePicture($18, 3, 4, 1, ds6E36);
   CombatMap^.ViewX := CombatantX(PCharacter(ds5D96)) - 3;
   CombatMap^.ViewY := CombatantY(PCharacter(ds5D96)) - 3;
-  res12_fn_2B88;
+  DrawCombatScreen;
   Who := PCharacter(ds5D96);
   while Who <> nil do
   begin

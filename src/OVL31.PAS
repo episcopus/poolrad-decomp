@@ -89,7 +89,7 @@ end;
 
 { ovl31:00E3. Purpose unknown: when VideoAdapter is 1 it calls SetPaletteRegister(0, 8) and then
   SetPaletteRegister(8, 0); ovl31_e3 makes the calls (0, 0) and (8, 8). Called by ovl16_e3, ovl19 and
-  res12_fn_2B88. }
+  DrawCombatScreen. }
 procedure ovl31_e2;
 begin
   case VideoAdapter of

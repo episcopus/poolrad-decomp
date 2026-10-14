@@ -395,7 +395,7 @@ end;
 { ovl05:0C06. Lets the player take items from the loot list ds6810 until another key than Take or
   Enter is pressed or the list is empty: the chosen item goes to SelectedCharacter
   (AddInventoryItem) and, unless the character is overloaded, is unlinked from the loot and freed.
-  Redraws the screen (res12_fn_27D9) at the end. }
+  Redraws the screen (RedrawView) at the end. }
 procedure TakeLootItems;
 var
   Chosen: PMenuLine;
@@ -436,7 +436,7 @@ begin
       end;
     end;
   until Done;
-  res12_fn_27D9;
+  RedrawView;
 end;
 
 { ovl05:0D38. The Take command of the treasure menu. MoneyLeft and ItemsLeft are TreasureLeft's two
@@ -460,7 +460,7 @@ begin
           'M':
             begin
               TakeMoney;
-              res12_fn_27D9;
+              RedrawView;
             end;
           'I': TakeLootItems;
           'E', KeyNone: Done := True;
@@ -476,7 +476,7 @@ begin
     else
     begin
       TakeMoney;
-      res12_fn_27D9;
+      RedrawView;
     end;
   end
   else
@@ -507,7 +507,7 @@ var
 begin
   Title := '';
   Done := False;
-  res12_fn_27D9;
+  RedrawView;
   MoneyLeft := 0;
   repeat
     TreasureLeft(MoneyLeft, ItemsLeft);

@@ -107,3 +107,21 @@ tags = ["frame", "locals", "array", "move", "codegen", "sortrec"]
 title = "res12:255B's sub sp,0x300 shows its ds6718 save buffer is a full 255-entry array, not 72"
 lesson = "res12:255B saves and restores the ovl30 scan table with Move(ds6718[1], Saved, $D8) (216 bytes, 72 TSortRecs) and its frame is sub sp, 0x300, with the buffer based at [bp-0x2fe] and one Byte index at [bp-0x2ff]. Declaring the buffer as array[1..72] of TSortRec (the shape ovl24's RunAffectHook uses) gives sub sp, 0xda with the buffer at [bp-0xd9]: too small. array[1..255] of TSortRec (765 bytes, the 767-byte frame padded to 768) reproduces sub sp, 0x300, the base [bp-0x2fe] and the index [bp-0x2ff] exactly, so the source declares a buffer for the whole table and copies only the 72 records ScanTargets can fill. Locals keep declaration order with the FIRST declared nearest bp (the index, declared second, sits just below the buffer). Probes: tools/re/tp_idioms/res12/PRB30.PAS (72-entry buffer) and PRB31.PAS (255-entry buffer)."
 evidence = ["src/RES12.PAS#DistanceToTarget", "re/symbols.toml#00BA:255B", "tools/re/tp_idioms/res12/PRB30.PAS", "tools/re/tp_idioms/res12/PRB31.PAS"]
+
+[[lesson]]
+id = "res12-char-case-loads-ax-vs-if-compares-memory"
+confidence = "V"
+units = ["res12", "*"]
+tags = ["case", "char", "codegen", "if", "selector"]
+title = "A case on a Char loads the selector into AL once; the same tests as if/else compare memory"
+lesson = "case Key of 'O': ...; 'G': ...; end (Key a Char local) emits mov al,[Key] once and then cmp al,'O' / cmp al,'G' (jne to the next arm). Writing the same dispatch as if Key = 'O' then ... else if Key = 'G' then ... emits cmp byte [Key],'O' / cmp byte [Key],'G' (a direct memory compare), which is 2 bytes shorter over two arms and shifts every later branch target. SelectPartyMember (00BA:2C48) matched only with the case form. This is the Char sibling of res12-word-case-selector-in-ax. Evidence: the routine's length (443 bytes) and its jump fields."
+evidence = ["src/RES12.PAS#SelectPartyMember", "re/symbols.toml#00BA:2C48"]
+
+[[lesson]]
+id = "res12-string-func-result-assigned-to-string-n"
+confidence = "V"
+units = ["res12", "*"]
+tags = ["string", "copy", "StrLCopy", "WordToText", "codegen"]
+title = "Assigning a string function result directly to a string[N] truncates with one StrLCopy; Copy adds a second"
+lesson = "For Hours: string[2], `Hours := WordToText(x)` compiles to WordToText's result into a hidden temp, then a single System_StrLCopy(Hours, temp, 2) that both copies and truncates. Writing it as `Hours := Copy(WordToText(x), 1, 2)` adds a second StrLCopy: the Copy goes into another 256-byte temp with max 2, then the assignment truncates again into Hours, which shifts the temp offsets and makes the routine 2 bytes too long. DrawLocationLine (00BA:290B) matched with the direct assignment; the manual two-digit padding (`if Length(Hours) < 2 then Hours := '0' + Hours`) is separate. The two hidden string temps sit 0x100 apart (256 bytes each) below the declared locals."
+evidence = ["src/RES12.PAS#DrawLocationLine", "re/symbols.toml#00BA:290B"]

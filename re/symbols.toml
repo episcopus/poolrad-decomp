@@ -16986,12 +16986,12 @@ id = "00BA:272A"
 unit = "res12"
 addr = "00BA:272A"
 size = 175
-name = "res12_fn_272A"
+name = "DrawViewWindows"
 signature = ""
 c_name = "res12_fn_272A"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_272A (00BA:272A draws the view's window frames (DrawWindow): the full screen, the bottom text window, the upper-left window and, with Inner set, the inner window; only RedrawView calls it); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16999,12 +16999,12 @@ id = "00BA:27D9"
 unit = "res12"
 addr = "00BA:27D9"
 size = 306
-name = "res12_fn_27D9"
+name = "RedrawView"
 signature = ""
 c_name = "res12_fn_27D9"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_27D9 (00BA:27D9 is the resident view dispatcher: it redraws the whole screen for the current view mode ds49F3 (shop, portrait, camp, area map, area view, loot), called by the shop, Temple, loot, camp and combat menus); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -17012,12 +17012,12 @@ id = "00BA:290B"
 unit = "res12"
 addr = "00BA:290B"
 size = 595
-name = "res12_fn_290B"
+name = "DrawLocationLine"
 signature = ""
 c_name = "res12_fn_290B"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_290B (00BA:290B builds and draws the party location line (column,row, facing, hours:minutes, and a camping/search suffix) on row 15 of the side window; called by the camp and wilderness screens); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -17025,12 +17025,12 @@ id = "00BA:2B5E"
 unit = "res12"
 addr = "00BA:2B5E"
 size = 42
-name = "res12_fn_2B5E"
+name = "DrawWildernessScreen"
 signature = ""
 c_name = "res12_fn_2B5E"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_2B5E (00BA:2B5E draws the wilderness map screen: sets view mode 3, DrawAdventureScreen, ShowAreaView, DrawPartyMarker, DrawLocationLine, DrawPartyRoster; called by ovl14 HandleWildernessKeys); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -17038,12 +17038,12 @@ id = "00BA:2B88"
 unit = "res12"
 addr = "00BA:2B88"
 size = 192
-name = "res12_fn_2B88"
+name = "DrawCombatScreen"
 signature = ""
 c_name = "res12_fn_2B88"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_2B88 (00BA:2B88 draws the combat screen windows and positions the cursor (ovl31_e2, two DrawWindow, ClearWindow, MoveCombatCursor); called by StartBattle, PlayerTurn and the combat overlays); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -17051,12 +17051,12 @@ id = "00BA:2C48"
 unit = "res12"
 addr = "00BA:2C48"
 size = 443
-name = "res12_fn_2C48"
+name = "SelectPartyMember"
 signature = ""
 c_name = "res12_fn_2C48"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_2C48 (00BA:2C48 loops the party roster with a 'Select' prompt and G/O/O-next/previous/E-return member picker, storing the choice in the caller's Selected; called by ovl03, ovl19 and ovl22); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]

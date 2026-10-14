@@ -173,7 +173,7 @@ begin
 end;
 
 { ovl06:053E (ShopMain). The shop's entry and main loop, called from ovl03 (the area logic) when the
-  party enters a shop. It marks the shop open (ds49F3), redraws the shop screen (res12_fn_27D9,
+  party enters a shop. It marks the shop open (ds49F3), redraws the shop screen (RedrawView,
   DrawPartyRoster on SelectedCharacter), clears the money block PooledMoney and clears MoneyInPool, then shows the
   menu (ReadPromptChoice) with a text chosen by TreasureLeft (the Take/Share entries appear only while
   MoneyPooled says money lies in the pool) and dispatches the key: B BuyItems, V ovl19_e5, T TakeMoney,
@@ -181,7 +181,7 @@ end;
   neither menu text shows, call UpdateSelectedCharacter with the key. With money left in the pool, E first asks
   "Do you want to go back and get your Money?" ('~Yes ~No' through AskMenu, which returns the
   0-based hotkey position) and the party leaves on No (AnswerNo); Yes clears the message window
-  (ClearRect) and stays. A second case redraws the screen (res12_fn_27D9) after B and T, and
+  (ClearRect) and stays. A second case redraws the screen (RedrawView) after B and T, and
   after A when Appraised is set. No parameters; side effects: the screen, the items and the money
   through the called routines. }
 procedure ShopMain;
@@ -198,7 +198,7 @@ var
   Entry: PMenuLine;
 begin
   ds49F3 := 1;
-  res12_fn_27D9;
+  RedrawView;
   DrawPartyRoster(SelectedCharacter);
   FillChar(PooledMoney, SizeOf(PooledMoney), 0);
   Title := '';
@@ -248,9 +248,9 @@ begin
       'O': UpdateSelectedCharacter(Key);
     end;
     case Key of
-      'B', 'T': res12_fn_27D9;
+      'B', 'T': RedrawView;
       'A': if Appraised <> 0 then
-             res12_fn_27D9;
+             RedrawView;
     end;
     DrawPartyRoster(SelectedCharacter);
   until Done <> 0;

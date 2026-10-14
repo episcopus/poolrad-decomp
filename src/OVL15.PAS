@@ -245,7 +245,7 @@ end;
 { ovl15:04A1. The Cast command: when MayUseMagic allows it, repeatedly lists SelectedCharacter's memorized
   spells (ChooseSpellFromList) and casts the chosen one in a cleared text window (ovl22_e5), until the list
   is left; 'has no spells memorized' when there is none. Clears ds6DB5 first and redraws the screen
-  (res12_fn_27D9) when something was shown. The camp's Magic menu and ovl14's wilderness keys. }
+  (RedrawView) when something was shown. The camp's Magic menu and ovl14's wilderness keys. }
 procedure CastSpells;
 var
   Choice: Word;
@@ -270,7 +270,7 @@ begin
       else
         ShowCharacterMessage(SelectedCharacter, 'has no spells memorized', MessageColor, 1);
     until Spell = 0;
-  if Redraw <> 0 then res12_fn_27D9;
+  if Redraw <> 0 then RedrawView;
 end;
 { ovl15:05A4. Shows the spell slots SelectedCharacter has left for memorizing: 'can memorize:' and,
   per class that has slots, a row '    Cleric Spells:' or 'Magic-User Spells:' with the slots left
@@ -327,7 +327,7 @@ end;
 { ovl15:077A. The Rest command: sets RestTime to the longest StudyRestMinutes of the party (hours,
   tens of minutes, minutes; the call also stores each member's RestHours), runs the rest
   (RunRestPeriod, whose result goes to EndCamp, ending the camp when nonzero), then clears RestTime and
-  calls res12_fn_290B. }
+  calls DrawLocationLine. }
 procedure RestParty(var EndCamp: Byte);
 var
   Who: PCharacter;
@@ -346,7 +346,7 @@ begin
   RestTime[1] := MaxMinutes mod 10;
   EndCamp := RunRestPeriod;
   FillChar(RestTime, SizeOf(RestTime), 0);
-  res12_fn_290B;
+  DrawLocationLine;
 end;
 { ovl15:0824. Sorts SelectedCharacter's 21 Spells slots by spell number (bit 7 ignored, empty
   slots first) with an exchange sort; MemorizeSpells calls it after adding a spell. }
@@ -418,7 +418,7 @@ begin
       if AskYesNo('Memorize these spells? ', AskColor, WordColor, HotColor) = No then
         CancelMemorizing(SelectedCharacter);
   end;
-  if Redraw <> 0 then res12_fn_27D9;
+  if Redraw <> 0 then RedrawView;
 end;
 { ovl15:0B5B. The Scribe command (a magic-user copying scroll spells into the spell book). When
   scroll spells are still being scribed, asks 'Scribe These Spells? ' (No cancels them, Yes
@@ -512,13 +512,13 @@ begin
       if AskYesNo('Scribe these spells? ', AskColor, WordColor, HotColor) = No then
         CancelScribing(SelectedCharacter);
   end;
-  if Redraw <> 0 then res12_fn_27D9;
+  if Redraw <> 0 then RedrawView;
 end;
 { ovl15:0FBC. The camp's Display command: lists every party member (the party list ds5D96, linked
   by Next) as a heading line followed by one line per affect on the member that the game can name,
   or ' <No Spell Effects>' when it names none, then a blank line, and shows the list in the full
   text window titled 'Display' with ChooseFromList (heading colour 11, lines 10, highlight 15,
-  with Exit); the list is freed and the screen redrawn (res12_fn_27D9) afterwards. A spell affect
+  with Exit); the list is freed and the screen redrawn (RedrawView) afterwards. A spell affect
   (the first case list) is named by the first spell 1..$38 whose SpellTable.AffectId is the affect
   (SpellNames), or 'Funky--n' (ByteToText writes the number) when no spell has it; fourteen
   other affects have fixed names (the Affect* constants); any other affect is left out. The
@@ -623,7 +623,7 @@ begin
                         ListLeft, ListFirstRow, ListRight, ListBottom, List, ListWithExit,
                         Redraw, Choice, Last);
   FreeMenuList(List);
-  res12_fn_27D9;
+  RedrawView;
 end;
 { ovl15:13F1. The camp's Magic menu 'Cast Memorize Scribe Display Rest Exit' (CampMagicMenuText)
   until Exit or the rest ends the camp (EndCamp): C CastSpells, M MemorizeSpells, S ScribeScrolls,
@@ -846,7 +846,7 @@ begin
         'I':
           begin
             ovl16_e3;
-            res12_fn_27D9;
+            RedrawView;
           end;
         'P':
           repeat
@@ -884,7 +884,7 @@ begin
   ds49F3 := ViewModeCamp;
   ds6DD8 := 0;
   FillChar(RestTime, SizeOf(RestTime), 0);
-  res12_fn_27D9;
+  RedrawView;
   ClearWindow(1, $11, $26, $16);
   DrawTextAt(1, $12, TextColor, 'The party makes camp...');
   CancelPartyStudy;
@@ -914,7 +914,7 @@ begin
   CancelPartyStudy;
   ds6DB5 := nil;
   ds49F3 := SavedMode;
-  res12_fn_290B;
+  DrawLocationLine;
   ClearCharacterMessage;
   ClearPromptLine;
 end;

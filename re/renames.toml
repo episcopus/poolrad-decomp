@@ -3693,3 +3693,45 @@ kind = "routine"
 why = "00BA:26C2 maps a spell's SpellTable class (byte 0) to the selected character's level in that class (ClassLevels cleric 0, magic-user 5), 12 for spell class 2 and a forced 6 when ds6DBF is set; ovl22_e3 multiplies the spell row's +3 byte by it"
 date = "2026-10-13"
 
+[[rename]]
+old = "res12_fn_272A"
+new = "DrawViewWindows"
+kind = "routine"
+why = "00BA:272A draws the view's window frames (DrawWindow): the full screen, the bottom text window, the upper-left window and, with Inner set, the inner window; only RedrawView calls it"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_27D9"
+new = "RedrawView"
+kind = "routine"
+why = "00BA:27D9 is the resident view dispatcher: it redraws the whole screen for the current view mode ds49F3 (shop, portrait, camp, area map, area view, loot), called by the shop, Temple, loot, camp and combat menus"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_2B5E"
+new = "DrawWildernessScreen"
+kind = "routine"
+why = "00BA:2B5E draws the wilderness map screen: sets view mode 3, DrawAdventureScreen, ShowAreaView, DrawPartyMarker, DrawLocationLine, DrawPartyRoster; called by ovl14 HandleWildernessKeys"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_2B88"
+new = "DrawCombatScreen"
+kind = "routine"
+why = "00BA:2B88 draws the combat screen windows and positions the cursor (ovl31_e2, two DrawWindow, ClearWindow, MoveCombatCursor); called by StartBattle, PlayerTurn and the combat overlays"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_2C48"
+new = "SelectPartyMember"
+kind = "routine"
+why = "00BA:2C48 loops the party roster with a 'Select' prompt and G/O/O-next/previous/E-return member picker, storing the choice in the caller's Selected; called by ovl03, ovl19 and ovl22"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_290B"
+new = "DrawLocationLine"
+kind = "routine"
+why = "00BA:290B builds and draws the party location line (column,row, facing, hours:minutes, and a camping/search suffix) on row 15 of the side window; called by the camp and wilderness screens"
+date = "2026-10-13"
+

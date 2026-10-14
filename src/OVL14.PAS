@@ -356,7 +356,7 @@ end;
   reads menu and movement keys through ReadPromptChoice and dispatches them (A/C/V/E/S/L
   menu keys, H/M/P/K movement with the icon sets, anything else through UpdateSelectedCharacter),
   otherwise it loads the ICON pictures for map pages 2..4 and runs a smaller key loop;
-  either loop repeats through res12_fn_290B until Redraw is set, then it tidies the
+  either loop repeats through DrawLocationLine until Redraw is set, then it tidies the
   window and returns the key. Also clears ds49D6^[713] on entry. }
 function HandleWildernessKeys: Char;
 var
@@ -432,7 +432,7 @@ begin
           UpdateSelectedCharacter(Key);
           DrawPartyRoster(SelectedCharacter);
         end;
-      res12_fn_290B;
+      DrawLocationLine;
     until Redraw <> 0;
   end;
   2..4:
@@ -442,7 +442,7 @@ begin
       LoadPictureSlot('ICON', 0, 9);
       LoadPictureSlot('ICON', 1, $A);
       LoadPictureSlot('ICON', 2, $B);
-      res12_fn_2B5E;
+      DrawWildernessScreen;
     end;
     Redraw := 0;
     repeat
@@ -483,7 +483,7 @@ begin
           Redraw := 0;
         end;
       end;
-      res12_fn_290B;
+      DrawLocationLine;
     until Redraw <> 0;
     end;
   end;
@@ -575,7 +575,7 @@ begin
         MoveParty
       else
         PlaySound(ds2622);
-      res12_fn_290B;
+      DrawLocationLine;
     end
     else
       ds49D6^[713] := 0;
@@ -585,7 +585,7 @@ begin
     if ds49D6^[713] < $FF then
     begin
       CheckMapCell;
-      res12_fn_290B;
+      DrawLocationLine;
     end
     else
       ds49D6^[713] := 0;
