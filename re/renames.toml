@@ -3448,3 +3448,10 @@ kind = "routine"
 why = "ECL commands 4 to 7: the dispatcher ovl03:2F2D calls it for SkippedOpcode 4 to 7 (cmp al,4..7 then call 01A3); it combines two operand values (add, sub, div, mul, ovl03:01E9..0222) and writes the answer with WriteVmWord (ovl07:0C77)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl03_fn_0234"
+new = "RandomCommand"
+kind = "routine"
+why = "ECL command 8: the dispatcher ovl03:2F2D calls it for SkippedOpcode 8 (cmp al,8 then call 0234); it rolls Random over the first operand and writes the roll with WriteVmWord (ovl07:0C77)"
+date = "2026-10-13"
+

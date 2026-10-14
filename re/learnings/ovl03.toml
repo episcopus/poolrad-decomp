@@ -1,0 +1,19 @@
+# Lessons from unit ovl03 (Encounter: the ECL command loop). Leads with evidence, not matcher verdicts.
+
+[[lesson]]
+id = "random-trunc-real-calls"
+confidence = "V"
+units = ["*"]
+tags = ["Random", "Trunc", "Real", "codegen", "call"]
+title = "Trunc(Random(n)) keeps two runtime calls before a byte store"
+lesson = "A byte assigned from Trunc(Random(Range)) compiles to the call to System Random, then xor dx,dx and two runtime calls (the Real conversion and the truncation, 0AF8:119A and 0AF8:119E in ovl03), then the low byte is stored. The plain Roll := Random(Range) and Roll := Byte(Random(Range)) have no calls and fail to match. When an original shows xor dx,dx followed by two lcalls after a Random or a Word function, look for Trunc (or another Real conversion) rather than a plain Word-to-Byte assignment."
+evidence = ["tools/re/tp_idioms/ovl03/RNDTRUNC.PAS", "src/OVL03.PAS#RandomCommand", "re/symbols.toml#ovl03:0234"]
+
+[[lesson]]
+id = "for-index-signed-cwde"
+confidence = "V"
+units = ["*"]
+tags = ["for", "ShortInt", "cwde", "index", "codegen"]
+title = "A loop index that the original sign-extends with cwde is a ShortInt"
+lesson = "The index of a for loop that feeds an array subscript is loaded with mov al,[I]; cwde before the scaling shl di,1 when it is declared ShortInt. Declared Byte, the same index compiles to xor ah,ah (the first mismatch in ArithmeticCommand). With the ShortInt declaration, `for I := 1 to 2 do Values[I] := OperandValue(I);` matches (the loop stays a loop; the index is a sign-extended byte)."
+evidence = ["src/OVL03.PAS#ArithmeticCommand", "re/symbols.toml#ovl03:01A3"]

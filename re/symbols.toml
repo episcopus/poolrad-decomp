@@ -185,40 +185,14 @@ evidence = ["prologue"]
 id = "ovl03:0234"
 unit = "ovl03"
 addr = "ovl03:0234"
-size = 17
-name = "ovl03_fn_0234"
+size = 94
+name = "RandomCommand"
 signature = ""
 c_name = "ovl03_fn_0234"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_0234 (ECL command 8: the dispatcher ovl03:2F2D calls it for SkippedOpcode 8 (cmp al,8 then call 0234); it rolls Random over the first operand and writes the roll with WriteVmWord (ovl07:0C77)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl03:0245"
-unit = "ovl03"
-addr = "ovl03:0245"
-size = 48
-name = "ovl03_fn_0245"
-signature = ""
-c_name = "ovl03_fn_0245"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:0275"
-unit = "ovl03"
-addr = "ovl03:0275"
-size = 29
-name = "ovl03_fn_0275"
-signature = ""
-c_name = "ovl03_fn_0275"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl03:0292"

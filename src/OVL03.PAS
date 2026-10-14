@@ -10,7 +10,7 @@ procedure GotoCommand;
 procedure GosubCommand;
 procedure CompareCommand;
 procedure ArithmeticCommand;
-procedure ovl03_fn_0234;
+procedure RandomCommand;
 procedure ovl03_fn_0245;
 procedure ovl03_fn_0275;
 procedure ovl03_fn_0292;
@@ -224,8 +224,26 @@ begin
   end;
   WriteVmWord(Target, Answer);
 end;
-{ ovl03:0234: frame not read }
-{@stub} procedure ovl03_fn_0234; begin end;
+{ ovl03:0234. ECL command 8 (dispatcher ovl03:2F2D, SkippedOpcode 8): stores a random number. The
+  first operand is the largest roll wanted: one is added to it, so the roll is 0 to that value
+  (Random(n) gives 0 to n-1). The roll is written with WriteVmWord to the script address the
+  second operand names. The Trunc keeps the Real conversion of the roll that the original makes
+  (0AF8:119A, 119E); it changes nothing for a whole number. QUIRK ovl03:024D: a first operand of
+  255 is not raised, so the roll can only be 0 to 254. }
+procedure RandomCommand;
+var
+  Range: Byte;
+  Roll: Byte;
+  Target: Word;
+begin
+  DecodeOperands(2);
+  Range := OperandValue(1);
+  if Range < $FF then
+    Inc(Range);
+  Target := MakeWord(OperandLow[2], OperandHigh[2]);
+  Roll := Trunc(Random(Range));
+  WriteVmWord(Target, Roll);
+end;
 { ovl03:0245: frame not read }
 {@stub} procedure ovl03_fn_0245; begin end;
 { ovl03:0275: retf 0: 0 bytes of parameters; 0 bytes of locals }
