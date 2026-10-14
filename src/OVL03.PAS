@@ -43,7 +43,7 @@ procedure ovl03_fn_1EF8;
 procedure ovl03_fn_238D;
 procedure ChooseAttitudeCommand;
 procedure ComparePartyItemCommand;
-procedure ovl03_fn_271F;
+procedure PauseCommand;
 procedure ovl03_fn_2775;
 procedure ovl03_fn_2AA2;
 procedure ovl03_fn_2AC1;
@@ -1444,8 +1444,14 @@ begin
     Member := Member^.Next;
   end;
 end;
-{ ovl03:271F: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl03_fn_271F; begin end;
+{ ovl03:271F. ECL command 58 (dispatcher ovl03:2F2D, SkippedOpcode 3Ah): pauses the script for the game
+  speed (DelayByGameSpeed, RES06: GameSpeed * 225 milliseconds). It has no operands, counts ds49ED up as
+  ECL command 36 does, and does not move EclPC itself. Purpose unknown: why the script waits here. }
+procedure PauseCommand;
+begin
+  Inc(ds49ED);
+  DelayByGameSpeed;
+end;
 { ovl03:2775: retf 0: 0 bytes of parameters; 62 bytes of locals }
 {@stub} procedure ovl03_fn_2775; begin end;
 { ovl03:2AA2: retf 0: 0 bytes of parameters; 0 bytes of locals }

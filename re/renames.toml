@@ -3693,3 +3693,10 @@ kind = "routine"
 why = "dispatcher ovl03:2F2D sends SkippedOpcode 32h (50) here (cmp al,32h); it searches the party's carried items (TCharacter.Items +$C8, ItemType +$2E) for the type operand 1 names and sets CompareFlags for the conditional commands (match ovl03:266A)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl03_fn_271F"
+new = "PauseCommand"
+kind = "routine"
+why = "dispatcher ovl03:2F2D sends SkippedOpcode 3Ah (58) here (cmp al,3Ah); it only counts ds49ED up and calls DelayByGameSpeed (RES06, GameSpeed * 225 ms), so it is a pause in the script (match ovl03:271F)"
+date = "2026-10-13"
+
