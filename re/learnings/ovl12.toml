@@ -575,3 +575,21 @@ tags = ["array", "absolute", "RaceRow", "index", "dseg", "codegen"]
 title = "RaceRow[item][n] compiles to DS:5582 + 16*item + n: the packet's address is the row's byte n, not row 0"
 lesson = "RaceRow is declared `array[0..128] of TRaceRow absolute ds5582`, so RaceRow[item][0] is at DS:5582, and the packet of ovl12:2A87 shows the test at `cmp byte ptr [di+5589h], 0` with di = 16*item. That is byte 7 of the row, not byte 0: the first draft with [0] reported `[di+34CEh]` against the original's `[di+5589h]` and the diff showed the 7. The packet's displacement is the absolute address; subtract 5582h and divide the rest by 16 to get the row byte (here 7). Two routines of the unit read byte 7 of the same row (ovl12:25BC and ovl12:2A87)."
 evidence = ["src/OVL12.PAS#HalveDamageByFirstSlotItemRow", "src/POOLVARS.PAS#RaceRow", "re/symbols.toml#ovl12:2A87"]
+
+[[lesson]]
+id = "nil-test-else-tail-layout"
+confidence = "V"
+units = ["*"]
+tags = ["if", "nil", "else", "layout", "codegen", "jump"]
+title = "The nil test with the body first and the nil case as the else part matches; the nil case first does not"
+lesson = "For `Item := FirstSlotItem(...); if Item <> nil then begin <tests on Item> end else DamageAmount := 0`, TP 6.0 emits `je` to a store of 0 placed after the body (ovl12:2DA6 to 2DD9). The form `if Item = nil then DamageAmount := 0 else if ...` placed the first conditional jump the other way (`jne`), and the match diff stopped at that instruction. The begin..end before the else keeps the original order; no semicolon before the else is allowed."
+evidence = ["src/OVL12.PAS#HalveOrCancelDamageForUnenchantedSlotItem", "re/symbols.toml#ovl12:2D88"]
+
+[[lesson]]
+id = "inc-with-byte-variable-loads-al"
+confidence = "V"
+units = ["*"]
+tags = ["Inc", "byte", "codegen", "global", "add"]
+title = "Inc(X, Y) with a byte variable Y loads Y into AL and adds it to X in memory"
+lesson = "`Inc(DamageAmount, LastDiceCount)` compiles to `mov al, [LastDiceCount]; add [DamageAmount], al` (ovl12:2D38, after the 3d8 roll), the form the original shows at ovl12:2D7B. It is the variable counterpart of the constant form in the lesson inc-with-step-is-memory-add; the plain `X := X + Y` is not what this matched."
+evidence = ["src/OVL12.PAS#SetDamageFromSlotItemType56", "re/symbols.toml#ovl12:2D38"]
