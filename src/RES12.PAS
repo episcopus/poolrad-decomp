@@ -590,8 +590,13 @@ end;
   "AC" headings with their values (DrawHitPoints, DrawArmourClass), the readied weapon's paged text
   (FormatItemLine then ShowPagedText) when a weapon is readied, and finally the status name
   (StatusNames[Status], +$10c) when the character takes no part in combat (Flag10D = 0), else
-  "(Helpless)" when IsHelpless says so. Side effects: video memory, the keyboard through
-  ShowPagedText's paging. }
+  "(Helpless)" when IsHelpless says so. The status row is not fixed: the routine stores
+  GlyphRow := Row + 1 before the weapon test, ShowPagedText leaves GlyphRow past the lines the
+  weapon text took, and the status is then drawn at GlyphRow + 2 (Row := GlyphRow + 1, then
+  Row + 1), so the row follows the weapon text and the assignment is what makes the no-weapon path
+  work.
+  Globals: GlyphRow (written, then read after ShowPagedText leaves it past the weapon text).
+  Side effects: video memory, the keyboard through ShowPagedText's paging. }
 procedure DrawCharacterPanel(Who: PCharacter);
 var
   Color: Byte;
