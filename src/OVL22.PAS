@@ -51,9 +51,7 @@ procedure CastCauseBlindness;
 function CureDiseaseAffects: Boolean;
 procedure CastCureDisease;
 procedure CastCauseDisease;
-procedure ovl22_fn_2383;
-procedure ovl22_e44;
-procedure ovl22_fn_23B6;
+procedure CastDispelMagic;
 procedure ovl22_e45;
 procedure ovl22_e9;
 procedure ovl22_fn_257E;
@@ -1300,12 +1298,66 @@ const
 begin
   ApplySpellToTargets(ds681B, 0, RunHandlerOnRemoval, 0, 0, 'is diseased');
 end;
-{ ovl22:2383: frame not read }
-{@stub} procedure ovl22_fn_2383; begin end;
-{ ovl22:2385: frame not read }
-{@stub} procedure ovl22_e44; begin end;
-{ ovl22:23B6: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl22_fn_23B6; begin end;
+{ ovl22:2385 (e44). Cast handler of spells 41 and 46, Dispel Magic (ovl22_e10 maps both
+  DS:6B84+41*4 and DS:6B84+46*4 to overlay stub 0096:00FC; SpellNames[41] and SpellNames[46] are
+  both 'Dispel Magic' at DS:2F7A and DS:3047). It tries to dispel the affects of the chosen target
+  ds6C95: for every affect of the target's list whose Data byte is below $FF it takes the effect's
+  level from the low nibble of Data, turns the caster level (res12_fn_26C2(ds681B)) and that level
+  into a chance (50 percent, +5 for each level the caster is above the effect, -2 for each level
+  below), and rolls 1d100: a roll up to that chance removes the affect (RemoveAffect) and, when
+  anything was removed, the target is told 'is affected' (res12_fn_1FEB). ds6820 marks the cast.
+  QUIRK ovl22:2385: the outer loop runs ds6C94 times but the body always reads the same first target
+  ds6C95 (it is never indexed by the loop counter), so a cast with several targets rolls on the
+  first one once per target and can show 'is affected' more than once. Reads ds681B, ds6C94, ds6C95;
+  changes ds6820, ds4844, ds4845 and the target's affect list. }
+procedure CastDispelMagic;
+const
+  MaxAffectData = $FF;            { an affect whose Data byte is this high is left alone }
+  LevelMask = $0F;                { the effect's level is the low nibble of the affect's Data byte }
+  BaseChance = $32;               { 50 percent, the base Dispel Magic chance }
+  LevelStep = 5;                  { +5 percent for each caster level above the effect's level }
+  LevelPenalty = 2;               { -2 percent for each caster level below it }
+  DiceSides = 100;                { the chance is rolled on 1d100 }
+  ShowAbout = 1;                  { res12_fn_1FEB's Flag argument }
+var
+  I: Byte;                        { the outer loop counter, 1..ds6C94 }
+  Level: Byte;                    { the caster level, res12_fn_26C2(ds681B) }
+  Target: PCharacter;             { the chosen target ds6C95 whose affects are dispelled }
+  Dispelled: Boolean;             { whether this pass removed any affect }
+  Affect: PAffect;                { the walker of Target's affect list }
+  Next: PAffect;                  { the affect's successor, kept before a removal }
+begin
+  ds6820 := 1;
+  Level := res12_fn_26C2(ds681B);
+  for I := 1 to ds6C94 do
+  begin
+    Dispelled := False;
+    Target := ds6C95;
+    Affect := PAffect(Target^.Affects);
+    while Affect <> nil do
+    begin
+      Next := Affect^.Next;
+      if Affect^.Data < MaxAffectData then
+      begin
+        ds4845 := Affect^.Data and LevelMask;
+        if Level > ds4845 then
+          ds4844 := (Level - ds4845) * LevelStep + BaseChance
+        else if Level < ds4845 then
+          ds4844 := BaseChance - (ds4845 - Level) * LevelPenalty
+        else
+          ds4844 := BaseChance;
+        if RollDice(1, DiceSides) <= ds4844 then
+        begin
+          RemoveAffect(Target, Affect^.Id, Affect);
+          Dispelled := True;
+        end;
+      end;
+      Affect := Next;
+    end;
+    if Dispelled then
+      res12_fn_1FEB(Target, ShowAbout, 'is affected');
+  end;
+end;
 { ovl22:24D6: retf 0: 0 bytes of parameters; 12 bytes of locals }
 {@stub} procedure ovl22_e45; begin end;
 { ovl22:2540: frame not read }

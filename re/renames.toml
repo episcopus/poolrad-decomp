@@ -3763,3 +3763,10 @@ kind = "routine"
 why = "spell 39 Cure Disease handler: calls CureDiseaseAffects on ds6C95 and drops the result (ovl22_e10 maps DS:6B84+39*4 to overlay stub 0096:00F2; SpellNames[39]='Cure Disease' at DS:2F28; SpellTable[39].AffectId is 0); make match UNIT=ovl22 FN=CastCureDisease: 17 bytes"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl22_e44"
+new = "CastDispelMagic"
+kind = "routine"
+why = "ovl22_e10 fills SpellHandlers[41] and SpellHandlers[46] (DS:6B84+41*4, DS:6B84+46*4) with overlay stub 0096:00FC = ovl22:2385; SpellNames[41] and SpellNames[46] are both 'Dispel Magic' (DS:2F7A, DS:3047). The routine dispels the target's affects by a caster-level chance, which is Dispel Magic"
+date = "2026-10-13"
+
