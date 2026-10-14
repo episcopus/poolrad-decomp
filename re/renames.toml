@@ -3441,3 +3441,10 @@ kind = "routine"
 why = "ovl12:010D adds 5 to ds6825 (the AI morale scratch that ovl09 CheckMorale computes) and 1 to AttackRoll; its frame (Who, Affect, Mode, retf 10) is the AffectHandlers shape (TAffectHandler, CallAffectHandler ovl24:0000), Mode not read"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e3"
+new = "LowerAttackAndMorale"
+kind = "routine"
+why = "ovl12:011D takes MoraleStep off the morale scratch ds6825 (to 0 when it is less) and 1 off AttackRoll: the undo of RaiseAttackAndMorale (ovl12:010D); the AffectHandlers shape (Who, Affect, Mode), Mode not read"
+date = "2026-10-13"
+

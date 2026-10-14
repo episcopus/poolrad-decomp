@@ -3174,12 +3174,12 @@ id = "ovl12:011D"
 unit = "ovl12"
 addr = "ovl12:011D"
 size = 30
-name = "ovl12_e3"
-signature = ""
+name = "LowerAttackAndMorale"
+signature = "procedure LowerAttackAndMorale(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e3"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_3"
+notes = "renamed from ovl12_e3 (ovl12:011D takes MoraleStep off the morale scratch ds6825 (to 0 when it is less) and 1 off AttackRoll: the undo of RaiseAttackAndMorale (ovl12:010D); the AffectHandlers shape (Who, Affect, Mode), Mode not read); auto:entry_3"
 evidence = ["prologue"]
 
 [[routine]]

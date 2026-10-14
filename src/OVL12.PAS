@@ -9,7 +9,7 @@ procedure CancelPendingHook(AffectId: Byte);
 function TryAddAffect(Who: PCharacter; AffectId, Data: Byte; Duration: Word): Boolean;
 procedure DropFromFight(Who: PCharacter; NewStatus: Byte; Msg: String40);
 procedure RaiseAttackAndMorale(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e3;
+procedure LowerAttackAndMorale(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e4;
 procedure ovl12_e5;
 procedure ovl12_e6;
@@ -233,14 +233,23 @@ begin
 end;
 { ovl12:010D. Affect handler of an affect (the AffectHandlers shape: Who, Affect and Mode; Mode is not read,
   so applying and removing run the same code, ovl24:0000): adds MoraleStep to the morale scratch ds6825 (ovl09 CheckMorale
-  computes it) and 1 to AttackRoll. LowerAttackAndMorale (ovl12:011D) takes both back. }
+  computes it) and 1 to AttackRoll. The handler at ovl12:011D takes both back. }
 procedure RaiseAttackAndMorale(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   Inc(ds6825, MoraleStep);
   Inc(AttackRoll);
 end;
-{ ovl12:011D: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e3; begin end;
+{ ovl12:011D. The handler that undoes RaiseAttackAndMorale (ovl12:010D), with the AffectHandlers shape (Who,
+  Affect and Mode; Mode not read): takes MoraleStep off the morale scratch ds6825, or sets it to 0 when it
+  holds less, and takes 1 off AttackRoll. }
+procedure LowerAttackAndMorale(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  if ds6825 < MoraleStep then
+    ds6825 := 0
+  else
+    Dec(ds6825, MoraleStep);
+  Dec(AttackRoll);
+end;
 { ovl12:013B: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e4; begin end;
 { ovl12:017F: retf 10: 10 bytes of parameters; 16 bytes of locals }
