@@ -7827,12 +7827,12 @@ id = "ovl16:34DF"
 unit = "ovl16"
 addr = "ovl16:34DF"
 size = 223
-name = "ovl16_fn_34DF"
+name = "DrawIconCell"
 signature = ""
 c_name = "ovl16_fn_34DF"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl16_fn_34DF (ovl16:34DF fills one icon-editor cell (FillPictureRect over 12 cells x 24 rows from @ds260A into DrawBuf) and draws the two mirrored halves of the character's icon (DrawIcon, indices $19 and $C) at CellCol and CellCol+3; called by the icon editor ovl16_e3); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

@@ -6,7 +6,7 @@ unit OVL16;
   are still stubs. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
-uses POOLVARS, RES04, RES06, RES09, RES12, OVL17, OVL19, OVL23, OVL25, OVL28, OVL32;
+uses POOLVARS, RES04, RES06, RES07, RES09, RES12, OVL17, OVL19, OVL23, OVL25, OVL28, OVL32;
 procedure FreeCharacter(Who: PCharacter);
 procedure RunCharacterMenu;
 procedure ovl16_fn_056C;
@@ -73,7 +73,7 @@ procedure ovl16_fn_29AE;
 procedure AddSavedCharacters;
 procedure RemoveSelectedCharacter(Uncounted, FreePicture: Boolean);
 procedure ChooseHeadAndBody;
-procedure ovl16_fn_34DF;
+procedure DrawIconCell(CellCol, CellRow: Byte; StaticLink: Word);
 procedure ovl16_fn_35BE;
 procedure ovl16_e3;
 procedure ovl16_fn_3C75;
@@ -890,7 +890,39 @@ begin
   ClearPromptLine;
 end;
 { ovl16:34DF: retf 6: 6 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl16_fn_34DF; begin end;
+{ ovl16:34DF. Draws one cell of the character-icon editor: it fills the cell (FillPictureRect, 12
+  cells wide and 24 pixel rows tall, from the palette at @ds260A into DrawBuf) and draws the two
+  mirrored halves of the character's icon (DrawIcon) at columns CellCol and CellCol + 3, row CellRow.
+  On the text-only adapter (VideoAdapter 0) the fill uses colour 3 (the icon's ground) and only the
+  head pictures (index $C) are drawn; on the other adapters the fill uses colour 0 and the body
+  pictures (index $19) are drawn first. FlushPictureChanges shows the result. Called by the icon
+  editor ovl16_e3. The original reaches the routine through a nested call (push bp; push cs; call), so
+  its last parameter is a static link the body never reads. }
+procedure DrawIconCell(CellCol, CellRow: Byte; StaticLink: Word);
+const
+  IconColsPerCell = 3;    { an icon cell is 3 text columns wide }
+  CellWidthCells = $C;    { FillPictureRect width, in 8-pixel cells }
+  CellHeightRows = $18;   { FillPictureRect height, in pixel rows }
+  SecondHalfCol = 3;      { the mirrored-half icon is 3 columns right }
+  GroundColour = 3;       { the icon's ground colour on VideoAdapter 0 }
+  BodyPicIndex = $19;     { the BODY picture block of the icon }
+  HeadPicIndex = $C;      { the HEAD picture block of the icon }
+  IconSet = 0;            { the icon set DrawIcon reads the pictures from }
+begin
+  if VideoAdapter = 0 then
+    FillPictureRect(CellCol * IconColsPerCell, CellRow * CellHeightRows, CellWidthCells,
+      CellHeightRows, GroundColour, @ds260A, DrawBuf)
+  else
+  begin
+    FillPictureRect(CellCol * IconColsPerCell, CellRow * CellHeightRows, CellWidthCells,
+      CellHeightRows, 0, @ds260A, DrawBuf);
+    DrawIcon(CellCol, CellRow, IconSet, 0, BodyPicIndex);
+    DrawIcon(CellCol + SecondHalfCol, CellRow, IconSet, 1, BodyPicIndex);
+  end;
+  DrawIcon(CellCol, CellRow, IconSet, 0, HeadPicIndex);
+  DrawIcon(CellCol + SecondHalfCol, CellRow, IconSet, 1, HeadPicIndex);
+  FlushPictureChanges;
+end;
 { ovl16:35BE: retf 8: 8 bytes of parameters; 40 bytes of locals }
 {@stub} procedure ovl16_fn_35BE; begin end;
 { ovl16:382D: frame not read }

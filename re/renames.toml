@@ -4057,3 +4057,10 @@ kind = "routine"
 why = "ovl16:306D is the training hall's Add (A) function (RunCharacterMenu ovl16:0161): its menu 'Add a character: ' / 'Add Exit' lists the saved characters on disk (ReadSavedCharacterList), LoadCharacterFile loads the picked one and AddPartyMember puts it in the party"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl16_fn_34DF"
+new = "DrawIconCell"
+kind = "routine"
+why = "ovl16:34DF fills one icon-editor cell (FillPictureRect over 12 cells x 24 rows from @ds260A into DrawBuf) and draws the two mirrored halves of the character's icon (DrawIcon, indices $19 and $C) at CellCol and CellCol+3; called by the icon editor ovl16_e3"
+date = "2026-10-13"
+
