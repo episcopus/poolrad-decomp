@@ -175,7 +175,8 @@ type
     { +$6: movement left in half squares (the Move menu shows Moves div 2); cleared by
       RemoveCombatant. }
     Moves: Byte;
-    { +$7: cleared at the start of each turn (ovl08:021E) and by RemoveCombatant; meaning unknown }
+    { +$7: the guard flag: GuardTurn (00BA:2686) sets it to 1 and EndCombatTurn (00BA:2637)
+      clears it; also cleared at the start of each turn (ovl08:021E) and by RemoveCombatant }
     B7: Byte;
     Pad8: Byte;
     { +$9: the icon set (facing) DrawIcon draws the combatant with (SetCombatantIcon, ovl31);

@@ -1060,7 +1060,7 @@ Overlay 24 holds the rules affects and rolls go through; its 22 entries (e1..e22
 
 ### 5.24 The resident character and item helper unit res12 (in progress)
 
-res12 is the resident helper the overlays call for character, item and view work. Twenty-six
+res12 is the resident helper the overlays call for character, item and view work. Forty
 routines are matched so far **[V]** (`make match UNIT=res12`): `RecalcCombatValues` recomputes a character's
 combat values and calls `SetArmourMovement` (`00BA:01FB`), `AddReadiedItemBonus` (`00BA:0282`),
 `ApplyWeaponBonuses` (`00BA:0000`) and `CapMovementByLoad` (`00BA:03A0`); `IsHelpless`
@@ -1160,7 +1160,24 @@ matched only with the copy.
   character's `Name` (+0) at (Col,Row) in the colour of its combat state (LightRed when `Flag10D` is 0,
   Yellow on the party side 1, LightCyan otherwise) and, when its Mode byte is set, appends the literal
   `'s` (the bytes `02 27 73`) after the name at Col plus its length.
-- **Map artifacts** **[V]**: `00BA:06D5` and `00BA:0712` are not routines but labels inside the
+- **The combat turn, the enemy scan and the spell level** **[V]**: `EndCombatTurn` (`00BA:2637`)
+  ends a combatant's turn (clears `Combat^.PendingSpell` +$0, `Initiative` +$3, the guard byte `B7`
+  +$7 and `Moves` +$6) and returns 1; `GuardTurn` (`00BA:2686`) calls it, sets `B7` to 1 and flashes
+  'Guarding' (the Done menu's Guard command, ovl08:0E45, and the AI fallback `ovl09_fn_0F4F`).
+  `CollectEnemiesInRange` (`00BA:2433`) runs `ScanTargets` from Who within Range steps, keeps only the
+  records whose combatant is on `OpposingSide(Who)`'s side (three bytes each, compacted in place), and
+  writes the kept combatant indexes into `ds6DE4` from entry 1, returning the count; `AiTurn` picks a
+  random one and `SpellAccepted` loops them for the area spells. `DistanceToTarget` (`00BA:255B`)
+  saves the scan table, opens the WalkLine tile gate (`CombatMap^.Head6`, +$6), scans omni from Who
+  over $FF steps and returns half the shortest walk length to Target (the distance in map cells,
+  which tests = 1 as melee range); the table is restored before the return. `SpellCasterLevel`
+  (`00BA:26C2`) returns the selected character's level in a spell's class (`ClassLevels`: 0 cleric,
+  5 magic-user), 12 for spell class 2, and a forced 6 while `ds6DBF` is set; ovl22_e3 multiplies the
+  spell row's +3 byte by it. QUIRK `00BA:26FB`: a spell class other than 0, 1 or 2 leaves the result
+  unassigned.
+- **Map artifacts** **[V]**: `00BA:2571` was not a routine but the middle of `DistanceToTarget`
+  (`00BA:255B`, whose real size is 220 bytes); `make match WRITE=1` removed it. `00BA:06D5` and
+  `00BA:0712` are not routines but labels inside the
   blocked `res12_fn_0442` (06D5 even starts one byte late, under an `es:` prefix), and
   `00BA:0B4F` was the same inside `DrawCharacterPanel` (removed by `make match WRITE=1`).
   `00BA:1857` and `00BA:187D` were the same inside `DrawCharacterName` (`00BA:1816`, whose real size
