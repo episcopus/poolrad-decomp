@@ -187,6 +187,9 @@ type
     { +$7: the guard flag: GuardTurn (00BA:2686) sets it to 1 and EndCombatTurn (00BA:2637)
       clears it; also cleared at the start of each turn (ovl08:021E) and by RemoveCombatant }
     B7: Byte;
+    { +$8: the has-attacked-this-round flag: StartCombatantRound clears it and
+      ResolveCombatantAttacks sets it to 1 (ovl13:143A); RefreshAttacks (ovl13:0E0B) lets the new
+      attack count through while it is 0. }
     Pad8: Byte;
     { +$9: the icon set (facing) DrawIcon draws the combatant with (SetCombatantIcon, ovl31);
       saved and restored around a move that is taken back (ovl08:09FD, 0B41). }
