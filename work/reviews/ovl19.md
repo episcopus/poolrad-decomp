@@ -31,7 +31,7 @@ One line per finding: `- [ ] <severity> <routine name>: <what and why, with the 
 Severity: must-fix (blocks review-pass), should-fix, note. When the decompiler fixes one, mark it
 `- [x]` and add `(fixed in <commit>)`. Do not delete findings.
 
-- [ ] must-fix ShowCharacterSheet (ClassNames, AlignmentNames, StatusNames): the sheet indexes three name
+- [x] must-fix ShowCharacterSheet (ClassNames, AlignmentNames, StatusNames): the sheet indexes three name
   tables whose declared bounds are shorter than the data, and the unit says nothing about it (checklist 3
   and 6). The bytes (DS image, `poolrad/start-unpack.exe`): `ClassNames` (DS:0D38, 27 bytes apart) holds 17
   real names, 0 Cleric .. 7 Monk, then 8 Cleric/Fighter, 9 Cleric/Fighter/Magic-User, 10 Cleric/Ranger,
@@ -45,8 +45,8 @@ Severity: must-fix (blocks review-pass), should-fix, note. When the decompiler f
   call the multi-class names "read past its eight entries **[I]**", which suggests garbage; they are the
   real multi-class names **[V]**. Fix: declare the three arrays with their real bounds (0..16, 0..8, 0..8
   in POOLVARS, an additive shared edit), say in ShowCharacterSheet's comment that `ClassMask` 8..16 are
-  the multi-class names, and correct the whitepaper and the `dseg.toml` evidence to [V].
-- [ ] must-fix ViewSelectedCharacter, RunItemMenu, CanGiveUpItem: the two numbers that decide which words
+  the multi-class names, and correct the whitepaper and the `dseg.toml` evidence to [V]. (fixed in ff13b01)
+- [x] must-fix ViewSelectedCharacter, RunItemMenu, CanGiveUpItem: the two numbers that decide which words
   the menus offer are left bare (severity definition: "a meaningful number left bare"). (a) The view mode
   `ds49F3` is compared with 1, 2, 3 and 4 as bare numbers in RunItemMenu (ovl19:0FA4, 0FAB, 0FB2, 10EB, 111A)
   and with a bare 5 three times in ViewSelectedCharacter (0ABA, 0BEA, 0D09), while
@@ -58,7 +58,7 @@ Severity: must-fix (blocks review-pass), should-fix, note. When the decompiler f
   `B84` test `ComputerRunThreshold = $7F` and UseItem names a different `$80` `AffectFlag`. Give the
   `B84` bit one unit-level name (POOLVARS says bit 7 marks a computer-run member, ovl10:0675) and the
   scribe bit of the scroll affects its own (`Affects[n] >= $80`, whitepaper 5.22), so the three uses of
-  `$80` in this unit are not confused with each other.
+  `$80` in this unit are not confused with each other. (fixed in ff13b01)
 - [ ] should-fix JoinItem, RunItemMenu, WouldOverloadInventory: more bare limits. The stack ceiling 255
   (JoinItem, ovl19:19F6 and three more times in the source) is the byte limit of `Count`; `Affects[1] < 2` (19B4) says which
   items may be joined and has no name or explanation beyond the QUIRK; the Halve test `ItemCountC7 < 16`
