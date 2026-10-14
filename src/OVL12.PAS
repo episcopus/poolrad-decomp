@@ -76,7 +76,7 @@ procedure StartBloodDrain(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure HoldWeakTargetFast(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ReviveOrRetryRevival(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure FireAttackTargetFor2d10(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e66;
+procedure AcidAttackTargetFor1d4(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e67;
 procedure ovl12_e68;
 procedure ovl12_fn_1BD7;
@@ -177,6 +177,7 @@ const
   ColdSaveBonus = 3;            { what a cold hit adds to SaveRoll (ovl12:03E1) }
   KindFire = 1;                 { the DamageKind bit of fire damage (POOLVARS DamageKind: 1 fire) }
   KindMagic = 8;                { the DamageKind bit of magical damage (POOLVARS DamageKind: bit 3 magic) }
+  KindAcid = $10;               { the DamageKind of acid damage (POOLVARS DamageKind: $10 acid) }
   FireSaveBonus = 3;            { what a fire hit adds to SaveRoll (ovl12:06E4) }
   FireReductionPerDie = 2;      { what each die of the last roll takes off fire damage (ovl12:1490) }
   FireProtectionSaveBonus = 4;  { what the fire damage hook (ovl12:1490) adds to SaveRoll }
@@ -1298,8 +1299,14 @@ begin
   DamageKind := KindFire or KindMagic;
   DealDamage(Who^.Combat^.Target, RollDiceCounted(2, 10), 0, False);
 end;
-{ ovl12:1A4C: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e66; begin end;
+{ ovl12:1A4C. Affect handler that splashes acid on the character Who attacked last (the AffectHandlers shape: Who, Affect
+  and Mode; none is read, ovl24:0000). DamageKind becomes KindAcid, then 1d4 damage goes to Who's combat Target without a
+  save (DealDamage, ovl24:1344). Which affect runs it is not known yet [?]. }
+procedure AcidAttackTargetFor1d4(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  DamageKind := KindAcid;
+  DealDamage(Who^.Combat^.Target, RollDiceCounted(1, 4), 0, False);
+end;
 { ovl12:1AAA: retf 10: 10 bytes of parameters; 28 bytes of locals }
 {@stub} procedure ovl12_e67; begin end;
 { ovl12:1BA8: frame not read }

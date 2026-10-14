@@ -3854,3 +3854,10 @@ kind = "routine"
 why = "ovl12:1A19 sets DamageKind 9 (POOLVARS: 1 fire, bit 3 magic) and deals RollDiceCounted(2, 10) to Who's combat Target with no save through DealDamage (ovl24:1344)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e66"
+new = "AcidAttackTargetFor1d4"
+kind = "routine"
+why = "ovl12:1A4C sets DamageKind to $10 (POOLVARS DamageKind: $10 acid) and deals RollDiceCounted(1, 4) to Who's combat Target with no save through DealDamage (ovl24:1344)"
+date = "2026-10-13"
+
