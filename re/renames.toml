@@ -3721,3 +3721,10 @@ kind = "routine"
 why = "ovl03:2AC1 is the handler of ECL opcode 52 (dispatcher ovl03:2F2D, cmp al,34h): its one operand is passed to ovl20_e1(Amount, 1), which advances the game clock's digit 1 by Amount (ovl20:03D5); the camp rest (RunRestPeriod, ovl20) makes the same call with Index 1 and Amount 5"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl03_fn_2AEB"
+new = "NewLineCommand"
+kind = "routine"
+why = "ovl03:2AEB is the handler of ECL opcode 51 (dispatcher ovl03:2F2D, cmp al,33h): it moves the text cursor GlyphCol/GlyphRow to column 1 of the next row (the POOLVARS comment says GlyphRow is Inc per newline) and clears ds84DF when set"
+date = "2026-10-13"
+

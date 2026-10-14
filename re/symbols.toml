@@ -680,12 +680,12 @@ id = "ovl03:2AEB"
 unit = "ovl03"
 addr = "ovl03:2AEB"
 size = 41
-name = "ovl03_fn_2AEB"
+name = "NewLineCommand"
 signature = ""
 c_name = "ovl03_fn_2AEB"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_2AEB (ovl03:2AEB is the handler of ECL opcode 51 (dispatcher ovl03:2F2D, cmp al,33h): it moves the text cursor GlyphCol/GlyphRow to column 1 of the next row (the POOLVARS comment says GlyphRow is Inc per newline) and clears ds84DF when set); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

@@ -710,7 +710,9 @@ var
   DuelMode: Byte;                 { nonzero during a duel (EndBattle's duel texts); the loader clears it (ovl11:040B) }
   ds84DD: Byte;                   { cleared by the loader (ovl11:0415) }
   ds84DE: Byte;                   { cleared by the loader (ovl11:041A) }
-  ds84DF: Byte;                   { cleared by the loader (ovl11:041F) }
+  { cleared by the loader (ovl11:041F) and, when set, by ECL command 51 (NewLineCommand, ovl03:2AEB);
+    meaning unknown }
+  ds84DF: Byte;
   { ds84E0: set while a close-up picture is up (ShowEncounterPicture, ShowCloseUpCommand ovl03:0856). }
   ds84E0: Byte;                   { close-up picture up; cleared by the loader (ovl11:0424) }
   { ds84E3: set when ShowEncounterPicture loads the 3D sprite; ShowCloseUpCommand (ovl03:0856) clears it. }

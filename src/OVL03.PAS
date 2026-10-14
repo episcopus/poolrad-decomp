@@ -47,7 +47,7 @@ procedure PauseCommand;
 procedure DamagePartyCommand;
 procedure RedrawAreaViewCommand;
 procedure PassTimeCommand;
-procedure ovl03_fn_2AEB;
+procedure NewLineCommand;
 procedure ovl03_fn_2B14;
 procedure ovl03_fn_2B33;
 procedure ovl03_fn_2B7E;
@@ -1614,8 +1614,25 @@ begin
   Amount := OperandValue(Amount);
   ovl20_e1(Amount, 1);
 end;
-{ ovl03:2AEB: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl03_fn_2AEB; begin end;
+{ ovl03:2AEB. ECL command 51 (dispatcher ovl03:2F2D, SkippedOpcode 33h): starts a new line of text. The
+  text cursor (GlyphCol, GlyphRow, the glyph position ShowPagedText keeps) goes to column 1 of the next
+  row. ds84DF is cleared when it is set; the cursor moves the same way on both branches, which the
+  original compiles as two branches. Inc(ds49ED) counts the command (see ds49ED). }
+procedure NewLineCommand;
+begin
+  Inc(ds49ED);
+  if ds84DF <> 0 then
+  begin
+    GlyphCol := 1;
+    Inc(GlyphRow);
+    ds84DF := 0;
+  end
+  else
+  begin
+    GlyphCol := 1;
+    Inc(GlyphRow);
+  end;
+end;
 { ovl03:2B14: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl03_fn_2B14; begin end;
 { ovl03:2B33: retf 0: 0 bytes of parameters; 256 bytes of locals }
