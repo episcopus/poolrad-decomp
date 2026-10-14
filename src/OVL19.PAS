@@ -11,8 +11,7 @@ procedure ViewSelectedCharacter(var Done: Byte);
 function CanGiveUpItem(Item: PMenuLine): Boolean;
 procedure RunItemMenu(var Done: Byte);
 procedure ReadyItem(Item: PMenuLine);
-procedure ovl19_fn_1734(Item: PMenuLine);
-procedure ovl19_fn_1758;
+procedure TradeItem(Item: PMenuLine);
 procedure ovl19_fn_17ED(Item: PMenuLine);
 procedure ovl19_fn_189D(Item: PMenuLine);
 procedure ovl19_e8(P: Pointer; var B: Byte);
@@ -396,7 +395,7 @@ end;
   Drop (D), Halve (H), Join (J), Sell (S) and Id (I), runs the chosen action and repeats until Escape or E
   is pressed, or Done is set. Ready runs ReadyItem. Use needs a readied item ("Must be Readied" otherwise)
   that ovl22_e6 accepts, or one with Affects[2] above 0 and Affects[3] below $80; then it runs ovl19_e8.
-  Trade and Sell ask CanGiveUpItem, then run ovl19_fn_1734 or ovl19_fn_1CEE. Drop asks CanGiveUpItem,
+  Trade and Sell ask CanGiveUpItem, then run TradeItem or ovl19_fn_1CEE. Drop asks CanGiveUpItem,
   shows "Your <item> will be gone forever" and then "Drop It?", and on Y calls res12_fn_1509 with
   SelectedCharacter and the item. Halve, Join and Id run ovl19_fn_17ED, ovl19_fn_189D and ovl19_fn_1F52.
   Done: the stop flag shared with ViewSelectedCharacter; ovl19_e8 may set it. The item menu is drawn
@@ -494,7 +493,7 @@ begin
           'T':
             begin
               if CanGiveUpItem(Selected) then
-                ovl19_fn_1734(Selected)
+                TradeItem(Selected)
               else
                 Key := ' ';
               DrawItemWindow := True;
@@ -619,10 +618,34 @@ begin
     end;
   end;
 end;
-{ ovl19:1734: frame not read }
-{@stub} procedure ovl19_fn_1734(Item: PMenuLine); begin end;
-{ ovl19:1758: retf 4: 4 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl19_fn_1758; begin end;
+{ ovl19:1734. The Trade action of the item menu (RunItemMenu's T key, after CanGiveUpItem; ovl19:0EF8).
+  Redraws the screen, then asks "Trade with Whom?" (res12_fn_2C48), which picks the recipient into Recipient,
+  starting from the viewed character (ds471A). Nothing is traded when no member is picked. Otherwise ds471A
+  is set to the recipient. When WouldOverloadInventory refuses the recipient, "Overloaded" is shown and the
+  item stays. Otherwise the item goes to res12_fn_15F7 with the recipient and to res12_fn_1509 with
+  SelectedCharacter (the Drop action makes the same res12_fn_1509 call), and the recipient's carried weight
+  is recalculated (res12_fn_0BB8). Parameter: Item, the item traded. Globals: ds471A (the viewed character),
+  SelectedCharacter (the giver). Side effects: the screen (res12_fn_27D9) and the messages. }
+procedure TradeItem(Item: PMenuLine);
+var
+  Recipient: PCharacter;
+begin
+  Recipient := ds471A;
+  res12_fn_27D9;
+  res12_fn_2C48('Trade with Whom?', 1, Pointer(Recipient));
+  if Recipient <> nil then
+  begin
+    ds471A := Recipient;
+    if WouldOverloadInventory(Recipient, Item) then
+      res12_fn_1693('Overloaded')
+    else
+    begin
+      res12_fn_15F7(Recipient, Item);
+      res12_fn_1509(SelectedCharacter, Item);
+      res12_fn_0BB8(Recipient);
+    end;
+  end;
+end;
 { ovl19:17ED: retf 4: 4 bytes of parameters; 24 bytes of locals }
 {@stub} procedure ovl19_fn_17ED(Item: PMenuLine); begin end;
 { ovl19:189D: retf 4: 4 bytes of parameters; 14 bytes of locals }

@@ -30,7 +30,7 @@ procedure res12_fn_1325;
 function res12_fn_13AB(Who: Pointer): Integer;
 procedure res12_fn_148B(Spell: Byte);
 procedure res12_fn_1509(Who: Pointer; Item: Pointer);
-procedure res12_fn_15F7;
+procedure res12_fn_15F7(Who: Pointer; Item: Pointer);
 procedure res12_fn_1693(Text: String40);
 procedure res12_fn_16EC(Who: Pointer; Text: string; A, B: Byte);
 procedure res12_fn_17E3;
@@ -62,7 +62,7 @@ procedure res12_fn_27D9;
 procedure res12_fn_290B;
 procedure res12_fn_2B5E;
 procedure res12_fn_2B88;
-procedure res12_fn_2C48;
+procedure res12_fn_2C48(Prompt: String40; Mode: Byte; var Who: Pointer);
 function res12_fn_2E03(Who: Pointer): Boolean;
 function res12_fn_2E46(Who: Pointer): Boolean;
 function res12_fn_2E8B(Who: Pointer; var W: Pointer): Byte;
@@ -124,7 +124,7 @@ implementation
 { 00BA:1509: retf 8: 8 bytes of parameters; 44 bytes of locals }
 {@stub} procedure res12_fn_1509(Who: Pointer; Item: Pointer); begin end;
 { 00BA:15F7: retf 8: 8 bytes of parameters; 8 bytes of locals }
-{@stub} procedure res12_fn_15F7; begin end;
+{@stub} procedure res12_fn_15F7(Who: Pointer; Item: Pointer); begin end;
 { 00BA:1693: retf 4; copies a string[40] value (limit $28). ovl04 passes 'Not enough money.'. }
 {@stub} procedure res12_fn_1693(Text: String40); begin end;
 { 00BA:16EC: retf 12. ovl04 passes the selected character, a message and two bytes (0, 0 or 0, 1). }
@@ -190,7 +190,7 @@ implementation
 { 00BA:2B88: retf 0: 0 bytes of parameters; 2 bytes of locals }
 {@stub} procedure res12_fn_2B88; begin end;
 { 00BA:2C48: retf 10: 10 bytes of parameters; 602 bytes of locals }
-{@stub} procedure res12_fn_2C48; begin end;
+{@stub} procedure res12_fn_2C48(Prompt: String40; Mode: Byte; var Who: Pointer); begin end;
 { 00BA:2E03: retf 4: 4 bytes of parameters; 2 bytes of locals }
 {@stub} function res12_fn_2E03(Who: Pointer): Boolean; begin end;
 { 00BA:2E46: retf 4: 4 bytes of parameters; 2 bytes of locals }
