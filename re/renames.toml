@@ -3546,3 +3546,10 @@ kind = "routine"
 why = "ECL command 19 (dispatcher ovl03:2F2D, opcode 13h): pops the script's return stack (ReturnStack, 6-byte entries with ReturnPC and Next) into EclPC, the return that ScriptGosub's entries call for (ovl03:0A9F, matched)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl03_fn_0AED"
+new = "ComparePairsCommand"
+kind = "routine"
+why = "ECL command 20 (dispatcher ovl03:2F2D, opcode 14h): compares operands 1 with 2 and 3 with 4 as words and sets CompareFlags[0] (equal) or [1] (not equal), the flags the conditional opcodes 16h to 1Bh (ovl03:0B52) test (ovl03:0AED, matched)"
+date = "2026-10-13"
+

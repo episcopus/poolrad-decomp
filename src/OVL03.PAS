@@ -21,10 +21,7 @@ procedure ReadNumberCommand;
 procedure ReadStringCommand;
 procedure ShowTextCommand;
 procedure ReturnCommand;
-procedure ovl03_fn_0AED;
-procedure ovl03_fn_0B39;
-procedure ovl03_fn_0B43;
-procedure ovl03_fn_0B48;
+procedure ComparePairsCommand;
 procedure ovl03_fn_0B52;
 procedure ovl03_fn_0BD1;
 procedure ovl03_fn_0C74;
@@ -555,14 +552,27 @@ begin
     ReturnStack := ReturnPrev;
   end;
 end;
-{ ovl03:0AED: frame not read }
-{@stub} procedure ovl03_fn_0AED; begin end;
-{ ovl03:0B39: frame not read }
-{@stub} procedure ovl03_fn_0B39; begin end;
-{ ovl03:0B43: frame not read }
-{@stub} procedure ovl03_fn_0B43; begin end;
-{ ovl03:0B48: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl03_fn_0B48; begin end;
+{ ovl03:0AED. ECL command 20 (dispatcher ovl03:2F2D, SkippedOpcode $14): compares two pairs of word
+  operands. The six CompareFlags are cleared, the four operands are read as words (OperandValue),
+  and operand 1 is compared with operand 2 and operand 3 with operand 4. When both pairs are equal
+  CompareFlags[0] (=) is set, else CompareFlags[1] (<>). The conditional commands 22 to 27 (the
+  handler at ovl03:0B52) test these flags. Purpose unknown: what the script compares this way (the
+  pairs are not yet traced to game variables). }
+procedure ComparePairsCommand;
+var
+  Values: array[1..4] of Word;
+  I: Byte;
+  Unused: Byte;                 { QUIRK ovl03:0AED: a byte of the frame nothing uses }
+begin
+  FillChar(CompareFlags, SizeOf(CompareFlags), 0);
+  DecodeOperands(4);
+  for I := 1 to 4 do
+    Values[I] := OperandValue(I);
+  if (Values[1] = Values[2]) and (Values[3] = Values[4]) then
+    CompareFlags[0] := 1
+  else
+    CompareFlags[1] := 1;
+end;
 { ovl03:0B52: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl03_fn_0B52; begin end;
 { ovl03:0BD1: retf 0: 0 bytes of parameters; 260 bytes of locals }
