@@ -420,8 +420,13 @@ begin
       ds6C91[I] := nil;
   ApplySpellToTargets(ds681B, 0, 0, 0, 0, Message);
 end;
-{ ovl22:100F: retf 0: 0 bytes of parameters; 12 bytes of locals }
-{@stub} procedure CastBless; begin end;
+{ ovl22:100F (e11). Cast handler of spell 1, Bless: applies the current spell ds681B to the party
+  side of the selected character (SelectedCharacter^.Side) with the message 'is Blessed'. One of the
+  per-spell handlers in SpellHandlers (SpellHandlers[1], filled by ovl22_e10). }
+procedure CastBless;
+begin
+  ApplySpellToSide(SelectedCharacter^.Side, 'is Blessed');
+end;
 { ovl22:1040: retf 0: 0 bytes of parameters; 10 bytes of locals }
 {@stub} procedure CastCurse; begin end;
 { ovl22:106B: retf 0: 0 bytes of parameters; 0 bytes of locals }
