@@ -22,7 +22,7 @@ procedure ReadStringCommand;
 procedure ShowTextCommand;
 procedure ReturnCommand;
 procedure ComparePairsCommand;
-procedure ovl03_fn_0B52;
+procedure RunIfCompared;
 procedure ovl03_fn_0BD1;
 procedure ovl03_fn_0C74;
 procedure ovl03_fn_0D7B;
@@ -84,6 +84,14 @@ const
   OpSub = 5;
   OpDiv = 6;
   OpMul = 7;
+  { The opcodes of the conditional commands (ovl03:0B52): each runs the next command only when the
+    CompareFlags entry of its comparison is set. }
+  OpIfEqual = 22;
+  OpIfNotEqual = 23;
+  OpIfLess = 24;
+  OpIfGreater = 25;
+  OpIfLessOrEqual = 26;
+  OpIfGreaterOrEqual = 27;
   { The bit of ECL command 10's operand that removes the member from the party, and the mask of
     the party position (ovl03:02E0). }
   RemoveMemberBit = $80;
@@ -573,8 +581,23 @@ begin
   else
     CompareFlags[1] := 1;
 end;
-{ ovl03:0B52: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl03_fn_0B52; begin end;
+{ ovl03:0B52. ECL commands 22 to 27 (dispatcher ovl03:2F2D, SkippedOpcode OpIfEqual to
+  OpIfGreaterOrEqual): a conditional. EclPC moves past the opcode, then the next command runs only
+  when its comparison flag in CompareFlags is set (=, <>, <, >, <=, >= in that order, set by
+  CompareCommand, ComparePairsCommand and the comparison routines of OVL07). When the flag is clear,
+  SkipCommand steps over the next command. Any other opcode only moves EclPC. }
+procedure RunIfCompared;
+begin
+  Inc(EclPC);
+  case SkippedOpcode of
+    OpIfEqual: if CompareFlags[0] = 0 then SkipCommand;
+    OpIfNotEqual: if CompareFlags[1] = 0 then SkipCommand;
+    OpIfLess: if CompareFlags[2] = 0 then SkipCommand;
+    OpIfGreater: if CompareFlags[3] = 0 then SkipCommand;
+    OpIfLessOrEqual: if CompareFlags[4] = 0 then SkipCommand;
+    OpIfGreaterOrEqual: if CompareFlags[5] = 0 then SkipCommand;
+  end;
+end;
 { ovl03:0BD1: retf 0: 0 bytes of parameters; 260 bytes of locals }
 {@stub} procedure ovl03_fn_0BD1; begin end;
 { ovl03:0C74: frame not read }

@@ -342,12 +342,12 @@ id = "ovl03:0B52"
 unit = "ovl03"
 addr = "ovl03:0B52"
 size = 127
-name = "ovl03_fn_0B52"
+name = "RunIfCompared"
 signature = ""
 c_name = "ovl03_fn_0B52"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_0B52 (ECL commands 22 to 27 (dispatcher ovl03:2F2D): each runs the next command only when the CompareFlags entry of its comparison is set, else SkipCommand steps over it (ovl03:0B52, matched); the flags are the ones CompareCommand and ComparePairsCommand set); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
