@@ -381,12 +381,12 @@ id = "ovl03:0DEF"
 unit = "ovl03"
 addr = "ovl03:0DEF"
 size = 111
-name = "ovl03_fn_0DEF"
+name = "BitwiseCommand"
 signature = ""
 c_name = "ovl03_fn_0DEF"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_0DEF (ECL commands 47 (and) and 48 (or) (dispatcher ovl03:2F2D, opcodes 2Fh and 30h): the byte result of operands 1 and 2 is compared with 0 (CompareWords) and written to operand 3 (ovl03:0DEF, matched)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

@@ -25,7 +25,7 @@ procedure ComparePairsCommand;
 procedure RunIfCompared;
 procedure StartEclBlock;
 procedure LoadAreaGraphics;
-procedure ovl03_fn_0DEF;
+procedure BitwiseCommand;
 procedure ovl03_fn_0E5E;
 procedure ovl03_fn_0EBC;
 procedure ovl03_fn_0F08;
@@ -91,6 +91,9 @@ const
   OpIfGreater = 25;
   OpIfLessOrEqual = 26;
   OpIfGreaterOrEqual = 27;
+  { The opcodes of the bitwise commands (ovl03:0DEF). }
+  OpAnd = 47;
+  OpOr = 48;
   { The bit of ECL command 10's operand that removes the member from the party, and the mask of
     the party position (ovl03:02E0). }
   RemoveMemberBit = $80;
@@ -677,8 +680,28 @@ begin
     ds4432 := 0;
   end;
 end;
-{ ovl03:0DEF: retf 0: 0 bytes of parameters; 8 bytes of locals }
-{@stub} procedure ovl03_fn_0DEF; begin end;
+{ ovl03:0DEF. ECL commands 47 and 48 (dispatcher ovl03:2F2D, SkippedOpcode OpAnd or OpOr): the
+  bitwise and (47) or or (48) of the values of operands 1 and 2, kept as a byte. CompareWords compares
+  that byte with 0, which sets the flags of CompareFlags for the conditional commands, and the byte is
+  written with WriteVmWord to the script address operand 3 names. }
+procedure BitwiseCommand;
+var
+  Target: Word;
+  Second: Word;
+  First: Word;
+  Combined: Byte;
+begin
+  DecodeOperands(3);
+  First := OperandValue(1);
+  Second := OperandValue(2);
+  Target := MakeWord(OperandLow[3], OperandHigh[3]);
+  if SkippedOpcode = OpAnd then
+    Combined := First and Second
+  else
+    Combined := First or Second;
+  CompareWords(0, Combined);
+  WriteVmWord(Target, Combined);
+end;
 { ovl03:0E5E: retf 0: 0 bytes of parameters; 10 bytes of locals }
 {@stub} procedure ovl03_fn_0E5E; begin end;
 { ovl03:0EBC: retf 0: 0 bytes of parameters; 8 bytes of locals }
