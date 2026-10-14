@@ -10,8 +10,7 @@ procedure ShowAbilityScore(Index: ShortInt; Highlight: Boolean);
 procedure ViewSelectedCharacter(var Done: Byte);
 function CanGiveUpItem(Item: PMenuLine): Boolean;
 procedure RunItemMenu(var Done: Byte);
-procedure ovl19_e7(P: Pointer);
-procedure ovl19_fn_1513;
+procedure ReadyItem(Item: PMenuLine);
 procedure ovl19_fn_1734(Item: PMenuLine);
 procedure ovl19_fn_1758;
 procedure ovl19_fn_17ED(Item: PMenuLine);
@@ -38,7 +37,7 @@ function CharacterMoneyValueInGold(Who: PCharacter): LongInt;
 function ChooseSpellFromList(SpellListKind, DisplayMode: Byte; var Choice: Word;
   var Listed: Byte): Byte;
 implementation
-uses RES06, RES09, RES12, OVL22, OVL25, OVL28, OVL31;
+uses RES06, RES09, RES12, OVL22, OVL24, OVL25, OVL28, OVL31;
 
 type
   { The sheet reads three TCharacter bytes as signed table indexes (cwde at ovl19:00C6, 0198 and 04DE). }
@@ -395,7 +394,7 @@ end;
 { ovl19:0EF8. The Items command of the View prompt (ViewSelectedCharacter's I key; whitepaper 5.4). It
   lists the items of SelectedCharacter with ChooseFromList under the words Ready (R), Use (U), Trade (T),
   Drop (D), Halve (H), Join (J), Sell (S) and Id (I), runs the chosen action and repeats until Escape or E
-  is pressed, or Done is set. Ready runs ovl19_e7. Use needs a readied item ("Must be Readied" otherwise)
+  is pressed, or Done is set. Ready runs ReadyItem. Use needs a readied item ("Must be Readied" otherwise)
   that ovl22_e6 accepts, or one with Affects[2] above 0 and Affects[3] below $80; then it runs ovl19_e8.
   Trade and Sell ask CanGiveUpItem, then run ovl19_fn_1734 or ovl19_fn_1CEE. Drop asks CanGiveUpItem,
   shows "Your <item> will be gone forever" and then "Drop It?", and on Y calls res12_fn_1509 with
@@ -477,7 +476,7 @@ begin
         Selected);
       if Selected <> nil then
         case Key of
-          'R': ovl19_e7(Selected);
+          'R': ReadyItem(Selected);
           'U':
             if not Selected^.Readied then
             begin
@@ -529,10 +528,97 @@ begin
       Redraw := 1;
   end;
 end;
-{ ovl19:14D0: frame not read }
-{@stub} procedure ovl19_e7(P: Pointer); begin end;
-{ ovl19:1513: retf 4: 4 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl19_fn_1513; begin end;
+{ ovl19:14D0. The Ready action of the item menu (RunItemMenu's R key, ovl19:0EF8) and of the AI's item step
+  (ovl09:13CA): readies Item for SelectedCharacter, or unreadies it when it is readied. Readying runs three
+  groups of checks and the last one that fails sets Reason: the hands (ds100 plus the item's
+  RaceRow[ItemType][1] above MaxHands gives "Your hands are full!", not shown in combat when the computer
+  fights for the character, Quick), the body slot RaceRow[ItemType][0] (an item already in it gives "already
+  using <name>"; the kinds $49 and $1C also check slots 11 and 12), and the classes RaceRow[ItemType][13]
+  allows (none of them in the character's PadB0 gives "Wrong Class"). When every check passes, the item is
+  marked Readied and its affect is applied: CallAffectHandler with the item's Affects[3] byte when that byte
+  is above $7F. Unreadying a readied item refuses a cursed one ("It's Cursed") and otherwise clears Readied
+  and removes the affect. The routine never stores the item in SlotItems.
+  Parameter: Item, the item. Globals: SelectedCharacter, ds49F3 (the view mode, 5 for combat), RaceRow
+  (indexed by item type, not by race). Side effects: messages (res12_fn_1693); the "already using" case
+  first redraws the slot item (res12_fn_0442). QUIRK ovl19:15BB: slot 9 is tested at SlotItems[10]
+  (+$F4) but the message names SlotItems[9] (+$F0). }
+procedure ReadyItem(Item: PMenuLine);
+const
+  ViewCombat = 5;
+  MaxHands = 2;
+  LastBodySlot = 8;
+  QuirkSlot = 9;
+  ReadyOk = 0;
+  ReadyWrongClass = 1;
+  ReadySlotUsed = 2;
+  ReadyHandsFull = 3;
+var
+  AffectOn: Boolean;            { the item's Affects[3] byte is above $7F: it has an affect }
+  Reason: Byte;                 { ReadyOk, or the check that failed }
+  Slot: Byte;                   { the body slot of the item: RaceRow[ItemType][0], or 11 and 12 for $49 and $1C }
+  Character: PCharacter;        { SelectedCharacter on entry }
+begin
+  AffectOn := Item^.Affects[3] > $7F;
+  Character := SelectedCharacter;
+  if Item^.Readied then
+  begin
+    if Item^.Cursed then
+      res12_fn_1693('It''s Cursed')
+    else
+    begin
+      Item^.Readied := False;
+      if AffectOn then
+        CallAffectHandler(Item^.Affects[3], Character, PAffect(Item), 1);
+    end;
+  end
+  else
+  begin
+    Reason := ReadyOk;
+    if Character^.ds100 + RaceRow[Item^.ItemType][1] > MaxHands then
+      Reason := ReadyHandsFull;
+    Slot := RaceRow[Item^.ItemType][0];
+    case Slot of
+      0..LastBodySlot:
+        if Character^.SlotItems[ShortInt(Slot)] <> nil then
+          Reason := ReadySlotUsed;
+      QuirkSlot:
+        if Character^.SlotItems[10] <> nil then
+          Reason := ReadySlotUsed;
+    end;
+    if Item^.ItemType = $49 then
+      if Character^.SlotItems[11] <> nil then
+      begin
+        Reason := ReadySlotUsed;
+        Slot := 11;
+      end;
+    if Item^.ItemType = $1C then
+      if Character^.SlotItems[12] <> nil then
+      begin
+        Reason := ReadySlotUsed;
+        Slot := 12;
+      end;
+    if (RaceRow[Item^.ItemType][13] and Character^.PadB0) = 0 then
+      Reason := ReadyWrongClass;
+    case Reason of
+      ReadyOk:
+        begin
+          Item^.Readied := True;
+          if AffectOn then
+            CallAffectHandler(Item^.Affects[3], Character, PAffect(Item), 0);
+        end;
+      ReadyWrongClass:
+        res12_fn_1693('Wrong Class');
+      ReadySlotUsed:
+        begin
+          res12_fn_0442(LongInt(Character), Character^.SlotItems[ShortInt(Slot)], 0, 0, 0, 0);
+          res12_fn_1693('already using ' + Character^.SlotItems[ShortInt(Slot)]^.Text);
+        end;
+      ReadyHandsFull:
+        if (ds49F3 <> ViewCombat) or (Character^.Quick = 0) then
+          res12_fn_1693('Your hands are full!');
+    end;
+  end;
+end;
 { ovl19:1734: frame not read }
 {@stub} procedure ovl19_fn_1734(Item: PMenuLine); begin end;
 { ovl19:1758: retf 4: 4 bytes of parameters; 0 bytes of locals }

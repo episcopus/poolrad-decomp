@@ -3448,3 +3448,10 @@ kind = "routine"
 why = "the Items command of the View prompt: the Ready, Use, Trade, Drop, Halve, Join, Sell and Id menu over the carried items (ovl19:0EF8; whitepaper 5.4); called by ViewSelectedCharacter for I and by the Use command (ovl08:031A)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl19_e7"
+new = "ReadyItem"
+kind = "routine"
+why = "ovl19:14D0 is the Ready action: RunItemMenu's R key (ovl19:0EF8) and the AI's item step (ovl09 calls it on SlotItems[0], SlotItems[1] and its picks). It marks the item Readied and applies its affect (CallAffectHandler, Affects[3] above $7F), or refuses with 'Wrong Class', 'already using <name>' or 'Your hands are full!' (RaceRow[ItemType] rows 0, 1 and 13 and PadB0)"
+date = "2026-10-13"
+

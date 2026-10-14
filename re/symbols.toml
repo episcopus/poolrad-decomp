@@ -8703,27 +8703,14 @@ evidence = ["prologue"]
 id = "ovl19:14D0"
 unit = "ovl19"
 addr = "ovl19:14D0"
-size = 67
-name = "ovl19_e7"
-signature = "procedure ovl19_e7(P: Pointer)"
+size = 584
+name = "ReadyItem"
+signature = "procedure ReadyItem(Item: PMenuLine)"
 c_name = "ovl19_e7"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl19_e7 (ovl19:14D0 is the Ready action: RunItemMenu's R key (ovl19:0EF8) and the AI's item step (ovl09 calls it on SlotItems[0], SlotItems[1] and its picks). It marks the item Readied and applies its affect (CallAffectHandler, Affects[3] above $7F), or refuses with 'Wrong Class', 'already using <name>' or 'Your hands are full!' (RaceRow[ItemType] rows 0, 1 and 13 and PadB0)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl19:1513"
-unit = "ovl19"
-addr = "ovl19:1513"
-size = 545
-name = "ovl19_fn_1513"
-signature = ""
-c_name = "ovl19_fn_1513"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl19:1734"

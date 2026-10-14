@@ -109,6 +109,42 @@ lesson = "DrawTextAt(Col, Row, Color, res12_fn_1037(x)) pushes the callee's resu
 evidence = ["src/OVL19.PAS#ShowCharacterSheet", "src/OVL19.PAS#ShowAbilityScore", "docs/design/WHITEPAPER.md#2.2"]
 
 [[lesson]]
+id = "locals-first-declared-nearest-bp"
+confidence = "V"
+units = ["*"]
+tags = ["frame", "locals", "layout"]
+title = "The first declared local sits nearest BP; the last one is the deepest"
+lesson = "ReadyItem declares AffectOn, Reason, Slot (Byte) and then Character (a pointer): the compiler places AffectOn at [bp-1], Reason at [bp-2], Slot at [bp-3] and Character at [bp-7..-4]. Declaring Character first put it at [bp-4..-1] and moved AffectOn to [bp-5], which the matcher reported at the first store. The order to write is the reverse of the frame's addresses."
+evidence = ["src/OVL19.PAS#ReadyItem", "build/packets/ovl19_14D0.md"]
+
+[[lesson]]
+id = "byte-case-then-signed-index"
+confidence = "V"
+units = ["*"]
+tags = ["compiler", "case", "signed", "index", "cwde"]
+title = "A Byte case loads the value once and compares it unsigned; a ShortInt cast gives the cwde index"
+lesson = "`case Slot of 0..8: ...; 9: ...; end` on a Byte compiles to one `mov al,[bp-3]` and unsigned `cmp al,0; jb` / `cmp al,8; ja` range tests, then `cmp al,9`. An `if (Slot >= 0) and (Slot <= 8)` with the same Byte, or a ShortInt Slot, compiled to memory compares with signed jl and jg (a different shape). The array index that must be sign-extended is written `SlotItems[ShortInt(Slot)]`: it gives `mov al,[bp-3]; cwde`, the same as the original, while the range test stays unsigned."
+evidence = ["src/OVL19.PAS#ReadyItem", "build/packets/ovl19_14D0.md"]
+
+[[lesson]]
+id = "reason-code-case-chain"
+confidence = "V"
+units = ["*"]
+tags = ["compiler", "case", "branch-shape"]
+title = "A case on a result code loads it once: cmp al,k with a jne chain, not repeated memory compares"
+lesson = "The original tests a message code with `mov al,[bp-2]; cmp al,0; jne`, then `cmp al,1; jne`, `cmp al,2; jne`, `cmp al,3; jne` with a jmp to the end after each branch. A chain of `if Reason = k then ... else if` compiled to `cmp byte [bp-2],k` on every test (a different shape at every test). Writing the dispatch as one `case Reason of` with the constants as labels matches."
+evidence = ["src/OVL19.PAS#ReadyItem"]
+
+[[lesson]]
+id = "cross-unit-call-needs-uses"
+confidence = "V"
+units = ["*"]
+tags = ["compiler", "uses", "units"]
+title = "Calling a routine of another unit needs that unit in the uses clause"
+lesson = "CallAffectHandler is declared in OVL24 and was not in OVL19's uses clause: the compile failed with Error 3 (Unknown identifier) at its first call. Adding OVL24 to the implementation uses clause (no cycle: OVL24 does not use OVL19) matches. A PMenuLine argument for CallAffectHandler's PAffect parameter needs the cast PAffect(Item), which compiles to the same push."
+evidence = ["src/OVL19.PAS#ReadyItem", "src/OVL24.PAS"]
+
+[[lesson]]
 id = "string-table-from-the-image"
 confidence = "V"
 units = ["ovl19"]

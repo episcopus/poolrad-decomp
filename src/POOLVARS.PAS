@@ -313,7 +313,7 @@ type
       compares the item it picked with slots 0 and 1 and checks their Cursed flag, ovl09:0B3C and
       ovl13 read RaceRow[ItemType] of slot 0, and ovl19 indexes the slots by RaceRow[ItemType][0]
       and reads the slots of item types $49 and $1C at +$F8 and +$FC (11 and 12). The writer is
-      not in the overlays (ovl19_e7?). }
+      not in the overlays: ReadyItem (ovl19:14D0) does not store it. }
     SlotItems: array[0..12] of PItem;  { +$CC }
     ds100: Byte;                  { +$100: an AI counter: ScoreTarget refuses a row[1] above 3 minus
                                     it, ovl09:13CA lowers it by RaceRow[item type][1] per slot item
