@@ -16908,12 +16908,12 @@ id = "00BA:23DB"
 unit = "res12"
 addr = "00BA:23DB"
 size = 88
-name = "res12_fn_23DB"
+name = "RecountCombatSides"
 signature = ""
 c_name = "res12_fn_23DB"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_23DB (00BA:23DB clears the two per-side counts ds6814Sides and recounts them by walking the character list ds5D96, adding one per member with Flag10D set to its side's count; RunCombat and EndCombatRound call it each round); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]

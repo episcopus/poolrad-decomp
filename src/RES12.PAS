@@ -58,7 +58,7 @@ function HasAffect(Who: Pointer; AffectId: Byte; var Affect: Pointer): Boolean;
 procedure ApplyDamage(Who: Pointer; Damage: Byte);
 procedure ShowHealResult(Who: Pointer);
 function OpposingSide(Who: Pointer): Byte;
-procedure res12_fn_23DB;
+procedure RecountCombatSides;
 function res12_fn_2433(P: Pointer; B: Byte): Byte;
 function res12_fn_255B(Who, Target: Pointer): Byte;
 procedure res12_fn_2571;
@@ -172,6 +172,7 @@ const
   StatusDead = 6;
   { TCharacter.Side values: the party is 0, the monsters 1 (SetQuickCombat compares them). }
   SideParty = 0;
+  SideMonsters = 1;
 
 { 00BA:0000. Applies the readied weapon to Who's attack values; RecalcCombatValues calls it after it
   has copied the character's base values. With no readied weapon (SlotItems[0], +$CC) it does
@@ -1249,8 +1250,25 @@ begin
   else
     OpposingSide := 0;
 end;
-{ 00BA:23DB: retf 0: 0 bytes of parameters; 4 bytes of locals }
-{@stub} procedure res12_fn_23DB; begin end;
+{ 00BA:23DB. Recounts the living combatants of each side: it clears both per-side counts
+  (ds6814Sides) and walks the character list (ds5D96) adding one for every member that takes part
+  in combat (Flag10D, +$10D, set) to its own side's count. RunCombat and EndCombatRound call it at
+  the start of a battle and each round; PlaceAllCombatants and ReviveCombatant also call it.
+  Globals: ds5D96 (read), ds6814Sides (write). }
+procedure RecountCombatSides;
+var
+  Member: PCharacter;
+begin
+  ds6814Sides[SideParty] := 0;
+  ds6814Sides[SideMonsters] := 0;
+  Member := PCharacter(ds5D96);
+  while Member <> nil do
+  begin
+    if Member^.Flag10D <> 0 then
+      Inc(ds6814Sides[ShortInt(Member^.Side)]);
+    Member := Member^.Next;
+  end;
+end;
 { 00BA:2433: retf 6: 6 bytes of parameters; 6 bytes of locals }
 {@stub} function res12_fn_2433(P: Pointer; B: Byte): Byte; begin end;
 { 00BA:255B: frame not read }

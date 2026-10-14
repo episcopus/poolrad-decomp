@@ -881,7 +881,7 @@ var
   PlacedCount: Byte;            { counted, never read }
   DroppedCount: Byte;           { counted, never read }
 begin
-  res12_fn_23DB;
+  RecountCombatSides;
   DroppedCount := 0;
   PlacedCount := 0;
   for Index := 1 to CombatantClearLoopLast do CombatantTable[Index].Kind := 0;

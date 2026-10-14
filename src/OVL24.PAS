@@ -800,7 +800,7 @@ begin
     else
       Msg := 'gets back up';
     ShowCharacterMessage(Who, Msg, $A, 1);
-    res12_fn_23DB;
+    RecountCombatSides;
     ReviveCombatant := True;
   end
   else

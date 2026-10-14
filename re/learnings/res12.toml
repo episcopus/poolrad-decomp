@@ -89,3 +89,12 @@ tags = ["set", "in", "System_SetIn", "codegen", "jump", "boolean"]
 title = "x in [set] calls System_SetIn and jumps je to the else; not (x in [set]) jumps jne to its else"
 lesson = "For `if X in [set] then A else B` TP6 emits `push X; mov di,<set>; push cs; push di; lcall System_SetIn; je B` (System_SetIn returns AL=1 when X is in the set, so je = not-in-set -> else). For `if not (X in [set]) then A else B` it emits `lcall System_SetIn; jne B`. The set constant (32 bytes) sits in the code segment before the routine. res12:2228's `if not (Status in [0,1])` matched with the jne form (00BA:22DC). Probe: tools/re/tp_idioms/res12/PRB24.PAS."
 evidence = ["src/RES12.PAS#ApplyDamage", "re/symbols.toml#00BA:2228", "tools/re/tp_idioms/res12/PRB24.PAS"]
+
+[[lesson]]
+id = "res12-byte-function-direct-result"
+confidence = "V"
+units = ["res12", "*"]
+tags = ["function", "result", "byte", "frame", "codegen"]
+title = "A Byte function assigning its result directly uses [bp-1] and sub sp,2; assigning from a local differs"
+lesson = "For a Byte function that assigns resNN := 1 / := 0 directly, TP6 emits sub sp,2 with the result at [bp-1] (`mov byte ptr [bp-1],1` .. `mov al,[bp-1]`). Assigning from a separate var (resNN := R with R a local) puts R at [bp-2] and adds a copy: `mov al,[bp-2]; mov [bp-1],al; mov al,[bp-1]`. res12:23B7 matched with the direct form. Probe: tools/re/tp_idioms/res12/PRB25.PAS."
+evidence = ["src/RES12.PAS#OpposingSide", "re/symbols.toml#00BA:23B7", "tools/re/tp_idioms/res12/PRB25.PAS"]

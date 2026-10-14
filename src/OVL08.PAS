@@ -75,7 +75,7 @@ begin
 end;
 { ovl08:007A. The combat loop. Sets the view mode and DS:6B84 := @ovl13_e14, runs StartBattle,
   then rounds until one side's count (ds6814 or ds6815) is zero or EndCombatRound says so.
-  Each round calls res12_fn_23DB, ovl13_e1 for every combatant on the party list, then turns in
+  Each round calls RecountCombatSides, ovl13_e1 for every combatant on the party list, then turns in
   initiative order (PickNextCombatant, CombatTurn). EndCombat frees the combat data. The byte
   local is unused; it is there so the frame matches. Called by ovl03_fn_179B. }
 procedure RunCombat;
@@ -92,7 +92,7 @@ begin
     Done := 1;
   while Done = 0 do
   begin
-    res12_fn_23DB;
+    RecountCombatSides;
     Who := PCharacter(ds5D96);
     while Who <> nil do
     begin
@@ -340,7 +340,7 @@ begin
     Who := Who^.Next;
   end;
   if BandageDying(0) <> 0 then ShowFlashMessage('Your Teammate is Dying');
-  res12_fn_23DB;
+  RecountCombatSides;
   MoveCombatCursor(CombatMap^.ViewX + 3, CombatMap^.ViewY + 3, $FF, 8);
   if (ds6814 = 0) or (ds6815 = 0) then Done := 1;
   if (ds6814 > 0) and (ds6815 = 0) and (ds49F4 = 0) then

@@ -3651,3 +3651,10 @@ kind = "routine"
 why = "00BA:23B7 returns the side opposite Who's Side (1 for a party member, 0 for a monster); the AI indexes ds6814Sides with it and ShortInt(res12_fn_23B7(Who)) counts Who's enemies"
 date = "2026-10-13"
 
+[[rename]]
+old = "res12_fn_23DB"
+new = "RecountCombatSides"
+kind = "routine"
+why = "00BA:23DB clears the two per-side counts ds6814Sides and recounts them by walking the character list ds5D96, adding one per member with Flag10D set to its side's count; RunCombat and EndCombatRound call it each round"
+date = "2026-10-13"
+
