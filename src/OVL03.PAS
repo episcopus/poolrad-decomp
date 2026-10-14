@@ -1,7 +1,8 @@
 unit OVL03;
-{ Encounter: the command loop of the ECL script interpreter (whitepaper 5.1). DispatchCommand
+{ Encounter: the command loop of the ECL script interpreter (whitepaper 5.1), and the wilderness
+  loop the main program runs after the character menu (RunWilderness, ovl03:32F8). DispatchCommand
   dispatches each command by its opcode (SkippedOpcode) to a handler in this unit; the handlers
-  decode their operands through OVL07 and run them. The other routines are still stubs. }
+  decode their operands through OVL07 and run them. }
 {$A-,O+,F+,S-,R-,G-,I-,L-}
 interface
 uses POOLVARS, RES09, OVL07, OVL16, RES12;
@@ -39,8 +40,7 @@ procedure RunAreaEventCommand;
 procedure SelectCaseCommand;
 procedure AddLootCommand;
 procedure LoseMoneyAndItemsCommand;
-procedure ovl03_fn_1EF8;
-procedure ovl03_fn_238D;
+procedure EncounterActionCommand;
 procedure ChooseAttitudeCommand;
 procedure ComparePartyItemCommand;
 procedure PauseCommand;
@@ -59,11 +59,9 @@ procedure DrawGlyphRunCommand;
 procedure DispatchCommand;
 procedure RunScriptFrom(Address: Word);
 procedure RunAreaStep;
-procedure ovl03_e1;
-procedure ovl03_fn_3379;
-procedure ovl03_fn_34AB;
+procedure RunWilderness;
 implementation
-uses OVL04, OVL05, OVL06, OVL08, OVL15, OVL17, OVL18, OVL20, OVL21, OVL24, OVL25, OVL26, OVL28, OVL29,
+uses OVL04, OVL05, OVL06, OVL08, OVL14, OVL15, OVL17, OVL18, OVL20, OVL21, OVL24, OVL25, OVL26, OVL28, OVL29,
   OVL32, RES03, RES04, RES05, RES06, Crt;
 
 const
@@ -142,6 +140,16 @@ const
   VarAreaDoorsLatch = 418;
   AreaDoorsOpen = $FE;
   VarWord725 = 725;
+  { ds49F3 values the wilderness loop (ovl03:32F8) writes: 4 for the 3D wall view, 3 for a map page.
+    RunAreaEventCommand sets the same pair from AreaViewKind (1 gives 4, anything else 3). }
+  ViewModeMap = 3;
+  ViewModeWall = 4;
+  { The GameVars words the wilderness loop saves the party's cell in before DoWildernessMenu, so a
+    cell that changed can play ds2628. }
+  VarSavedPartyColumn = 240;
+  VarSavedPartyRow = 241;
+  { UpCase of the key that makes camp (RunCamp) in the wilderness loop. }
+  KeyCamp = 'E';
   { The colours of the ECL menus (ovl03:0F08, ovl03:10D1): the title of AskMenu and the heading of a
     list, the words of AskMenu and the lines of a list, the hotkeys and the highlight. }
   MenuTitleColor = 13;
@@ -155,6 +163,18 @@ const
   OpContinueText = $11;
   { The menu of ECL command 44 (ovl03:25CB): the words of the attitudes, each after a hotkey mark. }
   AttitudeMenu = '~HAUGHTY ~SLY ~NICE ~MEEK ~ABUSIVE';
+  { ECL command 41 (ovl03:1EF8): the item AskMenu returns. Choice 3 is rewritten to ParlayChoice when the
+    fourth word is PARLAY rather than ADVANCE. }
+  CombatChoice = 0;
+  WaitChoice = 1;
+  FleeChoice = 2;
+  AdvanceChoice = 3;
+  ParlayChoice = 4;
+  { The word EncounterActionCommand writes to operand 4. }
+  MonstersFleeResult = 0;       { with the text 'The monsters flee.' }
+  FightResult = 1;              { a fight, or a flee the movement check refuses }
+  PartyFleesResult = 2;         { a flee the check allows, and the flee choice in kinds 1, 3 and 4 }
+  ParlayResult = 3;             { a parlay path with no step left }
   { ECL command 46 (ovl03:2775). Operand 1: bit 7 picks one target (clear: the number of hits, each on a
     random member), bit 6 hits the whole party, bit 5 is a hit no saving throw stops; the low five bits are
     the saving throw kind. Operand 5: bit 7 picks the selected character as the target (else a random
@@ -1445,10 +1465,226 @@ begin
     end;
   end;
 end;
-{ ovl03:1EF8: frame not read }
-{@stub} procedure ovl03_fn_1EF8; begin end;
-{ ovl03:238D: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl03_fn_238D; begin end;
+{ ovl03:1EF8. ECL command 41 (dispatcher ovl03:2F2D, opcode 41): the encounter action menu.
+  It shows the encounter the way command 12 does (operand 1 the sprite bank, operand 2 the distance
+  limit kept in word VarEncounterLimit of ds49D6, operand 3 the picture bank, the steps ahead cut
+  down to that limit), then asks COMBAT, WAIT, FLEE and either ADVANCE or PARLAY. ADVANCE is the
+  fourth word only when steps remain and GameVars word VarForceWallView is set; otherwise that word
+  is PARLAY and a pick of it is choice 4, not 3. Operand 4 is the script address the outcome is
+  written to (MakeWord of its two bytes; OperandValue never reads it). Operands 5 to 9 are the kind
+  of choices 0 to 4, and the kind selects which outcome table runs. The first three string operands
+  are unpacked into EclStrings[1..3] and copied to the prompt candidates; the prompt shown is the
+  first non-empty candidate, searched from the one after the steps ahead and wrapping over 1 to 3.
+  Operand 13 is the movement a flee needs, compared with the party's slowest (MovementRange);
+  operand 14 is the monsters' movement, compared with the party's fastest.
+  The word written is 0 with 'The monsters flee.', 1 for a fight or a flee the movement check
+  refuses, 2 for a flee the check allows (and for the flee choice in kinds 1, 3 and 4), and 3 when
+  a parlay path has no step left. A step closer, or 'Both sides wait.', sets MenuAgain and the menu
+  is asked again. ds84E9 is set for the whole command, so ShowEncounterPicture skips the close-up
+  unless monster pictures are on; ds84E4 is cleared and ds4A00 is set, so DrawTextRun waits after
+  each glyph. The prompt line is cleared on the way out.
+  QUIRK ovl03:210A: steps ahead other than 0, 1 or 2 leave the prompt (Lines[0]) unset. }
+procedure EncounterActionCommand;
+var
+  Choice: Byte;                 { the menu item AskMenu returns: 0 combat, 1 wait, 2 flee, 3 advance, 4 parlay }
+  ChoiceKinds: array[0..4] of Byte;  { operands 5 to 9: the kind of each choice }
+  Lines: array[0..3] of string; { Lines[1..3] the candidate prompts, Lines[0] the one shown }
+  FleeMovement: Byte;           { operand 13: slowest party movement that still flees }
+  MonsterMovement: Byte;        { operand 14: the monsters' movement }
+  I: Byte;
+  Fastest: Byte;                { the party's fastest movement (MovementRange) }
+  Slowest: Byte;                { the party's slowest movement (MovementRange) }
+  MenuAgain: Byte;              { 1 repeats the menu after a step or a wait text }
+  ClearWindow: Byte;            { 1 clears the text window; 0 when the prompt is empty }
+  Animate: Byte;                { 1 animates the menu while the close-up is up }
+  Options: string[40];          { '~COMBAT ~WAIT ~FLEE' and '~ADVANCE' or '~PARLAY' }
+  Title: string[1];             { the menu title: empty }
+  ChoiceKind: Byte;             { the kind of the item picked }
+  Line: Byte;                   { the candidate prompt being tried }
+  ResultAddr: Word;             { operand 4: script address of the outcome }
+begin
+  ds84E9 := 1;
+  ds84E4 := 0;
+  ds4A00 := 1;
+  MovementRange(Fastest, Slowest);
+  Title := '';
+  DecodeOperands(14);
+  EncounterSpriteBank := OperandValue(1);
+  ds49D6^[VarEncounterLimit] := OperandValue(2);
+  EncounterPicBank := OperandValue(3);
+  ResultAddr := MakeWord(OperandLow[4], OperandHigh[4]);
+  for I := 0 to 4 do
+    ChoiceKinds[I] := OperandValue(I + 5);
+  for I := 1 to 3 do
+    Lines[I] := EclStrings[I];
+  FleeMovement := OperandValue(13);
+  MonsterMovement := OperandValue(14);
+  ds49D6^[VarStepsAhead] := OpenStepsAhead(PartyMapColumn, PartyMapRow, PartyFacing);
+  if ds49D6^[VarEncounterLimit] < ds49D6^[VarStepsAhead] then
+    ds49D6^[VarStepsAhead] := ds49D6^[VarEncounterLimit];
+  ShowEncounterPicture(EncounterSpriteBank, EncounterPicBank, Byte(ds49D6^[VarStepsAhead]), PictureShown);
+  repeat
+    Animate := Ord((ds84E0 <> 0) and (ds84E1 <> 0));
+    ClearWindow := 1;
+    MenuAgain := 0;
+    GlyphCol := EclTextLeft;
+    GlyphRow := EclTextTop;
+    case ds49D6^[VarStepsAhead] of
+      0:
+        begin
+          Line := 1;
+          repeat
+            Lines[0] := Lines[Line];
+            Inc(Line);
+          until (Length(Lines[0]) <> 0) or (Line > 3);
+        end;
+      1:
+        begin
+          Line := 2;
+          repeat
+            Lines[0] := Lines[Line];
+            Inc(Line);
+            if Line > 3 then
+              Line := 1;
+          until (Length(Lines[0]) <> 0) or (Line = 2);
+        end;
+      2:
+        begin
+          Line := 3;
+          repeat
+            Lines[0] := Lines[Line];
+            Inc(Line);
+            if Line > 3 then
+              Line := 1;
+          until (Length(Lines[0]) <> 0) or (Line = 3);
+        end;
+    end;
+    if Length(Lines[0]) = 0 then
+      ClearWindow := 0;
+    ShowPagedText(EclTextLeft, EclTextTop, EclTextRight, EclTextBottom, EclTextColor, ClearWindow, Lines[0]);
+    { PARLAY is tested first so its literal is emitted before ADVANCE (pool at ovl03:1E9B). }
+    if (ds49D6^[VarStepsAhead] = 0) or (GameVars^[VarForceWallView] = 0) then
+      Options := '~COMBAT ~WAIT ~FLEE ~PARLAY'
+    else
+      Options := '~COMBAT ~WAIT ~FLEE ~ADVANCE';
+    Choice := AskMenu(Title, Options, MenuTitleColor, MenuTextColor, MenuHotColor, 0, Animate);
+    if (ds49D6^[VarStepsAhead] = 0) or (GameVars^[VarForceWallView] = 0) then
+      if Choice = AdvanceChoice then
+        Choice := ParlayChoice;
+    ChoiceKind := ChoiceKinds[Choice];
+    case ChoiceKind of
+      0:
+        if Choice <> FleeChoice then
+          WriteVmWord(ResultAddr, FightResult)
+        else if Slowest >= FleeMovement then
+          WriteVmWord(ResultAddr, PartyFleesResult)
+        else
+          WriteVmWord(ResultAddr, FightResult);
+      1:
+        case Choice of
+          CombatChoice: WriteVmWord(ResultAddr, FightResult);
+          WaitChoice:
+            begin
+              MenuAgain := 1;
+              ShowPagedText(EclTextLeft, EclTextTop, EclTextRight, EclTextBottom, EclTextColor, 1,
+                'Both sides wait.');
+            end;
+          FleeChoice: WriteVmWord(ResultAddr, PartyFleesResult);
+          AdvanceChoice:
+            begin
+              if ds49D6^[VarStepsAhead] <> 0 then
+              begin
+                Dec(ds49D6^[VarStepsAhead]);
+                ShowEncounterPicture(EncounterSpriteBank, EncounterPicBank,
+                  Byte(ds49D6^[VarStepsAhead]), PictureShown);
+              end
+              else
+                ShowPagedText(EclTextLeft, EclTextTop, EclTextRight, EclTextBottom, EclTextColor, 1,
+                  'Both sides wait.');
+              MenuAgain := 1;
+            end;
+          ParlayChoice:
+            if ds49D6^[VarStepsAhead] <= 0 then
+              WriteVmWord(ResultAddr, ParlayResult)
+            else
+            begin
+              Dec(ds49D6^[VarStepsAhead]);
+              ShowEncounterPicture(EncounterSpriteBank, EncounterPicBank,
+                Byte(ds49D6^[VarStepsAhead]), PictureShown);
+              MenuAgain := 1;
+            end;
+        end;
+      2:
+        case Choice of
+          CombatChoice:
+            if MonsterMovement > Fastest then
+            begin
+              WriteVmWord(ResultAddr, MonstersFleeResult);
+              GlyphCol := EclTextLeft;
+              GlyphRow := EclTextTop;
+              ShowPagedText(EclTextLeft, EclTextTop, EclTextRight, EclTextBottom, EclTextColor, 1,
+                'The monsters flee.');
+            end
+            else
+              WriteVmWord(ResultAddr, FightResult);
+          WaitChoice..ParlayChoice:
+            begin
+              WriteVmWord(ResultAddr, MonstersFleeResult);
+              GlyphCol := EclTextLeft;
+              GlyphRow := EclTextTop;
+              ShowPagedText(EclTextLeft, EclTextTop, EclTextRight, EclTextBottom, EclTextColor, 1,
+                'The monsters flee.');
+            end;
+        end;
+      3:
+        case Choice of
+          CombatChoice: WriteVmWord(ResultAddr, FightResult);
+          WaitChoice, AdvanceChoice:
+            begin
+              if ds49D6^[VarStepsAhead] <> 0 then
+              begin
+                Dec(ds49D6^[VarStepsAhead]);
+                ShowEncounterPicture(EncounterSpriteBank, EncounterPicBank,
+                  Byte(ds49D6^[VarStepsAhead]), PictureShown);
+              end
+              else
+                ShowPagedText(EclTextLeft, EclTextTop, EclTextRight, EclTextBottom, EclTextColor, 1,
+                  'Both sides wait.');
+              MenuAgain := 1;
+            end;
+          FleeChoice: WriteVmWord(ResultAddr, PartyFleesResult);
+          ParlayChoice:
+            if ds49D6^[VarStepsAhead] <= 0 then
+              WriteVmWord(ResultAddr, ParlayResult)
+            else
+            begin
+              Dec(ds49D6^[VarStepsAhead]);
+              ShowEncounterPicture(EncounterSpriteBank, EncounterPicBank,
+                Byte(ds49D6^[VarStepsAhead]), PictureShown);
+              MenuAgain := 1;
+            end;
+        end;
+      4:
+        case Choice of
+          CombatChoice: WriteVmWord(ResultAddr, FightResult);
+          WaitChoice, AdvanceChoice, ParlayChoice:
+            if ds49D6^[VarStepsAhead] <= 0 then
+              WriteVmWord(ResultAddr, ParlayResult)
+            else
+            begin
+              Dec(ds49D6^[VarStepsAhead]);
+              ShowEncounterPicture(EncounterSpriteBank, EncounterPicBank,
+                Byte(ds49D6^[VarStepsAhead]), PictureShown);
+              MenuAgain := 1;
+            end;
+          FleeChoice: WriteVmWord(ResultAddr, PartyFleesResult);
+        end;
+    end;
+  until MenuAgain = 0;
+  ClearRect(PromptLeftCol, PromptRow, PromptLastCol, PromptRow);
+  ds4A00 := 0;
+  ds84E9 := 0;
+end;
 { ovl03:25CB. ECL command 44 (dispatcher ovl03:2F2D, SkippedOpcode 2Ch): asks the player for an attitude.
   The menu offers AttitudeMenu's words (HAUGHTY, SLY, NICE, MEEK and ABUSIVE) under a blank title. Operands
   1 to 5 are the value of each attitude in that order, and the value of the one the player picks is written
@@ -1822,7 +2058,7 @@ end;
 { ovl03:2DD3. Runs the camp (MakeCamp, OVL15) between two script entries: the script machine runs the
   third entry address, ds49E7, before the camp (through ovl03:3171, not decompiled yet). When the camp
   leaves EndCamp set, the area view is redrawn (RedrawView) and the fourth entry address, ds49E9, runs.
-  Callers: ECL command 56 with operand 9 (ovl03:2E10) and ovl03_e1 (ovl03:33E7, the E key of the wilderness
+  Callers: ECL command 56 with operand 9 (ovl03:2E10) and RunWilderness (ovl03:33E7, the E key of the wilderness
   loop). Then the area view is drawn again
   (ShowAreaView) and ds557D, the gate of the heap error retry, is cleared. }
 procedure RunCamp;
@@ -1953,7 +2189,7 @@ begin
     OpChooseAddress, 38: SelectCaseCommand;
     39: AddLootCommand;
     40: LoseMoneyAndItemsCommand;
-    41: ovl03_fn_1EF8;
+    41: EncounterActionCommand;
     42: CopyIndexedWordCommand;
     43: AskMenuCommand;
     44: ChooseAttitudeCommand;
@@ -1998,7 +2234,7 @@ end;
   pages; page 3 also animates the area doors, AnimateAreaDoors ovl18:06B3). The picture window is cleared
   when the old kind was a map page, and the area is drawn (ShowAreaView). Then the script entries ds49E3 and
   ds49E5 run, and the step repeats while a script block was started (ds442F, StartEclBlock). SelectedCharacter
-  is saved and restored around the entries. Called from the area loop ovl03_e1 (ovl03:32F8). Purpose unknown
+  is saved and restored around the entries. Called from the area loop RunWilderness (ovl03:32F8). Purpose unknown
   in parts: what the entries and word VarWord725 do. }
 procedure RunAreaStep;
 var
@@ -2046,12 +2282,100 @@ begin
     end;
   until ds442F = 0;
 end;
-{ ovl03:32F8: frame not read }
-{@stub} procedure ovl03_e1; begin end;
-{ ovl03:3379: frame not read }
-{@stub} procedure ovl03_fn_3379; begin end;
-{ ovl03:34AB: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl03_fn_34AB; begin end;
+{ ovl03:32F8. The wilderness loop, entry 1 of this overlay: the main program calls it after the
+  character menu and quits when it returns. It clears the area flags, takes WallViewMode from
+  VarSavedWallView, and sets the view mode ds49F3 to ViewModeMap for map pages 2 to 4 when
+  VarForceWallView is clear, else ViewModeWall. Unless ds49F8 is set it loads the area script
+  (LoadEcl) and always resets the script machine (InitScript) and runs entry ds49EB. A view mode
+  other than the map page redraws once (RedrawView, while ds4432 is still 1) and draws the area
+  (ShowAreaView). Then it loops on HandleWildernessKeys. While word VarWord714 of ds49D6 is above 1
+  or the key is KeyCamp, and the party is not destroyed: KeyCamp makes camp (RunCamp); any other such
+  key saves the low bit of that word in ds84DD, forces the word to 1, draws the area, runs entry
+  ds49E5 and a step (RunAreaStep) if a script block started (ds442F), then restores the bit. Otherwise
+  entry ds49E3 runs, and a started block steps the area; if none started and the party lives, the
+  wilderness menu (DoWildernessMenu) runs and ds2628 plays when the party's cell changed. A destroyed
+  party clears PartyDestroyed and leaves the loop. The map entries ovl03:3379 and ovl03:34AB are
+  bytes of this routine (a call operand and a cmp), not routines. }
+procedure RunWilderness;
+var
+  Key: Char;                    { the key HandleWildernessKeys returned }
+  Unused: Byte;                 { QUIRK ovl03:32F8: a byte of the frame nothing uses }
+begin
+  ds4433 := 0;
+  ds4434 := 0;
+  ds4430 := 0;
+  ds4431 := 0;
+  ds4432 := 1;
+  ds49F3 := ViewModeWall;
+  ds442F := 0;
+  WallViewMode := GameVars^[VarSavedWallView];
+  case WallViewMode of
+    WallModeMapPage2, WallModeMapPage3, WallModeMapPage4:
+      if GameVars^[VarForceWallView] = 0 then
+        ds49F3 := ViewModeMap;
+  end;
+  if ds49F8 = 0 then
+    LoadEcl(WallViewMode);
+  InitScript;
+  RunScriptFrom(ds49EB);
+  if ds49F3 <> ViewModeMap then
+  begin
+    if ds4432 = 1 then
+    begin
+      RedrawView;
+      ds4432 := 0;
+    end;
+    ShowAreaView;
+  end;
+  GameVars^[VarSavedWallView] := WallViewMode;
+  repeat
+    Key := HandleWildernessKeys;
+    ds4436 := SelectedCharacter;
+    GameVars^[VarSavedWallView] := WallViewMode;
+    while ((ds49D6^[VarWord714] > 1) or (UpCase(Key) = KeyCamp)) and (PartyDestroyed = 0) do
+    begin
+      if UpCase(Key) = KeyCamp then
+        RunCamp
+      else
+      begin
+        ds84DD := ds49D6^[VarWord714] and 1;
+        ds49D6^[VarWord714] := 1;
+        ShowAreaView;
+        RunScriptFrom(ds49E5);
+        if ds442F <> 0 then
+          RunAreaStep;
+        ds49D6^[VarWord714] := ds84DD;
+      end;
+      if PartyDestroyed = 0 then
+      begin
+        Key := HandleWildernessKeys;
+        ds4436 := SelectedCharacter;
+      end;
+    end;
+    if PartyDestroyed = 0 then
+      RunScriptFrom(ds49E3);
+    if ds442F <> 0 then
+      RunAreaStep
+    else if PartyDestroyed = 0 then
+    begin
+      GameVars^[VarSavedPartyColumn] := PartyMapColumn;
+      GameVars^[VarSavedPartyRow] := PartyMapRow;
+      DoWildernessMenu;
+      ShowAreaView;
+      { ShortInt <> Word: the right operand is evaluated first, the original's load order (ovl03:3497). }
+      if (PartyMapColumn <> GameVars^[VarSavedPartyColumn]) or
+         (PartyMapRow <> GameVars^[VarSavedPartyRow]) then
+        PlaySound(ds2628);
+      ds84E0 := 0;
+      ds84E1 := 1;
+      RunScriptFrom(ds49E5);
+      if ds442F <> 0 then
+        RunAreaStep;
+    end;
+  until PartyDestroyed <> 0;
+  PartyDestroyed := 0;
+end;
 
+{ ovl03:3508. The initialisation part is empty: push bp, mov bp, sp, pop bp, retf. }
 begin
 end.

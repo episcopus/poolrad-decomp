@@ -575,27 +575,14 @@ evidence = ["prologue"]
 id = "ovl03:1EF8"
 unit = "ovl03"
 addr = "ovl03:1EF8"
-size = 1173
-name = "ovl03_fn_1EF8"
+size = 1747
+name = "EncounterActionCommand"
 signature = ""
 c_name = "ovl03_fn_1EF8"
-level = "none"
+level = "L2"
 justification = ""
-notes = "map (batch 10): the routine runs to 25A8 (retf at 25A7), size 1712; the entry at ovl03:238D splits it. blocked (dec-haiku, batch 9, 5 attempts): ECL command 41, the encounter action menu (dispatcher ovl03:2F2D). Frame 1104 bytes: Choice [bp-1]; ChoiceKinds array[0..4] of Byte [bp-6..-2] (operands 5 to 9); Lines array[0..3] of string [bp-406h..-7] (Lines[1..3] := EclStrings 1..3; Lines[0] the prompt, the first non-empty candidate, searched from StepsAhead+1 and wrapping over 1..3); FleeMovement [bp-407h] (operand 13), MonsterMovement [bp-408h] (operand 14); I [bp-409h]; Fastest [bp-40Ah] and Slowest [bp-40Bh] (MovementRange); MenuAgain [bp-40Ch]; ClearWindow [bp-40Dh]; Animate [bp-40Eh]; Options string[40] [bp-437h]; Title string[1] [bp-439h]; ChoiceKind [bp-43Ah]; Line [bp-43Bh]; ResultAddr word [bp-43Dh] = MakeWord(OperandLow[4], OperandHigh[4]) (operand 4 is the outcome address and is never read by value). The whole menu is repeat ... until MenuAgain = 0 from ovl03:2047 to 257F; the ShowEncounterPicture before it is outside the loop. Attempts (each a make match diff, the draft fixed one at a time): (1) the draft as written: the literal pool order of the two menu strings, fixed by writing if (steps = 0) or (wall = 0) then PARLAY else ADVANCE; (2) ResultAddr from operand 4 (OperandLow[4]), not 5; (3) the loop exit tests Length <> 0 (jne), not > 0 (ja); (4) kind 0 as if Choice <> 2 then the one result else the flee check (the then-block is laid out after the test); (5) stopped at ovl03:22CB: the original tests StepsAhead with je to the 'Both sides wait.' ShowPagedText, so the layout is if StepsAhead <> 0 then dec and ShowEncounterPicture else the text (the same polarity as (4); kind 1 choice 3, and likely kind 3 choice 1 and 3 and kind 4 choice 1 3 4). Probes: none yet. Untested: the case layouts (Choice of 0..4 inside kinds 1 to 4 keep AL across range tests; labels 1, 3 are lists, 1..4 a range), the case of ChoiceKind, and the Real-free parts after 22CB. Auto:near_call"
+notes = "renamed from ovl03_fn_1EF8 (dispatcher ovl03:2F2D calls it for opcode 41; the menu literals at ovl03:1E9B are COMBAT, WAIT, FLEE and PARLAY or ADVANCE, and the outcome word is written to operand 4); matched, 1712 bytes of code to the retf at 25A7. The map entry ovl03:238D was the middle of this routine and is removed. auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl03:238D"
-unit = "ovl03"
-addr = "ovl03:238D"
-size = 574
-name = "ovl03_fn_238D"
-signature = ""
-c_name = "ovl03_fn_238D"
-level = "none"
-justification = ""
-notes = "blocked (dec-haiku, batch 10): not a routine of its own. It is the middle of ovl03_fn_1EF8 (ECL command 41, prologue at 1EF8, sub sp 0x450, retf at 25A7): the code has no prologue, uses 1EF8's frame (bp-0x450, bp-0x43d, bp-0x40c) and jumps back to 2047 inside 1EF8's loop, so no Pascal procedure can start here. The map split 1EF8 at 238D (size 1173, where the routine is 1712 bytes, 1EF8 to 25A8). Probes: none needed; the bytes are a fragment. It goes away when 1EF8 matches: make match WRITE=1 removes this entry and corrects 1EF8's size; the stub line in src/OVL03.PAS must then be deleted by hand. auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl03:25CB"
@@ -835,40 +822,14 @@ evidence = ["prologue"]
 id = "ovl03:32F8"
 unit = "ovl03"
 addr = "ovl03:32F8"
-size = 129
-name = "ovl03_e1"
+size = 528
+name = "RunWilderness"
 signature = ""
 c_name = "ovl03_e1"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_1; blocked (dec-haiku, batch 13): not matched. MAP: ovl03:3379 and ovl03:34AB are map entries inside this routine, which runs 32F8..3507 (one retf at 3506). The matcher takes the next entry as the end: the registry gap is 129 bytes (up to 3379). With both entries removed the next entry is ovl03:3508 (ovl03_init), so the original is 528 bytes, and our compile is 566 bytes ('the original segment is too short'): the code itself is 38 bytes longer, so a size edit alone does not match. Our listing (build/match/ovl03/A/match.exe, OVL03_E1 to OVL03_FN_3379) agrees with the original instruction by instruction through the case on WallViewMode, the sound compare and the first keys; the extra bytes are in the loop's join jumps and the exit path, not located yet. Probe tools/re/tp_idioms/ovl03/WHILETRU.PAS: while True compiles like repeat until False, and an if/else that ends a loop body costs a join jmp to the head. Draft tried: case WallViewMode of 25, 26, 27 (AreaViewKind 2 to 4, ds49F3 3 when GameVars word 230 is 0; page 3 calls AnimateAreaDoors(1) when GameVars 435 is $FE and 418 is 0); if ds49F8 = 0 then LoadEcl(WallViewMode); InitScript; RunScriptFrom(ds49EB); if ds49F3 <> 3 then (res12_fn_27D9 when ds4432 = 1, then ShowAreaView); GameVars 242 := WallViewMode; Key := HandleWildernessKeys; ds4436 := SelectedCharacter; loop while True: if ((GameVars 714 > 1) or UpCase(Key) = 'E') and PartyDestroyed = 0 then (RunCamp for E, else save 714 bit 0 in ds84DD, set 714 to 1, ShowAreaView, RunScriptFrom(ds49E5), RunAreaStep when ds442F, restore 714; then keys when not destroyed) else (RunScriptFrom(ds49E3) when not destroyed; RunAreaStep when ds442F, else the menu block: GameVars 240 and 241 := party cell, DoWildernessMenu, ShowAreaView, PlaySound(ds2628) when the cell changed, ds84E0 := 0, ds84E1 := 1, RunScriptFrom(ds49E5), RunAreaStep when ds442F; then PartyDestroyed clears and exits, else keys). The draft needs OVL14 in the implementation uses (HandleWildernessKeys, DoWildernessMenu); OVL14 does not use OVL03."
+notes = "renamed from ovl03_e1 (the main program calls it after the character menu (src/POOL.PAS) and quits when it returns; it loops on HandleWildernessKeys and DoWildernessMenu until the party is destroyed (ovl03:32F8)); auto:entry_1; the wilderness loop, one routine 32F8..3507 (retf at 3506). ovl03:3379 and ovl03:34AB are map artefacts inside it (a call operand and a cmp), removed by make match WRITE=1. Outer loop is repeat until PartyDestroyed <> 0 (far head: jne to the clear, jmp back); inner loop is while ((ds49D6 word 714 > 1) or UpCase(Key) = E) and PartyDestroyed = 0. A changed cell is ShortInt <> Word so the word is evaluated first (ovl03:3497). Probe tools/re/tp_idioms/ovl03/WILDLOOP.PAS."
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl03:3379"
-unit = "ovl03"
-addr = "ovl03:3379"
-size = 306
-name = "ovl03_fn_3379"
-signature = ""
-c_name = "ovl03_fn_3379"
-level = "none"
-justification = ""
-notes = "auto:far_call; not a routine (dec-haiku, batch 13): it lies inside ovl03_e1 (ovl03:32F8..3507), in the middle of the lcall res12_fn_27D9 at ovl03:3378, so its far_call evidence is a byte-level scan hit (tools/re/enumerate_routines.py), not a call. Remove it when ovl03_e1 is written. blocked (dec-haiku, batch 14): not a routine and no Pascal can match it as one: make match FN=ovl03_fn_3379 reports only the stub, the listing in build/packets/ovl03_3379.md starts mid-instruction (fldenv [bx] is operand bytes), and it has no push bp prologue. The RunCamp comment that named ovl03:3379 as a caller (ovl03:2DD3) was corrected to ovl03_e1 (ovl03:33E7). Map entry removed by make match WRITE=1 once ovl03_e1 matches; its stub stays until then"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:34AB"
-unit = "ovl03"
-addr = "ovl03:34AB"
-size = 93
-name = "ovl03_fn_34AB"
-signature = ""
-c_name = "ovl03_fn_34AB"
-level = "none"
-justification = ""
-notes = "auto:far_call; blocked (dec-haiku, batch 14): not a routine and no Pascal can match it as one. make match FN=ovl03_fn_34AB reports only the stub. The bytes at 34AB (3B D3, cmp dx,bx) are an instruction in the body of ovl03_e1 (ovl03:32F8..3507), after the cdq at 34AA, with no push bp prologue. No jump, near call or lcall in the listing of ovl03_e1 (build/packets/ovl03_3379.md, 3379..3507) targets 34AB; the far_call start is a byte-level scan hit (tools/re/enumerate_routines.py counts any 9A byte whose operand lands there). Map entry removed by make match WRITE=1 once ovl03_e1 matches; its stub stays until then"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl03:3508"
@@ -878,7 +839,7 @@ size = 5
 name = "ovl03_init"
 signature = ""
 c_name = "ovl03_init"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_0"
 evidence = ["prologue"]

@@ -61,6 +61,6 @@ begin
   end;
   RunCharacterMenu;
   SetWallDescriptors(11, 0, 7, 6);
-  ovl03_e1;
+  RunWilderness;
   QuitGame;
 end.

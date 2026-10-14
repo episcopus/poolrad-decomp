@@ -6214,3 +6214,17 @@ kind = "routine"
 why = "ovl16:382D is the character-icon editor: AlterMenu (ovl15:1C59) runs it for the Icon key I (then RedrawView) and CreateCharacter runs it after ChooseHeadAndBody; it draws the 'old' and 'new' icon cells, edits CHeadBlock, CBodyBlock, the icon size and the six Figure colour pairs through the prompt lines 'Parts color-1 color-2 Size Exit' ... and asks 'Is this icon ok? '"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl03_fn_1EF8"
+new = "EncounterActionCommand"
+kind = "routine"
+why = "dispatcher ovl03:2F2D calls it for opcode 41; the menu literals at ovl03:1E9B are COMBAT, WAIT, FLEE and PARLAY or ADVANCE, and the outcome word is written to operand 4"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl03_e1"
+new = "RunWilderness"
+kind = "routine"
+why = "the main program calls it after the character menu (src/POOL.PAS) and quits when it returns; it loops on HandleWildernessKeys and DoWildernessMenu until the party is destroyed (ovl03:32F8)"
+date = "2026-10-14"
+
