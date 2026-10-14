@@ -541,6 +541,13 @@ var
     ReadPromptChoice under the title 'Choose a function '. }
   ds05F0: string[23];
   ds0619: array[0..10] of TFunctionSlot;  { the training-hall function menu (see TFunctionSlot) }
+  { The hit dice of the eight classes 0..7, rolled by ovl16:4235: ClassHitDiceCount[Class] dice of
+    ClassHitDieSides[Class] sides. The image holds 1,1,1,1,2,1,1,2 (cleric, druid, fighter, paladin,
+    ranger, magic-user, thief, monk; two dice for the ranger and the monk) and 8,8,10,10,8,4,6,4
+    sides. Entry 7 of the sides table is the byte at DS:08C5, entry 0 of the CHEAD suffix table
+    below (the image). }
+  ClassHitDiceCount: array[0..7] of Byte;    { the number of hit dice of the eight classes }
+  ClassHitDieSides: array[0..7] of Byte;     { the sides of each class's hit die }
   { The CHEAD/CBODY character-picture name suffix table: the byte ds08C5[FigureIndex] is the
     character BuildCharacterIcon appends to 'CHEAD'/'CBODY' (index 1 gives 'S', 2 gives 'T'). Its extent is
     unverified: the region runs to the door table at DS:0900. }

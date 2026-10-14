@@ -4099,3 +4099,24 @@ kind = "routine"
 why = "ovl16:408C is the ceiling ModifyCharacter (ovl16:209F) clamps a raised HpMax to: over the classes with a level it totals the level times each class's maximum hit die and divides by the class count after adding the constitution adjustment (ConstitutionHitPointAdjustment ovl16:3F31), never below 1; the maximum-roll counterpart of MinHitPoints ovl16:3FB3"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl16_fn_4235"
+new = "RollHitPoints"
+kind = "routine"
+why = "ovl16:4235 rolls the hit points a level gains: it sums over the classes in ClassBits that the character has a level in one RollDice roll of that class's hit dice (ds08B6 dice of ds08BE sides), with a first-level class raised to two thirds of its die; called by the training hall ovl16:29AE and the create-character run ovl16:1D1E, which divide the sum by the class count"
+date = "2026-10-14"
+
+[[rename]]
+old = "ds08B6"
+new = "ClassHitDiceCount"
+kind = "global"
+why = "ovl16:4235 pushes ds08B6[Class] as RollDice's Count and ds08BE[Class] as its Sides for every class the character has a level in; the image at DS:08B6 holds 1,1,1,1,2,1,1,2 (two dice for ranger and monk)"
+date = "2026-10-14"
+
+[[rename]]
+old = "ds08BE"
+new = "ClassHitDieSides"
+kind = "global"
+why = "ovl16:4235 pushes ds08BE[Class] as RollDice's Sides and raises a first-level roll to (ds08BE[Class] * 2) div 3; the image at DS:08BE holds 8,8,10,10,8,4,6,4 sides (its entry 7 is the first byte of the CHEAD suffix table ds08C5)"
+date = "2026-10-14"
+

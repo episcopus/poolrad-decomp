@@ -6,7 +6,7 @@ unit OVL16;
   are still stubs. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
-uses POOLVARS, RES04, RES06, RES07, RES09, RES12, OVL17, OVL19, OVL23, OVL25, OVL28, OVL32;
+uses POOLVARS, RES04, RES06, RES07, RES09, RES12, OVL17, OVL19, OVL23, OVL24, OVL25, OVL28, OVL32;
 procedure FreeCharacter(Who: PCharacter);
 procedure RunCharacterMenu;
 procedure ovl16_fn_056C;
@@ -93,7 +93,7 @@ function ConstitutionHitPointAdjustment(Who: PCharacter): ShortInt;
 function MinHitPoints(Who: PCharacter): Byte;
 function MaxHitPoints(Who: PCharacter): Byte;
 procedure ovl16_fn_41F8;
-function ovl16_fn_4235(Who: PCharacter; ClassBits: Byte): Byte;
+function RollHitPoints(Who: PCharacter; ClassBits: Byte): Byte;
 procedure ovl16_fn_42ED(Amount: LongInt; Who: PCharacter);
 implementation
 
@@ -1124,8 +1124,31 @@ begin
 end;
 { ovl16:41F8: retf 4: 4 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl16_fn_41F8; begin end;
-{ ovl16:4235: retf 6: 6 bytes of parameters; 4 bytes of locals }
-{@stub} function ovl16_fn_4235(Who: PCharacter; ClassBits: Byte): Byte; begin end;
+{ ovl16:4235. Rolls the hit points a level gains for the classes in ClassBits: over the eight classes
+   it adds, for each class the character has a level in (ClassLevels, +$96, signed, above 0) whose
+   bit is in ClassBits (ds05DE, one bit per class), a roll of ClassHitDiceCount[I] dice of
+   ClassHitDieSides[I] sides (RollDice, ovl24:0DE3), where a class at level 1 rolls at least two
+   thirds of its hit die (the first-level minimum). The caller divides the sum by the number of
+   classes with a level. Called by the training hall (ovl16:29AE, whitepaper 5.8) and the
+   create-character run (ovl16:1D1E). No side effects but the random rolls. }
+function RollHitPoints(Who: PCharacter; ClassBits: Byte): Byte;
+var
+  ClassRoll: Byte;   { [bp-2]: the roll for one class }
+  Sum: Byte;         { [bp-3]: the summed rolls, the result }
+  I: ShortInt;       { [bp-4]: class index 0..7 }
+begin
+  Sum := 0;
+  for I := 0 to 7 do
+    if (Who^.ClassLevels[I] > 0) and ((ds05DE[I] and ClassBits) > 0) then
+    begin
+      ClassRoll := RollDice(ClassHitDiceCount[I], ClassHitDieSides[I]);
+      if Who^.ClassLevels[I] = 1 then
+        if ClassRoll < (ClassHitDieSides[I] * 2) div 3 then
+          ClassRoll := (ClassHitDieSides[I] * 2) div 3;
+      Inc(Sum, ClassRoll);
+    end;
+  RollHitPoints := Sum;
+end;
 { ovl16:42ED: retf 8: 8 bytes of parameters; 8 bytes of locals }
 {@stub} procedure ovl16_fn_42ED(Amount: LongInt; Who: PCharacter); begin end;
 

@@ -8074,12 +8074,12 @@ id = "ovl16:4235"
 unit = "ovl16"
 addr = "ovl16:4235"
 size = 184
-name = "ovl16_fn_4235"
-signature = "function ovl16_fn_4235(Who: PCharacter; ClassBits: Byte): Byte"
+name = "RollHitPoints"
+signature = "function RollHitPoints(Who: PCharacter; ClassBits: Byte): Byte"
 c_name = "ovl16_fn_4235"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl16_fn_4235 (ovl16:4235 rolls the hit points a level gains: it sums over the classes in ClassBits that the character has a level in one RollDice roll of that class's hit dice (ds08B6 dice of ds08BE sides), with a first-level class raised to two thirds of its die; called by the training hall ovl16:29AE and the create-character run ovl16:1D1E, which divide the sum by the class count); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
