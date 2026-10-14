@@ -4197,3 +4197,10 @@ kind = "routine"
 why = "ovl12:2E37 walks the readied items (+$34) of AttackTarget and sets ds681E when one of their names is ReflectingNameNum $76 (the item that turns a gaze back, GazeStonesTarget ovl12:1CAD)"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl12_e111"
+new = "ApplyItemSecondAffect"
+kind = "routine"
+why = "ovl12:2EDA gives Who the affect named by Item^.Affects[2] (+$3D of TMenuLine) with AddAffect and CallAffectHandler for Mode 0 and removes it with RemoveAffect otherwise; its Affect parameter is read as an item"
+date = "2026-10-14"
+

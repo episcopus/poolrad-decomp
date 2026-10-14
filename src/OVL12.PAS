@@ -123,8 +123,7 @@ procedure HalveOrCancelDamageForUnenchantedSlotItem(Who: PCharacter; Affect: PAf
 procedure CancelCharmAndUnknown35ModerateChance(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure CancelCharmUnknown35PoisonAndParalysisHooks(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure SetFlagIfTargetReflects(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e111;
-procedure ovl12_fn_2EEA;
+procedure ApplyItemSecondAffect(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e112;
 procedure ovl12_fn_2F7B;
 procedure ovl12_e113;
@@ -178,6 +177,7 @@ const
   ExceptionalStrength = 18;     { Strength 18 is written with a percentile (EncodeStrength, ovl24:10E4) }
   FlagNameNum = $98;            { a NameNum that sets ds681E with FlagNameNumThird as the third name (ovl12:2E37) [?] }
   FlagNameNumThird = $FC;
+  ItemAffectData = $0C;         { the Data byte ovl12:2EDA gives the affect an item names in Affects[2] }
   StrengthKept = $80;           { bit 7 of a strength affect's Data: an earlier strength is kept in it (ovl24:115C) }
   AffectStrength1 = $0C;        { the two strength affects (ovl24:115C keeps the earlier strength in them) }
   AffectStrength2 = $26;
@@ -2105,10 +2105,24 @@ begin
     Item := Item^.Next;
   end;
 end;
-{ ovl12:2EDA: frame not read }
-{@stub} procedure ovl12_e111; begin end;
-{ ovl12:2EEA: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_fn_2EEA; begin end;
+{ ovl12:2EDA. Affect handler of a carried item (the AffectHandlers shape, but the Affect parameter is the item: the
+  routine reads it as a PItem, Item^.Affects[2] at +$3D of TMenuLine). Any Mode other than 0 removes the affect the
+  item names in Affects[2] from Who (RemoveAffect with nil). Mode 0 gives Who that affect with duration 0, Data
+  ItemAffectData and no handler on removal (NoRemoveHandler), then CallAffectHandler runs the affect's handler on Who at
+  once (Affect nil, Mode 0). Which item carries this handler is not known yet [?]. }
+procedure ApplyItemSecondAffect(Who: PCharacter; Affect: PAffect; Mode: Byte);
+var
+  Item: PItem;                  { Affect, read as the item it is }
+begin
+  Item := PItem(Affect);
+  if Mode <> 0 then
+    RemoveAffect(Who, Item^.Affects[2], nil)
+  else
+  begin
+    AddAffect(Who, Item^.Affects[2], 0, ItemAffectData, NoRemoveHandler);
+    CallAffectHandler(Item^.Affects[2], Who, nil, 0);
+  end;
+end;
 { ovl12:2F57: frame not read }
 {@stub} procedure ovl12_e112; begin end;
 { ovl12:2F7B: retf 10: 10 bytes of parameters; 0 bytes of locals }

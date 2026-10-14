@@ -4668,27 +4668,14 @@ evidence = ["prologue"]
 id = "ovl12:2EDA"
 unit = "ovl12"
 addr = "ovl12:2EDA"
-size = 16
-name = "ovl12_e111"
+size = 125
+name = "ApplyItemSecondAffect"
 signature = ""
 c_name = "ovl12_e111"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_111"
+notes = "renamed from ovl12_e111 (ovl12:2EDA gives Who the affect named by Item^.Affects[2] (+$3D of TMenuLine) with AddAffect and CallAffectHandler for Mode 0 and removes it with RemoveAffect otherwise; its Affect parameter is read as an item); auto:entry_111"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:2EEA"
-unit = "ovl12"
-addr = "ovl12:2EEA"
-size = 109
-name = "ovl12_fn_2EEA"
-signature = ""
-c_name = "ovl12_fn_2EEA"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:2F57"
