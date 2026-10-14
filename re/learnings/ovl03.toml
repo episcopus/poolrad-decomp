@@ -215,3 +215,48 @@ tags = ["nested", "static link", "ss:", "WriteVmWord", "frame"]
 title = "A nested procedure that writes the parent's results is proven with the parent; its locals are the parent's, reached through the static link"
 lesson = "WriteScanResults (ovl03:13D7) takes no parameters: its retf 2 pops the static link the parent pushes (push bp; push cs; call). It reads the parent's locals through the link with ss: overrides (mov al, byte ptr ss:[di-0x11]) and passes them to four WriteVmWord calls. In the source it is a procedure declared inside ScanPartyCommand (indented, not in the interface), and the matcher proves it NESTED with its parent, so its map entry needs no own match. Declare the parent's locals in the same order as the original frame (Found: ShortInt is read with cbw, so it is signed)."
 evidence = ["src/OVL03.PAS#ScanPartyCommand", "src/OVL03.PAS#WriteScanResults", "re/symbols.toml#ovl03:13D7", "tools/re/tp_idioms/ovl03/CASEAX.PAS"]
+
+[[lesson]]
+id = "map-entry-inside-match-remove-stub"
+confidence = "V"
+units = ["*"]
+tags = ["map", "stub", "phantom", "WRITE", "declaration"]
+title = "WRITE=1 removes a phantom map entry from the registry; its stub line and interface declaration must go from the source too"
+lesson = "ovl03:1B42 and ovl03:1C13 lie inside AddLootCommand (ovl03:19B0), each in the middle of an instruction (1B42 is a byte of the mov at 1B40, 1C13 a byte of the mov at 1C12), with no caller. make match WRITE=1 removed both entries from re/symbols.toml, but their {@stub} lines and interface declarations stayed in src/OVL03.PAS: a stub is a retf of its own and moves the code after it. After a WRITE run that reports a removed entry, delete its declaration and stub line, then match again."
+evidence = ["src/OVL03.PAS#AddLootCommand", "re/symbols.toml#ovl03:19B0"]
+
+[[lesson]]
+id = "repeat-until-test-at-bottom"
+confidence = "V"
+units = ["*"]
+tags = ["loop", "repeat", "while", "codegen"]
+title = "A loop whose first pass is unconditional and whose test is at the bottom is repeat ... until, not while"
+lesson = "The item loop of AddLootCommand (ovl03:1A80) has no test before its first pass: the original is init, body, then cmp Offset,Size; jae exit; jmp body. A while loop tests first (cmp; jb body; jmp exit), three bytes more, which moved every later jump in the routine. The block is never empty there (size 0 ends the game before the loop), so repeat ... until Offset >= Size is exact."
+evidence = ["src/OVL03.PAS#AddLootCommand"]
+
+[[lesson]]
+id = "case-keeps-selector-in-al"
+confidence = "V"
+units = ["*"]
+tags = ["case", "if", "range", "AL", "codegen"]
+title = "A case statement loads the selector into AL once and compares each label; an if compares the variable's memory each time"
+lesson = "In AddLootCommand the d100 Chance and Roll2 are case statements: the original loads mov al,[x] once and then cmp al,lo; jb; cmp al,hi; ja for each range, and a single label is cmp al,v; je. The same tests written as if (x >= lo) and (x <= hi) compile to cmp byte [x],lo, which fails to match. Label groups follow the original too: 11, 12 and 13, 14 are two-value lists (cmp al,v; je each), while 1..4, 5..7, 8..9 and 1..7 are ranges."
+evidence = ["src/OVL03.PAS#AddLootCommand"]
+
+[[lesson]]
+id = "if-layout-gives-test-polarity"
+confidence = "V"
+units = ["*"]
+tags = ["if", "layout", "polarity", "codegen"]
+title = "The jump target of an if test shows the source polarity: the block that is jumped to is written last"
+lesson = "TP lays out the then-block first and jumps over it. When the original tests with je straight to the later block, the source is the negated test with the blocks in the other order. ovl03:1DB1 (LoseMoneyAndItemsCommand) is the then-first form (jne to the party loop). ovl03:1EF8 (blocked) needs the negated forms: if Choice <> 2 then <one result> else <flee check>, and if (steps = 0) or (wall = 0) then PARLAY else ADVANCE, which also puts the two menu strings in the literal pool in the original order. Read the jump target before writing the condition."
+evidence = ["src/OVL03.PAS#LoseMoneyAndItemsCommand", "re/symbols.toml#ovl03:1EF8"]
+
+[[lesson]]
+id = "for-bound-local-no-extra-count"
+confidence = "V"
+units = ["*"]
+tags = ["for", "frame", "bound", "locals"]
+title = "A for-loop bound that is a local reuses the loop's own slot: an extra Count local adds two bytes to the frame"
+lesson = "AddLootCommand computes the number of rolls into the Index byte that also counted the money loop, then writes for Treasure := 1 to Index do. A separate Count local plus the hidden bound copy made the frame 0x176 instead of 0x174; removing Count gave the original frame. Declare the bound variable the original declares and let the hidden slot be the only extra byte."
+evidence = ["src/OVL03.PAS#AddLootCommand"]
