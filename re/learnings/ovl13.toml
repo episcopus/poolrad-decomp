@@ -134,3 +134,12 @@ tags = ["mod", "div", "idiv", "shr", "Byte", "codegen"]
 title = "`B mod 4` on a Byte is a 32-bit signed idiv; `B div 4` is two one-bit shifts"
 lesson = "ovl13:275E computes an even `Bearing`'s picture index and half. The original is `mov al,[Bearing]; xor ah,ah; cdq; mov cx,4; idiv cx; xchg dx,ax; mov dx,ax; mov al,[PicBase]; xor ah,ah; add ax,dx`, i.e. a signed 32-bit division, while the half comes from `mov al,[Bearing]; xor ah,ah; shr ax,1; shr ax,1`. Probe PRB26B0: `B mod 4` with B: Byte gives exactly the `xor ah,ah; cdq; mov cx,4; idiv cx; xchg dx,ax` sequence (the `xor ah,ah` is the Byte-to-Word step, then cdq widens to 32 bits and idiv divides), and `B div 4` gives the two one-bit shifts (the same bytes as `B shr 1 shr 1`), not `mov cx,2; shr ax,cl`. So a `mod` next to a shift pair in the packet is Byte mod/div by four, written as the ordinary operators."
 evidence = ["tools/re/tp_idioms/ovl13/PRB26B0.PAS", "src/OVL13.PAS#ShowAttackAnimation", "re/symbols.toml#ovl13:26B0"]
+
+[[lesson]]
+id = "string-literal-arg-temp-and-concat-256"
+confidence = "V"
+units = ["*"]
+tags = ["string", "temp", "StrCopy", "StrConcat", "StrLCopy", "O+", "overlay", "ReadPromptChoice"]
+title = "Under $O+ a string literal argument is copied into a stack temp whose address is the push, and a concatenation takes a 256-byte string[255] temp"
+lesson = "ovl13:2AA0 calls ReadPromptChoice('Aim:', Aim, $D, $A, $F, 0, 0, ExtKey) but pushes only 9 words: the literal's temp (System_StrCopy writes it into a 5-byte local, `mov di,'Aim:'; push cs; push di; lcall StrCopy`), then Prompt, the five bytes and @ExtKey. The StrCopy's destination is the argument push, so the push count is 4 bytes short of the declared parameters (probe PRB2AA0 shows the same). A concatenation `S := 'a' + T + 'c'` (S: string[40]) compiles to StrCopy(temp, 'a'); StrConcat(temp, T); StrConcat(temp, 'c'); StrLCopy(S, temp, 40) with one 256-byte string[255] temp per concatenation expression, allocated just below the named locals, and the frame rounds up to an even size. `DrawTextAt(0, $17, $A, 'Range = ' + ByteToText(D) + '  ')` uses another such temp. Evidence: the packet's `sub sp,0x232` and the -$131/-$231 offsets."
+evidence = ["tools/re/tp_idioms/ovl13/PRB2AA0.PAS", "src/OVL13.PAS#ShowAimPrompt", "re/symbols.toml#ovl13:2AA0"]

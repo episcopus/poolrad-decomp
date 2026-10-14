@@ -5696,27 +5696,14 @@ evidence = ["prologue"]
 id = "ovl13:2AA0"
 unit = "ovl13"
 addr = "ovl13:2AA0"
-size = 235
-name = "ovl13_fn_2AA0"
-signature = ""
+size = 413
+name = "ShowAimPrompt"
+signature = "function ShowAimPrompt(Who, Target: PCharacter; Range: Byte; ShowRange: Byte; Unused: Byte): Char"
 c_name = "ovl13_fn_2AA0"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_fn_2AA0 (ovl13:2AA0 draws the target's character panel and the combat cursor, shows 'Range = ' with the distance, builds the aim menu 'Next Prev Manual ' + the target name + 'Center Exit' and returns the key ReadPromptChoice reads under the title 'Aim:'; the target is named 'Target ' within Range when the aim is not ranged (ShowRange 0) or for a ranged weapon whose ammo can be used; called by ovl13_e17 (the player's aim cursor)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl13:2B8B"
-unit = "ovl13"
-addr = "ovl13:2B8B"
-size = 178
-name = "ovl13_fn_2B8B"
-signature = ""
-c_name = "ovl13_fn_2B8B"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl13:2C3D"

@@ -50,8 +50,7 @@ procedure ShowAttackAnimation(Who, Target: PCharacter; Item: PItem);
 procedure UpdateMonsterMorale;
 function FastestEnemyMovement(Who: Pointer): Byte;
 function ConfirmAttackTarget(Who, Target: PCharacter): Boolean;
-procedure ovl13_fn_2AA0;
-procedure ovl13_fn_2B8B;
+function ShowAimPrompt(Who, Target: PCharacter; Range: Byte; ShowRange: Byte; Unused: Byte): Char;
 procedure ovl13_fn_2C3D;
 procedure ovl13_fn_2D39;
 procedure ovl13_fn_2DC8;
@@ -1612,10 +1611,43 @@ begin
     end;
   end;
 end;
-{ ovl13:2AA0: frame not read }
-{@stub} procedure ovl13_fn_2AA0; begin end;
-{ ovl13:2B8B: retf 14: 14 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl13_fn_2B8B; begin end;
+{ ovl13:2AA0. Shows the manual-aim prompt and returns the key the player pressed: it draws the
+  target's character panel and puts the combat cursor on it (DrawCharacterPanel, ShowCursorOn), shows
+  'Range = ' with the distance when ShowRange is nonzero, builds the aim menu 'Next Prev Manual ' +
+  the target name + 'Center Exit' and reads a key from it through ReadPromptChoice ('Aim:'). The
+  target name is 'Target ' when the distance is within Range and the aim is worth naming: always when
+  ShowRange is 0, else only for a ranged weapon (IsRangedWeapon, ChooseAttackItem, and either no
+  adjacent enemy or an ammo that can strike in melee). Called by ovl13_e17, the player's aim cursor.
+  Globals: none. QUIRK ovl13:2ACF: Bearing is worked out and never read. }
+function ShowAimPrompt(Who, Target: PCharacter; Range: Byte; ShowRange: Byte; Unused: Byte): Char;
+var
+  Aim: string[40];               { [bp-$2A] the menu text under the panel }
+  ExtKey: Byte;                  { [bp-$2B] the extended key ReadPromptChoice returns }
+  AimItem: Pointer;              { [bp-$2F] the ammo ChooseAttackItem picks for a ranged aim }
+  Distance: Byte;                { [bp-$30] the distance from Who to Target (DistanceToTarget) }
+  Bearing: Byte;                 { [bp-$31] the direction from Who to Target (BearingTo) }
+begin
+  Aim := '';
+  Distance := DistanceToTarget(Who, Target);
+  Bearing := BearingTo(Who, Target);
+  if ShowRange <> 0 then
+    DrawTextAt(0, $17, $A, 'Range = ' + ByteToText(Distance) + '  ');
+  if Distance <= Range then
+  begin
+    if ShowRange = 0 then
+      Aim := 'Target '
+    else if Who <> Target then
+      if not IsRangedWeapon(Who) then
+        Aim := 'Target '
+      else if ChooseAttackItem(Who, AimItem) <> 0 then
+        if (CollectEnemiesInRange(Who, 1) = 0) or RangedWeaponCanMelee(Who) then
+          Aim := 'Target ';
+  end;
+  Aim := 'Next Prev Manual ' + Aim + 'Center Exit';
+  ShowCursorOn(Target, 3, 1);
+  DrawCharacterPanel(Target);
+  ShowAimPrompt := ReadPromptChoice('Aim:', Aim, $D, $A, $F, 0, 0, ExtKey);
+end;
 { ovl13:2C3D: frame not read }
 {@stub} procedure ovl13_fn_2C3D; begin end;
 { ovl13:2D39: retf 18: 18 bytes of parameters; 0 bytes of locals }

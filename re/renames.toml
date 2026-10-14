@@ -4204,3 +4204,10 @@ kind = "routine"
 why = "ovl13:2998 decides whether an attack on Target may proceed: allowed when Target is on the side opposing Who (OpposingSide) or Who is computer-run (Quick), else it asks 'Attack Ally: ' (AskYesNo) and on a yes sets ds6DE2 and word 819 of ds49D6^, moves every computer-run party member to the monster side and clears its target, then recounts the sides; called by MeleeAttack (ovl08:0D45)"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl13_fn_2AA0"
+new = "ShowAimPrompt"
+kind = "routine"
+why = "ovl13:2AA0 draws the target's character panel and the combat cursor, shows 'Range = ' with the distance, builds the aim menu 'Next Prev Manual ' + the target name + 'Center Exit' and returns the key ReadPromptChoice reads under the title 'Aim:'; the target is named 'Target ' within Range when the aim is not ranged (ShowRange 0) or for a ranged weapon whose ammo can be used; called by ovl13_e17 (the player's aim cursor)"
+date = "2026-10-14"
+
