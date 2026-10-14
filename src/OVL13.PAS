@@ -45,7 +45,7 @@ procedure ovl13_fn_2432;
 function ovl13_fn_2574(Who: PCharacter; Target: PCharacter): Boolean;
 procedure ovl13_fn_257E;
 procedure ovl13_fn_25C9;
-function ovl13_e18(Who, Target: Pointer): Byte;
+function BearingTo(Who, Target: Pointer): Byte;
 procedure ovl13_fn_26B0(Who, Target: PCharacter; Item: PItem);
 procedure ovl13_e19;
 function ovl13_e20(Who: Pointer): Byte;
@@ -855,7 +855,7 @@ begin
     else
     begin
       if Target^.Combat^.BF > 1 then
-        if ovl13_e18(Attacker, Target) = Target^.Combat^.IconSet then
+        if BearingTo(Attacker, Target) = Target^.Combat^.IconSet then
           if Target^.Combat^.B12 > 4 then
             Behind := 1;
       if Behind <> 0 then
@@ -904,16 +904,16 @@ begin
 end;
 { ovl13:17F6. Notes the attack Target is about to take from Attacker: Target's attack count Combat^.BF
   is raised and Combat^.B12 gains the angular error between Target's facing (Combat^.IconSet) and
-  the bearing from Target to Attacker (ovl13_e18), wrapped into 0..4, modulo 8. Called with the
+  the bearing from Target to Attacker (BearingTo), wrapped into 0..4, modulo 8. Called with the
   target as the second argument just before PerformAttack resolves the attack (ovl08 MeleeAttack,
   ovl09 AiTurn, GuardedEnemiesAttack, SweepEnemies). }
 procedure NoteAttackBearing(Attacker, Target: PCharacter);
 var
   Error: Byte;                   { Target's facing error, wrapped into 0..4 }
-  Bearing: Byte;                 { the direction from Target to Attacker (ovl13_e18) }
+  Bearing: Byte;                 { the direction from Target to Attacker (BearingTo) }
 begin
   Inc(Target^.Combat^.BF);
-  Bearing := ovl13_e18(Target, Attacker);
+  Bearing := BearingTo(Target, Attacker);
   Error := (Bearing - Target^.Combat^.IconSet + 8) mod 8;
   if Error > 4 then
     Error := 8 - Error;
@@ -948,17 +948,17 @@ const
 var
   NewItem: PMenuLine;            { the ammo copy linked into the shop's item list ds6810 }
   SavedSelection: PCharacter;    { SelectedCharacter around ResolveCombatantAttacks }
-  Bearing: Byte;                 { a direction from ovl13_e18 }
+  Bearing: Byte;                 { a direction from BearingTo }
 begin
   if (Target^.Combat^.BF < TargetTurnLimit) and (AttackKind = 0) then
   begin
-    Bearing := ovl13_e18(Target, Who);
+    Bearing := BearingTo(Target, Who);
     if IsCombatantInView(Target, 0) then
       SetCombatantIcon(Target, Bearing, 0, 0)
     else
       Target^.Combat^.IconSet := Bearing;
   end;
-  Bearing := ovl13_e18(Who, Target);
+  Bearing := BearingTo(Who, Target);
   DrawCharacterPanel(Who);
   SetCombatantIcon(Who, Bearing, 1, 0);
   Who^.Combat^.Target := Target;
@@ -1293,8 +1293,27 @@ end;
 {@stub} procedure ovl13_fn_257E; begin end;
 { ovl13:25C9: retf 8: 8 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl13_fn_25C9; begin end;
-{ ovl13:263D: retf 8: 8 bytes of parameters; 6 bytes of locals }
-{@stub} function ovl13_e18(Who, Target: Pointer): Byte; begin end;
+{ ovl13:263D. Returns the compass direction from Who's cell towards Target's cell: it reads both
+  combat-map cells (CombatantX/CombatantY) and walks Dir 0..8, returning the first direction whose
+  90-degree arc at Who (InDirArc) holds Target. Called to face a combatant at another: PerformAttack
+  turns Target with the direction from Target to Who, NoteAttackBearing measures the target's
+  facing error against it, and ovl09 uses the direction from Who to Combat^.Target as the AI's move
+  direction (ovl09:07F2, 0B3C). }
+function BearingTo(Who, Target: Pointer): Byte;
+var
+  Dir: Byte;                     { the direction walked, 0..8 }
+  WhoX, WhoY: ShortInt;          { Who's combat-map cell }
+  TargetX, TargetY: ShortInt;    { Target's combat-map cell }
+begin
+  WhoX := CombatantX(Who);
+  WhoY := CombatantY(Who);
+  TargetX := CombatantX(Target);
+  TargetY := CombatantY(Target);
+  Dir := 0;
+  while not InDirArc(WhoX, WhoY, TargetX, TargetY, Dir) do
+    Inc(Dir);
+  BearingTo := Dir;
+end;
 { ovl13:26B0: retf 12: 12 bytes of parameters; 6 bytes of locals }
 {@stub} procedure ovl13_fn_26B0(Who, Target: PCharacter; Item: PItem); begin end;
 { ovl13:2879: retf 0: 0 bytes of parameters; 8 bytes of locals }

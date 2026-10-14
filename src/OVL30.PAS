@@ -199,7 +199,7 @@ end;
   to the from point or to the base point passes. Otherwise the base point steps once towards
   Dir (DirStepX, DirStepY) and the case body checks the two half-planes of that direction's wedge
   (each shared with the neighbouring direction). Returns True when the point is in the arc.
-  Called by ovl13_e18, ovl22_e5 (which loops Dir upward to aim at a point) and ScanTargets. }
+  Called by BearingTo, ovl22_e5 (which loops Dir upward to aim at a point) and ScanTargets. }
 function InDirArc(FromX, FromY, ToX, ToY: ShortInt; Dir: Byte): Boolean;
 var
   BaseX, BaseY: ShortInt;         { the from point stepped once towards Dir }

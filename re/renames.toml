@@ -4155,3 +4155,10 @@ kind = "routine"
 why = "ovl13:20C3 is the routine RunCombat stores in ds6B84 (ovl08:0088) and ovl22_e5 calls after an aim: it fills the spell's target list ds6C91 (1-based, count ds6C94) with the caster alone (Pad2[6] nibble 0), with FindSpellTarget's aim or a ScanTargets area copy (nibble $F and 8..14), or with up to (Pad2[6] and 3)+1 distinct aims, and leaves the chosen cell in ds6DB9/ds6DBA; Done is 0 when nothing was collected."
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl13_e18"
+new = "BearingTo"
+kind = "routine"
+why = "ovl13:263D returns the compass direction from Who's cell to Target's cell (walks Dir 0..8 until InDirArc(WhoX,WhoY,TargetX,TargetY,Dir)); ovl09 uses it as the AI move direction and PerformAttack and NoteAttackBearing use it to face a combatant"
+date = "2026-10-14"
+

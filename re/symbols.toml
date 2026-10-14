@@ -5671,12 +5671,12 @@ id = "ovl13:263D"
 unit = "ovl13"
 addr = "ovl13:263D"
 size = 115
-name = "ovl13_e18"
-signature = "function ovl13_e18(Who, Target: Pointer): Byte"
+name = "BearingTo"
+signature = "function BearingTo(Who, Target: Pointer): Byte"
 c_name = "ovl13_e18"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_e18 (ovl13:263D returns the compass direction from Who's cell to Target's cell (walks Dir 0..8 until InDirArc(WhoX,WhoY,TargetX,TargetY,Dir)); ovl09 uses it as the AI move direction and PerformAttack and NoteAttackBearing use it to face a combatant); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
