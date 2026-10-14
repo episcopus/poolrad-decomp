@@ -967,6 +967,11 @@ var
     combatant's turn; entry 0 at DS:6E2C is the array base, never read. }
   ds6E2C: array[0..2] of Byte;
   ds6825: Byte;                   { AI morale scratch (CheckMorale computes it from B84, compares percentages) }
+  { A combatant pointer the affect handlers share as scratch: ovl13:3A86 (the affect $4A handler)
+    stores the combatant the affect records (CombatantRecord[Affect^.Data]) here and attacks it, and
+    ovl12's handler at ovl12 code 0x138 stores Who^.Combat^.Target here before reading it. It
+    overlaps the offset word of AffectHandlers[0], which is never called (SaveKind lies in it). }
+  ds6826: PCharacter;
   ds6E2F: Byte;                   { byte CheckMorale copies into ds6825; meaning unknown }
   ds6E30: Boolean;                { the Alt-M Magic On/Off toggle of the combat keys (ovl08:04A7) }
   ds6E31: Byte;                   { the key flag the ovl08 menus pass to ReadPromptChoice }

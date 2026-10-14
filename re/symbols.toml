@@ -5801,12 +5801,12 @@ id = "ovl13:3A86"
 unit = "ovl13"
 addr = "ovl13:3A86"
 size = 269
-name = "ovl13_e23"
+name = "ForcedAttack"
 signature = ""
 c_name = "ovl13_e23"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_23"
+notes = "renamed from ovl13_e23 (ovl13:3A86 is the affect $4A handler: the ovl12 initialiser (store at ovl12 code 0x354D) puts it in AffectHandlers[$4A] (DS:6950), and it makes Who attack the combatant its affect records with the second attack form (AttackSlots[1] 1, WeaponAttacks[1] 3, WeaponDamage[1] 4) and attack kind 1; make match UNIT=ovl13 FN=ForcedAttack MATCH.); auto:entry_23"
 evidence = ["prologue"]
 
 [[routine]]

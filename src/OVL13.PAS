@@ -57,7 +57,7 @@ procedure RunAimCursor(Who, Target: PCharacter; Range, Automatic,
 procedure RunAimTargets(Who: PCharacter; Range, Automatic, AimFlag: Byte; var Done: Byte; var Aim);
 function ChooseCombatTarget(Who: PCharacter; Range, ThroughWalls, ForgetTarget: Byte): Boolean;
 procedure RakeAttack(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl13_e23(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure ForcedAttack(Who: PCharacter; Affect: PAffect; Mode: Byte);
 function ovl13_e24: Boolean;
 implementation
 uses RES03, RES04, RES06, RES09, RES12, OVL19, OVL22, OVL24, OVL25, OVL30, OVL31, Crt;
@@ -125,9 +125,15 @@ const
   Var2AllyAttack = 819;
   { The two affects an enemy must not carry to take a parting shot (ovl13:0A91, 0AAB). ovl24
     removes the same pair when a combatant goes down or panics (ovl24:0322, 0336) and ovl24_e14
-    removes them too, so what they mean is not settled (whitepaper 5.5). }
+    removes them too. $4A is settled by its handler (ovl13:3A86, AffectForcedAttack); what $4B
+    changes is not (whitepaper 5.5). }
   AffectNoPartingShot1 = $4B;
-  AffectNoPartingShot2 = $4A;
+  AffectForcedAttack = $4A;
+  { The affect the combatant an affect $4A records (ds6826) loses when the forced attack it stands
+    for does not happen or is over (ovl13:3AC7, 3B6E). It is one of the affects a combatant loses
+    when it goes down (ovl24's DeathAffects) and its handler runs among the movement hooks
+    (ovl24:02FA kind $12), so what it changes there is not settled. }
+  AffectLostWithForcedAttack = $3A;
   { The direction scan of a parting shot: the attacker's icon set plus 6 through plus 10 approach
     the target's cell (ovl13:0AC7..0AF4); the compass direction tried each step is its index mod 8. }
   PartingShotFirstOffset = 6;
@@ -472,7 +478,7 @@ begin
         if not IsHelpless(Enemy) then
           if AttackTargetAllowed(Enemy, Who) then
             if not HasAffect(Enemy, AffectNoPartingShot1, Affect) then
-              if not HasAffect(Enemy, AffectNoPartingShot2, Affect) then
+              if not HasAffect(Enemy, AffectForcedAttack, Affect) then
                 for K := Enemy^.Combat^.IconSet + PartingShotFirstOffset
                   to Enemy^.Combat^.IconSet + PartingShotLastOffset do
                   if DidAttack = 0 then
@@ -2071,7 +2077,33 @@ end;
   $3A, and (mode 0 only) the affect's removal flag is cleared and it is removed from Who, which runs
   this handler again with mode 1 and so does not recurse. Globals: ds6826 (the recorded combatant),
   CombatantRecord. }
-{@stub} procedure ovl13_e23(Who: PCharacter; Affect: PAffect; Mode: Byte); begin end;
+procedure ForcedAttack(Who: PCharacter; Affect: PAffect; Mode: Byte);
+var
+  Done: Byte;                    { [bp-1] the turn-done flag PerformAttack fills in }
+  Unused: Byte;                  { QUIRK ovl13:3A89: declared but never read; it pads the frame }
+begin
+  ds6826 := CombatantRecord[Affect^.Data];
+  if (Mode <> 0) or (Who^.Flag10D = 0) or (ds6826^.Flag10D = 0) then
+  begin
+    RemoveAffect(ds6826, AffectLostWithForcedAttack, nil);
+    if Mode = 0 then
+    begin
+      Affect^.Flag := 0;
+      RemoveAffect(Who, AffectForcedAttack, Affect);
+    end;
+  end
+  else
+  begin
+    Who^.AttackSlots[1] := 1;
+    Who^.AttackSlots[2] := 0;
+    Who^.WeaponAttacks[1] := 3;
+    Who^.WeaponDamage[1] := 4;
+    PerformAttack(Who, ds6826, 1, nil, Done);
+    Done := EndCombatTurn(Who);
+    if ds6826^.Flag10D = 0 then
+      RemoveAffect(Who, AffectForcedAttack, Affect);
+  end;
+end;
 { ovl13:3B93: retf 0: 0 bytes of parameters; 262 bytes of locals }
 {@stub} function ovl13_e24: Boolean; begin end;
 
