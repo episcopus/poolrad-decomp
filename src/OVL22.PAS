@@ -57,7 +57,7 @@ procedure CastRemoveCurse;
 procedure CastBestowCurse;
 procedure CastBlink;
 procedure CastFireball;
-procedure ovl22_fn_2764;
+procedure ApplySpellToSideUpToLevel(Affect, Side: Byte; Message: String40);
 procedure ovl22_e49;
 procedure ovl22_fn_28BC;
 procedure ovl22_fn_295B;
@@ -1465,8 +1465,37 @@ begin
   MoveCombatCursor(ds6DB9, ds6DBA, AimCursorMargin, AimCursorDir);
   ApplySpellToTargets(ds681B, 0, 0, RollDiceCounted(Level, DamageDiceSides), DamageKindFire, '');
 end;
-{ ovl22:2764: retf 8: 8 bytes of parameters; 44 bytes of locals }
-{@stub} procedure ovl22_fn_2764; begin end;
+{ ovl22:2764. Applies the current spell ds681B to up to the caster level (res12_fn_26C2) of the
+  chosen targets ds6C91[1..ds6C94] that stand on Side, after removing from them the counter-affect
+  Affect: a target on Side with budget left spends one point of the level and, if it already carries
+  Affect, has it cured and is dropped, so the surviving targets are the ones the spell then affects.
+  It sets ds6820, applies the spell through ApplySpellToTargets with Message, and finally runs the
+  affect hooks $12 on each surviving target. Called by the Haste handler (CastHaste, ovl22:2892) and
+  the Slow handler (ovl22:2C09). Haste passes the slow affect $2A, Slow the haste affect $27 (the two
+  spells' SpellTable affect ids), so each removes the opposite spell from the side before it casts. }
+procedure ApplySpellToSideUpToLevel(Affect, Side: Byte; Message: String40);
+const
+  AffectHooks = $12;              { RunAffectHooks' kind for the affect this handler leaves }
+var
+  Level: Byte;                    { the caster level, the number of targets the spell may reach }
+  I: Byte;                        { the target index, 1..ds6C94 }
+begin
+  ds6820 := 1;
+  Level := res12_fn_26C2(ds681B);
+  for I := 1 to ds6C94 do
+    if (ds6C91[I]^.Side = Side) and (Level > 0) then
+    begin
+      Dec(Level);
+      if CureAffect(ds6C91[I], Affect) then
+        ds6C91[I] := nil;
+    end
+    else
+      ds6C91[I] := nil;
+  ApplySpellToTargets(ds681B, 0, 0, 0, 0, Message);
+  for I := 1 to ds6C94 do
+    if ds6C91[I] <> nil then
+      RunAffectHooks(AffectHooks, ds6C91[I]);
+end;
 { ovl22:2892: retf 0: 0 bytes of parameters; 10 bytes of locals }
 {@stub} procedure ovl22_e49; begin end;
 { ovl22:28BC: retf 12: 12 bytes of parameters; 8 bytes of locals }

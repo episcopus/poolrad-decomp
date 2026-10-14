@@ -10465,12 +10465,12 @@ id = "ovl22:2764"
 unit = "ovl22"
 addr = "ovl22:2764"
 size = 302
-name = "ovl22_fn_2764"
-signature = ""
+name = "ApplySpellToSideUpToLevel"
+signature = "procedure ApplySpellToSideUpToLevel(Affect, Side: Byte; Message: String40)"
 c_name = "ovl22_fn_2764"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl22_fn_2764 (applies the current spell to up to caster-level chosen targets on one side, first curing the opposite spell's affect; called by the Haste and Slow handlers); auto:near_call; signature from the callers: ovl22:2892 (Haste) pushes the affect, the caster's side and the string, ovl22:2C09 (Slow) the opposite side ('is Slowed')"
 evidence = ["prologue"]
 
 [[routine]]

@@ -3805,3 +3805,10 @@ kind = "routine"
 why = "cast handler of spells 47 and 64 Fireball: ovl22_e10 maps DS:6B84+47*4 and +64*4 to stub 0096:0110, SpellNames[47] is 'Fireball', it scans two steps around the aim point and deals d6 per level of fire damage with no message"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl22_fn_2764"
+new = "ApplySpellToSideUpToLevel"
+kind = "routine"
+why = "applies the current spell to up to caster-level chosen targets on one side, first curing the opposite spell's affect; called by the Haste and Slow handlers"
+date = "2026-10-13"
+
