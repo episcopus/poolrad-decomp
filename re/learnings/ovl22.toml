@@ -53,3 +53,12 @@ tags = ["compiler", "inc", "byte", "pointer-field"]
 title = "Two-argument Inc on a pointed-to byte field gives an in-place add"
 lesson = "For a pointed-to byte field, `P^.F := P^.F + R` compiles to a word add (xor ah,ah; mov dx,ax; load the field; add ax,dx; store), but the two-argument `Inc(P^.F, R)` yields exactly `call R; les di,[P]; add byte ptr es:[di+off], al`. ovl22:13D8 (CastFriends) uses the in-place byte add for the 2d4 Charisma increment, so its source is `Inc(ds6C95^.Charisma, RollDice(2, 4))`. TP 6.0 supports the second argument to Inc/Dec on an ordinal. Probe tools/re/tp_idioms/ovl22/PRB22B.PAS shows all three shapes (assignment, Inc, with block)."
 evidence = ["tools/re/tp_idioms/ovl22/PRB22B.PAS", "src/OVL22.PAS#CastFriends", "re/symbols.toml#ovl22:13D8"]
+
+[[lesson]]
+id = "sum-of-two-calls-evaluates-right-operand-first"
+confidence = "V"
+units = ["ovl22"]
+tags = ["compiler", "expression", "evaluation-order", "call"]
+title = "A sum of two function calls evaluates the right operand first"
+lesson = "TP 6.0 compiles `F(...) + G(...)` by calling G (the right operand) first, pushing its result, then calling F, then `xor ah,ah; pop dx; add ax,dx`. So the source that produced ovl22:14C7 (CastShockingGrasp)'s `res12_fn_26C2(ds681B)`-then-`RollDiceCounted(1,8)` order is `RollDiceCounted(1, 8) + res12_fn_26C2(ds681B)`, with the level on the right; the natural reading order gives the other call first and does not match. This differs from `F(...) + <memory expr>`, where the left call is evaluated first (CastMagicMissile, ovl22:1439). Probe tools/re/tp_idioms/ovl22/PRB25.PAS shows both orders side by side."
+evidence = ["tools/re/tp_idioms/ovl22/PRB25.PAS", "src/OVL22.PAS#CastShockingGrasp", "re/symbols.toml#ovl22:14C7"]

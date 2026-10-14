@@ -10127,12 +10127,12 @@ id = "ovl22:14C7"
 unit = "ovl22"
 addr = "ovl22:14C7"
 size = 84
-name = "ovl22_e25"
+name = "CastShockingGrasp"
 signature = ""
 c_name = "ovl22_e25"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_25"
+notes = "renamed from ovl22_e25 (cast handler of spell 20 Shocking Grasp (SpellHandlers[20]; ovl22_e10 fills the table at DS:6B84, whitepaper 5.22.2): deals the caster level plus 1d8 electrical damage to the chosen targets, no message (ovl22:14C7)); auto:entry_25"
 evidence = ["prologue"]
 
 [[routine]]

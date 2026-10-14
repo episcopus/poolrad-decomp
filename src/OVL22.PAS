@@ -31,7 +31,7 @@ procedure CastReduce;
 procedure CastFriends;
 procedure CastMagicMissile;
 procedure CastShield;
-procedure ovl22_e25;
+procedure CastShockingGrasp;
 procedure ovl22_e26;
 procedure ovl22_e27;
 procedure ovl22_fn_1758;
@@ -733,8 +733,20 @@ procedure CastShield;
 begin
   ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is shielded');
 end;
-{ ovl22:14C7: retf 0: 0 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl22_e25; begin end;
+{ ovl22:14C7 (e25). Cast handler of spell 20, Shocking Grasp (SpellHandlers[20]; ovl22_e10 fills the
+  table, whitepaper 5.22.2): deals the caster level from res12_fn_26C2 plus 1d8 (RollDiceCounted, count
+  kept in ds681C) of electrical damage to the chosen targets, with no message. Reads ds681B. }
+procedure CastShockingGrasp;
+const
+  DiceSides = 8;                  { 1d8 plus one point per caster level (the AD&D Shocking Grasp) }
+  DamageKindElectric = $0C;       { DealDamage: kind and $F7 = 4 names electricity (ovl24:1389) }
+begin
+  { QUIRK ovl22:14D7: TP 6.0 evaluates the right operand of `+` first when both are calls, so the
+    original's res12_fn_26C2-before-RollDiceCounted order needs the sum written with the level on the
+    right; the add is commutative and the bytes match only this way. }
+  ApplySpellToTargets(ds681B, 0, 0,
+    RollDiceCounted(1, DiceSides) + res12_fn_26C2(ds681B), DamageKindElectric, '');
+end;
 { ovl22:151B: retf 0: 0 bytes of parameters; 18 bytes of locals }
 {@stub} procedure ovl22_e26; begin end;
 { ovl22:1658: frame not read }

@@ -3623,3 +3623,10 @@ kind = "routine"
 why = "cast handler of spell 19 Shield (SpellHandlers[19]; ovl22_e10 fills the table at DS:6B84, whitepaper 5.22.2): applies the current spell ds681B (its own affect does the work) to the chosen targets with 'is shielded' (ovl22:1499)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl22_e25"
+new = "CastShockingGrasp"
+kind = "routine"
+why = "cast handler of spell 20 Shocking Grasp (SpellHandlers[20]; ovl22_e10 fills the table at DS:6B84, whitepaper 5.22.2): deals the caster level plus 1d8 electrical damage to the chosen targets, no message (ovl22:14C7)"
+date = "2026-10-13"
+
