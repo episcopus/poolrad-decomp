@@ -58,7 +58,7 @@ procedure RunAimTargets(Who: PCharacter; Range, Automatic, AimFlag: Byte; var Do
 function ChooseCombatTarget(Who: PCharacter; Range, ThroughWalls, ForgetTarget: Byte): Boolean;
 procedure RakeAttack(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ForcedAttack(Who: PCharacter; Affect: PAffect; Mode: Byte);
-function ovl13_e24: Boolean;
+function GodsIntervene: Boolean;
 implementation
 uses RES03, RES04, RES06, RES09, RES12, OVL19, OVL22, OVL24, OVL25, OVL30, OVL31, Crt;
 type
@@ -102,6 +102,9 @@ const
   StatusDying = 5;
   { The status a fleeing combatant is dropped with (ovl13:0CE1; the same 3 as ovl24's StatusFled). }
   StatusFled = 3;
+  { The status the Alt-X debug command leaves a monster with (ovl13:3C00); res12's HealCharacter and
+    ovl07 give the same 6 the name StatusDead. }
+  StatusDead = 6;
   { The health status of a combatant still standing (TCharacter.Status 0; ovl05's StatusOkay). }
   StatusOkay = 0;
   { The statuses that show 'is killed': the set [6, 7, 8] at ovl13:02CF (the original bytes
@@ -2104,8 +2107,41 @@ begin
       RemoveAffect(Who, AffectForcedAttack, Affect);
   end;
 end;
-{ ovl13:3B93: retf 0: 0 bytes of parameters; 262 bytes of locals }
-{@stub} function ovl13_e24: Boolean; begin end;
+{ ovl13:3B93. The Alt-X debug command of the combat keys (ovl08:0264 PlayerTurn, ovl09:0690
+  HandleCombatKey, which shows 'That doesn''t work' when this returns False): it acts only when the
+  program was started with the STING argument (ParamStr(1) = 'STING', the same argument res04's
+  ReadGameKey uses to turn on DebugMode), the developers' 'the gods intervene'. It returns True,
+  flashes 'The Gods intervene!', then walks the battle character list ds5D96 and, for every monster
+  it holds (Side = SideMonsters), takes it out of the fight (Flag10D 0), leaves it dead (Status
+  StatusDead) and clears its combat-map cell (CombatantTable[CombatantIndex(Who)].Kind 0), ending
+  each one's turn through EndCombatTurn; the cursor is finally centred on the view's top-left cell
+  (CombatMap^.ViewX + 3, ViewY + 3, margin $FF so the view does not scroll, no step). Globals:
+  ds5D96, CombatMap, CombatantTable. QUIRK ovl13:3C29: Done takes EndCombatTurn's result and is
+  never read. }
+function GodsIntervene: Boolean;
+var
+  Done: Byte;                    { QUIRK ovl13:3C29: EndCombatTurn's result, never read }
+  Who: PCharacter;               { the battle character list walked (ds5D96) }
+begin
+  GodsIntervene := False;
+  if ParamStr(1) <> 'STING' then
+    Exit;
+  GodsIntervene := True;
+  ShowFlashMessage('The Gods intervene!');
+  Who := PCharacter(ds5D96);
+  while Who <> nil do
+  begin
+    if Who^.Side = SideMonsters then
+    begin
+      Who^.Flag10D := 0;
+      Who^.Status := StatusDead;
+      CombatantTable[CombatantIndex(Who)].Kind := 0;
+    end;
+    Done := EndCombatTurn(Who);
+    Who := Who^.Next;
+  end;
+  MoveCombatCursor(CombatMap^.ViewX + 3, CombatMap^.ViewY + 3, $FF, 8);
+end;
 
 begin
 end.

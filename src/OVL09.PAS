@@ -26,7 +26,7 @@ uses Crt, RES04, RES05, RES06, RES12, OVL13, OVL19, OVL22, OVL24, OVL25, OVL30, 
 
 const
   KeyAltM = '2';                { Alt-M: Magic On / Magic Off (ovl08 calls it KeyAltM too) }
-  KeyAltX = '-';                { Alt-X: ovl13_e24 decides }
+  KeyAltX = '-';                { Alt-X: GodsIntervene decides }
   InitiativeQuickAll = $14;     { Initiative marking a quick-combat character (ovl08: InitiativeQuickAll) }
   VarNoCasting = 229;           { game variable (+$1CA) that hides Cast (ovl08: VarNoCasting) }
   MaxSpell = $38;               { highest spell number (ovl23: LastSpell) }
@@ -646,7 +646,7 @@ end;
   QuickTurn and the 07F2 region, who act when it returns True). Alt-M toggles the ds6E30 Magic
   flag with the same 'Magic On'/'Magic Off' message as PlayerTurn (ovl08:031A); Space clears
   Quick on every party member (B84 below $80, Status not 1) and, when Who is not quick yet,
-  marks Who quick (Initiative := InitiativeQuickAll) and returns True; Alt-X asks ovl13_e24.
+  marks Who quick (Initiative := InitiativeQuickAll) and returns True; Alt-X asks GodsIntervene.
   QUIRK ovl09:10AA: the Alt-X answer is tested and nothing happens either way (empty then).
   QUIRK ovl09:0FD2: the KeyPressed test is inverted with an empty then-branch (if not
   KeyPressed then else). FlushKeyboard always runs at the end. }
@@ -687,7 +687,7 @@ begin
           end;
         end;
       KeyAltX:
-        if ovl13_e24 then
+        if GodsIntervene then
         begin
         end;
     end;

@@ -34,7 +34,7 @@ const
   NoDirection = 8;        { MoveCharacter: the key was no direction }
   KeyQuickAll = #16;      { Alt-Q: every character fights by itself (the scan code) }
   KeyAltR = #19;          { Alt-R: accepted by CombatMenu, no command in PlayerTurn }
-  KeyAltX = '-';          { Alt-X: ovl13_e24 decides (That doesn't work) }
+  KeyAltX = '-';          { Alt-X: GodsIntervene decides (That doesn't work) }
   KeyAltM = '2';          { Alt-M: Magic On / Magic Off }
   { The keypad scan codes MoveCharacter turns into the directions 0 (north) to 7, clockwise. }
   KeyUp = 'H';
@@ -174,7 +174,7 @@ end;
   (ViewSelectedCharacter), A Aim (RunAimTargets), U Use (RunItemMenu), C Cast (CastCombatSpell), T Turn (TurnUndead), Q
   Quick (SetQuickCombat, the computer finishes the turn), D Done (EndTurnMenu), Space takes
   every character with B84 below $80 out of quick combat, and the Alt keys: Alt-M toggles Magic On/Off (ds6E30), Alt-Q makes
-  everybody quick, Alt-X asks ovl13_e24. After each command that does not end the turn the
+  everybody quick, Alt-X asks GodsIntervene. After each command that does not end the turn the
   character is shown again. Done is the turn-ended flag the commands set. }
 procedure PlayerTurn(Who: PCharacter);
 var
@@ -261,7 +261,7 @@ begin
             Done := 1;
           end;
           KeyAltX:
-            if ovl13_e24 then
+            if GodsIntervene then
             begin
               ShowCursorOn(Who, 3, 0);
               Done := 1;

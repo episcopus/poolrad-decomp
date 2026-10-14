@@ -5814,12 +5814,12 @@ id = "ovl13:3B93"
 unit = "ovl13"
 addr = "ovl13:3B93"
 size = 218
-name = "ovl13_e24"
-signature = "function ovl13_e24: Boolean"
+name = "GodsIntervene"
+signature = "function GodsIntervene: Boolean"
 c_name = "ovl13_e24"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_24"
+notes = "renamed from ovl13_e24 (ovl13:3B93 is the Alt-X debug command: it returns False unless the program was started with the STING argument (ParamStr(1); res04's DebugMode switch), then flashes 'The Gods intervene!' and takes every monster out of the fight (Flag10D 0, Status StatusDead, CombatantTable Kind 0); ovl08:0264 and ovl09:0690 call it for Alt-X and show 'That doesn't work' on False; make match UNIT=ovl13 FN=GodsIntervene MATCH.); auto:entry_24"
 evidence = ["prologue"]
 
 [[routine]]
