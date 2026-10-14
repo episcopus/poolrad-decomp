@@ -98,7 +98,7 @@ procedure ReviveDyingCharacter(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure GiveAffectUnlessFireOrAcid(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure GiveRegeneratingUnlessAffected(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure RetryRevivalAtFullHitPoints(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure TurnGaseousAndEscape;
+procedure TurnGaseousAndEscape(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e88;
 procedure ovl12_fn_2915;
 procedure ovl12_e89;
@@ -1781,8 +1781,16 @@ begin
   if not ReviveCombatant(Who, Who^.HpMax) then
     Added := TryAddAffect(Who, AffectUnknown66, Affect^.Data, AffectUnknown66RetryDuration);
 end;
-{ ovl12:28BF: retf 10: 10 bytes of parameters; 26 bytes of locals }
-{@stub} procedure TurnGaseousAndEscape; begin end;
+{ ovl12:28BF. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read). Affect's Flag is
+  cleared (NoRemoveHandler) so its handler does not run again on removal. Then the cursor is shown on Who
+  (ShowCursorOn, ovl31:1298; margin 3, cursor 0 [?]) and Who drops out of the fight with StatusFled and the text
+  'Turns gaseous and escapes' (DropCombatant, ovl24:0F06). Which affect runs it is not known yet [?]. }
+procedure TurnGaseousAndEscape(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  Affect^.Flag := NoRemoveHandler;
+  ShowCursorOn(Who, 3, 0);
+  DropCombatant(Who, StatusFled, 'Turns gaseous and escapes');
+end;
 { ovl12:2901: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e88; begin end;
 { ovl12:2915: retf 2: 2 bytes of parameters; 2 bytes of locals }
