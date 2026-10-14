@@ -1373,17 +1373,17 @@ begin
 end;
 { 00BA:2228. Applies Damage hit points to Who and updates its status. It computes Overkill =
   Damage - HpCurrent when the damage exceeds Who's current hit points (Flag11B, +$11B) and
-  Remaining = HpCurrent - Damage otherwise (the other stays 0), then sets the status: dead
-  (StatusDead) when the overkill is above 9 or when a hit exactly reaches 0 while Who was already
-  StatusAnimated; dying (StatusDying) when there is any overkill, recording the overkill in
-  Combat^.DyingRounds (+$E) in the combat view; unconscious (StatusUnconscious) when the hit
-  exactly reaches 0 otherwise. When the resulting status is not the standing set StatusOkay +
-  StatusAnimated Who leaves combat: Flag10D and the hit points are cleared and, in the combat
-  view, its side's count (ds6814Sides, by Side) and its initiative (Combat^.Initiative, +$3) drop;
-  a standing character just takes Remaining as its hit points. DealDamage, DamageWithMessage and
-  ovl13 call it. Globals: ds49F3 (view mode), ds6814Sides.
-  StatusDead (6): is the character dead, StatusAnimated (1): already dead-like (the heal code
-  counts 1 and 6); from the image status names. }
+  Remaining = HpCurrent - Damage otherwise (the other stays 0, so Remaining = 0 whenever the
+  damage is at or above HpCurrent; that is the code's "reaches 0 or below"). The status tests run
+  in this order: dead (StatusDead) when the overkill is above 9, or when Remaining = 0 and Who was
+  already StatusAnimated (an animated character is Dead for every blow that reaches 0 or below,
+  never Dying); otherwise dying (StatusDying) when there is any overkill, recording the overkill in
+  Combat^.DyingRounds (+$E) in the combat view; otherwise unconscious (StatusUnconscious) when
+  Remaining = 0, that is an exact hit to 0. When the resulting status is not the standing set
+  StatusOkay + StatusAnimated Who leaves combat: Flag10D and the hit points are cleared and, in the
+  combat view, its side's count (ds6814Sides, by Side) and its initiative (Combat^.Initiative, +$3)
+  drop; a standing character just takes Remaining as its hit points. DealDamage, DamageWithMessage
+  and ovl13 call it. Globals: ds49F3 (view mode), ds6814Sides. }
 procedure ApplyDamage(Who: Pointer; Damage: Byte);
 var
   Overkill, Remaining: Byte;
