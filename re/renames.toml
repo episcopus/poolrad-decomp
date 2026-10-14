@@ -5794,3 +5794,10 @@ kind = "routine"
 why = "ovl22:008A shows SpellMenuList through ChooseFromList (ovl25:0D9A) with the button word Cast/Memorize/Scribe/Learn per Mode and returns the chosen line's spell number from SpellMenuSpells, or 0 when the player left; called only by ChooseSpellFromList (ovl19:299C)"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl16_fn_056C"
+new = "CreateCharacter"
+kind = "routine"
+why = "ovl16:056C allocates a TCharacter (GetMem 285, FillChar) and walks the menus 'Pick Race', 'Pick Gender', 'Pick Class', 'Pick Alignment' (literal pool 04F1..0525), rolls the six abilities (RollDice(3,6) best of six, age and race adjustments), asks 'Keep this character? ' and 'Character name: ', then SaveCharacter and FreeMem; RunCharacterMenu dispatches it on the C key"
+date = "2026-10-14"
+
