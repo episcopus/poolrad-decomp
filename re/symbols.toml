@@ -3824,12 +3824,12 @@ id = "ovl12:14EB"
 unit = "ovl12"
 addr = "ovl12:14EB"
 size = 88
-name = "ovl12_e51"
-signature = ""
+name = "AddTrainedOutAndHeal"
+signature = "procedure AddTrainedOutAndHeal(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e51"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_51"
+notes = "renamed from ovl12_e51 (ovl12:14EB is the AddHealingBlockAndHeal shape (ovl12:12FB) with AffectTrainedOut: TryAddAffect(Who, AffectTrainedOut, Affect^.Data, TrainedOutDuration), then HealCharacter(Who, 1, 1) and res12_fn_234A when it healed); auto:entry_51"
 evidence = ["prologue"]
 
 [[routine]]

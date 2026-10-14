@@ -59,7 +59,7 @@ procedure ProgressRot(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e48(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e49(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ReduceFireDamageByRoll(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e51;
+procedure AddTrainedOutAndHeal(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_fn_1543;
 procedure ovl12_fn_1545;
 procedure ovl12_fn_1583;
@@ -1079,8 +1079,17 @@ begin
       CancelPendingHook(0);
   end;
 end;
-{ ovl12:14EB: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e51; begin end;
+{ ovl12:14EB. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode not read), the same shape as
+  AddHealingBlockAndHeal (ovl12:12FB) with the trained-out affect: it gives Who AffectTrainedOut (the Constitution
+  limit affect of TrainConstitution, ovl12:0233) for TrainedOutDuration rounds with the Data of Affect, when TryAddAffect
+  allows it. Then HealCharacter heals Who by one hit point with Flag 1, which a healing block does not stop, and when
+  that healed Who, res12_fn_234A (00BA:234A, not named yet) runs on Who. Which affect runs it is not known yet [?]. }
+procedure AddTrainedOutAndHeal(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  if TryAddAffect(Who, AffectTrainedOut, Affect^.Data, TrainedOutDuration) then
+    if HealCharacter(Who, 1, 1) then
+      res12_fn_234A(Who);
+end;
 { ovl12:1543: frame not read }
 {@stub} procedure ovl12_fn_1543; begin end;
 { ovl12:1545: frame not read }

@@ -3742,3 +3742,10 @@ kind = "routine"
 why = "ovl12:1490 is a damage hook (AffectHandlers shape): while the damage is fire (DamageKind bit 1) it takes 2 per die of the last roll (ds681C) off DamageAmount, never below ds681C, adds 4 to SaveRoll, and cancels non-magical damage (CancelPendingHook 0)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e51"
+new = "AddTrainedOutAndHeal"
+kind = "routine"
+why = "ovl12:14EB is the AddHealingBlockAndHeal shape (ovl12:12FB) with AffectTrainedOut: TryAddAffect(Who, AffectTrainedOut, Affect^.Data, TrainedOutDuration), then HealCharacter(Who, 1, 1) and res12_fn_234A when it healed"
+date = "2026-10-13"
+
