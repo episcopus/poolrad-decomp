@@ -58,7 +58,7 @@ const
   LongRestHours = 6;
   LongRestLevel = 2;
   MinutesPerLevel = 15;
-  { Colours of the prompt line (ReadPromptChoice, AskYesNo) and of the messages (res12_fn_16EC). }
+  { Colours of the prompt line (ReadPromptChoice, AskYesNo) and of the messages (ShowCharacterMessage). }
   TitleColor = 13;
   WordColor = 10;
   HotColor = 15;
@@ -217,7 +217,7 @@ end;
   when the game variable VarNoCasting forbids casting here (casting only: 'cannot cast spells in
   this area'), nor when the character's Status is 1 or Flag10D is 0 ('is in no condition to cast
   any spells', 'memorize spells' or 'scribe any scrolls'). The refusal is shown on the message line
-  (res12_fn_16EC). }
+  (ShowCharacterMessage). }
 function MayUseMagic(Action: Byte): Boolean;
 var
   Reason: String40;
@@ -239,13 +239,13 @@ begin
   else
   begin
     MayUseMagic := False;
-    res12_fn_16EC(SelectedCharacter, Reason, MessageColor, 1);
+    ShowCharacterMessage(SelectedCharacter, Reason, MessageColor, 1);
   end;
 end;
 { ovl15:04A1. The Cast command: when MayUseMagic allows it, repeatedly lists SelectedCharacter's memorized
   spells (ChooseSpellFromList) and casts the chosen one in a cleared text window (ovl22_e5), until the list
   is left; 'has no spells memorized' when there is none. Clears ds6DB5 first and redraws the screen
-  (res12_fn_27D9) when something was shown. The camp's Magic menu and ovl14's wilderness keys. }
+  (RedrawView) when something was shown. The camp's Magic menu and ovl14's wilderness keys. }
 procedure CastSpells;
 var
   Choice: Word;
@@ -268,9 +268,9 @@ begin
       else if Listed <> 0 then
         Redraw := 1
       else
-        res12_fn_16EC(SelectedCharacter, 'has no spells memorized', MessageColor, 1);
+        ShowCharacterMessage(SelectedCharacter, 'has no spells memorized', MessageColor, 1);
     until Spell = 0;
-  if Redraw <> 0 then res12_fn_27D9;
+  if Redraw <> 0 then RedrawView;
 end;
 { ovl15:05A4. Shows the spell slots SelectedCharacter has left for memorizing: 'can memorize:' and,
   per class that has slots, a row '    Cleric Spells:' or 'Magic-User Spells:' with the slots left
@@ -291,7 +291,7 @@ begin
     HasClass[SpellClass] := False;
     for SpellLevel := 1 to SpellLevels do
     begin
-      Counts[SpellLevel, SpellClass] := res12_fn_1037(SpellSlotsLeft(SpellLevel, SpellClass));
+      Counts[SpellLevel, SpellClass] := ByteToText(SpellSlotsLeft(SpellLevel, SpellClass));
       if SelectedCharacter^.SpellSlots[SpellClass, SpellLevel] = 0 then
         Counts[SpellLevel, SpellClass] := ' '
       else
@@ -303,7 +303,7 @@ begin
   end;
   if Any then
   begin
-    res12_fn_16EC(SelectedCharacter, 'can memorize:', MessageColor, 0);
+    ShowCharacterMessage(SelectedCharacter, 'can memorize:', MessageColor, 0);
     Row := 3;
     for SpellClass := ClassCleric to ClassMage do
       if HasClass[SpellClass] then
@@ -327,7 +327,7 @@ end;
 { ovl15:077A. The Rest command: sets RestTime to the longest StudyRestMinutes of the party (hours,
   tens of minutes, minutes; the call also stores each member's RestHours), runs the rest
   (RunRestPeriod, whose result goes to EndCamp, ending the camp when nonzero), then clears RestTime and
-  calls res12_fn_290B. }
+  calls DrawLocationLine. }
 procedure RestParty(var EndCamp: Byte);
 var
   Who: PCharacter;
@@ -346,7 +346,7 @@ begin
   RestTime[1] := MaxMinutes mod 10;
   EndCamp := RunRestPeriod;
   FillChar(RestTime, SizeOf(RestTime), 0);
-  res12_fn_290B;
+  DrawLocationLine;
 end;
 { ovl15:0824. Sorts SelectedCharacter's 21 Spells slots by spell number (bit 7 ignored, empty
   slots first) with an exchange sort; MemorizeSpells calls it after adding a spell. }
@@ -394,7 +394,7 @@ begin
   begin
     Done := not ShowSpellSlotsLeft;
     if Done then
-      res12_fn_16EC(SelectedCharacter, 'cannot memorize any spells', MessageColor, 1)
+      ShowCharacterMessage(SelectedCharacter, 'cannot memorize any spells', MessageColor, 1)
     else
     begin
       Spell := ChooseSpellFromList(ListLearnable, 2, Choice, Listed);
@@ -418,7 +418,7 @@ begin
       if AskYesNo('Memorize these spells? ', AskColor, WordColor, HotColor) = No then
         CancelMemorizing(SelectedCharacter);
   end;
-  if Redraw <> 0 then res12_fn_27D9;
+  if Redraw <> 0 then RedrawView;
 end;
 { ovl15:0B5B. The Scribe command (a magic-user copying scroll spells into the spell book). When
   scroll spells are still being scribed, asks 'Scribe These Spells? ' (No cancels them, Yes
@@ -457,7 +457,7 @@ begin
     begin
       Done := True;
       if Listed = 0 then
-        res12_fn_16EC(SelectedCharacter, 'has no copyable scrolls', MessageColor, 1)
+        ShowCharacterMessage(SelectedCharacter, 'has no copyable scrolls', MessageColor, 1)
       else
         Redraw := 1;
     end
@@ -465,7 +465,7 @@ begin
     begin
       Redraw := 1;
       if SelectedCharacter^.KnownSpells[Spell] <> 0 then
-        res12_fn_1693('You already know that spell')
+        ShowFlashMessage('You already know that spell')
       else
       begin
         Item := SelectedCharacter^.Items;
@@ -476,7 +476,7 @@ begin
             for I := 1 to ScrollSpells do
               if (Item^.Affects[I] > SpellMask) and ((Item^.Affects[I] and SpellMask) = Spell) then
               begin
-                res12_fn_1693('You are already scibing that spell');
+                ShowFlashMessage('You are already scibing that spell');
                 Found := True;
               end;
           Item := Item^.Next;
@@ -500,7 +500,7 @@ begin
             end;
           end
           else
-            res12_fn_1693('You can not scribe that spell.');
+            ShowFlashMessage('You can not scribe that spell.');
       end;
     end;
   end;
@@ -512,15 +512,15 @@ begin
       if AskYesNo('Scribe these spells? ', AskColor, WordColor, HotColor) = No then
         CancelScribing(SelectedCharacter);
   end;
-  if Redraw <> 0 then res12_fn_27D9;
+  if Redraw <> 0 then RedrawView;
 end;
 { ovl15:0FBC. The camp's Display command: lists every party member (the party list ds5D96, linked
   by Next) as a heading line followed by one line per affect on the member that the game can name,
   or ' <No Spell Effects>' when it names none, then a blank line, and shows the list in the full
   text window titled 'Display' with ChooseFromList (heading colour 11, lines 10, highlight 15,
-  with Exit); the list is freed and the screen redrawn (res12_fn_27D9) afterwards. A spell affect
+  with Exit); the list is freed and the screen redrawn (RedrawView) afterwards. A spell affect
   (the first case list) is named by the first spell 1..$38 whose SpellTable.AffectId is the affect
-  (SpellNames), or 'Funky--n' (res12_fn_1037 writes the number) when no spell has it; fourteen
+  (SpellNames), or 'Funky--n' (ByteToText writes the number) when no spell has it; fourteen
   other affects have fixed names (the Affect* constants); any other affect is left out. The
   list begins with a blank line (line 0, where the highlight starts: Choice 0), so the first
   member's name is line 1. Reads: ds5D96, SpellTable, SpellNames.
@@ -586,7 +586,7 @@ begin
               end
               else
                 Inc(Spell);
-            if Found = 0 then Name := 'Funky--' + res12_fn_1037(AffectId);
+            if Found = 0 then Name := 'Funky--' + ByteToText(AffectId);
           end;
         AffectStudyingManual: Name := 'Studying Manual of Bodily Health';
         AffectTrainingManual: Name := 'Training with Manual of Bodily Health';
@@ -623,12 +623,12 @@ begin
                         ListLeft, ListFirstRow, ListRight, ListBottom, List, ListWithExit,
                         Redraw, Choice, Last);
   FreeMenuList(List);
-  res12_fn_27D9;
+  RedrawView;
 end;
 { ovl15:13F1. The camp's Magic menu 'Cast Memorize Scribe Display Rest Exit' (CampMagicMenuText)
   until Exit or the rest ends the camp (EndCamp): C CastSpells, M MemorizeSpells, S ScribeScrolls,
   D DisplaySpellEffects, R RestParty; an extended key goes to UpdateSelectedCharacter (the character keys) and
-  redraws the character (res12_fn_0767). }
+  redraws the character (DrawPartyRoster). }
 procedure CampMagicMenu(var EndCamp: Byte);
 var
   Key: Char;
@@ -641,7 +641,7 @@ begin
     if ExtKey <> 0 then
     begin
       UpdateSelectedCharacter(Key);
-      res12_fn_0767(SelectedCharacter);
+      DrawPartyRoster(SelectedCharacter);
     end
     else
       case Key of
@@ -733,7 +733,7 @@ begin
       if not Picked then
       begin
         UpdateSelectedCharacter(Key);
-        res12_fn_0767(SelectedCharacter);
+        DrawPartyRoster(SelectedCharacter);
       end
       else
       begin
@@ -741,16 +741,16 @@ begin
           'G': MoveMemberUp;
           'O': MoveMemberDown;
         end;
-        res12_fn_0767(SelectedCharacter);
+        DrawPartyRoster(SelectedCharacter);
       end;
     end
     else if Key in [KeyEnter, 'P', 'S'] then
     begin
       Picked := not Picked;
       if Picked then
-        res12_fn_16EC(SelectedCharacter, 'has been selected', MessageColor, 0)
+        ShowCharacterMessage(SelectedCharacter, 'has been selected', MessageColor, 0)
       else
-        res12_fn_17E3;
+        ClearCharacterMessage;
     end;
   end;
 end;
@@ -773,19 +773,19 @@ begin
   end
   else
   begin
-    res12_fn_16EC(SelectedCharacter, 'will be gone', MessageColor, 0);
+    ShowCharacterMessage(SelectedCharacter, 'will be gone', MessageColor, 0);
     if AskYesNo('Drop from party? ', AskColor, WordColor, HotColor) = Yes then
     begin
       if SelectedCharacter^.Flag10D <> 0 then
-        res12_fn_16EC(SelectedCharacter, 'bids you farewell', MessageColor, 1)
+        ShowCharacterMessage(SelectedCharacter, 'bids you farewell', MessageColor, 1)
       else
-        res12_fn_16EC(SelectedCharacter, 'is dumped in a ditch', MessageColor, 1);
+        ShowCharacterMessage(SelectedCharacter, 'is dumped in a ditch', MessageColor, 1);
       ovl16_e2(False, True);
       ClearWindow($11, 1, $26, $0B);
-      res12_fn_0767(SelectedCharacter);
+      DrawPartyRoster(SelectedCharacter);
     end
     else
-      res12_fn_16EC(SelectedCharacter, 'Breathes A sigh of relief', MessageColor, 1);
+      ShowCharacterMessage(SelectedCharacter, 'Breathes A sigh of relief', MessageColor, 1);
   end;
 end;
 { ovl15:1A97. The Speed command: shows 'Game Speed = n (0=fastest 9=slowest)' and the choices
@@ -799,7 +799,7 @@ var
   Prompt: String40;
 begin
   repeat
-    DrawTextAt(1, $12, TextColor, 'Game Speed = ' + res12_fn_1037(GameSpeed) + ' (0=fastest 9=slowest)');
+    DrawTextAt(1, $12, TextColor, 'Game Speed = ' + ByteToText(GameSpeed) + ' (0=fastest 9=slowest)');
     Prompt := '';
     if GameSpeed > 0 then Prompt := Prompt + ' Faster';
     if GameSpeed < MaxGameSpeed then Prompt := Prompt + ' Slower';
@@ -818,7 +818,7 @@ begin
         'S': Inc(GameSpeed);
       end;
   until Key in [KeyNone, 'E'];
-  res12_fn_17E3;
+  ClearCharacterMessage;
 end;
 { ovl15:1C59. The camp's Alter menu 'Order Drop Speed Icon Pics Exit' (AlterMenuText): O
   PartyOrderMenu, D DropPartyMember, S CampSpeedMenu, I ovl16_e3 and a redraw, P the submenu that
@@ -836,7 +836,7 @@ begin
     if ExtKey <> 0 then
     begin
       UpdateSelectedCharacter(Key);
-      res12_fn_0767(SelectedCharacter);
+      DrawPartyRoster(SelectedCharacter);
     end
     else
       case Key of
@@ -846,7 +846,7 @@ begin
         'I':
           begin
             ovl16_e3;
-            res12_fn_27D9;
+            RedrawView;
           end;
         'P':
           repeat
@@ -884,7 +884,7 @@ begin
   ds49F3 := ViewModeCamp;
   ds6DD8 := 0;
   FillChar(RestTime, SizeOf(RestTime), 0);
-  res12_fn_27D9;
+  RedrawView;
   ClearWindow(1, $11, $26, $16);
   DrawTextAt(1, $12, TextColor, 'The party makes camp...');
   CancelPartyStudy;
@@ -896,7 +896,7 @@ begin
     if ExtKey <> 0 then
     begin
       UpdateSelectedCharacter(Key);
-      res12_fn_0767(SelectedCharacter);
+      DrawPartyRoster(SelectedCharacter);
     end
     else
       case Key of
@@ -914,8 +914,8 @@ begin
   CancelPartyStudy;
   ds6DB5 := nil;
   ds49F3 := SavedMode;
-  res12_fn_290B;
-  res12_fn_17E3;
+  DrawLocationLine;
+  ClearCharacterMessage;
   ClearPromptLine;
 end;
 

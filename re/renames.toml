@@ -3644,3 +3644,367 @@ kind = "routine"
 why = "its only caller UseBestItem (ovl09:13CA) passes an ITEM (ScoreTarget(Who, PCharacter(Pick))) and the bytes it reads are item fields (+$2E ItemType, +$32 Plus, +$36 Cursed, +$3D/+$3E Affects[2]/[3]); it rates an item for the AI's item step"
 date = "2026-10-13"
 
+[[rename]]
+old = "res12_fn_0000"
+new = "ApplyWeaponBonuses"
+kind = "routine"
+why = "applies the readied weapon (SlotItems[0], +CC) to the character's HitAdjust, WeaponAttacks, WeaponDamage and WeaponDamageBonus from the RaceRow row of the weapon's item kind, plus the dexterity (1168) and strength (1282/1325) adjustments and the slot-item pluses; called by res12_fn_0BB8 (make match UNIT=res12, 00BA:0000)"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_01FB"
+new = "SetArmourMovement"
+kind = "routine"
+why = "sets Who's Movement (+11C) from a readied armour item: when RaceRow[item type][0] is 2 (an armour) the item's Weight (+37) picks base movement/9/6 and a magic plus adds 3; called by res12_fn_0BB8 for every readied item (make match UNIT=res12, 00BA:01FB)"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_0282"
+new = "AddReadiedItemBonus"
+kind = "routine"
+why = "accumulates one readied item's bonuses (RaceRow[item type][6] and [0] pick the branch) into the TBonus a res12_fn_0BB8 caller keeps, and adds the item's PlusSave to Who^.SaveBonus (make match UNIT=res12, 00BA:0282)"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_03A0"
+new = "CapMovementByLoad"
+kind = "routine"
+why = "caps Who's Movement (+11C) by the carried weight above the strength allowance (CarriedWeight +102 minus res12_fn_13AB): excess up to 200h keeps it, up to 300h caps at 9, up to 400h at 6, above at 3, and it only falls; called once by res12_fn_0BB8 after the readied-item loop (make match UNIT=res12, 00BA:03A0)"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_0767"
+new = "DrawPartyRoster"
+kind = "routine"
+why = "00BA:0767 draws the party roster panel (Name/AC/HP per member, whitepaper 5.24); called by the shop, temple and inventory screens"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_08EF"
+new = "DrawArmourClass"
+kind = "routine"
+why = "00BA:08EF draws a character's armour-class value Abs(+111h - 60) signed, the value res12_fn_09E3 shows under the AC heading and ovl24 RollBeatsResistance compares a roll against"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_0973"
+new = "DrawHitPoints"
+kind = "routine"
+why = "00BA:0973 draws a character's current hit points (Flag11B +11Bh) in a range colour at (Col,Row); called by res12_fn_0767 and res12_fn_09E3"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_09E3"
+new = "DrawCharacterPanel"
+kind = "routine"
+why = "00BA:09E3 draws the character panel (name, Hitpoints, AC, readied weapon text, status) the combat and inventory screens show, whitepaper 5.24"
+date = "2026-10-13"
+
+[[rename]]
+old = "ds286B"
+new = "HelplessAffects"
+kind = "global"
+why = "res12_fn_0B73 (00BA:0B73) tests entries 1..4 through res12_fn_2199 and DrawCharacterPanel draws '(Helpless)' for a True answer; ovl13:1FC3 compares the same entries with the 16-byte table at DS:3204; entry 0 is never read"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_0B73"
+new = "IsHelpless"
+kind = "routine"
+why = "DrawCharacterPanel (00BA:09E3) draws '(Helpless)' when it returns True and ovl13 skips a combatant it answers True for; it tests the four affects of HelplessAffects (DS:286B) through res12_fn_2199"
+date = "2026-10-13"
+
+[[rename]]
+old = "ds4846"
+new = "ReadiedItemWeight"
+kind = "global"
+why = "res12_fn_0BB8 (00BA:0BB8) resets it to 0, adds each readied item's Weight times Count, and floors the character's CarriedWeight at it when the weight-excluding item (NameNum[1] $BA) is readied (00BA:0F43)"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_0BB8"
+new = "RecalcCombatValues"
+kind = "routine"
+why = "res12_fn_0BB8 (00BA:0BB8) recomputes the character's combat values from the items it carries and has readied; every equipment change and the whole combat call it (ovl03, ovl06, ovl08, ovl09, ovl10, ovl12, ovl13, ovl16, ovl19, ovl21, ovl24)"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_1037"
+new = "ByteToText"
+kind = "routine"
+why = "res12_fn_1037 (00BA:1037) returns the decimal text of the byte it is given through Str; DrawArmourClass, DrawHitPoints and ovl20's TwoDigitText use it"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_1073"
+new = "WordToText"
+kind = "routine"
+why = "res12_fn_1073 (00BA:1073) returns the decimal text of the word it is given through Str, the word twin of ByteToText; the shops and the Temple put prices and amounts into messages with it"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_10AD"
+new = "LongIntToText"
+kind = "routine"
+why = "res12_fn_10AD (00BA:10AD) returns the decimal text of the LongInt it is given through Str, the LongInt twin of ByteToText and WordToText"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_10E6"
+new = "DexterityAdjustment"
+kind = "routine"
+why = "res12_fn_10E6 (00BA:10E6) maps Who's dexterity (+0x13) to its AD&D reaction/defence adjustment (1..3 gives -4, 4..6 dexterity-7, 15..18 dexterity-14, 19..25 grows to 6); RecalcCombatValues sums it into the character's combat value"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_1168"
+new = "DexterityAttackAdjustment"
+kind = "routine"
+why = "00BA:1168: ApplyWeaponBonuses (00BA:0000) adds it to Who^.HitAdjust for a weapon whose RaceRow attack flags have bit 2 (WeaponFlagDexToHit); the sibling DexterityAdjustment (00BA:10E6) is the defensive one summed into ResistValue. Both map Dexterity (+0x13)."
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_11EA"
+new = "StrengthRowIndex"
+kind = "routine"
+why = "00BA:11EA: maps Strength (+0x10) plus the exceptional StrengthPercent (+0x16) to a 0..30 row of the strength table (strength 18 + percent bands become 18..23, 19..25 become 24..30); the only callers, res12_fn_1282, res12_fn_1325 and res12_fn_13AB, look up reaction, damage and weight allowances with it."
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_1282"
+new = "StrengthAttackAdjustment"
+kind = "routine"
+why = "00BA:1282: the strength reaction/attack adjustment; ApplyWeaponBonuses (00BA:0000) and RecalcCombatValues (00BA:0BB8) add it to Who^.HitAdjust (the to-hit value) for WeaponFlagStrength, and it is 0 unless Who^.StrengthBonusFlag (+0xAA) is nonzero."
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_1325"
+new = "StrengthDamageAdjustment"
+kind = "routine"
+why = "00BA:1325: the strength damage adjustment; ApplyWeaponBonuses (00BA:0000) and RecalcCombatValues (00BA:0BB8) add it to Who^.WeaponDamageBonus[1] for WeaponFlagStrength, and it is 0 unless Who^.StrengthBonusFlag (+0xAA) is nonzero."
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_13AB"
+new = "StrengthWeightAllowance"
+kind = "routine"
+why = "00BA:13AB: returns the strength weight allowance in coins (StrengthRowIndex row -> coins); CapMovementByLoad (00BA:03A0) subtracts it from Who^.CarriedWeight and ovl21's CarryLimit adds 1500 to it."
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_148B"
+new = "ForgetSpell"
+kind = "routine"
+why = "00BA:148B: clears the first memorized spell (SelectedCharacter^.Spells, +0x17) equal to Spell; DealDamage (ovl24:1344) calls it when a victim loses a pending spell, ovl13:02F9 and ovl22:0C20 also call it."
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_1509"
+new = "RemoveInventoryItem"
+kind = "routine"
+why = "00BA:1509 unlinks Item from Who^.Items and FreeMems it, reporting 'Nil Item pointer...' or 'Tried to Lose item & couldn't find it!'; called by ovl07 LoseItems for every lost item"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_15F7"
+new = "AddItemCopy"
+kind = "routine"
+why = "00BA:15F7 GetMems 63 bytes, Move-copies Item into it, clears its Next and appends it to Who^.Items; gives a character a copy of an item"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_1693"
+new = "ShowFlashMessage"
+kind = "routine"
+why = "00BA:1693 clears the bottom row, draws Text green at (0,24), delays via DelayByGameSpeed and clears the row again; callers pass 'Not enough money.', 'OverLoaded', 'Magic On'"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_16EC"
+new = "ShowCharacterMessage"
+kind = "routine"
+why = "00BA:16EC draws Who's name (1816) and paged Text in a message window (top Row in view mode 5, else fixed rows /), and on Wait delays and clears it (17E3); callers pass 'is bandaged', 'flees in panic', 'is cured'"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_17E3"
+new = "ClearCharacterMessage"
+kind = "routine"
+why = "00BA:17E3 clears the message window 16EC wrote in (view mode 5: (,)-(,); else (1,)-(,))"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_1816"
+new = "DrawCharacterName"
+kind = "routine"
+why = "00BA:1816 draws Who's Name at (Col,Row) in the state colour (LightRed no combat, Yellow party, LightCyan other) and appends '\\''s when Mode is set"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_1892"
+new = "CopyPictureItem"
+kind = "routine"
+why = "00BA:1892 copies item 0 of a source picture ds5E5A[PicIndex].Pics[Half] into item Row of the combat picture ds6E36 (ByteSize bytes at +17 and the pixel buffer at +13), mirroring through a temporary when Mirror is set; called in a loop by res12_fn_19DE and by ovl13"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_19DE"
+new = "DrawCombatIcon"
+kind = "routine"
+why = "00BA:19DE composes four items of the combat picture ds6E36 from the two halves of the icon slot ds5E5A[PicIndex] by calling CopyPictureItem four times (Half 0,0,1,1; Row 0,1,2,3; Mirror 0,1,1,0); called by ovl12, ovl13 and ovl22"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_1A29"
+new = "WalkCombatLine"
+kind = "routine"
+why = "00BA:1A29 walks the Bresenham line from cell (X1,Y1) to (X2,Y2) between combat cells (SetupLine/StepLine on the 3x-scaled cells), then animates the combat cursor along it: it draws the combat picture ds6E36 onto DrawBuf with res07_fn_0D71, flushes and delays, steps by DirStepX/DirStepY and keeps MoveCombatCursor on the cell; called by ovl12, ovl13 and ovl22 (aiming and movement)"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_1FEB"
+new = "ShowHitMessage"
+kind = "routine"
+why = "00BA:1FEB shows a per-character combat message and flashes the character's icon (DrawCombatIcon $16/$17), plays a sound and animates over the character's view cell; DealDamage calls it with Flag 0 and ApplyAffect with Flag 1"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_2199"
+new = "HasAffect"
+kind = "routine"
+why = "00BA:2199 returns whether AffectId is on Who's affect list and leaves the matching TAffect in the caller's Affect (callers read it as a question: if HasAffect(...) then)"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_2228"
+new = "ApplyDamage"
+kind = "routine"
+why = "00BA:2228 applies Damage hit points to Who, updates its health status (dead/dying/unconscious/standing) and drops it from combat when it falls; DealDamage, DamageWithMessage and ovl13 call it with a damage amount"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_234A"
+new = "ShowHealResult"
+kind = "routine"
+why = "00BA:234A shows Who as 'is fully healed' when its hit points equal HpMax and 'is partially healed' otherwise, then redraws the roster outside the combat view; ovl12 and ovl22 (healing and training) call it"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_23B7"
+new = "OpposingSide"
+kind = "routine"
+why = "00BA:23B7 returns the side opposite Who's Side (1 for a party member, 0 for a monster); the AI indexes ds6814Sides with it and ShortInt(res12_fn_23B7(Who)) counts Who's enemies"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_23DB"
+new = "RecountCombatSides"
+kind = "routine"
+why = "00BA:23DB clears the two per-side counts ds6814Sides and recounts them by walking the character list ds5D96, adding one per member with Flag10D set to its side's count; RunCombat and EndCombatRound call it each round"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_2433"
+new = "CollectEnemiesInRange"
+kind = "routine"
+why = "00BA:2433 filters the ovl30 ScanTargets table to the combatants on the side opposite Who (OpposingSide) within Range steps and writes their combatant indexes to ds6DE4; ovl09:02EB and 0B3C use the count and that list as Who's enemies in range"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_255B"
+new = "DistanceToTarget"
+kind = "routine"
+why = "00BA:255B scans from Who with the WalkLine gate open and returns ds6718[I].Key shr 1 for the found Target, the fewest walk steps halved; ovl09:0B3C tests it = 1 as melee range and uses it to decide whether Who can attack Target"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_2637"
+new = "EndCombatTurn"
+kind = "routine"
+why = "00BA:2637 clears the pending spell, initiative, guard byte and movement left of Who's combat state and returns 1; ovl08/ovl09/ovl13 call it on every path that ends a combatant's turn (Quit, self-end checks, AI turn end)"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_2686"
+new = "GuardTurn"
+kind = "routine"
+why = "00BA:2686 calls EndCombatTurn(Who), sets the combat guard byte B7 (+7) to 1 and flashes 'Guarding'; ovl08:0E45 binds it to the Guard menu key and ovl09_fn_0F4F uses it as the AI's fallback turn"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_26C2"
+new = "SpellCasterLevel"
+kind = "routine"
+why = "00BA:26C2 maps a spell's SpellTable class (byte 0) to the selected character's level in that class (ClassLevels cleric 0, magic-user 5), 12 for spell class 2 and a forced 6 when ds6DBF is set; ovl22_e3 multiplies the spell row's +3 byte by it"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_272A"
+new = "DrawViewWindows"
+kind = "routine"
+why = "00BA:272A draws the view's window frames (DrawWindow): the full screen, the bottom text window, the upper-left window and, with Inner set, the inner window; only RedrawView calls it"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_27D9"
+new = "RedrawView"
+kind = "routine"
+why = "00BA:27D9 is the resident view dispatcher: it redraws the whole screen for the current view mode ds49F3 (shop, portrait, camp, area map, area view, loot), called by the shop, Temple, loot, camp and combat menus"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_2B5E"
+new = "DrawWildernessScreen"
+kind = "routine"
+why = "00BA:2B5E draws the wilderness map screen: sets view mode 3, DrawAdventureScreen, ShowAreaView, DrawPartyMarker, DrawLocationLine, DrawPartyRoster; called by ovl14 HandleWildernessKeys"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_2B88"
+new = "DrawCombatScreen"
+kind = "routine"
+why = "00BA:2B88 draws the combat screen windows and positions the cursor (ovl31_e2, two DrawWindow, ClearWindow, MoveCombatCursor); called by StartBattle, PlayerTurn and the combat overlays"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_2C48"
+new = "SelectPartyMember"
+kind = "routine"
+why = "00BA:2C48 loops the party roster with a 'Select' prompt and G/O/O-next/previous/E-return member picker, storing the choice in the caller's Selected; called by ovl03, ovl19 and ovl22"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_290B"
+new = "DrawLocationLine"
+kind = "routine"
+why = "00BA:290B builds and draws the party location line (column,row, facing, hours:minutes, and a camping/search suffix) on row 15 of the side window; called by the camp and wilderness screens"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_2E03"
+new = "IsRangedWeapon"
+kind = "routine"
+why = "00BA:2E03 returns True when Who has a readied weapon (SlotItems[0]) whose RaceRow byte $C (the attack range, ovl09:536) is above 1 (a missile weapon); ovl08 gates the melee attack on it"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_2E46"
+new = "RangedWeaponCanMelee"
+kind = "routine"
+why = "00BA:2E46 returns True when IsRangedWeapon holds and the readied weapon kind's RaceRow attack flags carry both the melee bit $10 and the strength bit $04, i.e. a missile weapon that can also strike in melee; ovl08 uses it to allow the melee attack"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_2E8B"
+new = "ChooseAttackItem"
+kind = "routine"
+why = "00BA:2E8B fills the caller's pointer with the item Who's attack aims with: the readied weapon (SlotItems[0]) when the kind's attack flags have the melee bit $10, else the ammo in slot 11 (+$F8) or slot 12 (+$FC) when bit $08 marks a launcher; returns 1 when an item was aimed or the flags are exactly $A"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_2F57"
+new = "IsMaxClassLevel"
+kind = "routine"
+why = "00BA:2F57 returns True when Who's level in one class (ClassLevels[ClassIndex], +$96) has reached the maximum its race (+$2E) and strength (+$10) allow, so the trainers (ovl22:2D39) must not raise that class level further"
+date = "2026-10-13"
+

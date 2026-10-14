@@ -56,7 +56,7 @@ type
   PDamageDice = ^TDamageDice;
 
 { ovl19:004A. Draws the character sheet of SelectedCharacter in the window 1..38 x 1..22: the name line
-  (res12_fn_1816), the sex, race and age on row 3, the alignment on row 4, the class on row 5, the six
+  (DrawCharacterName), the sex, race and age on row 3, the alignment on row 4, the class on row 5, the six
   ability lines (ShowAbilityScore) with their labels from row 7, the money (ShowCharacterMoney), the
   class levels and experience on row 15, the combat block (ShowCombatStats) on rows 17 and 18, the weapon
   and armor on rows 20 and 21 and the status on row 22, and the head and body portraits when they are
@@ -94,7 +94,7 @@ begin
   SheetCharacter := SelectedCharacter;
   ClearFullScreen;
   DrawWindowFrame(1, 1, SheetRight, SheetBottom, 0);
-  res12_fn_1816(SheetCharacter, 1, 1, 0);
+  DrawCharacterName(SheetCharacter, 1, 1, 0);
   if SheetCharacter^.B84 > ComputerRunThreshold then
     DrawTextAt(Length(SheetCharacter^.Name) + NpcTagGap, 1, ValueColor, '(NPC)');
   Col := 1;
@@ -104,7 +104,7 @@ begin
   Text := RaceNames[SheetCharacter^.Race];
   DrawTextAt(Col, NameRow, TextColor, Text);
   Col := Col + Length(Text) + 1;
-  DrawTextAt(Col, NameRow, TextColor, 'Age ' + res12_fn_1073(SheetCharacter^.Age));
+  DrawTextAt(Col, NameRow, TextColor, 'Age ' + WordToText(SheetCharacter^.Age));
   Text := AlignmentNames[PSheetFields(SheetCharacter)^.Alignment];
   DrawTextAt(1, AlignmentRow, TextColor, Text);
   Text := ClassNames[SheetCharacter^.ClassMask];
@@ -131,11 +131,11 @@ begin
     begin
       if NeedSlash then
         Text := Text + '/';
-      Text := Text + res12_fn_1037(SheetCharacter^.ClassLevels[ClassSlot]);
+      Text := Text + ByteToText(SheetCharacter^.ClassLevels[ClassSlot]);
       NeedSlash := True;
     end;
   DrawTextAt(7, LevelRow, TextColor, Text);
-  DrawTextAt(17, LevelRow, TextColor, 'Exp ' + res12_fn_10AD(SheetCharacter^.Experience));
+  DrawTextAt(17, LevelRow, TextColor, 'Exp ' + LongIntToText(SheetCharacter^.Experience));
   ShowCombatStats;
   Row := WeaponRow;
   if SheetCharacter^.SlotItems[0] <> nil then
@@ -183,13 +183,13 @@ begin
       Name := MoneyKindNames[Kind];
       DrawTextAt(MoneyNameRight - Length(Name), Row, MoneyColor, Name);
       DrawTextAt(MoneyAmountColumn, Row, MoneyColor,
-        res12_fn_1073(SelectedCharacter^.Money[Kind]));
+        WordToText(SelectedCharacter^.Money[Kind]));
       Inc(Row);
     end;
 end;
-{ ovl19:0608. Draws the combat block of SelectedCharacter on the sheet: on row 17, AC (res12_fn_08EF) and
+{ ovl19:0608. Draws the combat block of SelectedCharacter on the sheet: on row 17, AC (DrawArmourClass) and
   THAC0 (60 minus HitAdjust, column 9 label, 15 value) and Encumbrance (CarriedWeight, column 22 label,
-  34 value); on row 18, HP (res12_fn_0973), Damage (dice count, d, sides, then the bonus with its sign)
+  34 value); on row 18, HP (DrawHitPoints), Damage (dice count, d, sides, then the bonus with its sign)
   and Movement (the Movement byte doubled by affect $2A and halved by affect $27, column 25 label,
   34 value). Labels are drawn in bright white (15), values in bright green (10). Called by ShowCharacterSheet
   (its call at ovl19:03F5) and by ovl16 (ovl16_fn_1DCB, ovl16_fn_2639). }
@@ -215,33 +215,33 @@ var
   Affect: Pointer;
 begin
   Character := SelectedCharacter;
-  res12_fn_0BB8(Character);
+  RecalcCombatValues(Character);
   Row := CombatRow;
   DrawTextAt(ArmorLabelColumn, Row, LabelColor, 'AC    ');
-  res12_fn_08EF(Character, ArmorValueColumn, Row);
+  DrawArmourClass(Character, ArmorValueColumn, Row);
   DrawTextAt(ArmorLabelColumn, Row + 1, LabelColor, 'HP    ');
-  res12_fn_0973(Character, ArmorValueColumn, Row + 1, 0);
+  DrawHitPoints(Character, ArmorValueColumn, Row + 1, 0);
   Col := 8;
   DrawTextAt(Col + 1, Row, LabelColor, 'THAC0   ');
-  DrawTextAt(Col + 7, Row, ValueColor, res12_fn_1037(ThacBase - Character^.HitAdjust));
-  Damage := res12_fn_1037(PDamageDice(Character)^.Count) + 'd' +
-    res12_fn_1037(PDamageDice(Character)^.Sides);
+  DrawTextAt(Col + 7, Row, ValueColor, ByteToText(ThacBase - Character^.HitAdjust));
+  Damage := ByteToText(PDamageDice(Character)^.Count) + 'd' +
+    ByteToText(PDamageDice(Character)^.Sides);
   if PDamageDice(Character)^.Bonus > 0 then
-    Damage := Damage + '+' + res12_fn_1037(PDamageDice(Character)^.Bonus);
+    Damage := Damage + '+' + ByteToText(PDamageDice(Character)^.Bonus);
   if PDamageDice(Character)^.Bonus < 0 then
-    Damage := Damage + '-' + res12_fn_1037(Abs(PDamageDice(Character)^.Bonus));
+    Damage := Damage + '-' + ByteToText(Abs(PDamageDice(Character)^.Bonus));
   DrawTextAt(Col, Row + 1, LabelColor, 'Damage        ');
   DrawTextAt(Col + 7, Row + 1, ValueColor, Damage);
   Col := 22;
   DrawTextAt(Col, Row, LabelColor, 'Encumbrance      ');
-  DrawTextAt(Col + 12, Row, ValueColor, res12_fn_1073(Character^.CarriedWeight));
+  DrawTextAt(Col + 12, Row, ValueColor, WordToText(Character^.CarriedWeight));
   Move := Character^.Movement;
-  if res12_fn_2199(Character, DoublingAffect, Affect) then
+  if HasAffect(Character, DoublingAffect, Affect) then
     Move := Move * 2;
-  if res12_fn_2199(Character, HalvingAffect, Affect) then
+  if HasAffect(Character, HalvingAffect, Affect) then
     Move := Move div 2;
   DrawTextAt(Col + 3, Row + 1, LabelColor, 'Movement   ');
-  DrawTextAt(Col + 12, Row + 1, ValueColor, res12_fn_1037(Move));
+  DrawTextAt(Col + 12, Row + 1, ValueColor, ByteToText(Move));
 end;
 { ovl19:0901. Draws ability score Index of SelectedCharacter (0 Strength .. 5 Charisma) on row 7 + Index,
   in columns 5 to 11 (a score below 10 is one column further right), in bright green, or bright magenta
@@ -272,12 +272,12 @@ begin
   if PAbilityBlock(SelectedCharacter)^.Scores[Index] < FirstTwoDigitValue then
     Inc(Col);
   DrawTextAt(Col, Index + ScoreRow, Color,
-    res12_fn_1037(PAbilityBlock(SelectedCharacter)^.Scores[Index]));
+    ByteToText(PAbilityBlock(SelectedCharacter)^.Scores[Index]));
   if Index = 0 then
     if SelectedCharacter^.Strength = ExceptionalStrength then
       if SelectedCharacter^.StrengthPercent > 0 then
       begin
-        Percentile := res12_fn_1037(SelectedCharacter^.StrengthPercent);
+        Percentile := ByteToText(SelectedCharacter^.StrengthPercent);
         if SelectedCharacter^.StrengthPercent < FirstTwoDigitValue then
           Percentile := '0' + Percentile;
         if SelectedCharacter^.StrengthPercent = PercentileMax then
@@ -349,7 +349,7 @@ begin
   end;
   if ds49F3 = 5 then
     ovl31_e2;
-  res12_fn_27D9;
+  RedrawView;
 end;
 { ovl19:0D70. Asks whether Item may leave the character: ovl19:0EF8 calls it before its T, D and S
   actions (the call sites at ovl19:1339, 1365 and 1443). False when the item is readied: "Must be
@@ -363,12 +363,12 @@ function CanGiveUpItem(Item: PMenuLine): Boolean;
 begin
   CanGiveUpItem := False;
   if Item^.Readied then
-    res12_fn_1693('Must be unreadied')
+    ShowFlashMessage('Must be unreadied')
   else if not ovl22_e6(Item) then
     CanGiveUpItem := True
   else if (Item^.Affects[1] > $7F) or (Item^.Affects[2] > $7F) or (Item^.Affects[3] > $7F) then
   begin
-    res12_fn_1816(SelectedCharacter, 1, 21, 0);
+    DrawCharacterName(SelectedCharacter, 1, 21, 0);
     GlyphCol := Length(SelectedCharacter^.Name) + 2;
     GlyphRow := 21;
     ShowPagedText(1, 21, 38, 22, 14, 0, ' was going to scribe from that scroll');
@@ -385,7 +385,7 @@ end;
   is pressed, or Done is set. Ready runs ReadyItem. Use needs a readied item ("Must be Readied" otherwise)
   that ovl22_e6 accepts, or one with Affects[2] above 0 and Affects[3] below $80; then it runs UseItem.
   Trade and Sell ask CanGiveUpItem, then run TradeItem or SellItem. Drop asks CanGiveUpItem,
-  shows "Your <item> will be gone forever" and then "Drop It?", and on Y calls res12_fn_1509 with
+  shows "Your <item> will be gone forever" and then "Drop It?", and on Y calls RemoveInventoryItem with
   SelectedCharacter and the item. Halve, Join and Id run HalveItem, JoinItem and IdentifyItem.
   Done: the stop flag shared with ViewSelectedCharacter; UseItem may set it. The item menu is drawn
   only when the character carries items; the Items window (rows 1 to 22) is drawn when DrawItemWindow
@@ -452,7 +452,7 @@ begin
       begin
         ClearFullScreen;
         DrawWindowFrame(1, 1, 38, 22, 0);
-        res12_fn_1816(Character, 1, 1, 1);
+        DrawCharacterName(Character, 1, 1, 1);
         DrawTextAt(Length(Character^.Name) + 4, 1, 10, 'Items');
         DrawWindow(1, 3, 38, 22, 0, 0, '');
         DrawTextAt(1, 3, 15, 'Ready Item');
@@ -468,7 +468,7 @@ begin
           'U':
             if not Selected^.Readied then
             begin
-              res12_fn_1693('Must be Readied');
+              ShowFlashMessage('Must be Readied');
               Key := ' ';
             end
             else if ovl22_e6(Selected) or ((Selected^.Affects[2] > 0) and (Selected^.Affects[3] < $80)) then
@@ -494,7 +494,7 @@ begin
               ShowPagedText(1, 21, 38, 22, 14, 1, 'Your ' + Selected^.Text + 'will be gone forever');
               if AskYesNo('Drop It? ', 13, 10, 15) = 'Y' then
               begin
-                res12_fn_1509(SelectedCharacter, Selected);
+                RemoveInventoryItem(SelectedCharacter, Selected);
                 Redraw := 1;
               end;
               ClearWindow(1, 21, 38, 22);
@@ -510,7 +510,7 @@ begin
               Key := ' ';
           'I': IdentifyItem(Selected, Redraw);
         end;
-      res12_fn_0BB8(Character);
+      RecalcCombatValues(Character);
     end;
     if Character^.ItemCountC7 <> OldCount then
       Redraw := 1;
@@ -527,7 +527,7 @@ end;
   is above $7F. Unreadying a readied item refuses a cursed one ("It's Cursed") and otherwise clears Readied
   and removes the affect. The routine never stores the item in SlotItems.
   Parameter: Item, the item. Globals: SelectedCharacter, ds49F3 (the view mode, 5 for combat), ItemTable
-  (indexed by item type, not by race). Side effects: messages (res12_fn_1693); the "already using" case
+  (indexed by item type, not by race). Side effects: messages (ShowFlashMessage); the "already using" case
   first redraws the slot item (res12_fn_0442). QUIRK ovl19:15BB: slot 9 is tested at SlotItems[10]
   (+$F4) but the message names SlotItems[9] (+$F0). }
 procedure ReadyItem(Item: PMenuLine);
@@ -551,7 +551,7 @@ begin
   if Item^.Readied then
   begin
     if Item^.Cursed then
-      res12_fn_1693('It''s Cursed')
+      ShowFlashMessage('It''s Cursed')
     else
     begin
       Item^.Readied := False;
@@ -595,43 +595,43 @@ begin
             CallAffectHandler(Item^.Affects[3], Character, PAffect(Item), 0);
         end;
       ReadyWrongClass:
-        res12_fn_1693('Wrong Class');
+        ShowFlashMessage('Wrong Class');
       ReadySlotUsed:
         begin
           res12_fn_0442(LongInt(Character), Character^.SlotItems[ShortInt(Slot)], 0, 0, 0, 0);
-          res12_fn_1693('already using ' + Character^.SlotItems[ShortInt(Slot)]^.Text);
+          ShowFlashMessage('already using ' + Character^.SlotItems[ShortInt(Slot)]^.Text);
         end;
       ReadyHandsFull:
         if (ds49F3 <> ViewCombat) or (Character^.Quick = 0) then
-          res12_fn_1693('Your hands are full!');
+          ShowFlashMessage('Your hands are full!');
     end;
   end;
 end;
 { ovl19:1734. The Trade action of the item menu (RunItemMenu's T key, after CanGiveUpItem; ovl19:0EF8).
-  Redraws the screen, then asks "Trade with Whom?" (res12_fn_2C48), which picks the recipient into Recipient,
+  Redraws the screen, then asks "Trade with Whom?" (SelectPartyMember), which picks the recipient into Recipient,
   starting from the viewed character (ViewedCharacter). Nothing is traded when no member is picked. Otherwise ViewedCharacter
   is set to the recipient. When WouldOverloadInventory refuses the recipient, "Overloaded" is shown and the
-  item stays. Otherwise the item goes to res12_fn_15F7 with the recipient and to res12_fn_1509 with
-  SelectedCharacter (the Drop action makes the same res12_fn_1509 call), and the recipient's carried weight
-  is recalculated (res12_fn_0BB8). Parameter: Item, the item traded. Globals: ViewedCharacter (the viewed character),
-  SelectedCharacter (the giver). Side effects: the screen (res12_fn_27D9) and the messages. }
+  item stays. Otherwise the item goes to AddItemCopy with the recipient and to RemoveInventoryItem with
+  SelectedCharacter (the Drop action makes the same RemoveInventoryItem call), and the recipient's carried weight
+  is recalculated (RecalcCombatValues). Parameter: Item, the item traded. Globals: ViewedCharacter (the viewed character),
+  SelectedCharacter (the giver). Side effects: the screen (RedrawView) and the messages. }
 procedure TradeItem(Item: PMenuLine);
 var
   Recipient: PCharacter;
 begin
   Recipient := ViewedCharacter;
-  res12_fn_27D9;
-  res12_fn_2C48('Trade with Whom?', 1, Pointer(Recipient));
+  RedrawView;
+  SelectPartyMember('Trade with Whom?', 1, Recipient);
   if Recipient <> nil then
   begin
     ViewedCharacter := Recipient;
     if WouldOverloadInventory(Recipient, Item) then
-      res12_fn_1693('Overloaded')
+      ShowFlashMessage('Overloaded')
     else
     begin
-      res12_fn_15F7(Recipient, Item);
-      res12_fn_1509(SelectedCharacter, Item);
-      res12_fn_0BB8(Recipient);
+      AddItemCopy(Recipient, Item);
+      RemoveInventoryItem(SelectedCharacter, Item);
+      RecalcCombatValues(Recipient);
     end;
   end;
 end;
@@ -640,7 +640,7 @@ end;
   (New, 63 bytes) is a copy of Item with Count Half and not Readied, linked in after Item: it takes Item's
   old Next, and Item keeps the rest of the count (Count minus Half) and points at the new record. Parameter:
   Item, the stack halved. Side effects: a new item record is allocated (it is never freed here); the
-  message (res12_fn_1693). }
+  message (ShowFlashMessage). }
 procedure HalveItem(Item: PMenuLine);
 var
   NewItem: PMenuLine;           { the second half of the stack }
@@ -660,12 +660,12 @@ begin
     Item^.Next := NewItem;
   end
   else
-    res12_fn_1693('Can''t halve that');
+    ShowFlashMessage('Can''t halve that');
 end;
 { ovl19:189D. The Join action of the item menu (RunItemMenu's J key, ovl19:0EF8): gathers into Item the counts
   of the other items of SelectedCharacter that match it. A match has a nonzero Count, the same NameNum[1..3],
   ItemType, Plus, PlusSave, Cursed and Weight, and Affects[1] below 2 (QUIRK ovl19:19A1 below). Each match is
-  taken off the character (res12_fn_1509) and its count added to the total, while the total stays at most
+  taken off the character (RemoveInventoryItem) and its count added to the total, while the total stays at most
   255. When the total would pass 255, Target is filled to 255, the match gives up what is needed to make
   255 (its count drops) and the match becomes the item that gathers the rest. Parameter: Item, the stack
   that gathers. Globals: SelectedCharacter (its Items list). Side effects: matches leave the list.
@@ -695,7 +695,7 @@ begin
       if Total + Cursor^.Count <= 255 then
       begin
         Inc(Total, Cursor^.Count);
-        res12_fn_1509(SelectedCharacter, Cursor);
+        RemoveInventoryItem(SelectedCharacter, Cursor);
       end
       else
       begin
@@ -715,11 +715,11 @@ end;
   Choice -1 it opens the Spells window) and is remembered in UsedScroll. Any other item with Affects[2] above 0 and
   Affects[3] below AffectFlag gives the spell Affects[2] and sets ItemAffectUse. No spell (0, or none chosen) sets
   Done to 0. Otherwise, in combat (view mode 5) for a character the computer does not fight for (Quick 0),
-  res12_fn_2B88 runs first. An affect item's use shows "uses an item" and the item's line (res12_fn_16EC,
+  DrawCombatScreen runs first. An affect item's use shows "uses an item" and the item's line (ShowCharacterMessage,
   res12_fn_0442, a delay). ovl22_e5 casts the spell and sets Done; in combat a spell whose SpellTable row has byte
-  +$B set takes Done from res12_fn_2637 instead. With Done set, a scroll is used up through ovl22_e7; an item that
+  +$B set takes Done from EndCombatTurn instead. With Done set, a scroll is used up through ovl22_e7; an item that
   is not a scroll and has Affects[1] above 0 loses one of its Count when the count is above 1, else one charge
-  (Affects[1]), and leaves the character (res12_fn_1509) with its last charge. Parameters: Item, Done. Globals:
+  (Affects[1]), and leaves the character (RemoveInventoryItem) with its last charge. Parameters: Item, Done. Globals:
   SelectedCharacter, ds49F3 (the view mode, 5 for combat), SpellTable, UsedScroll, ItemAffectUse. Side effects:
   messages, the screen (the item line is on row 22, or 23 in combat). }
 procedure UseItem(Item: PMenuLine; var Done: Byte);
@@ -755,12 +755,12 @@ begin
   else
   begin
     if (ds49F3 = ViewCombat) and (SelectedCharacter^.Quick = 0) then
-      res12_fn_2B88;
+      DrawCombatScreen;
     if ItemAffectUse then
     begin
       if Spell > LastSpell then
         Dec(Spell, SpellShift);
-      res12_fn_16EC(SelectedCharacter, 'uses an item', 10, 0);
+      ShowCharacterMessage(SelectedCharacter, 'uses an item', 10, 0);
       if ds49F3 = ViewCombat then
       begin
         DrawTextAt(0, ItemPromptRow, TitleColor, 'Item:');
@@ -769,13 +769,13 @@ begin
       else
         res12_fn_0442(LongInt(SelectedCharacter), Item, 1, 22, 0, 1);
       DelayByGameSpeed;
-      res12_fn_17E3;
+      ClearCharacterMessage;
     end;
     ItemAffectUse := True;
     ovl22_e5(Spell, SelectedCharacter^.Quick, 0, Done);
     ItemAffectUse := False;
     if (ds49F3 = ViewCombat) and (SpellTable[Spell].PadB[$B] <> 0) then
-      Done := res12_fn_2637(SelectedCharacter);
+      Done := EndCombatTurn(SelectedCharacter);
   end;
   if Done <> 0 then
   begin
@@ -789,7 +789,7 @@ begin
       begin
         Dec(Item^.Affects[1]);
         if Item^.Affects[1] = 0 then
-          res12_fn_1509(SelectedCharacter, Item);
+          RemoveInventoryItem(SelectedCharacter, Item);
       end;
     end;
   end;
@@ -798,7 +798,7 @@ end;
   Item is half its Value in gold (Value div 2), and a stack of more than one item is offered its Count times that
   offer divided by StackDivisor (QUIRK ovl19:1D1A). The offer is shown on row 21 as "I'll give you <offer> gold
   pieces for your <name>" and the character is asked "Is It a Deal? ". On Y, "Sold!" is shown, the item leaves
-  SelectedCharacter (res12_fn_1509) and the offer is paid as platinum (GoldPerPlatinum gold each, Offer div 5) and
+  SelectedCharacter (RemoveInventoryItem) and the offer is paid as platinum (GoldPerPlatinum gold each, Offer div 5) and
   gold (Offer mod 5). Every coin weighs one, so WouldOverload (ovl21:0054) may refuse them: then "Overloaded.
   Money will be put in pool." is shown, Room (what he can still carry) limits the platinum that goes to him, and
   the rest goes to PooledMoney[PlatinumKind]. Parameter: Item. Globals: SelectedCharacter (the seller),
@@ -834,16 +834,16 @@ begin
       Offer := Offer * Item^.Count;
   res12_fn_0442(LongInt(SheetCharacter), Item, 0, 0, 0, 0);
   ShowPagedText(MessageLeft, MessageTop, MessageRight, MessageBottom, MessageColor, 1,
-    'I''ll give you ' + res12_fn_1073(Offer) + ' gold pieces for your ' + Item^.Text);
+    'I''ll give you ' + WordToText(Offer) + ' gold pieces for your ' + Item^.Text);
   if AskYesNo('Is It a Deal? ', 13, 10, 15) = 'Y' then
   begin
-    res12_fn_1693('Sold!');
-    res12_fn_1509(SelectedCharacter, Item);
+    ShowFlashMessage('Sold!');
+    RemoveInventoryItem(SelectedCharacter, Item);
     Platinum := Offer div GoldPerPlatinum;
     Gold := Offer mod GoldPerPlatinum;
     if WouldOverload(SelectedCharacter, Gold + Platinum, Room) then
     begin
-      res12_fn_1693('Overloaded.  Money will be put in pool.');
+      ShowFlashMessage('Overloaded.  Money will be put in pool.');
       if Room > Platinum then
         Inc(SelectedCharacter^.Money[PlatinumKind], Platinum)
       else
@@ -909,7 +909,7 @@ begin
         SetPooledGold(PooledGold);
       end
       else
-        res12_fn_1693('Not Enough Money');
+        ShowFlashMessage('Not Enough Money');
     end;
   end;
   if Paid then
@@ -931,13 +931,13 @@ begin
   ClearWindow(MessageLeft, MessageTop, MessageRight, MessageBottom);
 end;
 { ovl19:2156. The Trade command of the View prompt for money (ViewSelectedCharacter's T key; whitepaper 5.4):
-  gives money of SelectedCharacter to another member. "Trade to?" asks for the recipient (res12_fn_2C48), which
+  gives money of SelectedCharacter to another member. "Trade to?" asks for the recipient (SelectPartyMember), which
   is kept in ViewedCharacter. The coin kinds SelectedCharacter holds are listed under "Select type of coin", each with
   its amount, its name right-aligned in eight columns. The chosen kind is asked for ("How much <kind> will you
   trade? ", ReadAmount, at most the character's money of that kind) and TransferMoney moves it to the recipient.
   The list is built again while money is left, and the recipient is asked again when the list is left with
   money still held. Parameters: none. Globals: ViewedCharacter (the recipient), SelectedCharacter (the giver).
-  Side effects: the screen (res12_fn_27D9, ShowCharacterSheet, ShowCharacterMoney) and the menu lines (GetMem,
+  Side effects: the screen (RedrawView, ShowCharacterSheet, ShowCharacterMoney) and the menu lines (GetMem,
   FreeMenuList). Its list is the one TakeMoney (ovl21:0CEB) builds for the pool.
   QUIRK ovl19:21EE: Kinds is incremented for every listed kind and never read.
   QUIRK ovl19:2468: Finished is not set when the list is cancelled before any transfer, so the test reads the
@@ -977,8 +977,8 @@ var
 begin
   repeat
     Recipient := ViewedCharacter;
-    res12_fn_27D9;
-    res12_fn_2C48('Trade to?', 1, Pointer(Recipient));
+    RedrawView;
+    SelectPartyMember('Trade to?', 1, Recipient);
     if Recipient = nil then
       Finished := True
     else
@@ -1138,7 +1138,7 @@ begin
 end;
 { ovl19:275B: rejects an item when the character already has more than 15 items or when its added
   weight exceeds the character's strength-based capacity plus 1500. The item weight is multiplied
-  by its count only when the count is nonzero. The call to res12_fn_0BB8 occurs before the checks. }
+  by its count only when the count is nonzero. The call to RecalcCombatValues occurs before the checks. }
 function WouldOverloadInventory(Character: PCharacter; Item: PMenuLine): Boolean;
 const
   MaximumItemCount = 15;
@@ -1147,7 +1147,7 @@ var
   Overloaded: Boolean;
   AddedWeight: Word;
 begin
-  res12_fn_0BB8(Character);
+  RecalcCombatValues(Character);
   Overloaded := False;
   if Character^.ItemCountC7 > MaximumItemCount then
     Overloaded := True;
@@ -1155,7 +1155,7 @@ begin
   if Item^.Count > 0 then
     AddedWeight := AddedWeight * Item^.Count;
   if Character^.CarriedWeight + AddedWeight >
-    res12_fn_13AB(Character) + BaseCarryAllowance then
+    StrengthWeightAllowance(Character) + BaseCarryAllowance then
     Overloaded := True;
   WouldOverloadInventory := Overloaded;
 end;
@@ -1247,7 +1247,7 @@ begin
     if Integer(Choice) < 0 then
     begin
       DrawWindow(1, 1, $26, 1, 0, 0, '');
-      res12_fn_1816(SelectedCharacter, 1, 1, 1);
+      DrawCharacterName(SelectedCharacter, 1, 1, 1);
       DrawTextAt(Length(SelectedCharacter^.Name) + 4, TitleRow,
         TitleColor, 'Spells ' + ModeDescription);
     end;

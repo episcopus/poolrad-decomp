@@ -766,6 +766,11 @@ name = "SoundDriverIdle"
 evidence = "SetSoundDriverIdle stores it (08AE:01CB); nonzero: the timer driver is stopped and PlaySound runs it only around one sound, waiting 0.1 s (08AE:00E9, 0156); StartGame sets 100 (ovl11)"
 
 [[global]]
+offset = 0x25A8
+name = "FacingNames"
+evidence = "the location line of res12 (00BA:290B) indexes DS:25A8 + PartyFacing*3 (a string[2] per entry) and appends it to the location line; the image bytes are N, NE, E, SE, S, SW, W, NW"
+
+[[global]]
 offset = 0x25C9
 name = "EgaPlaneMasks"
 evidence = "DrawGlyph mode 1 writes ds25C9[3 - Bit] to the Sequencer Map Mask (port 3C5h) and gates the font byte on it AND Color (0709:03C0..03ED)"
@@ -927,8 +932,10 @@ evidence = "eight string[16] at DS:0F53, 17 bytes apart: Lawful Good .. Chaotic 
 
 [[global]]
 offset = 0x1047
+size = 104
 name = "StatusNames"
-evidence = "eight string[12] at DS:1047, 13 bytes apart: Okay, Animated, tempgone, Running, Unconscious, Dying, Dead, Stoned (the image); ovl19_e1 draws StatusNames[+$10C] (ovl19:04D0); entry 2 reads 'tempgone' in the image"
+evidence = "eight string[12] at DS:1047, 13 bytes apart: Okay Animated tempgone Running Unconscious Dying Dead Stoned (the image); ovl19_e1 draws StatusNames[+$10C] (ovl19:04D0); res12_fn_09E3 shows StatusNames[TCharacter.Status] as the character's status line (00BA:0B24, stride 13)"
+
 
 [[global]]
 offset = 0x4716
@@ -1068,3 +1075,13 @@ evidence = "ds471A is the character the View command was started for: ViewSelect
 offset = 0x5582
 name = "ItemTable"
 evidence = "the ITEMS file block ovl11:05CD reads into DS:5582 (record 2 of ITEMS, $810 bytes = 129 rows of 16, whitepaper 4.3); the combat AI indexes it by ItemType in every routine of ovl09 (ScoreTarget, UseBestItem, AiTurn, UseMagicItem)"
+
+[[global]]
+offset = 0x286B
+name = "HelplessAffects"
+evidence = "res12_fn_0B73 (00BA:0B73) tests entries 1..4 through res12_fn_2199 and DrawCharacterPanel draws '(Helpless)' for a True answer; ovl13:1FC3 compares the same entries with the 16-byte table at DS:3204; entry 0 is never read"
+
+[[global]]
+offset = 0x4846
+name = "ReadiedItemWeight"
+evidence = "res12_fn_0BB8 (00BA:0BB8) resets it to 0, adds each readied item's Weight times Count, and floors the character's CarriedWeight at it when the weight-excluding item (NameNum[1] $BA) is readied (00BA:0F43)"

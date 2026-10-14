@@ -1,0 +1,145 @@
+# Lessons from res12. Not matcher verdicts; probes in tools/re/tp_idioms/res12/.
+
+[[lesson]]
+id = "res12-word-case-selector-in-ax"
+confidence = "V"
+units = ["res12", "*"]
+tags = ["case", "word", "codegen", "jump", "bounds"]
+title = "A case on a Word keeps the selector in AX; a range starting at 0 adds cmp ax,0 / jb"
+lesson = "case V of 0..$96: ...; $97..$18F: ...; else ...; end (V a 16-bit selector) loads the selector once (mov ax, es:[di+37h]) and then checks each range with cmp ax, imm plus jb/ja, including a leading cmp ax,0; jb for the lower bound of the range that starts at 0. The same ranges written as if (V >= 0) and (V <= $96) ... else if (V >= $97) and (V <= $18F) ... reload the operand for every test (cmp word ptr es:[di+37h], imm, with a les di before each) and compile 12 bytes longer. SetArmourMovement matched only with the case form. Probe: tools/re/tp_idioms/res12/PRB01.PAS."
+evidence = ["src/RES12.PAS#SetArmourMovement", "re/symbols.toml#00BA:01FB", "tools/re/tp_idioms/res12/PRB01.PAS"]
+
+[[lesson]]
+id = "res12-sign-extension-reveals-field-type"
+confidence = "V"
+units = ["res12", "*"]
+tags = ["type", "signed", "shortint", "byte", "codegen", "record"]
+title = "A cwde (sign extend) where a xor ah,ah (zero extend) is expected proves the operand is signed"
+lesson = "In X + Y with X and Y one-byte fields, Turbo Pascal widens Byte with xor ah,ah and ShortInt with cwde. res12:0282's nearly matched output differed only in one widening: Who^.SaveBonus := Who^.SaveBonus + Item^.PlusSave compiled the field at TMenuLine +$33 with cwde, while POOLVARS had it Byte. Changing PlusSave to ShortInt matched. Read the first differing instruction's extension opcode to recover a field's signedness; the assignments in ovl21 (PlusSave := 0/1/2) do not change code either way. Probe: tools/re/tp_idioms/res12/PRB02.PAS."
+evidence = ["src/RES12.PAS#AddReadiedItemBonus", "src/POOLVARS.PAS#TMenuLine", "re/symbols.toml#00BA:0282", "tools/re/tp_idioms/res12/PRB02.PAS"]
+
+[[lesson]]
+id = "res12-o-plus-copies-string-constants"
+confidence = "V"
+units = ["res12", "*"]
+tags = ["switch", "O+", "overlay", "string", "literal", "codegen", "frame"]
+title = "A resident unit can be compiled O+: a string literal passed to a string parameter is copied to a stack temporary"
+lesson = "res12 is resident but its routines copy every string literal to a stack temporary before the call (lea di,[bp-N]; push ss; push di; mov di,<literal>; push cs; push di; lcall System_StrCopy at 0AF8:0B0B). A make tpc probe shows this is the $O+ behaviour: with O- the literal's code-segment address is pushed directly, with O+ it is copied first. DrawPartyRoster (00BA:0767) and DrawCharacterPanel (00BA:09E3) could not match until the unit directive gained O+ ({$A-,O+,F+,S-,R-,G-,I-}); their frames grow by the string temporaries (0767: 8 -> 14 bytes). The other matched res12 routines use no string literals and were unaffected. Probes: tools/re/tp_idioms/res12/PRB11.PAS (O-) and PRB12.PAS (O+)."
+evidence = ["src/RES12.PAS#DrawPartyRoster", "src/RES12.PAS#DrawCharacterPanel", "re/symbols.toml#00BA:0767", "re/symbols.toml#00BA:09E3", "tools/re/tp_idioms/res12/PRB12.PAS"]
+
+[[lesson]]
+id = "res12-inc-vs-assignment-adds-to-memory"
+confidence = "V"
+units = ["res12", "*"]
+tags = ["codegen", "inc", "dec", "assignment", "memory", "adder"]
+title = "Inc(X, Y) adds to memory (mov ax,Y; add X,ax); X := X + Y loads, adds and stores"
+lesson = "For a Word X (a record field or a global) and a one-word Y, Inc(X, Y) compiles to mov ax, Y; add X, ax (a memory operand add), while X := X + Y compiles to mov ax, X; add ax, Y; mov X, ax (load/add/store, 8 bytes longer for a far es:[di] field). res12:0BB8 matched only after Who^.CarriedWeight := Who^.CarriedWeight + Weight became Inc(Who^.CarriedWeight, Weight) (00BA:0C54) and ReadiedItemWeight := ReadiedItemWeight + Weight became Inc(ReadiedItemWeight, Weight) (00BA:0C6C). Likewise Dec(X, const) compiles to sub X, imm while X := X - const loads, subtracts and stores (00BA:0F61). The plain assignment is right when X is itself a computed memory operand: Who^.CarriedWeight := Who^.CarriedWeight + Who^.Money[MoneyKind] stayed a load/add/store. Probe: the routine itself, make match UNIT=res12 FN=RecalcCombatValues."
+evidence = ["src/RES12.PAS#RecalcCombatValues", "re/symbols.toml#00BA:0BB8"]
+
+[[lesson]]
+id = "res12-case-unsigned-narrowing"
+confidence = "V"
+units = ["res12", "*"]
+tags = ["case", "byte", "shortint", "cwde", "jb", "codegen"]
+title = "A case over a ShortInt selector tests unsigned (jb/ja) when written as case Byte(selector)"
+lesson = "For X: ShortInt, case X of 0..8: ...; 9: ...; end tests the range with jl/jg (signed) and indexes an array with X sign-extended (cwde). res12:0BB8 (00BA:0C89..0C9D) instead tests jb/ja (unsigned) while the slot index still uses cwde, which is exactly case Byte(X) of 0..8: SlotItems[X] := ...; 9: ... (the Byte view of the selector tests unsigned; the ShortInt X in the index still sign-extends). Probes: tools/re/tp_idioms/res12/PRB14.PAS (case with a Byte and a ShortInt selector) and PRB15.PAS (case Byte(X) with ShortInt X)."
+evidence = ["src/RES12.PAS#RecalcCombatValues", "re/symbols.toml#00BA:0BB8", "tools/re/tp_idioms/res12/PRB14.PAS", "tools/re/tp_idioms/res12/PRB15.PAS"]
+
+[[lesson]]
+id = "res12-attack-triple-are-byte-pairs"
+confidence = "V"
+units = ["res12"]
+tags = ["record", "array", "loop", "TCharacter"]
+title = "TCharacter's base and readied attack triples are two-element arrays, copied by one for-loop"
+lesson = "res12:0BB8 copies six bytes (+$A3..+$A8) into +$115..+$11A with ONE for I := 1 to 2 that does three element assignments per pass (00BA:0DB3..0E1A). That is only possible if the base fields at +$A3, +$A5, +$A7 and the readied fields at +$115, +$117, +$119 are each array[1..2] (of Byte, Byte, ShortInt), not single bytes plus pads. The scalar-looking access Who^.WeaponAttacks := ... in ApplyWeaponBonuses compiles to the same bytes as Who^.WeaponAttacks[1] := ... (a constant index folds into the displacement), so the earlier scalar wording was never contradicted until this loop. POOLVARS was changed to the arrays; ovl09's Who^.dsA3/dsA5/dsA7 became BaseAttacks[1]/BaseDamage[1]/BaseDamageBonus[1] and still matches."
+evidence = ["src/RES12.PAS#RecalcCombatValues", "src/POOLVARS.PAS#TCharacter", "src/OVL09.PAS", "re/symbols.toml#00BA:0BB8"]
+
+[[lesson]]
+id = "res12-div4-word-two-shifts"
+confidence = "V"
+units = ["res12", "*"]
+tags = ["division", "shift", "codegen", "word", "locals"]
+title = "X div 4 on a Word compiles to two shr ax,1, while X shr 2 uses mov cl,2 / shr ax,cl"
+lesson = "Turbo Pascal 6.0 constant-folds `X div 4` for a Word local into two `shr ax,1` (00BA:18B3), but `X shr 2` compiles to `mov cl,2; shr ax,cl`. res12:1892's `PixelBytes := PixelBytes div 4` matched only with the div form. Also: locals are allocated in declaration order, the FIRST declared at the lowest offset from bp, so a routine using [bp-8], [bp-6] and [bp-4] declares Pic (Pointer, 4 bytes), then PixelBytes, then RowBytes. Probe: tools/re/tp_idioms/res12/PRB17.PAS."
+evidence = ["src/RES12.PAS#CopyPictureItem", "re/symbols.toml#00BA:1892", "tools/re/tp_idioms/res12/PRB17.PAS"]
+
+[[lesson]]
+id = "res12-with-pointer-parameter-frame"
+confidence = "I"
+units = ["res12", "*"]
+tags = ["with", "frame", "pointer", "codegen"]
+title = "A with over a pointer parameter adds a hidden frame temporary"
+lesson = "Drafting res12:0BB8 with `with Who^ do` gave sub sp, 0x16 while the original is sub sp, 0x14; rewriting every field access as Who^.field gave sub sp, 0x12. The four-byte gap fits a hidden far-pointer temporary the compiler keeps for the with expression (the original reloads les di,[bp+6] before each field, so it used explicit Who^.field). Marked [I]: inferred from the frame size, not probed in isolation."
+evidence = ["src/RES12.PAS#RecalcCombatValues", "re/symbols.toml#00BA:0BB8"]
+
+[[lesson]]
+id = "res12-nested-byte-for-loop-and-bound-temp"
+confidence = "V"
+units = ["res12", "*"]
+tags = ["for", "loop", "byte", "jne", "temp", "locals", "codegen"]
+title = "A Byte for-loop compares against the final value with jne; a variable bound gets a hidden byte temp"
+lesson = "TP6 compiles for I := 0 to 3 do (I a Byte local) as mov I,0; jmp body; inc I; body: ...; cmp I,3; jne inc, so the body runs for I = 0,1,2,3 and the loop exits on I = 3 (the final value is compared directly). A for whose bound is a variable first copies the bound into a hidden byte temporary: for Outer := 0 to Count do becomes mov al,Count; mov [bp-temp],al; mov al,0; cmp al,[bp-temp]; ja end; mov Outer,al; ...; inc Outer; cmp Outer,[bp-temp]; jne inc. res12:1FEB matched with for Pass := 0 to FlashCount do for Frame := 0 to 3 do and the original temp [bp-0x30]. Probe: tools/re/tp_idioms/res12/PRB18.PAS. Also: with a value String40 parameter the compiler's copy occupies [bp-N..bp-1] above the declared locals, and the declared locals keep declaration order with the FIRST declared nearest bp (res12:1FEB declares Col,Row,Icon,Frame,Pass,FlashCount at [bp-0x2a..bp-0x2f]). Probe: tools/re/tp_idioms/res12/PRB19.PAS."
+evidence = ["src/RES12.PAS#ShowHitMessage", "re/symbols.toml#00BA:1FEB", "tools/re/tp_idioms/res12/PRB18.PAS", "tools/re/tp_idioms/res12/PRB19.PAS"]
+
+[[lesson]]
+id = "res12-in-set-jump-direction"
+confidence = "V"
+units = ["res12", "*"]
+tags = ["set", "in", "System_SetIn", "codegen", "jump", "boolean"]
+title = "x in [set] calls System_SetIn and jumps je to the else; not (x in [set]) jumps jne to its else"
+lesson = "For `if X in [set] then A else B` TP6 emits `push X; mov di,<set>; push cs; push di; lcall System_SetIn; je B` (System_SetIn returns AL=1 when X is in the set, so je = not-in-set -> else). For `if not (X in [set]) then A else B` it emits `lcall System_SetIn; jne B`. The set constant (32 bytes) sits in the code segment before the routine. res12:2228's `if not (Status in [0,1])` matched with the jne form (00BA:22DC). Probe: tools/re/tp_idioms/res12/PRB24.PAS."
+evidence = ["src/RES12.PAS#ApplyDamage", "re/symbols.toml#00BA:2228", "tools/re/tp_idioms/res12/PRB24.PAS"]
+
+[[lesson]]
+id = "res12-byte-function-direct-result"
+confidence = "V"
+units = ["res12", "*"]
+tags = ["function", "result", "byte", "frame", "codegen"]
+title = "A Byte function assigning its result directly uses [bp-1] and sub sp,2; assigning from a local differs"
+lesson = "For a Byte function that assigns resNN := 1 / := 0 directly, TP6 emits sub sp,2 with the result at [bp-1] (`mov byte ptr [bp-1],1` .. `mov al,[bp-1]`). Assigning from a separate var (resNN := R with R a local) puts R at [bp-2] and adds a copy: `mov al,[bp-2]; mov [bp-1],al; mov al,[bp-1]`. res12:23B7 matched with the direct form. Probe: tools/re/tp_idioms/res12/PRB25.PAS."
+evidence = ["src/RES12.PAS#OpposingSide", "re/symbols.toml#00BA:23B7", "tools/re/tp_idioms/res12/PRB25.PAS"]
+
+[[lesson]]
+id = "res12-full-table-save-buffer-frame"
+confidence = "V"
+units = ["res12", "*"]
+tags = ["frame", "locals", "array", "move", "codegen", "sortrec"]
+title = "res12:255B's sub sp,0x300 shows its ds6718 save buffer is a full 255-entry array, not 72"
+lesson = "res12:255B saves and restores the ovl30 scan table with Move(ds6718[1], Saved, $D8) (216 bytes, 72 TSortRecs) and its frame is sub sp, 0x300, with the buffer based at [bp-0x2fe] and one Byte index at [bp-0x2ff]. Declaring the buffer as array[1..72] of TSortRec (the shape ovl24's RunAffectHook uses) gives sub sp, 0xda with the buffer at [bp-0xd9]: too small. array[1..255] of TSortRec (765 bytes, the 767-byte frame padded to 768) reproduces sub sp, 0x300, the base [bp-0x2fe] and the index [bp-0x2ff] exactly, so the source declares a buffer for the whole table and copies only the 72 records ScanTargets can fill. Locals keep declaration order with the FIRST declared nearest bp (the index, declared second, sits just below the buffer). Probes: tools/re/tp_idioms/res12/PRB30.PAS (72-entry buffer) and PRB31.PAS (255-entry buffer)."
+evidence = ["src/RES12.PAS#DistanceToTarget", "re/symbols.toml#00BA:255B", "tools/re/tp_idioms/res12/PRB30.PAS", "tools/re/tp_idioms/res12/PRB31.PAS"]
+
+[[lesson]]
+id = "res12-char-case-loads-ax-vs-if-compares-memory"
+confidence = "V"
+units = ["res12", "*"]
+tags = ["case", "char", "codegen", "if", "selector"]
+title = "A case on a Char loads the selector into AL once; the same tests as if/else compare memory"
+lesson = "case Key of 'O': ...; 'G': ...; end (Key a Char local) emits mov al,[Key] once and then cmp al,'O' / cmp al,'G' (jne to the next arm). Writing the same dispatch as if Key = 'O' then ... else if Key = 'G' then ... emits cmp byte [Key],'O' / cmp byte [Key],'G' (a direct memory compare), which is 2 bytes shorter over two arms and shifts every later branch target. SelectPartyMember (00BA:2C48) matched only with the case form. This is the Char sibling of res12-word-case-selector-in-ax. Evidence: the routine's length (443 bytes) and its jump fields."
+evidence = ["src/RES12.PAS#SelectPartyMember", "re/symbols.toml#00BA:2C48"]
+
+[[lesson]]
+id = "res12-string-func-result-assigned-to-string-n"
+confidence = "V"
+units = ["res12", "*"]
+tags = ["string", "copy", "StrLCopy", "WordToText", "codegen"]
+title = "Assigning a string function result directly to a string[N] truncates with one StrLCopy; Copy adds a second"
+lesson = "For Hours: string[2], `Hours := WordToText(x)` compiles to WordToText's result into a hidden temp, then a single System_StrLCopy(Hours, temp, 2) that both copies and truncates. Writing it as `Hours := Copy(WordToText(x), 1, 2)` adds a second StrLCopy: the Copy goes into another 256-byte temp with max 2, then the assignment truncates again into Hours, which shifts the temp offsets and makes the routine 2 bytes too long. DrawLocationLine (00BA:290B) matched with the direct assignment; the manual two-digit padding (`if Length(Hours) < 2 then Hours := '0' + Hours`) is separate. The two hidden string temps sit 0x100 apart (256 bytes each) below the declared locals."
+evidence = ["src/RES12.PAS#DrawLocationLine", "re/symbols.toml#00BA:290B"]
+
+[[lesson]]
+id = "res12-if-vs-boolean-expression-direct-store"
+confidence = "V"
+units = ["res12", "*"]
+tags = ["boolean", "and", "if", "codegen", "result", "short-circuit"]
+title = "A Boolean result from A and B goes through AL; the same condition written as if/then/else stores the result directly"
+lesson = "For a Boolean function, `R := A and B` (short-circuit) evaluates the conjunction into AL (mov al,0 / jmp / mov al,1) and stores [bp-1] once at the end, while `if A and B then R := True else R := False` sends the conjunction's jumps straight to two direct stores (mov byte [bp-1],1 and mov byte [bp-1],0) and never touches AL. res12:2E03 matched only with the if/then/else form (00BA:2E16 je 0x2e39 reaches the mov [bp-1],0 after the mov [bp-1],1 path, 6 bytes of code fewer than the expression form). Probe: tools/re/tp_idioms/res12/PRB32.PAS."
+evidence = ["src/RES12.PAS#IsRangedWeapon", "re/symbols.toml#00BA:2E03", "tools/re/tp_idioms/res12/PRB32.PAS"]
+
+[[lesson]]
+id = "res12-with-pointer-param-hidden-temp"
+confidence = "V"
+units = ["res12", "*"]
+tags = ["with", "pointer", "parameter", "frame", "temp", "codegen"]
+title = "with Who^ do over a pointer parameter keeps a hidden 4-byte temp and reuses it; explicit Who^.field reloads the parameter"
+lesson = "For a Who: PCharacter value parameter, `with Who^ do` stores Who once into a hidden 4-byte frame temporary (les di,[bp+8]; mov [bp-6],di; mov [bp-4],es) and every field access then loads that temp (les di,[bp-6]), so the parameter is read once. Writing every access as Who^.field instead reloads les di,[bp+8] before each field and adds no temp. res12:2F57's frame (sub sp,6, the temp at [bp-6..-3], the declared Level at [bp-2] and the result at [bp-1]) matched only with `with Who^ do`, and the local Level must be the first declared so it sits nearest bp. This is the counterpart of res12-with-pointer-parameter-frame (0BB8, which used explicit Who^.field). Probe: tools/re/tp_idioms/res12/PRB33.PAS."
+evidence = ["src/RES12.PAS#IsMaxClassLevel", "re/symbols.toml#00BA:2F57", "tools/re/tp_idioms/res12/PRB33.PAS"]

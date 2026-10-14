@@ -16074,39 +16074,26 @@ evidence = ["prologue"]
 id = "00BA:0000"
 unit = "res12"
 addr = "00BA:0000"
-size = 392
-name = "res12_fn_0000"
-signature = ""
+size = 507
+name = "ApplyWeaponBonuses"
+signature = "procedure ApplyWeaponBonuses(Who: PCharacter)"
 c_name = "res12_fn_0000"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_0000 (applies the readied weapon (SlotItems[0], +CC) to the character's HitAdjust, WeaponAttacks, WeaponDamage and WeaponDamageBonus from the RaceRow row of the weapon's item kind, plus the dexterity (1168) and strength (1282/1325) adjustments and the slot-item pluses; called by res12_fn_0BB8 (make match UNIT=res12, 00BA:0000)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "00BA:0188"
-unit = "res12"
-addr = "00BA:0188"
-size = 115
-name = "res12_fn_0188"
-signature = ""
-c_name = "res12_fn_0188"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "00BA:01FB"
 unit = "res12"
 addr = "00BA:01FB"
 size = 135
-name = "res12_fn_01FB"
-signature = ""
+name = "SetArmourMovement"
+signature = "procedure SetArmourMovement(Who: PCharacter; Item: PItem)"
 c_name = "res12_fn_01FB"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_01FB (sets Who's Movement (+11C) from a readied armour item: when RaceRow[item type][0] is 2 (an armour) the item's Weight (+37) picks base movement/9/6 and a magic plus adds 3; called by res12_fn_0BB8 for every readied item (make match UNIT=res12, 00BA:01FB)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16114,12 +16101,12 @@ id = "00BA:0282"
 unit = "res12"
 addr = "00BA:0282"
 size = 286
-name = "res12_fn_0282"
-signature = ""
+name = "AddReadiedItemBonus"
+signature = "procedure AddReadiedItemBonus(Who: PCharacter; Item: PItem; var Bonus: TBonus; var Flag: Byte)"
 c_name = "res12_fn_0282"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_0282 (accumulates one readied item's bonuses (RaceRow[item type][6] and [0] pick the branch) into the TBonus a res12_fn_0BB8 caller keeps, and adds the item's PlusSave to Who^.SaveBonus (make match UNIT=res12, 00BA:0282)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16127,12 +16114,12 @@ id = "00BA:03A0"
 unit = "res12"
 addr = "00BA:03A0"
 size = 162
-name = "res12_fn_03A0"
-signature = ""
+name = "CapMovementByLoad"
+signature = "procedure CapMovementByLoad(Who: PCharacter)"
 c_name = "res12_fn_03A0"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_03A0 (caps Who's Movement (+11C) by the carried weight above the strength allowance (CarriedWeight +102 minus res12_fn_13AB): excess up to 200h keeps it, up to 300h caps at 9, up to 400h at 6, above at 3, and it only falls; called once by res12_fn_0BB8 after the readied-item loop (make match UNIT=res12, 00BA:03A0)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16145,7 +16132,7 @@ signature = "procedure res12_fn_0442(Value: LongInt; P: Pointer; A, B, C, D: Byt
 c_name = "res12_fn_0442"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "blocked dec-deepseek 2026-10-13: builds a menu line's display text (clear Text; when ShowReadied the ' Yes  '/' No   ' of Readied; when a party member (list ds5D96, Next +104) has affect 5 via res12_fn_2199 and the item is Plus>0/PlusSave>0/Cursed, append '* '; when Count>0 append res12_fn_1037(Count) and ' '; a Mask of shown NameNum entries ((NameNum[I]<>0) and ((HiddenNames shr (3-I)) and 1)=0, Inc(Mask,1 shl (I-1))); then for I 3 downto 1, if ((Mask shr (I-1)) and 1)>0 append ds10A7[NameNum[I]] (256 strings[20] at DS:10A7, 1-based) and a space, or 's ' with Plural set when (Count<2) or (Plural<>0) is false and ((1 shl (I-1))=Mask) or (I=1 and Mask>4 and ItemType<>$56) or (I=2 and bit 1 of Mask clear) or (I=3 and ItemType=$56) or ((ItemType=$49 or $1C) and NameNum[3]<>$B1); finally DrawTextAt(A,B,$A,Text) when D<>0; LongInt Value is unread QUIRK). The draft matched every region except the plural term C: the original tests bit 1 of Mask with a single byte `shr al,1; jae` (00BA:06A6..06AB) while every form tried compiled to `and al,2; or al,al; je` (+2 bytes), `((Mask shr 1) and 1)=0` (+7, word shift), `not Odd(Mask shr 1)` (+extra shr), `(Mask and 2)<>2` (+2), `(2 and Mask)=0`, `((Mask and 2) div 2)=0`, `(Mask shr 1) and 1=0` and `Odd(Mask shr 1)=False` (all longer); with the outer `if (Count<2) or (Plural<>0) then <space> else if ...` form the whole routine was 2 bytes long. Probes: tools/re/tp_idioms/res12/PRB01..PRB10.PAS. Whole-routine match attempt: make match UNIT=res12 FN=res12_fn_0442."
 evidence = ["prologue"]
 
 [[routine]]
@@ -16158,7 +16145,7 @@ signature = ""
 c_name = "res12_fn_06D5"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "blocked dec-deepseek 2026-10-13: not a routine. 00BA:06D5 is a label inside res12_fn_0442 (which is itself blocked): the instruction at 06D5 starts one byte late (the real cmp byte es:[di+31h],0B1h begins at 06D4, under the es: prefix the map dropped), and the code jumps across the boundary (00BA:0737 jmp 05D7, 00BA:05F2 jmp 0731) and ends at 0442's own retf 10 (00BA:0758). It cannot be a standalone procedure: any prologue would not match the mid-routine bytes. When res12_fn_0442 matches, make match WRITE=1 removes this entry (as it did for the phantom 00BA:0B4F inside DrawCharacterPanel). No caller: the map's near_call evidence is a false positive."
 evidence = ["near_call"]
 
 [[routine]]
@@ -16171,7 +16158,7 @@ signature = ""
 c_name = "res12_fn_0712"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "blocked dec-deepseek 2026-10-13: not a routine. 00BA:0712 is the else-branch label of res12_fn_0442 (00BA:05F2 jmp 0731 leads into it; 00BA:0737 jmp 05D7 leads back), inside 0442's single frame (prologue push bp/mov bp,sp/sub sp,20Ch at 00BA:0442, epilogue retf 10 at 00BA:0758). No procedure can start there. When res12_fn_0442 matches, make match WRITE=1 removes this entry. No caller: the map's near_call evidence is a false positive."
 evidence = ["near_call"]
 
 [[routine]]
@@ -16179,12 +16166,12 @@ id = "00BA:0767"
 unit = "res12"
 addr = "00BA:0767"
 size = 392
-name = "res12_fn_0767"
-signature = "procedure res12_fn_0767(Who: Pointer)"
+name = "DrawPartyRoster"
+signature = "procedure DrawPartyRoster(Who: PCharacter)"
 c_name = "res12_fn_0767"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_0767 (00BA:0767 draws the party roster panel (Name/AC/HP per member, whitepaper 5.24); called by the shop, temple and inventory screens); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16192,12 +16179,12 @@ id = "00BA:08EF"
 unit = "res12"
 addr = "00BA:08EF"
 size = 132
-name = "res12_fn_08EF"
-signature = "procedure res12_fn_08EF(Who: Pointer; Col: Byte; Row: Byte)"
+name = "DrawArmourClass"
+signature = "procedure DrawArmourClass(Who: PCharacter; Col, Row: Byte)"
 c_name = "res12_fn_08EF"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_08EF (00BA:08EF draws a character's armour-class value Abs(+111h - 60) signed, the value res12_fn_09E3 shows under the AC heading and ovl24 RollBeatsResistance compares a roll against); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16205,51 +16192,38 @@ id = "00BA:0973"
 unit = "res12"
 addr = "00BA:0973"
 size = 112
-name = "res12_fn_0973"
-signature = "procedure res12_fn_0973(Who: Pointer; Col: Byte; Row: Byte; Mode: Byte)"
+name = "DrawHitPoints"
+signature = "procedure DrawHitPoints(Who: PCharacter; Col, Row, Flag: Byte)"
 c_name = "res12_fn_0973"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_0973 (00BA:0973 draws a character's current hit points (Flag11B +11Bh) in a range colour at (Col,Row); called by res12_fn_0767 and res12_fn_09E3); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "00BA:09E3"
 unit = "res12"
 addr = "00BA:09E3"
-size = 364
-name = "res12_fn_09E3"
-signature = "procedure res12_fn_09E3(Who: Pointer)"
+size = 400
+name = "DrawCharacterPanel"
+signature = "procedure DrawCharacterPanel(Who: PCharacter)"
 c_name = "res12_fn_09E3"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_09E3 (00BA:09E3 draws the character panel (name, Hitpoints, AC, readied weapon text, status) the combat and inventory screens show, whitepaper 5.24); auto:prologue"
 evidence = ["prologue"]
-
-[[routine]]
-id = "00BA:0B4F"
-unit = "res12"
-addr = "00BA:0B4F"
-size = 36
-name = "res12_fn_0B4F"
-signature = ""
-c_name = "res12_fn_0B4F"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "00BA:0B73"
 unit = "res12"
 addr = "00BA:0B73"
 size = 69
-name = "res12_fn_0B73"
-signature = "function res12_fn_0B73(Who: Pointer): Boolean"
+name = "IsHelpless"
+signature = "function IsHelpless(Who: Pointer): Boolean"
 c_name = "res12_fn_0B73"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_0B73 (DrawCharacterPanel (00BA:09E3) draws '(Helpless)' when it returns True and ovl13 skips a combatant it answers True for; it tests the four affects of HelplessAffects (DS:286B) through res12_fn_2199); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16257,12 +16231,12 @@ id = "00BA:0BB8"
 unit = "res12"
 addr = "00BA:0BB8"
 size = 1151
-name = "res12_fn_0BB8"
-signature = "procedure res12_fn_0BB8(Who: Pointer)"
+name = "RecalcCombatValues"
+signature = "procedure RecalcCombatValues(Who: PCharacter)"
 c_name = "res12_fn_0BB8"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_0BB8 (res12_fn_0BB8 (00BA:0BB8) recomputes the character's combat values from the items it carries and has readied; every equipment change and the whole combat call it (ovl03, ovl06, ovl08, ovl09, ovl10, ovl12, ovl13, ovl16, ovl19, ovl21, ovl24)); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16270,12 +16244,12 @@ id = "00BA:1037"
 unit = "res12"
 addr = "00BA:1037"
 size = 60
-name = "res12_fn_1037"
-signature = "function res12_fn_1037(N: Byte): string"
+name = "ByteToText"
+signature = "function ByteToText(Value: Byte): string"
 c_name = "res12_fn_1037"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_1037 (res12_fn_1037 (00BA:1037) returns the decimal text of the byte it is given through Str; DrawArmourClass, DrawHitPoints and ovl20's TwoDigitText use it); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16283,12 +16257,12 @@ id = "00BA:1073"
 unit = "res12"
 addr = "00BA:1073"
 size = 58
-name = "res12_fn_1073"
-signature = "function res12_fn_1073(Value: Word): string"
+name = "WordToText"
+signature = "function WordToText(Value: Word): string"
 c_name = "res12_fn_1073"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_1073 (res12_fn_1073 (00BA:1073) returns the decimal text of the word it is given through Str, the word twin of ByteToText; the shops and the Temple put prices and amounts into messages with it); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16296,12 +16270,12 @@ id = "00BA:10AD"
 unit = "res12"
 addr = "00BA:10AD"
 size = 57
-name = "res12_fn_10AD"
-signature = "function res12_fn_10AD(Experience: LongInt): string"
+name = "LongIntToText"
+signature = "function LongIntToText(Value: LongInt): string"
 c_name = "res12_fn_10AD"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_10AD (res12_fn_10AD (00BA:10AD) returns the decimal text of the LongInt it is given through Str, the LongInt twin of ByteToText and WordToText); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16309,12 +16283,12 @@ id = "00BA:10E6"
 unit = "res12"
 addr = "00BA:10E6"
 size = 130
-name = "res12_fn_10E6"
-signature = ""
+name = "DexterityAdjustment"
+signature = "function DexterityAdjustment(Who: PCharacter): Byte"
 c_name = "res12_fn_10E6"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_10E6 (res12_fn_10E6 (00BA:10E6) maps Who's dexterity (+0x13) to its AD&D reaction/defence adjustment (1..3 gives -4, 4..6 dexterity-7, 15..18 dexterity-14, 19..25 grows to 6); RecalcCombatValues sums it into the character's combat value); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16322,12 +16296,12 @@ id = "00BA:1168"
 unit = "res12"
 addr = "00BA:1168"
 size = 130
-name = "res12_fn_1168"
-signature = ""
+name = "DexterityAttackAdjustment"
+signature = "function DexterityAttackAdjustment(Who: PCharacter): ShortInt"
 c_name = "res12_fn_1168"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_1168 (00BA:1168: ApplyWeaponBonuses (00BA:0000) adds it to Who^.HitAdjust for a weapon whose RaceRow attack flags have bit 2 (WeaponFlagDexToHit); the sibling DexterityAdjustment (00BA:10E6) is the defensive one summed into ResistValue. Both map Dexterity (+0x13).); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16335,12 +16309,12 @@ id = "00BA:11EA"
 unit = "res12"
 addr = "00BA:11EA"
 size = 152
-name = "res12_fn_11EA"
+name = "StrengthRowIndex"
 signature = ""
 c_name = "res12_fn_11EA"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_11EA (00BA:11EA: maps Strength (+0x10) plus the exceptional StrengthPercent (+0x16) to a 0..30 row of the strength table (strength 18 + percent bands become 18..23, 19..25 become 24..30); the only callers, res12_fn_1282, res12_fn_1325 and res12_fn_13AB, look up reaction, damage and weight allowances with it.); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16348,12 +16322,12 @@ id = "00BA:1282"
 unit = "res12"
 addr = "00BA:1282"
 size = 163
-name = "res12_fn_1282"
-signature = ""
+name = "StrengthAttackAdjustment"
+signature = "function StrengthAttackAdjustment(Who: PCharacter): ShortInt"
 c_name = "res12_fn_1282"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_1282 (00BA:1282: the strength reaction/attack adjustment; ApplyWeaponBonuses (00BA:0000) and RecalcCombatValues (00BA:0BB8) add it to Who^.HitAdjust (the to-hit value) for WeaponFlagStrength, and it is 0 unless Who^.StrengthBonusFlag (+0xAA) is nonzero.); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16361,12 +16335,12 @@ id = "00BA:1325"
 unit = "res12"
 addr = "00BA:1325"
 size = 134
-name = "res12_fn_1325"
-signature = ""
+name = "StrengthDamageAdjustment"
+signature = "function StrengthDamageAdjustment(Who: PCharacter): ShortInt"
 c_name = "res12_fn_1325"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_1325 (00BA:1325: the strength damage adjustment; ApplyWeaponBonuses (00BA:0000) and RecalcCombatValues (00BA:0BB8) add it to Who^.WeaponDamageBonus[1] for WeaponFlagStrength, and it is 0 unless Who^.StrengthBonusFlag (+0xAA) is nonzero.); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16374,12 +16348,12 @@ id = "00BA:13AB"
 unit = "res12"
 addr = "00BA:13AB"
 size = 224
-name = "res12_fn_13AB"
-signature = "function res12_fn_13AB(Who: Pointer): Integer"
+name = "StrengthWeightAllowance"
+signature = "function StrengthWeightAllowance(Who: PCharacter): Integer"
 c_name = "res12_fn_13AB"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_13AB (00BA:13AB: returns the strength weight allowance in coins (StrengthRowIndex row -> coins); CapMovementByLoad (00BA:03A0) subtracts it from Who^.CarriedWeight and ovl21's CarryLimit adds 1500 to it.); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16387,12 +16361,12 @@ id = "00BA:148B"
 unit = "res12"
 addr = "00BA:148B"
 size = 126
-name = "res12_fn_148B"
-signature = "procedure res12_fn_148B(Spell: Byte)"
+name = "ForgetSpell"
+signature = "procedure ForgetSpell(Spell: Byte)"
 c_name = "res12_fn_148B"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_148B (00BA:148B: clears the first memorized spell (SelectedCharacter^.Spells, +0x17) equal to Spell; DealDamage (ovl24:1344) calls it when a victim loses a pending spell, ovl13:02F9 and ovl22:0C20 also call it.); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16400,12 +16374,12 @@ id = "00BA:1509"
 unit = "res12"
 addr = "00BA:1509"
 size = 238
-name = "res12_fn_1509"
-signature = "procedure res12_fn_1509(Who: Pointer; Item: Pointer)"
+name = "RemoveInventoryItem"
+signature = "procedure RemoveInventoryItem(Who: PCharacter; Item: PItem)"
 c_name = "res12_fn_1509"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_1509 (00BA:1509 unlinks Item from Who^.Items (+$C8) and FreeMems it (63 bytes), reporting 'Nil Item pointer...' or 'Tried to Lose item & couldn't find it!' through ShowMessageLine; the head case re-points Who^.Items at Item^.Next, then the record is always unlinked and freed. Called by ovl07 LoseItems for every lost item and by ovl13, ovl19 and ovl22 when an item is consumed.); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16413,12 +16387,12 @@ id = "00BA:15F7"
 unit = "res12"
 addr = "00BA:15F7"
 size = 156
-name = "res12_fn_15F7"
-signature = "procedure res12_fn_15F7(Who: Pointer; Item: Pointer)"
+name = "AddItemCopy"
+signature = "procedure AddItemCopy(Who: PCharacter; Item: PItem)"
 c_name = "res12_fn_15F7"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_15F7 (00BA:15F7 GetMems an item record (63 bytes), Move-copies Item into it, clears its Next (+$2A) and appends it to the end of Who^.Items (+$C8); an empty list keeps the copy as the head. Gives a character a copy of an item.); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16426,12 +16400,12 @@ id = "00BA:1693"
 unit = "res12"
 addr = "00BA:1693"
 size = 89
-name = "res12_fn_1693"
-signature = "procedure res12_fn_1693(Text: String40)"
+name = "ShowFlashMessage"
+signature = "procedure ShowFlashMessage(Text: String40)"
 c_name = "res12_fn_1693"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_1693 (00BA:1693 clears the bottom row, draws Text green at (0,24), delays via DelayByGameSpeed and clears the row again; callers pass 'Not enough money.', 'OverLoaded', 'Magic On'); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16439,12 +16413,12 @@ id = "00BA:16EC"
 unit = "res12"
 addr = "00BA:16EC"
 size = 247
-name = "res12_fn_16EC"
-signature = "procedure res12_fn_16EC(Who: Pointer; Text: string; A, B: Byte)"
+name = "ShowCharacterMessage"
+signature = "procedure ShowCharacterMessage(Who: PCharacter; Text: string; Row, Wait: Byte)"
 c_name = "res12_fn_16EC"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_16EC (00BA:16EC draws Who's name through DrawCharacterName and the paged Text through ShowPagedText in a message window: top row Row in the combat view (ds49F3 = 5), else rows $11/$12 (ds6DDA picks) with a frame; when Wait is set it delays and clears the window through ClearCharacterMessage. Callers pass 'is bandaged', 'flees in panic', 'is cured'.; auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16452,168 +16426,77 @@ id = "00BA:17E3"
 unit = "res12"
 addr = "00BA:17E3"
 size = 51
-name = "res12_fn_17E3"
-signature = "procedure res12_fn_17E3"
+name = "ClearCharacterMessage"
+signature = "procedure ClearCharacterMessage"
 c_name = "res12_fn_17E3"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_17E3 (00BA:17E3 clears the message window ShowCharacterMessage wrote in: box ($17,$A)-($26,$15) in the combat view (ds49F3 = 5), else box (1,$12)-($26,$16). Called by ShowCharacterMessage's Wait path and by the camp, temple and resting screens.); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "00BA:1816"
 unit = "res12"
 addr = "00BA:1816"
-size = 65
-name = "res12_fn_1816"
-signature = "procedure res12_fn_1816(Who: Pointer; Col, Row, Mode: Byte)"
+size = 124
+name = "DrawCharacterName"
+signature = "procedure DrawCharacterName(Who: PCharacter; Col, Row, Mode: Byte)"
 c_name = "res12_fn_1816"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_1816 (00BA:1816 draws Who's Name (+0) at (Col,Row) in the colour of its state: LightRed when Flag10D (+$10d) is 0 (no combat), Yellow when Side (+$10e) is 1 (the party), LightCyan otherwise; when Mode is set it appends the literal 's at Col + Length(Name). The map oversize 65 was wrong, the real routine is 124 bytes.); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "00BA:1857"
-unit = "res12"
-addr = "00BA:1857"
-size = 38
-name = "res12_fn_1857"
-signature = ""
-c_name = "res12_fn_1857"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "00BA:187D"
-unit = "res12"
-addr = "00BA:187D"
-size = 21
-name = "res12_fn_187D"
-signature = ""
-c_name = "res12_fn_187D"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "00BA:1892"
 unit = "res12"
 addr = "00BA:1892"
-size = 17
-name = "res12_fn_1892"
-signature = ""
+size = 332
+name = "CopyPictureItem"
+signature = "procedure CopyPictureItem(PicIndex, Half, Row, Mirror: Byte)"
 c_name = "res12_fn_1892"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_1892 (00BA:1892 copies item 0 of a source picture ds5E5A[PicIndex].Pics[Half] into item Row of the combat picture ds6E36 (ByteSize bytes at +17 and the pixel buffer at +13), mirroring through a temporary when Mirror is set; called in a loop by res12_fn_19DE and by ovl13); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "00BA:18A3"
-unit = "res12"
-addr = "00BA:18A3"
-size = 44
-name = "res12_fn_18A3"
-signature = ""
-c_name = "res12_fn_18A3"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "00BA:18CF"
-unit = "res12"
-addr = "00BA:18CF"
-size = 62
-name = "res12_fn_18CF"
-signature = ""
-c_name = "res12_fn_18CF"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "00BA:190D"
-unit = "res12"
-addr = "00BA:190D"
-size = 209
-name = "res12_fn_190D"
-signature = ""
-c_name = "res12_fn_190D"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "00BA:19DE"
 unit = "res12"
 addr = "00BA:19DE"
 size = 75
-name = "res12_fn_19DE"
-signature = ""
+name = "DrawCombatIcon"
+signature = "procedure DrawCombatIcon(PicIndex: Byte)"
 c_name = "res12_fn_19DE"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_19DE (00BA:19DE composes four items of the combat picture ds6E36 from the two halves of the icon slot ds5E5A[PicIndex] by calling CopyPictureItem four times (Half 0,0,1,1; Row 0,1,2,3; Mirror 0,1,1,0); called by ovl12, ovl13 and ovl22); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "00BA:1A29"
 unit = "res12"
 addr = "00BA:1A29"
-size = 657
-name = "res12_fn_1A29"
-signature = ""
+size = 1474
+name = "WalkCombatLine"
+signature = "procedure WalkCombatLine(FromX, FromY, ToX, ToY: ShortInt; Count, Mode: Byte)"
 c_name = "res12_fn_1A29"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_1A29 (00BA:1A29 walks the Bresenham line from cell (X1,Y1) to (X2,Y2) between combat cells (SetupLine/StepLine on the 3x-scaled cells), then animates the combat cursor along it: it draws the combat picture ds6E36 onto DrawBuf with res07_fn_0D71, flushes and delays, steps by DirStepX/DirStepY and keeps MoveCombatCursor on the cell; called by ovl12, ovl13 and ovl22 (aiming and movement)); auto:prologue"
 evidence = ["prologue"]
-
-[[routine]]
-id = "00BA:1CBA"
-unit = "res12"
-addr = "00BA:1CBA"
-size = 38
-name = "res12_fn_1CBA"
-signature = ""
-c_name = "res12_fn_1CBA"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "00BA:1CE0"
-unit = "res12"
-addr = "00BA:1CE0"
-size = 779
-name = "res12_fn_1CE0"
-signature = ""
-c_name = "res12_fn_1CE0"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "00BA:1FEB"
 unit = "res12"
 addr = "00BA:1FEB"
 size = 430
-name = "res12_fn_1FEB"
-signature = "procedure res12_fn_1FEB(Who: Pointer; Flag: Byte; Text: String40)"
+name = "ShowHitMessage"
+signature = "procedure ShowHitMessage(Who: Pointer; Flag: Byte; Text: String40)"
 c_name = "res12_fn_1FEB"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_1FEB (00BA:1FEB shows a per-character combat message and flashes the character's icon (DrawCombatIcon $16/$17), plays a sound and animates over the character's view cell; DealDamage calls it with Flag 0 and ApplyAffect with Flag 1); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16621,12 +16504,12 @@ id = "00BA:2199"
 unit = "res12"
 addr = "00BA:2199"
 size = 143
-name = "res12_fn_2199"
-signature = "function res12_fn_2199(Who: Pointer; AffectId: Byte; var Affect: Pointer): Boolean"
+name = "HasAffect"
+signature = "function HasAffect(Who: Pointer; AffectId: Byte; var Affect: Pointer): Boolean"
 c_name = "res12_fn_2199"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_2199 (00BA:2199 returns whether AffectId is on Who's affect list and leaves the matching TAffect in the caller's Affect (callers read it as a question: if HasAffect(...) then)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16634,12 +16517,12 @@ id = "00BA:2228"
 unit = "res12"
 addr = "00BA:2228"
 size = 290
-name = "res12_fn_2228"
-signature = "procedure res12_fn_2228(Who: Pointer; Damage: Byte)"
+name = "ApplyDamage"
+signature = "procedure ApplyDamage(Who: Pointer; Damage: Byte)"
 c_name = "res12_fn_2228"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_2228 (00BA:2228 applies Damage hit points to Who, updates its health status (dead/dying/unconscious/standing) and drops it from combat when it falls; DealDamage, DamageWithMessage and ovl13 call it with a damage amount); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16647,12 +16530,12 @@ id = "00BA:234A"
 unit = "res12"
 addr = "00BA:234A"
 size = 109
-name = "res12_fn_234A"
-signature = ""
+name = "ShowHealResult"
+signature = "procedure ShowHealResult(Who: Pointer)"
 c_name = "res12_fn_234A"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_234A (00BA:234A shows Who as 'is fully healed' when its hit points equal HpMax and 'is partially healed' otherwise, then redraws the roster outside the combat view; ovl12 and ovl22 (healing and training) call it); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16660,12 +16543,12 @@ id = "00BA:23B7"
 unit = "res12"
 addr = "00BA:23B7"
 size = 36
-name = "res12_fn_23B7"
-signature = "function res12_fn_23B7(Who: Pointer): Byte"
+name = "OpposingSide"
+signature = "function OpposingSide(Who: Pointer): Byte"
 c_name = "res12_fn_23B7"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_23B7 (00BA:23B7 returns the side opposite Who's Side (1 for a party member, 0 for a monster); the AI indexes ds6814Sides with it and ShortInt(res12_fn_23B7(Who)) counts Who's enemies); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16673,12 +16556,12 @@ id = "00BA:23DB"
 unit = "res12"
 addr = "00BA:23DB"
 size = 88
-name = "res12_fn_23DB"
+name = "RecountCombatSides"
 signature = ""
 c_name = "res12_fn_23DB"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_23DB (00BA:23DB clears the two per-side counts ds6814Sides and recounts them by walking the character list ds5D96, adding one per member with Flag10D set to its side's count; RunCombat and EndCombatRound call it each round); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16686,51 +16569,38 @@ id = "00BA:2433"
 unit = "res12"
 addr = "00BA:2433"
 size = 296
-name = "res12_fn_2433"
-signature = "function res12_fn_2433(P: Pointer; B: Byte): Byte"
+name = "CollectEnemiesInRange"
+signature = "function CollectEnemiesInRange(Who: Pointer; Range: Byte): Byte"
 c_name = "res12_fn_2433"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_2433 (00BA:2433 filters the ovl30 ScanTargets table to the combatants on the side opposite Who (OpposingSide) within Range steps and writes their combatant indexes to ds6DE4; ovl09:02EB and 0B3C use the count and that list as Who's enemies in range); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
 id = "00BA:255B"
 unit = "res12"
 addr = "00BA:255B"
-size = 22
-name = "res12_fn_255B"
-signature = "function res12_fn_255B(Who, Target: Pointer): Byte"
+size = 220
+name = "DistanceToTarget"
+signature = "function DistanceToTarget(Who, Target: Pointer): Byte"
 c_name = "res12_fn_255B"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_255B (00BA:255B scans from Who with the WalkLine gate open and returns ds6718[I].Key shr 1 for the found Target, the fewest walk steps halved; ovl09:0B3C tests it = 1 as melee range and uses it to decide whether Who can attack Target); auto:prologue"
 evidence = ["prologue"]
-
-[[routine]]
-id = "00BA:2571"
-unit = "res12"
-addr = "00BA:2571"
-size = 198
-name = "res12_fn_2571"
-signature = ""
-c_name = "res12_fn_2571"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "00BA:2637"
 unit = "res12"
 addr = "00BA:2637"
 size = 79
-name = "res12_fn_2637"
-signature = "function res12_fn_2637(Who: Pointer): Byte"
+name = "EndCombatTurn"
+signature = "function EndCombatTurn(Who: Pointer): Byte"
 c_name = "res12_fn_2637"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_2637 (00BA:2637 clears the pending spell, initiative, guard byte and movement left of Who's combat state and returns 1; ovl08/ovl09/ovl13 call it on every path that ends a combatant's turn (Quit, self-end checks, AI turn end)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16738,12 +16608,12 @@ id = "00BA:2686"
 unit = "res12"
 addr = "00BA:2686"
 size = 60
-name = "res12_fn_2686"
-signature = "function res12_fn_2686(Who: Pointer): Byte"
+name = "GuardTurn"
+signature = "function GuardTurn(Who: Pointer): Byte"
 c_name = "res12_fn_2686"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_2686 (00BA:2686 calls EndCombatTurn(Who), sets the combat guard byte B7 (+7) to 1 and flashes 'Guarding'; ovl08:0E45 binds it to the Guard menu key and ovl09_fn_0F4F uses it as the AI's fallback turn); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16751,12 +16621,12 @@ id = "00BA:26C2"
 unit = "res12"
 addr = "00BA:26C2"
 size = 104
-name = "res12_fn_26C2"
-signature = ""
+name = "SpellCasterLevel"
+signature = "function SpellCasterLevel(Spell: Byte): Byte"
 c_name = "res12_fn_26C2"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_26C2 (00BA:26C2 maps a spell's SpellTable class (byte 0) to the selected character's level in that class (ClassLevels cleric 0, magic-user 5), 12 for spell class 2 and a forced 6 when ds6DBF is set; ovl22_e3 multiplies the spell row's +3 byte by it); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16764,12 +16634,12 @@ id = "00BA:272A"
 unit = "res12"
 addr = "00BA:272A"
 size = 175
-name = "res12_fn_272A"
-signature = ""
+name = "DrawViewWindows"
+signature = "procedure DrawViewWindows(WithInner: Byte)"
 c_name = "res12_fn_272A"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_272A (00BA:272A draws the view's window frames (DrawWindow): the full screen, the bottom text window, the upper-left window and, with Inner set, the inner window; only RedrawView calls it); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16777,12 +16647,12 @@ id = "00BA:27D9"
 unit = "res12"
 addr = "00BA:27D9"
 size = 306
-name = "res12_fn_27D9"
-signature = ""
+name = "RedrawView"
+signature = "procedure RedrawView"
 c_name = "res12_fn_27D9"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_27D9 (00BA:27D9 is the resident view dispatcher: it redraws the whole screen for the current view mode ds49F3 (shop, portrait, camp, area map, area view, loot), called by the shop, Temple, loot, camp and combat menus); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16790,12 +16660,12 @@ id = "00BA:290B"
 unit = "res12"
 addr = "00BA:290B"
 size = 595
-name = "res12_fn_290B"
-signature = ""
+name = "DrawLocationLine"
+signature = "procedure DrawLocationLine"
 c_name = "res12_fn_290B"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_290B (00BA:290B builds and draws the party location line (column,row, facing, hours:minutes, and a camping/search suffix) on row 15 of the side window; called by the camp and wilderness screens); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16803,12 +16673,12 @@ id = "00BA:2B5E"
 unit = "res12"
 addr = "00BA:2B5E"
 size = 42
-name = "res12_fn_2B5E"
-signature = ""
+name = "DrawWildernessScreen"
+signature = "procedure DrawWildernessScreen"
 c_name = "res12_fn_2B5E"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_2B5E (00BA:2B5E draws the wilderness map screen: sets view mode 3, DrawAdventureScreen, ShowAreaView, DrawPartyMarker, DrawLocationLine, DrawPartyRoster; called by ovl14 HandleWildernessKeys); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16816,12 +16686,12 @@ id = "00BA:2B88"
 unit = "res12"
 addr = "00BA:2B88"
 size = 192
-name = "res12_fn_2B88"
-signature = ""
+name = "DrawCombatScreen"
+signature = "procedure DrawCombatScreen"
 c_name = "res12_fn_2B88"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_2B88 (00BA:2B88 draws the combat screen windows and positions the cursor (ovl31_e2, two DrawWindow, ClearWindow, MoveCombatCursor); called by StartBattle, PlayerTurn and the combat overlays); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16829,12 +16699,12 @@ id = "00BA:2C48"
 unit = "res12"
 addr = "00BA:2C48"
 size = 443
-name = "res12_fn_2C48"
-signature = "procedure res12_fn_2C48(Prompt: String40; Mode: Byte; var Who: Pointer)"
+name = "SelectPartyMember"
+signature = "procedure SelectPartyMember(Title: String40; WithExit: Byte; var Selected: PCharacter)"
 c_name = "res12_fn_2C48"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_2C48 (00BA:2C48 loops the party roster with a 'Select' prompt and G/O/O-next/previous/E-return member picker, storing the choice in the caller's Selected; called by ovl03, ovl19 and ovl22); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16842,12 +16712,12 @@ id = "00BA:2E03"
 unit = "res12"
 addr = "00BA:2E03"
 size = 67
-name = "res12_fn_2E03"
-signature = "function res12_fn_2E03(Who: Pointer): Boolean"
+name = "IsRangedWeapon"
+signature = "function IsRangedWeapon(Who: Pointer): Boolean"
 c_name = "res12_fn_2E03"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_2E03 (00BA:2E03 returns True when Who has a readied weapon (SlotItems[0]) whose RaceRow byte $C (the attack range, ovl09:536) is above 1 (a missile weapon); ovl08 gates the melee attack on it); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16855,12 +16725,12 @@ id = "00BA:2E46"
 unit = "res12"
 addr = "00BA:2E46"
 size = 69
-name = "res12_fn_2E46"
-signature = "function res12_fn_2E46(Who: Pointer): Boolean"
+name = "RangedWeaponCanMelee"
+signature = "function RangedWeaponCanMelee(Who: Pointer): Boolean"
 c_name = "res12_fn_2E46"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_2E46 (00BA:2E46 returns True when IsRangedWeapon holds and the readied weapon kind's RaceRow attack flags carry both the melee bit $10 and the strength bit $04, i.e. a missile weapon that can also strike in melee; ovl08 uses it to allow the melee attack); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16868,12 +16738,12 @@ id = "00BA:2E8B"
 unit = "res12"
 addr = "00BA:2E8B"
 size = 204
-name = "res12_fn_2E8B"
-signature = "function res12_fn_2E8B(Who: Pointer; var W: Pointer): Byte"
+name = "ChooseAttackItem"
+signature = "function ChooseAttackItem(Who: Pointer; var Aim: Pointer): Byte"
 c_name = "res12_fn_2E8B"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_2E8B (00BA:2E8B fills the caller's pointer with the item Who's attack aims with: the readied weapon (SlotItems[0]) when the kind's attack flags have the melee bit $10, else the ammo in slot 11 (+$F8) or slot 12 (+$FC) when bit $08 marks a launcher; returns 1 when an item was aimed or the flags are exactly $A); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16881,12 +16751,12 @@ id = "00BA:2F57"
 unit = "res12"
 addr = "00BA:2F57"
 size = 327
-name = "res12_fn_2F57"
-signature = ""
+name = "IsMaxClassLevel"
+signature = "function IsMaxClassLevel(Who: PCharacter; ClassIndex: ShortInt): Boolean"
 c_name = "res12_fn_2F57"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_2F57 (00BA:2F57 returns True when Who's level in one class (ClassLevels[ClassIndex], +$96) has reached the maximum its race (+$2E) and strength (+$10) allow, so the trainers (ovl22:2D39) must not raise that class level further); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]

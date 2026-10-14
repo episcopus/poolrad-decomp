@@ -89,7 +89,7 @@ end;
 
 { ovl31:00E3. Purpose unknown: when VideoAdapter is 1 it calls SetPaletteRegister(0, 8) and then
   SetPaletteRegister(8, 0); ovl31_e3 makes the calls (0, 0) and (8, 8). Called by ovl16_e3, ovl19 and
-  res12_fn_2B88. }
+  DrawCombatScreen. }
 procedure ovl31_e2;
 begin
   case VideoAdapter of
@@ -228,7 +228,7 @@ begin
 end;
 
 { ovl31:06E9. True when view cell (Col, Row) is inside the 7x7 window (0..ViewLast both ways).
-  Called here and by ovl13, res12_fn_1A29, res12_fn_1CE0. }
+  Called here and by ovl13, WalkCombatLine, res12_fn_1CE0. }
 function IsInView(Col, Row: ShortInt): Boolean;
 begin
   if (Col < 0) or (Col > ViewLast) or (Row < 0) or (Row > ViewLast) then

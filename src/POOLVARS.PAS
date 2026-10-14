@@ -115,7 +115,7 @@ type
     ItemType: Byte;               { +$2E }
     NameNum: array[1..3] of Byte; { +$2F..$31 }
     Plus: ShortInt;               { +$32 }
-    PlusSave: Byte;               { +$33 }
+    PlusSave: ShortInt;           { +$33: signed (AddReadiedItemBonus sign-extends it) }
     Readied: Boolean;             { +$34 }
     HiddenNames: Byte;            { +$35 }
     Cursed: Boolean;              { +$36: the item is cursed (Remove Curse looks for one, ovl04:0874) }
@@ -177,7 +177,8 @@ type
     { +$6: movement left in half squares (the Move menu shows Moves div 2); cleared by
       RemoveCombatant. }
     Moves: Byte;
-    { +$7: cleared at the start of each turn (ovl08:021E) and by RemoveCombatant; meaning unknown }
+    { +$7: the guard flag: GuardTurn (00BA:2686) sets it to 1 and EndCombatTurn (00BA:2637)
+      clears it; also cleared at the start of each turn (ovl08:021E) and by RemoveCombatant }
     B7: Byte;
     Pad8: Byte;
     { +$9: the icon set (facing) DrawIcon draws the combatant with (SetCombatantIcon, ovl31);
@@ -259,7 +260,9 @@ type
     { +$6D..+$71: five values ComputeSavingThrows sets to 20 and lowers to the best entry of
       SaveTable over the character's classes (ovl23:026D..030D): the five saving throws [I]. }
     SavingThrows: array[0..4] of Byte;
-    Pad72: Byte;
+    { +$72: the character's base movement; RecalcCombatValues copies it into Movement (+$11C) and
+      SetArmourMovement restores it for light armour. }
+    BaseMovement: Byte;
     { +$73: raised to the highest class level by RecalcClassStats (ovl23:0066), never lowered
       there; signed. }
     HighestLevel: ShortInt;
@@ -267,7 +270,7 @@ type
     { +$77..+$7E: the eight values ComputeThiefSkills builds from the thief level, the race and
       (for the first five) the dexterity: the thief skills [I] (ovl23:0329). }
     ThiefSkills: array[1..8] of Byte;
-    Affects: Pointer;             { +$7F: the list of affects (res12_fn_2199, RemoveAffect walk it) }
+    Affects: Pointer;             { +$7F: the list of affects (HasAffect, RemoveAffect walk it) }
     Pad83: Byte;
     { +$84: for computer-run members, low seven bits are morale and high bit $80 marks the AI
       (PrepareCombatants, ovl10:0675; CheckMorale, ovl09:10D7). Below $80, the party's Space
@@ -295,16 +298,20 @@ type
     { +$A1: RecalcClassStats sets 3 when the fighter level (ClassLevels[2]) is above 6, else 2
       (ovl23:0083): likely attacks per two rounds [I]. }
     Attacks: Byte;
-    { +$A2..+$AB: the character's own attack, read by UseBestItem (ovl09:13CA): its starting score
-      (Score2) is AttackFactorB * AttackFactorA, plus 2 * AttackBonus when the signed AttackBonus is above 0.
-      Purpose unknown: what these three bytes are in the game is not proven. }
+    { +$A2..+$AB: the character's base attack triple, each a pair of entries 1..2: the AI item
+      chooser (ovl09:13CA) reads only entry 1 (it multiplies +$A3 by +$A5 into its item score and,
+      when the signed +$A7 is above 0, adds twice it). RecalcCombatValues copies both entries of the
+      three pairs into the readied weapon block at +$115. +$A9 is the base value RecalcCombatValues
+      copies into ResistValue (+$111); ovl16:05E4 sets it to 50. The rest is unknown. }
     PadA2: Byte;
-    AttackFactorA: Byte;          { +$A3 }
-    PadA4: Byte;                  { +$A4 }
-    AttackFactorB: Byte;          { +$A5 }
-    PadA6: Byte;                  { +$A6 }
-    AttackBonus: ShortInt;        { +$A7 }
-    PadA8: array[$A8..$AA] of Byte;
+    BaseAttacks: array[1..2] of Byte;      { +$A3, +$A4: attacks per round (base) }
+    BaseDamage: array[1..2] of Byte;       { +$A5, +$A6: damage (base) }
+    BaseDamageBonus: array[1..2] of ShortInt;  { +$A7, +$A8: signed damage bonus (base) }
+    ResistBase: Byte;             { +$A9: base magic resistance RecalcCombatValues copies into ResistValue }
+    { +$AA: the strength reaction and damage adjustments (StrengthAttackAdjustment, StrengthDamageAdjustment) apply only
+      when this byte is nonzero; its meaning beyond that is not proven (it may mark a creature whose
+      attacks use the strength tables). }
+    StrengthBonusFlag: Byte;
     { +$AB: LoadMonster's caller gives a new monster the value Random(256) here (ovl17:1262);
       the rest of the byte's use is not known. }
     BAB: Byte;
@@ -349,7 +356,7 @@ type
     HandsInUse: Byte;
     SaveBonus: ShortInt;          { +$101: added to the d20 of every saving throw (SavingThrow, ovl24:0D96) }
     { +$102: the weight the character carries; every coin counts one (ovl21:0020, 003A), and it may
-      not exceed CarryLimit, 1500 plus the strength allowance res12_fn_13AB (ovl21:0000, 0054). }
+      not exceed CarryLimit, 1500 plus the strength allowance StrengthWeightAllowance (ovl21:0000, 0054). }
     CarriedWeight: Word;
     Next: PCharacter;             { +$104: the next character of the party list (ds5D96), nil ends it }
     Combat: PCombatant;           { +$108: the character's combat state (ovl08, ovl31) }
@@ -370,7 +377,20 @@ type
     { +$111: the d20 roll (20 counts 100) plus the level RollBeatsResistance is given must exceed it
       (ovl24:0C90); likely the magic resistance [I]. }
     ResistValue: Byte;
-    Pad112: array[$112..$11A] of Byte;
+    { +$112: RecalcCombatValues computes it (the sum of its frame bytes [bp-$B]..[bp-9] minus two);
+      not read by a decompiled routine yet, meaning unknown. }
+    ds112: Byte;
+    { +$113, +$114: part of the block RecalcCombatValues copies from the base block +$A2..+$A8 into
+      +$114..+$11A; not read by a decompiled routine yet, meaning unknown. }
+    Pad113: array[$113..$114] of Byte;
+    { +$115, +$117, +$119: the readied weapon's attack triple, each a pair of entries 1..2. RecalcCombatValues
+      copies the base triple (+$A3, +$A5, +$A7) in and ApplyWeaponBonuses then overwrites entry 1 from
+      the ItemTable row of the weapon's item kind (bytes 9, $A and $B). The AI's item score multiplies
+      +$A5 by +$A3 and adds twice +$A7, so the three read as the attacks per round, the damage and a
+      signed damage bonus [I]. Entry 2 rides along, never read by a decompiled routine. }
+    WeaponAttacks: array[1..2] of Byte;       { +$115, +$116 }
+    WeaponDamage: array[1..2] of Byte;        { +$117, +$118 }
+    WeaponDamageBonus: array[1..2] of ShortInt;  { +$119, +$11A: signed; the strength and item plus bonus goes here }
     { +$11B: Raise Dead and Stone to Flesh set it to 1; HealCharacter adds to it up to HpMax,
       ReviveCombatant sets it and DropCombatant clears it: the current hit points [I] (ovl24:17B9). }
     Flag11B: Byte;
@@ -473,7 +493,9 @@ type
     DiceSizeLarge: Byte;          { +3 }
     BonusLarge: ShortInt;         { +4 }
     Attacks: Byte;                { +5: the number of attacks (ScoreItem, ovl09:128D, counts those beyond the first) }
-    Pad6: array[6..8] of Byte;
+    { +6: bit 7 set means the item has a bonus class (the byte and $7F; AddReadiedItemBonus, 00BA:0282) }
+    BonusClass: Byte;
+    Pad7: array[7..8] of Byte;
     DiceCountNormal: Byte;        { +9: dice rolled against normal-size foes }
     DiceSizeNormal: Byte;         { +$A: the die size against normal-size foes }
     BonusNormal: ShortInt;        { +$B: the damage bonus against normal-size foes (signed) }
@@ -515,6 +537,8 @@ var
   ds0C26: array[0..15] of Byte;  { wall view id table, two equal groups of 8; see above }
   SpecialBlocks: array[0..9] of TSpecialBlock;  { entries 1..9 tested; only 3..9 replace the map block }
   ds2612: Word;                   { word passed to PlaySound by QuitGame and the Ctrl-S pause path; meaning unknown }
+  ds261A: Word;                   { the sound ShowHitMessage plays when Flag is clear; meaning unknown }
+  ds261C: Word;                   { the sound ShowHitMessage plays when Flag is set (a hit); meaning unknown }
   ds260A: array[0..7] of Byte;    { 8-byte structure FillPictureRect copies from @ds260A (DrawWallDescriptors) }
   ds2622: Word;                   { word e1 passes to PlaySound when Done is 0; meaning unknown }
   ds2628: Word;                   { word the ovl14 movement code passes to PlaySound; meaning unknown }
@@ -542,6 +566,10 @@ var
   CfgProbeResult: Byte;                   { IOResult of probing pool.cfg (Reset); res08_init retries while nonzero }
   HeapWords: array[0..1] of Word absolute HeapEnd;
   { the offset (0) and segment (1) words of the heap end (res08_init cuts it by $400 paragraphs) }
+  { The total weight of the readied items RecalcCombatValues recomputes: it is reset to 0, raised by each
+    readied item's Weight times Count, and becomes the floor of the character's CarriedWeight when
+    the weight-excluding item (NameNum[1] $BA) is readied (00BA:0F43). }
+  ReadiedItemWeight: Word;
   ds49D0: Boolean;                { when set, HeapErrorHandler offers SaveGame (save and load unit) before quitting }
   ds49D1: Byte;                   { 1 when POOL.CFG line 5 is 'F', 0 otherwise (meaning of F/N unknown, 2.3) }
   GameVars: ^TGameVars;           { the game variables (see TGameVars) }
@@ -642,6 +670,9 @@ var
     (TradeItem, ovl19:1734; TradeMoney, ovl19:2156). }
   ViewedCharacter: PCharacter;
   ds471E: array[0..$47] of Byte;  { 72 bytes reset to 1 when rest starts (ovl20:0CE5) }
+  { The eight compass names the location line of res12 (00BA:290B) indexes with PartyFacing, each a
+    three-byte string[2] at DS:25A8: N, NE, E, SE, S, SW, W, NW (the bytes are in the image). }
+  FacingNames: array[0..7] of string[2];
   ds25C0: array[0..2, 0..2] of Byte;  { the 3x3 line pattern table StepLine reads at [SY+1, SX+1] }
   { DirStepX and DirStepY: nine entries each (DirStepY starts 9 bytes after DirStepX). ovl14's
     ClampPartyPosition also adds them as the party's column and row step (cbw at ovl14:06D0, 06DB). }
@@ -719,6 +750,10 @@ var
   { The selected character: the Temple acts on it (ovl04 reads it everywhere), ShowHeadBodyWindow
     shows its HEAD and BODY pictures (ovl28:04F9); the loader sets it nil (ovl11:03B8). }
   SelectedCharacter: PCharacter;  { see above }
+  HelplessAffects: array[0..4] of Byte;   { the affects that leave a character helpless (IsHelpless tests
+                                    entries 1..4 through HasAffect; ovl13:1FC3 compares the same
+                                    entries with the 16-byte combat table at DS:3204). Entry 0 (DS:286B)
+                                    is never read. }
   ds286F: array[0..13] of Byte;   { the HEAD picture number per bank (SelectedCharacter^.HeadBank, ShowHeadBodyWindow) }
   ds287D: array[0..13] of Byte;   { the BODY picture number per bank (SelectedCharacter^.BodyBank, ShowHeadBodyWindow) }
   KeypadScanLetters: array[0..8] of Char; { 'OPQK MGHI': the scan code letter of keypad digits 1..9 (ReadPromptChoice) }
@@ -858,7 +893,15 @@ var
   RaceNames: array[0..7] of string[9];
   ClassNames: array[0..7] of string[26];
   AlignmentNames: array[0..7] of string[16];
+  { The names of the eight character status values that DrawCharacterPanel shows as the status line:
+    string[12] at DS:1047 (the image: 0 Okay, 1 Animated, 2 tempgone, 3 Running, 4 Unconscious,
+    5 Dying, 6 Dead, 7 Stoned), indexed by TCharacter.Status. }
   StatusNames: array[0..7] of string[12];
+  { The item name parts res12_fn_0442 appends to a menu line: 256 strings of at most 20
+    characters (21 bytes each) at DS:10A7 (the image: entry 1 'Battle Axe' through entry 255
+    'Cursed'; entry 0 overlaps the tail of the preceding status string and is never used).
+    Indexed by TMenuLine.NameNum. }
+  ds10A7: array[0..255] of string[20];
   PackedBuf: Pointer;             { the packed bytes of the DAX block LoadDaxBlock is reading }
   { Colour maps for RemapPictureColours (16 entries, colour I becomes entry I): ds0CD2 is the identity,
     ds0CE2 turns colour 13 into 8 and ds0CF2 turns 13 into 0 (the image). LoadPictureSlot recolours the
@@ -875,7 +918,10 @@ var
   ds6DBB: PCombatNode;            { a list of $13-byte records EndCombat frees (ovl08:0006); meaning unknown }
   ItemAffectUse: Boolean;         { True while the Use action (UseItem, ovl19:1BC2..1BE2) casts a spell through ovl22_e5,
                                     and set (ovl19:1AE7) for an item whose Affects[2] gives the spell (not a scroll);
-                                    what ovl22_e5 does with it is not known yet }
+                                    what ovl22_e5 does with it is not known yet. 0 in the spell setup paths
+                                    (ovl22:3413 clears it); when set, SpellCasterLevel (00BA:26C2) returns a
+                                    fixed level 6 and ovl22_e3's spell-power path skips the caster level
+                                    (ovl22:072F, ovl19:1B1E) }
   ds6E36: Pointer;                { a picture EndCombat frees through ReleasePicture (ovl08:005A) }
   { A routine pointer: RunCombat sets @ovl13_e14 at the start (ovl08:0085) and EndCombat
     @ovl22_e4 at the end (ovl08:0069); who calls it is not known yet. }
@@ -883,7 +929,7 @@ var
   ds6814: Byte;                   { zero (or ds6815 zero) ends the combat (ovl08:009B, 095C); likely the count of one side }
   ds6815: Byte;                   { see ds6814; likely the count of the other side }
   { ds6814 and ds6815 indexed by side (ovl10:1AC7); the combat AI indexes them by the
-    res12_fn_23B7 side of the actor (UseMagicItem, CastMemorizedSpell, ovl09:049F, 05C6). }
+    OpposingSide side of the actor (UseMagicItem, CastMemorizedSpell, ovl09:049F, 05C6). }
   ds6814Sides: array[0..1] of Byte absolute ds6814;
   ds6825: Byte;                   { AI morale scratch (CheckMorale computes it from B84, compares percentages) }
   ds6E2F: Byte;                   { byte CheckMorale copies into ds6825; meaning unknown }
@@ -891,7 +937,7 @@ var
   ds6E31: Byte;                   { the key flag the ovl08 menus pass to ReadPromptChoice }
   ds6DE3: Byte;                   { counted up once per combat round (ovl08:0891) }
   { The combatant order the AI works through: one DS:5F27 combatant index per entry, read from
-    entry 1 (ovl09:02EB loops 1..res12_fn_2433(Who, ovl22_e3(Spell)) over it; ovl13:0F90 moves
+    entry 1 (ovl09:02EB loops 1..CollectEnemiesInRange(Who, ovl22_e3(Spell)) over it; ovl13:0F90 moves
     the character at entry 1 to another entry). Entry 0 is never read. Extent not proven; the
     next named byte after it is ds6E2F. }
   ds6DE4: array[0..73] of Byte;

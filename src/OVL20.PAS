@@ -154,12 +154,12 @@ begin
 end;
 { ovl20:0565: retf 2: Number (2 bytes of parameters) and the String40 result, which the caller pushes
   before Number; 298 bytes of locals (S and the compiler's string temporary). The result is Number as
-  two characters: res12_fn_1037 gives its text, a '0' goes in front below 10, the first two are kept. }
+  two characters: ByteToText gives its text, a '0' goes in front below 10, the first two are kept. }
 function TwoDigitText(Number: Byte): String40;
 var
   Digits: String40;
 begin
-  Digits := res12_fn_1037(Number);
+  Digits := ByteToText(Number);
   if Number < 10 then
     Digits := '0' + Digits;
   TwoDigitText := Copy(Digits, 1, 2);
@@ -272,9 +272,9 @@ begin
     end;
     ShowRestTime(0);
     DrawTextAt(RestMessageColumn, RestMessageRow, RestTextColour, 'The Whole Party Is Healed');
-    if Healed then res12_fn_0767(SelectedCharacter);
+    if Healed then DrawPartyRoster(SelectedCharacter);
     DelayByGameSpeed;
-    res12_fn_17E3;
+    ClearCharacterMessage;
     ds6DD8 := 0;
   end;
 end;
@@ -477,7 +477,7 @@ begin
           ds49FB := 0;
           if RollDice(RestInterruptDice, RestInterruptSides) <= ds49D6^[$2D3] then
           begin
-            res12_fn_17E3;
+            ClearCharacterMessage;
             ShowRestTime(0);
             DrawTextAt(RestMessageColumn, RestMessageRow, RestMessageColour,
                        'The Party is rudely interrupted!');

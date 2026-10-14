@@ -75,7 +75,7 @@ begin
 end;
 { ovl08:007A. The combat loop. Sets the view mode and DS:6B84 := @ovl13_e14, runs StartBattle,
   then rounds until one side's count (ds6814 or ds6815) is zero or EndCombatRound says so.
-  Each round calls res12_fn_23DB, ovl13_e1 for every combatant on the party list, then turns in
+  Each round calls RecountCombatSides, ovl13_e1 for every combatant on the party list, then turns in
   initiative order (PickNextCombatant, CombatTurn). EndCombat frees the combat data. The byte
   local is unused; it is there so the frame matches. Called by ovl03_fn_179B. }
 procedure RunCombat;
@@ -92,7 +92,7 @@ begin
     Done := 1;
   while Done = 0 do
   begin
-    res12_fn_23DB;
+    RecountCombatSides;
     Who := PCharacter(ds5D96);
     while Who <> nil do
     begin
@@ -141,7 +141,7 @@ begin
 end;
 { ovl08:01F6. One combat turn of Who: clears the per-turn fields BF, B12 and B7, runs the
   RunAffectHooks hook 7 and, while Who still has an initiative, selects it (SelectedCharacter), shows it
-  (ShowCursorOn, res12_fn_0BB8, res12_fn_09E3), runs hook $F and lets the computer (QuickTurn, quick
+  (ShowCursorOn, RecalcCombatValues, DrawCharacterPanel), runs hook $F and lets the computer (QuickTurn, quick
   combat) or the player (PlayerTurn) act; then RedrawMapCell at its position (CombatantX, CombatantY).
   An initiative of InitiativeQuickAll (the Alt-Q fight) counts as $13. }
 procedure CombatTurn(Who: PCharacter);
@@ -157,8 +157,8 @@ begin
     if Who^.Combat^.Initiative = InitiativeQuickAll then Who^.Combat^.Initiative := InitiativeQuickAll - 1;
     SelectedCharacter := Who;
     ShowCursorOn(Who, 2, 1);
-    res12_fn_0BB8(Who);
-    res12_fn_09E3(Who);
+    RecalcCombatValues(Who);
+    DrawCharacterPanel(Who);
     RunAffectHooks($F, Who);
     if Who^.Combat^.Initiative > 0 then
       if Who^.Quick <> 0 then
@@ -169,7 +169,7 @@ begin
   end;
 end;
 { ovl08:031A. The player's turn for Who: a character with Flag10D clear ends it at once
-  (res12_fn_2637). A pending spell (Combat^.PendingSpell) is cast through ovl22_e5 and ends the
+  (EndCombatTurn). A pending spell (Combat^.PendingSpell) is cast through ovl22_e5 and ends the
   turn. Otherwise the CombatMenu key is carried out until Done: M Move (MoveCharacter), V View
   (ViewSelectedCharacter), A Aim (ovl13_e17), U Use (RunItemMenu), C Cast (ovl13_e15), T Turn (ovl13_e9), Q
   Quick (SetQuickCombat, the computer finishes the turn), D Done (EndTurnMenu), Space takes
@@ -191,7 +191,7 @@ begin
       Spell := Who^.Combat^.PendingSpell;
       Who^.Combat^.PendingSpell := 0;
       ovl22_e5(Spell, 0, 1, Done);
-      Done := res12_fn_2637(Who);
+      Done := EndCombatTurn(Who);
     end
     else
     begin
@@ -205,20 +205,20 @@ begin
           begin
             ViewSelectedCharacter(Done);
             ovl13_e6(Who);
-            if Done = 0 then res12_fn_2B88;
+            if Done = 0 then DrawCombatScreen;
           end;
           'A': ovl13_e17(Who, $FF, 1, 0, Done, Aim);
           'U':
           begin
             RunItemMenu(Done);
             ovl13_e6(Who);
-            if Done = 0 then res12_fn_2B88;
+            if Done = 0 then DrawCombatScreen;
           end;
           'C': ovl13_e15(0, 0, Done);
           'T':
           begin
             ovl13_e9(Who);
-            Done := res12_fn_2637(Who);
+            Done := EndCombatTurn(Who);
           end;
           'Q':
           begin
@@ -234,9 +234,9 @@ begin
           begin
             ds6E30 := not ds6E30;
             if ds6E30 then
-              res12_fn_1693('Magic On')
+              ShowFlashMessage('Magic On')
             else
-              res12_fn_1693('Magic Off');
+              ShowFlashMessage('Magic Off');
           end;
           ' ':
           begin
@@ -267,18 +267,18 @@ begin
               Done := 1;
             end
             else
-              res12_fn_1693('That doesn''t work');
+              ShowFlashMessage('That doesn''t work');
         end;
         if Done = 0 then
         begin
           ShowCursorOn(Who, 2, 1);
-          res12_fn_09E3(Who);
+          DrawCharacterPanel(Who);
         end;
       end;
     end;
   end
   else
-    Done := res12_fn_2637(Who);
+    Done := EndCombatTurn(Who);
 end;
 { ovl08:0666. Shows the combat menu of Who and returns the key in Cmd: Move while it has moves
   left, View Aim, Use when it carries items, Cast when it has a memorized spell, may cast and the
@@ -339,8 +339,8 @@ begin
     Inc(Index);
     Who := Who^.Next;
   end;
-  if BandageDying(0) <> 0 then res12_fn_1693('Your Teammate is Dying');
-  res12_fn_23DB;
+  if BandageDying(0) <> 0 then ShowFlashMessage('Your Teammate is Dying');
+  RecountCombatSides;
   MoveCombatCursor(CombatMap^.ViewX + 3, CombatMap^.ViewY + 3, $FF, 8);
   if (ds6814 = 0) or (ds6815 = 0) then Done := 1;
   if (ds6814 > 0) and (ds6815 = 0) and (ds49F4 = 0) then
@@ -351,7 +351,7 @@ end;
   combatant attacks it (MeleeAttack, CombatantRecord by the number ProbeStep returns); a step off the map
   asks Flee: (ovl13_e5 on Y); a step whose ground costs more than the moves left says Blocked;
   otherwise ovl13_e4 and ovl13_e3 move the character, and a character whose Flag10D clears or
-  for whom res12_fn_0B73 says so ends the turn (res12_fn_2637). Key #0 (Esc on the prompt) takes
+  for whom IsHelpless says so ends the turn (EndCombatTurn). Key #0 (Esc on the prompt) takes
   the move back: the saved moves, position (PlaceCombatant) and B9 return. Fewer than two half-moves
   left become 0. }
 procedure MoveCharacter(Who: PCharacter; var Done: Byte);
@@ -376,7 +376,7 @@ begin
   while (Who^.Combat^.Moves > 1) and (Key <> #0) and (Key <> #13) do
   begin
     ClearWindow($18, $18, $27, $18);
-    Key := ReadPromptChoice('Move/Attack, Move Left = ' + res12_fn_1037(Who^.Combat^.Moves shr 1) + ' ', '',
+    Key := ReadPromptChoice('Move/Attack, Move Left = ' + ByteToText(Who^.Combat^.Moves shr 1) + ' ', '',
       $A, $A, MenuColors, 1, 0, ds6E31);
     case Key of
       #0:
@@ -411,18 +411,18 @@ begin
           'N': Done := 0;
         end
       else if CombatTiles[Ground].Cost > Who^.Combat^.Moves then
-        res12_fn_1693('Blocked')
+        ShowFlashMessage('Blocked')
       else
       begin
         ovl13_e4(Who, Dir);
         if Who^.Flag10D = 0 then
-          Done := res12_fn_2637(Who)
+          Done := EndCombatTurn(Who)
         else
         begin
           ovl13_e3(Who, Dir);
-          if Who^.Flag10D = 0 then Done := res12_fn_2637(Who);
+          if Who^.Flag10D = 0 then Done := EndCombatTurn(Who);
           ApplyCloudTile(Who);
-          if res12_fn_0B73(Who) then Done := res12_fn_2637(Who);
+          if IsHelpless(Who) then Done := EndCombatTurn(Who);
         end;
       end;
     end;
@@ -430,13 +430,13 @@ begin
   if Who^.Combat^.Moves < 2 then Who^.Combat^.Moves := 0;
 end;
 { ovl08:0D45. Attacker attacks Target in melee: refused with Not with that weapon when
-  res12_fn_2E03 holds and res12_fn_2E46 does not (a weapon that cannot strike in melee, by the
+  IsRangedWeapon holds and RangedWeaponCanMelee does not (a weapon that cannot strike in melee, by the
   message); otherwise when ovl13_e16 allows the attack Target becomes Attacker's Combat^.Target and
   either ovl13_e7 ends the turn (Done := 1) or ovl13_e11 and ovl13_e12 carry the attack out. }
 procedure MeleeAttack(Attacker, Target: PCharacter; var Done: Byte);
 begin
-  if res12_fn_2E03(Attacker) and not res12_fn_2E46(Attacker) then
-    res12_fn_1693('Not with that weapon')
+  if IsRangedWeapon(Attacker) and not RangedWeaponCanMelee(Attacker) then
+    ShowFlashMessage('Not with that weapon')
   else if ovl13_e16(Attacker, Target) then
   begin
     Attacker^.Combat^.Target := Target;
@@ -450,7 +450,7 @@ begin
   end;
 end;
 { ovl08:0E45. The Done command's menu for Who: Guard (offered unless Not with that weapon would
-  apply, res12_fn_2686), Delay (initiative InitiativeLast: act at the end of the round), Quit (end
+  apply, GuardTurn), Delay (initiative InitiativeLast: act at the end of the round), Quit (end
   the turn), Bandage (when BandageDying finds a dying party member), Speed (GameSpeedMenu) and
   Exit. Repeats until Exit, Esc or a command that ends the turn. }
 procedure EndTurnMenu(Who: PCharacter; var Done: Byte);
@@ -460,7 +460,7 @@ var
 begin
   Done := 0;
   Menu := '';
-  if not res12_fn_2E03(Who) or res12_fn_2E46(Who) then Menu := Menu + 'Guard ';
+  if not IsRangedWeapon(Who) or RangedWeaponCanMelee(Who) then Menu := Menu + 'Guard ';
   Menu := Menu + 'Delay Quit ';
   if BandageDying(0) <> 0 then Menu := Menu + 'Bandage ';
   Menu := Menu + 'Speed Exit';
@@ -469,17 +469,17 @@ begin
   begin
     Key := ReadPromptChoice('', Menu, $D, $A, MenuColors, 0, 0, ds6E31);
     case Key of
-      'G': Done := res12_fn_2686(Who);
+      'G': Done := GuardTurn(Who);
       'D':
       begin
         Who^.Combat^.Initiative := InitiativeLast;
         Done := 1;
       end;
-      'Q': Done := res12_fn_2637(Who);
+      'Q': Done := EndCombatTurn(Who);
       'B':
       begin
         Done := BandageDying(1);
-        Done := res12_fn_2637(Who);
+        Done := EndCombatTurn(Who);
       end;
       'S': GameSpeedMenu;
     end;
@@ -487,7 +487,7 @@ begin
 end;
 { ovl08:0FFF. Returns 1 when a party character (Side 0) is dying (StatusDying) and may be
   bandaged (Combat^.NoBody 0), else 0. With DoIt nonzero the first one found is bandaged: Status
-  StatusBandaged, the bleeding count reset and the message is bandaged (res12_fn_16EC). }
+  StatusBandaged, the bleeding count reset and the message is bandaged (ShowCharacterMessage). }
 function BandageDying(DoIt: Byte): Byte;
 var
   Who: PCharacter;
@@ -504,7 +504,7 @@ begin
       begin
         Who^.Status := StatusBandaged;
         Who^.Combat^.DyingRounds := 0;
-        res12_fn_16EC(Who, 'is bandaged', 10, 1);
+        ShowCharacterMessage(Who, 'is bandaged', 10, 1);
         DoIt := 0;
       end;
     end;
@@ -523,7 +523,7 @@ begin
   Key := ' ';
   while not (Key in [#0, 'E']) do
   begin
-    Title := 'GameSpeed (' + res12_fn_1037(GameSpeed) + ') :';
+    Title := 'GameSpeed (' + ByteToText(GameSpeed) + ') :';
     Menu := ' ';
     if GameSpeed < MaxGameSpeed then Menu := Menu + 'Slower ';
     if GameSpeed > 0 then Menu := Menu + 'Faster ';

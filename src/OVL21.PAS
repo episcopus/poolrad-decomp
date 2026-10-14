@@ -61,11 +61,11 @@ const
   GemItemType = $46;    { the item type of a kept gem or jewel }
   HalfGoldInCopper = 100;  { added before dividing by the gold value: rounds to the nearest gold piece }
 
-{ ovl21:0000. The most weight Who may carry: 1500 plus the strength allowance res12_fn_13AB
+{ ovl21:0000. The most weight Who may carry: 1500 plus the strength allowance StrengthWeightAllowance
   (negative for a weak character). }
 function CarryLimit(Who: PCharacter): Word;
 begin
-  CarryLimit := res12_fn_13AB(Who) + BaseLoad;
+  CarryLimit := StrengthWeightAllowance(Who) + BaseLoad;
 end;
 { ovl21:0020. Takes Amount off the weight Who carries (coins handed away). }
 procedure RemoveCarriedWeight(Who: PCharacter; Amount: Word);
@@ -139,7 +139,7 @@ var
 begin
   if WouldOverload(SelectedCharacter, Amount, Room) then
   begin
-    res12_fn_1693('Overloaded.  Money will be put in Pool.');
+    ShowFlashMessage('Overloaded.  Money will be put in Pool.');
     Inc(SelectedCharacter^.Money[PlatinumCoin], Room);
     AddCarriedWeight(SelectedCharacter, Room);
     PooledMoney[PlatinumCoin] := Amount + PooledMoney[PlatinumCoin] - Room;
@@ -217,7 +217,7 @@ begin
     AddCarriedWeight(Giver, Amount);
   end
   else
-    res12_fn_1693('Overloaded');
+    ShowFlashMessage('Overloaded');
 end;
 { ovl21:0508. The Pool command: every player-run member (B84 0 or $B3) puts all seven kinds of
   his money into the pool (PooledMoney) and loses its weight; sets MoneyInPool (money in the pool). }
@@ -365,7 +365,7 @@ var
   Room: Word;
 begin
   if WouldOverload(Who, Amount, Room) then
-    res12_fn_1693('Overloaded')
+    ShowFlashMessage('Overloaded')
   else
   begin
     if Amount > PooledMoney[Kind] then
@@ -782,7 +782,7 @@ begin
   Redraw := 1;
   if (SelectedCharacter^.Money[GemsKind] = 0) and (SelectedCharacter^.Money[JewelryKind] = 0) then
   begin
-    res12_fn_1693('No Gems or Jewelry');
+    ShowFlashMessage('No Gems or Jewelry');
     Redraw := 0;
     Exit;
   end;
@@ -807,7 +807,7 @@ begin
         JewelryText := JewelryText + ' pieces of Jewelry';
       end;
       ClearRect(1, 1, $26, $16);
-      res12_fn_1816(SelectedCharacter, 1, 1, 0);
+      DrawCharacterName(SelectedCharacter, 1, 1, 0);
       DrawTextAt(1, 7, White, 'You have a fine collection of:');
       DrawTextAt(1, 9, White, GemsText);
       DrawTextAt(1, $0A, White, JewelryText);
@@ -934,7 +934,7 @@ begin
           end;
         'E', #0: Done := True;
       end;
-      res12_fn_0BB8(SelectedCharacter);
+      RecalcCombatValues(SelectedCharacter);
     end;
   until Done;
 end;

@@ -129,14 +129,14 @@ var
 begin
   Found := False;
   Other := PCharacter(ds5D96);
-  if res12_fn_2199(Who, AffectId, Affect) then
+  if HasAffect(Who, AffectId, Affect) then
     Found := True
   else if AffectId in [$15, $2D, $2E, $31] then
   begin
     Move(ds6718[1], Saved, SizeOf(Saved));
     while (Other <> nil) and not Found do
     begin
-      if res12_fn_2199(Other, AffectId, Affect) then
+      if HasAffect(Other, AffectId, Affect) then
       begin
         if ds49F3 = CombatViewMode then
         begin
@@ -384,11 +384,11 @@ begin
   begin
     ProbeStep(Who, 8, Occupant, Tile);
     if Tile = CloudTile then
-      if not res12_fn_2199(Who, $1E, Affect) then
-        if not res12_fn_2199(Who, $1F, Affect) then
-          if not res12_fn_2199(Who, $20, Affect) then
-            if not res12_fn_2199(Who, $6F, Affect) then
-              if not res12_fn_2199(Who, $7D, Affect) then
+      if not HasAffect(Who, $1E, Affect) then
+        if not HasAffect(Who, $1F, Affect) then
+          if not HasAffect(Who, $20, Affect) then
+            if not HasAffect(Who, $6F, Affect) then
+              if not HasAffect(Who, $7D, Affect) then
               begin
                 Saved := SavingThrow(Who, 0, 0);
                 if Saved then
@@ -519,7 +519,7 @@ end;
 
 { ovl24:0F06 (e11). Takes a standing combatant out of the fight: shows Msg on it, clears Flag10D,
   sets its Status (and its hit points to 0 unless it fled), redraws its ground, clears its entry
-  of CombatantTable and the occupancy; when res12_fn_2637 says so its death affects are removed
+  of CombatantTable and the occupancy; when EndCombatTurn says so its death affects are removed
   (RemoveDeathAffects). }
 procedure DropCombatant(Who: PCharacter; NewStatus: Byte; Msg: String40);
 var
@@ -529,7 +529,7 @@ begin
   begin
     Index := CombatantIndex(Who);
     ShowCursorOn(Who, 3, 0);
-    res12_fn_16EC(Who, Msg, $A, 1);
+    ShowCharacterMessage(Who, Msg, $A, 1);
     Who^.Flag10D := 0;
     Who^.Status := NewStatus;
     if Who^.Status <> StatusFled then
@@ -538,7 +538,7 @@ begin
     FlushPictureChanges;
     CombatantTable[Index].Kind := 0;
     RebuildOccupancy;
-    if res12_fn_2637(Who) <> 0 then
+    if EndCombatTurn(Who) <> 0 then
       RemoveDeathAffects(Who);
   end;
 end;
@@ -549,7 +549,7 @@ procedure ClearAttackerAffect(Who: PCharacter);
 var
   Affect: Pointer;
 begin
-  while res12_fn_2199(Who, AffectAttackerLoses, Affect) do
+  while HasAffect(Who, AffectAttackerLoses, Affect) do
     RemoveAffect(Who, AffectAttackerLoses, Affect);
 end;
 
@@ -580,9 +580,9 @@ var
   Affect: Pointer;
 begin
   CureAffect := False;
-  if res12_fn_2199(Who, AffectId, Affect) then
+  if HasAffect(Who, AffectId, Affect) then
   begin
-    res12_fn_16EC(Who, 'is Cured', $A, 1);
+    ShowCharacterMessage(Who, 'is Cured', $A, 1);
     RemoveAffect(Who, AffectId, Affect);
     CureAffect := True;
   end;
@@ -615,7 +615,7 @@ end;
 { ovl24:115C (e18). Sets Who's strength to Strength / Percent unless that is lower than the
   current one (then False and Code is the new value encoded plus $80). Otherwise the first
   strength affect ($C or $26) not yet holding an earlier strength gets the current one encoded
-  plus $80, Strength and StrengthPercent change (res12_fn_0BB8 recomputes), Code is the earlier
+  plus $80, Strength and StrengthPercent change (RecalcCombatValues recomputes), Code is the earlier
   strength encoded, and the result is True. }
 function RaiseStrength(Who: PCharacter; Strength, Percent: Byte; var Code: Byte): Boolean;
 var
@@ -650,7 +650,7 @@ begin
     end;
     Who^.Strength := Strength;
     Who^.StrengthPercent := Percent;
-    res12_fn_0BB8(Who);
+    RecalcCombatValues(Who);
     Code := EncodeStrength(OldStrength, OldPercent);
     RaiseStrength := True;
   end;
@@ -659,7 +659,7 @@ end;
 { ovl24:1344 (e19). Deals damage to Who: the damage hooks (6) may change DamageAmount; a save
   (Saved) makes it none (SaveEffect 1) or half (2). Shows 'takes <n> points of damage' (or 1
   point) with 'from Fire', 'from Cold', 'from Electricity', 'from Acid' or 'from Magic' by
-  DamageKind, deals it (res12_fn_2228); in combat the combatant cannot cast any more and a pending
+  DamageKind, deals it (ApplyDamage); in combat the combatant cannot cast any more and a pending
   spell is lost ('lost a spell'). A combatant that went down shows 'Goes Down', ', and is Dying'
   or 'is killed' (status 6..8); in combat it loses its death affects, the hooks $D run and it
   leaves the map (RemoveCombatant) unless they stood it up again. }
@@ -677,7 +677,7 @@ begin
   if DamageAmount > 0 then
   begin
     if DamageAmount <> 1 then
-      Msg := 'takes ' + res12_fn_1037(DamageAmount) + ' points of damage '
+      Msg := 'takes ' + ByteToText(DamageAmount) + ' points of damage '
     else
       Msg := 'takes 1 point of damage ';
     case DamageKind and $F7 of
@@ -688,15 +688,15 @@ begin
     end;
     if DamageKind and 8 = DamageKind then
       Msg := Msg + 'from Magic';
-    res12_fn_1FEB(Who, 0, Msg);
-    res12_fn_2228(Who, DamageAmount);
+    ShowHitMessage(Who, 0, Msg);
+    ApplyDamage(Who, DamageAmount);
     if ds49F3 = CombatViewMode then
     begin
       Who^.Combat^.CanCast := 0;
       if Who^.Combat^.PendingSpell > 0 then
       begin
-        res12_fn_16EC(Who, 'lost a spell', $C, 1);
-        res12_fn_148B(Who^.Combat^.PendingSpell);
+        ShowCharacterMessage(Who, 'lost a spell', $C, 1);
+        ForgetSpell(Who^.Combat^.PendingSpell);
         Who^.Combat^.PendingSpell := 0;
       end;
     end;
@@ -707,7 +707,7 @@ begin
         Msg := Msg + ', and is Dying';
       if Who^.Status in [6, 7, 8] then
         Msg := 'is killed';
-      res12_fn_16EC(Who, Msg, GlyphRow + 1, 0);
+      ShowCharacterMessage(Who, Msg, GlyphRow + 1, 0);
       if ds49F3 <> CombatViewMode then
         DelayByGameSpeed
       else
@@ -720,7 +720,7 @@ begin
           DelayByGameSpeed;
       end;
     end;
-    res12_fn_17E3;
+    ClearCharacterMessage;
   end;
 end;
 
@@ -738,17 +738,17 @@ begin
   HookAffectId := AffectId;
   RunAffectHooks(HookApplyAffect, Who);
   if (HookAffectId = 0) or (Saved and (SaveNegates = 1)) then
-    res12_fn_16EC(Who, 'is Unaffected', $A, 1)
+    ShowCharacterMessage(Who, 'is Unaffected', $A, 1)
   else
   begin
-    if res12_fn_2199(Who, AffectId, Existing) then
+    if HasAffect(Who, AffectId, Existing) then
       if ((PAffect(Existing)^.Duration > 0) and (Duration > PAffect(Existing)^.Duration)) or (Duration = 0) then
         RemoveAffect(Who, AffectId, Existing);
     AddAffect(Who, AffectId, Duration, Data, Flag);
     if Msg <> '' then
     begin
-      res12_fn_1FEB(Who, 1, Msg);
-      res12_fn_17E3;
+      ShowHitMessage(Who, 1, Msg);
+      ClearCharacterMessage;
     end;
   end;
 end;
@@ -765,7 +765,7 @@ begin
   HealCharacter := False;
   if Who^.Status in [0, 1, 4, 5] then
     if ((Who^.Flag11B < Who^.HpMax) and (Flag <> 0)) or
-      (not res12_fn_2199(Who, AffectHealingBlock, Affect) and (Flag = 0)) then
+      (not HasAffect(Who, AffectHealingBlock, Affect) and (Flag = 0)) then
     begin
       Who^.Flag11B := Who^.Flag11B + Amount;
       if Who^.Flag11B > Who^.HpMax then
@@ -799,8 +799,8 @@ begin
       Msg := 'stands up and grins'
     else
       Msg := 'gets back up';
-    res12_fn_16EC(Who, Msg, $A, 1);
-    res12_fn_23DB;
+    ShowCharacterMessage(Who, Msg, $A, 1);
+    RecountCombatSides;
     ReviveCombatant := True;
   end
   else

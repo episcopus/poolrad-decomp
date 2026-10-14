@@ -807,7 +807,7 @@ end;
   three colours, Animate passed on) and waits for one of its '~' hotkeys (ParseHotkeys); Return
   also answers when AcceptEnter is set. Returns the 0-based position of the hotkey in the menu
   (so '~Yes ~No' gives 0 or 1), 0 for Return, $FF for a letter or digit that is not a hotkey.
-  An extended key goes to UpdateSelectedCharacter and the selected character is redrawn (res12_fn_0767)
+  An extended key goes to UpdateSelectedCharacter and the selected character is redrawn (DrawPartyRoster)
   before asking again. Callers: ovl03, the Temple, the treasure menu and the shop. }
 function AskMenu(Title: String40; Text: string; TitleColor, WordColor, HotColor, AcceptEnter,
   Animate: Byte): Byte;
@@ -823,7 +823,7 @@ begin
     if ExtKey <> 0 then
     begin
       UpdateSelectedCharacter(Key);
-      res12_fn_0767(SelectedCharacter);
+      DrawPartyRoster(SelectedCharacter);
       Key := #0;
     end;
   until (Key in ['0'..'9', 'A'..'Z']) or ((Key = KeyReturn) and (AcceptEnter <> 0));
@@ -1000,7 +1000,7 @@ begin
   Who^.Money[6] := Trunc(Who^.Money[6] * Factor);
 end;
 { ovl07:1DF0. LoseItems: for each item Who carries, rolls d100 and hands the item to
-  res12_fn_1509 when the roll is at most Chance. Chance is lowered for good before each roll by
+  RemoveInventoryItem when the roll is at most Chance. Chance is lowered for good before each roll by
   90 for an item heavier than 255 and by 50 for one heavier than 24 (not below 0), so the lighter
   items after a heavy one keep the lower chance. }
 procedure LoseItems(Chance: Byte; Who: PCharacter);
@@ -1029,7 +1029,7 @@ begin
     Roll := RollDice(1, 100);
     NextItem := Item^.Next;
     if Roll <= Chance then
-      res12_fn_1509(Who, Item);
+      RemoveInventoryItem(Who, Item);
     Item := NextItem;
   end;
 end;
@@ -1053,7 +1053,7 @@ begin
   end;
 end;
 { ovl07:1FB1. MovementRange: the highest and lowest Movement of the party members (ds5D96),
-  each doubled by affect $27 or else halved by affect $2A (res12_fn_2199). }
+  each doubled by affect $27 or else halved by affect $2A (HasAffect). }
 procedure MovementRange(var Fastest, Slowest: Byte);
 var
   Member: PCharacter;
@@ -1066,9 +1066,9 @@ begin
   while Member <> nil do
   begin
     Value := Member^.Movement;
-    if res12_fn_2199(Member, $27, Affect) then
+    if HasAffect(Member, $27, Affect) then
       Value := Value shl 1
-    else if res12_fn_2199(Member, $2A, Affect) then
+    else if HasAffect(Member, $2A, Affect) then
       Value := Value shr 1;
     if Value > Fastest then
       Fastest := Value;
@@ -1080,7 +1080,7 @@ end;
 { ovl07:20CC. DamageWithMessage: unless Who is already dead (Status 6), shows '<name> dies.' when
   Damage is more than its hit points (Flag11B) plus 10, else '<name> is hit FOR <n> points of
   Damage.' in the text window (rows $11..$16, starting a new page with a 'press <enter>' prompt
-  when the window is full), applies the damage (res12_fn_2228), clears the window and redraws
+  when the window is full), applies the damage (ApplyDamage), clears the window and redraws
   the selected character. }
 procedure DamageWithMessage(Damage: Word; Who: PCharacter);
 var
@@ -1107,9 +1107,9 @@ begin
     ClearFirst := 0;
   GlyphCol := $26;
   ShowPagedText(1, $11, $26, $16, $F, ClearFirst, Text);
-  res12_fn_2228(Who, Damage);
+  ApplyDamage(Who, Damage);
   ClearRect($11, 1, $26, $F);
-  res12_fn_0767(SelectedCharacter);
+  DrawPartyRoster(SelectedCharacter);
 end;
 
 begin
