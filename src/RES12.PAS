@@ -800,8 +800,8 @@ begin
   WordToText := Text;
 end;
 { 00BA:10AD. Formats the LongInt Value as its decimal text, the same way ByteToText and WordToText
-  do: Str into a 255-character local, copied into the string result. Its only caller is in
-  ovl19 (the pool of treasure shows an amount with it).
+  do: Str into a 255-character local, copied into the string result. ovl19's character sheet
+  (ShowCharacterSheet) writes the character's experience points (Experience, +$AC) with it.
   Globals: none. }
 function LongIntToText(Value: LongInt): string;
 var
