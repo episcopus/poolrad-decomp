@@ -3658,3 +3658,17 @@ kind = "routine"
 why = "ovl22:1822 applies spell 25 to the chosen targets with the message 'is silenced'; ovl22_e10 maps DS:6B84+25*4 to its stub 0096:00B1 and SpellNames[25] (DS:2CEA) is 'Silence, 15' Radius'"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl22_e30"
+new = "CastSlowPoison"
+kind = "routine"
+why = "ovl22:185B applies spell 26 with the message 'is affected', needs the target's Poisoned affect, revives it to 1 hit point and adds the poison-slowing affect; ovl22_e10 maps DS:6B84+26*4 to its stub 0096:00B6 and SpellNames[26] (DS:2D13) is 'Slow Poison'"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e31"
+new = "CastSnakeCharm"
+kind = "routine"
+why = "ovl22:190F picks the giant snakes (CreatureType $E) of the party list whose hit points fit the caster's, then applies spell 27 with the message 'is charmed'; ovl22_e10 maps DS:6B84+27*4 to its stub 0096:00BB and SpellNames[27] (DS:2D3C) is 'Snake Charm'"
+date = "2026-10-13"
+

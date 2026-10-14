@@ -603,7 +603,7 @@ var
   { ds4844 and ds4845: two byte working globals the ovl22 cast handlers share (the original keeps them
     at DS:4844 and DS:4845, between SpellMenuItemCount and NewHeapEnd). Enlarge (CastEnlarge) puts its
     strength (18) and its percentile in them for RaiseStrength; Sleep (CastSleep) its hit-point pool;
-    Snake Charm (ovl22_e31) a hit-point pool that reaches 0 through it; ovl24_fn_23B6 a value and a
+    Snake Charm (CastSnakeCharm) a hit-point pool that reaches 0 through it; ovl24_fn_23B6 a value and a
     duration. }
   ds4844: Byte;                   { a spell handler's first working byte (see the note above) }
   ds4845: Byte;                   { the second working byte paired with ds4844 (see the note above) }

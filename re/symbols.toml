@@ -10192,12 +10192,12 @@ id = "ovl22:185B"
 unit = "ovl22"
 addr = "ovl22:185B"
 size = 180
-name = "ovl22_e30"
+name = "CastSlowPoison"
 signature = ""
 c_name = "ovl22_e30"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_30"
+notes = "renamed from ovl22_e30 (ovl22:185B applies spell 26 with the message 'is affected', needs the target's Poisoned affect, revives it to 1 hit point and adds the poison-slowing affect; ovl22_e10 maps DS:6B84+26*4 to its stub 0096:00B6 and SpellNames[26] (DS:2D13) is 'Slow Poison'); auto:entry_30"
 evidence = ["prologue"]
 
 [[routine]]
@@ -10205,12 +10205,12 @@ id = "ovl22:190F"
 unit = "ovl22"
 addr = "ovl22:190F"
 size = 180
-name = "ovl22_e31"
+name = "CastSnakeCharm"
 signature = ""
 c_name = "ovl22_e31"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_31"
+notes = "renamed from ovl22_e31 (ovl22:190F picks the giant snakes (CreatureType $E) of the party list whose hit points fit the caster's, then applies spell 27 with the message 'is charmed'; ovl22_e10 maps DS:6B84+27*4 to its stub 0096:00BB and SpellNames[27] (DS:2D3C) is 'Snake Charm'); auto:entry_31"
 evidence = ["prologue"]
 
 [[routine]]

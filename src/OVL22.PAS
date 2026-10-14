@@ -36,8 +36,8 @@ procedure CastSleep;
 procedure CastHoldPerson;
 procedure CastResistFire;
 procedure CastSilence;
-procedure ovl22_e30;
-procedure ovl22_e31;
+procedure CastSlowPoison;
+procedure CastSnakeCharm;
 procedure ovl22_e32;
 procedure ovl22_e33;
 procedure ovl22_e34;
@@ -874,10 +874,74 @@ procedure CastSilence;
 begin
   ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is silenced');
 end;
-{ ovl22:185B: retf 0: 0 bytes of parameters; 20 bytes of locals }
-{@stub} procedure ovl22_e30; begin end;
-{ ovl22:190F: retf 0: 0 bytes of parameters; 16 bytes of locals }
-{@stub} procedure ovl22_e31; begin end;
+{ ovl22:185B. Cast handler of spell 26, Slow Poison (entry 30: ovl22_e10 maps DS:6B84+26*4 to overlay
+  stub 0096:00B6; SpellNames[26] is 'Slow Poison' at DS:2D13). It needs the first chosen target ds6C95
+  to still be alive (Status is not 1) and to carry the Poisoned affect $37 (res12_fn_2199); anything
+  else is dropped (ds6C95 := nil) and the cast does nothing. A poisoned target at 0 hit points is
+  brought back to 1 (Flag11B), the spell's own affect is applied to the targets ('is affected'), the
+  revival affect's removal handler is run (CallAffectHandler($4E), which heals an unconscious
+  character, ovl24 AffectRevival) and the poison-slowing affect $0F is added for $A units. Reads
+  ds6C95 and ds681B. }
+procedure CastSlowPoison;
+const
+  DeadStatus = 1;                 { TCharacter.Status 1 counts as dead (whitepaper 4.2.5) }
+  PoisonedAffect = $37;           { the Poisoned affect the target must carry (ovl15 names $37 Poisoned) }
+  { The revival affect whose removal handler heals an unconscious character (ovl24 AffectRevival). }
+  RevivalAffect = $4E;
+  ReviveHitPoints = 1;            { a poisoned character at 0 hit points is brought back to 1 }
+  SlowPoisonAffect = $0F;         { the poison-slowing affect; Neutralize Poison removes it with the poison (ovl04) }
+  SlowPoisonDuration = $A;        { the affect lasts ten units }
+  SlowPoisonData = $FF;           { the affect's data byte }
+  RunHandlerOnRemoval = 1;        { Flag: the affect's handler runs when the affect is removed }
+  FullCasterLevel = $FF;          { ApplySpellToTargets uses this caster level instead of res12_fn_26C2 }
+  ModeRemove = 1;                 { CallAffectHandler's mode: run the handler as if removing the affect }
+var
+  Affect: Pointer;                { res12_fn_2199's out pointer, the target's Poisoned affect }
+  Target: PCharacter;             { ds6C95, the first chosen target }
+begin
+  Target := ds6C95;
+  if Target^.Status = DeadStatus then
+  begin
+    ds6C95 := nil;
+    Exit;
+  end;
+  if res12_fn_2199(Target, PoisonedAffect, Affect) then
+  begin
+    if Target^.Flag11B = 0 then
+      Target^.Flag11B := ReviveHitPoints;
+    ApplySpellToTargets(ds681B, FullCasterLevel, RunHandlerOnRemoval, 0, 0, 'is affected');
+    CallAffectHandler(RevivalAffect, Target, nil, ModeRemove);
+    AddAffect(Target, SlowPoisonAffect, SlowPoisonDuration, SlowPoisonData, RunHandlerOnRemoval);
+  end;
+end;
+{ ovl22:190F. Cast handler of spell 27, Snake Charm (entry 31: ovl22_e10 maps DS:6B84+27*4 to overlay
+  stub 0096:00BB; SpellNames[27] is 'Snake Charm' at DS:2D3C). The caster's own current hit points
+  (SelectedCharacter^.Flag11B) become the pool ds4844; it then walks the party list ds5D96 and, for
+  every giant snake (CreatureType $E) whose hit points fit the remaining pool, subtracts them, counts
+  it in ds6C94 and adds it to the chosen targets ds6C91. The spell's own affect is then applied to the
+  charmed snakes with the message 'is charmed'. Reads SelectedCharacter, ds5D96 and ds681B; changes
+  ds4844, ds6C94 and the target list. }
+procedure CastSnakeCharm;
+const
+  SnakeType = $E;                 { the CreatureType of a giant snake (MON*CHA, as ovl12 tests) }
+var
+  Current: PCharacter;            { the walker of the party list ds5D96 }
+begin
+  ds4844 := SelectedCharacter^.Flag11B;
+  ds6C94 := 0;
+  Current := PCharacter(ds5D96);
+  while Current <> nil do
+  begin
+    if (Current^.CreatureType = SnakeType) and (ds4844 >= Current^.Flag11B) then
+    begin
+      ds4844 := ds4844 - Current^.Flag11B;
+      Inc(ds6C94);
+      ds6C91[ds6C94] := Current;
+    end;
+    Current := Current^.Next;
+  end;
+  ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is charmed');
+end;
 { ovl22:19C3: retf 0: 0 bytes of parameters; 2 bytes of locals }
 {@stub} procedure ovl22_e32; begin end;
 { ovl22:1A16: retf 0: 0 bytes of parameters; 14 bytes of locals }
