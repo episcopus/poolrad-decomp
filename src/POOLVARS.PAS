@@ -888,15 +888,21 @@ var
     Platinum, Gems, Jewelry (the image); the Take menu lists the pool with them (ovl21:0DDF). }
   MoneyKindNames: array[0..6] of string[10];
   { The sheet's name tables (ShowCharacterSheet), the images' strings: the sex (+$9E, ShortInt), the race (+$2E),
-    the class (+$2F, the eight single classes) and the alignment (+$A0), and the status (+$10C). }
+    the class (+$2F: 0..7 the single classes, 8..16 the multi-class names) and the alignment (+$A0),
+    and the status (+$10C). }
   SexNames: array[0..1] of string[6];
   RaceNames: array[0..7] of string[9];
-  ClassNames: array[0..7] of string[26];
-  AlignmentNames: array[0..7] of string[16];
-  { The names of the eight character status values that DrawCharacterPanel shows as the status line:
-    string[12] at DS:1047 (the image: 0 Okay, 1 Animated, 2 tempgone, 3 Running, 4 Unconscious,
-    5 Dying, 6 Dead, 7 Stoned), indexed by TCharacter.Status. }
-  StatusNames: array[0..7] of string[12];
+  { 17 string[26] at DS:0D38, 27 bytes apart (the image): Cleric .. Monk (0..7), then Cleric/Fighter,
+    Cleric/Fighter/Magic-User, Cleric/Ranger, Cleric/Magic-User, Cleric/Thief, Fighter/Magic-User,
+    Fighter/Thief, Fighter/Magic-User/Thief and Magic-User/Thief (8..16), indexed by TCharacter.ClassMask. }
+  ClassNames: array[0..16] of string[26];
+  { Nine string[16] at DS:0F53, 17 bytes apart (the image): Lawful Good .. Chaotic Neutral (0..7) and
+    Chaotic Evil (8), indexed by the signed byte at +$A0. }
+  AlignmentNames: array[0..8] of string[16];
+  { The names of the nine character status values that DrawCharacterPanel shows as the status line:
+    string[12] at DS:1047, 13 bytes apart (the image: 0 Okay, 1 Animated, 2 tempgone, 3 Running,
+    4 Unconscious, 5 Dying, 6 Dead, 7 Stoned, 8 Gone), indexed by TCharacter.Status. }
+  StatusNames: array[0..8] of string[12];
   { The item name parts res12_fn_0442 appends to a menu line: 256 strings of at most 20
     characters (21 bytes each) at DS:10A7 (the image: entry 1 'Battle Axe' through entry 255
     'Cursed'; entry 0 overlaps the tail of the preceding status string and is never used).
