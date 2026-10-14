@@ -125,7 +125,7 @@ begin
   end;
 end;
 { ovl09:0203 (TryTurnUndead). The computer's Turn action, Turn Undead for a cleric: it returns True
-  and calls ovl13_e9 (the Turn of PlayerTurn's T case, src/OVL08.PAS:220) when the combatant has not
+  and calls TurnUndead (the Turn of PlayerTurn's T case, src/OVL08.PAS:220) when the combatant has not
   turned yet (Combat.Turned is 0), has a level in class 0 (ClassLevels[0] above 0; CombatMenu offers
   Turn on the same two tests, ovl08:0795) and ovl13_e10 agrees (ovl13_e10 is not named yet); else it
   returns False. Called by QuickTurn (ovl09:0170): a True result ends the turn through EndCombatTurn.
@@ -139,7 +139,7 @@ begin
   if (Who^.Combat^.Turned = 0) and (Who^.ClassLevels[0] > 0) and ovl13_e10(Who, Done) then
   begin
     TryTurnUndead := True;
-    ovl13_e9(Who);
+    TurnUndead(Who);
   end
   else
     TryTurnUndead := False;

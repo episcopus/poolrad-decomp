@@ -62,3 +62,12 @@ tags = ["array", "local", "store", "reload", "pointer", "codegen"]
 title = "Assigning an array element to a local before comparing it stores and reloads; comparing the element directly does not"
 lesson = "ovl13:0E82's sweep moves the first adjacent enemy out of ds6DE4 when it is not the target. The original loads `CombatantRecord[ds6DE4[1]]` into AX:DX, stores it to the Enemy local ([bp-9]/[bp-7]) and reloads it for the `Enemy <> Target` test (12 bytes: mov [bp-9],ax; mov [bp-7],dx; mov ax,[bp-9]; mov dx,[bp-7]). Writing `if CombatantRecord[ds6DE4[1]] <> Target then` instead of `Enemy := CombatantRecord[ds6DE4[1]]; if Enemy <> Target then` omits the store and reload, 12 bytes short. So a repeated array/pointer expression reads directly but a named local is round-tripped through its frame slot."
 evidence = ["src/OVL13.PAS#SweepEnemies", "re/symbols.toml#ovl13:0E82"]
+
+[[lesson]]
+id = "untyped-var-parameter-bridges-callers"
+confidence = "V"
+units = ["*"]
+tags = ["var", "parameter", "untyped", "compilation", "codegen"]
+title = "An untyped `var B` parameter lets callers pass differently typed variables"
+lesson = "ovl13:1351 (ovl13_e10) writes 4 bytes through its second parameter (`xor ax,ax; mov es:[di],ax; mov es:[di+2],ax`), so it is a `var` far pointer. Its two callers pass different things: TurnUndead (ovl13:116A) passes a PCharacter local and TryTurnUndead (ovl09:0203) passes a 1-byte `Done` plus a 3-byte `Unused` array. A typed `var B: PCharacter` would not accept ovl09's Byte and a `var B: Byte` would not accept ovl13's PCharacter, but the untyped form `function ovl13_e10(Who: Pointer; var B): Boolean` compiles both and emits the same far address push, so the declaration bridges them (the callee alone knows the size). Probe tools/re/tp_idioms/ovl13/PRBTURN.PAS is for the table index, not this. The untyped parameter does not change the caller's code (the address pushed is the same)."
+evidence = ["src/OVL13.PAS#TurnUndead", "src/OVL09.PAS#TryTurnUndead", "re/symbols.toml#ovl13:1351"]

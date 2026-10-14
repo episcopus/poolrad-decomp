@@ -21,9 +21,9 @@ function SweepEnemies(Who, Target: PCharacter): Boolean;
 procedure ovl13_fn_0FBF;
 procedure ovl13_fn_104E;
 function AttackTargetAllowed(Who, Target: PCharacter): Boolean;
-procedure ovl13_e9(Who: Pointer);
+procedure TurnUndead(Who: PCharacter);
 procedure ovl13_fn_11D8;
-function ovl13_e10(Who: Pointer; var B: Byte): Boolean;
+function ovl13_e10(Who: Pointer; var B): Boolean;
 procedure ovl13_fn_1406;
 procedure ovl13_fn_14A1;
 procedure ovl13_fn_1583;
@@ -77,7 +77,7 @@ procedure ovl13_fn_3A2B;
 procedure ovl13_e23;
 function ovl13_e24: Boolean;
 implementation
-uses RES03, RES06, RES12, OVL24, OVL30, OVL31;
+uses RES03, RES06, RES12, OVL24, OVL25, OVL30, OVL31;
 const
   { The two sides of a combat (POOLVARS, ovl24:0D96). }
   SideParty = 0;
@@ -128,6 +128,19 @@ const
   { CollectEnemiesInRange's range byte for "every enemy" (the $FF ovl13:0C7A passes when a flee is
     tried; range 1 is the adjacent ring). }
   AllEnemiesRange = $FF;
+  { Turn undead (ovl13:116A): the d20 turning check and the d12 roll for how many undead the turn
+    reaches. A cleric of level 1..8 uses its own level as the band, 9..13 use 9, any other level
+    uses 10. The table ds0447 is read by monster row times 10 plus the band. }
+  TurnCheckDie = 20;
+  TurnCountDie = 12;
+  MaxTurned = 6;
+  TurnBandLow = 1;
+  TurnBandHigh = 8;
+  TurnBand9Low = 9;
+  TurnBand9High = 13;
+  TurnBandOther = 10;
+  { The status a destroyed undead is left with (TCharacter.Status; in StatusKilled with 6 and 7). }
+  StatusDestroyed = 8;
 
 { ovl13:0000. Sets up Who's turn at the start of a combat round: clears and re-arms its combat
   state Combat^ (PendingSpell 0, Cast and Use-magic allowed), refreshes it through RefreshAttacks, lets
@@ -648,12 +661,86 @@ begin
       AttackTargetAllowed := ds681E = 0;
     end;
 end;
-{ ovl13:116A: frame not read }
-{@stub} procedure ovl13_e9(Who: Pointer); begin end;
+{ ovl13:116A, TurnUndead. The Turn Undead action of a cleric Who: it shows 'turns undead...',
+  marks Who's turn used (Combat^.Turned), then rolls how many undead the turn reaches
+  (RollDice(1, 12)) and the d20 turning check. Who's cleric level (ClassLevels[0]) is mapped to a
+  table band (1..8 itself, 9..13 to 9, else 10). While ovl13_e10 hands over an undead in range and
+  the reach and the stop flag allow it, the table ds0447 gives the number to beat for that
+  monster's row (Pad74[$76] times 10 plus the band); a d20 at or above its absolute value turns it.
+  A positive entry forces flight (Combat^.ForcedFlight, 'is turned'); a nonpositive one destroys
+  it ('Is destroyed', RemoveCombatant, Status 8, out of the fight). Each result spends one of the
+  six turns and one of the reach; when a destroyed one used the last reach a positive target puts
+  it back. When nothing was turned it flashes 'Nothing Happens...'. Finally it recounts the sides,
+  stores EndCombatTurn's result in ds6E31 and clears the message. Called by PlayerTurn's T case
+  (ovl08:031A) and TryTurnUndead (ovl09:0203). Globals: ds0447, ds6E31. }
+procedure TurnUndead(Who: PCharacter);
+var
+  Roll20: Byte;                  { the d20 turning check }
+  Remaining: Byte;               { undead the turn still reaches, from RollDice(1, 12) }
+  TurnsLeft: Byte;               { the six undead a turn may still affect }
+  Result: ShortInt;              { the table entry: positive turns, nonpositive destroys }
+  AnyTurned: Byte;               { nonzero once any undead was turned or destroyed }
+  Stop: Byte;                    { set when the turning check fails, stops the loop }
+  Selected: PCharacter;          { the undead ovl13_e10 hands over }
+  LevelBand: ShortInt;           { Who's cleric level mapped to the table column }
+begin
+  ShowCharacterMessage(Who, 'turns undead...', 10, 0);
+  ClearPromptLine;
+  DelayByGameSpeed;
+  AnyTurned := 0;
+  Stop := 0;
+  Who^.Combat^.Turned := 1;
+  TurnsLeft := MaxTurned;
+  Remaining := RollDice(1, TurnCountDie);
+  Roll20 := RollDice(1, TurnCheckDie);
+  case Who^.ClassLevels[0] of
+    TurnBandLow..TurnBandHigh:
+      LevelBand := Who^.ClassLevels[0];
+    TurnBand9Low..TurnBand9High:
+      LevelBand := TurnBand9Low;
+  else
+    LevelBand := TurnBandOther;
+  end;
+  while ovl13_e10(Who, Selected) and (Remaining > 0) and (Stop = 0) do
+  begin
+    Result := ds0447[ShortInt(Selected^.Pad74[$76]), LevelBand];
+    if Roll20 >= Abs(Result) then
+    begin
+      AnyTurned := 1;
+      ShowCursorOn(Selected, 3, 0);
+      DrawCharacterPanel(Selected);
+      if Result > 0 then
+      begin
+        Selected^.Combat^.ForcedFlight := 1;
+        ShowHitMessage(Selected, 1, 'is turned');
+      end
+      else
+      begin
+        ShowCharacterMessage(Selected, 'Is destroyed', 10, 0);
+        RemoveCombatant(Selected);
+        Selected^.Status := StatusDestroyed;
+        Selected^.Flag10D := 0;
+      end;
+      if TurnsLeft > 0 then
+        Dec(TurnsLeft);
+      Dec(Remaining);
+      if (Remaining = 0) and (TurnsLeft > 0) and (Result < 0) then
+        Inc(Remaining);
+      ClearCharacterMessage;
+    end
+    else
+      Stop := 1;
+  end;
+  if AnyTurned = 0 then
+    ShowFlashMessage('Nothing Happens...');
+  RecountCombatSides;
+  ds6E31 := EndCombatTurn(Who);
+  ClearCharacterMessage;
+end;
 { ovl13:11D8: retf 4: 4 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl13_fn_11D8; begin end;
 { ovl13:1351: retf 8: 8 bytes of parameters; 10 bytes of locals }
-{@stub} function ovl13_e10(Who: Pointer; var B: Byte): Boolean; begin end;
+{@stub} function ovl13_e10(Who: Pointer; var B): Boolean; begin end;
 { ovl13:1406: frame not read }
 {@stub} procedure ovl13_fn_1406; begin end;
 { ovl13:14A1: frame not read }

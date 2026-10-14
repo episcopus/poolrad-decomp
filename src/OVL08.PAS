@@ -171,7 +171,7 @@ end;
 { ovl08:031A. The player's turn for Who: a character with Flag10D clear ends it at once
   (EndCombatTurn). A pending spell (Combat^.PendingSpell) is cast through ovl22_e5 and ends the
   turn. Otherwise the CombatMenu key is carried out until Done: M Move (MoveCharacter), V View
-  (ViewSelectedCharacter), A Aim (ovl13_e17), U Use (RunItemMenu), C Cast (ovl13_e15), T Turn (ovl13_e9), Q
+  (ViewSelectedCharacter), A Aim (ovl13_e17), U Use (RunItemMenu), C Cast (ovl13_e15), T Turn (TurnUndead), Q
   Quick (SetQuickCombat, the computer finishes the turn), D Done (EndTurnMenu), Space takes
   every character with B84 below $80 out of quick combat, and the Alt keys: Alt-M toggles Magic On/Off (ds6E30), Alt-Q makes
   everybody quick, Alt-X asks ovl13_e24. After each command that does not end the turn the
@@ -217,7 +217,7 @@ begin
           'C': ovl13_e15(0, 0, Done);
           'T':
           begin
-            ovl13_e9(Who);
+            TurnUndead(Who);
             Done := EndCombatTurn(Who);
           end;
           'Q':

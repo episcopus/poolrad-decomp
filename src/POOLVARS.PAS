@@ -939,6 +939,12 @@ var
   { Cleared before and tested after RunAffectHooks kinds 1 (on the target) and 0 (on the attacker)
     around an attack's target check (ovl13:1085); a hook that sets it rejects the attack. }
   ds681E: Byte;
+  { The Turn Undead table (ovl13:122F): a row per undead type (TCharacter +$76) and a column per
+    cleric level band (0..9, the code passes 1..10 with bounds checks off); a positive entry turns
+    the undead, a nonpositive one destroys it, and the d20 turning check must reach the entry's
+    absolute value. The image holds the rows from DS:0447; the menu string after it begins at
+    DS:04B6. }
+  ds0447: array[0..10, 0..9] of Byte;
   { ds6814 and ds6815 indexed by side (ovl10:1AC7); the combat AI indexes them by the
     OpposingSide side of the actor (UseMagicItem, CastMemorizedSpell, ovl09:049F, 05C6). }
   ds6814Sides: array[0..1] of Byte absolute ds6814;

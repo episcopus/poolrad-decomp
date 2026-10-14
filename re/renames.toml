@@ -4092,3 +4092,10 @@ kind = "routine"
 why = "ovl13:1085 runs the target's affect hooks (RunAffectHooks kind 1) and the attacker's (kind 0, with Combat^.Target swapped in) and returns whether none set ds681E; a nil target fails, attacking oneself always passes. Called before an attack by AiTurn, PartingShots, ovl12_e70 and ovl13 e17/e21/2FD3"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl13_e9"
+new = "TurnUndead"
+kind = "routine"
+why = "ovl13:116A is the Turn Undead action: it marks the cleric's turn used, rolls how many undead the turn reaches and the d20 check, maps the cleric level to a table band, then repeatedly takes an undead from ovl13_e10 and reads ds0447[type, band] to turn (positive) or destroy (nonpositive) it, up to six; called by PlayerTurn's T case (ovl08:031A) and TryTurnUndead (ovl09:0203)"
+date = "2026-10-13"
+
