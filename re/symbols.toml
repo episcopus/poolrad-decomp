@@ -3811,12 +3811,12 @@ id = "ovl12:1490"
 unit = "ovl12"
 addr = "ovl12:1490"
 size = 91
-name = "ovl12_e50"
-signature = ""
+name = "ReduceFireDamageByRoll"
+signature = "procedure ReduceFireDamageByRoll(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e50"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_50"
+notes = "renamed from ovl12_e50 (ovl12:1490 is a damage hook (AffectHandlers shape): while the damage is fire (DamageKind bit 1) it takes 2 per die of the last roll (ds681C) off DamageAmount, never below ds681C, adds 4 to SaveRoll, and cancels non-magical damage (CancelPendingHook 0)); auto:entry_50"
 evidence = ["prologue"]
 
 [[routine]]

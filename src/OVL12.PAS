@@ -58,7 +58,7 @@ procedure ovl12_e46(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ProgressRot(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e48(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e49(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e50;
+procedure ReduceFireDamageByRoll(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e51;
 procedure ovl12_fn_1543;
 procedure ovl12_fn_1545;
@@ -179,7 +179,10 @@ const
   KindCold = 2;                 { the DamageKind bit of cold damage (ovl24:13E4, the text 'from Cold') }
   ColdSaveBonus = 3;            { what a cold hit adds to SaveRoll (ovl12:03E1) }
   KindFire = 1;                 { the DamageKind bit of fire damage (POOLVARS DamageKind: 1 fire) }
+  KindMagic = 8;                { the DamageKind bit of magical damage (POOLVARS DamageKind: bit 3 magic) }
   FireSaveBonus = 3;            { what a fire hit adds to SaveRoll (ovl12:06E4) }
+  FireReductionPerDie = 2;      { what each die of the last roll takes off fire damage (ovl12:1490) }
+  FireProtectionSaveBonus = 4;  { what the fire damage hook (ovl12:1490) adds to SaveRoll }
   ControlAppliedBit = $20;      { Affect.Data bit 5: set once the control is applied (ovl12:0400) }
   ControlSavedSideBit = $40;    { Affect.Data bit 6: the side Who had before; removing the affect gives it back }
   ControlSideBit = $80;         { Affect.Data bit 7: the side the control gives Who (TCharacter.Side) }
@@ -1047,15 +1050,35 @@ begin
   if ds681D <> 0 then
     ds681A := 0;
 end;
-{ 1472. Affect handler (the AffectHandlers shape: Who, Affect and Mode; only Who is read). It gives Who the affect
+{ ovl12:1472. Affect handler (the AffectHandlers shape: Who, Affect and Mode; only Who is read). It gives Who the affect
   AffectUnknown62 (AddAffect, ovl24:0E52) with Duration 0 (permanent), the Data AffectUnknown62Data and no handler
   when it is removed (NoRemoveHandler). Purpose unknown: which affect runs it is not known yet [?]. }
 procedure ovl12_e49(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   AddAffect(Who, AffectUnknown62, 0, AffectUnknown62Data, NoRemoveHandler);
 end;
-{ ovl12:1490: retf 10: 10 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl12_e50; begin end;
+{ ovl12:1490. Damage hook (the AffectHandlers shape: Who, Affect and Mode; none of them read). While the damage is fire
+  (DamageKind bit KindFire, DS:6819), each of the ds681C dice of the last roll takes FireReductionPerDie off
+  DamageAmount, and it never goes below ds681C; SaveRoll then gets FireProtectionSaveBonus. Damage that is not
+  magical (KindMagic clear) is cancelled altogether: CancelPendingHook(0) clears DamageAmount and HookAffectId.
+  Purpose unknown: which affect runs it is not known yet [?]. }
+procedure ReduceFireDamageByRoll(Who: PCharacter; Affect: PAffect; Mode: Byte);
+var
+  I: Byte;
+begin
+  if (DamageKind and KindFire) <> 0 then
+  begin
+    for I := 1 to ds681C do
+    begin
+      Dec(DamageAmount, FireReductionPerDie);
+      if DamageAmount < ds681C then
+        DamageAmount := ds681C;
+    end;
+    Inc(SaveRoll, FireProtectionSaveBonus);
+    if (DamageKind and KindMagic) = 0 then
+      CancelPendingHook(0);
+  end;
+end;
 { ovl12:14EB: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e51; begin end;
 { ovl12:1543: frame not read }

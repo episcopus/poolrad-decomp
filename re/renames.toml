@@ -3735,3 +3735,10 @@ kind = "routine"
 why = "ovl12:1399 is the rot handler of affect 39h (AffectRot, which Cure Disease removes, whitepaper 5.19): on each run it shows 'Rots...' on Who (res12_fn_16EC, colour 10) and takes Charisma down to 3 at most 2 at a time; then, while the stage in the affect's Data high nibble is above 1, it gives the rot again one stage lower (TryAddAffect, duration 43200); at stage 1 Who dies with 'Dies rots away' (DropFromFight, status 8)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e50"
+new = "ReduceFireDamageByRoll"
+kind = "routine"
+why = "ovl12:1490 is a damage hook (AffectHandlers shape): while the damage is fire (DamageKind bit 1) it takes 2 per die of the last roll (ds681C) off DamageAmount, never below ds681C, adds 4 to SaveRoll, and cancels non-magical damage (CancelPendingHook 0)"
+date = "2026-10-13"
+
