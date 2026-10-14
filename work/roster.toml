@@ -82,6 +82,20 @@ timeout = 150
 cost_cap = 8
 max_attempts = 2
 
+# The same-routine A/B test (2026-10-14): ovl16:056C and ovl16:382D each failed two Grok sessions;
+# this Sonnet worker with the same settings is pinned to ovl16 and stops when it is done.
+[[session]]
+name = "esc-sonnet-ab"
+role = "decompiler"
+tier = 2
+unit = "ovl16"
+model = "openrouter/anthropic/claude-sonnet-5.5"
+variant = "xhigh"
+batch = 1
+timeout = 150
+cost_cap = 8
+max_attempts = 2
+
 [[session]]
 name = "rev-sonnet"
 role = "reviewer"
