@@ -3840,3 +3840,10 @@ kind = "routine"
 why = "ovl12:1935 is the weak-target twin of StartBloodDrain (ovl12:18B5): when the target's Strength (+$10) is below 19 it gives the drinker affect 4A (AffectBloodDrainWeak, Duration 0, DrainBloodFromCombatant on removal) and the victim affect 3A (AffectHeldFast) and shows 'is held fast' on the victim in colour 10"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e64"
+new = "ReviveOrRetryRevival"
+kind = "routine"
+why = "ovl12:19D9 calls ReviveCombatant (ovl24:1869) on Who at Flag11B and, when that returns False, gives Who the revival affect 4E (AffectRevival, ovl24:175D) for one round with Affect's Data through TryAddAffect"
+date = "2026-10-13"
+

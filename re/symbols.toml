@@ -4019,12 +4019,12 @@ id = "ovl12:19D9"
 unit = "ovl12"
 addr = "ovl12:19D9"
 size = 64
-name = "ovl12_e64"
+name = "ReviveOrRetryRevival"
 signature = ""
 c_name = "ovl12_e64"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_64"
+notes = "renamed from ovl12_e64 (ovl12:19D9 calls ReviveCombatant (ovl24:1869) on Who at Flag11B and, when that returns False, gives Who the revival affect 4E (AffectRevival, ovl24:175D) for one round with Affect's Data through TryAddAffect); auto:entry_64"
 evidence = ["prologue"]
 
 [[routine]]

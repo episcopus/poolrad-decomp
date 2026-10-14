@@ -74,7 +74,7 @@ procedure ovl12_e60(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure DrainBloodFromCombatant(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure StartBloodDrain(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure HoldWeakTargetFast(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e64;
+procedure ReviveOrRetryRevival(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e65;
 procedure ovl12_e66;
 procedure ovl12_e67;
@@ -256,6 +256,8 @@ const
   AffectBloodDrainWeak = $4A;   { the other blood drain affect, given to the drinker by ovl12:1935; its handler is not
                                   known yet [?] }
   BloodDrainWeakDuration = 0;   { the Duration ovl12:1935 gives AffectBloodDrainWeak }
+  AffectRevival = $4E;          { the affect ovl24:175D calls (mode 1) for an unconscious character healed outside combat }
+  RevivalRetryDuration = 1;     { the Duration ovl12:19D9 gives AffectRevival }
 
 { ovl12:0000. Cancels the hook of an affect: when AffectId is 0 or is the affect the hooks are offering
   (HookAffectId), HookAffectId and DamageAmount are cleared. HookAffectId 0 reads as "is Unaffected"
@@ -1276,8 +1278,17 @@ begin
     res12_fn_16EC(AttackTarget, 'is held fast', $A, 1);
   end;
 end;
-{ ovl12:19D9: retf 10: 10 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl12_e64; begin end;
+{ ovl12:19D9. Affect handler that revives Who (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000).
+  ReviveCombatant (ovl24:1869) puts Who back on its square at Who's current hit points (Flag11B) and returns False when it
+  cannot be placed. Then Who gets AffectRevival for RevivalRetryDuration round, with the Data of Affect, so the revival is
+  tried again (TryAddAffect; its result is stored and never read). Which affect runs it is not known yet [?]. }
+procedure ReviveOrRetryRevival(Who: PCharacter; Affect: PAffect; Mode: Byte);
+var
+  Added: Boolean;               { the result of TryAddAffect, stored and never read }
+begin
+  if not ReviveCombatant(Who, Who^.Flag11B) then
+    Added := TryAddAffect(Who, AffectRevival, Affect^.Data, RevivalRetryDuration);
+end;
 { ovl12:1A19: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e65; begin end;
 { ovl12:1A4C: retf 10: 10 bytes of parameters; 0 bytes of locals }
