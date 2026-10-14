@@ -48,7 +48,7 @@ procedure HalveAgeDoubling(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure WeakenStrength(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure CauseDiseaseAndDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure LowerAttackVsEightListed(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e40;
+procedure LowerAttackIfSelectedIsBugbearOrGnoll(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e41;
 procedure ovl12_e42;
 procedure ovl12_fn_1307;
@@ -194,7 +194,7 @@ const
   AffectUnknown0F = $0F;        { purpose unknown; ovl04 removes it with the poison affect $37 (ovl04:0807) }
   AffectUnknown0FDuration = 10; { the Duration ovl12:05EB gives affect $0F }
   AffectUnknown18 = $18;        { purpose unknown: the affect SelectedCharacter must have for ds681E to stay 0 (ovl12:0918) }
-  AttackPenalty = 4;            { what ovl12:0918, 0BAC, 0C15 and 11F9 take off AttackRoll }
+  AttackPenalty = 4;            { what ovl12:0918, 0BAC, 0C15, 11F9 and 1276 take off AttackRoll }
   SavePenalty = 4;              { what ovl12:0BAC and 0C15 take off SaveRoll }
   ResistPenalty = 4;            { what ovl12:0BAC takes off Who's ResistValue and Pad112[$112] }
   MissRoll = -1;                { AttackRoll below 0 is a miss (RollToHit, ovl24:0CD5); ovl12:0C26 sets it }
@@ -935,8 +935,15 @@ begin
       if AttackTarget^.Name = ds0402[I] then
         Dec(AttackRoll, AttackPenalty);
 end;
-{ ovl12:1276: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e40; begin end;
+{ ovl12:1276. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). When the selected
+  character has Pad9E[$9F] (+$9F of TCharacter, not named yet) set to 1 and its name is 'BUGBEAR' or 'GNOLL', AttackRoll
+  loses AttackPenalty. Which affect runs it is not known yet [?]. }
+procedure LowerAttackIfSelectedIsBugbearOrGnoll(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  if SelectedCharacter^.Pad9E[$9F] = 1 then
+    if (SelectedCharacter^.Name = 'BUGBEAR') or (SelectedCharacter^.Name = 'GNOLL') then
+      Dec(AttackRoll, AttackPenalty);
+end;
 { ovl12:12B2: retf 10: 10 bytes of parameters; 2 bytes of locals }
 {@stub} procedure ovl12_e41; begin end;
 { ovl12:12FB: frame not read }

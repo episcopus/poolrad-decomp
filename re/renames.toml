@@ -3707,3 +3707,10 @@ kind = "routine"
 why = "ovl12:11F9 takes AttackPenalty (4) off AttackRoll once for each of the eight names ds0402[1..8] that the attacked character's name equals, when the selected character has Pad9E[$9F]=1 and CombatSize kind 2: the twin of BoostAttackVsEightListed (ovl12:0947), with the condition on the selected character"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e40"
+new = "LowerAttackIfSelectedIsBugbearOrGnoll"
+kind = "routine"
+why = "ovl12:1276 compares the selected character's name with the literals 'BUGBEAR' (ovl12:1268) and 'GNOLL' (ovl12:1270) by System_StrCompare (0AF8:0C10) when its Pad9E[$9F] is 1, and gives AttackRoll AttackPenalty off for either"
+date = "2026-10-13"
+
