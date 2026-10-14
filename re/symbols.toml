@@ -16829,40 +16829,14 @@ evidence = ["prologue"]
 id = "00BA:1A29"
 unit = "res12"
 addr = "00BA:1A29"
-size = 657
-name = "res12_fn_1A29"
+size = 1474
+name = "WalkCombatLine"
 signature = ""
 c_name = "res12_fn_1A29"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_1A29 (00BA:1A29 walks the Bresenham line from cell (X1,Y1) to (X2,Y2) between combat cells (SetupLine/StepLine on the 3x-scaled cells), then animates the combat cursor along it: it draws the combat picture ds6E36 onto DrawBuf with res07_fn_0D71, flushes and delays, steps by DirStepX/DirStepY and keeps MoveCombatCursor on the cell; called by ovl12, ovl13 and ovl22 (aiming and movement)); auto:prologue"
 evidence = ["prologue"]
-
-[[routine]]
-id = "00BA:1CBA"
-unit = "res12"
-addr = "00BA:1CBA"
-size = 38
-name = "res12_fn_1CBA"
-signature = ""
-c_name = "res12_fn_1CBA"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "00BA:1CE0"
-unit = "res12"
-addr = "00BA:1CE0"
-size = 779
-name = "res12_fn_1CE0"
-signature = ""
-c_name = "res12_fn_1CE0"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "00BA:1FEB"

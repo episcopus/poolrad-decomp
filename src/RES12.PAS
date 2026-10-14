@@ -7,7 +7,7 @@ unit RES12;
   Many routines are still stubs. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
-uses POOLVARS, RES06, RES07, RES09;
+uses Crt, POOLVARS, RES06, RES07, RES09, OVL30, OVL31;
 type
   { The readied-item bonus accumulator AddReadiedItemBonus fills for RecalcCombatValues: the four signed
     bytes it combines into the character's +$112 value (with the flag byte the second var
@@ -52,9 +52,7 @@ procedure ClearCharacterMessage;
 procedure DrawCharacterName(Who: PCharacter; Col, Row, Mode: Byte);
 procedure CopyPictureItem(PicIndex, Half, Row, Mirror: Byte);
 procedure DrawCombatIcon(PicIndex: Byte);
-procedure res12_fn_1A29;
-procedure res12_fn_1CBA;
-procedure res12_fn_1CE0;
+procedure WalkCombatLine(FromX, FromY, ToX, ToY: ShortInt; Count, Mode: Byte);
 procedure res12_fn_1FEB(Who: Pointer; Flag: Byte; Text: String40);
 function res12_fn_2199(Who: Pointer; AffectId: Byte; var Affect: Pointer): Boolean;
 procedure res12_fn_2228(Who: Pointer; Damage: Byte);
@@ -935,12 +933,162 @@ begin
   CopyPictureItem(PicIndex, 1, 2, 1);
   CopyPictureItem(PicIndex, 1, 3, 0);
 end;
-{ 00BA:1A29: frame not read }
-{@stub} procedure res12_fn_1A29; begin end;
-{ 00BA:1CBA: frame not read }
-{@stub} procedure res12_fn_1CBA; begin end;
-{ 00BA:1CE0: retf 12: 12 bytes of parameters; 0 bytes of locals }
-{@stub} procedure res12_fn_1CE0; begin end;
+{ 00BA:1A29. Walks the line from cell (FromX, FromY) to cell (ToX, ToY) and animates the combat cursor
+  along it (whitepaper 5.18, combat movement). It builds the Bresenham path between the two cells
+  (multiplied by 3, the 24x24 icon pitch) through SetupLine/StepLine, collecting each step's
+  direction Pattern into Path. It then walks that path: it computes the screen cell (PX, PY), draws
+  the combat picture ds6E36 onto the staging buffer DrawBuf through res07_fn_0D71 (frame Frame of
+  Count), flushes and delays, steps PX/PY by DirStepX/DirStepY[Path[I]], and keeps the cursor on
+  the cell (CursorX, CursorY) through MoveCombatCursor. The Mode byte > 0 forces drawing every
+  step; Count is the number of animation frames. Count/Mode/position come from ovl12, ovl13 and
+  ovl22 (the aiming and movement code).
+  Globals: CombatMap (read), ds6E36 (read), DrawBuf (read), ds4A24 (read), DirStepX, DirStepY.
+  Calls ovl30's line routines and ovl31's cursor/view routines. Side effects: video memory, timing. }
+procedure WalkCombatLine(FromX, FromY, ToX, ToY: ShortInt; Count, Mode: Byte);
+var
+  Path: array[0..$93] of Byte;    { [bp-$94] the direction code of each step of the line }
+  Line: TLineState;               { [bp-$ae] the Bresenham line state }
+  PadA, PadB: Byte;               { [bp-$af, bp-$b0] frame bytes the code never reads }
+  PathLen: Byte;                  { [bp-$b1] the current index into Path }
+  PathCount: Byte;                { [bp-$b2] the number of steps in Path }
+  Frame: Byte;                    { [bp-$b3] the animation frame, 0..Count-1 }
+  PadC: Byte;                     { [bp-$b4] a frame byte the code never reads }
+  LoopFlag: Boolean;              { [bp-$b5] repeat the walk when False }
+  Done: Boolean;                  { [bp-$b6] the walk left the 19x19 view }
+  CursorX, CursorY: ShortInt;     { [bp-$b7, bp-$b8] the cursor cell }
+  StartX, StartY: ShortInt;       { [bp-$b9, bp-$ba] the cell the walk started at }
+  AccX, AccY: ShortInt;           { [bp-$bb, bp-$bc] the sub-cell pixel accumulators }
+  DeltaX, DeltaY: ShortInt;       { [bp-$bd, bp-$be] ToX-FromX and ToY-FromY }
+  DXStep, DYStep: ShortInt;       { [bp-$bf, bp-$c0] the current step direction }
+  PX, PY: ShortInt;               { [bp-$c1, bp-$c2] the current icon pixel position }
+begin
+  StartX := FromX;
+  StartY := FromY;
+  FillChar(Path, $94, 8);
+  FillChar(Line, $1a, 0);
+  PathLen := 0;
+  Frame := 0;
+  Line.X1 := FromX * 3;
+  Line.Y1 := FromY * 3;
+  Line.X2 := ToX * 3;
+  Line.Y2 := ToY * 3;
+  SetupLine(@Line);
+  repeat
+    Done := not StepLine(@Line);
+    Path[PathLen] := Line.Pattern;
+    Inc(PathLen);
+  until Done;
+  PathCount := PathLen;
+  if PathCount < 2 then
+    Exit;
+  DeltaX := ToX - FromX;
+  DeltaY := ToY - FromY;
+  if not (IsInView(FromX - CombatMap^.ViewX, FromY - CombatMap^.ViewY) and
+          IsInView(ToX - CombatMap^.ViewX, ToY - CombatMap^.ViewY)) then
+  begin
+    if (Abs(DeltaX) <= 6) and (Abs(DeltaY) <= 6) then
+    begin
+      LoopFlag := True;
+      CursorX := FromX + DeltaX div 2;
+      CursorY := FromY + DeltaY div 2;
+    end
+    else
+    begin
+      LoopFlag := False;
+      CursorX := CombatMap^.ViewX + 3;
+      CursorY := CombatMap^.ViewY + 3;
+    end;
+  end
+  else
+  begin
+    LoopFlag := True;
+    CursorX := CombatMap^.ViewX + 3;
+    CursorY := CombatMap^.ViewY + 3;
+  end;
+  MoveCombatCursor(CursorX, CursorY, $ff, 8);
+  PathLen := 0;
+  AccX := 0;
+  AccY := 0;
+  repeat
+    PX := (FromX - CombatMap^.ViewX) * 3 + AccX;
+    PY := (FromY - CombatMap^.ViewY) * 3 + AccY;
+    StartX := FromX;
+    StartY := FromY;
+    Done := False;
+    repeat
+      if (Mode > 0) or (PX mod 3 = 0) or (PY mod 3 = 0) then
+      begin
+        res07_fn_0D71(PX, PY, Frame, 5, ds6E36, DrawBuf);
+        FlushPictureChanges;
+        Delay(Mode);
+        res07_fn_0D71(PX, PY, 0, 0, ds4A24, DrawBuf);
+        Inc(Frame);
+        if Frame >= Count then
+          Frame := 0;
+      end;
+      Inc(PathLen);
+      DXStep := DirStepX[Path[PathLen]];
+      DYStep := DirStepY[Path[PathLen]];
+      Inc(PX, DXStep);
+      Inc(PY, DYStep);
+      if (PX < 0) or (PX > $12) or (PY < 0) or (PY > $12) then
+        Done := True;
+      if (not Done) and (PathLen < PathCount) then
+      begin
+        Inc(AccX, DXStep);
+        Inc(AccY, DYStep);
+        if Abs(AccX) = 3 then
+        begin
+          Inc(FromX, SignOf(AccX));
+          Inc(CursorX, SignOf(AccX));
+          AccX := 0;
+        end;
+        if Abs(AccY) = 3 then
+        begin
+          Inc(FromY, SignOf(AccY));
+          Inc(CursorY, SignOf(AccY));
+          AccY := 0;
+        end;
+      end;
+    until (PathLen >= PathCount) or Done;
+    if PathLen < PathCount then
+    begin
+      DeltaX := SignOf(StartX - FromX);
+      DeltaY := SignOf(StartY - FromY);
+      if DeltaX <> 0 then
+      begin
+        if FromX >= CombatMap^.ViewX + 6 then
+          CursorX := FromX + 3
+        else if FromX <= CombatMap^.ViewX then
+          CursorX := FromX - 3;
+      end;
+      if DeltaY <> 0 then
+      begin
+        if FromY >= CombatMap^.ViewY + 6 then
+          CursorY := FromY + 3
+        else if FromY <= CombatMap^.ViewY then
+          CursorY := FromY - 3;
+      end;
+      MoveCombatCursor(CursorX, CursorY, $ff, 8);
+    end
+    else
+    begin
+      LoopFlag := True;
+      if not IsInView(ToX - CombatMap^.ViewX, ToY - CombatMap^.ViewY) then
+        MoveCombatCursor(ToX, ToY, 3, 8);
+      PX := (ToX - CombatMap^.ViewX) * 3;
+      PY := (ToY - CombatMap^.ViewY) * 3;
+      res07_fn_0D71(PX, PY, Frame, 5, ds6E36, DrawBuf);
+      if Mode > 0 then
+      begin
+        FlushPictureChanges;
+        Delay(Mode);
+        res07_fn_0D71(PX, PY, 0, 0, ds4A24, DrawBuf);
+      end;
+    end;
+  until LoopFlag;
+  FlushPictureChanges;
+end;
 { 00BA:1FEB: retf 10: 10 bytes of parameters; 48 bytes of locals }
 {@stub} procedure res12_fn_1FEB(Who: Pointer; Flag: Byte; Text: String40); begin end;
 { 00BA:2199: retf 10; walks the affect list of Who (+$7F) for AffectId, leaves the affect in
