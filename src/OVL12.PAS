@@ -130,9 +130,6 @@ procedure ShowMustHaveGiantStrength(Who: PCharacter; Affect: PAffect; Mode: Byte
 procedure RemoveAffect17WhenRemoved(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e116(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e1;
-procedure ovl12_fn_31D7;
-procedure ovl12_fn_3262;
-procedure ovl12_fn_3728;
 implementation
 uses RES12, OVL13, OVL23, OVL24, OVL30, OVL31, OVL33;
 const
@@ -306,6 +303,11 @@ const
   SpellDamageIndex = 11;        { KnownSpells index of the byte ovl12:30A5 reads: its high nibble is the damage [?] }
   SpellClearedIndex = 2;        { KnownSpells index ovl12:30A5 clears }
   LowNibble = $0F;              { the low nibble of a byte }
+var
+  { The AffectHandlers table (DS:6828) as untyped pointers. ovl13_e22 and ovl13_e23 are declared without parameters in
+    OVL13 (which has no PCharacter), so ovl12_e1 stores their addresses through this alias until OVL13 declares them
+    with the handler shape. The stores are the same four bytes. }
+  AffectHandlerPointers: array[0..$8B] of Pointer absolute AffectHandlers;
 
 { ovl12:0000. Cancels the hook of an affect: when AffectId is 0 or is the affect the hooks are offering
   (HookAffectId), HookAffectId and DamageAmount are cleared. HookAffectId 0 reads as "is Unaffected"
@@ -2250,14 +2252,153 @@ end;
 procedure ovl12_e116(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
 end;
-{ ovl12:31A2: frame not read }
-{@stub} procedure ovl12_e1; begin end;
-{ ovl12:31D7: frame not read }
-{@stub} procedure ovl12_fn_31D7; begin end;
-{ ovl12:3262: frame not read }
-{@stub} procedure ovl12_fn_3262; begin end;
-{ ovl12:3728: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_fn_3728; begin end;
+{ ovl12:31A2. Purpose unknown: the name stays provisional because ovl11 calls it by name (ovl11:002D, StartGame);
+  what it does is known. Entry 1 of the unit. It fills the affect handler table
+  AffectHandlers (DS:6828, one four-byte handler per affect number) with the stub address of each affect's handler:
+  this unit's stubs are in segment 0041, ovl13's in segment 0068 (entries 73 and 74). Affects 5, 13, 19, 24, 27, 60,
+  63, 92 and 127 get ovl12_e116, the handler that does nothing. Affect 0 and affect 88 are not set here [?]; entry 0 of
+  the table is not a handler (SaveKind lies in it). }
+procedure ovl12_e1;
+begin
+  AffectHandlers[1] := RaiseAttackAndMorale;
+  AffectHandlers[2] := LowerAttackAndMorale;
+  AffectHandlers[3] := BoostAttackAgainstTarget;
+  AffectHandlers[4] := StartTrainingWithManual;
+  AffectHandlers[5] := ovl12_e116;
+  AffectHandlers[6] := BoostFireAttackByTarget;
+  AffectHandlers[7] := TrainConstitution;
+  AffectHandlers[8] := ShiftAttackToSave;
+  AffectHandlers[9] := ovl12_e9;
+  AffectHandlers[10] := HalveColdDamage;
+  AffectHandlers[11] := ComputerTakesOver;
+  AffectHandlers[12] := ExchangeStrengthWithAffect;
+  AffectHandlers[13] := ovl12_e116;
+  AffectHandlers[14] := SetCharismaFromAffect;
+  AffectHandlers[15] := AddAffectAndDamage;
+  AffectHandlers[16] := IgnoreAffect;
+  AffectHandlers[17] := RaiseResistanceAndSave;
+  AffectHandlers[18] := BoostAttackVsListedTarget;
+  AffectHandlers[19] := ovl12_e116;
+  AffectHandlers[20] := HalveFireDamage;
+  AffectHandlers[21] := ShowSilenceAndStopCasting;
+  AffectHandlers[22] := DieIfPoisoned;
+  AffectHandlers[23] := GiveAffectItem;
+  AffectHandlers[24] := ovl12_e116;
+  AffectHandlers[25] := LowerAttackRollByFour;
+  AffectHandlers[26] := BoostAttackVsEightListed;
+  AffectHandlers[27] := ovl12_e116;
+  AffectHandlers[28] := ImageAbsorbsHit;
+  AffectHandlers[29] := ReduceDamageByQuarter;
+  AffectHandlers[30] := CoughStopsCasting;
+  AffectHandlers[31] := ovl12_e43;
+  AffectHandlers[32] := CollapseAndChangeSide;
+  AffectHandlers[33] := LowerAttackSaveAndResistance;
+  AffectHandlers[34] := RunDiseaseHandlers;
+  AffectHandlers[35] := RaiseAttackAndSave;
+  AffectHandlers[36] := LowerAttackAndSave;
+  AffectHandlers[37] := SetAttackMissIfTurnPending;
+  AffectHandlers[38] := ExchangeStrengthWithAffect;
+  AffectHandlers[39] := AgeCharacterOnce;
+  AffectHandlers[40] := ClearCloud;
+  AffectHandlers[41] := AvoidIfSelectedItemPlusZero;
+  AffectHandlers[42] := HalveAgeDoubling;
+  AffectHandlers[43] := WeakenStrength;
+  AffectHandlers[44] := CauseDiseaseAndDamage;
+  AffectHandlers[45] := ShiftAttackToSave;
+  AffectHandlers[46] := ovl12_e9;
+  AffectHandlers[47] := LowerAttackVsEightListed;
+  AffectHandlers[48] := LowerAttackIfSelectedIsBugbearOrGnoll;
+  AffectHandlers[49] := RaiseOrLowerAttackAndSave;
+  AffectHandlers[50] := AddHealingBlockAndHeal;
+  AffectHandlers[51] := ovl12_e43;
+  AffectHandlers[52] := ovl12_e43;
+  AffectHandlers[53] := ovl12_e43;
+  AffectHandlers[54] := ovl12_e44;
+  AffectHandlers[55] := ovl12_e45;
+  AffectHandlers[56] := ovl12_e46;
+  AffectHandlers[57] := ProgressRot;
+  AffectHandlers[58] := ovl12_e48;
+  AffectHandlers[59] := ovl12_e49;
+  AffectHandlers[60] := ovl12_e116;
+  AffectHandlers[61] := ReduceFireDamageByRoll;
+  AffectHandlers[62] := AddTrainedOutAndHeal;
+  AffectHandlers[63] := ovl12_e116;
+  AffectHandlers[64] := PoisonAttackTargetBonus0;
+  AffectHandlers[65] := PoisonAttackTargetBonus4;
+  AffectHandlers[66] := PoisonAttackTargetBonus2;
+  AffectHandlers[67] := ParalyzeAttackTargetFor2d8;
+  AffectHandlers[68] := ParalyzeAttackTargetUnlessImmune;
+  AffectHandlers[69] := ParalyzeAttackTargetFor1d9Plus10;
+  AffectHandlers[70] := PoisonAttackTargetBonusMinus2;
+  AffectHandlers[71] := SetFlagAndLowerAttackRollByFour;
+  AffectHandlers[72] := ovl12_e60;
+  AffectHandlerPointers[73] := @ovl13_e22;
+  AffectHandlerPointers[74] := @ovl13_e23;
+  AffectHandlers[75] := DrainBloodFromCombatant;
+  AffectHandlers[76] := StartBloodDrain;
+  AffectHandlers[77] := HoldWeakTargetFast;
+  AffectHandlers[78] := ReviveOrRetryRevival;
+  AffectHandlers[79] := FireAttackTargetFor2d10;
+  AffectHandlers[80] := AcidAttackTargetFor1d4;
+  AffectHandlers[81] := FrightenSideWithFear;
+  AffectHandlers[82] := ParalyzeSideWithFear;
+  AffectHandlers[83] := GazeStonesTarget;
+  AffectHandlers[84] := GazeCharmsTarget;
+  AffectHandlers[85] := DrainAttackTargetLevel;
+  AffectHandlers[86] := DrainAttackTargetTwoLevels;
+  AffectHandlers[87] := CauseRotOnAttackTarget;
+  AffectHandlers[89] := ovl12_e74;
+  AffectHandlers[90] := AddConstitutionSaveBonus;
+  AffectHandlers[91] := ovl12_e76;
+  AffectHandlers[92] := ovl12_e116;
+  AffectHandlers[93] := HalveFireDamageNoSave;
+  AffectHandlers[94] := HalveDamageForFirstSlotItem;
+  AffectHandlers[95] := FallDeadIfInFight;
+  AffectHandlers[96] := CancelDamageUnlessMagicSlotItem;
+  AffectHandlers[97] := AddConstitutionSaveBonusKind2Or4;
+  AffectHandlers[98] := RegainHitPoints;
+  AffectHandlers[99] := ReviveDyingCharacter;
+  AffectHandlers[100] := GiveAffectUnlessFireOrAcid;
+  AffectHandlers[101] := GiveRegeneratingUnlessAffected;
+  AffectHandlers[102] := RetryRevivalAtFullHitPoints;
+  AffectHandlers[103] := TurnGaseousAndEscape;
+  AffectHandlers[104] := AvoidDistantAttackByChance;
+  AffectHandlers[105] := CancelHookByHalfChance;
+  AffectHandlers[106] := CancelHookByLowChance;
+  AffectHandlers[107] := CancelCharmAndUnknown35HighChance;
+  AffectHandlers[108] := CancelCharmAndUnknown35;
+  AffectHandlers[109] := CancelParalysisHook;
+  AffectHandlers[110] := CancelColdDamage;
+  AffectHandlers[111] := CancelPoisonAndParalysisHooks;
+  AffectHandlers[112] := CancelFireDamage;
+  AffectHandlers[113] := ReduceFireDamageOnePerDie;
+  AffectHandlers[114] := HalveElectricityDamage;
+  AffectHandlers[115] := HalveDamageByFirstSlotItemRow;
+  AffectHandlers[116] := HalveDamageForEnchantedSlotItem;
+  AffectHandlers[117] := SetDamageFromSlotItemType55;
+  AffectHandlers[118] := HalveColdDamageNoSave;
+  AffectHandlers[119] := CancelDamageUnlessEnchantedSlotItem;
+  AffectHandlers[120] := AvoidDistantAttackForItemType57Or58;
+  AffectHandlers[121] := SpitAcidAtTarget;
+  AffectHandlers[122] := SetDamageFromSlotItemType56;
+  AffectHandlers[123] := HalveOrCancelDamageForUnenchantedSlotItem;
+  AffectHandlers[124] := CancelCharmAndUnknown35ModerateChance;
+  AffectHandlers[125] := CancelCharmUnknown35PoisonAndParalysisHooks;
+  AffectHandlers[126] := SetFlagIfTargetReflects;
+  AffectHandlers[127] := ovl12_e116;
+  AffectHandlers[128] := ApplyItemSecondAffect;
+  AffectHandlers[129] := ApplyItemSecondAffect;
+  AffectHandlers[130] := ApplyItemSecondAffect;
+  AffectHandlers[131] := GiveExceptionalStrength;
+  AffectHandlers[132] := ovl12_e113;
+  AffectHandlers[133] := ApplyItemSecondAffect;
+  AffectHandlers[134] := ApplyItemSecondAffect;
+  AffectHandlers[135] := ShowMustHaveGiantStrength;
+  AffectHandlers[136] := ApplyItemSecondAffect;
+  AffectHandlers[137] := RemoveAffect17WhenRemoved;
+  AffectHandlers[138] := ApplyItemSecondAffect;
+  AffectHandlers[139] := ApplyItemSecondAffect;
+end;
 
 begin
 end.

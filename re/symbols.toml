@@ -4746,53 +4746,14 @@ evidence = ["prologue"]
 id = "ovl12:31A2"
 unit = "ovl12"
 addr = "ovl12:31A2"
-size = 53
+size = 1799
 name = "ovl12_e1"
 signature = ""
 c_name = "ovl12_e1"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_1"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:31D7"
-unit = "ovl12"
-addr = "ovl12:31D7"
-size = 139
-name = "ovl12_fn_31D7"
-signature = ""
-c_name = "ovl12_fn_31D7"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:3262"
-unit = "ovl12"
-addr = "ovl12:3262"
-size = 1222
-name = "ovl12_fn_3262"
-signature = ""
-c_name = "ovl12_fn_3262"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:3728"
-unit = "ovl12"
-addr = "ovl12:3728"
-size = 385
-name = "ovl12_fn_3728"
-signature = ""
-c_name = "ovl12_fn_3728"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:38A9"
