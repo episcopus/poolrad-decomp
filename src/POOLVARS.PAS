@@ -868,6 +868,7 @@ var
   DamageAmount: Byte;             { the damage DealDamage offers to the hooks and then deals (ovl24:134E) }
   DamageKind: Byte;               { the kind of damage: 1 fire, 2 cold, 4 electricity, $10 acid, bit 3 magic (ovl24:13E4) }
   ds681C: Byte;                   { the dice count of the last RollDiceCounted roll (ovl24:0E37) }
+  ds6821: Byte;                   { nonzero: the Items window is drawn even if its flag is clear (ovl19:1194) }
   AttackRoll: ShortInt;           { the d20 attack or resistance roll (20 counts 100) the hooks may change (ovl24:0C63) }
   SaveKind: Byte;                 { the saving throw kind SavingThrow offers to the hooks (ovl24:0DAD) }
   { The handler of every affect number, called through CallAffectHandler (ovl24:001E); extent unknown. Entry 0

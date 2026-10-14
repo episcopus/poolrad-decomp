@@ -9,23 +9,21 @@ procedure ShowCombatStats;
 procedure ShowAbilityScore(Index: ShortInt; Highlight: Boolean);
 procedure ViewSelectedCharacter(var Done: Byte);
 function CanGiveUpItem(Item: PMenuLine): Boolean;
-procedure ovl19_e6(var Done: Byte);
-procedure ovl19_fn_0FE2;
-procedure ovl19_fn_148F;
+procedure RunItemMenu(var Done: Byte);
 procedure ovl19_e7(P: Pointer);
 procedure ovl19_fn_1513;
-procedure ovl19_fn_1734;
+procedure ovl19_fn_1734(Item: PMenuLine);
 procedure ovl19_fn_1758;
-procedure ovl19_fn_17ED;
-procedure ovl19_fn_189D;
+procedure ovl19_fn_17ED(Item: PMenuLine);
+procedure ovl19_fn_189D(Item: PMenuLine);
 procedure ovl19_e8(P: Pointer; var B: Byte);
 procedure ovl19_fn_1BA6;
 procedure ovl19_fn_1BD7;
 procedure ovl19_fn_1C13;
 procedure ovl19_fn_1C4D;
-procedure ovl19_fn_1CEE;
+procedure ovl19_fn_1CEE(Item: PMenuLine);
 procedure ovl19_fn_1F4B;
-procedure ovl19_fn_1F52;
+procedure ovl19_fn_1F52(Item: PMenuLine; var Redraw: Byte);
 procedure ovl19_fn_20A9;
 procedure ovl19_fn_2156;
 procedure ovl19_fn_2197;
@@ -302,10 +300,10 @@ begin
 end;
 { ovl19:0AB3. The View command (whitepaper 5.4; the shop's V key, the Temple's and the camp's View): draws
   the sheet of SelectedCharacter and shows the prompt "View:" with the words Items (I), Spells (S), Trade
-  (T), Drop (D) and Exit (E) until Exit or Escape (#0) is chosen or Done is set. Items runs ovl19_e6,
+  (T), Drop (D) and Exit (E) until Exit or Escape (#0) is chosen or Done is set. Items runs RunItemMenu,
   Spells runs ChooseSpellFromList, Trade runs ovl19_fn_2156 and Drop runs ovl19_fn_24A7 and then
   ShowCharacterMoney. The sheet is drawn again after Items, Spells and Trade. In view mode 5 (combat)
-  ovl31_e3 runs on entry and ovl31_e2 on exit. Done: the stop flag, 0 keeps the view going; ovl19_e6 gets
+  ovl31_e3 runs on entry and ovl31_e2 on exit. Done: the stop flag, 0 keeps the view going; RunItemMenu gets
   it too. ds471A keeps a copy of SelectedCharacter (ovl19:0AD1). }
 procedure ViewSelectedCharacter(var Done: Byte);
 var
@@ -350,7 +348,7 @@ begin
     Key := ReadPromptChoice('View:', Menu, 13, 10, 15, 0, 0, ExtKey);
     Choice := $FFFF;
     case Key of
-      'I': ovl19_e6(Done);
+      'I': RunItemMenu(Done);
       'S': Spell := ChooseSpellFromList(0, 0, Choice, HasSpells);
       'T': ovl19_fn_2156;
       'D':
@@ -394,24 +392,154 @@ begin
     CanGiveUpItem := True;
   ClearWindow(1, 21, 38, 22);
 end;
-{ ovl19:0EF8: frame not read }
-{@stub} procedure ovl19_e6(var Done: Byte); begin end;
-{ ovl19:0FE2: frame not read }
-{@stub} procedure ovl19_fn_0FE2; begin end;
-{ ovl19:148F: retf 4: 4 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl19_fn_148F; begin end;
+{ ovl19:0EF8. The Items command of the View prompt (ViewSelectedCharacter's I key; whitepaper 5.4). It
+  lists the items of SelectedCharacter with ChooseFromList under the words Ready (R), Use (U), Trade (T),
+  Drop (D), Halve (H), Join (J), Sell (S) and Id (I), runs the chosen action and repeats until Escape or E
+  is pressed, or Done is set. Ready runs ovl19_e7. Use needs a readied item ("Must be Readied" otherwise)
+  that ovl22_e6 accepts, or one with Affects[2] above 0 and Affects[3] below $80; then it runs ovl19_e8.
+  Trade and Sell ask CanGiveUpItem, then run ovl19_fn_1734 or ovl19_fn_1CEE. Drop asks CanGiveUpItem,
+  shows "Your <item> will be gone forever" and then "Drop It?", and on Y calls res12_fn_1509 with
+  SelectedCharacter and the item. Halve, Join and Id run ovl19_fn_17ED, ovl19_fn_189D and ovl19_fn_1F52.
+  Done: the stop flag shared with ViewSelectedCharacter; ovl19_e8 may set it. The item menu is drawn
+  only when the character carries items; the Items window (rows 1 to 22) is drawn when DrawItemWindow
+  is set or ds6821 is nonzero. The view mode ds49F3 decides which words are offered: 1 (set by
+  VisitTemple, ovl04:0D0F) offers Sell and Id; 2, 3 and 4 offer Use, and 5 (combat) offers Use only to
+  a character whose Combat^.Pad2 is set. Trade is not offered in combat. }
+procedure RunItemMenu(var Done: Byte);
+const
+  ViewCombat = 5;               { ds49F3 during combat (POOLVARS); ovl31 changes the combat map then }
+  VarNoUse = 229;              { GameVars^ word 229 (ovl19:0F98): Use is not offered while it is nonzero }
+var
+  Key: Char;                    { the key of the item menu; a space until the first one is read }
+  Menu: String40;               { the words of the item menu, built from the character and the view mode }
+  Spare: Byte;                  { the frame reserves this byte (ovl19:0EF8, [bp-$2B]); the code never reads it }
+  DrawItemWindow: Boolean;      { the Items window is to be drawn again }
+  Redraw: Byte;                 { ChooseFromList's Redraw: 1 when the list must be drawn again }
+  Cursor: PMenuLine;            { the item the loop that draws the list stands on }
+  Selected: PMenuLine;          { the item ChooseFromList returns: the one the action is taken on }
+  Choice: Integer;              { ChooseFromList's highlighted line }
+  Spare2: array[0..3] of Byte;  { the frame reserves four bytes (ovl19:0EF8, [bp-$3B..-$38]); never read }
+  Character: PCharacter;        { SelectedCharacter on entry; the items are his }
+  OldCount: Byte;               { his item count before the action (a change redraws the list) }
+  Spare3: Byte;                 { the frame reserves one more byte (ovl19:0EF8, [bp-$41]); never read }
+begin
+  Character := SelectedCharacter;
+  Key := ' ';
+  Selected := Character^.Items;
+  Choice := 0;
+  Redraw := 1;
+  DrawItemWindow := True;
+  while not (Key in [#0, 'E']) and (Done = 0) do
+  begin
+    if not (Character^.ItemCountC7 > 0) then
+      Exit;
+    OldCount := Character^.ItemCountC7;
+    if Character^.Items <> nil then
+    begin
+      Menu := 'Ready';
+      if Character^.Flag10D <> 0 then
+        if GameVars^[VarNoUse] = 0 then
+          if (ds49F3 = 2) or (ds49F3 = 3) or (ds49F3 = 4) or
+            ((ds49F3 = ViewCombat) and (Character^.Combat^.Pad2 <> 0)) then
+            Menu := Menu + ' Use';
+      if ((Character^.B84 < $80) or (Character^.Flag10D = 0) or (Character^.Status = 1)) and
+        (ds49F3 <> ViewCombat) then
+        Menu := Menu + ' Trade';
+      Menu := Menu + ' Drop';
+      if Character^.ItemCountC7 < 16 then
+        Menu := Menu + ' Halve';
+      Menu := Menu + ' Join';
+      if ((Character^.B84 < $80) or (Character^.Flag10D = 0) or (Character^.Status = 1)) and
+        (ds49F3 = 1) then
+        Menu := Menu + ' Sell';
+      if ds49F3 = 1 then
+        Menu := Menu + ' Id';
+      Cursor := Character^.Items;
+      while Cursor <> nil do
+      begin
+        res12_fn_0442(LongInt(Character), Cursor, 0, 0, 1, 0);
+        Cursor := Cursor^.Next;
+      end;
+      if DrawItemWindow or (ds6821 <> 0) then
+      begin
+        ClearFullScreen;
+        DrawWindowFrame(1, 1, 38, 22, 0);
+        res12_fn_1816(Character, 1, 1, 1);
+        DrawTextAt(Length(Character^.Name) + 4, 1, 10, 'Items');
+        DrawWindow(1, 3, 38, 22, 0, 0, '');
+        DrawTextAt(1, 3, 15, 'Ready Item');
+        Redraw := 1;
+        DrawItemWindow := False;
+        ds6821 := 0;
+      end;
+      Key := ChooseFromList('', Menu, 13, 10, 15, 1, 5, 38, 22, Character^.Items, 1, Redraw, Choice,
+        Selected);
+      if Selected <> nil then
+        case Key of
+          'R': ovl19_e7(Selected);
+          'U':
+            if not Selected^.Readied then
+            begin
+              res12_fn_1693('Must be Readied');
+              Key := ' ';
+            end
+            else if ovl22_e6(Selected) or ((Selected^.Affects[2] > 0) and (Selected^.Affects[3] < $80)) then
+            begin
+              ovl19_e8(Selected, Done);
+              if ds49F3 <> ViewCombat then
+                Done := 0;
+              if Done = 0 then
+                DrawItemWindow := True;
+            end;
+          'T':
+            begin
+              if CanGiveUpItem(Selected) then
+                ovl19_fn_1734(Selected)
+              else
+                Key := ' ';
+              DrawItemWindow := True;
+            end;
+          'D':
+            if CanGiveUpItem(Selected) then
+            begin
+              res12_fn_0442(LongInt(Character), Selected, 0, 0, 0, 0);
+              ShowPagedText(1, 21, 38, 22, 14, 1, 'Your ' + Selected^.Text + 'will be gone forever');
+              if AskYesNo('Drop It? ', 13, 10, 15) = 'Y' then
+              begin
+                res12_fn_1509(SelectedCharacter, Selected);
+                Redraw := 1;
+              end;
+              ClearWindow(1, 21, 38, 22);
+            end
+            else
+              Key := ' ';
+          'H': ovl19_fn_17ED(Selected);
+          'J': ovl19_fn_189D(Selected);
+          'S':
+            if CanGiveUpItem(Selected) then
+              ovl19_fn_1CEE(Selected)
+            else
+              Key := ' ';
+          'I': ovl19_fn_1F52(Selected, Redraw);
+        end;
+      res12_fn_0BB8(Character);
+    end;
+    if Character^.ItemCountC7 <> OldCount then
+      Redraw := 1;
+  end;
+end;
 { ovl19:14D0: frame not read }
 {@stub} procedure ovl19_e7(P: Pointer); begin end;
 { ovl19:1513: retf 4: 4 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl19_fn_1513; begin end;
 { ovl19:1734: frame not read }
-{@stub} procedure ovl19_fn_1734; begin end;
+{@stub} procedure ovl19_fn_1734(Item: PMenuLine); begin end;
 { ovl19:1758: retf 4: 4 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl19_fn_1758; begin end;
 { ovl19:17ED: retf 4: 4 bytes of parameters; 24 bytes of locals }
-{@stub} procedure ovl19_fn_17ED; begin end;
+{@stub} procedure ovl19_fn_17ED(Item: PMenuLine); begin end;
 { ovl19:189D: retf 4: 4 bytes of parameters; 14 bytes of locals }
-{@stub} procedure ovl19_fn_189D; begin end;
+{@stub} procedure ovl19_fn_189D(Item: PMenuLine); begin end;
 { ovl19:1A8A: frame not read }
 {@stub} procedure ovl19_e8(P: Pointer; var B: Byte); begin end;
 { ovl19:1BA6: frame not read }
@@ -423,11 +551,11 @@ end;
 { ovl19:1C4D: retf 8: 8 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl19_fn_1C4D; begin end;
 { ovl19:1CEE: retf 4: 4 bytes of parameters; 520 bytes of locals }
-{@stub} procedure ovl19_fn_1CEE; begin end;
+{@stub} procedure ovl19_fn_1CEE(Item: PMenuLine); begin end;
 { ovl19:1F4B: frame not read }
 {@stub} procedure ovl19_fn_1F4B; begin end;
 { ovl19:1F52: frame not read }
-{@stub} procedure ovl19_fn_1F52; begin end;
+{@stub} procedure ovl19_fn_1F52(Item: PMenuLine; var Redraw: Byte); begin end;
 { ovl19:20A9: retf 8: 8 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl19_fn_20A9; begin end;
 { ovl19:2156: frame not read }

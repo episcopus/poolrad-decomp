@@ -3441,3 +3441,10 @@ kind = "routine"
 why = "the Items menu's guard: False for a readied item (Must be unreadied) and for a scroll with a pending scribe the player does not give up (ovl19:0D70; whitepaper 5.22)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl19_e6"
+new = "RunItemMenu"
+kind = "routine"
+why = "the Items command of the View prompt: the Ready, Use, Trade, Drop, Halve, Join, Sell and Id menu over the carried items (ovl19:0EF8; whitepaper 5.4); called by ViewSelectedCharacter for I and by the Use command (ovl08:031A)"
+date = "2026-10-13"
+
