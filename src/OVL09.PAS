@@ -617,7 +617,7 @@ Attack:
     if RangedWeaponCanMelee(Who) and (DistanceToTarget(Who, Target) = 1) then
       Aim := nil;
   end;
-  ovl13_e12(Who, Target, 0, Aim, Done);
+  PerformAttack(Who, Target, 0, Aim, Done);
   if Done <> 0 then
   begin
     CanAct := 0;

@@ -5541,12 +5541,12 @@ id = "ovl13:1884"
 unit = "ovl13"
 addr = "ovl13:1884"
 size = 666
-name = "ovl13_e12"
-signature = "procedure ovl13_e12(Who, Target: Pointer; A: Byte; P: Pointer; var Done: Byte)"
+name = "PerformAttack"
+signature = "procedure PerformAttack(Who, Target: PCharacter; AttackKind: Byte; AimedItem: Pointer; var Done: Byte)"
 c_name = "ovl13_e12"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_e12 (ovl13:1884 turns the two combatants to face each other, animates the attack item, resolves the attack via ResolveCombatantAttacks and ends the turn; it is the attack entry point ovl08, ovl09 and the ovl13 helpers call); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -5802,11 +5802,11 @@ unit = "ovl13"
 addr = "ovl13:26B0"
 size = 457
 name = "ovl13_fn_26B0"
-signature = ""
+signature = "procedure ovl13_fn_26B0(Who, Target: PCharacter; Item: PItem)"
 c_name = "ovl13_fn_26B0"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "signature set from e12's pushes (ovl13:1884 calls it with Who, Target, an item pointer and pushes it as far ptr, far ptr, far ptr); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

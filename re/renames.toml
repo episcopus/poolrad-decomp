@@ -4120,3 +4120,10 @@ kind = "routine"
 why = "ovl13:17F6 raises Target^.Combat^.BF and adds the angular error between Target^.Combat^.IconSet and the bearing to the attacker into B12; called just before ovl13_e12 resolves an attack"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl13_e12"
+new = "PerformAttack"
+kind = "routine"
+why = "ovl13:1884 turns the two combatants to face each other, animates the attack item, resolves the attack via ResolveCombatantAttacks and ends the turn; it is the attack entry point ovl08, ovl09 and the ovl13 helpers call"
+date = "2026-10-13"
+

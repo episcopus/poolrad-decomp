@@ -1626,7 +1626,7 @@ end;
   in slot 11 (+$F8) when the slot-11 bit ($01) is set, or the item in slot 12 (+$FC) when the
   slot-12 bit ($80) is set. The result is 1 when an item was aimed, or when the flags are exactly
   $A (that case returns 1 with Aim still nil; why is not proven); 0 otherwise. ovl09's AiTurn
-  passes the aimed item to ovl13_e12 for the attack. Globals: ItemTable (read). }
+  passes the aimed item to PerformAttack for the attack. Globals: ItemTable (read). }
 function ChooseAttackItem(Who: Pointer; var Aim: Pointer): Byte;
 var
   Item: PItem;

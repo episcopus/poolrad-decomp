@@ -26,7 +26,7 @@ procedure ovl13_fn_11D8;
 function SelectTurnUndeadTarget(Who: Pointer; var Selected): Boolean;
 procedure ResolveCombatantAttacks(Attacker, Target: PCharacter; AttackKind: Byte; var Done: Byte);
 procedure NoteAttackBearing(Attacker, Target: PCharacter);
-procedure ovl13_e12(Who, Target: Pointer; A: Byte; P: Pointer; var Done: Byte);
+procedure PerformAttack(Who, Target: PCharacter; AttackKind: Byte; AimedItem: Pointer; var Done: Byte);
 procedure ovl13_fn_1B1E(Attacker: PCharacter; Target: PCharacter; var NeededRoll: Byte);
 procedure ovl13_fn_1BD7;
 function ovl13_e13(P: Pointer; var B: Byte): Boolean;
@@ -46,7 +46,7 @@ function ovl13_fn_2574(Who: PCharacter; Target: PCharacter): Boolean;
 procedure ovl13_fn_257E;
 procedure ovl13_fn_25C9;
 function ovl13_e18(Who, Target: Pointer): Byte;
-procedure ovl13_fn_26B0;
+procedure ovl13_fn_26B0(Who, Target: PCharacter; Item: PItem);
 procedure ovl13_e19;
 function ovl13_e20(Who: Pointer): Byte;
 function ovl13_e16(Who, Target: Pointer): Boolean;
@@ -73,7 +73,7 @@ procedure ovl13_fn_3A2B;
 procedure ovl13_e23;
 function ovl13_e24: Boolean;
 implementation
-uses RES03, RES06, RES12, OVL24, OVL25, OVL30, OVL31;
+uses RES03, RES06, RES12, OVL24, OVL25, OVL30, OVL31, Crt;
 type
   { A view of the two bytes ResolveCombatantAttacks selects between with the from-behind flag: TCharacter
     +$111 (ResistValue) and +$112 (ds112), accessed as a signed-indexed pair. }
@@ -324,7 +324,7 @@ begin
 end;
 { ovl13:0627. Lets every enemy next to Who that is watching (Combat^.B7) and not helpless strike
   back: for each combatant CollectEnemiesInRange(Who, 1) gathers, it puts the cursor on Who, clears
-  the enemy's watch flag and runs the attack through NoteAttackBearing and ovl13_e12. Does nothing for a
+  the enemy's watch flag and runs the attack through NoteAttackBearing and PerformAttack. Does nothing for a
   character that is out of the fight (Flag10D 0). Called after a move (StepCombatant). }
 procedure GuardedEnemiesAttack(Who: PCharacter);
 var
@@ -344,7 +344,7 @@ begin
         MoveCombatCursor(CombatantX(Who), CombatantY(Who), 2, 8);
         Enemy^.Combat^.B7 := 0;
         NoteAttackBearing(Enemy, Who);
-        ovl13_e12(Enemy, Who, 0, nil, Done);
+        PerformAttack(Enemy, Who, 0, nil, Done);
       end;
     end;
   end;
@@ -411,7 +411,7 @@ end;
   IconSet+6..IconSet+10: while the combatant is due an initiative (Initiative above 0) or is not
   being drawn (BF 0) it attacks at once, otherwise only when InDirArc says Who is in the arc facing
   the scanned direction from the enemy. The enemy's unused attack slot (1, or 2 for a monster with
-  Attacks 0) is marked in AttackSlots, stored in the enemy's Combat^.Pad4[4], and ovl13_e12(Enemy,
+  Attacks 0) is marked in AttackSlots, stored in the enemy's Combat^.Pad4[4], and PerformAttack(Enemy,
   Who, 1, nil, ds6E31) makes the attack; the enemy's remembered Combat^.Target is restored after it.
   When the shot leaves Who still in the fight, Who's panel is redrawn. Called before the move by
   MoveCharacter (ovl08:09DF) and MoveStep (ovl09:07F2), so the shots happen as the combatant leaves.
@@ -483,7 +483,7 @@ begin
                         Enemy^.AttackSlots[Slot] := 1;
                       Enemy^.Combat^.Pad4[4] := Slot;
                       SavedTarget := Enemy^.Combat^.Target;
-                      ovl13_e12(Enemy, Who, 1, nil, ds6E31);
+                      PerformAttack(Enemy, Who, 1, nil, ds6E31);
                       DidAttack := 1;
                       Enemy^.Combat^.Target := SavedTarget;
                       if Who^.Flag10D <> 0 then
@@ -590,7 +590,7 @@ end;
   It collects Who's adjacent enemies (CollectEnemiesInRange), counts the level-0 ones into Extra
   (remembering where Target is in the list), and when Extra still beats Who's attack slots
   (capped at Combat^.Pad4[5]) it shows 'sweeps', moves Target to the front of ds6DE4 and attacks
-  each level-0 enemy in turn through NoteAttackBearing/ovl13_e12, spending one attack per enemy
+  each level-0 enemy in turn through NoteAttackBearing/PerformAttack, spending one attack per enemy
   (AttackSlots[1] := 1 and Dec(Extra)) until Extra runs out. Returns True when the sweep
   happened, so the caller ends the turn. Called by MeleeAttack (ovl08:0D45) and the AI
   (ovl09:0B3C). Globals: ds6DE4 (the adjacent-enemy list), ds6E31 (the done flag e12 writes),
@@ -636,7 +636,7 @@ begin
                 Enemy := CombatantRecord[ds6DE4[I]];
                 NoteAttackBearing(Who, Enemy);
                 Who^.AttackSlots[1] := 1;
-                ovl13_e12(Who, Enemy, 0, nil, ds6E31);
+                PerformAttack(Who, Enemy, 0, nil, ds6E31);
                 Dec(Extra);
               end;
           SweepEnemies := True;
@@ -786,7 +786,7 @@ begin
         end;
   end;
 end;
-{ ovl13:1406. Resolves all of one combatant's melee attacks for its turn, the work ovl13_e12 wraps
+{ ovl13:1406. Resolves all of one combatant's melee attacks for its turn, the work PerformAttack wraps
   (this routine covers 1406..17F6: the map's entries 14A1, 1583, 1713 and 1758 lie inside it):
   it clears the attack-slot counters (ds6822[1..2], ds6E2C[1..2]) and the damage, marks the
   attacker's Combat^.Pad8, then either takes the helpless auto-hit (no roll, ShowAttackResult kind 3
@@ -799,7 +799,7 @@ end;
   damage, ShowAttackResult shows it and the death hook runs; when nothing landed a miss is shown.
   Done is left nonzero when the turn ends (EndCombatTurn) and zero while another attack remains.
   QUIRK ovl13:1733: DamageAmount is passed as ShowAttackResult's second and third bytes. Called by
-  ovl13_e12 (ovl13:19D6). Globals: ds6822, ds6E2C, DamageAmount, ds2622, ds2626. }
+  PerformAttack (ovl13:19D6). Globals: ds6822, ds6E2C, DamageAmount, ds2622, ds2626. }
 procedure ResolveCombatantAttacks(Attacker, Target: PCharacter; AttackKind: Byte; var Done: Byte);
 var
   Item: TItemRow;                { the readied slot-0 item's row, when the large-foe dice are used }
@@ -905,7 +905,7 @@ end;
 { ovl13:17F6. Notes the attack Target is about to take from Attacker: Target's attack count Combat^.BF
   is raised and Combat^.B12 gains the angular error between Target's facing (Combat^.IconSet) and
   the bearing from Target to Attacker (ovl13_e18), wrapped into 0..4, modulo 8. Called with the
-  target as the second argument just before ovl13_e12 resolves the attack (ovl08 MeleeAttack,
+  target as the second argument just before PerformAttack resolves the attack (ovl08 MeleeAttack,
   ovl09 AiTurn, GuardedEnemiesAttack, SweepEnemies). }
 procedure NoteAttackBearing(Attacker, Target: PCharacter);
 var
@@ -919,8 +919,91 @@ begin
     Error := 8 - Error;
   Target^.Combat^.B12 := (Target^.Combat^.B12 + Error) mod 8;
 end;
-{ ovl13:1884: retf 18: 18 bytes of parameters; 10 bytes of locals }
-{@stub} procedure ovl13_e12(Who, Target: Pointer; A: Byte; P: Pointer; var Done: Byte); begin end;
+{ ovl13:1884. Carries out one combat action of Who against Target, the wrapper around
+  ResolveCombatantAttacks (this routine covers 1884..1B1E; the map's entries inside it were merged):
+  it turns Target to face Who (once, while Target's attack count Combat^.BF is below TargetTurnLimit
+  and AttackKind is 0), turns Who to face Target (SetCombatantIcon, mirror) and redraws Who's panel,
+  remembers Target in Who^.Combat^.Target, pauses, lets ovl13_fn_26B0 play the aimed item AimedItem
+  and a BowItemKind readied item, then, when Who has any attack slot left, saves SelectedCharacter,
+  makes Who the selected character and resolves the attack (AttackKind is the attack kind, Done the
+  turn-done flag), spends one round of the aimed ammo (Count drops by ds6E2C[1]; an emptied stack
+  whose ammo can be thrown is copied into a new menu line linked into ds6810, recorded in ds5D9A and
+  removed from the inventory, else it is just removed), recomputes Who's combat values and restores
+  SelectedCharacter. Ends the turn when Done is set and re-lays Who's icon when it is in view. Called
+  by MeleeAttack (ovl08), AiTurn (ovl09), GuardedEnemiesAttack, PartingShots and SweepEnemies.
+  QUIRK ovl13:198D: Who^.SlotItems[0] is read without a nil test. Globals: SelectedCharacter,
+  ds6810, ds5D9A, ds6E2C. }
+procedure PerformAttack(Who, Target: PCharacter; AttackKind: Byte; AimedItem: Pointer; var Done: Byte);
+const
+  { Target turns to face Who only while its attack count Combat^.BF is below this (ovl13:1892). }
+  TargetTurnLimit = 3;
+  { The readied item kind ovl13_fn_26B0 is given a second time alongside the ammo (ovl13:195A): a
+    launcher whose own missile is drawn; which item kind this is is not settled, it is read as a bow. }
+  BowItemKind = $2F;
+  { The AimedItem^.Affects[3] value that stops an emptied ammo stack being copied into the loot list
+    ds6810 (ovl13:1A14 compares it; what the affect means is not settled). }
+  NoLootCopyAffect = $89;
+  { Milliseconds Delay lets the attack be seen (ovl13:1933). }
+  AttackPause = 100;
+var
+  NewItem: PMenuLine;            { the ammo copy linked into the shop's item list ds6810 }
+  SavedSelection: PCharacter;    { SelectedCharacter around ResolveCombatantAttacks }
+  Bearing: Byte;                 { a direction from ovl13_e18 }
+begin
+  if (Target^.Combat^.BF < TargetTurnLimit) and (AttackKind = 0) then
+  begin
+    Bearing := ovl13_e18(Target, Who);
+    if IsCombatantInView(Target, 0) then
+      SetCombatantIcon(Target, Bearing, 0, 0)
+    else
+      Target^.Combat^.IconSet := Bearing;
+  end;
+  Bearing := ovl13_e18(Who, Target);
+  DrawCharacterPanel(Who);
+  SetCombatantIcon(Who, Bearing, 1, 0);
+  Who^.Combat^.Target := Target;
+  Delay(AttackPause);
+  if AimedItem <> nil then
+    ovl13_fn_26B0(Who, Target, PItem(AimedItem));
+  if Who^.SlotItems[0]^.ItemType = BowItemKind then
+    ovl13_fn_26B0(Who, Target, Who^.SlotItems[0]);
+  Done := 1;
+  if (Who^.AttackSlots[1] > 0) or (Who^.AttackSlots[2] > 0) then
+  begin
+    SavedSelection := SelectedCharacter;
+    SelectedCharacter := Who;
+    ResolveCombatantAttacks(Who, Target, AttackKind, Done);
+    if AimedItem <> nil then
+    begin
+      if PItem(AimedItem)^.Count > 0 then
+        Dec(PItem(AimedItem)^.Count, ds6E2C[1]);
+      if PItem(AimedItem)^.Count = 0 then
+      begin
+        if RangedWeaponCanMelee(Who) and (PItem(AimedItem)^.Affects[3] <> NoLootCopyAffect) then
+        begin
+          New(NewItem);
+          Move(PItem(AimedItem)^, NewItem^, SizeOf(TMenuLine));
+          NewItem^.Next := ds6810;
+          ds6810 := NewItem;
+          NewItem^.Readied := False;
+          RemoveInventoryItem(Who, PItem(AimedItem));
+          ds5D9A := NewItem;
+        end
+        else
+          RemoveInventoryItem(Who, PItem(AimedItem));
+      end;
+    end;
+    RecalcCombatValues(Who);
+    SelectedCharacter := SavedSelection;
+  end;
+  if Done <> 0 then
+    Done := EndCombatTurn(Who);
+  if IsCombatantInView(Who, 0) then
+  begin
+    SetCombatantIcon(Who, Who^.Combat^.IconSet, 1, 1);
+    SetCombatantIcon(Who, Who^.Combat^.IconSet, 0, 0);
+  end;
+end;
 { ovl13:1B1E: frame not read }
 {@stub} procedure ovl13_fn_1B1E(Attacker: PCharacter; Target: PCharacter; var NeededRoll: Byte); begin end;
 { ovl13:1BD7: frame not read }
