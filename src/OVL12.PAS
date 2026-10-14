@@ -41,7 +41,7 @@ procedure LowerAttackAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure SetAttackMissIfTurnPending(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure AgeCharacterOnce(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ClearCloud(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_fn_0FAC(Who: PCharacter; Chance: Byte);
+procedure AvoidDistantAttack(Who: PCharacter; Chance: Byte);
 procedure ovl12_fn_101D;
 procedure ovl12_e35;
 procedure ovl12_e36;
@@ -827,8 +827,22 @@ begin
     Node := Node^.Next;
   end;
 end;
-{ ovl12:0FAC: retf 6: 6 bytes of parameters; 10 bytes of locals }
-{@stub} procedure ovl12_fn_0FAC(Who: PCharacter; Chance: Byte); begin end;
+{ ovl12:0FAC. Called by ovl12:1086 (ovl12_e35) and two more routines (ovl12:2901, 2BC8). When SelectedCharacter has an item
+  in its first slot (SlotItems[0]) and res12_fn_255B (the distance from SelectedCharacter to Who, 1 when adjacent [I])
+  is above 1, a roll of 1d100 at or below Chance avoids the attack: "Avoids it" is shown on Who (colour 10), the damage
+  becomes 0, the attack roll MissRoll and ds6823 goes down by one. Purpose unknown: the kind of attack is not known [?]. }
+procedure AvoidDistantAttack(Who: PCharacter; Chance: Byte);
+begin
+  if SelectedCharacter^.SlotItems[0] <> nil then
+    if res12_fn_255B(SelectedCharacter, Who) > 1 then
+      if RollDice(1, 100) <= Chance then
+      begin
+        res12_fn_16EC(Who, 'Avoids it', $A, 1);
+        DamageAmount := 0;
+        AttackRoll := MissRoll;
+        Dec(ds6823);
+      end;
+end;
 { ovl12:101D: retf 4: 4 bytes of parameters; 10 bytes of locals }
 {@stub} procedure ovl12_fn_101D; begin end;
 { ovl12:1086: retf 10: 10 bytes of parameters; 0 bytes of locals }

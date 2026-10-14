@@ -3590,12 +3590,12 @@ id = "ovl12:0FAC"
 unit = "ovl12"
 addr = "ovl12:0FAC"
 size = 113
-name = "ovl12_fn_0FAC"
-signature = ""
+name = "AvoidDistantAttack"
+signature = "procedure AvoidDistantAttack(Who: PCharacter; Chance: Byte)"
 c_name = "ovl12_fn_0FAC"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl12_fn_0FAC (ovl12:0FAC: 'Avoids it' dodge: with an item in SelectedCharacter's first slot and the attacker (SelectedCharacter, distance from res12_fn_255B above 1) away, a 1d100 roll at or below Chance avoids the attack and zeroes the damage; called by ovl12:1086 (AvoidIfSelectedItemPlusZero) with Chance 100); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

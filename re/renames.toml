@@ -3658,3 +3658,10 @@ kind = "routine"
 why = "ovl12:0CC3 is the cloud affect handler: it finds the cloud of Who with the kind of Affect's Data (ds6DBB list, TCombatNode), shows 'The air clears a little...', restores each arm's tile (body cells keep CloudBodyTile), unlinks and frees the cloud and repaints the others"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_fn_0FAC"
+new = "AvoidDistantAttack"
+kind = "routine"
+why = "ovl12:0FAC: 'Avoids it' dodge: with an item in SelectedCharacter's first slot and the attacker (SelectedCharacter, distance from res12_fn_255B above 1) away, a 1d100 roll at or below Chance avoids the attack and zeroes the damage; called by ovl12:1086 (AvoidIfSelectedItemPlusZero) with Chance 100"
+date = "2026-10-13"
+
