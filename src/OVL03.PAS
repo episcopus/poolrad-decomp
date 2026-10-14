@@ -42,7 +42,7 @@ procedure LoseMoneyAndItemsCommand;
 procedure ovl03_fn_1EF8;
 procedure ovl03_fn_238D;
 procedure ChooseAttitudeCommand;
-procedure ovl03_fn_266A;
+procedure ComparePartyItemCommand;
 procedure ovl03_fn_271F;
 procedure ovl03_fn_2775;
 procedure ovl03_fn_2AA2;
@@ -1408,8 +1408,42 @@ begin
   Value := Values[Choice];
   WriteVmWord(Target, Value);
 end;
-{ ovl03:266A: retf 0: 0 bytes of parameters; 12 bytes of locals }
-{@stub} procedure ovl03_fn_266A; begin end;
+{ ovl03:266A. ECL command 50 (dispatcher ovl03:2F2D, SkippedOpcode 32h): tests whether a party member carries
+  an item of the type operand 1 names. It walks the party list ds5D96 (through TCharacter.Next) and each
+  member's carried items (TCharacter.Items, +$C8; TMenuLine.Next at +$2A), comparing the ItemType (+$2E) of
+  each with the operand, and stops at the first match. CompareFlags[0] (equal) is set and [1] (not equal)
+  cleared when one is found, else [1] is set; the conditional commands 22 to 27 (ovl03:0B52) test them.
+  Purpose unknown: which item types the script tests. }
+procedure ComparePartyItemCommand;
+var
+  ItemType: Byte;
+  Unused: Byte;                 { QUIRK ovl03:266A: a byte of the frame nothing uses }
+  Member: PCharacter;
+  Item: PItem;
+  Found: Boolean;
+begin
+  DecodeOperands(1);
+  Found := False;
+  ItemType := OperandValue(1);
+  FillChar(CompareFlags, SizeOf(CompareFlags), 0);
+  CompareFlags[1] := 1;
+  Member := PCharacter(ds5D96);
+  while (Member <> nil) and (not Found) do
+  begin
+    Item := Member^.Items;
+    while (Item <> nil) and (not Found) do
+    begin
+      if ItemType = Item^.ItemType then
+      begin
+        CompareFlags[0] := 1;
+        CompareFlags[1] := 0;
+        Found := True;
+      end;
+      Item := Item^.Next;
+    end;
+    Member := Member^.Next;
+  end;
+end;
 { ovl03:271F: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl03_fn_271F; begin end;
 { ovl03:2775: retf 0: 0 bytes of parameters; 62 bytes of locals }

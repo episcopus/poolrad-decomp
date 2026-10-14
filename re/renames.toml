@@ -3686,3 +3686,10 @@ kind = "routine"
 why = "ovl03:2F2D dispatches SkippedOpcode 2Ch (44) to it; its five-word menu HAUGHTY, SLY, NICE, MEEK, ABUSIVE (ovl03:25A8 literal) asks for an attitude; the value of the chosen attitude (operands 1 to 5) goes to operand 6 (match ovl03:25CB)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl03_fn_266A"
+new = "ComparePartyItemCommand"
+kind = "routine"
+why = "dispatcher ovl03:2F2D sends SkippedOpcode 32h (50) here (cmp al,32h); it searches the party's carried items (TCharacter.Items +$C8, ItemType +$2E) for the type operand 1 names and sets CompareFlags for the conditional commands (match ovl03:266A)"
+date = "2026-10-13"
+

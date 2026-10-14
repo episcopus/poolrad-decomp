@@ -615,12 +615,12 @@ id = "ovl03:266A"
 unit = "ovl03"
 addr = "ovl03:266A"
 size = 181
-name = "ovl03_fn_266A"
+name = "ComparePartyItemCommand"
 signature = ""
 c_name = "ovl03_fn_266A"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_266A (dispatcher ovl03:2F2D sends SkippedOpcode 32h (50) here (cmp al,32h); it searches the party's carried items (TCharacter.Items +$C8, ItemType +$2E) for the type operand 1 names and sets CompareFlags for the conditional commands (match ovl03:266A)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
