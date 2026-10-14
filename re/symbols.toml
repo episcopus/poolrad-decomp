@@ -458,7 +458,7 @@ evidence = ["prologue"]
 id = "ovl03:12C6"
 unit = "ovl03"
 addr = "ovl03:12C6"
-size = 273
+size = 367
 name = "ComputePartyValueCommand"
 signature = ""
 c_name = "ovl03_fn_12C6"
@@ -472,12 +472,12 @@ id = "ovl03:13D7"
 unit = "ovl03"
 addr = "ovl03:13D7"
 size = 94
-name = "ovl03_fn_13D7"
+name = "WriteScanResults"
 signature = ""
 c_name = "ovl03_fn_13D7"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_13D7 (nested in ScanPartyCommand (ovl03:1435): writes the four results of the scan (lowest, highest, average, affect flag) to the script addresses of operands 3 to 6); auto:near_call; nested in ScanPartyCommand (ovl03:1435), proven by the parent's match"
 evidence = ["prologue"]
 
 [[routine]]
@@ -485,12 +485,12 @@ id = "ovl03:1435"
 unit = "ovl03"
 addr = "ovl03:1435"
 size = 500
-name = "ovl03_fn_1435"
+name = "ScanPartyCommand"
 signature = ""
 c_name = "ovl03_fn_1435"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_1435 (dispatcher ovl03:2F2D calls it for SkippedOpcode $1E (ECL command 30); it scans the party list for an affect (operand 1 = 0) or the lowest, highest and average of ThiefSkills[3] or Movement (operand 1 = $6BA7 or $6C1B)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

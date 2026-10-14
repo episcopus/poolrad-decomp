@@ -3623,3 +3623,17 @@ kind = "routine"
 why = "ECL command 29: dispatcher ovl03:2F2D calls it for SkippedOpcode 1Dh (cmp al,1Dh, call at ovl03:3038); it sums over the party list ds5D96 a byte from hit points, ResistValue, HitAdjust and ClassLevels[0] and [5] and writes it to operand 1; purpose unknown"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl03_fn_1435"
+new = "ScanPartyCommand"
+kind = "routine"
+why = "dispatcher ovl03:2F2D calls it for SkippedOpcode $1E (ECL command 30); it scans the party list for an affect (operand 1 = 0) or the lowest, highest and average of ThiefSkills[3] or Movement (operand 1 = $6BA7 or $6C1B)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_13D7"
+new = "WriteScanResults"
+kind = "routine"
+why = "nested in ScanPartyCommand (ovl03:1435): writes the four results of the scan (lowest, highest, average, affect flag) to the script addresses of operands 3 to 6"
+date = "2026-10-13"
+

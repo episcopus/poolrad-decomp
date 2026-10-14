@@ -32,8 +32,7 @@ procedure ChooseFromListCommand;
 procedure AskMenuCommand;
 procedure ClearEncounterCommand;
 procedure ComputePartyValueCommand;
-procedure ovl03_fn_13D7;
-procedure ovl03_fn_1435;
+procedure ScanPartyCommand;
 procedure ovl03_fn_1629;
 procedure ovl03_fn_16C9;
 procedure ovl03_fn_1758;
@@ -922,10 +921,109 @@ begin
   Target := MakeWord(OperandLow[1], OperandHigh[1]);
   WriteVmWord(Target, Checksum);
 end;
-{ ovl03:13D7: retf 2: 2 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl03_fn_13D7; begin end;
-{ ovl03:1435: retf 0: 0 bytes of parameters; 26 bytes of locals }
-{@stub} procedure ovl03_fn_1435; begin end;
+{ ovl03:1435. ECL command 30 (dispatcher ovl03:2F2D, SkippedOpcode $1E): scans the party (ds5D96
+  followed through TCharacter.Next) and writes the answer to the script
+  addresses of operands 3 to 6. Operand 1 chooses what is scanned. 0 is an affect search: operand 2
+  is the affect id, res12_fn_2199 looks for it in each member's affect list, and operand 6 gets 1 when
+  a member has it (the other three values are then 0). The script address $6BA7 is the thief skill 3
+  of each member (TCharacter.ThiefSkills[3]) and $6C1B their movement (TCharacter.Movement): operand 3
+  gets the lowest value of the party, operand 4 the highest, operand 5 the average (rounded down) and
+  operand 6 gets 0. Any other operand 1 writes nothing. A type 1 operand 1 is the script address
+  itself, not the word it names (OperandValue would read that word). QUIRK ovl03:1435: an empty party
+  divides by zero in the two stat scans. The write-back is the nested routine WriteScanResults (the
+  script addresses and the four values are its parent's locals). }
+procedure ScanPartyCommand;
+const
+  { The script addresses of the two stats: GetCharacterVar (ovl07:07BC) reads $6BA7 as ThiefSkills[3]
+    ($A7 - $A4 = 3) and $6C1B as Movement ($11B). }
+  StatThiefSkill3 = $6BA7;
+  StatMovement = $6C1B;
+  { The lowest value starts at the largest byte. }
+  StatMinStart = $FF;
+var
+  StatAddress: Word;            { operand 1: 0 for the affect search, else the address of a stat }
+  Sum: Word;                    { the sum of the stat over the party }
+  AffectId: Byte;               { operand 2: the affect the search looks for }
+  Member: PCharacter;           { the party member being visited }
+  Found: ShortInt;              { 1 when a member has the affect }
+  Affect: Pointer;              { the affect res12_fn_2199 leaves in the search }
+  Stats: array[1..3] of Byte;   { the lowest, highest and average values (written to operands 3 to 5) }
+  MinAddr: Word;                { operand 3: script address of the lowest value }
+  MaxAddr: Word;                { operand 4: script address of the highest value }
+  AverageAddr: Word;            { operand 5: script address of the average }
+  FoundAddr: Word;              { operand 6: script address of the affect flag }
+  I: Byte;                      { the party members counted, then the loop counter }
+
+  { ovl03:13D7. Writes the four results of the scan to the script addresses of operands 3 to 6. It
+    reaches the parent's locals through the static link (push bp; push cs; call). }
+  procedure WriteScanResults;
+  begin
+    WriteVmWord(MinAddr, Stats[1]);
+    WriteVmWord(MaxAddr, Stats[2]);
+    WriteVmWord(AverageAddr, Stats[3]);
+    WriteVmWord(FoundAddr, Found);
+  end;
+begin
+  DecodeOperands(6);
+  Member := PCharacter(ds5D96);
+  Found := 0;
+  if OperandType[1] = 1 then
+    StatAddress := MakeWord(OperandLow[1], OperandHigh[1])
+  else
+    StatAddress := OperandValue(1);
+  AffectId := OperandValue(2);
+  MinAddr := MakeWord(OperandLow[3], OperandHigh[3]);
+  MaxAddr := MakeWord(OperandLow[4], OperandHigh[4]);
+  AverageAddr := MakeWord(OperandLow[5], OperandHigh[5]);
+  FoundAddr := MakeWord(OperandLow[6], OperandHigh[6]);
+  Sum := 0;
+  I := 0;
+  Stats[1] := StatMinStart;
+  Stats[2] := 0;
+  case StatAddress of
+    0:
+      begin
+        while (Member <> nil) and (Found = 0) do
+        begin
+          Found := Ord(res12_fn_2199(Member, AffectId, Affect));
+          Member := Member^.Next;
+        end;
+        for I := 1 to 3 do
+          Stats[I] := 0;
+        WriteScanResults;
+      end;
+    StatThiefSkill3:
+      begin
+        while Member <> nil do
+        begin
+          Inc(I);
+          if Member^.ThiefSkills[3] < Stats[1] then
+            Stats[1] := Member^.ThiefSkills[3];
+          if Member^.ThiefSkills[3] > Stats[2] then
+            Stats[2] := Member^.ThiefSkills[3];
+          Inc(Sum, Member^.ThiefSkills[3]);
+          Member := Member^.Next;
+        end;
+        Stats[3] := Sum div I;
+        WriteScanResults;
+      end;
+    StatMovement:
+      begin
+        while Member <> nil do
+        begin
+          Inc(I);
+          if Member^.Movement < Stats[1] then
+            Stats[1] := Member^.Movement;
+          if Member^.Movement > Stats[2] then
+            Stats[2] := Member^.Movement;
+          Inc(Sum, Member^.Movement);
+          Member := Member^.Next;
+        end;
+        Stats[3] := Sum div I;
+        WriteScanResults;
+      end;
+  end;
+end;
 { ovl03:1629: retf 0: 0 bytes of parameters; 12 bytes of locals }
 {@stub} procedure ovl03_fn_1629; begin end;
 { ovl03:16C9: frame not read }

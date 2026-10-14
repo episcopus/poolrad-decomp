@@ -197,3 +197,21 @@ tags = ["frame", "unused", "pointer", "locals"]
 title = "A 4-byte pointer local with a 6-byte frame needs a declared unused Word after it"
 lesson = "ClearEncounterCommand (ovl03:125D) has `sub sp, 6` but only the 4-byte Next pointer is used. With `Next: PMenuLine` alone the frame is 4 bytes (sub sp, 4); declaring `Unused: Word` after it, with the QUIRK comment, puts the 2 bytes at bp-6..bp-5 and the match passes."
 evidence = ["src/OVL03.PAS#ClearEncounterCommand", "re/symbols.toml#ovl03:125D"]
+
+[[lesson]]
+id = "case-loads-word-once-if-chain-compares-memory"
+confidence = "V"
+units = ["*"]
+tags = ["case", "if", "Word", "codegen", "compare", "Inc"]
+title = "A case on a Word local loads it once into AX; an if chain compares it in memory each time"
+lesson = "ScanPartyCommand (ovl03:1435) has three arms on its Word local StatAddress: 0, $6BA7 and $6C1B. The original loads it once (mov ax,[bp-2]) and compares AX with each label (cmp ax,0; cmp ax,6BA7; cmp ax,6C1B), which is a case statement. Written as an if/else-if chain the same local compiles to cmp word [bp-2],0 and no shared AX load, and the match fails at the first arm. Inside an arm, Sum := Sum + V loads the sum into AX and stores it back (add ax,[Sum]; mov [Sum],ax), 6 bytes longer than the original's add [Sum],ax; Inc(Sum, V) produces the original's in-place add. Both shapes are in the probe."
+evidence = ["tools/re/tp_idioms/ovl03/CASEAX.PAS", "src/OVL03.PAS#ScanPartyCommand", "re/symbols.toml#ovl03:1435"]
+
+[[lesson]]
+id = "nested-write-back-through-static-link"
+confidence = "V"
+units = ["*"]
+tags = ["nested", "static link", "ss:", "WriteVmWord", "frame"]
+title = "A nested procedure that writes the parent's results is proven with the parent; its locals are the parent's, reached through the static link"
+lesson = "WriteScanResults (ovl03:13D7) takes no parameters: its retf 2 pops the static link the parent pushes (push bp; push cs; call). It reads the parent's locals through the link with ss: overrides (mov al, byte ptr ss:[di-0x11]) and passes them to four WriteVmWord calls. In the source it is a procedure declared inside ScanPartyCommand (indented, not in the interface), and the matcher proves it NESTED with its parent, so its map entry needs no own match. Declare the parent's locals in the same order as the original frame (Found: ShortInt is read with cbw, so it is signed)."
+evidence = ["src/OVL03.PAS#ScanPartyCommand", "src/OVL03.PAS#WriteScanResults", "re/symbols.toml#ovl03:13D7", "tools/re/tp_idioms/ovl03/CASEAX.PAS"]
