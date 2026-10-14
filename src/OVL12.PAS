@@ -83,7 +83,7 @@ procedure GazeStonesTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure GazeCharmsTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure DrainLevels(Who: PCharacter; Count: Byte);
 procedure DrainAttackTargetLevel(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e72;
+procedure DrainAttackTargetTwoLevels(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e73;
 procedure ovl12_e74;
 procedure ovl12_e75;
@@ -1559,8 +1559,13 @@ procedure DrainAttackTargetLevel(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   DrainLevels(Who^.Combat^.Target, 1);
 end;
-{ ovl12:23C2: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e72; begin end;
+{ ovl12:23C2. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Affect and Mode are not read, ovl24:0000)
+  that drains two levels from the character Who attacked last (Who's combat Target, TCombatant +$A): DrainLevels
+  takes two levels off it, with "is drained 2 levels" shown on it. Which affect runs it is not known yet [?]. }
+procedure DrainAttackTargetTwoLevels(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  DrainLevels(Who^.Combat^.Target, 2);
+end;
 { ovl12:23EC: retf 10: 10 bytes of parameters; 16 bytes of locals }
 {@stub} procedure ovl12_e73; begin end;
 { ovl12:2490: retf 10: 10 bytes of parameters; 0 bytes of locals }

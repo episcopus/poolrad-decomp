@@ -3910,3 +3910,10 @@ kind = "routine"
 why = "ovl12:23A4 calls DrainLevels(Who^.Combat^.Target, 1): an affect handler that drains one level from the character Who attacked last (the AttackTarget of BoostAttackAgainstTarget, ovl12:013B)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e72"
+new = "DrainAttackTargetTwoLevels"
+kind = "routine"
+why = "ovl12:23C2 calls DrainLevels(Who^.Combat^.Target, 2): the two-level twin of DrainAttackTargetLevel (ovl12:23A4), an affect handler that drains the character Who attacked last"
+date = "2026-10-13"
+

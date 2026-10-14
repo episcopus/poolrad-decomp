@@ -4149,12 +4149,12 @@ id = "ovl12:23C2"
 unit = "ovl12"
 addr = "ovl12:23C2"
 size = 42
-name = "ovl12_e72"
-signature = ""
+name = "DrainAttackTargetTwoLevels"
+signature = "procedure DrainAttackTargetTwoLevels(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e72"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_72"
+notes = "renamed from ovl12_e72 (ovl12:23C2 calls DrainLevels(Who^.Combat^.Target, 2): the two-level twin of DrainAttackTargetLevel (ovl12:23A4), an affect handler that drains the character Who attacked last); auto:entry_72"
 evidence = ["prologue"]
 
 [[routine]]
