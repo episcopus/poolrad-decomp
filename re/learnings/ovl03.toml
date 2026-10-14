@@ -71,3 +71,12 @@ tags = ["while", "and", "loop", "short-circuit", "codegen"]
 title = "`while (I <= Count) and (N < Max) do` reproduces the original's loop exit jumps"
 lesson = "The original's member loop tests I <= Count with a jbe into the body and a jmp to the exit, then tests the count against 63 the same way (ovl03:0450, 05A2..05B4). Written as one short-circuit while condition, TP 6 generates that layout exactly (proven by make match), so a loop that adds members can keep its two exits without a Break (TP 6 has none)."
 evidence = ["src/OVL03.PAS#AddEncounterGroupCommand", "re/symbols.toml#ovl03:0450"]
+
+[[lesson]]
+id = "empty-string-literal-local-no-copy"
+confidence = "V"
+units = ["*"]
+tags = ["string", "literal", "local", "frame", "O+"]
+title = "An empty literal passed directly is copied to a temporary; assigned to a local it is only a length store"
+lesson = "In the overlay, DrawWindow(3, 3, $D, $D, 0, $F, '') copies the literal '' into a stack temporary with 0AF8:0B0B before the call (ovl03:0856). `Prompt := ''` with a local `Prompt: string[1]` compiles to one `mov byte [bp-2], 0` and no copy (ovl03:0951); the local is then passed by address to ReadNumber's String40 value parameter (lea di, push ss, push di). The locals take their places in declaration order from bp-1 downward: Prompt (2 bytes) at bp-2, Number at bp-4, Target at bp-6, which gives the 6-byte frame. Declaring Target before Number moves the stored target to bp-4 and fails the match."
+evidence = ["src/OVL03.PAS#ReadNumberCommand", "src/OVL03.PAS#ShowCloseUpCommand", "re/symbols.toml#ovl03:0951"]
