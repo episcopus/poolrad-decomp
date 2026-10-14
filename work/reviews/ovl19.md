@@ -3,7 +3,7 @@
 decompiler: dec-haiku (most routines), dec-1, dec-5, dec-6, dec-9, dec-15, dec-luna, orch (the `Agent:` trailers of the unit's commits)
 reviewer: rev-sonnet
 date: 2026-10-13
-commit: 592a40d
+commit: 05e8e32 (second round; the first round reviewed 592a40d)
 
 Checklist: docs/process/playbooks/70-review.md (every item, every routine).
 
@@ -172,8 +172,22 @@ Severity: must-fix (blocks review-pass), should-fix, note. When the decompiler f
 - [ ] note CharacterMoneyValueInGold: parameter is `Who` where every other routine of the unit says
   `Character`; harmless.
 
+## Round 2 (2026-10-13, commit 05e8e32)
+
+Rerun: `make match UNIT=ovl19` says 21 matched, 0 differ, 0 stubs, `unit: complete`; `make readability
+UNIT=ovl19` is clean. Both must-fix findings are closed and I checked the fixes, not only the ticks:
+- Name tables: POOLVARS now declares `ClassNames` `[0..16]`, `AlignmentNames` `[0..8]` and `StatusNames`
+  `[0..8]` (lines 898, 901, 905); the `dseg.toml` evidence for the three says 17, 9 and 9 entries with the
+  table end addresses [V]; ShowCharacterSheet's comment says 0..7 are the single classes and 8..16 the
+  multi-class names; whitepaper 5.4 (line 634) says the same with [V].
+- Bare numbers: a unit-level constant block names the view modes (`ViewModeShop` 1 .. `ViewModeCombat` 5,
+  with who sets each and where), `ComputerRunB84` / `ComputerRunThreshold` for the B84 bit 7, `AffectFlag` /
+  `AffectThreshold` for Affects[3] bit 7, and `ScribeAffectThreshold` for the scroll's scribe bit; the grep
+  for bare `ds49F3 = n`, `< $80` and `> $7F` finds none left in code. The two spellings of each bit test
+  are explained and backed by a probe (`tools/re/tp_idioms/ovl19/PB19BIT.PAS`).
+The should-fix and note findings of round 1 stay open and do not block.
+
 ## Verdict
 
-Not passed: two must-fix findings, the three name tables (`ClassNames`, `AlignmentNames`, `StatusNames`) read
-beyond their declared bounds without a QUIRK or a true description, and the view-mode and computer-run
-numbers left bare in the routines that decide which words the menus offer.
+Passed: the two must-fix findings of round 1 are fixed and verified; the unit matches (complete) and reads
+true, and only should-fix and note findings remain open.
