@@ -612,8 +612,9 @@ var
   ds2624: Word;                   { sound passed to PlaySound by CastChosenSpell when spell $33 is cast; meaning unknown }
   ds2628: Word;                   { word the ovl14 movement code passes to PlaySound; meaning unknown }
   ds262C: Word;                   { the sound PlaySound plays as an attack animation reaches the target (ovl13:26B0) }
-  ds262A: Word;                   { sound passed to PlaySound by CastChosenSpell when spell $2F is cast, and by
-                                    ovl03:2CCF when ds84CC is 10; meaning unknown }
+  { sound passed to PlaySound by CastChosenSpell when spell $2F is cast, and by ovl03:2CCF when ds84CC is 10;
+    meaning unknown }
+  ds262A: Word;
   { Five words, one per 8x8 tile bank, subtracted from the symbol number to index within the
     bank (Put8x8Symbol, ovl34:020F); evidence in re/dseg.toml. }
   SymbolBase: array[0..4] of Word;  { per-bank base symbol numbers; see above }

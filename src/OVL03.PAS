@@ -1275,7 +1275,7 @@ end;
     ItemErrorColor's message and ends the game (QuitGame).
   - NoTreasure adds nothing.
   - any other Kind is a treasure table with Kind - TreasureTableBase rolls. Each roll adds one item in
-    front of ds6810 (BuildTreasureItem, with the roll's Code). After the rolls res12_fn_0442 runs for every
+    front of ds6810 (BuildTreasureItem, with the roll's Code). After the rolls FormatItemLine runs for every
     item of the list with SelectedCharacter (its meaning is not traced yet).
   The Code of a roll: Chance (d100) of 1 to 60 picks Roll2, a second d100. 1 to 47 and 50 to 59 are the
   kind itself (45 gives ';'); 60 to 90 a d10 gives '$', '#', '"', '%' or '&' for 1 to 4, 5 to 7, 8, 9 or
@@ -1402,7 +1402,7 @@ begin
     Node := ds6810;
     while Node <> nil do
     begin
-      res12_fn_0442(LongInt(SelectedCharacter), Node, 0, 0, 0, 0);
+      FormatItemLine(LongInt(SelectedCharacter), Node, 0, 0, 0, 0);
       Node := Node^.Next;
     end;
   end;
