@@ -5,18 +5,18 @@
   make stop-run [WAIT=<minutes>]  drain, let workers hand off, integrate, release every lock, reset, close
   make run-status                 what the roster's sessions are doing (heartbeats, locks, hand-offs)
 
-`work/roster.toml` lists the sessions: `name`, `role` and OpenCode `model` id, and optionally `mode`.
-A session runs in one of two modes:
+`work/roster.toml` lists the sessions: `name`, `role`, OpenCode `model` id and reasoning-effort
+`variant` (passed to OpenCode as `<model>#<variant>`), and optionally `mode`. A session runs in one of
+two modes:
 
   worker       the default for `decompiler` and `reviewer`: the tab runs the supervisor of
                docs/process/WORKER.md (`tools/agent/worker.py`), which claims, starts one fresh
                `opencode run` session per batch of routines (or per review), verifies, hands off and
                claims again until the control is no longer `running`. A model that ends its turn or
-               fills its context costs one batch, never the run. Optional fields: `variant` (OpenCode
-               model variant, passed as `<model>#<variant>`), `batch` (routines per session) and
-               `timeout` (minutes per session).
+               fills its context costs one batch, never the run. Optional fields: `batch` (routines
+               per session) and `timeout` (minutes per session); `heading` is not used.
   interactive  the default for every other role (orchestrator, expert, documentarian): the tab runs
-               `opencode mini --model <model> --prompt "<the block>"` with the prompt block of
+               `opencode mini --model <model>#<variant> --prompt "<the block>"` with the prompt block of
                docs/process/START-AGENT.md named by `heading` (`## The prompt for <heading>`). Such a
                session lives for as long as its model keeps working in one turn; nothing prompts it again.
 
@@ -77,31 +77,40 @@ def mode_of(row: dict) -> str:
 def roster() -> list[dict]:
     rows = tomllib.loads(ROSTER.read_text()).get("session", [])
     for r in rows:
-        for k in ("name", "role", "model"):
-            if not r.get(k):
-                raise ValueError("work/roster.toml: every session needs %s" % k)
-        common.identifier(r["name"], "session name")
-        mode = mode_of(r)
-        if mode not in ("worker", "interactive"):
-            raise ValueError("work/roster.toml: %s: mode is worker or interactive, not %r" % (r["name"], mode))
-        if mode == "worker" and r["role"] not in WORKER_ROLES:
-            raise ValueError("work/roster.toml: %s: only decompilers and reviewers run as workers" % r["name"])
-        if mode == "interactive" and not r.get("heading"):
-            raise ValueError("work/roster.toml: %s: an interactive session needs heading" % r["name"])
-        for k in ("batch", "timeout"):
-            if k in r and (isinstance(r[k], bool) or not isinstance(r[k], (int, float)) or r[k] <= 0):
-                raise ValueError("work/roster.toml: %s: %s must be a positive number" % (r["name"], k))
+        check_session(r)
     return rows
+
+
+def check_session(r: dict) -> None:
+    for k in ("name", "role", "model", "variant"):
+        if not r.get(k):
+            raise ValueError("work/roster.toml: every session needs %s" % k)
+    common.identifier(r["name"], "session name")
+    common.identifier(r["variant"], "variant")
+    if "#" in r["model"]:
+        raise ValueError("work/roster.toml: model is the id without a #variant suffix")
+    mode = mode_of(r)
+    if mode not in ("worker", "interactive"):
+        raise ValueError("work/roster.toml: %s: mode is worker or interactive, not %r" % (r["name"], mode))
+    if mode == "worker" and r["role"] not in WORKER_ROLES:
+        raise ValueError("work/roster.toml: %s: only decompilers and reviewers run as workers" % r["name"])
+    if mode == "interactive" and not r.get("heading"):
+        raise ValueError("work/roster.toml: %s: an interactive session needs heading" % r["name"])
+    for k in ("batch", "timeout"):
+        if k in r and (isinstance(r[k], bool) or not isinstance(r[k], (int, float)) or r[k] <= 0):
+            raise ValueError("work/roster.toml: %s: %s must be a positive number" % (r["name"], k))
+
+
+def model_spec(r: dict) -> str:
+    """The OpenCode `--model` value: `<provider/model>#<variant>`."""
+    return "%s#%s" % (r["model"], r["variant"])
 
 
 def worker_argv(row: dict, run_id: str) -> list[str]:
     """The supervisor's arguments for a worker-mode roster row (docs/process/WORKER.md)."""
-    variant = row.get("variant", "")
     argv = ["--agent", row["name"], "--role", row["role"], "--harness", "opencode", "--model", row["model"],
-            "--session", "%s-run-%s" % (row["name"], (run_id or "none")[:8]),
-            "--session-model", row["model"] + ("#" + variant if variant else "")]
-    if variant:
-        argv += ["--variant", variant]
+            "--variant", row["variant"], "--session", "%s-run-%s" % (row["name"], (run_id or "none")[:8]),
+            "--session-model", model_spec(row)]
     for key, opt in (("batch", "--batch"), ("timeout", "--timeout")):
         if key in row:
             argv += [opt, str(row[key])]
@@ -177,19 +186,20 @@ def start(dry: bool) -> int:
         for r in rows:
             what = ("make worker %s" % " ".join(worker_argv(r, "dry")) if mode_of(r) == "worker" else
                     "opencode mini with %d bytes of prompt" % len(prompts[r["name"]]))
-            print("start-run: would open a tab for %s (%s, %s): %s" % (r["name"], r["role"], r["model"], what))
+            print("start-run: would open a tab for %s (%s, %s): %s" % (r["name"], r["role"], model_spec(r), what))
         return 0
     admit("running", "human: make start-run admitted the roster %s" % ", ".join(r["name"] for r in rows))
     run_id = control.state().get("run_id", "")
     for k, r in enumerate(rows):
-        meta = {"name": r["name"], "role": r["role"], "model": r["model"], "mode": mode_of(r), "run_id": run_id,
+        meta = {"name": r["name"], "role": r["role"], "model": r["model"], "variant": r["variant"],
+                "mode": mode_of(r), "run_id": run_id,
                 "started": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")}
         if meta["mode"] == "worker":
             meta["worker_argv"] = worker_argv(r, run_id)
         (RUN_DIR / (r["name"] + ".json")).write_text(json.dumps(meta, indent=1))
         meta["iterm_session"] = open_tab(r["name"], first=(k == 0))
         (RUN_DIR / (r["name"] + ".json")).write_text(json.dumps(meta, indent=1))
-        print("start-run: %s (%s, %s, %s) opened in iTerm" % (r["name"], r["role"], r["model"], meta["mode"]))
+        print("start-run: %s (%s, %s, %s) opened in iTerm" % (r["name"], r["role"], model_spec(r), meta["mode"]))
         time.sleep(1.0)
     print("start-run: %d sessions started; watch with make run-status or make watch-agents" % len(rows))
     return 0

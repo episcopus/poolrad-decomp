@@ -44,6 +44,16 @@ def test_open_session_keeps_the_v2_tui_in_the_foreground():
     assert re.search(r"^opencode\b.*&", text, re.M) is None
 
 
+def test_a_variant_is_passed_as_a_model_suffix():
+    assert run.model_spec({"model": "openrouter/anthropic/claude-haiku-5.5", "variant": "high"}) == \
+        "openrouter/anthropic/claude-haiku-5.5#high"
+    with pytest.raises(ValueError):
+        run.check_session({"name": "dec-1", "role": "decompiler", "model": "a/b", "heading": "x"})
+    with pytest.raises(ValueError):
+        run.check_session({"name": "dec-1", "role": "decompiler", "model": "a/b#high",
+                            "variant": "high", "heading": "x"})
+
+
 def test_the_real_roster_resolves_every_prompt_block():
     """Interactive sessions need their START-AGENT block; worker sessions need none."""
     text = run.START_AGENT.read_text()
@@ -56,6 +66,7 @@ def test_the_real_roster_resolves_every_prompt_block():
         block = run.prompt_block(text, r["heading"])
         assert "Assigned role: `%s`" % r["role"] in block
         assert "Requested name: `%s`" % r["name"] in block
+        assert run.model_spec(r) == "%s#%s" % (r["model"], r["variant"])
 
 
 def test_decompilers_and_reviewers_run_as_workers_by_default():
@@ -75,15 +86,15 @@ def write_roster(tmp_path, monkeypatch, body):
 
 
 def test_roster_validation(tmp_path, monkeypatch):
-    rows = write_roster(tmp_path, monkeypatch, '[[session]]\nname = "dec-a"\nrole = "decompiler"\nmodel = "p/m"\n')
+    rows = write_roster(tmp_path, monkeypatch, '[[session]]\nname = "dec-a"\nrole = "decompiler"\nmodel = "p/m"\nvariant = "high"\n')
     assert rows[0]["name"] == "dec-a"                  # a worker needs no heading
     with pytest.raises(ValueError, match="heading"):
-        write_roster(tmp_path, monkeypatch, '[[session]]\nname = "orch"\nrole = "orchestrator"\nmodel = "p/m"\n')
+        write_roster(tmp_path, monkeypatch, '[[session]]\nname = "orch"\nrole = "orchestrator"\nmodel = "p/m"\nvariant = "high"\n')
     with pytest.raises(ValueError, match="only decompilers and reviewers"):
         write_roster(tmp_path, monkeypatch,
-                     '[[session]]\nname = "x"\nrole = "expert"\nmodel = "p/m"\nmode = "worker"\nheading = "h"\n')
+                     '[[session]]\nname = "x"\nrole = "expert"\nmodel = "p/m"\nvariant = "high"\nmode = "worker"\nheading = "h"\n')
     with pytest.raises(ValueError, match="positive"):
-        write_roster(tmp_path, monkeypatch, '[[session]]\nname = "d"\nrole = "decompiler"\nmodel = "p/m"\nbatch = 0\n')
+        write_roster(tmp_path, monkeypatch, '[[session]]\nname = "d"\nrole = "decompiler"\nmodel = "p/m"\nvariant = "high"\nbatch = 0\n')
 
 
 def test_worker_argv_carries_identity_model_and_options():
@@ -94,8 +105,6 @@ def test_worker_argv_carries_identity_model_and_options():
     assert argv[argv.index("--session-model") + 1] == "openrouter/x/y#max"
     assert argv[argv.index("--variant") + 1] == "max"
     assert argv[argv.index("--batch") + 1] == "4" and argv[argv.index("--timeout") + 1] == "60"
-    plain = run.worker_argv({"name": "rev-a", "role": "reviewer", "model": "p/m"}, "")
-    assert "--variant" not in plain and plain[plain.index("--session-model") + 1] == "p/m"
 
 
 def test_open_session_hands_a_worker_to_the_supervisor():

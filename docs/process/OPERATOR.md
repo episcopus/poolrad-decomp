@@ -20,7 +20,7 @@ make run-status       # heartbeats, processes, locks, inbox
 make stop-run         # drains, lets workers hand off, integrates, releases every lock, resets, closes the tabs
 ```
 
-`work/roster.toml` lists the sessions (name, role, OpenCode model id); edit it to change the roster or
+`work/roster.toml` lists the sessions (name, role, OpenCode model id, reasoning-effort `variant`); edit it to change the roster or
 the models. Decompilers and reviewers run as workers by default: their tab runs the supervisor
 (`make worker`, below and docs/process/WORKER.md), which starts a fresh `opencode run` session for each
 batch of routines or each review and claims again until the run is stopped. Optional per-worker fields:

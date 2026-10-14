@@ -7,8 +7,8 @@
 #  - an interactive session becomes the OpenCode UI in the main checkout, with the prompt of
 #    build/run/<name>.prompt.md as its first message.
 # OpenCode v2's top-level command rejects --model (it exits at once, and iTerm then closes the tab).
-# `opencode mini` is the interactive UI that accepts --model and --prompt, and it must stay in the
-# foreground: a backgrounded TUI is not the terminal's foreground process and cannot read the keyboard.
+# `opencode mini` is the interactive UI that accepts --model as model#variant and --prompt, and it must
+# stay in the foreground: a backgrounded TUI is not the terminal's foreground process and cannot read the keyboard.
 name="$1"
 [ -n "$name" ] || { echo "usage: open_session.sh <session name>"; exit 2; }
 root=$(cd "$(dirname "$0")/../.." && pwd)
@@ -16,7 +16,7 @@ cd "$root" || exit 2
 meta="build/run/$name.json"
 prompt="build/run/$name.prompt.md"
 [ -f "$meta" ] || { echo "no run files for $name (make start-run writes them)"; exit 2; }
-model=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["model"])' "$meta")
+model=$(python3 -c 'import json,sys; m=json.load(open(sys.argv[1])); print(m["model"]+"#"+m["variant"])' "$meta")
 mode=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("mode", "interactive"))' "$meta")
 printf '\033]1;%s\007' "$name"          # the tab title
 printf '\033]2;%s (%s, %s)\007' "$name" "$model" "$mode"
