@@ -1,46 +1,54 @@
 # The roster `make start-run` launches: one OpenCode session per entry, each in its own iTerm tab,
 # started with the matching prompt block of docs/process/START-AGENT.md (`heading` is the text after
-# "## The prompt for"). `model` is the OpenCode model id (`opencode models`); edit freely.
+# "## The prompt for"). `model` is the OpenCode model id (`opencode models`) and `variant` is its
+# reasoning effort, passed as `model#variant` (`high` on every session here); edit freely.
 # `make stop-run` drains, integrates, releases and closes exactly these sessions.
 
 [[session]]
-name = "orch-gpt-6-1"
+name = "orch-sonnet"
 role = "orchestrator"
-model = "openai/gpt-6.1-sol"
-heading = "orchestator gpt 6.1 sol"
+model = "openrouter/anthropic/claude-sonnet-5-5"
+variant = "high"
+heading = "orchestator sonnet"
 
 [[session]]
-name = "dec-mimo"
+name = "dec-deepseek-2"
 role = "decompiler"
-model = "openrouter/xiaomi/mimo-v2.6-pro"
-heading = "decompiler mimo"
+model = "openrouter/deepseek/deepseek-v4.1-flash"
+variant = "high"
+heading = "decompiler deepseek 2"
 
 [[session]]
-name = "dec-luna"
+name = "dec-haiku-2"
 role = "decompiler"
-model = "openai/gpt-6-luna"
-heading = "decompiler luna"
+model = "openrouter/anthropic/claude-haiku-5.5"
+variant = "high"
+heading = "decompiler haiku 2"
 
 [[session]]
 name = "dec-haiku"
 role = "decompiler"
 model = "openrouter/anthropic/claude-haiku-5.5"
+variant = "high"
 heading = "decompiler haiku"
 
 [[session]]
 name = "dec-deepseek"
 role = "decompiler"
 model = "openrouter/deepseek/deepseek-v4.1-flash"
+variant = "high"
 heading = "decompiler deepseek"
 
 [[session]]
 name = "rev-sonnet"
 role = "reviewer"
-model = "anthropic/claude-sonnet-5-5"
+model = "openrouter/anthropic/claude-sonnet-5-5"
+variant = "high"
 heading = "reviewer sonnet"
 
 [[session]]
 name = "exp-opus"
 role = "expert"
 model = "anthropic/claude-opus-5-5"
+variant = "high"
 heading = "expert opus"

@@ -20,7 +20,7 @@ make run-status       # heartbeats, processes, locks, inbox
 make stop-run         # drains, integrates, releases every lock, resets the state, closes the tabs
 ```
 
-`work/roster.toml` lists the sessions (name, role, OpenCode model id, which prompt block of
+`work/roster.toml` lists the sessions (name, role, OpenCode model id, reasoning-effort variant, which prompt block of
 docs/process/START-AGENT.md they start with); edit it to change the roster or the models. The first
 entry is the orchestrator session, which runs the loop below and decides what the inbox lists (its
 limits are in its KICKOFF.md prompt: the spec, ADRs, the session set and `poolrad/` stay yours). With

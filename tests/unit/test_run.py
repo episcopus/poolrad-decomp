@@ -44,6 +44,16 @@ def test_open_session_keeps_the_v2_tui_in_the_foreground():
     assert re.search(r"^opencode\b.*&", text, re.M) is None
 
 
+def test_a_variant_is_passed_as_a_model_suffix():
+    assert run.model_spec({"model": "openrouter/anthropic/claude-haiku-5.5", "variant": "high"}) == \
+        "openrouter/anthropic/claude-haiku-5.5#high"
+    with pytest.raises(ValueError):
+        run.check_session({"name": "dec-1", "role": "decompiler", "model": "a/b", "heading": "x"})
+    with pytest.raises(ValueError):
+        run.check_session({"name": "dec-1", "role": "decompiler", "model": "a/b#high",
+                            "variant": "high", "heading": "x"})
+
+
 def test_the_real_roster_resolves_every_prompt_block():
     text = run.START_AGENT.read_text()
     rows = run.roster()
@@ -53,3 +63,4 @@ def test_the_real_roster_resolves_every_prompt_block():
         block = run.prompt_block(text, r["heading"])
         assert "Assigned role: `%s`" % r["role"] in block
         assert "Requested name: `%s`" % r["name"] in block
+        assert run.model_spec(r) == "%s#%s" % (r["model"], r["variant"])

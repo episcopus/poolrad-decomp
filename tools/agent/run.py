@@ -5,12 +5,13 @@
   make stop-run [WAIT=<minutes>]  drain, integrate, release every lock, reset the state, close the tabs
   make run-status                 what the roster's sessions are doing (heartbeats, locks, hand-offs)
 
-`work/roster.toml` lists the sessions: name, role, OpenCode model id and the heading of the prompt
-block in docs/process/START-AGENT.md (`## The prompt for <heading>`). `start` writes each prompt to
-build/run/<name>.prompt.md, sets the shared control to `running` (the human's admission: this command
-is the human's), and opens an iTerm tab per session running tools/agent/open_session.sh, which starts
-`opencode mini --model <model> --prompt "<the block>"` in the main checkout. Session pids and iTerm ids go to
-build/run/<name>.json so `stop` can close exactly what `start` opened.
+`work/roster.toml` lists the sessions: name, role, OpenCode model id, reasoning-effort variant and
+the heading of the prompt block in docs/process/START-AGENT.md (`## The prompt for <heading>`).
+`start` writes each prompt to build/run/<name>.prompt.md, sets the shared control to `running` (the
+human's admission: this command is the human's), and opens an iTerm tab per session running
+tools/agent/open_session.sh, which starts `opencode mini --model <model>#<variant> --prompt "<the
+block>"` in the main checkout. Session pids and iTerm ids go to build/run/<name>.json so `stop` can
+close exactly what `start` opened.
 
 `stop` is the graceful shutdown: control `draining` (no new claims; holders finish and hand off), wait
 for the roster's heartbeats to say `stopped` (up to WAIT minutes, default 20), `make integrate` for
@@ -47,11 +48,23 @@ OPEN_SESSION = common.ROOT / "tools/agent/open_session.sh"
 def roster() -> list[dict]:
     rows = tomllib.loads(ROSTER.read_text()).get("session", [])
     for r in rows:
-        for k in ("name", "role", "model", "heading"):
-            if not r.get(k):
-                raise ValueError("work/roster.toml: every session needs %s" % k)
-        common.identifier(r["name"], "session name")
+        check_session(r)
     return rows
+
+
+def check_session(r: dict) -> None:
+    for k in ("name", "role", "model", "variant", "heading"):
+        if not r.get(k):
+            raise ValueError("work/roster.toml: every session needs %s" % k)
+    common.identifier(r["name"], "session name")
+    common.identifier(r["variant"], "variant")
+    if "#" in r["model"]:
+        raise ValueError("work/roster.toml: model is the id without a #variant suffix")
+
+
+def model_spec(r: dict) -> str:
+    """The OpenCode `--model` value: `<provider/model>#<variant>`."""
+    return "%s#%s" % (r["model"], r["variant"])
 
 
 def prompt_block(text: str, heading: str) -> str:
@@ -116,17 +129,17 @@ def start(dry: bool) -> int:
     if dry:
         for r in rows:
             print("start-run: would open a tab for %s (%s, %s) with %d bytes of prompt" % (
-                r["name"], r["role"], r["model"], len(prompts[r["name"]])))
+                r["name"], r["role"], model_spec(r), len(prompts[r["name"]])))
         return 0
     admit("running", "human: make start-run admitted the roster %s" % ", ".join(r["name"] for r in rows))
     run_id = control.state().get("run_id", "")
     for k, r in enumerate(rows):
-        meta = {"name": r["name"], "role": r["role"], "model": r["model"], "run_id": run_id,
-                "started": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")}
+        meta = {"name": r["name"], "role": r["role"], "model": r["model"], "variant": r["variant"],
+                "run_id": run_id, "started": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")}
         (RUN_DIR / (r["name"] + ".json")).write_text(json.dumps(meta, indent=1))
         meta["iterm_session"] = open_tab(r["name"], first=(k == 0))
         (RUN_DIR / (r["name"] + ".json")).write_text(json.dumps(meta, indent=1))
-        print("start-run: %s (%s, %s) opened in iTerm" % (r["name"], r["role"], r["model"]))
+        print("start-run: %s (%s, %s) opened in iTerm" % (r["name"], r["role"], model_spec(r)))
         time.sleep(1.0)
     print("start-run: %d sessions started; watch with make run-status or make watch-agents" % len(rows))
     return 0
