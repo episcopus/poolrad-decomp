@@ -160,3 +160,35 @@ def test_only_one_make_integrate_runs_at_a_time(repo, capsys):
     again = integrate.exclusive()
     assert again is not None
     again.close()
+
+
+def test_the_run_stops_itself_after_an_hour_without_planned_work(repo, monkeypatch):
+    """2026-10-14: the workers ran out at 02:13 and the run idled until the human stopped it at 06:27."""
+    import heartbeat
+    rec = Recorder()
+    now = [0.0]
+    lp = integrator.Loop("int-loop", 1, "", "", 1, sleep=lambda s: None, idle_stop_minutes=60, clock=lambda: now[0])
+    monkeypatch.setattr(lp, "tool", rec.tool)
+    stops = []
+    monkeypatch.setattr(lp, "auto_stop", lambda idle: stops.append(idle))
+    monkeypatch.setattr(integrate, "pending", lambda key=None: [])
+    heartbeat.beat("dec-9", "idle: nothing to claim, looking again in 300 s")
+    heartbeat.beat("rev-9", "unit ovl00 batch 2: routines Foo")          # still working
+    assert "no planned work" not in lp.step() and lp.idle_since is None
+    heartbeat.beat("rev-9", "idle: nothing to claim, looking again in 300 s")
+    assert "no planned work for 0 of 60 minutes" in lp.step()
+    now[0] = 59 * 60
+    lp.step()
+    assert stops == []
+    (common.lock_dir() / "ovl00.lock").write_text("agent = dec-9\n")      # work again: the clock restarts
+    lp.step()
+    assert lp.idle_since is None
+    (common.lock_dir() / "ovl00.lock").unlink()
+    lp.step()
+    now[0] += 61 * 60
+    assert "make stop-run started" in lp.step() and len(stops) == 1
+
+
+def test_auto_stop_can_be_turned_off(repo, monkeypatch):
+    lp = integrator.Loop("int-loop", 1, "", "", 1, sleep=lambda s: None, idle_stop_minutes=0)
+    assert lp.watch_idle() == ""

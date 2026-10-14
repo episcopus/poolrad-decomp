@@ -27,6 +27,12 @@ Every INTERVAL seconds while the shared control is `running` or `draining` (paus
   3. `make expert-scan` when the human admitted an expert budget for this run and dispatch is not
      frozen (expert.py skips matched routines and caps the waiting queue itself).
   4. A heartbeat saying what waits.
+  5. Auto-stop (IDLE_STOP minutes, 60 by default; 0 turns it off): when, for that long without a break,
+     no lock is held, no hand-off waits to be merged and every other running agent's heartbeat says it
+     is idle, the loop starts `make stop-run` in its own process (log build/run/auto-stop.log) and
+     exits, so a run that has run out of planned work ends instead of idling until the human looks
+     (2026-10-14: the decompilers ran out at 02:13, the run was stopped at 06:27). Rejected hand-offs
+     and routines the escalation tier gave up on are not planned work: they wait in `make inbox`.
 
 SIGTERM or SIGINT (make stop-run): a running integration finishes (it is atomic and takes a minute or
 two), a resolver session is killed and interrupted and its branch reset, then a `stopped` heartbeat.
@@ -56,6 +62,7 @@ import worker  # noqa: E402
 HERE = Path(__file__).resolve().parent
 DEFAULT_INTERVAL = 120
 DEFAULT_TIMEOUT_MINUTES = 30
+DEFAULT_IDLE_STOP_MINUTES = 60
 RESOLVE_ATTEMPTS = 2
 RETRYABLE = ("merge conflict", "make check failed")
 
@@ -100,7 +107,8 @@ def git_ok(args: list[str], cwd: Path) -> bool:
 
 class Loop:
     def __init__(self, agent: str, interval: float, session_cmd: str, session_model: str, timeout_minutes: float,
-                 harness: str = "", model: str = "", session: str = "", variant: str = "", sleep=None):
+                 harness: str = "", model: str = "", session: str = "", variant: str = "", sleep=None,
+                 idle_stop_minutes: float = 0, clock=None):
         self.agent = common.identifier(agent, "agent")
         if self.agent == integrate.AGENT:
             raise ValueError("the loop needs its own name: %r is the identity make integrate registers" % agent)
@@ -115,6 +123,9 @@ class Loop:
         self.stopping = False
         self.in_session = False
         self.py = sys.executable
+        self.idle_stop = idle_stop_minutes * 60
+        self.clock = clock or time.monotonic
+        self.idle_since: float | None = None
 
     # ---- small helpers
     def say(self, note: str, done: bool = False) -> None:
@@ -168,7 +179,7 @@ class Loop:
             while waited < self.interval and not self.stopping:
                 self.sleep(min(5.0, self.interval - waited))
                 waited += 5.0
-        self.say("integrator stopped (%s)" % ("signal" if self.stopping else "control is stopped"), done=True)
+        self.say("integrator stopped (%s)" % ("signal or auto-stop" if self.stopping else "control is stopped"), done=True)
         return 0
 
     def step(self) -> str:
@@ -189,7 +200,59 @@ class Loop:
         held = rejected()
         notes.append("waiting %d, rejected %d%s" % (len(left), len(held),
                      " (%s)" % ", ".join(p.stem for p, _ in held) if held else ""))
+        idle = self.watch_idle()
+        if idle:
+            notes.append(idle)
         return "; ".join(notes)
+
+    # ---- auto-stop
+    def busy(self) -> str:
+        """Why the run still has planned work ("" when it has none)."""
+        locks = sorted(p.stem for p in common.lock_dir().glob("*.lock"))
+        if locks:
+            return "locks held: " + ", ".join(locks[:4])
+        if integrate.pending():
+            return "hand-offs waiting"
+        now = dt.datetime.now(dt.timezone.utc)
+        for p in heartbeat.heartbeat_dir().glob("*.txt"):
+            f = heartbeat.fields(p.read_text())
+            if f.get("agent") in (self.agent, integrate.AGENT) or f.get("state") == "stopped":
+                continue
+            try:
+                age = (now - dt.datetime.fromisoformat(f["time"])).total_seconds() / 60
+            except (KeyError, ValueError):
+                continue
+            if age < heartbeat.LAPSED_MINUTES and not f.get("note", "").startswith("idle"):
+                return "%s is working" % f.get("agent")
+        return ""
+
+    def watch_idle(self) -> str:
+        if not self.idle_stop:
+            return ""
+        why = self.busy()
+        if why:
+            self.idle_since = None
+            return ""
+        if self.idle_since is None:
+            self.idle_since = self.clock()
+        idle = self.clock() - self.idle_since
+        if idle < self.idle_stop:
+            return "no planned work for %d of %d minutes" % (idle // 60, self.idle_stop // 60)
+        self.auto_stop(idle)
+        return "no planned work for %d minutes: make stop-run started" % (idle // 60)
+
+    def auto_stop(self, idle: float) -> None:
+        log = self.main / "build/run/auto-stop.log"
+        log.parent.mkdir(parents=True, exist_ok=True)
+        control.event("auto-stop", agent=self.agent, idle_minutes=int(idle // 60))
+        with log.open("a") as fh:
+            fh.write("\n%s: %s starts make stop-run after %d minutes without planned work\n" % (
+                now(), self.agent, idle // 60))
+            fh.flush()
+            # Its own session: stop-run closes this tab, which must not take stop-run with it.
+            subprocess.Popen([self.py, str(HERE / "run.py"), "stop", "--wait", "10"], cwd=self.main,
+                             stdout=fh, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, start_new_session=True)
+        self.stopping = True
 
     # ---- rejected hand-offs
     def resolve(self, path: Path, f: dict) -> str:
@@ -315,11 +378,13 @@ def main(argv=None) -> int:
     ap.add_argument("--model", default="")
     ap.add_argument("--session", default="")
     ap.add_argument("--variant", default="")
+    ap.add_argument("--idle-stop", type=float, default=DEFAULT_IDLE_STOP_MINUTES,
+                    help="minutes without planned work before make stop-run is started (0: never)")
     ap.add_argument("--once", action="store_true", help="one pass, then exit")
     a = ap.parse_args(argv)
     try:
         loop = Loop(a.agent, a.interval, a.session_cmd, a.session_model, a.timeout,
-                    a.harness, a.model, a.session, a.variant)
+                    a.harness, a.model, a.session, a.variant, idle_stop_minutes=a.idle_stop)
     except (ValueError, RuntimeError, OSError) as e:
         print("integrator: %s" % e, file=sys.stderr)
         return 2
