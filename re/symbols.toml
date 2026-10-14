@@ -8060,27 +8060,14 @@ evidence = ["prologue"]
 id = "ovl16:408C"
 unit = "ovl16"
 addr = "ovl16:408C"
-size = 364
-name = "ovl16_fn_408C"
-signature = "function ovl16_fn_408C(Who: PCharacter): Byte"
+size = 425
+name = "MaxHitPoints"
+signature = "function MaxHitPoints(Who: PCharacter): Byte"
 c_name = "ovl16_fn_408C"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl16_fn_408C (ovl16:408C is the ceiling ModifyCharacter (ovl16:209F) clamps a raised HpMax to: over the classes with a level it totals the level times each class's maximum hit die and divides by the class count after adding the constitution adjustment (ConstitutionHitPointAdjustment ovl16:3F31), never below 1; the maximum-roll counterpart of MinHitPoints ovl16:3FB3); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl16:41F8"
-unit = "ovl16"
-addr = "ovl16:41F8"
-size = 61
-name = "ovl16_fn_41F8"
-signature = ""
-c_name = "ovl16_fn_41F8"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl16:4235"
