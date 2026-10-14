@@ -88,12 +88,12 @@ procedure CauseRotOnAttackTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e74(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure AddConstitutionSaveBonus(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e76(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e77;
-procedure ovl12_e78;
+procedure HalveFireDamageNoSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure ovl12_e78(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_fn_25C9;
-procedure ovl12_e79;
-procedure ovl12_e80;
-procedure ovl12_e81;
+procedure ovl12_e79(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure ovl12_e80(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure ovl12_e81(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e82;
 procedure ovl12_e83;
 procedure ovl12_e84;
@@ -1638,8 +1638,14 @@ begin
   else if (DamageKind and KindElectricity) <> 0 then
     CancelPendingHook(0);
 end;
-{ ovl12:25A2: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e77; begin end;
+{ ovl12:25A2. Affect handler for damage (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000).
+  When the damage being dealt is fire (DamageKind bit KindFire, DS:6819), it halves DamageAmount (DS:6818): HalveFireDamage
+  (ovl12:06E4) without its SaveRoll bonus. Which affect runs it is not known yet [?]. }
+procedure HalveFireDamageNoSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  if (DamageKind and KindFire) <> 0 then
+    DamageAmount := DamageAmount shr 1;
+end;
 { ovl12:25BC: frame not read }
 {@stub} procedure ovl12_e78; begin end;
 { ovl12:25C9: retf 10: 10 bytes of parameters; 0 bytes of locals }

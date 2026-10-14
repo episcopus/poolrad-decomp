@@ -3931,3 +3931,10 @@ kind = "routine"
 why = "ovl12:24D9 adds to SaveRoll a bonus from Who's Constitution (TCharacter +$14, POOLVARS: 1 for 4..6 up to 5 for 18..20), only when SaveKind is 0 (the first save, SaveKindPoison [I])"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e77"
+new = "HalveFireDamageNoSave"
+kind = "routine"
+why = "ovl12:25A2 halves DamageAmount when DamageKind has the fire bit (KindFire); it is HalveFireDamage (ovl12:06E4) without the SaveRoll bonus; matched [V]"
+date = "2026-10-13"
+

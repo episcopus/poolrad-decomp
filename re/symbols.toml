@@ -4214,12 +4214,12 @@ id = "ovl12:25A2"
 unit = "ovl12"
 addr = "ovl12:25A2"
 size = 26
-name = "ovl12_e77"
+name = "HalveFireDamageNoSave"
 signature = ""
 c_name = "ovl12_e77"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_77"
+notes = "renamed from ovl12_e77 (ovl12:25A2 halves DamageAmount when DamageKind has the fire bit (KindFire); it is HalveFireDamage (ovl12:06E4) without the SaveRoll bonus; matched [V]); auto:entry_77"
 evidence = ["prologue"]
 
 [[routine]]
