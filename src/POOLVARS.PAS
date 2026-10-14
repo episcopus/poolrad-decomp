@@ -534,6 +534,9 @@ var
     indices and the path pattern. CheckCodeWheel picks one at random. }
   ds0000: array[0..12] of TCodeWheelEntry;  { the code wheel records; see above }
   ds04DF: string[40];             { prompt string HandleWildernessKeys passes to ReadPromptChoice; filled elsewhere }
+  { One bit per class 0..7 (the value is added to a class-bit mask): ovl16:29AE builds the character's
+    class bits from the classes with a level above 0 (DS:05DE[ClassLevels]) and the bits it may train. }
+  ds05DE: array[0..7] of Byte;
   { The 'C D M T V A R L S B E J' hotkey line: the prompt RunCharacterMenu (ovl16:0161) passes to
     ReadPromptChoice under the title 'Choose a function '. }
   ds05F0: string[23];
@@ -987,6 +990,10 @@ var
     read: it is declared so that the index base, which RecalcClassStats adds (ovl23:0103), names it. }
   SpellTable: array[0..$38] of TSpellEntry;  { see above }
   ClassThac0Table: array[0..7, 0..10] of Byte;  { the to-hit value per class 0..7 and level (RecalcClassStats) }
+  { The experience needed to reach each level, one 56-byte row (14 LongInts, level 0..13) per class 0..7
+    at DS:409B: ovl16:29AE reads ds409B[class, level+1] (the next level's threshold) and
+    ds409B[class, level+2] (that of the level after, 0 when the class is capped). }
+  ds409B: array[0..7, 0..13] of LongInt;
   ds40BC: Byte;                   { the byte before ClericSlotTable; see above }
   ClericSlotTable: array[0..12, 1..3] of Byte;  { cleric spell slots of levels 1..3 per cleric level }
   ds41D4: Byte;                   { the byte before MageSlotTable; see above }

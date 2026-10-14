@@ -89,13 +89,13 @@ procedure ovl16_fn_3E2F;
 procedure ovl16_fn_3EBF;
 procedure ovl16_fn_3EC4;
 procedure ovl16_fn_3EC9;
-procedure ovl16_fn_3F31;
+function ovl16_fn_3F31(Who: PCharacter): ShortInt;
 function ovl16_fn_3FB3(Who: PCharacter): Byte;
 procedure ovl16_fn_4047;
 function ovl16_fn_408C(Who: PCharacter): Byte;
 procedure ovl16_fn_41F8;
-procedure ovl16_fn_4235;
-procedure ovl16_fn_42ED;
+function ovl16_fn_4235(Who: PCharacter; ClassBits: Byte): Byte;
+procedure ovl16_fn_42ED(Amount: LongInt; Who: PCharacter);
 implementation
 
 const
@@ -954,7 +954,7 @@ end;
 { ovl16:3EC9: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl16_fn_3EC9; begin end;
 { ovl16:3F31: retf 4: 4 bytes of parameters; 8 bytes of locals }
-{@stub} procedure ovl16_fn_3F31; begin end;
+{@stub} function ovl16_fn_3F31(Who: PCharacter): ShortInt; begin end;
 { ovl16:3FB3: frame not read }
 {@stub} function ovl16_fn_3FB3(Who: PCharacter): Byte; begin end;
 { ovl16:4047: retf 4: 4 bytes of parameters; 0 bytes of locals }
@@ -964,9 +964,9 @@ end;
 { ovl16:41F8: retf 4: 4 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl16_fn_41F8; begin end;
 { ovl16:4235: retf 6: 6 bytes of parameters; 4 bytes of locals }
-{@stub} procedure ovl16_fn_4235; begin end;
+{@stub} function ovl16_fn_4235(Who: PCharacter; ClassBits: Byte): Byte; begin end;
 { ovl16:42ED: retf 8: 8 bytes of parameters; 8 bytes of locals }
-{@stub} procedure ovl16_fn_42ED; begin end;
+{@stub} procedure ovl16_fn_42ED(Amount: LongInt; Who: PCharacter); begin end;
 
 begin
 end.
