@@ -564,7 +564,7 @@ Loop:
   Index := RollDice(1, Count);
   Target := CombatantRecord[ds6DE4[Index]];
   if IsRangedWeapon(Who) then
-    if not res12_fn_2E46(Who) then
+    if not RangedWeaponCanMelee(Who) then
       if CollectEnemiesInRange(Who, 1) > 0 then
       begin
         UseBestItem(Who);
@@ -589,7 +589,7 @@ Attack:
   if IsRangedWeapon(Who) then
   begin
     Flag := res12_fn_2E8B(Who, Aim);
-    if res12_fn_2E46(Who) and (DistanceToTarget(Who, Target) = 1) then
+    if RangedWeaponCanMelee(Who) and (DistanceToTarget(Who, Target) = 1) then
       Aim := nil;
   end;
   ovl13_e12(Who, Target, 0, Aim, Done);

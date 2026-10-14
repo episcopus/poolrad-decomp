@@ -17077,12 +17077,12 @@ id = "00BA:2E46"
 unit = "res12"
 addr = "00BA:2E46"
 size = 69
-name = "res12_fn_2E46"
-signature = "function res12_fn_2E46(Who: Pointer): Boolean"
+name = "RangedWeaponCanMelee"
+signature = "function RangedWeaponCanMelee(Who: Pointer): Boolean"
 c_name = "res12_fn_2E46"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_2E46 (00BA:2E46 returns True when IsRangedWeapon holds and the readied weapon kind's RaceRow attack flags carry both the melee bit $10 and the strength bit $04, i.e. a missile weapon that can also strike in melee; ovl08 uses it to allow the melee attack); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]

@@ -71,7 +71,7 @@ procedure DrawWildernessScreen;
 procedure DrawCombatScreen;
 procedure SelectPartyMember(Title: String40; WithExit: Byte; var Selected: PCharacter);
 function IsRangedWeapon(Who: Pointer): Boolean;
-function res12_fn_2E46(Who: Pointer): Boolean;
+function RangedWeaponCanMelee(Who: Pointer): Boolean;
 function res12_fn_2E8B(Who: Pointer; var W: Pointer): Byte;
 procedure res12_fn_2F57;
 implementation
@@ -88,6 +88,7 @@ const
   WeaponFlagSlot11Plus = 1;     { add the plus of slot item 11 (+$F8) }
   WeaponFlagDexToHit = 2;       { the attack adds the dexterity roll adjustment }
   WeaponFlagStrength = 4;       { the attack adds the strength roll and damage adjustments }
+  WeaponFlagMelee = $10;        { the kind can strike with the readied weapon itself (2E46, 2E8B) }
   WeaponFlagSlot12Plus = $80;   { add the plus of slot item 12 (+$FC) }
   { The race value (Race, +$2E) that gets one more point with the item kinds $24, $25 and $29..$2C
     (the bows and the long and short swords of AD&D); which race that is is not proven here. }
@@ -1612,8 +1613,20 @@ begin
   else
     IsRangedWeapon := False;
 end;
-{ 00BA:2E46: retf 4: 4 bytes of parameters; 2 bytes of locals }
-{@stub} function res12_fn_2E46(Who: Pointer): Boolean; begin end;
+{ 00BA:2E46. Returns whether Who's readied missile weapon (IsRangedWeapon) can also strike in
+  melee: True when IsRangedWeapon holds and the weapon kind's RaceRow attack flags carry both the
+  melee bit ($10) and the strength bit ($04). ovl08's MeleeAttack allows the attack only when
+  IsRangedWeapon implies this too (else "Not with that weapon"); ovl09 and ovl13 test it.
+  Globals: RaceRow (read). }
+function RangedWeaponCanMelee(Who: Pointer): Boolean;
+begin
+  if IsRangedWeapon(Who) and
+     ((RaceRow[PCharacter(Who)^.SlotItems[0]^.ItemType][RaceRowAttackFlags] and
+       (WeaponFlagMelee or WeaponFlagStrength)) = (WeaponFlagMelee or WeaponFlagStrength)) then
+    RangedWeaponCanMelee := True
+  else
+    RangedWeaponCanMelee := False;
+end;
 { 00BA:2E8B: retf 8: 8 bytes of parameters; 6 bytes of locals }
 {@stub} function res12_fn_2E8B(Who: Pointer; var W: Pointer): Byte; begin end;
 { 00BA:2F57: retf 6: 6 bytes of parameters; 6 bytes of locals }

@@ -3742,3 +3742,10 @@ kind = "routine"
 why = "00BA:2E03 returns True when Who has a readied weapon (SlotItems[0]) whose RaceRow byte $C (the attack range, ovl09:536) is above 1 (a missile weapon); ovl08 gates the melee attack on it"
 date = "2026-10-13"
 
+[[rename]]
+old = "res12_fn_2E46"
+new = "RangedWeaponCanMelee"
+kind = "routine"
+why = "00BA:2E46 returns True when IsRangedWeapon holds and the readied weapon kind's RaceRow attack flags carry both the melee bit $10 and the strength bit $04, i.e. a missile weapon that can also strike in melee; ovl08 uses it to allow the melee attack"
+date = "2026-10-13"
+
