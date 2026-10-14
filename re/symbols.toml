@@ -5462,40 +5462,14 @@ evidence = ["prologue"]
 id = "ovl13:0E82"
 unit = "ovl13"
 addr = "ovl13:0E82"
-size = 317
-name = "ovl13_e7"
-signature = "function ovl13_e7(Who, Target: Pointer): Boolean"
+size = 515
+name = "SweepEnemies"
+signature = "function SweepEnemies(Who, Target: PCharacter): Boolean"
 c_name = "ovl13_e7"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_e7 (ovl13:0E82 is the melee sweep: when the attacker Who has attack slots left (AttackSlots[1] below Combat^.Pad4[5]), the target is a level-0 creature (HighestLevel 0) and stands in melee range, it shows 'sweeps' and attacks each level-0 adjacent enemy through ovl13_e11/ovl13_e12 until Extra attacks run out, moving Target to the front of ds6DE4; returns True so the caller (MeleeAttack ovl08:0D45, AI ovl09:0B3C) ends the turn); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl13:0FBF"
-unit = "ovl13"
-addr = "ovl13:0FBF"
-size = 143
-name = "ovl13_fn_0FBF"
-signature = ""
-c_name = "ovl13_fn_0FBF"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl13:104E"
-unit = "ovl13"
-addr = "ovl13:104E"
-size = 55
-name = "ovl13_fn_104E"
-signature = ""
-c_name = "ovl13_fn_104E"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl13:1085"

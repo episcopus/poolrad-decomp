@@ -4078,3 +4078,10 @@ kind = "routine"
 why = "ovl13:0E52 halves the doubled attack budget in ds681A (the character's Attacks is attacks per two rounds, POOLVARS +A1) into this round's count, adding the odd remainder on even-numbered combat rounds via the round counter ds6DE3; StartCombatantRound stores it in AttackSlots[2] and RefreshAttacks uses it as AttackCount"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl13_e7"
+new = "SweepEnemies"
+kind = "routine"
+why = "ovl13:0E82 is the melee sweep: when the attacker Who has attack slots left (AttackSlots[1] below Combat^.Pad4[5]), the target is a level-0 creature (HighestLevel 0) and stands in melee range, it shows 'sweeps' and attacks each level-0 adjacent enemy through ovl13_e11/ovl13_e12 until Extra attacks run out, moving Target to the front of ds6DE4; returns True so the caller (MeleeAttack ovl08:0D45, AI ovl09:0B3C) ends the turn"
+date = "2026-10-13"
+

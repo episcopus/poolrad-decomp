@@ -17,7 +17,7 @@ procedure PartingShots(Who: PCharacter; Dir: Byte);
 function TryFlee(Who: PCharacter): Byte;
 procedure RefreshAttacks(Who: PCharacter);
 function AttacksThisRound(DoubledAttacks: Byte): Byte;
-function ovl13_e7(Who, Target: Pointer): Boolean;
+function SweepEnemies(Who, Target: PCharacter): Boolean;
 procedure ovl13_fn_0FBF;
 procedure ovl13_fn_104E;
 function ovl13_e8(Who, Target: Pointer): Boolean;
@@ -556,8 +556,65 @@ begin
     Inc(RoundAttacks);
   AttacksThisRound := RoundAttacks shr 1;
 end;
-{ ovl13:0E82: frame not read }
-{@stub} function ovl13_e7(Who, Target: Pointer): Boolean; begin end;
+{ ovl13:0E82, SweepEnemies. The melee sweep: when the attacker Who still has attack slots left
+  (AttackSlots[1] below Combat^.Pad4[5]), Target is a level-0 creature (HighestLevel 0) and
+  Target stands in melee range (DistanceToTarget = 1), it sweeps the level-0 enemies around Who.
+  It collects Who's adjacent enemies (CollectEnemiesInRange), counts the level-0 ones into Extra
+  (remembering where Target is in the list), and when Extra still beats Who's attack slots
+  (capped at Combat^.Pad4[5]) it shows 'sweeps', moves Target to the front of ds6DE4 and attacks
+  each level-0 enemy in turn through ovl13_e11/ovl13_e12, spending one attack per enemy
+  (AttackSlots[1] := 1 and Dec(Extra)) until Extra runs out. Returns True when the sweep
+  happened, so the caller ends the turn. Called by MeleeAttack (ovl08:0D45) and the AI
+  (ovl09:0B3C). Globals: ds6DE4 (the adjacent-enemy list), ds6E31 (the done flag e12 writes),
+  CombatantRecord. }
+function SweepEnemies(Who, Target: PCharacter): Boolean;
+var
+  Count: Byte;                   { enemies adjacent to Who }
+  Extra: Byte;                   { level-0 enemies counted, then the attacks left }
+  I: Byte;                       { walk of the adjacent-enemy list }
+  SavedIndex: Byte;              { where Target sits in ds6DE4 }
+  Enemy: PCharacter;             { one adjacent enemy }
+begin
+  SweepEnemies := False;
+  if Who^.AttackSlots[1] < Who^.Combat^.Pad4[5] then
+    if Target^.HighestLevel = 0 then
+      if DistanceToTarget(Who, Target) = 1 then
+      begin
+        Count := CollectEnemiesInRange(Who, 1);
+        Extra := 0;
+        for I := 1 to Count do
+        begin
+          Enemy := CombatantRecord[ds6DE4[I]];
+          if Enemy = Target then
+            SavedIndex := I;
+          if Enemy^.HighestLevel = 0 then
+            Inc(Extra);
+        end;
+        if Extra > Who^.AttackSlots[1] then
+        begin
+          if Extra > Who^.Combat^.Pad4[5] then
+            Extra := Who^.Combat^.Pad4[5];
+          ShowCharacterMessage(Who, 'sweeps', 10, 1);
+          Enemy := CombatantRecord[ds6DE4[1]];
+          if Enemy <> Target then
+          begin
+            ds6DE4[SavedIndex] := ds6DE4[1];
+            ds6DE4[1] := CombatantIndex(Target);
+          end;
+          for I := 1 to Count do
+            if Extra > 0 then
+              if CombatantRecord[ds6DE4[I]]^.HighestLevel = 0 then
+              begin
+                Enemy := CombatantRecord[ds6DE4[I]];
+                ovl13_e11(Who, Enemy);
+                Who^.AttackSlots[1] := 1;
+                ovl13_e12(Who, Enemy, 0, nil, ds6E31);
+                Dec(Extra);
+              end;
+          SweepEnemies := True;
+        end;
+      end;
+end;
 { ovl13:0FBF: frame not read }
 {@stub} procedure ovl13_fn_0FBF; begin end;
 { ovl13:104E: retf 8: 8 bytes of parameters; 0 bytes of locals }

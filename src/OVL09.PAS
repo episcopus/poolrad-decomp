@@ -500,7 +500,7 @@ end;
   side. A target is attacked when line of sight (WalkLine, step count halved) reaches it within Range
   and ovl13_e8 allows it; otherwise a random enemy of the CollectEnemiesInRange(Who, Range) scan (ds6DE4) is
   picked, or UseBestItem chooses one when IsRangedWeapon holds, RangedWeaponCanMelee does not and a 1-step
-  scan finds an enemy. The attack runs ovl13_e7/e11/e12 and ends the turn through EndCombatTurn.
+  scan finds an enemy. The attack runs SweepEnemies/e11/e12 and ends the turn through EndCombatTurn.
   Result: 1 when the turn is over (CanAct = 0). The arguments of ovl13_e21 ($FF, 0, 0) are Purpose unknown.
   QUIRK ovl09:0C8E: Target := Combat^.Target is
   dereferenced (Target^.Flag10D at 0C91, Target^.Side at 0C9C) before its nil test at 0CAC, so a
@@ -604,7 +604,7 @@ Attack:
       ovl13_e18(Who, Target));
   if Flag = 0 then
     goto Next;
-  if ovl13_e7(Who, Target) then
+  if SweepEnemies(Who, Target) then
   begin
     Done := EndCombatTurn(Who);
     goto Next;
