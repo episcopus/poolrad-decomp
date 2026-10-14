@@ -2,7 +2,7 @@ unit OVL03;
 { Encounter: the command loop of the ECL script interpreter (whitepaper 5.1). DispatchCommand
   dispatches each command by its opcode (SkippedOpcode) to a handler in this unit; the handlers
   decode their operands through OVL07 and run them. The other routines are still stubs. }
-{$A-,O+,F+,S-,R-,G-,I-}
+{$A-,O+,F+,S-,R-,G-,I-,L-}
 interface
 uses POOLVARS, RES09, OVL07, OVL16, RES12;
 procedure EndCommand;

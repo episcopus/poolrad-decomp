@@ -1,93 +1,25 @@
 unit OVL16;
-{ CharCreate (overlay 16, whitepaper 5.8): creating and training a party member. Its menus ask
-  to pick a race, class, gender and alignment ('Pick Race', 'Pick Class', 'Pick Gender',
-  'Pick Alignment' in the literal pools at ovl16:04F1..0516), roll the six ability scores and build
-  a TCharacter. FreeCharacter frees a character and everything it owns. In progress: most routines
-  are still stubs. }
+{ CharCreate (overlay 16, whitepaper 5.8): the training hall, where a party member is created,
+  modified, trained, dropped, added from the saved list or removed. RunCharacterMenu is its menu;
+  CreateCharacter asks for a race, gender, class and alignment ('Pick Race', 'Pick Gender', 'Pick
+  Class', 'Pick Alignment' in the literal pool at ovl16:04F1..0525), rolls the six ability scores
+  and saves a TCharacter; ModifyCharacter, TrainCharacter, DropCharacter, AddSavedCharacters and
+  RemoveSelectedCharacter are the other functions. FreeCharacter frees a character and everything
+  it owns. EditCharacterIcon is the character-icon editor of the camp's Alter menu and of the end of
+  character creation (its nested DrawIconCell and CopyPictureSlot draw and recolour the icon). }
 {$A-,O+,F+,S-,R-,G-,I-,L-}
 interface
-uses POOLVARS, RES04, RES06, RES07, RES09, RES12, OVL17, OVL19, OVL23, OVL24, OVL25, OVL28, OVL32;
+uses POOLVARS, RES04, RES06, RES07, RES09, RES12, OVL17, OVL19, OVL23, OVL24, OVL25, OVL28, OVL31, OVL32;
 procedure FreeCharacter(Who: PCharacter);
 procedure RunCharacterMenu;
-procedure ovl16_fn_056C;
-procedure ovl16_fn_07E1;
-procedure ovl16_fn_07E5;
-procedure ovl16_fn_07EA;
-procedure ovl16_fn_07EF;
-procedure ovl16_fn_07F4;
-procedure ovl16_fn_07F9;
-procedure ovl16_fn_0808;
-procedure ovl16_fn_080D;
-procedure ovl16_fn_0812;
-procedure ovl16_fn_0875;
-procedure ovl16_fn_087A;
-procedure ovl16_fn_087F;
-procedure ovl16_fn_0884;
-procedure ovl16_fn_0889;
-procedure ovl16_fn_08A2;
-procedure ovl16_fn_08A7;
-procedure ovl16_fn_08AC;
-procedure ovl16_fn_0AE5;
-procedure ovl16_fn_0AEA;
-procedure ovl16_fn_0AEF;
-procedure ovl16_fn_0AF4;
-procedure ovl16_fn_0B48;
-procedure ovl16_fn_0B52;
-procedure ovl16_fn_1307;
-procedure ovl16_fn_1513;
-procedure ovl16_fn_1758;
-procedure ovl16_fn_19D3;
-procedure ovl16_fn_19FB;
-procedure ovl16_fn_1A2A;
-procedure ovl16_fn_1A51;
-procedure ovl16_fn_1A81;
-procedure ovl16_fn_1AA7;
-procedure ovl16_fn_1ACE;
-procedure ovl16_fn_1AF1;
-procedure ovl16_fn_1B1A;
-procedure ovl16_fn_1B41;
-procedure ovl16_fn_1B64;
-procedure ovl16_fn_1BAB;
-procedure ovl16_fn_1BD2;
-procedure ovl16_fn_1BD7;
-procedure ovl16_fn_1BF5;
-procedure ovl16_fn_1C1E;
-procedure ovl16_fn_1C45;
-procedure ovl16_fn_1C68;
-procedure ovl16_fn_1CD4;
-procedure ovl16_fn_1CFB;
-procedure ovl16_fn_1D1E;
-procedure ovl16_fn_1D84;
-procedure ovl16_fn_1DBA;
-procedure ovl16_fn_1DCB;
-procedure ovl16_fn_1E34;
-procedure ovl16_fn_1E5A;
-procedure ovl16_fn_1E7D;
-procedure ovl16_fn_1EA3;
-procedure ovl16_fn_1EB9;
-procedure ovl16_fn_1EC6;
+procedure CreateCharacter;
 procedure DropCharacter;
 procedure ModifyCharacter;
 procedure TrainCharacter;
 procedure AddSavedCharacters;
 procedure RemoveSelectedCharacter(Uncounted, FreePicture: Boolean);
 procedure ChooseHeadAndBody;
-procedure DrawIconCell(CellCol, CellRow: Byte; StaticLink: Word);
-procedure CopyPictureSlot(Source, Dest, Recolor: Byte; StaticLink: Word);
-procedure ovl16_e3;
-procedure ovl16_fn_3C75;
-procedure ovl16_fn_3C7A;
-procedure ovl16_fn_3C7F;
-procedure ovl16_fn_3C84;
-procedure ovl16_fn_3C89;
-procedure ovl16_fn_3C8E;
-procedure ovl16_fn_3C93;
-procedure ovl16_fn_3D34;
-procedure ovl16_fn_3E2A;
-procedure ovl16_fn_3E2F;
-procedure ovl16_fn_3EBF;
-procedure ovl16_fn_3EC4;
-procedure ovl16_fn_3EC9;
+procedure EditCharacterIcon;
 function ConstitutionHitPointAdjustment(Who: PCharacter): ShortInt;
 function MinHitPoints(Who: PCharacter): Byte;
 function MaxHitPoints(Who: PCharacter): Byte;
@@ -110,6 +42,20 @@ const
   ChoiceTitleColour = $D;   { the ReadPromptChoice title colour of the menu }
   Var2OfferModify = 680;    { ds49D6^ word: the modify function is offered while it is above 0; unknown }
   GoldInCopper = 200;       { one gold piece is 200 copper (CoinCopperValues[GoldCoin]) }
+  { the column of each ability's minimum and maximum in a 16-byte row of the per-race limits
+    ds3DA3 (ModifyCharacter, CreateCharacter): the Strength columns +0/+2/+4 are RaceStrengthMax and
+    RaceStrengthPercent, and Intelligence .. Charisma take the columns +6/+7 .. +14/+15. }
+  IntMinOffset = 6;
+  IntMaxOffset = 7;
+  WisMinOffset = 8;
+  WisMaxOffset = 9;
+  DexMinOffset = 10;
+  DexMaxOffset = 11;
+  ConMinOffset = 12;
+  ConMaxOffset = 13;
+  ChaMinOffset = 14;
+  ChaMaxOffset = 15;
+  ExceptionalStrength = 18; { a Strength above this uses the exceptional percentile; 18 itself rolls one }
 
 type
   { The five coin kinds, in the order of CoinCopperValues (copper 0 .. platinum 4). The money routine
@@ -126,6 +72,35 @@ type
     ByteSize: Word;                 { +$11: bytes per tile }
     Pixels: ^Byte;                  { +$13: the packed pixel bytes }
     Tail: array[0..20000] of Byte;  { +$17: the tile bytes, indexed by a byte times ByteSize }
+  end;
+
+  { TCharacter seen from its ability scores on, with the six scores (Strength .. Charisma) as an
+    array so a loop can index them by ability (ModifyCharacter's cursor, CreateCharacter's rolls). The
+    offsets match TCharacter's
+    (whitepaper 4.2.5): +$10 the scores, +$16 StrengthPercent, +$2E Race, +$2F ClassMask,
+    +$32 HpMax, +$85 HirelingShare, +$96 ClassLevels, +$9E B9E, +$B2 SpellSlots, +$11B Flag11B
+    (the current hit points). }
+  PScoredCharacter = ^TScoredCharacter;
+  TScoredCharacter = record
+    Pad0: array[0..$F] of Byte;             { +$00..+$0F: Name and the rest of TCharacter }
+    Scores: array[0..5] of Byte;            { +$10: Strength, Intelligence, Wisdom, Dexterity,
+                                              Constitution, Charisma }
+    StrengthPercent: Byte;                  { +$16 }
+    Pad17: array[$17..$2D] of Byte;
+    Race: ShortInt;                         { +$2E }
+    ClassMask: ShortInt;                    { +$2F }
+    Age: Word;                              { +$30 }
+    HpMax: Byte;                            { +$32 }
+    Pad33: array[$33..$84] of Byte;
+    HirelingShare: Byte;                    { +$85 }
+    Pad86: array[$86..$95] of Byte;
+    ClassLevels: array[0..7] of ShortInt;   { +$96..+$9D }
+    B9E: ShortInt;                          { +$9E }
+    Pad9F: Byte;                            { +$9F }
+    PadA0: array[$A0..$B1] of Byte;
+    SpellSlots: array[0..1, 1..3] of Byte;  { +$B2..+$B7 }
+    PadB8: array[$B8..$11A] of Byte;
+    Flag11B: Byte;                          { +$11B: the current hit points }
   end;
 
 { ovl16:0000. Frees a character and everything it owns: its combat state (Combat, size $16), its
@@ -164,7 +139,7 @@ end;
   draws the window (DrawWindow) and, when a character is selected, its roster (DrawPartyRoster) and
   the eleven function names of the menu at DS:0619 (the first letter in white, the rest in green,
   DrawTextAt). It then asks ReadPromptChoice for a function key (prompt line 'C D M T V A R L S B E J')
-  and dispatches it: C create (ovl16_fn_056C), D drop (DropCharacter), M modify (ModifyCharacter),
+  and dispatches it: C create (CreateCharacter), D drop (DropCharacter), M modify (ModifyCharacter),
   T train (TrainCharacter), V view (ViewSelectedCharacter), A add (AddSavedCharacters), R remove
   (SaveCharacter then RemoveSelectedCharacter), L load (LoadGame), S save (SaveGame), B buy/finish (sets ds49F3 to
   Mode 4 and leaves), E exit (AskYesNo, then save and QuitGame), J the STING cheat. An extended key
@@ -243,7 +218,7 @@ begin
       case Key of
         'C':
           if ds0619[0].Present <> 0 then
-            ovl16_fn_056C;
+            CreateCharacter;
         'D':
           if ds0619[1].Present <> 0 then
             DropCharacter;
@@ -310,120 +285,606 @@ begin
     end;
   end;
 end;
-{ ovl16:056C: frame not read }
-{@stub} procedure ovl16_fn_056C; begin end;
-{ ovl16:07E1: frame not read }
-{@stub} procedure ovl16_fn_07E1; begin end;
-{ ovl16:07E5: frame not read }
-{@stub} procedure ovl16_fn_07E5; begin end;
-{ ovl16:07EA: frame not read }
-{@stub} procedure ovl16_fn_07EA; begin end;
-{ ovl16:07EF: frame not read }
-{@stub} procedure ovl16_fn_07EF; begin end;
-{ ovl16:07F4: frame not read }
-{@stub} procedure ovl16_fn_07F4; begin end;
-{ ovl16:07F9: frame not read }
-{@stub} procedure ovl16_fn_07F9; begin end;
-{ ovl16:0808: frame not read }
-{@stub} procedure ovl16_fn_0808; begin end;
-{ ovl16:080D: frame not read }
-{@stub} procedure ovl16_fn_080D; begin end;
-{ ovl16:0812: frame not read }
-{@stub} procedure ovl16_fn_0812; begin end;
-{ ovl16:0875: frame not read }
-{@stub} procedure ovl16_fn_0875; begin end;
-{ ovl16:087A: frame not read }
-{@stub} procedure ovl16_fn_087A; begin end;
-{ ovl16:087F: frame not read }
-{@stub} procedure ovl16_fn_087F; begin end;
-{ ovl16:0884: frame not read }
-{@stub} procedure ovl16_fn_0884; begin end;
-{ ovl16:0889: frame not read }
-{@stub} procedure ovl16_fn_0889; begin end;
-{ ovl16:08A2: frame not read }
-{@stub} procedure ovl16_fn_08A2; begin end;
-{ ovl16:08A7: frame not read }
-{@stub} procedure ovl16_fn_08A7; begin end;
-{ ovl16:08AC: frame not read }
-{@stub} procedure ovl16_fn_08AC; begin end;
-{ ovl16:0AE5: frame not read }
-{@stub} procedure ovl16_fn_0AE5; begin end;
-{ ovl16:0AEA: frame not read }
-{@stub} procedure ovl16_fn_0AEA; begin end;
-{ ovl16:0AEF: frame not read }
-{@stub} procedure ovl16_fn_0AEF; begin end;
-{ ovl16:0AF4: frame not read }
-{@stub} procedure ovl16_fn_0AF4; begin end;
-{ ovl16:0B48: frame not read }
-{@stub} procedure ovl16_fn_0B48; begin end;
-{ ovl16:0B52: frame not read }
-{@stub} procedure ovl16_fn_0B52; begin end;
-{ ovl16:1307: frame not read }
-{@stub} procedure ovl16_fn_1307; begin end;
-{ ovl16:1513: frame not read }
-{@stub} procedure ovl16_fn_1513; begin end;
-{ ovl16:1758: frame not read }
-{@stub} procedure ovl16_fn_1758; begin end;
-{ ovl16:19D3: frame not read }
-{@stub} procedure ovl16_fn_19D3; begin end;
-{ ovl16:19FB: frame not read }
-{@stub} procedure ovl16_fn_19FB; begin end;
-{ ovl16:1A2A: frame not read }
-{@stub} procedure ovl16_fn_1A2A; begin end;
-{ ovl16:1A51: frame not read }
-{@stub} procedure ovl16_fn_1A51; begin end;
-{ ovl16:1A81: frame not read }
-{@stub} procedure ovl16_fn_1A81; begin end;
-{ ovl16:1AA7: frame not read }
-{@stub} procedure ovl16_fn_1AA7; begin end;
-{ ovl16:1ACE: frame not read }
-{@stub} procedure ovl16_fn_1ACE; begin end;
-{ ovl16:1AF1: frame not read }
-{@stub} procedure ovl16_fn_1AF1; begin end;
-{ ovl16:1B1A: frame not read }
-{@stub} procedure ovl16_fn_1B1A; begin end;
-{ ovl16:1B41: frame not read }
-{@stub} procedure ovl16_fn_1B41; begin end;
-{ ovl16:1B64: frame not read }
-{@stub} procedure ovl16_fn_1B64; begin end;
-{ ovl16:1BAB: frame not read }
-{@stub} procedure ovl16_fn_1BAB; begin end;
-{ ovl16:1BD2: frame not read }
-{@stub} procedure ovl16_fn_1BD2; begin end;
-{ ovl16:1BD7: frame not read }
-{@stub} procedure ovl16_fn_1BD7; begin end;
-{ ovl16:1BF5: frame not read }
-{@stub} procedure ovl16_fn_1BF5; begin end;
-{ ovl16:1C1E: frame not read }
-{@stub} procedure ovl16_fn_1C1E; begin end;
-{ ovl16:1C45: frame not read }
-{@stub} procedure ovl16_fn_1C45; begin end;
-{ ovl16:1C68: frame not read }
-{@stub} procedure ovl16_fn_1C68; begin end;
-{ ovl16:1CD4: frame not read }
-{@stub} procedure ovl16_fn_1CD4; begin end;
-{ ovl16:1CFB: frame not read }
-{@stub} procedure ovl16_fn_1CFB; begin end;
-{ ovl16:1D1E: frame not read }
-{@stub} procedure ovl16_fn_1D1E; begin end;
-{ ovl16:1D84: retf 8062: 8062 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl16_fn_1D84; begin end;
-{ ovl16:1DBA: frame not read }
-{@stub} procedure ovl16_fn_1DBA; begin end;
-{ ovl16:1DCB: frame not read }
-{@stub} procedure ovl16_fn_1DCB; begin end;
-{ ovl16:1E34: frame not read }
-{@stub} procedure ovl16_fn_1E34; begin end;
-{ ovl16:1E5A: frame not read }
-{@stub} procedure ovl16_fn_1E5A; begin end;
-{ ovl16:1E7D: frame not read }
-{@stub} procedure ovl16_fn_1E7D; begin end;
-{ ovl16:1EA3: frame not read }
-{@stub} procedure ovl16_fn_1EA3; begin end;
-{ ovl16:1EB9: frame not read }
-{@stub} procedure ovl16_fn_1EB9; begin end;
-{ ovl16:1EC6: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl16_fn_1EC6; begin end;
+{ ovl16:056C. The C (Create) function of the training hall, called by RunCharacterMenu (ovl16:0161). It
+  builds a new party member and saves it. The record is allocated (GetMem and FillChar, 285 bytes)
+  with its starting values: the six figure colour pairs from ds3CF5, magic resistance 50, THAC0 40,
+  Flag10D set (it takes part in combat and earns experience), picture banks 1 and 1 and a random BAB.
+  Four list menus follow in the window (1,2)..($26,$16), each a ChooseFromList with the title line
+  'Pick Race', 'Pick Gender', 'Pick Class' or 'Pick Alignment' and the choices indented by two
+  blanks; Enter picks, Escape (#0) leaves the whole routine:
+  - Race: Dwarf, Elf, Gnome, Half-Elf, Halfling and Human (RaceNames 1..5 and 7; menu line 6 is
+    stored as race 7, so Half-Orc cannot be picked). The race sets the first Figure byte (1 for
+    Dwarf, Gnome and Halfling, 2 otherwise) and gives permanent racial affects through AddAffect
+    (Duration 0, Data $FF, Flag 0): Dwarf $5A $61 $1A $2F, Gnome $61 $12 $2F $30, Halfling $5A $61,
+    Elf $6B, Half-Elf $7C, Human none.
+  - Gender: Male or Female (SexNames), stored as the zero-based choice in B9E.
+  - Class: the row of the race in ds3E17 lists the classes it may pick; the chosen ClassMask gets
+    level 1 in each class it combines (ClassLevels, a multi-class mask such as 8 Cleric/Fighter sets
+    several), then ComputeThiefSkills for a thief, THAC0 (the highest ClassThac0Table entry), the
+    item-usage ClassBits (ds05D6) and ComputeSavingThrows.
+  - Alignment: the row of the class in ds3FE7 lists the alignments it may pick (ByteA0).
+  The age comes next: the roll of the race and class entry in ds3E5B (a single class) or, for a
+  multi-class, its maximum, from the first of the combined classes in the entry order cleric,
+  fighter, magic-user.
+  Then, until the player answers Y to 'Keep this character? ', it makes the character the
+  SelectedCharacter, shows the sheet and rolls each ability score: the best of six RollDice(3, 6),
+  raised or lowered by the race's age brackets (ds3F31), clamped to the race's limits for the gender
+  (ds3DA3) and raised to the class minimum (ds3F81); an 18 Strength of a fighter gets a random
+  percentile up to the race's limit (StrengthPercent), a cleric multi-class gets at least 13 Wisdom.
+  The class loop then sets the first spell slots (cleric, magic-user), makes the character know the
+  first-level cleric spells (SpellTable) or four magic-user spells, rolls the starting gold (ds4263
+  dice, ten times their total shared by the classes) and the hit points (RollHitPoints, the
+  constitution adjustment and the class count; HpB1 keeps the roll per class) and shows the combat
+  numbers and the money. The name is asked ('Character name: ', repeated until it is not empty), the
+  head and body pictures are chosen (ChooseHeadAndBody), the icon editor runs (EditCharacterIcon) and
+  SaveCharacter writes the character to its file; SelectedCharacter is restored and the record freed
+  (the character joins the party later, through the A function that loads it from the file).
+  No parameters; reads and temporarily replaces the global SelectedCharacter. Side effects: the menus,
+  the character sheet and the saved character file.
+  QUIRK ovl16:0783: Escape in a menu leaves with Exit, which neither frees the new character or the
+  menu list nor restores SelectedCharacter (it is not yet replaced there); the memory is leaked.
+  QUIRK ovl16:1236: the racial roll adjustments (race 1 +1 Con -1 Cha, 2 +1 Dex -1 Con, 5 -1 Str
+  +1 Dex, 6 +1 Str +1 Con -2 Cha) test RaceIndex, the loop variable of the race menu, which is 7
+  after that loop, not the chosen race, so they never apply.
+  QUIRK ovl16:0FF3: the maximum-age rule has no case for ClassMask $A (Cleric/Ranger); no race offers
+  it, so its age would stay 0. }
+procedure CreateCharacter;
+const
+  StartFigureCount = 6;         { Figure[1..6]: the six colour pairs of the character icon }
+  StartResist = 50;             { ResistBase }
+  StartThac0 = 40;              { Thac0 before the class levels lower it }
+  HumanRace = 7;                { RaceNames[7] }
+  MenuRaceLines = 7;            { NewMenuList's count: the title line and the six races }
+  MenuGenderLines = 3;          { the title line and two genders }
+  RaceDwarf = 1;                { RaceNames: Dwarf, Elf, Gnome, Half-Elf, Halfling, Half-Orc, Human }
+  RaceElf = 2;
+  RaceGnome = 3;
+  RaceHalfElf = 4;
+  RaceHalfling = 5;
+  RaceHalfOrc = 6;              { not on the menu; its adjustments are in the dead racial roll code }
+  FirstRaceLine = 1;
+  LastMenuRace = 5;             { menu lines 1..5 are the races 1..5 }
+  HumanMenuLine = 6;            { menu line 6 is Human, stored as race 7 }
+  { The window and colours of the four ChooseFromList menus (the title and prompt words are empty). }
+  MenuLeftCol = 1;
+  MenuTopRow = 2;
+  MenuRightCol = $26;
+  MenuBottomRow = $16;
+  MenuHeadingColour = $D;
+  MenuLineColour = $A;
+  MenuHighlightColour = $F;
+  { AskYesNo's and ReadInputLine's colours. }
+  PromptTitleColour = $D;
+  PromptWordColour = $A;
+  PromptHotColour = $F;
+  NamePromptColour = $D;
+  KeyEnter = #13;
+  KeyEscape = #0;
+  { The permanent affects the race gives (AddAffect Duration 0, Data $FF, Flag 0). The saving-throw
+    hooks (RunAffectHooks kind $C, ovl24:02FA) run $5A and $61, the hooks of kind $A (the attacker of
+    a roll) $12 and $1A, kind $10 (the target of a roll) $2F and $30, kind 9 (a new affect)
+    $6B and $7C; what each does is not read yet [?]. }
+  AffectSaveHookA = $5A;
+  AffectSaveHookB = $61;
+  AffectAttackHookA = $1A;
+  AffectAttackHookB = $12;
+  AffectTargetHookA = $2F;
+  AffectTargetHookB = $30;
+  AffectNewAffectElf = $6B;
+  AffectNewAffectHalfElf = $7C;
+  PermanentDuration = 0;
+  DataFF = $FF;
+  NoRemoveHandler = 0;
+  FighterFigure = 1;            { Figure[0] for the Dwarf, Gnome and Halfling }
+  OtherFigure = 2;              { Figure[0] for the others }
+  { The class numbers (ClassLevels index, ClassNames order) and the multi-class ClassMask values. }
+  ClericClass = 0;
+  FighterClass = 2;
+  RangerClass = 4;
+  MageClass = 5;
+  ThiefClass = 6;
+  ClassTypeCount = 8;
+  ClericFighter = 8;
+  ClericFighterMage = 9;
+  ClericRanger = $A;
+  ClericMage = $B;
+  ClericThief = $C;
+  FighterMage = $D;
+  FighterThief = $E;
+  FighterMageThief = $F;
+  MageThief = $10;
+  { The age brackets of ds3F31 (columns of a race's row). }
+  YoungAdultAge = 0;
+  MiddleAge = 1;
+  OldAge = 2;
+  VenerableAge = 3;
+  AbilityRollCount = 6;         { rolls per ability; the best is kept }
+  AbilityDiceCount = 3;
+  AbilityDiceSides = 6;
+  StrengthIndex = 0;            { the six abilities in TCharacter order, +$10..+$15 }
+  IntelligenceIndex = 1;
+  WisdomIndex = 2;
+  DexterityIndex = 3;
+  ConstitutionIndex = 4;
+  CharismaIndex = 5;
+  MinClericWisdom = 13;         { a Cleric multi-class needs this Wisdom }
+  ExceptionalStrengthRoll = 100; { Random(100) + 1: the percentile of an 18 Strength fighter }
+  StartAttacks = 2;             { Attacks }
+  StartBaseDamage = 2;          { BaseDamage[1] }
+  StartMovement = $C;           { BaseMovement }
+  SpellDetectMagic = $B;        { the magic-user spells a magic-user starts with (SpellNames) }
+  SpellReadMagic = $12;
+  SpellShield = $13;
+  SpellSleep = $15;
+  SpellCount = $38;             { the spells of SpellTable }
+  KeepAnswer = 'Y';
+  NameMaxLength = $F;           { TCharacter.Name is string[15] }
+var
+  NewCharacter: PCharacter;     { [bp-4]: the working copy of the character being created }
+  SavedSelection: PCharacter;   { [bp-8]: SelectedCharacter before the creation replaced it }
+  MenuList: PMenuLine;          { [bp-0xC]: the list menu being shown (title line first) }
+  PickedLine: PMenuLine;        { [bp-0x10]: ChooseFromList's selected line, and the line being filled }
+  Choice: Integer;              { [bp-0x12]: ChooseFromList's choice, 1 is the first line after the title }
+  I: Byte;                      { [bp-0x13]: the menu line / figure / spell loop }
+  RollAttempt: Byte;            { [bp-0x14]: the six rolls of one ability }
+  AbilityRoll: Byte;            { [bp-0x15]: the current RollDice(3, 6) }
+  Key: Char;                    { [bp-0x16]: the key ChooseFromList or AskYesNo returned }
+  RaceIndex: ShortInt;          { [bp-0x17]: the race menu's loop variable; 7 afterwards (see the QUIRK) }
+  GenderIndex: ShortInt;        { [bp-0x18]: the gender menu's loop variable }
+  ClassIndex: ShortInt;         { [bp-0x19]: the class loop: 0..7 }
+  Spare1: Byte;                 { [bp-0x1A]: the original frame reserves this byte, never used }
+  AbilityIndex: ShortInt;       { [bp-0x1B]: the ability being rolled: 0..5 }
+  ChoiceCount: Byte;            { [bp-0x1C]: the number of choices of the class or alignment menu }
+  ConAdjustment: Integer;       { [bp-0x1E]: ConstitutionHitPointAdjustment of the new character }
+  Spare2: Byte;                 { [bp-0x1F]: the original frame reserves this byte, never used }
+  ClassTotal: Byte;             { [bp-0x20]: the number of classes the character has a level in }
+  GoldDiceTotal: Byte;          { [bp-0x21]: the starting-gold dice rolled over the classes }
+  WithExit: Byte;               { [bp-0x22]: ChooseFromList's WithExit, 1 }
+  Redraw: Byte;                 { [bp-0x23]: ChooseFromList's var Redraw, 1 }
+begin
+  GetMem(NewCharacter, CharacterSize);
+  FillChar(NewCharacter^, CharacterSize, 0);
+  with NewCharacter^ do
+  begin
+    for I := 1 to StartFigureCount do
+      Figure[I] := ds3CF5[I] + (ds3CF5[I] + 8) * 16;
+    ResistBase := StartResist;
+    Thac0 := StartThac0;
+    Status := 0;
+    Flag10D := 1;
+    HeadBank := 1;
+    BodyBank := 1;
+    CombatSize := 1;
+    BAB := Random(256);
+  end;
+  NewMenuList(MenuRaceLines, MenuList);
+  MenuList^.Flag29 := 1;
+  MenuList^.Text := 'Pick Race';
+  for RaceIndex := 1 to HumanRace do
+    case RaceIndex of
+      FirstRaceLine..LastMenuRace:
+        begin
+          PickedLine := GetMenuLine(RaceIndex, MenuList);
+          PickedLine^.Text := '  ' + RaceNames[RaceIndex];
+        end;
+      HumanRace:
+        begin
+          PickedLine := GetMenuLine(RaceIndex - 1, MenuList);
+          PickedLine^.Text := '  ' + RaceNames[RaceIndex];
+        end;
+    end;
+  PickedLine := MenuList;
+  Choice := 1;
+  Redraw := 1;
+  WithExit := 1;
+  repeat
+    Key := ChooseFromList('', '', MenuHeadingColour, MenuLineColour, MenuHighlightColour, MenuLeftCol,
+      MenuTopRow, MenuRightCol, MenuBottomRow, MenuList, WithExit, Redraw, Choice, PickedLine);
+    if Key = KeyEscape then Exit;
+  until Key = KeyEnter;
+  if Choice = HumanMenuLine then
+    Inc(Choice);
+  with NewCharacter^ do
+  begin
+    Race := Choice;
+    case Race of
+      RaceHalfling:
+        begin
+          Figure[0] := FighterFigure;
+          AddAffect(NewCharacter, AffectSaveHookA, PermanentDuration, DataFF, NoRemoveHandler);
+          AddAffect(NewCharacter, AffectSaveHookB, PermanentDuration, DataFF, NoRemoveHandler);
+        end;
+      RaceDwarf:
+        begin
+          Figure[0] := FighterFigure;
+          AddAffect(NewCharacter, AffectSaveHookA, PermanentDuration, DataFF, NoRemoveHandler);
+          AddAffect(NewCharacter, AffectSaveHookB, PermanentDuration, DataFF, NoRemoveHandler);
+          AddAffect(NewCharacter, AffectAttackHookA, PermanentDuration, DataFF, NoRemoveHandler);
+          AddAffect(NewCharacter, AffectTargetHookA, PermanentDuration, DataFF, NoRemoveHandler);
+        end;
+      RaceGnome:
+        begin
+          Figure[0] := FighterFigure;
+          AddAffect(NewCharacter, AffectSaveHookB, PermanentDuration, DataFF, NoRemoveHandler);
+          AddAffect(NewCharacter, AffectAttackHookB, PermanentDuration, DataFF, NoRemoveHandler);
+          AddAffect(NewCharacter, AffectTargetHookA, PermanentDuration, DataFF, NoRemoveHandler);
+          AddAffect(NewCharacter, AffectTargetHookB, PermanentDuration, DataFF, NoRemoveHandler);
+        end;
+      RaceElf:
+        begin
+          Figure[0] := OtherFigure;
+          AddAffect(NewCharacter, AffectNewAffectElf, PermanentDuration, DataFF, NoRemoveHandler);
+        end;
+      RaceHalfElf:
+        begin
+          Figure[0] := OtherFigure;
+          AddAffect(NewCharacter, AffectNewAffectHalfElf, PermanentDuration, DataFF, NoRemoveHandler);
+        end;
+    else
+      Figure[0] := OtherFigure;
+    end;
+  end;
+  FreeMenuList(MenuList);
+  NewMenuList(MenuGenderLines, MenuList);
+  MenuList^.Flag29 := 1;
+  MenuList^.Text := 'Pick Gender';
+  for GenderIndex := 0 to 1 do
+  begin
+    PickedLine := GetMenuLine(GenderIndex + 1, MenuList);
+    PickedLine^.Text := '  ' + SexNames[GenderIndex];
+  end;
+  PickedLine := MenuList;
+  Choice := 1;
+  WithExit := 1;
+  Redraw := 1;
+  repeat
+    Key := ChooseFromList('', '', MenuHeadingColour, MenuLineColour, MenuHighlightColour, MenuLeftCol,
+      MenuTopRow, MenuRightCol, MenuBottomRow, MenuList, WithExit, Redraw, Choice, PickedLine);
+    if Key = KeyEscape then Exit;
+  until Key = KeyEnter;
+  NewCharacter^.B9E := Choice - 1;
+  FreeMenuList(MenuList);
+  ChoiceCount := ds3E17[NewCharacter^.Race, 0];
+  NewMenuList(ChoiceCount + 1, MenuList);
+  MenuList^.Flag29 := 1;
+  MenuList^.Text := 'Pick Class';
+  for I := 1 to ChoiceCount do
+  begin
+    PickedLine := GetMenuLine(I, MenuList);
+    PickedLine^.Text := '  ' + ClassNames[ds3E17[NewCharacter^.Race, I]];
+  end;
+  PickedLine := MenuList;
+  Choice := 1;
+  WithExit := 1;
+  Redraw := 1;
+  repeat
+    Key := ChooseFromList('', '', MenuHeadingColour, MenuLineColour, MenuHighlightColour, MenuLeftCol,
+      MenuTopRow, MenuRightCol, MenuBottomRow, MenuList, WithExit, Redraw, Choice, PickedLine);
+    if Key = KeyEscape then Exit;
+  until Key = KeyEnter;
+  with NewCharacter^ do
+  begin
+    ClassMask := ds3E17[Race, Choice];
+    HighestLevel := 1;
+    case ClassMask of
+      0..7: ClassLevels[ClassMask] := 1;
+      ClericFighter:
+        begin
+          ClassLevels[ClericClass] := 1;
+          ClassLevels[FighterClass] := 1;
+        end;
+      ClericFighterMage:
+        begin
+          ClassLevels[ClericClass] := 1;
+          ClassLevels[FighterClass] := 1;
+          ClassLevels[MageClass] := 1;
+        end;
+      ClericRanger:
+        begin
+          ClassLevels[ClericClass] := 1;
+          ClassLevels[RangerClass] := 1;
+        end;
+      ClericMage:
+        begin
+          ClassLevels[ClericClass] := 1;
+          ClassLevels[MageClass] := 1;
+        end;
+      ClericThief:
+        begin
+          ClassLevels[ClericClass] := 1;
+          ClassLevels[ThiefClass] := 1;
+        end;
+      FighterMage:
+        begin
+          ClassLevels[FighterClass] := 1;
+          ClassLevels[MageClass] := 1;
+        end;
+      FighterThief:
+        begin
+          ClassLevels[FighterClass] := 1;
+          ClassLevels[ThiefClass] := 1;
+        end;
+      FighterMageThief:
+        begin
+          ClassLevels[FighterClass] := 1;
+          ClassLevels[MageClass] := 1;
+          ClassLevels[ThiefClass] := 1;
+        end;
+      MageThief:
+        begin
+          ClassLevels[MageClass] := 1;
+          ClassLevels[ThiefClass] := 1;
+        end;
+    end;
+    if ClassLevels[ThiefClass] > 0 then
+      ComputeThiefSkills(NewCharacter);
+    ClassBits := 0;
+    Thac0 := 0;
+    for ClassIndex := 0 to ClassTypeCount - 1 do
+      if ClassLevels[ClassIndex] > 0 then
+      begin
+        if ClassThac0Table[ClassIndex, ClassLevels[ClassIndex]] > Thac0 then
+          Thac0 := ClassThac0Table[ClassIndex, ClassLevels[ClassIndex]];
+        Inc(ClassBits, ds05D6[ClassIndex]);
+      end;
+  end;
+  ComputeSavingThrows(NewCharacter);
+  FreeMenuList(MenuList);
+  ChoiceCount := ds3FE7[NewCharacter^.ClassMask, 0];
+  NewMenuList(ChoiceCount + 1, MenuList);
+  MenuList^.Flag29 := 1;
+  MenuList^.Text := 'Pick Alignment';
+  for I := 1 to ChoiceCount do
+  begin
+    PickedLine := GetMenuLine(I, MenuList);
+    PickedLine^.Text := '  ' + AlignmentNames[ds3FE7[NewCharacter^.ClassMask, I]];
+  end;
+  PickedLine := MenuList;
+  Choice := 1;
+  WithExit := 1;
+  Redraw := 1;
+  repeat
+    Key := ChooseFromList('', '', MenuHeadingColour, MenuLineColour, MenuHighlightColour, MenuLeftCol,
+      MenuTopRow, MenuRightCol, MenuBottomRow, MenuList, WithExit, Redraw, Choice, PickedLine);
+    if Key = KeyEscape then Exit;
+  until Key = KeyEnter;
+  NewCharacter^.ByteA0 := ds3FE7[NewCharacter^.ClassMask, Choice];
+  FreeMenuList(MenuList);
+  if NewCharacter^.ClassMask <= 7 then
+    with ds3E5B[NewCharacter^.Race, NewCharacter^.ClassMask] do
+      NewCharacter^.Age := RollDice(Count, Sides) + Base
+  else
+    with NewCharacter^ do
+      case ClassMask of
+        ClericFighter:
+          Age := ds3E5B[Race, ClericClass].Base
+            + ds3E5B[Race, ClericClass].Sides * ds3E5B[Race, ClericClass].Count;
+        ClericFighterMage:
+          Age := ds3E5B[Race, ClericClass].Base
+            + ds3E5B[Race, ClericClass].Sides * ds3E5B[Race, ClericClass].Count;
+        ClericMage:
+          Age := ds3E5B[Race, ClericClass].Base
+            + ds3E5B[Race, ClericClass].Sides * ds3E5B[Race, ClericClass].Count;
+        ClericThief:
+          Age := ds3E5B[Race, ClericClass].Base
+            + ds3E5B[Race, ClericClass].Sides * ds3E5B[Race, ClericClass].Count;
+        FighterMage:
+          Age := ds3E5B[Race, MageClass].Base
+            + ds3E5B[Race, MageClass].Sides * ds3E5B[Race, MageClass].Count;
+        FighterThief:
+          Age := ds3E5B[Race, FighterClass].Base
+            + ds3E5B[Race, FighterClass].Sides * ds3E5B[Race, FighterClass].Count;
+        FighterMageThief:
+          Age := ds3E5B[Race, MageClass].Base
+            + ds3E5B[Race, MageClass].Sides * ds3E5B[Race, MageClass].Count;
+        MageThief:
+          Age := ds3E5B[Race, MageClass].Base
+            + ds3E5B[Race, MageClass].Sides * ds3E5B[Race, MageClass].Count;
+      end;
+  SavedSelection := SelectedCharacter;
+  SelectedCharacter := NewCharacter;
+  ShowCharacterSheet;
+  repeat
+    NewCharacter^.StrengthPercent := 0;
+    for AbilityIndex := 0 to CharismaIndex do
+    begin
+      PScoredCharacter(NewCharacter)^.Scores[AbilityIndex] := 0;
+      for RollAttempt := 1 to AbilityRollCount do
+      begin
+        AbilityRoll := RollDice(AbilityDiceCount, AbilityDiceSides);
+        case RaceIndex of
+          RaceDwarf:
+            case AbilityIndex of
+              ConstitutionIndex: Inc(AbilityRoll);
+              CharismaIndex: Dec(AbilityRoll);
+            end;
+          RaceElf:
+            case AbilityIndex of
+              DexterityIndex: Inc(AbilityRoll);
+              ConstitutionIndex: Dec(AbilityRoll);
+            end;
+          RaceHalfling:
+            case AbilityIndex of
+              StrengthIndex: Dec(AbilityRoll);
+              DexterityIndex: Inc(AbilityRoll);
+            end;
+          RaceHalfOrc:
+            case AbilityIndex of
+              StrengthIndex: Inc(AbilityRoll);
+              ConstitutionIndex: Inc(AbilityRoll);
+              CharismaIndex: Dec(AbilityRoll, 2);
+            end;
+        end;
+        if PScoredCharacter(NewCharacter)^.Scores[AbilityIndex] < AbilityRoll then
+          PScoredCharacter(NewCharacter)^.Scores[AbilityIndex] := AbilityRoll;
+      end;
+      with PScoredCharacter(NewCharacter)^ do
+        case AbilityIndex of
+          StrengthIndex:
+            begin
+              if (Scores[AbilityIndex] > 0) and (ds3F31[Race, YoungAdultAge] < Age) then
+                Inc(Scores[AbilityIndex]);
+              if (Scores[AbilityIndex] > 0) and (ds3F31[Race, MiddleAge] < Age) then
+                Dec(Scores[AbilityIndex]);
+              if (Scores[AbilityIndex] > 0) and (ds3F31[Race, OldAge] < Age) then
+                Dec(Scores[AbilityIndex], 2);
+              if (Scores[AbilityIndex] > 0) and (ds3F31[Race, VenerableAge] < Age) then
+                Dec(Scores[AbilityIndex]);
+              if Scores[AbilityIndex] < ds3DA3[Race, B9E] then
+                Scores[AbilityIndex] := ds3DA3[Race, B9E];
+              if Scores[AbilityIndex] > RaceStrengthMax[Race, B9E] then
+                Scores[AbilityIndex] := RaceStrengthMax[Race, B9E];
+              if Scores[AbilityIndex] < ds3F81[ClassMask, AbilityIndex] then
+                Scores[AbilityIndex] := ds3F81[ClassMask, AbilityIndex];
+              if (Scores[StrengthIndex] = ExceptionalStrength) and (ClassLevels[FighterClass] > 0) then
+              begin
+                StrengthPercent := Random(ExceptionalStrengthRoll) + 1;
+                if RaceStrengthPercent[Race, B9E] < StrengthPercent then
+                  StrengthPercent := RaceStrengthPercent[Race, B9E];
+              end;
+            end;
+          IntelligenceIndex:
+            begin
+              if ds3F31[Race, MiddleAge] < Age then
+                Inc(Scores[AbilityIndex]);
+              if ds3F31[Race, VenerableAge] < Age then
+                Inc(Scores[AbilityIndex]);
+              if Scores[AbilityIndex] < ds3DA3[Race, IntMinOffset] then
+                Scores[AbilityIndex] := ds3DA3[Race, IntMinOffset];
+              if Scores[AbilityIndex] > ds3DA3[Race, IntMaxOffset] then
+                Scores[AbilityIndex] := ds3DA3[Race, IntMaxOffset];
+              if Scores[AbilityIndex] < ds3F81[ClassMask, AbilityIndex] then
+                Scores[AbilityIndex] := ds3F81[ClassMask, AbilityIndex];
+            end;
+          WisdomIndex:
+            begin
+              if ds3F31[Race, YoungAdultAge] >= Age then
+                Dec(Scores[AbilityIndex]);
+              if ds3F31[Race, MiddleAge] < Age then
+                Inc(Scores[AbilityIndex]);
+              if ds3F31[Race, OldAge] < Age then
+                Inc(Scores[AbilityIndex]);
+              if ds3F31[Race, VenerableAge] < Age then
+                Inc(Scores[AbilityIndex]);
+              if Scores[AbilityIndex] < ds3DA3[Race, WisMinOffset] then
+                Scores[AbilityIndex] := ds3DA3[Race, WisMinOffset];
+              if Scores[AbilityIndex] > ds3DA3[Race, WisMaxOffset] then
+                Scores[AbilityIndex] := ds3DA3[Race, WisMaxOffset];
+              if Scores[AbilityIndex] < ds3F81[ClassMask, AbilityIndex] then
+                Scores[AbilityIndex] := ds3F81[ClassMask, AbilityIndex];
+              if (Scores[AbilityIndex] < MinClericWisdom) and (ClassMask in [ClericFighter..ClericThief]) then
+                Scores[AbilityIndex] := MinClericWisdom;
+            end;
+          DexterityIndex:
+            begin
+              if ds3F31[Race, OldAge] < Age then
+                Dec(Scores[AbilityIndex], 2);
+              if ds3F31[Race, VenerableAge] < Age then
+                Dec(Scores[AbilityIndex]);
+              if Scores[AbilityIndex] < ds3DA3[Race, DexMinOffset] then
+                Scores[AbilityIndex] := ds3DA3[Race, DexMinOffset];
+              if Scores[AbilityIndex] > ds3DA3[Race, DexMaxOffset] then
+                Scores[AbilityIndex] := ds3DA3[Race, DexMaxOffset];
+              if Scores[AbilityIndex] < ds3F81[ClassMask, AbilityIndex] then
+                Scores[AbilityIndex] := ds3F81[ClassMask, AbilityIndex];
+            end;
+          ConstitutionIndex:
+            begin
+              if ds3F31[Race, MiddleAge] < Age then
+                Dec(Scores[AbilityIndex]);
+              if ds3F31[Race, OldAge] < Age then
+                Dec(Scores[AbilityIndex]);
+              if ds3F31[Race, VenerableAge] < Age then
+                Dec(Scores[AbilityIndex]);
+              if Scores[AbilityIndex] < ds3DA3[Race, ConMinOffset] then
+                Scores[AbilityIndex] := ds3DA3[Race, ConMinOffset];
+              if Scores[AbilityIndex] > ds3DA3[Race, ConMaxOffset] then
+                Scores[AbilityIndex] := ds3DA3[Race, ConMaxOffset];
+              if Scores[AbilityIndex] < ds3F81[ClassMask, AbilityIndex] then
+                Scores[AbilityIndex] := ds3F81[ClassMask, AbilityIndex];
+            end;
+          CharismaIndex:
+            begin
+              if Scores[AbilityIndex] < ds3DA3[Race, ChaMinOffset] then
+                Scores[AbilityIndex] := ds3DA3[Race, ChaMinOffset];
+              if Scores[AbilityIndex] > ds3DA3[Race, ChaMaxOffset] then
+                Scores[AbilityIndex] := ds3DA3[Race, ChaMaxOffset];
+              if Scores[AbilityIndex] < ds3F81[ClassMask, AbilityIndex] then
+                Scores[AbilityIndex] := ds3F81[ClassMask, AbilityIndex];
+            end;
+        end;
+      ShowAbilityScore(AbilityIndex, False);
+    end;
+    with NewCharacter^ do
+    begin
+      Flag11B := HpMax;
+      Attacks := StartAttacks;
+      BaseAttacks[1] := 1;
+      BaseDamage[1] := StartBaseDamage;
+      StrengthBonusFlag := 1;
+      BaseMovement := StartMovement;
+      GoldDiceTotal := 0;
+      ClassTotal := 0;
+      for ClassIndex := 0 to ClassTypeCount - 1 do
+        if ClassLevels[ClassIndex] > 0 then
+        begin
+          case ClassIndex of
+            ClericClass: SpellSlots[0, 1] := 1;
+            MageClass: SpellSlots[1, 1] := 1;
+          end;
+          Inc(GoldDiceTotal, RollDice(ds4263[ClassIndex, 0], ds4263[ClassIndex, 1]));
+          Inc(ClassTotal);
+          case ClassIndex of
+            ClericClass:
+              begin
+                AddWisdomBonusSpells(NewCharacter);
+                for I := 1 to SpellCount do
+                  with SpellTable[I] do
+                    if (SpellClass = 0) and (Level = 1) then
+                      KnownSpells[I] := 1;
+              end;
+            MageClass:
+              begin
+                KnownSpells[SpellDetectMagic] := 1;
+                KnownSpells[SpellReadMagic] := 1;
+                KnownSpells[SpellShield] := 1;
+                KnownSpells[SpellSleep] := 1;
+              end;
+          end;
+        end;
+      Money[Ord(GoldCoin)] := GoldDiceTotal * 10 div ClassTotal;
+      HpB1 := RollHitPoints(NewCharacter, $FF);
+      HpMax := HpB1;
+      ConAdjustment := ConstitutionHitPointAdjustment(NewCharacter);
+      if ConAdjustment < 0 then
+      begin
+        if HpMax > Abs(ConAdjustment) + ClassTotal then
+          HpMax := (HpMax + ConAdjustment) div ClassTotal
+        else
+          HpMax := 1;
+      end
+      else
+        HpMax := (HpMax + ConAdjustment) div ClassTotal;
+      Flag11B := HpMax;
+      HpB1 := HpB1 div ClassTotal;
+    end;
+    ShowCombatStats;
+    ShowCharacterMoney;
+    Key := AskYesNo('Keep this character? ', PromptTitleColour, PromptWordColour, PromptHotColour);
+  until Key = KeepAnswer;
+  ShowCharacterSheet;
+  SelectedCharacter := SavedSelection;
+  repeat
+    NewCharacter^.Name := ReadInputLine('Character name: ', NamePromptColour, NameMaxLength);
+  until Length(NewCharacter^.Name) <> 0;
+  SavedSelection := SelectedCharacter;
+  SelectedCharacter := NewCharacter;
+  ChooseHeadAndBody;
+  EditCharacterIcon;
+  SaveCharacter(NewCharacter, '');
+  SelectedCharacter := SavedSelection;
+  FreeMem(NewCharacter, CharacterSize);
+end;
 { ovl16:1F37. Drops the selected character from the party, the D function of the training-hall menu
   (RunCharacterMenu, ovl16:0161, whose 'Drop' item dispatches it). It asks AskYesNo "Drop <name>
   forever? " and, only when that is answered Y, a second AskYesNo "Are you sure? ". A no at either
@@ -487,49 +948,7 @@ const
   { the hit-point line the cursor's last step shows (DrawHitPoints of res12) }
   HitPointColumn = 4;
   HitPointRow = $12;
-  { the column of each ability's minimum and maximum in a 16-byte row of the per-race limits
-    ds3DA3: the Strength columns +0/+2/+4 are RaceStrengthMax and RaceStrengthPercent, and
-    Intelligence .. Charisma take the columns +6/+7 .. +14/+15. }
-  IntMinOffset = 6;
-  IntMaxOffset = 7;
-  WisMinOffset = 8;
-  WisMaxOffset = 9;
-  DexMinOffset = 10;
-  DexMaxOffset = 11;
-  ConMinOffset = 12;
-  ConMaxOffset = 13;
-  ChaMinOffset = 14;
-  ChaMaxOffset = 15;
-  ExceptionalStrength = 18;     { a Strength above this uses the exceptional percentile }
   FighterClass = 2;             { only a fighter raises the Strength percentile }
-type
-  { The modify target: TCharacter from its ability scores on, with the six scores (Strength ..
-    Charisma) as an array so the cursor can index them by stat. The offsets match TCharacter's
-    (whitepaper 4.2.5): +$10 the scores, +$16 StrengthPercent, +$2E Race, +$2F ClassMask,
-    +$32 HpMax, +$85 HirelingShare, +$96 ClassLevels, +$9E B9E, +$B2 SpellSlots, +$11B Flag11B
-    (the current hit points). }
-  PModifyTarget = ^TModifyTarget;
-  TModifyTarget = record
-    Pad0: array[0..$F] of Byte;             { +$00..+$0F: Name and the rest of TCharacter }
-    Scores: array[0..5] of Byte;            { +$10: Strength, Intelligence, Wisdom, Dexterity,
-                                              Constitution, Charisma }
-    StrengthPercent: Byte;                  { +$16 }
-    Pad17: array[$17..$2D] of Byte;
-    Race: ShortInt;                         { +$2E }
-    ClassMask: ShortInt;                    { +$2F }
-    Age: Word;                              { +$30 }
-    HpMax: Byte;                            { +$32 }
-    Pad33: array[$33..$84] of Byte;
-    HirelingShare: Byte;                    { +$85 }
-    Pad86: array[$86..$95] of Byte;
-    ClassLevels: array[0..7] of ShortInt;   { +$96..+$9D }
-    B9E: ShortInt;                          { +$9E }
-    Pad9F: Byte;                            { +$9F }
-    PadA0: array[$A0..$B1] of Byte;
-    SpellSlots: array[0..1, 1..3] of Byte;  { +$B2..+$B7 }
-    PadB8: array[$B8..$11A] of Byte;
-    Flag11B: Byte;                          { +$11B: the current hit points }
-  end;
 var
   SavedScores: array[0..5] of Byte;   { [bp-6..bp-1]: the scores as they were on entry }
   SavedStrengthPercent: Byte;         { [bp-7]: the exceptional Strength on entry }
@@ -560,14 +979,14 @@ begin
     Exit;
   end;
   ShowCharacterSheet;
-  Move(PModifyTarget(SelectedCharacter)^.Scores, SavedScores, AbilityCount);
+  Move(PScoredCharacter(SelectedCharacter)^.Scores, SavedScores, AbilityCount);
   SavedStrengthPercent := SelectedCharacter^.StrengthPercent;
   SavedHpMax := SelectedCharacter^.HpMax;
   StatIndex := HitPointIndex;
   ShowStat(False);
   StatIndex := 0;
   ShowStat(True);
-  with PModifyTarget(SelectedCharacter)^ do
+  with PScoredCharacter(SelectedCharacter)^ do
   begin
     repeat
     Key := ReadPromptChoice('Modify character: ', 'Keep Exit',
@@ -708,7 +1127,7 @@ begin
         KeyExit, KeyNone:
         begin
           for Stat := 0 to AbilityCount - 1 do
-            PModifyTarget(SelectedCharacter)^.Scores[Stat] := SavedScores[Stat];
+            PScoredCharacter(SelectedCharacter)^.Scores[Stat] := SavedScores[Stat];
           SelectedCharacter^.StrengthPercent := SavedStrengthPercent;
           SelectedCharacter^.HpMax := SavedHpMax;
           SelectedCharacter^.Flag11B := HpMax;
@@ -1106,111 +1525,436 @@ begin
   end;
   ClearPromptLine;
 end;
-{ ovl16:34DF: retf 6: 6 bytes of parameters; 0 bytes of locals }
-{ ovl16:34DF. Draws one cell of the character-icon editor: it fills the cell (FillPictureRect, 12
-  cells wide and 24 pixel rows tall, from the palette at @ds260A into DrawBuf) and draws the two
-  mirrored halves of the character's icon (DrawIcon) at columns CellCol and CellCol + 3, row CellRow.
-  On the text-only adapter (VideoAdapter 0) the fill uses colour 3 (the icon's ground) and only the
-  head pictures (index $C) are drawn; on the other adapters the fill uses colour 0 and the body
-  pictures (index $19) are drawn first. FlushPictureChanges shows the result. Called by the icon
-  editor ovl16_e3. The original reaches the routine through a nested call (push bp; push cs; call), so
-  its last parameter is a static link the body never reads. }
-procedure DrawIconCell(CellCol, CellRow: Byte; StaticLink: Word);
-const
-  IconColsPerCell = 3;    { an icon cell is 3 text columns wide }
-  CellWidthCells = $C;    { FillPictureRect width, in 8-pixel cells }
-  CellHeightRows = $18;   { FillPictureRect height, in pixel rows }
-  SecondHalfCol = 3;      { the mirrored-half icon is 3 columns right }
-  GroundColour = 3;       { the icon's ground colour on VideoAdapter 0 }
-  BodyPicIndex = $19;     { the BODY picture block of the icon }
-  HeadPicIndex = $C;      { the HEAD picture block of the icon }
-  IconSet = 0;            { the icon set DrawIcon reads the pictures from }
-begin
-  if VideoAdapter = 0 then
-    FillPictureRect(CellCol * IconColsPerCell, CellRow * CellHeightRows, CellWidthCells,
-      CellHeightRows, GroundColour, @ds260A, DrawBuf)
-  else
-  begin
-    FillPictureRect(CellCol * IconColsPerCell, CellRow * CellHeightRows, CellWidthCells,
-      CellHeightRows, 0, @ds260A, DrawBuf);
-    DrawIcon(CellCol, CellRow, IconSet, 0, BodyPicIndex);
-    DrawIcon(CellCol + SecondHalfCol, CellRow, IconSet, 1, BodyPicIndex);
+{ ovl16:382D. The character-icon editor: the Icon function of the camp's Alter menu (AlterMenu,
+  ovl15:1C59) and the last step of CreateCharacter (after ChooseHeadAndBody). No parameters; it edits
+  SelectedCharacter in place: the CHEAD and CBODY picture blocks (CHeadBlock, CBodyBlock), the icon
+  size (Figure[0]: 1 small, 2 large) and the six colour pairs (Figure[1..6], low nibble colour 1,
+  high nibble colour 2) that BuildCharacterIcon (ovl17:0482) and CopyPictureSlot turn into the
+  character's combat icon (the picture slot CombatIcon of the table ds5E5A).
+  It draws the editor window, then the icon as it was on entry (icon cell row 2, caption 'old') and
+  the working icon (cell row 4, caption 'new'), each with the caption 'ready   action' below it (the
+  two halves DrawIconCell draws, the identical and the mirrored picture). The working icon lives in
+  scratch slot WorkSlot ($C): CopyPictureSlot recolours the combat icon into it after every key.
+  A prompt line (ReadPromptChoice, no title, the word list IconEditorPrompts[State]) offers the choices of the
+  current State: StateMain picks Parts, color-1, color-2 or Size (Exit or Escape leaves);
+  StateParts picks the Head or the Weapon picture; StateColourPart picks the part whose colour
+  changes (Weapon, Body, Hair or Face, Shield, Arm, Leg); StateSize picks Small or Large; StateStep
+  then steps the chosen block with Next and Prev, or the chosen colour nibble through the 16 colours.
+  Keep saves the value in the Saved... locals and returns to Mode, the state it came from; Exit or
+  Escape restores the saved value. Leaving StateMain restores the saved (last kept) values and
+  copies the working icon back into the combat icon slot. The editor then asks AskYesNo 'Is this
+  icon ok? ' and starts again on anything but Y; on a map-window area view (AreaViewKind above 1) it
+  first reloads the ICON pictures 0 and 1 into slots 11 and 12 (the slots it used as scratch).
+  Globals: reads and changes SelectedCharacter^ (CHeadBlock, CBodyBlock, CombatIcon, Figure) and the
+  prompt lines IconEditorPrompts (the word 'xxxx' of line 3 becomes 'Hair' or 'Face'); reads AreaViewKind.
+  ovl31_e2 and ovl31_e3 bracket the editor (palette register calls when VideoAdapter is 1, purpose
+  unknown).
+  QUIRK ovl16:39F9: ReadPromptChoice is called with ExtKeys 0, so ExtKey is always 0 and the `if
+  ExtKey = 0` guard never skips the key dispatch. QUIRK ovl16:3987: the size prompt names the size
+  the player can switch to: 'Small' is shown while Figure[0] is 2 (large), 'Large' otherwise. }
+procedure EditCharacterIcon;
+type
+  TFigureColours = array[1..6] of Byte;
+  TFigureBytes = record             { the character's Figure array: the size, then the six colour pairs }
+    Size: Byte;
+    Colours: TFigureColours;
   end;
-  DrawIcon(CellCol, CellRow, IconSet, 0, HeadPicIndex);
-  DrawIcon(CellCol + SecondHalfCol, CellRow, IconSet, 1, HeadPicIndex);
-  FlushPictureChanges;
-end;
-{ ovl16:35BE. Copies one picture slot of the character-icon table DS:5E5A into another: both halves
-  (the identical half at FirstPic and the mirrored half at SecondPic) get their tile bytes (the tail
-  at +$17) and their packed pixel bytes (the buffer Pixels points at, +$13) copied from Source into
-  Dest. ByteSize (the word at +$11) gives the tile size; on the EGA adapter (VideoAdapter 1) the
-  pixel buffer holds a quarter of that. When Recolor is set the copied destination icon is recoloured
-  with the selected character's six colour pairs (Figure[1..6] through ds3CF5), exactly the
-  recolouring BuildCharacterIcon (ovl17:0482) applies. Called by the icon editor ovl16_e3 (its Source
-  is the character's CombatIcon) and by ovl16_fn_3E2F. The original reaches it through a nested call
-  (push bp; push cs; call), so its last parameter is a static link the body never reads. }
-procedure CopyPictureSlot(Source, Dest, Recolor: Byte; StaticLink: Word);
+const
+  WindowLeft = 1;                 { the editor window, drawn by DrawWindow with no title }
+  WindowTop = 1;
+  WindowRight = $26;
+  WindowBottom = $16;
+  { The editor's states: the line of IconEditorPrompts the prompt shows. }
+  StateMain = 1;                  { 'Parts color-1 color-2 Size Exit' }
+  StateParts = 2;                 { 'Head Weapon Exit' }
+  StateColourPart = 3;            { 'Weapon Body Hair Shield Arm Leg Exit' ('Face' instead of 'Hair' for color-2) }
+  StateSize = 4;                  { 'Small Keep Exit' or 'Large Keep Exit' }
+  StateStep = 5;                  { 'Next Prev Keep Exit' }
+  ColourPromptLine = 3;           { the line of IconEditorPrompts holding the word 'xxxx' ... }
+  ColourWordColumn = 13;          { ... which starts at this column ... }
+  ColourWordLength = 4;           { ... and is this long ('Hair' or 'Face') }
+  { The pictures. }
+  WorkSlot = $C;                  { scratch picture slot of ds5E5A the editor draws the working icon from }
+  ReloadedSlot = $B;              { slot 11: BuildCharacterIcon's scratch slot, reloaded with ICON picture 0 }
+  OldCellRow = 2;                 { the icon cell of the icon as it was on entry }
+  NewCellRow = 4;                 { the icon cell of the working icon }
+  EditorCellCol = 1;
+  CaptionOldCol = 8;              { 'old' and 'new', beside the cells (text columns and rows) }
+  CaptionOldRow = 6;
+  CaptionNewRow = $C;
+  HalvesCol = 3;                  { 'ready   action', under each cell }
+  HalvesOldRow = $A;
+  HalvesNewRow = $10;
+  CaptionColour = $F;
+  { The icon's fields. }
+  IconSizeSmall = 1;              { Figure[0]: the CHEAD/CBODY suffix 'S' }
+  IconSizeLarge = 2;              { Figure[0]: the suffix 'T' }
+  MaxHeadBlock = 13;              { CHeadBlock runs 0..13 }
+  MaxBodyBlock = $1F;             { CBodyBlock runs 0..31 }
+  { The Figure[1..6] colour pairs, named by the prompt word that picks them. }
+  PartBody = 1;
+  PartArm = 2;
+  PartLeg = 3;
+  PartHairFace = 4;
+  PartShield = 5;
+  PartWeapon = 6;
+  { The prompt line (ReadPromptChoice of ovl25): title, word and hotkey colours; ExtKeys 0 and
+    Animate 0. }
+  PromptTitleColour = $D;
+  PromptWordColour = $A;
+  PromptHotColour = $F;
+  { The hotkeys of the prompt words. }
+  KeyEscape = #0;                 { what ReadPromptChoice returns on Escape }
+  KeySpace = ' ';                 { the key the editor stores to mean 'nothing pressed' }
+  KeyParts = 'P';
+  KeyColour1 = '1';
+  KeyColour2 = '2';
+  KeySize = 'S';
+  KeyHead = 'H';
+  KeyWeapon = 'W';
+  KeyBody = 'B';
+  KeyHair = 'H';
+  KeyFace = 'F';
+  KeyShield = 'S';
+  KeyArm = 'A';
+  KeyLeg = 'L';
+  KeyLarge = 'L';
+  KeySmall = 'S';
+  KeyNext = 'N';
+  KeyPrev = 'P';
+  KeyKeep = 'K';
+  KeyExit = 'E';
+  KeyYes = 'Y';
 var
-  I: Byte;                          { [bp-1]: loop index over the colour map }
-  Spare: Byte;                      { [bp-2]: the original frame reserves this byte, never read }
-  MapFrom: array[0..15] of Byte;    { [bp-0x12..bp-3]: the icon's source colours (the identity map) }
-  MapTo: array[0..15] of Byte;      { [bp-0x22..bp-0x13]: the destination colour of each source colour }
-  PixelBytes: Word;                 { [bp-0x24]: the pixel-buffer size copied }
+  UnusedTop: Byte;                    { [bp-1]: the original frame reserves this byte, never read }
+  Key: Char;                          { [bp-2]: the key ReadPromptChoice returned }
+  ExtKey: Byte;                       { [bp-3]: nonzero when Key is an extended key (the editor ignores those) }
+  SavedCHeadBlock: Byte;              { [bp-4]: CHeadBlock as last kept }
+  SavedCBodyBlock: Byte;              { [bp-5]: CBodyBlock as last kept }
+  SavedSize: Byte;                    { [bp-6]: Figure[0] as last kept }
+  SavedCombatIcon: Byte;              { [bp-7]: CombatIcon while BuildCharacterIcon builds into WorkSlot }
+  State: Byte;                        { [bp-8]: the prompt line shown (StateMain..StateStep) }
+  SizeName: string[5];                { [bp-0xe..bp-9]: 'Small' or 'Large' in StateSize, else empty }
+  UnusedMid: Byte;                    { [bp-0xf]: the original frame reserves this byte, never read }
+  SavedFigure: TFigureColours;        { [bp-0x15..bp-0x10]: Figure[1..6] as last kept }
+  ColourPart: Byte;                   { [bp-0x16]: the Figure index (PartBody..PartWeapon) whose colours change }
+  EditFace: Boolean;                  { [bp-0x17]: the high nibble (color-2, Face) is edited, not the low (color-1, Hair) }
+  LowNibble: Byte;                    { [bp-0x18]: colour 1 of Figure[ColourPart] }
+  HighNibble: Byte;                   { [bp-0x19]: colour 2 of Figure[ColourPart] }
+  Mode: Byte;                         { [bp-0x1a]: the state StateStep returns to (StateParts or StateColourPart) }
+  PartKey: Char;                      { [bp-0x1b]: the picture chosen in StateParts (KeyHead or KeyWeapon) }
+
+  { ovl16:34DF (nested). Draws one cell of the editor: it fills the cell (FillPictureRect, 12 cells
+    wide and 24 pixel rows tall, from the palette at @ds260A into DrawBuf) and draws the two mirrored
+    halves of the icon (DrawIcon) at columns CellCol and CellCol + 3, row CellRow. On the text-only
+    adapter (VideoAdapter 0) the fill uses colour 3 (the icon's ground) and only the head pictures
+    (index $C, WorkSlot) are drawn; on the other adapters the fill uses colour 0 and the body pictures
+    (index $19) are drawn first. FlushPictureChanges shows the result. It reads nothing of the
+    editor's own variables. }
+  procedure DrawIconCell(CellCol, CellRow: Byte);
+  const
+    IconColsPerCell = 3;    { an icon cell is 3 text columns wide }
+    CellWidthCells = $C;    { FillPictureRect width, in 8-pixel cells }
+    CellHeightRows = $18;   { FillPictureRect height, in pixel rows }
+    SecondHalfCol = 3;      { the mirrored-half icon is 3 columns right }
+    GroundColour = 3;       { the icon's ground colour on VideoAdapter 0 }
+    BodyPicIndex = $19;     { the BODY picture block of the icon }
+    HeadPicIndex = $C;      { the HEAD picture block of the icon }
+    IconSet = 0;            { the icon set DrawIcon reads the pictures from }
+  begin
+    if VideoAdapter = 0 then
+      FillPictureRect(CellCol * IconColsPerCell, CellRow * CellHeightRows, CellWidthCells,
+        CellHeightRows, GroundColour, @ds260A, DrawBuf)
+    else
+    begin
+      FillPictureRect(CellCol * IconColsPerCell, CellRow * CellHeightRows, CellWidthCells,
+        CellHeightRows, 0, @ds260A, DrawBuf);
+      DrawIcon(CellCol, CellRow, IconSet, 0, BodyPicIndex);
+      DrawIcon(CellCol + SecondHalfCol, CellRow, IconSet, 1, BodyPicIndex);
+    end;
+    DrawIcon(CellCol, CellRow, IconSet, 0, HeadPicIndex);
+    DrawIcon(CellCol + SecondHalfCol, CellRow, IconSet, 1, HeadPicIndex);
+    FlushPictureChanges;
+  end;
+
+  { ovl16:35BE (nested). Copies one picture slot of the character-icon table DS:5E5A into another:
+    both halves (the identical half at FirstPic and the mirrored half at SecondPic) get their tile
+    bytes (the tail at +$17) and their packed pixel bytes (the buffer Pixels points at, +$13) copied
+    from Source into Dest. ByteSize (the word at +$11) gives the tile size; on the EGA adapter
+    (VideoAdapter 1) the pixel buffer holds a quarter of that. When Recolor is set the copied
+    destination icon is recoloured with the selected character's six colour pairs (Figure[1..6]
+    through ds3CF5), exactly the recolouring BuildCharacterIcon (ovl17:0482) applies. The editor
+    calls it with the character's CombatIcon as Source and WorkSlot as Dest (and the other way round
+    at the end, without recolouring). It reads nothing of the editor's own variables. }
+  procedure CopyPictureSlot(Source, Dest, Recolor: Byte);
+  var
+    I: Byte;                          { [bp-1]: loop index over the colour map }
+    Spare: Byte;                      { [bp-2]: the original frame reserves this byte, never read }
+    MapFrom: array[0..15] of Byte;    { [bp-0x12..bp-3]: the icon's source colours (the identity map) }
+    MapTo: array[0..15] of Byte;      { [bp-0x22..bp-0x13]: the destination colour of each source colour }
+    PixelBytes: Word;                 { [bp-0x24]: the pixel-buffer size copied }
+  begin
+    PixelBytes := PMemPic(ds5E5A[Dest].FirstPic)^.ByteSize;
+    if VideoAdapter = 1 then
+      PixelBytes := PixelBytes shr 1 shr 1;
+    Move(PMemPic(ds5E5A[Source].FirstPic)^.Tail, PMemPic(ds5E5A[Dest].FirstPic)^.Tail,
+      PMemPic(ds5E5A[Dest].FirstPic)^.ByteSize);
+    Move(PMemPic(ds5E5A[Source].SecondPic)^.Tail, PMemPic(ds5E5A[Dest].SecondPic)^.Tail,
+      PMemPic(ds5E5A[Dest].SecondPic)^.ByteSize);
+    Move(PMemPic(ds5E5A[Source].FirstPic)^.Pixels^, PMemPic(ds5E5A[Dest].FirstPic)^.Pixels^, PixelBytes);
+    Move(PMemPic(ds5E5A[Source].SecondPic)^.Pixels^, PMemPic(ds5E5A[Dest].SecondPic)^.Pixels^, PixelBytes);
+    if Recolor <> 0 then
+      with SelectedCharacter^ do
+      begin
+        for I := 0 to 15 do
+        begin
+          MapFrom[I] := I;
+          MapTo[I] := I;
+        end;
+        for I := 1 to 6 do
+        begin
+          MapTo[ds3CF5[I]] := Figure[I] and $0F;
+          MapTo[ds3CF5[I] + 8] := (Figure[I] and $F0) shr 4;
+        end;
+        RemapPictureColours(@MapFrom, @MapTo, 0, 0, ds5E5A[Dest].FirstPic);
+        RemapPictureColours(@MapFrom, @MapTo, 0, 0, ds5E5A[Dest].SecondPic);
+      end;
+  end;
+
 begin
-  PixelBytes := PMemPic(ds5E5A[Dest].FirstPic)^.ByteSize;
-  if VideoAdapter = 1 then
-    PixelBytes := PixelBytes shr 1 shr 1;
-  Move(PMemPic(ds5E5A[Source].FirstPic)^.Tail, PMemPic(ds5E5A[Dest].FirstPic)^.Tail,
-    PMemPic(ds5E5A[Dest].FirstPic)^.ByteSize);
-  Move(PMemPic(ds5E5A[Source].SecondPic)^.Tail, PMemPic(ds5E5A[Dest].SecondPic)^.Tail,
-    PMemPic(ds5E5A[Dest].SecondPic)^.ByteSize);
-  Move(PMemPic(ds5E5A[Source].FirstPic)^.Pixels^, PMemPic(ds5E5A[Dest].FirstPic)^.Pixels^, PixelBytes);
-  Move(PMemPic(ds5E5A[Source].SecondPic)^.Pixels^, PMemPic(ds5E5A[Dest].SecondPic)^.Pixels^, PixelBytes);
-  if Recolor <> 0 then
+  DrawWindow(WindowLeft, WindowTop, WindowRight, WindowBottom, 0, 0, '');
+  ovl31_e2;
+  repeat
+    BuildCharacterIcon(False);
     with SelectedCharacter^ do
     begin
-      for I := 0 to 15 do
-      begin
-        MapFrom[I] := I;
-        MapTo[I] := I;
-      end;
-      for I := 1 to 6 do
-      begin
-        MapTo[ds3CF5[I]] := Figure[I] and $0F;
-        MapTo[ds3CF5[I] + 8] := (Figure[I] and $F0) shr 4;
-      end;
-      RemapPictureColours(@MapFrom, @MapTo, 0, 0, ds5E5A[Dest].FirstPic);
-      RemapPictureColours(@MapFrom, @MapTo, 0, 0, ds5E5A[Dest].SecondPic);
+      State := StateMain;
+      SavedFigure := TFigureBytes(Figure).Colours;
+      SavedCombatIcon := CombatIcon;
+      CombatIcon := WorkSlot;
+      BuildCharacterIcon(False);
+      CombatIcon := SavedCombatIcon;
+      SavedCHeadBlock := CHeadBlock;
+      SavedCBodyBlock := CBodyBlock;
+      SavedSize := Figure[0];
+      CopyPictureSlot(CombatIcon, WorkSlot, 1);
+      DrawIconCell(EditorCellCol, OldCellRow);
+      DrawTextAt(CaptionOldCol, CaptionOldRow, CaptionColour, 'old');
+      DrawTextAt(HalvesCol, HalvesOldRow, CaptionColour, 'ready   action');
+      DrawTextAt(CaptionOldCol, CaptionNewRow, CaptionColour, 'new');
+      DrawTextAt(HalvesCol, HalvesNewRow, CaptionColour, 'ready   action');
+      repeat
+        DrawIconCell(EditorCellCol, NewCellRow);
+        SizeName := '';
+        if State = StateSize then
+          if Figure[0] = IconSizeLarge then
+            SizeName := 'Small'
+          else
+            SizeName := 'Large';
+        Key := ReadPromptChoice('', SizeName + IconEditorPrompts[State], PromptTitleColour,
+          PromptWordColour, PromptHotColour, 0, 0, ExtKey);
+        if ExtKey = 0 then
+          case State of
+            StateMain:
+              begin
+                Mode := StateMain;
+                case Key of
+                  KeyParts: State := StateParts;
+                  KeyColour1:
+                    begin
+                      State := StateColourPart;
+                      EditFace := False;
+                      Delete(IconEditorPrompts[ColourPromptLine], ColourWordColumn, ColourWordLength);
+                      Insert('Hair', IconEditorPrompts[ColourPromptLine], ColourWordColumn);
+                    end;
+                  KeyColour2:
+                    begin
+                      State := StateColourPart;
+                      EditFace := True;
+                      Delete(IconEditorPrompts[ColourPromptLine], ColourWordColumn, ColourWordLength);
+                      Insert('Face', IconEditorPrompts[ColourPromptLine], ColourWordColumn);
+                    end;
+                  KeySize: State := StateSize;
+                end;
+              end;
+            StateParts:
+              begin
+                Mode := StateParts;
+                if Key in [KeyEscape, KeyExit] then
+                  State := StateMain
+                else
+                begin
+                  PartKey := Key;
+                  State := StateStep;
+                end;
+              end;
+            StateColourPart:
+              begin
+                Mode := StateColourPart;
+                case Key of
+                  KeyWeapon: ColourPart := PartWeapon;
+                  KeyBody: ColourPart := PartBody;
+                  KeyHair: ColourPart := PartHairFace;
+                  KeyFace: ColourPart := PartHairFace;
+                  KeyShield: ColourPart := PartShield;
+                  KeyArm: ColourPart := PartArm;
+                  KeyLeg: ColourPart := PartLeg;
+                else
+                  ColourPart := PartBody;
+                end;
+                if Key in [KeyEscape, KeyExit] then
+                  State := StateMain
+                else
+                  State := StateStep;
+              end;
+            StateSize:
+              begin
+                case Key of
+                  KeyLarge:
+                    begin
+                      Figure[0] := IconSizeLarge;
+                      BuildCharacterIcon(False);
+                    end;
+                  KeySmall:
+                    begin
+                      Figure[0] := IconSizeSmall;
+                      BuildCharacterIcon(False);
+                    end;
+                  KeyKeep:
+                    begin
+                      SavedSize := Figure[0];
+                      State := StateMain;
+                      Key := KeySpace;
+                    end;
+                  KeyExit, KeyEscape:
+                    begin
+                      Figure[0] := SavedSize;
+                      State := StateMain;
+                      Key := KeySpace;
+                    end;
+                end;
+                BuildCharacterIcon(False);
+              end;
+            StateStep:
+              case Mode of
+                StateParts:
+                  case PartKey of
+                    KeyHead:
+                      begin
+                        case Key of
+                          KeyPrev:
+                            if CHeadBlock > 0 then
+                              Dec(CHeadBlock)
+                            else
+                              CHeadBlock := MaxHeadBlock;
+                          KeyNext:
+                            if CHeadBlock < MaxHeadBlock then
+                              Inc(CHeadBlock)
+                            else
+                              CHeadBlock := 0;
+                          KeyKeep:
+                            with SelectedCharacter^ do
+                            begin
+                              SavedCHeadBlock := CHeadBlock;
+                              State := Mode;
+                              Key := KeySpace;
+                            end;
+                          KeyExit, KeyEscape:
+                            begin
+                              CHeadBlock := SavedCHeadBlock;
+                              State := Mode;
+                              Key := KeySpace;
+                            end;
+                        end;
+                        BuildCharacterIcon(False);
+                      end;
+                    KeyWeapon:
+                      begin
+                        case Key of
+                          KeyPrev:
+                            if CBodyBlock > 0 then
+                              Dec(CBodyBlock)
+                            else
+                              CBodyBlock := MaxBodyBlock;
+                          KeyNext:
+                            if CBodyBlock < MaxBodyBlock then
+                              Inc(CBodyBlock)
+                            else
+                              CBodyBlock := 0;
+                          KeyKeep:
+                            with SelectedCharacter^ do
+                            begin
+                              SavedCBodyBlock := CBodyBlock;
+                              State := Mode;
+                              Key := KeySpace;
+                            end;
+                          KeyExit, KeyEscape:
+                            begin
+                              CBodyBlock := SavedCBodyBlock;
+                              State := Mode;
+                              Key := KeySpace;
+                            end;
+                        end;
+                        BuildCharacterIcon(False);
+                      end;
+                  end;
+                StateColourPart:
+                  begin
+                    LowNibble := Figure[ColourPart] and $F;
+                    HighNibble := (Figure[ColourPart] and $F0) shr 4;
+                    case Key of
+                      KeyNext:
+                        begin
+                          if EditFace then
+                            HighNibble := (HighNibble + 1) mod 16
+                          else
+                            LowNibble := (LowNibble + 1) mod 16;
+                          Figure[ColourPart] := (HighNibble shl 4) + LowNibble;
+                        end;
+                      KeyPrev:
+                        begin
+                          if EditFace then
+                            HighNibble := (HighNibble - 1) and $F
+                          else
+                            LowNibble := (LowNibble - 1) and $F;
+                          Figure[ColourPart] := (HighNibble shl 4) + LowNibble;
+                        end;
+                      KeyKeep:
+                        begin
+                          SavedFigure := TFigureBytes(Figure).Colours;
+                          State := Mode;
+                          Key := KeySpace;
+                        end;
+                      KeyExit, KeyEscape:
+                        begin
+                          TFigureBytes(Figure).Colours := SavedFigure;
+                          State := Mode;
+                          Key := KeySpace;
+                        end;
+                    end;
+                  end;
+              end;
+          end;
+        CopyPictureSlot(CombatIcon, WorkSlot, 1);
+      until (Mode = StateMain) and (Key in [KeyEscape, KeyExit]);
+      CHeadBlock := SavedCHeadBlock;
+      CBodyBlock := SavedCBodyBlock;
+      Figure[0] := SavedSize;
+      TFigureBytes(Figure).Colours := SavedFigure;
+      CopyPictureSlot(CombatIcon, WorkSlot, 1);
+      CopyPictureSlot(WorkSlot, CombatIcon, 0);
     end;
+    ClearPromptLine;
+    FreePictureSlot(WorkSlot);
+    if AreaViewKind > 1 then
+    begin
+      LoadPictureSlot('ICON', 0, ReloadedSlot);
+      LoadPictureSlot('ICON', 1, WorkSlot);
+    end;
+    Key := AskYesNo('Is this icon ok? ', PromptTitleColour, PromptWordColour, PromptHotColour);
+  until Key = KeyYes;
+  ovl31_e3;
 end;
-{ ovl16:382D: frame not read }
-{@stub} procedure ovl16_e3; begin end;
-{ ovl16:3C75: frame not read }
-{@stub} procedure ovl16_fn_3C75; begin end;
-{ ovl16:3C7A: frame not read }
-{@stub} procedure ovl16_fn_3C7A; begin end;
-{ ovl16:3C7F: frame not read }
-{@stub} procedure ovl16_fn_3C7F; begin end;
-{ ovl16:3C84: frame not read }
-{@stub} procedure ovl16_fn_3C84; begin end;
-{ ovl16:3C89: frame not read }
-{@stub} procedure ovl16_fn_3C89; begin end;
-{ ovl16:3C8E: frame not read }
-{@stub} procedure ovl16_fn_3C8E; begin end;
-{ ovl16:3C93: frame not read }
-{@stub} procedure ovl16_fn_3C93; begin end;
-{ ovl16:3D34: frame not read }
-{@stub} procedure ovl16_fn_3D34; begin end;
-{ ovl16:3E2A: frame not read }
-{@stub} procedure ovl16_fn_3E2A; begin end;
-{ ovl16:3E2F: frame not read }
-{@stub} procedure ovl16_fn_3E2F; begin end;
-{ ovl16:3EBF: frame not read }
-{@stub} procedure ovl16_fn_3EBF; begin end;
-{ ovl16:3EC4: frame not read }
-{@stub} procedure ovl16_fn_3EC4; begin end;
-{ ovl16:3EC9: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl16_fn_3EC9; begin end;
 { ovl16:3F31. The constitution hit-point adjustment shared by the hit-point floor MinHitPoints and
   the ceiling MaxHitPoints of ModifyCharacter (ovl16:209F). It sums ConstitutionHitPointTable[Constitution] over the
   eight classes the character has a level in (ClassLevels[I], +$96, signed, above 0), then adds the

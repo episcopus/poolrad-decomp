@@ -3,7 +3,7 @@ unit OVL22;
   ChooseSpellFromList shows (BuildSpellList and its helpers, whitepaper 5.22), runs the picker
   (PickSpellFromMenu), gives a spell's area pattern size (SpellAreaSize) and casts, scribes, memorizes
   and learns spells for combat (ovl09) and the camp (ovl15). }
-{$A-,O+,F+,S-,R-,G-,I-}
+{$A-,O+,F+,S-,R-,G-,I-,L-}
 interface
 uses POOLVARS, RES03, RES06, RES09, RES12, OVL23, OVL24, OVL25, OVL30, OVL31;
 function PickSpellFromMenu(Mode: Byte; var Choice: Word): Byte;
