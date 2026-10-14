@@ -134,3 +134,39 @@ tags = ["map", "boundaries", "far-call", "stub-flat", "382D", "e3"]
 title = "Every remaining ovl16 e3-internal entry is a named stub offset's flat address landing inside 382D..3F30"
 lesson = "The entries 3C89, 3C8E, 3C93, 3D34, 3E2A, 3E2F are all inside ovl16_e3 (its only prologue 55 89 e5 at 382D, its single retf at 3F30). Each is a flat reading seg * 16 + stub_offset of an lcall through another overlay's stub: 3C89 = 0x03C5:0x39 (ovl25 AskYesNo) lcall at 3F17, 3C8E = 0x03C5:0x3E lcall at 0x0638, 3C93 = 0x03C5:0x43 lcall at 0x091E, 3D34 = 0x03D0:0x34 (ovl28) lcall at 0x340D, 3E2A = 0x03E0:0x2A (ovl31_e2) lcall at 0x385A, 3E2F = 0x03E0:0x2F (ovl31_e3) lcall at 0x3F28. The stub offsets come from re/units.toml (stub_segment), and the lcall sites are found by scanning build/re/overlays/ovl16.bin for 0x9A with seg*16+off in 0x3C80..0x3EA0; this separates a far_call entry from a near_call or mid-instruction artefact. 3C93 falls on the rel8 byte of a jne (75 20 at 3C92) and is mid-instruction; the others are instruction boundaries. None begins with a prologue, so no Pascal routine can compile to those bytes: probe tools/re/tp_idioms/ovl16/NOPROC.PAS shows even a parameterless, local-less far procedure starts 55 89 e5. Blocked until e3 matches; make match UNIT=ovl16 WRITE=1 then deletes them and corrects e3's size to 1796."
 evidence = ["re/symbols.toml#ovl16:382D", "re/symbols.toml#ovl16:3C89", "re/symbols.toml#ovl16:3C8E", "re/symbols.toml#ovl16:3C93", "re/symbols.toml#ovl16:3D34", "re/symbols.toml#ovl16:3E2A", "re/symbols.toml#ovl16:3E2F", "re/units.toml#ovl25", "re/units.toml#ovl31", "tools/re/tp_idioms/ovl16/NOPROC.PAS"]
+
+[[lesson]]
+id = "ovl16-with-copies-a-far-pointer-parameter"
+confidence = "V"
+units = ["ovl16", "*"]
+tags = ["with", "far-pointer", "frame", "les", "codegen", "3F31", "3FB3"]
+title = "`with Who^ do` copies a far-pointer parameter to a hidden local with les di; Ch := Who uses mov ax/mov dx"
+lesson = "ovl16:3F31 and 3FB3 take Who: PCharacter and begin with `les di,[bp+6]; mov [bp-X],di; mov [bp-X+2],es` (the hidden `with Who^ do` context pointer), then read it back with `les di,[bp-X]`. Writing the copy by hand (`Ch := Who`) compiles instead to `mov ax,[bp+6]; mov dx,[bp+8]; mov [bp-X],ax; mov [bp-X+2],dx` and cannot match (tools/re/tp_idioms/ovl16/CONHP.PAS). The hidden temp is allocated right after the declared locals, so its offset pins the number of byte locals: 3F31 needs a third spare byte at [bp-4] (result bp-1, Sum bp-2, counter bp-3, spare bp-4, temp bp-5..bp-8)."
+evidence = ["src/OVL16.PAS#ConstitutionHitPointAdjustment", "src/OVL16.PAS#MinHitPoints", "re/symbols.toml#ovl16:3F31", "re/symbols.toml#ovl16:3FB3", "tools/re/tp_idioms/ovl16/CONHP.PAS"]
+
+[[lesson]]
+id = "ovl16-for-counter-type-and-index-extension"
+confidence = "V"
+units = ["ovl16", "*"]
+tags = ["for", "loop", "shortint", "byte", "cbw", "index", "codegen", "3F31", "3FB3"]
+title = "A ShortInt for-loop counter of small bounds uses byte ops but sign-extends its array index; a Byte counter zero-extends"
+lesson = "In 3F31 and 3FB3 the class loop is `for I := 0 to 7` with the counter stored, incremented and compared as a byte (`mov byte [bp-3],0; inc byte [bp-3]; cmp byte [bp-3],7`) but the ClassLevels[I] index is sign-extended: `mov al,[bp-3]; cbw; les di,[bp-8]; add di,ax`. A Byte counter gives `xor ah,ah` instead and the bytes differ; declaring I: ShortInt (even though the loop only stores one byte) reproduces the original. Probe tools/re/tp_idioms/ovl16/CONHP.PAS."
+evidence = ["src/OVL16.PAS#ConstitutionHitPointAdjustment", "src/OVL16.PAS#MinHitPoints", "re/symbols.toml#ovl16:3F31", "re/symbols.toml#ovl16:3FB3", "tools/re/tp_idioms/ovl16/CONHP.PAS"]
+
+[[lesson]]
+id = "ovl16-case-loads-the-selector-once"
+confidence = "V"
+units = ["ovl16", "*"]
+tags = ["case", "if", "selector", "codegen", "3FB3"]
+title = "A two-label case statement loads the selector into AL once; an if/else chain compares memory twice"
+lesson = "ovl16:3FB3 adds a hit-die level for class 4 and class 7. `if I = 4 then Inc(Total) else if I = 7 then Inc(Total)` compiles to two direct compares (`cmp byte [bp-5],4` then `cmp byte [bp-5],7`, 8 bytes). `case I of 4: Inc(Total); 7: Inc(Total); end;` loads the selector once (`mov al,[bp-5]; cmp al,4; jne ..; inc; jmp ..; cmp al,7; jne ..; inc`, 7 bytes) and is what the original does; the one-byte difference moves every later label and makes the whole routine differ. Probe tools/re/tp_idioms/ovl16/HPCASE.PAS."
+evidence = ["src/OVL16.PAS#MinHitPoints", "re/symbols.toml#ovl16:3FB3", "tools/re/tp_idioms/ovl16/HPCASE.PAS"]
+
+[[lesson]]
+id = "ovl16-batch16-e3-entries-3EBF-3EC4-3EC9"
+confidence = "V"
+units = ["ovl16", "*"]
+tags = ["map", "boundaries", "far-call", "stub-flat", "e3", "ovl32", "3EBF", "3EC4", "3EC9"]
+title = "The remaining e3-internal entries 3EBF, 3EC4 and 3EC9 are flat readings of ovl32 stub calls"
+lesson = "The last three map entries inside ovl16_e3 (382D..3F30) are flat readings of the ovl32 stub segment 0x03E9: 3EBF = 0x03E9:0x2F FreePictureSlot (lcalls at 0x3321, 0x337B and 0x3EBF itself), 3EC4 = 0x03E9:0x34 LoadPictureSlot (lcalls at 0x3EE0, 0x3EFA), 3EC9 = 0x03E9:0x39 (lcalls at 0x3564, 0x357F, 0x3595, 0x35B0). None starts with a prologue (the only prologue in 382D..3F30 is at 382D; the next is 3F31), so all three are blocked until e3 matches, which deletes them and corrects e3's size to 1796. Found by scanning build/re/overlays/ovl16.bin for 0x9A with seg*16+off in 0x3E80..0x3ED0."
+evidence = ["re/symbols.toml#ovl16:3EBF", "re/symbols.toml#ovl16:3EC4", "re/symbols.toml#ovl16:3EC9", "re/units.toml#ovl32", "tools/re/tp_idioms/ovl16/NOPROC.PAS"]
