@@ -34,6 +34,13 @@ variant = "high"
 heading = "decompiler deepseek 2"
 
 [[session]]
+name = "dec-deepseek-3"
+role = "decompiler"
+model = "openrouter/deepseek/deepseek-v4.1-flash"
+variant = "high"
+heading = "decompiler deepseek 3"
+
+[[session]]
 name = "dec-haiku-2"
 role = "decompiler"
 model = "openrouter/anthropic/claude-haiku-5.5"
