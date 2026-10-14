@@ -3777,3 +3777,10 @@ kind = "routine"
 why = "ECL opcode 56 (dispatcher ovl03:2F2D cmp al,38h at ovl03:3135): operand 1 picks a screen: 8 ShowEndingNarrative (ovl18), 9 RunCamp then EndCommand"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl03_fn_2E7D"
+new = "DrawGlyphRunCommand"
+kind = "routine"
+why = "ECL command 60 (dispatcher ovl03:2F2D, SkippedOpcode 3Ch) draws a 0-terminated run of glyph words at the text cursor with DrawGlyph; packet ovl03_2E7D, proven by make match"
+date = "2026-10-13"
+

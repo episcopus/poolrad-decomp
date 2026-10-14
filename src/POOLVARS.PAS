@@ -711,10 +711,11 @@ var
   DuelMode: Byte;                 { nonzero during a duel (EndBattle's duel texts); the loader clears it (ovl11:040B) }
   ds84DD: Byte;                   { cleared by the loader (ovl11:0415) }
   { cleared by the loader (ovl11:041A) and by EndCommand (ovl03:0001); set by ECL command 61
-    (ovl03:2B14); meaning unknown }
+    (ovl03:2B14); while it is set, DrawGlyphRunCommand (ovl03:2E7D) starts a glyph run below row 13 at
+    column 2, row 5; the rest is unknown }
   ds84DE: Byte;
-  { cleared by the loader (ovl11:041F) and, when set, by ECL command 51 (NewLineCommand, ovl03:2AEB);
-    meaning unknown }
+  { cleared by the loader (ovl11:041F) and, when set, by ECL command 51 (NewLineCommand, ovl03:2AEB); set by
+    DrawGlyphRunCommand (ovl03:2E7D) before it draws a run; meaning unknown }
   ds84DF: Byte;
   { ds84E0: set while a close-up picture is up (ShowEncounterPicture, ShowCloseUpCommand ovl03:0856). }
   ds84E0: Byte;                   { close-up picture up; cleared by the loader (ovl11:0424) }
@@ -988,6 +989,8 @@ var
   ds6F83: Byte;
   ds70C6: Byte;                   { cleared by InitScript (ovl07:01FB); meaning unknown }
   ds84C8: array[0..1] of Byte;    { two bytes InitScript clears (ovl07:01DF); meaning unknown }
-  ds84E2: Byte;                   { cleared by InitScript (ovl07:01C1); meaning unknown }
+  { set by DrawGlyphRunCommand (ovl03:2E7D) when it moves a glyph run to the picture window; EndCommand
+    (ovl03:0001) redraws the picture frame while it is set }
+  ds84E2: Byte;                   { cleared by InitScript (ovl07:01C1) }
 implementation
 end.

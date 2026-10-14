@@ -784,12 +784,12 @@ id = "ovl03:2E7D"
 unit = "ovl03"
 addr = "ovl03:2E7D"
 size = 176
-name = "ovl03_fn_2E7D"
+name = "DrawGlyphRunCommand"
 signature = ""
 c_name = "ovl03_fn_2E7D"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_2E7D (ECL command 60 (dispatcher ovl03:2F2D, SkippedOpcode 3Ch) draws a 0-terminated run of glyph words at the text cursor with DrawGlyph; packet ovl03_2E7D, proven by make match); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

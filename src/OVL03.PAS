@@ -55,7 +55,7 @@ procedure FindMemorizedSpellCommand;
 procedure EngineActionCommand;
 procedure RunCamp;
 procedure ShowSpecialScreenCommand;
-procedure ovl03_fn_2E7D;
+procedure DrawGlyphRunCommand;
 procedure ovl03_fn_2F2D;
 procedure ovl03_fn_3171(Address: Word);
 procedure ovl03_fn_31B4;
@@ -177,6 +177,12 @@ const
   PictureFrameTop = 1;
   PictureFrameRight = $F;
   PictureFrameBottom = $F;
+  { ECL command 60 (ovl03:2E7D): the glyph run is drawn in colour 15; a run that starts below the close-up
+    box (its last row, CloseUpLastRow) starts at column 2, row 5 instead. }
+  GlyphRunColor = 15;
+  CloseUpLastRow = $D;
+  GlyphRunCol = 2;
+  GlyphRunRow = 5;
   { The party size: word 830 of ds49D6 (VarPartySize of ovl05, which is not visible here). }
   VarPartySize = 830;
   { ECL command 45 (ovl03:2CCF) biases the operand word by CodeBias and tests the result against the
@@ -1857,8 +1863,48 @@ begin
       end;
   end;
 end;
-{ ovl03:2E7D: retf 0: 0 bytes of parameters; 8 bytes of locals }
-{@stub} procedure ovl03_fn_2E7D; begin end;
+{ ovl03:2E7D. ECL command 60 (dispatcher ovl03:2F2D, SkippedOpcode 3Ch): draws one line of glyphs at the text
+  cursor. Operand 1 is the script address of a run of words: each word's low byte plus 1 is the glyph drawn
+  (DrawGlyph, one copy, colour GlyphRunColor) at GlyphCol and GlyphRow, and the cursor moves right after each
+  glyph. The run ends at the first word whose low byte is 0 or $FF. When ds84DE is set (ECL command 61) and the
+  cursor is below CloseUpLastRow, the cursor first goes to GlyphRunCol, GlyphRunRow and ds84E2 is set. ds84DF
+  is set, and the cursor goes down one row at the end. Purpose unknown: what the script writes this way. }
+procedure DrawGlyphRunCommand;
+var
+  Start: Word;                  { operand 1: the script address of the run }
+  Address: Word;                { the word read: Start plus Index }
+  Index: Byte;                  { the glyphs drawn so far }
+  Value: Byte;                  { the glyph of the word read: its low byte plus 1 }
+  Done: Boolean;                { set when the run ends }
+  Unused: Byte;                 { QUIRK ovl03:2E7D: a byte of the frame nothing uses }
+begin
+  FillChar(ds84C8, 2, 0);
+  ds84E0 := 0;
+  DecodeOperands(1);
+  Start := MakeWord(OperandLow[1], OperandHigh[1]);
+  Index := 0;
+  Done := False;
+  if (ds84DE <> 0) and (GlyphRow > CloseUpLastRow) then
+  begin
+    GlyphRow := GlyphRunRow;
+    GlyphCol := GlyphRunCol;
+    ds84E2 := 1;
+  end;
+  ds84DF := 1;
+  repeat
+    Address := Start + Index;
+    Value := ReadVmWord(Address) + 1;
+    if Value > 1 then
+    begin
+      DrawGlyph(GlyphCol, GlyphRow, GlyphRunColor, 1, Value, 0);
+      Inc(GlyphCol);
+      Inc(Index);
+    end
+    else
+      Done := True;
+  until Done;
+  Inc(GlyphRow);
+end;
 { ovl03:2F2D: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl03_fn_2F2D; begin end;
 { ovl03:3171: retf 2: 2 bytes of parameters; 0 bytes of locals }
