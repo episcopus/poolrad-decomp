@@ -77,8 +77,7 @@ procedure CastMonsterReadMagic;
 procedure MonsterBreath(Who: PCharacter; Affect: PAffect; Unused: Byte);
 function IsScroll(Item: PItem): Boolean;
 procedure ConsumeScrollSpell(Who: PCharacter; Item: PItem; Spell: Byte);
-procedure ovl22_e8(Who: PCharacter; Message: String40; Spell: Byte);
-procedure ovl22_fn_3379;
+procedure ShowSpellMessage(Who: PCharacter; Message: String40; Spell: Byte);
 procedure ovl22_e10;
 implementation
 
@@ -439,7 +438,7 @@ begin
     OK := False;
   end;
   if (Announce <> 0) and (ds6DBF = 0) then
-    ovl22_e8(Caster, 'casts', Spell);
+    ShowSpellMessage(Caster, 'casts', Spell);
   while OK do
   begin
     SpellTargetPicker(Spell, Quick, Done);
@@ -1976,10 +1975,41 @@ begin
   if Item^.NameNum[2] < NameNumberRedrawBelow then
     res12_fn_1509(Who, Item);
 end;
-{ ovl22:331A: frame not read }
-{@stub} procedure ovl22_e8(Who: PCharacter; Message: String40; Spell: Byte); begin end;
-{ ovl22:3379: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl22_fn_3379; begin end;
+{ ovl22:331A. Announces a spell event for a named character. In combat (ds49F3 = 5) it shows the timed
+  message 'Casts a Spell' and, on the combat message row, 'Spell:' with the spell's name at column 0.
+  Outside combat it clears the message window, draws Who's name at column 1 of row $13 (res12_fn_1816),
+  draws Message right after the name (two columns past the name's length: 'casts', 'has memorized' or
+  'has scribed'), draws the spell's name at column 1 of the next row, waits a game-speed delay and
+  clears the prompt (res12_fn_17E3). Called by ovl20's ProcessMemorizedSpell and
+  ProcessPendingScribedSpell and by CastChosenSpell (which passes 'casts'). The map's ovl22_fn_3379
+  entry at 3379 was invented inside this routine; make match WRITE=1 removed it. }
+procedure ShowSpellMessage(Who: PCharacter; Message: String40; Spell: Byte);
+const
+  CombatViewMode = 5;             { ds49F3 during combat (whitepaper 5.5) }
+  TextColumn = 1;                 { the column the name and the spell's name are drawn at }
+  MessageRow = $13;               { the row Who's name and Message are drawn on, out of combat }
+  SpellNameRow = $14;             { the row the spell's name is drawn on }
+  GapAfterName = 2;               { Message starts this many columns past the name's length }
+  MessageColour = $A;             { the colour of the messages }
+  TimedMessage = 1;               { nonzero: res12_fn_16EC delays by the game speed and clears it }
+  NoMode = 0;                     { res12_fn_1816's Mode: no extra highlight }
+begin
+  if ds49F3 = CombatViewMode then
+  begin
+    res12_fn_16EC(Who, 'Casts a Spell', MessageColour, TimedMessage);
+    ClearWindow(0, $17, $27, $17);
+    DrawTextAt(0, $17, MessageColour, 'Spell:' + SpellNames[Spell]);
+  end
+  else
+  begin
+    ClearWindow(TextColumn, $12, $26, $16);
+    res12_fn_1816(Who, TextColumn, MessageRow, NoMode);
+    DrawTextAt(Length(Who^.Name) + GapAfterName, MessageRow, MessageColour, Message);
+    DrawTextAt(TextColumn, SpellNameRow, MessageColour, SpellNames[Spell]);
+    DelayByGameSpeed;
+    res12_fn_17E3;
+  end;
+end;
 { ovl22:3413: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl22_e10; begin end;
 

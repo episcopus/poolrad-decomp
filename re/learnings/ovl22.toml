@@ -125,3 +125,12 @@ tags = ["compiler", "typecast", "boolean", "byte", "var-parameter"]
 title = "A Boolean var passed to a routine and then set from a Byte function needs `Boolean(Fn)` and keeps a plain `mov [bp-1],al`"
 lesson = "TP 6.0 rejects passing a Byte variable to a `var Boolean` parameter (Error 26: Type mismatch), so ovl22:30D9's local [bp-1], which it hands to DamageTargetInCell (var Blocked: Boolean) and later sets from the Byte function res12_fn_2637, must be declared Boolean. `Blocked := Boolean(res12_fn_2637(Who));` casts the same-size Byte to Boolean and compiles to the plain `call; mov byte [bp-1],al` the original has (ovl22:3234), while `Blocked := res12_fn_2637(Who) <> 0;` would add a compare. Probe tools/re/tp_idioms/ovl22/BOOLCAST.PAS."
 evidence = ["tools/re/tp_idioms/ovl22/BOOLCAST.PAS", "src/OVL22.PAS#MonsterBreath", "re/symbols.toml#ovl22:30D9"]
+
+[[lesson]]
+id = "string40-value-param-copy-slot-is-reused"
+confidence = "V"
+units = ["ovl22"]
+tags = ["compiler", "frame", "string", "parameter"]
+title = "A String40 value parameter is copied into a frame slot and that slot is reused when the parameter is passed on"
+lesson = "A `Message: String40` value parameter gets a prologue `StrLCopy(@copy, @param, 40)` copy in the frame (ovl22:331A copies into [bp-0x29]); passing the parameter on to another string parameter reuses that same slot (the DrawTextAt argument is [bp-0x29]), so no extra local is needed. Declaring a local `Text: String40; Text := Message;` adds a second copy and enlarges the frame by 41 bytes (sub sp 0x152 instead of the original's 0x12a), which the matcher reports as the `sub sp` constant differing. Probe tools/re/tp_idioms/ovl22/E8FRAME.PAS."
+evidence = ["tools/re/tp_idioms/ovl22/E8FRAME.PAS", "src/OVL22.PAS#ShowSpellMessage", "re/symbols.toml#ovl22:331A"]

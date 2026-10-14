@@ -3945,3 +3945,10 @@ kind = "routine"
 why = "ovl22:30D9 shows 'Breathes!' and runs a breath attack: a 1d100 chance check on ds6DE3, the target picker, the zap animation, a line beam (CastLineBeam) and DamageTargetInCell for the breather's maximum hit points; Share the monster breath attack (called with a character and its breath affect)"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl22_e8"
+new = "ShowSpellMessage"
+kind = "routine"
+why = "ovl22:331A draws Who's name (res12_fn_1816), then Message right after it, then the spell's name; in combat it shows the timed message 'Casts a Spell' and 'Spell:NAME'. Callers pass 'casts' (CastChosenSpell), 'has memorized' (ProcessMemorizedSpell) and 'has scribed' (ProcessPendingScribedSpell), so it announces a named character's spell event."
+date = "2026-10-14"
+

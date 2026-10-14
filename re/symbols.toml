@@ -10724,27 +10724,14 @@ evidence = ["prologue"]
 id = "ovl22:331A"
 unit = "ovl22"
 addr = "ovl22:331A"
-size = 95
-name = "ovl22_e8"
-signature = "procedure ovl22_e8(Who: PCharacter; Message: String40; Spell: Byte)"
+size = 249
+name = "ShowSpellMessage"
+signature = "procedure ShowSpellMessage(Who: PCharacter; Message: String40; Spell: Byte)"
 c_name = "ovl22_e8"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl22_e8 (ovl22:331A draws Who's name (res12_fn_1816), then Message right after it, then the spell's name; in combat it shows the timed message 'Casts a Spell' and 'Spell:NAME'. Callers pass 'casts' (CastChosenSpell), 'has memorized' (ProcessMemorizedSpell) and 'has scribed' (ProcessPendingScribedSpell), so it announces a named character's spell event.); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl22:3379"
-unit = "ovl22"
-addr = "ovl22:3379"
-size = 154
-name = "ovl22_fn_3379"
-signature = ""
-c_name = "ovl22_fn_3379"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl22:3413"
