@@ -53,3 +53,21 @@ tags = ["temp", "string", "frame", "if", "exit", "layout"]
 title = "`if not Cond then Exit;` lets the next statement reuse the condition's string temp"
 lesson = "An `if Cond then begin ... end` whose condition builds a string (for example `FileExists(Dir + Name)`) keeps that 256-byte string temp live through the whole if, so the body's string expressions get a second temp and the frame grows by $100. Rewriting it as a guard, `if not Cond then Exit;` followed by the body as separate statements, frees the condition's temp at the `;`, so the next `Dir + Name` reuses the same $20c slot: this is how ovl17:0010 keeps a single temp (frame $20c). The two arms compile to the same branch shape (`or al,al; jne body; jmp epilogue`), so only the frame size tells them apart. Probe tools/re/tp_idioms/ovl17/TEXTTEMP.PAS."
 evidence = ["tools/re/tp_idioms/ovl17/TEXTTEMP.PAS", "src/OVL17.PAS#ReadSavedCharacterList"]
+
+[[lesson]]
+id = "video-adapter-dispatch-is-a-case"
+confidence = "V"
+units = ["*"]
+tags = ["VideoAdapter", "case", "codegen", "dispatch"]
+title = "The VideoAdapter dispatch over 0/2 and 1 is a case, not an if"
+lesson = "A multi-label `case VideoAdapter of 0, 2: ...; 1: ...` loads the byte once and compares: `mov al,[VideoAdapter]; cmp al,0; je A; cmp al,2; je A; jmp Check1` (see res07 DrawPictureItem, 0464:0949, and ovl17:032F, ovl17:0335). The equivalent `if (VideoAdapter = 0) or (VideoAdapter = 2) then ... else if VideoAdapter = 1 then ...` compares the memory operand directly (`cmp byte [VideoAdapter],0`) and does not match. Use the case form when the dispatch compares the adapter more than once."
+evidence = ["src/OVL17.PAS#MergePictureData", "src/RES07.PAS#DrawPictureItem", "tools/re/tp_idioms/ovl17/PARAMPRB.PAS", "build/packets/ovl17_032F.md"]
+
+[[lesson]]
+id = "in-memory-picture-record"
+confidence = "V"
+units = ["*"]
+tags = ["picture", "TMemPic", "Pixels", "ByteSize", "T8x8Bank", "PByteArray"]
+title = "The in-memory picture record and how to index its Pixels pointer"
+lesson = "A loaded picture is the record ovl32 calls TMemPic: height at +0, width in columns at +2, the item count at +8, ByteSize at +$11, the Pixels pointer at +$13 and the copied tail at +$17 (ovl11/ovl32 load it; ovl17:032F reads ByteSize, Pixels and Tail of two such records). Its Pixels field is a `^Byte`, and a `^Byte` field cannot be indexed directly: `Rec^.Pixels[I]` is Error 121 (Invalid qualifier), so write `PByteArray(Rec^.Pixels)^[I]` (RES05 exports PByteArray/TByteArray). T8x8Bank in POOLVARS is the same bytes with Gap at +$13 instead of Pixels; do not confuse them."
+evidence = ["src/OVL32.PAS#TMemPic", "src/OVL17.PAS#MergePictureData", "tools/re/tp_idioms/ovl17/PIXPRB.PAS", "tools/re/tp_idioms/ovl17/PARAMPRB.PAS"]

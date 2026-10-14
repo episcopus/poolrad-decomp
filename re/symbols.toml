@@ -8336,12 +8336,12 @@ id = "ovl17:032F"
 unit = "ovl17"
 addr = "ovl17:032F"
 size = 339
-name = "ovl17_fn_032F"
+name = "MergePictureData"
 signature = ""
 c_name = "ovl17_fn_032F"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl17_fn_032F (ovl17:032F combines two in-memory pictures: ORs Source (the first parameter, ds5E5A slot 11 reference) tail/tile bytes into Dest and ANDs its pixel bytes into Dest, so Source masks Dest; called by ovl17_e3 for the character head and body pictures); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

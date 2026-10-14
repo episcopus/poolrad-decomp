@@ -10,7 +10,7 @@ uses POOLVARS;
 procedure ReadSavedCharacterList(var List: PMenuLine);
 procedure RewriteSavedCharacterList(List: PMenuLine);
 procedure CreateSaveDir;
-procedure ovl17_fn_032F;
+procedure MergePictureData(Source, Dest: Pointer);
 procedure ovl17_e3;
 procedure ovl17_e4;
 procedure ovl17_fn_0818;
@@ -28,6 +28,18 @@ procedure ovl17_e9;
 procedure ovl17_e11;
 implementation
 uses RES05, RES06, OVL23, OVL25;
+
+type
+  { An in-memory picture as ovl32 loads it: the same layout as ovl32's private TMemPic, with the
+    byte size (the word at +$11), the pointer to the packed pixel bytes (+$13) and the copied tail
+    (+$17) that the picture operations index. Declared here because ovl17 needs it too. }
+  PMemPic = ^TMemPic;
+  TMemPic = record
+    Head: array[0..$10] of Byte;  { +0..+$10: the picture header (height, width, item count) }
+    ByteSize: Word;               { +$11: bytes per tile }
+    Pixels: ^Byte;                { +$13: the packed pixel bytes }
+    Tail: array[0..20000] of Byte;  { +$17: the tile bytes, indexed by a byte times ByteSize }
+  end;
 
 const
   Yellow = $0E;        { EGA text colour of the disk prompt (the message colour OVL00 also uses) }
@@ -126,8 +138,38 @@ begin
       ShowMessageLine(Yellow, 'Put save disk in ' + SaveDir[1] + ':');
   until (ErrCode = IoSuccess) or (ErrCode = IoDirExists);
 end;
-{ ovl17:032F: retf 8: 8 bytes of parameters; 6 bytes of locals }
-{@stub} procedure ovl17_fn_032F; begin end;
+{ ovl17:032F. Combines two in-memory pictures, Dest and Source: ORs the tail bytes (the tile ids) of
+  Source into Dest and ANDs its pixel bytes into Dest, so Source masks Dest. On the EGA adapter
+  (VideoAdapter 1) the tail is ORed over Source^.ByteSize bytes and only the first
+  ds5E5A[11].FirstPic^.ByteSize div 4 pixel bytes are ANDed; on the other two adapters (0 and 2)
+  both run over Source^.ByteSize bytes. Called by ovl17_e3 for each mirrored half of the character
+  head and body pictures (slot 11 holds the reference picture). No heap or file effect. }
+procedure MergePictureData(Source, Dest: Pointer);
+var
+  Count: Word;                  { the pixel byte count of the EGA path, minus one }
+  I: Word;                      { the byte index, 0 based }
+begin
+  case VideoAdapter of
+    0, 2:
+      begin
+        for I := 0 to PMemPic(Source)^.ByteSize - 1 do
+        begin
+          PMemPic(Dest)^.Tail[I] := PMemPic(Dest)^.Tail[I] or PMemPic(Source)^.Tail[I];
+          PByteArray(PMemPic(Dest)^.Pixels)^[I] :=
+            PByteArray(PMemPic(Dest)^.Pixels)^[I] and PByteArray(PMemPic(Source)^.Pixels)^[I];
+        end;
+      end;
+    1:
+      begin
+        for I := 0 to PMemPic(Source)^.ByteSize - 1 do
+          PMemPic(Dest)^.Tail[I] := PMemPic(Dest)^.Tail[I] or PMemPic(Source)^.Tail[I];
+        Count := PMemPic(ds5E5A[11].FirstPic)^.ByteSize div 4 - 1;
+        for I := 0 to Count do
+          PByteArray(PMemPic(Dest)^.Pixels)^[I] :=
+            PByteArray(PMemPic(Dest)^.Pixels)^[I] and PByteArray(PMemPic(Source)^.Pixels)^[I];
+      end;
+  end;
+end;
 { ovl17:0482: retf 2: 2 bytes of parameters; 554 bytes of locals }
 {@stub} procedure ovl17_e3; begin end;
 { ovl17:069E: frame not read }
