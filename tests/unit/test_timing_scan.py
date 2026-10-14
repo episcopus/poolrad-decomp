@@ -62,3 +62,16 @@ def test_plain_computation_is_not_flagged(result):
     assert cls["0AF8:1685"]["class"] == "none"               # System.Move
     counts = {k: sum(1 for r in cls.values() if r["class"] == k) for k in ("waits", "uses", "none")}
     assert counts["none"] > counts["waits"] + counts["uses"], "most routines are plain computation"
+
+
+def test_a_register_reloaded_without_an_immediate_is_not_taken_for_the_tick_counter(monkeypatch):
+    """2026-10-14: FormatItemLine (00BA:0442) does `mov di,0x43D`, later `les di,[bp+6]`, then reads
+    `es:[di+0x31]`; the scanner still added 0x31 to 0x43D and reported the BIOS tick counter (0x46E)."""
+    import timing_scan
+    sc = timing_scan.Scanner()
+    stale = bytes.fromhex("BF3D04" "C47E06" "26807D31B1")        # mov di,0x43D; les di,[bp+6]; cmp es:[di+0x31],0B1h
+    fresh = bytes.fromhex("BF3D04" "26807D31B1")                 # mov di,0x43D; cmp es:[di+0x31],0B1h
+    for code, expect in ((stale, False), (fresh, True)):
+        monkeypatch.setattr(timing_scan, "routine_bytes", lambda r, image, ovl, code=code: (code, 0, "res12"))
+        feats = sc.scan({"id": "x"}, None, None)["feats"]
+        assert ("bios-tick-0000" in feats) == expect, (code.hex(), feats)
