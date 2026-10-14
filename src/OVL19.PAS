@@ -7,20 +7,7 @@ procedure ovl19_e1;
 procedure ovl19_fn_031E;
 procedure ovl19_e4;
 procedure ovl19_e2;
-procedure ovl19_e3;
-procedure ovl19_fn_0915;
-procedure ovl19_fn_0929;
-procedure ovl19_fn_092E;
-procedure ovl19_fn_0933;
-procedure ovl19_fn_0938;
-procedure ovl19_fn_0942;
-procedure ovl19_fn_0947;
-procedure ovl19_fn_094C;
-procedure ovl19_fn_0985;
-procedure ovl19_fn_098A;
-procedure ovl19_fn_0999;
-procedure ovl19_fn_099E;
-procedure ovl19_fn_09A3;
+procedure ShowAbilityScore(Index: ShortInt; Highlight: Boolean);
 procedure ovl19_e5(var Flag: Byte);
 procedure ovl19_fn_0B25;
 procedure ovl19_fn_0D70;
@@ -57,6 +44,14 @@ function ChooseSpellFromList(SpellListKind, DisplayMode: Byte; var Choice: Word;
 implementation
 uses RES06, RES09, RES12, OVL22;
 
+type
+  { TCharacter from its +$10 field on: the six ability scores (Strength..Charisma) indexed by row. }
+  TAbilityBlock = record
+    Name: string[15];
+    Scores: array[0..5] of Byte;
+  end;
+  PAbilityBlock = ^TAbilityBlock;
+
 { ovl19:004A: frame not read }
 {@stub} procedure ovl19_e1; begin end;
 { ovl19:031E: retf 0: 0 bytes of parameters; 0 bytes of locals }
@@ -65,34 +60,48 @@ uses RES06, RES09, RES12, OVL22;
 {@stub} procedure ovl19_e4; begin end;
 { ovl19:0608: retf 0: 0 bytes of parameters; 564 bytes of locals }
 {@stub} procedure ovl19_e2; begin end;
-{ ovl19:0901: frame not read }
-{@stub} procedure ovl19_e3; begin end;
-{ ovl19:0915: frame not read }
-{@stub} procedure ovl19_fn_0915; begin end;
-{ ovl19:0929: frame not read }
-{@stub} procedure ovl19_fn_0929; begin end;
-{ ovl19:092E: frame not read }
-{@stub} procedure ovl19_fn_092E; begin end;
-{ ovl19:0933: frame not read }
-{@stub} procedure ovl19_fn_0933; begin end;
-{ ovl19:0938: frame not read }
-{@stub} procedure ovl19_fn_0938; begin end;
-{ ovl19:0942: frame not read }
-{@stub} procedure ovl19_fn_0942; begin end;
-{ ovl19:0947: frame not read }
-{@stub} procedure ovl19_fn_0947; begin end;
-{ ovl19:094C: frame not read }
-{@stub} procedure ovl19_fn_094C; begin end;
-{ ovl19:0985: frame not read }
-{@stub} procedure ovl19_fn_0985; begin end;
-{ ovl19:098A: frame not read }
-{@stub} procedure ovl19_fn_098A; begin end;
-{ ovl19:0999: frame not read }
-{@stub} procedure ovl19_fn_0999; begin end;
-{ ovl19:099E: frame not read }
-{@stub} procedure ovl19_fn_099E; begin end;
-{ ovl19:09A3: frame not read }
-{@stub} procedure ovl19_fn_09A3; begin end;
+{ ovl19:0901. Draws ability score Index of SelectedCharacter (0 Strength .. 5 Charisma) on row 7 + Index,
+  in columns 5 to 11 (a score below 10 is one column further right), in bright green, or bright magenta
+  when Highlight is set. A Strength of 18 with a percentile also draws it in parentheses after the score
+  on row 7, two digits, 00 for 100. Called by ovl19_e1 for each of the six lines with Highlight False. }
+procedure ShowAbilityScore(Index: ShortInt; Highlight: Boolean);
+const
+  ExceptionalStrength = 18;
+  FirstScoreColumn = 5;
+  LastScoreColumn = 11;
+  ScoreRow = 7;
+  ScoreColor = 10;
+  HighlightColor = 13;
+  FirstTwoDigitValue = 10;
+  PercentileMax = 100;
+  PercentileColumn = 7;
+var
+  Percentile: String40;
+  Col: Byte;
+  Color: Byte;
+begin
+  if Highlight then
+    Color := HighlightColor
+  else
+    Color := ScoreColor;
+  Col := FirstScoreColumn;
+  ClearWindow(Col, Index + ScoreRow, LastScoreColumn, Index + ScoreRow);
+  if PAbilityBlock(SelectedCharacter)^.Scores[Index] < FirstTwoDigitValue then
+    Inc(Col);
+  DrawTextAt(Col, Index + ScoreRow, Color,
+    res12_fn_1037(PAbilityBlock(SelectedCharacter)^.Scores[Index]));
+  if Index = 0 then
+    if SelectedCharacter^.Strength = ExceptionalStrength then
+      if SelectedCharacter^.StrengthPercent > 0 then
+      begin
+        Percentile := res12_fn_1037(SelectedCharacter^.StrengthPercent);
+        if SelectedCharacter^.StrengthPercent < FirstTwoDigitValue then
+          Percentile := '0' + Percentile;
+        if SelectedCharacter^.StrengthPercent = PercentileMax then
+          Percentile := '00';
+        DrawTextAt(PercentileColumn, ScoreRow, Color, '(' + Percentile + ')');
+      end;
+end;
 { ovl19:0AB3: one var parameter (the Temple's View command). }
 {@stub} procedure ovl19_e5(var Flag: Byte); begin end;
 { ovl19:0B25: retf 4: 4 bytes of parameters; 0 bytes of locals }
