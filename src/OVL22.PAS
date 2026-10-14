@@ -427,8 +427,13 @@ procedure CastBless;
 begin
   ApplySpellToSide(SelectedCharacter^.Side, 'is Blessed');
 end;
-{ ovl22:1040: retf 0: 0 bytes of parameters; 10 bytes of locals }
-{@stub} procedure CastCurse; begin end;
+{ ovl22:1040 (e12). Cast handler of spell 2, Curse: applies the current spell ds681B to the side
+  opposite the selected character (res12_fn_23B7 returns 1 for side 0, else 0) with the message
+  'is Cursed'. One of the per-spell handlers in SpellHandlers (SpellHandlers[2]). }
+procedure CastCurse;
+begin
+  ApplySpellToSide(res12_fn_23B7(SelectedCharacter), 'is Cursed');
+end;
 { ovl22:106B: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure CastCureLightWounds; begin end;
 { ovl22:10A7: retf 0: 0 bytes of parameters; 2 bytes of locals }
