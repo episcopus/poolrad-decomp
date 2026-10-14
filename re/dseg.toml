@@ -1018,3 +1018,13 @@ evidence = "DS:6B00 is the bank index for the HEAD sprite pointer at DS:6B01, wh
 offset = 0x6B05
 name = "BodyBankIndex"
 evidence = "DS:6B05 is the bank index for the BODY sprite pointer at DS:6B06, set to sentinel value 255 when none; StartBattle resets it after ReleasePicture at ovl10:0968"
+
+[[global]]
+offset = 0x6F81
+name = "EncounterSpriteBank"
+evidence = "operand 1 of ECL command 12 (ovl03:03B4), passed as SpriteBank: ShowEncounterPicture loads the SPRIT sprites with it (ovl07:054E)"
+
+[[global]]
+offset = 0x6F82
+name = "EncounterPicBank"
+evidence = "operand 3 of ECL command 12 (ovl03:03B4), passed as PicBank: ShowEncounterPicture loads the PIC picture or the HEAD and BODY banks with it (ovl07:054E)"

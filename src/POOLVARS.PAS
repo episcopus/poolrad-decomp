@@ -956,6 +956,10 @@ var
   CompareFlags: array[0..5] of Byte;
   SkippedOpcode: Byte;                   { the opcode SkipCommand reads at EclPC (ovl07:1EB7) }
   ds84EA: Byte;                   { the head/picture word ds49D6^[$2E1] ShowEncounterPicture last showed (ovl07:0633) }
+  { The encounter picture's banks: operand 1 and operand 3 of ECL command 12 (ovl03:03B4), passed to
+    ShowEncounterPicture as SpriteBank (SPRIT) and PicBank (PIC, or HEAD and BODY). }
+  EncounterSpriteBank: Byte;      { the SPRIT bank the encounter sprites are loaded from (ovl07:054E) }
+  EncounterPicBank: Byte;         { the PIC bank, or the HEAD and BODY bank, of the close-up (ovl07:054E) }
   ds6F83: Byte;                   { set to 8 by InitScript (ovl07:01F0); meaning unknown }
   ds70C6: Byte;                   { cleared by InitScript (ovl07:01FB); meaning unknown }
   ds84C8: array[0..1] of Byte;    { two bytes InitScript clears (ovl07:01DF); meaning unknown }

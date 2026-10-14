@@ -3469,3 +3469,24 @@ kind = "routine"
 why = "ECL command 10: the dispatcher ovl03:2F2D calls it for SkippedOpcode 10 (cmp al,0xa; call 02E0); it selects the party member at the position operand 1 names as SelectedCharacter (ds5D96 walk, match ovl03:02E0)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl03_fn_03B4"
+new = "ShowEncounterCommand"
+kind = "routine"
+why = "ECL command 12 (dispatcher ovl03:2F2D, SkippedOpcode 12): sets the encounter picture's banks and shows it at the distance the party can see ahead, capped by word 704 (ovl03:03B4, matched)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ds6F81"
+new = "EncounterSpriteBank"
+kind = "global"
+why = "operand 1 of ECL command 12 (ovl03:03B4), passed as SpriteBank: ShowEncounterPicture loads the SPRIT sprites with it (ovl07:054E)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ds6F82"
+new = "EncounterPicBank"
+kind = "global"
+why = "operand 3 of ECL command 12 (ovl03:03B4), passed as PicBank: ShowEncounterPicture loads the PIC picture or the HEAD and BODY banks with it (ovl07:054E)"
+date = "2026-10-13"
+

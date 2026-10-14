@@ -13,7 +13,7 @@ procedure ArithmeticCommand;
 procedure RandomCommand;
 procedure StoreCommand;
 procedure SelectCharacterCommand;
-procedure ovl03_fn_03B4;
+procedure ShowEncounterCommand;
 procedure ovl03_fn_0450;
 procedure ovl03_fn_0745;
 procedure ovl03_fn_074A;
@@ -99,6 +99,15 @@ const
     the party position (ovl03:02E0). }
   RemoveMemberBit = $80;
   PositionMask = $7F;
+  { The two words of ds49D6 that ECL command 12 (ovl03:03B4) works with: the largest distance the
+    script allows for the encounter picture, and the steps the party sees ahead (OpenStepsAhead,
+    ovl07:0482, which also stores them there). }
+  VarEncounterLimit = 704;
+  VarStepsAhead = 705;
+var
+  { ds84C8 (POOLVARS) under the type ShowEncounterPicture takes: TPictureShown is declared in OVL07,
+    and Turbo Pascal accepts a var argument only of the identical type. }
+  PictureShown: TPictureShown absolute ds84C8;
 
 { ovl03:0001. The ECL command 0, the only command that takes no operands (the dispatcher at
   ovl03:2F2D calls it for SkippedOpcode 0). It clears the text windows when ds84E2 is set (the
@@ -279,8 +288,25 @@ begin
     ds84D3 := 0;
   end;
 end;
-{ ovl03:03B4: retf 0: 0 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl03_fn_03B4; begin end;
+{ ovl03:03B4. ECL command 12 (dispatcher ovl03:2F2D, SkippedOpcode 12): shows an encounter picture
+  at the distance the party can see ahead. Operand 1 is the sprite bank (EncounterSpriteBank) and
+  operand 3 the picture bank (EncounterPicBank), both passed to ShowEncounterPicture; operand 2 is
+  the largest distance the script allows, kept in word 704 of ds49D6. The distance is the steps
+  ahead (OpenStepsAhead, which also stores them in word 705), cut down to that limit. The two shown
+  flags are PictureShown (ds84C8). }
+procedure ShowEncounterCommand;
+var
+  Unused: Word;                 { QUIRK ovl03:03B4: two bytes of the frame nothing uses }
+begin
+  DecodeOperands(3);
+  EncounterSpriteBank := OperandValue(1);
+  ds49D6^[VarEncounterLimit] := OperandValue(2);
+  EncounterPicBank := OperandValue(3);
+  ds49D6^[VarStepsAhead] := OpenStepsAhead(PartyMapColumn, PartyMapRow, PartyFacing);
+  if ds49D6^[VarEncounterLimit] < ds49D6^[VarStepsAhead] then
+    ds49D6^[VarStepsAhead] := ds49D6^[VarEncounterLimit];
+  ShowEncounterPicture(EncounterSpriteBank, EncounterPicBank, Byte(ds49D6^[VarStepsAhead]), PictureShown);
+end;
 { ovl03:0450: frame not read }
 {@stub} procedure ovl03_fn_0450; begin end;
 { ovl03:0745: frame not read }

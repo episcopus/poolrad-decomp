@@ -225,12 +225,12 @@ id = "ovl03:03B4"
 unit = "ovl03"
 addr = "ovl03:03B4"
 size = 156
-name = "ovl03_fn_03B4"
+name = "ShowEncounterCommand"
 signature = ""
 c_name = "ovl03_fn_03B4"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_03B4 (ECL command 12 (dispatcher ovl03:2F2D, SkippedOpcode 12): sets the encounter picture's banks and shows it at the distance the party can see ahead, capped by word 704 (ovl03:03B4, matched)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
