@@ -11,7 +11,7 @@ procedure ReadSavedCharacterList(var List: PMenuLine);
 procedure RewriteSavedCharacterList(List: PMenuLine);
 procedure CreateSaveDir;
 procedure MergePictureData(Source, Dest: Pointer);
-procedure ovl17_e3;
+procedure BuildCharacterIcon(Recolor: Boolean);
 procedure ovl17_e4;
 procedure ovl17_fn_0818;
 procedure ovl17_fn_084A;
@@ -27,7 +27,7 @@ procedure ovl17_e8;
 procedure ovl17_e9;
 procedure ovl17_e11;
 implementation
-uses RES05, RES06, OVL23, OVL25;
+uses RES04, RES05, RES06, RES07, OVL23, OVL25, OVL32;
 
 type
   { An in-memory picture as ovl32 loads it: the same layout as ovl32's private TMemPic, with the
@@ -142,7 +142,7 @@ end;
   Source into Dest and ANDs its pixel bytes into Dest, so Source masks Dest. On the EGA adapter
   (VideoAdapter 1) the tail is ORed over Source^.ByteSize bytes and only the first
   ds5E5A[11].FirstPic^.ByteSize div 4 pixel bytes are ANDed; on the other two adapters (0 and 2)
-  both run over Source^.ByteSize bytes. Called by ovl17_e3 for each mirrored half of the character
+  both run over Source^.ByteSize bytes. Called by BuildCharacterIcon for each mirrored half of the character
   head and body pictures (slot 11 holds the reference picture). No heap or file effect. }
 procedure MergePictureData(Source, Dest: Pointer);
 var
@@ -170,8 +170,50 @@ begin
       end;
   end;
 end;
-{ ovl17:0482: retf 2: 2 bytes of parameters; 554 bytes of locals }
-{@stub} procedure ovl17_e3; begin end;
+{ ovl17:0482. Builds the selected character's (SelectedCharacter) combat icon picture. It selects
+  8X8D tile set 3, loads the character's CHEAD picture (block Sel^.CHeadBlock, the set name given
+  the suffix ds08C5[Sel^.Figure[0]]) into picture slot 11 and its CBODY picture (block
+  Sel^.CBodyBlock) into the character's icon slot (ds5E5A[Sel^.CombatIcon]), then merges the CHEAD
+  halves into the CBODY halves (MergePictureData: OR the tile bytes, AND the pixels), so the head
+  masks the body. When Recolor is set it also builds a 16-entry colour map from the six nibble pairs
+  Sel^.Figure[1..6] through ds3CF5 and applies it to both halves of the icon (res07_fn_1E5C).
+  Finally it frees slot 11, restores the tile set and flushes the keyboard. Called by the ovl16
+  character menus, by ovl17_e7 and by ovl17_e8. }
+procedure BuildCharacterIcon(Recolor: Boolean);
+var
+  UnusedBytes: array[0..2] of Byte;  { QUIRK ovl17:0482: three frame bytes the original reserves and never reads or writes }
+  MapFrom: array[0..15] of Byte;  { the icon's source colours (the identity map) }
+  MapTo: array[0..15] of Byte;    { the destination colour of each source colour }
+  I: Byte;                      { loop index }
+  UnusedByte: Byte;             { QUIRK ovl17:0482: a frame byte the original reserves and never reads or writes }
+begin
+  SelectTileSet(3);
+  with SelectedCharacter^ do
+  begin
+    LoadPictureSlot('CHEAD' + ds08C5[Figure[0]], CHeadBlock, 11);
+    LoadPictureSlot('CBODY' + ds08C5[Figure[0]], CBodyBlock, CombatIcon);
+    MergePictureData(ds5E5A[11].FirstPic, ds5E5A[CombatIcon].FirstPic);
+    MergePictureData(ds5E5A[11].SecondPic, ds5E5A[CombatIcon].SecondPic);
+    if Recolor then
+    begin
+      for I := 0 to 15 do
+      begin
+        MapFrom[I] := I;
+        MapTo[I] := I;
+      end;
+      for I := 1 to 6 do
+      begin
+        MapTo[ds3CF5[I]] := Figure[I] and $0F;
+        MapTo[ds3CF5[I] + 8] := (Figure[I] and $F0) shr 4;
+      end;
+      res07_fn_1E5C(@MapFrom, @MapTo, 0, 0, ds5E5A[CombatIcon].FirstPic);
+      res07_fn_1E5C(@MapFrom, @MapTo, 0, 0, ds5E5A[CombatIcon].SecondPic);
+    end;
+    FreePictureSlot(11);
+    RestoreTileSet;
+    FlushKeyboard;
+  end;
+end;
 { ovl17:069E: frame not read }
 {@stub} procedure ovl17_e4; begin end;
 { ovl17:0818: frame not read }

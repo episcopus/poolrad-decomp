@@ -3420,3 +3420,10 @@ kind = "routine"
 why = "ovl17:032F combines two in-memory pictures: ORs Source (the first parameter, ds5E5A slot 11 reference) tail/tile bytes into Dest and ANDs its pixel bytes into Dest, so Source masks Dest; called by ovl17_e3 for the character head and body pictures"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl17_e3"
+new = "BuildCharacterIcon"
+kind = "routine"
+why = "ovl17:0482 loads the selected character's CHEAD (slot 11) and CBODY (its icon slot) pictures, merges the head halves into the body halves with MergePictureData, and optionally recolours the icon from the six Figure nibble pairs through ds3CF5; called by the ovl16 character menus, ovl17_e7 and ovl17_e8"
+date = "2026-10-13"
+

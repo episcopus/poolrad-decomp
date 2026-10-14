@@ -8349,12 +8349,12 @@ id = "ovl17:0482"
 unit = "ovl17"
 addr = "ovl17:0482"
 size = 540
-name = "ovl17_e3"
+name = "BuildCharacterIcon"
 signature = ""
 c_name = "ovl17_e3"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl17_e3 (ovl17:0482 loads the selected character's CHEAD (slot 11) and CBODY (its icon slot) pictures, merges the head halves into the body halves with MergePictureData, and optionally recolours the icon from the six Figure nibble pairs through ds3CF5; called by the ovl16 character menus, ovl17_e7 and ovl17_e8); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

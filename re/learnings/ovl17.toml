@@ -71,3 +71,12 @@ tags = ["picture", "TMemPic", "Pixels", "ByteSize", "T8x8Bank", "PByteArray"]
 title = "The in-memory picture record and how to index its Pixels pointer"
 lesson = "A loaded picture is the record ovl32 calls TMemPic: height at +0, width in columns at +2, the item count at +8, ByteSize at +$11, the Pixels pointer at +$13 and the copied tail at +$17 (ovl11/ovl32 load it; ovl17:032F reads ByteSize, Pixels and Tail of two such records). Its Pixels field is a `^Byte`, and a `^Byte` field cannot be indexed directly: `Rec^.Pixels[I]` is Error 121 (Invalid qualifier), so write `PByteArray(Rec^.Pixels)^[I]` (RES05 exports PByteArray/TByteArray). T8x8Bank in POOLVARS is the same bytes with Gap at +$13 instead of Pixels; do not confuse them."
 evidence = ["src/OVL32.PAS#TMemPic", "src/OVL17.PAS#MergePictureData", "tools/re/tp_idioms/ovl17/PIXPRB.PAS", "tools/re/tp_idioms/ovl17/PARAMPRB.PAS"]
+
+[[lesson]]
+id = "byte-nibble-split-mask"
+confidence = "V"
+units = ["*"]
+tags = ["nibble", "shr", "and", "byte", "codegen"]
+title = "Splitting a byte into nibbles needs the mask written out"
+lesson = "To split a byte X into its nibbles the original writes `X and $0F` for the low nibble and `(X and $F0) shr 4` for the high one. The plain `X shr 4` compiles to `mov al,X; xor ah,ah; mov cx,4; shr ax,cl` and is 2 bytes shorter than the original's `mov al,X; and al,$F0; xor ah,ah; mov cx,4; shr ax,cl` (ovl17:05D7..05E3). The `and al,$F0` must be in the source. Probe tools/re/tp_idioms/ovl17/RECOLPRB.PAS."
+evidence = ["src/OVL17.PAS#BuildCharacterIcon", "tools/re/tp_idioms/ovl17/RECOLPRB.PAS"]

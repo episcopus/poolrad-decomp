@@ -304,9 +304,13 @@ type
     XpPerHp: Byte;
     HeadBank: Byte;               { +$BB: the HEAD picture bank number, 0 when none (ShowHeadBodyWindow) }
     BodyBank: Byte;               { +$BC: the BODY picture bank number, 0 when none (ShowHeadBodyWindow) }
-    PadBD: array[$BD..$BE] of Byte;
+    CHeadBlock: Byte;             { +$BD: the CHEAD picture block BuildCharacterIcon loads for the combat icon }
+    CBodyBlock: Byte;             { +$BE: the CBODY picture block BuildCharacterIcon loads for the combat icon }
     CombatIcon: Byte;             { +$BF: the icon picture DrawIcon draws for it on the combat map (ovl31) }
-    PadC0: array[$C0..$C6] of Byte;
+    { +$C0..+$C6: the character's figure descriptor as BuildCharacterIcon reads it. Figure[0] indexes ds08C5
+      for the CHEAD/CBODY name suffix; Figure[1..6] are six colour pairs (low nibble the source
+      colour's destination in the icon colour map, high nibble the source colour's + 8 slot). }
+    Figure: array[0..6] of Byte;
     ItemCountC7: Byte;            { +$C7: nonzero offers Use in the combat menu (ovl08:06E1); likely the item count }
     Items: PItem;                 { +$C8: the list of carried items }
     { +$CC..+$FF: the per-kind items the character remembers (13 pointer slots): ovl09:13CA
@@ -455,6 +459,10 @@ var
     indices and the path pattern. CheckCodeWheel picks one at random. }
   ds0000: array[0..12] of TCodeWheelEntry;  { the code wheel records; see above }
   ds04DF: string[40];             { prompt string HandleWildernessKeys passes to ReadPromptChoice; filled elsewhere }
+  { The CHEAD/CBODY character-picture name suffix table: the byte ds08C5[FigureIndex] is the
+    character BuildCharacterIcon appends to 'CHEAD'/'CBODY' (index 1 gives 'S', 2 gives 'T'). Its extent is
+    unverified: the region runs to the door table at DS:0900. }
+  ds08C5: array[0..$3A] of Char;
   { The wall view's id table: two equal groups of eight ids (0,15,12,11,13,10,9,14). ShowAreaView
     indexes it with the game variables VarWallIndexOutside and VarWallIndexInside. Its last six
     bytes are also entry 0 of SpecialBlocks, which DrawAreaView never reads. }
@@ -475,6 +483,10 @@ var
   { The base column of the map window page, indexed by AreaViewKind: entries 2..4 hold 0, 13 and
     26 (the pages of the 44-column map grid), entry 1 holds 78; evidence in re/dseg.toml. }
   MapBaseX: array[0..5] of Byte;  { map window page base column per AreaViewKind; see above }
+  { The colour-slot table BuildCharacterIcon reads to build the character icon's colour map: ds3CF5[I] for
+    I 1..6 holds 1, 2, 3, 4, 6, 7 (the destination colour of the I-th of the six colour pairs, and
+    plus 8 for the high nibble). It sits inside the ThiefSkillTable region (DS:3CF4). }
+  ds3CF5: array[0..$F] of Byte;
   ds43DC: Word;                   { nonzero after overlay sizing means the overlay manager failed: res08_init
                                     shows 'Overlay error, program abort!' and halts (probably OvrResult) }
   NewHeapEnd: Pointer;            { DS:$4848: HeapEnd cut by $400 paragraphs; assigned to HeapEnd }
