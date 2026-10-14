@@ -953,16 +953,19 @@ begin
   FillChar(ds4C20, $150, $FF);
   FillChar(ds4D70, $150, 0);
 end;
-{ 0464:1E5C: recolours the picture Pic. For every colour index I whose FromMap and ToMap
-  entries differ, each pixel of Pic whose palette colour is FromMap[I] becomes ToMap[I].
-  The changes go to a scratch copy of Pic (AllocatePicture) that is copied back over the
-  items from FirstItem on at the end. FirstItem is an item index (the byte offset of an
-  item is FirstItem * ByteSize). Flicker (nonzero) makes each change random: adapters 0
-  and 2 change each matching pixel with chance 1 in 4, adapter 1 changes a random subset
-  of the matching pixels of each cell. Adapter 0 compares 2-bit pixel pairs (ds25FA,
+{ 0464:1E5C: recolours item FirstItem of picture Pic (item 0 when FirstItem is
+  negative). For every colour index I whose FromMap and ToMap entries differ, each pixel
+  whose palette colour is FromMap[I] becomes ToMap[I]. The changes go to a scratch copy
+  of Pic (AllocatePicture) that is copied back at the end: because of the QUIRK at 1F51
+  the colour loop and the copy back run over exactly one item, item FirstItem, never the
+  items from FirstItem on. The scratch copy of a negative FirstItem holds ItemCount items
+  but only item 0 is used. FirstItem is an item index (the byte offset of an item is
+  FirstItem * ByteSize). Flicker (nonzero) makes each change random: adapters 0 and 2
+  change each matching pixel with chance 1 in 4, adapter 1 changes a random subset of the
+  matching pixels of each cell. Adapter 0 compares 2-bit pixel pairs (ds25FA,
   GlyphPixelMasks), adapter 1 the four EGA planes (EgaPlaneBitMasks), adapter 2 the two
   nibbles of each byte. Called by LoadPictureSlot (ovl32), LoadSpriteList (ovl28),
-  AnimateAreaDoors (ovl18) and ovl16, ovl17.
+  AnimateAreaDoors (ovl18, the door frame index) and ovl16, ovl17 (the others 0).
   QUIRK 0464:1F51: the header inside the colour loop tests FirstItem again; the header
   before the loop has already set it to 0, so Items is 1 for every colour: a negative
   FirstItem recolours and copies back item 0 only. }
@@ -972,7 +975,7 @@ var
   ToMapCopy: TColorMap;              { ToMap, copied on entry }
   PicOfs: Word;                      { byte offset in Pic of the pixel byte being read }
   ScratchOfs: Word;                  { byte offset in the scratch copy of the byte being written }
-  Items: Byte;                       { items recoloured: ItemCount for a negative FirstItem before the loop, then 1 (QUIRK) }
+  Items: Byte;                       { items allocated and copied: ItemCount for a negative FirstItem, else 1 }
   ColByte: Word;                     { byte column loop variable }
   PixelRow: Word;                    { pixel row loop variable }
   Mask: Byte;                        { adapter 1: the pixels of the cell that have the colour }
