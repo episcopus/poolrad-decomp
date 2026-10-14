@@ -522,3 +522,94 @@ def test_a_queue_worker_retries_a_failed_review_then_moves_on(repo, monkeypatch,
     assert (logs / "ovl00-fix1.log").exists() and (logs / "ovl00-fix1.log").read_text()
     assert worker.load_frontier("ovl00")[worker.fix_key("ovl00")] ["attempts"] == 2
     assert worker.fix_exhausted("ovl00") and waits == [7]
+
+
+# ----------------------------------------------------------------------------- the escalation tier
+import next as nxt  # noqa: E402
+
+
+def stuck_registry(repo):
+    """Foo blocked by tier 1, Bar out of tier-1 attempts, Baz a map artefact inside a real routine."""
+    (repo / "re/symbols.toml").write_text(registry([("ovl00:0000", "Foo", "none", "blocked: five attempts, boundary wrong"),
+                                                    ("ovl00:0040", "Bar", "none", ""),
+                                                    ("ovl00:0080", "Baz", "none", "blocked: not a routine, inside Foo")]))
+    (repo / "src/OVL00.PAS").write_text(SOURCE.replace("procedure Bar;\nimplementation", "procedure Bar;\nprocedure Baz;\nimplementation")
+                                        .replace("end.\n", "{@stub} procedure Baz; begin end;\nend.\n"))
+    commit(repo, "stuck routines")
+    worker.save_frontier("ovl00", {"ovl00:0040": {"attempts": 2}})
+
+
+def test_tier_two_plans_only_what_tier_one_gave_up_on(repo):
+    stuck_registry(repo)
+    fr = worker.load_frontier("ovl00")
+    assert "baz" in worker.stub_names((repo / "src/OVL00.PAS").read_text())          # a stub, but an artefact
+    assert [i.name for i in worker.plan(repo, "ovl00", fr, 2, tier=2)] == ["Foo", "Bar"]      # never the artefact
+    assert worker.plan(repo, "ovl00", fr, 2, tier=1) == []
+    fr["ovl00:0040"].update(escalations=2)
+    assert [i.name for i in worker.plan(repo, "ovl00", fr, 2, tier=2)] == ["Foo"]
+    fr["ovl00:0000"] = {"escalation_exhausted": True}
+    assert worker.plan(repo, "ovl00", fr, 2, tier=2) == []
+
+
+def test_tier_one_leaves_a_stuck_unit_to_the_escalation_tier(repo):
+    """2026-10-14: cheap workers claimed and gave back units with only exhausted routines all night."""
+    stuck_registry(repo)
+    assert nxt.next_unit() is None
+    n = nxt.next_escalation()
+    assert n[0] == "ovl00" and "ovl00:0000" in n[1] and "ovl00:0040" in n[1] and "ovl00:0080" not in n[1]
+    worker.save_frontier("ovl00", {"ovl00:0040": {"attempts": 2, "escalation_exhausted": True},
+                                   "ovl00:0000": {"escalation_exhausted": True}})
+    assert nxt.next_escalation() is None                       # the human's now (make inbox)
+
+
+def test_an_escalation_that_fails_is_counted_and_then_left_for_the_human(repo, monkeypatch, tmp_path):
+    stuck_registry(repo)
+    fake = FakeMake()
+    monkeypatch.setattr(worker, "run_make", fake)
+    cfg = worker.Config(agent="dec-1", role="decompiler", unit="ovl00", batch=1, session_cmd=session_script(tmp_path, "true"),
+                        timeout_minutes=1, max_attempts=1, idle_seconds=0, sleep=lambda s: None, tier=2)
+    assert worker.Worker(cfg).run() == 0
+    fr = worker.load_frontier("ovl00")
+    assert fr["ovl00:0000"]["escalation_exhausted"] and fr["ovl00:0040"]["escalation_exhausted"]
+    logs = repo / "build/worker/dec-1"
+    prompt = (logs / "ovl00-esc1.prompt.md").read_text()
+    assert "ovl00:0000 Foo" in prompt and "boundary wrong" in prompt and "escalation failed" in prompt
+    assert (logs / "ovl00-esc2.prompt.md").exists() and not (logs / "ovl00-esc3.prompt.md").exists()
+    import inbox
+    text = json.dumps(inbox.frontier())
+    assert "Escalation failed" in text and "ovl00:0000" in text
+
+
+def test_orphan_map_stubs_inside_matched_routines_are_retired(repo, monkeypatch):
+    """2026-10-14: seven retired map entries left as stubs kept ovl13 from ever being complete."""
+    (repo / "re/symbols.toml").write_text('[[routine]]\nid = "ovl00:0000"\nunit = "ovl00"\naddr = "ovl00:0000"\nname = "Foo"\n'
+                                          'size = 64\nlevel = "L2"\nnotes = ""\n')
+    (repo / "src/OVL00.PAS").write_text("unit OVL00;\ninterface\nprocedure Foo;\nprocedure ovl00_fn_0010;\nprocedure ovl00_fn_0200;\n"
+                                        "implementation\nprocedure Foo; begin end;\n{@stub} procedure ovl00_fn_0010; begin end;\n"
+                                        "{@stub} procedure ovl00_fn_0200; begin end;\nend.\n")
+    commit(repo, "orphans")
+    assert worker.orphan_stubs(repo, "ovl00") == ["ovl00_fn_0010"]          # 0200 lies outside every matched routine
+    fake = FakeMake()
+    monkeypatch.setattr(worker, "run_make", fake)
+    cfg = worker.Config(agent="dec-1", role="decompiler", unit="ovl00", session_cmd="true", timeout_minutes=1,
+                        idle_seconds=0, sleep=lambda s: None)
+    w = worker.Worker(cfg)
+    key, wt = w.claim("ovl00")
+    w.retire_orphans(worker.UnitRun(key, "ovl00", wt))
+    text = (wt / "src/OVL00.PAS").read_text()
+    assert "ovl00_fn_0010" not in text and "ovl00_fn_0200" in text
+    assert "retire map stubs" in git_at(wt, "log", "--format=%s", "-3")
+
+
+def test_a_session_is_interrupted_at_its_cost_cap(tmp_path, monkeypatch):
+    wt = tmp_path / "wt"
+    wt.mkdir()
+    prompt = tmp_path / "p.md"
+    prompt.write_text("x")
+    interrupted = []
+    monkeypatch.setattr(worker, "interrupt_session", lambda sid, f: interrupted.append(sid))
+    monkeypatch.setattr(worker, "session_cost", lambda sid: 9.0)
+    monkeypatch.setattr(worker, "COST_POLL_SECONDS", 0.2)
+    r = worker.run_session("echo {session_id}; sleep 30", prompt, wt, tmp_path / "s.log", timeout_s=20, cost_cap=5.0)
+    assert r.capped and not r.timed_out and interrupted == [r.session_id] and r.seconds < 10
+    assert "cost cap of USD 5.00 reached" in (tmp_path / "s.log").read_text()
