@@ -26,7 +26,7 @@ procedure RunIfCompared;
 procedure StartEclBlock;
 procedure LoadAreaGraphics;
 procedure BitwiseCommand;
-procedure ovl03_fn_0E5E;
+procedure CopyIndexedWordCommand;
 procedure ovl03_fn_0EBC;
 procedure ovl03_fn_0F08;
 procedure ovl03_fn_0FE2;
@@ -702,8 +702,26 @@ begin
   CompareWords(0, Combined);
   WriteVmWord(Target, Combined);
 end;
-{ ovl03:0E5E: retf 0: 0 bytes of parameters; 10 bytes of locals }
-{@stub} procedure ovl03_fn_0E5E; begin end;
+{ ovl03:0E5E. ECL command 42 (dispatcher ovl03:2F2D, SkippedOpcode $2A): copies a word out of a table.
+  Operand 1 is the script address of the table, operand 2 the index (a byte) and operand 3 the script
+  address the word goes to: the word at table + index is read with ReadVmWord and written with
+  WriteVmWord. }
+procedure CopyIndexedWordCommand;
+var
+  Base: Word;
+  Dest: Word;
+  Source: Word;
+  Value: Word;
+  Index: Byte;
+begin
+  DecodeOperands(3);
+  Base := MakeWord(OperandLow[1], OperandHigh[1]);
+  Index := OperandValue(2);
+  Dest := MakeWord(OperandLow[3], OperandHigh[3]);
+  Source := Base + Index;
+  Value := ReadVmWord(Source);
+  WriteVmWord(Dest, Value);
+end;
 { ovl03:0EBC: retf 0: 0 bytes of parameters; 8 bytes of locals }
 {@stub} procedure ovl03_fn_0EBC; begin end;
 { ovl03:0F08: frame not read }

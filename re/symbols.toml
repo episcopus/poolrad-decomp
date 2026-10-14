@@ -394,12 +394,12 @@ id = "ovl03:0E5E"
 unit = "ovl03"
 addr = "ovl03:0E5E"
 size = 94
-name = "ovl03_fn_0E5E"
+name = "CopyIndexedWordCommand"
 signature = ""
 c_name = "ovl03_fn_0E5E"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_0E5E (ECL command 42 (dispatcher ovl03:2F2D, opcode 2Ah): the word at the table address (operand 1) plus the byte index (operand 2) is read with ReadVmWord and written to operand 3 (ovl03:0E5E, matched)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
