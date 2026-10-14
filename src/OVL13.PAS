@@ -21,17 +21,13 @@ procedure RollAttackDamage(Attacker: PCharacter; Target: PCharacter; Index: Byte
 procedure ShowAttackResult(Attacker: PCharacter; Target: PCharacter; Kind, SpellFlag, Damage, Hit: Byte);
 procedure GuardedEnemiesAttack(Who: PCharacter);
 procedure StepCombatant(Who: PCharacter; Dir: Byte);
-procedure ovl13_fn_08AC;
 procedure PartingShots(Who: PCharacter; Dir: Byte);
 function TryFlee(Who: PCharacter): Byte;
 procedure RefreshAttacks(Who: PCharacter);
 function AttacksThisRound(DoubledAttacks: Byte): Byte;
 function SweepEnemies(Who, Target: PCharacter): Boolean;
-procedure ovl13_fn_0FBF;
-procedure ovl13_fn_104E;
 function AttackTargetAllowed(Who, Target: PCharacter): Boolean;
 procedure TurnUndead(Who: PCharacter);
-procedure ovl13_fn_11D8;
 function SelectTurnUndeadTarget(Who: Pointer; var Selected): Boolean;
 procedure ResolveCombatantAttacks(Attacker, Target: PCharacter; AttackKind: Byte; var Done: Byte);
 procedure NoteAttackBearing(Attacker, Target: PCharacter);
@@ -41,10 +37,7 @@ function FindNearbyTarget(Who: PCharacter; var Selected): Boolean;
 function FindSpellTarget(Spell, Automatic, AimFlag: Byte; var Target: TSpellTarget): Boolean;
 procedure SelectSpellTargets(Spell, Automatic: Byte; var Done: Byte);
 procedure CastCombatSpell(SpellNumber, NoRedraw: Byte; var Done: Byte);
-procedure ovl13_fn_2432;
 function IsBackstab(Who: PCharacter; Target: PCharacter): Boolean;
-procedure ovl13_fn_257E;
-procedure ovl13_fn_25C9;
 function BearingTo(Who, Target: Pointer): Byte;
 procedure ShowAttackAnimation(Who, Target: PCharacter; Item: PItem);
 procedure UpdateMonsterMorale;
@@ -418,7 +411,6 @@ begin
     Who^.Combat^.Moves := 0;
 end;
 { ovl13:08AC: retf 6: 6 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl13_fn_08AC; begin end;
 { ovl13:08B2, PartingShots. The parting shots Who provokes by leaving melee: it copies the enemies adjacent to
   Who now (CollectEnemiesInRange(Who, 1) into ds6DE4, ovl31) into Enemies, temporarily moves Who's
   cell in CombatantTable to Dir's neighbour to collect the enemies adjacent there, moves it back and
@@ -661,9 +653,7 @@ begin
       end;
 end;
 { ovl13:0FBF: frame not read }
-{@stub} procedure ovl13_fn_0FBF; begin end;
 { ovl13:104E: retf 8: 8 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl13_fn_104E; begin end;
 { ovl13:1085, AttackTargetAllowed. The attack's target check: it runs the target's and the attacker's affect hooks
   and reports whether the attack may go ahead. A nil Target fails, and attacking oneself is
   always allowed. Otherwise ds681E is cleared and RunAffectHooks kind 1 runs on Target; when no
@@ -770,7 +760,6 @@ begin
   ClearCharacterMessage;
 end;
 { ovl13:11D8: retf 4: 4 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl13_fn_11D8; begin end;
 { ovl13:1351. Picks the undead TurnUndead tries to turn next: of the enemies the range scan
   CollectEnemiesInRange(Who, AllEnemiesRange) lists it keeps the one with the lowest signed type row
   (TCharacter.Pad74[$76], above 0) whose combat state is not already forced to flee
@@ -1367,7 +1356,6 @@ begin
   end;
 end;
 { ovl13:2432: retf 8: 8 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl13_fn_2432; begin end;
 { ovl13:2574. Reports whether Who's attack on Target is a thief's backstab: Who's thief level
   (ClassLevels[6]) must be above 0 and Who must carry no slot-2 item but the one type below, with a
   backstab-capable readied weapon (SlotItems[0] empty or an item kind in the set below); then Target
@@ -1409,9 +1397,7 @@ begin
     IsBackstab := False;
 end;
 { ovl13:257E: frame not read }
-{@stub} procedure ovl13_fn_257E; begin end;
 { ovl13:25C9: retf 8: 8 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl13_fn_25C9; begin end;
 { ovl13:263D. Returns the compass direction from Who's cell towards Target's cell: it reads both
   combat-map cells (CombatantX/CombatantY) and walks Dir 0..8, returning the first direction whose
   90-degree arc at Who (InDirArc) holds Target. Called to face a combatant at another: PerformAttack
