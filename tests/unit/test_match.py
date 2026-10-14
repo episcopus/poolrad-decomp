@@ -130,3 +130,14 @@ def test_skeleton_declares_every_routine_and_marks_a_real_initialisation():
                                                key=lambda r: int(r["addr"].split(":")[1], 16))]
     empty = skeleton.skeleton(orig, "res10")         # an empty initialisation is already decompiled
     assert match.STUB_INIT not in empty and empty.endswith("begin\nend.\n")
+
+
+def test_the_whole_set_is_compiled_in_groups_under_the_reference_limit(monkeypatch):
+    """2026-10-14: one MATCH program for every unit ran TPC out of memory at about 1,050 references."""
+    def unit(n):
+        return "unit X;\ninterface\nimplementation\n" + "".join("procedure P%d;\nbegin\nend;\n" % k for k in range(n)) + "end.\n"
+    sources = {"A": unit(250), "B": unit(200), "C": unit(10), "D": unit(390)}
+    monkeypatch.setattr(match, "MAX_REFS_PER_BUILD", 400)
+    groups = match.build_groups(["a", "b", "c", "d"], sources)
+    assert groups == [["a"], ["b", "c"], ["d"]]                  # order kept, none over the limit
+    assert match.build_groups(["c"], sources) == [["c"]]
