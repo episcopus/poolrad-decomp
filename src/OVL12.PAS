@@ -65,7 +65,7 @@ procedure ParalyzeAttackTarget(Who: PCharacter; Duration: Word; Unused: Byte);
 procedure PoisonAttackTargetBonus0(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure PoisonAttackTargetBonus4(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure PoisonAttackTargetBonus2(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e55;
+procedure ParalyzeAttackTargetFor2d8(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e56;
 procedure ovl12_e57;
 procedure ovl12_e58;
@@ -1147,8 +1147,13 @@ procedure PoisonAttackTargetBonus2(Who: PCharacter; Affect: PAffect; Mode: Byte)
 begin
   PoisonAttackTarget(Who, 2);
 end;
-{ ovl12:1699: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e55; begin end;
+{ ovl12:1699. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Affect and Mode are not read, ovl24:0000).
+  It paralyses the character Who attacked last for RollDice(2, 8) rounds: ParalyzeAttackTarget (ovl12:15EB) with the
+  unused byte 0. No caller is in the map (auto:entry_55), so the affect that runs it is not known yet [?]. }
+procedure ParalyzeAttackTargetFor2d8(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  ParalyzeAttackTarget(Who, RollDice(2, 8), 0);
+end;
 { ovl12:16BB: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e56; begin end;
 { ovl12:16E6: retf 10: 10 bytes of parameters; 0 bytes of locals }
