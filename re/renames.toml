@@ -3665,3 +3665,10 @@ kind = "routine"
 why = "ovl12:0FAC: 'Avoids it' dodge: with an item in SelectedCharacter's first slot and the attacker (SelectedCharacter, distance from res12_fn_255B above 1) away, a 1d100 roll at or below Chance avoids the attack and zeroes the damage; called by ovl12:1086 (AvoidIfSelectedItemPlusZero) with Chance 100"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_fn_101D"
+new = "FirstSlotItem"
+kind = "routine"
+why = "ovl12:101D returns the item in Who's first remembered slot (SlotItems[0], TCharacter +$CC), or nil; res12_fn_2E8B may pick another item first; its callers test the item's Plus (ovl12:1086)"
+date = "2026-10-13"
+

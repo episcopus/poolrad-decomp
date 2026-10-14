@@ -42,8 +42,8 @@ procedure SetAttackMissIfTurnPending(Who: PCharacter; Affect: PAffect; Mode: Byt
 procedure AgeCharacterOnce(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ClearCloud(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure AvoidDistantAttack(Who: PCharacter; Chance: Byte);
-procedure ovl12_fn_101D;
-procedure ovl12_e35;
+function FirstSlotItem(Who: PCharacter): PItem;
+procedure ovl12_e35(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e36;
 procedure ovl12_e37;
 procedure ovl12_e38;
@@ -843,8 +843,24 @@ begin
         Dec(ds6823);
       end;
 end;
-{ ovl12:101D: retf 4: 4 bytes of parameters; 10 bytes of locals }
-{@stub} procedure ovl12_fn_101D; begin end;
+{ ovl12:101D. The item Who keeps in its first slot (SlotItems[0], TCharacter +$CC; the 13 slots are the items the
+  character remembers, POOLVARS), or nil when the slot is empty. When there is a slot item, res12_fn_2E8B (Who, Item)
+  runs first: its Item is kept when it returns nonzero and gives a non-nil item, otherwise the slot item is the result.
+  Purpose unknown: what res12_fn_2E8B finds is not known yet [?]. }
+function FirstSlotItem(Who: PCharacter): PItem;
+var
+  Item: Pointer;                { a Pointer, the var parameter of res12_fn_2E8B }
+  Found: Byte;                  { the result of res12_fn_2E8B }
+begin
+  Item := nil;
+  if Who^.SlotItems[0] <> nil then
+  begin
+    Found := res12_fn_2E8B(Who, Item);
+    if (Found = 0) or (Item = nil) then
+      Item := Who^.SlotItems[0];
+  end;
+  FirstSlotItem := PItem(Item);
+end;
 { ovl12:1086: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e35; begin end;
 { ovl12:10C1: retf 10: 10 bytes of parameters; 0 bytes of locals }
