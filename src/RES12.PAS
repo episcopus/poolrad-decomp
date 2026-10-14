@@ -37,7 +37,7 @@ procedure RecalcCombatValues(Who: PCharacter);
 function ByteToText(Value: Byte): string;
 function WordToText(Value: Word): string;
 function LongIntToText(Value: LongInt): string;
-function res12_fn_10E6(Who: PCharacter): Byte;
+function DexterityAdjustment(Who: PCharacter): Byte;
 function res12_fn_1168(Who: PCharacter): ShortInt;
 procedure res12_fn_11EA;
 function res12_fn_1282(Who: PCharacter): ShortInt;
@@ -136,6 +136,27 @@ const
     in the carried weight. $BA is an index of the DS:10A7 name table; which item it is is not proven. }
   BagNameNum = $BA;
   ExcludedWeight = $1388;
+  { DexterityAdjustment maps Who's dexterity (+$13) to its adjustment: dexterity 1..3 gives -4, 4..6
+    the dexterity minus 7, 7..14 gives 0, 15..18 the dexterity minus 14, 19..20 gives 4, 21..23
+    gives 5 and 24..25 gives 6. }
+  DexBand1Low = 1;
+  DexBand1High = 3;
+  DexBand1Adjust = $FC;   { -4 }
+  DexBand2Low = 4;
+  DexBand2High = 6;
+  DexBand2Offset = 7;
+  DexBand3Low = $F;
+  DexBand3High = $12;
+  DexBand3Offset = $E;
+  DexBand4Low = $13;
+  DexBand4High = $14;
+  DexBand4Adjust = 4;
+  DexBand5Low = $15;
+  DexBand5High = $17;
+  DexBand5Adjust = 5;
+  DexBand6Low = $18;
+  DexBand6High = $19;
+  DexBand6Adjust = 6;
   { EGA text colours DrawTextAt draws the character and shop panels in (whitepaper 5.24). }
   Green = $0A;
   LightMagenta = $0D;
@@ -513,7 +534,7 @@ begin
   Who^.ResistValue := Who^.ResistBase;
   Who^.Movement := Who^.BaseMovement;
   Who^.HitAdjust := Who^.Thac0;
-  Bonus.Pad0 := res12_fn_10E6(Who);
+  Bonus.Pad0 := DexterityAdjustment(Who);
   if Who^.SlotItems[0] = nil then
   begin
     Who^.HitAdjust := Who^.HitAdjust + res12_fn_1282(Who);
@@ -585,8 +606,26 @@ begin
   Str(Value, Text);
   LongIntToText := Text;
 end;
-{ 00BA:10E6: retf 4: 4 bytes of parameters; 2 bytes of locals }
-{@stub} function res12_fn_10E6(Who: PCharacter): Byte; begin end;
+{ 00BA:10E6. Returns the AD&D dexterity adjustment of Who's dexterity (Dexterity, +$13):
+  dexterity 1..3 gives -4, 4..6 the dexterity minus 7, 7..14 gives 0, 15..18 the dexterity
+  minus 14, 19..20 gives 4, 21..23 gives 5 and 24..25 gives 6. RecalcCombatValues stores it in
+  the accumulator's first byte, which it sums into the character's combat value. }
+function DexterityAdjustment(Who: PCharacter): Byte;
+var
+  Dex: Byte;
+begin
+  Dex := Who^.Dexterity;
+  case Dex of
+    DexBand1Low..DexBand1High: DexterityAdjustment := DexBand1Adjust;
+    DexBand2Low..DexBand2High: DexterityAdjustment := Dex - DexBand2Offset;
+    DexBand3Low..DexBand3High: DexterityAdjustment := Dex - DexBand3Offset;
+    DexBand4Low..DexBand4High: DexterityAdjustment := DexBand4Adjust;
+    DexBand5Low..DexBand5High: DexterityAdjustment := DexBand5Adjust;
+    DexBand6Low..DexBand6High: DexterityAdjustment := DexBand6Adjust;
+  else
+    DexterityAdjustment := 0;
+  end;
+end;
 { 00BA:1168: retf 4: 4 bytes of parameters; 2 bytes of locals }
 {@stub} function res12_fn_1168(Who: PCharacter): ShortInt; begin end;
 { 00BA:11EA: retf 4: 4 bytes of parameters; 2 bytes of locals }
