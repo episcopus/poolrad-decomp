@@ -3581,3 +3581,10 @@ kind = "routine"
 why = "cast handler of spell 9 Burning Hands (SpellHandlers[9]; ovl22_e10 fills the table, whitepaper 5.22.2): deals the caster level in fire damage to the chosen targets (ovl22:1190)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl22_e20"
+new = "CastEnlarge"
+kind = "routine"
+why = "cast handler of spell 12 Enlarge (SpellHandlers[12]; ovl22_e10 fills the table, whitepaper 5.22.2): gives the target strength 18 by caster level through RaiseStrength and adds the strength affect /bin/zshC (ovl22:12A5)"
+date = "2026-10-13"
+

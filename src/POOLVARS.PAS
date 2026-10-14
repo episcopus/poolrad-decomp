@@ -280,7 +280,11 @@ type
     { +$96..$9D: the level in each of the eight classes; Raise Dead treats index 2 apart (class 2
       is the fighter in the create-character run, whitepaper 5.8). Signed: only levels above 0 count. }
     ClassLevels: array[0..7] of ShortInt;
-    Pad9E: array[$9E..$9F] of Byte;
+    Sex: Byte;                    { +$9E: the sex, 0 male (whitepaper 4.2.5) }
+    { +$9F: the creature kind some spells test a target by: Charm Person and Sleep require 1 or less
+      (ovl22:11F3, 1760), Snake Charm $E (ovl22:193E) and ovl12 tests 4 and $A; MON*CHA has the
+      humanoids at 0 or 1, the undead at 4 and a giant snake at $E, and a saved party member at 0. }
+    CreatureType: Byte;
     ByteA0: ShortInt;             { +$A0: the script reads it signed (GetCharacterVar, ovl07:08C5); meaning unknown }
     { +$A1: RecalcClassStats sets 3 when the fighter level (ClassLevels[2]) is above 6, else 2
       (ovl23:0083): likely attacks per two rounds [I]. }
@@ -595,6 +599,13 @@ var
   SpellMenuSpells: array[0..$14] of Byte;  { the spell number (bit 7 = pending) of each menu line, in list order }
   SpellMenuItems: array[0..$30] of PMenuLine;  { for each scribed/learned line, the item (scroll) it came from }
   SpellMenuItemCount: Byte;                   { the number of entries SpellMenuItems holds (AddItemSpells, fn_051C) }
+  { ds4844 and ds4845: two byte working globals the ovl22 cast handlers share (the original keeps them
+    at DS:4844 and DS:4845, between SpellMenuItemCount and NewHeapEnd). Enlarge (CastEnlarge) puts its
+    strength (18) and its percentile in them for RaiseStrength; Sleep (ovl22_e26) its hit-point pool;
+    Snake Charm (ovl22_e31) a hit-point pool that reaches 0 through it; ovl24_fn_23B6 a value and a
+    duration. }
+  ds4844: Byte;                   { a spell handler's first working byte (see the note above) }
+  ds4845: Byte;                   { the second working byte paired with ds4844 (see the note above) }
   ds25C0: array[0..2, 0..2] of Byte;  { the 3x3 line pattern table StepLine reads at [SY+1, SX+1] }
   { DirStepX and DirStepY: nine entries each (DirStepY starts 9 bytes after DirStepX). ovl14's
     ClampPartyPosition also adds them as the party's column and row step (cbw at ovl14:06D0, 06DB). }

@@ -10062,12 +10062,12 @@ id = "ovl22:12A5"
 unit = "ovl22"
 addr = "ovl22:12A5"
 size = 201
-name = "ovl22_e20"
+name = "CastEnlarge"
 signature = ""
 c_name = "ovl22_e20"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_20"
+notes = "renamed from ovl22_e20 (cast handler of spell 12 Enlarge (SpellHandlers[12]; ovl22_e10 fills the table, whitepaper 5.22.2): gives the target strength 18 by caster level through RaiseStrength and adds the strength affect /bin/zshC (ovl22:12A5)); auto:entry_20"
 evidence = ["prologue"]
 
 [[routine]]

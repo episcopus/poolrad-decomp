@@ -26,7 +26,7 @@ procedure CastProtection;
 procedure CastResistCold;
 procedure CastBurningHands;
 procedure ovl22_e19;
-procedure ovl22_e20;
+procedure CastEnlarge;
 procedure ovl22_e21;
 procedure ovl22_e22;
 procedure ovl22_e23;
@@ -266,7 +266,7 @@ end;
   5d4, $3B is 1d4*10+40, $3F is 2d10*10 in combat (view mode 5) else (1d10+10)*10, and $43 is a flat
   $5A0. Every other value uses the SpellTable row's duration base (byte +4) plus its per-level byte
   (byte +5) times the caster level from res12_fn_26C2. Called by ApplySpellToTargets (as ApplyAffect's
-  Duration) and ovl22_e20, ovl22_fn_1758, ovl22_fn_202B, ovl22_fn_2EEA. }
+  Duration) and CastEnlarge, ovl22_fn_1758, ovl22_fn_202B, ovl22_fn_2EEA. }
 function SpellAffectDuration(Spell: Byte): Word;
 const
   { The few spells whose affect time is rolled for instead of read from SpellTable; the values
@@ -605,7 +605,43 @@ end;
 { ovl22:11DD: retf 0: 0 bytes of parameters; 22 bytes of locals }
 {@stub} procedure ovl22_e19; begin end;
 { ovl22:12A5: retf 0: 0 bytes of parameters; 14 bytes of locals }
-{@stub} procedure ovl22_e20; begin end;
+{ ovl22:12A5 (e20). Cast handler of spell 12, Enlarge: gives the first chosen target ds6C95 the
+  strength 18 (ExceptionalStrength) with the percentile for the caster level (res12_fn_26C2(ds681B):
+  0 at level 1 up to 100 at level 6), through RaiseStrength, and shows 'is stronger' when the
+  strength actually rose; it then adds the strength affect (id $0C, ovl24's AffectStrength1) with
+  the spell's duration, RaiseStrength's earlier-strength code and flag 1 (on removal it restores the
+  old strength, ovl24:AddAffect). The level and percentile go through the shared working globals
+  ds4844/ds4845. One of the per-spell handlers in SpellHandlers (SpellHandlers[12], filled by
+  ovl22_e10). }
+procedure CastEnlarge;
+const
+  ExceptionalStrength = 18;       { strength 18, whose RaiseStrength takes a percentile (ovl24) }
+  StrengthAffect = $0C;           { the strength affect id AddAffect keeps the earlier strength in }
+  { The exceptional-strength percentile Enlarge grants by caster level 1..6. }
+  PercentLevel1 = 0;
+  PercentLevel2 = 1;
+  PercentLevel3 = $33;
+  PercentLevel4 = $4C;
+  PercentLevel5 = $5B;
+  PercentLevel6 = $64;
+  MessageColour = $A;             { the colour res12_fn_16EC shows the message in }
+  TimedMessage = 1;               { nonzero: res12_fn_16EC delays by the game speed and clears it }
+var
+  Code: Byte;                     { RaiseStrength's earlier-strength code, passed to AddAffect as Data }
+begin
+  ds4844 := ExceptionalStrength;
+  case res12_fn_26C2(ds681B) of
+    1: ds4845 := PercentLevel1;
+    2: ds4845 := PercentLevel2;
+    3: ds4845 := PercentLevel3;
+    4: ds4845 := PercentLevel4;
+    5: ds4845 := PercentLevel5;
+    6: ds4845 := PercentLevel6;
+  end;
+  if RaiseStrength(ds6C95, ds4844, ds4845, Code) then
+    res12_fn_16EC(ds6C95, 'is stronger', MessageColour, TimedMessage);
+  AddAffect(ds6C95, StrengthAffect, SpellAffectDuration(ds681B), Code, 1);
+end;
 { ovl22:136E: retf 0: 0 bytes of parameters; 18 bytes of locals }
 {@stub} procedure ovl22_e21; begin end;
 { ovl22:13D8: retf 0: 0 bytes of parameters; 14 bytes of locals }
