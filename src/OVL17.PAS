@@ -21,7 +21,7 @@ procedure LoadMonster(Kind: Byte; Who: Pointer);
 procedure AddMonsterToParty(Kind: Byte);
 procedure AddPartyMember(Member: PCharacter);
 procedure ovl17_e8;
-procedure ovl17_e9;
+procedure SaveGame;
 procedure SaveAndExit(AreaScript: ScriptName);
 implementation
 uses RES04, RES05, RES06, RES07, OVL23, OVL24, OVL25, OVL32;
@@ -142,7 +142,7 @@ end;
   trailing backslash, and while that fails with anything but success or "already there" it shows
   "Put save disk in <drive>:" (the drive letter SaveDir starts with) and tries again. Reads SaveDir,
   creates the directory on the save disk as a side effect. Called before the save files are touched
-  by ReadSavedCharacterList, RewriteSavedCharacterList, SaveCharacter, ovl17_e8 and ovl17_e9. }
+  by ReadSavedCharacterList, RewriteSavedCharacterList, SaveCharacter, ovl17_e8 and SaveGame. }
 procedure CreateSaveDir;
 var
   ErrCode: Word;
@@ -236,7 +236,7 @@ end;
   with a Name it makes the save directory and writes to SaveDir + Name + '.sav'. It rewrites the
   file (prompting for the save disk while the open fails), BlockWrites the 285-byte character,
   closes it, and (after erasing any old file) writes the 63-byte items of Who^.Items to '.itm' and
-  the 9-byte affects of Who^.Affects to '.spc'. Called by ovl16_e1, ovl16_fn_1EA3 and ovl17_e9. }
+  the 9-byte affects of Who^.Affects to '.spc'. Called by ovl16_e1, ovl16_fn_1EA3 and SaveGame. }
 procedure SaveCharacter(Who: PCharacter; Name: String8);
 var
   SaveFile: file;                      { the file written }
@@ -581,14 +581,105 @@ begin
 end;
 { ovl17:1602: retf 0: 0 bytes of parameters; 1554 bytes of locals }
 {@stub} procedure ovl17_e8; begin end;
-{ ovl17:1D58: retf 0: 0 bytes of parameters; 1278 bytes of locals }
-{@stub} procedure ovl17_e9; begin end;
+{ ovl17:1D58. Saves the current game to the save disk. It prompts 'Save Which Game: ' for a slot
+  letter A..J (Escape cancels), makes the save directory and opens SaveDir + 'savgam<letter>.dat'
+  (showing the disk prompt while the open fails), then writes the whole game state: the party's map
+  cell into the ECL variable block, GameSpeed and the picture flags, TileSet, the three word blocks
+  (GameVars, ds49D6, ds49DA), the ECL code, the party map bytes, AreaViewKind and the view mode. Then
+  it writes the party list to the slot: a one-byte member count and the 8 'CHRDAT<letter><n>' names,
+  and finally saves each member with SaveCharacter and erases the member's old standalone .cha/.itm/
+  .spc files. Ends with the heap retry gate ds557D := 1 and clears the prompt line. Reads the slot
+  key, SaveDir, the game state and the party list ds5D96; writes the save files and ds557D. Called by
+  the heap error handler, MakeCamp, the character menu and ovl17_e11 (SaveAndExit). }
+procedure SaveGame;
+var
+  MemberFiles: array[1..8] of string[40];  { the 'CHRDAT<slot><n>' name written per party member }
+  SaveFile: file;               { the 'savgam<slot>.dat' save file }
+  Count: Byte;                  { party member count; also the small game-block loop index }
+  Walk: PCharacter;             { walks the party list ds5D96 }
+  NumText: string[1];           { Str(Count) }
+  FileName: string[40];         { the member's standalone file name (SaveDir + its DOS name) }
+  ExtKey: Byte;                 { ReadPromptChoice's extended-key flag (not used) }
+  Key: Char;                    { the slot letter or #0 }
+  ErrCode: Word;                { IOResult of the save-file rewrite }
+begin
+  repeat
+    Key := ReadPromptChoice('Save Which Game: ', 'A B C D E F G H I J', 13, 10, 15, 0,
+      Ord(ds49F3 = 2), ExtKey);
+  until Key in [#0, 'A'..'J'];
+  if Key = #0 then Exit;
+  CreateSaveDir;
+  repeat
+    Assign(SaveFile, SaveDir + 'savgam' + Key + '.dat');
+    Rewrite(SaveFile, 1);
+    ErrCode := IOResult;
+    if ErrCode <> 0 then
+      ShowMessageLine(Yellow, 'Put save disk in ' + SaveDir[1] + ':');
+  until ErrCode = 0;
+  ClearPromptLine;
+  DrawTextAt(0, $18, $A, 'Saving...Please Wait');
+  for Count := 1 to 3 do
+  begin
+    VarsAt4900^[$4AF9 + Count] := ds6AAEWords[Count].A;
+    VarsAt4900^[$4AFC + Count] := ds6AAEWords[Count].B;
+  end;
+  VarsAt4900^[$49FC] := GameSpeed;
+  VarsAt4900^[$49FF] := ShowMonsterPics * 2 + ShowPortraits;
+  VarsAt6B00^[$6E12] := TileSet;
+  BlockWrite(SaveFile, TileSet, 1);
+  BlockWrite(SaveFile, GameVars^, $800);
+  BlockWrite(SaveFile, ds49D6^, $800);
+  BlockWrite(SaveFile, ds49DA^, $400);
+  BlockWrite(SaveFile, EclCode^, $1E00);
+  BlockWrite(SaveFile, PartyMapColumn, 5);
+  BlockWrite(SaveFile, AreaViewKind, 1);
+  BlockWrite(SaveFile, ds49F3, 1);
+  Count := 0;
+  Walk := PCharacter(ds5D96);
+  while Walk <> nil do
+  begin
+    Inc(Count);
+    Str(Count, NumText);
+    MemberFiles[Count] := 'CHRDAT' + Key + NumText;
+    Walk := Walk^.Next;
+  end;
+  BlockWrite(SaveFile, Count, 1);
+  BlockWrite(SaveFile, MemberFiles, $148);
+  Close(SaveFile);
+  Walk := PCharacter(ds5D96);
+  Count := 0;
+  while Walk <> nil do
+  begin
+    Inc(Count);
+    Str(Count, NumText);
+    SaveCharacter(Walk, 'CHRDAT' + Key + NumText);
+    FileName := SaveDir + MakeDosFileName(DeleteAllOccurrences(Walk^.Name, '.'));
+    if FileExists(FileName + '.cha') then
+    begin
+      Assign(SaveFile, FileName + '.cha');
+      Erase(SaveFile);
+    end;
+    if FileExists(FileName + '.itm') then
+    begin
+      Assign(SaveFile, FileName + '.itm');
+      Erase(SaveFile);
+    end;
+    if FileExists(FileName + '.spc') then
+    begin
+      Assign(SaveFile, FileName + '.spc');
+      Erase(SaveFile);
+    end;
+    Walk := Walk^.Next;
+  end;
+  ds557D := True;
+  ClearPromptLine;
+end;
 { ovl17:22D5. Called by ovl03:0BD1 with the current area's ECL file name (GameDir + 'ECL' +
   Str(TileSet) + '.dax') just before an area transition. When that file exists (a normal area) it
   returns at once; otherwise it shows the 'Save and exit  Insert disk #N' line (N = TileSet)
   through ReadPromptChoice and, when the player presses its hotkey S, steps the party one cell
   back in its facing (wrapping the 16x16 area map), restores the tile set, saves the game
-  (ovl17_e9) and quits. Reads AreaScript, TileSet, PartyMapColumn, PartyMapRow and PartyFacing;
+  (SaveGame) and quits. Reads AreaScript, TileSet, PartyMapColumn, PartyMapRow and PartyFacing;
   writes ExtKey and, on S, the party's map cell. Side effects: the prompt line, the save disk
   and the game exit. }
 procedure SaveAndExit(AreaScript: ScriptName);
@@ -615,7 +706,7 @@ begin
     if PartyMapRow > $F then
       PartyMapRow := 0;
     RestoreTileSet;
-    ovl17_e9;
+    SaveGame;
     QuitGame;
   end;
 end;

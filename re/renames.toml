@@ -3462,3 +3462,10 @@ kind = "routine"
 why = "ovl17:22D5 shows the 'Save and exit Insert disk #N' prompt and, on the S hotkey, saves the game (ovl17_e9) and quits; called by ovl03:0BD1 with the area ECL file name, which gates it"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl17_e9"
+new = "SaveGame"
+kind = "routine"
+why = "ovl17:1D58 prompts for a slot letter and writes the whole game state and every party member to SaveDir + savgam<letter>.dat; called by the heap error handler, MakeCamp, the character menu and SaveAndExit"
+date = "2026-10-13"
+

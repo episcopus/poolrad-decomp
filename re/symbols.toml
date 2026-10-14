@@ -8440,12 +8440,12 @@ id = "ovl17:1D58"
 unit = "ovl17"
 addr = "ovl17:1D58"
 size = 1405
-name = "ovl17_e9"
-signature = "procedure ovl17_e9"
+name = "SaveGame"
+signature = "procedure SaveGame"
 c_name = "ovl17_e9"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl17_e9 (ovl17:1D58 prompts for a slot letter and writes the whole game state and every party member to SaveDir + savgam<letter>.dat; called by the heap error handler, MakeCamp, the character menu and SaveAndExit); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

@@ -504,7 +504,7 @@ var
   CfgProbeResult: Byte;                   { IOResult of probing pool.cfg (Reset); res08_init retries while nonzero }
   HeapWords: array[0..1] of Word absolute HeapEnd;
   { the offset (0) and segment (1) words of the heap end (res08_init cuts it by $400 paragraphs) }
-  ds49D0: Boolean;                { when set, HeapErrorHandler offers ovl17_e9 (save and load unit) before quitting }
+  ds49D0: Boolean;                { when set, HeapErrorHandler offers SaveGame (save and load unit) before quitting }
   ds49D1: Byte;                   { 1 when POOL.CFG line 5 is 'F', 0 otherwise (meaning of F/N unknown, 2.3) }
   GameVars: ^TGameVars;           { the game variables (see TGameVars) }
   CfgProbe: File;                 { pool.cfg opened untyped (128-byte records) to probe its existence }
@@ -559,7 +559,7 @@ var
     saves it in ds4661, empties it, builds a file path in it (ovl11:0564) for OpenGameFile and
     restores it (ovl11:0469, 05EA). }
   GameDir: string;                { the game directory; see above }
-  { True ends HeapErrorHandler's retry loop: it is read after ovl17_e9 runs (ovl00:0075),
+  { True ends HeapErrorHandler's retry loop: it is read after SaveGame runs (ovl00:0075),
     and who sets it is not shown until ovl17 is decompiled. }
   ds557D: Boolean;                { heap error retry gate; see above }
   ds5E52: PT8x8Bank;              { SQRPACI bank 1 (ovl11:04D6); DrawCellPicture source (PicCode <= 127) }
