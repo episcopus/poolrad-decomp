@@ -3941,12 +3941,12 @@ id = "ovl12:170B"
 unit = "ovl12"
 addr = "ovl12:170B"
 size = 20
-name = "ovl12_e58"
-signature = "procedure ovl12_e58(Who: PCharacter; Affect: PAffect; Mode: Byte)"
+name = "PoisonAttackTargetBonusMinus2"
+signature = "procedure PoisonAttackTargetBonusMinus2(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e58"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_58"
+notes = "renamed from ovl12_e58 (affect handler at ovl12:170B that calls PoisonAttackTarget (ovl12:1545) with Bonus -2 (pushed as 0FEh): the poison hook with a negative save bonus, the twin of PoisonAttackTargetBonus0/2/4); auto:entry_58"
 evidence = ["prologue"]
 
 [[routine]]

@@ -68,7 +68,7 @@ procedure PoisonAttackTargetBonus2(Who: PCharacter; Affect: PAffect; Mode: Byte)
 procedure ParalyzeAttackTargetFor2d8(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ParalyzeAttackTargetUnlessImmune(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ParalyzeAttackTargetFor1d9Plus10(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e58(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure PoisonAttackTargetBonusMinus2(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e59;
 procedure ovl12_e60;
 procedure ovl12_fn_1758;
@@ -1174,8 +1174,13 @@ begin
   { the third argument is the unused byte: ParalyzeAttackTarget never reads it; this caller passes $FE, the others 0 }
   ParalyzeAttackTarget(Who, RollDice(1, ParalysisDieSides) + ParalysisBaseRounds, $FE);
 end;
-{ ovl12:170B: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e58(Who: PCharacter; Affect: PAffect; Mode: Byte); begin end;
+{ ovl12:170B. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Affect and Mode are not read, ovl24:0000).
+  The poison hook of an attack with save bonus -2: PoisonAttackTarget (ovl12:1545) with Bonus -2. Which affect runs it
+  is not known yet [?]. }
+procedure PoisonAttackTargetBonusMinus2(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  PoisonAttackTarget(Who, -2);
+end;
 { ovl12:171F: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e59; begin end;
 { ovl12:1730: frame not read }
