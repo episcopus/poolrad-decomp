@@ -3546,3 +3546,10 @@ kind = "routine"
 why = "ovl12:06E4 halves DamageAmount and adds FireSaveBonus (3) to SaveRoll when DamageKind has the fire bit KindFire (1, POOLVARS DamageKind comment), the fire twin of HalveColdDamage (ovl12:03E1, same code with the bit changed)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e19"
+new = "ShowSilenceAndStopCasting"
+kind = "routine"
+why = "ovl12:070F shows 'is silenced' in colour 10 when the combat byte Pad2 (+2) of Who's combatant is set, then clears Pad2 and CanCast (+1, hides Cast): an affect handler (Who, Affect, Mode) reading only Who"
+date = "2026-10-13"
+

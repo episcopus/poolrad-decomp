@@ -25,7 +25,7 @@ procedure IgnoreAffect(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure RaiseResistanceAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure BoostAttackVsListedTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure HalveFireDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e19;
+procedure ShowSilenceAndStopCasting(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e20;
 procedure ovl12_e21;
 procedure ovl12_e22;
@@ -543,8 +543,17 @@ begin
     Inc(SaveRoll, FireSaveBonus);
   end;
 end;
-{ ovl12:070F: retf 10: 10 bytes of parameters; 12 bytes of locals }
-{@stub} procedure ovl12_e19; begin end;
+{ ovl12:070F. Affect handler (the AffectHandlers shape: Who, Affect and Mode; only Who is read). When Who's combat
+  byte Pad2 (+$2 of TCombatant, not named yet) is set, Who shows "is silenced" in colour 10 (res12_fn_16EC). Then
+  Pad2 and CanCast (+$1, zero hides Cast in the combat menu, ovl08:0747) are both cleared. Which affect runs it is
+  not known yet [?]. }
+procedure ShowSilenceAndStopCasting(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  if Who^.Combat^.Pad2 <> 0 then
+    res12_fn_16EC(Who, 'is silenced', $A, 1);
+  Who^.Combat^.Pad2 := 0;
+  Who^.Combat^.CanCast := 0;
+end;
 { ovl12:0775: retf 10: 10 bytes of parameters; 22 bytes of locals }
 {@stub} procedure ovl12_e20; begin end;
 { ovl12:07E0: retf 10: 10 bytes of parameters; 20 bytes of locals }

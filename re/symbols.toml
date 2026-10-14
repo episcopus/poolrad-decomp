@@ -3382,12 +3382,12 @@ id = "ovl12:070F"
 unit = "ovl12"
 addr = "ovl12:070F"
 size = 102
-name = "ovl12_e19"
+name = "ShowSilenceAndStopCasting"
 signature = ""
 c_name = "ovl12_e19"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_19"
+notes = "renamed from ovl12_e19 (ovl12:070F shows 'is silenced' in colour 10 when the combat byte Pad2 (+2) of Who's combatant is set, then clears Pad2 and CanCast (+1, hides Cast): an affect handler (Who, Affect, Mode) reading only Who); auto:entry_19"
 evidence = ["prologue"]
 
 [[routine]]
