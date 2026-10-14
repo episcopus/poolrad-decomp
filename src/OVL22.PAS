@@ -1859,10 +1859,10 @@ begin
 end;
 { ovl22:3092 (e61). Cast handler of spell 66, a monster-only spell: SpellNames[66] is empty and the
   ovl22_e10 handler table points element 66 of SpellHandlers at this stub. The handler is empty: the
-  picker has already chosen the targets (CastChosenSpell calls SpellTargetPicker before the handler,
-  the DS:6B84 callback) and
-  the spell then does nothing, since ApplySpellToTargets is never called here, unlike its neighbours
-  CastMonsterParalyze (spell 61) and CastMonsterMagicDamage (spell 65). }
+  picker has already chosen the targets (CastChosenSpell calls SpellTargetPicker, the DS:6B84
+  callback, before the handler) and the spell then does nothing, since ApplySpellToTargets is never
+  called here, unlike its neighbours CastMonsterParalyze (spell 61) and CastMonsterMagicDamage
+  (spell 65). }
 procedure CastMonsterNoEffect;
 begin
 end;
