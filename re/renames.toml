@@ -3623,3 +3623,10 @@ kind = "routine"
 why = "ovl12:0BCF calls CallAffectHandler (ovl24:0000) twice with the same Who, Affect and Mode: first affect $2B, then $2C (AffectCauseDisease, named in ovl15:0FBC's table); both ids are in the Cure Disease list (DiseaseAffects, ovl04:031E, whitepaper 5.19), so it runs the disease handlers; which affect runs it is not known yet"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e30"
+new = "RaiseAttackAndSave"
+kind = "routine"
+why = "ovl12:0C06 adds 1 to SaveRoll and to AttackRoll and uses neither parameter (AffectHandlers shape, Mode not read); the twin of LowerAttackAndSave (ovl12:0C15); it is called by ovl12:12B2 (ovl12_e41, not decompiled yet)"
+date = "2026-10-13"
+

@@ -36,7 +36,7 @@ procedure CoughStopsCasting(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure CollapseAndChangeSide(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure LowerAttackSaveAndResistance(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure RunDiseaseHandlers(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e30;
+procedure RaiseAttackAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e31;
 procedure ovl12_e32;
 procedure ovl12_e33;
@@ -724,8 +724,13 @@ begin
   CallAffectHandler(AffectUnknown2B, Who, Affect, Mode);
   CallAffectHandler(AffectCauseDisease, Who, Affect, Mode);
 end;
-{ ovl12:0C06: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e30; begin end;
+{ 0C06. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). Adds 1 to SaveRoll and
+  to AttackRoll, the plus of LowerAttackAndSave (ovl12:0C15). Called by ovl12:12B2 (ovl12_e41, not decompiled yet). }
+procedure RaiseAttackAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  Inc(SaveRoll);
+  Inc(AttackRoll);
+end;
 { ovl12:0C15: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e31; begin end;
 { ovl12:0C26: retf 10: 10 bytes of parameters; 0 bytes of locals }

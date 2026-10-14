@@ -3525,12 +3525,12 @@ id = "ovl12:0C06"
 unit = "ovl12"
 addr = "ovl12:0C06"
 size = 15
-name = "ovl12_e30"
-signature = ""
+name = "RaiseAttackAndSave"
+signature = "procedure RaiseAttackAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e30"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl12_e30 (ovl12:0C06 adds 1 to SaveRoll and to AttackRoll and uses neither parameter (AffectHandlers shape, Mode not read); the twin of LowerAttackAndSave (ovl12:0C15); it is called by ovl12:12B2 (ovl12_e41, not decompiled yet)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
