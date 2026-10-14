@@ -402,3 +402,25 @@ def test_reviewer_hands_off_passed_or_failed_from_the_committed_review(repo, mon
     assert "re: review ovl00 passed (worker)" in git_at(wt, "log", "--format=%s", "main..review/ovl00")
     hand = [c for c in fake.calls if c[0] == "handoff"][0]
     assert "STATE=review-passed" in hand
+
+
+def test_a_killed_service_session_is_interrupted_by_its_own_id(tmp_path, monkeypatch):
+    """A session on OpenCode's background service outlives its killed client (2026-10-13)."""
+    wt = tmp_path / "wt"
+    wt.mkdir()
+    prompt = tmp_path / "p.md"
+    prompt.write_text("x")
+    log = tmp_path / "s.log"
+    interrupted = []
+    monkeypatch.setattr(worker, "interrupt_session", lambda sid, f: interrupted.append(sid))
+    r = worker.run_session("echo {session_id} {title}; sleep 30", prompt, wt, log, timeout_s=0.5, title="dec-a ovl20-batch1")
+    assert r.timed_out and r.session_id.startswith("ses_poolrad") and interrupted == [r.session_id]
+    assert "%s dec-a ovl20-batch1" % r.session_id in log.read_text()
+    interrupted.clear()
+    r = worker.run_session("echo done", prompt, wt, log, timeout_s=20)      # no {session_id}: nothing to interrupt
+    assert r.session_id == "" and not interrupted
+
+
+def test_the_default_session_runs_on_the_service_with_a_chosen_id():
+    cmd = worker.DEFAULT_SESSION_CMD
+    assert "--standalone" not in cmd and "--session {session_id}" in cmd and "--title {title}" in cmd

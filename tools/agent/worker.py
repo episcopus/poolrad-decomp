@@ -51,9 +51,10 @@ Arguments and environment (the Makefile passes the variables as options):
   --role ROLE                   decompiler or reviewer
   --unit UNIT                   claim this unit (or review) once and stop after it; default: the queue
   --batch BATCH                 routines per session (default 6)
-  --session-cmd SESSION_CMD     shell template with {prompt_file}, {worktree}, {model_flag} and {title}
+  --session-cmd SESSION_CMD     shell template with {prompt_file}, {worktree}, {model_flag}, {title}
                                 (`<agent> <unit>-batch<N>`, quoted: OpenCode's session title, so each
-                                session's cost can be found again); default
+                                session's cost can be found again) and {session_id} (a fresh OpenCode
+                                session id, `ses_poolrad<hex>`); default
                                 DEFAULT_SESSION_CMD below
   --session-model SESSION_MODEL model passed as {model_flag} (` --model <m>`), empty by default
   --max-sessions MAX_SESSIONS   stop after this many sessions in this run (default unlimited)
@@ -65,10 +66,17 @@ Arguments and environment (the Makefile passes the variables as options):
                                 needed the first time a name is used (`make agent-register` does the same)
 
 The default session command runs the installed opencode (v2: `opencode run [flags] [message]`, no
-directory flag, so the template changes directory first; `--standalone` keeps the server inside the
-process group the supervisor kills on timeout, `--auto` approves tool use in a non-interactive run):
+directory flag, so the template changes directory first; `--auto` approves tool use in a
+non-interactive run):
 
-  cd {worktree} && opencode run --standalone --auto --title {title}{model_flag} "$(cat {prompt_file})"
+  cd {worktree} && opencode run --auto --session {session_id} --title {title}{model_flag} "$(cat {prompt_file})"
+
+It runs on OpenCode's background service, which holds the provider credentials. (`--standalone`, a
+private server in the process group, read them from the starting shell's environment and on 2026-10-13
+found none: every model was "unavailable".) A session on the service outlives its killed client and
+keeps editing the worktree, so whenever the supervisor kills a session (timeout or shutdown) it also
+interrupts it through the service (`POST /api/session/<id>/interrupt`); the id is chosen here, through
+`--session`, so the supervisor never has to guess which session is its own.
 
 An alternative for the Claude CLI (not installed on the machine this was written on):
 
@@ -91,6 +99,7 @@ import sys
 import threading
 import time
 import tomllib
+import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -100,7 +109,8 @@ import control  # noqa: E402
 import heartbeat  # noqa: E402
 import identity  # noqa: E402
 
-DEFAULT_SESSION_CMD = 'cd {worktree} && opencode run --standalone --auto --title {title}{model_flag} "$(cat {prompt_file})"'
+DEFAULT_SESSION_CMD = ('cd {worktree} && opencode run --auto --session {session_id} --title {title}{model_flag} '
+                       '"$(cat {prompt_file})"')
 DEFAULT_BATCH = 6
 DEFAULT_TIMEOUT_MINUTES = 90
 DEFAULT_MAX_ATTEMPTS = 2
@@ -324,6 +334,21 @@ class SessionResult:
     returncode: int
     timed_out: bool
     seconds: float
+    session_id: str = ""
+
+
+def new_session_id() -> str:
+    return "ses_poolrad" + uuid.uuid4().hex[:16]
+
+
+def interrupt_session(session_id: str, log) -> None:
+    """Stop an OpenCode session on the background service; killing its client does not."""
+    try:
+        r = subprocess.run(["opencode", "api", "post", "/api/session/%s/interrupt" % session_id],
+                           capture_output=True, text=True, timeout=30, stdin=subprocess.DEVNULL)
+        log.write("$ interrupt %s: exit %d %s\n" % (session_id, r.returncode, " ".join((r.stdout + r.stderr).split())[:200]))
+    except (OSError, subprocess.TimeoutExpired) as e:
+        log.write("$ interrupt %s failed: %s\n" % (session_id, e))
 
 
 def kill_group(proc: subprocess.Popen) -> None:
@@ -343,8 +368,10 @@ def run_session(cmd_template: str, prompt_file: Path, wt: Path, log: Path, timeo
                 model_flag: str = "", title: str = "") -> SessionResult:
     """Run one model session (a shell command built from the template) in its own process group, its
     output appended to `log`; the whole group is killed when `timeout_s` passes or on interruption."""
+    session_id = new_session_id() if "{session_id}" in cmd_template else ""
     cmd = cmd_template.format(prompt_file=shlex.quote(str(prompt_file)), worktree=shlex.quote(str(wt)),
-                              model_flag=model_flag, title=shlex.quote(title or prompt_file.stem))
+                              model_flag=model_flag, title=shlex.quote(title or prompt_file.stem),
+                              session_id=session_id)
     log.parent.mkdir(parents=True, exist_ok=True)
     start = time.monotonic()
     with log.open("a") as f:
@@ -360,13 +387,17 @@ def run_session(cmd_template: str, prompt_file: Path, wt: Path, log: Path, timeo
             except subprocess.TimeoutExpired:
                 timed_out = True
                 kill_group(proc)
+                if session_id:
+                    interrupt_session(session_id, f)
         except BaseException:                       # Interrupted, KeyboardInterrupt: never leave it running
             kill_group(proc)
+            if session_id:
+                interrupt_session(session_id, f)
             raise
         rc = proc.returncode if proc.returncode is not None else -1
         f.write("$ exit %d%s after %.0f s\n" % (rc, " (timed out, killed)" if timed_out else "",
                                                 time.monotonic() - start))
-    return SessionResult(rc, timed_out, time.monotonic() - start)
+    return SessionResult(rc, timed_out, time.monotonic() - start, session_id)
 
 
 class Pulse:
