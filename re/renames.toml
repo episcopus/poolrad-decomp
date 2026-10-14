@@ -5192,6 +5192,13 @@ why = "ovl13:3B93 is the Alt-X debug command: it returns False unless the progra
 date = "2026-10-14"
 
 [[rename]]
+old = "ovl16_fn_29AE"
+new = "TrainCharacter"
+kind = "routine"
+why = "ovl16:29AE is the T item of RunCharacterMenu (ovl16:0161): it trains the selected character, refusing the unconscious and those short of 1000 gold; its strings are Do you wish to train?, Training costs 1000 gp. and we only train conscious people"
+date = "2026-10-14"
+
+[[rename]]
 old = "ovl20_fn_0000"
 new = "AdvanceAffectDurations"
 kind = "routine"

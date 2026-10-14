@@ -720,8 +720,9 @@ var
   ds093D: array[0..$F] of Byte;   { the third 16-byte record AnimateAreaDoors passes to RemapPictureColours }
   ds094D: array[0..8] of Word;    { the per-step DrawAreaView columns of AnimateAreaDoors (indexed 0..8) }
   ds095F: array[0..8] of Word;    { the per-step DrawAreaView rows of AnimateAreaDoors (indexed 0..8) }
-  { Set to 1 by the RunCharacterMenu STING cheat (ovl16:0161) and read there to offer the modify
-    function; its meaning beyond that is unknown. }
+  { Set to 1 by the RunCharacterMenu STING cheat (the J key, ovl16:0161). While set, the menu
+    offers Modify, and TrainCharacter (ovl16:29AE) skips the consciousness, gold, class and
+    experience checks and does not charge the 1000 gold. }
   ds470C: Byte;
   ds470E: Pointer;                { the FINAL picture bank ShowEndingNarrative loads through LoadPicture and draws }
   ds4712: Byte;                   { the DS:49F3 value ShowEndingNarrative saves at the start and restores at the end }
@@ -1081,8 +1082,10 @@ var
   SpellTable: array[0..$38] of TSpellEntry;  { see above }
   ClassThac0Table: array[0..7, 0..10] of Byte;  { the to-hit value per class 0..7 and level (RecalcClassStats) }
   { The experience needed to reach each level, one 56-byte row (14 LongInts, level 0..13) per class 0..7
-    at DS:409B: ovl16:29AE reads ds409B[class, level+1] (the next level's threshold) and
-    ds409B[class, level+2] (that of the level after, 0 when the class is capped). }
+    at DS:409B. TrainCharacter (ovl16:29AE) reads ds409B[class, level+1], the next level's threshold
+    (it trains when Experience has reached it, and 0 means the class has no further level), and
+    ds409B[class, level+2], the level after (Experience already there is cut to one below, so one
+    visit raises one level; 0 when there is no level after next). }
   ds409B: array[0..7, 0..13] of LongInt;
   { ClassXpTable is the same storage under the name ovl12:2122 uses (the nested routine for the highest class level). }
   ClassXpTable: array[0..7, 0..13] of LongInt absolute ds409B;

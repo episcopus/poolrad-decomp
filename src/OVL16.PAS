@@ -68,8 +68,7 @@ procedure ovl16_fn_1EB9;
 procedure ovl16_fn_1EC6;
 procedure DropCharacter;
 procedure ModifyCharacter;
-procedure ovl16_fn_295B;
-procedure ovl16_fn_29AE;
+procedure TrainCharacter;
 procedure AddSavedCharacters;
 procedure RemoveSelectedCharacter(Uncounted, FreePicture: Boolean);
 procedure ChooseHeadAndBody;
@@ -166,7 +165,7 @@ end;
   the eleven function names of the menu at DS:0619 (the first letter in white, the rest in green,
   DrawTextAt). It then asks ReadPromptChoice for a function key (prompt line 'C D M T V A R L S B E J')
   and dispatches it: C create (ovl16_fn_056C), D drop (DropCharacter), M modify (ModifyCharacter),
-  T train (ovl16_fn_29AE), V view (ViewSelectedCharacter), A add (AddSavedCharacters), R remove
+  T train (TrainCharacter), V view (ViewSelectedCharacter), A add (AddSavedCharacters), R remove
   (SaveCharacter then RemoveSelectedCharacter), L load (LoadGame), S save (SaveGame), B buy/finish (sets ds49F3 to
   Mode 4 and leaves), E exit (AskYesNo, then save and QuitGame), J the STING cheat. An extended key
   G or O selects another party member (UpdateSelectedCharacter); E or S clears the heap retry gate
@@ -253,7 +252,7 @@ begin
             ModifyCharacter;
         'T':
           if ds0619[3].Present <> 0 then
-            ovl16_fn_29AE;
+            TrainCharacter;
         'V':
           if ds0619[4].Present <> 0 then
             ViewSelectedCharacter(Done);
@@ -724,10 +723,212 @@ begin
     SelectedCharacter^.HirelingShare := 1;
   end;
 end;
-{ ovl16:295B: frame not read }
-{@stub} procedure ovl16_fn_295B; begin end;
-{ ovl16:29AE: retf 0: 0 bytes of parameters; 546 bytes of locals }
-{@stub} procedure ovl16_fn_29AE; begin end;
+{ ovl16:29AE. The Train (T) function of the training hall, dispatched by RunCharacterMenu
+  (ovl16:0161) when ds0619[3] is present. It refuses an unconscious character (Status at
+  +$10C not 0, 'we only train conscious people') and one with less than 1000 gold
+  (CharacterMoneyValueInGold, 'Training costs 1000 gp.'), unless the STING cheat ds470C is
+  set (the J key, ovl16:0306). For each class with a level it adds that class's bit (ds05DE)
+  and, unless the race has reached the level cap IsMaxClassLevel (res12:2F57) inlines for
+  that class, marks the class trainable when Experience has reached ds409B[class, level+1]
+  and that threshold is above 0 (0 means the class has no further level). Experience already
+  at ds409B[class, level+2] is cut to one below it, so one visit raises one level. Unless
+  ds470C is set, the hall's word ds49D6^[Var2OfferModify] (680) must share a bit with the
+  character's classes and with a trainable class; only its low byte is tested. The window
+  then lists the levels the character will become, AskYesNo confirms, PayGold takes the
+  1000 gold, each trainable class rises by one and RecalcClassStats rebuilds the derived
+  stats. A magic-user who rose (class 5) picks one spell (ChooseSpellFromList, list kind 4,
+  'to choose from') and marks it known. The hit points gained are RollHitPoints of the
+  trained classes, shared across every class with a level, with a floor of 1, added to HpB1
+  (+$B1) and, after the constitution adjustment, to HpMax; Flag11B (the current hit points)
+  keeps the same gap below HpMax. No parameters. Globals: SelectedCharacter, ds470C, ds05DE,
+  ds409B, ds49D6, ClassNames. Side effects: the function window, the flash line, the
+  character's experience, levels, spells, hit points and money.
+  QUIRK ovl16:2CDA: the first refusal's Exit is followed by a jump the compiler keeps, the
+  skip of the else branch, which nothing reaches. }
+procedure TrainCharacter;
+const
+  MessageColour = $E;           { yellow: the flash messages of the refusals }
+  TrainCost = 1000;             { the gold pieces the training costs }
+  PromptTitleColour = $D;       { the AskYesNo title colour }
+  PromptWordColour = $A;
+  PromptHotColour = $F;
+  BecomeTextCol = 6;            { the column of the becoming lines }
+  BecomeTextColour = $A;        { green }
+  NameRow = 4;                  { DrawCharacterName's row; the first class line is the next }
+  FirstBecomeRow = 5;
+  NameCol = 4;                  { DrawCharacterName's column; its mode argument is 0 }
+  ClericClass = 0;              { ClassLevels index; a half-elf cleric caps at 5 }
+  FighterClass = 2;             { the class the racial level caps apply to }
+  MageClass = 5;                { a rise here asks for a new spell }
+  SpellListToChoose = 4;        { ChooseSpellFromList's 'to choose from' list (ovl19:299C) }
+  SpellDisplayMode = 4;         { the display mode the call pushes; ovl22 reads it }
+  NoSpellChoice = $FFFF;        { negative, so ChooseSpellFromList opens the spell window }
+  Strength17 = 17;              { the strength that raises a race's fighter cap by one }
+  Strength18 = 18;              { a gnome fighter's cap looks at strength below 18 }
+  RaceDwarf = 1;                { RaceNames: Dwarf, Elf, Gnome, Half-Elf, Halfling (DS:0F03) }
+  RaceElf = 2;
+  RaceGnome = 3;
+  RaceHalfElf = 4;
+  RaceHalfling = 5;
+var
+  AtLimit: Byte;                { [bp-1]: the class is at its racial level limit }
+  NewExperience: LongInt;       { [bp-5]: the experience the training leaves the character at }
+  ClassXp: LongInt;             { [bp-9]: a class's ds409B threshold }
+  TrainableBits: Byte;          { [bp-0xa]: the class bits with enough experience to train }
+  ClassBitMask: Byte;           { [bp-0xb]: the class bits of every class with a level above 0 }
+  AllowedBits: Byte;            { [bp-0xc]: the class bits the training may raise }
+  TrainedCount: Byte;           { [bp-0xd]: the classes with a level (the hit points are shared) }
+  HpRoll: Integer;              { [bp-0xf]: RollHitPoints' roll, signed so the divide is idiv }
+  HpGain: Integer;              { [bp-0x11]: the hit points the rise adds }
+  SavedHp: Byte;                { [bp-0x12]: the hit points of the class levels before the rise }
+  I: ShortInt;                  { [bp-0x13]: the class loop }
+  ConBonus: Integer;            { [bp-0x15]: ConstitutionHitPointAdjustment, sign-extended }
+  Row: Byte;                    { [bp-0x16]: the text row of the becoming list }
+  SavedMageLevel: ShortInt;     { [bp-0x17]: ClassLevels[5] before the rise }
+  Level: ShortInt;              { [bp-0x18]: ClassLevels[I]; Succ of it indexes ds409B }
+  ChosenSpell: Byte;            { [bp-0x19]: the spell ChooseSpellFromList returned }
+  Choice: Word;                 { [bp-0x1b]: ChooseSpellFromList's choice }
+  Listed: Byte;                 { [bp-0x1c]: ChooseSpellFromList's listed flag }
+  Spare: Byte;                  { [bp-0x1d]: the original frame reserves this byte, never read }
+begin
+  if (SelectedCharacter^.Status <> 0) and (ds470C = 0) then
+  begin
+    FlashMessageLine('we only train conscious people', MessageColour);
+    Exit;
+  end;
+  if (CharacterMoneyValueInGold(SelectedCharacter) < TrainCost) and (ds470C = 0) then
+  begin
+    FlashMessageLine('Training costs 1000 gp.', MessageColour);
+    Exit;
+  end;
+  TrainableBits := 0;
+  ClassBitMask := 0;
+  with SelectedCharacter^ do
+  begin
+    NewExperience := 0;
+    for I := 0 to 7 do
+      if ClassLevels[I] > 0 then
+      begin
+        Inc(ClassBitMask, ds05DE[I]);
+        AtLimit := 0;
+        Level := ClassLevels[I];
+        case Race of
+          RaceDwarf:
+            if I = FighterClass then
+              if ((Level = 8) and (Strength = Strength17)) or
+                 ((Level = 7) and (Strength < Strength17)) then
+                AtLimit := 1;
+          RaceElf:
+            if I = FighterClass then
+              if (Level = 7) or ((Level = 6) and (Strength = Strength17))
+                 or ((Level = 5) and (Strength < Strength17)) then
+                AtLimit := 1;
+          RaceGnome:
+            if I = FighterClass then
+              if (Level = 6) or ((Level = 5) and (Strength < Strength18)) then
+                AtLimit := 1;
+          RaceHalfElf:
+            if (I = ClericClass) and (Level = 5) then
+              AtLimit := 1
+            else if I = FighterClass then
+              if (Level = 8) or ((Level = 7) and (Strength = Strength17))
+                 or ((Level = 6) and (Strength < Strength17)) then
+                AtLimit := 1;
+          RaceHalfling:
+            if I = FighterClass then
+              if (Level = 6) or ((Level = 5) and (Strength = Strength17))
+                 or ((Level = 4) and (Strength < Strength17)) then
+                AtLimit := 1;
+        end;
+        if AtLimit = 0 then
+          if (ds409B[I, Succ(Level)] <= Experience) or (ds470C <> 0) then
+            if ds409B[I, Succ(Level)] > 0 then
+            begin
+              Inc(TrainableBits, ds05DE[I]);
+              ClassXp := ds409B[I, Succ(Succ(Level))];
+              if (ClassXp > 0) and (Experience >= ClassXp) and (ClassXp > NewExperience) then
+                NewExperience := ClassXp - 1;
+            end;
+      end;
+    if NewExperience > 0 then
+      Experience := NewExperience;
+    if ds470C = 0 then
+    begin
+      if Byte(ds49D6^[Var2OfferModify] and ClassBitMask) = 0 then
+      begin
+        FlashMessageLine('We don''t train that class here', MessageColour);
+        Exit;
+      end
+      else if Byte(ds49D6^[Var2OfferModify] and TrainableBits) = 0 then
+      begin
+        FlashMessageLine('Not Enough Experience', MessageColour);
+        Exit;
+      end;
+    end;
+    if ds470C = 0 then
+      AllowedBits := Byte(ds49D6^[Var2OfferModify] and TrainableBits)
+    else
+      AllowedBits := TrainableBits;
+    ClearWindow(MenuLeft, MenuTop, MenuRight, MenuBottom);
+    Row := NameRow;
+    DrawCharacterName(SelectedCharacter, NameCol, Row, 0);
+    DrawTextAt(Length(Name) + 4, Row, BecomeTextColour, ' will become:');
+    for I := 0 to 7 do
+      if (ClassLevels[I] > 0) and ((ds05DE[I] and AllowedBits) > 0) then
+      begin
+        Inc(Row);
+        if Row = FirstBecomeRow then
+          DrawTextAt(BecomeTextCol, Row, BecomeTextColour,
+            '    a level ' + ByteToText(ClassLevels[I] + 1) + ' ' + ClassNames[I])
+        else
+          DrawTextAt(BecomeTextCol, Row, BecomeTextColour,
+            'and a level ' + ByteToText(ClassLevels[I] + 1) + ' ' + ClassNames[I]);
+      end;
+    if AskYesNo('Do you wish to train? ', PromptTitleColour, PromptWordColour,
+      PromptHotColour) <> 'Y' then
+      Exit;
+    ShowFlashMessage('Congratulations...');
+    if ds470C = 0 then
+      PayGold(TrainCost, SelectedCharacter);
+    TrainedCount := 0;
+    SavedMageLevel := ClassLevels[MageClass];
+    for I := 0 to 7 do
+      if ClassLevels[I] > 0 then
+      begin
+        Inc(TrainedCount);
+        if (ds05DE[I] and AllowedBits) > 0 then
+        begin
+          Inc(ClassLevels[I]);
+          if Pad74[$74] > 0 then
+          begin
+            Dec(Pad74[$75], Pad74[$75] div Pad74[$74]);
+            Dec(Pad74[$74]);
+          end;
+        end;
+      end;
+    RecalcClassStats(SelectedCharacter);
+    if ClassLevels[MageClass] > SavedMageLevel then
+    begin
+      Choice := NoSpellChoice;
+      repeat
+        ChosenSpell := ChooseSpellFromList(SpellListToChoose, SpellDisplayMode, Choice, Listed);
+      until (ChosenSpell > 0) or (Listed = 0);
+      KnownSpells[ChosenSpell] := 1;
+    end;
+    HpRoll := RollHitPoints(SelectedCharacter, AllowedBits);
+    HpGain := HpRoll div TrainedCount;
+    if HpGain = 0 then
+      HpGain := 1;
+    Inc(HpB1, HpGain);
+    ConBonus := ConstitutionHitPointAdjustment(SelectedCharacter);
+    HpGain := (HpRoll + ConBonus) div TrainedCount;
+    if HpGain < 1 then
+      HpGain := 1;
+    SavedHp := HpMax - Flag11B;
+    Inc(HpMax, HpGain);
+    Flag11B := HpMax - SavedHp;
+  end;
+end;
 { ovl16:306D. The Add (A) function of the training hall, dispatched by RunCharacterMenu (ovl16:0161):
   it clears the function window, lists the saved characters on disk (ReadSavedCharacterList) and runs
   the menu "Add a character: " with "Add Exit" (ChooseFromList). Enter or A loads the highlighted

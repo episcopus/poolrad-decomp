@@ -6783,7 +6783,7 @@ evidence = ["prologue"]
 id = "ovl16:209F"
 unit = "ovl16"
 addr = "ovl16:209F"
-size = 2127
+size = 2319
 name = "ModifyCharacter"
 signature = ""
 c_name = "ovl16_fn_209F"
@@ -6793,29 +6793,16 @@ notes = "renamed from ovl16_fn_209F (ovl16:209F is the M (Modify) item of the tr
 evidence = ["prologue"]
 
 [[routine]]
-id = "ovl16:295B"
-unit = "ovl16"
-addr = "ovl16:295B"
-size = 83
-name = "ovl16_fn_295B"
-signature = ""
-c_name = "ovl16_fn_295B"
-level = "none"
-justification = ""
-notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 13: not a routine. 0x295B is inside the literal pool of ovl16:29AE (the strings ' will become:' .. 'Congratulations...' run 0x295B..0x29AD). From 0x295B to the next prologue there is only ovl16:29AE (one prologue 55 89 e5 at 0x29AE and one retf at 0x304E on build/re/overlays/ovl16.bin), so this 83-byte entry is the near_call reading of the following routine's literal pool. Removed when 29AE matches (make match UNIT=ovl16 WRITE=1); 29AE is itself blocked (see its note)."
-evidence = ["near_call"]
-
-[[routine]]
 id = "ovl16:29AE"
 unit = "ovl16"
 addr = "ovl16:29AE"
 size = 1727
-name = "ovl16_fn_29AE"
+name = "TrainCharacter"
 signature = ""
 c_name = "ovl16_fn_29AE"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 13: the draft is in tools/re/tp_idioms/ovl16/TRAIN_DRAFT.PAS. With a one-byte spare local declared (the original reserves one) the frame matches (sub sp, 0x222) and the entry checks match byte for byte; the compiled body is still 36 bytes too long. Remaining codegen differences: TP 6.0 writes 'A := A + B' on two Bytes as a 16-bit add where the original's 'add [bp-0xb],al' is 8-bit (Inc(A, B) produces it; fixed already for ClassBitMask and TrainableBits); the ds409B[I, Level + 1] index wants 'Level + 1' computed in the byte first (mov al,[bp-0x18]; inc al; cbw; shl ax,1; shl ax,1) but Level: ShortInt gives cbw-then-inc (first real remaining diff at 0x12d3); the forward jmps at 0x1191 (0x27 vs 0x2a), 0x1259 (0x125f vs 0x1261) and 0x12cd still differ. Needs ds05DE (array[0..7] of Byte, the class bit of each class) and ds409B (array[0..7,0..13] of LongInt, the experience to reach each level), both added to POOLVARS, and the ovl16_fn_42ED(Amount: LongInt; Who: PCharacter) / ovl16_fn_4235(Who: PCharacter; ClassBits: Byte): Byte / ovl16_fn_3F31(Who: PCharacter): ShortInt signatures."
+notes = "renamed from ovl16_fn_29AE (ovl16:29AE is the T item of RunCharacterMenu (ovl16:0161): it trains the selected character, refusing the unconscious and those short of 1000 gold; its strings are Do you wish to train?, Training costs 1000 gp. and we only train conscious people); auto:near_call. Matched: the experience index is Succ(Level), which increments the byte before sign-extending (tools/re/tp_idioms/ovl16/LVLIDX.PAS); Level + 1 does not. ovl16:295B was this routine's literal pool and was removed when it matched."
 evidence = ["prologue"]
 
 [[routine]]
