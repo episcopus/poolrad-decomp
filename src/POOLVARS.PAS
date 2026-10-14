@@ -576,6 +576,9 @@ var
   ds470E: Pointer;                { the FINAL picture bank ShowEndingNarrative loads through LoadPicture and draws }
   ds4712: Byte;                   { the DS:49F3 value ShowEndingNarrative saves at the start and restores at the end }
   ds4713: string[1];              { Str(TileSet): the picture number ShowEndingNarrative appends to FINAL }
+  { The character whose sheet ShowCharacterSheet draws: a copy of SelectedCharacter taken at its start; no
+    other routine reads it (ovl19:0051). }
+  SheetCharacter: PCharacter;
   ds471E: array[0..$47] of Byte;  { 72 bytes reset to 1 when rest starts (ovl20:0CE5) }
   ds25C0: array[0..2, 0..2] of Byte;  { the 3x3 line pattern table StepLine reads at [SY+1, SX+1] }
   { DirStepX and DirStepY: nine entries each (DirStepY starts 9 bytes after DirStepX). ovl14's
@@ -779,6 +782,13 @@ var
   { The names of the seven kinds of money, string[10] at DS:0FFA: Copper, Silver, Electrum, Gold,
     Platinum, Gems, Jewelry (the image); the Take menu lists the pool with them (ovl21:0DDF). }
   MoneyKindNames: array[0..6] of string[10];
+  { The sheet's name tables (ShowCharacterSheet), the images' strings: the sex (+$9E, ShortInt), the race (+$2E),
+    the class (+$2F, the eight single classes) and the alignment (+$A0), and the status (+$10C). }
+  SexNames: array[0..1] of string[6];
+  RaceNames: array[0..7] of string[9];
+  ClassNames: array[0..7] of string[26];
+  AlignmentNames: array[0..7] of string[16];
+  StatusNames: array[0..7] of string[12];
   PackedBuf: Pointer;             { the packed bytes of the DAX block LoadDaxBlock is reading }
   { Colour maps for res07_fn_1E5C (16 entries, colour I becomes entry I): ds0CD2 is the identity,
     ds0CE2 turns colour 13 into 8 and ds0CF2 turns 13 into 0 (the image). LoadPictureSlot recolours the

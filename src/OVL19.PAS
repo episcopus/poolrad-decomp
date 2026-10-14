@@ -3,8 +3,7 @@ unit OVL19;
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 uses POOLVARS;
-procedure ovl19_e1;
-procedure ovl19_fn_031E;
+procedure ShowCharacterSheet;
 procedure ShowCharacterMoney;
 procedure ShowCombatStats;
 procedure ShowAbilityScore(Index: ShortInt; Highlight: Boolean);
@@ -42,9 +41,19 @@ function CharacterMoneyValueInGold(Who: PCharacter): LongInt;
 function ChooseSpellFromList(SpellListKind, DisplayMode: Byte; var Choice: Word;
   var Listed: Byte): Byte;
 implementation
-uses RES06, RES09, RES12, OVL22;
+uses RES06, RES09, RES12, OVL22, OVL28;
 
 type
+  { The sheet reads three TCharacter bytes as signed table indexes (cwde at ovl19:00C6, 0198 and 04DE). }
+  TSheetFields = record
+    Filler: array[0..$9D] of Byte;
+    Sex: ShortInt;                { +$9E }
+    Pad9F: Byte;
+    Alignment: ShortInt;          { +$A0 }
+    Filler2: array[$A1..$10B] of Byte;
+    Status: ShortInt;             { +$10C }
+  end;
+  PSheetFields = ^TSheetFields;
   { TCharacter from its +$10 field on: the six ability scores (Strength..Charisma) indexed by row. }
   TAbilityBlock = record
     Name: string[15];
@@ -62,10 +71,108 @@ type
   end;
   PDamageDice = ^TDamageDice;
 
-{ ovl19:004A: frame not read }
-{@stub} procedure ovl19_e1; begin end;
-{ ovl19:031E: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl19_fn_031E; begin end;
+{ ovl19:004A. Draws the character sheet of SelectedCharacter in the window 1..38 x 1..22: the name line
+  (res12_fn_1816), the sex, race and age on row 3, the alignment on row 4, the class on row 5, the six
+  ability lines (ShowAbilityScore) with their labels from row 7, the money (ShowCharacterMoney), the
+  class levels and experience on row 15, the combat block (ShowCombatStats) on rows 17 and 18, the weapon
+  and armor on rows 20 and 21 and the status on row 22, and the head and body portraits when they are
+  on (ShowPortraits) and the tile set is 3. Called by ovl19_e5 (the View command), ovl19_fn_0B25,
+  ovl19_fn_2197 and ovl16 (ovl16_fn_0B52, ovl16_fn_1DCB, ovl16_fn_209F). SheetCharacter keeps the
+  character for the whole drawing. }
+procedure ShowCharacterSheet;
+const
+  SheetRight = 38;
+  SheetBottom = 22;
+  NpcTagGap = 3;
+  ComputerRunThreshold = $7F;
+  NameRow = 3;
+  AlignmentRow = 4;
+  ClassRow = 5;
+  FirstAbilityRow = 7;
+  StatLabelColor = 10;
+  LevelRow = 15;
+  WeaponRow = 20;
+  TextColor = 15;
+  ValueColor = 10;
+  HeadBodyTileSet = 3;
+var
+  { SpareFirst and SpareSecond fill the two bytes the frame reserves (ovl19:004A, [bp-1] and [bp-4]);
+    the code never reads them }
+  SpareFirst: Byte;
+  Row: Byte;
+  Col: Byte;
+  SpareSecond: Byte;
+  Stat: ShortInt;
+  ClassSlot: ShortInt;
+  Text: string;
+  NeedSlash: Boolean;
+begin
+  SheetCharacter := SelectedCharacter;
+  ClearFullScreen;
+  DrawWindowFrame(1, 1, SheetRight, SheetBottom, 0);
+  res12_fn_1816(SheetCharacter, 1, 1, 0);
+  if SheetCharacter^.B84 > ComputerRunThreshold then
+    DrawTextAt(Length(SheetCharacter^.Name) + NpcTagGap, 1, ValueColor, '(NPC)');
+  Col := 1;
+  Text := SexNames[PSheetFields(SheetCharacter)^.Sex];
+  DrawTextAt(Col, NameRow, TextColor, Text);
+  Col := Col + Length(Text) + 1;
+  Text := RaceNames[SheetCharacter^.Race];
+  DrawTextAt(Col, NameRow, TextColor, Text);
+  Col := Col + Length(Text) + 1;
+  DrawTextAt(Col, NameRow, TextColor, 'Age ' + res12_fn_1073(SheetCharacter^.Age));
+  Text := AlignmentNames[PSheetFields(SheetCharacter)^.Alignment];
+  DrawTextAt(1, AlignmentRow, TextColor, Text);
+  Text := ClassNames[SheetCharacter^.ClassMask];
+  DrawTextAt(1, ClassRow, TextColor, Text);
+  for Stat := 0 to 5 do
+  begin
+    case Stat of
+      0: Text := 'STR ';
+      1: Text := 'INT ';
+      2: Text := 'WIS ';
+      3: Text := 'DEX ';
+      4: Text := 'CON ';
+      5: Text := 'CHA ';
+    end;
+    DrawTextAt(1, Stat + FirstAbilityRow, StatLabelColor, Text);
+    ShowAbilityScore(Stat, False);
+  end;
+  ShowCharacterMoney;
+  DrawTextAt(1, LevelRow, TextColor, 'Level');
+  NeedSlash := False;
+  Text := '';
+  for ClassSlot := 0 to 7 do
+    if SheetCharacter^.ClassLevels[ClassSlot] > 0 then
+    begin
+      if NeedSlash then
+        Text := Text + '/';
+      Text := Text + res12_fn_1037(SheetCharacter^.ClassLevels[ClassSlot]);
+      NeedSlash := True;
+    end;
+  DrawTextAt(7, LevelRow, TextColor, Text);
+  DrawTextAt(17, LevelRow, TextColor, 'Exp ' + res12_fn_10AD(SheetCharacter^.Experience));
+  ShowCombatStats;
+  Row := WeaponRow;
+  if SheetCharacter^.SlotItems[0] <> nil then
+  begin
+    DrawTextAt(1, Row, TextColor, 'Weapon');
+    res12_fn_0442(LongInt(SheetCharacter), SheetCharacter^.SlotItems[0], 8, Row, 0, 1);
+  end;
+  Inc(Row);
+  if SheetCharacter^.SlotItems[2] <> nil then
+  begin
+    { QUIRK ovl19:0467: the Armor label is drawn in column 2, one column right of Weapon and Status }
+    DrawTextAt(2, Row, TextColor, 'Armor');
+    res12_fn_0442(LongInt(SheetCharacter), SheetCharacter^.SlotItems[2], 8, Row, 0, 1);
+  end;
+  Inc(Row);
+  DrawTextAt(1, Row, TextColor, 'Status');
+  DrawTextAt(8, Row, ValueColor, StatusNames[PSheetFields(SheetCharacter)^.Status]);
+  if ShowPortraits <> 0 then
+    if TileSet = HeadBodyTileSet then
+      ShowHeadBodyWindow;
+end;
 { ovl19:050D. Clears the money window (columns 12 to 26, rows 7 to 14) and lists the kinds of money
   SelectedCharacter holds, from Jewelry (6) down to Copper (0): each kind with a nonzero Money entry gets
   a row, its name ending in column 19 and its amount in column 21. The Money entries are Words at +$88. }
@@ -100,7 +207,7 @@ end;
   THAC0 (60 minus HitAdjust, column 9 label, 15 value) and Encumbrance (CarriedWeight, column 22 label,
   34 value); on row 18, HP (res12_fn_0973), Damage (dice count, d, sides, then the bonus with its sign)
   and Movement (the Movement byte doubled by affect $2A and halved by affect $27, column 25 label,
-  34 value). Labels are drawn in bright white (15), values in bright green (10). Called by ovl19_e1
+  34 value). Labels are drawn in bright white (15), values in bright green (10). Called by ShowCharacterSheet
   (its call at ovl19:03F5) and by ovl16 (ovl16_fn_1DCB, ovl16_fn_2639). }
 procedure ShowCombatStats;
 const
@@ -155,7 +262,7 @@ end;
 { ovl19:0901. Draws ability score Index of SelectedCharacter (0 Strength .. 5 Charisma) on row 7 + Index,
   in columns 5 to 11 (a score below 10 is one column further right), in bright green, or bright magenta
   when Highlight is set. A Strength of 18 with a percentile also draws it in parentheses after the score
-  on row 7, two digits, 00 for 100. Called by ovl19_e1 for each of the six lines with Highlight False. }
+  on row 7, two digits, 00 for 100. Called by ShowCharacterSheet for each of the six lines with Highlight False. }
 procedure ShowAbilityScore(Index: ShortInt; Highlight: Boolean);
 const
   ExceptionalStrength = 18;

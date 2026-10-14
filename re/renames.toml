@@ -3420,3 +3420,10 @@ kind = "routine"
 why = "Draws the AC, HP, THAC0, Damage, Encumbrance and Movement labels of the sheet (literal strings at ovl19:05BE..05FC, the labels of the combat block), with the values of the selected character. Called by ovl19_e1 (ovl19:03F5) and from ovl16 (ovl16_fn_1DCB, ovl16_fn_2639)."
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl19_e1"
+new = "ShowCharacterSheet"
+kind = "routine"
+why = "Called by ovl19_e5 (the View command, ovl19:0AB3) and ovl16 (ovl16_fn_0B52, ovl16_fn_1DCB, ovl16_fn_209F). Draws the sheet window with the name, sex, race, age, alignment, class, abilities, levels, experience, combat block, weapon, armor, status and portraits of SelectedCharacter (ovl19:004A)."
+date = "2026-10-13"
+

@@ -21,7 +21,7 @@ function res12_fn_0B73(Who: Pointer): Boolean;
 procedure res12_fn_0BB8(Who: Pointer);
 function res12_fn_1037(N: Byte): string;
 function res12_fn_1073(Value: Word): string;
-procedure res12_fn_10AD;
+function res12_fn_10AD(Experience: LongInt): string;
 procedure res12_fn_10E6;
 procedure res12_fn_1168;
 procedure res12_fn_11EA;
@@ -106,7 +106,7 @@ implementation
   a price into a message with it. }
 {@stub} function res12_fn_1073(Value: Word): string; begin end;
 { 00BA:10AD: retf 4: 4 bytes of parameters; 256 bytes of locals }
-{@stub} procedure res12_fn_10AD; begin end;
+{@stub} function res12_fn_10AD(Experience: LongInt): string; begin end;
 { 00BA:10E6: retf 4: 4 bytes of parameters; 2 bytes of locals }
 {@stub} procedure res12_fn_10E6; begin end;
 { 00BA:1168: retf 4: 4 bytes of parameters; 2 bytes of locals }

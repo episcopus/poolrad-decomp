@@ -8612,27 +8612,14 @@ evidence = ["prologue"]
 id = "ovl19:004A"
 unit = "ovl19"
 addr = "ovl19:004A"
-size = 724
-name = "ovl19_e1"
+size = 1219
+name = "ShowCharacterSheet"
 signature = ""
 c_name = "ovl19_e1"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl19_e1 (Called by ovl19_e5 (the View command, ovl19:0AB3) and ovl16 (ovl16_fn_0B52, ovl16_fn_1DCB, ovl16_fn_209F). Draws the sheet window with the name, sex, race, age, alignment, class, abilities, levels, experience, combat block, weapon, armor, status and portraits of SelectedCharacter (ovl19:004A).); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl19:031E"
-unit = "ovl19"
-addr = "ovl19:031E"
-size = 495
-name = "ovl19_fn_031E"
-signature = ""
-c_name = "ovl19_fn_031E"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl19:050D"
@@ -16480,7 +16467,7 @@ unit = "res12"
 addr = "00BA:10AD"
 size = 57
 name = "res12_fn_10AD"
-signature = ""
+signature = "function res12_fn_10AD(Experience: LongInt): string"
 c_name = "res12_fn_10AD"
 level = "none"
 justification = ""

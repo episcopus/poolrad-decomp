@@ -906,6 +906,36 @@ name = "MoneyKindNames"
 evidence = "seven string[10] Copper Silver Electrum Gold Platinum Gems Jewelry at DS:0FFA (the image); TakeMoney prefixes each pooled amount with MoneyKindNames[Kind] (ovl21:0DDF)"
 
 [[global]]
+offset = 0x0FEC
+name = "SexNames"
+evidence = "two string[6] at DS:0FEC, seven bytes apart: Male, Female (the image); ovl19_e1 draws SexNames[the sex byte at +$9E] on the sheet (ovl19:00C6)"
+
+[[global]]
+offset = 0x0F03
+name = "RaceNames"
+evidence = "eight string[9] at DS:0F03, ten bytes apart: Monster, Dwarf, Elf, Gnome, Half-Elf, Halfling, Half-Orc, Human (the image); ovl19_e1 draws RaceNames[Race] (+$2E, ovl19:0118)"
+
+[[global]]
+offset = 0x0D38
+name = "ClassNames"
+evidence = "eight string[26] at DS:0D38, 27 bytes apart: Cleric, Druid, Fighter, Paladin, Ranger, Magic-User, Thief, Monk (the image); ovl19_e1 draws ClassNames[ClassMask] (+$2F, ovl19:01D2); the multi-class masks 8..16 index past the eighth entry"
+
+[[global]]
+offset = 0x0F53
+name = "AlignmentNames"
+evidence = "eight string[16] at DS:0F53, 17 bytes apart: Lawful Good .. Chaotic Neutral (the image); ovl19_e1 draws AlignmentNames[the signed byte at +$A0] (ovl19:0198)"
+
+[[global]]
+offset = 0x1047
+name = "StatusNames"
+evidence = "eight string[12] at DS:1047, 13 bytes apart: Okay, Animated, tempgone, Running, Unconscious, Dying, Dead, Stoned (the image); ovl19_e1 draws StatusNames[+$10C] (ovl19:04D0); entry 2 reads 'tempgone' in the image"
+
+[[global]]
+offset = 0x4716
+name = "SheetCharacter"
+evidence = "pointer ovl19_e1 stores SelectedCharacter in at ovl19:0051 and reads for every line of the sheet (ovl19:0051..04F6); no other code reads it"
+
+[[global]]
 offset = 0x0970
 name = "TreasureItemRows"
 evidence = "BuildTreasureItem copies the name numbers, weight, value and affects of a fixed item from eight words starting at the chosen row (ovl21:182F..18C2)"
