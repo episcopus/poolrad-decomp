@@ -936,6 +936,9 @@ var
   { Set while ComputeMovement runs the movement affect hooks and cleared around them; what reads
     it is not known yet. }
   ds681D: Boolean;
+  { Cleared before and tested after RunAffectHooks kinds 1 (on the target) and 0 (on the attacker)
+    around an attack's target check (ovl13:1085); a hook that sets it rejects the attack. }
+  ds681E: Byte;
   { ds6814 and ds6815 indexed by side (ovl10:1AC7); the combat AI indexes them by the
     OpposingSide side of the actor (UseMagicItem, CastMemorizedSpell, ovl09:049F, 05C6). }
   ds6814Sides: array[0..1] of Byte absolute ds6814;

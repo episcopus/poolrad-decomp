@@ -5476,12 +5476,12 @@ id = "ovl13:1085"
 unit = "ovl13"
 addr = "ovl13:1085"
 size = 229
-name = "ovl13_e8"
-signature = "function ovl13_e8(Who, Target: Pointer): Boolean"
+name = "AttackTargetAllowed"
+signature = "function AttackTargetAllowed(Who, Target: PCharacter): Boolean"
 c_name = "ovl13_e8"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_e8 (ovl13:1085 runs the target's affect hooks (RunAffectHooks kind 1) and the attacker's (kind 0, with Combat^.Target swapped in) and returns whether none set ds681E; a nil target fails, attacking oneself always passes. Called before an attack by AiTurn, PartingShots, ovl12_e70 and ovl13 e17/e21/2FD3); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

@@ -20,7 +20,7 @@ function AttacksThisRound(DoubledAttacks: Byte): Byte;
 function SweepEnemies(Who, Target: PCharacter): Boolean;
 procedure ovl13_fn_0FBF;
 procedure ovl13_fn_104E;
-function ovl13_e8(Who, Target: Pointer): Boolean;
+function AttackTargetAllowed(Who, Target: PCharacter): Boolean;
 procedure ovl13_e9(Who: Pointer);
 procedure ovl13_fn_11D8;
 function ovl13_e10(Who: Pointer; var B: Byte): Boolean;
@@ -378,7 +378,7 @@ end;
   Who now (CollectEnemiesInRange(Who, 1) into ds6DE4, ovl31) into Enemies, temporarily moves Who's
   cell in CombatantTable to Dir's neighbour to collect the enemies adjacent there, moves it back and
   clears the copied entries that are still adjacent, so Enemies keeps the enemies Who is leaving
-  behind. For each of them, still in the fight (Flag10D set) and not IsHelpless, whom ovl13_e8(Who)
+  behind. For each of them, still in the fight (Flag10D set) and not IsHelpless, whom AttackTargetAllowed(Who)
   says may take the shot and who carries neither affect $4A nor $4B, it scans the directions
   IconSet+6..IconSet+10: while the combatant is due an initiative (Initiative above 0) or is not
   being drawn (BF 0) it attacks at once, otherwise only when InDirArc says Who is in the arc facing
@@ -434,7 +434,7 @@ begin
         DidAttack := 0;
         Enemy := CombatantRecord[Enemies[I]];
         if not IsHelpless(Enemy) then
-          if ovl13_e8(Enemy, Who) then
+          if AttackTargetAllowed(Enemy, Who) then
             if not HasAffect(Enemy, AffectNoPartingShot1, Affect) then
               if not HasAffect(Enemy, AffectNoPartingShot2, Affect) then
                 for K := Enemy^.Combat^.IconSet + PartingShotFirstOffset
@@ -619,8 +619,35 @@ end;
 {@stub} procedure ovl13_fn_0FBF; begin end;
 { ovl13:104E: retf 8: 8 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl13_fn_104E; begin end;
-{ ovl13:1085: retf 8: 8 bytes of parameters; 6 bytes of locals }
-{@stub} function ovl13_e8(Who, Target: Pointer): Boolean; begin end;
+{ ovl13:1085, AttackTargetAllowed. The attack's target check: it runs the target's and the attacker's affect hooks
+  and reports whether the attack may go ahead. A nil Target fails, and attacking oneself is
+  always allowed. Otherwise ds681E is cleared and RunAffectHooks kind 1 runs on Target; when no
+  hook rejected it, Who's remembered Combat^.Target is saved, replaced by Target and the attacker's
+  hook kind 0 runs, then the old target is put back. The result is True exactly when ds681E ended
+  0 (no hook vetoed). Called before an attack (ovl09 AiTurn, PartingShots, ovl12_e70 and ovl13's
+  e17/e21/2FD3). Globals: ds681E. }
+function AttackTargetAllowed(Who, Target: PCharacter): Boolean;
+var
+  SavedTarget: PCharacter;       { Who^.Combat^.Target around the attacker's hook }
+begin
+  AttackTargetAllowed := False;
+  if Target <> nil then
+    if Who = Target then
+      AttackTargetAllowed := True
+    else
+    begin
+      ds681E := 0;
+      RunAffectHooks(1, Target);
+      if ds681E = 0 then
+      begin
+        SavedTarget := Who^.Combat^.Target;
+        Who^.Combat^.Target := Target;
+        RunAffectHooks(0, Who);
+        Who^.Combat^.Target := SavedTarget;
+      end;
+      AttackTargetAllowed := ds681E = 0;
+    end;
+end;
 { ovl13:116A: frame not read }
 {@stub} procedure ovl13_e9(Who: Pointer); begin end;
 { ovl13:11D8: retf 4: 4 bytes of parameters; 0 bytes of locals }

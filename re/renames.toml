@@ -4085,3 +4085,10 @@ kind = "routine"
 why = "ovl13:0E82 is the melee sweep: when the attacker Who has attack slots left (AttackSlots[1] below Combat^.Pad4[5]), the target is a level-0 creature (HighestLevel 0) and stands in melee range, it shows 'sweeps' and attacks each level-0 adjacent enemy through ovl13_e11/ovl13_e12 until Extra attacks run out, moving Target to the front of ds6DE4; returns True so the caller (MeleeAttack ovl08:0D45, AI ovl09:0B3C) ends the turn"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl13_e8"
+new = "AttackTargetAllowed"
+kind = "routine"
+why = "ovl13:1085 runs the target's affect hooks (RunAffectHooks kind 1) and the attacker's (kind 0, with Combat^.Target swapped in) and returns whether none set ds681E; a nil target fails, attacking oneself always passes. Called before an attack by AiTurn, PartingShots, ovl12_e70 and ovl13 e17/e21/2FD3"
+date = "2026-10-13"
+

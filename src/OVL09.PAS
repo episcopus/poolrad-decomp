@@ -498,7 +498,7 @@ end;
   Range byte (+$C) of the item in slot 0 (SlotItems[0], +$CC) minus 1; a result of 0 or $FF (a Range of
   0 or 1) becomes 1. The remembered Combat^.Target is dropped when it is not dying or is on the party
   side. A target is attacked when line of sight (WalkLine, step count halved) reaches it within Range
-  and ovl13_e8 allows it; otherwise a random enemy of the CollectEnemiesInRange(Who, Range) scan (ds6DE4) is
+  and AttackTargetAllowed allows it; otherwise a random enemy of the CollectEnemiesInRange(Who, Range) scan (ds6DE4) is
   picked, or UseBestItem chooses one when IsRangedWeapon holds, RangedWeaponCanMelee does not and a 1-step
   scan finds an enemy. The attack runs SweepEnemies/e11/e12 and ends the turn through EndCombatTurn.
   Result: 1 when the turn is over (CanAct = 0). The arguments of ovl13_e21 ($FF, 0, 0) are Purpose unknown.
@@ -565,7 +565,7 @@ Loop:
   if (Target^.Flag10D = 0) or (Target^.Side = 0) then
     Target := nil;
   if Target <> nil then
-    if ovl13_e8(Who, Target) then
+    if AttackTargetAllowed(Who, Target) then
     begin
       TargetX := CombatantX(Target);
       TargetY := CombatantY(Target);
@@ -596,7 +596,7 @@ Loop:
         Done := 1;
         goto Attack;
       end;
-  if (DistanceToTarget(Who, Target) = 1) or ovl13_e8(Who, Target) then
+  if (DistanceToTarget(Who, Target) = 1) or AttackTargetAllowed(Who, Target) then
     Flag := 1;
 Attack:
   if Flag <> 0 then
