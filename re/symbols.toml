@@ -4266,12 +4266,12 @@ id = "ovl12:268A"
 unit = "ovl12"
 addr = "ovl12:268A"
 size = 118
-name = "ovl12_e81"
+name = "AddConstitutionSaveBonusKind2Or4"
 signature = ""
 c_name = "ovl12_e81"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_81"
+notes = "renamed from ovl12_e81 (ovl12:268A adds the Constitution bonus of AddConstitutionSaveBonus (ovl12:24D9) to SaveRoll when SaveKind is 2 or 4 (4 is the fear save [I]); matched [V]); auto:entry_81"
 evidence = ["prologue"]
 
 [[routine]]

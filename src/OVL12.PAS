@@ -92,7 +92,7 @@ procedure HalveFireDamageNoSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure HalveDamageForFirstSlotItem(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure FallDeadIfInFight(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure CancelDamageUnlessMagicSlotItem(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e81(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure AddConstitutionSaveBonusKind2Or4(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e82;
 procedure ovl12_e83;
 procedure ovl12_e84;
@@ -1682,8 +1682,28 @@ begin
   if (Item = nil) or ((Item^.Plus = 0) and (Item^.NameNum[3] <> SlotItemNameNum3)) then
     DamageAmount := 0;
 end;
-{ ovl12:268A: retf 10: 10 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl12_e81; begin end;
+{ ovl12:268A. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Affect and Mode are not read, ovl24:0000).
+  For the saving throw kinds 2 and 4 (SaveKind, DS:682A; kind 4 is SaveKindFear [I]) it adds to SaveRoll the Constitution
+  bonus of AddConstitutionSaveBonus (ovl12:24D9): 1 for 4..6, 2 for 7..10, 3 for 11..13, 4 for 14..17 and 5 for 18..20.
+  Which affect runs it is not known yet [?].
+  QUIRK ovl12:268A: a Constitution outside 4..20 sets no bonus, so the local Bonus keeps what the stack held, and that
+  value is added to SaveRoll. }
+procedure AddConstitutionSaveBonusKind2Or4(Who: PCharacter; Affect: PAffect; Mode: Byte);
+var
+  Bonus: Byte;                  { the bonus of Who's Constitution bracket }
+begin
+  if (SaveKind = SaveKindFear) or (SaveKind = 2) then
+  begin
+    case Who^.Constitution of
+      4..6: Bonus := 1;
+      7..10: Bonus := 2;
+      11..13: Bonus := 3;
+      14..17: Bonus := 4;
+      18..20: Bonus := 5;
+    end;
+    SaveRoll := SaveRoll + Bonus;
+  end;
+end;
 { ovl12:2700: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e82; begin end;
 { ovl12:2730: retf 10: 10 bytes of parameters; 2 bytes of locals }

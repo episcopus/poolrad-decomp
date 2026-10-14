@@ -3959,3 +3959,10 @@ kind = "routine"
 why = "ovl12:264B sets DamageAmount to 0 unless the first slot item of SelectedCharacter is a magic item (Plus <> 0) or has NameNum[3] $B1 [?]; matched [V]"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e81"
+new = "AddConstitutionSaveBonusKind2Or4"
+kind = "routine"
+why = "ovl12:268A adds the Constitution bonus of AddConstitutionSaveBonus (ovl12:24D9) to SaveRoll when SaveKind is 2 or 4 (4 is the fear save [I]); matched [V]"
+date = "2026-10-13"
+
