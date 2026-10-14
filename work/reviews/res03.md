@@ -3,11 +3,11 @@
 decompiler: dec-3, dec-4, dec-14 (the Agent: trailers of the unit's commits, plus five commits without a trailer; none is rev-sonnet)
 reviewer: rev-sonnet
 date: 2026-10-13
-commit: b8ab320
+commit: c71c9a8
 
 Checklist: docs/process/playbooks/70-review.md (every item, every routine).
 
-First review. `make match UNIT=res03` (rerun): `unit: complete, 471 bytes of Pascal code; external object of 5721 bytes from 01D7`: five Pascal routines and the initialisation part matched, twenty entries kept as the original's bytes (`external = true`, `re/units.toml` `external_from = 08AE:01D7`), 0 differ. `make readability UNIT=res03`: clean. The packet is `build/packets/res03.md`. Scope: the Pascal front end (TimeInHundredths, WaitHundredths, PlaySound, SilenceSound, SetSoundDriverIdle, the unit comment and constants), the declarations of the external entries and the whitepaper 5.14 entry. The external bytes are not Pascal and are not judged line by line; what the source and registry say about them is.
+Round 1 (b8ab320). `make match UNIT=res03` (rerun): `unit: complete, 471 bytes of Pascal code; external object of 5721 bytes from 01D7`: five Pascal routines and the initialisation part matched, twenty entries kept as the original's bytes (`external = true`, `re/units.toml` `external_from = 08AE:01D7`), 0 differ. `make readability UNIT=res03`: clean. The packet is `build/packets/res03.md`. Scope: the Pascal front end (TimeInHundredths, WaitHundredths, PlaySound, SilenceSound, SetSoundDriverIdle, the unit comment and constants), the declarations of the external entries and the whitepaper 5.14 entry. The external bytes are not Pascal and are not judged line by line; what the source and registry say about them is.
 
 ## Findings
 
@@ -26,3 +26,19 @@ What was verified: PlaySound's order against the packet (SoundMode test at `08AE
 ## Verdict
 
 Passed. No must-fix: the Pascal routines and their comments are true; the findings concern stale held/blocked wording in the whitepaper and the registry, data entries declared as procedures, the missing time-out sentence, an unproven chip name and one QUIRK address.
+
+## Round 2 (c71c9a8)
+
+Round 1 passed on the findings but the supervisor handed it off as failed because `make review-pass CHECK=1` did not yet accept a unit with an external object (`external_from`). That tooling now accepts it (`make review-pass UNIT=res03 CHECK=1` reports it would record the stamp). `src/RES03.PAS` is unchanged since round 1 (`git log -- src/RES03.PAS`: last commit 927b51a), so every round 1 finding is re-checked against the same text and still stands; none is must-fix. Reran `make match UNIT=res03` (`unit: complete`, 6 matched, 0 differ, external object of 5721 bytes from 01D7), `make readability UNIT=res03` (clean) and read the packet beside the source; checked the new-in-this-round points below.
+
+- [ ] should-fix the external entries `res03_fn_1477` and `res03_fn_14EC` carry the provisional name although their role is known and cited in whitepaper 5.14 and in the notes of SetSpeakerTune and SetTandyTune: 1477 is the voice stepper of the PC speaker (called by the INT 08h handler, plays the four voice records at CS:022D on port 42h), 14EC the one of the Tandy chip (voice records CS:03C7, port C0h). `make rename` them (for example `StepSpeakerVoices`, `StepTandyVoices`) with that evidence. `res03_fn_157A` and `res03_fn_160B` have no known purpose in the registry or the whitepaper; their comments say only "retf 0: 0 bytes of parameters", so add `Purpose unknown:` with what is known (callers, which table or record they touch) or say that nothing is known. The same applies to the data entries.
+- [ ] should-fix round 1 says "eleven `res03_fn_09E3 .. res03_fn_1221` declarations" and later "the nine data entries"; the count is eleven (09E3, 0A27, 0AD3, 0C8F, 0DB1, 0DCC, 0DEB, 0E06, 0F5B, 1091, 1221), the span the whitepaper calls data inside the driver. Their comments in the source say `frame not read`, a tool default that neither says the entry is data nor "Purpose unknown:".
+- [ ] note SetSoundOutput(Enabled: Word) and the literal 0 and 1 in `PlaySound`: the parameter is a flag stored as a byte at CS:020D, so `Boolean` would read better, but the stub's two bytes of parameters match a Word and the external bytes are fixed; acceptable. A port should treat it as a Boolean.
+- [ ] note PlaySound: the source calls `SetTandyTune(NoTune)` before `SetSpeakerTune(NoTune)` in the SoundStop and SoundQuiet arms but in the opposite order in SilenceSound; the comment says "both devices" and the order is faithful (it matches). No action.
+- [ ] note whitepaper 5.14 and the res06 `GameClock` paragraph (5.15) give the same quirk for the same expression in two units; the addresses of the muls are `08AE:0036`, `08AE:0046` (see the round 1 finding on the QUIRK address).
+
+What was verified again: the callers named in the comments (StartGame passes 100 in `ovl11` and clears the variable directly at `ovl11:045D`; `ovl31` passes 0 and 10; res08's init and ReadGameKey call SilenceSound; QuitGame and the Ctrl-S pause call PlaySound), `SoundModeBeforePause` and `SoundDriverIdle` comments in POOLVARS and `re/dseg.toml`, the unit's directives, no `inline` or `assembler`, and that the stub signatures this unit sets (SetSpeakerTune, SetTandyTune, SetSoundOutput, the three Pascal routines) are recorded as `signature` in `re/symbols.toml`.
+
+## Verdict (round 2)
+
+Passed. No must-fix. The Pascal front end and its comments are true and backed by evidence; the open should-fix findings (stale held/blocked wording, data entries declared as procedures, unnamed steppers, the missing time-out sentence, the chip name, the QUIRK address) are for the unit's next maintenance pass and do not block.

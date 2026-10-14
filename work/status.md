@@ -12,7 +12,7 @@ Approach: ADR-002 (SPEC 4), Pascal-first matching decompilation; the C track (AD
 | P1 Map | done (`make p1-check`): 50 units, 1332 routines, TP 6.0 June 1991 pinned |
 | P2 Oracle and data | done: goldens with recordings for 2 of 2 session scripts (boot-title, create-character); `make golden CHECK=1` |
 | P3 Match harness | done: `make match` (tools/match/match.py, tests/unit/test_match.py); gate `make check` |
-| P4 Match | 403 of 1113 game routines at L2 (123391 of 233807 bytes by re/symbols.toml sizes); 36 of 46 game units complete, 32 reviewed; 20 routines (3661 bytes) inside external object files are not Pascal and are matched by bytes; main program `src/POOL.PAS` matched by `make match UNIT=main` |
+| P4 Match | 403 of 1113 game routines at L2 (123391 of 233807 bytes by re/symbols.toml sizes); 36 of 46 game units complete, 33 reviewed; 20 routines (3661 bytes) inside external object files are not Pascal and are matched by bytes; main program `src/POOL.PAS` matched by `make match UNIT=main` |
 | P5 Rebuild | `make rebuild` links the whole game from `src/` (every unit has source: decompiled or skeleton) and reports identical segments |
 
 ### P4 units with matched routines
@@ -50,7 +50,7 @@ Approach: ADR-002 (SPEC 4), Pascal-first matching decompilation; the C track (AD
 | ovl33 | DebugTrace | 2 | 2 | 248 | clean | yes |
 | ovl34 | TileLoad | 3 | 3 | 631 | clean | yes |
 | res02 | res02 | 1 | 1 | 16 | clean | yes |
-| res03 | res03 | 6 | 6 | 471 | clean | complete |
+| res03 | res03 | 6 | 6 | 471 | clean | yes |
 | res04 | res04 | 5 | 5 | 336 | clean | yes |
 | res05 | res05 | 18 | 18 | 2416 | clean | yes |
 | res06 | res06 | 20 | 20 | 4151 | clean | complete |
