@@ -43,7 +43,7 @@ function StrengthRowIndex(Who: PCharacter): Byte;
 function StrengthAttackAdjustment(Who: PCharacter): ShortInt;
 function StrengthDamageAdjustment(Who: PCharacter): ShortInt;
 function StrengthWeightAllowance(Who: PCharacter): Integer;
-procedure res12_fn_148B(Spell: Byte);
+procedure ForgetSpell(Spell: Byte);
 procedure res12_fn_1509(Who: Pointer; Item: Pointer);
 procedure res12_fn_15F7;
 procedure res12_fn_1693(Text: String40);
@@ -742,8 +742,24 @@ begin
     StrengthWeightAllowance := 0;
   end;
 end;
-{ 00BA:148B: retf 2: 2 bytes of parameters; 2 bytes of locals }
-{@stub} procedure res12_fn_148B(Spell: Byte); begin end;
+{ 00BA:148B. Clears the spell Spell from the selected character's memorized spells (SelectedCharacter,
+  DS:5D92; Spells at +$17, 21 slots 0..$14): it scans the slots and empties the first one that holds
+  Spell. DealDamage calls it ("loses a pending spell"), ovl13 and ovl22 also call it. }
+procedure ForgetSpell(Spell: Byte);
+var
+  I: Byte;
+begin
+  I := 0;
+  while I <= $14 do
+  begin
+    if SelectedCharacter^.Spells[I] = Spell then
+    begin
+      SelectedCharacter^.Spells[I] := 0;
+      I := $15;
+    end;
+    Inc(I);
+  end;
+end;
 { 00BA:1509: retf 8: 8 bytes of parameters; 44 bytes of locals }
 {@stub} procedure res12_fn_1509(Who: Pointer; Item: Pointer); begin end;
 { 00BA:15F7: retf 8: 8 bytes of parameters; 8 bytes of locals }

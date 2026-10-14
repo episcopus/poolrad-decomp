@@ -16713,12 +16713,12 @@ id = "00BA:148B"
 unit = "res12"
 addr = "00BA:148B"
 size = 126
-name = "res12_fn_148B"
-signature = "procedure res12_fn_148B(Spell: Byte)"
+name = "ForgetSpell"
+signature = "procedure ForgetSpell(Spell: Byte)"
 c_name = "res12_fn_148B"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_148B (00BA:148B: clears the first memorized spell (SelectedCharacter^.Spells, +0x17) equal to Spell; DealDamage (ovl24:1344) calls it when a victim loses a pending spell, ovl13:02F9 and ovl22:0C20 also call it.); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]

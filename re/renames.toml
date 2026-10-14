@@ -3546,3 +3546,10 @@ kind = "routine"
 why = "00BA:13AB: returns the strength weight allowance in coins (StrengthRowIndex row -> coins); CapMovementByLoad (00BA:03A0) subtracts it from Who^.CarriedWeight and ovl21's CarryLimit adds 1500 to it."
 date = "2026-10-13"
 
+[[rename]]
+old = "res12_fn_148B"
+new = "ForgetSpell"
+kind = "routine"
+why = "00BA:148B: clears the first memorized spell (SelectedCharacter^.Spells, +0x17) equal to Spell; DealDamage (ovl24:1344) calls it when a victim loses a pending spell, ovl13:02F9 and ovl22:0C20 also call it."
+date = "2026-10-13"
+

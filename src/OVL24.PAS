@@ -696,7 +696,7 @@ begin
       if Who^.Combat^.PendingSpell > 0 then
       begin
         res12_fn_16EC(Who, 'lost a spell', $C, 1);
-        res12_fn_148B(Who^.Combat^.PendingSpell);
+        ForgetSpell(Who^.Combat^.PendingSpell);
         Who^.Combat^.PendingSpell := 0;
       end;
     end;
