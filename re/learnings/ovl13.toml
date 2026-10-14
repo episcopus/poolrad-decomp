@@ -26,3 +26,12 @@ tags = ["shr", "shift", "codegen", "backstab"]
 title = "`x shr 2` is mov cx,2; shr ax,cl, but `x shr 1 shr 1` is two shr ax,1"
 lesson = "ovl13:01FB needs a thief level divided by four and the original is `cbw; shr ax,1; shr ax,1`. TP 6.0 compiles `x shr 2` with the count in CL (`mov cx,2; shr ax,cl`, 5 bytes here) but `x shr 1 shr 1` as two `shr ax,1` instructions, so when the packet shows the repeated one-bit shifts the source shifts one bit at a time (or divides by four in two steps). ovl13_fn_2574 (the backstab check) then multiplies DamageAmount by (level shr 1 shr 1) + 2. Probe tools/re/tp_idioms/ovl13/PRBSHR.PAS."
 evidence = ["tools/re/tp_idioms/ovl13/PRBSHR.PAS", "src/OVL13.PAS#RollAttackDamage", "re/symbols.toml#ovl13:0191"]
+
+[[lesson]]
+id = "set-in-jcc-polarity"
+confidence = "V"
+units = ["*"]
+tags = ["set", "in", "System_SetIn", "jcc", "case", "codegen"]
+title = "`x in S` skips the body with je; `not (x in S)` with jne"
+lesson = "System_SetIn (0AF8:0DC0) leaves a flag such that `if X in [6,7,8] then <body>` compiles to `call System_SetIn; je skip; <body>` (je when X is in the set), while `if not (X in [6,7,8]) then <body>` compiles to `jne skip`. ovl13:05BF is `je` before the 'is killed' body, so the source is `if Target^.Status in [6,7,8] then`, not the negated form (the set at ovl13:02CF is the 32 bytes c0 01 00.., bits 6, 7 and 8). A `case Kind of 2: ...; 3: ...; else ...; end` on a byte starts `mov al,Kind` and compares the loaded value (ovl13:0300), not a direct `cmp byte [bp+..], 2`. Probe tools/re/tp_idioms/ovl13/PRBSET.PAS."
+evidence = ["tools/re/tp_idioms/ovl13/PRBSET.PAS", "src/OVL13.PAS#ShowAttackResult", "re/symbols.toml#ovl13:02F9"]

@@ -9,7 +9,7 @@ uses POOLVARS;
 procedure StartCombatantRound(Who: PCharacter);
 function ComputeMovement(Who: PCharacter): Byte;
 procedure RollAttackDamage(Attacker: PCharacter; Target: PCharacter; Index: Byte);
-procedure ovl13_fn_02F9;
+procedure ShowAttackResult(Attacker: PCharacter; Target: PCharacter; Kind, SpellFlag, Damage, Hit: Byte);
 procedure GuardedEnemiesAttack(Who: PCharacter);
 procedure StepCombatant(Who: PCharacter; Dir: Byte);
 procedure ovl13_fn_08AC;
@@ -109,6 +109,12 @@ const
     what 4 and 5 change is not known there. }
   HookAttackerDamage = 4;
   HookTargetDamage = 5;
+  HookGoesDown = $D;           { run when a combatant goes down (ovl13:05F1, ovl24's HookGoesDown) }
+  { TCharacter.Status (+$10C) values the death message tests (ovl13:0583, 05AC). }
+  StatusDying = 5;
+  { The statuses that show 'is killed': the set [6, 7, 8] at ovl13:02CF (the original bytes
+    c0 01 00.. at that address are bits 6, 7 and 8). Status 5 (dying) gets 'and is Dying' instead. }
+  StatusKilled = [6, 7, 8];
   { The backstab multiplier is the thief level (ClassLevels[6]) div 4 plus 2 (ovl13:01F2). The
     original shifts the level one bit at a time (shr 1 twice), not `shr 2`, so keep both shifts. }
   BackstabLevelStep = 1;
@@ -206,8 +212,87 @@ begin
   RunAffectHooks(HookAttackerDamage, Attacker);
   RunAffectHooks(HookTargetDamage, Target);
 end;
-{ ovl13:02F9: retf 16: 16 bytes of parameters; 594 bytes of locals }
-{@stub} procedure ovl13_fn_02F9; begin end;
+{ ovl13:02F9. Shows the result of one melee attack in the combat window: it builds the message
+  ('Attacks', ' -Backstabs-' or 'slays helpless' with '(from behind) ' when Kind is 1), names
+  Target and, on a hit, adds 'Hitting for <Damage> point(s) of damage' (or 'with one cruel blow'
+  for Kind 3) and applies the damage to Target through ApplyDamage; on a miss it adds 'and
+  Misses'. The text is paged out (ShowPagedText). Then, when SpellFlag is set, Target cannot cast
+  and loses a pending spell ('lost a spell'); a Target still in the fight that went down shows
+  'goes down' (and 'and is Dying' at Status 5, else 'is killed' unless Status is in
+  StatusNoKillMsg), loses its death affects and runs the death hooks; one that dies leaves the map
+  through RemoveCombatant. Called from ovl13_fn_14A1/1713/1758 with the attacker, the target, the
+  kind, the spell flag, the damage and the hit flag. }
+procedure ShowAttackResult(Attacker: PCharacter; Target: PCharacter; Kind, SpellFlag, Damage, Hit: Byte);
+var
+  Row: Byte;
+  Text: string[80];
+begin
+  case Kind of
+    2: Text := '-Backstabs-';
+    3: Text := 'slays helpless';
+  else
+    Text := 'Attacks';
+  end;
+  ShowCharacterMessage(Attacker, Text, 10, 0);
+  Row := 12;
+  DrawCharacterName(Target, 23, Row, 0);
+  Inc(Row);
+  if Kind = 1 then
+    Text := '(from behind) '
+  else
+    Text := '';
+  if Hit <> 0 then
+  begin
+    if Kind = 3 then
+      Text := 'with one cruel blow'
+    else
+    begin
+      Text := Text + 'Hitting for ' + ByteToText(Damage);
+      if Damage = 1 then
+        Text := Text + ' point '
+      else
+        Text := Text + ' points ';
+      Text := Text + 'of damage';
+    end;
+    ApplyDamage(Target, SpellFlag);
+  end
+  else
+    Text := Text + 'and Misses';
+  ShowPagedText(23, Row, 38, Row + 3, 10, 1, Text);
+  Row := GlyphRow + 1;
+  if SpellFlag > 0 then
+  begin
+    Target^.Combat^.CanCast := 0;
+    if Target^.Combat^.PendingSpell > 0 then
+    begin
+      DelayByGameSpeed;
+      ShowCharacterMessage(Target, 'lost a spell', 12, 1);
+      ForgetSpell(Target^.Combat^.PendingSpell);
+      Target^.Combat^.PendingSpell := 0;
+    end
+    else
+      DelayByGameSpeed;
+  end
+  else
+    DelayByGameSpeed;
+  if Target^.Flag10D = 0 then
+  begin
+    ShowCharacterMessage(Target, 'goes down', Row, 0);
+    Inc(Row, 2);
+    if Target^.Status = StatusDying then
+      DrawTextAt(23, Row, 10, 'and is Dying');
+    if Target^.Status in StatusKilled then
+      ShowCharacterMessage(Target, 'is killed', Row, 0);
+    Inc(Row, 2);
+    RemoveDeathAffects(Target);
+    RunAffectHooks(HookGoesDown, Target);
+    if Target^.Flag10D = 0 then
+      RemoveCombatant(Target)
+    else
+      DelayByGameSpeed;
+  end;
+  ClearCharacterMessage;
+end;
 { ovl13:0627. Lets every enemy next to Who that is watching (Combat^.B7) and not helpless strike
   back: for each combatant CollectEnemiesInRange(Who, 1) gathers, it puts the cursor on Who, clears
   the enemy's watch flag and runs the attack through ovl13_e11 and ovl13_e12. Does nothing for a

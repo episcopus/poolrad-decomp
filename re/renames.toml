@@ -4043,3 +4043,10 @@ kind = "routine"
 why = "ovl13:0712 moves Who one map cell in direction Dir: charges Combat^.Moves two half squares (three on a diagonal), moves CombatantTable's cell by DirStepX/DirStepY, redraws ground and occupancy, moves the quick-combat cursor and clears BF/B12; called from MoveCharacter (ovl08:09DF) and MoveStep (ovl09:07F2)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl13_fn_02F9"
+new = "ShowAttackResult"
+kind = "routine"
+why = "ovl13:02F9 shows one melee attack's result in the combat window: it builds 'Attacks'/' -Backstabs-'/'slays helpless' text, draws Target's name, on a hit adds 'Hitting for N point(s) of damage' and calls ApplyDamage, on a miss adds 'and Misses', pages the text through ShowPagedText, and then, when SpellFlag is set, makes Target lose its pending spell and, when Target is out of the fight (Flag10D 0), shows goes down/dying/killed, runs the death hooks and removes Target from the map; called from ovl13_fn_14A1/1713/1758"
+date = "2026-10-13"
+

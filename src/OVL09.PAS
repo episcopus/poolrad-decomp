@@ -391,7 +391,7 @@ end;
   through ovl13_e5); with no affordable step, or one that would step back (ds443C = (Turn + 4)
   mod 8), the pattern is advanced (ds443D counts the turns) and the actor may instead end the turn
   through ovl09_fn_0F4F or ovl13_e21. A step taken sets the icon (SetCombatantIcon with the turn),
-  runs ovl13_e4 (or ovl13_e3 once Flag10D is set past it) and ApplyCloudTile; an ending turn runs
+  runs ovl13_e4 (or StepCombatant once Flag10D is set past it) and ApplyCloudTile; an ending turn runs
   EndCombatTurn. QUIRK: the jumps to MoveEnd and from there to Finish (ovl09:0B27) are the
   original's; NoStep only computes ovl09_fn_0F4F. Globals: PartyFacing, ds443C, ds443D. }
 procedure MoveStep(Who: PCharacter);
@@ -476,7 +476,7 @@ AfterMove:
     Done := EndCombatTurn(Who);
     goto MoveEnd;
   end;
-  ovl13_e3(Who, Who^.Combat^.IconSet);
+  StepCombatant(Who, Who^.Combat^.IconSet);
   if Who^.Flag10D = 0 then
     Done := EndCombatTurn(Who);
   ApplyCloudTile(Who);

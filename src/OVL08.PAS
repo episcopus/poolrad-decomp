@@ -350,7 +350,7 @@ end;
   Move Left = n takes keypad keys (KeyUp..KeyHome give the directions 0..7). A step towards a
   combatant attacks it (MeleeAttack, CombatantRecord by the number ProbeStep returns); a step off the map
   asks Flee: (ovl13_e5 on Y); a step whose ground costs more than the moves left says Blocked;
-  otherwise ovl13_e4 and ovl13_e3 move the character, and a character whose Flag10D clears or
+  otherwise ovl13_e4 and StepCombatant move the character, and a character whose Flag10D clears or
   for whom IsHelpless says so ends the turn (EndCombatTurn). Key #0 (Esc on the prompt) takes
   the move back: the saved moves, position (PlaceCombatant) and B9 return. Fewer than two half-moves
   left become 0. }
@@ -419,7 +419,7 @@ begin
           Done := EndCombatTurn(Who)
         else
         begin
-          ovl13_e3(Who, Dir);
+          StepCombatant(Who, Dir);
           if Who^.Flag10D = 0 then Done := EndCombatTurn(Who);
           ApplyCloudTile(Who);
           if IsHelpless(Who) then Done := EndCombatTurn(Who);
