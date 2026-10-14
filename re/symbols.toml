@@ -10452,12 +10452,12 @@ id = "ovl22:266B"
 unit = "ovl22"
 addr = "ovl22:266B"
 size = 249
-name = "ovl22_e48"
+name = "CastFireball"
 signature = ""
 c_name = "ovl22_e48"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_48"
+notes = "renamed from ovl22_e48 (cast handler of spells 47 and 64 Fireball: ovl22_e10 maps DS:6B84+47*4 and +64*4 to stub 0096:0110, SpellNames[47] is 'Fireball', it scans two steps around the aim point and deals d6 per level of fire damage with no message); auto:entry_48"
 evidence = ["prologue"]
 
 [[routine]]

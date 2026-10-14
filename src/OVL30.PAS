@@ -242,7 +242,7 @@ end;
   four neighbours of the record (FootprintCell fills the offsets, invalid neighbours get -1), keeps
   the pairs in Dir's arc (InDirArc) that the line walk (WalkLine) crosses in the fewest steps,
   and stores the record index, the step count and the working direction (the requested Dir, or
-  the first working one when Dir is 8). Called from combat and item aiming (ovl22_e48) and from
+  the first working one when Dir is 8). Called from combat and item aiming (CastFireball) and from
   ovl09, ovl13, ovl24 and res12. }
 procedure ScanTargets(FromX, FromY: ShortInt; MaxSteps: Word; Dir, Base: Byte; Map: Pointer);
 var

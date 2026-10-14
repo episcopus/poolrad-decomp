@@ -56,7 +56,7 @@ procedure CastPrayer;
 procedure CastRemoveCurse;
 procedure CastBestowCurse;
 procedure CastBlink;
-procedure ovl22_e48;
+procedure CastFireball;
 procedure ovl22_fn_2764;
 procedure ovl22_e49;
 procedure ovl22_fn_28BC;
@@ -1425,8 +1425,46 @@ procedure CastBlink;
 begin
   ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is blinking');
 end;
-{ ovl22:266B: retf 0: 0 bytes of parameters; 4 bytes of locals }
-{@stub} procedure ovl22_e48; begin end;
+{ ovl22:266B. Cast handler of spells 47 and 64, Fireball (ovl22_e10 maps both DS:6B84+47*4 and
+  DS:6B84+64*4 to overlay stub 0096:0110; SpellNames[47] is 'Fireball', and spell 64 has an empty
+  name, a monster's fireball). It sets ds6820 and takes the caster level from res12_fn_26C2 (the
+  spell's d6-per-level damage) except for the monster's spell 64, whose level is the roll 1d3*2+1.
+  When the 3D wall view is off (GameVars^[VarForceWallView] = 0) it collects into ds6C91[1..ds6C94]
+  the combatants ScanTargets finds within two steps of the aim point ds6DB9/ds6DBA; it then moves
+  the combat cursor onto the aim point and applies the spell to the targets with RollDiceCounted
+  (the d6 per level), fire damage and no message. Called through SpellHandlers[47] and [64]. }
+procedure CastFireball;
+const
+  MonsterFireball = $40;          { spell 64, the monster's fireball sharing this handler with spell 47 }
+  LevelDiceCount = 1;             { the monster's level is 1d3 * 2 + 1: 3, 5 or 7 }
+  LevelDiceSides = 3;
+  LevelScale = 2;
+  ScanSteps = 2;                  { ScanTargets' MaxSteps around the aim point }
+  OmniDir = $FF;                  { ScanTargets' Dir: every direction (InDirArc omni) }
+  FootprintBase = 1;              { ScanTargets' Base: the FootprintCell neighbour base }
+  DamageDiceSides = 6;            { one d6 per caster level }
+  DamageKindFire = 9;             { DealDamage classifies kind 9 as fire (ovl24:1389) }
+  AimCursorMargin = 0;            { MoveCombatCursor's Margin }
+  AimCursorDir = 8;               { MoveCombatCursor's omni direction }
+var
+  Level: Byte;                    { the caster level, or the monster's rolled one }
+  I: Byte;                        { the target index, 1..ds6718[0].Val }
+begin
+  ds6820 := 1;
+  if ds681B = MonsterFireball then
+    Level := RollDice(LevelDiceCount, LevelDiceSides) * LevelScale + 1
+  else
+    Level := res12_fn_26C2(ds681B);
+  if GameVars^[VarForceWallView] = 0 then
+  begin
+    ScanTargets(ds6DB9, ds6DBA, ScanSteps, OmniDir, FootprintBase, CombatMap);
+    for I := 1 to ds6718[0].Val do
+      ds6C91[I] := CombatantRecord[ds6718[I].Head];
+    ds6C94 := ds6718[0].Val;
+  end;
+  MoveCombatCursor(ds6DB9, ds6DBA, AimCursorMargin, AimCursorDir);
+  ApplySpellToTargets(ds681B, 0, 0, RollDiceCounted(Level, DamageDiceSides), DamageKindFire, '');
+end;
 { ovl22:2764: retf 8: 8 bytes of parameters; 44 bytes of locals }
 {@stub} procedure ovl22_fn_2764; begin end;
 { ovl22:2892: retf 0: 0 bytes of parameters; 10 bytes of locals }

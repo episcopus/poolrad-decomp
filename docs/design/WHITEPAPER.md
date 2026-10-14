@@ -966,7 +966,7 @@ Overlay 30 draws lines and sorts:
   the pairs in direction Dir's arc (`InDirArc`) that the line walk (`WalkLine`) crosses in the
   fewest steps, appends one record per hit (table index, step count, working direction) to the
   `DS:6718` sort table and sorts it. The stored direction is the requested Dir, or the first
-  working one when Dir is 8. Called from combat and item aiming (`ovl22_e48`) and from ovl09,
+  working one when Dir is 8. Called from combat and item aiming (`CastFireball`) and from ovl09,
   ovl13, ovl24 and res12. Compiler notes: a `for` over a variable bound
   snapshots it into a hidden temp slot (the `sub sp` covers it), and near/far jump selection
   follows rel8 reachability (proven by `make tpc` probes in `scratch/Q4.PAS` to `scratch/Q6.PAS`).
