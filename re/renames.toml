@@ -3735,3 +3735,10 @@ kind = "routine"
 why = "ovl03:2B14 is the handler of ECL opcode 61 (dispatcher ovl03:2F2D, cmp al,3Dh): it clears the picture window box (1,1)-(15,15) with ClearRect and sets ds84DE; EndCommand (ovl03:0001) draws the same box and clears ds84DE"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl03_fn_2B33"
+new = "ChoosePartyMemberCommand"
+kind = "routine"
+why = "ovl03:2B33 is the handler of ECL opcode 57 (dispatcher ovl03:2F2D, cmp al,39h): it clears the ECL text window (ClearRect with EclTextLeft..EclTextBottom), copies operand 1's string (EclStrings[1]) to a local and calls res12_fn_2C48 with it, mode 0 and SelectedCharacter as the var parameter that receives the member"
+date = "2026-10-13"
+

@@ -706,12 +706,12 @@ id = "ovl03:2B33"
 unit = "ovl03"
 addr = "ovl03:2B33"
 size = 75
-name = "ovl03_fn_2B33"
+name = "ChoosePartyMemberCommand"
 signature = ""
 c_name = "ovl03_fn_2B33"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_2B33 (ovl03:2B33 is the handler of ECL opcode 57 (dispatcher ovl03:2F2D, cmp al,39h): it clears the ECL text window (ClearRect with EclTextLeft..EclTextBottom), copies operand 1's string (EclStrings[1]) to a local and calls res12_fn_2C48 with it, mode 0 and SelectedCharacter as the var parameter that receives the member); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16633,7 +16633,7 @@ unit = "res12"
 addr = "00BA:2C48"
 size = 443
 name = "res12_fn_2C48"
-signature = ""
+signature = "procedure res12_fn_2C48(Prompt: String40; Mode: Byte; var Who)"
 c_name = "res12_fn_2C48"
 level = "none"
 justification = ""

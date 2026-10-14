@@ -49,7 +49,7 @@ procedure RedrawAreaViewCommand;
 procedure PassTimeCommand;
 procedure NewLineCommand;
 procedure ClearPictureWindowCommand;
-procedure ovl03_fn_2B33;
+procedure ChoosePartyMemberCommand;
 procedure ovl03_fn_2B7E;
 procedure ovl03_fn_2C03;
 procedure ovl03_fn_2CCF;
@@ -1649,8 +1649,21 @@ begin
   ClearRect(PictureFrameLeft, PictureFrameTop, PictureFrameRight, PictureFrameBottom);
   ds84DE := 1;
 end;
-{ ovl03:2B33: retf 0: 0 bytes of parameters; 256 bytes of locals }
-{@stub} procedure ovl03_fn_2B33; begin end;
+{ ovl03:2B33. ECL command 57 (dispatcher ovl03:2F2D, SkippedOpcode 39h): asks the player to choose a party
+  member. The ECL text window (EclTextLeft to EclTextBottom) is cleared, the string operand 1 is copied
+  into a local as the prompt, and res12_fn_2C48 runs with that prompt, mode 0 and SelectedCharacter as
+  the var parameter that receives the chosen member. res12_fn_2C48 is the selection the learning notes
+  call SelectPartyMember (res12, matched earlier); its own code is not traced here. Its Who is untyped
+  in RES12.PAS, since PCharacter is not visible there (the caller passes the address of SelectedCharacter). }
+procedure ChoosePartyMemberCommand;
+var
+  Prompt: string;
+begin
+  DecodeOperands(1);
+  ClearRect(EclTextLeft, EclTextTop, EclTextRight, EclTextBottom);
+  Prompt := EclStrings[1];
+  res12_fn_2C48(Prompt, 0, SelectedCharacter);
+end;
 { ovl03:2B7E: retf 0: 0 bytes of parameters; 6 bytes of locals }
 {@stub} procedure ovl03_fn_2B7E; begin end;
 { ovl03:2C03: retf 0: 0 bytes of parameters; 10 bytes of locals }
