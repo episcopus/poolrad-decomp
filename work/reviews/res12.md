@@ -3,7 +3,7 @@
 decompiler: dec-deepseek (54 commits), dec-deepseek-2, dec-haiku, dec-1, dec-5, dec-6, dec-9, dec-12, dec-17, dec-18, esc-grok, int-loop, orch (the Agent: trailers of src/RES12.PAS; 80 commits carry none; none is rev-sonnet)
 reviewer: rev-sonnet
 date: 2026-10-14
-commit: 2599a66
+commit: 2599a66 (round 1), d5e55ed (round 2)
 
 Checklist: docs/process/playbooks/70-review.md (every item, every routine).
 
@@ -49,6 +49,9 @@ Severity: must-fix (blocks review-pass), should-fix, note. When the decompiler f
 - [ ] note whitepaper 5.24 (checklist item 10): it says what the unit taught and agrees with the source on every point I checked. Line 1289's "a weightless container" and the source's "which item it is is not proven" disagree in strength; settle them with the 'Holding' entry (see RecalcCombatValues). The whitepaper's `RemoveInventoryItem` text ("then always clears Item^.Next and frees it") is not exact for a nil or missing item (nothing is freed); the source comment is right.
 - [ ] note the tables: I recomputed the dexterity (two tables), strength attack, damage and weight tables, the armour weight bands and the load bands from the case ranges in the source against each comment. All agree.
 
+- [ ] note round 2, unit comment (lines 2 to 18): it now names the groups and whitepaper 5.24, and every name in it is a routine of the unit. It leaves out `ForgetSpell`, `HasAffect`, `IsHelpless` and `ShowHealResult`; add them when the unit is next touched. Not blocking.
+- [ ] note round 2, fixes checked against the code: `LongIntToText` (caller `ShowCharacterSheet`, experience +$AC) is right; `IsMaxClassLevel` (and its `re/symbols.toml` notes) now names `CastRestoration` and says `TrainCharacter` inlines the limits; `ApplyDamage` states the test order and "reaches 0 or below" and agrees with `(Overkill > 9) or ((Remaining = 0) and (Status = StatusAnimated))`; `DrawCharacterPanel` documents the `GlyphRow` dependence (`Row := GlyphRow + 1`, status drawn at `Row + 1`) exactly as the code does. `make match UNIT=res12` (rerun at d5e55ed): `unit: complete`, 52 matched; `make readability UNIT=res12`: clean.
+
 ## Verdict
 
-Not passed: five must-fix findings (a false caller and meaning in `LongIntToText`, a wrong caller in `IsMaxClassLevel`, a wrong test description in `ApplyDamage`, the undocumented `GlyphRow` dependence in `DrawCharacterPanel`, and the inaccurate unit comment). The tables, constants, QUIRK marks and the long `RecalcCombatValues` comment are sound; the many should-fix items are naming and completeness points that do not block.
+Round 1: not passed (five must-fix). Round 2: passed. All five must-fix findings are fixed and verified (5fcd93f, 4217327, 8e5d577, a1224e2, 0d3f96f); no must-fix is open. The should-fix items stay open for the decompiler or Phase 6 and do not block.
