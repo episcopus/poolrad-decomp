@@ -423,9 +423,9 @@ Record size is always `17 + item_count * height * width_cols * 4` **[V]** (all n
 
 **Drawing one cell** **[V]** (`DrawCellPicture`, `ovl32:00F1`): a picture code above 127 is drawn from the pointer at DS:5E56 with bit 7 cleared; a code of 127 or less is drawn from DS:5E52. Both calls pass flags 0 and the destination pointer at DS:4A20 to `DrawPictureItem`. The fourth argument is never read.
 
-**The picture table** **[V]** (`FreePictureSlot`, `ovl32:014E`; `DrawIcon`, `ovl32:04FC`): DS:5E5A is an array of two pointers per slot, stride 8. `FreePictureSlot` frees each pointer that is not nil through `ReleasePicture` (`FreeMem`, then the pointer is stored nil). `DrawIcon` indexes the same table by picture number times 8 plus mirror half times 4. `DrawPartyMarker` passes picture numbers 9 to 11, so the table runs past four slots; the declared bound is the byte index. When the chosen pointer is not nil, `DrawIcon` allocates a picture of the same height and width (`AllocatePicture`), copies into it (`MirrorPicture` when the icon set is above 3, otherwise `Move` of the tail at +$17 and the pixel buffer at +$13; adapter 1 copies a quarter of the bytes), draws it at the cell times 3 through `res07_fn_0D71`, and frees the copy.
+**The picture table** **[V]** (`FreePictureSlot`, `ovl32:014E`; `DrawIcon`, `ovl32:04FC`): DS:5E5A is an array of two pointers per slot, stride 8. `FreePictureSlot` frees each pointer that is not nil through `ReleasePicture` (`FreeMem`, then the pointer is stored nil). `DrawIcon` indexes the same table by picture number times 8 plus mirror half times 4. `DrawPartyMarker` passes picture numbers 9 to 11, so the table runs past four slots; the declared bound is the byte index. When the chosen pointer is not nil, `DrawIcon` allocates a picture of the same height and width (`AllocatePicture`), copies into it (`MirrorPicture` when the icon set is above 3, otherwise `Move` of the tail at +$17 and the pixel buffer at +$13; adapter 1 copies a quarter of the bytes), draws it at the cell times 3 through `DrawPictureItemClipped`, and frees the copy.
 
-**Loading a slot** **[V]** (`LoadPictureSlot`, `ovl32:01C8`, `make match UNIT=ovl32`: unit complete): loads picture `Block` of a set into the first pointer of slot `Slot` and picture `Block + $80` (the mirrored half) into the second, through `LoadPicture`. For `CHEAD` and `CBODY` a name ending in `T` adds $40 to `Block` and the `T` is dropped; `COMSPR` and `ICON` are used as named; any other set gets the file number `TileSet` appended. `ICON` pictures and the `TileSet` sets are then recoloured by `res07_fn_1E5C` with 16-entry colour maps: from the identity map DS:0CD2 to DS:0CF2 (colour 13 becomes 0) for `ICON`, to DS:0CE2 (13 becomes 8) for the others. `StartGame` fills slots 13 to 24 with `COMSPR` pictures 0 to 11 and slot 25 with picture 25.
+**Loading a slot** **[V]** (`LoadPictureSlot`, `ovl32:01C8`, `make match UNIT=ovl32`: unit complete): loads picture `Block` of a set into the first pointer of slot `Slot` and picture `Block + $80` (the mirrored half) into the second, through `LoadPicture`. For `CHEAD` and `CBODY` a name ending in `T` adds $40 to `Block` and the `T` is dropped; `COMSPR` and `ICON` are used as named; any other set gets the file number `TileSet` appended. `ICON` pictures and the `TileSet` sets are then recoloured by `RemapPictureColours` with 16-entry colour maps: from the identity map DS:0CD2 to DS:0CF2 (colour 13 becomes 0) for `ICON`, to DS:0CE2 (13 becomes 8) for the others. `StartGame` fills slots 13 to 24 with `COMSPR` pictures 0 to 11 and slot 25 with picture 25.
 
 `PIC*.DAX` and `SPRIT*.DAX` (and some `FINAL5` blocks) wrap several records as an animation **[V]**:
 
@@ -780,7 +780,7 @@ Overlay 23 recomputes what a character draws from its eight class levels (`TChar
     from ovl01, ovl02 (the code wheel), ovl03, ovl04, ovl05 and ovl06; the frame and clear
     routines are also called directly from ovl08, ovl13, ovl14, ovl15, ovl16, ovl19 and res12.
 
-### 5.11 Saving and loading (in progress: ovl17 SaveLoad)
+### 5.11 Saving and loading (ovl17 SaveLoad, complete)
 
 Unit ovl17 reads and writes the saved-game files of section 4.4: the per-character
 `CHRDAT<slot><n>.SAV/.ITM/.SPC` (character 285, item 63, affect 9 bytes) and the roster
@@ -796,11 +796,89 @@ character joins the party.
   (`RecalcClassStats`, ovl23). So every party member carries a distinct combat icon 0..7, and the
   party list `ds5D96` is the single list the combat and camp units walk **[V]** (5.5, 5.20).
 
-**Boundary note** **[V]** (`make packet UNIT=ovl17`): the map splits several ovl17 routines into
-mid-instruction entries (`ovl17_fn_0818/084A/0865` inside `ovl17_e4`, `ovl17_fn_0B48` inside
-`ovl17_e5`, `ovl17_fn_0F99` inside `ovl17_e6`, `ovl17_fn_0AE5` a literal pool). Each real routine has
-one `push bp; mov bp, sp` prologue and one `retf`; the phantom entries share the parent frame. Scan
-for the real prologues before drafting, and let `make match WRITE=1` retire the phantom map entries.
+- **The saved-character list** **[V]** (`ReadSavedCharacterList`, `ovl17:0010`; `RewriteSavedCharacterList`,
+  `ovl17:01B8`): `charlist.txt` in `SaveDir` holds one saved character name per line. The reader makes
+  the save directory (`CreateSaveDir`), reads the file into a list of 46-byte menu lines (the Text,
+  Flag29 and Next fields of `TMenuLine`) and prefixes `'* '` to a name the party list `ds5D96` already
+  carries; the writer rewrites the file from such a list, skipping the lines that begin with `'*'`,
+  and prompts for the save disk while the file cannot be created. Both use the map disk prompt
+  `'Put save disk in <drive>:'`.
+- **Saving a character** **[V]** (`SaveCharacter`, `ovl17:069E`; `make match UNIT=ovl17`): with an
+  empty name it adds the character's name to `charlist.txt` (a new line at the tail, then the rewrite
+  above) and writes `SaveDir + MakeDosFileName(name) + '.cha'`; with a name it makes the directory and
+  writes `SaveDir + name + '.sav'`. Either way it `Rewrite`s the file with record size 1 (prompting
+  for the save disk while the open fails), `BlockWrite`s the 285-byte character, closes it and, after
+  `Erase`ing any old file, writes the 63-byte items of `Who^.Items` to `.itm` and the 9-byte affects
+  of `Who^.Affects` to `.spc`.
+- **Loading a character** **[V]** (`LoadCharacterFile`, `ovl17:0AEC`; `make match UNIT=ovl17`): the
+  read counterpart of `SaveCharacter`. `UseSaveDir` picks the save disk (the name becomes
+  `SaveDir + MakeDosFileName(name)` and the prompt names SaveDir's drive) or the game disk (the
+  prompt is `InsertDiskPrompts[TileSet] + GameDir's drive + ':'`); `SavedGame` picks `'.sav'` (a saved
+  game) or `'.cha'` (an available character). It `OpenGameFile`s `name + suffix` and `BlockRead`s the
+  285-byte character into `Who^`, clears `Who^.Next`, `.Items`, `.Affects` and `.Combat`, and, when
+  `name.itm` / `name.spc` exist, reads the 63-byte item and 9-byte affect records to end of file into a
+  `GetMem` chain, then flushes the keyboard.
+- **Loading a monster** **[V]** (`LoadMonster`, `ovl17:0EC4`; `make match UNIT=ovl17`): builds
+  `MON<Str(TileSet)>CHA.DAX` / `SPC` / `ITM` and reads block `Kind` from each `poolrad` archive through
+  `LoadDaxBlock`. A missing CHA block shows "Unable to load monster" and quits; otherwise it `Move`s
+  the 285-byte record into `Who^`, clears `Items`, `Affects`, `Next` and `Combat`, and builds
+  `Who^.Figure`: `Figure[0]` is 1 for the races 1/3/5 and 2 for 2/4/6/7, `Figure[1..3]` and
+  `Figure[5..6]` are random nibble pairs `Roll + ((Roll + 8) shl 4)` from `RollDice(1, 6)`, and
+  `Figure[4]` is `$C4`. The SPC and ITM records (9 and 63 bytes) are copied out of the buffer (offset
+  up to the block size) into `GetMem` chains while `ds557C` marks the load. Called by ovl07
+  `LoadCharacter` and AddMonsterToParty.
+- **Adding a monster to the party** **[V]** (`AddMonsterToParty`, `ovl17:1262`; `make match
+  UNIT=ovl17`): gives up if the party already holds eight members (`ds49D6^[830] > 7`), has
+  `LoadMonster` build a 285-byte record, sets its `+$AB` byte to `Random(256)`, collects the classes
+  with a positive level (`ClassLevels[0..6]`, index 2 when none qualifies) into a small array, rolls
+  one of them (`RollDice(1, Count)`) and picks the body picture bank from the DS:08C5-region tables
+  by `Who^.B9E` and the roll (the table of class 0, 5, 6 or the default), then the head bank the same
+  way (`RollDice(1, 8)`). Finally `AddPartyMember` and `BuildCharacterIcon(True)`. Called by
+  ovl03_fn_2B7E.
+- **The combat icon picture** **[V]** (`BuildCharacterIcon`, `ovl17:0482`; `MergePictureData`,
+  `ovl17:032F`): with 8X8D tile set 3 selected, it loads the selected character's CHEAD picture (the
+  name suffixed from `ds08C5[Sel^.Figure[0]]`, block `Sel^.CHeadBlock`) into slot 11 and its CBODY
+  (block `Sel^.CBodyBlock`) into slot `Sel^.CombatIcon`, then merges the CHEAD halves into the CBODY
+  halves (OR the tail tile bytes, AND the pixel bytes) so the head masks the body; when asked it also
+  builds a 16-entry colour map from the six nibble pairs `Sel^.Figure[1..6]` through `ds3CF5` and
+  applies it to both halves.
+- **Saving the game** **[V]** (`SaveGame`, `ovl17:1D58`; `make match UNIT=ovl17`): prompts
+  `'Save Which Game: '` for a slot letter A..J (a set of `[#0, 'A'..'J']`, Escape cancels), makes the
+  save directory and `Rewrite`s `SaveDir + 'savgam<slot>.dat'` (prompting for the disk while the open
+  fails). It first copies the party's map cell into the ECL variable block: `ds6AAEWords[I].A/.B` into
+  the words at `$4AF9 + I` / `$4AFC + I` (I = 1..3), `GameSpeed` to `$49FC`, the packed picture flags
+  (`ShowMonsterPics * 2 + ShowPortraits`) to `$49FF`, and `TileSet` to `$6E12`. Then it `BlockWrite`s
+  `TileSet` (1), `GameVars^`, `ds49D6^` ($800 each), `ds49DA^` ($400), `EclCode^` ($1E00), the five
+  party-map bytes `PartyMapColumn..`, `AreaViewKind` and `ds49F3` (1 each), a one-byte member count and
+  the eight 41-byte `'CHRDAT<slot><n>'` names. It closes the file, then for each party member calls
+  `SaveCharacter(member, 'CHRDAT<slot><n>')` and erases the member's standalone `.cha/.itm/.spc` files
+  (nested under the `.cha` test), and ends with `ds557D := True` and a cleared prompt line. Reads the
+  slot key, `SaveDir`, the game state and the party list `ds5D96`; called by the heap error handler,
+  ovl15 `MakeCamp`, ovl16_e1 and SaveAndExit.
+- **Loading the game** **[V]** (`LoadGame`, `ovl17:1602`; `make match UNIT=ovl17`): the read
+  counterpart of SaveGame. Inside `'Load Which Game: '` it repeats until the player picks a letter
+  A..J whose `SaveDir + 'savgam<letter>.dat'` exists (or Escape), then `OpenGameFile`s the slot and
+  `BlockRead`s the state back in the same order, restoring `ShowMonsterPics := word shr 1`,
+  `ShowPortraits := word and 1` and `GameSpeed` from the ECL block and zeroing `$6E3E`. For the
+  member count it loads each name (`MakeDosFileName(DeleteAllOccurrences(name, '.'))`) with
+  `LoadCharacterFile(name, Who, 1, 1)` into a fresh 285-byte `GetMem` record and adds it with
+  `AddPartyMember`, then erases the members' standalone `.cha/.itm/.spc` files and rebuilds every
+  member's combat icon (`BuildCharacterIcon(True)`). Finally it restores `TileSet` from `$6E12`,
+  loads the 3D map (`Load3DMap(GameVars^[VarGeoBlock])` when `AreaViewKind < 2`) or the three wall
+  sets (`LoadWallSet`), animates the doors when `GameVars^[VarRiverGate] <> 0`, and flushes the
+  keyboard. Called by ovl16_e1.
+- **Save and exit** **[V]** (`SaveAndExit`, `ovl17:22D5`; `make match UNIT=ovl17`): called by
+  ovl03:0BD1 with the current area's ECL file name. When that file exists (a normal area) it returns
+  at once; otherwise it shows `'Save and exit  Insert disk #<TileSet>'` and, when the player presses
+  its hotkey S, steps the party one cell back in its facing (`Dec` of `DirStepX/DirStepY[PartyFacing]`,
+  clamped into the 16x16 map), restores the tile set through `RestoreTileSet`, calls SaveGame and
+  quits. So the "Save and exit" path is the end of the game, when the next area has no ECL script.
+
+**Boundary note** **[V]** (`make packet UNIT=ovl17`, before the routines were matched): the map split
+several ovl17 routines into mid-instruction entries (`ovl17_fn_0818/084A/0865` inside `SaveCharacter`,
+`ovl17_fn_0B48` inside `LoadCharacterFile`, `ovl17_fn_0F99` inside `LoadMonster`, `ovl17_fn_0AE5` a
+literal pool). Each real routine has one `push bp; mov bp, sp` prologue and one `retf`; the phantom
+entries share the parent frame. `make match WRITE=1` retires them as each real routine matches.
 
 ### 5.12 Copy protection: the code wheel
 
@@ -836,7 +914,7 @@ What the game takes from the outside world, found by `make timing-scan` and by r
 
 - `ShowMessageLine(Color, Text)` shows a one-line message on row 24: it clears 40 columns of that row (`ClearTextCells(0, 24, 0, 40)`), draws the text in the given colour (`DrawTextAt(0, 24, Color, Text)`) and waits for a key through `ReadGameKey`. The text is a `string[40]`. Twelve routines call it, in overlays 0, 3, 5, 7, 17 and 33 and in res06 itself (`make packet FN=ShowMessageLine`).
 - `GameClock` (`GameClock`, `0709:0C3F`) is the game's time of day in hundredths of a second: it reads `GetTime` and returns `Hour * 360000 + Minute * 6000 + Second * 100 + Sec100`. `Hour * 360000` is a LongInt multiply (the `System` runtime), but `Minute * 6000` and `Second * 100` are Word multiplies whose high word is dropped (QUIRK `0709:0C75`, `0709:0C85`, so a minute above 10 loses its carry). `WaitKeyOrTimeout`, `ShowTitleScreen`, `AnimateFinalPicture` and `ReadPromptChoice` call it.
-- Overlay 0 is the heap error handler: its initialisation sets `HeapError := @HeapErrorHandler`, so Turbo Pascal calls `HeapErrorHandler(Size)` when `New` or `GetMem` cannot get `Size` bytes. A zero size returns at once with an unassigned result (`jbe ovl00:004C` to `ovl00:00A3`). For a non-zero size it shows "WARNING: Insufficient Memory" in colour 14 (yellow); if the Boolean `DS:49D0` is set it calls `ovl17_e9` (the save and load unit) and repeats until `DS:557D` says to stop, otherwise it shows "Insufficient Memory. Exiting Program". Then it always ends the program (`QuitGame`), so that path never returns. The function result is never assigned on any path (QUIRK `ovl00:00A3`).
+- Overlay 0 is the heap error handler: its initialisation sets `HeapError := @HeapErrorHandler`, so Turbo Pascal calls `HeapErrorHandler(Size)` when `New` or `GetMem` cannot get `Size` bytes. A zero size returns at once with an unassigned result (`jbe ovl00:004C` to `ovl00:00A3`). For a non-zero size it shows "WARNING: Insufficient Memory" in colour 14 (yellow); if the Boolean `DS:49D0` is set it calls `SaveGame` (the save and load unit) and repeats until `DS:557D` says to stop, otherwise it shows "Insufficient Memory. Exiting Program". Then it always ends the program (`QuitGame`), so that path never returns. The function result is never assigned on any path (QUIRK `ovl00:00A3`).
 - `DrawGlyph(Col, Row, Color, Count, Glyph, Cook)` (`0709:01DF`) **[V]** draws Count copies of a font glyph from cell Col of text row Row (cells are 8 by 8 pixels, 40 by 25). The font is the `GameFont` block, 8 bytes per glyph indexed `[Glyph, PixelRow]`; Cook nonzero maps the character through `UpCase` into 0..63 (the text glyph set). Exits for a cell past column 39 or row 24, a nil font, or Count 0. By `VideoAdapter`: 0 builds 16-bit pixel rows from `GlyphPixelMasks` and `GlyphColorPatterns` (colour through the four-colour map `DS:25D5`) into the two text-scanline planes `$B800`/`$BA00`; 1 writes each font byte to the two EGA pages per plane through the Sequencer Map Mask (`EgaPlaneMasks`, port `3C5h`), 0 where the colour lacks the plane; 2 builds two colour nibbles per pixel pair into the four graphics planes `$B800..$BE00`.
 - `ClearTextCells(Col, Row, Color, Count)` (`0709:05EB`) draws Count spaces; `DrawTextAt(Col, Row, Color, Text)` (`0709:0626`) draws a string cooked glyph by glyph (QUIRK `0709:0647`: the row is tested against 39, not 24, so DrawGlyph does the real row check). `FlashMessageLine(Text, Color)` (`0709:0D68`) is `ShowMessageLine` without the key wait: clear row 24, draw, `DelayByGameSpeed`, clear. `ReadInputLine(Prompt, Color, MaxLen)` (`0709:09E3`) is the line editor of the bottom row: characters `' '..'z'` up to MaxLen echoed in white, Backspace, Enter or Esc to end (Esc returns the text too), result upper-cased `string[40]`. `ReadNumber(Prompt, Color)` (`0709:0B66`) repeats it with 6 characters until `Val` accepts a number in 0..65536 and returns it as a Word (QUIRK `0709:0BBF`: 65536 passes and becomes 0). All **[V]** (`make match UNIT=res06`).
 - `ShowPagedText(Left, Top, Right, Bottom, Color, ClearFirst, Text)` (`0709:0768`) **[V]** is the word-wrapping pager behind the shop, temple, treasure and battle-end text: it keeps a cursor in the globals `GlyphCol`/`GlyphRow` (`DS:5E24`/`DS:5E25`, reset to (Left, Top) when outside the rectangle or when ClearFirst clears it through `ClearRect`), scans Text word by word (leading `BreakChars` skipped, the run stops at a blank or a break character, trailing break characters absorbed from `Text[J + 1]`), draws a word through its nested `DrawTextRun` (`0709:06A7`: one `DrawGlyph` per character, `Delay(GameSpeed * 10)` after each while `DS:4A00` is set) when it still fits before Right, else starts a new line with its nested `SkipSpaces` (`0709:0714`); past Bottom with text left it shows "Press any key to continue" through `ShowMessageLine(13, ...)`, flushes the keyboard, clears the rectangle and continues from the top. QUIRK `0709:0919`: the equal-to-Right-and-blank branch is dead (the outer test already took greater than Right). Coordinates past column 39 or row 24 (Bottom is tested against 39 too) and empty text return at once; `Width` is computed and never read; the frame has an unused byte local. Matched with both nested routines (`make match UNIT=res06`: `NESTED` lines).
@@ -850,7 +928,7 @@ The parts proven so far:
 - `DrawSprite(Col, Row: Integer; Direct: Byte; Sprite: Pointer)` (`ovl28:0000`): a nil sprite draws
   nothing; with `Direct` set it blits the sprite one column and one row up and left (`Col - 1`,
   `Row - 1`) onto the screen buffer
-  `DS:4A20` through `res07_fn_0D71` (mode 0, flag 1) and steps the display (`FlushPictureChanges`);
+  `DS:4A20` through `DrawPictureItemClipped` (mode 0, flag 1) and steps the display (`FlushPictureChanges`);
   otherwise it copies the sprite into the staging buffer with `ShowPicture`.
 - `DrawHeadSprite` and `DrawBodySprite` (`ovl28:0050`, `ovl28:0070`): draw a sprite at (column,
   row) and at (column, row + 5); `ShowHeadBodySprites` (`ovl28:0697`) uses them to draw the HEAD
@@ -874,7 +952,7 @@ The parts proven so far:
   whitepaper 4.2.3, 5.13).
 
 - `Show3DSprite` (`ovl28:0708`) shows slot 1..3 of a sprite list at the sprite's base column and row
-  plus 2 through `res07_fn_0D71`; another slot restores the saved video mode (`RestoreVideoMode`,
+  plus 2 through `DrawPictureItemClipped`; another slot restores the saved video mode (`RestoreVideoMode`,
   `SavedVideoMode`) and ends the game with the unit's range error string.
 - `ShowHeadBodyWindow` (`ovl28:04F9`) draws the HEAD/BODY picture window (columns 28..38, rows 1..11)
   of the character record `DS:5D92` and shows the HEAD and BODY sprites of its two bank numbers
@@ -892,7 +970,7 @@ The parts proven so far:
   `Count` (QUIRK `ovl28:0269`); the final `FreeMem(Prev, Row + 1)` frees with the last picture's
   `Row` (QUIRK `ovl28:046C`). `PIC` and
   `FINAL` pictures after the first are stored xored with the first one's data, which the loader
-  undoes before decoding (`UnpackPicturePixels`); bit 0 of `Mode` adds a pass through `res07_fn_1E5C` on
+  undoes before decoding (`UnpackPicturePixels`); bit 0 of `Mode` adds a pass through `RemapPictureColours` on
   non-zero video adapters **[V]** (matched). Callers: `ovl03`, `ShowEncounterPicture`, `ovl18` (FINAL) and
   `res12_fn_27D9`.
 
@@ -905,11 +983,11 @@ Overlay 18 (PoolNarrative) plays the game's ending and animates the area view do
 - `ShowEndingNarrative` (`ovl18:02A4`, called by `ovl03:2E10`) shows the dragon's death and the
   Tyranthraxus and Bane speech as lines of text at column 1, rows $11 onwards, colour 10
   (`DrawTextAt(1, Row, 10, Text)`) and loads and draws the `FINAL<number>` pictures (the number is
-  `Str(TileSet)` in DS:4713) through `LoadPicture` and `res07_fn_0D71`, running the animation
+  `Str(TileSet)` in DS:4713) through `LoadPicture` and `DrawPictureItemClipped`, running the animation
   `AnimateFinalPicture(3, 5, 2, x)`, `(3, 1, 7, x)` and `(3, 1, 8, 1)` between the speech blocks. It saves
   the view mode DS:49F3 in DS:4712, sets 7 and restores it.
 - `AnimateAreaDoors` (`ovl18:06B3`, called by `ovl03:31B4` and `ovl17:1602`) draws or clears the doors
-  of the area view: it calls `res07_fn_1E5C(@ds091D, @ds092D, code, 1, bank)` for each entry of
+  of the area view: it calls `RemapPictureColours(@ds091D, @ds092D, code, 1, bank)` for each entry of
   DS:0900 (0..10) and `(@ds091D, @ds093D, code, 1, bank)` for DS:090B (0..17), where bit 7 of a code
   selects the second SQRPACI bank DS:5E56 instead of DS:5E52 and the low 7 bits are the picture
   number, and it steps the view with `DrawAreaView(DS:094D[I], DS:095F[I])` over 9 steps.
@@ -1029,7 +1107,7 @@ Overlay 24 holds the rules affects and rolls go through; its 22 entries (e1..e22
 
 ### 5.22 The camp: studying spells, resting and the Alter menu **[V]** (`src/OVL15.PAS`, `make match UNIT=ovl15`: unit complete)
 
-- **The camp** **[V]**: `MakeCamp` (`ovl15:1E6F`, entry 1, called by ovl03) sets the view mode `ds49F3` to 2 (restored on leaving), shows "The party makes camp..." and runs the menu "Save View Magic Rest Alter Exit" (`CampMenuText`, `DS:0508`, a string[40] in the data segment like the other menu texts `CampMagicMenuText` `DS:0531`, `AlterMenuText` `DS:055A` and `PartyOrderMenuTexts` `DS:0584`). Save is `ovl17_e9` followed by "Quit TO DOS "; View is `ViewSelectedCharacter`. Extended keys (G and O) go to `UpdateSelectedCharacter`, which picks another character, in every camp menu.
+- **The camp** **[V]**: `MakeCamp` (`ovl15:1E6F`, entry 1, called by ovl03) sets the view mode `ds49F3` to 2 (restored on leaving), shows "The party makes camp..." and runs the menu "Save View Magic Rest Alter Exit" (`CampMenuText`, `DS:0508`, a string[40] in the data segment like the other menu texts `CampMagicMenuText` `DS:0531`, `AlterMenuText` `DS:055A` and `PartyOrderMenuTexts` `DS:0584`). Save is `SaveGame` followed by "Quit TO DOS "; View is `ViewSelectedCharacter`. Extended keys (G and O) go to `UpdateSelectedCharacter`, which picks another character, in every camp menu.
 - **Spell-list selection** **[V]** (`ChooseSpellFromList`, `ovl19:299C`): the first argument chooses both the list label ("in Memory", "in Spell Book", "on Scroll", "on Scrolls", "to choose from", "to be memorized", "to be scribed") and the list passed to `ovl22_e2`; the second argument and `Choice` go to `ovl22_e1`. A zero `Listed` result returns zero. When `Choice` is negative, it opens a one-row window with an empty frame title, redraws the selected character, and draws "Spells " plus the list label at row 1. The function returns the spell byte from `ovl22_e1` **[V]** (`make match UNIT=ovl19 FN=ChooseSpellFromList`).
 - **Studying is pending until the rest** **[V]**: memorizing puts the spell number with bit 7 set into the first empty slot of `TCharacter.Spells` (+$17..+$2B, then sorted by `SortMemorizedSpells`); scribing sets bit 7 on a spell byte of a scroll (`TMenuLine.Affects[1..3]` of an item `ovl22_e6` accepts). `CancelPartyStudy` clears every pending spell and mark when the camp opens and again when it closes, and No to "Memorize/Scribe These Spells?" cancels them. During `RunRestPeriod`, `ProcessPendingScribedSpell` and `ProcessMemorizedSpell` clear the pending bit when their rest conditions are met and pass the spell and its message text to ovl22_e7/e8.
 - **Rest time** **[V]**: `StudyRestMinutes` (`ovl15:0000`) is 15 minutes per spell level of every pending spell and scroll spell, plus 4 hours when there is one (6 hours when one is above level 2); the hours go to `TCharacter.RestHours` (+$2C). `RestParty` puts the party's largest value into `RestTime` (`DS:6DC2`, seven words: [1] minutes, [2] tens of minutes, [3] hours) for `RunRestPeriod`, whose byte result ends the camp when nonzero, and clears it afterwards.
@@ -1053,21 +1131,22 @@ Overlay 24 holds the rules affects and rolls go through; its 22 entries (e1..e22
 - **Strings and menu** **[V]**: `TwoDigitText` (`ovl20:0565`) gives a number as two characters: the text of `res12_fn_1037`, with a `0` in front below 10 and only the first two kept. `ShowRestTime` (`ovl20:05F0`) draws `Rest Time:` at column 1 of row 17, then days and hours as `dd:hh` from column 12 (each in its colour, the selected field in 15, the others in 10) and the minutes (`10 * RestTime[2] + RestTime[1]`) at column 18. `RestTimeMenu` (`ovl20:0721`) loops on `ReadPromptChoice` with the text `Rest   daYs Hours Mins   Inc Dec   Exit` (colours 13, 10, 15, extended keys on) until Rest (result 1), Exit or Escape (result 0); Enter counts as Rest. `Y`, `H` and `M` select the days, hours or minutes field (`RestTime` digits 4, 3 and 2); the left and right arrows step between them with wrap-around; Inc or the up arrow adds 1 to the field (5 to `RestTime[1]` on the minutes field) and Dec or the down arrow takes it off through `SpendRestTime`, each followed by `NormalizeRestTime`. The menu starts on the minutes field.
 - **Open** **[?]**: `ovl20_fn_0000` is 752 bytes including its literal pool and walks the party's affect lists while time advances. Its five-attempt draft did not match; the source is a stub and the matcher has not recorded L2. Compiler-proven boundaries removed the false entries `099E`, `09A3`, `09A8`, `0B2A`, `0B48` and `0B89`; they lie inside `ProcessMemorizedSpell` and `AdvanceRestStudies`, not in separate routines.
 
-### 5.23 The picture unit res07 **[V]** (`src/RES07.PAS`, `make match UNIT=res07`: 17 of 19 routines at L2)
+### 5.23 The picture unit res07 **[V]** (`src/RES07.PAS`, `make match UNIT=res07`: unit complete)
 
 - **The picture record** **[V]**: `TPicture` holds Height and WidthCols as words at +0/+2, XPos and YPos at +4/+6, ItemCount at +8, the 8-byte palette at +9, ByteSize (bytes per item) at +$11, the pixel-buffer pointer at +$13 and the packed pixel data from +$17 (data indexed with range checks off, like ovl32's TMemPic). `AllocatePicture` (`0464:248E`) allocates `Height*WidthCols*2` bytes per item (doubled when VideoAdapter is not 0) times ItemCount plus $17, zeroes it, stores the header, and with bit 0 of AllocFlags allocates the pixel buffer (a quarter of the size when VideoAdapter is 1); `ReleasePicture` (`0464:2595`) frees both, with a `with PPicture(Pointer(Pic))^` over the untyped var.
 - **Loading** **[V]**: `LoadPicture` (`0464:0111`, 404 bytes) frees any picture already in the caller's pointer, calls `LoadDaxBlock(Text, '.dax', BlockId, Size, Block)`, copies Height/WidthCols/XPos/YPos/ItemCount/Palette into locals with `Move`, allocates, stores XPos/YPos/Palette into the new picture and calls `UnpackPicturePixels` (`0464:02A5`, matched, below) with (Block, $11, AllocFlags, Color, Target^); then frees the DAX block and calls FlushKeyboard. It leaves one byte of its frame unused (QUIRK `0464:0114`).
 - **The unit is compiled with O+** **[V]**: like res08, res07 is resident but was built with `{$O+}`: a string constant passed to a routine is copied to a stack temporary through `System_StrCopy` (`0AF8:0B0B`) at `0464:0152` (`LoadDaxBlock`'s '.dax' under the overlay-copy rule), and all 14 matched routines match with `{$A-,O+,F+,S-,R-,G-,I-}`. This is more evidence for the res08 escalation (O+ is per unit, not overlay-units-only).
 - **The mirrors** **[V]**: `MirrorPicture` (`0464:15C7`, 906 bytes) copies a picture mirrored: the palette as is, then each pixel row reversed per VideoAdapter (each 16-bit unit through `MirrorWord` 0464:1509, which reverses the eight 2-bit groups using `GlyphPixelMasks`; each byte through `MirrorByte` 0464:1484 in 4-byte groups; or through `SwapNibbles` 0464:1596), and the pixel buffer at +$13 mirrored too (word by word, byte by byte within the row, or in place). ovl32 DrawIcon uses it for icon sets above 3.
-- **The direct blit** **[V]**: `ShowPicture` (`0464:1951`, 513 bytes) copies a picture's pixel data straight to the video hardware: adapter 0 moves one WidthCols*2-byte row per screen row to the segment `ds4EC0[Row]` at column X*2; adapter 1 writes one byte per pixel through the four EGA planes (map mask `EgaPlaneBitMasks`, new global at DS:25F6, address `ds5050[Row]+Col` in segment $A000); adapter 2 is the adapter-0 move with four bytes per column and the `ds51E0` table.
-- **The changed-region flush** **[V]**: the blitters mark changed screen rows in `ds4A28` (a byte flag per row) and the first and last changed offset in the word arrays `ds4AD0`/`ds4C20`/`ds4D70`; `FlushPictureChanges` (`0464:1B52`, 778 bytes) presents them per adapter (row moves to the `ds4EC0`/`ds51E0` segments, or the four planes through port 3C5 plus a Graphics-Controller write-mode-1 copy from $A200 to $A000) and then clears the trackers. The blitter `DrawPictureItem` (`0464:08D4`, matched, below) marks the same trackers; `0D71` is still a stub.
+- **The direct blit** **[V]**: `ShowPicture` (`0464:1951`, 513 bytes) copies a picture's pixel data straight to the video hardware: adapter 0 moves one WidthCols*2-byte row per screen row to the segment `ds4EC0[Row]` at column `PicCol*2`; adapter 1 writes, per row and per cell column, the four plane bytes of the source cell (the plane-interleaved layout, 4 bytes per cell; each byte holds eight pixels of one EGA plane, written through the map mask `EgaPlaneBitMasks`, new global at DS:25F6, to address `ds5050[Row]+Col` in segment $A000); adapter 2 is the adapter-0 move with four bytes per column and the `ds51E0` table.
+- **The changed-region flush** **[V]**: the blitters mark changed screen rows in `ds4A28` (a byte flag per row), the first (lowest) changed byte offset of the staging buffer `DrawBuf` in `ds4C20` (a minimum, starts $FFFF) and the last (highest) in `ds4D70` (starts 0), and the screen-side byte column of that first changed byte in `ds4AD0` (`LeftCol * 2/1/4` on adapters 0/1/2); `FlushPictureChanges` (`0464:1B52`, 778 bytes) presents them per adapter (row moves to the `ds4EC0`/`ds51E0` segments at that column, or the four planes through port 3C5 plus a Graphics-Controller write-mode-1 copy from $A200 to $A000) and then clears the trackers. The blitters `DrawPictureItem` (`0464:08D4`, matched, below) and `DrawPictureItemClipped` (`0464:0D71`, matched, below) mark the same trackers.
 - **Video mode and palette** **[V]**: `SetVideoMode` (`0464:00CF`) saves the current mode (`ds4A1D`) in `SavedVideoMode` and sets INT 10h function 0 with the new mode; `RestoreVideoMode` (`0464:00FF`) sets the saved one back. `SetPaletteRegister` (`0464:2A0D`) writes one EGA palette register through INT 10h AH=10h AL=0 (BH = the colour, mapped from 0..7 as is and 8.. as +8, BL = the register). `ColorMatchMask` (`0464:0000`) returns the bit mask of the eight 4-bit pixels of a 4-byte cell that equal a colour; `PaletteColor` (`0464:007B`) returns a palette colour for a pixel value.
 - **Map corrections** **[V]**: 19 of the 39 map entries of res07 were not routines (they have no `55 89 E5` prologue; aligned disassembly runs through them): 066F/0710 inside 02A5, 0A33/0C0C/0D6C inside 08D4, 0E01..140E (11) inside 0D71, 1514 inside 1509, 1708 inside 15C7, 1A19 inside 1951. Six routines were resized (02A5 1583, 08D4 1181, 0D71 1811, 1509 141, 15C7 906, 1951 513) and 00FF is 13 bytes plus a 5-byte literal pool, not 18. res07 has 19 routines plus the empty initialisation part.
 - **Unpacking** **[V]** (`UnpackPicturePixels`, `0464:02A5`, 1583 bytes, `make match`): the DAX pixel data (4 bytes = one 8-pixel cell, read from offset $11) becomes the picture's data per VideoAdapter. Adapter 0 turns each pixel's nibble into its palette colour (`PaletteColor`, `0464:007B`) and that colour into 2-bit pairs through `ds25FA[colour, position]`, two bytes per cell; with a pixel buffer (`Pixels`, AllocFlags bit 0) it also stores the mask of the pixels equal to `Color` (`ColorMatchMask`, `0464:0000`) and clears those bits of the data. Adapter 1 keeps the raw nibble: each pixel's colour bits select the EGA planes through `EgaPlaneBitMasks`, one byte per plane per cell. Adapter 2 copies `ByteSize` bytes per item unchanged. The third argument (LoadPicture's AllocFlags) is never read; the frame keeps 17 bytes that are never touched (QUIRK `0464:02A5`).
-- **Fill** **[V]** (`FillPictureRect`, `0464:2632`, 987 bytes): called four times by `DrawWallDescriptors` (`ovl29:0174`) with X = 2, the wall descriptor rows and the colours `ds6A60..ds6A63`; it fills Width x Height cells of the picture with the palette colour, clipped at all four edges, marks the trackers, and per adapter writes two bytes (0, colour through `ds0D02`), four bytes (2, `ds0D06`) or the four plane bytes (1, `EgaPlaneBitMasks`) per cell. QUIRK `0464:2707`: a rectangle that starts above row 0 is drawn one row too far (the bound is `Height - |Y|` with an inclusive loop).
+- **Fill** **[V]** (`FillPictureRect`, `0464:2632`, 987 bytes): called by `DrawWallDescriptors` (`ovl29:0174`, four times, with FirstCol = 2, the wall descriptor pixel rows and the colours `ds6A60..ds6A63`) and by `ovl16_fn_34DF` (`ovl16:34DF`); Width and FirstCol are cells of 8 pixels while FirstRow and Height are pixel rows (one loop pass per pixel row), so it fills a Width-cell by Height-pixel-row rectangle of the picture with the palette colour, clipped at all four edges, marks the trackers, and per adapter writes two bytes (0, colour through `ds0D02`), four bytes (2, `ds0D06`) or the four plane bytes (1, `EgaPlaneBitMasks`) per cell. QUIRK `0464:2707`: a rectangle that starts above row 0 is drawn one row too far (the bound is `Height - |FirstRow|` with an inclusive loop).
 - **Item copy** **[V]** (`DrawPictureItem`, `0464:08D4`, 1181 bytes): copies item `PicIndex` of the picture `Source` into `Dest` at column `Col` and pixel row `Row * 8`, one source row of bytes at a time (2 bytes per cell on adapter 0, 4 on 1 and 2). With `Flags` bit 0 and a pixel buffer in `Source`, a destination byte becomes `(dest and mask) or source`; adapter 1 reads one mask byte per four data bytes. It does no clipping of its own (`RightRoom` is a Word, added as it is). Callers: `DrawCellPicture` (`ovl32:00F1`) and `Put8x8Symbol` (`ovl34:015D`).
 - **The fill tables** **[V]** (bytes of `start-unpack.exe` at DS:0D02, DS:0D06, DS:25FA, DS:25E5, DS:25F6): `ds0D02[C]` is four 2-bit pixels of colour C (`00 55 AA FF` for C 0..3), `ds0D06[C]` two 4-bit pixels of colour C (C * `$11`); the two overlap (`ds0D02[C + 4]` is `ds0D06[C]`). `ds25FA` is a 16 x 4 table (`colour, position`): for colours 0..3 the colour's 2-bit value in the bit pair of that pixel (colour 1 at position 0 is `$40`); colours 4..15 do not follow that pattern. `GlyphPixelMasks` (words `C000 3000 0C00 0300 00C0 0030 000C 0003`) and `EgaPlaneBitMasks` (`01 02 04 08`) are the plane and pixel masks. The meaning of the fill bytes for colours 4..15 is **[?]**.
-- **Remaining** **[?]**: `0D71` (the clipped sprite blitter that `ovl18`, `ovl28`, `ovl31` and `res12` call) and `1E5C` (the 16-entry colour remap used by `LoadPictureSlot`, `AnimateAreaDoors` and `LoadSpriteList`).
+- **Clipped blit** **[V]** (`DrawPictureItemClipped`, `0464:0D71`, 1811 bytes, matched): the clipping version of `DrawPictureItem`. While `ds5370` is set (the loader sets it) it cuts the item to `Dest` on all four sides (source cells cut on the left or right, pixel rows cut above or below), and returns without drawing when a cut is larger than the picture; with `ds5370` zero it draws with no check. Flags bit 2 first copies the destination bytes it is about to overwrite into the screen buffer `ds4A24` (save under; the reader is not decompiled yet). The matched code shows the checks as one `or` per exit, and an `if ... else` whose default is stored twice (`SrcLastRow`).
+- **Colour remap** **[V]** (`RemapPictureColours`, `0464:1E5C`, 1586 bytes, matched): recolours a picture for every colour index I whose `FromMap` and `ToMap` entries differ: each pixel whose palette colour is `FromMap[I]` becomes `ToMap[I]`, computed into a scratch copy (`AllocatePicture`) that is copied back at the end. Adapter 0 compares 2-bit pixel pairs through `ds25FA` and `GlyphPixelMasks`, adapter 1 the four EGA planes through `EgaPlaneBitMasks` (a random subset of the matching pixels of a cell when flicker is on), adapter 2 the two nibbles of each byte. QUIRK `0464:1F51`: the header inside the colour loop tests the first item again, so a negative first item recolours item 0 only. Callers: `LoadPictureSlot` (`ovl32:01C8`), `LoadSpriteList` (`ovl28:00A2`), `AnimateAreaDoors` (`ovl18:06B3`), `ovl16_fn_35BE` and `BuildCharacterIcon`.
 
 ## 6. Open questions
 

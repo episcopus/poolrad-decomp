@@ -424,3 +424,101 @@ def test_a_killed_service_session_is_interrupted_by_its_own_id(tmp_path, monkeyp
 def test_the_default_session_runs_on_the_service_with_a_chosen_id():
     cmd = worker.DEFAULT_SESSION_CMD
     assert "--standalone" not in cmd and "--session {session_id}" in cmd and "--title {title}" in cmd
+
+
+# ----------------------------------------------------------------------------- failed reviews
+REVIEW = ("# Review: ovl00\n\ndecompiler: dec-0\nreviewer: rev-1\n\n## Findings\n\n"
+          "- [ ] must-fix Foo (ovl00:0000): the comment names the wrong caller.\n"
+          "- [x] must-fix Bar (ovl00:0040): fixed earlier.\n- [ ] should-fix Bar: a vaguer name.\n")
+
+
+def complete_with_failed_review(repo):
+    """ovl00 with every routine at L2 and one open must-fix finding: `make next` offers it first."""
+    (repo / "re/symbols.toml").write_text(registry([("ovl00:0000", "Foo", "L2", ""), ("ovl00:0040", "Bar", "L2", "")]))
+    (repo / "src/OVL00.PAS").write_text(SOURCE.replace("{@stub} ", ""))
+    (repo / "work/reviews").mkdir()
+    (repo / "work/reviews/ovl00.md").write_text(REVIEW)
+    commit(repo, "ovl00 complete, review failed")
+
+
+CLOSE_FINDING = ("python3 -c \"import pathlib;p=pathlib.Path('work/reviews/ovl00.md');"
+                 "p.write_text(p.read_text().replace('- [ ] must-fix Foo', '- [x] must-fix Foo'))\"\n"
+                 "git add -A && git -c user.name=s -c user.email=s@x commit -qm 'ovl00: fix review findings (ovl00:0000) [L2]'")
+
+
+def test_a_failed_review_gets_a_fix_session_and_is_handed_off_complete(repo, monkeypatch, tmp_path):
+    """2026-10-14: a worker gave such a unit back untouched every five minutes and never moved on."""
+    complete_with_failed_review(repo)
+    import next as nxt
+    assert nxt.next_unit()[0] == "ovl00" and "review failed" in nxt.next_unit()[1]
+    fake = FakeMake()
+    monkeypatch.setattr(worker, "run_make", fake)
+    cmd = session_script(tmp_path, CLOSE_FINDING)
+    cfg = worker.Config(agent="dec-1", role="decompiler", unit="", batch=6, session_cmd=cmd,
+                        timeout_minutes=1, max_attempts=2, idle_seconds=0, sleep=lambda s: None)
+    w = worker.Worker(cfg)
+    key, wt = w.claim()
+    w.current = worker.UnitRun(key, "ovl00", wt)
+    w.work_unit(w.current)
+    w.finish(w.current, "done")
+    prompt = (repo / "build/worker/dec-1/ovl00-fix1.prompt.md").read_text()
+    assert "the comment names the wrong caller" in prompt and "fixed earlier" not in prompt
+    assert ["readability", "UNIT=ovl00"] in fake.calls
+    hand = [c for c in fake.calls if c[0] == "handoff"][0]
+    assert "STATE=complete" in hand
+    assert any(n.startswith("NOTE=worker: review fixes: 1 must-fix closed, 0 still open (1 session(s))") for n in hand)
+    assert worker.fix_key("ovl00") not in worker.load_frontier("ovl00")
+
+
+def test_review_fix_attempts_are_bounded_and_then_the_queue_moves_on(repo, monkeypatch, tmp_path):
+    complete_with_failed_review(repo)
+    import next as nxt
+    fake = FakeMake()
+    monkeypatch.setattr(worker, "run_make", fake)
+    cfg = worker.Config(agent="dec-1", role="decompiler", unit="ovl00", session_cmd=session_script(tmp_path, "true"),
+                        timeout_minutes=1, max_attempts=1, idle_seconds=0, sleep=lambda s: None)
+    assert worker.Worker(cfg).run() == 0
+    entry = worker.load_frontier("ovl00")[worker.fix_key("ovl00")]
+    assert entry["attempts"] == 1 and entry["exhausted"]
+    assert not common.lock_path("ovl00").exists()                    # nothing committed: given back
+    assert nxt.fix_exhausted("ovl00") and nxt.next_unit() is None    # no longer offered first
+    fake.calls.clear()
+    assert worker.Worker(cfg).run() == 0                             # an explicit claim spends no session
+    assert not (repo / "build/worker/dec-1/ovl00-fix2.log").exists()
+    worker.release_frontier("ovl00")
+    assert nxt.next_unit()[0] == "ovl00"                             # --release puts it back
+
+
+def test_review_fixes_that_break_readability_are_reset(repo, monkeypatch, tmp_path):
+    complete_with_failed_review(repo)
+
+    class Unreadable(FakeMake):
+        def __call__(self, wt, args, log, env=None):
+            return 1 if args[0] == "readability" else super().__call__(wt, args, log, env)
+
+    monkeypatch.setattr(worker, "run_make", Unreadable())
+    cfg = worker.Config(agent="dec-1", role="decompiler", unit="ovl00", session_cmd=session_script(tmp_path, CLOSE_FINDING),
+                        timeout_minutes=1, max_attempts=2, idle_seconds=0, sleep=lambda s: None)
+    assert worker.Worker(cfg).run() == 0
+    logs = repo / "build/worker/dec-1"
+    assert list((logs / "ovl00-fix1-commits").glob("*.patch"))
+    assert worker.load_frontier("ovl00")[worker.fix_key("ovl00")]["attempts"] == 1
+    assert not worker.load_frontier("ovl00")[worker.fix_key("ovl00")].get("exhausted")
+
+
+def test_a_queue_worker_retries_a_failed_review_then_moves_on(repo, monkeypatch, tmp_path):
+    complete_with_failed_review(repo)
+    monkeypatch.setattr(worker, "run_make", FakeMake())
+    waits = []
+
+    def wait(seconds):                               # the worker idles once both attempts are spent
+        waits.append(seconds)
+        common.atomic_write(repo / ".git/poolrad-control.json", '{"state":"stopped","reason":"test"}\n')
+
+    cfg = worker.Config(agent="dec-1", role="decompiler", unit="", session_cmd=session_script(tmp_path, "true"),
+                        timeout_minutes=1, max_attempts=2, idle_seconds=7, sleep=wait)
+    assert worker.Worker(cfg).run() == 0
+    logs = repo / "build/worker/dec-1"
+    assert (logs / "ovl00-fix1.log").exists() and (logs / "ovl00-fix1.log").read_text()
+    assert worker.load_frontier("ovl00")[worker.fix_key("ovl00")] ["attempts"] == 2
+    assert worker.fix_exhausted("ovl00") and waits == [7]

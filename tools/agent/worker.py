@@ -36,6 +36,14 @@ Decompiler role, per unit:
   6. Frontier: .git/poolrad-frontier/<unit>.json in the clone's common git directory,
      {"<routine id>": {"attempts": n, "last": "<iso time>", "agent": "...", "batch_log": "<path>"}}.
      A routine with attempts >= MAX_ATTEMPTS is not planned again until `--release` clears it.
+  6a. A unit whose review failed (open `- [ ] must-fix` findings in work/reviews/<id>.md; every
+     routine is already at L2, so there is nothing to plan): ONE session from
+     tools/agent/fix_prompt.md with the findings as its task, verified with `make match` and
+     `make readability` (else its commits are saved and reset, as for a batch). Findings still open
+     afterwards count one attempt under the frontier id `<unit>:review-fix`; at MAX_ATTEMPTS the entry
+     is marked exhausted, no more sessions are spent on it, and `make next` stops offering the unit
+     (it shows in `make inbox`). Before 2026-10-14 a worker gave such a unit back untouched and waited,
+     forever, because `make next` offers failed reviews first.
   7. Nothing left to plan: `make check` in the worktree (log build/worker/<agent>/<unit>-check.log),
      then `make handoff STATE=complete|partial` from the worktree with an automatic note; a branch with
      no commits beyond main is given back with `unlock.py --owner` (lock, worktree and branch removed).
@@ -118,6 +126,8 @@ DEFAULT_IDLE_SECONDS = 300
 PULSE_SECONDS = 600                  # heartbeat period while a session or a check runs
 KILL_GRACE_SECONDS = 10
 BLOCKED = re.compile(r"(?<![A-Za-z])blocked(?![A-Za-z])", re.I)
+MUST_FIX = re.compile(r"\s*-\s*\[ \]\s*must-fix\b", re.I)
+REVIEW_FIX = "review-fix"               # frontier entry `<unit>:review-fix`: attempts at a failed review
 STUB_RE = re.compile(r"^\s*\{@stub\}\s*(?:procedure|function)\s+([A-Za-z_][A-Za-z0-9_]*)", re.I | re.M)
 STUB_INIT = "{@stub-init}"
 HERE = Path(__file__).resolve().parent
@@ -262,6 +272,28 @@ def frontier_listing(unit: str | None = None) -> list[str]:
 
 
 # ----------------------------------------------------------------------------- git and shell helpers
+def open_findings(root: Path, unit: str) -> list[str]:
+    """The open must-fix findings of the unit's review (work/reviews/<unit>.md), as written."""
+    review = root / "work/reviews" / ("%s.md" % unit)
+    if not review.exists():
+        return []
+    return [l.strip() for l in review.read_text().splitlines() if MUST_FIX.match(l)]
+
+
+def fix_key(unit: str) -> str:
+    return "%s:%s" % (unit, REVIEW_FIX)
+
+
+def fix_exhausted(unit: str) -> bool:
+    return bool(load_frontier(unit).get(fix_key(unit), {}).get("exhausted"))
+
+
+def clear_fix(unit: str) -> None:
+    data = load_frontier(unit)
+    if data.pop(fix_key(unit), None) is not None:
+        save_frontier(unit, data)
+
+
 def git_out(wt: Path, *args: str) -> str:
     return common.git(*args, cwd=wt)
 
@@ -446,6 +478,17 @@ def batch_prompt(wt: Path, unit: str, agent: str, items: list[Item], number: int
         routines="\n".join("  %d. %s" % (k + 1, i.line()) for k, i in enumerate(items))))
 
 
+def fix_prompt(wt: Path, unit: str, agent: str, findings: list[str], notes: list[str] = ()) -> str:
+    text = ""
+    if notes:
+        text = ("Notes on this unit (work/blockers.md, or why make integrate rejected the last hand-off); do what they say first:\n" +
+                "\n".join("  " + n for n in notes) + "\n")
+    return render(HERE / "fix_prompt.md", dict(
+        worktree=str(wt), unit=unit, unit_file="%s.PAS" % unit.upper(), agent=agent,
+        branch="unit/%s" % unit, notes=text,
+        findings="\n".join("  %d. %s" % (k + 1, f) for k, f in enumerate(findings))))
+
+
 def review_prompt(wt: Path, unit: str, agent: str) -> str:
     return render(HERE / "review_prompt.md", dict(
         worktree=str(wt), unit=unit, unit_file="%s.PAS" % unit.upper(), agent=agent,
@@ -482,6 +525,9 @@ class UnitRun:
     blocked: int = 0
     frontier: int = 0
     sessions: int = 0
+    fix_sessions: int = 0                           # sessions spent on the unit's failed review
+    fixed: int = 0                                  # must-fix findings closed in this run
+    fix_open: int = 0                               # must-fix findings still open after the last one
 
 
 class Worker:
@@ -612,15 +658,26 @@ class Worker:
                 pass
         return exit_code
 
+    def may_start(self) -> bool:
+        """False (and the reason in self.stopping) when no new session may start."""
+        st = self.state()
+        if st in ("paused", "stopped"):
+            self.stopping = "control is %s" % st
+            return False
+        if self.cfg.max_sessions and self.sessions >= self.cfg.max_sessions:
+            self.stopping = "MAX_SESSIONS=%d reached" % self.cfg.max_sessions
+            return False
+        return True
+
     def work_unit(self, run: UnitRun) -> None:
         os.chdir(run.wt)
-        while True:
-            st = self.state()
-            if st in ("paused", "stopped"):
-                self.stopping = "control is %s" % st
+        findings = open_findings(run.wt, run.unit)
+        if findings and not fix_exhausted(run.unit):
+            if not self.may_start():
                 return
-            if self.cfg.max_sessions and self.sessions >= self.cfg.max_sessions:
-                self.stopping = "MAX_SESSIONS=%d reached" % self.cfg.max_sessions
+            self.run_fix(run, findings)
+        while True:
+            if not self.may_start():
                 return
             items = plan(run.wt, run.unit, load_frontier(run.unit), self.cfg.max_attempts)
             if not items:
@@ -629,18 +686,66 @@ class Worker:
             run.batch += 1
             self.run_batch(run, batch)
 
-    def run_batch(self, run: UnitRun, batch: list[Item]) -> None:
-        tag = "%s-batch%d" % (run.unit, run.batch)
-        log = self.logs / (tag + ".log")
-        prompt_file = self.logs / (tag + ".prompt.md")
-        prompt_file.parent.mkdir(parents=True, exist_ok=True)
+    def unit_notes(self, run: UnitRun) -> list[str]:
         import claim as claim_tool
         notes = claim_tool.blocker_notes(self.main, run.unit)
         why = claim_tool.rejection(run.unit)
         if why:
             notes = list(notes) + ["make integrate rejected this unit's last hand-off: %s. Fix that first "
                                    "(merge main into the branch if it is behind, resolve, make check), then continue." % why]
-        prompt_file.write_text(batch_prompt(run.wt, run.unit, self.agent, batch, run.batch, notes))
+        return notes
+
+    def run_fix(self, run: UnitRun, findings: list[str]) -> None:
+        """One session on the open must-fix findings of the unit's failed review."""
+        run.batch += 1
+        tag = "%s-fix%d" % (run.unit, run.batch)
+        log = self.logs / (tag + ".log")
+        prompt_file = self.logs / (tag + ".prompt.md")
+        prompt_file.parent.mkdir(parents=True, exist_ok=True)
+        prompt_file.write_text(fix_prompt(run.wt, run.unit, self.agent, findings, self.unit_notes(run)))
+        start = head_of(run.wt)
+        note = "unit %s: fixing %d must-fix review finding(s)" % (run.unit, len(findings))
+        self.sessions += 1
+        run.sessions += 1
+        run.fix_sessions += 1
+        with Pulse(self.agent, note):
+            result = run_session(self.cfg.session_cmd, prompt_file, run.wt, log,
+                                 self.cfg.timeout_minutes * 60, self.model_flag(), "%s %s" % (self.agent, tag))
+        self.say("%s: session ended (exit %d%s); verifying" % (
+            note, result.returncode, ", timed out" if result.timed_out else ""))
+        self.verify_fix(run, findings, start, log, tag)
+
+    def verify_fix(self, run: UnitRun, findings: list[str], start: str, log: Path, tag: str) -> None:
+        if salvage(run.wt, self.logs / (tag + ".patch")):
+            print("worker: uncommitted changes saved to %s and discarded" % (self.logs / (tag + ".patch")))
+        with Pulse(self.agent, "unit %s: verifying the review fixes" % run.unit):
+            rc = run_make(run.wt, ["match", "UNIT=%s" % run.unit], log)
+            if rc == 0:
+                rc = run_make(run.wt, ["readability", "UNIT=%s" % run.unit], log)
+            if rc != 0:
+                n = reset_batch(run.wt, start, self.logs / (tag + "-commits"))
+                print("worker: make match or readability failed after the review fixes; %d commit(s) saved to %s "
+                      "and reset to %s" % (n, self.logs / (tag + "-commits"), start[:12]))
+        left = open_findings(run.wt, run.unit)
+        run.fixed += max(0, len(findings) - len(left))
+        run.fix_open = len(left)
+        if not left:
+            clear_fix(run.unit)
+            return
+        attempts = bump_frontier(run.unit, fix_key(run.unit), self.agent, str(log))
+        if attempts >= self.cfg.max_attempts:
+            data = load_frontier(run.unit)
+            data[fix_key(run.unit)]["exhausted"] = True
+            save_frontier(run.unit, data)
+        print("worker: %d must-fix finding(s) of %s still open; review-fix attempts %d%s" % (
+            len(left), run.unit, attempts, " (exhausted: make next stops offering it)" if attempts >= self.cfg.max_attempts else ""))
+
+    def run_batch(self, run: UnitRun, batch: list[Item]) -> None:
+        tag = "%s-batch%d" % (run.unit, run.batch)
+        log = self.logs / (tag + ".log")
+        prompt_file = self.logs / (tag + ".prompt.md")
+        prompt_file.parent.mkdir(parents=True, exist_ok=True)
+        prompt_file.write_text(batch_prompt(run.wt, run.unit, self.agent, batch, run.batch, self.unit_notes(run)))
         start = head_of(run.wt)
         note = "unit %s batch %d: routines %s" % (run.unit, run.batch, ", ".join(i.name for i in batch))
         self.sessions += 1
@@ -787,6 +892,9 @@ class Worker:
             state = "complete" if rs and all(done(r) for r in rs) else "partial"
             note = "worker: %d matched this run, %d blocked, %d in frontier, check %s (%s); %s" % (
                 run.matched, run.blocked, run.frontier, "green" if green else "RED", check_log, why)
+            if run.fix_sessions:
+                note = "worker: review fixes: %d must-fix closed, %d still open (%d session(s)); %s" % (
+                    run.fixed, run.fix_open, run.fix_sessions, note[len("worker: "):])
         self.say("handing off %s as %s" % (run.key, state))
         rc = run_make(run.wt, ["handoff", "AGENT=%s" % self.agent, "UNIT=%s" % run.unit, "STATE=%s" % state,
                                "NOTE=%s" % " ".join(note.split()), "CHANGELOG="], self.logs / (run.unit + "-handoff.log"))
@@ -802,7 +910,10 @@ class Worker:
     def release(self, run: UnitRun) -> None:
         import unlock
         self.say("giving back %s: nothing beyond main" % run.key)
-        self.skipped.add(run.key)
+        # A failed review with attempts left is not "nothing plannable": the next claim tries again, and
+        # once the attempts are spent `make next` stops offering it, so the worker cannot spin on it.
+        if run.key.startswith("review-") or not open_findings(run.wt, run.unit) or fix_exhausted(run.unit):
+            self.skipped.add(run.key)
         if unlock.main([run.key, "--agent", self.agent, "--owner"]) != 0:
             print("worker: owner release of %s refused; the lock stays for the human (make inbox)" % run.key,
                   file=sys.stderr)

@@ -204,7 +204,7 @@ begin
   FreeMem(Block, Size);
   ClearPromptLine;
 end;
-{ ovl07:0411. LoadCharacter: allocates a character record (New), has ovl17_e6 fill it for Kind
+{ ovl07:0411. LoadCharacter: allocates a character record (New), has LoadMonster fill it for Kind
   and returns it with its item list and its affect list. }
 procedure LoadCharacter(Kind: Byte; var Who: PCharacter; var Items: PItem; var Affects: Pointer);
 var
@@ -212,7 +212,7 @@ var
 begin
   Who := nil;
   New(Who);
-  ovl17_e6(Kind, Who);
+  LoadMonster(Kind, Who);
   Items := Who^.Items;
   Affects := Who^.Affects;
 end;

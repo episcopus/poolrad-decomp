@@ -59,7 +59,7 @@ const
     what the two values select is not known. }
   BeforeRemoval = 0;
   AfterRemoval = $A;
-  DyingFlags = 5;               { the flags res07_fn_0D71 draws DyingPicture with }
+  DyingFlags = 5;               { the flags DrawPictureItemClipped draws DyingPicture with }
 
 { ovl31:0000. Cell Index (0..3) of footprint kind Kind: its offset (DX, DY) from the combatant's
   cell, from Footprints. True when that cell exists (DX >= 0); kind 0 has no cells. Kind 1 is one
@@ -487,7 +487,7 @@ begin
     RedrawGround(0, 0, Index);
     for I := 0 to FootprintCells do
       if FootprintCell(CombatantTable[Index].Kind, I, DX, DY) then
-        res07_fn_0D71((CombatantViewCol[Index] + DX) * CellStep, (CombatantViewRow[Index] + DY) * CellStep,
+        DrawPictureItemClipped((CombatantViewCol[Index] + DX) * CellStep, (CombatantViewRow[Index] + DY) * CellStep,
           0, DyingFlags, DyingPicture, DrawBuf);
     FlushPictureChanges;
     if Who^.Combat^.NoBody = 0 then

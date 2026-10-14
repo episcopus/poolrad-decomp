@@ -3,7 +3,7 @@
 decompiler: dec-16, dec-r10, dec-s10, deepseek-dec (the Agent: trailers of the unit's commits, plus eight commits without a trailer and one integrator merge; none is rev-sonnet)
 reviewer: rev-sonnet
 date: 2026-10-13
-commit: b8ab320
+commit: b8ab320 (round 1), 99d80b2 (round 2)
 
 Checklist: docs/process/playbooks/70-review.md (every item, every routine).
 
@@ -24,6 +24,28 @@ First review. `make match UNIT=ovl10` (rerun): `unit: complete`, 16 matched (Sca
 
 What was verified: every constant of the Flag set against the chances in PlaceRiver (35 and 75), PlaceTallFeatures (1, 1, 3, 4, 7, 0) and ScatterTerrainFeatures; PlaceRiver's start column (34 - 5d4 then moved left to (Col + 2) mod 7 = 0), the bridge rules (d20 of 1 or an odd count, forced bridge on rows 7..15 when none: `12 - d9 + 4`), PlaceTallFeatures' kind and tile arithmetic ($23 + Kind, $1F + Kind above for kinds below 5), ScatterTerrainFeatures' five tile ranges, ScatterRareTiles' d100 cases (98, 99, 100, then one in 100 and d10 of 1..6 or 7..10, unless ds84DC is $A); WallSideKind's off-map rule and PassageKind's OR; BuildDungeonMap's loop bounds (-6..6, -2..2), the cell origin (21, 10) with 6 and 5 steps and SetDungeonCell's `Picture + 1` and bounds; the corner drawers' branches against the packet's compare chains; BuildWildernessMap's block lookup (columns +13 and +26 for AreaViewKind 3 and 4); CreateCombatMap's loads and the $4E9-byte allocation (7 + 25 * 50); PrepareCombatants' record size ($16), NoBody rule, icon set and B84 rule; IsBeyondGrid's one-direction QUIRK; TryPlaceAt's cell arithmetic (+22, +10) and its tile test; FindStartCell's ring rules (first ring length from FirstRingCells, later rings 12, the skipped ring for side 0 with an odd facing, the group fallback through FacingWallDirs); PlaceAllCombatants' side origins, first-ring counts (half, rounded up), the group 1 shape 4, the Flag10D body rule, the NoBody removal through ovl16_e2 and the unused PlacedCount/DroppedCount; StartBattle's order. No inline code, no assembler routines; the unit comment states its purpose and cites 5.5.2; every `dsXXXX` global it uses has a POOLVARS comment.
 
+## Round 2 (commit 99d80b2, includes the fixes 975fe2b and 7c11d77)
+
+`make match UNIT=ovl10` (rerun): `unit: complete`, 16 matched, 7 nested, 0 differ, 8082 bytes. `make readability UNIT=ovl10`: clean. Packet rebuilt and read beside the source.
+
+Re-checked each round 1 finding against the new source:
+
+- BlockTerrainFlags (must-fix): I re-extracted every range of the case table with a script; the overlaps are exactly 3, 4, 7 (3 beats 2), $28, $29, $2B (1 beats 5), $7C (8 beats 9) and $F5 ($20 beats $80). The QUIRK at ovl10:08AA..0B14 and whitepaper 5.5.2 now list all eight with the winning value, and the unassigned `Flags` for a code in no range is its own QUIRK at ovl10:0B68. Fixed.
+- PrepareCombatants and B84: one reading now (`MoraleMask`, `ComputerRunFlag`, `MaxComputerMorale = $66` with ovl09:0431 and ovl09:10D7 as evidence, [I] kept on `Var2Morale`). Fixed.
+- Globals: `PartyMapColumn`, `PartyMapRow`, `PartyFacing`, `DirStepX`/`DirStepY`, `WallViewMode`, `HeadBankIndex`, `BodyBankIndex` replace the dsXXXX names (re/dseg.toml, re/renames.toml; the other units' sources were renamed in the same commit and match). Fixed.
+- StartBattle comment now names the bank index reset, the three `DiscardWaitingKey` calls and `res12_fn_2B88`. Fixed.
+- Magic numbers: `CombatantClearLoopLast` (marked QUIRK 0872), `LaterRingLastCellCount`, `SideWall`/`SideOpen`/`SideDoor`, `FacingOffsetRight/Back/Left`, `MaxComputerMorale`, `CombatRecordSize`, `CombatMapSize`. The corner drawers' picture ids stay bare but are listed in one table comment marked `Purpose unknown` (artwork not viewed), which is what the playbook accepts.
+- FindStartCell: inline comments at the three `case Phase` arms and the group loop; TryPlaceAt carries the QUIRK for the coordinates stored before ProbeStep. Fixed.
+- CreateCombatMap: the three header writes are described as they are (`ShowCursor` cleared, `CursorKind` 1, `Head6` tile gate 0); the unread Load24x24Set argument is a QUIRK. Fixed.
+
+New, none blocking:
+
+- [ ] note StartBattle: `ds6E30` (Magic toggle, POOLVARS ovl08:04A7) and `ds6DE3` (round counter, ovl08:0891) have comments with real meanings but still carry dsXXXX names; ovl08 owns them, so rename in Phase 6 or when ovl08 is next touched.
+- [ ] note StartBattle and PrepareCombatants: `res12_fn_0BB8`, `res12_fn_23DB`, `res12_fn_2B88` and `ovl13_e19` are other units' still-unnamed routines; the comments say when they run but not what they do, which only their owners can settle. Revisit when res12 is named.
+- [ ] note PlaceAllCombatants: `ds6814Sides` (count per side) and `Flag10D` remain provisional names, as in round 1; consistent with POOLVARS and ovl08.
+
 ## Verdict
 
-Not passed. One must-fix: the BlockTerrainFlags QUIRK (source and whitepaper 5.5.2) names two duplicated block codes (3 and 4) where the table duplicates eight (3, 4, 7, $28, $29, $2B, $7C, $F5), each time with the first listed value winning.
+Round 1: not passed (one must-fix: the BlockTerrainFlags QUIRK named two duplicated block codes where the table duplicates eight; fixed in 975fe2b).
+
+Round 2: passed. Every round 1 finding is fixed and re-verified against the bytes and the source; the three notes above do not block.

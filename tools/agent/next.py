@@ -2,7 +2,9 @@
 """next.py: print the next unit from work/queue.toml (SPEC 9.4).
 
 Work for a decompiler, first that applies: a unit whose review failed (open must-fix findings in
-work/reviews/<id>.md) and that nobody holds; then the first unit that is neither locked nor complete
+work/reviews/<id>.md) and that nobody holds, unless workers already spent their attempts on those
+findings (frontier entry `<id>:review-fix` marked exhausted, tools/agent/worker.py; `make inbox` lists
+it); then the first unit that is neither locked nor complete
 (every routine at L2 or L3 in re/symbols.toml) and not waiting: a unit is waiting when every routine not
 yet at L2 or L3 has a `blocked` note in re/symbols.toml (judged per routine, so a unit with any routine
 still workable stays in the queue). It comes back once a routine is unblocked.
@@ -10,6 +12,7 @@ With --review: the first complete unit that has no passed review, no review lock
 open must-fix finding (those wait for a decompiler's fixes first)."""
 from __future__ import annotations
 
+import json
 import re
 import sys
 from pathlib import Path
@@ -34,12 +37,22 @@ def waiting(uid: str, rs: list[dict]) -> bool:
     return bool(rest) and all(BLOCKED.search(str(r.get("notes", ""))) for r in rest)
 
 
+def fix_exhausted(uid: str) -> bool:
+    """Workers spent their attempts on this unit's review findings: leave it to the human (make inbox)."""
+    path = common.common_dir() / "poolrad-frontier" / ("%s.json" % uid)
+    try:
+        entry = json.loads(path.read_text()).get("%s:review-fix" % uid, {})
+    except (OSError, ValueError, AttributeError):
+        return False
+    return bool(entry.get("exhausted"))
+
+
 def next_unit() -> tuple[str, str, int, int] | None:
     rs = common.routines()
     for u in common.queue():                         # failed reviews come back first
         uid = u["id"]
         findings = common.open_must_fix(uid)
-        if findings and not common.lock_path(uid).exists() and not common.pending_handoff(uid):
+        if findings and not common.lock_path(uid).exists() and not common.pending_handoff(uid) and not fix_exhausted(uid):
             n = sum(1 for r in rs if r["unit"] == uid)
             return uid, "review failed: fix the %d must-fix findings in work/reviews/%s.md" % (len(findings), uid), n, n
     for u in common.queue():
