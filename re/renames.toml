@@ -3658,3 +3658,10 @@ kind = "routine"
 why = "00BA:23DB clears the two per-side counts ds6814Sides and recounts them by walking the character list ds5D96, adding one per member with Flag10D set to its side's count; RunCombat and EndCombatRound call it each round"
 date = "2026-10-13"
 
+[[rename]]
+old = "res12_fn_2433"
+new = "CollectEnemiesInRange"
+kind = "routine"
+why = "00BA:2433 filters the ovl30 ScanTargets table to the combatants on the side opposite Who (OpposingSide) within Range steps and writes their combatant indexes to ds6DE4; ovl09:02EB and 0B3C use the count and that list as Who's enemies in range"
+date = "2026-10-13"
+

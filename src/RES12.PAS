@@ -59,7 +59,7 @@ procedure ApplyDamage(Who: Pointer; Damage: Byte);
 procedure ShowHealResult(Who: Pointer);
 function OpposingSide(Who: Pointer): Byte;
 procedure RecountCombatSides;
-function res12_fn_2433(P: Pointer; B: Byte): Byte;
+function CollectEnemiesInRange(Who: Pointer; Range: Byte): Byte;
 function res12_fn_255B(Who, Target: Pointer): Byte;
 procedure res12_fn_2571;
 function res12_fn_2637(Who: Pointer): Byte;
@@ -1269,8 +1269,39 @@ begin
     Member := Member^.Next;
   end;
 end;
-{ 00BA:2433: retf 6: 6 bytes of parameters; 6 bytes of locals }
-{@stub} function res12_fn_2433(P: Pointer; B: Byte): Byte; begin end;
+{ 00BA:2433. Collects Who's enemies that an area scan can reach into the target list ds6DE4 and
+  returns how many there are. It scans the map for every combatant whose footprint line from Who is
+  at most Range steps away (ScanTargets, direction omni, footprint kind of Who), then keeps only the
+  records whose combatant is on the side opposite Who's (Side of CombatantRecord[ds6718[I].Head]
+  equals OpposingSide(Who)): each kept record is compacted into ds6718 (Move) and the table count
+  (ds6718[0].Val) is lowered to the kept count. Finally the combatant index of every kept record
+  (ds6718[I].Head) is written into ds6DE4[1..Count], the combatant order the AI and the area spells
+  work through (ovl09:02EB, 0B3C). The result is that count; 0 when no enemy is in range. }
+function CollectEnemiesInRange(Who: Pointer; Range: Byte): Byte;
+var
+  Count: Byte;    { [bp-2] the scan count, then the kept count }
+  Found: Byte;    { [bp-3] the kept records so far }
+  Index: Byte;    { [bp-4] the walk of the scan table }
+begin
+  ScanTargets(CombatantX(PCharacter(Who)), CombatantY(PCharacter(Who)), Range, $FF,
+              CombatantKind(PCharacter(Who)), CombatMap);
+  Count := ds6718[0].Val;
+  Found := 0;
+  if Count > 0 then
+  begin
+    for Index := 1 to Count do
+      if CombatantRecord[ds6718[Index].Head]^.Side = OpposingSide(Who) then
+      begin
+        Inc(Found);
+        Move(ds6718[Index], ds6718[Found], SizeOf(TSortRec));
+      end;
+    Count := Found;
+    ds6718[0].Val := Found;
+  end;
+  CollectEnemiesInRange := Count;
+  for Index := 1 to Count do
+    ds6DE4[Index] := ds6718[Index].Head;
+end;
 { 00BA:255B: frame not read }
 {@stub} function res12_fn_255B(Who, Target: Pointer): Byte; begin end;
 { 00BA:2571: retf 8: 8 bytes of parameters; 0 bytes of locals }

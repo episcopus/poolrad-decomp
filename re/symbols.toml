@@ -16921,12 +16921,12 @@ id = "00BA:2433"
 unit = "res12"
 addr = "00BA:2433"
 size = 296
-name = "res12_fn_2433"
-signature = "function res12_fn_2433(P: Pointer; B: Byte): Byte"
+name = "CollectEnemiesInRange"
+signature = "function CollectEnemiesInRange(P: Pointer; B: Byte): Byte"
 c_name = "res12_fn_2433"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_2433 (00BA:2433 filters the ovl30 ScanTargets table to the combatants on the side opposite Who (OpposingSide) within Range steps and writes their combatant indexes to ds6DE4; ovl09:02EB and 0B3C use the count and that list as Who's enemies in range); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]

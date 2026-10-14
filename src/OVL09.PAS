@@ -131,7 +131,7 @@ end;
 { ovl09:02EB (SpellAccepted). Decides whether the AI accepts spell Spell cast at Range by Who
   (UseMagicItem 03E4 and CastMemorizedSpell 0545 keep what it accepts). Refuses at once when the
   spell row's +$D byte is below Range. A spell other than 3 whose +$E byte is 0, and spell 3 when
-  ovl13_e13(Who, Done) agrees, are accepted at once. Otherwise res12_fn_2433 collects Who's
+  ovl13_e13(Who, Done) agrees, are accepted at once. Otherwise CollectEnemiesInRange collects Who's
   enemies the area pattern of ovl22_e3(Spell) reaches (ds6DE4, count Tries): a zero count refuses,
   a zero +$F byte accepts; else each collected enemy is asked through the nested
   DifferentSideInArea, a Yes refuses the spell and a No (or no enemy at all) accepts it.
@@ -170,7 +170,7 @@ begin
     SpellAccepted := True;
     Exit;
   end;
-  Tries := res12_fn_2433(Who, ovl22_e3(Spell));
+  Tries := CollectEnemiesInRange(Who, ovl22_e3(Spell));
   if Tries > 0 then
   begin
     if SpellTable[Spell].PadB[$F] = 0 then
@@ -477,7 +477,7 @@ end;
   +12 of the item in slot 0 (+$CC, minus 1, clamped). The remembered Combat^.Target is
   dropped when it is not dying or is on the party side, and a target is attacked when line of
   sight (WalkLine) reaches it within Range and ovl13_e8 allows it; otherwise a random enemy of
-  the res12_fn_2433(Who, Range) scan (ds6DE4) is picked (or UseBestItem chooses one when
+  the CollectEnemiesInRange(Who, Range) scan (ds6DE4) is picked (or UseBestItem chooses one when
   res12_fn_2E03 says to). The attack runs ovl13_e7/e11/e12 and ends the turn through
   res12_fn_2637. Result: 1 when the turn is over (CanAct = 0). QUIRK: [bp-3] is reused for
   res12_fn_2E8B's dead result; the +$CC deref runs before its nil test. Globals: ds443C, ds443D,
@@ -552,7 +552,7 @@ Loop:
     end;
   if Flag <> 0 then
     goto Attack;
-  Count := res12_fn_2433(Who, Range);
+  Count := CollectEnemiesInRange(Who, Range);
   if Count = 0 then
   begin
     if ovl13_e21(Who, $FF, 0, 0) then
@@ -565,7 +565,7 @@ Loop:
   Target := CombatantRecord[ds6DE4[Index]];
   if res12_fn_2E03(Who) then
     if not res12_fn_2E46(Who) then
-      if res12_fn_2433(Who, 1) > 0 then
+      if CollectEnemiesInRange(Who, 1) > 0 then
       begin
         UseBestItem(Who);
         Done := 1;
@@ -870,7 +870,7 @@ begin
   if (SlotPick <> nil) or (Row14 = $0A) then
     SlotFound := 1;
   if (AttackPick <> nil) and (Best > Score2 shr 1) and (SlotFound <> 0) and
-     ((BothKinds <> 0) or (res12_fn_2433(Who, 1) = 0)) then
+     ((BothKinds <> 0) or (CollectEnemiesInRange(Who, 1) = 0)) then
     Pick := AttackPick
   else
     Pick := OtherPick;
