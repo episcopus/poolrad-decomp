@@ -10392,8 +10392,8 @@ signature = ""
 c_name = "ovl22_fn_2383"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "blocked: not a routine. ovl22:2383..2384 are the last two bytes ('e','d') of ovl22_e44's string literal 'is affected' (CS:2379, 12 bytes with its length), which the compiler places right before the routine at ovl22:2385. Disassembling at 2383 reads the two literal bytes (65 64) as prefixes before the real `push bp` (55) at 2385, so no Pascal routine can start there (a make tpc routine begins with 55 89 e5, not 65 64 55) and make match cannot match it. It will be removed by `make match WRITE=1` when ovl22_e44 (ovl22:2385) matches: 2383 lies inside e44's literal pool, the same way make match WRITE=1 removed ovl22_fn_228C from inside CureDiseaseAffects. A make tpc probe of a function/procedure body was not run because the boundary is mid-literal, not a compiler question."
+evidence = ["prologue"]
 
 [[routine]]
 id = "ovl22:2385"
