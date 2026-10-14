@@ -613,6 +613,7 @@ var
   ShowMonsterPics: Byte;          { nonzero: the monster pictures are shown; the camp's Pics submenu toggles it
                                     (ovl15:1D02, 1DE9); the loader sets it to 1 (ovl11:0397) }
   ds49F8: Byte;                   { cleared by the loader (ovl11:03A6) }
+  { the view kind before the last area step: RunAreaStep (ovl03:31B4) copies AreaViewKind here before it sets 1 }
   ds49F9: Byte;                   { set to 1 by the loader (ovl11:03EB) }
   ds49FA: Byte;                   { 1 makes ECL command 36 (ovl03:179B) set the view mode to 4 instead of 3; meaning unknown }
   ds49FB: Word;                   { cleared by the loader (ovl11:03AD) }
@@ -825,7 +826,8 @@ var
   { set to 1 by EndCommand (ovl03:0001) and StartEclBlock (ovl03:0BD1): the script run ends; the script run
     loop (ovl03:3171) clears it on entry and on exit }
   ds442E: Byte;
-  ds442F: Byte;                   { set to 1 by ECL command 32 (ovl03:0BD1); meaning unknown }
+  { RunAreaStep (ovl03:31B4) runs its step again while this is set; ECL command 32 (ovl03:0BD1) sets it }
+  ds442F: Byte;                   { set to 1 by ECL command 32 (ovl03:0BD1) }
   ds4430: Byte;                   { when nonzero, the ECL command 0 (ovl03:0001) selects the character at ds4436 }
   ds4431: Byte;                   { cleared by ECL command 32 (ovl03:0BD1), set by 33 and 55 (ovl03:0C74) }
   ds4432: Byte;                   { with ds4433 and ds4434 set, ovl03:0C74 redraws the character; set elsewhere }

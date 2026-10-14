@@ -58,7 +58,7 @@ procedure ShowSpecialScreenCommand;
 procedure DrawGlyphRunCommand;
 procedure DispatchCommand;
 procedure RunScriptFrom(Address: Word);
-procedure ovl03_fn_31B4;
+procedure RunAreaStep;
 procedure ovl03_e1;
 procedure ovl03_fn_3379;
 procedure ovl03_fn_34AB;
@@ -131,6 +131,17 @@ const
   EclTextTop = $11;
   EclTextRight = $26;
   EclTextBottom = $16;
+  { The WallViewMode values that show the map window pages 2 to 4 (AreaViewKind 2 to 4, ovl03:31B4). }
+  WallModeMapPage2 = $19;
+  WallModeMapPage3 = $1A;
+  WallModeMapPage4 = $1B;
+  { The GameVars words the area step (ovl03:31B4) reads: the area doors are animated when word VarAreaDoors is
+    AreaDoorsOpen and word VarAreaDoorsLatch is clear. Word 435 is one of the gates DrawAreaView reads
+    (ovl27:0000); the meaning of the values is not traced. Word VarWord725 of ds49D6 is cleared at each step. }
+  VarAreaDoors = 435;
+  VarAreaDoorsLatch = 418;
+  AreaDoorsOpen = $FE;
+  VarWord725 = 725;
   { The colours of the ECL menus (ovl03:0F08, ovl03:10D1): the title of AskMenu and the heading of a
     list, the words of AskMenu and the lines of a list, the hotkeys and the highlight. }
   MenuTitleColor = 13;
@@ -1979,8 +1990,61 @@ begin
   end;
   ds442E := 0;
 end;
-{ ovl03:31B4: retf 0: 0 bytes of parameters; 6 bytes of locals }
-{@stub} procedure ovl03_fn_31B4; begin end;
+{ ovl03:31B4. One step of the area (the party has moved, or the script asked for the area to be drawn again):
+  the event byte of the party's cell goes to ds6AB1 (EventByteAt), word VarWord725 of ds49D6 is cleared, and
+  the view kind AreaViewKind is set to 1 (the 3D wall view) with its old value kept in ds49F9. The script entry
+  ds49EB runs. When VarForceWallView is clear, AreaViewKind takes 2, 3 or 4 from WallViewMode (the map window
+  pages; page 3 also animates the area doors, AnimateAreaDoors ovl18:06B3). The picture window is cleared
+  when the old kind was a map page, and the area is drawn (ShowAreaView). Then the script entries ds49E3 and
+  ds49E5 run, and the step repeats while a script block was started (ds442F, StartEclBlock). SelectedCharacter
+  is saved and restored around the entries. Called from the area loop ovl03_e1 (ovl03:32F8). Purpose unknown
+  in parts: what the entries and word VarWord725 do. }
+procedure RunAreaStep;
+var
+  Saved: PCharacter;            { SelectedCharacter, restored after the second entry }
+begin
+  repeat
+    ds6AB1 := EventByteAt(PartyMapColumn, PartyMapRow);
+    ds49D6^[VarWord725] := 0;
+    Saved := SelectedCharacter;
+    ds49F9 := AreaViewKind;
+    AreaViewKind := 1;
+    RunScriptFrom(ds49EB);
+    ds49F3 := 4;
+    if GameVars^[VarForceWallView] = 0 then
+      case WallViewMode of
+        WallModeMapPage2:
+          begin
+            AreaViewKind := 2;
+            ds49F3 := 3;
+          end;
+        WallModeMapPage3:
+          begin
+            AreaViewKind := 3;
+            ds49F3 := 3;
+            if (GameVars^[VarAreaDoors] = AreaDoorsOpen) and (GameVars^[VarAreaDoorsLatch] = 0) then
+              AnimateAreaDoors(1);
+          end;
+        WallModeMapPage4:
+          begin
+            AreaViewKind := 4;
+            ds49F3 := 3;
+          end;
+      end;
+    if (ds49F9 > 1) and (AreaViewKind = 1) then
+      DrawWindow(3, 3, $D, $D, 0, $A, '');
+    if ((((ds49F9 > 1) or (AreaViewKind = 1)) and (ds4431 <> 0)) or ((ds49F9 = 1) and (AreaViewKind = 1))) then
+      ShowAreaView;
+    ds442F := 0;
+    RunScriptFrom(ds49E3);
+    if ds442F = 0 then
+    begin
+      RunScriptFrom(ds49E5);
+      SelectedCharacter := Saved;
+      res12_fn_0767(SelectedCharacter);
+    end;
+  until ds442F = 0;
+end;
 { ovl03:32F8: frame not read }
 {@stub} procedure ovl03_e1; begin end;
 { ovl03:3379: frame not read }

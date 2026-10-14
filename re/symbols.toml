@@ -823,12 +823,12 @@ id = "ovl03:31B4"
 unit = "ovl03"
 addr = "ovl03:31B4"
 size = 324
-name = "ovl03_fn_31B4"
+name = "RunAreaStep"
 signature = ""
 c_name = "ovl03_fn_31B4"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_31B4 (one step of the area: EventByteAt into ds6AB1, AreaViewKind set to 1 (copied to ds49F9), entry ds49EB, the map page kind from WallViewMode, ShowAreaView, entries ds49E3 and ds49E5, repeated while StartEclBlock sets ds442F; packet ovl03_31B4, proven by make match); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

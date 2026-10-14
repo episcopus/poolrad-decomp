@@ -3798,3 +3798,10 @@ kind = "routine"
 why = "runs the ECL script from an entry address (EclPC := Address), dispatching each opcode with DispatchCommand until EndCommand or StartEclBlock sets ds442E or the party is destroyed; callers RunCamp (ovl03:2DD3, ds49E7/ds49E9), ovl03:31B4, ovl03:32F8, ovl03:3379, ovl03:34AB; packet ovl03_3171, proven by make match"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl03_fn_31B4"
+new = "RunAreaStep"
+kind = "routine"
+why = "one step of the area: EventByteAt into ds6AB1, AreaViewKind set to 1 (copied to ds49F9), entry ds49EB, the map page kind from WallViewMode, ShowAreaView, entries ds49E3 and ds49E5, repeated while StartEclBlock sets ds442F; packet ovl03_31B4, proven by make match"
+date = "2026-10-13"
+
