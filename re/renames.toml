@@ -4113,3 +4113,10 @@ kind = "routine"
 why = "ovl12:2A87 takes FirstSlotItem(SelectedCharacter) and, when there is one, halves DamageAmount when its RaceRow byte 7 (DS:5589) is 0 or odd; the frame and the caller-less entry match HalveDamageForFirstSlotItem (ovl12:25BC)"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl12_e100"
+new = "HalveDamageForEnchantedSlotItem"
+kind = "routine"
+why = "ovl12:2AE6 takes FirstSlotItem(SelectedCharacter) and halves DamageAmount when that item's Plus (+$32, a signed byte, compared with jle) is above 0; the same frame and caller-less entry as the other damage hooks"
+date = "2026-10-14"
+

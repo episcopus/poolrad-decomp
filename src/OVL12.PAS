@@ -112,7 +112,7 @@ procedure CancelFireDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ReduceFireDamageOnePerDie(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure HalveElectricityDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure HalveDamageByFirstSlotItemRow(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e100(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure HalveDamageForEnchantedSlotItem(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e101(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e102(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_fn_2B6F;
@@ -1925,8 +1925,18 @@ begin
     if (RaceRow[Item^.ItemType][7] = 0) or ((RaceRow[Item^.ItemType][7] and 1) <> 0) then
       DamageAmount := DamageAmount shr 1;
 end;
-{ ovl12:2AE6: retf 10: 10 bytes of parameters; 4 bytes of locals }
-{@stub} procedure ovl12_e100(Who: PCharacter; Affect: PAffect; Mode: Byte); begin end;
+{ ovl12:2AE6. Affect handler for damage (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000).
+  When the first slot item of SelectedCharacter (FirstSlotItem, ovl12:101D) has Plus (+$32, a signed byte) above 0,
+  DamageAmount is halved. Purpose unknown: which affect runs it is not known yet [?]. }
+procedure HalveDamageForEnchantedSlotItem(Who: PCharacter; Affect: PAffect; Mode: Byte);
+var
+  Item: PItem;
+begin
+  Item := FirstSlotItem(SelectedCharacter);
+  if Item <> nil then
+    if Item^.Plus > 0 then
+      DamageAmount := DamageAmount shr 1;
+end;
 { ovl12:2B20: retf 10: 10 bytes of parameters; 4 bytes of locals }
 {@stub} procedure ovl12_e101(Who: PCharacter; Affect: PAffect; Mode: Byte); begin end;
 { ovl12:2B63: frame not read }
