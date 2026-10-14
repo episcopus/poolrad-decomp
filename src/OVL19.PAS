@@ -260,7 +260,7 @@ begin
     if Integer(Choice) < 0 then
     begin
       DrawWindow(1, 1, $26, 1, 0, 0, '');
-      res12_fn_1816(SelectedCharacter, 1, 1, 1);
+      DrawCharacterName(SelectedCharacter, 1, 1, 1);
       DrawTextAt(Length(SelectedCharacter^.Name) + 4, TitleRow,
         TitleColor, 'Spells ' + ModeDescription);
     end;

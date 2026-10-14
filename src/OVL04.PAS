@@ -92,13 +92,13 @@ const
   NoAnimation = 0;
   ClearTextBeforeMessage = 1;    { ShowPagedText's ClearFirst parameter }
 
-{ ovl04:0013. Shows Reason for the selected character (res12_fn_16EC, e.g. "is not blind.") and
-  asks "cast cure anyway: "; returns the key (Yes or not). res12_fn_17E3 clears the prompt. }
+{ ovl04:0013. Shows Reason for the selected character (ShowCharacterMessage, e.g. "is not blind.") and
+  asks "cast cure anyway: "; returns the key (Yes or not). ClearCharacterMessage clears the prompt. }
 function AskCastAnyway(Reason: string): Char;
 begin
-  res12_fn_16EC(SelectedCharacter, Reason, 0, 0);
+  ShowCharacterMessage(SelectedCharacter, Reason, 0, 0);
   AskCastAnyway := AskYesNo('cast cure anyway: ', PromptTitleColor, PromptWordColor, PromptHotColor);
-  res12_fn_17E3;
+  ClearCharacterMessage;
 end;
 
 { ovl04:00BF. Tells what Service costs ("<service> will only cost <price> gold pieces."), asks
@@ -140,15 +140,15 @@ begin
       end
       else
       begin
-        res12_fn_1693('Not enough money.');
+        ShowFlashMessage('Not enough money.');
         Answer := No;
       end;
     end;
   end;
   if Answer = Yes then
   begin
-    res12_fn_17E3;
-    res12_fn_16EC(SelectedCharacter, 'is cured.', 0, 1);
+    ClearCharacterMessage;
+    ShowCharacterMessage(SelectedCharacter, 'is cured.', 0, 1);
   end;
   ChargeForCure := Answer;
 end;

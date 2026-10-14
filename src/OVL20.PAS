@@ -274,7 +274,7 @@ begin
     DrawTextAt(RestMessageColumn, RestMessageRow, RestTextColour, 'The Whole Party Is Healed');
     if Healed then DrawPartyRoster(SelectedCharacter);
     DelayByGameSpeed;
-    res12_fn_17E3;
+    ClearCharacterMessage;
     ds6DD8 := 0;
   end;
 end;
@@ -477,7 +477,7 @@ begin
           ds49FB := 0;
           if RollDice(RestInterruptDice, RestInterruptSides) <= ds49D6^[$2D3] then
           begin
-            res12_fn_17E3;
+            ClearCharacterMessage;
             ShowRestTime(0);
             DrawTextAt(RestMessageColumn, RestMessageRow, RestMessageColour,
                        'The Party is rudely interrupted!');

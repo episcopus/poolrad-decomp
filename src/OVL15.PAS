@@ -58,7 +58,7 @@ const
   LongRestHours = 6;
   LongRestLevel = 2;
   MinutesPerLevel = 15;
-  { Colours of the prompt line (ReadPromptChoice, AskYesNo) and of the messages (res12_fn_16EC). }
+  { Colours of the prompt line (ReadPromptChoice, AskYesNo) and of the messages (ShowCharacterMessage). }
   TitleColor = 13;
   WordColor = 10;
   HotColor = 15;
@@ -217,7 +217,7 @@ end;
   when the game variable VarNoCasting forbids casting here (casting only: 'cannot cast spells in
   this area'), nor when the character's Status is 1 or Flag10D is 0 ('is in no condition to cast
   any spells', 'memorize spells' or 'scribe any scrolls'). The refusal is shown on the message line
-  (res12_fn_16EC). }
+  (ShowCharacterMessage). }
 function MayUseMagic(Action: Byte): Boolean;
 var
   Reason: String40;
@@ -239,7 +239,7 @@ begin
   else
   begin
     MayUseMagic := False;
-    res12_fn_16EC(SelectedCharacter, Reason, MessageColor, 1);
+    ShowCharacterMessage(SelectedCharacter, Reason, MessageColor, 1);
   end;
 end;
 { ovl15:04A1. The Cast command: when MayUseMagic allows it, repeatedly lists SelectedCharacter's memorized
@@ -268,7 +268,7 @@ begin
       else if Listed <> 0 then
         Redraw := 1
       else
-        res12_fn_16EC(SelectedCharacter, 'has no spells memorized', MessageColor, 1);
+        ShowCharacterMessage(SelectedCharacter, 'has no spells memorized', MessageColor, 1);
     until Spell = 0;
   if Redraw <> 0 then res12_fn_27D9;
 end;
@@ -303,7 +303,7 @@ begin
   end;
   if Any then
   begin
-    res12_fn_16EC(SelectedCharacter, 'can memorize:', MessageColor, 0);
+    ShowCharacterMessage(SelectedCharacter, 'can memorize:', MessageColor, 0);
     Row := 3;
     for SpellClass := ClassCleric to ClassMage do
       if HasClass[SpellClass] then
@@ -394,7 +394,7 @@ begin
   begin
     Done := not ShowSpellSlotsLeft;
     if Done then
-      res12_fn_16EC(SelectedCharacter, 'cannot memorize any spells', MessageColor, 1)
+      ShowCharacterMessage(SelectedCharacter, 'cannot memorize any spells', MessageColor, 1)
     else
     begin
       Spell := ChooseSpellFromList(ListLearnable, 2, Choice, Listed);
@@ -457,7 +457,7 @@ begin
     begin
       Done := True;
       if Listed = 0 then
-        res12_fn_16EC(SelectedCharacter, 'has no copyable scrolls', MessageColor, 1)
+        ShowCharacterMessage(SelectedCharacter, 'has no copyable scrolls', MessageColor, 1)
       else
         Redraw := 1;
     end
@@ -465,7 +465,7 @@ begin
     begin
       Redraw := 1;
       if SelectedCharacter^.KnownSpells[Spell] <> 0 then
-        res12_fn_1693('You already know that spell')
+        ShowFlashMessage('You already know that spell')
       else
       begin
         Item := SelectedCharacter^.Items;
@@ -476,7 +476,7 @@ begin
             for I := 1 to ScrollSpells do
               if (Item^.Affects[I] > SpellMask) and ((Item^.Affects[I] and SpellMask) = Spell) then
               begin
-                res12_fn_1693('You are already scibing that spell');
+                ShowFlashMessage('You are already scibing that spell');
                 Found := True;
               end;
           Item := Item^.Next;
@@ -500,7 +500,7 @@ begin
             end;
           end
           else
-            res12_fn_1693('You can not scribe that spell.');
+            ShowFlashMessage('You can not scribe that spell.');
       end;
     end;
   end;
@@ -748,9 +748,9 @@ begin
     begin
       Picked := not Picked;
       if Picked then
-        res12_fn_16EC(SelectedCharacter, 'has been selected', MessageColor, 0)
+        ShowCharacterMessage(SelectedCharacter, 'has been selected', MessageColor, 0)
       else
-        res12_fn_17E3;
+        ClearCharacterMessage;
     end;
   end;
 end;
@@ -773,19 +773,19 @@ begin
   end
   else
   begin
-    res12_fn_16EC(SelectedCharacter, 'will be gone', MessageColor, 0);
+    ShowCharacterMessage(SelectedCharacter, 'will be gone', MessageColor, 0);
     if AskYesNo('Drop from party? ', AskColor, WordColor, HotColor) = Yes then
     begin
       if SelectedCharacter^.Flag10D <> 0 then
-        res12_fn_16EC(SelectedCharacter, 'bids you farewell', MessageColor, 1)
+        ShowCharacterMessage(SelectedCharacter, 'bids you farewell', MessageColor, 1)
       else
-        res12_fn_16EC(SelectedCharacter, 'is dumped in a ditch', MessageColor, 1);
+        ShowCharacterMessage(SelectedCharacter, 'is dumped in a ditch', MessageColor, 1);
       ovl16_e2(False, True);
       ClearWindow($11, 1, $26, $0B);
       DrawPartyRoster(SelectedCharacter);
     end
     else
-      res12_fn_16EC(SelectedCharacter, 'Breathes A sigh of relief', MessageColor, 1);
+      ShowCharacterMessage(SelectedCharacter, 'Breathes A sigh of relief', MessageColor, 1);
   end;
 end;
 { ovl15:1A97. The Speed command: shows 'Game Speed = n (0=fastest 9=slowest)' and the choices
@@ -818,7 +818,7 @@ begin
         'S': Inc(GameSpeed);
       end;
   until Key in [KeyNone, 'E'];
-  res12_fn_17E3;
+  ClearCharacterMessage;
 end;
 { ovl15:1C59. The camp's Alter menu 'Order Drop Speed Icon Pics Exit' (AlterMenuText): O
   PartyOrderMenu, D DropPartyMember, S CampSpeedMenu, I ovl16_e3 and a redraw, P the submenu that
@@ -915,7 +915,7 @@ begin
   ds6DB5 := nil;
   ds49F3 := SavedMode;
   res12_fn_290B;
-  res12_fn_17E3;
+  ClearCharacterMessage;
   ClearPromptLine;
 end;
 

@@ -139,7 +139,7 @@ var
 begin
   if WouldOverload(SelectedCharacter, Amount, Room) then
   begin
-    res12_fn_1693('Overloaded.  Money will be put in Pool.');
+    ShowFlashMessage('Overloaded.  Money will be put in Pool.');
     Inc(SelectedCharacter^.Money[PlatinumCoin], Room);
     AddCarriedWeight(SelectedCharacter, Room);
     PooledMoney[PlatinumCoin] := Amount + PooledMoney[PlatinumCoin] - Room;
@@ -217,7 +217,7 @@ begin
     AddCarriedWeight(Giver, Amount);
   end
   else
-    res12_fn_1693('Overloaded');
+    ShowFlashMessage('Overloaded');
 end;
 { ovl21:0508. The Pool command: every player-run member (B84 0 or $B3) puts all seven kinds of
   his money into the pool (PooledMoney) and loses its weight; sets MoneyInPool (money in the pool). }
@@ -365,7 +365,7 @@ var
   Room: Word;
 begin
   if WouldOverload(Who, Amount, Room) then
-    res12_fn_1693('Overloaded')
+    ShowFlashMessage('Overloaded')
   else
   begin
     if Amount > PooledMoney[Kind] then
@@ -782,7 +782,7 @@ begin
   Redraw := 1;
   if (SelectedCharacter^.Money[GemsKind] = 0) and (SelectedCharacter^.Money[JewelryKind] = 0) then
   begin
-    res12_fn_1693('No Gems or Jewelry');
+    ShowFlashMessage('No Gems or Jewelry');
     Redraw := 0;
     Exit;
   end;
@@ -807,7 +807,7 @@ begin
         JewelryText := JewelryText + ' pieces of Jewelry';
       end;
       ClearRect(1, 1, $26, $16);
-      res12_fn_1816(SelectedCharacter, 1, 1, 0);
+      DrawCharacterName(SelectedCharacter, 1, 1, 0);
       DrawTextAt(1, 7, White, 'You have a fine collection of:');
       DrawTextAt(1, 9, White, GemsText);
       DrawTextAt(1, $0A, White, JewelryText);

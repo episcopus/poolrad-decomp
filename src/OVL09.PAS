@@ -47,7 +47,7 @@ const
   step pattern (+$15) when the current one is 1..4 and a d4 comes up 1: a d8 gives the new
   pattern, an 8 rerolls a d2 + 4, anything else a d4. Morale runs when no key was pressed; a
   panicking character (+$14 set) that is not stuck (+$10 0) shows 'flees in panic' (unit offset 0)
-  through res12_fn_16EC. Then, while the turn is not over: use a magic item (UseMagicItem, ending
+  through ShowCharacterMessage. Then, while the turn is not over: use a magic item (UseMagicItem, ending
   through res12_fn_2637), finish a pending spell (Combat^.PendingSpell; ovl22_e5, end of turn),
   take the level-0 turn (ovl09_fn_0203, end of turn), cast a memorized spell (CastMemorizedSpell,
   Done := 1), use the best item (UseBestItem) and read keys again (HandleCombatKey); with Done
@@ -60,7 +60,7 @@ var
 begin
   Done := Ord(HandleCombatKey(Who));
   ClearPromptLine;
-  res12_fn_17E3;
+  ClearCharacterMessage;
   if Who^.Flag10D = 0 then
     Done := res12_fn_2637(Who);
   Step := PByteArray(Who^.Combat)^[$15];
@@ -76,7 +76,7 @@ begin
   if Done = 0 then
     Done := CheckMorale(Who);
   if (PByteArray(Who^.Combat)^[$14] <> 0) and (PByteArray(Who^.Combat)^[$10] = 0) then
-    res12_fn_16EC(Who, 'flees in panic', $0A, 1);
+    ShowCharacterMessage(Who, 'flees in panic', $0A, 1);
   if Done <> 0 then
     Exit;
   if UseMagicItem(Who) then
@@ -607,11 +607,11 @@ Finish:
 end;
 { ovl09:0F4F. Purpose unknown: returns res12_fn_2637(Who) when IsHelpless(Who) or
   res12_fn_2E03(Who) is true or the combatant's Initiative is 0, else res12_fn_2686(Who).
-  Called by QuickTurn (ovl09:01EE) and from the 07F2 and 0B3C regions. res12_fn_17E3 runs first
+  Called by QuickTurn (ovl09:01EE) and from the 07F2 and 0B3C regions. ClearCharacterMessage runs first
   (parameterless). }
 function ovl09_fn_0F4F(Who: PCharacter): Byte;
 begin
-  res12_fn_17E3;
+  ClearCharacterMessage;
   if IsHelpless(Who) or res12_fn_2E03(Who) or (Who^.Combat^.Initiative = 0) then
     ovl09_fn_0F4F := res12_fn_2637(Who)
   else
@@ -642,9 +642,9 @@ begin
         begin
           ds6E30 := not ds6E30;
           if ds6E30 then
-            res12_fn_1693('Magic On')
+            ShowFlashMessage('Magic On')
           else
-            res12_fn_1693('Magic Off');
+            ShowFlashMessage('Magic Off');
         end;
       ' ':
         begin
@@ -672,7 +672,7 @@ end;
 { ovl09:10D7. The morale gauntlet for the computer's turn (called by QuickTurn when
   HandleCombatKey is false): clears the combat byte at +$14, then walks a chain of early exits
   to the end (result 0). A nonzero Combat^.Pad10 forces flight ('is forced to flee' through
-  res12_fn_16EC); B84 at or below $7F ends it; otherwise ds6825 ((B84 and $7F) * 2, zeroed above
+  ShowCharacterMessage); B84 at or below $7F ends it; otherwise ds6825 ((B84 and $7F) * 2, zeroed above
   $66) is compared against two hit-point percentages (Who's Flag11B loss and game word 710),
   each failure ending it. Survivors with a good ovl13_e20 roll against half the ovl13_e2 roll
   and Intelligence above 5 offer surrender ('Surrenders' through DropCombatant) and return
@@ -691,7 +691,7 @@ begin
   if Who^.Combat^.Pad10 <> 0 then
   begin
     PByteArray(Who^.Combat)^[$14] := 1;
-    res12_fn_16EC(Who, 'is forced to flee', $0A, 1);
+    ShowCharacterMessage(Who, 'is forced to flee', $0A, 1);
   end
   else if Who^.B84 <= $7F then
   else

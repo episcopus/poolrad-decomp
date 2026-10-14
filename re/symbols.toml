@@ -16726,12 +16726,12 @@ id = "00BA:1509"
 unit = "res12"
 addr = "00BA:1509"
 size = 238
-name = "res12_fn_1509"
-signature = "procedure res12_fn_1509(Who: Pointer; Item: Pointer)"
+name = "RemoveInventoryItem"
+signature = "procedure RemoveInventoryItem(Who: PCharacter; Item: PItem)"
 c_name = "res12_fn_1509"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_1509 (00BA:1509 unlinks Item from Who^.Items (+$C8) and FreeMems it (63 bytes), reporting 'Nil Item pointer...' or 'Tried to Lose item & couldn't find it!' through ShowMessageLine; the head case re-points Who^.Items at Item^.Next, then the record is always unlinked and freed. Called by ovl07 LoseItems for every lost item and by ovl13, ovl19 and ovl22 when an item is consumed.); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16739,12 +16739,12 @@ id = "00BA:15F7"
 unit = "res12"
 addr = "00BA:15F7"
 size = 156
-name = "res12_fn_15F7"
-signature = ""
+name = "AddItemCopy"
+signature = "procedure AddItemCopy(Who: PCharacter; Item: PItem)"
 c_name = "res12_fn_15F7"
 level = "none"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_15F7 (00BA:15F7 GetMems an item record (63 bytes), Move-copies Item into it, clears its Next (+$2A) and appends it to the end of Who^.Items (+$C8); an empty list keeps the copy as the head. Gives a character a copy of an item.); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16752,12 +16752,12 @@ id = "00BA:1693"
 unit = "res12"
 addr = "00BA:1693"
 size = 89
-name = "res12_fn_1693"
-signature = "procedure res12_fn_1693(Text: String40)"
+name = "ShowFlashMessage"
+signature = "procedure ShowFlashMessage(Text: String40)"
 c_name = "res12_fn_1693"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_1693 (00BA:1693 clears the bottom row, draws Text green at (0,24), delays via DelayByGameSpeed and clears the row again; callers pass 'Not enough money.', 'OverLoaded', 'Magic On'); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16765,12 +16765,12 @@ id = "00BA:16EC"
 unit = "res12"
 addr = "00BA:16EC"
 size = 247
-name = "res12_fn_16EC"
-signature = "procedure res12_fn_16EC(Who: Pointer; Text: string; A, B: Byte)"
+name = "ShowCharacterMessage"
+signature = "procedure ShowCharacterMessage(Who: PCharacter; Text: string; Row, Wait: Byte)"
 c_name = "res12_fn_16EC"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_16EC (00BA:16EC draws Who's name through DrawCharacterName and the paged Text through ShowPagedText in a message window: top row Row in the combat view (ds49F3 = 5), else rows $11/$12 (ds6DDA picks) with a frame; when Wait is set it delays and clears the window through ClearCharacterMessage. Callers pass 'is bandaged', 'flees in panic', 'is cured'.; auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16778,12 +16778,12 @@ id = "00BA:17E3"
 unit = "res12"
 addr = "00BA:17E3"
 size = 51
-name = "res12_fn_17E3"
-signature = "procedure res12_fn_17E3"
+name = "ClearCharacterMessage"
+signature = "procedure ClearCharacterMessage"
 c_name = "res12_fn_17E3"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_17E3 (00BA:17E3 clears the message window ShowCharacterMessage wrote in: box ($17,$A)-($26,$15) in the combat view (ds49F3 = 5), else box (1,$12)-($26,$16). Called by ShowCharacterMessage's Wait path and by the camp, temple and resting screens.); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16791,12 +16791,12 @@ id = "00BA:1816"
 unit = "res12"
 addr = "00BA:1816"
 size = 65
-name = "res12_fn_1816"
-signature = "procedure res12_fn_1816(Who: Pointer; Col, Row, Mode: Byte)"
+name = "DrawCharacterName"
+signature = "procedure DrawCharacterName(Who: PCharacter; Col, Row, Mode: Byte)"
 c_name = "res12_fn_1816"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_1816 (00BA:1816 draws Who's Name (+0) at (Col,Row) in the colour of its state: LightRed when Flag10D (+$10d) is 0 (no combat), Yellow when Side (+$10e) is 1 (the party), LightCyan otherwise; when Mode is set it appends the literal 's at Col + Length(Name). The map oversize 65 was wrong, the real routine is 124 bytes.); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

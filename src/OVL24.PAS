@@ -529,7 +529,7 @@ begin
   begin
     Index := CombatantIndex(Who);
     ShowCursorOn(Who, 3, 0);
-    res12_fn_16EC(Who, Msg, $A, 1);
+    ShowCharacterMessage(Who, Msg, $A, 1);
     Who^.Flag10D := 0;
     Who^.Status := NewStatus;
     if Who^.Status <> StatusFled then
@@ -582,7 +582,7 @@ begin
   CureAffect := False;
   if res12_fn_2199(Who, AffectId, Affect) then
   begin
-    res12_fn_16EC(Who, 'is Cured', $A, 1);
+    ShowCharacterMessage(Who, 'is Cured', $A, 1);
     RemoveAffect(Who, AffectId, Affect);
     CureAffect := True;
   end;
@@ -695,7 +695,7 @@ begin
       Who^.Combat^.CanCast := 0;
       if Who^.Combat^.PendingSpell > 0 then
       begin
-        res12_fn_16EC(Who, 'lost a spell', $C, 1);
+        ShowCharacterMessage(Who, 'lost a spell', $C, 1);
         ForgetSpell(Who^.Combat^.PendingSpell);
         Who^.Combat^.PendingSpell := 0;
       end;
@@ -707,7 +707,7 @@ begin
         Msg := Msg + ', and is Dying';
       if Who^.Status in [6, 7, 8] then
         Msg := 'is killed';
-      res12_fn_16EC(Who, Msg, GlyphRow + 1, 0);
+      ShowCharacterMessage(Who, Msg, GlyphRow + 1, 0);
       if ds49F3 <> CombatViewMode then
         DelayByGameSpeed
       else
@@ -720,7 +720,7 @@ begin
           DelayByGameSpeed;
       end;
     end;
-    res12_fn_17E3;
+    ClearCharacterMessage;
   end;
 end;
 
@@ -738,7 +738,7 @@ begin
   HookAffectId := AffectId;
   RunAffectHooks(HookApplyAffect, Who);
   if (HookAffectId = 0) or (Saved and (SaveNegates = 1)) then
-    res12_fn_16EC(Who, 'is Unaffected', $A, 1)
+    ShowCharacterMessage(Who, 'is Unaffected', $A, 1)
   else
   begin
     if res12_fn_2199(Who, AffectId, Existing) then
@@ -748,7 +748,7 @@ begin
     if Msg <> '' then
     begin
       res12_fn_1FEB(Who, 1, Msg);
-      res12_fn_17E3;
+      ClearCharacterMessage;
     end;
   end;
 end;
@@ -799,7 +799,7 @@ begin
       Msg := 'stands up and grins'
     else
       Msg := 'gets back up';
-    res12_fn_16EC(Who, Msg, $A, 1);
+    ShowCharacterMessage(Who, Msg, $A, 1);
     res12_fn_23DB;
     ReviveCombatant := True;
   end

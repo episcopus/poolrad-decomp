@@ -44,12 +44,12 @@ function StrengthAttackAdjustment(Who: PCharacter): ShortInt;
 function StrengthDamageAdjustment(Who: PCharacter): ShortInt;
 function StrengthWeightAllowance(Who: PCharacter): Integer;
 procedure ForgetSpell(Spell: Byte);
-procedure res12_fn_1509(Who: Pointer; Item: Pointer);
-procedure res12_fn_15F7;
-procedure res12_fn_1693(Text: String40);
-procedure res12_fn_16EC(Who: Pointer; Text: string; A, B: Byte);
-procedure res12_fn_17E3;
-procedure res12_fn_1816(Who: Pointer; Col, Row, Mode: Byte);
+procedure RemoveInventoryItem(Who: PCharacter; Item: PItem);
+procedure AddItemCopy(Who: PCharacter; Item: PItem);
+procedure ShowFlashMessage(Text: String40);
+procedure ShowCharacterMessage(Who: PCharacter; Text: string; Row, Wait: Byte);
+procedure ClearCharacterMessage;
+procedure DrawCharacterName(Who: PCharacter; Col, Row, Mode: Byte);
 procedure res12_fn_1857;
 procedure res12_fn_187D;
 procedure res12_fn_1892;
@@ -159,9 +159,17 @@ const
   DexBand6Adjust = 6;
   { EGA text colours DrawTextAt draws the character and shop panels in (whitepaper 5.24). }
   Green = $0A;
+  LightCyan = $0B;
+  LightRed = $0C;
   LightMagenta = $0D;
   Yellow = $0E;
   White = $0F;
+  { SizeOf(TMenuLine): the item record GetMem allocates and FreeMem frees in 1509 and 15F7
+    (the original pushes $3f) and ovl05 frees with ItemListSize. }
+  ItemListSize = $3F;
+  { The bottom message line 1509 reports a lost item on and 1693 flashes on. }
+  BottomRow = 24;
+  ScreenLastCol = 39;
 
 { 00BA:0000. Applies the readied weapon to Who's attack values; RecalcCombatValues calls it after it
   has copied the character's base values. With no readied weapon (SlotItems[0], +$CC) it does
@@ -315,7 +323,7 @@ end;
 {@stub} procedure res12_fn_0712; begin end;
 { 00BA:0767. Draws the roster panel the shop and the Temple show (whitepaper 5.24): a
   "Name / AC  HP" header and one line per party member of the list ds5D96. The member Who is
-  drawn white from its Name, every other member through res12_fn_1816. Each line's armour value
+  drawn white from its Name, every other member through DrawCharacterName. Each line's armour value
   (DrawArmourClass) and current hit points (DrawHitPoints) are drawn in one of three columns picked
   by the value's range, and each line is cleared first. The left column is 1 while the shop is
   open (ds49F3 = 0) and $11 otherwise. Globals: ds49F3 (read), ds5D96 (read). }
@@ -341,7 +349,7 @@ begin
     if Member = Who then
       DrawTextAt(Left, Row, White, Member^.Name)
     else
-      res12_fn_1816(Member, Left, Row, 0);
+      DrawCharacterName(Member, Left, Row, 0);
     case Member^.ResistValue of
       0..$32: ValueShift := 1;
       $33..$3C: ValueShift := 2;
@@ -396,7 +404,7 @@ begin
 end;
 
 { 00BA:09E3. Draws the character panel the combat and inventory screens show (whitepaper 5.24): it
-  clears the box ($17,1)-($26,$15), writes the name line through res12_fn_16EC, the "Hitpoints" and
+  clears the box ($17,1)-($26,$15), writes the name line through ShowCharacterMessage, the "Hitpoints" and
   "AC" headings with their values (DrawHitPoints, DrawArmourClass), the readied weapon's paged text
   (res12_fn_0442 then ShowPagedText) when a weapon is readied, and finally the status name
   (StatusNames[Status], +$10c) when the character takes no part in combat (Flag10D = 0), else
@@ -409,7 +417,7 @@ var
 begin
   ClearWindow($17, 1, $26, $15);
   Row := 1;
-  res12_fn_16EC(Who, ' ', Row, 0);
+  ShowCharacterMessage(Who, ' ', Row, 0);
   Inc(Row);
   DrawTextAt($17, Row + 1, Green, 'Hitpoints');
   DrawHitPoints(Who, $21, Row + 1, 0);
@@ -760,18 +768,46 @@ begin
     Inc(I);
   end;
 end;
-{ 00BA:1509: retf 8: 8 bytes of parameters; 44 bytes of locals }
-{@stub} procedure res12_fn_1509(Who: Pointer; Item: Pointer); begin end;
-{ 00BA:15F7: retf 8: 8 bytes of parameters; 8 bytes of locals }
-{@stub} procedure res12_fn_15F7; begin end;
-{ 00BA:1693: retf 4; copies a string[40] value (limit $28). ovl04 passes 'Not enough money.'. }
-{@stub} procedure res12_fn_1693(Text: String40); begin end;
-{ 00BA:16EC: retf 12. ovl04 passes the selected character, a message and two bytes (0, 0 or 0, 1). }
-{@stub} procedure res12_fn_16EC(Who: Pointer; Text: string; A, B: Byte); begin end;
-{ 00BA:17E3: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure res12_fn_17E3; begin end;
-{ 00BA:1816: frame not read }
-{@stub} procedure res12_fn_1816(Who: Pointer; Col, Row, Mode: Byte); begin end;
+{ 00BA:1509. Removes Item from the carried-item list Who^.Items (+$C8) and frees the record:
+  when Item is the head it re-points the head at Item^.Next, otherwise it walks the list for the
+  record whose Next is Item; a nil Item or an Item not on the list only reports through
+  ShowMessageLine. The item is unlinked (Item^.Next := nil) and freed (ItemListSize). Called by
+  ovl07 LoseItems for every lost item, and by ovl13, ovl19 and ovl22 when an item is consumed.
+  Globals: none. }
+procedure RemoveInventoryItem(Who: PCharacter; Item: PItem);
+var
+  Prev: PItem;
+begin
+  if Item = nil then
+    ShowMessageLine(Yellow, 'Nil Item pointer...')
+  else
+  begin
+    Prev := Who^.Items;
+    if Prev = Item then
+      Who^.Items := Item^.Next
+    else
+      while (Prev <> nil) and (Prev^.Next <> Item) do
+        Prev := Prev^.Next;
+    if Prev = nil then
+      ShowMessageLine(Yellow, 'Tried to Lose item & couldn''t find it!')
+    else
+    begin
+      Prev^.Next := Item^.Next;
+      Item^.Next := nil;
+      FreeMem(Item, ItemListSize);
+    end;
+  end;
+end;
+{ 00BA:15F7: implementation pending in this batch }
+{@stub} procedure AddItemCopy(Who: PCharacter; Item: PItem); begin end;
+{ 00BA:1693: implementation pending in this batch }
+{@stub} procedure ShowFlashMessage(Text: String40); begin end;
+{ 00BA:16EC: implementation pending in this batch }
+{@stub} procedure ShowCharacterMessage(Who: PCharacter; Text: string; Row, Wait: Byte); begin end;
+{ 00BA:17E3: implementation pending in this batch }
+{@stub} procedure ClearCharacterMessage; begin end;
+{ 00BA:1816: implementation pending in this batch }
+{@stub} procedure DrawCharacterName(Who: PCharacter; Col, Row, Mode: Byte); begin end;
 { 00BA:1857: frame not read }
 {@stub} procedure res12_fn_1857; begin end;
 { 00BA:187D: retf 10: 10 bytes of parameters; 0 bytes of locals }

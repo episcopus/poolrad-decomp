@@ -1000,7 +1000,7 @@ begin
   Who^.Money[6] := Trunc(Who^.Money[6] * Factor);
 end;
 { ovl07:1DF0. LoseItems: for each item Who carries, rolls d100 and hands the item to
-  res12_fn_1509 when the roll is at most Chance. Chance is lowered for good before each roll by
+  RemoveInventoryItem when the roll is at most Chance. Chance is lowered for good before each roll by
   90 for an item heavier than 255 and by 50 for one heavier than 24 (not below 0), so the lighter
   items after a heavy one keep the lower chance. }
 procedure LoseItems(Chance: Byte; Who: PCharacter);
@@ -1029,7 +1029,7 @@ begin
     Roll := RollDice(1, 100);
     NextItem := Item^.Next;
     if Roll <= Chance then
-      res12_fn_1509(Who, Item);
+      RemoveInventoryItem(Who, Item);
     Item := NextItem;
   end;
 end;

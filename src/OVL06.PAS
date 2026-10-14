@@ -80,7 +80,7 @@ var
 begin
   if WouldOverloadInventory(SelectedCharacter, Item) then
   begin
-    res12_fn_1693('OverLoaded');
+    ShowFlashMessage('OverLoaded');
     Overloaded := 1;
   end
   else
@@ -113,7 +113,7 @@ end;
   (CharacterMoneyValueInGold); if the Price fits it adds the item to the character's items (AddInventoryItem) and,
   when that worked, stores the money less the Price (SetCharacterGold). Otherwise it reads the money pooled
   in the shop (MoneyValueInGold on PooledMoney); if the Price fits it adds the item and stores the pool less the
-  Price (SetPooledGold), else it shows "Not enough Money." (res12_fn_1693). No parameters; side effects:
+  Price (SetPooledGold), else it shows "Not enough Money." (ShowFlashMessage). No parameters; side effects:
   the character's items, the money and the screen.
   QUIRK ovl06:03C7: CharacterMoneyValueInGold returns a LongInt, but Money is a Word, so only AX is kept and a
   character with 65536 or more is compared and charged modulo 65536 (a price can fit when only the
@@ -166,7 +166,7 @@ begin
           end;
         end
         else
-          res12_fn_1693('Not enough Money.');
+          ShowFlashMessage('Not enough Money.');
       end;
     end;
   until Cancelled;

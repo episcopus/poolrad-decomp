@@ -234,9 +234,9 @@ begin
           begin
             ds6E30 := not ds6E30;
             if ds6E30 then
-              res12_fn_1693('Magic On')
+              ShowFlashMessage('Magic On')
             else
-              res12_fn_1693('Magic Off');
+              ShowFlashMessage('Magic Off');
           end;
           ' ':
           begin
@@ -267,7 +267,7 @@ begin
               Done := 1;
             end
             else
-              res12_fn_1693('That doesn''t work');
+              ShowFlashMessage('That doesn''t work');
         end;
         if Done = 0 then
         begin
@@ -339,7 +339,7 @@ begin
     Inc(Index);
     Who := Who^.Next;
   end;
-  if BandageDying(0) <> 0 then res12_fn_1693('Your Teammate is Dying');
+  if BandageDying(0) <> 0 then ShowFlashMessage('Your Teammate is Dying');
   res12_fn_23DB;
   MoveCombatCursor(CombatMap^.ViewX + 3, CombatMap^.ViewY + 3, $FF, 8);
   if (ds6814 = 0) or (ds6815 = 0) then Done := 1;
@@ -411,7 +411,7 @@ begin
           'N': Done := 0;
         end
       else if CombatTiles[Ground].Cost > Who^.Combat^.Moves then
-        res12_fn_1693('Blocked')
+        ShowFlashMessage('Blocked')
       else
       begin
         ovl13_e4(Who, Dir);
@@ -436,7 +436,7 @@ end;
 procedure MeleeAttack(Attacker, Target: PCharacter; var Done: Byte);
 begin
   if res12_fn_2E03(Attacker) and not res12_fn_2E46(Attacker) then
-    res12_fn_1693('Not with that weapon')
+    ShowFlashMessage('Not with that weapon')
   else if ovl13_e16(Attacker, Target) then
   begin
     Attacker^.Combat^.Target := Target;
@@ -487,7 +487,7 @@ begin
 end;
 { ovl08:0FFF. Returns 1 when a party character (Side 0) is dying (StatusDying) and may be
   bandaged (Combat^.NoBody 0), else 0. With DoIt nonzero the first one found is bandaged: Status
-  StatusBandaged, the bleeding count reset and the message is bandaged (res12_fn_16EC). }
+  StatusBandaged, the bleeding count reset and the message is bandaged (ShowCharacterMessage). }
 function BandageDying(DoIt: Byte): Byte;
 var
   Who: PCharacter;
@@ -504,7 +504,7 @@ begin
       begin
         Who^.Status := StatusBandaged;
         Who^.Combat^.DyingRounds := 0;
-        res12_fn_16EC(Who, 'is bandaged', 10, 1);
+        ShowCharacterMessage(Who, 'is bandaged', 10, 1);
         DoIt := 0;
       end;
     end;
