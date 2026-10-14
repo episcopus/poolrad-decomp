@@ -3476,3 +3476,10 @@ kind = "routine"
 why = "ovl12:0233 shows 'is hardier' on Who (res12_fn_16EC), increments Constitution (+$14), and adds to HpMax (+$32) and the current hit points Flag11B (+$11B) the share of HpMax - HpB1 (+$B1) by the class weights of ovl04:0510 (Raise Dead's loss, mirrored); at Constitution 20 it gives affect $3E instead; AffectHandlers frame, entry 7 of ovl12 (auto:entry_7)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e8"
+new = "ShiftAttackToSave"
+kind = "routine"
+why = "ovl12:0377 adds 2 to SaveRoll (DS:6816) and takes 2 from AttackRoll (DS:6822) for SelectedCharacter when its +$A0 (ByteA0) is 2, 5 or 8 (SelectedCharacter DS:5D92); the purpose is not known, the mechanism is the code's; entry 8 of ovl12 (auto:entry_8)"
+date = "2026-10-13"
+

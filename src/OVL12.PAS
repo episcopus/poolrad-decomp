@@ -14,7 +14,7 @@ procedure BoostAttackAgainstTarget(Who: PCharacter; Affect: PAffect; Mode: Byte)
 procedure StartTrainingWithManual(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure BoostFireAttackByTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure TrainConstitution(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e8;
+procedure ShiftAttackToSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e9;
 procedure ovl12_e10;
 procedure ovl12_e11;
@@ -344,8 +344,18 @@ begin
     Inc(Who^.Flag11B, Gain);
   end;
 end;
-{ ovl12:0377: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e8; begin end;
+{ ovl12:0377. Purpose unknown: it moves 2 from the attack roll to the saving throw roll when the selected character's
+  ByteA0 (+$A0 of TCharacter, meaning not known) is 2, 5 or 8: SaveRoll (DS:6816) gains 2 and AttackRoll (DS:6822)
+  loses 2. It has the 10-byte frame of the affect handlers, but reads SelectedCharacter, not its parameters
+  (Who, Affect and Mode are not read). }
+procedure ShiftAttackToSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  if (SelectedCharacter^.ByteA0 = 2) or (SelectedCharacter^.ByteA0 = 5) or (SelectedCharacter^.ByteA0 = 8) then
+  begin
+    Inc(SaveRoll, 2);
+    Dec(AttackRoll, 2);
+  end;
+end;
 { ovl12:03AC: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e9; begin end;
 { ovl12:03E1: retf 10: 10 bytes of parameters; 0 bytes of locals }
