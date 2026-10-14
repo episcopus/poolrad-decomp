@@ -799,6 +799,14 @@ character joins the party.
   for the save disk while the open fails), `BlockWrite`s the 285-byte character, closes it and, after
   `Erase`ing any old file, writes the 63-byte items of `Who^.Items` to `.itm` and the 9-byte affects
   of `Who^.Affects` to `.spc`.
+- **Loading a character** **[V]** (`LoadCharacterFile`, `ovl17:0AEC`; `make match UNIT=ovl17`): the
+  read counterpart of `SaveCharacter`. `UseSaveDir` picks the save disk (the name becomes
+  `SaveDir + MakeDosFileName(name)` and the prompt names SaveDir's drive) or the game disk (the
+  prompt is `InsertDiskPrompts[TileSet] + GameDir's drive + ':'`); `SavedGame` picks `'.sav'` (a saved
+  game) or `'.cha'` (an available character). It `OpenGameFile`s `name + suffix` and `BlockRead`s the
+  285-byte character into `Who^`, clears `Who^.Next`, `.Items`, `.Affects` and `.Combat`, and, when
+  `name.itm` / `name.spc` exist, reads the 63-byte item and 9-byte affect records to end of file into a
+  `GetMem` chain, then flushes the keyboard.
 - **The combat icon picture** **[V]** (`BuildCharacterIcon`, `ovl17:0482`; `MergePictureData`,
   `ovl17:032F`): with 8X8D tile set 3 selected, it loads the selected character's CHEAD picture (the
   name suffixed from `ds08C5[Sel^.Figure[0]]`, block `Sel^.CHeadBlock`) into slot 11 and its CBODY
@@ -809,7 +817,7 @@ character joins the party.
 
 **Boundary note** **[V]** (`make packet UNIT=ovl17`): the map splits several ovl17 routines into
 mid-instruction entries (`ovl17_fn_0818/084A/0865` inside `SaveCharacter`, `ovl17_fn_0B48` inside
-`ovl17_e5`, `ovl17_fn_0F99` inside `ovl17_e6`, `ovl17_fn_0AE5` a literal pool). Each real routine has
+`LoadCharacterFile`, `ovl17_fn_0F99` inside `ovl17_e6`, `ovl17_fn_0AE5` a literal pool). Each real routine has
 one `push bp; mov bp, sp` prologue and one `retf`; the phantom entries share the parent frame. Scan
 for the real prologues before drafting, and let `make match WRITE=1` retire the phantom map entries.
 

@@ -15,9 +15,7 @@ procedure CreateSaveDir;
 procedure MergePictureData(Source, Dest: Pointer);
 procedure BuildCharacterIcon(Recolor: Boolean);
 procedure SaveCharacter(Who: PCharacter; Name: String8);
-procedure ovl17_fn_0AE5;
-procedure ovl17_e5;
-procedure ovl17_fn_0B48;
+procedure LoadCharacterFile(FileName: string; Who: PCharacter; SavedGame: Byte; UseSaveDir: Byte);
 procedure ovl17_e6(Kind: Byte; Who: Pointer);
 procedure ovl17_fn_0F99;
 procedure ovl17_e7;
@@ -302,12 +300,77 @@ begin
     Close(SaveFile);
   end;
 end;
-{ ovl17:0AE5: frame not read }
-{@stub} procedure ovl17_fn_0AE5; begin end;
-{ ovl17:0AEC: frame not read }
-{@stub} procedure ovl17_e5; begin end;
-{ ovl17:0B48: retf 12: 12 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl17_fn_0B48; begin end;
+{ ovl17:0AEC. Loads one character and its item and affect lists from a file. The file lives on the
+  save disk (UseSaveDir: FileName is SaveDir + the DOS-cleaned name, and the prompt names SaveDir's
+  drive) or on the game disk (the prompt is InsertDiskPrompts[TileSet] + GameDir's drive). SavedGame
+  picks the character suffix: '.sav' for a saved game, '.cha' for an available character. It opens
+  FileName + Suffix through OpenGameFile and BlockReads the 285-byte character into Who^, then clears
+  Who's list links (Next, Items, Affects, Combat), and, when FileName.itm / FileName.spc exist, reads
+  the 63-byte item and 9-byte affect lists, each into a GetMem chain that runs to end of file. Reads
+  SaveDir, GameDir, TileSet and InsertDiskPrompts; writes SaveFile, Who^ and the heap; then flushes the
+  keyboard. The read counterpart of SaveCharacter. Called by ovl16_fn_306D and ovl17_e8. }
+procedure LoadCharacterFile(FileName: string; Who: PCharacter; SavedGame: Byte; UseSaveDir: Byte);
+var
+  SaveFile: file;               { the character, item and affect files }
+  ReadCount: Word;              { the record count BlockRead reports }
+  Suffix: string[4];            { '.sav' or '.cha' }
+  Item: PItem;                  { walks Who^.Items while the items are read }
+  Affect: PAffect;              { walks Who^.Affects while the affects are read }
+  DiskPrompt: string[40];       { the "Put save disk in X:" prompt OpenGameFile shows }
+  Status: Byte;                 { the OpenGameFile result (kept, never read) }
+begin
+  if UseSaveDir <> 0 then
+  begin
+    FileName := SaveDir + MakeDosFileName(FileName);
+    DiskPrompt := 'Put save disk in ' + SaveDir[1] + ':';
+  end
+  else
+    DiskPrompt := InsertDiskPrompts[TileSet] + GameDir[1] + ':';
+  if SavedGame <> 0 then
+    Suffix := '.sav'
+  else
+    Suffix := '.cha';
+  Status := OpenGameFile(FileName + Suffix, DiskPrompt, 0, SaveFile);
+  BlockRead(SaveFile, Who^, 285, ReadCount);
+  Close(SaveFile);
+  Who^.Next := nil;
+  Who^.Items := nil;
+  Who^.Affects := nil;
+  Who^.Combat := nil;
+  if FileExists(FileName + '.itm') then
+  begin
+    GetMem(Who^.Items, 63);
+    Item := Who^.Items;
+    Status := OpenGameFile(FileName + '.itm', DiskPrompt, 0, SaveFile);
+    repeat
+      BlockRead(SaveFile, Item^, 63, ReadCount);
+      Item^.Next := nil;
+      if not Eof(SaveFile) then
+      begin
+        GetMem(Item^.Next, 63);
+        Item := Item^.Next;
+      end;
+    until Eof(SaveFile);
+    Close(SaveFile);
+  end;
+  if FileExists(FileName + '.spc') then
+  begin
+    GetMem(Who^.Affects, 9);
+    Affect := Who^.Affects;
+    Status := OpenGameFile(FileName + '.spc', DiskPrompt, 0, SaveFile);
+    repeat
+      BlockRead(SaveFile, Affect^, 9, ReadCount);
+      Affect^.Next := nil;
+      if not Eof(SaveFile) then
+      begin
+        GetMem(Affect^.Next, 9);
+        Affect := Affect^.Next;
+      end;
+    until Eof(SaveFile);
+    Close(SaveFile);
+  end;
+  FlushKeyboard;
+end;
 { ovl17:0EC4: frame not read }
 {@stub} procedure ovl17_e6(Kind: Byte; Who: Pointer); begin end;
 { ovl17:0F99: retf 6: 6 bytes of parameters; 0 bytes of locals }

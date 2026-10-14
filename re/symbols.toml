@@ -8361,7 +8361,7 @@ evidence = ["prologue"]
 id = "ovl17:069E"
 unit = "ovl17"
 addr = "ovl17:069E"
-size = 1062
+size = 1102
 name = "SaveCharacter"
 signature = ""
 c_name = "ovl17_e4"
@@ -8371,43 +8371,17 @@ notes = "renamed from ovl17_e4 (ovl17:069E saves one character to the save disk:
 evidence = ["prologue"]
 
 [[routine]]
-id = "ovl17:0AE5"
-unit = "ovl17"
-addr = "ovl17:0AE5"
-size = 7
-name = "ovl17_fn_0AE5"
-signature = ""
-c_name = "ovl17_fn_0AE5"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
 id = "ovl17:0AEC"
 unit = "ovl17"
 addr = "ovl17:0AEC"
-size = 92
-name = "ovl17_e5"
+size = 940
+name = "LoadCharacterFile"
 signature = ""
 c_name = "ovl17_e5"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl17_e5 (ovl17:0AEC reads one character and its item/affect lists from the save or game disk: it opens FileName + '.sav'/'.cha' through OpenGameFile, BlockReads the 285-byte record into Who^ and reads the .itm (63) and .spc (9) lists to end of file; the read counterpart of SaveCharacter (ovl17:069E); called by ovl16_fn_306D and ovl17_e8); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl17:0B48"
-unit = "ovl17"
-addr = "ovl17:0B48"
-size = 892
-name = "ovl17_fn_0B48"
-signature = ""
-c_name = "ovl17_fn_0B48"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl17:0EC4"
