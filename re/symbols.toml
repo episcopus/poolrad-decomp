@@ -3447,12 +3447,12 @@ id = "ovl12:09C0"
 unit = "ovl12"
 addr = "ovl12:09C0"
 size = 125
-name = "ovl12_e24"
-signature = ""
+name = "ImageAbsorbsHit"
+signature = "procedure ImageAbsorbsHit(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e24"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_24"
+notes = "renamed from ovl12_e24 (ovl12:09C0 is the handler of the images affect $1C, which runs on the damage hook (kind 6, ovl24:02FA, the hook list of ovl24:0000 kinds 5 and 6): when 1d(Data+1) is above 1 it cancels the damage (CancelPendingHook(0)), shows lost an image (res12_fn_16EC, colour 10) and takes one off Data, removing the affect at 0 (RemoveAffect with nil); the message and the Data count support a mirror-image style affect [I]); auto:entry_24"
 evidence = ["prologue"]
 
 [[routine]]

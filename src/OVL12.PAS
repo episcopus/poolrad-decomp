@@ -30,7 +30,7 @@ procedure DieIfPoisoned(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure GiveAffectItem(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure LowerAttackRollByFour(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure BoostAttackVsEightListed(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e24;
+procedure ImageAbsorbsHit(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e25;
 procedure ovl12_e26;
 procedure ovl12_fn_0AE5;
@@ -212,6 +212,7 @@ const
   AffectUnknown0FDuration = 10; { the Duration ovl12:05EB gives affect $0F }
   AffectUnknown18 = $18;        { purpose unknown: the affect SelectedCharacter must have for ds681E to stay 0 (ovl12:0918) }
   AttackPenalty = 4;            { what ovl12:0918 takes off AttackRoll }
+  AffectImages = $1C;           { the images affect: runs on the damage hook (kind 6, ovl24:02FA); Data counts the images [I] }
   MinimumResistance = $39;      { ovl12:064E raises ResistValue (+$111) to at least this (57) }
   ClearDamageValue = $0F;       { ovl12:064E clears DamageAmount when ds681B is this }
   GivenItemType = $14;          { TMenuLine.ItemType of the item the affect gives (ovl12:07E0) }
@@ -646,8 +647,23 @@ begin
       if AttackTarget^.Name = ds0382[I] then
         Inc(AttackRoll);
 end;
-{ ovl12:09C0: retf 10: 10 bytes of parameters; 14 bytes of locals }
-{@stub} procedure ovl12_e24; begin end;
+{ ovl12:09C0. Affect handler of the images affect (AffectImages, $1C; it runs on the damage hook, kind 6,
+  ovl24:02FA; the AffectHandlers shape, Who, Affect and Mode, Mode not read). When a hit is about to land,
+  one image may take it: with 1d(Data+1) (Data counts the images [I]) above 1, ds681B not 0 and ds6820 0,
+  CancelPendingHook(0) drops the damage, Who shows "lost an image" in colour 10 (res12_fn_16EC) and Data goes
+  down by one. When no image is left (Data 0) affect AffectImages is removed. A roll of 1 lets the hit through
+  [I]. }
+procedure ImageAbsorbsHit(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  if (RollDice(1, Affect^.Data + 1) > 1) and (ds681B > 0) and (ds6820 = 0) then
+  begin
+    CancelPendingHook(0);
+    res12_fn_16EC(Who, 'lost an image', $A, 1);
+    Dec(Affect^.Data);
+    if Affect^.Data = 0 then
+      RemoveAffect(Who, AffectImages, nil);
+  end;
+end;
 { ovl12:0A3D: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e25; begin end;
 { ovl12:0A65: frame not read }
