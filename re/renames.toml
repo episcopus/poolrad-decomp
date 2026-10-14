@@ -3400,6 +3400,83 @@ why = "ovl20:0721 draws the 'Rest daYs Hours Mins Inc Dec Exit' menu through Rea
 date = "2026-10-13"
 
 [[rename]]
+old = "ovl17_e1"
+new = "ReadSavedCharacterList"
+kind = "routine"
+why = "ovl17:0010 reads charlist.txt (SaveDir + charlist.txt) and builds a 46-byte menu line per saved character, prefixing a star for a name already in the party list ds5D96; called by ovl16 character menu and ovl17_e4"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl17_e2"
+new = "RewriteSavedCharacterList"
+kind = "routine"
+why = "ovl17:01B8 rewrites the save disk charlist.txt from a saved-character menu list: CreateSaveDir, Rewrite the file (prompting for the save disk while the open fails), WriteLn each list line whose text does not start with a star (party members skipped), Close; called by ovl16 add-character menu and ovl17_e4"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl17_fn_032F"
+new = "MergePictureData"
+kind = "routine"
+why = "ovl17:032F combines two in-memory pictures: ORs Source (the first parameter, ds5E5A slot 11 reference) tail/tile bytes into Dest and ANDs its pixel bytes into Dest, so Source masks Dest; called by ovl17_e3 for the character head and body pictures"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl17_e3"
+new = "BuildCharacterIcon"
+kind = "routine"
+why = "ovl17:0482 loads the selected character's CHEAD (slot 11) and CBODY (its icon slot) pictures, merges the head halves into the body halves with MergePictureData, and optionally recolours the icon from the six Figure nibble pairs through ds3CF5; called by the ovl16 character menus, ovl17_e7 and ovl17_e8"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl17_e4"
+new = "SaveCharacter"
+kind = "routine"
+why = "ovl17:069E saves one character to the save disk: with an empty Name it adds the character's name to charlist.txt and writes SaveDir + DOS-cleaned name + .cha, with a Name it writes SaveDir + Name + .sav; BlockWrites the 285-byte character and the 63-byte items (.itm) and 9-byte affects (.spc) lists; called by ovl16_e1, ovl16_fn_1EA3 and ovl17_e9"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl17_e5"
+new = "LoadCharacterFile"
+kind = "routine"
+why = "ovl17:0AEC reads one character and its item/affect lists from the save or game disk: it opens FileName + '.sav'/'.cha' through OpenGameFile, BlockReads the 285-byte record into Who^ and reads the .itm (63) and .spc (9) lists to end of file; the read counterpart of SaveCharacter (ovl17:069E); called by ovl16_fn_306D and ovl17_e8"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl17_e6"
+new = "LoadMonster"
+kind = "routine"
+why = "ovl17:0EC4 loads a monster: it builds MON<Str(TileSet)>CHA/SPC/ITM.DAX names, LoadDaxBlock block Kind from the poolrad MON<N>CHA/SPC/ITM.DAX archives, Moves the 285-byte record into Who^, clears its list links, builds the Figure descriptor with RollDice(1,6) nibble pairs and copies the 9-byte affects and 63-byte items into GetMem chains; called by ovl07 LoadCharacter and ovl17_e7"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl17_e7"
+new = "AddMonsterToParty"
+kind = "routine"
+why = "ovl17:1262 adds a monster of Kind to the party: it returns at once when the party already holds eight members (ds49D6^[830] > 7), has LoadMonster build the record, gives it a random byte at +AB, picks one of the classes with a positive level (RollDice(1, Count)) and the body/head picture banks from the ds08C5-region tables by Who^.B9E and the roll, then AddPartyMember and BuildCharacterIcon(True); called by ovl03_fn_2B7E"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl17_e11"
+new = "SaveAndExit"
+kind = "routine"
+why = "ovl17:22D5 shows the 'Save and exit Insert disk #N' prompt and, on the S hotkey, saves the game (ovl17_e9) and quits; called by ovl03:0BD1 with the area ECL file name, which gates it"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl17_e9"
+new = "SaveGame"
+kind = "routine"
+why = "ovl17:1D58 prompts for a slot letter and writes the whole game state and every party member to SaveDir + savgam<letter>.dat; called by the heap error handler, MakeCamp, the character menu and SaveAndExit"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl17_e8"
+new = "LoadGame"
+kind = "routine"
+why = "ovl17:1602 loads a saved game from SaveDir + savgam<slot>.dat, restores the game state and the party, rebuilds every member icon and the area view; the counterpart of SaveGame; called by ovl16_e1"
+date = "2026-10-13"
+
+[[rename]]
 old = "res07_fn_0D71"
 new = "DrawPictureItemClipped"
 kind = "routine"
@@ -3412,6 +3489,643 @@ new = "RemapPictureColours"
 kind = "routine"
 why = "0464:1E5C maps the colours of a picture: for each colour index I whose FromMap and ToMap entries differ, every pixel of the picture with palette colour FromMap[I] becomes ToMap[I] (through a scratch copy, adapters 0, 1 and 2; src/RES07.PAS, MATCH); LoadPictureSlot (ovl32) passes the identity map, AnimateAreaDoors (ovl18) and LoadSpriteList (ovl28) pass the door and sprite maps"
 date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_e3"
+new = "ShowAbilityScore"
+kind = "routine"
+why = "called by ovl19_e1 for rows 7..12 (STR..CHA labels, ovl19:004A loop, [bp-5] = 0..5 with Highlight 0); draws the score at offset 10h plus Index of SelectedCharacter; Strength 18 adds the percentile in parentheses (ovl19:0901 code)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_e4"
+new = "ShowCharacterMoney"
+kind = "routine"
+why = "Called by ovl19_e1 (ovl19:004A, near call 050D after the Level line). Lists the Money[0..6] entries of SelectedCharacter (+$88) with their MoneyKindNames (DS:0FFA, ovl21:0DDF) in the window 12..26 x 7..14 (ovl19:050D code)."
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_e2"
+new = "ShowCombatStats"
+kind = "routine"
+why = "Draws the AC, HP, THAC0, Damage, Encumbrance and Movement labels of the sheet (literal strings at ovl19:05BE..05FC, the labels of the combat block), with the values of the selected character. Called by ovl19_e1 (ovl19:03F5) and from ovl16 (ovl16_fn_1DCB, ovl16_fn_2639)."
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_e1"
+new = "ShowCharacterSheet"
+kind = "routine"
+why = "Called by ovl19_e5 (the View command, ovl19:0AB3) and ovl16 (ovl16_fn_0B52, ovl16_fn_1DCB, ovl16_fn_209F). Draws the sheet window with the name, sex, race, age, alignment, class, abilities, levels, experience, combat block, weapon, armor, status and portraits of SelectedCharacter (ovl19:004A)."
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_e5"
+new = "ViewSelectedCharacter"
+kind = "routine"
+why = "the View command: draws the sheet and the View: prompt with Items, Spells, Trade, Drop and Exit; the Temple, the shop and the camp call it for their V key (ovl19:0AB3; whitepaper 5.4, 5.22)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_fn_0D70"
+new = "CanGiveUpItem"
+kind = "routine"
+why = "the Items menu's guard: False for a readied item (Must be unreadied) and for a scroll with a pending scribe the player does not give up (ovl19:0D70; whitepaper 5.22)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_e6"
+new = "RunItemMenu"
+kind = "routine"
+why = "the Items command of the View prompt: the Ready, Use, Trade, Drop, Halve, Join, Sell and Id menu over the carried items (ovl19:0EF8; whitepaper 5.4); called by ViewSelectedCharacter for I and by the Use command (ovl08:031A)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_e7"
+new = "ReadyItem"
+kind = "routine"
+why = "ovl19:14D0 is the Ready action: RunItemMenu's R key (ovl19:0EF8) and the AI's item step (ovl09 calls it on SlotItems[0], SlotItems[1] and its picks). It marks the item Readied and applies its affect (CallAffectHandler, Affects[3] above $7F), or refuses with 'Wrong Class', 'already using <name>' or 'Your hands are full!' (RaceRow[ItemType] rows 0, 1 and 13 and PadB0)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_fn_1734"
+new = "TradeItem"
+kind = "routine"
+why = "ovl19:1734 is the Trade action of RunItemMenu's T key (ovl19:0EF8, after CanGiveUpItem): 'Trade with Whom?' picks the recipient (res12_fn_2C48), the item is added to the recipient (res12_fn_15F7) and taken from SelectedCharacter (res12_fn_1509), or 'Overloaded' is shown when WouldOverloadInventory refuses the recipient"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_fn_17ED"
+new = "HalveItem"
+kind = "routine"
+why = "ovl19:17ED is the Halve action of RunItemMenu's H key (ovl19:0EF8, line H calls it): Count div 2 goes to a new 63-byte record copied from the item (Move, New), that record takes the item's Next, the item keeps the rest of the count, and 'Can''t halve that' is shown when the half is zero"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_fn_189D"
+new = "JoinItem"
+kind = "routine"
+why = "ovl19:189D is the Join action of RunItemMenu's J key (ovl19:0EF8, line J calls it): it adds the counts of the matching stacks of SelectedCharacter (same NameNum, ItemType, Plus, Cursed, Weight, Affects[1] below 2) to Item up to 255, taking each match off the character (res12_fn_1509) and carrying the rest into the next stack"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_e8"
+new = "UseItem"
+kind = "routine"
+why = "ovl19:1A8A is the Use action: RunItemMenu's U key (ovl19:0EF8) and UseMagicItem (ovl09:03E4, the computer's magic-item step) pass it an item; a scroll (ovl22_e6 true) gives its spell by ChooseSpellFromList, an item with Affects[2] gives it directly, and the spell is cast through ovl22_e5 (matched, ovl19:1A8A)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ds6B80"
+new = "UsedScroll"
+kind = "global"
+why = "ds6B80 is the far pointer ovl19:1AB3 stores the item in when ovl22_e6 accepts it (a scroll), before ChooseSpellFromList reads the scroll's spell; no other reader is decompiled yet"
+date = "2026-10-13"
+
+[[rename]]
+old = "ds6DBF"
+new = "ItemAffectUse"
+kind = "global"
+why = "ds6DBF is set (ovl19:1AE7) for an item whose Affects[2] gives the spell, and around the ovl22_e5 cast (ovl19:1BC2..1BE2); the 'uses an item' message follows the flag (ovl19:1B1E); what ovl22_e5 does with it is not known yet"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_fn_1CEE"
+new = "SellItem"
+kind = "routine"
+why = "ovl19:1CEE is the Sell action: RunItemMenu's S key (ovl19:0EF8) after CanGiveUpItem; it shows 'I'll give you <offer> gold pieces for your <item>', asks 'Is It a Deal?' and on Y shows 'Sold!', removes the item (res12_fn_1509) and pays the offer in platinum and gold (matched, ovl19:1CEE)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_fn_1F52"
+new = "IdentifyItem"
+kind = "routine"
+why = "ovl19:1F52 is the Id action of the item menu: RunItemMenu's I key calls it (ovl19:0EF8) and its strings are 'For 200 gold pieces I''ll identify your ' (1EC8), 'Is It a Deal? ' (1EF0), 'Not Enough Money' (1EFF), 'I can''t tell anything new about your ' (1F10) and 'It looks like some sort of ' (1F36); it charges IdentifyPrice 200 gold from the character or the pool and clears TMenuLine.HiddenNames of the item (matched, ovl19:1F52)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_fn_2156"
+new = "TradeMoney"
+kind = "routine"
+why = "ovl19:2156 is the Trade command of the View prompt for money: ViewSelectedCharacter's T key calls it (ovl19:0AB3); it asks 'Trade to?' (res12_fn_2C48), lists the coin kinds under 'Select type of coin' with ChooseFromList, asks 'How much <kind> will you trade? ' (ReadAmount) and moves the money with TransferMoney (ovl21:044C); its list is the one ovl21's TakeMoney builds (matched, ovl19:2156)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ds471A"
+new = "ViewedCharacter"
+kind = "global"
+why = "ds471A is the character the View command was started for: ViewSelectedCharacter stores SelectedCharacter in it (ovl19:0AD1), and the two Trade commands start 'Trade to?' from it and store the recipient in it (ovl19:1734 TradeItem, ovl19:2156 TradeMoney)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_fn_24A7"
+new = "ChooseAndDropMoney"
+kind = "routine"
+why = "the View prompt's D key (ovl19:0AB3 calls it, followed by ShowCharacterMoney) lists the coin kinds SelectedCharacter holds under 'Select type of coin' (ChooseFromList), asks 'How much <kind> will you drop? ' (ReadAmount) and calls DropMoney (ovl21:0A01); ovl19:24A7 is the Drop twin of TradeMoney (ovl19:2156)"
+date = "2026-10-13"
+
+[[rename]]
+old = "RaceRow"
+new = "ItemTable"
+kind = "global"
+why = "the ITEMS file block at DS:5582 (ovl11:05CD, whitepaper 4.3): 129 item rows indexed by ItemType in ovl09, not a race table"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl09_fn_0203"
+new = "TryTurnUndead"
+kind = "routine"
+why = "ovl08 CombatMenu offers Turn (ovl08:0795) when ClassLevels[0] > 0 and Turned = 0, and PlayerTurn's T case runs ovl13_e9 (src/OVL08.PAS:220); the routine tests the same conditions and runs ovl13_e9 with ovl13_e10 agreeing: the computer's Turn action"
+date = "2026-10-13"
+
+[[rename]]
+old = "ScoreTarget"
+new = "ScoreItem"
+kind = "routine"
+why = "its only caller UseBestItem (ovl09:13CA) passes an ITEM (ScoreTarget(Who, PCharacter(Pick))) and the bytes it reads are item fields (+$2E ItemType, +$32 Plus, +$36 Cursed, +$3D/+$3E Affects[2]/[3]); it rates an item for the AI's item step"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_0000"
+new = "ApplyWeaponBonuses"
+kind = "routine"
+why = "applies the readied weapon (SlotItems[0], +CC) to the character's HitAdjust, WeaponAttacks, WeaponDamage and WeaponDamageBonus from the RaceRow row of the weapon's item kind, plus the dexterity (1168) and strength (1282/1325) adjustments and the slot-item pluses; called by res12_fn_0BB8 (make match UNIT=res12, 00BA:0000)"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_01FB"
+new = "SetArmourMovement"
+kind = "routine"
+why = "sets Who's Movement (+11C) from a readied armour item: when RaceRow[item type][0] is 2 (an armour) the item's Weight (+37) picks base movement/9/6 and a magic plus adds 3; called by res12_fn_0BB8 for every readied item (make match UNIT=res12, 00BA:01FB)"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_0282"
+new = "AddReadiedItemBonus"
+kind = "routine"
+why = "accumulates one readied item's bonuses (RaceRow[item type][6] and [0] pick the branch) into the TBonus a res12_fn_0BB8 caller keeps, and adds the item's PlusSave to Who^.SaveBonus (make match UNIT=res12, 00BA:0282)"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_03A0"
+new = "CapMovementByLoad"
+kind = "routine"
+why = "caps Who's Movement (+11C) by the carried weight above the strength allowance (CarriedWeight +102 minus res12_fn_13AB): excess up to 200h keeps it, up to 300h caps at 9, up to 400h at 6, above at 3, and it only falls; called once by res12_fn_0BB8 after the readied-item loop (make match UNIT=res12, 00BA:03A0)"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_0767"
+new = "DrawPartyRoster"
+kind = "routine"
+why = "00BA:0767 draws the party roster panel (Name/AC/HP per member, whitepaper 5.24); called by the shop, temple and inventory screens"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_08EF"
+new = "DrawArmourClass"
+kind = "routine"
+why = "00BA:08EF draws a character's armour-class value Abs(+111h - 60) signed, the value res12_fn_09E3 shows under the AC heading and ovl24 RollBeatsResistance compares a roll against"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_0973"
+new = "DrawHitPoints"
+kind = "routine"
+why = "00BA:0973 draws a character's current hit points (Flag11B +11Bh) in a range colour at (Col,Row); called by res12_fn_0767 and res12_fn_09E3"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_09E3"
+new = "DrawCharacterPanel"
+kind = "routine"
+why = "00BA:09E3 draws the character panel (name, Hitpoints, AC, readied weapon text, status) the combat and inventory screens show, whitepaper 5.24"
+date = "2026-10-13"
+
+[[rename]]
+old = "ds286B"
+new = "HelplessAffects"
+kind = "global"
+why = "res12_fn_0B73 (00BA:0B73) tests entries 1..4 through res12_fn_2199 and DrawCharacterPanel draws '(Helpless)' for a True answer; ovl13:1FC3 compares the same entries with the 16-byte table at DS:3204; entry 0 is never read"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_0B73"
+new = "IsHelpless"
+kind = "routine"
+why = "DrawCharacterPanel (00BA:09E3) draws '(Helpless)' when it returns True and ovl13 skips a combatant it answers True for; it tests the four affects of HelplessAffects (DS:286B) through res12_fn_2199"
+date = "2026-10-13"
+
+[[rename]]
+old = "ds4846"
+new = "ReadiedItemWeight"
+kind = "global"
+why = "res12_fn_0BB8 (00BA:0BB8) resets it to 0, adds each readied item's Weight times Count, and floors the character's CarriedWeight at it when the weight-excluding item (NameNum[1] $BA) is readied (00BA:0F43)"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_0BB8"
+new = "RecalcCombatValues"
+kind = "routine"
+why = "res12_fn_0BB8 (00BA:0BB8) recomputes the character's combat values from the items it carries and has readied; every equipment change and the whole combat call it (ovl03, ovl06, ovl08, ovl09, ovl10, ovl12, ovl13, ovl16, ovl19, ovl21, ovl24)"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_1037"
+new = "ByteToText"
+kind = "routine"
+why = "res12_fn_1037 (00BA:1037) returns the decimal text of the byte it is given through Str; DrawArmourClass, DrawHitPoints and ovl20's TwoDigitText use it"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_1073"
+new = "WordToText"
+kind = "routine"
+why = "res12_fn_1073 (00BA:1073) returns the decimal text of the word it is given through Str, the word twin of ByteToText; the shops and the Temple put prices and amounts into messages with it"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_10AD"
+new = "LongIntToText"
+kind = "routine"
+why = "res12_fn_10AD (00BA:10AD) returns the decimal text of the LongInt it is given through Str, the LongInt twin of ByteToText and WordToText"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_10E6"
+new = "DexterityAdjustment"
+kind = "routine"
+why = "res12_fn_10E6 (00BA:10E6) maps Who's dexterity (+0x13) to its AD&D reaction/defence adjustment (1..3 gives -4, 4..6 dexterity-7, 15..18 dexterity-14, 19..25 grows to 6); RecalcCombatValues sums it into the character's combat value"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_1168"
+new = "DexterityAttackAdjustment"
+kind = "routine"
+why = "00BA:1168: ApplyWeaponBonuses (00BA:0000) adds it to Who^.HitAdjust for a weapon whose RaceRow attack flags have bit 2 (WeaponFlagDexToHit); the sibling DexterityAdjustment (00BA:10E6) is the defensive one summed into ResistValue. Both map Dexterity (+0x13)."
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_11EA"
+new = "StrengthRowIndex"
+kind = "routine"
+why = "00BA:11EA: maps Strength (+0x10) plus the exceptional StrengthPercent (+0x16) to a 0..30 row of the strength table (strength 18 + percent bands become 18..23, 19..25 become 24..30); the only callers, res12_fn_1282, res12_fn_1325 and res12_fn_13AB, look up reaction, damage and weight allowances with it."
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_1282"
+new = "StrengthAttackAdjustment"
+kind = "routine"
+why = "00BA:1282: the strength reaction/attack adjustment; ApplyWeaponBonuses (00BA:0000) and RecalcCombatValues (00BA:0BB8) add it to Who^.HitAdjust (the to-hit value) for WeaponFlagStrength, and it is 0 unless Who^.StrengthBonusFlag (+0xAA) is nonzero."
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_1325"
+new = "StrengthDamageAdjustment"
+kind = "routine"
+why = "00BA:1325: the strength damage adjustment; ApplyWeaponBonuses (00BA:0000) and RecalcCombatValues (00BA:0BB8) add it to Who^.WeaponDamageBonus[1] for WeaponFlagStrength, and it is 0 unless Who^.StrengthBonusFlag (+0xAA) is nonzero."
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_13AB"
+new = "StrengthWeightAllowance"
+kind = "routine"
+why = "00BA:13AB: returns the strength weight allowance in coins (StrengthRowIndex row -> coins); CapMovementByLoad (00BA:03A0) subtracts it from Who^.CarriedWeight and ovl21's CarryLimit adds 1500 to it."
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_148B"
+new = "ForgetSpell"
+kind = "routine"
+why = "00BA:148B: clears the first memorized spell (SelectedCharacter^.Spells, +0x17) equal to Spell; DealDamage (ovl24:1344) calls it when a victim loses a pending spell, ovl13:02F9 and ovl22:0C20 also call it."
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_1509"
+new = "RemoveInventoryItem"
+kind = "routine"
+why = "00BA:1509 unlinks Item from Who^.Items and FreeMems it, reporting 'Nil Item pointer...' or 'Tried to Lose item & couldn't find it!'; called by ovl07 LoseItems for every lost item"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_15F7"
+new = "AddItemCopy"
+kind = "routine"
+why = "00BA:15F7 GetMems 63 bytes, Move-copies Item into it, clears its Next and appends it to Who^.Items; gives a character a copy of an item"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_1693"
+new = "ShowFlashMessage"
+kind = "routine"
+why = "00BA:1693 clears the bottom row, draws Text green at (0,24), delays via DelayByGameSpeed and clears the row again; callers pass 'Not enough money.', 'OverLoaded', 'Magic On'"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_16EC"
+new = "ShowCharacterMessage"
+kind = "routine"
+why = "00BA:16EC draws Who's name (1816) and paged Text in a message window (top Row in view mode 5, else fixed rows /), and on Wait delays and clears it (17E3); callers pass 'is bandaged', 'flees in panic', 'is cured'"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_17E3"
+new = "ClearCharacterMessage"
+kind = "routine"
+why = "00BA:17E3 clears the message window 16EC wrote in (view mode 5: (,)-(,); else (1,)-(,))"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_1816"
+new = "DrawCharacterName"
+kind = "routine"
+why = "00BA:1816 draws Who's Name at (Col,Row) in the state colour (LightRed no combat, Yellow party, LightCyan other) and appends '\\''s when Mode is set"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_1892"
+new = "CopyPictureItem"
+kind = "routine"
+why = "00BA:1892 copies item 0 of a source picture ds5E5A[PicIndex].Pics[Half] into item Row of the combat picture ds6E36 (ByteSize bytes at +17 and the pixel buffer at +13), mirroring through a temporary when Mirror is set; called in a loop by res12_fn_19DE and by ovl13"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_19DE"
+new = "DrawCombatIcon"
+kind = "routine"
+why = "00BA:19DE composes four items of the combat picture ds6E36 from the two halves of the icon slot ds5E5A[PicIndex] by calling CopyPictureItem four times (Half 0,0,1,1; Row 0,1,2,3; Mirror 0,1,1,0); called by ovl12, ovl13 and ovl22"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_1A29"
+new = "WalkCombatLine"
+kind = "routine"
+why = "00BA:1A29 walks the Bresenham line from cell (X1,Y1) to (X2,Y2) between combat cells (SetupLine/StepLine on the 3x-scaled cells), then animates the combat cursor along it: it draws the combat picture ds6E36 onto DrawBuf with res07_fn_0D71, flushes and delays, steps by DirStepX/DirStepY and keeps MoveCombatCursor on the cell; called by ovl12, ovl13 and ovl22 (aiming and movement)"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_1FEB"
+new = "ShowHitMessage"
+kind = "routine"
+why = "00BA:1FEB shows a per-character combat message and flashes the character's icon (DrawCombatIcon $16/$17), plays a sound and animates over the character's view cell; DealDamage calls it with Flag 0 and ApplyAffect with Flag 1"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_2199"
+new = "HasAffect"
+kind = "routine"
+why = "00BA:2199 returns whether AffectId is on Who's affect list and leaves the matching TAffect in the caller's Affect (callers read it as a question: if HasAffect(...) then)"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_2228"
+new = "ApplyDamage"
+kind = "routine"
+why = "00BA:2228 applies Damage hit points to Who, updates its health status (dead/dying/unconscious/standing) and drops it from combat when it falls; DealDamage, DamageWithMessage and ovl13 call it with a damage amount"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_234A"
+new = "ShowHealResult"
+kind = "routine"
+why = "00BA:234A shows Who as 'is fully healed' when its hit points equal HpMax and 'is partially healed' otherwise, then redraws the roster outside the combat view; ovl12 and ovl22 (healing and training) call it"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_23B7"
+new = "OpposingSide"
+kind = "routine"
+why = "00BA:23B7 returns the side opposite Who's Side (1 for a party member, 0 for a monster); the AI indexes ds6814Sides with it and ShortInt(res12_fn_23B7(Who)) counts Who's enemies"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_23DB"
+new = "RecountCombatSides"
+kind = "routine"
+why = "00BA:23DB clears the two per-side counts ds6814Sides and recounts them by walking the character list ds5D96, adding one per member with Flag10D set to its side's count; RunCombat and EndCombatRound call it each round"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_2433"
+new = "CollectEnemiesInRange"
+kind = "routine"
+why = "00BA:2433 filters the ovl30 ScanTargets table to the combatants on the side opposite Who (OpposingSide) within Range steps and writes their combatant indexes to ds6DE4; ovl09:02EB and 0B3C use the count and that list as Who's enemies in range"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_255B"
+new = "DistanceToTarget"
+kind = "routine"
+why = "00BA:255B scans from Who with the WalkLine gate open and returns ds6718[I].Key shr 1 for the found Target, the fewest walk steps halved; ovl09:0B3C tests it = 1 as melee range and uses it to decide whether Who can attack Target"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_2637"
+new = "EndCombatTurn"
+kind = "routine"
+why = "00BA:2637 clears the pending spell, initiative, guard byte and movement left of Who's combat state and returns 1; ovl08/ovl09/ovl13 call it on every path that ends a combatant's turn (Quit, self-end checks, AI turn end)"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_2686"
+new = "GuardTurn"
+kind = "routine"
+why = "00BA:2686 calls EndCombatTurn(Who), sets the combat guard byte B7 (+7) to 1 and flashes 'Guarding'; ovl08:0E45 binds it to the Guard menu key and ovl09_fn_0F4F uses it as the AI's fallback turn"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_26C2"
+new = "SpellCasterLevel"
+kind = "routine"
+why = "00BA:26C2 maps a spell's SpellTable class (byte 0) to the selected character's level in that class (ClassLevels cleric 0, magic-user 5), 12 for spell class 2 and a forced 6 when ds6DBF is set; ovl22_e3 multiplies the spell row's +3 byte by it"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_272A"
+new = "DrawViewWindows"
+kind = "routine"
+why = "00BA:272A draws the view's window frames (DrawWindow): the full screen, the bottom text window, the upper-left window and, with Inner set, the inner window; only RedrawView calls it"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_27D9"
+new = "RedrawView"
+kind = "routine"
+why = "00BA:27D9 is the resident view dispatcher: it redraws the whole screen for the current view mode ds49F3 (shop, portrait, camp, area map, area view, loot), called by the shop, Temple, loot, camp and combat menus"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_2B5E"
+new = "DrawWildernessScreen"
+kind = "routine"
+why = "00BA:2B5E draws the wilderness map screen: sets view mode 3, DrawAdventureScreen, ShowAreaView, DrawPartyMarker, DrawLocationLine, DrawPartyRoster; called by ovl14 HandleWildernessKeys"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_2B88"
+new = "DrawCombatScreen"
+kind = "routine"
+why = "00BA:2B88 draws the combat screen windows and positions the cursor (ovl31_e2, two DrawWindow, ClearWindow, MoveCombatCursor); called by StartBattle, PlayerTurn and the combat overlays"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_2C48"
+new = "SelectPartyMember"
+kind = "routine"
+why = "00BA:2C48 loops the party roster with a 'Select' prompt and G/O/O-next/previous/E-return member picker, storing the choice in the caller's Selected; called by ovl03, ovl19 and ovl22"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_290B"
+new = "DrawLocationLine"
+kind = "routine"
+why = "00BA:290B builds and draws the party location line (column,row, facing, hours:minutes, and a camping/search suffix) on row 15 of the side window; called by the camp and wilderness screens"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_2E03"
+new = "IsRangedWeapon"
+kind = "routine"
+why = "00BA:2E03 returns True when Who has a readied weapon (SlotItems[0]) whose RaceRow byte $C (the attack range, ovl09:536) is above 1 (a missile weapon); ovl08 gates the melee attack on it"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_2E46"
+new = "RangedWeaponCanMelee"
+kind = "routine"
+why = "00BA:2E46 returns True when IsRangedWeapon holds and the readied weapon kind's RaceRow attack flags carry both the melee bit $10 and the strength bit $04, i.e. a missile weapon that can also strike in melee; ovl08 uses it to allow the melee attack"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_2E8B"
+new = "ChooseAttackItem"
+kind = "routine"
+why = "00BA:2E8B fills the caller's pointer with the item Who's attack aims with: the readied weapon (SlotItems[0]) when the kind's attack flags have the melee bit $10, else the ammo in slot 11 (+$F8) or slot 12 (+$FC) when bit $08 marks a launcher; returns 1 when an item was aimed or the flags are exactly $A"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_2F57"
+new = "IsMaxClassLevel"
+kind = "routine"
+why = "00BA:2F57 returns True when Who's level in one class (ClassLevels[ClassIndex], +$96) has reached the maximum its race (+$2E) and strength (+$10) allow, so the trainers (ovl22:2D39) must not raise that class level further"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl16_fn_0000"
+new = "FreeCharacter"
+kind = "routine"
+why = "ovl16:0000 frees a character: Combat (+108h, size 16h), the Items list (+C8h, size 3Fh) and the Affects list (+7Fh, size 9), frees the record (size 11Dh) and clears the caller pointer; called by ovl16_e2"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl16_e1"
+new = "RunCharacterMenu"
+kind = "routine"
+why = "ovl16:0161 entry point (called by ovl03:2E10): draws the training-hall window and its 11-function menu at DS:0619 and dispatches C create, D drop, M modify, T train, V view, A add, R remove, L load, S save, B finish, E exit, J the STING cheat"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl16_fn_1F37"
+new = "DropCharacter"
+kind = "routine"
+why = "ovl16:1F37 removes the selected character from the party: it asks AskYesNo 'Drop <name> forever?' and 'Are you sure?', then shows 'bids you farewell' or 'You dump <name> out back' and calls ovl16_e2(False, True); it is the D (Drop) item of the training-hall menu RunCharacterMenu (ovl16:0161), whitepaper 5.8 'Alter'"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl16_fn_209F"
+new = "ModifyCharacter"
+kind = "routine"
+why = "ovl16:209F is the M (Modify) item of the training hall: it refuses an experienced character with '<name> can t be modified.' and lets the player raise/lower the six ability scores and HP with the arrows, Keep (K) or Exit (E); called by RunCharacterMenu (ovl16:0161)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl16_fn_33E7"
+new = "ChooseHeadAndBody"
+kind = "routine"
+why = "ovl16:33E7 shows the selected character's head and body pictures (ShowHeadBodyWindow) and its prompt 'Head Body Keep' cycles HeadBank (+BB) and BodyBank (+BC); the head/body step of the create flow (whitepaper 5.8)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl16_e2"
+new = "RemoveSelectedCharacter"
+kind = "routine"
+why = "ovl16:3291 unlinks SelectedCharacter from the party list ds5D96 (TCharacter.Next +104) and frees its record with FreeCharacter; it lowers the party size ds49D6^[830] unless Uncounted, and frees the CombatIcon picture slot unless FreePicture is false; the removal counterpart of AddPartyMember (ovl17:1446)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl16_fn_306D"
+new = "AddSavedCharacters"
+kind = "routine"
+why = "ovl16:306D is the training hall's Add (A) function (RunCharacterMenu ovl16:0161): its menu 'Add a character: ' / 'Add Exit' lists the saved characters on disk (ReadSavedCharacterList), LoadCharacterFile loads the picked one and AddPartyMember puts it in the party"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl16_fn_34DF"
+new = "DrawIconCell"
+kind = "routine"
+why = "ovl16:34DF fills one icon-editor cell (FillPictureRect over 12 cells x 24 rows from @ds260A into DrawBuf) and draws the two mirrored halves of the character's icon (DrawIcon, indices $19 and $C) at CellCol and CellCol+3; called by the icon editor ovl16_e3"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl16_fn_35BE"
+new = "CopyPictureSlot"
+kind = "routine"
+why = "ovl16:35BE copies one picture slot of DS:5E5A into another (both halves' tile bytes and packed pixel buffers through Move) and, when its third parameter is set, recolours the destination with the selected character's Figure[1..6] colour pairs, the same recolouring BuildCharacterIcon (ovl17:0482) applies"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl16_fn_3F31"
+new = "ConstitutionHitPointAdjustment"
+kind = "routine"
+why = "ovl16:3F31 computes the signed constitution hit-point adjustment shared by the hit-point floor ovl16:3FB3 and the ceiling ovl16:408C: it sums ds408E[Constitution] (the AD&D 1e table: -2 at 3, -1 at 4..6, 0 at 7..14, +1 at 15, +2 at 16..18) over the classes with a level and adds the fighter bonus (ClassMask 2 above constitution 16 and 17); callers ModifyCharacter ovl16:209F use it through 3FB3/408C"
+date = "2026-10-14"
+
+[[rename]]
+old = "ds408E"
+new = "ConstitutionHitPointTable"
+kind = "global"
+why = "DS:408E is the AD&D 1e constitution hit-point adjustment table read by ovl16:3F31 (ConstitutionHitPointAdjustment): signed byte per constitution, -2 at 3, -1 at 4..6, 0 at 7..14, +1 at 15, +2 at 16..18; indexed by TCharacter.Constitution (+0x14), read as a signed byte (tools/re/tp_idioms/ovl16/CONHP.PAS)"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl16_fn_3FB3"
+new = "MinHitPoints"
+kind = "routine"
+why = "ovl16:3FB3 is the floor ModifyCharacter (ovl16:209F) clamps a lowered HpMax to ('if ovl16:3FB3(SelectedCharacter) > HpMax then HpMax := ...'): over the classes with a level it counts the hit dice and totals their levels (one extra for class 4 and 7, whose maximum die is one higher, ovl16:408C), then divides by the class count after adding the constitution adjustment (ConstitutionHitPointAdjustment ovl16:3F31) and never returns below 1; the minimum-roll counterpart of the ceiling ovl16:408C"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl16_fn_408C"
+new = "MaxHitPoints"
+kind = "routine"
+why = "ovl16:408C is the ceiling ModifyCharacter (ovl16:209F) clamps a raised HpMax to: over the classes with a level it totals the level times each class's maximum hit die and divides by the class count after adding the constitution adjustment (ConstitutionHitPointAdjustment ovl16:3F31), never below 1; the maximum-roll counterpart of MinHitPoints ovl16:3FB3"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl16_fn_4235"
+new = "RollHitPoints"
+kind = "routine"
+why = "ovl16:4235 rolls the hit points a level gains: it sums over the classes in ClassBits that the character has a level in one RollDice roll of that class's hit dice (ds08B6 dice of ds08BE sides), with a first-level class raised to two thirds of its die; called by the training hall ovl16:29AE and the create-character run ovl16:1D1E, which divide the sum by the class count"
+date = "2026-10-14"
+
+[[rename]]
+old = "ds08B6"
+new = "ClassHitDiceCount"
+kind = "global"
+why = "ovl16:4235 pushes ds08B6[Class] as RollDice's Count and ds08BE[Class] as its Sides for every class the character has a level in; the image at DS:08B6 holds 1,1,1,1,2,1,1,2 (two dice for ranger and monk)"
+date = "2026-10-14"
+
+[[rename]]
+old = "ds08BE"
+new = "ClassHitDieSides"
+kind = "global"
+why = "ovl16:4235 pushes ds08BE[Class] as RollDice's Sides and raises a first-level roll to (ds08BE[Class] * 2) div 3; the image at DS:08BE holds 8,8,10,10,8,4,6,4 sides (its entry 7 is the first byte of the CHEAD suffix table ds08C5)"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl16_fn_42ED"
+new = "PayGold"
+kind = "routine"
+why = "ovl16:42ED takes Amount gold pieces from Who's money for the training hall (ovl16:29AE calls it with the training cost): it converts the amount to copper, hands coins over from copper up (one more coin than the remainder needs) and gives the overshoot back as change from platinum down; the enum coin kind and Succ/Pred are proven by tools/re/tp_idioms/ovl16/PAYPRB2.PAS"
+date = "2026-10-14"
 
 [[rename]]
 old = "ovl12_fn_0000"
@@ -4006,20 +4720,6 @@ old = "ovl12_e87"
 new = "TurnGaseousAndEscape"
 kind = "routine"
 why = "ovl12:28BF clears the Flag of the affect, shows the cursor on Who (ShowCursorOn, ovl31:1298) and drops Who with Status 3 (fled, ovl05:050D) and the text 'Turns gaseous and escapes' (DropCombatant, ovl24:0F06)"
-date = "2026-10-13"
-
-[[rename]]
-old = "ovl12_e84"
-new = "GiveAffectUnlessFireOrAcid"
-kind = "routine"
-why = "ovl12:27D9 adds affect $66 for RollDice(3, 6) rounds unless DamageKind has the fire bit (1) or the acid bit ($10), POOLVARS DamageKind"
-date = "2026-10-13"
-
-[[rename]]
-old = "ovl12_e86"
-new = "RetryRevivalAtFullHitPoints"
-kind = "routine"
-why = "ovl12:2866 calls ReviveCombatant with Who's HpMax (+$32); when it fails it stores TryAddAffect of affect $66 for 1 round with the Data of Affect, the result never read"
 date = "2026-10-13"
 
 [[rename]]

@@ -6,7 +6,7 @@ unit OVL05;
   computer-run members take their share of the money; ShowBattleResult shows the result and the
   experience; TreasureMenu (View Take Pool Share Detect Exit) hands out the loot, with TakeTreasure,
   TakeLootItems and ChooseLootItem for the items. A destroyed party gets "The END!" instead. }
-{$A-,O+,F+,S-,R-,G-,I-}
+{$A-,O+,F+,S-,R-,G-,I-,L-}
 interface
 uses POOLVARS;
 procedure ComputeBattleExperience(var Xp: LongInt);
@@ -31,7 +31,7 @@ const
   { Nonzero: a duel gives 100 experience per level of the selected character (ovl05:000D), and a
     non-duel battle counts every player-run member as standing (ovl05:058D). Cleared by EndBattle. }
   VarFixedXpBattle = 742;
-  VarPartySize = 830;           { the members; ovl16_e2 decrements it when it removes a counted one }
+  VarPartySize = 830;           { the members; RemoveSelectedCharacter decrements it when it removes a counted one }
   VarAfterBattle1 = 880;        { three words EndBattle clears (ovl05:163C..1652); meaning unknown }
   VarAfterBattle2 = 881;
   VarAfterBattle3 = 882;
@@ -199,7 +199,7 @@ end;
   dead. A won battle computes and awards BattleExperience. A surviving party gets its fled members
   back (Status 0, Flag10D 1), dying ones unconscious, unconscious ones with Flag11B back to okay; a
   fled party (VarBattleOutcome $81) keeps only its fled members, the others leave the list
-  (ovl16_e2). A destroyed party leaves the list entirely and VarPartySize becomes 0. In a duel the
+  (RemoveSelectedCharacter). A destroyed party leaves the list entirely and VarPartySize becomes 0. In a duel the
   duelist (Flag10D 1, okay, not a monster) wins the experience, every okay or dead combatant gets
   Flag10D and the dying become unconscious. }
 procedure SettleBattleOutcome;
@@ -276,7 +276,7 @@ begin
           else
           begin
             SelectedCharacter := Who;
-            ovl16_e2(False, True);
+            RemoveSelectedCharacter(False, True);
           end;
         end;
         Who := Who^.Next;
@@ -291,7 +291,7 @@ begin
         if Who^.Combat^.NoBody <> ExtraCombatant then
         begin
           SelectedCharacter := Who;
-          ovl16_e2(False, True);
+          RemoveSelectedCharacter(False, True);
         end
         else
           Stop := True;
@@ -395,7 +395,7 @@ end;
 { ovl05:0C06. Lets the player take items from the loot list ds6810 until another key than Take or
   Enter is pressed or the list is empty: the chosen item goes to SelectedCharacter
   (AddInventoryItem) and, unless the character is overloaded, is unlinked from the loot and freed.
-  Redraws the screen (res12_fn_27D9) at the end. }
+  Redraws the screen (RedrawView) at the end. }
 procedure TakeLootItems;
 var
   Chosen: PMenuLine;
@@ -436,7 +436,7 @@ begin
       end;
     end;
   until Done;
-  res12_fn_27D9;
+  RedrawView;
 end;
 
 { ovl05:0D38. The Take command of the treasure menu. MoneyLeft and ItemsLeft are TreasureLeft's two
@@ -460,14 +460,14 @@ begin
           'M':
             begin
               TakeMoney;
-              res12_fn_27D9;
+              RedrawView;
             end;
           'I': TakeLootItems;
           'E', KeyNone: Done := True;
           'G': UpdateSelectedCharacter(Key);
           'O': UpdateSelectedCharacter(Key);
         end;
-        res12_fn_0767(SelectedCharacter);
+        DrawPartyRoster(SelectedCharacter);
         TreasureLeft(MoneyLeft, ItemsLeft);
         if (MoneyLeft = 0) or (ItemsLeft = 0) then
           Done := True;
@@ -476,7 +476,7 @@ begin
     else
     begin
       TakeMoney;
-      res12_fn_27D9;
+      RedrawView;
     end;
   end
   else
@@ -485,7 +485,7 @@ end;
 
 { ovl05:0ECD. The treasure menu after a won battle: 'View Pool Exit', with Take while there is loot
   and Share while there is pooled money, and Detect when SelectedCharacter has Detect Magic
-  memorized and there are items (Detect casts it through ovl22_e5). V views (ovl19_e5), T takes
+  memorized and there are items (Detect casts it through ovl22_e5). V views (ViewSelectedCharacter), T takes
   (TakeTreasure), P pools (PoolMoney) when the key flag is clear, S shares (ShareMoney). Exit with
   treasure left asks 'There is still treasure left.  Do you want to go back and claim your
   treasure?' and leaves on No. }
@@ -507,7 +507,7 @@ var
 begin
   Title := '';
   Done := False;
-  res12_fn_27D9;
+  RedrawView;
   MoneyLeft := 0;
   repeat
     TreasureLeft(MoneyLeft, ItemsLeft);
@@ -534,7 +534,7 @@ begin
       Menu := 'View Take Pool' + ExitText;
     Key := ReadPromptChoice(Title, Menu, 13, 10, 15, 1, 1, ExtKey);
     case Key of
-      'V': ovl19_e5(ExtKey);
+      'V': ViewSelectedCharacter(ExtKey);
       'T': TakeTreasure(MoneyLeft, ItemsLeft);
       'P': if ExtKey = 0 then PoolMoney;
       'S': ShareMoney;
@@ -559,19 +559,19 @@ begin
       'G':
         begin
           UpdateSelectedCharacter(Key);
-          res12_fn_0767(SelectedCharacter);
+          DrawPartyRoster(SelectedCharacter);
         end;
       'O':
         begin
           UpdateSelectedCharacter(Key);
-          res12_fn_0767(SelectedCharacter);
+          DrawPartyRoster(SelectedCharacter);
         end;
     end;
   until Done;
 end;
 
 { ovl05:11AC. Takes the monsters (Side 1) and the extra combatants (TCombatant.NoBody = 1) out of the
-  party list (ovl16_e2 on SelectedCharacter; an extra combatant does not lower VarPartySize) and
+  party list (RemoveSelectedCharacter on SelectedCharacter; an extra combatant does not lower VarPartySize) and
   counts in VarRemovedCount the removed ones whose Flag10D is not 1; the remaining members' combat
   state is freed. SelectedCharacter is the first member afterwards. }
 procedure RemoveBattleCombatants;
@@ -589,7 +589,7 @@ begin
         Inc(ds49D6^[VarRemovedCount]);
       NextWho := Who^.Next;
       SelectedCharacter := Who;
-      ovl16_e2(Who^.Combat^.NoBody = ExtraCombatant, True);
+      RemoveSelectedCharacter(Who^.Combat^.NoBody = ExtraCombatant, True);
       Who := NextWho;
     end
     else

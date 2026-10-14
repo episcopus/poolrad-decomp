@@ -3,7 +3,8 @@
 
   make watch-agents [INTERVAL=5]          redraw every INTERVAL seconds until Ctrl+C
 
-One screen: progress, agents still in the run, the hand-offs waiting for the orchestrator
+One screen: progress (units, routines, and code bytes at L2: on main, and with what the unit locks'
+worktrees have matched but not handed off or not integrated yet), agents still in the run, the hand-offs waiting for the orchestrator
 (escalations first), the locks, and what the queues offer next. Active agents (a heartbeat within
 heartbeat.QUIET_MINUTES) come first, then any agent quiet for less than heartbeat.LAPSED_MINUTES,
 each group by name. A stopped session, and a heartbeat silent for LAPSED_MINUTES or more, is left
@@ -16,6 +17,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import shutil
+import tomllib
 import sys
 import time
 from pathlib import Path
@@ -49,15 +51,54 @@ def section(title: str, width: int) -> str:
     return c(BOLD + ";" + CYAN, "── %s " % title) + c(DIM, "─" * max(width - len(title) - 4, 0))
 
 
+def matched(r: dict) -> bool:
+    return r.get("level") in ("L2", "L3")
+
+
+def unit_bytes(rs: list[dict], unit: str) -> tuple[int, int]:
+    """(bytes at L2/L3, all bytes) of a unit's Pascal routines, by re/symbols.toml sizes (as make status)."""
+    mine = [r for r in rs if r["unit"] == unit and not r.get("external")]
+    return (sum(int(r.get("size") or 0) for r in mine if matched(r)), sum(int(r.get("size") or 0) for r in mine))
+
+
+def in_flight(rs: list[dict], units: set[str]) -> dict[str, tuple[int, int]]:
+    """Per locked unit: (bytes at L2, all bytes) in the holder's worktree registry. The worker records L2
+    there after every batch, but main sees it only after the hand-off is integrated."""
+    out = {}
+    wts = common.main_checkout().parent / "poolrad-worktrees"
+    for p in common.lock_dir().glob("*.lock"):
+        unit = p.stem
+        if unit not in units:
+            continue                                         # reviews and tasks change no levels
+        reg = wts / unit / "re/symbols.toml"
+        try:
+            out[unit] = unit_bytes(tomllib.loads(reg.read_text()).get("routine", []), unit)
+        except (OSError, tomllib.TOMLDecodeError):
+            continue                                         # mid-write or gone: next redraw
+    return out
+
+
+def pct(part: int, whole: int) -> str:
+    return "%.1f%%" % (100.0 * part / whole) if whole else "?"
+
+
 def progress() -> str:
     rs = common.routines()
     units = [u["id"] for u in common.queue()]
     mine = [r for r in rs if r["unit"] in units]
     done = [u for u in units if common.unit_complete(u, rs)]
     passed = [u for u in done if nxt.reviewed(u, rs)]
-    l2 = sum(r.get("level") in ("L2", "L3") for r in mine)
-    return "units %s complete, %s reviewed   routines %s at L2" % (
-        c(BOLD, "%d/%d" % (len(done), len(units))), c(BOLD, str(len(passed))), c(BOLD, "%d/%d" % (l2, len(mine))))
+    l2 = sum(matched(r) for r in mine)
+    game = [r for r in mine if not r.get("external")]
+    total = sum(int(r.get("size") or 0) for r in game)
+    on_main = sum(int(r.get("size") or 0) for r in game if matched(r))
+    extra = sum(max(0, wt - unit_bytes(rs, u)[0]) for u, (wt, _) in in_flight(rs, set(units)).items())
+    line = "units %s complete, %s reviewed   routines %s at L2   bytes %s at L2 (%s)" % (
+        c(BOLD, "%d/%d" % (len(done), len(units))), c(BOLD, str(len(passed))), c(BOLD, "%d/%d" % (l2, len(mine))),
+        c(BOLD, "{:,}/{:,}".format(on_main, total)), c(BOLD, pct(on_main, total)))
+    if extra:
+        line += "   +{:,} in worktrees: {}".format(extra, c(BOLD + ";" + GREEN, pct(on_main + extra, total)))
+    return line
 
 
 def agents(now: dt.datetime, width: int) -> list[str]:
@@ -95,9 +136,11 @@ def handoffs(width: int) -> list[str]:
 
 def locks() -> list[str]:
     out = []
+    flight = in_flight(common.routines(), {u["id"] for u in common.queue()})
     for p in sorted(common.lock_dir().glob("*.lock")):
         f = heartbeat.fields(p.read_text())
-        out.append("%-16s %-9s" % (p.stem, f.get("agent", "?")))
+        share = "%6s" % pct(*flight[p.stem]) if p.stem in flight else " " * 6
+        out.append("%-16s %-14s %s" % (p.stem, cut(f.get("agent", "?"), 14), share))
     if not out:
         return [c(DIM, "none")]
     return ["   ".join(out[i:i + 3]) for i in range(0, len(out), 3)]

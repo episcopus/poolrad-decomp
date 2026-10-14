@@ -1,8 +1,8 @@
 unit OVL26;
 { The area view (whitepaper 5.2.1): ShowAreaView shows either the 3D wall view or the scrolling map
   window, DrawPartyMarker draws the animated party marker onto that window. The main callers are the
-  view dispatcher of the resident unit (res12_fn_27D9, view types 3 and 4), the wilderness map screen
-  (res12_fn_2B5E, after the text windows of DrawAdventureScreen) and the encounter unit (ovl03, five
+  view dispatcher of the resident unit (RedrawView, view types 3 and 4), the wilderness map screen
+  (DrawWildernessScreen, after the text windows of DrawAdventureScreen) and the encounter unit (ovl03, five
   sites); ShowEncounterPicture (the loader) also calls ShowAreaView. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
@@ -35,7 +35,7 @@ const
   MaxWindowTop = $1F;
 
 { ovl26:0000. Draws the animated party marker onto the 5x5 map window ShowAreaView drew (through
-  DrawAreaView); the wilderness map screen res12_fn_2B5E also calls it directly, after its own
+  DrawAreaView); the wilderness map screen DrawWildernessScreen also calls it directly, after its own
   DrawAreaView. The marker cell is the party position within that window, MapBaseX[AreaViewKind]
   plus GameVars^[VarMapX] (the column) and GameVars^[VarMapY] (the row), folded with the same edge
   limits ShowAreaView clamps the window to (ovl26:0253..0285): columns and rows 0 and 1 stay at the
@@ -67,7 +67,7 @@ begin
 end;
 
 { ovl26:016D. Shows the current area view, the way the view dispatcher of the resident unit asks
-  for it (res12_fn_27D9, view types 3 and 4). The kind is AreaViewKind, or 1 whenever the
+  for it (RedrawView, view types 3 and 4). The kind is AreaViewKind, or 1 whenever the
   game variable VarForceWallView is set. Kind 1 draws the 3D wall view: it asks GeoLoad for
   the event byte of the party cell (EventByteAt; bit 7 says the cell is interior), picks the wall id
   table entry ds0C26[VarWallIndexInside] or ds0C26[VarWallIndexOutside] accordingly, refreshes

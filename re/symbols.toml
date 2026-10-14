@@ -1529,6 +1529,7 @@ name = "AskCastAnyway"
 signature = "function AskCastAnyway(Reason: string): Char"
 c_name = "ovl04_fn_0013"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 18dc375"
 justification = ""
 notes = "renamed from ovl04_fn_0013 (shows the reason a cure is not needed for SelectedCharacter (res12_fn_16EC) and returns the key of the prompt 'cast cure anyway: ' (ovl04:0013, matched)); auto:near_call"
 evidence = ["prologue"]
@@ -1542,6 +1543,7 @@ name = "ChargeForCure"
 signature = "function ChargeForCure(Service: string; Price: Word): Char"
 c_name = "ovl04_fn_00BF"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 18dc375"
 justification = ""
 notes = "renamed from ovl04_fn_00BF (shows '<service> will only cost <n> gold pieces.', asks 'pay for cure', takes the price from the character or the pooled money, says 'Not enough money.' or 'is cured.' (ovl04:00BF, matched)); auto:near_call"
 evidence = ["prologue"]
@@ -1555,6 +1557,7 @@ name = "CureBlindness"
 signature = "procedure CureBlindness"
 c_name = "ovl04_fn_0249"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 18dc375"
 justification = ""
 notes = "renamed from ovl04_fn_0249 (checks affect 21h, prompt 'is not blind.', service 'Cure Blindness' for 1000, removes affect 21h through ovl24_e2 (ovl04:0249, matched)); auto:near_call"
 evidence = ["prologue"]
@@ -1568,6 +1571,7 @@ name = "CureDisease"
 signature = "procedure CureDisease"
 c_name = "ovl04_fn_02ED"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 18dc375"
 justification = ""
 notes = "renamed from ovl04_fn_02ED (checks the six affects at DS:0114, 'is not Diseased.', 'Cure Disease' for 1000, removes the six (ovl04:02ED, matched)); auto:near_call"
 evidence = ["prologue"]
@@ -1581,6 +1585,7 @@ name = "CureWounds"
 signature = "procedure CureWounds(Strength: Byte)"
 c_name = "ovl04_fn_0401"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 18dc375"
 justification = ""
 notes = "renamed from ovl04_fn_0401 (case 1..3: 'Cure Light/Serious/Critical Wounds' for 100/350/600, heals ovl24_e8(1,8), (2,8)+1, (3,8)+3 through ovl24_e21 (ovl04:0401, matched)); auto:near_call"
 evidence = ["prologue"]
@@ -1594,6 +1599,7 @@ name = "RaiseDead"
 signature = "procedure RaiseDead"
 c_name = "ovl04_fn_0510"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 18dc375"
 justification = ""
 notes = "renamed from ovl04_fn_0510 (status 1 or 6 is dead, 'is not dead.', 'Raise Dead' for 5500, clears the status, lowers constitution and adjusts hp_max (ovl04:0510, matched)); auto:near_call"
 evidence = ["prologue"]
@@ -1607,6 +1613,7 @@ name = "NeutralizePoison"
 signature = "procedure NeutralizePoison"
 c_name = "ovl04_fn_0751"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 18dc375"
 justification = ""
 notes = "renamed from ovl04_fn_0751 (checks affect 37h, 'is not poisoned.', 'Neutralize Poison' for 1000, removes affects 37h, 16h, 0Fh (ovl04:0751, matched)); auto:near_call"
 evidence = ["prologue"]
@@ -1620,6 +1627,7 @@ name = "RemoveCurse"
 signature = "procedure RemoveCurse"
 c_name = "ovl04_fn_083A"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 18dc375"
 justification = ""
 notes = "renamed from ovl04_fn_083A (looks for a cursed item (+36h) or affect 24h, 'is not cursed.', 'Remove Curse' for 3500, hands the character to ovl22_e9 (ovl04:083A, matched)); auto:near_call"
 evidence = ["prologue"]
@@ -1633,6 +1641,7 @@ name = "StoneToFlesh"
 signature = "procedure StoneToFlesh"
 c_name = "ovl04_fn_0928"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 18dc375"
 justification = ""
 notes = "renamed from ovl04_fn_0928 (status 7 is stoned, 'is not stoned.', 'Stone to Flesh' for 2000, sets the status to 0 (ovl04:0928, matched)); auto:near_call"
 evidence = ["prologue"]
@@ -1646,6 +1655,7 @@ name = "HealMenu"
 signature = "procedure HealMenu"
 c_name = "ovl04_fn_09D7"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 18dc375"
 justification = ""
 notes = "renamed from ovl04_fn_09D7 (fills ten menu lines with the service names at DS:011A, '<name>, how can we help you?', menu 'Heal Exit', runs the chosen service routine (ovl04:09D7, matched)); auto:near_call"
 evidence = ["prologue"]
@@ -1659,6 +1669,7 @@ name = "VisitTemple"
 signature = "procedure VisitTemple"
 c_name = "ovl04_e1"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 18dc375"
 justification = ""
 notes = "renamed from ovl04_e1 (the Temple entry: menu 'Heal View Take Pool Share Appraise Exit', the priest's 'you have left some money here' on Exit (ovl04:0D09, matched)); auto:entry_1"
 evidence = ["prologue"]
@@ -1672,6 +1683,7 @@ name = "ovl04_init"
 signature = ""
 c_name = "ovl04_init"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 18dc375"
 justification = ""
 notes = "auto:entry_0"
 evidence = ["prologue"]
@@ -2581,6 +2593,7 @@ name = "QuickTurn"
 signature = "procedure QuickTurn(Who: PCharacter)"
 c_name = "ovl09_e1"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, b452899"
 justification = ""
 notes = "renamed from ovl09_e1 (ovl09:000F is the computer's turn for a quick-combat character (called by ovl08 CombatTurn/PlayerTurn when Quick is set): it reads a key, ends the turn through res12_fn_2637 when the character is not dying, rerolls the step pattern, runs morale (fleeing in panic through res12_fn_16EC), then in a loop uses a magic item, finishes a pending spell through ovl22_e5, takes the level-0 turn, casts a memorized spell, uses the best item and loops through ovl13_e21 into AiTurn or ovl09_fn_0F4F); auto:entry_1"
 evidence = ["prologue"]
@@ -2590,12 +2603,13 @@ id = "ovl09:0203"
 unit = "ovl09"
 addr = "ovl09:0203"
 size = 232
-name = "ovl09_fn_0203"
+name = "TryTurnUndead"
 signature = ""
 c_name = "ovl09_fn_0203"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, b452899"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl09_fn_0203 (ovl08 CombatMenu offers Turn (ovl08:0795) when ClassLevels[0] > 0 and Turned = 0, and PlayerTurn's T case runs ovl13_e9 (src/OVL08.PAS:220); the routine tests the same conditions and runs ovl13_e9 with ovl13_e10 agreeing: the computer's Turn action); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2607,6 +2621,7 @@ name = "DifferentSideInArea"
 signature = ""
 c_name = "ovl09_fn_0255"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, b452899"
 justification = ""
 notes = "renamed from ovl09_fn_0255 (ovl09:0255 (nested in SpellAccepted): scans the map entities around (X, Y) with the spell's line budget and answers True when one of them has a Side unlike res12_fn_23B7(SelectedCharacter)); auto:near_call; nested in SpellAccepted (ovl09:02EB), proven by the parent's match"
 evidence = ["prologue"]
@@ -2620,6 +2635,7 @@ name = "SpellAccepted"
 signature = "function SpellAccepted(Who: PCharacter; Spell, Range: Byte): Boolean"
 c_name = "ovl09_fn_02EB"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, b452899"
 justification = ""
 notes = "renamed from ovl09_fn_02EB (ovl09:02EB decides whether the AI accepts spell Spell at Range for Who: refuses below the spell row byte +$D, accepts a zero +$E byte or spell 3 through ovl13_e13, else counts Who's enemies in the area with res12_fn_2433 and refuses when ovl09_fn_0255 finds a side unlike res12_fn_23B7(SelectedCharacter) near one; callers UseMagicItem (03E4) and CastMemorizedSpell (0545) keep what it accepts); auto:near_call"
 evidence = ["prologue"]
@@ -2633,6 +2649,7 @@ name = "UseMagicItem"
 signature = ""
 c_name = "ovl09_fn_03E4"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, b452899"
 justification = ""
 notes = "renamed from ovl09_fn_03E4 (ovl09:03E4 walks Who Items for a castable item (Affects and 02EB range checks), uses it through ovl19_e8 and ends the turn; caller ovl09_e1); auto:near_call"
 evidence = ["prologue"]
@@ -2646,6 +2663,7 @@ name = "CastMemorizedSpell"
 signature = ""
 c_name = "ovl09_fn_0545"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, b452899"
 justification = ""
 notes = "renamed from ovl09_fn_0545 (ovl09:0545 casts a memorized spell for the AI turn (collects Who Spells, picks one in 02EB range, casts through ovl13_e15 which CombatMenu calls Cast); caller ovl09_e1); auto:near_call"
 evidence = ["prologue"]
@@ -2659,6 +2677,7 @@ name = "CanAffordStep"
 signature = ""
 c_name = "ovl09_fn_0675"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, b452899"
 justification = ""
 notes = "renamed from ovl09_fn_0675 (ovl09:0675 probes the step BaseDir plus the pattern offset through ProbeStep and returns True only when the step's cost (tile cost times 2, 3 on a diagonal; Moves + 1 on a TileKept tile without one of four affects) is at or below Combat.Moves (ovl09:07B8..07C9); caller ovl09_fn_0898); auto:near_call"
 evidence = ["prologue"]
@@ -2672,6 +2691,7 @@ name = "MoveStep"
 signature = "procedure MoveStep(Who: PCharacter)"
 c_name = "ovl09_fn_07F2"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, b452899"
 justification = ""
 notes = "renamed from ovl09_fn_07F2 (ovl09:07F2 is one step of the AI's move for Who (called from the AI turn loop at 0B3C, ovl09:0BD3 and 0D7C): it shows the move prompt, lets HandleCombatKey interrupt, picks a direction (ovl13_e18 or the party facing) and a step pattern, tries CanAffordStep, and moves or attacks through ovl13_e4/ovl13_e3 and ApplyCloudTile; with no affordable step it turns the pattern (ds443D)); auto:near_call"
 evidence = ["prologue"]
@@ -2685,6 +2705,7 @@ name = "AiTurn"
 signature = "function AiTurn(Who: PCharacter): Byte"
 c_name = "ovl09_fn_0B3C"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, b452899"
 justification = ""
 notes = "renamed from ovl09_fn_0B3C (ovl09:0B3C is the AI's whole turn for Who (called by ovl09_e1 at 01E6 when the initiative allows): it runs affect hook 0E, loops movement (MoveStep while panicking) and attacks, picks an attack target from the remembered Combat^.Target or a random enemy of the res12_fn_2433 scan (or ovl09_fn_13CA), attacks through ovl13_e7/e11/e12 and ends the turn through res12_fn_2637; result 1 when the turn is over); auto:near_call"
 evidence = ["prologue"]
@@ -2698,6 +2719,7 @@ name = "ovl09_fn_0F4F"
 signature = ""
 c_name = "ovl09_fn_0F4F"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, b452899"
 justification = ""
 notes = "auto:near_call"
 evidence = ["prologue"]
@@ -2711,6 +2733,7 @@ name = "HandleCombatKey"
 signature = ""
 c_name = "ovl09_fn_0FC1"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, b452899"
 justification = ""
 notes = "renamed from ovl09_fn_0FC1 (ovl09:0FC1 reads a key during the AI turn and dispatches Alt-M magic toggle, Space quick marking and Alt-X (callers ovl09_e1, ovl09_fn_07F2 region)); auto:near_call"
 evidence = ["prologue"]
@@ -2724,6 +2747,7 @@ name = "CheckMorale"
 signature = ""
 c_name = "ovl09_fn_10D7"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, b452899"
 justification = ""
 notes = "renamed from ovl09_fn_10D7 (ovl09:10D7 runs the morale gauntlet for the AI turn (flees in panic, surrenders) showing 'is forced to flee' and 'Surrenders' through res12_fn_16EC and ovl24_e11; caller ovl09_e1); auto:near_call"
 evidence = ["prologue"]
@@ -2733,12 +2757,13 @@ id = "ovl09:128D"
 unit = "ovl09"
 addr = "ovl09:128D"
 size = 317
-name = "ScoreTarget"
+name = "ScoreItem"
 signature = ""
 c_name = "ovl09_fn_128D"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, b452899"
 justification = ""
-notes = "renamed from ovl09_fn_128D (ovl09:128D returns a Byte score that ovl09_fn_13CA maximizes (ovl09:1543 keeps the candidate with the highest value)); auto:near_call"
+notes = "renamed from ScoreTarget (its only caller UseBestItem (ovl09:13CA) passes an ITEM (ScoreTarget(Who, PCharacter(Pick))) and the bytes it reads are item fields (+$2E ItemType, +$32 Plus, +$36 Cursed, +$3D/+$3E Affects[2]/[3]); it rates an item for the AI's item step); renamed from ovl09_fn_128D (ovl09:128D returns a Byte score that ovl09_fn_13CA maximizes (ovl09:1543 keeps the candidate with the highest value)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2750,6 +2775,7 @@ name = "UseBestItem"
 signature = "procedure UseBestItem(Who: PCharacter)"
 c_name = "ovl09_fn_13CA"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, b452899"
 justification = ""
 notes = "renamed from ovl09_fn_13CA (ovl09:13CA is the AI's item step (called by ovl09_e1 every turn and by AiTurn before attacking): it pays the per-kind slot items off Who^.ds100, scores the carried items with ScoreTarget and keeps the best row-14-bit-3/$10 item, the best other item and the best type-1 item by Plus, then uses the slot-0, slot-1 and picked items through ovl19_e7 (res12_fn_0BB8/ovl13_e6/res12_fn_09E3), branching on ds100 above or below 2); auto:near_call"
 evidence = ["prologue"]
@@ -2763,6 +2789,7 @@ name = "ovl09_init"
 signature = ""
 c_name = "ovl09_init"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, b452899"
 justification = ""
 notes = "auto:entry_0"
 evidence = ["prologue"]
@@ -6396,12 +6423,12 @@ id = "ovl16:0000"
 unit = "ovl16"
 addr = "ovl16:0000"
 size = 353
-name = "ovl16_fn_0000"
+name = "FreeCharacter"
 signature = ""
 c_name = "ovl16_fn_0000"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl16_fn_0000 (ovl16:0000 frees a character: Combat (+108h, size 16h), the Items list (+C8h, size 3Fh) and the Affects list (+7Fh, size 9), frees the record (size 11Dh) and clears the caller pointer; called by ovl16_e2); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -6409,12 +6436,12 @@ id = "ovl16:0161"
 unit = "ovl16"
 addr = "ovl16:0161"
 size = 1035
-name = "ovl16_e1"
+name = "RunCharacterMenu"
 signature = ""
 c_name = "ovl16_e1"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_1"
+notes = "renamed from ovl16_e1 (ovl16:0161 entry point (called by ovl03:2E10): draws the training-hall window and its 11-function menu at DS:0619 and dispatches C create, D drop, M modify, T train, V view, A add, R remove, L load, S save, B finish, E exit, J the STING cheat); auto:entry_1"
 evidence = ["prologue"]
 
 [[routine]]
@@ -6427,7 +6454,7 @@ signature = ""
 c_name = "ovl16_fn_056C"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3: the map boundary is wrong. 056C has its prologue at 056C and its retf epilogue at 1ED1 (a second prologue follows at 1F37), so the routine is 6501 bytes, not 629; the entries the map lists inside it (07E1, 07E5, 07EA and the rest up to 1F30) are fixup-table artifacts with no prologue (07E1 starts mid parameter-push of the AddAffect call at 07D3..07EA). Too large for one batch: decompiling it is what lets make match UNIT=ovl16 WRITE=1 delete those entries and correct its size"
 evidence = ["prologue"]
 
 [[routine]]
@@ -6440,7 +6467,7 @@ signature = ""
 c_name = "ovl16_fn_07E1"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3: not a routine. The 4 bytes at 07E1 (push ax; mov al,0; push ax) are the tail of the AddAffect parameter sequence that starts at 07D3 inside ovl16:056C; no prologue, no return. It is removed from the registry when 056C matches (make match UNIT=ovl16 WRITE=1 corrects its boundary to the retf at 1ED1)"
 evidence = ["near_call"]
 
 [[routine]]
@@ -6453,7 +6480,7 @@ signature = ""
 c_name = "ovl16_fn_07E5"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine. The 5 bytes at 07E5 are the lcall AddAffect (0B00:0052) of the call sequence at 07D3..07EA inside ovl16:056C; no prologue, no return. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects its boundary to the retf at 1ED1)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6466,7 +6493,7 @@ signature = ""
 c_name = "ovl16_fn_07EA"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine. The bytes at 07EA are the jmp 0919h that ends the AddAffect case arm of ovl16:056C plus the first bytes of the following case test; no prologue, no return. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects its boundary to the retf at 1ED1)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6479,7 +6506,7 @@ signature = ""
 c_name = "ovl16_fn_07EF"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue. The bytes at 07EF are `75 68` (jne 0859h), the conditional of the `cmp al,1` case test that follows the `jmp 0919h` at 07EA inside ovl16:056C. 056C is one routine (prologue `push bp; mov bp,sp; sub sp,134h` at 056C, single retf at 1ED1; only one prologue between 056C and 1F37, checked on build/re/overlays/ovl16.bin), so every map entry inside it (07E1..1ED1, this one included) is a fixup-table artifact. No near call targets 07EF. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size to 6502 and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6492,7 +6519,7 @@ signature = ""
 c_name = "ovl16_fn_07F4"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue. 07F4 is the `mov byte ptr es:[di+0c0h],1` (bytes 26 c6 85 c0 00 01, preceded by `les di,[bp-27h]` at 07F1) of the case-1 arm of ovl16:056C. 056C is one routine from 056C to its single retf at 1ED1, so this entry is an artifact inside it; no near call targets 07F4. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6505,7 +6532,7 @@ signature = ""
 c_name = "ovl16_fn_07F9"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue. 07F9 is the last byte (`01`) of the `mov ...es:[di+0c0h],1` at 07F4 followed by `push [bp-2]` and `push [bp-4]` (ff 76 fe, ff 76 fc) in the AddAffect argument sequence of ovl16:056C's case-1 arm; mid-instruction. 056C is one routine (single prologue at 056C, single retf at 1ED1), so this entry is an artifact inside it; no near call targets 07F9. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6518,7 +6545,7 @@ signature = ""
 c_name = "ovl16_fn_0808"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue. 0808 is `push ax` (50) among the pushes of the `AddAffect(..., 5ah, 0, 0ffh, 0)` call at 07F3..080C inside ovl16:056C. 056C is one routine (single prologue at 056C, single retf at 1ED1), so this entry is an artifact inside it; no near call targets 0808. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6531,7 +6558,7 @@ signature = ""
 c_name = "ovl16_fn_080D"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue. 080D is the immediate bytes (`52 00`) of the `lcall 0b0h:0052h` (AddAffect, 9a 52 00 b0 00 at 080C) inside ovl16:056C; mid-instruction. This far call is what the map keyed the `auto:far_call` entry on, but the call belongs to 056C, which is one routine (single prologue at 056C, single retf at 1ED1); no near call targets 080D. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6544,7 +6571,7 @@ signature = ""
 c_name = "ovl16_fn_0812"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue. 0812 is inside `push word ptr [bp-2]` (ff 76 fe at 0811, then ff 76 fc) in the second AddAffect call of ovl16:056C's case-1 arm; mid-instruction. 056C is one routine (single prologue at 056C, single retf at 1ED1), so this entry is an artifact inside it; no near call targets 0812. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6557,7 +6584,7 @@ signature = ""
 c_name = "ovl16_fn_0875"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x0085 * 16 + 0x0025 = 0x0875) of the inter-overlay stub call lcall 0x0085:0x0025 (bytes 9a 25 00 85 00) at ovl16:11FB, also at ovl16:1E2D and ovl16:20E2; stub 0x85:0x25 is ovl19:004A ShowCharacterSheet (build/re/overlays.json). 0x0875 is mov al,0 (b0 00), mid argument sequence of the AddAffect call at 0878 inside ovl16:056C. 056C is one routine: its only prologue in the region is 55 89 e5 at 056C and its single retf is at 1ED1, so every map entry inside it (0875..1ED1) is a stub/fixup artefact. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6570,7 +6597,7 @@ signature = ""
 c_name = "ovl16_fn_087A"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x0085 * 16 + 0x002A = 0x087A) of the inter-overlay stub call lcall 0x0085:0x002A (bytes 9a 2a 00 85 00) at ovl16:1DFA, also at ovl16:28C1; stub 0x85:0x2A is ovl19:0608 ShowCombatStats. 0x087A is the high operand byte of the lcall AddAffect at 0878 (9a 52 00 b0 00), mid-instruction, inside ovl16:056C. 056C is one routine (single prologue 55 89 e5 at 056C, single retf at 1ED1), so this entry is an artefact inside it. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6583,7 +6610,7 @@ signature = ""
 c_name = "ovl16_fn_087F"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x0085 * 16 + 0x002F = 0x087F) of the inter-overlay stub call lcall 0x0085:0x002F (bytes 9a 2f 00 85 00) at ovl16:1BD3, also at ovl16:204C; stub 0x85:0x2F is ovl19:0901 ShowAbilityScore. 0x087F is the third byte (fe) of push word ptr [bp-2] at 087D (ff 76 fe), mid-instruction, inside ovl16:056C. 056C is one routine (single prologue 55 89 e5 at 056C, single retf at 1ED1), so this entry is an artefact inside it. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6596,7 +6623,7 @@ signature = ""
 c_name = "ovl16_fn_0884"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x0085 * 16 + 0x0034 = 0x0884) of the inter-overlay stub call lcall 0x0085:0x0034 (bytes 9a 34 00 85 00) at ovl16:1DFF; stub 0x85:0x34 is ovl19:050D ShowCharacterMoney. 0x0884 is the operand byte 12 of mov al,0x12 at 0883 (b0 12), mid-instruction, in the AddAffect argument sequence of ovl16:056C. 056C is one routine (single prologue 55 89 e5 at 056C, single retf at 1ED1), so this entry is an artefact inside it. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6609,7 +6636,7 @@ signature = ""
 c_name = "ovl16_fn_0889"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x0085 * 16 + 0x0039 = 0x0889) of the inter-overlay stub call lcall 0x0085:0x0039 (bytes 9a 39 00 85 00) at ovl16:03A4; stub 0x85:0x39 is ovl19:0AB3 ViewSelectedCharacter. 0x0889 is mov al,0xff (b0 ff), one of the argument pushes of the AddAffect call at 088F inside ovl16:056C; it starts an instruction but is not a routine entry. 056C is one routine (single prologue 55 89 e5 at 056C, single retf at 1ED1), so this entry is an artefact inside it. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6622,7 +6649,7 @@ signature = ""
 c_name = "ovl16_fn_08A2"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x0085 * 16 + 0x0052 = 0x08A2) of the inter-overlay stub call lcall 0x0085:0x0052 (bytes 9a 52 00 85 00) at ovl16:031F; stub 0x85:0x52 is ovl19:27DF UpdateSelectedCharacter. 0x08A2 is push ax (50), one of the argument pushes of the AddAffect call at 08A6, inside ovl16:056C. 056C is one routine (single prologue 55 89 e5 at 056C, single retf at 1ED1), so this entry is an artefact inside it. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6635,7 +6662,7 @@ signature = ""
 c_name = "ovl16_fn_08A7"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x0085 * 16 + 0x0057 = 0x08A7) of the inter-overlay stub call lcall 0x0085:0x0057 (bytes 9a 57 00 85 00) at ovl16:29EA; stub 0x85:0x57 is ovl19:28BE CharacterMoneyValueInGold (build/re/overlays.json). 0x08A7 is byte 0x52, the low offset byte of the lcall AddAffect (ovl24:0E52) at 08A6 (bytes 9a 52 00 b0 00), mid-instruction inside ovl16:056C. 056C is one routine: its only prologue in the region is 55 89 e5 at 056C and its single retf is at 1ED1, so every map entry inside it (056C..1ED1) is a stub/fixup artefact. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6648,7 +6675,7 @@ signature = ""
 c_name = "ovl16_fn_08AC"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x0085 * 16 + 0x005C = 0x08AC) of the inter-overlay stub call lcall 0x0085:0x005C (bytes 9a 5c 00 85 00) at ovl16:2F81; stub 0x85:0x5C is ovl19:299C ChooseSpellFromList (build/re/overlays.json). 0x08AC is byte 0x76, the opcode of push word ptr [bp-2] at 08AB (bytes ff 76 fe), mid-instruction inside ovl16:056C. 056C is one routine: its only prologue in the region is 55 89 e5 at 056C and its single retf is at 1ED1, so every map entry inside it (056C..1ED1) is a stub/fixup artefact. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6661,7 +6688,7 @@ signature = ""
 c_name = "ovl16_fn_0AE5"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x00AC * 16 + 0x0025 = 0x0AE5) of the inter-overlay stub call lcall 0x00AC:0x0025 (bytes 9a 25 00 ac 00) at ovl16:2F5A; stub 0xAC:0x25 is ovl23:0000 RecalcClassStats, reached via the ovl23 stub segment 0x00AC (build/re/overlays.json). 0x0AE5 starts les di, [bp-0x10] (bytes c4 7e f0), which the linear disassembler shows as an instruction boundary, but it is still mid-routine inside ovl16:056C. 056C is one routine: its only prologue in the region is 55 89 e5 at 056C and its single retf is at 1ED1, so every map entry inside it (056C..1ED1) is a stub/fixup artefact. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6674,7 +6701,7 @@ signature = ""
 c_name = "ovl16_fn_0AEA"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x00AC * 16 + 0x002A = 0x0AEA) of the inter-overlay stub call lcall 0x00AC:0x002A (bytes 9a 2a 00 ac 00) at ovl16:1C9B, also at ovl16:2381 and ovl16:26E3; stub 0xAC:0x2A is ovl23:01AF AddWisdomBonusSpells, reached via the ovl23 stub segment 0x00AC (build/re/overlays.json). 0x0AEA starts mov ax,0x28 (bytes b8 28 00), which the linear disassembler shows as an instruction boundary, but it is still mid-routine inside ovl16:056C. 056C is one routine: its only prologue in the region is 55 89 e5 at 056C and its single retf is at 1ED1, so every map entry inside it (056C..1ED1) is a stub/fixup artefact. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6687,7 +6714,7 @@ signature = ""
 c_name = "ovl16_fn_0AEF"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x00AC * 16 + 0x002F = 0x0AEF) of the inter-overlay stub call lcall 0x00AC:0x002F (bytes 9a 2f 00 ac 00) at ovl16:0D6B; stub 0xAC:0x2F is ovl23:0255 ComputeSavingThrows, reached via the ovl23 stub segment 0x00AC (build/re/overlays.json). 0x0AEF is byte 0x25, the low offset byte of the lcall System_StrLCopy (0AF8:0B25) at 0AEE (bytes 9a 25 0b f8 0a), mid-instruction inside ovl16:056C. 056C is one routine: its only prologue in the region is 55 89 e5 at 056C and its single retf is at 1ED1, so every map entry inside it (056C..1ED1) is a stub/fixup artefact. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6700,7 +6727,7 @@ signature = ""
 c_name = "ovl16_fn_0AF4"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x00AC * 16 + 0x0034 = 0x0AF4) of the inter-overlay stub call lcall 0x00AC:0x0034 (bytes 9a 34 00 ac 00) at ovl16:0CC9; stub 0xAC:0x34 is ovl23:0329 ComputeThiefSkills, reached via the ovl23 stub segment 0x00AC (build/re/overlays.json). 0x0AF4 is byte 0x46, the ModRM byte of mov al,[bp-0x13] at 0AF3 (bytes 8a 46 ed), mid-instruction inside ovl16:056C. 056C is one routine: its only prologue in the region is 55 89 e5 at 056C and its single retf is at 1ED1, so every map entry inside it (056C..1ED1) is a stub/fixup artefact. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6713,7 +6740,7 @@ signature = ""
 c_name = "ovl16_fn_0B48"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return at this address. 0B48 is the flat-linear reading (stub segment 0x00B0 * 16 + 0x0048) of the inter-overlay stub call lcall 0x00B0:0x0048 at ovl16:0F26 (also 122E, 1C83, 4280); stub 0xB0:0x48 is ovl24:0DE3 RollDice (build/re/overlays.json). The byte at 0B48 is 0x76 (jbe), mid-instruction inside ovl16:056C. 056C is one routine: single prologue 55 89 e5 at 056C and single retf at 1ED1, so every map entry in 056C..1ED1 is a stub/fixup artefact. Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6726,7 +6753,7 @@ signature = ""
 c_name = "ovl16_fn_0B52"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return. 0B52 is the flat reading (stub segment 0x00B0 * 16 + 0x0052) of the inter-overlay stub call lcall 0x00B0:0x0052 (12 call sites, first at ovl16:07CE); stub 0xB0:0x52 is ovl24:0E52 AddAffect (build/re/overlays.json). The byte at 0B52 is 0x7E (jle), mid-instruction inside ovl16:056C (one routine: prologue 55 89 e5 at 056C, retf at 1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6739,7 +6766,7 @@ signature = ""
 c_name = "ovl16_fn_1307"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return. 1307 is the flat reading (0x00BA * 16 + 0x0767) of the lcall 0x00BA:0x0767 DrawPartyRoster (res12:0767) at ovl16:01BF and 032C; it lands mid-instruction (byte 0x7E) inside ovl16:056C, the single routine from 056C (prologue 55 89 e5) to its retf at 1ED1. Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6752,7 +6779,7 @@ signature = ""
 c_name = "ovl16_fn_1513"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return. 1513 is the flat reading (0x00BA * 16 + 0x0973) of the lcall 0x00BA:0x0973 DrawHitPoints (res12:0973) at ovl16:2065; it lands mid-instruction (byte 0x8B) inside ovl16:056C (single routine 056C..1ED1, prologue 55 89 e5, retf at 1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6765,7 +6792,7 @@ signature = ""
 c_name = "ovl16_fn_1758"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return. 1758 is the flat reading (0x00BA * 16 + 0x0BB8) of the lcall 0x00BA:0x0BB8 RecalcCombatValues (res12:0BB8) at ovl16:28AD and 28BC; it lands mid-instruction (byte 0x1F) inside ovl16:056C (single routine 056C..1ED1, prologue 55 89 e5, retf at 1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6778,7 +6805,7 @@ signature = ""
 c_name = "ovl16_fn_19D3"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:21CD is the disp8 of les di,[bp-0x18] (c4 7e e8 at 21CB), not a call opcode; its bogus target (0x19D3) lands on the byte 0x98 mid-instruction inside ovl16:056C (single routine 056C..1ED1, prologue 55 89 e5, retf at 1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["near_call"]
 
 [[routine]]
@@ -6791,7 +6818,7 @@ signature = ""
 c_name = "ovl16_fn_19FB"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:21F5 is the disp8 of les di,[bp-0x18] (c4 7e e8 at 21F3), not a call opcode, and its bogus target (0x19FB) lies inside ovl16:056C (single routine 056C..1ED1, prologue 55 89 e5, one retf at 1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["near_call"]
 
 [[routine]]
@@ -6804,7 +6831,7 @@ signature = ""
 c_name = "ovl16_fn_1A2A"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:2224 is the disp8 of les di,[bp-0x18] (c4 7e e8 at 2222), not a call opcode, and its bogus target (0x1A2A) lies inside ovl16:056C (single routine 056C..1ED1, prologue 55 89 e5, one retf at 1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["near_call"]
 
 [[routine]]
@@ -6817,7 +6844,7 @@ signature = ""
 c_name = "ovl16_fn_1A51"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:224B is the disp8 of les di,[bp-0x18] (c4 7e e8 at 2249), not a call opcode, and its bogus target (0x1A51) lies inside ovl16:056C (single routine 056C..1ED1, prologue 55 89 e5, one retf at 1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["near_call"]
 
 [[routine]]
@@ -6830,7 +6857,7 @@ signature = ""
 c_name = "ovl16_fn_1A81"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:227B is the disp8 of les di,[bp-0x18] (c4 7e e8 at 2279), not a call opcode, and its bogus target (0x1A81) lies inside ovl16:056C (single routine 056C..1ED1, prologue 55 89 e5, one retf at 1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["near_call"]
 
 [[routine]]
@@ -6843,7 +6870,7 @@ signature = ""
 c_name = "ovl16_fn_1AA7"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:22A1 is the disp8 of les di,[bp-0x18] (c4 7e e8 at 229F), not a call opcode, and its bogus target (0x1AA7) lies inside ovl16:056C (single routine 056C..1ED1, prologue 55 89 e5, one retf at 1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["near_call"]
 
 [[routine]]
@@ -6856,7 +6883,7 @@ signature = ""
 c_name = "ovl16_fn_1ACE"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:22C8 is the disp8 of les di,[bp-0x18] (c4 7e e8 at 22C6), not a call opcode, and its bogus target (0x1ACE) lies inside ovl16:056C (single routine 056C..1ED1, prologue 55 89 e5, one retf at 1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["near_call"]
 
 [[routine]]
@@ -6869,7 +6896,7 @@ signature = ""
 c_name = "ovl16_fn_1AF1"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 7: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:22EB is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:22E9) followed by add di,ax (03 f8), read as a call whose bogus rel16 targets 0x1AF1; 0x1AF1 lies inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). 0x1AF1 is an instruction boundary but not a routine start. make match UNIT=ovl16 FN=ovl16_fn_1AF1 reports only the stub; there is no Pascal to write for a mid-routine instruction boundary. Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -6882,7 +6909,7 @@ signature = ""
 c_name = "ovl16_fn_1B1A"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 7: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:2314 is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:2312) followed by add di,ax (03 f8), read as a call whose bogus rel16 targets 0x1B1A; 0x1B1A is mid-instruction (the second byte of mov di,ax, 8b f8, at ovl16:1B19) and lies inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -6895,7 +6922,7 @@ signature = ""
 c_name = "ovl16_fn_1B41"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 7: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:233B is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:2339) followed by add di,ax (03 f8), read as a call whose bogus rel16 targets 0x1B41; 0x1B41 is mid-instruction (the last byte of mov dl,[di+0x3DB2], 8a 95 b2 3d, at ovl16:1B3E) and lies inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -6908,7 +6935,7 @@ signature = ""
 c_name = "ovl16_fn_1B64"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 7: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:235E is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:235C) followed by add di,ax (03 f8), read as a call whose bogus rel16 targets 0x1B64; 0x1B64 is mid-instruction (the last byte of mov dl,[di+0x3DB2], 8a 95 b2 3d, at ovl16:1B61) and lies inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -6921,7 +6948,7 @@ signature = ""
 c_name = "ovl16_fn_1BAB"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 7: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:23A5 is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:23A3) followed by add di,ax (03 f8), read as a call whose bogus rel16 targets 0x1BAB; 0x1BAB is mid-instruction (the second byte of mov al,es:[di+0x2F] (26 8a 45 2f) at ovl16:1BAA) and lies inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -6934,7 +6961,7 @@ signature = ""
 c_name = "ovl16_fn_1BD2"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 7: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:23CC is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:23CA) followed by add di,ax (03 f8), read as a call whose bogus rel16 targets 0x1BD2; 0x1BD2 lies inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). 0x1BD2 is an instruction boundary but not a routine start. Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -6947,7 +6974,7 @@ signature = ""
 c_name = "ovl16_fn_1BD7"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3 batch 8: not a routine, no prologue and no return. The entry is the flat reading (resident segment 0x00BA * 16 + 0x1037 = 0x1BD7) of the inter-overlay stub call lcall 0x00BA:0x1037 (bytes 9a 37 10 ba 00) at ovl16:2DE6 and 2E48; 0x00BA is res12's segment. 0x1BD7 is the last (segment-high, 0x00) byte of the unrelated lcall 0x0085:0x002F at ovl16:1BD3 (bytes 9a 2f 00 85 00), mid-instruction inside ovl16:056C. 056C is one routine: its only prologue in the region is 55 89 e5 at 056C and its single retf is at 1ED1 (verified on build/re/overlays/ovl16.bin), so every map entry inside it is a stub/fixup artefact. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)."
 evidence = ["far_call"]
 
 [[routine]]
@@ -6960,7 +6987,7 @@ signature = ""
 c_name = "ovl16_fn_1BF5"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 8: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:23EF is the disp8 of les di,[bp-0x18] (c4 7e e8 at 23ED) followed by add di,ax (03 f8), read as a call whose bogus rel16 (0xF803, -2045) targets 0x1BF5. 0x1BF5 is mid-instruction (the ModRM byte 0x88 of mov byte ptr es:[di+0x11b],al, bytes 26 88 85 1b 01 at 1BF4) inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -6973,7 +7000,7 @@ signature = ""
 c_name = "ovl16_fn_1C1E"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 8: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:2418 is the disp8 of les di,[bp-0x18] (c4 7e e8 at 2416) followed by add di,ax (03 f8), read as a call whose bogus rel16 (0xF803, -2045) targets 0x1C1E. 0x1C1E is mid-instruction (the middle byte 0x7e of les di,[bp-0x27], bytes c4 7e d9 at 1C1D) inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -6986,7 +7013,7 @@ signature = ""
 c_name = "ovl16_fn_1C45"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 8: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:243F is the disp8 of les di,[bp-0x18] (c4 7e e8 at 243D) followed by add di,ax (03 f8), read as a call whose bogus rel16 (0xF803, -2045) targets 0x1C45. 0x1C45 is an instruction boundary (jg 0x1c4a, bytes 7f 03) but not a routine start: no prologue and no return, and it lies inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -6999,7 +7026,7 @@ signature = ""
 c_name = "ovl16_fn_1C68"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 8: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:2462 is the disp8 of les di,[bp-0x18] (c4 7e e8 at 2460) followed by add di,ax (03 f8), read as a call whose bogus rel16 (0xF803, -2045) targets 0x1C68. 0x1C68 is mid-instruction (the last byte 0x01 of mov byte ptr es:[di+0xb5],1, bytes 26 c6 85 b5 00 01 at 1C63) inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -7012,7 +7039,7 @@ signature = ""
 c_name = "ovl16_fn_1CD4"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 8: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:24CE is the disp8 of les di,[bp-0x18] (c4 7e e8 at 24CC) followed by add di,ax (03 f8), read as a call whose bogus rel16 (0xF803, -2045) targets 0x1CD4. 0x1CD4 is an instruction boundary (xor ah,ah, bytes 30 e4) but not a routine start: no prologue and no return, and it lies inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -7025,7 +7052,7 @@ signature = ""
 c_name = "ovl16_fn_1CFB"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 9: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:24F5 is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:24F3) followed by add di,ax (03 f8), read as a call whose bogus rel16 (0xF803, -2045) targets 0x1CFB. 0x1CFB is mid-instruction (the last byte 0x01 of mov byte ptr es:[di+0x44],1, bytes 26 c6 45 44 01 at ovl16:1CF7) inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -7038,7 +7065,7 @@ signature = ""
 c_name = "ovl16_fn_1D1E"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 9: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:2518 is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:2516) followed by add di,ax (03 f8), read as a call whose bogus rel16 (0xF803, -2045) targets 0x1D1E. 0x1D1E is mid-instruction (the last byte 0xDF of mov al,[bp-0x21], bytes 8a 46 df at ovl16:1D1C) inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -7051,7 +7078,7 @@ signature = ""
 c_name = "ovl16_fn_1D84"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 9: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:257E is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:257C) followed by add di,ax (03 f8), read as a call whose bogus rel16 (0xF803, -2045) targets 0x1D84. 0x1D84 is mid-instruction (the second byte 0xE4 of xor ah,ah, bytes 30 e4 at ovl16:1D83) inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -7064,7 +7091,7 @@ signature = ""
 c_name = "ovl16_fn_1DBA"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 9: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:25B4 is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:25B2) followed by add di,ax (03 f8), read as a call whose bogus rel16 (0xF803, -2045) targets 0x1DBA. 0x1DBA is mid-instruction (the middle byte 0x7E of les di,[bp-0x27], bytes c4 7e d9 at ovl16:1DB9) inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -7077,7 +7104,7 @@ signature = ""
 c_name = "ovl16_fn_1DCB"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 9: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:25C5 is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:25C3) followed by add di,ax (03 f8), read as a call whose bogus rel16 (0xF803, -2045) targets 0x1DCB. 0x1DCB is an instruction boundary (mov byte ptr es:[di+0x32],al, bytes 26 88 45 32 at ovl16:1DCB) but not a routine start: no prologue and no return, and it lies inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -7090,7 +7117,7 @@ signature = ""
 c_name = "ovl16_fn_1E34"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 9: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:262E is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:262C) followed by add di,ax (03 f8), read as a call whose bogus rel16 (0xF803, -2045) targets 0x1E34. 0x1E34 is mid-instruction (the last byte 0xF8 of mov ax,[bp-8], bytes 8b 46 f8 at ovl16:1E32) inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -7103,7 +7130,7 @@ signature = ""
 c_name = "ovl16_fn_1E5A"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 10: not a routine. 0x1E5A is an instruction boundary inside the single routine ovl16:056C (the lcall 0x0709:0x09E3 ReadInputLine, bytes 9a e3 09 09 07). The near_call evidence is a false positive: the E8 byte at ovl16:2654 is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:2652) followed by add di,ax (03 f8), read as a call whose bogus rel16 (-2045) targets 0x1E5A. 056C has one prologue at 0x056C and one retf at 0x1ED1 (verified on build/re/overlays/ovl16.bin), so it is one routine 056C..1ED1. Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -7116,7 +7143,7 @@ signature = ""
 c_name = "ovl16_fn_1E7D"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 10: not a routine. 0x1E7D is an instruction boundary inside the single routine ovl16:056C (mov [bp-8],ax, bytes 89 46 f8). The near_call evidence is a false positive: the E8 byte at ovl16:2677 is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:2675) followed by add di,ax (03 f8); the bogus rel16 targets 0x1E7D. 056C is one routine 056C..1ED1 (one prologue at 0x056C, one retf at 0x1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -7129,7 +7156,7 @@ signature = ""
 c_name = "ovl16_fn_1EA3"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 10: not a routine. 0x1EA3 is an instruction boundary inside the single routine ovl16:056C (mov di,0x4FE, bytes bf fe 04). The near_call evidence is a false positive: the E8 byte at ovl16:269D is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:269B) followed by add di,ax (03 f8); the bogus rel16 targets 0x1EA3. 056C is one routine 056C..1ED1 (one prologue at 0x056C, one retf at 0x1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -7142,7 +7169,7 @@ signature = ""
 c_name = "ovl16_fn_1EB9"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 10: not a routine. 0x1EB9 is mid-instruction inside the single routine ovl16:056C: it is the 0x92 byte of mov [0x5D92],ax (a3 92 5d at ovl16:1EB8). The near_call evidence is a false positive: the E8 byte at ovl16:35E5 is the ModRM of shr ax,1 (d1 e8 at ovl16:35E4) inside ovl16:35BE; the following bytes d1 e8 are read as rel16 (-5935), targeting 0x1EB9. 056C is one routine 056C..1ED1 (one prologue at 0x056C, one retf at 0x1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -7155,255 +7182,47 @@ signature = ""
 c_name = "ovl16_fn_1EC6"
 level = "none"
 justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:1F0D"
-unit = "ovl16"
-addr = "ovl16:1F0D"
-size = 35
-name = "ovl16_fn_1F0D"
-signature = ""
-c_name = "ovl16_fn_1F0D"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:1F30"
-unit = "ovl16"
-addr = "ovl16:1F30"
-size = 7
-name = "ovl16_fn_1F30"
-signature = ""
-c_name = "ovl16_fn_1F30"
-level = "none"
-justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 10: not a routine. 0x1EC6 is mid-instruction inside the single routine ovl16:056C: it is the 0x1D immediate byte of mov ax,0x11D (b8 1d 01 at ovl16:1EC5). The near_call evidence is a false positive: the E8 byte at ovl16:26C0 is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:26BE) followed by add di,ax (03 f8); the bogus rel16 targets 0x1EC6. 056C is one routine 056C..1ED1 (one prologue at 0x056C, one retf at 0x1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
 id = "ovl16:1F37"
 unit = "ovl16"
 addr = "ovl16:1F37"
-size = 34
-name = "ovl16_fn_1F37"
+size = 360
+name = "DropCharacter"
 signature = ""
 c_name = "ovl16_fn_1F37"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl16_fn_1F37 (ovl16:1F37 removes the selected character from the party: it asks AskYesNo 'Drop <name> forever?' and 'Are you sure?', then shows 'bids you farewell' or 'You dump <name> out back' and calls ovl16_e2(False, True); it is the D (Drop) item of the training-hall menu RunCharacterMenu (ovl16:0161), whitepaper 5.8 'Alter'); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl16:1F59"
-unit = "ovl16"
-addr = "ovl16:1F59"
-size = 35
-name = "ovl16_fn_1F59"
-signature = ""
-c_name = "ovl16_fn_1F59"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:1F7C"
-unit = "ovl16"
-addr = "ovl16:1F7C"
-size = 108
-name = "ovl16_fn_1F7C"
-signature = ""
-c_name = "ovl16_fn_1F7C"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:1FE8"
-unit = "ovl16"
-addr = "ovl16:1FE8"
-size = 35
-name = "ovl16_fn_1FE8"
-signature = ""
-c_name = "ovl16_fn_1FE8"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:200B"
-unit = "ovl16"
-addr = "ovl16:200B"
-size = 8
-name = "ovl16_fn_200B"
-signature = ""
-c_name = "ovl16_fn_200B"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:2013"
-unit = "ovl16"
-addr = "ovl16:2013"
-size = 32
-name = "ovl16_fn_2013"
-signature = ""
-c_name = "ovl16_fn_2013"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl16:2033"
 unit = "ovl16"
 addr = "ovl16:2033"
-size = 108
-name = "ovl16_fn_2033"
+size = 59
+name = "ShowStat"
 signature = ""
-c_name = "ovl16_fn_2033"
-level = "none"
+c_name = "ShowStat"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "nested in ModifyCharacter (ovl16:209F), proven by the parent's match: the parent's ShowStat redraws the value under the cursor (ability StatIndex through ShowAbilityScore, or the hit-point line through DrawHitPoints) by reading the parent's own StatIndex through the static link; the 49 bytes after its retf are 209F's string literals"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl16:209F"
 unit = "ovl16"
 addr = "ovl16:209F"
-size = 236
-name = "ovl16_fn_209F"
+size = 2127
+name = "ModifyCharacter"
 signature = ""
 c_name = "ovl16_fn_209F"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl16_fn_209F (ovl16:209F is the M (Modify) item of the training hall: it refuses an experienced character with '<name> can t be modified.' and lets the player raise/lower the six ability scores and HP with the arrows, Keep (K) or Exit (E); called by RunCharacterMenu (ovl16:0161)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl16:218B"
-unit = "ovl16"
-addr = "ovl16:218B"
-size = 16
-name = "ovl16_fn_218B"
-signature = ""
-c_name = "ovl16_fn_218B"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:219B"
-unit = "ovl16"
-addr = "ovl16:219B"
-size = 63
-name = "ovl16_fn_219B"
-signature = ""
-c_name = "ovl16_fn_219B"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:21DA"
-unit = "ovl16"
-addr = "ovl16:21DA"
-size = 12
-name = "ovl16_fn_21DA"
-signature = ""
-c_name = "ovl16_fn_21DA"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:21E6"
-unit = "ovl16"
-addr = "ovl16:21E6"
-size = 77
-name = "ovl16_fn_21E6"
-signature = ""
-c_name = "ovl16_fn_21E6"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:2233"
-unit = "ovl16"
-addr = "ovl16:2233"
-size = 281
-name = "ovl16_fn_2233"
-signature = ""
-c_name = "ovl16_fn_2233"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl16:234C"
-unit = "ovl16"
-addr = "ovl16:234C"
-size = 106
-name = "ovl16_fn_234C"
-signature = ""
-c_name = "ovl16_fn_234C"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:23B6"
-unit = "ovl16"
-addr = "ovl16:23B6"
-size = 119
-name = "ovl16_fn_23B6"
-signature = ""
-c_name = "ovl16_fn_23B6"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl16:242D"
-unit = "ovl16"
-addr = "ovl16:242D"
-size = 524
-name = "ovl16_fn_242D"
-signature = ""
-c_name = "ovl16_fn_242D"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:2639"
-unit = "ovl16"
-addr = "ovl16:2639"
-size = 802
-name = "ovl16_fn_2639"
-signature = ""
-c_name = "ovl16_fn_2639"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl16:295B"
@@ -7415,7 +7234,7 @@ signature = ""
 c_name = "ovl16_fn_295B"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 13: not a routine. 0x295B is inside the literal pool of ovl16:29AE (the strings ' will become:' .. 'Congratulations...' run 0x295B..0x29AD). From 0x295B to the next prologue there is only ovl16:29AE (one prologue 55 89 e5 at 0x29AE and one retf at 0x304E on build/re/overlays/ovl16.bin), so this 83-byte entry is the near_call reading of the following routine's literal pool. Removed when 29AE matches (make match UNIT=ovl16 WRITE=1); 29AE is itself blocked (see its note)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -7428,7 +7247,7 @@ signature = ""
 c_name = "ovl16_fn_29AE"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 13: the draft is in tools/re/tp_idioms/ovl16/TRAIN_DRAFT.PAS. With a one-byte spare local declared (the original reserves one) the frame matches (sub sp, 0x222) and the entry checks match byte for byte; the compiled body is still 36 bytes too long. Remaining codegen differences: TP 6.0 writes 'A := A + B' on two Bytes as a 16-bit add where the original's 'add [bp-0xb],al' is 8-bit (Inc(A, B) produces it; fixed already for ClassBitMask and TrainableBits); the ds409B[I, Level + 1] index wants 'Level + 1' computed in the byte first (mov al,[bp-0x18]; inc al; cbw; shl ax,1; shl ax,1) but Level: ShortInt gives cbw-then-inc (first real remaining diff at 0x12d3); the forward jmps at 0x1191 (0x27 vs 0x2a), 0x1259 (0x125f vs 0x1261) and 0x12cd still differ. Needs ds05DE (array[0..7] of Byte, the class bit of each class) and ds409B (array[0..7,0..13] of LongInt, the experience to reach each level), both added to POOLVARS, and the ovl16_fn_42ED(Amount: LongInt; Who: PCharacter) / ovl16_fn_4235(Who: PCharacter; ClassBits: Byte): Byte / ovl16_fn_3F31(Who: PCharacter): ShortInt signatures."
 evidence = ["prologue"]
 
 [[routine]]
@@ -7436,12 +7255,12 @@ id = "ovl16:306D"
 unit = "ovl16"
 addr = "ovl16:306D"
 size = 548
-name = "ovl16_fn_306D"
+name = "AddSavedCharacters"
 signature = ""
 c_name = "ovl16_fn_306D"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl16_fn_306D (ovl16:306D is the training hall's Add (A) function (RunCharacterMenu ovl16:0161): its menu 'Add a character: ' / 'Add Exit' lists the saved characters on disk (ReadSavedCharacterList), LoadCharacterFile loads the picked one and AddPartyMember puts it in the party); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -7449,12 +7268,12 @@ id = "ovl16:3291"
 unit = "ovl16"
 addr = "ovl16:3291"
 size = 342
-name = "ovl16_e2"
-signature = "procedure ovl16_e2(Uncounted, FreePicture: Boolean)"
+name = "RemoveSelectedCharacter"
+signature = "procedure RemoveSelectedCharacter(Uncounted, FreePicture: Boolean)"
 c_name = "ovl16_e2"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl16_e2 (ovl16:3291 unlinks SelectedCharacter from the party list ds5D96 (TCharacter.Next +104) and frees its record with FreeCharacter; it lowers the party size ds49D6^[830] unless Uncounted, and frees the CombatIcon picture slot unless FreePicture is false; the removal counterpart of AddPartyMember (ovl17:1446)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -7462,12 +7281,12 @@ id = "ovl16:33E7"
 unit = "ovl16"
 addr = "ovl16:33E7"
 size = 248
-name = "ovl16_fn_33E7"
+name = "ChooseHeadAndBody"
 signature = ""
 c_name = "ovl16_fn_33E7"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl16_fn_33E7 (ovl16:33E7 shows the selected character's head and body pictures (ShowHeadBodyWindow) and its prompt 'Head Body Keep' cycles HeadBank (+BB) and BodyBank (+BC); the head/body step of the create flow (whitepaper 5.8)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -7475,12 +7294,12 @@ id = "ovl16:34DF"
 unit = "ovl16"
 addr = "ovl16:34DF"
 size = 223
-name = "ovl16_fn_34DF"
+name = "DrawIconCell"
 signature = ""
 c_name = "ovl16_fn_34DF"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl16_fn_34DF (ovl16:34DF fills one icon-editor cell (FillPictureRect over 12 cells x 24 rows from @ds260A into DrawBuf) and draws the two mirrored halves of the character's icon (DrawIcon, indices $19 and $C) at CellCol and CellCol+3; called by the icon editor ovl16_e3); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -7488,12 +7307,12 @@ id = "ovl16:35BE"
 unit = "ovl16"
 addr = "ovl16:35BE"
 size = 623
-name = "ovl16_fn_35BE"
+name = "CopyPictureSlot"
 signature = ""
 c_name = "ovl16_fn_35BE"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl16_fn_35BE (ovl16:35BE copies one picture slot of DS:5E5A into another (both halves' tile bytes and packed pixel buffers through Move) and, when its third parameter is set, recolours the destination with the selected character's Figure[1..6] colour pairs, the same recolouring BuildCharacterIcon (ovl17:0482) applies); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -7506,7 +7325,7 @@ signature = ""
 c_name = "ovl16_e3"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-14 by dec-deepseek-3 batch 14: the map boundary is wrong. e3 has its only prologue (55 89 e5) at 382D and its single retf at 3F30 (the next prologue is 3F31), so it runs 382D..3F30, 1796 bytes, not 1096; the size stays 1096 until e3 matches (make match UNIT=ovl16 WRITE=1 then corrects it). The map entries inside it (3C75, 3C7A, 3C7F, 3C84, 3C89, 3C8E, 3C93, 3D34, 3E2A, 3E2F, 3EBF, 3EC4, 3EC9) are its own code, not routines; several are flat-linear readings of the ovl25 stub segment 0x03C5 (0x25, 0x2A ReadPromptChoice, 0x2F ClearPromptLine, 0x34 LoadPictureSlot, 0x39 AskYesNo, 0x3E) landing inside e3, and the rest are ovl31 (0x03E0:0x2A/0x2F) stub flats. e3 is the character-icon editor entered from AlterMenu (ovl15:1C59): it draws the window and BuildCharacterIcon, then a repeat loop over ReadPromptChoice runs a case on the state local [bp-8] (states 1 pick head/body bank or Hair/Face, 2 pick head bank, 3 pick body bank, 4 Size/colour-pair/FaceSelect, 5 the colour-nibble editor) with nested `with SelectedCharacter^` scopes (temps at [bp-0x1f] and [bp-0x23]), a 288-byte frame of string temporaries (the 'new'/'Small'/'Large'/'Hair'/'Face' prompts, a third-page string at [bp-0x120], a 6-byte Figure[1..6] copy at [bp-0x15]), and it ends by asking AskYesNo 'Is this icon ok? '. Its nested routines DrawIconCell (34DF) and CopyPictureSlot (35BE) are emitted before it and already matched. Too large and string-temporary heavy for one batch: no draft committed (src left as {@stub}); a later decompiler should derive it from the same codegen as BuildCharacterIcon (ovl17:0482) and ModifyCharacter (ovl16:209F)"
 evidence = ["prologue"]
 
 [[routine]]
@@ -7519,7 +7338,7 @@ signature = ""
 c_name = "ovl16_fn_3C75"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 14: not a routine. 3C75 is the ModRM byte 0xbd of `cmp byte ptr es:[di+0xbe],0` (bytes 26 80 bd be 00 00 at 3C73) inside ovl16_e3's CBodyBlock case arm, mid-instruction; no prologue. The entry is the flat-linear reading (seg 0x03C5 * 16 + 0x0025 = 0x3C75) of an ovl25 stub call (lcall 0x03C5:0x0025, e.g. at 0x0677 and 0x0961; 0x3C5 is the ovl25 stub segment). e3 has its only prologue (55 89 e5) at 382D and its single retf at 3F30, so it runs 382D..3F30 and every map entry inside it is an artefact. Removed when e3 matches (make match UNIT=ovl16 WRITE=1 corrects e3's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -7532,7 +7351,7 @@ signature = ""
 c_name = "ovl16_fn_3C7A"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 14: not a routine. 3C7A is the displacement byte 0x0a of `jbe 3C85h` (bytes 76 0a at 3C79) inside ovl16_e3, mid-instruction; no prologue. The entry is the flat-linear reading (seg 0x03C5 * 16 + 0x002A = 0x3C7A) of the ovl25 ReadPromptChoice stub call (lcall 0x03C5:0x002A, e.g. at 0x0300 and at 39F9 inside e3 itself). e3's only prologue is 55 89 e5 at 382D and its single retf is at 3F30, so the entry is inside it. Removed when e3 matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -7545,7 +7364,7 @@ signature = ""
 c_name = "ovl16_fn_3C7F"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 14: not a routine. 3C7F is the opcode byte 0xfe of `dec byte ptr es:[di+0xbe]` (bytes 26 fe 8d be 00 at 3C7E) inside ovl16_e3, mid-instruction (the 0x26 segment prefix at 3C7E starts the instruction); no prologue. The entry is the flat-linear reading (seg 0x03C5 * 16 + 0x002F = 0x3C7F) of the ovl25 ClearPromptLine stub call (lcall 0x03C5:0x002F, e.g. at 0x0300 and at 3EB7 inside e3). e3's only prologue is 55 89 e5 at 382D and its single retf is at 3F30. Removed when e3 matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -7558,7 +7377,7 @@ signature = ""
 c_name = "ovl16_fn_3C84"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 14: not a routine. 3C84 is the displacement byte 0x09 of `jmp 3C8Eh` (bytes eb 09 at 3C83) inside ovl16_e3, mid-instruction; no prologue. The entry is the flat-linear reading (seg 0x03C5 * 16 + 0x0034 = 0x3C84) of the ovl25 LoadPictureSlot stub call (lcall 0x03C5:0x0034, e.g. at 0x0775 and at 0x30FB). e3's only prologue is 55 89 e5 at 382D and its single retf is at 3F30, so the entry is inside it. Removed when e3 matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -7571,8 +7390,8 @@ signature = ""
 c_name = "ovl16_fn_3C89"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 15: not a routine. 3C89 is the instruction boundary c6 85 be 00 1f (mov byte ptr [di+0xbe],0x1f, one of e3's bank assignments) with no prologue. The entry is the flat-linear reading (seg 0x03C5 * 16 + 0x0039 = 0x3C89) of the ovl25 AskYesNo stub call at 3F17 (lcall 0x3C5:0x39, also at 1E1C, 1F81, 1FA6, 2E98). e3 has its only prologue (55 89 e5) at 382D and its single retf at 3F30 (byte scan of build/re/overlays/ovl16.bin, re/learnings/ovl16.toml), so 3C89 lies inside e3, and a make tpc probe (tools/re/tp_idioms/ovl16/NOPROC.PAS) shows even a parameterless, local-less far procedure starts with 55 89 e5, so c6 cannot start a routine. Removed when e3 matches (make match UNIT=ovl16 WRITE=1 corrects e3's size to 1796 and deletes the entries inside it)"
+evidence = ["far_call", "tools/re/tp_idioms/ovl16/NOPROC.PAS", "re/learnings/ovl16.toml#ovl16-e3-map-entries-are-ovl25-stub-flats"]
 
 [[routine]]
 id = "ovl16:3C8E"
@@ -7584,8 +7403,8 @@ signature = ""
 c_name = "ovl16_fn_3C8E"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 15: not a routine. 3C8E is the instruction boundary eb 66 (jmp 0x3CF6) with no prologue. The entry is the flat-linear reading (seg 0x03C5 * 16 + 0x003E = 0x3C8E) of the ovl25 stub call lcall 0x3C5:0x3E at 0x0638, 0x092C, 0x0A5A, 0x0D9C. e3 has its only prologue (55 89 e5) at 382D and its single retf at 3F30 (byte scan of build/re/overlays/ovl16.bin, re/learnings/ovl16.toml), so 3C8E lies inside e3, and a make tpc probe (tools/re/tp_idioms/ovl16/NOPROC.PAS) shows a far procedure always starts with 55 89 e5, so eb cannot start one. Removed when e3 matches (make match UNIT=ovl16 WRITE=1 corrects e3's size to 1796 and deletes the entries inside it)"
+evidence = ["far_call", "tools/re/tp_idioms/ovl16/NOPROC.PAS", "re/learnings/ovl16.toml#ovl16-e3-map-entries-are-ovl25-stub-flats"]
 
 [[routine]]
 id = "ovl16:3C93"
@@ -7597,8 +7416,8 @@ signature = ""
 c_name = "ovl16_fn_3C93"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 15: not a routine. 3C93 is the byte 0x20, the rel8 of jne 0x3CB4 (75 20 at 3C92), mid-instruction, with no prologue. The entry is the flat-linear reading (seg 0x03C5 * 16 + 0x0043 = 0x3C93) of the ovl25 stub call lcall 0x3C5:0x43 at 0x091E, 0x0A33, 0x0D75, 0x0EDE, 0x3288. e3 has its only prologue (55 89 e5) at 382D and its single retf at 3F30 (byte scan of build/re/overlays/ovl16.bin, re/learnings/ovl16.toml), so 3C93 lies inside e3; its size 161 is only the gap to the next map entry (3D34). Removed when e3 matches (make match UNIT=ovl16 WRITE=1 corrects e3's size to 1796 and deletes the entries inside it)"
+evidence = ["far_call", "tools/re/tp_idioms/ovl16/NOPROC.PAS", "re/learnings/ovl16.toml#ovl16-e3-map-entries-are-ovl25-stub-flats"]
 
 [[routine]]
 id = "ovl16:3D34"
@@ -7610,8 +7429,8 @@ signature = ""
 c_name = "ovl16_fn_3D34"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 15: not a routine. 3D34 is the instruction boundary 88 46 e7 (mov byte ptr [bp-0x19],al) with no prologue. The entry is the flat-linear reading (seg 0x03D0 * 16 + 0x0034 = 0x3D34) of the ovl28 stub call lcall 0x3D0:0x34 at 0x340D (re/units.toml: stub 0x03D0 -> ovl28). e3 has its only prologue (55 89 e5) at 382D and its single retf at 3F30 (byte scan of build/re/overlays/ovl16.bin, re/learnings/ovl16.toml), so 3D34 lies inside e3; its size 246 is only the gap to the next map entry (3E2A). Removed when e3 matches (make match UNIT=ovl16 WRITE=1 corrects e3's size to 1796 and deletes the entries inside it)"
+evidence = ["far_call", "re/units.toml#ovl28", "tools/re/tp_idioms/ovl16/NOPROC.PAS", "re/learnings/ovl16.toml#ovl16-e3-map-entries-are-ovl25-stub-flats"]
 
 [[routine]]
 id = "ovl16:3E2A"
@@ -7623,8 +7442,8 @@ signature = ""
 c_name = "ovl16_fn_3E2A"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 15: not a routine. 3E2A is the instruction boundary 26 8a 85 bf 00 (mov al,es:[di+0xbf], the CombatIcon byte e3 hands to CopyPictureSlot) with no prologue. The entry is the flat-linear reading (seg 0x03E0 * 16 + 0x002A = 0x3E2A) of the ovl31_e2 stub call lcall 0x3E0:0x2A at 0x385A. e3 has its only prologue (55 89 e5) at 382D and its single retf at 3F30 (byte scan of build/re/overlays/ovl16.bin, re/learnings/ovl16.toml), so 3E2A lies inside e3, and a make tpc probe (tools/re/tp_idioms/ovl16/NOPROC.PAS) shows a far procedure always starts with 55 89 e5, so 26 cannot start one. Removed when e3 matches (make match UNIT=ovl16 WRITE=1 corrects e3's size to 1796 and deletes the entries inside it)"
+evidence = ["far_call", "re/units.toml#ovl31", "tools/re/tp_idioms/ovl16/NOPROC.PAS", "re/learnings/ovl16.toml#ovl16-e3-map-entries-are-ovl25-stub-flats"]
 
 [[routine]]
 id = "ovl16:3E2F"
@@ -7636,8 +7455,8 @@ signature = ""
 c_name = "ovl16_fn_3E2F"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 15: not a routine. 3E2F is the instruction boundary 50 (push ax, the CombatIcon argument of e3's nested CopyPictureSlot call at 3E38) with no prologue. The entry is the flat-linear reading (seg 0x03E0 * 16 + 0x002F = 0x3E2F) of the ovl31_e3 stub call lcall 0x3E0:0x2F at 3F28. e3 has its only prologue (55 89 e5) at 382D and its single retf at 3F30 (byte scan of build/re/overlays/ovl16.bin, re/learnings/ovl16.toml), so 3E2F lies inside e3; its size 144 is only the gap to the next map entry (3EBF). Removed when e3 matches (make match UNIT=ovl16 WRITE=1 corrects e3's size to 1796 and deletes the entries inside it)"
+evidence = ["far_call", "re/units.toml#ovl31", "tools/re/tp_idioms/ovl16/NOPROC.PAS", "re/learnings/ovl16.toml#ovl16-e3-map-entries-are-ovl25-stub-flats"]
 
 [[routine]]
 id = "ovl16:3EBF"
@@ -7649,8 +7468,8 @@ signature = ""
 c_name = "ovl16_fn_3EBF"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 16: not a routine. 3EBF is the instruction 9a 2f 00 e9 03 (lcall 0x03E9:0x002F, FreePictureSlot ovl32:014E) inside e3's body, and its own flat target (seg 0x03E9 * 16 + 0x002F = 0x3EBF) lands on it. The same stub is called at 0x3321 and 0x337B, whose flat targets also name 3EBF. e3 has its only prologue (55 89 e5) at 382D and its single retf at 3F30 (byte scan of build/re/overlays/ovl16.bin), so 3EBF lies inside e3; a make tpc probe (tools/re/tp_idioms/ovl16/NOPROC.PAS) shows a far procedure always starts with 55 89 e5, so 9a cannot start one. Removed when e3 matches (make match UNIT=ovl16 WRITE=1 corrects e3's size to 1796 and deletes the entries inside it)"
+evidence = ["far_call", "re/units.toml#ovl32", "tools/re/tp_idioms/ovl16/NOPROC.PAS", "re/learnings/ovl16.toml#ovl16-e3-map-entries-are-ovl25-stub-flats"]
 
 [[routine]]
 id = "ovl16:3EC4"
@@ -7662,8 +7481,8 @@ signature = ""
 c_name = "ovl16_fn_3EC4"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 16: not a routine. 3EC4 is the instruction boundary 80 3e fa 49 01 (cmp byte [0x49fa],1) inside e3 with no prologue. The entry is the flat-linear reading (seg 0x03E9 * 16 + 0x0034 = 0x3EC4) of the LoadPictureSlot (ovl32:01C8) stub call lcall 0x03E9:0x34 at 0x3EE0 and 0x3EFA. e3 has its only prologue (55 89 e5) at 382D and its single retf at 3F30 (byte scan of build/re/overlays/ovl16.bin, re/learnings/ovl16.toml), so 3EC4 lies inside e3; its size 5 is only the gap to the next map entry (3EC9). Removed when e3 matches (make match UNIT=ovl16 WRITE=1 corrects e3's size to 1796 and deletes the entries inside it)"
+evidence = ["far_call", "re/units.toml#ovl32", "tools/re/tp_idioms/ovl16/NOPROC.PAS", "re/learnings/ovl16.toml#ovl16-e3-map-entries-are-ovl25-stub-flats"]
 
 [[routine]]
 id = "ovl16:3EC9"
@@ -7675,85 +7494,59 @@ signature = ""
 c_name = "ovl16_fn_3EC9"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 16: not a routine. 3EC9 is the instruction boundary 76 34 (jbe, no prologue) inside e3. The entry is the flat-linear reading (seg 0x03E9 * 16 + 0x0039 = 0x3EC9) of an ovl32 stub call lcall 0x03E9:0x39 at 0x3564, 0x357F, 0x3595 and 0x35B0. e3 has its only prologue (55 89 e5) at 382D and its single retf at 3F30 (byte scan of build/re/overlays/ovl16.bin, re/learnings/ovl16.toml), so 3EC9 lies inside e3; its size 104 is only the gap to the next map entry (3F31). Removed when e3 matches (make match UNIT=ovl16 WRITE=1 corrects e3's size to 1796 and deletes the entries inside it)"
+evidence = ["far_call", "re/units.toml#ovl32", "tools/re/tp_idioms/ovl16/NOPROC.PAS", "re/learnings/ovl16.toml#ovl16-e3-map-entries-are-ovl25-stub-flats"]
 
 [[routine]]
 id = "ovl16:3F31"
 unit = "ovl16"
 addr = "ovl16:3F31"
 size = 130
-name = "ovl16_fn_3F31"
-signature = ""
+name = "ConstitutionHitPointAdjustment"
+signature = "function ConstitutionHitPointAdjustment(Who: PCharacter): ShortInt"
 c_name = "ovl16_fn_3F31"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl16_fn_3F31 (ovl16:3F31 computes the signed constitution hit-point adjustment shared by the hit-point floor ovl16:3FB3 and the ceiling ovl16:408C: it sums ds408E[Constitution] (the AD&D 1e table: -2 at 3, -1 at 4..6, 0 at 7..14, +1 at 15, +2 at 16..18) over the classes with a level and adds the fighter bonus (ClassMask 2 above constitution 16 and 17); callers ModifyCharacter ovl16:209F use it through 3FB3/408C); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl16:3FB3"
 unit = "ovl16"
 addr = "ovl16:3FB3"
-size = 148
-name = "ovl16_fn_3FB3"
-signature = ""
+size = 217
+name = "MinHitPoints"
+signature = "function MinHitPoints(Who: PCharacter): Byte"
 c_name = "ovl16_fn_3FB3"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl16_fn_3FB3 (ovl16:3FB3 is the floor ModifyCharacter (ovl16:209F) clamps a lowered HpMax to ('if ovl16:3FB3(SelectedCharacter) > HpMax then HpMax := ...'): over the classes with a level it counts the hit dice and totals their levels (one extra for class 4 and 7, whose maximum die is one higher, ovl16:408C), then divides by the class count after adding the constitution adjustment (ConstitutionHitPointAdjustment ovl16:3F31) and never returns below 1; the minimum-roll counterpart of the ceiling ovl16:408C); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl16:4047"
-unit = "ovl16"
-addr = "ovl16:4047"
-size = 69
-name = "ovl16_fn_4047"
-signature = ""
-c_name = "ovl16_fn_4047"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl16:408C"
 unit = "ovl16"
 addr = "ovl16:408C"
-size = 364
-name = "ovl16_fn_408C"
-signature = ""
+size = 425
+name = "MaxHitPoints"
+signature = "function MaxHitPoints(Who: PCharacter): Byte"
 c_name = "ovl16_fn_408C"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl16_fn_408C (ovl16:408C is the ceiling ModifyCharacter (ovl16:209F) clamps a raised HpMax to: over the classes with a level it totals the level times each class's maximum hit die and divides by the class count after adding the constitution adjustment (ConstitutionHitPointAdjustment ovl16:3F31), never below 1; the maximum-roll counterpart of MinHitPoints ovl16:3FB3); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl16:41F8"
-unit = "ovl16"
-addr = "ovl16:41F8"
-size = 61
-name = "ovl16_fn_41F8"
-signature = ""
-c_name = "ovl16_fn_41F8"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl16:4235"
 unit = "ovl16"
 addr = "ovl16:4235"
 size = 184
-name = "ovl16_fn_4235"
-signature = ""
+name = "RollHitPoints"
+signature = "function RollHitPoints(Who: PCharacter; ClassBits: Byte): Byte"
 c_name = "ovl16_fn_4235"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl16_fn_4235 (ovl16:4235 rolls the hit points a level gains: it sums over the classes in ClassBits that the character has a level in one RollDice roll of that class's hit dice (ds08B6 dice of ds08BE sides), with a first-level class raised to two thirds of its die; called by the training hall ovl16:29AE and the create-character run ovl16:1D1E, which divide the sum by the class count); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -7761,12 +7554,12 @@ id = "ovl16:42ED"
 unit = "ovl16"
 addr = "ovl16:42ED"
 size = 359
-name = "ovl16_fn_42ED"
-signature = ""
+name = "PayGold"
+signature = "procedure PayGold(Amount: LongInt; Who: PCharacter)"
 c_name = "ovl16_fn_42ED"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl16_fn_42ED (ovl16:42ED takes Amount gold pieces from Who's money for the training hall (ovl16:29AE calls it with the training cost): it converts the amount to copper, hands coins over from copper up (one more coin than the remainder needs) and gives the overshoot back as change from platinum down; the enum coin kind and Succ/Pred are proven by tools/re/tp_idioms/ovl16/PAYPRB2.PAS); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -7787,12 +7580,13 @@ id = "ovl17:0010"
 unit = "ovl17"
 addr = "ovl17:0010"
 size = 424
-name = "ovl17_e1"
+name = "ReadSavedCharacterList"
 signature = ""
 c_name = "ovl17_e1"
-level = "none"
+level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 699d71c"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl17_e1 (ovl17:0010 reads charlist.txt (SaveDir + charlist.txt) and builds a 46-byte menu line per saved character, prefixing a star for a name already in the party list ds5D96; called by ovl16 character menu and ovl17_e4); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -7800,12 +7594,13 @@ id = "ovl17:01B8"
 unit = "ovl17"
 addr = "ovl17:01B8"
 size = 246
-name = "ovl17_e2"
+name = "RewriteSavedCharacterList"
 signature = ""
 c_name = "ovl17_e2"
-level = "none"
+level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 699d71c"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl17_e2 (ovl17:01B8 rewrites the save disk charlist.txt from a saved-character menu list: CreateSaveDir, Rewrite the file (prompting for the save disk while the open fails), WriteLn each list line whose text does not start with a star (party members skipped), Close; called by ovl16 add-character menu and ovl17_e4); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -7817,6 +7612,7 @@ name = "CreateSaveDir"
 signature = ""
 c_name = "ovl17_fn_02AE"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 699d71c"
 justification = ""
 notes = "renamed from ovl17_fn_02AE (ovl17:02AE: MkDir of SaveDir minus its trailing backslash (System MkDir = 0AF8:17D6, INT 21h/39), then loops showing 'Put save disk in <drive>:' until IOResult is 0 or 5; called by ovl17_e1/e2/e4/e8/e9 before they touch save files); auto:near_call"
 evidence = ["prologue"]
@@ -7826,12 +7622,13 @@ id = "ovl17:032F"
 unit = "ovl17"
 addr = "ovl17:032F"
 size = 339
-name = "ovl17_fn_032F"
+name = "MergePictureData"
 signature = ""
 c_name = "ovl17_fn_032F"
-level = "none"
+level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 699d71c"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl17_fn_032F (ovl17:032F combines two in-memory pictures: ORs Source (the first parameter, ds5E5A slot 11 reference) tail/tile bytes into Dest and ANDs its pixel bytes into Dest, so Source masks Dest; called by ovl17_e3 for the character head and body pictures); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -7839,142 +7636,69 @@ id = "ovl17:0482"
 unit = "ovl17"
 addr = "ovl17:0482"
 size = 540
-name = "ovl17_e3"
+name = "BuildCharacterIcon"
 signature = ""
 c_name = "ovl17_e3"
-level = "none"
+level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 699d71c"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl17_e3 (ovl17:0482 loads the selected character's CHEAD (slot 11) and CBODY (its icon slot) pictures, merges the head halves into the body halves with MergePictureData, and optionally recolours the icon from the six Figure nibble pairs through ds3CF5; called by the ovl16 character menus, ovl17_e7 and ovl17_e8); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl17:069E"
 unit = "ovl17"
 addr = "ovl17:069E"
-size = 378
-name = "ovl17_e4"
+size = 1102
+name = "SaveCharacter"
 signature = ""
 c_name = "ovl17_e4"
-level = "none"
+level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 699d71c"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl17_e4 (ovl17:069E saves one character to the save disk: with an empty Name it adds the character's name to charlist.txt and writes SaveDir + DOS-cleaned name + .cha, with a Name it writes SaveDir + Name + .sav; BlockWrites the 285-byte character and the 63-byte items (.itm) and 9-byte affects (.spc) lists; called by ovl16_e1, ovl16_fn_1EA3 and ovl17_e9); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl17:0818"
-unit = "ovl17"
-addr = "ovl17:0818"
-size = 50
-name = "ovl17_fn_0818"
-signature = ""
-c_name = "ovl17_fn_0818"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl17:084A"
-unit = "ovl17"
-addr = "ovl17:084A"
-size = 27
-name = "ovl17_fn_084A"
-signature = ""
-c_name = "ovl17_fn_084A"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl17:0865"
-unit = "ovl17"
-addr = "ovl17:0865"
-size = 640
-name = "ovl17_fn_0865"
-signature = ""
-c_name = "ovl17_fn_0865"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl17:0AE5"
-unit = "ovl17"
-addr = "ovl17:0AE5"
-size = 7
-name = "ovl17_fn_0AE5"
-signature = ""
-c_name = "ovl17_fn_0AE5"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl17:0AEC"
 unit = "ovl17"
 addr = "ovl17:0AEC"
-size = 92
-name = "ovl17_e5"
+size = 984
+name = "LoadCharacterFile"
 signature = ""
 c_name = "ovl17_e5"
-level = "none"
+level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 699d71c"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl17_e5 (ovl17:0AEC reads one character and its item/affect lists from the save or game disk: it opens FileName + '.sav'/'.cha' through OpenGameFile, BlockReads the 285-byte record into Who^ and reads the .itm (63) and .spc (9) lists to end of file; the read counterpart of SaveCharacter (ovl17:069E); called by ovl16_fn_306D and ovl17_e8); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl17:0B48"
-unit = "ovl17"
-addr = "ovl17:0B48"
-size = 892
-name = "ovl17_fn_0B48"
-signature = ""
-c_name = "ovl17_fn_0B48"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl17:0EC4"
 unit = "ovl17"
 addr = "ovl17:0EC4"
-size = 213
-name = "ovl17_e6"
-signature = "procedure ovl17_e6(Kind: Byte; Who: Pointer)"
+size = 926
+name = "LoadMonster"
+signature = "procedure LoadMonster(Kind: Byte; Who: Pointer)"
 c_name = "ovl17_e6"
-level = "none"
+level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 699d71c"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl17_e6 (ovl17:0EC4 loads a monster: it builds MON<Str(TileSet)>CHA/SPC/ITM.DAX names, LoadDaxBlock block Kind from the poolrad MON<N>CHA/SPC/ITM.DAX archives, Moves the 285-byte record into Who^, clears its list links, builds the Figure descriptor with RollDice(1,6) nibble pairs and copies the 9-byte affects and 63-byte items into GetMem chains; called by ovl07 LoadCharacter and ovl17_e7); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl17:0F99"
-unit = "ovl17"
-addr = "ovl17:0F99"
-size = 713
-name = "ovl17_fn_0F99"
-signature = ""
-c_name = "ovl17_fn_0F99"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl17:1262"
 unit = "ovl17"
 addr = "ovl17:1262"
 size = 484
-name = "ovl17_e7"
+name = "AddMonsterToParty"
 signature = ""
 c_name = "ovl17_e7"
-level = "none"
+level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 699d71c"
 justification = ""
-notes = "auto:entry_7"
+notes = "renamed from ovl17_e7 (ovl17:1262 adds a monster of Kind to the party: it returns at once when the party already holds eight members (ds49D6^[830] > 7), has LoadMonster build the record, gives it a random byte at +AB, picks one of the classes with a positive level (RollDice(1, Count)) and the body/head picture banks from the ds08C5-region tables by Who^.B9E and the roll, then AddPartyMember and BuildCharacterIcon(True); called by ovl03_fn_2B7E); auto:entry_7"
 evidence = ["prologue"]
 
 [[routine]]
@@ -7986,6 +7710,7 @@ name = "AddPartyMember"
 signature = "procedure AddPartyMember(Member: PCharacter)"
 c_name = "ovl17_e10"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 699d71c"
 justification = ""
 notes = "renamed from ovl17_e10 (ovl17:1446 links one TCharacter into the party list ds5D96 (tail, or head when empty), gives it the lowest free combat map icon 0..7, counts it in ds49D6^[VarPartySize] and calls RecalcClassStats; matches ovl16 and ovl17 load-game callers); auto:near_call"
 evidence = ["prologue"]
@@ -7995,12 +7720,13 @@ id = "ovl17:1602"
 unit = "ovl17"
 addr = "ovl17:1602"
 size = 1878
-name = "ovl17_e8"
+name = "LoadGame"
 signature = ""
 c_name = "ovl17_e8"
-level = "none"
+level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 699d71c"
 justification = ""
-notes = "auto:entry_8"
+notes = "renamed from ovl17_e8 (ovl17:1602 loads a saved game from SaveDir + savgam<slot>.dat, restores the game state and the party, rebuilds every member icon and the area view; the counterpart of SaveGame; called by ovl16_e1); auto:entry_8"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8008,12 +7734,13 @@ id = "ovl17:1D58"
 unit = "ovl17"
 addr = "ovl17:1D58"
 size = 1405
-name = "ovl17_e9"
-signature = "procedure ovl17_e9"
+name = "SaveGame"
+signature = "procedure SaveGame"
 c_name = "ovl17_e9"
-level = "none"
+level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 699d71c"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl17_e9 (ovl17:1D58 prompts for a slot letter and writes the whole game state and every party member to SaveDir + savgam<letter>.dat; called by the heap error handler, MakeCamp, the character menu and SaveAndExit); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8021,12 +7748,13 @@ id = "ovl17:22D5"
 unit = "ovl17"
 addr = "ovl17:22D5"
 size = 267
-name = "ovl17_e11"
+name = "SaveAndExit"
 signature = ""
 c_name = "ovl17_e11"
-level = "none"
+level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 699d71c"
 justification = ""
-notes = "auto:entry_11"
+notes = "renamed from ovl17_e11 (ovl17:22D5 shows the 'Save and exit Insert disk #N' prompt and, on the S hotkey, saves the game (ovl17_e9) and quits; called by ovl03:0BD1 with the area ECL file name, which gates it); auto:entry_11"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8037,7 +7765,8 @@ size = 5
 name = "ovl17_init"
 signature = ""
 c_name = "ovl17_init"
-level = "none"
+level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 699d71c"
 justification = ""
 notes = "auto:entry_0"
 evidence = ["prologue"]
@@ -8102,39 +7831,28 @@ evidence = ["prologue"]
 id = "ovl19:004A"
 unit = "ovl19"
 addr = "ovl19:004A"
-size = 724
-name = "ovl19_e1"
+size = 1219
+name = "ShowCharacterSheet"
 signature = ""
 c_name = "ovl19_e1"
-level = "none"
+level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 75f4aad"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl19_e1 (Called by ovl19_e5 (the View command, ovl19:0AB3) and ovl16 (ovl16_fn_0B52, ovl16_fn_1DCB, ovl16_fn_209F). Draws the sheet window with the name, sex, race, age, alignment, class, abilities, levels, experience, combat block, weapon, armor, status and portraits of SelectedCharacter (ovl19:004A).); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl19:031E"
-unit = "ovl19"
-addr = "ovl19:031E"
-size = 495
-name = "ovl19_fn_031E"
-signature = ""
-c_name = "ovl19_fn_031E"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl19:050D"
 unit = "ovl19"
 addr = "ovl19:050D"
 size = 251
-name = "ovl19_e4"
+name = "ShowCharacterMoney"
 signature = ""
 c_name = "ovl19_e4"
-level = "none"
+level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 75f4aad"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl19_e4 (Called by ovl19_e1 (ovl19:004A, near call 050D after the Level line). Lists the Money[0..6] entries of SelectedCharacter (+$88) with their MoneyKindNames (DS:0FFA, ovl21:0DDF) in the window 12..26 x 7..14 (ovl19:050D code).); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8142,337 +7860,111 @@ id = "ovl19:0608"
 unit = "ovl19"
 addr = "ovl19:0608"
 size = 761
-name = "ovl19_e2"
+name = "ShowCombatStats"
 signature = ""
 c_name = "ovl19_e2"
-level = "none"
+level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 75f4aad"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl19_e2 (Draws the AC, HP, THAC0, Damage, Encumbrance and Movement labels of the sheet (literal strings at ovl19:05BE..05FC, the labels of the combat block), with the values of the selected character. Called by ovl19_e1 (ovl19:03F5) and from ovl16 (ovl16_fn_1DCB, ovl16_fn_2639).); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl19:0901"
 unit = "ovl19"
 addr = "ovl19:0901"
-size = 20
-name = "ovl19_e3"
-signature = ""
+size = 434
+name = "ShowAbilityScore"
+signature = "procedure ShowAbilityScore(Index: ShortInt; Highlight: Boolean)"
 c_name = "ovl19_e3"
-level = "none"
+level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 75f4aad"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl19_e3 (called by ovl19_e1 for rows 7..12 (STR..CHA labels, ovl19:004A loop, [bp-5] = 0..5 with Highlight 0); draws the score at offset 10h plus Index of SelectedCharacter; Strength 18 adds the percentile in parentheses (ovl19:0901 code)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl19:0915"
-unit = "ovl19"
-addr = "ovl19:0915"
-size = 20
-name = "ovl19_fn_0915"
-signature = ""
-c_name = "ovl19_fn_0915"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl19:0929"
-unit = "ovl19"
-addr = "ovl19:0929"
-size = 5
-name = "ovl19_fn_0929"
-signature = ""
-c_name = "ovl19_fn_0929"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl19:092E"
-unit = "ovl19"
-addr = "ovl19:092E"
-size = 5
-name = "ovl19_fn_092E"
-signature = ""
-c_name = "ovl19_fn_092E"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl19:0933"
-unit = "ovl19"
-addr = "ovl19:0933"
-size = 5
-name = "ovl19_fn_0933"
-signature = ""
-c_name = "ovl19_fn_0933"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl19:0938"
-unit = "ovl19"
-addr = "ovl19:0938"
-size = 10
-name = "ovl19_fn_0938"
-signature = ""
-c_name = "ovl19_fn_0938"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl19:0942"
-unit = "ovl19"
-addr = "ovl19:0942"
-size = 5
-name = "ovl19_fn_0942"
-signature = ""
-c_name = "ovl19_fn_0942"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl19:0947"
-unit = "ovl19"
-addr = "ovl19:0947"
-size = 5
-name = "ovl19_fn_0947"
-signature = ""
-c_name = "ovl19_fn_0947"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl19:094C"
-unit = "ovl19"
-addr = "ovl19:094C"
-size = 57
-name = "ovl19_fn_094C"
-signature = ""
-c_name = "ovl19_fn_094C"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl19:0985"
-unit = "ovl19"
-addr = "ovl19:0985"
-size = 5
-name = "ovl19_fn_0985"
-signature = ""
-c_name = "ovl19_fn_0985"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl19:098A"
-unit = "ovl19"
-addr = "ovl19:098A"
-size = 15
-name = "ovl19_fn_098A"
-signature = ""
-c_name = "ovl19_fn_098A"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl19:0999"
-unit = "ovl19"
-addr = "ovl19:0999"
-size = 5
-name = "ovl19_fn_0999"
-signature = ""
-c_name = "ovl19_fn_0999"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl19:099E"
-unit = "ovl19"
-addr = "ovl19:099E"
-size = 5
-name = "ovl19_fn_099E"
-signature = ""
-c_name = "ovl19_fn_099E"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl19:09A3"
-unit = "ovl19"
-addr = "ovl19:09A3"
-size = 272
-name = "ovl19_fn_09A3"
-signature = ""
-c_name = "ovl19_fn_09A3"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl19:0AB3"
 unit = "ovl19"
 addr = "ovl19:0AB3"
-size = 114
-name = "ovl19_e5"
-signature = "procedure ovl19_e5(var Flag: Byte)"
+size = 701
+name = "ViewSelectedCharacter"
+signature = "procedure ViewSelectedCharacter(var Done: Byte)"
 c_name = "ovl19_e5"
-level = "none"
+level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 75f4aad"
 justification = ""
-notes = "auto:entry_5"
+notes = "renamed from ovl19_e5 (the View command: draws the sheet and the View: prompt with Items, Spells, Trade, Drop and Exit; the Temple, the shop and the camp call it for their V key (ovl19:0AB3; whitepaper 5.4, 5.22)); auto:entry_5"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl19:0B25"
-unit = "ovl19"
-addr = "ovl19:0B25"
-size = 587
-name = "ovl19_fn_0B25"
-signature = ""
-c_name = "ovl19_fn_0B25"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl19:0D70"
 unit = "ovl19"
 addr = "ovl19:0D70"
 size = 392
-name = "ovl19_fn_0D70"
-signature = ""
+name = "CanGiveUpItem"
+signature = "function CanGiveUpItem(Item: PMenuLine): Boolean"
 c_name = "ovl19_fn_0D70"
-level = "none"
+level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 75f4aad"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl19_fn_0D70 (the Items menu's guard: False for a readied item (Must be unreadied) and for a scroll with a pending scribe the player does not give up (ovl19:0D70; whitepaper 5.22)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl19:0EF8"
 unit = "ovl19"
 addr = "ovl19:0EF8"
-size = 234
-name = "ovl19_e6"
-signature = "procedure ovl19_e6(var Done: Byte)"
+size = 1496
+name = "RunItemMenu"
+signature = "procedure RunItemMenu(var Done: Byte)"
 c_name = "ovl19_e6"
-level = "none"
+level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 75f4aad"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl19_e6 (the Items command of the View prompt: the Ready, Use, Trade, Drop, Halve, Join, Sell and Id menu over the carried items (ovl19:0EF8; whitepaper 5.4); called by ViewSelectedCharacter for I and by the Use command (ovl08:031A)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl19:0FE2"
-unit = "ovl19"
-addr = "ovl19:0FE2"
-size = 1197
-name = "ovl19_fn_0FE2"
-signature = ""
-c_name = "ovl19_fn_0FE2"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl19:148F"
-unit = "ovl19"
-addr = "ovl19:148F"
-size = 65
-name = "ovl19_fn_148F"
-signature = ""
-c_name = "ovl19_fn_148F"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl19:14D0"
 unit = "ovl19"
 addr = "ovl19:14D0"
-size = 67
-name = "ovl19_e7"
-signature = "procedure ovl19_e7(P: Pointer)"
+size = 612
+name = "ReadyItem"
+signature = "procedure ReadyItem(Item: PMenuLine)"
 c_name = "ovl19_e7"
-level = "none"
+level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 75f4aad"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl19_e7 (ovl19:14D0 is the Ready action: RunItemMenu's R key (ovl19:0EF8) and the AI's item step (ovl09 calls it on SlotItems[0], SlotItems[1] and its picks). It marks the item Readied and applies its affect (CallAffectHandler, Affects[3] above $7F), or refuses with 'Wrong Class', 'already using <name>' or 'Your hands are full!' (RaceRow[ItemType] rows 0, 1 and 13 and PadB0)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl19:1513"
-unit = "ovl19"
-addr = "ovl19:1513"
-size = 545
-name = "ovl19_fn_1513"
-signature = ""
-c_name = "ovl19_fn_1513"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl19:1734"
 unit = "ovl19"
 addr = "ovl19:1734"
-size = 36
-name = "ovl19_fn_1734"
-signature = ""
+size = 185
+name = "TradeItem"
+signature = "procedure TradeItem(Item: PMenuLine)"
 c_name = "ovl19_fn_1734"
-level = "none"
+level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 75f4aad"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl19_fn_1734 (ovl19:1734 is the Trade action of RunItemMenu's T key (ovl19:0EF8, after CanGiveUpItem): 'Trade with Whom?' picks the recipient (res12_fn_2C48), the item is added to the recipient (res12_fn_15F7) and taken from SelectedCharacter (res12_fn_1509), or 'Overloaded' is shown when WouldOverloadInventory refuses the recipient); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl19:1758"
-unit = "ovl19"
-addr = "ovl19:1758"
-size = 149
-name = "ovl19_fn_1758"
-signature = ""
-c_name = "ovl19_fn_1758"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl19:17ED"
 unit = "ovl19"
 addr = "ovl19:17ED"
 size = 176
-name = "ovl19_fn_17ED"
-signature = ""
+name = "HalveItem"
+signature = "procedure HalveItem(Item: PMenuLine)"
 c_name = "ovl19_fn_17ED"
-level = "none"
+level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 75f4aad"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl19_fn_17ED (ovl19:17ED is the Halve action of RunItemMenu's H key (ovl19:0EF8, line H calls it): Count div 2 goes to a new 63-byte record copied from the item (Move, New), that record takes the item's Next, the item keeps the rest of the count, and 'Can''t halve that' is shown when the half is zero); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8480,220 +7972,83 @@ id = "ovl19:189D"
 unit = "ovl19"
 addr = "ovl19:189D"
 size = 493
-name = "ovl19_fn_189D"
-signature = ""
+name = "JoinItem"
+signature = "procedure JoinItem(Item: PMenuLine)"
 c_name = "ovl19_fn_189D"
-level = "none"
+level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 75f4aad"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl19_fn_189D (ovl19:189D is the Join action of RunItemMenu's J key (ovl19:0EF8, line J calls it): it adds the counts of the matching stacks of SelectedCharacter (same NameNum, ItemType, Plus, Cursed, Weight, Affects[1] below 2) to Item up to 255, taking each match off the character (res12_fn_1509) and carrying the rest into the next stack); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl19:1A8A"
 unit = "ovl19"
 addr = "ovl19:1A8A"
-size = 284
-name = "ovl19_e8"
-signature = "procedure ovl19_e8(P: Pointer; var B: Byte)"
+size = 612
+name = "UseItem"
+signature = "procedure UseItem(Item: PMenuLine; var Done: Byte)"
 c_name = "ovl19_e8"
-level = "none"
+level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 75f4aad"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl19_e8 (ovl19:1A8A is the Use action: RunItemMenu's U key (ovl19:0EF8) and UseMagicItem (ovl09:03E4, the computer's magic-item step) pass it an item; a scroll (ovl22_e6 true) gives its spell by ChooseSpellFromList, an item with Affects[2] gives it directly, and the spell is cast through ovl22_e5 (matched, ovl19:1A8A)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl19:1BA6"
-unit = "ovl19"
-addr = "ovl19:1BA6"
-size = 49
-name = "ovl19_fn_1BA6"
-signature = ""
-c_name = "ovl19_fn_1BA6"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl19:1BD7"
-unit = "ovl19"
-addr = "ovl19:1BD7"
-size = 60
-name = "ovl19_fn_1BD7"
-signature = ""
-c_name = "ovl19_fn_1BD7"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl19:1C13"
-unit = "ovl19"
-addr = "ovl19:1C13"
-size = 58
-name = "ovl19_fn_1C13"
-signature = ""
-c_name = "ovl19_fn_1C13"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl19:1C4D"
-unit = "ovl19"
-addr = "ovl19:1C4D"
-size = 161
-name = "ovl19_fn_1C4D"
-signature = ""
-c_name = "ovl19_fn_1C4D"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl19:1CEE"
 unit = "ovl19"
 addr = "ovl19:1CEE"
-size = 605
-name = "ovl19_fn_1CEE"
-signature = ""
+size = 612
+name = "SellItem"
+signature = "procedure SellItem(Item: PMenuLine)"
 c_name = "ovl19_fn_1CEE"
-level = "none"
+level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 75f4aad"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl19_fn_1CEE (ovl19:1CEE is the Sell action: RunItemMenu's S key (ovl19:0EF8) after CanGiveUpItem; it shows 'I'll give you <offer> gold pieces for your <item>', asks 'Is It a Deal?' and on Y shows 'Sold!', removes the item (res12_fn_1509) and pays the offer in platinum and gold (matched, ovl19:1CEE)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl19:1F4B"
-unit = "ovl19"
-addr = "ovl19:1F4B"
-size = 7
-name = "ovl19_fn_1F4B"
-signature = ""
-c_name = "ovl19_fn_1F4B"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl19:1F52"
 unit = "ovl19"
 addr = "ovl19:1F52"
-size = 343
-name = "ovl19_fn_1F52"
-signature = ""
+size = 516
+name = "IdentifyItem"
+signature = "procedure IdentifyItem(Item: PMenuLine; var Redraw: Byte)"
 c_name = "ovl19_fn_1F52"
-level = "none"
+level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 75f4aad"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl19_fn_1F52 (ovl19:1F52 is the Id action of the item menu: RunItemMenu's I key calls it (ovl19:0EF8) and its strings are 'For 200 gold pieces I''ll identify your ' (1EC8), 'Is It a Deal? ' (1EF0), 'Not Enough Money' (1EFF), 'I can''t tell anything new about your ' (1F10) and 'It looks like some sort of ' (1F36); it charges IdentifyPrice 200 gold from the character or the pool and clears TMenuLine.HiddenNames of the item (matched, ovl19:1F52)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl19:20A9"
-unit = "ovl19"
-addr = "ovl19:20A9"
-size = 173
-name = "ovl19_fn_20A9"
-signature = ""
-c_name = "ovl19_fn_20A9"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl19:2156"
 unit = "ovl19"
 addr = "ovl19:2156"
-size = 65
-name = "ovl19_fn_2156"
+size = 849
+name = "TradeMoney"
 signature = ""
 c_name = "ovl19_fn_2156"
-level = "none"
+level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 75f4aad"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl19_fn_2156 (ovl19:2156 is the Trade command of the View prompt for money: ViewSelectedCharacter's T key calls it (ovl19:0AB3); it asks 'Trade to?' (res12_fn_2C48), lists the coin kinds under 'Select type of coin' with ChooseFromList, asks 'How much <kind> will you trade? ' (ReadAmount) and moves the money with TransferMoney (ovl21:044C); its list is the one ovl21's TakeMoney builds (matched, ovl19:2156)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl19:2197"
-unit = "ovl19"
-addr = "ovl19:2197"
-size = 156
-name = "ovl19_fn_2197"
-signature = ""
-c_name = "ovl19_fn_2197"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl19:2233"
-unit = "ovl19"
-addr = "ovl19:2233"
-size = 89
-name = "ovl19_fn_2233"
-signature = ""
-c_name = "ovl19_fn_2233"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl19:228C"
-unit = "ovl19"
-addr = "ovl19:228C"
-size = 247
-name = "ovl19_fn_228C"
-signature = ""
-c_name = "ovl19_fn_228C"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl19:2383"
-unit = "ovl19"
-addr = "ovl19:2383"
-size = 51
-name = "ovl19_fn_2383"
-signature = ""
-c_name = "ovl19_fn_2383"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl19:23B6"
-unit = "ovl19"
-addr = "ovl19:23B6"
-size = 241
-name = "ovl19_fn_23B6"
-signature = ""
-c_name = "ovl19_fn_23B6"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl19:24A7"
 unit = "ovl19"
 addr = "ovl19:24A7"
 size = 692
-name = "ovl19_fn_24A7"
+name = "ChooseAndDropMoney"
 signature = ""
 c_name = "ovl19_fn_24A7"
-level = "none"
+level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 75f4aad"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl19_fn_24A7 (the View prompt's D key (ovl19:0AB3 calls it, followed by ShowCharacterMoney) lists the coin kinds SelectedCharacter holds under 'Select type of coin' (ChooseFromList), asks 'How much <kind> will you drop? ' (ReadAmount) and calls DropMoney (ovl21:0A01); ovl19:24A7 is the Drop twin of TradeMoney (ovl19:2156)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8705,6 +8060,7 @@ name = "WouldOverloadInventory"
 signature = "function WouldOverloadInventory(Character: PCharacter; Item: PMenuLine): Boolean"
 c_name = "ovl19_e9"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 75f4aad"
 justification = ""
 notes = "renamed from ovl19_e9 (ovl19:275B checks the character item count and compares added item weight against the strength-based carry limit plus 1500; ovl06:0239 refuses when true); auto:near_call"
 evidence = ["prologue"]
@@ -8718,6 +8074,7 @@ name = "UpdateSelectedCharacter"
 signature = "procedure UpdateSelectedCharacter(Key: Char)"
 c_name = "ovl19_e10"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 75f4aad"
 justification = ""
 notes = "renamed from ovl19_e10 (ovl19:27DF writes SelectedCharacter from the party head; G selects the previous member with wraparound, O selects the next or wraps to the head); auto:entry_10"
 evidence = ["prologue"]
@@ -8731,6 +8088,7 @@ name = "CharacterMoneyValueInGold"
 signature = "function CharacterMoneyValueInGold(Who: PCharacter): LongInt"
 c_name = "ovl19_e11"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 75f4aad"
 justification = ""
 notes = "renamed from ovl19_e11 (ovl19:28BE sums Who.Money[0..4] times CoinCopperValues, adds 100 copper for rounding, divides by the 200-copper gold entry, and returns a LongInt); auto:near_call"
 evidence = ["prologue"]
@@ -8744,6 +8102,7 @@ name = "ChooseSpellFromList"
 signature = "function ChooseSpellFromList(SpellListKind, DisplayMode: Byte; var Choice: Word; var Listed: Byte): Byte"
 c_name = "ovl19_e12"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 75f4aad"
 justification = ""
 notes = "renamed from ovl19_e12 (ovl19:299C prepares the mode-specific spell-list heading and delegates the spell/choice selection to ovl22; callers in ovl15 use it for casting, memorizing, learning and scribing); auto:near_call"
 evidence = ["prologue"]
@@ -8756,7 +8115,8 @@ size = 5
 name = "ovl19_init"
 signature = ""
 c_name = "ovl19_init"
-level = "none"
+level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 75f4aad"
 justification = ""
 notes = "auto:entry_0"
 evidence = ["prologue"]
@@ -13161,14 +12521,27 @@ evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:0C73; aligned by make tp
 id = "0AF8:0AF0"
 unit = "res00"
 addr = "0AF8:0AF0"
-size = 27
+size = 12
 name = "res00_fn_0AF0"
 signature = ""
 c_name = "res00_fn_0AF0"
 level = "none"
 justification = ""
-notes = "auto:forced"
-evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:0C7F; aligned by make tp-compare, confirmed by runtime_entries"]
+notes = "auto:forced; size 12 (was 27, the gap to 0B0B): the original calls 0AF8:0AFC as a routine entry (ovl16:43D2), so 0AFC is a second routine in the span, not part of this one"
+evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:0C7F; aligned by make tp-compare, confirmed by runtime_entries", "tools/re/tp_idioms/ovl16/PAYPRB2.PAS"]
+
+[[routine]]
+id = "0AF8:0AFC"
+unit = "res00"
+addr = "0AF8:0AFC"
+size = 15
+name = "res00_fn_0AFC"
+signature = ""
+c_name = "res00_fn_0AFC"
+level = "none"
+justification = ""
+notes = "Abs of a LongInt: `Amount := Abs(Amount)` compiles to lcall 0AF8:0AFC (tools/re/tp_idioms/ovl16/PAYPRB2.PAS, the probe longint Abs call; ovl16:43D2 calls it the same way with the value in ax:dx and stores ax:dx). The entry was missing because tools/re/rtl_ident.py scans only poolrad/start-unpack.exe for far calls, and the call at ovl16:43D2 is in an overlay (GAME.OVR)"
+evidence = ["far-called from outside res00 (1 site: ovl16:43D2)", "tools/re/tp_idioms/ovl16/PAYPRB2.PAS"]
 
 [[routine]]
 id = "0AF8:0B0B"
@@ -15329,6 +14702,7 @@ name = "SetEgaFillRegisters"
 signature = ""
 c_name = "res06_fn_0000"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 10c1e35"
 justification = ""
 notes = "renamed from res06_fn_0000 (sets the EGA Graphics Controller registers 0..5, 7 and 8 and the Sequencer map mask for the picture fill (Port I/O only), 0709:0000); auto:near_call"
 evidence = ["prologue"]
@@ -15342,6 +14716,7 @@ name = "SetActivePage"
 signature = "procedure SetActivePage(A: Byte)"
 c_name = "res06_fn_0071"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 10c1e35"
 justification = ""
 notes = "renamed from res06_fn_0071 (sets the video BIOS active display page (Intr 10h AH=5) and stores the plane segment A shl 9 + A000 in ds4A16, 0709:0071); auto:far_call"
 evidence = ["prologue"]
@@ -15355,6 +14730,7 @@ name = "SetPageSegment"
 signature = "procedure SetPageSegment(A: Byte)"
 c_name = "res06_fn_00A0"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 10c1e35"
 justification = ""
 notes = "renamed from SetPlaneSegment (its argument is the display page the video BIOS selects (INT 10h AH=5) and the segment ds4A18 it stores is $A000 + page * $200; the page is not an EGA plane); renamed from res06_fn_00A0 (stores the plane segment A shl 9 + A000 in ds4A18, 0709:00A0); auto:near_call"
 evidence = ["prologue"]
@@ -15368,6 +14744,7 @@ name = "FillPlaneRect"
 signature = "procedure FillPlaneRect(A, B, C, D: ShortInt; E, F: Byte)"
 c_name = "res06_fn_00B7"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 10c1e35"
 justification = ""
 notes = "renamed from res06_fn_00B7 (fills a byte-column by cell-row rectangle on an EGA plane via FillChar with GC write mode (0709:00B7, called by res06_fn_0CAB, res06_fn_0DD3 and ClearWindow)); auto:near_call"
 evidence = ["prologue"]
@@ -15381,6 +14758,7 @@ name = "LoadGameFont"
 signature = ""
 c_name = "res06_fn_017C"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 10c1e35"
 justification = ""
 notes = "renamed from res06_fn_017C (loads DAX block 201 ($C9) of 8X8d1.dax into ds5E20 (0709:017C); block 201 is the 1-bit font, 177 glyphs of 8 bytes (whitepaper font section); called by StartGame (ovl11:002D); ds5E20 is read as glyph bitmaps by res06_fn_01DF); auto:prologue"
 evidence = ["prologue"]
@@ -15394,6 +14772,7 @@ name = "DrawGlyph"
 signature = "procedure DrawGlyph(Col, Row, Color, Count, Glyph, Cook: Byte)"
 c_name = "res06_fn_01DF"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 10c1e35"
 justification = ""
 notes = "renamed from res06_fn_01DF (draws Count copies of the GameFont glyph Glyph from cell Col advancing right (0709:01DF): text-scanline words, EGA planar bytes, or graphics nibbles by VideoAdapter; called by CheckCodeWheel, ShowMessageLine path, DrawTextRun); auto:near_call; matched by dec-14 2026-10-12 from dec-1's draft: for I := 1 to Count, the font as a 2-D [Glyph, Row] byte array, '> 0' bit tests (jbe), Inc(DestOff, 40), Color shl 4, case Plane"
 evidence = ["prologue"]
@@ -15407,6 +14786,7 @@ name = "ClearTextCells"
 signature = "procedure ClearTextCells(Col, Row, Color, Count: Byte)"
 c_name = "res06_fn_05EB"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 10c1e35"
 justification = ""
 notes = "renamed from res06_fn_05EB (draws Count space glyphs (DrawGlyph with $20) from Col on Row (0709:0608..061F); ShowMessageLine clears row 24 with (0, 24, 0, 40) before writing); auto:near_call"
 evidence = ["prologue"]
@@ -15420,6 +14800,7 @@ name = "DrawTextAt"
 signature = "procedure DrawTextAt(Col, Row, Color: Byte; Text: string)"
 c_name = "res06_fn_0626"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 10c1e35"
 justification = ""
 notes = "renamed from res06_fn_0626 (for each character of the string calls DrawGlyph(Col, Row, Color, 1, char, 1) and advances Col (0709:0671..069F); ShowMessageLine writes its message with it); auto:near_call"
 evidence = ["prologue"]
@@ -15432,6 +14813,7 @@ size = 109
 name = "DrawTextRun"
 c_name = "res06_fn_06a7"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 10c1e35"
 justification = ""
 notes = "nested in ShowPagedText (0709:0768), declared so in the unit source and proven by the parent's match (NESTED line); recorded by make match WRITE=1"
 evidence = ["compiler"]
@@ -15445,6 +14827,7 @@ size = 58
 name = "SkipSpaces"
 c_name = "res06_fn_0714"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 10c1e35"
 justification = ""
 notes = "nested in ShowPagedText (0709:0768), declared so in the unit source and proven by the parent's match (NESTED line); recorded by make match WRITE=1"
 evidence = ["compiler"]
@@ -15459,6 +14842,7 @@ name = "ShowPagedText"
 signature = "procedure ShowPagedText(Left, Top, Right, Bottom, Color, ClearFirst: Byte; Text: string)"
 c_name = "res06_fn_0768"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 10c1e35"
 justification = ""
 notes = "renamed from res06_fn_0768 (word-wrapping text pager (0709:0768): shows Text in the Left..Bottom rect with BreakChars word scan, GlyphCol/GlyphRow cursor, FillPlaneRect/ClearRect clear and 'Press any key to continue' paging; called by ChargeForCure, VisitTemple, ShopMain, LoadEcl, ShowCredits); auto:far_call; matched with its nested DrawTextRun (0709:06A7) and SkipSpaces (0709:0714) once the matcher compared proven nested ranges by address (commit c7265b6); dec-1's draft needed two fixes: the trailing-break scan indexes Text[J + 1] (0709:08C9) and the frame has an unused byte local at [bp-105h] (dec-r06)"
 evidence = ["prologue"]
@@ -15472,6 +14856,7 @@ name = "ReadInputLine"
 signature = "function ReadInputLine(Prompt: String40; Color: Byte; MaxLen: Byte): String40"
 c_name = "res06_fn_09E3"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 10c1e35"
 justification = ""
 notes = "renamed from res06_fn_09E3 (reads keys with ReadGameKey, adds ' '..'z' up to MaxLen and echoes them, Backspace deletes, Enter or Esc ends, returns the line upper-cased (0709:0A2B..0B5B); CheckCodeWheel reads the code word with it); auto:near_call"
 evidence = ["prologue"]
@@ -15485,6 +14870,7 @@ name = "ReadNumber"
 signature = "function ReadNumber(Prompt: String40; Color: Byte): Word"
 c_name = "res06_fn_0B66"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 10c1e35"
 justification = ""
 notes = "renamed from res06_fn_0B66 (repeats ReadInputLine (6 characters) until Val gives a number with no error in 0..65536 and returns it (0709:0B80..0BE9)); auto:prologue"
 evidence = ["prologue"]
@@ -15498,6 +14884,7 @@ name = "ShowMessageLine"
 signature = "procedure ShowMessageLine(Color: Byte; Text: String40)"
 c_name = "res06_fn_0BF5"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 10c1e35"
 justification = ""
 notes = "renamed from res06_fn_0BF5 (shows a string on row 24 in a colour and waits for a key (0709:0BF5, whitepaper 5.15)); auto:near_call"
 evidence = ["prologue"]
@@ -15511,6 +14898,7 @@ name = "GameClock"
 signature = "function GameClock: Longint"
 c_name = "res06_fn_0C3F"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 10c1e35"
 justification = ""
 notes = "renamed from res06_fn_0C3F (0709:0C3F reads the DOS time (GetTime) and returns Hour*360000 + Minute*6000 + Second*100 + Sec100, the time of day in hundredths; WaitKeyOrTimeout, ShowTitleScreen, AnimateFinalPicture and ovl25_e2 use it as a clock); auto:prologue"
 evidence = ["prologue"]
@@ -15524,6 +14912,7 @@ name = "ClearFullScreen"
 signature = ""
 c_name = "res06_fn_0CAB"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 10c1e35"
 justification = ""
 notes = "renamed from res06_fn_0CAB (clears the whole screen to 0 by VideoAdapter (0709:0CAB): 0 fills two planes, 1 draws the full screen through FillPlaneRect twice, 2 fills four planes; called by ovl19); auto:prologue"
 evidence = ["prologue"]
@@ -15537,6 +14926,7 @@ name = "FlashMessageLine"
 signature = "procedure FlashMessageLine(Text: String40; Color: Byte)"
 c_name = "res06_fn_0D68"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 10c1e35"
 justification = ""
 notes = "renamed from res06_fn_0D68 (clears row 24, writes the text there, waits DelayCounted and clears it again, with no key wait (0709:0D81..0DB5); CheckCodeWheel shows the wrong-code message with it); auto:prologue"
 evidence = ["prologue"]
@@ -15550,6 +14940,7 @@ name = "DelayByGameSpeed"
 signature = ""
 c_name = "res06_fn_0DBE"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 10c1e35"
 justification = ""
 notes = "renamed from DelayCounted (the routine is Delay(GameSpeed * 225): 225 milliseconds per GameSpeed step, no counter involved); renamed from res06_fn_0DBE (delays ds49E2 * 225 ms through Crt.Delay, 0709:0DBE); auto:near_call"
 evidence = ["prologue"]
@@ -15563,6 +14954,7 @@ name = "ClearRect"
 signature = "procedure ClearRect(Left, Top, Right, Bottom: ShortInt)"
 c_name = "res06_fn_0DD3"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 10c1e35"
 justification = ""
 notes = "renamed from res06_fn_0DD3 (Byte-coordinate twin of ClearWindow (0709:0DD3): clears Left..Right by Top..Bottom to 0 by VideoAdapter (text scanlines, FillPlaneRect pair, or graphics rows); called by HealMenu, VisitTemple, ShopMain, ShowEndingNarrative); auto:near_call"
 evidence = ["prologue"]
@@ -15576,6 +14968,7 @@ name = "res06_init"
 signature = ""
 c_name = "res06_init"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 10c1e35"
 justification = ""
 notes = "auto:init; the empty initialisation part (push bp; mov bp,sp; pop bp; retf at 0709:0F82): begin end. in src/RES06.PAS, matched by the whole-unit comparison (dec-r06)"
 evidence = ["prologue"]
@@ -15589,6 +14982,7 @@ name = "ColorMatchMask"
 signature = ""
 c_name = "res07_fn_0000"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, d907ed4"
 justification = ""
 notes = "renamed from res07_fn_0000 (0464:0000 returns a bit mask of the eight 4-bit pixels of a 4-byte cell that equal Color; its only caller 02A5 (0464:0358, 0464:067B) uses the bits to set single pixels of a picture's pixel buffer); auto:near_call"
 evidence = ["prologue"]
@@ -15602,6 +14996,7 @@ name = "PaletteColor"
 signature = ""
 c_name = "res07_fn_007B"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, d907ed4"
 justification = ""
 notes = "renamed from res07_fn_007B (0464:007B returns the palette colour for a pixel value from an 8-byte palette: even index high nibble, odd index low nibble of Pal[Index shr 1]; called by 02A5 at 0464:03F7 and 0464:04F7..0550 to map a cell pixel through the picture palette); auto:near_call"
 evidence = ["prologue"]
@@ -15615,6 +15010,7 @@ name = "SetVideoMode"
 signature = "procedure SetVideoMode(A: Byte)"
 c_name = "res07_fn_00CF"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, d907ed4"
 justification = ""
 notes = "renamed from res07_fn_00CF (0464:00CF sets INT 10h function 0 (set video mode) with AL=A after saving the current mode (ds4A1D) in SavedVideoMode, then records A as current; called by res08_init (042B:00E0 with 0Dh) and by RestoreVideoMode); auto:near_call"
 evidence = ["prologue"]
@@ -15628,6 +15024,7 @@ name = "RestoreVideoMode"
 signature = "procedure RestoreVideoMode"
 c_name = "res07_fn_00FF"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, d907ed4"
 justification = ""
 notes = "renamed from res07_fn_00FF (0464:00FF calls SetVideoMode(SavedVideoMode) to go back to the mode saved at the last mode set; called by the picture loaders ovl28/ovl29/ovl32/ovl34 before their error messages and by ovl28 Show3DSprite); auto:far_call"
 evidence = ["prologue"]
@@ -15641,6 +15038,7 @@ name = "LoadPicture"
 signature = "procedure LoadPicture(Text: string; A, B, C: Byte; var Target)"
 c_name = "res07_fn_0111"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, d907ed4"
 justification = ""
 notes = "renamed from res07_fn_0111 (0464:0111 loads DAX picture block A of the set Text (with the dax extension) into the caller's picture pointer: frees any old picture, copies the header into locals, AllocatePicture, stores X/Y and the palette, unpacks the pixels through 02A5, frees the DAX block; called by ovl01/ovl11/ovl18/ovl28/ovl32/ovl34); auto:prologue"
 evidence = ["prologue"]
@@ -15654,6 +15052,7 @@ name = "UnpackPicturePixels"
 signature = "procedure UnpackPicturePixels(Source: Pointer; Offset: Word; AllocFlags, Color: Byte; Data: Pointer)"
 c_name = "res07_fn_02A5"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, d907ed4"
 justification = ""
 notes = "renamed from res07_fn_02A5 (LoadPicture (0464:0111) passes it a DAX block (pixels from offset $11) and its new picture; it unpacks the block's packed 4-bit pixels into the picture's data per VideoAdapter, building the pixel buffer (0464:02A5, L2)); auto:near_call; map deepseek-dec 2026-10-12: ends 08D4 (was 970); bogus entries 066F, 0710 deleted (mid-routine, no 55 89 E5 prologue)"
 evidence = ["prologue"]
@@ -15667,6 +15066,7 @@ name = "DrawPictureItem"
 signature = "procedure DrawPictureItem(Col, Row: Integer; PicIndex, Flags: Byte; Source, Dest: Pointer)"
 c_name = "res07_fn_08D4"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, d907ed4"
 justification = ""
 notes = "renamed from res07_fn_08D4 (DrawCellPicture (ovl32:00F1) and Put8x8Symbol (ovl34:015D) call it with a picture item and the staging buffer DrawBuf; it copies item PicIndex of the picture Source into Dest at column Col and pixel row Row * 8, masked when Flags bit 0 is set and Source has a pixel buffer (0464:08D4, L2)); auto:prologue; map deepseek-dec 2026-10-12: ends 0D71 (was 351); bogus entries 0A33, 0C0C, 0D6C deleted"
 evidence = ["prologue"]
@@ -15680,6 +15080,7 @@ name = "DrawPictureItemClipped"
 signature = "procedure DrawPictureItemClipped(Col, Row: Integer; PicIndex, Flags: Byte; Source, Dest: Pointer)"
 c_name = "res07_fn_0D71"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, d907ed4"
 justification = ""
 notes = "renamed from res07_fn_0D71 (0464:0D71 is DrawPictureItem (0464:08D4) with range checks: it cuts the item to Dest on all four sides while ds5370 is set, masks with Flags bit 0 and saves the overwritten bytes into ds4A24 with Flags bit 2 (src/RES07.PAS, MATCH); callers OVL18 AnimateFinalPicture and ShowEndingNarrative, OVL28 DrawSprite and Show3DSprite, OVL31 RemoveCombatant, OVL32 DrawIcon, RES12); auto:far_call; map deepseek-dec 2026-10-12: ends 1484 (was 144); bogus entries 0E01..140E (11) deleted"
 evidence = ["prologue"]
@@ -15693,6 +15094,7 @@ name = "MirrorByte"
 signature = ""
 c_name = "res07_fn_1484"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, d907ed4"
 justification = ""
 notes = "renamed from res07_fn_1484 (0464:1484 reverses the eight bits of a byte (bit 0 to bit 7 ...); called by 15C7 (0464:18xx) to flip a byte of a picture row); auto:near_call"
 evidence = ["prologue"]
@@ -15706,6 +15108,7 @@ name = "MirrorWord"
 signature = ""
 c_name = "res07_fn_1509"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, d907ed4"
 justification = ""
 notes = "renamed from res07_fn_1509 (0464:1509 reverses the order of the eight 2-bit groups of a word using GlyphPixelMasks (DS:25E5..25F3); called by 15C7 for every 2-byte unit of a picture row); auto:near_call; map deepseek-dec 2026-10-12: ends 1596 (was 11); bogus entry 1514 deleted"
 evidence = ["prologue"]
@@ -15719,6 +15122,7 @@ name = "SwapNibbles"
 signature = ""
 c_name = "res07_fn_1596"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, d907ed4"
 justification = ""
 notes = "renamed from res07_fn_1596 (0464:1596 swaps the two nibbles of a byte (X shl 4 + high nibble); companion of MirrorByte for flipping an 8-pixel byte); auto:near_call"
 evidence = ["prologue"]
@@ -15732,6 +15136,7 @@ name = "MirrorPicture"
 signature = "procedure MirrorPicture(Source, Dest: Pointer)"
 c_name = "res07_fn_15C7"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, d907ed4"
 justification = ""
 notes = "renamed from res07_fn_15C7 (0464:15C7 copies the picture Source into Dest mirrored: palette as is, then each pixel row reversed per VideoAdapter (MirrorWord units, MirrorByte groups, SwapNibbles bytes) and the pixel buffer at +$13 mirrored too; called by ovl32 DrawIcon for icon sets above 3 and by res12); auto:far_call; map deepseek-dec 2026-10-12: ends 1951 (was 321); bogus entry 1708 deleted"
 evidence = ["prologue"]
@@ -15745,6 +15150,7 @@ name = "ShowPicture"
 signature = "procedure ShowPicture(X, Y: Integer; Buf: Pointer)"
 c_name = "res07_fn_1951"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, d907ed4"
 justification = ""
 notes = "renamed from res07_fn_1951 (0464:1951 copies a picture's packed pixel data straight to the video hardware at (X,Y), one branch per VideoAdapter; called by ShowTitleScreen, ovl28 DrawSprite and ovl34 Put8x8Symbol); auto:prologue; map deepseek-dec 2026-10-12: ends 1B52 (was 200); bogus entry 1A19 deleted"
 evidence = ["prologue"]
@@ -15758,6 +15164,7 @@ name = "FlushPictureChanges"
 signature = ""
 c_name = "res07_fn_1B52"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, d907ed4"
 justification = ""
 notes = "renamed from res07_fn_1B52 (0464:1B52 presents the changed regions the blitters marked in ds4A28/ds4AD0/ds4C20/ds4D70 to the screen per VideoAdapter (row moves to the ds4EC0/ds51E0 segment tables, or the four EGA planes through port 3C5 plus a GC-mode-1 copy), then resets the trackers; called by the sprite, combat-view and area-view units after a blit); auto:far_call"
 evidence = ["prologue"]
@@ -15771,6 +15178,7 @@ name = "RemapPictureColours"
 signature = "procedure RemapPictureColours(FromMap, ToMap: Pointer; FirstItem: Integer; Flicker: Byte; Pic: Pointer)"
 c_name = "res07_fn_1E5C"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, d907ed4"
 justification = ""
 notes = "renamed from res07_fn_1E5C (0464:1E5C maps the colours of a picture: for each colour index I whose FromMap and ToMap entries differ, every pixel of the picture with palette colour FromMap[I] becomes ToMap[I] (through a scratch copy, adapters 0, 1 and 2; src/RES07.PAS, MATCH); LoadPictureSlot (ovl32) passes the identity map, AnimateAreaDoors (ovl18) and LoadSpriteList (ovl28) pass the door and sprite maps); auto:prologue"
 evidence = ["prologue"]
@@ -15784,6 +15192,7 @@ name = "AllocatePicture"
 signature = "procedure AllocatePicture(Height, Width: Word; ItemCount, AllocFlags: Byte; var Pic)"
 c_name = "res07_fn_248E"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, d907ed4"
 justification = ""
 notes = "renamed from res07_fn_248E (0464:248E allocates and zeroes a picture block of ItemCount * Height * WidthCols * 2 (x2 for a non-zero VideoAdapter) + $17 bytes plus an optional pixel buffer, and stores the header fields; called by ovl10 StartBattle, ovl11 StartGame, ovl28 LoadSpriteList, ovl32 DrawIcon, res12 and 0111/1E5C); auto:near_call"
 evidence = ["prologue"]
@@ -15797,6 +15206,7 @@ name = "ReleasePicture"
 signature = "procedure ReleasePicture(var Pic)"
 c_name = "res07_fn_2595"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, d907ed4"
 justification = ""
 notes = "renamed from res07_fn_2595 (0464:2595 frees the pixel buffer (a quarter of the size for VideoAdapter 1) and the picture block (ItemCount * ByteSize + 17), then nils the caller's variable; called by ovl01/ovl08/ovl10/ovl14/ovl28/ovl32, res12 and 0111/1E5C); auto:near_call"
 evidence = ["prologue"]
@@ -15810,6 +15220,7 @@ name = "FillPictureRect"
 signature = "procedure FillPictureRect(FirstCol, FirstRow: Integer; Width, Height: Word; Colour: Byte; Palette: Pointer; Target: Pointer)"
 c_name = "res07_fn_2632"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, d907ed4"
 justification = ""
 notes = "renamed from res07_fn_2632 (DrawWallDescriptors (ovl29:0174) calls it four times with X=2, the wall descriptor rows and Colour from ds6A60..ds6A63; the routine fills Width x Height cells of the picture Target with the palette colour, clipping at all four edges (0464:2632, L2)); auto:prologue"
 evidence = ["prologue"]
@@ -15823,6 +15234,7 @@ name = "SetPaletteRegister"
 signature = "procedure SetPaletteRegister(A, B: Byte)"
 c_name = "res07_fn_2A0D"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, d907ed4"
 justification = ""
 notes = "renamed from res07_fn_2A0D (0464:2A0D writes one EGA palette register: INT 10h AH=10h AL=0 with BH=Color (mapped: below 8 as is, else +8) and BL=Register; called by ovl31_e2/e3 and ShowTitleScreen); auto:prologue"
 evidence = ["prologue"]
@@ -15836,6 +15248,7 @@ name = "res07_init"
 signature = ""
 c_name = "res07_init"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, d907ed4"
 justification = ""
 notes = "auto:init"
 evidence = ["prologue"]
@@ -15942,39 +15355,26 @@ evidence = ["prologue"]
 id = "00BA:0000"
 unit = "res12"
 addr = "00BA:0000"
-size = 392
-name = "res12_fn_0000"
-signature = ""
+size = 507
+name = "ApplyWeaponBonuses"
+signature = "procedure ApplyWeaponBonuses(Who: PCharacter)"
 c_name = "res12_fn_0000"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_0000 (applies the readied weapon (SlotItems[0], +CC) to the character's HitAdjust, WeaponAttacks, WeaponDamage and WeaponDamageBonus from the RaceRow row of the weapon's item kind, plus the dexterity (1168) and strength (1282/1325) adjustments and the slot-item pluses; called by res12_fn_0BB8 (make match UNIT=res12, 00BA:0000)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "00BA:0188"
-unit = "res12"
-addr = "00BA:0188"
-size = 115
-name = "res12_fn_0188"
-signature = ""
-c_name = "res12_fn_0188"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "00BA:01FB"
 unit = "res12"
 addr = "00BA:01FB"
 size = 135
-name = "res12_fn_01FB"
-signature = ""
+name = "SetArmourMovement"
+signature = "procedure SetArmourMovement(Who: PCharacter; Item: PItem)"
 c_name = "res12_fn_01FB"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_01FB (sets Who's Movement (+11C) from a readied armour item: when RaceRow[item type][0] is 2 (an armour) the item's Weight (+37) picks base movement/9/6 and a magic plus adds 3; called by res12_fn_0BB8 for every readied item (make match UNIT=res12, 00BA:01FB)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -15982,12 +15382,12 @@ id = "00BA:0282"
 unit = "res12"
 addr = "00BA:0282"
 size = 286
-name = "res12_fn_0282"
-signature = ""
+name = "AddReadiedItemBonus"
+signature = "procedure AddReadiedItemBonus(Who: PCharacter; Item: PItem; var Bonus: TBonus; var Flag: Byte)"
 c_name = "res12_fn_0282"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_0282 (accumulates one readied item's bonuses (RaceRow[item type][6] and [0] pick the branch) into the TBonus a res12_fn_0BB8 caller keeps, and adds the item's PlusSave to Who^.SaveBonus (make match UNIT=res12, 00BA:0282)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -15995,12 +15395,12 @@ id = "00BA:03A0"
 unit = "res12"
 addr = "00BA:03A0"
 size = 162
-name = "res12_fn_03A0"
-signature = ""
+name = "CapMovementByLoad"
+signature = "procedure CapMovementByLoad(Who: PCharacter)"
 c_name = "res12_fn_03A0"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_03A0 (caps Who's Movement (+11C) by the carried weight above the strength allowance (CarriedWeight +102 minus res12_fn_13AB): excess up to 200h keeps it, up to 300h caps at 9, up to 400h at 6, above at 3, and it only falls; called once by res12_fn_0BB8 after the readied-item loop (make match UNIT=res12, 00BA:03A0)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16013,7 +15413,7 @@ signature = "procedure res12_fn_0442(Value: LongInt; P: Pointer; A, B, C, D: Byt
 c_name = "res12_fn_0442"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "blocked dec-deepseek 2026-10-13: builds a menu line's display text (clear Text; when ShowReadied the ' Yes  '/' No   ' of Readied; when a party member (list ds5D96, Next +104) has affect 5 via res12_fn_2199 and the item is Plus>0/PlusSave>0/Cursed, append '* '; when Count>0 append res12_fn_1037(Count) and ' '; a Mask of shown NameNum entries ((NameNum[I]<>0) and ((HiddenNames shr (3-I)) and 1)=0, Inc(Mask,1 shl (I-1))); then for I 3 downto 1, if ((Mask shr (I-1)) and 1)>0 append ds10A7[NameNum[I]] (256 strings[20] at DS:10A7, 1-based) and a space, or 's ' with Plural set when (Count<2) or (Plural<>0) is false and ((1 shl (I-1))=Mask) or (I=1 and Mask>4 and ItemType<>$56) or (I=2 and bit 1 of Mask clear) or (I=3 and ItemType=$56) or ((ItemType=$49 or $1C) and NameNum[3]<>$B1); finally DrawTextAt(A,B,$A,Text) when D<>0; LongInt Value is unread QUIRK). The draft matched every region except the plural term C: the original tests bit 1 of Mask with a single byte `shr al,1; jae` (00BA:06A6..06AB) while every form tried compiled to `and al,2; or al,al; je` (+2 bytes), `((Mask shr 1) and 1)=0` (+7, word shift), `not Odd(Mask shr 1)` (+extra shr), `(Mask and 2)<>2` (+2), `(2 and Mask)=0`, `((Mask and 2) div 2)=0`, `(Mask shr 1) and 1=0` and `Odd(Mask shr 1)=False` (all longer); with the outer `if (Count<2) or (Plural<>0) then <space> else if ...` form the whole routine was 2 bytes long. Probes: tools/re/tp_idioms/res12/PRB01..PRB10.PAS. Whole-routine match attempt: make match UNIT=res12 FN=res12_fn_0442."
 evidence = ["prologue"]
 
 [[routine]]
@@ -16026,7 +15426,7 @@ signature = ""
 c_name = "res12_fn_06D5"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "blocked dec-deepseek 2026-10-13: not a routine. 00BA:06D5 is a label inside res12_fn_0442 (which is itself blocked): the instruction at 06D5 starts one byte late (the real cmp byte es:[di+31h],0B1h begins at 06D4, under the es: prefix the map dropped), and the code jumps across the boundary (00BA:0737 jmp 05D7, 00BA:05F2 jmp 0731) and ends at 0442's own retf 10 (00BA:0758). It cannot be a standalone procedure: any prologue would not match the mid-routine bytes. When res12_fn_0442 matches, make match WRITE=1 removes this entry (as it did for the phantom 00BA:0B4F inside DrawCharacterPanel). No caller: the map's near_call evidence is a false positive."
 evidence = ["near_call"]
 
 [[routine]]
@@ -16039,7 +15439,7 @@ signature = ""
 c_name = "res12_fn_0712"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "blocked dec-deepseek 2026-10-13: not a routine. 00BA:0712 is the else-branch label of res12_fn_0442 (00BA:05F2 jmp 0731 leads into it; 00BA:0737 jmp 05D7 leads back), inside 0442's single frame (prologue push bp/mov bp,sp/sub sp,20Ch at 00BA:0442, epilogue retf 10 at 00BA:0758). No procedure can start there. When res12_fn_0442 matches, make match WRITE=1 removes this entry. No caller: the map's near_call evidence is a false positive."
 evidence = ["near_call"]
 
 [[routine]]
@@ -16047,12 +15447,12 @@ id = "00BA:0767"
 unit = "res12"
 addr = "00BA:0767"
 size = 392
-name = "res12_fn_0767"
-signature = "procedure res12_fn_0767(Who: Pointer)"
+name = "DrawPartyRoster"
+signature = "procedure DrawPartyRoster(Who: PCharacter)"
 c_name = "res12_fn_0767"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_0767 (00BA:0767 draws the party roster panel (Name/AC/HP per member, whitepaper 5.24); called by the shop, temple and inventory screens); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16060,12 +15460,12 @@ id = "00BA:08EF"
 unit = "res12"
 addr = "00BA:08EF"
 size = 132
-name = "res12_fn_08EF"
-signature = ""
+name = "DrawArmourClass"
+signature = "procedure DrawArmourClass(Who: PCharacter; Col, Row: Byte)"
 c_name = "res12_fn_08EF"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_08EF (00BA:08EF draws a character's armour-class value Abs(+111h - 60) signed, the value res12_fn_09E3 shows under the AC heading and ovl24 RollBeatsResistance compares a roll against); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16073,51 +15473,38 @@ id = "00BA:0973"
 unit = "res12"
 addr = "00BA:0973"
 size = 112
-name = "res12_fn_0973"
-signature = ""
+name = "DrawHitPoints"
+signature = "procedure DrawHitPoints(Who: PCharacter; Col, Row, Flag: Byte)"
 c_name = "res12_fn_0973"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_0973 (00BA:0973 draws a character's current hit points (Flag11B +11Bh) in a range colour at (Col,Row); called by res12_fn_0767 and res12_fn_09E3); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "00BA:09E3"
 unit = "res12"
 addr = "00BA:09E3"
-size = 364
-name = "res12_fn_09E3"
-signature = "procedure res12_fn_09E3(Who: Pointer)"
+size = 400
+name = "DrawCharacterPanel"
+signature = "procedure DrawCharacterPanel(Who: PCharacter)"
 c_name = "res12_fn_09E3"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_09E3 (00BA:09E3 draws the character panel (name, Hitpoints, AC, readied weapon text, status) the combat and inventory screens show, whitepaper 5.24); auto:prologue"
 evidence = ["prologue"]
-
-[[routine]]
-id = "00BA:0B4F"
-unit = "res12"
-addr = "00BA:0B4F"
-size = 36
-name = "res12_fn_0B4F"
-signature = ""
-c_name = "res12_fn_0B4F"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "00BA:0B73"
 unit = "res12"
 addr = "00BA:0B73"
 size = 69
-name = "res12_fn_0B73"
-signature = "function res12_fn_0B73(Who: Pointer): Boolean"
+name = "IsHelpless"
+signature = "function IsHelpless(Who: Pointer): Boolean"
 c_name = "res12_fn_0B73"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_0B73 (DrawCharacterPanel (00BA:09E3) draws '(Helpless)' when it returns True and ovl13 skips a combatant it answers True for; it tests the four affects of HelplessAffects (DS:286B) through res12_fn_2199); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16125,12 +15512,12 @@ id = "00BA:0BB8"
 unit = "res12"
 addr = "00BA:0BB8"
 size = 1151
-name = "res12_fn_0BB8"
-signature = "procedure res12_fn_0BB8(Who: Pointer)"
+name = "RecalcCombatValues"
+signature = "procedure RecalcCombatValues(Who: PCharacter)"
 c_name = "res12_fn_0BB8"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_0BB8 (res12_fn_0BB8 (00BA:0BB8) recomputes the character's combat values from the items it carries and has readied; every equipment change and the whole combat call it (ovl03, ovl06, ovl08, ovl09, ovl10, ovl12, ovl13, ovl16, ovl19, ovl21, ovl24)); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16138,12 +15525,12 @@ id = "00BA:1037"
 unit = "res12"
 addr = "00BA:1037"
 size = 60
-name = "res12_fn_1037"
-signature = "function res12_fn_1037(N: Byte): string"
+name = "ByteToText"
+signature = "function ByteToText(Value: Byte): string"
 c_name = "res12_fn_1037"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_1037 (res12_fn_1037 (00BA:1037) returns the decimal text of the byte it is given through Str; DrawArmourClass, DrawHitPoints and ovl20's TwoDigitText use it); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16151,12 +15538,12 @@ id = "00BA:1073"
 unit = "res12"
 addr = "00BA:1073"
 size = 58
-name = "res12_fn_1073"
-signature = "function res12_fn_1073(Value: Word): string"
+name = "WordToText"
+signature = "function WordToText(Value: Word): string"
 c_name = "res12_fn_1073"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_1073 (res12_fn_1073 (00BA:1073) returns the decimal text of the word it is given through Str, the word twin of ByteToText; the shops and the Temple put prices and amounts into messages with it); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16164,12 +15551,12 @@ id = "00BA:10AD"
 unit = "res12"
 addr = "00BA:10AD"
 size = 57
-name = "res12_fn_10AD"
-signature = ""
+name = "LongIntToText"
+signature = "function LongIntToText(Value: LongInt): string"
 c_name = "res12_fn_10AD"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_10AD (res12_fn_10AD (00BA:10AD) returns the decimal text of the LongInt it is given through Str, the LongInt twin of ByteToText and WordToText); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16177,12 +15564,12 @@ id = "00BA:10E6"
 unit = "res12"
 addr = "00BA:10E6"
 size = 130
-name = "res12_fn_10E6"
-signature = ""
+name = "DexterityAdjustment"
+signature = "function DexterityAdjustment(Who: PCharacter): Byte"
 c_name = "res12_fn_10E6"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_10E6 (res12_fn_10E6 (00BA:10E6) maps Who's dexterity (+0x13) to its AD&D reaction/defence adjustment (1..3 gives -4, 4..6 dexterity-7, 15..18 dexterity-14, 19..25 grows to 6); RecalcCombatValues sums it into the character's combat value); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16190,12 +15577,12 @@ id = "00BA:1168"
 unit = "res12"
 addr = "00BA:1168"
 size = 130
-name = "res12_fn_1168"
-signature = ""
+name = "DexterityAttackAdjustment"
+signature = "function DexterityAttackAdjustment(Who: PCharacter): ShortInt"
 c_name = "res12_fn_1168"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_1168 (00BA:1168: ApplyWeaponBonuses (00BA:0000) adds it to Who^.HitAdjust for a weapon whose RaceRow attack flags have bit 2 (WeaponFlagDexToHit); the sibling DexterityAdjustment (00BA:10E6) is the defensive one summed into ResistValue. Both map Dexterity (+0x13).); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16203,12 +15590,12 @@ id = "00BA:11EA"
 unit = "res12"
 addr = "00BA:11EA"
 size = 152
-name = "res12_fn_11EA"
+name = "StrengthRowIndex"
 signature = ""
 c_name = "res12_fn_11EA"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_11EA (00BA:11EA: maps Strength (+0x10) plus the exceptional StrengthPercent (+0x16) to a 0..30 row of the strength table (strength 18 + percent bands become 18..23, 19..25 become 24..30); the only callers, res12_fn_1282, res12_fn_1325 and res12_fn_13AB, look up reaction, damage and weight allowances with it.); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16216,12 +15603,12 @@ id = "00BA:1282"
 unit = "res12"
 addr = "00BA:1282"
 size = 163
-name = "res12_fn_1282"
-signature = ""
+name = "StrengthAttackAdjustment"
+signature = "function StrengthAttackAdjustment(Who: PCharacter): ShortInt"
 c_name = "res12_fn_1282"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_1282 (00BA:1282: the strength reaction/attack adjustment; ApplyWeaponBonuses (00BA:0000) and RecalcCombatValues (00BA:0BB8) add it to Who^.HitAdjust (the to-hit value) for WeaponFlagStrength, and it is 0 unless Who^.StrengthBonusFlag (+0xAA) is nonzero.); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16229,12 +15616,12 @@ id = "00BA:1325"
 unit = "res12"
 addr = "00BA:1325"
 size = 134
-name = "res12_fn_1325"
-signature = ""
+name = "StrengthDamageAdjustment"
+signature = "function StrengthDamageAdjustment(Who: PCharacter): ShortInt"
 c_name = "res12_fn_1325"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_1325 (00BA:1325: the strength damage adjustment; ApplyWeaponBonuses (00BA:0000) and RecalcCombatValues (00BA:0BB8) add it to Who^.WeaponDamageBonus[1] for WeaponFlagStrength, and it is 0 unless Who^.StrengthBonusFlag (+0xAA) is nonzero.); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16242,12 +15629,12 @@ id = "00BA:13AB"
 unit = "res12"
 addr = "00BA:13AB"
 size = 224
-name = "res12_fn_13AB"
-signature = "function res12_fn_13AB(Who: Pointer): Integer"
+name = "StrengthWeightAllowance"
+signature = "function StrengthWeightAllowance(Who: PCharacter): Integer"
 c_name = "res12_fn_13AB"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_13AB (00BA:13AB: returns the strength weight allowance in coins (StrengthRowIndex row -> coins); CapMovementByLoad (00BA:03A0) subtracts it from Who^.CarriedWeight and ovl21's CarryLimit adds 1500 to it.); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16255,12 +15642,12 @@ id = "00BA:148B"
 unit = "res12"
 addr = "00BA:148B"
 size = 126
-name = "res12_fn_148B"
-signature = "procedure res12_fn_148B(Spell: Byte)"
+name = "ForgetSpell"
+signature = "procedure ForgetSpell(Spell: Byte)"
 c_name = "res12_fn_148B"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_148B (00BA:148B: clears the first memorized spell (SelectedCharacter^.Spells, +0x17) equal to Spell; DealDamage (ovl24:1344) calls it when a victim loses a pending spell, ovl13:02F9 and ovl22:0C20 also call it.); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16268,12 +15655,12 @@ id = "00BA:1509"
 unit = "res12"
 addr = "00BA:1509"
 size = 238
-name = "res12_fn_1509"
-signature = "procedure res12_fn_1509(Who: Pointer; Item: Pointer)"
+name = "RemoveInventoryItem"
+signature = "procedure RemoveInventoryItem(Who: PCharacter; Item: PItem)"
 c_name = "res12_fn_1509"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_1509 (00BA:1509 unlinks Item from Who^.Items (+$C8) and FreeMems it (63 bytes), reporting 'Nil Item pointer...' or 'Tried to Lose item & couldn't find it!' through ShowMessageLine; the head case re-points Who^.Items at Item^.Next, then the record is always unlinked and freed. Called by ovl07 LoseItems for every lost item and by ovl13, ovl19 and ovl22 when an item is consumed.); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16281,12 +15668,12 @@ id = "00BA:15F7"
 unit = "res12"
 addr = "00BA:15F7"
 size = 156
-name = "res12_fn_15F7"
-signature = "procedure res12_fn_15F7(Who: Pointer; Item: Pointer)"
+name = "AddItemCopy"
+signature = "procedure AddItemCopy(Who: PCharacter; Item: PItem)"
 c_name = "res12_fn_15F7"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_15F7 (00BA:15F7 GetMems an item record (63 bytes), Move-copies Item into it, clears its Next (+$2A) and appends it to the end of Who^.Items (+$C8); an empty list keeps the copy as the head. Gives a character a copy of an item.); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16294,12 +15681,12 @@ id = "00BA:1693"
 unit = "res12"
 addr = "00BA:1693"
 size = 89
-name = "res12_fn_1693"
-signature = "procedure res12_fn_1693(Text: String40)"
+name = "ShowFlashMessage"
+signature = "procedure ShowFlashMessage(Text: String40)"
 c_name = "res12_fn_1693"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_1693 (00BA:1693 clears the bottom row, draws Text green at (0,24), delays via DelayByGameSpeed and clears the row again; callers pass 'Not enough money.', 'OverLoaded', 'Magic On'); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16307,12 +15694,12 @@ id = "00BA:16EC"
 unit = "res12"
 addr = "00BA:16EC"
 size = 247
-name = "res12_fn_16EC"
-signature = "procedure res12_fn_16EC(Who: Pointer; Text: string; A, B: Byte)"
+name = "ShowCharacterMessage"
+signature = "procedure ShowCharacterMessage(Who: PCharacter; Text: string; Row, Wait: Byte)"
 c_name = "res12_fn_16EC"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_16EC (00BA:16EC draws Who's name through DrawCharacterName and the paged Text through ShowPagedText in a message window: top row Row in the combat view (ds49F3 = 5), else rows $11/$12 (ds6DDA picks) with a frame; when Wait is set it delays and clears the window through ClearCharacterMessage. Callers pass 'is bandaged', 'flees in panic', 'is cured'.; auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16320,168 +15707,77 @@ id = "00BA:17E3"
 unit = "res12"
 addr = "00BA:17E3"
 size = 51
-name = "res12_fn_17E3"
-signature = "procedure res12_fn_17E3"
+name = "ClearCharacterMessage"
+signature = "procedure ClearCharacterMessage"
 c_name = "res12_fn_17E3"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_17E3 (00BA:17E3 clears the message window ShowCharacterMessage wrote in: box ($17,$A)-($26,$15) in the combat view (ds49F3 = 5), else box (1,$12)-($26,$16). Called by ShowCharacterMessage's Wait path and by the camp, temple and resting screens.); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "00BA:1816"
 unit = "res12"
 addr = "00BA:1816"
-size = 65
-name = "res12_fn_1816"
-signature = "procedure res12_fn_1816(Who: Pointer; Col, Row, Mode: Byte)"
+size = 124
+name = "DrawCharacterName"
+signature = "procedure DrawCharacterName(Who: PCharacter; Col, Row, Mode: Byte)"
 c_name = "res12_fn_1816"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_1816 (00BA:1816 draws Who's Name (+0) at (Col,Row) in the colour of its state: LightRed when Flag10D (+$10d) is 0 (no combat), Yellow when Side (+$10e) is 1 (the party), LightCyan otherwise; when Mode is set it appends the literal 's at Col + Length(Name). The map oversize 65 was wrong, the real routine is 124 bytes.); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "00BA:1857"
-unit = "res12"
-addr = "00BA:1857"
-size = 38
-name = "res12_fn_1857"
-signature = ""
-c_name = "res12_fn_1857"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "00BA:187D"
-unit = "res12"
-addr = "00BA:187D"
-size = 21
-name = "res12_fn_187D"
-signature = ""
-c_name = "res12_fn_187D"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "00BA:1892"
 unit = "res12"
 addr = "00BA:1892"
-size = 17
-name = "res12_fn_1892"
-signature = ""
+size = 332
+name = "CopyPictureItem"
+signature = "procedure CopyPictureItem(PicIndex, Half, Row, Mirror: Byte)"
 c_name = "res12_fn_1892"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_1892 (00BA:1892 copies item 0 of a source picture ds5E5A[PicIndex].Pics[Half] into item Row of the combat picture ds6E36 (ByteSize bytes at +17 and the pixel buffer at +13), mirroring through a temporary when Mirror is set; called in a loop by res12_fn_19DE and by ovl13); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "00BA:18A3"
-unit = "res12"
-addr = "00BA:18A3"
-size = 44
-name = "res12_fn_18A3"
-signature = ""
-c_name = "res12_fn_18A3"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "00BA:18CF"
-unit = "res12"
-addr = "00BA:18CF"
-size = 62
-name = "res12_fn_18CF"
-signature = ""
-c_name = "res12_fn_18CF"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "00BA:190D"
-unit = "res12"
-addr = "00BA:190D"
-size = 209
-name = "res12_fn_190D"
-signature = ""
-c_name = "res12_fn_190D"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "00BA:19DE"
 unit = "res12"
 addr = "00BA:19DE"
 size = 75
-name = "res12_fn_19DE"
-signature = "procedure res12_fn_19DE(Arg: Byte)"
+name = "DrawCombatIcon"
+signature = "procedure DrawCombatIcon(PicIndex: Byte)"
 c_name = "res12_fn_19DE"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_19DE (00BA:19DE composes four items of the combat picture ds6E36 from the two halves of the icon slot ds5E5A[PicIndex] by calling CopyPictureItem four times (Half 0,0,1,1; Row 0,1,2,3; Mirror 0,1,1,0); called by ovl12, ovl13 and ovl22); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "00BA:1A29"
 unit = "res12"
 addr = "00BA:1A29"
-size = 657
-name = "res12_fn_1A29"
-signature = "procedure res12_fn_1A29(X1, Y1, X2, Y2: ShortInt; Kind, Flag: Byte)"
+size = 1474
+name = "WalkCombatLine"
+signature = "procedure WalkCombatLine(FromX, FromY, ToX, ToY: ShortInt; Count, Mode: Byte)"
 c_name = "res12_fn_1A29"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_1A29 (00BA:1A29 walks the Bresenham line from cell (X1,Y1) to (X2,Y2) between combat cells (SetupLine/StepLine on the 3x-scaled cells), then animates the combat cursor along it: it draws the combat picture ds6E36 onto DrawBuf with res07_fn_0D71, flushes and delays, steps by DirStepX/DirStepY and keeps MoveCombatCursor on the cell; called by ovl12, ovl13 and ovl22 (aiming and movement)); auto:prologue"
 evidence = ["prologue"]
-
-[[routine]]
-id = "00BA:1CBA"
-unit = "res12"
-addr = "00BA:1CBA"
-size = 38
-name = "res12_fn_1CBA"
-signature = ""
-c_name = "res12_fn_1CBA"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "00BA:1CE0"
-unit = "res12"
-addr = "00BA:1CE0"
-size = 779
-name = "res12_fn_1CE0"
-signature = ""
-c_name = "res12_fn_1CE0"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "00BA:1FEB"
 unit = "res12"
 addr = "00BA:1FEB"
 size = 430
-name = "res12_fn_1FEB"
-signature = "procedure res12_fn_1FEB(Who: Pointer; Flag: Byte; Text: String40)"
+name = "ShowHitMessage"
+signature = "procedure ShowHitMessage(Who: Pointer; Flag: Byte; Text: String40)"
 c_name = "res12_fn_1FEB"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_1FEB (00BA:1FEB shows a per-character combat message and flashes the character's icon (DrawCombatIcon $16/$17), plays a sound and animates over the character's view cell; DealDamage calls it with Flag 0 and ApplyAffect with Flag 1); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16489,12 +15785,12 @@ id = "00BA:2199"
 unit = "res12"
 addr = "00BA:2199"
 size = 143
-name = "res12_fn_2199"
-signature = "function res12_fn_2199(Who: Pointer; AffectId: Byte; var Affect: Pointer): Boolean"
+name = "HasAffect"
+signature = "function HasAffect(Who: Pointer; AffectId: Byte; var Affect: Pointer): Boolean"
 c_name = "res12_fn_2199"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_2199 (00BA:2199 returns whether AffectId is on Who's affect list and leaves the matching TAffect in the caller's Affect (callers read it as a question: if HasAffect(...) then)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16502,12 +15798,12 @@ id = "00BA:2228"
 unit = "res12"
 addr = "00BA:2228"
 size = 290
-name = "res12_fn_2228"
-signature = "procedure res12_fn_2228(Who: Pointer; Damage: Byte)"
+name = "ApplyDamage"
+signature = "procedure ApplyDamage(Who: Pointer; Damage: Byte)"
 c_name = "res12_fn_2228"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_2228 (00BA:2228 applies Damage hit points to Who, updates its health status (dead/dying/unconscious/standing) and drops it from combat when it falls; DealDamage, DamageWithMessage and ovl13 call it with a damage amount); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16515,12 +15811,12 @@ id = "00BA:234A"
 unit = "res12"
 addr = "00BA:234A"
 size = 109
-name = "res12_fn_234A"
-signature = "procedure res12_fn_234A(Who: Pointer)"
+name = "ShowHealResult"
+signature = "procedure ShowHealResult(Who: Pointer)"
 c_name = "res12_fn_234A"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_234A (00BA:234A shows Who as 'is fully healed' when its hit points equal HpMax and 'is partially healed' otherwise, then redraws the roster outside the combat view; ovl12 and ovl22 (healing and training) call it); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16528,12 +15824,12 @@ id = "00BA:23B7"
 unit = "res12"
 addr = "00BA:23B7"
 size = 36
-name = "res12_fn_23B7"
-signature = "function res12_fn_23B7(Who: Pointer): Byte"
+name = "OpposingSide"
+signature = "function OpposingSide(Who: Pointer): Byte"
 c_name = "res12_fn_23B7"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_23B7 (00BA:23B7 returns the side opposite Who's Side (1 for a party member, 0 for a monster); the AI indexes ds6814Sides with it and ShortInt(res12_fn_23B7(Who)) counts Who's enemies); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16541,12 +15837,12 @@ id = "00BA:23DB"
 unit = "res12"
 addr = "00BA:23DB"
 size = 88
-name = "res12_fn_23DB"
+name = "RecountCombatSides"
 signature = ""
 c_name = "res12_fn_23DB"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_23DB (00BA:23DB clears the two per-side counts ds6814Sides and recounts them by walking the character list ds5D96, adding one per member with Flag10D set to its side's count; RunCombat and EndCombatRound call it each round); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16554,51 +15850,38 @@ id = "00BA:2433"
 unit = "res12"
 addr = "00BA:2433"
 size = 296
-name = "res12_fn_2433"
-signature = "function res12_fn_2433(P: Pointer; B: Byte): Byte"
+name = "CollectEnemiesInRange"
+signature = "function CollectEnemiesInRange(Who: Pointer; Range: Byte): Byte"
 c_name = "res12_fn_2433"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_2433 (00BA:2433 filters the ovl30 ScanTargets table to the combatants on the side opposite Who (OpposingSide) within Range steps and writes their combatant indexes to ds6DE4; ovl09:02EB and 0B3C use the count and that list as Who's enemies in range); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
 id = "00BA:255B"
 unit = "res12"
 addr = "00BA:255B"
-size = 22
-name = "res12_fn_255B"
-signature = "function res12_fn_255B(Who, Target: Pointer): Byte"
+size = 220
+name = "DistanceToTarget"
+signature = "function DistanceToTarget(Who, Target: Pointer): Byte"
 c_name = "res12_fn_255B"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_255B (00BA:255B scans from Who with the WalkLine gate open and returns ds6718[I].Key shr 1 for the found Target, the fewest walk steps halved; ovl09:0B3C tests it = 1 as melee range and uses it to decide whether Who can attack Target); auto:prologue"
 evidence = ["prologue"]
-
-[[routine]]
-id = "00BA:2571"
-unit = "res12"
-addr = "00BA:2571"
-size = 198
-name = "res12_fn_2571"
-signature = ""
-c_name = "res12_fn_2571"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "00BA:2637"
 unit = "res12"
 addr = "00BA:2637"
 size = 79
-name = "res12_fn_2637"
-signature = "function res12_fn_2637(Who: Pointer): Byte"
+name = "EndCombatTurn"
+signature = "function EndCombatTurn(Who: Pointer): Byte"
 c_name = "res12_fn_2637"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_2637 (00BA:2637 clears the pending spell, initiative, guard byte and movement left of Who's combat state and returns 1; ovl08/ovl09/ovl13 call it on every path that ends a combatant's turn (Quit, self-end checks, AI turn end)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16606,12 +15889,12 @@ id = "00BA:2686"
 unit = "res12"
 addr = "00BA:2686"
 size = 60
-name = "res12_fn_2686"
-signature = "function res12_fn_2686(Who: Pointer): Byte"
+name = "GuardTurn"
+signature = "function GuardTurn(Who: Pointer): Byte"
 c_name = "res12_fn_2686"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_2686 (00BA:2686 calls EndCombatTurn(Who), sets the combat guard byte B7 (+7) to 1 and flashes 'Guarding'; ovl08:0E45 binds it to the Guard menu key and ovl09_fn_0F4F uses it as the AI's fallback turn); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16619,12 +15902,12 @@ id = "00BA:26C2"
 unit = "res12"
 addr = "00BA:26C2"
 size = 104
-name = "res12_fn_26C2"
-signature = "function res12_fn_26C2(Value: Byte): Byte"
+name = "SpellCasterLevel"
+signature = "function SpellCasterLevel(Spell: Byte): Byte"
 c_name = "res12_fn_26C2"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_26C2 (00BA:26C2 maps a spell's SpellTable class (byte 0) to the selected character's level in that class (ClassLevels cleric 0, magic-user 5), 12 for spell class 2 and a forced 6 when ds6DBF is set; ovl22_e3 multiplies the spell row's +3 byte by it); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16632,12 +15915,12 @@ id = "00BA:272A"
 unit = "res12"
 addr = "00BA:272A"
 size = 175
-name = "res12_fn_272A"
-signature = ""
+name = "DrawViewWindows"
+signature = "procedure DrawViewWindows(WithInner: Byte)"
 c_name = "res12_fn_272A"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_272A (00BA:272A draws the view's window frames (DrawWindow): the full screen, the bottom text window, the upper-left window and, with Inner set, the inner window; only RedrawView calls it); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16645,12 +15928,12 @@ id = "00BA:27D9"
 unit = "res12"
 addr = "00BA:27D9"
 size = 306
-name = "res12_fn_27D9"
-signature = ""
+name = "RedrawView"
+signature = "procedure RedrawView"
 c_name = "res12_fn_27D9"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_27D9 (00BA:27D9 is the resident view dispatcher: it redraws the whole screen for the current view mode ds49F3 (shop, portrait, camp, area map, area view, loot), called by the shop, Temple, loot, camp and combat menus); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16658,12 +15941,12 @@ id = "00BA:290B"
 unit = "res12"
 addr = "00BA:290B"
 size = 595
-name = "res12_fn_290B"
-signature = ""
+name = "DrawLocationLine"
+signature = "procedure DrawLocationLine"
 c_name = "res12_fn_290B"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_290B (00BA:290B builds and draws the party location line (column,row, facing, hours:minutes, and a camping/search suffix) on row 15 of the side window; called by the camp and wilderness screens); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16671,12 +15954,12 @@ id = "00BA:2B5E"
 unit = "res12"
 addr = "00BA:2B5E"
 size = 42
-name = "res12_fn_2B5E"
-signature = ""
+name = "DrawWildernessScreen"
+signature = "procedure DrawWildernessScreen"
 c_name = "res12_fn_2B5E"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_2B5E (00BA:2B5E draws the wilderness map screen: sets view mode 3, DrawAdventureScreen, ShowAreaView, DrawPartyMarker, DrawLocationLine, DrawPartyRoster; called by ovl14 HandleWildernessKeys); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16684,12 +15967,12 @@ id = "00BA:2B88"
 unit = "res12"
 addr = "00BA:2B88"
 size = 192
-name = "res12_fn_2B88"
-signature = ""
+name = "DrawCombatScreen"
+signature = "procedure DrawCombatScreen"
 c_name = "res12_fn_2B88"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_2B88 (00BA:2B88 draws the combat screen windows and positions the cursor (ovl31_e2, two DrawWindow, ClearWindow, MoveCombatCursor); called by StartBattle, PlayerTurn and the combat overlays); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16697,12 +15980,12 @@ id = "00BA:2C48"
 unit = "res12"
 addr = "00BA:2C48"
 size = 443
-name = "res12_fn_2C48"
-signature = ""
+name = "SelectPartyMember"
+signature = "procedure SelectPartyMember(Title: String40; WithExit: Byte; var Selected: PCharacter)"
 c_name = "res12_fn_2C48"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_2C48 (00BA:2C48 loops the party roster with a 'Select' prompt and G/O/O-next/previous/E-return member picker, storing the choice in the caller's Selected; called by ovl03, ovl19 and ovl22); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16710,12 +15993,12 @@ id = "00BA:2E03"
 unit = "res12"
 addr = "00BA:2E03"
 size = 67
-name = "res12_fn_2E03"
-signature = "function res12_fn_2E03(Who: Pointer): Boolean"
+name = "IsRangedWeapon"
+signature = "function IsRangedWeapon(Who: Pointer): Boolean"
 c_name = "res12_fn_2E03"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_2E03 (00BA:2E03 returns True when Who has a readied weapon (SlotItems[0]) whose RaceRow byte $C (the attack range, ovl09:536) is above 1 (a missile weapon); ovl08 gates the melee attack on it); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16723,12 +16006,12 @@ id = "00BA:2E46"
 unit = "res12"
 addr = "00BA:2E46"
 size = 69
-name = "res12_fn_2E46"
-signature = "function res12_fn_2E46(Who: Pointer): Boolean"
+name = "RangedWeaponCanMelee"
+signature = "function RangedWeaponCanMelee(Who: Pointer): Boolean"
 c_name = "res12_fn_2E46"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_2E46 (00BA:2E46 returns True when IsRangedWeapon holds and the readied weapon kind's RaceRow attack flags carry both the melee bit $10 and the strength bit $04, i.e. a missile weapon that can also strike in melee; ovl08 uses it to allow the melee attack); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16736,12 +16019,12 @@ id = "00BA:2E8B"
 unit = "res12"
 addr = "00BA:2E8B"
 size = 204
-name = "res12_fn_2E8B"
-signature = "function res12_fn_2E8B(Who: Pointer; var W: Pointer): Byte"
+name = "ChooseAttackItem"
+signature = "function ChooseAttackItem(Who: Pointer; var Aim: Pointer): Byte"
 c_name = "res12_fn_2E8B"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_2E8B (00BA:2E8B fills the caller's pointer with the item Who's attack aims with: the readied weapon (SlotItems[0]) when the kind's attack flags have the melee bit $10, else the ammo in slot 11 (+$F8) or slot 12 (+$FC) when bit $08 marks a launcher; returns 1 when an item was aimed or the flags are exactly $A); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16749,12 +16032,12 @@ id = "00BA:2F57"
 unit = "res12"
 addr = "00BA:2F57"
 size = 327
-name = "res12_fn_2F57"
-signature = ""
+name = "IsMaxClassLevel"
+signature = "function IsMaxClassLevel(Who: PCharacter; ClassIndex: ShortInt): Boolean"
 c_name = "res12_fn_2F57"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_2F57 (00BA:2F57 returns True when Who's level in one class (ClassLevels[ClassIndex], +$96) has reached the maximum its race (+$2E) and strength (+$10) allow, so the trainers (ovl22:2D39) must not raise that class level further); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]

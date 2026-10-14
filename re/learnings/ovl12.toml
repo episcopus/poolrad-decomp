@@ -646,7 +646,7 @@ units = ["*"]
 tags = ["stub", "AffectHandlers", "overlay", "table", "entry"]
 title = "A stub address stored in a table names its overlay entry: entry = (value - 20h) / 5"
 lesson = "Each overlay stub is five bytes from offset 20h (entry 0), so a value stored in AffectHandlers by ovl12_e1 identifies its entry: 2Ah is entry 2 (RaiseAttackAndMorale), 264h is entry 116 (ovl12_e116), 255h is entry 113 (ovl12_e113). build/re/overlays.json gives each entry's code offset (ovl12 entry 113 at 12453 = 30A5). An entry of another unit carries that unit's stub segment: 0068 is ovl13 (entries 22 and 23, at AffectHandlers[73] and [74]). Decode such a table from the manifest, not from the map's entry notes: some ovl12 entries (30 and 112) have no auto:entry note."
-evidence = ["src/OVL12.PAS#ovl12_e1", "build/re/overlays.json", "re/symbols.toml#ovl12:30A5"]
+evidence = ["src/OVL12.PAS#ovl12_e1", "re/symbols.toml#ovl12:30A5"]
 
 [[lesson]]
 id = "div-16-compiles-with-mov-cl"
@@ -691,4 +691,4 @@ units = ["*"]
 tags = ["AffectHandlers", "signature", "cross-unit", "stub"]
 title = "A table entry from another unit needs that unit's stub in the handler shape"
 lesson = "OVL13 declares ovl13_e22 and ovl13_e23 as `procedure ovl13_e22;` with no parameters, yet their frames take 10 bytes of parameters (packets ovl13_39D2 and ovl13_3A86, the handler shape), and AffectHandlers[73] and [74] store them. OVL13 has no uses clause, so it cannot name PCharacter or PAffect. Until OVL13 declares them with the handler shape, ovl12_e1 stores them through the absolute alias AffectHandlerPointers (Pointer). The stores are the same four bytes, and the match proves them. Replace the alias with typed assignments when OVL13 declares the shape."
-evidence = ["src/OVL12.PAS#ovl12_e1", "src/OVL13.PAS#ovl13_e22", "build/packets/ovl13_39D2.md"]
+evidence = ["src/OVL12.PAS#ovl12_e1", "src/OVL13.PAS#ovl13_e22"]
