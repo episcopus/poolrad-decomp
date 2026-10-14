@@ -9893,12 +9893,12 @@ id = "ovl22:08C3"
 unit = "ovl22"
 addr = "ovl22:08C3"
 size = 462
-name = "ovl22_fn_08C3"
+name = "ApplySpellToTargets"
 signature = ""
 c_name = "ovl22_fn_08C3"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl22_fn_08C3 (ovl22:08C3 applies a spell to every chosen target in ds6C91[1..ds6C94]: saving throw, damage and, when the spell has an AffectId, ApplyAffect (ovl24:1656)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

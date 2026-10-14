@@ -3497,3 +3497,10 @@ kind = "routine"
 why = "ovl22:07D6 returns the affect duration; 08C3 passes it as ApplyAffect Duration (ovl24:1656)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl22_fn_08C3"
+new = "ApplySpellToTargets"
+kind = "routine"
+why = "ovl22:08C3 applies a spell to every chosen target in ds6C91[1..ds6C94]: saving throw, damage and, when the spell has an AffectId, ApplyAffect (ovl24:1656)"
+date = "2026-10-13"
+

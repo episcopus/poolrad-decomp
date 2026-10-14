@@ -742,6 +742,17 @@ var
   ds681F: Byte;                   { 1 while the Temple removes affects (RemoveAffect; ovl04:0386, 05AB, 07CE), 0 after }
   PooledMoney: TPartyMoney;       { the Temple clears it on entry (ovl04:0D32) and passes it to MoneyValueInGold }
   ds6C95: PCharacter;             { the character Remove Curse hands to ovl22_e9 (ovl04:08FA) }
+  { Globals of the spell target picker ovl22 (CastSpell, whitepaper 5.22). }
+  { The chosen targets of a spell being cast: ovl22_e4 fills entries 1..ds6C94 (entry 0, at DS:6C91,
+    is never used as a pointer; ds6C94 sits in its high byte), and ApplySpellToTargets applies the spell to
+    each of them. Element I is at DS:6C91 + I*4. }
+  ds6C91: array[0..71] of PCharacter;  { see above }
+  { The number of chosen targets: ovl22_e4 sets it to 1 for a single target and higher for an area
+    spell; ApplySpellToTargets loops 1..ds6C94. DS:6C94. }
+  ds6C94: Byte;
+  { The spell currently being cast: ApplySpellToTargets reads its SpellTable row byte +2 to decide whether
+    the spell needs a roll to hit. DS:681B. }
+  ds681B: Byte;
   { 1 while money lies in the pool: PoolMoney sets it, ShareMoney sets it when some is left; the
     Temple and the shop clear it with the pool (ovl04:0D37). }
   MoneyInPool: Byte;

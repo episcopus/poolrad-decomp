@@ -13,7 +13,7 @@ procedure AddScrollSpells(Pending: Byte);
 function BuildSpellList(Kind: Byte): Byte;
 function SpellAreaSize(Spell: Byte): Byte;
 function SpellAffectDuration(Spell: Byte): Word;
-procedure ovl22_fn_08C3;
+procedure ApplySpellToTargets(Spell, CasterLevel, Flag, Damage, Kind: Byte; Message: String40);
 procedure ovl22_e4;
 procedure ovl22_fn_0AE5;
 procedure ovl22_fn_0B25;
@@ -282,7 +282,7 @@ end;
   spells are rolled for instead of read from the table: spell or affect $28 is 1d6*10, $39 and $3D are
   5d4, $3B is 1d4*10+40, $3F is 2d10*10 in combat (view mode 5) else (1d10+10)*10, and $43 is a flat
   $5A0. Every other value uses the SpellTable row's duration base (byte +4) plus its per-level byte
-  (byte +5) times the caster level from res12_fn_26C2. Called by ovl22_fn_08C3 (as ApplyAffect's
+  (byte +5) times the caster level from res12_fn_26C2. Called by ApplySpellToTargets (as ApplyAffect's
   Duration) and ovl22_e20, ovl22_fn_1758, ovl22_fn_202B, ovl22_fn_2EEA. }
 function SpellAffectDuration(Spell: Byte): Word;
 const
@@ -318,8 +318,59 @@ begin
   end;
   SpellAffectDuration := Value;
 end;
-{ ovl22:08C3: retf 14: 14 bytes of parameters; 50 bytes of locals }
-{@stub} procedure ovl22_fn_08C3; begin end;
+{ ovl22:08C3. Applies the chosen spell Spell to every target in ds6C91[1..ds6C94] (the list the
+  picker ovl22_e4 filled). It first sets the global DamageKind (Kind when the spell deals Damage,
+  else 0) and returns at once with no targets. For each non-nil target: it rolls the spell's own
+  saving throw (SpellTable row byte +8 nonzero, the save kind in +9) into Saved, and, when the
+  current spell's row byte +2 is $FF, runs the affect hooks, and rolls to hit the target's
+  ResistValue (+$111); a miss cancels the damage and counts as saved. It deals Damage through
+  DealDamage and, when the spell's AffectId (row byte +$A) is set, applies the affect through
+  ApplyAffect with SpellAffectDuration(Spell), the caster level (CasterLevel, or res12_fn_26C2
+  when 0), Flag, the row's save effect and Message. Called by the spell menus; the caster level is
+  real or computed. }
+procedure ApplySpellToTargets(Spell, CasterLevel, Flag, Damage, Kind: Byte; Message: String40);
+var
+  Level: Byte;                    { the caster level used as ApplyAffect's Data }
+  I: Byte;                        { the target index, 1..ds6C94 }
+  Target: PCharacter;             { the target ds6C91[I] the spell is applied to }
+  Saved: Boolean;                 { whether the target saved against the spell }
+begin
+  if Damage = 0 then
+    DamageKind := 0
+  else
+    DamageKind := Kind;
+  if ds6C94 = 0 then
+    Exit;
+  if CasterLevel = 0 then
+    Level := res12_fn_26C2(Spell)
+  else
+    Level := CasterLevel;
+  for I := 1 to ds6C94 do
+    if ds6C91[I] <> nil then
+    begin
+      Target := ds6C91[I];
+      if SpellTable[Spell].Pad2[8] = 0 then
+        Saved := False
+      else
+        Saved := SavingThrow(Target, SpellTable[Spell].Pad2[9], 0);
+      if SpellTable[ds681B].Pad2[2] = $FF then
+      begin
+        res12_fn_0BB8(Target);
+        RunAffectHooks($0B, Target);
+        if not RollToHit(SelectedCharacter, Target, Target^.ResistValue) then
+        begin
+          Damage := 0;
+          Saved := True;
+        end;
+      end;
+      if Damage > 0 then
+        DealDamage(Target, Damage, SpellTable[Spell].Pad2[8], Saved);
+      if SpellTable[Spell].AffectId > 0 then
+        ApplyAffect(Target, SpellTable[Spell].AffectId, SpellAffectDuration(Spell),
+          Level, Flag, SpellTable[Spell].Pad2[8], Saved, Message);
+    end;
+  DamageKind := 0;
+end;
 { ovl22:0A91: frame not read }
 {@stub} procedure ovl22_e4; begin end;
 { ovl22:0AE5: frame not read }
