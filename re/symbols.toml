@@ -10010,12 +10010,12 @@ id = "ovl22:1123"
 unit = "ovl22"
 addr = "ovl22:1123"
 size = 63
-name = "ovl22_e16"
+name = "CastProtection"
 signature = ""
 c_name = "ovl22_e16"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_16"
+notes = "renamed from ovl22_e16 (cast handler of the protection spells (SpellHandlers[6],[7],[16],[17]; ovl22_e10 fills the table, whitepaper 5.22.2): applies the current spell ds681B to the chosen targets with 'is protected' (ovl22:1123)); auto:entry_16"
 evidence = ["prologue"]
 
 [[routine]]

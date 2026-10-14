@@ -22,7 +22,7 @@ procedure CastCurse;
 procedure CastCureLightWounds;
 procedure CastCauseLightWounds;
 procedure CastDetectionSpell;
-procedure ovl22_e16;
+procedure CastProtection;
 procedure ovl22_e17;
 procedure ovl22_e18;
 procedure ovl22_e19;
@@ -571,7 +571,15 @@ begin
   ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is affected');
 end;
 { ovl22:1123: retf 0: 0 bytes of parameters; 14 bytes of locals }
-{@stub} procedure ovl22_e16; begin end;
+{ ovl22:1123 (e16). Cast handler of the protection spells, spells 6 and 16 (Protection From Evil) and
+  7 and 17 (Protection From Good): applies the current spell ds681B to the chosen targets with the
+  message 'is protected' and no damage of its own (ApplySpellToTargets; the spell's own AffectId does
+  the work). One of the per-spell handlers in SpellHandlers (SpellHandlers[6], [7], [16] and [17];
+  filled by ovl22_e10). }
+procedure CastProtection;
+begin
+  ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is protected');
+end;
 { ovl22:1162: retf 0: 0 bytes of parameters; 18 bytes of locals }
 {@stub} procedure ovl22_e17; begin end;
 { ovl22:1190: retf 0: 0 bytes of parameters; 2 bytes of locals }
