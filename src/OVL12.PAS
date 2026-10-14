@@ -126,7 +126,7 @@ procedure SetFlagIfTargetReflects(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ApplyItemSecondAffect(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure GiveExceptionalStrength(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e113(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e114;
+procedure ShowMustHaveGiantStrength(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e115;
 procedure ovl12_e116;
 procedure ovl12_e1;
@@ -174,6 +174,7 @@ const
   AffectMorale = 100;           { what applying the control sets the morale scratch ds6825 to }
   ExceptionalStrength = 18;     { Strength 18 is written with a percentile (EncodeStrength, ovl24:10E4) }
   ExceptionalPercent = 100;     { the percentile of 18/100, the strength ovl12:2F57 raises Who to }
+  GiantStrength = 19;           { the lowest Strength of the giant range 19..25 (whitepaper 5.24, StrengthRowIndex) }
   StrengthMessageView = 2;      { ds49F3 while "is stronger" is shown in combat (ovl12:2F57); meaning not known [?] }
   FlagNameNum = $98;            { a NameNum that sets ds681E with FlagNameNumThird as the third name (ovl12:2E37) [?] }
   FlagNameNumThird = $FC;
@@ -2214,8 +2215,24 @@ begin
     ds6821 := 1;
   end;
 end;
-{ ovl12:3134: retf 10: 10 bytes of parameters; 30 bytes of locals }
-{@stub} procedure ovl12_e114; begin end;
+{ ovl12:3134. Affect handler of table entry 135 (affect $87, stub entry 114), with the AffectHandlers shape (Who,
+  Affect and Mode, ovl24:0000). Mode 0 applies it; any other Mode does nothing. QUIRK ovl12:3134: the Affect argument
+  is read as a character (Other := PCharacter(Affect)), as in ovl12_e113. When Who's Strength is below GiantStrength,
+  Other's KnownSpells[SpellClearedIndex] is cleared and res12_fn_1693 shows 'Must have Giant Strength' (the literal is
+  copied to a stack temporary first, $O+). Which affect runs it is not known yet [?]. }
+procedure ShowMustHaveGiantStrength(Who: PCharacter; Affect: PAffect; Mode: Byte);
+var
+  Other: PCharacter;
+begin
+  Other := PCharacter(Affect);
+  if Mode <> 0 then
+    Exit;
+  if Who^.Strength < GiantStrength then
+  begin
+    Other^.KnownSpells[SpellClearedIndex] := 0;
+    res12_fn_1693('Must have Giant Strength');
+  end;
+end;
 { ovl12:317A: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e115; begin end;
 { ovl12:319B: retf 10: 10 bytes of parameters; 0 bytes of locals }

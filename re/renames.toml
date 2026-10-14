@@ -4211,3 +4211,10 @@ kind = "routine"
 why = "ovl12:2F57 raises Who to 18/100 with RaiseStrength (ovl24:115C) and adds affect $26 (AffectStrength2) when applied; any other Mode removes a $26 strength affect (DecodeStrength, ovl24:110D) and shows nothing"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl12_e114"
+new = "ShowMustHaveGiantStrength"
+kind = "routine"
+why = "ovl12:3134 shows 'Must have Giant Strength' (res12_fn_1693 with the literal) when Who's Strength is below 19; the handler's own effect is that message"
+date = "2026-10-14"
+

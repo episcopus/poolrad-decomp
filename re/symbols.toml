@@ -4694,7 +4694,7 @@ evidence = ["prologue"]
 id = "ovl12:30A5"
 unit = "ovl12"
 addr = "ovl12:30A5"
-size = 118
+size = 143
 name = "ovl12_e113"
 signature = ""
 c_name = "ovl12_e113"
@@ -4708,12 +4708,12 @@ id = "ovl12:3134"
 unit = "ovl12"
 addr = "ovl12:3134"
 size = 70
-name = "ovl12_e114"
+name = "ShowMustHaveGiantStrength"
 signature = ""
 c_name = "ovl12_e114"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_114"
+notes = "renamed from ovl12_e114 (ovl12:3134 shows 'Must have Giant Strength' (res12_fn_1693 with the literal) when Who's Strength is below 19; the handler's own effect is that message); auto:entry_114"
 evidence = ["prologue"]
 
 [[routine]]
