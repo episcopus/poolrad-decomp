@@ -77,7 +77,7 @@ end;
   then rounds until one side's count (ds6814 or ds6815) is zero or EndCombatRound says so.
   Each round calls RecountCombatSides, StartCombatantRound for every combatant on the party list, then turns in
   initiative order (PickNextCombatant, CombatTurn). EndCombat frees the combat data. The byte
-  local is unused; it is there so the frame matches. Called by ovl03_fn_179B. }
+  local is unused; it is there so the frame matches. Called by RunAreaEventCommand. }
 procedure RunCombat;
 var
   Done: Byte;

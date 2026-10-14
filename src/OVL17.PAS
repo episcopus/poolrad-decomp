@@ -488,7 +488,7 @@ end;
   them (RollDice(1, Count)) and picks the monster's body picture bank from the ds08C5-region
   MonsterBanks tables by the roll and Who^.B9E (the body table of class 0, 5, 6 or the default), and
   its head bank from the head table the same way. Then AddPartyMember adds it and
-  BuildCharacterIcon(True) rebuilds the combat icon. Called by ovl03_fn_2B7E. }
+  BuildCharacterIcon(True) rebuilds the combat icon. Called by AddComputerMemberCommand. }
 procedure AddMonsterToParty(Kind: Byte);
 const
   PartySize = 830;              { party member count, a word of the ds49D6 game variable block }

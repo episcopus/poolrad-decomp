@@ -1,0 +1,325 @@
+# Lessons from unit ovl03 (Encounter: the ECL command loop). Leads with evidence, not matcher verdicts.
+
+[[lesson]]
+id = "random-trunc-real-calls"
+confidence = "V"
+units = ["*"]
+tags = ["Random", "Trunc", "Real", "codegen", "call"]
+title = "Trunc(Random(n)) keeps two runtime calls before a byte store"
+lesson = "A byte assigned from Trunc(Random(Range)) compiles to the call to System Random, then xor dx,dx and two runtime calls (the Real conversion and the truncation, 0AF8:119A and 0AF8:119E in ovl03), then the low byte is stored. The plain Roll := Random(Range) and Roll := Byte(Random(Range)) have no calls and fail to match. When an original shows xor dx,dx followed by two lcalls after a Random or a Word function, look for Trunc (or another Real conversion) rather than a plain Word-to-Byte assignment."
+evidence = ["tools/re/tp_idioms/ovl03/RNDTRUNC.PAS", "src/OVL03.PAS#RandomCommand", "re/symbols.toml#ovl03:0234"]
+
+[[lesson]]
+id = "for-index-signed-cwde"
+confidence = "V"
+units = ["*"]
+tags = ["for", "ShortInt", "cwde", "index", "codegen"]
+title = "A loop index that the original sign-extends with cwde is a ShortInt"
+lesson = "The index of a for loop that feeds an array subscript is loaded with mov al,[I]; cwde before the scaling shl di,1 when it is declared ShortInt. Declared Byte, the same index compiles to xor ah,ah (the first mismatch in ArithmeticCommand). With the ShortInt declaration, `for I := 1 to 2 do Values[I] := OperandValue(I);` matches (the loop stays a loop; the index is a sign-extended byte)."
+evidence = ["src/OVL03.PAS#ArithmeticCommand", "re/symbols.toml#ovl03:01A3"]
+
+[[lesson]]
+id = "word-function-to-byte-local-and-frame-hole"
+confidence = "V"
+units = ["*"]
+tags = ["Byte", "Word", "frame", "unused", "locals", "codegen"]
+title = "A Word function result stored in a Byte keeps only AL; a frame byte nothing reads is a declared unused Byte"
+lesson = "Position := OperandValue(1) with a Byte Position stores only AL (mov [bp-6],al), with no widening, and Position := Position and $7F stays a byte operation. In SelectCharacterCommand the locals are Member (a pointer at [bp-4]), a byte at [bp-5] that no statement reads, then Position, I and RemoveFlag at [bp-6..-8]. The gap is a declared unused Byte (QUIRK ovl03:02E0), placed between the pointer and the byte locals so that the later locals keep their original offsets. Probe the offsets with make match, not by guessing the declaration order."
+evidence = ["src/OVL03.PAS#SelectCharacterCommand", "src/OVL03.PAS#ArithmeticCommand", "re/symbols.toml#ovl03:02E0"]
+
+[[lesson]]
+id = "guard-before-while-compound"
+confidence = "V"
+units = ["*"]
+tags = ["while", "guard", "and", "loop", "codegen"]
+title = "A guard before a while with a compound condition is an if around the loop"
+lesson = "The original tests Position > 0 once before the loop (cmp byte [bp-6],0; jbe exit), then the loop head tests I < Position and Member <> nil and jumps back to that head. Writing `if Position > 0 then while (I < Position) and (Member <> nil) do ...` reproduces that layout exactly (proven by make match; the variant without the guard was not probed)."
+evidence = ["src/OVL03.PAS#SelectCharacterCommand", "re/symbols.toml#ovl03:02E0"]
+
+[[lesson]]
+id = "var-argument-needs-identical-type"
+confidence = "V"
+units = ["*"]
+tags = ["var", "absolute", "type", "identity", "cross-unit"]
+title = "A var argument must have the identical type: alias the global under the other unit's type"
+lesson = "ShowEncounterPicture takes `var Shown: TPictureShown` (TPictureShown is an anonymous-looking array[0..1] of Byte declared in OVL07), and POOLVARS declares ds84C8 as array[0..1] of Byte. Passing ds84C8 directly fails with Error 26 (Type mismatch): Turbo Pascal compares the named type, not the shape. The fix that matches is a unit-local alias of the same two bytes, `PictureShown: TPictureShown absolute ds84C8;`, passed as the argument; the code is the same direct address. The type cannot move into POOLVARS without editing OVL07."
+evidence = ["src/OVL03.PAS#ShowEncounterCommand", "src/OVL07.PAS#ShowEncounterPicture", "re/symbols.toml#ovl03:03B4"]
+
+[[lesson]]
+id = "literal-to-string12-local-frame"
+confidence = "V"
+units = ["*"]
+tags = ["string", "literal", "frame", "overlay", "O+"]
+title = "A literal assigned to a local string[12] copies with max 12 and keeps its 13 bytes in the frame"
+lesson = "`PictureSetName := 'CPIC'` with a local `string[12]` compiles to the copy 0AF8:0B25 with max 12 (push 0Ch) into the local, which is then passed by address to a string parameter. The same literal passed directly to LoadPictureSlot(string, ...) uses a 5-byte temporary instead, and the frame is 8 bytes short of the original's. The local must be declared right after the record local it follows (Template, 285 bytes, then the 13-byte string, then the item and affect cursors) for the offsets to match."
+evidence = ["src/OVL03.PAS#AddEncounterGroupCommand", "re/symbols.toml#ovl03:0450"]
+
+[[lesson]]
+id = "unsigned-le-zero-guard-ja"
+confidence = "V"
+units = ["*"]
+tags = ["byte", "compare", "guard", "codegen"]
+title = "`if Count <= 0 then Count := 1` compiles to the original's ja; `if Count = 0` to jne"
+lesson = "For a Byte counter, `if Count = 0 then Count := 1` compiles to cmp byte [x],0; jne, which skips the assignment on the other branch. The original's `cmp byte [bp-2],0; ja skip; mov byte [bp-2],1` (skip when Count > 0) is the source `if Count <= 0 then Count := 1`. The two sources mean the same for a Byte; when a compare with 0 differs only in its conditional jump, change the relation and keep the logic."
+evidence = ["src/OVL03.PAS#AddEncounterGroupCommand", "re/symbols.toml#ovl03:0450"]
+
+[[lesson]]
+id = "two-condition-while-matches-exit-shape"
+confidence = "V"
+units = ["*"]
+tags = ["while", "and", "loop", "short-circuit", "codegen"]
+title = "`while (I <= Count) and (N < Max) do` reproduces the original's loop exit jumps"
+lesson = "The original's member loop tests I <= Count with a jbe into the body and a jmp to the exit, then tests the count against 63 the same way (ovl03:0450, 05A2..05B4). Written as one short-circuit while condition, TP 6 generates that layout exactly (proven by make match), so a loop that adds members can keep its two exits without a Break (TP 6 has none)."
+evidence = ["src/OVL03.PAS#AddEncounterGroupCommand", "re/symbols.toml#ovl03:0450"]
+
+[[lesson]]
+id = "empty-string-literal-local-no-copy"
+confidence = "V"
+units = ["*"]
+tags = ["string", "literal", "local", "frame", "O+"]
+title = "An empty literal passed directly is copied to a temporary; assigned to a local it is only a length store"
+lesson = "In the overlay, DrawWindow(3, 3, $D, $D, 0, $F, '') copies the literal '' into a stack temporary with 0AF8:0B0B before the call (ovl03:0856). `Prompt := ''` with a local `Prompt: string[1]` compiles to one `mov byte [bp-2], 0` and no copy (ovl03:0951); the local is then passed by address to ReadNumber's String40 value parameter (lea di, push ss, push di). The locals take their places in declaration order from bp-1 downward: Prompt (2 bytes) at bp-2, Number at bp-4, Target at bp-6, which gives the 6-byte frame. Declaring Target before Number moves the stored target to bp-4 and fails the match."
+evidence = ["src/OVL03.PAS#ReadNumberCommand", "src/OVL03.PAS#ShowCloseUpCommand", "re/symbols.toml#ovl03:0951"]
+
+[[lesson]]
+id = "string-length-zero-test-byte-compare"
+confidence = "V"
+units = ["*"]
+tags = ["string", "length", "compare", "codegen"]
+title = "`if Length(S) = 0` on a string variable is one byte compare, not a string comparison call"
+lesson = "After `Answer := ReadInputLine(...)` the test `if Length(Answer) = 0 then Answer := ' '` compiles to cmp byte [bp-0x104],0; jne, with no call to System_StrCompare (0AF8:0C10). The literal ' ' is then copied with 0AF8:0B25 from the code segment, three pushes (source, destination, max 255). Writing `Answer = ''` is the string compare the original does not make (ovl03:0994, matched)."
+evidence = ["src/OVL03.PAS#ReadStringCommand", "re/symbols.toml#ovl03:0994"]
+
+[[lesson]]
+id = "sizeof-constants-match-literal-sizes"
+confidence = "V"
+units = ["*"]
+tags = ["SizeOf", "FreeMem", "FillChar", "constant", "codegen"]
+title = "SizeOf(record) and SizeOf(array) compile to the literal sizes the original pushes"
+lesson = "FreeMem(ReturnStack, SizeOf(TReturnEntry)) pushes 6 and FillChar(CompareFlags, SizeOf(CompareFlags), 0) pushes 6, exactly as the original's literal sizes (ovl03:0A9F, 0AED). The size of a record or an array is a compile-time constant, so readable sizes cost nothing in the match."
+evidence = ["src/OVL03.PAS#ReturnCommand", "src/OVL03.PAS#ComparePairsCommand", "re/symbols.toml#ovl03:0A9F"]
+
+[[lesson]]
+id = "map-entry-inside-routine-is-removed-with-its-stub"
+confidence = "V"
+units = ["*"]
+tags = ["map", "boundary", "stub", "write"]
+title = "A map entry inside a matched routine is removed by WRITE, but its stub lines stay until the source is cleaned"
+lesson = "ovl03:0B39, 0B43 and 0B48 were map entries inside ComparePairsCommand (0AED..0B51): the first was the displacement of a jne, the second sat inside a mov, the third was the displacement of a jmp. The map's size of 76 for 0AED was short by 25 bytes. `make match UNIT=ovl03 WRITE=1` corrected the size to 101 and removed the three entries, but it does not touch src/OVL03.PAS: their stub lines and interface declarations had to be deleted by hand. Look for an entry that starts with a byte that is an operand of the routine before it (a jump displacement, a mov immediate) before writing a stub for it."
+evidence = ["src/OVL03.PAS#ComparePairsCommand", "re/symbols.toml#ovl03:0AED"]
+
+[[lesson]]
+id = "byte-loop-index-over-array-1-to-4"
+confidence = "V"
+units = ["*"]
+tags = ["for", "Byte", "ShortInt", "index", "codegen"]
+title = "A Byte loop index subscripting array[1..4] of Word matches; the ShortInt rule is not general"
+lesson = "`for I := 1 to 4 do Values[I] := OperandValue(I);` with I: Byte matches ovl03:0AED, where the index is loaded with mov al,[bp-9]; xor ah,ah before shl di,1. The for-index-signed-cwde lesson (ShortInt for `for I := 1 to 2` in ArithmeticCommand) therefore depends on the code around the loop. Try Byte first and change to ShortInt only when the first differing byte is a cwde where the original has xor ah,ah."
+evidence = ["src/OVL03.PAS#ComparePairsCommand", "src/OVL03.PAS#ArithmeticCommand", "re/symbols.toml#ovl03:0AED"]
+
+[[lesson]]
+id = "opcode-test-chain-is-a-case"
+confidence = "V"
+units = ["*"]
+tags = ["case", "if", "dispatch", "SkippedOpcode", "codegen"]
+title = "A run of opcode tests on one variable is a case statement: the variable is loaded into AL once"
+lesson = "Written as `if SkippedOpcode = OpIfEqual then ... else if SkippedOpcode = OpIfNotEqual then ...`, the routine reloads the global before every compare (cmp byte [SkippedOpcode], n). The original loads SkippedOpcode into AL once (mov al, [6F7F]) and compares AL with each label (cmp al, 16h; jne ...). Writing the six opcodes of RunIfCompared (ovl03:0B52) as one case statement with one if per arm matched. Use case for a dispatch on one byte; keep the arms as single statements."
+evidence = ["src/OVL03.PAS#RunIfCompared", "re/symbols.toml#ovl03:0B52"]
+
+[[lesson]]
+id = "literal-argument-temp-sized-by-literal"
+confidence = "V"
+units = ["*"]
+tags = ["string", "literal", "temp", "frame", "O+", "codegen"]
+title = "A string literal passed directly under $O+ gets a temp of its length plus one; the frame pad is the compiler's, not a declared byte"
+lesson = "Load24x24Set('BACPAC', 0, 40) in an overlay unit puts the copy in a 7-byte temp (bp-0Bh..bp-05h) with no local string declared. The routine's frame is 12 bytes (sub sp, 0Ch) with three Byte locals and the loop index, and the compiler supplies the extra byte. A declared `Unused: Byte` moved the temp to bp-0Ch and failed the match; without it LoadAreaGraphics (ovl03:0C74) matches. Do not declare a pad when the frame already matches; probe the offset first."
+evidence = ["src/OVL03.PAS#LoadAreaGraphics", "re/symbols.toml#ovl03:0C74"]
+
+[[lesson]]
+id = "concat-argument-stays-on-stack"
+confidence = "V"
+units = ["*"]
+tags = ["string", "concat", "argument", "O+", "retf"]
+title = "A string expression passed as a value argument is built in the argument temp: StrCopy and StrConcat leave the destination on the stack"
+lesson = "ovl17_e11(GameDir + 'ECL' + TileSetText + '.dax') in an overlay unit compiles to a 256-byte argument temp at bp-103h: the address of the temp is pushed first, then GameDir is copied into it (System_StrCopy, retf 4, pops only the source), then each piece is appended with System_StrConcat, which also pops only its source. The temp's address is then the 4-byte argument of ovl17_e11 (retf 4), so the callee's parameter is a `string` value parameter. StartEclBlock (ovl03:0BD1) matched with this form and the number from Str(TileSet, TileSetText) in a string[1] local."
+evidence = ["src/OVL03.PAS#StartEclBlock", "src/OVL17.PAS#ovl17_e11", "re/symbols.toml#ovl03:0BD1"]
+
+[[lesson]]
+id = "inc-byte-adds-in-place"
+confidence = "V"
+units = ["*"]
+tags = ["Inc", "Byte", "add", "word", "codegen"]
+title = "Inc(byte, word expression) adds AL in place; a byte := byte + word expression widens"
+lesson = "After a word expression (here a div 10 of a sum) the original does add byte ptr [x], al, 3 bytes. Written as `Checksum := Checksum + (...) div 10`, TP computes the sum in AX and widens the byte (mov dx,ax; mov al,[x]; xor ah,ah; add ax,dx; mov [x],al), 9 bytes longer, and the exit jump of the loop lands elsewhere. `Inc(Checksum, (...) div 10)` compiles to the original's form."
+evidence = ["tools/re/tp_idioms/ovl03/BYTEADD.PAS", "src/OVL03.PAS#ComputePartyValueCommand", "re/symbols.toml#ovl03:12C6"]
+
+[[lesson]]
+id = "dec-eclpc-then-redecode-count"
+confidence = "V"
+units = ["*"]
+tags = ["EclPC", "DecodeOperands", "Dec", "count", "script"]
+title = "A variable operand count is read by reading the count, Dec(EclPC) and DecodeOperands(Count) again"
+lesson = "ChooseFromListCommand (ovl03:0F08) and AskMenuCommand (ovl03:10D1) both decode a fixed header with DecodeOperands(3) or (2), read the count with OperandValue, then run `dec word [0x49ed]` (EclPC, see dseg) and DecodeOperands(Count). The Dec is the instruction before the second decode in both packets, so the source keeps `Dec(EclPC)` between them and both routines match with it. The variant without the Dec was not probed."
+evidence = ["src/OVL03.PAS#ChooseFromListCommand", "src/OVL03.PAS#AskMenuCommand", "re/dseg.toml#EclPC"]
+
+[[lesson]]
+id = "boolean-and-as-value-ord"
+confidence = "V"
+units = ["*"]
+tags = ["Boolean", "and", "Ord", "if", "codegen"]
+title = "A Boolean `and` stored as a Byte compiles to a materialised value; if-then-else on it does not"
+lesson = "`if (ds84E0 <> 0) and (ds84E1 <> 0) then Animate := 1 else Animate := 0` jumps straight to the else branch on the first clear flag (je to the else label), while the original builds the Boolean in AL (mov al,0; jmp; mov al,1) and stores it. `Animate := Ord((ds84E0 <> 0) and (ds84E1 <> 0));` matches (ovl03:10D1). Try the Ord form first when a flag is stored as a byte from a Boolean expression."
+evidence = ["src/OVL03.PAS#AskMenuCommand", "re/symbols.toml#ovl03:10D1"]
+
+[[lesson]]
+id = "string-expression-chain-into-max-target"
+confidence = "V"
+units = ["*"]
+tags = ["string", "concat", "loop", "O+", "codegen"]
+title = "`Text := Text + '~' + E + ' '` compiles to a temp copy, one concat per piece and a max-50 copy back"
+lesson = "In an overlay unit the assignment of a concatenation to a string[50] variable copies the target into a 256-byte temp (System_StrCopy, the target pushed first), appends each piece with System_StrConcat, then copies the temp back with System_StrLCopy and max 50 (ovl03:10D1, the loop body and the final option). Each such statement gets its own temp in the frame, so two of them can sit at bp-13Fh and bp-13Eh."
+evidence = ["src/OVL03.PAS#AskMenuCommand", "re/symbols.toml#ovl03:10D1"]
+
+[[lesson]]
+id = "empty-string-local-to-string40-param"
+confidence = "V"
+units = ["*"]
+tags = ["string", "param", "String40", "literal", "codegen"]
+title = "An empty string[1] local passed to a String40 value parameter is passed by address, with no copy"
+lesson = "`Empty := ''` on a string[1] local and passing Empty twice to AskListMenu (String40 value parameters for Title and Text) compiles to two lea/push pairs of the same address, the callee does the copy. The same holds for AskMenu's Title (ovl03:10D1)."
+evidence = ["src/OVL03.PAS#ChooseFromListCommand", "src/OVL03.PAS#AskMenuCommand", "re/symbols.toml#ovl03:0F08"]
+
+[[lesson]]
+id = "unused-word-after-pointer-local"
+confidence = "V"
+units = ["*"]
+tags = ["frame", "unused", "pointer", "locals"]
+title = "A 4-byte pointer local with a 6-byte frame needs a declared unused Word after it"
+lesson = "ClearEncounterCommand (ovl03:125D) has `sub sp, 6` but only the 4-byte Next pointer is used. With `Next: PMenuLine` alone the frame is 4 bytes (sub sp, 4); declaring `Unused: Word` after it, with the QUIRK comment, puts the 2 bytes at bp-6..bp-5 and the match passes."
+evidence = ["src/OVL03.PAS#ClearEncounterCommand", "re/symbols.toml#ovl03:125D"]
+
+[[lesson]]
+id = "case-loads-word-once-if-chain-compares-memory"
+confidence = "V"
+units = ["*"]
+tags = ["case", "if", "Word", "codegen", "compare", "Inc"]
+title = "A case on a Word local loads it once into AX; an if chain compares it in memory each time"
+lesson = "ScanPartyCommand (ovl03:1435) has three arms on its Word local StatAddress: 0, $6BA7 and $6C1B. The original loads it once (mov ax,[bp-2]) and compares AX with each label (cmp ax,0; cmp ax,6BA7; cmp ax,6C1B), which is a case statement. Written as an if/else-if chain the same local compiles to cmp word [bp-2],0 and no shared AX load, and the match fails at the first arm. Inside an arm, Sum := Sum + V loads the sum into AX and stores it back (add ax,[Sum]; mov [Sum],ax), 6 bytes longer than the original's add [Sum],ax; Inc(Sum, V) produces the original's in-place add. Both shapes are in the probe."
+evidence = ["tools/re/tp_idioms/ovl03/CASEAX.PAS", "src/OVL03.PAS#ScanPartyCommand", "re/symbols.toml#ovl03:1435"]
+
+[[lesson]]
+id = "nested-write-back-through-static-link"
+confidence = "V"
+units = ["*"]
+tags = ["nested", "static link", "ss:", "WriteVmWord", "frame"]
+title = "A nested procedure that writes the parent's results is proven with the parent; its locals are the parent's, reached through the static link"
+lesson = "WriteScanResults (ovl03:13D7) takes no parameters: its retf 2 pops the static link the parent pushes (push bp; push cs; call). It reads the parent's locals through the link with ss: overrides (mov al, byte ptr ss:[di-0x11]) and passes them to four WriteVmWord calls. In the source it is a procedure declared inside ScanPartyCommand (indented, not in the interface), and the matcher proves it NESTED with its parent, so its map entry needs no own match. Declare the parent's locals in the same order as the original frame (Found: ShortInt is read with cbw, so it is signed)."
+evidence = ["src/OVL03.PAS#ScanPartyCommand", "src/OVL03.PAS#WriteScanResults", "re/symbols.toml#ovl03:13D7", "tools/re/tp_idioms/ovl03/CASEAX.PAS"]
+
+[[lesson]]
+id = "map-entry-inside-match-remove-stub"
+confidence = "V"
+units = ["*"]
+tags = ["map", "stub", "phantom", "WRITE", "declaration"]
+title = "WRITE=1 removes a phantom map entry from the registry; its stub line and interface declaration must go from the source too"
+lesson = "ovl03:1B42 and ovl03:1C13 lie inside AddLootCommand (ovl03:19B0), each in the middle of an instruction (1B42 is a byte of the mov at 1B40, 1C13 a byte of the mov at 1C12), with no caller. make match WRITE=1 removed both entries from re/symbols.toml, but their {@stub} lines and interface declarations stayed in src/OVL03.PAS: a stub is a retf of its own and moves the code after it. After a WRITE run that reports a removed entry, delete its declaration and stub line, then match again."
+evidence = ["src/OVL03.PAS#AddLootCommand", "re/symbols.toml#ovl03:19B0"]
+
+[[lesson]]
+id = "repeat-until-test-at-bottom"
+confidence = "V"
+units = ["*"]
+tags = ["loop", "repeat", "while", "codegen"]
+title = "A loop whose first pass is unconditional and whose test is at the bottom is repeat ... until, not while"
+lesson = "The item loop of AddLootCommand (ovl03:1A80) has no test before its first pass: the original is init, body, then cmp Offset,Size; jae exit; jmp body. A while loop tests first (cmp; jb body; jmp exit), three bytes more, which moved every later jump in the routine. The block is never empty there (size 0 ends the game before the loop), so repeat ... until Offset >= Size is exact."
+evidence = ["src/OVL03.PAS#AddLootCommand"]
+
+[[lesson]]
+id = "case-keeps-selector-in-al"
+confidence = "V"
+units = ["*"]
+tags = ["case", "if", "range", "AL", "codegen"]
+title = "A case statement loads the selector into AL once and compares each label; an if compares the variable's memory each time"
+lesson = "In AddLootCommand the d100 Chance and Roll2 are case statements: the original loads mov al,[x] once and then cmp al,lo; jb; cmp al,hi; ja for each range, and a single label is cmp al,v; je. The same tests written as if (x >= lo) and (x <= hi) compile to cmp byte [x],lo, which fails to match. Label groups follow the original too: 11, 12 and 13, 14 are two-value lists (cmp al,v; je each), while 1..4, 5..7, 8..9 and 1..7 are ranges."
+evidence = ["src/OVL03.PAS#AddLootCommand"]
+
+[[lesson]]
+id = "if-layout-gives-test-polarity"
+confidence = "V"
+units = ["*"]
+tags = ["if", "layout", "polarity", "codegen"]
+title = "The jump target of an if test shows the source polarity: the block that is jumped to is written last"
+lesson = "TP lays out the then-block first and jumps over it. When the original tests with je straight to the later block, the source is the negated test with the blocks in the other order. ovl03:1DB1 (LoseMoneyAndItemsCommand) is the then-first form (jne to the party loop). ovl03:1EF8 (blocked) needs the negated forms: if Choice <> 2 then <one result> else <flee check>, and if (steps = 0) or (wall = 0) then PARLAY else ADVANCE, which also puts the two menu strings in the literal pool in the original order. Read the jump target before writing the condition."
+evidence = ["src/OVL03.PAS#LoseMoneyAndItemsCommand", "re/symbols.toml#ovl03:1EF8"]
+
+[[lesson]]
+id = "for-bound-local-no-extra-count"
+confidence = "V"
+units = ["*"]
+tags = ["for", "frame", "bound", "locals"]
+title = "A for-loop bound that is a local reuses the loop's own slot: an extra Count local adds two bytes to the frame"
+lesson = "AddLootCommand computes the number of rolls into the Index byte that also counted the money loop, then writes for Treasure := 1 to Index do. A separate Count local plus the hidden bound copy made the frame 0x176 instead of 0x174; removing Count gave the original frame. Declare the bound variable the original declares and let the hidden slot be the only extra byte."
+evidence = ["src/OVL03.PAS#AddLootCommand"]
+
+[[lesson]]
+id = "char-argument-to-string40-param"
+confidence = "V"
+units = ["*"]
+tags = ["string", "char", "overlay", "temp", "frame", "codegen"]
+title = "A Char passed where a String40 value parameter is expected becomes a 256-byte temporary, not a copy in a local"
+lesson = "AskMenu(Blank, '~HAUGHTY ...', ...) with a Char local Blank: the caller pushes a 256-byte temporary, calls 0AF8:0C3B (char to string, which leaves its destination on the stack as 0AF8:0B0B does) and passes the temporary's address as Title. A literal Text argument in an overlay unit ($O+) is copied to a temporary sized by its length (34 characters give 35 bytes). Assigning the same Char to a string local (Title := Blank) adds a second 256-byte temporary and a StrLCopy, so the frame grows by 0x100. ChooseAttitudeCommand (ovl03:25CB) matched with the direct form, frame sub sp 0x12e. Probe tools/re/tp_idioms/ovl03/CHARTIT.PAS."
+evidence = ["src/OVL03.PAS#ChooseAttitudeCommand", "tools/re/tp_idioms/ovl03/CHARTIT.PAS", "re/symbols.toml#ovl03:25CB"]
+
+[[lesson]]
+id = "operand-argument-read-from-unset-local"
+confidence = "V"
+units = ["*"]
+tags = ["argument", "uninitialised", "local", "codegen", "quirk"]
+title = "A local passed as an argument before it is set is pushed from its frame byte"
+lesson = "Amount := OperandValue(Amount) followed by ovl20_e1(Amount, 1) compiles to push [bp-1] (the unset local) before the OperandValue call, then the store of AL back to [bp-1]. The original (ECL 52, ovl03:2AC1) reads the frame byte as the operand number, so the compiled behaviour depends on what the stack held on entry. The matched Pascal states that read as a QUIRK rather than a constant operand 1, which would not match. Probe the shape with make match, not by reasoning about the declaration."
+evidence = ["src/OVL03.PAS#PassTimeCommand", "re/symbols.toml#ovl03:2AC1"]
+
+[[lesson]]
+id = "untyped-var-for-type-invisible-in-callee-unit"
+confidence = "V"
+units = ["*"]
+tags = ["var", "untyped", "Pointer", "unit", "uses", "signature"]
+title = "A var parameter whose type the callee's unit cannot see is declared untyped"
+lesson = "res12_fn_2C48 takes the address of SelectedCharacter (a PCharacter from POOLVARS), but RES12 uses only RES06, so PCharacter is not visible there. A var parameter of type Pointer rejects a PCharacter variable (Error 26, Type mismatch), so the stub declares the parameter untyped: procedure res12_fn_2C48(Prompt: String40; Mode: Byte; var Who). Untyped var accepts any variable and pushes its address, which is exactly the caller's push ds; push di. The callee's own decompiler may later declare a typed parameter once its unit uses POOLVARS."
+evidence = ["src/OVL03.PAS#ChoosePartyMemberCommand", "src/RES12.PAS", "re/symbols.toml#00BA:2C48"]
+
+[[lesson]]
+id = "byte-shr-widens-through-ax"
+confidence = "V"
+units = ["*"]
+tags = ["shr", "Byte", "codegen", "widen"]
+title = "Morale := Morale shr 1 on a Byte local widens through AX"
+lesson = "A byte local shifted right by one compiles to mov al,[x]; xor ah,ah; shr ax,1; mov [x],al, and or with $80 stays a byte operation (mov al,[x]; or al,80h; mov [x],al). Writing Morale := OperandValue(2) shr 1 with the Word result in a Byte gives the same bytes as the two-statement form (ECL 54, ovl03:2B7E, matched)."
+evidence = ["src/OVL03.PAS#AddComputerMemberCommand", "re/symbols.toml#ovl03:2B7E"]
+
+[[lesson]]
+id = "search-loop-runs-once-when-inner-sets-found"
+confidence = "V"
+units = ["*"]
+tags = ["while", "repeat", "loop", "quirk", "flag"]
+title = "A search loop whose inner repeat sets its exit flag on both exits walks only the first element"
+lesson = "FindMemorizedSpellCommand (ovl03:2C03) has a while over the party with an inner repeat over the slots. The inner loop sets Found both when the value matches and when the slots run out (I := $FF), so after the first pass Found is always set and the outer while ends. The matched Pascal keeps this shape; it is recorded as a QUIRK, not as a search of the whole party. Read the exit flag's writers on every path before assuming a walk covers the list."
+evidence = ["src/OVL03.PAS#FindMemorizedSpellCommand", "re/symbols.toml#ovl03:2C03"]
+
+[[lesson]]
+id = "while-true-is-repeat-until-false"
+confidence = "V"
+units = ["*"]
+tags = ["while", "repeat", "loop", "join", "codegen", "jmp"]
+title = "while True compiles like repeat until False; an if/else that ends a loop body costs a join jump"
+lesson = "In TP 6.0 `while True do` and `repeat ... until False` compile to the same bytes: no test at the head, and the loop ends with one jmp to its head. An if/else that is the last statement of the loop body adds a jmp at the end of the then-branch to the else's join, and the join jumps to the head: two jumps where an original whose normal path jumps straight to the head has one. Probe the loop shape (WHILETRU.PAS: the then-branch jmp to the join, then the join's jmp to the head) before writing such a loop. ovl03_e1 (ovl03:32F8) is blocked on this shape: its compiled code is 38 bytes longer than the original."
+evidence = ["tools/re/tp_idioms/ovl03/WHILETRU.PAS", "re/symbols.toml#ovl03:32F8"]
+
+[[lesson]]
+id = "match-too-short-is-longer-code"
+confidence = "V"
+units = ["*"]
+tags = ["match", "segment", "too short", "boundary", "map"]
+title = "'the original segment is too short here' means our routine is longer than the original bytes up to the next map entry"
+lesson = "tools/match/match.py compares our compiled routine with the original bytes from the routine's entry to the next map entry. A longer compiled routine reports 'the original segment is too short here', even when its first instructions agree. A map entry inside the routine shortens the original segment in the same way, so the two causes look alike (ovl03:3379 and ovl03:34AB lie inside ovl03_e1). Measure both before editing a boundary: our routine is the gap between OVL03_E1 and the next public symbol in build/match/<unit>/A/match.map, and its bytes are in build/match/<unit>/A/match.exe (read with tp_toolchain.read_mz and read_map, disassembled with capstone in 16-bit mode)."
+evidence = ["tools/match/match.py", "re/symbols.toml#ovl03:32F8", "re/symbols.toml#ovl03:3379"]

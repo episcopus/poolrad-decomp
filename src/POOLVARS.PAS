@@ -293,7 +293,11 @@ type
       for every cleric spell (table class 0) of a level the character has a cleric spell slot
       for (ovl23:0135); likely the spells the character can learn [I]. }
     KnownSpells: array[1..$38] of Byte;
-    Pad6B: Byte;                  { +$6B }
+    { +$6B: the sweep-attack limit RecalcCombatValues (00BA:0BB8) sets: the fighter level
+      (ClassLevels[2]) when it is above 0 and the race is above 0, else 1; StartCombatantRound
+      (ovl13:0000) copies it into the combatant's attack-slot limit (Combat^.Pad4[5]) which
+      SweepEnemies reads, and CollapseAndChangeSide (ovl12:0B1B) sets it from the fighter level too. }
+    SweepAttacks: Byte;
     { +$6C: bits 0..6 are the combat footprint kind (PlaceCombatant copies them into CombatantTable[].Kind); bit 7
       is not part of it. }
     CombatSize: Byte;
@@ -558,6 +562,7 @@ const
   VarMapY = 196;                  { the party's row in the area map grid }
   VarGeoBlock = 197;              { the GEO block id of the loaded 3D area map (Load3DMap, ovl29:11FB) }
   VarForceWallView = 230;         { nonzero: ShowAreaView shows the wall view whatever AreaViewKind says }
+  VarSavedWallView = 242;         { WallViewMode before ECL command 32 (ovl03:0BD1) set it; no reader yet }
   { Nonzero: the overhead wall map is off (ShowAreaView clears WallMapMode, the A key cannot set
     it, ovl14:0380); the name predates that evidence. }
   VarShowWallOverlays = 251;
@@ -629,7 +634,9 @@ var
   ds2624: Word;                   { sound passed to PlaySound by CastChosenSpell when spell $33 is cast; meaning unknown }
   ds2628: Word;                   { word the ovl14 movement code passes to PlaySound; meaning unknown }
   ds262C: Word;                   { the sound PlaySound plays as an attack animation reaches the target (ovl13:26B0) }
-  ds262A: Word;                   { sound passed to PlaySound by CastChosenSpell when spell $2F is cast; meaning unknown }
+  { sound passed to PlaySound by CastChosenSpell when spell $2F is cast, and by ovl03:2CCF when ds84CC is 10;
+    meaning unknown }
+  ds262A: Word;
   { Five words, one per 8x8 tile bank, subtracted from the symbol number to index within the
     bank (Put8x8Symbol, ovl34:020F); evidence in re/dseg.toml. }
   SymbolBase: array[0..4] of Word;  { per-bank base symbol numbers; see above }
@@ -700,7 +707,8 @@ var
   CfgProbe: File;                 { pool.cfg opened untyped (128-byte records) to probe its existence }
   ds04B6: string[40];             { prompt string HandleWildernessKeys passes to ReadPromptChoice in the movement loop }
   DebugMode: Boolean;             { STING debug mode: switched by Ctrl-D in ReadGameKey; ShowDebugTrace shows only when set }
-  AreaViewKind: Byte;             { what to draw: 1 the 3D wall view, 2..4 the map window page; evidence in re/dseg.toml }
+  AreaViewKind: Byte;             { what to draw: 1 the 3D wall view, 2..4 the map window page (evidence in re/dseg.toml);
+                                    1 also makes ECL command 36 (ovl03:179B) set the view mode to 4 instead of 3 }
   ds6A60: Byte;                   { wall view descriptor 1 (of 4): SetWallDescriptors sets them }
   ds6A61: Byte;                   { wall view descriptor 2: ShowAreaView fills it from ds6F69 when ds84E5 is set }
   ds6A62: Byte;                   { wall view descriptor 3: ShowAreaView fills it from ds6F69 when ds84E5 is set }
@@ -791,7 +799,7 @@ var
   ds4712: Byte;                   { the DS:49F3 value ShowEndingNarrative saves at the start and restores at the end }
   ds4713: string[1];              { Str(TileSet): the picture number ShowEndingNarrative appends to FINAL }
   { The character whose sheet ShowCharacterSheet draws: a copy of SelectedCharacter taken at its start (ovl19:0051).
-    The Sell action (ovl19:1CEE) passes it to res12_fn_0442 for the item's line (ovl19:1D59); no other routine reads it yet. }
+    The Sell action (ovl19:1CEE) passes it to FormatItemLine for the item's line (ovl19:1D59); no other routine reads it yet. }
   SheetCharacter: PCharacter;
   { The character the View command was started for: a copy of SelectedCharacter that ViewSelectedCharacter
     stores (ovl19:0AD1). The two Trade commands start their "Trade to?" from it and store the recipient in it
@@ -847,6 +855,7 @@ var
   DyingPicture: Pointer;                { the picture RemoveCombatant draws over a dying combatant's cells }
   ds261E: Word;                   { the sound RemoveCombatant plays (PlaySound) when a combatant dies }
   ds6718: array[0..255] of TSortRec;  { the ovl30 sort table (element 0 holds the count, SortTable) }
+  { up: ECL 36, 49, 51, 58 and 61 (ovl03:179B, 2AA2, 2AEB, 271F, 2B14); down: 37, 38 (ovl03:18F8); meaning unknown }
   EclPC: Word;                   { set to $9900 by the loader (ovl11:03C0) }
   ds49E5: Word;                   { the second script entry address (see ds49E3); the ovl14 L key copies it to EclPC }
   ds49F4: Byte;                   { cleared by the loader (ovl11:03CB) }
@@ -855,6 +864,7 @@ var
   ShowMonsterPics: Byte;          { nonzero: the monster pictures are shown; the camp's Pics submenu toggles it
                                     (ovl15:1D02, 1DE9); the loader sets it to 1 (ovl11:0397) }
   ds49F8: Byte;                   { cleared by the loader (ovl11:03A6) }
+  { the view kind before the last area step: RunAreaStep (ovl03:31B4) copies AreaViewKind here before it sets 1 }
   ds49F9: Byte;                   { set to 1 by the loader (ovl11:03EB) }
   RestInterruptCounter: Word;     { rest steps since the last interruption check: ovl20:0C9A counts them and
                                     resets it at the ds49D6 word VarRestInterruptSteps; the loader clears it
@@ -965,10 +975,17 @@ var
     { DoPick clears it. Overlaps ds6DDE[1]; exact sharing uncertain. }
   DuelMode: Byte;                 { nonzero during a duel (EndBattle's duel texts); the loader clears it (ovl11:040B) }
   ds84DD: Byte;                   { cleared by the loader (ovl11:0415) }
-  ds84DE: Byte;                   { cleared by the loader (ovl11:041A) }
-  ds84DF: Byte;                   { cleared by the loader (ovl11:041F) }
-  ds84E0: Byte;                   { cleared by the loader (ovl11:0424) }
-  ds84E3: Byte;                   { cleared by the loader (ovl11:0433) }
+  { cleared by the loader (ovl11:041A) and by EndCommand (ovl03:0001); set by ECL command 61
+    (ovl03:2B14); while it is set, DrawGlyphRunCommand (ovl03:2E7D) starts a glyph run below row 13 at
+    column 2, row 5; the rest is unknown }
+  ds84DE: Byte;
+  { cleared by the loader (ovl11:041F) and, when set, by ECL command 51 (NewLineCommand, ovl03:2AEB); set by
+    DrawGlyphRunCommand (ovl03:2E7D) before it draws a run; meaning unknown }
+  ds84DF: Byte;
+  { ds84E0: set while a close-up picture is up (ShowEncounterPicture, ShowCloseUpCommand ovl03:0856). }
+  ds84E0: Byte;                   { close-up picture up; cleared by the loader (ovl11:0424) }
+  { ds84E3: set when ShowEncounterPicture loads the 3D sprite; ShowCloseUpCommand (ovl03:0856) clears it. }
+  ds84E3: Byte;                   { 3D encounter sprite loaded; cleared by the loader (ovl11:0433) }
   ds84E4: Byte;                   { window-clear once flag: HandleWildernessKeys clears the text window and sets it }
   ds84E9: Byte;                   { cleared by the loader (ovl11:0456) }
 
@@ -1093,7 +1110,7 @@ var
     string[12] at DS:1047, 13 bytes apart (the image: 0 Okay, 1 Animated, 2 tempgone, 3 Running,
     4 Unconscious, 5 Dying, 6 Dead, 7 Stoned, 8 Gone), indexed by TCharacter.Status. }
   StatusNames: array[0..8] of string[12];
-  { The item name parts res12_fn_0442 appends to a menu line: 256 strings of at most 20
+  { The item name parts FormatItemLine appends to a menu line: 256 strings of at most 20
     characters (21 bytes each) at DS:10A7 (the image: entry 1 'Battle Axe' through entry 255
     'Cursed'; entry 0 overlaps the tail of the preceding status string and is never used).
     Indexed by TMenuLine.NameNum. }
@@ -1179,6 +1196,20 @@ var
     the character at entry 1 to another entry). Entry 0 is never read. Extent not proven; the
     next named byte after it is ds6E2F. }
   ds6DE4: array[0..73] of Byte;
+  { set to 1 by EndCommand (ovl03:0001) and StartEclBlock (ovl03:0BD1): the script run ends; the script run
+    loop (ovl03:3171) clears it on entry and on exit }
+  ds442E: Byte;
+  { RunAreaStep (ovl03:31B4) runs its step again while this is set; ECL command 32 (ovl03:0BD1) sets it }
+  ds442F: Byte;                   { set to 1 by ECL command 32 (ovl03:0BD1) }
+  ds4430: Byte;                   { when nonzero, the ECL command 0 (ovl03:0001) selects the character at ds4436 }
+  ds4431: Byte;                   { cleared by ECL command 32 (ovl03:0BD1), set by 33 and 55 (ovl03:0C74) }
+  ds4432: Byte;                   { with ds4433 and ds4434 set, ovl03:0C74 redraws the character; set elsewhere }
+  ds4433: Byte;                   { set by ECL command 55 (ovl03:0C74); meaning unknown }
+  ds4434: Byte;                   { set by ECL command 33 (ovl03:0C74); meaning unknown }
+  { The members ECL command 11 (ovl03:0450) has added to the party list; it adds none at
+    MaxEncounterMembers (63). }
+  EncounterMemberCount: Byte;
+  ds4436: PCharacter;             { and clears this flag; what sets the flag is not known }
   { Scratch of the combat AI (ovl09). }
   ds443C: Byte;                   { the direction the AI chose last; 8 before its first step
                                     (ovl09:0B3C clears it, the 07F2 step reads and sets it) }
@@ -1316,8 +1347,11 @@ var
   ds84D0: Word;                   { set by a script write to address $B9 (WriteVmWord, ovl07:0D55); meaning unknown }
   ds84D2: Byte;                   { set to 1 when the script writes 0 to the character word $6C00 (ovl07:0B99) }
   ds84D3: Byte;                   { set to 1 when the script writes 0 to the character word $6B00 (ovl07:0A91) }
+  { ds84E1 is set to 1 when ShowCloseUpCommand (ovl03:0856) hides the close-up. }
   ds84E1: Byte;                   { cleared by ShowHeadBody (ovl07:0514); meaning unknown }
   ds84E6: Byte;                   { set to 1 when the script moves the party or changes its marker (ovl07:0D6C..0DD6) }
+  { set to 1 by ECL command 11 (ovl03:0450) after it has added members to the party list; meaning unknown }
+  ds84E7: Byte;
   ds84E8: Byte;                   { set to 1 when the script writes game variable $49FD or $49FE (ovl07:0CAF) }
   { The decoded operands of the current script command (DecodeOperands, ovl07:0000): entries
     1..64 of each table; entry 0 is the byte before, never read (in the image it is the last entry
@@ -1343,11 +1377,22 @@ var
   { The results of the script's last comparison (CompareStrings, CompareWords): 1 in [0] when
     equal, [1] unequal, [2] less, [3] greater, [4] less or equal, [5] greater or equal, else 0. }
   CompareFlags: array[0..5] of Byte;
+  { the opcode that was current before the last one the script run loop (ovl03:3171) read; no other reader yet }
+  ds6F7E: Byte;
   SkippedOpcode: Byte;                   { the opcode SkipCommand reads at EclPC (ovl07:1EB7) }
   ds84EA: Byte;                   { the head/picture word ds49D6^[$2E1] ShowEncounterPicture last showed (ovl07:0633) }
-  ds6F83: Byte;                   { set to 8 by InitScript (ovl07:01F0); meaning unknown }
+  { The encounter picture's banks: operand 1 and operand 3 of ECL command 12 (ovl03:03B4), passed to
+    ShowEncounterPicture as SpriteBank (SPRIT) and PicBank (PIC, or HEAD and BODY). }
+  EncounterSpriteBank: Byte;      { the SPRIT bank the encounter sprites are loaded from (ovl07:054E) }
+  EncounterPicBank: Byte;         { the PIC bank, or the HEAD and BODY bank, of the close-up (ovl07:054E) }
+  { The icon slot of the encounter group being set up: InitScript sets 8 (ovl07:01F0). ECL command 11
+    (ovl03:0450) and SetupDuel (ovl07:1A6F) load the group's CPIC picture into it and give it to their
+    members as CombatIcon; ECL command 11 moves it on by one per group. }
+  ds6F83: Byte;
   ds70C6: Byte;                   { cleared by InitScript (ovl07:01FB); meaning unknown }
   ds84C8: array[0..1] of Byte;    { two bytes InitScript clears (ovl07:01DF); meaning unknown }
-  ds84E2: Byte;                   { cleared by InitScript (ovl07:01C1); meaning unknown }
+  { set by DrawGlyphRunCommand (ovl03:2E7D) when it moves a glyph run to the picture window; EndCommand
+    (ovl03:0001) redraws the picture frame while it is set }
+  ds84E2: Byte;                   { cleared by InitScript (ovl07:01C1) }
 implementation
 end.

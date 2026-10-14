@@ -825,8 +825,9 @@ end;
   the affect's Flag, so the handler does not run again when the affect is removed. Unless the Temple is removing
   affects (ds681F is not 0), Who collapses: DropFromFight takes Who out of the fight with StatusDead and the text
   'collapses'. Then Who's side becomes the high nibble of the affect's Data, Quick is set so the computer plays
-  Who (as ComputerTakesOver does, ovl12:0400), the morale of a computer-run member is cleared, and Who's +$6B gets
-  the fighter level, +$72 gets 12, +$76 and +$9F get 0. Purpose unknown: runs for affect $20 (id 32, ovl12_e1 [V]). }
+  Who (as ComputerTakesOver does, ovl12:0400), the morale of a computer-run member is cleared, and Who's
+  SweepAttacks (+$6B) gets the fighter level, +$72 gets 12, +$76 and +$9F get 0. Purpose unknown: runs for
+  affect $20 (id 32, ovl12_e1 [V]). }
 procedure CollapseAndChangeSide(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   Affect^.Flag := 0;
@@ -835,7 +836,7 @@ begin
   Who^.Side := Affect^.Data div 16;
   Who^.Quick := 1;
   Who^.Pad74[$76] := 0;
-  Who^.Pad6B := Who^.ClassLevels[FighterClass];
+  Who^.SweepAttacks := Who^.ClassLevels[FighterClass];
   Who^.BaseMovement := 12;
   if Who^.B84 = ComputerRunMorale then
     Who^.B84 := 0;

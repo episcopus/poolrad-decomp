@@ -469,7 +469,7 @@ end;
 { 0709:0B66. Asks for a number on the bottom line: reads up to 6 characters with
   ReadInputLine (Prompt in Color) until Val accepts them as a number from 0 to 65536, and
   returns it as a Word. QUIRK 0709:0BBF: 65536 itself is accepted and returns 0. Called by
-  ovl03_fn_0951. }
+  ReadNumberCommand. }
 function ReadNumber(Prompt: String40; Color: Byte): Word;
 const
   MaxDigits = 6;

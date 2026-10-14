@@ -5795,6 +5795,405 @@ why = "ovl22:008A shows SpellMenuList through ChooseFromList (ovl25:0D9A) with t
 date = "2026-10-14"
 
 [[rename]]
+old = "res12_fn_0442"
+new = "FormatItemLine"
+kind = "routine"
+why = "00BA:0442 builds an item menu line's Text from the DS:10A7 name parts, the count, the readied Yes/No and a magic marker, and draws it at (Col, Row) in green when ShowText is set (make match UNIT=res12; callers in ovl06 ChooseShopItem, ovl19 ShowCharacterSheet and DrawCharacterPanel)"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl03_fn_0001"
+new = "EndCommand"
+kind = "routine"
+why = "ECL command 0: the dispatcher ovl03:2F2D calls it when SkippedOpcode is 0 (cmp al,0 then call 0001), and it is the only command handler that reads no operands (no DecodeOperands call before Inc(EclPC))"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_00F4"
+new = "GotoCommand"
+kind = "routine"
+why = "ECL command 1: the dispatcher ovl03:2F2D calls it for SkippedOpcode 1 (cmp al,1 then call 00F4); it decodes one operand and sets EclPC to MakeWord(OperandLow[1], OperandHigh[1]), the jump ScriptGosub and InitScript also read"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_0111"
+new = "GosubCommand"
+kind = "routine"
+why = "ECL command 2: the dispatcher ovl03:2F2D calls it for SkippedOpcode 2 (cmp al,2 then call 0111); it decodes one operand and calls ScriptGosub(1), which pushes the return address (ovl07:1951)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_0126"
+new = "CompareCommand"
+kind = "routine"
+why = "ECL command 3: the dispatcher ovl03:2F2D calls it for SkippedOpcode 3 (cmp al,3 then call 0126); it compares two operands with CompareStrings or CompareWords, which set the flags the conditional commands test (ovl07:1815, 18EB)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_01A3"
+new = "ArithmeticCommand"
+kind = "routine"
+why = "ECL commands 4 to 7: the dispatcher ovl03:2F2D calls it for SkippedOpcode 4 to 7 (cmp al,4..7 then call 01A3); it combines two operand values (add, sub, div, mul, ovl03:01E9..0222) and writes the answer with WriteVmWord (ovl07:0C77)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_0234"
+new = "RandomCommand"
+kind = "routine"
+why = "ECL command 8: the dispatcher ovl03:2F2D calls it for SkippedOpcode 8 (cmp al,8 then call 0234); it rolls Random over the first operand and writes the roll with WriteVmWord (ovl07:0C77)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_0292"
+new = "StoreCommand"
+kind = "routine"
+why = "ECL command 9: the dispatcher ovl03:2F2D calls it for SkippedOpcode 9 (cmp al,9; call 0292); it stores operand 1 (a value by WriteVmWord, a string by WriteVmString from EclStrings[1]) at the address operand 2 names (match ovl03:0292)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_02E0"
+new = "SelectCharacterCommand"
+kind = "routine"
+why = "ECL command 10: the dispatcher ovl03:2F2D calls it for SkippedOpcode 10 (cmp al,0xa; call 02E0); it selects the party member at the position operand 1 names as SelectedCharacter (ds5D96 walk, match ovl03:02E0)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_03B4"
+new = "ShowEncounterCommand"
+kind = "routine"
+why = "ECL command 12 (dispatcher ovl03:2F2D, SkippedOpcode 12): sets the encounter picture's banks and shows it at the distance the party can see ahead, capped by word 704 (ovl03:03B4, matched)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ds6F81"
+new = "EncounterSpriteBank"
+kind = "global"
+why = "operand 1 of ECL command 12 (ovl03:03B4), passed as SpriteBank: ShowEncounterPicture loads the SPRIT sprites with it (ovl07:054E)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ds6F82"
+new = "EncounterPicBank"
+kind = "global"
+why = "operand 3 of ECL command 12 (ovl03:03B4), passed as PicBank: ShowEncounterPicture loads the PIC picture or the HEAD and BODY banks with it (ovl07:054E)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_0450"
+new = "AddEncounterGroupCommand"
+kind = "routine"
+why = "ECL command 11 (dispatcher ovl03:2F2D, SkippedOpcode 11): loads a character of Kind with LoadCharacter (ovl17_e6) and appends Count copies to the party list ds5D96 with combat icons 8 and up (ovl07 InitScript sets ds6F83 to 8; ovl17_e10 uses icons 0..7 for party members), loading the CPIC picture of the group (ovl03:0450, matched)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ds4435"
+new = "EncounterMemberCount"
+kind = "global"
+why = "the members ECL command 11 (ovl03:0450) has added: incremented per member, the command adds none at 63 (MaxEncounterMembers)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_0817"
+new = "ApproachEncounterCommand"
+kind = "routine"
+why = "ECL command 13 (dispatcher ovl03:2F2D, SkippedOpcode 13): while word 705 of ds49D6 (VarStepsAhead, the steps the party sees ahead) is above 0 it takes one off and redraws the encounter picture at the new distance (ovl03:0817, matched); the command is the approach of the encounter picture, as opcode 12 (ShowEncounterCommand) starts it"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_0856"
+new = "ShowCloseUpCommand"
+kind = "routine"
+why = "ECL command 14 (dispatcher ovl03:2F2D, SkippedOpcode 14): operand 1 is a picture bank; PictureShown and ds84E0 mark the close-up, and it draws the PIC picture or the HEAD and BODY pictures as ShowEncounterPicture does (ovl07:054E), or hides it when the bank is $FF (ovl03:0856, matched)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_0951"
+new = "ReadNumberCommand"
+kind = "routine"
+why = "ECL command 15 (dispatcher ovl03:2F2D, SkippedOpcode 15): asks the player for a number with ReadNumber (RES06, empty prompt, colour 10) and stores the word at the script address of operand 2 with WriteVmWord (ovl03:0951, matched)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_0994"
+new = "ReadStringCommand"
+kind = "routine"
+why = "ECL command 16 (opcode 10h in the dispatcher ovl03:2F2D, the string twin of ReadNumberCommand): reads a line with ReadInputLine and stores it with WriteVmString at operand 2's address (ovl03:0994, matched)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_0A09"
+new = "ShowTextCommand"
+kind = "routine"
+why = "ECL commands 17 and 18 (dispatcher ovl03:2F2D, opcodes 11h and 12h): show operand 1's text in the ECL text window with ShowPagedText (RES06); 11h keeps the window, 12h clears it and resets GlyphCol/GlyphRow (ovl03:0A09, matched)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_0A9F"
+new = "ReturnCommand"
+kind = "routine"
+why = "ECL command 19 (dispatcher ovl03:2F2D, opcode 13h): pops the script's return stack (ReturnStack, 6-byte entries with ReturnPC and Next) into EclPC, the return that ScriptGosub's entries call for (ovl03:0A9F, matched)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_0AED"
+new = "ComparePairsCommand"
+kind = "routine"
+why = "ECL command 20 (dispatcher ovl03:2F2D, opcode 14h): compares operands 1 with 2 and 3 with 4 as words and sets CompareFlags[0] (equal) or [1] (not equal), the flags the conditional opcodes 16h to 1Bh (ovl03:0B52) test (ovl03:0AED, matched)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_0B52"
+new = "RunIfCompared"
+kind = "routine"
+why = "ECL commands 22 to 27 (dispatcher ovl03:2F2D): each runs the next command only when the CompareFlags entry of its comparison is set, else SkipCommand steps over it (ovl03:0B52, matched); the flags are the ones CompareCommand and ComparePairsCommand set"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_0BD1"
+new = "StartEclBlock"
+kind = "routine"
+why = "ECL command 32 (dispatcher ovl03:2F2D, opcode 20h): starts ECL block Block of the area's ECL#.DAX file: WallViewMode is saved and set to the block, the file path goes to ovl17_e11, LoadEcl loads the block, InitScript resets the machine (ovl03:0BD1, matched)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_0C74"
+new = "LoadAreaGraphics"
+kind = "routine"
+why = "ECL commands 33 and 55 (dispatcher ovl03:2F2D): command 33 loads the 3D map (Load3DMap) and the BACPAC picture set, command 55 the wall sets (LoadWallSet) and the ds6AAEWords slots, then redraws the selected character when ds4432 to ds4434 are set (ovl03:0C74, matched; it contains the label ovl03:0D7B)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_0DEF"
+new = "BitwiseCommand"
+kind = "routine"
+why = "ECL commands 47 (and) and 48 (or) (dispatcher ovl03:2F2D, opcodes 2Fh and 30h): the byte result of operands 1 and 2 is compared with 0 (CompareWords) and written to operand 3 (ovl03:0DEF, matched)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_0E5E"
+new = "CopyIndexedWordCommand"
+kind = "routine"
+why = "ECL command 42 (dispatcher ovl03:2F2D, opcode 2Ah): the word at the table address (operand 1) plus the byte index (operand 2) is read with ReadVmWord and written to operand 3 (ovl03:0E5E, matched)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_0EBC"
+new = "StoreIndexedWordCommand"
+kind = "routine"
+why = "ECL command 53: dispatcher ovl03:2F2D calls it for SkippedOpcode 35h (cmp al,35h); it writes operand 1 as a word at the table of operand 2 plus the index of operand 3 (WriteVmWord); CopyIndexedWordCommand (ovl03:0E5E) reads that table"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_0F08"
+new = "ChooseFromListCommand"
+kind = "routine"
+why = "ECL command 21: dispatcher ovl03:2F2D calls it for SkippedOpcode 15h (cmp al,15h, call at ovl03:3003); it builds a TMenuLine list of the string operands and shows it with AskListMenu (ChooseFromList, OVL25) under the prompt, writing the chosen index to operand 1"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_10D1"
+new = "AskMenuCommand"
+kind = "routine"
+why = "ECL command 43: dispatcher ovl03:2F2D calls it for SkippedOpcode 2Bh (cmp al,2Bh, call at ovl03:30C4); it joins the EclStrings operands into a ~ hotkey text and asks it with AskMenu (ovl07:1684), writing the choice to operand 1"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_125D"
+new = "ClearEncounterCommand"
+kind = "routine"
+why = "ECL command 28: dispatcher ovl03:2F2D calls it for SkippedOpcode 1Ch (cmp al,1Ch, call at ovl03:302D); it zeroes EncounterMemberCount and ds84E7 (the members of ECL command 11), sets the icon slot ds6F83 back to 8 (as InitScript), clears PooledMoney and frees the item list ds6810"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_12C6"
+new = "ComputePartyValueCommand"
+kind = "routine"
+why = "ECL command 29: dispatcher ovl03:2F2D calls it for SkippedOpcode 1Dh (cmp al,1Dh, call at ovl03:3038); it sums over the party list ds5D96 a byte from hit points, ResistValue, HitAdjust and ClassLevels[0] and [5] and writes it to operand 1; purpose unknown"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_1435"
+new = "ScanPartyCommand"
+kind = "routine"
+why = "dispatcher ovl03:2F2D calls it for SkippedOpcode $1E (ECL command 30); it scans the party list for an affect (operand 1 = 0) or the lowest, highest and average of ThiefSkills[3] or Movement (operand 1 = $6BA7 or $6C1B)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_13D7"
+new = "WriteScanResults"
+kind = "routine"
+why = "nested in ScanPartyCommand (ovl03:1435): writes the four results of the scan (lowest, highest, average, affect flag) to the script addresses of operands 3 to 6"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_1629"
+new = "CheckPartyClassCommand"
+kind = "routine"
+why = "dispatcher ovl03:2F2D calls it for SkippedOpcode $22 (ECL command 34); it sets operand 1 to 1 when a party member's ClassMask (TCharacter +$2F) is 4 or 10, and writes 0 to operand 2"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_16C9"
+new = "RollRangeCommand"
+kind = "routine"
+why = "dispatcher ovl03:2F2D calls it for SkippedOpcode $23 (ECL command 35); it rolls two d6 against two ranges made from operands 1 to 4 and writes the outcome 0 to 2 to script address $6DCB (word 715 of ds49D6)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_179B"
+new = "RunAreaEventCommand"
+kind = "routine"
+why = "dispatcher ovl03:2F2D calls it for SkippedOpcode $24 (ECL command 36); ShopMain (ovl06:053E) and RunCombat (ovl08:007A) name ovl03 as the area logic that calls them: it runs the pending encounter or the requested shop or temple"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_18F8"
+new = "SelectCaseCommand"
+kind = "routine"
+why = "dispatcher ovl03:2F2D sends SkippedOpcode 37 and 38 here (cmp al,25h / 26h); the code picks the address of operand choice+1 and runs it (38, ScriptGosub) or stores it in ds49ED (37)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_19B0"
+new = "AddLootCommand"
+kind = "routine"
+why = "dispatcher ovl03:2F2D sends SkippedOpcode 39 here (cmp al,27h); it fills ds6810, the loot list that ComputeBattleExperience (ovl05:0000) fills, from an item block or from rolls"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_1DB1"
+new = "LoseMoneyAndItemsCommand"
+kind = "routine"
+why = "dispatcher ovl03:2F2D sends SkippedOpcode 40 here (cmp al,28h); it calls ScaleMoney with (100-Percent)/100 and LoseItems with Percent, for the selected character or the party"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_25CB"
+new = "ChooseAttitudeCommand"
+kind = "routine"
+why = "ovl03:2F2D dispatches SkippedOpcode 2Ch (44) to it; its five-word menu HAUGHTY, SLY, NICE, MEEK, ABUSIVE (ovl03:25A8 literal) asks for an attitude; the value of the chosen attitude (operands 1 to 5) goes to operand 6 (match ovl03:25CB)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_266A"
+new = "ComparePartyItemCommand"
+kind = "routine"
+why = "dispatcher ovl03:2F2D sends SkippedOpcode 32h (50) here (cmp al,32h); it searches the party's carried items (TCharacter.Items +$C8, ItemType +$2E) for the type operand 1 names and sets CompareFlags for the conditional commands (match ovl03:266A)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_271F"
+new = "PauseCommand"
+kind = "routine"
+why = "dispatcher ovl03:2F2D sends SkippedOpcode 3Ah (58) here (cmp al,3Ah); it only counts ds49ED up and calls DelayByGameSpeed (RES06, GameSpeed * 225 ms), so it is a pause in the script (match ovl03:271F)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_2775"
+new = "DamagePartyCommand"
+kind = "routine"
+why = "dispatcher ovl03:2F2D sends SkippedOpcode 2Eh (46) here (cmp al,2Eh); it damages the party or one member with DamageWithMessage (ovl07:20CC) after saving throws (ovl24:0D63) or RollBeatsResistance (ovl24:0C4F), and shows 'The END!' when no member has Flag10D (match ovl03:2775)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_2AA2"
+new = "RedrawAreaViewCommand"
+kind = "routine"
+why = "dispatcher ovl03:2F2D sends SkippedOpcode 31h (49) here (cmp al,31h); it calls ShowAreaView (ovl26:016D) when ds84E3 (3D encounter sprite loaded) is set, then clears ds84E3 and ds84E0 (match ovl03:2AA2)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_2AC1"
+new = "PassTimeCommand"
+kind = "routine"
+why = "ovl03:2AC1 is the handler of ECL opcode 52 (dispatcher ovl03:2F2D, cmp al,34h): its one operand is passed to ovl20_e1(Amount, 1), which advances the game clock's digit 1 by Amount (ovl20:03D5); the camp rest (RunRestPeriod, ovl20) makes the same call with Index 1 and Amount 5"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_2AEB"
+new = "NewLineCommand"
+kind = "routine"
+why = "ovl03:2AEB is the handler of ECL opcode 51 (dispatcher ovl03:2F2D, cmp al,33h): it moves the text cursor GlyphCol/GlyphRow to column 1 of the next row (the POOLVARS comment says GlyphRow is Inc per newline) and clears ds84DF when set"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_2B14"
+new = "ClearPictureWindowCommand"
+kind = "routine"
+why = "ovl03:2B14 is the handler of ECL opcode 61 (dispatcher ovl03:2F2D, cmp al,3Dh): it clears the picture window box (1,1)-(15,15) with ClearRect and sets ds84DE; EndCommand (ovl03:0001) draws the same box and clears ds84DE"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_2B33"
+new = "ChoosePartyMemberCommand"
+kind = "routine"
+why = "ovl03:2B33 is the handler of ECL opcode 57 (dispatcher ovl03:2F2D, cmp al,39h): it clears the ECL text window (ClearRect with EclTextLeft..EclTextBottom), copies operand 1's string (EclStrings[1]) to a local and calls res12_fn_2C48 with it, mode 0 and SelectedCharacter as the var parameter that receives the member"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_2B7E"
+new = "AddComputerMemberCommand"
+kind = "routine"
+why = "ovl03:2B7E is the handler of ECL opcode 54 (dispatcher ovl03:2F2D, cmp al,36h): ovl17_e7(kind) adds the rolled member (it calls AddPartyMember, ovl17:1446), then its B84 is (operand 2 shr 1) or $80, the computer-run bit (TCharacter.B84, POOLVARS), and its Side is set from the kind"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_2C03"
+new = "FindMemorizedSpellCommand"
+kind = "routine"
+why = "ovl03:2C03 is the handler of ECL opcode 59 (dispatcher ovl03:2F2D, cmp al,3Bh): it compares operand 1 with the bytes from TCharacter.Spells[1] (+$18 on, the memorized spells of POOLVARS, which CombatMenu and ovl14 read) of the first party member and writes the slot found (or $FF) and the member count"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_2CCF"
+new = "EngineActionCommand"
+kind = "routine"
+why = "ECL opcode 45 (dispatcher ovl03:2F2D cmp al,2Dh calls it, ovl03:30DA); the operand word picks an engine action: area redraw (ds4431, ds84E0..), duel (SetupDuel), sound (ds84CC), StepPartyForward, WallIdAt (ds49FA)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_2DD3"
+new = "RunCamp"
+kind = "routine"
+why = "runs MakeCamp (OVL15 camp menu) between script entries ds49E7 and ds49E9 (InitScript, ovl07:01B6); called by ECL opcode 56 with operand 9 (ovl03:2E10) and ovl03:3379"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_2E10"
+new = "ShowSpecialScreenCommand"
+kind = "routine"
+why = "ECL opcode 56 (dispatcher ovl03:2F2D cmp al,38h at ovl03:3135): operand 1 picks a screen: 8 ShowEndingNarrative (ovl18), 9 RunCamp then EndCommand"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_2E7D"
+new = "DrawGlyphRunCommand"
+kind = "routine"
+why = "ECL command 60 (dispatcher ovl03:2F2D, SkippedOpcode 3Ch) draws a 0-terminated run of glyph words at the text cursor with DrawGlyph; packet ovl03_2E7D, proven by make match"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_2F2D"
+new = "DispatchCommand"
+kind = "routine"
+why = "the ECL command dispatcher: case on SkippedOpcode runs one handler per opcode; called by ovl03_fn_3171 (ovl03:3171) for each command; packet ovl03_2F2D, proven by make match"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_3171"
+new = "RunScriptFrom"
+kind = "routine"
+why = "runs the ECL script from an entry address (EclPC := Address), dispatching each opcode with DispatchCommand until EndCommand or StartEclBlock sets ds442E or the party is destroyed; callers RunCamp (ovl03:2DD3, ds49E7/ds49E9), ovl03:31B4, ovl03:32F8, ovl03:3379, ovl03:34AB; packet ovl03_3171, proven by make match"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl03_fn_31B4"
+new = "RunAreaStep"
+kind = "routine"
+why = "one step of the area: EventByteAt into ds6AB1, AreaViewKind set to 1 (copied to ds49F9), entry ds49EB, the map page kind from WallViewMode, ShowAreaView, entries ds49E3 and ds49E5, repeated while StartEclBlock sets ds442F; packet ovl03_31B4, proven by make match"
+date = "2026-10-13"
+
+[[rename]]
 old = "ovl16_fn_056C"
 new = "CreateCharacter"
 kind = "routine"

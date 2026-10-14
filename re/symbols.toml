@@ -121,12 +121,12 @@ id = "ovl03:0001"
 unit = "ovl03"
 addr = "ovl03:0001"
 size = 243
-name = "ovl03_fn_0001"
+name = "EndCommand"
 signature = ""
 c_name = "ovl03_fn_0001"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_0001 (ECL command 0: the dispatcher ovl03:2F2D calls it when SkippedOpcode is 0 (cmp al,0 then call 0001), and it is the only command handler that reads no operands (no DecodeOperands call before Inc(EclPC))); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -134,12 +134,12 @@ id = "ovl03:00F4"
 unit = "ovl03"
 addr = "ovl03:00F4"
 size = 29
-name = "ovl03_fn_00F4"
+name = "GotoCommand"
 signature = ""
 c_name = "ovl03_fn_00F4"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_00F4 (ECL command 1: the dispatcher ovl03:2F2D calls it for SkippedOpcode 1 (cmp al,1 then call 00F4); it decodes one operand and sets EclPC to MakeWord(OperandLow[1], OperandHigh[1]), the jump ScriptGosub and InitScript also read); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -147,12 +147,12 @@ id = "ovl03:0111"
 unit = "ovl03"
 addr = "ovl03:0111"
 size = 21
-name = "ovl03_fn_0111"
+name = "GosubCommand"
 signature = ""
 c_name = "ovl03_fn_0111"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_0111 (ECL command 2: the dispatcher ovl03:2F2D calls it for SkippedOpcode 2 (cmp al,2 then call 0111); it decodes one operand and calls ScriptGosub(1), which pushes the return address (ovl07:1951)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -160,12 +160,12 @@ id = "ovl03:0126"
 unit = "ovl03"
 addr = "ovl03:0126"
 size = 125
-name = "ovl03_fn_0126"
+name = "CompareCommand"
 signature = ""
 c_name = "ovl03_fn_0126"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_0126 (ECL command 3: the dispatcher ovl03:2F2D calls it for SkippedOpcode 3 (cmp al,3 then call 0126); it compares two operands with CompareStrings or CompareWords, which set the flags the conditional commands test (ovl07:1815, 18EB)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -173,597 +173,116 @@ id = "ovl03:01A3"
 unit = "ovl03"
 addr = "ovl03:01A3"
 size = 145
-name = "ovl03_fn_01A3"
+name = "ArithmeticCommand"
 signature = ""
 c_name = "ovl03_fn_01A3"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_01A3 (ECL commands 4 to 7: the dispatcher ovl03:2F2D calls it for SkippedOpcode 4 to 7 (cmp al,4..7 then call 01A3); it combines two operand values (add, sub, div, mul, ovl03:01E9..0222) and writes the answer with WriteVmWord (ovl07:0C77)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl03:0234"
 unit = "ovl03"
 addr = "ovl03:0234"
-size = 17
-name = "ovl03_fn_0234"
+size = 94
+name = "RandomCommand"
 signature = ""
 c_name = "ovl03_fn_0234"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_0234 (ECL command 8: the dispatcher ovl03:2F2D calls it for SkippedOpcode 8 (cmp al,8 then call 0234); it rolls Random over the first operand and writes the roll with WriteVmWord (ovl07:0C77)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl03:0245"
-unit = "ovl03"
-addr = "ovl03:0245"
-size = 48
-name = "ovl03_fn_0245"
-signature = ""
-c_name = "ovl03_fn_0245"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:0275"
-unit = "ovl03"
-addr = "ovl03:0275"
-size = 29
-name = "ovl03_fn_0275"
-signature = ""
-c_name = "ovl03_fn_0275"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl03:0292"
 unit = "ovl03"
 addr = "ovl03:0292"
-size = 19
-name = "ovl03_fn_0292"
+size = 78
+name = "StoreCommand"
 signature = ""
 c_name = "ovl03_fn_0292"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_0292 (ECL command 9: the dispatcher ovl03:2F2D calls it for SkippedOpcode 9 (cmp al,9; call 0292); it stores operand 1 (a value by WriteVmWord, a string by WriteVmString from EclStrings[1]) at the address operand 2 names (match ovl03:0292)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl03:02A5"
-unit = "ovl03"
-addr = "ovl03:02A5"
-size = 48
-name = "ovl03_fn_02A5"
-signature = ""
-c_name = "ovl03_fn_02A5"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:02D5"
-unit = "ovl03"
-addr = "ovl03:02D5"
-size = 5
-name = "ovl03_fn_02D5"
-signature = ""
-c_name = "ovl03_fn_02D5"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:02DA"
-unit = "ovl03"
-addr = "ovl03:02DA"
-size = 5
-name = "ovl03_fn_02DA"
-signature = ""
-c_name = "ovl03_fn_02DA"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:02DF"
-unit = "ovl03"
-addr = "ovl03:02DF"
-size = 1
-name = "ovl03_fn_02DF"
-signature = ""
-c_name = "ovl03_fn_02DF"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl03:02E0"
 unit = "ovl03"
 addr = "ovl03:02E0"
-size = 4
-name = "ovl03_fn_02E0"
+size = 212
+name = "SelectCharacterCommand"
 signature = ""
 c_name = "ovl03_fn_02E0"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_02E0 (ECL command 10: the dispatcher ovl03:2F2D calls it for SkippedOpcode 10 (cmp al,0xa; call 02E0); it selects the party member at the position operand 1 names as SelectedCharacter (ds5D96 walk, match ovl03:02E0)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl03:02E4"
-unit = "ovl03"
-addr = "ovl03:02E4"
-size = 5
-name = "ovl03_fn_02E4"
-signature = ""
-c_name = "ovl03_fn_02E4"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:02E9"
-unit = "ovl03"
-addr = "ovl03:02E9"
-size = 5
-name = "ovl03_fn_02E9"
-signature = ""
-c_name = "ovl03_fn_02E9"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:02EE"
-unit = "ovl03"
-addr = "ovl03:02EE"
-size = 5
-name = "ovl03_fn_02EE"
-signature = ""
-c_name = "ovl03_fn_02EE"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:02F3"
-unit = "ovl03"
-addr = "ovl03:02F3"
-size = 5
-name = "ovl03_fn_02F3"
-signature = ""
-c_name = "ovl03_fn_02F3"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:02F8"
-unit = "ovl03"
-addr = "ovl03:02F8"
-size = 5
-name = "ovl03_fn_02F8"
-signature = ""
-c_name = "ovl03_fn_02F8"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:02FD"
-unit = "ovl03"
-addr = "ovl03:02FD"
-size = 5
-name = "ovl03_fn_02FD"
-signature = ""
-c_name = "ovl03_fn_02FD"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:0302"
-unit = "ovl03"
-addr = "ovl03:0302"
-size = 5
-name = "ovl03_fn_0302"
-signature = ""
-c_name = "ovl03_fn_0302"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:0307"
-unit = "ovl03"
-addr = "ovl03:0307"
-size = 5
-name = "ovl03_fn_0307"
-signature = ""
-c_name = "ovl03_fn_0307"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:030C"
-unit = "ovl03"
-addr = "ovl03:030C"
-size = 5
-name = "ovl03_fn_030C"
-signature = ""
-c_name = "ovl03_fn_030C"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:0311"
-unit = "ovl03"
-addr = "ovl03:0311"
-size = 5
-name = "ovl03_fn_0311"
-signature = ""
-c_name = "ovl03_fn_0311"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:0316"
-unit = "ovl03"
-addr = "ovl03:0316"
-size = 5
-name = "ovl03_fn_0316"
-signature = ""
-c_name = "ovl03_fn_0316"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:031B"
-unit = "ovl03"
-addr = "ovl03:031B"
-size = 5
-name = "ovl03_fn_031B"
-signature = ""
-c_name = "ovl03_fn_031B"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:0320"
-unit = "ovl03"
-addr = "ovl03:0320"
-size = 5
-name = "ovl03_fn_0320"
-signature = ""
-c_name = "ovl03_fn_0320"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:0325"
-unit = "ovl03"
-addr = "ovl03:0325"
-size = 5
-name = "ovl03_fn_0325"
-signature = ""
-c_name = "ovl03_fn_0325"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:032A"
-unit = "ovl03"
-addr = "ovl03:032A"
-size = 5
-name = "ovl03_fn_032A"
-signature = ""
-c_name = "ovl03_fn_032A"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:032F"
-unit = "ovl03"
-addr = "ovl03:032F"
-size = 5
-name = "ovl03_fn_032F"
-signature = ""
-c_name = "ovl03_fn_032F"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:0334"
-unit = "ovl03"
-addr = "ovl03:0334"
-size = 5
-name = "ovl03_fn_0334"
-signature = ""
-c_name = "ovl03_fn_0334"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:0339"
-unit = "ovl03"
-addr = "ovl03:0339"
-size = 5
-name = "ovl03_fn_0339"
-signature = ""
-c_name = "ovl03_fn_0339"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:033E"
-unit = "ovl03"
-addr = "ovl03:033E"
-size = 5
-name = "ovl03_fn_033E"
-signature = ""
-c_name = "ovl03_fn_033E"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:0343"
-unit = "ovl03"
-addr = "ovl03:0343"
-size = 5
-name = "ovl03_fn_0343"
-signature = ""
-c_name = "ovl03_fn_0343"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:0348"
-unit = "ovl03"
-addr = "ovl03:0348"
-size = 45
-name = "ovl03_fn_0348"
-signature = ""
-c_name = "ovl03_fn_0348"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:0375"
-unit = "ovl03"
-addr = "ovl03:0375"
-size = 63
-name = "ovl03_fn_0375"
-signature = ""
-c_name = "ovl03_fn_0375"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl03:03B4"
 unit = "ovl03"
 addr = "ovl03:03B4"
 size = 156
-name = "ovl03_fn_03B4"
+name = "ShowEncounterCommand"
 signature = ""
 c_name = "ovl03_fn_03B4"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_03B4 (ECL command 12 (dispatcher ovl03:2F2D, SkippedOpcode 12): sets the encounter picture's banks and shows it at the distance the party can see ahead, capped by word 704 (ovl03:03B4, matched)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl03:0450"
 unit = "ovl03"
 addr = "ovl03:0450"
-size = 757
-name = "ovl03_fn_0450"
+size = 967
+name = "AddEncounterGroupCommand"
 signature = ""
 c_name = "ovl03_fn_0450"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_0450 (ECL command 11 (dispatcher ovl03:2F2D, SkippedOpcode 11): loads a character of Kind with LoadCharacter (ovl17_e6) and appends Count copies to the party list ds5D96 with combat icons 8 and up (ovl07 InitScript sets ds6F83 to 8; ovl17_e10 uses icons 0..7 for party members), loading the CPIC picture of the group (ovl03:0450, matched)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl03:0745"
-unit = "ovl03"
-addr = "ovl03:0745"
-size = 5
-name = "ovl03_fn_0745"
-signature = ""
-c_name = "ovl03_fn_0745"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:074A"
-unit = "ovl03"
-addr = "ovl03:074A"
-size = 43
-name = "ovl03_fn_074A"
-signature = ""
-c_name = "ovl03_fn_074A"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:0775"
-unit = "ovl03"
-addr = "ovl03:0775"
-size = 48
-name = "ovl03_fn_0775"
-signature = ""
-c_name = "ovl03_fn_0775"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:07A5"
-unit = "ovl03"
-addr = "ovl03:07A5"
-size = 5
-name = "ovl03_fn_07A5"
-signature = ""
-c_name = "ovl03_fn_07A5"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:07AA"
-unit = "ovl03"
-addr = "ovl03:07AA"
-size = 89
-name = "ovl03_fn_07AA"
-signature = ""
-c_name = "ovl03_fn_07AA"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:0803"
-unit = "ovl03"
-addr = "ovl03:0803"
-size = 20
-name = "ovl03_fn_0803"
-signature = ""
-c_name = "ovl03_fn_0803"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl03:0817"
 unit = "ovl03"
 addr = "ovl03:0817"
-size = 46
-name = "ovl03_fn_0817"
+size = 63
+name = "ApproachEncounterCommand"
 signature = ""
 c_name = "ovl03_fn_0817"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_0817 (ECL command 13 (dispatcher ovl03:2F2D, SkippedOpcode 13): while word 705 of ds49D6 (VarStepsAhead, the steps the party sees ahead) is above 0 it takes one off and redraws the encounter picture at the new distance (ovl03:0817, matched); the command is the approach of the encounter picture, as opcode 12 (ShowEncounterCommand) starts it); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl03:0845"
-unit = "ovl03"
-addr = "ovl03:0845"
-size = 5
-name = "ovl03_fn_0845"
-signature = ""
-c_name = "ovl03_fn_0845"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:084A"
-unit = "ovl03"
-addr = "ovl03:084A"
-size = 12
-name = "ovl03_fn_084A"
-signature = ""
-c_name = "ovl03_fn_084A"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl03:0856"
 unit = "ovl03"
 addr = "ovl03:0856"
-size = 143
-name = "ovl03_fn_0856"
+size = 251
+name = "ShowCloseUpCommand"
 signature = ""
 c_name = "ovl03_fn_0856"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_0856 (ECL command 14 (dispatcher ovl03:2F2D, SkippedOpcode 14): operand 1 is a picture bank; PictureShown and ds84E0 mark the close-up, and it draws the PIC picture or the HEAD and BODY pictures as ShowEncounterPicture does (ovl07:054E), or hides it when the bank is $FF (ovl03:0856, matched)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl03:08E5"
-unit = "ovl03"
-addr = "ovl03:08E5"
-size = 108
-name = "ovl03_fn_08E5"
-signature = ""
-c_name = "ovl03_fn_08E5"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl03:0951"
 unit = "ovl03"
 addr = "ovl03:0951"
 size = 67
-name = "ovl03_fn_0951"
+name = "ReadNumberCommand"
 signature = ""
 c_name = "ovl03_fn_0951"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_0951 (ECL command 15 (dispatcher ovl03:2F2D, SkippedOpcode 15): asks the player for a number with ReadNumber (RES06, empty prompt, colour 10) and stores the word at the script address of operand 2 with WriteVmWord (ovl03:0951, matched)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -771,12 +290,12 @@ id = "ovl03:0994"
 unit = "ovl03"
 addr = "ovl03:0994"
 size = 117
-name = "ovl03_fn_0994"
+name = "ReadStringCommand"
 signature = ""
 c_name = "ovl03_fn_0994"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_0994 (ECL command 16 (opcode 10h in the dispatcher ovl03:2F2D, the string twin of ReadNumberCommand): reads a line with ReadInputLine and stores it with WriteVmString at operand 2's address (ovl03:0994, matched)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -784,12 +303,12 @@ id = "ovl03:0A09"
 unit = "ovl03"
 addr = "ovl03:0A09"
 size = 150
-name = "ovl03_fn_0A09"
+name = "ShowTextCommand"
 signature = ""
 c_name = "ovl03_fn_0A09"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_0A09 (ECL commands 17 and 18 (dispatcher ovl03:2F2D, opcodes 11h and 12h): show operand 1's text in the ECL text window with ShowPagedText (RES06); 11h keeps the window, 12h clears it and resets GlyphCol/GlyphRow (ovl03:0A09, matched)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -797,77 +316,38 @@ id = "ovl03:0A9F"
 unit = "ovl03"
 addr = "ovl03:0A9F"
 size = 78
-name = "ovl03_fn_0A9F"
+name = "ReturnCommand"
 signature = ""
 c_name = "ovl03_fn_0A9F"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_0A9F (ECL command 19 (dispatcher ovl03:2F2D, opcode 13h): pops the script's return stack (ReturnStack, 6-byte entries with ReturnPC and Next) into EclPC, the return that ScriptGosub's entries call for (ovl03:0A9F, matched)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl03:0AED"
 unit = "ovl03"
 addr = "ovl03:0AED"
-size = 76
-name = "ovl03_fn_0AED"
+size = 101
+name = "ComparePairsCommand"
 signature = ""
 c_name = "ovl03_fn_0AED"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_0AED (ECL command 20 (dispatcher ovl03:2F2D, opcode 14h): compares operands 1 with 2 and 3 with 4 as words and sets CompareFlags[0] (equal) or [1] (not equal), the flags the conditional opcodes 16h to 1Bh (ovl03:0B52) test (ovl03:0AED, matched)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl03:0B39"
-unit = "ovl03"
-addr = "ovl03:0B39"
-size = 10
-name = "ovl03_fn_0B39"
-signature = ""
-c_name = "ovl03_fn_0B39"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:0B43"
-unit = "ovl03"
-addr = "ovl03:0B43"
-size = 5
-name = "ovl03_fn_0B43"
-signature = ""
-c_name = "ovl03_fn_0B43"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:0B48"
-unit = "ovl03"
-addr = "ovl03:0B48"
-size = 10
-name = "ovl03_fn_0B48"
-signature = ""
-c_name = "ovl03_fn_0B48"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl03:0B52"
 unit = "ovl03"
 addr = "ovl03:0B52"
 size = 127
-name = "ovl03_fn_0B52"
+name = "RunIfCompared"
 signature = ""
 c_name = "ovl03_fn_0B52"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_0B52 (ECL commands 22 to 27 (dispatcher ovl03:2F2D): each runs the next command only when the CompareFlags entry of its comparison is set, else SkipCommand steps over it (ovl03:0B52, matched); the flags are the ones CompareCommand and ComparePairsCommand set); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -875,51 +355,38 @@ id = "ovl03:0BD1"
 unit = "ovl03"
 addr = "ovl03:0BD1"
 size = 163
-name = "ovl03_fn_0BD1"
+name = "StartEclBlock"
 signature = ""
 c_name = "ovl03_fn_0BD1"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_0BD1 (ECL command 32 (dispatcher ovl03:2F2D, opcode 20h): starts ECL block Block of the area's ECL#.DAX file: WallViewMode is saved and set to the block, the file path goes to ovl17_e11, LoadEcl loads the block, InitScript resets the machine (ovl03:0BD1, matched)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl03:0C74"
 unit = "ovl03"
 addr = "ovl03:0C74"
-size = 263
-name = "ovl03_fn_0C74"
+size = 379
+name = "LoadAreaGraphics"
 signature = ""
 c_name = "ovl03_fn_0C74"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_0C74 (ECL commands 33 and 55 (dispatcher ovl03:2F2D): command 33 loads the 3D map (Load3DMap) and the BACPAC picture set, command 55 the wall sets (LoadWallSet) and the ds6AAEWords slots, then redraws the selected character when ds4432 to ds4434 are set (ovl03:0C74, matched; it contains the label ovl03:0D7B)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl03:0D7B"
-unit = "ovl03"
-addr = "ovl03:0D7B"
-size = 116
-name = "ovl03_fn_0D7B"
-signature = ""
-c_name = "ovl03_fn_0D7B"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl03:0DEF"
 unit = "ovl03"
 addr = "ovl03:0DEF"
 size = 111
-name = "ovl03_fn_0DEF"
+name = "BitwiseCommand"
 signature = ""
 c_name = "ovl03_fn_0DEF"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_0DEF (ECL commands 47 (and) and 48 (or) (dispatcher ovl03:2F2D, opcodes 2Fh and 30h): the byte result of operands 1 and 2 is compared with 0 (CompareWords) and written to operand 3 (ovl03:0DEF, matched)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -927,12 +394,12 @@ id = "ovl03:0E5E"
 unit = "ovl03"
 addr = "ovl03:0E5E"
 size = 94
-name = "ovl03_fn_0E5E"
+name = "CopyIndexedWordCommand"
 signature = ""
 c_name = "ovl03_fn_0E5E"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_0E5E (ECL command 42 (dispatcher ovl03:2F2D, opcode 2Ah): the word at the table address (operand 1) plus the byte index (operand 2) is read with ReadVmWord and written to operand 3 (ovl03:0E5E, matched)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -940,51 +407,38 @@ id = "ovl03:0EBC"
 unit = "ovl03"
 addr = "ovl03:0EBC"
 size = 76
-name = "ovl03_fn_0EBC"
+name = "StoreIndexedWordCommand"
 signature = ""
 c_name = "ovl03_fn_0EBC"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_0EBC (ECL command 53: dispatcher ovl03:2F2D calls it for SkippedOpcode 35h (cmp al,35h); it writes operand 1 as a word at the table of operand 2 plus the index of operand 3 (WriteVmWord); CopyIndexedWordCommand (ovl03:0E5E) reads that table); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl03:0F08"
 unit = "ovl03"
 addr = "ovl03:0F08"
-size = 218
-name = "ovl03_fn_0F08"
+size = 457
+name = "ChooseFromListCommand"
 signature = ""
 c_name = "ovl03_fn_0F08"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_0F08 (ECL command 21: dispatcher ovl03:2F2D calls it for SkippedOpcode 15h (cmp al,15h, call at ovl03:3003); it builds a TMenuLine list of the string operands and shows it with AskListMenu (ChooseFromList, OVL25) under the prompt, writing the chosen index to operand 1); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl03:0FE2"
-unit = "ovl03"
-addr = "ovl03:0FE2"
-size = 239
-name = "ovl03_fn_0FE2"
-signature = ""
-c_name = "ovl03_fn_0FE2"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl03:10D1"
 unit = "ovl03"
 addr = "ovl03:10D1"
 size = 396
-name = "ovl03_fn_10D1"
+name = "AskMenuCommand"
 signature = ""
 c_name = "ovl03_fn_10D1"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_10D1 (ECL command 43: dispatcher ovl03:2F2D calls it for SkippedOpcode 2Bh (cmp al,2Bh, call at ovl03:30C4); it joins the EclStrings operands into a ~ hotkey text and asks it with AskMenu (ovl07:1684), writing the choice to operand 1); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -992,51 +446,38 @@ id = "ovl03:125D"
 unit = "ovl03"
 addr = "ovl03:125D"
 size = 105
-name = "ovl03_fn_125D"
+name = "ClearEncounterCommand"
 signature = ""
 c_name = "ovl03_fn_125D"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_125D (ECL command 28: dispatcher ovl03:2F2D calls it for SkippedOpcode 1Ch (cmp al,1Ch, call at ovl03:302D); it zeroes EncounterMemberCount and ds84E7 (the members of ECL command 11), sets the icon slot ds6F83 back to 8 (as InitScript), clears PooledMoney and frees the item list ds6810); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl03:12C6"
 unit = "ovl03"
 addr = "ovl03:12C6"
-size = 65
-name = "ovl03_fn_12C6"
+size = 367
+name = "ComputePartyValueCommand"
 signature = ""
 c_name = "ovl03_fn_12C6"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_12C6 (ECL command 29: dispatcher ovl03:2F2D calls it for SkippedOpcode 1Dh (cmp al,1Dh, call at ovl03:3038); it sums over the party list ds5D96 a byte from hit points, ResistValue, HitAdjust and ClassLevels[0] and [5] and writes it to operand 1; purpose unknown); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl03:1307"
-unit = "ovl03"
-addr = "ovl03:1307"
-size = 208
-name = "ovl03_fn_1307"
-signature = ""
-c_name = "ovl03_fn_1307"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl03:13D7"
 unit = "ovl03"
 addr = "ovl03:13D7"
 size = 94
-name = "ovl03_fn_13D7"
+name = "WriteScanResults"
 signature = ""
 c_name = "ovl03_fn_13D7"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_13D7 (nested in ScanPartyCommand (ovl03:1435): writes the four results of the scan (lowest, highest, average, affect flag) to the script addresses of operands 3 to 6); auto:near_call; nested in ScanPartyCommand (ovl03:1435), proven by the parent's match"
 evidence = ["prologue"]
 
 [[routine]]
@@ -1044,12 +485,12 @@ id = "ovl03:1435"
 unit = "ovl03"
 addr = "ovl03:1435"
 size = 500
-name = "ovl03_fn_1435"
+name = "ScanPartyCommand"
 signature = ""
 c_name = "ovl03_fn_1435"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_1435 (dispatcher ovl03:2F2D calls it for SkippedOpcode $1E (ECL command 30); it scans the party list for an affect (operand 1 = 0) or the lowest, highest and average of ThiefSkills[3] or Movement (operand 1 = $6BA7 or $6C1B)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -1057,51 +498,38 @@ id = "ovl03:1629"
 unit = "ovl03"
 addr = "ovl03:1629"
 size = 160
-name = "ovl03_fn_1629"
+name = "CheckPartyClassCommand"
 signature = ""
 c_name = "ovl03_fn_1629"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_1629 (dispatcher ovl03:2F2D calls it for SkippedOpcode $22 (ECL command 34); it sets operand 1 to 1 when a party member's ClassMask (TCharacter +$2F) is 4 or 10, and writes 0 to operand 2); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl03:16C9"
 unit = "ovl03"
 addr = "ovl03:16C9"
-size = 143
-name = "ovl03_fn_16C9"
+size = 210
+name = "RollRangeCommand"
 signature = ""
 c_name = "ovl03_fn_16C9"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_16C9 (dispatcher ovl03:2F2D calls it for SkippedOpcode $23 (ECL command 35); it rolls two d6 against two ranges made from operands 1 to 4 and writes the outcome 0 to 2 to script address $6DCB (word 715 of ds49D6)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl03:1758"
-unit = "ovl03"
-addr = "ovl03:1758"
-size = 67
-name = "ovl03_fn_1758"
-signature = ""
-c_name = "ovl03_fn_1758"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl03:179B"
 unit = "ovl03"
 addr = "ovl03:179B"
 size = 349
-name = "ovl03_fn_179B"
+name = "RunAreaEventCommand"
 signature = ""
 c_name = "ovl03_fn_179B"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_179B (dispatcher ovl03:2F2D calls it for SkippedOpcode $24 (ECL command 36); ShopMain (ovl06:053E) and RunCombat (ovl08:007A) name ovl03 as the area logic that calls them: it runs the pending encounter or the requested shop or temple); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -1109,64 +537,38 @@ id = "ovl03:18F8"
 unit = "ovl03"
 addr = "ovl03:18F8"
 size = 184
-name = "ovl03_fn_18F8"
+name = "SelectCaseCommand"
 signature = ""
 c_name = "ovl03_fn_18F8"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_18F8 (dispatcher ovl03:2F2D sends SkippedOpcode 37 and 38 here (cmp al,25h / 26h); the code picks the address of operand choice+1 and runs it (38, ScriptGosub) or stores it in ds49ED (37)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl03:19B0"
 unit = "ovl03"
 addr = "ovl03:19B0"
-size = 402
-name = "ovl03_fn_19B0"
+size = 1025
+name = "AddLootCommand"
 signature = ""
 c_name = "ovl03_fn_19B0"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_19B0 (dispatcher ovl03:2F2D sends SkippedOpcode 39 here (cmp al,27h); it fills ds6810, the loot list that ComputeBattleExperience (ovl05:0000) fills, from an item block or from rolls); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl03:1B42"
-unit = "ovl03"
-addr = "ovl03:1B42"
-size = 209
-name = "ovl03_fn_1B42"
-signature = ""
-c_name = "ovl03_fn_1B42"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl03:1C13"
-unit = "ovl03"
-addr = "ovl03:1C13"
-size = 414
-name = "ovl03_fn_1C13"
-signature = ""
-c_name = "ovl03_fn_1C13"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl03:1DB1"
 unit = "ovl03"
 addr = "ovl03:1DB1"
 size = 327
-name = "ovl03_fn_1DB1"
+name = "LoseMoneyAndItemsCommand"
 signature = ""
 c_name = "ovl03_fn_1DB1"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_1DB1 (dispatcher ovl03:2F2D sends SkippedOpcode 40 here (cmp al,28h); it calls ScaleMoney with (100-Percent)/100 and LoseItems with Percent, for the selected character or the party); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -1179,7 +581,7 @@ signature = ""
 c_name = "ovl03_fn_1EF8"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "map (batch 10): the routine runs to 25A8 (retf at 25A7), size 1712; the entry at ovl03:238D splits it. blocked (dec-haiku, batch 9, 5 attempts): ECL command 41, the encounter action menu (dispatcher ovl03:2F2D). Frame 1104 bytes: Choice [bp-1]; ChoiceKinds array[0..4] of Byte [bp-6..-2] (operands 5 to 9); Lines array[0..3] of string [bp-406h..-7] (Lines[1..3] := EclStrings 1..3; Lines[0] the prompt, the first non-empty candidate, searched from StepsAhead+1 and wrapping over 1..3); FleeMovement [bp-407h] (operand 13), MonsterMovement [bp-408h] (operand 14); I [bp-409h]; Fastest [bp-40Ah] and Slowest [bp-40Bh] (MovementRange); MenuAgain [bp-40Ch]; ClearWindow [bp-40Dh]; Animate [bp-40Eh]; Options string[40] [bp-437h]; Title string[1] [bp-439h]; ChoiceKind [bp-43Ah]; Line [bp-43Bh]; ResultAddr word [bp-43Dh] = MakeWord(OperandLow[4], OperandHigh[4]) (operand 4 is the outcome address and is never read by value). The whole menu is repeat ... until MenuAgain = 0 from ovl03:2047 to 257F; the ShowEncounterPicture before it is outside the loop. Attempts (each a make match diff, the draft fixed one at a time): (1) the draft as written: the literal pool order of the two menu strings, fixed by writing if (steps = 0) or (wall = 0) then PARLAY else ADVANCE; (2) ResultAddr from operand 4 (OperandLow[4]), not 5; (3) the loop exit tests Length <> 0 (jne), not > 0 (ja); (4) kind 0 as if Choice <> 2 then the one result else the flee check (the then-block is laid out after the test); (5) stopped at ovl03:22CB: the original tests StepsAhead with je to the 'Both sides wait.' ShowPagedText, so the layout is if StepsAhead <> 0 then dec and ShowEncounterPicture else the text (the same polarity as (4); kind 1 choice 3, and likely kind 3 choice 1 and 3 and kind 4 choice 1 3 4). Probes: none yet. Untested: the case layouts (Choice of 0..4 inside kinds 1 to 4 keep AL across range tests; labels 1, 3 are lists, 1..4 a range), the case of ChoiceKind, and the Real-free parts after 22CB. Auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -1192,7 +594,7 @@ signature = ""
 c_name = "ovl03_fn_238D"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "blocked (dec-haiku, batch 10): not a routine of its own. It is the middle of ovl03_fn_1EF8 (ECL command 41, prologue at 1EF8, sub sp 0x450, retf at 25A7): the code has no prologue, uses 1EF8's frame (bp-0x450, bp-0x43d, bp-0x40c) and jumps back to 2047 inside 1EF8's loop, so no Pascal procedure can start here. The map split 1EF8 at 238D (size 1173, where the routine is 1712 bytes, 1EF8 to 25A8). Probes: none needed; the bytes are a fragment. It goes away when 1EF8 matches: make match WRITE=1 removes this entry and corrects 1EF8's size; the stub line in src/OVL03.PAS must then be deleted by hand. auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -1200,12 +602,12 @@ id = "ovl03:25CB"
 unit = "ovl03"
 addr = "ovl03:25CB"
 size = 159
-name = "ovl03_fn_25CB"
+name = "ChooseAttitudeCommand"
 signature = ""
 c_name = "ovl03_fn_25CB"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_25CB (ovl03:2F2D dispatches SkippedOpcode 2Ch (44) to it; its five-word menu HAUGHTY, SLY, NICE, MEEK, ABUSIVE (ovl03:25A8 literal) asks for an attitude; the value of the chosen attitude (operands 1 to 5) goes to operand 6 (match ovl03:25CB)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -1213,12 +615,12 @@ id = "ovl03:266A"
 unit = "ovl03"
 addr = "ovl03:266A"
 size = 181
-name = "ovl03_fn_266A"
+name = "ComparePartyItemCommand"
 signature = ""
 c_name = "ovl03_fn_266A"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_266A (dispatcher ovl03:2F2D sends SkippedOpcode 32h (50) here (cmp al,32h); it searches the party's carried items (TCharacter.Items +$C8, ItemType +$2E) for the type operand 1 names and sets CompareFlags for the conditional commands (match ovl03:266A)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -1226,12 +628,12 @@ id = "ovl03:271F"
 unit = "ovl03"
 addr = "ovl03:271F"
 size = 86
-name = "ovl03_fn_271F"
+name = "PauseCommand"
 signature = ""
 c_name = "ovl03_fn_271F"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_271F (dispatcher ovl03:2F2D sends SkippedOpcode 3Ah (58) here (cmp al,3Ah); it only counts ds49ED up and calls DelayByGameSpeed (RES06, GameSpeed * 225 ms), so it is a pause in the script (match ovl03:271F)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -1239,12 +641,12 @@ id = "ovl03:2775"
 unit = "ovl03"
 addr = "ovl03:2775"
 size = 813
-name = "ovl03_fn_2775"
+name = "DamagePartyCommand"
 signature = ""
 c_name = "ovl03_fn_2775"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_2775 (dispatcher ovl03:2F2D sends SkippedOpcode 2Eh (46) here (cmp al,2Eh); it damages the party or one member with DamageWithMessage (ovl07:20CC) after saving throws (ovl24:0D63) or RollBeatsResistance (ovl24:0C4F), and shows 'The END!' when no member has Flag10D (match ovl03:2775)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -1252,12 +654,12 @@ id = "ovl03:2AA2"
 unit = "ovl03"
 addr = "ovl03:2AA2"
 size = 31
-name = "ovl03_fn_2AA2"
+name = "RedrawAreaViewCommand"
 signature = ""
 c_name = "ovl03_fn_2AA2"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_2AA2 (dispatcher ovl03:2F2D sends SkippedOpcode 31h (49) here (cmp al,31h); it calls ShowAreaView (ovl26:016D) when ds84E3 (3D encounter sprite loaded) is set, then clears ds84E3 and ds84E0 (match ovl03:2AA2)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -1265,12 +667,12 @@ id = "ovl03:2AC1"
 unit = "ovl03"
 addr = "ovl03:2AC1"
 size = 42
-name = "ovl03_fn_2AC1"
+name = "PassTimeCommand"
 signature = ""
 c_name = "ovl03_fn_2AC1"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_2AC1 (ovl03:2AC1 is the handler of ECL opcode 52 (dispatcher ovl03:2F2D, cmp al,34h): its one operand is passed to ovl20_e1(Amount, 1), which advances the game clock's digit 1 by Amount (ovl20:03D5); the camp rest (RunRestPeriod, ovl20) makes the same call with Index 1 and Amount 5); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -1278,12 +680,12 @@ id = "ovl03:2AEB"
 unit = "ovl03"
 addr = "ovl03:2AEB"
 size = 41
-name = "ovl03_fn_2AEB"
+name = "NewLineCommand"
 signature = ""
 c_name = "ovl03_fn_2AEB"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_2AEB (ovl03:2AEB is the handler of ECL opcode 51 (dispatcher ovl03:2F2D, cmp al,33h): it moves the text cursor GlyphCol/GlyphRow to column 1 of the next row (the POOLVARS comment says GlyphRow is Inc per newline) and clears ds84DF when set); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -1291,12 +693,12 @@ id = "ovl03:2B14"
 unit = "ovl03"
 addr = "ovl03:2B14"
 size = 31
-name = "ovl03_fn_2B14"
+name = "ClearPictureWindowCommand"
 signature = ""
 c_name = "ovl03_fn_2B14"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_2B14 (ovl03:2B14 is the handler of ECL opcode 61 (dispatcher ovl03:2F2D, cmp al,3Dh): it clears the picture window box (1,1)-(15,15) with ClearRect and sets ds84DE; EndCommand (ovl03:0001) draws the same box and clears ds84DE); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -1304,12 +706,12 @@ id = "ovl03:2B33"
 unit = "ovl03"
 addr = "ovl03:2B33"
 size = 75
-name = "ovl03_fn_2B33"
+name = "ChoosePartyMemberCommand"
 signature = ""
 c_name = "ovl03_fn_2B33"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_2B33 (ovl03:2B33 is the handler of ECL opcode 57 (dispatcher ovl03:2F2D, cmp al,39h): it clears the ECL text window (ClearRect with EclTextLeft..EclTextBottom), copies operand 1's string (EclStrings[1]) to a local and calls res12_fn_2C48 with it, mode 0 and SelectedCharacter as the var parameter that receives the member); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -1317,12 +719,12 @@ id = "ovl03:2B7E"
 unit = "ovl03"
 addr = "ovl03:2B7E"
 size = 133
-name = "ovl03_fn_2B7E"
+name = "AddComputerMemberCommand"
 signature = ""
 c_name = "ovl03_fn_2B7E"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_2B7E (ovl03:2B7E is the handler of ECL opcode 54 (dispatcher ovl03:2F2D, cmp al,36h): ovl17_e7(kind) adds the rolled member (it calls AddPartyMember, ovl17:1446), then its B84 is (operand 2 shr 1) or $80, the computer-run bit (TCharacter.B84, POOLVARS), and its Side is set from the kind); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -1330,77 +732,38 @@ id = "ovl03:2C03"
 unit = "ovl03"
 addr = "ovl03:2C03"
 size = 204
-name = "ovl03_fn_2C03"
+name = "FindMemorizedSpellCommand"
 signature = ""
 c_name = "ovl03_fn_2C03"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_2C03 (ovl03:2C03 is the handler of ECL opcode 59 (dispatcher ovl03:2F2D, cmp al,3Bh): it compares operand 1 with the bytes from TCharacter.Spells[1] (+$18 on, the memorized spells of POOLVARS, which CombatMenu and ovl14 read) of the first party member and writes the slot found (or $FF) and the member count); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl03:2CCF"
 unit = "ovl03"
 addr = "ovl03:2CCF"
-size = 106
-name = "ovl03_fn_2CCF"
+size = 260
+name = "EngineActionCommand"
 signature = ""
 c_name = "ovl03_fn_2CCF"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_2CCF (ECL opcode 45 (dispatcher ovl03:2F2D cmp al,2Dh calls it, ovl03:30DA); the operand word picks an engine action: area redraw (ds4431, ds84E0..), duel (SetupDuel), sound (ds84CC), StepPartyForward, WallIdAt (ds49FA)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl03:2D39"
-unit = "ovl03"
-addr = "ovl03:2D39"
-size = 129
-name = "ovl03_fn_2D39"
-signature = ""
-c_name = "ovl03_fn_2D39"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:2DBA"
-unit = "ovl03"
-addr = "ovl03:2DBA"
-size = 17
-name = "ovl03_fn_2DBA"
-signature = ""
-c_name = "ovl03_fn_2DBA"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl03:2DCB"
-unit = "ovl03"
-addr = "ovl03:2DCB"
-size = 8
-name = "ovl03_fn_2DCB"
-signature = ""
-c_name = "ovl03_fn_2DCB"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl03:2DD3"
 unit = "ovl03"
 addr = "ovl03:2DD3"
 size = 61
-name = "ovl03_fn_2DD3"
+name = "RunCamp"
 signature = ""
 c_name = "ovl03_fn_2DD3"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_2DD3 (runs MakeCamp (OVL15 camp menu) between script entries ds49E7 and ds49E9 (InitScript, ovl07:01B6); called by ECL opcode 56 with operand 9 (ovl03:2E10) and ovl03:3379); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -1408,12 +771,12 @@ id = "ovl03:2E10"
 unit = "ovl03"
 addr = "ovl03:2E10"
 size = 109
-name = "ovl03_fn_2E10"
+name = "ShowSpecialScreenCommand"
 signature = ""
 c_name = "ovl03_fn_2E10"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_2E10 (ECL opcode 56 (dispatcher ovl03:2F2D cmp al,38h at ovl03:3135): operand 1 picks a screen: 8 ShowEndingNarrative (ovl18), 9 RunCamp then EndCommand); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -1421,12 +784,12 @@ id = "ovl03:2E7D"
 unit = "ovl03"
 addr = "ovl03:2E7D"
 size = 176
-name = "ovl03_fn_2E7D"
+name = "DrawGlyphRunCommand"
 signature = ""
 c_name = "ovl03_fn_2E7D"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_2E7D (ECL command 60 (dispatcher ovl03:2F2D, SkippedOpcode 3Ch) draws a 0-terminated run of glyph words at the text cursor with DrawGlyph; packet ovl03_2E7D, proven by make match); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -1434,12 +797,12 @@ id = "ovl03:2F2D"
 unit = "ovl03"
 addr = "ovl03:2F2D"
 size = 580
-name = "ovl03_fn_2F2D"
+name = "DispatchCommand"
 signature = ""
 c_name = "ovl03_fn_2F2D"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_2F2D (the ECL command dispatcher: case on SkippedOpcode runs one handler per opcode; called by ovl03_fn_3171 (ovl03:3171) for each command; packet ovl03_2F2D, proven by make match); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -1447,12 +810,12 @@ id = "ovl03:3171"
 unit = "ovl03"
 addr = "ovl03:3171"
 size = 67
-name = "ovl03_fn_3171"
-signature = ""
+name = "RunScriptFrom"
+signature = "procedure RunScriptFrom(Address: Word)"
 c_name = "ovl03_fn_3171"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_3171 (runs the ECL script from an entry address (EclPC := Address), dispatching each opcode with DispatchCommand until EndCommand or StartEclBlock sets ds442E or the party is destroyed; callers RunCamp (ovl03:2DD3, ds49E7/ds49E9), ovl03:31B4, ovl03:32F8, ovl03:3379, ovl03:34AB; packet ovl03_3171, proven by make match); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -1460,12 +823,12 @@ id = "ovl03:31B4"
 unit = "ovl03"
 addr = "ovl03:31B4"
 size = 324
-name = "ovl03_fn_31B4"
+name = "RunAreaStep"
 signature = ""
 c_name = "ovl03_fn_31B4"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_31B4 (one step of the area: EventByteAt into ds6AB1, AreaViewKind set to 1 (copied to ds49F9), entry ds49EB, the map page kind from WallViewMode, ShowAreaView, entries ds49E3 and ds49E5, repeated while StartEclBlock sets ds442F; packet ovl03_31B4, proven by make match); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -1478,7 +841,7 @@ signature = ""
 c_name = "ovl03_e1"
 level = "none"
 justification = ""
-notes = "auto:entry_1"
+notes = "auto:entry_1; blocked (dec-haiku, batch 13): not matched. MAP: ovl03:3379 and ovl03:34AB are map entries inside this routine, which runs 32F8..3507 (one retf at 3506). The matcher takes the next entry as the end: the registry gap is 129 bytes (up to 3379). With both entries removed the next entry is ovl03:3508 (ovl03_init), so the original is 528 bytes, and our compile is 566 bytes ('the original segment is too short'): the code itself is 38 bytes longer, so a size edit alone does not match. Our listing (build/match/ovl03/A/match.exe, OVL03_E1 to OVL03_FN_3379) agrees with the original instruction by instruction through the case on WallViewMode, the sound compare and the first keys; the extra bytes are in the loop's join jumps and the exit path, not located yet. Probe tools/re/tp_idioms/ovl03/WHILETRU.PAS: while True compiles like repeat until False, and an if/else that ends a loop body costs a join jmp to the head. Draft tried: case WallViewMode of 25, 26, 27 (AreaViewKind 2 to 4, ds49F3 3 when GameVars word 230 is 0; page 3 calls AnimateAreaDoors(1) when GameVars 435 is $FE and 418 is 0); if ds49F8 = 0 then LoadEcl(WallViewMode); InitScript; RunScriptFrom(ds49EB); if ds49F3 <> 3 then (res12_fn_27D9 when ds4432 = 1, then ShowAreaView); GameVars 242 := WallViewMode; Key := HandleWildernessKeys; ds4436 := SelectedCharacter; loop while True: if ((GameVars 714 > 1) or UpCase(Key) = 'E') and PartyDestroyed = 0 then (RunCamp for E, else save 714 bit 0 in ds84DD, set 714 to 1, ShowAreaView, RunScriptFrom(ds49E5), RunAreaStep when ds442F, restore 714; then keys when not destroyed) else (RunScriptFrom(ds49E3) when not destroyed; RunAreaStep when ds442F, else the menu block: GameVars 240 and 241 := party cell, DoWildernessMenu, ShowAreaView, PlaySound(ds2628) when the cell changed, ds84E0 := 0, ds84E1 := 1, RunScriptFrom(ds49E5), RunAreaStep when ds442F; then PartyDestroyed clears and exits, else keys). The draft needs OVL14 in the implementation uses (HandleWildernessKeys, DoWildernessMenu); OVL14 does not use OVL03."
 evidence = ["prologue"]
 
 [[routine]]
@@ -1491,7 +854,7 @@ signature = ""
 c_name = "ovl03_fn_3379"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; not a routine (dec-haiku, batch 13): it lies inside ovl03_e1 (ovl03:32F8..3507), in the middle of the lcall res12_fn_27D9 at ovl03:3378, so its far_call evidence is a byte-level scan hit (tools/re/enumerate_routines.py), not a call. Remove it when ovl03_e1 is written. blocked (dec-haiku, batch 14): not a routine and no Pascal can match it as one: make match FN=ovl03_fn_3379 reports only the stub, the listing in build/packets/ovl03_3379.md starts mid-instruction (fldenv [bx] is operand bytes), and it has no push bp prologue. The RunCamp comment that named ovl03:3379 as a caller (ovl03:2DD3) was corrected to ovl03_e1 (ovl03:33E7). Map entry removed by make match WRITE=1 once ovl03_e1 matches; its stub stays until then"
 evidence = ["far_call"]
 
 [[routine]]
@@ -1504,7 +867,7 @@ signature = ""
 c_name = "ovl03_fn_34AB"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked (dec-haiku, batch 14): not a routine and no Pascal can match it as one. make match FN=ovl03_fn_34AB reports only the stub. The bytes at 34AB (3B D3, cmp dx,bx) are an instruction in the body of ovl03_e1 (ovl03:32F8..3507), after the cdq at 34AA, with no push bp prologue. No jump, near call or lcall in the listing of ovl03_e1 (build/packets/ovl03_3379.md, 3379..3507) targets 34AB; the far_call start is a byte-level scan hit (tools/re/enumerate_routines.py counts any 9A byte whose operand lands there). Map entry removed by make match WRITE=1 once ovl03_e1 matches; its stub stays until then"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6351,7 +5714,7 @@ unit = "ovl17"
 addr = "ovl17:1262"
 size = 484
 name = "AddMonsterToParty"
-signature = ""
+signature = "procedure ovl17_e7(Kind: Byte)"
 c_name = "ovl17_e7"
 level = "L2"
 review = "passed 2026-10-13 by rev-sonnet, 699d71c"
@@ -6407,7 +5770,7 @@ unit = "ovl17"
 addr = "ovl17:22D5"
 size = 267
 name = "SaveAndExit"
-signature = ""
+signature = "procedure ovl17_e11(Path: string)"
 c_name = "ovl17_e11"
 level = "L2"
 review = "passed 2026-10-13 by rev-sonnet, 699d71c"
@@ -7306,6 +6669,7 @@ name = "PickSpellFromMenu"
 signature = "function PickSpellFromMenu(Mode: Byte; var Choice: Word): Byte"
 c_name = "ovl22_e1"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e1 (ovl22:008A shows SpellMenuList through ChooseFromList (ovl25:0D9A) with the button word Cast/Memorize/Scribe/Learn per Mode and returns the chosen line's spell number from SpellMenuSpells, or 0 when the player left; called only by ChooseSpellFromList (ovl19:299C)); escalation: matched. The earlier block (Word Choice cannot reach ChooseFromList's var Integer) is solved by the variable typecast Integer(Choice) at the call (probe tools/re/tp_idioms/ovl22/VARCAST.PAS), so ovl19 and ovl15 keep Word. The Key set of the repeat loop is [#0, #13, C, E, L, M, S] (set pool at ovl22:004A), the leave test [#0, E] (ovl22:006A); the empty string for DrawWindow shares a zero byte of the set [1..4] at ovl22:001B."
 evidence = ["prologue"]
@@ -7319,6 +6683,7 @@ name = "AddSpellMenuLine"
 signature = "procedure AddSpellMenuLine(Spell: Byte)"
 c_name = "ovl22_fn_028D"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_fn_028D (ovl22:028D appends one line for a spell to the spell menu list ds4766, inserting a level heading when the level changes; called by ovl22_e2 and ovl22_fn_044E); auto:near_call"
 evidence = ["prologue"]
@@ -7332,6 +6697,7 @@ name = "AddItemSpells"
 signature = "procedure AddItemSpells(Pending: Byte)"
 c_name = "ovl22_fn_044E"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_fn_044E (ovl22:044E adds the spell affects of the current item (CurrentItem) to the spell menu list through AddSpellMenuLine, recording the item in SpellMenuItems; Pending selects the pending (bit 7) or the plain affects; called by ovl22_e2 and ovl22_fn_051C); auto:near_call"
 evidence = ["prologue"]
@@ -7345,6 +6711,7 @@ name = "AddScrollSpells"
 signature = "procedure AddScrollSpells(Pending: Byte)"
 c_name = "ovl22_fn_051C"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_fn_051C (ovl22:051C walks SelectedCharacter^.Items, and for every scroll (ovl22_e6) adds its spell affects to the spell menu list through AddItemSpells; Pending picks the plain or the pending affects; called by ovl22_e2); auto:near_call"
 evidence = ["prologue"]
@@ -7358,6 +6725,7 @@ name = "BuildSpellList"
 signature = "function BuildSpellList(Kind: Byte): Byte"
 c_name = "ovl22_e2"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e2 (ovl22:059C builds the spell menu list SpellMenuList for ChooseSpellFromList's list kind (0 memorized, 5 pending memorized, 1 spell book, 2 first scroll, 3 scrolls, 6 pending scrolls, 4 learnable) and returns whether it is not empty; called by ovl19:299C); auto:entry_2"
 evidence = ["prologue"]
@@ -7371,6 +6739,7 @@ name = "SpellAreaSize"
 signature = "function SpellAreaSize(Spell: Byte): Byte"
 c_name = "ovl22_e3"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e3 (ovl22:0729 returns the area size of a spell: base byte (row +2) plus the per-level byte (row +3) times the caster level from res12_fn_26C2, or times 6 while ds6DBF is set; res12_fn_2433 passes it to ScanTargets as the pattern budget (ovl09:02EB SpellAccepted)); auto:entry_3"
 evidence = ["prologue"]
@@ -7384,6 +6753,7 @@ name = "SpellAffectDuration"
 signature = ""
 c_name = "ovl22_fn_07D6"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_fn_07D6 (ovl22:07D6 returns the affect duration; 08C3 passes it as ApplyAffect Duration (ovl24:1656)); auto:near_call"
 evidence = ["prologue"]
@@ -7397,6 +6767,7 @@ name = "ApplySpellToTargets"
 signature = ""
 c_name = "ovl22_fn_08C3"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_fn_08C3 (ovl22:08C3 applies a spell to every chosen target in ds6C91[1..ds6C94]: saving throw, damage and, when the spell has an AffectId, ApplyAffect (ovl24:1656)); auto:near_call"
 evidence = ["prologue"]
@@ -7410,6 +6781,7 @@ name = "ChooseSpellTargets"
 signature = ""
 c_name = "ovl22_e4"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e4 (ovl22:0A91 picks the spell targets (ds6C91): self, one through res12_fn_2C48, or the whole party, and reports through Done; the DS:6B84 combat callback); auto:entry_4"
 evidence = ["prologue"]
@@ -7423,6 +6795,7 @@ name = "CastChosenSpell"
 signature = "procedure CastChosenSpell(A, B, C: Byte; var Done: Byte)"
 c_name = "ovl22_e5"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e5 (the CastSpell entry: picks the spell's targets through the DS:6B84 picker, animates the cast and runs the spell's handler SpellHandlers[Spell] (ovl22:0C20)); auto:entry_5"
 evidence = ["prologue"]
@@ -7436,6 +6809,7 @@ name = "ApplySpellToSide"
 signature = ""
 c_name = "ovl22_fn_0F4F"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_fn_0F4F (applies the current spell ds681B to the targets on one side, shared by the Bless and Curse cast handlers (ovl22:0F4F)); auto:near_call"
 evidence = ["prologue"]
@@ -7449,6 +6823,7 @@ name = "CastBless"
 signature = ""
 c_name = "ovl22_e11"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e11 (cast handler of spell 1 Bless: applies the spell to the caster side with 'is Blessed' (SpellHandlers[1], ovl22:100F)); auto:entry_11"
 evidence = ["prologue"]
@@ -7462,6 +6837,7 @@ name = "CastCurse"
 signature = ""
 c_name = "ovl22_e12"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e12 (cast handler of spell 2 Curse: applies the spell to the opposite side with 'is Cursed' (SpellHandlers[2], ovl22:1040)); auto:entry_12"
 evidence = ["prologue"]
@@ -7475,6 +6851,7 @@ name = "CastCureLightWounds"
 signature = ""
 c_name = "ovl22_e13"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e13 (cast handler of spell 3 Cure Light Wounds: heals the first target 1d8 (SpellHandlers[3], ovl22:106B)); auto:entry_13"
 evidence = ["prologue"]
@@ -7488,6 +6865,7 @@ name = "CastCauseLightWounds"
 signature = ""
 c_name = "ovl22_e14"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e14 (cast handler of spell 4 Cause Light Wounds: deals 1d8 damage to the targets (SpellHandlers[4], ovl22:10A7)); auto:entry_14"
 evidence = ["prologue"]
@@ -7501,6 +6879,7 @@ name = "CastDetectionSpell"
 signature = ""
 c_name = "ovl22_e15"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e15 (cast handler of the detection spells (SpellHandlers[5],[11],[18],[22],[29]; ovl22_e10 fills the table, whitepaper 5.22.2): applies the current spell ds681B to the chosen targets with 'is affected' (ovl22:10E9)); auto:entry_15"
 evidence = ["prologue"]
@@ -7514,6 +6893,7 @@ name = "CastProtection"
 signature = ""
 c_name = "ovl22_e16"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e16 (cast handler of the protection spells (SpellHandlers[6],[7],[16],[17]; ovl22_e10 fills the table, whitepaper 5.22.2): applies the current spell ds681B to the chosen targets with 'is protected' (ovl22:1123)); auto:entry_16"
 evidence = ["prologue"]
@@ -7527,6 +6907,7 @@ name = "CastResistCold"
 signature = ""
 c_name = "ovl22_e17"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e17 (cast handler of spell 8 Resist Cold (SpellHandlers[8]; ovl22_e10 fills the table, whitepaper 5.22.2): applies the current spell ds681B to the chosen targets with 'is cold-resistant' (ovl22:1162)); auto:entry_17"
 evidence = ["prologue"]
@@ -7540,6 +6921,7 @@ name = "CastBurningHands"
 signature = ""
 c_name = "ovl22_e18"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e18 (cast handler of spell 9 Burning Hands (SpellHandlers[9]; ovl22_e10 fills the table, whitepaper 5.22.2): deals the caster level in fire damage to the chosen targets (ovl22:1190)); auto:entry_18"
 evidence = ["prologue"]
@@ -7553,6 +6935,7 @@ name = "CastCharmPerson"
 signature = ""
 c_name = "ovl22_e19"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e19 (cast handler of spell 10 Charm Person (SpellHandlers[10]; ovl22_e10 fills the table, whitepaper 5.22.2): refuses a non-person target (CreatureType or CombatSize above 1), else applies the charm affect $0B with the caster's side in bit 7 of its data (ovl22:11DD)); auto:entry_19"
 evidence = ["prologue"]
@@ -7566,6 +6949,7 @@ name = "CastEnlarge"
 signature = ""
 c_name = "ovl22_e20"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e20 (cast handler of spell 12 Enlarge (SpellHandlers[12]; ovl22_e10 fills the table, whitepaper 5.22.2): gives the target strength 18 by caster level through RaiseStrength and adds the strength affect /bin/zshC (ovl22:12A5)); auto:entry_20"
 evidence = ["prologue"]
@@ -7579,6 +6963,7 @@ name = "CastReduce"
 signature = ""
 c_name = "ovl22_e21"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e21 (cast handler of spell 13 Reduce (SpellHandlers[13]; ovl22_e10 fills the table at DS:6B84, whitepaper 5.22.2): a target that fails its saving throw (kind 4) loses the strength affect $0C Enlarge adds and is told 'has been reduced' (ovl22:136E)); auto:entry_21"
 evidence = ["prologue"]
@@ -7592,6 +6977,7 @@ name = "CastFriends"
 signature = ""
 c_name = "ovl22_e22"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e22 (cast handler of spell 14 Friends (SpellHandlers[14]; ovl22_e10 fills the table at DS:6B84, whitepaper 5.22.2): raises the target ds6C95 Charisma by 2d4 capped at 25 and passes the old Charisma as the affect data with the restore flag, message 'is friendly' (ovl22:13D8)); auto:entry_22"
 evidence = ["prologue"]
@@ -7605,6 +6991,7 @@ name = "CastMagicMissile"
 signature = ""
 c_name = "ovl22_e23"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e23 (cast handler of spell 15 Magic Missile (SpellHandlers[15]; ovl22_e10 fills the table at DS:6B84, whitepaper 5.22.2): deals one d4 plus one point per two caster levels through RollDiceCounted (count in ds681C), no message (ovl22:1439)); auto:entry_23"
 evidence = ["prologue"]
@@ -7618,6 +7005,7 @@ name = "CastShield"
 signature = ""
 c_name = "ovl22_e24"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e24 (cast handler of spell 19 Shield (SpellHandlers[19]; ovl22_e10 fills the table at DS:6B84, whitepaper 5.22.2): applies the current spell ds681B (its own affect does the work) to the chosen targets with 'is shielded' (ovl22:1499)); auto:entry_24"
 evidence = ["prologue"]
@@ -7631,6 +7019,7 @@ name = "CastShockingGrasp"
 signature = ""
 c_name = "ovl22_e25"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e25 (cast handler of spell 20 Shocking Grasp (SpellHandlers[20]; ovl22_e10 fills the table at DS:6B84, whitepaper 5.22.2): deals the caster level plus 1d8 electrical damage to the chosen targets, no message (ovl22:14C7)); auto:entry_25"
 evidence = ["prologue"]
@@ -7644,6 +7033,7 @@ name = "CastSleep"
 signature = ""
 c_name = "ovl22_e26"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e26 (cast handler of spell 21 Sleep (SpellHandlers[21]; ovl22_e10 fills the table at DS:6B84, whitepaper 5.22.2): rolls the 4d4 pool ds4844 and charges each target a cost ds4845 by HighestLevel and Race, dropping targets that are dead, already affected $35, or too costly, then applies the spell to the survivors with 'falls asleep' (ovl22:151B)); auto:entry_26"
 evidence = ["prologue"]
@@ -7657,6 +7047,7 @@ name = "CastHoldPerson"
 signature = ""
 c_name = "ovl22_e27"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e27 (ovl22:1658 applies spell 23 to the chosen targets with the message 'is held'; ovl22_e10 maps DS:6B84+23*4 to its stub 0096:00A7 and SpellNames[23] (DS:2C98) is 'Hold Person'); auto:entry_27"
 evidence = ["prologue"]
@@ -7670,6 +7061,7 @@ name = "CastResistFire"
 signature = ""
 c_name = "ovl22_e28"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e28 (ovl22:17E9 applies spell 24 to the chosen targets with the message 'is fire resistant'; ovl22_e10 maps DS:6B84+24*4 to its stub 0096:00AC and SpellNames[24] (DS:2CC1) is 'Resist Fire'); auto:entry_28"
 evidence = ["prologue"]
@@ -7683,6 +7075,7 @@ name = "CastSilence"
 signature = ""
 c_name = "ovl22_e29"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e29 (ovl22:1822 applies spell 25 to the chosen targets with the message 'is silenced'; ovl22_e10 maps DS:6B84+25*4 to its stub 0096:00B1 and SpellNames[25] (DS:2CEA) is 'Silence, 15' Radius'); auto:entry_29"
 evidence = ["prologue"]
@@ -7696,6 +7089,7 @@ name = "CastSlowPoison"
 signature = ""
 c_name = "ovl22_e30"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e30 (ovl22:185B applies spell 26 with the message 'is affected', needs the target's Poisoned affect, revives it to 1 hit point and adds the poison-slowing affect; ovl22_e10 maps DS:6B84+26*4 to its stub 0096:00B6 and SpellNames[26] (DS:2D13) is 'Slow Poison'); auto:entry_30"
 evidence = ["prologue"]
@@ -7709,6 +7103,7 @@ name = "CastSnakeCharm"
 signature = ""
 c_name = "ovl22_e31"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e31 (ovl22:190F picks the giant snakes (CreatureType $E) of the party list whose hit points fit the caster's, then applies spell 27 with the message 'is charmed'; ovl22_e10 maps DS:6B84+27*4 to its stub 0096:00BB and SpellNames[27] (DS:2D3C) is 'Snake Charm'); auto:entry_31"
 evidence = ["prologue"]
@@ -7722,6 +7117,7 @@ name = "CastSpiritualHammer"
 signature = ""
 c_name = "ovl22_e32"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e32 (ovl22:19C3 applies spell 28 with Flag 1 then runs affect $17's handler on the first target; ovl22_e10 maps DS:6B84+28*4 to its stub 0096:00C0 and SpellNames[28] (DS:2D65) is 'Spiritual Hammer'); auto:entry_32"
 evidence = ["prologue"]
@@ -7735,6 +7131,7 @@ name = "CastInvisibility"
 signature = ""
 c_name = "ovl22_e33"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e33 (ovl22:1A16 applies spell 30 to the chosen targets with the message 'is invisible'; ovl22_e10 maps DS:6B84+30*4 to its stub 0096:00C5 and SpellNames[30] (DS:2DB7) is 'Invisibility'); auto:entry_33"
 evidence = ["prologue"]
@@ -7748,6 +7145,7 @@ name = "CastKnock"
 signature = ""
 c_name = "ovl22_e34"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e34 (ovl22:1A4F applies spell 31 to the chosen targets with the message 'Knock-Knock'; ovl22_e10 maps DS:6B84+31*4 to its stub 0096:00CA and SpellNames[31] (DS:2DE0) is 'Knock'); auto:entry_34"
 evidence = ["prologue"]
@@ -7761,6 +7159,7 @@ name = "CastMirrorImage"
 signature = ""
 c_name = "ovl22_e35"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e35 (ovl22:1A8A applies spell 32 with a 1d4 caster level and the message 'is duplicated'; ovl22_e10 maps DS:6B84+32*4 to its stub 0096:00CF and SpellNames[32] (DS:2E09) is 'Mirror Image'); auto:entry_35"
 evidence = ["prologue"]
@@ -7774,6 +7173,7 @@ name = "CastRayOfEnfeeblement"
 signature = ""
 c_name = "ovl22_e36"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e36 (ovl22:1ACC applies spell 33 to the chosen targets with the message 'is weakened'; ovl22_e10 maps DS:6B84+33*4 to its stub 0096:00D4 and SpellNames[33] (DS:2E32) is 'Ray of Enfeeblement'); auto:entry_36"
 evidence = ["prologue"]
@@ -7787,6 +7187,7 @@ name = "CastStinkingCloud"
 signature = ""
 c_name = "ovl22_e37"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e37 (ovl22:1B11 places a cloud marker in the DS:6DBB list (caster, aim ds6DB9/ds6DBA, four aim tiles and flags, affect $28), paints the cloud into the combat map and runs ApplyCloudTile (the stinking cloud affect) on the combatants of the four cells; ovl22_e10 maps DS:6B84+34*4 to its stub 0096:00D9 and SpellNames[34] (DS:2E5B) is 'Stinking Cloud'); auto:entry_37"
 evidence = ["prologue"]
@@ -7800,6 +7201,7 @@ name = "CastStrength"
 signature = ""
 c_name = "ovl22_e38"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e38 (cast handler of spell 35 (SpellNames[35] is 'Strength' at DS:28E9); rolls a class bonus die (d4 magic-user, d6 cleric/thief, d8 fighter), raises the target's Strength, clamps at 18 with a fighter percentile, and adds the strength affect $26 (RaiseStrength keeps the earlier strength in affect 0Ch or 26h, whitepaper 5.22.2)); auto:entry_38"
 evidence = ["prologue"]
@@ -7813,6 +7215,7 @@ name = "CastAnimateDead"
 signature = ""
 c_name = "ovl22_e39"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e39 (cast handler of spell 36 (SpellNames[36] is 'Animate Dead' at DS:28E9): walks the party list ds5D96, turns up to the caster level corpses (Status 6, CreatureType 0) into undead on the caster's side and leaves the animate affect $20 with 'is animated' (make match UNIT=ovl22 FN=CastAnimateDead)); auto:entry_39"
 evidence = ["prologue"]
@@ -7826,6 +7229,7 @@ name = "CastCureBlindness"
 signature = ""
 c_name = "ovl22_e40"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e40 (cast handler of spell 37 (SpellNames[37] is 'Cure Blindness' at DS:28E9): removes the blindness affect $21 (SpellTable[37].AffectId) from the first chosen target ds6C95 and shows 'can see' when it was there (make match UNIT=ovl22 FN=CastCureBlindness)); auto:entry_40"
 evidence = ["prologue"]
@@ -7839,6 +7243,7 @@ name = "CastCauseBlindness"
 signature = ""
 c_name = "ovl22_e41"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e41 (spell 38 Cause Blindness handler: applies ds681B to the targets with the message 'is blind' (ovl22_e10 maps DS:6B84+38*4 to overlay stub 0096:00ED; SpellNames[38]='Cause Blindness'; its affect $21 is the blindness Cure Blindness removes)); auto:entry_41"
 evidence = ["prologue"]
@@ -7852,6 +7257,7 @@ name = "CureDiseaseAffects"
 signature = "function CureDiseaseAffects: Boolean"
 c_name = "ovl22_fn_228A"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_fn_228A (the helper ovl22_e42 (spell 39 Cure Disease) and ovl22_e54 call: cures the six DiseaseAffects[1..6] ($1F,$22,$2B,$2C,$32,$39) with their companions from ds6C95 and returns whether it cured any (make match UNIT=ovl22 FN=CureDiseaseAffects: 165 bytes)); auto:near_call"
 evidence = ["prologue"]
@@ -7865,6 +7271,7 @@ name = "CastCureDisease"
 signature = ""
 c_name = "ovl22_e42"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e42 (spell 39 Cure Disease handler: calls CureDiseaseAffects on ds6C95 and drops the result (ovl22_e10 maps DS:6B84+39*4 to overlay stub 0096:00F2; SpellNames[39]='Cure Disease' at DS:2F28; SpellTable[39].AffectId is 0); make match UNIT=ovl22 FN=CastCureDisease: 17 bytes); auto:entry_42"
 evidence = ["prologue"]
@@ -7878,6 +7285,7 @@ name = "CastCauseDisease"
 signature = ""
 c_name = "ovl22_e43"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e43 (spell 40 Cause Disease handler: applies ds681B to the targets with the message 'is diseased' and Flag 1 (ovl22_e10 maps DS:6B84+40*4 to overlay stub 0096:00F7; SpellNames[40]='Cause Disease'; the affect is one CureDiseaseAffects clears)); auto:entry_43"
 evidence = ["prologue"]
@@ -7891,6 +7299,7 @@ name = "CastDispelMagic"
 signature = ""
 c_name = "ovl22_e44"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e44 (ovl22_e10 fills SpellHandlers[41] and SpellHandlers[46] (DS:6B84+41*4, DS:6B84+46*4) with overlay stub 0096:00FC = ovl22:2385; SpellNames[41] and SpellNames[46] are both 'Dispel Magic' (DS:2F7A, DS:3047). The routine dispels the target's affects by a caster-level chance, which is Dispel Magic); auto:entry_44"
 evidence = ["prologue"]
@@ -7904,6 +7313,7 @@ name = "CastPrayer"
 signature = ""
 c_name = "ovl22_e45"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e45 (ovl22_e10 fills SpellHandlers[42] (DS:6B84+42*4) with overlay stub 0096:0101 = ovl22:24D6; SpellNames[42] is 'Prayer' (DS:2FA3). The routine applies the spell to the targets with the caster's Side in the affect data and the message 'is praying'); auto:entry_45"
 evidence = ["prologue"]
@@ -7917,6 +7327,7 @@ name = "CastRemoveCurse"
 signature = ""
 c_name = "ovl22_e9"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e9 (ovl22_e10 fills SpellHandlers[43] (DS:6B84+43*4) with overlay stub 0096:004D = ovl22:2540; SpellNames[43] is 'Remove Curse' (DS:2FCC), and the Temple's RemoveCurse (ovl04:083A) stores the character in ds6C95 and calls it. It cures the curse affect 24h or clears the Cursed flag of the character's first cursed item, saying 'is un-cursed' or ''s item is un-cursed'); auto:entry_9"
 evidence = ["prologue"]
@@ -7930,6 +7341,7 @@ name = "CastBestowCurse"
 signature = ""
 c_name = "ovl22_e46"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e46 (cast handler of spell 44 Bestow Curse: ovl22_e10 maps DS:6B84+44*4 to stub 0096:0106, SpellNames[44] is 'Bestow Curse' and it applies the spell with 'has been cursed!'); auto:entry_46"
 evidence = ["prologue"]
@@ -7943,6 +7355,7 @@ name = "CastBlink"
 signature = ""
 c_name = "ovl22_e47"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e47 (cast handler of spell 45 Blink: ovl22_e10 maps DS:6B84+45*4 to stub 0096:010B, SpellNames[45] is 'Blink' and it applies the spell with 'is blinking'); auto:entry_47"
 evidence = ["prologue"]
@@ -7956,6 +7369,7 @@ name = "CastFireball"
 signature = ""
 c_name = "ovl22_e48"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e48 (cast handler of spells 47 and 64 Fireball: ovl22_e10 maps DS:6B84+47*4 and +64*4 to stub 0096:0110, SpellNames[47] is 'Fireball', it scans two steps around the aim point and deals d6 per level of fire damage with no message); auto:entry_48"
 evidence = ["prologue"]
@@ -7969,6 +7383,7 @@ name = "ApplySpellToSideUpToLevel"
 signature = "procedure ApplySpellToSideUpToLevel(Affect, Side: Byte; Message: String40)"
 c_name = "ovl22_fn_2764"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_fn_2764 (applies the current spell to up to caster-level chosen targets on one side, first curing the opposite spell's affect; called by the Haste and Slow handlers); auto:near_call; signature from the callers: ovl22:2892 (Haste) pushes the affect, the caster's side and the string, ovl22:2C09 (Slow) the opposite side ('is Slowed')"
 evidence = ["prologue"]
@@ -7982,6 +7397,7 @@ name = "CastHaste"
 signature = ""
 c_name = "ovl22_e49"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e49 (cast handler of spell 48 Haste: ovl22_e10 maps DS:6B84+48*4 to stub 0096:0115, SpellNames[48] is 'Haste', it removes the slow affect 2Ah from the caster's side up to the caster level and applies the spell with is Hasted); auto:entry_49"
 evidence = ["prologue"]
@@ -7995,6 +7411,7 @@ name = "DamageTargetInCell"
 signature = "procedure DamageTargetInCell(CellX, CellY, Damage, SaveKind: Byte; var Blocked: Boolean)"
 c_name = "ovl22_fn_28BC"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_fn_28BC (deals a line spell's damage to the combatant in one map cell and reports whether the tile blocks the beam; called by the Lightning Bolt helpers (ovl22_e50, ovl22_fn_295B)); auto:near_call; signature from the callers: ovl22_e50 (Lightning Bolt) pushes the aim cell, the rolled damage, save kind 4 and a var flag; ovl22_fn_295B passes the walked cell, a damage, a save kind and its var flag"
 evidence = ["prologue"]
@@ -8008,6 +7425,7 @@ name = "CastLineBeam"
 signature = ""
 c_name = "ovl22_fn_295B"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_fn_295B (line spells' beam helper: draws the beam line and damages each cell with DamageTargetInCell, called by the Lightning Bolt handler and the paralysis beams (ovl22_e50, ovl22_fn_2F57, ovl22_fn_31D7)); auto:near_call"
 evidence = ["prologue"]
@@ -8021,6 +7439,7 @@ name = "CastLightningBolt"
 signature = ""
 c_name = "ovl22_e50"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e50 (cast handler of spell 51 Lightning Bolt: one d6 per caster level, dealt to the aim cell and along the beam with the bounce flag (whitepaper 5.22.2)); auto:entry_50"
 evidence = ["prologue"]
@@ -8034,6 +7453,7 @@ name = "CastSlow"
 signature = ""
 c_name = "ovl22_e51"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e51 (cast handler of spell 55 Slow: removes the haste affect from the opposite side then applies Slow (whitepaper 5.22.2)); auto:entry_51"
 evidence = ["prologue"]
@@ -8047,6 +7467,7 @@ name = "CastRestoration"
 signature = ""
 c_name = "ovl22_e52"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e52 (cast handler of spell 56 Restoration: gives back one drained level and its hit points and advances a class (whitepaper 5.22.2)); auto:entry_52"
 evidence = ["prologue"]
@@ -8060,6 +7481,7 @@ name = "CastMonsterHaste"
 signature = ""
 c_name = "ovl22_e53"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e53 (the ovl22_e10 handler table points SpellHandlers[57] at stub 0096:0129 (overlay entry 53, ovl22:2E02); the routine cancels the slow affect $2A from the first chosen target (CureAffect) and otherwise applies the current spell with 'is Speedy', so it is the single-target haste handler of the monster-only spell 57 (SpellNames[57] is empty); make match UNIT=ovl22: 65 bytes matched); auto:entry_53"
 evidence = ["prologue"]
@@ -8073,6 +7495,7 @@ name = "CastMonsterHeal"
 signature = ""
 c_name = "ovl22_e54"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e54 (the ovl22_e10 handler table points SpellHandlers[58] at stub 0096:012E (overlay entry 54, ovl22:2E4D); the routine cures the Poisoned affect $37 plus its companion $16 from the first chosen target, else cures disease, else heals 1d4+8 with 'is Healed'; the heal handler of the monster-only spell 58 (SpellNames[58] is empty); make match UNIT=ovl22: 140 bytes matched); auto:entry_54"
 evidence = ["prologue"]
@@ -8086,6 +7509,7 @@ name = "CastMonsterStrength"
 signature = ""
 c_name = "ovl22_e55"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e55 (the ovl22_e10 handler table points SpellHandlers[59] at stub 0096:0133 (overlay entry 55, ovl22:2EE5); the routine gives the first chosen target a plain Strength 21 through RaiseStrength (no percentile), shows 'is stronger' and adds the strength affect $26 for SpellAffectDuration; the strength handler of the monster-only spell 59 (SpellNames[59] is empty); make match UNIT=ovl22: 104 bytes matched); auto:entry_55"
 evidence = ["prologue"]
@@ -8099,6 +7523,7 @@ name = "CastMonsterBeam"
 signature = ""
 c_name = "ovl22_e56"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e56 (the ovl22_e10 handler table points SpellHandlers[60] at stub 0096:0138 (overlay entry 56, ovl22:2F4D); the routine strikes the aim cell ds6DB9/ds6DBA for 1d6+20 through DamageTargetInCell (save kind 4, half damage) and then runs a short CastLineBeam(3, 20, 4, 0) away from the caster; the beam handler of the monster-only spell 60 (SpellNames[60] is empty); make match UNIT=ovl22: 63 bytes matched); auto:entry_56"
 evidence = ["prologue"]
@@ -8112,6 +7537,7 @@ name = "CastMonsterParalyze"
 signature = ""
 c_name = "ovl22_e57"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e57 (handler of the monster-only spell 61 (SpellHandlers element 61, overlay entry 57, stub 0096:013D): applies the current spell with the message 'is paralyzed'); auto:entry_57"
 evidence = ["prologue"]
@@ -8125,6 +7551,7 @@ name = "CastMonsterHealWounds"
 signature = ""
 c_name = "ovl22_e58"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e58 (handler of the monster-only spell 62 (SpellHandlers element 62, overlay entry 58, stub 0096:0142): heals the first chosen target 2d4 + 2 hit points and reports 'is Healed'); auto:entry_58"
 evidence = ["prologue"]
@@ -8138,6 +7565,7 @@ name = "CastMonsterInvisibility"
 signature = ""
 c_name = "ovl22_e59"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e59 (handler of the monster-only spell 63 (SpellHandlers element 63, overlay entry 59, stub 0096:0147): applies the current spell with the message 'is invisible'); auto:entry_59"
 evidence = ["prologue"]
@@ -8151,6 +7579,7 @@ name = "CastMonsterMagicDamage"
 signature = ""
 c_name = "ovl22_e60"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e60 (handler of the monster-only spell 65 (SpellHandlers element 65, overlay entry 60, stub 0096:014C): applies the current spell for 2d4 + 2 magic damage (kind 8) with no message); auto:entry_60"
 evidence = ["prologue"]
@@ -8164,6 +7593,7 @@ name = "CastMonsterNoEffect"
 signature = ""
 c_name = "ovl22_e61"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e61 (handler of the monster-only spell 66 (SpellHandlers element 66, overlay entry 61, stub 0096:0151): the handler body is empty, so the cast does nothing after the picker); auto:entry_61"
 evidence = ["prologue"]
@@ -8177,6 +7607,7 @@ name = "CastMonsterReadMagic"
 signature = ""
 c_name = "ovl22_e62"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e62 (ovl22:30A2 calls ApplySpellToTargets(ds681B, $FF, 1, 0, 0, 'is Reading'); the handler table element 67 (whitepaper 5.22.2), a monster-only spell with its own reading affect); auto:entry_62"
 evidence = ["prologue"]
@@ -8190,6 +7621,7 @@ name = "MonsterBreath"
 signature = "procedure MonsterBreath(Who: PCharacter; Affect: PAffect; Unused: Byte)"
 c_name = "ovl22_e63"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e63 (ovl22:30D9 shows 'Breathes!' and runs a breath attack: a 1d100 chance check on ds6DE3, the target picker, the zap animation, a line beam (CastLineBeam) and DamageTargetInCell for the breather's maximum hit points; Share the monster breath attack (called with a character and its breath affect)); auto:entry_63"
 evidence = ["prologue"]
@@ -8203,6 +7635,7 @@ name = "IsScroll"
 signature = "function IsScroll(Item: PItem): Boolean"
 c_name = "ovl22_e6"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e6 (ovl22:323D returns True when the far pointer is not nil and RaceRow[Item^.ItemType][0] is in $B..$D; every caller (AddScrollSpells, UseMagicItem, StudyRestMinutes, CancelScribing, ScribeScrolls, ProcessPendingScribedSpell) uses it to find the items whose Affects carry scroll spells); auto:near_call"
 evidence = ["prologue"]
@@ -8216,6 +7649,7 @@ name = "ConsumeScrollSpell"
 signature = "procedure ConsumeScrollSpell(Who: PCharacter; Item: PItem; Spell: Byte)"
 c_name = "ovl22_e7"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e7 (ovl22:328A clears the first of Item^.Affects[1..3] whose low seven bits equal the scribed spell (Spell and $7F), decrements Item^.NameNum[2] and hands the item to res12_fn_1509 when it falls below $D2; ProcessPendingScribedSpell calls it to consume a spell from a scroll after it is marked known); auto:entry_7"
 evidence = ["prologue"]
@@ -8229,6 +7663,7 @@ name = "ShowSpellMessage"
 signature = "procedure ShowSpellMessage(Who: PCharacter; Message: String40; Spell: Byte)"
 c_name = "ovl22_e8"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e8 (ovl22:331A draws Who's name (res12_fn_1816), then Message right after it, then the spell's name; in combat it shows the timed message 'Casts a Spell' and 'Spell:NAME'. Callers pass 'casts' (CastChosenSpell), 'has memorized' (ProcessMemorizedSpell) and 'has scribed' (ProcessPendingScribedSpell), so it announces a named character's spell event.); auto:near_call"
 evidence = ["prologue"]
@@ -8242,6 +7677,7 @@ name = "InitSpellHandlers"
 signature = ""
 c_name = "ovl22_e10"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e10 (ovl22:3413 fills SpellHandlers at DS:6B84 (element 0 the target picker via SpellTargetPicker, elements 1..$43 the per-spell cast handlers, all overlay stubs of this unit) and stores @MonsterBreath in DS:6988; ovl11:002D StartGame calls it once at start-up. It initialises the spell-casting handlers and globals.); auto:entry_10"
 evidence = ["prologue"]
@@ -8255,6 +7691,7 @@ name = "ovl22_init"
 signature = ""
 c_name = "ovl22_init"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "auto:entry_0"
 evidence = ["prologue"]
@@ -13638,40 +13075,14 @@ evidence = ["prologue"]
 id = "00BA:0442"
 unit = "res12"
 addr = "00BA:0442"
-size = 659
-name = "res12_fn_0442"
-signature = "procedure res12_fn_0442(Value: LongInt; P: Pointer; A, B, C, D: Byte)"
+size = 805
+name = "FormatItemLine"
+signature = "procedure FormatItemLine(Value: LongInt; Item: PItem; Col, Row, ShowReadied, ShowText: Byte)"
 c_name = "res12_fn_0442"
-level = "none"
+level = "L2"
 justification = ""
-notes = "blocked dec-deepseek 2026-10-13: builds a menu line's display text (clear Text; when ShowReadied the ' Yes  '/' No   ' of Readied; when a party member (list ds5D96, Next +104) has affect 5 via res12_fn_2199 and the item is Plus>0/PlusSave>0/Cursed, append '* '; when Count>0 append res12_fn_1037(Count) and ' '; a Mask of shown NameNum entries ((NameNum[I]<>0) and ((HiddenNames shr (3-I)) and 1)=0, Inc(Mask,1 shl (I-1))); then for I 3 downto 1, if ((Mask shr (I-1)) and 1)>0 append ds10A7[NameNum[I]] (256 strings[20] at DS:10A7, 1-based) and a space, or 's ' with Plural set when (Count<2) or (Plural<>0) is false and ((1 shl (I-1))=Mask) or (I=1 and Mask>4 and ItemType<>$56) or (I=2 and bit 1 of Mask clear) or (I=3 and ItemType=$56) or ((ItemType=$49 or $1C) and NameNum[3]<>$B1); finally DrawTextAt(A,B,$A,Text) when D<>0; LongInt Value is unread QUIRK). The draft matched every region except the plural term C: the original tests bit 1 of Mask with a single byte `shr al,1; jae` (00BA:06A6..06AB) while every form tried compiled to `and al,2; or al,al; je` (+2 bytes), `((Mask shr 1) and 1)=0` (+7, word shift), `not Odd(Mask shr 1)` (+extra shr), `(Mask and 2)<>2` (+2), `(2 and Mask)=0`, `((Mask and 2) div 2)=0`, `(Mask shr 1) and 1=0` and `Odd(Mask shr 1)=False` (all longer); with the outer `if (Count<2) or (Plural<>0) then <space> else if ...` form the whole routine was 2 bytes long. Probes: tools/re/tp_idioms/res12/PRB01..PRB10.PAS. Whole-routine match attempt: make match UNIT=res12 FN=res12_fn_0442."
+notes = "renamed from res12_fn_0442 (00BA:0442 builds an item menu line's Text from the DS:10A7 name parts, the count, the readied Yes/No and a magic marker, and draws it at (Col, Row) in green when ShowText is set (make match UNIT=res12; callers in ovl06 ChooseShopItem, ovl19 ShowCharacterSheet and DrawCharacterPanel)); builds an item menu line's Text (Yes/No, magic '* ', count, DS:10A7 name parts, plural 's ') and draws it when ShowText is set. QUIRK 00BA:0442: LongInt Value is never read. The plural term at 00BA:06A6 is not Odd(Mask) (bit 0), not a bit-1 test: shr al,1; jae (probe PRB34)."
 evidence = ["prologue"]
-
-[[routine]]
-id = "00BA:06D5"
-unit = "res12"
-addr = "00BA:06D5"
-size = 61
-name = "res12_fn_06D5"
-signature = ""
-c_name = "res12_fn_06D5"
-level = "none"
-justification = ""
-notes = "blocked dec-deepseek 2026-10-13: not a routine. 00BA:06D5 is a label inside res12_fn_0442 (which is itself blocked): the instruction at 06D5 starts one byte late (the real cmp byte es:[di+31h],0B1h begins at 06D4, under the es: prefix the map dropped), and the code jumps across the boundary (00BA:0737 jmp 05D7, 00BA:05F2 jmp 0731) and ends at 0442's own retf 10 (00BA:0758). It cannot be a standalone procedure: any prologue would not match the mid-routine bytes. When res12_fn_0442 matches, make match WRITE=1 removes this entry (as it did for the phantom 00BA:0B4F inside DrawCharacterPanel). No caller: the map's near_call evidence is a false positive."
-evidence = ["near_call"]
-
-[[routine]]
-id = "00BA:0712"
-unit = "res12"
-addr = "00BA:0712"
-size = 85
-name = "res12_fn_0712"
-signature = ""
-c_name = "res12_fn_0712"
-level = "none"
-justification = ""
-notes = "blocked dec-deepseek 2026-10-13: not a routine. 00BA:0712 is the else-branch label of res12_fn_0442 (00BA:05F2 jmp 0731 leads into it; 00BA:0737 jmp 05D7 leads back), inside 0442's single frame (prologue push bp/mov bp,sp/sub sp,20Ch at 00BA:0442, epilogue retf 10 at 00BA:0758). No procedure can start there. When res12_fn_0442 matches, make match WRITE=1 removes this entry. No caller: the map's near_call evidence is a false positive."
-evidence = ["near_call"]
 
 [[routine]]
 id = "00BA:0767"
@@ -14279,7 +13690,7 @@ size = 18
 name = "res12_init"
 signature = ""
 c_name = "res12_init"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:init"
 evidence = ["prologue"]
