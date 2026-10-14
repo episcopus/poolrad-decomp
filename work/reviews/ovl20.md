@@ -89,8 +89,21 @@ No `inline`, `db` or `assembler` anywhere; the unused frame bytes and the unused
   days at MaxRestDays or less") is true in effect because CarryRestClock first reduces the days below 30,
   but it is worth one clause saying why the clamp is only reached after months were turned into days.
 
+## Round 3 (commit 0f21180)
+
+Rerun: `make match UNIT=ovl20` (unit: complete, 15 matched, 0 differ) and `make readability UNIT=ovl20`
+(clean). Both must-fix findings of the last round are fixed and checked against the source:
+TimedAffectFlagCount = $48 and TimedAffectDue = 1 now say they are the 72 TimedAffectFlags entries
+(ds471E is the same bytes from index 1), and RestFirstColumn says 11 is the column before the days field
+(days at 11 + 1 = 12). No new must-fix found: no `inline`, `db` or `assembler`; the unused frame bytes,
+the unused local and the nil-list read at ovl20:0118 are marked QUIRK; the CarryRestClock top-digit
+repeat is marked QUIRK ovl20:037B; the CheckRestHealing interval (288 steps of five minutes is 24 hours)
+and the RunRestPeriod comment agree with the code. The should-fix and note findings above stay open
+(the ShowRestTime format, the RunRestPeriod menu sentence, the `> PendingSpellFlag` threshold in
+ProcessPendingScribedSpell as a QUIRK, the vague `State` and `Index` parameter names, the bare menu key
+characters and the bare 6 in AdvanceGameClock); none changes what a port would do wrongly.
+
 ## Verdict
 
-not passed: two must-fix findings (the misleading RestCounterBytes/RestCounterInitial constants and the
-wrong RestFirstColumn comment); everything else is should-fix or note. The matching, quirk marks,
-signature records and whitepaper section 5.22.1 are in order.
+passed: no open must-fix finding; the bytes match, the quirks are marked, the signatures are recorded and
+the remaining findings are should-fix or note.
