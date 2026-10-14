@@ -18,7 +18,7 @@ procedure ShiftAttackToSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e9(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure HalveColdDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ComputerTakesOver(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e12;
+procedure ExchangeStrengthWithAffect(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e13;
 procedure ovl12_e14;
 procedure ovl12_e15;
@@ -202,6 +202,10 @@ const
   ComputerRunFlag = $80;        { TCharacter.B84 high bit: the computer runs the member (ovl09 CheckMorale) }
   ComputerRunMorale = $B3;      { TCharacter.B84 of a computer-run member: the flag and morale $33 }
   AffectMorale = 100;           { what applying the control sets the morale scratch ds6825 to }
+  ExceptionalStrength = 18;     { Strength 18 is written with a percentile (EncodeStrength, ovl24:10E4) }
+  StrengthKept = $80;           { bit 7 of a strength affect's Data: an earlier strength is kept in it (ovl24:115C) }
+  AffectStrength1 = $0C;        { the two strength affects (ovl24:115C keeps the earlier strength in them) }
+  AffectStrength2 = $26;
 
 { ovl12:0000. Cancels the hook of an affect: when AffectId is 0 or is the affect the hooks are offering
   (HookAffectId), HookAffectId and DamageAmount are cleared. HookAffectId 0 reads as "is Unaffected"
@@ -418,8 +422,55 @@ begin
     ds6825 := AffectMorale;
   end;
 end;
-{ ovl12:04BA: retf 10: 10 bytes of parameters; 12 bytes of locals }
-{@stub} procedure ovl12_e12; begin end;
+{ 04BA. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000) of a strength
+  affect whose Data holds an encoded strength (EncodeStrength, ovl24:10E4). Does nothing when Data has bit 7
+  (StrengthKept): an earlier strength is kept in it. Otherwise Who's Strength and StrengthPercent take the
+  affect's strength (DecodeStrength, ovl24:110D). Then the strongest other strength affect of Who, id $0C or
+  $26 (AffectStrength1, AffectStrength2), gives Who its strength, and it takes the encoded strength the
+  affect gave Who. Strength 18 with a percentile counts above any other 18 (ExceptionalStrength). With no
+  other strength affect Who keeps the decoded strength. Which affect ids run it is not known yet [?].
+  QUIRK ovl12:05B8: the earlier affect's Data is written without StrengthKept, where RaiseStrength (ovl24:115C)
+  sets it. }
+procedure ExchangeStrengthWithAffect(Who: PCharacter; Affect: PAffect; Mode: Byte);
+var
+  Strength: Byte;
+  Percent: Byte;
+  BestStrength: Byte;
+  BestPercent: Byte;
+  Scan: PAffect;
+  Earlier: PAffect;
+begin
+  if Affect^.Data > StrengthKept - 1 then
+    Exit;
+  DecodeStrength(Affect, Strength, Percent);
+  Who^.Strength := Strength;
+  Who^.StrengthPercent := Percent;
+  Earlier := nil;
+  BestStrength := 0;
+  BestPercent := 0;
+  Scan := Who^.Affects;
+  while Scan <> nil do
+  begin
+    if (Scan^.Id = AffectStrength1) or (Scan^.Id = AffectStrength2) then
+      if Scan <> Affect then
+      begin
+        DecodeStrength(Scan, Strength, Percent);
+        if (Strength > BestStrength) or ((BestStrength = ExceptionalStrength) and (Percent > BestPercent)) then
+        begin
+          BestStrength := Strength;
+          BestPercent := Percent;
+          Earlier := Scan;
+        end;
+      end;
+    Scan := Scan^.Next;
+  end;
+  if Earlier <> nil then
+  begin
+    Earlier^.Data := EncodeStrength(Who^.Strength, Who^.StrengthPercent);
+    Who^.Strength := BestStrength;
+    Who^.StrengthPercent := BestPercent;
+  end;
+end;
 { ovl12:05D6: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e13; begin end;
 { ovl12:05EB: retf 10: 10 bytes of parameters; 0 bytes of locals }

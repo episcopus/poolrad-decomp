@@ -3291,12 +3291,12 @@ id = "ovl12:04BA"
 unit = "ovl12"
 addr = "ovl12:04BA"
 size = 284
-name = "ovl12_e12"
-signature = ""
+name = "ExchangeStrengthWithAffect"
+signature = "procedure ExchangeStrengthWithAffect(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e12"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_12"
+notes = "renamed from ovl12_e12 (ovl12:04BA is an affect handler (AffectHandlers shape, Mode not read) of a strength affect: Who's Strength and StrengthPercent take the affect's strength (DecodeStrength, ovl24:110D), then the strongest other affect with id hex 0C or 26 gives Who its strength and takes the affect's encoded strength (EncodeStrength, ovl24:10E4); RaiseStrength (ovl24:115C) keeps the earlier strength in the same two affects); auto:entry_12"
 evidence = ["prologue"]
 
 [[routine]]

@@ -78,7 +78,7 @@ confidence = "V"
 units = ["*"]
 tags = ["compare", "Byte", "constant", "codegen", "jump"]
 title = "`X <= $7F` compiles to cmp 7Fh; ja, while `X < $80` compiles to cmp 80h; jae"
-lesson = "ovl12:0400 tests whether a character's B84 has its computer-run high bit clear: `if Who^.B84 <= $7F then`. TP 6.0 emits `cmp byte ptr es:[di+84h], 7Fh; ja skip`, which is the original's bytes. The same test written `< $80` emits `cmp ..., 80h; jae`, the same meaning but other bytes, so the written form decides the match. A named constant works in either form: `ComputerRunFlag - 1` gives the 7Fh form."
+lesson = "ovl12:0400 tests whether a character's B84 has its computer-run high bit clear: `if Who^.B84 <= $7F then`. TP 6.0 emits `cmp byte ptr es:[di+84h], 7Fh; ja skip`, which is the original's bytes. The same test written `< $80` emits `cmp ..., 80h; jae`, the same meaning but other bytes, so the written form decides the match. A named constant works in either form: `ComputerRunFlag - 1` gives the 7Fh form. The same holds for `X > $7F` (`if Data > StrengthKept - 1 then Exit` in ovl12:04BA, `cmp 7Fh; jbe` plus a jump to the epilogue) against `X >= $80`, which compiles to `cmp 80h`."
 evidence = ["src/OVL12.PAS#ComputerTakesOver", "tools/re/tp_idioms/ovl12/E11SHIFT.PAS", "re/symbols.toml#ovl12:0400"]
 
 [[lesson]]
