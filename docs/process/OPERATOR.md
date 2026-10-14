@@ -38,6 +38,16 @@ still runs (a worker answers with a hand-off of what it committed; stop-run wait
 releases the rest with an operator record (branches with commits are kept for the next claimer and
 listed), and leaves control `stopped`, so `make start-run` can follow immediately.
 
+### Tiers, escalation and the end of a run
+
+Tier-1 decompilers (cheap models) take units from the queue; escalation workers (`tier = 2`, a stronger
+model, `cost_cap` and `timeout` per session) take only the routines tier 1 gave up on (WORKER.md, "The
+escalation tier"). What both tiers fail on appears in `make inbox` under "Escalation failed", with the
+routine's notes; that, rejected integrations the loop could not resolve, and failed reviews it could not
+fix are what the run leaves for you. When nothing is planned for `idle_stop` minutes (60 by default)
+the integrator loop starts `make stop-run` itself (log build/run/auto-stop.log), so an overnight run
+ends when its work does.
+
 ### The integrator loop
 
 The roster entry with `role = "integrator"` (`int-loop`) is a script, not a model session

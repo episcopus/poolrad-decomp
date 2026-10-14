@@ -15,11 +15,15 @@ two modes:
                `opencode run` session per batch of routines (or per review), verifies, hands off and
                claims again until the control is no longer `running`. A model that ends its turn or
                fills its context costs one batch, never the run. Optional fields: `batch` (routines
-               per session) and `timeout` (minutes per session); `heading` is not used.
+               per session), `timeout` (minutes per session), `tier` (2: the escalation tier, which
+               takes only the routines tier 1 gave up on), `cost_cap` (USD per session) and
+               `max_attempts`; `heading` is not used.
   script       the default for `integrator`: the tab runs tools/agent/integrator.py, which merges
                hand-offs (`make integrate`) every `interval` seconds, queues expert cases, and starts a
                fresh `opencode run` session with the row's model only to resolve a merge conflict that
                `make integrate` rejected. It never ends its own turn, unlike an orchestrator session.
+               `idle_stop` (minutes, default 60, 0 off): with no planned work that long, it starts
+               `make stop-run` itself.
   interactive  the default for every other role (orchestrator, expert, documentarian): the tab runs
                `opencode mini --model <model>#<variant> --prompt "<the block>"` with the prompt block of
                docs/process/START-AGENT.md named by `heading` (`## The prompt for <heading>`). Such a
@@ -108,9 +112,13 @@ def check_session(r: dict) -> None:
         raise ValueError("work/roster.toml: %s: the integrator, and only it, runs as a script" % r["name"])
     if mode == "interactive" and not r.get("heading"):
         raise ValueError("work/roster.toml: %s: an interactive session needs heading" % r["name"])
-    for k in ("batch", "timeout", "interval"):
+    for k in ("batch", "timeout", "interval", "cost_cap", "max_attempts"):
         if k in r and (isinstance(r[k], bool) or not isinstance(r[k], (int, float)) or r[k] <= 0):
             raise ValueError("work/roster.toml: %s: %s must be a positive number" % (r["name"], k))
+    if "idle_stop" in r and (isinstance(r["idle_stop"], bool) or not isinstance(r["idle_stop"], (int, float)) or r["idle_stop"] < 0):
+        raise ValueError("work/roster.toml: %s: idle_stop is minutes, 0 to turn it off" % r["name"])
+    if "tier" in r and (r["tier"] not in (1, 2) or r["role"] != "decompiler"):
+        raise ValueError("work/roster.toml: %s: tier is 1 or 2, for decompilers only" % r["name"])
 
 
 def model_spec(r: dict) -> str:
@@ -123,7 +131,8 @@ def worker_argv(row: dict, run_id: str) -> list[str]:
     argv = ["--agent", row["name"], "--role", row["role"], "--harness", "opencode", "--model", row["model"],
             "--variant", row["variant"], "--session", "%s-run-%s" % (row["name"], (run_id or "none")[:8]),
             "--session-model", model_spec(row)]
-    for key, opt in (("batch", "--batch"), ("timeout", "--timeout")):
+    for key, opt in (("batch", "--batch"), ("timeout", "--timeout"), ("tier", "--tier"),
+                     ("cost_cap", "--cost-cap"), ("max_attempts", "--max-attempts")):
         if key in row:
             argv += [opt, str(row[key])]
     return argv
@@ -133,7 +142,7 @@ def integrator_argv(row: dict, run_id: str) -> list[str]:
     """The integration loop's arguments (tools/agent/integrator.py); the model resolves rejected merges."""
     argv = ["--agent", row["name"], "--harness", "opencode", "--model", row["model"], "--variant", row["variant"],
             "--session", "%s-run-%s" % (row["name"], (run_id or "none")[:8]), "--session-model", model_spec(row)]
-    for key, opt in (("interval", "--interval"), ("timeout", "--timeout")):
+    for key, opt in (("interval", "--interval"), ("timeout", "--timeout"), ("idle_stop", "--idle-stop")):
         if key in row:
             argv += [opt, str(row[key])]
     return argv

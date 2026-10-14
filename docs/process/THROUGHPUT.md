@@ -94,7 +94,8 @@ subagent. Experts cannot claim game units, edit source/registries, record levels
 human-reserved changes or recursively consult another expert. They return bounded advice to the
 original worker, which still must prove it with the pinned compiler and independent review.
 
-Limits approved for this system (raised tenfold by the human on 2026-10-13, after the first run used
+The advisory expert is retired (AGENTS.md rule 14, 2026-10-14); these limits apply only if a human
+starts it for a one-off diagnosis. Limits approved for this system (raised tenfold by the human on 2026-10-13, after the first run used
 all five cases within 20 minutes, four of them on routines that already matched):
 
 | Limit | Value |

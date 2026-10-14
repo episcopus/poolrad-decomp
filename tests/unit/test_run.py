@@ -59,7 +59,7 @@ def test_the_real_roster_resolves_every_prompt_block():
     text = run.START_AGENT.read_text()
     rows = run.roster()
     names = [r["name"] for r in rows]
-    assert len(names) == len(set(names)) and rows[0]["role"] == "orchestrator"
+    assert len(names) == len(set(names))
     for r in rows:
         if run.mode_of(r) != "interactive":
             continue
@@ -148,3 +148,13 @@ def test_run_add_refuses_a_session_that_is_still_running(tmp_path, monkeypatch):
     monkeypatch.setattr(run.control, "state", lambda: {"state": "stopped"})
     with pytest.raises(ValueError, match="running run"):
         run.add("int-loop")
+
+
+def test_the_roster_has_an_integrator_and_an_escalation_tier():
+    """The run needs its integration loop and someone for the routines tier 1 gives up on."""
+    rows = run.roster()
+    assert [r["name"] for r in rows if run.mode_of(r) == "script"] == ["int-loop"]
+    tier2 = [r for r in rows if r.get("tier") == 2]
+    assert tier2 and all(run.mode_of(r) == "worker" and r.get("cost_cap") for r in tier2)
+    argv = run.argv_of(tier2[0], "abc12345")
+    assert argv[argv.index("--tier") + 1] == "2" and argv[argv.index("--cost-cap") + 1] == str(tier2[0]["cost_cap"])

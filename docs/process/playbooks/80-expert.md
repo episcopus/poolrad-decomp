@@ -1,5 +1,10 @@
 # 80 Bounded expert advice
 
+**Retired 2026-10-14 (AGENTS.md rule 14).** Hard routines now go to the escalation tier
+(docs/process/WORKER.md, "The escalation tier"): a stronger-model decompiler that writes and proves the
+code itself. This playbook stays for a human who wants a one-off diagnosis from the expert tools.
+
+
 **Inputs:** one human-started expert session, registered harness/model/session metadata, a protected
 human-approved budget with trusted usage counters and an external billing/runtime cap. No case is
 permission to create another agent or to approve a change reserved for the human.

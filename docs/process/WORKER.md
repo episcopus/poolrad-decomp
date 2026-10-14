@@ -45,6 +45,30 @@ and the registry change is committed. A reviewer session gets `tools/agent/revie
 once per review (playbook 70); the supervisor hands off `review-passed` when the committed review has no
 open must-fix and the stamp is written, else `review-failed` with the findings in the note.
 
+## The escalation tier
+
+A decompiler worker started with `TIER=2` (`tier = 2` in `work/roster.toml`) is the escalation tier: a
+stronger model that takes only what tier 1 gave up on. `make claim --escalate` (`next.next_escalation`)
+offers the first unit, not locked and with no hand-off waiting, that holds a stuck routine: one whose
+frontier entry has `MAX_ATTEMPTS` failed tier-1 sessions, or whose registry notes say `blocked`, but
+not a map artefact (notes "not a routine": an entry the map invented inside a real routine) and never
+the initialisation part. Tier 1 no longer claims a unit whose remaining routines are all stuck (it
+counts them as waiting), so cheap workers do not claim and give it back every few minutes.
+
+Each session gets `tools/agent/escalate_prompt.md` with one routine (`BATCH=1` in the roster), the
+registry notes of the earlier attempts, the path of the last session log, and where the frozen failed
+drafts are (`poolrad-trials/`). It writes and proves the Pascal like any decompiler; it may merge map
+entries into the real routine they belong to. `TIMEOUT` and `COST_CAP` (USD, polled from OpenCode every
+30 seconds) bound each session; either one kills and interrupts it. A routine it does not match counts
+one escalation in its frontier entry (`escalations`); at `MAX_ATTEMPTS` the entry is marked
+`escalation_exhausted` and `make inbox` lists it under "Escalation failed" for the human, with the
+notes the session wrote. `worker.py --release <unit> [routine]` clears both tiers' counts.
+
+Both tiers first retire orphan stubs: a `{@stub}` whose name has no registry record and whose address
+(`<unit>_fn_XXXX`) lies inside a routine already at L2 is a map entry `make match WRITE=1` dropped; it is
+deleted with its interface declaration, `make match` must still pass (else the change is reset), and
+`make match WRITE=1` records whatever that completes (often the initialisation part).
+
 ## A unit whose review failed
 
 `make next` offers a unit with open `- [ ] must-fix` findings in work/reviews/<id>.md first. Its
