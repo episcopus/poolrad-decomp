@@ -798,8 +798,28 @@ begin
     end;
   end;
 end;
-{ 00BA:15F7: implementation pending in this batch }
-{@stub} procedure AddItemCopy(Who: PCharacter; Item: PItem); begin end;
+{ 00BA:15F7. Allocates an item record (ItemListSize), deep-copies Item into it (Move) with its Next
+  cleared, and appends it to the end of the carried-item list Who^.Items (+$C8); an empty list keeps
+  the copy as the head. Used when a character is given a copy of an item, not the item itself.
+  Globals: none. }
+procedure AddItemCopy(Who: PCharacter; Item: PItem);
+var
+  Prev: PItem;
+  NewItem: PItem;
+begin
+  GetMem(NewItem, ItemListSize);
+  Move(Item^, NewItem^, ItemListSize);
+  NewItem^.Next := nil;
+  Prev := Who^.Items;
+  if Prev = nil then
+    Who^.Items := NewItem
+  else
+  begin
+    while Prev^.Next <> nil do
+      Prev := Prev^.Next;
+    Prev^.Next := NewItem;
+  end;
+end;
 { 00BA:1693: implementation pending in this batch }
 {@stub} procedure ShowFlashMessage(Text: String40); begin end;
 { 00BA:16EC: implementation pending in this batch }
