@@ -380,9 +380,11 @@ type
     { +$112: RecalcCombatValues computes it (the sum of its frame bytes [bp-$B]..[bp-9] minus two);
       not read by a decompiled routine yet, meaning unknown. }
     ds112: Byte;
-    { +$113, +$114: part of the block RecalcCombatValues copies from the base block +$A2..+$A8 into
-      +$114..+$11A; not read by a decompiled routine yet, meaning unknown. }
-    Pad113: array[$113..$114] of Byte;
+    { +$113, +$114: two bytes indexed 1..2 by PartingShots, which picks the higher one that is nonzero
+      as its attack slot and sets it to 1 (ovl13:0B80..0BBA); StartCombatantRound writes entry 2
+      from the attack byte (ovl13:006E). What the pair counts is not settled. The lower bound is 1
+      so the compiler emits the same `add di, ax` addressing as the original. }
+    AttackSlots: array[1..2] of Byte;
     { +$115, +$117, +$119: the readied weapon's attack triple, each a pair of entries 1..2. RecalcCombatValues
       copies the base triple (+$A3, +$A5, +$A7) in and ApplyWeaponBonuses then overwrites entry 1 from
       the ItemTable row of the weapon's item kind (bytes 9, $A and $B). The AI's item score multiplies

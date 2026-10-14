@@ -35,3 +35,12 @@ tags = ["set", "in", "System_SetIn", "jcc", "case", "codegen"]
 title = "`x in S` skips the body with je; `not (x in S)` with jne"
 lesson = "System_SetIn (0AF8:0DC0) leaves a flag such that `if X in [6,7,8] then <body>` compiles to `call System_SetIn; je skip; <body>` (je when X is in the set), while `if not (X in [6,7,8]) then <body>` compiles to `jne skip`. ovl13:05BF is `je` before the 'is killed' body, so the source is `if Target^.Status in [6,7,8] then`, not the negated form (the set at ovl13:02CF is the 32 bytes c0 01 00.., bits 6, 7 and 8). A `case Kind of 2: ...; 3: ...; else ...; end` on a byte starts `mov al,Kind` and compares the loaded value (ovl13:0300), not a direct `cmp byte [bp+..], 2`. Probe tools/re/tp_idioms/ovl13/PRBSET.PAS."
 evidence = ["tools/re/tp_idioms/ovl13/PRBSET.PAS", "src/OVL13.PAS#ShowAttackResult", "re/symbols.toml#ovl13:02F9"]
+
+[[lesson]]
+id = "inc-shortint-field-is-byte-add"
+confidence = "V"
+units = ["*"]
+tags = ["inc", "dec", "ShortInt", "byte", "memory-add", "codegen"]
+title = "Inc/Dec on a one-byte field adds in place even when the field and the addend are ShortInt"
+lesson = "ovl13:0923 updates CombatantTable[Idx].X (a ShortInt field) by DirStepX[Dir] (a ShortInt). The original is the 8-bit `mov dl,[DirStepX+Dir]; mov al,Idx; xor ah,ah; ...; add byte [table+0],dl`. `Field := Field + ShortIntValue` is wrong: it widens both operands (cwde) and does a 16-bit load/add/store (ovl13's first draft, 16 bytes too long per update). `Inc(Field, ShortIntValue)` gives the byte memory add; `Dec(Field, ShortIntValue)` gives the matching `sub byte [table+0],dl`. So a one-byte field with a one-byte signed addend must be read as memory-inc/dec, not assignment (the Word counterpart is res12-inc-vs-assignment-adds-to-memory). Probe tools/re/tp_idioms/ovl13/PRBBYTE.PAS (SignedInc/ByteFieldInc give the add; all four assignment forms widen)."
+evidence = ["tools/re/tp_idioms/ovl13/PRBBYTE.PAS", "src/OVL13.PAS#PartingShots", "re/symbols.toml#ovl13:08B2"]

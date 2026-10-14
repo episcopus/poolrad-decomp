@@ -1,7 +1,7 @@
 unit OVL13;
 { CombatSpells: the combat actions overlay (whitepaper 5.5). RunCombat calls it to set up every
   combatant's round (ComputeMovement and StartCombatantRound), to move a combatant on the combat map (StepCombatant
-  and ovl13_e4), and to resolve what a combat action does; the ovl13_eN entry points are the ones
+  and PartingShots), and to resolve what a combat action does; the ovl13_eN entry points are the ones
   the combat menu and the combat AI call. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
@@ -13,17 +13,7 @@ procedure ShowAttackResult(Attacker: PCharacter; Target: PCharacter; Kind, Spell
 procedure GuardedEnemiesAttack(Who: PCharacter);
 procedure StepCombatant(Who: PCharacter; Dir: Byte);
 procedure ovl13_fn_08AC;
-procedure ovl13_e4(Who: Pointer; Dir: Byte);
-procedure ovl13_fn_098F;
-procedure ovl13_fn_0999;
-procedure ovl13_fn_0B2A;
-procedure ovl13_fn_0B2F;
-procedure ovl13_fn_0B3E;
-procedure ovl13_fn_0B48;
-procedure ovl13_fn_0B4D;
-procedure ovl13_fn_0B57;
-procedure ovl13_fn_0B5C;
-procedure ovl13_fn_0B61;
+procedure PartingShots(Who: PCharacter; Dir: Byte);
 function ovl13_e5(Who: Pointer): Byte;
 procedure ovl13_fn_0CEE;
 procedure ovl13_e6(Who: PCharacter);
@@ -91,7 +81,7 @@ procedure ovl13_fn_3A2B;
 procedure ovl13_e23;
 function ovl13_e24: Boolean;
 implementation
-uses RES03, RES06, RES12, OVL24, OVL31;
+uses RES03, RES06, RES12, OVL24, OVL30, OVL31;
 const
   { The two sides of a combat (POOLVARS, ovl24:0D96). }
   SideParty = 0;
@@ -127,6 +117,16 @@ const
     ovl13:00C2 a combatant whose (Side + 1) shares a bit with it loses InitiativePenalty; what
     the word is filled with is not settled (named VarCombatWord715 in ovl08). }
   VarCombatWord715 = 715;
+  { The two affects an enemy must not carry to take a parting shot (ovl13:0A91, 0AAB). ovl24
+    removes the same pair when a combatant goes down or panics (ovl24:0322, 0336) and ovl24_e14
+    removes them too, so what they mean is not settled (whitepaper 5.5). }
+  AffectNoPartingShot1 = $4B;
+  AffectNoPartingShot2 = $4A;
+  { The direction scan of a parting shot: the attacker's icon set plus 6 through plus 10 approach
+    the target's cell (ovl13:0AC7..0AF4); the compass direction tried each step is its index mod 8. }
+  PartingShotFirstOffset = 6;
+  PartingShotLastOffset = 10;
+  Directions = 8;
 
 { ovl13:0000. Sets up Who's turn at the start of a combat round: clears and re-arms its combat
   state Combat^ (PendingSpell 0, Cast and Use-magic allowed), refreshes it through ovl13_e6, lets
@@ -153,7 +153,7 @@ begin
     ds681A := Who^.PadA2;
     ds681D := False;
     RunAffectHooks(HookComputeMovement, Who);
-    Who^.Pad113[$114] := ovl13_fn_0E52(ds681A);
+    Who^.AttackSlots[2] := ovl13_fn_0E52(ds681A);
     Pad4[5] := Who^.Pad6B;
     if Who^.Flag10D <> 0 then
     begin
@@ -373,28 +373,96 @@ begin
 end;
 { ovl13:08AC: retf 6: 6 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl13_fn_08AC; begin end;
-{ ovl13:08B2: frame not read }
-{@stub} procedure ovl13_e4(Who: Pointer; Dir: Byte); begin end;
-{ ovl13:098F: frame not read }
-{@stub} procedure ovl13_fn_098F; begin end;
-{ ovl13:0999: frame not read }
-{@stub} procedure ovl13_fn_0999; begin end;
-{ ovl13:0B2A: frame not read }
-{@stub} procedure ovl13_fn_0B2A; begin end;
-{ ovl13:0B2F: frame not read }
-{@stub} procedure ovl13_fn_0B2F; begin end;
-{ ovl13:0B3E: frame not read }
-{@stub} procedure ovl13_fn_0B3E; begin end;
-{ ovl13:0B48: frame not read }
-{@stub} procedure ovl13_fn_0B48; begin end;
-{ ovl13:0B4D: frame not read }
-{@stub} procedure ovl13_fn_0B4D; begin end;
-{ ovl13:0B57: frame not read }
-{@stub} procedure ovl13_fn_0B57; begin end;
-{ ovl13:0B5C: frame not read }
-{@stub} procedure ovl13_fn_0B5C; begin end;
-{ ovl13:0B61: retf 6: 6 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl13_fn_0B61; begin end;
+{ ovl13:08B2, PartingShots. The parting shots Who provokes by leaving melee: it copies the enemies adjacent to
+  Who now (CollectEnemiesInRange(Who, 1) into ds6DE4, ovl31) into Enemies, temporarily moves Who's
+  cell in CombatantTable to Dir's neighbour to collect the enemies adjacent there, moves it back and
+  clears the copied entries that are still adjacent, so Enemies keeps the enemies Who is leaving
+  behind. For each of them, still in the fight (Flag10D set) and not IsHelpless, whom ovl13_e8(Who)
+  says may take the shot and who carries neither affect $4A nor $4B, it scans the directions
+  IconSet+6..IconSet+10: while the combatant is due an initiative (Initiative above 0) or is not
+  being drawn (BF 0) it attacks at once, otherwise only when InDirArc says Who is in the arc facing
+  the scanned direction from the enemy. The enemy's unused attack slot (1, or 2 for a monster with
+  Attacks 0) is marked in AttackSlots, stored in the enemy's Combat^.Pad4[4], and ovl13_e12(Enemy,
+  Who, 1, nil, ds6E31) makes the attack; the enemy's remembered Combat^.Target is restored after it.
+  When the shot leaves Who still in the fight, Who's panel is redrawn. Called before the move by
+  MoveCharacter (ovl08:09DF) and MoveStep (ovl09:07F2), so the shots happen as the combatant leaves.
+  Globals: ds6DE4, CombatantTable, DirStepX/DirStepY, CombatantRecord, ds6E31. }
+procedure PartingShots(Who: PCharacter; Dir: Byte);
+var
+  Enemies: array[1..12] of Byte;   { the enemies adjacent before the move (12 is ds6DE4's size) }
+  Affect: Pointer;                 { scratch for HasAffect }
+  Found: Byte;                     { nonzero when Enemies[I] is still adjacent after the move }
+  DidAttack: Byte;                 { the enemy attacked in this scan; stops the rest of the loop }
+  Idx: Byte;                       { Who's entry in CombatantTable }
+  Unused: Byte;                    { QUIRK ovl13:08B8: declared but never read; it pads the frame }
+  Count: Byte;                     { enemies adjacent before the move }
+  CountAfter: Byte;                { enemies adjacent at the destination }
+  J: Byte;                         { index over CountAfter }
+  I: Byte;                         { index over Enemies }
+  SlotIndex: Byte;                 { index over the enemy's two attack slots }
+  Slot: Byte;                      { the attack slot the enemy uses (1, or 2) }
+  K: Byte;                         { the scanned direction offset (IconSet+6..+10) }
+  Enemy: PCharacter;               { the enemy leaving melee }
+  SavedTarget: PCharacter;         { the enemy's Combat^.Target, saved across the attack }
+begin
+  FillChar(Enemies, SizeOf(Enemies), 0);
+  Idx := CombatantIndex(Who);
+  Count := CollectEnemiesInRange(Who, 1);
+  if Count = 0 then
+    Exit;
+  for I := 1 to Count do
+    Enemies[I] := ds6DE4[I];
+  Inc(CombatantTable[Idx].X, DirStepX[Dir]);
+  Inc(CombatantTable[Idx].Y, DirStepY[Dir]);
+  CountAfter := CollectEnemiesInRange(Who, 1);
+  Dec(CombatantTable[Idx].X, DirStepX[Dir]);
+  Dec(CombatantTable[Idx].Y, DirStepY[Dir]);
+  for I := 1 to Count do
+  begin
+    Found := 0;
+    for J := 1 to CountAfter do
+      if ds6DE4[J] = Enemies[I] then
+        Found := 1;
+    if Found <> 0 then
+      Enemies[I] := 0;
+  end;
+  for I := 1 to Count do
+    if Enemies[I] > 0 then
+      if Who^.Flag10D <> 0 then
+      begin
+        DidAttack := 0;
+        Enemy := CombatantRecord[Enemies[I]];
+        if not IsHelpless(Enemy) then
+          if ovl13_e8(Enemy, Who) then
+            if not HasAffect(Enemy, AffectNoPartingShot1, Affect) then
+              if not HasAffect(Enemy, AffectNoPartingShot2, Affect) then
+                for K := Enemy^.Combat^.IconSet + PartingShotFirstOffset
+                  to Enemy^.Combat^.IconSet + PartingShotLastOffset do
+                  if DidAttack = 0 then
+                  begin
+                    if ((Enemy^.Combat^.Initiative > 0) or (Enemy^.Combat^.BF = 0))
+                      or InDirArc(CombatantX(Enemy), CombatantY(Enemy),
+                          CombatantX(Who), CombatantY(Who), K mod Directions) then
+                    begin
+                      Slot := 1;
+                      if Enemy^.Attacks = 0 then
+                        Slot := 2;
+                      for SlotIndex := 1 to 2 do
+                        if Enemy^.AttackSlots[SlotIndex] > 0 then
+                          Slot := SlotIndex;
+                      if Enemy^.AttackSlots[Slot] = 0 then
+                        Enemy^.AttackSlots[Slot] := 1;
+                      Enemy^.Combat^.Pad4[4] := Slot;
+                      SavedTarget := Enemy^.Combat^.Target;
+                      ovl13_e12(Enemy, Who, 1, nil, ds6E31);
+                      DidAttack := 1;
+                      Enemy^.Combat^.Target := SavedTarget;
+                      if Who^.Flag10D <> 0 then
+                        DrawCharacterPanel(Who);
+                    end;
+                  end;
+      end;
+end;
 { ovl13:0C6A: frame not read }
 {@stub} function ovl13_e5(Who: Pointer): Byte; begin end;
 { ovl13:0CEE: retf 4: 4 bytes of parameters; 0 bytes of locals }

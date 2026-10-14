@@ -5410,144 +5410,14 @@ evidence = ["prologue"]
 id = "ovl13:08B2"
 unit = "ovl13"
 addr = "ovl13:08B2"
-size = 221
-name = "ovl13_e4"
-signature = "procedure ovl13_e4(Who: Pointer; Dir: Byte)"
+size = 925
+name = "PartingShots"
+signature = "procedure PartingShots(Who: PCharacter; Dir: Byte)"
 c_name = "ovl13_e4"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_4"
+notes = "renamed from ovl13_e4 (ovl13:08B2 runs the attacks of the enemies Who is leaving behind when it moves (adjacent before the step, not at the destination; called by MoveCharacter ovl08:09DF and MoveStep ovl09:07F2 just before StepCombatant)); auto:entry_4"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl13:098F"
-unit = "ovl13"
-addr = "ovl13:098F"
-size = 10
-name = "ovl13_fn_098F"
-signature = ""
-c_name = "ovl13_fn_098F"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:0999"
-unit = "ovl13"
-addr = "ovl13:0999"
-size = 401
-name = "ovl13_fn_0999"
-signature = ""
-c_name = "ovl13_fn_0999"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:0B2A"
-unit = "ovl13"
-addr = "ovl13:0B2A"
-size = 5
-name = "ovl13_fn_0B2A"
-signature = ""
-c_name = "ovl13_fn_0B2A"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:0B2F"
-unit = "ovl13"
-addr = "ovl13:0B2F"
-size = 15
-name = "ovl13_fn_0B2F"
-signature = ""
-c_name = "ovl13_fn_0B2F"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:0B3E"
-unit = "ovl13"
-addr = "ovl13:0B3E"
-size = 10
-name = "ovl13_fn_0B3E"
-signature = ""
-c_name = "ovl13_fn_0B3E"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:0B48"
-unit = "ovl13"
-addr = "ovl13:0B48"
-size = 5
-name = "ovl13_fn_0B48"
-signature = ""
-c_name = "ovl13_fn_0B48"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:0B4D"
-unit = "ovl13"
-addr = "ovl13:0B4D"
-size = 10
-name = "ovl13_fn_0B4D"
-signature = ""
-c_name = "ovl13_fn_0B4D"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:0B57"
-unit = "ovl13"
-addr = "ovl13:0B57"
-size = 5
-name = "ovl13_fn_0B57"
-signature = ""
-c_name = "ovl13_fn_0B57"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:0B5C"
-unit = "ovl13"
-addr = "ovl13:0B5C"
-size = 5
-name = "ovl13_fn_0B5C"
-signature = ""
-c_name = "ovl13_fn_0B5C"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:0B61"
-unit = "ovl13"
-addr = "ovl13:0B61"
-size = 265
-name = "ovl13_fn_0B61"
-signature = ""
-c_name = "ovl13_fn_0B61"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl13:0C6A"
