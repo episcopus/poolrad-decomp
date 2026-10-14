@@ -45,6 +45,20 @@ and the registry change is committed. A reviewer session gets `tools/agent/revie
 once per review (playbook 70); the supervisor hands off `review-passed` when the committed review has no
 open must-fix and the stamp is written, else `review-failed` with the findings in the note.
 
+## A unit whose review failed
+
+`make next` offers a unit with open `- [ ] must-fix` findings in work/reviews/<id>.md first. Its
+routines are all at L2, so there is no batch to plan: the worker runs one session from
+`tools/agent/fix_prompt.md` with the open findings as its task (log `<unit>-fix<N>.log`). The session
+fixes each finding (or disputes it with evidence), marks it `- [x]` with the commit, and commits; it
+never stamps the review. The supervisor then requires `make match` and `make readability` to pass (else
+the session's commits are saved as patches and reset) and hands the branch off `complete`, with how
+many findings were closed in the note; after the merge `make next REVIEW=1` offers the unit to a
+reviewer again. Findings still open count one attempt under the frontier id `<unit>:review-fix`; at
+`MAX_ATTEMPTS` the entry is marked exhausted, no more sessions are spent, `make next` stops offering the
+unit (so the worker moves on to other units) and `make inbox` lists it. `worker.py --release <unit>`
+puts it back.
+
 ## Exhaustion: hand-off or release
 
 When nothing is left to plan for the unit (everything is matched, blocked or in the frontier), or
