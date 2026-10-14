@@ -45,11 +45,8 @@ procedure CastMirrorImage;
 procedure CastRayOfEnfeeblement;
 procedure CastStinkingCloud;
 procedure CastStrength;
-procedure ovl22_fn_202B;
 procedure CastAnimateDead;
-procedure ovl22_fn_20A9;
 procedure CastCureBlindness;
-procedure ovl22_fn_2233;
 procedure ovl22_e41;
 procedure ovl22_fn_228A;
 procedure ovl22_fn_228C;
@@ -265,7 +262,7 @@ end;
   5d4, $3B is 1d4*10+40, $3F is 2d10*10 in combat (view mode 5) else (1d10+10)*10, and $43 is a flat
   $5A0. Every other value uses the SpellTable row's duration base (byte +4) plus its per-level byte
   (byte +5) times the caster level from res12_fn_26C2. Called by ApplySpellToTargets (as ApplyAffect's
-  Duration) and CastEnlarge, CastHoldPerson, ovl22_fn_202B, ovl22_fn_2EEA. }
+  Duration) and CastEnlarge, CastHoldPerson, CastStrength, ovl22_fn_2EEA. }
 function SpellAffectDuration(Spell: Byte): Word;
 const
   { The few spells whose affect time is rolled for instead of read from SpellTable; the values
@@ -1156,8 +1153,6 @@ begin
     res12_fn_16EC(Target, 'is stronger', MessageColour, TimedMessage);
   AddAffect(Target, StrengthAffect, SpellAffectDuration(ds681B), Code, RunHandlerOnRemoval);
 end;
-{ ovl22:202B: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl22_fn_202B; begin end;
 { ovl22:206F. Cast handler of spell 36, Animate Dead: for up to the caster level corpses still in the
   party list ds5D96 (Status 6, CreatureType 0) it places the body on the combat map at its own cell
   (PlaceCombatant) and turns it into an undead creature under the caster's side: CreatureType 4, Quick
@@ -1232,8 +1227,6 @@ begin
     Current := Current^.Next;
   end;
 end;
-{ ovl22:20A9: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl22_fn_20A9; begin end;
 { ovl22:2217. Cast handler of spell 37, Cure Blindness (SpellTable[37].AffectId is $21): removes the
   blindness affect $21 from the first chosen target ds6C95 (CureAffect) and, only when the target
   actually carried it, tells 'can see' through res12_fn_1FEB. Reads ds6C95. }
@@ -1245,8 +1238,6 @@ begin
   if CureAffect(ds6C95, BlindnessAffect) then
     res12_fn_1FEB(ds6C95, ShowAbout, 'can see');
 end;
-{ ovl22:2233: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl22_fn_2233; begin end;
 { ovl22:225D: retf 0: 0 bytes of parameters; 10 bytes of locals }
 {@stub} procedure ovl22_e41; begin end;
 { ovl22:228A: frame not read }
