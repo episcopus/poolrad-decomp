@@ -10,7 +10,7 @@ function TryAddAffect(Who: PCharacter; AffectId, Data: Byte; Duration: Word): Bo
 procedure DropFromFight(Who: PCharacter; NewStatus: Byte; Msg: String40);
 procedure RaiseAttackAndMorale(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure LowerAttackAndMorale(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e4;
+procedure BoostAttackAgainstTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e5;
 procedure ovl12_e6;
 procedure ovl12_e7;
@@ -181,6 +181,7 @@ const
   StatusGone = 6;               { TCharacter.Status 6, dead for good (ovl04:0510) }
   StatusStoned = 7;             { TCharacter.Status 7, stone (ovl04:093D) }
   MoraleStep = 5;               { what the affect handlers add to or take from the morale scratch ds6825 }
+  TargetBonus = 2;              { what BoostAttackAgainstTarget adds to AttackRoll and to DamageAmount }
 
 { ovl12:0000. Cancels the hook of an affect: when AffectId is 0 or is the affect the hooks are offering
   (HookAffectId), HookAffectId and DamageAmount are cleared. HookAffectId 0 reads as "is Unaffected"
@@ -250,8 +251,19 @@ begin
     Dec(ds6825, MoraleStep);
   Dec(AttackRoll);
 end;
-{ ovl12:013B: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e4; begin end;
+{ ovl12:013B. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000).
+  It copies the character Who attacked last (Who's combat Target, TCombatant at +$108 of Who, MeleeAttack
+  sets it in ovl08) into AttackTarget. When that character's byte +$9F (Pad9E[$9F] of TCharacter, not named
+  yet) is 4, the attack roll and the damage each gain TargetBonus. }
+procedure BoostAttackAgainstTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  AttackTarget := Who^.Combat^.Target;
+  if AttackTarget^.Pad9E[$9F] = 4 then
+  begin
+    Inc(AttackRoll, TargetBonus);
+    Inc(DamageAmount, TargetBonus);
+  end;
+end;
 { ovl12:017F: retf 10: 10 bytes of parameters; 16 bytes of locals }
 {@stub} procedure ovl12_e5; begin end;
 { ovl12:01C3: retf 10: 10 bytes of parameters; 2 bytes of locals }

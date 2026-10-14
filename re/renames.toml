@@ -3448,3 +3448,10 @@ kind = "routine"
 why = "ovl12:011D takes MoraleStep off the morale scratch ds6825 (to 0 when it is less) and 1 off AttackRoll: the undo of RaiseAttackAndMorale (ovl12:010D); the AffectHandlers shape (Who, Affect, Mode), Mode not read"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e4"
+new = "BoostAttackAgainstTarget"
+kind = "routine"
+why = "ovl12:013B copies Who's combat record's Target (+$A of the TCombatant at +$108, the character attacked last, ovl08) into DS:6826, and when that character's byte +$9F is 4 adds 2 to AttackRoll and to DamageAmount; the AffectHandlers shape (Who, Affect, Mode), Mode not read"
+date = "2026-10-13"
+

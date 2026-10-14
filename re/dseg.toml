@@ -761,6 +761,11 @@ name = "AffectHandlers"
 evidence = "the far procedure table CallAffectHandler calls by affect id (lcall [di+6828h], ovl24:001E)"
 
 [[global]]
+offset = 0x6826
+name = "AttackTarget"
+evidence = "BoostAttackAgainstTarget (ovl12:013B) stores Who's combat Target here (a far pointer, ovl12:0147..014E); its segment word is DS:6828, where AffectHandlers starts"
+
+[[global]]
 offset = 0x5374
 name = "SoundDriverIdle"
 evidence = "SetSoundDriverIdle stores it (08AE:01CB); nonzero: the timer driver is stopped and PlaySound runs it only around one sound, waiting 0.1 s (08AE:00E9, 0156); StartGame sets 100 (ovl11)"

@@ -3187,12 +3187,12 @@ id = "ovl12:013B"
 unit = "ovl12"
 addr = "ovl12:013B"
 size = 68
-name = "ovl12_e4"
-signature = ""
+name = "BoostAttackAgainstTarget"
+signature = "procedure BoostAttackAgainstTarget(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e4"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_4"
+notes = "renamed from ovl12_e4 (ovl12:013B copies Who's combat record's Target (+$A of the TCombatant at +$108, the character attacked last, ovl08) into DS:6826, and when that character's byte +$9F is 4 adds 2 to AttackRoll and to DamageAmount; the AffectHandlers shape (Who, Affect, Mode), Mode not read); auto:entry_4"
 evidence = ["prologue"]
 
 [[routine]]

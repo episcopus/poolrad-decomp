@@ -803,6 +803,9 @@ var
     res12_fn_23B7 side of the actor (UseMagicItem, CastMemorizedSpell, ovl09:049F, 05C6). }
   ds6814Sides: array[0..1] of Byte absolute ds6814;
   ds6825: Byte;                   { AI morale scratch (CheckMorale computes it from B84, compares percentages) }
+  { The character Who attacked last (Who^.Combat^.Target), copied by BoostAttackAgainstTarget (ovl12:013B).
+    A far pointer: its segment word is DS:6828, the start of AffectHandlers, which overlaps it. }
+  AttackTarget: PCharacter;
   ds6E2F: Byte;                   { byte CheckMorale copies into ds6825; meaning unknown }
   ds6E30: Boolean;                { the Alt-M Magic On/Off toggle of the combat keys (ovl08:04A7) }
   ds6E31: Byte;                   { the key flag the ovl08 menus pass to ReadPromptChoice }
