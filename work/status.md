@@ -12,7 +12,7 @@ Approach: ADR-002 (SPEC 4), Pascal-first matching decompilation; the C track (AD
 | P1 Map | done (`make p1-check`): 50 units, 1332 routines, TP 6.0 June 1991 pinned |
 | P2 Oracle and data | done: goldens with recordings for 2 of 2 session scripts (boot-title, create-character); `make golden CHECK=1` |
 | P3 Match harness | done: `make match` (tools/match/match.py, tests/unit/test_match.py); gate `make check` |
-| P4 Match | 403 of 1113 game routines at L2 (123391 of 233807 bytes by re/symbols.toml sizes); 36 of 46 game units complete, 31 reviewed; 20 routines (3661 bytes) inside external object files are not Pascal and are matched by bytes; main program `src/POOL.PAS` matched by `make match UNIT=main` |
+| P4 Match | 403 of 1113 game routines at L2 (123391 of 233807 bytes by re/symbols.toml sizes); 36 of 46 game units complete, 32 reviewed; 20 routines (3661 bytes) inside external object files are not Pascal and are matched by bytes; main program `src/POOL.PAS` matched by `make match UNIT=main` |
 | P5 Rebuild | `make rebuild` links the whole game from `src/` (every unit has source: decompiled or skeleton) and reports identical segments |
 
 ### P4 units with matched routines
@@ -28,7 +28,7 @@ Approach: ADR-002 (SPEC 4), Pascal-first matching decompilation; the C track (AD
 | ovl07 | Loader | 33 | 33 | 8730 | clean | yes |
 | ovl08 | CombatAI | 14 | 14 | 4735 | clean | yes |
 | ovl09 | CombatAI | 15 | 15 | 6574 | clean | complete |
-| ovl10 | BattleStart | 23 | 23 | 9802 | clean | complete |
+| ovl10 | BattleStart | 23 | 23 | 9802 | clean | yes |
 | ovl11 | Loader | 2 | 2 | 1517 | clean | yes |
 | ovl14 | ovl14 | 14 | 14 | 4268 | clean | yes |
 | ovl15 | Camp | 23 | 23 | 8293 | clean | yes |
