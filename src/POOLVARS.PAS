@@ -946,7 +946,9 @@ var
   { ds84E3: set when ShowEncounterPicture loads the 3D sprite; ShowCloseUpCommand (ovl03:0856) clears it. }
   ds84E3: Byte;                   { 3D encounter sprite loaded; cleared by the loader (ovl11:0433) }
   ds84E4: Byte;                   { window-clear once flag: HandleWildernessKeys clears the text window and sets it }
-  ds84E9: Byte;                   { cleared by the loader (ovl11:0456) }
+  { ds84E9: EncounterActionCommand (ovl03:1EF8) sets it so ShowEncounterPicture skips the
+    close-up unless monster pictures are on. The loader clears it (ovl11:0456). }
+  ds84E9: Byte;                   { skip the close-up unless monster pictures are on }
 
   { The 8x8 tile world of ovl34 (whitepaper 4.x): which 8X8D file to take the bank from, the five
     loaded banks, the staging buffer tiles are copied through, the buffer DrawPictureItem draws

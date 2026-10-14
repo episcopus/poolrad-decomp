@@ -6193,3 +6193,10 @@ kind = "routine"
 why = "one step of the area: EventByteAt into ds6AB1, AreaViewKind set to 1 (copied to ds49F9), entry ds49EB, the map page kind from WallViewMode, ShowAreaView, entries ds49E3 and ds49E5, repeated while StartEclBlock sets ds442F; packet ovl03_31B4, proven by make match"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl03_fn_1EF8"
+new = "EncounterActionCommand"
+kind = "routine"
+why = "dispatcher ovl03:2F2D calls it for opcode 41; the menu literals at ovl03:1E9B are COMBAT, WAIT, FLEE and PARLAY or ADVANCE, and the outcome word is written to operand 4"
+date = "2026-10-14"
+

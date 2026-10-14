@@ -60,8 +60,8 @@ confidence = "V"
 units = ["*"]
 tags = ["byte", "compare", "guard", "codegen"]
 title = "`if Count <= 0 then Count := 1` compiles to the original's ja; `if Count = 0` to jne"
-lesson = "For a Byte counter, `if Count = 0 then Count := 1` compiles to cmp byte [x],0; jne, which skips the assignment on the other branch. The original's `cmp byte [bp-2],0; ja skip; mov byte [bp-2],1` (skip when Count > 0) is the source `if Count <= 0 then Count := 1`. The two sources mean the same for a Byte; when a compare with 0 differs only in its conditional jump, change the relation and keep the logic."
-evidence = ["src/OVL03.PAS#AddEncounterGroupCommand", "re/symbols.toml#ovl03:0450"]
+lesson = "For a Byte counter, `if Count = 0 then Count := 1` compiles to cmp byte [x],0; jne, which skips the assignment on the other branch. The original's `cmp byte [bp-2],0; ja skip; mov byte [bp-2],1` (skip when Count > 0) is the source `if Count <= 0 then Count := 1`. The same split holds for a Word compared with 0, where `ja` and `jne` are equivalent at runtime: EncounterActionCommand (ovl03:2330) tests steps ahead with `ja` to the step-closer block, which is `if Steps <= 0 then WriteVmWord else` the step, not `if Steps = 0`. The two sources mean the same for a value that cannot be negative; when a compare with 0 differs only in its conditional jump, change the relation and keep the logic."
+evidence = ["src/OVL03.PAS#AddEncounterGroupCommand", "re/symbols.toml#ovl03:0450", "src/OVL03.PAS#EncounterActionCommand", "re/symbols.toml#ovl03:1EF8"]
 
 [[lesson]]
 id = "two-condition-while-matches-exit-shape"
@@ -249,8 +249,8 @@ confidence = "V"
 units = ["*"]
 tags = ["if", "layout", "polarity", "codegen"]
 title = "The jump target of an if test shows the source polarity: the block that is jumped to is written last"
-lesson = "TP lays out the then-block first and jumps over it. When the original tests with je straight to the later block, the source is the negated test with the blocks in the other order. ovl03:1DB1 (LoseMoneyAndItemsCommand) is the then-first form (jne to the party loop). ovl03:1EF8 (blocked) needs the negated forms: if Choice <> 2 then <one result> else <flee check>, and if (steps = 0) or (wall = 0) then PARLAY else ADVANCE, which also puts the two menu strings in the literal pool in the original order. Read the jump target before writing the condition."
-evidence = ["src/OVL03.PAS#LoseMoneyAndItemsCommand", "re/symbols.toml#ovl03:1EF8"]
+lesson = "TP lays out the then-block first and jumps over it. When the original tests with je straight to the later block, the source is the negated test with the blocks in the other order. ovl03:1DB1 (LoseMoneyAndItemsCommand) is the then-first form (jne to the party loop). EncounterActionCommand (ovl03:1EF8, matched) uses the negated forms: if Choice <> FleeChoice then the one result else the flee check, if (steps = 0) or (wall = 0) then PARLAY else ADVANCE (which also puts the two menu strings in the literal pool in the original order), and if Steps <> 0 then the step-closer else 'Both sides wait.'. Read the jump target before writing the condition."
+evidence = ["src/OVL03.PAS#LoseMoneyAndItemsCommand", "src/OVL03.PAS#EncounterActionCommand", "re/symbols.toml#ovl03:1EF8"]
 
 [[lesson]]
 id = "for-bound-local-no-extra-count"
