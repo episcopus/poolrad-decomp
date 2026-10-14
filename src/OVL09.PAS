@@ -388,7 +388,7 @@ end;
   the direction; a panicking one rerolls the step pattern (StepPattern, RollDice(1, 2)) and derives a
   direction from the party marker facing PartyFacing (+ 4 on the party side, mod 8). The step then tries
   patterns Step = 1..5 while CanAffordStep refuses them (a panicking actor that is off the map ends
-  through ovl13_e5); with no affordable step, or one that would step back (ds443C = (Turn + 4)
+  through TryFlee); with no affordable step, or one that would step back (ds443C = (Turn + 4)
   mod 8), the pattern is advanced (ds443D counts the turns) and the actor may instead end the turn
   through ovl09_fn_0F4F or ovl13_e21. A step taken sets the icon (SetCombatantIcon with the turn),
   runs PartingShots (or StepCombatant once Flag10D is set past it) and ApplyCloudTile; an ending turn runs
@@ -431,7 +431,7 @@ begin
         not CanAffordStep(Who, Step, Dir, OffMap) do
   begin
     if (Who^.Combat^.Panic <> 0) and (OffMap <> 0) then
-      Done := ovl13_e5(Who)
+      Done := TryFlee(Who)
     else
       Inc(Step);
   end;

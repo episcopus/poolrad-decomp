@@ -4057,3 +4057,10 @@ kind = "routine"
 why = "ovl13:08B2 runs the attacks of the enemies Who is leaving behind when it moves (adjacent before the step, not at the destination; called by MoveCharacter ovl08:09DF and MoveStep ovl09:07F2 just before StepCombatant)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl13_e5"
+new = "TryFlee"
+kind = "routine"
+why = "ovl13:0C6A is the Flee answer of the Move command (ovl08:0410) and the panicking off-map step (ovl09:0434): it drops the combatant with StatusFled ('Got Away') or flashes 'Escape is blocked', then ends the turn through EndCombatTurn"
+date = "2026-10-13"
+

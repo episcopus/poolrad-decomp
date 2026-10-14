@@ -5423,27 +5423,14 @@ evidence = ["prologue"]
 id = "ovl13:0C6A"
 unit = "ovl13"
 addr = "ovl13:0C6A"
-size = 132
-name = "ovl13_e5"
-signature = "function ovl13_e5(Who: Pointer): Byte"
+size = 185
+name = "TryFlee"
+signature = "function TryFlee(Who: PCharacter): Byte"
 c_name = "ovl13_e5"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_5"
+notes = "renamed from ovl13_e5 (ovl13:0C6A is the Flee answer of the Move command (ovl08:0410) and the panicking off-map step (ovl09:0434): it drops the combatant with StatusFled ('Got Away') or flashes 'Escape is blocked', then ends the turn through EndCombatTurn); auto:entry_5"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl13:0CEE"
-unit = "ovl13"
-addr = "ovl13:0CEE"
-size = 53
-name = "ovl13_fn_0CEE"
-signature = ""
-c_name = "ovl13_fn_0CEE"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl13:0D23"

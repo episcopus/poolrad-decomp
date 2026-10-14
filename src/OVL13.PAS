@@ -14,8 +14,7 @@ procedure GuardedEnemiesAttack(Who: PCharacter);
 procedure StepCombatant(Who: PCharacter; Dir: Byte);
 procedure ovl13_fn_08AC;
 procedure PartingShots(Who: PCharacter; Dir: Byte);
-function ovl13_e5(Who: Pointer): Byte;
-procedure ovl13_fn_0CEE;
+function TryFlee(Who: PCharacter): Byte;
 procedure ovl13_e6(Who: PCharacter);
 procedure ovl13_fn_0D92;
 procedure ovl13_fn_0D99;
@@ -102,6 +101,8 @@ const
   HookGoesDown = $D;           { run when a combatant goes down (ovl13:05F1, ovl24's HookGoesDown) }
   { TCharacter.Status (+$10C) values the death message tests (ovl13:0583, 05AC). }
   StatusDying = 5;
+  { The status a fleeing combatant is dropped with (ovl13:0CE1; the same 3 as ovl24's StatusFled). }
+  StatusFled = 3;
   { The statuses that show 'is killed': the set [6, 7, 8] at ovl13:02CF (the original bytes
     c0 01 00.. at that address are bits 6, 7 and 8). Status 5 (dying) gets 'and is Dying' instead. }
   StatusKilled = [6, 7, 8];
@@ -127,6 +128,9 @@ const
   PartingShotFirstOffset = 6;
   PartingShotLastOffset = 10;
   Directions = 8;
+  { CollectEnemiesInRange's range byte for "every enemy" (the $FF ovl13:0C7A passes when a flee is
+    tried; range 1 is the adjacent ring). }
+  AllEnemiesRange = $FF;
 
 { ovl13:0000. Sets up Who's turn at the start of a combat round: clears and re-arms its combat
   state Combat^ (PendingSpell 0, Cast and Use-magic allowed), refreshes it through ovl13_e6, lets
@@ -463,10 +467,37 @@ begin
                   end;
       end;
 end;
-{ ovl13:0C6A: frame not read }
-{@stub} function ovl13_e5(Who: Pointer): Byte; begin end;
-{ ovl13:0CEE: retf 4: 4 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl13_fn_0CEE; begin end;
+{ ovl13:0C6A. Tries to flee the fight for Who (the Flee answer of the Move command, ovl08:0410,
+  and a panicking off-map step, ovl09:0434): with no enemy at all within CollectEnemiesInRange's
+  $FF it gets away; otherwise it gets away when ovl13_e20(Who)'s initiative is below half Who's
+  round Movement, or level with it and a RollDice(1, 2) coin comes up 1. Getting away drops the
+  combatant from the fight with StatusFled ('Got Away'), a block flashes 'Escape is blocked'.
+  Returns EndCombatTurn(Who), which ends the turn. Globals: none. }
+function TryFlee(Who: PCharacter): Byte;
+var
+  Escaped: Boolean;              { the flee attempt succeeded }
+  Other: Byte;                   { initiative ovl13_e20 works out for Who }
+  Moves: Byte;                   { half of Who's round movement budget }
+begin
+  Escaped := False;
+  if CollectEnemiesInRange(Who, AllEnemiesRange) = 0 then
+    Escaped := True
+  else
+  begin
+    Moves := ComputeMovement(Who) shr 1;
+    Other := ovl13_e20(Who);
+    if Other < Moves then
+      Escaped := True
+    else if Other = Moves then
+      if RollDice(1, 2) = 1 then
+        Escaped := True;
+  end;
+  if Escaped then
+    DropCombatant(Who, StatusFled, 'Got Away')
+  else
+    ShowFlashMessage('Escape is blocked');
+  TryFlee := EndCombatTurn(Who);
+end;
 { ovl13:0D23: frame not read }
 {@stub} procedure ovl13_e6(Who: PCharacter); begin end;
 { ovl13:0D92: frame not read }
