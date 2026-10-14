@@ -25,13 +25,15 @@ implementation
 uses Crt, RES04, RES12, OVL22, OVL24, OVL25;
 const
   RestLabelColumn = 1;      { the column of the "Rest Time:" label }
-  RestFirstColumn = 11;     { the column where the days field starts }
+  RestFirstColumn = 11;     { the column before the days field; ShowRestTime draws the first days digit
+                              at RestFirstColumn + 1 = 12, then moves right three columns a field }
   RestRow = 17;             { the text row of the rest time line }
   TopClockDigit = 6;        { the top digit of the clock (years); its carry ages the party instead of carrying }
   RestTextColour = 10;      { EGA colour of the rest time }
   RestSelectedColour = 15;  { EGA colour of the field the player is changing }
-  RestCounterBytes = $48;   { bytes reset at ovl20:0CE5 }
-  RestCounterInitial = 1;   { initial value stored by that FillChar }
+  TimedAffectFlagCount = $48; { the 72 TimedAffectFlags entries, one per party member (ds471E is the same
+                                bytes from index 1; the FillChar at ovl20:0000 and ovl20:0CE5 marks them) }
+  TimedAffectDue = 1;         { the value that FillChar stores: every member's timed affects are due }
   FirstPartyIndex = 1;      { RestStudyCountdowns is indexed from 1 by the party traversal }
   RestDisplayInterval = 5;  { five rest steps between time-line redraws }
   RestInterruptDice = 1;    { one roll per interruption check }
@@ -110,7 +112,7 @@ var
   TargetAffect: PAffect;        { the affect this pass is shortening or removing }
 begin
   if ds49F3 <> ViewModeCamp then
-    FillChar(ds471E, RestCounterBytes, RestCounterInitial)
+    FillChar(ds471E, TimedAffectFlagCount, TimedAffectDue)
   else
   begin
     HasTimedAffect := 0;
@@ -603,7 +605,7 @@ begin
     Inc(PartyIndex);
     Who := Who^.Next;
   end;
-  FillChar(ds471E, RestCounterBytes, RestCounterInitial);
+  FillChar(ds471E, TimedAffectFlagCount, TimedAffectDue);
   RestCycleCounter := 0;
   DisplayCounter := 0;
   ClearRect(RestWindowLeft, RestWindowTop, RestWindowRight, RestWindowBottom);
