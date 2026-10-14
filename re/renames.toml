@@ -5787,3 +5787,10 @@ kind = "routine"
 why = "ovl22:3413 fills SpellHandlers at DS:6B84 (element 0 the target picker via SpellTargetPicker, elements 1..$43 the per-spell cast handlers, all overlay stubs of this unit) and stores @MonsterBreath in DS:6988; ovl11:002D StartGame calls it once at start-up. It initialises the spell-casting handlers and globals."
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl22_e1"
+new = "PickSpellFromMenu"
+kind = "routine"
+why = "ovl22:008A shows SpellMenuList through ChooseFromList (ovl25:0D9A) with the button word Cast/Memorize/Scribe/Learn per Mode and returns the chosen line's spell number from SpellMenuSpells, or 0 when the player left; called only by ChooseSpellFromList (ovl19:299C)"
+date = "2026-10-14"
+

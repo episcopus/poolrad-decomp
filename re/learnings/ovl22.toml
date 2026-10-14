@@ -152,3 +152,21 @@ tags = ["matcher", "dsgroup", "absolute", "array", "global"]
 title = "A constant-index write into an `absolute` block needs the block to be a real array with a dseg.toml name, not an absolute over a 4-byte pointer"
 lesson = "make match resolves a DS operand by the nearest preceding public variable (Build.data_var), then maps that name to the original offset (original_global + delta). So `SpellHandlers[k] := H;` with SpellHandlers declared `array[0..$43] of TSpellHandler absolute ds6B84` (ds6B84 a 4-byte Pointer) failed: the address ds6B84+4k sat inside the unrelated variable ds6988, so the matcher read it as DS:6988 instead of DS:6B88. Declaring the block as a real array (`SpellHandlers: array[0..$43] of TSpellHandler;` plus a re/dseg.toml entry offset 0x6B84 name SpellHandlers, and `ds6B84: Pointer absolute SpellHandlers;` / `SpellTargetPicker: TSpellTargetPicker absolute SpellHandlers;` for the other views) makes the element resolve to 6B84+4k; the alias views resolve to the same base, so ovl08's `ds6B84 := @...` still matches. src/POOLVARS.PAS#SpellHandlers."
 evidence = ["src/POOLVARS.PAS#SpellHandlers", "re/dseg.toml#SpellHandlers", "src/OVL22.PAS#InitSpellHandlers", "re/symbols.toml#ovl22:3413"]
+
+[[lesson]]
+id = "var-typecast-bridges-word-integer-var-param"
+confidence = "V"
+units = ["*"]
+tags = ["compiler", "var-parameter", "typecast", "word", "integer"]
+title = "A variable typecast passes a Word variable to a var Integer parameter"
+lesson = "TP 6.0 refuses a Word variable for a var Integer parameter and the reverse (Error 26: WDTOIN.PAS, INTOWD.PAS), but a variable typecast is itself a variable reference, so ChooseFromList(..., Integer(Choice), ...) with Choice: Word compiles to the plain address push (lea di; push ss; push di) and no code of its own. ovl22:008A (PickSpellFromMenu) keeps the Word its callers (ovl19:299C, ovl15) declare and calls ChooseFromList with Integer(Choice); the signed test `cmp word es:[di],0; jge` is `Integer(Choice) < 0`. No change to other units or to the NoChoice constant is needed."
+evidence = ["tools/re/tp_idioms/ovl22/VARCAST.PAS", "src/OVL22.PAS#PickSpellFromMenu", "re/symbols.toml#ovl22:008A"]
+
+[[lesson]]
+id = "set-constant-shares-zero-bytes-with-empty-string"
+confidence = "V"
+units = ["*"]
+tags = ["compiler", "literal-pool", "set", "empty-string"]
+title = "The empty string literal of a call shares a zero byte of a set constant before it"
+lesson = "In ovl22:008A's literal pool the set [1..4] at 001B is 1E followed by 31 zero bytes, and the '' passed to DrawWindow is the byte at 001C (the first zero byte of that set), not a pool entry of its own. The matched source needs nothing special for the empty string (a plain '' argument); but the sets of an until loop must list every member the original set holds (here [#0, #13, 'C', 'E', 'L', 'M', 'S'], read from the pool bytes 01 20 .. 28 30 08 at 004A) or the pool differs at the first byte that differs."
+evidence = ["src/OVL22.PAS#PickSpellFromMenu", "re/symbols.toml#ovl22:008A"]
