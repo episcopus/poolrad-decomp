@@ -498,12 +498,12 @@ id = "ovl03:1629"
 unit = "ovl03"
 addr = "ovl03:1629"
 size = 160
-name = "ovl03_fn_1629"
+name = "CheckPartyClassCommand"
 signature = ""
 c_name = "ovl03_fn_1629"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_1629 (dispatcher ovl03:2F2D calls it for SkippedOpcode $22 (ECL command 34); it sets operand 1 to 1 when a party member's ClassMask (TCharacter +$2F) is 4 or 10, and writes 0 to operand 2); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

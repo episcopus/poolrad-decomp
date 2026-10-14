@@ -33,7 +33,7 @@ procedure AskMenuCommand;
 procedure ClearEncounterCommand;
 procedure ComputePartyValueCommand;
 procedure ScanPartyCommand;
-procedure ovl03_fn_1629;
+procedure CheckPartyClassCommand;
 procedure ovl03_fn_16C9;
 procedure ovl03_fn_1758;
 procedure ovl03_fn_179B;
@@ -1024,8 +1024,41 @@ begin
       end;
   end;
 end;
-{ ovl03:1629: retf 0: 0 bytes of parameters; 12 bytes of locals }
-{@stub} procedure ovl03_fn_1629; begin end;
+{ ovl03:1629. ECL command 34 (dispatcher ovl03:2F2D, SkippedOpcode $22): reports whether a party member
+  has the class mask 4 or 10. It walks the party list ds5D96 (through TCharacter.Next) and tests the
+  ClassMask (+$2F) of each member: a member with 4 or 10 sets the flag. Operand 1 receives the flag (1
+  or 0) and operand 2 the second value, which the original always writes as 0 (QUIRK ovl03:1629: the
+  Mark byte is set with the flag and never read). Mask 10 is one of the multi-class values AwardExperience
+  halves (ovl05:0355); mask 4 is not named yet. }
+procedure CheckPartyClassCommand;
+var
+  Member: PCharacter;           { the party member being tested }
+  Found: Byte;                  { 1 when a member has a class mask of 4 or 10 }
+  Second: Byte;                 { the value operand 2 receives: always 0 }
+  Mark: Byte;                   { QUIRK ovl03:1629: set with Found, never read }
+  Target: Word;                 { operand 1: script address of Found }
+  SecondTarget: Word;           { operand 2: script address of Second }
+  Unused: Byte;                 { QUIRK ovl03:1629: a byte of the frame nothing uses }
+begin
+  DecodeOperands(2);
+  Member := PCharacter(ds5D96);
+  Found := 0;
+  Second := 0;
+  Mark := 0;
+  while Member <> nil do
+  begin
+    if (Member^.ClassMask = 4) or (Member^.ClassMask = 10) then
+    begin
+      Found := 1;
+      Mark := 1;
+    end;
+    Member := Member^.Next;
+  end;
+  Target := MakeWord(OperandLow[1], OperandHigh[1]);
+  SecondTarget := MakeWord(OperandLow[2], OperandHigh[2]);
+  WriteVmWord(Target, Found);
+  WriteVmWord(SecondTarget, Second);
+end;
 { ovl03:16C9: frame not read }
 {@stub} procedure ovl03_fn_16C9; begin end;
 { ovl03:1758: frame not read }

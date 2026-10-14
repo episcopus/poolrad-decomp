@@ -3637,3 +3637,9 @@ kind = "routine"
 why = "nested in ScanPartyCommand (ovl03:1435): writes the four results of the scan (lowest, highest, average, affect flag) to the script addresses of operands 3 to 6"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl03_fn_1629"
+new = "CheckPartyClassCommand"
+kind = "routine"
+why = "dispatcher ovl03:2F2D calls it for SkippedOpcode $22 (ECL command 34); it sets operand 1 to 1 when a party member's ClassMask (TCharacter +$2F) is 4 or 10, and writes 0 to operand 2"
+date = "2026-10-13"
