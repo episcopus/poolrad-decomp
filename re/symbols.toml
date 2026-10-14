@@ -16790,40 +16790,14 @@ evidence = ["prologue"]
 id = "00BA:1816"
 unit = "res12"
 addr = "00BA:1816"
-size = 65
+size = 124
 name = "DrawCharacterName"
 signature = "procedure DrawCharacterName(Who: PCharacter; Col, Row, Mode: Byte)"
 c_name = "res12_fn_1816"
-level = "none"
+level = "L2"
 justification = ""
 notes = "renamed from res12_fn_1816 (00BA:1816 draws Who's Name (+0) at (Col,Row) in the colour of its state: LightRed when Flag10D (+$10d) is 0 (no combat), Yellow when Side (+$10e) is 1 (the party), LightCyan otherwise; when Mode is set it appends the literal 's at Col + Length(Name). The map oversize 65 was wrong, the real routine is 124 bytes.); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "00BA:1857"
-unit = "res12"
-addr = "00BA:1857"
-size = 38
-name = "res12_fn_1857"
-signature = ""
-c_name = "res12_fn_1857"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "00BA:187D"
-unit = "res12"
-addr = "00BA:187D"
-size = 21
-name = "res12_fn_187D"
-signature = ""
-c_name = "res12_fn_187D"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "00BA:1892"

@@ -50,8 +50,6 @@ procedure ShowFlashMessage(Text: String40);
 procedure ShowCharacterMessage(Who: PCharacter; Text: string; Row, Wait: Byte);
 procedure ClearCharacterMessage;
 procedure DrawCharacterName(Who: PCharacter; Col, Row, Mode: Byte);
-procedure res12_fn_1857;
-procedure res12_fn_187D;
 procedure res12_fn_1892;
 procedure res12_fn_18A3;
 procedure res12_fn_18CF;
@@ -876,12 +874,26 @@ begin
   else
     ClearWindow(1, $12, $26, $16);
 end;
-{ 00BA:1816: implementation pending in this batch }
-{@stub} procedure DrawCharacterName(Who: PCharacter; Col, Row, Mode: Byte); begin end;
-{ 00BA:1857: frame not read }
-{@stub} procedure res12_fn_1857; begin end;
-{ 00BA:187D: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure res12_fn_187D; begin end;
+{ 00BA:1816. Draws Who's name (Name, +0) as text at (Col, Row) in the colour of Who's state:
+  LightRed when Who takes no part in combat (Flag10D, +$10d = 0), Yellow for the party side
+  (Side, +$10e = 1) and LightCyan otherwise. When Mode is set it appends "'s" after the name
+  (at Col + Length(Name)). Called by the roster, the character panel and ovl13, ovl16, ovl19,
+  ovl21 and ovl22. Globals: none. }
+procedure DrawCharacterName(Who: PCharacter; Col, Row, Mode: Byte);
+var
+  Color: Byte;
+begin
+  if Who^.Flag10D = 0 then
+    Color := LightRed
+  else
+    if Who^.Side = 1 then
+      Color := Yellow
+    else
+      Color := LightCyan;
+  DrawTextAt(Col, Row, Color, Who^.Name);
+  if Mode <> 0 then
+    DrawTextAt(Col + Length(Who^.Name), Row, Color, '''s');
+end;
 { 00BA:1892: frame not read }
 {@stub} procedure res12_fn_1892; begin end;
 { 00BA:18A3: frame not read }
