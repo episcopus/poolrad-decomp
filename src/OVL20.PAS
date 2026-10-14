@@ -88,7 +88,8 @@ const
 { ovl20:0000. Spends elapsed game time on the party's timed affects. AdvanceGameClock calls it with the Amount
   and Index just added to the game clock. Those units are scaled down to the smallest digit (each higher
   digit multiplied by ClockRadix), then spent in passes of at most MaxAffectStep. Outside camp every
-  member is marked due (FillChar of ds471E). In camp it returns at once when no TimedAffectFlags entry is set. A
+  member is marked due (FillChar of ds471E, the same 72 bytes as TimedAffectFlags from index 1; a port
+  should use TimedAffectFlags). In camp it returns at once when no TimedAffectFlags entry is set. A
   marked member's flag is cleared, then each affect loses the pass or is removed through RemoveAffect
   when its duration does not outlast the pass. Duration 0 is permanent and is left. The flag is set
   again while a timed affect remains. Reads ds49F3, ds49D6 word VarPartySize, ClockRadix and the party
