@@ -549,40 +549,14 @@ evidence = ["prologue"]
 id = "ovl03:19B0"
 unit = "ovl03"
 addr = "ovl03:19B0"
-size = 402
-name = "ovl03_fn_19B0"
+size = 1025
+name = "AddLootCommand"
 signature = ""
 c_name = "ovl03_fn_19B0"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_19B0 (dispatcher ovl03:2F2D sends SkippedOpcode 39 here (cmp al,27h); it fills ds6810, the loot list that ComputeBattleExperience (ovl05:0000) fills, from an item block or from rolls); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl03:1B42"
-unit = "ovl03"
-addr = "ovl03:1B42"
-size = 209
-name = "ovl03_fn_1B42"
-signature = ""
-c_name = "ovl03_fn_1B42"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl03:1C13"
-unit = "ovl03"
-addr = "ovl03:1C13"
-size = 414
-name = "ovl03_fn_1C13"
-signature = ""
-c_name = "ovl03_fn_1C13"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl03:1DB1"

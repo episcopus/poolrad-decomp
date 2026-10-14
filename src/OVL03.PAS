@@ -37,9 +37,7 @@ procedure CheckPartyClassCommand;
 procedure RollRangeCommand;
 procedure RunAreaEventCommand;
 procedure SelectCaseCommand;
-procedure ovl03_fn_19B0;
-procedure ovl03_fn_1B42;
-procedure ovl03_fn_1C13;
+procedure AddLootCommand;
 procedure ovl03_fn_1DB1;
 procedure ovl03_fn_1EF8;
 procedure ovl03_fn_238D;
@@ -68,7 +66,7 @@ procedure ovl03_e1;
 procedure ovl03_fn_3379;
 procedure ovl03_fn_34AB;
 implementation
-uses OVL04, OVL05, OVL06, OVL08, OVL17, OVL24, OVL25, OVL26, OVL28, OVL29, OVL32, RES06;
+uses OVL04, OVL05, OVL06, OVL08, OVL17, OVL21, OVL24, OVL25, OVL26, OVL28, OVL29, OVL32, RES04, RES05, RES06;
 
 const
   { The operand types from this one up are strings: $80 a packed string, $81 the address of a
@@ -92,6 +90,12 @@ const
   OpOr = 48;
   { The opcode of the case command that stores the chosen address in ds49ED (ovl03:18F8); 38 runs it. }
   OpChooseAddress = 37;
+  { The loot Kind of ECL command 39 (ovl03:19B0): below TreasureTableBase it is an item block, from it
+    up a treasure table of Kind - TreasureTableBase rolls, and NoTreasure gives nothing. }
+  TreasureTableBase = $80;
+  NoTreasure = $FF;
+  { The colour of the message 'Unable to find item file' (ovl03:19B0). }
+  ItemErrorColor = 15;
   { The bit of ECL command 10's operand that removes the member from the party, and the mask of
     the party position (ovl03:02E0). }
   RemoveMemberBit = $80;
@@ -1197,12 +1201,146 @@ begin
       Inc(I);
   end;
 end;
-{ ovl03:19B0: frame not read }
-{@stub} procedure ovl03_fn_19B0; begin end;
-{ ovl03:1B42: frame not read }
-{@stub} procedure ovl03_fn_1B42; begin end;
-{ ovl03:1C13: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl03_fn_1C13; begin end;
+{ ovl03:19B0. ECL command 39 (dispatcher ovl03:2F2D, SkippedOpcode $27): adds loot to the loot list ds6810
+  (the list ComputeBattleExperience, ovl05:0000, fills). Operands 1 to 7 set PooledMoney (each read as a
+  word); operand 8 is the Kind of the loot:
+  - a Kind below TreasureTableBase is an item block: every 63-byte record of ITEM<TileSet>.dax block Kind
+    (LoadDaxBlock) is linked in front of ds6810, then the block is freed. An empty block (size 0) shows
+    ItemErrorColor's message and ends the game (QuitGame).
+  - NoTreasure adds nothing.
+  - any other Kind is a treasure table with Kind - TreasureTableBase rolls. Each roll adds one item in
+    front of ds6810 (BuildTreasureItem, with the roll's Code). After the rolls res12_fn_0442 runs for every
+    item of the list with SelectedCharacter (its meaning is not traced yet).
+  The Code of a roll: Chance (d100) of 1 to 60 picks Roll2, a second d100. 1 to 47 and 50 to 59 are the
+  kind itself (45 gives ';'); 60 to 90 a d10 gives '$', '#', '"', '%' or '&' for 1 to 4, 5 to 7, 8, 9 or
+  10; 91 to 94 gives 'I', 95 to 97 ']' and 98 to 100 'M'. Roll2 of 48 or 49 keeps the Code of the
+  previous roll (QUIRK ovl03:1BB7). Chance 61 to 85 gives '=', 86 to 92 '>', 93 to 98 a d16 gives 'G',
+  'F', 'T', 'N', 'O', '\' or 'C' for 1 to 7, 8 or 9, 10, 11 or 12, 13 or 14, 15 and 16, and 99 or 100
+  gives 'E'. }
+procedure AddLootCommand;
+var
+  Index: ShortInt;              { the money loop counter, then the number of rolls }
+  Kind: Byte;
+  Treasure: Byte;               { the roll being made }
+  Unused: array[0..22] of Byte; { QUIRK ovl03:19B0: 23 bytes of the frame nothing uses }
+  Item: TMenuLine;
+  Entry: PMenuLine;
+  Node: PMenuLine;
+  Pick: Byte;
+  Chance: Byte;
+  Roll2: Byte;                  { the second d100 of a roll, then the d10 of the 60..90 group }
+  Code: Char;                   { the kind of the item the roll builds }
+  Offset: Word;
+  Size: Word;
+  TileSetText: string[1];
+  Block: Pointer;
+begin
+  DecodeOperands(8);
+  for Index := 0 to 6 do
+    PooledMoney[Index] := OperandValue(Byte(Index) + 1);
+  Kind := OperandValue(8);
+  if Kind < TreasureTableBase then
+  begin
+    Str(TileSet, TileSetText);
+    LoadDaxBlock('ITEM' + TileSetText, '.dax', Kind, Size, Block);
+    if Size = 0 then
+    begin
+      ShowMessageLine(ItemErrorColor, 'Unable to find item file');
+      QuitGame;
+    end;
+    Offset := 0;
+    repeat
+      Move(PByteArray(Block)^[Offset], Item, SizeOf(Item));
+      Item.Next := nil;
+      Inc(Offset, SizeOf(Item));
+      if ds6810 = nil then
+      begin
+        New(ds6810);
+        ds6810^ := Item;
+      end
+      else
+      begin
+        Entry := ds6810;
+        New(ds6810);
+        ds6810^ := Item;
+        ds6810^.Next := Entry;
+      end;
+    until Offset >= Size;
+    FreeMem(Block, Size);
+  end
+  else if Kind <> NoTreasure then
+  begin
+    Index := Kind - TreasureTableBase;
+    for Treasure := 1 to Index do
+    begin
+      Chance := RollDice(1, 100);
+      case Chance of
+        1..60:
+          begin
+            Roll2 := RollDice(1, 100);
+            case Roll2 of
+              1..47, 50..59:
+                if Roll2 = 45 then
+                  Code := ';'
+                else
+                  Code := Chr(Roll2);
+              60..90:
+                begin
+                  Roll2 := RollDice(1, 10);
+                  case Roll2 of
+                    1..4: Code := '$';
+                    5..7: Code := '#';
+                    8: Code := '"';
+                    9: Code := '%';
+                    10: Code := '&';
+                  end;
+                end;
+              91..94: Code := 'I';
+              95..97: Code := ']';
+              98..100: Code := 'M';
+            end;
+          end;
+        61..85: Code := '=';
+        86..92: Code := '>';
+        { 91 and 92 are taken by 86..92 above; the label is 91..98 as the original compares it }
+        91..98:
+          begin
+            Pick := RollDice(1, 16);
+            case Pick of
+              1..7: Code := 'G';
+              8..9: Code := 'F';
+              10: Code := 'T';
+              11, 12: Code := 'N';
+              13, 14: Code := 'O';
+              15: Code := '\';
+              16: Code := 'C';
+            end;
+          end;
+        99, 100: Code := 'E';
+      end;
+      BuildTreasureItem(Ord(Code), Item);
+      if ds6810 = nil then
+      begin
+        New(ds6810);
+        ds6810^ := Item;
+        ds6810^.Next := nil;
+      end
+      else
+      begin
+        Entry := ds6810;
+        New(ds6810);
+        ds6810^ := Item;
+        ds6810^.Next := Entry;
+      end;
+    end;
+    Node := ds6810;
+    while Node <> nil do
+    begin
+      res12_fn_0442(LongInt(SelectedCharacter), Node, 0, 0, 0, 0);
+      Node := Node^.Next;
+    end;
+  end;
+end;
 { ovl03:1DB1: retf 0: 0 bytes of parameters; 18 bytes of locals }
 {@stub} procedure ovl03_fn_1DB1; begin end;
 { ovl03:1EF8: frame not read }
