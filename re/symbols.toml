@@ -10308,7 +10308,7 @@ evidence = ["prologue"]
 id = "ovl22:206F"
 unit = "ovl22"
 addr = "ovl22:206F"
-size = 416
+size = 424
 name = "CastAnimateDead"
 signature = ""
 c_name = "ovl22_e39"
@@ -10321,27 +10321,14 @@ evidence = ["prologue"]
 id = "ovl22:2217"
 unit = "ovl22"
 addr = "ovl22:2217"
-size = 28
-name = "ovl22_e40"
+size = 61
+name = "CastCureBlindness"
 signature = ""
 c_name = "ovl22_e40"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_40"
+notes = "renamed from ovl22_e40 (cast handler of spell 37 (SpellNames[37] is 'Cure Blindness' at DS:28E9): removes the blindness affect $21 (SpellTable[37].AffectId) from the first chosen target ds6C95 and shows 'can see' when it was there (make match UNIT=ovl22 FN=CastCureBlindness)); auto:entry_40"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl22:2233"
-unit = "ovl22"
-addr = "ovl22:2233"
-size = 42
-name = "ovl22_fn_2233"
-signature = ""
-c_name = "ovl22_fn_2233"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl22:225D"

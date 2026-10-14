@@ -3728,3 +3728,10 @@ kind = "routine"
 why = "cast handler of spell 36 (SpellNames[36] is 'Animate Dead' at DS:28E9): walks the party list ds5D96, turns up to the caster level corpses (Status 6, CreatureType 0) into undead on the caster's side and leaves the animate affect $20 with 'is animated' (make match UNIT=ovl22 FN=CastAnimateDead)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl22_e40"
+new = "CastCureBlindness"
+kind = "routine"
+why = "cast handler of spell 37 (SpellNames[37] is 'Cure Blindness' at DS:28E9): removes the blindness affect $21 (SpellTable[37].AffectId) from the first chosen target ds6C95 and shows 'can see' when it was there (make match UNIT=ovl22 FN=CastCureBlindness)"
+date = "2026-10-13"
+

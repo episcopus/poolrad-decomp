@@ -48,7 +48,7 @@ procedure CastStrength;
 procedure ovl22_fn_202B;
 procedure CastAnimateDead;
 procedure ovl22_fn_20A9;
-procedure ovl22_e40;
+procedure CastCureBlindness;
 procedure ovl22_fn_2233;
 procedure ovl22_e41;
 procedure ovl22_fn_228A;
@@ -1234,8 +1234,17 @@ begin
 end;
 { ovl22:20A9: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl22_fn_20A9; begin end;
-{ ovl22:2217: frame not read }
-{@stub} procedure ovl22_e40; begin end;
+{ ovl22:2217. Cast handler of spell 37, Cure Blindness (SpellTable[37].AffectId is $21): removes the
+  blindness affect $21 from the first chosen target ds6C95 (CureAffect) and, only when the target
+  actually carried it, tells 'can see' through res12_fn_1FEB. Reads ds6C95. }
+procedure CastCureBlindness;
+const
+  BlindnessAffect = $21;          { the blindness affect CureAffect removes; the affect of spell 37 }
+  ShowAbout = 1;                  { res12_fn_1FEB's Flag argument }
+begin
+  if CureAffect(ds6C95, BlindnessAffect) then
+    res12_fn_1FEB(ds6C95, ShowAbout, 'can see');
+end;
 { ovl22:2233: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl22_fn_2233; begin end;
 { ovl22:225D: retf 0: 0 bytes of parameters; 10 bytes of locals }
