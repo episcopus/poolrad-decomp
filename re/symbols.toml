@@ -16781,7 +16781,7 @@ size = 51
 name = "ClearCharacterMessage"
 signature = "procedure ClearCharacterMessage"
 c_name = "res12_fn_17E3"
-level = "none"
+level = "L2"
 justification = ""
 notes = "renamed from res12_fn_17E3 (00BA:17E3 clears the message window ShowCharacterMessage wrote in: box ($17,$A)-($26,$15) in the combat view (ds49F3 = 5), else box (1,$12)-($26,$16). Called by ShowCharacterMessage's Wait path and by the camp, temple and resting screens.); auto:near_call"
 evidence = ["prologue"]

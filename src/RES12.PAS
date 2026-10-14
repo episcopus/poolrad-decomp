@@ -866,8 +866,16 @@ begin
     ClearCharacterMessage;
   end;
 end;
-{ 00BA:17E3: implementation pending in this batch }
-{@stub} procedure ClearCharacterMessage; begin end;
+{ 00BA:17E3. Clears the message window ShowCharacterMessage wrote in: in the combat view (view mode 5)
+  the box ($17,$A)-($26,$15), otherwise the box (1,$12)-($26,$16). Called after the wait flag of
+  ShowCharacterMessage and by the camp, temple and resting screens to wipe a message. Globals: ds49F3. }
+procedure ClearCharacterMessage;
+begin
+  if ds49F3 = 5 then
+    ClearWindow($17, $A, $26, $15)
+  else
+    ClearWindow(1, $12, $26, $16);
+end;
 { 00BA:1816: implementation pending in this batch }
 {@stub} procedure DrawCharacterName(Who: PCharacter; Col, Row, Mode: Byte); begin end;
 { 00BA:1857: frame not read }
