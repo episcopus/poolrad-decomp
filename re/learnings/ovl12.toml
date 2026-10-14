@@ -350,3 +350,12 @@ tags = ["rename", "global", "tooling", "unit", "ownership"]
 title = "make rename of a global used by another unit edits that unit's source (ds681C, set in ovl24)"
 lesson = "`make rename OLD=ds681C NEW=LastDiceCount` changed src/OVL24.PAS (RollDiceCounted, which sets it), src/POOLVARS.PAS and re/dseg.toml as well as ovl12. A unit branch may not edit another unit's file (AGENTS rule 3), so it was reverted with `git checkout` for the three files and the renames.toml record removed, and ds681C keeps its dsXXXX name (its POOLVARS comment carries what is known, which satisfies R5). A global read in several units should be renamed by the orchestrator or the owner of the unit that sets it."
 evidence = ["src/OVL24.PAS#RollDiceCounted", "src/POOLVARS.PAS#ds681C", "re/dseg.toml"]
+
+[[lesson]]
+id = "byte-function-result-to-word-parameter"
+confidence = "V"
+units = ["ovl12"]
+tags = ["RollDice", "Byte", "Word", "parameter", "xor", "codegen", "call"]
+title = "A Byte function result passed to a Word value parameter is zero-extended: xor ah, ah; push ax"
+lesson = "ParalyzeAttackTargetFor2d8 (ovl12:1699) passes `RollDice(2, 8)`, a Byte function result, as the Word Duration of ParalyzeAttackTarget (ovl12:15EB). The original calls RollDice, then `xor ah, ah; push ax` (ovl12:16AD) before the call, and the match holds with the Word parameter. A constant 0 for the Byte parameter is `mov al, 0; push ax`."
+evidence = ["src/OVL12.PAS#ParalyzeAttackTargetFor2d8", "re/symbols.toml#ovl12:1699"]
