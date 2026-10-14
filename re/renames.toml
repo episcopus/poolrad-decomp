@@ -4036,3 +4036,10 @@ kind = "routine"
 why = "ovl16:209F is the M (Modify) item of the training hall: it refuses an experienced character with '<name> can t be modified.' and lets the player raise/lower the six ability scores and HP with the arrows, Keep (K) or Exit (E); called by RunCharacterMenu (ovl16:0161)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl16_fn_33E7"
+new = "ChooseHeadAndBody"
+kind = "routine"
+why = "ovl16:33E7 shows the selected character's head and body pictures (ShowHeadBodyWindow) and its prompt 'Head Body Keep' cycles HeadBank (+BB) and BodyBank (+BC); the head/body step of the create flow (whitepaper 5.8)"
+date = "2026-10-13"
+

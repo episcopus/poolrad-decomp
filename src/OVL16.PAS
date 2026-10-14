@@ -6,7 +6,7 @@ unit OVL16;
   are still stubs. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
-uses POOLVARS, RES04, RES06, RES09, RES12, OVL17, OVL19, OVL23, OVL25;
+uses POOLVARS, RES04, RES06, RES09, RES12, OVL17, OVL19, OVL23, OVL25, OVL28;
 procedure FreeCharacter(Who: PCharacter);
 procedure RunCharacterMenu;
 procedure ovl16_fn_056C;
@@ -72,7 +72,7 @@ procedure ovl16_fn_295B;
 procedure ovl16_fn_29AE;
 procedure ovl16_fn_306D;
 procedure ovl16_e2(Uncounted, FreePicture: Boolean);
-procedure ovl16_fn_33E7;
+procedure ChooseHeadAndBody;
 procedure ovl16_fn_34DF;
 procedure ovl16_fn_35BE;
 procedure ovl16_e3;
@@ -716,8 +716,56 @@ end;
 {@stub} procedure ovl16_fn_306D; begin end;
 { ovl16:3291: retf 4: 4 bytes of parameters; 4 bytes of locals }
 {@stub} procedure ovl16_e2(Uncounted, FreePicture: Boolean); begin end;
-{ ovl16:33E7: retf 0: 0 bytes of parameters; 24 bytes of locals }
-{@stub} procedure ovl16_fn_33E7; begin end;
+{ ovl16:33E7. The head/body step of character creation (the "Head Body Keep" prompt of the create
+  flow, whitepaper 5.8): it shows the selected character's HEAD and BODY pictures (ShowHeadBodyWindow)
+  and asks ReadPromptChoice for a key. H or B steps the HeadBank (+$BB) or the BodyBank (+$BC) through
+  the picture numbers DS:286F and DS:287D, wrapping above $E and $C back to 1; K keeps the two banks as
+  they are now. Any other key (Escape included) leaves the banks alone and shows the prompt again: only
+  K leaves the loop. The banks that were current on entry are restored at the end unless the last K
+  kept the current ones. No parameters; works on SelectedCharacter. Side effects: the head/body window,
+  the prompt line and the two pictures. }
+procedure ChooseHeadAndBody;
+const
+  MaxHeadBank = $E;   { the highest HeadBank the picture table DS:286F (14 entries) offers }
+  MaxBodyBank = $C;   { the highest BodyBank the picture table DS:287D offers }
+  { The prompt line colours (ReadPromptChoice of ovl25). }
+  PromptTitleColour = 0;    { the title is empty, so its colour does not matter }
+  PromptWordColour = $F;    { white: the letters of the words 'Head Body Keep' }
+  PromptHotColour = $A;     { green: the words' capitals 'H', 'B', 'K' and the highlight }
+  PromptExtKeys = 0;        { the extended keys are not accepted }
+  PromptAnimate = 0;        { the caller does not ask for the picture animation }
+var
+  Key: Char;               { [bp-1]: the key ReadPromptChoice returned }
+  ExtKey: Byte;            { [bp-2]: nonzero when Key is an extended key }
+  SavedHeadBank: Byte;     { [bp-3]: the HeadBank that was current on entry }
+  SavedBodyBank: Byte;     { [bp-4]: the BodyBank that was current on entry }
+begin
+  with SelectedCharacter^ do
+  begin
+    SavedHeadBank := HeadBank;
+    SavedBodyBank := BodyBank;
+    repeat
+      ShowHeadBodyWindow;
+      Key := ReadPromptChoice('', 'Head Body Keep', PromptTitleColour, PromptWordColour,
+        PromptHotColour, PromptExtKeys, PromptAnimate, ExtKey);
+      if ExtKey = 0 then
+        case Key of
+          'H':
+            if HeadBank < MaxHeadBank then Inc(HeadBank) else HeadBank := 1;
+          'B':
+            if BodyBank < MaxBodyBank then Inc(BodyBank) else BodyBank := 1;
+          'K':
+            begin
+              SavedHeadBank := HeadBank;
+              SavedBodyBank := BodyBank;
+            end;
+        end;
+    until Key = 'K';
+    HeadBank := SavedHeadBank;
+    BodyBank := SavedBodyBank;
+  end;
+  ClearPromptLine;
+end;
 { ovl16:34DF: retf 6: 6 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl16_fn_34DF; begin end;
 { ovl16:35BE: retf 8: 8 bytes of parameters; 40 bytes of locals }

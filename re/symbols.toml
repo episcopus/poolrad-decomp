@@ -7814,12 +7814,12 @@ id = "ovl16:33E7"
 unit = "ovl16"
 addr = "ovl16:33E7"
 size = 248
-name = "ovl16_fn_33E7"
+name = "ChooseHeadAndBody"
 signature = ""
 c_name = "ovl16_fn_33E7"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl16_fn_33E7 (ovl16:33E7 shows the selected character's head and body pictures (ShowHeadBodyWindow) and its prompt 'Head Body Keep' cycles HeadBank (+BB) and BodyBank (+BC); the head/body step of the create flow (whitepaper 5.8)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
