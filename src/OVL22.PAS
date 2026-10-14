@@ -445,8 +445,14 @@ begin
   if HealCharacter(ds6C95, RollDice(1, 8), 0) then
     res12_fn_234A(ds6C95);
 end;
-{ ovl22:10A7: retf 0: 0 bytes of parameters; 2 bytes of locals }
-{@stub} procedure CastCauseLightWounds; begin end;
+{ ovl22:10A7 (e14). Cast handler of spell 4, Cause Light Wounds: applies the current spell ds681B
+  to the chosen targets with 1d8 damage of kind 8 and no message (ApplySpellToTargets; the dice go
+  through RollDiceCounted, which also records their count in ds681C). One of the per-spell handlers
+  in SpellHandlers (SpellHandlers[4], filled by ovl22_e10). }
+procedure CastCauseLightWounds;
+begin
+  ApplySpellToTargets(ds681B, 0, 0, RollDiceCounted(1, 8), 8, '');
+end;
 { ovl22:10E9: retf 0: 0 bytes of parameters; 12 bytes of locals }
 {@stub} procedure ovl22_e15; begin end;
 { ovl22:1123: retf 0: 0 bytes of parameters; 14 bytes of locals }
