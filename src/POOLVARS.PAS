@@ -165,12 +165,19 @@ type
   end;
   { The handler of an affect number (the table AffectHandlers): Mode 0 applies it, 1 removes it. }
   TAffectHandler = procedure(Who: PCharacter; Affect: PAffect; Mode: Byte);
+  { The combat target picker stored in DS:6B84: the spell number, an unused byte and Done in/out
+    (ChooseSpellTargets, ovl22:0A91; ovl08 stores it and CastChosenSpell calls it). }
+  TSpellTargetPicker = procedure(Spell: Byte; Unused: Byte; var Done: Byte);
+  { A cast handler: SpellHandlers holds one parameterless far routine per spell number; it reads the
+    current spell from ds681B and applies it (InitSpellHandlers fills entries 1.. from overlay stub 0096:0057
+    on; CastChosenSpell calls SpellHandlers[Spell] after the picker, whitepaper 5.22). }
+  TSpellHandler = procedure;
   { The combat state of a character (TCharacter.Combat, +$108), read and written by the combat
     units ovl08, ovl09 and ovl31; only the fields they use are named. ovl10 allocates $16 bytes for it
     (CombatRecordSize), which is this record's size with the fields to +$15. }
   PCombatant = ^TCombatant;
   TCombatant = record
-    { +$0: nonzero: the turn finishes this spell through ovl22_e5 (ovl08:0336); cleared when the
+    { +$0: nonzero: the turn finishes this spell through CastChosenSpell (ovl08:0336); cleared when the
       combatant leaves the map (RemoveCombatant). }
     PendingSpell: Byte;
     CanCast: Byte;                { +$1: zero hides Cast in the combat menu (ovl08:0747) }
@@ -212,17 +219,21 @@ type
       QuickTurn and MoveStep reroll it (ovl09:000F, 07F2). }
     StepPattern: Byte;
   end;
-  { One $13-byte record of the list at DS:6DBB (FreeMem size, ovl08:0029): a cloud on the combat map
-    (ovl12:0CC3). Its centre is (X, Y); arm i is one step from it in direction ds290D[i], and Tiles[i]
-    is the tile that arm covered before the cloud came. }
+  { One $13-byte record of the list at DS:6DBB (New/GetMem size 19, FreeMem size 19 at ovl08:0029): a
+    cloud on the combat map: CastStinkingCloud (ovl22:1B11) allocates one, fills it and later walks the
+    list, and ClearCloud (ovl12:0CC3) frees it. Its centre is (X, Y); arm i is one step from it in
+    direction ds290D[i], and Tiles[i] is the tile that arm covered before the cloud came. }
   PCombatNode = ^TCombatNode;
   TCombatNode = record
-    Owner: PCharacter;            { +$0: the character the cloud belongs to }
-    Next: PCombatNode;            { +$4 }
-    Tiles: array[1..4] of Byte;   { +$8..$B: the tile each arm covered }
-    Arms: array[1..4] of Byte;    { +$C..$F: nonzero while the arm is still in place }
-    X, Y: ShortInt;               { +$10, +$11: the centre cell }
-    Kind: Byte;                   { +$12: the high nibble of the Data of the affect that made it }
+    Owner: PCharacter;            { +$0: the character the cloud belongs to (the caster) }
+    Next: PCombatNode;            { +$4: the next cloud marker in the list }
+    Tiles: array[1..4] of Byte;   { +$8..$B: the tile each arm covered (found around the aim point) }
+    Arms: array[1..4] of Byte;    { +$C..$F: nonzero while the arm is still in place (a walkable combat tile) }
+    { +$10, +$11: the centre cell, the aim column and row (ds6DB9 and ds6DBA at the cast; signed, cwde at
+      ovl22:1D3A, 1D74). }
+    X, Y: ShortInt;
+    { +$12: the high nibble of the Data of the affect that made it (the caster's cloud count at the cast). }
+    Kind: Byte;
   end;
   { One 16-byte row of the spell table DS:320A (SpellTable): RecalcClassStats reads the class
     and the level (ovl23:0110, 0119); the other bytes are not known yet. }
@@ -236,6 +247,13 @@ type
       spell with this affect (ovl15:10D9). }
     AffectId: Byte;
     PadB: array[$B..15] of Byte;
+  end;
+  { The 41 bytes at DS:28E9, the storage of SpellNames[0] (never read as a name): the four bytes at
+    +$25 hold the aim directions the Stinking Cloud handler scans around a spell's aim point (the image has
+    8, 2, 3, 4 at DS:290E..2911), the rest is not known yet. }
+  TSpellNamesPrefix = record
+    Unknown: array[0..$24] of Byte;   { +0..+$24 }
+    AimDirs: array[1..4] of Byte;     { +$25..+$28: the cloud aim directions at DS:290E }
   end;
   { The seven digits of the camp's rest clock RestTime (ovl20:02F2). }
   TRestClock = array[0..6] of Word;
@@ -304,9 +322,14 @@ type
     { +$9E: Sign-extended row index LoadMonster's caller (ovl17:1262) and the create menus (ovl16)
       use to pick the character's picture banks: ovl17:1262 reads ds08C5[2 + B9E*8 + roll] and
       ds08C5[18/28/38/48 + B9E*5 + roll], and ovl16:13CB reads ds3DA3[B9E + (Race shl 4)].
-      ovl16:0A29 sets it to (the create menu's selection - 1); its meaning is not settled. }
+      ovl16:0A29 sets it to (the create menu's selection - 1); it is probably the sex, 0 male
+      (whitepaper 4.2.5), but that is not settled. }
     B9E: ShortInt;
-    Pad9F: Byte;
+    { +$9F: the creature kind some spells test a target by: Charm Person and the shared helper
+      ovl22_fn_1758 require 1 or less (ovl22:11F3, 1760), Snake Charm $E (ovl22:193E) and ovl12
+      tests 4 and $A; MON*CHA has the humanoids at 0 or 1, the undead at 4 and a giant snake at $E,
+      and a saved party member at 0. }
+    CreatureType: Byte;
     { +$A0: the script reads it signed (GetCharacterVar, ovl07:08C5). Purpose unknown: ScoreItem (ovl09:128D)
       refuses an item whose Affects[3] is $84 when the low nibble of its Affects[2] differs from this byte. }
     ByteA0: ShortInt;
@@ -581,11 +604,14 @@ var
   ds261A: Word;                   { the sound ShowHitMessage plays when Flag is clear; meaning unknown }
   ds261C: Word;                   { the sound ShowHitMessage plays when Flag is set (a hit); meaning unknown }
   ds2620: Word;                   { the sound PlaySound plays as an attack animation leaves the attacker (ovl13:26B0) }
+  ds2618: Word;                   { PlaySound argument of CastChosenSpell for a spell without its own sound }
   ds260A: array[0..7] of Byte;    { 8-byte structure FillPictureRect copies from @ds260A (DrawWallDescriptors) }
   ds2622: Word;                   { word e1 passes to PlaySound when Done is 0; meaning unknown }
   ds2626: Word;                   { word ResolveCombatantAttacks passes to PlaySound when nothing landed (ovl13:1774) }
+  ds2624: Word;                   { sound passed to PlaySound by CastChosenSpell when spell $33 is cast; meaning unknown }
   ds2628: Word;                   { word the ovl14 movement code passes to PlaySound; meaning unknown }
   ds262C: Word;                   { the sound PlaySound plays as an attack animation reaches the target (ovl13:26B0) }
+  ds262A: Word;                   { sound passed to PlaySound by CastChosenSpell when spell $2F is cast; meaning unknown }
   { Five words, one per 8x8 tile bank, subtracted from the symbol number to index within the
     bank (Put8x8Symbol, ovl34:020F); evidence in re/dseg.toml. }
   SymbolBase: array[0..4] of Word;  { per-bank base symbol numbers; see above }
@@ -743,6 +769,21 @@ var
   { The eight compass names the location line of res12 (00BA:290B) indexes with PartyFacing, each a
     three-byte string[2] at DS:25A8: N, NE, E, SE, S, SW, W, NW (the bytes are in the image). }
   FacingNames: array[0..7] of string[2];
+  { The spell lists of the CastSpell overlay (ovl22, whitepaper 5.22): BuildSpellList builds one and
+    PickSpellFromMenu runs the picker over it. }
+  SpellLevelNames: array[0..3] of string[40];  { the heading of each spell level in the spell menu: entries
+                                    1..3 are '1st Level', '2nd Level', '3rd Level'; entry 0 is empty }
+  SpellMenuList: PMenuLine;              { head of the spell menu list BuildSpellList builds, PickSpellFromMenu frees }
+  SpellMenuSpells: array[0..$14] of Byte;  { the spell number (bit 7 = pending) of each menu line, in list order }
+  SpellMenuItems: array[0..$30] of PMenuLine;  { for each scribed/learned line, the item (scroll) it came from }
+  SpellMenuItemCount: Byte;                   { the number of entries SpellMenuItems holds (AddItemSpells, fn_051C) }
+  { ds4844 and ds4845: two byte working globals the ovl22 cast handlers share (the original keeps them
+    at DS:4844 and DS:4845, between SpellMenuItemCount and NewHeapEnd). Enlarge (CastEnlarge) puts its
+    strength (18) and its percentile in them for RaiseStrength; Sleep (CastSleep) its hit-point pool;
+    Snake Charm (CastSnakeCharm) a hit-point pool that reaches 0 through it; ovl24_fn_23B6 a value and a
+    duration. }
+  ds4844: Byte;                   { a spell handler's first working byte (see the note above) }
+  ds4845: Byte;                   { the second working byte paired with ds4844 (see the note above) }
   ds25C0: array[0..2, 0..2] of Byte;  { the 3x3 line pattern table StepLine reads at [SY+1, SX+1] }
   { DirStepX and DirStepY: nine entries each (DirStepY starts 9 bytes after DirStepX). ovl14's
     ClampPartyPosition also adds them as the party's column and row step (cbw at ovl14:06D0, 06DB). }
@@ -861,8 +902,6 @@ var
   ds6B06: Pointer;                { the loaded BODY sprite bank (ShowHeadBodySprites, LoadHeadBodySprites) }
   ds6B0A: string[8];              { the last picture file loaded (LoadSpriteList); cleared by the loader (ovl11:043D) }
   ds6B1C: Byte;                   { set to $FF by the loader (ovl11:0442) and by FreeSpriteList }
-  UsedScroll: PMenuLine;          { the scroll the Use action (UseItem, ovl19:1AB3) takes its spell from: set when ovl22_e6
-                                    accepts the item; no other reader is decompiled yet }
   ds0C6C: array[0..$F] of Byte;   { 16-byte table LoadSpriteList passes to RemapPictureColours (with ds0C7C) }
   ds0C7C: array[0..$F] of Byte;   { second 16-byte table LoadSpriteList passes to RemapPictureColours }
   { The ten pieces a wall of the 3D view is drawn from (DrawWallPiece, DrawWallView): each piece is a
@@ -914,16 +953,23 @@ var
     $2C, $32, $39 in the image; ovl04:031E, 03A6). Entry 0, the byte before, is never read. }
   DiseaseAffects: array[0..6] of Byte;  { see above }
   ds681F: Byte;                   { 1 while the Temple removes affects (RemoveAffect; ovl04:0386, 05AB, 07CE), 0 after }
-  { Set to 1 once SelectSpellTargets has filled the target list ds6C91 from a spell's area scan (ovl13:2205),
-    never cleared by ovl13; ovl12:09C0 (ImageAbsorbsHit) lets an image take a hit only while this byte is 0. }
+  { A flag the spell code shares: ApplySpellToSide sets it to 1 and CastChosenSpell and SelectSpellTargets clear it;
+    SelectSpellTargets sets it to 1 once it has filled the target list ds6C91 from a spell's area scan
+    (ovl13:2205), never cleared by ovl13; ovl12:09C0 (ImageAbsorbsHit) lets an image take a hit only while
+    this byte is 0. It is touched by ovl04, ovl05, ovl06, ovl18, ovl19 and ovl21. The meaning is not
+    settled. DS:6820. }
   ds6820: Byte;
   PooledMoney: TPartyMoney;       { the Temple clears it on entry (ovl04:0D32) and passes it to MoneyValueInGold }
-  { The spell targets SelectSpellTargets collects while a spell is aimed: entry I holds the PCharacter of a
-    target at DS:6C91 + (I-1)*4, entry 1 is the global ds6C95 below; entry 0 is never read (its
-    fourth byte is the count ds6C94, which overlaps the array). }
+  { Globals of the spell target picker (CastSpell, whitepaper 5.22). The spell targets SelectSpellTargets
+    (ovl13) and ChooseSpellTargets (ovl22) collect while a spell is aimed: entry I holds the PCharacter of a
+    target at DS:6C91 + (I-1)*4, entry 1 is the global ds6C95 above; entry 0 is never read (its fourth byte
+    is the count ds6C94, which overlaps the array). ApplySpellToTargets applies the spell to each of them. }
   ds6C91: array[0..73] of PCharacter;  { 1-based spell target list; see above }
-  ds6C94: Byte;                   { the number of targets in ds6C91 SelectSpellTargets collected }
-  ds6C95: PCharacter;             { the first spell target, also the character Remove Curse hands to ovl22_e9 (ovl04:08FA) }
+  { The number of chosen targets: the target pickers set it to 1 for a single target and higher for an area
+    spell (SelectSpellTargets, ChooseSpellTargets); ApplySpellToTargets loops 1..ds6C94. DS:6C94. }
+  ds6C94: Byte;
+  { The first spell target, also the character Remove Curse hands to CastRemoveCurse (ovl04:08FA). }
+  ds6C95: PCharacter;
   { 1 while money lies in the pool: PoolMoney sets it, ShareMoney sets it when some is left; the
     Temple and the shop clear it with the pool (ovl04:0D37). }
   MoneyInPool: Byte;
@@ -1003,30 +1049,52 @@ var
   ds0D02: array[0..15] of Byte;   { four 2-bit pixels of colour C; see above }
   ds0D06: array[0..15] of Byte;   { two 4-bit pixels of colour C (C * $11); see above }
   { Globals of the combat unit ovl08 (whitepaper 5.5). }
-  { The combat cell of the target FindSpellTarget last chose (its X and Y, written together with the
-    chosen target, ovl13:207C/2086); who reads them is not found yet. }
-  ds6DB9: Byte;                   { see above: the chosen target's combat column }
-  ds6DBA: Byte;                   { see above: the chosen target's combat row }
+  { The combat cell a spell being cast is aimed at (X here, Y in ds6DBA): FindSpellTarget writes the chosen
+    target's cell together with the target (ovl13:207C/2086), SelectSpellTargets fills it from CombatantX of the
+    selected character, and CastChosenSpell uses it as a line endpoint of the cast animation and as part of
+    the point to face (InDirArc). ShortInt: the Stinking Cloud handler adds a signed DirStepX to it (cwde at
+    ovl22:1C53). DS:6DB9. }
+  ds6DB9: ShortInt;
+  { The Y of the cell a spell being cast is aimed at, the companion of DS:6DB9; see its comment. DS:6DBA. }
+  ds6DBA: ShortInt;
+  { The current item the ovl22 spell lists work on (PickSpellFromMenu, fn_044E, fn_051C); UseItem (ovl19:1AB3) also
+    stores the scroll it takes its spell from here, when IsScroll accepts the item (main named it CurrentItem
+    for that store; the ovl22 routines use it as their working item). }
+  CurrentItem: PItem;
   { Globals of the combat unit ovl08 (whitepaper 5.5). }
-  ds6DBB: PCombatNode;            { the list of clouds (TCombatNode): EndCombat frees them (ovl08:0006); ovl12:0CC3 }
-  ItemAffectUse: Boolean;         { True while the Use action (UseItem, ovl19:1BC2..1BE2) casts a spell through ovl22_e5,
-                                    and set (ovl19:1AE7) for an item whose Affects[2] gives the spell (not a scroll);
-                                    what ovl22_e5 does with it is not known yet. 0 in the spell setup paths
-                                    (ovl22:3413 clears it); when set, SpellCasterLevel (00BA:26C2) returns a
-                                    fixed level 6 and ovl22_e3's spell-power path skips the caster level
-                                    (ovl22:072F, ovl19:1B1E) }
+  { The list of clouds (TCombatNode, the Stinking Cloud markers): EndCombat frees them (ovl08:0006); ovl12:0CC3. }
+  ds6DBB: PCombatNode;
+  { True while the Use action (UseItem, ovl19:1BC2..1BE2) casts a spell through CastChosenSpell, and set
+    (ovl19:1AE7) for an item whose Affects[2] gives the spell (not a scroll); what CastChosenSpell does
+    with it is not known yet. 0 in the spell setup paths (ovl22:3413 clears it); when set,
+    SpellCasterLevel (00BA:26C2) returns a fixed level 6, and SpellAreaSize (ovl22:0729) multiplies its
+    per-level byte by 6 instead of the caster level (ovl22:072F, ovl19:1B1E). }
+  ItemAffectUse: Boolean;
   ds6E36: Pointer;                { a picture EndCombat frees through ReleasePicture (ovl08:005A) }
-  { A routine pointer: RunCombat sets @SelectSpellTargets at the start (ovl08:0085) and EndCombat
-    @ovl22_e4 at the end (ovl08:0069); who calls it is not known yet. }
-  ds6B84: Pointer;                { routine RunCombat stores at ovl08:0085 and EndCombat at ovl08:0069 }
+  { The DS:6B84 block InitSpellHandlers fills: element 0 (DS:6B84) is the target picker and elements
+    1..$43 are the per-spell cast handlers, one per spell number 1..$43 (68 elements, DS:6B84..6C93,
+    ending just before ds6C94), so CastChosenSpell's [Spell*4 + DS:6B84] reaches SpellHandlers[Spell].
+    It is the real array here (not an absolute over a 4-byte pointer) so that a constant index such as
+    SpellHandlers[1] resolves to DS:6B88 under `make match`; the DS:6B84 views below alias it. }
+  SpellHandlers: array[0..$43] of TSpellHandler;
+  { DS:6B84 as the combat target picker: RunCombat sets @SelectSpellTargets at the start (ovl08:0085) and
+    EndCombat @ChooseSpellTargets at the end (ovl08:0069); CastChosenSpell calls it as (spell, B, Done). }
+  SpellTargetPicker: TSpellTargetPicker absolute SpellHandlers;
+  { DS:6B84 as a far pointer, the two stores above written through the pointer type: RunCombat sets
+    @SelectSpellTargets at the start (ovl08:0085) and EndCombat @ChooseSpellTargets at the end (ovl08:0069). }
+  ds6B84: Pointer absolute SpellHandlers;
+  { Set to @MonsterBreath by InitSpellHandlers (ovl22:37A1). No routine in the image reads DS:6988 (no overlay,
+    the resident units or the main program has the address), so its purpose is not known. DS:6988. }
+  ds6988: Pointer;
   ds6814: Byte;                   { zero (or ds6815 zero) ends the combat (ovl08:009B, 095C); likely the count of one side }
   ds6815: Byte;                   { see ds6814; likely the count of the other side }
   { The round's Movement in half squares ComputeMovement computes for a combatant (it stores it
     before the movement affect hooks and reads it back); StartCombatantRound also seeds it from Who^.PadA2.
     ovl12:0C4B shifts it left by 1 every time it runs and ovl12:10C1 shifts it right by 1 [?]. }
   ds681A: Byte;
-  { Purpose unknown: ovl12:064E clears DamageAmount when this byte is $0F; ovl12:2556 cancels the damage hook then too;
-    ovl12:09C0 (ImageAbsorbsHit) needs it above 0. }
+  { The spell currently being cast: ApplySpellToTargets reads its SpellTable row byte +2 to decide whether
+    the spell needs a roll to hit. DS:681B. ovl12:064E also clears DamageAmount when this byte is $0F;
+    ovl12:2556 cancels the damage hook then too; ovl12:09C0 (ImageAbsorbsHit) needs it above 0. }
   ds681B: Byte;
   LastDiceCount: Byte;            { the dice count of the last RollDiceCounted roll (ovl24:0E37) }
   { Set while ComputeMovement runs the movement affect hooks and cleared around them; what reads
@@ -1063,7 +1131,7 @@ var
   ds6DE3: Byte;                   { counted up once per combat round (ovl08:0891) }
   ds6DE2: Byte;                   { set to 1 when the player confirms attacking an ally (ovl13:2998) }
   { The combatant order the AI works through: one DS:5F27 combatant index per entry, read from
-    entry 1 (ovl09:02EB loops 1..CollectEnemiesInRange(Who, ovl22_e3(Spell)) over it; ovl13:0F90 moves
+    entry 1 (ovl09:02EB loops 1..CollectEnemiesInRange(Who, SpellAreaSize(Spell)) over it; ovl13:0F90 moves
     the character at entry 1 to another entry). Entry 0 is never read. Extent not proven; the
     next named byte after it is ds6E2F. }
   ds6DE4: array[0..73] of Byte;
@@ -1089,6 +1157,11 @@ var
   ds409B: array[0..7, 0..13] of LongInt;
   { ClassXpTable is the same storage under the name ovl12:2122 uses (the nested routine for the highest class level). }
   ClassXpTable: array[0..7, 0..13] of LongInt absolute ds409B;
+  { The experience points a class needs for each level: one 14-entry LongInt row per class 0..7, entry
+    [Class, Level] one more than the AD&D threshold (fighter [2, 2] is 2001, magic-user [5, 2] 2501,
+    thief [6, 2] 1251) and -1 above the class's top level. The Restoration handler (ovl22:2C43) reads
+    [Class, Level + 1] to pick the class whose next level is cheapest to restore. }
+  ExperienceTable: array[0..7, 0..13] of LongInt;
   ds40BC: Byte;                   { the byte before ClericSlotTable; see above }
   ClericSlotTable: array[0..12, 1..3] of Byte;  { cleric spell slots of levels 1..3 per cleric level }
   ds41D4: Byte;                   { the byte before MageSlotTable; see above }
@@ -1117,8 +1190,8 @@ var
   HookAffectId: Byte;             { the affect ApplyAffect offers to the hooks; 0 afterwards: unaffected (ovl24:1672) }
   DamageAmount: Byte;             { the damage DealDamage offers to the hooks and then deals (ovl24:134E) }
   DamageKind: Byte;               { the kind of damage: 1 fire, 2 cold, 4 electricity, $10 acid, bit 3 magic (ovl24:13E4) }
-  { Set to 1 by ovl12:2F57 when it adds a strength affect; nonzero: the Items window is drawn even if
-    its flag is clear (ovl19:1194). }
+  { Set to 1 by InitSpellHandlers (ovl22:3435) at start-up, next byte after ds6820, and by ovl12:2F57 when
+    it adds a strength affect; nonzero: the Items window is drawn even if its flag is clear (ovl19:1194). DS:6821. }
   ds6821: Byte;
   { Byte DS:6822 as the three bytes ResolveCombatantAttacks addresses by attack slot: element 0 is the scalar
     AttackRoll that RollToHit and RollBeatsResistance write, elements 1 and 2 (DS:6823/6824) are the
@@ -1145,7 +1218,7 @@ var
     camp's Rest command sets [1] minutes, [2] tens of minutes and [3] hours from the longest study
     time of the party (ovl15:07CA) before RunRestPeriod runs the rest, and clears all seven words after. }
   RestTime: TRestClock;
-  ds6DB5: Pointer;                { set to nil when the camp opens and closes and before casting (ovl15:04B0, 1FB6) }
+  ds6DB5: PCharacter;             { set to nil when the camp opens and closes and before casting (ovl15:04B0, 1FB6) }
   { Per-member rest-study delay, decremented each rest step (ovl20:0B33..0B91). When it reaches zero,
     the next pending spell's level resets it to three times that level (ovl20:0B80..0B91). }
   RestStudyCountdowns: array[0..6] of Byte;
@@ -1158,6 +1231,9 @@ var
   { The spell names, string[40] per spell 1..$38 at DS:2912 ('Bless' .. 'Restoration' in the image,
     the rows of SpellTable); entry 0 is the index base (ovl15:10EE), never read. }
   SpellNames: array[0..$38] of string[40];
+  { The DS:28E9 bytes before SpellNames[1] (DS:2912) seen as a record: the Stinking Cloud handler
+    (ovl22:1B11) reads AimDirs (DS:290E) from it. }
+  SpellNamesPrefix: TSpellNamesPrefix absolute SpellNames;
   { Globals of the combat map builder ovl10 (whitepaper 5.5.2). }
   CombatBlock: Byte;              { the area map block code the battle is fought on (ovl10:1215) }
   { The combat direction (an index of DirStepX/DirStepY) of a facing 0..3; PrepareCombatants also

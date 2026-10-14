@@ -55,7 +55,7 @@ const
 
 { ovl08:0000. Frees the combat data after the last round: the DS:6DBB list of $13-byte records,
   the CombatMap block, and the picture DS:6E36 (ReleasePicture). Then ovl31_e3, and DS:6B84 becomes
-  @ovl22_e4. Called once by RunCombat. The word local is unused; it is there so the frame matches. }
+  @ChooseSpellTargets. Called once by RunCombat. The word local is unused; it is there so the frame matches. }
 procedure EndCombat;
 var
   Next: PCombatNode;
@@ -71,7 +71,7 @@ begin
   CombatMap := nil;
   ReleasePicture(ds6E36);
   ovl31_e3;
-  ds6B84 := @ovl22_e4;
+  ds6B84 := @ChooseSpellTargets;
 end;
 { ovl08:007A. The combat loop. Sets the view mode and DS:6B84 := @SelectSpellTargets, runs StartBattle,
   then rounds until one side's count (ds6814 or ds6815) is zero or EndCombatRound says so.
@@ -169,7 +169,7 @@ begin
   end;
 end;
 { ovl08:031A. The player's turn for Who: a character with Flag10D clear ends it at once
-  (EndCombatTurn). A pending spell (Combat^.PendingSpell) is cast through ovl22_e5 and ends the
+  (EndCombatTurn). A pending spell (Combat^.PendingSpell) is cast through CastChosenSpell and ends the
   turn. Otherwise the CombatMenu key is carried out until Done: M Move (MoveCharacter), V View
   (ViewSelectedCharacter), A Aim (RunAimTargets), U Use (RunItemMenu), C Cast (CastCombatSpell), T Turn (TurnUndead), Q
   Quick (SetQuickCombat, the computer finishes the turn), D Done (EndTurnMenu), Space takes
@@ -190,7 +190,7 @@ begin
     begin
       Spell := Who^.Combat^.PendingSpell;
       Who^.Combat^.PendingSpell := 0;
-      ovl22_e5(Spell, 0, 1, Done);
+      CastChosenSpell(Spell, 0, 1, Done);
       Done := EndCombatTurn(Who);
     end
     else

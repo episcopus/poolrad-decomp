@@ -16,8 +16,9 @@ two modes:
                claims again until the control is no longer `running`. A model that ends its turn or
                fills its context costs one batch, never the run. Optional fields: `batch` (routines
                per session), `timeout` (minutes per session), `tier` (2: the escalation tier, which
-               takes only the routines tier 1 gave up on), `cost_cap` (USD per session) and
-               `max_attempts`; `heading` is not used.
+               takes only the routines tier 1 gave up on), `cost_cap` (USD per session),
+               `max_attempts` and `unit` (claim that unit once, work it and stop: an A/B test or a
+               one-off); `heading` is not used.
   script       the default for `integrator`: the tab runs tools/agent/integrator.py, which merges
                hand-offs (`make integrate`) every `interval` seconds, queues expert cases, and starts a
                fresh `opencode run` session with the row's model only to resolve a merge conflict that
@@ -117,6 +118,8 @@ def check_session(r: dict) -> None:
             raise ValueError("work/roster.toml: %s: %s must be a positive number" % (r["name"], k))
     if "idle_stop" in r and (isinstance(r["idle_stop"], bool) or not isinstance(r["idle_stop"], (int, float)) or r["idle_stop"] < 0):
         raise ValueError("work/roster.toml: %s: idle_stop is minutes, 0 to turn it off" % r["name"])
+    if "unit" in r and (mode not in ("worker",) or not isinstance(r["unit"], str)):
+        raise ValueError("work/roster.toml: %s: unit pins a worker to one unit (its claim)" % r["name"])
     if "tier" in r and (r["tier"] not in (1, 2) or r["role"] != "decompiler"):
         raise ValueError("work/roster.toml: %s: tier is 1 or 2, for decompilers only" % r["name"])
 
@@ -132,7 +135,7 @@ def worker_argv(row: dict, run_id: str) -> list[str]:
             "--variant", row["variant"], "--session", "%s-run-%s" % (row["name"], (run_id or "none")[:8]),
             "--session-model", model_spec(row)]
     for key, opt in (("batch", "--batch"), ("timeout", "--timeout"), ("tier", "--tier"),
-                     ("cost_cap", "--cost-cap"), ("max_attempts", "--max-attempts")):
+                     ("cost_cap", "--cost-cap"), ("max_attempts", "--max-attempts"), ("unit", "--unit")):
         if key in row:
             argv += [opt, str(row[key])]
     return argv

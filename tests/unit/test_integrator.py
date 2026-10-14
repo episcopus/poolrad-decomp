@@ -192,3 +192,17 @@ def test_the_run_stops_itself_after_an_hour_without_planned_work(repo, monkeypat
 def test_auto_stop_can_be_turned_off(repo, monkeypatch):
     lp = integrator.Loop("int-loop", 1, "", "", 1, sleep=lambda s: None, idle_stop_minutes=0)
     assert lp.watch_idle() == ""
+
+
+def test_a_resolution_is_judged_against_the_main_it_was_given(repo, monkeypatch, tmp_path):
+    """2026-10-14: main moved during the ovl03 resolver session and its correct merge was discarded."""
+    wt, _sha = diverge(repo, conflict=True)
+    rec = Recorder()
+    resolve = session_script(tmp_path, "git merge main >/dev/null 2>&1 || true\n"
+                                       "python3 -c \"import pathlib,re;p=pathlib.Path('src/OVL00.PAS');"
+                                       "p.write_text(re.sub(r'<<<<<<< HEAD\\n(.*?)=======\\n.*?>>>>>>> main\\n', r'\\1', p.read_text(), flags=re.S))\"\n"
+                                       "git add -A && git -c user.name=s -c user.email=s@x commit -q --no-edit\n"
+                                       "cd %s && echo moved > MOVED.txt && git add MOVED.txt && "
+                                       "git -c user.name=h -c user.email=h@x commit -qm 'main moves during the session'" % repo)
+    note = loop(monkeypatch, rec, resolve, "p/m#high").step()
+    assert "ovl00 resolved (model session" in note and ["integrate.py", "--key", "ovl00"] in rec.tools

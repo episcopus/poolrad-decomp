@@ -347,7 +347,14 @@ def compile_variant(units: list[str], sources: dict[str, str], pads: bool, out: 
     for f in ("TPC.EXE", "TURBO.TPL"):
         shutil.copy(bin_dir / f, out / f)
     refs = []
+    # Every unit not being compared is built with {$L-} (no local symbols: no code changes, and its
+    # interface routines stay public in the map). TPC links the units' symbol tables in 640K: ovl03, the
+    # event dispatcher that calls into almost every unit, ran out of memory matched alone at about 35 of
+    # its routines (2026-10-14), and ovl12 had already put {$L-} in its own source for the same reason.
+    compared = {u.upper() for u in units}
     for name, text in sources.items():
+        if name not in compared:
+            text = "{$L-}\r\n" + text
         (out / (name + ".PAS")).write_text(with_pads(name, text) if pads else text)
         if pads:                                 # referenced, or the smart linker drops them
             refs += ["@MPadC%s" % name, "@MPadV%s" % name]

@@ -1139,7 +1139,7 @@ end;
     - Automatic = 0 lets RunAimTargets pick (the player's cursor); else the spell row's own data picks it:
       when the spell's range/targeting mode, the row's byte +$E (PadB[$E]), is 0 the spell targets
       its caster (and FindNearbyTarget is asked when Spell is 3); otherwise up to 20 times
-      ChooseCombatTarget offers the next aim (ovl22_e3(Spell) is the
+      ChooseCombatTarget offers the next aim (SpellAreaSize(Spell) is the
       spell's range) and the aim is accepted while the spell's area (ScanTargets with the row's +$F
       byte as the line budget) holds only the caster's enemies and the target is either not helpless or
       the row's AffectId (+$A) is not one of HelplessAffects.
@@ -1157,7 +1157,7 @@ begin
   Chosen := 0;
   if Automatic = 0 then
   begin
-    RunAimTargets(SelectedCharacter, ovl22_e3(Spell), 0, AimFlag, Chosen, Target);
+    RunAimTargets(SelectedCharacter, SpellAreaSize(Spell), 0, AimFlag, Chosen, Target);
     SelectedCharacter^.Combat^.Target := Target.Who;
   end
   else
@@ -1178,7 +1178,7 @@ begin
       while (Attempts > 0) and (Chosen = 0) do
       begin
         Valid := 1;
-        if ChooseCombatTarget(SelectedCharacter, ovl22_e3(Spell), 0, 1) then
+        if ChooseCombatTarget(SelectedCharacter, SpellAreaSize(Spell), 0, 1) then
         begin
           SavedTarget := SelectedCharacter^.Combat^.Target;
           if SpellTable[Spell].PadB[$F] > 0 then
@@ -1325,7 +1325,7 @@ end;
   nonzero when the caller is the computer (the combat screen, cursor and panel are then not
   redrawn). A spell whose
   SpellTable byte +$B is 0 cannot be cast in combat ('Camp Only Spell'). When the spell's byte +$C
-  div 3 (its casting delay) is 0 the spell goes off at once through ovl22_e5 and the turn ends
+  div 3 (its casting delay) is 0 the spell goes off at once through CastChosenSpell and the turn ends
   (EndCombatTurn); otherwise the caster 'Begins Casting' (Done set), the spell is remembered in
   Combat^.PendingSpell and the delay is taken off Combat^.Initiative (at least 1), so the spell
   finishes on the caster's next turn (PlayerTurn ovl08:031A, ovl09 CastMemorizedSpell).
@@ -1372,7 +1372,7 @@ begin
   CastTime := SpellTable[Spell].PadB[SpellCastDelay] div 3;
   if CastTime = 0 then
   begin
-    ovl22_e5(Spell, NoRedraw, 1, Done);
+    CastChosenSpell(Spell, NoRedraw, 1, Done);
     Done := EndCombatTurn(ChosenChar);
   end
   else
@@ -1868,7 +1868,7 @@ end;
   the cursor, M runs the free aim cursor RunAimCursor, T resolves the aimed attack, C centres the
   cursor) then redraws the target's cell and steps to the next. When it finally ends and Automatic is
   set it clears the range line. Called by PlayerTurn (ovl08:0310, Range $FF, Automatic 1) and
-  FindSpellTarget (Range from ovl22_e3, Automatic 0). Globals: ItemTable, CombatantTable,
+  FindSpellTarget (Range from SpellAreaSize, Automatic 0). Globals: ItemTable, CombatantTable,
   CombatantRecord, ds6718 (the scan table ListAimTargets copies into Targets). }
 procedure RunAimTargets(Who: PCharacter; Range, Automatic, AimFlag: Byte; var Done: Byte; var Aim);
 var

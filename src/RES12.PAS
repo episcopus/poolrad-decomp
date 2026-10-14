@@ -1439,7 +1439,7 @@ begin
   DistanceToTarget := ds6718[Index].Key shr 1;
   Move(Saved, ds6718[1], SavedScanBytes);
 end;
-{ 00BA:2637. Ends Who's combat turn: it clears the pending spell (PendingSpell, +$0; ovl22_e5
+{ 00BA:2637. Ends Who's combat turn: it clears the pending spell (PendingSpell, +$0; CastChosenSpell
   casts it when the turn ends), the turn order (Initiative, +$3), the guard byte (B7, +$7; the Guard
   command of the Done menu sets it to 1) and the movement left (Moves, +$6), then returns 1 (the
   turn is over). The Done menu's Quit command, every "the turn ends" path of the AI and the self-end
@@ -1467,7 +1467,7 @@ end;
 { 00BA:26C2. Returns the level the selected character casts a spell at: the spell's class
   (SpellTable[Spell].SpellClass, byte 0 of the 16-byte row; 0 is cleric, 1 magic-user) picks the
   character's level in that class (ClassLevels: 0 cleric, 5 magic-user; whitepaper 5.6), and a spell
-  class 2 gives 12. When ItemAffectUse is set every class except 2 gives 6 instead. ovl22_e3 multiplies the
+  class 2 gives 12. When ItemAffectUse is set every class except 2 gives 6 instead. SpellAreaSize multiplies the
   spell row's +3 byte by the result, so this is the power the spell is cast with; the res12 wrapper
   takes the spell number. Called by the ovl22 casting routines.
   Purpose unknown: what spell class 2 and ItemAffectUse are.

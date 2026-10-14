@@ -79,6 +79,9 @@ def routine_bytes(r, image, ovl) -> tuple[bytes, int, str]:
     return ovl[r["unit"]][off:off + r["size"]], off, r["unit"]
 
 
+PARENT16 = {"al": "ax", "ah": "ax", "bl": "bx", "bh": "bx", "cl": "cx", "ch": "cx", "dl": "dx", "dh": "dx"}
+
+
 class Scanner:
     def __init__(self, tick_vars: set[int] | None = None):
         if Cs is None:
@@ -110,6 +113,10 @@ class Scanner:
         reg_imm: dict[str, int] = {}               # 16-bit registers last loaded with an immediate
         for n, i in enumerate(insns):
             mn, ops = i.mnemonic, i.operands
+            try:
+                written = {i.reg_name(r) for r in i.regs_access()[1]}
+            except Exception:                      # noqa: BLE001  capstone without access data: forget nothing
+                written = set()
             if mn == "mov" and len(ops) == 2 and ops[1].type == X86_OP_IMM and ops[0].type == X86_OP_REG:
                 reg = i.reg_name(ops[0].reg)
                 reg_imm[reg] = ops[1].imm & 0xFFFF
@@ -158,6 +165,22 @@ class Scanner:
                         continue
                     elif d in self.tick_vars and o.mem.base == 0 and o.mem.index == 0 and mn != "lea":
                         feats.append((n, "tick-var-%04X" % d))
+            # A register keeps a remembered immediate only until something else writes it (les di, add di,
+            # pop, xchg, a call's clobbers), after this instruction's own operands were read. 2026-10-14:
+            # FormatItemLine (00BA:0442) reloads DI with LES long after `mov di,0x43D`, and `[di+0x31]` was
+            # taken for the BIOS tick counter at 0x46E.
+            set_imm = mn == "mov" and len(ops) == 2 and ops[1].type == X86_OP_IMM and ops[0].type == X86_OP_REG
+            if mn in ("call", "lcall"):
+                reg_imm.clear()
+                ah = dx = None
+            elif not set_imm:
+                for reg in written:
+                    for name in {reg, PARENT16.get(reg, reg)}:
+                        reg_imm.pop(name, None)
+                if written & {"ah", "ax"}:
+                    ah = None
+                if written & {"dx", "dl", "dh"}:
+                    dx = None
             if mn.startswith("j") or mn in LOOPING:
                 if ops and ops[0].type == X86_OP_IMM:
                     t = ops[0].imm

@@ -319,6 +319,11 @@ class Loop:
             state=f.get("state", "?"), reason=f.get("integrate_reason", ""),
             integrate_log=f.get("integrate_log", "(none)"), agent=self.agent)))
         flag = " --model " + shlex.quote(self.session_model)
+        # The main the session is asked to merge. Main may move while the session works (another hand-off
+        # integrated, a human commit); `make integrate` merges with the newest main afterwards anyway, so the
+        # session is judged against this one (2026-10-14: a correct ovl03 merge was discarded because a
+        # roster commit landed on main six minutes into the session).
+        base = common.git("rev-parse", "main", cwd=self.main)
         self.in_session = True
         try:
             result = worker.run_session(self.session_cmd, prompt, wt, log, self.timeout_s, flag,
@@ -334,7 +339,7 @@ class Loop:
             git_ok(["merge", "--abort"], wt)
         dirty = worker.salvage(wt, self.logs / ("%s-resolve.patch" % key))
         markers = git_ok(["grep", "-q", "-E", r"^(<<<<<<<|>>>>>>>) ", "HEAD", "--"], wt)
-        merged = git_ok(["merge-base", "--is-ancestor", "main", "HEAD"], wt)
+        merged = git_ok(["merge-base", "--is-ancestor", base, "HEAD"], wt)
         if result.provider_error:                          # not a judgement on the merge: no attempt counted
             self.abandon(wt, start, key, log)
             data = load_state()

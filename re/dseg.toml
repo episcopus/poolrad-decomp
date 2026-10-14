@@ -631,6 +631,11 @@ name = "ClassThac0Table"
 evidence = "[class 0..7, level] bytes; RecalcClassStats keeps the largest entry over the classes in the character's THAC0 byte +2Dh (ovl23:0020..0062)"
 
 [[global]]
+offset = 0x409B
+name = "ExperienceTable"
+evidence = "the experience points a class needs per level: eight rows of 14 4-byte entries (`array[0..7, 0..13] of LongInt`); entry [class, level] is one more than the AD&D threshold (fighter [2,2] 2001, magic-user [5,2] 2501, thief [6,2] 1251, cleric [0,2] 1501) and -1 above the class's top level; CastRestoration reads entry [class, level+1] to pick the class to restore (ovl22:2CFD..2D30, DS:409B+class*$38+(level+1)*4)"
+
+[[global]]
 offset = 0x40BD
 name = "ClericSlotTable"
 evidence = "[cleric level, 1..3] bytes copied into the cleric spell slots +B2h..+B4h when the cleric level (ClassLevels[0]) is above 1 (ovl23:00B0..00E3); index base DS:40BC"
@@ -1067,11 +1072,6 @@ name = "BodyBankIndex"
 evidence = "DS:6B05 is the bank index for the BODY sprite pointer at DS:6B06, set to sentinel value 255 when none; StartBattle resets it after ReleasePicture at ovl10:0968"
 
 [[global]]
-offset = 0x6B80
-name = "UsedScroll"
-evidence = "ds6B80 is the far pointer ovl19:1AB3 stores the item in when ovl22_e6 accepts it (a scroll), before ChooseSpellFromList reads the scroll's spell; no other reader is decompiled yet"
-
-[[global]]
 offset = 0x6DBF
 name = "ItemAffectUse"
 evidence = "ds6DBF is set (ovl19:1AE7) for an item whose Affects[2] gives the spell, and around the ovl22_e5 cast (ovl19:1BC2..1BE2); the 'uses an item' message follows the flag (ovl19:1B1E); what ovl22_e5 does with it is not known yet"
@@ -1135,3 +1135,38 @@ evidence = "ovl20:0871 increments it once per five-minute rest step and, at $120
 offset = 0x6DDA
 name = "RestWindowActive"
 evidence = "ovl20:0C9A sets it to 1 while the rest screen is up and clears it on exit; RES12:0886 reads it to pick the top row of the message window. Nonzero says the rest screen is up. The loader clears it (ovl11:0410)."
+
+[[global]]
+offset = 0x4766
+name = "SpellMenuList"
+evidence = "DS:4766: the head of the spell menu list ovl22_e2 builds with AddSpellMenuLine and ovl22_e1 shows and frees (ovl22:059C, 008A)"
+
+[[global]]
+offset = 0x476A
+name = "SpellMenuSpells"
+evidence = "DS:476A: the spell number of each spell menu line in list order, bit 7 = pending (ovl22:028D writes, 008A reads); array[0..$14] of Byte"
+
+[[global]]
+offset = 0x0A79
+name = "SpellLevelNames"
+evidence = "DS:0A79: the heading of each spell level in the spell menu, entries 1..3 are '1st Level', '2nd Level', '3rd Level' (ovl22:028D)"
+
+[[global]]
+offset = 0x477F
+name = "SpellMenuItems"
+evidence = "DS:477F: for each spell line ovl22_fn_044E adds, the item (scroll) it came from; ovl22_e1 copies the entry of the chosen line to ds6B80 (ovl22:044E, 051C, 008A); array[0..$30] of PMenuLine"
+
+[[global]]
+offset = 0x4843
+name = "SpellMenuItemCount"
+evidence = "DS:4843: the number of entries SpellMenuItems holds (ovl22:044E writes, 051C clears)"
+
+[[global]]
+offset = 0x6B80
+name = "CurrentItem"
+evidence = "DS:6B80: the current item the ovl22 spell lists work on (ovl22_fn_051C walks SelectedCharacter^.Items into it, ovl22_fn_044E reads its affects, ovl22_e1 copies a chosen line's SpellMenuItems entry into it)"
+
+[[global]]
+offset = 0x6B84
+name = "SpellHandlers"
+evidence = "DS:6B84: the spell handler block InitSpellHandlers (ovl22:3413) fills at start-up, 68 far pointers DS:6B84..6C93 (element 0 the combat target picker, elements 1..$43 the cast handler of every spell number 1..$43; several spells share one handler); CastChosenSpell calls [Spell*4 + DS:6B84] as the current spell ds681B is cast, ovl08 stores @ChooseSpellTargets (EndCombat) and @ovl13_e14 (RunCombat) through the ds6B84 Pointer view"

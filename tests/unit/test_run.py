@@ -158,3 +158,12 @@ def test_the_roster_has_an_integrator_and_an_escalation_tier():
     assert tier2 and all(run.mode_of(r) == "worker" and r.get("cost_cap") for r in tier2)
     argv = run.argv_of(tier2[0], "abc12345")
     assert argv[argv.index("--tier") + 1] == "2" and argv[argv.index("--cost-cap") + 1] == str(tier2[0]["cost_cap"])
+
+
+def test_a_worker_can_be_pinned_to_one_unit():
+    row = {"name": "esc-ab", "role": "decompiler", "tier": 2, "model": "p/m", "variant": "xhigh", "unit": "ovl16"}
+    run.check_session(row)
+    argv = run.argv_of(row, "r1")
+    assert argv[argv.index("--unit") + 1] == "ovl16" and argv[argv.index("--tier") + 1] == "2"
+    with pytest.raises(ValueError, match="unit pins a worker"):
+        run.check_session({"name": "int", "role": "integrator", "model": "p/m", "variant": "high", "unit": "ovl16"})
