@@ -4591,12 +4591,12 @@ id = "ovl12:2C1C"
 unit = "ovl12"
 addr = "ovl12:2C1C"
 size = 284
-name = "ovl12_e105"
+name = "SpitAcidAtTarget"
 signature = ""
 c_name = "ovl12_e105"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_105"
+notes = "renamed from ovl12_e105 (ovl12:2C1C shows 'Spits Acid' on Who (string in the pool at ovl12:2C11), draws the spit to Who's combat target and deals 8d4 to it with a half-on-save; a handler, no direct caller); auto:entry_105"
 evidence = ["prologue"]
 
 [[routine]]

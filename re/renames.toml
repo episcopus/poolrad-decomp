@@ -4148,3 +4148,10 @@ kind = "routine"
 why = "ovl12:2BC8 calls AvoidDistantAttack (ovl12:0FAC, chance 50) only when SelectedCharacter's first slot item (SlotItems[0]) has ItemType $57 or $58; an affect handler, no direct caller"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl12_e105"
+new = "SpitAcidAtTarget"
+kind = "routine"
+why = "ovl12:2C1C shows 'Spits Acid' on Who (string in the pool at ovl12:2C11), draws the spit to Who's combat target and deals 8d4 to it with a half-on-save; a handler, no direct caller"
+date = "2026-10-14"
+

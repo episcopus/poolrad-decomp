@@ -117,7 +117,7 @@ procedure SetDamageFromSlotItemType55(Who: PCharacter; Affect: PAffect; Mode: By
 procedure HalveColdDamageNoSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure CancelDamageUnlessEnchantedSlotItem(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure AvoidDistantAttackForItemType57Or58(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e105;
+procedure SpitAcidAtTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e106;
 procedure ovl12_fn_2D39;
 procedure ovl12_e107;
@@ -231,6 +231,14 @@ const
   AlwaysSaves = 100;            { the SaveRoll that makes a saving throw succeed (ovl24:0D63 succeeds when it reaches) [I] }
   DistantAvoidChance = 60;      { the Chance ovl12:2901 gives AvoidDistantAttack }
   SlotItemAvoidChance = 50;     { the Chance ovl12:2BC8 gives AvoidDistantAttack for a first slot item of type $57 or $58 }
+  SpitChance = 25;              { the 1d100 roll at or below which Who spits acid (ovl12:2C1C) [?] }
+  SpitMaxDistance = 4;          { res12_fn_255B (the distance to the target [I]) must be below this for a spit }
+  SpitAnimation = $17;          { the argument of res12_fn_19DE that ovl12:2C1C shows the spit with [?] }
+  SpitLineKind = 1;             { the Kind of the spit line res12_fn_1A29 draws (ovl12:2C1C) [?] }
+  SpitLineFlag = 30;            { the Flag of that line }
+  SaveKindSpit = 3;             { SavingThrow kind 3, the fourth of the five saves: the save against the spit [I] }
+  AffectUnknown79 = $79;        { purpose unknown [?]: the spit removes it from Who once it has spat (ovl12:2C1C) }
+  AffectUnknown50 = $50;        { purpose unknown [?]: the spit removes it from Who with no particular affect (ovl12:2C1C) }
   HookChanceHalf = 50;          { the Chance ovl12:2976 gives ovl12:2915 (the hook cancel with a roll) }
   HookChanceLow = 15;           { the Chance ovl12:2984 gives ovl12:2915 }
   HookChanceHigh = 90;          { the 1d100 roll at or below which ovl12:2992 cancels its hooks }
@@ -1983,8 +1991,33 @@ begin
     if (Item^.ItemType = $57) or (Item^.ItemType = $58) then
       AvoidDistantAttack(Who, SlotItemAvoidChance);
 end;
-{ ovl12:2C1C: retf 10: 10 bytes of parameters; 12 bytes of locals }
-{@stub} procedure ovl12_e105; begin end;
+{ ovl12:2C1C. Affect handler that spits acid at the character Who attacked last (the AffectHandlers shape: Who, Affect
+  and Mode; Mode is not read, ovl24:0000). AttackTarget becomes Who's combat Target (Who^.Combat^.Target). On a 1d100 roll at
+  or below SpitChance, when res12_fn_255B (the distance to AttackTarget [I]) is below SpitMaxDistance: Who's turn ends
+  (res12_fn_2637, its result is not read), "Spits Acid" is shown on Who in colour 10, the spit is drawn from Who to
+  AttackTarget (res12_fn_19DE with SpitAnimation, res12_fn_1A29 with CombatantX and CombatantY), and AttackTarget takes 8d4
+  damage (DealDamage, half when its save of kind SaveKindSpit succeeds). Then AffectUnknown79 and AffectUnknown50 are removed
+  from Who (RemoveAffect; Affect is the affect handled).
+  QUIRK ovl12:2C1C: DamageKind is not set here (AcidAttackTargetFor1d4, ovl12:1A4C, sets KindAcid first), so the spit's
+  damage is dealt with whatever kind the damage before left in DamageKind (DealDamage, ovl24:1344). Never fixed. }
+procedure SpitAcidAtTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
+var
+  Turn: Byte;                   { the result of res12_fn_2637 (ends Who's turn), never read }
+begin
+  AttackTarget := Who^.Combat^.Target;
+  if RollDice(1, 100) <= SpitChance then
+    if res12_fn_255B(Who, AttackTarget) < SpitMaxDistance then
+    begin
+      Turn := res12_fn_2637(Who);
+      res12_fn_16EC(Who, 'Spits Acid', $A, 1);
+      res12_fn_19DE(SpitAnimation);
+      res12_fn_1A29(CombatantX(Who), CombatantY(Who), CombatantX(AttackTarget), CombatantY(AttackTarget),
+        SpitLineKind, SpitLineFlag);
+      DealDamage(AttackTarget, RollDiceCounted(8, 4), 2, SavingThrow(AttackTarget, SaveKindSpit, 0));
+      RemoveAffect(Who, AffectUnknown79, Affect);
+      RemoveAffect(Who, AffectUnknown50, nil);
+    end;
+end;
 { ovl12:2D38: frame not read }
 {@stub} procedure ovl12_e106; begin end;
 { ovl12:2D39: retf 10: 10 bytes of parameters; 4 bytes of locals }
