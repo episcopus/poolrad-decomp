@@ -7039,7 +7039,7 @@ signature = ""
 c_name = "ovl16_fn_07EF"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue. The bytes at 07EF are `75 68` (jne 0859h), the conditional of the `cmp al,1` case test that follows the `jmp 0919h` at 07EA inside ovl16:056C. 056C is one routine (prologue `push bp; mov bp,sp; sub sp,134h` at 056C, single retf at 1ED1; only one prologue between 056C and 1F37, checked on build/re/overlays/ovl16.bin), so every map entry inside it (07E1..1ED1, this one included) is a fixup-table artifact. No near call targets 07EF. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size to 6502 and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -7052,7 +7052,7 @@ signature = ""
 c_name = "ovl16_fn_07F4"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue. 07F4 is the `mov byte ptr es:[di+0c0h],1` (bytes 26 c6 85 c0 00 01, preceded by `les di,[bp-27h]` at 07F1) of the case-1 arm of ovl16:056C. 056C is one routine from 056C to its single retf at 1ED1, so this entry is an artifact inside it; no near call targets 07F4. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -7065,7 +7065,7 @@ signature = ""
 c_name = "ovl16_fn_07F9"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue. 07F9 is the last byte (`01`) of the `mov ...es:[di+0c0h],1` at 07F4 followed by `push [bp-2]` and `push [bp-4]` (ff 76 fe, ff 76 fc) in the AddAffect argument sequence of ovl16:056C's case-1 arm; mid-instruction. 056C is one routine (single prologue at 056C, single retf at 1ED1), so this entry is an artifact inside it; no near call targets 07F9. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -7078,7 +7078,7 @@ signature = ""
 c_name = "ovl16_fn_0808"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue. 0808 is `push ax` (50) among the pushes of the `AddAffect(..., 5ah, 0, 0ffh, 0)` call at 07F3..080C inside ovl16:056C. 056C is one routine (single prologue at 056C, single retf at 1ED1), so this entry is an artifact inside it; no near call targets 0808. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -7091,7 +7091,7 @@ signature = ""
 c_name = "ovl16_fn_080D"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue. 080D is the immediate bytes (`52 00`) of the `lcall 0b0h:0052h` (AddAffect, 9a 52 00 b0 00 at 080C) inside ovl16:056C; mid-instruction. This far call is what the map keyed the `auto:far_call` entry on, but the call belongs to 056C, which is one routine (single prologue at 056C, single retf at 1ED1); no near call targets 080D. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -7104,7 +7104,7 @@ signature = ""
 c_name = "ovl16_fn_0812"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue. 0812 is inside `push word ptr [bp-2]` (ff 76 fe at 0811, then ff 76 fc) in the second AddAffect call of ovl16:056C's case-1 arm; mid-instruction. 056C is one routine (single prologue at 056C, single retf at 1ED1), so this entry is an artifact inside it; no near call targets 0812. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
