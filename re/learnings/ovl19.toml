@@ -242,3 +242,12 @@ tags = ["frame", "locals", "temporaries", "string"]
 title = "TradeMoney's frame: locals from bp-4 in declaration order, string temporaries below them"
 lesson = "TradeMoney (sub sp 0x234) takes its locals in declaration order from bp-4 downward: Recipient (4), Kind (ShortInt, -5), CoinKind (-6), I (-7), Pad (-8), List (-0xC), Chosen (-0x10), Head (-0x14), Kinds (Word, -0x16), Choice (Integer, -0x18), Num string[15] (-0x28), Spaces string[4] (-0x2D), Text string (-0x12D, 256 bytes), Key (-0x12E), Amount (Word, -0x130), Finished (-0x131), Done (-0x132), Redraw (-0x133). The 256-byte string temporaries occupy -0x233..-0x134 under them. Compare a missing or extra local with these addresses first."
 evidence = ["src/OVL19.PAS#TradeMoney", "re/symbols.toml#ovl19:2156"]
+
+[[lesson]]
+id = "repeat-back-jump-lands-on-the-call"
+confidence = "V"
+units = ["ovl19"]
+tags = ["compiler", "repeat", "loop", "call", "frame"]
+title = "A repeat whose back jump lands on a call has that call inside the loop; the Drop money menu's frame"
+lesson = "ChooseAndDropMoney (ovl19:24A7, sub sp 0x22E, retf 0) is TradeMoney's coin list with one shape change: its `until Done` jumps back to ovl19:24AE, which is the push cs of ShowCharacterMoney, so that call is the first statement of the repeat. Written before the repeat, the jump lands on the list reset (a 4-byte mismatch at the jump). Locals in declaration order from bp-1: Kind (-1), CoinKind (-2), Pad (-3), I (-4), Kinds (Word, -6), Choice (-8), List (-0xC), Chosen (-0x10), Head (-0x14), Done (-0x15), Redraw (-0x16), Num (-0x26), Spaces (-0x2B), Text (-0x12B), Key (-0x12C), Amount (Word, -0x12E). The for-limit byte of the Spaces loop is the first temporary (-0x12F), and the 256-byte concatenation temporary sits at -0x22E..-0x12F."
+evidence = ["src/OVL19.PAS#ChooseAndDropMoney", "re/symbols.toml#ovl19:24A7"]
