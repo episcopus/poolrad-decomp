@@ -3668,12 +3668,12 @@ id = "ovl12:11F9"
 unit = "ovl12"
 addr = "ovl12:11F9"
 size = 125
-name = "ovl12_e39"
-signature = ""
+name = "LowerAttackVsEightListed"
+signature = "procedure LowerAttackVsEightListed(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e39"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_39"
+notes = "renamed from ovl12_e39 (ovl12:11F9 takes AttackPenalty (4) off AttackRoll once for each of the eight names ds0402[1..8] that the attacked character's name equals, when the selected character has Pad9E[$9F]=1 and CombatSize kind 2: the twin of BoostAttackVsEightListed (ovl12:0947), with the condition on the selected character); auto:entry_39"
 evidence = ["prologue"]
 
 [[routine]]

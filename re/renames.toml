@@ -3700,3 +3700,10 @@ kind = "routine"
 why = "ovl12:1168 gives Who the disease affect AffectCauseDisease ($2C, ovl15/ovl04 name it) for 10 rounds with Affect's Data, deals one point of damage when Flag11B is above 1, else gives nausea (AffectNausea) unless present"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e39"
+new = "LowerAttackVsEightListed"
+kind = "routine"
+why = "ovl12:11F9 takes AttackPenalty (4) off AttackRoll once for each of the eight names ds0402[1..8] that the attacked character's name equals, when the selected character has Pad9E[$9F]=1 and CombatSize kind 2: the twin of BoostAttackVsEightListed (ovl12:0947), with the condition on the selected character"
+date = "2026-10-13"
+

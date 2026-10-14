@@ -47,7 +47,7 @@ procedure AvoidIfSelectedItemPlusZero(Who: PCharacter; Affect: PAffect; Mode: By
 procedure HalveAgeDoubling(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure WeakenStrength(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure CauseDiseaseAndDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e39(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure LowerAttackVsEightListed(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e40;
 procedure ovl12_e41;
 procedure ovl12_e42;
@@ -194,7 +194,7 @@ const
   AffectUnknown0F = $0F;        { purpose unknown; ovl04 removes it with the poison affect $37 (ovl04:0807) }
   AffectUnknown0FDuration = 10; { the Duration ovl12:05EB gives affect $0F }
   AffectUnknown18 = $18;        { purpose unknown: the affect SelectedCharacter must have for ds681E to stay 0 (ovl12:0918) }
-  AttackPenalty = 4;            { what ovl12:0918, 0BAC and 0C15 take off AttackRoll }
+  AttackPenalty = 4;            { what ovl12:0918, 0BAC, 0C15 and 11F9 take off AttackRoll }
   SavePenalty = 4;              { what ovl12:0BAC and 0C15 take off SaveRoll }
   ResistPenalty = 4;            { what ovl12:0BAC takes off Who's ResistValue and Pad112[$112] }
   MissRoll = -1;                { AttackRoll below 0 is a miss (RollToHit, ovl24:0CD5); ovl12:0C26 sets it }
@@ -206,6 +206,7 @@ const
   AffectHealingBlock = $32;     { HealCharacter with Flag 0 does nothing while the character has it (ovl24:175D) }
   AffectHealingBlockDuration = 14400; { $3840: the Duration ovl12:12FB gives affect AffectHealingBlock }
   SideDataBit = $10;            { Affect.Data bit 4: a side, 0 or 1, compared with Who's Side (ovl12:12B2) }
+  CombatKindMask = $7F;         { TCharacter.CombatSize bits 0..6: the combat footprint kind (POOLVARS, +$6C) }
   CoughResistLimit = 52;        { ovl12:0A65: TCharacter.Pad112[$112] above this steps down by CoughResistStep,
                                   else it is set to CoughResistReset }
   CoughResistReset = 50;
@@ -919,8 +920,21 @@ begin
     else if not res12_fn_2199(Who, AffectNausea, FoundAffect) then
       AddAffect(Who, AffectNausea, 0, $FF, 0);
 end;
-{ ovl12:11F9: retf 10: 10 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl12_e39; begin end;
+{ ovl12:11F9. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000). It copies
+  the character Who attacked last (Who's combat Target, TCombatant at +$108 of Who, MeleeAttack sets it in ovl08) into
+  AttackTarget. When the selected character has Pad9E[$9F] (+$9F of TCharacter, not named yet) set to 1 and its
+  CombatSize has footprint kind 2 (bits 0..6 of +$6C), AttackRoll loses AttackPenalty for each of the names ds0402[1..8]
+  that the target's name equals. Which affect runs it is not known yet [?]. }
+procedure LowerAttackVsEightListed(Who: PCharacter; Affect: PAffect; Mode: Byte);
+var
+  I: Byte;                      { the name row 1..8 of ds0402 }
+begin
+  AttackTarget := Who^.Combat^.Target;
+  if (SelectedCharacter^.Pad9E[$9F] = 1) and ((SelectedCharacter^.CombatSize and CombatKindMask) = 2) then
+    for I := 1 to 8 do
+      if AttackTarget^.Name = ds0402[I] then
+        Dec(AttackRoll, AttackPenalty);
+end;
 { ovl12:1276: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e40; begin end;
 { ovl12:12B2: retf 10: 10 bytes of parameters; 2 bytes of locals }
