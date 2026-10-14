@@ -13,7 +13,7 @@ q = '$(subst ','\'',$(1))'
 
 .PHONY: help setup doctor inputs unexepack overlays map dax smoke status next ghidra p1-check \
         tp-install tp-probe tp-compare tp-pin tpc emu2 \
-        packet claim lock locks unlock handoff handoffs handoff-done integrate start-run stop-run run-status heartbeat agents watch-agents worker inbox \
+        packet claim lock locks unlock handoff handoffs handoff-done integrate start-run stop-run run-add run-status heartbeat agents watch-agents worker inbox \
         agent-control agent-step safety-check merge-check hooks match-gate merge-driver \
         agent-register agent-usage agent-meter performance learn learning-check expert-budget expert-request expert-take expert-step expert-finish expert-result experts expert-scan expert-candidates task-approve \
         oracle-run oracle-dosbox timing-scan golden match test test-slow check review-pass rebuild skeleton stubs readability rename host coco3
@@ -122,6 +122,9 @@ start-run:        ## admit the run and open one iTerm tab per session of work/ro
 stop-run:         ## graceful shutdown: drain, integrate what is handed off, release locks, reset state, close the sessions [WAIT=<minutes>]
 	$(PY) tools/agent/run.py stop $(if $(WAIT),--wait $(call q,$(value WAIT)))
 
+run-add:          ## start (or restart) one roster session in the running run: NAME=<roster name>
+	$(PY) tools/agent/run.py add $(call q,$(value NAME))
+
 run-status:       ## the roster's sessions: heartbeat state, process, locks, inbox
 	$(PY) tools/agent/run.py status
 
@@ -140,7 +143,7 @@ heartbeat:        ## tell the human what you are doing: AGENT=<you> NOTE="<now, 
 agents:           ## every agent's last heartbeat, oldest first; QUIET = silent for more than 20 minutes
 	$(PY) tools/agent/heartbeat.py --list
 
-watch-agents:     ## live view: progress, active agents (then by name), hand-offs, locks, queues; stopped and hour-lapsed heartbeats omitted (INTERVAL=n; Ctrl+C to stop)
+watch-agents:     ## live view: progress (units, routines, bytes on main and in unit worktrees), active agents (then by name), hand-offs, locks, queues; stopped and hour-lapsed heartbeats omitted (INTERVAL=n; Ctrl+C to stop)
 	@$(PY) tools/agent/watch.py --interval $(or $(INTERVAL),5)
 
 worker:           ## supervisor owning a lock, one model session per batch (docs/process/WORKER.md): AGENT=<name> ROLE=decompiler|reviewer [UNIT=] [BATCH=6] [SESSION_CMD=] [SESSION_MODEL=] [MAX_SESSIONS=] [TIMEOUT=min] [MAX_ATTEMPTS=2] [IDLE=300] [HARNESS= MODEL= SESSION= VARIANT=]
