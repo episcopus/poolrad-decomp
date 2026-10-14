@@ -5,7 +5,7 @@ unit OVL08;
   (QuickTurn) and the player the others (PlayerTurn with CombatMenu, MoveCharacter, MeleeAttack,
   EndTurnMenu, GameSpeedMenu). EndCombatRound bleeds dying characters and asks Continue Battle,
   BandageDying and SetQuickCombat serve the commands, EndCombat frees the combat data. }
-{$A-,O+,F+,S-,R-,G-,I-}
+{$A-,O+,F+,S-,R-,G-,I-,L-}
 interface
 uses POOLVARS;
 procedure EndCombat;

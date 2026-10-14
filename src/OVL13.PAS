@@ -3,7 +3,7 @@ unit OVL13;
   combatant's round (ComputeMovement and StartCombatantRound), to move a combatant on the combat map (StepCombatant
   and PartingShots), and to resolve what a combat action does; the ovl13_eN entry points are the ones
   the combat menu and the combat AI call. }
-{$A-,O+,F+,S-,R-,G-,I-}
+{$A-,O+,F+,S-,R-,G-,I-,L-}
 interface
 uses POOLVARS;
 type
