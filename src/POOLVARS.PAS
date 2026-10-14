@@ -568,6 +568,18 @@ var
     I 1..6 holds 1, 2, 3, 4, 6, 7 (the destination colour of the I-th of the six colour pairs, and
     plus 8 for the high nibble). It sits inside the ThiefSkillTable region (DS:3CF4). }
   ds3CF5: array[0..$F] of Byte;
+  { The per-race ability limits ModifyCharacter (ovl16:209F) and ovl16:056C clamp to: a 16-byte row
+    per race, a minimum and maximum column per ability (ds3DA3, indexed by [Race, B9E] or
+    [Race, column]). Columns +0/+2/+4 hold the Strength minimum, maximum and exceptional percentile
+    maximum (RaceStrengthMax and RaceStrengthPercent are the same rows viewed two and four columns
+    on), columns +6/+7 .. +14/+15 the minimum and maximum of Intelligence, Wisdom, Dexterity,
+    Constitution and Charisma. }
+  ds3DA3: array[0..$F, 0..$F] of Byte;
+  RaceStrengthMax: array[0..$F, -2..$D] of Byte absolute ds3DA3;
+  RaceStrengthPercent: array[0..$F, -4..$B] of Byte absolute ds3DA3;
+  { The per-class ability minimums ModifyCharacter clamps to: six columns per class (Strength ..
+    Charisma), indexed by [ClassMask, Stat]. }
+  ds3F81: array[0..$10, 0..5] of Byte;
   ds43DC: Word;                   { nonzero after overlay sizing means the overlay manager failed: res08_init
                                     shows 'Overlay error, program abort!' and halts (probably OvrResult) }
   NewHeapEnd: Pointer;            { DS:$4848: HeapEnd cut by $400 paragraphs; assigned to HeapEnd }

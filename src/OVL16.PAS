@@ -6,7 +6,7 @@ unit OVL16;
   are still stubs. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
-uses POOLVARS, RES04, RES06, RES09, RES12, OVL17, OVL19, OVL25;
+uses POOLVARS, RES04, RES06, RES09, RES12, OVL17, OVL19, OVL23, OVL25;
 procedure FreeCharacter(Who: PCharacter);
 procedure RunCharacterMenu;
 procedure ovl16_fn_056C;
@@ -67,17 +67,7 @@ procedure ovl16_fn_1EA3;
 procedure ovl16_fn_1EB9;
 procedure ovl16_fn_1EC6;
 procedure DropCharacter;
-procedure ovl16_fn_2033;
-procedure ovl16_fn_209F;
-procedure ovl16_fn_218B;
-procedure ovl16_fn_219B;
-procedure ovl16_fn_21DA;
-procedure ovl16_fn_21E6;
-procedure ovl16_fn_2233;
-procedure ovl16_fn_234C;
-procedure ovl16_fn_23B6;
-procedure ovl16_fn_242D;
-procedure ovl16_fn_2639;
+procedure ModifyCharacter;
 procedure ovl16_fn_295B;
 procedure ovl16_fn_29AE;
 procedure ovl16_fn_306D;
@@ -100,9 +90,9 @@ procedure ovl16_fn_3EBF;
 procedure ovl16_fn_3EC4;
 procedure ovl16_fn_3EC9;
 procedure ovl16_fn_3F31;
-procedure ovl16_fn_3FB3;
+function ovl16_fn_3FB3(Who: PCharacter): Byte;
 procedure ovl16_fn_4047;
-procedure ovl16_fn_408C;
+function ovl16_fn_408C(Who: PCharacter): Byte;
 procedure ovl16_fn_41F8;
 procedure ovl16_fn_4235;
 procedure ovl16_fn_42ED;
@@ -159,7 +149,7 @@ end;
   draws the window (DrawWindow) and, when a character is selected, its roster (DrawPartyRoster) and
   the eleven function names of the menu at DS:0619 (the first letter in white, the rest in green,
   DrawTextAt). It then asks ReadPromptChoice for a function key (prompt line 'C D M T V A R L S B E J')
-  and dispatches it: C create (ovl16_fn_056C), D drop (DropCharacter), M modify (ovl16_fn_209F),
+  and dispatches it: C create (ovl16_fn_056C), D drop (DropCharacter), M modify (ModifyCharacter),
   T train (ovl16_fn_29AE), V view (ViewSelectedCharacter), A add (ovl16_fn_306D), R remove
   (SaveCharacter then ovl16_e2), L load (LoadGame), S save (SaveGame), B buy/finish (sets ds49F3 to
   Mode 4 and leaves), E exit (AskYesNo, then save and QuitGame), J the STING cheat. An extended key
@@ -244,7 +234,7 @@ begin
             DropCharacter;
         'M':
           if ds0619[2].Present <> 0 then
-            ovl16_fn_209F;
+            ModifyCharacter;
         'T':
           if ds0619[3].Present <> 0 then
             ovl16_fn_29AE;
@@ -447,28 +437,277 @@ begin
       ShowFlashMessage(Name + ' breathes a sigh of relief.');
   end;
 end;
-{ ovl16:2033: retf 4: 4 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl16_fn_2033; begin end;
-{ ovl16:209F: frame not read }
-{@stub} procedure ovl16_fn_209F; begin end;
-{ ovl16:218B: frame not read }
-{@stub} procedure ovl16_fn_218B; begin end;
-{ ovl16:219B: frame not read }
-{@stub} procedure ovl16_fn_219B; begin end;
-{ ovl16:21DA: frame not read }
-{@stub} procedure ovl16_fn_21DA; begin end;
-{ ovl16:21E6: frame not read }
-{@stub} procedure ovl16_fn_21E6; begin end;
-{ ovl16:2233: frame not read }
-{@stub} procedure ovl16_fn_2233; begin end;
-{ ovl16:234C: frame not read }
-{@stub} procedure ovl16_fn_234C; begin end;
-{ ovl16:23B6: frame not read }
-{@stub} procedure ovl16_fn_23B6; begin end;
-{ ovl16:242D: frame not read }
-{@stub} procedure ovl16_fn_242D; begin end;
-{ ovl16:2639: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl16_fn_2639; begin end;
+{ ovl16:209F. The Modify (M) function of the training hall, dispatched by RunCharacterMenu
+  (ovl16:0161). It refuses a character that already has experience ('<name> can''t be modified.',
+  FlashMessageLine), else draws the character sheet and lets the player raise or lower the six
+  ability scores and the hit points. The arrow keys move the cursor (Down/Up through Strength
+  ..Charisma and the hit-point line) and adjust the value under it (Right raises, Left lowers); a
+  value is held between the per-race limits (ds3DA3) and the per-class minimum (ds3F81), a Wisdom
+  change recomputes the cleric bonus spells (AddWisdomBonusSpells), and a hit-point change is
+  bounded by fn_3FB3 (floor) and fn_408C (ceiling). 'K' (Keep) accepts the changes and leaves, 'E'
+  (Exit, or Escape) restores the saved abilities. The nested ShowStat (ovl16:2033) redraws the
+  value under the cursor. A `with SelectedCharacter^` block edits the modified character; its
+  Experience, Scores (+$10), StrengthPercent, HpMax, Flag11B, Race, ClassMask, B9E, ClassLevels,
+  SpellSlots and HirelingShare are used. }
+procedure ModifyCharacter;
+const
+  AbilityCount = 6;             { Strength..Charisma; the cursor's HitPointIndex is the extra step }
+  HitPointIndex = 6;            { the hit-point line below Charisma }
+  { The BIOS scan codes ReadPromptChoice returns with ExtKey set for the four arrows. }
+  ScanUp = #$48;
+  ScanDown = #$50;
+  ScanLeft = #$4B;
+  ScanRight = #$4D;
+  KeyEnter = #13;
+  KeyKeep = 'K';                { the 'Keep' word of the prompt: accept the changes }
+  KeyExit = 'E';                { the 'Exit' word of the prompt: restore the saved abilities }
+  KeyNone = #0;                 { what Escape returns }
+  { The prompt line (ReadPromptChoice of ovl25): its title, word and hotkey colours; ExtKeys = 1
+    accepts the arrow keys. }
+  PromptTitleColour = $D;
+  PromptWordColour = $A;
+  PromptHotColour = $F;
+  AcceptExtendedKeys = 1;
+  MessageColour = $E;           { the flash message on an experienced character }
+  { the hit-point line the cursor's last step shows (DrawHitPoints of res12) }
+  HitPointColumn = 4;
+  HitPointRow = $12;
+  { the column of each ability's minimum and maximum in a 16-byte row of the per-race limits
+    ds3DA3: the Strength columns +0/+2/+4 are RaceStrengthMax and RaceStrengthPercent, and
+    Intelligence .. Charisma take the columns +6/+7 .. +14/+15. }
+  IntMinOffset = 6;
+  IntMaxOffset = 7;
+  WisMinOffset = 8;
+  WisMaxOffset = 9;
+  DexMinOffset = 10;
+  DexMaxOffset = 11;
+  ConMinOffset = 12;
+  ConMaxOffset = 13;
+  ChaMinOffset = 14;
+  ChaMaxOffset = 15;
+  ExceptionalStrength = 18;     { a Strength above this uses the exceptional percentile }
+  FighterClass = 2;             { only a fighter raises the Strength percentile }
+type
+  { The modify target: TCharacter from its ability scores on, with the six scores (Strength ..
+    Charisma) as an array so the cursor can index them by stat. The offsets match TCharacter's
+    (whitepaper 4.2.5): +$10 the scores, +$16 StrengthPercent, +$2E Race, +$2F ClassMask,
+    +$32 HpMax, +$85 HirelingShare, +$96 ClassLevels, +$9E B9E, +$B2 SpellSlots, +$11B Flag11B
+    (the current hit points). }
+  PModifyTarget = ^TModifyTarget;
+  TModifyTarget = record
+    Pad0: array[0..$F] of Byte;             { +$00..+$0F: Name and the rest of TCharacter }
+    Scores: array[0..5] of Byte;            { +$10: Strength, Intelligence, Wisdom, Dexterity,
+                                              Constitution, Charisma }
+    StrengthPercent: Byte;                  { +$16 }
+    Pad17: array[$17..$2D] of Byte;
+    Race: ShortInt;                         { +$2E }
+    ClassMask: ShortInt;                    { +$2F }
+    Age: Word;                              { +$30 }
+    HpMax: Byte;                            { +$32 }
+    Pad33: array[$33..$84] of Byte;
+    HirelingShare: Byte;                    { +$85 }
+    Pad86: array[$86..$95] of Byte;
+    ClassLevels: array[0..7] of ShortInt;   { +$96..+$9D }
+    B9E: ShortInt;                          { +$9E }
+    Pad9F: Byte;                            { +$9F }
+    PadA0: array[$A0..$B1] of Byte;
+    SpellSlots: array[0..1, 1..3] of Byte;  { +$B2..+$B7 }
+    PadB8: array[$B8..$11A] of Byte;
+    Flag11B: Byte;                          { +$11B: the current hit points }
+  end;
+var
+  SavedScores: array[0..5] of Byte;   { [bp-6..bp-1]: the scores as they were on entry }
+  SavedStrengthPercent: Byte;         { [bp-7]: the exceptional Strength on entry }
+  SavedHpMax: Byte;                   { [bp-8]: the maximum hit points on entry }
+  Spare: Byte;                        { [bp-9]: the original frame reserves this byte, never read }
+  Stat: ShortInt;                     { [bp-0xa]: the ability under the cursor / the restore loop }
+  Key: Char;                          { [bp-0xb]: the key ReadPromptChoice returned }
+  ExtKey: Byte;                       { [bp-0xc]: nonzero when Key is an extended key }
+  StatIndex: Byte;                    { [bp-0xd]: the cursor: 0..5 an ability, 6 the hit-point line }
+  Spare2: array[0..6] of Byte;        { [bp-0xe..bp-0x14]: the original frame reserves these, never read }
+
+  { ovl16:2033 (nested). Redraws the value under the cursor: ability StatIndex through
+    ShowAbilityScore (ovl19:0901), or the hit-point line through DrawHitPoints (00BA:0973) when
+    StatIndex is HitPointIndex. Highlight is passed to both (false clears the highlight). It reads
+    the parent's StatIndex and the global SelectedCharacter. }
+  procedure ShowStat(Highlight: Boolean);
+  begin
+    if StatIndex < AbilityCount then
+      ShowAbilityScore(StatIndex, Highlight)
+    else
+      DrawHitPoints(SelectedCharacter, HitPointColumn, HitPointRow, Byte(Highlight));
+  end;
+
+begin
+  if SelectedCharacter^.Experience > 0 then
+  begin
+    FlashMessageLine(SelectedCharacter^.Name + ' can''t be modified.', MessageColour);
+    Exit;
+  end;
+  ShowCharacterSheet;
+  Move(PModifyTarget(SelectedCharacter)^.Scores, SavedScores, AbilityCount);
+  SavedStrengthPercent := SelectedCharacter^.StrengthPercent;
+  SavedHpMax := SelectedCharacter^.HpMax;
+  StatIndex := HitPointIndex;
+  ShowStat(False);
+  StatIndex := 0;
+  ShowStat(True);
+  with PModifyTarget(SelectedCharacter)^ do
+  begin
+    repeat
+    Key := ReadPromptChoice('Modify character: ', 'Keep Exit',
+      PromptTitleColour, PromptWordColour, PromptHotColour, AcceptExtendedKeys, 0, ExtKey);
+    ShowStat(False);
+    if ExtKey <> 0 then
+    begin
+      case Key of
+        ScanDown, KeyEnter:
+        begin
+          Inc(StatIndex);
+          if StatIndex > HitPointIndex then
+            StatIndex := 0;
+        end;
+        ScanUp:
+        begin
+          Dec(StatIndex);
+          if StatIndex = $FF then
+            StatIndex := HitPointIndex;
+        end;
+        ScanLeft:
+        begin
+          if StatIndex < AbilityCount then
+          begin
+            Stat := StatIndex;
+            Dec(Scores[Stat]);
+            case Stat of
+              0:
+                if StrengthPercent > 0 then
+                begin
+                  Dec(StrengthPercent);
+                  Inc(Scores[Stat]);
+                end
+                else if (Scores[Stat] < ds3DA3[Race, B9E])
+                     or (Scores[Stat] < ds3F81[ClassMask, 0]) then
+                  Scores[Stat] := ds3DA3[Race, B9E];
+              1:
+                if (Scores[Stat] < ds3DA3[Race, IntMinOffset])
+                   or (Scores[Stat] < ds3F81[ClassMask, 1]) then
+                  Scores[Stat] := ds3DA3[Race, IntMinOffset];
+              2:
+                begin
+                  if (Scores[Stat] < ds3DA3[Race, WisMinOffset])
+                     or (Scores[Stat] < ds3F81[ClassMask, 2]) then
+                    Scores[Stat] := ds3DA3[Race, WisMinOffset];
+                  if SpellSlots[0, 1] > 0 then
+                    SpellSlots[0, 1] := 1;
+                  AddWisdomBonusSpells(SelectedCharacter);
+                end;
+              3:
+                if (Scores[Stat] < ds3DA3[Race, DexMinOffset])
+                   or (Scores[Stat] < ds3F81[ClassMask, 3]) then
+                  Scores[Stat] := ds3DA3[Race, DexMinOffset];
+              4:
+                begin
+                  if (Scores[Stat] < ds3DA3[Race, ConMinOffset])
+                     or (Scores[Stat] < ds3F81[ClassMask, 4]) then
+                    Scores[Stat] := ds3DA3[Race, ConMinOffset];
+                  if ovl16_fn_408C(SelectedCharacter) < HpMax then
+                    HpMax := ovl16_fn_408C(SelectedCharacter);
+                  Flag11B := HpMax;
+                  StatIndex := HitPointIndex;
+                  ShowStat(False);
+                  StatIndex := 4;
+                end;
+              5:
+                if (Scores[Stat] < ds3DA3[Race, ChaMinOffset])
+                   or (Scores[Stat] < ds3F81[ClassMask, 5]) then
+                  Scores[Stat] := ds3DA3[Race, ChaMinOffset];
+            end;
+          end
+        else
+        begin
+          Dec(HpMax);
+          if ovl16_fn_3FB3(SelectedCharacter) > HpMax then
+            HpMax := ovl16_fn_3FB3(SelectedCharacter);
+          Flag11B := HpMax;
+        end;
+      end;
+        ScanRight:
+        begin
+          if StatIndex < AbilityCount then
+          begin
+            Stat := StatIndex;
+            Inc(Scores[Stat]);
+            case Stat of
+              0:
+                if Scores[Stat] > RaceStrengthMax[Race, B9E] then
+                begin
+                  if (Scores[Stat] > ExceptionalStrength)
+                     and (ClassLevels[FighterClass] > 0)
+                     and (RaceStrengthPercent[Race, B9E] > StrengthPercent) then
+                    Inc(StrengthPercent);
+                  Scores[Stat] := RaceStrengthMax[Race, B9E];
+                end;
+              1:
+                if Scores[Stat] > ds3DA3[Race, IntMaxOffset] then
+                  Scores[Stat] := ds3DA3[Race, IntMaxOffset];
+              2:
+                begin
+                  if Scores[Stat] > ds3DA3[Race, WisMaxOffset] then
+                    Scores[Stat] := ds3DA3[Race, WisMaxOffset];
+                  if SpellSlots[0, 1] > 0 then
+                    SpellSlots[0, 1] := 1;
+                  AddWisdomBonusSpells(SelectedCharacter);
+                end;
+              3:
+                if Scores[Stat] > ds3DA3[Race, DexMaxOffset] then
+                  Scores[Stat] := ds3DA3[Race, DexMaxOffset];
+              4:
+                begin
+                  if Scores[Stat] > ds3DA3[Race, ConMaxOffset] then
+                    Scores[Stat] := ds3DA3[Race, ConMaxOffset];
+                  if ovl16_fn_3FB3(SelectedCharacter) > HpMax then
+                    HpMax := ovl16_fn_3FB3(SelectedCharacter);
+                  Flag11B := HpMax;
+                  StatIndex := HitPointIndex;
+                  ShowStat(False);
+                  StatIndex := 4;
+                end;
+              5:
+                if Scores[Stat] > ds3DA3[Race, ChaMaxOffset] then
+                  Scores[Stat] := ds3DA3[Race, ChaMaxOffset];
+            end;
+          end
+          else
+          begin
+            Inc(HpMax);
+            if ovl16_fn_408C(SelectedCharacter) < HpMax then
+              HpMax := ovl16_fn_408C(SelectedCharacter);
+            Flag11B := HpMax;
+          end;
+      end;
+      end;
+    end
+    else
+      case Key of
+        KeyExit, KeyNone:
+        begin
+          for Stat := 0 to AbilityCount - 1 do
+            PModifyTarget(SelectedCharacter)^.Scores[Stat] := SavedScores[Stat];
+          SelectedCharacter^.StrengthPercent := SavedStrengthPercent;
+          SelectedCharacter^.HpMax := SavedHpMax;
+          SelectedCharacter^.Flag11B := HpMax;
+          RecalcCombatValues(SelectedCharacter);
+          Exit;
+        end;
+      end;
+    RecalcCombatValues(SelectedCharacter);
+    ShowCombatStats;
+    ShowStat(True);
+    until (ExtKey = 0) and (Key = KeyKeep);
+    SelectedCharacter^.HirelingShare := 1;
+  end;
+end;
 { ovl16:295B: frame not read }
 {@stub} procedure ovl16_fn_295B; begin end;
 { ovl16:29AE: retf 0: 0 bytes of parameters; 546 bytes of locals }
@@ -514,11 +753,11 @@ end;
 { ovl16:3F31: retf 4: 4 bytes of parameters; 8 bytes of locals }
 {@stub} procedure ovl16_fn_3F31; begin end;
 { ovl16:3FB3: frame not read }
-{@stub} procedure ovl16_fn_3FB3; begin end;
+{@stub} function ovl16_fn_3FB3(Who: PCharacter): Byte; begin end;
 { ovl16:4047: retf 4: 4 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl16_fn_4047; begin end;
 { ovl16:408C: frame not read }
-{@stub} procedure ovl16_fn_408C; begin end;
+{@stub} function ovl16_fn_408C(Who: PCharacter): Byte; begin end;
 { ovl16:41F8: retf 4: 4 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl16_fn_41F8; begin end;
 { ovl16:4235: retf 6: 6 bytes of parameters; 4 bytes of locals }

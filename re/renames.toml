@@ -4029,3 +4029,10 @@ kind = "routine"
 why = "ovl16:1F37 removes the selected character from the party: it asks AskYesNo 'Drop <name> forever?' and 'Are you sure?', then shows 'bids you farewell' or 'You dump <name> out back' and calls ovl16_e2(False, True); it is the D (Drop) item of the training-hall menu RunCharacterMenu (ovl16:0161), whitepaper 5.8 'Alter'"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl16_fn_209F"
+new = "ModifyCharacter"
+kind = "routine"
+why = "ovl16:209F is the M (Modify) item of the training hall: it refuses an experienced character with '<name> can t be modified.' and lets the player raise/lower the six ability scores and HP with the arrows, Keep (K) or Exit (E); called by RunCharacterMenu (ovl16:0161)"
+date = "2026-10-13"
+

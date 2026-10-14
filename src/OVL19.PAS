@@ -88,7 +88,7 @@ type
   class levels and experience on row 15, the combat block (ShowCombatStats) on rows 17 and 18, the weapon
   and armor on rows 20 and 21 and the status on row 22, and the head and body portraits when they are
   on (ShowPortraits) and the tile set is 3. Called by ViewSelectedCharacter (the View command),
-  TradeMoney (ovl19:219D) and ovl16 (ovl16_fn_0B52, ovl16_fn_1DCB, ovl16_fn_209F). SheetCharacter keeps the
+  TradeMoney (ovl19:219D) and ovl16 (ovl16_fn_0B52, ovl16_fn_1DCB, ModifyCharacter). SheetCharacter keeps the
   character for the whole drawing. }
 procedure ShowCharacterSheet;
 const

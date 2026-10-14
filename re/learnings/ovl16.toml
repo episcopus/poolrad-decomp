@@ -53,3 +53,39 @@ tags = ["map", "boundaries", "near-call", "pool", "1F37"]
 title = "The ovl16 1F30..200B map entries lie inside DropCharacter (1F37) and its literal pool"
 lesson = "Between ovl16:1F37 (DropCharacter, one prologue 55 89 e5) and its retf at 2032 the only bytes are its body; the 101-byte string pool just before it (1ED2..1F36, 'Drop ', ' forever? ', 'Are you sure? ', 'You dump ', ' out back.', ' bids you farewell.', ' breathes a sigh of relief.') belongs to DropCharacter, not 056C. So near_call entries 1F59 (an instruction boundary, push di), 1F7C (mid-instruction) and 1FE8 (last byte of lea di,[bp-0x214]) are inside its body, 200B is the false-positive target of the E8 disp8 at 0x2805 landing on DropCharacter's own `call 0x3291` (ovl16_e2), and 1F30 sits inside ' breathes a sigh of relief.' in its pool. make match UNIT=ovl16 WRITE=1 removed all of these (and the earlier 1F0D and 2013, also in this pool/body) when DropCharacter matched."
 evidence = ["re/symbols.toml#ovl16:1F37", "re/symbols.toml#ovl16:1F30", "re/symbols.toml#ovl16:1F59", "re/symbols.toml#ovl16:200B", "src/OVL16.PAS#DropCharacter"]
+
+[[lesson]]
+id = "ovl16-2d-array-index-builds-di"
+confidence = "V"
+units = ["ovl16", "*"]
+tags = ["array", "index", "codegen", "di", "ax", "2d", "209F"]
+title = "A two-dimensional byte-array index builds the index in DI; a flat index shifts AX"
+lesson = "ModifyCharacter (ovl16:209F) indexes the per-race limits as ds3DA3[Race, B9E]. Written as a two dimensional array array[0..$F, 0..$F] of Byte, TP6 emits `mov al,<Race>; cwde; mov di,ax; mov cl,4; shl di,cl; add di,dx` (the index in DI), which is what the original does (8b f8 b1 04 d3 e7, 52 times in ovl16). Written as a flat array ds3DA3[Race*16 + B9E] it emits `shl ax,cl; ...; mov di,ax` instead and cannot match. A constant second subscript (ds3DA3[Race, 6]) folds into the base displacement ([di+base+6] = DS:3DA9). Probe tools/re/tp_idioms/ovl16/RIDXPRB.PAS."
+evidence = ["src/OVL16.PAS#ModifyCharacter", "re/symbols.toml#ovl16:209F", "tools/re/tp_idioms/ovl16/RIDXPRB.PAS"]
+
+[[lesson]]
+id = "ovl16-shifted-bound-absolute-alias"
+confidence = "V"
+units = ["ovl16", "*"]
+tags = ["absolute", "array", "index", "codegen", "209F"]
+title = "A shifted second-dimension lower bound in an absolute alias folds a constant into the base"
+lesson = "The per-race Strength maximum and percentile maximum are the same 16-byte rows read two and four columns on (DS:3DA5, DS:3DA7), so the original emits `add di,dx; mov dl,[di+0x3da5]` with the same index Race*16+B9E as the minimum. `ds3DA3[Race, B9E + 2]` does not match (TP emits inc ax; inc ax). Declaring RaceStrengthMax: array[0..$F, -2..$D] of Byte absolute ds3DA3 and indexing RaceStrengthMax[Race, B9E] folds the +2 into the base exactly. The alias must NOT be named dsXXXX (make match rejects an absolute alias whose ds-name offset disagrees with its base). Probe tools/re/tp_idioms/ovl16/ABSPRB.PAS."
+evidence = ["src/OVL16.PAS#ModifyCharacter", "src/POOLVARS.PAS", "tools/re/tp_idioms/ovl16/ABSPRB.PAS"]
+
+[[lesson]]
+id = "ovl16-nested-showstat-static-link"
+confidence = "V"
+units = ["ovl16", "*"]
+tags = ["nested", "static-link", "with", "frame", "2033", "209F"]
+title = "ovl16:2033 is a nested routine of ModifyCharacter that redraws the cursor's value"
+lesson = "The map lists ovl16:2033 as a top-level routine, but its only callers are in ModifyCharacter (ovl16:209F) and it reads the parent's local StatIndex through the static link: the calls are `push <boolean>; push bp; push cs; call`, and the body is `if ss:[di-0xd] < 6 then ShowAbilityScore else DrawHitPoints` with di from [bp+6]. It is emitted in 209F's pre-entry region (2033 before the 108-byte literal pool 206E..209D and the entry 209F), so it must be declared nested (procedure ShowStat inside ModifyCharacter) and its top-level {stub} removed; make match UNIT=ovl16 WRITE=1 reports it NESTED and marks 2033 L2. Probe tools/re/tp_idioms/ovl16/NEST1.PAS (call shape push ax; push bp; push cs; call)."
+evidence = ["src/OVL16.PAS#ModifyCharacter", "re/symbols.toml#ovl16:2033", "tools/re/tp_idioms/ovl16/NEST1.PAS"]
+
+[[lesson]]
+id = "ovl16-modifycharacter-frame-and-loop"
+confidence = "V"
+units = ["ovl16"]
+tags = ["frame", "with", "repeat", "case", "209F"]
+title = "ModifyCharacter's frame, with temp and loop shape"
+lesson = "ModifyCharacter (ovl16:209F) has a 276-byte frame (sub sp, 0x114): 20 bytes of named locals (SavedScores [bp-6..bp-1], SavedStrengthPercent, SavedHpMax, one spare byte at [bp-9], Stat, Key, ExtKey, StatIndex, and seven spare bytes the original reserves before the with temp), a 4-byte `with SelectedCharacter^ do` temp at [bp-0x15..bp-0x18], and the compiler string temporaries. The loop is `repeat ... until (ExtKey = 0) and (Key = KeyKeep)` followed by HirelingShare := 1 (the je+jmp form, not jne); the key dispatch and the ability adjust are `case` statements, and a large-bodied `case Stat of` alternates its je/jne by body size (the ==127 rel8 range). The exit path restores the saved scores."
+evidence = ["src/OVL16.PAS#ModifyCharacter", "re/symbols.toml#ovl16:209F"]

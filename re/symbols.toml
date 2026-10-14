@@ -7722,7 +7722,7 @@ evidence = ["near_call"]
 id = "ovl16:1F37"
 unit = "ovl16"
 addr = "ovl16:1F37"
-size = 252
+size = 360
 name = "DropCharacter"
 signature = ""
 c_name = "ovl16_fn_1F37"
@@ -7735,144 +7735,27 @@ evidence = ["prologue"]
 id = "ovl16:2033"
 unit = "ovl16"
 addr = "ovl16:2033"
-size = 108
-name = "ovl16_fn_2033"
+size = 59
+name = "ShowStat"
 signature = ""
-c_name = "ovl16_fn_2033"
-level = "none"
+c_name = "ShowStat"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "nested in ModifyCharacter (ovl16:209F), proven by the parent's match: the parent's ShowStat redraws the value under the cursor (ability StatIndex through ShowAbilityScore, or the hit-point line through DrawHitPoints) by reading the parent's own StatIndex through the static link; the 49 bytes after its retf are 209F's string literals"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl16:209F"
 unit = "ovl16"
 addr = "ovl16:209F"
-size = 236
-name = "ovl16_fn_209F"
+size = 2127
+name = "ModifyCharacter"
 signature = ""
 c_name = "ovl16_fn_209F"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl16_fn_209F (ovl16:209F is the M (Modify) item of the training hall: it refuses an experienced character with '<name> can t be modified.' and lets the player raise/lower the six ability scores and HP with the arrows, Keep (K) or Exit (E); called by RunCharacterMenu (ovl16:0161)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl16:218B"
-unit = "ovl16"
-addr = "ovl16:218B"
-size = 16
-name = "ovl16_fn_218B"
-signature = ""
-c_name = "ovl16_fn_218B"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:219B"
-unit = "ovl16"
-addr = "ovl16:219B"
-size = 63
-name = "ovl16_fn_219B"
-signature = ""
-c_name = "ovl16_fn_219B"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:21DA"
-unit = "ovl16"
-addr = "ovl16:21DA"
-size = 12
-name = "ovl16_fn_21DA"
-signature = ""
-c_name = "ovl16_fn_21DA"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:21E6"
-unit = "ovl16"
-addr = "ovl16:21E6"
-size = 77
-name = "ovl16_fn_21E6"
-signature = ""
-c_name = "ovl16_fn_21E6"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:2233"
-unit = "ovl16"
-addr = "ovl16:2233"
-size = 281
-name = "ovl16_fn_2233"
-signature = ""
-c_name = "ovl16_fn_2233"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl16:234C"
-unit = "ovl16"
-addr = "ovl16:234C"
-size = 106
-name = "ovl16_fn_234C"
-signature = ""
-c_name = "ovl16_fn_234C"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:23B6"
-unit = "ovl16"
-addr = "ovl16:23B6"
-size = 119
-name = "ovl16_fn_23B6"
-signature = ""
-c_name = "ovl16_fn_23B6"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl16:242D"
-unit = "ovl16"
-addr = "ovl16:242D"
-size = 524
-name = "ovl16_fn_242D"
-signature = ""
-c_name = "ovl16_fn_242D"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:2639"
-unit = "ovl16"
-addr = "ovl16:2639"
-size = 802
-name = "ovl16_fn_2639"
-signature = ""
-c_name = "ovl16_fn_2639"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl16:295B"
@@ -8166,7 +8049,7 @@ unit = "ovl16"
 addr = "ovl16:3FB3"
 size = 148
 name = "ovl16_fn_3FB3"
-signature = ""
+signature = "function ovl16_fn_3FB3(Who: PCharacter): Byte"
 c_name = "ovl16_fn_3FB3"
 level = "none"
 justification = ""
@@ -8192,7 +8075,7 @@ unit = "ovl16"
 addr = "ovl16:408C"
 size = 364
 name = "ovl16_fn_408C"
-signature = ""
+signature = "function ovl16_fn_408C(Who: PCharacter): Byte"
 c_name = "ovl16_fn_408C"
 level = "none"
 justification = ""
