@@ -12,7 +12,7 @@ function CanGiveUpItem(Item: PMenuLine): Boolean;
 procedure RunItemMenu(var Done: Byte);
 procedure ReadyItem(Item: PMenuLine);
 procedure TradeItem(Item: PMenuLine);
-procedure ovl19_fn_17ED(Item: PMenuLine);
+procedure HalveItem(Item: PMenuLine);
 procedure ovl19_fn_189D(Item: PMenuLine);
 procedure ovl19_e8(P: Pointer; var B: Byte);
 procedure ovl19_fn_1BA6;
@@ -397,7 +397,7 @@ end;
   that ovl22_e6 accepts, or one with Affects[2] above 0 and Affects[3] below $80; then it runs ovl19_e8.
   Trade and Sell ask CanGiveUpItem, then run TradeItem or ovl19_fn_1CEE. Drop asks CanGiveUpItem,
   shows "Your <item> will be gone forever" and then "Drop It?", and on Y calls res12_fn_1509 with
-  SelectedCharacter and the item. Halve, Join and Id run ovl19_fn_17ED, ovl19_fn_189D and ovl19_fn_1F52.
+  SelectedCharacter and the item. Halve, Join and Id run HalveItem, ovl19_fn_189D and ovl19_fn_1F52.
   Done: the stop flag shared with ViewSelectedCharacter; ovl19_e8 may set it. The item menu is drawn
   only when the character carries items; the Items window (rows 1 to 22) is drawn when DrawItemWindow
   is set or ds6821 is nonzero. The view mode ds49F3 decides which words are offered: 1 (set by
@@ -512,7 +512,7 @@ begin
             end
             else
               Key := ' ';
-          'H': ovl19_fn_17ED(Selected);
+          'H': HalveItem(Selected);
           'J': ovl19_fn_189D(Selected);
           'S':
             if CanGiveUpItem(Selected) then
@@ -646,8 +646,33 @@ begin
     end;
   end;
 end;
-{ ovl19:17ED: retf 4: 4 bytes of parameters; 24 bytes of locals }
-{@stub} procedure ovl19_fn_17ED(Item: PMenuLine); begin end;
+{ ovl19:17ED. The Halve action of the item menu (RunItemMenu's H key, ovl19:0EF8): splits the stack Item
+  in two. Half is its Count div 2; when Half is zero "Can't halve that" is shown. Otherwise a new record
+  (New, 63 bytes) is a copy of Item with Count Half and not Readied, linked in after Item: it takes Item's
+  old Next, and Item keeps the rest of the count (Count minus Half) and points at the new record. Parameter:
+  Item, the stack halved. Side effects: a new item record is allocated (it is never freed here); the
+  message (res12_fn_1693). }
+procedure HalveItem(Item: PMenuLine);
+var
+  NewItem: PMenuLine;           { the second half of the stack }
+  Half: Byte;                   { the count the new record takes }
+  Rest: Byte;                   { the count Item keeps }
+begin
+  Half := Item^.Count div 2;
+  if Half > 0 then
+  begin
+    Rest := Item^.Count - Half;
+    New(NewItem);
+    Move(Item^, NewItem^, SizeOf(TMenuLine));
+    NewItem^.Count := Half;
+    NewItem^.Readied := False;
+    NewItem^.Next := Item^.Next;
+    Item^.Count := Rest;
+    Item^.Next := NewItem;
+  end
+  else
+    res12_fn_1693('Can''t halve that');
+end;
 { ovl19:189D: retf 4: 4 bytes of parameters; 14 bytes of locals }
 {@stub} procedure ovl19_fn_189D(Item: PMenuLine); begin end;
 { ovl19:1A8A: frame not read }

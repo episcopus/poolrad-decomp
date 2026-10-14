@@ -8730,12 +8730,12 @@ id = "ovl19:17ED"
 unit = "ovl19"
 addr = "ovl19:17ED"
 size = 176
-name = "ovl19_fn_17ED"
-signature = "procedure ovl19_fn_17ED(Item: PMenuLine)"
+name = "HalveItem"
+signature = "procedure HalveItem(Item: PMenuLine)"
 c_name = "ovl19_fn_17ED"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl19_fn_17ED (ovl19:17ED is the Halve action of RunItemMenu's H key (ovl19:0EF8, line H calls it): Count div 2 goes to a new 63-byte record copied from the item (Move, New), that record takes the item's Next, the item keeps the rest of the count, and 'Can''t halve that' is shown when the half is zero); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

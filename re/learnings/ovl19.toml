@@ -115,7 +115,7 @@ units = ["*"]
 tags = ["frame", "locals", "layout"]
 title = "The first declared local sits nearest BP; the last one is the deepest"
 lesson = "ReadyItem declares AffectOn, Reason, Slot (Byte) and then Character (a pointer): the compiler places AffectOn at [bp-1], Reason at [bp-2], Slot at [bp-3] and Character at [bp-7..-4]. Declaring Character first put it at [bp-4..-1] and moved AffectOn to [bp-5], which the matcher reported at the first store. The order to write is the reverse of the frame's addresses."
-evidence = ["src/OVL19.PAS#ReadyItem", "build/packets/ovl19_14D0.md"]
+evidence = ["src/OVL19.PAS#ReadyItem"]
 
 [[lesson]]
 id = "byte-case-then-signed-index"
@@ -124,7 +124,7 @@ units = ["*"]
 tags = ["compiler", "case", "signed", "index", "cwde"]
 title = "A Byte case loads the value once and compares it unsigned; a ShortInt cast gives the cwde index"
 lesson = "`case Slot of 0..8: ...; 9: ...; end` on a Byte compiles to one `mov al,[bp-3]` and unsigned `cmp al,0; jb` / `cmp al,8; ja` range tests, then `cmp al,9`. An `if (Slot >= 0) and (Slot <= 8)` with the same Byte, or a ShortInt Slot, compiled to memory compares with signed jl and jg (a different shape). The array index that must be sign-extended is written `SlotItems[ShortInt(Slot)]`: it gives `mov al,[bp-3]; cwde`, the same as the original, while the range test stays unsigned."
-evidence = ["src/OVL19.PAS#ReadyItem", "build/packets/ovl19_14D0.md"]
+evidence = ["src/OVL19.PAS#ReadyItem"]
 
 [[lesson]]
 id = "reason-code-case-chain"

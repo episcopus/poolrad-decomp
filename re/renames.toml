@@ -3462,3 +3462,10 @@ kind = "routine"
 why = "ovl19:1734 is the Trade action of RunItemMenu's T key (ovl19:0EF8, after CanGiveUpItem): 'Trade with Whom?' picks the recipient (res12_fn_2C48), the item is added to the recipient (res12_fn_15F7) and taken from SelectedCharacter (res12_fn_1509), or 'Overloaded' is shown when WouldOverloadInventory refuses the recipient"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl19_fn_17ED"
+new = "HalveItem"
+kind = "routine"
+why = "ovl19:17ED is the Halve action of RunItemMenu's H key (ovl19:0EF8, line H calls it): Count div 2 goes to a new 63-byte record copied from the item (Move, New), that record takes the item's Next, the item keeps the rest of the count, and 'Can''t halve that' is shown when the half is zero"
+date = "2026-10-13"
+
