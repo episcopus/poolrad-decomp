@@ -161,3 +161,75 @@ tags = ["div", "shr", "nibble", "shift", "codegen", "constant", "cl"]
 title = "A Byte's high nibble written as div 16 compiles to mov cl, 4; shr ax, cl, where shr 4 gives mov cx, 4"
 lesson = "`Who^.Side := Affect^.Data div 16` (CollapseAndChangeSide, ovl12:0B1B) matches the original's `xor ah, ah; mov cl, 4; shr ax, cl` at 0B53..0B57. `Affect^.Data shr 4` compiled to `mov cx, 4; shr ax, cl` and first differed at 0B55. This extends the div/shr rule above to n = 4; n = 2, 6 and 7 are in tools/re/tp_idioms/ovl12/E11SHIFT.PAS."
 evidence = ["src/OVL12.PAS#CollapseAndChangeSide", "re/symbols.toml#ovl12:0B1B"]
+
+[[lesson]]
+id = "dec-byte-field-through-pointer-param"
+confidence = "V"
+units = ["ovl12"]
+tags = ["dec", "field", "pointer", "record", "les", "codegen", "byte"]
+title = "Dec on a Byte field reached through a pointer parameter reloads the pointer for each statement"
+lesson = "`Dec(Who^.ResistValue, ResistPenalty); Dec(Who^.Pad112[$112], ResistPenalty);` (LowerAttackSaveAndResistance, ovl12:0BAC) matches `les di, [bp+0Ch]; sub byte ptr es:[di+111h], 4` and then the same `les di` again before the second store. The pointer parameter is read from its frame slot for every statement. A constant Dec on a Byte global is one `sub byte ptr [..], n`. Write one statement per field through a pointer parameter; the match proves the form."
+evidence = ["src/OVL12.PAS#LowerAttackSaveAndResistance", "re/symbols.toml#ovl12:0BAC"]
+
+[[lesson]]
+id = "negative-constant-to-shortint-global"
+confidence = "V"
+units = ["ovl12"]
+tags = ["shortint", "negative", "constant", "store", "signed", "codegen"]
+title = "A negative constant stored in a ShortInt global is one byte store of its two's complement"
+lesson = "`AttackRoll := MissRoll` with `MissRoll = -1` (SetAttackMissIfTurnPending, ovl12:0C26) matches `mov byte ptr [6822h], 0FFh`: one byte store, no word store and no sign extension. The guard `Who^.Combat^.Initiative > 0` on the ShortInt field compares with `cmp byte ptr es:[di+3], 0; jle`, a signed test."
+evidence = ["src/OVL12.PAS#SetAttackMissIfTurnPending", "re/symbols.toml#ovl12:0C26"]
+
+[[lesson]]
+id = "and-mask-zero-test-then-add-bit"
+confidence = "V"
+units = ["ovl12"]
+tags = ["and", "mask", "bit", "if", "add", "byte", "field"]
+title = "if (x and mask) = 0 then x := x + mask compiles to and al, mask; or al, al; jne, then add ax, mask"
+lesson = "AgeCharacterOnce (ovl12:0C4B) matches `mov al, es:[di+3]; and al, 10h; or al, al; jne skip` for `if (Affect^.Data and AgedBit) = 0 then`, and `mov al, es:[di+3]; xor ah, ah; add ax, 10h; mov es:[di+3], al` for `Affect^.Data := Affect^.Data + AgedBit`. The `= 0` test costs only the jump over the body, the same as `not` in LowerAttackRollByFour (ovl12:0918). Adding a bit known to be clear is written as `+ mask`; the `or` form was not probed."
+evidence = ["src/OVL12.PAS#AgeCharacterOnce", "re/symbols.toml#ovl12:0C4B"]
+
+[[lesson]]
+id = "shl-one-of-byte-global"
+confidence = "V"
+units = ["ovl12"]
+tags = ["shl", "shift", "byte", "global", "codegen", "count"]
+title = "ds681A := ds681A shl 1 on a Byte global is one shl ax, 1 between a load and a store"
+lesson = "AgeCharacterOnce (ovl12:0C4B) ends with `ds681A := ds681A shl 1;` and matches `mov al, [681Ah]; xor ah, ah; shl ax, 1; mov [681Ah], al`. A shift by 1 needs no cl register, unlike the shifts by 4, 6 and 7 (div-16-byte-high-nibble, div-by-power-of-two-is-mov-cl)."
+evidence = ["src/OVL12.PAS#AgeCharacterOnce", "re/symbols.toml#ovl12:0C4B"]
+
+[[lesson]]
+id = "rename-refuses-name-used-in-comment"
+confidence = "V"
+units = ["ovl12"]
+tags = ["rename", "tooling", "comment", "name"]
+title = "make rename refuses a new name that appears anywhere in src, comments included"
+lesson = "`make rename OLD=ovl12_e31 NEW=LowerAttackAndSave` stopped with `LowerAttackAndSave is already used in src/` because the comment of RaiseAttackAndSave (ovl12:0C06) named it. The comment was reworded to give the address (`the plus of the routine at ovl12:0C15`) and the rename then went through. Before renaming, grep src for the new name and reword any comment that uses it."
+evidence = ["src/OVL12.PAS#RaiseAttackAndSave", "tools/match/rename.py"]
+
+[[lesson]]
+id = "readability-r5-comment-on-declaration-line"
+confidence = "V"
+units = ["ovl12"]
+tags = ["readability", "R5", "global", "comment", "poolvars"]
+title = "The R5 check reads a global's comment on its declaration line only"
+lesson = "A comment on `ds681E: Byte;` that wrapped onto a second line failed `make readability` (R5, SetAttackMissIfTurnPending) with 'needs a comment in POOLVARS.PAS'. On one line it passes. Keep a global's comment on its declaration line, and keep the line within 127 characters."
+evidence = ["src/POOLVARS.PAS#ds681E"]
+
+[[lesson]]
+id = "line-too-long-127"
+confidence = "V"
+units = ["ovl12"]
+tags = ["compile", "line", "length", "error", "127"]
+title = "Turbo Pascal stops at a source line over 127 characters with Error 11, Line too long"
+lesson = "`make match` failed with `OVL12.PAS(201): Error 11: Line too long` for a constant declaration with a long comment. Keep every source line, comments included, within 127 characters, and keep a declaration's comment short enough to stay on its line."
+evidence = ["src/OVL12.PAS#AffectUnknown2B"]
+
+[[lesson]]
+id = "learning-evidence-no-build-paths"
+confidence = "V"
+units = ["ovl12"]
+tags = ["learning", "packet", "build", "evidence", "tooling"]
+title = "A learning row may not cite a build/ path: make packet stops on it"
+lesson = "`make packet` failed with `durable lessons must not depend on ignored build logs` for the row map-entry-at-displacement-byte, whose evidence named build/packets/ovl12_0A65.md. The build packet is regenerated by make packet, so the row cites only committed files (the routine's symbols entry and its source)."
+evidence = ["tools/agent/learning.py", "re/symbols.toml#ovl12:0A65"]
