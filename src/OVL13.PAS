@@ -1127,7 +1127,7 @@ end;
 { ovl13:263D: retf 8: 8 bytes of parameters; 6 bytes of locals }
 {@stub} function ovl13_e18(Who, Target: Pointer): Byte; begin end;
 { ovl13:26B0: retf 12: 12 bytes of parameters; 6 bytes of locals }
-{@stub} procedure ovl13_fn_26B0; begin end;
+{@stub} procedure ovl13_fn_26B0(Who, Target: PCharacter; Item: PItem); begin end;
 { ovl13:2879: retf 0: 0 bytes of parameters; 8 bytes of locals }
 {@stub} procedure ovl13_e19; begin end;
 { ovl13:2908: retf 4: 4 bytes of parameters; 8 bytes of locals }
