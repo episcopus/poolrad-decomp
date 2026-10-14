@@ -1063,3 +1063,8 @@ evidence = "ds6DBF is set (ovl19:1AE7) for an item whose Affects[2] gives the sp
 offset = 0x471A
 name = "ViewedCharacter"
 evidence = "ds471A is the character the View command was started for: ViewSelectedCharacter stores SelectedCharacter in it (ovl19:0AD1), and the two Trade commands start 'Trade to?' from it and store the recipient in it (ovl19:1734 TradeItem, ovl19:2156 TradeMoney)"
+
+[[global]]
+offset = 0x5582
+name = "ItemTable"
+evidence = "the ITEMS file block ovl11:05CD reads into DS:5582 (record 2 of ITEMS, $810 bytes = 129 rows of 16, whitepaper 4.3); the combat AI indexes it by ItemType in every routine of ovl09 (ScoreTarget, UseBestItem, AiTurn, UseMagicItem)"

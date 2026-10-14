@@ -3623,3 +3623,24 @@ kind = "routine"
 why = "the View prompt's D key (ovl19:0AB3 calls it, followed by ShowCharacterMoney) lists the coin kinds SelectedCharacter holds under 'Select type of coin' (ChooseFromList), asks 'How much <kind> will you drop? ' (ReadAmount) and calls DropMoney (ovl21:0A01); ovl19:24A7 is the Drop twin of TradeMoney (ovl19:2156)"
 date = "2026-10-13"
 
+[[rename]]
+old = "RaceRow"
+new = "ItemTable"
+kind = "global"
+why = "the ITEMS file block at DS:5582 (ovl11:05CD, whitepaper 4.3): 129 item rows indexed by ItemType in ovl09, not a race table"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl09_fn_0203"
+new = "TryTurnUndead"
+kind = "routine"
+why = "ovl08 CombatMenu offers Turn (ovl08:0795) when ClassLevels[0] > 0 and Turned = 0, and PlayerTurn's T case runs ovl13_e9 (src/OVL08.PAS:220); the routine tests the same conditions and runs ovl13_e9 with ovl13_e10 agreeing: the computer's Turn action"
+date = "2026-10-13"
+
+[[rename]]
+old = "ScoreTarget"
+new = "ScoreItem"
+kind = "routine"
+why = "its only caller UseBestItem (ovl09:13CA) passes an ITEM (ScoreTarget(Who, PCharacter(Pick))) and the bytes it reads are item fields (+$2E ItemType, +$32 Plus, +$36 Cursed, +$3D/+$3E Affects[2]/[3]); it rates an item for the AI's item step"
+date = "2026-10-13"
+

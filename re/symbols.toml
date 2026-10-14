@@ -2590,12 +2590,12 @@ id = "ovl09:0203"
 unit = "ovl09"
 addr = "ovl09:0203"
 size = 232
-name = "ovl09_fn_0203"
+name = "TryTurnUndead"
 signature = ""
 c_name = "ovl09_fn_0203"
 level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl09_fn_0203 (ovl08 CombatMenu offers Turn (ovl08:0795) when ClassLevels[0] > 0 and Turned = 0, and PlayerTurn's T case runs ovl13_e9 (src/OVL08.PAS:220); the routine tests the same conditions and runs ovl13_e9 with ovl13_e10 agreeing: the computer's Turn action); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2733,12 +2733,12 @@ id = "ovl09:128D"
 unit = "ovl09"
 addr = "ovl09:128D"
 size = 317
-name = "ScoreTarget"
+name = "ScoreItem"
 signature = ""
 c_name = "ovl09_fn_128D"
 level = "L2"
 justification = ""
-notes = "renamed from ovl09_fn_128D (ovl09:128D returns a Byte score that ovl09_fn_13CA maximizes (ovl09:1543 keeps the candidate with the highest value)); auto:near_call"
+notes = "renamed from ScoreTarget (its only caller UseBestItem (ovl09:13CA) passes an ITEM (ScoreTarget(Who, PCharacter(Pick))) and the bytes it reads are item fields (+$2E ItemType, +$32 Plus, +$36 Cursed, +$3D/+$3E Affects[2]/[3]); it rates an item for the AI's item step); renamed from ovl09_fn_128D (ovl09:128D returns a Byte score that ovl09_fn_13CA maximizes (ovl09:1543 keeps the candidate with the highest value)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

@@ -159,14 +159,16 @@ type
   { The handler of an affect number (the table AffectHandlers): Mode 0 applies it, 1 removes it. }
   TAffectHandler = procedure(Who: PCharacter; Affect: PAffect; Mode: Byte);
   { The combat state of a character (TCharacter.Combat, +$108), read and written by the combat
-    units ovl08 and ovl31; only the fields they use are named. }
+    units ovl08, ovl09 and ovl31; only the fields they use are named. ovl10 allocates $16 bytes for it
+    (CombatRecordSize), which is this record's size with the fields to +$15. }
   PCombatant = ^TCombatant;
   TCombatant = record
     { +$0: nonzero: the turn finishes this spell through ovl22_e5 (ovl08:0336); cleared when the
       combatant leaves the map (RemoveCombatant). }
     PendingSpell: Byte;
     CanCast: Byte;                { +$1: zero hides Cast in the combat menu (ovl08:0747) }
-    Pad2: Byte;
+    { +$2: zero makes UseMagicItem give up at once (ovl09:03E4); no other decompiled unit reads it [I]. }
+    CanUseMagicItem: Byte;
     { +$3: the turn order: CombatTurn acts only above 0, the highest roll goes first
       (PickNextCombatant), Delay sets 1, $14 (the Alt-Q quick fight) acts as $13. Signed. Cleared
       by RemoveCombatant. }
@@ -184,12 +186,20 @@ type
     Target: PCharacter;           { +$A: the character attacked last (MeleeAttack sets it) }
     DyingRounds: Byte;            { +$E: the rounds a dying character (Status 5) has bled; above 9 it dies }
     BF: Byte;                     { +$F: cleared at the start of each turn (ovl08:0204); meaning unknown }
-    Pad10: Byte;
+    { +$10: nonzero forces flight: CheckMorale (ovl09:10D7) then shows 'is forced to flee' and sets Panic;
+      QuickTurn shows 'flees in panic' only while it is zero (ovl09:000F). }
+    ForcedFlight: Byte;
     Turned: Byte;                 { +$11: nonzero hides Turn in the combat menu (ovl08:0795) }
     B12: Byte;                    { +$12: cleared at the start of each turn (ovl08:0211); meaning unknown }
     { +$13: nonzero: no body is left on the map when the combatant dies (RemoveCombatant, ovl31),
       and a dying character with it set is not bandaged (ovl08:1029). }
     NoBody: Byte;
+    { +$14: nonzero while the combatant is panicking: CheckMorale clears it and sets it on a failed
+      morale roll; AiTurn moves a panicking combatant with MoveStep (ovl09:0B3C, ovl09:07F2). }
+    Panic: Byte;
+    { +$15: the step pattern, 1..6, the row of StepTurnOffsets that CanAffordStep and MoveStep read;
+      QuickTurn and MoveStep reroll it (ovl09:000F, 07F2). }
+    StepPattern: Byte;
   end;
   { One $13-byte record of the list at DS:6DBB (FreeMem size, ovl08:0029); only Next is known. }
   PCombatNode = ^TCombatNode;
@@ -279,24 +289,29 @@ type
       ovl16:0A29 sets it to (the create menu's selection - 1); its meaning is not settled. }
     B9E: ShortInt;
     Pad9F: Byte;
-    ByteA0: ShortInt;             { +$A0: the script reads it signed (GetCharacterVar, ovl07:08C5); meaning unknown }
+    { +$A0: the script reads it signed (GetCharacterVar, ovl07:08C5). Purpose unknown: ScoreItem (ovl09:128D)
+      refuses an item whose Affects[3] is $84 when the low nibble of its Affects[2] differs from this byte. }
+    ByteA0: ShortInt;
     { +$A1: RecalcClassStats sets 3 when the fighter level (ClassLevels[2]) is above 6, else 2
       (ovl23:0083): likely attacks per two rounds [I]. }
     Attacks: Byte;
-    { +$A2..+$AB: three bytes the AI item chooser reads (ovl09:13CA): it multiplies +$A3 and +$A5
-      into its item score and, when the signed +$A7 is above 0, adds twice it. The rest is unknown. }
+    { +$A2..+$AB: the character's own attack, read by UseBestItem (ovl09:13CA): its starting score
+      (Score2) is AttackFactorB * AttackFactorA, plus 2 * AttackBonus when the signed AttackBonus is above 0.
+      Purpose unknown: what these three bytes are in the game is not proven. }
     PadA2: Byte;
-    dsA3: Byte;                   { +$A3 }
+    AttackFactorA: Byte;          { +$A3 }
     PadA4: Byte;                  { +$A4 }
-    dsA5: Byte;                   { +$A5 }
+    AttackFactorB: Byte;          { +$A5 }
     PadA6: Byte;                  { +$A6 }
-    dsA7: ShortInt;               { +$A7 }
+    AttackBonus: ShortInt;        { +$A7 }
     PadA8: array[$A8..$AA] of Byte;
     { +$AB: LoadMonster's caller gives a new monster the value Random(256) here (ovl17:1262);
       the rest of the byte's use is not known. }
     BAB: Byte;
     Experience: LongInt;          { +$AC: experience points; AwardExperience adds a battle's share (ovl05:04A3) }
-    PadB0: Byte;
+    { +$B0: the character's class bits [I]: UseBestItem skips an item whose ClassMask (TItemRow) shares
+      no bit with it (ovl09:13CA). Purpose unknown beyond that. }
+    ClassBits: Byte;
     { +$B1: Raise Dead subtracts it from HpMax to get the hit points its constitution
       arithmetic works on (ovl04:0612); its meaning beyond that is not known. }
     HpB1: Byte;
@@ -323,13 +338,15 @@ type
     Items: PItem;                 { +$C8: the list of carried items }
     { +$CC..+$FF: the per-kind items the character remembers (13 pointer slots): ovl09:13CA
       compares the item it picked with slots 0 and 1 and checks their Cursed flag, ovl09:0B3C and
-      ovl13 read RaceRow[ItemType] of slot 0, and ovl19 indexes the slots by RaceRow[ItemType][0]
+      ovl13 read ItemTable[ItemType] of slot 0, and ovl19 indexes the slots by ItemTable[ItemType].Slot
       and reads the slots of item types $49 and $1C at +$F8 and +$FC (11 and 12). The writer is
       not in the overlays: ReadyItem (ovl19:14D0) does not store it. }
     SlotItems: array[0..12] of PItem;  { +$CC }
-    ds100: Byte;                  { +$100: an AI counter: ScoreTarget refuses a row[1] above 3 minus
-                                    it, ovl09:13CA lowers it by RaceRow[item type][1] per slot item
-                                    and branches on it being 2, ovl19 adds it to row[1] }
+    { +$100: the hands the character's items take [I]. ScoreItem refuses an item whose Hands plus this is
+      above 3 (ovl09:128D). UseBestItem first takes the Hands of the slot-0 and slot-1 items off it, then
+      gives the slot-1 hands back after a use, and tests it against 2 (ovl09:13CA). Whether it counts hands
+      in use or hands free is not proven: the subtraction runs before the pick is made. }
+    HandsInUse: Byte;
     SaveBonus: ShortInt;          { +$101: added to the d20 of every saving throw (SavingThrow, ovl24:0D96) }
     { +$102: the weight the character carries; every coin counts one (ovl21:0020, 003A), and it may
       not exceed CarryLimit, 1500 plus the strength allowance res12_fn_13AB (ovl21:0000, 0054). }
@@ -446,8 +463,25 @@ type
     Unk2: Byte;                   { +$2: never read by ScanTargets; meaning unknown }
     Kind: Byte;                   { +$3: the footprint kind (FootprintCell; 1..4), 0 when not on the map }
   end;
-  { One sixteen-byte combat AI row of RaceRow (ScoreTarget copies one into a local). }
-  TRaceRow = array[0..15] of Byte;
+  { One 16-byte row of ItemTable: the ITEMS file record of whitepaper 4.3. The field names are those of
+    coab's ItemData as tools/re/items.py decodes them [H]; the layout is verified by the round trip [V].
+    ovl09 reads +0, +1, +5, +9..+$E; +6..+8 and +$F are not read by any decompiled routine. }
+  TItemRow = record
+    Slot: Byte;                   { +0: the item's slot kind (UseBestItem, ovl09:13CA, tests it for 0 and 1) }
+    Hands: Byte;                  { +1: the hands the item takes }
+    DiceCountLarge: Byte;         { +2 }
+    DiceSizeLarge: Byte;          { +3 }
+    BonusLarge: ShortInt;         { +4 }
+    Attacks: Byte;                { +5: the number of attacks (ScoreItem, ovl09:128D, counts those beyond the first) }
+    Pad6: array[6..8] of Byte;
+    DiceCountNormal: Byte;        { +9: dice rolled against normal-size foes }
+    DiceSizeNormal: Byte;         { +$A: the die size against normal-size foes }
+    BonusNormal: ShortInt;        { +$B: the damage bonus against normal-size foes (signed) }
+    Range: Byte;                  { +$C: the attack range }
+    ClassMask: Byte;              { +$D: the class bits that may use the item (ANDed with ClassBits) }
+    Flags: Byte;                  { +$E: the flag bits of the AI's item step (ovl09 constants FlagAttack etc.) }
+    Pad15: Byte;
+  end;
 const
   { Words of GameVars^ whose meaning is proven (word n is at byte offset 2n of the block; the
     matched reads in ovl26 are at +$186, +$188, +$1CC, +$1F6, +$1FA and +$1FC). }
@@ -462,6 +496,10 @@ const
   VarWallIndexInside = 254;       { the ds0C26 wall id index for an interior cell (event byte bit 7) }
   VarRiverGate = 418;             { river-crossing gate: CheckMapCell prints the stench message while it is 0
                                     (ovl14:0905); who sets it is not known yet }
+  { Word 710 of ds49D6^ (the second game word block, $6B00..$6EFF, not GameVars^): the morale source of
+    computer-run members (ovl10 sets B84 from it; StartBattle caps it at 100) [I]; CheckMorale reads it
+    (ovl09:10D7). }
+  Var2Morale = 710;
 var
   { The 13 code wheel records of the copy protection (whitepaper 5.12): the answer, the rune
     indices and the path pattern. CheckCodeWheel picks one at random. }
@@ -673,11 +711,11 @@ var
     (ovl17:107B, 1252); cleared by the loader (ovl11:0438) }
   ds557C: Byte;
   ds5582: array[0..$80F] of Byte;   { $810-byte buffer the loader reads the file block into (ovl11:05CD) }
-  { 129 sixteen-byte combat AI rows indexed by race (ScoreTarget copies the row of Who^.Race
-    into a local and scores it): the same block the loader uses as its file buffer (load time
-    only, ovl11:05CD). The row count ($810 div 16) is from the size; the per-race meaning of
-    the bytes is open. }
-  RaceRow: array[0..128] of TRaceRow absolute ds5582;
+  { The ITEMS type table (whitepaper 4.3): 129 sixteen-byte rows, one per item type, indexed by an item's
+    ItemType (ScoreItem, UseBestItem, AiTurn and UseMagicItem read them). The loader (ovl11:05CD) reads the
+    file's record 2 into this block, which is its buffer at load time. The row count ($810 div 16) is from
+    the file size. }
+  ItemTable: array[0..128] of TItemRow absolute ds5582;
   { The selected character: the Temple acts on it (ovl04 reads it everywhere), ShowHeadBodyWindow
     shows its HEAD and BODY pictures (ovl28:04F9); the loader sets it nil (ovl11:03B8). }
   SelectedCharacter: PCharacter;  { see above }

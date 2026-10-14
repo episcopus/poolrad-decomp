@@ -391,7 +391,7 @@ end;
   only when the character carries items; the Items window (rows 1 to 22) is drawn when DrawItemWindow
   is set or ds6821 is nonzero. The view mode ds49F3 decides which words are offered: 1 (set by
   VisitTemple, ovl04:0D0F) offers Sell and Id; 2, 3 and 4 offer Use, and 5 (combat) offers Use only to
-  a character whose Combat^.Pad2 is set. Trade is not offered in combat. }
+  a character whose Combat^.CanUseMagicItem is set. Trade is not offered in combat. }
 procedure RunItemMenu(var Done: Byte);
 const
   ViewCombat = 5;               { ds49F3 during combat (POOLVARS); ovl31 changes the combat map then }
@@ -428,7 +428,7 @@ begin
       if Character^.Flag10D <> 0 then
         if GameVars^[VarNoCasting] = 0 then
           if (ds49F3 = 2) or (ds49F3 = 3) or (ds49F3 = 4) or
-            ((ds49F3 = ViewCombat) and (Character^.Combat^.Pad2 <> 0)) then
+            ((ds49F3 = ViewCombat) and (Character^.Combat^.CanUseMagicItem <> 0)) then
             Menu := Menu + ' Use';
       if ((Character^.B84 < $80) or (Character^.Flag10D = 0) or (Character^.Status = 1)) and
         (ds49F3 <> ViewCombat) then
@@ -518,15 +518,15 @@ begin
 end;
 { ovl19:14D0. The Ready action of the item menu (RunItemMenu's R key, ovl19:0EF8) and of the AI's item step
   (ovl09:13CA): readies Item for SelectedCharacter, or unreadies it when it is readied. Readying runs three
-  groups of checks and the last one that fails sets Reason: the hands (ds100 plus the item's
-  RaceRow[ItemType][1] above MaxHands gives "Your hands are full!", not shown in combat when the computer
-  fights for the character, Quick), the body slot RaceRow[ItemType][0] (an item already in it gives "already
-  using <name>"; the kinds $49 and $1C also check slots 11 and 12), and the classes RaceRow[ItemType][13]
-  allows (none of them in the character's PadB0 gives "Wrong Class"). When every check passes, the item is
+  groups of checks and the last one that fails sets Reason: the hands (HandsInUse plus the item's
+  ItemTable[ItemType].Hands above MaxHands gives "Your hands are full!", not shown in combat when the computer
+  fights for the character, Quick), the body slot ItemTable[ItemType].Slot (an item already in it gives "already
+  using <name>"; the kinds $49 and $1C also check slots 11 and 12), and the classes ItemTable[ItemType].ClassMask
+  allows (none of them in the character's ClassBits gives "Wrong Class"). When every check passes, the item is
   marked Readied and its affect is applied: CallAffectHandler with the item's Affects[3] byte when that byte
   is above $7F. Unreadying a readied item refuses a cursed one ("It's Cursed") and otherwise clears Readied
   and removes the affect. The routine never stores the item in SlotItems.
-  Parameter: Item, the item. Globals: SelectedCharacter, ds49F3 (the view mode, 5 for combat), RaceRow
+  Parameter: Item, the item. Globals: SelectedCharacter, ds49F3 (the view mode, 5 for combat), ItemTable
   (indexed by item type, not by race). Side effects: messages (res12_fn_1693); the "already using" case
   first redraws the slot item (res12_fn_0442). QUIRK ovl19:15BB: slot 9 is tested at SlotItems[10]
   (+$F4) but the message names SlotItems[9] (+$F0). }
@@ -543,7 +543,7 @@ const
 var
   AffectOn: Boolean;            { the item's Affects[3] byte is above $7F: it has an affect }
   Reason: Byte;                 { ReadyOk, or the check that failed }
-  Slot: Byte;                   { the body slot of the item: RaceRow[ItemType][0], or 11 and 12 for $49 and $1C }
+  Slot: Byte;                   { the body slot of the item: ItemTable[ItemType].Slot, or 11 and 12 for $49 and $1C }
   Character: PCharacter;        { SelectedCharacter on entry }
 begin
   AffectOn := Item^.Affects[3] > $7F;
@@ -562,9 +562,9 @@ begin
   else
   begin
     Reason := ReadyOk;
-    if Character^.ds100 + RaceRow[Item^.ItemType][1] > MaxHands then
+    if Character^.HandsInUse + ItemTable[Item^.ItemType].Hands > MaxHands then
       Reason := ReadyHandsFull;
-    Slot := RaceRow[Item^.ItemType][0];
+    Slot := ItemTable[Item^.ItemType].Slot;
     case Slot of
       0..LastBodySlot:
         if Character^.SlotItems[ShortInt(Slot)] <> nil then
@@ -585,7 +585,7 @@ begin
         Reason := ReadySlotUsed;
         Slot := 12;
       end;
-    if (RaceRow[Item^.ItemType][13] and Character^.PadB0) = 0 then
+    if (ItemTable[Item^.ItemType].ClassMask and Character^.ClassBits) = 0 then
       Reason := ReadyWrongClass;
     case Reason of
       ReadyOk:
