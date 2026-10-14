@@ -1472,7 +1472,51 @@ begin
       end;
   end;
 end;
-{@stub} procedure DrawLocationLine; begin end;
+{ 00BA:290B. Builds the party location line and draws it on row 15 of the side window (ClearWindow
+  (17,15)-(38,15), then DrawTextAt (17,15) in Green): the party position (PartyMapColumn and
+  PartyMapRow, or the game map position GameVars^[VarMapX/Y] for the area view, the column shifted
+  by the map page width for AreaViewKind 3 and 4), the facing (FacingNames) and the game clock time
+  as hours:minutes (the game clock digits, each number padded to two digits with a leading zero).
+  Outside the 3D view (GameVars^[VarShowWallOverlays] = 0) the position "column,row " is
+  prepended; in the camp (ViewModeCamp) " camping" is appended and in the wilderness search mode
+  (bit 0 of the travel mode word ds49D6^[714]) " search". Called by the camp and wilderness screens.
+  Globals: PartyMapColumn, PartyMapRow, GameVars, AreaViewKind, VarsAt4900, FacingNames,
+  PartyFacing, ds49F3, ds49D6 (all read). Side effect: the screen. }
+procedure DrawLocationLine;
+var
+  Col, Row: ShortInt;               { the party position shown in the line }
+  Hours, Minutes: string[2];        { the two-digit clock fields }
+  Line: string[40];                 { the line built and drawn }
+begin
+  Line := '';
+  Col := PartyMapColumn;
+  Row := PartyMapRow;
+  if AreaViewKind > 1 then
+  begin
+    Col := GameVars^[VarMapX];
+    Row := GameVars^[VarMapY];
+    if AreaViewKind = 3 then
+      Inc(Col, MapPageWidth);
+    if AreaViewKind = 4 then
+      Inc(Col, MapPageWidth * 2);
+  end;
+  Hours := WordToText(VarsAt4900^[ClockHours]);
+  if Length(Hours) < 2 then
+    Hours := '0' + Hours;
+  Minutes := WordToText(10 * VarsAt4900^[ClockTenMinutes] + VarsAt4900^[ClockMinutes]);
+  if Length(Minutes) < 2 then
+    Minutes := '0' + Minutes;
+  if GameVars^[VarShowWallOverlays] = 0 then
+    Line := ByteToText(Col) + ',' + ByteToText(Row) + ' ';
+  Line := Line + FacingNames[PartyFacing] + ' ';
+  Line := Line + Hours + ':' + Minutes;
+  if ds49F3 = ViewModeCamp then
+    Line := Line + ' camping'
+  else if (ds49D6^[VarTravelMode] and 1) > 0 then
+    Line := Line + ' search';
+  ClearWindow($11, $F, $26, $F);
+  DrawTextAt($11, $F, $0A, Line);
+end;
 {@stub} procedure DrawWildernessScreen; begin end;
 {@stub} procedure DrawCombatScreen; begin end;
 {@stub} procedure SelectPartyMember(Title: String40; WithExit: Byte; var Selected: PCharacter); begin end;
