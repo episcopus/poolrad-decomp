@@ -93,7 +93,7 @@ function ConstitutionHitPointAdjustment(Who: PCharacter): ShortInt;
 function MinHitPoints(Who: PCharacter): Byte;
 function MaxHitPoints(Who: PCharacter): Byte;
 function RollHitPoints(Who: PCharacter; ClassBits: Byte): Byte;
-procedure ovl16_fn_42ED(Amount: LongInt; Who: PCharacter);
+procedure PayGold(Amount: LongInt; Who: PCharacter);
 implementation
 
 const
@@ -110,8 +110,14 @@ const
   NameColour = $A;          { green: the rest of the function name }
   ChoiceTitleColour = $D;   { the ReadPromptChoice title colour of the menu }
   Var2OfferModify = 680;    { ds49D6^ word: the modify function is offered while it is above 0; unknown }
+  GoldInCopper = 200;       { one gold piece is 200 copper (CoinCopperValues[GoldCoin]) }
 
 type
+  { The five coin kinds, in the order of CoinCopperValues (copper 0 .. platinum 4). The money routine
+    42ED walks it with Succ and Pred, which is the enumerated type the original used (its
+    `mov al,x; inc al` / `dec al` is the Succ/Pred codegen, tools/re/tp_idioms/ovl16/PAYPRB2.PAS). }
+  TCoinKind = (CopperCoin, SilverCoin, ElectrumCoin, GoldCoin, PlatinumCoin);
+
   { An in-memory picture as ovl32 loads it: the tile byte size at +$11, the pointer to the packed
     pixel buffer at +$13 and the copied tile bytes (the tail) at +$17. The same layout as ovl32's
     private TMemPic, declared here because ovl16 needs it too (like ovl17's copy). }
@@ -1146,8 +1152,47 @@ begin
     end;
   RollHitPoints := Sum;
 end;
-{ ovl16:42ED: retf 8: 8 bytes of parameters; 8 bytes of locals }
-{@stub} procedure ovl16_fn_42ED(Amount: LongInt; Who: PCharacter); begin end;
+{ ovl16:42ED. Takes Amount gold pieces from Who's money (the training-hall cost, ovl16:29AE): the
+   amount is converted to copper (times GoldInCopper), then coin by coin from copper up it hands
+   over Amount div CoinCopperValues[Kind] + 1 coins (one more than the remainder needs, so the
+   hand-over always overshoots) capped at the coins Who holds, and gives the overshoot back as
+   change kind by kind from platinum down (Amount div CoinCopperValues[Kind] coins). QUIRK
+   ovl16:432A: the kind is not bounded, so a character who cannot cover the amount walks on into
+   Money[5..6] (gems and jewelry) and reads CoinCopperValues past its five entries, and when a kind
+   has no coins left the hand-over of zero coins starts the loop again. The `with Who^` evaluates
+   the parameter once. }
+procedure PayGold(Amount: LongInt; Who: PCharacter);
+var
+  Coins: Word;       { [bp-2]: the coins of one kind handed over or given back }
+  Kind: TCoinKind;   { [bp-3]: the coin kind, copper 0 .. platinum 4 }
+begin
+  Amount := Amount * GoldInCopper;
+  Kind := CopperCoin;
+  with Who^ do
+  begin
+    while Amount > 0 do
+    begin
+      Coins := Amount div CoinCopperValues[Ord(Kind)] + 1;
+      if Coins > Money[Ord(Kind)] then
+        Coins := Money[Ord(Kind)];
+      Dec(Amount, Coins * CoinCopperValues[Ord(Kind)]);
+      Dec(Money[Ord(Kind)], Coins);
+      Kind := Succ(Kind);
+    end;
+    if Amount < 0 then
+    begin
+      Amount := Abs(Amount);
+      Kind := PlatinumCoin;
+      while Amount > 0 do
+      begin
+        Coins := Amount div CoinCopperValues[Ord(Kind)];
+        Dec(Amount, Coins * CoinCopperValues[Ord(Kind)]);
+        Inc(Money[Ord(Kind)], Coins);
+        Kind := Pred(Kind);
+      end;
+    end;
+  end;
+end;
 
 begin
 end.

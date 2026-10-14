@@ -8087,12 +8087,12 @@ id = "ovl16:42ED"
 unit = "ovl16"
 addr = "ovl16:42ED"
 size = 359
-name = "ovl16_fn_42ED"
-signature = "procedure ovl16_fn_42ED(Amount: LongInt; Who: PCharacter)"
+name = "PayGold"
+signature = "procedure PayGold(Amount: LongInt; Who: PCharacter)"
 c_name = "ovl16_fn_42ED"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl16_fn_42ED (ovl16:42ED takes Amount gold pieces from Who's money for the training hall (ovl16:29AE calls it with the training cost): it converts the amount to copper, hands coins over from copper up (one more coin than the remainder needs) and gives the overshoot back as change from platinum down; the enum coin kind and Succ/Pred are proven by tools/re/tp_idioms/ovl16/PAYPRB2.PAS); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -13033,14 +13033,27 @@ evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:0C73; aligned by make tp
 id = "0AF8:0AF0"
 unit = "res00"
 addr = "0AF8:0AF0"
-size = 27
+size = 12
 name = "res00_fn_0AF0"
 signature = ""
 c_name = "res00_fn_0AF0"
 level = "none"
 justification = ""
-notes = "auto:forced"
-evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:0C7F; aligned by make tp-compare, confirmed by runtime_entries"]
+notes = "auto:forced; size 12 (was 27, the gap to 0B0B): the original calls 0AF8:0AFC as a routine entry (ovl16:43D2), so 0AFC is a second routine in the span, not part of this one"
+evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:0C7F; aligned by make tp-compare, confirmed by runtime_entries", "tools/re/tp_idioms/ovl16/PAYPRB2.PAS"]
+
+[[routine]]
+id = "0AF8:0AFC"
+unit = "res00"
+addr = "0AF8:0AFC"
+size = 15
+name = "res00_fn_0AFC"
+signature = ""
+c_name = "res00_fn_0AFC"
+level = "none"
+justification = ""
+notes = "Abs of a LongInt: `Amount := Abs(Amount)` compiles to lcall 0AF8:0AFC (tools/re/tp_idioms/ovl16/PAYPRB2.PAS, the probe longint Abs call; ovl16:43D2 calls it the same way with the value in ax:dx and stores ax:dx). The entry was missing because tools/re/rtl_ident.py scans only poolrad/start-unpack.exe for far calls, and the call at ovl16:43D2 is in an overlay (GAME.OVR)"
+evidence = ["far-called from outside res00 (1 site: ovl16:43D2)", "tools/re/tp_idioms/ovl16/PAYPRB2.PAS"]
 
 [[routine]]
 id = "0AF8:0B0B"
