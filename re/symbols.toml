@@ -16768,7 +16768,7 @@ size = 247
 name = "ShowCharacterMessage"
 signature = "procedure ShowCharacterMessage(Who: PCharacter; Text: string; Row, Wait: Byte)"
 c_name = "res12_fn_16EC"
-level = "none"
+level = "L2"
 justification = ""
 notes = "renamed from res12_fn_16EC (00BA:16EC draws Who's name through DrawCharacterName and the paged Text through ShowPagedText in a message window: top row Row in the combat view (ds49F3 = 5), else rows $11/$12 (ds6DDA picks) with a frame; when Wait is set it delays and clears the window through ClearCharacterMessage. Callers pass 'is bandaged', 'flees in panic', 'is cured'.; auto:near_call"
 evidence = ["prologue"]

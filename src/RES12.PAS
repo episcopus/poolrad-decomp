@@ -831,8 +831,41 @@ begin
   DelayByGameSpeed;
   ClearWindow(0, BottomRow, ScreenLastCol, BottomRow);
 end;
-{ 00BA:16EC: implementation pending in this batch }
-{@stub} procedure ShowCharacterMessage(Who: PCharacter; Text: string; Row, Wait: Byte); begin end;
+{ 00BA:16EC. Shows a message about Who in a small window, its top Row in the combat view (view
+  mode 5) and a fixed window otherwise; draws Who's name (DrawCharacterName) and the paged text Text
+  (ShowPagedText) and, when Wait is set, delays DelayByGameSpeed and clears the window again
+  (ClearCharacterMessage). Used for the per-character combat and camp messages ('is bandaged',
+  'flees in panic', 'is cured'). Globals: ds49F3 (view mode), ds6DDA (picks the window top).
+  Side effects: video memory, the keyboard through ShowPagedText's paging. }
+procedure ShowCharacterMessage(Who: PCharacter; Text: string; Row, Wait: Byte);
+var
+  Top: Byte;
+begin
+  if ds49F3 = 5 then
+  begin
+    ClearWindow($17, Row, $26, $15);
+    DrawCharacterName(Who, $17, Row, 0);
+    ShowPagedText($17, Row + 1, $26, $15, Green, 1, Text);
+  end
+  else
+  begin
+    if ds6DDA <> 0 then
+      Top := $12
+    else
+    begin
+      Top := $11;
+      DrawWindowFrame(1, Top, $26, $16, 0);
+    end;
+    ClearWindow(1, Top, $26, $16);
+    DrawCharacterName(Who, 1, Top + 1, 0);
+    ShowPagedText(1, Top + 1 + 1, $26, $16, Green, 1, Text);
+  end;
+  if Wait <> 0 then
+  begin
+    DelayByGameSpeed;
+    ClearCharacterMessage;
+  end;
+end;
 { 00BA:17E3: implementation pending in this batch }
 {@stub} procedure ClearCharacterMessage; begin end;
 { 00BA:1816: implementation pending in this batch }
