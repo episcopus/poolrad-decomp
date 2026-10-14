@@ -11,8 +11,6 @@ procedure GosubCommand;
 procedure CompareCommand;
 procedure ArithmeticCommand;
 procedure RandomCommand;
-procedure ovl03_fn_0245;
-procedure ovl03_fn_0275;
 procedure ovl03_fn_0292;
 procedure ovl03_fn_02A5;
 procedure ovl03_fn_02D5;
@@ -244,10 +242,6 @@ begin
   Roll := Trunc(Random(Range));
   WriteVmWord(Target, Roll);
 end;
-{ ovl03:0245: frame not read }
-{@stub} procedure ovl03_fn_0245; begin end;
-{ ovl03:0275: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl03_fn_0275; begin end;
 { ovl03:0292: frame not read }
 {@stub} procedure ovl03_fn_0292; begin end;
 { ovl03:02A5: frame not read }
