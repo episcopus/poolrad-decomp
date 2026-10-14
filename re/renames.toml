@@ -4106,3 +4106,10 @@ kind = "routine"
 why = "ovl13:1351 scans CollectEnemiesInRange(Who, $FF) and keeps the enemy with the lowest TCharacter.Pad74[$76] type row (the row ds0447 is indexed by) that is not ForcedFlight, returning it to TurnUndead (ovl13:116A) and TryTurnUndead (ovl09:0203)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl13_fn_1406"
+new = "ResolveCombatantAttacks"
+kind = "routine"
+why = "ovl13:1406 resolves one combatant's melee attacks for its turn (helpless auto-hit, large-foe dice, to-hit and damage rolls, the death hook) and covers 1406..17F6; called by e12 (ovl13:19D6)"
+date = "2026-10-13"
+

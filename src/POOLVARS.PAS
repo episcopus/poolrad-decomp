@@ -543,6 +543,7 @@ var
   ds261C: Word;                   { the sound ShowHitMessage plays when Flag is set (a hit); meaning unknown }
   ds260A: array[0..7] of Byte;    { 8-byte structure FillPictureRect copies from @ds260A (DrawWallDescriptors) }
   ds2622: Word;                   { word e1 passes to PlaySound when Done is 0; meaning unknown }
+  ds2626: Word;                   { word ResolveCombatantAttacks passes to PlaySound when nothing landed (ovl13:1774) }
   ds2628: Word;                   { word the ovl14 movement code passes to PlaySound; meaning unknown }
   { Five words, one per 8x8 tile bank, subtracted from the symbol number to index within the
     bank (Put8x8Symbol, ovl34:020F); evidence in re/dseg.toml. }
@@ -948,6 +949,9 @@ var
   { ds6814 and ds6815 indexed by side (ovl10:1AC7); the combat AI indexes them by the
     OpposingSide side of the actor (UseMagicItem, CastMemorizedSpell, ovl09:049F, 05C6). }
   ds6814Sides: array[0..1] of Byte absolute ds6814;
+  { One counter per attack slot (1 and 2) of the attacks ovl13:1406 has made while resolving a
+    combatant's turn; entry 0 at DS:6E2C is the array base, never read. }
+  ds6E2C: array[0..2] of Byte;
   ds6825: Byte;                   { AI morale scratch (CheckMorale computes it from B84, compares percentages) }
   ds6E2F: Byte;                   { byte CheckMorale copies into ds6825; meaning unknown }
   ds6E30: Boolean;                { the Alt-M Magic On/Off toggle of the combat keys (ovl08:04A7) }
@@ -1002,7 +1006,11 @@ var
   DamageKind: Byte;               { the kind of damage: 1 fire, 2 cold, 4 electricity, $10 acid, bit 3 magic (ovl24:13E4) }
   ds681C: Byte;                   { the dice count of the last RollDiceCounted roll (ovl24:0E37) }
   ds6821: Byte;                   { nonzero: the Items window is drawn even if its flag is clear (ovl19:1194) }
-  AttackRoll: ShortInt;           { the d20 attack or resistance roll (20 counts 100) the hooks may change (ovl24:0C63) }
+  { Byte DS:6822 as the three bytes ResolveCombatantAttacks addresses by attack slot: element 0 is the scalar
+    AttackRoll that RollToHit and RollBeatsResistance write, elements 1 and 2 (DS:6823/6824) are the
+    per-slot rolls the attack loop counts. }
+  ds6822: array[0..2] of ShortInt;
+  AttackRoll: ShortInt absolute ds6822;   { the scalar attack or resistance roll (ovl24:0C63) }
   SaveKind: Byte;                 { the saving throw kind SavingThrow offers to the hooks (ovl24:0DAD) }
   { The handler of every affect number, called through CallAffectHandler (ovl24:001E); extent unknown. Entry 0
     is not a handler: SaveKind lies in it. }

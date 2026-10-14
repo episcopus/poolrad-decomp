@@ -5514,66 +5514,14 @@ evidence = ["prologue"]
 id = "ovl13:1406"
 unit = "ovl13"
 addr = "ovl13:1406"
-size = 155
-name = "ovl13_fn_1406"
-signature = ""
+size = 1008
+name = "ResolveCombatantAttacks"
+signature = "procedure ResolveCombatantAttacks(Attacker, Target: PCharacter; AttackKind: Byte; var Done: Byte)"
 c_name = "ovl13_fn_1406"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_fn_1406 (ovl13:1406 resolves one combatant's melee attacks for its turn (helpless auto-hit, large-foe dice, to-hit and damage rolls, the death hook) and covers 1406..17F6; called by e12 (ovl13:19D6)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl13:14A1"
-unit = "ovl13"
-addr = "ovl13:14A1"
-size = 226
-name = "ovl13_fn_14A1"
-signature = ""
-c_name = "ovl13_fn_14A1"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl13:1583"
-unit = "ovl13"
-addr = "ovl13:1583"
-size = 400
-name = "ovl13_fn_1583"
-signature = ""
-c_name = "ovl13_fn_1583"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:1713"
-unit = "ovl13"
-addr = "ovl13:1713"
-size = 69
-name = "ovl13_fn_1713"
-signature = ""
-c_name = "ovl13_fn_1713"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:1758"
-unit = "ovl13"
-addr = "ovl13:1758"
-size = 158
-name = "ovl13_fn_1758"
-signature = ""
-c_name = "ovl13_fn_1758"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl13:17F6"
@@ -5607,7 +5555,7 @@ unit = "ovl13"
 addr = "ovl13:1B1E"
 size = 185
 name = "ovl13_fn_1B1E"
-signature = ""
+signature = "procedure ovl13_fn_1B1E(Attacker: PCharacter; Target: PCharacter; var NeededRoll: Byte)"
 c_name = "ovl13_fn_1B1E"
 level = "none"
 justification = ""

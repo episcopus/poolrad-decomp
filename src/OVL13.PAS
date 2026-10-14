@@ -24,14 +24,10 @@ function AttackTargetAllowed(Who, Target: PCharacter): Boolean;
 procedure TurnUndead(Who: PCharacter);
 procedure ovl13_fn_11D8;
 function SelectTurnUndeadTarget(Who: Pointer; var Selected): Boolean;
-procedure ovl13_fn_1406;
-procedure ovl13_fn_14A1;
-procedure ovl13_fn_1583;
-procedure ovl13_fn_1713;
-procedure ovl13_fn_1758;
+procedure ResolveCombatantAttacks(Attacker, Target: PCharacter; AttackKind: Byte; var Done: Byte);
 procedure ovl13_e11(Who, Target: Pointer);
 procedure ovl13_e12(Who, Target: Pointer; A: Byte; P: Pointer; var Done: Byte);
-procedure ovl13_fn_1B1E;
+procedure ovl13_fn_1B1E(Attacker: PCharacter; Target: PCharacter; var NeededRoll: Byte);
 procedure ovl13_fn_1BD7;
 function ovl13_e13(P: Pointer; var B: Byte): Boolean;
 procedure ovl13_fn_1C13;
@@ -78,6 +74,14 @@ procedure ovl13_e23;
 function ovl13_e24: Boolean;
 implementation
 uses RES03, RES06, RES12, OVL24, OVL25, OVL30, OVL31;
+type
+  { A view of the two bytes ResolveCombatantAttacks selects between with the from-behind flag: TCharacter
+    +$111 (ResistValue) and +$112 (ds112), accessed as a signed-indexed pair. }
+  TResistView = record
+    Pad: array[0..$110] of Byte;
+    Pair: array[0..1] of Byte;
+  end;
+  PResistView = ^TResistView;
 const
   { The two sides of a combat (POOLVARS, ovl24:0D96). }
   SideParty = 0;
@@ -144,6 +148,14 @@ const
   { The starting smallest type row of the turn target scan (ovl13:1351), above every row of the
     Turn Undead table ds0447 (rows 0..10), so the first in-range undead always replaces it. }
   UndeadRowCeiling = 13;
+  { The readied weapon takes its large-foe dice when the target is big: TCharacter.CombatSize (+$6C)
+    above LargeTargetSize, or a footprint kind (bits 0..2) above LargeFootprintKind (ovl13:150D..1522). }
+  LargeTargetSize = $80;
+  FootprintKindMask = 7;
+  LargeFootprintKind = 1;
+  { An affect hook ResolveCombatantAttacks runs on the target after RecalcCombatValues (ovl13:1591); ovl24's
+    table names kinds 6, 9, $A, $C, $D and $10, not this one. }
+  HookAttackSetup = $B;
 
 { ovl13:0000. Sets up Who's turn at the start of a combat round: clears and re-arms its combat
   state Combat^ (PendingSpell 0, Cast and Use-magic allowed), refreshes it through RefreshAttacks, lets
@@ -774,22 +786,128 @@ begin
         end;
   end;
 end;
-{ ovl13:1406: frame not read }
-{@stub} procedure ovl13_fn_1406; begin end;
-{ ovl13:14A1: frame not read }
-{@stub} procedure ovl13_fn_14A1; begin end;
-{ ovl13:1583: frame not read }
-{@stub} procedure ovl13_fn_1583; begin end;
-{ ovl13:1713: frame not read }
-{@stub} procedure ovl13_fn_1713; begin end;
-{ ovl13:1758: retf 14: 14 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl13_fn_1758; begin end;
+{ ovl13:1406. Resolves all of one combatant's melee attacks for its turn, the work ovl13_e12 wraps
+  (this routine covers 1406..17F6: the map's entries 14A1, 1583, 1713 and 1758 lie inside it):
+  it clears the attack-slot counters (ds6822[1..2], ds6E2C[1..2]) and the damage, marks the
+  attacker's Combat^.Pad8, then either takes the helpless auto-hit (no roll, ShowAttackResult kind 3
+  with the target's Flag11B + 5, ClearAttackerAffect, both attack slots cleared) or, against a target
+  that fights back, switches the readied weapon to its large-foe dice when the target is big
+  (CombatSize above $80 or a footprint kind above 1), recomputes the target's combat values, runs hook
+  $B on it, works out the needed to-hit roll and the hit kind (a from-behind hit uses the ds112 pair
+  and kind 1, a backstab kind 2), then walks the attacker's attack slots downward: each slot with
+  attacks left fires once, RollToHit (or a helpless target) lands it, RollAttackDamage rolls the
+  damage, ShowAttackResult shows it and the death hook runs; when nothing landed a miss is shown.
+  Done is left nonzero when the turn ends (EndCombatTurn) and zero while another attack remains.
+  QUIRK ovl13:1733: DamageAmount is passed as ShowAttackResult's second and third bytes. Called by
+  ovl13_e12 (ovl13:19D6). Globals: ds6822, ds6E2C, DamageAmount, ds2622, ds2626. }
+procedure ResolveCombatantAttacks(Attacker, Target: PCharacter; AttackKind: Byte; var Done: Byte);
+var
+  Item: TItemRow;                { the readied slot-0 item's row, when the large-foe dice are used }
+  Landed: Byte;                  { set once any attack of the turn landed }
+  TargetDown: Byte;              { set when the target left the fight during the attacks }
+  Behind: Byte;                  { the from-behind flag (AttackKind, set by the e18 icon test too) }
+  NeededRoll: Byte;              { the to-hit value RollToHit must reach for this attack }
+  SlotIndex: Byte;               { the attack slot being resolved, and the counter of the tail loop }
+  SlotCount: Byte;               { the attacker's current attack slot (Combat^.Pad4[4]) }
+  HitKind: Byte;                 { the ShowAttackResult kind: 0 plain, 1 from behind, 2 backstab }
+  RearAttack: ShortInt;          { nonzero selects the ds112 byte instead of ResistValue }
+begin
+  Behind := AttackKind;
+  Done := 0;
+  ds6822[1] := 0;
+  ds6822[2] := 0;
+  ds6E2C[1] := 0;
+  ds6E2C[2] := 0;
+  Landed := 0;
+  TargetDown := 0;
+  DamageAmount := 0;
+  Attacker^.Combat^.Pad8 := 1;
+  if IsHelpless(Target) then
+  begin
+    PlaySound(ds2622);
+    while Attacker^.AttackSlots[Attacker^.Combat^.Pad4[4]] = 0 do
+      Dec(Attacker^.Combat^.Pad4[4]);
+    Inc(ds6E2C[Attacker^.Combat^.Pad4[4]]);
+    ShowAttackResult(Attacker, Target, 3, Target^.Flag11B + 5, 1, 1);
+    ClearAttackerAffect(Attacker);
+    for SlotIndex := 1 to 2 do
+      Attacker^.AttackSlots[SlotIndex] := 0;
+    Landed := 1;
+    Done := 1;
+  end
+  else
+  begin
+    if (Attacker^.SlotItems[0] <> nil) and
+       ((Target^.CombatSize > LargeTargetSize) or
+        ((Target^.CombatSize and FootprintKindMask) > LargeFootprintKind)) then
+    begin
+      Item := ItemTable[Attacker^.SlotItems[0]^.ItemType];
+      Attacker^.WeaponAttacks[1] := Item.DiceCountLarge;
+      Attacker^.WeaponDamage[1] := Item.DiceSizeLarge;
+      Attacker^.WeaponDamageBonus[1] := Attacker^.WeaponDamageBonus[1] - Item.BonusNormal
+        + Item.BonusLarge;
+    end;
+    RecalcCombatValues(Target);
+    RunAffectHooks(HookAttackSetup, Target);
+    RearAttack := 0;
+    if ovl13_fn_2574(Attacker, Target) then
+      NeededRoll := Target^.ds112 - 2
+    else
+    begin
+      if Target^.Combat^.BF > 1 then
+        if ovl13_e18(Attacker, Target) = Target^.Combat^.IconSet then
+          if Target^.Combat^.B12 > 4 then
+            Behind := 1;
+      if Behind <> 0 then
+        RearAttack := 1;
+      NeededRoll := PResistView(Target)^.Pair[RearAttack];
+    end;
+    ovl13_fn_1B1E(Attacker, Target, NeededRoll);
+    HitKind := 0;
+    if Behind <> 0 then
+      HitKind := 1;
+    if ovl13_fn_2574(Attacker, Target) then
+      HitKind := 2;
+    SlotCount := Attacker^.Combat^.Pad4[4];
+    for SlotIndex := SlotCount downto 1 do
+      while (Attacker^.AttackSlots[SlotIndex] > 0) and (TargetDown = 0) do
+      begin
+        Dec(Attacker^.AttackSlots[SlotIndex]);
+        Attacker^.Combat^.Pad4[4] := SlotIndex;
+        Inc(ds6E2C[SlotIndex]);
+        if RollToHit(Attacker, Target, NeededRoll) or IsHelpless(Target) then
+        begin
+          Inc(ds6822[SlotIndex]);
+          PlaySound(ds2622);
+          Landed := 1;
+          RollAttackDamage(Attacker, Target, SlotIndex);
+          ShowAttackResult(Attacker, Target, HitKind, DamageAmount, DamageAmount, 1);
+          if Target^.Flag10D <> 0 then
+            RunAffectHooks(SlotIndex + 1, Attacker);
+          if Target^.Flag10D = 0 then
+            TargetDown := 1;
+        end;
+      end;
+    if Landed = 0 then
+    begin
+      PlaySound(ds2626);
+      ShowAttackResult(Attacker, Target, HitKind, 0, 0, 0);
+    end;
+    Done := 1;
+    for SlotIndex := 1 to 2 do
+      if Attacker^.AttackSlots[SlotIndex] > 0 then
+        Done := 0;
+    Attacker^.Combat^.Pad4[5] := 0;
+  end;
+  if Done <> 0 then
+    Done := EndCombatTurn(Attacker);
+end;
 { ovl13:17F6: retf 8: 8 bytes of parameters; 2 bytes of locals }
 {@stub} procedure ovl13_e11(Who, Target: Pointer); begin end;
 { ovl13:1884: retf 18: 18 bytes of parameters; 10 bytes of locals }
 {@stub} procedure ovl13_e12(Who, Target: Pointer; A: Byte; P: Pointer; var Done: Byte); begin end;
 { ovl13:1B1E: frame not read }
-{@stub} procedure ovl13_fn_1B1E; begin end;
+{@stub} procedure ovl13_fn_1B1E(Attacker: PCharacter; Target: PCharacter; var NeededRoll: Byte); begin end;
 { ovl13:1BD7: frame not read }
 {@stub} procedure ovl13_fn_1BD7; begin end;
 { ovl13:1BF8: frame not read }
