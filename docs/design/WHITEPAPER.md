@@ -1058,6 +1058,37 @@ Overlay 24 holds the rules affects and rolls go through; its 22 entries (e1..e22
 - **The fill tables** **[V]** (bytes of `start-unpack.exe` at DS:0D02, DS:0D06, DS:25FA, DS:25E5, DS:25F6): `ds0D02[C]` is four 2-bit pixels of colour C (`00 55 AA FF` for C 0..3), `ds0D06[C]` two 4-bit pixels of colour C (C * `$11`); the two overlap (`ds0D02[C + 4]` is `ds0D06[C]`). `ds25FA` is a 16 x 4 table (`colour, position`): for colours 0..3 the colour's 2-bit value in the bit pair of that pixel (colour 1 at position 0 is `$40`); colours 4..15 do not follow that pattern. `GlyphPixelMasks` (words `C000 3000 0C00 0300 00C0 0030 000C 0003`) and `EgaPlaneBitMasks` (`01 02 04 08`) are the plane and pixel masks. The meaning of the fill bytes for colours 4..15 is **[?]**.
 - **Remaining** **[?]**: `0D71` (the clipped sprite blitter that `ovl18`, `ovl28`, `ovl31` and `res12` call) and `1E5C` (the 16-entry colour remap used by `LoadPictureSlot`, `AnimateAreaDoors` and `LoadSpriteList`).
 
+### 5.24 The resident character and item helper unit res12 (in progress)
+
+res12 is the resident helper the overlays call for character, item and view work. Four routines
+are matched so far **[V]** (`make match UNIT=res12`): `res12_fn_0BB8` recomputes a character's
+combat values and calls `SetArmourMovement` (`00BA:01FB`), `AddReadiedItemBonus` (`00BA:0282`),
+`ApplyWeaponBonuses` (`00BA:0000`) and `CapMovementByLoad` (`00BA:03A0`).
+
+- **Movement** **[V]**: the character's base movement is the byte at +$72 (`BaseMovement`);
+  `SetArmourMovement` copies it to Movement (+$11C) for an armour (item kind 2) below weight
+  $97, uses 9 up to $18F and 6 above, and adds 3 for a magic armour while the movement is at
+  most 9. `CapMovementByLoad` then caps Movement by the carried weight (+$102) above the
+  strength allowance `res12_fn_13AB`: excess up to $200 keeps it, up to $300 caps at 9, up to
+  $400 at 6, above at 3, and the cap never raises it.
+- **Readied items** **[V]**: `AddReadiedItemBonus` reads the item kind's RaceRow byte 6: bit 7
+  clear means the item contributes nothing; with it set the low seven bits are a bonus class.
+  A kind-1 item assigns bonus class plus Plus to a kind bonus; other items with class 0 sum
+  their Plus (a kind-9 item keeps the largest instead) and always add PlusSave (+$33, signed)
+  to `SaveBonus` (+$101); a class above 0 keeps the largest class plus Plus and, for a positive
+  plus on an armour, sets a flag. `ApplyWeaponBonuses` builds the readied weapon's attack values
+  from its RaceRow row: HitAdjust (+$110) is reset to Thac0 (+$2D), the flag byte $E adds the
+  dexterity roll adjustment (`res12_fn_1168`, bit 2) and the strength roll adjustment
+  (`res12_fn_1282`, bit 4), WeaponAttacks (+$115) and WeaponDamage (+$117) come from bytes 9 and
+  $A, and the signed WeaponDamageBonus (+$119) from byte $B plus the strength damage adjustment
+  (`res12_fn_1325`) and the plus of the weapon and, by flag bits 0 and 7, of slot items 11
+  (+$F8) and 12 (+$FC). The RaceRow kind column is 0 weapon, 1 plus item, 2 armour, 9 special.
+- **The item name table** **[V]**: 256 strings of at most 20 characters at DS:10A7 (the image:
+  entry 1 `Battle Axe` through entry 255 `Cursed`, entry 0 unused); the menu-line formatter
+  `res12_fn_0442` indexes it with a line's NameNum. That formatter is blocked (its plural rule
+  is two bytes short of a match, see `re/symbols.toml`); the rest of the unit (the shop, view
+  and message routines) is still stubs. The item field at +$33 (`PlusSave`) is signed.
+
 ## 6. Open questions
 
 1. Remaining compiler directives (`$A`, `$B`, `$V`, `$X`) and which game unit is the 16-byte unit at `0A31` (2.2). The version is pinned: Turbo Pascal 6.0, June 1991 release.
