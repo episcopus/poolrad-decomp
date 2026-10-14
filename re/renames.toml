@@ -3791,3 +3791,10 @@ kind = "routine"
 why = "the ECL command dispatcher: case on SkippedOpcode runs one handler per opcode; called by ovl03_fn_3171 (ovl03:3171) for each command; packet ovl03_2F2D, proven by make match"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl03_fn_3171"
+new = "RunScriptFrom"
+kind = "routine"
+why = "runs the ECL script from an entry address (EclPC := Address), dispatching each opcode with DispatchCommand until EndCommand or StartEclBlock sets ds442E or the party is destroyed; callers RunCamp (ovl03:2DD3, ds49E7/ds49E9), ovl03:31B4, ovl03:32F8, ovl03:3379, ovl03:34AB; packet ovl03_3171, proven by make match"
+date = "2026-10-13"
+

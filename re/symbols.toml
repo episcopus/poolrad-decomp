@@ -810,12 +810,12 @@ id = "ovl03:3171"
 unit = "ovl03"
 addr = "ovl03:3171"
 size = 67
-name = "ovl03_fn_3171"
-signature = "procedure ovl03_fn_3171(Address: Word)"
+name = "RunScriptFrom"
+signature = "procedure RunScriptFrom(Address: Word)"
 c_name = "ovl03_fn_3171"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_3171 (runs the ECL script from an entry address (EclPC := Address), dispatching each opcode with DispatchCommand until EndCommand or StartEclBlock sets ds442E or the party is destroyed; callers RunCamp (ovl03:2DD3, ds49E7/ds49E9), ovl03:31B4, ovl03:32F8, ovl03:3379, ovl03:34AB; packet ovl03_3171, proven by make match); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

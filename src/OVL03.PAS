@@ -57,7 +57,7 @@ procedure RunCamp;
 procedure ShowSpecialScreenCommand;
 procedure DrawGlyphRunCommand;
 procedure DispatchCommand;
-procedure ovl03_fn_3171(Address: Word);
+procedure RunScriptFrom(Address: Word);
 procedure ovl03_fn_31B4;
 procedure ovl03_e1;
 procedure ovl03_fn_3379;
@@ -1819,12 +1819,12 @@ var
   Unused: Byte;                 { QUIRK ovl03:2DD3: a byte of the frame nothing uses }
 begin
   EndCamp := 0;
-  ovl03_fn_3171(ds49E7);
+  RunScriptFrom(ds49E7);
   MakeCamp(EndCamp);
   if EndCamp <> 0 then
   begin
     res12_fn_27D9;
-    ovl03_fn_3171(ds49E9);
+    RunScriptFrom(ds49E9);
   end;
   ShowAreaView;
   ds557D := False;
@@ -1962,8 +1962,23 @@ begin
     61: ClearPictureWindowCommand;
   end;
 end;
-{ ovl03:3171: retf 2: 2 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl03_fn_3171(Address: Word); begin end;
+{ ovl03:3171. Runs the ECL script from the script address Address (an entry point: ds49E7 for the camp,
+  RunCamp ovl03:2DD3, or one InitScript sets). EclPC takes Address. While the run is not over (ds442E clear:
+  EndCommand and StartEclBlock set it) and the party is not destroyed (PartyDestroyed clear), the opcode of
+  the current command goes to ds6F7E, the opcode at EclPC is read into SkippedOpcode and DispatchCommand runs
+  it. Both flags are cleared on the way out. }
+procedure RunScriptFrom(Address: Word);
+begin
+  EclPC := Address;
+  ds442E := 0;
+  while (ds442E = 0) and (PartyDestroyed = 0) do
+  begin
+    ds6F7E := SkippedOpcode;
+    SkippedOpcode := EclCode^[EclPC];
+    DispatchCommand;
+  end;
+  ds442E := 0;
+end;
 { ovl03:31B4: retf 0: 0 bytes of parameters; 6 bytes of locals }
 {@stub} procedure ovl03_fn_31B4; begin end;
 { ovl03:32F8: frame not read }

@@ -822,7 +822,9 @@ var
     the character at entry 1 to another entry). Entry 0 is never read. Extent not proven; the
     next named byte after it is ds6E2F. }
   ds6DE4: array[0..73] of Byte;
-  ds442E: Byte;                   { set to 1 by the ECL command 0 (ovl03:0001); meaning unknown }
+  { set to 1 by EndCommand (ovl03:0001) and StartEclBlock (ovl03:0BD1): the script run ends; the script run
+    loop (ovl03:3171) clears it on entry and on exit }
+  ds442E: Byte;
   ds442F: Byte;                   { set to 1 by ECL command 32 (ovl03:0BD1); meaning unknown }
   ds4430: Byte;                   { when nonzero, the ECL command 0 (ovl03:0001) selects the character at ds4436 }
   ds4431: Byte;                   { cleared by ECL command 32 (ovl03:0BD1), set by 33 and 55 (ovl03:0C74) }
@@ -977,6 +979,8 @@ var
   { The results of the script's last comparison (CompareStrings, CompareWords): 1 in [0] when
     equal, [1] unequal, [2] less, [3] greater, [4] less or equal, [5] greater or equal, else 0. }
   CompareFlags: array[0..5] of Byte;
+  { the opcode that was current before the last one the script run loop (ovl03:3171) read; no other reader yet }
+  ds6F7E: Byte;
   SkippedOpcode: Byte;                   { the opcode SkipCommand reads at EclPC (ovl07:1EB7) }
   ds84EA: Byte;                   { the head/picture word ds49D6^[$2E1] ShowEncounterPicture last showed (ovl07:0633) }
   { The encounter picture's banks: operand 1 and operand 3 of ECL command 12 (ovl03:03B4), passed to
