@@ -10218,12 +10218,12 @@ id = "ovl22:19C3"
 unit = "ovl22"
 addr = "ovl22:19C3"
 size = 83
-name = "ovl22_e32"
+name = "CastSpiritualHammer"
 signature = ""
 c_name = "ovl22_e32"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_32"
+notes = "renamed from ovl22_e32 (ovl22:19C3 applies spell 28 with Flag 1 then runs affect $17's handler on the first target; ovl22_e10 maps DS:6B84+28*4 to its stub 0096:00C0 and SpellNames[28] (DS:2D65) is 'Spiritual Hammer'); auto:entry_32"
 evidence = ["prologue"]
 
 [[routine]]
@@ -10231,12 +10231,12 @@ id = "ovl22:1A16"
 unit = "ovl22"
 addr = "ovl22:1A16"
 size = 57
-name = "ovl22_e33"
+name = "CastInvisibility"
 signature = ""
 c_name = "ovl22_e33"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_33"
+notes = "renamed from ovl22_e33 (ovl22:1A16 applies spell 30 to the chosen targets with the message 'is invisible'; ovl22_e10 maps DS:6B84+30*4 to its stub 0096:00C5 and SpellNames[30] (DS:2DB7) is 'Invisibility'); auto:entry_33"
 evidence = ["prologue"]
 
 [[routine]]
@@ -10244,12 +10244,12 @@ id = "ovl22:1A4F"
 unit = "ovl22"
 addr = "ovl22:1A4F"
 size = 59
-name = "ovl22_e34"
+name = "CastKnock"
 signature = ""
 c_name = "ovl22_e34"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_34"
+notes = "renamed from ovl22_e34 (ovl22:1A4F applies spell 31 to the chosen targets with the message 'Knock-Knock'; ovl22_e10 maps DS:6B84+31*4 to its stub 0096:00CA and SpellNames[31] (DS:2DE0) is 'Knock'); auto:entry_34"
 evidence = ["prologue"]
 
 [[routine]]
@@ -10257,12 +10257,12 @@ id = "ovl22:1A8A"
 unit = "ovl22"
 addr = "ovl22:1A8A"
 size = 66
-name = "ovl22_e35"
+name = "CastMirrorImage"
 signature = ""
 c_name = "ovl22_e35"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_35"
+notes = "renamed from ovl22_e35 (ovl22:1A8A applies spell 32 with a 1d4 caster level and the message 'is duplicated'; ovl22_e10 maps DS:6B84+32*4 to its stub 0096:00CF and SpellNames[32] (DS:2E09) is 'Mirror Image'); auto:entry_35"
 evidence = ["prologue"]
 
 [[routine]]
@@ -10270,12 +10270,12 @@ id = "ovl22:1ACC"
 unit = "ovl22"
 addr = "ovl22:1ACC"
 size = 69
-name = "ovl22_e36"
+name = "CastRayOfEnfeeblement"
 signature = ""
 c_name = "ovl22_e36"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_36"
+notes = "renamed from ovl22_e36 (ovl22:1ACC applies spell 33 to the chosen targets with the message 'is weakened'; ovl22_e10 maps DS:6B84+33*4 to its stub 0096:00D4 and SpellNames[33] (DS:2E32) is 'Ray of Enfeeblement'); auto:entry_36"
 evidence = ["prologue"]
 
 [[routine]]

@@ -3672,3 +3672,38 @@ kind = "routine"
 why = "ovl22:190F picks the giant snakes (CreatureType $E) of the party list whose hit points fit the caster's, then applies spell 27 with the message 'is charmed'; ovl22_e10 maps DS:6B84+27*4 to its stub 0096:00BB and SpellNames[27] (DS:2D3C) is 'Snake Charm'"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl22_e32"
+new = "CastSpiritualHammer"
+kind = "routine"
+why = "ovl22:19C3 applies spell 28 with Flag 1 then runs affect $17's handler on the first target; ovl22_e10 maps DS:6B84+28*4 to its stub 0096:00C0 and SpellNames[28] (DS:2D65) is 'Spiritual Hammer'"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e33"
+new = "CastInvisibility"
+kind = "routine"
+why = "ovl22:1A16 applies spell 30 to the chosen targets with the message 'is invisible'; ovl22_e10 maps DS:6B84+30*4 to its stub 0096:00C5 and SpellNames[30] (DS:2DB7) is 'Invisibility'"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e34"
+new = "CastKnock"
+kind = "routine"
+why = "ovl22:1A4F applies spell 31 to the chosen targets with the message 'Knock-Knock'; ovl22_e10 maps DS:6B84+31*4 to its stub 0096:00CA and SpellNames[31] (DS:2DE0) is 'Knock'"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e35"
+new = "CastMirrorImage"
+kind = "routine"
+why = "ovl22:1A8A applies spell 32 with a 1d4 caster level and the message 'is duplicated'; ovl22_e10 maps DS:6B84+32*4 to its stub 0096:00CF and SpellNames[32] (DS:2E09) is 'Mirror Image'"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e36"
+new = "CastRayOfEnfeeblement"
+kind = "routine"
+why = "ovl22:1ACC applies spell 33 to the chosen targets with the message 'is weakened'; ovl22_e10 maps DS:6B84+33*4 to its stub 0096:00D4 and SpellNames[33] (DS:2E32) is 'Ray of Enfeeblement'"
+date = "2026-10-13"
+

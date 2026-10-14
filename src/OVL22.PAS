@@ -38,11 +38,11 @@ procedure CastResistFire;
 procedure CastSilence;
 procedure CastSlowPoison;
 procedure CastSnakeCharm;
-procedure ovl22_e32;
-procedure ovl22_e33;
-procedure ovl22_e34;
-procedure ovl22_e35;
-procedure ovl22_e36;
+procedure CastSpiritualHammer;
+procedure CastInvisibility;
+procedure CastKnock;
+procedure CastMirrorImage;
+procedure CastRayOfEnfeeblement;
 procedure ovl22_e37;
 procedure ovl22_e38;
 procedure ovl22_fn_202B;
@@ -942,16 +942,59 @@ begin
   end;
   ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is charmed');
 end;
-{ ovl22:19C3: retf 0: 0 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl22_e32; begin end;
-{ ovl22:1A16: retf 0: 0 bytes of parameters; 14 bytes of locals }
-{@stub} procedure ovl22_e33; begin end;
-{ ovl22:1A4F: retf 0: 0 bytes of parameters; 12 bytes of locals }
-{@stub} procedure ovl22_e34; begin end;
-{ ovl22:1A8A: retf 0: 0 bytes of parameters; 14 bytes of locals }
-{@stub} procedure ovl22_e35; begin end;
-{ ovl22:1ACC: retf 0: 0 bytes of parameters; 12 bytes of locals }
-{@stub} procedure ovl22_e36; begin end;
+{ ovl22:19C3 (e32). Cast handler of spell 28, Spiritual Hammer (SpellHandlers[28]: ovl22_e10 maps
+  DS:6B84+28*4 to overlay stub 0096:00C0; SpellNames[28] is 'Spiritual Hammer' at DS:2D65, the
+  spell's own affect is $17). It applies the current spell ds681B to the chosen targets with no
+  message of its own and the affect set to run its handler on removal (ApplySpellToTargets, Flag 1),
+  then runs the handler of affect $17 on the first chosen target ds6C95 (CallAffectHandler, mode 0),
+  which is the spell's hammer. Reads ds681B and ds6C95. }
+procedure CastSpiritualHammer;
+const
+  SpiritualHammerAffect = $17;    { the spell's own affect (SpellTable[28].AffectId): its handler is run here }
+  RunHandlerOnRemoval = 1;        { ApplySpellToTargets' Flag: the affect's handler runs when it is removed }
+  ModeApply = 0;                  { CallAffectHandler's mode: apply (not remove) the affect }
+begin
+  ApplySpellToTargets(ds681B, 0, RunHandlerOnRemoval, 0, 0, '');
+  CallAffectHandler(SpiritualHammerAffect, ds6C95, nil, ModeApply);
+end;
+{ ovl22:1A16 (e33). Cast handler of spell 30, Invisibility (SpellHandlers[30]: ovl22_e10 maps
+  DS:6B84+30*4 to overlay stub 0096:00C5; SpellNames[30] is 'Invisibility' at DS:2DB7; its
+  SpellTable affect byte is 0). It only applies the current spell ds681B to the chosen targets with
+  the message 'is invisible'; the spell's own affect does the hiding, so the handler has nothing else
+  to do. Reads ds681B. }
+procedure CastInvisibility;
+begin
+  ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is invisible');
+end;
+{ ovl22:1A4F (e34). Cast handler of spell 31, Knock (SpellHandlers[31]: ovl22_e10 maps
+  DS:6B84+31*4 to overlay stub 0096:00CA; SpellNames[31] is 'Knock' at DS:2DE0). It only applies
+  the current spell ds681B to the chosen targets with the message 'Knock-Knock'; the spell's own
+  affect $1C opens the lock, so the handler has nothing else to do. Reads ds681B. }
+procedure CastKnock;
+begin
+  ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'Knock-Knock');
+end;
+{ ovl22:1A8A (e35). Cast handler of spell 32, Mirror Image (SpellHandlers[32]: ovl22_e10 maps
+  DS:6B84+32*4 to overlay stub 0096:00CF; SpellNames[32] is 'Mirror Image' at DS:2E09). It applies
+  the current spell ds681B to the chosen targets with the message 'is duplicated' and the caster
+  level set to 1d4 (RollDice(1, 4)); that roll is the number of images and becomes the affect's
+  Data. Reads ds681B. }
+procedure CastMirrorImage;
+const
+  ImagesCount = 1;                { the images are 1d4 (RollDice(Count, Sides)) }
+  ImagesSides = 4;
+begin
+  ApplySpellToTargets(ds681B, RollDice(ImagesCount, ImagesSides), 0, 0, 0, 'is duplicated');
+end;
+{ ovl22:1ACC (e36). Cast handler of spell 33, Ray of Enfeeblement (SpellHandlers[33]: ovl22_e10 maps
+  DS:6B84+33*4 to overlay stub 0096:00D4; SpellNames[33] is 'Ray of Enfeeblement' at DS:2E32). It
+  only applies the current spell ds681B to the chosen targets with the message 'is weakened'; the
+  spell's own affect lowers the target's strength, so the handler has nothing else to do. Reads
+  ds681B. }
+procedure CastRayOfEnfeeblement;
+begin
+  ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is weakened');
+end;
 { ovl22:1B11: retf 0: 0 bytes of parameters; 42 bytes of locals }
 {@stub} procedure ovl22_e37; begin end;
 { ovl22:1F41: frame not read }
