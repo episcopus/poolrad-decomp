@@ -127,7 +127,7 @@ procedure ApplyItemSecondAffect(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure GiveExceptionalStrength(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e113(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ShowMustHaveGiantStrength(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e115;
+procedure RemoveAffect17WhenRemoved(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e116;
 procedure ovl12_e1;
 procedure ovl12_fn_31D7;
@@ -202,6 +202,7 @@ const
   MissedBit = $10;              { Affect.Data bit 4 again, set by ovl12:2490 once it has made the attack roll a miss [?] }
   DataLowNibble = $0F;          { the low nibble of Affect.Data, the part ovl12:2490 keeps in the first case }
   AffectImages = $1C;           { the images affect: runs on the damage hook (kind 6, ovl24:02FA); Data counts the images [I] }
+  AffectUnknown17 = $17;        { purpose unknown [?]: the affect ovl12:317A removes from Who when its own affect is removed }
   AffectUnknown2B = $2B;        { purpose unknown; a Cure Disease affect (ovl04:031E), run by RunDiseaseHandlers }
   AffectCauseDisease = $2C;     { named in ovl15 (ovl15:0FBC); a Cure Disease affect (ovl04:031E) }
   AffectCauseDiseaseDuration = 10; { the Duration ovl12:1168 gives affect AffectCauseDisease }
@@ -2233,8 +2234,15 @@ begin
     res12_fn_1693('Must have Giant Strength');
   end;
 end;
-{ ovl12:317A: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e115; begin end;
+{ ovl12:317A. Affect handler of table entry 137 (affect $89, stub entry 115), with the AffectHandlers shape (Who,
+  Affect and Mode, ovl24:0000). Mode 0 applies it and does nothing; any other Mode, the removal (RemoveAffect,
+  ovl24:0026), removes affect AffectUnknown17 from Who with no particular affect given. Which other affect the
+  handler belongs to is not known yet [?]. }
+procedure RemoveAffect17WhenRemoved(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  if Mode <> 0 then
+    RemoveAffect(Who, AffectUnknown17, nil);
+end;
 { ovl12:319B: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e116; begin end;
 { ovl12:31A2: frame not read }

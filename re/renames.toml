@@ -4218,3 +4218,10 @@ kind = "routine"
 why = "ovl12:3134 shows 'Must have Giant Strength' (res12_fn_1693 with the literal) when Who's Strength is below 19; the handler's own effect is that message"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl12_e115"
+new = "RemoveAffect17WhenRemoved"
+kind = "routine"
+why = "ovl12:317A calls RemoveAffect(Who, $17, nil) only when Mode is not 0, the removal of the affect (table entry 137, affect $89)"
+date = "2026-10-14"
+

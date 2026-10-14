@@ -4721,12 +4721,12 @@ id = "ovl12:317A"
 unit = "ovl12"
 addr = "ovl12:317A"
 size = 33
-name = "ovl12_e115"
+name = "RemoveAffect17WhenRemoved"
 signature = ""
 c_name = "ovl12_e115"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_115"
+notes = "renamed from ovl12_e115 (ovl12:317A calls RemoveAffect(Who, $17, nil) only when Mode is not 0, the removal of the affect (table entry 137, affect $89)); auto:entry_115"
 evidence = ["prologue"]
 
 [[routine]]
