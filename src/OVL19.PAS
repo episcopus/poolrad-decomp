@@ -408,7 +408,8 @@ end;
 procedure RunItemMenu(var Done: Byte);
 const
   ViewCombat = 5;               { ds49F3 during combat (POOLVARS); ovl31 changes the combat map then }
-  VarNoUse = 229;              { GameVars^ word 229 (ovl19:0F98): Use is not offered while it is nonzero }
+  VarNoCasting = 229;          { the game word that forbids casting (ovl07, ovl08, ovl09, ovl15); Use is not
+                                 offered while it is nonzero (ovl19:0F98) }
 var
   Key: Char;                    { the key of the item menu; a space until the first one is read }
   Menu: String40;               { the words of the item menu, built from the character and the view mode }
@@ -438,7 +439,7 @@ begin
     begin
       Menu := 'Ready';
       if Character^.Flag10D <> 0 then
-        if GameVars^[VarNoUse] = 0 then
+        if GameVars^[VarNoCasting] = 0 then
           if (ds49F3 = 2) or (ds49F3 = 3) or (ds49F3 = 4) or
             ((ds49F3 = ViewCombat) and (Character^.Combat^.Pad2 <> 0)) then
             Menu := Menu + ' Use';
