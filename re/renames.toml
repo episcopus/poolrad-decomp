@@ -3952,3 +3952,10 @@ kind = "routine"
 why = "ovl12:2610 clears the affect's Flag and, when Who's Flag10D (combat participation, TCharacter +10D) is set, DropFromFight takes Who out with StatusGone and 'Falls dead'; matched [V]"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e80"
+new = "CancelDamageUnlessMagicSlotItem"
+kind = "routine"
+why = "ovl12:264B sets DamageAmount to 0 unless the first slot item of SelectedCharacter is a magic item (Plus <> 0) or has NameNum[3] $B1 [?]; matched [V]"
+date = "2026-10-13"
+

@@ -4253,12 +4253,12 @@ id = "ovl12:264B"
 unit = "ovl12"
 addr = "ovl12:264B"
 size = 63
-name = "ovl12_e80"
+name = "CancelDamageUnlessMagicSlotItem"
 signature = ""
 c_name = "ovl12_e80"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_80"
+notes = "renamed from ovl12_e80 (ovl12:264B sets DamageAmount to 0 unless the first slot item of SelectedCharacter is a magic item (Plus <> 0) or has NameNum[3] $B1 [?]; matched [V]); auto:entry_80"
 evidence = ["prologue"]
 
 [[routine]]

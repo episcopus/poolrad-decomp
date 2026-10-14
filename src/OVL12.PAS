@@ -91,7 +91,7 @@ procedure ovl12_e76(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure HalveFireDamageNoSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure HalveDamageForFirstSlotItem(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure FallDeadIfInFight(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e80(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure CancelDamageUnlessMagicSlotItem(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e81(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e82;
 procedure ovl12_e83;
@@ -224,6 +224,7 @@ const
   GivenItemAffect3 = $89;       { Affects[3] of that item }
   ItemCountLimit = $10;         { no item is given once ItemCountC7 is this or more (ovl12:07E0 at 0869) [I] }
   ItemRowFlags = $81;           { bits 0 and 7 of byte 7 of an item type's RaceRow row, tested by ovl12:25BC [?] }
+  SlotItemNameNum3 = $B1;       { NameNum[3] of the item that keeps the damage at ovl12:264B [?] }
   CloudTile = $1E;              { the cloud tile ApplyCloudTile (ovl24:0AE7) tests for; ovl12:0F14 repaints the arms with it }
   CloudBodyTile = $1F;          { the tile a cloud arm gets where a body lies when the cloud clears (ovl12:0CC3) [?] }
   AffectNausea = $1F;           { the affect of a failed save against the cloud: nausea (ovl24:0AE7) }
@@ -1669,8 +1670,18 @@ begin
   if Who^.Flag10D <> 0 then
     DropFromFight(Who, StatusGone, 'Falls dead');
 end;
-{ ovl12:264B: retf 10: 10 bytes of parameters; 4 bytes of locals }
-{@stub} procedure ovl12_e80; begin end;
+{ ovl12:264B. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). It cancels the
+  damage (DamageAmount := 0) unless SelectedCharacter's first slot item (FirstSlotItem, ovl12:101D) is a magic item
+  (Plus, +$32, not 0) or has NameNum[3] (+$31) SlotItemNameNum3; with no first slot item the damage is cancelled.
+  Which affect runs it is not known yet [?]. }
+procedure CancelDamageUnlessMagicSlotItem(Who: PCharacter; Affect: PAffect; Mode: Byte);
+var
+  Item: PItem;
+begin
+  Item := FirstSlotItem(SelectedCharacter);
+  if (Item = nil) or ((Item^.Plus = 0) and (Item^.NameNum[3] <> SlotItemNameNum3)) then
+    DamageAmount := 0;
+end;
 { ovl12:268A: retf 10: 10 bytes of parameters; 2 bytes of locals }
 {@stub} procedure ovl12_e81; begin end;
 { ovl12:2700: retf 10: 10 bytes of parameters; 0 bytes of locals }
