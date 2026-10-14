@@ -20,11 +20,11 @@ procedure LoadCharacterFile(FileName: string; Who: PCharacter; SavedGame: Byte; 
 procedure LoadMonster(Kind: Byte; Who: Pointer);
 procedure AddMonsterToParty(Kind: Byte);
 procedure AddPartyMember(Member: PCharacter);
-procedure ovl17_e8;
+procedure LoadGame;
 procedure SaveGame;
 procedure SaveAndExit(AreaScript: ScriptName);
 implementation
-uses RES04, RES05, RES06, RES07, OVL23, OVL24, OVL25, OVL32;
+uses RES04, RES05, RES06, RES07, OVL18, OVL23, OVL24, OVL25, OVL29, OVL32;
 
 type
   { An in-memory picture as ovl32 loads it: the same layout as ovl32's private TMemPic, with the
@@ -142,7 +142,7 @@ end;
   trailing backslash, and while that fails with anything but success or "already there" it shows
   "Put save disk in <drive>:" (the drive letter SaveDir starts with) and tries again. Reads SaveDir,
   creates the directory on the save disk as a side effect. Called before the save files are touched
-  by ReadSavedCharacterList, RewriteSavedCharacterList, SaveCharacter, ovl17_e8 and SaveGame. }
+  by ReadSavedCharacterList, RewriteSavedCharacterList, SaveCharacter, LoadGame and SaveGame. }
 procedure CreateSaveDir;
 var
   ErrCode: Word;
@@ -194,7 +194,7 @@ end;
   masks the body. When Recolor is set it also builds a 16-entry colour map from the six nibble pairs
   Sel^.Figure[1..6] through ds3CF5 and applies it to both halves of the icon (res07_fn_1E5C).
   Finally it frees slot 11, restores the tile set and flushes the keyboard. Called by the ovl16
-  character menus, by AddMonsterToParty and by ovl17_e8. }
+  character menus, by AddMonsterToParty and by LoadGame. }
 procedure BuildCharacterIcon(Recolor: Boolean);
 var
   UnusedBytes: array[0..2] of Byte;  { QUIRK ovl17:0482: three frame bytes the original reserves and never reads or writes }
@@ -327,7 +327,7 @@ end;
   Who's list links (Next, Items, Affects, Combat), and, when FileName.itm / FileName.spc exist, reads
   the 63-byte item and 9-byte affect lists, each into a GetMem chain that runs to end of file. Reads
   SaveDir, GameDir, TileSet and InsertDiskPrompts; writes SaveFile, Who^ and the heap; then flushes the
-  keyboard. The read counterpart of SaveCharacter. Called by ovl16_fn_306D and ovl17_e8. }
+  keyboard. The read counterpart of SaveCharacter. Called by ovl16_fn_306D and LoadGame. }
 procedure LoadCharacterFile(FileName: string; Who: PCharacter; SavedGame: Byte; UseSaveDir: Byte);
 var
   SaveFile: file;               { the character, item and affect files }
@@ -579,8 +579,118 @@ begin
   Inc(ds49D6^[VarPartySize]);
   RecalcClassStats(Member);
 end;
-{ ovl17:1602: retf 0: 0 bytes of parameters; 1554 bytes of locals }
-{@stub} procedure ovl17_e8; begin end;
+{ ovl17:1602. Loads a saved game from the save disk. It scans the letters A..J for
+  SaveDir + 'savgam<letter>.dat', collects the found ones into the 'Load Which Game: ' prompt
+  (ReadPromptChoice, Escape cancels) and prompts again until the player picks a slot whose file
+  exists. Then it opens the slot through OpenGameFile and reads the game state back: TileSet, the
+  three word blocks (GameVars, ds49D6, ds49DA), the ECL code, the party map bytes, AreaViewKind, the
+  view mode, and the party list (a member count and the 8 'CHRDAT<slot><n>' names). It restores
+  GameSpeed and the picture flags, loads every named member through LoadCharacterFile and
+  AddPartyMember, erases the members' old standalone .cha/.itm/.spc files, rebuilds every member's
+  combat icon (BuildCharacterIcon(True)), restores TileSet and the 3D map (Load3DMap or, for a map
+  view, the wall sets through LoadWallSet), animates the doors when the river gate is set, and
+  flushes the keyboard. Reads the save files, SaveDir and the party list; writes the game state,
+  ds5D96, SelectedCharacter and the party list. Called by ovl16_e1. }
+procedure LoadGame;
+var
+  MemberFiles: array[1..8] of string[40];  { the 'CHRDAT<slot><n>' names read from the save }
+  SaveFile: file;               { the 'savgam<slot>.dat' save file and the erased member files }
+  I: Byte;                      { the member loops and the wall-set loop }
+  Who: PCharacter;              { the loaded member, then the walker of the party list ds5D96 }
+  FileName: string[40];         { a member file's base name (its DOS-cleaned name) }
+  ReadCount: Word;              { the BlockRead record count }
+  MemberCount: Byte;            { the party member count read from the save }
+  Status: Byte;                 { the OpenGameFile result (kept, never read) }
+  Slot: Char;                   { the scanned slot letter and the chosen one (#0 cancels) }
+  ExtKey: Byte;                 { ReadPromptChoice's extended-key flag (not used) }
+  GameList: string[20];         { the letters of the slots that exist, e.g. 'A C F ' }
+begin
+  CreateSaveDir;
+  GameList := '';
+  for Slot := 'A' to 'J' do
+    if FileExists(SaveDir + 'savgam' + Slot + '.dat') then
+      GameList := GameList + Slot + ' ';
+  if GameList = '' then Exit;
+  repeat
+    Slot := ReadPromptChoice('Load Which Game: ', GameList, 13, 10, 15, 0, 0, ExtKey);
+  until ((Slot in ['A'..'J']) and FileExists(SaveDir + 'savgam' + Slot + '.dat')) or (Slot = #0);
+  if Slot = #0 then Exit;
+  Status := OpenGameFile(SaveDir + 'savgam' + Slot + '.dat',
+    'Put save disk in ' + SaveDir, 1, SaveFile);
+  ClearPromptLine;
+  DrawTextAt(0, $18, $A, 'Loading...Please Wait');
+  BlockRead(SaveFile, TileSet, 1, ReadCount);
+  BlockRead(SaveFile, GameVars^, $800, ReadCount);
+  BlockRead(SaveFile, ds49D6^, $800, ReadCount);
+  BlockRead(SaveFile, ds49DA^, $400, ReadCount);
+  BlockRead(SaveFile, EclCode^, $1E00, ReadCount);
+  BlockRead(SaveFile, PartyMapColumn, 5, ReadCount);
+  BlockRead(SaveFile, AreaViewKind, 1, ReadCount);
+  BlockRead(SaveFile, ds49F3, 1, ReadCount);
+  BlockRead(SaveFile, MemberCount, 1, ReadCount);
+  BlockRead(SaveFile, MemberFiles, $148, ReadCount);
+  Close(SaveFile);
+  ShowMonsterPics := VarsAt4900^[$49FF] shr 1;
+  ShowPortraits := VarsAt4900^[$49FF] and 1;
+  GameSpeed := VarsAt4900^[$49FC];
+  VarsAt6B00^[$6E3E] := 0;
+  for I := 1 to MemberCount do
+  begin
+    FileName := MakeDosFileName(DeleteAllOccurrences(MemberFiles[I], '.'));
+    if FileExists(SaveDir + FileName + '.sav') then
+    begin
+      GetMem(Who, 285);
+      LoadCharacterFile(FileName, Who, 1, 1);
+      AddPartyMember(Who);
+      CreateSaveDir;
+    end;
+  end;
+  Who := PCharacter(ds5D96);
+  while Who <> nil do
+  begin
+    FileName := SaveDir + MakeDosFileName(DeleteAllOccurrences(Who^.Name, '.'));
+    if FileExists(FileName + '.cha') then
+    begin
+      Assign(SaveFile, FileName + '.cha');
+      Erase(SaveFile);
+      if FileExists(FileName + '.itm') then
+      begin
+        Assign(SaveFile, FileName + '.itm');
+        Erase(SaveFile);
+      end;
+      if FileExists(FileName + '.spc') then
+      begin
+        Assign(SaveFile, FileName + '.spc');
+        Erase(SaveFile);
+      end;
+    end;
+    Who := Who^.Next;
+  end;
+  SelectedCharacter := PCharacter(ds5D96);
+  while SelectedCharacter <> nil do
+  begin
+    BuildCharacterIcon(True);
+    SelectedCharacter := SelectedCharacter^.Next;
+  end;
+  SelectedCharacter := PCharacter(ds5D96);
+  TileSet := VarsAt6B00^[$6E12];
+  if AreaViewKind < 2 then
+    Load3DMap(GameVars^[VarGeoBlock]);
+  if AreaViewKind > 1 then
+    LoadPictureSlot('ICON', 0, 11)
+  else
+    for I := 1 to 3 do
+    begin
+      ds6AAEWords[I].A := VarsAt4900^[$4AF9 + I];
+      ds6AAEWords[I].B := VarsAt4900^[$4AFC + I];
+      if Integer(ds6AAEWords[I].A) >= 0 then
+        LoadWallSet(ds6AAEWords[I].A, ds6AAEWords[I].B);
+    end;
+  if GameVars^[VarRiverGate] <> 0 then
+    AnimateAreaDoors(0);
+  FlushKeyboard;
+  ClearPromptLine;
+end;
 { ovl17:1D58. Saves the current game to the save disk. It prompts 'Save Which Game: ' for a slot
   letter A..J (Escape cancels), makes the save directory and opens SaveDir + 'savgam<letter>.dat'
   (showing the disk prompt while the open fails), then writes the whole game state: the party's map

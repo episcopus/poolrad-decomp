@@ -8427,12 +8427,12 @@ id = "ovl17:1602"
 unit = "ovl17"
 addr = "ovl17:1602"
 size = 1878
-name = "ovl17_e8"
+name = "LoadGame"
 signature = ""
 c_name = "ovl17_e8"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_8"
+notes = "renamed from ovl17_e8 (ovl17:1602 loads a saved game from SaveDir + savgam<slot>.dat, restores the game state and the party, rebuilds every member icon and the area view; the counterpart of SaveGame; called by ovl16_e1); auto:entry_8"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8469,7 +8469,7 @@ size = 5
 name = "ovl17_init"
 signature = ""
 c_name = "ovl17_init"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_0"
 evidence = ["prologue"]
