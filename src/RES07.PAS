@@ -18,6 +18,9 @@ type
     only there so the index compiles, like the picture record's tail) }
   TByteArray = array[0..0] of Byte;
   PByteArray = ^TByteArray;
+  { a 16-entry colour map: entry I is the colour index that colour I becomes (1E5C) }
+  TColorMap = array[0..15] of Byte;
+  PColorMap = ^TColorMap;
 
   { An in-memory picture (whitepaper 4.2.3): the DAX header fields at +0..+$10,
     then ByteSize (the bytes per item), the pixel-buffer pointer at +$13 and the
@@ -43,14 +46,14 @@ procedure RestoreVideoMode;
 procedure LoadPicture(Text: string; BlockId, AllocFlags, Color: Byte; var Target);
 procedure UnpackPicturePixels(Source: Pointer; Offset: Word; AllocFlags, Color: Byte; Data: Pointer);
 procedure DrawPictureItem(Col, Row: Integer; PicIndex, Flags: Byte; Source, Dest: Pointer);
-procedure res07_fn_0D71(Col, Row: Integer; PicIndex, Flags: Byte; Source, Dest: Pointer);
+procedure DrawPictureItemClipped(Col, Row: Integer; PicIndex, Flags: Byte; Source, Dest: Pointer);
 function MirrorByte(Value: Byte): Byte;
 function MirrorWord(Value: Word): Word;
 function SwapNibbles(Value: Byte): Byte;
 procedure MirrorPicture(Source, Dest: Pointer);
 procedure ShowPicture(PicCol, PicRow: Integer; Buf: Pointer);
 procedure FlushPictureChanges;
-procedure res07_fn_1E5C(FromMap, ToMap: Pointer; FirstRow: Integer; Flicker: Byte; Pic: Pointer);
+procedure RemapPictureColours(FromMap, ToMap: Pointer; FirstItem: Integer; Flicker: Byte; Pic: Pointer);
 procedure AllocatePicture(Height, WidthCols: Word; ItemCount, AllocFlags: Byte; var Pic);
 procedure ReleasePicture(var Pic);
 procedure FillPictureRect(FirstCol, FirstRow: Integer; Width, Height: Word; Colour: Byte; Palette: Pointer; Target: Pointer);
@@ -419,7 +422,233 @@ begin
   end;
 end;
 { 0464:0D71: retf 16: same frame as DrawPictureItem. Bit 0 of Flags is tested. }
-{@stub} procedure res07_fn_0D71(Col, Row: Integer; PicIndex, Flags: Byte; Source, Dest: Pointer); begin end;
+{ 0464:0D71: the clipping version of DrawPictureItem (08D4). Draws item PicIndex of
+  Source with its top-left cell at column Col and pixel row Row * 8, cut to Dest on
+  all four sides. Bit 0 of Flags masks the picture (Source needs a pixel buffer);
+  bit 2 first copies the destination bytes that are about to be overwritten into the
+  screen buffer ds4A24 (SaveOfs, the same layout as the picture rows). The range
+  checks run only while ds5370 is nonzero (set by the loader); when it is 0 the
+  picture is drawn with no check at all. Per VideoAdapter: 0 and 2 copy bytes (2 or
+  4 per cell), 1 copies the four EGA planes and reads one mask byte per four data
+  bytes. The change marks go into ds4A28, ds4AD0, ds4C20 and ds4D70 per pixel row.
+  QUIRK 0464:0D71: SaveOfs starts at the top-cut bytes only (no PicIndex offset), and
+  the adapter 1 mask phase is set once per call, so it carries from row to row. }
+procedure DrawPictureItemClipped(Col, Row: Integer; PicIndex, Flags: Byte; Source, Dest: Pointer);
+var
+  LeftCut: Word;           { source cells cut off on the left (Col < 0) }
+  RightCut: Word;          { source cells cut off on the right }
+  LeftCol: Word;           { the first destination cell column }
+  RightRoom: Word;         { destination cells right of the picture (0 when it is cut) }
+  LeftMaskCut: Word;       { adapter 1: mask bytes cut off on the left }
+  RightMaskCut: Word;      { adapter 1: mask bytes cut off on the right }
+  VisibleBytes: Word;      { bytes of each source row that land in Dest }
+  SrcOfs: Word;            { source byte offset of the next byte }
+  DestOfs: Word;           { destination byte offset of the next byte }
+  SaveOfs: Word;           { byte offset in the save buffer ds4A24 }
+  SrcLastRow: Word;        { last source pixel row that is drawn }
+  SrcRow: Word;            { source row loop counter }
+  MaskOfs: Word;           { adapter 1: mask byte offset }
+  BytesToNextMask: Byte;   { adapter 1: data bytes left before the next mask byte }
+  FirstRow: Word;          { first destination pixel row: Row * 8, or 0 when Row < 0 }
+  LeftBytes: Word;         { the first changed byte of the row (ds4AD0) }
+  HasMask: Boolean;        { Flags bit 0 is set and Source has a pixel buffer }
+  SaveBackground: Boolean; { Flags bit 2 is set }
+begin
+  if (Source = nil) or (Dest = nil) then Exit;
+  HasMask := ((Flags and 1) > 0) and (PPicture(Source)^.Pixels <> nil);
+  SaveBackground := (Flags and 4) > 0;
+  if ds5370 <> 0 then
+  begin
+    if Col < 0 then
+    begin
+      LeftCut := Abs(Col);
+      if LeftCut > PPicture(Source)^.WidthCols then Exit;
+      LeftCol := 0;
+    end
+    else
+    begin
+      LeftCut := 0;
+      LeftCol := Col;
+      if LeftCol > PPicture(Dest)^.WidthCols then Exit;
+    end;
+    if Col + PPicture(Source)^.WidthCols > PPicture(Dest)^.WidthCols then
+    begin
+      RightCut := Col + PPicture(Source)^.WidthCols - PPicture(Dest)^.WidthCols;
+      if RightCut > PPicture(Source)^.WidthCols then Exit;
+      RightRoom := 0;
+    end
+    else
+    begin
+      RightCut := 0;
+      RightRoom := PPicture(Dest)^.WidthCols - (Col + PPicture(Source)^.WidthCols);
+      if RightRoom > PPicture(Dest)^.WidthCols then Exit;
+    end;
+    if Row < 0 then
+    begin
+      SrcOfs := Abs(Row) * PPicture(Source)^.WidthCols * 8;
+      DestOfs := 0;
+      FirstRow := 0;
+      SrcLastRow := PPicture(Source)^.Height - 1 - Abs(Row) * 8;
+      if (PPicture(Source)^.ByteSize - 1 < SrcOfs) or
+         (SrcLastRow > PPicture(Source)^.Height - 1) then Exit;
+    end
+    else
+    begin
+      SrcOfs := 0;
+      FirstRow := Row * 8;
+      DestOfs := FirstRow * PPicture(Dest)^.WidthCols;
+      { the original stores the default here and again in the else below (0464:0F3F, 0F95) }
+      SrcLastRow := PPicture(Source)^.Height - 1;
+      if Row * 8 + PPicture(Source)^.Height > PPicture(Dest)^.Height then
+        SrcLastRow := PPicture(Dest)^.Height - 1 - Row * 8
+      else
+        SrcLastRow := PPicture(Source)^.Height - 1;
+      if (PPicture(Source)^.ByteSize - 1 < SrcOfs) or
+         (PPicture(Dest)^.ByteSize - 1 < DestOfs) or
+         (SrcLastRow > PPicture(Source)^.Height - 1) then Exit;
+    end;
+  end
+  else
+  begin
+    LeftCut := 0;
+    RightCut := 0;
+    SrcOfs := 0;
+    FirstRow := Row * 8;
+    DestOfs := FirstRow * PPicture(Dest)^.WidthCols;
+    SrcLastRow := PPicture(Source)^.Height - 1;
+    LeftCol := Col;
+    RightRoom := PPicture(Dest)^.WidthCols - (Col + PPicture(Source)^.WidthCols);
+  end;
+  case VideoAdapter of
+    0, 2:
+    begin
+      if VideoAdapter = 0 then
+      begin
+        LeftBytes := LeftCol * 2;
+        VisibleBytes := (PPicture(Source)^.WidthCols - LeftCut - RightCut) * 2;
+        LeftCut := LeftCut * 2;
+        RightCut := RightCut * 2;
+        LeftCol := LeftCol * 2;
+        RightRoom := RightRoom * 2;
+        SrcOfs := SrcOfs * 2;
+        SaveOfs := SrcOfs;
+        SrcOfs := SrcOfs + PicIndex * PPicture(Source)^.ByteSize;
+        DestOfs := DestOfs * 2;
+      end
+      else
+      begin
+        LeftBytes := LeftCol * 4;
+        VisibleBytes := (PPicture(Source)^.WidthCols - LeftCut - RightCut) * 4;
+        LeftCut := LeftCut * 4;
+        RightCut := RightCut * 4;
+        LeftCol := LeftCol * 4;
+        RightRoom := RightRoom * 4;
+        SrcOfs := SrcOfs * 4;
+        SaveOfs := SrcOfs;
+        SrcOfs := SrcOfs + PicIndex * PPicture(Source)^.ByteSize;
+        DestOfs := DestOfs * 4;
+      end;
+      for SrcRow := 0 to SrcLastRow do
+      begin
+        ds4A28[FirstRow] := 1;
+        Inc(SrcOfs, LeftCut);
+        Inc(SaveOfs, LeftCut);
+        Inc(DestOfs, LeftCol);
+        if ds4C20[FirstRow] > DestOfs then
+        begin
+          ds4AD0[FirstRow] := LeftBytes;
+          ds4C20[FirstRow] := DestOfs;
+        end;
+        if SaveBackground then
+          Move(PPicture(Dest)^.Data[DestOfs], PPicture(ds4A24)^.Data[SaveOfs], VisibleBytes);
+        Inc(SaveOfs, VisibleBytes);
+        if HasMask then
+        begin
+          for ds70C7 := 1 to VisibleBytes do
+          begin
+            PPicture(Dest)^.Data[DestOfs] := (PPicture(Dest)^.Data[DestOfs] and
+              PPicture(Source)^.Pixels^[SrcOfs]) or PPicture(Source)^.Data[SrcOfs];
+            Inc(SrcOfs);
+            Inc(DestOfs);
+          end;
+        end
+        else
+        begin
+          Move(PPicture(Source)^.Data[SrcOfs], PPicture(Dest)^.Data[DestOfs], VisibleBytes);
+          Inc(SrcOfs, VisibleBytes);
+          Inc(DestOfs, VisibleBytes);
+        end;
+        if DestOfs - 1 > ds4D70[FirstRow] then ds4D70[FirstRow] := DestOfs - 1;
+        Inc(SrcOfs, RightCut);
+        Inc(SaveOfs, RightCut);
+        Inc(DestOfs, RightRoom);
+        Inc(FirstRow);
+      end;
+    end;
+    1:
+    begin
+      LeftBytes := LeftCol;
+      VisibleBytes := (PPicture(Source)^.WidthCols - LeftCut - RightCut) * 4;
+      LeftCut := LeftCut * 4;
+      RightCut := RightCut * 4;
+      LeftCol := LeftCol * 4;
+      RightRoom := RightRoom * 4;
+      SrcOfs := SrcOfs * 4;
+      SaveOfs := SrcOfs;
+      SrcOfs := SrcOfs + PicIndex * PPicture(Source)^.ByteSize;
+      { two shifts by 1: the original does not compile shr 2 this way (res07-shift-two-forms) }
+      MaskOfs := SrcOfs shr 1 shr 1;
+      LeftMaskCut := LeftCut shr 1 shr 1;
+      RightMaskCut := RightCut shr 1 shr 1;
+      BytesToNextMask := 4;
+      DestOfs := DestOfs * 4;
+      for SrcRow := 0 to SrcLastRow do
+      begin
+        ds4A28[FirstRow] := 1;
+        Inc(SrcOfs, LeftCut);
+        Inc(MaskOfs, LeftMaskCut);
+        Inc(SaveOfs, LeftCut);
+        Inc(DestOfs, LeftCol);
+        if ds4C20[FirstRow] > DestOfs then
+        begin
+          ds4AD0[FirstRow] := LeftBytes;
+          ds4C20[FirstRow] := DestOfs;
+        end;
+        if SaveBackground then
+          Move(PPicture(Dest)^.Data[DestOfs], PPicture(ds4A24)^.Data[SaveOfs], VisibleBytes);
+        Inc(SaveOfs, VisibleBytes);
+        if HasMask then
+        begin
+          for ds70C7 := 1 to VisibleBytes do
+          begin
+            PPicture(Dest)^.Data[DestOfs] := (PPicture(Dest)^.Data[DestOfs] and
+              PPicture(Source)^.Pixels^[MaskOfs]) or PPicture(Source)^.Data[SrcOfs];
+            Inc(SrcOfs);
+            Dec(BytesToNextMask);
+            if BytesToNextMask = 0 then
+            begin
+              BytesToNextMask := 4;
+              Inc(MaskOfs);
+            end;
+            Inc(DestOfs);
+          end;
+        end
+        else
+        begin
+          Move(PPicture(Source)^.Data[SrcOfs], PPicture(Dest)^.Data[DestOfs], VisibleBytes);
+          Inc(SrcOfs, VisibleBytes);
+          Inc(DestOfs, VisibleBytes);
+        end;
+        if DestOfs - 1 > ds4D70[FirstRow] then ds4D70[FirstRow] := DestOfs - 1;
+        Inc(SrcOfs, RightCut);
+        Inc(MaskOfs, RightMaskCut);
+        Inc(SaveOfs, RightCut);
+        Inc(DestOfs, RightRoom);
+        Inc(FirstRow);
+      end;
+    end;
+  end;
+end;
 { 0464:1484: reverses the eight bits of X: bit 0 becomes bit 7, bit 1 bit 6,
   and so on. The byte-sized mirror used to flip an 8-pixel byte of a picture. }
 function MirrorByte(Value: Byte): Byte;
@@ -715,8 +944,147 @@ begin
   FillChar(ds4C20, $150, $FF);
   FillChar(ds4D70, $150, 0);
 end;
-{ 0464:1E5C: retf 16: 16 bytes of parameters; 68 bytes of locals }
-{@stub} procedure res07_fn_1E5C(FromMap, ToMap: Pointer; FirstRow: Integer; Flicker: Byte; Pic: Pointer); begin end;
+{ 0464:1E5C: recolours the picture Pic. For every colour index I whose FromMap and ToMap
+  entries differ, each pixel of Pic whose palette colour is FromMap[I] becomes ToMap[I].
+  The changes go to a scratch copy of Pic (AllocatePicture) that is copied back over the
+  items from FirstItem on at the end. FirstItem is an item index (the byte offset of an
+  item is FirstItem * ByteSize). Flicker (nonzero) makes each change random: adapters 0
+  and 2 change each matching pixel with chance 1 in 4, adapter 1 changes a random subset
+  of the matching pixels of each cell. Adapter 0 compares 2-bit pixel pairs (ds25FA,
+  GlyphPixelMasks), adapter 1 the four EGA planes (EgaPlaneBitMasks), adapter 2 the two
+  nibbles of each byte. Called by LoadPictureSlot (ovl32), LoadSpriteList (ovl28),
+  AnimateAreaDoors (ovl18) and ovl16, ovl17.
+  QUIRK 0464:1F51: the header inside the colour loop tests FirstItem again; the header
+  before the loop has already set it to 0, so Items is 1 for every colour: a negative
+  FirstItem recolours and copies back item 0 only. }
+procedure RemapPictureColours(FromMap, ToMap: Pointer; FirstItem: Integer; Flicker: Byte; Pic: Pointer);
+var
+  FromMapCopy: TColorMap;            { FromMap, copied on entry }
+  ToMapCopy: TColorMap;              { ToMap, copied on entry }
+  PicOfs: Word;                      { byte offset in Pic of the pixel byte being read }
+  ScratchOfs: Word;                  { byte offset in the scratch copy of the byte being written }
+  Items: Byte;                       { items recoloured: ItemCount for a negative FirstItem before the loop, then 1 (QUIRK) }
+  ColByte: Word;                     { byte column loop variable }
+  PixelRow: Word;                    { pixel row loop variable }
+  Mask: Byte;                        { adapter 1: the pixels of the cell that have the colour }
+  PlaneMask: array[0..3] of Byte;    { adapter 1: per EGA plane $00 (the colour bit is set) or $FF }
+  Plane: Byte;                       { EGA plane loop variable }
+  Unused: Byte;                      { the original frame has one byte the locals never use }
+  Quad: Byte;                        { pixel pair loop variable (adapter 0) }
+  RowBytes: Word;                    { bytes per pixel row }
+  FromHigh: Byte;                    { adapter 2: the FromMap colour in the high nibble }
+  ToHigh: Byte;                      { adapter 2: the ToMap colour in the high nibble }
+  Colour: Byte;                      { colour index loop variable }
+  Scratch: Pointer;                  { the scratch copy of Pic the changes are written to }
+begin
+  FromMapCopy := PColorMap(FromMap)^;
+  ToMapCopy := PColorMap(ToMap)^;
+  if Pic = nil then Exit;
+  with PPicture(Pic)^ do
+  begin
+    if FirstItem < 0 then
+    begin
+      FirstItem := 0;
+      Items := ItemCount;
+    end
+    else
+      Items := 1;
+    PicOfs := FirstItem * ByteSize;
+    ScratchOfs := 0;
+  end;
+  AllocatePicture(PPicture(Pic)^.Height, PPicture(Pic)^.WidthCols, Items, 0, Scratch);
+  PPicture(Scratch)^.Palette := PPicture(Pic)^.Palette;
+  Move(PPicture(Pic)^.Data[PicOfs], PPicture(Scratch)^.Data[ScratchOfs],
+    PPicture(Scratch)^.ItemCount * PPicture(Scratch)^.ByteSize);
+  for Colour := 0 to 15 do
+  begin
+    with PPicture(Pic)^ do
+    begin
+      if FirstItem < 0 then
+      begin
+        FirstItem := 0;
+        Items := ItemCount;
+      end
+      else
+        Items := 1;
+      PicOfs := FirstItem * ByteSize;
+      ScratchOfs := 0;
+    end;
+    if FromMapCopy[Colour] <> ToMapCopy[Colour] then
+    begin
+      with PPicture(Scratch)^ do
+      begin
+        case VideoAdapter of
+        0:
+        begin
+          RowBytes := WidthCols * 2;
+          for ds70C7 := FirstItem to Items + FirstItem - 1 do
+            for PixelRow := 1 to Height do
+              for ColByte := 1 to RowBytes do
+              begin
+                for Quad := 0 to 3 do
+                  if (PPicture(Pic)^.Data[PicOfs] and GlyphPixelMasks[Quad + 4]) =
+                    ds25FA[PaletteColor(FromMapCopy[Colour], @Palette), Quad] then
+                    if (Flicker = 0) or ((Flicker <> 0) and (Random(4) = 0)) then
+                      Data[ScratchOfs] := (Data[ScratchOfs] and not GlyphPixelMasks[Quad + 4]) or
+                        ds25FA[PaletteColor(ToMapCopy[Colour], @Palette), Quad];
+                Inc(PicOfs);
+                Inc(ScratchOfs);
+              end;
+        end;
+        1:
+        begin
+          for Plane := 0 to 3 do
+            if (FromMapCopy[Colour] and EgaPlaneBitMasks[Plane]) > 0 then
+              PlaneMask[Plane] := 0
+            else
+              PlaneMask[Plane] := $FF;
+          for ds70C7 := FirstItem to Items + FirstItem - 1 do
+            for PixelRow := 1 to Height do
+              for ColByte := 1 to WidthCols do
+              begin
+                if Flicker <> 0 then
+                  Mask := Random(256) and Random(256)
+                else
+                  Mask := $FF;
+                for Plane := 0 to 3 do
+                  Mask := (PPicture(Pic)^.Data[PicOfs + Plane] xor PlaneMask[Plane]) and Mask;
+                for Plane := 0 to 3 do
+                  if (ToMapCopy[Colour] and EgaPlaneBitMasks[Plane]) > 0 then
+                    Data[ScratchOfs + Plane] := Data[ScratchOfs + Plane] or Mask
+                  else
+                    Data[ScratchOfs + Plane] := Data[ScratchOfs + Plane] and not Mask;
+                Inc(PicOfs, 4);
+                Inc(ScratchOfs, 4);
+              end;
+        end;
+        2:
+        begin
+          RowBytes := WidthCols * 4;
+          FromHigh := FromMapCopy[Colour] shl 4;
+          ToHigh := ToMapCopy[Colour] shl 4;
+          for ds70C7 := FirstItem to Items + FirstItem - 1 do
+            for PixelRow := 1 to Height do
+              for ColByte := 1 to RowBytes do
+              begin
+                if (PPicture(Pic)^.Data[PicOfs] and $F0) = FromHigh then
+                  if (Flicker = 0) or ((Flicker <> 0) and (Random(4) = 0)) then
+                    Data[ScratchOfs] := (Data[ScratchOfs] and $0F) or ToHigh;
+                if (PPicture(Pic)^.Data[PicOfs] and $0F) = FromMapCopy[Colour] then
+                  if (Flicker = 0) or ((Flicker <> 0) and (Random(4) = 0)) then
+                    Data[ScratchOfs] := (Data[ScratchOfs] and $F0) or ToMapCopy[Colour];
+                Inc(PicOfs);
+                Inc(ScratchOfs);
+              end;
+        end;
+        end;
+      end;
+    end;
+  end;
+  with PPicture(Pic)^ do
+    Move(PPicture(Scratch)^.Data[0], Data[FirstItem * ByteSize], Items * ByteSize);
+  ReleasePicture(Scratch);
+end;
 { 0464:248E: allocates a picture record of Height * WidthCols * 2 bytes per
   item (times 2 again when the video adapter is not 0, the EGA planar case) times
   ItemCount, plus $17 header bytes, zeroes it, stores the header fields and, when

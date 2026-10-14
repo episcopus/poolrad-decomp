@@ -568,9 +568,9 @@ var
   ds49F3: Byte;                   { the view mode; see above }
   ds0900: array[0..$A] of Byte;   { the first door block codes of AnimateAreaDoors (bit 7 = other bank) }
   ds090B: array[0..$11] of Byte;  { the second door block codes of AnimateAreaDoors (indexed 0..$11); same 7-bit flag }
-  ds091D: array[0..$F] of Byte;   { the first 16-byte record AnimateAreaDoors passes to res07_fn_1E5C }
-  ds092D: array[0..$F] of Byte;   { the second 16-byte record AnimateAreaDoors passes to res07_fn_1E5C }
-  ds093D: array[0..$F] of Byte;   { the third 16-byte record AnimateAreaDoors passes to res07_fn_1E5C }
+  ds091D: array[0..$F] of Byte;   { the first 16-byte record AnimateAreaDoors passes to RemapPictureColours }
+  ds092D: array[0..$F] of Byte;   { the second 16-byte record AnimateAreaDoors passes to RemapPictureColours }
+  ds093D: array[0..$F] of Byte;   { the third 16-byte record AnimateAreaDoors passes to RemapPictureColours }
   ds094D: array[0..8] of Word;    { the per-step DrawAreaView columns of AnimateAreaDoors (indexed 0..8) }
   ds095F: array[0..8] of Word;    { the per-step DrawAreaView rows of AnimateAreaDoors (indexed 0..8) }
   ds470E: Pointer;                { the FINAL picture bank ShowEndingNarrative loads through LoadPicture and draws }
@@ -683,8 +683,8 @@ var
   ds6B06: Pointer;                { the loaded BODY sprite bank (ShowHeadBodySprites, LoadHeadBodySprites) }
   ds6B0A: string[8];              { the last picture file loaded (LoadSpriteList); cleared by the loader (ovl11:043D) }
   ds6B1C: Byte;                   { set to $FF by the loader (ovl11:0442) and by FreeSpriteList }
-  ds0C6C: array[0..$F] of Byte;   { 16-byte table LoadSpriteList passes to res07_fn_1E5C (with ds0C7C) }
-  ds0C7C: array[0..$F] of Byte;   { second 16-byte table LoadSpriteList passes to res07_fn_1E5C }
+  ds0C6C: array[0..$F] of Byte;   { 16-byte table LoadSpriteList passes to RemapPictureColours (with ds0C7C) }
+  ds0C7C: array[0..$F] of Byte;   { second 16-byte table LoadSpriteList passes to RemapPictureColours }
   { The ten pieces a wall of the 3D view is drawn from (DrawWallPiece, DrawWallView): each piece is a
     rectangle of 8x8 tiles, Width x Height, whose tiles follow each other in a wall's 156-byte tile
     list from FirstTile on (the image's values 0,2,6,..,$9A add up to $9C exactly), drawn with its
@@ -780,7 +780,7 @@ var
     Platinum, Gems, Jewelry (the image); the Take menu lists the pool with them (ovl21:0DDF). }
   MoneyKindNames: array[0..6] of string[10];
   PackedBuf: Pointer;             { the packed bytes of the DAX block LoadDaxBlock is reading }
-  { Colour maps for res07_fn_1E5C (16 entries, colour I becomes entry I): ds0CD2 is the identity,
+  { Colour maps for RemapPictureColours (16 entries, colour I becomes entry I): ds0CD2 is the identity,
     ds0CE2 turns colour 13 into 8 and ds0CF2 turns 13 into 0 (the image). LoadPictureSlot recolours the
     TileSet picture sets from ds0CD2 to ds0CE2 and ICON from ds0CD2 to ds0CF2. }
   ds0CD2: array[0..15] of Byte;   { identity colour map; see above }
