@@ -19,8 +19,8 @@ const
   IconSetCopyLimit = 3;       { icon sets above this are copied by MirrorPicture }
   OneItem = 1;                { item count stored in the allocated picture }
   AllocatePixels = 1;         { bit 0 of AllocFlags asks AllocatePicture for a pixel buffer }
-  NoPicIndex = 0;             { picture index this routine passes to res07_fn_0D71 }
-  BlitFlagBit = 1;            { res07_fn_0D71 tests bit 0 of the flags byte }
+  NoPicIndex = 0;             { picture index this routine passes to DrawPictureItemClipped }
+  BlitFlagBit = 1;            { DrawPictureItemClipped tests bit 0 of the flags byte }
   CellStep = 3;               { the cell column and row are multiplied by 3 for the blit }
   QuarterAdapter = 1;         { VideoAdapter 1: the pixel copy is a quarter of the byte size }
   AltPictures = $40;          { a CHEAD/CBODY name ending in T selects the pictures from $40 on }
@@ -131,7 +131,7 @@ end;
 { ovl32:04FC. Draws the picture PicIndex, mirror half Mirror, from the table at ds5E5A.
   Nothing happens when that pointer is nil. Otherwise a picture of the same height and
   width is allocated, the bytes are copied (MirrorPicture when IconSet is above
-  IconSetCopyLimit, otherwise Move of the tail and the pixels), and res07_fn_0D71 draws
+  IconSetCopyLimit, otherwise Move of the tail and the pixels), and DrawPictureItemClipped draws
   it at the cell times CellStep. The copy is then freed. DrawPartyMarker passes the
   marker cell, the icon set PartyFacing, and the walk frame split into half and picture. }
 procedure DrawIcon(CellCol, CellRow: Shortint; IconSet, Mirror, PicIndex: Byte);
@@ -154,7 +154,7 @@ begin
           Move(Pixels^, PMemPic(Dest)^.Pixels^, ByteSize);
       end;
     end;
-    res07_fn_0D71(CellCol * CellStep, CellRow * CellStep, NoPicIndex, BlitFlagBit, Dest, DrawBuf);
+    DrawPictureItemClipped(CellCol * CellStep, CellRow * CellStep, NoPicIndex, BlitFlagBit, Dest, DrawBuf);
     ReleasePicture(Dest);
   end;
 end;

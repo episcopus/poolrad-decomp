@@ -423,7 +423,7 @@ Record size is always `17 + item_count * height * width_cols * 4` **[V]** (all n
 
 **Drawing one cell** **[V]** (`DrawCellPicture`, `ovl32:00F1`): a picture code above 127 is drawn from the pointer at DS:5E56 with bit 7 cleared; a code of 127 or less is drawn from DS:5E52. Both calls pass flags 0 and the destination pointer at DS:4A20 to `DrawPictureItem`. The fourth argument is never read.
 
-**The picture table** **[V]** (`FreePictureSlot`, `ovl32:014E`; `DrawIcon`, `ovl32:04FC`): DS:5E5A is an array of two pointers per slot, stride 8. `FreePictureSlot` frees each pointer that is not nil through `ReleasePicture` (`FreeMem`, then the pointer is stored nil). `DrawIcon` indexes the same table by picture number times 8 plus mirror half times 4. `DrawPartyMarker` passes picture numbers 9 to 11, so the table runs past four slots; the declared bound is the byte index. When the chosen pointer is not nil, `DrawIcon` allocates a picture of the same height and width (`AllocatePicture`), copies into it (`MirrorPicture` when the icon set is above 3, otherwise `Move` of the tail at +$17 and the pixel buffer at +$13; adapter 1 copies a quarter of the bytes), draws it at the cell times 3 through `res07_fn_0D71`, and frees the copy.
+**The picture table** **[V]** (`FreePictureSlot`, `ovl32:014E`; `DrawIcon`, `ovl32:04FC`): DS:5E5A is an array of two pointers per slot, stride 8. `FreePictureSlot` frees each pointer that is not nil through `ReleasePicture` (`FreeMem`, then the pointer is stored nil). `DrawIcon` indexes the same table by picture number times 8 plus mirror half times 4. `DrawPartyMarker` passes picture numbers 9 to 11, so the table runs past four slots; the declared bound is the byte index. When the chosen pointer is not nil, `DrawIcon` allocates a picture of the same height and width (`AllocatePicture`), copies into it (`MirrorPicture` when the icon set is above 3, otherwise `Move` of the tail at +$17 and the pixel buffer at +$13; adapter 1 copies a quarter of the bytes), draws it at the cell times 3 through `DrawPictureItemClipped`, and frees the copy.
 
 **Loading a slot** **[V]** (`LoadPictureSlot`, `ovl32:01C8`, `make match UNIT=ovl32`: unit complete): loads picture `Block` of a set into the first pointer of slot `Slot` and picture `Block + $80` (the mirrored half) into the second, through `LoadPicture`. For `CHEAD` and `CBODY` a name ending in `T` adds $40 to `Block` and the `T` is dropped; `COMSPR` and `ICON` are used as named; any other set gets the file number `TileSet` appended. `ICON` pictures and the `TileSet` sets are then recoloured by `res07_fn_1E5C` with 16-entry colour maps: from the identity map DS:0CD2 to DS:0CF2 (colour 13 becomes 0) for `ICON`, to DS:0CE2 (13 becomes 8) for the others. `StartGame` fills slots 13 to 24 with `COMSPR` pictures 0 to 11 and slot 25 with picture 25.
 
@@ -839,7 +839,7 @@ The parts proven so far:
 - `DrawSprite(Col, Row: Integer; Direct: Byte; Sprite: Pointer)` (`ovl28:0000`): a nil sprite draws
   nothing; with `Direct` set it blits the sprite one column and one row up and left (`Col - 1`,
   `Row - 1`) onto the screen buffer
-  `DS:4A20` through `res07_fn_0D71` (mode 0, flag 1) and steps the display (`FlushPictureChanges`);
+  `DS:4A20` through `DrawPictureItemClipped` (mode 0, flag 1) and steps the display (`FlushPictureChanges`);
   otherwise it copies the sprite into the staging buffer with `ShowPicture`.
 - `DrawHeadSprite` and `DrawBodySprite` (`ovl28:0050`, `ovl28:0070`): draw a sprite at (column,
   row) and at (column, row + 5); `ShowHeadBodySprites` (`ovl28:0697`) uses them to draw the HEAD
@@ -863,7 +863,7 @@ The parts proven so far:
   whitepaper 4.2.3, 5.13).
 
 - `Show3DSprite` (`ovl28:0708`) shows slot 1..3 of a sprite list at the sprite's base column and row
-  plus 2 through `res07_fn_0D71`; another slot restores the saved video mode (`RestoreVideoMode`,
+  plus 2 through `DrawPictureItemClipped`; another slot restores the saved video mode (`RestoreVideoMode`,
   `SavedVideoMode`) and ends the game with the unit's range error string.
 - `ShowHeadBodyWindow` (`ovl28:04F9`) draws the HEAD/BODY picture window (columns 28..38, rows 1..11)
   of the character record `DS:5D92` and shows the HEAD and BODY sprites of its two bank numbers
@@ -894,7 +894,7 @@ Overlay 18 (PoolNarrative) plays the game's ending and animates the area view do
 - `ShowEndingNarrative` (`ovl18:02A4`, called by `ovl03:2E10`) shows the dragon's death and the
   Tyranthraxus and Bane speech as lines of text at column 1, rows $11 onwards, colour 10
   (`DrawTextAt(1, Row, 10, Text)`) and loads and draws the `FINAL<number>` pictures (the number is
-  `Str(TileSet)` in DS:4713) through `LoadPicture` and `res07_fn_0D71`, running the animation
+  `Str(TileSet)` in DS:4713) through `LoadPicture` and `DrawPictureItemClipped`, running the animation
   `AnimateFinalPicture(3, 5, 2, x)`, `(3, 1, 7, x)` and `(3, 1, 8, 1)` between the speech blocks. It saves
   the view mode DS:49F3 in DS:4712, sets 7 and restores it.
 - `AnimateAreaDoors` (`ovl18:06B3`, called by `ovl03:31B4` and `ovl17:1602`) draws or clears the doors

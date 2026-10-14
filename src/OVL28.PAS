@@ -15,7 +15,7 @@ type
   { One loaded sprite picture: what AllocatePicture allocates and ReleasePicture frees (the same record
     ovl32 draws: height and width at +0 and +2, item count at +8, byte size at +$11, pixels at +$13,
     whitepaper 4.2.3). LoadSpriteList reads the sprite's base screen column and row from +4 and +6
-    (Show3DSprite adds 2 to each and passes them to res07_fn_0D71) and the byte size from +$11. The
+    (Show3DSprite adds 2 to each and passes them to DrawPictureItemClipped) and the byte size from +$11. The
     height, width and item count are set by the allocator and not read here; the pixel pointer at
     +$13 is not declared because this unit never reads it. }
   TSpritePicture = record
@@ -58,7 +58,7 @@ uses RES04, RES05, RES09, RES07;
 { ovl28:0000. Draws the 8x8 sprite Sprite at column Col and row Row. A nil Sprite draws nothing. When
   Direct is set it blits the sprite one column and one row up and left (Col - 1, Row - 1) onto the
   screen buffer DrawBuf through
-  res07_fn_0D71 (mode 0, the flag 1) and steps the display through FlushPictureChanges; otherwise it
+  DrawPictureItemClipped (mode 0, the flag 1) and steps the display through FlushPictureChanges; otherwise it
   copies it into the staging buffer with ShowPicture. Called by DrawHeadSprite, DrawBodySprite and
   ShowHeadBodySprites inside this unit, and from ovl03, ShowEncounterPicture, ovl18 and ovl25 (the packet's callers). }
 procedure DrawSprite(Col, Row: Integer; Direct: Byte; Sprite: Pointer);
@@ -67,7 +67,7 @@ begin
   begin
     if Direct <> 0 then
     begin
-      res07_fn_0D71(Col - 1, Row - 1, 0, 1, Sprite, DrawBuf);
+      DrawPictureItemClipped(Col - 1, Row - 1, 0, 1, Sprite, DrawBuf);
       FlushPictureChanges;
     end
     else
@@ -275,7 +275,7 @@ end;
   legal; another slot restores the saved video mode with RestoreVideoMode, which calls
   SetVideoMode(SavedVideoMode) so the range message is readable, then ends the game with
   'Illegal range in Show3DSprite.'): the sprite is drawn at its base column and row plus 2 (X + 3 -
-  1, Y + 3 - 1) through res07_fn_0D71 onto the screen buffer DrawBuf and the display is stepped.
+  1, Y + 3 - 1) through DrawPictureItemClipped onto the screen buffer DrawBuf and the display is stepped.
   A nil slot leaves early. Called by ShowEncounterPicture. }
 procedure Show3DSprite(Slot: Byte; Rec: PSpriteList);
 var
@@ -290,7 +290,7 @@ begin
   end;
   if List.Slots[Slot].Sprite <> nil then
     with List.Slots[Slot].Sprite^ do
-      res07_fn_0D71(X + 3 - 1, Y + 3 - 1, 0, 1, List.Slots[Slot].Sprite, DrawBuf)
+      DrawPictureItemClipped(X + 3 - 1, Y + 3 - 1, 0, 1, List.Slots[Slot].Sprite, DrawBuf)
   else
     Exit;
   FlushPictureChanges;

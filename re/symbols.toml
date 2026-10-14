@@ -16160,12 +16160,12 @@ id = "0464:0D71"
 unit = "res07"
 addr = "0464:0D71"
 size = 1811
-name = "res07_fn_0D71"
-signature = "procedure res07_fn_0D71(Col, Row: Integer; PicIndex, Flags: Byte; Source, Dest: Pointer)"
+name = "DrawPictureItemClipped"
+signature = "procedure DrawPictureItemClipped(Col, Row: Integer; PicIndex, Flags: Byte; Source, Dest: Pointer)"
 c_name = "res07_fn_0D71"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:far_call; map deepseek-dec 2026-10-12: ends 1484 (was 144); bogus entries 0E01..140E (11) deleted"
+notes = "renamed from res07_fn_0D71 (0464:0D71 is DrawPictureItem (0464:08D4) with range checks: it cuts the item to Dest on all four sides while ds5370 is set, masks with Flags bit 0 and saves the overwritten bytes into ds4A24 with Flags bit 2 (src/RES07.PAS, MATCH); callers OVL18 AnimateFinalPicture and ShowEndingNarrative, OVL28 DrawSprite and Show3DSprite, OVL31 RemoveCombatant, OVL32 DrawIcon, RES12); auto:far_call; map deepseek-dec 2026-10-12: ends 1484 (was 144); bogus entries 0E01..140E (11) deleted"
 evidence = ["prologue"]
 
 [[routine]]

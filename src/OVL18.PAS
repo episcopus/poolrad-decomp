@@ -29,7 +29,7 @@ begin
   StartTick := GameClock;
   FillChar(Sprites, SizeOf(TSpriteList), 0);
   LoadSpriteList('FINAL', Bank, 2, @Sprites);
-  res07_fn_0D71(Col - 1, Row - 1, 0, 0, Sprites.Slots[1].Sprite, DrawBuf);
+  DrawPictureItemClipped(Col - 1, Row - 1, 0, 0, Sprites.Slots[1].Sprite, DrawBuf);
   FlushPictureChanges;
   repeat
     DrawSprite(Col, Row, 1, Sprites.Slots[Sprites.Flag].Sprite);
@@ -50,7 +50,7 @@ end;
 { ovl18:02A4. The ending narrative (PoolNarrative): it shows the dragon's death and the
   Tyranthraxus and Bane speech as lines of text (DrawTextAt on column 1, rows $11 onwards, colour
   10), loads the FINAL<number> pictures (whose number is Str(TileSet) in DS:4713) through
-  LoadPicture and draws them with res07_fn_0D71, running the AnimateFinalPicture
+  LoadPicture and draws them with DrawPictureItemClipped, running the AnimateFinalPicture
   animation between the speech blocks, and restores the view mode DS:49F3 at the end.
   Callers: ovl03:2E10. Gets its picture
   number from DS:4713 and its lines from the code's literal pool. }
@@ -66,24 +66,24 @@ begin
   DrawTextAt(1, $13, $A, 'from the dragon''s body.');
   res12_fn_27D9;
   LoadPicture('FINAL' + ds4713, 1, 0, 0, ds470E);
-  res07_fn_0D71(0, 0, 0, 0, ds470E, DrawBuf);
+  DrawPictureItemClipped(0, 0, 0, 0, ds470E, DrawBuf);
   AnimateFinalPicture(3, 5, 2, (10 - GameSpeed) * 5 div 2);
   LoadPicture('FINAL' + ds4713, 3, 0, 0, ds470E);
-  res07_fn_0D71(0, 0, 0, 0, ds470E, DrawBuf);
+  DrawPictureItemClipped(0, 0, 0, 0, ds470E, DrawBuf);
   if ds49D6^[830] > 1 then
   begin
     LoadPicture('FINAL' + ds4713, 4, 0, 0, ds470E);
-    res07_fn_0D71(0, $B, 0, 0, ds470E, DrawBuf);
+    DrawPictureItemClipped(0, $B, 0, 0, ds470E, DrawBuf);
   end;
   if ds49D6^[830] > 2 then
   begin
     LoadPicture('FINAL' + ds4713, 5, 0, 0, ds470E);
-    res07_fn_0D71($D, 9, 0, 0, ds470E, DrawBuf);
+    DrawPictureItemClipped($D, 9, 0, 0, ds470E, DrawBuf);
   end;
   if ds49D6^[830] > 3 then
   begin
     LoadPicture('FINAL' + ds4713, 6, 0, 0, ds470E);
-    res07_fn_0D71(0, 9, 0, 0, ds470E, DrawBuf);
+    DrawPictureItemClipped(0, 9, 0, 0, ds470E, DrawBuf);
   end;
   ClearRect(1, $11, $26, $16);
   DrawTextAt(1, $11, $A, '"Fools, you have but slain the body');
