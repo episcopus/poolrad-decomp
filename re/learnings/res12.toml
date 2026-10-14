@@ -98,3 +98,12 @@ tags = ["function", "result", "byte", "frame", "codegen"]
 title = "A Byte function assigning its result directly uses [bp-1] and sub sp,2; assigning from a local differs"
 lesson = "For a Byte function that assigns resNN := 1 / := 0 directly, TP6 emits sub sp,2 with the result at [bp-1] (`mov byte ptr [bp-1],1` .. `mov al,[bp-1]`). Assigning from a separate var (resNN := R with R a local) puts R at [bp-2] and adds a copy: `mov al,[bp-2]; mov [bp-1],al; mov al,[bp-1]`. res12:23B7 matched with the direct form. Probe: tools/re/tp_idioms/res12/PRB25.PAS."
 evidence = ["src/RES12.PAS#OpposingSide", "re/symbols.toml#00BA:23B7", "tools/re/tp_idioms/res12/PRB25.PAS"]
+
+[[lesson]]
+id = "res12-full-table-save-buffer-frame"
+confidence = "V"
+units = ["res12", "*"]
+tags = ["frame", "locals", "array", "move", "codegen", "sortrec"]
+title = "res12:255B's sub sp,0x300 shows its ds6718 save buffer is a full 255-entry array, not 72"
+lesson = "res12:255B saves and restores the ovl30 scan table with Move(ds6718[1], Saved, $D8) (216 bytes, 72 TSortRecs) and its frame is sub sp, 0x300, with the buffer based at [bp-0x2fe] and one Byte index at [bp-0x2ff]. Declaring the buffer as array[1..72] of TSortRec (the shape ovl24's RunAffectHook uses) gives sub sp, 0xda with the buffer at [bp-0xd9]: too small. array[1..255] of TSortRec (765 bytes, the 767-byte frame padded to 768) reproduces sub sp, 0x300, the base [bp-0x2fe] and the index [bp-0x2ff] exactly, so the source declares a buffer for the whole table and copies only the 72 records ScanTargets can fill. Locals keep declaration order with the FIRST declared nearest bp (the index, declared second, sits just below the buffer). Probes: tools/re/tp_idioms/res12/PRB30.PAS (72-entry buffer) and PRB31.PAS (255-entry buffer)."
+evidence = ["src/RES12.PAS#DistanceToTarget", "re/symbols.toml#00BA:255B", "tools/re/tp_idioms/res12/PRB30.PAS", "tools/re/tp_idioms/res12/PRB31.PAS"]
