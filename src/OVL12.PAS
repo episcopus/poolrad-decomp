@@ -16,7 +16,7 @@ procedure BoostFireAttackByTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure TrainConstitution(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ShiftAttackToSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e9(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e10;
+procedure HalveColdDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e11;
 procedure ovl12_e12;
 procedure ovl12_e13;
@@ -194,6 +194,8 @@ const
   AffectTrainedOut = $3E;       { purpose unknown [?]: given by the training routine (ovl12:0233) at ConstitutionLimit }
   TrainedOutDuration = $3C;
   TrainedOutData = $FF;
+  KindCold = 2;                 { the DamageKind bit of cold damage (ovl24:13E4, the text 'from Cold') }
+  ColdSaveBonus = 3;            { what a cold hit adds to SaveRoll (ovl12:03E1) }
 
 { ovl12:0000. Cancels the hook of an affect: when AffectId is 0 or is the affect the hooks are offering
   (HookAffectId), HookAffectId and DamageAmount are cleared. HookAffectId 0 reads as "is Unaffected"
@@ -367,8 +369,17 @@ begin
     Dec(AttackRoll, 2);
   end;
 end;
-{ ovl12:03E1: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e10; begin end;
+{ ovl12:03E1. Affect handler for damage (the AffectHandlers frame: Who, Affect and Mode, none of them read): when
+  the damage being dealt is cold (DamageKind bit KindCold, DS:6819), it halves DamageAmount (DS:6818) and adds
+  ColdSaveBonus to SaveRoll (DS:6816). Purpose unknown: which affect runs it is not known yet [?]. }
+procedure HalveColdDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  if (DamageKind and KindCold) <> 0 then
+  begin
+    DamageAmount := DamageAmount shr 1;
+    Inc(SaveRoll, ColdSaveBonus);
+  end;
+end;
 { ovl12:0400: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e11; begin end;
 { ovl12:04BA: retf 10: 10 bytes of parameters; 12 bytes of locals }

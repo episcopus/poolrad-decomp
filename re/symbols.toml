@@ -3265,12 +3265,12 @@ id = "ovl12:03E1"
 unit = "ovl12"
 addr = "ovl12:03E1"
 size = 31
-name = "ovl12_e10"
-signature = ""
+name = "HalveColdDamage"
+signature = "procedure HalveColdDamage(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e10"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_10"
+notes = "renamed from ovl12_e10 (ovl12:03E1 halves DamageAmount (DS:6818) and adds 3 to SaveRoll (DS:6816) when DamageKind (DS:6819) has bit 2, cold (POOLVARS DamageKind comment; ovl24:13E4 says 'from Cold'); AffectHandlers frame, entry 10 of ovl12 (auto:entry_10); the affect that runs it is not known yet); auto:entry_10"
 evidence = ["prologue"]
 
 [[routine]]
