@@ -121,12 +121,12 @@ id = "ovl03:0001"
 unit = "ovl03"
 addr = "ovl03:0001"
 size = 243
-name = "ovl03_fn_0001"
+name = "EndCommand"
 signature = ""
 c_name = "ovl03_fn_0001"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_0001 (ECL command 0: the dispatcher ovl03:2F2D calls it when SkippedOpcode is 0 (cmp al,0 then call 0001), and it is the only command handler that reads no operands (no DecodeOperands call before Inc(EclPC))); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

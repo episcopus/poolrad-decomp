@@ -812,6 +812,9 @@ var
     the character at entry 1 to another entry). Entry 0 is never read. Extent not proven; the
     next named byte after it is ds6E2F. }
   ds6DE4: array[0..73] of Byte;
+  ds442E: Byte;                   { set to 1 by the ECL command 0 (ovl03:0001); meaning unknown }
+  ds4430: Byte;                   { when nonzero, the ECL command 0 (ovl03:0001) selects the character at ds4436 }
+  ds4436: PCharacter;             { and clears this flag; what sets the flag is not known }
   { Scratch of the combat AI (ovl09). }
   ds443C: Byte;                   { the direction the AI chose last; 8 before its first step
                                     (ovl09:0B3C clears it, the 07F2 step reads and sets it) }

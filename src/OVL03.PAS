@@ -1,9 +1,12 @@
 unit OVL03;
-{ Encounter: overlay unit, 13581 bytes of code. Skeleton by tools/match/skeleton.py: every routine is a stub
-  until decompiled (playbook 30). }
+{ Encounter: the command loop of the ECL script interpreter (whitepaper 5.1). ovl03_fn_2F2D
+  dispatches each command by its opcode (SkippedOpcode) to a handler in this unit; the handlers
+  decode their operands through OVL07 and run them (EndCommand, GotoCommand, GosubCommand,
+  CompareCommand, ArithmeticCommand, RandomCommand). The other routines are still stubs. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
-procedure ovl03_fn_0001;
+uses POOLVARS, RES09, OVL07;
+procedure EndCommand;
 procedure ovl03_fn_00F4;
 procedure ovl03_fn_0111;
 procedure ovl03_fn_0126;
@@ -112,8 +115,40 @@ procedure ovl03_fn_3379;
 procedure ovl03_fn_34AB;
 implementation
 
-{ ovl03:0001: retf 0: 0 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl03_fn_0001; begin end;
+{ ovl03:0001. The ECL command 0, the only command that takes no operands (the dispatcher at
+  ovl03:2F2D calls it for SkippedOpcode 0). It clears the text windows when ds84E2 is set (the
+  second one only when the game variable VarForceWallView is set, since the code reads that same
+  word), selects the character at ds4436 when ds4430 is set, clears the two-byte scratch ds84C8,
+  moves EclPC past the command, empties the return stack of ScriptGosub, and puts the text
+  cursor at column 1, row 17 (GlyphCol, GlyphRow). }
+procedure EndCommand;
+begin
+  if ds84E2 <> 0 then
+  begin
+    DrawWindow(1, 1, $F, $F, 0, $F, '');
+    if GameVars^[VarForceWallView] <> 0 then
+      DrawWindow(3, 3, $D, $D, 0, $F, '');
+  end;
+  if ds4430 <> 0 then
+  begin
+    SelectedCharacter := ds4436;
+    ds4430 := 0;
+  end;
+  FillChar(ds84C8, 2, 0);
+  ds84E0 := 0;
+  ds84E2 := 0;
+  ds442E := 1;
+  Inc(EclPC);
+  while ReturnStack <> nil do
+  begin
+    ReturnPrev := ReturnStack^.Next;
+    FreeMem(ReturnStack, 6);
+    ReturnStack := ReturnPrev;
+  end;
+  GlyphRow := $11;
+  GlyphCol := 1;
+  ds84DE := 0;
+end;
 { ovl03:00F4: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl03_fn_00F4; begin end;
 { ovl03:0111: retf 0: 0 bytes of parameters; 0 bytes of locals }

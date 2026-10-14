@@ -3413,3 +3413,10 @@ kind = "routine"
 why = "0464:1E5C maps the colours of a picture: for each colour index I whose FromMap and ToMap entries differ, every pixel of the picture with palette colour FromMap[I] becomes ToMap[I] (through a scratch copy, adapters 0, 1 and 2; src/RES07.PAS, MATCH); LoadPictureSlot (ovl32) passes the identity map, AnimateAreaDoors (ovl18) and LoadSpriteList (ovl28) pass the door and sprite maps"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl03_fn_0001"
+new = "EndCommand"
+kind = "routine"
+why = "ECL command 0: the dispatcher ovl03:2F2D calls it when SkippedOpcode is 0 (cmp al,0 then call 0001), and it is the only command handler that reads no operands (no DecodeOperands call before Inc(EclPC))"
+date = "2026-10-13"
+
