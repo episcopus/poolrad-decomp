@@ -3826,3 +3826,31 @@ kind = "routine"
 why = "deals a line spell's damage to the combatant in one map cell and reports whether the tile blocks the beam; called by the Lightning Bolt helpers (ovl22_e50, ovl22_fn_295B)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl22_fn_295B"
+new = "CastLineBeam"
+kind = "routine"
+why = "line spells' beam helper: draws the beam line and damages each cell with DamageTargetInCell, called by the Lightning Bolt handler and the paralysis beams (ovl22_e50, ovl22_fn_2F57, ovl22_fn_31D7)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e50"
+new = "CastLightningBolt"
+kind = "routine"
+why = "cast handler of spell 51 Lightning Bolt: one d6 per caster level, dealt to the aim cell and along the beam with the bounce flag (whitepaper 5.22.2)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e51"
+new = "CastSlow"
+kind = "routine"
+why = "cast handler of spell 55 Slow: removes the haste affect from the opposite side then applies Slow (whitepaper 5.22.2)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_e52"
+new = "CastRestoration"
+kind = "routine"
+why = "cast handler of spell 56 Restoration: gives back one drained level and its hit points and advances a class (whitepaper 5.22.2)"
+date = "2026-10-13"
+

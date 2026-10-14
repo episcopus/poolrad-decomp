@@ -5,7 +5,7 @@ unit OVL22;
   and learns spells for combat (ovl09) and the camp (ovl15). }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
-uses POOLVARS, RES03, RES06, RES09, RES12, OVL24, OVL25, OVL30, OVL31;
+uses POOLVARS, RES03, RES06, RES09, RES12, OVL23, OVL24, OVL25, OVL30, OVL31;
 function ovl22_e1(Mode: Byte; var Choice: Word): Byte;
 procedure AddSpellMenuLine(Spell: Byte);
 procedure AddItemSpells(Pending: Byte);
@@ -60,12 +60,10 @@ procedure CastFireball;
 procedure ApplySpellToSideUpToLevel(Affect, Side: Byte; Message: String40);
 procedure CastHaste;
 procedure DamageTargetInCell(CellX, CellY, Damage, SaveKind: Byte; var Blocked: Boolean);
-procedure ovl22_fn_295B;
-procedure ovl22_fn_2B8B;
-procedure ovl22_e50;
-procedure ovl22_e51;
-procedure ovl22_e52;
-procedure ovl22_fn_2D39;
+procedure CastLineBeam(Range, Damage, SaveKind, Bounce: Byte);
+procedure CastLightningBolt;
+procedure CastSlow;
+procedure CastRestoration;
 procedure ovl22_e53;
 procedure ovl22_e54;
 procedure ovl22_e55;
@@ -1512,8 +1510,8 @@ end;
   the impassable cost). When a combatant stands in the cell (Occupant > 0) it deals Damage to it with
   the spell's saving throw (SavingThrow with SaveKind and no bonus; the damage is halved on a save,
   DealDamage's SaveEffect 2) as electrical damage (DamageKind $0C) and plays the zap animation
-  res12_fn_19DE($13). Called by the line-area helpers (ovl22_fn_295B and its callers, the Lightning
-  Bolt handler ovl22_e50 among them). }
+  res12_fn_19DE($13). Called by the line-area helpers (CastLineBeam and its callers, the Lightning
+  Bolt handler CastLightningBolt among them). }
 procedure DamageTargetInCell(CellX, CellY, Damage, SaveKind: Byte; var Blocked: Boolean);
 const
   RefusedTileCost = $FF;          { TCombatTile.Cost this high refuses the cell (CastStinkingCloud names it) }
@@ -1543,18 +1541,108 @@ begin
     DamageKind := 0;
   end;
 end;
-{ ovl22:295B: frame not read }
-{@stub} procedure ovl22_fn_295B; begin end;
-{ ovl22:2B8B: frame not read }
-{@stub} procedure ovl22_fn_2B8B; begin end;
+{ ovl22:295B. The line-beam helper of the line spells: it draws the beam of the Lightning Bolt handler
+  CastLightningBolt and of the paralysis beams ovl22_fn_2F57 and ovl22_fn_31D7 and damages every combatant it
+  passes. It starts at the aim cell ds6DB9/ds6DBA (playing the zap animation res12_fn_19DE($13)) and
+  walks a line away from the caster for Range * 2 steps (a TLineState filled by SetupLine and advanced
+  by StepLine); it draws each step through res12_fn_1A29 and deals Damage (electrical, SavingThrow kind
+  SaveKind) through DamageTargetInCell. The walk stops at the end of the line, when the line leaves the
+  map (Tile 0), at a tile whose CombatTiles cost is above MaxPassableCost, or when the occupant of the
+  cell changes (a fresh combatant, so the beam does not pass through bodies). When Blocked (the tile
+  refused the beam) and Bounce is set, it moves the aim cell to the bounce point and walks a second
+  line back to the caster, turning the beam around once (DirSign flips and Bounce clears). Sets ds6820.
+  Parameters: Range the spell's reach (the line walks Range * 2 cells); Damage the damage dealt per
+  cell; SaveKind the SavingThrow kind; Bounce nonzero lets the beam reflect off a wall once. Globals:
+  ds6DB9/ds6DBA (the aim cell, moved to the bounce point), ds6820, SelectedCharacter and CombatTiles.
+  Called by CastLightningBolt (Lightning Bolt), ovl22_fn_2F57 and ovl22_fn_31D7. }
+procedure CastLineBeam(Range, Damage, SaveKind, Bounce: Byte);
+const
+  LineStep = 4;                   { res12_fn_1A29's step: it walks the beam line in steps of 4 }
+  LineWidth = $32;                { res12_fn_1A29's width for the beam line }
+  MaxPassableCost = 1;            { a tile the beam passes through has a CombatTiles cost at most this }
+  BouncePatternLimit = 8;         { the bounce line's pattern byte must be at most this to count }
+  BounceExtraSteps = 8;           { steps the beam gains when it reflects (Line.First is advanced by 8) }
+  ZapAnimation = $13;             { res12_fn_19DE's argument that plays the zap animation (as DamageTargetInCell) }
+var
+  Line, Line2: TLineState;        { the walked beam line and the line back to the caster at a bounce }
+  CasterX, CasterY: ShortInt;     { the caster's cell (CombatantX/Y of SelectedCharacter) }
+  StartX, StartY: Byte;           { the cell the current step of the beam starts from, for res12_fn_1A29 }
+  DirSign: ShortInt;              { +1 or -1: whether the beam goes away from the caster or back to it }
+  Blocked, StepDone: Boolean;     { the cell refused the beam; StepLine advanced the line }
+  Bouncing: Byte;                 { remaining bounces: 0 after the beam has reflected once }
+  PrevOccupant: Byte;             { the occupant of the previous cell, to stop at a fresh combatant }
+  Occupant, Tile: Byte;           { GetMapCell's out values for the current cell }
+  Length: Byte;                   { the remaining beam steps, Range * 2 at the start }
+begin
+  res12_fn_19DE(ZapAnimation);
+  GetMapCell(ds6DB9, ds6DBA, PrevOccupant, Tile);
+  DirSign := 1;
+  CasterX := CombatantX(SelectedCharacter);
+  CasterY := CombatantY(SelectedCharacter);
+  Bouncing := Bounce;
+  if (CasterX = ds6DB9) and (CasterY = ds6DBA) then
+    Exit;
+  Length := Range * 2;
+  ds6820 := 1;
+  while Length > 0 do
+  begin
+    FillChar(Line, SizeOf(Line), 0);
+    Line.X1 := ds6DB9;
+    Line.Y1 := ds6DBA;
+    Line.X2 := ds6DB9 + (ds6DB9 - CasterX) * DirSign * Length;
+    Line.Y2 := ds6DBA + (ds6DBA - CasterY) * DirSign * Length;
+    SetupLine(@Line);
+    repeat
+      StartX := Line.X;
+      StartY := Line.Y;
+      { The beam steps the line while it still has room (`if (X1 <> X2) or (Y1 <> Y2)`), and the
+        stops are the `until` disjunction: the loop ends when StepLine stops, a fresh occupant
+        blocks the beam, the line leaves the map, the tile refuses it, or the reach is spent. }
+      if (Line.X1 <> Line.X2) or (Line.Y1 <> Line.Y2) then
+        repeat
+          StepDone := StepLine(@Line);
+          GetMapCell(Line.X, Line.Y, Occupant, Tile);
+        until (not StepDone) or ((Occupant > 0) and (Occupant <> PrevOccupant)) or (Tile = 0) or
+              (CombatTiles[Tile].Cost > MaxPassableCost) or (Line.First >= Length);
+      PrevOccupant := Occupant;
+      if Tile = 0 then
+        Length := 0;
+      res12_fn_1A29(StartX, StartY, Line.X, Line.Y, LineStep, LineWidth);
+      DamageTargetInCell(Line.X, Line.Y, Damage, SaveKind, Blocked);
+      if Blocked then
+      begin
+        ds6DB9 := Line.X;
+        ds6DBA := Line.Y;
+        FillChar(Line2, SizeOf(Line2), 0);
+        Line2.X1 := ds6DB9;
+        Line2.Y1 := ds6DBA;
+        Line2.X2 := CasterX;
+        Line2.Y2 := CasterY;
+        SetupLine(@Line2);
+        while StepLine(@Line2) do ;
+        if (Bouncing <> 0) and (Line2.First <= BouncePatternLimit) then
+          Inc(Line.First, BounceExtraSteps);
+        { QUIRK ovl22:2B71: written `0 - DirSign`, not `-DirSign`: TP 6.0 compiles unary minus to
+          `neg ax` but the subtraction to `mov dx,ax; xor ax,ax; sub ax,dx`, which is the original's
+          bytes (probe NEG.PAS). }
+        DirSign := 0 - DirSign;
+        Bouncing := 0;
+        PrevOccupant := 0;
+      end;
+      if Line.First < Length then
+        Dec(Length, Line.First)
+      else
+        Length := 0;
+    until (Blocked) or (Length = 0);
+  end;
+  ds6820 := 0;
+end;
 { ovl22:2BB7: retf 0: 0 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl22_e50; begin end;
+{@stub} procedure CastLightningBolt; begin end;
 { ovl22:2C09: retf 0: 0 bytes of parameters; 10 bytes of locals }
-{@stub} procedure ovl22_e51; begin end;
+{@stub} procedure CastSlow; begin end;
 { ovl22:2C43: frame not read }
-{@stub} procedure ovl22_e52; begin end;
-{ ovl22:2D39: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl22_fn_2D39; begin end;
+{@stub} procedure CastRestoration; begin end;
 { ovl22:2E02: retf 0: 0 bytes of parameters; 10 bytes of locals }
 {@stub} procedure ovl22_e53; begin end;
 { ovl22:2E4D: retf 0: 0 bytes of parameters; 12 bytes of locals }

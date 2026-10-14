@@ -902,6 +902,11 @@ var
     read: it is declared so that the index base, which RecalcClassStats adds (ovl23:0103), names it. }
   SpellTable: array[0..$38] of TSpellEntry;  { see above }
   ClassThac0Table: array[0..7, 0..10] of Byte;  { the to-hit value per class 0..7 and level (RecalcClassStats) }
+  { The experience points a class needs for each level: one 14-entry LongInt row per class 0..7, entry
+    [Class, Level] one more than the AD&D threshold (fighter [2, 2] is 2001, magic-user [5, 2] 2501,
+    thief [6, 2] 1251) and -1 above the class's top level. The Restoration handler (ovl22:2C43) reads
+    [Class, Level + 1] to pick the class whose next level is cheapest to restore. }
+  ExperienceTable: array[0..7, 0..13] of LongInt;
   ds40BC: Byte;                   { the byte before ClericSlotTable; see above }
   ClericSlotTable: array[0..12, 1..3] of Byte;  { cleric spell slots of levels 1..3 per cleric level }
   ds41D4: Byte;                   { the byte before MageSlotTable; see above }

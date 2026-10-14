@@ -66,7 +66,7 @@ procedure res12_fn_2C48(Msg: String40; Flag: Byte; var Who: Pointer);
 function res12_fn_2E03(Who: Pointer): Boolean;
 function res12_fn_2E46(Who: Pointer): Boolean;
 function res12_fn_2E8B(Who: Pointer; var W: Pointer): Byte;
-procedure res12_fn_2F57;
+function res12_fn_2F57(Who: Pointer; Class: Byte): Boolean;
 implementation
 
 { 00BA:0000: frame not read }
@@ -198,7 +198,7 @@ implementation
 { 00BA:2E8B: retf 8: 8 bytes of parameters; 6 bytes of locals }
 {@stub} function res12_fn_2E8B(Who: Pointer; var W: Pointer): Byte; begin end;
 { 00BA:2F57: retf 6: 6 bytes of parameters; 6 bytes of locals }
-{@stub} procedure res12_fn_2F57; begin end;
+{@stub} function res12_fn_2F57(Who: Pointer; Class: Byte): Boolean; begin end;
 
 begin
 end.

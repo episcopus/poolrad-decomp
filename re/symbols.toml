@@ -10503,39 +10503,26 @@ evidence = ["prologue"]
 id = "ovl22:295B"
 unit = "ovl22"
 addr = "ovl22:295B"
-size = 560
-name = "ovl22_fn_295B"
+size = 604
+name = "CastLineBeam"
 signature = ""
 c_name = "ovl22_fn_295B"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl22_fn_295B (line spells' beam helper: draws the beam line and damages each cell with DamageTargetInCell, called by the Lightning Bolt handler and the paralysis beams (ovl22_e50, ovl22_fn_2F57, ovl22_fn_31D7)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl22:2B8B"
-unit = "ovl22"
-addr = "ovl22:2B8B"
-size = 44
-name = "ovl22_fn_2B8B"
-signature = ""
-c_name = "ovl22_fn_2B8B"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl22:2BB7"
 unit = "ovl22"
 addr = "ovl22:2BB7"
 size = 82
-name = "ovl22_e50"
+name = "CastLightningBolt"
 signature = ""
 c_name = "ovl22_e50"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_50"
+notes = "renamed from ovl22_e50 (cast handler of spell 51 Lightning Bolt: one d6 per caster level, dealt to the aim cell and along the beam with the bounce flag (whitepaper 5.22.2)); auto:entry_50"
 evidence = ["prologue"]
 
 [[routine]]
@@ -10543,39 +10530,26 @@ id = "ovl22:2C09"
 unit = "ovl22"
 addr = "ovl22:2C09"
 size = 58
-name = "ovl22_e51"
+name = "CastSlow"
 signature = ""
 c_name = "ovl22_e51"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_51"
+notes = "renamed from ovl22_e51 (cast handler of spell 55 Slow: removes the haste affect from the opposite side then applies Slow (whitepaper 5.22.2)); auto:entry_51"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl22:2C43"
 unit = "ovl22"
 addr = "ovl22:2C43"
-size = 246
-name = "ovl22_e52"
+size = 437
+name = "CastRestoration"
 signature = ""
 c_name = "ovl22_e52"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_52"
+notes = "renamed from ovl22_e52 (cast handler of spell 56 Restoration: gives back one drained level and its hit points and advances a class (whitepaper 5.22.2)); auto:entry_52"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl22:2D39"
-unit = "ovl22"
-addr = "ovl22:2D39"
-size = 201
-name = "ovl22_fn_2D39"
-signature = ""
-c_name = "ovl22_fn_2D39"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl22:2E02"
@@ -16945,11 +16919,11 @@ unit = "res12"
 addr = "00BA:2F57"
 size = 327
 name = "res12_fn_2F57"
-signature = ""
+signature = "function res12_fn_2F57(Who: Pointer; Class: Byte): Boolean"
 c_name = "res12_fn_2F57"
 level = "none"
 justification = ""
-notes = "auto:prologue"
+notes = "signature from the caller: ovl22:2C43 (CastRestoration) pushes the character and the class index and skips the class when true; auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]

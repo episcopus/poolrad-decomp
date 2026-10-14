@@ -80,3 +80,30 @@ tags = ["spell", "handler-table", "global", "stub", "naming"]
 title = "The DS:6B84 cast handler table runs past the 40 cast spells, one element per spell number"
 lesson = "ovl22_e10 (ovl22:3413) fills SpellHandlers at DS:6B84 with 68 far pointers (elements 0..67): element 0 is the target picker, element N the overlay stub 0096:(0x20 + 5*entry) of spell N's handler, so the handler routine the map calls ovl22_e<entry> has entry = (stub_offset - 0x20) / 5. The 40 cast spells occupy elements 1..40; elements 41..56 are the remaining named spells, since SpellNames (DS:28E9) is a string[40] array of 41 bytes per entry with entries 1..$38 = 'Bless'..'Restoration'. Element 41 Dispel Magic and element 46 Dispel Magic share ovl22:2385 (CastDispelMagic), element 42 Prayer is ovl22:24D6 (CastPrayer), element 43 Remove Curse is ovl22:2540 (CastRemoveCurse). To name a handler whose entry is above 40, read SpellNames[N] at DS:28E9 + N*41. The file offset of SpellNames[1] (DS:2912) in poolrad/start-unpack.exe is 0xFAD2 (the byte 05 then 'Bless'), so a handler's name is decoded straight from the image."
 evidence = ["re/symbols.toml#ovl22:3413", "poolrad/start-unpack.exe#DS:2912", "src/OVL22.PAS#CastDispelMagic", "src/OVL22.PAS#CastPrayer", "src/OVL22.PAS#CastRemoveCurse", "re/symbols.toml#ovl22:2385"]
+
+[[lesson]]
+id = "or-guard-without-else-gives-direct-jumps"
+confidence = "V"
+units = ["ovl22"]
+tags = ["compiler", "control-flow", "if", "guard", "loop"]
+title = "An if/or guard without an else gives `jne body; je after`; with an else it adds two jmps"
+lesson = "For a `repeat` whose stepping must be skipped when the line endpoints coincide, TP 6.0 compiles `if (X1 <> X2) or (Y1 <> Y2) then <repeat>;` (no else) to `cmp X1,X2; jne body; cmp Y1,Y2; je after; body: ...`, placing the direct exit jumps at the end. The same guard written `if (X1 = X2) and (Y1 = Y2) then goto EndOfStep;` compiles to `jne body; jne body; jmp after`, and writing the guard with an explicit `else goto EndOfStep` adds a `jmp` over the else and a `jmp` for the else (4 extra bytes). The beam stops inside the repeat are the `until` disjunction `(not StepDone) or ((Occupant > 0) and (Occupant <> PrevOccupant)) or (Tile = 0) or (Cost > 1) or (Line.First >= Length)`, whose terms compile to direct jumps to the after label. Probe tools/re/tp_idioms/ovl22/GUARD.PAS."
+evidence = ["tools/re/tp_idioms/ovl22/GUARD.PAS", "src/OVL22.PAS#CastLineBeam", "re/symbols.toml#ovl22:295B"]
+
+[[lesson]]
+id = "signed-negation-zero-minus-gives-sub-form"
+confidence = "V"
+units = ["ovl22"]
+tags = ["compiler", "negation", "expression", "byte"]
+title = "`0 - X` on a signed byte local gives `mov dx,ax; xor ax,ax; sub ax,dx`, not `neg ax`"
+lesson = "TP 6.0 compiles `X := -X` for a ShortInt to `mov al,X; cwde; neg ax`, but the equivalent `X := 0 - X;` to `mov al,X; cwde; mov dx,ax; xor ax,ax; sub ax,dx; mov X,al`. ovl22:2B71 (CastLineBeam) turns the beam around with the subtraction form, so its source is `DirSign := 0 - DirSign;`. Probe tools/re/tp_idioms/ovl22/NEG.PAS."
+evidence = ["tools/re/tp_idioms/ovl22/NEG.PAS", "src/OVL22.PAS#CastLineBeam", "re/symbols.toml#ovl22:295B"]
+
+[[lesson]]
+id = "succ-shortint-gives-inc-al-cwde"
+confidence = "V"
+units = ["ovl22"]
+tags = ["compiler", "expression", "succ", "index"]
+title = "`Succ(Level)` on a ShortInt local gives `inc al; cwde` where `Level + 1` gives `cwde; inc ax`"
+lesson = "In an array index, `ExperienceTable[Class, Level + 1]` with Level a ShortInt local compiles `mov al,[bp-k]; cwde; inc ax` (because `Level + 1` is evaluated as an Integer), but `ExperienceTable[Class, Succ(Level)]` compiles `mov al,[bp-k]; inc al; cwde` (the byte is incremented in place, then sign-extended). ovl22:2CF0 (CastRestoration) uses the Succ form three times, so its source is `ExperienceTable[Class, Succ(Level)]`. Probe tools/re/tp_idioms/ovl22/INDEX.PAS."
+evidence = ["tools/re/tp_idioms/ovl22/INDEX.PAS", "src/OVL22.PAS#CastRestoration", "re/symbols.toml#ovl22:2C43"]

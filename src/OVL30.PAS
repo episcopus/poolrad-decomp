@@ -60,7 +60,7 @@ end;
 { ovl30:01A0. Sets up the line drawing state Line from its two endpoints: it clears the stepped
   flag, computes DX = |X2 - X1| and DY = |Y2 - Y1|, the x and y step directions through SignOf, the
   current position (X1, Y1) and the three Bresenham steps (the larger of DX and DY drives them).
-  Called by ovl22_fn_295B, WalkLine and res12_fn_1A29. }
+  Called by CastLineBeam, WalkLine and res12_fn_1A29. }
 procedure SetupLine(Line: PLineState);
 begin
   with Line^ do
@@ -92,7 +92,7 @@ end;
   by 2 or 3, and the direction taken picks the Pattern byte from the 3x3 table ds25C0 at
   3*(StepY+1) + (StepX+1). Pattern is written on every call, even when the line is already at its
   end point and the routine returns False (StepX and StepY stay 0, giving ds25C0[1, 1]).
-  Called by ovl22_fn_295B, WalkLine and res12_fn_1A29. }
+  Called by CastLineBeam, WalkLine and res12_fn_1A29. }
 function StepLine(Line: PLineState): Boolean;
 var
   StepX, StepY: ShortInt;         { the x and y direction of this step, -1, 0 or 1 }
