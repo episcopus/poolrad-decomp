@@ -96,7 +96,7 @@ procedure AddConstitutionSaveBonusKind2Or4(Who: PCharacter; Affect: PAffect; Mod
 procedure RegainHitPoints(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ReviveDyingCharacter(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure GiveAffectUnlessFireOrAcid(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure GiveRegeneratingUnlessAffected;
+procedure GiveRegeneratingUnlessAffected(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure RetryRevivalAtFullHitPoints;
 procedure TurnGaseousAndEscape;
 procedure ovl12_e88;
@@ -1759,8 +1759,17 @@ begin
     if (DamageKind and KindAcid) = 0 then
       AddAffect(Who, AffectUnknown66, RollDice(AffectUnknown66Dice, AffectUnknown66Sides), $FF, RunsHandlerOnRemove);
 end;
-{ ovl12:2814: retf 10: 10 bytes of parameters; 4 bytes of locals }
-{@stub} procedure GiveRegeneratingUnlessAffected; begin end;
+{ ovl12:2814. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read). Unless res12_fn_2199 finds
+  AffectUnknown62 or AffectRegenerating on Who, Who gets AffectRegenerating (Regenerating) for RegeneratingDuration rounds
+  with the Data $FF, and its handler runs when it is removed. Which affect runs it is not known yet [?]. }
+procedure GiveRegeneratingUnlessAffected(Who: PCharacter; Affect: PAffect; Mode: Byte);
+var
+  FoundAffect: Pointer;         { the affect res12_fn_2199 looks for; it is given back and never read }
+begin
+  if not res12_fn_2199(Who, AffectUnknown62, FoundAffect) then
+    if not res12_fn_2199(Who, AffectRegenerating, FoundAffect) then
+      AddAffect(Who, AffectRegenerating, RegeneratingDuration, $FF, RunsHandlerOnRemove);
+end;
 { ovl12:2866: retf 10: 10 bytes of parameters; 2 bytes of locals }
 {@stub} procedure RetryRevivalAtFullHitPoints; begin end;
 { ovl12:28BF: retf 10: 10 bytes of parameters; 26 bytes of locals }
