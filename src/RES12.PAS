@@ -60,8 +60,7 @@ procedure ShowHealResult(Who: Pointer);
 function OpposingSide(Who: Pointer): Byte;
 procedure RecountCombatSides;
 function CollectEnemiesInRange(Who: Pointer; Range: Byte): Byte;
-function res12_fn_255B(Who, Target: Pointer): Byte;
-procedure res12_fn_2571;
+function DistanceToTarget(Who, Target: Pointer): Byte;
 function res12_fn_2637(Who: Pointer): Byte;
 function res12_fn_2686(Who: Pointer): Byte;
 procedure res12_fn_26C2;
@@ -173,6 +172,10 @@ const
   { TCharacter.Side values: the party is 0, the monsters 1 (SetQuickCombat compares them). }
   SideParty = 0;
   SideMonsters = 1;
+  { The most records the ScanTargets table ds6718 can hold: one per combatant of CombatantTable
+    (72 plus its count at entry 0), times the 3 bytes of a TSortRec. 255B saves and restores exactly
+    this many records of ds6718 around its scan. }
+  SavedScanBytes = $D8;
 
 { 00BA:0000. Applies the readied weapon to Who's attack values; RecalcCombatValues calls it after it
   has copied the character's base values. With no readied weapon (SlotItems[0], +$CC) it does
@@ -1302,10 +1305,34 @@ begin
   for Index := 1 to Count do
     ds6DE4[Index] := ds6718[Index].Head;
 end;
-{ 00BA:255B: frame not read }
-{@stub} function res12_fn_255B(Who, Target: Pointer): Byte; begin end;
-{ 00BA:2571: retf 8: 8 bytes of parameters; 0 bytes of locals }
-{@stub} procedure res12_fn_2571; begin end;
+{ 00BA:255B. Returns half the distance, in map steps, of Target from Who. It preserves the current
+  scan result (ds6718, the 72 records ScanTargets can fill), opens the WalkLine tile gate
+  (CombatMap^.Head6, +6) so the line is not blocked by the tile the combatants stand on, scans from
+  Who (ScanTargets over $FF steps, direction omni, footprint kind of Who), closes the gate again,
+  and looks Target up among the found combatants (CombatantRecord[ds6718[I].Head] = Target; the
+  first index I with a match, or the scan count when it is not found). The result is that record's
+  shortest walk length (Key, the fewest WalkLine steps) divided by two, the distance in map cells;
+  ovl09:0B3C and others test it = 1 as melee range. The saved records are put back before the
+  return. Globals: ds6718 (read/write), CombatMap (write), CombatantRecord (read).
+  QUIRK 00BA:2617: when Target is not found the result comes from the record at the scan count
+  (or from record 1 when nothing was found), not from a defined value. }
+function DistanceToTarget(Who, Target: Pointer): Byte;
+var
+  Saved: array[1..255] of TSortRec;   { [bp-$2fe] the scan table saved around the scan }
+  Index: Byte;                        { [bp-$2ff] the walk of the scan table }
+begin
+  Move(ds6718[1], Saved, SavedScanBytes);
+  CombatMap^.Head6 := 1;
+  ScanTargets(CombatantX(PCharacter(Who)), CombatantY(PCharacter(Who)), $FF, $FF,
+              CombatantKind(PCharacter(Who)), CombatMap);
+  CombatMap^.Head6 := 0;
+  Index := 1;
+  while (CombatantRecord[ds6718[Index].Head] <> PCharacter(Target)) and
+        (Index < ds6718[0].Val) do
+    Inc(Index);
+  DistanceToTarget := ds6718[Index].Key shr 1;
+  Move(Saved, ds6718[1], SavedScanBytes);
+end;
 { 00BA:2637: retf 4: 4 bytes of parameters; 2 bytes of locals }
 {@stub} function res12_fn_2637(Who: Pointer): Byte; begin end;
 { 00BA:2686: retf 4: 4 bytes of parameters; 10 bytes of locals }

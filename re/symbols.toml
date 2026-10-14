@@ -16933,27 +16933,14 @@ evidence = ["prologue"]
 id = "00BA:255B"
 unit = "res12"
 addr = "00BA:255B"
-size = 22
-name = "res12_fn_255B"
-signature = "function res12_fn_255B(Who, Target: Pointer): Byte"
+size = 220
+name = "DistanceToTarget"
+signature = "function DistanceToTarget(Who, Target: Pointer): Byte"
 c_name = "res12_fn_255B"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_255B (00BA:255B scans from Who with the WalkLine gate open and returns ds6718[I].Key shr 1 for the found Target, the fewest walk steps halved; ovl09:0B3C tests it = 1 as melee range and uses it to decide whether Who can attack Target); auto:prologue"
 evidence = ["prologue"]
-
-[[routine]]
-id = "00BA:2571"
-unit = "res12"
-addr = "00BA:2571"
-size = 198
-name = "res12_fn_2571"
-signature = ""
-c_name = "res12_fn_2571"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "00BA:2637"

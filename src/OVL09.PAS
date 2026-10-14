@@ -571,7 +571,7 @@ Loop:
         Done := 1;
         goto Attack;
       end;
-  if (res12_fn_255B(Who, Target) = 1) or ovl13_e8(Who, Target) then
+  if (DistanceToTarget(Who, Target) = 1) or ovl13_e8(Who, Target) then
     Flag := 1;
 Attack:
   if Flag <> 0 then
@@ -589,7 +589,7 @@ Attack:
   if res12_fn_2E03(Who) then
   begin
     Flag := res12_fn_2E8B(Who, Aim);
-    if res12_fn_2E46(Who) and (res12_fn_255B(Who, Target) = 1) then
+    if res12_fn_2E46(Who) and (DistanceToTarget(Who, Target) = 1) then
       Aim := nil;
   end;
   ovl13_e12(Who, Target, 0, Aim, Done);
