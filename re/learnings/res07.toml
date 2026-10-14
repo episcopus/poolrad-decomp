@@ -137,4 +137,4 @@ units = ["*"]
 tags = ["tooling", "match", "globals", "disassembly"]
 title = "Our build's data offsets differ from the original by a constant; read names, not raw bytes"
 lesson = "build/match/<unit>/A/match.exe (the matcher's own build) lays out DS differently from the original, so `cmp byte [0x3374]` in ours is `cmp byte [0x5370]` in the original (ds5370, the same global). The matcher maps globals by name, so raw text diffs of global operands and RTL calls (lcall 0494:0A14 vs 0AF8:0A5B) are noise; compare the rest of the instruction stream (jump targets masked) to find the first real difference. The matcher stops at its first difference, so the first reported one is often a displacement that follows an earlier mismatch."
-evidence = ["tools/match/match.py#data_var", "build/match/res07/A/match.map"]
+evidence = ["tools/match/match.py#data_var"]
