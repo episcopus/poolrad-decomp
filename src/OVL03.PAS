@@ -3,7 +3,7 @@ unit OVL03;
   loop the main program runs after the character menu (RunWilderness, ovl03:32F8). DispatchCommand
   dispatches each command by its opcode (SkippedOpcode) to a handler in this unit; the handlers
   decode their operands through OVL07 and run them. }
-{$A-,O+,F+,S-,R-,G-,I-}
+{$A-,O+,F+,S-,R-,G-,I-,L-}
 interface
 uses POOLVARS, RES09, OVL07, OVL16, RES12;
 procedure EndCommand;

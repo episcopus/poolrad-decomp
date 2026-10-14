@@ -5340,742 +5340,14 @@ evidence = ["prologue"]
 id = "ovl16:056C"
 unit = "ovl16"
 addr = "ovl16:056C"
-size = 629
-name = "ovl16_fn_056C"
+size = 6603
+name = "CreateCharacter"
 signature = ""
 c_name = "ovl16_fn_056C"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3: the map boundary is wrong. 056C has its prologue at 056C and its retf epilogue at 1ED1 (a second prologue follows at 1F37), so the routine is 6501 bytes, not 629; the entries the map lists inside it (07E1, 07E5, 07EA and the rest up to 1F30) are fixup-table artifacts with no prologue (07E1 starts mid parameter-push of the AddAffect call at 07D3..07EA). Too large for one batch: decompiling it is what lets make match UNIT=ovl16 WRITE=1 delete those entries and correct its size"
+notes = "renamed from ovl16_fn_056C (the C function of the training hall: allocates a TCharacter, runs the Pick Race, Pick Gender, Pick Class and Pick Alignment menus, rolls the six abilities and saves the character; literal pool 04F1..056B). Matched 2026-10-14 by esc-sonnet-ab after dec-deepseek-3 found the map boundary wrong (prologue at 056C, single retf at 1ED1: 6502 bytes of code, not 629): make match WRITE=1 removed the 57 fixup and ModRM artefact entries 07E1..1EC6 inside it. QUIRK 1236: the racial roll adjustments test the race menu loop variable (7 after the loop) and never apply; QUIRK 0783: Escape in a menu leaves with Exit and leaks the record."
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl16:07E1"
-unit = "ovl16"
-addr = "ovl16:07E1"
-size = 4
-name = "ovl16_fn_07E1"
-signature = ""
-c_name = "ovl16_fn_07E1"
-level = "none"
-justification = ""
-notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3: not a routine. The 4 bytes at 07E1 (push ax; mov al,0; push ax) are the tail of the AddAffect parameter sequence that starts at 07D3 inside ovl16:056C; no prologue, no return. It is removed from the registry when 056C matches (make match UNIT=ovl16 WRITE=1 corrects its boundary to the retf at 1ED1)"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:07E5"
-unit = "ovl16"
-addr = "ovl16:07E5"
-size = 5
-name = "ovl16_fn_07E5"
-signature = ""
-c_name = "ovl16_fn_07E5"
-level = "none"
-justification = ""
-notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine. The 5 bytes at 07E5 are the lcall AddAffect (0B00:0052) of the call sequence at 07D3..07EA inside ovl16:056C; no prologue, no return. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects its boundary to the retf at 1ED1)"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl16:07EA"
-unit = "ovl16"
-addr = "ovl16:07EA"
-size = 5
-name = "ovl16_fn_07EA"
-signature = ""
-c_name = "ovl16_fn_07EA"
-level = "none"
-justification = ""
-notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine. The bytes at 07EA are the jmp 0919h that ends the AddAffect case arm of ovl16:056C plus the first bytes of the following case test; no prologue, no return. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects its boundary to the retf at 1ED1)"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl16:07EF"
-unit = "ovl16"
-addr = "ovl16:07EF"
-size = 5
-name = "ovl16_fn_07EF"
-signature = ""
-c_name = "ovl16_fn_07EF"
-level = "none"
-justification = ""
-notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue. The bytes at 07EF are `75 68` (jne 0859h), the conditional of the `cmp al,1` case test that follows the `jmp 0919h` at 07EA inside ovl16:056C. 056C is one routine (prologue `push bp; mov bp,sp; sub sp,134h` at 056C, single retf at 1ED1; only one prologue between 056C and 1F37, checked on build/re/overlays/ovl16.bin), so every map entry inside it (07E1..1ED1, this one included) is a fixup-table artifact. No near call targets 07EF. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size to 6502 and deletes the entries inside it)"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl16:07F4"
-unit = "ovl16"
-addr = "ovl16:07F4"
-size = 5
-name = "ovl16_fn_07F4"
-signature = ""
-c_name = "ovl16_fn_07F4"
-level = "none"
-justification = ""
-notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue. 07F4 is the `mov byte ptr es:[di+0c0h],1` (bytes 26 c6 85 c0 00 01, preceded by `les di,[bp-27h]` at 07F1) of the case-1 arm of ovl16:056C. 056C is one routine from 056C to its single retf at 1ED1, so this entry is an artifact inside it; no near call targets 07F4. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl16:07F9"
-unit = "ovl16"
-addr = "ovl16:07F9"
-size = 15
-name = "ovl16_fn_07F9"
-signature = ""
-c_name = "ovl16_fn_07F9"
-level = "none"
-justification = ""
-notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue. 07F9 is the last byte (`01`) of the `mov ...es:[di+0c0h],1` at 07F4 followed by `push [bp-2]` and `push [bp-4]` (ff 76 fe, ff 76 fc) in the AddAffect argument sequence of ovl16:056C's case-1 arm; mid-instruction. 056C is one routine (single prologue at 056C, single retf at 1ED1), so this entry is an artifact inside it; no near call targets 07F9. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl16:0808"
-unit = "ovl16"
-addr = "ovl16:0808"
-size = 5
-name = "ovl16_fn_0808"
-signature = ""
-c_name = "ovl16_fn_0808"
-level = "none"
-justification = ""
-notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue. 0808 is `push ax` (50) among the pushes of the `AddAffect(..., 5ah, 0, 0ffh, 0)` call at 07F3..080C inside ovl16:056C. 056C is one routine (single prologue at 056C, single retf at 1ED1), so this entry is an artifact inside it; no near call targets 0808. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl16:080D"
-unit = "ovl16"
-addr = "ovl16:080D"
-size = 5
-name = "ovl16_fn_080D"
-signature = ""
-c_name = "ovl16_fn_080D"
-level = "none"
-justification = ""
-notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue. 080D is the immediate bytes (`52 00`) of the `lcall 0b0h:0052h` (AddAffect, 9a 52 00 b0 00 at 080C) inside ovl16:056C; mid-instruction. This far call is what the map keyed the `auto:far_call` entry on, but the call belongs to 056C, which is one routine (single prologue at 056C, single retf at 1ED1); no near call targets 080D. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl16:0812"
-unit = "ovl16"
-addr = "ovl16:0812"
-size = 99
-name = "ovl16_fn_0812"
-signature = ""
-c_name = "ovl16_fn_0812"
-level = "none"
-justification = ""
-notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue. 0812 is inside `push word ptr [bp-2]` (ff 76 fe at 0811, then ff 76 fc) in the second AddAffect call of ovl16:056C's case-1 arm; mid-instruction. 056C is one routine (single prologue at 056C, single retf at 1ED1), so this entry is an artifact inside it; no near call targets 0812. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl16:0875"
-unit = "ovl16"
-addr = "ovl16:0875"
-size = 5
-name = "ovl16_fn_0875"
-signature = ""
-c_name = "ovl16_fn_0875"
-level = "none"
-justification = ""
-notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x0085 * 16 + 0x0025 = 0x0875) of the inter-overlay stub call lcall 0x0085:0x0025 (bytes 9a 25 00 85 00) at ovl16:11FB, also at ovl16:1E2D and ovl16:20E2; stub 0x85:0x25 is ovl19:004A ShowCharacterSheet (build/re/overlays.json). 0x0875 is mov al,0 (b0 00), mid argument sequence of the AddAffect call at 0878 inside ovl16:056C. 056C is one routine: its only prologue in the region is 55 89 e5 at 056C and its single retf is at 1ED1, so every map entry inside it (0875..1ED1) is a stub/fixup artefact. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl16:087A"
-unit = "ovl16"
-addr = "ovl16:087A"
-size = 5
-name = "ovl16_fn_087A"
-signature = ""
-c_name = "ovl16_fn_087A"
-level = "none"
-justification = ""
-notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x0085 * 16 + 0x002A = 0x087A) of the inter-overlay stub call lcall 0x0085:0x002A (bytes 9a 2a 00 85 00) at ovl16:1DFA, also at ovl16:28C1; stub 0x85:0x2A is ovl19:0608 ShowCombatStats. 0x087A is the high operand byte of the lcall AddAffect at 0878 (9a 52 00 b0 00), mid-instruction, inside ovl16:056C. 056C is one routine (single prologue 55 89 e5 at 056C, single retf at 1ED1), so this entry is an artefact inside it. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl16:087F"
-unit = "ovl16"
-addr = "ovl16:087F"
-size = 5
-name = "ovl16_fn_087F"
-signature = ""
-c_name = "ovl16_fn_087F"
-level = "none"
-justification = ""
-notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x0085 * 16 + 0x002F = 0x087F) of the inter-overlay stub call lcall 0x0085:0x002F (bytes 9a 2f 00 85 00) at ovl16:1BD3, also at ovl16:204C; stub 0x85:0x2F is ovl19:0901 ShowAbilityScore. 0x087F is the third byte (fe) of push word ptr [bp-2] at 087D (ff 76 fe), mid-instruction, inside ovl16:056C. 056C is one routine (single prologue 55 89 e5 at 056C, single retf at 1ED1), so this entry is an artefact inside it. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl16:0884"
-unit = "ovl16"
-addr = "ovl16:0884"
-size = 5
-name = "ovl16_fn_0884"
-signature = ""
-c_name = "ovl16_fn_0884"
-level = "none"
-justification = ""
-notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x0085 * 16 + 0x0034 = 0x0884) of the inter-overlay stub call lcall 0x0085:0x0034 (bytes 9a 34 00 85 00) at ovl16:1DFF; stub 0x85:0x34 is ovl19:050D ShowCharacterMoney. 0x0884 is the operand byte 12 of mov al,0x12 at 0883 (b0 12), mid-instruction, in the AddAffect argument sequence of ovl16:056C. 056C is one routine (single prologue 55 89 e5 at 056C, single retf at 1ED1), so this entry is an artefact inside it. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl16:0889"
-unit = "ovl16"
-addr = "ovl16:0889"
-size = 25
-name = "ovl16_fn_0889"
-signature = ""
-c_name = "ovl16_fn_0889"
-level = "none"
-justification = ""
-notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x0085 * 16 + 0x0039 = 0x0889) of the inter-overlay stub call lcall 0x0085:0x0039 (bytes 9a 39 00 85 00) at ovl16:03A4; stub 0x85:0x39 is ovl19:0AB3 ViewSelectedCharacter. 0x0889 is mov al,0xff (b0 ff), one of the argument pushes of the AddAffect call at 088F inside ovl16:056C; it starts an instruction but is not a routine entry. 056C is one routine (single prologue 55 89 e5 at 056C, single retf at 1ED1), so this entry is an artefact inside it. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl16:08A2"
-unit = "ovl16"
-addr = "ovl16:08A2"
-size = 5
-name = "ovl16_fn_08A2"
-signature = ""
-c_name = "ovl16_fn_08A2"
-level = "none"
-justification = ""
-notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x0085 * 16 + 0x0052 = 0x08A2) of the inter-overlay stub call lcall 0x0085:0x0052 (bytes 9a 52 00 85 00) at ovl16:031F; stub 0x85:0x52 is ovl19:27DF UpdateSelectedCharacter. 0x08A2 is push ax (50), one of the argument pushes of the AddAffect call at 08A6, inside ovl16:056C. 056C is one routine (single prologue 55 89 e5 at 056C, single retf at 1ED1), so this entry is an artefact inside it. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl16:08A7"
-unit = "ovl16"
-addr = "ovl16:08A7"
-size = 5
-name = "ovl16_fn_08A7"
-signature = ""
-c_name = "ovl16_fn_08A7"
-level = "none"
-justification = ""
-notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x0085 * 16 + 0x0057 = 0x08A7) of the inter-overlay stub call lcall 0x0085:0x0057 (bytes 9a 57 00 85 00) at ovl16:29EA; stub 0x85:0x57 is ovl19:28BE CharacterMoneyValueInGold (build/re/overlays.json). 0x08A7 is byte 0x52, the low offset byte of the lcall AddAffect (ovl24:0E52) at 08A6 (bytes 9a 52 00 b0 00), mid-instruction inside ovl16:056C. 056C is one routine: its only prologue in the region is 55 89 e5 at 056C and its single retf is at 1ED1, so every map entry inside it (056C..1ED1) is a stub/fixup artefact. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl16:08AC"
-unit = "ovl16"
-addr = "ovl16:08AC"
-size = 569
-name = "ovl16_fn_08AC"
-signature = ""
-c_name = "ovl16_fn_08AC"
-level = "none"
-justification = ""
-notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x0085 * 16 + 0x005C = 0x08AC) of the inter-overlay stub call lcall 0x0085:0x005C (bytes 9a 5c 00 85 00) at ovl16:2F81; stub 0x85:0x5C is ovl19:299C ChooseSpellFromList (build/re/overlays.json). 0x08AC is byte 0x76, the opcode of push word ptr [bp-2] at 08AB (bytes ff 76 fe), mid-instruction inside ovl16:056C. 056C is one routine: its only prologue in the region is 55 89 e5 at 056C and its single retf is at 1ED1, so every map entry inside it (056C..1ED1) is a stub/fixup artefact. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl16:0AE5"
-unit = "ovl16"
-addr = "ovl16:0AE5"
-size = 5
-name = "ovl16_fn_0AE5"
-signature = ""
-c_name = "ovl16_fn_0AE5"
-level = "none"
-justification = ""
-notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x00AC * 16 + 0x0025 = 0x0AE5) of the inter-overlay stub call lcall 0x00AC:0x0025 (bytes 9a 25 00 ac 00) at ovl16:2F5A; stub 0xAC:0x25 is ovl23:0000 RecalcClassStats, reached via the ovl23 stub segment 0x00AC (build/re/overlays.json). 0x0AE5 starts les di, [bp-0x10] (bytes c4 7e f0), which the linear disassembler shows as an instruction boundary, but it is still mid-routine inside ovl16:056C. 056C is one routine: its only prologue in the region is 55 89 e5 at 056C and its single retf is at 1ED1, so every map entry inside it (056C..1ED1) is a stub/fixup artefact. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl16:0AEA"
-unit = "ovl16"
-addr = "ovl16:0AEA"
-size = 5
-name = "ovl16_fn_0AEA"
-signature = ""
-c_name = "ovl16_fn_0AEA"
-level = "none"
-justification = ""
-notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x00AC * 16 + 0x002A = 0x0AEA) of the inter-overlay stub call lcall 0x00AC:0x002A (bytes 9a 2a 00 ac 00) at ovl16:1C9B, also at ovl16:2381 and ovl16:26E3; stub 0xAC:0x2A is ovl23:01AF AddWisdomBonusSpells, reached via the ovl23 stub segment 0x00AC (build/re/overlays.json). 0x0AEA starts mov ax,0x28 (bytes b8 28 00), which the linear disassembler shows as an instruction boundary, but it is still mid-routine inside ovl16:056C. 056C is one routine: its only prologue in the region is 55 89 e5 at 056C and its single retf is at 1ED1, so every map entry inside it (056C..1ED1) is a stub/fixup artefact. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl16:0AEF"
-unit = "ovl16"
-addr = "ovl16:0AEF"
-size = 5
-name = "ovl16_fn_0AEF"
-signature = ""
-c_name = "ovl16_fn_0AEF"
-level = "none"
-justification = ""
-notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x00AC * 16 + 0x002F = 0x0AEF) of the inter-overlay stub call lcall 0x00AC:0x002F (bytes 9a 2f 00 ac 00) at ovl16:0D6B; stub 0xAC:0x2F is ovl23:0255 ComputeSavingThrows, reached via the ovl23 stub segment 0x00AC (build/re/overlays.json). 0x0AEF is byte 0x25, the low offset byte of the lcall System_StrLCopy (0AF8:0B25) at 0AEE (bytes 9a 25 0b f8 0a), mid-instruction inside ovl16:056C. 056C is one routine: its only prologue in the region is 55 89 e5 at 056C and its single retf is at 1ED1, so every map entry inside it (056C..1ED1) is a stub/fixup artefact. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl16:0AF4"
-unit = "ovl16"
-addr = "ovl16:0AF4"
-size = 84
-name = "ovl16_fn_0AF4"
-signature = ""
-c_name = "ovl16_fn_0AF4"
-level = "none"
-justification = ""
-notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x00AC * 16 + 0x0034 = 0x0AF4) of the inter-overlay stub call lcall 0x00AC:0x0034 (bytes 9a 34 00 ac 00) at ovl16:0CC9; stub 0xAC:0x34 is ovl23:0329 ComputeThiefSkills, reached via the ovl23 stub segment 0x00AC (build/re/overlays.json). 0x0AF4 is byte 0x46, the ModRM byte of mov al,[bp-0x13] at 0AF3 (bytes 8a 46 ed), mid-instruction inside ovl16:056C. 056C is one routine: its only prologue in the region is 55 89 e5 at 056C and its single retf is at 1ED1, so every map entry inside it (056C..1ED1) is a stub/fixup artefact. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl16:0B48"
-unit = "ovl16"
-addr = "ovl16:0B48"
-size = 10
-name = "ovl16_fn_0B48"
-signature = ""
-c_name = "ovl16_fn_0B48"
-level = "none"
-justification = ""
-notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return at this address. 0B48 is the flat-linear reading (stub segment 0x00B0 * 16 + 0x0048) of the inter-overlay stub call lcall 0x00B0:0x0048 at ovl16:0F26 (also 122E, 1C83, 4280); stub 0xB0:0x48 is ovl24:0DE3 RollDice (build/re/overlays.json). The byte at 0B48 is 0x76 (jbe), mid-instruction inside ovl16:056C. 056C is one routine: single prologue 55 89 e5 at 056C and single retf at 1ED1, so every map entry in 056C..1ED1 is a stub/fixup artefact. Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl16:0B52"
-unit = "ovl16"
-addr = "ovl16:0B52"
-size = 1973
-name = "ovl16_fn_0B52"
-signature = ""
-c_name = "ovl16_fn_0B52"
-level = "none"
-justification = ""
-notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return. 0B52 is the flat reading (stub segment 0x00B0 * 16 + 0x0052) of the inter-overlay stub call lcall 0x00B0:0x0052 (12 call sites, first at ovl16:07CE); stub 0xB0:0x52 is ovl24:0E52 AddAffect (build/re/overlays.json). The byte at 0B52 is 0x7E (jle), mid-instruction inside ovl16:056C (one routine: prologue 55 89 e5 at 056C, retf at 1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl16:1307"
-unit = "ovl16"
-addr = "ovl16:1307"
-size = 524
-name = "ovl16_fn_1307"
-signature = ""
-c_name = "ovl16_fn_1307"
-level = "none"
-justification = ""
-notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return. 1307 is the flat reading (0x00BA * 16 + 0x0767) of the lcall 0x00BA:0x0767 DrawPartyRoster (res12:0767) at ovl16:01BF and 032C; it lands mid-instruction (byte 0x7E) inside ovl16:056C, the single routine from 056C (prologue 55 89 e5) to its retf at 1ED1. Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl16:1513"
-unit = "ovl16"
-addr = "ovl16:1513"
-size = 581
-name = "ovl16_fn_1513"
-signature = ""
-c_name = "ovl16_fn_1513"
-level = "none"
-justification = ""
-notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return. 1513 is the flat reading (0x00BA * 16 + 0x0973) of the lcall 0x00BA:0x0973 DrawHitPoints (res12:0973) at ovl16:2065; it lands mid-instruction (byte 0x8B) inside ovl16:056C (single routine 056C..1ED1, prologue 55 89 e5, retf at 1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl16:1758"
-unit = "ovl16"
-addr = "ovl16:1758"
-size = 635
-name = "ovl16_fn_1758"
-signature = ""
-c_name = "ovl16_fn_1758"
-level = "none"
-justification = ""
-notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return. 1758 is the flat reading (0x00BA * 16 + 0x0BB8) of the lcall 0x00BA:0x0BB8 RecalcCombatValues (res12:0BB8) at ovl16:28AD and 28BC; it lands mid-instruction (byte 0x1F) inside ovl16:056C (single routine 056C..1ED1, prologue 55 89 e5, retf at 1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl16:19D3"
-unit = "ovl16"
-addr = "ovl16:19D3"
-size = 40
-name = "ovl16_fn_19D3"
-signature = ""
-c_name = "ovl16_fn_19D3"
-level = "none"
-justification = ""
-notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:21CD is the disp8 of les di,[bp-0x18] (c4 7e e8 at 21CB), not a call opcode; its bogus target (0x19D3) lands on the byte 0x98 mid-instruction inside ovl16:056C (single routine 056C..1ED1, prologue 55 89 e5, retf at 1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:19FB"
-unit = "ovl16"
-addr = "ovl16:19FB"
-size = 47
-name = "ovl16_fn_19FB"
-signature = ""
-c_name = "ovl16_fn_19FB"
-level = "none"
-justification = ""
-notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:21F5 is the disp8 of les di,[bp-0x18] (c4 7e e8 at 21F3), not a call opcode, and its bogus target (0x19FB) lies inside ovl16:056C (single routine 056C..1ED1, prologue 55 89 e5, one retf at 1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:1A2A"
-unit = "ovl16"
-addr = "ovl16:1A2A"
-size = 39
-name = "ovl16_fn_1A2A"
-signature = ""
-c_name = "ovl16_fn_1A2A"
-level = "none"
-justification = ""
-notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:2224 is the disp8 of les di,[bp-0x18] (c4 7e e8 at 2222), not a call opcode, and its bogus target (0x1A2A) lies inside ovl16:056C (single routine 056C..1ED1, prologue 55 89 e5, one retf at 1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:1A51"
-unit = "ovl16"
-addr = "ovl16:1A51"
-size = 48
-name = "ovl16_fn_1A51"
-signature = ""
-c_name = "ovl16_fn_1A51"
-level = "none"
-justification = ""
-notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:224B is the disp8 of les di,[bp-0x18] (c4 7e e8 at 2249), not a call opcode, and its bogus target (0x1A51) lies inside ovl16:056C (single routine 056C..1ED1, prologue 55 89 e5, one retf at 1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:1A81"
-unit = "ovl16"
-addr = "ovl16:1A81"
-size = 38
-name = "ovl16_fn_1A81"
-signature = ""
-c_name = "ovl16_fn_1A81"
-level = "none"
-justification = ""
-notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:227B is the disp8 of les di,[bp-0x18] (c4 7e e8 at 2279), not a call opcode, and its bogus target (0x1A81) lies inside ovl16:056C (single routine 056C..1ED1, prologue 55 89 e5, one retf at 1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:1AA7"
-unit = "ovl16"
-addr = "ovl16:1AA7"
-size = 39
-name = "ovl16_fn_1AA7"
-signature = ""
-c_name = "ovl16_fn_1AA7"
-level = "none"
-justification = ""
-notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:22A1 is the disp8 of les di,[bp-0x18] (c4 7e e8 at 229F), not a call opcode, and its bogus target (0x1AA7) lies inside ovl16:056C (single routine 056C..1ED1, prologue 55 89 e5, one retf at 1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:1ACE"
-unit = "ovl16"
-addr = "ovl16:1ACE"
-size = 35
-name = "ovl16_fn_1ACE"
-signature = ""
-c_name = "ovl16_fn_1ACE"
-level = "none"
-justification = ""
-notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:22C8 is the disp8 of les di,[bp-0x18] (c4 7e e8 at 22C6), not a call opcode, and its bogus target (0x1ACE) lies inside ovl16:056C (single routine 056C..1ED1, prologue 55 89 e5, one retf at 1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:1AF1"
-unit = "ovl16"
-addr = "ovl16:1AF1"
-size = 41
-name = "ovl16_fn_1AF1"
-signature = ""
-c_name = "ovl16_fn_1AF1"
-level = "none"
-justification = ""
-notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 7: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:22EB is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:22E9) followed by add di,ax (03 f8), read as a call whose bogus rel16 targets 0x1AF1; 0x1AF1 lies inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). 0x1AF1 is an instruction boundary but not a routine start. make match UNIT=ovl16 FN=ovl16_fn_1AF1 reports only the stub; there is no Pascal to write for a mid-routine instruction boundary. Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:1B1A"
-unit = "ovl16"
-addr = "ovl16:1B1A"
-size = 39
-name = "ovl16_fn_1B1A"
-signature = ""
-c_name = "ovl16_fn_1B1A"
-level = "none"
-justification = ""
-notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 7: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:2314 is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:2312) followed by add di,ax (03 f8), read as a call whose bogus rel16 targets 0x1B1A; 0x1B1A is mid-instruction (the second byte of mov di,ax, 8b f8, at ovl16:1B19) and lies inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:1B41"
-unit = "ovl16"
-addr = "ovl16:1B41"
-size = 35
-name = "ovl16_fn_1B41"
-signature = ""
-c_name = "ovl16_fn_1B41"
-level = "none"
-justification = ""
-notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 7: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:233B is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:2339) followed by add di,ax (03 f8), read as a call whose bogus rel16 targets 0x1B41; 0x1B41 is mid-instruction (the last byte of mov dl,[di+0x3DB2], 8a 95 b2 3d, at ovl16:1B3E) and lies inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:1B64"
-unit = "ovl16"
-addr = "ovl16:1B64"
-size = 71
-name = "ovl16_fn_1B64"
-signature = ""
-c_name = "ovl16_fn_1B64"
-level = "none"
-justification = ""
-notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 7: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:235E is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:235C) followed by add di,ax (03 f8), read as a call whose bogus rel16 targets 0x1B64; 0x1B64 is mid-instruction (the last byte of mov dl,[di+0x3DB2], 8a 95 b2 3d, at ovl16:1B61) and lies inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:1BAB"
-unit = "ovl16"
-addr = "ovl16:1BAB"
-size = 39
-name = "ovl16_fn_1BAB"
-signature = ""
-c_name = "ovl16_fn_1BAB"
-level = "none"
-justification = ""
-notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 7: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:23A5 is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:23A3) followed by add di,ax (03 f8), read as a call whose bogus rel16 targets 0x1BAB; 0x1BAB is mid-instruction (the second byte of mov al,es:[di+0x2F] (26 8a 45 2f) at ovl16:1BAA) and lies inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:1BD2"
-unit = "ovl16"
-addr = "ovl16:1BD2"
-size = 5
-name = "ovl16_fn_1BD2"
-signature = ""
-c_name = "ovl16_fn_1BD2"
-level = "none"
-justification = ""
-notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 7: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:23CC is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:23CA) followed by add di,ax (03 f8), read as a call whose bogus rel16 targets 0x1BD2; 0x1BD2 lies inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). 0x1BD2 is an instruction boundary but not a routine start. Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:1BD7"
-unit = "ovl16"
-addr = "ovl16:1BD7"
-size = 30
-name = "ovl16_fn_1BD7"
-signature = ""
-c_name = "ovl16_fn_1BD7"
-level = "none"
-justification = ""
-notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3 batch 8: not a routine, no prologue and no return. The entry is the flat reading (resident segment 0x00BA * 16 + 0x1037 = 0x1BD7) of the inter-overlay stub call lcall 0x00BA:0x1037 (bytes 9a 37 10 ba 00) at ovl16:2DE6 and 2E48; 0x00BA is res12's segment. 0x1BD7 is the last (segment-high, 0x00) byte of the unrelated lcall 0x0085:0x002F at ovl16:1BD3 (bytes 9a 2f 00 85 00), mid-instruction inside ovl16:056C. 056C is one routine: its only prologue in the region is 55 89 e5 at 056C and its single retf is at 1ED1 (verified on build/re/overlays/ovl16.bin), so every map entry inside it is a stub/fixup artefact. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)."
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl16:1BF5"
-unit = "ovl16"
-addr = "ovl16:1BF5"
-size = 41
-name = "ovl16_fn_1BF5"
-signature = ""
-c_name = "ovl16_fn_1BF5"
-level = "none"
-justification = ""
-notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 8: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:23EF is the disp8 of les di,[bp-0x18] (c4 7e e8 at 23ED) followed by add di,ax (03 f8), read as a call whose bogus rel16 (0xF803, -2045) targets 0x1BF5. 0x1BF5 is mid-instruction (the ModRM byte 0x88 of mov byte ptr es:[di+0x11b],al, bytes 26 88 85 1b 01 at 1BF4) inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:1C1E"
-unit = "ovl16"
-addr = "ovl16:1C1E"
-size = 39
-name = "ovl16_fn_1C1E"
-signature = ""
-c_name = "ovl16_fn_1C1E"
-level = "none"
-justification = ""
-notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 8: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:2418 is the disp8 of les di,[bp-0x18] (c4 7e e8 at 2416) followed by add di,ax (03 f8), read as a call whose bogus rel16 (0xF803, -2045) targets 0x1C1E. 0x1C1E is mid-instruction (the middle byte 0x7e of les di,[bp-0x27], bytes c4 7e d9 at 1C1D) inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:1C45"
-unit = "ovl16"
-addr = "ovl16:1C45"
-size = 35
-name = "ovl16_fn_1C45"
-signature = ""
-c_name = "ovl16_fn_1C45"
-level = "none"
-justification = ""
-notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 8: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:243F is the disp8 of les di,[bp-0x18] (c4 7e e8 at 243D) followed by add di,ax (03 f8), read as a call whose bogus rel16 (0xF803, -2045) targets 0x1C45. 0x1C45 is an instruction boundary (jg 0x1c4a, bytes 7f 03) but not a routine start: no prologue and no return, and it lies inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:1C68"
-unit = "ovl16"
-addr = "ovl16:1C68"
-size = 108
-name = "ovl16_fn_1C68"
-signature = ""
-c_name = "ovl16_fn_1C68"
-level = "none"
-justification = ""
-notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 8: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:2462 is the disp8 of les di,[bp-0x18] (c4 7e e8 at 2460) followed by add di,ax (03 f8), read as a call whose bogus rel16 (0xF803, -2045) targets 0x1C68. 0x1C68 is mid-instruction (the last byte 0x01 of mov byte ptr es:[di+0xb5],1, bytes 26 c6 85 b5 00 01 at 1C63) inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:1CD4"
-unit = "ovl16"
-addr = "ovl16:1CD4"
-size = 39
-name = "ovl16_fn_1CD4"
-signature = ""
-c_name = "ovl16_fn_1CD4"
-level = "none"
-justification = ""
-notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 8: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:24CE is the disp8 of les di,[bp-0x18] (c4 7e e8 at 24CC) followed by add di,ax (03 f8), read as a call whose bogus rel16 (0xF803, -2045) targets 0x1CD4. 0x1CD4 is an instruction boundary (xor ah,ah, bytes 30 e4) but not a routine start: no prologue and no return, and it lies inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:1CFB"
-unit = "ovl16"
-addr = "ovl16:1CFB"
-size = 35
-name = "ovl16_fn_1CFB"
-signature = ""
-c_name = "ovl16_fn_1CFB"
-level = "none"
-justification = ""
-notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 9: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:24F5 is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:24F3) followed by add di,ax (03 f8), read as a call whose bogus rel16 (0xF803, -2045) targets 0x1CFB. 0x1CFB is mid-instruction (the last byte 0x01 of mov byte ptr es:[di+0x44],1, bytes 26 c6 45 44 01 at ovl16:1CF7) inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:1D1E"
-unit = "ovl16"
-addr = "ovl16:1D1E"
-size = 102
-name = "ovl16_fn_1D1E"
-signature = ""
-c_name = "ovl16_fn_1D1E"
-level = "none"
-justification = ""
-notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 9: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:2518 is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:2516) followed by add di,ax (03 f8), read as a call whose bogus rel16 (0xF803, -2045) targets 0x1D1E. 0x1D1E is mid-instruction (the last byte 0xDF of mov al,[bp-0x21], bytes 8a 46 df at ovl16:1D1C) inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:1D84"
-unit = "ovl16"
-addr = "ovl16:1D84"
-size = 54
-name = "ovl16_fn_1D84"
-signature = ""
-c_name = "ovl16_fn_1D84"
-level = "none"
-justification = ""
-notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 9: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:257E is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:257C) followed by add di,ax (03 f8), read as a call whose bogus rel16 (0xF803, -2045) targets 0x1D84. 0x1D84 is mid-instruction (the second byte 0xE4 of xor ah,ah, bytes 30 e4 at ovl16:1D83) inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:1DBA"
-unit = "ovl16"
-addr = "ovl16:1DBA"
-size = 17
-name = "ovl16_fn_1DBA"
-signature = ""
-c_name = "ovl16_fn_1DBA"
-level = "none"
-justification = ""
-notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 9: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:25B4 is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:25B2) followed by add di,ax (03 f8), read as a call whose bogus rel16 (0xF803, -2045) targets 0x1DBA. 0x1DBA is mid-instruction (the middle byte 0x7E of les di,[bp-0x27], bytes c4 7e d9 at ovl16:1DB9) inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:1DCB"
-unit = "ovl16"
-addr = "ovl16:1DCB"
-size = 105
-name = "ovl16_fn_1DCB"
-signature = ""
-c_name = "ovl16_fn_1DCB"
-level = "none"
-justification = ""
-notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 9: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:25C5 is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:25C3) followed by add di,ax (03 f8), read as a call whose bogus rel16 (0xF803, -2045) targets 0x1DCB. 0x1DCB is an instruction boundary (mov byte ptr es:[di+0x32],al, bytes 26 88 45 32 at ovl16:1DCB) but not a routine start: no prologue and no return, and it lies inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:1E34"
-unit = "ovl16"
-addr = "ovl16:1E34"
-size = 38
-name = "ovl16_fn_1E34"
-signature = ""
-c_name = "ovl16_fn_1E34"
-level = "none"
-justification = ""
-notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 9: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:262E is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:262C) followed by add di,ax (03 f8), read as a call whose bogus rel16 (0xF803, -2045) targets 0x1E34. 0x1E34 is mid-instruction (the last byte 0xF8 of mov ax,[bp-8], bytes 8b 46 f8 at ovl16:1E32) inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:1E5A"
-unit = "ovl16"
-addr = "ovl16:1E5A"
-size = 35
-name = "ovl16_fn_1E5A"
-signature = ""
-c_name = "ovl16_fn_1E5A"
-level = "none"
-justification = ""
-notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 10: not a routine. 0x1E5A is an instruction boundary inside the single routine ovl16:056C (the lcall 0x0709:0x09E3 ReadInputLine, bytes 9a e3 09 09 07). The near_call evidence is a false positive: the E8 byte at ovl16:2654 is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:2652) followed by add di,ax (03 f8), read as a call whose bogus rel16 (-2045) targets 0x1E5A. 056C has one prologue at 0x056C and one retf at 0x1ED1 (verified on build/re/overlays/ovl16.bin), so it is one routine 056C..1ED1. Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:1E7D"
-unit = "ovl16"
-addr = "ovl16:1E7D"
-size = 38
-name = "ovl16_fn_1E7D"
-signature = ""
-c_name = "ovl16_fn_1E7D"
-level = "none"
-justification = ""
-notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 10: not a routine. 0x1E7D is an instruction boundary inside the single routine ovl16:056C (mov [bp-8],ax, bytes 89 46 f8). The near_call evidence is a false positive: the E8 byte at ovl16:2677 is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:2675) followed by add di,ax (03 f8); the bogus rel16 targets 0x1E7D. 056C is one routine 056C..1ED1 (one prologue at 0x056C, one retf at 0x1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:1EA3"
-unit = "ovl16"
-addr = "ovl16:1EA3"
-size = 22
-name = "ovl16_fn_1EA3"
-signature = ""
-c_name = "ovl16_fn_1EA3"
-level = "none"
-justification = ""
-notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 10: not a routine. 0x1EA3 is an instruction boundary inside the single routine ovl16:056C (mov di,0x4FE, bytes bf fe 04). The near_call evidence is a false positive: the E8 byte at ovl16:269D is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:269B) followed by add di,ax (03 f8); the bogus rel16 targets 0x1EA3. 056C is one routine 056C..1ED1 (one prologue at 0x056C, one retf at 0x1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:1EB9"
-unit = "ovl16"
-addr = "ovl16:1EB9"
-size = 13
-name = "ovl16_fn_1EB9"
-signature = ""
-c_name = "ovl16_fn_1EB9"
-level = "none"
-justification = ""
-notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 10: not a routine. 0x1EB9 is mid-instruction inside the single routine ovl16:056C: it is the 0x92 byte of mov [0x5D92],ax (a3 92 5d at ovl16:1EB8). The near_call evidence is a false positive: the E8 byte at ovl16:35E5 is the ModRM of shr ax,1 (d1 e8 at ovl16:35E4) inside ovl16:35BE; the following bytes d1 e8 are read as rel16 (-5935), targeting 0x1EB9. 056C is one routine 056C..1ED1 (one prologue at 0x056C, one retf at 0x1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:1EC6"
-unit = "ovl16"
-addr = "ovl16:1EC6"
-size = 71
-name = "ovl16_fn_1EC6"
-signature = ""
-c_name = "ovl16_fn_1EC6"
-level = "none"
-justification = ""
-notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 10: not a routine. 0x1EC6 is mid-instruction inside the single routine ovl16:056C: it is the 0x1D immediate byte of mov ax,0x11D (b8 1d 01 at ovl16:1EC5). The near_call evidence is a false positive: the E8 byte at ovl16:26C0 is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:26BE) followed by add di,ax (03 f8); the bogus rel16 targets 0x1EC6. 056C is one routine 056C..1ED1 (one prologue at 0x056C, one retf at 0x1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl16:1F37"
@@ -6159,7 +5431,7 @@ evidence = ["prologue"]
 id = "ovl16:33E7"
 unit = "ovl16"
 addr = "ovl16:33E7"
-size = 248
+size = 1094
 name = "ChooseHeadAndBody"
 signature = ""
 c_name = "ovl16_fn_33E7"
@@ -6178,7 +5450,7 @@ signature = ""
 c_name = "ovl16_fn_34DF"
 level = "L2"
 justification = ""
-notes = "renamed from ovl16_fn_34DF (ovl16:34DF fills one icon-editor cell (FillPictureRect over 12 cells x 24 rows from @ds260A into DrawBuf) and draws the two mirrored halves of the character's icon (DrawIcon, indices $19 and $C) at CellCol and CellCol+3; called by the icon editor ovl16_e3); auto:near_call"
+notes = "renamed from ovl16_fn_34DF (ovl16:34DF fills one icon-editor cell (FillPictureRect over 12 cells x 24 rows from @ds260A into DrawBuf) and draws the two mirrored halves of the character's icon (DrawIcon, indices $19 and $C) at CellCol and CellCol+3; called by the icon editor ovl16_e3); auto:near_call; nested in EditCharacterIcon (ovl16:382D), proven by the parent's match"
 evidence = ["prologue"]
 
 [[routine]]
@@ -6191,190 +5463,21 @@ signature = ""
 c_name = "ovl16_fn_35BE"
 level = "L2"
 justification = ""
-notes = "renamed from ovl16_fn_35BE (ovl16:35BE copies one picture slot of DS:5E5A into another (both halves' tile bytes and packed pixel buffers through Move) and, when its third parameter is set, recolours the destination with the selected character's Figure[1..6] colour pairs, the same recolouring BuildCharacterIcon (ovl17:0482) applies); auto:near_call"
+notes = "renamed from ovl16_fn_35BE (ovl16:35BE copies one picture slot of DS:5E5A into another (both halves' tile bytes and packed pixel buffers through Move) and, when its third parameter is set, recolours the destination with the selected character's Figure[1..6] colour pairs, the same recolouring BuildCharacterIcon (ovl17:0482) applies); auto:near_call; nested in EditCharacterIcon (ovl16:382D), proven by the parent's match"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl16:382D"
 unit = "ovl16"
 addr = "ovl16:382D"
-size = 1096
-name = "ovl16_e3"
+size = 1796
+name = "EditCharacterIcon"
 signature = ""
 c_name = "ovl16_e3"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call; blocked 2026-10-14 by dec-deepseek-3 batch 14: the map boundary is wrong. e3 has its only prologue (55 89 e5) at 382D and its single retf at 3F30 (the next prologue is 3F31), so it runs 382D..3F30, 1796 bytes, not 1096; the size stays 1096 until e3 matches (make match UNIT=ovl16 WRITE=1 then corrects it). The map entries inside it (3C75, 3C7A, 3C7F, 3C84, 3C89, 3C8E, 3C93, 3D34, 3E2A, 3E2F, 3EBF, 3EC4, 3EC9) are its own code, not routines; several are flat-linear readings of the ovl25 stub segment 0x03C5 (0x25, 0x2A ReadPromptChoice, 0x2F ClearPromptLine, 0x34 LoadPictureSlot, 0x39 AskYesNo, 0x3E) landing inside e3, and the rest are ovl31 (0x03E0:0x2A/0x2F) stub flats. e3 is the character-icon editor entered from AlterMenu (ovl15:1C59): it draws the window and BuildCharacterIcon, then a repeat loop over ReadPromptChoice runs a case on the state local [bp-8] (states 1 pick head/body bank or Hair/Face, 2 pick head bank, 3 pick body bank, 4 Size/colour-pair/FaceSelect, 5 the colour-nibble editor) with nested `with SelectedCharacter^` scopes (temps at [bp-0x1f] and [bp-0x23]), a 288-byte frame of string temporaries (the 'new'/'Small'/'Large'/'Hair'/'Face' prompts, a third-page string at [bp-0x120], a 6-byte Figure[1..6] copy at [bp-0x15]), and it ends by asking AskYesNo 'Is this icon ok? '. Its nested routines DrawIconCell (34DF) and CopyPictureSlot (35BE) are emitted before it and already matched. Too large and string-temporary heavy for one batch: no draft committed (src left as {@stub}); a later decompiler should derive it from the same codegen as BuildCharacterIcon (ovl17:0482) and ModifyCharacter (ovl16:209F)"
+notes = "renamed from ovl16_e3 (ovl16:382D is the character-icon editor: AlterMenu (ovl15:1C59) runs it for the Icon key I (then RedrawView) and CreateCharacter runs it after ChooseHeadAndBody; it draws the 'old' and 'new' icon cells, edits CHeadBlock, CBodyBlock, the icon size and the six Figure colour pairs through the prompt lines 'Parts color-1 color-2 Size Exit' ... and asks 'Is this icon ok? '); auto:near_call; matched by the escalation tier (esc-sonnet-ab, 2026-10-14): the routine runs 382D..3F30 (1796 bytes, one prologue, one retf); its nested DrawIconCell (34DF) and CopyPictureSlot (35BE) and the literal pool 37C8..382C sit in its pre-entry region; the 13 map entries 3C75..3EC9 inside it were ovl25, ovl28, ovl31 and ovl32 stub-call flat readings, not routines; the 6-byte Figure[1..6] save and restore is a structure assignment (0AF8:0A3F), not Move (tools/re/tp_idioms/ovl16/FIGCOPY.PAS)"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl16:3C75"
-unit = "ovl16"
-addr = "ovl16:3C75"
-size = 5
-name = "ovl16_fn_3C75"
-signature = ""
-c_name = "ovl16_fn_3C75"
-level = "none"
-justification = ""
-notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 14: not a routine. 3C75 is the ModRM byte 0xbd of `cmp byte ptr es:[di+0xbe],0` (bytes 26 80 bd be 00 00 at 3C73) inside ovl16_e3's CBodyBlock case arm, mid-instruction; no prologue. The entry is the flat-linear reading (seg 0x03C5 * 16 + 0x0025 = 0x3C75) of an ovl25 stub call (lcall 0x03C5:0x0025, e.g. at 0x0677 and 0x0961; 0x3C5 is the ovl25 stub segment). e3 has its only prologue (55 89 e5) at 382D and its single retf at 3F30, so it runs 382D..3F30 and every map entry inside it is an artefact. Removed when e3 matches (make match UNIT=ovl16 WRITE=1 corrects e3's size and deletes the entries inside it)"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl16:3C7A"
-unit = "ovl16"
-addr = "ovl16:3C7A"
-size = 5
-name = "ovl16_fn_3C7A"
-signature = ""
-c_name = "ovl16_fn_3C7A"
-level = "none"
-justification = ""
-notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 14: not a routine. 3C7A is the displacement byte 0x0a of `jbe 3C85h` (bytes 76 0a at 3C79) inside ovl16_e3, mid-instruction; no prologue. The entry is the flat-linear reading (seg 0x03C5 * 16 + 0x002A = 0x3C7A) of the ovl25 ReadPromptChoice stub call (lcall 0x03C5:0x002A, e.g. at 0x0300 and at 39F9 inside e3 itself). e3's only prologue is 55 89 e5 at 382D and its single retf is at 3F30, so the entry is inside it. Removed when e3 matches (make match UNIT=ovl16 WRITE=1)"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl16:3C7F"
-unit = "ovl16"
-addr = "ovl16:3C7F"
-size = 5
-name = "ovl16_fn_3C7F"
-signature = ""
-c_name = "ovl16_fn_3C7F"
-level = "none"
-justification = ""
-notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 14: not a routine. 3C7F is the opcode byte 0xfe of `dec byte ptr es:[di+0xbe]` (bytes 26 fe 8d be 00 at 3C7E) inside ovl16_e3, mid-instruction (the 0x26 segment prefix at 3C7E starts the instruction); no prologue. The entry is the flat-linear reading (seg 0x03C5 * 16 + 0x002F = 0x3C7F) of the ovl25 ClearPromptLine stub call (lcall 0x03C5:0x002F, e.g. at 0x0300 and at 3EB7 inside e3). e3's only prologue is 55 89 e5 at 382D and its single retf is at 3F30. Removed when e3 matches (make match UNIT=ovl16 WRITE=1)"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl16:3C84"
-unit = "ovl16"
-addr = "ovl16:3C84"
-size = 5
-name = "ovl16_fn_3C84"
-signature = ""
-c_name = "ovl16_fn_3C84"
-level = "none"
-justification = ""
-notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 14: not a routine. 3C84 is the displacement byte 0x09 of `jmp 3C8Eh` (bytes eb 09 at 3C83) inside ovl16_e3, mid-instruction; no prologue. The entry is the flat-linear reading (seg 0x03C5 * 16 + 0x0034 = 0x3C84) of the ovl25 LoadPictureSlot stub call (lcall 0x03C5:0x0034, e.g. at 0x0775 and at 0x30FB). e3's only prologue is 55 89 e5 at 382D and its single retf is at 3F30, so the entry is inside it. Removed when e3 matches (make match UNIT=ovl16 WRITE=1)"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl16:3C89"
-unit = "ovl16"
-addr = "ovl16:3C89"
-size = 5
-name = "ovl16_fn_3C89"
-signature = ""
-c_name = "ovl16_fn_3C89"
-level = "none"
-justification = ""
-notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 15: not a routine. 3C89 is the instruction boundary c6 85 be 00 1f (mov byte ptr [di+0xbe],0x1f, one of e3's bank assignments) with no prologue. The entry is the flat-linear reading (seg 0x03C5 * 16 + 0x0039 = 0x3C89) of the ovl25 AskYesNo stub call at 3F17 (lcall 0x3C5:0x39, also at 1E1C, 1F81, 1FA6, 2E98). e3 has its only prologue (55 89 e5) at 382D and its single retf at 3F30 (byte scan of build/re/overlays/ovl16.bin, re/learnings/ovl16.toml), so 3C89 lies inside e3, and a make tpc probe (tools/re/tp_idioms/ovl16/NOPROC.PAS) shows even a parameterless, local-less far procedure starts with 55 89 e5, so c6 cannot start a routine. Removed when e3 matches (make match UNIT=ovl16 WRITE=1 corrects e3's size to 1796 and deletes the entries inside it)"
-evidence = ["far_call", "tools/re/tp_idioms/ovl16/NOPROC.PAS", "re/learnings/ovl16.toml#ovl16-e3-map-entries-are-ovl25-stub-flats"]
-
-[[routine]]
-id = "ovl16:3C8E"
-unit = "ovl16"
-addr = "ovl16:3C8E"
-size = 5
-name = "ovl16_fn_3C8E"
-signature = ""
-c_name = "ovl16_fn_3C8E"
-level = "none"
-justification = ""
-notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 15: not a routine. 3C8E is the instruction boundary eb 66 (jmp 0x3CF6) with no prologue. The entry is the flat-linear reading (seg 0x03C5 * 16 + 0x003E = 0x3C8E) of the ovl25 stub call lcall 0x3C5:0x3E at 0x0638, 0x092C, 0x0A5A, 0x0D9C. e3 has its only prologue (55 89 e5) at 382D and its single retf at 3F30 (byte scan of build/re/overlays/ovl16.bin, re/learnings/ovl16.toml), so 3C8E lies inside e3, and a make tpc probe (tools/re/tp_idioms/ovl16/NOPROC.PAS) shows a far procedure always starts with 55 89 e5, so eb cannot start one. Removed when e3 matches (make match UNIT=ovl16 WRITE=1 corrects e3's size to 1796 and deletes the entries inside it)"
-evidence = ["far_call", "tools/re/tp_idioms/ovl16/NOPROC.PAS", "re/learnings/ovl16.toml#ovl16-e3-map-entries-are-ovl25-stub-flats"]
-
-[[routine]]
-id = "ovl16:3C93"
-unit = "ovl16"
-addr = "ovl16:3C93"
-size = 161
-name = "ovl16_fn_3C93"
-signature = ""
-c_name = "ovl16_fn_3C93"
-level = "none"
-justification = ""
-notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 15: not a routine. 3C93 is the byte 0x20, the rel8 of jne 0x3CB4 (75 20 at 3C92), mid-instruction, with no prologue. The entry is the flat-linear reading (seg 0x03C5 * 16 + 0x0043 = 0x3C93) of the ovl25 stub call lcall 0x3C5:0x43 at 0x091E, 0x0A33, 0x0D75, 0x0EDE, 0x3288. e3 has its only prologue (55 89 e5) at 382D and its single retf at 3F30 (byte scan of build/re/overlays/ovl16.bin, re/learnings/ovl16.toml), so 3C93 lies inside e3; its size 161 is only the gap to the next map entry (3D34). Removed when e3 matches (make match UNIT=ovl16 WRITE=1 corrects e3's size to 1796 and deletes the entries inside it)"
-evidence = ["far_call", "tools/re/tp_idioms/ovl16/NOPROC.PAS", "re/learnings/ovl16.toml#ovl16-e3-map-entries-are-ovl25-stub-flats"]
-
-[[routine]]
-id = "ovl16:3D34"
-unit = "ovl16"
-addr = "ovl16:3D34"
-size = 246
-name = "ovl16_fn_3D34"
-signature = ""
-c_name = "ovl16_fn_3D34"
-level = "none"
-justification = ""
-notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 15: not a routine. 3D34 is the instruction boundary 88 46 e7 (mov byte ptr [bp-0x19],al) with no prologue. The entry is the flat-linear reading (seg 0x03D0 * 16 + 0x0034 = 0x3D34) of the ovl28 stub call lcall 0x3D0:0x34 at 0x340D (re/units.toml: stub 0x03D0 -> ovl28). e3 has its only prologue (55 89 e5) at 382D and its single retf at 3F30 (byte scan of build/re/overlays/ovl16.bin, re/learnings/ovl16.toml), so 3D34 lies inside e3; its size 246 is only the gap to the next map entry (3E2A). Removed when e3 matches (make match UNIT=ovl16 WRITE=1 corrects e3's size to 1796 and deletes the entries inside it)"
-evidence = ["far_call", "re/units.toml#ovl28", "tools/re/tp_idioms/ovl16/NOPROC.PAS", "re/learnings/ovl16.toml#ovl16-e3-map-entries-are-ovl25-stub-flats"]
-
-[[routine]]
-id = "ovl16:3E2A"
-unit = "ovl16"
-addr = "ovl16:3E2A"
-size = 5
-name = "ovl16_fn_3E2A"
-signature = ""
-c_name = "ovl16_fn_3E2A"
-level = "none"
-justification = ""
-notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 15: not a routine. 3E2A is the instruction boundary 26 8a 85 bf 00 (mov al,es:[di+0xbf], the CombatIcon byte e3 hands to CopyPictureSlot) with no prologue. The entry is the flat-linear reading (seg 0x03E0 * 16 + 0x002A = 0x3E2A) of the ovl31_e2 stub call lcall 0x3E0:0x2A at 0x385A. e3 has its only prologue (55 89 e5) at 382D and its single retf at 3F30 (byte scan of build/re/overlays/ovl16.bin, re/learnings/ovl16.toml), so 3E2A lies inside e3, and a make tpc probe (tools/re/tp_idioms/ovl16/NOPROC.PAS) shows a far procedure always starts with 55 89 e5, so 26 cannot start one. Removed when e3 matches (make match UNIT=ovl16 WRITE=1 corrects e3's size to 1796 and deletes the entries inside it)"
-evidence = ["far_call", "re/units.toml#ovl31", "tools/re/tp_idioms/ovl16/NOPROC.PAS", "re/learnings/ovl16.toml#ovl16-e3-map-entries-are-ovl25-stub-flats"]
-
-[[routine]]
-id = "ovl16:3E2F"
-unit = "ovl16"
-addr = "ovl16:3E2F"
-size = 144
-name = "ovl16_fn_3E2F"
-signature = ""
-c_name = "ovl16_fn_3E2F"
-level = "none"
-justification = ""
-notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 15: not a routine. 3E2F is the instruction boundary 50 (push ax, the CombatIcon argument of e3's nested CopyPictureSlot call at 3E38) with no prologue. The entry is the flat-linear reading (seg 0x03E0 * 16 + 0x002F = 0x3E2F) of the ovl31_e3 stub call lcall 0x3E0:0x2F at 3F28. e3 has its only prologue (55 89 e5) at 382D and its single retf at 3F30 (byte scan of build/re/overlays/ovl16.bin, re/learnings/ovl16.toml), so 3E2F lies inside e3; its size 144 is only the gap to the next map entry (3EBF). Removed when e3 matches (make match UNIT=ovl16 WRITE=1 corrects e3's size to 1796 and deletes the entries inside it)"
-evidence = ["far_call", "re/units.toml#ovl31", "tools/re/tp_idioms/ovl16/NOPROC.PAS", "re/learnings/ovl16.toml#ovl16-e3-map-entries-are-ovl25-stub-flats"]
-
-[[routine]]
-id = "ovl16:3EBF"
-unit = "ovl16"
-addr = "ovl16:3EBF"
-size = 5
-name = "ovl16_fn_3EBF"
-signature = ""
-c_name = "ovl16_fn_3EBF"
-level = "none"
-justification = ""
-notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 16: not a routine. 3EBF is the instruction 9a 2f 00 e9 03 (lcall 0x03E9:0x002F, FreePictureSlot ovl32:014E) inside e3's body, and its own flat target (seg 0x03E9 * 16 + 0x002F = 0x3EBF) lands on it. The same stub is called at 0x3321 and 0x337B, whose flat targets also name 3EBF. e3 has its only prologue (55 89 e5) at 382D and its single retf at 3F30 (byte scan of build/re/overlays/ovl16.bin), so 3EBF lies inside e3; a make tpc probe (tools/re/tp_idioms/ovl16/NOPROC.PAS) shows a far procedure always starts with 55 89 e5, so 9a cannot start one. Removed when e3 matches (make match UNIT=ovl16 WRITE=1 corrects e3's size to 1796 and deletes the entries inside it)"
-evidence = ["far_call", "re/units.toml#ovl32", "tools/re/tp_idioms/ovl16/NOPROC.PAS", "re/learnings/ovl16.toml#ovl16-e3-map-entries-are-ovl25-stub-flats"]
-
-[[routine]]
-id = "ovl16:3EC4"
-unit = "ovl16"
-addr = "ovl16:3EC4"
-size = 5
-name = "ovl16_fn_3EC4"
-signature = ""
-c_name = "ovl16_fn_3EC4"
-level = "none"
-justification = ""
-notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 16: not a routine. 3EC4 is the instruction boundary 80 3e fa 49 01 (cmp byte [0x49fa],1) inside e3 with no prologue. The entry is the flat-linear reading (seg 0x03E9 * 16 + 0x0034 = 0x3EC4) of the LoadPictureSlot (ovl32:01C8) stub call lcall 0x03E9:0x34 at 0x3EE0 and 0x3EFA. e3 has its only prologue (55 89 e5) at 382D and its single retf at 3F30 (byte scan of build/re/overlays/ovl16.bin, re/learnings/ovl16.toml), so 3EC4 lies inside e3; its size 5 is only the gap to the next map entry (3EC9). Removed when e3 matches (make match UNIT=ovl16 WRITE=1 corrects e3's size to 1796 and deletes the entries inside it)"
-evidence = ["far_call", "re/units.toml#ovl32", "tools/re/tp_idioms/ovl16/NOPROC.PAS", "re/learnings/ovl16.toml#ovl16-e3-map-entries-are-ovl25-stub-flats"]
-
-[[routine]]
-id = "ovl16:3EC9"
-unit = "ovl16"
-addr = "ovl16:3EC9"
-size = 104
-name = "ovl16_fn_3EC9"
-signature = ""
-c_name = "ovl16_fn_3EC9"
-level = "none"
-justification = ""
-notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 16: not a routine. 3EC9 is the instruction boundary 76 34 (jbe, no prologue) inside e3. The entry is the flat-linear reading (seg 0x03E9 * 16 + 0x0039 = 0x3EC9) of an ovl32 stub call lcall 0x03E9:0x39 at 0x3564, 0x357F, 0x3595 and 0x35B0. e3 has its only prologue (55 89 e5) at 382D and its single retf at 3F30 (byte scan of build/re/overlays/ovl16.bin, re/learnings/ovl16.toml), so 3EC9 lies inside e3; its size 104 is only the gap to the next map entry (3F31). Removed when e3 matches (make match UNIT=ovl16 WRITE=1 corrects e3's size to 1796 and deletes the entries inside it)"
-evidence = ["far_call", "re/units.toml#ovl32", "tools/re/tp_idioms/ovl16/NOPROC.PAS", "re/learnings/ovl16.toml#ovl16-e3-map-entries-are-ovl25-stub-flats"]
 
 [[routine]]
 id = "ovl16:3F31"
@@ -6449,7 +5552,7 @@ size = 5
 name = "ovl16_init"
 signature = ""
 c_name = "ovl16_init"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_0"
 evidence = ["prologue"]
@@ -7527,6 +6630,7 @@ name = "PickSpellFromMenu"
 signature = "function PickSpellFromMenu(Mode: Byte; var Choice: Word): Byte"
 c_name = "ovl22_e1"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e1 (ovl22:008A shows SpellMenuList through ChooseFromList (ovl25:0D9A) with the button word Cast/Memorize/Scribe/Learn per Mode and returns the chosen line's spell number from SpellMenuSpells, or 0 when the player left; called only by ChooseSpellFromList (ovl19:299C)); escalation: matched. The earlier block (Word Choice cannot reach ChooseFromList's var Integer) is solved by the variable typecast Integer(Choice) at the call (probe tools/re/tp_idioms/ovl22/VARCAST.PAS), so ovl19 and ovl15 keep Word. The Key set of the repeat loop is [#0, #13, C, E, L, M, S] (set pool at ovl22:004A), the leave test [#0, E] (ovl22:006A); the empty string for DrawWindow shares a zero byte of the set [1..4] at ovl22:001B."
 evidence = ["prologue"]
@@ -7540,6 +6644,7 @@ name = "AddSpellMenuLine"
 signature = "procedure AddSpellMenuLine(Spell: Byte)"
 c_name = "ovl22_fn_028D"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_fn_028D (ovl22:028D appends one line for a spell to the spell menu list ds4766, inserting a level heading when the level changes; called by ovl22_e2 and ovl22_fn_044E); auto:near_call"
 evidence = ["prologue"]
@@ -7553,6 +6658,7 @@ name = "AddItemSpells"
 signature = "procedure AddItemSpells(Pending: Byte)"
 c_name = "ovl22_fn_044E"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_fn_044E (ovl22:044E adds the spell affects of the current item (CurrentItem) to the spell menu list through AddSpellMenuLine, recording the item in SpellMenuItems; Pending selects the pending (bit 7) or the plain affects; called by ovl22_e2 and ovl22_fn_051C); auto:near_call"
 evidence = ["prologue"]
@@ -7566,6 +6672,7 @@ name = "AddScrollSpells"
 signature = "procedure AddScrollSpells(Pending: Byte)"
 c_name = "ovl22_fn_051C"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_fn_051C (ovl22:051C walks SelectedCharacter^.Items, and for every scroll (ovl22_e6) adds its spell affects to the spell menu list through AddItemSpells; Pending picks the plain or the pending affects; called by ovl22_e2); auto:near_call"
 evidence = ["prologue"]
@@ -7579,6 +6686,7 @@ name = "BuildSpellList"
 signature = "function BuildSpellList(Kind: Byte): Byte"
 c_name = "ovl22_e2"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e2 (ovl22:059C builds the spell menu list SpellMenuList for ChooseSpellFromList's list kind (0 memorized, 5 pending memorized, 1 spell book, 2 first scroll, 3 scrolls, 6 pending scrolls, 4 learnable) and returns whether it is not empty; called by ovl19:299C); auto:entry_2"
 evidence = ["prologue"]
@@ -7592,6 +6700,7 @@ name = "SpellAreaSize"
 signature = "function SpellAreaSize(Spell: Byte): Byte"
 c_name = "ovl22_e3"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e3 (ovl22:0729 returns the area size of a spell: base byte (row +2) plus the per-level byte (row +3) times the caster level from res12_fn_26C2, or times 6 while ds6DBF is set; res12_fn_2433 passes it to ScanTargets as the pattern budget (ovl09:02EB SpellAccepted)); auto:entry_3"
 evidence = ["prologue"]
@@ -7605,6 +6714,7 @@ name = "SpellAffectDuration"
 signature = ""
 c_name = "ovl22_fn_07D6"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_fn_07D6 (ovl22:07D6 returns the affect duration; 08C3 passes it as ApplyAffect Duration (ovl24:1656)); auto:near_call"
 evidence = ["prologue"]
@@ -7618,6 +6728,7 @@ name = "ApplySpellToTargets"
 signature = ""
 c_name = "ovl22_fn_08C3"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_fn_08C3 (ovl22:08C3 applies a spell to every chosen target in ds6C91[1..ds6C94]: saving throw, damage and, when the spell has an AffectId, ApplyAffect (ovl24:1656)); auto:near_call"
 evidence = ["prologue"]
@@ -7631,6 +6742,7 @@ name = "ChooseSpellTargets"
 signature = ""
 c_name = "ovl22_e4"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e4 (ovl22:0A91 picks the spell targets (ds6C91): self, one through res12_fn_2C48, or the whole party, and reports through Done; the DS:6B84 combat callback); auto:entry_4"
 evidence = ["prologue"]
@@ -7644,6 +6756,7 @@ name = "CastChosenSpell"
 signature = "procedure CastChosenSpell(A, B, C: Byte; var Done: Byte)"
 c_name = "ovl22_e5"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e5 (the CastSpell entry: picks the spell's targets through the DS:6B84 picker, animates the cast and runs the spell's handler SpellHandlers[Spell] (ovl22:0C20)); auto:entry_5"
 evidence = ["prologue"]
@@ -7657,6 +6770,7 @@ name = "ApplySpellToSide"
 signature = ""
 c_name = "ovl22_fn_0F4F"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_fn_0F4F (applies the current spell ds681B to the targets on one side, shared by the Bless and Curse cast handlers (ovl22:0F4F)); auto:near_call"
 evidence = ["prologue"]
@@ -7670,6 +6784,7 @@ name = "CastBless"
 signature = ""
 c_name = "ovl22_e11"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e11 (cast handler of spell 1 Bless: applies the spell to the caster side with 'is Blessed' (SpellHandlers[1], ovl22:100F)); auto:entry_11"
 evidence = ["prologue"]
@@ -7683,6 +6798,7 @@ name = "CastCurse"
 signature = ""
 c_name = "ovl22_e12"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e12 (cast handler of spell 2 Curse: applies the spell to the opposite side with 'is Cursed' (SpellHandlers[2], ovl22:1040)); auto:entry_12"
 evidence = ["prologue"]
@@ -7696,6 +6812,7 @@ name = "CastCureLightWounds"
 signature = ""
 c_name = "ovl22_e13"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e13 (cast handler of spell 3 Cure Light Wounds: heals the first target 1d8 (SpellHandlers[3], ovl22:106B)); auto:entry_13"
 evidence = ["prologue"]
@@ -7709,6 +6826,7 @@ name = "CastCauseLightWounds"
 signature = ""
 c_name = "ovl22_e14"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e14 (cast handler of spell 4 Cause Light Wounds: deals 1d8 damage to the targets (SpellHandlers[4], ovl22:10A7)); auto:entry_14"
 evidence = ["prologue"]
@@ -7722,6 +6840,7 @@ name = "CastDetectionSpell"
 signature = ""
 c_name = "ovl22_e15"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e15 (cast handler of the detection spells (SpellHandlers[5],[11],[18],[22],[29]; ovl22_e10 fills the table, whitepaper 5.22.2): applies the current spell ds681B to the chosen targets with 'is affected' (ovl22:10E9)); auto:entry_15"
 evidence = ["prologue"]
@@ -7735,6 +6854,7 @@ name = "CastProtection"
 signature = ""
 c_name = "ovl22_e16"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e16 (cast handler of the protection spells (SpellHandlers[6],[7],[16],[17]; ovl22_e10 fills the table, whitepaper 5.22.2): applies the current spell ds681B to the chosen targets with 'is protected' (ovl22:1123)); auto:entry_16"
 evidence = ["prologue"]
@@ -7748,6 +6868,7 @@ name = "CastResistCold"
 signature = ""
 c_name = "ovl22_e17"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e17 (cast handler of spell 8 Resist Cold (SpellHandlers[8]; ovl22_e10 fills the table, whitepaper 5.22.2): applies the current spell ds681B to the chosen targets with 'is cold-resistant' (ovl22:1162)); auto:entry_17"
 evidence = ["prologue"]
@@ -7761,6 +6882,7 @@ name = "CastBurningHands"
 signature = ""
 c_name = "ovl22_e18"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e18 (cast handler of spell 9 Burning Hands (SpellHandlers[9]; ovl22_e10 fills the table, whitepaper 5.22.2): deals the caster level in fire damage to the chosen targets (ovl22:1190)); auto:entry_18"
 evidence = ["prologue"]
@@ -7774,6 +6896,7 @@ name = "CastCharmPerson"
 signature = ""
 c_name = "ovl22_e19"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e19 (cast handler of spell 10 Charm Person (SpellHandlers[10]; ovl22_e10 fills the table, whitepaper 5.22.2): refuses a non-person target (CreatureType or CombatSize above 1), else applies the charm affect $0B with the caster's side in bit 7 of its data (ovl22:11DD)); auto:entry_19"
 evidence = ["prologue"]
@@ -7787,6 +6910,7 @@ name = "CastEnlarge"
 signature = ""
 c_name = "ovl22_e20"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e20 (cast handler of spell 12 Enlarge (SpellHandlers[12]; ovl22_e10 fills the table, whitepaper 5.22.2): gives the target strength 18 by caster level through RaiseStrength and adds the strength affect /bin/zshC (ovl22:12A5)); auto:entry_20"
 evidence = ["prologue"]
@@ -7800,6 +6924,7 @@ name = "CastReduce"
 signature = ""
 c_name = "ovl22_e21"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e21 (cast handler of spell 13 Reduce (SpellHandlers[13]; ovl22_e10 fills the table at DS:6B84, whitepaper 5.22.2): a target that fails its saving throw (kind 4) loses the strength affect $0C Enlarge adds and is told 'has been reduced' (ovl22:136E)); auto:entry_21"
 evidence = ["prologue"]
@@ -7813,6 +6938,7 @@ name = "CastFriends"
 signature = ""
 c_name = "ovl22_e22"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e22 (cast handler of spell 14 Friends (SpellHandlers[14]; ovl22_e10 fills the table at DS:6B84, whitepaper 5.22.2): raises the target ds6C95 Charisma by 2d4 capped at 25 and passes the old Charisma as the affect data with the restore flag, message 'is friendly' (ovl22:13D8)); auto:entry_22"
 evidence = ["prologue"]
@@ -7826,6 +6952,7 @@ name = "CastMagicMissile"
 signature = ""
 c_name = "ovl22_e23"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e23 (cast handler of spell 15 Magic Missile (SpellHandlers[15]; ovl22_e10 fills the table at DS:6B84, whitepaper 5.22.2): deals one d4 plus one point per two caster levels through RollDiceCounted (count in ds681C), no message (ovl22:1439)); auto:entry_23"
 evidence = ["prologue"]
@@ -7839,6 +6966,7 @@ name = "CastShield"
 signature = ""
 c_name = "ovl22_e24"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e24 (cast handler of spell 19 Shield (SpellHandlers[19]; ovl22_e10 fills the table at DS:6B84, whitepaper 5.22.2): applies the current spell ds681B (its own affect does the work) to the chosen targets with 'is shielded' (ovl22:1499)); auto:entry_24"
 evidence = ["prologue"]
@@ -7852,6 +6980,7 @@ name = "CastShockingGrasp"
 signature = ""
 c_name = "ovl22_e25"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e25 (cast handler of spell 20 Shocking Grasp (SpellHandlers[20]; ovl22_e10 fills the table at DS:6B84, whitepaper 5.22.2): deals the caster level plus 1d8 electrical damage to the chosen targets, no message (ovl22:14C7)); auto:entry_25"
 evidence = ["prologue"]
@@ -7865,6 +6994,7 @@ name = "CastSleep"
 signature = ""
 c_name = "ovl22_e26"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e26 (cast handler of spell 21 Sleep (SpellHandlers[21]; ovl22_e10 fills the table at DS:6B84, whitepaper 5.22.2): rolls the 4d4 pool ds4844 and charges each target a cost ds4845 by HighestLevel and Race, dropping targets that are dead, already affected $35, or too costly, then applies the spell to the survivors with 'falls asleep' (ovl22:151B)); auto:entry_26"
 evidence = ["prologue"]
@@ -7878,6 +7008,7 @@ name = "CastHoldPerson"
 signature = ""
 c_name = "ovl22_e27"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e27 (ovl22:1658 applies spell 23 to the chosen targets with the message 'is held'; ovl22_e10 maps DS:6B84+23*4 to its stub 0096:00A7 and SpellNames[23] (DS:2C98) is 'Hold Person'); auto:entry_27"
 evidence = ["prologue"]
@@ -7891,6 +7022,7 @@ name = "CastResistFire"
 signature = ""
 c_name = "ovl22_e28"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e28 (ovl22:17E9 applies spell 24 to the chosen targets with the message 'is fire resistant'; ovl22_e10 maps DS:6B84+24*4 to its stub 0096:00AC and SpellNames[24] (DS:2CC1) is 'Resist Fire'); auto:entry_28"
 evidence = ["prologue"]
@@ -7904,6 +7036,7 @@ name = "CastSilence"
 signature = ""
 c_name = "ovl22_e29"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e29 (ovl22:1822 applies spell 25 to the chosen targets with the message 'is silenced'; ovl22_e10 maps DS:6B84+25*4 to its stub 0096:00B1 and SpellNames[25] (DS:2CEA) is 'Silence, 15' Radius'); auto:entry_29"
 evidence = ["prologue"]
@@ -7917,6 +7050,7 @@ name = "CastSlowPoison"
 signature = ""
 c_name = "ovl22_e30"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e30 (ovl22:185B applies spell 26 with the message 'is affected', needs the target's Poisoned affect, revives it to 1 hit point and adds the poison-slowing affect; ovl22_e10 maps DS:6B84+26*4 to its stub 0096:00B6 and SpellNames[26] (DS:2D13) is 'Slow Poison'); auto:entry_30"
 evidence = ["prologue"]
@@ -7930,6 +7064,7 @@ name = "CastSnakeCharm"
 signature = ""
 c_name = "ovl22_e31"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e31 (ovl22:190F picks the giant snakes (CreatureType $E) of the party list whose hit points fit the caster's, then applies spell 27 with the message 'is charmed'; ovl22_e10 maps DS:6B84+27*4 to its stub 0096:00BB and SpellNames[27] (DS:2D3C) is 'Snake Charm'); auto:entry_31"
 evidence = ["prologue"]
@@ -7943,6 +7078,7 @@ name = "CastSpiritualHammer"
 signature = ""
 c_name = "ovl22_e32"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e32 (ovl22:19C3 applies spell 28 with Flag 1 then runs affect $17's handler on the first target; ovl22_e10 maps DS:6B84+28*4 to its stub 0096:00C0 and SpellNames[28] (DS:2D65) is 'Spiritual Hammer'); auto:entry_32"
 evidence = ["prologue"]
@@ -7956,6 +7092,7 @@ name = "CastInvisibility"
 signature = ""
 c_name = "ovl22_e33"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e33 (ovl22:1A16 applies spell 30 to the chosen targets with the message 'is invisible'; ovl22_e10 maps DS:6B84+30*4 to its stub 0096:00C5 and SpellNames[30] (DS:2DB7) is 'Invisibility'); auto:entry_33"
 evidence = ["prologue"]
@@ -7969,6 +7106,7 @@ name = "CastKnock"
 signature = ""
 c_name = "ovl22_e34"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e34 (ovl22:1A4F applies spell 31 to the chosen targets with the message 'Knock-Knock'; ovl22_e10 maps DS:6B84+31*4 to its stub 0096:00CA and SpellNames[31] (DS:2DE0) is 'Knock'); auto:entry_34"
 evidence = ["prologue"]
@@ -7982,6 +7120,7 @@ name = "CastMirrorImage"
 signature = ""
 c_name = "ovl22_e35"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e35 (ovl22:1A8A applies spell 32 with a 1d4 caster level and the message 'is duplicated'; ovl22_e10 maps DS:6B84+32*4 to its stub 0096:00CF and SpellNames[32] (DS:2E09) is 'Mirror Image'); auto:entry_35"
 evidence = ["prologue"]
@@ -7995,6 +7134,7 @@ name = "CastRayOfEnfeeblement"
 signature = ""
 c_name = "ovl22_e36"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e36 (ovl22:1ACC applies spell 33 to the chosen targets with the message 'is weakened'; ovl22_e10 maps DS:6B84+33*4 to its stub 0096:00D4 and SpellNames[33] (DS:2E32) is 'Ray of Enfeeblement'); auto:entry_36"
 evidence = ["prologue"]
@@ -8008,6 +7148,7 @@ name = "CastStinkingCloud"
 signature = ""
 c_name = "ovl22_e37"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e37 (ovl22:1B11 places a cloud marker in the DS:6DBB list (caster, aim ds6DB9/ds6DBA, four aim tiles and flags, affect $28), paints the cloud into the combat map and runs ApplyCloudTile (the stinking cloud affect) on the combatants of the four cells; ovl22_e10 maps DS:6B84+34*4 to its stub 0096:00D9 and SpellNames[34] (DS:2E5B) is 'Stinking Cloud'); auto:entry_37"
 evidence = ["prologue"]
@@ -8021,6 +7162,7 @@ name = "CastStrength"
 signature = ""
 c_name = "ovl22_e38"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e38 (cast handler of spell 35 (SpellNames[35] is 'Strength' at DS:28E9); rolls a class bonus die (d4 magic-user, d6 cleric/thief, d8 fighter), raises the target's Strength, clamps at 18 with a fighter percentile, and adds the strength affect $26 (RaiseStrength keeps the earlier strength in affect 0Ch or 26h, whitepaper 5.22.2)); auto:entry_38"
 evidence = ["prologue"]
@@ -8034,6 +7176,7 @@ name = "CastAnimateDead"
 signature = ""
 c_name = "ovl22_e39"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e39 (cast handler of spell 36 (SpellNames[36] is 'Animate Dead' at DS:28E9): walks the party list ds5D96, turns up to the caster level corpses (Status 6, CreatureType 0) into undead on the caster's side and leaves the animate affect $20 with 'is animated' (make match UNIT=ovl22 FN=CastAnimateDead)); auto:entry_39"
 evidence = ["prologue"]
@@ -8047,6 +7190,7 @@ name = "CastCureBlindness"
 signature = ""
 c_name = "ovl22_e40"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e40 (cast handler of spell 37 (SpellNames[37] is 'Cure Blindness' at DS:28E9): removes the blindness affect $21 (SpellTable[37].AffectId) from the first chosen target ds6C95 and shows 'can see' when it was there (make match UNIT=ovl22 FN=CastCureBlindness)); auto:entry_40"
 evidence = ["prologue"]
@@ -8060,6 +7204,7 @@ name = "CastCauseBlindness"
 signature = ""
 c_name = "ovl22_e41"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e41 (spell 38 Cause Blindness handler: applies ds681B to the targets with the message 'is blind' (ovl22_e10 maps DS:6B84+38*4 to overlay stub 0096:00ED; SpellNames[38]='Cause Blindness'; its affect $21 is the blindness Cure Blindness removes)); auto:entry_41"
 evidence = ["prologue"]
@@ -8073,6 +7218,7 @@ name = "CureDiseaseAffects"
 signature = "function CureDiseaseAffects: Boolean"
 c_name = "ovl22_fn_228A"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_fn_228A (the helper ovl22_e42 (spell 39 Cure Disease) and ovl22_e54 call: cures the six DiseaseAffects[1..6] ($1F,$22,$2B,$2C,$32,$39) with their companions from ds6C95 and returns whether it cured any (make match UNIT=ovl22 FN=CureDiseaseAffects: 165 bytes)); auto:near_call"
 evidence = ["prologue"]
@@ -8086,6 +7232,7 @@ name = "CastCureDisease"
 signature = ""
 c_name = "ovl22_e42"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e42 (spell 39 Cure Disease handler: calls CureDiseaseAffects on ds6C95 and drops the result (ovl22_e10 maps DS:6B84+39*4 to overlay stub 0096:00F2; SpellNames[39]='Cure Disease' at DS:2F28; SpellTable[39].AffectId is 0); make match UNIT=ovl22 FN=CastCureDisease: 17 bytes); auto:entry_42"
 evidence = ["prologue"]
@@ -8099,6 +7246,7 @@ name = "CastCauseDisease"
 signature = ""
 c_name = "ovl22_e43"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e43 (spell 40 Cause Disease handler: applies ds681B to the targets with the message 'is diseased' and Flag 1 (ovl22_e10 maps DS:6B84+40*4 to overlay stub 0096:00F7; SpellNames[40]='Cause Disease'; the affect is one CureDiseaseAffects clears)); auto:entry_43"
 evidence = ["prologue"]
@@ -8112,6 +7260,7 @@ name = "CastDispelMagic"
 signature = ""
 c_name = "ovl22_e44"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e44 (ovl22_e10 fills SpellHandlers[41] and SpellHandlers[46] (DS:6B84+41*4, DS:6B84+46*4) with overlay stub 0096:00FC = ovl22:2385; SpellNames[41] and SpellNames[46] are both 'Dispel Magic' (DS:2F7A, DS:3047). The routine dispels the target's affects by a caster-level chance, which is Dispel Magic); auto:entry_44"
 evidence = ["prologue"]
@@ -8125,6 +7274,7 @@ name = "CastPrayer"
 signature = ""
 c_name = "ovl22_e45"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e45 (ovl22_e10 fills SpellHandlers[42] (DS:6B84+42*4) with overlay stub 0096:0101 = ovl22:24D6; SpellNames[42] is 'Prayer' (DS:2FA3). The routine applies the spell to the targets with the caster's Side in the affect data and the message 'is praying'); auto:entry_45"
 evidence = ["prologue"]
@@ -8138,6 +7288,7 @@ name = "CastRemoveCurse"
 signature = ""
 c_name = "ovl22_e9"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e9 (ovl22_e10 fills SpellHandlers[43] (DS:6B84+43*4) with overlay stub 0096:004D = ovl22:2540; SpellNames[43] is 'Remove Curse' (DS:2FCC), and the Temple's RemoveCurse (ovl04:083A) stores the character in ds6C95 and calls it. It cures the curse affect 24h or clears the Cursed flag of the character's first cursed item, saying 'is un-cursed' or ''s item is un-cursed'); auto:entry_9"
 evidence = ["prologue"]
@@ -8151,6 +7302,7 @@ name = "CastBestowCurse"
 signature = ""
 c_name = "ovl22_e46"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e46 (cast handler of spell 44 Bestow Curse: ovl22_e10 maps DS:6B84+44*4 to stub 0096:0106, SpellNames[44] is 'Bestow Curse' and it applies the spell with 'has been cursed!'); auto:entry_46"
 evidence = ["prologue"]
@@ -8164,6 +7316,7 @@ name = "CastBlink"
 signature = ""
 c_name = "ovl22_e47"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e47 (cast handler of spell 45 Blink: ovl22_e10 maps DS:6B84+45*4 to stub 0096:010B, SpellNames[45] is 'Blink' and it applies the spell with 'is blinking'); auto:entry_47"
 evidence = ["prologue"]
@@ -8177,6 +7330,7 @@ name = "CastFireball"
 signature = ""
 c_name = "ovl22_e48"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e48 (cast handler of spells 47 and 64 Fireball: ovl22_e10 maps DS:6B84+47*4 and +64*4 to stub 0096:0110, SpellNames[47] is 'Fireball', it scans two steps around the aim point and deals d6 per level of fire damage with no message); auto:entry_48"
 evidence = ["prologue"]
@@ -8190,6 +7344,7 @@ name = "ApplySpellToSideUpToLevel"
 signature = "procedure ApplySpellToSideUpToLevel(Affect, Side: Byte; Message: String40)"
 c_name = "ovl22_fn_2764"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_fn_2764 (applies the current spell to up to caster-level chosen targets on one side, first curing the opposite spell's affect; called by the Haste and Slow handlers); auto:near_call; signature from the callers: ovl22:2892 (Haste) pushes the affect, the caster's side and the string, ovl22:2C09 (Slow) the opposite side ('is Slowed')"
 evidence = ["prologue"]
@@ -8203,6 +7358,7 @@ name = "CastHaste"
 signature = ""
 c_name = "ovl22_e49"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e49 (cast handler of spell 48 Haste: ovl22_e10 maps DS:6B84+48*4 to stub 0096:0115, SpellNames[48] is 'Haste', it removes the slow affect 2Ah from the caster's side up to the caster level and applies the spell with is Hasted); auto:entry_49"
 evidence = ["prologue"]
@@ -8216,6 +7372,7 @@ name = "DamageTargetInCell"
 signature = "procedure DamageTargetInCell(CellX, CellY, Damage, SaveKind: Byte; var Blocked: Boolean)"
 c_name = "ovl22_fn_28BC"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_fn_28BC (deals a line spell's damage to the combatant in one map cell and reports whether the tile blocks the beam; called by the Lightning Bolt helpers (ovl22_e50, ovl22_fn_295B)); auto:near_call; signature from the callers: ovl22_e50 (Lightning Bolt) pushes the aim cell, the rolled damage, save kind 4 and a var flag; ovl22_fn_295B passes the walked cell, a damage, a save kind and its var flag"
 evidence = ["prologue"]
@@ -8229,6 +7386,7 @@ name = "CastLineBeam"
 signature = ""
 c_name = "ovl22_fn_295B"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_fn_295B (line spells' beam helper: draws the beam line and damages each cell with DamageTargetInCell, called by the Lightning Bolt handler and the paralysis beams (ovl22_e50, ovl22_fn_2F57, ovl22_fn_31D7)); auto:near_call"
 evidence = ["prologue"]
@@ -8242,6 +7400,7 @@ name = "CastLightningBolt"
 signature = ""
 c_name = "ovl22_e50"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e50 (cast handler of spell 51 Lightning Bolt: one d6 per caster level, dealt to the aim cell and along the beam with the bounce flag (whitepaper 5.22.2)); auto:entry_50"
 evidence = ["prologue"]
@@ -8255,6 +7414,7 @@ name = "CastSlow"
 signature = ""
 c_name = "ovl22_e51"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e51 (cast handler of spell 55 Slow: removes the haste affect from the opposite side then applies Slow (whitepaper 5.22.2)); auto:entry_51"
 evidence = ["prologue"]
@@ -8268,6 +7428,7 @@ name = "CastRestoration"
 signature = ""
 c_name = "ovl22_e52"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e52 (cast handler of spell 56 Restoration: gives back one drained level and its hit points and advances a class (whitepaper 5.22.2)); auto:entry_52"
 evidence = ["prologue"]
@@ -8281,6 +7442,7 @@ name = "CastMonsterHaste"
 signature = ""
 c_name = "ovl22_e53"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e53 (the ovl22_e10 handler table points SpellHandlers[57] at stub 0096:0129 (overlay entry 53, ovl22:2E02); the routine cancels the slow affect $2A from the first chosen target (CureAffect) and otherwise applies the current spell with 'is Speedy', so it is the single-target haste handler of the monster-only spell 57 (SpellNames[57] is empty); make match UNIT=ovl22: 65 bytes matched); auto:entry_53"
 evidence = ["prologue"]
@@ -8294,6 +7456,7 @@ name = "CastMonsterHeal"
 signature = ""
 c_name = "ovl22_e54"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e54 (the ovl22_e10 handler table points SpellHandlers[58] at stub 0096:012E (overlay entry 54, ovl22:2E4D); the routine cures the Poisoned affect $37 plus its companion $16 from the first chosen target, else cures disease, else heals 1d4+8 with 'is Healed'; the heal handler of the monster-only spell 58 (SpellNames[58] is empty); make match UNIT=ovl22: 140 bytes matched); auto:entry_54"
 evidence = ["prologue"]
@@ -8307,6 +7470,7 @@ name = "CastMonsterStrength"
 signature = ""
 c_name = "ovl22_e55"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e55 (the ovl22_e10 handler table points SpellHandlers[59] at stub 0096:0133 (overlay entry 55, ovl22:2EE5); the routine gives the first chosen target a plain Strength 21 through RaiseStrength (no percentile), shows 'is stronger' and adds the strength affect $26 for SpellAffectDuration; the strength handler of the monster-only spell 59 (SpellNames[59] is empty); make match UNIT=ovl22: 104 bytes matched); auto:entry_55"
 evidence = ["prologue"]
@@ -8320,6 +7484,7 @@ name = "CastMonsterBeam"
 signature = ""
 c_name = "ovl22_e56"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e56 (the ovl22_e10 handler table points SpellHandlers[60] at stub 0096:0138 (overlay entry 56, ovl22:2F4D); the routine strikes the aim cell ds6DB9/ds6DBA for 1d6+20 through DamageTargetInCell (save kind 4, half damage) and then runs a short CastLineBeam(3, 20, 4, 0) away from the caster; the beam handler of the monster-only spell 60 (SpellNames[60] is empty); make match UNIT=ovl22: 63 bytes matched); auto:entry_56"
 evidence = ["prologue"]
@@ -8333,6 +7498,7 @@ name = "CastMonsterParalyze"
 signature = ""
 c_name = "ovl22_e57"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e57 (handler of the monster-only spell 61 (SpellHandlers element 61, overlay entry 57, stub 0096:013D): applies the current spell with the message 'is paralyzed'); auto:entry_57"
 evidence = ["prologue"]
@@ -8346,6 +7512,7 @@ name = "CastMonsterHealWounds"
 signature = ""
 c_name = "ovl22_e58"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e58 (handler of the monster-only spell 62 (SpellHandlers element 62, overlay entry 58, stub 0096:0142): heals the first chosen target 2d4 + 2 hit points and reports 'is Healed'); auto:entry_58"
 evidence = ["prologue"]
@@ -8359,6 +7526,7 @@ name = "CastMonsterInvisibility"
 signature = ""
 c_name = "ovl22_e59"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e59 (handler of the monster-only spell 63 (SpellHandlers element 63, overlay entry 59, stub 0096:0147): applies the current spell with the message 'is invisible'); auto:entry_59"
 evidence = ["prologue"]
@@ -8372,6 +7540,7 @@ name = "CastMonsterMagicDamage"
 signature = ""
 c_name = "ovl22_e60"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e60 (handler of the monster-only spell 65 (SpellHandlers element 65, overlay entry 60, stub 0096:014C): applies the current spell for 2d4 + 2 magic damage (kind 8) with no message); auto:entry_60"
 evidence = ["prologue"]
@@ -8385,6 +7554,7 @@ name = "CastMonsterNoEffect"
 signature = ""
 c_name = "ovl22_e61"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e61 (handler of the monster-only spell 66 (SpellHandlers element 66, overlay entry 61, stub 0096:0151): the handler body is empty, so the cast does nothing after the picker); auto:entry_61"
 evidence = ["prologue"]
@@ -8398,6 +7568,7 @@ name = "CastMonsterReadMagic"
 signature = ""
 c_name = "ovl22_e62"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e62 (ovl22:30A2 calls ApplySpellToTargets(ds681B, $FF, 1, 0, 0, 'is Reading'); the handler table element 67 (whitepaper 5.22.2), a monster-only spell with its own reading affect); auto:entry_62"
 evidence = ["prologue"]
@@ -8411,6 +7582,7 @@ name = "MonsterBreath"
 signature = "procedure MonsterBreath(Who: PCharacter; Affect: PAffect; Unused: Byte)"
 c_name = "ovl22_e63"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e63 (ovl22:30D9 shows 'Breathes!' and runs a breath attack: a 1d100 chance check on ds6DE3, the target picker, the zap animation, a line beam (CastLineBeam) and DamageTargetInCell for the breather's maximum hit points; Share the monster breath attack (called with a character and its breath affect)); auto:entry_63"
 evidence = ["prologue"]
@@ -8424,6 +7596,7 @@ name = "IsScroll"
 signature = "function IsScroll(Item: PItem): Boolean"
 c_name = "ovl22_e6"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e6 (ovl22:323D returns True when the far pointer is not nil and RaceRow[Item^.ItemType][0] is in $B..$D; every caller (AddScrollSpells, UseMagicItem, StudyRestMinutes, CancelScribing, ScribeScrolls, ProcessPendingScribedSpell) uses it to find the items whose Affects carry scroll spells); auto:near_call"
 evidence = ["prologue"]
@@ -8437,6 +7610,7 @@ name = "ConsumeScrollSpell"
 signature = "procedure ConsumeScrollSpell(Who: PCharacter; Item: PItem; Spell: Byte)"
 c_name = "ovl22_e7"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e7 (ovl22:328A clears the first of Item^.Affects[1..3] whose low seven bits equal the scribed spell (Spell and $7F), decrements Item^.NameNum[2] and hands the item to res12_fn_1509 when it falls below $D2; ProcessPendingScribedSpell calls it to consume a spell from a scroll after it is marked known); auto:entry_7"
 evidence = ["prologue"]
@@ -8450,6 +7624,7 @@ name = "ShowSpellMessage"
 signature = "procedure ShowSpellMessage(Who: PCharacter; Message: String40; Spell: Byte)"
 c_name = "ovl22_e8"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e8 (ovl22:331A draws Who's name (res12_fn_1816), then Message right after it, then the spell's name; in combat it shows the timed message 'Casts a Spell' and 'Spell:NAME'. Callers pass 'casts' (CastChosenSpell), 'has memorized' (ProcessMemorizedSpell) and 'has scribed' (ProcessPendingScribedSpell), so it announces a named character's spell event.); auto:near_call"
 evidence = ["prologue"]
@@ -8463,6 +7638,7 @@ name = "InitSpellHandlers"
 signature = ""
 c_name = "ovl22_e10"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "renamed from ovl22_e10 (ovl22:3413 fills SpellHandlers at DS:6B84 (element 0 the target picker via SpellTargetPicker, elements 1..$43 the per-spell cast handlers, all overlay stubs of this unit) and stores @MonsterBreath in DS:6988; ovl11:002D StartGame calls it once at start-up. It initialises the spell-casting handlers and globals.); auto:entry_10"
 evidence = ["prologue"]
@@ -8476,6 +7652,7 @@ name = "ovl22_init"
 signature = ""
 c_name = "ovl22_init"
 level = "L2"
+review = "passed 2026-10-14 by rev-sonnet, 67fa329"
 justification = ""
 notes = "auto:entry_0"
 evidence = ["prologue"]

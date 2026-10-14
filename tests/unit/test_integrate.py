@@ -143,3 +143,42 @@ def test_a_branch_already_in_main_only_gets_its_bookkeeping(clone):
     before = git("rev-parse", "HEAD", cwd=repo)
     assert integrate.main([]) == 0
     assert cleared == ["a"] and git("rev-parse", "HEAD", cwd=repo) == before
+
+
+def test_main_moving_during_the_check_integrates_again_instead_of_rejecting(clone, monkeypatch):
+    """2026-10-14: ovl22 was rejected because a tooling merge and a roster commit landed on main while its
+    make check ran; the hand-off itself was fine."""
+    repo, handoffs, cleared, tip = clone
+    real_make = integrate.make
+    checks = []
+
+    def make(target, cwd, log, *extra):
+        if target == "check":
+            checks.append(cwd)
+            if len(checks) == 1:                       # someone commits to main during the first check
+                (repo / "work/roster.toml").write_text("# moved\n")
+                git("add", "work/roster.toml", cwd=repo)
+                git("commit", "-qm", "roster edit during the integration", cwd=repo)
+        return real_make(target, cwd, log, *extra)
+    monkeypatch.setattr(integrate, "make", make)
+    assert integrate.main([]) == 0
+    assert len([c for c in checks if Path(c) != repo]) == 2 and cleared == ["a"]   # two integrations, one per main
+    log = git("log", "--format=%s", "-3", cwd=repo).splitlines()
+    assert log[0].startswith("Merge unit/a (complete)") and log[1] == "roster edit during the integration"
+
+
+def test_main_moving_again_on_the_retry_is_still_rejected(clone, monkeypatch):
+    repo, handoffs, cleared, tip = clone
+    real_make = integrate.make
+    n = []
+
+    def make(target, cwd, log, *extra):
+        if target == "check":
+            n.append(1)
+            (repo / "work/roster.toml").write_text("# moved %d\n" % len(n))
+            git("add", "work/roster.toml", cwd=repo)
+            git("commit", "-qm", "moves again", cwd=repo)
+        return real_make(target, cwd, log, *extra)
+    monkeypatch.setattr(integrate, "make", make)
+    assert integrate.main([]) == 1                      # one retry, then the usual rejection
+    assert len(n) == 2 and "integrate = rejected" in (handoffs / "a.md").read_text()

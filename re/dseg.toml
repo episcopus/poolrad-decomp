@@ -1185,3 +1185,8 @@ evidence = "operand 3 of ECL command 12 (ovl03:03B4), passed as PicBank: ShowEnc
 offset = 0x4435
 name = "EncounterMemberCount"
 evidence = "the members ECL command 11 (ovl03:0450) has added: incremented per member, the command adds none at 63 (MaxEncounterMembers)"
+
+[[global]]
+offset = 0x07E8
+name = "IconEditorPrompts"
+evidence = "ovl16:39F9 passes SizeName + DS:07E8[State] (State 1..5) as the ReadPromptChoice prompt of the icon editor and ovl16:3A31..3A8C Delete and Insert the word at column 13 of entry 3 (DS:083A); the image holds the five prompt lines 'Parts color-1 color-2 Size Exit', 'Head Weapon Exit', 'Weapon Body xxxx Shield Arm Leg Exit', ' Keep Exit' and 'Next Prev Keep Exit' at DS:07E8, stride 41"

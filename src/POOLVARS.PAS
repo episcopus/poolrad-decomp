@@ -255,6 +255,13 @@ type
     Unknown: array[0..$24] of Byte;   { +0..+$24 }
     AimDirs: array[1..4] of Byte;     { +$25..+$28: the cloud aim directions at DS:290E }
   end;
+  { One entry of the starting-age table ds3E5B: a new character of that race and class starts Base years
+    old plus Count dice of Sides sides (ovl16:056C). }
+  TAgeEntry = record
+    Base: Word;                   { +0: the base age in years }
+    Count: Byte;                  { +2: the number of dice }
+    Sides: Byte;                  { +3: the sides of each die }
+  end;
   { The seven digits of the camp's rest clock RestTime (ovl20:02F2). }
   TRestClock = array[0..6] of Word;
   TCharacter = record
@@ -286,7 +293,11 @@ type
       for every cleric spell (table class 0) of a level the character has a cleric spell slot
       for (ovl23:0135); likely the spells the character can learn [I]. }
     KnownSpells: array[1..$38] of Byte;
-    Pad6B: Byte;                  { +$6B }
+    { +$6B: the sweep-attack limit RecalcCombatValues (00BA:0BB8) sets: the fighter level
+      (ClassLevels[2]) when it is above 0 and the race is above 0, else 1; StartCombatantRound
+      (ovl13:0000) copies it into the combatant's attack-slot limit (Combat^.Pad4[5]) which
+      SweepEnemies reads, and CollapseAndChangeSide (ovl12:0B1B) sets it from the fighter level too. }
+    SweepAttacks: Byte;
     { +$6C: bits 0..6 are the combat footprint kind (PlaceCombatant copies them into CombatantTable[].Kind); bit 7
       is not part of it. }
     CombatSize: Byte;
@@ -579,6 +590,11 @@ var
     compares with the attacked character's name. Their text is not read yet [?]. }
   ds0402: array[1..8] of string[15];
   ds04DF: string[40];             { prompt string HandleWildernessKeys passes to ReadPromptChoice; filled elsewhere }
+  { The item-usage bit of each class 0..7 (the image: 2, $10, 8, $40, $80, 1, 4, $20 for cleric, druid,
+    fighter, paladin, ranger, magic-user, thief, monk): ovl16:056C adds the bit of every class a new
+    character has a level in into TCharacter.ClassBits (+$B0), the mask UseBestItem tests an item's
+    ClassMask against. }
+  ds05D6: array[0..7] of Byte;
   { One bit per class 0..7 (the value is added to a class-bit mask): ovl16:29AE builds the character's
     class bits from the classes with a level above 0 (DS:05DE[ClassLevels]) and the bits it may train. }
   ds05DE: array[0..7] of Byte;
@@ -586,6 +602,12 @@ var
     ReadPromptChoice under the title 'Choose a function '. }
   ds05F0: string[23];
   ds0619: array[0..10] of TFunctionSlot;  { the training-hall function menu (see TFunctionSlot) }
+  ds07E7: Byte;                   { the byte between the function menu and the icon editor prompts (never read) }
+  { The five prompt lines of the character-icon editor EditCharacterIcon (ovl16:382D), 1-based, indexed by
+    its State: the image holds 'Parts color-1 color-2 Size Exit', 'Head Weapon Exit',
+    'Weapon Body xxxx Shield Arm Leg Exit', ' Keep Exit' and 'Next Prev Keep Exit' (DS:07E8, stride 41).
+    The editor rewrites the 'xxxx' of line 3 (column 13) to 'Hair' or 'Face'. }
+  IconEditorPrompts: array[1..5] of string[40];
   { The hit dice of the eight classes 0..7, rolled by ovl16:4235: ClassHitDiceCount[Class] dice of
     ClassHitDieSides[Class] sides. The image holds 1,1,1,1,2,1,1,2 (cleric, druid, fighter, paladin,
     ranger, magic-user, thief, monk; two dice for the ranger and the monk) and 8,8,10,10,8,4,6,4
@@ -640,9 +662,28 @@ var
   ds3DA3: array[0..$F, 0..$F] of Byte;
   RaceStrengthMax: array[0..$F, -2..$D] of Byte absolute ds3DA3;
   RaceStrengthPercent: array[0..$F, -4..$B] of Byte absolute ds3DA3;
+  { The classes each race may pick when a character is created (ovl16:056C): a 12-byte row per race 1..7
+    (Dwarf .. Human, RaceNames order), the count of choices first and then the ClassMask numbers (0..7
+    the single classes, 8..16 the multi-classes) in menu order. The image's Dwarf row is 3, 2, 6, 14
+    (fighter, thief, fighter/thief) and its Human row 4, 0, 2, 5, 6. Row 0 is the index base; the image
+    holds the tail of the Human row of ds3DA3 there. }
+  ds3E17: array[0..7, 0..11] of ShortInt;
+  { The starting ages (ovl16:056C): a 28-byte row per race 1..7 of seven TAgeEntry, one per single class 0..6
+    (the image's Dwarf cleric is 250 + 2d20, its fighter 40 + 5d4). Row 0 is the index base: it lies over
+    the Half-Orc and Human rows of ds3E17 in the image. }
+  ds3E5B: array[0..7, 0..6] of TAgeEntry;
+  { The age brackets of each race 1..7 (ovl16:056C): five words per row, the ages above which a character
+    counts as a young adult, middle aged, old and venerable (the image's Dwarf row is 50, 150, 250, 350,
+    450); the ability scores of a new character are adjusted for every bracket its age is above. Row 0
+    is the index base: the image holds the end of ds3E5B there. }
+  ds3F31: array[0..7, 0..4] of Word;
   { The per-class ability minimums ModifyCharacter clamps to: six columns per class (Strength ..
     Charisma), indexed by [ClassMask, Stat]. }
   ds3F81: array[0..$10, 0..5] of Byte;
+  { The alignments each class mask may pick (ovl16:056C): a 10-byte row per ClassMask 0..16, the count first and
+    then the AlignmentNames numbers (the image's cleric row is 9 and 0..8, its druid row 5 and 1, 3, 4, 5,
+    7). }
+  ds3FE7: array[0..16, 0..9] of ShortInt;
   { The constitution hit-point adjustment table (the AD&D 1e table): ConstitutionHitPointTable[Constitution] is the
     hit-point adjustment a class with a level gets, signed (Constitution 3 gives -2, 4..6 -1,
     7..14 0, 15 +1, 16..18 +2). ovl16:3F31 sums it over the classes the character has a level in
@@ -1194,6 +1235,10 @@ var
     thief [6, 2] 1251) and -1 above the class's top level. The Restoration handler (ovl22:2C43) reads
     [Class, Level + 1] to pick the class whose next level is cheapest to restore. }
   ExperienceTable: array[0..7, 0..13] of LongInt;
+  { The dice of a new character's starting gold per class 0..7 (ovl16:056C): the count, then the sides (the image: cleric and
+    druid 3d6, fighter, paladin, ranger and monk 5d4, magic-user 2d4, thief 2d6). The gold is ten times
+    the total rolled over the character's classes, shared by their number. }
+  ds4263: array[0..7, 0..1] of Byte;
   ds40BC: Byte;                   { the byte before ClericSlotTable; see above }
   ClericSlotTable: array[0..12, 1..3] of Byte;  { cleric spell slots of levels 1..3 per cleric level }
   ds41D4: Byte;                   { the byte before MageSlotTable; see above }

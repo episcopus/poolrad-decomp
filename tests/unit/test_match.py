@@ -45,8 +45,10 @@ def test_an_overlay_unit_matches_through_its_stubs(built):
 def test_a_routine_matches_inside_a_unit_of_stubs():
     # A unit being decompiled routine by routine: a matched routine sits beside stubs (playbook 30), and
     # such a unit is not compared as a whole. Picked from the sources, since units complete over time.
+    import tomllib
+    external = {r["unit"] for r in tomllib.loads((ROOT / "re/symbols.toml").read_text())["routine"] if r.get("external")}
     for unit in match.units_with_source():
-        if unit == "main":
+        if unit == "main" or unit in external:      # res03's object-file routines are stubs that match by bytes
             continue
         rs = match.routines_of((match.SRC / (unit.upper() + ".PAS")).read_text())
         if any(s for _n, s in rs) and any(not s for _n, s in rs):

@@ -3,7 +3,7 @@ unit OVL22;
   ChooseSpellFromList shows (BuildSpellList and its helpers, whitepaper 5.22), runs the picker
   (PickSpellFromMenu), gives a spell's area pattern size (SpellAreaSize) and casts, scribes, memorizes
   and learns spells for combat (ovl09) and the camp (ovl15). }
-{$A-,O+,F+,S-,R-,G-,I-}
+{$A-,O+,F+,S-,R-,G-,I-,L-}
 interface
 uses POOLVARS, RES03, RES06, RES09, RES12, OVL23, OVL24, OVL25, OVL30, OVL31;
 function PickSpellFromMenu(Mode: Byte; var Choice: Word): Byte;
@@ -192,6 +192,7 @@ end;
 procedure AddSpellMenuLine(Spell: Byte);
 const
   MenuLineBytes = $2E;            { a menu line node: Text, Flag29 and Next, the used part of TMenuLine }
+  SpellMask = $7F;                { the low seven bits of a spell byte hold the spell number }
 var
   Line: PMenuLine;
   Count: ShortInt;                { ShortInt, not Byte: indexing SpellMenuSpells and the level compare
@@ -220,41 +221,52 @@ begin
     Line := Line^.Next;
   end;
   Line^.Next := nil;
-  if SpellTable[Spell and $7F].Level <> PrevLevel then
+  if SpellTable[Spell and SpellMask].Level <> PrevLevel then
   begin
-    Line^.Text := SpellLevelNames[SpellTable[Spell and $7F].Level];
+    Line^.Text := SpellLevelNames[SpellTable[Spell and SpellMask].Level];
     Line^.Flag29 := 1;
     GetMem(Line^.Next, MenuLineBytes);
     Line := Line^.Next;
     Line^.Next := nil;
   end;
-  if Spell > $7F then
+  if Spell > SpellMask then
     Line^.Text := ' *'
   else
     Line^.Text := '  ';
-  Line^.Text := Line^.Text + SpellNames[Spell and $7F];
+  Line^.Text := Line^.Text + SpellNames[Spell and SpellMask];
   Line^.Flag29 := 0;
-  SpellMenuSpells[Count] := Spell and $7F;
+  SpellMenuSpells[Count] := Spell and SpellMask;
 end;
 { ovl22:044E: retf 2: 2 bytes of parameters; 6 bytes of locals }
 { ovl22:044E. Adds the spell affects of the current item (CurrentItem, set by AddScrollSpells or by the
   caller) to the spell menu list: for each of its three spell affects it calls AddSpellMenuLine and
   records the item in SpellMenuItems[SpellMenuItemCount]. Pending selects which affects count: nonzero
-  takes the pending ones (bit $80 set, > $80), zero the plain ones (> 0). First it clears the item's
-  HiddenNames when HasAffect(SelectedCharacter, $10) reports the affect, or when the character is
-  a cleric (ClassLevels[0] > 0) and ItemTable[ItemType].Slot is $0C; a hidden item is skipped. Called by
-  BuildSpellList (Kind 2) and AddScrollSpells. }
+  takes the pending ones (the pending bit $80 set, > $80), zero the plain ones (> 0). First it clears
+  the item's HiddenNames so its spells can be listed: a character carrying the Read Magic affect
+  (HasAffect(SelectedCharacter, ReadMagicAffect)) sees the item's hidden spell names, and a cleric
+  (ClassLevels[0] > 0) sees a cleric's scroll (ItemTable[CurrentItem^.ItemType].Slot =
+  ClericScrollClass); an item whose HiddenNames is not cleared is skipped. Called by BuildSpellList
+  (Kind 2) and AddScrollSpells. }
 procedure AddItemSpells(Pending: Byte);
+const
+  { The Read Magic affect (spell 18 Read Magic, SpellTable[18].AffectId): while the character
+    carries it he sees the item's hidden spell names. }
+  ReadMagicAffect = $10;
+  { ItemTable[ItemType].Slot of a cleric's scroll (item type $3E, BuildTreasureItem ovl21:1010):
+    a cleric sees the scroll's spells without Read Magic. }
+  ClericScrollClass = $0C;
+  PendingSpell = $80;             { the pending bit above the spell number in an item's spell affect }
 var
   I: Byte;
   Affect: Pointer;
 begin
-  if HasAffect(SelectedCharacter, $10, Affect) or
-     ((SelectedCharacter^.ClassLevels[0] > 0) and (ItemTable[CurrentItem^.ItemType].Slot = $0C)) then
+  if HasAffect(SelectedCharacter, ReadMagicAffect, Affect) or
+     ((SelectedCharacter^.ClassLevels[0] > 0) and
+      (ItemTable[CurrentItem^.ItemType].Slot = ClericScrollClass)) then
     CurrentItem^.HiddenNames := 0;
   if CurrentItem^.HiddenNames = 0 then
     for I := 1 to 3 do
-      if ((Pending <> 0) and (CurrentItem^.Affects[I] > $80)) or
+      if ((Pending <> 0) and (CurrentItem^.Affects[I] > PendingSpell)) or
          ((Pending = 0) and (CurrentItem^.Affects[I] > 0)) then
       begin
         AddSpellMenuLine(CurrentItem^.Affects[I]);
@@ -290,6 +302,9 @@ end;
   character has a slot for and does not know yet (SpellTable 1..$38). It clears SpellMenuSpells first.
   Called by ovl19:299C ChooseSpellFromList. }
 function BuildSpellList(Kind: Byte): Byte;
+const
+  SpellMask = $7F;                { the low seven bits of a spell byte hold the spell number }
+  PendingSpell = $80;             { the pending bit above the spell number }
 var
   I: Byte;
 begin
@@ -300,11 +315,11 @@ begin
   case Kind of
     0:
       for I := 0 to $14 do
-        if (SelectedCharacter^.Spells[I] > 0) and (SelectedCharacter^.Spells[I] < $80) then
+        if (SelectedCharacter^.Spells[I] > 0) and (SelectedCharacter^.Spells[I] < PendingSpell) then
           AddSpellMenuLine(SelectedCharacter^.Spells[I]);
     5:
       for I := 0 to $14 do
-        if SelectedCharacter^.Spells[I] > $7F then
+        if SelectedCharacter^.Spells[I] > SpellMask then
           AddSpellMenuLine(SelectedCharacter^.Spells[I]);
     1:
       for I := 1 to $37 do
@@ -343,40 +358,41 @@ begin
     Area := 1;
   SpellAreaSize := Area;
 end;
-{ ovl22:07D6. The duration (in ApplyAffect's time unit) of the affect a spell leaves. A few
-  spells are rolled for instead of read from the table: spell or affect $28 is 1d6*10, $39 and $3D are
-  5d4, $3B is 1d4*10+40, $3F is 2d10*10 in combat (view mode 5) else (1d10+10)*10, and $43 is a flat
-  $5A0. Every other value uses the SpellTable row's duration base (byte +4) plus its per-level byte
-  (byte +5) times the caster level from SpellCasterLevel. Called by ApplySpellToTargets (as ApplyAffect's
-  Duration) and CastEnlarge, CastHoldPerson, CastStrength, CastMonsterStrength. }
+{ ovl22:07D6. The duration (in ApplyAffect's time unit) of the affect a spell leaves. Spell is the
+  spell number (the cast handlers pass ds681B). A few spells are rolled for instead of read from the
+  table: spell 40 Cause Disease is 1d6*10, spells 57 and 61 are 5d4, spell 59 is 1d4*10+40, spell 63 is
+  2d10*10 in combat (view mode 5) else (1d10+10)*10, and spell 67 is a flat $5A0. Every other value
+  uses the SpellTable row's duration base (byte +4) plus its per-level byte (byte +5) times the caster
+  level from SpellCasterLevel. Called by ApplySpellToTargets (as ApplyAffect's Duration) and
+  CastEnlarge, CastHoldPerson, CastStrength, CastMonsterStrength. }
 function SpellAffectDuration(Spell: Byte): Word;
 const
-  { The few spells whose affect time is rolled for instead of read from SpellTable; the values
-    are the spell or affect codes the callers pass (the codes above $38 are affects, not spells). }
-  RolledSpell28 = $28;             { 1d6 * 10 }
-  RolledSpell39 = $39;             { 5d4 }
-  RolledSpell3B = $3B;             { 1d4 * 10 + 40 }
-  RolledSpell3D = $3D;             { 5d4 }
-  RolledSpell3F = $3F;             { 2d10 * 10 in combat, else (1d10 + 10) * 10 }
-  FixedSpell43 = $43;              { a flat $5A0 }
+  { The few spells whose affect time is rolled for instead of read from SpellTable, by spell number
+    (ds681B); the values are spell numbers, not affect ids. }
+  CauseDisease = $28;              { spell 40: 1d6 * 10 }
+  MonsterHaste = $39;              { spell 57: 5d4 }
+  MonsterStrength = $3B;           { spell 59: 1d4 * 10 + 40 }
+  MonsterParalyze = $3D;           { spell 61: 5d4 }
+  MonsterInvisibility = $3F;       { spell 63: 2d10 * 10 in combat, else (1d10 + 10) * 10 }
+  MonsterReadMagic = $43;          { spell 67: a flat $5A0 }
   CombatViewMode = 5;              { ds49F3 during combat (whitepaper 5.5) }
   Scale = 10;
 var
   Value: Word;
 begin
   case Spell of
-    RolledSpell28:
+    CauseDisease:
       Value := RollDice(1, 6) * Scale;
-    RolledSpell39, RolledSpell3D:
+    MonsterHaste, MonsterParalyze:
       Value := RollDice(5, 4);
-    RolledSpell3B:
+    MonsterStrength:
       Value := RollDice(1, 4) * Scale + 40;
-    RolledSpell3F:
+    MonsterInvisibility:
       if ds49F3 = CombatViewMode then
         Value := RollDice(2, 10) * Scale
       else
         Value := (RollDice(1, 10) + Scale) * Scale;
-    FixedSpell43:
+    MonsterReadMagic:
       Value := $5A0;
   else
     Value := SpellTable[Spell].Pad2[4] + SpellTable[Spell].Pad2[5] * SpellCasterLevel(Spell);
@@ -832,22 +848,23 @@ end;
 { ovl22:151B (e26). Cast handler of spell 21, Sleep (SpellHandlers[21]; InitSpellHandlers fills the table,
   whitepaper 5.22.2): sets ds6820 and rolls the 4d4 pool ds4844. For every chosen target ds6C91[I] it
   charges a cost in ds4845 by the target's HighestLevel (+$73, a monster's hit dice) and level 5's Race
-  (+$2E). A target is slept (the cost comes off the pool) only when it is not dead (Status <> 1), does
-  not already carry the sleep affect $35 (HasAffect) and the pool still covers its cost; otherwise
-  it is dropped (ds6C91[I] := nil). ApplySpellToTargets then applies the spell's own affect to the
-  survivors with 'falls asleep'. Reads ds6C94, ds681B; changes ds6820, ds4844, ds4845 and the target list. }
+  (+$2E). A target is slept (the cost comes off the pool) only when it is not Animated (Status <> 1,
+  an undead), does not already carry the sleep affect $35 (HasAffect) and the pool still covers its
+  cost; otherwise it is dropped (ds6C91[I] := nil). ApplySpellToTargets then applies the spell's own
+  affect to the survivors with 'falls asleep'. Reads ds6C94, ds681B; changes ds6820, ds4844, ds4845
+  and the target list. }
 procedure CastSleep;
 const
   SleepAffect = $35;              { the affect that marks a target already asleep }
   PoolDiceCount = 4;              { the 4d4 pool of hit dice Sleep can affect }
   PoolDiceSides = 4;
-  DeadStatus = 1;                 { TCharacter.Status 1 counts as dead (whitepaper 4.2.5) }
+  StatusAnimated = 1;             { TCharacter.Status 1: Animated, the undead (StatusNames); Sleep refuses it }
   { The pool cost of one target, by its HighestLevel (a monster's hit dice), the AD&D Sleep table. }
   CostLevel0 = 1;
   CostLevel2 = 2;
   CostLevel3 = 4;
   CostLevel4 = 6;
-  CostLevel5Small = $A;           { a level-5 creature of Race 0 (a smaller kind) costs 10 }
+  CostLevel5Small = $A;           { a level-5 monster (Race 0, a hit-dice creature) costs 10 }
   CostLevel5Large = $14;          { any other level-5 or higher creature costs 20 }
 var
   I: Byte;                        { the target index, 1..ds6C94 }
@@ -871,9 +888,9 @@ begin
       ds4845 := CostLevel5Large;
     end;
     { QUIRK ovl22:15FE: the guard is written positive on purpose; the equivalent negative
-      `(Status = 1) or HasAffect(...) or (pool < cost)` then-drop-else-Dec form compiles with the
-      two branches laid out the other way round (probe PRB26.PAS) and does not match. }
-    if (ds6C91[I]^.Status <> DeadStatus) and not HasAffect(ds6C91[I], SleepAffect, Affect) and
+      `(Status = Animated) or HasAffect(...) or (pool < cost)` then-drop-else-Dec form compiles with
+      the two branches laid out the other way round (probe PRB26.PAS) and does not match. }
+    if (ds6C91[I]^.Status <> StatusAnimated) and not HasAffect(ds6C91[I], SleepAffect, Affect) and
        (ds4844 >= ds4845) then
       Dec(ds4844, ds4845)
     else
@@ -959,15 +976,15 @@ begin
 end;
 { ovl22:185B. Cast handler of spell 26, Slow Poison (entry 30: InitSpellHandlers maps DS:6B84+26*4 to overlay
   stub 0096:00B6; SpellNames[26] is 'Slow Poison' at DS:2D13). It needs the first chosen target ds6C95
-  to still be alive (Status is not 1) and to carry the Poisoned affect $37 (HasAffect); anything
-  else is dropped (ds6C95 := nil) and the cast does nothing. A poisoned target at 0 hit points is
-  brought back to 1 (Flag11B), the spell's own affect is applied to the targets ('is affected'), the
-  revival affect's removal handler is run (CallAffectHandler($4E), which heals an unconscious
-  character, ovl24 AffectRevival) and the poison-slowing affect $0F is added for $A units. Reads
-  ds6C95 and ds681B. }
+  to not be Animated (Status is not 1, an undead) and to carry the Poisoned affect $37 (HasAffect);
+  anything else is dropped (ds6C95 := nil) and the cast does nothing. A poisoned target at 0 hit
+  points is brought back to 1 (Flag11B), the spell's own affect is applied to the targets
+  ('is affected'), the revival affect's removal handler is run (CallAffectHandler($4E), which heals
+  an unconscious character, ovl24 AffectRevival) and the poison-slowing affect $0F is added for $A
+  units. Reads ds6C95 and ds681B. }
 procedure CastSlowPoison;
 const
-  DeadStatus = 1;                 { TCharacter.Status 1 counts as dead (whitepaper 4.2.5) }
+  StatusAnimated = 1;             { TCharacter.Status 1: Animated, the undead (StatusNames); Slow Poison refuses it }
   PoisonedAffect = $37;           { the Poisoned affect the target must carry (ovl15 names $37 Poisoned) }
   { The revival affect whose removal handler heals an unconscious character (ovl24 AffectRevival). }
   RevivalAffect = $4E;
@@ -983,7 +1000,7 @@ var
   Target: PCharacter;             { ds6C95, the first chosen target }
 begin
   Target := ds6C95;
-  if Target^.Status = DeadStatus then
+  if Target^.Status = StatusAnimated then
   begin
     ds6C95 := nil;
     Exit;
@@ -1041,18 +1058,19 @@ begin
   CallAffectHandler(SpiritualHammerAffect, ds6C95, nil, ModeApply);
 end;
 { ovl22:1A16 (e33). Cast handler of spell 30, Invisibility (SpellHandlers[30]: InitSpellHandlers maps
-  DS:6B84+30*4 to overlay stub 0096:00C5; SpellNames[30] is 'Invisibility' at DS:2DB7; its
-  SpellTable affect byte is 0). It only applies the current spell ds681B to the chosen targets with
-  the message 'is invisible'; the spell's own affect does the hiding, so the handler has nothing else
-  to do. Reads ds681B. }
+  DS:6B84+30*4 to overlay stub 0096:00C5; SpellNames[30] is 'Invisibility' at DS:2DB7, its
+  SpellTable affect byte is $19). It only applies the current spell ds681B to the chosen targets with
+  the message 'is invisible'; the spell's own affect $19 does the hiding, so the handler has nothing
+  else to do. Reads ds681B. }
 procedure CastInvisibility;
 begin
   ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is invisible');
 end;
 { ovl22:1A4F (e34). Cast handler of spell 31, Knock (SpellHandlers[31]: InitSpellHandlers maps
   DS:6B84+31*4 to overlay stub 0096:00CA; SpellNames[31] is 'Knock' at DS:2DE0). It only applies
-  the current spell ds681B to the chosen targets with the message 'Knock-Knock'; the spell's own
-  affect $1C opens the lock, so the handler has nothing else to do. Reads ds681B. }
+  the current spell ds681B to the chosen targets with the message 'Knock-Knock'; Knock's SpellTable
+  affect byte is 0, so no affect is applied here. The door effect lives elsewhere: ovl14's wilderness
+  door code looks for Knock among the memorized spells. Reads ds681B. }
 procedure CastKnock;
 begin
   ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'Knock-Knock');
@@ -1084,16 +1102,16 @@ end;
   ds6DBA: the caster, the aim cell, and for each of the four aim directions (SpellNamesPrefix.AimDirs,
   DS:290E) the tile it found around the aim cell, whether the cell may hold the cloud, and the cloud's
   own affect $28 with the caster level. A cell whose tile is $1E (the cloud tile) borrows the tile of
-  an earlier cloud marker that already reaches it; a cell whose tile is $1F borrows the tile of a body
-  there (BodyTable). The cloud cell itself is painted into the combat map, the cast is announced
-  ('Creates a noxious cloud'), the cursor is moved to the aim point and the cloud affect runs on every
-  combatant in the four cells (ApplyCloudTile). Reads ds681B, ds6DB9/ds6DBA, ds5D96 (SelectedCharacter's
-  side), BodyCount, CombatTiles, CombatMap and CombatantRecord; changes ds6820, ds6DBB, the combat map
-  and the affects of the targets. }
+  an earlier cloud marker that already reaches it; a cell whose tile is $1F (a body on the map)
+  borrows the body's tile there (BodyTable). The cloud cell itself is painted into the combat map, the
+  cast is announced ('Creates a noxious cloud'), the cursor is moved to the aim point and the cloud
+  affect runs on every combatant in the four cells (ApplyCloudTile). Reads ds681B, ds6DB9/ds6DBA,
+  ds6DBB, SelectedCharacter, BodyCount, BodyTable, CombatTiles, CombatMap and CombatantRecord; changes
+  ds6820, ds6DBB, the combat map and the affects of the targets. }
 procedure CastStinkingCloud;
 const
   CloudTile = $1E;                { a noxious cloud cell (ApplyCloudTile tests the tile under a combatant for it) }
-  CloudEdgeTile = $1F;            { the second cloud tile the aim scan looks for; meaning open }
+  BodyTile = $1F;                 { a body on the map: the aim scan borrows the body's tile there (BodyTable) }
   CloudAffect = $28;              { the affect the cast leaves on the caster and his clouds }
   { The cloud count goes into the affect's data in bits 4..7 (Count * CloudCountScale). }
   CloudCountScale = 16;
@@ -1161,7 +1179,7 @@ begin
         Cloud := Cloud^.Next;
       end;
     end
-    else if Tile = CloudEdgeTile then
+    else if Tile = BodyTile then
       for J := 1 to BodyCount do
         if (BodyTable[J].X = ds6DB9 + DirStepX[Dir]) and
            (BodyTable[J].Y = ds6DBA + DirStepY[Dir]) then
@@ -1291,7 +1309,7 @@ begin
           Current^.Side := SelectedCharacter^.Side;
           Current^.Quick := 1;
           Current^.Pad74[$76] := AnimatedMark;
-          Current^.Pad6B := 0;
+          Current^.SweepAttacks := 0;
           Current^.BaseMovement := 6;
           for I := 0 to MaxSpellSlot do
             Current^.Spells[I] := 0;
@@ -1313,12 +1331,13 @@ begin
     Current := Current^.Next;
   end;
 end;
-{ ovl22:2217. Cast handler of spell 37, Cure Blindness (SpellTable[37].AffectId is $21): removes the
-  blindness affect $21 from the first chosen target ds6C95 (CureAffect) and, only when the target
-  actually carried it, tells 'can see' through ShowHitMessage. Reads ds6C95. }
+{ ovl22:2217. Cast handler of spell 37, Cure Blindness (SpellTable[37].AffectId is 0): removes the
+  blindness affect $21 that spell 38 Cause Blindness leaves (SpellTable[38].AffectId) from the first
+  chosen target ds6C95 (CureAffect) and, only when the target actually carried it, tells 'can see'
+  through ShowHitMessage. Reads ds6C95. }
 procedure CastCureBlindness;
 const
-  BlindnessAffect = $21;          { the blindness affect CureAffect removes; the affect of spell 37 }
+  BlindnessAffect = $21;          { the blindness affect CureAffect removes; spell 38 Cause Blindness leaves it }
   ShowAbout = 1;                  { ShowHitMessage's Flag argument }
 begin
   if CureAffect(ds6C95, BlindnessAffect) then
@@ -1448,7 +1467,7 @@ begin
   end;
 end;
 { ovl22:24D6 (e45). Cast handler of spell 42, Prayer (InitSpellHandlers maps DS:6B84+42*4 to overlay stub
-  0096:00... ; SpellNames[42] is 'Prayer'). It applies the current spell ds681B to the chosen targets
+  0096:0101; SpellNames[42] is 'Prayer'). It applies the current spell ds681B to the chosen targets
   with no flag, damage or kind of its own and the message 'is praying'; the caster level it passes as
   the affect's Data is the caster level (SpellCasterLevel(ds681B)) plus the caster's Side scaled by 16, so
   the affect's handler can tell whose side the prayer favours (the same Side-in-the-data trick as
@@ -1870,8 +1889,8 @@ end;
   InitSpellHandlers table points element 59 of SpellHandlers at this stub. It gives the first chosen target
   ds6C95 a fixed Strength of 21 with no exceptional percentile (RaiseStrength; a monster's strength),
   shows 'is stronger' when the strength actually rose (ShowCharacterMessage) and adds the strength affect $26
-  (the affect CastStrength and Enlarge keep the earlier strength in, ovl24 RaiseStrength) for the
-  current spell's own duration (SpellAffectDuration). }
+  (the affect CastStrength and this routine leave, SpellTable[35] and [59]; Enlarge's is $0C, ovl24
+  RaiseStrength) for the current spell's own duration (SpellAffectDuration). }
 procedure CastMonsterStrength;
 const
   MonsterStrength = 21;           { the Strength RaiseStrength applies }
@@ -2048,15 +2067,16 @@ end;
 { ovl22:328A. ConsumeScrollSpell: removes one scribed spell from a scroll. The spell number (the low
   seven bits of Spell) is looked for among the scroll's three spell bytes Item^.Affects[1..3]; the
   last slot whose low seven bits match is cleared, the scroll's second name number (NameNum[2],
-  +$30) is decremented and, when it drops below $D2, the scroll is handed to RemoveInventoryItem to redraw
-  (Who, Item). ProcessPendingScribedSpell calls it after marking the scribed spell known, and ovl19's
-  item code calls it too. Nothing happens when the spell is not on the scroll (Slot stays 0). }
+  +$30) is decremented and, when it drops below $D2 (no spells left), the scroll is removed from
+  Who's items (RemoveInventoryItem unlinks it and frees it; nothing is redrawn).
+  ProcessPendingScribedSpell calls it after marking the scribed spell known, and ovl19's item code
+  calls it too. Nothing happens when the spell is not on the scroll (Slot stays 0). }
 procedure ConsumeScrollSpell(Who: PCharacter; Item: PItem; Spell: Byte);
 const
-  SpellMask = $7F;                { the pending bit sits above the spell number on a scroll }
-  { The value the scroll's second name number is drawn from; meaning not known, the scroll is
-    redrawn through RemoveInventoryItem when it drops below this. }
-  NameNumberRedrawBelow = $D2;
+  SpellMask = $7F;                { the low seven bits of a scroll's spell byte hold the spell number }
+  { A scroll's NameNum[2] is its remaining spell count plus $D1 (BuildTreasureItem, ovl21:1010); a
+    value below this means no spells are left and the used-up scroll is removed. }
+  UsedUpScrollBelow = $D2;
 var
   SpellNumber: Byte;              { Spell with the pending bit cleared, the number looked for }
   I: Byte;                        { the scroll spell slot, 1..3 }
@@ -2071,7 +2091,7 @@ begin
     Exit;
   Item^.Affects[Slot] := 0;
   Dec(Item^.NameNum[2]);
-  if Item^.NameNum[2] < NameNumberRedrawBelow then
+  if Item^.NameNum[2] < UsedUpScrollBelow then
     RemoveInventoryItem(Who, Item);
 end;
 { ovl22:331A. Announces a spell event for a named character. In combat (ds49F3 = 5) it shows the timed
@@ -2115,7 +2135,9 @@ end;
   overlay stub of this unit (several spells share one handler: elements 5, 11, 18, 22 and 29 are
   CastDetectionSpell; 6, 7, 16, 17 and 52..54 are CastProtection; 46 is CastDispelMagic with 41).
   Then it stores @MonsterBreath in DS:6988 (ds6988), clears the affect-removal flag ds681F, the
-  combat-only-spell flag ItemAffectUse and the picker's chosen character ds6DB5, and sets ds6821 to 1. }
+  item-cast flag ItemAffectUse (set while the Use action casts a spell from an item, ovl19; the
+  spell is then not forgotten and SpellCasterLevel returns 6) and the picker's chosen character
+  ds6DB5, and sets ds6821 to 1. }
 procedure InitSpellHandlers;
 begin
   SpellTargetPicker := ChooseSpellTargets;

@@ -197,3 +197,57 @@ tags = ["succ", "shortint", "index", "cbw", "array", "codegen", "29AE"]
 title = "Succ(ShortInt) used as a subscript increments the byte before sign-extending; Level + 1 sign-extends first"
 lesson = "TrainCharacter (ovl16:29AE) indexes ds409B[I, next level] with `mov al,[bp-0x18]; inc al; cwde; shl ax,1; shl ax,1`, and the level after that with two `inc al` before the cwde. `Level + 1` on a ShortInt is `cwde; inc ax` (and `Level + 2` is `cwde; inc ax; inc ax`), which is what blocked the earlier drafts. `Succ(Level)` as the subscript, not assigned back to a ShortInt, is the inc-then-sign-extend form; `Succ(Succ(Level))` is two inc al. Assigning Succ back (`Level := Succ(Level)`) is a different sequence (`cwde; inc ax; mov`), so the subscript must be the Succ expression itself. The > 0 test on the next level's threshold compares the array element in memory (`cmp word [di+high],0; jg; jge; jmp; cmp word [di+low],0; ja`), which a direct `ds409B[I, Succ(Level)] > 0` gives; loading it into a LongInt local first does not. Probe tools/re/tp_idioms/ovl16/LVLIDX.PAS."
 evidence = ["src/OVL16.PAS#TrainCharacter", "re/symbols.toml#ovl16:29AE", "tools/re/tp_idioms/ovl16/LVLIDX.PAS"]
+
+[[lesson]]
+id = "createcharacter-056C-frame-and-temps"
+confidence = "V"
+units = ["ovl16", "*"]
+tags = ["056C", "temp", "string-function", "with", "for-limit", "frame", "overlay"]
+title = "CreateCharacter's $134 frame is declared locals, with temps and 256-byte string temps shared from [bp-0x24] down"
+lesson = "ovl16:056C (CreateCharacter, 6502 bytes) has 21 declared locals down to [bp-0x23] (Who, the saved SelectedCharacter, the menu list, the selected line, Choice, the byte and ShortInt loop variables, a spare byte at [bp-0x1a] and [bp-0x1f], ChooseFromList's WithExit and Redraw) and every temporary starts at [bp-0x24] and grows down: a with pointer (4 bytes at [bp-0x27], a nested with below it at [bp-0x2b]), the 1-byte limit of `for I := 1 to ChoiceCount` ([bp-0x24], a variable limit is copied to a temp), the literal copies for string value parameters under $O+ ('', 'Keep this character? ' 22 bytes at [bp-0x39]) and the 256-byte string temps of `'  ' + Names[X]` ([bp-0x123], or [bp-0x124] when the for limit temp holds [bp-0x24]) and of the ReadInputLine result ([bp-0x134], below the 17-byte literal copy, whatever the declared String40 result: probe tools/re/tp_idioms/ovl16/CRTEMP.PAS). The frame is therefore the deepest statement, not the sum of the temps. `Who^` assignments inside `with Who^` that name the pointer itself (AddAffect(Who, ...)) push [bp-4], not the with temp. A with over a global array element (`with ds3E5B[Race, ClassMask] do`) keeps `di` and `ds` in the with temp. Operand order matters in the age sum: `Base + Sides * Count` loads Count first and Base last (the original), `Count * Sides` loads Sides first and differs at the first table reference; `X * 16` gives `mov cl,4; shl ax,cl` where `X shl 4` gives `mov cx,4` (see the ovl22 probe PRB27)."
+evidence = ["src/OVL16.PAS#CreateCharacter", "tools/re/tp_idioms/ovl16/CRTEMP.PAS", "re/symbols.toml#ovl16:056C"]
+
+[[lesson]]
+id = "createcharacter-056C-race-loop-variable-quirk"
+confidence = "V"
+units = ["ovl16"]
+tags = ["056C", "quirk", "for-loop", "dead-code", "race"]
+title = "The racial roll adjustments of character creation test the race menu's loop variable and never apply"
+lesson = "ovl16:1236 reads [bp-0x17], the loop variable of `for RaceIndex := 1 to 7` that filled the race menu (ovl16:0658..0707), and adjusts the 3d6 roll for races 1, 2, 5 and 6 (+1 Con -1 Cha, +1 Dex -1 Con, -1 Str +1 Dex, +1 Str +1 Con -2 Cha). The variable is never assigned again, and a for loop leaves its variable at the last value (7, the Human), so no case matches: the adjustments are dead code the original kept, and the nested `case RaceIndex of ... case AbilityIndex of ...` must be written as the original has it (a case in a case: `mov al,[idx]` once, compares on al, and `jmp end` after each outer arm) to match. The chosen race is TCharacter.Race (+$2E), stored from the menu choice with line 6 mapped to race 7 (Half-Orc, race 6, is not offered)."
+evidence = ["src/OVL16.PAS#CreateCharacter", "re/symbols.toml#ovl16:056C"]
+
+[[lesson]]
+id = "createcharacter-056C-tables-and-index-bases"
+confidence = "V"
+units = ["ovl16"]
+tags = ["056C", "tables", "index-base", "dseg", "age", "race", "class"]
+title = "The creation tables ds3E17, ds3E5B, ds3F31, ds3FE7, ds4263 and ds05D6 are indexed from a row-0 base that overlaps other data"
+lesson = "The tables read by ovl16:056C are addressed by [Race, column] or [ClassMask, column] with the first row an index base the game never reads, so the base lies inside the previous table in the image: ds3E17 (12 bytes per race 1..7: a count, then ClassMask numbers; the Dwarf row is 3,2,6,14) starts over the tail of the Human row of ds3DA3, ds3E5B (28 bytes per race: seven 4-byte TAgeEntry of base word, dice count, dice sides; Dwarf cleric FA 00 02 14 = 250 + 2d20) starts over the Half-Orc and Human rows of ds3E17, and ds3F31 (10 bytes per race: five age-bracket words, Dwarf 50 150 250 350 450) starts over the end of ds3E5B. ds3FE7 is 10 bytes per ClassMask (count then alignment numbers: cleric 9, 0..8), ds4263 two bytes per class (starting gold dice count and sides) and ds05D6 the item-usage bit of each class. Declare each with its natural row count and name the index base by its DS address (dsXXXX), as the matcher resolves globals by name, not by layout; a 2D index [Race, Column] evaluates the column first (`mov cx,Column` before `Race * 12`) like the other 2D tables of the unit. Dumped with tools/re DGROUP bytes of poolrad/start-unpack.exe at DGROUP_PARA * 16 + offset."
+evidence = ["src/POOLVARS.PAS#ds3E17", "src/POOLVARS.PAS#ds3E5B", "src/POOLVARS.PAS#ds3F31", "src/POOLVARS.PAS#ds3FE7", "src/POOLVARS.PAS#ds4263", "src/POOLVARS.PAS#ds05D6"]
+
+[[lesson]]
+id = "ovl16-iconeditor-382D-nested-routines-moved-in"
+confidence = "V"
+units = ["ovl16"]
+tags = ["nested", "static-link", "382D", "34DF", "35BE", "frame", "with", "temps"]
+title = "EditCharacterIcon (382D) matched once DrawIconCell and CopyPictureSlot moved inside it as nested routines"
+lesson = "ovl16:382D is one routine of 1796 bytes; its pre-entry region holds the nested DrawIconCell (34DF), CopyPictureSlot (35BE) (called `push bp; push cs; call`) and its literal pool (37C8..382C). Declared inside it with the trailing StaticLink parameter dropped they compile to the same bytes (the match prints NESTED), so the earlier top-level form with `StaticLink: Word` is not needed. Frame $120 = 27 bytes of named locals (nearest bp first: spare byte, Key, ExtKey, four Saved bytes, State, SizeName string[5] at [bp-0xe], spare byte, SavedFigure [bp-0x15], ColourPart, EditFace, LowNibble, HighNibble, Mode, PartKey at [bp-0x1b]) plus the 4-byte `with SelectedCharacter^` temp at [bp-0x1f], a 1-byte '' title copy at [bp-0x20] and the 256-byte temp of `SizeName + IconEditorPrompts[State]` ([bp-0x120]); the Keep arms of the block steps nest a second `with` (temp [bp-0x23]) and the outer `with` ends before ClearPromptLine (the 'ICON' and 'Is this icon ok? ' copies sit at [bp-0x20] and [bp-0x2d]). Shape: `repeat with ... do begin repeat ... until (Mode = 1) and (Key in [#0, 'E']); restore end; ... until Key = 'Y'`, `if ExtKey = 0 then case State of 1..5`, `case Mode of 2, 3` and `case PartKey of 'H', 'W'` inside state 5. `(High + 1) mod 16` is idiv; `(High - 1) and $F` is dec ax; and ax,$F."
+evidence = ["src/OVL16.PAS#EditCharacterIcon", "re/symbols.toml#ovl16:382D", "re/symbols.toml#ovl16:34DF", "re/symbols.toml#ovl16:35BE"]
+
+[[lesson]]
+id = "ovl16-structure-assignment-is-0a3f-not-move"
+confidence = "V"
+units = ["ovl16", "*"]
+tags = ["move", "assignment", "typecast", "0A3F", "1685", "382D"]
+title = "A structure assignment calls 0AF8:0A3F with the source address pushed first; Move calls 0AF8:1685"
+lesson = "The icon editor saves and restores Figure[1..6] (+$C1) with `les di,[with temp]; add di,0xc1; push es; push di; lea di,[bp-0x15]; push ss; push di; mov ax,6; push ax; lcall 0AF8:0A3F`. Move(Figure[1], Saved, 6) compiles to the same pushes but calls 0AF8:1685, so the match fails at the call. An assignment of a 6-byte array does call 0A3F (source address first, then destination, then the byte count): `Saved := TFigureBytes(Figure).Colours` and `TFigureBytes(Figure).Colours := Saved` where TFigureBytes is a record view {Size: Byte; Colours: array[1..6] of Byte} of the 7-byte Figure array. A variable typecast to a smaller array, `TColours(Figure[1])`, is refused with Error 61. Probe tools/re/tp_idioms/ovl16/FIGCOPY.PAS."
+evidence = ["src/OVL16.PAS#EditCharacterIcon", "tools/re/tp_idioms/ovl16/FIGCOPY.PAS"]
+
+[[lesson]]
+id = "poolvars-one-byte-gap-needs-a-pad-global"
+confidence = "V"
+units = ["*"]
+tags = ["globals", "poolvars", "layout", "pad", "matcher", "07E8"]
+title = "A one-byte gap between two declared globals needs a pad declaration or an address immediate is off by one"
+lesson = "make match compares a global reference as the nearest declared anchor plus our compiled distance, so a gap in the original that POOLVARS does not declare shifts later arrays: IconEditorPrompts (DS:07E8, array[1..5] of string[40], indexed [State*$29 + $7BF]) came out as `DS0619+421 (DS:07BE expected), the original DS:07BF` because the function menu ds0619 (11 slots of 42 bytes) ends at DS:07E7 and the image has one zero byte there. Declaring `ds07E7: Byte;` between the two made the address fields match. A 1-based array declared at its row-1 address folds the -$29 into the immediate, as ds0382 and ds0402 already do."
+evidence = ["src/POOLVARS.PAS#ds07E7", "src/POOLVARS.PAS#IconEditorPrompts", "src/OVL16.PAS#EditCharacterIcon"]

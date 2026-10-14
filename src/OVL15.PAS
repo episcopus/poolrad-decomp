@@ -821,7 +821,7 @@ begin
   ClearCharacterMessage;
 end;
 { ovl15:1C59. The camp's Alter menu 'Order Drop Speed Icon Pics Exit' (AlterMenuText): O
-  PartyOrderMenu, D DropPartyMember, S CampSpeedMenu, I ovl16_e3 and a redraw, P the submenu that
+  PartyOrderMenu, D DropPartyMember, S CampSpeedMenu, I EditCharacterIcon and a redraw, P the submenu that
   toggles the monster pictures (ShowMonsterPics) and the portraits (ShowPortraits). }
 procedure AlterMenu;
 var
@@ -845,7 +845,7 @@ begin
         'S': CampSpeedMenu;
         'I':
           begin
-            ovl16_e3;
+            EditCharacterIcon;
             RedrawView;
           end;
         'P':
