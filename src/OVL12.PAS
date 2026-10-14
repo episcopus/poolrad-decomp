@@ -51,7 +51,7 @@ procedure LowerAttackVsEightListed(Who: PCharacter; Affect: PAffect; Mode: Byte)
 procedure LowerAttackIfSelectedIsBugbearOrGnoll(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure RaiseOrLowerAttackAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure AddHealingBlockAndHeal(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e43;
+procedure ovl12_e43(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e44;
 procedure ovl12_e45;
 procedure ovl12_e46;
@@ -972,8 +972,14 @@ begin
     if HealCharacter(Who, 1, 1) then
       res12_fn_234A(Who);
 end;
-{ ovl12:133F: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e43; begin end;
+{ ovl12:133F. Affect handler (the AffectHandlers shape: Who, Affect and Mode; only Who is read). It calls
+  res12_fn_2637(Who), the routine the combat units call to end a combatant's turn (ovl08, ovl09 AiTurn), and does
+  nothing with its result: a Turbo Pascal statement cannot call a function, so the call is tested and the test
+  stands alone. Purpose unknown: which affect runs it is not known yet [?]. }
+procedure ovl12_e43(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  if res12_fn_2637(Who) <> 0 then ;
+end;
 { ovl12:1355: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e44; begin end;
 { ovl12:135C: retf 10: 10 bytes of parameters; 0 bytes of locals }
