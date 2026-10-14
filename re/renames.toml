@@ -3847,3 +3847,10 @@ kind = "routine"
 why = "ovl12:19D9 calls ReviveCombatant (ovl24:1869) on Who at Flag11B and, when that returns False, gives Who the revival affect 4E (AffectRevival, ovl24:175D) for one round with Affect's Data through TryAddAffect"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e65"
+new = "FireAttackTargetFor2d10"
+kind = "routine"
+why = "ovl12:1A19 sets DamageKind 9 (POOLVARS: 1 fire, bit 3 magic) and deals RollDiceCounted(2, 10) to Who's combat Target with no save through DealDamage (ovl24:1344)"
+date = "2026-10-13"
+

@@ -75,7 +75,7 @@ procedure DrainBloodFromCombatant(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure StartBloodDrain(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure HoldWeakTargetFast(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ReviveOrRetryRevival(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e65;
+procedure FireAttackTargetFor2d10(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e66;
 procedure ovl12_e67;
 procedure ovl12_e68;
@@ -1289,8 +1289,15 @@ begin
   if not ReviveCombatant(Who, Who^.Flag11B) then
     Added := TryAddAffect(Who, AffectRevival, Affect^.Data, RevivalRetryDuration);
 end;
-{ ovl12:1A19: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e65; begin end;
+{ ovl12:1A19. Affect handler that burns the character Who attacked last (the AffectHandlers shape: Who, Affect and Mode;
+  none is read, ovl24:0000). DamageKind becomes 9 (KindFire or KindMagic, fire with the magic bit, as
+  BoostFireAttackByTarget sets it), then 2d10 damage goes to Who's combat Target (Who^.Combat^.Target) without a save
+  (DealDamage, ovl24:1344). Which affect runs it is not known yet [?]. }
+procedure FireAttackTargetFor2d10(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  DamageKind := KindFire or KindMagic;
+  DealDamage(Who^.Combat^.Target, RollDiceCounted(2, 10), 0, False);
+end;
 { ovl12:1A4C: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e66; begin end;
 { ovl12:1AAA: retf 10: 10 bytes of parameters; 28 bytes of locals }

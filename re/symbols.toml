@@ -4032,12 +4032,12 @@ id = "ovl12:1A19"
 unit = "ovl12"
 addr = "ovl12:1A19"
 size = 51
-name = "ovl12_e65"
+name = "FireAttackTargetFor2d10"
 signature = ""
 c_name = "ovl12_e65"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_65"
+notes = "renamed from ovl12_e65 (ovl12:1A19 sets DamageKind 9 (POOLVARS: 1 fire, bit 3 magic) and deals RollDiceCounted(2, 10) to Who's combat Target with no save through DealDamage (ovl24:1344)); auto:entry_65"
 evidence = ["prologue"]
 
 [[routine]]
