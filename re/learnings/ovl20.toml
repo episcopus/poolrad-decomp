@@ -8,3 +8,12 @@ tags = ["compiler", "byte", "array", "dec"]
 title = "Dec on a byte array element subtracts directly from memory"
 lesson = "With TP 6.0 and $A-, Dec(Who^.Spells[SpellIndex], $80) compiles to a zero-extend and indexed address calculation followed by sub byte ptr es:[di], 0x80. This matches clearing the pending-spell bit without widening the assignment to a word."
 evidence = ["tools/re/tp_idioms/ovl20/PRB20_DEC.PAS", "src/OVL20.PAS#ProcessMemorizedSpell", "re/symbols.toml#ovl20:0925"]
+
+[[lesson]]
+id = "case-arm-exit-vs-fallthrough-to-until"
+confidence = "V"
+units = ["*"]
+tags = ["compiler", "case", "exit", "repeat", "until", "branch"]
+title = "A case arm that ends a repeat loop through its until test has no Exit"
+lesson = "In RestTimeMenu the arm 'R' sets the function result and the original jumps straight to the until test (07D5 jmp 083D), which ends the loop because 'R' is in the set. Writing Exit after the assignment adds a jump to the epilogue, two bytes more in that arm, so the jne before it gets displacement 08 instead of 06. When a case arm's last byte difference is a short-jump displacement two too large, look for an Exit the original did not have."
+evidence = ["src/OVL20.PAS#RestTimeMenu", "re/symbols.toml#ovl20:0721"]

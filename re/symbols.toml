@@ -9367,12 +9367,12 @@ id = "ovl20:0721"
 unit = "ovl20"
 addr = "ovl20:0721"
 size = 336
-name = "ovl20_fn_0721"
-signature = "function ovl20_fn_0721: Byte"
+name = "RestTimeMenu"
+signature = "function RestTimeMenu: Byte"
 c_name = "ovl20_fn_0721"
-level = "none"
+level = "L2"
 justification = ""
-notes = "blocked: five match attempts. Draft reconstructed the rest menu from ovl20:0721: title and prompt strings, ExtendedKey handling H/P/K/M, field selection, Inc/Dec updates to RestTime and NormalizeRestTime, and exit result. Attempts addressed the literal pool by removing named string constants, using an empty title (DS:06D8), and matching the set as [#0,'E','R'] from bytes at 0701; adjusted ReadPromptChoice colors to push 13,10,15 and Selected to ShortInt. Final mismatch at 0721-relative byte 04E4: branch displacement ours 08, original 06. Per bounded effort, no further attempts in this session; source is a stub again."
+notes = "Matched at L2 from the expert's diagnosis (case-e3e08f0948364dc1bc0b5b8e58260c3e): the five earlier attempts ended the R arm with Exit, which made the jne at 07CF two bytes longer (displacement 08 against 06); the original sets the result and jumps to the until test (07D5 -> 083D)."
 evidence = ["prologue"]
 
 [[routine]]
