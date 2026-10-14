@@ -485,3 +485,48 @@ tags = ["ShortInt", "for", "index", "cwde", "first-diff"]
 title = "A for-loop counter used as a class index is ShortInt: mov al,[bp-32h]; cwde before the table add (ovl12:2122)"
 lesson = "The class-total loop of ovl12:2122 indexes ClassLevels with its counter; the original sign-extends the counter (`mov al, [bp-32h]; cwde; add di, ax`). The first match attempt used a Byte counter and failed at the epilogue jump (21C5) because the matcher reports the first difference in address order and the loop lies later. Declare a loop counter ShortInt when it is an index into a ShortInt-indexed field (ClassLevels, HighestLevel); the for-loop check itself has no cwde."
 evidence = ["src/OVL12.PAS#DrainLevels", "re/symbols.toml#ovl12:2122"]
+
+[[lesson]]
+id = "multiply-by-16-is-shl-cl"
+confidence = "V"
+units = ["*"]
+tags = ["mul", "shl", "codegen", "constant", "Byte", "probe"]
+title = "x * 16 compiles to mov cl,4; shl ax,cl, while x shl 4 compiles to mov cx,4; shl ax,cl"
+lesson = "A Byte function result times 16 plus a constant (`(RollDice(1, 6) * RotStage) + RotDataLow`, ovl12:23EC) compiles to `xor ah, ah; mov cl, 4; shl ax, cl; add ax, 0Fh` (the 2-byte `mov cl, 4`). The same value written `RollDice(1, 6) shl 4` compiles to `mov cx, 4` (3 bytes) and does not match; the probe tools/re/tp_idioms/ovl12/E73MUL16.PAS shows the four forms side by side. Write the multiplication when the original shows `mov cl`, and name the factor by its meaning (RotStage = $10)."
+evidence = ["tools/re/tp_idioms/ovl12/E73MUL16.PAS", "src/OVL12.PAS#CauseRotOnAttackTarget", "re/symbols.toml#ovl12:23EC"]
+
+[[lesson]]
+id = "assign-widens-inc-does-not-byte-local"
+confidence = "V"
+units = ["*"]
+tags = ["Inc", "assign", "Byte", "local", "codegen", "probe"]
+title = "X := X + Local widens both to words; Inc(X, Local) with a Byte local is one byte add"
+lesson = "With a Byte local Bonus, `Inc(SaveRoll, Bonus)` compiles to `mov al, [bp-1]; add byte ptr [6816h], al` and does not match the original. `SaveRoll := SaveRoll + Bonus` compiles to the original's `mov al, [6816h]; xor ah, ah; mov dx, ax; ...; add ax, dx; mov [6816h], al` (ovl12:24D9). The Inc form with a constant step (lesson inc-with-step-is-memory-add) is still one memory add; the assignment form is the one for two variables."
+evidence = ["tools/re/tp_idioms/ovl12/E75INC.PAS", "src/OVL12.PAS#AddConstitutionSaveBonus", "re/symbols.toml#ovl12:24D9"]
+
+[[lesson]]
+id = "case-without-else-leaves-the-local"
+confidence = "V"
+units = ["*"]
+tags = ["case", "else", "QUIRK", "local", "uninitialised"]
+title = "A case with ranges and no else leaves the result local unset for the other values"
+lesson = "ovl12:24D9 sets its Byte local in five ranged branches and has no else: a value outside every range jumps past the stores with the local untouched (its stack slot is then added, a quirk the source marks). The matched Pascal has no else, `case Who^.Constitution of 4..6: Bonus := 1; ... 18..20: Bonus := 5; end;`, and the matcher agreed on the jump chain. Do not add an else: it changes the code. Mark the quirk in the routine's comment."
+evidence = ["src/OVL12.PAS#AddConstitutionSaveBonus", "re/symbols.toml#ovl12:24D9"]
+
+[[lesson]]
+id = "after-write-check-map-entry-in-call"
+confidence = "V"
+units = ["*"]
+tags = ["WRITE", "map-entry", "far_call", "declaration", "tool-gap"]
+title = "make match WRITE=1 removes a map entry inside the matched code, not its declaration or stub"
+lesson = "Writing ovl12_e76 (ovl12:2556, 76 bytes) removed the map entry ovl12:257E (ovl12_fn_257E): its byte is the segment word of the lcall at 257A, inside e76. The registry entry went, but `procedure ovl12_fn_257E;` in the interface and its `{@stub}` line stayed, so the unit would not compile. After WRITE=1, search the source for each removed name (git diff re/symbols.toml shows the '-' lines) and delete its declaration and stub by hand."
+evidence = ["src/OVL12.PAS#ovl12_e76", "re/symbols.toml#ovl12:2556"]
+
+[[lesson]]
+id = "mask-test-and-or-matches"
+confidence = "V"
+units = ["*"]
+tags = ["and", "or", "bit", "mask", "codegen"]
+title = "(Data and $10) = 0 then Data := Data or $10 matches; the or form is no longer unprobed"
+lesson = "ovl12:2490 tests bit 4 of Affect.Data with `and al, 10h; or al, al; jne` and sets it with `mov al, es:[di+3]; or al, 10h; mov es:[di+3], al`. `Affect^.Data := Affect^.Data and DataLowNibble` (mask $0F) matched the other branch. This settles the or form that lesson and-mask-zero-test-then-add-bit left open for setting a bit that is known to be clear."
+evidence = ["src/OVL12.PAS#ovl12_e74", "re/symbols.toml#ovl12:2490"]
