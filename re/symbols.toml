@@ -419,27 +419,14 @@ evidence = ["prologue"]
 id = "ovl03:0F08"
 unit = "ovl03"
 addr = "ovl03:0F08"
-size = 218
-name = "ovl03_fn_0F08"
+size = 381
+name = "ChooseFromListCommand"
 signature = ""
 c_name = "ovl03_fn_0F08"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_0F08 (ECL command 21: dispatcher ovl03:2F2D calls it for SkippedOpcode 15h (cmp al,15h, call at ovl03:3003); it builds a TMenuLine list of the string operands and shows it with AskListMenu (ChooseFromList, OVL25) under the prompt, writing the chosen index to operand 1); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl03:0FE2"
-unit = "ovl03"
-addr = "ovl03:0FE2"
-size = 239
-name = "ovl03_fn_0FE2"
-signature = ""
-c_name = "ovl03_fn_0FE2"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl03:10D1"

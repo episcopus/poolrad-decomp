@@ -28,8 +28,7 @@ procedure LoadAreaGraphics;
 procedure BitwiseCommand;
 procedure CopyIndexedWordCommand;
 procedure StoreIndexedWordCommand;
-procedure ovl03_fn_0F08;
-procedure ovl03_fn_0FE2;
+procedure ChooseFromListCommand;
 procedure ovl03_fn_10D1;
 procedure ovl03_fn_125D;
 procedure ovl03_fn_12C6;
@@ -72,7 +71,7 @@ procedure ovl03_e1;
 procedure ovl03_fn_3379;
 procedure ovl03_fn_34AB;
 implementation
-uses OVL17, OVL26, OVL28, OVL29, OVL32, RES06;
+uses OVL17, OVL25, OVL26, OVL28, OVL29, OVL32, RES06;
 
 const
   { The operand types from this one up are strings: $80 a packed string, $81 the address of a
@@ -740,10 +739,57 @@ begin
   Addr := Base + Index;
   WriteVmWord(Addr, Value);
 end;
-{ ovl03:0F08: frame not read }
-{@stub} procedure ovl03_fn_0F08; begin end;
-{ ovl03:0FE2: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl03_fn_0FE2; begin end;
+{ ovl03:0F08. ECL command 21 (dispatcher ovl03:2F2D, SkippedOpcode $15): a list menu. Operand 1 is
+  the address that receives Choice, the index AskListMenu returns for the line the player picked.
+  The prompt is the first string operand (EclStrings[1]); it is shown in the text window
+  (EclTextLeft to EclTextRight, EclTextTop to EclTextBottom) and the list goes under it. Operand 3
+  is the number of lines: they are the string operands EclStrings[1..Count], decoded again after
+  Dec(EclPC) backs EclPC up one byte. The lines are built as a TMenuLine list (NewMenuList), each
+  holding its text (at most 40 characters) and a cleared Flag29. QUIRK ovl03:0F08: AskListMenu
+  leaves the chosen line in Menu (its var parameter), so FreeMenuList frees from that line on
+  and the lines before it stay allocated [I]. The window is cleared afterwards. }
+procedure ChooseFromListCommand;
+var
+  Count: Byte;
+  I: Byte;
+  Prompt: string;
+  Menu: PMenuLine;
+  MenuHead: PMenuLine;
+  Empty: string[1];
+  Choice: Integer;
+  Redraw: Byte;
+  Target: Word;
+  Unused: Byte;                 { QUIRK ovl03:0F08: a byte of the frame nothing uses }
+begin
+  ds84E4 := 0;
+  Redraw := 1;
+  Empty := '';
+  I := 1;
+  DecodeOperands(3);
+  Target := MakeWord(OperandLow[1], OperandHigh[1]);
+  Prompt := EclStrings[1];
+  Count := OperandValue(3);
+  Dec(EclPC);
+  DecodeOperands(Count);
+  NewMenuList(Count, Menu);
+  MenuHead := Menu;
+  GlyphCol := EclTextLeft;
+  GlyphRow := EclTextTop;
+  ShowPagedText(EclTextLeft, EclTextTop, EclTextRight, EclTextBottom, EclTextColor, 1, Prompt);
+  while Menu <> nil do
+  begin
+    Menu^.Text := EclStrings[I];
+    Menu^.Flag29 := 0;
+    Menu := Menu^.Next;
+    Inc(I);
+  end;
+  Menu := MenuHead;
+  Choice := 0;
+  AskListMenu(Empty, Empty, 13, 10, 15, 1, GlyphRow + 1, 38, 22, Menu, 0, Redraw, Choice, Menu);
+  WriteVmWord(Target, Choice);
+  FreeMenuList(Menu);
+  ClearRect(EclTextLeft, EclTextTop, EclTextRight, EclTextBottom);
+end;
 { ovl03:10D1: retf 0: 0 bytes of parameters; 320 bytes of locals }
 {@stub} procedure ovl03_fn_10D1; begin end;
 { ovl03:125D: retf 0: 0 bytes of parameters; 6 bytes of locals }

@@ -3595,3 +3595,10 @@ kind = "routine"
 why = "ECL command 53: dispatcher ovl03:2F2D calls it for SkippedOpcode 35h (cmp al,35h); it writes operand 1 as a word at the table of operand 2 plus the index of operand 3 (WriteVmWord); CopyIndexedWordCommand (ovl03:0E5E) reads that table"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl03_fn_0F08"
+new = "ChooseFromListCommand"
+kind = "routine"
+why = "ECL command 21: dispatcher ovl03:2F2D calls it for SkippedOpcode 15h (cmp al,15h, call at ovl03:3003); it builds a TMenuLine list of the string operands and shows it with AskListMenu (ChooseFromList, OVL25) under the prompt, writing the chosen index to operand 1"
+date = "2026-10-13"
+
