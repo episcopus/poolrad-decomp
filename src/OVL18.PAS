@@ -106,7 +106,7 @@ begin
   res12_fn_27D9;
 end;
 { ovl18:06B3. Animates the doors of the area view (Flag 1) or clears them (flag 0): it draws the
-  doors of the two block-code tables DS:0900 and DS:090B through res07_fn_1E5C (bit 7 of a code
+  doors of the two block-code tables DS:0900 and DS:090B through RemapPictureColours (bit 7 of a code
   selects the second SQRPACI bank ds5E56, otherwise ds5E52), stepping the area view through
   DS:094D/DS:095F and stepping the display, then clears the doors. Called by ovl03:31B4 and
   ovl17:1602. }
@@ -123,28 +123,28 @@ begin
     begin
       for DoorCol := 0 to $A do
         if ds0900[DoorCol] > $7F then
-          res07_fn_1E5C(@ds091D, @ds092D, ds0900[DoorCol] and $7F, 1, Pointer(ds5E56))
+          RemapPictureColours(@ds091D, @ds092D, ds0900[DoorCol] and $7F, 1, Pointer(ds5E56))
         else
-          res07_fn_1E5C(@ds091D, @ds092D, ds0900[DoorCol], 1, Pointer(ds5E52));
+          RemapPictureColours(@ds091D, @ds092D, ds0900[DoorCol], 1, Pointer(ds5E52));
       for DoorCol := 0 to $11 do
         if ds090B[DoorCol] > $7F then
-          res07_fn_1E5C(@ds091D, @ds093D, ds090B[DoorCol] and $7F, 1, Pointer(ds5E56))
+          RemapPictureColours(@ds091D, @ds093D, ds090B[DoorCol] and $7F, 1, Pointer(ds5E56))
         else
-          res07_fn_1E5C(@ds091D, @ds093D, ds090B[DoorCol], 1, Pointer(ds5E52));
+          RemapPictureColours(@ds091D, @ds093D, ds090B[DoorCol], 1, Pointer(ds5E52));
       DrawAreaView(ds094D[DoorRow], ds095F[DoorRow]);
       FlushPictureChanges;
     end;
   end;
   for DoorCol := 0 to $A do
     if ds0900[DoorCol] > $7F then
-      res07_fn_1E5C(@ds091D, @ds092D, ds0900[DoorCol] and $7F, 0, Pointer(ds5E56))
+      RemapPictureColours(@ds091D, @ds092D, ds0900[DoorCol] and $7F, 0, Pointer(ds5E56))
     else
-      res07_fn_1E5C(@ds091D, @ds092D, ds0900[DoorCol], 0, Pointer(ds5E52));
+      RemapPictureColours(@ds091D, @ds092D, ds0900[DoorCol], 0, Pointer(ds5E52));
   for DoorCol := 0 to $11 do
     if ds090B[DoorCol] > $7F then
-      res07_fn_1E5C(@ds091D, @ds093D, ds090B[DoorCol] and $7F, 0, Pointer(ds5E56))
+      RemapPictureColours(@ds091D, @ds093D, ds090B[DoorCol] and $7F, 0, Pointer(ds5E56))
     else
-      res07_fn_1E5C(@ds091D, @ds093D, ds090B[DoorCol], 0, Pointer(ds5E52));
+      RemapPictureColours(@ds091D, @ds093D, ds090B[DoorCol], 0, Pointer(ds5E52));
   if Flag <> 0 then
   begin
     DrawAreaView($17, $19);

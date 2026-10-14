@@ -425,7 +425,7 @@ Record size is always `17 + item_count * height * width_cols * 4` **[V]** (all n
 
 **The picture table** **[V]** (`FreePictureSlot`, `ovl32:014E`; `DrawIcon`, `ovl32:04FC`): DS:5E5A is an array of two pointers per slot, stride 8. `FreePictureSlot` frees each pointer that is not nil through `ReleasePicture` (`FreeMem`, then the pointer is stored nil). `DrawIcon` indexes the same table by picture number times 8 plus mirror half times 4. `DrawPartyMarker` passes picture numbers 9 to 11, so the table runs past four slots; the declared bound is the byte index. When the chosen pointer is not nil, `DrawIcon` allocates a picture of the same height and width (`AllocatePicture`), copies into it (`MirrorPicture` when the icon set is above 3, otherwise `Move` of the tail at +$17 and the pixel buffer at +$13; adapter 1 copies a quarter of the bytes), draws it at the cell times 3 through `DrawPictureItemClipped`, and frees the copy.
 
-**Loading a slot** **[V]** (`LoadPictureSlot`, `ovl32:01C8`, `make match UNIT=ovl32`: unit complete): loads picture `Block` of a set into the first pointer of slot `Slot` and picture `Block + $80` (the mirrored half) into the second, through `LoadPicture`. For `CHEAD` and `CBODY` a name ending in `T` adds $40 to `Block` and the `T` is dropped; `COMSPR` and `ICON` are used as named; any other set gets the file number `TileSet` appended. `ICON` pictures and the `TileSet` sets are then recoloured by `res07_fn_1E5C` with 16-entry colour maps: from the identity map DS:0CD2 to DS:0CF2 (colour 13 becomes 0) for `ICON`, to DS:0CE2 (13 becomes 8) for the others. `StartGame` fills slots 13 to 24 with `COMSPR` pictures 0 to 11 and slot 25 with picture 25.
+**Loading a slot** **[V]** (`LoadPictureSlot`, `ovl32:01C8`, `make match UNIT=ovl32`: unit complete): loads picture `Block` of a set into the first pointer of slot `Slot` and picture `Block + $80` (the mirrored half) into the second, through `LoadPicture`. For `CHEAD` and `CBODY` a name ending in `T` adds $40 to `Block` and the `T` is dropped; `COMSPR` and `ICON` are used as named; any other set gets the file number `TileSet` appended. `ICON` pictures and the `TileSet` sets are then recoloured by `RemapPictureColours` with 16-entry colour maps: from the identity map DS:0CD2 to DS:0CF2 (colour 13 becomes 0) for `ICON`, to DS:0CE2 (13 becomes 8) for the others. `StartGame` fills slots 13 to 24 with `COMSPR` pictures 0 to 11 and slot 25 with picture 25.
 
 `PIC*.DAX` and `SPRIT*.DAX` (and some `FINAL5` blocks) wrap several records as an animation **[V]**:
 
@@ -881,7 +881,7 @@ The parts proven so far:
   `Count` (QUIRK `ovl28:0269`); the final `FreeMem(Prev, Row + 1)` frees with the last picture's
   `Row` (QUIRK `ovl28:046C`). `PIC` and
   `FINAL` pictures after the first are stored xored with the first one's data, which the loader
-  undoes before decoding (`UnpackPicturePixels`); bit 0 of `Mode` adds a pass through `res07_fn_1E5C` on
+  undoes before decoding (`UnpackPicturePixels`); bit 0 of `Mode` adds a pass through `RemapPictureColours` on
   non-zero video adapters **[V]** (matched). Callers: `ovl03`, `ShowEncounterPicture`, `ovl18` (FINAL) and
   `res12_fn_27D9`.
 
@@ -898,7 +898,7 @@ Overlay 18 (PoolNarrative) plays the game's ending and animates the area view do
   `AnimateFinalPicture(3, 5, 2, x)`, `(3, 1, 7, x)` and `(3, 1, 8, 1)` between the speech blocks. It saves
   the view mode DS:49F3 in DS:4712, sets 7 and restores it.
 - `AnimateAreaDoors` (`ovl18:06B3`, called by `ovl03:31B4` and `ovl17:1602`) draws or clears the doors
-  of the area view: it calls `res07_fn_1E5C(@ds091D, @ds092D, code, 1, bank)` for each entry of
+  of the area view: it calls `RemapPictureColours(@ds091D, @ds092D, code, 1, bank)` for each entry of
   DS:0900 (0..10) and `(@ds091D, @ds093D, code, 1, bank)` for DS:090B (0..17), where bit 7 of a code
   selects the second SQRPACI bank DS:5E56 instead of DS:5E52 and the low 7 bits are the picture
   number, and it steps the view with `DrawAreaView(DS:094D[I], DS:095F[I])` over 9 steps.

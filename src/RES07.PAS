@@ -18,6 +18,9 @@ type
     only there so the index compiles, like the picture record's tail) }
   TByteArray = array[0..0] of Byte;
   PByteArray = ^TByteArray;
+  { a 16-entry colour map: entry I is the colour index that colour I becomes (1E5C) }
+  TColorMap = array[0..15] of Byte;
+  PColorMap = ^TColorMap;
 
   { An in-memory picture (whitepaper 4.2.3): the DAX header fields at +0..+$10,
     then ByteSize (the bytes per item), the pixel-buffer pointer at +$13 and the
@@ -50,7 +53,7 @@ function SwapNibbles(Value: Byte): Byte;
 procedure MirrorPicture(Source, Dest: Pointer);
 procedure ShowPicture(PicCol, PicRow: Integer; Buf: Pointer);
 procedure FlushPictureChanges;
-procedure res07_fn_1E5C(FromMap, ToMap: Pointer; FirstRow: Integer; Flicker: Byte; Pic: Pointer);
+procedure RemapPictureColours(FromMap, ToMap: Pointer; FirstItem: Integer; Flicker: Byte; Pic: Pointer);
 procedure AllocatePicture(Height, WidthCols: Word; ItemCount, AllocFlags: Byte; var Pic);
 procedure ReleasePicture(var Pic);
 procedure FillPictureRect(FirstCol, FirstRow: Integer; Width, Height: Word; Colour: Byte; Palette: Pointer; Target: Pointer);
@@ -941,8 +944,147 @@ begin
   FillChar(ds4C20, $150, $FF);
   FillChar(ds4D70, $150, 0);
 end;
-{ 0464:1E5C: retf 16: 16 bytes of parameters; 68 bytes of locals }
-{@stub} procedure res07_fn_1E5C(FromMap, ToMap: Pointer; FirstRow: Integer; Flicker: Byte; Pic: Pointer); begin end;
+{ 0464:1E5C: recolours the picture Pic. For every colour index I whose FromMap and ToMap
+  entries differ, each pixel of Pic whose palette colour is FromMap[I] becomes ToMap[I].
+  The changes go to a scratch copy of Pic (AllocatePicture) that is copied back over the
+  items from FirstItem on at the end. FirstItem is an item index (the byte offset of an
+  item is FirstItem * ByteSize). Flicker (nonzero) makes each change random: adapters 0
+  and 2 change each matching pixel with chance 1 in 4, adapter 1 changes a random subset
+  of the matching pixels of each cell. Adapter 0 compares 2-bit pixel pairs (ds25FA,
+  GlyphPixelMasks), adapter 1 the four EGA planes (EgaPlaneBitMasks), adapter 2 the two
+  nibbles of each byte. Called by LoadPictureSlot (ovl32), LoadSpriteList (ovl28),
+  AnimateAreaDoors (ovl18) and ovl16, ovl17.
+  QUIRK 0464:1F51: the header inside the colour loop tests FirstItem again; the header
+  before the loop has already set it to 0, so Items is 1 for every colour: a negative
+  FirstItem recolours and copies back item 0 only. }
+procedure RemapPictureColours(FromMap, ToMap: Pointer; FirstItem: Integer; Flicker: Byte; Pic: Pointer);
+var
+  FromMapCopy: TColorMap;            { FromMap, copied on entry }
+  ToMapCopy: TColorMap;              { ToMap, copied on entry }
+  PicOfs: Word;                      { byte offset in Pic of the pixel byte being read }
+  ScratchOfs: Word;                  { byte offset in the scratch copy of the byte being written }
+  Items: Byte;                       { items recoloured: ItemCount for a negative FirstItem before the loop, then 1 (QUIRK) }
+  ColByte: Word;                     { byte column loop variable }
+  PixelRow: Word;                    { pixel row loop variable }
+  Mask: Byte;                        { adapter 1: the pixels of the cell that have the colour }
+  PlaneMask: array[0..3] of Byte;    { adapter 1: per EGA plane $00 (the colour bit is set) or $FF }
+  Plane: Byte;                       { EGA plane loop variable }
+  Unused: Byte;                      { the original frame has one byte the locals never use }
+  Quad: Byte;                        { pixel pair loop variable (adapter 0) }
+  RowBytes: Word;                    { bytes per pixel row }
+  FromHigh: Byte;                    { adapter 2: the FromMap colour in the high nibble }
+  ToHigh: Byte;                      { adapter 2: the ToMap colour in the high nibble }
+  Colour: Byte;                      { colour index loop variable }
+  Scratch: Pointer;                  { the scratch copy of Pic the changes are written to }
+begin
+  FromMapCopy := PColorMap(FromMap)^;
+  ToMapCopy := PColorMap(ToMap)^;
+  if Pic = nil then Exit;
+  with PPicture(Pic)^ do
+  begin
+    if FirstItem < 0 then
+    begin
+      FirstItem := 0;
+      Items := ItemCount;
+    end
+    else
+      Items := 1;
+    PicOfs := FirstItem * ByteSize;
+    ScratchOfs := 0;
+  end;
+  AllocatePicture(PPicture(Pic)^.Height, PPicture(Pic)^.WidthCols, Items, 0, Scratch);
+  PPicture(Scratch)^.Palette := PPicture(Pic)^.Palette;
+  Move(PPicture(Pic)^.Data[PicOfs], PPicture(Scratch)^.Data[ScratchOfs],
+    PPicture(Scratch)^.ItemCount * PPicture(Scratch)^.ByteSize);
+  for Colour := 0 to 15 do
+  begin
+    with PPicture(Pic)^ do
+    begin
+      if FirstItem < 0 then
+      begin
+        FirstItem := 0;
+        Items := ItemCount;
+      end
+      else
+        Items := 1;
+      PicOfs := FirstItem * ByteSize;
+      ScratchOfs := 0;
+    end;
+    if FromMapCopy[Colour] <> ToMapCopy[Colour] then
+    begin
+      with PPicture(Scratch)^ do
+      begin
+        case VideoAdapter of
+        0:
+        begin
+          RowBytes := WidthCols * 2;
+          for ds70C7 := FirstItem to Items + FirstItem - 1 do
+            for PixelRow := 1 to Height do
+              for ColByte := 1 to RowBytes do
+              begin
+                for Quad := 0 to 3 do
+                  if (PPicture(Pic)^.Data[PicOfs] and GlyphPixelMasks[Quad + 4]) =
+                    ds25FA[PaletteColor(FromMapCopy[Colour], @Palette), Quad] then
+                    if (Flicker = 0) or ((Flicker <> 0) and (Random(4) = 0)) then
+                      Data[ScratchOfs] := (Data[ScratchOfs] and not GlyphPixelMasks[Quad + 4]) or
+                        ds25FA[PaletteColor(ToMapCopy[Colour], @Palette), Quad];
+                Inc(PicOfs);
+                Inc(ScratchOfs);
+              end;
+        end;
+        1:
+        begin
+          for Plane := 0 to 3 do
+            if (FromMapCopy[Colour] and EgaPlaneBitMasks[Plane]) > 0 then
+              PlaneMask[Plane] := 0
+            else
+              PlaneMask[Plane] := $FF;
+          for ds70C7 := FirstItem to Items + FirstItem - 1 do
+            for PixelRow := 1 to Height do
+              for ColByte := 1 to WidthCols do
+              begin
+                if Flicker <> 0 then
+                  Mask := Random(256) and Random(256)
+                else
+                  Mask := $FF;
+                for Plane := 0 to 3 do
+                  Mask := (PPicture(Pic)^.Data[PicOfs + Plane] xor PlaneMask[Plane]) and Mask;
+                for Plane := 0 to 3 do
+                  if (ToMapCopy[Colour] and EgaPlaneBitMasks[Plane]) > 0 then
+                    Data[ScratchOfs + Plane] := Data[ScratchOfs + Plane] or Mask
+                  else
+                    Data[ScratchOfs + Plane] := Data[ScratchOfs + Plane] and not Mask;
+                Inc(PicOfs, 4);
+                Inc(ScratchOfs, 4);
+              end;
+        end;
+        2:
+        begin
+          RowBytes := WidthCols * 4;
+          FromHigh := FromMapCopy[Colour] shl 4;
+          ToHigh := ToMapCopy[Colour] shl 4;
+          for ds70C7 := FirstItem to Items + FirstItem - 1 do
+            for PixelRow := 1 to Height do
+              for ColByte := 1 to RowBytes do
+              begin
+                if (PPicture(Pic)^.Data[PicOfs] and $F0) = FromHigh then
+                  if (Flicker = 0) or ((Flicker <> 0) and (Random(4) = 0)) then
+                    Data[ScratchOfs] := (Data[ScratchOfs] and $0F) or ToHigh;
+                if (PPicture(Pic)^.Data[PicOfs] and $0F) = FromMapCopy[Colour] then
+                  if (Flicker = 0) or ((Flicker <> 0) and (Random(4) = 0)) then
+                    Data[ScratchOfs] := (Data[ScratchOfs] and $F0) or ToMapCopy[Colour];
+                Inc(PicOfs);
+                Inc(ScratchOfs);
+              end;
+        end;
+        end;
+      end;
+    end;
+  end;
+  with PPicture(Pic)^ do
+    Move(PPicture(Scratch)^.Data[0], Data[FirstItem * ByteSize], Items * ByteSize);
+  ReleasePicture(Scratch);
+end;
 { 0464:248E: allocates a picture record of Height * WidthCols * 2 bytes per
   item (times 2 again when the video adapter is not 0, the EGA planar case) times
   ItemCount, plus $17 header bytes, zeroes it, stores the header fields and, when

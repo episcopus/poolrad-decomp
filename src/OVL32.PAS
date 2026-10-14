@@ -92,7 +92,7 @@ end;
   CHEAD and CBODY sets: a name ending in T adds $40 to Block and loses that letter. COMSPR and
   ICON: the name is used as it is, and ICON pictures are recoloured with ds0CF2. Any other set
   takes the file number TileSet as a suffix and both pictures are recoloured with ds0CE2
-  (res07_fn_1E5C, from the identity map ds0CD2). Flushes the keyboard at the end. StartGame
+  (RemapPictureColours, from the identity map ds0CD2). Flushes the keyboard at the end. StartGame
   loads COMSPR pictures 0 to 11 into slots 13 to 24 and picture 25 into slot 25 with it. }
 procedure LoadPictureSlot(SetName: string; Block, Slot: Byte);
 var
@@ -114,17 +114,17 @@ begin
     LoadPicture(SetName + Suffix, Block + MirrorPictures, 1, 0, ds5E5A[Slot].SecondPic);
     if SetName = 'ICON' then
     begin
-      res07_fn_1E5C(@ds0CD2, @ds0CF2, 0, 0, ds5E5A[Slot].FirstPic);
-      res07_fn_1E5C(@ds0CD2, @ds0CF2, 0, 0, ds5E5A[Slot].SecondPic);
+      RemapPictureColours(@ds0CD2, @ds0CF2, 0, 0, ds5E5A[Slot].FirstPic);
+      RemapPictureColours(@ds0CD2, @ds0CF2, 0, 0, ds5E5A[Slot].SecondPic);
     end;
   end
   else
   begin
     Str(TileSet, Suffix);
     LoadPicture(SetName + Suffix, Block, 1, 0, ds5E5A[Slot].FirstPic);
-    res07_fn_1E5C(@ds0CD2, @ds0CE2, 0, 0, ds5E5A[Slot].FirstPic);
+    RemapPictureColours(@ds0CD2, @ds0CE2, 0, 0, ds5E5A[Slot].FirstPic);
     LoadPicture(SetName + Suffix, Block + MirrorPictures, 1, 0, ds5E5A[Slot].SecondPic);
-    res07_fn_1E5C(@ds0CD2, @ds0CE2, 0, 0, ds5E5A[Slot].SecondPic);
+    RemapPictureColours(@ds0CD2, @ds0CE2, 0, 0, ds5E5A[Slot].SecondPic);
   end;
   FlushKeyboard;
 end;

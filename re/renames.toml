@@ -3406,3 +3406,10 @@ kind = "routine"
 why = "0464:0D71 is DrawPictureItem (0464:08D4) with range checks: it cuts the item to Dest on all four sides while ds5370 is set, masks with Flags bit 0 and saves the overwritten bytes into ds4A24 with Flags bit 2 (src/RES07.PAS, MATCH); callers OVL18 AnimateFinalPicture and ShowEndingNarrative, OVL28 DrawSprite and Show3DSprite, OVL31 RemoveCombatant, OVL32 DrawIcon, RES12"
 date = "2026-10-13"
 
+[[rename]]
+old = "res07_fn_1E5C"
+new = "RemapPictureColours"
+kind = "routine"
+why = "0464:1E5C maps the colours of a picture: for each colour index I whose FromMap and ToMap entries differ, every pixel of the picture with palette colour FromMap[I] becomes ToMap[I] (through a scratch copy, adapters 0, 1 and 2; src/RES07.PAS, MATCH); LoadPictureSlot (ovl32) passes the identity map, AnimateAreaDoors (ovl18) and LoadSpriteList (ovl28) pass the door and sprite maps"
+date = "2026-10-13"
+

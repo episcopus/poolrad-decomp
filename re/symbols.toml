@@ -16251,12 +16251,12 @@ id = "0464:1E5C"
 unit = "res07"
 addr = "0464:1E5C"
 size = 1586
-name = "res07_fn_1E5C"
-signature = "procedure res07_fn_1E5C(FromMap, ToMap: Pointer; FirstRow: Integer; Flicker: Byte; Pic: Pointer)"
+name = "RemapPictureColours"
+signature = "procedure RemapPictureColours(FromMap, ToMap: Pointer; FirstItem: Integer; Flicker: Byte; Pic: Pointer)"
 c_name = "res07_fn_1E5C"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res07_fn_1E5C (0464:1E5C maps the colours of a picture: for each colour index I whose FromMap and ToMap entries differ, every pixel of the picture with palette colour FromMap[I] becomes ToMap[I] (through a scratch copy, adapters 0, 1 and 2; src/RES07.PAS, MATCH); LoadPictureSlot (ovl32) passes the identity map, AnimateAreaDoors (ovl18) and LoadSpriteList (ovl28) pass the door and sprite maps); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16319,7 +16319,7 @@ size = 6
 name = "res07_init"
 signature = ""
 c_name = "res07_init"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:init"
 evidence = ["prologue"]
