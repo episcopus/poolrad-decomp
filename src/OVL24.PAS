@@ -677,7 +677,7 @@ begin
   if DamageAmount > 0 then
   begin
     if DamageAmount <> 1 then
-      Msg := 'takes ' + res12_fn_1037(DamageAmount) + ' points of damage '
+      Msg := 'takes ' + ByteToText(DamageAmount) + ' points of damage '
     else
       Msg := 'takes 1 point of damage ';
     case DamageKind and $F7 of

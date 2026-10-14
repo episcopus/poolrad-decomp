@@ -3483,3 +3483,10 @@ kind = "routine"
 why = "res12_fn_0BB8 (00BA:0BB8) recomputes the character's combat values from the items it carries and has readied; every equipment change and the whole combat call it (ovl03, ovl06, ovl08, ovl09, ovl10, ovl12, ovl13, ovl16, ovl19, ovl21, ovl24)"
 date = "2026-10-13"
 
+[[rename]]
+old = "res12_fn_1037"
+new = "ByteToText"
+kind = "routine"
+why = "res12_fn_1037 (00BA:1037) returns the decimal text of the byte it is given through Str; DrawArmourClass, DrawHitPoints and ovl20's TwoDigitText use it"
+date = "2026-10-13"
+

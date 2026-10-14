@@ -291,7 +291,7 @@ begin
     HasClass[SpellClass] := False;
     for SpellLevel := 1 to SpellLevels do
     begin
-      Counts[SpellLevel, SpellClass] := res12_fn_1037(SpellSlotsLeft(SpellLevel, SpellClass));
+      Counts[SpellLevel, SpellClass] := ByteToText(SpellSlotsLeft(SpellLevel, SpellClass));
       if SelectedCharacter^.SpellSlots[SpellClass, SpellLevel] = 0 then
         Counts[SpellLevel, SpellClass] := ' '
       else
@@ -520,7 +520,7 @@ end;
   text window titled 'Display' with ChooseFromList (heading colour 11, lines 10, highlight 15,
   with Exit); the list is freed and the screen redrawn (res12_fn_27D9) afterwards. A spell affect
   (the first case list) is named by the first spell 1..$38 whose SpellTable.AffectId is the affect
-  (SpellNames), or 'Funky--n' (res12_fn_1037 writes the number) when no spell has it; fourteen
+  (SpellNames), or 'Funky--n' (ByteToText writes the number) when no spell has it; fourteen
   other affects have fixed names (the Affect* constants); any other affect is left out. The
   list begins with a blank line (line 0, where the highlight starts: Choice 0), so the first
   member's name is line 1. Reads: ds5D96, SpellTable, SpellNames.
@@ -586,7 +586,7 @@ begin
               end
               else
                 Inc(Spell);
-            if Found = 0 then Name := 'Funky--' + res12_fn_1037(AffectId);
+            if Found = 0 then Name := 'Funky--' + ByteToText(AffectId);
           end;
         AffectStudyingManual: Name := 'Studying Manual of Bodily Health';
         AffectTrainingManual: Name := 'Training with Manual of Bodily Health';
@@ -799,7 +799,7 @@ var
   Prompt: String40;
 begin
   repeat
-    DrawTextAt(1, $12, TextColor, 'Game Speed = ' + res12_fn_1037(GameSpeed) + ' (0=fastest 9=slowest)');
+    DrawTextAt(1, $12, TextColor, 'Game Speed = ' + ByteToText(GameSpeed) + ' (0=fastest 9=slowest)');
     Prompt := '';
     if GameSpeed > 0 then Prompt := Prompt + ' Faster';
     if GameSpeed < MaxGameSpeed then Prompt := Prompt + ' Slower';

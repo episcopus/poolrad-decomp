@@ -386,7 +386,7 @@ var
   Done: Byte;
 begin
   DrawTextAt(0, 24, 10, 'Move/Attack, Move Left = ' +
-    res12_fn_1037(Who^.Combat^.Moves shr 1) + ' ');
+    ByteToText(Who^.Combat^.Moves shr 1) + ' ');
   if HandleCombatKey(Who) then
     Exit;
   if Who^.Combat^.Moves shr 1 <= 0 then

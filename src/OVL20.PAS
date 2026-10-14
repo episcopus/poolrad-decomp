@@ -154,12 +154,12 @@ begin
 end;
 { ovl20:0565: retf 2: Number (2 bytes of parameters) and the String40 result, which the caller pushes
   before Number; 298 bytes of locals (S and the compiler's string temporary). The result is Number as
-  two characters: res12_fn_1037 gives its text, a '0' goes in front below 10, the first two are kept. }
+  two characters: ByteToText gives its text, a '0' goes in front below 10, the first two are kept. }
 function TwoDigitText(Number: Byte): String40;
 var
   Digits: String40;
 begin
-  Digits := res12_fn_1037(Number);
+  Digits := ByteToText(Number);
   if Number < 10 then
     Digits := '0' + Digits;
   TwoDigitText := Copy(Digits, 1, 2);

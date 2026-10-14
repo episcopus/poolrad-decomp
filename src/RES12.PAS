@@ -34,7 +34,7 @@ procedure DrawHitPoints(Who: PCharacter; Col, Row, Flag: Byte);
 procedure DrawCharacterPanel(Who: PCharacter);
 function IsHelpless(Who: Pointer): Boolean;
 procedure RecalcCombatValues(Who: PCharacter);
-function res12_fn_1037(N: Byte): string;
+function ByteToText(Value: Byte): string;
 function res12_fn_1073(Value: Word): string;
 procedure res12_fn_10AD;
 function res12_fn_10E6(Who: PCharacter): Byte;
@@ -350,7 +350,7 @@ var
   ValueText: string;
   Unused: Byte;   { the original frame carries one byte here that the code never reads }
 begin
-  ValueText := res12_fn_1037(Abs(Who^.ResistValue - 60));
+  ValueText := ByteToText(Abs(Who^.ResistValue - 60));
   if Who^.ResistValue > 60 then
     ValueText := '-' + ValueText;
   DrawTextAt(Col, Row, Green, ValueText);
@@ -371,7 +371,7 @@ begin
     ValueColor := Green;
   if Flag <> 0 then
     ValueColor := LightMagenta;
-  DrawTextAt(Col, Row, ValueColor, res12_fn_1037(Who^.Flag11B));
+  DrawTextAt(Col, Row, ValueColor, ByteToText(Who^.Flag11B));
 end;
 
 { 00BA:09E3. Draws the character panel the combat and inventory screens show (whitepaper 5.24): it
@@ -553,8 +553,16 @@ begin
   else
     Who^.Pad6B := 1;
 end;
-{ 00BA:1037: retf 2: 2 bytes of parameters; 256 bytes of locals }
-{@stub} function res12_fn_1037(N: Byte): string; begin end;
+{ 00BA:1037. Formats the byte N as its decimal text: it writes N into a 255-character local through
+  Str and copies that into the string result. DrawArmourClass and DrawHitPoints show the AC and
+  hit-point values with it, and TwoDigitText (ovl20:0565) keeps the first two characters. }
+function ByteToText(Value: Byte): string;
+var
+  Text: string[255];
+begin
+  Str(Value, Text);
+  ByteToText := Text;
+end;
 { 00BA:1073: retf 2, a string function (the caller pushes the result temporary first); ovl04 puts
   a price into a message with it. }
 {@stub} function res12_fn_1073(Value: Word): string; begin end;

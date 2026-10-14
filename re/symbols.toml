@@ -16596,12 +16596,12 @@ id = "00BA:1037"
 unit = "res12"
 addr = "00BA:1037"
 size = 60
-name = "res12_fn_1037"
-signature = "function res12_fn_1037(N: Byte): string"
+name = "ByteToText"
+signature = "function ByteToText(Value: Byte): string"
 c_name = "res12_fn_1037"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_1037 (res12_fn_1037 (00BA:1037) returns the decimal text of the byte it is given through Str; DrawArmourClass, DrawHitPoints and ovl20's TwoDigitText use it); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

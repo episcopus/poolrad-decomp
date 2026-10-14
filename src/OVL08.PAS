@@ -376,7 +376,7 @@ begin
   while (Who^.Combat^.Moves > 1) and (Key <> #0) and (Key <> #13) do
   begin
     ClearWindow($18, $18, $27, $18);
-    Key := ReadPromptChoice('Move/Attack, Move Left = ' + res12_fn_1037(Who^.Combat^.Moves shr 1) + ' ', '',
+    Key := ReadPromptChoice('Move/Attack, Move Left = ' + ByteToText(Who^.Combat^.Moves shr 1) + ' ', '',
       $A, $A, MenuColors, 1, 0, ds6E31);
     case Key of
       #0:
@@ -523,7 +523,7 @@ begin
   Key := ' ';
   while not (Key in [#0, 'E']) do
   begin
-    Title := 'GameSpeed (' + res12_fn_1037(GameSpeed) + ') :';
+    Title := 'GameSpeed (' + ByteToText(GameSpeed) + ') :';
     Menu := ' ';
     if GameSpeed < MaxGameSpeed then Menu := Menu + 'Slower ';
     if GameSpeed > 0 then Menu := Menu + 'Faster ';
