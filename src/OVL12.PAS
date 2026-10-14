@@ -84,7 +84,7 @@ procedure GazeCharmsTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure DrainLevels(Who: PCharacter; Count: Byte);
 procedure DrainAttackTargetLevel(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure DrainAttackTargetTwoLevels(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e73;
+procedure CauseRotOnAttackTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e74;
 procedure ovl12_e75;
 procedure ovl12_e76;
@@ -206,6 +206,7 @@ const
   AffectCauseDiseaseDuration = 10; { the Duration ovl12:1168 gives affect AffectCauseDisease }
   AffectHealingBlock = $32;     { HealCharacter with Flag 0 does nothing while the character has it (ovl24:175D) }
   AffectHealingBlockDuration = 14400; { $3840: the Duration ovl12:12FB gives affect AffectHealingBlock }
+  HealingBlockData = $FF;       { the Data byte ovl12:23EC gives AffectHealingBlock }
   SideDataBit = $10;            { Affect.Data bit 4: a side, 0 or 1, compared with Who's Side (ovl12:12B2) }
   CombatKindMask = $7F;         { TCharacter.CombatSize bits 0..6: the combat footprint kind (POOLVARS, +$6C) }
   CoughResistLimit = 52;        { ovl12:0A65: TCharacter.Pad112[$112] above this steps down by CoughResistStep,
@@ -235,6 +236,7 @@ const
   AffectRot = $39;              { the rot affect: Cure Disease removes it (whitepaper 5.19 table, DS:0114) }
   RotDuration = 43200;          { $A8C0: the Duration the rot handler (ovl12:1399) gives the next rot }
   RotStage = $10;               { one stage of the rot: the rot handler takes it off the affect's Data high nibble }
+  RotDataLow = $0F;             { the low nibble of a new rot's Data (ovl12:23EC), kept by ProgressRot [?] }
   RotLastStage = 1;             { a rot whose stage is this or lower kills its victim (the rot handler, ovl12:1399) }
   RotCharismaLoss = 2;          { what each run of the rot handler (ovl12:1399) takes off Charisma }
   RotMinimumCharisma = 3;       { Charisma is not taken below this by the rot handler (ovl12:1399) }
@@ -1566,8 +1568,24 @@ procedure DrainAttackTargetTwoLevels(Who: PCharacter; Affect: PAffect; Mode: Byt
 begin
   DrainLevels(Who^.Combat^.Target, 2);
 end;
-{ ovl12:23EC: retf 10: 10 bytes of parameters; 16 bytes of locals }
-{@stub} procedure ovl12_e73; begin end;
+{ ovl12:23EC. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Affect and Mode are not read, ovl24:0000)
+  that gives the rot to the character Who attacked last (Who's combat Target, copied into AttackTarget). Unless that
+  character already has the healing block AffectHealingBlock (res12_fn_2199 finds it), it gets the block for
+  AffectHealingBlockDuration rounds, then AffectRot for RotDuration rounds with the Data (1d6 * RotStage) + RotDataLow: the
+  rot stage is the high nibble (ProgressRot, ovl12:1399). "is Diseased" is shown on it in colour 10. Which affect runs
+  it is not known yet [?]. }
+procedure CauseRotOnAttackTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
+var
+  FoundAffect: Pointer;         { the healing block res12_fn_2199 looks for on AttackTarget }
+begin
+  AttackTarget := Who^.Combat^.Target;
+  if not res12_fn_2199(AttackTarget, AffectHealingBlock, FoundAffect) then
+  begin
+    AddAffect(AttackTarget, AffectHealingBlock, AffectHealingBlockDuration, HealingBlockData, RunsHandlerOnRemove);
+    AddAffect(AttackTarget, AffectRot, RotDuration, (RollDice(1, 6) * RotStage) + RotDataLow, RunsHandlerOnRemove);
+    res12_fn_16EC(AttackTarget, 'is Diseased', $A, 1);
+  end;
+end;
 { ovl12:2490: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e74; begin end;
 { ovl12:24D9: retf 10: 10 bytes of parameters; 2 bytes of locals }

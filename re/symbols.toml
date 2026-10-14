@@ -4162,12 +4162,12 @@ id = "ovl12:23EC"
 unit = "ovl12"
 addr = "ovl12:23EC"
 size = 164
-name = "ovl12_e73"
-signature = ""
+name = "CauseRotOnAttackTarget"
+signature = "procedure CauseRotOnAttackTarget(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e73"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_73"
+notes = "renamed from ovl12_e73 (ovl12:23EC gives AttackTarget (Who's Combat Target) the healing block AffectHealingBlock and then the rot AffectRot with stage RollDice(1,6) (ProgressRot reads the stage as Data div 16), shows 'is Diseased': an affect handler that inflicts a rot on the character Who attacked last); auto:entry_73"
 evidence = ["prologue"]
 
 [[routine]]

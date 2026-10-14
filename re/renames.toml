@@ -3917,3 +3917,10 @@ kind = "routine"
 why = "ovl12:23C2 calls DrainLevels(Who^.Combat^.Target, 2): the two-level twin of DrainAttackTargetLevel (ovl12:23A4), an affect handler that drains the character Who attacked last"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e73"
+new = "CauseRotOnAttackTarget"
+kind = "routine"
+why = "ovl12:23EC gives AttackTarget (Who's Combat Target) the healing block AffectHealingBlock and then the rot AffectRot with stage RollDice(1,6) (ProgressRot reads the stage as Data div 16), shows 'is Diseased': an affect handler that inflicts a rot on the character Who attacked last"
+date = "2026-10-13"
+
