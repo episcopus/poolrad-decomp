@@ -1060,8 +1060,8 @@ Overlay 24 holds the rules affects and rolls go through; its 22 entries (e1..e22
 
 ### 5.24 The resident character and item helper unit res12 (in progress)
 
-res12 is the resident helper the overlays call for character, item and view work. Ten routines
-are matched so far **[V]** (`make match UNIT=res12`): `RecalcCombatValues` recomputes a character's
+res12 is the resident helper the overlays call for character, item and view work. Twenty-six
+routines are matched so far **[V]** (`make match UNIT=res12`): `RecalcCombatValues` recomputes a character's
 combat values and calls `SetArmourMovement` (`00BA:01FB`), `AddReadiedItemBonus` (`00BA:0282`),
 `ApplyWeaponBonuses` (`00BA:0000`) and `CapMovementByLoad` (`00BA:03A0`); `IsHelpless`
 (`00BA:0B73`) tests the four affects that leave a character helpless; the four panel routines
@@ -1141,9 +1141,30 @@ matched only with the copy.
   eight string[12] entries at DS:1047: Okay Animated tempgone Running Unconscious Dying Dead
   Stoned), or "(Helpless)" when `IsHelpless` says so. The value at +$111 is the one
   `ovl24`'s `RollBeatsResistance` compares a d20+level against.
+- **Item-list helpers** **[V]**: the carried-item list is `TCharacter.Items` (+$C8), linked through
+  `TMenuLine.Next` (+$2A). `RemoveInventoryItem` (`00BA:1509`) unlinks an item and frees the record
+  (63 bytes): it re-points the head when the item is `Items`, else walks for the record whose Next is
+  the item, reports through `ShowMessageLine` (Yellow) on a nil item ("Nil Item pointer...") or one not
+  on the list ("Tried to Lose item & couldn't find it!"), then always clears `Item^.Next` and frees it;
+  ovl07 `LoseItems` calls it for every lost item. `AddItemCopy` (`00BA:15F7`) GetMems a 63-byte
+  record, `Move`s the item into it, clears the copy's Next and appends it at the end of `Items`; it is
+  the "give a copy of an item" helper, ovl12 and ovl19 call it.
+- **Message helpers** **[V]**: `ShowCharacterMessage` (`00BA:16EC`) is the per-character message box:
+  in the combat view mode (`ds49F3` = 5) it clears the box ($17,Row)-($26,$15) and in every other view
+  a fixed box, top row $11 or $12 (`ds6DDA` picks and the $11 case first draws the frame); it then
+  draws the character's name through `DrawCharacterName` and the wrapped text through `ShowPagedText`
+  (Green, cleared first) and, when the wait byte is set, delays `DelayByGameSpeed` and clears the box
+  through `ClearCharacterMessage` (`00BA:17E3`, box ($17,$A)-($26,$15) in view mode 5, else
+  (1,$12)-($26,$16)). `ShowFlashMessage` (`00BA:1693`) flashes a `String40` on the bottom row 24 in
+  Green (clear, draw, `DelayByGameSpeed`, clear); `DrawCharacterName` (`00BA:1816`) draws a
+  character's `Name` (+0) at (Col,Row) in the colour of its combat state (LightRed when `Flag10D` is 0,
+  Yellow on the party side 1, LightCyan otherwise) and, when its Mode byte is set, appends the literal
+  `'s` (the bytes `02 27 73`) after the name at Col plus its length.
 - **Map artifacts** **[V]**: `00BA:06D5` and `00BA:0712` are not routines but labels inside the
   blocked `res12_fn_0442` (06D5 even starts one byte late, under an `es:` prefix), and
   `00BA:0B4F` was the same inside `DrawCharacterPanel` (removed by `make match WRITE=1`).
+  `00BA:1857` and `00BA:187D` were the same inside `DrawCharacterName` (`00BA:1816`, whose real size
+  is 124 bytes, not the 65 the map guessed; `make match WRITE=1` removed both).
 
 ## 6. Open questions
 
