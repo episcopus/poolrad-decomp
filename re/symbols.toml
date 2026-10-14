@@ -3200,12 +3200,12 @@ id = "ovl12:017F"
 unit = "ovl12"
 addr = "ovl12:017F"
 size = 68
-name = "ovl12_e5"
-signature = ""
+name = "StartTrainingWithManual"
+signature = "procedure StartTrainingWithManual(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e5"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_5"
+notes = "renamed from ovl12_e5 (ovl12:017F shows 'starts to train' on Who (res12_fn_16EC, colour 10) and gives Who affect 7, AffectTrainingManual ('Training with Manual of Bodily Health', named in ovl15:0FBC), duration 43200, data 255, Flag 1 (AddAffect, ovl24:0E52); AffectHandlers frame (Who, Affect, Mode), entry 5 of ovl12 (auto:entry_5)); auto:entry_5"
 evidence = ["prologue"]
 
 [[routine]]

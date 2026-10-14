@@ -11,7 +11,7 @@ procedure DropFromFight(Who: PCharacter; NewStatus: Byte; Msg: String40);
 procedure RaiseAttackAndMorale(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure LowerAttackAndMorale(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure BoostAttackAgainstTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e5;
+procedure StartTrainingWithManual(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e6;
 procedure ovl12_e7;
 procedure ovl12_e8;
@@ -182,6 +182,9 @@ const
   StatusStoned = 7;             { TCharacter.Status 7, stone (ovl04:093D) }
   MoraleStep = 5;               { what the affect handlers add to or take from the morale scratch ds6825 }
   TargetBonus = 2;              { what BoostAttackAgainstTarget adds to AttackRoll and to DamageAmount }
+  AffectTrainingManual = 7;     { the affect id of "Training with Manual of Bodily Health" (ovl15:0FBC names it) }
+  TrainingManualDuration = 43200; { $A8C0: the Duration ovl12:017F gives the affect }
+  TrainingManualData = $FF;     { the Data byte ovl12:017F gives the affect }
 
 { ovl12:0000. Cancels the hook of an affect: when AffectId is 0 or is the affect the hooks are offering
   (HookAffectId), HookAffectId and DamageAmount are cleared. HookAffectId 0 reads as "is Unaffected"
@@ -264,8 +267,15 @@ begin
     Inc(DamageAmount, TargetBonus);
   end;
 end;
-{ ovl12:017F: retf 10: 10 bytes of parameters; 16 bytes of locals }
-{@stub} procedure ovl12_e5; begin end;
+{ ovl12:017F. Shows "starts to train" on Who in colour 10 (res12_fn_16EC, the message is copied to a
+  stack temporary by 0AF8:0B0B first) and gives Who the training manual affect (AffectTrainingManual,
+  duration TrainingManualDuration, data TrainingManualData), whose handler runs when it is removed.
+  It has the AffectHandlers frame (Who, Affect, Mode); Affect and Mode are not read here. }
+procedure StartTrainingWithManual(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  res12_fn_16EC(Who, 'starts to train', $A, 1);
+  AddAffect(Who, AffectTrainingManual, TrainingManualDuration, TrainingManualData, RunsHandlerOnRemove);
+end;
 { ovl12:01C3: retf 10: 10 bytes of parameters; 2 bytes of locals }
 {@stub} procedure ovl12_e6; begin end;
 { ovl12:0233: retf 10: 10 bytes of parameters; 14 bytes of locals }

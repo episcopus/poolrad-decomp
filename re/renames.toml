@@ -3455,3 +3455,10 @@ kind = "routine"
 why = "ovl12:013B copies Who's combat record's Target (+$A of the TCombatant at +$108, the character attacked last, ovl08) into DS:6826, and when that character's byte +$9F is 4 adds 2 to AttackRoll and to DamageAmount; the AffectHandlers shape (Who, Affect, Mode), Mode not read"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e5"
+new = "StartTrainingWithManual"
+kind = "routine"
+why = "ovl12:017F shows 'starts to train' on Who (res12_fn_16EC, colour 10) and gives Who affect 7, AffectTrainingManual ('Training with Manual of Bodily Health', named in ovl15:0FBC), duration 43200, data 255, Flag 1 (AddAffect, ovl24:0E52); AffectHandlers frame (Who, Affect, Mode), entry 5 of ovl12 (auto:entry_5)"
+date = "2026-10-13"
+
