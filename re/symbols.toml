@@ -16466,12 +16466,12 @@ id = "00BA:03A0"
 unit = "res12"
 addr = "00BA:03A0"
 size = 162
-name = "res12_fn_03A0"
-signature = ""
+name = "CapMovementByLoad"
+signature = "procedure CapMovementByLoad(Who: PCharacter)"
 c_name = "res12_fn_03A0"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_03A0 (caps Who's Movement (+11C) by the carried weight above the strength allowance (CarriedWeight +102 minus res12_fn_13AB): excess up to 200h keeps it, up to 300h caps at 9, up to 400h at 6, above at 3, and it only falls; called once by res12_fn_0BB8 after the readied-item loop (make match UNIT=res12, 00BA:03A0)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

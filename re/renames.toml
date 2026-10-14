@@ -3420,3 +3420,10 @@ kind = "routine"
 why = "accumulates one readied item's bonuses (RaceRow[item type][6] and [0] pick the branch) into the TBonus a res12_fn_0BB8 caller keeps, and adds the item's PlusSave to Who^.SaveBonus (make match UNIT=res12, 00BA:0282)"
 date = "2026-10-13"
 
+[[rename]]
+old = "res12_fn_03A0"
+new = "CapMovementByLoad"
+kind = "routine"
+why = "caps Who's Movement (+11C) by the carried weight above the strength allowance (CarriedWeight +102 minus res12_fn_13AB): excess up to 200h keeps it, up to 300h caps at 9, up to 400h at 6, above at 3, and it only falls; called once by res12_fn_0BB8 after the readied-item loop (make match UNIT=res12, 00BA:03A0)"
+date = "2026-10-13"
+

@@ -22,7 +22,7 @@ type
 procedure ApplyWeaponBonuses(Who: PCharacter);
 procedure SetArmourMovement(Who: PCharacter; Item: PItem);
 procedure AddReadiedItemBonus(Who: PCharacter; Item: PItem; var Bonus: TBonus; var Flag: Byte);
-procedure res12_fn_03A0;
+procedure CapMovementByLoad(Who: PCharacter);
 procedure res12_fn_0442(Value: LongInt; P: Pointer; A, B, C, D: Byte);
 procedure res12_fn_06D5;
 procedure res12_fn_0712;
@@ -112,6 +112,14 @@ const
   MediumArmourMove = 9;
   HeavyArmourMove = 6;
   MagicArmourMoveBonus = 3;
+  { The load limits of CapMovementByLoad (the excess carried weight): up to LightLoadLimit the
+    movement is left alone, up to MediumLoadLimit it is 9, up to HeavyLoadLimit 6, and above
+    that 3. }
+  LightLoadLimit = $200;
+  MediumLoadFrom = $201;
+  MediumLoadLimit = $300;
+  HeavyLoadFrom = $301;
+  HeavyLoadLimit = $400;
   { RaceRow byte offsets AddReadiedItemBonus reads. }
   RaceRowItemKind = 0;      { +0: the item kind: 0 weapon, 1 plus item, 2 armour, 9 special }
   RaceRowBonusClass = 6;    { +6: bit 7 set means the item has a bonus class (byte and $7F) }
@@ -232,8 +240,31 @@ begin
   end;
 end;
 
-{ 00BA:03A0: retf 4: 4 bytes of parameters; 4 bytes of locals }
-{@stub} procedure res12_fn_03A0; begin end;
+{ 00BA:03A0. Caps Who's movement by the weight the character carries above its strength
+  allowance; res12_fn_0BB8 calls it once after the readied-item loop. Weight is
+  CarriedWeight (+$102) minus res12_fn_13AB(Who) (the strength weight allowance), clamped at 0
+  from below. The excess picks the cap: up to $200 the movement is left alone, up to $300 it is
+  9, up to $400 6, and above that 3; the movement only falls, never rises.
+  Globals: none beyond Who. }
+procedure CapMovementByLoad(Who: PCharacter);
+var
+  Weight: Integer;
+  NewMovement: Byte;
+begin
+  Weight := Who^.CarriedWeight - res12_fn_13AB(Who);
+  if Weight < 0 then
+    Weight := 0;
+  case Weight of
+    0..LightLoadLimit: NewMovement := Who^.Movement;
+    MediumLoadFrom..MediumLoadLimit: NewMovement := MediumArmourMove;
+    HeavyLoadFrom..HeavyLoadLimit: NewMovement := HeavyArmourMove;
+  else
+    NewMovement := 3;
+  end;
+  if NewMovement < Who^.Movement then
+    Who^.Movement := NewMovement;
+end;
+
 { 00BA:0442: frame not read }
 {@stub} procedure res12_fn_0442(Value: LongInt; P: Pointer; A, B, C, D: Byte); begin end;
 { 00BA:06D5: frame not read }
