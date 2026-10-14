@@ -8755,7 +8755,7 @@ evidence = ["prologue"]
 id = "ovl19:1A8A"
 unit = "ovl19"
 addr = "ovl19:1A8A"
-size = 513
+size = 612
 name = "UseItem"
 signature = "procedure UseItem(Item: PMenuLine; var Done: Byte)"
 c_name = "ovl19_e8"
@@ -8769,12 +8769,12 @@ id = "ovl19:1CEE"
 unit = "ovl19"
 addr = "ovl19:1CEE"
 size = 605
-name = "ovl19_fn_1CEE"
-signature = "procedure ovl19_fn_1CEE(Item: PMenuLine)"
+name = "SellItem"
+signature = "procedure SellItem(Item: PMenuLine)"
 c_name = "ovl19_fn_1CEE"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl19_fn_1CEE (ovl19:1CEE is the Sell action: RunItemMenu's S key (ovl19:0EF8) after CanGiveUpItem; it shows 'I'll give you <offer> gold pieces for your <item>', asks 'Is It a Deal?' and on Y shows 'Sold!', removes the item (res12_fn_1509) and pays the offer in platinum and gold (matched, ovl19:1CEE)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

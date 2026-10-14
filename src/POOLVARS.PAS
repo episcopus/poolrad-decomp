@@ -576,8 +576,8 @@ var
   ds470E: Pointer;                { the FINAL picture bank ShowEndingNarrative loads through LoadPicture and draws }
   ds4712: Byte;                   { the DS:49F3 value ShowEndingNarrative saves at the start and restores at the end }
   ds4713: string[1];              { Str(TileSet): the picture number ShowEndingNarrative appends to FINAL }
-  { The character whose sheet ShowCharacterSheet draws: a copy of SelectedCharacter taken at its start; no
-    other routine reads it (ovl19:0051). }
+  { The character whose sheet ShowCharacterSheet draws: a copy of SelectedCharacter taken at its start (ovl19:0051).
+    The Sell action (ovl19:1CEE) passes it to res12_fn_0442 for the item's line (ovl19:1D59); no other routine reads it yet. }
   SheetCharacter: PCharacter;
   { A copy of SelectedCharacter that the View command stores (ovl19:0AD1) before it draws the sheet;
     no decompiled routine reads it yet. }

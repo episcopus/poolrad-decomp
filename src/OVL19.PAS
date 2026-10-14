@@ -15,7 +15,7 @@ procedure TradeItem(Item: PMenuLine);
 procedure HalveItem(Item: PMenuLine);
 procedure JoinItem(Item: PMenuLine);
 procedure UseItem(Item: PMenuLine; var Done: Byte);
-procedure ovl19_fn_1CEE(Item: PMenuLine);
+procedure SellItem(Item: PMenuLine);
 procedure ovl19_fn_1F4B;
 procedure ovl19_fn_1F52(Item: PMenuLine; var Redraw: Byte);
 procedure ovl19_fn_20A9;
@@ -32,7 +32,7 @@ function CharacterMoneyValueInGold(Who: PCharacter): LongInt;
 function ChooseSpellFromList(SpellListKind, DisplayMode: Byte; var Choice: Word;
   var Listed: Byte): Byte;
 implementation
-uses RES06, RES09, RES12, OVL22, OVL24, OVL25, OVL28, OVL31;
+uses RES06, RES09, RES12, OVL21, OVL22, OVL24, OVL25, OVL28, OVL31;
 
 type
   { The sheet reads three TCharacter bytes as signed table indexes (cwde at ovl19:00C6, 0198 and 04DE). }
@@ -391,7 +391,7 @@ end;
   Drop (D), Halve (H), Join (J), Sell (S) and Id (I), runs the chosen action and repeats until Escape or E
   is pressed, or Done is set. Ready runs ReadyItem. Use needs a readied item ("Must be Readied" otherwise)
   that ovl22_e6 accepts, or one with Affects[2] above 0 and Affects[3] below $80; then it runs UseItem.
-  Trade and Sell ask CanGiveUpItem, then run TradeItem or ovl19_fn_1CEE. Drop asks CanGiveUpItem,
+  Trade and Sell ask CanGiveUpItem, then run TradeItem or SellItem. Drop asks CanGiveUpItem,
   shows "Your <item> will be gone forever" and then "Drop It?", and on Y calls res12_fn_1509 with
   SelectedCharacter and the item. Halve, Join and Id run HalveItem, JoinItem and ovl19_fn_1F52.
   Done: the stop flag shared with ViewSelectedCharacter; UseItem may set it. The item menu is drawn
@@ -512,7 +512,7 @@ begin
           'J': JoinItem(Selected);
           'S':
             if CanGiveUpItem(Selected) then
-              ovl19_fn_1CEE(Selected)
+              SellItem(Selected)
             else
               Key := ' ';
           'I': ovl19_fn_1F52(Selected, Redraw);
@@ -801,8 +801,73 @@ begin
     end;
   end;
 end;
-{ ovl19:1CEE: retf 4: 4 bytes of parameters; 520 bytes of locals }
-{@stub} procedure ovl19_fn_1CEE(Item: PMenuLine); begin end;
+{ ovl19:1CEE. The Sell action of the item menu (RunItemMenu's S key, ovl19:0EF8, after CanGiveUpItem): the offer for
+  Item is half its Value in gold (Value div 2), and a stack of more than one item is offered its Count times that
+  offer divided by StackDivisor (QUIRK ovl19:1D1A). The offer is shown on row 21 as "I'll give you <offer> gold
+  pieces for your <name>" and the character is asked "Is It a Deal? ". On Y, "Sold!" is shown, the item leaves
+  SelectedCharacter (res12_fn_1509) and the offer is paid as platinum (GoldPerPlatinum gold each, Offer div 5) and
+  gold (Offer mod 5). Every coin weighs one, so WouldOverload (ovl21:0054) may refuse them: then "Overloaded.
+  Money will be put in pool." is shown, Room (what he can still carry) limits the platinum that goes to him, and
+  the rest goes to PooledMoney[PlatinumKind]. Parameter: Item. Globals: SelectedCharacter (the seller),
+  SheetCharacter (the item line res12_fn_0442 draws at ovl19:1D55), PooledMoney. Side effects: messages, the
+  window rows 21 and 22 (cleared at the end). QUIRK ovl19:1D1A: the test for kind $49 is followed by a test of the
+  same kind for $1C, so the $1C branch (ovl19:1D46, the stack offer without the division) is never taken. }
+procedure SellItem(Item: PMenuLine);
+const
+  MessageLeft = 1;
+  MessageTop = 21;
+  MessageRight = 38;
+  MessageBottom = 22;
+  MessageColor = 14;
+  ItemKindSlot11 = $49;         { ReadyItem checks body slot 11 for this kind (ovl19:14D0) }
+  ItemKindSlot12 = $1C;         { and body slot 12 for this kind }
+  StackDivisor = 20;            { the divisor of a stack's offer [I] }
+  GoldPerPlatinum = 5;          { platinum is 1000 copper against 200 for gold (CoinCopperValues) }
+  GoldKind = 3;                 { the MoneyKindNames indexes of gold and platinum }
+  PlatinumKind = 4;
+var
+  Offer: Word;                  { the offer in gold: half the Value, a stack's Count times it divided by StackDivisor }
+  Platinum: Word;               { the part of the offer paid in platinum: Offer div GoldPerPlatinum }
+  Gold: Word;                   { the rest of the offer, paid in gold: Offer mod GoldPerPlatinum }
+  Room: Word;                   { WouldOverload's Room: the coins the character can still carry (ovl21:0054) [I] }
+begin
+  Offer := 0;
+  if Item^.Value > 0 then
+    Offer := Item^.Value div 2;
+  if Item^.Count > 1 then
+    if not ((Item^.ItemType = ItemKindSlot11) and (Item^.ItemType = ItemKindSlot12)) then
+      Offer := (Offer * Item^.Count) div StackDivisor
+    else
+      Offer := Offer * Item^.Count;
+  res12_fn_0442(LongInt(SheetCharacter), Item, 0, 0, 0, 0);
+  ShowPagedText(MessageLeft, MessageTop, MessageRight, MessageBottom, MessageColor, 1,
+    'I''ll give you ' + res12_fn_1073(Offer) + ' gold pieces for your ' + Item^.Text);
+  if AskYesNo('Is It a Deal? ', 13, 10, 15) = 'Y' then
+  begin
+    res12_fn_1693('Sold!');
+    res12_fn_1509(SelectedCharacter, Item);
+    Platinum := Offer div GoldPerPlatinum;
+    Gold := Offer mod GoldPerPlatinum;
+    if WouldOverload(SelectedCharacter, Gold + Platinum, Room) then
+    begin
+      res12_fn_1693('Overloaded.  Money will be put in pool.');
+      if Room > Platinum then
+        Inc(SelectedCharacter^.Money[PlatinumKind], Platinum)
+      else
+      begin
+        Inc(SelectedCharacter^.Money[PlatinumKind], Room);
+        Inc(PooledMoney[PlatinumKind], Platinum - Room);
+      end;
+      Inc(SelectedCharacter^.Money[GoldKind], Gold);
+    end
+    else
+    begin
+      Inc(SelectedCharacter^.Money[PlatinumKind], Platinum);
+      Inc(SelectedCharacter^.Money[GoldKind], Gold);
+    end;
+  end;
+  ClearWindow(MessageLeft, MessageTop, MessageRight, MessageBottom);
+end;
 { ovl19:1F4B: frame not read }
 {@stub} procedure ovl19_fn_1F4B; begin end;
 { ovl19:1F52: frame not read }

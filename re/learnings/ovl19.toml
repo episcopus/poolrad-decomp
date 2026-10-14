@@ -197,3 +197,21 @@ tags = ["character", "offset", "combat", "quick"]
 title = "The combat checks in the Use action read Quick (+$10F), not Flag10D (+$10D)"
 lesson = "UseItem tests SelectedCharacter's byte at +$10F before res12_fn_2B88 (ovl19:1B11) and passes it as the second argument of ovl22_e5 (ovl19:1BCF). POOLVARS names +$10F Quick (nonzero while the computer fights for the character), so the reads are Quick and not Flag10D (+$10D, the experience eligibility). A field one byte off is still inside the same record, so check each offset against the disassembly."
 evidence = ["src/OVL19.PAS#UseItem", "src/POOLVARS.PAS#TCharacter"]
+
+[[lesson]]
+id = "not-and-layout-for-two-tests"
+confidence = "V"
+units = ["*"]
+tags = ["compiler", "boolean", "branch", "layout", "and", "not"]
+title = "Two tests of one field: `if not (A and B) then Div else Mul` lays out like the original, the plain `and` does not"
+lesson = "SellItem tests a kind byte against $49 and then $1C and runs the multiply branch only when both hold. The original jumps to the divide branch on the first miss (jne) and falls into it after a second test that jumps to the multiply branch (je). `if (K = $49) and (K = $1C) then Mul else Div` compiles to cmp; jne Div; cmp; jne Div; Mul, which differs; `if not ((K = $49) and (K = $1C)) then Div else Mul` compiles to cmp; jne Div; cmp; je Mul; Div, which matches. The probe reproduces both shapes. The source's dead multiply branch stays as a QUIRK."
+evidence = ["tools/re/tp_idioms/ovl19/PRB19NOT.PAS", "src/OVL19.PAS#SellItem"]
+
+[[lesson]]
+id = "shared-tail-written-in-each-branch"
+confidence = "V"
+units = ["*"]
+tags = ["compiler", "if", "else", "duplicate", "tail"]
+title = "A statement the original runs on both branches of an if-else is written in each branch"
+lesson = "Turbo Pascal does not move a common tail out of the branches: SellItem's gold addition (Money[GoldKind] += Gold) is code in the overload branch (ovl19:1E8B) and again in the other branch (ovl19:1EA5), each followed by a jump past the other. A single statement after the if-else gives one copy and a mismatch at the first jump. Write the statement in both branches to reproduce the original; a reviewer should read the two copies as one intended step."
+evidence = ["src/OVL19.PAS#SellItem", "re/symbols.toml#SellItem"]
