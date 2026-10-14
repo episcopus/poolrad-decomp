@@ -31,6 +31,21 @@ First review. `make match UNIT=res07` (rerun): `unit: complete`, 20 matched, 0 n
 - [ ] note SetPaletteRegister (0464:2A0D): comment, mapping (0..7 as is, 8..15 as +8 = 16..23) and the callers (ovl01 ShowTitleScreen, ovl31_e2/e3) match the code and the packet; `Register` could say "EGA palette register 0..15". It never tests VideoAdapter; the callers do.
 - [ ] note ColorMatchMask, PaletteColor, MirrorByte, MirrorWord (GlyphPixelMasks words $C000..$0003 in the opposite order, as the comment says), SwapNibbles, AllocatePicture, ReleasePicture, UnpackPicturePixels adapters 0 to 2 and DrawPictureItem were read against the packet and are accurate apart from the findings above. `MirrorPicture` mode 2 "in place" for the pixel buffer is loose (the buffer is mirrored into the same reversed position as the data, `Dest^.Pixels[DestOfs]`, not literally in place); the res12 callers are confirmed by the packet (res12_fn_18CF).
 
+## Round 2 (rev-sonnet, 2026-10-13, commit ea2f513)
+
+Rerun: `make match UNIT=res07`: `unit: complete`, 20 matched, 0 nested, 0 differ, 0 stubs. `make readability UNIT=res07`: clean. I read the five fixed routines in src/RES07.PAS again against the round 1 findings and the packet:
+
+- FlushPictureChanges (0464:1B52): the comment now says the four planes go to the off-screen page $A200 and are then copied onto $A000 in GC write mode 1 (register 5 := 1, restored to 0), which is what lines 933 to 943 do. The tracker semantics (ds4C20 first/lowest and starts $FFFF, ds4D70 last/highest and starts 0, ds4AD0 the screen-side byte column, LeftCol * 2/1/4) are now in the routine comment, the POOLVARS comments (src/POOLVARS.PAS 641 to 651) and whitepaper 5.23 (line 1130). Closed.
+- ShowPicture (0464:1951): the adapter 1 description (four plane bytes per cell, one byte per plane, eight pixels per byte, map mask on 3C5) and the parameter names PicCol/PicRow with PicRow * 8 are correct, in the source and in whitepaper line 1129. Closed.
+- RemapPictureColours (0464:1E5C): the header says exactly one item, item FirstItem (item 0 for a negative FirstItem), and the QUIRK 1F51 sentence is consistent with it. Closed. Remaining nit: the local `Items` comment ("ItemCount for a negative FirstItem, else 1") is true only of the header before the loop; in the colour loop it is always 1. Added as a should-fix below.
+- FillPictureRect (0464:2632): Width and FirstCol in cells, FirstRow and Height in pixel rows, ovl16:34DF listed as a caller. Closed.
+
+No open must-fix finding remains. The should-fix and note items above stay open for the decompiler (names of the dsXXXX globals, bare port numbers and sizes, shared ds70C7 loop counter QUIRK, SetVideoMode/RestoreVideoMode SavedVideoMode side effect, stale parameter names in comments, whitepaper "all 14 matched routines" at line 1127 and "19 routines plus the empty initialisation part" at line 1132, and the two learnings `res07_fn_1E5C` and the picture record lesson in re/learnings/res07.toml that still call +0 "a word (the row/item count)", +8 "the height in rows", +$11 "the bytes per row" and name a `FirstRow` parameter). None blocks the pass: no name or comment misstates what the code does in the routines I re-read, and the bytes are proven.
+
+- [ ] should-fix RemapPictureColours (0464:1E5C): the comment of the local `Items` ("ItemCount for a negative FirstItem, else 1") describes only the header before the loop; inside the colour loop (1F51) it is always 1. Say so in the local comment.
+
 ## Verdict
 
-Not passed: five must-fix findings (FlushPictureChanges copy direction, the tracker array semantics, ShowPicture's "one byte per pixel", RemapPictureColours' "items from FirstItem on", FillPictureRect's cell units); all five are comment corrections, no byte changes.
+Round 1: not passed, five must-fix findings (FlushPictureChanges copy direction, the tracker array semantics, ShowPicture's "one byte per pixel", RemapPictureColours' "items from FirstItem on", FillPictureRect's cell units), all comment corrections.
+
+Round 2: passed. All five are fixed and verified in the source, POOLVARS and the whitepaper; the open should-fix items do not block.

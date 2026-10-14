@@ -12,7 +12,7 @@ Approach: ADR-002 (SPEC 4), Pascal-first matching decompilation; the C track (AD
 | P1 Map | done (`make p1-check`): 50 units, 1296 routines, TP 6.0 June 1991 pinned |
 | P2 Oracle and data | done: goldens with recordings for 2 of 2 session scripts (boot-title, create-character); `make golden CHECK=1` |
 | P3 Match harness | done: `make match` (tools/match/match.py, tests/unit/test_match.py); gate `make check` |
-| P4 Match | 435 of 1077 game routines at L2 (145400 of 233807 bytes by re/symbols.toml sizes); 39 of 46 game units complete, 33 reviewed; 20 routines (3661 bytes) inside external object files are not Pascal and are matched by bytes; main program `src/POOL.PAS` matched by `make match UNIT=main` |
+| P4 Match | 435 of 1077 game routines at L2 (145400 of 233807 bytes by re/symbols.toml sizes); 39 of 46 game units complete, 36 reviewed; 20 routines (3661 bytes) inside external object files are not Pascal and are matched by bytes; main program `src/POOL.PAS` matched by `make match UNIT=main` |
 | P5 Rebuild | `make rebuild` links the whole game from `src/` (every unit has source: decompiled or skeleton) and reports identical segments |
 
 ### P4 units with matched routines
@@ -22,7 +22,7 @@ Approach: ADR-002 (SPEC 4), Pascal-first matching decompilation; the C track (AD
 | ovl00 | ovl00 | 2 | 2 | 124 | clean | yes |
 | ovl01 | ovl01 | 4 | 4 | 2062 | clean | yes |
 | ovl02 | ovl02 | 2 | 2 | 609 | clean | yes |
-| ovl04 | Temple | 12 | 12 | 3876 | clean | complete |
+| ovl04 | Temple | 12 | 12 | 3876 | clean | yes |
 | ovl05 | TreasureShare | 12 | 12 | 5750 | clean | yes |
 | ovl06 | Shop | 5 | 5 | 1901 | clean | yes |
 | ovl07 | Loader | 33 | 33 | 8730 | clean | yes |
@@ -53,8 +53,8 @@ Approach: ADR-002 (SPEC 4), Pascal-first matching decompilation; the C track (AD
 | res03 | res03 | 6 | 6 | 471 | clean | yes |
 | res04 | res04 | 5 | 5 | 336 | clean | yes |
 | res05 | res05 | 18 | 18 | 2416 | clean | yes |
-| res06 | res06 | 20 | 20 | 4151 | clean | complete |
-| res07 | res07 | 20 | 20 | 10832 | clean | complete |
+| res06 | res06 | 20 | 20 | 4151 | clean | yes |
+| res07 | res07 | 20 | 20 | 10832 | clean | yes |
 | res08 | res08 | 1 | 1 | 748 | clean | yes |
 | res09 | res09 | 4 | 4 | 880 | clean | yes |
 | res10 | res10 | 1 | 1 | 16 | clean | yes |
