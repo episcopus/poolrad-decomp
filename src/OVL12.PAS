@@ -44,8 +44,8 @@ procedure ClearCloud(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure AvoidDistantAttack(Who: PCharacter; Chance: Byte);
 function FirstSlotItem(Who: PCharacter): PItem;
 procedure AvoidIfSelectedItemPlusZero(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e36;
-procedure ovl12_e37;
+procedure HalveAgeDoubling(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure ovl12_e37(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e38;
 procedure ovl12_e39;
 procedure ovl12_e40;
@@ -871,8 +871,13 @@ begin
     if FirstSlotItem(SelectedCharacter)^.Plus = 0 then
       AvoidDistantAttack(Who, AlwaysAvoids);
 end;
-{ ovl12:10C1: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e36; begin end;
+{ ovl12:10C1. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). It halves
+  ds681A, the byte that AgeCharacterOnce (ovl12:0C4B) doubles every time it runs. Which affect runs it is not known
+  yet [?]. }
+procedure HalveAgeDoubling(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  ds681A := ds681A shr 1;
+end;
 { ovl12:10DE: retf 10: 10 bytes of parameters; 16 bytes of locals }
 {@stub} procedure ovl12_e37; begin end;
 { ovl12:1168: retf 10: 10 bytes of parameters; 4 bytes of locals }

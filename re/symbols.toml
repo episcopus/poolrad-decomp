@@ -3629,12 +3629,12 @@ id = "ovl12:10C1"
 unit = "ovl12"
 addr = "ovl12:10C1"
 size = 29
-name = "ovl12_e36"
-signature = ""
+name = "HalveAgeDoubling"
+signature = "procedure HalveAgeDoubling(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e36"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_36"
+notes = "renamed from ovl12_e36 (ovl12:10C1 halves ds681A, the byte AgeCharacterOnce (ovl12:0C4B) doubles every time it runs; affect handler (AffectHandlers shape, nothing read); which affect runs it is not known); auto:entry_36"
 evidence = ["prologue"]
 
 [[routine]]
