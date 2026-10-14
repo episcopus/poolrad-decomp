@@ -35,7 +35,7 @@ procedure DrawCharacterPanel(Who: PCharacter);
 function IsHelpless(Who: Pointer): Boolean;
 procedure RecalcCombatValues(Who: PCharacter);
 function ByteToText(Value: Byte): string;
-function res12_fn_1073(Value: Word): string;
+function WordToText(Value: Word): string;
 procedure res12_fn_10AD;
 function res12_fn_10E6(Who: PCharacter): Byte;
 function res12_fn_1168(Who: PCharacter): ShortInt;
@@ -563,9 +563,17 @@ begin
   Str(Value, Text);
   ByteToText := Text;
 end;
-{ 00BA:1073: retf 2, a string function (the caller pushes the result temporary first); ovl04 puts
-  a price into a message with it. }
-{@stub} function res12_fn_1073(Value: Word): string; begin end;
+{ 00BA:1073. Formats the word Value as its decimal text, the same way ByteToText does for a byte:
+  Str into a 255-character local, copied into the string result. The shops and the Temple put
+  prices and amounts into messages with it.
+  Globals: none. }
+function WordToText(Value: Word): string;
+var
+  Text: string[255];
+begin
+  Str(Value, Text);
+  WordToText := Text;
+end;
 { 00BA:10AD: retf 4: 4 bytes of parameters; 256 bytes of locals }
 {@stub} procedure res12_fn_10AD; begin end;
 { 00BA:10E6: retf 4: 4 bytes of parameters; 2 bytes of locals }

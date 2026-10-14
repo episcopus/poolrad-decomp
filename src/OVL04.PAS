@@ -118,7 +118,7 @@ var
   Money: Word;
   Pooled: LongInt;
 begin
-  Service := Service + ' will only cost ' + res12_fn_1073(Price) + ' gold pieces.';
+  Service := Service + ' will only cost ' + WordToText(Price) + ' gold pieces.';
   ShowPagedText(TextWindowLeft, TextWindowTop, TextWindowRight, TextWindowBottom,
                 TextWindowColor, 1, Service);
   Answer := AskYesNo('pay for cure ', PromptTitleColor, CostPromptWordColor, CostPromptHotColor);

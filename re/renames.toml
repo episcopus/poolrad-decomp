@@ -3490,3 +3490,10 @@ kind = "routine"
 why = "res12_fn_1037 (00BA:1037) returns the decimal text of the byte it is given through Str; DrawArmourClass, DrawHitPoints and ovl20's TwoDigitText use it"
 date = "2026-10-13"
 
+[[rename]]
+old = "res12_fn_1073"
+new = "WordToText"
+kind = "routine"
+why = "res12_fn_1073 (00BA:1073) returns the decimal text of the word it is given through Str, the word twin of ByteToText; the shops and the Temple put prices and amounts into messages with it"
+date = "2026-10-13"
+

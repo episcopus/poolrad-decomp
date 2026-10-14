@@ -16609,12 +16609,12 @@ id = "00BA:1073"
 unit = "res12"
 addr = "00BA:1073"
 size = 58
-name = "res12_fn_1073"
-signature = "function res12_fn_1073(Value: Word): string"
+name = "WordToText"
+signature = "function WordToText(Value: Word): string"
 c_name = "res12_fn_1073"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_1073 (res12_fn_1073 (00BA:1073) returns the decimal text of the word it is given through Str, the word twin of ByteToText; the shops and the Temple put prices and amounts into messages with it); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
