@@ -3903,3 +3903,10 @@ kind = "routine"
 why = "nested in ovl12:2122 (DrainLevels): returns the class with the highest level, which DrainLevels reads for HighestLevel (+$73) and Experience (+$AC) at ovl12:235E..2383; the value it compares is ClassXpTable"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e71"
+new = "DrainAttackTargetLevel"
+kind = "routine"
+why = "ovl12:23A4 calls DrainLevels(Who^.Combat^.Target, 1): an affect handler that drains one level from the character Who attacked last (the AttackTarget of BoostAttackAgainstTarget, ovl12:013B)"
+date = "2026-10-13"
+
