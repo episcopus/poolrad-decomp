@@ -16,8 +16,7 @@ procedure SelectCharacterCommand;
 procedure ShowEncounterCommand;
 procedure AddEncounterGroupCommand;
 procedure ApproachEncounterCommand;
-procedure ovl03_fn_0856;
-procedure ovl03_fn_08E5;
+procedure ShowCloseUpCommand;
 procedure ovl03_fn_0951;
 procedure ovl03_fn_0994;
 procedure ovl03_fn_0A09;
@@ -77,7 +76,7 @@ procedure ovl03_e1;
 procedure ovl03_fn_3379;
 procedure ovl03_fn_34AB;
 implementation
-uses OVL32;
+uses OVL26, OVL28, OVL32;
 
 const
   { The operand types from this one up are strings: $80 a packed string, $81 the address of a
@@ -99,6 +98,12 @@ const
   VarStepsAhead = 705;
   { ECL command 11 (ovl03:0450) adds no encounter member once its count of members reaches this. }
   MaxEncounterMembers = 63;
+  { The word of ds49D6 that ECL command 14 (ovl03:0856) reads: NoHeadBank when the close-up is the PIC
+    picture, else the HEAD bank of the HEAD and BODY close-up (ShowEncounterPicture, ovl07:054E). }
+  VarCloseUpHead = 737;
+  NoHeadBank = $FF;
+  { The picture bank ECL command 14 (ovl03:0856) takes to hide the close-up instead of showing it. }
+  HideCloseUp = $FF;
 var
   { ds84C8 (POOLVARS) under the type ShowEncounterPicture takes: TPictureShown is declared in OVL07,
     and Turbo Pascal accepts a var argument only of the identical type. }
@@ -423,10 +428,47 @@ begin
   end;
   Inc(EclPC);
 end;
-{ ovl03:0856: frame not read }
-{@stub} procedure ovl03_fn_0856; begin end;
-{ ovl03:08E5: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl03_fn_08E5; begin end;
+{ ovl03:0856. ECL command 14 (dispatcher ovl03:2F2D, SkippedOpcode 14): shows the close-up picture of
+  the encounter, or hides it. Operand 1 is the picture bank PicBank. When PicBank is HideCloseUp, the
+  close-up goes: when ds49F9 is above 1 or AreaViewKind is 1 and a close-up or the 3D sprite is up
+  (ds84E0 or ds84E3), the area view is drawn again (ShowAreaView), those flags are cleared and ds84E1
+  is set; both PictureShown flags are cleared. Otherwise the picture window (3, 3 to 13, 13) is
+  cleared first unless VarForceWallView is set, and the close-up is drawn as ShowEncounterPicture
+  draws it: the PIC picture PicBank when word VarCloseUpHead of ds49D6 is NoHeadBank, else the HEAD
+  and BODY pictures (ShowHeadBody). Purpose of ds49F9 unknown: the loader sets it to 1 (ovl11:03EB). }
+procedure ShowCloseUpCommand;
+var
+  PicBank: Byte;
+begin
+  DecodeOperands(1);
+  PicBank := OperandValue(1);
+  if (GameVars^[VarForceWallView] = 0) and (PicBank <> HideCloseUp) then
+    DrawWindow(3, 3, $D, $D, 0, $F, '');
+  if PicBank <> HideCloseUp then
+  begin
+    PictureShown[1] := 1;
+    ds84E0 := 1;
+    if ds49D6^[VarCloseUpHead] = NoHeadBank then
+    begin
+      LoadSpriteList('PIC', PicBank, 0, @PictureAnimation);
+      DrawSprite(3, 3, 1, PictureAnimation.Frames[1].Sprite);
+    end
+    else
+      ShowHeadBody(ds49D6^[VarCloseUpHead], PicBank);
+  end
+  else
+  begin
+    if ((ds49F9 > 1) or (AreaViewKind = 1)) and ((ds84E0 <> 0) or (ds84E3 <> 0)) then
+    begin
+      ShowAreaView;
+      ds84E0 := 0;
+      ds84E3 := 0;
+      ds84E1 := 1;
+    end;
+    PictureShown[0] := 0;
+    PictureShown[1] := 0;
+  end;
+end;
 { ovl03:0951: retf 0: 0 bytes of parameters; 6 bytes of locals }
 {@stub} procedure ovl03_fn_0951; begin end;
 { ovl03:0994: retf 0: 0 bytes of parameters; 516 bytes of locals }

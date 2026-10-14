@@ -3511,3 +3511,10 @@ kind = "routine"
 why = "ECL command 13 (dispatcher ovl03:2F2D, SkippedOpcode 13): while word 705 of ds49D6 (VarStepsAhead, the steps the party sees ahead) is above 0 it takes one off and redraws the encounter picture at the new distance (ovl03:0817, matched); the command is the approach of the encounter picture, as opcode 12 (ShowEncounterCommand) starts it"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl03_fn_0856"
+new = "ShowCloseUpCommand"
+kind = "routine"
+why = "ECL command 14 (dispatcher ovl03:2F2D, SkippedOpcode 14): operand 1 is a picture bank; PictureShown and ds84E0 mark the close-up, and it draws the PIC picture or the HEAD and BODY pictures as ShowEncounterPicture does (ovl07:054E), or hides it when the bank is $FF (ovl03:0856, matched)"
+date = "2026-10-13"
+

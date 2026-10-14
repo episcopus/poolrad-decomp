@@ -709,8 +709,10 @@ var
   ds84DD: Byte;                   { cleared by the loader (ovl11:0415) }
   ds84DE: Byte;                   { cleared by the loader (ovl11:041A) }
   ds84DF: Byte;                   { cleared by the loader (ovl11:041F) }
-  ds84E0: Byte;                   { cleared by the loader (ovl11:0424) }
-  ds84E3: Byte;                   { cleared by the loader (ovl11:0433) }
+  { ds84E0: set while a close-up picture is up (ShowEncounterPicture, ShowCloseUpCommand ovl03:0856). }
+  ds84E0: Byte;                   { close-up picture up; cleared by the loader (ovl11:0424) }
+  { ds84E3: set when ShowEncounterPicture loads the 3D sprite; ShowCloseUpCommand (ovl03:0856) clears it. }
+  ds84E3: Byte;                   { 3D encounter sprite loaded; cleared by the loader (ovl11:0433) }
   ds84E4: Byte;                   { window-clear once flag: HandleWildernessKeys clears the text window and sets it }
   ds84E9: Byte;                   { cleared by the loader (ovl11:0456) }
 
@@ -930,6 +932,7 @@ var
   ds84D0: Word;                   { set by a script write to address $B9 (WriteVmWord, ovl07:0D55); meaning unknown }
   ds84D2: Byte;                   { set to 1 when the script writes 0 to the character word $6C00 (ovl07:0B99) }
   ds84D3: Byte;                   { set to 1 when the script writes 0 to the character word $6B00 (ovl07:0A91) }
+  { ds84E1 is set to 1 when ShowCloseUpCommand (ovl03:0856) hides the close-up. }
   ds84E1: Byte;                   { cleared by ShowHeadBody (ovl07:0514); meaning unknown }
   ds84E6: Byte;                   { set to 1 when the script moves the party or changes its marker (ovl07:0D6C..0DD6) }
   { set to 1 by ECL command 11 (ovl03:0450) after it has added members to the party list; meaning unknown }

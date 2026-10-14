@@ -250,7 +250,7 @@ evidence = ["prologue"]
 id = "ovl03:0817"
 unit = "ovl03"
 addr = "ovl03:0817"
-size = 58
+size = 63
 name = "ApproachEncounterCommand"
 signature = ""
 c_name = "ovl03_fn_0817"
@@ -263,27 +263,14 @@ evidence = ["prologue"]
 id = "ovl03:0856"
 unit = "ovl03"
 addr = "ovl03:0856"
-size = 143
-name = "ovl03_fn_0856"
+size = 251
+name = "ShowCloseUpCommand"
 signature = ""
 c_name = "ovl03_fn_0856"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_0856 (ECL command 14 (dispatcher ovl03:2F2D, SkippedOpcode 14): operand 1 is a picture bank; PictureShown and ds84E0 mark the close-up, and it draws the PIC picture or the HEAD and BODY pictures as ShowEncounterPicture does (ovl07:054E), or hides it when the bank is $FF (ovl03:0856, matched)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl03:08E5"
-unit = "ovl03"
-addr = "ovl03:08E5"
-size = 108
-name = "ovl03_fn_08E5"
-signature = ""
-c_name = "ovl03_fn_08E5"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl03:0951"
