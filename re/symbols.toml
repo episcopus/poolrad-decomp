@@ -3928,12 +3928,12 @@ id = "ovl12:16E6"
 unit = "ovl12"
 addr = "ovl12:16E6"
 size = 37
-name = "ovl12_e57"
-signature = ""
+name = "ParalyzeAttackTargetFor1d9Plus10"
+signature = "procedure ParalyzeAttackTargetFor1d9Plus10(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e57"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_57"
+notes = "renamed from ovl12_e57 (affect handler at ovl12:16E6 whose body is ParalyzeAttackTarget(Who, RollDice(1, 9) + 10, $FE) (ovl12:15EB): paralysis for 1d9 plus 10 rounds, the same shape as ParalyzeAttackTargetFor2d8 (ovl12:1699)); auto:entry_57"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3942,7 +3942,7 @@ unit = "ovl12"
 addr = "ovl12:170B"
 size = 20
 name = "ovl12_e58"
-signature = ""
+signature = "procedure ovl12_e58(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e58"
 level = "none"
 justification = ""
