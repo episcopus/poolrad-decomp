@@ -10140,12 +10140,12 @@ id = "ovl22:151B"
 unit = "ovl22"
 addr = "ovl22:151B"
 size = 317
-name = "ovl22_e26"
+name = "CastSleep"
 signature = ""
 c_name = "ovl22_e26"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_26"
+notes = "renamed from ovl22_e26 (cast handler of spell 21 Sleep (SpellHandlers[21]; ovl22_e10 fills the table at DS:6B84, whitepaper 5.22.2): rolls the 4d4 pool ds4844 and charges each target a cost ds4845 by HighestLevel and Race, dropping targets that are dead, already affected $35, or too costly, then applies the spell to the survivors with 'falls asleep' (ovl22:151B)); auto:entry_26"
 evidence = ["prologue"]
 
 [[routine]]

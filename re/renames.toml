@@ -3630,3 +3630,10 @@ kind = "routine"
 why = "cast handler of spell 20 Shocking Grasp (SpellHandlers[20]; ovl22_e10 fills the table at DS:6B84, whitepaper 5.22.2): deals the caster level plus 1d8 electrical damage to the chosen targets, no message (ovl22:14C7)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl22_e26"
+new = "CastSleep"
+kind = "routine"
+why = "cast handler of spell 21 Sleep (SpellHandlers[21]; ovl22_e10 fills the table at DS:6B84, whitepaper 5.22.2): rolls the 4d4 pool ds4844 and charges each target a cost ds4845 by HighestLevel and Race, dropping targets that are dead, already affected $35, or too costly, then applies the spell to the survivors with 'falls asleep' (ovl22:151B)"
+date = "2026-10-13"
+

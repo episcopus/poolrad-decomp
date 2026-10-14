@@ -32,7 +32,7 @@ procedure CastFriends;
 procedure CastMagicMissile;
 procedure CastShield;
 procedure CastShockingGrasp;
-procedure ovl22_e26;
+procedure CastSleep;
 procedure ovl22_e27;
 procedure ovl22_fn_1758;
 procedure ovl22_e28;
@@ -747,8 +747,58 @@ begin
   ApplySpellToTargets(ds681B, 0, 0,
     RollDiceCounted(1, DiceSides) + res12_fn_26C2(ds681B), DamageKindElectric, '');
 end;
-{ ovl22:151B: retf 0: 0 bytes of parameters; 18 bytes of locals }
-{@stub} procedure ovl22_e26; begin end;
+{ ovl22:151B (e26). Cast handler of spell 21, Sleep (SpellHandlers[21]; ovl22_e10 fills the table,
+  whitepaper 5.22.2): sets ds6820 and rolls the 4d4 pool ds4844. For every chosen target ds6C91[I] it
+  charges a cost in ds4845 by the target's HighestLevel (+$73, a monster's hit dice) and level 5's Race
+  (+$2E). A target is slept (the cost comes off the pool) only when it is not dead (Status <> 1), does
+  not already carry the sleep affect $35 (res12_fn_2199) and the pool still covers its cost; otherwise
+  it is dropped (ds6C91[I] := nil). ApplySpellToTargets then applies the spell's own affect to the
+  survivors with 'falls asleep'. Reads ds6C94, ds681B; changes ds6820, ds4844, ds4845 and the target list. }
+procedure CastSleep;
+const
+  SleepAffect = $35;              { the affect that marks a target already asleep }
+  PoolDiceCount = 4;              { the 4d4 pool of hit dice Sleep can affect }
+  PoolDiceSides = 4;
+  DeadStatus = 1;                 { TCharacter.Status 1 counts as dead (whitepaper 4.2.5) }
+  { The pool cost of one target, by its HighestLevel (a monster's hit dice), the AD&D Sleep table. }
+  CostLevel0 = 1;
+  CostLevel2 = 2;
+  CostLevel3 = 4;
+  CostLevel4 = 6;
+  CostLevel5Small = $A;           { a level-5 creature of Race 0 (a smaller kind) costs 10 }
+  CostLevel5Large = $14;          { any other level-5 or higher creature costs 20 }
+var
+  I: Byte;                        { the target index, 1..ds6C94 }
+  Affect: Pointer;                { res12_fn_2199's out pointer, the target's sleep affect }
+begin
+  ds6820 := 1;
+  ds4844 := RollDice(PoolDiceCount, PoolDiceSides);
+  for I := 1 to ds6C94 do
+  begin
+    case ds6C91[I]^.HighestLevel of
+      0..1: ds4845 := CostLevel0;
+      2: ds4845 := CostLevel2;
+      3: ds4845 := CostLevel3;
+      4: ds4845 := CostLevel4;
+      5:
+        if ds6C91[I]^.Race = 0 then
+          ds4845 := CostLevel5Small
+        else
+          ds4845 := CostLevel5Large;
+    else
+      ds4845 := CostLevel5Large;
+    end;
+    { QUIRK ovl22:15FE: the guard is written positive on purpose; the equivalent negative
+      `(Status = 1) or res12_fn_2199(...) or (pool < cost)` then-drop-else-Dec form compiles with the
+      two branches laid out the other way round (probe PRB26.PAS) and does not match. }
+    if (ds6C91[I]^.Status <> DeadStatus) and not res12_fn_2199(ds6C91[I], SleepAffect, Affect) and
+       (ds4844 >= ds4845) then
+      Dec(ds4844, ds4845)
+    else
+      ds6C91[I] := nil;
+  end;
+  ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'falls asleep');
+end;
 { ovl22:1658: frame not read }
 {@stub} procedure ovl22_e27; begin end;
 { ovl22:1758: retf 0: 0 bytes of parameters; 0 bytes of locals }

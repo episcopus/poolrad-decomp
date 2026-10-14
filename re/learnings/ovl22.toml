@@ -62,3 +62,12 @@ tags = ["compiler", "expression", "evaluation-order", "call"]
 title = "A sum of two function calls evaluates the right operand first"
 lesson = "TP 6.0 compiles `F(...) + G(...)` by calling G (the right operand) first, pushing its result, then calling F, then `xor ah,ah; pop dx; add ax,dx`. So the source that produced ovl22:14C7 (CastShockingGrasp)'s `res12_fn_26C2(ds681B)`-then-`RollDiceCounted(1,8)` order is `RollDiceCounted(1, 8) + res12_fn_26C2(ds681B)`, with the level on the right; the natural reading order gives the other call first and does not match. This differs from `F(...) + <memory expr>`, where the left call is evaluated first (CastMagicMissile, ovl22:1439). Probe tools/re/tp_idioms/ovl22/PRB25.PAS shows both orders side by side."
 evidence = ["tools/re/tp_idioms/ovl22/PRB25.PAS", "src/OVL22.PAS#CastShockingGrasp", "re/symbols.toml#ovl22:14C7"]
+
+[[lesson]]
+id = "two-arg-dec-and-positive-guard-layout"
+confidence = "V"
+units = ["ovl22"]
+tags = ["compiler", "dec", "byte", "branch-layout", "guard"]
+title = "Two-argument Dec is an in-place byte subtract; a positive and-guard fixes the branch layout"
+lesson = "Two-argument `Dec(X, Y)` on Byte globals compiles to `mov al,[Y]; sub [X],al`, while `X := X - Y` compiles to a longer word sequence (mov al,[Y]; xor ah,ah; mov dx,ax; mov al,[X]; xor ah,ah; sub ax,dx; mov [X],al). ovl22:151B (CastSleep) subtracts the Sleep pool in place, so its source is `Dec(ds4844, ds4845)`. The same routine also shows a branch-layout effect: the guard `if (Status = 1) or res12(...) or (pool < cost) then drop else Dec(...)` compiles with the drop placed first (jae to the else), but the positive `if (Status <> 1) and not res12(...) and (pool >= cost) then Dec(...) else drop` compiles with the else placed first (jb to the drop), which is the original's layout. So the source is the positive and-guard even though the negative or-guard reads more naturally."
+evidence = ["tools/re/tp_idioms/ovl22/PRB26.PAS", "src/OVL22.PAS#CastSleep", "re/symbols.toml#ovl22:151B"]
