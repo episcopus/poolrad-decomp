@@ -530,3 +530,30 @@ tags = ["and", "or", "bit", "mask", "codegen"]
 title = "(Data and $10) = 0 then Data := Data or $10 matches; the or form is no longer unprobed"
 lesson = "ovl12:2490 tests bit 4 of Affect.Data with `and al, 10h; or al, al; jne` and sets it with `mov al, es:[di+3]; or al, 10h; mov es:[di+3], al`. `Affect^.Data := Affect^.Data and DataLowNibble` (mask $0F) matched the other branch. This settles the or form that lesson and-mask-zero-test-then-add-bit left open for setting a bit that is known to be clear."
 evidence = ["src/OVL12.PAS#ovl12_e74", "re/symbols.toml#ovl12:2490"]
+
+[[lesson]]
+id = "row-indexed-by-item-type-field"
+confidence = "V"
+units = ["*"]
+tags = ["absolute", "array", "index", "RaceRow", "field", "codegen"]
+title = "`[di + 5589h]` with di = item type shl 4 is RaceRow[ItemType][7], the absolute array's row field"
+lesson = "ovl12:25BC indexes the absolute RaceRow (base DS:5582, 16-byte rows) by the item's ItemType (+$2E): `mov di, ax; shl di, 4; mov al, [di+5589h]`. The displacement minus the base gives the field: 5589 - 5582 = 7, so the routine reads RaceRow[ItemType][7]. The matched Pascal `RaceRow[Item^.ItemType][7] and ItemRowFlags` gives the same code. Subtract the absolute base from a displacement before naming a table field; the meaning of byte 7 is still open [?]."
+evidence = ["src/OVL12.PAS#HalveDamageForFirstSlotItem", "re/symbols.toml#ovl12:25BC"]
+
+[[lesson]]
+id = "nil-test-first-in-one-or"
+confidence = "V"
+units = ["*"]
+tags = ["nil", "or", "and", "Exit", "pointer", "codegen"]
+title = "`if (Item = nil) or (...) then` matches an original that tests nil first and skips to the body, with no Exit"
+lesson = "ovl12:264B takes the first slot item, cancels the damage when it is nil or when Plus is 0 and NameNum[3] is not $B1: `je body` for nil, `jne skip` for Plus, `je skip` for NameNum[3], then the body. The one-if form `if (Item = nil) or ((Item^.Plus = 0) and (Item^.NameNum[3] <> $B1)) then DamageAmount := 0;` matched on the first attempt. Writing the early-out with Exit was not tried, since the single condition already matched; keep the test order of the original."
+evidence = ["src/OVL12.PAS#CancelDamageUnlessMagicSlotItem", "re/symbols.toml#ovl12:264B"]
+
+[[lesson]]
+id = "literal-argument-frame-under-O"
+confidence = "V"
+units = ["*"]
+tags = ["literal", "String", "O+", "frame", "temporary", "sub-sp"]
+title = "A 10-character literal passed to a String40 parameter under $O+ leaves a 12-byte frame: the copy temporary sits at [bp-0Bh]"
+lesson = "ovl12:2610 passes 'Falls dead' to DropFromFight (String40) under $O+: `lea di, [bp-0Bh]; push ss; push di; ... lcall System_StrCopy(0AF8:0B0B)` copies the literal to the temporary, and the routine's `sub sp, 0Ch` (12 bytes) holds it. The matched source is `DropFromFight(Who, StatusGone, 'Falls dead');` with no local declared, so the frame comes from the compiler. Only this one literal length is measured here: why the frame is 12 and not 11 bytes is not known [?]."
+evidence = ["src/OVL12.PAS#FallDeadIfInFight", "re/symbols.toml#ovl12:2610"]
