@@ -71,3 +71,12 @@ tags = ["compiler", "dec", "byte", "branch-layout", "guard"]
 title = "Two-argument Dec is an in-place byte subtract; a positive and-guard fixes the branch layout"
 lesson = "Two-argument `Dec(X, Y)` on Byte globals compiles to `mov al,[Y]; sub [X],al`, while `X := X - Y` compiles to a longer word sequence (mov al,[Y]; xor ah,ah; mov dx,ax; mov al,[X]; xor ah,ah; sub ax,dx; mov [X],al). ovl22:151B (CastSleep) subtracts the Sleep pool in place, so its source is `Dec(ds4844, ds4845)`. The same routine also shows a branch-layout effect: the guard `if (Status = 1) or res12(...) or (pool < cost) then drop else Dec(...)` compiles with the drop placed first (jae to the else), but the positive `if (Status <> 1) and not res12(...) and (pool >= cost) then Dec(...) else drop` compiles with the else placed first (jb to the drop), which is the original's layout. So the source is the positive and-guard even though the negative or-guard reads more naturally."
 evidence = ["tools/re/tp_idioms/ovl22/PRB26.PAS", "src/OVL22.PAS#CastSleep", "re/symbols.toml#ovl22:151B"]
+
+[[lesson]]
+id = "spellhandlers-continues-past-spell-40"
+confidence = "V"
+units = ["ovl22"]
+tags = ["spell", "handler-table", "global", "stub", "naming"]
+title = "The DS:6B84 cast handler table runs past the 40 cast spells, one element per spell number"
+lesson = "ovl22_e10 (ovl22:3413) fills SpellHandlers at DS:6B84 with 68 far pointers (elements 0..67): element 0 is the target picker, element N the overlay stub 0096:(0x20 + 5*entry) of spell N's handler, so the handler routine the map calls ovl22_e<entry> has entry = (stub_offset - 0x20) / 5. The 40 cast spells occupy elements 1..40; elements 41..56 are the remaining named spells, since SpellNames (DS:28E9) is a string[40] array of 41 bytes per entry with entries 1..$38 = 'Bless'..'Restoration'. Element 41 Dispel Magic and element 46 Dispel Magic share ovl22:2385 (CastDispelMagic), element 42 Prayer is ovl22:24D6 (CastPrayer), element 43 Remove Curse is ovl22:2540 (CastRemoveCurse). To name a handler whose entry is above 40, read SpellNames[N] at DS:28E9 + N*41. The file offset of SpellNames[1] (DS:2912) in poolrad/start-unpack.exe is 0xFAD2 (the byte 05 then 'Bless'), so a handler's name is decoded straight from the image."
+evidence = ["build/packets/ovl22_3413.md", "poolrad/start-unpack.exe#DS:2912", "src/OVL22.PAS#CastDispelMagic", "src/OVL22.PAS#CastPrayer", "src/OVL22.PAS#CastRemoveCurse", "re/symbols.toml#ovl22:2385"]
