@@ -15,10 +15,7 @@ procedure StepCombatant(Who: PCharacter; Dir: Byte);
 procedure ovl13_fn_08AC;
 procedure PartingShots(Who: PCharacter; Dir: Byte);
 function TryFlee(Who: PCharacter): Byte;
-procedure ovl13_e6(Who: PCharacter);
-procedure ovl13_fn_0D92;
-procedure ovl13_fn_0D99;
-procedure ovl13_fn_0E08;
+procedure RefreshAttacks(Who: PCharacter);
 function ovl13_fn_0E52(Value: Byte): Byte;
 function ovl13_e7(Who, Target: Pointer): Boolean;
 procedure ovl13_fn_0FBF;
@@ -133,7 +130,7 @@ const
   AllEnemiesRange = $FF;
 
 { ovl13:0000. Sets up Who's turn at the start of a combat round: clears and re-arms its combat
-  state Combat^ (PendingSpell 0, Cast and Use-magic allowed), refreshes it through ovl13_e6, lets
+  state Combat^ (PendingSpell 0, Cast and Use-magic allowed), refreshes it through RefreshAttacks, lets
   the hooks change the attack byte ds681A (RunAffectHooks $12) and stores the result in the
   readied-weapon block (+$114); then, for a character still in the fight (Flag10D set), rolls its
   initiative (1d6 plus DexterityAttackAdjustment, at least 1, 6 lower when the round penalty word
@@ -153,7 +150,7 @@ begin
     CanUseMagicItem := 1;
     Pad8 := 0;
     Pad4[4] := 2;
-    ovl13_e6(Who);
+    RefreshAttacks(Who);
     ds681A := Who^.PadA2;
     ds681D := False;
     RunAffectHooks(HookComputeMovement, Who);
@@ -498,14 +495,52 @@ begin
     ShowFlashMessage('Escape is blocked');
   TryFlee := EndCombatTurn(Who);
 end;
-{ ovl13:0D23: frame not read }
-{@stub} procedure ovl13_e6(Who: PCharacter); begin end;
-{ ovl13:0D92: frame not read }
-{@stub} procedure ovl13_fn_0D92; begin end;
-{ ovl13:0D99: frame not read }
-{@stub} procedure ovl13_fn_0D99; begin end;
-{ ovl13:0E08: retf 4: 4 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl13_fn_0E08; begin end;
+{ ovl13:0D23. Refreshes Who's readied-weapon attack count for the turn: it remembers the old
+  AttackSlots[1] and seeds it from the character's Attacks (+$A1); with a ranged weapon readied
+  (IsRangedWeapon and ChooseAttackItem passes) it takes the readied weapon's ItemTable attacks
+  (at least 2) and remembers the aimed ammo item, else it keeps AttackSlots[1]. That attack count
+  goes to ds681A, the movement/attack affect hook $12 may change it, and ovl13_fn_0E52 turns the
+  changed byte into the attack count. A ranged aim caps the count at the ammo stack's Count.
+  AttackSlots[1] takes the result unless a ranged attack (Ranged, i.e. ds681A is not 0) would
+  more than double the saved count. Called after StartCombatantRound and whenever the AI or the
+  player readies an item (ovl08:0207, ovl09:0942). Globals: ds681A, ds681D, ItemTable. }
+procedure RefreshAttacks(Who: PCharacter);
+var
+  AttackCount: Byte;             { attacks the readied weapon gives this turn }
+  SavedAttacks: Byte;            { AttackSlots[1] before the refresh }
+  AmmoLimit: Byte;               { attacks left in the aimed ammo stack, at least 1 }
+  ReadyAttacks: Byte;            { ItemTable attacks of the readied weapon }
+  Ranged: Boolean;               { a ranged weapon and an aim were chosen }
+  Aim: Pointer;                  { the item ChooseAttackItem picked (a PItem) }
+begin
+  Ranged := False;
+  SavedAttacks := Who^.AttackSlots[1];
+  Who^.AttackSlots[1] := Who^.Attacks;
+  if IsRangedWeapon(Who) and (ChooseAttackItem(Who, Aim) <> 0) then
+  begin
+    Ranged := True;
+    ReadyAttacks := ItemTable[Byte(Who^.SlotItems[0]^.ItemType)].Attacks;
+    if ReadyAttacks < 2 then
+      ReadyAttacks := 2;
+    ds681A := ReadyAttacks;
+  end
+  else
+    ds681A := Who^.AttackSlots[1];
+  ds681D := False;
+  RunAffectHooks(HookComputeMovement, Who);
+  AttackCount := ovl13_fn_0E52(ds681A);
+  if Ranged and (Aim <> nil) then
+  begin
+    AmmoLimit := 1;
+    if (Aim <> nil) and (PItem(Aim)^.Count > AmmoLimit) then
+      AmmoLimit := PItem(Aim)^.Count;
+    if AmmoLimit < AttackCount then
+      AttackCount := AmmoLimit;
+  end;
+  if (Who^.Combat^.Pad8 = 0) or (AttackCount < SavedAttacks) or
+     ((Who^.Combat^.Pad8 <> 0) and (AttackCount < SavedAttacks * 2) and not Ranged) then
+    Who^.AttackSlots[1] := AttackCount;
+end;
 { ovl13:0E52: retf 2: 2 bytes of parameters; 2 bytes of locals }
 {@stub} function ovl13_fn_0E52(Value: Byte): Byte; begin end;
 { ovl13:0E82: frame not read }

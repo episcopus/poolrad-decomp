@@ -5436,53 +5436,14 @@ evidence = ["prologue"]
 id = "ovl13:0D23"
 unit = "ovl13"
 addr = "ovl13:0D23"
-size = 111
-name = "ovl13_e6"
-signature = "procedure ovl13_e6(Who: PCharacter)"
+size = 303
+name = "RefreshAttacks"
+signature = "procedure RefreshAttacks(Who: PCharacter)"
 c_name = "ovl13_e6"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_e6 (ovl13:0D23 recomputes Who's readied-weapon attack count into ds681A and AttackSlots[1] from the ranged weapon/ammo or the character's Attacks, running the attack affect hook $12 and ovl13_fn_0E52; called after StartCombatantRound (ovl13:0000) and whenever an item is readied (ovl08:0207, ovl09:0942)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl13:0D92"
-unit = "ovl13"
-addr = "ovl13:0D92"
-size = 7
-name = "ovl13_fn_0D92"
-signature = ""
-c_name = "ovl13_fn_0D92"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl13:0D99"
-unit = "ovl13"
-addr = "ovl13:0D99"
-size = 111
-name = "ovl13_fn_0D99"
-signature = ""
-c_name = "ovl13_fn_0D99"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl13:0E08"
-unit = "ovl13"
-addr = "ovl13:0E08"
-size = 74
-name = "ovl13_fn_0E08"
-signature = ""
-c_name = "ovl13_fn_0E08"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl13:0E52"

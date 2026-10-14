@@ -4064,3 +4064,10 @@ kind = "routine"
 why = "ovl13:0C6A is the Flee answer of the Move command (ovl08:0410) and the panicking off-map step (ovl09:0434): it drops the combatant with StatusFled ('Got Away') or flashes 'Escape is blocked', then ends the turn through EndCombatTurn"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl13_e6"
+new = "RefreshAttacks"
+kind = "routine"
+why = "ovl13:0D23 recomputes Who's readied-weapon attack count into ds681A and AttackSlots[1] from the ranged weapon/ammo or the character's Attacks, running the attack affect hook $12 and ovl13_fn_0E52; called after StartCombatantRound (ovl13:0000) and whenever an item is readied (ovl08:0207, ovl09:0942)"
+date = "2026-10-13"
+

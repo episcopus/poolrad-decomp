@@ -813,7 +813,7 @@ end;
   slot-0 item is readied through ReadyItem (the Ready Item entry that the whitepaper's overlay table
   lists for ovl19), the slot-1 item's Hands are taken off again when it is not cursed, and the pick is
   readied. After that
-  (SkipSlotUse) RecalcCombatValues and ovl13_e6 run, and HandsInUse decides: above HandThreshold (2) the
+  (SkipSlotUse) RecalcCombatValues and RefreshAttacks run, and HandsInUse decides: above HandThreshold (2) the
   slot-1 item is readied, or the pick when slot 1 is empty or cursed; below it the slot-1 item and then
   PlusPick are readied, unless slot 1 holds PlusPick or a cursed item. A use runs RecalcCombatValues, and a
   use at all ends with DrawCharacterPanel. Purpose unknown: the game names of the slot-0 and slot-1 items
@@ -939,7 +939,7 @@ begin
   Used := 1;
 SkipSlotUse:
   RecalcCombatValues(Who);
-  ovl13_e6(Who);
+  RefreshAttacks(Who);
   SlotUsable := 1;
   if Who^.SlotItems[1] <> nil then
     if (Who^.SlotItems[1] = PlusPick) or Who^.SlotItems[1]^.Cursed then

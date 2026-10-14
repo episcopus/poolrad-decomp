@@ -204,14 +204,14 @@ begin
           'V':
           begin
             ViewSelectedCharacter(Done);
-            ovl13_e6(Who);
+            RefreshAttacks(Who);
             if Done = 0 then DrawCombatScreen;
           end;
           'A': ovl13_e17(Who, $FF, 1, 0, Done, Aim);
           'U':
           begin
             RunItemMenu(Done);
-            ovl13_e6(Who);
+            RefreshAttacks(Who);
             if Done = 0 then DrawCombatScreen;
           end;
           'C': ovl13_e15(0, 0, Done);
