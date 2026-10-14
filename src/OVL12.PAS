@@ -19,7 +19,7 @@ procedure ovl12_e9(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure HalveColdDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ComputerTakesOver(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ExchangeStrengthWithAffect(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e13;
+procedure SetCharismaFromAffect(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e14;
 procedure ovl12_e15;
 procedure ovl12_e16;
@@ -471,8 +471,13 @@ begin
     Who^.StrengthPercent := BestPercent;
   end;
 end;
-{ ovl12:05D6: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e13; begin end;
+{ 05D6. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000): Who's
+  Charisma (TCharacter +$15) becomes the affect's Data byte. Applying and removing run the same code, so the
+  value is set each time. Which affect id runs it is not known yet [?]. }
+procedure SetCharismaFromAffect(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  Who^.Charisma := Affect^.Data;
+end;
 { ovl12:05EB: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e14; begin end;
 { ovl12:0647: retf 10: 10 bytes of parameters; 0 bytes of locals }

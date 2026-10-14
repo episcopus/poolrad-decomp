@@ -3304,12 +3304,12 @@ id = "ovl12:05D6"
 unit = "ovl12"
 addr = "ovl12:05D6"
 size = 21
-name = "ovl12_e13"
-signature = ""
+name = "SetCharismaFromAffect"
+signature = "procedure SetCharismaFromAffect(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e13"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_13"
+notes = "renamed from ovl12_e13 (ovl12:05D6 is an affect handler (AffectHandlers shape, Mode not read) that copies the affect's Data byte into Who's Charisma (TCharacter +hex 15, POOLVARS Charisma); applying and removing run the same code); auto:entry_13"
 evidence = ["prologue"]
 
 [[routine]]

@@ -3504,3 +3504,10 @@ kind = "routine"
 why = "ovl12:04BA is an affect handler (AffectHandlers shape, Mode not read) of a strength affect: Who's Strength and StrengthPercent take the affect's strength (DecodeStrength, ovl24:110D), then the strongest other affect with id hex 0C or 26 gives Who its strength and takes the affect's encoded strength (EncodeStrength, ovl24:10E4); RaiseStrength (ovl24:115C) keeps the earlier strength in the same two affects"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e13"
+new = "SetCharismaFromAffect"
+kind = "routine"
+why = "ovl12:05D6 is an affect handler (AffectHandlers shape, Mode not read) that copies the affect's Data byte into Who's Charisma (TCharacter +hex 15, POOLVARS Charisma); applying and removing run the same code"
+date = "2026-10-13"
+
