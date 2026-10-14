@@ -13679,7 +13679,7 @@ signature = "function IsMaxClassLevel(Who: PCharacter; ClassIndex: ShortInt): Bo
 c_name = "res12_fn_2F57"
 level = "L2"
 justification = ""
-notes = "signature from the caller: ovl22:2C43 (CastRestoration) pushes the character and the class index and skips the class when true; auto:prologue; renamed from res12_fn_2F57 (00BA:2F57 returns True when Who's level in one class (ClassLevels[ClassIndex], +$96) has reached the maximum its race (+$2E) and strength (+$10) allow, so the trainers (ovl22:2D39) must not raise that class level further); auto:prologue"
+notes = "signature from the caller: ovl22:2C43 (CastRestoration) pushes the character and the class index and skips the class when true; auto:prologue; renamed from res12_fn_2F57 (00BA:2F57 returns True when Who's level in one class (ClassLevels[ClassIndex], +$96) has reached the maximum its race (+$2E) and strength (+$10) allow, so CastRestoration never raises that class level further; ovl16:29AE TrainCharacter inlines the same limits and does not call this); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]

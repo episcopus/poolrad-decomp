@@ -1821,9 +1821,11 @@ begin
   if (Aim <> nil) or (Flags = $A) then
     ChooseAttackItem := 1;
 end;
-{ 00BA:2F57. Returns whether Who's level in one class has reached the maximum its race allows, so
-  the trainers (ovl22:2D39 raises ClassLevels[ClassIndex], +$96, only when this is False) must not
-  raise that class level further. False when the level is 0; otherwise Who's race (+$2E) and
+{ 00BA:2F57. Returns whether Who's level in one class has reached the maximum its race allows:
+  CastRestoration (ovl22:2C43, spell 56 Restoration) picks the class that regains a drained level
+  and skips a class this reaches, so it never raises ClassLevels[ClassIndex] (+$96) past the cap.
+  The training hall's TrainCharacter (ovl16:29AE) does not call this: it inlines the same race and
+  strength limits. False when the level is 0; otherwise Who's race (+$2E) and
   strength (+$10) pick the limit (the AD&D demihuman level limits [H]): a dwarf (RaceDwarf 1) in the
   fighter class (ClassFighter 2) stops at level 8 with Strength17 (17), at 7 with less; an elf
   (RaceElf 2) stops at 7, at 6 with Strength17, at 5 with less; a gnome (RaceGnome 3) stops at 6, at
