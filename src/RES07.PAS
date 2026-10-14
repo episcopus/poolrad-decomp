@@ -864,8 +864,9 @@ end;
   row) and ds4D70 (the last offset), one branch per video adapter: adapter 0
   moves each changed span from the staging buffer DrawBuf to the segment
   ds4EC0[Row+8]; adapter 1 writes the four EGA planes byte by byte through port
-  3C5 (stride 4 in the source) into $A200, then copies $A000 to $A200 in GC
-  write mode 1; adapter 2 moves the spans to the ds51E0 segments. Finally the
+  3C5 (stride 4 in the source) into the off-screen page $A200, then copies $A200
+  onto the visible page $A000 in GC write mode 1 (GC register 5 := 1, restored to
+  0); adapter 2 moves the spans to the ds51E0 segments. Finally the
   trackers are reset. Called after every sprite or picture blit. }
 procedure FlushPictureChanges;
 var
