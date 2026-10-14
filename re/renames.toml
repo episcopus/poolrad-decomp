@@ -3924,3 +3924,10 @@ kind = "routine"
 why = "ovl12:23EC gives AttackTarget (Who's Combat Target) the healing block AffectHealingBlock and then the rot AffectRot with stage RollDice(1,6) (ProgressRot reads the stage as Data div 16), shows 'is Diseased': an affect handler that inflicts a rot on the character Who attacked last"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e75"
+new = "AddConstitutionSaveBonus"
+kind = "routine"
+why = "ovl12:24D9 adds to SaveRoll a bonus from Who's Constitution (TCharacter +$14, POOLVARS: 1 for 4..6 up to 5 for 18..20), only when SaveKind is 0 (the first save, SaveKindPoison [I])"
+date = "2026-10-13"
+

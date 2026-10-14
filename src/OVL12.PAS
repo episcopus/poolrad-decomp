@@ -86,7 +86,7 @@ procedure DrainAttackTargetLevel(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure DrainAttackTargetTwoLevels(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure CauseRotOnAttackTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e74(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e75;
+procedure AddConstitutionSaveBonus(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e76;
 procedure ovl12_fn_257E;
 procedure ovl12_e77;
@@ -1602,8 +1602,27 @@ begin
     Affect^.Data := Affect^.Data or MissedBit;
   end;
 end;
-{ ovl12:24D9: retf 10: 10 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl12_e75; begin end;
+{ ovl12:24D9. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Affect and Mode are not read, ovl24:0000).
+  For the first saving throw kind (SaveKind 0, SaveKindPoison [I]) it adds a bonus to SaveRoll from Who's Constitution
+  (+$14): 1 for 4..6, 2 for 7..10, 3 for 11..13, 4 for 14..17 and 5 for 18..20. Which affect runs it is not known yet [?].
+  QUIRK ovl12:24D9: a Constitution outside 4..20 sets no bonus, so the local Bonus keeps what the stack held, and that
+  value is added to SaveRoll. }
+procedure AddConstitutionSaveBonus(Who: PCharacter; Affect: PAffect; Mode: Byte);
+var
+  Bonus: Byte;                  { the bonus of Who's Constitution bracket }
+begin
+  if SaveKind = SaveKindPoison then
+  begin
+    case Who^.Constitution of
+      4..6: Bonus := 1;
+      7..10: Bonus := 2;
+      11..13: Bonus := 3;
+      14..17: Bonus := 4;
+      18..20: Bonus := 5;
+    end;
+    SaveRoll := SaveRoll + Bonus;
+  end;
+end;
 { ovl12:2556: frame not read }
 {@stub} procedure ovl12_e76; begin end;
 { ovl12:257E: retf 10: 10 bytes of parameters; 0 bytes of locals }
