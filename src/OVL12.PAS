@@ -13,7 +13,7 @@ procedure LowerAttackAndMorale(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure BoostAttackAgainstTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure StartTrainingWithManual(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure BoostFireAttackByTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e7;
+procedure TrainConstitution(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e8;
 procedure ovl12_e9;
 procedure ovl12_e10;
@@ -185,6 +185,15 @@ const
   AffectTrainingManual = 7;     { the affect id of "Training with Manual of Bodily Health" (ovl15:0FBC names it) }
   TrainingManualDuration = 43200; { $A8C0: the Duration ovl12:017F gives the affect }
   TrainingManualData = $FF;     { the Data byte ovl12:017F gives the affect }
+  TrainingConstitution = 15;    { training needs at least this Constitution; a fighter level counts Constitution - 15,
+                                  a non-fighter level counts twice above it (the same rule as Raise Dead, ovl04:0510) }
+  FighterOnlyConstitution = 17; { from 17 up only a fighter level keeps the training gain (ovl04 uses the same limit) }
+  FighterClass = 2;             { index in ClassLevels of the fighter }
+  LastClass = 7;
+  ConstitutionLimit = 20;       { training that takes Constitution to 20 gives AffectTrainedOut and stops }
+  AffectTrainedOut = $3E;       { purpose unknown [?]: given by the training routine (ovl12:0233) at ConstitutionLimit }
+  TrainedOutDuration = $3C;
+  TrainedOutData = $FF;
 
 { ovl12:0000. Cancels the hook of an affect: when AffectId is 0 or is the affect the hooks are offering
   (HookAffectId), HookAffectId and DamageAmount are cleared. HookAffectId 0 reads as "is Unaffected"
@@ -297,8 +306,44 @@ begin
   Inc(DamageAmount, Bonus);
   DamageKind := 9;
 end;
-{ ovl12:0233: retf 10: 10 bytes of parameters; 14 bytes of locals }
-{@stub} procedure ovl12_e7; begin end;
+{ ovl12:0233. Training of Who's constitution: shows "is hardier" on Who (colour 10), Constitution goes up by one,
+  and Who's hit points gain: the hit points above HpB1 (HpMax - HpB1) are divided by the class weight (fighter
+  levels count Constitution - 15, non-fighter levels count twice above 15, else 1; 1 when the weight is 0),
+  and the gain goes to HpMax and to the current hit points Flag11B. Nothing is gained below Constitution 15,
+  nor from 17 up without a fighter level. At Constitution 20 Who gets AffectTrainedOut instead and the
+  routine ends. It has the AffectHandlers frame (Who, Affect, Mode); Affect and Mode are not read here. }
+procedure TrainConstitution(Who: PCharacter; Affect: PAffect; Mode: Byte);
+var
+  Gain: Byte;                   { HpMax - HpB1 first, then the gain of this training }
+  Weight: Byte;                 { the class weights summed (ovl04:0510) }
+  I: ShortInt;
+begin
+  res12_fn_16EC(Who, 'is hardier', $A, 1);
+  Inc(Who^.Constitution);
+  if Who^.Constitution >= ConstitutionLimit then
+  begin
+    AddAffect(Who, AffectTrainedOut, TrainedOutDuration, TrainedOutData, RunsHandlerOnRemove);
+    Exit;
+  end;
+  Gain := Who^.HpMax - Who^.HpB1;
+  Weight := 0;
+  if Who^.Constitution < TrainingConstitution then Exit;
+  for I := 0 to LastClass do
+    if Who^.ClassLevels[I] > 0 then
+      if I = FighterClass then
+        Inc(Weight, (Who^.Constitution - TrainingConstitution) * Who^.ClassLevels[I])
+      else if Who^.Constitution > TrainingConstitution then
+        Inc(Weight, Who^.ClassLevels[I] * 2)
+      else
+        Inc(Weight, Who^.ClassLevels[I]);
+  if Weight = 0 then Weight := 1;
+  Gain := Gain div Weight;
+  if (Who^.Constitution < FighterOnlyConstitution) or (Who^.ClassLevels[FighterClass] > 0) then
+  begin
+    Inc(Who^.HpMax, Gain);
+    Inc(Who^.Flag11B, Gain);
+  end;
+end;
 { ovl12:0377: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e8; begin end;
 { ovl12:03AC: retf 10: 10 bytes of parameters; 0 bytes of locals }

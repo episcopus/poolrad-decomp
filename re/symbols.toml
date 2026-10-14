@@ -3226,12 +3226,12 @@ id = "ovl12:0233"
 unit = "ovl12"
 addr = "ovl12:0233"
 size = 324
-name = "ovl12_e7"
-signature = ""
+name = "TrainConstitution"
+signature = "procedure TrainConstitution(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e7"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_7"
+notes = "renamed from ovl12_e7 (ovl12:0233 shows 'is hardier' on Who (res12_fn_16EC), increments Constitution (+$14), and adds to HpMax (+$32) and the current hit points Flag11B (+$11B) the share of HpMax - HpB1 (+$B1) by the class weights of ovl04:0510 (Raise Dead's loss, mirrored); at Constitution 20 it gives affect $3E instead; AffectHandlers frame, entry 7 of ovl12 (auto:entry_7)); auto:entry_7"
 evidence = ["prologue"]
 
 [[routine]]
