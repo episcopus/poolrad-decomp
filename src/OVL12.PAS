@@ -54,7 +54,7 @@ procedure AddHealingBlockAndHeal(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e43(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e44(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e45(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e46;
+procedure ovl12_e46(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e47;
 procedure ovl12_e48;
 procedure ovl12_e49;
@@ -157,6 +157,7 @@ implementation
 uses RES12, OVL24, OVL31;
 const
   RunsHandlerOnRemove = 1;      { TAffect.Flag: the affect's handler runs when the affect is removed }
+  NoRemoveHandler = 0;          { the same Flag, clear: the affect's handler does not run when the affect is removed }
   HookGoesDown = $D;            { RunAffectHooks kind: a combatant going down (DealDamage, DropCombatant) }
   CombatViewMode = 5;           { ds49F3 during a combat (RunCombat sets it, whitepaper 5.5) }
   StatusGone = 6;               { TCharacter.Status 6, dead for good (ovl04:0510) }
@@ -224,6 +225,9 @@ const
   AffectNausea = $1F;           { the affect of a failed save against the cloud: nausea (ovl24:0AE7) }
   WeakeningDuration = $3C;      { the Duration ovl12:10DE gives the affect AffectUnknown2B }
   AlwaysAvoids = 100;           { the Chance that avoids every roll of 1d100 (ovl12:1086) }
+  AffectUnknown19 = $19;        { purpose unknown [I]: RollToHit clears it from the attacker (ovl24:0CB7) }
+  AffectUnknown19Duration = 1;  { the Duration ovl12:1363 gives affect AffectUnknown19 }
+  AffectUnknown19Data = $0C;    { the Data byte ovl12:1363 gives affect AffectUnknown19 }
 
 { ovl12:0000. Cancels the hook of an affect: when AffectId is 0 or is the affect the hooks are offering
   (HookAffectId), HookAffectId and DamageAmount are cleared. HookAffectId 0 reads as "is Unaffected"
@@ -992,8 +996,14 @@ end;
 procedure ovl12_e45(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
 end;
-{ ovl12:1363: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e46; begin end;
+{ ovl12:1363. Affect handler (the AffectHandlers shape: Who, Affect and Mode; only Who is read). It gives Who the
+  affect AffectUnknown19 (ovl24:0E52, AddAffect) for AffectUnknown19Duration rounds with the Data AffectUnknown19Data,
+  with NoRemoveHandler: the handler does not run when the affect is removed. AffectUnknown19 is the affect RollToHit
+  clears from the attacker (ovl24:0CB7) [I]. Purpose unknown: which affect runs it is not known yet [?]. }
+procedure ovl12_e46(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  AddAffect(Who, AffectUnknown19, AffectUnknown19Duration, AffectUnknown19Data, NoRemoveHandler);
+end;
 { ovl12:1399: retf 10: 10 bytes of parameters; 16 bytes of locals }
 {@stub} procedure ovl12_e47; begin end;
 { ovl12:1452: retf 10: 10 bytes of parameters; 0 bytes of locals }
