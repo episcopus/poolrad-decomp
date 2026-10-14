@@ -364,7 +364,7 @@ var
   Key: Char;
   KeyFlag: Byte;
   SpareBuf: String[40];   { 41 frame-filling bytes, never read; purpose unknown }
-  ViewFlag: Byte;         { flag ovl19_e5 (View) takes }
+  ViewFlag: Byte;         { flag ViewSelectedCharacter (View) takes }
   SpareLong: LongInt;     { 4 frame-filling bytes, never read; purpose unknown }
 begin
   ds49D6^[713] := 0;
@@ -388,7 +388,7 @@ begin
             if SelectedCharacter^.Status = 0 then
               CastSpells;
           'V':
-            ovl19_e5(ViewFlag);
+            ViewSelectedCharacter(ViewFlag);
           'E':
             Redraw := 1;
           'S':
@@ -452,7 +452,7 @@ begin
           'C':
             CastSpells;
           'V':
-            ovl19_e5(ViewFlag);
+            ViewSelectedCharacter(ViewFlag);
           'E':
             Redraw := 1;
           'S':

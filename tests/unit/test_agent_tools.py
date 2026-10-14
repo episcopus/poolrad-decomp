@@ -285,3 +285,27 @@ def test_an_unprovable_init_does_not_keep_a_blocked_unit_in_the_queue(monkeypatc
           {"unit": "ovl31", "id": "c", "name": "ovl31_init"}]
     assert nxt.waiting("ovl25", rs)                  # only the init is left besides blocked routines
     assert not nxt.waiting("ovl31", rs)              # the init alone is real work (no stubs left)
+
+
+def test_the_watch_reports_bytes_on_main_and_in_unit_worktrees(tmp_path, monkeypatch):
+    """Bytes at L2 as make status counts them (external object code left out), plus what a unit lock's
+    worktree has recorded at L2 but main has not integrated yet."""
+    import watch
+    rows = [dict(id="ovl00:0000", unit="ovl00", size=100, level="L2"), dict(id="ovl00:0100", unit="ovl00", size=300, level="none"),
+            dict(id="ovl01:0000", unit="ovl01", size=600, level="none"), dict(id="ovl01:0600", unit="ovl01", size=50, external=True)]
+    monkeypatch.setattr(common, "routines", lambda: rows)
+    monkeypatch.setattr(common, "queue", lambda: [{"id": "ovl00"}, {"id": "ovl01"}])
+    monkeypatch.setattr(common, "main_checkout", lambda: tmp_path / "clone")
+    locks = tmp_path / "locks"
+    locks.mkdir()
+    monkeypatch.setattr(common, "lock_dir", lambda: locks)
+    assert "bytes 100/1,000 at L2 (10.0%)" in watch.progress() and "in worktrees" not in watch.progress()
+    (locks / "ovl01.lock").write_text("agent = dec-1\n")
+    (locks / "review-ovl00.lock").write_text("agent = rev-1\n")
+    reg = tmp_path / "poolrad-worktrees/ovl01/re"
+    reg.mkdir(parents=True)
+    reg.joinpath("symbols.toml").write_text('[[routine]]\nid = "ovl01:0000"\nunit = "ovl01"\nsize = 450\nlevel = "L2"\n'
+                                            '[[routine]]\nid = "ovl01:01C2"\nunit = "ovl01"\nsize = 150\nlevel = "none"\n')
+    text = watch.progress()
+    assert "bytes 100/1,000 at L2 (10.0%)" in text and "+450 in worktrees: 55.0%" in text
+    assert "75.0%" in "\n".join(watch.locks())

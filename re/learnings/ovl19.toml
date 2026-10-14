@@ -35,3 +35,219 @@ tags = ["spell-list", "selection", "window"]
 title = "The spell-list selector separates list kind from selection mode"
 lesson = "ChooseSpellFromList uses its first byte to select the heading suffix and to call ovl22_e2; its second byte is passed with Choice to ovl22_e1. A zero Listed result returns zero. For a negative Choice, it opens the one-row Spells window, redraws SelectedCharacter, and draws the combined `Spells ` plus suffix heading."
 evidence = ["src/OVL19.PAS#ChooseSpellFromList", "re/symbols.toml#ovl19:299C"]
+
+[[lesson]]
+id = "sheet-field-views"
+confidence = "V"
+units = ["ovl19"]
+tags = ["record", "cast", "fields", "pool-variables"]
+title = "Read TCharacter bytes that have no Pascal name with a view record"
+lesson = "Ability scores (+$10..+$15, indexed by a variable), the damage dice and bonus (+$115, +$117, +$119 inside POOLVARS' Pad112) and the sex (+$9E) are read through local record views in OVL19: a Filler array up to the offset, then the field or array. `PAbilityBlock(SelectedCharacter)^.Scores[Index]` compiles to les di, ptr; add di, ax; es:[di+$10], the original's shape, so POOLVARS' TCharacter needs no change. The same view holds the signed indexes (sex, alignment, status) of ovl19_e1."
+evidence = ["src/OVL19.PAS#TAbilityBlock", "src/OVL19.PAS#TDamageDice", "src/OVL19.PAS#TSheetFields", "re/symbols.toml#ShowAbilityScore"]
+
+[[lesson]]
+id = "signed-table-index-cwde"
+confidence = "V"
+units = ["ovl19"]
+tags = ["index", "signed", "cwde"]
+title = "A cwde before an index means a ShortInt, not a Byte"
+lesson = "The original sign-extends an index with cwde (the row arithmetic of ShowAbilityScore, offset 003F of its code; the race, class, alignment and status tables in ovl19_e1). With a Byte index TP emits xor ah, ah, which was the first mismatch of ShowAbilityScore. Declare the index ShortInt when the packet shows cwde, and a Byte when it shows xor ah, ah."
+evidence = ["src/OVL19.PAS#ShowAbilityScore", "src/OVL19.PAS#ShowCharacterSheet"]
+
+[[lesson]]
+id = "map-entries-inside-matched-routine"
+confidence = "V"
+units = ["ovl19"]
+tags = ["map", "boundaries", "stubs"]
+title = "Map entries inside a matched routine are decoding artefacts"
+lesson = "ovl19_fn_031E (inside ShowCharacterSheet) and ovl19_fn_0915..ovl19_fn_09A3 (inside ShowAbilityScore) were mid-instruction decodes of the bodies of ovl19_e1 and ovl19_e3. Once the enclosing routine matches, make match WRITE=1 removes their entries from re/symbols.toml, but their stub lines and interface declarations stay in src/ until removed by hand; a stub for a removed entry gives a note from make stubs."
+evidence = ["re/symbols.toml#ovl19:0901", "re/symbols.toml#ovl19:004A", "src/OVL19.PAS#ShowAbilityScore"]
+
+[[lesson]]
+id = "two-spare-frame-bytes"
+confidence = "V"
+units = ["ovl19"]
+tags = ["frame", "locals", "padding"]
+title = "A frame two bytes larger than the code's locals holds two declared, unused bytes"
+lesson = "ovl19_e1's frame is 0x308 bytes; the code reads [bp-2] (row), [bp-3] (column), [bp-5], [bp-6], the text at [bp-0x106] and the flag at [bp-0x107], and never [bp-1] or [bp-4]. Declaring two one-byte locals before Row and between Col and Stat (TP allocates the first declared at [bp-1] and downward) reproduces every offset and the frame size. Declare the spares only when the frame and offsets prove them."
+evidence = ["src/OVL19.PAS#ShowCharacterSheet", "re/symbols.toml#ovl19:004A"]
+
+[[lesson]]
+id = "literal-title-argument-temp"
+confidence = "V"
+units = ["ovl19"]
+tags = ["string", "literal", "argument", "overlay", "prompt"]
+title = "A literal string argument is copied into a stack temporary before the call"
+lesson = "Under $O+, ReadPromptChoice('View:', Menu, ...) first pushes the address of a stack temporary, copies the literal into it with System_StrCopy (0AF8:0B0B), then pushes the Menu pointer and the five colour and flag bytes. The probe reproduces that shape and ViewSelectedCharacter (ovl19:0AB3) matches it. Write the literal inline in the call; the compiler makes the temporary."
+evidence = ["tools/re/tp_idioms/ovl19/PRB19TIT.PAS", "re/symbols.toml#ovl19:0AB3"]
+
+[[lesson]]
+id = "set-membership-branch-polarity"
+confidence = "V"
+units = ["ovl19"]
+tags = ["set", "in", "branch", "flags"]
+title = "After System_SetIn, `not (x in S)` continues with je"
+lesson = "ViewSelectedCharacter (ovl19:0AE3, 0CF2) matches with `while not (Key in [#0, 'E']) and (Done = 0)` and `if (Done = 0) and (Key in ['I', 'S', 'T'])`: System_SetIn (0AF8:0DC0) is followed by je to the path taken when the element is absent. The 32-byte set is bit n of byte n div 8 (element n): [#0, 'E'] is 01 at byte 0 and 20 at byte 8."
+evidence = ["re/symbols.toml#ovl19:0AB3", "src/OVL19.PAS#ViewSelectedCharacter"]
+
+[[lesson]]
+id = "frame-temp-block-and-even-size"
+confidence = "V"
+units = ["ovl19"]
+tags = ["frame", "temporary", "padding", "locals"]
+title = "String temporaries are 256-byte blocks under the locals; the frame is rounded to even"
+lesson = "The concatenation temporary of ViewSelectedCharacter sits at [bp-0x132], 256 bytes just below its last local Choice at [bp-0x32], and the frame is sub sp 0x132. RunItemMenu's locals end at [bp-0x41] (one spare byte after OldCount), its temporary is at [bp-0x141], and the frame is 0x141 rounded up to sub sp 0x142. To find a missing spare byte, compare the first temporary's address with the lowest local: temporary = lowest local - 0x100 - spares."
+evidence = ["src/OVL19.PAS#ViewSelectedCharacter", "src/OVL19.PAS#RunItemMenu"]
+
+[[lesson]]
+id = "string-function-result-argument"
+confidence = "V"
+units = ["ovl19"]
+tags = ["string", "temporary", "function-result"]
+title = "A string function result passed on is not copied; a concatenated assignment builds a temporary"
+lesson = "DrawTextAt(Col, Row, Color, res12_fn_1037(x)) pushes the callee's result pointer and passes it on with no copy. `Text := SexNames[i]` copies with 0AF8:0B25 (max 255). `Text := Text + '/'` copies Text into a temporary (0AF8:0B0B), appends (0AF8:0B98) and copies back (0AF8:0B25). The temporary sizes give the frame: two 256-byte function temporaries sit under the Text local."
+evidence = ["src/OVL19.PAS#ShowCharacterSheet", "src/OVL19.PAS#ShowAbilityScore", "docs/design/WHITEPAPER.md#2.2"]
+
+[[lesson]]
+id = "locals-first-declared-nearest-bp"
+confidence = "V"
+units = ["*"]
+tags = ["frame", "locals", "layout"]
+title = "The first declared local sits nearest BP; the last one is the deepest"
+lesson = "ReadyItem declares AffectOn, Reason, Slot (Byte) and then Character (a pointer): the compiler places AffectOn at [bp-1], Reason at [bp-2], Slot at [bp-3] and Character at [bp-7..-4]. Declaring Character first put it at [bp-4..-1] and moved AffectOn to [bp-5], which the matcher reported at the first store. The order to write is the reverse of the frame's addresses."
+evidence = ["src/OVL19.PAS#ReadyItem"]
+
+[[lesson]]
+id = "byte-case-then-signed-index"
+confidence = "V"
+units = ["*"]
+tags = ["compiler", "case", "signed", "index", "cwde"]
+title = "A Byte case loads the value once and compares it unsigned; a ShortInt cast gives the cwde index"
+lesson = "`case Slot of 0..8: ...; 9: ...; end` on a Byte compiles to one `mov al,[bp-3]` and unsigned `cmp al,0; jb` / `cmp al,8; ja` range tests, then `cmp al,9`. An `if (Slot >= 0) and (Slot <= 8)` with the same Byte, or a ShortInt Slot, compiled to memory compares with signed jl and jg (a different shape). The array index that must be sign-extended is written `SlotItems[ShortInt(Slot)]`: it gives `mov al,[bp-3]; cwde`, the same as the original, while the range test stays unsigned."
+evidence = ["src/OVL19.PAS#ReadyItem"]
+
+[[lesson]]
+id = "reason-code-case-chain"
+confidence = "V"
+units = ["*"]
+tags = ["compiler", "case", "branch-shape"]
+title = "A case on a result code loads it once: cmp al,k with a jne chain, not repeated memory compares"
+lesson = "The original tests a message code with `mov al,[bp-2]; cmp al,0; jne`, then `cmp al,1; jne`, `cmp al,2; jne`, `cmp al,3; jne` with a jmp to the end after each branch. A chain of `if Reason = k then ... else if` compiled to `cmp byte [bp-2],k` on every test (a different shape at every test). Writing the dispatch as one `case Reason of` with the constants as labels matches."
+evidence = ["src/OVL19.PAS#ReadyItem"]
+
+[[lesson]]
+id = "if-else-fall-through-is-the-positive-test"
+confidence = "V"
+units = ["*"]
+tags = ["compiler", "if", "branch-layout"]
+title = "The fall-through branch is the one whose test holds: write the test as it is in the code"
+lesson = "JoinItem's `if Total + Cursor^.Count > 255 then A else B` first compiled to `jle` to B with A after it; the original has `jg` to the overflow block, so its fall-through is the not-overflow code. Writing `if Total + Cursor^.Count <= 255 then B1 else A1` (the not-overflow code first) matches. When a branch is laid out out of line, invert the test and swap the blocks instead of adding code."
+evidence = ["src/OVL19.PAS#JoinItem"]
+
+[[lesson]]
+id = "self-compare-is-real-code"
+confidence = "V"
+units = ["*"]
+tags = ["compiler", "quirk", "record-compare"]
+title = "A test that compares a field of one record with the same field of that record compiles to two loads from the same pointer"
+lesson = "JoinItem's Affects[1], Affects[2] and Affects[3] tests load both operands from Cursor (les di,[bp-4] before each load and each compare). The original does the same, so the source has the self-compare as written and the QUIRK is kept, not corrected to Target. A matched self-compare is evidence of the source, not of a typo to fix; record it as QUIRK with its address."
+evidence = ["src/OVL19.PAS#JoinItem"]
+
+[[lesson]]
+id = "cross-unit-call-needs-uses"
+confidence = "V"
+units = ["*"]
+tags = ["compiler", "uses", "units"]
+title = "Calling a routine of another unit needs that unit in the uses clause"
+lesson = "CallAffectHandler is declared in OVL24 and was not in OVL19's uses clause: the compile failed with Error 3 (Unknown identifier) at its first call. Adding OVL24 to the implementation uses clause (no cycle: OVL24 does not use OVL19) matches. A PMenuLine argument for CallAffectHandler's PAffect parameter needs the cast PAffect(Item), which compiles to the same push."
+evidence = ["src/OVL19.PAS#ReadyItem", "src/OVL24.PAS"]
+
+[[lesson]]
+id = "string-table-from-the-image"
+confidence = "V"
+units = ["ovl19"]
+tags = ["data", "image", "tables", "dseg"]
+title = "Read a DS string table from the unpacked image by calibrating on a known name"
+lesson = "The image's data segment base is found from a known entry: MoneyKindNames (DS:0FFA) gives the file offset of its 'Copper' string, base = file offset - 0FFB. The same base gives RaceNames (DS:0F03), ClassNames (DS:0D38), AlignmentNames (DS:0F53) and StatusNames (DS:1047), each read with its stride. Record the name, stride and count in re/dseg.toml with the image as evidence."
+evidence = ["re/dseg.toml#MoneyKindNames", "re/dseg.toml#RaceNames", "re/dseg.toml#StatusNames"]
+
+[[lesson]]
+id = "dec-with-constant-stays-byte"
+confidence = "V"
+units = ["*"]
+tags = ["compiler", "byte", "dec", "constant", "arithmetic"]
+title = "Dec(byte, constant) stays a byte operation; x := x - constant widens through AX"
+lesson = "UseItem subtracts $17 from a spell byte above $38 with one `sub byte ptr [bp-1], 0x17` (ovl19:1B2E). `Spell := Spell - SpellShift` with the same constant compiles to `mov al,[bp-1]; xor ah,ah; sub ax,0x17; mov [bp-1],al`, four instructions and seven bytes longer, which shifted every later jump of the routine. Write Dec(x, constant) for a byte that is decremented in place. The probe reproduces both shapes."
+evidence = ["tools/re/tp_idioms/ovl19/PRB19DEC.PAS", "src/OVL19.PAS#UseItem"]
+
+[[lesson]]
+id = "constant-jump-difference-is-a-size-difference"
+confidence = "V"
+units = ["*"]
+tags = ["matcher", "debugging", "jump", "size"]
+title = "A jump that differs only in its displacement marks an earlier size difference"
+lesson = "make match reports a relative jump whose target differs as `constant ... (it does not move with the layout)`. The target is the first place where our code is longer or shorter than the original's before it: UseItem's `jmp 0x1c1a` against the original's `jmp 0x1c13` came from the 7-byte widened subtraction above, not from the jump. Find the first block whose length differs by disassembling our build (build/match/<unit>/A/match.exe, the segment named by the map) and fix that statement, not the jump."
+evidence = ["src/OVL19.PAS#UseItem", "re/symbols.toml#UseItem"]
+
+[[lesson]]
+id = "use-item-quick-not-flag10d"
+confidence = "V"
+units = ["ovl19"]
+tags = ["character", "offset", "combat", "quick"]
+title = "The combat checks in the Use action read Quick (+$10F), not Flag10D (+$10D)"
+lesson = "UseItem tests SelectedCharacter's byte at +$10F before res12_fn_2B88 (ovl19:1B11) and passes it as the second argument of ovl22_e5 (ovl19:1BCF). POOLVARS names +$10F Quick (nonzero while the computer fights for the character), so the reads are Quick and not Flag10D (+$10D, the experience eligibility). A field one byte off is still inside the same record, so check each offset against the disassembly."
+evidence = ["src/OVL19.PAS#UseItem", "src/POOLVARS.PAS#TCharacter"]
+
+[[lesson]]
+id = "not-and-layout-for-two-tests"
+confidence = "V"
+units = ["*"]
+tags = ["compiler", "boolean", "branch", "layout", "and", "not"]
+title = "Two tests of one field: `if not (A and B) then Div else Mul` lays out like the original, the plain `and` does not"
+lesson = "SellItem tests a kind byte against $49 and then $1C and runs the multiply branch only when both hold. The original jumps to the divide branch on the first miss (jne) and falls into it after a second test that jumps to the multiply branch (je). `if (K = $49) and (K = $1C) then Mul else Div` compiles to cmp; jne Div; cmp; jne Div; Mul, which differs; `if not ((K = $49) and (K = $1C)) then Div else Mul` compiles to cmp; jne Div; cmp; je Mul; Div, which matches. The probe reproduces both shapes. The source's dead multiply branch stays as a QUIRK."
+evidence = ["tools/re/tp_idioms/ovl19/PRB19NOT.PAS", "src/OVL19.PAS#SellItem"]
+
+[[lesson]]
+id = "shared-tail-written-in-each-branch"
+confidence = "V"
+units = ["*"]
+tags = ["compiler", "if", "else", "duplicate", "tail"]
+title = "A statement the original runs on both branches of an if-else is written in each branch"
+lesson = "Turbo Pascal does not move a common tail out of the branches: SellItem's gold addition (Money[GoldKind] += Gold) is code in the overload branch (ovl19:1E8B) and again in the other branch (ovl19:1EA5), each followed by a jump past the other. A single statement after the if-else gives one copy and a mismatch at the first jump. Write the statement in both branches to reproduce the original; a reviewer should read the two copies as one intended step."
+evidence = ["src/OVL19.PAS#SellItem", "re/symbols.toml#SellItem"]
+
+[[lesson]]
+id = "paid-flag-tested-twice-and-longint-price"
+confidence = "V"
+units = ["ovl19"]
+tags = ["compiler", "LongInt", "Dec", "if", "flag"]
+title = "A LongInt price is taken with Dec, and a flag the original tests twice is written as two tests"
+lesson = "IdentifyItem keeps the character's and the pool's money as LongInt (CharacterMoneyValueInGold, MoneyValueInGold). `Dec(Gold, 200)` compiles to sub word and sbb word on the variable, which is the original's shape; `Gold := Gold - 200` loads both words, subtracts, and stores them back, 12 bytes that mismatch. SetCharacterGold(Gold) with a Word parameter pushes only the low word of the LongInt. When the not-paid path of an if jumps to a second test of the same flag, write `if Paid then begin ... end;` followed by a separate `if Paid then DelayByGameSpeed;`: one merged block is 5 bytes shorter and jumps to the wrong place."
+evidence = ["src/OVL19.PAS#IdentifyItem", "re/symbols.toml#ovl19:1F52", "tools/re/tp_idioms/ovl19/PRB19DEC.PAS"]
+
+[[lesson]]
+id = "word-compare-zero-jne-or-ja"
+confidence = "V"
+units = ["ovl19"]
+tags = ["compiler", "Word", "compare", "jne", "ja"]
+title = "A Word compared with zero: <> 0 compiles to jne, > 0 to ja"
+lesson = "Money is a Word array. TradeMoney's listing loop tests `Money[Kind] <> 0` and compiles to cmp; jne (ovl19:21E9 of the original). Its flag loop tests `Money[Kind] > 0` and compiles to cmp; jbe past the body (ovl19:242C), the unsigned form. Writing > 0 in the listing loop gives ja into the body where the original has jne, and mismatches at that jump. Write the test the source shows."
+evidence = ["src/OVL19.PAS#TradeMoney", "re/symbols.toml#ovl19:2156"]
+
+[[lesson]]
+id = "trade-money-frame-layout"
+confidence = "V"
+units = ["ovl19"]
+tags = ["frame", "locals", "temporaries", "string"]
+title = "TradeMoney's frame: locals from bp-4 in declaration order, string temporaries below them"
+lesson = "TradeMoney (sub sp 0x234) takes its locals in declaration order from bp-4 downward: Recipient (4), Kind (ShortInt, -5), CoinKind (-6), I (-7), Pad (-8), List (-0xC), Chosen (-0x10), Head (-0x14), Kinds (Word, -0x16), Choice (Integer, -0x18), Num string[15] (-0x28), Spaces string[4] (-0x2D), Text string (-0x12D, 256 bytes), Key (-0x12E), Amount (Word, -0x130), Finished (-0x131), Done (-0x132), Redraw (-0x133). The 256-byte string temporaries occupy -0x233..-0x134 under them. Compare a missing or extra local with these addresses first."
+evidence = ["src/OVL19.PAS#TradeMoney", "re/symbols.toml#ovl19:2156"]
+
+[[lesson]]
+id = "repeat-back-jump-lands-on-the-call"
+confidence = "V"
+units = ["ovl19"]
+tags = ["compiler", "repeat", "loop", "call", "frame"]
+title = "A repeat whose back jump lands on a call has that call inside the loop; the Drop money menu's frame"
+lesson = "ChooseAndDropMoney (ovl19:24A7, sub sp 0x22E, retf 0) is TradeMoney's coin list with one shape change: its `until Done` jumps back to ovl19:24AE, which is the push cs of ShowCharacterMoney, so that call is the first statement of the repeat. Written before the repeat, the jump lands on the list reset (a 4-byte mismatch at the jump). Locals in declaration order from bp-1: Kind (-1), CoinKind (-2), Pad (-3), I (-4), Kinds (Word, -6), Choice (-8), List (-0xC), Chosen (-0x10), Head (-0x14), Done (-0x15), Redraw (-0x16), Num (-0x26), Spaces (-0x2B), Text (-0x12B), Key (-0x12C), Amount (Word, -0x12E). The for-limit byte of the Spaces loop is the first temporary (-0x12F), and the 256-byte concatenation temporary sits at -0x22E..-0x12F."
+evidence = ["src/OVL19.PAS#ChooseAndDropMoney", "re/symbols.toml#ovl19:24A7"]

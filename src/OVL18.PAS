@@ -29,7 +29,7 @@ begin
   StartTick := GameClock;
   FillChar(Sprites, SizeOf(TSpriteList), 0);
   LoadSpriteList('FINAL', Bank, 2, @Sprites);
-  res07_fn_0D71(Col - 1, Row - 1, 0, 0, Sprites.Slots[1].Sprite, DrawBuf);
+  DrawPictureItemClipped(Col - 1, Row - 1, 0, 0, Sprites.Slots[1].Sprite, DrawBuf);
   FlushPictureChanges;
   repeat
     DrawSprite(Col, Row, 1, Sprites.Slots[Sprites.Flag].Sprite);
@@ -50,7 +50,7 @@ end;
 { ovl18:02A4. The ending narrative (PoolNarrative): it shows the dragon's death and the
   Tyranthraxus and Bane speech as lines of text (DrawTextAt on column 1, rows $11 onwards, colour
   10), loads the FINAL<number> pictures (whose number is Str(TileSet) in DS:4713) through
-  LoadPicture and draws them with res07_fn_0D71, running the AnimateFinalPicture
+  LoadPicture and draws them with DrawPictureItemClipped, running the AnimateFinalPicture
   animation between the speech blocks, and restores the view mode DS:49F3 at the end.
   Callers: ovl03:2E10. Gets its picture
   number from DS:4713 and its lines from the code's literal pool. }
@@ -66,24 +66,24 @@ begin
   DrawTextAt(1, $13, $A, 'from the dragon''s body.');
   RedrawView;
   LoadPicture('FINAL' + ds4713, 1, 0, 0, ds470E);
-  res07_fn_0D71(0, 0, 0, 0, ds470E, DrawBuf);
+  DrawPictureItemClipped(0, 0, 0, 0, ds470E, DrawBuf);
   AnimateFinalPicture(3, 5, 2, (10 - GameSpeed) * 5 div 2);
   LoadPicture('FINAL' + ds4713, 3, 0, 0, ds470E);
-  res07_fn_0D71(0, 0, 0, 0, ds470E, DrawBuf);
+  DrawPictureItemClipped(0, 0, 0, 0, ds470E, DrawBuf);
   if ds49D6^[830] > 1 then
   begin
     LoadPicture('FINAL' + ds4713, 4, 0, 0, ds470E);
-    res07_fn_0D71(0, $B, 0, 0, ds470E, DrawBuf);
+    DrawPictureItemClipped(0, $B, 0, 0, ds470E, DrawBuf);
   end;
   if ds49D6^[830] > 2 then
   begin
     LoadPicture('FINAL' + ds4713, 5, 0, 0, ds470E);
-    res07_fn_0D71($D, 9, 0, 0, ds470E, DrawBuf);
+    DrawPictureItemClipped($D, 9, 0, 0, ds470E, DrawBuf);
   end;
   if ds49D6^[830] > 3 then
   begin
     LoadPicture('FINAL' + ds4713, 6, 0, 0, ds470E);
-    res07_fn_0D71(0, 9, 0, 0, ds470E, DrawBuf);
+    DrawPictureItemClipped(0, 9, 0, 0, ds470E, DrawBuf);
   end;
   ClearRect(1, $11, $26, $16);
   DrawTextAt(1, $11, $A, '"Fools, you have but slain the body');
@@ -106,7 +106,7 @@ begin
   RedrawView;
 end;
 { ovl18:06B3. Animates the doors of the area view (Flag 1) or clears them (flag 0): it draws the
-  doors of the two block-code tables DS:0900 and DS:090B through res07_fn_1E5C (bit 7 of a code
+  doors of the two block-code tables DS:0900 and DS:090B through RemapPictureColours (bit 7 of a code
   selects the second SQRPACI bank ds5E56, otherwise ds5E52), stepping the area view through
   DS:094D/DS:095F and stepping the display, then clears the doors. Called by ovl03:31B4 and
   ovl17:1602. }
@@ -123,28 +123,28 @@ begin
     begin
       for DoorCol := 0 to $A do
         if ds0900[DoorCol] > $7F then
-          res07_fn_1E5C(@ds091D, @ds092D, ds0900[DoorCol] and $7F, 1, Pointer(ds5E56))
+          RemapPictureColours(@ds091D, @ds092D, ds0900[DoorCol] and $7F, 1, Pointer(ds5E56))
         else
-          res07_fn_1E5C(@ds091D, @ds092D, ds0900[DoorCol], 1, Pointer(ds5E52));
+          RemapPictureColours(@ds091D, @ds092D, ds0900[DoorCol], 1, Pointer(ds5E52));
       for DoorCol := 0 to $11 do
         if ds090B[DoorCol] > $7F then
-          res07_fn_1E5C(@ds091D, @ds093D, ds090B[DoorCol] and $7F, 1, Pointer(ds5E56))
+          RemapPictureColours(@ds091D, @ds093D, ds090B[DoorCol] and $7F, 1, Pointer(ds5E56))
         else
-          res07_fn_1E5C(@ds091D, @ds093D, ds090B[DoorCol], 1, Pointer(ds5E52));
+          RemapPictureColours(@ds091D, @ds093D, ds090B[DoorCol], 1, Pointer(ds5E52));
       DrawAreaView(ds094D[DoorRow], ds095F[DoorRow]);
       FlushPictureChanges;
     end;
   end;
   for DoorCol := 0 to $A do
     if ds0900[DoorCol] > $7F then
-      res07_fn_1E5C(@ds091D, @ds092D, ds0900[DoorCol] and $7F, 0, Pointer(ds5E56))
+      RemapPictureColours(@ds091D, @ds092D, ds0900[DoorCol] and $7F, 0, Pointer(ds5E56))
     else
-      res07_fn_1E5C(@ds091D, @ds092D, ds0900[DoorCol], 0, Pointer(ds5E52));
+      RemapPictureColours(@ds091D, @ds092D, ds0900[DoorCol], 0, Pointer(ds5E52));
   for DoorCol := 0 to $11 do
     if ds090B[DoorCol] > $7F then
-      res07_fn_1E5C(@ds091D, @ds093D, ds090B[DoorCol] and $7F, 0, Pointer(ds5E56))
+      RemapPictureColours(@ds091D, @ds093D, ds090B[DoorCol] and $7F, 0, Pointer(ds5E56))
     else
-      res07_fn_1E5C(@ds091D, @ds093D, ds090B[DoorCol], 0, Pointer(ds5E52));
+      RemapPictureColours(@ds091D, @ds093D, ds090B[DoorCol], 0, Pointer(ds5E52));
   if Flag <> 0 then
   begin
     DrawAreaView($17, $19);

@@ -19,8 +19,8 @@ const
   IconSetCopyLimit = 3;       { icon sets above this are copied by MirrorPicture }
   OneItem = 1;                { item count stored in the allocated picture }
   AllocatePixels = 1;         { bit 0 of AllocFlags asks AllocatePicture for a pixel buffer }
-  NoPicIndex = 0;             { picture index this routine passes to res07_fn_0D71 }
-  BlitFlagBit = 1;            { res07_fn_0D71 tests bit 0 of the flags byte }
+  NoPicIndex = 0;             { picture index this routine passes to DrawPictureItemClipped }
+  BlitFlagBit = 1;            { DrawPictureItemClipped tests bit 0 of the flags byte }
   CellStep = 3;               { the cell column and row are multiplied by 3 for the blit }
   QuarterAdapter = 1;         { VideoAdapter 1: the pixel copy is a quarter of the byte size }
   AltPictures = $40;          { a CHEAD/CBODY name ending in T selects the pictures from $40 on }
@@ -92,7 +92,7 @@ end;
   CHEAD and CBODY sets: a name ending in T adds $40 to Block and loses that letter. COMSPR and
   ICON: the name is used as it is, and ICON pictures are recoloured with ds0CF2. Any other set
   takes the file number TileSet as a suffix and both pictures are recoloured with ds0CE2
-  (res07_fn_1E5C, from the identity map ds0CD2). Flushes the keyboard at the end. StartGame
+  (RemapPictureColours, from the identity map ds0CD2). Flushes the keyboard at the end. StartGame
   loads COMSPR pictures 0 to 11 into slots 13 to 24 and picture 25 into slot 25 with it. }
 procedure LoadPictureSlot(SetName: string; Block, Slot: Byte);
 var
@@ -114,24 +114,24 @@ begin
     LoadPicture(SetName + Suffix, Block + MirrorPictures, 1, 0, ds5E5A[Slot].SecondPic);
     if SetName = 'ICON' then
     begin
-      res07_fn_1E5C(@ds0CD2, @ds0CF2, 0, 0, ds5E5A[Slot].FirstPic);
-      res07_fn_1E5C(@ds0CD2, @ds0CF2, 0, 0, ds5E5A[Slot].SecondPic);
+      RemapPictureColours(@ds0CD2, @ds0CF2, 0, 0, ds5E5A[Slot].FirstPic);
+      RemapPictureColours(@ds0CD2, @ds0CF2, 0, 0, ds5E5A[Slot].SecondPic);
     end;
   end
   else
   begin
     Str(TileSet, Suffix);
     LoadPicture(SetName + Suffix, Block, 1, 0, ds5E5A[Slot].FirstPic);
-    res07_fn_1E5C(@ds0CD2, @ds0CE2, 0, 0, ds5E5A[Slot].FirstPic);
+    RemapPictureColours(@ds0CD2, @ds0CE2, 0, 0, ds5E5A[Slot].FirstPic);
     LoadPicture(SetName + Suffix, Block + MirrorPictures, 1, 0, ds5E5A[Slot].SecondPic);
-    res07_fn_1E5C(@ds0CD2, @ds0CE2, 0, 0, ds5E5A[Slot].SecondPic);
+    RemapPictureColours(@ds0CD2, @ds0CE2, 0, 0, ds5E5A[Slot].SecondPic);
   end;
   FlushKeyboard;
 end;
 { ovl32:04FC. Draws the picture PicIndex, mirror half Mirror, from the table at ds5E5A.
   Nothing happens when that pointer is nil. Otherwise a picture of the same height and
   width is allocated, the bytes are copied (MirrorPicture when IconSet is above
-  IconSetCopyLimit, otherwise Move of the tail and the pixels), and res07_fn_0D71 draws
+  IconSetCopyLimit, otherwise Move of the tail and the pixels), and DrawPictureItemClipped draws
   it at the cell times CellStep. The copy is then freed. DrawPartyMarker passes the
   marker cell, the icon set PartyFacing, and the walk frame split into half and picture. }
 procedure DrawIcon(CellCol, CellRow: Shortint; IconSet, Mirror, PicIndex: Byte);
@@ -154,7 +154,7 @@ begin
           Move(Pixels^, PMemPic(Dest)^.Pixels^, ByteSize);
       end;
     end;
-    res07_fn_0D71(CellCol * CellStep, CellRow * CellStep, NoPicIndex, BlitFlagBit, Dest, DrawBuf);
+    DrawPictureItemClipped(CellCol * CellStep, CellRow * CellStep, NoPicIndex, BlitFlagBit, Dest, DrawBuf);
     ReleasePicture(Dest);
   end;
 end;

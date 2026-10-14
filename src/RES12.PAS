@@ -77,14 +77,8 @@ function IsMaxClassLevel(Who: PCharacter; ClassIndex: ShortInt): Boolean;
 implementation
 
 const
-  { Byte offsets into a RaceRow (DS:5582; 129 sixteen-byte rows indexed by item kind, POOLVARS).
-    The readied weapon's item kind picks the row. }
-  RaceRowWeaponDice = 9;        { +$9: the item kind's damage dice count [I] }
-  RaceRowWeaponDieSize = $A;    { +$A: the item kind's damage die size [I] }
-  RaceRowWeaponBonus = $B;      { +$B: the item kind's base damage bonus }
-  RaceRowWeaponRange = $C;      { +$C: the item kind's attack range in map cells (ovl09:536 reads it) }
-  RaceRowAttackFlags = $E;      { +$E: which attack bonuses the item kind gets, see below }
-  { Bits of RaceRow[item kind][RaceRowAttackFlags]. }
+  { Bits of ItemTable[item kind].Flags (DS:5582; 129 sixteen-byte rows indexed by item kind, POOLVARS):
+    which attack bonuses the item kind gets. The readied weapon's item kind picks the row. }
   WeaponFlagSlot11Plus = 1;     { add the plus of slot item 11 (+$F8) }
   WeaponFlagDexToHit = 2;       { the attack adds the dexterity roll adjustment }
   WeaponFlagStrength = 4;       { the attack adds the strength roll and damage adjustments }
@@ -98,7 +92,7 @@ const
   BonusKindRangeHigh = $2D;
   BonusKindLow = $25;
   BonusKindLower = $24;
-  { Item kind (RaceRow[item kind][0]) of an armour, and the movement it allows: up to
+  { Item kind (ItemTable[item kind].Slot) of an armour, and the movement it allows: up to
     LightArmourWeight the character keeps its BaseMovement, up to HeavyArmourWeight it is
     MediumArmourMove, and above it HeavyArmourMove. A magic armour adds MagicArmourMoveBonus. }
   ArmourItemKind = 2;
@@ -116,9 +110,7 @@ const
   MediumLoadLimit = $300;
   HeavyLoadFrom = $301;
   HeavyLoadLimit = $400;
-  { RaceRow byte offsets AddReadiedItemBonus reads. }
-  RaceRowItemKind = 0;      { +0: the item kind: 0 weapon, 1 plus item, 2 armour, 9 special }
-  RaceRowBonusClass = 6;    { +6: bit 7 set means the item has a bonus class (byte and $7F) }
+  { Item kinds AddReadiedItemBonus tells apart (ItemTable[item kind].Slot): 0 weapon, 2 armour. }
   PlusItemKind = 1;         { item kind whose bonus is assigned, not accumulated }
   SpecialItemKind = 9;      { item kind whose plus is kept as a maximum }
   { RecalcCombatValues: the readied item kinds whose slot index equals the kind, 0..LastDirectSlotKind;
@@ -215,14 +207,14 @@ const
 
 { 00BA:0000. Applies the readied weapon to Who's attack values; RecalcCombatValues calls it after it
   has copied the character's base values. With no readied weapon (SlotItems[0], +$CC) it does
-  nothing. Otherwise the weapon's item kind picks a RaceRow row (DS:5582): its byte 9 becomes
+  nothing. Otherwise the weapon's item kind picks a ItemTable row (DS:5582): its byte 9 becomes
   Who^.WeaponAttacks (+$115), byte $A Who^.WeaponDamage (+$117) and byte $B the base of the
   signed Who^.WeaponDamageBonus (+$119). The attack flags byte $E adds the dexterity roll
   adjustment (DexterityAttackAdjustment, bit 2) to HitAdjust (+$110, reset to Thac0 +$2D first) and the
   strength roll (StrengthAttackAdjustment) to HitAdjust and the strength damage (StrengthDamageAdjustment) to the
   damage bonus (bit 4); bit 0 adds the plus of slot item 11 (+$F8) and bit 7 the plus of slot
   item 12 (+$FC) to the weapon's own plus. Race 2 gets one more point with the bonus kinds.
-  Globals: RaceRow. }
+  Globals: ItemTable. }
 procedure ApplyWeaponBonuses(Who: PCharacter);
 var
   Weapon: PItem;
@@ -234,19 +226,19 @@ begin
     Exit;
   ItemType := Weapon^.ItemType;
   Who^.HitAdjust := Who^.Thac0;
-  if (RaceRow[ItemType][RaceRowAttackFlags] and WeaponFlagDexToHit) <> 0 then
+  if (ItemTable[ItemType].Flags and WeaponFlagDexToHit) <> 0 then
     Who^.HitAdjust := Who^.HitAdjust + DexterityAttackAdjustment(Who);
-  Who^.WeaponDamageBonus[1] := RaceRow[ItemType][RaceRowWeaponBonus];
-  if (RaceRow[ItemType][RaceRowAttackFlags] and WeaponFlagStrength) <> 0 then
+  Who^.WeaponDamageBonus[1] := ItemTable[ItemType].BonusNormal;
+  if (ItemTable[ItemType].Flags and WeaponFlagStrength) <> 0 then
   begin
     Who^.HitAdjust := Who^.HitAdjust + StrengthAttackAdjustment(Who);
     Who^.WeaponDamageBonus[1] := Who^.WeaponDamageBonus[1] + StrengthDamageAdjustment(Who);
   end;
   WeaponPlus := Weapon^.Plus;
-  if RaceRow[ItemType][RaceRowAttackFlags] > $7F then
+  if ItemTable[ItemType].Flags > $7F then
     if Who^.SlotItems[12] <> nil then
       WeaponPlus := WeaponPlus + Who^.SlotItems[12]^.Plus;
-  if (RaceRow[ItemType][RaceRowAttackFlags] and WeaponFlagSlot11Plus) > 0 then
+  if (ItemTable[ItemType].Flags and WeaponFlagSlot11Plus) > 0 then
     if Who^.SlotItems[11] <> nil then
       WeaponPlus := WeaponPlus + Who^.SlotItems[11]^.Plus;
   Who^.WeaponDamageBonus[1] := Who^.WeaponDamageBonus[1] + WeaponPlus;
@@ -255,19 +247,19 @@ begin
       (Weapon^.ItemType = BonusKindLow) or (Weapon^.ItemType = BonusKindLower)) then
     Inc(WeaponPlus);
   Who^.HitAdjust := Who^.HitAdjust + WeaponPlus;
-  Who^.WeaponAttacks[1] := RaceRow[ItemType][RaceRowWeaponDice];
-  Who^.WeaponDamage[1] := RaceRow[ItemType][RaceRowWeaponDieSize];
+  Who^.WeaponAttacks[1] := ItemTable[ItemType].DiceCountNormal;
+  Who^.WeaponDamage[1] := ItemTable[ItemType].DiceSizeNormal;
 end;
 
 { 00BA:01FB. Sets Who's movement (Movement, +$11C) from a readied armour; RecalcCombatValues calls it
-  for every readied item. It does nothing unless the item's kind (RaceRow[item type][0]) is 2, an
+  for every readied item. It does nothing unless the item's kind (ItemTable[item type].Slot) is 2, an
   armour. Then the armour's weight (+$37) picks the movement: at most $96 keeps the character's
   base movement (BaseMovement, +$72), $97..$18F gives 9 and anything else 6. A magic armour
   (Plus, +$32, not 0) adds 3 while the movement is at most 9.
-  Globals: RaceRow. }
+  Globals: ItemTable. }
 procedure SetArmourMovement(Who: PCharacter; Item: PItem);
 begin
-  if RaceRow[Item^.ItemType][0] = ArmourItemKind then
+  if ItemTable[Item^.ItemType].Slot = ArmourItemKind then
   begin
     case Item^.Weight of
       0..LightArmourWeight: Who^.Movement := Who^.BaseMovement;
@@ -283,23 +275,23 @@ end;
 
 { 00BA:0282. Adds one readied item's bonuses into the accumulator Bonus (TBonus) that
   RecalcCombatValues keeps; called for every readied item after SetArmourMovement. Value is the item
-  kind's bonus class (RaceRow[item type][6]); with bit 7 clear the item contributes nothing. The
-  item kind (RaceRow[item type][0]) and Value pick what happens: a kind-1 item assigns
+  kind's bonus class (ItemTable[item type].BonusClass); with bit 7 clear the item contributes nothing. The
+  item kind (ItemTable[item type].Slot) and Value pick what happens: a kind-1 item assigns
   Value + Plus to Bonus.KindBonus; otherwise Value 0 adds Plus to Bonus.PlusSum (a kind-9 item
   keeps the larger Plus in Bonus.BestPlus instead) and always adds the item's PlusSave (+$33) to
   Who^.SaveBonus; a Value above 0 keeps Value + Plus as the larger Bonus.BestValue and, for a
   positive plus on a kind-2 (armour) item, sets Flag.
-  Globals: RaceRow. }
+  Globals: ItemTable. }
 procedure AddReadiedItemBonus(Who: PCharacter; Item: PItem; var Bonus: TBonus; var Flag: Byte);
 var
   Value: Byte;
   Kind: Byte;
 begin
-  Value := RaceRow[Item^.ItemType][RaceRowBonusClass];
+  Value := ItemTable[Item^.ItemType].BonusClass;
   if Value <= $7F then
     Exit;
   Value := Value and $7F;
-  Kind := RaceRow[Item^.ItemType][RaceRowItemKind];
+  Kind := ItemTable[Item^.ItemType].Slot;
   if Kind = PlusItemKind then
   begin
     Bonus.KindBonus := Value + Item^.Plus;
@@ -503,7 +495,7 @@ end;
   count the items (ItemCountC7), add every item's weight times its Count to CarriedWeight (+$102)
   and to the readied weight ReadiedItemWeight (DS:4846), and file each readied item into its slot (kind 0..8
   into SlotItems[kind], kind 9 into the first free of slots 9 and 10, item type $49 into slot 11,
-  $1C into slot 12), raising ds100 (+$100) by the kind's RaceRow[item type][1]. It then adds the
+  $1C into slot 12), raising HandsInUse (+$100) by the kind's ItemTable[item type].Hands. It then adds the
   carried money to the weight, copies the base attack triple (+$A3..+$A8) into the readied weapon
   triple (+$115..+$11A) and the base resistance (+$A9) into ResistValue (+$111), resets SaveBonus,
   Movement and HitAdjust, adds the unarmed strength bonuses (StrengthAttackAdjustment, StrengthDamageAdjustment) when no
@@ -512,7 +504,7 @@ end;
   ReadiedItemWeight, sets ResistValue to the sum of the accumulator, ds112 (+$112) to its best three values
   minus two, and Movement through CapMovementByLoad. Called whenever a character's equipment or
   status changes.
-  Globals: RaceRow, ReadiedItemWeight (write). }
+  Globals: ItemTable, ReadiedItemWeight (write). }
 procedure RecalcCombatValues(Who: PCharacter);
 var
   TripleIndex: Byte;
@@ -532,7 +524,7 @@ begin
   IgnoresWeight := 0;
   Who^.ItemCountC7 := 0;
   Item := Who^.Items;
-  Who^.ds100 := 0;
+  Who^.HandsInUse := 0;
   Who^.CarriedWeight := 0;
   ReadiedItemWeight := 0;
   while Item <> nil do
@@ -545,7 +537,7 @@ begin
     if Item^.Readied then
     begin
       Inc(ReadiedItemWeight, Weight);
-      ItemKind := RaceRow[Item^.ItemType][RaceRowItemKind];
+      ItemKind := ItemTable[Item^.ItemType].Slot;
       { QUIRK 00BA:0C8C: ItemKind indexes SlotItems signed (cwde) but the case reads it
         unsigned (jb/ja), so the selector is written as the Byte view of the ShortInt }
       case Byte(ItemKind) of
@@ -565,7 +557,7 @@ begin
         Who^.SlotItems[12] := Item;
       if Item^.NameNum[1] = BagNameNum then
         IgnoresWeight := 1;
-      Who^.ds100 := Who^.ds100 + RaceRow[Item^.ItemType][1];
+      Who^.HandsInUse := Who^.HandsInUse + ItemTable[Item^.ItemType].Hands;
     end;
     Item := Item^.Next;
   end;
@@ -986,7 +978,7 @@ end;
   along it (whitepaper 5.18, combat movement). It builds the Bresenham path between the two cells
   (multiplied by 3, the 24x24 icon pitch) through SetupLine/StepLine, collecting each step's
   direction Pattern into Path. It then walks that path: it computes the screen cell (PX, PY), draws
-  the combat picture ds6E36 onto the staging buffer DrawBuf through res07_fn_0D71 (frame Frame of
+  the combat picture ds6E36 onto the staging buffer DrawBuf through DrawPictureItemClipped (frame Frame of
   Count), flushes and delays, steps PX/PY by DirStepX/DirStepY[Path[I]], and keeps the cursor on
   the cell (CursorX, CursorY) through MoveCombatCursor. The Mode byte > 0 forces drawing every
   step; Count is the number of animation frames. Count/Mode/position come from ovl12, ovl13 and
@@ -1067,10 +1059,10 @@ begin
     repeat
       if (Mode > 0) or (PX mod 3 = 0) or (PY mod 3 = 0) then
       begin
-        res07_fn_0D71(PX, PY, Frame, 5, ds6E36, DrawBuf);
+        DrawPictureItemClipped(PX, PY, Frame, 5, ds6E36, DrawBuf);
         FlushPictureChanges;
         Delay(Mode);
-        res07_fn_0D71(PX, PY, 0, 0, ds4A24, DrawBuf);
+        DrawPictureItemClipped(PX, PY, 0, 0, ds4A24, DrawBuf);
         Inc(Frame);
         if Frame >= Count then
           Frame := 0;
@@ -1127,12 +1119,12 @@ begin
         MoveCombatCursor(ToX, ToY, 3, 8);
       PX := (ToX - CombatMap^.ViewX) * 3;
       PY := (ToY - CombatMap^.ViewY) * 3;
-      res07_fn_0D71(PX, PY, Frame, 5, ds6E36, DrawBuf);
+      DrawPictureItemClipped(PX, PY, Frame, 5, ds6E36, DrawBuf);
       if Mode > 0 then
       begin
         FlushPictureChanges;
         Delay(Mode);
-        res07_fn_0D71(PX, PY, 0, 0, ds4A24, DrawBuf);
+        DrawPictureItemClipped(PX, PY, 0, 0, ds4A24, DrawBuf);
       end;
     end;
   until LoopFlag;
@@ -1182,10 +1174,10 @@ begin
     for Pass := 0 to FlashCount do
       for Frame := 0 to 3 do
       begin
-        res07_fn_0D71(Col, Row, Frame, 5, ds6E36, DrawBuf);
+        DrawPictureItemClipped(Col, Row, Frame, 5, ds6E36, DrawBuf);
         FlushPictureChanges;
         Delay($46);
-        res07_fn_0D71(Col, Row, 0, 0, ds4A24, DrawBuf);
+        DrawPictureItemClipped(Col, Row, 0, 0, ds4A24, DrawBuf);
       end;
     SetSoundDriverIdle($A);
     FlushPictureChanges;
@@ -1397,13 +1389,13 @@ end;
 { 00BA:26C2. Returns the level the selected character casts a spell at: the spell's class
   (SpellTable[Spell].SpellClass, byte 0 of the 16-byte row; 0 is cleric, 1 magic-user) picks the
   character's level in that class (ClassLevels: 0 cleric, 5 magic-user; whitepaper 5.6), and a spell
-  class 2 gives 12. When ds6DBF is set every class except 2 gives 6 instead. ovl22_e3 multiplies the
+  class 2 gives 12. When ItemAffectUse is set every class except 2 gives 6 instead. ovl22_e3 multiplies the
   spell row's +3 byte by the result, so this is the power the spell is cast with; the res12 wrapper
   takes the spell number. Called by the ovl22 casting routines.
-  Purpose unknown: what spell class 2 and ds6DBF are.
+  Purpose unknown: what spell class 2 and ItemAffectUse are.
   QUIRK 00BA:26FB: a spell class other than 0, 1 or 2 leaves the result unassigned (the frame byte
   is returned).
-  Globals: SpellTable, SelectedCharacter (read), ds6DBF (read). }
+  Globals: SpellTable, SelectedCharacter (read), ItemAffectUse (read). }
 function SpellCasterLevel(Spell: Byte): Byte;
 begin
   case SpellTable[Spell].SpellClass of
@@ -1411,7 +1403,7 @@ begin
     1: SpellCasterLevel := SelectedCharacter^.ClassLevels[5];
     2: SpellCasterLevel := $0C;
   end;
-  if (ds6DBF <> 0) and (SpellTable[Spell].SpellClass <> 2) then
+  if ItemAffectUse and (SpellTable[Spell].SpellClass <> 2) then
     SpellCasterLevel := 6;
 end;
 { 00BA:272A. Draws the window frames of a view screen (one DrawWindow each): the full screen
@@ -1602,39 +1594,39 @@ begin
   end;
 end;
 { 00BA:2E03. Returns whether Who's readied weapon (SlotItems[0], +$CC) is a missile weapon: False
-  with no readied weapon, otherwise True when the weapon kind's RaceRow attack range (byte $C) is
+  with no readied weapon, otherwise True when the weapon kind's ItemTable attack range (byte $C) is
   above 1 (a melee weapon has range 1). ovl08's MeleeAttack refuses a missile-only weapon
   (IsRangedWeapon and not RangedWeaponCanMelee); the combat AI and ovl13 test it too.
-  Globals: RaceRow (read). }
+  Globals: ItemTable (read). }
 function IsRangedWeapon(Who: Pointer): Boolean;
 begin
   if (PCharacter(Who)^.SlotItems[0] <> nil) and
-     (RaceRow[PCharacter(Who)^.SlotItems[0]^.ItemType][RaceRowWeaponRange] > 1) then
+     (ItemTable[PCharacter(Who)^.SlotItems[0]^.ItemType].Range > 1) then
     IsRangedWeapon := True
   else
     IsRangedWeapon := False;
 end;
 { 00BA:2E46. Returns whether Who's readied missile weapon (IsRangedWeapon) can also strike in
-  melee: True when IsRangedWeapon holds and the weapon kind's RaceRow attack flags carry both the
+  melee: True when IsRangedWeapon holds and the weapon kind's ItemTable attack flags carry both the
   melee bit ($10) and the strength bit ($04). ovl08's MeleeAttack allows the attack only when
   IsRangedWeapon implies this too (else "Not with that weapon"); ovl09 and ovl13 test it.
-  Globals: RaceRow (read). }
+  Globals: ItemTable (read). }
 function RangedWeaponCanMelee(Who: Pointer): Boolean;
 begin
   if IsRangedWeapon(Who) and
-     ((RaceRow[PCharacter(Who)^.SlotItems[0]^.ItemType][RaceRowAttackFlags] and
+     ((ItemTable[PCharacter(Who)^.SlotItems[0]^.ItemType].Flags and
        (WeaponFlagMelee or WeaponFlagStrength)) = (WeaponFlagMelee or WeaponFlagStrength)) then
     RangedWeaponCanMelee := True
   else
     RangedWeaponCanMelee := False;
 end;
 { 00BA:2E8B. Picks the item Who's attack aims with and returns whether it found one, clearing Aim
-  first. With a readied weapon (SlotItems[0], +$CC): its kind's RaceRow attack flags (byte $E)
+  first. With a readied weapon (SlotItems[0], +$CC): its kind's ItemTable attack flags (byte $E)
   decide the aim. The melee bit ($10) aims the weapon itself; the launcher bit ($08) aims the item
   in slot 11 (+$F8) when the slot-11 bit ($01) is set, or the item in slot 12 (+$FC) when the
   slot-12 bit ($80) is set. The result is 1 when an item was aimed, or when the flags are exactly
   $A (that case returns 1 with Aim still nil; why is not proven); 0 otherwise. ovl09's AiTurn
-  passes the aimed item to ovl13_e12 for the attack. Globals: RaceRow (read). }
+  passes the aimed item to ovl13_e12 for the attack. Globals: ItemTable (read). }
 function ChooseAttackItem(Who: Pointer; var Aim: Pointer): Byte;
 var
   Item: PItem;
@@ -1646,7 +1638,7 @@ begin
   Flags := 0;
   if Item <> nil then
   begin
-    Flags := RaceRow[Item^.ItemType][RaceRowAttackFlags];
+    Flags := ItemTable[Item^.ItemType].Flags;
     if (Flags and WeaponFlagMelee) <> 0 then
       Aim := Item;
     if (Flags and WeaponFlagAmmo) <> 0 then

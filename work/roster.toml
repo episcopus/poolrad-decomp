@@ -6,6 +6,10 @@
 # "interactive"` makes a decompiler or reviewer one too. `model` is the OpenCode model id (`opencode
 # models`) and `variant` is its reasoning effort, passed as `model#variant` (`high` on every session
 # here). Optional for workers: `batch` (routines per session) and `timeout` (minutes per session).
+# The integrator (`role = "integrator"`) is a script, tools/agent/integrator.py: it runs `make integrate`
+# every `interval` seconds (default 120) and queues expert cases; its model is used only for a fresh
+# session that resolves a merge conflict `make integrate` rejected. `make run-add NAME=<name>` starts or
+# restarts one entry in a running run.
 # `make stop-run` drains, lets workers hand off, integrates, releases and closes exactly these sessions.
 
 [[session]]
@@ -14,6 +18,13 @@ role = "orchestrator"
 model = "openrouter/anthropic/claude-sonnet-5.5"
 variant = "high"
 heading = "orchestator sonnet"
+
+[[session]]
+name = "int-loop"
+role = "integrator"
+model = "openrouter/anthropic/claude-sonnet-5.5"
+variant = "high"
+interval = 120
 
 [[session]]
 name = "dec-deepseek-2"

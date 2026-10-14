@@ -3400,6 +3400,251 @@ why = "ovl20:0721 draws the 'Rest daYs Hours Mins Inc Dec Exit' menu through Rea
 date = "2026-10-13"
 
 [[rename]]
+old = "ovl17_e1"
+new = "ReadSavedCharacterList"
+kind = "routine"
+why = "ovl17:0010 reads charlist.txt (SaveDir + charlist.txt) and builds a 46-byte menu line per saved character, prefixing a star for a name already in the party list ds5D96; called by ovl16 character menu and ovl17_e4"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl17_e2"
+new = "RewriteSavedCharacterList"
+kind = "routine"
+why = "ovl17:01B8 rewrites the save disk charlist.txt from a saved-character menu list: CreateSaveDir, Rewrite the file (prompting for the save disk while the open fails), WriteLn each list line whose text does not start with a star (party members skipped), Close; called by ovl16 add-character menu and ovl17_e4"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl17_fn_032F"
+new = "MergePictureData"
+kind = "routine"
+why = "ovl17:032F combines two in-memory pictures: ORs Source (the first parameter, ds5E5A slot 11 reference) tail/tile bytes into Dest and ANDs its pixel bytes into Dest, so Source masks Dest; called by ovl17_e3 for the character head and body pictures"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl17_e3"
+new = "BuildCharacterIcon"
+kind = "routine"
+why = "ovl17:0482 loads the selected character's CHEAD (slot 11) and CBODY (its icon slot) pictures, merges the head halves into the body halves with MergePictureData, and optionally recolours the icon from the six Figure nibble pairs through ds3CF5; called by the ovl16 character menus, ovl17_e7 and ovl17_e8"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl17_e4"
+new = "SaveCharacter"
+kind = "routine"
+why = "ovl17:069E saves one character to the save disk: with an empty Name it adds the character's name to charlist.txt and writes SaveDir + DOS-cleaned name + .cha, with a Name it writes SaveDir + Name + .sav; BlockWrites the 285-byte character and the 63-byte items (.itm) and 9-byte affects (.spc) lists; called by ovl16_e1, ovl16_fn_1EA3 and ovl17_e9"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl17_e5"
+new = "LoadCharacterFile"
+kind = "routine"
+why = "ovl17:0AEC reads one character and its item/affect lists from the save or game disk: it opens FileName + '.sav'/'.cha' through OpenGameFile, BlockReads the 285-byte record into Who^ and reads the .itm (63) and .spc (9) lists to end of file; the read counterpart of SaveCharacter (ovl17:069E); called by ovl16_fn_306D and ovl17_e8"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl17_e6"
+new = "LoadMonster"
+kind = "routine"
+why = "ovl17:0EC4 loads a monster: it builds MON<Str(TileSet)>CHA/SPC/ITM.DAX names, LoadDaxBlock block Kind from the poolrad MON<N>CHA/SPC/ITM.DAX archives, Moves the 285-byte record into Who^, clears its list links, builds the Figure descriptor with RollDice(1,6) nibble pairs and copies the 9-byte affects and 63-byte items into GetMem chains; called by ovl07 LoadCharacter and ovl17_e7"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl17_e7"
+new = "AddMonsterToParty"
+kind = "routine"
+why = "ovl17:1262 adds a monster of Kind to the party: it returns at once when the party already holds eight members (ds49D6^[830] > 7), has LoadMonster build the record, gives it a random byte at +AB, picks one of the classes with a positive level (RollDice(1, Count)) and the body/head picture banks from the ds08C5-region tables by Who^.B9E and the roll, then AddPartyMember and BuildCharacterIcon(True); called by ovl03_fn_2B7E"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl17_e11"
+new = "SaveAndExit"
+kind = "routine"
+why = "ovl17:22D5 shows the 'Save and exit Insert disk #N' prompt and, on the S hotkey, saves the game (ovl17_e9) and quits; called by ovl03:0BD1 with the area ECL file name, which gates it"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl17_e9"
+new = "SaveGame"
+kind = "routine"
+why = "ovl17:1D58 prompts for a slot letter and writes the whole game state and every party member to SaveDir + savgam<letter>.dat; called by the heap error handler, MakeCamp, the character menu and SaveAndExit"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl17_e8"
+new = "LoadGame"
+kind = "routine"
+why = "ovl17:1602 loads a saved game from SaveDir + savgam<slot>.dat, restores the game state and the party, rebuilds every member icon and the area view; the counterpart of SaveGame; called by ovl16_e1"
+date = "2026-10-13"
+
+[[rename]]
+old = "res07_fn_0D71"
+new = "DrawPictureItemClipped"
+kind = "routine"
+why = "0464:0D71 is DrawPictureItem (0464:08D4) with range checks: it cuts the item to Dest on all four sides while ds5370 is set, masks with Flags bit 0 and saves the overwritten bytes into ds4A24 with Flags bit 2 (src/RES07.PAS, MATCH); callers OVL18 AnimateFinalPicture and ShowEndingNarrative, OVL28 DrawSprite and Show3DSprite, OVL31 RemoveCombatant, OVL32 DrawIcon, RES12"
+date = "2026-10-13"
+
+[[rename]]
+old = "res07_fn_1E5C"
+new = "RemapPictureColours"
+kind = "routine"
+why = "0464:1E5C maps the colours of a picture: for each colour index I whose FromMap and ToMap entries differ, every pixel of the picture with palette colour FromMap[I] becomes ToMap[I] (through a scratch copy, adapters 0, 1 and 2; src/RES07.PAS, MATCH); LoadPictureSlot (ovl32) passes the identity map, AnimateAreaDoors (ovl18) and LoadSpriteList (ovl28) pass the door and sprite maps"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_e3"
+new = "ShowAbilityScore"
+kind = "routine"
+why = "called by ovl19_e1 for rows 7..12 (STR..CHA labels, ovl19:004A loop, [bp-5] = 0..5 with Highlight 0); draws the score at offset 10h plus Index of SelectedCharacter; Strength 18 adds the percentile in parentheses (ovl19:0901 code)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_e4"
+new = "ShowCharacterMoney"
+kind = "routine"
+why = "Called by ovl19_e1 (ovl19:004A, near call 050D after the Level line). Lists the Money[0..6] entries of SelectedCharacter (+$88) with their MoneyKindNames (DS:0FFA, ovl21:0DDF) in the window 12..26 x 7..14 (ovl19:050D code)."
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_e2"
+new = "ShowCombatStats"
+kind = "routine"
+why = "Draws the AC, HP, THAC0, Damage, Encumbrance and Movement labels of the sheet (literal strings at ovl19:05BE..05FC, the labels of the combat block), with the values of the selected character. Called by ovl19_e1 (ovl19:03F5) and from ovl16 (ovl16_fn_1DCB, ovl16_fn_2639)."
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_e1"
+new = "ShowCharacterSheet"
+kind = "routine"
+why = "Called by ovl19_e5 (the View command, ovl19:0AB3) and ovl16 (ovl16_fn_0B52, ovl16_fn_1DCB, ovl16_fn_209F). Draws the sheet window with the name, sex, race, age, alignment, class, abilities, levels, experience, combat block, weapon, armor, status and portraits of SelectedCharacter (ovl19:004A)."
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_e5"
+new = "ViewSelectedCharacter"
+kind = "routine"
+why = "the View command: draws the sheet and the View: prompt with Items, Spells, Trade, Drop and Exit; the Temple, the shop and the camp call it for their V key (ovl19:0AB3; whitepaper 5.4, 5.22)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_fn_0D70"
+new = "CanGiveUpItem"
+kind = "routine"
+why = "the Items menu's guard: False for a readied item (Must be unreadied) and for a scroll with a pending scribe the player does not give up (ovl19:0D70; whitepaper 5.22)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_e6"
+new = "RunItemMenu"
+kind = "routine"
+why = "the Items command of the View prompt: the Ready, Use, Trade, Drop, Halve, Join, Sell and Id menu over the carried items (ovl19:0EF8; whitepaper 5.4); called by ViewSelectedCharacter for I and by the Use command (ovl08:031A)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_e7"
+new = "ReadyItem"
+kind = "routine"
+why = "ovl19:14D0 is the Ready action: RunItemMenu's R key (ovl19:0EF8) and the AI's item step (ovl09 calls it on SlotItems[0], SlotItems[1] and its picks). It marks the item Readied and applies its affect (CallAffectHandler, Affects[3] above $7F), or refuses with 'Wrong Class', 'already using <name>' or 'Your hands are full!' (RaceRow[ItemType] rows 0, 1 and 13 and PadB0)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_fn_1734"
+new = "TradeItem"
+kind = "routine"
+why = "ovl19:1734 is the Trade action of RunItemMenu's T key (ovl19:0EF8, after CanGiveUpItem): 'Trade with Whom?' picks the recipient (res12_fn_2C48), the item is added to the recipient (res12_fn_15F7) and taken from SelectedCharacter (res12_fn_1509), or 'Overloaded' is shown when WouldOverloadInventory refuses the recipient"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_fn_17ED"
+new = "HalveItem"
+kind = "routine"
+why = "ovl19:17ED is the Halve action of RunItemMenu's H key (ovl19:0EF8, line H calls it): Count div 2 goes to a new 63-byte record copied from the item (Move, New), that record takes the item's Next, the item keeps the rest of the count, and 'Can''t halve that' is shown when the half is zero"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_fn_189D"
+new = "JoinItem"
+kind = "routine"
+why = "ovl19:189D is the Join action of RunItemMenu's J key (ovl19:0EF8, line J calls it): it adds the counts of the matching stacks of SelectedCharacter (same NameNum, ItemType, Plus, Cursed, Weight, Affects[1] below 2) to Item up to 255, taking each match off the character (res12_fn_1509) and carrying the rest into the next stack"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_e8"
+new = "UseItem"
+kind = "routine"
+why = "ovl19:1A8A is the Use action: RunItemMenu's U key (ovl19:0EF8) and UseMagicItem (ovl09:03E4, the computer's magic-item step) pass it an item; a scroll (ovl22_e6 true) gives its spell by ChooseSpellFromList, an item with Affects[2] gives it directly, and the spell is cast through ovl22_e5 (matched, ovl19:1A8A)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ds6B80"
+new = "UsedScroll"
+kind = "global"
+why = "ds6B80 is the far pointer ovl19:1AB3 stores the item in when ovl22_e6 accepts it (a scroll), before ChooseSpellFromList reads the scroll's spell; no other reader is decompiled yet"
+date = "2026-10-13"
+
+[[rename]]
+old = "ds6DBF"
+new = "ItemAffectUse"
+kind = "global"
+why = "ds6DBF is set (ovl19:1AE7) for an item whose Affects[2] gives the spell, and around the ovl22_e5 cast (ovl19:1BC2..1BE2); the 'uses an item' message follows the flag (ovl19:1B1E); what ovl22_e5 does with it is not known yet"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_fn_1CEE"
+new = "SellItem"
+kind = "routine"
+why = "ovl19:1CEE is the Sell action: RunItemMenu's S key (ovl19:0EF8) after CanGiveUpItem; it shows 'I'll give you <offer> gold pieces for your <item>', asks 'Is It a Deal?' and on Y shows 'Sold!', removes the item (res12_fn_1509) and pays the offer in platinum and gold (matched, ovl19:1CEE)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_fn_1F52"
+new = "IdentifyItem"
+kind = "routine"
+why = "ovl19:1F52 is the Id action of the item menu: RunItemMenu's I key calls it (ovl19:0EF8) and its strings are 'For 200 gold pieces I''ll identify your ' (1EC8), 'Is It a Deal? ' (1EF0), 'Not Enough Money' (1EFF), 'I can''t tell anything new about your ' (1F10) and 'It looks like some sort of ' (1F36); it charges IdentifyPrice 200 gold from the character or the pool and clears TMenuLine.HiddenNames of the item (matched, ovl19:1F52)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_fn_2156"
+new = "TradeMoney"
+kind = "routine"
+why = "ovl19:2156 is the Trade command of the View prompt for money: ViewSelectedCharacter's T key calls it (ovl19:0AB3); it asks 'Trade to?' (res12_fn_2C48), lists the coin kinds under 'Select type of coin' with ChooseFromList, asks 'How much <kind> will you trade? ' (ReadAmount) and moves the money with TransferMoney (ovl21:044C); its list is the one ovl21's TakeMoney builds (matched, ovl19:2156)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ds471A"
+new = "ViewedCharacter"
+kind = "global"
+why = "ds471A is the character the View command was started for: ViewSelectedCharacter stores SelectedCharacter in it (ovl19:0AD1), and the two Trade commands start 'Trade to?' from it and store the recipient in it (ovl19:1734 TradeItem, ovl19:2156 TradeMoney)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_fn_24A7"
+new = "ChooseAndDropMoney"
+kind = "routine"
+why = "the View prompt's D key (ovl19:0AB3 calls it, followed by ShowCharacterMoney) lists the coin kinds SelectedCharacter holds under 'Select type of coin' (ChooseFromList), asks 'How much <kind> will you drop? ' (ReadAmount) and calls DropMoney (ovl21:0A01); ovl19:24A7 is the Drop twin of TradeMoney (ovl19:2156)"
+date = "2026-10-13"
+
+[[rename]]
+old = "RaceRow"
+new = "ItemTable"
+kind = "global"
+why = "the ITEMS file block at DS:5582 (ovl11:05CD, whitepaper 4.3): 129 item rows indexed by ItemType in ovl09, not a race table"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl09_fn_0203"
+new = "TryTurnUndead"
+kind = "routine"
+why = "ovl08 CombatMenu offers Turn (ovl08:0795) when ClassLevels[0] > 0 and Turned = 0, and PlayerTurn's T case runs ovl13_e9 (src/OVL08.PAS:220); the routine tests the same conditions and runs ovl13_e9 with ovl13_e10 agreeing: the computer's Turn action"
+date = "2026-10-13"
+
+[[rename]]
+old = "ScoreTarget"
+new = "ScoreItem"
+kind = "routine"
+why = "its only caller UseBestItem (ovl09:13CA) passes an ITEM (ScoreTarget(Who, PCharacter(Pick))) and the bytes it reads are item fields (+$2E ItemType, +$32 Plus, +$36 Cursed, +$3D/+$3E Affects[2]/[3]); it rates an item for the AI's item step"
+date = "2026-10-13"
+
+[[rename]]
 old = "res12_fn_0000"
 new = "ApplyWeaponBonuses"
 kind = "routine"

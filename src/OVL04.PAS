@@ -54,8 +54,8 @@ const
   LastClass = 7;
   HealMenuLines = 10;           { lines NewMenuList builds for the Heal menu }
   KeyEnter = #13;
-  KeyNone = #0;                 { Escape returns #0 from ReadPromptChoice (ovl25:0235..0238); Escape, E and #0
-                                  return #0 from ChooseFromList (ovl25:0589..0593), ending HealMenu }
+  KeyNone = #0;                 { Escape returns #0 from ReadPromptChoice (ovl25:059F..05A7); Escape, E and #0
+                                  return #0 from ChooseFromList (ovl25:105C..1074), ending HealMenu }
   AnswerNo = 1;                 { AskMenu returns the 0-based hotkey position: for '~Yes ~No' the
                                    second key (No) is 1, the value VisitTemple leaves on }
   PromptTitleColor = 13;         { title, word and hotkey colours of AskCastAnyway and VisitTemple }
@@ -391,11 +391,11 @@ begin
   end;
 end;
 
-{ ovl04:09D7. The Heal menu: fills ten menu lines with TempleMenuText, draws the windows and
+{ ovl04:09D7. The Heal menu: fills ten menu lines with TempleMenuText, clears row 24, draws the windows and
   "<name>, how can we help you?", and runs ChooseFromList with "Heal Exit" until Exit or Escape.
   Heal or Enter on lines 0..8 runs that service; line 9 is Exit. RedrawList requests the initial page
-  draw and is cleared by ChooseFromList. Frees the lines, clears columns 0..39 of row 24, redraws the
-  view and reshows SelectedCharacter. }
+  draw and is cleared by ChooseFromList. Frees the lines, clears the whole screen (columns 0..39, rows
+  0..24) and redraws the view and reshows SelectedCharacter. }
 procedure HealMenu;
 var
   List: PMenuLine;
@@ -469,7 +469,7 @@ procedure VisitTemple;
 var
   Key: Char;
   Done: Boolean;
-  ExtKey: Byte;            { ReadPromptChoice sets this for extended scan letters and keypad digits (ovl25:0224..0287) }
+  ExtKey: Byte;            { 1 for an extended key (ovl25:0580..0591) or a keypad digit (ovl25:0691..06C7) }
   Prompt: String40;
   MoneyPooled: Byte;      { nonzero while money lies in the pool (TreasureLeft's first result) }
   PoolSecond: Byte;       { TreasureLeft's second result; not read here }
@@ -492,7 +492,7 @@ begin
                             AcceptExtendedKeys, NoAnimation, ExtKey);
     case Key of
       'H': if ExtKey = 0 then HealMenu;
-      'V': ovl19_e5(ExtKey);
+      'V': ViewSelectedCharacter(ExtKey);
       'T': TakeMoney;
       'P': if ExtKey = 0 then PoolMoney;
       'S': ShareMoney;
