@@ -33,7 +33,6 @@ procedure BoostAttackVsEightListed(Who: PCharacter; Affect: PAffect; Mode: Byte)
 procedure ImageAbsorbsHit(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ReduceDamageByQuarter(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure CoughStopsCasting(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_fn_0AE5;
 procedure ovl12_e27;
 procedure ovl12_fn_0B25;
 procedure ovl12_fn_0B2A;
@@ -698,8 +697,6 @@ begin
   if Who = SelectedCharacter then
     res12_fn_09E3(Who);
 end;
-{ ovl12:0AE5: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_fn_0AE5; begin end;
 { ovl12:0B1B: frame not read }
 {@stub} procedure ovl12_e27; begin end;
 { ovl12:0B25: frame not read }
