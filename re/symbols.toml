@@ -16872,7 +16872,7 @@ size = 290
 name = "ApplyDamage"
 signature = "procedure ApplyDamage(Who: Pointer; Damage: Byte)"
 c_name = "res12_fn_2228"
-level = "none"
+level = "L2"
 justification = ""
 notes = "renamed from res12_fn_2228 (00BA:2228 applies Damage hit points to Who, updates its health status (dead/dying/unconscious/standing) and drops it from combat when it falls; DealDamage, DamageWithMessage and ovl13 call it with a damage amount); auto:prologue"
 evidence = ["prologue"]
@@ -16882,12 +16882,12 @@ id = "00BA:234A"
 unit = "res12"
 addr = "00BA:234A"
 size = 109
-name = "res12_fn_234A"
-signature = ""
+name = "ShowHealResult"
+signature = "procedure ShowHealResult(Who: Pointer)"
 c_name = "res12_fn_234A"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_234A (00BA:234A shows Who as 'is fully healed' when its hit points equal HpMax and 'is partially healed' otherwise, then redraws the roster outside the combat view; ovl12 and ovl22 (healing and training) call it); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]

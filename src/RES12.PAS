@@ -56,7 +56,7 @@ procedure WalkCombatLine(FromX, FromY, ToX, ToY: ShortInt; Count, Mode: Byte);
 procedure ShowHitMessage(Who: Pointer; Flag: Byte; Text: String40);
 function HasAffect(Who: Pointer; AffectId: Byte; var Affect: Pointer): Boolean;
 procedure ApplyDamage(Who: Pointer; Damage: Byte);
-procedure res12_fn_234A;
+procedure ShowHealResult(Who: Pointer);
 function res12_fn_23B7(Who: Pointer): Byte;
 procedure res12_fn_23DB;
 function res12_fn_2433(P: Pointer; B: Byte): Byte;
@@ -1219,8 +1219,23 @@ begin
   else
     PCharacter(Who)^.Flag11B := Remaining;
 end;
-{ 00BA:234A: retf 4: 4 bytes of parameters; 42 bytes of locals }
-{@stub} procedure res12_fn_234A; begin end;
+{ 00BA:234A. Shows how far a heal brought Who: "is fully healed" when its current hit points (the
+  byte +$11B) equal its maximum (HpMax, +$32) and "is partially healed" otherwise, through
+  ShowCharacterMessage with a wait. Outside the combat view it then redraws the party roster
+  (DrawPartyRoster) for the selected character. ovl12 and ovl22 (the healing and training code)
+  call it. Globals: ds49F3 (view mode), SelectedCharacter. }
+procedure ShowHealResult(Who: Pointer);
+var
+  Message: String40;
+begin
+  if PCharacter(Who)^.Flag11B = PCharacter(Who)^.HpMax then
+    Message := 'is fully healed'
+  else
+    Message := 'is partially healed';
+  ShowCharacterMessage(Who, Message, $A, 1);
+  if ds49F3 <> 5 then
+    DrawPartyRoster(SelectedCharacter);
+end;
 { 00BA:23B7: retf 4: 4 bytes of parameters; 2 bytes of locals }
 {@stub} function res12_fn_23B7(Who: Pointer): Byte; begin end;
 { 00BA:23DB: retf 0: 0 bytes of parameters; 4 bytes of locals }
