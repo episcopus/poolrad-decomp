@@ -66,7 +66,10 @@ def compile_rebuild() -> tuple[Path, Path, Path, str]:
     for name, text in sources.items():
         if name == match.PROGRAM:
             text = program_with_overlays(text, overlays)
-        (OUT / (name + ".PAS")).write_text(text)
+        # {$D-,L-}: no debug or local-symbol information, which changes no code and which the comparison
+        # does not read (only the map's segments). With it TPC ran out of memory linking the whole game
+        # once ovl03, the event dispatcher, was decompiled (2026-10-14).
+        (OUT / (name + ".PAS")).write_text("{$D-,L-}\r\n" + text)
     kind, emu = tp.find_emulator(None)
     log = tp.run_tpc(kind, emu, OUT, ["/B", "/GD", "POOL.PAS"])
     exe, ovr, mapf = tp.ci(OUT, "POOL.EXE"), tp.ci(OUT, "POOL.OVR"), tp.ci(OUT, "POOL.MAP")
