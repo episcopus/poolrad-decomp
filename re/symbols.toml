@@ -3369,12 +3369,12 @@ id = "ovl12:06E4"
 unit = "ovl12"
 addr = "ovl12:06E4"
 size = 43
-name = "ovl12_e18"
+name = "HalveFireDamage"
 signature = ""
 c_name = "ovl12_e18"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_18"
+notes = "renamed from ovl12_e18 (ovl12:06E4 halves DamageAmount and adds FireSaveBonus (3) to SaveRoll when DamageKind has the fire bit KindFire (1, POOLVARS DamageKind comment), the fire twin of HalveColdDamage (ovl12:03E1, same code with the bit changed)); auto:entry_18"
 evidence = ["prologue"]
 
 [[routine]]

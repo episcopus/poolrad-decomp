@@ -24,7 +24,7 @@ procedure AddAffectAndDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure IgnoreAffect(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure RaiseResistanceAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure BoostAttackVsListedTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e18;
+procedure HalveFireDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e19;
 procedure ovl12_e20;
 procedure ovl12_e21;
@@ -195,6 +195,8 @@ const
   TrainedOutData = $FF;
   KindCold = 2;                 { the DamageKind bit of cold damage (ovl24:13E4, the text 'from Cold') }
   ColdSaveBonus = 3;            { what a cold hit adds to SaveRoll (ovl12:03E1) }
+  KindFire = 1;                 { the DamageKind bit of fire damage (POOLVARS DamageKind: 1 fire) }
+  FireSaveBonus = 3;            { what a fire hit adds to SaveRoll (ovl12:06E4) }
   ControlAppliedBit = $20;      { Affect.Data bit 5: set once the control is applied (ovl12:0400) }
   ControlSavedSideBit = $40;    { Affect.Data bit 6: the side Who had before; removing the affect gives it back }
   ControlSideBit = $80;         { Affect.Data bit 7: the side the control gives Who (TCharacter.Side) }
@@ -529,8 +531,18 @@ begin
       if AttackTarget^.Name = ds0332[I] then
         Inc(AttackRoll);
 end;
-{ ovl12:06E4: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e18; begin end;
+{ ovl12:06E4. Affect handler for damage (the AffectHandlers frame: Who, Affect and Mode, none of them read): when
+  the damage being dealt is fire (DamageKind bit KindFire, DS:6819), it halves DamageAmount (DS:6818) and adds
+  FireSaveBonus to SaveRoll (DS:6816), the fire twin of HalveColdDamage (ovl12:03E1). Purpose unknown: which
+  affect runs it is not known yet [?]. }
+procedure HalveFireDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  if (DamageKind and KindFire) <> 0 then
+  begin
+    DamageAmount := DamageAmount shr 1;
+    Inc(SaveRoll, FireSaveBonus);
+  end;
+end;
 { ovl12:070F: retf 10: 10 bytes of parameters; 12 bytes of locals }
 {@stub} procedure ovl12_e19; begin end;
 { ovl12:0775: retf 10: 10 bytes of parameters; 22 bytes of locals }

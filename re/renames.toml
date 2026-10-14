@@ -3539,3 +3539,10 @@ kind = "routine"
 why = "ovl12:0679 is an affect handler (Who, Affect, Mode) that copies Who's combat Target into AttackTarget like BoostAttackAgainstTarget (ovl12:013B), and adds 1 to AttackRoll per name ds0332[1..4] equal to the target's name when its Pad9E[$9F] and CombatSize are 1"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e18"
+new = "HalveFireDamage"
+kind = "routine"
+why = "ovl12:06E4 halves DamageAmount and adds FireSaveBonus (3) to SaveRoll when DamageKind has the fire bit KindFire (1, POOLVARS DamageKind comment), the fire twin of HalveColdDamage (ovl12:03E1, same code with the bit changed)"
+date = "2026-10-13"
+
