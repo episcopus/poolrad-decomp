@@ -305,3 +305,21 @@ tags = ["while", "repeat", "loop", "quirk", "flag"]
 title = "A search loop whose inner repeat sets its exit flag on both exits walks only the first element"
 lesson = "FindMemorizedSpellCommand (ovl03:2C03) has a while over the party with an inner repeat over the slots. The inner loop sets Found both when the value matches and when the slots run out (I := $FF), so after the first pass Found is always set and the outer while ends. The matched Pascal keeps this shape; it is recorded as a QUIRK, not as a search of the whole party. Read the exit flag's writers on every path before assuming a walk covers the list."
 evidence = ["src/OVL03.PAS#FindMemorizedSpellCommand", "re/symbols.toml#ovl03:2C03"]
+
+[[lesson]]
+id = "while-true-is-repeat-until-false"
+confidence = "V"
+units = ["*"]
+tags = ["while", "repeat", "loop", "join", "codegen", "jmp"]
+title = "while True compiles like repeat until False; an if/else that ends a loop body costs a join jump"
+lesson = "In TP 6.0 `while True do` and `repeat ... until False` compile to the same bytes: no test at the head, and the loop ends with one jmp to its head. An if/else that is the last statement of the loop body adds a jmp at the end of the then-branch to the else's join, and the join jumps to the head: two jumps where an original whose normal path jumps straight to the head has one. Probe the loop shape (WHILETRU.PAS: the then-branch jmp to the join, then the join's jmp to the head) before writing such a loop. ovl03_e1 (ovl03:32F8) is blocked on this shape: its compiled code is 38 bytes longer than the original."
+evidence = ["tools/re/tp_idioms/ovl03/WHILETRU.PAS", "re/symbols.toml#ovl03:32F8"]
+
+[[lesson]]
+id = "match-too-short-is-longer-code"
+confidence = "V"
+units = ["*"]
+tags = ["match", "segment", "too short", "boundary", "map"]
+title = "'the original segment is too short here' means our routine is longer than the original bytes up to the next map entry"
+lesson = "tools/match/match.py compares our compiled routine with the original bytes from the routine's entry to the next map entry. A longer compiled routine reports 'the original segment is too short here', even when its first instructions agree. A map entry inside the routine shortens the original segment in the same way, so the two causes look alike (ovl03:3379 and ovl03:34AB lie inside ovl03_e1). Measure both before editing a boundary: our routine is the gap between OVL03_E1 and the next public symbol in build/match/<unit>/A/match.map, and its bytes are in build/match/<unit>/A/match.exe (read with tp_toolchain.read_mz and read_map, disassembled with capstone in 16-bit mode)."
+evidence = ["tools/match/match.py", "re/symbols.toml#ovl03:32F8", "re/symbols.toml#ovl03:3379"]

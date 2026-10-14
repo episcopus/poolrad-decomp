@@ -841,7 +841,7 @@ signature = ""
 c_name = "ovl03_e1"
 level = "none"
 justification = ""
-notes = "auto:entry_1"
+notes = "auto:entry_1; blocked (dec-haiku, batch 13): not matched. MAP: ovl03:3379 and ovl03:34AB are map entries inside this routine, which runs 32F8..3507 (one retf at 3506). The matcher takes the next entry as the end: the registry gap is 129 bytes (up to 3379). With both entries removed the next entry is ovl03:3508 (ovl03_init), so the original is 528 bytes, and our compile is 566 bytes ('the original segment is too short'): the code itself is 38 bytes longer, so a size edit alone does not match. Our listing (build/match/ovl03/A/match.exe, OVL03_E1 to OVL03_FN_3379) agrees with the original instruction by instruction through the case on WallViewMode, the sound compare and the first keys; the extra bytes are in the loop's join jumps and the exit path, not located yet. Probe tools/re/tp_idioms/ovl03/WHILETRU.PAS: while True compiles like repeat until False, and an if/else that ends a loop body costs a join jmp to the head. Draft tried: case WallViewMode of 25, 26, 27 (AreaViewKind 2 to 4, ds49F3 3 when GameVars word 230 is 0; page 3 calls AnimateAreaDoors(1) when GameVars 435 is $FE and 418 is 0); if ds49F8 = 0 then LoadEcl(WallViewMode); InitScript; RunScriptFrom(ds49EB); if ds49F3 <> 3 then (res12_fn_27D9 when ds4432 = 1, then ShowAreaView); GameVars 242 := WallViewMode; Key := HandleWildernessKeys; ds4436 := SelectedCharacter; loop while True: if ((GameVars 714 > 1) or UpCase(Key) = 'E') and PartyDestroyed = 0 then (RunCamp for E, else save 714 bit 0 in ds84DD, set 714 to 1, ShowAreaView, RunScriptFrom(ds49E5), RunAreaStep when ds442F, restore 714; then keys when not destroyed) else (RunScriptFrom(ds49E3) when not destroyed; RunAreaStep when ds442F, else the menu block: GameVars 240 and 241 := party cell, DoWildernessMenu, ShowAreaView, PlaySound(ds2628) when the cell changed, ds84E0 := 0, ds84E1 := 1, RunScriptFrom(ds49E5), RunAreaStep when ds442F; then PartyDestroyed clears and exits, else keys). The draft needs OVL14 in the implementation uses (HandleWildernessKeys, DoWildernessMenu); OVL14 does not use OVL03."
 evidence = ["prologue"]
 
 [[routine]]
@@ -854,7 +854,7 @@ signature = ""
 c_name = "ovl03_fn_3379"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; not a routine (dec-haiku, batch 13): it lies inside ovl03_e1 (ovl03:32F8..3507), in the middle of the lcall res12_fn_27D9 at ovl03:3378, so its far_call evidence is a byte-level scan hit (tools/re/enumerate_routines.py), not a call. Remove it when ovl03_e1 is written"
 evidence = ["far_call"]
 
 [[routine]]
