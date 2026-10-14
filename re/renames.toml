@@ -4106,3 +4106,10 @@ kind = "routine"
 why = "ovl12:2A6D tests DamageKind bit 4 (KindElectricity, ds6819 and 4) and halves DamageAmount (shr 1), the electricity twin of HalveColdDamage (ovl12:03E1)"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl12_e99"
+new = "HalveDamageByFirstSlotItemRow"
+kind = "routine"
+why = "ovl12:2A87 takes FirstSlotItem(SelectedCharacter) and, when there is one, halves DamageAmount when its RaceRow byte 7 (DS:5589) is 0 or odd; the frame and the caller-less entry match HalveDamageForFirstSlotItem (ovl12:25BC)"
+date = "2026-10-14"
+

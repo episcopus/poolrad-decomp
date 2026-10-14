@@ -111,12 +111,12 @@ procedure CancelPoisonAndParalysisHooks(Who: PCharacter; Affect: PAffect; Mode: 
 procedure CancelFireDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ReduceFireDamageOnePerDie(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure HalveElectricityDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e99;
-procedure ovl12_e100;
-procedure ovl12_e101;
-procedure ovl12_e102;
+procedure HalveDamageByFirstSlotItemRow(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure ovl12_e100(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure ovl12_e101(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure ovl12_e102(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_fn_2B6F;
-procedure ovl12_e103;
+procedure ovl12_e103(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_fn_2B8B;
 procedure ovl12_e104;
 procedure ovl12_e105;
@@ -1912,18 +1912,29 @@ begin
   if (DamageKind and KindElectricity) <> 0 then
     DamageAmount := DamageAmount shr 1;
 end;
-{ ovl12:2A87: retf 10: 10 bytes of parameters; 4 bytes of locals }
-{@stub} procedure ovl12_e99; begin end;
+{ ovl12:2A87. Affect handler for damage (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000).
+  The first slot item of SelectedCharacter (FirstSlotItem, ovl12:101D) is looked at: when there is one and its
+  RaceRow byte 7 (RaceRow[ItemType][7], DS:5589) is 0 or odd, DamageAmount is halved. Purpose unknown: which affect
+  runs it is not known yet [?]. }
+procedure HalveDamageByFirstSlotItemRow(Who: PCharacter; Affect: PAffect; Mode: Byte);
+var
+  Item: PItem;
+begin
+  Item := FirstSlotItem(SelectedCharacter);
+  if Item <> nil then
+    if (RaceRow[Item^.ItemType][7] = 0) or ((RaceRow[Item^.ItemType][7] and 1) <> 0) then
+      DamageAmount := DamageAmount shr 1;
+end;
 { ovl12:2AE6: retf 10: 10 bytes of parameters; 4 bytes of locals }
-{@stub} procedure ovl12_e100; begin end;
+{@stub} procedure ovl12_e100(Who: PCharacter; Affect: PAffect; Mode: Byte); begin end;
 { ovl12:2B20: retf 10: 10 bytes of parameters; 4 bytes of locals }
-{@stub} procedure ovl12_e101; begin end;
+{@stub} procedure ovl12_e101(Who: PCharacter; Affect: PAffect; Mode: Byte); begin end;
 { ovl12:2B63: frame not read }
-{@stub} procedure ovl12_e102; begin end;
+{@stub} procedure ovl12_e102(Who: PCharacter; Affect: PAffect; Mode: Byte); begin end;
 { ovl12:2B6F: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_fn_2B6F; begin end;
 { ovl12:2B7D: frame not read }
-{@stub} procedure ovl12_e103; begin end;
+{@stub} procedure ovl12_e103(Who: PCharacter; Affect: PAffect; Mode: Byte); begin end;
 { ovl12:2B8B: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_fn_2B8B; begin end;
 { ovl12:2BC8: retf 10: 10 bytes of parameters; 4 bytes of locals }
