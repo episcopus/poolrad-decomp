@@ -116,3 +116,39 @@ tags = ["map", "boundary", "entry", "write", "tooling"]
 title = "A map entry inside a routine that matched is removed by make match WRITE=1"
 lesson = "The map invented ovl12_fn_06C8 (28 bytes, `auto:far_call`) inside ovl12:0679. Its first byte is in the middle of an instruction (`add di, 332h` at 06C7), so no caller can exist. When BoostAttackVsListedTarget (ovl12:0679) matched at 107 bytes, `make match UNIT=ovl12 WRITE=1` removed the entry and printed `lies inside ... removed from the map`. Do not write a stub for such an entry: drop its interface declaration and stub line in the source after the routine is written."
 evidence = ["re/symbols.toml#ovl12:0679", "src/OVL12.PAS#BoostAttackVsListedTarget"]
+
+[[lesson]]
+id = "div-four-two-single-shifts"
+confidence = "V"
+units = ["*"]
+tags = ["div", "shift", "byte", "codegen"]
+title = "X div 4 on a Byte compiles to two single shifts, not to mov cl"
+lesson = "`DamageAmount := DamageAmount - DamageAmount div 4` (ovl12:0A3D) matched with `mov al, [6818h]; xor ah, ah; shr ax, 1; shr ax, 1` for the quotient, then `sub ax, dx` and the byte store. The `mov cl, n; shr ax, cl` form seen for div 64 and div 128 (ovl12:0400) is therefore not the rule for every power of two: a quotient by 4 is two `shr ax, 1`. Measured here for n = 2, 6 and 7 only; n = 3 to 5 were not probed."
+evidence = ["src/OVL12.PAS#ReduceDamageByQuarter", "re/symbols.toml#ovl12:0A3D", "re/learnings/ovl12.toml#div-by-power-of-two-is-mov-cl"]
+
+[[lesson]]
+id = "array-lower-bound-folds-into-displacement"
+confidence = "V"
+units = ["*"]
+tags = ["array", "index", "dseg", "string", "codegen"]
+title = "An array declared from 1 at DS:0382 adds 0372h: the lower bound is folded into the displacement"
+lesson = "ovl12:0947 indexes eight 16-byte names with `for I := 1 to 8` as `shl di, 4; add di, 372h`, the same stride as ovl12:0679 (`add di, 332h` for rows of `ds0332: array[0..4]`). `ds0382: array[1..8] of string[15]` declared at DS:0382 (directly after ds0332, which ends at 0382) reproduces that displacement: the displacement 372h is the declared start 382h minus one row (16), the compiler's folding of the lower bound 1. The other lower bound was not probed."
+evidence = ["src/OVL12.PAS#BoostAttackVsEightListed", "src/POOLVARS.PAS#ds0382", "re/symbols.toml#ovl12:0947"]
+
+[[lesson]]
+id = "if-not-boolean-call-tests-al"
+confidence = "V"
+units = ["*"]
+tags = ["if", "not", "Boolean", "function", "codegen"]
+title = "if not Boolean-function(...) then assignment tests AL with or al, al and jumps over the store"
+lesson = "`if not res12_fn_2199(SelectedCharacter, $18, FoundAffect) then ds681E := 1;` (ovl12:0918) compiles to `call; or al, al; jne skip; mov byte [681Eh], 1`. The `not` costs no instruction: the jump is taken when the result is non-zero. The var Pointer local is pushed as `push ss; push di` (lea di, [bp-4])."
+evidence = ["src/OVL12.PAS#LowerAttackRollByFour", "re/symbols.toml#ovl12:0918"]
+
+[[lesson]]
+id = "map-entry-at-displacement-byte"
+confidence = "V"
+units = ["*"]
+tags = ["map", "boundary", "entry", "write", "tooling"]
+title = "The map invents an entry on the displacement byte of an instruction inside a matched routine"
+lesson = "ovl12:0AE5 (`auto:far_call`, 54 bytes) is the last byte of `mov al, byte ptr es:[di+112h]` (26 8A 85 12 01 at ovl12:0AE1) inside CoughStopsCasting (ovl12:0A65). `make match UNIT=ovl12 WRITE=1` removed it when CoughStopsCasting matched at 172 bytes. As with ovl12:06C8, no caller can enter there, and the source had to lose its interface declaration and stub line afterwards. Check the first byte of an invented entry against the instruction before it before any probe."
+evidence = ["re/symbols.toml#ovl12:0A65", "src/OVL12.PAS#CoughStopsCasting", "build/packets/ovl12_0A65.md"]
