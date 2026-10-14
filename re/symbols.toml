@@ -3278,12 +3278,12 @@ id = "ovl12:0400"
 unit = "ovl12"
 addr = "ovl12:0400"
 size = 186
-name = "ovl12_e11"
-signature = ""
+name = "ComputerTakesOver"
+signature = "procedure ComputerTakesOver(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e11"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_11"
+notes = "renamed from ovl12_e11 (ovl12:0400 is an affect handler (AffectHandlers shape, Mode 0 applies): on apply it sets Quick (+$10F, the computer plays the turn, whitepaper 5.5 Who plays), marks B84 with the computer-run flag and morale $33, clears Combat^.Target and sets the side from Data bit 7; on removal it gives the side back from Data bit 6); auto:entry_11"
 evidence = ["prologue"]
 
 [[routine]]

@@ -17,7 +17,7 @@ procedure TrainConstitution(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ShiftAttackToSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e9(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure HalveColdDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e11;
+procedure ComputerTakesOver(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e12;
 procedure ovl12_e13;
 procedure ovl12_e14;
@@ -196,6 +196,12 @@ const
   TrainedOutData = $FF;
   KindCold = 2;                 { the DamageKind bit of cold damage (ovl24:13E4, the text 'from Cold') }
   ColdSaveBonus = 3;            { what a cold hit adds to SaveRoll (ovl12:03E1) }
+  ControlAppliedBit = $20;      { Affect.Data bit 5: set once the control is applied (ovl12:0400) }
+  ControlSavedSideBit = $40;    { Affect.Data bit 6: the side Who had before; removing the affect gives it back }
+  ControlSideBit = $80;         { Affect.Data bit 7: the side the control gives Who (TCharacter.Side) }
+  ComputerRunFlag = $80;        { TCharacter.B84 high bit: the computer runs the member (ovl09 CheckMorale) }
+  ComputerRunMorale = $B3;      { TCharacter.B84 of a computer-run member: the flag and morale $33 }
+  AffectMorale = 100;           { what applying the control sets the morale scratch ds6825 to }
 
 { ovl12:0000. Cancels the hook of an affect: when AffectId is 0 or is the affect the hooks are offering
   (HookAffectId), HookAffectId and DamageAmount are cleared. HookAffectId 0 reads as "is Unaffected"
@@ -380,8 +386,38 @@ begin
     Inc(SaveRoll, ColdSaveBonus);
   end;
 end;
-{ ovl12:0400: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e11; begin end;
+{ 0400. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode 0 applies, any other value
+  removes, ovl24:0000). The affect number that runs it is not known yet [?]. Applying gives Who to the
+  computer, as quick combat does (whitepaper, "Who plays"): Quick is set so QuickTurn plays the turn, Who
+  becomes computer-run with morale $33 unless it already is, the target Who attacked is dropped and
+  res12_fn_23DB runs (not named yet). The side becomes Affect.Data bit 7 (ControlSideBit); bit 6 keeps the
+  side before (ControlSavedSideBit) and bit 5 marks the control as applied, so a second apply only sets
+  the morale. Removing gives back the side from bit 6 and clears the computer-run morale while it is still
+  ComputerRunMorale; it does not clear Quick. Applying also sets the morale scratch ds6825 (AffectMorale). }
+procedure ComputerTakesOver(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  if Mode <> 0 then
+  begin
+    Who^.Side := (Affect^.Data and ControlSavedSideBit) div ControlSavedSideBit;
+    if Who^.B84 = ComputerRunMorale then
+      Who^.B84 := 0;
+  end
+  else
+  begin
+    if (Affect^.Data and ControlAppliedBit) = 0 then
+    begin
+      { the side is read signed, as the original sign-extends it (cbw) }
+      Affect^.Data := Affect^.Data + ControlAppliedBit + ShortInt(Who^.Side) * ControlSavedSideBit;
+      Who^.Side := Affect^.Data div ControlSideBit;
+      Who^.Quick := 1;
+      if Who^.B84 <= ComputerRunFlag - 1 then
+        Who^.B84 := ComputerRunMorale;
+      Who^.Combat^.Target := nil;
+      res12_fn_23DB;
+    end;
+    ds6825 := AffectMorale;
+  end;
+end;
 { ovl12:04BA: retf 10: 10 bytes of parameters; 12 bytes of locals }
 {@stub} procedure ovl12_e12; begin end;
 { ovl12:05D6: retf 10: 10 bytes of parameters; 0 bytes of locals }

@@ -55,6 +55,33 @@ lesson = "`if (DamageKind and KindCold) <> 0 then` matches ovl12:03E1 as `mov al
 evidence = ["src/OVL12.PAS#HalveColdDamage", "re/symbols.toml#ovl12:03E1"]
 
 [[lesson]]
+id = "div-by-power-of-two-is-mov-cl"
+confidence = "V"
+units = ["*"]
+tags = ["div", "shr", "shift", "codegen", "constant", "cl"]
+title = "X div 2^n compiles to mov cl, n; shr ax, cl, while X shr n compiles to mov cx, n; shr ax, cl"
+lesson = "ovl12:0400 has `mov cl, 6; shr ax, cl` and `mov cl, 7; shr ax, cl` where the source has `div 64` and `div 128`. With `shr 6` or `shr 7` (any constant shift, Byte, Word or ShortInt operand, typed count or not) TP 6.0 emits `mov cx, n; shr ax, cl`, three bytes instead of two, and the first diff of the routine is the je after it. Write a power-of-two division as `div` when the original does, and let the match show which form it wrote. Probe tools/re/tp_idioms/ovl12/E11SHIFT.PAS (both shapes, and the shl form of `ShortInt(X) * 64`)."
+evidence = ["src/OVL12.PAS#ComputerTakesOver", "tools/re/tp_idioms/ovl12/E11SHIFT.PAS", "re/symbols.toml#ovl12:0400"]
+
+[[lesson]]
+id = "signed-field-read-by-cast-cwde"
+confidence = "V"
+units = ["*"]
+tags = ["ShortInt", "Byte", "cast", "cwde", "field", "codegen", "sign"]
+title = "A Byte field read as ShortInt(field) sign-extends with cwde; read as Byte it is xor ah, ah"
+lesson = "ovl12:0400 reads TCharacter.Side (+$10E, declared Byte) and multiplies it by 64: `mov al, es:[di+10Eh]; cwde; mov cl, 6; shl ax, cl`. The original reads the side signed. Writing `ShortInt(Who^.Side) * ControlSavedSideBit` on the Byte field reproduces the cwde and keeps POOLVARS's Byte declaration, so other routines that compare the field keep their code. The probe shows the same cwde for `ShortInt(X) * 64` on a Byte parameter."
+evidence = ["src/OVL12.PAS#ComputerTakesOver", "tools/re/tp_idioms/ovl12/E11SHIFT.PAS", "src/POOLVARS.PAS#TCharacter"]
+
+[[lesson]]
+id = "less-or-equal-7f-is-the-cmp-form"
+confidence = "V"
+units = ["*"]
+tags = ["compare", "Byte", "constant", "codegen", "jump"]
+title = "`X <= $7F` compiles to cmp 7Fh; ja, while `X < $80` compiles to cmp 80h; jae"
+lesson = "ovl12:0400 tests whether a character's B84 has its computer-run high bit clear: `if Who^.B84 <= $7F then`. TP 6.0 emits `cmp byte ptr es:[di+84h], 7Fh; ja skip`, which is the original's bytes. The same test written `< $80` emits `cmp ..., 80h; jae`, the same meaning but other bytes, so the written form decides the match. A named constant works in either form: `ComputerRunFlag - 1` gives the 7Fh form."
+evidence = ["src/OVL12.PAS#ComputerTakesOver", "tools/re/tp_idioms/ovl12/E11SHIFT.PAS", "re/symbols.toml#ovl12:0400"]
+
+[[lesson]]
 id = "case-label-list-with-else-on-field"
 confidence = "V"
 units = ["*"]

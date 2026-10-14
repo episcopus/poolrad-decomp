@@ -3490,3 +3490,10 @@ kind = "routine"
 why = "ovl12:03E1 halves DamageAmount (DS:6818) and adds 3 to SaveRoll (DS:6816) when DamageKind (DS:6819) has bit 2, cold (POOLVARS DamageKind comment; ovl24:13E4 says 'from Cold'); AffectHandlers frame, entry 10 of ovl12 (auto:entry_10); the affect that runs it is not known yet"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e11"
+new = "ComputerTakesOver"
+kind = "routine"
+why = "ovl12:0400 is an affect handler (AffectHandlers shape, Mode 0 applies): on apply it sets Quick (+$10F, the computer plays the turn, whitepaper 5.5 Who plays), marks B84 with the computer-run flag and morale $33, clears Combat^.Target and sets the side from Data bit 7; on removal it gives the side back from Data bit 6"
+date = "2026-10-13"
+
