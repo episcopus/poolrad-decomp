@@ -663,7 +663,7 @@ begin
 end;
 
 { ovl10:12E1. Walks the party list (ds5D96) and readies each character for the battle: calls
-  res12_fn_0BB8 on it, allocates and zeroes its Combat record, sets NoBody for list entries past
+  RecalcCombatValues on it, allocates and zeroes its Combat record, sets NoBody for list entries past
   game word VarPartySize, gives it the icon set FacingCombatDir of the party facing (turned half
   round, + 4 mod 8, for side 1), and marks a party-side NoBody member computer-run when B84's
   low-seven-bit morale is 0 or above MaxComputerMorale. It then stores Var2Morale plus
@@ -678,7 +678,7 @@ begin
   Count := 0;
   while Who <> nil do
   begin
-    res12_fn_0BB8(Who);
+    RecalcCombatValues(Who);
     Inc(Count);
     GetMem(Who^.Combat, CombatRecordSize);
     FillChar(Who^.Combat^, CombatRecordSize, 0);

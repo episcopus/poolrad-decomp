@@ -249,7 +249,7 @@ type
     { +$6D..+$71: five values ComputeSavingThrows sets to 20 and lowers to the best entry of
       SaveTable over the character's classes (ovl23:026D..030D): the five saving throws [I]. }
     SavingThrows: array[0..4] of Byte;
-    { +$72: the character's base movement; res12_fn_0BB8 copies it into Movement (+$11C) and
+    { +$72: the character's base movement; RecalcCombatValues copies it into Movement (+$11C) and
       SetArmourMovement restores it for light armour. }
     BaseMovement: Byte;
     { +$73: raised to the highest class level by RecalcClassStats (ovl23:0066), never lowered
@@ -280,15 +280,17 @@ type
     { +$A1: RecalcClassStats sets 3 when the fighter level (ClassLevels[2]) is above 6, else 2
       (ovl23:0083): likely attacks per two rounds [I]. }
     Attacks: Byte;
-    { +$A2..+$AB: three bytes the AI item chooser reads (ovl09:13CA): it multiplies +$A3 and +$A5
-      into its item score and, when the signed +$A7 is above 0, adds twice it. The rest is unknown. }
+    { +$A2..+$AB: the character's base attack triple, each a pair of entries 1..2: the AI item
+      chooser (ovl09:13CA) reads only entry 1 (it multiplies +$A3 by +$A5 into its item score and,
+      when the signed +$A7 is above 0, adds twice it). RecalcCombatValues copies both entries of the
+      three pairs into the readied weapon block at +$115. +$A9 is the base value RecalcCombatValues
+      copies into ResistValue (+$111); ovl16:05E4 sets it to 50. The rest is unknown. }
     PadA2: Byte;
-    dsA3: Byte;                   { +$A3 }
-    PadA4: Byte;                  { +$A4 }
-    dsA5: Byte;                   { +$A5 }
-    PadA6: Byte;                  { +$A6 }
-    dsA7: ShortInt;               { +$A7 }
-    PadA8: array[$A8..$AB] of Byte;
+    BaseAttacks: array[1..2] of Byte;      { +$A3, +$A4: attacks per round (base) }
+    BaseDamage: array[1..2] of Byte;       { +$A5, +$A6: damage (base) }
+    BaseDamageBonus: array[1..2] of ShortInt;  { +$A7, +$A8: signed damage bonus (base) }
+    ResistBase: Byte;             { +$A9: base magic resistance RecalcCombatValues copies into ResistValue }
+    PadAA: array[$AA..$AB] of Byte;
     Experience: LongInt;          { +$AC: experience points; AwardExperience adds a battle's share (ovl05:04A3) }
     PadB0: Byte;
     { +$B1: Raise Dead subtracts it from HpMax to get the hit points its constitution
@@ -343,23 +345,20 @@ type
     { +$111: the d20 roll (20 counts 100) plus the level RollBeatsResistance is given must exceed it
       (ovl24:0C90); likely the magic resistance [I]. }
     ResistValue: Byte;
-    { +$112: res12_fn_0BB8 computes it (the sum of its frame bytes [bp-$B]..[bp-9] minus two);
+    { +$112: RecalcCombatValues computes it (the sum of its frame bytes [bp-$B]..[bp-9] minus two);
       not read by a decompiled routine yet, meaning unknown. }
     ds112: Byte;
-    { +$113, +$114: part of the block res12_fn_0BB8 copies from the base block +$A2..+$A8 into
+    { +$113, +$114: part of the block RecalcCombatValues copies from the base block +$A2..+$A8 into
       +$114..+$11A; not read by a decompiled routine yet, meaning unknown. }
     Pad113: array[$113..$114] of Byte;
-    { +$115, +$117, +$119: the readied weapon's attack triple, filled by ApplyWeaponBonuses from the
-      RaceRow row of the weapon's item kind (bytes 9, $A and $B; the base values live at +$A3,
-      +$A5 and +$A7). The AI's item score multiplies +$A5 by +$A3 and adds twice +$A7, so the
-      three read as the attacks per round, the damage and a signed damage bonus [I]. The bytes
-      between them (+$116, +$118, +$11A) belong to the same block, not read here. }
-    WeaponAttacks: Byte;          { +$115 }
-    Pad116: Byte;                 { +$116 }
-    WeaponDamage: Byte;           { +$117 }
-    Pad118: Byte;                 { +$118 }
-    WeaponDamageBonus: ShortInt;  { +$119: signed; the strength and item plus bonus goes here }
-    Pad11A: Byte;                 { +$11A }
+    { +$115, +$117, +$119: the readied weapon's attack triple, each a pair of entries 1..2. RecalcCombatValues
+      copies the base triple (+$A3, +$A5, +$A7) in and ApplyWeaponBonuses then overwrites entry 1 from
+      the RaceRow row of the weapon's item kind (bytes 9, $A and $B). The AI's item score multiplies
+      +$A5 by +$A3 and adds twice +$A7, so the three read as the attacks per round, the damage and a
+      signed damage bonus [I]. Entry 2 rides along, never read by a decompiled routine. }
+    WeaponAttacks: array[1..2] of Byte;       { +$115, +$116 }
+    WeaponDamage: array[1..2] of Byte;        { +$117, +$118 }
+    WeaponDamageBonus: array[1..2] of ShortInt;  { +$119, +$11A: signed; the strength and item plus bonus goes here }
     { +$11B: Raise Dead and Stone to Flesh set it to 1; HealCharacter adds to it up to HpMax,
       ReviveCombatant sets it and DropCombatant clears it: the current hit points [I] (ovl24:17B9). }
     Flag11B: Byte;
@@ -502,6 +501,10 @@ var
   CfgProbeResult: Byte;                   { IOResult of probing pool.cfg (Reset); res08_init retries while nonzero }
   HeapWords: array[0..1] of Word absolute HeapEnd;
   { the offset (0) and segment (1) words of the heap end (res08_init cuts it by $400 paragraphs) }
+  { The total weight of the readied items RecalcCombatValues recomputes: it is reset to 0, raised by each
+    readied item's Weight times Count, and becomes the floor of the character's CarriedWeight when
+    the weight-excluding item (NameNum[1] $BA) is readied (00BA:0F43). }
+  ReadiedItemWeight: Word;
   ds49D0: Boolean;                { when set, HeapErrorHandler offers ovl17_e9 (save and load unit) before quitting }
   ds49D1: Byte;                   { 1 when POOL.CFG line 5 is 'F', 0 otherwise (meaning of F/N unknown, 2.3) }
   GameVars: ^TGameVars;           { the game variables (see TGameVars) }

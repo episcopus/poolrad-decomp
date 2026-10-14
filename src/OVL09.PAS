@@ -770,8 +770,8 @@ end;
   else OtherPick. It then uses the slot-0 item (unless it is the pick or cursed), the slot-1
   item (when not cursed, also paying its row[1] again) and the pick through ovl19_e7, and when
   Who^.ds100 is above 2 uses the slot-1 item or the pick, below 2 the slot-1 item, then PlusPick;
-  every use runs res12_fn_0BB8 (and ovl13_e6 once), and a use ends with DrawCharacterPanel. Globals:
-  RaceRow; TCharacter slots SlotItems and ds100/dsA3/dsA5/dsA7/dsB0. QUIRK: the [bp-1b] and
+  every use runs RecalcCombatValues (and ovl13_e6 once), and a use ends with DrawCharacterPanel. Globals:
+  RaceRow; TCharacter slots SlotItems and ds100/BaseAttacks/BaseDamage/BaseDamageBonus/dsB0. QUIRK: the [bp-1b] and
   [bp-20] frame bytes are never read. }
 procedure UseBestItem(Who: PCharacter);
 label
@@ -803,9 +803,9 @@ begin
   OtherPick := nil;
   PlusPick := nil;
   Best := 1;
-  Score2 := Who^.dsA5 * Who^.dsA3;
-  if Who^.dsA7 > 0 then
-    Score2 := Score2 + Who^.dsA7 * 2;
+  Score2 := Who^.BaseDamage[1] * Who^.BaseAttacks[1];
+  if Who^.BaseDamageBonus[1] > 0 then
+    Score2 := Score2 + Who^.BaseDamageBonus[1] * 2;
   Best2 := 0;
   Pick := Who^.Items;
   while Pick <> nil do
@@ -883,7 +883,7 @@ begin
     goto SkipSlotUse;
   if Who^.SlotItems[0] <> nil then
     ovl19_e7(Who^.SlotItems[0]);
-  res12_fn_0BB8(Who);
+  RecalcCombatValues(Who);
   if Who^.SlotItems[1] <> nil then
     if not Who^.SlotItems[1]^.Cursed then
       Who^.ds100 := Who^.ds100 - RaceRow[Byte(Who^.SlotItems[1]^.ItemType)][1];
@@ -891,7 +891,7 @@ begin
     ovl19_e7(Pick);
   Used := 1;
 SkipSlotUse:
-  res12_fn_0BB8(Who);
+  RecalcCombatValues(Who);
   ovl13_e6(Who);
   SlotUsable := 1;
   if Who^.SlotItems[1] <> nil then
@@ -915,12 +915,12 @@ SkipSlotUse:
     begin
       if Who^.SlotItems[1] <> nil then
         ovl19_e7(Who^.SlotItems[1]);
-      res12_fn_0BB8(Who);
+      RecalcCombatValues(Who);
       if PlusPick <> nil then
         ovl19_e7(PlusPick);
       Used := 1;
     end;
-  res12_fn_0BB8(Who);
+  RecalcCombatValues(Who);
   if Used <> 0 then
     DrawCharacterPanel(Who);
 end;

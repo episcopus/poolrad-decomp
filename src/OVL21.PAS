@@ -934,7 +934,7 @@ begin
           end;
         'E', #0: Done := True;
       end;
-      res12_fn_0BB8(SelectedCharacter);
+      RecalcCombatValues(SelectedCharacter);
     end;
   until Done;
 end;

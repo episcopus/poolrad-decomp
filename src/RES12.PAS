@@ -1,6 +1,6 @@
 unit RES12;
 { res12: the resident helper unit the overlays call for characters, items and combat. It
-  recomputes the combat values (res12_fn_0BB8 and ApplyWeaponBonuses) and the strength,
+  recomputes the combat values (RecalcCombatValues and ApplyWeaponBonuses) and the strength,
   dexterity, weight and damage figures (1168, 1282, 1325, 13AB, 2228, 2199); it draws the shop
   screen and its item prompts (27D9, 0767, called by ShopMain, whitepaper 5.4), shows the
   per-character messages (16EC, 1FEB) and dispatches the area view (27D9, 2B5E, whitepaper 5.2.1).
@@ -9,15 +9,17 @@ unit RES12;
 interface
 uses POOLVARS, RES06, RES09;
 type
-  { The readied-item bonus accumulator AddReadiedItemBonus fills for res12_fn_0BB8: the four signed
+  { The readied-item bonus accumulator AddReadiedItemBonus fills for RecalcCombatValues: the four signed
     bytes it combines into the character's +$112 value (with the flag byte the second var
-    parameter points at). Only the fields this unit reads are named. }
+    parameter points at). RecalcCombatValues clears and sums all five bytes as Values. }
   TBonus = record
-    Pad0: Byte;            { +0: cleared by the caller, not read by AddReadiedItemBonus }
-    KindBonus: ShortInt;   { +1: Value + Plus of a kind-1 item }
-    PlusSum: ShortInt;     { +2: the plus of every other non-kind-9 item }
-    BestPlus: ShortInt;    { +3: the largest plus of a kind-9 item }
-    BestValue: ShortInt;   { +4: the largest Value + Plus of a Value <> 0 item }
+    case Integer of
+      0: (Pad0: Byte;          { +0: cleared by the caller, not read by AddReadiedItemBonus }
+          KindBonus: ShortInt; { +1: Value + Plus of a kind-1 item }
+          PlusSum: ShortInt;   { +2: the plus of every other non-kind-9 item }
+          BestPlus: ShortInt;  { +3: the largest plus of a kind-9 item }
+          BestValue: ShortInt);{ +4: the largest Value + Plus of a Value <> 0 item }
+      1: (Values: array[0..4] of ShortInt);  { the five bytes as RecalcCombatValues clears and sums them }
   end;
 procedure ApplyWeaponBonuses(Who: PCharacter);
 procedure SetArmourMovement(Who: PCharacter; Item: PItem);
@@ -31,11 +33,11 @@ procedure DrawArmourClass(Who: PCharacter; Col, Row: Byte);
 procedure DrawHitPoints(Who: PCharacter; Col, Row, Flag: Byte);
 procedure DrawCharacterPanel(Who: PCharacter);
 function IsHelpless(Who: Pointer): Boolean;
-procedure res12_fn_0BB8(Who: Pointer);
+procedure RecalcCombatValues(Who: PCharacter);
 function res12_fn_1037(N: Byte): string;
 function res12_fn_1073(Value: Word): string;
 procedure res12_fn_10AD;
-procedure res12_fn_10E6;
+function res12_fn_10E6(Who: PCharacter): Byte;
 function res12_fn_1168(Who: PCharacter): ShortInt;
 procedure res12_fn_11EA;
 function res12_fn_1282(Who: PCharacter): ShortInt;
@@ -124,13 +126,23 @@ const
   RaceRowBonusClass = 6;    { +6: bit 7 set means the item has a bonus class (byte and $7F) }
   PlusItemKind = 1;         { item kind whose bonus is assigned, not accumulated }
   SpecialItemKind = 9;      { item kind whose plus is kept as a maximum }
+  { RecalcCombatValues: the readied item kinds whose slot index equals the kind, 0..LastDirectSlotKind;
+    kind SpecialItemKind goes to the first free of slots 9 and 10. }
+  LastDirectSlotKind = 8;
+  { RecalcCombatValues: the item types it files into SlotItems[11] and SlotItems[12]. }
+  Slot11ItemType = $49;
+  Slot12ItemType = $1C;
+  { RecalcCombatValues: a readied item whose NameNum[1] is $BA instead counts ExcludedWeight (5000 less)
+    in the carried weight. $BA is an index of the DS:10A7 name table; which item it is is not proven. }
+  BagNameNum = $BA;
+  ExcludedWeight = $1388;
   { EGA text colours DrawTextAt draws the character and shop panels in (whitepaper 5.24). }
   Green = $0A;
   LightMagenta = $0D;
   Yellow = $0E;
   White = $0F;
 
-{ 00BA:0000. Applies the readied weapon to Who's attack values; res12_fn_0BB8 calls it after it
+{ 00BA:0000. Applies the readied weapon to Who's attack values; RecalcCombatValues calls it after it
   has copied the character's base values. With no readied weapon (SlotItems[0], +$CC) it does
   nothing. Otherwise the weapon's item kind picks a RaceRow row (DS:5582): its byte 9 becomes
   Who^.WeaponAttacks (+$115), byte $A Who^.WeaponDamage (+$117) and byte $B the base of the
@@ -153,11 +165,11 @@ begin
   Who^.HitAdjust := Who^.Thac0;
   if (RaceRow[ItemType][RaceRowAttackFlags] and WeaponFlagDexToHit) <> 0 then
     Who^.HitAdjust := Who^.HitAdjust + res12_fn_1168(Who);
-  Who^.WeaponDamageBonus := RaceRow[ItemType][RaceRowWeaponBonus];
+  Who^.WeaponDamageBonus[1] := RaceRow[ItemType][RaceRowWeaponBonus];
   if (RaceRow[ItemType][RaceRowAttackFlags] and WeaponFlagStrength) <> 0 then
   begin
     Who^.HitAdjust := Who^.HitAdjust + res12_fn_1282(Who);
-    Who^.WeaponDamageBonus := Who^.WeaponDamageBonus + res12_fn_1325(Who);
+    Who^.WeaponDamageBonus[1] := Who^.WeaponDamageBonus[1] + res12_fn_1325(Who);
   end;
   WeaponPlus := Weapon^.Plus;
   if RaceRow[ItemType][RaceRowAttackFlags] > $7F then
@@ -166,17 +178,17 @@ begin
   if (RaceRow[ItemType][RaceRowAttackFlags] and WeaponFlagSlot11Plus) > 0 then
     if Who^.SlotItems[11] <> nil then
       WeaponPlus := WeaponPlus + Who^.SlotItems[11]^.Plus;
-  Who^.WeaponDamageBonus := Who^.WeaponDamageBonus + WeaponPlus;
+  Who^.WeaponDamageBonus[1] := Who^.WeaponDamageBonus[1] + WeaponPlus;
   if (Who^.Race = BonusRace) and
      ((Weapon^.ItemType > BonusKindRangeLow) and (Weapon^.ItemType < BonusKindRangeHigh) or
       (Weapon^.ItemType = BonusKindLow) or (Weapon^.ItemType = BonusKindLower)) then
     Inc(WeaponPlus);
   Who^.HitAdjust := Who^.HitAdjust + WeaponPlus;
-  Who^.WeaponAttacks := RaceRow[ItemType][RaceRowWeaponDice];
-  Who^.WeaponDamage := RaceRow[ItemType][RaceRowWeaponDieSize];
+  Who^.WeaponAttacks[1] := RaceRow[ItemType][RaceRowWeaponDice];
+  Who^.WeaponDamage[1] := RaceRow[ItemType][RaceRowWeaponDieSize];
 end;
 
-{ 00BA:01FB. Sets Who's movement (Movement, +$11C) from a readied armour; res12_fn_0BB8 calls it
+{ 00BA:01FB. Sets Who's movement (Movement, +$11C) from a readied armour; RecalcCombatValues calls it
   for every readied item. It does nothing unless the item's kind (RaceRow[item type][0]) is 2, an
   armour. Then the armour's weight (+$37) picks the movement: at most $96 keeps the character's
   base movement (BaseMovement, +$72), $97..$18F gives 9 and anything else 6. A magic armour
@@ -199,7 +211,7 @@ begin
 end;
 
 { 00BA:0282. Adds one readied item's bonuses into the accumulator Bonus (TBonus) that
-  res12_fn_0BB8 keeps; called for every readied item after SetArmourMovement. Value is the item
+  RecalcCombatValues keeps; called for every readied item after SetArmourMovement. Value is the item
   kind's bonus class (RaceRow[item type][6]); with bit 7 clear the item contributes nothing. The
   item kind (RaceRow[item type][0]) and Value pick what happens: a kind-1 item assigns
   Value + Plus to Bonus.KindBonus; otherwise Value 0 adds Plus to Bonus.PlusSum (a kind-9 item
@@ -245,7 +257,7 @@ begin
 end;
 
 { 00BA:03A0. Caps Who's movement by the weight the character carries above its strength
-  allowance; res12_fn_0BB8 calls it once after the readied-item loop. Weight is
+  allowance; RecalcCombatValues calls it once after the readied-item loop. Weight is
   CarriedWeight (+$102) minus res12_fn_13AB(Who) (the strength weight allowance), clamped at 0
   from below. The excess picks the cap: up to $200 the movement is left alone, up to $300 it is
   9, up to $400 6, and above that 3; the movement only falls, never rises.
@@ -415,8 +427,132 @@ begin
     if res12_fn_2199(Who, HelplessAffects[I], Affect) then
       IsHelpless := True;
 end;
-{ 00BA:0BB8: retf 4: 4 bytes of parameters; 20 bytes of locals }
-{@stub} procedure res12_fn_0BB8(Who: Pointer); begin end;
+{ 00BA:0BB8. Recomputes every combat value of Who from the items it carries and has readied.
+  It clears the 13 per-kind slots (SlotItems, +$CC); walks the carried item list (Items, +$C8) to
+  count the items (ItemCountC7), add every item's weight times its Count to CarriedWeight (+$102)
+  and to the readied weight ReadiedItemWeight (DS:4846), and file each readied item into its slot (kind 0..8
+  into SlotItems[kind], kind 9 into the first free of slots 9 and 10, item type $49 into slot 11,
+  $1C into slot 12), raising ds100 (+$100) by the kind's RaceRow[item type][1]. It then adds the
+  carried money to the weight, copies the base attack triple (+$A3..+$A8) into the readied weapon
+  triple (+$115..+$11A) and the base resistance (+$A9) into ResistValue (+$111), resets SaveBonus,
+  Movement and HitAdjust, adds the unarmed strength bonuses (res12_fn_1282, res12_fn_1325) when no
+  weapon is readied, and runs ApplyWeaponBonuses. For every readied item it runs SetArmourMovement
+  and AddReadiedItemBonus; it then cuts the weight-excluding item's 5000, floors the weight at
+  ReadiedItemWeight, sets ResistValue to the sum of the accumulator, ds112 (+$112) to its best three values
+  minus two, and Movement through CapMovementByLoad. Called whenever a character's equipment or
+  status changes.
+  Globals: RaceRow, ReadiedItemWeight (write). }
+procedure RecalcCombatValues(Who: PCharacter);
+var
+  TripleIndex: Byte;
+  BonusIndex: ShortInt;
+  Item: PItem;
+  ArmourPlusFlag: Byte;
+  IgnoresWeight: Byte;
+  Bonus: TBonus;
+  SlotIndex: ShortInt;
+  Unused: Byte;   { the original frame carries a byte no instruction of this routine reads }
+  MoneyKind: ShortInt;
+  Weight: Word;
+  ItemKind: ShortInt;
+begin
+  for SlotIndex := 0 to 12 do
+    Who^.SlotItems[SlotIndex] := nil;
+  IgnoresWeight := 0;
+  Who^.ItemCountC7 := 0;
+  Item := Who^.Items;
+  Who^.ds100 := 0;
+  Who^.CarriedWeight := 0;
+  ReadiedItemWeight := 0;
+  while Item <> nil do
+  begin
+    Inc(Who^.ItemCountC7);
+    Weight := Item^.Weight;
+    if Item^.Count > 0 then
+      Weight := Item^.Count * Weight;
+    Inc(Who^.CarriedWeight, Weight);
+    if Item^.Readied then
+    begin
+      Inc(ReadiedItemWeight, Weight);
+      ItemKind := RaceRow[Item^.ItemType][RaceRowItemKind];
+      { QUIRK 00BA:0C8C: ItemKind indexes SlotItems signed (cwde) but the case reads it
+        unsigned (jb/ja), so the selector is written as the Byte view of the ShortInt }
+      case Byte(ItemKind) of
+        0..LastDirectSlotKind: Who^.SlotItems[ItemKind] := Item;
+        SpecialItemKind:
+          if Who^.SlotItems[SpecialItemKind] <> nil then
+          begin
+            if Who^.SlotItems[SpecialItemKind + 1] = nil then
+              Who^.SlotItems[SpecialItemKind + 1] := Item;
+          end
+          else
+            Who^.SlotItems[SpecialItemKind] := Item;
+      end;
+      if Item^.ItemType = Slot11ItemType then
+        Who^.SlotItems[11] := Item;
+      if Item^.ItemType = Slot12ItemType then
+        Who^.SlotItems[12] := Item;
+      if Item^.NameNum[1] = BagNameNum then
+        IgnoresWeight := 1;
+      Who^.ds100 := Who^.ds100 + RaceRow[Item^.ItemType][1];
+    end;
+    Item := Item^.Next;
+  end;
+  for MoneyKind := 0 to 6 do
+    Who^.CarriedWeight := Who^.CarriedWeight + Who^.Money[MoneyKind];
+  for TripleIndex := 1 to 2 do
+  begin
+    Who^.WeaponAttacks[TripleIndex] := Who^.BaseAttacks[TripleIndex];
+    Who^.WeaponDamage[TripleIndex] := Who^.BaseDamage[TripleIndex];
+    Who^.WeaponDamageBonus[TripleIndex] := Who^.BaseDamageBonus[TripleIndex];
+  end;
+  for BonusIndex := 0 to 4 do
+    Bonus.Values[BonusIndex] := 0;
+  ArmourPlusFlag := 0;
+  Who^.SaveBonus := 0;
+  Who^.ResistValue := Who^.ResistBase;
+  Who^.Movement := Who^.BaseMovement;
+  Who^.HitAdjust := Who^.Thac0;
+  Bonus.Pad0 := res12_fn_10E6(Who);
+  if Who^.SlotItems[0] = nil then
+  begin
+    Who^.HitAdjust := Who^.HitAdjust + res12_fn_1282(Who);
+    Who^.WeaponDamageBonus[1] := Who^.WeaponDamageBonus[1] + res12_fn_1325(Who);
+  end;
+  ApplyWeaponBonuses(Who);
+  Item := Who^.Items;
+  while Item <> nil do
+  begin
+    if Item^.Readied then
+    begin
+      SetArmourMovement(Who, Item);
+      AddReadiedItemBonus(Who, Item, Bonus, ArmourPlusFlag);
+    end;
+    Item := Item^.Next;
+  end;
+  if ArmourPlusFlag <> 0 then
+    Bonus.BestPlus := 0;
+  if IgnoresWeight <> 0 then
+  begin
+    if Who^.CarriedWeight < ExcludedWeight then
+      Who^.CarriedWeight := 0
+    else
+      Dec(Who^.CarriedWeight, ExcludedWeight);
+    if Who^.CarriedWeight < ReadiedItemWeight then
+      Who^.CarriedWeight := ReadiedItemWeight;
+  end;
+  CapMovementByLoad(Who);
+  if Bonus.BestValue < Who^.ResistValue then
+    Bonus.BestValue := Who^.ResistValue;
+  Who^.ResistValue := 0;
+  for BonusIndex := 0 to 4 do
+    Who^.ResistValue := Who^.ResistValue + Bonus.Values[BonusIndex];
+  Who^.ds112 := Bonus.BestValue + Bonus.PlusSum + Bonus.BestPlus - 2;
+  if (Who^.ClassLevels[2] > 0) and (Who^.Race > 0) then
+    Who^.Pad6B := Who^.ClassLevels[2]
+  else
+    Who^.Pad6B := 1;
+end;
 { 00BA:1037: retf 2: 2 bytes of parameters; 256 bytes of locals }
 {@stub} function res12_fn_1037(N: Byte): string; begin end;
 { 00BA:1073: retf 2, a string function (the caller pushes the result temporary first); ovl04 puts
@@ -425,7 +561,7 @@ end;
 { 00BA:10AD: retf 4: 4 bytes of parameters; 256 bytes of locals }
 {@stub} procedure res12_fn_10AD; begin end;
 { 00BA:10E6: retf 4: 4 bytes of parameters; 2 bytes of locals }
-{@stub} procedure res12_fn_10E6; begin end;
+{@stub} function res12_fn_10E6(Who: PCharacter): Byte; begin end;
 { 00BA:1168: retf 4: 4 bytes of parameters; 2 bytes of locals }
 {@stub} function res12_fn_1168(Who: PCharacter): ShortInt; begin end;
 { 00BA:11EA: retf 4: 4 bytes of parameters; 2 bytes of locals }

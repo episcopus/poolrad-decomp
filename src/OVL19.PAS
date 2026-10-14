@@ -151,7 +151,7 @@ uses RES06, RES09, RES12, OVL22;
 {@stub} procedure ovl19_fn_24A7; begin end;
 { ovl19:275B: rejects an item when the character already has more than 15 items or when its added
   weight exceeds the character's strength-based capacity plus 1500. The item weight is multiplied
-  by its count only when the count is nonzero. The call to res12_fn_0BB8 occurs before the checks. }
+  by its count only when the count is nonzero. The call to RecalcCombatValues occurs before the checks. }
 function WouldOverloadInventory(Character: PCharacter; Item: PMenuLine): Boolean;
 const
   MaximumItemCount = 15;
@@ -160,7 +160,7 @@ var
   Overloaded: Boolean;
   AddedWeight: Word;
 begin
-  res12_fn_0BB8(Character);
+  RecalcCombatValues(Character);
   Overloaded := False;
   if Character^.ItemCountC7 > MaximumItemCount then
     Overloaded := True;

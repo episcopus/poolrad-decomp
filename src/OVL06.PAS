@@ -71,7 +71,7 @@ end;
   while the inventory has room. WouldOverloadInventory (Inventory) checks the list against the item and returns
   True when it is overloaded: Overloaded is then 1 and "OverLoaded" is shown. Otherwise Overloaded is
   0 and a new TMenuLine is allocated (New), the item copied into it (record assignment of $3F bytes)
-  and the node linked at the end of SelectedCharacter^.Items; res12_fn_0BB8 then redraws the list.
+  and the node linked at the end of SelectedCharacter^.Items; RecalcCombatValues then redraws the list.
   Item is the entry to add; Overloaded receives 1 when the item was refused (ovl06:026D) and 0 when
   it was added (ovl06:0277). Called from ovl05 (TreasureShare) and BuyItems (Buy). }
 procedure AddInventoryItem(Item: PMenuLine; var Overloaded: Byte);
@@ -103,7 +103,7 @@ begin
       NewItem^.Next := nil;
       Tail^.Next := NewItem;
     end;
-    res12_fn_0BB8(SelectedCharacter);
+    RecalcCombatValues(SelectedCharacter);
   end;
 end;
 

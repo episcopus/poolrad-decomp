@@ -1029,3 +1029,8 @@ evidence = "DS:6B05 is the bank index for the BODY sprite pointer at DS:6B06, se
 offset = 0x286B
 name = "HelplessAffects"
 evidence = "res12_fn_0B73 (00BA:0B73) tests entries 1..4 through res12_fn_2199 and DrawCharacterPanel draws '(Helpless)' for a True answer; ovl13:1FC3 compares the same entries with the 16-byte table at DS:3204; entry 0 is never read"
+
+[[global]]
+offset = 0x4846
+name = "ReadiedItemWeight"
+evidence = "res12_fn_0BB8 (00BA:0BB8) resets it to 0, adds each readied item's Weight times Count, and floors the character's CarriedWeight at it when the weight-excluding item (NameNum[1] $BA) is readied (00BA:0F43)"

@@ -3469,3 +3469,17 @@ kind = "routine"
 why = "DrawCharacterPanel (00BA:09E3) draws '(Helpless)' when it returns True and ovl13 skips a combatant it answers True for; it tests the four affects of HelplessAffects (DS:286B) through res12_fn_2199"
 date = "2026-10-13"
 
+[[rename]]
+old = "ds4846"
+new = "ReadiedItemWeight"
+kind = "global"
+why = "res12_fn_0BB8 (00BA:0BB8) resets it to 0, adds each readied item's Weight times Count, and floors the character's CarriedWeight at it when the weight-excluding item (NameNum[1] $BA) is readied (00BA:0F43)"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_0BB8"
+new = "RecalcCombatValues"
+kind = "routine"
+why = "res12_fn_0BB8 (00BA:0BB8) recomputes the character's combat values from the items it carries and has readied; every equipment change and the whole combat call it (ovl03, ovl06, ovl08, ovl09, ovl10, ovl12, ovl13, ovl16, ovl19, ovl21, ovl24)"
+date = "2026-10-13"
+

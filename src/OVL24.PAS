@@ -615,7 +615,7 @@ end;
 { ovl24:115C (e18). Sets Who's strength to Strength / Percent unless that is lower than the
   current one (then False and Code is the new value encoded plus $80). Otherwise the first
   strength affect ($C or $26) not yet holding an earlier strength gets the current one encoded
-  plus $80, Strength and StrengthPercent change (res12_fn_0BB8 recomputes), Code is the earlier
+  plus $80, Strength and StrengthPercent change (RecalcCombatValues recomputes), Code is the earlier
   strength encoded, and the result is True. }
 function RaiseStrength(Who: PCharacter; Strength, Percent: Byte; var Code: Byte): Boolean;
 var
@@ -650,7 +650,7 @@ begin
     end;
     Who^.Strength := Strength;
     Who^.StrengthPercent := Percent;
-    res12_fn_0BB8(Who);
+    RecalcCombatValues(Who);
     Code := EncodeStrength(OldStrength, OldPercent);
     RaiseStrength := True;
   end;

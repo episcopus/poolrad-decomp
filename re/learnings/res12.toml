@@ -26,3 +26,39 @@ tags = ["switch", "O+", "overlay", "string", "literal", "codegen", "frame"]
 title = "A resident unit can be compiled O+: a string literal passed to a string parameter is copied to a stack temporary"
 lesson = "res12 is resident but its routines copy every string literal to a stack temporary before the call (lea di,[bp-N]; push ss; push di; mov di,<literal>; push cs; push di; lcall System_StrCopy at 0AF8:0B0B). A make tpc probe shows this is the $O+ behaviour: with O- the literal's code-segment address is pushed directly, with O+ it is copied first. DrawPartyRoster (00BA:0767) and DrawCharacterPanel (00BA:09E3) could not match until the unit directive gained O+ ({$A-,O+,F+,S-,R-,G-,I-}); their frames grow by the string temporaries (0767: 8 -> 14 bytes). The other matched res12 routines use no string literals and were unaffected. Probes: tools/re/tp_idioms/res12/PRB11.PAS (O-) and PRB12.PAS (O+)."
 evidence = ["src/RES12.PAS#DrawPartyRoster", "src/RES12.PAS#DrawCharacterPanel", "re/symbols.toml#00BA:0767", "re/symbols.toml#00BA:09E3", "tools/re/tp_idioms/res12/PRB12.PAS"]
+
+[[lesson]]
+id = "res12-inc-vs-assignment-adds-to-memory"
+confidence = "V"
+units = ["res12", "*"]
+tags = ["codegen", "inc", "dec", "assignment", "memory", "adder"]
+title = "Inc(X, Y) adds to memory (mov ax,Y; add X,ax); X := X + Y loads, adds and stores"
+lesson = "For a Word X (a record field or a global) and a one-word Y, Inc(X, Y) compiles to mov ax, Y; add X, ax (a memory operand add), while X := X + Y compiles to mov ax, X; add ax, Y; mov X, ax (load/add/store, 8 bytes longer for a far es:[di] field). res12:0BB8 matched only after Who^.CarriedWeight := Who^.CarriedWeight + Weight became Inc(Who^.CarriedWeight, Weight) (00BA:0C54) and ReadiedItemWeight := ReadiedItemWeight + Weight became Inc(ReadiedItemWeight, Weight) (00BA:0C6C). Likewise Dec(X, const) compiles to sub X, imm while X := X - const loads, subtracts and stores (00BA:0F61). The plain assignment is right when X is itself a computed memory operand: Who^.CarriedWeight := Who^.CarriedWeight + Who^.Money[MoneyKind] stayed a load/add/store. Probe: the routine itself, make match UNIT=res12 FN=RecalcCombatValues."
+evidence = ["src/RES12.PAS#RecalcCombatValues", "re/symbols.toml#00BA:0BB8"]
+
+[[lesson]]
+id = "res12-case-unsigned-narrowing"
+confidence = "V"
+units = ["res12", "*"]
+tags = ["case", "byte", "shortint", "cwde", "jb", "codegen"]
+title = "A case over a ShortInt selector tests unsigned (jb/ja) when written as case Byte(selector)"
+lesson = "For X: ShortInt, case X of 0..8: ...; 9: ...; end tests the range with jl/jg (signed) and indexes an array with X sign-extended (cwde). res12:0BB8 (00BA:0C89..0C9D) instead tests jb/ja (unsigned) while the slot index still uses cwde, which is exactly case Byte(X) of 0..8: SlotItems[X] := ...; 9: ... (the Byte view of the selector tests unsigned; the ShortInt X in the index still sign-extends). Probes: tools/re/tp_idioms/res12/PRB14.PAS (case with a Byte and a ShortInt selector) and PRB15.PAS (case Byte(X) with ShortInt X)."
+evidence = ["src/RES12.PAS#RecalcCombatValues", "re/symbols.toml#00BA:0BB8", "tools/re/tp_idioms/res12/PRB14.PAS", "tools/re/tp_idioms/res12/PRB15.PAS"]
+
+[[lesson]]
+id = "res12-attack-triple-are-byte-pairs"
+confidence = "V"
+units = ["res12"]
+tags = ["record", "array", "loop", "TCharacter"]
+title = "TCharacter's base and readied attack triples are two-element arrays, copied by one for-loop"
+lesson = "res12:0BB8 copies six bytes (+$A3..+$A8) into +$115..+$11A with ONE for I := 1 to 2 that does three element assignments per pass (00BA:0DB3..0E1A). That is only possible if the base fields at +$A3, +$A5, +$A7 and the readied fields at +$115, +$117, +$119 are each array[1..2] (of Byte, Byte, ShortInt), not single bytes plus pads. The scalar-looking access Who^.WeaponAttacks := ... in ApplyWeaponBonuses compiles to the same bytes as Who^.WeaponAttacks[1] := ... (a constant index folds into the displacement), so the earlier scalar wording was never contradicted until this loop. POOLVARS was changed to the arrays; ovl09's Who^.dsA3/dsA5/dsA7 became BaseAttacks[1]/BaseDamage[1]/BaseDamageBonus[1] and still matches."
+evidence = ["src/RES12.PAS#RecalcCombatValues", "src/POOLVARS.PAS#TCharacter", "src/OVL09.PAS", "re/symbols.toml#00BA:0BB8"]
+
+[[lesson]]
+id = "res12-with-pointer-parameter-frame"
+confidence = "I"
+units = ["res12", "*"]
+tags = ["with", "frame", "pointer", "codegen"]
+title = "A with over a pointer parameter adds a hidden frame temporary"
+lesson = "Drafting res12:0BB8 with `with Who^ do` gave sub sp, 0x16 while the original is sub sp, 0x14; rewriting every field access as Who^.field gave sub sp, 0x12. The four-byte gap fits a hidden far-pointer temporary the compiler keeps for the with expression (the original reloads les di,[bp+6] before each field, so it used explicit Who^.field). Marked [I]: inferred from the frame size, not probed in isolation."
+evidence = ["src/RES12.PAS#RecalcCombatValues", "re/symbols.toml#00BA:0BB8"]

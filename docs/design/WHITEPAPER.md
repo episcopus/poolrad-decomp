@@ -625,7 +625,7 @@ the 28-byte money block at `DS:67F4` and `DS:6DC0`, redraws the shop (`res12:27D
 - `AddInventoryItem` (`ovl06:0239`) appends a clone of an item to `SelectedCharacter^.Items`
   (+$C8, the character's carried items) and sets its var `Overloaded` to 1 when the item was
   refused, 0 when it was added (`ovl06:026D`, `ovl06:0277`). The matched `WouldOverloadInventory`
-  (`ovl19:275B`) first calls `res12_fn_0BB8`, then returns true when the character's byte at +$C7
+  (`ovl19:275B`) first calls `RecalcCombatValues`, then returns true when the character's byte at +$C7
   exceeds 15 or when `CarriedWeight` (+$102) plus the item's added weight exceeds
   `res12_fn_13AB(Character) + 1500`. Added weight starts at `Item^.Weight`; the code multiplies it
   by `Item^.Count` only when the count is nonzero. `AddInventoryItem` refuses the item and shows
@@ -692,7 +692,7 @@ Map note: `07D1`, `0B48`, `0F21`, `1758`, `1F4B` and `2233` were inside routines
 - **Magic first** **[V]**: `UseMagicItem` (`ovl09:03E4`) walks the character's items for a castable one (`Affects[2]` the spell level, `Affects[3]` below $80 and `ovl22_e6` false) and uses it through `ovl19_e8`; `CastMemorizedSpell` (`ovl09:0545`) collects the memorized spells, keeps those `SpellAccepted` accepts and casts one through `ovl13_e15`. Both give up at once when the combat byte +$108^.+2 is zero, the side count `ds6814Sides[res12_fn_23B7(Who)]` is zero or game variable 229 (`VarNoCasting`) is set, and both roll `RollDice(1, 7)` for the number of tries. `SpellAccepted` (`ovl09:02EB`) is the range test they share: it refuses when the spell row's byte +$D is below the requested range, accepts a spell other than 3 whose +$E byte is 0, asks `ovl13_e13(Who, Done)` for spell 3, and otherwise collects Who's enemies the area pattern of `ovl22_e3(Spell)` reaches (`res12_fn_2433`, count `Tries`; the indexes land in DS:6DE4, from 1) and refuses when the nested `DifferentSideInArea` (`ovl09:0255`: `ScanTargets` around each collected enemy with the row's +$F byte as the line budget) finds a side unlike `res12_fn_23B7(SelectedCharacter)`; a zero count or a zero +$F byte accepts.
 - **Morale** **[V]** (`CheckMorale`, `ovl09:10D7`): clears the combat byte +$108^.+$14, then a nonzero +$108^.+$10 forces flight ("is forced to flee" through `res12_fn_16EC`); a character with B84 above $7F compares `(B84 and $7F) * 2` (zeroed above $66, DS:6825) with the hit-point percentage lost and, a second time, DS:6E2F with `GameVars^[710]`: a failed check makes a monster of side 1 flee, and a character with Intelligence above 5 surrenders (`DropCombatant(Who, 4, 'Surrenders')`), the rest get the affects $4A and $4B removed.
 - **Choosing a target** **[V]** (`ScoreTarget`, `ovl09:128D`): the score of a candidate is `Row[10] * Row[9]` of the candidate's `RaceRow` (DS:5582, 129 rows of 16 bytes over the loader's file buffer), plus eight times its HpMax and twice `Row[11]` when positive, plus `(Row[5] - 1) * 2` when bit 3 of `Row[14]` is set, plus 3 when `Row[1]` is at most 1; it is 0 when `Row[1]` plus the actor's byte +$100 is above 3, when the candidate's known-spell bytes $0C and $0B hold $84 and a low nibble unlike the actor's `ByteA0`, when byte $0B is $53 or byte 4 is set. `UseBestItem` keeps the highest score (`ovl09:1543`).
-- **The AI's item step** **[V]** (`UseBestItem`, `ovl09:13CA`, called by `QuickTurn` every turn and by `AiTurn` before attacking): pays the two per-kind slot items (RaceRow[item type][1] off `Who^.ds100`), scores every carried item with `ScoreTarget(Who, item)` (the item's type indexes `RaceRow`) and keeps the best 'attack' item (`Row[14]` bit 3 or bit $10; score `Best`), the best other item (`Score2`) and the best type-1 item by `Plus + 1`. The item used is the attack pick when it beats half of `Score2` and `Row[14]` points at a slot item (bits 1 and $80 select the slots at +$F8 and +$FC), else the other pick. The slot-0 item (unless it is the pick or cursed), the slot-1 item (paying its `Row[1]` again) and the pick are used through `ovl19_e7` with `res12_fn_0BB8` and `ovl13_e6`, and `ds100` above or below 2 chooses between the slot-1 item and the extra pick; a use ends the step through `DrawCharacterPanel`.
+- **The AI's item step** **[V]** (`UseBestItem`, `ovl09:13CA`, called by `QuickTurn` every turn and by `AiTurn` before attacking): pays the two per-kind slot items (RaceRow[item type][1] off `Who^.ds100`), scores every carried item with `ScoreTarget(Who, item)` (the item's type indexes `RaceRow`) and keeps the best 'attack' item (`Row[14]` bit 3 or bit $10; score `Best`), the best other item (`Score2`) and the best type-1 item by `Plus + 1`. The item used is the attack pick when it beats half of `Score2` and `Row[14]` points at a slot item (bits 1 and $80 select the slots at +$F8 and +$FC), else the other pick. The slot-0 item (unless it is the pick or cursed), the slot-1 item (paying its `Row[1]` again) and the pick are used through `ovl19_e7` with `RecalcCombatValues` and `ovl13_e6`, and `ds100` above or below 2 chooses between the slot-1 item and the extra pick; a use ends the step through `DrawCharacterPanel`.
 - **Stepping** **[V]** (`CanAffordStep`, `ovl09:0675`): attempt `Column` of the actor's step pattern turns the base direction by `StepTurnOffsets[+$108^.+$15, Column]` (DS:02AE, 7 rows of 5, rows 1 and 2 are drawn by `RollDice(1, 2)` at `ovl09:08CD`) modulo 8; `ProbeStep` looks at the cells, a tile of 0 reports off-map and returns, and the step is affordable when no combatant is in the way, the tile cost is below the moves left and the step's cost (tile cost times 2, times 3 on a diagonal; `Moves + 1` on `TileKept` without one of the affects $20, $1E, $6F, $7D) is at or below the moves left.
 - **The AI's move step** **[V]** (`MoveStep`, `ovl09:07F2`): shows `Move/Attack, Move Left = Moves div 2` through `DrawTextAt(0, 24, 10, ...)` and lets `HandleCombatKey` interrupt (True ends the step). It gives up through `ovl09_fn_0F4F` when no half-move is left, the initiative is 0, or a magic-user (`ClassMask` 5) is not panicking (the byte past `TCombatant` at +$14). The direction comes from `ovl13_e18(Who, Combat^.Target)` while clear of panic, else from the party marker facing `PartyFacing` (+ 4 on the party side, mod 8) with a fresh `RollDice(1, 2)` step pattern (+$15). It tries pattern columns 1..5 through `CanAffordStep` (a panicking actor off the map ends through `ovl13_e5`), refuses a step back (`ds443C` = (Turn + 4) mod 8), advances the pattern when refused (`ds443D` counts) and may end the turn through `ovl13_e21` or `ovl09_fn_0F4F`. A step taken faces the actor (`SetCombatantIcon(Who, Turn, 0, 0)`), moves through `ovl13_e4` (or `ovl13_e3` once `Flag10D` is set past it) and `ApplyCloudTile`, an ended turn through `res12_fn_2637`.
 - **Keys during the computer's turn** **[V]** (`HandleCombatKey`, `ovl09:0FC1`): Alt-M toggles Magic On/Off (DS:6E30), Space marks the character for quick combat, Alt-X asks `ovl13_e24`.
@@ -1060,10 +1060,11 @@ Overlay 24 holds the rules affects and rolls go through; its 22 entries (e1..e22
 
 ### 5.24 The resident character and item helper unit res12 (in progress)
 
-res12 is the resident helper the overlays call for character, item and view work. Eight routines
-are matched so far **[V]** (`make match UNIT=res12`): `res12_fn_0BB8` recomputes a character's
+res12 is the resident helper the overlays call for character, item and view work. Ten routines
+are matched so far **[V]** (`make match UNIT=res12`): `RecalcCombatValues` recomputes a character's
 combat values and calls `SetArmourMovement` (`00BA:01FB`), `AddReadiedItemBonus` (`00BA:0282`),
-`ApplyWeaponBonuses` (`00BA:0000`) and `CapMovementByLoad` (`00BA:03A0`); the four panel routines
+`ApplyWeaponBonuses` (`00BA:0000`) and `CapMovementByLoad` (`00BA:03A0`); `IsHelpless`
+(`00BA:0B73`) tests the four affects that leave a character helpless; the four panel routines
 `DrawPartyRoster` (`00BA:0767`), `DrawArmourClass` (`00BA:08EF`), `DrawHitPoints` (`00BA:0973`) and
 `DrawCharacterPanel` (`00BA:09E3`) draw the shop, Temple, combat and inventory character panels.
 The unit is compiled with **`$O+`** even though it is resident: every string literal passed to a
@@ -1089,6 +1090,29 @@ matched only with the copy.
   $A, and the signed WeaponDamageBonus (+$119) from byte $B plus the strength damage adjustment
   (`res12_fn_1325`) and the plus of the weapon and, by flag bits 0 and 7, of slot items 11
   (+$F8) and 12 (+$FC). The RaceRow kind column is 0 weapon, 1 plus item, 2 armour, 9 special.
+- **Recalculating the combat values** **[V]**: `RecalcCombatValues` (`00BA:0BB8`) is the routine
+  every equipment change calls (ovl03, ovl06, ovl08..ovl10, ovl12, ovl13, ovl16, ovl19, ovl21,
+  ovl24). It clears the 13 per-kind slots (`SlotItems`, +$CC); walks the carried item list (`Items`,
+  +$C8) to count the items (`ItemCountC7`, +$C7), add each item's `Weight` (+$37) times its `Count`
+  (+$39) to the carried weight (+$102) and to `ReadiedItemWeight` (DS:4846), and file each readied
+  item into its slot (item kinds 0..8 into `SlotItems[kind]`, kind 9 into the first free of slots 9
+  and 10, item type $49 into slot 11 and $1C into slot 12), raising `ds100` (+$100) by
+  RaceRow[item type][1]. It then adds the seven carried money words (+$88) to the weight (every coin
+  counts one), copies the base attack triple (+$A3, +$A5, +$A7) into the readied weapon triple
+  (+$115, +$117, +$119) and the base value +$A9 (ovl16:05E4 sets 50) into `ResistValue` (+$111),
+  resets `SaveBonus` (+$101), `Movement` (+$11C) and `HitAdjust` (+$110), adds the unarmed strength
+  bonuses (`res12_fn_1282`, `res12_fn_1325`) when no weapon is readied, and runs `ApplyWeaponBonuses`
+  and, per readied item, `SetArmourMovement` and `AddReadiedItemBonus`. A readied item whose
+  `NameNum[1]` is $BA (a weightless container) instead counts 5000 less and the weight is floored at
+  `ReadiedItemWeight`. Finally `ResistValue` becomes the sum of the accumulator's five bytes, `ds112`
+  (+$112) its best three minus two, and `Movement` is capped by `CapMovementByLoad`. The base and
+  readied attack values are each a pair of bytes (entry 1 is the one the AI and the weapon code read),
+  which is what forced the `TCharacter` fields at +$A3, +$A5, +$A7, +$115, +$117 and +$119 to be
+  two-element arrays.
+- **Helpless** **[V]**: `IsHelpless` (`00BA:0B73`) returns True when any of the four affects in
+  `HelplessAffects` (DS:286B, entries 1..4 = $33, $34, $35, $1F) is on the character's affect list
+  (`res12_fn_2199`). ovl13:1FC3 compares the same entries with the 16-byte combat table at DS:3204;
+  `DrawCharacterPanel` shows "(Helpless)" for a True answer.
 - **The item name table** **[V]**: 256 strings of at most 20 characters at DS:10A7 (the image:
   entry 1 `Battle Axe` through entry 255 `Cursed`, entry 0 unused); the menu-line formatter
   `res12_fn_0442` indexes it with a line's NameNum. That formatter is blocked (its plural rule

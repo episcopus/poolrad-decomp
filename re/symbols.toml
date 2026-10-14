@@ -16583,12 +16583,12 @@ id = "00BA:0BB8"
 unit = "res12"
 addr = "00BA:0BB8"
 size = 1151
-name = "res12_fn_0BB8"
-signature = "procedure res12_fn_0BB8(Who: Pointer)"
+name = "RecalcCombatValues"
+signature = "procedure RecalcCombatValues(Who: PCharacter)"
 c_name = "res12_fn_0BB8"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_0BB8 (res12_fn_0BB8 (00BA:0BB8) recomputes the character's combat values from the items it carries and has readied; every equipment change and the whole combat call it (ovl03, ovl06, ovl08, ovl09, ovl10, ovl12, ovl13, ovl16, ovl19, ovl21, ovl24)); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16636,7 +16636,7 @@ unit = "res12"
 addr = "00BA:10E6"
 size = 130
 name = "res12_fn_10E6"
-signature = ""
+signature = "function res12_fn_10E6(Who: PCharacter): Byte"
 c_name = "res12_fn_10E6"
 level = "none"
 justification = ""
