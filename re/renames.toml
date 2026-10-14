@@ -3756,3 +3756,10 @@ kind = "routine"
 why = "00BA:2E8B fills the caller's pointer with the item Who's attack aims with: the readied weapon (SlotItems[0]) when the kind's attack flags have the melee bit $10, else the ammo in slot 11 (+$F8) or slot 12 (+$FC) when bit $08 marks a launcher; returns 1 when an item was aimed or the flags are exactly $A"
 date = "2026-10-13"
 
+[[rename]]
+old = "res12_fn_2F57"
+new = "IsMaxClassLevel"
+kind = "routine"
+why = "00BA:2F57 returns True when Who's level in one class (ClassLevels[ClassIndex], +$96) has reached the maximum its race (+$2E) and strength (+$10) allow, so the trainers (ovl22:2D39) must not raise that class level further"
+date = "2026-10-13"
+

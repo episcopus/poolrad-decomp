@@ -125,3 +125,21 @@ tags = ["string", "copy", "StrLCopy", "WordToText", "codegen"]
 title = "Assigning a string function result directly to a string[N] truncates with one StrLCopy; Copy adds a second"
 lesson = "For Hours: string[2], `Hours := WordToText(x)` compiles to WordToText's result into a hidden temp, then a single System_StrLCopy(Hours, temp, 2) that both copies and truncates. Writing it as `Hours := Copy(WordToText(x), 1, 2)` adds a second StrLCopy: the Copy goes into another 256-byte temp with max 2, then the assignment truncates again into Hours, which shifts the temp offsets and makes the routine 2 bytes too long. DrawLocationLine (00BA:290B) matched with the direct assignment; the manual two-digit padding (`if Length(Hours) < 2 then Hours := '0' + Hours`) is separate. The two hidden string temps sit 0x100 apart (256 bytes each) below the declared locals."
 evidence = ["src/RES12.PAS#DrawLocationLine", "re/symbols.toml#00BA:290B"]
+
+[[lesson]]
+id = "res12-if-vs-boolean-expression-direct-store"
+confidence = "V"
+units = ["res12", "*"]
+tags = ["boolean", "and", "if", "codegen", "result", "short-circuit"]
+title = "A Boolean result from A and B goes through AL; the same condition written as if/then/else stores the result directly"
+lesson = "For a Boolean function, `R := A and B` (short-circuit) evaluates the conjunction into AL (mov al,0 / jmp / mov al,1) and stores [bp-1] once at the end, while `if A and B then R := True else R := False` sends the conjunction's jumps straight to two direct stores (mov byte [bp-1],1 and mov byte [bp-1],0) and never touches AL. res12:2E03 matched only with the if/then/else form (00BA:2E16 je 0x2e39 reaches the mov [bp-1],0 after the mov [bp-1],1 path, 6 bytes of code fewer than the expression form). Probe: tools/re/tp_idioms/res12/PRB32.PAS."
+evidence = ["src/RES12.PAS#IsRangedWeapon", "re/symbols.toml#00BA:2E03", "tools/re/tp_idioms/res12/PRB32.PAS"]
+
+[[lesson]]
+id = "res12-with-pointer-param-hidden-temp"
+confidence = "V"
+units = ["res12", "*"]
+tags = ["with", "pointer", "parameter", "frame", "temp", "codegen"]
+title = "with Who^ do over a pointer parameter keeps a hidden 4-byte temp and reuses it; explicit Who^.field reloads the parameter"
+lesson = "For a Who: PCharacter value parameter, `with Who^ do` stores Who once into a hidden 4-byte frame temporary (les di,[bp+8]; mov [bp-6],di; mov [bp-4],es) and every field access then loads that temp (les di,[bp-6]), so the parameter is read once. Writing every access as Who^.field instead reloads les di,[bp+8] before each field and adds no temp. res12:2F57's frame (sub sp,6, the temp at [bp-6..-3], the declared Level at [bp-2] and the result at [bp-1]) matched only with `with Who^ do`, and the local Level must be the first declared so it sits nearest bp. This is the counterpart of res12-with-pointer-parameter-frame (0BB8, which used explicit Who^.field). Probe: tools/re/tp_idioms/res12/PRB33.PAS."
+evidence = ["src/RES12.PAS#IsMaxClassLevel", "re/symbols.toml#00BA:2F57", "tools/re/tp_idioms/res12/PRB33.PAS"]

@@ -73,7 +73,7 @@ procedure SelectPartyMember(Title: String40; WithExit: Byte; var Selected: PChar
 function IsRangedWeapon(Who: Pointer): Boolean;
 function RangedWeaponCanMelee(Who: Pointer): Boolean;
 function ChooseAttackItem(Who: Pointer; var Aim: Pointer): Byte;
-procedure res12_fn_2F57;
+function IsMaxClassLevel(Who: PCharacter; ClassIndex: ShortInt): Boolean;
 implementation
 
 const
@@ -1660,8 +1660,57 @@ begin
   if (Aim <> nil) or (Flags = $A) then
     ChooseAttackItem := 1;
 end;
-{ 00BA:2F57: retf 6: 6 bytes of parameters; 6 bytes of locals }
-{@stub} procedure res12_fn_2F57; begin end;
+{ 00BA:2F57. Returns whether Who's level in one class has reached the maximum its race allows, so
+  the trainers (ovl22:2D39 raises ClassLevels[ClassIndex], +$96, only when this is False) must not
+  raise that class level further. False when the level is 0; otherwise Who's race (+$2E) and
+  strength (+$10) pick the limit: race 1 class 2 stops at level 8 with strength 17, at 7 with
+  less; race 2 class 2 stops at 7, at 6 with strength 17, at 5 with less; race 3 class 2 stops at
+  6, at 5 with strength below 18; race 4 class 0 stops at 5 and class 2 stops at 8, at 7 with
+  strength 17, at 6 with less; race 5 class 2 stops at 6, at 5 with strength 17, at 4 with less.
+  ClassIndex is the class index 0..7. Globals: none. }
+function IsMaxClassLevel(Who: PCharacter; ClassIndex: ShortInt): Boolean;
+var
+  Level: ShortInt;
+begin
+  IsMaxClassLevel := False;
+  with Who^ do
+  begin
+    Level := ClassLevels[ClassIndex];
+    if Level > 0 then
+      case Race of
+        1:
+          if (ClassIndex = 2) and
+             ((Level = 8) and (Strength = $11) or
+              (Level = 7) and (Strength < $11)) then
+            IsMaxClassLevel := True;
+        2:
+          if (ClassIndex = 2) and
+             ((Level = 7) or
+              (Level = 6) and (Strength = $11) or
+              (Level = 5) and (Strength < $11)) then
+            IsMaxClassLevel := True;
+        3:
+          if (ClassIndex = 2) and
+             ((Level = 6) or
+              (Level = 5) and (Strength < $12)) then
+            IsMaxClassLevel := True;
+        4:
+          if (ClassIndex = 0) and (Level = 5) then
+            IsMaxClassLevel := True
+          else if (ClassIndex = 2) and
+                  ((Level = 8) or
+                   (Level = 7) and (Strength = $11) or
+                   (Level = 6) and (Strength < $11)) then
+            IsMaxClassLevel := True;
+        5:
+          if (ClassIndex = 2) and
+             ((Level = 6) or
+              (Level = 5) and (Strength = $11) or
+              (Level = 4) and (Strength < $11)) then
+            IsMaxClassLevel := True;
+      end;
+  end;
+end;
 
 begin
 end.

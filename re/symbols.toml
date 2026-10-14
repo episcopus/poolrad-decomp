@@ -17091,7 +17091,7 @@ unit = "res12"
 addr = "00BA:2E8B"
 size = 204
 name = "ChooseAttackItem"
-signature = "function ChooseAttackItem(Who: Pointer; var W: Pointer): Byte"
+signature = "function ChooseAttackItem(Who: Pointer; var Aim: Pointer): Byte"
 c_name = "res12_fn_2E8B"
 level = "L2"
 justification = ""
@@ -17103,12 +17103,12 @@ id = "00BA:2F57"
 unit = "res12"
 addr = "00BA:2F57"
 size = 327
-name = "res12_fn_2F57"
-signature = ""
+name = "IsMaxClassLevel"
+signature = "function IsMaxClassLevel(Who: PCharacter; ClassIndex: ShortInt): Boolean"
 c_name = "res12_fn_2F57"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_2F57 (00BA:2F57 returns True when Who's level in one class (ClassLevels[ClassIndex], +$96) has reached the maximum its race (+$2E) and strength (+$10) allow, so the trainers (ovl22:2D39) must not raise that class level further); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
