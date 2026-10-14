@@ -407,12 +407,12 @@ id = "ovl03:0EBC"
 unit = "ovl03"
 addr = "ovl03:0EBC"
 size = 76
-name = "ovl03_fn_0EBC"
+name = "StoreIndexedWordCommand"
 signature = ""
 c_name = "ovl03_fn_0EBC"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_0EBC (ECL command 53: dispatcher ovl03:2F2D calls it for SkippedOpcode 35h (cmp al,35h); it writes operand 1 as a word at the table of operand 2 plus the index of operand 3 (WriteVmWord); CopyIndexedWordCommand (ovl03:0E5E) reads that table); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

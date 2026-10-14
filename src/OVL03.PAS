@@ -27,7 +27,7 @@ procedure StartEclBlock;
 procedure LoadAreaGraphics;
 procedure BitwiseCommand;
 procedure CopyIndexedWordCommand;
-procedure ovl03_fn_0EBC;
+procedure StoreIndexedWordCommand;
 procedure ovl03_fn_0F08;
 procedure ovl03_fn_0FE2;
 procedure ovl03_fn_10D1;
@@ -722,8 +722,24 @@ begin
   Value := ReadVmWord(Source);
   WriteVmWord(Dest, Value);
 end;
-{ ovl03:0EBC: retf 0: 0 bytes of parameters; 8 bytes of locals }
-{@stub} procedure ovl03_fn_0EBC; begin end;
+{ ovl03:0EBC. ECL command 53 (dispatcher ovl03:2F2D, SkippedOpcode $35): stores operand 1 as a word
+  in a table of words. Operand 2 is the script address of the table and operand 3 the index: the
+  word goes to table + index with WriteVmWord. It is the store that CopyIndexedWordCommand (ovl03:0E5E,
+  command 42) reads back. }
+procedure StoreIndexedWordCommand;
+var
+  Index: Word;
+  Base: Word;
+  Value: Word;
+  Addr: Word;
+begin
+  DecodeOperands(3);
+  Value := OperandValue(1);
+  Base := MakeWord(OperandLow[2], OperandHigh[2]);
+  Index := OperandValue(3);
+  Addr := Base + Index;
+  WriteVmWord(Addr, Value);
+end;
 { ovl03:0F08: frame not read }
 {@stub} procedure ovl03_fn_0F08; begin end;
 { ovl03:0FE2: retf 0: 0 bytes of parameters; 0 bytes of locals }
