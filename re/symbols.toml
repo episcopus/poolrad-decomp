@@ -17090,12 +17090,12 @@ id = "00BA:2E8B"
 unit = "res12"
 addr = "00BA:2E8B"
 size = 204
-name = "res12_fn_2E8B"
-signature = "function res12_fn_2E8B(Who: Pointer; var W: Pointer): Byte"
+name = "ChooseAttackItem"
+signature = "function ChooseAttackItem(Who: Pointer; var W: Pointer): Byte"
 c_name = "res12_fn_2E8B"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res12_fn_2E8B (00BA:2E8B fills the caller's pointer with the item Who's attack aims with: the readied weapon (SlotItems[0]) when the kind's attack flags have the melee bit $10, else the ammo in slot 11 (+$F8) or slot 12 (+$FC) when bit $08 marks a launcher; returns 1 when an item was aimed or the flags are exactly $A); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]

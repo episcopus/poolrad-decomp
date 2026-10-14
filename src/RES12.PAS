@@ -72,7 +72,7 @@ procedure DrawCombatScreen;
 procedure SelectPartyMember(Title: String40; WithExit: Byte; var Selected: PCharacter);
 function IsRangedWeapon(Who: Pointer): Boolean;
 function RangedWeaponCanMelee(Who: Pointer): Boolean;
-function res12_fn_2E8B(Who: Pointer; var W: Pointer): Byte;
+function ChooseAttackItem(Who: Pointer; var Aim: Pointer): Byte;
 procedure res12_fn_2F57;
 implementation
 
@@ -89,6 +89,7 @@ const
   WeaponFlagDexToHit = 2;       { the attack adds the dexterity roll adjustment }
   WeaponFlagStrength = 4;       { the attack adds the strength roll and damage adjustments }
   WeaponFlagMelee = $10;        { the kind can strike with the readied weapon itself (2E46, 2E8B) }
+  WeaponFlagAmmo = $08;         { the kind fires an ammo item: slot 11 or 12 (ChooseAttackItem) }
   WeaponFlagSlot12Plus = $80;   { add the plus of slot item 12 (+$FC) }
   { The race value (Race, +$2E) that gets one more point with the item kinds $24, $25 and $29..$2C
     (the bows and the long and short swords of AD&D); which race that is is not proven here. }
@@ -1627,8 +1628,38 @@ begin
   else
     RangedWeaponCanMelee := False;
 end;
-{ 00BA:2E8B: retf 8: 8 bytes of parameters; 6 bytes of locals }
-{@stub} function res12_fn_2E8B(Who: Pointer; var W: Pointer): Byte; begin end;
+{ 00BA:2E8B. Picks the item Who's attack aims with and returns whether it found one, clearing Aim
+  first. With a readied weapon (SlotItems[0], +$CC): its kind's RaceRow attack flags (byte $E)
+  decide the aim. The melee bit ($10) aims the weapon itself; the launcher bit ($08)
+  aims the item in slot 11 (+$F8) when the $1 bit is set, or the item in slot 12 (+$FC) when the
+  $80 bit is set. The result is 1 when an item was aimed, or when the flags are exactly $A (a
+  ranged weapon that fires with nothing to aim); 0 otherwise. ovl09's AiTurn passes the aimed
+  item to ovl13_e12 for the attack. Globals: RaceRow (read). }
+function ChooseAttackItem(Who: Pointer; var Aim: Pointer): Byte;
+var
+  Item: PItem;
+  Flags: Byte;
+begin
+  ChooseAttackItem := 0;
+  Item := PCharacter(Who)^.SlotItems[0];
+  Aim := nil;
+  Flags := 0;
+  if Item <> nil then
+  begin
+    Flags := RaceRow[Item^.ItemType][RaceRowAttackFlags];
+    if (Flags and WeaponFlagMelee) <> 0 then
+      Aim := Item;
+    if (Flags and WeaponFlagAmmo) <> 0 then
+    begin
+      if (Flags and WeaponFlagSlot11Plus) <> 0 then
+        Aim := PCharacter(Who)^.SlotItems[11];
+      if (Flags and WeaponFlagSlot12Plus) <> 0 then
+        Aim := PCharacter(Who)^.SlotItems[12];
+    end;
+  end;
+  if (Aim <> nil) or (Flags = $A) then
+    ChooseAttackItem := 1;
+end;
 { 00BA:2F57: retf 6: 6 bytes of parameters; 6 bytes of locals }
 {@stub} procedure res12_fn_2F57; begin end;
 

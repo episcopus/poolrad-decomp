@@ -480,7 +480,7 @@ end;
   the CollectEnemiesInRange(Who, Range) scan (ds6DE4) is picked (or UseBestItem chooses one when
   IsRangedWeapon says to). The attack runs ovl13_e7/e11/e12 and ends the turn through
   EndCombatTurn. Result: 1 when the turn is over (CanAct = 0). QUIRK: [bp-3] is reused for
-  res12_fn_2E8B's dead result; the +$CC deref runs before its nil test. Globals: ds443C, ds443D,
+  ChooseAttackItem's dead result; the +$CC deref runs before its nil test. Globals: ds443C, ds443D,
   ds443E, RaceRow, ds6DE4, CombatantRecord, CombatMap. }
 function AiTurn(Who: PCharacter): Byte;
 label
@@ -588,7 +588,7 @@ Attack:
   Aim := nil;
   if IsRangedWeapon(Who) then
   begin
-    Flag := res12_fn_2E8B(Who, Aim);
+    Flag := ChooseAttackItem(Who, Aim);
     if RangedWeaponCanMelee(Who) and (DistanceToTarget(Who, Target) = 1) then
       Aim := nil;
   end;

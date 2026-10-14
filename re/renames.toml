@@ -3749,3 +3749,10 @@ kind = "routine"
 why = "00BA:2E46 returns True when IsRangedWeapon holds and the readied weapon kind's RaceRow attack flags carry both the melee bit $10 and the strength bit $04, i.e. a missile weapon that can also strike in melee; ovl08 uses it to allow the melee attack"
 date = "2026-10-13"
 
+[[rename]]
+old = "res12_fn_2E8B"
+new = "ChooseAttackItem"
+kind = "routine"
+why = "00BA:2E8B fills the caller's pointer with the item Who's attack aims with: the readied weapon (SlotItems[0]) when the kind's attack flags have the melee bit $10, else the ammo in slot 11 (+$F8) or slot 12 (+$FC) when bit $08 marks a launcher; returns 1 when an item was aimed or the flags are exactly $A"
+date = "2026-10-13"
+
