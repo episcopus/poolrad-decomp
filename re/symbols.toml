@@ -10608,12 +10608,12 @@ id = "ovl22:2F99"
 unit = "ovl22"
 addr = "ovl22:2F99"
 size = 55
-name = "ovl22_e57"
+name = "CastMonsterParalyze"
 signature = ""
 c_name = "ovl22_e57"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_57"
+notes = "renamed from ovl22_e57 (handler of the monster-only spell 61 (SpellHandlers element 61, overlay entry 57, stub 0096:013D): applies the current spell with the message 'is paralyzed'); auto:entry_57"
 evidence = ["prologue"]
 
 [[routine]]

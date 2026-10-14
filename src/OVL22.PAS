@@ -68,7 +68,7 @@ procedure CastMonsterHaste;
 procedure CastMonsterHeal;
 procedure CastMonsterStrength;
 procedure CastMonsterBeam;
-procedure ovl22_e57;
+procedure CastMonsterParalyze;
 procedure ovl22_e58;
 procedure ovl22_fn_2FD3;
 procedure ovl22_e59;
@@ -1814,8 +1814,14 @@ begin
   DamageTargetInCell(ds6DB9, ds6DBA, RollDice(StrikeDiceCount, StrikeDiceSides) + StrikeBase, SaveKindSpell, Blocked);
   CastLineBeam(BeamReach, BeamDamage, SaveKindSpell, NoBounce);
 end;
-{ ovl22:2F99: retf 0: 0 bytes of parameters; 14 bytes of locals }
-{@stub} procedure ovl22_e57; begin end;
+{ ovl22:2F99 (e57). Cast handler of spell 61, a monster-only spell: SpellNames[61] is empty and the
+  ovl22_e10 handler table points element 61 of SpellHandlers at this stub. It only applies the current
+  spell ds681B to the chosen targets with the message 'is paralyzed'; the spell's own affect does the
+  paralyzing (as CastCauseBlindness does the blinding). Reads ds681B. }
+procedure CastMonsterParalyze;
+begin
+  ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is paralyzed');
+end;
 { ovl22:2FD0: frame not read }
 {@stub} procedure ovl22_e58; begin end;
 { ovl22:2FD3: retf 0: 0 bytes of parameters; 10 bytes of locals }
