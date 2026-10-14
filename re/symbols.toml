@@ -3122,12 +3122,12 @@ id = "ovl12:0000"
 unit = "ovl12"
 addr = "ovl12:0000"
 size = 31
-name = "ovl12_fn_0000"
-signature = ""
+name = "CancelPendingHook"
+signature = "procedure CancelPendingHook(AffectId: Byte)"
 c_name = "ovl12_fn_0000"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl12_fn_0000 (ovl12:0000 clears HookAffectId and DamageAmount when its AffectId is 0 or is the affect the hooks offer (HookAffectId, set by ApplyAffect; zero means 'is Unaffected', ovl24:1672, 1682; DamageAmount is the damage DealDamage offers, ovl24:134E)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

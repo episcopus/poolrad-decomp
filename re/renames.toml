@@ -3413,3 +3413,10 @@ kind = "routine"
 why = "0464:1E5C maps the colours of a picture: for each colour index I whose FromMap and ToMap entries differ, every pixel of the picture with palette colour FromMap[I] becomes ToMap[I] (through a scratch copy, adapters 0, 1 and 2; src/RES07.PAS, MATCH); LoadPictureSlot (ovl32) passes the identity map, AnimateAreaDoors (ovl18) and LoadSpriteList (ovl28) pass the door and sprite maps"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_fn_0000"
+new = "CancelPendingHook"
+kind = "routine"
+why = "ovl12:0000 clears HookAffectId and DamageAmount when its AffectId is 0 or is the affect the hooks offer (HookAffectId, set by ApplyAffect; zero means 'is Unaffected', ovl24:1672, 1682; DamageAmount is the damage DealDamage offers, ovl24:134E)"
+date = "2026-10-13"
+

@@ -1,9 +1,11 @@
 unit OVL12;
-{ TrainRewards: overlay unit, 14510 bytes of code. Skeleton by tools/match/skeleton.py: every routine is a stub
-  until decompiled (playbook 30). }
+{ TrainRewards: overlay 12, the training and rewards unit, 14510 bytes of code. The loader (ovl11) hands
+  over to its entry 1 (the loader section of the whitepaper). Its affect handlers and roll hooks change
+  AttackRoll, DamageAmount and the morale scratch ds6825; each routine's comment says what it does. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
-procedure ovl12_fn_0000;
+uses POOLVARS;
+procedure CancelPendingHook(AffectId: Byte);
 procedure ovl12_fn_001F;
 procedure ovl12_fn_0058;
 procedure ovl12_e2;
@@ -171,9 +173,19 @@ procedure ovl12_fn_31D7;
 procedure ovl12_fn_3262;
 procedure ovl12_fn_3728;
 implementation
+uses RES06, RES12, OVL24, OVL31;
 
-{ ovl12:0000: retf 2: 2 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_fn_0000; begin end;
+{ ovl12:0000. Cancels the hook of an affect: when AffectId is 0 or is the affect the hooks are offering
+  (HookAffectId), HookAffectId and DamageAmount are cleared. HookAffectId 0 reads as "is Unaffected"
+  (ovl24:1672), so the affect and its damage are dropped. }
+procedure CancelPendingHook(AffectId: Byte);
+begin
+  if (AffectId = 0) or (HookAffectId = AffectId) then
+  begin
+    DamageAmount := 0;
+    HookAffectId := 0;
+  end;
+end;
 { ovl12:001F: retf 10: 10 bytes of parameters; 2 bytes of locals }
 {@stub} procedure ovl12_fn_001F; begin end;
 { ovl12:0058: retf 10: 10 bytes of parameters; 42 bytes of locals }
