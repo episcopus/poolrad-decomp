@@ -4435,12 +4435,12 @@ id = "ovl12:29CB"
 unit = "ovl12"
 addr = "ovl12:29CB"
 size = 14
-name = "ovl12_e93"
+name = "CancelParalysisHook"
 signature = ""
 c_name = "ovl12_e93"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_93"
+notes = "renamed from ovl12_e93 (ovl12:29CB is an affect handler whose whole body is CancelPendingHook(AffectParalysis) (ovl12:29CB, matched)); auto:entry_93"
 evidence = ["prologue"]
 
 [[routine]]

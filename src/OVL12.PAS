@@ -105,7 +105,7 @@ procedure CancelHookByHalfChance(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure CancelHookByLowChance(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure CancelCharmAndUnknown35HighChance(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure CancelCharmAndUnknown35(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e93;
+procedure CancelParalysisHook(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e94;
 procedure ovl12_e95;
 procedure ovl12_e96;
@@ -1852,8 +1852,13 @@ begin
   CancelPendingHook(AffectCharm);
   CancelPendingHook(AffectUnknown35);
 end;
-{ ovl12:29CB: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e93; begin end;
+{ ovl12:29CB. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none of them is read, ovl24:0000). It cancels
+  the pending hook of the paralysis affect (AffectParalysis, $34) with CancelPendingHook, and nothing else. Purpose
+  unknown: which affect runs it is not known yet [?]. }
+procedure CancelParalysisHook(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  CancelPendingHook(AffectParalysis);
+end;
 { ovl12:29D9: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e94; begin end;
 { ovl12:29F0: retf 10: 10 bytes of parameters; 0 bytes of locals }
