@@ -290,12 +290,12 @@ id = "ovl03:0994"
 unit = "ovl03"
 addr = "ovl03:0994"
 size = 117
-name = "ovl03_fn_0994"
+name = "ReadStringCommand"
 signature = ""
 c_name = "ovl03_fn_0994"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_0994 (ECL command 16 (opcode 10h in the dispatcher ovl03:2F2D, the string twin of ReadNumberCommand): reads a line with ReadInputLine and stores it with WriteVmString at operand 2's address (ovl03:0994, matched)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

@@ -18,7 +18,7 @@ procedure AddEncounterGroupCommand;
 procedure ApproachEncounterCommand;
 procedure ShowCloseUpCommand;
 procedure ReadNumberCommand;
-procedure ovl03_fn_0994;
+procedure ReadStringCommand;
 procedure ovl03_fn_0A09;
 procedure ovl03_fn_0A9F;
 procedure ovl03_fn_0AED;
@@ -104,6 +104,9 @@ const
   NoHeadBank = $FF;
   { The picture bank ECL command 14 (ovl03:0856) takes to hide the close-up instead of showing it. }
   HideCloseUp = $FF;
+  { The colour and the longest line of the text ECL command 16 asks for (ovl03:0994). }
+  EclTextColor = 10;
+  EclInputMaxLength = 40;
 var
   { ds84C8 (POOLVARS) under the type ShowEncounterPicture takes: TPictureShown is declared in OVL07,
     and Turbo Pascal accepts a var argument only of the identical type. }
@@ -485,8 +488,25 @@ begin
   Number := ReadNumber(Prompt, 10);
   WriteVmWord(Target, Number);
 end;
-{ ovl03:0994: retf 0: 0 bytes of parameters; 516 bytes of locals }
-{@stub} procedure ovl03_fn_0994; begin end;
+{ ovl03:0994. ECL command 16 (dispatcher ovl03:2F2D, SkippedOpcode 16): asks the player for a line of
+  text and stores it as a string at the script address that operand 2 names (WriteVmString). Operand
+  1 is decoded but never read. The prompt is empty; ReadInputLine (RES06) reads the line in colour
+  EclTextColor, at most EclInputMaxLength characters. An empty answer is stored as one space, so the
+  script's string is never empty. }
+procedure ReadStringCommand;
+var
+  Prompt: string[1];
+  Target: Word;
+  Answer: string;
+begin
+  DecodeOperands(2);
+  Prompt := '';
+  Target := MakeWord(OperandLow[2], OperandHigh[2]);
+  Answer := ReadInputLine(Prompt, EclTextColor, EclInputMaxLength);
+  if Length(Answer) = 0 then
+    Answer := ' ';
+  WriteVmString(Target, Answer);
+end;
 { ovl03:0A09: retf 0: 0 bytes of parameters; 256 bytes of locals }
 {@stub} procedure ovl03_fn_0A09; begin end;
 { ovl03:0A9F: retf 0: 0 bytes of parameters; 0 bytes of locals }
