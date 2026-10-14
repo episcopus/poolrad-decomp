@@ -3749,3 +3749,10 @@ kind = "routine"
 why = "ovl03:2B7E is the handler of ECL opcode 54 (dispatcher ovl03:2F2D, cmp al,36h): ovl17_e7(kind) adds the rolled member (it calls AddPartyMember, ovl17:1446), then its B84 is (operand 2 shr 1) or $80, the computer-run bit (TCharacter.B84, POOLVARS), and its Side is set from the kind"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl03_fn_2C03"
+new = "FindMemorizedSpellCommand"
+kind = "routine"
+why = "ovl03:2C03 is the handler of ECL opcode 59 (dispatcher ovl03:2F2D, cmp al,3Bh): it compares operand 1 with the bytes from TCharacter.Spells[1] (+$18 on, the memorized spells of POOLVARS, which CombatMenu and ovl14 read) of the first party member and writes the slot found (or $FF) and the member count"
+date = "2026-10-13"
+

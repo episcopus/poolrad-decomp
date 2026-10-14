@@ -732,12 +732,12 @@ id = "ovl03:2C03"
 unit = "ovl03"
 addr = "ovl03:2C03"
 size = 204
-name = "ovl03_fn_2C03"
+name = "FindMemorizedSpellCommand"
 signature = ""
 c_name = "ovl03_fn_2C03"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_2C03 (ovl03:2C03 is the handler of ECL opcode 59 (dispatcher ovl03:2F2D, cmp al,3Bh): it compares operand 1 with the bytes from TCharacter.Spells[1] (+$18 on, the memorized spells of POOLVARS, which CombatMenu and ovl14 read) of the first party member and writes the slot found (or $FF) and the member count); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

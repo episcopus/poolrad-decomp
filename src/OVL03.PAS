@@ -51,7 +51,7 @@ procedure NewLineCommand;
 procedure ClearPictureWindowCommand;
 procedure ChoosePartyMemberCommand;
 procedure AddComputerMemberCommand;
-procedure ovl03_fn_2C03;
+procedure FindMemorizedSpellCommand;
 procedure ovl03_fn_2CCF;
 procedure ovl03_fn_2D39;
 procedure ovl03_fn_2DBA;
@@ -165,6 +165,10 @@ const
   EndTextColor = 10;
   EndPauseMs = 3000;
   ContinueColor = 15;
+  { ECL command 59 (ovl03:2C03): the last slot the search reaches, and the slot value it returns when the
+    value is not found (the byte $FF, that is -1 in a ShortInt). }
+  SpellScanLast = 81;
+  NoSpellSlot = $FF;
   { ECL command 54 (ovl03:2B7E): the kind that makes the added member a member of the other side (Side 1),
     and the high bit of its B84 byte that marks a computer-run member. }
   OtherSideKind = $18;
@@ -1694,8 +1698,52 @@ begin
   res12_fn_0BB8(SelectedCharacter);
   res12_fn_0767(SelectedCharacter);
 end;
-{ ovl03:2C03: retf 0: 0 bytes of parameters; 10 bytes of locals }
-{@stub} procedure ovl03_fn_2C03; begin end;
+{ ovl03:2C03. ECL command 59 (dispatcher ovl03:2F2D, SkippedOpcode 3Bh): looks for the value of operand 1
+  among the memorized spells of the first party member (ds5D96, TCharacter.Spells). The bytes from Spells[1]
+  up are compared with the value one by one, up to slot SpellScanLast. Operand 2 receives the slot found,
+  or NoSpellSlot when none in those bytes has it; operand 3 receives Count, the members walked (1 for a party
+  with a member, 0 for an empty one). Purpose unknown: what the script does with the two results.
+  QUIRK ovl03:2C03: the walk stops after the first member, because the search sets Found both when it finds
+  the value and when it runs out of slots. QUIRK ovl03:2C03: Found is tested before the routine sets it, so
+  the search runs only when that stack byte is zero. QUIRK ovl03:2C03: the two target addresses are kept as
+  bytes (the high byte of each operand address is lost). QUIRK ovl03:2C03: the scan runs past the 21 entries
+  of Spells, through the record bytes after them. }
+procedure FindMemorizedSpellCommand;
+var
+  Value: Byte;                  { operand 1: the value searched for }
+  I: Byte;                      { the slot searched, from 1 }
+  Count: Byte;                  { the members walked }
+  Member: PCharacter;           { the party member being searched }
+  Found: Boolean;               { QUIRK ovl03:2C03: read before it is set }
+  SlotAddr: Byte;               { operand 2: script address of I (its high byte is lost, QUIRK ovl03:2C03) }
+  CountAddr: Byte;              { operand 3: script address of Count (QUIRK ovl03:2C03) }
+begin
+  DecodeOperands(3);
+  Value := OperandValue(1);
+  SlotAddr := MakeWord(OperandLow[2], OperandHigh[2]);
+  CountAddr := MakeWord(OperandLow[3], OperandHigh[3]);
+  I := 1;
+  Count := 0;
+  Member := PCharacter(ds5D96);
+  while (Member <> nil) and (not Found) do
+  begin
+    repeat
+      if Member^.Spells[I] = Value then
+        Found := True
+      else if I <= SpellScanLast then
+        Inc(I)
+      else
+      begin
+        I := NoSpellSlot;
+        Found := True;
+      end;
+    until Found;
+    Member := Member^.Next;
+    Inc(Count);
+  end;
+  WriteVmWord(SlotAddr, I);
+  WriteVmWord(CountAddr, Count);
+end;
 { ovl03:2CCF: frame not read }
 {@stub} procedure ovl03_fn_2CCF; begin end;
 { ovl03:2D39: frame not read }
