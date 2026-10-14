@@ -3400,6 +3400,83 @@ why = "ovl20:0721 draws the 'Rest daYs Hours Mins Inc Dec Exit' menu through Rea
 date = "2026-10-13"
 
 [[rename]]
+old = "ovl17_e1"
+new = "ReadSavedCharacterList"
+kind = "routine"
+why = "ovl17:0010 reads charlist.txt (SaveDir + charlist.txt) and builds a 46-byte menu line per saved character, prefixing a star for a name already in the party list ds5D96; called by ovl16 character menu and ovl17_e4"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl17_e2"
+new = "RewriteSavedCharacterList"
+kind = "routine"
+why = "ovl17:01B8 rewrites the save disk charlist.txt from a saved-character menu list: CreateSaveDir, Rewrite the file (prompting for the save disk while the open fails), WriteLn each list line whose text does not start with a star (party members skipped), Close; called by ovl16 add-character menu and ovl17_e4"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl17_fn_032F"
+new = "MergePictureData"
+kind = "routine"
+why = "ovl17:032F combines two in-memory pictures: ORs Source (the first parameter, ds5E5A slot 11 reference) tail/tile bytes into Dest and ANDs its pixel bytes into Dest, so Source masks Dest; called by ovl17_e3 for the character head and body pictures"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl17_e3"
+new = "BuildCharacterIcon"
+kind = "routine"
+why = "ovl17:0482 loads the selected character's CHEAD (slot 11) and CBODY (its icon slot) pictures, merges the head halves into the body halves with MergePictureData, and optionally recolours the icon from the six Figure nibble pairs through ds3CF5; called by the ovl16 character menus, ovl17_e7 and ovl17_e8"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl17_e4"
+new = "SaveCharacter"
+kind = "routine"
+why = "ovl17:069E saves one character to the save disk: with an empty Name it adds the character's name to charlist.txt and writes SaveDir + DOS-cleaned name + .cha, with a Name it writes SaveDir + Name + .sav; BlockWrites the 285-byte character and the 63-byte items (.itm) and 9-byte affects (.spc) lists; called by ovl16_e1, ovl16_fn_1EA3 and ovl17_e9"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl17_e5"
+new = "LoadCharacterFile"
+kind = "routine"
+why = "ovl17:0AEC reads one character and its item/affect lists from the save or game disk: it opens FileName + '.sav'/'.cha' through OpenGameFile, BlockReads the 285-byte record into Who^ and reads the .itm (63) and .spc (9) lists to end of file; the read counterpart of SaveCharacter (ovl17:069E); called by ovl16_fn_306D and ovl17_e8"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl17_e6"
+new = "LoadMonster"
+kind = "routine"
+why = "ovl17:0EC4 loads a monster: it builds MON<Str(TileSet)>CHA/SPC/ITM.DAX names, LoadDaxBlock block Kind from the poolrad MON<N>CHA/SPC/ITM.DAX archives, Moves the 285-byte record into Who^, clears its list links, builds the Figure descriptor with RollDice(1,6) nibble pairs and copies the 9-byte affects and 63-byte items into GetMem chains; called by ovl07 LoadCharacter and ovl17_e7"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl17_e7"
+new = "AddMonsterToParty"
+kind = "routine"
+why = "ovl17:1262 adds a monster of Kind to the party: it returns at once when the party already holds eight members (ds49D6^[830] > 7), has LoadMonster build the record, gives it a random byte at +AB, picks one of the classes with a positive level (RollDice(1, Count)) and the body/head picture banks from the ds08C5-region tables by Who^.B9E and the roll, then AddPartyMember and BuildCharacterIcon(True); called by ovl03_fn_2B7E"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl17_e11"
+new = "SaveAndExit"
+kind = "routine"
+why = "ovl17:22D5 shows the 'Save and exit Insert disk #N' prompt and, on the S hotkey, saves the game (ovl17_e9) and quits; called by ovl03:0BD1 with the area ECL file name, which gates it"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl17_e9"
+new = "SaveGame"
+kind = "routine"
+why = "ovl17:1D58 prompts for a slot letter and writes the whole game state and every party member to SaveDir + savgam<letter>.dat; called by the heap error handler, MakeCamp, the character menu and SaveAndExit"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl17_e8"
+new = "LoadGame"
+kind = "routine"
+why = "ovl17:1602 loads a saved game from SaveDir + savgam<slot>.dat, restores the game state and the party, rebuilds every member icon and the area view; the counterpart of SaveGame; called by ovl16_e1"
+date = "2026-10-13"
+
+[[rename]]
 old = "res07_fn_0D71"
 new = "DrawPictureItemClipped"
 kind = "routine"

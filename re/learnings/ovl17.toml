@@ -35,3 +35,111 @@ tags = ["map", "boundary", "phantom", "pool", "routine", "split"]
 title = "The map can split one routine into several entries at mid-instruction or literal-pool addresses"
 lesson = "re/symbols.toml boundaries are approximate: an entry can start mid-instruction (no push bp prologue) or inside the previous routine's literal pool, so several map entries can tile one real routine. In ovl17 the real routines each have one push bp; mov bp,sp prologue and one retf; entries ovl17_fn_0818/084A/0865 are mid-ovl17_e4 (which really runs 069E..0AC1, one frame, one retf 8), ovl17_fn_0B48 is mid-ovl17_e5 (0AEC..0E95), ovl17_fn_0F99 is mid-ovl17_e6 (0EC4..125F), and ovl17_fn_0AE5 is inside ovl17_e5's pre-entry literal pool. Find every real prologue by scanning for push bp before drafting: decompile the whole real routine, then make match WRITE=1 removes the phantom entries inside the matched range. Do not decompile a mid-instruction entry as its own routine (its frame fields are the parent's)."
 evidence = ["src/OVL17.PAS", "re/symbols.toml#ovl17:0818", "re/symbols.toml#ovl17:0B48", "re/symbols.toml#ovl17:0F99", "docs/design/WHITEPAPER.md#5.11"]
+
+[[lesson]]
+id = "text-file-runtime-entries"
+confidence = "V"
+units = ["*"]
+tags = ["text", "file", "assign", "reset", "eof", "readln", "close", "runtime", "System"]
+title = "The Text file statements name these System entries"
+lesson = "The TP 6.0 contract for `Text` files: `Assign(F, S)` calls 0AF8:04F7 (0AF8:13E2 is the other Assign entry used when the record is a typed file), `Reset(F)` calls 0AF8:0567, `Rewrite(F)` calls 0AF8:056C (the 5 bytes after Reset), `Eof(F)` calls 0AF8:0A04 (Boolean in AL), `ReadLn(F, Target)` calls System_StrLCopy with the target's max length then 0AF8:081C, `Write(F, S)` calls 0AF8:0919 then res00_fn_086E, `WriteLn(F, S)` calls 0AF8:0919 then 0AF8:084A, and `Close(F)` calls 0AF8:05C1. A `Text` local occupies $100 bytes of frame and is addressed at its base. Probes tools/re/tp_idioms/ovl17/TEXTPRB.PAS and FILEPRB.PAS."
+evidence = ["tools/re/tp_idioms/ovl17/TEXTPRB.PAS", "tools/re/tp_idioms/ovl17/FILEPRB.PAS", "src/OVL17.PAS#ReadSavedCharacterList", "src/OVL17.PAS#RewriteSavedCharacterList"]
+
+[[lesson]]
+id = "guard-exit-shares-string-temp"
+confidence = "V"
+units = ["*"]
+tags = ["temp", "string", "frame", "if", "exit", "layout"]
+title = "`if not Cond then Exit;` lets the next statement reuse the condition's string temp"
+lesson = "An `if Cond then begin ... end` whose condition builds a string (for example `FileExists(Dir + Name)`) keeps that 256-byte string temp live through the whole if, so the body's string expressions get a second temp and the frame grows by $100. Rewriting it as a guard, `if not Cond then Exit;` followed by the body as separate statements, frees the condition's temp at the `;`, so the next `Dir + Name` reuses the same $20c slot: this is how ovl17:0010 keeps a single temp (frame $20c). The two arms compile to the same branch shape (`or al,al; jne body; jmp epilogue`), so only the frame size tells them apart. Probe tools/re/tp_idioms/ovl17/TEXTTEMP.PAS."
+evidence = ["tools/re/tp_idioms/ovl17/TEXTTEMP.PAS", "src/OVL17.PAS#ReadSavedCharacterList"]
+
+[[lesson]]
+id = "video-adapter-dispatch-is-a-case"
+confidence = "V"
+units = ["*"]
+tags = ["VideoAdapter", "case", "codegen", "dispatch"]
+title = "The VideoAdapter dispatch over 0/2 and 1 is a case, not an if"
+lesson = "A multi-label `case VideoAdapter of 0, 2: ...; 1: ...` loads the byte once and compares: `mov al,[VideoAdapter]; cmp al,0; je A; cmp al,2; je A; jmp Check1` (see res07 DrawPictureItem, 0464:0949, and ovl17:032F, ovl17:0335). The equivalent `if (VideoAdapter = 0) or (VideoAdapter = 2) then ... else if VideoAdapter = 1 then ...` compares the memory operand directly (`cmp byte [VideoAdapter],0`) and does not match. Use the case form when the dispatch compares the adapter more than once."
+evidence = ["src/OVL17.PAS#MergePictureData", "src/RES07.PAS#DrawPictureItem", "tools/re/tp_idioms/ovl17/PARAMPRB.PAS"]
+
+[[lesson]]
+id = "in-memory-picture-record"
+confidence = "V"
+units = ["*"]
+tags = ["picture", "TMemPic", "Pixels", "ByteSize", "T8x8Bank", "PByteArray"]
+title = "The in-memory picture record and how to index its Pixels pointer"
+lesson = "A loaded picture is the record ovl32 calls TMemPic: height at +0, width in columns at +2, the item count at +8, ByteSize at +$11, the Pixels pointer at +$13 and the copied tail at +$17 (ovl11/ovl32 load it; ovl17:032F reads ByteSize, Pixels and Tail of two such records). Its Pixels field is a `^Byte`, and a `^Byte` field cannot be indexed directly: `Rec^.Pixels[I]` is Error 121 (Invalid qualifier), so write `PByteArray(Rec^.Pixels)^[I]` (RES05 exports PByteArray/TByteArray). T8x8Bank in POOLVARS is the same bytes with Gap at +$13 instead of Pixels; do not confuse them."
+evidence = ["src/OVL32.PAS#TMemPic", "src/OVL17.PAS#MergePictureData", "tools/re/tp_idioms/ovl17/PIXPRB.PAS", "tools/re/tp_idioms/ovl17/PARAMPRB.PAS"]
+
+[[lesson]]
+id = "byte-nibble-split-mask"
+confidence = "V"
+units = ["*"]
+tags = ["nibble", "shr", "and", "byte", "codegen"]
+title = "Splitting a byte into nibbles needs the mask written out"
+lesson = "To split a byte X into its nibbles the original writes `X and $0F` for the low nibble and `(X and $F0) shr 4` for the high one. The plain `X shr 4` compiles to `mov al,X; xor ah,ah; mov cx,4; shr ax,cl` and is 2 bytes shorter than the original's `mov al,X; and al,$F0; xor ah,ah; mov cx,4; shr ax,cl` (ovl17:05D7..05E3). The `and al,$F0` must be in the source. Probe tools/re/tp_idioms/ovl17/RECOLPRB.PAS."
+evidence = ["src/OVL17.PAS#BuildCharacterIcon", "tools/re/tp_idioms/ovl17/RECOLPRB.PAS"]
+
+[[lesson]]
+id = "untyped-file-runtime-entries"
+confidence = "V"
+units = ["*"]
+tags = ["file", "untyped", "rewrite", "reset", "erase", "blockwrite", "assign", "string-parameter"]
+title = "The untyped file statements name these System entries"
+lesson = "For an untyped `file`: `Assign(F, Name)` calls 0AF8:13E2; `Reset(F, RecSize)` calls 0AF8:1410 (INT 21h AH=3Dh, open existing) with the size pushed; `Rewrite(F, RecSize)` calls 0AF8:1419, the twin nine bytes on (INT 21h AH=3Ch, create), also with the size pushed; `Erase(F)` calls 0AF8:161F (INT 21h AH=41h, delete) with only the record's address pushed; `Close(F)` calls 0AF8:1491 and `BlockWrite(F, Buf, Count)` calls 0AF8:1502. FileRec is $80 bytes. A value `string[N]` parameter is copied in the callee with System_StrLCopy limit N and the copy reads the pointer at [bp+6], so the value string parameter is the LAST declared parameter. Probes tools/re/tp_idioms/ovl17/FILEOP2.PAS and PROLOGPR.PAS."
+evidence = ["src/OVL17.PAS#SaveCharacter", "tools/re/tp_idioms/ovl17/FILEOP2.PAS", "tools/re/tp_idioms/ovl17/PROLOGPR.PAS"]
+
+[[lesson]]
+id = "two-dimensional-array-index-uses-di"
+confidence = "V"
+units = ["*"]
+tags = ["array", "2d", "index", "codegen", "register", "di", "stride"]
+title = "A 2-D array access computes the flat index in DI, a hand-written 1-D index in AX"
+lesson = "For `Arr[I, J]` (a declared 2-D array) TP 6.0 computes the flat offset I * (row length) + J in DI: `mov di, ax; mov si, di; shl di, 1; shl di, 1; add di, si; add di, dx` for a row length of 5 (and `mov di, ax; mov cl, 3; shl di, cl; add di, dx` for 8). The same arithmetic written by hand as a 1-D index `Arr[I * 5 + J]` accumulates in AX instead (`mov si, ax; shl ax, 1; shl ax, 1; add ax, si; add ax, dx; mov di, ax`), which the matcher rejects. When the original indexes a table by a row and a column, declare it 2-D (the row length gives the stride, the row count sets the field's extent). Proven by the matched `ovl23:041A` (ComputeThiefSkills, `ThiefDexTable[Dexterity, Skill]`) and ovl17's AddMonsterToParty (`ovl17:132C`, `MonsterBanks.BodyClass0[B9E, RollDice(1, 5)]`); probe tools/re/tp_idioms/ovl17/E7PROB.PAS."
+evidence = ["src/OVL23.PAS#ComputeThiefSkills", "src/OVL17.PAS#AddMonsterToParty", "tools/re/tp_idioms/ovl17/E7PROB.PAS"]
+
+[[lesson]]
+id = "absolute-record-alias-folds-field-offset"
+confidence = "V"
+units = ["*"]
+tags = ["absolute", "record", "alias", "table", "displacement", "codegen", "frame"]
+title = "An `absolute` record alias over a byte table folds the field offset into the displacement"
+lesson = "Indexing a global byte array with a constant offset (`Arr[18 + I]`) makes TP 6.0 add the constant in a register (`add ax, 0x12; mov di, ax; mov al, [di + base]`). Reinterpreting the same bytes with an `absolute` record alias and indexing the field (`Banks.Body[I]`, the field laid out at +18) folds the offset into the displacement (`mov al, [di + base + 18]`) with no register add. When the original reads a table at a fixed offset inside another table, declare a record type with a field at that offset and an `absolute` alias (ovl17:1332, MonsterBanks over ds08C5). Probes tools/re/tp_idioms/ovl17/IDXPROB.PAS (the three 1-D shapes all fail to fold) and ABSPROB.PAS (the record alias folds)."
+evidence = ["src/OVL17.PAS#AddMonsterToParty", "tools/re/tp_idioms/ovl17/ABSPROB.PAS", "tools/re/tp_idioms/ovl17/IDXPROB.PAS"]
+
+[[lesson]]
+id = "string-constant-argument-stays-on-stack"
+confidence = "V"
+units = ["*"]
+tags = ["string", "constant", "argument", "overlay", "O+", "StrCopy", "stack", "call"]
+title = "A string constant argument under $O+ is copied into the argument slot and left on the stack"
+lesson = "In an overlay unit ($O+) passing a string constant to a routine compiles to: push the argument-slot address, then push the constant literal address and call System_StrCopy (0AF8:0B0B), which pops only the source (retf 4), leaving the argument-slot pointer on the stack as the routine's argument; the other arguments are pushed after it. The slot is an unnamed compiler temp. So `ReadPromptChoice('Load Which Game: ', GameList, ...)` puts the literal in a temp and GameList becomes the second string argument, and `ReadPromptChoice('Save Which Game: ', 'A B C D E F G H I J', ...)` uses two such temps. Probe tools/re/tp_idioms/ovl17/CALLPRB.PAS; seen at ovl17:16B2 and ovl17:1D5F."
+evidence = ["tools/re/tp_idioms/ovl17/CALLPRB.PAS", "src/OVL17.PAS#LoadGame", "src/OVL17.PAS#SaveGame"]
+
+[[lesson]]
+id = "signed-compare-needs-integer-cast"
+confidence = "V"
+units = ["*"]
+tags = ["compare", "word", "integer", "signed", "jl", "codegen"]
+title = "A signed compare of a Word field takes an Integer cast"
+lesson = "`if W >= 0` with W: Word compiles to an unsigned test; the original's `cmp word [..],0; jl` (signed less) comes from `if Integer(W) >= 0`, which reinterprets the word and emits `jl`. Use the cast rather than changing a shared field's type. Seen at ovl17:1C6B (LoadGame, `Integer(ds6AAEWords[I].A) >= 0`)."
+evidence = ["src/OVL17.PAS#LoadGame"]
+
+[[lesson]]
+id = "dec-array-step-is-a-byte-sub"
+confidence = "V"
+units = ["*"]
+tags = ["dec", "inc", "byte", "subtract", "direction", "codegen"]
+title = "Dec(x, Arr[I]) steps a byte variable in place; x := x - Arr[I] widens"
+lesson = "`Dec(PartyMapColumn, DirStepX[PartyFacing])` compiles to `mov al,[DirStepX+..]; sub byte [PartyMapColumn], al`, while `PartyMapColumn := PartyMapColumn - DirStepX[PartyFacing]` widens both to 16 bits (`cwde; sub ax,dx; mov [..],al`), four bytes longer. ovl14's MoveParty uses the matching `Inc(x, Arr[I])`; ovl17:237E (SaveAndExit) needs the Dec form."
+evidence = ["src/OVL17.PAS#SaveAndExit", "src/OVL14.PAS#MoveParty"]
+
+[[lesson]]
+id = "sum-plus-product-operand-order"
+confidence = "V"
+units = ["*"]
+tags = ["sum", "product", "operand", "order", "codegen", "byte", "word"]
+title = "A sum whose terms are a byte and a byte product loads the plain byte first when the product is the left term"
+lesson = "For `X := B * 2 + A` (A, B: Byte; X: Word) TP 6.0 loads A first (into DX), then B (`shl ax,1`), then `add ax,dx`; the mirror `X := A + B * 2` loads B first. So the original's `mov al,[ShowPortraits]; mov dx,ax; mov al,[ShowMonsterPics]; shl ax,1; add ax,dx` (ovl17:1EF6) is `ShowMonsterPics * 2 + ShowPortraits`. Probe tools/re/tp_idioms/ovl17/SUMPRB.PAS."
+evidence = ["tools/re/tp_idioms/ovl17/SUMPRB.PAS", "src/OVL17.PAS#SaveGame"]
