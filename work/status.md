@@ -12,7 +12,7 @@ Approach: ADR-002 (SPEC 4), Pascal-first matching decompilation; the C track (AD
 | P1 Map | done (`make p1-check`): 50 units, 1024 routines, TP 6.0 June 1991 pinned |
 | P2 Oracle and data | done: goldens with recordings for 2 of 2 session scripts (boot-title, create-character); `make golden CHECK=1` |
 | P3 Match harness | done: `make match` (tools/match/match.py, tests/unit/test_match.py); gate `make check` |
-| P4 Match | 804 of 804 game routines at L2 (235599 of 235599 bytes by re/symbols.toml sizes); 46 of 46 game units complete, 45 reviewed; 20 routines (3661 bytes) inside external object files are not Pascal and are matched by bytes; main program `src/POOL.PAS` matched by `make match UNIT=main` |
+| P4 Match | 804 of 804 game routines at L2 (235599 of 235599 bytes by re/symbols.toml sizes); 46 of 46 game units complete, 46 reviewed; 20 routines (3661 bytes) inside external object files are not Pascal and are matched by bytes; main program `src/POOL.PAS` matched by `make match UNIT=main` |
 | P5 Rebuild | `make rebuild` links the whole game from `src/` (every unit has source: decompiled or skeleton) and reports identical segments |
 
 ### P4 units with matched routines
@@ -22,7 +22,7 @@ Approach: ADR-002 (SPEC 4), Pascal-first matching decompilation; the C track (AD
 | ovl00 | ovl00 | 2 | 2 | 124 | clean | yes |
 | ovl01 | ovl01 | 4 | 4 | 2062 | clean | yes |
 | ovl02 | ovl02 | 2 | 2 | 609 | clean | yes |
-| ovl03 | Encounter | 56 | 56 | 13674 | clean | complete |
+| ovl03 | Encounter | 56 | 56 | 13674 | clean | yes |
 | ovl04 | Temple | 12 | 12 | 3876 | clean | yes |
 | ovl05 | TreasureShare | 12 | 12 | 5750 | clean | yes |
 | ovl06 | Shop | 5 | 5 | 1901 | clean | yes |
