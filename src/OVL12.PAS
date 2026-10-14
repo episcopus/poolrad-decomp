@@ -60,9 +60,7 @@ procedure ovl12_e48(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e49(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ReduceFireDamageByRoll(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure AddTrainedOutAndHeal(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_fn_1543;
-procedure ovl12_fn_1545;
-procedure ovl12_fn_1583;
+procedure PoisonAttackTarget(Who: PCharacter; Bonus: ShortInt);
 procedure ovl12_fn_15EB;
 procedure ovl12_e52;
 procedure ovl12_e53;
@@ -194,6 +192,7 @@ const
   AffectStrength1 = $0C;        { the two strength affects (ovl24:115C keeps the earlier strength in them) }
   AffectStrength2 = $26;
   AffectPoisoned = $37;         { the Poisoned affect (ovl15 names it 'Poisoned'; ovl04 calls it AffectPoison) }
+  SaveKindPoison = 0;           { SavingThrow kind 0, the first of the five saves: the poison save [I] (ovl12:1545) }
   AffectUnknown0F = $0F;        { purpose unknown; ovl04 removes it with the poison affect $37 (ovl04:0807) }
   AffectUnknown0FDuration = 10; { the Duration ovl12:05EB gives affect $0F }
   AffectUnknown18 = $18;        { purpose unknown: the affect SelectedCharacter must have for ds681E to stay 0 (ovl12:0918) }
@@ -1090,12 +1089,23 @@ begin
     if HealCharacter(Who, 1, 1) then
       res12_fn_234A(Who);
 end;
-{ ovl12:1543: frame not read }
-{@stub} procedure ovl12_fn_1543; begin end;
-{ ovl12:1545: frame not read }
-{@stub} procedure ovl12_fn_1545; begin end;
-{ ovl12:1583: retf 6: 6 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_fn_1583; begin end;
+{ ovl12:1545. Poison hook of an attack (the frame is Who and Bonus; Bonus is the save bonus, 0 in ovl12_e52's call at
+  ovl12:166A). AttackTarget becomes Who's Combat^.Target, the character Who attacked last. That character makes a poison
+  save (SaveKindPoison, with Bonus). When it fails, "is Poisoned" (colour 10) is shown on it, DelayByGameSpeed waits, it
+  gets AffectPoisoned for good (AddAffect with Duration 0, Data $FF, no handler on removal) and DropFromFight kills it
+  with StatusGone and "is killed". The map split this routine at ovl12:1543 and ovl12:1583, which are inside its
+  literal pool and inside its code. Which affect runs it is not known yet [?]. }
+procedure PoisonAttackTarget(Who: PCharacter; Bonus: ShortInt);
+begin
+  AttackTarget := Who^.Combat^.Target;
+  if not SavingThrow(AttackTarget, SaveKindPoison, Bonus) then
+  begin
+    res12_fn_16EC(AttackTarget, 'is Poisoned', $A, 0);
+    DelayByGameSpeed;
+    AddAffect(AttackTarget, AffectPoisoned, 0, $FF, NoRemoveHandler);
+    DropFromFight(AttackTarget, StatusGone, 'is killed');
+  end;
+end;
 { ovl12:15EB: retf 8: 8 bytes of parameters; 14 bytes of locals }
 {@stub} procedure ovl12_fn_15EB; begin end;
 { ovl12:165D: retf 10: 10 bytes of parameters; 0 bytes of locals }

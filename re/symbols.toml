@@ -3823,7 +3823,7 @@ evidence = ["prologue"]
 id = "ovl12:14EB"
 unit = "ovl12"
 addr = "ovl12:14EB"
-size = 88
+size = 90
 name = "AddTrainedOutAndHeal"
 signature = "procedure AddTrainedOutAndHeal(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e51"
@@ -3833,43 +3833,17 @@ notes = "renamed from ovl12_e51 (ovl12:14EB is the AddHealingBlockAndHeal shape 
 evidence = ["prologue"]
 
 [[routine]]
-id = "ovl12:1543"
-unit = "ovl12"
-addr = "ovl12:1543"
-size = 2
-name = "ovl12_fn_1543"
-signature = ""
-c_name = "ovl12_fn_1543"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
 id = "ovl12:1545"
 unit = "ovl12"
 addr = "ovl12:1545"
-size = 62
-name = "ovl12_fn_1545"
-signature = ""
+size = 153
+name = "PoisonAttackTarget"
+signature = "procedure PoisonAttackTarget(Who: PCharacter; Bonus: ShortInt)"
 c_name = "ovl12_fn_1545"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl12_fn_1545 (ovl12:1545 (153 bytes, its literal pool 152F-1544): the attacked character (Who's Combat^.Target) makes a poison save (SavingThrow kind 0 with Bonus, ovl12_e52 passes 0); on failure it shows 'is Poisoned', gets AffectPoisoned for good and DropFromFight kills it (StatusGone, 'is killed')); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:1583"
-unit = "ovl12"
-addr = "ovl12:1583"
-size = 104
-name = "ovl12_fn_1583"
-signature = ""
-c_name = "ovl12_fn_1583"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:15EB"

@@ -3749,3 +3749,10 @@ kind = "routine"
 why = "ovl12:14EB is the AddHealingBlockAndHeal shape (ovl12:12FB) with AffectTrainedOut: TryAddAffect(Who, AffectTrainedOut, Affect^.Data, TrainedOutDuration), then HealCharacter(Who, 1, 1) and res12_fn_234A when it healed"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_fn_1545"
+new = "PoisonAttackTarget"
+kind = "routine"
+why = "ovl12:1545 (153 bytes, its literal pool 152F-1544): the attacked character (Who's Combat^.Target) makes a poison save (SavingThrow kind 0 with Bonus, ovl12_e52 passes 0); on failure it shows 'is Poisoned', gets AffectPoisoned for good and DropFromFight kills it (StatusGone, 'is killed')"
+date = "2026-10-13"
+
