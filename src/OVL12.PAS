@@ -69,7 +69,7 @@ procedure ParalyzeAttackTargetFor2d8(Who: PCharacter; Affect: PAffect; Mode: Byt
 procedure ParalyzeAttackTargetUnlessImmune(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ParalyzeAttackTargetFor1d9Plus10(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure PoisonAttackTargetBonusMinus2(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e59;
+procedure SetFlagAndLowerAttackRollByFour(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e60;
 procedure ovl12_fn_1758;
 procedure ovl12_e61;
@@ -1181,8 +1181,14 @@ procedure PoisonAttackTargetBonusMinus2(Who: PCharacter; Affect: PAffect; Mode: 
 begin
   PoisonAttackTarget(Who, -2);
 end;
-{ ovl12:171F: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e59; begin end;
+{ ovl12:171F. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none of them is read, ovl24:0000). Sets
+  ds681E to 1 (the flag ovl12:0918 and ovl12:0C26 also set; nothing reads it yet) and takes AttackPenalty off AttackRoll
+  without the test LowerAttackRollByFour (ovl12:0918) makes first. Which affect runs it is not known yet [?]. }
+procedure SetFlagAndLowerAttackRollByFour(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  ds681E := 1;
+  Dec(AttackRoll, AttackPenalty);
+end;
 { ovl12:1730: frame not read }
 {@stub} procedure ovl12_e60; begin end;
 { ovl12:1758: retf 10: 10 bytes of parameters; 0 bytes of locals }
