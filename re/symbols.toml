@@ -10152,39 +10152,26 @@ evidence = ["prologue"]
 id = "ovl22:1658"
 unit = "ovl22"
 addr = "ovl22:1658"
-size = 256
-name = "ovl22_e27"
+size = 383
+name = "CastHoldPerson"
 signature = ""
 c_name = "ovl22_e27"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_27"
+notes = "renamed from ovl22_e27 (ovl22:1658 applies spell 23 to the chosen targets with the message 'is held'; ovl22_e10 maps DS:6B84+23*4 to its stub 0096:00A7 and SpellNames[23] (DS:2C98) is 'Hold Person'); auto:entry_27"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl22:1758"
-unit = "ovl22"
-addr = "ovl22:1758"
-size = 145
-name = "ovl22_fn_1758"
-signature = ""
-c_name = "ovl22_fn_1758"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl22:17E9"
 unit = "ovl22"
 addr = "ovl22:17E9"
 size = 57
-name = "ovl22_e28"
+name = "CastResistFire"
 signature = ""
 c_name = "ovl22_e28"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_28"
+notes = "renamed from ovl22_e28 (ovl22:17E9 applies spell 24 to the chosen targets with the message 'is fire resistant'; ovl22_e10 maps DS:6B84+24*4 to its stub 0096:00AC and SpellNames[24] (DS:2CC1) is 'Resist Fire'); auto:entry_28"
 evidence = ["prologue"]
 
 [[routine]]
@@ -10192,12 +10179,12 @@ id = "ovl22:1822"
 unit = "ovl22"
 addr = "ovl22:1822"
 size = 57
-name = "ovl22_e29"
+name = "CastSilence"
 signature = ""
 c_name = "ovl22_e29"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_29"
+notes = "renamed from ovl22_e29 (ovl22:1822 applies spell 25 to the chosen targets with the message 'is silenced'; ovl22_e10 maps DS:6B84+25*4 to its stub 0096:00B1 and SpellNames[25] (DS:2CEA) is 'Silence, 15' Radius'); auto:entry_29"
 evidence = ["prologue"]
 
 [[routine]]

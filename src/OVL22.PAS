@@ -33,10 +33,9 @@ procedure CastMagicMissile;
 procedure CastShield;
 procedure CastShockingGrasp;
 procedure CastSleep;
-procedure ovl22_e27;
-procedure ovl22_fn_1758;
-procedure ovl22_e28;
-procedure ovl22_e29;
+procedure CastHoldPerson;
+procedure CastResistFire;
+procedure CastSilence;
 procedure ovl22_e30;
 procedure ovl22_e31;
 procedure ovl22_e32;
@@ -266,7 +265,7 @@ end;
   5d4, $3B is 1d4*10+40, $3F is 2d10*10 in combat (view mode 5) else (1d10+10)*10, and $43 is a flat
   $5A0. Every other value uses the SpellTable row's duration base (byte +4) plus its per-level byte
   (byte +5) times the caster level from res12_fn_26C2. Called by ApplySpellToTargets (as ApplyAffect's
-  Duration) and CastEnlarge, ovl22_fn_1758, ovl22_fn_202B, ovl22_fn_2EEA. }
+  Duration) and CastEnlarge, CastHoldPerson, ovl22_fn_202B, ovl22_fn_2EEA. }
 function SpellAffectDuration(Spell: Byte): Word;
 const
   { The few spells whose affect time is rolled for instead of read from SpellTable; the values
@@ -799,14 +798,82 @@ begin
   end;
   ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'falls asleep');
 end;
-{ ovl22:1658: frame not read }
-{@stub} procedure ovl22_e27; begin end;
-{ ovl22:1758: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl22_fn_1758; begin end;
-{ ovl22:17E9: retf 0: 0 bytes of parameters; 18 bytes of locals }
-{@stub} procedure ovl22_e28; begin end;
-{ ovl22:1822: retf 0: 0 bytes of parameters; 12 bytes of locals }
-{@stub} procedure ovl22_e29; begin end;
+{ ovl22:1658. Cast handler of spell 23, Hold Person (entry 27: ovl22_e10 maps DS:6B84+23*4 to overlay
+  stub 0096:00A7; SpellNames[23] is 'Hold Person' at DS:2C98): for every chosen target ds6C91[I]
+  it rolls a saving throw whose bonus shrinks as more targets were picked (one target -3, or -2 when
+  the spell is Hold Person itself, two targets -1, three or four none), drawing a beam from the caster
+  to every target but the first (SetSoundDriverIdle, PlaySound(ds2618), the cast animation
+  res12_fn_19DE($12) and the res12_fn_1A29 line), and applies the spell's own affect with the message
+  'is held' through ApplyAffect. A target that is not a person (CreatureType above 1 or CombatSize
+  above 1, as CastCharmPerson tests) is treated as having saved, and a nil target is skipped. Reads
+  ds6C94, ds6C91, ds681B and SelectedCharacter. }
+procedure CastHoldPerson;
+const
+  HoldPerson = $17;               { the spell whose lone target saves at -2 instead of -3 (spell 23) }
+  { The saving-throw bonus by number of chosen targets (a negative bonus makes the save harder):
+    fewer targets mean the spell is concentrated, so the single-target save is the hardest. }
+  OneTargetBonus = -3;
+  HoldPersonBonus = -2;
+  TwoTargetsBonus = -1;
+  ThreeOrFourBonus = 0;
+  FriendlyType = 1;               { the largest CreatureType Hold Person can affect (a person) }
+  FriendlySize = 1;               { the largest CombatSize (combat footprint kind) it can affect }
+  AnimationKind = $12;            { res12_fn_19DE's argument that starts the cast animation }
+  AimStep = 4;                    { the line res12_fn_1A29 walks for the cast animation }
+  AimWidth = $1E;
+var
+  Target: PCharacter;             { ds6C91[I], the target this pass applies the spell to }
+  Saved: Boolean;                 { whether the target saved (or is not a person) }
+  I: Byte;                        { the target index, ds6C94 downto 1 }
+  SaveBonus: ShortInt;            { the saving-throw bonus for this many targets }
+begin
+  case ds6C94 of
+    1:
+      if ds681B = HoldPerson then
+        SaveBonus := HoldPersonBonus
+      else
+        SaveBonus := OneTargetBonus;
+    2: SaveBonus := TwoTargetsBonus;
+    3, 4: SaveBonus := ThreeOrFourBonus;
+  end;
+  for I := ds6C94 downto 1 do
+    if ds6C91[I] <> nil then
+    begin
+      Target := ds6C91[I];
+      if I < ds6C94 then
+      begin
+        SetSoundDriverIdle(0);
+        PlaySound(ds2618);
+        res12_fn_19DE(AnimationKind);
+        res12_fn_1A29(CombatantX(SelectedCharacter), CombatantY(SelectedCharacter),
+          CombatantX(Target), CombatantY(Target), AimStep, AimWidth);
+        SetSoundDriverIdle($A);
+      end;
+      Saved := SavingThrow(Target, SpellTable[ds681B].Pad2[9], SaveBonus);
+      if (Target^.CreatureType > FriendlyType) or (Target^.CombatSize > FriendlySize) then
+        Saved := True;
+      ApplyAffect(Target, SpellTable[ds681B].AffectId, SpellAffectDuration(ds681B),
+        res12_fn_26C2(ds681B), 0, SpellTable[ds681B].Pad2[8], Saved, 'is held');
+    end;
+end;
+{ ovl22:17E9. Cast handler of spell 24, Resist Fire (entry 28: ovl22_e10 maps DS:6B84+24*4 to overlay
+  stub 0096:00AC; SpellNames[24] is 'Resist Fire' at DS:2CC1): applies the current spell ds681B to the
+  chosen targets with the message 'is fire resistant' and no damage or flag of its own
+  (ApplySpellToTargets; the spell's own affect does the work). One of the per-spell handlers in
+  SpellHandlers (whitepaper 5.22.2). }
+procedure CastResistFire;
+begin
+  ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is fire resistant');
+end;
+{ ovl22:1822. Cast handler of spell 25, Silence, 15' Radius (entry 29: ovl22_e10 maps DS:6B84+25*4 to
+  overlay stub 0096:00B1; SpellNames[25] is "Silence, 15' Radius" at DS:2CEA): applies the current spell
+  ds681B to the chosen targets with the message 'is silenced' and no damage or flag of its own
+  (ApplySpellToTargets; the spell's own affect does the work). One of the per-spell handlers in
+  SpellHandlers (whitepaper 5.22.2). }
+procedure CastSilence;
+begin
+  ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is silenced');
+end;
 { ovl22:185B: retf 0: 0 bytes of parameters; 20 bytes of locals }
 {@stub} procedure ovl22_e30; begin end;
 { ovl22:190F: retf 0: 0 bytes of parameters; 16 bytes of locals }
