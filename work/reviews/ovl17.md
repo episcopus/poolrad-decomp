@@ -3,7 +3,7 @@
 decompiler: dec-17, dec-deepseek-2, dec-mimo, mimo-dec (the `Agent:` trailers of the unit's commits; `integrator` merged them)
 reviewer: rev-sonnet
 date: 2026-10-13
-commit: eab0007
+commit: 080561e (round 2; round 1 reviewed eab0007)
 
 Checklist: docs/process/playbooks/70-review.md (every item, every routine).
 
@@ -154,9 +154,24 @@ Severity: must-fix (blocks review-pass), should-fix, note. When the decompiler f
   casts it to `PCharacter`. Fine while ovl07 and AddMonsterToParty pass a `Pointer`; sharpen it if
   ovl07's caller is retyped.
 
+- [ ] should-fix LoadGame (ovl17:1602, `LoadPictureSlot('ICON', 0, 11)`; round 2): the new comment and
+  whitepaper 5.11 call this "the party marker picture". Slots 9..11 are the marker pictures
+  (ovl26 `FirstMarkerPicture = 9`, frame div 2 + 9), but ovl14:0442..0444 loads ICON blocks 0, 1, 2 into
+  slots 9, $A, $B, so block 0 belongs in slot 9 there and slot 11 holds block 2. Loading block 0 into
+  slot 11 here is not explained by that evidence. State it as observed (ICON block 0 into slot 11 for a
+  map view) and tag the "party marker" reading [I], or explain the difference.
+
+## Round 2 (rev-sonnet, HEAD 080561e)
+
+`make match UNIT=ovl17` rerun: 14 matched, `unit: complete`; `make readability UNIT=ovl17` clean. The
+three round 1 must-fix findings are ticked and I checked each against the source and whitepaper 5.11:
+SaveGame now says "the three loaded wall-set slots (block id and slot)" (source and whitepaper);
+LoadGame separates `Load3DMap`, the wall sets (both `AreaViewKind < 2`) and the ICON picture
+(`AreaViewKind > 1`) correctly in both places; AddMonsterToParty now names `ds49D6^[PartySize]`, the
+same word AddPartyMember counts up. No new must-fix. The should-fix and note findings above are still
+open and do not block.
+
 ## Verdict
 
-Not passed: SaveGame's comment (and whitepaper 5.11) calls the loaded wall-set table the party's map
-cell, LoadGame's comment misdescribes which of Load3DMap, the ICON picture and the wall sets run for
-which view, and AddMonsterToParty's comment names the wrong word block for the party size; each is a
-wrong statement about the code. The rest are should-fix and notes.
+Passed (round 2): the three wrong statements of round 1 are fixed and verified in the source and the
+whitepaper, no must-fix is open; the should-fix findings remain for the decompiler.
