@@ -12,7 +12,7 @@ Approach: ADR-002 (SPEC 4), Pascal-first matching decompilation; the C track (AD
 | P1 Map | done (`make p1-check`): 50 units, 1332 routines, TP 6.0 June 1991 pinned |
 | P2 Oracle and data | done: goldens with recordings for 2 of 2 session scripts (boot-title, create-character); `make golden CHECK=1` |
 | P3 Match harness | done: `make match` (tools/match/match.py, tests/unit/test_match.py); gate `make check` |
-| P4 Match | 403 of 1113 game routines at L2 (123391 of 233807 bytes by re/symbols.toml sizes); 36 of 46 game units complete, 31 reviewed; 20 routines (3661 bytes) inside external object files are not Pascal and are matched by bytes; main program `src/POOL.PAS` matched by `make match UNIT=main` |
+| P4 Match | 403 of 1113 game routines at L2 (123391 of 233807 bytes by re/symbols.toml sizes); 36 of 46 game units complete, 33 reviewed; 20 routines (3661 bytes) inside external object files are not Pascal and are matched by bytes; main program `src/POOL.PAS` matched by `make match UNIT=main` |
 | P5 Rebuild | `make rebuild` links the whole game from `src/` (every unit has source: decompiled or skeleton) and reports identical segments |
 
 ### P4 units with matched routines
@@ -28,7 +28,7 @@ Approach: ADR-002 (SPEC 4), Pascal-first matching decompilation; the C track (AD
 | ovl07 | Loader | 33 | 33 | 8730 | clean | yes |
 | ovl08 | CombatAI | 14 | 14 | 4735 | clean | yes |
 | ovl09 | CombatAI | 15 | 15 | 6574 | clean | complete |
-| ovl10 | BattleStart | 23 | 23 | 9802 | clean | complete |
+| ovl10 | BattleStart | 23 | 23 | 9802 | clean | yes |
 | ovl11 | Loader | 2 | 2 | 1517 | clean | yes |
 | ovl14 | ovl14 | 14 | 14 | 4268 | clean | yes |
 | ovl15 | Camp | 23 | 23 | 8293 | clean | yes |
@@ -50,7 +50,7 @@ Approach: ADR-002 (SPEC 4), Pascal-first matching decompilation; the C track (AD
 | ovl33 | DebugTrace | 2 | 2 | 248 | clean | yes |
 | ovl34 | TileLoad | 3 | 3 | 631 | clean | yes |
 | res02 | res02 | 1 | 1 | 16 | clean | yes |
-| res03 | res03 | 6 | 6 | 471 | clean | complete |
+| res03 | res03 | 6 | 6 | 471 | clean | yes |
 | res04 | res04 | 5 | 5 | 336 | clean | yes |
 | res05 | res05 | 18 | 18 | 2416 | clean | yes |
 | res06 | res06 | 20 | 20 | 4151 | clean | complete |
@@ -107,6 +107,8 @@ Locks (agents at work): `make locks`. Next unit: `make next`.
 ## Blockers and decisions waiting for the human
 
 Blockers are kept in `work/blockers.md` (the orchestrator's, playbook 90) and copied here by `make status`.
+
+- res07 integration rejected (2026-10-14, hand-off 21bd575, dec-haiku-2): `make check` fails at the learning stage, `res07-match-build-globals` in re/learnings/res07.toml cites `build/match/res07/A/match.map`, an ignored build file, as evidence. Replace it with a committed file (for example `tools/match/match.py#data_var` only, or a whitepaper section), run `make check`, hand off again. The owner (or the next claimer of res07) fixes it on branch unit/res07; the orchestrator does not edit the worker's evidence.
 
 - ovl20:0721 Rest menu advice is available for the next claimer after partial integration f2e91b58a3a8 (2026-10-13). Read make expert-result CASE=case-e3e08f0948364dc1bc0b5b8e58260c3e. The expert's suggestion for failed draft revision 71c5353b is to remove Exit from the 'R' arm and let the until Key in [#0,'E','R'] test finish the loop; original 07D5 jumps to 083D, not the epilogue. The expert reported a scratch match (310 code bytes, 73 pool bytes); build/expert/ovl20_0721_draft.pas is ignored scratch, not accepted source. This is bounded advice only, not L2: check its frozen inputs against the new unit and prove any source change through make match, readability and WRITE=1. ovl20_fn_0000 remains separately blocked. The current holder need not repeat five failed attempts blindly.
 
