@@ -357,12 +357,12 @@ end;
 { ovl22:0A91. Picks the targets of a spell being cast and reports through Done whether the cast should
   go ahead. It defaults the picker's chosen character ds6DB5 to the selected character, sets the
   target count ds6C94 to 1 and the first target ds6C95 to the selected character, and Done to 1, then
-  switches on SpellTable[Spell].Level: level 1 keeps only the caster; level 2 asks 'Cast Spell on
-  whom' (res12_fn_2C48 picks into ds6DB5) and keeps the pick, or clears Done and the list when none
-  was picked; level 4 adds every character of the party list ds5D96, walking Next (+$104), to the
-  list; any other level clears Done. The second byte parameter is unused (QUIRK ovl22:0A91: the
-  original frame reserves it). Called as the DS:6B84 combat callback (ovl08 EndCombat stores
-  @ChooseSpellTargets). }
+  switches on the spell's target mode (SpellTable row byte +7): mode 1 keeps only the caster; mode 2
+  asks 'Cast Spell on whom' (res12_fn_2C48 picks into ds6DB5) and keeps the pick, or clears Done and
+  the list when none was picked; mode 4 adds every character of the party list ds5D96, walking Next
+  (+$104), to the list; any other mode clears Done. The second byte parameter is unused (QUIRK
+  ovl22:0A91: the original frame reserves it). Called as the DS:6B84 combat callback (ovl08 EndCombat
+  stores @ChooseSpellTargets). }
 procedure ChooseSpellTargets(Spell: Byte; Unused: Byte; var Done: Byte);
 var
   { Never read: the original frame reserves one pointer (QUIRK ovl22:0A91); it is declared so the
