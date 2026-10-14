@@ -165,3 +165,19 @@ def test_a_group_that_runs_tpc_out_of_memory_is_split_and_retried(monkeypatch):
     monkeypatch.setattr(match, "compile_variant", lambda *a, **k: (_ for _ in ()).throw(match.MatchError("Error 26: Type mismatch")))
     with pytest.raises(match.MatchError, match="Type mismatch"):         # a real error is never split away
         match.match_units(["a", "b"])
+
+
+def test_units_not_compared_are_built_without_local_symbols(tmp_path, monkeypatch):
+    """2026-10-14: ovl03 alone ran TPC out of memory; {$L-} on the other units changes no code."""
+    class Stop(Exception):
+        pass
+
+    def stop(*a, **k):
+        raise Stop()
+    monkeypatch.setattr(match.tp, "find_emulator", stop)
+    sources = {"OVL03": "unit OVL03;\r\ninterface\r\nimplementation\r\nend.\r\n",
+               "RES12": "unit RES12;\r\ninterface\r\nimplementation\r\nend.\r\n"}
+    with pytest.raises(Stop):
+        match.compile_variant(["ovl03"], sources, False, tmp_path / "out")
+    assert not (tmp_path / "out/OVL03.PAS").read_bytes().startswith(b"{$L-}")
+    assert (tmp_path / "out/RES12.PAS").read_bytes().startswith(b"{$L-}\r\nunit RES12;")
