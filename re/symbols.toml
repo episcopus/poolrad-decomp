@@ -4096,27 +4096,14 @@ evidence = ["prologue"]
 id = "ovl12:1E77"
 unit = "ovl12"
 addr = "ovl12:1E77"
-size = 292
-name = "ovl12_e70"
-signature = ""
+size = 395
+name = "GazeCharmsTarget"
+signature = "procedure GazeCharmsTarget(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e70"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_70"
+notes = "renamed from ovl12_e70 (ovl12:1E77 is the charm gaze: 'Gazes...' on Who, the gaze line to AttackTarget (res12_fn_1A29), ds681B 10, then the charm affect $0B ('is charmed', Data = Who's side in bit 7 plus $0C, negated by a fear save with bonus -2) and its handler at once (CallAffectHandler); the same walk and gaze as GazeStonesTarget (ovl12:1CAD) with a charm for the stone; matched at L2 (make match FN=ovl12_e70)); auto:entry_70"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:1F9B"
-unit = "ovl12"
-addr = "ovl12:1F9B"
-size = 103
-name = "ovl12_fn_1F9B"
-signature = ""
-c_name = "ovl12_fn_1F9B"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl12:2002"

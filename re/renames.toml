@@ -3882,3 +3882,10 @@ kind = "routine"
 why = "ovl12:1CAD shows 'gazes...' on Who, draws the gaze line from Who to AttackTarget (res12_fn_1A29), lets a readied item with a NameNum of $76 turn it back on Who ('reflects it!', colour 12), then makes a stone save (SavingThrow kind 1) and DropFromFight with StatusStoned and 'is Stoned' (status 7 is stone, ovl12:0058 and ovl04:093D); matched at L2 (make match FN=ovl12_e69)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e70"
+new = "GazeCharmsTarget"
+kind = "routine"
+why = "ovl12:1E77 is the charm gaze: 'Gazes...' on Who, the gaze line to AttackTarget (res12_fn_1A29), ds681B 10, then the charm affect $0B ('is charmed', Data = Who's side in bit 7 plus $0C, negated by a fear save with bonus -2) and its handler at once (CallAffectHandler); the same walk and gaze as GazeStonesTarget (ovl12:1CAD) with a charm for the stone; matched at L2 (make match FN=ovl12_e70)"
+date = "2026-10-13"
+

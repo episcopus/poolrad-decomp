@@ -80,8 +80,7 @@ procedure AcidAttackTargetFor1d4(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure FrightenSideWithFear(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ParalyzeSideWithFear(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure GazeStonesTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e70;
-procedure ovl12_fn_1F9B;
+procedure GazeCharmsTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_fn_2002;
 procedure ovl12_fn_20A9;
 procedure ovl12_fn_2122;
@@ -149,7 +148,7 @@ procedure ovl12_fn_31D7;
 procedure ovl12_fn_3262;
 procedure ovl12_fn_3728;
 implementation
-uses RES12, OVL24, OVL31;
+uses RES12, OVL13, OVL24, OVL30, OVL31;
 const
   RunsHandlerOnRemove = 1;      { TAffect.Flag: the affect's handler runs when the affect is removed }
   NoRemoveHandler = 0;          { the same Flag, clear: the affect's handler does not run when the affect is removed }
@@ -270,6 +269,9 @@ const
   GazeAnimation = $12;          { the argument of res12_fn_19DE that ovl12:1CAD shows the gaze with [?] }
   GazeLineKind = 4;             { the Kind and Flag of the gaze lines res12_fn_1A29 draws (ovl12:1CAD) [?] }
   GazeLineFlag = $2D;
+  AffectCharm = $0B;            { the affect of "is charmed" (ovl12:1E77 gives it) [I] }
+  CharmData = $0C;              { the low bits of the charm's Data (ovl12:1E77); bit 7 is the side of the gazer [?] }
+  CharmSaveBonus = -2;          { what ovl12:1E77 takes off the fear save of the charmed character }
 
 { ovl12:0000. Cancels the hook of an affect: when AffectId is 0 or is the affect the hooks are offering
   (HookAffectId), HookAffectId and DamageAmount are cleared. HookAffectId 0 reads as "is Unaffected"
@@ -1417,10 +1419,37 @@ begin
   if not SavingThrow(AttackTarget, SaveKindStone, 0) then
     DropFromFight(AttackTarget, StatusStoned, 'is Stoned');
 end;
-{ ovl12:1E77: frame not read }
-{@stub} procedure ovl12_e70; begin end;
-{ ovl12:1F9B: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_fn_1F9B; begin end;
+{ ovl12:1E77. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000): a charm gaze
+  [I]. Who's gaze reaches the character Who attacked last (AttackTarget) when ovl13_e8 allows it and WalkLine walks the
+  line from Who to AttackTarget's cell (WalkLine may move the end cell, EndX and EndY). "Gazes..." is shown on Who
+  (colour 10), the gaze line is drawn to AttackTarget as GazeStonesTarget draws it (res12_fn_1A29), ds681B becomes 10,
+  and AttackTarget gets the charm affect AffectCharm for good with Data: Who's side in bit 7 (ControlSideBit) and
+  CharmData. A successful fear save (SavingThrow kind 4, CharmSaveBonus) negates it, and "is charmed" is shown on it.
+  Then, when AttackTarget has the affect, its handler runs at once (CallAffectHandler, Mode 0). Which affect runs this
+  handler is not known yet [?]. }
+procedure GazeCharmsTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
+var
+  StepCount: Word;              { the steps WalkLine takes }
+  FoundAffect: Pointer;         { the charm affect of AttackTarget, as res12_fn_2199 gives it back }
+  EndX, EndY: ShortInt;         { AttackTarget's cell, the end of the walk: WalkLine may change it }
+begin
+  AttackTarget := Who^.Combat^.Target;
+  EndX := CombatantX(AttackTarget);
+  EndY := CombatantY(AttackTarget);
+  if not ovl13_e8(Who, AttackTarget) then
+    Exit;
+  if not WalkLine(CombatantX(Who), CombatantY(Who), EndX, EndY, StepCount, Pointer(CombatMap)) then
+    Exit;
+  res12_fn_16EC(Who, 'Gazes...', $A, 0);
+  res12_fn_19DE(GazeAnimation);
+  res12_fn_1A29(CombatantX(Who), CombatantY(Who), CombatantX(AttackTarget), CombatantY(AttackTarget),
+    GazeLineKind, GazeLineFlag);
+  ds681B := 10;
+  ApplyAffect(AttackTarget, AffectCharm, 0, ShortInt(Who^.Side) * ControlSideBit + CharmData, RunsHandlerOnRemove,
+    SaveNegatesAffect, SavingThrow(Who^.Combat^.Target, SaveKindFear, CharmSaveBonus), 'is charmed');
+  if res12_fn_2199(AttackTarget, AffectCharm, FoundAffect) then
+    CallAffectHandler(AffectCharm, AttackTarget, FoundAffect, 0);
+end;
 { ovl12:2002: frame not read }
 {@stub} procedure ovl12_fn_2002; begin end;
 { ovl12:20A9: retf 2: 2 bytes of parameters; 0 bytes of locals }
