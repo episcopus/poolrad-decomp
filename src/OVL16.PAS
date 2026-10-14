@@ -1,9 +1,13 @@
 unit OVL16;
-{ CharCreate: overlay unit, 17497 bytes of code. Skeleton by tools/match/skeleton.py: every routine is a stub
-  until decompiled (playbook 30). }
+{ CharCreate (overlay 16, whitepaper 5.8): creating and training a party member. Its menus ask
+  to pick a race, class, gender and alignment ('Pick Race', 'Pick Class', 'Pick Gender',
+  'Pick Alignment' in the literal pools at ovl16:04F1..0516), roll the six ability scores and build
+  a TCharacter. FreeCharacter frees a character and everything it owns. In progress: most routines
+  are still stubs. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
-procedure ovl16_fn_0000;
+uses POOLVARS;
+procedure FreeCharacter(Who: PCharacter);
 procedure ovl16_e1;
 procedure ovl16_fn_056C;
 procedure ovl16_fn_07E1;
@@ -111,8 +115,44 @@ procedure ovl16_fn_4235;
 procedure ovl16_fn_42ED;
 implementation
 
-{ ovl16:0000: retf 4: 4 bytes of parameters; 20 bytes of locals }
-{@stub} procedure ovl16_fn_0000; begin end;
+const
+  CombatRecordSize = $16;   { FreeMem size of TCharacter.Combat (TCombatant) }
+  ItemListSize = $3F;       { FreeMem size of one item of TCharacter.Items (TMenuLine) }
+  AffectSize = 9;           { FreeMem size of one affect of TCharacter.Affects (TAffect) }
+  CharacterSize = $11D;     { FreeMem size of a whole TCharacter }
+
+{ ovl16:0000. Frees a character and everything it owns: its combat state (Combat, size $16), its
+  carried items (the list at Items, size $3F) and its affects (the list at Affects, size 9), then
+  the character record itself (size $11D) and clears the caller's pointer (Char := nil). }
+procedure FreeCharacter(Who: PCharacter);
+var
+  CurItem: PItem;
+  NextItem: PItem;
+  CurAffect: PAffect;
+  NextAffect: PAffect;
+begin
+  with Who^ do
+  begin
+    if Combat <> nil then
+      FreeMem(Combat, CombatRecordSize);
+    NextItem := Items;
+    while NextItem <> nil do
+    begin
+      CurItem := NextItem;
+      NextItem := NextItem^.Next;
+      FreeMem(CurItem, ItemListSize);
+    end;
+    NextAffect := PAffect(Affects);
+    while NextAffect <> nil do
+    begin
+      CurAffect := NextAffect;
+      NextAffect := NextAffect^.Next;
+      FreeMem(CurAffect, AffectSize);
+    end;
+  end;
+  FreeMem(Who, CharacterSize);
+  Who := nil;
+end;
 { ovl16:0161: retf 0: 0 bytes of parameters; 296 bytes of locals }
 {@stub} procedure ovl16_e1; begin end;
 { ovl16:056C: frame not read }

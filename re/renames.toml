@@ -4008,3 +4008,10 @@ kind = "routine"
 why = "00BA:2F57 returns True when Who's level in one class (ClassLevels[ClassIndex], +$96) has reached the maximum its race (+$2E) and strength (+$10) allow, so the trainers (ovl22:2D39) must not raise that class level further"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl16_fn_0000"
+new = "FreeCharacter"
+kind = "routine"
+why = "ovl16:0000 frees a character: Combat (+108h, size 16h), the Items list (+C8h, size 3Fh) and the Affects list (+7Fh, size 9), frees the record (size 11Dh) and clears the caller pointer; called by ovl16_e2"
+date = "2026-10-13"
+

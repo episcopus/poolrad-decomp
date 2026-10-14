@@ -6956,12 +6956,12 @@ id = "ovl16:0000"
 unit = "ovl16"
 addr = "ovl16:0000"
 size = 353
-name = "ovl16_fn_0000"
+name = "FreeCharacter"
 signature = ""
 c_name = "ovl16_fn_0000"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl16_fn_0000 (ovl16:0000 frees a character: Combat (+108h, size 16h), the Items list (+C8h, size 3Fh) and the Affects list (+7Fh, size 9), frees the record (size 11Dh) and clears the caller pointer; called by ovl16_e2); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
