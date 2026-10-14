@@ -64,7 +64,7 @@ procedure PoisonAttackTarget(Who: PCharacter; Bonus: ShortInt);
 procedure ParalyzeAttackTarget(Who: PCharacter; Duration: Word; Unused: Byte);
 procedure PoisonAttackTargetBonus0(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure PoisonAttackTargetBonus4(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e54;
+procedure PoisonAttackTargetBonus2(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e55;
 procedure ovl12_e56;
 procedure ovl12_e57;
@@ -1140,8 +1140,13 @@ procedure PoisonAttackTargetBonus4(Who: PCharacter; Affect: PAffect; Mode: Byte)
 begin
   PoisonAttackTarget(Who, 4);
 end;
-{ ovl12:1685: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e54; begin end;
+{ ovl12:1685. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Affect and Mode are not read, ovl24:0000).
+  The poison hook of an attack with save bonus 2: PoisonAttackTarget (ovl12:1545) with Bonus 2. Which affect runs it
+  is not known yet [?]. }
+procedure PoisonAttackTargetBonus2(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  PoisonAttackTarget(Who, 2);
+end;
 { ovl12:1699: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e55; begin end;
 { ovl12:16BB: retf 10: 10 bytes of parameters; 0 bytes of locals }

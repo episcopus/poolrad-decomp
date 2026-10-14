@@ -3777,3 +3777,10 @@ kind = "routine"
 why = "affect handler at ovl12:1671 whose whole body is PoisonAttackTarget(Who, 4) (ovl12:1545 with save bonus 4); the affect that runs it is not known yet"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e54"
+new = "PoisonAttackTargetBonus2"
+kind = "routine"
+why = "affect handler at ovl12:1685 whose whole body is PoisonAttackTarget(Who, 2) (ovl12:1545 with save bonus 2); the affect that runs it is not known yet"
+date = "2026-10-13"
+
