@@ -906,6 +906,36 @@ name = "MoneyKindNames"
 evidence = "seven string[10] Copper Silver Electrum Gold Platinum Gems Jewelry at DS:0FFA (the image); TakeMoney prefixes each pooled amount with MoneyKindNames[Kind] (ovl21:0DDF)"
 
 [[global]]
+offset = 0x0FEC
+name = "SexNames"
+evidence = "two string[6] at DS:0FEC, seven bytes apart: Male, Female (the image); ovl19_e1 draws SexNames[the sex byte at +$9E] on the sheet (ovl19:00C6)"
+
+[[global]]
+offset = 0x0F03
+name = "RaceNames"
+evidence = "eight string[9] at DS:0F03, ten bytes apart: Monster, Dwarf, Elf, Gnome, Half-Elf, Halfling, Half-Orc, Human (the image); ovl19_e1 draws RaceNames[Race] (+$2E, ovl19:0118)"
+
+[[global]]
+offset = 0x0D38
+name = "ClassNames"
+evidence = "eight string[26] at DS:0D38, 27 bytes apart: Cleric, Druid, Fighter, Paladin, Ranger, Magic-User, Thief, Monk (the image); ovl19_e1 draws ClassNames[ClassMask] (+$2F, ovl19:01D2); the multi-class masks 8..16 index past the eighth entry"
+
+[[global]]
+offset = 0x0F53
+name = "AlignmentNames"
+evidence = "eight string[16] at DS:0F53, 17 bytes apart: Lawful Good .. Chaotic Neutral (the image); ovl19_e1 draws AlignmentNames[the signed byte at +$A0] (ovl19:0198)"
+
+[[global]]
+offset = 0x1047
+name = "StatusNames"
+evidence = "eight string[12] at DS:1047, 13 bytes apart: Okay, Animated, tempgone, Running, Unconscious, Dying, Dead, Stoned (the image); ovl19_e1 draws StatusNames[+$10C] (ovl19:04D0); entry 2 reads 'tempgone' in the image"
+
+[[global]]
+offset = 0x4716
+name = "SheetCharacter"
+evidence = "pointer ovl19_e1 stores SelectedCharacter in at ovl19:0051 and reads for every line of the sheet (ovl19:0051..04F6); no other code reads it"
+
+[[global]]
 offset = 0x0970
 name = "TreasureItemRows"
 evidence = "BuildTreasureItem copies the name numbers, weight, value and affects of a fixed item from eight words starting at the chosen row (ovl21:182F..18C2)"
@@ -1018,3 +1048,18 @@ evidence = "DS:6B00 is the bank index for the HEAD sprite pointer at DS:6B01, wh
 offset = 0x6B05
 name = "BodyBankIndex"
 evidence = "DS:6B05 is the bank index for the BODY sprite pointer at DS:6B06, set to sentinel value 255 when none; StartBattle resets it after ReleasePicture at ovl10:0968"
+
+[[global]]
+offset = 0x6B80
+name = "UsedScroll"
+evidence = "ds6B80 is the far pointer ovl19:1AB3 stores the item in when ovl22_e6 accepts it (a scroll), before ChooseSpellFromList reads the scroll's spell; no other reader is decompiled yet"
+
+[[global]]
+offset = 0x6DBF
+name = "ItemAffectUse"
+evidence = "ds6DBF is set (ovl19:1AE7) for an item whose Affects[2] gives the spell, and around the ovl22_e5 cast (ovl19:1BC2..1BE2); the 'uses an item' message follows the flag (ovl19:1B1E); what ovl22_e5 does with it is not known yet"
+
+[[global]]
+offset = 0x471A
+name = "ViewedCharacter"
+evidence = "ds471A is the character the View command was started for: ViewSelectedCharacter stores SelectedCharacter in it (ovl19:0AD1), and the two Trade commands start 'Trade to?' from it and store the recipient in it (ovl19:1734 TradeItem, ovl19:2156 TradeMoney)"

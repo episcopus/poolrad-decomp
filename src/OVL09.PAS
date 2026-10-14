@@ -188,7 +188,7 @@ end;
   the turn through res12_fn_2637): rolls 1d7 rounds; each round walks Who^.Items for the first
   item that passes (not ovl22_e6, Affects[3] below $80, Readied, level from Affects[2] in
   1..MaxSpell adjusted down by $17 above it, and SpellAccepted in range) and remembers it as
-  Best. Afterwards a chosen Best is used through ovl19_e8 and the result is True. Early exits
+  Best. Afterwards a chosen Best is used through UseItem and the result is True. Early exits
   (Pad2 zero, both ds6814Sides zero, VarNoCasting set) return False at once. QUIRK ovl09:049F:
   RowByte (the RaceRow byte of the item kind) is computed but never read. QUIRK: the
   [bp-5..-6] and [bp-9..-12] frame bytes are never read (UnusedA, UnusedB). Globals: ds6814Sides
@@ -247,7 +247,7 @@ begin
 Done:
   if Best <> nil then
   begin
-    ovl19_e8(Best, E8Done);
+    UseItem(Best, E8Done);
     UseMagicItem := True;
   end;
 end;
@@ -768,7 +768,7 @@ end;
   OtherPick/Score2) and the best type-1 item by its Plus (row[0] = 1; PlusPick/Best2). The item
   to use is AttackPick when it beats half of Score2 and the row-14 bits point at a slot item,
   else OtherPick. It then uses the slot-0 item (unless it is the pick or cursed), the slot-1
-  item (when not cursed, also paying its row[1] again) and the pick through ovl19_e7, and when
+  item (when not cursed, also paying its row[1] again) and the pick through ReadyItem, and when
   Who^.ds100 is above 2 uses the slot-1 item or the pick, below 2 the slot-1 item, then PlusPick;
   every use runs res12_fn_0BB8 (and ovl13_e6 once), and a use ends with res12_fn_09E3. Globals:
   RaceRow; TCharacter slots SlotItems and ds100/dsA3/dsA5/dsA7/dsB0. QUIRK: the [bp-1b] and
@@ -882,13 +882,13 @@ begin
   if SlotUsable = 0 then
     goto SkipSlotUse;
   if Who^.SlotItems[0] <> nil then
-    ovl19_e7(Who^.SlotItems[0]);
+    ReadyItem(Who^.SlotItems[0]);
   res12_fn_0BB8(Who);
   if Who^.SlotItems[1] <> nil then
     if not Who^.SlotItems[1]^.Cursed then
       Who^.ds100 := Who^.ds100 - RaceRow[Byte(Who^.SlotItems[1]^.ItemType)][1];
   if Pick <> nil then
-    ovl19_e7(Pick);
+    ReadyItem(Pick);
   Used := 1;
 SkipSlotUse:
   res12_fn_0BB8(Who);
@@ -901,12 +901,12 @@ SkipSlotUse:
   begin
     if (Who^.SlotItems[1] = nil) or Who^.SlotItems[1]^.Cursed then
     begin
-      ovl19_e7(Pick);
+      ReadyItem(Pick);
       Used := 1;
     end
     else
     begin
-      ovl19_e7(Who^.SlotItems[1]);
+      ReadyItem(Who^.SlotItems[1]);
       Used := 1;
     end;
   end
@@ -914,10 +914,10 @@ SkipSlotUse:
     if SlotUsable <> 0 then
     begin
       if Who^.SlotItems[1] <> nil then
-        ovl19_e7(Who^.SlotItems[1]);
+        ReadyItem(Who^.SlotItems[1]);
       res12_fn_0BB8(Who);
       if PlusPick <> nil then
-        ovl19_e7(PlusPick);
+        ReadyItem(PlusPick);
       Used := 1;
     end;
   res12_fn_0BB8(Who);

@@ -325,7 +325,7 @@ type
       compares the item it picked with slots 0 and 1 and checks their Cursed flag, ovl09:0B3C and
       ovl13 read RaceRow[ItemType] of slot 0, and ovl19 indexes the slots by RaceRow[ItemType][0]
       and reads the slots of item types $49 and $1C at +$F8 and +$FC (11 and 12). The writer is
-      not in the overlays (ovl19_e7?). }
+      not in the overlays: ReadyItem (ovl19:14D0) does not store it. }
     SlotItems: array[0..12] of PItem;  { +$CC }
     ds100: Byte;                  { +$100: an AI counter: ScoreTarget refuses a row[1] above 3 minus
                                     it, ovl09:13CA lowers it by RaceRow[item type][1] per slot item
@@ -596,6 +596,13 @@ var
   ds470E: Pointer;                { the FINAL picture bank ShowEndingNarrative loads through LoadPicture and draws }
   ds4712: Byte;                   { the DS:49F3 value ShowEndingNarrative saves at the start and restores at the end }
   ds4713: string[1];              { Str(TileSet): the picture number ShowEndingNarrative appends to FINAL }
+  { The character whose sheet ShowCharacterSheet draws: a copy of SelectedCharacter taken at its start (ovl19:0051).
+    The Sell action (ovl19:1CEE) passes it to res12_fn_0442 for the item's line (ovl19:1D59); no other routine reads it yet. }
+  SheetCharacter: PCharacter;
+  { The character the View command was started for: a copy of SelectedCharacter that ViewSelectedCharacter
+    stores (ovl19:0AD1). The two Trade commands start their "Trade to?" from it and store the recipient in it
+    (TradeItem, ovl19:1734; TradeMoney, ovl19:2156). }
+  ViewedCharacter: PCharacter;
   ds471E: array[0..$47] of Byte;  { 72 bytes reset to 1 when rest starts (ovl20:0CE5) }
   ds25C0: array[0..2, 0..2] of Byte;  { the 3x3 line pattern table StepLine reads at [SY+1, SX+1] }
   { DirStepX and DirStepY: nine entries each (DirStepY starts 9 bytes after DirStepX). ovl14's
@@ -709,6 +716,8 @@ var
   ds6B06: Pointer;                { the loaded BODY sprite bank (ShowHeadBodySprites, LoadHeadBodySprites) }
   ds6B0A: string[8];              { the last picture file loaded (LoadSpriteList); cleared by the loader (ovl11:043D) }
   ds6B1C: Byte;                   { set to $FF by the loader (ovl11:0442) and by FreeSpriteList }
+  UsedScroll: PMenuLine;          { the scroll the Use action (UseItem, ovl19:1AB3) takes its spell from: set when ovl22_e6
+                                    accepts the item; no other reader is decompiled yet }
   ds0C6C: array[0..$F] of Byte;   { 16-byte table LoadSpriteList passes to RemapPictureColours (with ds0C7C) }
   ds0C7C: array[0..$F] of Byte;   { second 16-byte table LoadSpriteList passes to RemapPictureColours }
   { The ten pieces a wall of the 3D view is drawn from (DrawWallPiece, DrawWallView): each piece is a
@@ -805,6 +814,13 @@ var
   { The names of the seven kinds of money, string[10] at DS:0FFA: Copper, Silver, Electrum, Gold,
     Platinum, Gems, Jewelry (the image); the Take menu lists the pool with them (ovl21:0DDF). }
   MoneyKindNames: array[0..6] of string[10];
+  { The sheet's name tables (ShowCharacterSheet), the images' strings: the sex (+$9E, ShortInt), the race (+$2E),
+    the class (+$2F, the eight single classes) and the alignment (+$A0), and the status (+$10C). }
+  SexNames: array[0..1] of string[6];
+  RaceNames: array[0..7] of string[9];
+  ClassNames: array[0..7] of string[26];
+  AlignmentNames: array[0..7] of string[16];
+  StatusNames: array[0..7] of string[12];
   PackedBuf: Pointer;             { the packed bytes of the DAX block LoadDaxBlock is reading }
   { Colour maps for RemapPictureColours (16 entries, colour I becomes entry I): ds0CD2 is the identity,
     ds0CE2 turns colour 13 into 8 and ds0CF2 turns 13 into 0 (the image). LoadPictureSlot recolours the
@@ -819,6 +835,9 @@ var
   ds0D06: array[0..15] of Byte;   { two 4-bit pixels of colour C (C * $11); see above }
   { Globals of the combat unit ovl08 (whitepaper 5.5). }
   ds6DBB: PCombatNode;            { a list of $13-byte records EndCombat frees (ovl08:0006); meaning unknown }
+  ItemAffectUse: Boolean;         { True while the Use action (UseItem, ovl19:1BC2..1BE2) casts a spell through ovl22_e5,
+                                    and set (ovl19:1AE7) for an item whose Affects[2] gives the spell (not a scroll);
+                                    what ovl22_e5 does with it is not known yet }
   ds6E36: Pointer;                { a picture EndCombat frees through ReleasePicture (ovl08:005A) }
   { A routine pointer: RunCombat sets @ovl13_e14 at the start (ovl08:0085) and EndCombat
     @ovl22_e4 at the end (ovl08:0069); who calls it is not known yet. }
@@ -881,6 +900,7 @@ var
   DamageAmount: Byte;             { the damage DealDamage offers to the hooks and then deals (ovl24:134E) }
   DamageKind: Byte;               { the kind of damage: 1 fire, 2 cold, 4 electricity, $10 acid, bit 3 magic (ovl24:13E4) }
   ds681C: Byte;                   { the dice count of the last RollDiceCounted roll (ovl24:0E37) }
+  ds6821: Byte;                   { nonzero: the Items window is drawn even if its flag is clear (ovl19:1194) }
   AttackRoll: ShortInt;           { the d20 attack or resistance roll (20 counts 100) the hooks may change (ovl24:0C63) }
   SaveKind: Byte;                 { the saving throw kind SavingThrow offers to the hooks (ovl24:0DAD) }
   { The handler of every affect number, called through CallAffectHandler (ovl24:001E); extent unknown. Entry 0
