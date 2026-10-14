@@ -446,12 +446,12 @@ id = "ovl03:125D"
 unit = "ovl03"
 addr = "ovl03:125D"
 size = 105
-name = "ovl03_fn_125D"
+name = "ClearEncounterCommand"
 signature = ""
 c_name = "ovl03_fn_125D"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_125D (ECL command 28: dispatcher ovl03:2F2D calls it for SkippedOpcode 1Ch (cmp al,1Ch, call at ovl03:302D); it zeroes EncounterMemberCount and ds84E7 (the members of ECL command 11), sets the icon slot ds6F83 back to 8 (as InitScript), clears PooledMoney and frees the item list ds6810); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

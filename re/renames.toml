@@ -3609,3 +3609,10 @@ kind = "routine"
 why = "ECL command 43: dispatcher ovl03:2F2D calls it for SkippedOpcode 2Bh (cmp al,2Bh, call at ovl03:30C4); it joins the EclStrings operands into a ~ hotkey text and asks it with AskMenu (ovl07:1684), writing the choice to operand 1"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl03_fn_125D"
+new = "ClearEncounterCommand"
+kind = "routine"
+why = "ECL command 28: dispatcher ovl03:2F2D calls it for SkippedOpcode 1Ch (cmp al,1Ch, call at ovl03:302D); it zeroes EncounterMemberCount and ds84E7 (the members of ECL command 11), sets the icon slot ds6F83 back to 8 (as InitScript), clears PooledMoney and frees the item list ds6810"
+date = "2026-10-13"
+

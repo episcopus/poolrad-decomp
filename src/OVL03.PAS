@@ -30,7 +30,7 @@ procedure CopyIndexedWordCommand;
 procedure StoreIndexedWordCommand;
 procedure ChooseFromListCommand;
 procedure AskMenuCommand;
-procedure ovl03_fn_125D;
+procedure ClearEncounterCommand;
 procedure ovl03_fn_12C6;
 procedure ovl03_fn_1307;
 procedure ovl03_fn_13D7;
@@ -104,6 +104,8 @@ const
   VarStepsAhead = 705;
   { ECL command 11 (ovl03:0450) adds no encounter member once its count of members reaches this. }
   MaxEncounterMembers = 63;
+  { The icon slot ds6F83 starts at: InitScript (ovl07:01F0) and ECL command 28 (ovl03:125D) set it. }
+  FirstEncounterIcon = 8;
   { The word of ds49D6 that ECL command 14 (ovl03:0856) reads: NoHeadBank when the close-up is the PIC
     picture, else the HEAD bank of the HEAD and BODY close-up (ShowEncounterPicture, ovl07:054E). }
   VarCloseUpHead = 737;
@@ -853,8 +855,27 @@ begin
   WriteVmWord(Target, Choice);
   ClearRect(PromptLeftCol, PromptRow, PromptLastCol, PromptRow);
 end;
-{ ovl03:125D: retf 0: 0 bytes of parameters; 6 bytes of locals }
-{@stub} procedure ovl03_fn_125D; begin end;
+{ ovl03:125D. ECL command 28 (dispatcher ovl03:2F2D, SkippedOpcode $1C): clears the encounter. It has no
+  operands and moves EclPC past the command. The members ECL command 11 added are dropped
+  (EncounterMemberCount and ds84E7 go to 0), the icon slot ds6F83 goes back to FirstEncounterIcon,
+  PooledMoney is cleared, and the item list ds6810 is freed line by line (SizeOf(TMenuLine) bytes each). }
+procedure ClearEncounterCommand;
+var
+  Next: PMenuLine;
+  Unused: Word;                 { QUIRK ovl03:125D: two bytes of the frame nothing uses }
+begin
+  Inc(EclPC);
+  EncounterMemberCount := 0;
+  ds84E7 := 0;
+  ds6F83 := FirstEncounterIcon;
+  FillChar(PooledMoney, SizeOf(TPartyMoney), 0);
+  while ds6810 <> nil do
+  begin
+    Next := ds6810^.Next;
+    FreeMem(ds6810, SizeOf(TMenuLine));
+    ds6810 := Next;
+  end;
+end;
 { ovl03:12C6: frame not read }
 {@stub} procedure ovl03_fn_12C6; begin end;
 { ovl03:1307: retf 0: 0 bytes of parameters; 0 bytes of locals }
