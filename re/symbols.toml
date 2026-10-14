@@ -8401,12 +8401,12 @@ id = "ovl17:1262"
 unit = "ovl17"
 addr = "ovl17:1262"
 size = 484
-name = "ovl17_e7"
+name = "AddMonsterToParty"
 signature = ""
 c_name = "ovl17_e7"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_7"
+notes = "renamed from ovl17_e7 (ovl17:1262 adds a monster of Kind to the party: it returns at once when the party already holds eight members (ds49D6^[830] > 7), has LoadMonster build the record, gives it a random byte at +AB, picks one of the classes with a positive level (RollDice(1, Count)) and the body/head picture banks from the ds08C5-region tables by Who^.B9E and the roll, then AddPartyMember and BuildCharacterIcon(True); called by ovl03_fn_2B7E); auto:entry_7"
 evidence = ["prologue"]
 
 [[routine]]

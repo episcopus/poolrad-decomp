@@ -815,7 +815,15 @@ character joins the party.
   `Figure[5..6]` are random nibble pairs `Roll + ((Roll + 8) shl 4)` from `RollDice(1, 6)`, and
   `Figure[4]` is `$C4`. The SPC and ITM records (9 and 63 bytes) are copied out of the buffer (offset
   up to the block size) into `GetMem` chains while `ds557C` marks the load. Called by ovl07
-  `LoadCharacter` and ovl17_e7.
+  `LoadCharacter` and AddMonsterToParty.
+- **Adding a monster to the party** **[V]** (`AddMonsterToParty`, `ovl17:1262`; `make match
+  UNIT=ovl17`): gives up if the party already holds eight members (`ds49D6^[830] > 7`), has
+  `LoadMonster` build a 285-byte record, sets its `+$AB` byte to `Random(256)`, collects the classes
+  with a positive level (`ClassLevels[0..6]`, index 2 when none qualifies) into a small array, rolls
+  one of them (`RollDice(1, Count)`) and picks the body picture bank from the DS:08C5-region tables
+  by `Who^.B9E` and the roll (the table of class 0, 5, 6 or the default), then the head bank the same
+  way (`RollDice(1, 8)`). Finally `AddPartyMember` and `BuildCharacterIcon(True)`. Called by
+  ovl03_fn_2B7E.
 - **The combat icon picture** **[V]** (`BuildCharacterIcon`, `ovl17:0482`; `MergePictureData`,
   `ovl17:032F`): with 8X8D tile set 3 selected, it loads the selected character's CHEAD picture (the
   name suffixed from `ds08C5[Sel^.Figure[0]]`, block `Sel^.CHeadBlock`) into slot 11 and its CBODY

@@ -17,7 +17,7 @@ procedure BuildCharacterIcon(Recolor: Boolean);
 procedure SaveCharacter(Who: PCharacter; Name: String8);
 procedure LoadCharacterFile(FileName: string; Who: PCharacter; SavedGame: Byte; UseSaveDir: Byte);
 procedure LoadMonster(Kind: Byte; Who: Pointer);
-procedure ovl17_e7;
+procedure AddMonsterToParty(Kind: Byte);
 procedure AddPartyMember(Member: PCharacter);
 procedure ovl17_e8;
 procedure ovl17_e9;
@@ -36,6 +36,25 @@ type
     Pixels: ^Byte;                { +$13: the packed pixel bytes }
     Tail: array[0..20000] of Byte;  { +$17: the tile bytes, indexed by a byte times ByteSize }
   end;
+  { The monster picture-bank tables a loaded monster's appearance is picked from: a view of the
+    ds08C5-region byte table (POOLVARS, whose ds08C5[Figure[0]] is the CHEAD/CBODY suffix) with the
+    head bank table at +2 and the four body bank tables at +$12, +$1C, +$26 and +$30. AddMonsterToParty
+    indexes each by Who^.B9E * its stride plus a RollDice. The first two bytes are the suffix
+    table's. }
+  { Each table is indexed [Who^.B9E, a RollDice], one row per B9E (the 16/10-byte extents keep the
+    next table at its own offset; a 2-D access is what makes the compiler index by the row stride,
+    as ThiefDexTable[Dexterity, Skill] does in ovl23). }
+  TMonsterBanks = record
+    Suffix01: array[0..1] of Byte;       { +0..+1: the CHEAD/CBODY suffix table's first bytes }
+    Head: array[0..1, 0..7] of Byte;     { +2: head banks, [B9E, RollDice(1, 8)] }
+    BodyClass0: array[0..1, 0..4] of Byte;  { +$12: body banks for class 0 }
+    BodyOther: array[0..1, 0..4] of Byte;   { +$1C: body banks for the other classes }
+    BodyClass5: array[0..1, 0..4] of Byte;  { +$26: body banks for class 5 }
+    BodyClass6: array[0..1, 0..4] of Byte;  { +$30: body banks for class 6 }
+  end;
+
+var
+  MonsterBanks: TMonsterBanks absolute ds08C5;  { the ds08C5 picture-bank tables; see TMonsterBanks }
 
 const
   Yellow = $0E;        { EGA text colour of the disk prompt (the message colour OVL00 also uses) }
@@ -174,7 +193,7 @@ end;
   masks the body. When Recolor is set it also builds a 16-entry colour map from the six nibble pairs
   Sel^.Figure[1..6] through ds3CF5 and applies it to both halves of the icon (res07_fn_1E5C).
   Finally it frees slot 11, restores the tile set and flushes the keyboard. Called by the ovl16
-  character menus, by ovl17_e7 and by ovl17_e8. }
+  character menus, by AddMonsterToParty and by ovl17_e8. }
 procedure BuildCharacterIcon(Recolor: Boolean);
 var
   UnusedBytes: array[0..2] of Byte;  { QUIRK ovl17:0482: three frame bytes the original reserves and never reads or writes }
@@ -378,7 +397,7 @@ end;
   two random nibble pairs from RollDice(1, 6), and Figure[4] is $C4. Then it loads MON<set>SPC.DAX
   and MON<set>ITM.DAX block Kind and copies their 9-byte affect and 63-byte item records out of the
   buffer (the offset advances to the block size) into GetMem chains. Sets ds557C while the lists are
-  read and flushes the keyboard. Called by ovl07 LoadCharacter and ovl17_e7. }
+  read and flushes the keyboard. Called by ovl07 LoadCharacter and AddMonsterToParty. }
 procedure LoadMonster(Kind: Byte; Who: Pointer);
 var
   Size: Word;                   { the unpacked size of the loaded DAX block }
@@ -461,8 +480,57 @@ begin
   ds557C := 0;
   FlushKeyboard;
 end;
-{ ovl17:1262: retf 2: 2 bytes of parameters; 18 bytes of locals }
-{@stub} procedure ovl17_e7; begin end;
+{ ovl17:1262. Adds a monster of kind Kind to the party. If the party already holds eight members
+  (GameVars^[PartySize] > 7) it does nothing. Otherwise it allocates a 285-byte character and has
+  LoadMonster fill it, gives it a random byte at +$AB (Random(256)), collects the classes with a
+  positive level (Who^.ClassLevels[0..6]) into Pick[] (Pick[1] = 2 when none qualifies), rolls one of
+  them (RollDice(1, Count)) and picks the monster's body picture bank from the ds08C5-region
+  MonsterBanks tables by the roll and Who^.B9E (the body table of class 0, 5, 6 or the default), and
+  its head bank from the head table the same way. Then AddPartyMember adds it and
+  BuildCharacterIcon(True) rebuilds the combat icon. Called by ovl03_fn_2B7E. }
+procedure AddMonsterToParty(Kind: Byte);
+const
+  PartySize = 830;              { party member count, a word of the ds49D6 game variable block }
+  LastClass = 6;                { the highest ClassLevels index the class scan tests }
+var
+  Unused: Pointer;              { QUIRK ovl17:1262: a spare far pointer the original never reads or writes }
+  Who: PCharacter;              { the monster record being built }
+  Count: Byte;                  { the classes found, then the RollDice(1, Count) pick }
+  I: ShortInt;                  { walks the classes 0..LastClass }
+  { QUIRK ovl17:1262: four bytes, but the scan writes up to Pick[LastClass + 1] (7): the original
+    writes past the array into Count, I and Who for a monster with more than four classes. }
+  Pick: array[1..4] of Byte;    { the classes with a positive level, 1-based }
+begin
+  if ds49D6^[PartySize] > 7 then Exit;
+  GetMem(Who, 285);
+  LoadMonster(Kind, Who);
+  with Who^ do
+  begin
+    BAB := Random(256);
+    Count := 0;
+    for I := 0 to LastClass do
+      if ClassLevels[I] > 0 then
+      begin
+        Inc(Count);
+        Pick[Count] := I;
+      end;
+    if Count = 0 then
+    begin
+      Count := 1;
+      Pick[Count] := 2;
+    end;
+    Count := RollDice(1, Count);
+    case Pick[Count] of
+      0: BodyBank := MonsterBanks.BodyClass0[B9E, RollDice(1, 5)];
+      5: BodyBank := MonsterBanks.BodyClass5[B9E, RollDice(1, 5)];
+      6: BodyBank := MonsterBanks.BodyClass6[B9E, RollDice(1, 5)];
+      else BodyBank := MonsterBanks.BodyOther[B9E, RollDice(1, 5)];
+    end;
+    HeadBank := MonsterBanks.Head[B9E, RollDice(1, 8)];
+  end;
+  AddPartyMember(Who);
+  BuildCharacterIcon(True);
+end;
 { ovl17:1446. Adds one character to the party list (ds5D96) and gives it a combat map icon. Member
   points to the TCharacter to add: its Next is left nil. When the list is empty it becomes the head
   and SelectedCharacter; otherwise it is linked at the tail. Then every icon number 0..7 a member

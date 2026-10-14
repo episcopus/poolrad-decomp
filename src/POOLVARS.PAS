@@ -273,7 +273,12 @@ type
     { +$96..$9D: the level in each of the eight classes; Raise Dead treats index 2 apart (class 2
       is the fighter in the create-character run, whitepaper 5.8). Signed: only levels above 0 count. }
     ClassLevels: array[0..7] of ShortInt;
-    Pad9E: array[$9E..$9F] of Byte;
+    { +$9E: Sign-extended row index LoadMonster's caller (ovl17:1262) and the create menus (ovl16)
+      use to pick the character's picture banks: ovl17:1262 reads ds08C5[2 + B9E*8 + roll] and
+      ds08C5[18/28/38/48 + B9E*5 + roll], and ovl16:13CB reads ds3DA3[B9E + (Race shl 4)].
+      ovl16:0A29 sets it to (the create menu's selection - 1); its meaning is not settled. }
+    B9E: ShortInt;
+    Pad9F: Byte;
     ByteA0: ShortInt;             { +$A0: the script reads it signed (GetCharacterVar, ovl07:08C5); meaning unknown }
     { +$A1: RecalcClassStats sets 3 when the fighter level (ClassLevels[2]) is above 6, else 2
       (ovl23:0083): likely attacks per two rounds [I]. }
@@ -286,7 +291,10 @@ type
     dsA5: Byte;                   { +$A5 }
     PadA6: Byte;                  { +$A6 }
     dsA7: ShortInt;               { +$A7 }
-    PadA8: array[$A8..$AB] of Byte;
+    PadA8: array[$A8..$AA] of Byte;
+    { +$AB: LoadMonster's caller gives a new monster the value Random(256) here (ovl17:1262);
+      the rest of the byte's use is not known. }
+    BAB: Byte;
     Experience: LongInt;          { +$AC: experience points; AwardExperience adds a battle's share (ovl05:04A3) }
     PadB0: Byte;
     { +$B1: Raise Dead subtracts it from HpMax to get the hit points its constitution
@@ -650,7 +658,9 @@ var
   ds5378: Word;                   { set to 1 by the loader (ovl11:03E0) }
   ds547A: Word;                   { set to 1 by the loader (ovl11:03DA) }
   ds547D: Byte;                   { a character the loader appends to the path through System_MemOp_0C3B (ovl11:0581) }
-  ds557C: Byte;                   { set to 1 while LoadMonster reads the MON*.DAX affect and item lists and to 0 after (ovl17:107B, 1252); cleared by the loader (ovl11:0438) }
+  { set to 1 while LoadMonster reads the MON*.DAX affect and item lists and to 0 after
+    (ovl17:107B, 1252); cleared by the loader (ovl11:0438) }
+  ds557C: Byte;
   ds5582: array[0..$80F] of Byte;   { $810-byte buffer the loader reads the file block into (ovl11:05CD) }
   { 129 sixteen-byte combat AI rows indexed by race (ScoreTarget copies the row of Who^.Race
     into a local and scores it): the same block the loader uses as its file buffer (load time
