@@ -1630,11 +1630,11 @@ begin
 end;
 { 00BA:2E8B. Picks the item Who's attack aims with and returns whether it found one, clearing Aim
   first. With a readied weapon (SlotItems[0], +$CC): its kind's RaceRow attack flags (byte $E)
-  decide the aim. The melee bit ($10) aims the weapon itself; the launcher bit ($08)
-  aims the item in slot 11 (+$F8) when the $1 bit is set, or the item in slot 12 (+$FC) when the
-  $80 bit is set. The result is 1 when an item was aimed, or when the flags are exactly $A (a
-  ranged weapon that fires with nothing to aim); 0 otherwise. ovl09's AiTurn passes the aimed
-  item to ovl13_e12 for the attack. Globals: RaceRow (read). }
+  decide the aim. The melee bit ($10) aims the weapon itself; the launcher bit ($08) aims the item
+  in slot 11 (+$F8) when the slot-11 bit ($01) is set, or the item in slot 12 (+$FC) when the
+  slot-12 bit ($80) is set. The result is 1 when an item was aimed, or when the flags are exactly
+  $A (that case returns 1 with Aim still nil; why is not proven); 0 otherwise. ovl09's AiTurn
+  passes the aimed item to ovl13_e12 for the attack. Globals: RaceRow (read). }
 function ChooseAttackItem(Who: Pointer; var Aim: Pointer): Byte;
 var
   Item: PItem;
