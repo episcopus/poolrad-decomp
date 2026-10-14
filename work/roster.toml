@@ -1,8 +1,12 @@
-# The roster `make start-run` launches: one OpenCode session per entry, each in its own iTerm tab,
-# started with the matching prompt block of docs/process/START-AGENT.md (`heading` is the text after
-# "## The prompt for"). `model` is the OpenCode model id (`opencode models`) and `variant` is its
-# reasoning effort, passed as `model#variant` (`high` on every session here); edit freely.
-# `make stop-run` drains, integrates, releases and closes exactly these sessions.
+# The roster `make start-run` launches, one iTerm tab per entry. Decompilers and reviewers run as
+# workers (`make worker`, docs/process/WORKER.md): a supervisor that starts one fresh `opencode run`
+# per batch of routines or per review and claims again until the run stops; `heading` is not used for
+# them. Every other role is one interactive OpenCode session started with the prompt block of
+# docs/process/START-AGENT.md named by `heading` (the text after "## The prompt for"); `mode =
+# "interactive"` makes a decompiler or reviewer one too. `model` is the OpenCode model id (`opencode
+# models`) and `variant` is its reasoning effort, passed as `model#variant` (`high` on every session
+# here). Optional for workers: `batch` (routines per session) and `timeout` (minutes per session).
+# `make stop-run` drains, lets workers hand off, integrates, releases and closes exactly these sessions.
 
 [[session]]
 name = "orch-sonnet"

@@ -55,12 +55,66 @@ def test_a_variant_is_passed_as_a_model_suffix():
 
 
 def test_the_real_roster_resolves_every_prompt_block():
+    """Interactive sessions need their START-AGENT block; worker sessions need none."""
     text = run.START_AGENT.read_text()
     rows = run.roster()
     names = [r["name"] for r in rows]
     assert len(names) == len(set(names)) and rows[0]["role"] == "orchestrator"
     for r in rows:
+        if run.mode_of(r) == "worker":
+            continue
         block = run.prompt_block(text, r["heading"])
         assert "Assigned role: `%s`" % r["role"] in block
         assert "Requested name: `%s`" % r["name"] in block
         assert run.model_spec(r) == "%s#%s" % (r["model"], r["variant"])
+
+
+def test_decompilers_and_reviewers_run_as_workers_by_default():
+    """2026-10-13: every interactive decompiler and reviewer stopped on its own while work remained."""
+    assert run.mode_of({"role": "decompiler"}) == "worker"
+    assert run.mode_of({"role": "reviewer"}) == "worker"
+    assert run.mode_of({"role": "orchestrator"}) == "interactive"
+    assert run.mode_of({"role": "expert"}) == "interactive"
+    assert run.mode_of({"role": "decompiler", "mode": "interactive"}) == "interactive"
+
+
+def write_roster(tmp_path, monkeypatch, body):
+    path = tmp_path / "roster.toml"
+    path.write_text(body)
+    monkeypatch.setattr(run, "ROSTER", path)
+    return run.roster()
+
+
+def test_roster_validation(tmp_path, monkeypatch):
+    rows = write_roster(tmp_path, monkeypatch, '[[session]]\nname = "dec-a"\nrole = "decompiler"\nmodel = "p/m"\nvariant = "high"\n')
+    assert rows[0]["name"] == "dec-a"                  # a worker needs no heading
+    with pytest.raises(ValueError, match="heading"):
+        write_roster(tmp_path, monkeypatch, '[[session]]\nname = "orch"\nrole = "orchestrator"\nmodel = "p/m"\nvariant = "high"\n')
+    with pytest.raises(ValueError, match="only decompilers and reviewers"):
+        write_roster(tmp_path, monkeypatch,
+                     '[[session]]\nname = "x"\nrole = "expert"\nmodel = "p/m"\nvariant = "high"\nmode = "worker"\nheading = "h"\n')
+    with pytest.raises(ValueError, match="positive"):
+        write_roster(tmp_path, monkeypatch, '[[session]]\nname = "d"\nrole = "decompiler"\nmodel = "p/m"\nvariant = "high"\nbatch = 0\n')
+
+
+def test_worker_argv_carries_identity_model_and_options():
+    argv = run.worker_argv({"name": "dec-a", "role": "decompiler", "model": "openrouter/x/y", "variant": "max",
+                            "batch": 4, "timeout": 60}, "d8bd82ffe0844e16")
+    assert argv[:8] == ["--agent", "dec-a", "--role", "decompiler", "--harness", "opencode", "--model", "openrouter/x/y"]
+    assert argv[argv.index("--session") + 1] == "dec-a-run-d8bd82ff"
+    assert argv[argv.index("--session-model") + 1] == "openrouter/x/y#max"
+    assert argv[argv.index("--variant") + 1] == "max"
+    assert argv[argv.index("--batch") + 1] == "4" and argv[argv.index("--timeout") + 1] == "60"
+
+
+def test_open_session_hands_a_worker_to_the_supervisor():
+    text = (ROOT / "tools/agent/open_session.sh").read_text()
+    assert 'exec .venv/bin/python tools/agent/run.py session "$name"' in text
+    assert text.index("run.py session") < text.index("exec opencode mini")
+
+
+def test_stop_signals_workers_before_integrating():
+    """A worker hands off on SIGTERM; its hand-off must land in stop-run's integration."""
+    import inspect
+    src = inspect.getsource(run.stop)
+    assert src.index("signal_sessions(names, signal.SIGTERM)") < src.index('["make", "integrate"]')

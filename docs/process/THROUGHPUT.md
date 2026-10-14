@@ -94,20 +94,23 @@ subagent. Experts cannot claim game units, edit source/registries, record levels
 human-reserved changes or recursively consult another expert. They return bounded advice to the
 original worker, which still must prove it with the pinned compiler and independent review.
 
-Conservative limits approved for this system:
+Limits approved for this system (raised tenfold by the human on 2026-10-13, after the first run used
+all five cases within 20 minutes, four of them on routines that already matched):
 
 | Limit | Value |
 |---|---|
 | Active cases | 1 |
-| Cases per run | 5 |
+| Waiting cases | 2 (a scan queues no more until the expert takes one) |
+| Cases per run | 50 (a case retired as `obsolete` does not count) |
 | Consultations | 1 per routine/problem/input revision |
 | Case lease | 15 minutes, checked before further reasoning/tools |
 | Case allocation | USD 10 |
-| Run allocation | USD 50, including measured expert idle/overhead after budget baseline |
+| Run allocation | USD 500, including measured expert idle/overhead after budget baseline |
+| Already matched | a codegen case is never queued for a routine at L2/L3 on main or in its worktree; one that reaches L2 while it waits is retired as `obsolete` when the expert takes the next case |
 
 **Dollar allocations are not hard provider billing ceilings.** Usage is often reported after a model
 turn; a turn can overshoot an allocation. Before enabling this queue, give the expert a dedicated
-harness/provider budget cap of at most USD 50 and a tool/runtime timeout. Restrict its permissions to
+harness/provider budget cap of at most USD 500 and a tool/runtime timeout. Restrict its permissions to
 read-only project/reference access and the narrow queue/meter endpoints (optional generated probe
 scratch only, never game source). Protect policy, meter and usage files from workers. A lease does not
 kill a process or interrupt an in-flight paid request. Without an external cap and trusted counters,
@@ -116,7 +119,7 @@ do not enable automatic paid advice. This avoids pretending shell scripts are a 
 Human setup, once per run (after run admission and expert registration):
 
 ```sh
-make expert-budget AGENT=expert-1 OPERATOR=1 BILLING_CAP_REF="<configured provider/harness cap reference>" REASON="human approved one expert, USD 50 cap"
+make expert-budget AGENT=expert-1 OPERATOR=1 BILLING_CAP_REF="<configured provider/harness cap reference>" REASON="human approved one expert, USD 500 cap"
 ```
 
 The command requires a usable meter and pins the exact expert incarnation and run id. It refuses a

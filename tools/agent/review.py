@@ -10,7 +10,9 @@ The review lives in work/reviews/<unit>.md (template: work/reviews/TEMPLATE.md).
   1. the file names a `decompiler:` and a `reviewer:`, and they differ (the reviewer of a unit is never
      its decompiler, SPEC 9.2);
   2. no finding is open with severity must-fix (`- [ ] must-fix ...`; a resolved one is `- [x] ...`);
-  3. the unit matches completely now (`make match UNIT=<id>`: every routine L2, `unit: complete`);
+  3. the unit matches completely now (`make match UNIT=<id>`: every routine L2, `unit: complete`); code
+     linked from an external object file (`external_from` in re/units.toml, SPEC 8.3) counts as matched,
+     exactly as `make match` counts it for completeness;
   4. the unit passes the checkable readability rules (`make readability UNIT=<id>`); the reviewer has
      judged the rest (docs/process/READABILITY.md).
 
@@ -32,6 +34,9 @@ sys.path.insert(0, str(ROOT / "tools/match"))
 import match  # noqa: E402
 
 REVIEWS = ROOT / "work/reviews"
+# Results a reviewed unit may consist of: Pascal proven at L2, nested routines a matched routine proves,
+# and routines inside an external object file, which the matcher keeps as the original's bytes.
+ACCEPTED = ("matched", "nested", "external")
 
 
 def field_of(text: str, key: str) -> str:
@@ -97,7 +102,7 @@ def main(argv=None) -> int:
     except match.MatchError as e:
         problems.append("make match: %s" % e)
         results, whole = [], ""
-    bad = [r for r in results if r.status not in ("matched", "nested")]
+    bad = [r for r in results if r.status not in ACCEPTED]
     if bad:
         problems.append("not every routine matches: %s" % ", ".join("%s (%s)" % (r.name, r.status) for r in bad[:8]))
     if results and not whole.startswith("unit: complete"):

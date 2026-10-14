@@ -17,8 +17,10 @@ only automates identity and admission; if it ever disagrees with them, they win.
 OpenCode session as the harness, so it detects `opencode` only.
 
 **Read first (2026-10-13).** A session started this way holds its unit lock itself, so when it runs out
-of context the lock stays until you release it (`make inbox` lists it). For decompilers and reviewers
-prefer `make worker AGENT=dec-1 ROLE=decompiler HARNESS=opencode MODEL=<provider/model> SESSION=<label>`
+of context the lock stays until you release it (`make inbox` lists it), and it works only for as long as
+its model keeps going in one turn (in the 2026-10-13 run every such decompiler and reviewer stopped on
+its own within 90 minutes). `make start-run` therefore starts decompilers and reviewers as workers and
+uses these blocks only for interactive roster entries (`mode`, docs/process/OPERATOR.md). By hand, prefer `make worker AGENT=dec-1 ROLE=decompiler HARNESS=opencode MODEL=<provider/model> SESSION=<label>`
 from a plain terminal: the supervisor claims, runs one `opencode run` session per batch and hands off
 or releases by itself (docs/process/WORKER.md, docs/process/OPERATOR.md). Use this prompt for roles the
 supervisor does not run (documentarian, expert, a tooling task) or when you want to watch a session

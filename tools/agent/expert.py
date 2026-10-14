@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 """Bounded advice queue for ONE human-started expert. Never launches, replaces or stops agents.
 
-Conservative defaults: 1 active case, 5 cases/run, 900 seconds/case, $10 allocation/case and $50/run.
+Defaults: 1 active case, at most 2 waiting, 50 cases/run, 900 seconds/case, $10 allocation/case and
+$500/run (raised tenfold by the human on 2026-10-13: 5 cases and $50 ran out within 20 minutes, four of
+the five on routines that already matched). A codegen case whose routine is already at L2 or L3 (on main,
+or in the unit's worktree registry) is never queued, and one that got there while waiting is retired as
+`obsolete` when the expert takes the next case; obsolete cases do not count against the run's cases.
 Dollar admission uses real harness counters and reserved allocations. Counters arrive after model
 turns, so a provider/harness billing cap is REQUIRED; repository reservations are not a hard invoice
 ceiling. Missing usage, expiry or overage freezes dispatch. No recursive consultation, verdict-writing,
@@ -28,7 +32,8 @@ import meter
 import performance
 import activity
 
-DEFAULTS = dict(max_cases=5, case_usd=10.0, run_usd=50.0, deadline_seconds=900)
+DEFAULTS = dict(max_cases=50, max_queued=2, case_usd=10.0, run_usd=500.0, deadline_seconds=900)
+LEVELS_DONE = ("L2", "L3")
 
 
 def directory() -> Path:
@@ -124,6 +129,52 @@ def problem(unit: str, fn: str) -> dict:
     return matches[0]
 
 
+def worktree_of(unit: str) -> Path:
+    return common.main_checkout().parent / "poolrad-worktrees" / unit
+
+
+def resolved(unit: str, routine_id: str) -> str:
+    """Where the routine already matches ("main" or "worktree"), or "" when it still needs work.
+
+    The registry level is the evidence: a passing `make match FN=` event is not, because a routine parked
+    as a stub also returns 0. The worker's worktree counts because `make match WRITE=1` records L2 there
+    before the commit (2026-10-13: ovl20:0C9A was L2 only in the worktree when it was queued)."""
+    for label, root in (("main", common.main_checkout()), ("worktree", worktree_of(unit))):
+        path = root / "re/symbols.toml"
+        if not path.exists():
+            continue
+        try:
+            rows = tomllib.loads(path.read_text()).get("routine", [])
+        except (tomllib.TOMLDecodeError, OSError):
+            continue
+        if any(r.get("id") == routine_id and r.get("level") in LEVELS_DONE for r in rows):
+            return label
+    return ""
+
+
+def routine_excerpt(source: str, name: str) -> str | None:
+    """The routine's implementation (header, nested routines, body), never its interface declaration.
+
+    The interface section repeats every header, so a search from the top found the declaration and cut
+    the excerpt at the next declaration (2026-10-13: the expert got one line and had to dig out the
+    worker's trial copy)."""
+    impl = re.search(r"^implementation\b", source, re.I | re.M)
+    body = source[impl.end():] if impl else source
+    header = r"^(?:\{@stub\}\s*)?(?:procedure|function)\s+"
+    match = re.search(header + r"%s\b.*?(?=%s|^end\.|\Z)" % (re.escape(name), header), body, re.M | re.S | re.I)
+    if not match:
+        return None
+    text = match[0]
+    if text.startswith("{@stub}"):
+        text = text.split("\n", 1)[0] + "\n"
+    else:                                      # up to its final `end;`, not the next routine's comment
+        ends = list(re.finditer(r"^end;[^\n]*\n?", text, re.M))
+        if ends:
+            text = text[:ends[-1].end()]
+    lead = re.search(r"\{[^{}]*\}\s*\Z", body[:match.start()])   # its own comment (address, meaning)
+    return (lead[0] if lead else "") + text
+
+
 def eligible(unit: str, row: dict, category: str) -> list[dict]:
     history = performance.events()
     if category == "codegen":
@@ -162,6 +213,8 @@ def candidates() -> list[dict]:
     for (unit, routine), failed in sorted(latest.items()):
         try:
             row = problem(unit, routine)
+            if resolved(unit, row["id"]):
+                continue                       # failed once, matched since: history, not a problem
             eligible(unit, row, "codegen")
             out.append(dict(unit=unit, routine=routine, category="codegen",
                             question="Diagnose these recorded code-generation failures without changing matcher rules: " + failed["detail"][:900]))
@@ -195,8 +248,8 @@ def scan(agent: str) -> list[dict]:
             queued.append(dict(case_id=case["case_id"], unit=case["unit"], routine=case["routine"]))
         except ValueError as e:
             queued.append(dict(**candidate, held=str(e)))
-            if (directory() / "policy.json").exists() and policy().get("frozen"):
-                break
+            if (directory() / "policy.json").exists() and policy().get("frozen") or "waiting" in str(e):
+                break                          # frozen, or the waiting queue is full: the rest wait too
     return queued
 
 
@@ -214,9 +267,13 @@ def request(agent: str, unit: str, fn: str, category: str, question: str) -> dic
     notes = row.get("notes", "").lower()
     if "waiting for the human" in notes or "human decision" in notes or "escalate-res06-20261012110841" in notes:
         raise ValueError("routine is held on a human decision; expert advice cannot authorize it")
+    if category == "codegen":
+        where = resolved(unit, row["id"])
+        if where:
+            raise ValueError("%s is already at L2 (%s); no consultation" % (row["id"], where))
     history = eligible(unit, row, category)
     main_dir = common.main_checkout()
-    worker = main_dir.parent / "poolrad-worktrees" / unit
+    worker = worktree_of(unit)
     root = worker if category == "codegen" and worker.is_dir() else main_dir
     revision = activity.source_revision(root)
     frozen_trial = None
@@ -233,15 +290,16 @@ def request(agent: str, unit: str, fn: str, category: str, question: str) -> dic
     local_name = next((r["name"] for r in local_rows if r["id"] == row["id"]), row["name"])
     if frozen_trial:
         local_name = frozen_trial.get("names", {}).get(row["id"], local_name)
-    match = re.search(r"^(?:\{@stub\}\s*)?(?:procedure|function)\s+%s\b.*?(?=^(?:procedure|function)\s|\Z)" %
-                      re.escape(local_name), source, re.M | re.S)
-    source_excerpt = match[0] if match else source
+    source_excerpt = routine_excerpt(source, local_name) or source
     key = hashlib.sha256((row["id"] + category + revision).encode()).hexdigest()
     current = [c for c in cases() if c["run_id"] == p["run_id"]]
     if any(c["problem_key"] == key for c in current):
         raise ValueError("this problem revision already has a consultation; no recursive retries")
-    if len(current) >= p["max_cases"]:
+    if len([c for c in current if c["state"] != "obsolete"]) >= p["max_cases"]:
         raise ValueError("expert case count exhausted for this run")
+    if len([c for c in current if c["state"] == "queued"]) >= p.get("max_queued", DEFAULTS["max_queued"]):
+        raise ValueError("%d cases already waiting for the expert; queue more after it takes one" %
+                         p.get("max_queued", DEFAULTS["max_queued"]))
     try:
         sample = meter.snapshot(expert)
     except (ValueError, OSError):
@@ -284,6 +342,14 @@ def take(agent: str) -> dict | None:
         raise
     budget(p, sample)
     queued = sorted((c for c in cases() if c["state"] == "queued" and c["run_id"] == p["run_id"]), key=lambda c: c["created"])
+    for case in list(queued):
+        where = resolved(case["unit"], case["routine"]) if case["category"] == "codegen" else ""
+        if where:                              # matched while it waited: no paid advice on a solved routine
+            case.update(state="obsolete", obsolete=time.time(), obsolete_reason="already at L2 (%s)" % where)
+            write_case(case)
+            control.event("expert-obsolete", agent=agent, case_id=case["case_id"], unit=case["unit"],
+                          routine=case["routine"], reason=case["obsolete_reason"])
+            queued.remove(case)
     if not queued:
         return None
     try:

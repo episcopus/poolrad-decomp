@@ -57,6 +57,18 @@ def test_review_pass_accepts_a_clean_review_of_a_complete_unit(tmp_path, monkeyp
     assert "would record 'passed" in capsys.readouterr().out
 
 
+def test_review_pass_accepts_a_unit_with_an_external_object_tail(tmp_path, monkeypatch, capsys):
+    """res03 links its sound driver from an .OBJ: `make match` calls the unit complete, so must review-pass
+    (2026-10-13: rev-sonnet's res03 review could not be stamped)."""
+    reviews = tmp_path / "reviews"
+    reviews.mkdir()
+    (reviews / "res03.md").write_text("decompiler: alice\nreviewer: bob\n")
+    monkeypatch.setattr(review, "REVIEWS", reviews)
+    results, whole = review.match.match_unit("res03")
+    assert any(r.status == "external" for r in results) and whole.startswith("unit: complete")
+    assert review.main(["res03", "--check"]) == 0, capsys.readouterr().out
+
+
 def test_a_failed_review_goes_back_to_a_decompiler_not_to_a_reviewer(tmp_path, monkeypatch):
     # Built from a copy of the live registry with every recorded review removed, so it does not depend on
     # which units have been reviewed on main (a merged review used to move the queue and break this test).
