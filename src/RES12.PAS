@@ -1531,7 +1531,20 @@ begin
   DrawLocationLine;
   DrawPartyRoster(SelectedCharacter);
 end;
-{@stub} procedure DrawCombatScreen; begin end;
+{ 00BA:2B88. Draws the combat screen: ovl31_e2 prepares the EGA palette, the left window
+  (1,1)-(21,21) and the right window (23,1)-(38,21) are drawn with DrawWindow, the bottom two rows
+  (0,23)-(39,24) are cleared, and the cursor is placed on the combat map's view origin plus three
+  cells (MoveCombatCursor: margin CursorMargin, direction CursorNoStep). Called by StartBattle,
+  PlayerTurn and the combat overlays. Globals: CombatMap (read). Side effect: the screen. }
+procedure DrawCombatScreen;
+begin
+  ovl31_e2;
+  DrawWindow(1, 1, $15, $15, 0, 0, '');
+  DrawWindow($17, 1, $26, $15, 0, 0, '');
+  ClearWindow(0, $17, $27, $18);
+  MoveCombatCursor(CombatMap^.ViewX + ViewCentreCell, CombatMap^.ViewY + ViewCentreCell,
+                   CursorMargin, CursorNoStep);
+end;
 {@stub} procedure SelectPartyMember(Title: String40; WithExit: Byte; var Selected: PCharacter); begin end;
 { 00BA:2E03: retf 4: 4 bytes of parameters; 2 bytes of locals }
 {@stub} function res12_fn_2E03(Who: Pointer): Boolean; begin end;
