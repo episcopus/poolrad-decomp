@@ -58,10 +58,13 @@ const
   SeqMapMask = 2;                { SC register 2: the plane map mask }
   MapMaskAll = $0F;              { all four planes enabled }
 var
-  { The video memory the views draw through: the CGA/Tandy scanline banks $B800..$BE00, which
-    DrawGlyph modes 0 and 2 and ClearFullScreen/ClearRect fill directly. RES09 maps the same
-    memory as the VideoText/VideoGrf planes; the EGA display pages ds4A16/ds4A18 (SetActivePage)
-    are this memory seen with a page selected. }
+  { The planes below are the CGA/Tandy video memory (VideoAdapter 0 and 2): the scanline banks
+    $B800, $BA00 and, for the graphics planes, $BC00 and $BE00. DrawGlyph modes 0 and 2 and
+    ClearFullScreen/ClearRect fill them directly; RES09 maps the same memory as its VideoText and
+    VideoGrf planes. The EGA display pages (VideoAdapter 1) are a different memory: page 0 at
+    $A000 and page 1 at $A200 (Page shl 9 + $A000; the add at 0709:0096 and 0709:00AD). In this
+    unit they are reached only through ds4A16 (SetActivePage) and ds4A18 (SetPageSegment), never
+    through the planes above. RES07 writes $A000 and $A200 directly (0464:1951, 0464:1B52). }
   TextPlane0: TTextPlane absolute $B800:$0000;
   TextPlane1: TTextPlane absolute $BA00:$0000;
   GraphPlane0: TGraphPlane absolute $B800:$0000;
