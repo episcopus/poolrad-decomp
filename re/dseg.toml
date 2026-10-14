@@ -1043,3 +1043,8 @@ evidence = "DS:477F: for each spell line ovl22_fn_044E adds, the item (scroll) i
 offset = 0x4843
 name = "SpellMenuItemCount"
 evidence = "DS:4843: the number of entries SpellMenuItems holds (ovl22:044E writes, 051C clears)"
+
+[[global]]
+offset = 0x6B80
+name = "CurrentItem"
+evidence = "DS:6B80: the current item the ovl22 spell lists work on (ovl22_fn_051C walks SelectedCharacter^.Items into it, ovl22_fn_044E reads its affects, ovl22_e1 copies a chosen line's SpellMenuItems entry into it)"

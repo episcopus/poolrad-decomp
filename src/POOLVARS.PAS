@@ -584,7 +584,7 @@ var
   SpellMenuList: PMenuLine;              { head of the spell menu list ovl22_e2/fn_028D build and ovl22_e1 frees }
   SpellMenuSpells: array[0..$14] of Byte;  { the spell number (bit 7 = pending) of each menu line, in list order }
   SpellMenuItems: array[0..$30] of PMenuLine;  { for each scribed/learned line, the item (scroll) it came from }
-  SpellMenuItemCount: Byte;                   { the number of entries SpellMenuItems holds (ovl22_fn_044E, fn_051C) }
+  SpellMenuItemCount: Byte;                   { the number of entries SpellMenuItems holds (AddItemSpells, fn_051C) }
   ds25C0: array[0..2, 0..2] of Byte;  { the 3x3 line pattern table StepLine reads at [SY+1, SX+1] }
   { DirStepX and DirStepY: nine entries each (DirStepY starts 9 bytes after DirStepX). ovl14's
     ClampPartyPosition also adds them as the party's column and row step (cbw at ovl14:06D0, 06DB). }
@@ -806,7 +806,7 @@ var
   ds6DBF: Byte;
   { the current item of the ovl22 spell lists (ovl22_e1, fn_044E, fn_051C); no decompiled routine
     outside ovl22 reads it }
-  ds6B80: PItem;
+  CurrentItem: PItem;
   ds6E36: Pointer;                { a picture EndCombat frees through ReleasePicture (ovl08:005A) }
   { A routine pointer: RunCombat sets @ovl13_e14 at the start (ovl08:0085) and EndCombat
     @ovl22_e4 at the end (ovl08:0069); who calls it is not known yet. }

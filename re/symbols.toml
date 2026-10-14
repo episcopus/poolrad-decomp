@@ -9828,12 +9828,12 @@ id = "ovl22:044E"
 unit = "ovl22"
 addr = "ovl22:044E"
 size = 206
-name = "ovl22_fn_044E"
-signature = ""
+name = "AddItemSpells"
+signature = "procedure AddItemSpells(Pending: Byte)"
 c_name = "ovl22_fn_044E"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl22_fn_044E (ovl22:044E adds the spell affects of the current item (CurrentItem) to the spell menu list through AddSpellMenuLine, recording the item in SpellMenuItems; Pending selects the pending (bit 7) or the plain affects; called by ovl22_e2 and ovl22_fn_051C); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

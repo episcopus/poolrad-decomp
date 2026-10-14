@@ -3462,3 +3462,17 @@ kind = "global"
 why = "DS:4843: the number of entries SpellMenuItems holds (ovl22:044E writes, 051C clears)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ds6B80"
+new = "CurrentItem"
+kind = "global"
+why = "DS:6B80: the current item the ovl22 spell lists work on (ovl22_fn_051C walks SelectedCharacter^.Items into it, ovl22_fn_044E reads its affects, ovl22_e1 copies a chosen line's SpellMenuItems entry into it)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl22_fn_044E"
+new = "AddItemSpells"
+kind = "routine"
+why = "ovl22:044E adds the spell affects of the current item (CurrentItem) to the spell menu list through AddSpellMenuLine, recording the item in SpellMenuItems; Pending selects the pending (bit 7) or the plain affects; called by ovl22_e2 and ovl22_fn_051C"
+date = "2026-10-13"
+
