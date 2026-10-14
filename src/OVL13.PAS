@@ -27,7 +27,7 @@ function SelectTurnUndeadTarget(Who: Pointer; var Selected): Boolean;
 procedure ResolveCombatantAttacks(Attacker, Target: PCharacter; AttackKind: Byte; var Done: Byte);
 procedure NoteAttackBearing(Attacker, Target: PCharacter);
 procedure PerformAttack(Who, Target: PCharacter; AttackKind: Byte; AimedItem: Pointer; var Done: Byte);
-procedure ovl13_fn_1B1E(Attacker: PCharacter; Target: PCharacter; var NeededRoll: Byte);
+procedure AddRangePenalty(Attacker: PCharacter; Target: PCharacter; var NeededRoll: Byte);
 procedure ovl13_fn_1BD7;
 function ovl13_e13(P: Pointer; var B: Byte): Boolean;
 procedure ovl13_fn_1C13;
@@ -862,7 +862,7 @@ begin
         RearAttack := 1;
       NeededRoll := PResistView(Target)^.Pair[RearAttack];
     end;
-    ovl13_fn_1B1E(Attacker, Target, NeededRoll);
+    AddRangePenalty(Attacker, Target, NeededRoll);
     HitKind := 0;
     if Behind <> 0 then
       HitKind := 1;
@@ -1004,8 +1004,34 @@ begin
     SetCombatantIcon(Who, Who^.Combat^.IconSet, 0, 0);
   end;
 end;
-{ ovl13:1B1E: frame not read }
-{@stub} procedure ovl13_fn_1B1E(Attacker: PCharacter; Target: PCharacter; var NeededRoll: Byte); begin end;
+{ ovl13:1B1E. Adds the attack's range penalty to NeededRoll, the to-hit value RollToHit must reach:
+  it takes the distance to Target (DistanceToTarget) and, for a ranged weapon (IsRangedWeapon),
+  reduces it by the readied weapon's range band ItemTable[SlotItems[0]^.ItemType].Range div 3
+  ((Range - 1) div 3, at least 0). While the distance then still exceeds the band it takes the band
+  off the distance and adds 2, then 3 to NeededRoll (two bands at most). A melee weapon's band is the
+  distance itself, so no penalty. Called by ResolveCombatantAttacks after the resistance/ds112
+  NeededRoll. Globals: ItemTable. }
+procedure AddRangePenalty(Attacker, Target: PCharacter; var NeededRoll: Byte);
+var
+  RangeBand: ShortInt;           { the weapon's range band, or the distance for a melee weapon }
+  Distance: ShortInt;            { the distance to Target, reduced band by band }
+begin
+  Distance := DistanceToTarget(Attacker, Target);
+  if IsRangedWeapon(Attacker) then
+    RangeBand := (ItemTable[Attacker^.SlotItems[0]^.ItemType].Range - 1) div 3
+  else
+    RangeBand := Distance;
+  if Distance - RangeBand > 0 then
+  begin
+    Distance := Distance - RangeBand;
+    NeededRoll := NeededRoll + 2;
+  end;
+  if Distance - RangeBand > 0 then
+  begin
+    Distance := Distance - RangeBand;
+    NeededRoll := NeededRoll + 3;
+  end;
+end;
 { ovl13:1BD7: frame not read }
 {@stub} procedure ovl13_fn_1BD7; begin end;
 { ovl13:1BF8: frame not read }

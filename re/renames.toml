@@ -4127,3 +4127,10 @@ kind = "routine"
 why = "ovl13:1884 turns the two combatants to face each other, animates the attack item, resolves the attack via ResolveCombatantAttacks and ends the turn; it is the attack entry point ovl08, ovl09 and the ovl13 helpers call"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl13_fn_1B1E"
+new = "AddRangePenalty"
+kind = "routine"
+why = "ovl13:1B1E takes the distance to Target and the readied weapon's range band ItemTable[ItemType].Range div 3 and adds 2 then 3 to the to-hit value NeededRoll for each band the target is beyond; called by ResolveCombatantAttacks"
+date = "2026-10-13"
+

@@ -5553,27 +5553,14 @@ evidence = ["prologue"]
 id = "ovl13:1B1E"
 unit = "ovl13"
 addr = "ovl13:1B1E"
-size = 185
-name = "ovl13_fn_1B1E"
-signature = "procedure ovl13_fn_1B1E(Attacker: PCharacter; Target: PCharacter; var NeededRoll: Byte)"
+size = 186
+name = "AddRangePenalty"
+signature = "procedure AddRangePenalty(Attacker: PCharacter; Target: PCharacter; var NeededRoll: Byte)"
 c_name = "ovl13_fn_1B1E"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_fn_1B1E (ovl13:1B1E takes the distance to Target and the readied weapon's range band ItemTable[ItemType].Range div 3 and adds 2 then 3 to the to-hit value NeededRoll for each band the target is beyond; called by ResolveCombatantAttacks); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl13:1BD7"
-unit = "ovl13"
-addr = "ovl13:1BD7"
-size = 33
-name = "ovl13_fn_1BD7"
-signature = ""
-c_name = "ovl13_fn_1BD7"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl13:1BF8"
