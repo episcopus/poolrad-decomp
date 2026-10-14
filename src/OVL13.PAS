@@ -40,7 +40,7 @@ procedure AddRangePenalty(Attacker: PCharacter; Target: PCharacter; var NeededRo
 function FindNearbyTarget(Who: PCharacter; var Selected): Boolean;
 function FindSpellTarget(Spell, Automatic, AimFlag: Byte; var Target: TSpellTarget): Boolean;
 procedure SelectSpellTargets(Spell, Automatic: Byte; var Done: Byte);
-procedure ovl13_e15(A, B: Byte; var Done: Byte);
+procedure CastCombatSpell(SpellNumber, NoRedraw: Byte; var Done: Byte);
 procedure ovl13_fn_2432;
 function IsBackstab(Who: PCharacter; Target: PCharacter): Boolean;
 procedure ovl13_fn_257E;
@@ -73,7 +73,7 @@ procedure ovl13_fn_3A2B;
 procedure ovl13_e23;
 function ovl13_e24: Boolean;
 implementation
-uses RES03, RES06, RES12, OVL22, OVL24, OVL25, OVL30, OVL31, Crt;
+uses RES03, RES06, RES12, OVL19, OVL22, OVL24, OVL25, OVL30, OVL31, Crt;
 type
   { A view of the two bytes ResolveCombatantAttacks selects between with the from-behind flag: TCharacter
     +$111 (ResistValue) and +$112 (ds112), accessed as a signed-indexed pair. }
@@ -1283,8 +1283,72 @@ begin
     end;
   end;
 end;
-{ ovl13:2414: frame not read }
-{@stub} procedure ovl13_e15(A, B: Byte; var Done: Byte); begin end;
+{ ovl13:2414. The C Cast command and the AI's memorized-spell cast: SpellNumber is the spell to
+  cast (0 opens ChooseSpellFromList at once, the list position starting at NoChoice), NoRedraw is
+  nonzero when the caller is the computer (the combat screen, cursor and panel are then not
+  redrawn). A spell whose
+  SpellTable byte +$B is 0 cannot be cast in combat ('Camp Only Spell'). When the spell's byte +$C
+  div 3 (its casting delay) is 0 the spell goes off at once through ovl22_e5 and the turn ends
+  (EndCombatTurn); otherwise the caster 'Begins Casting' (Done set), the spell is remembered in
+  Combat^.PendingSpell and the delay is taken off Combat^.Initiative (at least 1), so the spell
+  finishes on the caster's next turn (PlayerTurn ovl08:031A, ovl09 CastMemorizedSpell).
+  QUIRK ovl13:2417: the byte local after Spell is declared and never read; it shifts every later
+  local down one byte and is what makes the frame $1A. Globals: SelectedCharacter. }
+procedure CastCombatSpell(SpellNumber, NoRedraw: Byte; var Done: Byte);
+const
+  { The list position ChooseSpellFromList starts from and returns when nothing was picked. }
+  NoChoice = $FFFF;
+  { The SpellTable bytes e15 tests (TSpellEntry.PadB). }
+  SpellCombatFlag = $B;          { +$B: 0 marks a spell castable only in camp }
+  SpellCastDelay = $C;           { +$C: div 3 gives the casting delay in rows }
+  { The colour/row ShowCharacterMessage shows 'Begins Casting' on. }
+  CastMessageRow = 10;
+var
+  Spell: Byte;                   { the spell number cast, 0 while none is chosen }
+  Unused: Byte;                  { QUIRK ovl13:2417: declared but never read }
+  CastTime: Byte;                { the spell's casting delay, PadB[$C] div 3 }
+  Choice: Word;                  { ChooseSpellFromList's list position }
+  Listed: Byte;                  { nonzero when ChooseSpellFromList has spells to show }
+  ChosenChar: PCharacter;        { the caster (SelectedCharacter at entry) }
+begin
+  ChosenChar := SelectedCharacter;
+  Listed := 1;
+  Choice := NoChoice;
+  Done := 0;
+  Spell := SpellNumber;
+  if Spell = 0 then
+    Spell := ChooseSpellFromList(0, 1, Choice, Listed);
+  if Spell > 0 then
+    if SpellTable[Spell].PadB[SpellCombatFlag] = 0 then
+    begin
+      ShowFlashMessage('Camp Only Spell');
+      Spell := 0;
+    end;
+  if NoRedraw = 0 then
+  begin
+    DrawCombatScreen;
+    ShowCursorOn(ChosenChar, 3, 1);
+    DrawCharacterPanel(ChosenChar);
+  end;
+  if Spell <= 0 then
+    Exit;
+  CastTime := SpellTable[Spell].PadB[SpellCastDelay] div 3;
+  if CastTime = 0 then
+  begin
+    ovl22_e5(Spell, NoRedraw, 1, Done);
+    Done := EndCombatTurn(ChosenChar);
+  end
+  else
+  begin
+    Done := 1;
+    ShowCharacterMessage(ChosenChar, 'Begins Casting', CastMessageRow, 1);
+    ChosenChar^.Combat^.PendingSpell := Spell;
+    if ChosenChar^.Combat^.Initiative > CastTime then
+      Dec(ChosenChar^.Combat^.Initiative, CastTime)
+    else
+      ChosenChar^.Combat^.Initiative := 1;
+  end;
+end;
 { ovl13:2432: retf 8: 8 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl13_fn_2432; begin end;
 { ovl13:2574. Reports whether Who's attack on Target is a thief's backstab: Who's thief level

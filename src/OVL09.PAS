@@ -274,7 +274,7 @@ end;
   and the actor's side count ds6814Sides[OpposingSide(Who)] is above 0. Then RollDice(1, 7) rounds
   run with the level starting at 7 and falling by one per round: each round tries up to three random
   memorized spells through SpellAccepted (Who, Spell, Level) and casts the first accepted one through
-  ovl13_e15 (the Cast of CombatMenu). This routine does not read VarNoCasting (CombatMenu hides Cast
+  CastCombatSpell (the Cast of CombatMenu). This routine does not read VarNoCasting (CombatMenu hides Cast
   with it) or CanUseMagicItem (UseMagicItem's gate). QUIRK: the [bp-0x17..-0x1A] and [bp-0x24] frame
   bytes are never read (UnusedC, UnusedD). Globals: ds6814Sides (ds6814), ds6E30. }
 function CastMemorizedSpell(Who: PCharacter): Byte;
@@ -330,7 +330,7 @@ begin
   end;
 Done:
   if Chosen > 0 then
-    ovl13_e15(Chosen, 1, CastDone)
+    CastCombatSpell(Chosen, 1, CastDone)
   else
     CastDone := 0;
   CastMemorizedSpell := CastDone;

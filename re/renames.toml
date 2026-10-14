@@ -4169,3 +4169,10 @@ kind = "routine"
 why = "ovl13:2574 returns True when Who's attack on Target is a thief backstab: thief level (ClassLevels[6]) above 0, a backstab-capable readied weapon and an allowed slot-2 item, Target attacked (Combat^.BF above 1) and facing Who (BearingTo(Who,Target)=IconSet); RollAttackDamage applies the thief damage multiplier and ResolveCombatantAttacks uses ds112-2 and attack kind 2"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl13_e15"
+new = "CastCombatSpell"
+kind = "routine"
+why = "ovl13:2414 is the combat Cast command and the AI memorized-spell cast: it chooses a spell (ChooseSpellFromList), rejects a camp-only spell, then either casts at once through ovl22_e5 or begins casting (Combat^.PendingSpell, Initiative) for the next turn; called by PlayerTurn's C key (ovl08:031A) and ovl09 CastMemorizedSpell"
+date = "2026-10-14"
+
