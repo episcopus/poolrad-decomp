@@ -87,8 +87,7 @@ procedure DrainAttackTargetTwoLevels(Who: PCharacter; Affect: PAffect; Mode: Byt
 procedure CauseRotOnAttackTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e74(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure AddConstitutionSaveBonus(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e76;
-procedure ovl12_fn_257E;
+procedure ovl12_e76(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e77;
 procedure ovl12_e78;
 procedure ovl12_fn_25C9;
@@ -170,6 +169,7 @@ const
   KindFire = 1;                 { the DamageKind bit of fire damage (POOLVARS DamageKind: 1 fire) }
   KindMagic = 8;                { the DamageKind bit of magical damage (POOLVARS DamageKind: bit 3 magic) }
   KindAcid = $10;               { the DamageKind of acid damage (POOLVARS DamageKind: $10 acid) }
+  KindElectricity = 4;          { the DamageKind bit of electricity damage (POOLVARS DamageKind: 4 electricity; ovl12:2556) }
   FireSaveBonus = 3;            { what a fire hit adds to SaveRoll (ovl12:06E4) }
   FireReductionPerDie = 2;      { what each die of the last roll takes off fire damage (ovl12:1490) }
   FireProtectionSaveBonus = 4;  { what the fire damage hook (ovl12:1490) adds to SaveRoll }
@@ -216,7 +216,7 @@ const
   CoughResistReset = 50;
   CoughResistStep = 2;
   MinimumResistance = $39;      { ovl12:064E raises ResistValue (+$111) to at least this (57) }
-  ClearDamageValue = $0F;       { ovl12:064E clears DamageAmount when ds681B is this }
+  ClearDamageValue = $0F;       { ovl12:064E clears DamageAmount when ds681B is this; ovl12:2556 cancels the hook too }
   GivenItemType = $14;          { TMenuLine.ItemType of the item the affect gives (ovl12:07E0) }
   GivenItemNameNum2 = $14;      { NameNum[2] of that item }
   GivenItemNameNum3 = $F3;      { NameNum[3] of that item; the search of Who's items uses it too (ovl12:07E0) }
@@ -1623,10 +1623,21 @@ begin
     SaveRoll := SaveRoll + Bonus;
   end;
 end;
-{ ovl12:2556: frame not read }
-{@stub} procedure ovl12_e76; begin end;
-{ ovl12:257E: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_fn_257E; begin end;
+{ ovl12:2556. Purpose unknown: an affect handler on the damage hook (the AffectHandlers shape: Who, Affect and Mode; Affect
+  and Mode are not read, ovl24:0000; Who is read for its message). When ds681B is ClearDamageValue the pending hook is
+  cancelled (CancelPendingHook(0): the damage is dropped) and "is unaffected" is shown on Who in colour 10. Otherwise,
+  when the damage is electricity (KindElectricity in DamageKind), the hook is cancelled without the message. Which
+  affect runs it is not known yet [?]. }
+procedure ovl12_e76(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  if ds681B = ClearDamageValue then
+  begin
+    CancelPendingHook(0);
+    res12_fn_16EC(Who, 'is unaffected', $A, 1);
+  end
+  else if (DamageKind and KindElectricity) <> 0 then
+    CancelPendingHook(0);
+end;
 { ovl12:25A2: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e77; begin end;
 { ovl12:25BC: frame not read }
