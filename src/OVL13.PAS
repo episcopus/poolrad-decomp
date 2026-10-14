@@ -46,7 +46,7 @@ function IsBackstab(Who: PCharacter; Target: PCharacter): Boolean;
 procedure ovl13_fn_257E;
 procedure ovl13_fn_25C9;
 function BearingTo(Who, Target: Pointer): Byte;
-procedure ovl13_fn_26B0(Who, Target: PCharacter; Item: PItem);
+procedure ShowAttackAnimation(Who, Target: PCharacter; Item: PItem);
 procedure ovl13_e19;
 function ovl13_e20(Who: Pointer): Byte;
 function ovl13_e16(Who, Target: Pointer): Boolean;
@@ -82,6 +82,14 @@ type
     Pair: array[0..1] of Byte;
   end;
   PResistView = ^TResistView;
+  { A view of the header of the 24x3 combat picture AllocatePicture makes ds6E36 point at (the
+    TPicture res12's CopyPictureItem reads): only the bytes-per-item word at +$11 is needed here
+    to quarter it for the text adapter, the rest of the header is not read. }
+  TPictureHeader = record
+    Head: array[0..$10] of Byte;
+    ByteSize: Word;
+  end;
+  PPictureHeader = ^TPictureHeader;
 const
   { The two sides of a combat (POOLVARS, ovl24:0D96). }
   SideParty = 0;
@@ -923,7 +931,7 @@ end;
   ResolveCombatantAttacks (this routine covers 1884..1B1E; the map's entries inside it were merged):
   it turns Target to face Who (once, while Target's attack count Combat^.BF is below TargetTurnLimit
   and AttackKind is 0), turns Who to face Target (SetCombatantIcon, mirror) and redraws Who's panel,
-  remembers Target in Who^.Combat^.Target, pauses, lets ovl13_fn_26B0 play the aimed item AimedItem
+  remembers Target in Who^.Combat^.Target, pauses, lets ShowAttackAnimation play the aimed item AimedItem
   and a BowItemKind readied item, then, when Who has any attack slot left, saves SelectedCharacter,
   makes Who the selected character and resolves the attack (AttackKind is the attack kind, Done the
   turn-done flag), spends one round of the aimed ammo (Count drops by ds6E2C[1]; an emptied stack
@@ -937,7 +945,7 @@ procedure PerformAttack(Who, Target: PCharacter; AttackKind: Byte; AimedItem: Po
 const
   { Target turns to face Who only while its attack count Combat^.BF is below this (ovl13:1892). }
   TargetTurnLimit = 3;
-  { The readied item kind ovl13_fn_26B0 is given a second time alongside the ammo (ovl13:195A): a
+  { The readied item kind ShowAttackAnimation is given a second time alongside the ammo (ovl13:195A): a
     launcher whose own missile is drawn; which item kind this is is not settled, it is read as a bow. }
   BowItemKind = $2F;
   { The AimedItem^.Affects[3] value that stops an emptied ammo stack being copied into the loot list
@@ -964,9 +972,9 @@ begin
   Who^.Combat^.Target := Target;
   Delay(AttackPause);
   if AimedItem <> nil then
-    ovl13_fn_26B0(Who, Target, PItem(AimedItem));
+    ShowAttackAnimation(Who, Target, PItem(AimedItem));
   if Who^.SlotItems[0]^.ItemType = BowItemKind then
-    ovl13_fn_26B0(Who, Target, Who^.SlotItems[0]);
+    ShowAttackAnimation(Who, Target, Who^.SlotItems[0]);
   Done := 1;
   if (Who^.AttackSlots[1] > 0) or (Who^.AttackSlots[2] > 0) then
   begin
@@ -1416,8 +1424,91 @@ begin
     Inc(Dir);
   BearingTo := Dir;
 end;
-{ ovl13:26B0: retf 12: 12 bytes of parameters; 6 bytes of locals }
-{@stub} procedure ovl13_fn_26B0(Who, Target: PCharacter; Item: PItem); begin end;
+{ ovl13:26B0. Shows one attack's missile flying from Who to Target: it picks a picture by Item's item
+  kind (the missile sprite of the bearing from Who to Target for most kinds, a 2x2 combat icon or
+  two rows of another picture for the rest) and draws it at Who's cell, then animates it along the
+  line between the two combatants (WalkCombatLine), with a launch and an impact sound. Called by
+  PerformAttack for the aimed item and for a readied bow. Globals: ds6E36 (the combat picture whose
+  bytes-per-item word is read), VideoAdapter, ds2620 and ds262C (the two sounds). QUIRK ovl13:26DD:
+  PixelBytes is worked out and never read. }
+procedure ShowAttackAnimation(Who, Target: PCharacter; Item: PItem);
+const
+  { The first of the three directional missile pictures of the picture table ds5E5A (ovl13:26D1):
+    an even bearing uses this slot plus Bearing mod 4, its half selected by Bearing div 4; an odd
+    bearing uses the next slot, one half and a mirror for the westward directions. }
+  MissilePicBase = 13;
+  { The picture the kinds with neither a missile nor an icon copy: two rows of the slot seven past
+    the base (ovl13:27E2, 27F9). }
+  SwingPicOffset = 7;
+  { The 2x2 combat icons drawn for the remaining kinds (ovl13:27A1, 27C1): three and four past the
+    missile base, DrawCombatIcon's own four CopyPictureItem calls. }
+  IconPicOffset1 = 3;
+  IconPicOffset2 = 4;
+  { The item kind whose own picture is drawn instead of the missile: the readied bow
+    (ovl13:27D3, the same kind PerformAttack tests). }
+  BowItemKind = $2F;
+  { WalkCombatLine's Count and Mode for each picture kind (ovl13:26C9/26CD the missile, 27A6/27AA the
+    icons, 280B/280F the swing). }
+  MissileFrames = 1;
+  MissileMode = 10;
+  IconFrames = 4;
+  IconMode = $32;
+  SwingFrames = 2;
+  SwingMode = $14;
+var
+  PicIndex: Byte;                { [bp-1] the picture slot the copies start from, 13 for a missile }
+  Frames: Byte;                  { [bp-2] WalkCombatLine's Count: the animation frames }
+  Bearing: Byte;                 { [bp-3] the direction from Who's cell to Target's cell (BearingTo) }
+  Mode: Byte;                    { [bp-4] WalkCombatLine's Mode: nonzero draws every step }
+  PixelBytes: Word;              { [bp-6] the picture's bytes per item quartered for the text adapter }
+begin
+  Bearing := BearingTo(Who, Target);
+  Frames := MissileFrames;
+  Mode := MissileMode;
+  PicIndex := MissilePicBase;
+  PixelBytes := PPictureHeader(ds6E36)^.ByteSize;
+  if VideoAdapter = 1 then
+    PixelBytes := PixelBytes div 4;
+  case Item^.ItemType of
+    9, $15, $1C, $1F, $49:
+      if Odd(Bearing) then
+      begin
+        if (Bearing = 3) or (Bearing = 5) then
+          CopyPictureItem(PicIndex + 1, 1, 0, Byte(Bearing = 5))
+        else
+          CopyPictureItem(PicIndex + 1, 0, 0, Byte(Bearing = 7));
+      end
+      else
+        CopyPictureItem(PicIndex + Bearing mod 4, Bearing div 4, 0, 0);
+    2, 7, $14:
+      begin
+        DrawCombatIcon(PicIndex + IconPicOffset1);
+        Frames := IconFrames;
+        Mode := IconMode;
+      end;
+    $55, $56:
+      begin
+        DrawCombatIcon(PicIndex + IconPicOffset2);
+        Frames := IconFrames;
+        Mode := IconMode;
+      end;
+  else
+    begin
+      if Item^.ItemType = BowItemKind then
+        Inc(PicIndex);
+      CopyPictureItem(PicIndex + SwingPicOffset, 0, 0, 0);
+      CopyPictureItem(PicIndex + SwingPicOffset, 1, 1, 0);
+      Frames := SwingFrames;
+      Mode := SwingMode;
+    end;
+  end;
+  SetSoundDriverIdle(0);
+  PlaySound(ds2620);
+  WalkCombatLine(CombatantX(Who), CombatantY(Who), CombatantX(Target), CombatantY(Target),
+    Frames, Mode);
+  PlaySound(ds262C);
+  SetSoundDriverIdle(10);
+end;
 { ovl13:2879: retf 0: 0 bytes of parameters; 8 bytes of locals }
 {@stub} procedure ovl13_e19; begin end;
 { ovl13:2908: retf 4: 4 bytes of parameters; 8 bytes of locals }

@@ -125,3 +125,12 @@ tags = ["set", "in", "System_SetIn", "ShortInt", "compare", "codegen"]
 title = "`not (x in S)` inverts the SetIn jump (`jne` where `x in S` gives `je`), and a ShortInt record field compared with a Byte local widens to a 16-bit compare"
 lesson = "ovl13:1BF8 (FindNearbyTarget) tests `BodyTable[i].Who^.Status in StatusKilled` and the original is `call System_SetIn; jne skip`, while the probe `if St in [6,7,8] then` gives `je skip` (SetIn clears ZF when the element is in the set). So the source is `if not (Status in StatusKilled) then` (a body whose owner is not yet dead). The same routine compares `BodyTable[i].X` (TBody.X: ShortInt) with the scanned cell column: with that local a Byte the compare widens (`mov al,[Byte]; xor ah,ah; mov cx,ax; ... cwde; cmp ax,cx`), but declaring it ShortInt gives the original 8-bit `mov al,[di+field]; cmp al,[bp-k]`. Probe tools/re/tp_idioms/ovl13/PRB_E13.PAS."
 evidence = ["tools/re/tp_idioms/ovl13/PRB_E13.PAS", "src/OVL13.PAS#FindNearbyTarget", "re/symbols.toml#ovl13:1BF8"]
+
+[[lesson]]
+id = "byte-mod-four-idiv-and-div-four-shifts"
+confidence = "V"
+units = ["*"]
+tags = ["mod", "div", "idiv", "shr", "Byte", "codegen"]
+title = "`B mod 4` on a Byte is a 32-bit signed idiv; `B div 4` is two one-bit shifts"
+lesson = "ovl13:275E computes an even `Bearing`'s picture index and half. The original is `mov al,[Bearing]; xor ah,ah; cdq; mov cx,4; idiv cx; xchg dx,ax; mov dx,ax; mov al,[PicBase]; xor ah,ah; add ax,dx`, i.e. a signed 32-bit division, while the half comes from `mov al,[Bearing]; xor ah,ah; shr ax,1; shr ax,1`. Probe PRB26B0: `B mod 4` with B: Byte gives exactly the `xor ah,ah; cdq; mov cx,4; idiv cx; xchg dx,ax` sequence (the `xor ah,ah` is the Byte-to-Word step, then cdq widens to 32 bits and idiv divides), and `B div 4` gives the two one-bit shifts (the same bytes as `B shr 1 shr 1`), not `mov cx,2; shr ax,cl`. So a `mod` next to a shift pair in the packet is Byte mod/div by four, written as the ordinary operators."
+evidence = ["tools/re/tp_idioms/ovl13/PRB26B0.PAS", "src/OVL13.PAS#ShowAttackAnimation", "re/symbols.toml#ovl13:26B0"]

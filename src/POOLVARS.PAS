@@ -541,10 +541,12 @@ var
   ds2612: Word;                   { word passed to PlaySound by QuitGame and the Ctrl-S pause path; meaning unknown }
   ds261A: Word;                   { the sound ShowHitMessage plays when Flag is clear; meaning unknown }
   ds261C: Word;                   { the sound ShowHitMessage plays when Flag is set (a hit); meaning unknown }
+  ds2620: Word;                   { the sound PlaySound plays as an attack animation leaves the attacker (ovl13:26B0) }
   ds260A: array[0..7] of Byte;    { 8-byte structure FillPictureRect copies from @ds260A (DrawWallDescriptors) }
   ds2622: Word;                   { word e1 passes to PlaySound when Done is 0; meaning unknown }
   ds2626: Word;                   { word ResolveCombatantAttacks passes to PlaySound when nothing landed (ovl13:1774) }
   ds2628: Word;                   { word the ovl14 movement code passes to PlaySound; meaning unknown }
+  ds262C: Word;                   { the sound PlaySound plays as an attack animation reaches the target (ovl13:26B0) }
   { Five words, one per 8x8 tile bank, subtracted from the symbol number to index within the
     bank (Put8x8Symbol, ovl34:020F); evidence in re/dseg.toml. }
   SymbolBase: array[0..4] of Word;  { per-bank base symbol numbers; see above }

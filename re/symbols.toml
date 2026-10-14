@@ -5645,12 +5645,12 @@ id = "ovl13:26B0"
 unit = "ovl13"
 addr = "ovl13:26B0"
 size = 457
-name = "ovl13_fn_26B0"
-signature = "procedure ovl13_fn_26B0(Who, Target: PCharacter; Item: PItem)"
+name = "ShowAttackAnimation"
+signature = "procedure ShowAttackAnimation(Who, Target: PCharacter; Item: PItem)"
 c_name = "ovl13_fn_26B0"
-level = "none"
+level = "L2"
 justification = ""
-notes = "signature set from e12's pushes (ovl13:1884 calls it with Who, Target, an item pointer and pushes it as far ptr, far ptr, far ptr); auto:near_call"
+notes = "renamed from ovl13_fn_26B0 (ovl13:26B0 draws the attack's picture at Who's cell (CopyPictureItem/DrawCombatIcon selected by the item kind) and animates it along the line to Target (WalkCombatLine) with a launch (ds2620) and an impact (ds262C) sound; PerformAttack calls it for the aimed item and a readied bow); signature set from e12's pushes (ovl13:1884 calls it with Who, Target, an item pointer and pushes it as far ptr, far ptr, far ptr); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
