@@ -704,7 +704,7 @@ end;
   div HpMax; Flag11B is the current hit points) or is zero. Then ds6825 takes ds6E2F, the hook runs
   again, and the second test holds when it is below 100 minus ds49D6^[Var2Morale] (word 710 of the
   second game word block, $6B00..$6EFF, not GameVars; the morale source of ovl10), or is zero, or Who
-  is on the party side (Side 0). Only when both tests hold is there a roll: ovl13_e20 at or below half
+  is on the party side (Side 0). Only when both tests hold is there a roll: FastestEnemyMovement at or below half
   of ComputeMovement's value sets Panic and removes affects $4A and $4B (the character panics and the turn
   goes on); a higher roll with Intelligence above 5 surrenders (DropCombatant(Who, 4, 'Surrenders'),
   result EndCombatTurn(Who)); otherwise nothing happens. QUIRK ovl09:1141: the B84 gate is an inverted
@@ -737,7 +737,7 @@ begin
       RunAffectHooks($11, Who);
       if (ds6825 < 100 - ds49D6^[Var2Morale]) or (ds6825 = 0) or (Who^.Side = 0) then
       begin
-        E20Result := ovl13_e20(Who);
+        E20Result := FastestEnemyMovement(Who);
         if E20Result <= ComputeMovement(Who) div 2 then
         begin
           Who^.Combat^.Panic := 1;

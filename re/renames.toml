@@ -4190,3 +4190,10 @@ kind = "routine"
 why = "ovl13:2879 walks the battle character list ds5D96 and totals the monster side's (Side = SideMonsters) maximum and current hit points, then stores 20 * current div maximum * 5 in the morale byte ds6E2F that CheckMorale (ovl09:10D7) reads as a monster's second morale base; called by StartBattle and EndCombatRound"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl13_e20"
+new = "FastestEnemyMovement"
+kind = "routine"
+why = "ovl13:2908 walks the battle character list ds5D96 and returns half of the largest round Movement (ComputeMovement div 2) among the combatants on the side opposing Who that are still in the fight (Flag10D set); TryFlee compares it with half of Who's Movement to decide the escape and CheckMorale uses it as the panic threshold"
+date = "2026-10-14"
+

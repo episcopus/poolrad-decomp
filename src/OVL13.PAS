@@ -48,7 +48,7 @@ procedure ovl13_fn_25C9;
 function BearingTo(Who, Target: Pointer): Byte;
 procedure ShowAttackAnimation(Who, Target: PCharacter; Item: PItem);
 procedure UpdateMonsterMorale;
-function ovl13_e20(Who: Pointer): Byte;
+function FastestEnemyMovement(Who: Pointer): Byte;
 function ovl13_e16(Who, Target: Pointer): Boolean;
 procedure ovl13_fn_2AA0;
 procedure ovl13_fn_2B8B;
@@ -505,14 +505,14 @@ begin
 end;
 { ovl13:0C6A. Tries to flee the fight for Who (the Flee answer of the Move command, ovl08:0410,
   and a panicking off-map step, ovl09:0434): with no enemy at all within CollectEnemiesInRange's
-  $FF it gets away; otherwise it gets away when ovl13_e20(Who)'s initiative is below half Who's
+  $FF it gets away; otherwise it gets away when FastestEnemyMovement(Who)'s initiative is below half Who's
   round Movement, or level with it and a RollDice(1, 2) coin comes up 1. Getting away drops the
   combatant from the fight with StatusFled ('Got Away'), a block flashes 'Escape is blocked'.
   Returns EndCombatTurn(Who), which ends the turn. Globals: none. }
 function TryFlee(Who: PCharacter): Byte;
 var
   Escaped: Boolean;              { the flee attempt succeeded }
-  Other: Byte;                   { initiative ovl13_e20 works out for Who }
+  Other: Byte;                   { initiative FastestEnemyMovement works out for Who }
   Moves: Byte;                   { half of Who's round movement budget }
 begin
   Escaped := False;
@@ -521,7 +521,7 @@ begin
   else
   begin
     Moves := ComputeMovement(Who) shr 1;
-    Other := ovl13_e20(Who);
+    Other := FastestEnemyMovement(Who);
     if Other < Moves then
       Escaped := True
     else if Other = Moves then
@@ -1543,8 +1543,33 @@ begin
   if TotalMaxHp > 0 then
     ds6E2F := 20 * TotalCurrentHp div TotalMaxHp * 5;
 end;
-{ ovl13:2908: retf 4: 4 bytes of parameters; 8 bytes of locals }
-{@stub} function ovl13_e20(Who: Pointer): Byte; begin end;
+{ ovl13:2908. Returns half of the largest round Movement (ComputeMovement div 2) among the combatants
+  on the side opposing Who that are still in the fight (Flag10D set), and 0 when there is none: it
+  walks the battle's character list ds5D96 and keeps the highest value. TryFlee compares the result
+  with half of Who's own round Movement to decide whether Who outruns every enemy (Other < Moves
+  gets away; level with it needs a coin) and CheckMorale panics Who when the result is at most half
+  of Who's own Movement. Globals: ds5D96 (read). }
+function FastestEnemyMovement(Who: Pointer): Byte;
+var
+  Best: Byte;                    { [bp-2] the largest half-movement found }
+  Moves: Byte;                   { [bp-3] the current combatant's half-movement }
+  Member: PCharacter;            { [bp-7] the combatant walked in ds5D96 }
+begin
+  Best := 0;
+  Member := PCharacter(ds5D96);
+  while Member <> nil do
+  begin
+    if OpposingSide(Who) = Member^.Side then
+      if Member^.Flag10D <> 0 then
+      begin
+        Moves := ComputeMovement(Member) div 2;
+        if Moves > Best then
+          Best := Moves;
+      end;
+    Member := Member^.Next;
+  end;
+  FastestEnemyMovement := Best;
+end;
 { ovl13:2998: retf 8: 8 bytes of parameters; 20 bytes of locals }
 {@stub} function ovl13_e16(Who, Target: Pointer): Boolean; begin end;
 { ovl13:2AA0: frame not read }

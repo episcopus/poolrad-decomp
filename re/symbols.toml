@@ -5671,12 +5671,12 @@ id = "ovl13:2908"
 unit = "ovl13"
 addr = "ovl13:2908"
 size = 144
-name = "ovl13_e20"
-signature = "function ovl13_e20(Who: Pointer): Byte"
+name = "FastestEnemyMovement"
+signature = "function FastestEnemyMovement(Who: Pointer): Byte"
 c_name = "ovl13_e20"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_e20 (ovl13:2908 walks the battle character list ds5D96 and returns half of the largest round Movement (ComputeMovement div 2) among the combatants on the side opposing Who that are still in the fight (Flag10D set); TryFlee compares it with half of Who's Movement to decide the escape and CheckMorale uses it as the panic threshold); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
