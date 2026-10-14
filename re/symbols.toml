@@ -10556,12 +10556,12 @@ id = "ovl22:2E02"
 unit = "ovl22"
 addr = "ovl22:2E02"
 size = 75
-name = "ovl22_e53"
+name = "CastMonsterHaste"
 signature = ""
 c_name = "ovl22_e53"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_53"
+notes = "renamed from ovl22_e53 (the ovl22_e10 handler table points SpellHandlers[57] at stub 0096:0129 (overlay entry 53, ovl22:2E02); the routine cancels the slow affect $2A from the first chosen target (CureAffect) and otherwise applies the current spell with 'is Speedy', so it is the single-target haste handler of the monster-only spell 57 (SpellNames[57] is empty); make match UNIT=ovl22: 65 bytes matched); auto:entry_53"
 evidence = ["prologue"]
 
 [[routine]]

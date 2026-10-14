@@ -64,7 +64,7 @@ procedure CastLineBeam(Range, Damage, SaveKind, Bounce: Byte);
 procedure CastLightningBolt;
 procedure CastSlow;
 procedure CastRestoration;
-procedure ovl22_e53;
+procedure CastMonsterHaste;
 procedure ovl22_e54;
 procedure ovl22_e55;
 procedure ovl22_fn_2EEA;
@@ -1245,7 +1245,7 @@ end;
   the $22 spell affect on its own, and curing $2B clears its companions $2C (Cause Disease) and $1F
   (Helpless) too, while curing $32 (Dreaded Mummy Disease) clears $39. ds681F is set while the
   affects go so the removal does not trigger the Temple's own cure. Called by CastCureDisease (spell 39,
-  Cure Disease) and ovl22_e54. }
+  Cure Disease) and CastMonsterHeal. }
 function CureDiseaseAffects: Boolean;
 const
   DiseaseAffectHelpless = $1F;     { the Display names it Helpless (ovl15 AffectHelpless) }
@@ -1728,8 +1728,18 @@ begin
   RecalcClassStats(Target);
   res12_fn_16EC(Target, 'is restored', MessageColour, TimedMessage);
 end;
-{ ovl22:2E02: retf 0: 0 bytes of parameters; 10 bytes of locals }
-{@stub} procedure ovl22_e53; begin end;
+{ ovl22:2E02. Cast handler of spell 57, a monster-only spell: SpellNames[57] is empty, and the
+  ovl22_e10 table points element 57 of SpellHandlers at this stub. It first cancels the slow affect
+  $2A from the first chosen target ds6C95 (CureAffect, which shows 'is Cured'); when the target was
+  not slowed it applies the current spell ds681B to the chosen targets with 'is Speedy', so the
+  affected target carries the spell's own (haste) affect. It is CastHaste's single-target sibling. }
+procedure CastMonsterHaste;
+const
+  SlowAffect = $2A;               { the slow affect the spell cancels (SpellTable[55].AffectId, as CastHaste) }
+begin
+  if not CureAffect(ds6C95, SlowAffect) then
+    ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is Speedy');
+end;
 { ovl22:2E4D: retf 0: 0 bytes of parameters; 12 bytes of locals }
 {@stub} procedure ovl22_e54; begin end;
 { ovl22:2EE5: frame not read }
