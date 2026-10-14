@@ -666,6 +666,10 @@ var
   { The selected character: the Temple acts on it (ovl04 reads it everywhere), ShowHeadBodyWindow
     shows its HEAD and BODY pictures (ovl28:04F9); the loader sets it nil (ovl11:03B8). }
   SelectedCharacter: PCharacter;  { see above }
+  HelplessAffects: array[0..4] of Byte;   { the affects that leave a character helpless (IsHelpless tests
+                                    entries 1..4 through res12_fn_2199; ovl13:1FC3 compares the same
+                                    entries with the 16-byte combat table at DS:3204). Entry 0 (DS:286B)
+                                    is never read. }
   ds286F: array[0..13] of Byte;   { the HEAD picture number per bank (SelectedCharacter^.HeadBank, ShowHeadBodyWindow) }
   ds287D: array[0..13] of Byte;   { the BODY picture number per bank (SelectedCharacter^.BodyBank, ShowHeadBodyWindow) }
   KeypadScanLetters: array[0..8] of Char; { 'OPQK MGHI': the scan code letter of keypad digits 1..9 (ReadPromptChoice) }

@@ -351,7 +351,7 @@ end;
   combatant attacks it (MeleeAttack, CombatantRecord by the number ProbeStep returns); a step off the map
   asks Flee: (ovl13_e5 on Y); a step whose ground costs more than the moves left says Blocked;
   otherwise ovl13_e4 and ovl13_e3 move the character, and a character whose Flag10D clears or
-  for whom res12_fn_0B73 says so ends the turn (res12_fn_2637). Key #0 (Esc on the prompt) takes
+  for whom IsHelpless says so ends the turn (res12_fn_2637). Key #0 (Esc on the prompt) takes
   the move back: the saved moves, position (PlaceCombatant) and B9 return. Fewer than two half-moves
   left become 0. }
 procedure MoveCharacter(Who: PCharacter; var Done: Byte);
@@ -422,7 +422,7 @@ begin
           ovl13_e3(Who, Dir);
           if Who^.Flag10D = 0 then Done := res12_fn_2637(Who);
           ApplyCloudTile(Who);
-          if res12_fn_0B73(Who) then Done := res12_fn_2637(Who);
+          if IsHelpless(Who) then Done := res12_fn_2637(Who);
         end;
       end;
     end;

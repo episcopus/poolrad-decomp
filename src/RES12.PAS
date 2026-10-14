@@ -30,7 +30,7 @@ procedure DrawPartyRoster(Who: PCharacter);
 procedure DrawArmourClass(Who: PCharacter; Col, Row: Byte);
 procedure DrawHitPoints(Who: PCharacter; Col, Row, Flag: Byte);
 procedure DrawCharacterPanel(Who: PCharacter);
-function res12_fn_0B73(Who: Pointer): Boolean;
+function IsHelpless(Who: Pointer): Boolean;
 procedure res12_fn_0BB8(Who: Pointer);
 function res12_fn_1037(N: Byte): string;
 function res12_fn_1073(Value: Word): string;
@@ -367,7 +367,7 @@ end;
   "AC" headings with their values (DrawHitPoints, DrawArmourClass), the readied weapon's paged text
   (res12_fn_0442 then ShowPagedText) when a weapon is readied, and finally the status name
   (StatusNames[Status], +$10c) when the character takes no part in combat (Flag10D = 0), else
-  "(Helpless)" when res12_fn_0B73 says so. Side effects: video memory, the keyboard through
+  "(Helpless)" when IsHelpless says so. Side effects: video memory, the keyboard through
   ShowPagedText's paging. }
 procedure DrawCharacterPanel(Who: PCharacter);
 var
@@ -397,11 +397,24 @@ begin
   if Who^.Flag10D = 0 then
     DrawTextAt($17, Row + 1, White, StatusNames[ShortInt(Who^.Status)])
   else
-    if res12_fn_0B73(Who) then
+    if IsHelpless(Who) then
       DrawTextAt($17, Row + 1, White, '(Helpless)');
 end;
-{ 00BA:0B73: retf 4: 4 bytes of parameters; 6 bytes of locals }
-{@stub} function res12_fn_0B73(Who: Pointer): Boolean; begin end;
+{ 00BA:0B73. Returns whether Who is helpless: True when any of the four affects in
+  HelplessAffects (DS:286B, entries 1..4) is on Who's affect list (res12_fn_2199). DrawCharacterPanel
+  shows '(Helpless)' when it is True; ovl13 skips a helpless combatant. Called by eight
+  overlay routines and DrawCharacterPanel.
+  Globals: HelplessAffects (read). }
+function IsHelpless(Who: Pointer): Boolean;
+var
+  I: Byte;
+  Affect: Pointer;
+begin
+  IsHelpless := False;
+  for I := 1 to 4 do
+    if res12_fn_2199(Who, HelplessAffects[I], Affect) then
+      IsHelpless := True;
+end;
 { 00BA:0BB8: retf 4: 4 bytes of parameters; 20 bytes of locals }
 {@stub} procedure res12_fn_0BB8(Who: Pointer); begin end;
 { 00BA:1037: retf 2: 2 bytes of parameters; 256 bytes of locals }

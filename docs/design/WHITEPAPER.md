@@ -1104,7 +1104,7 @@ matched only with the copy.
   "AC" value (`DrawArmourClass`, `Abs(+$111 - 60)` signed in Green), the readied weapon's text
   (`res12_fn_0442` then `ShowPagedText`), and the status name `StatusNames[Status]` (+$10C, the
   eight string[12] entries at DS:1047: Okay Animated tempgone Running Unconscious Dying Dead
-  Stoned), or "(Helpless)" when `res12_fn_0B73` says so. The value at +$111 is the one
+  Stoned), or "(Helpless)" when `IsHelpless` says so. The value at +$111 is the one
   `ovl24`'s `RollBeatsResistance` compares a d20+level against.
 - **Map artifacts** **[V]**: `00BA:06D5` and `00BA:0712` are not routines but labels inside the
   blocked `res12_fn_0442` (06D5 even starts one byte late, under an `es:` prefix), and

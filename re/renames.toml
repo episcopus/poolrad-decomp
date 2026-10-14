@@ -3455,3 +3455,17 @@ kind = "routine"
 why = "00BA:09E3 draws the character panel (name, Hitpoints, AC, readied weapon text, status) the combat and inventory screens show, whitepaper 5.24"
 date = "2026-10-13"
 
+[[rename]]
+old = "ds286B"
+new = "HelplessAffects"
+kind = "global"
+why = "res12_fn_0B73 (00BA:0B73) tests entries 1..4 through res12_fn_2199 and DrawCharacterPanel draws '(Helpless)' for a True answer; ovl13:1FC3 compares the same entries with the 16-byte table at DS:3204; entry 0 is never read"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_0B73"
+new = "IsHelpless"
+kind = "routine"
+why = "DrawCharacterPanel (00BA:09E3) draws '(Helpless)' when it returns True and ovl13 skips a combatant it answers True for; it tests the four affects of HelplessAffects (DS:286B) through res12_fn_2199"
+date = "2026-10-13"
+

@@ -605,14 +605,14 @@ Next:
 Finish:
   AiTurn := Ord(CanAct = 0);
 end;
-{ ovl09:0F4F. Purpose unknown: returns res12_fn_2637(Who) when res12_fn_0B73(Who) or
+{ ovl09:0F4F. Purpose unknown: returns res12_fn_2637(Who) when IsHelpless(Who) or
   res12_fn_2E03(Who) is true or the combatant's Initiative is 0, else res12_fn_2686(Who).
   Called by QuickTurn (ovl09:01EE) and from the 07F2 and 0B3C regions. res12_fn_17E3 runs first
   (parameterless). }
 function ovl09_fn_0F4F(Who: PCharacter): Byte;
 begin
   res12_fn_17E3;
-  if res12_fn_0B73(Who) or res12_fn_2E03(Who) or (Who^.Combat^.Initiative = 0) then
+  if IsHelpless(Who) or res12_fn_2E03(Who) or (Who^.Combat^.Initiative = 0) then
     ovl09_fn_0F4F := res12_fn_2637(Who)
   else
     ovl09_fn_0F4F := res12_fn_2686(Who);

@@ -16570,12 +16570,12 @@ id = "00BA:0B73"
 unit = "res12"
 addr = "00BA:0B73"
 size = 69
-name = "res12_fn_0B73"
-signature = "function res12_fn_0B73(Who: Pointer): Boolean"
+name = "IsHelpless"
+signature = "function IsHelpless(Who: Pointer): Boolean"
 c_name = "res12_fn_0B73"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_0B73 (DrawCharacterPanel (00BA:09E3) draws '(Helpless)' when it returns True and ovl13 skips a combatant it answers True for; it tests the four affects of HelplessAffects (DS:286B) through res12_fn_2199); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
