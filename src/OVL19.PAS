@@ -13,7 +13,7 @@ procedure RunItemMenu(var Done: Byte);
 procedure ReadyItem(Item: PMenuLine);
 procedure TradeItem(Item: PMenuLine);
 procedure HalveItem(Item: PMenuLine);
-procedure ovl19_fn_189D(Item: PMenuLine);
+procedure JoinItem(Item: PMenuLine);
 procedure ovl19_e8(P: Pointer; var B: Byte);
 procedure ovl19_fn_1BA6;
 procedure ovl19_fn_1BD7;
@@ -397,7 +397,7 @@ end;
   that ovl22_e6 accepts, or one with Affects[2] above 0 and Affects[3] below $80; then it runs ovl19_e8.
   Trade and Sell ask CanGiveUpItem, then run TradeItem or ovl19_fn_1CEE. Drop asks CanGiveUpItem,
   shows "Your <item> will be gone forever" and then "Drop It?", and on Y calls res12_fn_1509 with
-  SelectedCharacter and the item. Halve, Join and Id run HalveItem, ovl19_fn_189D and ovl19_fn_1F52.
+  SelectedCharacter and the item. Halve, Join and Id run HalveItem, JoinItem and ovl19_fn_1F52.
   Done: the stop flag shared with ViewSelectedCharacter; ovl19_e8 may set it. The item menu is drawn
   only when the character carries items; the Items window (rows 1 to 22) is drawn when DrawItemWindow
   is set or ds6821 is nonzero. The view mode ds49F3 decides which words are offered: 1 (set by
@@ -513,7 +513,7 @@ begin
             else
               Key := ' ';
           'H': HalveItem(Selected);
-          'J': ovl19_fn_189D(Selected);
+          'J': JoinItem(Selected);
           'S':
             if CanGiveUpItem(Selected) then
               ovl19_fn_1CEE(Selected)
@@ -673,8 +673,53 @@ begin
   else
     res12_fn_1693('Can''t halve that');
 end;
-{ ovl19:189D: retf 4: 4 bytes of parameters; 14 bytes of locals }
-{@stub} procedure ovl19_fn_189D(Item: PMenuLine); begin end;
+{ ovl19:189D. The Join action of the item menu (RunItemMenu's J key, ovl19:0EF8): gathers into Item the counts
+  of the other items of SelectedCharacter that match it. A match has a nonzero Count, the same NameNum[1..3],
+  ItemType, Plus, PlusSave, Cursed and Weight, and Affects[1] below 2 (QUIRK ovl19:19A1 below). Each match is
+  taken off the character (res12_fn_1509) and its count added to the total, while the total stays at most
+  255. When the total would pass 255, Target is filled to 255, the match gives up what is needed to make
+  255 (its count drops) and the match becomes the item that gathers the rest. Parameter: Item, the stack
+  that gathers. Globals: SelectedCharacter (its Items list). Side effects: matches leave the list.
+  QUIRK ovl19:19A1: the Affects[1], Affects[2] and Affects[3] tests compare the match with itself (both
+  sides read Cursor), so they never reject a match; only the Affects[1] below 2 test (ovl19:19B4) does. }
+procedure JoinItem(Item: PMenuLine);
+var
+  Cursor: PMenuLine;            { the item of the character's list being looked at }
+  Next: PMenuLine;              { the item after Cursor, read before Cursor can leave the list }
+  Target: PMenuLine;            { the stack that gathers the counts: Item, then a match that was filled up }
+  Total: Byte;                  { the count Target will hold }
+begin
+  Target := Item;
+  Total := Target^.Count;
+  Cursor := SelectedCharacter^.Items;
+  while Cursor <> nil do
+  begin
+    Next := Cursor^.Next;
+    if (Cursor <> Target) and (Cursor^.Count > 0) and
+      (Cursor^.NameNum[1] = Target^.NameNum[1]) and (Cursor^.NameNum[2] = Target^.NameNum[2]) and
+      (Cursor^.NameNum[3] = Target^.NameNum[3]) and (Cursor^.ItemType = Target^.ItemType) and
+      (Cursor^.Plus = Target^.Plus) and (Cursor^.PlusSave = Target^.PlusSave) and
+      (Cursor^.Cursed = Target^.Cursed) and (Cursor^.Weight = Target^.Weight) and
+      (Cursor^.Affects[1] = Cursor^.Affects[1]) and (Cursor^.Affects[1] < 2) and
+      (Cursor^.Affects[2] = Cursor^.Affects[2]) and (Cursor^.Affects[3] = Cursor^.Affects[3]) then
+    begin
+      if Total + Cursor^.Count <= 255 then
+      begin
+        Inc(Total, Cursor^.Count);
+        res12_fn_1509(SelectedCharacter, Cursor);
+      end
+      else
+      begin
+        Target^.Count := 255;
+        Cursor^.Count := Cursor^.Count - (255 - Total);
+        Total := Cursor^.Count;
+        Target := Cursor;
+      end;
+    end;
+    Cursor := Next;
+  end;
+  Target^.Count := Total;
+end;
 { ovl19:1A8A: frame not read }
 {@stub} procedure ovl19_e8(P: Pointer; var B: Byte); begin end;
 { ovl19:1BA6: frame not read }

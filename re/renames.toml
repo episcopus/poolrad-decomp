@@ -3469,3 +3469,10 @@ kind = "routine"
 why = "ovl19:17ED is the Halve action of RunItemMenu's H key (ovl19:0EF8, line H calls it): Count div 2 goes to a new 63-byte record copied from the item (Move, New), that record takes the item's Next, the item keeps the rest of the count, and 'Can''t halve that' is shown when the half is zero"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl19_fn_189D"
+new = "JoinItem"
+kind = "routine"
+why = "ovl19:189D is the Join action of RunItemMenu's J key (ovl19:0EF8, line J calls it): it adds the counts of the matching stacks of SelectedCharacter (same NameNum, ItemType, Plus, Cursed, Weight, Affects[1] below 2) to Item up to 255, taking each match off the character (res12_fn_1509) and carrying the rest into the next stack"
+date = "2026-10-13"
+

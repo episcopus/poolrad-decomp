@@ -136,6 +136,24 @@ lesson = "The original tests a message code with `mov al,[bp-2]; cmp al,0; jne`,
 evidence = ["src/OVL19.PAS#ReadyItem"]
 
 [[lesson]]
+id = "if-else-fall-through-is-the-positive-test"
+confidence = "V"
+units = ["*"]
+tags = ["compiler", "if", "branch-layout"]
+title = "The fall-through branch is the one whose test holds: write the test as it is in the code"
+lesson = "JoinItem's `if Total + Cursor^.Count > 255 then A else B` first compiled to `jle` to B with A after it; the original has `jg` to the overflow block, so its fall-through is the not-overflow code. Writing `if Total + Cursor^.Count <= 255 then B1 else A1` (the not-overflow code first) matches. When a branch is laid out out of line, invert the test and swap the blocks instead of adding code."
+evidence = ["src/OVL19.PAS#JoinItem"]
+
+[[lesson]]
+id = "self-compare-is-real-code"
+confidence = "V"
+units = ["*"]
+tags = ["compiler", "quirk", "record-compare"]
+title = "A test that compares a field of one record with the same field of that record compiles to two loads from the same pointer"
+lesson = "JoinItem's Affects[1], Affects[2] and Affects[3] tests load both operands from Cursor (les di,[bp-4] before each load and each compare). The original does the same, so the source has the self-compare as written and the QUIRK is kept, not corrected to Target. A matched self-compare is evidence of the source, not of a typo to fix; record it as QUIRK with its address."
+evidence = ["src/OVL19.PAS#JoinItem"]
+
+[[lesson]]
 id = "cross-unit-call-needs-uses"
 confidence = "V"
 units = ["*"]

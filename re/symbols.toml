@@ -8743,12 +8743,12 @@ id = "ovl19:189D"
 unit = "ovl19"
 addr = "ovl19:189D"
 size = 493
-name = "ovl19_fn_189D"
-signature = "procedure ovl19_fn_189D(Item: PMenuLine)"
+name = "JoinItem"
+signature = "procedure JoinItem(Item: PMenuLine)"
 c_name = "ovl19_fn_189D"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl19_fn_189D (ovl19:189D is the Join action of RunItemMenu's J key (ovl19:0EF8, line J calls it): it adds the counts of the matching stacks of SelectedCharacter (same NameNum, ItemType, Plus, Cursed, Weight, Affects[1] below 2) to Item up to 255, taking each match off the character (res12_fn_1509) and carrying the rest into the next stack); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
