@@ -45,7 +45,8 @@ model = "openrouter/deepseek/deepseek-v4.1-flash"
 variant = "high"
 
 # Tier 2: the escalation decompilers, one hard routine per session, up to two sessions per routine,
-# each stopped at 150 minutes or USD 8.
+# each stopped at 150 minutes or USD 8. Two, not three: three Grok xhigh sessions at once outran
+# OpenRouter's per-request credit reservation on 2026-10-14 (about USD 1.50 a minute together).
 [[session]]
 name = "esc-grok"
 role = "decompiler"
@@ -59,17 +60,6 @@ max_attempts = 2
 
 [[session]]
 name = "esc-grok-2"
-role = "decompiler"
-tier = 2
-model = "openrouter/x-ai/grok-4.7"
-variant = "xhigh"
-batch = 1
-timeout = 150
-cost_cap = 8
-max_attempts = 2
-
-[[session]]
-name = "esc-grok-3"
 role = "decompiler"
 tier = 2
 model = "openrouter/x-ai/grok-4.7"
