@@ -17,7 +17,7 @@ procedure ShowEncounterCommand;
 procedure AddEncounterGroupCommand;
 procedure ApproachEncounterCommand;
 procedure ShowCloseUpCommand;
-procedure ovl03_fn_0951;
+procedure ReadNumberCommand;
 procedure ovl03_fn_0994;
 procedure ovl03_fn_0A09;
 procedure ovl03_fn_0A9F;
@@ -76,7 +76,7 @@ procedure ovl03_e1;
 procedure ovl03_fn_3379;
 procedure ovl03_fn_34AB;
 implementation
-uses OVL26, OVL28, OVL32;
+uses OVL26, OVL28, OVL32, RES06;
 
 const
   { The operand types from this one up are strings: $80 a packed string, $81 the address of a
@@ -469,8 +469,22 @@ begin
     PictureShown[1] := 0;
   end;
 end;
-{ ovl03:0951: retf 0: 0 bytes of parameters; 6 bytes of locals }
-{@stub} procedure ovl03_fn_0951; begin end;
+{ ovl03:0951. ECL command 15 (dispatcher ovl03:2F2D, SkippedOpcode 15): asks the player for a number
+  and stores it as a word at the script address that operand 2 names. Operand 1 is decoded but never
+  read. The prompt is empty; ReadNumber (RES06, colour 10) repeats the input line until the text is a
+  number from 0 to 65536. }
+procedure ReadNumberCommand;
+var
+  Prompt: string[1];
+  Number: Word;
+  Target: Word;
+begin
+  DecodeOperands(2);
+  Prompt := '';
+  Target := MakeWord(OperandLow[2], OperandHigh[2]);
+  Number := ReadNumber(Prompt, 10);
+  WriteVmWord(Target, Number);
+end;
 { ovl03:0994: retf 0: 0 bytes of parameters; 516 bytes of locals }
 {@stub} procedure ovl03_fn_0994; begin end;
 { ovl03:0A09: retf 0: 0 bytes of parameters; 256 bytes of locals }

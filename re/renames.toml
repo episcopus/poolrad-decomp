@@ -3518,3 +3518,10 @@ kind = "routine"
 why = "ECL command 14 (dispatcher ovl03:2F2D, SkippedOpcode 14): operand 1 is a picture bank; PictureShown and ds84E0 mark the close-up, and it draws the PIC picture or the HEAD and BODY pictures as ShowEncounterPicture does (ovl07:054E), or hides it when the bank is $FF (ovl03:0856, matched)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl03_fn_0951"
+new = "ReadNumberCommand"
+kind = "routine"
+why = "ECL command 15 (dispatcher ovl03:2F2D, SkippedOpcode 15): asks the player for a number with ReadNumber (RES06, empty prompt, colour 10) and stores the word at the script address of operand 2 with WriteVmWord (ovl03:0951, matched)"
+date = "2026-10-13"
+
