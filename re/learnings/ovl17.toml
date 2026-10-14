@@ -42,8 +42,8 @@ confidence = "V"
 units = ["*"]
 tags = ["text", "file", "assign", "reset", "eof", "readln", "close", "runtime", "System"]
 title = "The Text file statements name these System entries"
-lesson = "The TP 6.0 contract for `Text` files: `Assign(F, S)` calls 0AF8:04F7 (0AF8:13E2 is the other Assign entry used when the record is a typed file), `Reset(F)` calls 0AF8:0567, `Eof(F)` calls 0AF8:0A04 (Boolean in AL), `ReadLn(F, Target)` calls System_StrLCopy with the target's max length then 0AF8:081C, and `Close(F)` calls 0AF8:05C1. A `Text` local occupies $100 bytes of frame and is addressed at its base. Probe tools/re/tp_idioms/ovl17/TEXTPRB.PAS."
-evidence = ["tools/re/tp_idioms/ovl17/TEXTPRB.PAS", "src/OVL17.PAS#ReadSavedCharacterList"]
+lesson = "The TP 6.0 contract for `Text` files: `Assign(F, S)` calls 0AF8:04F7 (0AF8:13E2 is the other Assign entry used when the record is a typed file), `Reset(F)` calls 0AF8:0567, `Rewrite(F)` calls 0AF8:056C (the 5 bytes after Reset), `Eof(F)` calls 0AF8:0A04 (Boolean in AL), `ReadLn(F, Target)` calls System_StrLCopy with the target's max length then 0AF8:081C, `Write(F, S)` calls 0AF8:0919 then res00_fn_086E, `WriteLn(F, S)` calls 0AF8:0919 then 0AF8:084A, and `Close(F)` calls 0AF8:05C1. A `Text` local occupies $100 bytes of frame and is addressed at its base. Probes tools/re/tp_idioms/ovl17/TEXTPRB.PAS and FILEPRB.PAS."
+evidence = ["tools/re/tp_idioms/ovl17/TEXTPRB.PAS", "tools/re/tp_idioms/ovl17/FILEPRB.PAS", "src/OVL17.PAS#ReadSavedCharacterList", "src/OVL17.PAS#RewriteSavedCharacterList"]
 
 [[lesson]]
 id = "guard-exit-shares-string-temp"

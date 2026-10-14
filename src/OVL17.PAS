@@ -8,7 +8,7 @@ unit OVL17;
 interface
 uses POOLVARS;
 procedure ReadSavedCharacterList(var List: PMenuLine);
-procedure ovl17_e2;
+procedure RewriteSavedCharacterList(List: PMenuLine);
 procedure CreateSaveDir;
 procedure ovl17_fn_032F;
 procedure ovl17_e3;
@@ -80,13 +80,41 @@ begin
   end;
   Close(Names);
 end;
-{ ovl17:01B8: retf 4: 4 bytes of parameters; 774 bytes of locals }
-{@stub} procedure ovl17_e2; begin end;
+{ ovl17:01B8. Rewrites the save disk's charlist.txt from List, the saved-character menu list that
+  ReadSavedCharacterList built (and the add-character menu then edited): makes the save directory
+  (CreateSaveDir), then opens charlist.txt for rewriting and shows "Put save disk in <drive>:" and
+  tries again while the open fails (IOResult non-zero). Writes one line per list entry whose text
+  does not start with '*' (the party members are skipped, so they leave the available-character
+  file), then closes it. Reads SaveDir and List; writes charlist.txt. Called by the ovl16 add-character
+  menu (ovl16_fn_306D) and by ovl17_e4. }
+procedure RewriteSavedCharacterList(List: PMenuLine);
+var
+  Line: PMenuLine;              { walks the list }
+  Names: Text;                  { the rewritten charlist.txt }
+  ErrCode: Word;                { IOResult of the Rewrite }
+begin
+  CreateSaveDir;
+  repeat
+    Assign(Names, SaveDir + 'charlist.txt');
+    Rewrite(Names);
+    ErrCode := IOResult;
+    if ErrCode <> 0 then
+      ShowMessageLine(Yellow, 'Put save disk in ' + SaveDir[1] + ':');
+  until ErrCode = 0;
+  Line := List;
+  while Line <> nil do
+  begin
+    if Line^.Text[1] <> '*' then
+      WriteLn(Names, Line^.Text);
+    Line := Line^.Next;
+  end;
+  Close(Names);
+end;
 { ovl17:02AE. Makes sure the save directory exists on the save disk: MkDir of SaveDir without its
   trailing backslash, and while that fails with anything but success or "already there" it shows
   "Put save disk in <drive>:" (the drive letter SaveDir starts with) and tries again. Reads SaveDir,
   creates the directory on the save disk as a side effect. Called before the save files are touched
-  by ReadSavedCharacterList, ovl17_e2, ovl17_e4, ovl17_e8 and ovl17_e9. }
+  by ReadSavedCharacterList, RewriteSavedCharacterList, ovl17_e4, ovl17_e8 and ovl17_e9. }
 procedure CreateSaveDir;
 var
   ErrCode: Word;

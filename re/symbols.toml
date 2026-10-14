@@ -8310,12 +8310,12 @@ id = "ovl17:01B8"
 unit = "ovl17"
 addr = "ovl17:01B8"
 size = 246
-name = "ovl17_e2"
+name = "RewriteSavedCharacterList"
 signature = ""
 c_name = "ovl17_e2"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl17_e2 (ovl17:01B8 rewrites the save disk charlist.txt from a saved-character menu list: CreateSaveDir, Rewrite the file (prompting for the save disk while the open fails), WriteLn each list line whose text does not start with a star (party members skipped), Close; called by ovl16 add-character menu and ovl17_e4); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
