@@ -44,35 +44,13 @@ role = "decompiler"
 model = "openrouter/deepseek/deepseek-v4.1-flash"
 variant = "high"
 
-# Tier 2: the escalation decompilers, one hard routine per session, up to two sessions per routine,
-# each stopped at 150 minutes or USD 8. Two, not three: three Grok xhigh sessions at once outran
-# OpenRouter's per-request credit reservation on 2026-10-14 (about USD 1.50 a minute together).
+# Tier 2: the escalation decompilers, Claude Sonnet 5.5, one hard routine per session, up to two
+# sessions per routine, each stopped at 150 minutes or USD 8. Grok 4.7 (xhigh) was retired on
+# 2026-10-14 after the same-routine A/B test: ovl16:056C and ovl16:382D each failed two Grok sessions
+# (about USD 17 each) and were matched by one Sonnet session each (USD 4.16 and 2.91); over the day Grok
+# cost about USD 30 per matched routine and Sonnet about USD 3.
 [[session]]
-name = "esc-grok"
-role = "decompiler"
-tier = 2
-model = "openrouter/x-ai/grok-4.7"
-variant = "xhigh"
-batch = 1
-timeout = 150
-cost_cap = 8
-max_attempts = 2
-
-[[session]]
-name = "esc-grok-2"
-role = "decompiler"
-tier = 2
-model = "openrouter/x-ai/grok-4.7"
-variant = "xhigh"
-batch = 1
-timeout = 150
-cost_cap = 8
-max_attempts = 2
-
-# A/B test (2026-10-14): the same escalation settings as the Grok workers, with Claude Sonnet 5.5, to
-# compare the cost per matched routine on the hard tail.
-[[session]]
-name = "esc-sonnet"
+name = "esc-sonnet-2"
 role = "decompiler"
 tier = 2
 model = "openrouter/anthropic/claude-sonnet-5.5"
@@ -82,13 +60,10 @@ timeout = 150
 cost_cap = 8
 max_attempts = 2
 
-# The same-routine A/B test (2026-10-14): ovl16:056C and ovl16:382D each failed two Grok sessions;
-# this Sonnet worker with the same settings is pinned to ovl16 and stops when it is done.
 [[session]]
-name = "esc-sonnet-ab"
+name = "esc-sonnet"
 role = "decompiler"
 tier = 2
-unit = "ovl16"
 model = "openrouter/anthropic/claude-sonnet-5.5"
 variant = "xhigh"
 batch = 1
