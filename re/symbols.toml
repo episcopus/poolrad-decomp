@@ -4630,12 +4630,12 @@ id = "ovl12:2DE4"
 unit = "ovl12"
 addr = "ovl12:2DE4"
 size = 36
-name = "ovl12_e108"
+name = "CancelCharmAndUnknown35ModerateChance"
 signature = ""
 c_name = "ovl12_e108"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_108"
+notes = "renamed from ovl12_e108 (ovl12:2DE4 cancels the hooks of the charm (AffectCharm) and of AffectUnknown35 when a 1d100 roll is at or below 30; the sibling of CancelCharmAndUnknown35HighChance (ovl12:2992, 90), no direct caller); auto:entry_108"
 evidence = ["prologue"]
 
 [[routine]]

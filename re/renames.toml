@@ -4176,3 +4176,10 @@ kind = "routine"
 why = "ovl12:2D88 halves DamageAmount for a first slot item with Plus 0 and NameNum[3] $B1 (SlotItemNameNum3), cancels it for other Plus-0 items and with no item, and leaves it for Plus not 0; no direct caller"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl12_e108"
+new = "CancelCharmAndUnknown35ModerateChance"
+kind = "routine"
+why = "ovl12:2DE4 cancels the hooks of the charm (AffectCharm) and of AffectUnknown35 when a 1d100 roll is at or below 30; the sibling of CancelCharmAndUnknown35HighChance (ovl12:2992, 90), no direct caller"
+date = "2026-10-14"
+

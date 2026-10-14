@@ -120,7 +120,7 @@ procedure AvoidDistantAttackForItemType57Or58(Who: PCharacter; Affect: PAffect; 
 procedure SpitAcidAtTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure SetDamageFromSlotItemType56(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure HalveOrCancelDamageForUnenchantedSlotItem(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e108;
+procedure CancelCharmAndUnknown35ModerateChance(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e109;
 procedure ovl12_e110;
 procedure ovl12_e111;
@@ -241,6 +241,7 @@ const
   HookChanceHalf = 50;          { the Chance ovl12:2976 gives ovl12:2915 (the hook cancel with a roll) }
   HookChanceLow = 15;           { the Chance ovl12:2984 gives ovl12:2915 }
   HookChanceHigh = 90;          { the 1d100 roll at or below which ovl12:2992 cancels its hooks }
+  HookChanceModerate = 30;      { the 1d100 roll at or below which ovl12:2DE4 cancels the charm's and AffectUnknown35's hooks }
   AffectUnknown19 = $19;        { purpose unknown [I]: RollToHit clears it from the attacker (ovl24:0CB7) }
   AffectUnknown19Duration = 1;  { the Duration ovl12:1363 gives affect AffectUnknown19 }
   AffectUnknown19Data = $0C;    { the Data byte ovl12:1363 gives affect AffectUnknown19 }
@@ -2053,8 +2054,17 @@ begin
   else
     DamageAmount := 0;
 end;
-{ ovl12:2DE4: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e108; begin end;
+{ ovl12:2DE4. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). A 1d100 roll at or
+  below HookChanceModerate (30) cancels the pending hook of the charm (AffectCharm) and then the one of affect
+  AffectUnknown35, each through CancelPendingHook (ovl12:0000). Which affect runs it is not known yet [?]. }
+procedure CancelCharmAndUnknown35ModerateChance(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  if RollDice(1, 100) <= HookChanceModerate then
+  begin
+    CancelPendingHook(AffectCharm);
+    CancelPendingHook(AffectUnknown35);
+  end;
+end;
 { ovl12:2E08: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e109; begin end;
 { ovl12:2E37: retf 10: 10 bytes of parameters; 6 bytes of locals }
