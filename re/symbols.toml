@@ -602,12 +602,12 @@ id = "ovl03:25CB"
 unit = "ovl03"
 addr = "ovl03:25CB"
 size = 159
-name = "ovl03_fn_25CB"
+name = "ChooseAttitudeCommand"
 signature = ""
 c_name = "ovl03_fn_25CB"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_25CB (ovl03:2F2D dispatches SkippedOpcode 2Ch (44) to it; its five-word menu HAUGHTY, SLY, NICE, MEEK, ABUSIVE (ovl03:25A8 literal) asks for an attitude; the value of the chosen attitude (operands 1 to 5) goes to operand 6 (match ovl03:25CB)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

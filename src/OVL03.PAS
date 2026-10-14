@@ -41,7 +41,7 @@ procedure AddLootCommand;
 procedure LoseMoneyAndItemsCommand;
 procedure ovl03_fn_1EF8;
 procedure ovl03_fn_238D;
-procedure ovl03_fn_25CB;
+procedure ChooseAttitudeCommand;
 procedure ovl03_fn_266A;
 procedure ovl03_fn_271F;
 procedure ovl03_fn_2775;
@@ -144,6 +144,8 @@ const
   PromptLastCol = $27;
   { ECL command 17: the text goes on after the text already in the window; command 18 clears it first. }
   OpContinueText = $11;
+  { The menu of ECL command 44 (ovl03:25CB): the words of the attitudes, each after a hotkey mark. }
+  AttitudeMenu = '~HAUGHTY ~SLY ~NICE ~MEEK ~ABUSIVE';
 var
   { ds84C8 (POOLVARS) under the type ShowEncounterPicture takes: TPictureShown is declared in OVL07,
     and Turbo Pascal accepts a var argument only of the identical type. }
@@ -1383,8 +1385,29 @@ end;
 {@stub} procedure ovl03_fn_1EF8; begin end;
 { ovl03:238D: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl03_fn_238D; begin end;
-{ ovl03:25CB: retf 0: 0 bytes of parameters; 302 bytes of locals }
-{@stub} procedure ovl03_fn_25CB; begin end;
+{ ovl03:25CB. ECL command 44 (dispatcher ovl03:2F2D, SkippedOpcode 2Ch): asks the player for an attitude.
+  The menu offers AttitudeMenu's words (HAUGHTY, SLY, NICE, MEEK and ABUSIVE) under a blank title. Operands
+  1 to 5 are the value of each attitude in that order, and the value of the one the player picks is written
+  with WriteVmWord to the script address operand 6 names. Purpose unknown: what the script does with the
+  value (not traced yet). }
+procedure ChooseAttitudeCommand;
+var
+  Choice: Byte;                 { the 0-based attitude AskMenu returns }
+  Value: Byte;                  { the value of the chosen attitude }
+  I: Byte;
+  Values: array[0..4] of Byte;  { operands 1 to 5 }
+  Target: Word;                 { operand 6: script address of Value }
+  BlankTitle: Char;
+begin
+  DecodeOperands(6);
+  BlankTitle := ' ';
+  for I := 0 to 4 do
+    Values[I] := OperandValue(I + 1);
+  Choice := AskMenu(BlankTitle, AttitudeMenu, MenuTitleColor, MenuTextColor, MenuHotColor, 0, 0);
+  Target := MakeWord(OperandLow[6], OperandHigh[6]);
+  Value := Values[Choice];
+  WriteVmWord(Target, Value);
+end;
 { ovl03:266A: retf 0: 0 bytes of parameters; 12 bytes of locals }
 {@stub} procedure ovl03_fn_266A; begin end;
 { ovl03:271F: retf 0: 0 bytes of parameters; 0 bytes of locals }

@@ -260,3 +260,12 @@ tags = ["for", "frame", "bound", "locals"]
 title = "A for-loop bound that is a local reuses the loop's own slot: an extra Count local adds two bytes to the frame"
 lesson = "AddLootCommand computes the number of rolls into the Index byte that also counted the money loop, then writes for Treasure := 1 to Index do. A separate Count local plus the hidden bound copy made the frame 0x176 instead of 0x174; removing Count gave the original frame. Declare the bound variable the original declares and let the hidden slot be the only extra byte."
 evidence = ["src/OVL03.PAS#AddLootCommand"]
+
+[[lesson]]
+id = "char-argument-to-string40-param"
+confidence = "V"
+units = ["*"]
+tags = ["string", "char", "overlay", "temp", "frame", "codegen"]
+title = "A Char passed where a String40 value parameter is expected becomes a 256-byte temporary, not a copy in a local"
+lesson = "AskMenu(Blank, '~HAUGHTY ...', ...) with a Char local Blank: the caller pushes a 256-byte temporary, calls 0AF8:0C3B (char to string, which leaves its destination on the stack as 0AF8:0B0B does) and passes the temporary's address as Title. A literal Text argument in an overlay unit ($O+) is copied to a temporary sized by its length (34 characters give 35 bytes). Assigning the same Char to a string local (Title := Blank) adds a second 256-byte temporary and a StrLCopy, so the frame grows by 0x100. ChooseAttitudeCommand (ovl03:25CB) matched with the direct form, frame sub sp 0x12e. Probe tools/re/tp_idioms/ovl03/CHARTIT.PAS."
+evidence = ["src/OVL03.PAS#ChooseAttitudeCommand", "tools/re/tp_idioms/ovl03/CHARTIT.PAS", "re/symbols.toml#ovl03:25CB"]
