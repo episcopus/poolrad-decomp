@@ -1668,8 +1668,66 @@ const
 begin
   ApplySpellToSideUpToLevel(HasteAffect, res12_fn_23B7(SelectedCharacter), 'is Slowed');
 end;
-{ ovl22:2C43: frame not read }
-{@stub} procedure CastRestoration; begin end;
+{ ovl22:2C43 (e52). Cast handler of spell 56, Restoration: it gives the selected character ds6C95 back
+  one drained level. The character's drained levels are Pad74[$74] and the hit points lost with them
+  Pad74[$75] (a character shows +$32 max, +$11B current and +$75 lost hit points, ovl33:0004), so one
+  restored level gives back Pad74[$75] div Pad74[$74] hit points, added to HpMax (+$32), the current
+  hit points (+$11B) and HpB1 (+$B1), then the drained-level count is decremented. It then picks the
+  class to advance (ClassLevels, +$96): over the eight classes it takes the class whose current level
+  is not above the best so far and whose entry one level up in the experience table ds409B has the
+  smallest positive value, and keeps the class whose res12_fn_2F57 call is false; that class gains one
+  level, the character's Experience (+$AC) is raised to at least that entry, RecalcClassStats
+  recomputes the derived values and the character is told 'is restored' (res12_fn_16EC). A character
+  with no drained level (Pad74[$74] = 0) is left alone. Reads ds6C95; changes the character's drained
+  levels, hit points, class level and Experience. }
+procedure CastRestoration;
+const
+  DrainedLevels = $74;            { TCharacter.Pad74 index: the levels the character was drained }
+  LostHitPoints = $75;            { TCharacter.Pad74 index: the hit points lost with them (ovl33:0004) }
+  MaxRestoredLevel = 13;          { a class level above this is never advanced ($D) }
+  MaxExperience = 10000000;       { the initial 'smallest' experience value the loop compares against }
+  LastClass = 7;                  { the last class index of ClassLevels }
+  MessageColour = $A;             { the colour res12_fn_16EC shows 'is restored' in }
+  TimedMessage = 1;               { nonzero: res12_fn_16EC delays by the game speed and clears it }
+var
+  Target: PCharacter;             { ds6C95, the selected character being restored }
+  PerLevel: Byte;                 { the hit points one restored level gives back }
+  MaxLevel: ShortInt;             { the highest class level a later class may still advance from }
+  Level: ShortInt;                { the class level the loop is looking at (ClassLevels[Class]) }
+  BestXp: LongInt;                { the smallest experience entry found so far, MaxExperience at the start }
+  BestClass: ShortInt;            { the class the level is restored in }
+  Class: ShortInt;                { the class index, 0..LastClass }
+begin
+  Target := ds6C95;
+  if Target^.Pad74[DrainedLevels] <= 0 then
+    Exit;
+  PerLevel := Target^.Pad74[LostHitPoints] div Target^.Pad74[DrainedLevels];
+  Inc(Target^.HpMax, PerLevel);
+  Inc(Target^.Flag11B, PerLevel);
+  Inc(Target^.HpB1, PerLevel);
+  Dec(Target^.Pad74[LostHitPoints], PerLevel);
+  Dec(Target^.Pad74[DrainedLevels]);
+  MaxLevel := MaxRestoredLevel;
+  BestXp := MaxExperience;
+  { QUIRK ovl22:2CAE: BestClass is never initialized, only set by an accepted class; a character with
+    no class that can advance would advance whatever class the stale local names. }
+  for Class := 0 to LastClass do
+  begin
+    Level := Target^.ClassLevels[Class];
+    if (Level > 0) and (Level <= MaxLevel) and (ExperienceTable[Class, Succ(Level)] > 0) and
+       (ExperienceTable[Class, Succ(Level)] < BestXp) and not res12_fn_2F57(Target, Class) then
+    begin
+      MaxLevel := Level;
+      BestClass := Class;
+      BestXp := ExperienceTable[Class, Succ(Level)];
+    end;
+  end;
+  Inc(Target^.ClassLevels[BestClass]);
+  if Target^.Experience < BestXp then
+    Target^.Experience := BestXp;
+  RecalcClassStats(Target);
+  res12_fn_16EC(Target, 'is restored', MessageColour, TimedMessage);
+end;
 { ovl22:2E02: retf 0: 0 bytes of parameters; 10 bytes of locals }
 {@stub} procedure ovl22_e53; begin end;
 { ovl22:2E4D: retf 0: 0 bytes of parameters; 12 bytes of locals }
