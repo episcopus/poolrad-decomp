@@ -250,40 +250,14 @@ evidence = ["prologue"]
 id = "ovl03:0817"
 unit = "ovl03"
 addr = "ovl03:0817"
-size = 46
-name = "ovl03_fn_0817"
+size = 58
+name = "ApproachEncounterCommand"
 signature = ""
 c_name = "ovl03_fn_0817"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_0817 (ECL command 13 (dispatcher ovl03:2F2D, SkippedOpcode 13): while word 705 of ds49D6 (VarStepsAhead, the steps the party sees ahead) is above 0 it takes one off and redraws the encounter picture at the new distance (ovl03:0817, matched); the command is the approach of the encounter picture, as opcode 12 (ShowEncounterCommand) starts it); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl03:0845"
-unit = "ovl03"
-addr = "ovl03:0845"
-size = 5
-name = "ovl03_fn_0845"
-signature = ""
-c_name = "ovl03_fn_0845"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl03:084A"
-unit = "ovl03"
-addr = "ovl03:084A"
-size = 12
-name = "ovl03_fn_084A"
-signature = ""
-c_name = "ovl03_fn_084A"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl03:0856"

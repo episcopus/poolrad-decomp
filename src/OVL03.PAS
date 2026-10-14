@@ -15,9 +15,7 @@ procedure StoreCommand;
 procedure SelectCharacterCommand;
 procedure ShowEncounterCommand;
 procedure AddEncounterGroupCommand;
-procedure ovl03_fn_0817;
-procedure ovl03_fn_0845;
-procedure ovl03_fn_084A;
+procedure ApproachEncounterCommand;
 procedure ovl03_fn_0856;
 procedure ovl03_fn_08E5;
 procedure ovl03_fn_0951;
@@ -412,12 +410,19 @@ begin
   ds84E7 := 1;
   SelectedCharacter := Saved;
 end;
-{ ovl03:0817: frame not read }
-{@stub} procedure ovl03_fn_0817; begin end;
-{ ovl03:0845: frame not read }
-{@stub} procedure ovl03_fn_0845; begin end;
-{ ovl03:084A: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl03_fn_084A; begin end;
+{ ovl03:0817. ECL command 13 (dispatcher ovl03:2F2D, SkippedOpcode 13): brings the encounter picture
+  one step nearer. While the steps the party sees ahead (VarStepsAhead, word 705 of ds49D6) are not
+  used up, it takes one off and shows the picture again at the new distance (ShowEncounterPicture).
+  It has no operands and always moves EclPC past the command. }
+procedure ApproachEncounterCommand;
+begin
+  if ds49D6^[VarStepsAhead] > 0 then
+  begin
+    Dec(ds49D6^[VarStepsAhead]);
+    ShowEncounterPicture(EncounterSpriteBank, EncounterPicBank, Byte(ds49D6^[VarStepsAhead]), PictureShown);
+  end;
+  Inc(EclPC);
+end;
 { ovl03:0856: frame not read }
 {@stub} procedure ovl03_fn_0856; begin end;
 { ovl03:08E5: retf 0: 0 bytes of parameters; 0 bytes of locals }

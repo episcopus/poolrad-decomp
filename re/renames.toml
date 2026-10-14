@@ -3504,3 +3504,10 @@ kind = "global"
 why = "the members ECL command 11 (ovl03:0450) has added: incremented per member, the command adds none at 63 (MaxEncounterMembers)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl03_fn_0817"
+new = "ApproachEncounterCommand"
+kind = "routine"
+why = "ECL command 13 (dispatcher ovl03:2F2D, SkippedOpcode 13): while word 705 of ds49D6 (VarStepsAhead, the steps the party sees ahead) is above 0 it takes one off and redraws the encounter picture at the new distance (ovl03:0817, matched); the command is the approach of the encounter picture, as opcode 12 (ShowEncounterCommand) starts it"
+date = "2026-10-13"
+
