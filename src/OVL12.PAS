@@ -106,7 +106,7 @@ procedure CancelHookByLowChance(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure CancelCharmAndUnknown35HighChance(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure CancelCharmAndUnknown35(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure CancelParalysisHook(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e94;
+procedure CancelColdDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e95;
 procedure ovl12_e96;
 procedure ovl12_e97;
@@ -1859,8 +1859,14 @@ procedure CancelParalysisHook(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   CancelPendingHook(AffectParalysis);
 end;
-{ ovl12:29D9: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e94; begin end;
+{ ovl12:29D9. Damage hook (the AffectHandlers shape: Who, Affect and Mode; none of them is read, ovl24:0000). While the
+  damage being dealt is cold (DamageKind bit KindCold, DS:6819), CancelPendingHook(0) drops it: DamageAmount and the
+  hook offered are cleared. Purpose unknown: which affect runs it is not known yet [?]. }
+procedure CancelColdDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  if (DamageKind and KindCold) <> 0 then
+    CancelPendingHook(0);
+end;
 { ovl12:29F0: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e95; begin end;
 { ovl12:2A11: retf 10: 10 bytes of parameters; 0 bytes of locals }

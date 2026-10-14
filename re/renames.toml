@@ -4071,3 +4071,10 @@ kind = "routine"
 why = "ovl12:29CB is an affect handler whose whole body is CancelPendingHook(AffectParalysis) (ovl12:29CB, matched)"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl12_e94"
+new = "CancelColdDamage"
+kind = "routine"
+why = "ovl12:29D9 tests DamageKind bit 2 (KindCold, ds6819 and 2) and then calls CancelPendingHook(0), which drops the damage (ovl12:29D9, matched)"
+date = "2026-10-14"
+

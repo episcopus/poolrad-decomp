@@ -4448,12 +4448,12 @@ id = "ovl12:29D9"
 unit = "ovl12"
 addr = "ovl12:29D9"
 size = 23
-name = "ovl12_e94"
+name = "CancelColdDamage"
 signature = ""
 c_name = "ovl12_e94"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_94"
+notes = "renamed from ovl12_e94 (ovl12:29D9 tests DamageKind bit 2 (KindCold, ds6819 and 2) and then calls CancelPendingHook(0), which drops the damage (ovl12:29D9, matched)); auto:entry_94"
 evidence = ["prologue"]
 
 [[routine]]
