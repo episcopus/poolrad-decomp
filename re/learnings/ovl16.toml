@@ -35,3 +35,21 @@ tags = ["map", "boundaries", "stubs", "near-call", "modrm", "overlay", "056C"]
 title = "The batch 7 to 10 ovl16 near_call entries are all inside 056C or its literal pool"
 lesson = "Every near_call artefact in the upper half of ovl16:056C is an 0xE8 disp8 byte (c4 7e e8 les di,[bp-0x18], or d1 e8 shr ax,1) whose following instruction bytes form the bogus rel16; the target is mid-056C. Batch 7: c4 7e e8 at 0x22E9, 0x2312, 0x2339, 0x235C, 0x23A3, 0x23CA (E8 at 0x22EB, 0x2314, 0x233B, 0x235E, 0x23A5, 0x23CC, rel16 03 f8) keys 1AF1, 1B1A, 1B41, 1B64, 1BAB, 1BD2. Batch 8: the resident stub lcall 0x00BA:0x1037 (9a 37 10 ba 00) keys far_call 1BD7, and c4 7e e8 at 0x23ED, 0x2416, 0x243D, 0x2460, 0x24CC keys 1BF5, 1C1E, 1C45, 1C68, 1CD4. Batch 9: c4 7e e8 at 0x24F3, 0x2516, 0x257C, 0x25B2, 0x25C3, 0x262C keys 1CFB, 1D1E, 1D84, 1DBA, 1DCB, 1E34. Batch 10: c4 7e e8 at 0x2652, 0x2675, 0x269B, 0x26BE, 0x2705 keys 1E5A, 1E7D, 1EA3, 1EC6, 1F0D and d1 e8 at 0x35E4 keys 1EB9. Of these, 1E5A, 1E7D and 1EA3 are instruction boundaries inside 056C, 1EB9 and 1EC6 are mid-instruction, and 1F0D is in the literal pool after the retf at 1ED1. A capstone CS_MODE_16 linear sweep of code[0x056C:0x1ED1] decodes to the retf at 1ED1 with no desync, so it tells boundary from mid-instruction reliably."
 evidence = ["re/symbols.toml#ovl16:1AF1", "re/symbols.toml#ovl16:1BD2", "re/symbols.toml#ovl16:1BD7", "re/symbols.toml#ovl16:1CD4", "re/symbols.toml#ovl16:1E34", "re/symbols.toml#ovl16:1E5A", "re/symbols.toml#ovl16:1E7D", "re/symbols.toml#ovl16:1EA3", "re/symbols.toml#ovl16:1EB9", "re/symbols.toml#ovl16:1EC6", "re/symbols.toml#ovl16:1F0D"]
+
+[[lesson]]
+id = "dropcharacter-with-temp-vs-pointer-local"
+confidence = "V"
+units = ["ovl16"]
+tags = ["with", "pointer", "temp", "frame", "les", "codegen", "1F37"]
+title = "DropCharacter reads the selected character through a with temp, not a pointer local"
+lesson = "ovl16:1F37 (DropCharacter) is `if SelectedCharacter = nil then Exit; with SelectedCharacter^ do ...`. The `with` loads the pointer once with `les di,[0x5d92]; mov [bp-5],di; mov [bp-3],es` and reads Name and Flag10D through `les di,[bp-5]`. Writing it as `Who: PCharacter; Who := SelectedCharacter;` compiles to word moves (`mov ax,[Sel]; mov dx,[Sel+2]; mov [bp-5],ax; mov [bp-3],dx`), 3 bytes longer, so the exit jump becomes e9e800 instead of e9e500 and every later offset shifts; the routine cannot match that way. The `with` temp sits below the named locals, so the frame still shows the original's spare one-byte local at [bp-1] above it (declared local order, first nearest bp). Probes tools/re/tp_idioms/ovl16/DROP3.PAS (pointer local) and DROP4.PAS (with), both using DROPU.PAS so the external calls are lcall. See re/learnings/ovl17.toml with-temp-below-named-locals."
+evidence = ["src/OVL16.PAS#DropCharacter", "re/symbols.toml#ovl16:1F37", "tools/re/tp_idioms/ovl16/DROP3.PAS", "tools/re/tp_idioms/ovl16/DROP4.PAS"]
+
+[[lesson]]
+id = "near-call-artifact-ovl16-1F37-body-and-pool"
+confidence = "V"
+units = ["ovl16"]
+tags = ["map", "boundaries", "near-call", "pool", "1F37"]
+title = "The ovl16 1F30..200B map entries lie inside DropCharacter (1F37) and its literal pool"
+lesson = "Between ovl16:1F37 (DropCharacter, one prologue 55 89 e5) and its retf at 2032 the only bytes are its body; the 101-byte string pool just before it (1ED2..1F36, 'Drop ', ' forever? ', 'Are you sure? ', 'You dump ', ' out back.', ' bids you farewell.', ' breathes a sigh of relief.') belongs to DropCharacter, not 056C. So near_call entries 1F59 (an instruction boundary, push di), 1F7C (mid-instruction) and 1FE8 (last byte of lea di,[bp-0x214]) are inside its body, 200B is the false-positive target of the E8 disp8 at 0x2805 landing on DropCharacter's own `call 0x3291` (ovl16_e2), and 1F30 sits inside ' breathes a sigh of relief.' in its pool. make match UNIT=ovl16 WRITE=1 removed all of these (and the earlier 1F0D and 2013, also in this pool/body) when DropCharacter matched."
+evidence = ["re/symbols.toml#ovl16:1F37", "re/symbols.toml#ovl16:1F30", "re/symbols.toml#ovl16:1F59", "re/symbols.toml#ovl16:200B", "src/OVL16.PAS#DropCharacter"]

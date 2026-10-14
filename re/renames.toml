@@ -4022,3 +4022,10 @@ kind = "routine"
 why = "ovl16:0161 entry point (called by ovl03:2E10): draws the training-hall window and its 11-function menu at DS:0619 and dispatches C create, D drop, M modify, T train, V view, A add, R remove, L load, S save, B finish, E exit, J the STING cheat"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl16_fn_1F37"
+new = "DropCharacter"
+kind = "routine"
+why = "ovl16:1F37 removes the selected character from the party: it asks AskYesNo 'Drop <name> forever?' and 'Are you sure?', then shows 'bids you farewell' or 'You dump <name> out back' and calls ovl16_e2(False, True); it is the D (Drop) item of the training-hall menu RunCharacterMenu (ovl16:0161), whitepaper 5.8 'Alter'"
+date = "2026-10-13"
+

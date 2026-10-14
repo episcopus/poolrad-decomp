@@ -7719,108 +7719,17 @@ notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 10: not a ro
 evidence = ["near_call"]
 
 [[routine]]
-id = "ovl16:1F0D"
-unit = "ovl16"
-addr = "ovl16:1F0D"
-size = 35
-name = "ovl16_fn_1F0D"
-signature = ""
-c_name = "ovl16_fn_1F0D"
-level = "none"
-justification = ""
-notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 10: not a routine. 0x1F0D lies in the string-literal pool 0x1ED2..0x1F36 after 056C's retf at 0x1ED1; it is inside the literal ' bids you farewell.' (the packet decodes 1F07 ' bids you farewell.'). The near_call evidence is a false positive: the E8 byte at ovl16:2707 is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:2705) inside 056C, followed by add di,ax (03 f8); the bogus rel16 targets 0x1F0D. Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:1F30"
-unit = "ovl16"
-addr = "ovl16:1F30"
-size = 7
-name = "ovl16_fn_1F30"
-signature = ""
-c_name = "ovl16_fn_1F30"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
 id = "ovl16:1F37"
 unit = "ovl16"
 addr = "ovl16:1F37"
-size = 34
-name = "ovl16_fn_1F37"
+size = 252
+name = "DropCharacter"
 signature = ""
 c_name = "ovl16_fn_1F37"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl16_fn_1F37 (ovl16:1F37 removes the selected character from the party: it asks AskYesNo 'Drop <name> forever?' and 'Are you sure?', then shows 'bids you farewell' or 'You dump <name> out back' and calls ovl16_e2(False, True); it is the D (Drop) item of the training-hall menu RunCharacterMenu (ovl16:0161), whitepaper 5.8 'Alter'); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl16:1F59"
-unit = "ovl16"
-addr = "ovl16:1F59"
-size = 35
-name = "ovl16_fn_1F59"
-signature = ""
-c_name = "ovl16_fn_1F59"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:1F7C"
-unit = "ovl16"
-addr = "ovl16:1F7C"
-size = 108
-name = "ovl16_fn_1F7C"
-signature = ""
-c_name = "ovl16_fn_1F7C"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:1FE8"
-unit = "ovl16"
-addr = "ovl16:1FE8"
-size = 35
-name = "ovl16_fn_1FE8"
-signature = ""
-c_name = "ovl16_fn_1FE8"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:200B"
-unit = "ovl16"
-addr = "ovl16:200B"
-size = 8
-name = "ovl16_fn_200B"
-signature = ""
-c_name = "ovl16_fn_200B"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:2013"
-unit = "ovl16"
-addr = "ovl16:2013"
-size = 32
-name = "ovl16_fn_2013"
-signature = ""
-c_name = "ovl16_fn_2013"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl16:2033"

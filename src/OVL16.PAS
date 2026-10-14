@@ -66,14 +66,7 @@ procedure ovl16_fn_1E7D;
 procedure ovl16_fn_1EA3;
 procedure ovl16_fn_1EB9;
 procedure ovl16_fn_1EC6;
-procedure ovl16_fn_1F0D;
-procedure ovl16_fn_1F30;
-procedure ovl16_fn_1F37;
-procedure ovl16_fn_1F59;
-procedure ovl16_fn_1F7C;
-procedure ovl16_fn_1FE8;
-procedure ovl16_fn_200B;
-procedure ovl16_fn_2013;
+procedure DropCharacter;
 procedure ovl16_fn_2033;
 procedure ovl16_fn_209F;
 procedure ovl16_fn_218B;
@@ -166,7 +159,7 @@ end;
   draws the window (DrawWindow) and, when a character is selected, its roster (DrawPartyRoster) and
   the eleven function names of the menu at DS:0619 (the first letter in white, the rest in green,
   DrawTextAt). It then asks ReadPromptChoice for a function key (prompt line 'C D M T V A R L S B E J')
-  and dispatches it: C create (ovl16_fn_056C), D drop (ovl16_fn_1F37), M modify (ovl16_fn_209F),
+  and dispatches it: C create (ovl16_fn_056C), D drop (DropCharacter), M modify (ovl16_fn_209F),
   T train (ovl16_fn_29AE), V view (ViewSelectedCharacter), A add (ovl16_fn_306D), R remove
   (SaveCharacter then ovl16_e2), L load (LoadGame), S save (SaveGame), B buy/finish (sets ds49F3 to
   Mode 4 and leaves), E exit (AskYesNo, then save and QuitGame), J the STING cheat. An extended key
@@ -248,7 +241,7 @@ begin
             ovl16_fn_056C;
         'D':
           if ds0619[1].Present <> 0 then
-            ovl16_fn_1F37;
+            DropCharacter;
         'M':
           if ds0619[2].Present <> 0 then
             ovl16_fn_209F;
@@ -426,22 +419,34 @@ end;
 {@stub} procedure ovl16_fn_1EB9; begin end;
 { ovl16:1EC6: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl16_fn_1EC6; begin end;
-{ ovl16:1F0D: frame not read }
-{@stub} procedure ovl16_fn_1F0D; begin end;
-{ ovl16:1F30: frame not read }
-{@stub} procedure ovl16_fn_1F30; begin end;
-{ ovl16:1F37: frame not read }
-{@stub} procedure ovl16_fn_1F37; begin end;
-{ ovl16:1F59: frame not read }
-{@stub} procedure ovl16_fn_1F59; begin end;
-{ ovl16:1F7C: frame not read }
-{@stub} procedure ovl16_fn_1F7C; begin end;
-{ ovl16:1FE8: frame not read }
-{@stub} procedure ovl16_fn_1FE8; begin end;
-{ ovl16:200B: frame not read }
-{@stub} procedure ovl16_fn_200B; begin end;
-{ ovl16:2013: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl16_fn_2013; begin end;
+{ ovl16:1F37. Drops the selected character from the party, the D function of the training-hall menu
+  (RunCharacterMenu, ovl16:0161, whose 'Drop' item dispatches it). It asks AskYesNo "Drop <name>
+  forever? " and, only when that is answered Y, a second AskYesNo "Are you sure? ". A no at either
+  prompt shows the flash message "<name> breathes a sigh of relief." and does nothing else.
+  Otherwise it shows "<name> bids you farewell." when the character still counts for combat and
+  experience (Flag10D set; whitepaper 5.8) or "You dump <name> out back." when it does not, then
+  removes it from the party through ovl16_e2(False, True). No parameters; reads the global
+  SelectedCharacter (nothing happens while it is nil); side effects: a flash message and the drop. }
+procedure DropCharacter;
+var
+  Unused: Byte;      { [bp-1]: never read; the original frame carries this spare byte }
+begin
+  if SelectedCharacter = nil then Exit;
+  with SelectedCharacter^ do
+  begin
+    if (AskYesNo('Drop ' + Name + ' forever? ', $E, $A, $F) = 'Y')
+       and (AskYesNo('Are you sure? ', $E, $A, $F) = 'Y') then
+    begin
+      if Flag10D = 0 then
+        ShowFlashMessage('You dump ' + Name + ' out back.')
+      else
+        ShowFlashMessage(Name + ' bids you farewell.');
+      ovl16_e2(False, True);
+    end
+    else
+      ShowFlashMessage(Name + ' breathes a sigh of relief.');
+  end;
+end;
 { ovl16:2033: retf 4: 4 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl16_fn_2033; begin end;
 { ovl16:209F: frame not read }
