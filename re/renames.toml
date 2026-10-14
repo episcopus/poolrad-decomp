@@ -3707,3 +3707,10 @@ kind = "routine"
 why = "ovl22:1ACC applies spell 33 to the chosen targets with the message 'is weakened'; ovl22_e10 maps DS:6B84+33*4 to its stub 0096:00D4 and SpellNames[33] (DS:2E32) is 'Ray of Enfeeblement'"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl22_e37"
+new = "CastStinkingCloud"
+kind = "routine"
+why = "ovl22:1B11 places a cloud marker in the DS:6DBB list (caster, aim ds6DB9/ds6DBA, four aim tiles and flags, affect $28), paints the cloud into the combat map and runs ApplyCloudTile (the stinking cloud affect) on the combatants of the four cells; ovl22_e10 maps DS:6B84+34*4 to its stub 0096:00D9 and SpellNames[34] (DS:2E5B) is 'Stinking Cloud'"
+date = "2026-10-13"
+

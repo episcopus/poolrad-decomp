@@ -198,12 +198,18 @@ type
       and a dying character with it set is not bandaged (ovl08:1029). }
     NoBody: Byte;
   end;
-  { One $13-byte record of the list at DS:6DBB (FreeMem size, ovl08:0029); only Next is known. }
+  { One $13-byte record of the list at DS:6DBB (New/GetMem size 19, FreeMem size 19 at ovl08:0029):
+    the marker a Stinking Cloud cast leaves: CastStinkingCloud (ovl22:1B11) allocates one, fills it
+    and later walks the list; nothing outside ovl22 reads its fields. }
   PCombatNode = ^TCombatNode;
   TCombatNode = record
-    Pad0: array[0..3] of Byte;
-    Next: PCombatNode;            { +$4 }
-    Pad8: array[8..$12] of Byte;
+    Who: PCharacter;              { +$0: the caster the cloud was cast for }
+    Next: PCombatNode;            { +$4: the next cloud marker in the list }
+    Tiles: array[1..4] of Byte;   { +$8: the tile found around the aim point, one per aim direction }
+    Flags: array[1..4] of Byte;   { +$C: nonzero: the cell may hold the cloud (a walkable combat tile) }
+    X: ShortInt;                  { +$10: the aim column (ds6DB9 at the cast; signed, cwde at ovl22:1D3A) }
+    Y: ShortInt;                  { +$11: the aim row (ds6DBA at the cast; signed, cwde at ovl22:1D74) }
+    Clouds: Byte;                 { +$12: how many clouds the caster already had (Count) }
   end;
   { One 16-byte row of the spell table DS:320A (SpellTable): RecalcClassStats reads the class
     and the level (ovl23:0110, 0119); the other bytes are not known yet. }
@@ -217,6 +223,13 @@ type
       spell with this affect (ovl15:10D9). }
     AffectId: Byte;
     PadB: array[$B..15] of Byte;
+  end;
+  { The 41 bytes at DS:28E9, the storage of SpellNames[0] (never read as a name): the four bytes at
+    +$25 hold the aim directions the Stinking Cloud handler scans around a spell's aim point (the image has
+    8, 2, 3, 4 at DS:290E..2911), the rest is not known yet. }
+  TSpellNamesPrefix = record
+    Unknown: array[0..$24] of Byte;   { +0..+$24 }
+    AimDirs: array[1..4] of Byte;     { +$25..+$28: the cloud aim directions at DS:290E }
   end;
   { The seven digits of the camp's rest clock RestTime (ovl20:02F2). }
   TRestClock = array[0..6] of Word;
@@ -837,13 +850,14 @@ var
   ds0D02: array[0..15] of Byte;   { four 2-bit pixels of colour C; see above }
   ds0D06: array[0..15] of Byte;   { two 4-bit pixels of colour C (C * $11); see above }
   { Globals of the combat unit ovl08 (whitepaper 5.5). }
-  ds6DBB: PCombatNode;            { a list of $13-byte records EndCombat frees (ovl08:0006); meaning unknown }
+  ds6DBB: PCombatNode;            { head of the Stinking Cloud markers; EndCombat frees the list }
   { The X of the tile a spell being cast is aimed at: ovl13_e14 fills it from CombatantX of the
     selected character, and CastChosenSpell uses it as a line endpoint of the cast animation and
-    as part of the point to face (InDirArc). DS:6DB9. }
-  ds6DB9: Byte;
+    as part of the point to face (InDirArc). ShortInt: the Stinking Cloud handler adds a signed DirStepX to
+    it (cwde at ovl22:1C53). DS:6DB9. }
+  ds6DB9: ShortInt;
   { The Y of the tile a spell being cast is aimed at, the companion of DS:6DB9; see its comment. DS:6DBA. }
-  ds6DBA: Byte;
+  ds6DBA: ShortInt;
   { nonzero: SpellAreaSize and res12_fn_26C2 use a fixed caster level 6 (a spell's area is then
     its per-level byte times 6); the writer is not found yet }
   ds6DBF: Byte;
@@ -945,6 +959,9 @@ var
   { The spell names, string[40] per spell 1..$38 at DS:2912 ('Bless' .. 'Restoration' in the image,
     the rows of SpellTable); entry 0 is the index base (ovl15:10EE), never read. }
   SpellNames: array[0..$38] of string[40];
+  { The DS:28E9 bytes before SpellNames[1] (DS:2912) seen as a record: the Stinking Cloud handler
+    (ovl22:1B11) reads AimDirs (DS:290E) from it. }
+  SpellNamesPrefix: TSpellNamesPrefix absolute SpellNames;
   { Globals of the combat map builder ovl10 (whitepaper 5.5.2). }
   CombatBlock: Byte;              { the area map block code the battle is fought on (ovl10:1215) }
   { The combat direction (an index of DirStepX/DirStepY) of a facing 0..3; PrepareCombatants also

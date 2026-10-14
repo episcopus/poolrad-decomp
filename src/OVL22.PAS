@@ -43,7 +43,7 @@ procedure CastInvisibility;
 procedure CastKnock;
 procedure CastMirrorImage;
 procedure CastRayOfEnfeeblement;
-procedure ovl22_e37;
+procedure CastStinkingCloud;
 procedure ovl22_e38;
 procedure ovl22_fn_202B;
 procedure ovl22_e39;
@@ -995,8 +995,106 @@ procedure CastRayOfEnfeeblement;
 begin
   ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is weakened');
 end;
-{ ovl22:1B11: retf 0: 0 bytes of parameters; 42 bytes of locals }
-{@stub} procedure ovl22_e37; begin end;
+{ ovl22:1B11 (e37). Cast handler of spell 34, Stinking Cloud (SpellHandlers[34]: ovl22_e10 maps
+  DS:6B84+34*4 to overlay stub 0096:00D9; SpellNames[34] is 'Stinking Cloud' at DS:2E5B). It leaves
+  a marker in the list ds6DBB (a list of $13-byte TCombatNode records) for the aim point ds6DB9/
+  ds6DBA: the caster, the aim cell, and for each of the four aim directions (SpellNamesPrefix.AimDirs,
+  DS:290E) the tile it found around the aim cell, whether the cell may hold the cloud, and the cloud's
+  own affect $28 with the caster level. A cell whose tile is $1E (the cloud tile) borrows the tile of
+  an earlier cloud marker that already reaches it; a cell whose tile is $1F borrows the tile of a body
+  there (BodyTable). The cloud cell itself is painted into the combat map, the cast is announced
+  ('Creates a noxious cloud'), the cursor is moved to the aim point and the cloud affect runs on every
+  combatant in the four cells (ApplyCloudTile). Reads ds681B, ds6DB9/ds6DBA, ds5D96 (SelectedCharacter's
+  side), BodyCount, CombatTiles, CombatMap and CombatantRecord; changes ds6820, ds6DBB, the combat map
+  and the affects of the targets. }
+procedure CastStinkingCloud;
+const
+  CloudTile = $1E;                { a noxious cloud cell (ApplyCloudTile tests the tile under a combatant for it) }
+  CloudEdgeTile = $1F;            { the second cloud tile the aim scan looks for; meaning open }
+  CloudAffect = $28;              { the affect the cast leaves on the caster and his clouds }
+  { The cloud count goes into the affect's data in bits 4..7 (Count * CloudCountScale). }
+  CloudCountScale = 16;
+  RefusedTileCost = $FF;          { a combat tile cost this high refuses the cell (TCombatTile.Cost) }
+  AimCursorMargin = $FF;          { the margin MoveCombatCursor centres the view with }
+  AimCursorDir = 8;               { the omni direction MoveCombatCursor steps in (DirStepX/DirStepY) }
+  MessageColour = $A;             { the colour res12_fn_16EC shows the message in }
+var
+  Cloud: PCombatNode;             { the walker of the ds6DBB cloud list }
+  Node: PCombatNode;              { the cloud marker this cast fills }
+  Occupant: array[1..4] of Byte;  { the combatant standing in each aim cell (GetMapCell's out) }
+  J: Byte;                        { the aim direction or the body index being looked at }
+  Count: Byte;                    { how many cloud markers the caster already had }
+  Tile: Byte;                     { the tile GetMapCell found, or one the scan borrows }
+  Level: Byte;                    { the caster level, res12_fn_26C2(ds681B) }
+  I: Byte;                        { the aim direction index, 1..4 }
+  Dir: Byte;                      { the compass direction of aim direction I (SpellNamesPrefix.AimDirs) }
+begin
+  ds6820 := 1;
+  Level := res12_fn_26C2(ds681B);
+  Count := 0;
+  Node := ds6DBB;
+  if ds6DBB = nil then
+  begin
+    GetMem(ds6DBB, SizeOf(TCombatNode));
+    Node := ds6DBB;
+  end
+  else
+  begin
+    while Node^.Next <> nil do
+    begin
+      if Node^.Who = SelectedCharacter then
+        Inc(Count);
+      Node := Node^.Next;
+    end;
+    GetMem(Node^.Next, SizeOf(TCombatNode));
+    Node := Node^.Next;
+  end;
+  FillChar(Node^, SizeOf(TCombatNode), 0);
+  AddAffect(SelectedCharacter, CloudAffect, Level, Level + Count * CloudCountScale, 1);
+  Node^.Who := SelectedCharacter;
+  Node^.Clouds := Count;
+  Node^.X := ds6DB9;
+  Node^.Y := ds6DBA;
+  for I := 1 to 4 do
+  begin
+    Dir := SpellNamesPrefix.AimDirs[I];
+    GetMapCell(ds6DB9 + DirStepX[Dir], ds6DBA + DirStepY[Dir], Occupant[I], Tile);
+    if (Tile > 0) and (CombatTiles[Tile].Cost < RefusedTileCost) then
+      Node^.Flags[I] := 1
+    else
+      Node^.Flags[I] := 0;
+    if Tile = CloudTile then
+    begin
+      Cloud := ds6DBB;
+      while Cloud <> nil do
+      begin
+        if Cloud <> Node then
+          for J := 1 to 4 do
+            if Cloud^.Flags[J] <> 0 then
+              if (Cloud^.X + DirStepX[SpellNamesPrefix.AimDirs[J]] = ds6DB9 + DirStepX[Dir]) and
+                 (Cloud^.Y + DirStepY[SpellNamesPrefix.AimDirs[J]] = ds6DBA + DirStepY[Dir]) and
+                 (Cloud^.Tiles[J] <> CloudTile) then
+                Tile := Cloud^.Tiles[J];
+        Cloud := Cloud^.Next;
+      end;
+    end
+    else if Tile = CloudEdgeTile then
+      for J := 1 to BodyCount do
+        if (BodyTable[J].X = ds6DB9 + DirStepX[Dir]) and
+           (BodyTable[J].Y = ds6DBA + DirStepY[Dir]) then
+          Tile := BodyTable[J].Tile;
+    Node^.Tiles[I] := Tile;
+    if Node^.Flags[I] <> 0 then
+      CombatMap^.Cells[ds6DBA + DirStepY[Dir], ds6DB9 + DirStepX[Dir]] := CloudTile;
+  end;
+  res12_fn_16EC(SelectedCharacter, 'Creates a noxious cloud', MessageColour, 0);
+  MoveCombatCursor(ds6DB9, ds6DBA, AimCursorMargin, AimCursorDir);
+  DelayByGameSpeed;
+  res12_fn_17E3;
+  for I := 1 to 4 do
+    if Occupant[I] > 0 then
+      ApplyCloudTile(CombatantRecord[Occupant[I]]);
+end;
 { ovl22:1F41: frame not read }
 {@stub} procedure ovl22_e38; begin end;
 { ovl22:202B: retf 0: 0 bytes of parameters; 0 bytes of locals }
