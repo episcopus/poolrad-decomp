@@ -54,10 +54,7 @@ function ShowAimPrompt(Who, Target: PCharacter; Range: Byte; ShowRange: Byte; Un
 procedure ResolveAimedAttack(Who, Target: PCharacter; Automatic: Byte; var Done: Byte; var Aim: TSpellTarget);
 procedure RunAimCursor(Who, Target: PCharacter; Range, Automatic,
   AimFlag: Byte; var Done: Byte; var Aim: TSpellTarget);
-procedure ovl13_fn_32E6;
-procedure ovl13_fn_3389;
-procedure ovl13_e17(Who: Pointer; A, B, C: Byte; var Done: Byte; var Aim);
-procedure ovl13_fn_3728;
+procedure RunAimTargets(Who: PCharacter; Range, Automatic, AimFlag: Byte; var Done: Byte; var Aim);
 function ChooseCombatTarget(Who: PCharacter; Range, ThroughWalls, ForgetTarget: Byte): Boolean;
 procedure ovl13_e22;
 procedure ovl13_fn_39E6;
@@ -1116,14 +1113,14 @@ begin
 end;
 { ovl13:1E16. Finds a target for the spell Spell while it is aimed, and hands it over through the
   untyped var Target (a TSpellTarget: the combatant and its cell).
-    - Automatic = 0 lets ovl13_e17 pick (the player's cursor); else the spell row's own data picks it:
+    - Automatic = 0 lets RunAimTargets pick (the player's cursor); else the spell row's own data picks it:
       when the row's byte +6 (Pad2[6]) is 0 the caster itself is taken (and FindNearbyTarget is asked
       when Spell is 3); otherwise up to 20 times ChooseCombatTarget offers the next aim (ovl22_e3(Spell) is the
       spell's range) and the aim is accepted while the spell's area (ScanTargets with the row's +$F
       byte as the line budget) holds only the caster's enemies and the target is either not helpless or
       the row's AffectId (+$A) is not one of HelplessAffects.
   Returns True when a target was stored, and then leaves its cell in ds6DB9/ds6DBA; False clears the
-  seven bytes of Target. AimFlag is passed to ovl13_e17 as its third flag (1 for the spell rows whose
+  seven bytes of Target. AimFlag is passed to RunAimTargets as its third flag (1 for the spell rows whose
   Pad2[6] nibble is 8..14). Globals: SelectedCharacter, ds6DB9, ds6DBA. }
 function FindSpellTarget(Spell, Automatic, AimFlag: Byte; var Target: TSpellTarget): Boolean;
 var
@@ -1136,7 +1133,7 @@ begin
   Chosen := 0;
   if Automatic = 0 then
   begin
-    ovl13_e17(SelectedCharacter, ovl22_e3(Spell), 0, AimFlag, Chosen, Target);
+    RunAimTargets(SelectedCharacter, ovl22_e3(Spell), 0, AimFlag, Chosen, Target);
     SelectedCharacter^.Combat^.Target := Target.Who;
   end
   else
@@ -1614,7 +1611,7 @@ end;
   the target name + 'Center Exit' and reads a key from it through ReadPromptChoice ('Aim:'). The
   target name is 'Target ' when the distance is within Range and the aim is worth naming: always when
   ShowRange is 0, else only for a ranged weapon (IsRangedWeapon, ChooseAttackItem, and either no
-  adjacent enemy or an ammo that can strike in melee). Called by ovl13_e17, the player's aim cursor.
+  adjacent enemy or an ammo that can strike in melee). Called by RunAimTargets, the player's aim cursor.
   Globals: none. QUIRK ovl13:2ACF: Bearing is worked out and never read. }
 function ShowAimPrompt(Who, Target: PCharacter; Range: Byte; ShowRange: Byte; Unused: Byte): Char;
 var
@@ -1653,7 +1650,7 @@ end;
   level-0 enemies (SweepEnemies, ending the turn when it swept) or names the ranged weapon's ammo
   (ChooseAttackItem, dropped to nil in melee range) and resolves the attack through PerformAttack.
   When Done was cleared the aim record is cleared (FillChar 7). Called by the manual aim cursor
-  (ovl13_e17 through ovl13:2DFA) and ovl13:31D7. Globals: CombatMap (write).
+  (RunAimTargets through ovl13:2DFA) and ovl13:31D7. Globals: CombatMap (write).
   QUIRK ovl13:2C3D: the byte local is declared and never read; it makes the frame 6 bytes. }
 procedure ResolveAimedAttack(Who, Target: PCharacter; Automatic: Byte; var Done: Byte; var Aim: TSpellTarget);
 var
@@ -1836,14 +1833,139 @@ begin
     end;
   end;
 end;
-{ ovl13:32E6: retf 6: 6 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl13_fn_32E6; begin end;
-{ ovl13:3389: retf 6: 6 bytes of parameters; 8 bytes of locals }
-{@stub} procedure ovl13_fn_3389; begin end;
-{ ovl13:3558: frame not read }
-{@stub} procedure ovl13_e17(Who: Pointer; A, B, C: Byte; var Done: Byte; var Aim); begin end;
-{ ovl13:3728: retf 18: 18 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl13_fn_3728; begin end;
+{ ovl13:3558. The aim cursor of the combat A command: it clears the aim record Aim and Done, works
+  out the effective range AimRange (Range itself, or for the $FF "any" the readied weapon's
+  ItemTable range minus one, at least 1) and lists the targets reachable from Who
+  (ListAimTargets, the ScanTargets scan). It starts on the first target (StepAimCursor) and loops
+  while Done is clear and the player has not pressed #0 or 'E': when Who may not attack the current
+  target (AttackTargetAllowed) it steps the cursor on; otherwise it asks ShowAimPrompt and (N/P move
+  the cursor, M runs the free aim cursor RunAimCursor, T resolves the aimed attack, C centres the
+  cursor) then redraws the target's cell and steps to the next. When it finally ends and Automatic is
+  set it clears the range line. Called by PlayerTurn (ovl08:0310, Range $FF, Automatic 1) and
+  FindSpellTarget (Range from ovl22_e3, Automatic 0). Globals: ItemTable, CombatantTable,
+  CombatantRecord, ds6718 (the scan table ListAimTargets copies into Targets). }
+procedure RunAimTargets(Who: PCharacter; Range, Automatic, AimFlag: Byte; var Done: Byte; var Aim);
+var
+  Targets: array[1..72] of TSortRec;  { ds6718's records: a combatant index and its walk distance }
+  AimRange: Byte;                { the effective attack range this aim uses }
+  Count: Byte;                   { the targets in Targets }
+  Index: Byte;                   { the target the cursor is on }
+  NextDelta: Byte;               { the direction the invalid-target branch steps }
+  Walk: Byte;                    { the direction the accepted-target branch steps, 0 when not drawn }
+  FromX, FromY: ShortInt;        { the cell the cursor came from }
+  ToX, ToY: ShortInt;            { the cell the cursor moved to }
+  Target: PCharacter;            { the combatant under the cursor }
+  Key: Char;                     { the key ShowAimPrompt returned }
+
+  { ovl13:32E6. Lists the targets Who can reach: ScanTargets over the whole map ($7F steps, every
+    direction, Who's own footprint kind) into ds6718 and copies ds6718[1..Count] into Targets. The
+    count goes into the enclosing Count. Called with Who by e17. }
+  procedure ListAimTargets(Who: PCharacter);
+  var
+    I: Byte;                     { the copy index }
+  begin
+    ScanTargets(CombatantX(Who), CombatantY(Who), $7F, $FF, CombatantKind(Who), CombatMap);
+    Count := ds6718[0].Val;
+    for I := 1 to Count do
+      Targets[I] := ds6718[I];
+  end;
+
+  { ovl13:3389. Steps the aim cursor through Targets by Delta and returns the target there: with
+    Step set it remembers the current cell (CombatantTable), otherwise it redraws the old cell
+    (RedrawMapCell). The index wraps into 1..Count, the new target's cell is remembered and, with
+    Step set, WalkCombatLine draws the cursor's move from the old cell to it. Called by e17. }
+  function StepAimCursor(Delta, Step: Byte): PCharacter;
+  var
+    Unused: array[0..3] of Byte;  { QUIRK ovl13:3389: four frame slots the compiler keeps, never read }
+  begin
+    if Step <> 0 then
+    begin
+      FromX := CombatantTable[Targets[Index].Head].X;
+      FromY := CombatantTable[Targets[Index].Head].Y;
+    end
+    else
+      RedrawMapCell(FromX, FromY);
+    Inc(Index, Delta);
+    if Index = 0 then
+      Index := Count;
+    if Index > Count then
+      Index := 1;
+    StepAimCursor := CombatantRecord[Targets[Index].Head];
+    ToX := CombatantTable[Targets[Index].Head].X;
+    ToY := CombatantTable[Targets[Index].Head].Y;
+    if Step <> 0 then
+    begin
+      WalkCombatLine(FromX, FromY, ToX, ToY, 1, 0);
+      FromX := ToX;
+      FromY := ToY;
+    end;
+  end;
+
+begin
+  CopyPictureItem(AimCursorPicture, 0, 0, 0);
+  FillChar(Aim, 7, 0);
+  Done := 0;
+  AimRange := Range;
+  if AimRange = $FF then
+  begin
+    if Who^.SlotItems[0] <> nil then
+      AimRange := ItemTable[Who^.SlotItems[0]^.ItemType].Range - 1
+    else
+      AimRange := 1;
+  end;
+  if (AimRange = 0) or (AimRange = $FF) then
+    AimRange := 1;
+  ListAimTargets(Who);
+  Index := 1;
+  NextDelta := 0;
+  Target := StepAimCursor(NextDelta, 1);
+  NextDelta := 1;
+  Key := ' ';
+  while (Done = 0) and not (Key in [#0, 'E']) do
+  begin
+    if not AttackTargetAllowed(Who, Target) then
+      Target := StepAimCursor(NextDelta, 0)
+    else
+    begin
+      Key := ShowAimPrompt(Who, Target, AimRange, Automatic, AimFlag);
+      case Key of
+        'N':
+          begin
+            NextDelta := 1;
+            Walk := 1;
+          end;
+        'P':
+          begin
+            NextDelta := $FF;
+            Walk := $FF;
+          end;
+        'M':
+          begin
+            RunAimCursor(Who, Target, AimRange, Automatic, AimFlag, Done, TSpellTarget(Aim));
+            CopyPictureItem(AimCursorPicture, 0, 0, 0);
+            ListAimTargets(Who);
+            Walk := 0;
+          end;
+        'T':
+          begin
+            ResolveAimedAttack(Who, Target, Automatic, Done, TSpellTarget(Aim));
+            CopyPictureItem(AimCursorPicture, 0, 0, 0);
+            ListAimTargets(Who);
+            Walk := 0;
+          end;
+        'C':
+          begin
+            MoveCombatCursor(CombatantX(Target), CombatantY(Target), 0, 8);
+            Walk := 0;
+          end;
+      end;
+      RedrawMapCell(CombatantX(Target), CombatantY(Target));
+      Target := StepAimCursor(Walk, Ord((Done = 0) and not (Key in [#0, 'E'])));
+    end;
+  end;
+  if Automatic <> 0 then
+    ClearWindow(0, $17, $27, $17);
+end;
 { ovl13:37E4: frame not read }
 { ovl13:37E4. Picks an enemy inside Range for Who, the target search the automatic spell aim and the
   AI movement use: it first drops Who's remembered Combat^.Target unless ForgetTarget is 0 and the

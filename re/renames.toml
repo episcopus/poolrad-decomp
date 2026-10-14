@@ -4232,3 +4232,24 @@ kind = "routine"
 why = "ovl13:37E4 picks a random in-range enemy (CollectEnemiesInRange) as Who's Combat^.Target for the automatic spell aim and the AI, with a second pass that opens the WalkLine tile gate; called by FindSpellTarget and ovl09 QuickTurn/MoveStep/AiTurn"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl13_fn_32E6"
+new = "ListAimTargets"
+kind = "routine"
+why = "ovl13:32E6 nested in ovl13_e17: ScanTargets over the whole map into ds6718 and copies ds6718[1..Count] into the aim target list Targets"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl13_fn_3389"
+new = "StepAimCursor"
+kind = "routine"
+why = "ovl13:3389 nested in ovl13_e17: steps the aim cursor through Targets by Delta, wraps it, redraws the old cell and draws the move with WalkCombatLine, returning the new target"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl13_e17"
+new = "RunAimTargets"
+kind = "routine"
+why = "ovl13:3558 is the Aim command's target loop: it lists the reachable targets (ListAimTargets), steps the cursor (StepAimCursor), shows ShowAimPrompt, lets the player move the cursor or resolve the aimed attack (RunAimCursor, ResolveAimedAttack), and clears the range line; called by PlayerTurn (ovl08:0310) and FindSpellTarget"
+date = "2026-10-14"
+

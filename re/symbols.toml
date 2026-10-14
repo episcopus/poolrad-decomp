@@ -5736,12 +5736,12 @@ id = "ovl13:32E6"
 unit = "ovl13"
 addr = "ovl13:32E6"
 size = 163
-name = "ovl13_fn_32E6"
-signature = ""
+name = "ListAimTargets"
+signature = "procedure ListAimTargets(Who: PCharacter)"
 c_name = "ovl13_fn_32E6"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_fn_32E6 (ovl13:32E6 nested in RunAimTargets: ScanTargets over the whole map into ds6718 and copies ds6718[1..Count] into the parent's Targets list); nested in RunAimTargets (ovl13:3558), proven by the parent's match"
 evidence = ["prologue"]
 
 [[routine]]
@@ -5749,39 +5749,26 @@ id = "ovl13:3389"
 unit = "ovl13"
 addr = "ovl13:3389"
 size = 463
-name = "ovl13_fn_3389"
-signature = ""
+name = "StepAimCursor"
+signature = "function StepAimCursor(Delta, Step: Byte): PCharacter"
 c_name = "ovl13_fn_3389"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_fn_3389 (ovl13:3389 nested in RunAimTargets: it steps the parent's Index through Targets by Delta, wraps it into 1..Count, redraws the old cell (or remembers the new one) and draws the move with WalkCombatLine, returning the target it lands on); nested in RunAimTargets (ovl13:3558), proven by the parent's match"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl13:3558"
 unit = "ovl13"
 addr = "ovl13:3558"
-size = 464
-name = "ovl13_e17"
-signature = "procedure ovl13_e17(Who: Pointer; A, B, C: Byte; var Done: Byte; var Aim)"
+size = 652
+name = "RunAimTargets"
+signature = "procedure RunAimTargets(Who: PCharacter; Range, Automatic, AimFlag: Byte; var Done: Byte; var Aim)"
 c_name = "ovl13_e17"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_e17 (ovl13:3558 is the Aim command's target loop: it lists the reachable targets (ListAimTargets), steps the cursor (StepAimCursor), shows ShowAimPrompt, lets the player move the cursor or resolve the aimed attack (RunAimCursor, ResolveAimedAttack), and clears the range line; called by PlayerTurn (ovl08:0310) and FindSpellTarget); auto:near_call; nested: ListAimTargets (ovl13:32E6) and StepAimCursor (ovl13:3389), proven by the parent's match"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl13:3728"
-unit = "ovl13"
-addr = "ovl13:3728"
-size = 188
-name = "ovl13_fn_3728"
-signature = ""
-c_name = "ovl13_fn_3728"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl13:37E4"

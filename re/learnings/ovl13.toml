@@ -179,3 +179,12 @@ tags = ["for", "loop", "bound", "frame", "temporary", "codegen"]
 title = "`for I := 1 to LocalVar` copies the bound into a hidden frame temp; an explicit copy local doubles it"
 lesson = "ovl13:37E4 re-scans the remaining enemies with a `for Index := 1 to Count do`. The original's loop reads the bound from one frame byte: `mov al,[bp-2]; mov [bp-0xc],al; mov al,1; cmp al,[bp-0xc] ... cmp al,[bp-0xc]`. That store is TP's own for-loop final-value temp, not a source local, so the source has no CountCopy: declaring `CountCopy := Count; for Index := 1 to CountCopy do` adds a second byte and a second copy (`mov al,[bp-0xc]; mov [bp-0xd],al`) and makes the frame 2 bytes too big (0xe against 0xc). Rule: a for-loop over a variable bound always carries one hidden temp word/byte for the bound; do not mirror it with a named local. Probe tools/re/tp_idioms/ovl13/PRBE22.PAS (F1 frame 0xc, F4, same locals plus the for loop, 0xe)."
 evidence = ["tools/re/tp_idioms/ovl13/PRBE22.PAS", "src/OVL13.PAS#ChooseCombatTarget", "re/symbols.toml#ovl13:37E4"]
+
+[[lesson]]
+id = "nested-static-link-shifts-parameters-and-result"
+confidence = "V"
+units = ["*"]
+tags = ["nested", "static link", "parameter", "result", "frame", "codegen"]
+title = "A nested routine's static link sits at [bp+6], so its first parameter is at [bp+0xa] and its last at [bp+8]; a pointer result gets a hidden 4-byte slot"
+lesson = "ovl13:3558 (RunAimTargets) calls the nested 3389 as push Delta; push Step; push bp; push cs; call. The static link at [bp+6] pushes every argument one slot up: the first declared parameter (Delta) lands at [bp+0xa] and the last (Step) at [bp+8], the reverse of a top-level far routine's [bp+6]/[bp+8]. Writing the parameters in the other order (Step, Delta) compiles the same instructions with [bp+8] and [bp+0xa] swapped, so make match reports a nested-instruction difference at operand bytes, not an address. A nested function returning a far pointer stores it in a hidden result slot nearest bp ([bp-4]/[bp-2]); assigning to a named local first adds a store/reload pair (mov [bp-8],ax; mov [bp-6],dx; mov [bp-4],ax; mov [bp-2],dx), so the source assigns the result expression directly. The original 3389 keeps a 4-byte unused slot below the result (sub sp,8, QUIRK)."
+evidence = ["src/OVL13.PAS#RunAimTargets", "src/OVL13.PAS#StepAimCursor", "re/symbols.toml#ovl13:3558"]
