@@ -89,8 +89,7 @@ procedure ovl12_e74(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure AddConstitutionSaveBonus(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e76(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure HalveFireDamageNoSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e78(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_fn_25C9;
+procedure HalveDamageForFirstSlotItem(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e79(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e80(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e81(Who: PCharacter; Affect: PAffect; Mode: Byte);
@@ -224,6 +223,7 @@ const
   GivenItemAffect2 = $17;       { Affects[2] of that item }
   GivenItemAffect3 = $89;       { Affects[3] of that item }
   ItemCountLimit = $10;         { no item is given once ItemCountC7 is this or more (ovl12:07E0 at 0869) [I] }
+  ItemRowFlags = $81;           { bits 0 and 7 of byte 7 of an item type's RaceRow row, tested by ovl12:25BC [?] }
   CloudTile = $1E;              { the cloud tile ApplyCloudTile (ovl24:0AE7) tests for; ovl12:0F14 repaints the arms with it }
   CloudBodyTile = $1F;          { the tile a cloud arm gets where a body lies when the cloud clears (ovl12:0CC3) [?] }
   AffectNausea = $1F;           { the affect of a failed save against the cloud: nausea (ovl24:0AE7) }
@@ -1646,10 +1646,19 @@ begin
   if (DamageKind and KindFire) <> 0 then
     DamageAmount := DamageAmount shr 1;
 end;
-{ ovl12:25BC: frame not read }
-{@stub} procedure ovl12_e78; begin end;
-{ ovl12:25C9: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_fn_25C9; begin end;
+{ ovl12:25BC. Affect handler for damage (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000).
+  It takes the first slot item of SelectedCharacter (FirstSlotItem, ovl12:101D). When there is one and byte 7 of its
+  RaceRow row (RaceRow[ItemType][7], DS:5589; the row is indexed by the item type, the meaning of byte 7 is not known [?])
+  has ItemRowFlags bits set, DamageAmount is halved. Purpose unknown: which affect runs it is not known yet [?]. }
+procedure HalveDamageForFirstSlotItem(Who: PCharacter; Affect: PAffect; Mode: Byte);
+var
+  Item: PItem;
+begin
+  Item := FirstSlotItem(SelectedCharacter);
+  if Item <> nil then
+    if (RaceRow[Item^.ItemType][7] and ItemRowFlags) <> 0 then
+      DamageAmount := DamageAmount shr 1;
+end;
 { ovl12:2610: retf 10: 10 bytes of parameters; 12 bytes of locals }
 {@stub} procedure ovl12_e79; begin end;
 { ovl12:264B: retf 10: 10 bytes of parameters; 4 bytes of locals }

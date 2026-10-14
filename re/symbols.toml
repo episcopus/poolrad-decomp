@@ -4226,27 +4226,14 @@ evidence = ["prologue"]
 id = "ovl12:25BC"
 unit = "ovl12"
 addr = "ovl12:25BC"
-size = 13
-name = "ovl12_e78"
+size = 73
+name = "HalveDamageForFirstSlotItem"
 signature = ""
 c_name = "ovl12_e78"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_78"
+notes = "renamed from ovl12_e78 (ovl12:25BC halves DamageAmount when the first slot item of SelectedCharacter has bits of byte 7 of its RaceRow row (RaceRow[ItemType][7]); the affect that runs it is not known; matched [V]); auto:entry_78"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:25C9"
-unit = "ovl12"
-addr = "ovl12:25C9"
-size = 71
-name = "ovl12_fn_25C9"
-signature = ""
-c_name = "ovl12_fn_25C9"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:2610"
