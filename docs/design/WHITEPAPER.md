@@ -1085,7 +1085,7 @@ matched only with the copy.
   to `SaveBonus` (+$101); a class above 0 keeps the largest class plus Plus and, for a positive
   plus on an armour, sets a flag. `ApplyWeaponBonuses` builds the readied weapon's attack values
   from its RaceRow row: HitAdjust (+$110) is reset to Thac0 (+$2D), the flag byte $E adds the
-  dexterity roll adjustment (`res12_fn_1168`, bit 2) and the strength roll adjustment
+  dexterity roll adjustment (`DexterityAttackAdjustment`, bit 2) and the strength roll adjustment
   (`res12_fn_1282`, bit 4), WeaponAttacks (+$115) and WeaponDamage (+$117) come from bytes 9 and
   $A, and the signed WeaponDamageBonus (+$119) from byte $B plus the strength damage adjustment
   (`res12_fn_1325`) and the plus of the weapon and, by flag bits 0 and 7, of slot items 11

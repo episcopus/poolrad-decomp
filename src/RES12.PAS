@@ -38,7 +38,7 @@ function ByteToText(Value: Byte): string;
 function WordToText(Value: Word): string;
 function LongIntToText(Value: LongInt): string;
 function DexterityAdjustment(Who: PCharacter): Byte;
-function res12_fn_1168(Who: PCharacter): ShortInt;
+function DexterityAttackAdjustment(Who: PCharacter): ShortInt;
 procedure res12_fn_11EA;
 function res12_fn_1282(Who: PCharacter): ShortInt;
 function res12_fn_1325(Who: PCharacter): ShortInt;
@@ -168,7 +168,7 @@ const
   nothing. Otherwise the weapon's item kind picks a RaceRow row (DS:5582): its byte 9 becomes
   Who^.WeaponAttacks (+$115), byte $A Who^.WeaponDamage (+$117) and byte $B the base of the
   signed Who^.WeaponDamageBonus (+$119). The attack flags byte $E adds the dexterity roll
-  adjustment (res12_fn_1168, bit 2) to HitAdjust (+$110, reset to Thac0 +$2D first) and the
+  adjustment (DexterityAttackAdjustment, bit 2) to HitAdjust (+$110, reset to Thac0 +$2D first) and the
   strength roll (res12_fn_1282) to HitAdjust and the strength damage (res12_fn_1325) to the
   damage bonus (bit 4); bit 0 adds the plus of slot item 11 (+$F8) and bit 7 the plus of slot
   item 12 (+$FC) to the weapon's own plus. Race 2 gets one more point with the bonus kinds.
@@ -185,7 +185,7 @@ begin
   ItemType := Weapon^.ItemType;
   Who^.HitAdjust := Who^.Thac0;
   if (RaceRow[ItemType][RaceRowAttackFlags] and WeaponFlagDexToHit) <> 0 then
-    Who^.HitAdjust := Who^.HitAdjust + res12_fn_1168(Who);
+    Who^.HitAdjust := Who^.HitAdjust + DexterityAttackAdjustment(Who);
   Who^.WeaponDamageBonus[1] := RaceRow[ItemType][RaceRowWeaponBonus];
   if (RaceRow[ItemType][RaceRowAttackFlags] and WeaponFlagStrength) <> 0 then
   begin
@@ -626,8 +626,27 @@ begin
     DexterityAdjustment := 0;
   end;
 end;
-{ 00BA:1168: retf 4: 4 bytes of parameters; 2 bytes of locals }
-{@stub} function res12_fn_1168(Who: PCharacter): ShortInt; begin end;
+{ 00BA:1168. Maps Who's dexterity (Dexterity, +$13) to its AD&D reaction/attack adjustment:
+  dexterity 0..2 gives -4, 3..5 the dexterity minus 6, 6..15 gives 0, 16..18 the dexterity
+  minus 15, 19..20 gives 3, 21..23 gives 4 and 24..25 gives 5. ApplyWeaponBonuses adds it to
+  the attack value (HitAdjust) for a weapon kind whose attack flags have bit 2. ovl13 also calls
+  it. Globals: none. }
+function DexterityAttackAdjustment(Who: PCharacter): ShortInt;
+var
+  Dex: Byte;
+begin
+  Dex := Who^.Dexterity;
+  case Dex of
+    0..2: DexterityAttackAdjustment := -4;
+    3..5: DexterityAttackAdjustment := Dex - 6;
+    $10..$12: DexterityAttackAdjustment := Dex - $F;
+    $13..$14: DexterityAttackAdjustment := 3;
+    $15..$17: DexterityAttackAdjustment := 4;
+    $18..$19: DexterityAttackAdjustment := 5;
+  else
+    DexterityAttackAdjustment := 0;
+  end;
+end;
 { 00BA:11EA: retf 4: 4 bytes of parameters; 2 bytes of locals }
 {@stub} procedure res12_fn_11EA; begin end;
 { 00BA:1282: retf 4: 4 bytes of parameters; 2 bytes of locals }

@@ -16648,12 +16648,12 @@ id = "00BA:1168"
 unit = "res12"
 addr = "00BA:1168"
 size = 130
-name = "res12_fn_1168"
-signature = "function res12_fn_1168(Who: PCharacter): ShortInt"
+name = "DexterityAttackAdjustment"
+signature = "function DexterityAttackAdjustment(Who: PCharacter): ShortInt"
 c_name = "res12_fn_1168"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res12_fn_1168 (00BA:1168: ApplyWeaponBonuses (00BA:0000) adds it to Who^.HitAdjust for a weapon whose RaceRow attack flags have bit 2 (WeaponFlagDexToHit); the sibling DexterityAdjustment (00BA:10E6) is the defensive one summed into ResistValue. Both map Dexterity (+0x13).); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

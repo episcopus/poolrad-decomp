@@ -3511,3 +3511,10 @@ kind = "routine"
 why = "res12_fn_10E6 (00BA:10E6) maps Who's dexterity (+0x13) to its AD&D reaction/defence adjustment (1..3 gives -4, 4..6 dexterity-7, 15..18 dexterity-14, 19..25 grows to 6); RecalcCombatValues sums it into the character's combat value"
 date = "2026-10-13"
 
+[[rename]]
+old = "res12_fn_1168"
+new = "DexterityAttackAdjustment"
+kind = "routine"
+why = "00BA:1168: ApplyWeaponBonuses (00BA:0000) adds it to Who^.HitAdjust for a weapon whose RaceRow attack flags have bit 2 (WeaponFlagDexToHit); the sibling DexterityAdjustment (00BA:10E6) is the defensive one summed into ResistValue. Both map Dexterity (+0x13)."
+date = "2026-10-13"
+
