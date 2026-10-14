@@ -53,9 +53,7 @@ procedure CastCureDisease;
 procedure CastCauseDisease;
 procedure CastDispelMagic;
 procedure CastPrayer;
-procedure ovl22_e9;
-procedure ovl22_fn_257E;
-procedure ovl22_fn_25C9;
+procedure CastRemoveCurse;
 procedure ovl22_e46;
 procedure ovl22_e47;
 procedure ovl22_e48;
@@ -1376,12 +1374,40 @@ begin
   ApplySpellToTargets(ds681B, res12_fn_26C2(ds681B) + ShortInt(SelectedCharacter^.Side) * SideScale,
     0, 0, 0, 'is praying');
 end;
-{ ovl22:2540: frame not read }
-{@stub} procedure ovl22_e9; begin end;
-{ ovl22:257E: frame not read }
-{@stub} procedure ovl22_fn_257E; begin end;
-{ ovl22:25C9: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl22_fn_25C9; begin end;
+{ ovl22:2540 (e9). Cast handler of spell 43, Remove Curse, and the routine the Temple's Remove
+  Curse service calls (ovl22_e10 maps DS:6B84+43*4 to overlay stub 0096:007E; SpellNames[43] is
+  'Remove Curse' at DS:2FCC; the Temple's RemoveCurse ovl04:083A stores the character in ds6C95 and
+  calls this). It first tries to cure the curse affect $24 from the character ds6C95 and, when it was
+  there, says 'is un-cursed' (res12_fn_1FEB). Otherwise it walks the character's carried items
+  (ds6C95^.Items, the list at +$C8) and clears the Cursed flag (+$36) of the first cursed item it
+  finds, saying ''s item is un-cursed'. Reads ds6C95; changes the character's affects and its items. }
+procedure CastRemoveCurse;
+const
+  CurseAffect = $24;              { the curse affect CureAffect removes (AffectCurse, ovl04:08A0) }
+  ShowAbout = 1;                  { res12_fn_1FEB's Flag argument }
+var
+  Item: PItem;                    { the walker of the character's carried items }
+  UnCursed: Boolean;              { whether a cursed item was found and cleared }
+begin
+  if CureAffect(ds6C95, CurseAffect) then
+    res12_fn_1FEB(ds6C95, ShowAbout, 'is un-cursed')
+  else
+  begin
+    UnCursed := False;
+    Item := ds6C95^.Items;
+    while (Item <> nil) and not UnCursed do
+    begin
+      if Item^.Cursed then
+      begin
+        UnCursed := True;
+        Item^.Cursed := False;
+      end;
+      Item := Item^.Next;
+    end;
+    if UnCursed then
+      res12_fn_1FEB(ds6C95, ShowAbout, '''s item is un-cursed');
+  end;
+end;
 { ovl22:2604: retf 0: 0 bytes of parameters; 18 bytes of locals }
 {@stub} procedure ovl22_e46; begin end;
 { ovl22:263D: retf 0: 0 bytes of parameters; 12 bytes of locals }

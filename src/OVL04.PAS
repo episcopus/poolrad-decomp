@@ -3,7 +3,7 @@ unit OVL04;
   Appraise and Exit; HealMenu lists nine cleric services plus Exit. Most services check the selected
   character, ask for confirmation when unnecessary (AskCastAnyway), charge through ChargeForCure and
   remove affects through RemoveAffect. CureWounds does not ask and heals through RollDice and
-  HealCharacter (ovl04:0401); RemoveCurse delegates to ovl22_e9 (ovl04:083A), not the ovl24 handlers. }
+  HealCharacter (ovl04:0401); RemoveCurse delegates to CastRemoveCurse (ovl04:083A), not the ovl24 handlers. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 function AskCastAnyway(Reason: string): Char;
@@ -334,7 +334,7 @@ end;
 
 { ovl04:083A. Remove Curse: the character needs it when one of its items is cursed or it has
   AffectCurse; otherwise asks first. Charges PriceRemoveCurse and hands the character to
-  ovl22_e9 through ds6C95. }
+  CastRemoveCurse through ds6C95. }
 procedure RemoveCurse;
 var
   Cursed: Boolean;
@@ -360,7 +360,7 @@ begin
     if Answer = Yes then
     begin
       ds6C95 := SelectedCharacter;
-      ovl22_e9;
+      CastRemoveCurse;
     end;
   end;
 end;

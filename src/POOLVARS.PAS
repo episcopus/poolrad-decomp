@@ -776,7 +776,7 @@ var
   DiseaseAffects: array[0..6] of Byte;  { see above }
   ds681F: Byte;                   { 1 while the Temple removes affects (RemoveAffect; ovl04:0386, 05AB, 07CE), 0 after }
   PooledMoney: TPartyMoney;       { the Temple clears it on entry (ovl04:0D32) and passes it to MoneyValueInGold }
-  ds6C95: PCharacter;             { the character Remove Curse hands to ovl22_e9 (ovl04:08FA) }
+  ds6C95: PCharacter;             { the character Remove Curse hands to CastRemoveCurse (ovl04:08FA) }
   { Globals of the spell target picker ovl22 (CastSpell, whitepaper 5.22). }
   { The chosen targets of a spell being cast: ChooseSpellTargets fills entries 1..ds6C94 (entry 0, at DS:6C91,
     is never used as a pointer; ds6C94 sits in its high byte), and ApplySpellToTargets applies the spell to

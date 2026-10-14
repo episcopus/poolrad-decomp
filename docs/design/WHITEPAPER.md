@@ -986,7 +986,7 @@ All seven routines are decompiled and matched.
   | Cure Light / Serious / Critical Wounds | 100 / 350 / 600 | always offered | heals 1d8, 2d8+1, 3d8+3 (`RollDice`, `HealCharacter`) |
   | Neutralize Poison | 1000 | affect $37 | removes $37, $16, $0F |
   | Raise Dead | 5500 | status (+$10C) 1 or 6 | removes $20 and $37, status 0, constitution - 1, hit point loss (below) |
-  | Remove Curse | 3500 | a cursed item (+$36 of an item in the list at +$C8) or affect $24 | hands the character to `ovl22_e9` (`DS:6C95`) |
+  | Remove Curse | 3500 | a cursed item (+$36 of an item in the list at +$C8) or affect $24 | hands the character to `CastRemoveCurse` (`DS:6C95`) |
   | Stone to Flesh | 2000 | status 7 | status 0 |
 
 - **Raise Dead and constitution** **[V]** (`ovl04:05E1..072A`): after lowering constitution (+$14) by one, a character with constitution 14 or more loses `(hp_max - byte +$B1) div bonus` hit points, where bonus sums over the eight class levels at +$96 (signed bytes): constitution - 14 per fighter level (class index 2), 2 per other level above constitution 15, else 1. The thresholds apply to the reduced constitution; when bonus is 0 the hit-point loss is not divided. The loss is skipped when the constitution is 17 or more and the character has no fighter level. `Flag10D` (+$10D) is the combat-participation flag checked by `AwardExperience` (`ovl05:0355`); `Flag11B` (+$11B) is the current hit points [I] (HealCharacter adds up to HpMax, `ovl24:17B9`). Raise Dead and Stone to Flesh set both to 1, restoring one hit point [I].

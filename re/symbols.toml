@@ -10412,40 +10412,14 @@ evidence = ["prologue"]
 id = "ovl22:2540"
 unit = "ovl22"
 addr = "ovl22:2540"
-size = 62
-name = "ovl22_e9"
+size = 179
+name = "CastRemoveCurse"
 signature = ""
 c_name = "ovl22_e9"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_9"
+notes = "renamed from ovl22_e9 (ovl22_e10 fills SpellHandlers[43] (DS:6B84+43*4) with overlay stub 0096:004D = ovl22:2540; SpellNames[43] is 'Remove Curse' (DS:2FCC), and the Temple's RemoveCurse (ovl04:083A) stores the character in ds6C95 and calls it. It cures the curse affect 24h or clears the Cursed flag of the character's first cursed item, saying 'is un-cursed' or ''s item is un-cursed'); auto:entry_9"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl22:257E"
-unit = "ovl22"
-addr = "ovl22:257E"
-size = 75
-name = "ovl22_fn_257E"
-signature = ""
-c_name = "ovl22_fn_257E"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl22:25C9"
-unit = "ovl22"
-addr = "ovl22:25C9"
-size = 59
-name = "ovl22_fn_25C9"
-signature = ""
-c_name = "ovl22_fn_25C9"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl22:2604"
