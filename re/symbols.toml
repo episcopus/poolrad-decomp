@@ -719,12 +719,12 @@ id = "ovl03:2B7E"
 unit = "ovl03"
 addr = "ovl03:2B7E"
 size = 133
-name = "ovl03_fn_2B7E"
+name = "AddComputerMemberCommand"
 signature = ""
 c_name = "ovl03_fn_2B7E"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_2B7E (ovl03:2B7E is the handler of ECL opcode 54 (dispatcher ovl03:2F2D, cmp al,36h): ovl17_e7(kind) adds the rolled member (it calls AddPartyMember, ovl17:1446), then its B84 is (operand 2 shr 1) or $80, the computer-run bit (TCharacter.B84, POOLVARS), and its Side is set from the kind); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -7905,7 +7905,7 @@ unit = "ovl17"
 addr = "ovl17:1262"
 size = 484
 name = "ovl17_e7"
-signature = ""
+signature = "procedure ovl17_e7(Kind: Byte)"
 c_name = "ovl17_e7"
 level = "none"
 justification = ""

@@ -21,7 +21,7 @@ procedure ovl17_e5;
 procedure ovl17_fn_0B48;
 procedure ovl17_e6(Kind: Byte; Who: Pointer);
 procedure ovl17_fn_0F99;
-procedure ovl17_e7;
+procedure ovl17_e7(Kind: Byte);
 procedure AddPartyMember(Member: PCharacter);
 procedure ovl17_e8;
 procedure ovl17_e9;
@@ -77,7 +77,7 @@ end;
 { ovl17:0F99: retf 6: 6 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl17_fn_0F99; begin end;
 { ovl17:1262: retf 2: 2 bytes of parameters; 18 bytes of locals }
-{@stub} procedure ovl17_e7; begin end;
+{@stub} procedure ovl17_e7(Kind: Byte); begin end;
 { ovl17:1446. Adds one character to the party list (ds5D96) and gives it a combat map icon. Member
   points to the TCharacter to add: its Next is left nil. When the list is empty it becomes the head
   and SelectedCharacter; otherwise it is linked at the tail. Then every icon number 0..7 a member

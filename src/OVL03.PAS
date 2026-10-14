@@ -50,7 +50,7 @@ procedure PassTimeCommand;
 procedure NewLineCommand;
 procedure ClearPictureWindowCommand;
 procedure ChoosePartyMemberCommand;
-procedure ovl03_fn_2B7E;
+procedure AddComputerMemberCommand;
 procedure ovl03_fn_2C03;
 procedure ovl03_fn_2CCF;
 procedure ovl03_fn_2D39;
@@ -165,6 +165,10 @@ const
   EndTextColor = 10;
   EndPauseMs = 3000;
   ContinueColor = 15;
+  { ECL command 54 (ovl03:2B7E): the kind that makes the added member a member of the other side (Side 1),
+    and the high bit of its B84 byte that marks a computer-run member. }
+  OtherSideKind = $18;
+  ComputerMemberBit = $80;
   { The picture frame of ECL commands 0 and 61 (ovl03:0001, ovl03:2B14): columns 1 to 15 and rows 1 to
     15, a box the close-up picture is drawn inside (columns and rows 3 to 13). }
   PictureFrameLeft = 1;
@@ -1664,8 +1668,32 @@ begin
   Prompt := EclStrings[1];
   res12_fn_2C48(Prompt, 0, SelectedCharacter);
 end;
-{ ovl03:2B7E: retf 0: 0 bytes of parameters; 6 bytes of locals }
-{@stub} procedure ovl03_fn_2B7E; begin end;
+{ ovl03:2B7E. ECL command 54 (dispatcher ovl03:2F2D, SkippedOpcode 36h): adds a computer-run member. Operand
+  1 is the kind ovl17_e7 adds (it rolls the character and calls AddPartyMember, which makes it the
+  SelectedCharacter). Operand 2 halved, with the high bit ComputerMemberBit set, is its B84 byte: the low
+  seven bits are its morale and the high bit marks it as run by the computer (TCharacter.B84). Its Side is
+  1 for OtherSideKind and 0 otherwise. The character is then redrawn (res12_fn_0BB8 and res12_fn_0767).
+  QUIRK ovl03:2B7E: four bytes of the frame nothing uses. }
+procedure AddComputerMemberCommand;
+var
+  Unused: LongInt;              { QUIRK ovl03:2B7E: four bytes of the frame nothing uses }
+  Kind: Byte;
+  Morale: Byte;
+begin
+  DecodeOperands(2);
+  Kind := OperandValue(1);
+  ovl17_e7(Kind);
+  Morale := OperandValue(2);
+  Morale := Morale shr 1;
+  Morale := Morale or ComputerMemberBit;
+  SelectedCharacter^.B84 := Morale;
+  if Kind <> OtherSideKind then
+    SelectedCharacter^.Side := 0
+  else
+    SelectedCharacter^.Side := 1;
+  res12_fn_0BB8(SelectedCharacter);
+  res12_fn_0767(SelectedCharacter);
+end;
 { ovl03:2C03: retf 0: 0 bytes of parameters; 10 bytes of locals }
 {@stub} procedure ovl03_fn_2C03; begin end;
 { ovl03:2CCF: frame not read }

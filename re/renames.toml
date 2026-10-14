@@ -3742,3 +3742,10 @@ kind = "routine"
 why = "ovl03:2B33 is the handler of ECL opcode 57 (dispatcher ovl03:2F2D, cmp al,39h): it clears the ECL text window (ClearRect with EclTextLeft..EclTextBottom), copies operand 1's string (EclStrings[1]) to a local and calls res12_fn_2C48 with it, mode 0 and SelectedCharacter as the var parameter that receives the member"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl03_fn_2B7E"
+new = "AddComputerMemberCommand"
+kind = "routine"
+why = "ovl03:2B7E is the handler of ECL opcode 54 (dispatcher ovl03:2F2D, cmp al,36h): ovl17_e7(kind) adds the rolled member (it calls AddPartyMember, ovl17:1446), then its B84 is (operand 2 shr 1) or $80, the computer-run bit (TCharacter.B84, POOLVARS), and its Side is set from the kind"
+date = "2026-10-13"
+
