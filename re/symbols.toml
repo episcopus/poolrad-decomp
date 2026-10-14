@@ -10673,12 +10673,12 @@ id = "ovl22:30A2"
 unit = "ovl22"
 addr = "ovl22:30A2"
 size = 55
-name = "ovl22_e62"
+name = "CastMonsterReadMagic"
 signature = ""
 c_name = "ovl22_e62"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_62"
+notes = "renamed from ovl22_e62 (ovl22:30A2 calls ApplySpellToTargets(ds681B, $FF, 1, 0, 0, 'is Reading'); the handler table element 67 (whitepaper 5.22.2), a monster-only spell with its own reading affect); auto:entry_62"
 evidence = ["prologue"]
 
 [[routine]]

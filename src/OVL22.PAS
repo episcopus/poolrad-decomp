@@ -73,7 +73,7 @@ procedure CastMonsterHealWounds;
 procedure CastMonsterInvisibility;
 procedure CastMonsterMagicDamage;
 procedure CastMonsterNoEffect;
-procedure ovl22_e62;
+procedure CastMonsterReadMagic;
 procedure ovl22_e63;
 procedure ovl22_fn_31D7;
 function ovl22_e6(Item: Pointer): Boolean;
@@ -1866,8 +1866,15 @@ end;
 procedure CastMonsterNoEffect;
 begin
 end;
-{ ovl22:30A2: retf 0: 0 bytes of parameters; 12 bytes of locals }
-{@stub} procedure ovl22_e62; begin end;
+{ ovl22:30A2 (e62). Cast handler of the monster-only spell 67 (SpellHandlers element 67, whose
+  SpellNames entry is empty, whitepaper 5.22.2): applies the current spell ds681B to the chosen
+  targets with caster level $FF (a fixed affect data, as CastSlowPoison's FullCasterLevel), Flag 1
+  so the affect's handler runs when it is removed, no damage or kind of its own, and the message
+  'is Reading'. }
+procedure CastMonsterReadMagic;
+begin
+  ApplySpellToTargets(ds681B, $FF, 1, 0, 0, 'is Reading');
+end;
 { ovl22:30D9: frame not read }
 {@stub} procedure ovl22_e63; begin end;
 { ovl22:31D7: retf 10: 10 bytes of parameters; 0 bytes of locals }

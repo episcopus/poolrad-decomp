@@ -3917,3 +3917,10 @@ kind = "routine"
 why = "handler of the monster-only spell 66 (SpellHandlers element 66, overlay entry 61, stub 0096:0151): the handler body is empty, so the cast does nothing after the picker"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl22_e62"
+new = "CastMonsterReadMagic"
+kind = "routine"
+why = "ovl22:30A2 calls ApplySpellToTargets(ds681B, $FF, 1, 0, 0, 'is Reading'); the handler table element 67 (whitepaper 5.22.2), a monster-only spell with its own reading affect"
+date = "2026-10-14"
+
