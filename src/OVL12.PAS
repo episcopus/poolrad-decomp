@@ -85,7 +85,7 @@ procedure DrainLevels(Who: PCharacter; Count: Byte);
 procedure DrainAttackTargetLevel(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure DrainAttackTargetTwoLevels(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure CauseRotOnAttackTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e74;
+procedure ovl12_e74(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e75;
 procedure ovl12_e76;
 procedure ovl12_fn_257E;
@@ -200,6 +200,8 @@ const
   ResistPenalty = 4;            { what ovl12:0BAC takes off Who's ResistValue and Pad112[$112] }
   MissRoll = -1;                { AttackRoll below 0 is a miss (RollToHit, ovl24:0CD5); ovl12:0C26 sets it }
   AgedBit = $10;                { Affect.Data bit 4: set once the affect has aged Who (ovl12:0C4B) }
+  MissedBit = $10;              { Affect.Data bit 4 again, set by ovl12:2490 once it has made the attack roll a miss [?] }
+  DataLowNibble = $0F;          { the low nibble of Affect.Data, the part ovl12:2490 keeps in the first case }
   AffectImages = $1C;           { the images affect: runs on the damage hook (kind 6, ovl24:02FA); Data counts the images [I] }
   AffectUnknown2B = $2B;        { purpose unknown; a Cure Disease affect (ovl04:031E), run by RunDiseaseHandlers }
   AffectCauseDisease = $2C;     { named in ovl15 (ovl15:0FBC); a Cure Disease affect (ovl04:031E) }
@@ -1586,8 +1588,20 @@ begin
     res12_fn_16EC(AttackTarget, 'is Diseased', $A, 1);
   end;
 end;
-{ ovl12:2490: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e74; begin end;
+{ ovl12:2490. Purpose unknown: an affect handler (the AffectHandlers shape: Who, Affect and Mode; Who and Mode are not
+  read, ovl24:0000). It works on Affect's Data (+3). In combat round 0 (ds6DE3, the round counter, is 0) with AttackRoll 0
+  it keeps only DataLowNibble of Data. Otherwise, when MissedBit is clear, AttackRoll becomes MissRoll (a miss, ovl24:0CD5)
+  and MissedBit is set, so the attack misses once. Which affect runs it is not known yet [?]. }
+procedure ovl12_e74(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  if (ds6DE3 = 0) and (AttackRoll = 0) then
+    Affect^.Data := Affect^.Data and DataLowNibble
+  else if (Affect^.Data and MissedBit) = 0 then
+  begin
+    AttackRoll := MissRoll;
+    Affect^.Data := Affect^.Data or MissedBit;
+  end;
+end;
 { ovl12:24D9: retf 10: 10 bytes of parameters; 2 bytes of locals }
 {@stub} procedure ovl12_e75; begin end;
 { ovl12:2556: frame not read }
