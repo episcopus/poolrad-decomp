@@ -1822,7 +1822,8 @@ end;
 { ovl03:2DD3. Runs the camp (MakeCamp, OVL15) between two script entries: the script machine runs the
   third entry address, ds49E7, before the camp (through ovl03:3171, not decompiled yet). When the camp
   leaves EndCamp set, the area view is redrawn (res12_fn_27D9) and the fourth entry address, ds49E9, runs.
-  Callers: ECL command 56 with operand 9 (ovl03:2E10) and ovl03:3379. Then the area view is drawn again
+  Callers: ECL command 56 with operand 9 (ovl03:2E10) and ovl03_e1 (ovl03:33E7, the E key of the wilderness
+  loop). Then the area view is drawn again
   (ShowAreaView) and ds557D, the gate of the heap error retry, is cleared. }
 procedure RunCamp;
 var

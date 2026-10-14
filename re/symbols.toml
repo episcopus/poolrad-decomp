@@ -854,7 +854,7 @@ signature = ""
 c_name = "ovl03_fn_3379"
 level = "none"
 justification = ""
-notes = "auto:far_call; not a routine (dec-haiku, batch 13): it lies inside ovl03_e1 (ovl03:32F8..3507), in the middle of the lcall res12_fn_27D9 at ovl03:3378, so its far_call evidence is a byte-level scan hit (tools/re/enumerate_routines.py), not a call. Remove it when ovl03_e1 is written"
+notes = "auto:far_call; not a routine (dec-haiku, batch 13): it lies inside ovl03_e1 (ovl03:32F8..3507), in the middle of the lcall res12_fn_27D9 at ovl03:3378, so its far_call evidence is a byte-level scan hit (tools/re/enumerate_routines.py), not a call. Remove it when ovl03_e1 is written. blocked (dec-haiku, batch 14): not a routine and no Pascal can match it as one: make match FN=ovl03_fn_3379 reports only the stub, the listing in build/packets/ovl03_3379.md starts mid-instruction (fldenv [bx] is operand bytes), and it has no push bp prologue. The RunCamp comment that named ovl03:3379 as a caller (ovl03:2DD3) was corrected to ovl03_e1 (ovl03:33E7). Map entry removed by make match WRITE=1 once ovl03_e1 matches; its stub stays until then"
 evidence = ["far_call"]
 
 [[routine]]
@@ -867,7 +867,7 @@ signature = ""
 c_name = "ovl03_fn_34AB"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked (dec-haiku, batch 14): not a routine and no Pascal can match it as one. make match FN=ovl03_fn_34AB reports only the stub. The bytes at 34AB (3B D3, cmp dx,bx) are an instruction in the body of ovl03_e1 (ovl03:32F8..3507), after the cdq at 34AA, with no push bp prologue. No jump, near call or lcall in the listing of ovl03_e1 (build/packets/ovl03_3379.md, 3379..3507) targets 34AB; the far_call start is a byte-level scan hit (tools/re/enumerate_routines.py counts any 9A byte whose operand lands there). Map entry removed by make match WRITE=1 once ovl03_e1 matches; its stub stays until then"
 evidence = ["far_call"]
 
 [[routine]]
