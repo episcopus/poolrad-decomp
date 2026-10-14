@@ -888,6 +888,7 @@ var
   { Purpose unknown: ovl12:09C0 (ImageAbsorbsHit) lets an image take a hit only while this byte is 0;
     nothing else reads it yet [?]. }
   ds6820: Byte;
+  ds6821: Byte;                   { set to 1 by ovl12:2F57 when it adds a strength affect [?] }
   AttackRoll: ShortInt;           { the d20 attack or resistance roll (20 counts 100) the hooks may change (ovl24:0C63) }
   ds6823: Byte;                   { decremented every time an attack is avoided (ovl12:0FAC); meaning unknown [?] }
   SaveKind: Byte;                 { the saving throw kind SavingThrow offers to the hooks (ovl24:0DAD) }

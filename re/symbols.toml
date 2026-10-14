@@ -4681,27 +4681,14 @@ evidence = ["prologue"]
 id = "ovl12:2F57"
 unit = "ovl12"
 addr = "ovl12:2F57"
-size = 36
-name = "ovl12_e112"
+size = 334
+name = "GiveExceptionalStrength"
 signature = ""
 c_name = "ovl12_e112"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:far_call"
+notes = "renamed from ovl12_e112 (ovl12:2F57 raises Who to 18/100 with RaiseStrength (ovl24:115C) and adds affect $26 (AffectStrength2) when applied; any other Mode removes a $26 strength affect (DecodeStrength, ovl24:110D) and shows nothing); auto:far_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:2F7B"
-unit = "ovl12"
-addr = "ovl12:2F7B"
-size = 298
-name = "ovl12_fn_2F7B"
-signature = ""
-c_name = "ovl12_fn_2F7B"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:30A5"

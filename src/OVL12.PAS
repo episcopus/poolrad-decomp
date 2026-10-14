@@ -124,8 +124,7 @@ procedure CancelCharmAndUnknown35ModerateChance(Who: PCharacter; Affect: PAffect
 procedure CancelCharmUnknown35PoisonAndParalysisHooks(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure SetFlagIfTargetReflects(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ApplyItemSecondAffect(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e112;
-procedure ovl12_fn_2F7B;
+procedure GiveExceptionalStrength(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e113;
 procedure ovl12_fn_30FB;
 procedure ovl12_e114;
@@ -175,6 +174,8 @@ const
   ComputerRunMorale = $B3;      { TCharacter.B84 of a computer-run member: the flag and morale $33 }
   AffectMorale = 100;           { what applying the control sets the morale scratch ds6825 to }
   ExceptionalStrength = 18;     { Strength 18 is written with a percentile (EncodeStrength, ovl24:10E4) }
+  ExceptionalPercent = 100;     { the percentile of 18/100, the strength ovl12:2F57 raises Who to }
+  StrengthMessageView = 2;      { ds49F3 while "is stronger" is shown in combat (ovl12:2F57); meaning not known [?] }
   FlagNameNum = $98;            { a NameNum that sets ds681E with FlagNameNumThird as the third name (ovl12:2E37) [?] }
   FlagNameNumThird = $FC;
   ItemAffectData = $0C;         { the Data byte ovl12:2EDA gives the affect an item names in Affects[2] }
@@ -2123,10 +2124,68 @@ begin
     CallAffectHandler(Item^.Affects[2], Who, nil, 0);
   end;
 end;
-{ ovl12:2F57: frame not read }
-{@stub} procedure ovl12_e112; begin end;
-{ ovl12:2F7B: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_fn_2F7B; begin end;
+{ ovl12:2F57. Affect handler of the exceptional strength (the AffectHandlers shape: Who, Affect and Mode; Affect is not
+  read). Mode 0 (applying) raises Who's strength to ExceptionalStrength with ExceptionalPercent (18/100) with
+  RaiseStrength (ovl24:115C). When that gives True (Who was not stronger), "is stronger" is shown on Who in colour 10
+  (res12_fn_16EC); in combat the view mode is set to StrengthMessageView while the text shows and back to
+  CombatViewMode after. Then ds6821 becomes 1 and affect AffectStrength2 is added with duration 0, Data Code (what
+  RaiseStrength wrote: the strength Who had before, encoded, when it gave True) and its handler on removal
+  (RunsHandlerOnRemove).
+  QUIRK ovl12:302D: the affect is added even when RaiseStrength gave False (Who already stronger), with Code as
+  RaiseStrength left it. Any other Mode removes a strength affect: the walk over Who's affects (Affects, +$7F) takes
+  the first AffectStrength2 that qualifies. When Who is 18/100 now, every such affect qualifies (QUIRK ovl12:2FCF: the
+  test reads the affect's Id at +0, not its Data (StrengthKept, bit 7 at +3), so it always holds); otherwise the affect
+  must decode to 18/100 (DecodeStrength). The walk then goes on to the next affect, reading the Next of the removed one
+  (QUIRK ovl12:2FFF), and stops once one was removed. }
+procedure GiveExceptionalStrength(Who: PCharacter; Affect: PAffect; Mode: Byte);
+var
+  Code: Byte;                   { the strength Who had before, encoded as RaiseStrength gives it (ovl24:115C) }
+  Strength: Byte;               { the strength of a strength affect, decoded (DecodeStrength) }
+  Percent: Byte;                { the percentile of that strength }
+  IsExceptional: Boolean;       { Who is 18/100 now }
+  Done: Boolean;                { an affect was removed; the walk stops }
+  Scan: PAffect;                { walks Who's affects }
+begin
+  if Mode <> 0 then
+  begin
+    Done := False;
+    Scan := Who^.Affects;
+    if (Who^.Strength = ExceptionalStrength) and (Who^.StrengthPercent = ExceptionalPercent) then
+      IsExceptional := True
+    else
+      IsExceptional := False;
+    while (Scan <> nil) and not Done do
+    begin
+      if Scan^.Id = AffectStrength2 then
+      begin
+        DecodeStrength(Scan, Strength, Percent);
+        if (IsExceptional and (Scan^.Id < StrengthKept)) or
+          ((Strength = ExceptionalStrength) and (Percent = ExceptionalPercent) and not IsExceptional) then
+        begin
+          RemoveAffect(Who, AffectStrength2, Scan);
+          Done := True;
+        end;
+      end;
+      Scan := Scan^.Next;
+    end;
+  end
+  else
+  begin
+    if RaiseStrength(Who, ExceptionalStrength, ExceptionalPercent, Code) then
+    begin
+      if ds49F3 = CombatViewMode then
+      begin
+        ds49F3 := StrengthMessageView;
+        res12_fn_16EC(Who, 'is stronger', $A, 1);
+        ds49F3 := CombatViewMode;
+      end
+      else
+        res12_fn_16EC(Who, 'is stronger', $A, 1);
+    end;
+    ds6821 := 1;
+    AddAffect(Who, AffectStrength2, 0, Code, RunsHandlerOnRemove);
+  end;
+end;
 { ovl12:30A5: frame not read }
 {@stub} procedure ovl12_e113; begin end;
 { ovl12:30FB: retf 10: 10 bytes of parameters; 0 bytes of locals }

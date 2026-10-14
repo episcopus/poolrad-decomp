@@ -4204,3 +4204,10 @@ kind = "routine"
 why = "ovl12:2EDA gives Who the affect named by Item^.Affects[2] (+$3D of TMenuLine) with AddAffect and CallAffectHandler for Mode 0 and removes it with RemoveAffect otherwise; its Affect parameter is read as an item"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl12_e112"
+new = "GiveExceptionalStrength"
+kind = "routine"
+why = "ovl12:2F57 raises Who to 18/100 with RaiseStrength (ovl24:115C) and adds affect $26 (AffectStrength2) when applied; any other Mode removes a $26 strength affect (DecodeStrength, ovl24:110D) and shows nothing"
+date = "2026-10-14"
+
