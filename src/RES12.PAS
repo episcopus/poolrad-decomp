@@ -265,8 +265,12 @@ begin
     Who^.Movement := NewMovement;
 end;
 
-{ 00BA:0442: frame not read }
+{ 00BA:0442: retf 16: 16 bytes of parameters; 524 bytes of locals. BLOCKED (see re/symbols.toml
+  notes): it builds an item menu line's display text (the name parts from the DS:10A7 table, a
+  magic marker, the count and a plural) and optionally draws it. The draft matches everything but
+  the plural rule's "bit 1 of the mask is clear" term, which is two bytes short of it. }
 {@stub} procedure res12_fn_0442(Value: LongInt; P: Pointer; A, B, C, D: Byte); begin end;
+
 { 00BA:06D5: frame not read }
 {@stub} procedure res12_fn_06D5; begin end;
 { 00BA:0712: retf 16: 16 bytes of parameters; 0 bytes of locals }

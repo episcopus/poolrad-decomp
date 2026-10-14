@@ -16484,7 +16484,7 @@ signature = "procedure res12_fn_0442(Value: LongInt; P: Pointer; A, B, C, D: Byt
 c_name = "res12_fn_0442"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "blocked dec-deepseek 2026-10-13: builds a menu line's display text (clear Text; when ShowReadied the ' Yes  '/' No   ' of Readied; when a party member (list ds5D96, Next +104) has affect 5 via res12_fn_2199 and the item is Plus>0/PlusSave>0/Cursed, append '* '; when Count>0 append res12_fn_1037(Count) and ' '; a Mask of shown NameNum entries ((NameNum[I]<>0) and ((HiddenNames shr (3-I)) and 1)=0, Inc(Mask,1 shl (I-1))); then for I 3 downto 1, if ((Mask shr (I-1)) and 1)>0 append ds10A7[NameNum[I]] (256 strings[20] at DS:10A7, 1-based) and a space, or 's ' with Plural set when (Count<2) or (Plural<>0) is false and ((1 shl (I-1))=Mask) or (I=1 and Mask>4 and ItemType<>$56) or (I=2 and bit 1 of Mask clear) or (I=3 and ItemType=$56) or ((ItemType=$49 or $1C) and NameNum[3]<>$B1); finally DrawTextAt(A,B,$A,Text) when D<>0; LongInt Value is unread QUIRK). The draft matched every region except the plural term C: the original tests bit 1 of Mask with a single byte `shr al,1; jae` (00BA:06A6..06AB) while every form tried compiled to `and al,2; or al,al; je` (+2 bytes), `((Mask shr 1) and 1)=0` (+7, word shift), `not Odd(Mask shr 1)` (+extra shr), `(Mask and 2)<>2` (+2), `(2 and Mask)=0`, `((Mask and 2) div 2)=0`, `(Mask shr 1) and 1=0` and `Odd(Mask shr 1)=False` (all longer); with the outer `if (Count<2) or (Plural<>0) then <space> else if ...` form the whole routine was 2 bytes long. Probes: tools/re/tp_idioms/res12/PRB01..PRB10.PAS. Whole-routine match attempt: make match UNIT=res12 FN=res12_fn_0442."
 evidence = ["prologue"]
 
 [[routine]]

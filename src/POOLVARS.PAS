@@ -797,6 +797,11 @@ var
   { The names of the seven kinds of money, string[10] at DS:0FFA: Copper, Silver, Electrum, Gold,
     Platinum, Gems, Jewelry (the image); the Take menu lists the pool with them (ovl21:0DDF). }
   MoneyKindNames: array[0..6] of string[10];
+  { The item name parts res12_fn_0442 appends to a menu line: 256 strings of at most 20
+    characters (21 bytes each) at DS:10A7 (the image: entry 1 'Battle Axe' through entry 255
+    'Cursed'; entry 0 overlaps the tail of the preceding status string and is never used).
+    Indexed by TMenuLine.NameNum. }
+  ds10A7: array[0..255] of string[20];
   PackedBuf: Pointer;             { the packed bytes of the DAX block LoadDaxBlock is reading }
   { Colour maps for res07_fn_1E5C (16 entries, colour I becomes entry I): ds0CD2 is the identity,
     ds0CE2 turns colour 13 into 8 and ds0CF2 turns 13 into 0 (the image). LoadPictureSlot recolours the
