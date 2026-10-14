@@ -53,6 +53,8 @@ def claim(argv=None) -> int:
     ap.add_argument("--agent", default=os.environ.get("AGENT", ""))
     ap.add_argument("--base", default="main", help="branch the unit branch starts from")
     ap.add_argument("--review", action="store_true", help="claim a review instead of a unit")
+    ap.add_argument("--escalate", action="store_true",
+                    help="claim the next unit with routines the cheap tier gave up on (next.next_escalation)")
     ap.add_argument("--task", default="", help="claim a named task (doc-<chapter>, map) instead of a unit")
     ap.add_argument("--harness", default=os.environ.get("POOLRAD_HARNESS", ""))
     ap.add_argument("--model", default=os.environ.get("POOLRAD_MODEL", ""))
@@ -98,7 +100,7 @@ def claim(argv=None) -> int:
     a.reused = False
     for _attempt in range(50):
         if not unit:
-            n = nxt.next_review() if a.review else nxt.next_unit()
+            n = nxt.next_review() if a.review else (nxt.next_escalation() if a.escalate else nxt.next_unit())
             if n is None:
                 print("claim: nothing to claim (queue empty, or every unit locked or complete)")
                 return 1

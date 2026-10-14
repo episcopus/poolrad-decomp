@@ -1,0 +1,199 @@
+# Lessons from unit ovl13 (CombatSpells). Leads with evidence, not matcher verdicts.
+
+[[lesson]]
+id = "with-temp-odd-offset-named-local"
+confidence = "V"
+units = ["*"]
+tags = ["with", "pointer", "temporary", "frame", "A-", "codegen"]
+title = "A with over a pointer puts its hidden temp at an odd offset under $A-"
+lesson = "TP 6.0 compiles `with Who^.Combat^ do` by loading the far pointer once into a hidden temp (`les di,es:[di+off]; mov [bp-t],di; mov [bp-t+2],es`) and reloading `les di,[bp-t]` before every field access. The temp sits below the named locals. Under the default alignment it lands on an even offset, so a routine with one named byte local gets its temp at [bp-6] and an unused byte at [bp-2]. Under `$A-` (every POOL unit) the byte stays at [bp-1] and the temp lands at the odd offset [bp-5], which is what ovl13:0000 shows (sub sp,6, temp offset word at [bp-5], [bp-1] never read). An explicit local assignment `P := Who^.Combat` always compiles to word moves (mov ax/mov dx), never les, so a lone pointer temp with no matching named local proves a with."
+evidence = ["tools/re/tp_idioms/ovl13/PRBFAR.PAS", "src/OVL13.PAS#StartCombatantRound", "re/symbols.toml#ovl13:0000"]
+
+[[lesson]]
+id = "signed-and-of-byte-and-word"
+confidence = "V"
+units = ["*"]
+tags = ["and", "signed", "ShortInt", "cbw", "cwde", "codegen", "branch"]
+title = "`(ShortInt + 1) and Word` grows to a 32-bit and; `and Integer` stays 16-bit"
+lesson = "ovl13:00C5 is `mov al,Side; cbw; inc ax; and ax, word; or al,al`: the field at +$10E is widened with cbw (a sign extend), so the source reads it signed, and the AND is 16-bit signed. In TP 6.0, `(S + 1) and W` with S: ShortInt and W: Word promotes the whole thing to LongInt (`cwde; cdq; and ax,cx; and dx,bx`), 8 bytes too long; casting the word to Integer keeps the 16-bit `and ax, word`. The `<> 0` test then picks `or ax,ax` for a 16-bit result; wrapping the expression in Byte() (the value fits a byte here) gives the original `or al,al`. Side itself stays a Byte in POOLVARS: ovl09 and res12 compare it unsigned, so the signedness lives only in this expression's casts. A one-byte branch-target shift in a later `je` (0x100 vs 0xFF) was the tell that the then-body was one byte long."
+evidence = ["tools/re/tp_idioms/ovl13/PRBSIDE.PAS", "tools/re/tp_idioms/ovl13/PRBIF.PAS", "src/OVL13.PAS#StartCombatantRound", "re/symbols.toml#ovl13:0000"]
+
+[[lesson]]
+id = "shr-by-two-constants"
+confidence = "V"
+units = ["*"]
+tags = ["shr", "shift", "codegen", "backstab"]
+title = "`x shr 2` is mov cx,2; shr ax,cl, but `x shr 1 shr 1` is two shr ax,1"
+lesson = "ovl13:01FB needs a thief level divided by four and the original is `cbw; shr ax,1; shr ax,1`. TP 6.0 compiles `x shr 2` with the count in CL (`mov cx,2; shr ax,cl`, 5 bytes here) but `x shr 1 shr 1` as two `shr ax,1` instructions, so when the packet shows the repeated one-bit shifts the source shifts one bit at a time (or divides by four in two steps). ovl13_fn_2574 (the backstab check) then multiplies DamageAmount by (level shr 1 shr 1) + 2. Probe tools/re/tp_idioms/ovl13/PRBSHR.PAS."
+evidence = ["tools/re/tp_idioms/ovl13/PRBSHR.PAS", "src/OVL13.PAS#RollAttackDamage", "re/symbols.toml#ovl13:0191"]
+
+[[lesson]]
+id = "set-in-jcc-polarity"
+confidence = "V"
+units = ["*"]
+tags = ["set", "in", "System_SetIn", "jcc", "case", "codegen"]
+title = "`x in S` skips the body with je; `not (x in S)` with jne"
+lesson = "System_SetIn (0AF8:0DC0) leaves a flag such that `if X in [6,7,8] then <body>` compiles to `call System_SetIn; je skip; <body>` (je when X is in the set), while `if not (X in [6,7,8]) then <body>` compiles to `jne skip`. ovl13:05BF is `je` before the 'is killed' body, so the source is `if Target^.Status in [6,7,8] then`, not the negated form (the set at ovl13:02CF is the 32 bytes c0 01 00.., bits 6, 7 and 8). A `case Kind of 2: ...; 3: ...; else ...; end` on a byte starts `mov al,Kind` and compares the loaded value (ovl13:0300), not a direct `cmp byte [bp+..], 2`. Probe tools/re/tp_idioms/ovl13/PRBSET.PAS."
+evidence = ["tools/re/tp_idioms/ovl13/PRBSET.PAS", "src/OVL13.PAS#ShowAttackResult", "re/symbols.toml#ovl13:02F9"]
+
+[[lesson]]
+id = "inc-shortint-field-is-byte-add"
+confidence = "V"
+units = ["*"]
+tags = ["inc", "dec", "ShortInt", "byte", "memory-add", "codegen"]
+title = "Inc/Dec on a one-byte field adds in place even when the field and the addend are ShortInt"
+lesson = "ovl13:0923 updates CombatantTable[Idx].X (a ShortInt field) by DirStepX[Dir] (a ShortInt). The original is the 8-bit `mov dl,[DirStepX+Dir]; mov al,Idx; xor ah,ah; ...; add byte [table+0],dl`. `Field := Field + ShortIntValue` is wrong: it widens both operands (cwde) and does a 16-bit load/add/store (ovl13's first draft, 16 bytes too long per update). `Inc(Field, ShortIntValue)` gives the byte memory add; `Dec(Field, ShortIntValue)` gives the matching `sub byte [table+0],dl`. So a one-byte field with a one-byte signed addend must be read as memory-inc/dec, not assignment (the Word counterpart is res12-inc-vs-assignment-adds-to-memory). Probe tools/re/tp_idioms/ovl13/PRBBYTE.PAS (SignedInc/ByteFieldInc give the add; all four assignment forms widen)."
+evidence = ["tools/re/tp_idioms/ovl13/PRBBYTE.PAS", "src/OVL13.PAS#PartingShots", "re/symbols.toml#ovl13:08B2"]
+
+[[lesson]]
+id = "odd-is-shr-carry-not-test"
+confidence = "V"
+units = ["*"]
+tags = ["Odd", "boolean", "shr", "carry", "codegen"]
+title = "`Odd(X)` compiles to `mov al,X; shr al,1; jae`, not `test al,1`"
+lesson = "ovl13:0E52 tests the low bit of the combat round counter ds6DE3 and conditionally increments a local. The original is `mov al,[ds6DE3]; shr al,1; jae skip; inc byte [bp-2]`, i.e. it reads bit 0 through the carry of a one-bit shift. TP 6.0 gives exactly that for `if Odd(ds6DE3) then Inc(Count);` (probe F1). The alternative `if (G and 1) <> 0 then Inc(Count)` compiles to `mov al,G; and al,1; or al,al; je` and `if Odd(G) then ... Ord(Odd(G))` builds a 16-bit value (`mov al,0; jae/inc ax`). So a `shr al,1` followed by a conditional increment is the source `Odd(X)`, and the trailing `mov al,Count; xor ah,ah; shr ax,1` is a byte `shr 1`."
+evidence = ["tools/re/tp_idioms/ovl13/PRBHALF.PAS", "src/OVL13.PAS#AttacksThisRound", "re/symbols.toml#ovl13:0E52"]
+
+[[lesson]]
+id = "assign-then-compare-stores-then-reloads"
+confidence = "V"
+units = ["*"]
+tags = ["array", "local", "store", "reload", "pointer", "codegen"]
+title = "Assigning an array element to a local before comparing it stores and reloads; comparing the element directly does not"
+lesson = "ovl13:0E82's sweep moves the first adjacent enemy out of ds6DE4 when it is not the target. The original loads `CombatantRecord[ds6DE4[1]]` into AX:DX, stores it to the Enemy local ([bp-9]/[bp-7]) and reloads it for the `Enemy <> Target` test (12 bytes: mov [bp-9],ax; mov [bp-7],dx; mov ax,[bp-9]; mov dx,[bp-7]). Writing `if CombatantRecord[ds6DE4[1]] <> Target then` instead of `Enemy := CombatantRecord[ds6DE4[1]]; if Enemy <> Target then` omits the store and reload, 12 bytes short. So a repeated array/pointer expression reads directly but a named local is round-tripped through its frame slot."
+evidence = ["src/OVL13.PAS#SweepEnemies", "re/symbols.toml#ovl13:0E82"]
+
+[[lesson]]
+id = "untyped-var-parameter-bridges-callers"
+confidence = "V"
+units = ["*"]
+tags = ["var", "parameter", "untyped", "typecast", "compilation", "codegen"]
+title = "An untyped `var` parameter lets callers pass differently typed variables; the callee writes through it with a value typecast"
+lesson = "ovl13:1351 (SelectTurnUndeadTarget) writes 4 bytes through its second parameter (`xor ax,ax; mov es:[di],ax; mov es:[di+2],ax`), so it is a `var` far pointer. Its two callers pass different things: TurnUndead (ovl13:116A) passes a PCharacter local and TryTurnUndead (ovl09:0203) passes a 1-byte `Done` plus a 3-byte `Unused` array. A typed `var B: PCharacter` would not accept ovl09's Byte and a `var B: Byte` would not accept ovl13's PCharacter, so the parameter stays untyped. Direct assignment is Error 43 ('Illegal assignment'); the callee writes through the untyped parameter with a value typecast, `PCharacter(Selected) := nil` and `PCharacter(Selected) := Enemy`, which the compiler turns into `les di,[bp+6]` plus the word stores (probes PRBUTYP, PRBUTYP2, PRBUTYP3; the `Move(P, Selected, 4)` form calls System_Move instead, 7 bytes more per store). The untyped parameter does not change the caller's code (the address pushed is the same)."
+evidence = ["tools/re/tp_idioms/ovl13/PRBUTYP.PAS", "tools/re/tp_idioms/ovl13/PRBUTYP3.PAS", "src/OVL13.PAS#SelectTurnUndeadTarget", "src/OVL13.PAS#TurnUndead", "src/OVL09.PAS#TryTurnUndead", "re/symbols.toml#ovl13:1351"]
+
+[[lesson]]
+id = "signed-field-comparison-uses-jle-jge"
+confidence = "V"
+units = ["*"]
+tags = ["ShortInt", "Byte", "compare", "jle", "jge", "codegen"]
+title = "A `> 0` (or `<`) on a byte field emits `jle`/`jge` only when the field is read signed"
+lesson = "ovl13:1351 compares TCharacter.Pad74[$76] (a Byte) twice: `cmp byte [..+0x76],0; jle skip` and `mov al,[..+0x76]; cmp al,Min; jge skip`. Both jumps are signed, so the field is read as a ShortInt even though POOLVARS declares Pad74 as Byte: writing `Enemy^.Pad74[$76] > 0` on the Byte gives `jbe`, but `ShortInt(Enemy^.Pad74[$76]) > 0` gives `jle`, and `ShortInt(Enemy^.Pad74[$76]) < MinRow` with `MinRow: ShortInt` gives `jge` matching `cmp al, byte [bp-4]`. The turn-undead table index reads the same field with `ShortInt(...)` (PRBTURN), so the field is signed throughout. Probe tools/re/tp_idioms/ovl13/PRBCMP2.PAS."
+evidence = ["tools/re/tp_idioms/ovl13/PRBCMP.PAS", "tools/re/tp_idioms/ovl13/PRBCMP2.PAS", "src/OVL13.PAS#SelectTurnUndeadTarget", "re/symbols.toml#ovl13:1351"]
+
+[[lesson]]
+id = "indexed-global-must-span-its-bytes-in-our-layout"
+confidence = "V"
+units = ["*"]
+tags = ["dseg", "layout", "array", "index", "matcher", "absolute"]
+title = "The matcher resolves a DS operand by the nearest-lower named variable, so an indexed global must actually occupy those bytes in our layout"
+lesson = "match.py's data_var(off) returns the public DATA symbol with the largest offset <= off and the delta. So `AttackRoll[SlotIndex]` (SlotIndex 1..2, original DS:6823/6824) compiled to our `AttackRoll+1`, but our AttackRoll was a one-byte scalar at DS:605D and SaveKind was declared right after, so our offset 605E resolved to SAVEKIND (original 682A) and the match failed. Making the array the real declaration (`ds6822: array[0..2] of ShortInt;` plus `AttackRoll: ShortInt absolute ds6822;`) gives the bytes to the array, so the same address resolves to ds6822+1 = 6823. The same held for ds6E2C[1..2]: the array must span DS:6E2C..6E2E. An `absolute` alias alone does not help: it maps to the base, not to the alias's own range."
+evidence = ["src/POOLVARS.PAS#ds6822", "src/POOLVARS.PAS#ds6E2C", "src/OVL13.PAS#ResolveCombatantAttacks", "tools/match/match.py"]
+
+[[lesson]]
+id = "record-field-pair-index-needs-a-view-pointer"
+confidence = "V"
+units = ["*"]
+tags = ["record", "field", "array", "index", "cwde", "ShortInt", "view", "codegen"]
+title = "Indexing a TCharacter field pair emits cwde and a folded displacement only through a pointer-cast view record with a ShortInt index"
+lesson = "ovl13:160F is `mov al,[bp-0x18]; cwde; les di,[bp+0xc]; add di,ax; mov al,es:[di+0x111]`: Target + a signed index + the field offset $111. `PByteArray(Target)^[$111 + RearAttack]` instead emits `xor ah,ah; add ax,0x111; les di,..; add di,ax; mov al,es:[di]` (one byte longer); declaring a local view record `TResistView = record Pad: array[0..$110] of Byte; Pair: array[0..1] of Byte; end; PResistView = ^TResistView;` and writing `PResistView(Target)^.Pair[RearAttack]` with `RearAttack: ShortInt` reproduces the original exactly (the cwde comes from the signed index, the field offset is folded into the displacement). This reads the ResistValue/ds112 pair without changing TCharacter, which res12 and ovl24 use as scalars. Probe tools/re/tp_idioms/ovl13/PRBVIEW.PAS."
+evidence = ["tools/re/tp_idioms/ovl13/PRBVIEW.PAS", "src/OVL13.PAS#ResolveCombatantAttacks", "src/OVL13.PAS#TResistView", "re/symbols.toml#ovl13:1406"]
+
+[[lesson]]
+id = "for-downto-while-nests-as-headed-loops"
+confidence = "V"
+units = ["*"]
+tags = ["for", "downto", "while", "loop", "codegen"]
+title = "A `for i := N downto 1 do while cond do body` compiles to the for's guard, the while's headed test and the for's test-then-dec"
+lesson = "ovl13:1406 walks the attack slots with `for SlotIndex := SlotCount downto 1 do while (AttackSlots[SlotIndex] > 0) and (TargetDown = 0) do begin ... end;`. TP 6.0 emits the for-loop's initial guard (`cmp SlotCount,1; jae`), assigns the counter, jumps to the while's headed test (167C), the while's body ends with a jump back to its test, and when the test fails control falls to the for-loop's `cmp SlotIndex,1; je done` and only then `dec SlotIndex`. So the decrement sits after the exit test, not before it."
+evidence = ["src/OVL13.PAS#ResolveCombatantAttacks", "re/symbols.toml#ovl13:1406"]
+
+[[lesson]]
+id = "map-artifact-stub-shifts-the-next-routines-pool"
+confidence = "V"
+units = ["*"]
+tags = ["matcher", "map", "stub", "literal", "pool", "layout", "boundary"]
+title = "A leftover {@stub} for a map entry the compiler merged into its neighbour is still compiled and shifts the next routine by its 5-byte body"
+lesson = "Resolving ovl13:1BD7/1C13/1D08 as entries inside their neighbours removed them from re/symbols.toml, but the `{@stub}` lines stayed in src/OVL13.PAS. The matcher still compiles them (`push bp; mov bp,sp; pop bp; retf`, 5 bytes), so they sit between AddRangePenalty and e13 and push e13 5 bytes later; the next routine's literal-pool alignment then shifts and the diff reports a bogus jump-target constant (`jmp 0x1dda` against `0x1db2`). Deleting the stub lines (and their interface declarations) restores the layout. A diff at a forward jump that is a few bytes off, after a boundary the map corrected, is this: an unmatched `{@stub}` is still code, not padding."
+evidence = ["src/OVL13.PAS#FindNearbyTarget", "re/symbols.toml#ovl13:1BF8", "re/symbols.toml#ovl13:1BD7"]
+
+[[lesson]]
+id = "negated-set-membership-and-shortint-field-compares"
+confidence = "V"
+units = ["*"]
+tags = ["set", "in", "System_SetIn", "ShortInt", "compare", "codegen"]
+title = "`not (x in S)` inverts the SetIn jump (`jne` where `x in S` gives `je`), and a ShortInt record field compared with a Byte local widens to a 16-bit compare"
+lesson = "ovl13:1BF8 (FindNearbyTarget) tests `BodyTable[i].Who^.Status in StatusKilled` and the original is `call System_SetIn; jne skip`, while the probe `if St in [6,7,8] then` gives `je skip` (SetIn clears ZF when the element is in the set). So the source is `if not (Status in StatusKilled) then` (a body whose owner is not yet dead). The same routine compares `BodyTable[i].X` (TBody.X: ShortInt) with the scanned cell column: with that local a Byte the compare widens (`mov al,[Byte]; xor ah,ah; mov cx,ax; ... cwde; cmp ax,cx`), but declaring it ShortInt gives the original 8-bit `mov al,[di+field]; cmp al,[bp-k]`. Probe tools/re/tp_idioms/ovl13/PRB_E13.PAS."
+evidence = ["tools/re/tp_idioms/ovl13/PRB_E13.PAS", "src/OVL13.PAS#FindNearbyTarget", "re/symbols.toml#ovl13:1BF8"]
+
+[[lesson]]
+id = "byte-mod-four-idiv-and-div-four-shifts"
+confidence = "V"
+units = ["*"]
+tags = ["mod", "div", "idiv", "shr", "Byte", "codegen"]
+title = "`B mod 4` on a Byte is a 32-bit signed idiv; `B div 4` is two one-bit shifts"
+lesson = "ovl13:275E computes an even `Bearing`'s picture index and half. The original is `mov al,[Bearing]; xor ah,ah; cdq; mov cx,4; idiv cx; xchg dx,ax; mov dx,ax; mov al,[PicBase]; xor ah,ah; add ax,dx`, i.e. a signed 32-bit division, while the half comes from `mov al,[Bearing]; xor ah,ah; shr ax,1; shr ax,1`. Probe PRB26B0: `B mod 4` with B: Byte gives exactly the `xor ah,ah; cdq; mov cx,4; idiv cx; xchg dx,ax` sequence (the `xor ah,ah` is the Byte-to-Word step, then cdq widens to 32 bits and idiv divides), and `B div 4` gives the two one-bit shifts (the same bytes as `B shr 1 shr 1`), not `mov cx,2; shr ax,cl`. So a `mod` next to a shift pair in the packet is Byte mod/div by four, written as the ordinary operators."
+evidence = ["tools/re/tp_idioms/ovl13/PRB26B0.PAS", "src/OVL13.PAS#ShowAttackAnimation", "re/symbols.toml#ovl13:26B0"]
+
+[[lesson]]
+id = "string-literal-arg-temp-and-concat-256"
+confidence = "V"
+units = ["*"]
+tags = ["string", "temp", "StrCopy", "StrConcat", "StrLCopy", "O+", "overlay", "ReadPromptChoice"]
+title = "Under $O+ a string literal argument is copied into a stack temp whose address is the push, and a concatenation takes a 256-byte string[255] temp"
+lesson = "ovl13:2AA0 calls ReadPromptChoice('Aim:', Aim, $D, $A, $F, 0, 0, ExtKey) but pushes only 9 words: the literal's temp (System_StrCopy writes it into a 5-byte local, `mov di,'Aim:'; push cs; push di; lcall StrCopy`), then Prompt, the five bytes and @ExtKey. The StrCopy's destination is the argument push, so the push count is 4 bytes short of the declared parameters (probe PRB2AA0 shows the same). A concatenation `S := 'a' + T + 'c'` (S: string[40]) compiles to StrCopy(temp, 'a'); StrConcat(temp, T); StrConcat(temp, 'c'); StrLCopy(S, temp, 40) with one 256-byte string[255] temp per concatenation expression, allocated just below the named locals, and the frame rounds up to an even size. `DrawTextAt(0, $17, $A, 'Range = ' + ByteToText(D) + '  ')` uses another such temp. Evidence: the packet's `sub sp,0x232` and the -$131/-$231 offsets."
+evidence = ["tools/re/tp_idioms/ovl13/PRB2AA0.PAS", "src/OVL13.PAS#ShowAimPrompt", "re/symbols.toml#ovl13:2AA0"]
+
+[[lesson]]
+id = "odd-offset-pointer-slot-named-local-vs-with-temp"
+confidence = "V"
+units = ["*"]
+tags = ["local", "pointer", "temporary", "frame", "A-", "with", "codegen"]
+title = "The odd-offset 4-byte slot at [bp-5] under $A- is a named Pointer local declared after a byte local as often as a with temp; the store tells them apart"
+lesson = "ovl13:2C3D has sub sp,6 and touches only a 4-byte slot at [bp-5]/[bp-3], never [bp-1]. Probe PRB2C3D with {$A-} shows `X: Byte; A: Pointer;` gives exactly that (X at [bp-1], A off at [bp-5], seg at [bp-3], frame 6), while `A: Pointer; X: Byte;` puts A at [bp-4]/[bp-2]. So the same frame as the with-temp case (with-temp-odd-offset-named-local) is produced by a named Pointer local declared after a one-byte local. Read the store: `xor ax,ax; mov [bp-5],ax; mov [bp-3],ax` (or mov ax/mov dx of a value) is a named local assignment (here AimItem := nil), while `les di,[...]; mov [bp-5],di; mov [bp-3],es` reloaded by `les di,[bp-5]` before each field is a with temp. Declare the spare byte (QUIRK) only when the frame and the untouched offset prove it."
+evidence = ["tools/re/tp_idioms/ovl13/PRB2C3D.PAS", "src/OVL13.PAS#ResolveAimedAttack", "re/symbols.toml#ovl13:2C3D"]
+
+[[lesson]]
+id = "inc-shortint-inplace-add-byte-vs-assign-widened-add"
+confidence = "V"
+units = ["*"]
+tags = ["inc", "ShortInt", "array", "add", "cwde", "codegen"]
+title = "`Inc(X, A[I])` is an 8-bit in-place `add byte [X],al` where `X := X + A[I]` widens to a 16-bit signed add"
+lesson = "ovl13:2DFA moves its cursor with `Inc(CurX, DirStepX[Dir])` and `Inc(CurY, DirStepY[Dir])`; the original reads `mov al,[DirStepX[Dir]]; add byte [bp-0x33],al` with no sign extension. Written as `CurX := CurX + DirStepX[Dir]` (CurX and DirStepX both ShortInt) the compiler sign-extends both operands and adds 16-bit (`mov al,[...]; cwde; mov dx,ax; mov al,[CurX]; cwde; add ax,dx; mov [CurX],al`), 10 bytes longer, which is what ovl13:0712's `NewX := OldX + DirStepX[Dir]` shows. So an 8-bit `add byte [local],al` reading a ShortInt array element is `Inc`, not `+`. Probe: tools/re/tp_idioms/ovl13/PRBDIRS.PAS."
+evidence = ["tools/re/tp_idioms/ovl13/PRBDIRS.PAS", "src/OVL13.PAS#RunAimCursor", "re/symbols.toml#ovl13:2DFA", "src/OVL13.PAS#StepCombatant"]
+
+[[lesson]]
+id = "sparse-case-loads-selector-once-if-chain-compares-memory"
+confidence = "V"
+units = ["*"]
+tags = ["case", "if", "selector", "compare", "codegen"]
+title = "A sparse `case` on a Char/Byte selector loads it once into AL (`mov al,[sel]; cmp al,..`); an if-chain compares the memory each time (`cmp byte [sel],..`)"
+lesson = "ovl13:2DFA handles the aim key with `case Key of #13,'T': ...; 'H': ...; ...; #0,'E': ...; 'C': ...; else Dir := 8; end`. The original emits `mov al,[bp-0x2a]; cmp al,0xd; je ...; cmp al,0x54; je ...; jmp ...` (the selector is loaded once and every comparison is on AL), while an `if (Key = #13) or (Key = 'T') then ... else if Key = 'H' ...` chain emits `cmp byte [bp-0x2a],0xd` on the memory each time. So a `mov al,[sel]` before a run of `cmp al,imm` is a `case`, not an if-chain."
+evidence = ["src/OVL13.PAS#RunAimCursor", "re/symbols.toml#ovl13:2DFA"]
+
+[[lesson]]
+id = "for-bound-local-uses-hidden-temp-not-an-extra-local"
+confidence = "V"
+units = ["*"]
+tags = ["for", "loop", "bound", "frame", "temporary", "codegen"]
+title = "`for I := 1 to LocalVar` copies the bound into a hidden frame temp; an explicit copy local doubles it"
+lesson = "ovl13:37E4 re-scans the remaining enemies with a `for Index := 1 to Count do`. The original's loop reads the bound from one frame byte: `mov al,[bp-2]; mov [bp-0xc],al; mov al,1; cmp al,[bp-0xc] ... cmp al,[bp-0xc]`. That store is TP's own for-loop final-value temp, not a source local, so the source has no CountCopy: declaring `CountCopy := Count; for Index := 1 to CountCopy do` adds a second byte and a second copy (`mov al,[bp-0xc]; mov [bp-0xd],al`) and makes the frame 2 bytes too big (0xe against 0xc). Rule: a for-loop over a variable bound always carries one hidden temp word/byte for the bound; do not mirror it with a named local. Probe tools/re/tp_idioms/ovl13/PRBE22.PAS (F1 frame 0xc, F4, same locals plus the for loop, 0xe)."
+evidence = ["tools/re/tp_idioms/ovl13/PRBE22.PAS", "src/OVL13.PAS#ChooseCombatTarget", "re/symbols.toml#ovl13:37E4"]
+
+[[lesson]]
+id = "nested-static-link-shifts-parameters-and-result"
+confidence = "V"
+units = ["*"]
+tags = ["nested", "static link", "parameter", "result", "frame", "codegen"]
+title = "A nested routine's static link sits at [bp+6], so its first parameter is at [bp+0xa] and its last at [bp+8]; a pointer result gets a hidden 4-byte slot"
+lesson = "ovl13:3558 (RunAimTargets) calls the nested 3389 as push Delta; push Step; push bp; push cs; call. The static link at [bp+6] pushes every argument one slot up: the first declared parameter (Delta) lands at [bp+0xa] and the last (Step) at [bp+8], the reverse of a top-level far routine's [bp+6]/[bp+8]. Writing the parameters in the other order (Step, Delta) compiles the same instructions with [bp+8] and [bp+0xa] swapped, so make match reports a nested-instruction difference at operand bytes, not an address. A nested function returning a far pointer stores it in a hidden result slot nearest bp ([bp-4]/[bp-2]); assigning to a named local first adds a store/reload pair (mov [bp-8],ax; mov [bp-6],dx; mov [bp-4],ax; mov [bp-2],dx), so the source assigns the result expression directly. The original 3389 keeps a 4-byte unused slot below the result (sub sp,8, QUIRK)."
+evidence = ["src/OVL13.PAS#RunAimTargets", "src/OVL13.PAS#StepAimCursor", "re/symbols.toml#ovl13:3558"]
+
+[[lesson]]
+id = "or-chain-puts-else-first-and-inverts-its-last-test"
+confidence = "V"
+units = ["*"]
+tags = ["if", "or", "and", "block order", "jump", "codegen"]
+title = "An `if` whose condition is an `or` chain emits the else block first and inverts the last test (a `jne` to the else); the `and` form emits the then block first"
+lesson = "ovl13:3A86 (ForcedAttack) emits [the or-chain tests][the RemoveAffect block][jmp epilogue][the PerformAttack block][epilogue]: the first block is the *else* of the source's `if`. Written as `if (Mode = 0) and (Who^.Flag10D <> 0) and (ds6826^.Flag10D <> 0) then <attack> else <remove>`, TP 6.0 emits the then (attack) first and its two first tests become short-inverted jumps over a near jmp (`je +3; jmp else`), 4 bytes longer per test; the original has plain `jne else` / `je else`. Rewriting the same condition as `if (Mode <> 0) or (Who^.Flag10D = 0) or (ds6826^.Flag10D = 0) then <remove> else <attack>` reproduces it exactly: the or-chain emits the else block (attack) after the tests' target block, and its last operand jumps to the *else* on false (`jne` for an `= 0` operand) instead of to the then. So an or-form if it is: (1) then block first in the source, else block second, and (2) the last operand's jump is inverted. Probe tools/re/tp_idioms/ovl13/IFNEST.PAS (P1 the and-form, P2 the or-form, P3/P4 the same with a trailing Exit, which does not change the block order)."
+evidence = ["tools/re/tp_idioms/ovl13/IFNEST.PAS", "src/OVL13.PAS#ForcedAttack", "re/symbols.toml#ovl13:3A86"]

@@ -3400,6 +3400,83 @@ why = "ovl20:0721 draws the 'Rest daYs Hours Mins Inc Dec Exit' menu through Rea
 date = "2026-10-13"
 
 [[rename]]
+old = "ovl17_e1"
+new = "ReadSavedCharacterList"
+kind = "routine"
+why = "ovl17:0010 reads charlist.txt (SaveDir + charlist.txt) and builds a 46-byte menu line per saved character, prefixing a star for a name already in the party list ds5D96; called by ovl16 character menu and ovl17_e4"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl17_e2"
+new = "RewriteSavedCharacterList"
+kind = "routine"
+why = "ovl17:01B8 rewrites the save disk charlist.txt from a saved-character menu list: CreateSaveDir, Rewrite the file (prompting for the save disk while the open fails), WriteLn each list line whose text does not start with a star (party members skipped), Close; called by ovl16 add-character menu and ovl17_e4"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl17_fn_032F"
+new = "MergePictureData"
+kind = "routine"
+why = "ovl17:032F combines two in-memory pictures: ORs Source (the first parameter, ds5E5A slot 11 reference) tail/tile bytes into Dest and ANDs its pixel bytes into Dest, so Source masks Dest; called by ovl17_e3 for the character head and body pictures"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl17_e3"
+new = "BuildCharacterIcon"
+kind = "routine"
+why = "ovl17:0482 loads the selected character's CHEAD (slot 11) and CBODY (its icon slot) pictures, merges the head halves into the body halves with MergePictureData, and optionally recolours the icon from the six Figure nibble pairs through ds3CF5; called by the ovl16 character menus, ovl17_e7 and ovl17_e8"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl17_e4"
+new = "SaveCharacter"
+kind = "routine"
+why = "ovl17:069E saves one character to the save disk: with an empty Name it adds the character's name to charlist.txt and writes SaveDir + DOS-cleaned name + .cha, with a Name it writes SaveDir + Name + .sav; BlockWrites the 285-byte character and the 63-byte items (.itm) and 9-byte affects (.spc) lists; called by ovl16_e1, ovl16_fn_1EA3 and ovl17_e9"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl17_e5"
+new = "LoadCharacterFile"
+kind = "routine"
+why = "ovl17:0AEC reads one character and its item/affect lists from the save or game disk: it opens FileName + '.sav'/'.cha' through OpenGameFile, BlockReads the 285-byte record into Who^ and reads the .itm (63) and .spc (9) lists to end of file; the read counterpart of SaveCharacter (ovl17:069E); called by ovl16_fn_306D and ovl17_e8"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl17_e6"
+new = "LoadMonster"
+kind = "routine"
+why = "ovl17:0EC4 loads a monster: it builds MON<Str(TileSet)>CHA/SPC/ITM.DAX names, LoadDaxBlock block Kind from the poolrad MON<N>CHA/SPC/ITM.DAX archives, Moves the 285-byte record into Who^, clears its list links, builds the Figure descriptor with RollDice(1,6) nibble pairs and copies the 9-byte affects and 63-byte items into GetMem chains; called by ovl07 LoadCharacter and ovl17_e7"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl17_e7"
+new = "AddMonsterToParty"
+kind = "routine"
+why = "ovl17:1262 adds a monster of Kind to the party: it returns at once when the party already holds eight members (ds49D6^[830] > 7), has LoadMonster build the record, gives it a random byte at +AB, picks one of the classes with a positive level (RollDice(1, Count)) and the body/head picture banks from the ds08C5-region tables by Who^.B9E and the roll, then AddPartyMember and BuildCharacterIcon(True); called by ovl03_fn_2B7E"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl17_e11"
+new = "SaveAndExit"
+kind = "routine"
+why = "ovl17:22D5 shows the 'Save and exit Insert disk #N' prompt and, on the S hotkey, saves the game (ovl17_e9) and quits; called by ovl03:0BD1 with the area ECL file name, which gates it"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl17_e9"
+new = "SaveGame"
+kind = "routine"
+why = "ovl17:1D58 prompts for a slot letter and writes the whole game state and every party member to SaveDir + savgam<letter>.dat; called by the heap error handler, MakeCamp, the character menu and SaveAndExit"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl17_e8"
+new = "LoadGame"
+kind = "routine"
+why = "ovl17:1602 loads a saved game from SaveDir + savgam<slot>.dat, restores the game state and the party, rebuilds every member icon and the area view; the counterpart of SaveGame; called by ovl16_e1"
+date = "2026-10-13"
+
+[[rename]]
 old = "res07_fn_0D71"
 new = "DrawPictureItemClipped"
 kind = "routine"
@@ -3412,6 +3489,1756 @@ new = "RemapPictureColours"
 kind = "routine"
 why = "0464:1E5C maps the colours of a picture: for each colour index I whose FromMap and ToMap entries differ, every pixel of the picture with palette colour FromMap[I] becomes ToMap[I] (through a scratch copy, adapters 0, 1 and 2; src/RES07.PAS, MATCH); LoadPictureSlot (ovl32) passes the identity map, AnimateAreaDoors (ovl18) and LoadSpriteList (ovl28) pass the door and sprite maps"
 date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_e3"
+new = "ShowAbilityScore"
+kind = "routine"
+why = "called by ovl19_e1 for rows 7..12 (STR..CHA labels, ovl19:004A loop, [bp-5] = 0..5 with Highlight 0); draws the score at offset 10h plus Index of SelectedCharacter; Strength 18 adds the percentile in parentheses (ovl19:0901 code)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_e4"
+new = "ShowCharacterMoney"
+kind = "routine"
+why = "Called by ovl19_e1 (ovl19:004A, near call 050D after the Level line). Lists the Money[0..6] entries of SelectedCharacter (+$88) with their MoneyKindNames (DS:0FFA, ovl21:0DDF) in the window 12..26 x 7..14 (ovl19:050D code)."
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_e2"
+new = "ShowCombatStats"
+kind = "routine"
+why = "Draws the AC, HP, THAC0, Damage, Encumbrance and Movement labels of the sheet (literal strings at ovl19:05BE..05FC, the labels of the combat block), with the values of the selected character. Called by ovl19_e1 (ovl19:03F5) and from ovl16 (ovl16_fn_1DCB, ovl16_fn_2639)."
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_e1"
+new = "ShowCharacterSheet"
+kind = "routine"
+why = "Called by ovl19_e5 (the View command, ovl19:0AB3) and ovl16 (ovl16_fn_0B52, ovl16_fn_1DCB, ovl16_fn_209F). Draws the sheet window with the name, sex, race, age, alignment, class, abilities, levels, experience, combat block, weapon, armor, status and portraits of SelectedCharacter (ovl19:004A)."
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_e5"
+new = "ViewSelectedCharacter"
+kind = "routine"
+why = "the View command: draws the sheet and the View: prompt with Items, Spells, Trade, Drop and Exit; the Temple, the shop and the camp call it for their V key (ovl19:0AB3; whitepaper 5.4, 5.22)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_fn_0D70"
+new = "CanGiveUpItem"
+kind = "routine"
+why = "the Items menu's guard: False for a readied item (Must be unreadied) and for a scroll with a pending scribe the player does not give up (ovl19:0D70; whitepaper 5.22)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_e6"
+new = "RunItemMenu"
+kind = "routine"
+why = "the Items command of the View prompt: the Ready, Use, Trade, Drop, Halve, Join, Sell and Id menu over the carried items (ovl19:0EF8; whitepaper 5.4); called by ViewSelectedCharacter for I and by the Use command (ovl08:031A)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_e7"
+new = "ReadyItem"
+kind = "routine"
+why = "ovl19:14D0 is the Ready action: RunItemMenu's R key (ovl19:0EF8) and the AI's item step (ovl09 calls it on SlotItems[0], SlotItems[1] and its picks). It marks the item Readied and applies its affect (CallAffectHandler, Affects[3] above $7F), or refuses with 'Wrong Class', 'already using <name>' or 'Your hands are full!' (RaceRow[ItemType] rows 0, 1 and 13 and PadB0)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_fn_1734"
+new = "TradeItem"
+kind = "routine"
+why = "ovl19:1734 is the Trade action of RunItemMenu's T key (ovl19:0EF8, after CanGiveUpItem): 'Trade with Whom?' picks the recipient (res12_fn_2C48), the item is added to the recipient (res12_fn_15F7) and taken from SelectedCharacter (res12_fn_1509), or 'Overloaded' is shown when WouldOverloadInventory refuses the recipient"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_fn_17ED"
+new = "HalveItem"
+kind = "routine"
+why = "ovl19:17ED is the Halve action of RunItemMenu's H key (ovl19:0EF8, line H calls it): Count div 2 goes to a new 63-byte record copied from the item (Move, New), that record takes the item's Next, the item keeps the rest of the count, and 'Can''t halve that' is shown when the half is zero"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_fn_189D"
+new = "JoinItem"
+kind = "routine"
+why = "ovl19:189D is the Join action of RunItemMenu's J key (ovl19:0EF8, line J calls it): it adds the counts of the matching stacks of SelectedCharacter (same NameNum, ItemType, Plus, Cursed, Weight, Affects[1] below 2) to Item up to 255, taking each match off the character (res12_fn_1509) and carrying the rest into the next stack"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_e8"
+new = "UseItem"
+kind = "routine"
+why = "ovl19:1A8A is the Use action: RunItemMenu's U key (ovl19:0EF8) and UseMagicItem (ovl09:03E4, the computer's magic-item step) pass it an item; a scroll (ovl22_e6 true) gives its spell by ChooseSpellFromList, an item with Affects[2] gives it directly, and the spell is cast through ovl22_e5 (matched, ovl19:1A8A)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ds6B80"
+new = "UsedScroll"
+kind = "global"
+why = "ds6B80 is the far pointer ovl19:1AB3 stores the item in when ovl22_e6 accepts it (a scroll), before ChooseSpellFromList reads the scroll's spell; no other reader is decompiled yet"
+date = "2026-10-13"
+
+[[rename]]
+old = "ds6DBF"
+new = "ItemAffectUse"
+kind = "global"
+why = "ds6DBF is set (ovl19:1AE7) for an item whose Affects[2] gives the spell, and around the ovl22_e5 cast (ovl19:1BC2..1BE2); the 'uses an item' message follows the flag (ovl19:1B1E); what ovl22_e5 does with it is not known yet"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_fn_1CEE"
+new = "SellItem"
+kind = "routine"
+why = "ovl19:1CEE is the Sell action: RunItemMenu's S key (ovl19:0EF8) after CanGiveUpItem; it shows 'I'll give you <offer> gold pieces for your <item>', asks 'Is It a Deal?' and on Y shows 'Sold!', removes the item (res12_fn_1509) and pays the offer in platinum and gold (matched, ovl19:1CEE)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_fn_1F52"
+new = "IdentifyItem"
+kind = "routine"
+why = "ovl19:1F52 is the Id action of the item menu: RunItemMenu's I key calls it (ovl19:0EF8) and its strings are 'For 200 gold pieces I''ll identify your ' (1EC8), 'Is It a Deal? ' (1EF0), 'Not Enough Money' (1EFF), 'I can''t tell anything new about your ' (1F10) and 'It looks like some sort of ' (1F36); it charges IdentifyPrice 200 gold from the character or the pool and clears TMenuLine.HiddenNames of the item (matched, ovl19:1F52)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_fn_2156"
+new = "TradeMoney"
+kind = "routine"
+why = "ovl19:2156 is the Trade command of the View prompt for money: ViewSelectedCharacter's T key calls it (ovl19:0AB3); it asks 'Trade to?' (res12_fn_2C48), lists the coin kinds under 'Select type of coin' with ChooseFromList, asks 'How much <kind> will you trade? ' (ReadAmount) and moves the money with TransferMoney (ovl21:044C); its list is the one ovl21's TakeMoney builds (matched, ovl19:2156)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ds471A"
+new = "ViewedCharacter"
+kind = "global"
+why = "ds471A is the character the View command was started for: ViewSelectedCharacter stores SelectedCharacter in it (ovl19:0AD1), and the two Trade commands start 'Trade to?' from it and store the recipient in it (ovl19:1734 TradeItem, ovl19:2156 TradeMoney)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl19_fn_24A7"
+new = "ChooseAndDropMoney"
+kind = "routine"
+why = "the View prompt's D key (ovl19:0AB3 calls it, followed by ShowCharacterMoney) lists the coin kinds SelectedCharacter holds under 'Select type of coin' (ChooseFromList), asks 'How much <kind> will you drop? ' (ReadAmount) and calls DropMoney (ovl21:0A01); ovl19:24A7 is the Drop twin of TradeMoney (ovl19:2156)"
+date = "2026-10-13"
+
+[[rename]]
+old = "RaceRow"
+new = "ItemTable"
+kind = "global"
+why = "the ITEMS file block at DS:5582 (ovl11:05CD, whitepaper 4.3): 129 item rows indexed by ItemType in ovl09, not a race table"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl09_fn_0203"
+new = "TryTurnUndead"
+kind = "routine"
+why = "ovl08 CombatMenu offers Turn (ovl08:0795) when ClassLevels[0] > 0 and Turned = 0, and PlayerTurn's T case runs ovl13_e9 (src/OVL08.PAS:220); the routine tests the same conditions and runs ovl13_e9 with ovl13_e10 agreeing: the computer's Turn action"
+date = "2026-10-13"
+
+[[rename]]
+old = "ScoreTarget"
+new = "ScoreItem"
+kind = "routine"
+why = "its only caller UseBestItem (ovl09:13CA) passes an ITEM (ScoreTarget(Who, PCharacter(Pick))) and the bytes it reads are item fields (+$2E ItemType, +$32 Plus, +$36 Cursed, +$3D/+$3E Affects[2]/[3]); it rates an item for the AI's item step"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_0000"
+new = "ApplyWeaponBonuses"
+kind = "routine"
+why = "applies the readied weapon (SlotItems[0], +CC) to the character's HitAdjust, WeaponAttacks, WeaponDamage and WeaponDamageBonus from the RaceRow row of the weapon's item kind, plus the dexterity (1168) and strength (1282/1325) adjustments and the slot-item pluses; called by res12_fn_0BB8 (make match UNIT=res12, 00BA:0000)"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_01FB"
+new = "SetArmourMovement"
+kind = "routine"
+why = "sets Who's Movement (+11C) from a readied armour item: when RaceRow[item type][0] is 2 (an armour) the item's Weight (+37) picks base movement/9/6 and a magic plus adds 3; called by res12_fn_0BB8 for every readied item (make match UNIT=res12, 00BA:01FB)"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_0282"
+new = "AddReadiedItemBonus"
+kind = "routine"
+why = "accumulates one readied item's bonuses (RaceRow[item type][6] and [0] pick the branch) into the TBonus a res12_fn_0BB8 caller keeps, and adds the item's PlusSave to Who^.SaveBonus (make match UNIT=res12, 00BA:0282)"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_03A0"
+new = "CapMovementByLoad"
+kind = "routine"
+why = "caps Who's Movement (+11C) by the carried weight above the strength allowance (CarriedWeight +102 minus res12_fn_13AB): excess up to 200h keeps it, up to 300h caps at 9, up to 400h at 6, above at 3, and it only falls; called once by res12_fn_0BB8 after the readied-item loop (make match UNIT=res12, 00BA:03A0)"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_0767"
+new = "DrawPartyRoster"
+kind = "routine"
+why = "00BA:0767 draws the party roster panel (Name/AC/HP per member, whitepaper 5.24); called by the shop, temple and inventory screens"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_08EF"
+new = "DrawArmourClass"
+kind = "routine"
+why = "00BA:08EF draws a character's armour-class value Abs(+111h - 60) signed, the value res12_fn_09E3 shows under the AC heading and ovl24 RollBeatsResistance compares a roll against"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_0973"
+new = "DrawHitPoints"
+kind = "routine"
+why = "00BA:0973 draws a character's current hit points (Flag11B +11Bh) in a range colour at (Col,Row); called by res12_fn_0767 and res12_fn_09E3"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_09E3"
+new = "DrawCharacterPanel"
+kind = "routine"
+why = "00BA:09E3 draws the character panel (name, Hitpoints, AC, readied weapon text, status) the combat and inventory screens show, whitepaper 5.24"
+date = "2026-10-13"
+
+[[rename]]
+old = "ds286B"
+new = "HelplessAffects"
+kind = "global"
+why = "res12_fn_0B73 (00BA:0B73) tests entries 1..4 through res12_fn_2199 and DrawCharacterPanel draws '(Helpless)' for a True answer; ovl13:1FC3 compares the same entries with the 16-byte table at DS:3204; entry 0 is never read"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_0B73"
+new = "IsHelpless"
+kind = "routine"
+why = "DrawCharacterPanel (00BA:09E3) draws '(Helpless)' when it returns True and ovl13 skips a combatant it answers True for; it tests the four affects of HelplessAffects (DS:286B) through res12_fn_2199"
+date = "2026-10-13"
+
+[[rename]]
+old = "ds4846"
+new = "ReadiedItemWeight"
+kind = "global"
+why = "res12_fn_0BB8 (00BA:0BB8) resets it to 0, adds each readied item's Weight times Count, and floors the character's CarriedWeight at it when the weight-excluding item (NameNum[1] $BA) is readied (00BA:0F43)"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_0BB8"
+new = "RecalcCombatValues"
+kind = "routine"
+why = "res12_fn_0BB8 (00BA:0BB8) recomputes the character's combat values from the items it carries and has readied; every equipment change and the whole combat call it (ovl03, ovl06, ovl08, ovl09, ovl10, ovl12, ovl13, ovl16, ovl19, ovl21, ovl24)"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_1037"
+new = "ByteToText"
+kind = "routine"
+why = "res12_fn_1037 (00BA:1037) returns the decimal text of the byte it is given through Str; DrawArmourClass, DrawHitPoints and ovl20's TwoDigitText use it"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_1073"
+new = "WordToText"
+kind = "routine"
+why = "res12_fn_1073 (00BA:1073) returns the decimal text of the word it is given through Str, the word twin of ByteToText; the shops and the Temple put prices and amounts into messages with it"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_10AD"
+new = "LongIntToText"
+kind = "routine"
+why = "res12_fn_10AD (00BA:10AD) returns the decimal text of the LongInt it is given through Str, the LongInt twin of ByteToText and WordToText"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_10E6"
+new = "DexterityAdjustment"
+kind = "routine"
+why = "res12_fn_10E6 (00BA:10E6) maps Who's dexterity (+0x13) to its AD&D reaction/defence adjustment (1..3 gives -4, 4..6 dexterity-7, 15..18 dexterity-14, 19..25 grows to 6); RecalcCombatValues sums it into the character's combat value"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_1168"
+new = "DexterityAttackAdjustment"
+kind = "routine"
+why = "00BA:1168: ApplyWeaponBonuses (00BA:0000) adds it to Who^.HitAdjust for a weapon whose RaceRow attack flags have bit 2 (WeaponFlagDexToHit); the sibling DexterityAdjustment (00BA:10E6) is the defensive one summed into ResistValue. Both map Dexterity (+0x13)."
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_11EA"
+new = "StrengthRowIndex"
+kind = "routine"
+why = "00BA:11EA: maps Strength (+0x10) plus the exceptional StrengthPercent (+0x16) to a 0..30 row of the strength table (strength 18 + percent bands become 18..23, 19..25 become 24..30); the only callers, res12_fn_1282, res12_fn_1325 and res12_fn_13AB, look up reaction, damage and weight allowances with it."
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_1282"
+new = "StrengthAttackAdjustment"
+kind = "routine"
+why = "00BA:1282: the strength reaction/attack adjustment; ApplyWeaponBonuses (00BA:0000) and RecalcCombatValues (00BA:0BB8) add it to Who^.HitAdjust (the to-hit value) for WeaponFlagStrength, and it is 0 unless Who^.StrengthBonusFlag (+0xAA) is nonzero."
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_1325"
+new = "StrengthDamageAdjustment"
+kind = "routine"
+why = "00BA:1325: the strength damage adjustment; ApplyWeaponBonuses (00BA:0000) and RecalcCombatValues (00BA:0BB8) add it to Who^.WeaponDamageBonus[1] for WeaponFlagStrength, and it is 0 unless Who^.StrengthBonusFlag (+0xAA) is nonzero."
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_13AB"
+new = "StrengthWeightAllowance"
+kind = "routine"
+why = "00BA:13AB: returns the strength weight allowance in coins (StrengthRowIndex row -> coins); CapMovementByLoad (00BA:03A0) subtracts it from Who^.CarriedWeight and ovl21's CarryLimit adds 1500 to it."
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_148B"
+new = "ForgetSpell"
+kind = "routine"
+why = "00BA:148B: clears the first memorized spell (SelectedCharacter^.Spells, +0x17) equal to Spell; DealDamage (ovl24:1344) calls it when a victim loses a pending spell, ovl13:02F9 and ovl22:0C20 also call it."
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_1509"
+new = "RemoveInventoryItem"
+kind = "routine"
+why = "00BA:1509 unlinks Item from Who^.Items and FreeMems it, reporting 'Nil Item pointer...' or 'Tried to Lose item & couldn't find it!'; called by ovl07 LoseItems for every lost item"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_15F7"
+new = "AddItemCopy"
+kind = "routine"
+why = "00BA:15F7 GetMems 63 bytes, Move-copies Item into it, clears its Next and appends it to Who^.Items; gives a character a copy of an item"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_1693"
+new = "ShowFlashMessage"
+kind = "routine"
+why = "00BA:1693 clears the bottom row, draws Text green at (0,24), delays via DelayByGameSpeed and clears the row again; callers pass 'Not enough money.', 'OverLoaded', 'Magic On'"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_16EC"
+new = "ShowCharacterMessage"
+kind = "routine"
+why = "00BA:16EC draws Who's name (1816) and paged Text in a message window (top Row in view mode 5, else fixed rows /), and on Wait delays and clears it (17E3); callers pass 'is bandaged', 'flees in panic', 'is cured'"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_17E3"
+new = "ClearCharacterMessage"
+kind = "routine"
+why = "00BA:17E3 clears the message window 16EC wrote in (view mode 5: (,)-(,); else (1,)-(,))"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_1816"
+new = "DrawCharacterName"
+kind = "routine"
+why = "00BA:1816 draws Who's Name at (Col,Row) in the state colour (LightRed no combat, Yellow party, LightCyan other) and appends '\\''s when Mode is set"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_1892"
+new = "CopyPictureItem"
+kind = "routine"
+why = "00BA:1892 copies item 0 of a source picture ds5E5A[PicIndex].Pics[Half] into item Row of the combat picture ds6E36 (ByteSize bytes at +17 and the pixel buffer at +13), mirroring through a temporary when Mirror is set; called in a loop by res12_fn_19DE and by ovl13"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_19DE"
+new = "DrawCombatIcon"
+kind = "routine"
+why = "00BA:19DE composes four items of the combat picture ds6E36 from the two halves of the icon slot ds5E5A[PicIndex] by calling CopyPictureItem four times (Half 0,0,1,1; Row 0,1,2,3; Mirror 0,1,1,0); called by ovl12, ovl13 and ovl22"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_1A29"
+new = "WalkCombatLine"
+kind = "routine"
+why = "00BA:1A29 walks the Bresenham line from cell (X1,Y1) to (X2,Y2) between combat cells (SetupLine/StepLine on the 3x-scaled cells), then animates the combat cursor along it: it draws the combat picture ds6E36 onto DrawBuf with res07_fn_0D71, flushes and delays, steps by DirStepX/DirStepY and keeps MoveCombatCursor on the cell; called by ovl12, ovl13 and ovl22 (aiming and movement)"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_1FEB"
+new = "ShowHitMessage"
+kind = "routine"
+why = "00BA:1FEB shows a per-character combat message and flashes the character's icon (DrawCombatIcon $16/$17), plays a sound and animates over the character's view cell; DealDamage calls it with Flag 0 and ApplyAffect with Flag 1"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_2199"
+new = "HasAffect"
+kind = "routine"
+why = "00BA:2199 returns whether AffectId is on Who's affect list and leaves the matching TAffect in the caller's Affect (callers read it as a question: if HasAffect(...) then)"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_2228"
+new = "ApplyDamage"
+kind = "routine"
+why = "00BA:2228 applies Damage hit points to Who, updates its health status (dead/dying/unconscious/standing) and drops it from combat when it falls; DealDamage, DamageWithMessage and ovl13 call it with a damage amount"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_234A"
+new = "ShowHealResult"
+kind = "routine"
+why = "00BA:234A shows Who as 'is fully healed' when its hit points equal HpMax and 'is partially healed' otherwise, then redraws the roster outside the combat view; ovl12 and ovl22 (healing and training) call it"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_23B7"
+new = "OpposingSide"
+kind = "routine"
+why = "00BA:23B7 returns the side opposite Who's Side (1 for a party member, 0 for a monster); the AI indexes ds6814Sides with it and ShortInt(res12_fn_23B7(Who)) counts Who's enemies"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_23DB"
+new = "RecountCombatSides"
+kind = "routine"
+why = "00BA:23DB clears the two per-side counts ds6814Sides and recounts them by walking the character list ds5D96, adding one per member with Flag10D set to its side's count; RunCombat and EndCombatRound call it each round"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_2433"
+new = "CollectEnemiesInRange"
+kind = "routine"
+why = "00BA:2433 filters the ovl30 ScanTargets table to the combatants on the side opposite Who (OpposingSide) within Range steps and writes their combatant indexes to ds6DE4; ovl09:02EB and 0B3C use the count and that list as Who's enemies in range"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_255B"
+new = "DistanceToTarget"
+kind = "routine"
+why = "00BA:255B scans from Who with the WalkLine gate open and returns ds6718[I].Key shr 1 for the found Target, the fewest walk steps halved; ovl09:0B3C tests it = 1 as melee range and uses it to decide whether Who can attack Target"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_2637"
+new = "EndCombatTurn"
+kind = "routine"
+why = "00BA:2637 clears the pending spell, initiative, guard byte and movement left of Who's combat state and returns 1; ovl08/ovl09/ovl13 call it on every path that ends a combatant's turn (Quit, self-end checks, AI turn end)"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_2686"
+new = "GuardTurn"
+kind = "routine"
+why = "00BA:2686 calls EndCombatTurn(Who), sets the combat guard byte B7 (+7) to 1 and flashes 'Guarding'; ovl08:0E45 binds it to the Guard menu key and ovl09_fn_0F4F uses it as the AI's fallback turn"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_26C2"
+new = "SpellCasterLevel"
+kind = "routine"
+why = "00BA:26C2 maps a spell's SpellTable class (byte 0) to the selected character's level in that class (ClassLevels cleric 0, magic-user 5), 12 for spell class 2 and a forced 6 when ds6DBF is set; ovl22_e3 multiplies the spell row's +3 byte by it"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_272A"
+new = "DrawViewWindows"
+kind = "routine"
+why = "00BA:272A draws the view's window frames (DrawWindow): the full screen, the bottom text window, the upper-left window and, with Inner set, the inner window; only RedrawView calls it"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_27D9"
+new = "RedrawView"
+kind = "routine"
+why = "00BA:27D9 is the resident view dispatcher: it redraws the whole screen for the current view mode ds49F3 (shop, portrait, camp, area map, area view, loot), called by the shop, Temple, loot, camp and combat menus"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_2B5E"
+new = "DrawWildernessScreen"
+kind = "routine"
+why = "00BA:2B5E draws the wilderness map screen: sets view mode 3, DrawAdventureScreen, ShowAreaView, DrawPartyMarker, DrawLocationLine, DrawPartyRoster; called by ovl14 HandleWildernessKeys"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_2B88"
+new = "DrawCombatScreen"
+kind = "routine"
+why = "00BA:2B88 draws the combat screen windows and positions the cursor (ovl31_e2, two DrawWindow, ClearWindow, MoveCombatCursor); called by StartBattle, PlayerTurn and the combat overlays"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_2C48"
+new = "SelectPartyMember"
+kind = "routine"
+why = "00BA:2C48 loops the party roster with a 'Select' prompt and G/O/O-next/previous/E-return member picker, storing the choice in the caller's Selected; called by ovl03, ovl19 and ovl22"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_290B"
+new = "DrawLocationLine"
+kind = "routine"
+why = "00BA:290B builds and draws the party location line (column,row, facing, hours:minutes, and a camping/search suffix) on row 15 of the side window; called by the camp and wilderness screens"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_2E03"
+new = "IsRangedWeapon"
+kind = "routine"
+why = "00BA:2E03 returns True when Who has a readied weapon (SlotItems[0]) whose RaceRow byte $C (the attack range, ovl09:536) is above 1 (a missile weapon); ovl08 gates the melee attack on it"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_2E46"
+new = "RangedWeaponCanMelee"
+kind = "routine"
+why = "00BA:2E46 returns True when IsRangedWeapon holds and the readied weapon kind's RaceRow attack flags carry both the melee bit $10 and the strength bit $04, i.e. a missile weapon that can also strike in melee; ovl08 uses it to allow the melee attack"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_2E8B"
+new = "ChooseAttackItem"
+kind = "routine"
+why = "00BA:2E8B fills the caller's pointer with the item Who's attack aims with: the readied weapon (SlotItems[0]) when the kind's attack flags have the melee bit $10, else the ammo in slot 11 (+$F8) or slot 12 (+$FC) when bit $08 marks a launcher; returns 1 when an item was aimed or the flags are exactly $A"
+date = "2026-10-13"
+
+[[rename]]
+old = "res12_fn_2F57"
+new = "IsMaxClassLevel"
+kind = "routine"
+why = "00BA:2F57 returns True when Who's level in one class (ClassLevels[ClassIndex], +$96) has reached the maximum its race (+$2E) and strength (+$10) allow, so the trainers (ovl22:2D39) must not raise that class level further"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl16_fn_0000"
+new = "FreeCharacter"
+kind = "routine"
+why = "ovl16:0000 frees a character: Combat (+108h, size 16h), the Items list (+C8h, size 3Fh) and the Affects list (+7Fh, size 9), frees the record (size 11Dh) and clears the caller pointer; called by ovl16_e2"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl16_e1"
+new = "RunCharacterMenu"
+kind = "routine"
+why = "ovl16:0161 entry point (called by ovl03:2E10): draws the training-hall window and its 11-function menu at DS:0619 and dispatches C create, D drop, M modify, T train, V view, A add, R remove, L load, S save, B finish, E exit, J the STING cheat"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl16_fn_1F37"
+new = "DropCharacter"
+kind = "routine"
+why = "ovl16:1F37 removes the selected character from the party: it asks AskYesNo 'Drop <name> forever?' and 'Are you sure?', then shows 'bids you farewell' or 'You dump <name> out back' and calls ovl16_e2(False, True); it is the D (Drop) item of the training-hall menu RunCharacterMenu (ovl16:0161), whitepaper 5.8 'Alter'"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl16_fn_209F"
+new = "ModifyCharacter"
+kind = "routine"
+why = "ovl16:209F is the M (Modify) item of the training hall: it refuses an experienced character with '<name> can t be modified.' and lets the player raise/lower the six ability scores and HP with the arrows, Keep (K) or Exit (E); called by RunCharacterMenu (ovl16:0161)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl16_fn_33E7"
+new = "ChooseHeadAndBody"
+kind = "routine"
+why = "ovl16:33E7 shows the selected character's head and body pictures (ShowHeadBodyWindow) and its prompt 'Head Body Keep' cycles HeadBank (+BB) and BodyBank (+BC); the head/body step of the create flow (whitepaper 5.8)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl16_e2"
+new = "RemoveSelectedCharacter"
+kind = "routine"
+why = "ovl16:3291 unlinks SelectedCharacter from the party list ds5D96 (TCharacter.Next +104) and frees its record with FreeCharacter; it lowers the party size ds49D6^[830] unless Uncounted, and frees the CombatIcon picture slot unless FreePicture is false; the removal counterpart of AddPartyMember (ovl17:1446)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl16_fn_306D"
+new = "AddSavedCharacters"
+kind = "routine"
+why = "ovl16:306D is the training hall's Add (A) function (RunCharacterMenu ovl16:0161): its menu 'Add a character: ' / 'Add Exit' lists the saved characters on disk (ReadSavedCharacterList), LoadCharacterFile loads the picked one and AddPartyMember puts it in the party"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl16_fn_34DF"
+new = "DrawIconCell"
+kind = "routine"
+why = "ovl16:34DF fills one icon-editor cell (FillPictureRect over 12 cells x 24 rows from @ds260A into DrawBuf) and draws the two mirrored halves of the character's icon (DrawIcon, indices $19 and $C) at CellCol and CellCol+3; called by the icon editor ovl16_e3"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl16_fn_35BE"
+new = "CopyPictureSlot"
+kind = "routine"
+why = "ovl16:35BE copies one picture slot of DS:5E5A into another (both halves' tile bytes and packed pixel buffers through Move) and, when its third parameter is set, recolours the destination with the selected character's Figure[1..6] colour pairs, the same recolouring BuildCharacterIcon (ovl17:0482) applies"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl16_fn_3F31"
+new = "ConstitutionHitPointAdjustment"
+kind = "routine"
+why = "ovl16:3F31 computes the signed constitution hit-point adjustment shared by the hit-point floor ovl16:3FB3 and the ceiling ovl16:408C: it sums ds408E[Constitution] (the AD&D 1e table: -2 at 3, -1 at 4..6, 0 at 7..14, +1 at 15, +2 at 16..18) over the classes with a level and adds the fighter bonus (ClassMask 2 above constitution 16 and 17); callers ModifyCharacter ovl16:209F use it through 3FB3/408C"
+date = "2026-10-14"
+
+[[rename]]
+old = "ds408E"
+new = "ConstitutionHitPointTable"
+kind = "global"
+why = "DS:408E is the AD&D 1e constitution hit-point adjustment table read by ovl16:3F31 (ConstitutionHitPointAdjustment): signed byte per constitution, -2 at 3, -1 at 4..6, 0 at 7..14, +1 at 15, +2 at 16..18; indexed by TCharacter.Constitution (+0x14), read as a signed byte (tools/re/tp_idioms/ovl16/CONHP.PAS)"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl16_fn_3FB3"
+new = "MinHitPoints"
+kind = "routine"
+why = "ovl16:3FB3 is the floor ModifyCharacter (ovl16:209F) clamps a lowered HpMax to ('if ovl16:3FB3(SelectedCharacter) > HpMax then HpMax := ...'): over the classes with a level it counts the hit dice and totals their levels (one extra for class 4 and 7, whose maximum die is one higher, ovl16:408C), then divides by the class count after adding the constitution adjustment (ConstitutionHitPointAdjustment ovl16:3F31) and never returns below 1; the minimum-roll counterpart of the ceiling ovl16:408C"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl16_fn_408C"
+new = "MaxHitPoints"
+kind = "routine"
+why = "ovl16:408C is the ceiling ModifyCharacter (ovl16:209F) clamps a raised HpMax to: over the classes with a level it totals the level times each class's maximum hit die and divides by the class count after adding the constitution adjustment (ConstitutionHitPointAdjustment ovl16:3F31), never below 1; the maximum-roll counterpart of MinHitPoints ovl16:3FB3"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl16_fn_4235"
+new = "RollHitPoints"
+kind = "routine"
+why = "ovl16:4235 rolls the hit points a level gains: it sums over the classes in ClassBits that the character has a level in one RollDice roll of that class's hit dice (ds08B6 dice of ds08BE sides), with a first-level class raised to two thirds of its die; called by the training hall ovl16:29AE and the create-character run ovl16:1D1E, which divide the sum by the class count"
+date = "2026-10-14"
+
+[[rename]]
+old = "ds08B6"
+new = "ClassHitDiceCount"
+kind = "global"
+why = "ovl16:4235 pushes ds08B6[Class] as RollDice's Count and ds08BE[Class] as its Sides for every class the character has a level in; the image at DS:08B6 holds 1,1,1,1,2,1,1,2 (two dice for ranger and monk)"
+date = "2026-10-14"
+
+[[rename]]
+old = "ds08BE"
+new = "ClassHitDieSides"
+kind = "global"
+why = "ovl16:4235 pushes ds08BE[Class] as RollDice's Sides and raises a first-level roll to (ds08BE[Class] * 2) div 3; the image at DS:08BE holds 8,8,10,10,8,4,6,4 sides (its entry 7 is the first byte of the CHEAD suffix table ds08C5)"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl16_fn_42ED"
+new = "PayGold"
+kind = "routine"
+why = "ovl16:42ED takes Amount gold pieces from Who's money for the training hall (ovl16:29AE calls it with the training cost): it converts the amount to copper, hands coins over from copper up (one more coin than the remainder needs) and gives the overshoot back as change from platinum down; the enum coin kind and Succ/Pred are proven by tools/re/tp_idioms/ovl16/PAYPRB2.PAS"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl12_fn_0000"
+new = "CancelPendingHook"
+kind = "routine"
+why = "ovl12:0000 clears HookAffectId and DamageAmount when its AffectId is 0 or is the affect the hooks offer (HookAffectId, set by ApplyAffect; zero means 'is Unaffected', ovl24:1672, 1682; DamageAmount is the damage DealDamage offers, ovl24:134E)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_fn_001F"
+new = "TryAddAffect"
+kind = "routine"
+why = "ovl12:001F adds an affect through AddAffect (ovl24:0E52) with Flag 1 (the handler runs when it is removed, TAffect.Flag) and returns True, but returns False and adds nothing while ds681F is set (the Temple removes affects: RemoveAffect callers ovl04:0386, 05AB, 07CE)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_fn_0058"
+new = "DropFromFight"
+kind = "routine"
+why = "ovl12:0058 shows Msg on Who (res12_fn_16EC, colour 10) unless Who's Status is 6, 7 or 8 already; then it sets Status to NewStatus, clears Flag10D and Flag11B, removes the death affects (ovl24:100A), runs the hooks of kind $D (a combatant going down, ovl24:02FA), removes Who from the map when Flag10D is clear (ovl31:0E11), and outside combat (ds49F3 not 5) redraws the selected character; the same steps as DropCombatant (ovl24:0F06) without its ground redraw"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e2"
+new = "RaiseAttackAndMorale"
+kind = "routine"
+why = "ovl12:010D adds 5 to ds6825 (the AI morale scratch that ovl09 CheckMorale computes) and 1 to AttackRoll; its frame (Who, Affect, Mode, retf 10) is the AffectHandlers shape (TAffectHandler, CallAffectHandler ovl24:0000), Mode not read"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e3"
+new = "LowerAttackAndMorale"
+kind = "routine"
+why = "ovl12:011D takes MoraleStep off the morale scratch ds6825 (to 0 when it is less) and 1 off AttackRoll: the undo of RaiseAttackAndMorale (ovl12:010D); the AffectHandlers shape (Who, Affect, Mode), Mode not read"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e4"
+new = "BoostAttackAgainstTarget"
+kind = "routine"
+why = "ovl12:013B copies Who's combat record's Target (+$A of the TCombatant at +$108, the character attacked last, ovl08) into DS:6826, and when that character's byte +$9F is 4 adds 2 to AttackRoll and to DamageAmount; the AffectHandlers shape (Who, Affect, Mode), Mode not read"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e5"
+new = "StartTrainingWithManual"
+kind = "routine"
+why = "ovl12:017F shows 'starts to train' on Who (res12_fn_16EC, colour 10) and gives Who affect 7, AffectTrainingManual ('Training with Manual of Bodily Health', named in ovl15:0FBC), duration 43200, data 255, Flag 1 (AddAffect, ovl24:0E52); AffectHandlers frame (Who, Affect, Mode), entry 5 of ovl12 (auto:entry_5)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e6"
+new = "BoostFireAttackByTarget"
+kind = "routine"
+why = "ovl12:01C3 is an affect handler (AffectHandlers shape, entry 6 of ovl12): it copies Who's combat Target into AttackTarget like BoostAttackAgainstTarget (ovl12:013B), adds a bonus of 1, 2 or 3 (by the target's byte +$9F: 10, 9 or 12, 4) to AttackRoll and DamageAmount and sets DamageKind to 9 (fire and the magic bit, ovl24:13E4, whose text says 'from Fire'); the affect that runs it is not known yet"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e7"
+new = "TrainConstitution"
+kind = "routine"
+why = "ovl12:0233 shows 'is hardier' on Who (res12_fn_16EC), increments Constitution (+$14), and adds to HpMax (+$32) and the current hit points Flag11B (+$11B) the share of HpMax - HpB1 (+$B1) by the class weights of ovl04:0510 (Raise Dead's loss, mirrored); at Constitution 20 it gives affect $3E instead; AffectHandlers frame, entry 7 of ovl12 (auto:entry_7)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e8"
+new = "ShiftAttackToSave"
+kind = "routine"
+why = "ovl12:0377 adds 2 to SaveRoll (DS:6816) and takes 2 from AttackRoll (DS:6822) for SelectedCharacter when its +$A0 (ByteA0) is 2, 5 or 8 (SelectedCharacter DS:5D92); the purpose is not known, the mechanism is the code's; entry 8 of ovl12 (auto:entry_8)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e10"
+new = "HalveColdDamage"
+kind = "routine"
+why = "ovl12:03E1 halves DamageAmount (DS:6818) and adds 3 to SaveRoll (DS:6816) when DamageKind (DS:6819) has bit 2, cold (POOLVARS DamageKind comment; ovl24:13E4 says 'from Cold'); AffectHandlers frame, entry 10 of ovl12 (auto:entry_10); the affect that runs it is not known yet"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e11"
+new = "ComputerTakesOver"
+kind = "routine"
+why = "ovl12:0400 is an affect handler (AffectHandlers shape, Mode 0 applies): on apply it sets Quick (+$10F, the computer plays the turn, whitepaper 5.5 Who plays), marks B84 with the computer-run flag and morale $33, clears Combat^.Target and sets the side from Data bit 7; on removal it gives the side back from Data bit 6"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e12"
+new = "ExchangeStrengthWithAffect"
+kind = "routine"
+why = "ovl12:04BA is an affect handler (AffectHandlers shape, Mode not read) of a strength affect: Who's Strength and StrengthPercent take the affect's strength (DecodeStrength, ovl24:110D), then the strongest other affect with id hex 0C or 26 gives Who its strength and takes the affect's encoded strength (EncodeStrength, ovl24:10E4); RaiseStrength (ovl24:115C) keeps the earlier strength in the same two affects"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e13"
+new = "SetCharismaFromAffect"
+kind = "routine"
+why = "ovl12:05D6 is an affect handler (AffectHandlers shape, Mode not read) that copies the affect's Data byte into Who's Charisma (TCharacter +hex 15, POOLVARS Charisma); applying and removing run the same code"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e14"
+new = "AddAffectAndDamage"
+kind = "routine"
+why = "ovl12:05EB is an affect handler (AffectHandlers shape, Mode not read) that calls TryAddAffect with affect hex 0F for 10 and the affect's Data, then deals 1 plain point of damage (DealDamage, DamageKind 0) while Flag11B is above 1; the meaning of affect 0F is not known (ovl04 AffectRemovedAtNeutralizePoison3)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e15"
+new = "IgnoreAffect"
+kind = "routine"
+why = "ovl12:0647 is push bp, mov bp,sp, pop bp, retf 10: an affect handler (AffectHandlers shape) with an empty body, so it ignores the affect when called"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e16"
+new = "RaiseResistanceAndSave"
+kind = "routine"
+why = "ovl12:064E is an affect handler (AffectHandlers shape, Affect and Mode not read): it raises ResistValue (TCharacter +hex 111) to at least 57, adds one to SaveRoll, and clears DamageAmount when ds681B is hex 0F"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e17"
+new = "BoostAttackVsListedTarget"
+kind = "routine"
+why = "ovl12:0679 is an affect handler (Who, Affect, Mode) that copies Who's combat Target into AttackTarget like BoostAttackAgainstTarget (ovl12:013B), and adds 1 to AttackRoll per name ds0332[1..4] equal to the target's name when its Pad9E[$9F] and CombatSize are 1"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e18"
+new = "HalveFireDamage"
+kind = "routine"
+why = "ovl12:06E4 halves DamageAmount and adds FireSaveBonus (3) to SaveRoll when DamageKind has the fire bit KindFire (1, POOLVARS DamageKind comment), the fire twin of HalveColdDamage (ovl12:03E1, same code with the bit changed)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e19"
+new = "ShowSilenceAndStopCasting"
+kind = "routine"
+why = "ovl12:070F shows 'is silenced' in colour 10 when the combat byte Pad2 (+2) of Who's combatant is set, then clears Pad2 and CanCast (+1, hides Cast): an affect handler (Who, Affect, Mode) reading only Who"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e20"
+new = "DieIfPoisoned"
+kind = "routine"
+why = "ovl12:0775 finds the Poisoned affect (affect $37, ovl15 'Poisoned') with res12_fn_2199 and, when Who has it, drops Who with StatusGone and 'dies from poison' (DropFromFight, ovl12:0058); then removes affect $0F inside the ds681F bracket (ovl04:0386); an affect handler reading only Who"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e21"
+new = "GiveAffectItem"
+kind = "routine"
+why = "ovl12:07E0 is an affect handler (Who, Affect, Mode): on apply it gives Who an item of type $14 (NameNum $F3, Plus 1, Affects $17 and $89) unless Who has one or ItemCountC7 is $10 or more, shows 'Gains an item' (res12_fn_16EC) and on removal takes that item off Who's list (res12_fn_1509); Mode is read, Affect not"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e22"
+new = "LowerAttackRollByFour"
+kind = "routine"
+why = "ovl12:093C subtracts 4 from AttackRoll (sub byte [6822],4) on every call; the frame is the AffectHandlers shape (Who, Affect, Mode), none read; it sets ds681E only when res12_fn_2199(SelectedCharacter, $18) finds no affect (ovl12:0933..0937)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e23"
+new = "BoostAttackVsEightListed"
+kind = "routine"
+why = "ovl12:0947 is BoostAttackVsListedTarget (ovl12:0679) with eight names: the same Pad9E[$9F] and CombatSize tests, then AttackRoll gains 1 per equal name of ds0382[1..8] (loop bound 8, base 0x372 + 16*I, against 0x332 + 16*I for ds0332 in ovl12:0679); the AffectHandlers shape with only Who read"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e24"
+new = "ImageAbsorbsHit"
+kind = "routine"
+why = "ovl12:09C0 is the handler of the images affect $1C, which runs on the damage hook (kind 6, ovl24:02FA, the hook list of ovl24:0000 kinds 5 and 6): when 1d(Data+1) is above 1 it cancels the damage (CancelPendingHook(0)), shows lost an image (res12_fn_16EC, colour 10) and takes one off Data, removing the affect at 0 (RemoveAffect with nil); the message and the Data count support a mirror-image style affect [I]"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e25"
+new = "ReduceDamageByQuarter"
+kind = "routine"
+why = "ovl12:0A3D takes a quarter off DamageAmount (DS:6818): DamageAmount := DamageAmount - DamageAmount div 4 (two shr ax,1, sub, store byte); the AffectHandlers shape with no parameter read, so it runs as a damage hook handler (kind 6); the affect that runs it is not known"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e26"
+new = "CoughStopsCasting"
+kind = "routine"
+why = "ovl12:0A65 clears the combat byte Pad2 (+$2) and CanCast (+$1) of the character (the stop-casting pair of ShowSilenceAndStopCasting, ovl12:070F), and shows is coughing (colour 10) when Pad2 was set; the message text (literal pool 0A59) and the Pad2 test are the evidence"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e27"
+new = "CollapseAndChangeSide"
+kind = "routine"
+why = "ovl12:0B1B is an affect handler (AffectHandlers shape, Mode not read): it clears the affect's Flag, drops Who with the text 'collapses' and StatusGone unless ds681F is set (the Temple removing affects), then sets Who's Side from the high nibble of the affect's Data and Quick (computer plays, as ComputerTakesOver ovl12:0400)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e28"
+new = "LowerAttackSaveAndResistance"
+kind = "routine"
+why = "ovl12:0BAC is an affect handler (AffectHandlers shape, Mode not read): it takes 4 off AttackRoll and SaveRoll and off Who's ResistValue (+$111) and Pad112[$112] (+$112, the byte CoughStopsCasting copies into ResistValue, ovl12:0A65); which affect runs it is not known yet"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e29"
+new = "RunDiseaseHandlers"
+kind = "routine"
+why = "ovl12:0BCF calls CallAffectHandler (ovl24:0000) twice with the same Who, Affect and Mode: first affect $2B, then $2C (AffectCauseDisease, named in ovl15:0FBC's table); both ids are in the Cure Disease list (DiseaseAffects, ovl04:031E, whitepaper 5.19), so it runs the disease handlers; which affect runs it is not known yet"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e30"
+new = "RaiseAttackAndSave"
+kind = "routine"
+why = "ovl12:0C06 adds 1 to SaveRoll and to AttackRoll and uses neither parameter (AffectHandlers shape, Mode not read); the twin of LowerAttackAndSave (ovl12:0C15); it is called by ovl12:12B2 (ovl12_e41, not decompiled yet)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e31"
+new = "LowerAttackAndSave"
+kind = "routine"
+why = "ovl12:0C15 takes 4 off AttackRoll and 4 off SaveRoll and reads neither parameter (AffectHandlers shape, Mode not read); the minus of RaiseAttackAndSave (ovl12:0C06), which adds 1 to each"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e32"
+new = "SetAttackMissIfTurnPending"
+kind = "routine"
+why = "ovl12:0C26 tests Who's combatant Initiative (TCombatant +$3, above 0 while CombatTurn still has its turn to take, ovl08); when it is above 0 it sets ds681E to 1 and AttackRoll to -1, a negative roll that RollToHit counts as a miss (AttackRoll comment, ovl24:0CD5); reads only Who (AffectHandlers shape, Mode and Affect not read)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e33"
+new = "AgeCharacterOnce"
+kind = "routine"
+why = "ovl12:0C4B is an affect handler (AffectHandlers shape, Mode not read): when the affect's Data bit 4 is clear it sets it, shows 'ages' on Who (res12_fn_16EC, colour 10, the message copied to a stack temporary as in StartTrainingWithManual) and adds one year to Who's Age (TCharacter +$30, the age in years, POOLVARS); it then doubles ds681A (shl 1) every time it runs; which affect runs it is not known yet"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e34"
+new = "ClearCloud"
+kind = "routine"
+why = "ovl12:0CC3 is the cloud affect handler: it finds the cloud of Who with the kind of Affect's Data (ds6DBB list, TCombatNode), shows 'The air clears a little...', restores each arm's tile (body cells keep CloudBodyTile), unlinks and frees the cloud and repaints the others"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_fn_0FAC"
+new = "AvoidDistantAttack"
+kind = "routine"
+why = "ovl12:0FAC: 'Avoids it' dodge: with an item in SelectedCharacter's first slot and the attacker (SelectedCharacter, distance from res12_fn_255B above 1) away, a 1d100 roll at or below Chance avoids the attack and zeroes the damage; called by ovl12:1086 (AvoidIfSelectedItemPlusZero) with Chance 100"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_fn_101D"
+new = "FirstSlotItem"
+kind = "routine"
+why = "ovl12:101D returns the item in Who's first remembered slot (SlotItems[0], TCharacter +$CC), or nil; res12_fn_2E8B may pick another item first; its callers test the item's Plus (ovl12:1086)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e35"
+new = "AvoidIfSelectedItemPlusZero"
+kind = "routine"
+why = "ovl12:1086 is an affect handler (AffectHandlers shape, nothing read): when FirstSlotItem of SelectedCharacter has Plus 0, Who avoids the attack in progress (AvoidDistantAttack with AlwaysAvoids); which affect runs it is not known"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e36"
+new = "HalveAgeDoubling"
+kind = "routine"
+why = "ovl12:10C1 halves ds681A, the byte AgeCharacterOnce (ovl12:0C4B) doubles every time it runs; affect handler (AffectHandlers shape, nothing read); which affect runs it is not known"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e37"
+new = "WeakenStrength"
+kind = "routine"
+why = "ovl12:10DE gives Who the disease affect 2B for 60 rounds; while Strength is above 3 it shows 'is weakened' and takes one off Strength, at 3 or less it adds nausea (affect 1F); affect handler, nothing but Who and Affect's Data read; which affect runs it is not known"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e38"
+new = "CauseDiseaseAndDamage"
+kind = "routine"
+why = "ovl12:1168 gives Who the disease affect AffectCauseDisease ($2C, ovl15/ovl04 name it) for 10 rounds with Affect's Data, deals one point of damage when Flag11B is above 1, else gives nausea (AffectNausea) unless present"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e39"
+new = "LowerAttackVsEightListed"
+kind = "routine"
+why = "ovl12:11F9 takes AttackPenalty (4) off AttackRoll once for each of the eight names ds0402[1..8] that the attacked character's name equals, when the selected character has Pad9E[$9F]=1 and CombatSize kind 2: the twin of BoostAttackVsEightListed (ovl12:0947), with the condition on the selected character"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e40"
+new = "LowerAttackIfSelectedIsBugbearOrGnoll"
+kind = "routine"
+why = "ovl12:1276 compares the selected character's name with the literals 'BUGBEAR' (ovl12:1268) and 'GNOLL' (ovl12:1270) by System_StrCompare (0AF8:0C10) when its Pad9E[$9F] is 1, and gives AttackRoll AttackPenalty off for either"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e41"
+new = "RaiseOrLowerAttackAndSave"
+kind = "routine"
+why = "ovl12:12B2 runs RaiseAttackAndSave (ovl12:0C06) when Who's Side (+$10E) equals bit 4 of Affect's Data, else takes one off AttackRoll and one off SaveRoll (inline sub byte, not LowerAttackAndSave's penalty)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e42"
+new = "AddHealingBlockAndHeal"
+kind = "routine"
+why = "ovl12:12FB gives Who the healing block affect $32 (AffectHealingBlock, ovl24:175D) for 14400 rounds, then HealCharacter (Amount 1, Flag 1) heals one point and res12_fn_234A runs on Who when it healed"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e47"
+new = "ProgressRot"
+kind = "routine"
+why = "ovl12:1399 is the rot handler of affect 39h (AffectRot, which Cure Disease removes, whitepaper 5.19): on each run it shows 'Rots...' on Who (res12_fn_16EC, colour 10) and takes Charisma down to 3 at most 2 at a time; then, while the stage in the affect's Data high nibble is above 1, it gives the rot again one stage lower (TryAddAffect, duration 43200); at stage 1 Who dies with 'Dies rots away' (DropFromFight, status 8)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e50"
+new = "ReduceFireDamageByRoll"
+kind = "routine"
+why = "ovl12:1490 is a damage hook (AffectHandlers shape): while the damage is fire (DamageKind bit 1) it takes 2 per die of the last roll (ds681C) off DamageAmount, never below ds681C, adds 4 to SaveRoll, and cancels non-magical damage (CancelPendingHook 0)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e51"
+new = "AddTrainedOutAndHeal"
+kind = "routine"
+why = "ovl12:14EB is the AddHealingBlockAndHeal shape (ovl12:12FB) with AffectTrainedOut: TryAddAffect(Who, AffectTrainedOut, Affect^.Data, TrainedOutDuration), then HealCharacter(Who, 1, 1) and res12_fn_234A when it healed"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_fn_1545"
+new = "PoisonAttackTarget"
+kind = "routine"
+why = "ovl12:1545 (153 bytes, its literal pool 152F-1544): the attacked character (Who's Combat^.Target) makes a poison save (SavingThrow kind 0 with Bonus, ovl12_e52 passes 0); on failure it shows 'is Poisoned', gets AffectPoisoned for good and DropFromFight kills it (StatusGone, 'is killed')"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_fn_15EB"
+new = "ParalyzeAttackTarget"
+kind = "routine"
+why = "paralyses the character Who attacked last (AttackTarget := Who^.Combat^.Target, ovl12:15EB): SavingThrow kind 0 first, then 'is Paralyzed' (literal at ovl12:15DE) and AddAffect with affect 34h; both handlers ovl12:1699 and ovl12:16BB call it with (Who, Duration, 0)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e52"
+new = "PoisonAttackTargetBonus0"
+kind = "routine"
+why = "affect handler at ovl12:165D whose whole body is PoisonAttackTarget(Who, 0) (ovl12:1545 with save bonus 0); the affect that runs it is not known yet"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e53"
+new = "PoisonAttackTargetBonus4"
+kind = "routine"
+why = "affect handler at ovl12:1671 whose whole body is PoisonAttackTarget(Who, 4) (ovl12:1545 with save bonus 4); the affect that runs it is not known yet"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e54"
+new = "PoisonAttackTargetBonus2"
+kind = "routine"
+why = "affect handler at ovl12:1685 whose whole body is PoisonAttackTarget(Who, 2) (ovl12:1545 with save bonus 2); the affect that runs it is not known yet"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e55"
+new = "ParalyzeAttackTargetFor2d8"
+kind = "routine"
+why = "affect handler at ovl12:1699 whose body is ParalyzeAttackTarget(Who, RollDice(2, 8), 0) (ovl12:15EB); the map finds no direct caller (auto:entry_55), so the affect that runs it is not known yet"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e56"
+new = "ParalyzeAttackTargetUnlessImmune"
+kind = "routine"
+why = "affect handler at ovl12:16BB: ParalyzeAttackTarget(Who, 63, 0) (ovl12:15EB) unless Who^.Combat^.Target^.Race (+$2E) is 2; the map finds no direct caller, so the affect that runs it is not known yet"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e57"
+new = "ParalyzeAttackTargetFor1d9Plus10"
+kind = "routine"
+why = "affect handler at ovl12:16E6 whose body is ParalyzeAttackTarget(Who, RollDice(1, 9) + 10, $FE) (ovl12:15EB): paralysis for 1d9 plus 10 rounds, the same shape as ParalyzeAttackTargetFor2d8 (ovl12:1699)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e58"
+new = "PoisonAttackTargetBonusMinus2"
+kind = "routine"
+why = "affect handler at ovl12:170B that calls PoisonAttackTarget (ovl12:1545) with Bonus -2 (pushed as 0FEh): the poison hook with a negative save bonus, the twin of PoisonAttackTargetBonus0/2/4"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e59"
+new = "SetFlagAndLowerAttackRollByFour"
+kind = "routine"
+why = "affect handler at ovl12:171F: ds681E := 1, then Dec(AttackRoll, AttackPenalty) with no res12_fn_2199 test; the unconditional form of LowerAttackRollByFour (ovl12:0918)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e61"
+new = "DrainBloodFromCombatant"
+kind = "routine"
+why = "affect handler at ovl12:176F: when Mode is 0 and Who and the combatant whose index is the affect Data (CombatantRecord) both take part, it shows Sucks some Blood on Who (res12_fn_16EC) and deals 1d4 to that combatant (RollDiceCounted, DealDamage), then takes 16 times the damage off the affect Duration; the other branch removes the affects and sets Pad10 (forces flight in CheckMorale, ovl09:10D7)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e62"
+new = "StartBloodDrain"
+kind = "routine"
+why = "ovl12:18B5 gives the drinker affect 4B (AffectBloodDrain, whose removal runs DrainBloodFromCombatant ovl12:176F, which reads the victim index from its Data) and the victim affect 3A (AffectHeldFast, which ovl12:1935 announces as 'is held fast'); it starts the blood drain"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e63"
+new = "HoldWeakTargetFast"
+kind = "routine"
+why = "ovl12:1935 is the weak-target twin of StartBloodDrain (ovl12:18B5): when the target's Strength (+$10) is below 19 it gives the drinker affect 4A (AffectBloodDrainWeak, Duration 0, DrainBloodFromCombatant on removal) and the victim affect 3A (AffectHeldFast) and shows 'is held fast' on the victim in colour 10"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e64"
+new = "ReviveOrRetryRevival"
+kind = "routine"
+why = "ovl12:19D9 calls ReviveCombatant (ovl24:1869) on Who at Flag11B and, when that returns False, gives Who the revival affect 4E (AffectRevival, ovl24:175D) for one round with Affect's Data through TryAddAffect"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e65"
+new = "FireAttackTargetFor2d10"
+kind = "routine"
+why = "ovl12:1A19 sets DamageKind 9 (POOLVARS: 1 fire, bit 3 magic) and deals RollDiceCounted(2, 10) to Who's combat Target with no save through DealDamage (ovl24:1344)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e66"
+new = "AcidAttackTargetFor1d4"
+kind = "routine"
+why = "ovl12:1A4C sets DamageKind to $10 (POOLVARS DamageKind: $10 acid) and deals RollDiceCounted(1, 4) to Who's combat Target with no save through DealDamage (ovl24:1344)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e67"
+new = "FrightenSideWithFear"
+kind = "routine"
+why = "ovl12:1AAA walks the party list (ds5D96, +$104 next) and, for each member with Flag10D on the side of Who (res12_fn_23B7), makes a fear save (SavingThrow kind 4) and gives AffectParalysis ($34) or AffectWeakened ($02) by HighestLevel 0..3 or 4..5, with the messages 'is paralyzed with fear' and 'is weakened by fear' (ovl12:1B91 and 1A96 pool strings)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e68"
+new = "ParalyzeSideWithFear"
+kind = "routine"
+why = "ovl12:1BA8 walks the party list (ds5D96), removes affect $52 from every member, then gives each member on the actor's side with Flag10D a paralysis for 1d4 rounds (AffectParalysis, Data FearData) after a SaveKindParalysis save, with the message 'is paralyzed with fear' (the message of FrightenSideWithFear, ovl12:1AAA); matched at L2 (make match FN=ovl12_e68)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e69"
+new = "GazeStonesTarget"
+kind = "routine"
+why = "ovl12:1CAD shows 'gazes...' on Who, draws the gaze line from Who to AttackTarget (res12_fn_1A29), lets a readied item with a NameNum of $76 turn it back on Who ('reflects it!', colour 12), then makes a stone save (SavingThrow kind 1) and DropFromFight with StatusStoned and 'is Stoned' (status 7 is stone, ovl12:0058 and ovl04:093D); matched at L2 (make match FN=ovl12_e69)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e70"
+new = "GazeCharmsTarget"
+kind = "routine"
+why = "ovl12:1E77 is the charm gaze: 'Gazes...' on Who, the gaze line to AttackTarget (res12_fn_1A29), ds681B 10, then the charm affect $0B ('is charmed', Data = Who's side in bit 7 plus $0C, negated by a fear save with bonus -2) and its handler at once (CallAffectHandler); the same walk and gaze as GazeStonesTarget (ovl12:1CAD) with a charm for the stone; matched at L2 (make match FN=ovl12_e70)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_fn_2122"
+new = "DrainLevels"
+kind = "routine"
+why = "message is drained with N levels or a level (res12_fn_16EC, pool 20DF..20FB), the victim goes dead forever or killed through DropFromFight, Count levels come off the highest class (ovl12:2122); callers ovl12:23A4 and ovl12:23C2 are not decompiled yet"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_fn_2002"
+new = "HighestLevelClass"
+kind = "routine"
+why = "nested in ovl12:2122 (DrainLevels): returns the class with the highest level, which DrainLevels reads for HighestLevel (+$73) and Experience (+$AC) at ovl12:235E..2383; the value it compares is ClassXpTable"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e71"
+new = "DrainAttackTargetLevel"
+kind = "routine"
+why = "ovl12:23A4 calls DrainLevels(Who^.Combat^.Target, 1): an affect handler that drains one level from the character Who attacked last (the AttackTarget of BoostAttackAgainstTarget, ovl12:013B)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e72"
+new = "DrainAttackTargetTwoLevels"
+kind = "routine"
+why = "ovl12:23C2 calls DrainLevels(Who^.Combat^.Target, 2): the two-level twin of DrainAttackTargetLevel (ovl12:23A4), an affect handler that drains the character Who attacked last"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e73"
+new = "CauseRotOnAttackTarget"
+kind = "routine"
+why = "ovl12:23EC gives AttackTarget (Who's Combat Target) the healing block AffectHealingBlock and then the rot AffectRot with stage RollDice(1,6) (ProgressRot reads the stage as Data div 16), shows 'is Diseased': an affect handler that inflicts a rot on the character Who attacked last"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e75"
+new = "AddConstitutionSaveBonus"
+kind = "routine"
+why = "ovl12:24D9 adds to SaveRoll a bonus from Who's Constitution (TCharacter +$14, POOLVARS: 1 for 4..6 up to 5 for 18..20), only when SaveKind is 0 (the first save, SaveKindPoison [I])"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e77"
+new = "HalveFireDamageNoSave"
+kind = "routine"
+why = "ovl12:25A2 halves DamageAmount when DamageKind has the fire bit (KindFire); it is HalveFireDamage (ovl12:06E4) without the SaveRoll bonus; matched [V]"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e78"
+new = "HalveDamageForFirstSlotItem"
+kind = "routine"
+why = "ovl12:25BC halves DamageAmount when the first slot item of SelectedCharacter has bits of byte 7 of its RaceRow row (RaceRow[ItemType][7]); the affect that runs it is not known; matched [V]"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e79"
+new = "FallDeadIfInFight"
+kind = "routine"
+why = "ovl12:2610 clears the affect's Flag and, when Who's Flag10D (combat participation, TCharacter +10D) is set, DropFromFight takes Who out with StatusGone and 'Falls dead'; matched [V]"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e80"
+new = "CancelDamageUnlessMagicSlotItem"
+kind = "routine"
+why = "ovl12:264B sets DamageAmount to 0 unless the first slot item of SelectedCharacter is a magic item (Plus <> 0) or has NameNum[3] $B1 [?]; matched [V]"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e81"
+new = "AddConstitutionSaveBonusKind2Or4"
+kind = "routine"
+why = "ovl12:268A adds the Constitution bonus of AddConstitutionSaveBonus (ovl12:24D9) to SaveRoll when SaveKind is 2 or 4 (4 is the fear save [I]); matched [V]"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e82"
+new = "RegainHitPoints"
+kind = "routine"
+why = "ovl12:2700 adds RegainedHitPoints (3) to Flag11B, the current hit points (TCharacter +$11B), and caps it at HpMax (+$32); AffectHandlers shape, Affect and Mode not read"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e84"
+new = "GiveAffectUnlessFireOrAcid"
+kind = "routine"
+why = "ovl12:27D9 adds affect $66 for RollDice(3, 6) rounds unless DamageKind has the fire bit (1) or the acid bit ($10), POOLVARS DamageKind"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e83"
+new = "ReviveDyingCharacter"
+kind = "routine"
+why = "ovl12:2730 revives a dying (Status 5) or unconscious (Status 4) character with the hit points left after its DyingRounds (TCombatant +$E) via ReviveCombatant (ovl24:1869), then gives affect $5F and removes its own affect $63 (RemoveAffect with the Affect)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e86"
+new = "RetryRevivalAtFullHitPoints"
+kind = "routine"
+why = "ovl12:2866 calls ReviveCombatant with Who's HpMax (+$32); when it fails it stores TryAddAffect of affect $66 for 1 round with the Data of Affect, the result never read"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e85"
+new = "GiveRegeneratingUnlessAffected"
+kind = "routine"
+why = "ovl12:2814 gives affect $3B (Regenerating, named in ovl15:0FBC) for 3 rounds unless res12_fn_2199 finds affect $62 or $3B on Who"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e87"
+new = "TurnGaseousAndEscape"
+kind = "routine"
+why = "ovl12:28BF clears the Flag of the affect, shows the cursor on Who (ShowCursorOn, ovl31:1298) and drops Who with Status 3 (fled, ovl05:050D) and the text 'Turns gaseous and escapes' (DropCombatant, ovl24:0F06)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e88"
+new = "AvoidDistantAttackByChance"
+kind = "routine"
+why = "ovl12:2901 is an affect handler (AffectHandlers shape, nothing read): it calls AvoidDistantAttack (ovl12:0FAC) for Who with chance 60; which affect runs it is not known"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_fn_2915"
+new = "CancelHookOnChance"
+kind = "routine"
+why = "ovl12:2915 (callers ovl12:2976 and 2984): with a hook offered (HookAffectId) or magic damage (DamageKind bit 8), a 1d100 roll at or below Chance less 5 for each point that res12_fn_26C2 of ds681B falls short of 11 cancels the hook (CancelPendingHook 0)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e89"
+new = "CancelHookByHalfChance"
+kind = "routine"
+why = "ovl12:2976 is an affect handler (AffectHandlers shape, nothing read) that calls CancelHookOnChance (ovl12:2915) with chance 50; which affect runs it is not known"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e92"
+new = "CancelCharmAndUnknown35"
+kind = "routine"
+why = "ovl12:29B6 is an affect handler (AffectHandlers shape, nothing read) that cancels the offered hooks of the charm (affect $0B) and of affect $35 (CancelPendingHook) without a roll; which affect runs it is not known"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e90"
+new = "CancelHookByLowChance"
+kind = "routine"
+why = "ovl12:2984 is an affect handler (AffectHandlers shape, nothing read) that calls CancelHookOnChance (ovl12:2915) with chance 15; which affect runs it is not known"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e91"
+new = "CancelCharmAndUnknown35HighChance"
+kind = "routine"
+why = "ovl12:2992 is an affect handler (AffectHandlers shape, nothing read): a 1d100 roll at or below 90 cancels the offered hooks of affect $35 and of the charm (affect $0B) (CancelPendingHook); which affect runs it is not known"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e93"
+new = "CancelParalysisHook"
+kind = "routine"
+why = "ovl12:29CB is an affect handler whose whole body is CancelPendingHook(AffectParalysis) (ovl12:29CB, matched)"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl12_e94"
+new = "CancelColdDamage"
+kind = "routine"
+why = "ovl12:29D9 tests DamageKind bit 2 (KindCold, ds6819 and 2) and then calls CancelPendingHook(0), which drops the damage (ovl12:29D9, matched)"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl12_e95"
+new = "CancelPoisonAndParalysisHooks"
+kind = "routine"
+why = "ovl12:29F0 calls CancelPendingHook(AffectPoisoned) and CancelPendingHook(AffectParalysis), then sets SaveRoll to 100 when SaveKind is 0 (the poison save, ovl12:2A01)"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl12_e96"
+new = "CancelFireDamage"
+kind = "routine"
+why = "ovl12:2A11 tests DamageKind bit 1 (KindFire, ds6819 and 1) and then calls CancelPendingHook(0), which drops the damage (ovl12:2A11, matched)"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl12_e97"
+new = "ReduceFireDamageOnePerDie"
+kind = "routine"
+why = "ovl12:2A28 is the loop of ReduceFireDamageByRoll (ovl12:1490) with Dec(DamageAmount) (one point, fe 0e 18 68) per die of ds681C, and no save bonus or cancel"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl12_e98"
+new = "HalveElectricityDamage"
+kind = "routine"
+why = "ovl12:2A6D tests DamageKind bit 4 (KindElectricity, ds6819 and 4) and halves DamageAmount (shr 1), the electricity twin of HalveColdDamage (ovl12:03E1)"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl12_e99"
+new = "HalveDamageByFirstSlotItemRow"
+kind = "routine"
+why = "ovl12:2A87 takes FirstSlotItem(SelectedCharacter) and, when there is one, halves DamageAmount when its RaceRow byte 7 (DS:5589) is 0 or odd; the frame and the caller-less entry match HalveDamageForFirstSlotItem (ovl12:25BC)"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl12_e100"
+new = "HalveDamageForEnchantedSlotItem"
+kind = "routine"
+why = "ovl12:2AE6 takes FirstSlotItem(SelectedCharacter) and halves DamageAmount when that item's Plus (+$32, a signed byte, compared with jle) is above 0; the same frame and caller-less entry as the other damage hooks"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl12_e101"
+new = "SetDamageFromSlotItemType55"
+kind = "routine"
+why = "ovl12:2B20 reads SelectedCharacter^.SlotItems[0] and, when its ItemType is $55, sets DamageAmount to RollDiceCounted(1, 6) + 1; the item type's name is not known"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl12_e102"
+new = "HalveColdDamageNoSave"
+kind = "routine"
+why = "ovl12:2B63 halves DamageAmount while DamageKind has KindCold (bit 2); it is HalveColdDamage (ovl12:03E1) without the SaveRoll bonus, the cold twin of HalveFireDamageNoSave (ovl12:25A2)"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl12_e103"
+new = "CancelDamageUnlessEnchantedSlotItem"
+kind = "routine"
+why = "ovl12:2B7D cancels DamageAmount unless FirstSlotItem(SelectedCharacter) exists with Plus not 0, and then only when Race (+$2E) is above 0 or HighestLevel (+$73) is below 4; the name gives the first exception, the comment the second"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl12_e104"
+new = "AvoidDistantAttackForItemType57Or58"
+kind = "routine"
+why = "ovl12:2BC8 calls AvoidDistantAttack (ovl12:0FAC, chance 50) only when SelectedCharacter's first slot item (SlotItems[0]) has ItemType $57 or $58; an affect handler, no direct caller"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl12_e105"
+new = "SpitAcidAtTarget"
+kind = "routine"
+why = "ovl12:2C1C shows 'Spits Acid' on Who (string in the pool at ovl12:2C11), draws the spit to Who's combat target and deals 8d4 to it with a half-on-save; a handler, no direct caller"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl12_e106"
+new = "SetDamageFromSlotItemType56"
+kind = "routine"
+why = "ovl12:2D38 sets DamageAmount to 3d8 (RollDiceCounted 3, 8) when SelectedCharacter's first slot item has ItemType $56, the sibling of SetDamageFromSlotItemType55 (ovl12:2B20); no direct caller"
+date = "2026-10-14"
+
+[[rename]]
+old = "ds681C"
+new = "LastDiceCount"
+kind = "global"
+why = "the dice count of the last RollDiceCounted roll (ovl24:0E37 stores it); ovl12:2D38 adds it to DamageAmount for fire or magic damage"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl12_e107"
+new = "HalveOrCancelDamageForUnenchantedSlotItem"
+kind = "routine"
+why = "ovl12:2D88 halves DamageAmount for a first slot item with Plus 0 and NameNum[3] $B1 (SlotItemNameNum3), cancels it for other Plus-0 items and with no item, and leaves it for Plus not 0; no direct caller"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl12_e108"
+new = "CancelCharmAndUnknown35ModerateChance"
+kind = "routine"
+why = "ovl12:2DE4 cancels the hooks of the charm (AffectCharm) and of AffectUnknown35 when a 1d100 roll is at or below 30; the sibling of CancelCharmAndUnknown35HighChance (ovl12:2992, 90), no direct caller"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl12_e109"
+new = "CancelCharmUnknown35PoisonAndParalysisHooks"
+kind = "routine"
+why = "ovl12:2E08 cancels the hooks of affects $0B (charm), $35, $34 (paralysis) and $37 (poison) with CancelPendingHook, then sets SaveRoll to AlwaysSaves when SaveKind is the poison save (SaveKind 0)"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl12_e110"
+new = "SetFlagIfTargetReflects"
+kind = "routine"
+why = "ovl12:2E37 walks the readied items (+$34) of AttackTarget and sets ds681E when one of their names is ReflectingNameNum $76 (the item that turns a gaze back, GazeStonesTarget ovl12:1CAD)"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl12_e111"
+new = "ApplyItemSecondAffect"
+kind = "routine"
+why = "ovl12:2EDA gives Who the affect named by Item^.Affects[2] (+$3D of TMenuLine) with AddAffect and CallAffectHandler for Mode 0 and removes it with RemoveAffect otherwise; its Affect parameter is read as an item"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl12_e112"
+new = "GiveExceptionalStrength"
+kind = "routine"
+why = "ovl12:2F57 raises Who to 18/100 with RaiseStrength (ovl24:115C) and adds affect $26 (AffectStrength2) when applied; any other Mode removes a $26 strength affect (DecodeStrength, ovl24:110D) and shows nothing"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl12_e114"
+new = "ShowMustHaveGiantStrength"
+kind = "routine"
+why = "ovl12:3134 shows 'Must have Giant Strength' (res12_fn_1693 with the literal) when Who's Strength is below 19; the handler's own effect is that message"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl12_e115"
+new = "RemoveAffect17WhenRemoved"
+kind = "routine"
+why = "ovl12:317A calls RemoveAffect(Who, $17, nil) only when Mode is not 0, the removal of the affect (table entry 137, affect $89)"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl13_e2"
+new = "ComputeMovement"
+kind = "routine"
+why = "ovl13:0123 works out a combatant's round Movement from Movement (+0x11C), clamped to 1..0x60 and doubled into half squares; RunCombat calls it at the start of every round (ovl08:0063) and its result is stored in Combat^.Moves (+6, half squares)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl13_e1"
+new = "StartCombatantRound"
+kind = "routine"
+why = "ovl13:0000 is RunCombat's per-round setup of a combatant: RunCombat calls it for every combatant on the party list at the start of each round (ovl08:0063) before turns; it clears and re-arms Combat^, refreshes it (ovl13_e6, the movement hooks), rolls Initiative and sets Combat^.Moves"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl13_fn_0191"
+new = "RollAttackDamage"
+kind = "routine"
+why = "ovl13:0191 rolls one attack's damage for Attacker against Target: entry Index (1 or 2) of the readied weapon triple (WeaponAttacks/WeaponDamage/WeaponDamageBonus) through RollDiceCounted, stores it in DamageAmount, multiplies by the backstab factor when ovl13_fn_2574 says so, and runs the damage hooks (kinds 4 and 5); called per attack from ovl13:1713 which forwards it to ovl13_fn_02F9 with DamageAmount"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl13_fn_0627"
+new = "GuardedEnemiesAttack"
+kind = "routine"
+why = "ovl13:0627 is called by the move routine ovl13_e3 after Who moves: it collects Who's adjacent enemies (CollectEnemiesInRange(Who,1)) and lets each one that is guarding (Combat^.B7, the flag GuardTurn sets) and not helpless attack Who through ovl13_e11 and ovl13_e12; called as ovl13_fn_0627(Who) with the mover, cleared at the end of a move in ovl13_fn_08AC too (stub)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl13_e3"
+new = "StepCombatant"
+kind = "routine"
+why = "ovl13:0712 moves Who one map cell in direction Dir: charges Combat^.Moves two half squares (three on a diagonal), moves CombatantTable's cell by DirStepX/DirStepY, redraws ground and occupancy, moves the quick-combat cursor and clears BF/B12; called from MoveCharacter (ovl08:09DF) and MoveStep (ovl09:07F2)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl13_fn_02F9"
+new = "ShowAttackResult"
+kind = "routine"
+why = "ovl13:02F9 shows one melee attack's result in the combat window: it builds 'Attacks'/' -Backstabs-'/'slays helpless' text, draws Target's name, on a hit adds 'Hitting for N point(s) of damage' and calls ApplyDamage, on a miss adds 'and Misses', pages the text through ShowPagedText, and then, when SpellFlag is set, makes Target lose its pending spell and, when Target is out of the fight (Flag10D 0), shows goes down/dying/killed, runs the death hooks and removes Target from the map; called from ovl13_fn_14A1/1713/1758"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl13_e4"
+new = "PartingShots"
+kind = "routine"
+why = "ovl13:08B2 runs the attacks of the enemies Who is leaving behind when it moves (adjacent before the step, not at the destination; called by MoveCharacter ovl08:09DF and MoveStep ovl09:07F2 just before StepCombatant)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl13_e5"
+new = "TryFlee"
+kind = "routine"
+why = "ovl13:0C6A is the Flee answer of the Move command (ovl08:0410) and the panicking off-map step (ovl09:0434): it drops the combatant with StatusFled ('Got Away') or flashes 'Escape is blocked', then ends the turn through EndCombatTurn"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl13_e6"
+new = "RefreshAttacks"
+kind = "routine"
+why = "ovl13:0D23 recomputes Who's readied-weapon attack count into ds681A and AttackSlots[1] from the ranged weapon/ammo or the character's Attacks, running the attack affect hook $12 and ovl13_fn_0E52; called after StartCombatantRound (ovl13:0000) and whenever an item is readied (ovl08:0207, ovl09:0942)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl13_fn_0E52"
+new = "AttacksThisRound"
+kind = "routine"
+why = "ovl13:0E52 halves the doubled attack budget in ds681A (the character's Attacks is attacks per two rounds, POOLVARS +A1) into this round's count, adding the odd remainder on even-numbered combat rounds via the round counter ds6DE3; StartCombatantRound stores it in AttackSlots[2] and RefreshAttacks uses it as AttackCount"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl13_e7"
+new = "SweepEnemies"
+kind = "routine"
+why = "ovl13:0E82 is the melee sweep: when the attacker Who has attack slots left (AttackSlots[1] below Combat^.Pad4[5]), the target is a level-0 creature (HighestLevel 0) and stands in melee range, it shows 'sweeps' and attacks each level-0 adjacent enemy through ovl13_e11/ovl13_e12 until Extra attacks run out, moving Target to the front of ds6DE4; returns True so the caller (MeleeAttack ovl08:0D45, AI ovl09:0B3C) ends the turn"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl13_e8"
+new = "AttackTargetAllowed"
+kind = "routine"
+why = "ovl13:1085 runs the target's affect hooks (RunAffectHooks kind 1) and the attacker's (kind 0, with Combat^.Target swapped in) and returns whether none set ds681E; a nil target fails, attacking oneself always passes. Called before an attack by AiTurn, PartingShots, ovl12_e70 and ovl13 e17/e21/2FD3"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl13_e9"
+new = "TurnUndead"
+kind = "routine"
+why = "ovl13:116A is the Turn Undead action: it marks the cleric's turn used, rolls how many undead the turn reaches and the d20 check, maps the cleric level to a table band, then repeatedly takes an undead from ovl13_e10 and reads ds0447[type, band] to turn (positive) or destroy (nonpositive) it, up to six; called by PlayerTurn's T case (ovl08:031A) and TryTurnUndead (ovl09:0203)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl13_e10"
+new = "SelectTurnUndeadTarget"
+kind = "routine"
+why = "ovl13:1351 scans CollectEnemiesInRange(Who, $FF) and keeps the enemy with the lowest TCharacter.Pad74[$76] type row (the row ds0447 is indexed by) that is not ForcedFlight, returning it to TurnUndead (ovl13:116A) and TryTurnUndead (ovl09:0203)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl13_fn_1406"
+new = "ResolveCombatantAttacks"
+kind = "routine"
+why = "ovl13:1406 resolves one combatant's melee attacks for its turn (helpless auto-hit, large-foe dice, to-hit and damage rolls, the death hook) and covers 1406..17F6; called by e12 (ovl13:19D6)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl13_e11"
+new = "NoteAttackBearing"
+kind = "routine"
+why = "ovl13:17F6 raises Target^.Combat^.BF and adds the angular error between Target^.Combat^.IconSet and the bearing to the attacker into B12; called just before ovl13_e12 resolves an attack"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl13_e12"
+new = "PerformAttack"
+kind = "routine"
+why = "ovl13:1884 turns the two combatants to face each other, animates the attack item, resolves the attack via ResolveCombatantAttacks and ends the turn; it is the attack entry point ovl08, ovl09 and the ovl13 helpers call"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl13_fn_1B1E"
+new = "AddRangePenalty"
+kind = "routine"
+why = "ovl13:1B1E takes the distance to Target and the readied weapon's range band ItemTable[ItemType].Range div 3 and adds 2 then 3 to the to-hit value NeededRoll for each band the target is beyond; called by ResolveCombatantAttacks"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl13_e13"
+new = "FindNearbyTarget"
+kind = "routine"
+why = "ovl13:1BF8 scans the nine cells around Who and hands over the most-wounded same-side combatant (or a body on a body tile whose owner is not yet dead); called for spell 3 by ovl09 SpellAccepted and by ovl13_fn_1E16"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl13_fn_1E16"
+new = "FindSpellTarget"
+kind = "routine"
+why = "ovl13:1E16 picks the target a spell is aimed at: with Automatic=0 it lets ovl13_e17 choose (the player's cursor) and copies the choice into Combat^.Target, else it takes the spell row's own data (PadB[$E] zero means the caster itself, spell 3 asks FindNearbyTarget) or loops ovl13_e21 up to 20 times and keeps an aim whose area hits only the caster's enemies and whose target is not helpless by the row's AffectId; it returns whether a target was stored and leaves its cell in ds6DB9/ds6DBA. Called by ovl13_e14 only."
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl13_e14"
+new = "SelectSpellTargets"
+kind = "routine"
+why = "ovl13:20C3 is the routine RunCombat stores in ds6B84 (ovl08:0088) and ovl22_e5 calls after an aim: it fills the spell's target list ds6C91 (1-based, count ds6C94) with the caster alone (Pad2[6] nibble 0), with FindSpellTarget's aim or a ScanTargets area copy (nibble $F and 8..14), or with up to (Pad2[6] and 3)+1 distinct aims, and leaves the chosen cell in ds6DB9/ds6DBA; Done is 0 when nothing was collected."
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl13_e18"
+new = "BearingTo"
+kind = "routine"
+why = "ovl13:263D returns the compass direction from Who's cell to Target's cell (walks Dir 0..8 until InDirArc(WhoX,WhoY,TargetX,TargetY,Dir)); ovl09 uses it as the AI move direction and PerformAttack and NoteAttackBearing use it to face a combatant"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl13_fn_2574"
+new = "IsBackstab"
+kind = "routine"
+why = "ovl13:2574 returns True when Who's attack on Target is a thief backstab: thief level (ClassLevels[6]) above 0, a backstab-capable readied weapon and an allowed slot-2 item, Target attacked (Combat^.BF above 1) and facing Who (BearingTo(Who,Target)=IconSet); RollAttackDamage applies the thief damage multiplier and ResolveCombatantAttacks uses ds112-2 and attack kind 2"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl13_e15"
+new = "CastCombatSpell"
+kind = "routine"
+why = "ovl13:2414 is the combat Cast command and the AI memorized-spell cast: it chooses a spell (ChooseSpellFromList), rejects a camp-only spell, then either casts at once through ovl22_e5 or begins casting (Combat^.PendingSpell, Initiative) for the next turn; called by PlayerTurn's C key (ovl08:031A) and ovl09 CastMemorizedSpell"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl13_fn_26B0"
+new = "ShowAttackAnimation"
+kind = "routine"
+why = "ovl13:26B0 draws the attack's picture at Who's cell (CopyPictureItem/DrawCombatIcon selected by the item kind) and animates it along the line to Target (WalkCombatLine) with a launch (ds2620) and an impact (ds262C) sound; PerformAttack calls it for the aimed item and a readied bow"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl13_e19"
+new = "UpdateMonsterMorale"
+kind = "routine"
+why = "ovl13:2879 walks the battle character list ds5D96 and totals the monster side's (Side = SideMonsters) maximum and current hit points, then stores 20 * current div maximum * 5 in the morale byte ds6E2F that CheckMorale (ovl09:10D7) reads as a monster's second morale base; called by StartBattle and EndCombatRound"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl13_e20"
+new = "FastestEnemyMovement"
+kind = "routine"
+why = "ovl13:2908 walks the battle character list ds5D96 and returns half of the largest round Movement (ComputeMovement div 2) among the combatants on the side opposing Who that are still in the fight (Flag10D set); TryFlee compares it with half of Who's Movement to decide the escape and CheckMorale uses it as the panic threshold"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl13_e16"
+new = "ConfirmAttackTarget"
+kind = "routine"
+why = "ovl13:2998 decides whether an attack on Target may proceed: allowed when Target is on the side opposing Who (OpposingSide) or Who is computer-run (Quick), else it asks 'Attack Ally: ' (AskYesNo) and on a yes sets ds6DE2 and word 819 of ds49D6^, moves every computer-run party member to the monster side and clears its target, then recounts the sides; called by MeleeAttack (ovl08:0D45)"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl13_fn_2AA0"
+new = "ShowAimPrompt"
+kind = "routine"
+why = "ovl13:2AA0 draws the target's character panel and the combat cursor, shows 'Range = ' with the distance, builds the aim menu 'Next Prev Manual ' + the target name + 'Center Exit' and returns the key ReadPromptChoice reads under the title 'Aim:'; the target is named 'Target ' within Range when the aim is not ranged (ShowRange 0) or for a ranged weapon whose ammo can be used; called by ovl13_e17 (the player's aim cursor)"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl13_fn_2C3D"
+new = "ResolveAimedAttack"
+kind = "routine"
+why = "ovl13:2C3D records Target in the aim record (Who/X/Y from CombatantX/CombatantY), puts the combat cursor on its cell, and, when the Automatic byte is 1, asks ConfirmAttackTarget and resolves the attack through SweepEnemies or PerformAttack; called by the manual aim cursor ovl13_e17 via ovl13:2DFA and by ovl13:31D7 (whitepaper 5.5)"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl13_fn_2DFA"
+new = "RunAimCursor"
+kind = "routine"
+why = "ovl13:2DFA is the manual aim cursor: it moves a cursor over the combat map (MoveCombatCursor/DirStepX), walks a line of sight from Who (WalkLine), finds the combatant or body under the cursor (CombatantRecord/BodyTable), draws the panel, builds the 'Center Exit' prompt (ReadPromptChoice '(Use Cursor keys) '), and on Enter/'T' records the cell in Aim and, when Automatic, resolves the attack through ResolveAimedAttack; called by the aim wrapper ovl13_e17 (whitepaper 5.5)"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl13_e21"
+new = "ChooseCombatTarget"
+kind = "routine"
+why = "ovl13:37E4 picks a random in-range enemy (CollectEnemiesInRange) as Who's Combat^.Target for the automatic spell aim and the AI, with a second pass that opens the WalkLine tile gate; called by FindSpellTarget and ovl09 QuickTurn/MoveStep/AiTurn"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl13_fn_32E6"
+new = "ListAimTargets"
+kind = "routine"
+why = "ovl13:32E6 nested in ovl13_e17: ScanTargets over the whole map into ds6718 and copies ds6718[1..Count] into the aim target list Targets"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl13_fn_3389"
+new = "StepAimCursor"
+kind = "routine"
+why = "ovl13:3389 nested in ovl13_e17: steps the aim cursor through Targets by Delta, wraps it, redraws the old cell and draws the move with WalkCombatLine, returning the new target"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl13_e17"
+new = "RunAimTargets"
+kind = "routine"
+why = "ovl13:3558 is the Aim command's target loop: it lists the reachable targets (ListAimTargets), steps the cursor (StepAimCursor), shows ShowAimPrompt, lets the player move the cursor or resolve the aimed attack (RunAimCursor, ResolveAimedAttack), and clears the range line; called by PlayerTurn (ovl08:0310) and FindSpellTarget"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl13_e22"
+new = "RakeAttack"
+kind = "routine"
+why = "ovl13:39D2 is the round's rake: the ovl12 initialiser (store at ovl12 code 0x354D) puts it in AffectHandlers[$49] (DS:694C), and it shows 'Rakes...' and attacks again with the second attack form (WeaponAttacks[2]/WeaponDamage[2]) after the last attack resolution landed both slot-1 hits (ds6822[1] = 2, ovl13:16F2); make match UNIT=ovl13 FN=RakeAttack MATCH."
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl13_e23"
+new = "ForcedAttack"
+kind = "routine"
+why = "ovl13:3A86 is the affect $4A handler: the ovl12 initialiser (store at ovl12 code 0x354D) puts it in AffectHandlers[$4A] (DS:6950), and it makes Who attack the combatant its affect records with the second attack form (AttackSlots[1] 1, WeaponAttacks[1] 3, WeaponDamage[1] 4) and attack kind 1; make match UNIT=ovl13 FN=ForcedAttack MATCH."
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl13_e24"
+new = "GodsIntervene"
+kind = "routine"
+why = "ovl13:3B93 is the Alt-X debug command: it returns False unless the program was started with the STING argument (ParamStr(1); res04's DebugMode switch), then flashes 'The Gods intervene!' and takes every monster out of the fight (Flag10D 0, Status StatusDead, CombatantTable Kind 0); ovl08:0264 and ovl09:0690 call it for Alt-X and show 'That doesn't work' on False; make match UNIT=ovl13 FN=GodsIntervene MATCH."
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl16_fn_29AE"
+new = "TrainCharacter"
+kind = "routine"
+why = "ovl16:29AE is the T item of RunCharacterMenu (ovl16:0161): it trains the selected character, refusing the unconscious and those short of 1000 gold; its strings are Do you wish to train?, Training costs 1000 gp. and we only train conscious people"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl20_fn_0000"
+new = "AdvanceAffectDurations"
+kind = "routine"
+why = "ovl20:0000, called by ovl20_e1 after the game clock advances: scales Amount of digit Index down by ClockRadix and subtracts that elapsed time from each timed affect Duration, removing the affect through RemoveAffect when the duration does not outlast the pass (ovl20:01B7, ovl20:01FE)"
+date = "2026-10-14"
+
+[[rename]]
+old = "ds471D"
+new = "TimedAffectFlags"
+kind = "global"
+why = "ovl20:002F indexes DS:471D by the 1-based party index: AdvanceAffectDurations clears the flag, then sets it again while that member still has an affect whose Duration is above 0 (ovl20:01C2, ovl20:02A7); index 0 is never read"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl20_e1"
+new = "AdvanceGameClock"
+kind = "routine"
+why = "ovl20:03D5 adds Amount units of game-clock digit Index to the seven game variables at VarsAt4900 $49C6..$49CC, carries the local clock and spends that elapsed time through AdvanceAffectDurations (the game clock of the rest, whitepaper 5.22.1); callers ovl03:2AC1, ovl08:0880 EndCombatRound (1, 1), ovl14:073B MoveParty, ovl14:0818 CheckMapCell, ovl14:0989 HandleWildernessKeys and ovl20:0C9A RunRestPeriod (5, 1)"
+date = "2026-10-14"
+
+[[rename]]
+old = "ds49FB"
+new = "RestInterruptCounter"
+kind = "global"
+why = "ovl20:0C9A counts rest steps in it (Inc) and resets it when it reaches the threshold in ds49D6 word $2D2 (VarRestInterruptSteps), then checks for an interruption; the loader clears it (ovl11:03AD, POOLVARS). Rest's interruption counter (whitepaper 5.22.1)."
+date = "2026-10-14"
+
+[[rename]]
+old = "ds6DD8"
+new = "RestHealCounter"
+kind = "global"
+why = "ovl20:0871 increments it once per five-minute rest step and, at $120 (288 steps, 24 hours, RestHealCheckInterval), calls HealCharacter for every party member and resets it; MakeCamp clears it when the camp opens (ovl15:1E80). Whitepaper 5.22.1."
+date = "2026-10-14"
+
+[[rename]]
+old = "ds6DDA"
+new = "RestWindowActive"
+kind = "global"
+why = "ovl20:0C9A sets it to 1 while the rest screen is up and clears it on exit; RES12:0886 reads it to pick the top row of the message window. Nonzero says the rest screen is up. The loader clears it (ovl11:0410)."
+date = "2026-10-14"
 
 [[rename]]
 old = "ovl03_fn_0001"

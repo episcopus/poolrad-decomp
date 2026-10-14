@@ -17,3 +17,12 @@ tags = ["compiler", "case", "exit", "repeat", "until", "branch"]
 title = "A case arm that ends a repeat loop through its until test has no Exit"
 lesson = "In RestTimeMenu the arm 'R' sets the function result and the original jumps straight to the until test (07D5 jmp 083D), which ends the loop because 'R' is in the set. Writing Exit after the assignment adds a jump to the epilogue, two bytes more in that arm, so the jne before it gets displacement 08 instead of 06. When a case arm's last byte difference is a short-jump displacement two too large, look for an Exit the original did not have."
 evidence = ["src/OVL20.PAS#RestTimeMenu", "re/symbols.toml#ovl20:0721"]
+
+[[lesson]]
+id = "shortint-pred-not-dec"
+confidence = "V"
+units = ["*"]
+tags = ["compiler", "shortint", "pred", "dec", "index"]
+title = "ShortInt Pred is mov/dec/mov; Dec is a byte decrement; an index Pred is dec then cwde"
+lesson = "On a ShortInt, Dec(X) compiles to dec byte [X], and X := X - 1 compiles to mov al; cwde; dec ax; mov. X := Pred(X) is mov al; dec al; mov, with no cwde. Used as an index, Clock[Pred(X)] is mov al; dec al; cwde; shl, while Clock[X - 1] is mov al; cwde; dec ax. ovl20:0070 and ovl20:0084 are the Pred forms. A loop that both indexes and stores with mov/dec/mov is Pred twice, not Dec and not subtraction."
+evidence = ["tools/re/tp_idioms/ovl20/PRB20_A.PAS", "src/OVL20.PAS#AdvanceAffectDurations", "re/symbols.toml#ovl20:0000"]

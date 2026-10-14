@@ -41,7 +41,7 @@ reviewer: rev-sonnet, date: 2026-10-13, commit: 1315f47 (the branch head; the fi
 
 ### Round 2 findings
 
-- [ ] must-fix unit `var` block comment (RES06.PAS lines 61 to 64): "the EGA display pages ds4A16/ds4A18 (SetActivePage) are this memory seen with a page selected" is false. The pages are at segment `$A000 + Page * $200` (`add ax, 0xa000` at 0709:0096 and 0709:00AD, as the SetActivePage and SetPageSegment comments say), a different memory from the CGA/Tandy banks `$B800..$BE00` that TextPlane0/1 and GraphPlane0..3 overlay. A porter who believed it would alias the EGA pages with the scanline banks. Say that the planes are CGA/Tandy video memory (VideoAdapter 0 and 2) and that the EGA pages (VideoAdapter 1) live at `$A000` and `$A200`, reached only through ds4A16/ds4A18.
+- [x] must-fix unit `var` block comment (RES06.PAS lines 61 to 64): "the EGA display pages ds4A16/ds4A18 (SetActivePage) are this memory seen with a page selected" is false. The pages are at segment `$A000 + Page * $200` (`add ax, 0xa000` at 0709:0096 and 0709:00AD, as the SetActivePage and SetPageSegment comments say), a different memory from the CGA/Tandy banks `$B800..$BE00` that TextPlane0/1 and GraphPlane0..3 overlay. A porter who believed it would alias the EGA pages with the scanline banks. Say that the planes are CGA/Tandy video memory (VideoAdapter 0 and 2) and that the EGA pages (VideoAdapter 1) live at `$A000` and `$A200`, reached only through ds4A16/ds4A18. (fixed in 2d31648)
 - [ ] should-fix TextPlane/WordPlane comments and ClearRect constant `ScanlinesPerTextRow` (RES06.PAS lines 36, 567; DrawGlyph comment line 160): "4 scanlines per text row" is per bank. A text row is 8 pixel scanlines, 4 in each of the two banks (even scanlines in `$B800`, odd in `$BA00`; DrawGlyph mode 0 writes `Row * 4 .. Row * 4 + 3` in both). Say "4 rows in each bank (8 scanlines)" so the constant is not read as the total. `TWordPlane` is said to have "200 rows of 40 words" but a bank holds 100 rows of 80 bytes (8000 bytes, as TTextPlane); the extra rows are only there to keep the type wide, say that or why.
 - [ ] should-fix FillPlaneRect (RES06.PAS lines 123, 132): `40 * 8` and `Inc(DestOff, $28)` are bare while the unit has `ScreenCols` (40) and DrawGlyph has `GraphStride = $28` (the same 40 bytes per scanline); round 1 asked for the same constants everywhere. Hoist `GraphStride` to the unit constants and use `ScreenCols` and the 8 scanlines per cell row as a named constant. The `RightCol - LeftCol + 1` is the byte count (a cell column is one byte on the EGA page), say so in the comment.
 - [ ] should-fix whitepaper 5.15 (checklist item 10): the DrawGlyph entry still reads `DrawGlyph(Col, Row, Color, Count, Glyph, Cook)`, but the parameter is now `TextSet`; "the two EGA pages per plane" should read "the two EGA display pages (ds4A16/ds4A18), one write per plane through the Map Mask". The `re/symbols.toml` notes still say "EGA plane" for FillPlaneRect, SetActivePage and ClearFullScreen (history of the renames, accepted as such; the source is the current word).
@@ -51,3 +51,17 @@ reviewer: rev-sonnet, date: 2026-10-13, commit: 1315f47 (the branch head; the fi
 ## Round 2 verdict
 
 One open must-fix (the false claim in the `var` block comment about the EGA pages being the same memory as the scanline banks). Review not passed; no stamp written. The three should-fix items and the notes do not block.
+
+## Round 3
+
+reviewer: rev-sonnet, date: 2026-10-13, commit: eab0007 (the branch head, which includes the fix 2d31648 and its close df6626b).
+
+`make match UNIT=res06` (rerun): `unit: complete`, 18 matched, 2 nested, 0 differ, 0 stubs. `make readability UNIT=res06`: clean. `make packet UNIT=res06` rewritten.
+
+The round 2 must-fix is closed. The `var` block comment (RES06.PAS lines 61 to 68) now says the planes are the CGA/Tandy video memory (VideoAdapter 0 and 2, banks `$B800`, `$BA00`, `$BC00`, `$BE00`), that the EGA display pages (VideoAdapter 1) are a different memory at `$A000` and `$A200` (`Page shl 9 + $A000`), and that this unit reaches them only through ds4A16 and ds4A18. I checked it against the packet (`add ax, 0xa000` at 0709:0096 and 0709:00AD) and against RES07, which writes `$A000` and `$A200` directly (0464:1951 and 0464:1B52 in RES07.PAS). The claim is true and the earlier aliasing statement is gone.
+
+The three round 2 should-fix items are still open (the "4 scanlines per text row" wording and `ScanlinesPerTextRow`, the bare `40 * 8` and `$28` in FillPlaneRect, the DrawGlyph entry in whitepaper 5.15 still named `Cook`). They are weak wording and style points, not wrong claims that mislead a porter, and they do not block. They stay open for the decompiler to pick up when convenient.
+
+## Round 3 verdict
+
+Passed: no open must-fix finding; the review stamp is written. Open should-fix items (round 2) remain listed above.

@@ -64,7 +64,7 @@ begin
   DrawTextAt(1, $11, $A, 'Mortally wounded, the dragon roars!');
   DrawTextAt(1, $12, $A, 'The spirit of Tyranthraxus flares up');
   DrawTextAt(1, $13, $A, 'from the dragon''s body.');
-  res12_fn_27D9;
+  RedrawView;
   LoadPicture('FINAL' + ds4713, 1, 0, 0, ds470E);
   DrawPictureItemClipped(0, 0, 0, 0, ds470E, DrawBuf);
   AnimateFinalPicture(3, 5, 2, (10 - GameSpeed) * 5 div 2);
@@ -103,7 +103,7 @@ begin
   DelayByGameSpeed;
   DelayByGameSpeed;
   ds49F3 := ds4712;
-  res12_fn_27D9;
+  RedrawView;
 end;
 { ovl18:06B3. Animates the doors of the area view (Flag 1) or clears them (flag 0): it draws the
   doors of the two block-code tables DS:0900 and DS:090B through RemapPictureColours (bit 7 of a code

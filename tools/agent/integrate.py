@@ -21,6 +21,11 @@ the hand-off `integrate = rejected` with the reason and the log (`build/integrat
 UNIT=<id>` reuses its lock and worktree), fixes the branch and hands off again, which clears the
 rejection. DRY=1 stops after the check and leaves main alone.
 
+One integration runs at a time (an exclusive lock, `poolrad-integrate.lock` in the clone's git
+directory): the scripted integrator loop (tools/agent/integrator.py), an orchestrator session and the
+human may all call it, and two runs on the same hand-off would share build/integrate/<key>. A second
+call while one runs prints that and exits 3 without touching anything.
+
 A model is only needed when the driver reports a conflict in the same record; everything else is
 mechanical. The integrator registers itself as agent `integrator` with the orchestrator role, so the
 hand-off and lock tools accept it.
@@ -29,6 +34,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import fcntl
 import os
 import shutil
 import subprocess
@@ -56,6 +62,17 @@ class AlreadyMerged(Exception):
 
 def handoff_dir() -> Path:
     return common.common_dir() / "poolrad-handoffs"
+
+
+def exclusive():
+    """The open lock file while this process holds the integration lock, or None when another holds it."""
+    fh = (common.common_dir() / "poolrad-integrate.lock").open("w")
+    try:
+        fcntl.flock(fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        fh.close()
+        return None
+    return fh
 
 
 def pending(key: str | None = None) -> list[Path]:
@@ -263,6 +280,10 @@ def main(argv=None) -> int:
         main_dir = common.main_checkout()
         if common.git("status", "--porcelain", "--untracked-files=no", cwd=main_dir):
             raise ValueError("main has uncommitted tracked changes; commit or stash them first")
+        held = exclusive()
+        if held is None:
+            print("integrate: another make integrate is running; nothing done (try again when it ends)")
+            return 3
         identity.ensure(AGENT, "orchestrator", "make", "script", "integrate")
         install_driver(main_dir)
         todo = pending(a.key or None)

@@ -248,6 +248,9 @@ Write plainly: no em dashes or en dashes.
 
 ## Prompt: expert advisor (only after human startup and budget admission)
 
+Retired 2026-10-14 (AGENTS.md rule 14): the escalation tier of docs/process/WORKER.md takes hard
+routines. Kept for a human-started one-off diagnosis.
+
 ```text
 You are the one pre-started expert advisor, agent name "<expert-name>". Your actual harness/model/session
 metadata is registered as ROLE=expert; the human has admitted the protected, externally capped budget.
