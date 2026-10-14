@@ -66,7 +66,7 @@ procedure PoisonAttackTargetBonus0(Who: PCharacter; Affect: PAffect; Mode: Byte)
 procedure PoisonAttackTargetBonus4(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure PoisonAttackTargetBonus2(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ParalyzeAttackTargetFor2d8(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e56;
+procedure ParalyzeAttackTargetUnlessImmune(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e57;
 procedure ovl12_e58;
 procedure ovl12_e59;
@@ -197,6 +197,7 @@ const
   AffectParalysis = $34;        { the affect of "is Paralyzed" (ovl12:15EB): a spell affect that ovl15 names by its spell [I] }
   ParalysisData = $0C;          { the Data byte ovl12:15EB gives the paralysis affect }
   ParalysisImmuneRace = 2;      { TCharacter.Race (+$2E) that ovl12:16BB leaves unparalysed [?] }
+  ParalysisDuration = $3F;      { the rounds ovl12:16BB paralyses for (63) }
   AffectUnknown0F = $0F;        { purpose unknown; ovl04 removes it with the poison affect $37 (ovl04:0807) }
   AffectUnknown0FDuration = 10; { the Duration ovl12:05EB gives affect $0F }
   AffectUnknown18 = $18;        { purpose unknown: the affect SelectedCharacter must have for ds681E to stay 0 (ovl12:0918) }
@@ -1154,8 +1155,15 @@ procedure ParalyzeAttackTargetFor2d8(Who: PCharacter; Affect: PAffect; Mode: Byt
 begin
   ParalyzeAttackTarget(Who, RollDice(2, 8), 0);
 end;
-{ ovl12:16BB: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e56; begin end;
+{ ovl12:16BB. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Affect and Mode are not read, ovl24:0000).
+  Unless the character Who attacked last (Who^.Combat^.Target) has race ParalysisImmuneRace, it is paralysed for
+  ParalysisDuration rounds: ParalyzeAttackTarget (ovl12:15EB) with the unused byte 0. The map finds no direct caller
+  (auto:entry_56), so the affect that runs it is not known yet [?]. }
+procedure ParalyzeAttackTargetUnlessImmune(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  if Who^.Combat^.Target^.Race <> ParalysisImmuneRace then
+    ParalyzeAttackTarget(Who, ParalysisDuration, 0);
+end;
 { ovl12:16E6: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e57; begin end;
 { ovl12:170B: retf 10: 10 bytes of parameters; 0 bytes of locals }
