@@ -735,9 +735,10 @@ var
   ViewedCharacter: PCharacter;
   { Per-member timed-affect flags, indexed from 1 (member 1 is DS:471E). ovl20:0000 clears a member's
     flag, spends elapsed time on that member's affects, and sets the flag again while a timed affect
-    remains. Index 0 (this byte) is never read. ds471E is the same table from index 1. }
+    remains. Index 0 (this byte) is never read. ds471E is the same 72 bytes from index 1 and is only the
+    name ovl20's rest code uses; a port should read and write TimedAffectFlags. }
   TimedAffectFlags: array[0..$48] of Byte;
-  ds471E: array[0..$47] of Byte;  { 72 bytes reset to 1 when rest starts (ovl20:0CE5) }
+  ds471E: array[0..$47] of Byte;  { the same 72 bytes from index 1; prefer TimedAffectFlags }
   { The eight compass names the location line of res12 (00BA:290B) indexes with PartyFacing, each a
     three-byte string[2] at DS:25A8: N, NE, E, SE, S, SW, W, NW (the bytes are in the image). }
   FacingNames: array[0..7] of string[2];
@@ -776,7 +777,9 @@ var
                                     (ovl15:1D02, 1DE9); the loader sets it to 1 (ovl11:0397) }
   ds49F8: Byte;                   { cleared by the loader (ovl11:03A6) }
   ds49F9: Byte;                   { set to 1 by the loader (ovl11:03EB) }
-  ds49FB: Word;                   { cleared by the loader (ovl11:03AD) }
+  RestInterruptCounter: Word;     { rest steps since the last interruption check: ovl20:0C9A counts them and
+                                    resets it at the ds49D6 word VarRestInterruptSteps; the loader clears it
+                                    (ovl11:03AD) }
   PartyDestroyed: Byte;           { 1 when no player-run member is left (SettleBattleOutcome); loader clears it }
   ds4A00: Byte;                   { set to 1 by the loader (ovl11:03A1) and by EndBattle (ovl05:1631) }
   ds4A24: Pointer;                { screen buffer the loader allocates through AllocatePicture (ovl11:00D4) }
@@ -876,7 +879,9 @@ var
   LastPromptExtKey: Byte;         { the last prompt's Flag (an extended key), copied by ReadPromptChoice }
   PromptTimeout: Longint;         { prompt timeout in GameClock hundredths; 0 waits forever (ReadPromptChoice) }
   PromptTimeoutKey: Char;         { the key the prompt returns when the timeout runs out (ReadPromptChoice) }
-  ds6DDA: Byte;                   { cleared by the loader (ovl11:0410) }
+  RestWindowActive: Byte;         { nonzero while the rest screen is up: ovl20:0C9A sets it to 1 on entry and 0
+                                    on exit, and RES12:0886 picks the top row of its message window from it;
+                                    loader clears it (ovl11:0410) }
   ds6DDE: array[0..2] of Byte;    { 3-byte buffer the loader fills with 1 (ovl11:0342) }
   ds6DE0: Byte;                   { knock menu flag: e1 offers Knock while nonzero; overlaps ds6DDE[2] }
   ds6DDF: Byte;                   { pick/knock menu flag (e1 offers Pick/Knock while nonzero) }
@@ -1141,7 +1146,9 @@ var
   { Per-member rest-study delay, decremented each rest step (ovl20:0B33..0B91). When it reaches zero,
     the next pending spell's level resets it to three times that level (ovl20:0B80..0B91). }
   RestStudyCountdowns: array[0..6] of Byte;
-  ds6DD8: Word;                   { cleared when the camp opens (ovl15:1E80); meaning unknown }
+  RestHealCounter: Word;          { rest steps since the last whole-party heal: ovl20:0871 counts to
+                                    RestHealCheckInterval (288 steps, 24 hours) then heals and resets it;
+                                    MakeCamp clears it when the camp opens (ovl15:1E80) }
   { The direction of each cloud arm 1..4 (ovl12:0CC3): DirStepX[ds290D[Arm]] and DirStepY[ds290D[Arm]] give the
     arm's step from the centre. The values are not read yet [?]. }
   ds290D: array[0..4] of Byte;

@@ -30,7 +30,7 @@ One line per finding: `- [ ] <severity> <routine name>: <what and why, with the 
 Severity: must-fix (blocks review-pass), should-fix, note. When the decompiler fixes one, mark it
 `- [x]` and add `(fixed in <commit>)`. Do not delete findings.
 
-- [ ] must-fix ovl20_e1: the routine keeps a placeholder name and says `Purpose unknown:` although its own
+- [x] must-fix ovl20_e1: the routine keeps a placeholder name and says `Purpose unknown:` although its own
   comment (and whitepaper 5.22.1) states the purpose in full: it is the game clock advance. It adds `Amount`
   units to digit `Index` of the seven game-clock words (GameVars 198..204), carries, writes back and spends
   the time on timed affects. Its callers confirm it: the end of every combat round `ovl20_e1(1, 1)`
@@ -42,8 +42,8 @@ Severity: must-fix (blocks review-pass), should-fix, note. When the decompiler f
   and say in the unit comment (lines 2-4, which mention only `RunRestPeriod` and `AdvanceAffectDurations`)
   that this routine is the unit's main entry for other units. Also name the bare `$49C6` (line 223 and 230,
   the first game-clock word as a `VarsAt4900` index) as a constant; the comment calls it "49C6h..49CCh" and
-  the whitepaper "GameVars words 198..204", so a port cannot tell which numbering is meant.
-- [ ] must-fix RunRestPeriod, CheckRestHealing, POOLVARS (ds49FB, ds6DD8, ds6DDA): the interruption test
+  the whitepaper "GameVars words 198..204", so a port cannot tell which numbering is meant. (fixed in 871d3e5)
+- [x] must-fix RunRestPeriod, CheckRestHealing, POOLVARS (ds49FB, ds6DD8, ds6DDA): the interruption test
   uses two game variables as bare numbers, `ds49D6^[$2D2]` (lines 584, 587) and `ds49D6^[$2D3]` (590),
   and the code gives no name or in-source meaning for them. The whitepaper (5.22.1) knows them: `$2D2` is
   the number of rest steps between interruption checks (the counter `ds49FB` is compared with it) and `$2D3`
@@ -58,15 +58,15 @@ Severity: must-fix (blocks review-pass), should-fix, note. When the decompiler f
   `RestInterruptCounter`, `RestHealCounter`, `RestWindowActive`; evidence above) or at least correct the
   POOLVARS comments, which now contradict this unit's own comments (checklist 4: `dsXXXX` globals carry what is
   known). `ds471E` (72 bytes reset to 1) is the same table as `TimedAffectFlags` from index 1; say once in
-  the code comment which of the two names a port should use.
-- [ ] must-fix CarryRestClock: a missing quirk mark. The top digit (6, radix 256) is never reduced, so
+  the code comment which of the two names a port should use. (fixed in 6998fcf and 16d2a8f)
+- [x] must-fix CarryRestClock: a missing quirk mark. The top digit (6, radix 256) is never reduced, so
   once `Clock[6] >= 256` every later call ages every party member by another year, and the call is made for
   every step of `ovl20_e1` and for `NormalizeRestTime`. The comment records "the radix is kept [I]" but not
   that this repeats, and it is not marked `QUIRK ovl20:037B:` (the `inc word es:[di+30h]`). Mark it with the
   address (checklist 6) and state the consequence (the aging repeats at every carry call while the year digit
   stays at or above 256; whether the game can reach that is not proven, so say so). The bare `6` (loop bound
-  and `Digit <> 6`, lines 178 and 180) should name the top digit (`TopClockDigit`).
-- [ ] must-fix NormalizeRestTime, SpendRestTime, ShowRestTime, RestTimeMenu, RunRestPeriod: meaningful numbers
+  and `Digit <> 6`, lines 178 and 180) should name the top digit (`TopClockDigit`). (fixed in ea34032)
+- [x] must-fix NormalizeRestTime, SpendRestTime, ShowRestTime, RestTimeMenu, RunRestPeriod: meaningful numbers
   left bare, although the unit shows the habit of naming them (`RestMinuteStep`, `RestHoursField`, ...) and
   then does not use them. The `RestTime` digits are indexed by raw numbers everywhere: `RestTime[1]` minutes,
   `[2]` tens of minutes, `[3]` hours, `[4]` days, `[5]` months (lines 201 to 361, 561). Name the digits once
@@ -85,7 +85,7 @@ Severity: must-fix (blocks review-pass), should-fix, note. When the decompiler f
   `RestTimeMenu` (`'H'`, `'P'`, `'K'`, `'M'`, lines 324 to 332) are scan codes (up, down, left, right) written as
   letters, and `'X'` is an invented "ignore" key; the comment never says which arm is which key, so a reader
   sees `'M'` mean both "minutes" (line 346) and "right arrow" (332). Name them (`ScanUp`, `ScanDown`,
-  `ScanLeft`, `ScanRight`) and say what `'X'` is for.
+  `ScanLeft`, `ScanRight`) and say what `'X'` is for. (fixed in 6a4a03f)
 - [ ] should-fix CheckRestHealing: the comment says it "calls HealCharacter for every party member" but
   not that the amount is one hit point per member, per 288 steps (a day), with Flag 0 (HealCharacter then
   skips members with affect $32, per its own comment, ovl24:175D). That is the whole game effect of the

@@ -291,7 +291,7 @@ end;
   the 16x16 area map ($F steps to 0, 0 steps to $F), then refreshes the cell bytes
   ds6AB0 (through WallIdAt) and ds6AB1 (through EventByteAt), resets the ds6DDE..ds6DE0
   menu flags to 1, and steps
-  the sound through ovl20_e1 (mode 2 when ds49D6^[714] has bit 0, else mode 1).
+  the sound through AdvanceGameClock (mode 2 when ds49D6^[714] has bit 0, else mode 1).
   Called by DoWildernessMenu. }
 procedure MoveParty;
 begin
@@ -310,9 +310,9 @@ begin
   FillChar(ds6DDE, 3, 1);
   ds6AB1 := EventByteAt(PartyMapColumn, PartyMapRow);
   if ds49D6^[714] and 1 > 0 then
-    ovl20_e1(1, 2)
+    AdvanceGameClock(1, 2)
   else
-    ovl20_e1(1, 1);
+    AdvanceGameClock(1, 1);
 end;
 { ovl14:0818. Checks the area-map block ahead of the party: steps the GameVars area-map
   position by the icon set's direction, clamps it (columns 0..$F, rows 0..$23), and
@@ -344,12 +344,12 @@ begin
       begin
         GameVars^[VarMapX] := GridCol;
         GameVars^[VarMapY] := GridRow;
-        ovl20_e1($C, 3);
+        AdvanceGameClock($C, 3);
       end;
   else
     GameVars^[VarMapX] := GridCol;
     GameVars^[VarMapY] := GridRow;
-    ovl20_e1($C, 3);
+    AdvanceGameClock($C, 3);
   end;
 end;
 { ovl14:0989. The wilderness key driver (called by ovl03_fn_3379): in the 3D view it
@@ -396,7 +396,7 @@ begin
           'L':
             begin
               ds49D6^[714] := ds49D6^[714] or 2;
-              ovl20_e1(1, 2);
+              AdvanceGameClock(1, 2);
               EclPC := ds49E5;
               Redraw := 1;
             end;
@@ -460,7 +460,7 @@ begin
           'L':
             begin
               ds49D6^[714] := ds49D6^[714] or 2;
-              ovl20_e1(1, 2);
+              AdvanceGameClock(1, 2);
               EclPC := ds49E5;
               Redraw := 1;
             end;

@@ -869,7 +869,7 @@ begin
   end;
 end;
 { ovl15:1E6F. Entry 1, called by ovl03: the party makes camp. Sets the view mode to ViewModeCamp
-  (restored on leaving), clears ds6DD8 and RestTime, shows 'The party makes camp...', cancels any
+  (restored on leaving), clears RestHealCounter and RestTime, shows 'The party makes camp...', cancels any
   unfinished study (CancelPartyStudy, again on leaving) and runs the Camp menu 'Save View Magic
   Rest Alter Exit' (CampMenuText) until Exit or EndCamp: S saves (SaveGame) and offers 'Quit TO
   DOS ', V ViewSelectedCharacter (the view), M CampMagicMenu, R RestParty, A AlterMenu. EndCamp is set by a rest
@@ -882,7 +882,7 @@ var
 begin
   SavedMode := ds49F3;
   ds49F3 := ViewModeCamp;
-  ds6DD8 := 0;
+  RestHealCounter := 0;
   FillChar(RestTime, SizeOf(RestTime), 0);
   RedrawView;
   ClearWindow(1, $11, $26, $16);

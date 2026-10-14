@@ -172,7 +172,7 @@ const
     this many records of ds6718 around its scan. }
   SavedScanBytes = $D8;
   { The game clock is a seven-digit mixed-radix count in the game variables (VarsAt4900^[$49C6+Digit];
-    ovl20_e1 advances it and ShowRestTime reads the same digits). The location line (00BA:290B) reads
+    AdvanceGameClock advances it and ShowRestTime reads the same digits). The location line (00BA:290B) reads
     digit 1 and 2 (the minute ones and tens) and digit 3 (the hours) to show the time as hours:minutes. }
   ClockMinutes = $49C7;
   ClockTenMinutes = $49C8;
@@ -869,7 +869,7 @@ end;
   mode 5) and a fixed window otherwise; draws Who's name (DrawCharacterName) and the paged text Text
   (ShowPagedText) and, when Wait is set, delays DelayByGameSpeed and clears the window again
   (ClearCharacterMessage). Used for the per-character combat and camp messages ('is bandaged',
-  'flees in panic', 'is cured'). Globals: ds49F3 (view mode), ds6DDA (picks the window top).
+  'flees in panic', 'is cured'). Globals: ds49F3 (view mode), RestWindowActive (picks the window top).
   Side effects: video memory, the keyboard through ShowPagedText's paging. }
 procedure ShowCharacterMessage(Who: PCharacter; Text: string; Row, Wait: Byte);
 var
@@ -883,7 +883,7 @@ begin
   end
   else
   begin
-    if ds6DDA <> 0 then
+    if RestWindowActive <> 0 then
       Top := $12
     else
     begin

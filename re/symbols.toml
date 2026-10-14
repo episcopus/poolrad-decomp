@@ -7733,12 +7733,12 @@ id = "ovl20:03D5"
 unit = "ovl20"
 addr = "ovl20:03D5"
 size = 165
-name = "ovl20_e1"
-signature = "procedure ovl20_e1(Amount: Byte; Index: ShortInt)"
+name = "AdvanceGameClock"
+signature = "procedure AdvanceGameClock(Amount: Byte; Index: ShortInt)"
 c_name = "ovl20_e1"
 level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl20_e1 (ovl20:03D5 adds Amount units of game-clock digit Index to the seven game variables at VarsAt4900 $49C6..$49CC, carries the local clock and spends that elapsed time through AdvanceAffectDurations (the game clock of the rest, whitepaper 5.22.1); callers ovl03:2AC1, ovl08:0880 EndCombatRound (1, 1), ovl14:073B MoveParty, ovl14:0818 CheckMapCell, ovl14:0989 HandleWildernessKeys and ovl20:0C9A RunRestPeriod (5, 1)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
