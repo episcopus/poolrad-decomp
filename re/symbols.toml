@@ -4006,12 +4006,12 @@ id = "ovl12:1935"
 unit = "ovl12"
 addr = "ovl12:1935"
 size = 164
-name = "ovl12_e63"
+name = "HoldWeakTargetFast"
 signature = ""
 c_name = "ovl12_e63"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_63"
+notes = "renamed from ovl12_e63 (ovl12:1935 is the weak-target twin of StartBloodDrain (ovl12:18B5): when the target's Strength (+$10) is below 19 it gives the drinker affect 4A (AffectBloodDrainWeak, Duration 0, DrainBloodFromCombatant on removal) and the victim affect 3A (AffectHeldFast) and shows 'is held fast' on the victim in colour 10); auto:entry_63"
 evidence = ["prologue"]
 
 [[routine]]

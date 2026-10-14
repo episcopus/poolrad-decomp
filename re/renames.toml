@@ -3833,3 +3833,10 @@ kind = "routine"
 why = "ovl12:18B5 gives the drinker affect 4B (AffectBloodDrain, whose removal runs DrainBloodFromCombatant ovl12:176F, which reads the victim index from its Data) and the victim affect 3A (AffectHeldFast, which ovl12:1935 announces as 'is held fast'); it starts the blood drain"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e63"
+new = "HoldWeakTargetFast"
+kind = "routine"
+why = "ovl12:1935 is the weak-target twin of StartBloodDrain (ovl12:18B5): when the target's Strength (+$10) is below 19 it gives the drinker affect 4A (AffectBloodDrainWeak, Duration 0, DrainBloodFromCombatant on removal) and the victim affect 3A (AffectHeldFast) and shows 'is held fast' on the victim in colour 10"
+date = "2026-10-13"
+

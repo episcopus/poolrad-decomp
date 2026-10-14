@@ -73,7 +73,7 @@ procedure SetFlagAndLowerAttackRollByFour(Who: PCharacter; Affect: PAffect; Mode
 procedure ovl12_e60(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure DrainBloodFromCombatant(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure StartBloodDrain(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e63;
+procedure HoldWeakTargetFast(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e64;
 procedure ovl12_e65;
 procedure ovl12_e66;
@@ -252,6 +252,10 @@ const
   AffectHeldFast = $3A;         { the affect of the victim of a blood drain; ovl12:1935 shows "is held fast" when it gives it }
   HeldFastData = $FF;           { the Data byte the blood drain gives AffectHeldFast }
   HeldFastDuration = 0;         { the Duration the blood drain gives AffectHeldFast }
+  HeldFastStrengthLimit = $13;  { a target whose Strength (TCharacter +$10) is below this is held fast (ovl12:1935) }
+  AffectBloodDrainWeak = $4A;   { the other blood drain affect, given to the drinker by ovl12:1935; its handler is not
+                                  known yet [?] }
+  BloodDrainWeakDuration = 0;   { the Duration ovl12:1935 gives AffectBloodDrainWeak }
 
 { ovl12:0000. Cancels the hook of an affect: when AffectId is 0 or is the affect the hooks are offering
   (HookAffectId), HookAffectId and DamageAmount are cleared. HookAffectId 0 reads as "is Unaffected"
@@ -1255,8 +1259,23 @@ begin
   AddAffect(AttackTarget, AffectHeldFast, HeldFastDuration, HeldFastData, NoRemoveHandler);
   CallAffectHandler(AffectHeldFast, AttackTarget, nil, 0);
 end;
-{ ovl12:1935: retf 10: 10 bytes of parameters; 14 bytes of locals }
-{@stub} procedure ovl12_e63; begin end;
+{ ovl12:1935. Affect handler that holds a weak combat target fast (the AffectHandlers shape: Who, Affect and Mode; Affect and
+  Mode are not read, ovl24:0000). The character Who attacked last (Who's combat Target) is copied into AttackTarget. When
+  AttackTarget's Strength (TCharacter +$10) is below HeldFastStrengthLimit, Who gets AffectBloodDrainWeak (Duration 0, its
+  Data the combatant index of AttackTarget, so DrainBloodFromCombatant (ovl12:176F) runs on it when it is removed),
+  AttackTarget gets AffectHeldFast and that affect's handler runs, and "is held fast" is shown on AttackTarget in colour 10
+  (res12_fn_16EC). Which affect runs it is not known yet [?]. }
+procedure HoldWeakTargetFast(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  AttackTarget := Who^.Combat^.Target;
+  if AttackTarget^.Strength < HeldFastStrengthLimit then
+  begin
+    AddAffect(Who, AffectBloodDrainWeak, BloodDrainWeakDuration, CombatantIndex(AttackTarget), RunsHandlerOnRemove);
+    AddAffect(AttackTarget, AffectHeldFast, HeldFastDuration, HeldFastData, NoRemoveHandler);
+    CallAffectHandler(AffectHeldFast, AttackTarget, nil, 0);
+    res12_fn_16EC(AttackTarget, 'is held fast', $A, 1);
+  end;
+end;
 { ovl12:19D9: retf 10: 10 bytes of parameters; 2 bytes of locals }
 {@stub} procedure ovl12_e64; begin end;
 { ovl12:1A19: retf 10: 10 bytes of parameters; 0 bytes of locals }
