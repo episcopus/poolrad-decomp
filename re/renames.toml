@@ -4008,3 +4008,122 @@ kind = "routine"
 why = "00BA:2F57 returns True when Who's level in one class (ClassLevels[ClassIndex], +$96) has reached the maximum its race (+$2E) and strength (+$10) allow, so the trainers (ovl22:2D39) must not raise that class level further"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl16_fn_0000"
+new = "FreeCharacter"
+kind = "routine"
+why = "ovl16:0000 frees a character: Combat (+108h, size 16h), the Items list (+C8h, size 3Fh) and the Affects list (+7Fh, size 9), frees the record (size 11Dh) and clears the caller pointer; called by ovl16_e2"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl16_e1"
+new = "RunCharacterMenu"
+kind = "routine"
+why = "ovl16:0161 entry point (called by ovl03:2E10): draws the training-hall window and its 11-function menu at DS:0619 and dispatches C create, D drop, M modify, T train, V view, A add, R remove, L load, S save, B finish, E exit, J the STING cheat"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl16_fn_1F37"
+new = "DropCharacter"
+kind = "routine"
+why = "ovl16:1F37 removes the selected character from the party: it asks AskYesNo 'Drop <name> forever?' and 'Are you sure?', then shows 'bids you farewell' or 'You dump <name> out back' and calls ovl16_e2(False, True); it is the D (Drop) item of the training-hall menu RunCharacterMenu (ovl16:0161), whitepaper 5.8 'Alter'"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl16_fn_209F"
+new = "ModifyCharacter"
+kind = "routine"
+why = "ovl16:209F is the M (Modify) item of the training hall: it refuses an experienced character with '<name> can t be modified.' and lets the player raise/lower the six ability scores and HP with the arrows, Keep (K) or Exit (E); called by RunCharacterMenu (ovl16:0161)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl16_fn_33E7"
+new = "ChooseHeadAndBody"
+kind = "routine"
+why = "ovl16:33E7 shows the selected character's head and body pictures (ShowHeadBodyWindow) and its prompt 'Head Body Keep' cycles HeadBank (+BB) and BodyBank (+BC); the head/body step of the create flow (whitepaper 5.8)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl16_e2"
+new = "RemoveSelectedCharacter"
+kind = "routine"
+why = "ovl16:3291 unlinks SelectedCharacter from the party list ds5D96 (TCharacter.Next +104) and frees its record with FreeCharacter; it lowers the party size ds49D6^[830] unless Uncounted, and frees the CombatIcon picture slot unless FreePicture is false; the removal counterpart of AddPartyMember (ovl17:1446)"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl16_fn_306D"
+new = "AddSavedCharacters"
+kind = "routine"
+why = "ovl16:306D is the training hall's Add (A) function (RunCharacterMenu ovl16:0161): its menu 'Add a character: ' / 'Add Exit' lists the saved characters on disk (ReadSavedCharacterList), LoadCharacterFile loads the picked one and AddPartyMember puts it in the party"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl16_fn_34DF"
+new = "DrawIconCell"
+kind = "routine"
+why = "ovl16:34DF fills one icon-editor cell (FillPictureRect over 12 cells x 24 rows from @ds260A into DrawBuf) and draws the two mirrored halves of the character's icon (DrawIcon, indices $19 and $C) at CellCol and CellCol+3; called by the icon editor ovl16_e3"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl16_fn_35BE"
+new = "CopyPictureSlot"
+kind = "routine"
+why = "ovl16:35BE copies one picture slot of DS:5E5A into another (both halves' tile bytes and packed pixel buffers through Move) and, when its third parameter is set, recolours the destination with the selected character's Figure[1..6] colour pairs, the same recolouring BuildCharacterIcon (ovl17:0482) applies"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl16_fn_3F31"
+new = "ConstitutionHitPointAdjustment"
+kind = "routine"
+why = "ovl16:3F31 computes the signed constitution hit-point adjustment shared by the hit-point floor ovl16:3FB3 and the ceiling ovl16:408C: it sums ds408E[Constitution] (the AD&D 1e table: -2 at 3, -1 at 4..6, 0 at 7..14, +1 at 15, +2 at 16..18) over the classes with a level and adds the fighter bonus (ClassMask 2 above constitution 16 and 17); callers ModifyCharacter ovl16:209F use it through 3FB3/408C"
+date = "2026-10-14"
+
+[[rename]]
+old = "ds408E"
+new = "ConstitutionHitPointTable"
+kind = "global"
+why = "DS:408E is the AD&D 1e constitution hit-point adjustment table read by ovl16:3F31 (ConstitutionHitPointAdjustment): signed byte per constitution, -2 at 3, -1 at 4..6, 0 at 7..14, +1 at 15, +2 at 16..18; indexed by TCharacter.Constitution (+0x14), read as a signed byte (tools/re/tp_idioms/ovl16/CONHP.PAS)"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl16_fn_3FB3"
+new = "MinHitPoints"
+kind = "routine"
+why = "ovl16:3FB3 is the floor ModifyCharacter (ovl16:209F) clamps a lowered HpMax to ('if ovl16:3FB3(SelectedCharacter) > HpMax then HpMax := ...'): over the classes with a level it counts the hit dice and totals their levels (one extra for class 4 and 7, whose maximum die is one higher, ovl16:408C), then divides by the class count after adding the constitution adjustment (ConstitutionHitPointAdjustment ovl16:3F31) and never returns below 1; the minimum-roll counterpart of the ceiling ovl16:408C"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl16_fn_408C"
+new = "MaxHitPoints"
+kind = "routine"
+why = "ovl16:408C is the ceiling ModifyCharacter (ovl16:209F) clamps a raised HpMax to: over the classes with a level it totals the level times each class's maximum hit die and divides by the class count after adding the constitution adjustment (ConstitutionHitPointAdjustment ovl16:3F31), never below 1; the maximum-roll counterpart of MinHitPoints ovl16:3FB3"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl16_fn_4235"
+new = "RollHitPoints"
+kind = "routine"
+why = "ovl16:4235 rolls the hit points a level gains: it sums over the classes in ClassBits that the character has a level in one RollDice roll of that class's hit dice (ds08B6 dice of ds08BE sides), with a first-level class raised to two thirds of its die; called by the training hall ovl16:29AE and the create-character run ovl16:1D1E, which divide the sum by the class count"
+date = "2026-10-14"
+
+[[rename]]
+old = "ds08B6"
+new = "ClassHitDiceCount"
+kind = "global"
+why = "ovl16:4235 pushes ds08B6[Class] as RollDice's Count and ds08BE[Class] as its Sides for every class the character has a level in; the image at DS:08B6 holds 1,1,1,1,2,1,1,2 (two dice for ranger and monk)"
+date = "2026-10-14"
+
+[[rename]]
+old = "ds08BE"
+new = "ClassHitDieSides"
+kind = "global"
+why = "ovl16:4235 pushes ds08BE[Class] as RollDice's Sides and raises a first-level roll to (ds08BE[Class] * 2) div 3; the image at DS:08BE holds 8,8,10,10,8,4,6,4 sides (its entry 7 is the first byte of the CHEAD suffix table ds08C5)"
+date = "2026-10-14"
+
+[[rename]]
+old = "ovl16_fn_42ED"
+new = "PayGold"
+kind = "routine"
+why = "ovl16:42ED takes Amount gold pieces from Who's money for the training hall (ovl16:29AE calls it with the training cost): it converts the amount to copper, hands coins over from copper up (one more coin than the remainder needs) and gives the overshoot back as change from platinum down; the enum coin kind and Succ/Pred are proven by tools/re/tp_idioms/ovl16/PAYPRB2.PAS"
+date = "2026-10-14"
+

@@ -141,6 +141,13 @@ type
     Frames: array[1..8] of TAnimFrame;  { +2 }
   end;
   TItem = TMenuLine;
+  { One slot of the training-hall function menu at DS:0619 (11 records, stride 42): the line the
+    create-character overlay (ovl16) draws and whether the function is offered. RunCharacterMenu reads
+    Name[I] with I = 0..10 and gates the hotkey 'C'..'J' on Present. }
+  TFunctionSlot = record
+    Name: string[40];
+    Present: Byte;               { +$29: nonzero: the function is drawn and its hotkey works }
+  end;
   { A character in memory: the 285-byte record of whitepaper 4.2.5 (name, abilities and hp_max
     [V] by tools/re/records.py). Only the fields a decompiled unit uses are named; the Pad
     arrays keep the offsets. }
@@ -527,6 +534,20 @@ var
     indices and the path pattern. CheckCodeWheel picks one at random. }
   ds0000: array[0..12] of TCodeWheelEntry;  { the code wheel records; see above }
   ds04DF: string[40];             { prompt string HandleWildernessKeys passes to ReadPromptChoice; filled elsewhere }
+  { One bit per class 0..7 (the value is added to a class-bit mask): ovl16:29AE builds the character's
+    class bits from the classes with a level above 0 (DS:05DE[ClassLevels]) and the bits it may train. }
+  ds05DE: array[0..7] of Byte;
+  { The 'C D M T V A R L S B E J' hotkey line: the prompt RunCharacterMenu (ovl16:0161) passes to
+    ReadPromptChoice under the title 'Choose a function '. }
+  ds05F0: string[23];
+  ds0619: array[0..10] of TFunctionSlot;  { the training-hall function menu (see TFunctionSlot) }
+  { The hit dice of the eight classes 0..7, rolled by ovl16:4235: ClassHitDiceCount[Class] dice of
+    ClassHitDieSides[Class] sides. The image holds 1,1,1,1,2,1,1,2 (cleric, druid, fighter, paladin,
+    ranger, magic-user, thief, monk; two dice for the ranger and the monk) and 8,8,10,10,8,4,6,4
+    sides. Entry 7 of the sides table is the byte at DS:08C5, entry 0 of the CHEAD suffix table
+    below (the image). }
+  ClassHitDiceCount: array[0..7] of Byte;    { the number of hit dice of the eight classes }
+  ClassHitDieSides: array[0..7] of Byte;     { the sides of each class's hit die }
   { The CHEAD/CBODY character-picture name suffix table: the byte ds08C5[FigureIndex] is the
     character BuildCharacterIcon appends to 'CHEAD'/'CBODY' (index 1 gives 'S', 2 gives 'T'). Its extent is
     unverified: the region runs to the door table at DS:0900. }
@@ -557,6 +578,23 @@ var
     I 1..6 holds 1, 2, 3, 4, 6, 7 (the destination colour of the I-th of the six colour pairs, and
     plus 8 for the high nibble). It sits inside the ThiefSkillTable region (DS:3CF4). }
   ds3CF5: array[0..$F] of Byte;
+  { The per-race ability limits ModifyCharacter (ovl16:209F) and ovl16:056C clamp to: a 16-byte row
+    per race, a minimum and maximum column per ability (ds3DA3, indexed by [Race, B9E] or
+    [Race, column]). Columns +0/+2/+4 hold the Strength minimum, maximum and exceptional percentile
+    maximum (RaceStrengthMax and RaceStrengthPercent are the same rows viewed two and four columns
+    on), columns +6/+7 .. +14/+15 the minimum and maximum of Intelligence, Wisdom, Dexterity,
+    Constitution and Charisma. }
+  ds3DA3: array[0..$F, 0..$F] of Byte;
+  RaceStrengthMax: array[0..$F, -2..$D] of Byte absolute ds3DA3;
+  RaceStrengthPercent: array[0..$F, -4..$B] of Byte absolute ds3DA3;
+  { The per-class ability minimums ModifyCharacter clamps to: six columns per class (Strength ..
+    Charisma), indexed by [ClassMask, Stat]. }
+  ds3F81: array[0..$10, 0..5] of Byte;
+  { The constitution hit-point adjustment table (the AD&D 1e table): ConstitutionHitPointTable[Constitution] is the
+    hit-point adjustment a class with a level gets, signed (Constitution 3 gives -2, 4..6 -1,
+    7..14 0, 15 +1, 16..18 +2). ovl16:3F31 sums it over the classes the character has a level in
+    and adds the fighter bonus (Constitution above 16). Indexed by TCharacter.Constitution (+$14). }
+  ConstitutionHitPointTable: array[0..$12] of ShortInt;
   ds43DC: Word;                   { nonzero after overlay sizing means the overlay manager failed: res08_init
                                     shows 'Overlay error, program abort!' and halts (probably OvrResult) }
   NewHeapEnd: Pointer;            { DS:$4848: HeapEnd cut by $400 paragraphs; assigned to HeapEnd }
@@ -659,6 +697,9 @@ var
   ds093D: array[0..$F] of Byte;   { the third 16-byte record AnimateAreaDoors passes to RemapPictureColours }
   ds094D: array[0..8] of Word;    { the per-step DrawAreaView columns of AnimateAreaDoors (indexed 0..8) }
   ds095F: array[0..8] of Word;    { the per-step DrawAreaView rows of AnimateAreaDoors (indexed 0..8) }
+  { Set to 1 by the RunCharacterMenu STING cheat (ovl16:0161) and read there to offer the modify
+    function; its meaning beyond that is unknown. }
+  ds470C: Byte;
   ds470E: Pointer;                { the FINAL picture bank ShowEndingNarrative loads through LoadPicture and draws }
   ds4712: Byte;                   { the DS:49F3 value ShowEndingNarrative saves at the start and restores at the end }
   ds4713: string[1];              { Str(TileSet): the picture number ShowEndingNarrative appends to FINAL }
@@ -961,6 +1002,10 @@ var
     read: it is declared so that the index base, which RecalcClassStats adds (ovl23:0103), names it. }
   SpellTable: array[0..$38] of TSpellEntry;  { see above }
   ClassThac0Table: array[0..7, 0..10] of Byte;  { the to-hit value per class 0..7 and level (RecalcClassStats) }
+  { The experience needed to reach each level, one 56-byte row (14 LongInts, level 0..13) per class 0..7
+    at DS:409B: ovl16:29AE reads ds409B[class, level+1] (the next level's threshold) and
+    ds409B[class, level+2] (that of the level after, 0 when the class is capped). }
+  ds409B: array[0..7, 0..13] of LongInt;
   ds40BC: Byte;                   { the byte before ClericSlotTable; see above }
   ClericSlotTable: array[0..12, 1..3] of Byte;  { cleric spell slots of levels 1..3 per cleric level }
   ds41D4: Byte;                   { the byte before MageSlotTable; see above }

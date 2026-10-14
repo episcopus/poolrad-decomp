@@ -1085,3 +1085,18 @@ evidence = "res12_fn_0B73 (00BA:0B73) tests entries 1..4 through res12_fn_2199 a
 offset = 0x4846
 name = "ReadiedItemWeight"
 evidence = "res12_fn_0BB8 (00BA:0BB8) resets it to 0, adds each readied item's Weight times Count, and floors the character's CarriedWeight at it when the weight-excluding item (NameNum[1] $BA) is readied (00BA:0F43)"
+
+[[global]]
+offset = 0x408E
+name = "ConstitutionHitPointTable"
+evidence = "DS:408E is the AD&D 1e constitution hit-point adjustment table read by ovl16:3F31 (ConstitutionHitPointAdjustment): signed byte per constitution, -2 at 3, -1 at 4..6, 0 at 7..14, +1 at 15, +2 at 16..18; indexed by TCharacter.Constitution (+0x14), read as a signed byte (tools/re/tp_idioms/ovl16/CONHP.PAS)"
+
+[[global]]
+offset = 0x08B6
+name = "ClassHitDiceCount"
+evidence = "ovl16:4235 pushes ds08B6[Class] as RollDice's Count and ds08BE[Class] as its Sides for every class the character has a level in; the image at DS:08B6 holds 1,1,1,1,2,1,1,2 (two dice for ranger and monk)"
+
+[[global]]
+offset = 0x08BE
+name = "ClassHitDieSides"
+evidence = "ovl16:4235 pushes ds08BE[Class] as RollDice's Sides and raises a first-level roll to (ds08BE[Class] * 2) div 3; the image at DS:08BE holds 8,8,10,10,8,4,6,4 sides (its entry 7 is the first byte of the CHEAD suffix table ds08C5)"
