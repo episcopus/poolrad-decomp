@@ -1018,3 +1018,8 @@ evidence = "DS:6B00 is the bank index for the HEAD sprite pointer at DS:6B01, wh
 offset = 0x6B05
 name = "BodyBankIndex"
 evidence = "DS:6B05 is the bank index for the BODY sprite pointer at DS:6B06, set to sentinel value 255 when none; StartBattle resets it after ReleasePicture at ovl10:0968"
+
+[[global]]
+offset = 0x5582
+name = "ItemTable"
+evidence = "the ITEMS file block ovl11:05CD reads into DS:5582 (record 2 of ITEMS, $810 bytes = 129 rows of 16, whitepaper 4.3); the combat AI indexes it by ItemType in every routine of ovl09 (ScoreTarget, UseBestItem, AiTurn, UseMagicItem)"

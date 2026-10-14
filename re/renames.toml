@@ -3413,3 +3413,24 @@ kind = "routine"
 why = "0464:1E5C maps the colours of a picture: for each colour index I whose FromMap and ToMap entries differ, every pixel of the picture with palette colour FromMap[I] becomes ToMap[I] (through a scratch copy, adapters 0, 1 and 2; src/RES07.PAS, MATCH); LoadPictureSlot (ovl32) passes the identity map, AnimateAreaDoors (ovl18) and LoadSpriteList (ovl28) pass the door and sprite maps"
 date = "2026-10-13"
 
+[[rename]]
+old = "RaceRow"
+new = "ItemTable"
+kind = "global"
+why = "the ITEMS file block at DS:5582 (ovl11:05CD, whitepaper 4.3): 129 item rows indexed by ItemType in ovl09, not a race table"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl09_fn_0203"
+new = "TryTurnUndead"
+kind = "routine"
+why = "ovl08 CombatMenu offers Turn (ovl08:0795) when ClassLevels[0] > 0 and Turned = 0, and PlayerTurn's T case runs ovl13_e9 (src/OVL08.PAS:220); the routine tests the same conditions and runs ovl13_e9 with ovl13_e10 agreeing: the computer's Turn action"
+date = "2026-10-13"
+
+[[rename]]
+old = "ScoreTarget"
+new = "ScoreItem"
+kind = "routine"
+why = "its only caller UseBestItem (ovl09:13CA) passes an ITEM (ScoreTarget(Who, PCharacter(Pick))) and the bytes it reads are item fields (+$2E ItemType, +$32 Plus, +$36 Cursed, +$3D/+$3E Affects[2]/[3]); it rates an item for the AI's item step"
+date = "2026-10-13"
+
