@@ -3694,12 +3694,12 @@ id = "ovl12:12B2"
 unit = "ovl12"
 addr = "ovl12:12B2"
 size = 73
-name = "ovl12_e41"
-signature = ""
+name = "RaiseOrLowerAttackAndSave"
+signature = "procedure RaiseOrLowerAttackAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e41"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_41"
+notes = "renamed from ovl12_e41 (ovl12:12B2 runs RaiseAttackAndSave (ovl12:0C06) when Who's Side (+$10E) equals bit 4 of Affect's Data, else takes one off AttackRoll and one off SaveRoll (inline sub byte, not LowerAttackAndSave's penalty)); auto:entry_41"
 evidence = ["prologue"]
 
 [[routine]]

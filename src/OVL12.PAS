@@ -49,7 +49,7 @@ procedure WeakenStrength(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure CauseDiseaseAndDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure LowerAttackVsEightListed(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure LowerAttackIfSelectedIsBugbearOrGnoll(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e41;
+procedure RaiseOrLowerAttackAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e42;
 procedure ovl12_fn_1307;
 procedure ovl12_e43;
@@ -737,7 +737,7 @@ begin
   CallAffectHandler(AffectCauseDisease, Who, Affect, Mode);
 end;
 { 0C06. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). Adds 1 to SaveRoll and
-  to AttackRoll, the plus of the routine at ovl12:0C15. Called by ovl12:12B2 (ovl12_e41, not decompiled yet). }
+  to AttackRoll, the plus of the routine at ovl12:0C15. Called by ovl12:12B2 (RaiseOrLowerAttackAndSave, not decompiled yet). }
 procedure RaiseAttackAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   Inc(SaveRoll);
@@ -944,8 +944,23 @@ begin
     if (SelectedCharacter^.Name = 'BUGBEAR') or (SelectedCharacter^.Name = 'GNOLL') then
       Dec(AttackRoll, AttackPenalty);
 end;
-{ ovl12:12B2: retf 10: 10 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl12_e41; begin end;
+{ ovl12:12B2. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is passed on, ovl24:0000). The side
+  the affect names is Affect's Data bit 4 (SideDataBit, 0 or 1). When Who's Side (+$10E of TCharacter) equals it,
+  RaiseAttackAndSave (ovl12:0C06) runs with Who, Affect and Mode; otherwise AttackRoll and SaveRoll each lose one.
+  Which affect runs it is not known yet [?]. }
+procedure RaiseOrLowerAttackAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
+var
+  Side: Byte;                   { the side bit of Affect's Data, 0 or 1 }
+begin
+  Side := (Affect^.Data and SideDataBit) div 16;
+  if Who^.Side = Side then
+    RaiseAttackAndSave(Who, Affect, Mode)
+  else
+  begin
+    Dec(AttackRoll);
+    Dec(SaveRoll);
+  end;
+end;
 { ovl12:12FB: frame not read }
 {@stub} procedure ovl12_e42; begin end;
 { ovl12:1307: retf 10: 10 bytes of parameters; 0 bytes of locals }
