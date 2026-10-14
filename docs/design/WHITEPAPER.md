@@ -845,8 +845,9 @@ character joins the party.
 - **Saving the game** **[V]** (`SaveGame`, `ovl17:1D58`; `make match UNIT=ovl17`): prompts
   `'Save Which Game: '` for a slot letter A..J (a set of `[#0, 'A'..'J']`, Escape cancels), makes the
   save directory and `Rewrite`s `SaveDir + 'savgam<slot>.dat'` (prompting for the disk while the open
-  fails). It first copies the party's map cell into the ECL variable block: `ds6AAEWords[I].A/.B` into
-  the words at `$4AF9 + I` / `$4AFC + I` (I = 1..3), `GameSpeed` to `$49FC`, the packed picture flags
+  fails). It first copies the three loaded wall-set slots (block id and slot) into the ECL variable
+  words: `ds6AAEWords[I].A/.B` into the words at `$4AF9 + I` / `$4AFC + I` (I = 1..3), `GameSpeed` to
+  `$49FC`, the packed picture flags
   (`ShowMonsterPics * 2 + ShowPortraits`) to `$49FF`, and `TileSet` to `$6E12`. Then it `BlockWrite`s
   `TileSet` (1), `GameVars^`, `ds49D6^` ($800 each), `ds49DA^` ($400), `EclCode^` ($1E00), the five
   party-map bytes `PartyMapColumn..`, `AreaViewKind` and `ds49F3` (1 each), a one-byte member count and
@@ -863,10 +864,12 @@ character joins the party.
   member count it loads each name (`MakeDosFileName(DeleteAllOccurrences(name, '.'))`) with
   `LoadCharacterFile(name, Who, 1, 1)` into a fresh 285-byte `GetMem` record and adds it with
   `AddPartyMember`, then erases the members' standalone `.cha/.itm/.spc` files and rebuilds every
-  member's combat icon (`BuildCharacterIcon(True)`). Finally it restores `TileSet` from `$6E12`,
-  loads the 3D map (`Load3DMap(GameVars^[VarGeoBlock])` when `AreaViewKind < 2`) or the three wall
-  sets (`LoadWallSet`), animates the doors when `GameVars^[VarRiverGate] <> 0`, and flushes the
-  keyboard. Called by ovl16_e1.
+  member's combat icon (`BuildCharacterIcon(True)`). Finally it restores `TileSet` from `$6E12` and
+  the view: the 3D view (`AreaViewKind < 2`) gets `Load3DMap(GameVars^[VarGeoBlock])` and the three
+  wall sets (`LoadWallSet` of the `ds6AAEWords` pairs whose block id is not negative); a map view
+  (`AreaViewKind > 1`) gets the party marker picture instead (`LoadPictureSlot('ICON', 0, 11)` into
+  picture slot 11, the scratch slot `BuildCharacterIcon` freed). It then animates the doors when
+  `GameVars^[VarRiverGate] <> 0` and flushes the keyboard. Called by ovl16_e1.
 - **Save and exit** **[V]** (`SaveAndExit`, `ovl17:22D5`; `make match UNIT=ovl17`): called by
   ovl03:0BD1 with the current area's ECL file name. When that file exists (a normal area) it returns
   at once; otherwise it shows `'Save and exit  Insert disk #<TileSet>'` and, when the player presses

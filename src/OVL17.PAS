@@ -482,7 +482,7 @@ begin
   FlushKeyboard;
 end;
 { ovl17:1262. Adds a monster of kind Kind to the party. If the party already holds eight members
-  (GameVars^[PartySize] > 7) it does nothing. Otherwise it allocates a 285-byte character and has
+  (ds49D6^[PartySize] > 7) it does nothing. Otherwise it allocates a 285-byte character and has
   LoadMonster fill it, gives it a random byte at +$AB (Random(256)), collects the classes with a
   positive level (Who^.ClassLevels[0..6]) into Pick[] (Pick[1] = 2 when none qualifies), rolls one of
   them (RollDice(1, Count)) and picks the monster's body picture bank from the ds08C5-region
@@ -587,9 +587,13 @@ end;
   view mode, and the party list (a member count and the 8 'CHRDAT<slot><n>' names). It restores
   GameSpeed and the picture flags, loads every named member through LoadCharacterFile and
   AddPartyMember, erases the members' old standalone .cha/.itm/.spc files, rebuilds every member's
-  combat icon (BuildCharacterIcon(True)), restores TileSet and the 3D map (Load3DMap or, for a map
-  view, the wall sets through LoadWallSet), animates the doors when the river gate is set, and
-  flushes the keyboard. Reads the save files, SaveDir and the party list; writes the game state,
+  combat icon (BuildCharacterIcon(True)), then restores the view: TileSet from $6E12, and either the
+  3D view (AreaViewKind < 2: Load3DMap(GameVars^[VarGeoBlock]) and the three wall sets through
+  LoadWallSet, the ds6AAEWords pairs whose block id is not negative) or, for a map view
+  (AreaViewKind > 1), LoadPictureSlot('ICON', 0, 11), which loads ICON block 0 into picture slot 11,
+  the scratch slot BuildCharacterIcon freed (the map view's party marker pictures are slots 9..11,
+  ovl26 DrawPartyMarker). It animates the doors when the river gate is set, and flushes the
+  keyboard. Reads the save files, SaveDir and the party list; writes the game state,
   ds5D96, SelectedCharacter and the party list. Called by ovl16_e1. }
 procedure LoadGame;
 var
@@ -693,8 +697,9 @@ begin
 end;
 { ovl17:1D58. Saves the current game to the save disk. It prompts 'Save Which Game: ' for a slot
   letter A..J (Escape cancels), makes the save directory and opens SaveDir + 'savgam<letter>.dat'
-  (showing the disk prompt while the open fails), then writes the whole game state: the party's map
-  cell into the ECL variable block, GameSpeed and the picture flags, TileSet, the three word blocks
+  (showing the disk prompt while the open fails), then writes the whole game state: the three loaded
+  wall-set slots (block id and slot) into the ECL variable words at $4AF9 + I and $4AFC + I,
+  GameSpeed and the picture flags, TileSet, the three word blocks
   (GameVars, ds49D6, ds49DA), the ECL code, the party map bytes, AreaViewKind and the view mode. Then
   it writes the party list to the slot: a one-byte member count and the 8 'CHRDAT<letter><n>' names,
   and finally saves each member with SaveCharacter and erases the member's old standalone .cha/.itm/
