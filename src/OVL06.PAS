@@ -24,7 +24,7 @@ const
   and its Value (the price, +$3A) right-justified (a zero Value becomes 1, ovl06:0068), then draws
   the "Shop" window (DrawWindow) and runs the item picker ChooseFromList titled "Items: " with a "Buy"
   button. Action receives the picker's key, Head the chosen entry, Selected is set to Head;
-  res12_fn_0442 is called for each entry afterwards. Parameters: Action (out, the key), Selected
+  FormatItemLine is called for each entry afterwards. Parameters: Action (out, the key), Selected
   (out, the chosen entry), Head (in/out, the list the picker works on), Choice (in/out, the
   picker's position, ChooseFromList's Choice). Side effect: the screen (and the stock entries' Text and
   Value). Called from BuyItems (Buy). }
@@ -62,7 +62,7 @@ begin
   Entry := ds6810;
   while Entry <> nil do
   begin
-    res12_fn_0442(0, Entry, 0, 0, 0, 0);
+    FormatItemLine(0, Entry, 0, 0, 0, 0);
     Entry := Entry^.Next;
   end;
 end;
@@ -207,7 +207,7 @@ begin
   Entry := ds6810;
   while Entry <> nil do
   begin
-    res12_fn_0442(0, Entry, 0, 0, 0, 0);
+    FormatItemLine(0, Entry, 0, 0, 0, 0);
     Entry := Entry^.Next;
   end;
   repeat

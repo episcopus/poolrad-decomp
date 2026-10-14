@@ -13898,40 +13898,14 @@ evidence = ["prologue"]
 id = "00BA:0442"
 unit = "res12"
 addr = "00BA:0442"
-size = 659
-name = "res12_fn_0442"
-signature = "procedure res12_fn_0442(Value: LongInt; P: Pointer; A, B, C, D: Byte)"
+size = 805
+name = "FormatItemLine"
+signature = "procedure FormatItemLine(Value: LongInt; Item: PItem; Col, Row, ShowReadied, ShowText: Byte)"
 c_name = "res12_fn_0442"
-level = "none"
+level = "L2"
 justification = ""
-notes = "blocked dec-deepseek 2026-10-13: builds a menu line's display text (clear Text; when ShowReadied the ' Yes  '/' No   ' of Readied; when a party member (list ds5D96, Next +104) has affect 5 via res12_fn_2199 and the item is Plus>0/PlusSave>0/Cursed, append '* '; when Count>0 append res12_fn_1037(Count) and ' '; a Mask of shown NameNum entries ((NameNum[I]<>0) and ((HiddenNames shr (3-I)) and 1)=0, Inc(Mask,1 shl (I-1))); then for I 3 downto 1, if ((Mask shr (I-1)) and 1)>0 append ds10A7[NameNum[I]] (256 strings[20] at DS:10A7, 1-based) and a space, or 's ' with Plural set when (Count<2) or (Plural<>0) is false and ((1 shl (I-1))=Mask) or (I=1 and Mask>4 and ItemType<>$56) or (I=2 and bit 1 of Mask clear) or (I=3 and ItemType=$56) or ((ItemType=$49 or $1C) and NameNum[3]<>$B1); finally DrawTextAt(A,B,$A,Text) when D<>0; LongInt Value is unread QUIRK). The draft matched every region except the plural term C: the original tests bit 1 of Mask with a single byte `shr al,1; jae` (00BA:06A6..06AB) while every form tried compiled to `and al,2; or al,al; je` (+2 bytes), `((Mask shr 1) and 1)=0` (+7, word shift), `not Odd(Mask shr 1)` (+extra shr), `(Mask and 2)<>2` (+2), `(2 and Mask)=0`, `((Mask and 2) div 2)=0`, `(Mask shr 1) and 1=0` and `Odd(Mask shr 1)=False` (all longer); with the outer `if (Count<2) or (Plural<>0) then <space> else if ...` form the whole routine was 2 bytes long. Probes: tools/re/tp_idioms/res12/PRB01..PRB10.PAS. Whole-routine match attempt: make match UNIT=res12 FN=res12_fn_0442."
+notes = "renamed from res12_fn_0442 (00BA:0442 builds an item menu line's Text from the DS:10A7 name parts, the count, the readied Yes/No and a magic marker, and draws it at (Col, Row) in green when ShowText is set (make match UNIT=res12; callers in ovl06 ChooseShopItem, ovl19 ShowCharacterSheet and DrawCharacterPanel)); builds an item menu line's Text (Yes/No, magic '* ', count, DS:10A7 name parts, plural 's ') and draws it when ShowText is set. QUIRK 00BA:0442: LongInt Value is never read. The plural term at 00BA:06A6 is not Odd(Mask) (bit 0), not a bit-1 test: shr al,1; jae (probe PRB34)."
 evidence = ["prologue"]
-
-[[routine]]
-id = "00BA:06D5"
-unit = "res12"
-addr = "00BA:06D5"
-size = 61
-name = "res12_fn_06D5"
-signature = ""
-c_name = "res12_fn_06D5"
-level = "none"
-justification = ""
-notes = "blocked dec-deepseek 2026-10-13: not a routine. 00BA:06D5 is a label inside res12_fn_0442 (which is itself blocked): the instruction at 06D5 starts one byte late (the real cmp byte es:[di+31h],0B1h begins at 06D4, under the es: prefix the map dropped), and the code jumps across the boundary (00BA:0737 jmp 05D7, 00BA:05F2 jmp 0731) and ends at 0442's own retf 10 (00BA:0758). It cannot be a standalone procedure: any prologue would not match the mid-routine bytes. When res12_fn_0442 matches, make match WRITE=1 removes this entry (as it did for the phantom 00BA:0B4F inside DrawCharacterPanel). No caller: the map's near_call evidence is a false positive."
-evidence = ["near_call"]
-
-[[routine]]
-id = "00BA:0712"
-unit = "res12"
-addr = "00BA:0712"
-size = 85
-name = "res12_fn_0712"
-signature = ""
-c_name = "res12_fn_0712"
-level = "none"
-justification = ""
-notes = "blocked dec-deepseek 2026-10-13: not a routine. 00BA:0712 is the else-branch label of res12_fn_0442 (00BA:05F2 jmp 0731 leads into it; 00BA:0737 jmp 05D7 leads back), inside 0442's single frame (prologue push bp/mov bp,sp/sub sp,20Ch at 00BA:0442, epilogue retf 10 at 00BA:0758). No procedure can start there. When res12_fn_0442 matches, make match WRITE=1 removes this entry. No caller: the map's near_call evidence is a false positive."
-evidence = ["near_call"]
 
 [[routine]]
 id = "00BA:0767"
@@ -14539,7 +14513,7 @@ size = 18
 name = "res12_init"
 signature = ""
 c_name = "res12_init"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:init"
 evidence = ["prologue"]
