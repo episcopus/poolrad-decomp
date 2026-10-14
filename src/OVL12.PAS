@@ -312,6 +312,16 @@ const
   SpellDamageIndex = 11;        { KnownSpells index of the byte ovl12:30A5 reads: its high nibble is the damage [?] }
   SpellClearedIndex = 2;        { KnownSpells index ovl12:30A5 clears }
   LowNibble = $0F;              { the low nibble of a byte }
+  PermanentDuration = 0;        { the Duration of an affect that lasts for good (AddAffect, ApplyAffect) }
+  DataFF = $FF;                 { a Data byte of $FF that several affects here are given; its meaning is not known [?] }
+  TargetCodeFour = 4;           { a Pad9F value of a target (TCharacter +$9F, purpose unknown [?]): BoostAttackAgainstTarget
+                                  gives it TargetBonus, BoostFireAttackByTarget gives it FireBonusForFour }
+  TargetCodeNine = 9;           { Pad9F 9 of a target (purpose unknown [?]), see FireBonusForNineTwelve }
+  TargetCodeTen = 10;           { Pad9F 10 of a target (purpose unknown [?]), see FireBonusForTen }
+  TargetCodeTwelve = 12;        { Pad9F 12 of a target (purpose unknown [?]), see FireBonusForNineTwelve }
+  FireBonusForTen = 1;          { what BoostFireAttackByTarget adds to AttackRoll and DamageAmount for TargetCodeTen }
+  FireBonusForNineTwelve = 2;   { the same for TargetCodeNine and TargetCodeTwelve }
+  FireBonusForFour = 3;         { the same for TargetCodeFour }
 var
   { The AffectHandlers table (DS:6828) as untyped pointers. ovl13_e22 and ovl13_e23 are declared without parameters in
     OVL13 (which has no PCharacter), so ovl12_e1 stores their addresses through this alias until OVL13 declares them
@@ -389,12 +399,12 @@ begin
 end;
 { ovl12:013B. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000).
   It copies the character Who attacked last (Who's combat Target, TCombatant at +$108 of Who, MeleeAttack
-  sets it in ovl08) into AttackTarget. When that character's byte +$9F (Pad9F of TCharacter, not named
-  yet) is 4, the attack roll and the damage each gain TargetBonus. }
+  sets it in ovl08) into AttackTarget. When that character's byte +$9F (Pad9F of TCharacter, purpose unknown [?])
+  is TargetCodeFour (4), the attack roll and the damage each gain TargetBonus. }
 procedure BoostAttackAgainstTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   AttackTarget := Who^.Combat^.Target;
-  if AttackTarget^.Pad9F = 4 then
+  if AttackTarget^.Pad9F = TargetCodeFour then
   begin
     Inc(AttackRoll, TargetBonus);
     Inc(DamageAmount, TargetBonus);
@@ -411,8 +421,9 @@ begin
 end;
 { ovl12:01C3. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000).
   Like BoostAttackAgainstTarget (ovl12:013B) it copies Who's combat Target into AttackTarget, then gives
-  a bonus to the attack roll and to the damage from the target's byte +$9F (Pad9F of TCharacter, not
-  named yet): 10 gives 1, 9 or 12 gives 2, 4 gives 3, any other value gives 0. The damage kind becomes 9
+  a bonus to the attack roll and to the damage from the target's byte +$9F (Pad9F of TCharacter, purpose unknown
+  [?]): TargetCodeTen gives FireBonusForTen (1), TargetCodeNine or TargetCodeTwelve give FireBonusForNineTwelve (2),
+  TargetCodeFour gives FireBonusForFour (3), any other value gives 0. The damage kind becomes KindFire or KindMagic
   (fire, plus the magic bit 8, ovl24:13E4). Which affect runs it is not known yet [?]. }
 procedure BoostFireAttackByTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
@@ -420,15 +431,15 @@ var
 begin
   AttackTarget := Who^.Combat^.Target;
   case AttackTarget^.Pad9F of
-    10: Bonus := 1;
-    9, 12: Bonus := 2;
-    4: Bonus := 3;
+    TargetCodeTen: Bonus := FireBonusForTen;
+    TargetCodeNine, TargetCodeTwelve: Bonus := FireBonusForNineTwelve;
+    TargetCodeFour: Bonus := FireBonusForFour;
   else
     Bonus := 0;
   end;
   Inc(AttackRoll, Bonus);
   Inc(DamageAmount, Bonus);
-  DamageKind := 9;
+  DamageKind := KindFire or KindMagic;
 end;
 { ovl12:0233. Training of Who's constitution: shows "is hardier" on Who (colour 10), Constitution goes up by one,
   and Who's hit points gain: the hit points above HpB1 (HpMax - HpB1) are divided by the class weight (fighter
@@ -992,7 +1003,7 @@ begin
       Dec(Who^.Strength);
     end
     else if not HasAffect(Who, AffectNausea, FoundAffect) then
-      AddAffect(Who, AffectNausea, 0, $FF, 0);
+      AddAffect(Who, AffectNausea, PermanentDuration, DataFF, NoRemoveHandler);
 end;
 { ovl12:1168. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000). It gives Who
   the disease affect AffectCauseDisease for AffectCauseDiseaseDuration rounds, with the Data of Affect, when TryAddAffect
@@ -1012,7 +1023,7 @@ begin
         DrawPartyRoster(SelectedCharacter);
     end
     else if not HasAffect(Who, AffectNausea, FoundAffect) then
-      AddAffect(Who, AffectNausea, 0, $FF, 0);
+      AddAffect(Who, AffectNausea, PermanentDuration, DataFF, NoRemoveHandler);
 end;
 { ovl12:11F9. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000). It copies
   the character Who attacked last (Who's combat Target, TCombatant at +$108 of Who, MeleeAttack sets it in ovl08) into
@@ -1134,7 +1145,7 @@ end;
   when it is removed (NoRemoveHandler). Purpose unknown: which affect runs it is not known yet [?]. }
 procedure ovl12_e49(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
-  AddAffect(Who, AffectUnknown62, 0, AffectUnknown62Data, NoRemoveHandler);
+  AddAffect(Who, AffectUnknown62, PermanentDuration, AffectUnknown62Data, NoRemoveHandler);
 end;
 { ovl12:1490. Damage hook (the AffectHandlers shape: Who, Affect and Mode; none of them read). While the damage is fire
   (DamageKind bit KindFire, DS:6819), each of the LastDiceCount dice of the last roll takes FireReductionPerDie off
@@ -1183,7 +1194,7 @@ begin
   begin
     ShowCharacterMessage(AttackTarget, 'is Poisoned', $A, 0);
     DelayByGameSpeed;
-    AddAffect(AttackTarget, AffectPoisoned, 0, $FF, NoRemoveHandler);
+    AddAffect(AttackTarget, AffectPoisoned, PermanentDuration, DataFF, NoRemoveHandler);
     DropFromFight(AttackTarget, StatusDead, 'is killed');
   end;
 end;
@@ -1276,9 +1287,10 @@ end;
   DS:65BD). When Mode is 0 and Who and that combatant both still take part (Flag10D), Who sucks blood from it: "Sucks some
   Blood" is shown on Who (colour 10), 1d4 damage is dealt to the combatant without a save (RollDiceCounted, DealDamage),
   Who's turn is ended (EndCombatTurn, its result is not read), then the affect's Duration div 16 must stay above the
-  damage, which is taken off the Duration (times 16) while the combatant is still in the fight; otherwise affect $4B is
-  removed from Who. Else affect $3A is removed from the combatant and, when Mode is 0, the affect's Flag is cleared and
-  affect $4B is removed from Who. Last, when both still take part, Who's combat byte ForcedFlight becomes 1 (CheckMorale
+  damage, which is taken off the Duration (times 16) while the combatant is still in the fight; otherwise AffectBloodDrain
+  ($4B) is removed from Who. Else AffectHeldFast ($3A) is removed from the combatant and, when Mode is 0, the affect's
+  Flag is cleared and AffectBloodDrain is removed from Who. Last, when both still take part, Who's combat byte ForcedFlight
+  becomes 1 (CheckMorale
   forces
   a combatant with it nonzero to flee, ovl09:10D7). Which affect runs it is not known yet [?]. }
 procedure DrainBloodFromCombatant(Who: PCharacter; Affect: PAffect; Mode: Byte);
@@ -1289,11 +1301,11 @@ begin
   AttackTarget := CombatantRecord[Affect^.Data];
   if (Mode <> 0) or (Who^.Flag10D = 0) or (AttackTarget^.Flag10D = 0) then
   begin
-    RemoveAffect(AttackTarget, $3A, nil);
+    RemoveAffect(AttackTarget, AffectHeldFast, nil);
     if Mode = 0 then
     begin
       Affect^.Flag := 0;
-      RemoveAffect(Who, $4B, Affect);
+      RemoveAffect(Who, AffectBloodDrain, Affect);
     end;
     if (Who^.Flag10D <> 0) and (AttackTarget^.Flag10D <> 0) then
       Who^.Combat^.ForcedFlight := 1;
@@ -1308,7 +1320,7 @@ begin
     if (AttackTarget^.Flag10D <> 0) and (Affect^.Duration div 16 > Dice) then
       Dec(Affect^.Duration, Dice * 16)
     else
-      RemoveAffect(Who, $4B, Affect);
+      RemoveAffect(Who, AffectBloodDrain, Affect);
   end;
 end;
 { ovl12:18B5. Affect handler that starts a blood drain (the AffectHandlers shape: Who, Affect and Mode; Affect and Mode
@@ -1387,9 +1399,9 @@ begin
       begin
         FearSaved := SavingThrow(Scan, SaveKindFear, 0);
         case Scan^.HighestLevel of
-          0..3: ApplyAffect(Scan, AffectParalysis, 0, FearData, NoRemoveHandler, SaveNegatesAffect, FearSaved,
+          0..3: ApplyAffect(Scan, AffectParalysis, PermanentDuration, FearData, NoRemoveHandler, SaveNegatesAffect, FearSaved,
             'is paralyzed with fear');
-          4, 5: ApplyAffect(Scan, AffectWeakened, 0, FearData, NoRemoveHandler, SaveNegatesAffect, FearSaved,
+          4, 5: ApplyAffect(Scan, AffectWeakened, PermanentDuration, FearData, NoRemoveHandler, SaveNegatesAffect, FearSaved,
             'is weakened by fear');
         end;
       end;
@@ -1493,7 +1505,8 @@ begin
   WalkCombatLine(CombatantX(Who), CombatantY(Who), CombatantX(AttackTarget), CombatantY(AttackTarget),
     GazeLineKind, GazeLineFlag);
   ds681B := 10;
-  ApplyAffect(AttackTarget, AffectCharm, 0, ShortInt(Who^.Side) * ControlSideBit + CharmData, RunsHandlerOnRemove,
+  ApplyAffect(AttackTarget, AffectCharm, PermanentDuration, ShortInt(Who^.Side) * ControlSideBit + CharmData,
+  RunsHandlerOnRemove,
     SaveNegatesAffect, SavingThrow(Who^.Combat^.Target, SaveKindFear, CharmSaveBonus), 'is charmed');
   if HasAffect(AttackTarget, AffectCharm, FoundAffect) then
     CallAffectHandler(AffectCharm, AttackTarget, FoundAffect, 0);
@@ -1781,7 +1794,7 @@ begin
   if HitPoints > 0 then
     if ReviveCombatant(Who, HitPoints) then
     begin
-      AddAffect(Who, AffectUnknown5F, RollDice(1, AffectUnknown5FDieSides) + 1, $FF, RunsHandlerOnRemove);
+      AddAffect(Who, AffectUnknown5F, RollDice(1, AffectUnknown5FDieSides) + 1, DataFF, RunsHandlerOnRemove);
       Affect^.Flag := NoRemoveHandler;
       RemoveAffect(Who, AffectUnknown63, Affect);
     end;
@@ -1793,7 +1806,7 @@ procedure GiveAffectUnlessFireOrAcid(Who: PCharacter; Affect: PAffect; Mode: Byt
 begin
   if (DamageKind and KindFire) = 0 then
     if (DamageKind and KindAcid) = 0 then
-      AddAffect(Who, AffectUnknown66, RollDice(AffectUnknown66Dice, AffectUnknown66Sides), $FF, RunsHandlerOnRemove);
+      AddAffect(Who, AffectUnknown66, RollDice(AffectUnknown66Dice, AffectUnknown66Sides), DataFF, RunsHandlerOnRemove);
 end;
 { ovl12:2814. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read). Unless HasAffect finds
   AffectUnknown62 or AffectRegenerating on Who, Who gets AffectRegenerating (Regenerating) for RegeneratingDuration rounds
@@ -1804,7 +1817,7 @@ var
 begin
   if not HasAffect(Who, AffectUnknown62, FoundAffect) then
     if not HasAffect(Who, AffectRegenerating, FoundAffect) then
-      AddAffect(Who, AffectRegenerating, RegeneratingDuration, $FF, RunsHandlerOnRemove);
+      AddAffect(Who, AffectRegenerating, RegeneratingDuration, DataFF, RunsHandlerOnRemove);
 end;
 { ovl12:2866. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read). ReviveCombatant
   (ovl24:1869) tries to put Who back on the map with its full HpMax (+$32). When that fails, Who gets AffectUnknown66
@@ -1837,11 +1850,17 @@ end;
 { ovl12:2915. Helper of the two hook cancels ovl12:2976 and ovl12:2984, which pass Chance. Only when a hook is offered
   (HookAffectId is not 0) or the damage is magical (DamageKind bit KindMagic), a 1d100 roll at or below a threshold
   cancels the pending hook (CancelPendingHook(0): the damage is dropped). The threshold is Chance less 5 for each
-  point that SpellCasterLevel of ds681B falls short of 11. Purpose unknown: what that value measures is not known [?]. }
+  point that Level falls short of 11. Level is SpellCasterLevel of ds681B (RES12 00BA:26C2 [V]): the cleric level for
+  spell class 0, the magic-user level for class 1, 12 for class 2, or 6 while ItemAffectUse is set. What the threshold
+  measures is not known [?].
+  QUIRK ovl12:2915: Threshold is a Byte, but Chance - 5 * (11 - Level) is worked out in 16 bits and the result is
+  stored in the byte, so a negative value wraps to 256 plus the value (-5 gives 251). With Chance 15 and Level below 8,
+  or Chance 50 and Level 0, the wrapped threshold is 251 or more, so the roll almost always cancels the hook. With
+  Level above 11 (12 for class 2) the threshold rises above Chance. Never fixed. }
 procedure CancelHookOnChance(Chance: Byte);
 var
-  Level: Byte;                  { SpellCasterLevel of ds681B; the threshold falls 5 for each point below 11 [?] }
-  Threshold: Byte;              { Chance less 5 for each point Level falls short of 11 }
+  Level: Byte;                  { SpellCasterLevel of ds681B: a class level, 12 or 6 (see the QUIRK) }
+  Threshold: Byte;              { Chance - 5 * (11 - Level), wrapped to a byte (QUIRK ovl12:2915) }
 begin
   Level := SpellCasterLevel(ds681B);
   Threshold := Chance - 5 * (11 - Level);
@@ -2140,7 +2159,7 @@ begin
     RemoveAffect(Who, Item^.Affects[2], nil)
   else
   begin
-    AddAffect(Who, Item^.Affects[2], 0, ItemAffectData, NoRemoveHandler);
+    AddAffect(Who, Item^.Affects[2], PermanentDuration, ItemAffectData, NoRemoveHandler);
     CallAffectHandler(Item^.Affects[2], Who, nil, 0);
   end;
 end;
@@ -2203,7 +2222,7 @@ begin
         ShowCharacterMessage(Who, 'is stronger', $A, 1);
     end;
     ds6821 := 1;
-    AddAffect(Who, AffectStrength2, 0, Code, RunsHandlerOnRemove);
+    AddAffect(Who, AffectStrength2, PermanentDuration, Code, RunsHandlerOnRemove);
   end;
 end;
 { ovl12:30A5. Affect handler of table entry 132 (affect $84, stub entry 113), with the AffectHandlers shape
