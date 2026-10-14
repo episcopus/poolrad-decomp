@@ -128,7 +128,7 @@ end;
   and calls ovl13_e9 (the Turn of PlayerTurn's T case, src/OVL08.PAS:220) when the combatant has not
   turned yet (Combat.Turned is 0), has a level in class 0 (ClassLevels[0] above 0; CombatMenu offers
   Turn on the same two tests, ovl08:0795) and ovl13_e10 agrees (ovl13_e10 is not named yet); else it
-  returns False. Called by QuickTurn (ovl09:0169): a True result ends the turn through res12_fn_2637.
+  returns False. Called by QuickTurn (ovl09:0170): a True result ends the turn through res12_fn_2637.
   Unused fills the two frame bytes the code never reads ([bp-2..-4]; B at [bp-5] is ovl13_e10's var
   parameter). }
 function TryTurnUndead(Who: PCharacter): Boolean;
