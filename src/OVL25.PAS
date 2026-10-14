@@ -6,7 +6,7 @@ unit OVL25;
   (TMenuLine, built by NewMenuList and freed by FreeMenuList) in a window, moves a highlight over it
   (Home/End, with Next/Prev/Exit words added to the prompt) and returns the key and the chosen line.
   AskYesNo and ClearPromptLine are the small helpers the game calls everywhere. }
-{$A-,O+,F+,S-,R-,G-,I-}
+{$A-,O+,F+,S-,R-,G-,I-,L-}
 interface
 uses POOLVARS, RES06;
 function GetMenuLine(Index: Integer; List: PMenuLine): PMenuLine;

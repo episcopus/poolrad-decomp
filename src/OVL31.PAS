@@ -7,7 +7,7 @@ unit OVL31;
   RedrawGround/RedrawMapCell/DrawCursorAt repaint cells, SetCombatantIcon turns a combatant,
   PlaceCombatant and RemoveCombatant put one on the map and take it off (leaving a body,
   BodyTable). Everything that changes the map runs only in view mode 5 (ds49F3). }
-{$A-,O+,F+,S-,R-,G-,I-}
+{$A-,O+,F+,S-,R-,G-,I-,L-}
 interface
 uses POOLVARS;
 function FootprintCell(Kind, Index: Byte; var DX, DY: ShortInt): Boolean;

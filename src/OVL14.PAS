@@ -1,7 +1,7 @@
 unit OVL14;
 { Wilderness travel (whitepaper 5.3): the area-map movement keys and icon sets, the
   Bash/Pick/Knock/Exit command menu, and the code-table records behind Knock. }
-{$A-,O+,F+,S-,R-,G-,I-}
+{$A-,O+,F+,S-,R-,G-,I-,L-}
 interface
 uses POOLVARS;
 type

@@ -4800,12 +4800,12 @@ id = "ovl13:0000"
 unit = "ovl13"
 addr = "ovl13:0000"
 size = 291
-name = "ovl13_e1"
-signature = "procedure ovl13_e1(Who: Pointer)"
+name = "StartCombatantRound"
+signature = "procedure StartCombatantRound(Who: Pointer)"
 c_name = "ovl13_e1"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_1"
+notes = "renamed from ovl13_e1 (ovl13:0000 is RunCombat's per-round setup of a combatant: RunCombat calls it for every combatant on the party list at the start of each round (ovl08:0063) before turns; it clears and re-arms Combat^, refreshes it (ovl13_e6, the movement hooks), rolls Initiative and sets Combat^.Moves); auto:entry_1"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4813,12 +4813,12 @@ id = "ovl13:0123"
 unit = "ovl13"
 addr = "ovl13:0123"
 size = 110
-name = "ovl13_e2"
-signature = "function ovl13_e2(Who: Pointer): Byte"
+name = "ComputeMovement"
+signature = "function ComputeMovement(Who: Pointer): Byte"
 c_name = "ovl13_e2"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_e2 (ovl13:0123 works out a combatant's round Movement from Movement (+0x11C), clamped to 1..0x60 and doubled into half squares; RunCombat calls it at the start of every round (ovl08:0063) and its result is stored in Combat^.Moves (+6, half squares)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4826,12 +4826,12 @@ id = "ovl13:0191"
 unit = "ovl13"
 addr = "ovl13:0191"
 size = 360
-name = "ovl13_fn_0191"
-signature = ""
+name = "RollAttackDamage"
+signature = "procedure RollAttackDamage(Attacker: PCharacter; Target: PCharacter; Index: Byte)"
 c_name = "ovl13_fn_0191"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_fn_0191 (ovl13:0191 rolls one attack's damage for Attacker against Target: entry Index (1 or 2) of the readied weapon triple (WeaponAttacks/WeaponDamage/WeaponDamageBonus) through RollDiceCounted, stores it in DamageAmount, multiplies by the backstab factor when ovl13_fn_2574 says so, and runs the damage hooks (kinds 4 and 5); called per attack from ovl13:1713 which forwards it to ovl13_fn_02F9 with DamageAmount); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4839,12 +4839,12 @@ id = "ovl13:02F9"
 unit = "ovl13"
 addr = "ovl13:02F9"
 size = 814
-name = "ovl13_fn_02F9"
-signature = ""
+name = "ShowAttackResult"
+signature = "procedure ShowAttackResult(Attacker: PCharacter; Target: PCharacter; Kind, SpellFlag, Damage, Hit: Byte)"
 c_name = "ovl13_fn_02F9"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_fn_02F9 (ovl13:02F9 shows one melee attack's result in the combat window: it builds 'Attacks'/' -Backstabs-'/'slays helpless' text, draws Target's name, on a hit adds 'Hitting for N point(s) of damage' and calls ApplyDamage, on a miss adds 'and Misses', pages the text through ShowPagedText, and then, when SpellFlag is set, makes Target lose its pending spell and, when Target is out of the fight (Flag10D 0), shows goes down/dying/killed, runs the death hooks and removes Target from the map; called from ovl13_fn_14A1/1713/1758); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4852,441 +4852,155 @@ id = "ovl13:0627"
 unit = "ovl13"
 addr = "ovl13:0627"
 size = 235
-name = "ovl13_fn_0627"
+name = "GuardedEnemiesAttack"
 signature = ""
 c_name = "ovl13_fn_0627"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_fn_0627 (ovl13:0627 is called by the move routine ovl13_e3 after Who moves: it collects Who's adjacent enemies (CollectEnemiesInRange(Who,1)) and lets each one that is guarding (Combat^.B7, the flag GuardTurn sets) and not helpless attack Who through ovl13_e11 and ovl13_e12; called as ovl13_fn_0627(Who) with the mover, cleared at the end of a move in ovl13_fn_08AC too (stub)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl13:0712"
 unit = "ovl13"
 addr = "ovl13:0712"
-size = 410
-name = "ovl13_e3"
-signature = "procedure ovl13_e3(Who: Pointer; Dir: Byte)"
+size = 416
+name = "StepCombatant"
+signature = "procedure StepCombatant(Who: Pointer; Dir: Byte)"
 c_name = "ovl13_e3"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_3"
+notes = "renamed from ovl13_e3 (ovl13:0712 moves Who one map cell in direction Dir: charges Combat^.Moves two half squares (three on a diagonal), moves CombatantTable's cell by DirStepX/DirStepY, redraws ground and occupancy, moves the quick-combat cursor and clears BF/B12; called from MoveCharacter (ovl08:09DF) and MoveStep (ovl09:07F2)); auto:entry_3"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl13:08AC"
-unit = "ovl13"
-addr = "ovl13:08AC"
-size = 6
-name = "ovl13_fn_08AC"
-signature = ""
-c_name = "ovl13_fn_08AC"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl13:08B2"
 unit = "ovl13"
 addr = "ovl13:08B2"
-size = 221
-name = "ovl13_e4"
-signature = "procedure ovl13_e4(Who: Pointer; Dir: Byte)"
+size = 952
+name = "PartingShots"
+signature = "procedure PartingShots(Who: PCharacter; Dir: Byte)"
 c_name = "ovl13_e4"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_4"
+notes = "renamed from ovl13_e4 (ovl13:08B2 runs the attacks of the enemies Who is leaving behind when it moves (adjacent before the step, not at the destination; called by MoveCharacter ovl08:09DF and MoveStep ovl09:07F2 just before StepCombatant)); auto:entry_4"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl13:098F"
-unit = "ovl13"
-addr = "ovl13:098F"
-size = 10
-name = "ovl13_fn_098F"
-signature = ""
-c_name = "ovl13_fn_098F"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:0999"
-unit = "ovl13"
-addr = "ovl13:0999"
-size = 401
-name = "ovl13_fn_0999"
-signature = ""
-c_name = "ovl13_fn_0999"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:0B2A"
-unit = "ovl13"
-addr = "ovl13:0B2A"
-size = 5
-name = "ovl13_fn_0B2A"
-signature = ""
-c_name = "ovl13_fn_0B2A"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:0B2F"
-unit = "ovl13"
-addr = "ovl13:0B2F"
-size = 15
-name = "ovl13_fn_0B2F"
-signature = ""
-c_name = "ovl13_fn_0B2F"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:0B3E"
-unit = "ovl13"
-addr = "ovl13:0B3E"
-size = 10
-name = "ovl13_fn_0B3E"
-signature = ""
-c_name = "ovl13_fn_0B3E"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:0B48"
-unit = "ovl13"
-addr = "ovl13:0B48"
-size = 5
-name = "ovl13_fn_0B48"
-signature = ""
-c_name = "ovl13_fn_0B48"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:0B4D"
-unit = "ovl13"
-addr = "ovl13:0B4D"
-size = 10
-name = "ovl13_fn_0B4D"
-signature = ""
-c_name = "ovl13_fn_0B4D"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:0B57"
-unit = "ovl13"
-addr = "ovl13:0B57"
-size = 5
-name = "ovl13_fn_0B57"
-signature = ""
-c_name = "ovl13_fn_0B57"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:0B5C"
-unit = "ovl13"
-addr = "ovl13:0B5C"
-size = 5
-name = "ovl13_fn_0B5C"
-signature = ""
-c_name = "ovl13_fn_0B5C"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:0B61"
-unit = "ovl13"
-addr = "ovl13:0B61"
-size = 265
-name = "ovl13_fn_0B61"
-signature = ""
-c_name = "ovl13_fn_0B61"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl13:0C6A"
 unit = "ovl13"
 addr = "ovl13:0C6A"
-size = 132
-name = "ovl13_e5"
-signature = "function ovl13_e5(Who: Pointer): Byte"
+size = 185
+name = "TryFlee"
+signature = "function TryFlee(Who: PCharacter): Byte"
 c_name = "ovl13_e5"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_5"
+notes = "renamed from ovl13_e5 (ovl13:0C6A is the Flee answer of the Move command (ovl08:0410) and the panicking off-map step (ovl09:0434): it drops the combatant with StatusFled ('Got Away') or flashes 'Escape is blocked', then ends the turn through EndCombatTurn); auto:entry_5"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl13:0CEE"
-unit = "ovl13"
-addr = "ovl13:0CEE"
-size = 53
-name = "ovl13_fn_0CEE"
-signature = ""
-c_name = "ovl13_fn_0CEE"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl13:0D23"
 unit = "ovl13"
 addr = "ovl13:0D23"
-size = 111
-name = "ovl13_e6"
-signature = "procedure ovl13_e6(Who: Pointer)"
+size = 303
+name = "RefreshAttacks"
+signature = "procedure RefreshAttacks(Who: PCharacter)"
 c_name = "ovl13_e6"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_e6 (ovl13:0D23 recomputes Who's readied-weapon attack count into ds681A and AttackSlots[1] from the ranged weapon/ammo or the character's Attacks, running the attack affect hook $12 and ovl13_fn_0E52; called after StartCombatantRound (ovl13:0000) and whenever an item is readied (ovl08:0207, ovl09:0942)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl13:0D92"
-unit = "ovl13"
-addr = "ovl13:0D92"
-size = 7
-name = "ovl13_fn_0D92"
-signature = ""
-c_name = "ovl13_fn_0D92"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl13:0D99"
-unit = "ovl13"
-addr = "ovl13:0D99"
-size = 111
-name = "ovl13_fn_0D99"
-signature = ""
-c_name = "ovl13_fn_0D99"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl13:0E08"
-unit = "ovl13"
-addr = "ovl13:0E08"
-size = 74
-name = "ovl13_fn_0E08"
-signature = ""
-c_name = "ovl13_fn_0E08"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl13:0E52"
 unit = "ovl13"
 addr = "ovl13:0E52"
 size = 48
-name = "ovl13_fn_0E52"
-signature = ""
+name = "AttacksThisRound"
+signature = "function AttacksThisRound(DoubledAttacks: Byte): Byte"
 c_name = "ovl13_fn_0E52"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_fn_0E52 (ovl13:0E52 halves the doubled attack budget in ds681A (the character's Attacks is attacks per two rounds, POOLVARS +A1) into this round's count, adding the odd remainder on even-numbered combat rounds via the round counter ds6DE3; StartCombatantRound stores it in AttackSlots[2] and RefreshAttacks uses it as AttackCount); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl13:0E82"
 unit = "ovl13"
 addr = "ovl13:0E82"
-size = 317
-name = "ovl13_e7"
-signature = "function ovl13_e7(Who, Target: Pointer): Boolean"
+size = 515
+name = "SweepEnemies"
+signature = "function SweepEnemies(Who, Target: PCharacter): Boolean"
 c_name = "ovl13_e7"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_e7 (ovl13:0E82 is the melee sweep: when the attacker Who has attack slots left (AttackSlots[1] below Combat^.Pad4[5]), the target is a level-0 creature (HighestLevel 0) and stands in melee range, it shows 'sweeps' and attacks each level-0 adjacent enemy through ovl13_e11/ovl13_e12 until Extra attacks run out, moving Target to the front of ds6DE4; returns True so the caller (MeleeAttack ovl08:0D45, AI ovl09:0B3C) ends the turn); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl13:0FBF"
-unit = "ovl13"
-addr = "ovl13:0FBF"
-size = 143
-name = "ovl13_fn_0FBF"
-signature = ""
-c_name = "ovl13_fn_0FBF"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl13:104E"
-unit = "ovl13"
-addr = "ovl13:104E"
-size = 55
-name = "ovl13_fn_104E"
-signature = ""
-c_name = "ovl13_fn_104E"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl13:1085"
 unit = "ovl13"
 addr = "ovl13:1085"
 size = 229
-name = "ovl13_e8"
-signature = "function ovl13_e8(Who, Target: Pointer): Boolean"
+name = "AttackTargetAllowed"
+signature = "function AttackTargetAllowed(Who, Target: PCharacter): Boolean"
 c_name = "ovl13_e8"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_e8 (ovl13:1085 runs the target's affect hooks (RunAffectHooks kind 1) and the attacker's (kind 0, with Combat^.Target swapped in) and returns whether none set ds681E; a nil target fails, attacking oneself always passes. Called before an attack by AiTurn, PartingShots, ovl12_e70 and ovl13 e17/e21/2FD3); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl13:116A"
 unit = "ovl13"
 addr = "ovl13:116A"
-size = 110
-name = "ovl13_e9"
-signature = "procedure ovl13_e9(Who: Pointer)"
+size = 487
+name = "TurnUndead"
+signature = "procedure TurnUndead(Who: PCharacter)"
 c_name = "ovl13_e9"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_9"
+notes = "renamed from ovl13_e9 (ovl13:116A is the Turn Undead action: it marks the cleric's turn used, rolls how many undead the turn reaches and the d20 check, maps the cleric level to a table band, then repeatedly takes an undead from ovl13_e10 and reads ds0447[type, band] to turn (positive) or destroy (nonpositive) it, up to six; called by PlayerTurn's T case (ovl08:031A) and TryTurnUndead (ovl09:0203)); auto:entry_9"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl13:11D8"
-unit = "ovl13"
-addr = "ovl13:11D8"
-size = 377
-name = "ovl13_fn_11D8"
-signature = ""
-c_name = "ovl13_fn_11D8"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl13:1351"
 unit = "ovl13"
 addr = "ovl13:1351"
 size = 181
-name = "ovl13_e10"
-signature = "function ovl13_e10(Who: Pointer; var B: Byte): Boolean"
+name = "SelectTurnUndeadTarget"
+signature = "function SelectTurnUndeadTarget(Who: Pointer; var Selected): Boolean"
 c_name = "ovl13_e10"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_e10 (ovl13:1351 scans CollectEnemiesInRange(Who, $FF) and keeps the enemy with the lowest TCharacter.Pad74[$76] type row (the row ds0447 is indexed by) that is not ForcedFlight, returning it to TurnUndead (ovl13:116A) and TryTurnUndead (ovl09:0203)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl13:1406"
 unit = "ovl13"
 addr = "ovl13:1406"
-size = 155
-name = "ovl13_fn_1406"
-signature = ""
+size = 1008
+name = "ResolveCombatantAttacks"
+signature = "procedure ResolveCombatantAttacks(Attacker, Target: PCharacter; AttackKind: Byte; var Done: Byte)"
 c_name = "ovl13_fn_1406"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_fn_1406 (ovl13:1406 resolves one combatant's melee attacks for its turn (helpless auto-hit, large-foe dice, to-hit and damage rolls, the death hook) and covers 1406..17F6; called by e12 (ovl13:19D6)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl13:14A1"
-unit = "ovl13"
-addr = "ovl13:14A1"
-size = 226
-name = "ovl13_fn_14A1"
-signature = ""
-c_name = "ovl13_fn_14A1"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl13:1583"
-unit = "ovl13"
-addr = "ovl13:1583"
-size = 400
-name = "ovl13_fn_1583"
-signature = ""
-c_name = "ovl13_fn_1583"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:1713"
-unit = "ovl13"
-addr = "ovl13:1713"
-size = 69
-name = "ovl13_fn_1713"
-signature = ""
-c_name = "ovl13_fn_1713"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:1758"
-unit = "ovl13"
-addr = "ovl13:1758"
-size = 158
-name = "ovl13_fn_1758"
-signature = ""
-c_name = "ovl13_fn_1758"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl13:17F6"
 unit = "ovl13"
 addr = "ovl13:17F6"
 size = 142
-name = "ovl13_e11"
-signature = "procedure ovl13_e11(Who, Target: Pointer)"
+name = "NoteAttackBearing"
+signature = "procedure NoteAttackBearing(Attacker, Target: PCharacter)"
 c_name = "ovl13_e11"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_e11 (ovl13:17F6 raises Target^.Combat^.BF and adds the angular error between Target^.Combat^.IconSet and the bearing to the attacker into B12; called just before ovl13_e12 resolves an attack); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -5294,259 +5008,103 @@ id = "ovl13:1884"
 unit = "ovl13"
 addr = "ovl13:1884"
 size = 666
-name = "ovl13_e12"
-signature = "procedure ovl13_e12(Who, Target: Pointer; A: Byte; P: Pointer; var Done: Byte)"
+name = "PerformAttack"
+signature = "procedure PerformAttack(Who, Target: PCharacter; AttackKind: Byte; AimedItem: Pointer; var Done: Byte)"
 c_name = "ovl13_e12"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_e12 (ovl13:1884 turns the two combatants to face each other, animates the attack item, resolves the attack via ResolveCombatantAttacks and ends the turn; it is the attack entry point ovl08, ovl09 and the ovl13 helpers call); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl13:1B1E"
 unit = "ovl13"
 addr = "ovl13:1B1E"
-size = 185
-name = "ovl13_fn_1B1E"
-signature = ""
+size = 218
+name = "AddRangePenalty"
+signature = "procedure AddRangePenalty(Attacker: PCharacter; Target: PCharacter; var NeededRoll: Byte)"
 c_name = "ovl13_fn_1B1E"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_fn_1B1E (ovl13:1B1E takes the distance to Target and the readied weapon's range band ItemTable[ItemType].Range div 3 and adds 2 then 3 to the to-hit value NeededRoll for each band the target is beyond; called by ResolveCombatantAttacks); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl13:1BD7"
-unit = "ovl13"
-addr = "ovl13:1BD7"
-size = 33
-name = "ovl13_fn_1BD7"
-signature = ""
-c_name = "ovl13_fn_1BD7"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl13:1BF8"
 unit = "ovl13"
 addr = "ovl13:1BF8"
-size = 27
-name = "ovl13_e13"
-signature = "function ovl13_e13(P: Pointer; var B: Byte): Boolean"
+size = 542
+name = "FindNearbyTarget"
+signature = "function FindNearbyTarget(Who: PCharacter; var Selected): Boolean"
 c_name = "ovl13_e13"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_e13 (ovl13:1BF8 scans the nine cells around Who and hands over the most-wounded same-side combatant (or a body on a body tile whose owner is not yet dead); called for spell 3 by ovl09 SpellAccepted and by ovl13_fn_1E16); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl13:1C13"
-unit = "ovl13"
-addr = "ovl13:1C13"
-size = 245
-name = "ovl13_fn_1C13"
-signature = ""
-c_name = "ovl13_fn_1C13"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:1D08"
-unit = "ovl13"
-addr = "ovl13:1D08"
-size = 270
-name = "ovl13_fn_1D08"
-signature = ""
-c_name = "ovl13_fn_1D08"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl13:1E16"
 unit = "ovl13"
 addr = "ovl13:1E16"
-size = 533
-name = "ovl13_fn_1E16"
-signature = ""
+size = 685
+name = "FindSpellTarget"
+signature = "function FindSpellTarget(Spell, Automatic, AimFlag: Byte; var Target: TSpellTarget): Boolean"
 c_name = "ovl13_fn_1E16"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_fn_1E16 (ovl13:1E16 picks the target a spell is aimed at: with Automatic=0 it lets ovl13_e17 choose (the player's cursor) and copies the choice into Combat^.Target, else it takes the spell row's own data (PadB[$E] zero means the caster itself, spell 3 asks FindNearbyTarget) or loops ovl13_e21 up to 20 times and keeps an aim whose area hits only the caster's enemies and whose target is not helpless by the row's AffectId; it returns whether a target was stored and leaves its cell in ds6DB9/ds6DBA. Called by ovl13_e14 only.); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl13:202B"
-unit = "ovl13"
-addr = "ovl13:202B"
-size = 126
-name = "ovl13_fn_202B"
-signature = ""
-c_name = "ovl13_fn_202B"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:20A9"
-unit = "ovl13"
-addr = "ovl13:20A9"
-size = 26
-name = "ovl13_fn_20A9"
-signature = ""
-c_name = "ovl13_fn_20A9"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl13:20C3"
 unit = "ovl13"
 addr = "ovl13:20C3"
-size = 368
-name = "ovl13_e14"
-signature = ""
+size = 849
+name = "SelectSpellTargets"
+signature = "procedure SelectSpellTargets(Spell, Automatic: Byte; var Done: Byte)"
 c_name = "ovl13_e14"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_14"
+notes = "renamed from ovl13_e14 (ovl13:20C3 is the routine RunCombat stores in ds6B84 (ovl08:0088) and ovl22_e5 calls after an aim: it fills the spell's target list ds6C91 (1-based, count ds6C94) with the caster alone (Pad2[6] nibble 0), with FindSpellTarget's aim or a ScanTargets area copy (nibble $F and 8..14), or with up to (Pad2[6] and 3)+1 distinct aims, and leaves the chosen cell in ds6DB9/ds6DBA; Done is 0 when nothing was collected.); auto:entry_14"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl13:2233"
-unit = "ovl13"
-addr = "ovl13:2233"
-size = 89
-name = "ovl13_fn_2233"
-signature = ""
-c_name = "ovl13_fn_2233"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:228C"
-unit = "ovl13"
-addr = "ovl13:228C"
-size = 247
-name = "ovl13_fn_228C"
-signature = ""
-c_name = "ovl13_fn_228C"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:2383"
-unit = "ovl13"
-addr = "ovl13:2383"
-size = 51
-name = "ovl13_fn_2383"
-signature = ""
-c_name = "ovl13_fn_2383"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:23B6"
-unit = "ovl13"
-addr = "ovl13:23B6"
-size = 94
-name = "ovl13_fn_23B6"
-signature = ""
-c_name = "ovl13_fn_23B6"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl13:2414"
 unit = "ovl13"
 addr = "ovl13:2414"
-size = 30
-name = "ovl13_e15"
-signature = "procedure ovl13_e15(A, B: Byte; var Done: Byte)"
+size = 352
+name = "CastCombatSpell"
+signature = "procedure CastCombatSpell(SpellNumber, NoRedraw: Byte; var Done: Byte)"
 c_name = "ovl13_e15"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_15"
+notes = "renamed from ovl13_e15 (ovl13:2414 is the combat Cast command and the AI memorized-spell cast: it chooses a spell (ChooseSpellFromList), rejects a camp-only spell, then either casts at once through ovl22_e5 or begins casting (Combat^.PendingSpell, Initiative) for the next turn; called by PlayerTurn's C key (ovl08:031A) and ovl09 CastMemorizedSpell); auto:entry_15"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl13:2432"
-unit = "ovl13"
-addr = "ovl13:2432"
-size = 322
-name = "ovl13_fn_2432"
-signature = ""
-c_name = "ovl13_fn_2432"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl13:2574"
 unit = "ovl13"
 addr = "ovl13:2574"
-size = 10
-name = "ovl13_fn_2574"
-signature = ""
+size = 201
+name = "IsBackstab"
+signature = "function IsBackstab(Who: PCharacter; Target: PCharacter): Boolean"
 c_name = "ovl13_fn_2574"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_fn_2574 (ovl13:2574 returns True when Who's attack on Target is a thief backstab: thief level (ClassLevels[6]) above 0, a backstab-capable readied weapon and an allowed slot-2 item, Target attacked (Combat^.BF above 1) and facing Who (BearingTo(Who,Target)=IconSet); RollAttackDamage applies the thief damage multiplier and ResolveCombatantAttacks uses ds112-2 and attack kind 2); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl13:257E"
-unit = "ovl13"
-addr = "ovl13:257E"
-size = 75
-name = "ovl13_fn_257E"
-signature = ""
-c_name = "ovl13_fn_257E"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:25C9"
-unit = "ovl13"
-addr = "ovl13:25C9"
-size = 116
-name = "ovl13_fn_25C9"
-signature = ""
-c_name = "ovl13_fn_25C9"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl13:263D"
 unit = "ovl13"
 addr = "ovl13:263D"
 size = 115
-name = "ovl13_e18"
-signature = "function ovl13_e18(Who, Target: Pointer): Byte"
+name = "BearingTo"
+signature = "function BearingTo(Who, Target: Pointer): Byte"
 c_name = "ovl13_e18"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_e18 (ovl13:263D returns the compass direction from Who's cell to Target's cell (walks Dir 0..8 until InDirArc(WhoX,WhoY,TargetX,TargetY,Dir)); ovl09 uses it as the AI move direction and PerformAttack and NoteAttackBearing use it to face a combatant); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -5554,12 +5112,12 @@ id = "ovl13:26B0"
 unit = "ovl13"
 addr = "ovl13:26B0"
 size = 457
-name = "ovl13_fn_26B0"
-signature = ""
+name = "ShowAttackAnimation"
+signature = "procedure ShowAttackAnimation(Who, Target: PCharacter; Item: PItem)"
 c_name = "ovl13_fn_26B0"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_fn_26B0 (ovl13:26B0 draws the attack's picture at Who's cell (CopyPictureItem/DrawCombatIcon selected by the item kind) and animates it along the line to Target (WalkCombatLine) with a launch (ds2620) and an impact (ds262C) sound; PerformAttack calls it for the aimed item and a readied bow); signature set from e12's pushes (ovl13:1884 calls it with Who, Target, an item pointer and pushes it as far ptr, far ptr, far ptr); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -5567,12 +5125,12 @@ id = "ovl13:2879"
 unit = "ovl13"
 addr = "ovl13:2879"
 size = 143
-name = "ovl13_e19"
+name = "UpdateMonsterMorale"
 signature = ""
 c_name = "ovl13_e19"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_19"
+notes = "renamed from ovl13_e19 (ovl13:2879 walks the battle character list ds5D96 and totals the monster side's (Side = SideMonsters) maximum and current hit points, then stores 20 * current div maximum * 5 in the morale byte ds6E2F that CheckMorale (ovl09:10D7) reads as a monster's second morale base; called by StartBattle and EndCombatRound); auto:entry_19"
 evidence = ["prologue"]
 
 [[routine]]
@@ -5580,12 +5138,12 @@ id = "ovl13:2908"
 unit = "ovl13"
 addr = "ovl13:2908"
 size = 144
-name = "ovl13_e20"
-signature = "function ovl13_e20(Who: Pointer): Byte"
+name = "FastestEnemyMovement"
+signature = "function FastestEnemyMovement(Who: Pointer): Byte"
 c_name = "ovl13_e20"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_e20 (ovl13:2908 walks the battle character list ds5D96 and returns half of the largest round Movement (ComputeMovement div 2) among the combatants on the side opposing Who that are still in the fight (Flag10D set); TryFlee compares it with half of Who's Movement to decide the escape and CheckMorale uses it as the panic threshold); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -5593,168 +5151,64 @@ id = "ovl13:2998"
 unit = "ovl13"
 addr = "ovl13:2998"
 size = 264
-name = "ovl13_e16"
-signature = "function ovl13_e16(Who, Target: Pointer): Boolean"
+name = "ConfirmAttackTarget"
+signature = "function ConfirmAttackTarget(Who, Target: PCharacter): Boolean"
 c_name = "ovl13_e16"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_e16 (ovl13:2998 decides whether an attack on Target may proceed: allowed when Target is on the side opposing Who (OpposingSide) or Who is computer-run (Quick), else it asks 'Attack Ally: ' (AskYesNo) and on a yes sets ds6DE2 and word 819 of ds49D6^, moves every computer-run party member to the monster side and clears its target, then recounts the sides; called by MeleeAttack (ovl08:0D45)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl13:2AA0"
 unit = "ovl13"
 addr = "ovl13:2AA0"
-size = 235
-name = "ovl13_fn_2AA0"
-signature = ""
+size = 413
+name = "ShowAimPrompt"
+signature = "function ShowAimPrompt(Who, Target: PCharacter; Range: Byte; ShowRange: Byte; Unused: Byte): Char"
 c_name = "ovl13_fn_2AA0"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_fn_2AA0 (ovl13:2AA0 draws the target's character panel and the combat cursor, shows 'Range = ' with the distance, builds the aim menu 'Next Prev Manual ' + the target name + 'Center Exit' and returns the key ReadPromptChoice reads under the title 'Aim:'; the target is named 'Target ' within Range when the aim is not ranged (ShowRange 0) or for a ranged weapon whose ammo can be used; called by ovl13_e17 (the player's aim cursor)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl13:2B8B"
-unit = "ovl13"
-addr = "ovl13:2B8B"
-size = 178
-name = "ovl13_fn_2B8B"
-signature = ""
-c_name = "ovl13_fn_2B8B"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl13:2C3D"
 unit = "ovl13"
 addr = "ovl13:2C3D"
-size = 252
-name = "ovl13_fn_2C3D"
+size = 445
+name = "ResolveAimedAttack"
 signature = ""
 c_name = "ovl13_fn_2C3D"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_fn_2C3D (ovl13:2C3D records Target in the aim record (Who/X/Y from CombatantX/CombatantY), puts the combat cursor on its cell, and, when the Automatic byte is 1, asks ConfirmAttackTarget and resolves the attack through SweepEnemies or PerformAttack; called by the manual aim cursor ovl13_e17 via ovl13:2DFA and by ovl13:31D7 (whitepaper 5.5)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl13:2D39"
-unit = "ovl13"
-addr = "ovl13:2D39"
-size = 143
-name = "ovl13_fn_2D39"
-signature = ""
-c_name = "ovl13_fn_2D39"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:2DC8"
-unit = "ovl13"
-addr = "ovl13:2DC8"
-size = 50
-name = "ovl13_fn_2DC8"
-signature = ""
-c_name = "ovl13_fn_2DC8"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl13:2DFA"
 unit = "ovl13"
 addr = "ovl13:2DFA"
-size = 349
-name = "ovl13_fn_2DFA"
+size = 1886
+name = "RunAimCursor"
 signature = ""
 c_name = "ovl13_fn_2DFA"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_fn_2DFA (ovl13:2DFA is the manual aim cursor: it moves a cursor over the combat map (MoveCombatCursor/DirStepX), walks a line of sight from Who (WalkLine), finds the combatant or body under the cursor (CombatantRecord/BodyTable), draws the panel, builds the 'Center Exit' prompt (ReadPromptChoice '(Use Cursor keys) '), and on Enter/'T' records the cell in Aim and, when Automatic, resolves the attack through ResolveAimedAttack; called by the aim wrapper ovl13_e17 (whitepaper 5.5)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl13:2F57"
-unit = "ovl13"
-addr = "ovl13:2F57"
-size = 36
-name = "ovl13_fn_2F57"
-signature = ""
-c_name = "ovl13_fn_2F57"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:2F7B"
-unit = "ovl13"
-addr = "ovl13:2F7B"
-size = 88
-name = "ovl13_fn_2F7B"
-signature = ""
-c_name = "ovl13_fn_2F7B"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:2FD3"
-unit = "ovl13"
-addr = "ovl13:2FD3"
-size = 296
-name = "ovl13_fn_2FD3"
-signature = ""
-c_name = "ovl13_fn_2FD3"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:30FB"
-unit = "ovl13"
-addr = "ovl13:30FB"
-size = 220
-name = "ovl13_fn_30FB"
-signature = ""
-c_name = "ovl13_fn_30FB"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:31D7"
-unit = "ovl13"
-addr = "ovl13:31D7"
-size = 271
-name = "ovl13_fn_31D7"
-signature = ""
-c_name = "ovl13_fn_31D7"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl13:32E6"
 unit = "ovl13"
 addr = "ovl13:32E6"
 size = 163
-name = "ovl13_fn_32E6"
-signature = ""
+name = "ListAimTargets"
+signature = "procedure ListAimTargets(Who: PCharacter)"
 c_name = "ovl13_fn_32E6"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_fn_32E6 (ovl13:32E6 nested in RunAimTargets: ScanTargets over the whole map into ds6718 and copies ds6718[1..Count] into the parent's Targets list); nested in RunAimTargets (ovl13:3558), proven by the parent's match"
 evidence = ["prologue"]
 
 [[routine]]
@@ -5762,116 +5216,64 @@ id = "ovl13:3389"
 unit = "ovl13"
 addr = "ovl13:3389"
 size = 463
-name = "ovl13_fn_3389"
-signature = ""
+name = "StepAimCursor"
+signature = "function StepAimCursor(Delta, Step: Byte): PCharacter"
 c_name = "ovl13_fn_3389"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_fn_3389 (ovl13:3389 nested in RunAimTargets: it steps the parent's Index through Targets by Delta, wraps it into 1..Count, redraws the old cell (or remembers the new one) and draws the move with WalkCombatLine, returning the target it lands on); nested in RunAimTargets (ovl13:3558), proven by the parent's match"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl13:3558"
 unit = "ovl13"
 addr = "ovl13:3558"
-size = 464
-name = "ovl13_e17"
-signature = "procedure ovl13_e17(Who: Pointer; A, B, C: Byte; var Done: Byte; var Aim)"
+size = 652
+name = "RunAimTargets"
+signature = "procedure RunAimTargets(Who: PCharacter; Range, Automatic, AimFlag: Byte; var Done: Byte; var Aim)"
 c_name = "ovl13_e17"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_e17 (ovl13:3558 is the Aim command's target loop: it lists the reachable targets (ListAimTargets), steps the cursor (StepAimCursor), shows ShowAimPrompt, lets the player move the cursor or resolve the aimed attack (RunAimCursor, ResolveAimedAttack), and clears the range line; called by PlayerTurn (ovl08:0310) and FindSpellTarget); auto:near_call; nested: ListAimTargets (ovl13:32E6) and StepAimCursor (ovl13:3389), proven by the parent's match"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl13:3728"
-unit = "ovl13"
-addr = "ovl13:3728"
-size = 188
-name = "ovl13_fn_3728"
-signature = ""
-c_name = "ovl13_fn_3728"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl13:37E4"
 unit = "ovl13"
 addr = "ovl13:37E4"
-size = 447
-name = "ovl13_e21"
-signature = "function ovl13_e21(Who: Pointer; A, B, C: Byte): Boolean"
+size = 494
+name = "ChooseCombatTarget"
+signature = "function ChooseCombatTarget(Who: PCharacter; Range, ThroughWalls, ForgetTarget: Byte): Boolean"
 c_name = "ovl13_e21"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_e21 (ovl13:37E4 picks a random in-range enemy (CollectEnemiesInRange) as Who's Combat^.Target for the automatic spell aim and the AI, with a second pass that opens the WalkLine tile gate; called by FindSpellTarget and ovl09 QuickTurn/MoveStep/AiTurn); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl13:39A3"
-unit = "ovl13"
-addr = "ovl13:39A3"
-size = 47
-name = "ovl13_fn_39A3"
-signature = ""
-c_name = "ovl13_fn_39A3"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl13:39D2"
 unit = "ovl13"
 addr = "ovl13:39D2"
-size = 20
-name = "ovl13_e22"
+size = 180
+name = "RakeAttack"
 signature = ""
 c_name = "ovl13_e22"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_22"
+notes = "renamed from ovl13_e22 (ovl13:39D2 is the round's rake: the ovl12 initialiser (store at ovl12 code 0x354D) puts it in AffectHandlers[$49] (DS:694C), and it shows 'Rakes...' and attacks again with the second attack form (WeaponAttacks[2]/WeaponDamage[2]) after the last attack resolution landed both slot-1 hits (ds6822[1] = 2, ovl13:16F2); make match UNIT=ovl13 FN=RakeAttack MATCH.); auto:entry_22"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl13:39E6"
-unit = "ovl13"
-addr = "ovl13:39E6"
-size = 69
-name = "ovl13_fn_39E6"
-signature = ""
-c_name = "ovl13_fn_39E6"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl13:3A2B"
-unit = "ovl13"
-addr = "ovl13:3A2B"
-size = 91
-name = "ovl13_fn_3A2B"
-signature = ""
-c_name = "ovl13_fn_3A2B"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl13:3A86"
 unit = "ovl13"
 addr = "ovl13:3A86"
 size = 269
-name = "ovl13_e23"
+name = "ForcedAttack"
 signature = ""
 c_name = "ovl13_e23"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_23"
+notes = "renamed from ovl13_e23 (ovl13:3A86 is the affect $4A handler: the ovl12 initialiser (store at ovl12 code 0x354D) puts it in AffectHandlers[$4A] (DS:6950), and it makes Who attack the combatant its affect records with the second attack form (AttackSlots[1] 1, WeaponAttacks[1] 3, WeaponDamage[1] 4) and attack kind 1; make match UNIT=ovl13 FN=ForcedAttack MATCH.); auto:entry_23"
 evidence = ["prologue"]
 
 [[routine]]
@@ -5879,12 +5281,12 @@ id = "ovl13:3B93"
 unit = "ovl13"
 addr = "ovl13:3B93"
 size = 218
-name = "ovl13_e24"
-signature = "function ovl13_e24: Boolean"
+name = "GodsIntervene"
+signature = "function GodsIntervene: Boolean"
 c_name = "ovl13_e24"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_24"
+notes = "renamed from ovl13_e24 (ovl13:3B93 is the Alt-X debug command: it returns False unless the program was started with the STING argument (ParamStr(1); res04's DebugMode switch), then flashes 'The Gods intervene!' and takes every monster out of the fight (Flag10D 0, Status StatusDead, CombatantTable Kind 0); ovl08:0264 and ovl09:0690 call it for Alt-X and show 'That doesn't work' on False; make match UNIT=ovl13 FN=GodsIntervene MATCH.); auto:entry_24"
 evidence = ["prologue"]
 
 [[routine]]

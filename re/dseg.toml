@@ -746,6 +746,11 @@ name = "AttackRoll"
 evidence = "RollToHit and RollBeatsResistance: d20 with 20 counted as 100, hooks may change it, negative means a miss (ovl24:0C63, 0CD5)"
 
 [[global]]
+offset = 0x6822
+name = "AttackSlotRolls"
+evidence = "DS:6822 as three bytes indexed by attack slot: element 0 is AttackRoll, elements 1 and 2 are the per-slot counters ResolveCombatantAttacks increments (ovl13:1406, 16F2)"
+
+[[global]]
 offset = 0x682A
 name = "SaveKind"
 evidence = "SavingThrow stores the saving throw kind for the hooks of kind 0Ch (ovl24:0DAD)"
