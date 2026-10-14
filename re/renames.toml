@@ -4190,3 +4190,10 @@ kind = "routine"
 why = "ovl12:2E08 cancels the hooks of affects $0B (charm), $35, $34 (paralysis) and $37 (poison) with CancelPendingHook, then sets SaveRoll to AlwaysSaves when SaveKind is the poison save (SaveKind 0)"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl12_e110"
+new = "SetFlagIfTargetReflects"
+kind = "routine"
+why = "ovl12:2E37 walks the readied items (+$34) of AttackTarget and sets ds681E when one of their names is ReflectingNameNum $76 (the item that turns a gaze back, GazeStonesTarget ovl12:1CAD)"
+date = "2026-10-14"
+

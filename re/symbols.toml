@@ -4656,12 +4656,12 @@ id = "ovl12:2E37"
 unit = "ovl12"
 addr = "ovl12:2E37"
 size = 163
-name = "ovl12_e110"
+name = "SetFlagIfTargetReflects"
 signature = ""
 c_name = "ovl12_e110"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_110"
+notes = "renamed from ovl12_e110 (ovl12:2E37 walks the readied items (+$34) of AttackTarget and sets ds681E when one of their names is ReflectingNameNum $76 (the item that turns a gaze back, GazeStonesTarget ovl12:1CAD)); auto:entry_110"
 evidence = ["prologue"]
 
 [[routine]]

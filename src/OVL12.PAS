@@ -122,7 +122,7 @@ procedure SetDamageFromSlotItemType56(Who: PCharacter; Affect: PAffect; Mode: By
 procedure HalveOrCancelDamageForUnenchantedSlotItem(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure CancelCharmAndUnknown35ModerateChance(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure CancelCharmUnknown35PoisonAndParalysisHooks(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e110;
+procedure SetFlagIfTargetReflects(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e111;
 procedure ovl12_fn_2EEA;
 procedure ovl12_e112;
@@ -176,6 +176,8 @@ const
   ComputerRunMorale = $B3;      { TCharacter.B84 of a computer-run member: the flag and morale $33 }
   AffectMorale = 100;           { what applying the control sets the morale scratch ds6825 to }
   ExceptionalStrength = 18;     { Strength 18 is written with a percentile (EncodeStrength, ovl24:10E4) }
+  FlagNameNum = $98;            { a NameNum that sets ds681E with FlagNameNumThird as the third name (ovl12:2E37) [?] }
+  FlagNameNumThird = $FC;
   StrengthKept = $80;           { bit 7 of a strength affect's Data: an earlier strength is kept in it (ovl24:115C) }
   AffectStrength1 = $0C;        { the two strength affects (ovl24:115C keeps the earlier strength in them) }
   AffectStrength2 = $26;
@@ -2080,8 +2082,29 @@ begin
   if SaveKind = SaveKindPoison then
     SaveRoll := AlwaysSaves;
 end;
-{ ovl12:2E37: retf 10: 10 bytes of parameters; 6 bytes of locals }
-{@stub} procedure ovl12_e110; begin end;
+{ ovl12:2E37. Affect handler (the AffectHandlers shape: Who, Affect and Mode; only Who is read). AttackTarget becomes
+  Who's combat Target (Combat^.Target, as BoostAttackAgainstTarget at ovl12:013B does). The carried items of
+  AttackTarget (Items, +$C8) are walked while ds681E is 0. Every readied item (Readied, +$34) that has
+  ReflectingNameNum ($76, the item that turns a gaze back, GazeStonesTarget at ovl12:1CAD) in one of its names
+  (NameNum[1..3], +$2F..+$31), or FlagNameNum in one name with FlagNameNumThird in the third, sets ds681E to 1.
+  Purpose unknown: ds681E is read by nothing yet [?]; which affect runs it is not known yet [?]. }
+procedure SetFlagIfTargetReflects(Who: PCharacter; Affect: PAffect; Mode: Byte);
+var
+  Item: PItem;                  { the carried items of AttackTarget, walked from the first }
+  NameIndex: Byte;              { the name 1..3 of Item that is looked at }
+begin
+  AttackTarget := Who^.Combat^.Target;
+  Item := AttackTarget^.Items;
+  while (Item <> nil) and (ds681E = 0) do
+  begin
+    if Item^.Readied then
+      for NameIndex := 1 to 3 do
+        if ((Item^.NameNum[NameIndex] = FlagNameNum) and (Item^.NameNum[3] = FlagNameNumThird)) or
+          (Item^.NameNum[NameIndex] = ReflectingNameNum) then
+          ds681E := 1;
+    Item := Item^.Next;
+  end;
+end;
 { ovl12:2EDA: frame not read }
 {@stub} procedure ovl12_e111; begin end;
 { ovl12:2EEA: retf 10: 10 bytes of parameters; 0 bytes of locals }
