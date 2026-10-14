@@ -39,7 +39,7 @@ procedure RunDiseaseHandlers(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure RaiseAttackAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure LowerAttackAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure SetAttackMissIfTurnPending(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e33;
+procedure AgeCharacterOnce(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e34;
 procedure ovl12_fn_0FAC;
 procedure ovl12_fn_101D;
@@ -198,6 +198,7 @@ const
   SavePenalty = 4;              { what ovl12:0BAC and 0C15 take off SaveRoll }
   ResistPenalty = 4;            { what ovl12:0BAC takes off Who's ResistValue and Pad112[$112] }
   MissRoll = -1;                { AttackRoll below 0 is a miss (RollToHit, ovl24:0CD5); ovl12:0C26 sets it }
+  AgedBit = $10;                { Affect.Data bit 4: set once the affect has aged Who (ovl12:0C4B) }
   AffectImages = $1C;           { the images affect: runs on the damage hook (kind 6, ovl24:02FA); Data counts the images [I] }
   AffectUnknown2B = $2B;        { purpose unknown; a Cure Disease affect (ovl04:031E), run by RunDiseaseHandlers }
   AffectCauseDisease = $2C;     { named in ovl15 (ovl15:0FBC); a Cure Disease affect (ovl04:031E) }
@@ -751,8 +752,20 @@ begin
     AttackRoll := MissRoll;
   end;
 end;
-{ ovl12:0C4B: retf 10: 10 bytes of parameters; 6 bytes of locals }
-{@stub} procedure ovl12_e33; begin end;
+{ 0C4B. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000). The first run
+  with AgedBit clear in the affect's Data sets the bit, shows "ages" on Who in colour 10 (res12_fn_16EC) and adds one
+  year to Who's Age (+$30). Every run doubles ds681A (shl 1), whether or not Who was aged. Which affect runs it is not
+  known yet [?]. }
+procedure AgeCharacterOnce(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  if (Affect^.Data and AgedBit) = 0 then
+  begin
+    Affect^.Data := Affect^.Data + AgedBit;
+    res12_fn_16EC(Who, 'ages', $A, 1);
+    Inc(Who^.Age);
+  end;
+  ds681A := ds681A shl 1;
+end;
 { ovl12:0CC3: retf 10: 10 bytes of parameters; 40 bytes of locals }
 {@stub} procedure ovl12_e34; begin end;
 { ovl12:0FAC: retf 6: 6 bytes of parameters; 10 bytes of locals }

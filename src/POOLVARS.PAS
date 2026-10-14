@@ -864,6 +864,7 @@ var
   HookAffectId: Byte;             { the affect ApplyAffect offers to the hooks; 0 afterwards: unaffected (ovl24:1672) }
   DamageAmount: Byte;             { the damage DealDamage offers to the hooks and then deals (ovl24:134E) }
   DamageKind: Byte;               { the kind of damage: 1 fire, 2 cold, 4 electricity, $10 acid, bit 3 magic (ovl24:13E4) }
+  ds681A: Byte;                   { shl 1 every time ovl12:0C4B runs; no other use known [?] }
   { Purpose unknown: ovl12:064E clears DamageAmount when this byte is $0F; ovl12:09C0 (ImageAbsorbsHit) needs it above 0. }
   ds681B: Byte;
   ds681C: Byte;                   { the dice count of the last RollDiceCounted roll (ovl24:0E37) }

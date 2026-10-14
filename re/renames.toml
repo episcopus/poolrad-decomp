@@ -3644,3 +3644,10 @@ kind = "routine"
 why = "ovl12:0C26 tests Who's combatant Initiative (TCombatant +$3, above 0 while CombatTurn still has its turn to take, ovl08); when it is above 0 it sets ds681E to 1 and AttackRoll to -1, a negative roll that RollToHit counts as a miss (AttackRoll comment, ovl24:0CD5); reads only Who (AffectHandlers shape, Mode and Affect not read)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e33"
+new = "AgeCharacterOnce"
+kind = "routine"
+why = "ovl12:0C4B is an affect handler (AffectHandlers shape, Mode not read): when the affect's Data bit 4 is clear it sets it, shows 'ages' on Who (res12_fn_16EC, colour 10, the message copied to a stack temporary as in StartTrainingWithManual) and adds one year to Who's Age (TCharacter +$30, the age in years, POOLVARS); it then doubles ds681A (shl 1) every time it runs; which affect runs it is not known yet"
+date = "2026-10-13"
+
