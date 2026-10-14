@@ -72,7 +72,7 @@ procedure PoisonAttackTargetBonusMinus2(Who: PCharacter; Affect: PAffect; Mode: 
 procedure SetFlagAndLowerAttackRollByFour(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e60(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure DrainBloodFromCombatant(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e62;
+procedure StartBloodDrain(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e63;
 procedure ovl12_e64;
 procedure ovl12_e65;
@@ -246,6 +246,12 @@ const
   RotCharismaLoss = 2;          { what each run of the rot handler (ovl12:1399) takes off Charisma }
   RotMinimumCharisma = 3;       { Charisma is not taken below this by the rot handler (ovl12:1399) }
   StatusRotted = 8;             { TCharacter.Status 8: what the rot handler gives its victim, who dies of the rot }
+  AffectBloodDrain = $4B;       { the affect of the blood drain on the drinker: its Data is the victim's combatant index and
+                                  DrainBloodFromCombatant (ovl12:176F) runs when it is removed }
+  BloodDrainDuration = $CF;     { the Duration ovl12:18B5 gives AffectBloodDrain (207) }
+  AffectHeldFast = $3A;         { the affect of the victim of a blood drain; ovl12:1935 shows "is held fast" when it gives it }
+  HeldFastData = $FF;           { the Data byte the blood drain gives AffectHeldFast }
+  HeldFastDuration = 0;         { the Duration the blood drain gives AffectHeldFast }
 
 { ovl12:0000. Cancels the hook of an affect: when AffectId is 0 or is the affect the hooks are offering
   (HookAffectId), HookAffectId and DamageAmount are cleared. HookAffectId 0 reads as "is Unaffected"
@@ -1237,8 +1243,18 @@ begin
       RemoveAffect(Who, $4B, Affect);
   end;
 end;
-{ ovl12:18B5: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e62; begin end;
+{ ovl12:18B5. Affect handler that starts a blood drain (the AffectHandlers shape: Who, Affect and Mode; Affect and Mode
+  are not read, ovl24:0000). The character Who attacked last (Who's combat Target) is copied into AttackTarget. Who gets
+  AffectBloodDrain for BloodDrainDuration rounds, its Data the combatant index of AttackTarget (CombatantIndex), so
+  DrainBloodFromCombatant (ovl12:176F) runs on it when it is removed. AttackTarget gets AffectHeldFast and that affect's
+  handler runs at once (CallAffectHandler). Which affect runs it is not known yet [?]. }
+procedure StartBloodDrain(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  AttackTarget := Who^.Combat^.Target;
+  AddAffect(Who, AffectBloodDrain, BloodDrainDuration, CombatantIndex(AttackTarget), RunsHandlerOnRemove);
+  AddAffect(AttackTarget, AffectHeldFast, HeldFastDuration, HeldFastData, NoRemoveHandler);
+  CallAffectHandler(AffectHeldFast, AttackTarget, nil, 0);
+end;
 { ovl12:1935: retf 10: 10 bytes of parameters; 14 bytes of locals }
 {@stub} procedure ovl12_e63; begin end;
 { ovl12:19D9: retf 10: 10 bytes of parameters; 2 bytes of locals }

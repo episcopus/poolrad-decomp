@@ -3993,12 +3993,12 @@ id = "ovl12:18B5"
 unit = "ovl12"
 addr = "ovl12:18B5"
 size = 128
-name = "ovl12_e62"
+name = "StartBloodDrain"
 signature = ""
 c_name = "ovl12_e62"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_62"
+notes = "renamed from ovl12_e62 (ovl12:18B5 gives the drinker affect 4B (AffectBloodDrain, whose removal runs DrainBloodFromCombatant ovl12:176F, which reads the victim index from its Data) and the victim affect 3A (AffectHeldFast, which ovl12:1935 announces as 'is held fast'); it starts the blood drain); auto:entry_62"
 evidence = ["prologue"]
 
 [[routine]]
