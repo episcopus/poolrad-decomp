@@ -27,7 +27,7 @@ procedure BoostAttackVsListedTarget(Who: PCharacter; Affect: PAffect; Mode: Byte
 procedure HalveFireDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ShowSilenceAndStopCasting(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure DieIfPoisoned(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e21;
+procedure GiveAffectItem(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e22;
 procedure ovl12_e23;
 procedure ovl12_e24;
@@ -212,6 +212,13 @@ const
   AffectUnknown0FDuration = 10; { the Duration ovl12:05EB gives affect $0F }
   MinimumResistance = $39;      { ovl12:064E raises ResistValue (+$111) to at least this (57) }
   ClearDamageValue = $0F;       { ovl12:064E clears DamageAmount when ds681B is this }
+  GivenItemType = $14;          { TMenuLine.ItemType of the item the affect gives (ovl12:07E0) }
+  GivenItemNameNum2 = $14;      { NameNum[2] of that item }
+  GivenItemNameNum3 = $F3;      { NameNum[3] of that item; the search of Who's items uses it too (ovl12:07E0) }
+  GivenItemPlus = 1;            { Plus of that item }
+  GivenItemAffect2 = $17;       { Affects[2] of that item }
+  GivenItemAffect3 = $89;       { Affects[3] of that item }
+  ItemCountLimit = $10;         { no item is given once ItemCountC7 is this or more (ovl12:07E0 at 0869) [I] }
 
 { ovl12:0000. Cancels the hook of an affect: when AffectId is 0 or is the affect the hooks are offering
   (HookAffectId), HookAffectId and DamageAmount are cleared. HookAffectId 0 reads as "is Unaffected"
@@ -570,8 +577,47 @@ begin
   RemoveAffect(Who, AffectUnknown0F, nil);
   ds681F := 0;
 end;
-{ ovl12:07E0: retf 10: 10 bytes of parameters; 20 bytes of locals }
-{@stub} procedure ovl12_e21; begin end;
+{ ovl12:07E0. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Affect is not read). When the affect
+  is applied (Mode 0) and Who has no item of GivenItemType with NameNum[3] GivenItemNameNum3 yet, and Who's
+  ItemCountC7 (+$C7, likely the item count [I]) is below ItemCountLimit, Who gets such an item (res12_fn_15F7 adds
+  it to the list, the temporary is freed) and "Gains an item" is shown in colour 10. When it is removed (Mode not
+  0) the item Who has is taken off the list (res12_fn_1509). Then res12_fn_0BB8 redraws Who. Purpose unknown: which
+  affect id runs it is not known yet [?]. }
+procedure GiveAffectItem(Who: PCharacter; Affect: PAffect; Mode: Byte);
+var
+  Item: PItem;
+  Found: Boolean;
+begin
+  Item := Who^.Items;
+  Found := False;
+  while (Item <> nil) and not Found do
+    if (Item^.ItemType = GivenItemType) and (Item^.NameNum[3] = GivenItemNameNum3) then
+      Found := True
+    else
+      Item := Item^.Next;
+  if Mode <> 0 then
+  begin
+    if Item <> nil then
+      res12_fn_1509(Who, Item);
+  end;
+  if Mode = 0 then
+    if not Found then
+      if Who^.ItemCountC7 < ItemCountLimit then
+      begin
+        New(Item);
+        FillChar(Item^, SizeOf(TMenuLine), 0);
+        Item^.ItemType := GivenItemType;
+        Item^.NameNum[2] := GivenItemNameNum2;
+        Item^.NameNum[3] := GivenItemNameNum3;
+        Item^.Plus := GivenItemPlus;
+        Item^.Affects[2] := GivenItemAffect2;
+        Item^.Affects[3] := GivenItemAffect3;
+        res12_fn_15F7(Who, Item);
+        Dispose(Item);
+        res12_fn_16EC(Who, 'Gains an item', $A, 1);
+      end;
+  res12_fn_0BB8(Who);
+end;
 { ovl12:0918: retf 10: 10 bytes of parameters; 4 bytes of locals }
 {@stub} procedure ovl12_e22; begin end;
 { ovl12:0947: retf 10: 10 bytes of parameters; 2 bytes of locals }

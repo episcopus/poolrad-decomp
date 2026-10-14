@@ -3560,3 +3560,10 @@ kind = "routine"
 why = "ovl12:0775 finds the Poisoned affect (affect $37, ovl15 'Poisoned') with res12_fn_2199 and, when Who has it, drops Who with StatusGone and 'dies from poison' (DropFromFight, ovl12:0058); then removes affect $0F inside the ds681F bracket (ovl04:0386); an affect handler reading only Who"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e21"
+new = "GiveAffectItem"
+kind = "routine"
+why = "ovl12:07E0 is an affect handler (Who, Affect, Mode): on apply it gives Who an item of type $14 (NameNum $F3, Plus 1, Affects $17 and $89) unless Who has one or ItemCountC7 is $10 or more, shows 'Gains an item' (res12_fn_16EC) and on removal takes that item off Who's list (res12_fn_1509); Mode is read, Affect not"
+date = "2026-10-13"
+

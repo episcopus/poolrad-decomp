@@ -3408,12 +3408,12 @@ id = "ovl12:07E0"
 unit = "ovl12"
 addr = "ovl12:07E0"
 size = 312
-name = "ovl12_e21"
+name = "GiveAffectItem"
 signature = ""
 c_name = "ovl12_e21"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_21"
+notes = "renamed from ovl12_e21 (ovl12:07E0 is an affect handler (Who, Affect, Mode): on apply it gives Who an item of type $14 (NameNum $F3, Plus 1, Affects $17 and $89) unless Who has one or ItemCountC7 is $10 or more, shows 'Gains an item' (res12_fn_16EC) and on removal takes that item off Who's list (res12_fn_1509); Mode is read, Affect not); auto:entry_21"
 evidence = ["prologue"]
 
 [[routine]]
@@ -16802,7 +16802,7 @@ unit = "res12"
 addr = "00BA:15F7"
 size = 156
 name = "res12_fn_15F7"
-signature = ""
+signature = "procedure res12_fn_15F7(Who: Pointer; Item: Pointer)"
 c_name = "res12_fn_15F7"
 level = "none"
 justification = ""
