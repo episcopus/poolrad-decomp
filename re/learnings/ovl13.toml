@@ -170,3 +170,12 @@ tags = ["case", "if", "selector", "compare", "codegen"]
 title = "A sparse `case` on a Char/Byte selector loads it once into AL (`mov al,[sel]; cmp al,..`); an if-chain compares the memory each time (`cmp byte [sel],..`)"
 lesson = "ovl13:2DFA handles the aim key with `case Key of #13,'T': ...; 'H': ...; ...; #0,'E': ...; 'C': ...; else Dir := 8; end`. The original emits `mov al,[bp-0x2a]; cmp al,0xd; je ...; cmp al,0x54; je ...; jmp ...` (the selector is loaded once and every comparison is on AL), while an `if (Key = #13) or (Key = 'T') then ... else if Key = 'H' ...` chain emits `cmp byte [bp-0x2a],0xd` on the memory each time. So a `mov al,[sel]` before a run of `cmp al,imm` is a `case`, not an if-chain."
 evidence = ["src/OVL13.PAS#RunAimCursor", "re/symbols.toml#ovl13:2DFA"]
+
+[[lesson]]
+id = "for-bound-local-uses-hidden-temp-not-an-extra-local"
+confidence = "V"
+units = ["*"]
+tags = ["for", "loop", "bound", "frame", "temporary", "codegen"]
+title = "`for I := 1 to LocalVar` copies the bound into a hidden frame temp; an explicit copy local doubles it"
+lesson = "ovl13:37E4 re-scans the remaining enemies with a `for Index := 1 to Count do`. The original's loop reads the bound from one frame byte: `mov al,[bp-2]; mov [bp-0xc],al; mov al,1; cmp al,[bp-0xc] ... cmp al,[bp-0xc]`. That store is TP's own for-loop final-value temp, not a source local, so the source has no CountCopy: declaring `CountCopy := Count; for Index := 1 to CountCopy do` adds a second byte and a second copy (`mov al,[bp-0xc]; mov [bp-0xd],al`) and makes the frame 2 bytes too big (0xe against 0xc). Rule: a for-loop over a variable bound always carries one hidden temp word/byte for the bound; do not mirror it with a named local. Probe tools/re/tp_idioms/ovl13/PRBE22.PAS (F1 frame 0xc, F4, same locals plus the for loop, 0xe)."
+evidence = ["tools/re/tp_idioms/ovl13/PRBE22.PAS", "src/OVL13.PAS#ChooseCombatTarget", "re/symbols.toml#ovl13:37E4"]
