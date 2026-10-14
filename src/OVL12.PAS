@@ -52,7 +52,7 @@ procedure LowerAttackIfSelectedIsBugbearOrGnoll(Who: PCharacter; Affect: PAffect
 procedure RaiseOrLowerAttackAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure AddHealingBlockAndHeal(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e43(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e44;
+procedure ovl12_e44(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e45;
 procedure ovl12_e46;
 procedure ovl12_e47;
@@ -980,8 +980,12 @@ procedure ovl12_e43(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   if res12_fn_2637(Who) <> 0 then ;
 end;
-{ ovl12:1355: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e44; begin end;
+{ ovl12:1355. Affect handler (the AffectHandlers shape: Who, Affect and Mode) with an empty body, like IgnoreAffect
+  (ovl12:0647): none of its parameters is read and no global is written. Purpose unknown: which affect runs it is
+  not known yet [?]. }
+procedure ovl12_e44(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+end;
 { ovl12:135C: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl12_e45; begin end;
 { ovl12:1363: retf 10: 10 bytes of parameters; 0 bytes of locals }
