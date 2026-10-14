@@ -89,3 +89,21 @@ tags = ["file", "untyped", "rewrite", "reset", "erase", "blockwrite", "assign", 
 title = "The untyped file statements name these System entries"
 lesson = "For an untyped `file`: `Assign(F, Name)` calls 0AF8:13E2; `Reset(F, RecSize)` calls 0AF8:1410 (INT 21h AH=3Dh, open existing) with the size pushed; `Rewrite(F, RecSize)` calls 0AF8:1419, the twin nine bytes on (INT 21h AH=3Ch, create), also with the size pushed; `Erase(F)` calls 0AF8:161F (INT 21h AH=41h, delete) with only the record's address pushed; `Close(F)` calls 0AF8:1491 and `BlockWrite(F, Buf, Count)` calls 0AF8:1502. FileRec is $80 bytes. A value `string[N]` parameter is copied in the callee with System_StrLCopy limit N and the copy reads the pointer at [bp+6], so the value string parameter is the LAST declared parameter. Probes tools/re/tp_idioms/ovl17/FILEOP2.PAS and PROLOGPR.PAS."
 evidence = ["src/OVL17.PAS#SaveCharacter", "tools/re/tp_idioms/ovl17/FILEOP2.PAS", "tools/re/tp_idioms/ovl17/PROLOGPR.PAS"]
+
+[[lesson]]
+id = "two-dimensional-array-index-uses-di"
+confidence = "V"
+units = ["*"]
+tags = ["array", "2d", "index", "codegen", "register", "di", "stride"]
+title = "A 2-D array access computes the flat index in DI, a hand-written 1-D index in AX"
+lesson = "For `Arr[I, J]` (a declared 2-D array) TP 6.0 computes the flat offset I * (row length) + J in DI: `mov di, ax; mov si, di; shl di, 1; shl di, 1; add di, si; add di, dx` for a row length of 5 (and `mov di, ax; mov cl, 3; shl di, cl; add di, dx` for 8). The same arithmetic written by hand as a 1-D index `Arr[I * 5 + J]` accumulates in AX instead (`mov si, ax; shl ax, 1; shl ax, 1; add ax, si; add ax, dx; mov di, ax`), which the matcher rejects. When the original indexes a table by a row and a column, declare it 2-D (the row length gives the stride, the row count sets the field's extent). Proven by the matched `ovl23:041A` (ComputeThiefSkills, `ThiefDexTable[Dexterity, Skill]`) and ovl17's AddMonsterToParty (`ovl17:132C`, `MonsterBanks.BodyClass0[B9E, RollDice(1, 5)]`); probe tools/re/tp_idioms/ovl17/E7PROB.PAS."
+evidence = ["src/OVL23.PAS#ComputeThiefSkills", "src/OVL17.PAS#AddMonsterToParty", "tools/re/tp_idioms/ovl17/E7PROB.PAS"]
+
+[[lesson]]
+id = "absolute-record-alias-folds-field-offset"
+confidence = "V"
+units = ["*"]
+tags = ["absolute", "record", "alias", "table", "displacement", "codegen", "frame"]
+title = "An `absolute` record alias over a byte table folds the field offset into the displacement"
+lesson = "Indexing a global byte array with a constant offset (`Arr[18 + I]`) makes TP 6.0 add the constant in a register (`add ax, 0x12; mov di, ax; mov al, [di + base]`). Reinterpreting the same bytes with an `absolute` record alias and indexing the field (`Banks.Body[I]`, the field laid out at +18) folds the offset into the displacement (`mov al, [di + base + 18]`) with no register add. When the original reads a table at a fixed offset inside another table, declare a record type with a field at that offset and an `absolute` alias (ovl17:1332, MonsterBanks over ds08C5). Probes tools/re/tp_idioms/ovl17/IDXPROB.PAS (the three 1-D shapes all fail to fold) and ABSPROB.PAS (the record alias folds)."
+evidence = ["src/OVL17.PAS#AddMonsterToParty", "tools/re/tp_idioms/ovl17/ABSPROB.PAS", "tools/re/tp_idioms/ovl17/IDXPROB.PAS"]
