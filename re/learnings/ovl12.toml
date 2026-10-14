@@ -296,3 +296,21 @@ tags = ["array", "index", "base", "dseg", "codegen", "string"]
 title = "An array[1..8] of string[15] index compiles to base - 16 plus 16*I"
 lesson = "For ds0382: array[1..8] of string[15] at DS:0382, BoostAttackVsEightListed (ovl12:0947) adds the constant 372h and shl 4 of I, which is 382h - 16 + 16*I. ovl12:11F9 uses 3F2h + 16*I, so its table starts at DS:0402, the byte after ds0382 (declared as ds0402 in POOLVARS.PAS, its text not read yet). Reading the constant of the index gives the table's base without the map."
 evidence = ["src/POOLVARS.PAS#ds0402", "src/OVL12.PAS#LowerAttackVsEightListed", "re/symbols.toml#ovl12:0947"]
+
+[[lesson]]
+id = "function-result-tested-for-effect"
+confidence = "V"
+units = ["ovl12"]
+tags = ["function", "statement", "if", "empty", "Byte", "codegen", "call"]
+title = "A Byte function called only for its effect is an if with an empty branch"
+lesson = "Turbo Pascal 6.0 rejects a bare function call as a statement (Error 122, probe tools/re/tp_idioms/ovl12/FNSTMT.PAS). The original calls res12_fn_2637(Who) and drops the result: it compiles to a push of Who, the call, `or al, al` and `je` to the next instruction (ovl12:133F, 22 bytes). The source that matched is `if res12_fn_2637(Who) <> 0 then ;` with an empty statement. The Exit form was not probed."
+evidence = ["src/OVL12.PAS#ovl12_e43", "re/symbols.toml#ovl12:133F", "tools/re/tp_idioms/ovl12/FNSTMT.PAS"]
+
+[[lesson]]
+id = "then-else-swapped-shows-ja-for-jbe"
+confidence = "V"
+units = ["ovl12"]
+tags = ["if", "else", "compare", "branch", "codegen", "jbe", "ja"]
+title = "A diff of ja where the original has jbe means the branches of the if are swapped"
+lesson = "ProgressRot (ovl12:1399) first wrote `if Who^.Charisma <= 2 then Who^.Charisma := 0 else Dec(Who^.Charisma, 2)`: the match showed `ja 0x13dd` where the original has `jbe 0x13dd`, the jump to the zero assignment. The original tests `> 2` first and its then branch is the subtraction, so the matched form is `if Who^.Charisma > RotCharismaLoss then Dec(...) else Who^.Charisma := 0`. Check the jump sense in the packet before reversing the test."
+evidence = ["src/OVL12.PAS#ProgressRot", "re/symbols.toml#ovl12:1399"]
