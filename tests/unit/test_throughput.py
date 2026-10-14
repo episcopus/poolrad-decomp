@@ -360,15 +360,16 @@ def test_expert_response_cannot_write_verdicts_or_approvals(expert_run):
         expert.finish("expert-1", case["case_id"], {"diagnosis": "x", "evidence": ["src/OVL00.PAS"], "level": "L2"})
 
 
-def test_expert_queue_keeps_conservative_case_and_money_limits(expert_run):
-    for i in range(5):
-        case = {"case_id": "case-" + ("%032x" % i), "state": "queued", "run_id": "test-run",
+def test_expert_queue_keeps_its_case_and_money_limits(expert_run):
+    limit = expert.policy()["max_cases"]
+    for i in range(limit):
+        case = {"case_id": "case-" + ("%032x" % i), "state": "completed", "run_id": "test-run",
                 "problem_key": "different-%d" % i, "allocation_usd": 10, "created": time.time()}
         expert.write_case(case)
     with pytest.raises(ValueError, match="case count exhausted"):
         queue_one()
     policy = expert.policy()
-    sample = {**policy["baseline"], "cost_usd": 45.0}
+    sample = {**policy["baseline"], "cost_usd": policy["run_usd"] - 5.0}
     with pytest.raises(ValueError, match="allocation exhausted"):
         expert.budget(policy, sample, 10)
 
@@ -385,3 +386,72 @@ def test_explicit_scoped_spec_approval_does_not_allow_other_reserved_files(repo)
         base=git_at(repo, "rev-parse", "main"), reason="human approved expert role only")))
     findings = safety.branch_findings()
     assert not any("SPEC.md" in f for f in findings) and any("state.toml" in f for f in findings)
+
+
+def mark_l2(root):
+    symbols = root / "re/symbols.toml"
+    symbols.write_text(symbols.read_text().replace('level = "none"', 'level = "L2"'))
+
+
+def test_expert_never_queues_a_routine_already_at_l2(expert_run):
+    """2026-10-13: four of five cases went to routines that already matched (on main or in a worktree)."""
+    repo, _sample = expert_run
+    mark_l2(repo)
+    assert expert.resolved("ovl00", "ovl00:0000") == "main"
+    assert expert.candidates() == []
+    with pytest.raises(ValueError, match="already at L2"):
+        queue_one()
+
+
+def test_expert_counts_l2_in_the_worker_worktree(expert_run, monkeypatch, tmp_path):
+    worktree = tmp_path / "wt"
+    (worktree / "re").mkdir(parents=True)
+    (worktree / "re/symbols.toml").write_text('[[routine]]\nid = "ovl00:0000"\nunit = "ovl00"\nname = "Foo"\nlevel = "L2"\n')
+    monkeypatch.setattr(expert, "worktree_of", lambda unit: worktree)
+    assert expert.resolved("ovl00", "ovl00:0000") == "worktree"
+
+
+def test_expert_retires_a_case_matched_while_waiting_without_charging_it(expert_run):
+    repo, _sample = expert_run
+    case = queue_one()
+    mark_l2(repo)
+    with control.coordination_lock():
+        assert expert.take("expert-1") is None
+    retired = expert.get_case(case["case_id"])
+    assert retired["state"] == "obsolete" and "already at L2" in retired["obsolete_reason"]
+    p = expert.policy()
+    p["max_cases"] = 1
+    common.atomic_write(expert.directory() / "policy.json", json.dumps(p))
+    mark_l2(repo)                          # an obsolete case does not use up the run's cases
+    symbols = repo / "re/symbols.toml"
+    symbols.write_text(symbols.read_text().replace('level = "L2"', 'level = "none"'))
+    (repo / "src/OVL00.PAS").write_text("unit OVL00;\ninterface\nimplementation\nend.\n{ edited }\n")
+    current = activity.source_revision(repo)
+    control.event("activity", agent="dec-1", tool="match", unit="ovl00", args=["ovl00", "--routine", "Foo"],
+                  revision=current, returncode=1, failed=[dict(routine="ovl00:0000", name="Foo", detail="frame differs")])
+    assert queue_one()["state"] == "queued"
+
+
+def test_expert_scan_does_not_build_a_backlog(expert_run):
+    p = expert.policy()
+    p["max_queued"] = 0
+    common.atomic_write(expert.directory() / "policy.json", json.dumps(p))
+    with control.coordination_lock():
+        result = expert.scan("orch")
+    assert "waiting" in result[0]["held"] and not expert.cases()
+
+
+def test_expert_defaults_are_the_tenfold_budget():
+    assert expert.DEFAULTS["max_cases"] == 50 and expert.DEFAULTS["run_usd"] == 500.0
+    assert expert.DEFAULTS["case_usd"] == 10.0 and expert.DEFAULTS["deadline_seconds"] == 900
+
+
+def test_expert_excerpt_is_the_implementation_not_the_interface_line():
+    source = ("unit OVL20;\ninterface\nfunction RestMenu: Byte;\nprocedure Other;\nimplementation\n"
+              "{ ovl20:0721: the rest menu }\nfunction RestMenu: Byte;\nvar Key: Char;\nbegin\n  RestMenu := 1;\nend;\n\n"
+              "{ ovl20:0871: other }\nprocedure Other;\nbegin\nend;\n\nend.\n")
+    excerpt = expert.routine_excerpt(source, "restmenu")
+    assert excerpt.startswith("{ ovl20:0721: the rest menu }") and "RestMenu := 1;" in excerpt
+    assert excerpt.rstrip().endswith("end;") and "ovl20:0871" not in excerpt
+    stub = "unit X;\ninterface\nprocedure P;\nimplementation\n{@stub} procedure P; begin end;\n{ next }\nend.\n"
+    assert expert.routine_excerpt(stub, "P") == "{@stub} procedure P; begin end;\n"

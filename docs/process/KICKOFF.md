@@ -53,10 +53,10 @@ before permitting the first claim; do not invent a placeholder id. Later claims 
 registration. OpenCode metering attempts a read-only baseline; other harnesses need a trusted usage
 export/bridge. Use `make agent-meter` at hand-offs/stops and `make performance` for analysis.
 
-For the expert, human setup also needs a dedicated provider/harness USD 50 cap and runtime timeout,
+For the expert, human setup also needs a dedicated provider/harness USD 500 cap and runtime timeout,
 then `make expert-budget AGENT=<expert> OPERATOR=1 BILLING_CAP_REF="<cap reference>" REASON="<approval>"`.
-That admits one already started expert for this run, five cases, USD 10 allocations and 15-minute
-leases. The script never enforces provider billing by pretending post-turn cost reports are hard caps.
+That admits one already started expert for this run, 50 cases (at most two waiting at once), USD 10
+allocations and 15-minute leases. The script never enforces provider billing by pretending post-turn cost reports are hard caps.
 Read `docs/process/THROUGHPUT.md` for deployment, usage schema, expiry and recovery behavior.
 
 To stop the run gracefully: `make agent-control STATE=draining OPERATOR=1 REASON="finish current tasks and stop"`.
