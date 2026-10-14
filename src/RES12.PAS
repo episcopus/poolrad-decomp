@@ -1429,9 +1429,10 @@ end;
   (DrawViewWindows then the HEAD and BODY sprites at (3,3)); mode 2 the camp (the portrait
   windows, the PIC sprite list and the roster); modes 3 and 4 the area view (DrawViewWindows,
   ShowAreaView and the roster, the inner window drawn only for mode 4); mode 6 the loot screen
-  (the portrait windows, the PIC block 1 sprites and the roster). Every mode but 0 draws the
-  character roster and, except 1 and 6, the location line. Called by the shop, the Temple, the
-  loot, camp and combat menus to redraw their screen.
+  (the portrait windows, the PIC block 1 sprites and the roster). Modes 2, 3 and 4 draw the
+  character roster and the location line, mode 6 the roster only; modes 0 and 1 draw neither
+  (mode 1 shows the portrait). Called by the shop, the Temple, the loot, camp and combat menus to
+  redraw their screen.
   Globals: ds49F3 (read), ds49FD, ds49FE, PictureAnimation, SelectedCharacter (read). }
 procedure RedrawView;
 begin

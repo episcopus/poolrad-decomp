@@ -1188,8 +1188,8 @@ matched only with the copy.
   sprites at (3,3) through `LoadHeadBodySprites`/`ShowHeadBodySprites`), mode 2 the camp (the
   portrait windows, the PIC block $1D sprite list and the roster), modes 3 and 4 the area view
   (`DrawViewWindows`, `ShowAreaView` and the roster; only mode 4 draws the inner window) and mode 6
-  the loot screen (the portrait windows, the PIC block 1 sprite list and the roster); every mode but
-  0 draws the roster and, except 1 and 6, the location line. `DrawViewWindows` (`00BA:272A`) draws
+  the loot screen (the portrait windows, the PIC block 1 sprite list and the roster); modes 2, 3 and
+  4 draw the roster and the location line, mode 6 the roster only and modes 0 and 1 neither. `DrawViewWindows` (`00BA:272A`) draws
   the view's window frames through `DrawWindow`: the full screen (1,1)-(38,22), the bottom text
   window (1,17)-(38,22) and the upper-left window (1,1)-(15,15), plus the inner window
   (3,3)-(13,13) that frames the portrait or the 3D view. `DrawWildernessScreen` (`00BA:2B5E`) is the
