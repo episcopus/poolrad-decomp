@@ -3149,12 +3149,12 @@ id = "ovl12:0000"
 unit = "ovl12"
 addr = "ovl12:0000"
 size = 31
-name = "ovl12_fn_0000"
-signature = ""
+name = "CancelPendingHook"
+signature = "procedure CancelPendingHook(AffectId: Byte)"
 c_name = "ovl12_fn_0000"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl12_fn_0000 (ovl12:0000 clears HookAffectId and DamageAmount when its AffectId is 0 or is the affect the hooks offer (HookAffectId, set by ApplyAffect; zero means 'is Unaffected', ovl24:1672, 1682; DamageAmount is the damage DealDamage offers, ovl24:134E)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3162,12 +3162,12 @@ id = "ovl12:001F"
 unit = "ovl12"
 addr = "ovl12:001F"
 size = 57
-name = "ovl12_fn_001F"
-signature = ""
+name = "TryAddAffect"
+signature = "function TryAddAffect(Who: PCharacter; AffectId, Data: Byte; Duration: Word): Boolean"
 c_name = "ovl12_fn_001F"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl12_fn_001F (ovl12:001F adds an affect through AddAffect (ovl24:0E52) with Flag 1 (the handler runs when it is removed, TAffect.Flag) and returns True, but returns False and adds nothing while ds681F is set (the Temple removes affects: RemoveAffect callers ovl04:0386, 05AB, 07CE)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3175,12 +3175,12 @@ id = "ovl12:0058"
 unit = "ovl12"
 addr = "ovl12:0058"
 size = 181
-name = "ovl12_fn_0058"
-signature = ""
+name = "DropFromFight"
+signature = "procedure DropFromFight(Who: PCharacter; NewStatus: Byte; Msg: String40)"
 c_name = "ovl12_fn_0058"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl12_fn_0058 (ovl12:0058 shows Msg on Who (res12_fn_16EC, colour 10) unless Who's Status is 6, 7 or 8 already; then it sets Status to NewStatus, clears Flag10D and Flag11B, removes the death affects (ovl24:100A), runs the hooks of kind $D (a combatant going down, ovl24:02FA), removes Who from the map when Flag10D is clear (ovl31:0E11), and outside combat (ds49F3 not 5) redraws the selected character; the same steps as DropCombatant (ovl24:0F06) without its ground redraw); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3188,12 +3188,12 @@ id = "ovl12:010D"
 unit = "ovl12"
 addr = "ovl12:010D"
 size = 16
-name = "ovl12_e2"
-signature = ""
+name = "RaiseAttackAndMorale"
+signature = "procedure RaiseAttackAndMorale(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e2"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_2"
+notes = "renamed from ovl12_e2 (ovl12:010D adds 5 to ds6825 (the AI morale scratch that ovl09 CheckMorale computes) and 1 to AttackRoll; its frame (Who, Affect, Mode, retf 10) is the AffectHandlers shape (TAffectHandler, CallAffectHandler ovl24:0000), Mode not read); auto:entry_2"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3201,12 +3201,12 @@ id = "ovl12:011D"
 unit = "ovl12"
 addr = "ovl12:011D"
 size = 30
-name = "ovl12_e3"
-signature = ""
+name = "LowerAttackAndMorale"
+signature = "procedure LowerAttackAndMorale(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e3"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_3"
+notes = "renamed from ovl12_e3 (ovl12:011D takes MoraleStep off the morale scratch ds6825 (to 0 when it is less) and 1 off AttackRoll: the undo of RaiseAttackAndMorale (ovl12:010D); the AffectHandlers shape (Who, Affect, Mode), Mode not read); auto:entry_3"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3214,12 +3214,12 @@ id = "ovl12:013B"
 unit = "ovl12"
 addr = "ovl12:013B"
 size = 68
-name = "ovl12_e4"
-signature = ""
+name = "BoostAttackAgainstTarget"
+signature = "procedure BoostAttackAgainstTarget(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e4"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_4"
+notes = "renamed from ovl12_e4 (ovl12:013B copies Who's combat record's Target (+$A of the TCombatant at +$108, the character attacked last, ovl08) into DS:6826, and when that character's byte +$9F is 4 adds 2 to AttackRoll and to DamageAmount; the AffectHandlers shape (Who, Affect, Mode), Mode not read); auto:entry_4"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3227,12 +3227,12 @@ id = "ovl12:017F"
 unit = "ovl12"
 addr = "ovl12:017F"
 size = 68
-name = "ovl12_e5"
-signature = ""
+name = "StartTrainingWithManual"
+signature = "procedure StartTrainingWithManual(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e5"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_5"
+notes = "renamed from ovl12_e5 (ovl12:017F shows 'starts to train' on Who (res12_fn_16EC, colour 10) and gives Who affect 7, AffectTrainingManual ('Training with Manual of Bodily Health', named in ovl15:0FBC), duration 43200, data 255, Flag 1 (AddAffect, ovl24:0E52); AffectHandlers frame (Who, Affect, Mode), entry 5 of ovl12 (auto:entry_5)); auto:entry_5"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3240,12 +3240,12 @@ id = "ovl12:01C3"
 unit = "ovl12"
 addr = "ovl12:01C3"
 size = 112
-name = "ovl12_e6"
-signature = ""
+name = "BoostFireAttackByTarget"
+signature = "procedure BoostFireAttackByTarget(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e6"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_6"
+notes = "renamed from ovl12_e6 (ovl12:01C3 is an affect handler (AffectHandlers shape, entry 6 of ovl12): it copies Who's combat Target into AttackTarget like BoostAttackAgainstTarget (ovl12:013B), adds a bonus of 1, 2 or 3 (by the target's byte +$9F: 10, 9 or 12, 4) to AttackRoll and DamageAmount and sets DamageKind to 9 (fire and the magic bit, ovl24:13E4, whose text says 'from Fire'); the affect that runs it is not known yet); auto:entry_6"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3253,12 +3253,12 @@ id = "ovl12:0233"
 unit = "ovl12"
 addr = "ovl12:0233"
 size = 324
-name = "ovl12_e7"
-signature = ""
+name = "TrainConstitution"
+signature = "procedure TrainConstitution(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e7"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_7"
+notes = "renamed from ovl12_e7 (ovl12:0233 shows 'is hardier' on Who (res12_fn_16EC), increments Constitution (+$14), and adds to HpMax (+$32) and the current hit points Flag11B (+$11B) the share of HpMax - HpB1 (+$B1) by the class weights of ovl04:0510 (Raise Dead's loss, mirrored); at Constitution 20 it gives affect $3E instead; AffectHandlers frame, entry 7 of ovl12 (auto:entry_7)); auto:entry_7"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3266,12 +3266,12 @@ id = "ovl12:0377"
 unit = "ovl12"
 addr = "ovl12:0377"
 size = 53
-name = "ovl12_e8"
-signature = ""
+name = "ShiftAttackToSave"
+signature = "procedure ShiftAttackToSave(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e8"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_8"
+notes = "renamed from ovl12_e8 (ovl12:0377 adds 2 to SaveRoll (DS:6816) and takes 2 from AttackRoll (DS:6822) for SelectedCharacter when its +$A0 (ByteA0) is 2, 5 or 8 (SelectedCharacter DS:5D92); the purpose is not known, the mechanism is the code's; entry 8 of ovl12 (auto:entry_8)); auto:entry_8"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3280,9 +3280,9 @@ unit = "ovl12"
 addr = "ovl12:03AC"
 size = 53
 name = "ovl12_e9"
-signature = ""
+signature = "procedure ovl12_e9(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e9"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_9"
 evidence = ["prologue"]
@@ -3292,12 +3292,12 @@ id = "ovl12:03E1"
 unit = "ovl12"
 addr = "ovl12:03E1"
 size = 31
-name = "ovl12_e10"
-signature = ""
+name = "HalveColdDamage"
+signature = "procedure HalveColdDamage(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e10"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_10"
+notes = "renamed from ovl12_e10 (ovl12:03E1 halves DamageAmount (DS:6818) and adds 3 to SaveRoll (DS:6816) when DamageKind (DS:6819) has bit 2, cold (POOLVARS DamageKind comment; ovl24:13E4 says 'from Cold'); AffectHandlers frame, entry 10 of ovl12 (auto:entry_10); the affect that runs it is not known yet); auto:entry_10"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3305,12 +3305,12 @@ id = "ovl12:0400"
 unit = "ovl12"
 addr = "ovl12:0400"
 size = 186
-name = "ovl12_e11"
-signature = ""
+name = "ComputerTakesOver"
+signature = "procedure ComputerTakesOver(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e11"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_11"
+notes = "renamed from ovl12_e11 (ovl12:0400 is an affect handler (AffectHandlers shape, Mode 0 applies): on apply it sets Quick (+$10F, the computer plays the turn, whitepaper 5.5 Who plays), marks B84 with the computer-run flag and morale $33, clears Combat^.Target and sets the side from Data bit 7; on removal it gives the side back from Data bit 6); auto:entry_11"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3318,12 +3318,12 @@ id = "ovl12:04BA"
 unit = "ovl12"
 addr = "ovl12:04BA"
 size = 284
-name = "ovl12_e12"
-signature = ""
+name = "ExchangeStrengthWithAffect"
+signature = "procedure ExchangeStrengthWithAffect(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e12"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_12"
+notes = "renamed from ovl12_e12 (ovl12:04BA is an affect handler (AffectHandlers shape, Mode not read) of a strength affect: Who's Strength and StrengthPercent take the affect's strength (DecodeStrength, ovl24:110D), then the strongest other affect with id hex 0C or 26 gives Who its strength and takes the affect's encoded strength (EncodeStrength, ovl24:10E4); RaiseStrength (ovl24:115C) keeps the earlier strength in the same two affects); auto:entry_12"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3331,12 +3331,12 @@ id = "ovl12:05D6"
 unit = "ovl12"
 addr = "ovl12:05D6"
 size = 21
-name = "ovl12_e13"
-signature = ""
+name = "SetCharismaFromAffect"
+signature = "procedure SetCharismaFromAffect(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e13"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_13"
+notes = "renamed from ovl12_e13 (ovl12:05D6 is an affect handler (AffectHandlers shape, Mode not read) that copies the affect's Data byte into Who's Charisma (TCharacter +hex 15, POOLVARS Charisma); applying and removing run the same code); auto:entry_13"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3344,12 +3344,12 @@ id = "ovl12:05EB"
 unit = "ovl12"
 addr = "ovl12:05EB"
 size = 92
-name = "ovl12_e14"
-signature = ""
+name = "AddAffectAndDamage"
+signature = "procedure AddAffectAndDamage(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e14"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_14"
+notes = "renamed from ovl12_e14 (ovl12:05EB is an affect handler (AffectHandlers shape, Mode not read) that calls TryAddAffect with affect hex 0F for 10 and the affect's Data, then deals 1 plain point of damage (DealDamage, DamageKind 0) while Flag11B is above 1; the meaning of affect 0F is not known (ovl04 AffectRemovedAtNeutralizePoison3)); auto:entry_14"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3357,12 +3357,12 @@ id = "ovl12:0647"
 unit = "ovl12"
 addr = "ovl12:0647"
 size = 7
-name = "ovl12_e15"
-signature = ""
+name = "IgnoreAffect"
+signature = "procedure IgnoreAffect(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e15"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_15"
+notes = "renamed from ovl12_e15 (ovl12:0647 is push bp, mov bp,sp, pop bp, retf 10: an affect handler (AffectHandlers shape) with an empty body, so it ignores the affect when called); auto:entry_15"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3370,51 +3370,38 @@ id = "ovl12:064E"
 unit = "ovl12"
 addr = "ovl12:064E"
 size = 43
-name = "ovl12_e16"
-signature = ""
+name = "RaiseResistanceAndSave"
+signature = "procedure RaiseResistanceAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e16"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_16"
+notes = "renamed from ovl12_e16 (ovl12:064E is an affect handler (AffectHandlers shape, Affect and Mode not read): it raises ResistValue (TCharacter +hex 111) to at least 57, adds one to SaveRoll, and clears DamageAmount when ds681B is hex 0F); auto:entry_16"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl12:0679"
 unit = "ovl12"
 addr = "ovl12:0679"
-size = 79
-name = "ovl12_e17"
+size = 107
+name = "BoostAttackVsListedTarget"
 signature = ""
 c_name = "ovl12_e17"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_17"
+notes = "renamed from ovl12_e17 (ovl12:0679 is an affect handler (Who, Affect, Mode) that copies Who's combat Target into AttackTarget like BoostAttackAgainstTarget (ovl12:013B), and adds 1 to AttackRoll per name ds0332[1..4] equal to the target's name when its Pad9E[$9F] and CombatSize are 1); auto:entry_17"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:06C8"
-unit = "ovl12"
-addr = "ovl12:06C8"
-size = 28
-name = "ovl12_fn_06C8"
-signature = ""
-c_name = "ovl12_fn_06C8"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:06E4"
 unit = "ovl12"
 addr = "ovl12:06E4"
 size = 43
-name = "ovl12_e18"
+name = "HalveFireDamage"
 signature = ""
 c_name = "ovl12_e18"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_18"
+notes = "renamed from ovl12_e18 (ovl12:06E4 halves DamageAmount and adds FireSaveBonus (3) to SaveRoll when DamageKind has the fire bit KindFire (1, POOLVARS DamageKind comment), the fire twin of HalveColdDamage (ovl12:03E1, same code with the bit changed)); auto:entry_18"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3422,12 +3409,12 @@ id = "ovl12:070F"
 unit = "ovl12"
 addr = "ovl12:070F"
 size = 102
-name = "ovl12_e19"
+name = "ShowSilenceAndStopCasting"
 signature = ""
 c_name = "ovl12_e19"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_19"
+notes = "renamed from ovl12_e19 (ovl12:070F shows 'is silenced' in colour 10 when the combat byte Pad2 (+2) of Who's combatant is set, then clears Pad2 and CanCast (+1, hides Cast): an affect handler (Who, Affect, Mode) reading only Who); auto:entry_19"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3435,12 +3422,12 @@ id = "ovl12:0775"
 unit = "ovl12"
 addr = "ovl12:0775"
 size = 107
-name = "ovl12_e20"
+name = "DieIfPoisoned"
 signature = ""
 c_name = "ovl12_e20"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_20"
+notes = "renamed from ovl12_e20 (ovl12:0775 finds the Poisoned affect (affect $37, ovl15 'Poisoned') with res12_fn_2199 and, when Who has it, drops Who with StatusGone and 'dies from poison' (DropFromFight, ovl12:0058); then removes affect $0F inside the ds681F bracket (ovl04:0386); an affect handler reading only Who); auto:entry_20"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3448,12 +3435,12 @@ id = "ovl12:07E0"
 unit = "ovl12"
 addr = "ovl12:07E0"
 size = 312
-name = "ovl12_e21"
+name = "GiveAffectItem"
 signature = ""
 c_name = "ovl12_e21"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_21"
+notes = "renamed from ovl12_e21 (ovl12:07E0 is an affect handler (Who, Affect, Mode): on apply it gives Who an item of type $14 (NameNum $F3, Plus 1, Affects $17 and $89) unless Who has one or ItemCountC7 is $10 or more, shows 'Gains an item' (res12_fn_16EC) and on removal takes that item off Who's list (res12_fn_1509); Mode is read, Affect not); auto:entry_21"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3461,12 +3448,12 @@ id = "ovl12:0918"
 unit = "ovl12"
 addr = "ovl12:0918"
 size = 47
-name = "ovl12_e22"
-signature = ""
+name = "LowerAttackRollByFour"
+signature = "procedure LowerAttackRollByFour(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e22"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_22"
+notes = "renamed from ovl12_e22 (ovl12:093C subtracts 4 from AttackRoll (sub byte [6822],4) on every call; the frame is the AffectHandlers shape (Who, Affect, Mode), none read; it sets ds681E only when res12_fn_2199(SelectedCharacter, $18) finds no affect (ovl12:0933..0937)); auto:entry_22"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3474,12 +3461,12 @@ id = "ovl12:0947"
 unit = "ovl12"
 addr = "ovl12:0947"
 size = 121
-name = "ovl12_e23"
-signature = ""
+name = "BoostAttackVsEightListed"
+signature = "procedure BoostAttackVsEightListed(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e23"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_23"
+notes = "renamed from ovl12_e23 (ovl12:0947 is BoostAttackVsListedTarget (ovl12:0679) with eight names: the same Pad9E[$9F] and CombatSize tests, then AttackRoll gains 1 per equal name of ds0382[1..8] (loop bound 8, base 0x372 + 16*I, against 0x332 + 16*I for ds0332 in ovl12:0679); the AffectHandlers shape with only Who read); auto:entry_23"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3487,12 +3474,12 @@ id = "ovl12:09C0"
 unit = "ovl12"
 addr = "ovl12:09C0"
 size = 125
-name = "ovl12_e24"
-signature = ""
+name = "ImageAbsorbsHit"
+signature = "procedure ImageAbsorbsHit(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e24"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_24"
+notes = "renamed from ovl12_e24 (ovl12:09C0 is the handler of the images affect $1C, which runs on the damage hook (kind 6, ovl24:02FA, the hook list of ovl24:0000 kinds 5 and 6): when 1d(Data+1) is above 1 it cancels the damage (CancelPendingHook(0)), shows lost an image (res12_fn_16EC, colour 10) and takes one off Data, removing the affect at 0 (RemoveAffect with nil); the message and the Data count support a mirror-image style affect [I]); auto:entry_24"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3500,272 +3487,51 @@ id = "ovl12:0A3D"
 unit = "ovl12"
 addr = "ovl12:0A3D"
 size = 40
-name = "ovl12_e25"
-signature = ""
+name = "ReduceDamageByQuarter"
+signature = "procedure ReduceDamageByQuarter(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e25"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_25"
+notes = "renamed from ovl12_e25 (ovl12:0A3D takes a quarter off DamageAmount (DS:6818): DamageAmount := DamageAmount - DamageAmount div 4 (two shr ax,1, sub, store byte); the AffectHandlers shape with no parameter read, so it runs as a damage hook handler (kind 6); the affect that runs it is not known); auto:entry_25"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl12:0A65"
 unit = "ovl12"
 addr = "ovl12:0A65"
-size = 128
-name = "ovl12_e26"
-signature = ""
+size = 182
+name = "CoughStopsCasting"
+signature = "procedure CoughStopsCasting(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e26"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_26"
+notes = "renamed from ovl12_e26 (ovl12:0A65 clears the combat byte Pad2 (+$2) and CanCast (+$1) of the character (the stop-casting pair of ShowSilenceAndStopCasting, ovl12:070F), and shows is coughing (colour 10) when Pad2 was set; the message text (literal pool 0A59) and the Pad2 test are the evidence); auto:entry_26"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:0AE5"
-unit = "ovl12"
-addr = "ovl12:0AE5"
-size = 54
-name = "ovl12_fn_0AE5"
-signature = ""
-c_name = "ovl12_fn_0AE5"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:0B1B"
 unit = "ovl12"
 addr = "ovl12:0B1B"
-size = 10
-name = "ovl12_e27"
-signature = ""
+size = 145
+name = "CollapseAndChangeSide"
+signature = "procedure CollapseAndChangeSide(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e27"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_27"
+notes = "renamed from ovl12_e27 (ovl12:0B1B is an affect handler (AffectHandlers shape, Mode not read): it clears the affect's Flag, drops Who with the text 'collapses' and StatusGone unless ds681F is set (the Temple removing affects), then sets Who's Side from the high nibble of the affect's Data and Quick (computer plays, as ComputerTakesOver ovl12:0400)); auto:entry_27"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:0B25"
-unit = "ovl12"
-addr = "ovl12:0B25"
-size = 5
-name = "ovl12_fn_0B25"
-signature = ""
-c_name = "ovl12_fn_0B25"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:0B2A"
-unit = "ovl12"
-addr = "ovl12:0B2A"
-size = 5
-name = "ovl12_fn_0B2A"
-signature = ""
-c_name = "ovl12_fn_0B2A"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:0B2F"
-unit = "ovl12"
-addr = "ovl12:0B2F"
-size = 20
-name = "ovl12_fn_0B2F"
-signature = ""
-c_name = "ovl12_fn_0B2F"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:0B43"
-unit = "ovl12"
-addr = "ovl12:0B43"
-size = 5
-name = "ovl12_fn_0B43"
-signature = ""
-c_name = "ovl12_fn_0B43"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:0B48"
-unit = "ovl12"
-addr = "ovl12:0B48"
-size = 5
-name = "ovl12_fn_0B48"
-signature = ""
-c_name = "ovl12_fn_0B48"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:0B4D"
-unit = "ovl12"
-addr = "ovl12:0B4D"
-size = 5
-name = "ovl12_fn_0B4D"
-signature = ""
-c_name = "ovl12_fn_0B4D"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:0B52"
-unit = "ovl12"
-addr = "ovl12:0B52"
-size = 5
-name = "ovl12_fn_0B52"
-signature = ""
-c_name = "ovl12_fn_0B52"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:0B57"
-unit = "ovl12"
-addr = "ovl12:0B57"
-size = 10
-name = "ovl12_fn_0B57"
-signature = ""
-c_name = "ovl12_fn_0B57"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:0B61"
-unit = "ovl12"
-addr = "ovl12:0B61"
-size = 15
-name = "ovl12_fn_0B61"
-signature = ""
-c_name = "ovl12_fn_0B61"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:0B70"
-unit = "ovl12"
-addr = "ovl12:0B70"
-size = 5
-name = "ovl12_fn_0B70"
-signature = ""
-c_name = "ovl12_fn_0B70"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:0B75"
-unit = "ovl12"
-addr = "ovl12:0B75"
-size = 5
-name = "ovl12_fn_0B75"
-signature = ""
-c_name = "ovl12_fn_0B75"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:0B7A"
-unit = "ovl12"
-addr = "ovl12:0B7A"
-size = 5
-name = "ovl12_fn_0B7A"
-signature = ""
-c_name = "ovl12_fn_0B7A"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:0B7F"
-unit = "ovl12"
-addr = "ovl12:0B7F"
-size = 5
-name = "ovl12_fn_0B7F"
-signature = ""
-c_name = "ovl12_fn_0B7F"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:0B84"
-unit = "ovl12"
-addr = "ovl12:0B84"
-size = 5
-name = "ovl12_fn_0B84"
-signature = ""
-c_name = "ovl12_fn_0B84"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:0B89"
-unit = "ovl12"
-addr = "ovl12:0B89"
-size = 5
-name = "ovl12_fn_0B89"
-signature = ""
-c_name = "ovl12_fn_0B89"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:0B8E"
-unit = "ovl12"
-addr = "ovl12:0B8E"
-size = 30
-name = "ovl12_fn_0B8E"
-signature = ""
-c_name = "ovl12_fn_0B8E"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:0BAC"
 unit = "ovl12"
 addr = "ovl12:0BAC"
 size = 35
-name = "ovl12_e28"
-signature = ""
+name = "LowerAttackSaveAndResistance"
+signature = "procedure LowerAttackSaveAndResistance(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e28"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_28"
+notes = "renamed from ovl12_e28 (ovl12:0BAC is an affect handler (AffectHandlers shape, Mode not read): it takes 4 off AttackRoll and SaveRoll and off Who's ResistValue (+$111) and Pad112[$112] (+$112, the byte CoughStopsCasting copies into ResistValue, ovl12:0A65); which affect runs it is not known yet); auto:entry_28"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3773,12 +3539,12 @@ id = "ovl12:0BCF"
 unit = "ovl12"
 addr = "ovl12:0BCF"
 size = 55
-name = "ovl12_e29"
-signature = ""
+name = "RunDiseaseHandlers"
+signature = "procedure RunDiseaseHandlers(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e29"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_29"
+notes = "renamed from ovl12_e29 (ovl12:0BCF calls CallAffectHandler (ovl24:0000) twice with the same Who, Affect and Mode: first affect $2B, then $2C (AffectCauseDisease, named in ovl15:0FBC's table); both ids are in the Cure Disease list (DiseaseAffects, ovl04:031E, whitepaper 5.19), so it runs the disease handlers; which affect runs it is not known yet); auto:entry_29"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3786,12 +3552,12 @@ id = "ovl12:0C06"
 unit = "ovl12"
 addr = "ovl12:0C06"
 size = 15
-name = "ovl12_e30"
-signature = ""
+name = "RaiseAttackAndSave"
+signature = "procedure RaiseAttackAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e30"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl12_e30 (ovl12:0C06 adds 1 to SaveRoll and to AttackRoll and uses neither parameter (AffectHandlers shape, Mode not read); the twin of LowerAttackAndSave (ovl12:0C15); it is called by ovl12:12B2 (ovl12_e41, not decompiled yet)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3799,12 +3565,12 @@ id = "ovl12:0C15"
 unit = "ovl12"
 addr = "ovl12:0C15"
 size = 17
-name = "ovl12_e31"
-signature = ""
+name = "LowerAttackAndSave"
+signature = "procedure LowerAttackAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e31"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_31"
+notes = "renamed from ovl12_e31 (ovl12:0C15 takes 4 off AttackRoll and 4 off SaveRoll and reads neither parameter (AffectHandlers shape, Mode not read); the minus of RaiseAttackAndSave (ovl12:0C06), which adds 1 to each); auto:entry_31"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3812,12 +3578,12 @@ id = "ovl12:0C26"
 unit = "ovl12"
 addr = "ovl12:0C26"
 size = 37
-name = "ovl12_e32"
-signature = ""
+name = "SetAttackMissIfTurnPending"
+signature = "procedure SetAttackMissIfTurnPending(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e32"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_32"
+notes = "renamed from ovl12_e32 (ovl12:0C26 tests Who's combatant Initiative (TCombatant +$3, above 0 while CombatTurn still has its turn to take, ovl08); when it is above 0 it sets ds681E to 1 and AttackRoll to -1, a negative roll that RollToHit counts as a miss (AttackRoll comment, ovl24:0CD5); reads only Who (AffectHandlers shape, Mode and Affect not read)); auto:entry_32"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3825,12 +3591,12 @@ id = "ovl12:0C4B"
 unit = "ovl12"
 addr = "ovl12:0C4B"
 size = 120
-name = "ovl12_e33"
-signature = ""
+name = "AgeCharacterOnce"
+signature = "procedure AgeCharacterOnce(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e33"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_33"
+notes = "renamed from ovl12_e33 (ovl12:0C4B is an affect handler (AffectHandlers shape, Mode not read): when the affect's Data bit 4 is clear it sets it, shows 'ages' on Who (res12_fn_16EC, colour 10, the message copied to a stack temporary as in StartTrainingWithManual) and adds one year to Who's Age (TCharacter +$30, the age in years, POOLVARS); it then doubles ds681A (shl 1) every time it runs; which affect runs it is not known yet); auto:entry_33"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3838,12 +3604,12 @@ id = "ovl12:0CC3"
 unit = "ovl12"
 addr = "ovl12:0CC3"
 size = 745
-name = "ovl12_e34"
-signature = ""
+name = "ClearCloud"
+signature = "procedure ClearCloud(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e34"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_34"
+notes = "renamed from ovl12_e34 (ovl12:0CC3 is the cloud affect handler: it finds the cloud of Who with the kind of Affect's Data (ds6DBB list, TCombatNode), shows 'The air clears a little...', restores each arm's tile (body cells keep CloudBodyTile), unlinks and frees the cloud and repaints the others); auto:entry_34"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3851,12 +3617,12 @@ id = "ovl12:0FAC"
 unit = "ovl12"
 addr = "ovl12:0FAC"
 size = 113
-name = "ovl12_fn_0FAC"
-signature = ""
+name = "AvoidDistantAttack"
+signature = "procedure AvoidDistantAttack(Who: PCharacter; Chance: Byte)"
 c_name = "ovl12_fn_0FAC"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl12_fn_0FAC (ovl12:0FAC: 'Avoids it' dodge: with an item in SelectedCharacter's first slot and the attacker (SelectedCharacter, distance from res12_fn_255B above 1) away, a 1d100 roll at or below Chance avoids the attack and zeroes the damage; called by ovl12:1086 (AvoidIfSelectedItemPlusZero) with Chance 100); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3864,12 +3630,12 @@ id = "ovl12:101D"
 unit = "ovl12"
 addr = "ovl12:101D"
 size = 105
-name = "ovl12_fn_101D"
-signature = ""
+name = "FirstSlotItem"
+signature = "function FirstSlotItem(Who: PCharacter): PItem"
 c_name = "ovl12_fn_101D"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl12_fn_101D (ovl12:101D returns the item in Who's first remembered slot (SlotItems[0], TCharacter +$CC), or nil; res12_fn_2E8B may pick another item first; its callers test the item's Plus (ovl12:1086)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3877,12 +3643,12 @@ id = "ovl12:1086"
 unit = "ovl12"
 addr = "ovl12:1086"
 size = 59
-name = "ovl12_e35"
-signature = ""
+name = "AvoidIfSelectedItemPlusZero"
+signature = "procedure AvoidIfSelectedItemPlusZero(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e35"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_35"
+notes = "renamed from ovl12_e35 (ovl12:1086 is an affect handler (AffectHandlers shape, nothing read): when FirstSlotItem of SelectedCharacter has Plus 0, Who avoids the attack in progress (AvoidDistantAttack with AlwaysAvoids); which affect runs it is not known); auto:entry_35"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3890,12 +3656,12 @@ id = "ovl12:10C1"
 unit = "ovl12"
 addr = "ovl12:10C1"
 size = 29
-name = "ovl12_e36"
-signature = ""
+name = "HalveAgeDoubling"
+signature = "procedure HalveAgeDoubling(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e36"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_36"
+notes = "renamed from ovl12_e36 (ovl12:10C1 halves ds681A, the byte AgeCharacterOnce (ovl12:0C4B) doubles every time it runs; affect handler (AffectHandlers shape, nothing read); which affect runs it is not known); auto:entry_36"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3903,12 +3669,12 @@ id = "ovl12:10DE"
 unit = "ovl12"
 addr = "ovl12:10DE"
 size = 138
-name = "ovl12_e37"
-signature = ""
+name = "WeakenStrength"
+signature = "procedure WeakenStrength(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e37"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_37"
+notes = "renamed from ovl12_e37 (ovl12:10DE gives Who the disease affect 2B for 60 rounds; while Strength is above 3 it shows 'is weakened' and takes one off Strength, at 3 or less it adds nausea (affect 1F); affect handler, nothing but Who and Affect's Data read; which affect runs it is not known); auto:entry_37"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3916,12 +3682,12 @@ id = "ovl12:1168"
 unit = "ovl12"
 addr = "ovl12:1168"
 size = 145
-name = "ovl12_e38"
-signature = ""
+name = "CauseDiseaseAndDamage"
+signature = "procedure CauseDiseaseAndDamage(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e38"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_38"
+notes = "renamed from ovl12_e38 (ovl12:1168 gives Who the disease affect AffectCauseDisease ($2C, ovl15/ovl04 name it) for 10 rounds with Affect's Data, deals one point of damage when Flag11B is above 1, else gives nausea (AffectNausea) unless present); auto:entry_38"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3929,12 +3695,12 @@ id = "ovl12:11F9"
 unit = "ovl12"
 addr = "ovl12:11F9"
 size = 125
-name = "ovl12_e39"
-signature = ""
+name = "LowerAttackVsEightListed"
+signature = "procedure LowerAttackVsEightListed(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e39"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_39"
+notes = "renamed from ovl12_e39 (ovl12:11F9 takes AttackPenalty (4) off AttackRoll once for each of the eight names ds0402[1..8] that the attacked character's name equals, when the selected character has Pad9E[$9F]=1 and CombatSize kind 2: the twin of BoostAttackVsEightListed (ovl12:0947), with the condition on the selected character); auto:entry_39"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3942,12 +3708,12 @@ id = "ovl12:1276"
 unit = "ovl12"
 addr = "ovl12:1276"
 size = 60
-name = "ovl12_e40"
-signature = ""
+name = "LowerAttackIfSelectedIsBugbearOrGnoll"
+signature = "procedure LowerAttackIfSelectedIsBugbearOrGnoll(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e40"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_40"
+notes = "renamed from ovl12_e40 (ovl12:1276 compares the selected character's name with the literals 'BUGBEAR' (ovl12:1268) and 'GNOLL' (ovl12:1270) by System_StrCompare (0AF8:0C10) when its Pad9E[$9F] is 1, and gives AttackRoll AttackPenalty off for either); auto:entry_40"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3955,39 +3721,26 @@ id = "ovl12:12B2"
 unit = "ovl12"
 addr = "ovl12:12B2"
 size = 73
-name = "ovl12_e41"
-signature = ""
+name = "RaiseOrLowerAttackAndSave"
+signature = "procedure RaiseOrLowerAttackAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e41"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_41"
+notes = "renamed from ovl12_e41 (ovl12:12B2 runs RaiseAttackAndSave (ovl12:0C06) when Who's Side (+$10E) equals bit 4 of Affect's Data, else takes one off AttackRoll and one off SaveRoll (inline sub byte, not LowerAttackAndSave's penalty)); auto:entry_41"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl12:12FB"
 unit = "ovl12"
 addr = "ovl12:12FB"
-size = 12
-name = "ovl12_e42"
-signature = ""
+size = 68
+name = "AddHealingBlockAndHeal"
+signature = "procedure AddHealingBlockAndHeal(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e42"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_42"
+notes = "renamed from ovl12_e42 (ovl12:12FB gives Who the healing block affect $32 (AffectHealingBlock, ovl24:175D) for 14400 rounds, then HealCharacter (Amount 1, Flag 1) heals one point and res12_fn_234A runs on Who when it healed); auto:entry_42"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:1307"
-unit = "ovl12"
-addr = "ovl12:1307"
-size = 56
-name = "ovl12_fn_1307"
-signature = ""
-c_name = "ovl12_fn_1307"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:133F"
@@ -3995,9 +3748,9 @@ unit = "ovl12"
 addr = "ovl12:133F"
 size = 22
 name = "ovl12_e43"
-signature = ""
+signature = "procedure ovl12_e43(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e43"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_43"
 evidence = ["prologue"]
@@ -4008,9 +3761,9 @@ unit = "ovl12"
 addr = "ovl12:1355"
 size = 7
 name = "ovl12_e44"
-signature = ""
+signature = "procedure ovl12_e44(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e44"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_44"
 evidence = ["prologue"]
@@ -4021,9 +3774,9 @@ unit = "ovl12"
 addr = "ovl12:135C"
 size = 7
 name = "ovl12_e45"
-signature = ""
+signature = "procedure ovl12_e45(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e45"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_45"
 evidence = ["prologue"]
@@ -4034,9 +3787,9 @@ unit = "ovl12"
 addr = "ovl12:1363"
 size = 54
 name = "ovl12_e46"
-signature = ""
+signature = "procedure ovl12_e46(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e46"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_46"
 evidence = ["prologue"]
@@ -4046,12 +3799,12 @@ id = "ovl12:1399"
 unit = "ovl12"
 addr = "ovl12:1399"
 size = 185
-name = "ovl12_e47"
-signature = ""
+name = "ProgressRot"
+signature = "procedure ProgressRot(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e47"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_47"
+notes = "renamed from ovl12_e47 (ovl12:1399 is the rot handler of affect 39h (AffectRot, which Cure Disease removes, whitepaper 5.19): on each run it shows 'Rots...' on Who (res12_fn_16EC, colour 10) and takes Charisma down to 3 at most 2 at a time; then, while the stage in the affect's Data high nibble is above 1, it gives the rot again one stage lower (TryAddAffect, duration 43200); at stage 1 Who dies with 'Dies rots away' (DropFromFight, status 8)); auto:entry_47"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4060,9 +3813,9 @@ unit = "ovl12"
 addr = "ovl12:1452"
 size = 32
 name = "ovl12_e48"
-signature = ""
+signature = "procedure ovl12_e48(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e48"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_48"
 evidence = ["prologue"]
@@ -4073,9 +3826,9 @@ unit = "ovl12"
 addr = "ovl12:1472"
 size = 30
 name = "ovl12_e49"
-signature = ""
+signature = "procedure ovl12_e49(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e49"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_49"
 evidence = ["prologue"]
@@ -4085,77 +3838,51 @@ id = "ovl12:1490"
 unit = "ovl12"
 addr = "ovl12:1490"
 size = 91
-name = "ovl12_e50"
-signature = ""
+name = "ReduceFireDamageByRoll"
+signature = "procedure ReduceFireDamageByRoll(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e50"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_50"
+notes = "renamed from ovl12_e50 (ovl12:1490 is a damage hook (AffectHandlers shape): while the damage is fire (DamageKind bit 1) it takes 2 per die of the last roll (ds681C) off DamageAmount, never below ds681C, adds 4 to SaveRoll, and cancels non-magical damage (CancelPendingHook 0)); auto:entry_50"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl12:14EB"
 unit = "ovl12"
 addr = "ovl12:14EB"
-size = 88
-name = "ovl12_e51"
-signature = ""
+size = 90
+name = "AddTrainedOutAndHeal"
+signature = "procedure AddTrainedOutAndHeal(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e51"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_51"
+notes = "renamed from ovl12_e51 (ovl12:14EB is the AddHealingBlockAndHeal shape (ovl12:12FB) with AffectTrainedOut: TryAddAffect(Who, AffectTrainedOut, Affect^.Data, TrainedOutDuration), then HealCharacter(Who, 1, 1) and res12_fn_234A when it healed); auto:entry_51"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:1543"
-unit = "ovl12"
-addr = "ovl12:1543"
-size = 2
-name = "ovl12_fn_1543"
-signature = ""
-c_name = "ovl12_fn_1543"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl12:1545"
 unit = "ovl12"
 addr = "ovl12:1545"
-size = 62
-name = "ovl12_fn_1545"
-signature = ""
+size = 166
+name = "PoisonAttackTarget"
+signature = "procedure PoisonAttackTarget(Who: PCharacter; Bonus: ShortInt)"
 c_name = "ovl12_fn_1545"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl12_fn_1545 (ovl12:1545 (153 bytes, its literal pool 152F-1544): the attacked character (Who's Combat^.Target) makes a poison save (SavingThrow kind 0 with Bonus, ovl12_e52 passes 0); on failure it shows 'is Poisoned', gets AffectPoisoned for good and DropFromFight kills it (StatusGone, 'is killed')); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:1583"
-unit = "ovl12"
-addr = "ovl12:1583"
-size = 104
-name = "ovl12_fn_1583"
-signature = ""
-c_name = "ovl12_fn_1583"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:15EB"
 unit = "ovl12"
 addr = "ovl12:15EB"
 size = 114
-name = "ovl12_fn_15EB"
-signature = ""
+name = "ParalyzeAttackTarget"
+signature = "procedure ParalyzeAttackTarget(Who: PCharacter; Duration: Word; Unused: Byte)"
 c_name = "ovl12_fn_15EB"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl12_fn_15EB (paralyses the character Who attacked last (AttackTarget := Who^.Combat^.Target, ovl12:15EB): SavingThrow kind 0 first, then 'is Paralyzed' (literal at ovl12:15DE) and AddAffect with affect 34h; both handlers ovl12:1699 and ovl12:16BB call it with (Who, Duration, 0)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4163,12 +3890,12 @@ id = "ovl12:165D"
 unit = "ovl12"
 addr = "ovl12:165D"
 size = 20
-name = "ovl12_e52"
-signature = ""
+name = "PoisonAttackTargetBonus0"
+signature = "procedure PoisonAttackTargetBonus0(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e52"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_52"
+notes = "renamed from ovl12_e52 (affect handler at ovl12:165D whose whole body is PoisonAttackTarget(Who, 0) (ovl12:1545 with save bonus 0); the affect that runs it is not known yet); auto:entry_52"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4176,12 +3903,12 @@ id = "ovl12:1671"
 unit = "ovl12"
 addr = "ovl12:1671"
 size = 20
-name = "ovl12_e53"
-signature = ""
+name = "PoisonAttackTargetBonus4"
+signature = "procedure PoisonAttackTargetBonus4(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e53"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_53"
+notes = "renamed from ovl12_e53 (affect handler at ovl12:1671 whose whole body is PoisonAttackTarget(Who, 4) (ovl12:1545 with save bonus 4); the affect that runs it is not known yet); auto:entry_53"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4189,12 +3916,12 @@ id = "ovl12:1685"
 unit = "ovl12"
 addr = "ovl12:1685"
 size = 20
-name = "ovl12_e54"
-signature = ""
+name = "PoisonAttackTargetBonus2"
+signature = "procedure PoisonAttackTargetBonus2(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e54"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_54"
+notes = "renamed from ovl12_e54 (affect handler at ovl12:1685 whose whole body is PoisonAttackTarget(Who, 2) (ovl12:1545 with save bonus 2); the affect that runs it is not known yet); auto:entry_54"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4202,12 +3929,12 @@ id = "ovl12:1699"
 unit = "ovl12"
 addr = "ovl12:1699"
 size = 34
-name = "ovl12_e55"
-signature = ""
+name = "ParalyzeAttackTargetFor2d8"
+signature = "procedure ParalyzeAttackTargetFor2d8(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e55"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_55"
+notes = "renamed from ovl12_e55 (affect handler at ovl12:1699 whose body is ParalyzeAttackTarget(Who, RollDice(2, 8), 0) (ovl12:15EB); the map finds no direct caller (auto:entry_55), so the affect that runs it is not known yet); auto:entry_55"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4215,12 +3942,12 @@ id = "ovl12:16BB"
 unit = "ovl12"
 addr = "ovl12:16BB"
 size = 43
-name = "ovl12_e56"
-signature = ""
+name = "ParalyzeAttackTargetUnlessImmune"
+signature = "procedure ParalyzeAttackTargetUnlessImmune(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e56"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_56"
+notes = "renamed from ovl12_e56 (affect handler at ovl12:16BB: ParalyzeAttackTarget(Who, 63, 0) (ovl12:15EB) unless Who^.Combat^.Target^.Race (+$2E) is 2; the map finds no direct caller, so the affect that runs it is not known yet); auto:entry_56"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4228,12 +3955,12 @@ id = "ovl12:16E6"
 unit = "ovl12"
 addr = "ovl12:16E6"
 size = 37
-name = "ovl12_e57"
-signature = ""
+name = "ParalyzeAttackTargetFor1d9Plus10"
+signature = "procedure ParalyzeAttackTargetFor1d9Plus10(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e57"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_57"
+notes = "renamed from ovl12_e57 (affect handler at ovl12:16E6 whose body is ParalyzeAttackTarget(Who, RollDice(1, 9) + 10, $FE) (ovl12:15EB): paralysis for 1d9 plus 10 rounds, the same shape as ParalyzeAttackTargetFor2d8 (ovl12:1699)); auto:entry_57"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4241,12 +3968,12 @@ id = "ovl12:170B"
 unit = "ovl12"
 addr = "ovl12:170B"
 size = 20
-name = "ovl12_e58"
-signature = ""
+name = "PoisonAttackTargetBonusMinus2"
+signature = "procedure PoisonAttackTargetBonusMinus2(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e58"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_58"
+notes = "renamed from ovl12_e58 (affect handler at ovl12:170B that calls PoisonAttackTarget (ovl12:1545) with Bonus -2 (pushed as 0FEh): the poison hook with a negative save bonus, the twin of PoisonAttackTargetBonus0/2/4); auto:entry_58"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4254,51 +3981,38 @@ id = "ovl12:171F"
 unit = "ovl12"
 addr = "ovl12:171F"
 size = 17
-name = "ovl12_e59"
-signature = ""
+name = "SetFlagAndLowerAttackRollByFour"
+signature = "procedure SetFlagAndLowerAttackRollByFour(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e59"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_59"
+notes = "renamed from ovl12_e59 (affect handler at ovl12:171F: ds681E := 1, then Dec(AttackRoll, AttackPenalty) with no res12_fn_2199 test; the unconditional form of LowerAttackRollByFour (ovl12:0918)); auto:entry_59"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl12:1730"
 unit = "ovl12"
 addr = "ovl12:1730"
-size = 40
+size = 63
 name = "ovl12_e60"
-signature = ""
+signature = "procedure ovl12_e60(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e60"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_60"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:1758"
-unit = "ovl12"
-addr = "ovl12:1758"
-size = 23
-name = "ovl12_fn_1758"
-signature = ""
-c_name = "ovl12_fn_1758"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:176F"
 unit = "ovl12"
 addr = "ovl12:176F"
 size = 326
-name = "ovl12_e61"
-signature = ""
+name = "DrainBloodFromCombatant"
+signature = "procedure DrainBloodFromCombatant(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e61"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_61"
+notes = "renamed from ovl12_e61 (affect handler at ovl12:176F: when Mode is 0 and Who and the combatant whose index is the affect Data (CombatantRecord) both take part, it shows Sucks some Blood on Who (res12_fn_16EC) and deals 1d4 to that combatant (RollDiceCounted, DealDamage), then takes 16 times the damage off the affect Duration; the other branch removes the affects and sets Pad10 (forces flight in CheckMorale, ovl09:10D7)); auto:entry_61"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4306,12 +4020,12 @@ id = "ovl12:18B5"
 unit = "ovl12"
 addr = "ovl12:18B5"
 size = 128
-name = "ovl12_e62"
+name = "StartBloodDrain"
 signature = ""
 c_name = "ovl12_e62"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_62"
+notes = "renamed from ovl12_e62 (ovl12:18B5 gives the drinker affect 4B (AffectBloodDrain, whose removal runs DrainBloodFromCombatant ovl12:176F, which reads the victim index from its Data) and the victim affect 3A (AffectHeldFast, which ovl12:1935 announces as 'is held fast'); it starts the blood drain); auto:entry_62"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4319,12 +4033,12 @@ id = "ovl12:1935"
 unit = "ovl12"
 addr = "ovl12:1935"
 size = 164
-name = "ovl12_e63"
+name = "HoldWeakTargetFast"
 signature = ""
 c_name = "ovl12_e63"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_63"
+notes = "renamed from ovl12_e63 (ovl12:1935 is the weak-target twin of StartBloodDrain (ovl12:18B5): when the target's Strength (+$10) is below 19 it gives the drinker affect 4A (AffectBloodDrainWeak, Duration 0, DrainBloodFromCombatant on removal) and the victim affect 3A (AffectHeldFast) and shows 'is held fast' on the victim in colour 10); auto:entry_63"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4332,12 +4046,12 @@ id = "ovl12:19D9"
 unit = "ovl12"
 addr = "ovl12:19D9"
 size = 64
-name = "ovl12_e64"
+name = "ReviveOrRetryRevival"
 signature = ""
 c_name = "ovl12_e64"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_64"
+notes = "renamed from ovl12_e64 (ovl12:19D9 calls ReviveCombatant (ovl24:1869) on Who at Flag11B and, when that returns False, gives Who the revival affect 4E (AffectRevival, ovl24:175D) for one round with Affect's Data through TryAddAffect); auto:entry_64"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4345,12 +4059,12 @@ id = "ovl12:1A19"
 unit = "ovl12"
 addr = "ovl12:1A19"
 size = 51
-name = "ovl12_e65"
+name = "FireAttackTargetFor2d10"
 signature = ""
 c_name = "ovl12_e65"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_65"
+notes = "renamed from ovl12_e65 (ovl12:1A19 sets DamageKind 9 (POOLVARS: 1 fire, bit 3 magic) and deals RollDiceCounted(2, 10) to Who's combat Target with no save through DealDamage (ovl24:1344)); auto:entry_65"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4358,12 +4072,12 @@ id = "ovl12:1A4C"
 unit = "ovl12"
 addr = "ovl12:1A4C"
 size = 94
-name = "ovl12_e66"
+name = "AcidAttackTargetFor1d4"
 signature = ""
 c_name = "ovl12_e66"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_66"
+notes = "renamed from ovl12_e66 (ovl12:1A4C sets DamageKind to $10 (POOLVARS DamageKind: $10 acid) and deals RollDiceCounted(1, 4) to Who's combat Target with no save through DealDamage (ovl24:1344)); auto:entry_66"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4371,194 +4085,90 @@ id = "ovl12:1AAA"
 unit = "ovl12"
 addr = "ovl12:1AAA"
 size = 254
-name = "ovl12_e67"
+name = "FrightenSideWithFear"
 signature = ""
 c_name = "ovl12_e67"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_67"
+notes = "renamed from ovl12_e67 (ovl12:1AAA walks the party list (ds5D96, +$104 next) and, for each member with Flag10D on the side of Who (res12_fn_23B7), makes a fear save (SavingThrow kind 4) and gives AffectParalysis ($34) or AffectWeakened ($02) by HighestLevel 0..3 or 4..5, with the messages 'is paralyzed with fear' and 'is weakened by fear' (ovl12:1B91 and 1A96 pool strings)); auto:entry_67"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl12:1BA8"
 unit = "ovl12"
 addr = "ovl12:1BA8"
-size = 47
-name = "ovl12_e68"
-signature = ""
+size = 261
+name = "ParalyzeSideWithFear"
+signature = "procedure ParalyzeSideWithFear(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e68"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_68"
+notes = "renamed from ovl12_e68 (ovl12:1BA8 walks the party list (ds5D96), removes affect $52 from every member, then gives each member on the actor's side with Flag10D a paralysis for 1d4 rounds (AffectParalysis, Data FearData) after a SaveKindParalysis save, with the message 'is paralyzed with fear' (the message of FrightenSideWithFear, ovl12:1AAA); matched at L2 (make match FN=ovl12_e68)); auto:entry_68"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:1BD7"
-unit = "ovl12"
-addr = "ovl12:1BD7"
-size = 193
-name = "ovl12_fn_1BD7"
-signature = ""
-c_name = "ovl12_fn_1BD7"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:1C98"
-unit = "ovl12"
-addr = "ovl12:1C98"
-size = 21
-name = "ovl12_fn_1C98"
-signature = ""
-c_name = "ovl12_fn_1C98"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl12:1CAD"
 unit = "ovl12"
 addr = "ovl12:1CAD"
 size = 458
-name = "ovl12_e69"
-signature = ""
+name = "GazeStonesTarget"
+signature = "procedure GazeStonesTarget(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e69"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_69"
+notes = "renamed from ovl12_e69 (ovl12:1CAD shows 'gazes...' on Who, draws the gaze line from Who to AttackTarget (res12_fn_1A29), lets a readied item with a NameNum of $76 turn it back on Who ('reflects it!', colour 12), then makes a stone save (SavingThrow kind 1) and DropFromFight with StatusStoned and 'is Stoned' (status 7 is stone, ovl12:0058 and ovl04:093D); matched at L2 (make match FN=ovl12_e69)); auto:entry_69"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl12:1E77"
 unit = "ovl12"
 addr = "ovl12:1E77"
-size = 292
-name = "ovl12_e70"
-signature = ""
+size = 683
+name = "GazeCharmsTarget"
+signature = "procedure GazeCharmsTarget(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e70"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_70"
+notes = "renamed from ovl12_e70 (ovl12:1E77 is the charm gaze: 'Gazes...' on Who, the gaze line to AttackTarget (res12_fn_1A29), ds681B 10, then the charm affect $0B ('is charmed', Data = Who's side in bit 7 plus $0C, negated by a fear save with bonus -2) and its handler at once (CallAffectHandler); the same walk and gaze as GazeStonesTarget (ovl12:1CAD) with a charm for the stone; matched at L2 (make match FN=ovl12_e70)); auto:entry_70"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:1F9B"
-unit = "ovl12"
-addr = "ovl12:1F9B"
-size = 103
-name = "ovl12_fn_1F9B"
-signature = ""
-c_name = "ovl12_fn_1F9B"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl12:2002"
 unit = "ovl12"
 addr = "ovl12:2002"
 size = 167
-name = "ovl12_fn_2002"
+name = "HighestLevelClass"
 signature = ""
 c_name = "ovl12_fn_2002"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl12_fn_2002 (nested in ovl12:2122 (DrainLevels): returns the class with the highest level, which DrainLevels reads for HighestLevel (+$73) and Experience (+$AC) at ovl12:235E..2383; the value it compares is ClassXpTable); auto:near_call; nested in DrainLevels (ovl12:2122), proven by the parent's match"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:20A9"
-unit = "ovl12"
-addr = "ovl12:20A9"
-size = 121
-name = "ovl12_fn_20A9"
-signature = ""
-c_name = "ovl12_fn_20A9"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:2122"
 unit = "ovl12"
 addr = "ovl12:2122"
-size = 117
-name = "ovl12_fn_2122"
-signature = ""
+size = 642
+name = "DrainLevels"
+signature = "procedure DrainLevels(Who: PCharacter; Count: Byte)"
 c_name = "ovl12_fn_2122"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl12_fn_2122 (message is drained with N levels or a level (res12_fn_16EC, pool 20DF..20FB), the victim goes dead forever or killed through DropFromFight, Count levels come off the highest class (ovl12:2122); callers ovl12:23A4 and ovl12:23C2 are not decompiled yet); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:2197"
-unit = "ovl12"
-addr = "ovl12:2197"
-size = 156
-name = "ovl12_fn_2197"
-signature = ""
-c_name = "ovl12_fn_2197"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:2233"
-unit = "ovl12"
-addr = "ovl12:2233"
-size = 89
-name = "ovl12_fn_2233"
-signature = ""
-c_name = "ovl12_fn_2233"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:228C"
-unit = "ovl12"
-addr = "ovl12:228C"
-size = 247
-name = "ovl12_fn_228C"
-signature = ""
-c_name = "ovl12_fn_228C"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:2383"
-unit = "ovl12"
-addr = "ovl12:2383"
-size = 33
-name = "ovl12_fn_2383"
-signature = ""
-c_name = "ovl12_fn_2383"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:23A4"
 unit = "ovl12"
 addr = "ovl12:23A4"
 size = 30
-name = "ovl12_e71"
-signature = ""
+name = "DrainAttackTargetLevel"
+signature = "procedure DrainAttackTargetLevel(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e71"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_71"
+notes = "renamed from ovl12_e71 (ovl12:23A4 calls DrainLevels(Who^.Combat^.Target, 1): an affect handler that drains one level from the character Who attacked last (the AttackTarget of BoostAttackAgainstTarget, ovl12:013B)); auto:entry_71"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4566,12 +4176,12 @@ id = "ovl12:23C2"
 unit = "ovl12"
 addr = "ovl12:23C2"
 size = 42
-name = "ovl12_e72"
-signature = ""
+name = "DrainAttackTargetTwoLevels"
+signature = "procedure DrainAttackTargetTwoLevels(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e72"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_72"
+notes = "renamed from ovl12_e72 (ovl12:23C2 calls DrainLevels(Who^.Combat^.Target, 2): the two-level twin of DrainAttackTargetLevel (ovl12:23A4), an affect handler that drains the character Who attacked last); auto:entry_72"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4579,12 +4189,12 @@ id = "ovl12:23EC"
 unit = "ovl12"
 addr = "ovl12:23EC"
 size = 164
-name = "ovl12_e73"
-signature = ""
+name = "CauseRotOnAttackTarget"
+signature = "procedure CauseRotOnAttackTarget(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e73"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_73"
+notes = "renamed from ovl12_e73 (ovl12:23EC gives AttackTarget (Who's Combat Target) the healing block AffectHealingBlock and then the rot AffectRot with stage RollDice(1,6) (ProgressRot reads the stage as Data div 16), shows 'is Diseased': an affect handler that inflicts a rot on the character Who attacked last); auto:entry_73"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4593,9 +4203,9 @@ unit = "ovl12"
 addr = "ovl12:2490"
 size = 73
 name = "ovl12_e74"
-signature = ""
+signature = "procedure ovl12_e74(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e74"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_74"
 evidence = ["prologue"]
@@ -4605,90 +4215,64 @@ id = "ovl12:24D9"
 unit = "ovl12"
 addr = "ovl12:24D9"
 size = 125
-name = "ovl12_e75"
-signature = ""
+name = "AddConstitutionSaveBonus"
+signature = "procedure AddConstitutionSaveBonus(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e75"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_75"
+notes = "renamed from ovl12_e75 (ovl12:24D9 adds to SaveRoll a bonus from Who's Constitution (TCharacter +$14, POOLVARS: 1 for 4..6 up to 5 for 18..20), only when SaveKind is 0 (the first save, SaveKindPoison [I])); auto:entry_75"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl12:2556"
 unit = "ovl12"
 addr = "ovl12:2556"
-size = 40
+size = 76
 name = "ovl12_e76"
-signature = ""
+signature = "procedure ovl12_e76(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e76"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_76"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:257E"
-unit = "ovl12"
-addr = "ovl12:257E"
-size = 36
-name = "ovl12_fn_257E"
-signature = ""
-c_name = "ovl12_fn_257E"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:25A2"
 unit = "ovl12"
 addr = "ovl12:25A2"
 size = 26
-name = "ovl12_e77"
+name = "HalveFireDamageNoSave"
 signature = ""
 c_name = "ovl12_e77"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_77"
+notes = "renamed from ovl12_e77 (ovl12:25A2 halves DamageAmount when DamageKind has the fire bit (KindFire); it is HalveFireDamage (ovl12:06E4) without the SaveRoll bonus; matched [V]); auto:entry_77"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl12:25BC"
 unit = "ovl12"
 addr = "ovl12:25BC"
-size = 13
-name = "ovl12_e78"
+size = 84
+name = "HalveDamageForFirstSlotItem"
 signature = ""
 c_name = "ovl12_e78"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_78"
+notes = "renamed from ovl12_e78 (ovl12:25BC halves DamageAmount when the first slot item of SelectedCharacter has bits of byte 7 of its RaceRow row (RaceRow[ItemType][7]); the affect that runs it is not known; matched [V]); auto:entry_78"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:25C9"
-unit = "ovl12"
-addr = "ovl12:25C9"
-size = 71
-name = "ovl12_fn_25C9"
-signature = ""
-c_name = "ovl12_fn_25C9"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:2610"
 unit = "ovl12"
 addr = "ovl12:2610"
 size = 59
-name = "ovl12_e79"
+name = "FallDeadIfInFight"
 signature = ""
 c_name = "ovl12_e79"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_79"
+notes = "renamed from ovl12_e79 (ovl12:2610 clears the affect's Flag and, when Who's Flag10D (combat participation, TCharacter +10D) is set, DropFromFight takes Who out with StatusGone and 'Falls dead'; matched [V]); auto:entry_79"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4696,12 +4280,12 @@ id = "ovl12:264B"
 unit = "ovl12"
 addr = "ovl12:264B"
 size = 63
-name = "ovl12_e80"
+name = "CancelDamageUnlessMagicSlotItem"
 signature = ""
 c_name = "ovl12_e80"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_80"
+notes = "renamed from ovl12_e80 (ovl12:264B sets DamageAmount to 0 unless the first slot item of SelectedCharacter is a magic item (Plus <> 0) or has NameNum[3] $B1 [?]; matched [V]); auto:entry_80"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4709,12 +4293,12 @@ id = "ovl12:268A"
 unit = "ovl12"
 addr = "ovl12:268A"
 size = 118
-name = "ovl12_e81"
+name = "AddConstitutionSaveBonusKind2Or4"
 signature = ""
 c_name = "ovl12_e81"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_81"
+notes = "renamed from ovl12_e81 (ovl12:268A adds the Constitution bonus of AddConstitutionSaveBonus (ovl12:24D9) to SaveRoll when SaveKind is 2 or 4 (4 is the fear save [I]); matched [V]); auto:entry_81"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4722,12 +4306,12 @@ id = "ovl12:2700"
 unit = "ovl12"
 addr = "ovl12:2700"
 size = 48
-name = "ovl12_e82"
+name = "RegainHitPoints"
 signature = ""
 c_name = "ovl12_e82"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_82"
+notes = "renamed from ovl12_e82 (ovl12:2700 adds RegainedHitPoints (3) to Flag11B, the current hit points (TCharacter +$11B), and caps it at HpMax (+$32); AffectHandlers shape, Affect and Mode not read); auto:entry_82"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4735,12 +4319,12 @@ id = "ovl12:2730"
 unit = "ovl12"
 addr = "ovl12:2730"
 size = 169
-name = "ovl12_e83"
+name = "ReviveDyingCharacter"
 signature = ""
 c_name = "ovl12_e83"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_83"
+notes = "renamed from ovl12_e83 (ovl12:2730 revives a dying (Status 5) or unconscious (Status 4) character with the hit points left after its DyingRounds (TCombatant +$E) via ReviveCombatant (ovl24:1869), then gives affect $5F and removes its own affect $63 (RemoveAffect with the Affect)); auto:entry_83"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4748,12 +4332,12 @@ id = "ovl12:27D9"
 unit = "ovl12"
 addr = "ovl12:27D9"
 size = 59
-name = "ovl12_e84"
+name = "GiveAffectUnlessFireOrAcid"
 signature = ""
 c_name = "ovl12_e84"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_84"
+notes = "renamed from ovl12_e84 (ovl12:27D9 adds affect $66 for RollDice(3, 6) rounds unless DamageKind has the fire bit (1) or the acid bit ($10), POOLVARS DamageKind); auto:entry_84"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4761,12 +4345,12 @@ id = "ovl12:2814"
 unit = "ovl12"
 addr = "ovl12:2814"
 size = 82
-name = "ovl12_e85"
+name = "GiveRegeneratingUnlessAffected"
 signature = ""
 c_name = "ovl12_e85"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_85"
+notes = "renamed from ovl12_e85 (ovl12:2814 gives affect $3B (Regenerating, named in ovl15:0FBC) for 3 rounds unless res12_fn_2199 finds affect $62 or $3B on Who); auto:entry_85"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4774,12 +4358,12 @@ id = "ovl12:2866"
 unit = "ovl12"
 addr = "ovl12:2866"
 size = 89
-name = "ovl12_e86"
+name = "RetryRevivalAtFullHitPoints"
 signature = ""
 c_name = "ovl12_e86"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_86"
+notes = "renamed from ovl12_e86 (ovl12:2866 calls ReviveCombatant with Who's HpMax (+$32); when it fails it stores TryAddAffect of affect $66 for 1 round with the Data of Affect, the result never read); auto:entry_86"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4787,12 +4371,12 @@ id = "ovl12:28BF"
 unit = "ovl12"
 addr = "ovl12:28BF"
 size = 66
-name = "ovl12_e87"
+name = "TurnGaseousAndEscape"
 signature = ""
 c_name = "ovl12_e87"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_87"
+notes = "renamed from ovl12_e87 (ovl12:28BF clears the Flag of the affect, shows the cursor on Who (ShowCursorOn, ovl31:1298) and drops Who with Status 3 (fled, ovl05:050D) and the text 'Turns gaseous and escapes' (DropCombatant, ovl24:0F06)); auto:entry_87"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4800,12 +4384,12 @@ id = "ovl12:2901"
 unit = "ovl12"
 addr = "ovl12:2901"
 size = 20
-name = "ovl12_e88"
+name = "AvoidDistantAttackByChance"
 signature = ""
 c_name = "ovl12_e88"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_88"
+notes = "renamed from ovl12_e88 (ovl12:2901 is an affect handler (AffectHandlers shape, nothing read): it calls AvoidDistantAttack (ovl12:0FAC) for Who with chance 60; which affect runs it is not known); auto:entry_88"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4813,12 +4397,12 @@ id = "ovl12:2915"
 unit = "ovl12"
 addr = "ovl12:2915"
 size = 97
-name = "ovl12_fn_2915"
+name = "CancelHookOnChance"
 signature = ""
 c_name = "ovl12_fn_2915"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl12_fn_2915 (ovl12:2915 (callers ovl12:2976 and 2984): with a hook offered (HookAffectId) or magic damage (DamageKind bit 8), a 1d100 roll at or below Chance less 5 for each point that res12_fn_26C2 of ds681B falls short of 11 cancels the hook (CancelPendingHook 0)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4826,12 +4410,12 @@ id = "ovl12:2976"
 unit = "ovl12"
 addr = "ovl12:2976"
 size = 14
-name = "ovl12_e89"
+name = "CancelHookByHalfChance"
 signature = ""
 c_name = "ovl12_e89"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_89"
+notes = "renamed from ovl12_e89 (ovl12:2976 is an affect handler (AffectHandlers shape, nothing read) that calls CancelHookOnChance (ovl12:2915) with chance 50; which affect runs it is not known); auto:entry_89"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4839,12 +4423,12 @@ id = "ovl12:2984"
 unit = "ovl12"
 addr = "ovl12:2984"
 size = 14
-name = "ovl12_e90"
+name = "CancelHookByLowChance"
 signature = ""
 c_name = "ovl12_e90"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_90"
+notes = "renamed from ovl12_e90 (ovl12:2984 is an affect handler (AffectHandlers shape, nothing read) that calls CancelHookOnChance (ovl12:2915) with chance 15; which affect runs it is not known); auto:entry_90"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4852,12 +4436,12 @@ id = "ovl12:2992"
 unit = "ovl12"
 addr = "ovl12:2992"
 size = 36
-name = "ovl12_e91"
+name = "CancelCharmAndUnknown35HighChance"
 signature = ""
 c_name = "ovl12_e91"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_91"
+notes = "renamed from ovl12_e91 (ovl12:2992 is an affect handler (AffectHandlers shape, nothing read): a 1d100 roll at or below 90 cancels the offered hooks of affect $35 and of the charm (affect $0B) (CancelPendingHook); which affect runs it is not known); auto:entry_91"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4865,12 +4449,12 @@ id = "ovl12:29B6"
 unit = "ovl12"
 addr = "ovl12:29B6"
 size = 21
-name = "ovl12_e92"
+name = "CancelCharmAndUnknown35"
 signature = ""
 c_name = "ovl12_e92"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_92"
+notes = "renamed from ovl12_e92 (ovl12:29B6 is an affect handler (AffectHandlers shape, nothing read) that cancels the offered hooks of the charm (affect $0B) and of affect $35 (CancelPendingHook) without a roll; which affect runs it is not known); auto:entry_92"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4878,12 +4462,12 @@ id = "ovl12:29CB"
 unit = "ovl12"
 addr = "ovl12:29CB"
 size = 14
-name = "ovl12_e93"
+name = "CancelParalysisHook"
 signature = ""
 c_name = "ovl12_e93"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_93"
+notes = "renamed from ovl12_e93 (ovl12:29CB is an affect handler whose whole body is CancelPendingHook(AffectParalysis) (ovl12:29CB, matched)); auto:entry_93"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4891,12 +4475,12 @@ id = "ovl12:29D9"
 unit = "ovl12"
 addr = "ovl12:29D9"
 size = 23
-name = "ovl12_e94"
+name = "CancelColdDamage"
 signature = ""
 c_name = "ovl12_e94"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_94"
+notes = "renamed from ovl12_e94 (ovl12:29D9 tests DamageKind bit 2 (KindCold, ds6819 and 2) and then calls CancelPendingHook(0), which drops the damage (ovl12:29D9, matched)); auto:entry_94"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4904,12 +4488,12 @@ id = "ovl12:29F0"
 unit = "ovl12"
 addr = "ovl12:29F0"
 size = 33
-name = "ovl12_e95"
+name = "CancelPoisonAndParalysisHooks"
 signature = ""
 c_name = "ovl12_e95"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_95"
+notes = "renamed from ovl12_e95 (ovl12:29F0 calls CancelPendingHook(AffectPoisoned) and CancelPendingHook(AffectParalysis), then sets SaveRoll to 100 when SaveKind is 0 (the poison save, ovl12:2A01)); auto:entry_95"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4917,12 +4501,12 @@ id = "ovl12:2A11"
 unit = "ovl12"
 addr = "ovl12:2A11"
 size = 23
-name = "ovl12_e96"
+name = "CancelFireDamage"
 signature = ""
 c_name = "ovl12_e96"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_96"
+notes = "renamed from ovl12_e96 (ovl12:2A11 tests DamageKind bit 1 (KindFire, ds6819 and 1) and then calls CancelPendingHook(0), which drops the damage (ovl12:2A11, matched)); auto:entry_96"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4930,12 +4514,12 @@ id = "ovl12:2A28"
 unit = "ovl12"
 addr = "ovl12:2A28"
 size = 69
-name = "ovl12_e97"
+name = "ReduceFireDamageOnePerDie"
 signature = ""
 c_name = "ovl12_e97"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_97"
+notes = "renamed from ovl12_e97 (ovl12:2A28 is the loop of ReduceFireDamageByRoll (ovl12:1490) with Dec(DamageAmount) (one point, fe 0e 18 68) per die of ds681C, and no save bonus or cancel); auto:entry_97"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4943,12 +4527,12 @@ id = "ovl12:2A6D"
 unit = "ovl12"
 addr = "ovl12:2A6D"
 size = 26
-name = "ovl12_e98"
+name = "HalveElectricityDamage"
 signature = ""
 c_name = "ovl12_e98"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_98"
+notes = "renamed from ovl12_e98 (ovl12:2A6D tests DamageKind bit 4 (KindElectricity, ds6819 and 4) and halves DamageAmount (shr 1), the electricity twin of HalveColdDamage (ovl12:03E1)); auto:entry_98"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4956,12 +4540,12 @@ id = "ovl12:2A87"
 unit = "ovl12"
 addr = "ovl12:2A87"
 size = 95
-name = "ovl12_e99"
+name = "HalveDamageByFirstSlotItemRow"
 signature = ""
 c_name = "ovl12_e99"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_99"
+notes = "renamed from ovl12_e99 (ovl12:2A87 takes FirstSlotItem(SelectedCharacter) and, when there is one, halves DamageAmount when its RaceRow byte 7 (DS:5589) is 0 or odd; the frame and the caller-less entry match HalveDamageForFirstSlotItem (ovl12:25BC)); auto:entry_99"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4969,12 +4553,12 @@ id = "ovl12:2AE6"
 unit = "ovl12"
 addr = "ovl12:2AE6"
 size = 58
-name = "ovl12_e100"
-signature = ""
+name = "HalveDamageForEnchantedSlotItem"
+signature = "procedure HalveDamageForEnchantedSlotItem(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e100"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_100"
+notes = "renamed from ovl12_e100 (ovl12:2AE6 takes FirstSlotItem(SelectedCharacter) and halves DamageAmount when that item's Plus (+$32, a signed byte, compared with jle) is above 0; the same frame and caller-less entry as the other damage hooks); auto:entry_100"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4982,77 +4566,51 @@ id = "ovl12:2B20"
 unit = "ovl12"
 addr = "ovl12:2B20"
 size = 67
-name = "ovl12_e101"
-signature = ""
+name = "SetDamageFromSlotItemType55"
+signature = "procedure SetDamageFromSlotItemType55(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e101"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_101"
+notes = "renamed from ovl12_e101 (ovl12:2B20 reads SelectedCharacter^.SlotItems[0] and, when its ItemType is $55, sets DamageAmount to RollDiceCounted(1, 6) + 1; the item type's name is not known); auto:entry_101"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl12:2B63"
 unit = "ovl12"
 addr = "ovl12:2B63"
-size = 12
-name = "ovl12_e102"
-signature = ""
+size = 26
+name = "HalveColdDamageNoSave"
+signature = "procedure HalveColdDamageNoSave(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e102"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_102"
+notes = "renamed from ovl12_e102 (ovl12:2B63 halves DamageAmount while DamageKind has KindCold (bit 2); it is HalveColdDamage (ovl12:03E1) without the SaveRoll bonus, the cold twin of HalveFireDamageNoSave (ovl12:25A2)); auto:entry_102"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:2B6F"
-unit = "ovl12"
-addr = "ovl12:2B6F"
-size = 14
-name = "ovl12_fn_2B6F"
-signature = ""
-c_name = "ovl12_fn_2B6F"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl12:2B7D"
 unit = "ovl12"
 addr = "ovl12:2B7D"
-size = 14
-name = "ovl12_e103"
-signature = ""
+size = 75
+name = "CancelDamageUnlessEnchantedSlotItem"
+signature = "procedure CancelDamageUnlessEnchantedSlotItem(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e103"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_103"
+notes = "renamed from ovl12_e103 (ovl12:2B7D cancels DamageAmount unless FirstSlotItem(SelectedCharacter) exists with Plus not 0, and then only when Race (+$2E) is above 0 or HighestLevel (+$73) is below 4; the name gives the first exception, the comment the second); auto:entry_103"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:2B8B"
-unit = "ovl12"
-addr = "ovl12:2B8B"
-size = 61
-name = "ovl12_fn_2B8B"
-signature = ""
-c_name = "ovl12_fn_2B8B"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:2BC8"
 unit = "ovl12"
 addr = "ovl12:2BC8"
 size = 84
-name = "ovl12_e104"
+name = "AvoidDistantAttackForItemType57Or58"
 signature = ""
 c_name = "ovl12_e104"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_104"
+notes = "renamed from ovl12_e104 (ovl12:2BC8 calls AvoidDistantAttack (ovl12:0FAC, chance 50) only when SelectedCharacter's first slot item (SlotItems[0]) has ItemType $57 or $58; an affect handler, no direct caller); auto:entry_104"
 evidence = ["prologue"]
 
 [[routine]]
@@ -5060,51 +4618,38 @@ id = "ovl12:2C1C"
 unit = "ovl12"
 addr = "ovl12:2C1C"
 size = 284
-name = "ovl12_e105"
+name = "SpitAcidAtTarget"
 signature = ""
 c_name = "ovl12_e105"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_105"
+notes = "renamed from ovl12_e105 (ovl12:2C1C shows 'Spits Acid' on Who (string in the pool at ovl12:2C11), draws the spit to Who's combat target and deals 8d4 to it with a half-on-save; a handler, no direct caller); auto:entry_105"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl12:2D38"
 unit = "ovl12"
 addr = "ovl12:2D38"
-size = 1
-name = "ovl12_e106"
+size = 80
+name = "SetDamageFromSlotItemType56"
 signature = ""
 c_name = "ovl12_e106"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_106"
+notes = "renamed from ovl12_e106 (ovl12:2D38 sets DamageAmount to 3d8 (RollDiceCounted 3, 8) when SelectedCharacter's first slot item has ItemType $56, the sibling of SetDamageFromSlotItemType55 (ovl12:2B20); no direct caller); auto:entry_106"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:2D39"
-unit = "ovl12"
-addr = "ovl12:2D39"
-size = 79
-name = "ovl12_fn_2D39"
-signature = ""
-c_name = "ovl12_fn_2D39"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:2D88"
 unit = "ovl12"
 addr = "ovl12:2D88"
 size = 92
-name = "ovl12_e107"
+name = "HalveOrCancelDamageForUnenchantedSlotItem"
 signature = ""
 c_name = "ovl12_e107"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_107"
+notes = "renamed from ovl12_e107 (ovl12:2D88 halves DamageAmount for a first slot item with Plus 0 and NameNum[3] $B1 (SlotItemNameNum3), cancels it for other Plus-0 items and with no item, and leaves it for Plus not 0; no direct caller); auto:entry_107"
 evidence = ["prologue"]
 
 [[routine]]
@@ -5112,12 +4657,12 @@ id = "ovl12:2DE4"
 unit = "ovl12"
 addr = "ovl12:2DE4"
 size = 36
-name = "ovl12_e108"
+name = "CancelCharmAndUnknown35ModerateChance"
 signature = ""
 c_name = "ovl12_e108"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_108"
+notes = "renamed from ovl12_e108 (ovl12:2DE4 cancels the hooks of the charm (AffectCharm) and of AffectUnknown35 when a 1d100 roll is at or below 30; the sibling of CancelCharmAndUnknown35HighChance (ovl12:2992, 90), no direct caller); auto:entry_108"
 evidence = ["prologue"]
 
 [[routine]]
@@ -5125,12 +4670,12 @@ id = "ovl12:2E08"
 unit = "ovl12"
 addr = "ovl12:2E08"
 size = 47
-name = "ovl12_e109"
+name = "CancelCharmUnknown35PoisonAndParalysisHooks"
 signature = ""
 c_name = "ovl12_e109"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_109"
+notes = "renamed from ovl12_e109 (ovl12:2E08 cancels the hooks of affects /bin/zshB (charm), , (paralysis) and (poison) with CancelPendingHook, then sets SaveRoll to AlwaysSaves when SaveKind is the poison save (SaveKind 0)); auto:entry_109"
 evidence = ["prologue"]
 
 [[routine]]
@@ -5138,103 +4683,64 @@ id = "ovl12:2E37"
 unit = "ovl12"
 addr = "ovl12:2E37"
 size = 163
-name = "ovl12_e110"
+name = "SetFlagIfTargetReflects"
 signature = ""
 c_name = "ovl12_e110"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_110"
+notes = "renamed from ovl12_e110 (ovl12:2E37 walks the readied items (+$34) of AttackTarget and sets ds681E when one of their names is ReflectingNameNum $76 (the item that turns a gaze back, GazeStonesTarget ovl12:1CAD)); auto:entry_110"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl12:2EDA"
 unit = "ovl12"
 addr = "ovl12:2EDA"
-size = 16
-name = "ovl12_e111"
+size = 125
+name = "ApplyItemSecondAffect"
 signature = ""
 c_name = "ovl12_e111"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_111"
+notes = "renamed from ovl12_e111 (ovl12:2EDA gives Who the affect named by Item^.Affects[2] (+$3D of TMenuLine) with AddAffect and CallAffectHandler for Mode 0 and removes it with RemoveAffect otherwise; its Affect parameter is read as an item); auto:entry_111"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:2EEA"
-unit = "ovl12"
-addr = "ovl12:2EEA"
-size = 109
-name = "ovl12_fn_2EEA"
-signature = ""
-c_name = "ovl12_fn_2EEA"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:2F57"
 unit = "ovl12"
 addr = "ovl12:2F57"
-size = 36
-name = "ovl12_e112"
+size = 334
+name = "GiveExceptionalStrength"
 signature = ""
 c_name = "ovl12_e112"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:far_call"
+notes = "renamed from ovl12_e112 (ovl12:2F57 raises Who to 18/100 with RaiseStrength (ovl24:115C) and adds affect $26 (AffectStrength2) when applied; any other Mode removes a $26 strength affect (DecodeStrength, ovl24:110D) and shows nothing); auto:far_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:2F7B"
-unit = "ovl12"
-addr = "ovl12:2F7B"
-size = 298
-name = "ovl12_fn_2F7B"
-signature = ""
-c_name = "ovl12_fn_2F7B"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:30A5"
 unit = "ovl12"
 addr = "ovl12:30A5"
-size = 86
+size = 143
 name = "ovl12_e113"
 signature = ""
 c_name = "ovl12_e113"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_113"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:30FB"
-unit = "ovl12"
-addr = "ovl12:30FB"
-size = 57
-name = "ovl12_fn_30FB"
-signature = ""
-c_name = "ovl12_fn_30FB"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:3134"
 unit = "ovl12"
 addr = "ovl12:3134"
 size = 70
-name = "ovl12_e114"
+name = "ShowMustHaveGiantStrength"
 signature = ""
 c_name = "ovl12_e114"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_114"
+notes = "renamed from ovl12_e114 (ovl12:3134 shows 'Must have Giant Strength' (res12_fn_1693 with the literal) when Who's Strength is below 19; the handler's own effect is that message); auto:entry_114"
 evidence = ["prologue"]
 
 [[routine]]
@@ -5242,12 +4748,12 @@ id = "ovl12:317A"
 unit = "ovl12"
 addr = "ovl12:317A"
 size = 33
-name = "ovl12_e115"
+name = "RemoveAffect17WhenRemoved"
 signature = ""
 c_name = "ovl12_e115"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_115"
+notes = "renamed from ovl12_e115 (ovl12:317A calls RemoveAffect(Who, $17, nil) only when Mode is not 0, the removal of the affect (table entry 137, affect $89)); auto:entry_115"
 evidence = ["prologue"]
 
 [[routine]]
@@ -5258,7 +4764,7 @@ size = 7
 name = "ovl12_e116"
 signature = ""
 c_name = "ovl12_e116"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_116"
 evidence = ["prologue"]
@@ -5267,53 +4773,14 @@ evidence = ["prologue"]
 id = "ovl12:31A2"
 unit = "ovl12"
 addr = "ovl12:31A2"
-size = 53
+size = 1799
 name = "ovl12_e1"
 signature = ""
 c_name = "ovl12_e1"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_1"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:31D7"
-unit = "ovl12"
-addr = "ovl12:31D7"
-size = 139
-name = "ovl12_fn_31D7"
-signature = ""
-c_name = "ovl12_fn_31D7"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:3262"
-unit = "ovl12"
-addr = "ovl12:3262"
-size = 1222
-name = "ovl12_fn_3262"
-signature = ""
-c_name = "ovl12_fn_3262"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl12:3728"
-unit = "ovl12"
-addr = "ovl12:3728"
-size = 385
-name = "ovl12_fn_3728"
-signature = ""
-c_name = "ovl12_fn_3728"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:38A9"
@@ -5323,7 +4790,7 @@ size = 5
 name = "ovl12_init"
 signature = ""
 c_name = "ovl12_init"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_0"
 evidence = ["prologue"]
@@ -6358,12 +5825,12 @@ id = "ovl16:0000"
 unit = "ovl16"
 addr = "ovl16:0000"
 size = 353
-name = "ovl16_fn_0000"
+name = "FreeCharacter"
 signature = ""
 c_name = "ovl16_fn_0000"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl16_fn_0000 (ovl16:0000 frees a character: Combat (+108h, size 16h), the Items list (+C8h, size 3Fh) and the Affects list (+7Fh, size 9), frees the record (size 11Dh) and clears the caller pointer; called by ovl16_e2); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -6371,12 +5838,12 @@ id = "ovl16:0161"
 unit = "ovl16"
 addr = "ovl16:0161"
 size = 1035
-name = "ovl16_e1"
+name = "RunCharacterMenu"
 signature = ""
 c_name = "ovl16_e1"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_1"
+notes = "renamed from ovl16_e1 (ovl16:0161 entry point (called by ovl03:2E10): draws the training-hall window and its 11-function menu at DS:0619 and dispatches C create, D drop, M modify, T train, V view, A add, R remove, L load, S save, B finish, E exit, J the STING cheat); auto:entry_1"
 evidence = ["prologue"]
 
 [[routine]]
@@ -6389,7 +5856,7 @@ signature = ""
 c_name = "ovl16_fn_056C"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3: the map boundary is wrong. 056C has its prologue at 056C and its retf epilogue at 1ED1 (a second prologue follows at 1F37), so the routine is 6501 bytes, not 629; the entries the map lists inside it (07E1, 07E5, 07EA and the rest up to 1F30) are fixup-table artifacts with no prologue (07E1 starts mid parameter-push of the AddAffect call at 07D3..07EA). Too large for one batch: decompiling it is what lets make match UNIT=ovl16 WRITE=1 delete those entries and correct its size"
 evidence = ["prologue"]
 
 [[routine]]
@@ -6402,7 +5869,7 @@ signature = ""
 c_name = "ovl16_fn_07E1"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3: not a routine. The 4 bytes at 07E1 (push ax; mov al,0; push ax) are the tail of the AddAffect parameter sequence that starts at 07D3 inside ovl16:056C; no prologue, no return. It is removed from the registry when 056C matches (make match UNIT=ovl16 WRITE=1 corrects its boundary to the retf at 1ED1)"
 evidence = ["near_call"]
 
 [[routine]]
@@ -6415,7 +5882,7 @@ signature = ""
 c_name = "ovl16_fn_07E5"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine. The 5 bytes at 07E5 are the lcall AddAffect (0B00:0052) of the call sequence at 07D3..07EA inside ovl16:056C; no prologue, no return. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects its boundary to the retf at 1ED1)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6428,7 +5895,7 @@ signature = ""
 c_name = "ovl16_fn_07EA"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine. The bytes at 07EA are the jmp 0919h that ends the AddAffect case arm of ovl16:056C plus the first bytes of the following case test; no prologue, no return. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects its boundary to the retf at 1ED1)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6441,7 +5908,7 @@ signature = ""
 c_name = "ovl16_fn_07EF"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue. The bytes at 07EF are `75 68` (jne 0859h), the conditional of the `cmp al,1` case test that follows the `jmp 0919h` at 07EA inside ovl16:056C. 056C is one routine (prologue `push bp; mov bp,sp; sub sp,134h` at 056C, single retf at 1ED1; only one prologue between 056C and 1F37, checked on build/re/overlays/ovl16.bin), so every map entry inside it (07E1..1ED1, this one included) is a fixup-table artifact. No near call targets 07EF. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size to 6502 and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6454,7 +5921,7 @@ signature = ""
 c_name = "ovl16_fn_07F4"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue. 07F4 is the `mov byte ptr es:[di+0c0h],1` (bytes 26 c6 85 c0 00 01, preceded by `les di,[bp-27h]` at 07F1) of the case-1 arm of ovl16:056C. 056C is one routine from 056C to its single retf at 1ED1, so this entry is an artifact inside it; no near call targets 07F4. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6467,7 +5934,7 @@ signature = ""
 c_name = "ovl16_fn_07F9"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue. 07F9 is the last byte (`01`) of the `mov ...es:[di+0c0h],1` at 07F4 followed by `push [bp-2]` and `push [bp-4]` (ff 76 fe, ff 76 fc) in the AddAffect argument sequence of ovl16:056C's case-1 arm; mid-instruction. 056C is one routine (single prologue at 056C, single retf at 1ED1), so this entry is an artifact inside it; no near call targets 07F9. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6480,7 +5947,7 @@ signature = ""
 c_name = "ovl16_fn_0808"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue. 0808 is `push ax` (50) among the pushes of the `AddAffect(..., 5ah, 0, 0ffh, 0)` call at 07F3..080C inside ovl16:056C. 056C is one routine (single prologue at 056C, single retf at 1ED1), so this entry is an artifact inside it; no near call targets 0808. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6493,7 +5960,7 @@ signature = ""
 c_name = "ovl16_fn_080D"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue. 080D is the immediate bytes (`52 00`) of the `lcall 0b0h:0052h` (AddAffect, 9a 52 00 b0 00 at 080C) inside ovl16:056C; mid-instruction. This far call is what the map keyed the `auto:far_call` entry on, but the call belongs to 056C, which is one routine (single prologue at 056C, single retf at 1ED1); no near call targets 080D. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6506,7 +5973,7 @@ signature = ""
 c_name = "ovl16_fn_0812"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue. 0812 is inside `push word ptr [bp-2]` (ff 76 fe at 0811, then ff 76 fc) in the second AddAffect call of ovl16:056C's case-1 arm; mid-instruction. 056C is one routine (single prologue at 056C, single retf at 1ED1), so this entry is an artifact inside it; no near call targets 0812. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6519,7 +5986,7 @@ signature = ""
 c_name = "ovl16_fn_0875"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x0085 * 16 + 0x0025 = 0x0875) of the inter-overlay stub call lcall 0x0085:0x0025 (bytes 9a 25 00 85 00) at ovl16:11FB, also at ovl16:1E2D and ovl16:20E2; stub 0x85:0x25 is ovl19:004A ShowCharacterSheet (build/re/overlays.json). 0x0875 is mov al,0 (b0 00), mid argument sequence of the AddAffect call at 0878 inside ovl16:056C. 056C is one routine: its only prologue in the region is 55 89 e5 at 056C and its single retf is at 1ED1, so every map entry inside it (0875..1ED1) is a stub/fixup artefact. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6532,7 +5999,7 @@ signature = ""
 c_name = "ovl16_fn_087A"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x0085 * 16 + 0x002A = 0x087A) of the inter-overlay stub call lcall 0x0085:0x002A (bytes 9a 2a 00 85 00) at ovl16:1DFA, also at ovl16:28C1; stub 0x85:0x2A is ovl19:0608 ShowCombatStats. 0x087A is the high operand byte of the lcall AddAffect at 0878 (9a 52 00 b0 00), mid-instruction, inside ovl16:056C. 056C is one routine (single prologue 55 89 e5 at 056C, single retf at 1ED1), so this entry is an artefact inside it. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6545,7 +6012,7 @@ signature = ""
 c_name = "ovl16_fn_087F"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x0085 * 16 + 0x002F = 0x087F) of the inter-overlay stub call lcall 0x0085:0x002F (bytes 9a 2f 00 85 00) at ovl16:1BD3, also at ovl16:204C; stub 0x85:0x2F is ovl19:0901 ShowAbilityScore. 0x087F is the third byte (fe) of push word ptr [bp-2] at 087D (ff 76 fe), mid-instruction, inside ovl16:056C. 056C is one routine (single prologue 55 89 e5 at 056C, single retf at 1ED1), so this entry is an artefact inside it. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6558,7 +6025,7 @@ signature = ""
 c_name = "ovl16_fn_0884"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x0085 * 16 + 0x0034 = 0x0884) of the inter-overlay stub call lcall 0x0085:0x0034 (bytes 9a 34 00 85 00) at ovl16:1DFF; stub 0x85:0x34 is ovl19:050D ShowCharacterMoney. 0x0884 is the operand byte 12 of mov al,0x12 at 0883 (b0 12), mid-instruction, in the AddAffect argument sequence of ovl16:056C. 056C is one routine (single prologue 55 89 e5 at 056C, single retf at 1ED1), so this entry is an artefact inside it. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6571,7 +6038,7 @@ signature = ""
 c_name = "ovl16_fn_0889"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x0085 * 16 + 0x0039 = 0x0889) of the inter-overlay stub call lcall 0x0085:0x0039 (bytes 9a 39 00 85 00) at ovl16:03A4; stub 0x85:0x39 is ovl19:0AB3 ViewSelectedCharacter. 0x0889 is mov al,0xff (b0 ff), one of the argument pushes of the AddAffect call at 088F inside ovl16:056C; it starts an instruction but is not a routine entry. 056C is one routine (single prologue 55 89 e5 at 056C, single retf at 1ED1), so this entry is an artefact inside it. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6584,7 +6051,7 @@ signature = ""
 c_name = "ovl16_fn_08A2"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x0085 * 16 + 0x0052 = 0x08A2) of the inter-overlay stub call lcall 0x0085:0x0052 (bytes 9a 52 00 85 00) at ovl16:031F; stub 0x85:0x52 is ovl19:27DF UpdateSelectedCharacter. 0x08A2 is push ax (50), one of the argument pushes of the AddAffect call at 08A6, inside ovl16:056C. 056C is one routine (single prologue 55 89 e5 at 056C, single retf at 1ED1), so this entry is an artefact inside it. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6597,7 +6064,7 @@ signature = ""
 c_name = "ovl16_fn_08A7"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x0085 * 16 + 0x0057 = 0x08A7) of the inter-overlay stub call lcall 0x0085:0x0057 (bytes 9a 57 00 85 00) at ovl16:29EA; stub 0x85:0x57 is ovl19:28BE CharacterMoneyValueInGold (build/re/overlays.json). 0x08A7 is byte 0x52, the low offset byte of the lcall AddAffect (ovl24:0E52) at 08A6 (bytes 9a 52 00 b0 00), mid-instruction inside ovl16:056C. 056C is one routine: its only prologue in the region is 55 89 e5 at 056C and its single retf is at 1ED1, so every map entry inside it (056C..1ED1) is a stub/fixup artefact. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6610,7 +6077,7 @@ signature = ""
 c_name = "ovl16_fn_08AC"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x0085 * 16 + 0x005C = 0x08AC) of the inter-overlay stub call lcall 0x0085:0x005C (bytes 9a 5c 00 85 00) at ovl16:2F81; stub 0x85:0x5C is ovl19:299C ChooseSpellFromList (build/re/overlays.json). 0x08AC is byte 0x76, the opcode of push word ptr [bp-2] at 08AB (bytes ff 76 fe), mid-instruction inside ovl16:056C. 056C is one routine: its only prologue in the region is 55 89 e5 at 056C and its single retf is at 1ED1, so every map entry inside it (056C..1ED1) is a stub/fixup artefact. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6623,7 +6090,7 @@ signature = ""
 c_name = "ovl16_fn_0AE5"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x00AC * 16 + 0x0025 = 0x0AE5) of the inter-overlay stub call lcall 0x00AC:0x0025 (bytes 9a 25 00 ac 00) at ovl16:2F5A; stub 0xAC:0x25 is ovl23:0000 RecalcClassStats, reached via the ovl23 stub segment 0x00AC (build/re/overlays.json). 0x0AE5 starts les di, [bp-0x10] (bytes c4 7e f0), which the linear disassembler shows as an instruction boundary, but it is still mid-routine inside ovl16:056C. 056C is one routine: its only prologue in the region is 55 89 e5 at 056C and its single retf is at 1ED1, so every map entry inside it (056C..1ED1) is a stub/fixup artefact. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6636,7 +6103,7 @@ signature = ""
 c_name = "ovl16_fn_0AEA"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x00AC * 16 + 0x002A = 0x0AEA) of the inter-overlay stub call lcall 0x00AC:0x002A (bytes 9a 2a 00 ac 00) at ovl16:1C9B, also at ovl16:2381 and ovl16:26E3; stub 0xAC:0x2A is ovl23:01AF AddWisdomBonusSpells, reached via the ovl23 stub segment 0x00AC (build/re/overlays.json). 0x0AEA starts mov ax,0x28 (bytes b8 28 00), which the linear disassembler shows as an instruction boundary, but it is still mid-routine inside ovl16:056C. 056C is one routine: its only prologue in the region is 55 89 e5 at 056C and its single retf is at 1ED1, so every map entry inside it (056C..1ED1) is a stub/fixup artefact. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6649,7 +6116,7 @@ signature = ""
 c_name = "ovl16_fn_0AEF"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x00AC * 16 + 0x002F = 0x0AEF) of the inter-overlay stub call lcall 0x00AC:0x002F (bytes 9a 2f 00 ac 00) at ovl16:0D6B; stub 0xAC:0x2F is ovl23:0255 ComputeSavingThrows, reached via the ovl23 stub segment 0x00AC (build/re/overlays.json). 0x0AEF is byte 0x25, the low offset byte of the lcall System_StrLCopy (0AF8:0B25) at 0AEE (bytes 9a 25 0b f8 0a), mid-instruction inside ovl16:056C. 056C is one routine: its only prologue in the region is 55 89 e5 at 056C and its single retf is at 1ED1, so every map entry inside it (056C..1ED1) is a stub/fixup artefact. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6662,7 +6129,7 @@ signature = ""
 c_name = "ovl16_fn_0AF4"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue, no near call. The entry is the flat-linear reading (seg 0x00AC * 16 + 0x0034 = 0x0AF4) of the inter-overlay stub call lcall 0x00AC:0x0034 (bytes 9a 34 00 ac 00) at ovl16:0CC9; stub 0xAC:0x34 is ovl23:0329 ComputeThiefSkills, reached via the ovl23 stub segment 0x00AC (build/re/overlays.json). 0x0AF4 is byte 0x46, the ModRM byte of mov al,[bp-0x13] at 0AF3 (bytes 8a 46 ed), mid-instruction inside ovl16:056C. 056C is one routine: its only prologue in the region is 55 89 e5 at 056C and its single retf is at 1ED1, so every map entry inside it (056C..1ED1) is a stub/fixup artefact. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6675,7 +6142,7 @@ signature = ""
 c_name = "ovl16_fn_0B48"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return at this address. 0B48 is the flat-linear reading (stub segment 0x00B0 * 16 + 0x0048) of the inter-overlay stub call lcall 0x00B0:0x0048 at ovl16:0F26 (also 122E, 1C83, 4280); stub 0xB0:0x48 is ovl24:0DE3 RollDice (build/re/overlays.json). The byte at 0B48 is 0x76 (jbe), mid-instruction inside ovl16:056C. 056C is one routine: single prologue 55 89 e5 at 056C and single retf at 1ED1, so every map entry in 056C..1ED1 is a stub/fixup artefact. Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6688,7 +6155,7 @@ signature = ""
 c_name = "ovl16_fn_0B52"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return. 0B52 is the flat reading (stub segment 0x00B0 * 16 + 0x0052) of the inter-overlay stub call lcall 0x00B0:0x0052 (12 call sites, first at ovl16:07CE); stub 0xB0:0x52 is ovl24:0E52 AddAffect (build/re/overlays.json). The byte at 0B52 is 0x7E (jle), mid-instruction inside ovl16:056C (one routine: prologue 55 89 e5 at 056C, retf at 1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6701,7 +6168,7 @@ signature = ""
 c_name = "ovl16_fn_1307"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return. 1307 is the flat reading (0x00BA * 16 + 0x0767) of the lcall 0x00BA:0x0767 DrawPartyRoster (res12:0767) at ovl16:01BF and 032C; it lands mid-instruction (byte 0x7E) inside ovl16:056C, the single routine from 056C (prologue 55 89 e5) to its retf at 1ED1. Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6714,7 +6181,7 @@ signature = ""
 c_name = "ovl16_fn_1513"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return. 1513 is the flat reading (0x00BA * 16 + 0x0973) of the lcall 0x00BA:0x0973 DrawHitPoints (res12:0973) at ovl16:2065; it lands mid-instruction (byte 0x8B) inside ovl16:056C (single routine 056C..1ED1, prologue 55 89 e5, retf at 1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6727,7 +6194,7 @@ signature = ""
 c_name = "ovl16_fn_1758"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return. 1758 is the flat reading (0x00BA * 16 + 0x0BB8) of the lcall 0x00BA:0x0BB8 RecalcCombatValues (res12:0BB8) at ovl16:28AD and 28BC; it lands mid-instruction (byte 0x1F) inside ovl16:056C (single routine 056C..1ED1, prologue 55 89 e5, retf at 1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -6740,7 +6207,7 @@ signature = ""
 c_name = "ovl16_fn_19D3"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:21CD is the disp8 of les di,[bp-0x18] (c4 7e e8 at 21CB), not a call opcode; its bogus target (0x19D3) lands on the byte 0x98 mid-instruction inside ovl16:056C (single routine 056C..1ED1, prologue 55 89 e5, retf at 1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["near_call"]
 
 [[routine]]
@@ -6753,7 +6220,7 @@ signature = ""
 c_name = "ovl16_fn_19FB"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:21F5 is the disp8 of les di,[bp-0x18] (c4 7e e8 at 21F3), not a call opcode, and its bogus target (0x19FB) lies inside ovl16:056C (single routine 056C..1ED1, prologue 55 89 e5, one retf at 1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["near_call"]
 
 [[routine]]
@@ -6766,7 +6233,7 @@ signature = ""
 c_name = "ovl16_fn_1A2A"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:2224 is the disp8 of les di,[bp-0x18] (c4 7e e8 at 2222), not a call opcode, and its bogus target (0x1A2A) lies inside ovl16:056C (single routine 056C..1ED1, prologue 55 89 e5, one retf at 1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["near_call"]
 
 [[routine]]
@@ -6779,7 +6246,7 @@ signature = ""
 c_name = "ovl16_fn_1A51"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:224B is the disp8 of les di,[bp-0x18] (c4 7e e8 at 2249), not a call opcode, and its bogus target (0x1A51) lies inside ovl16:056C (single routine 056C..1ED1, prologue 55 89 e5, one retf at 1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["near_call"]
 
 [[routine]]
@@ -6792,7 +6259,7 @@ signature = ""
 c_name = "ovl16_fn_1A81"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:227B is the disp8 of les di,[bp-0x18] (c4 7e e8 at 2279), not a call opcode, and its bogus target (0x1A81) lies inside ovl16:056C (single routine 056C..1ED1, prologue 55 89 e5, one retf at 1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["near_call"]
 
 [[routine]]
@@ -6805,7 +6272,7 @@ signature = ""
 c_name = "ovl16_fn_1AA7"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:22A1 is the disp8 of les di,[bp-0x18] (c4 7e e8 at 229F), not a call opcode, and its bogus target (0x1AA7) lies inside ovl16:056C (single routine 056C..1ED1, prologue 55 89 e5, one retf at 1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["near_call"]
 
 [[routine]]
@@ -6818,7 +6285,7 @@ signature = ""
 c_name = "ovl16_fn_1ACE"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:22C8 is the disp8 of les di,[bp-0x18] (c4 7e e8 at 22C6), not a call opcode, and its bogus target (0x1ACE) lies inside ovl16:056C (single routine 056C..1ED1, prologue 55 89 e5, one retf at 1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["near_call"]
 
 [[routine]]
@@ -6831,7 +6298,7 @@ signature = ""
 c_name = "ovl16_fn_1AF1"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 7: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:22EB is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:22E9) followed by add di,ax (03 f8), read as a call whose bogus rel16 targets 0x1AF1; 0x1AF1 lies inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). 0x1AF1 is an instruction boundary but not a routine start. make match UNIT=ovl16 FN=ovl16_fn_1AF1 reports only the stub; there is no Pascal to write for a mid-routine instruction boundary. Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -6844,7 +6311,7 @@ signature = ""
 c_name = "ovl16_fn_1B1A"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 7: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:2314 is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:2312) followed by add di,ax (03 f8), read as a call whose bogus rel16 targets 0x1B1A; 0x1B1A is mid-instruction (the second byte of mov di,ax, 8b f8, at ovl16:1B19) and lies inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -6857,7 +6324,7 @@ signature = ""
 c_name = "ovl16_fn_1B41"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 7: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:233B is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:2339) followed by add di,ax (03 f8), read as a call whose bogus rel16 targets 0x1B41; 0x1B41 is mid-instruction (the last byte of mov dl,[di+0x3DB2], 8a 95 b2 3d, at ovl16:1B3E) and lies inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -6870,7 +6337,7 @@ signature = ""
 c_name = "ovl16_fn_1B64"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 7: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:235E is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:235C) followed by add di,ax (03 f8), read as a call whose bogus rel16 targets 0x1B64; 0x1B64 is mid-instruction (the last byte of mov dl,[di+0x3DB2], 8a 95 b2 3d, at ovl16:1B61) and lies inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -6883,7 +6350,7 @@ signature = ""
 c_name = "ovl16_fn_1BAB"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 7: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:23A5 is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:23A3) followed by add di,ax (03 f8), read as a call whose bogus rel16 targets 0x1BAB; 0x1BAB is mid-instruction (the second byte of mov al,es:[di+0x2F] (26 8a 45 2f) at ovl16:1BAA) and lies inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -6896,7 +6363,7 @@ signature = ""
 c_name = "ovl16_fn_1BD2"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 7: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:23CC is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:23CA) followed by add di,ax (03 f8), read as a call whose bogus rel16 targets 0x1BD2; 0x1BD2 lies inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). 0x1BD2 is an instruction boundary but not a routine start. Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -6909,7 +6376,7 @@ signature = ""
 c_name = "ovl16_fn_1BD7"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-13 by dec-deepseek-3 batch 8: not a routine, no prologue and no return. The entry is the flat reading (resident segment 0x00BA * 16 + 0x1037 = 0x1BD7) of the inter-overlay stub call lcall 0x00BA:0x1037 (bytes 9a 37 10 ba 00) at ovl16:2DE6 and 2E48; 0x00BA is res12's segment. 0x1BD7 is the last (segment-high, 0x00) byte of the unrelated lcall 0x0085:0x002F at ovl16:1BD3 (bytes 9a 2f 00 85 00), mid-instruction inside ovl16:056C. 056C is one routine: its only prologue in the region is 55 89 e5 at 056C and its single retf is at 1ED1 (verified on build/re/overlays/ovl16.bin), so every map entry inside it is a stub/fixup artefact. Removed when 056C matches (make match UNIT=ovl16 WRITE=1 corrects 056C's size and deletes the entries inside it)."
 evidence = ["far_call"]
 
 [[routine]]
@@ -6922,7 +6389,7 @@ signature = ""
 c_name = "ovl16_fn_1BF5"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 8: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:23EF is the disp8 of les di,[bp-0x18] (c4 7e e8 at 23ED) followed by add di,ax (03 f8), read as a call whose bogus rel16 (0xF803, -2045) targets 0x1BF5. 0x1BF5 is mid-instruction (the ModRM byte 0x88 of mov byte ptr es:[di+0x11b],al, bytes 26 88 85 1b 01 at 1BF4) inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -6935,7 +6402,7 @@ signature = ""
 c_name = "ovl16_fn_1C1E"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 8: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:2418 is the disp8 of les di,[bp-0x18] (c4 7e e8 at 2416) followed by add di,ax (03 f8), read as a call whose bogus rel16 (0xF803, -2045) targets 0x1C1E. 0x1C1E is mid-instruction (the middle byte 0x7e of les di,[bp-0x27], bytes c4 7e d9 at 1C1D) inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -6948,7 +6415,7 @@ signature = ""
 c_name = "ovl16_fn_1C45"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 8: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:243F is the disp8 of les di,[bp-0x18] (c4 7e e8 at 243D) followed by add di,ax (03 f8), read as a call whose bogus rel16 (0xF803, -2045) targets 0x1C45. 0x1C45 is an instruction boundary (jg 0x1c4a, bytes 7f 03) but not a routine start: no prologue and no return, and it lies inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -6961,7 +6428,7 @@ signature = ""
 c_name = "ovl16_fn_1C68"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 8: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:2462 is the disp8 of les di,[bp-0x18] (c4 7e e8 at 2460) followed by add di,ax (03 f8), read as a call whose bogus rel16 (0xF803, -2045) targets 0x1C68. 0x1C68 is mid-instruction (the last byte 0x01 of mov byte ptr es:[di+0xb5],1, bytes 26 c6 85 b5 00 01 at 1C63) inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -6974,7 +6441,7 @@ signature = ""
 c_name = "ovl16_fn_1CD4"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 8: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:24CE is the disp8 of les di,[bp-0x18] (c4 7e e8 at 24CC) followed by add di,ax (03 f8), read as a call whose bogus rel16 (0xF803, -2045) targets 0x1CD4. 0x1CD4 is an instruction boundary (xor ah,ah, bytes 30 e4) but not a routine start: no prologue and no return, and it lies inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -6987,7 +6454,7 @@ signature = ""
 c_name = "ovl16_fn_1CFB"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 9: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:24F5 is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:24F3) followed by add di,ax (03 f8), read as a call whose bogus rel16 (0xF803, -2045) targets 0x1CFB. 0x1CFB is mid-instruction (the last byte 0x01 of mov byte ptr es:[di+0x44],1, bytes 26 c6 45 44 01 at ovl16:1CF7) inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -7000,7 +6467,7 @@ signature = ""
 c_name = "ovl16_fn_1D1E"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 9: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:2518 is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:2516) followed by add di,ax (03 f8), read as a call whose bogus rel16 (0xF803, -2045) targets 0x1D1E. 0x1D1E is mid-instruction (the last byte 0xDF of mov al,[bp-0x21], bytes 8a 46 df at ovl16:1D1C) inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -7013,7 +6480,7 @@ signature = ""
 c_name = "ovl16_fn_1D84"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 9: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:257E is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:257C) followed by add di,ax (03 f8), read as a call whose bogus rel16 (0xF803, -2045) targets 0x1D84. 0x1D84 is mid-instruction (the second byte 0xE4 of xor ah,ah, bytes 30 e4 at ovl16:1D83) inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -7026,7 +6493,7 @@ signature = ""
 c_name = "ovl16_fn_1DBA"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 9: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:25B4 is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:25B2) followed by add di,ax (03 f8), read as a call whose bogus rel16 (0xF803, -2045) targets 0x1DBA. 0x1DBA is mid-instruction (the middle byte 0x7E of les di,[bp-0x27], bytes c4 7e d9 at ovl16:1DB9) inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -7039,7 +6506,7 @@ signature = ""
 c_name = "ovl16_fn_1DCB"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 9: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:25C5 is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:25C3) followed by add di,ax (03 f8), read as a call whose bogus rel16 (0xF803, -2045) targets 0x1DCB. 0x1DCB is an instruction boundary (mov byte ptr es:[di+0x32],al, bytes 26 88 45 32 at ovl16:1DCB) but not a routine start: no prologue and no return, and it lies inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -7052,7 +6519,7 @@ signature = ""
 c_name = "ovl16_fn_1E34"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 9: not a routine, no prologue and no return. The near_call evidence is a false positive: the E8 byte at ovl16:262E is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:262C) followed by add di,ax (03 f8), read as a call whose bogus rel16 (0xF803, -2045) targets 0x1E34. 0x1E34 is mid-instruction (the last byte 0xF8 of mov ax,[bp-8], bytes 8b 46 f8 at ovl16:1E32) inside the single routine ovl16:056C (056C..1ED1: one prologue 55 89 e5 at 056C and one retf at 1ED1, verified on build/re/overlays/ovl16.bin). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -7065,7 +6532,7 @@ signature = ""
 c_name = "ovl16_fn_1E5A"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 10: not a routine. 0x1E5A is an instruction boundary inside the single routine ovl16:056C (the lcall 0x0709:0x09E3 ReadInputLine, bytes 9a e3 09 09 07). The near_call evidence is a false positive: the E8 byte at ovl16:2654 is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:2652) followed by add di,ax (03 f8), read as a call whose bogus rel16 (-2045) targets 0x1E5A. 056C has one prologue at 0x056C and one retf at 0x1ED1 (verified on build/re/overlays/ovl16.bin), so it is one routine 056C..1ED1. Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -7078,7 +6545,7 @@ signature = ""
 c_name = "ovl16_fn_1E7D"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 10: not a routine. 0x1E7D is an instruction boundary inside the single routine ovl16:056C (mov [bp-8],ax, bytes 89 46 f8). The near_call evidence is a false positive: the E8 byte at ovl16:2677 is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:2675) followed by add di,ax (03 f8); the bogus rel16 targets 0x1E7D. 056C is one routine 056C..1ED1 (one prologue at 0x056C, one retf at 0x1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -7091,7 +6558,7 @@ signature = ""
 c_name = "ovl16_fn_1EA3"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 10: not a routine. 0x1EA3 is an instruction boundary inside the single routine ovl16:056C (mov di,0x4FE, bytes bf fe 04). The near_call evidence is a false positive: the E8 byte at ovl16:269D is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:269B) followed by add di,ax (03 f8); the bogus rel16 targets 0x1EA3. 056C is one routine 056C..1ED1 (one prologue at 0x056C, one retf at 0x1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -7104,7 +6571,7 @@ signature = ""
 c_name = "ovl16_fn_1EB9"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 10: not a routine. 0x1EB9 is mid-instruction inside the single routine ovl16:056C: it is the 0x92 byte of mov [0x5D92],ax (a3 92 5d at ovl16:1EB8). The near_call evidence is a false positive: the E8 byte at ovl16:35E5 is the ModRM of shr ax,1 (d1 e8 at ovl16:35E4) inside ovl16:35BE; the following bytes d1 e8 are read as rel16 (-5935), targeting 0x1EB9. 056C is one routine 056C..1ED1 (one prologue at 0x056C, one retf at 0x1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -7117,255 +6584,47 @@ signature = ""
 c_name = "ovl16_fn_1EC6"
 level = "none"
 justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:1F0D"
-unit = "ovl16"
-addr = "ovl16:1F0D"
-size = 35
-name = "ovl16_fn_1F0D"
-signature = ""
-c_name = "ovl16_fn_1F0D"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:1F30"
-unit = "ovl16"
-addr = "ovl16:1F30"
-size = 7
-name = "ovl16_fn_1F30"
-signature = ""
-c_name = "ovl16_fn_1F30"
-level = "none"
-justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 10: not a routine. 0x1EC6 is mid-instruction inside the single routine ovl16:056C: it is the 0x1D immediate byte of mov ax,0x11D (b8 1d 01 at ovl16:1EC5). The near_call evidence is a false positive: the E8 byte at ovl16:26C0 is the disp8 of les di,[bp-0x18] (c4 7e e8 at ovl16:26BE) followed by add di,ax (03 f8); the bogus rel16 targets 0x1EC6. 056C is one routine 056C..1ED1 (one prologue at 0x056C, one retf at 0x1ED1). Removed when 056C matches (make match UNIT=ovl16 WRITE=1)."
 evidence = ["near_call"]
 
 [[routine]]
 id = "ovl16:1F37"
 unit = "ovl16"
 addr = "ovl16:1F37"
-size = 34
-name = "ovl16_fn_1F37"
+size = 360
+name = "DropCharacter"
 signature = ""
 c_name = "ovl16_fn_1F37"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl16_fn_1F37 (ovl16:1F37 removes the selected character from the party: it asks AskYesNo 'Drop <name> forever?' and 'Are you sure?', then shows 'bids you farewell' or 'You dump <name> out back' and calls ovl16_e2(False, True); it is the D (Drop) item of the training-hall menu RunCharacterMenu (ovl16:0161), whitepaper 5.8 'Alter'); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl16:1F59"
-unit = "ovl16"
-addr = "ovl16:1F59"
-size = 35
-name = "ovl16_fn_1F59"
-signature = ""
-c_name = "ovl16_fn_1F59"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:1F7C"
-unit = "ovl16"
-addr = "ovl16:1F7C"
-size = 108
-name = "ovl16_fn_1F7C"
-signature = ""
-c_name = "ovl16_fn_1F7C"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:1FE8"
-unit = "ovl16"
-addr = "ovl16:1FE8"
-size = 35
-name = "ovl16_fn_1FE8"
-signature = ""
-c_name = "ovl16_fn_1FE8"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:200B"
-unit = "ovl16"
-addr = "ovl16:200B"
-size = 8
-name = "ovl16_fn_200B"
-signature = ""
-c_name = "ovl16_fn_200B"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:2013"
-unit = "ovl16"
-addr = "ovl16:2013"
-size = 32
-name = "ovl16_fn_2013"
-signature = ""
-c_name = "ovl16_fn_2013"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl16:2033"
 unit = "ovl16"
 addr = "ovl16:2033"
-size = 108
-name = "ovl16_fn_2033"
+size = 59
+name = "ShowStat"
 signature = ""
-c_name = "ovl16_fn_2033"
-level = "none"
+c_name = "ShowStat"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "nested in ModifyCharacter (ovl16:209F), proven by the parent's match: the parent's ShowStat redraws the value under the cursor (ability StatIndex through ShowAbilityScore, or the hit-point line through DrawHitPoints) by reading the parent's own StatIndex through the static link; the 49 bytes after its retf are 209F's string literals"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl16:209F"
 unit = "ovl16"
 addr = "ovl16:209F"
-size = 236
-name = "ovl16_fn_209F"
+size = 2127
+name = "ModifyCharacter"
 signature = ""
 c_name = "ovl16_fn_209F"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl16_fn_209F (ovl16:209F is the M (Modify) item of the training hall: it refuses an experienced character with '<name> can t be modified.' and lets the player raise/lower the six ability scores and HP with the arrows, Keep (K) or Exit (E); called by RunCharacterMenu (ovl16:0161)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl16:218B"
-unit = "ovl16"
-addr = "ovl16:218B"
-size = 16
-name = "ovl16_fn_218B"
-signature = ""
-c_name = "ovl16_fn_218B"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:219B"
-unit = "ovl16"
-addr = "ovl16:219B"
-size = 63
-name = "ovl16_fn_219B"
-signature = ""
-c_name = "ovl16_fn_219B"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:21DA"
-unit = "ovl16"
-addr = "ovl16:21DA"
-size = 12
-name = "ovl16_fn_21DA"
-signature = ""
-c_name = "ovl16_fn_21DA"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:21E6"
-unit = "ovl16"
-addr = "ovl16:21E6"
-size = 77
-name = "ovl16_fn_21E6"
-signature = ""
-c_name = "ovl16_fn_21E6"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:2233"
-unit = "ovl16"
-addr = "ovl16:2233"
-size = 281
-name = "ovl16_fn_2233"
-signature = ""
-c_name = "ovl16_fn_2233"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl16:234C"
-unit = "ovl16"
-addr = "ovl16:234C"
-size = 106
-name = "ovl16_fn_234C"
-signature = ""
-c_name = "ovl16_fn_234C"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:23B6"
-unit = "ovl16"
-addr = "ovl16:23B6"
-size = 119
-name = "ovl16_fn_23B6"
-signature = ""
-c_name = "ovl16_fn_23B6"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl16:242D"
-unit = "ovl16"
-addr = "ovl16:242D"
-size = 524
-name = "ovl16_fn_242D"
-signature = ""
-c_name = "ovl16_fn_242D"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl16:2639"
-unit = "ovl16"
-addr = "ovl16:2639"
-size = 802
-name = "ovl16_fn_2639"
-signature = ""
-c_name = "ovl16_fn_2639"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl16:295B"
@@ -7377,7 +6636,7 @@ signature = ""
 c_name = "ovl16_fn_295B"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 13: not a routine. 0x295B is inside the literal pool of ovl16:29AE (the strings ' will become:' .. 'Congratulations...' run 0x295B..0x29AD). From 0x295B to the next prologue there is only ovl16:29AE (one prologue 55 89 e5 at 0x29AE and one retf at 0x304E on build/re/overlays/ovl16.bin), so this 83-byte entry is the near_call reading of the following routine's literal pool. Removed when 29AE matches (make match UNIT=ovl16 WRITE=1); 29AE is itself blocked (see its note)."
 evidence = ["near_call"]
 
 [[routine]]
@@ -7390,7 +6649,7 @@ signature = ""
 c_name = "ovl16_fn_29AE"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-13 by dec-deepseek-3 batch 13: the draft is in tools/re/tp_idioms/ovl16/TRAIN_DRAFT.PAS. With a one-byte spare local declared (the original reserves one) the frame matches (sub sp, 0x222) and the entry checks match byte for byte; the compiled body is still 36 bytes too long. Remaining codegen differences: TP 6.0 writes 'A := A + B' on two Bytes as a 16-bit add where the original's 'add [bp-0xb],al' is 8-bit (Inc(A, B) produces it; fixed already for ClassBitMask and TrainableBits); the ds409B[I, Level + 1] index wants 'Level + 1' computed in the byte first (mov al,[bp-0x18]; inc al; cbw; shl ax,1; shl ax,1) but Level: ShortInt gives cbw-then-inc (first real remaining diff at 0x12d3); the forward jmps at 0x1191 (0x27 vs 0x2a), 0x1259 (0x125f vs 0x1261) and 0x12cd still differ. Needs ds05DE (array[0..7] of Byte, the class bit of each class) and ds409B (array[0..7,0..13] of LongInt, the experience to reach each level), both added to POOLVARS, and the ovl16_fn_42ED(Amount: LongInt; Who: PCharacter) / ovl16_fn_4235(Who: PCharacter; ClassBits: Byte): Byte / ovl16_fn_3F31(Who: PCharacter): ShortInt signatures."
 evidence = ["prologue"]
 
 [[routine]]
@@ -7398,12 +6657,12 @@ id = "ovl16:306D"
 unit = "ovl16"
 addr = "ovl16:306D"
 size = 548
-name = "ovl16_fn_306D"
+name = "AddSavedCharacters"
 signature = ""
 c_name = "ovl16_fn_306D"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl16_fn_306D (ovl16:306D is the training hall's Add (A) function (RunCharacterMenu ovl16:0161): its menu 'Add a character: ' / 'Add Exit' lists the saved characters on disk (ReadSavedCharacterList), LoadCharacterFile loads the picked one and AddPartyMember puts it in the party); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -7411,12 +6670,12 @@ id = "ovl16:3291"
 unit = "ovl16"
 addr = "ovl16:3291"
 size = 342
-name = "ovl16_e2"
-signature = "procedure ovl16_e2(Uncounted, FreePicture: Boolean)"
+name = "RemoveSelectedCharacter"
+signature = "procedure RemoveSelectedCharacter(Uncounted, FreePicture: Boolean)"
 c_name = "ovl16_e2"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl16_e2 (ovl16:3291 unlinks SelectedCharacter from the party list ds5D96 (TCharacter.Next +104) and frees its record with FreeCharacter; it lowers the party size ds49D6^[830] unless Uncounted, and frees the CombatIcon picture slot unless FreePicture is false; the removal counterpart of AddPartyMember (ovl17:1446)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -7424,12 +6683,12 @@ id = "ovl16:33E7"
 unit = "ovl16"
 addr = "ovl16:33E7"
 size = 248
-name = "ovl16_fn_33E7"
+name = "ChooseHeadAndBody"
 signature = ""
 c_name = "ovl16_fn_33E7"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl16_fn_33E7 (ovl16:33E7 shows the selected character's head and body pictures (ShowHeadBodyWindow) and its prompt 'Head Body Keep' cycles HeadBank (+BB) and BodyBank (+BC); the head/body step of the create flow (whitepaper 5.8)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -7437,12 +6696,12 @@ id = "ovl16:34DF"
 unit = "ovl16"
 addr = "ovl16:34DF"
 size = 223
-name = "ovl16_fn_34DF"
+name = "DrawIconCell"
 signature = ""
 c_name = "ovl16_fn_34DF"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl16_fn_34DF (ovl16:34DF fills one icon-editor cell (FillPictureRect over 12 cells x 24 rows from @ds260A into DrawBuf) and draws the two mirrored halves of the character's icon (DrawIcon, indices $19 and $C) at CellCol and CellCol+3; called by the icon editor ovl16_e3); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -7450,12 +6709,12 @@ id = "ovl16:35BE"
 unit = "ovl16"
 addr = "ovl16:35BE"
 size = 623
-name = "ovl16_fn_35BE"
+name = "CopyPictureSlot"
 signature = ""
 c_name = "ovl16_fn_35BE"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl16_fn_35BE (ovl16:35BE copies one picture slot of DS:5E5A into another (both halves' tile bytes and packed pixel buffers through Move) and, when its third parameter is set, recolours the destination with the selected character's Figure[1..6] colour pairs, the same recolouring BuildCharacterIcon (ovl17:0482) applies); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -7468,7 +6727,7 @@ signature = ""
 c_name = "ovl16_e3"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "auto:near_call; blocked 2026-10-14 by dec-deepseek-3 batch 14: the map boundary is wrong. e3 has its only prologue (55 89 e5) at 382D and its single retf at 3F30 (the next prologue is 3F31), so it runs 382D..3F30, 1796 bytes, not 1096; the size stays 1096 until e3 matches (make match UNIT=ovl16 WRITE=1 then corrects it). The map entries inside it (3C75, 3C7A, 3C7F, 3C84, 3C89, 3C8E, 3C93, 3D34, 3E2A, 3E2F, 3EBF, 3EC4, 3EC9) are its own code, not routines; several are flat-linear readings of the ovl25 stub segment 0x03C5 (0x25, 0x2A ReadPromptChoice, 0x2F ClearPromptLine, 0x34 LoadPictureSlot, 0x39 AskYesNo, 0x3E) landing inside e3, and the rest are ovl31 (0x03E0:0x2A/0x2F) stub flats. e3 is the character-icon editor entered from AlterMenu (ovl15:1C59): it draws the window and BuildCharacterIcon, then a repeat loop over ReadPromptChoice runs a case on the state local [bp-8] (states 1 pick head/body bank or Hair/Face, 2 pick head bank, 3 pick body bank, 4 Size/colour-pair/FaceSelect, 5 the colour-nibble editor) with nested `with SelectedCharacter^` scopes (temps at [bp-0x1f] and [bp-0x23]), a 288-byte frame of string temporaries (the 'new'/'Small'/'Large'/'Hair'/'Face' prompts, a third-page string at [bp-0x120], a 6-byte Figure[1..6] copy at [bp-0x15]), and it ends by asking AskYesNo 'Is this icon ok? '. Its nested routines DrawIconCell (34DF) and CopyPictureSlot (35BE) are emitted before it and already matched. Too large and string-temporary heavy for one batch: no draft committed (src left as {@stub}); a later decompiler should derive it from the same codegen as BuildCharacterIcon (ovl17:0482) and ModifyCharacter (ovl16:209F)"
 evidence = ["prologue"]
 
 [[routine]]
@@ -7481,7 +6740,7 @@ signature = ""
 c_name = "ovl16_fn_3C75"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 14: not a routine. 3C75 is the ModRM byte 0xbd of `cmp byte ptr es:[di+0xbe],0` (bytes 26 80 bd be 00 00 at 3C73) inside ovl16_e3's CBodyBlock case arm, mid-instruction; no prologue. The entry is the flat-linear reading (seg 0x03C5 * 16 + 0x0025 = 0x3C75) of an ovl25 stub call (lcall 0x03C5:0x0025, e.g. at 0x0677 and 0x0961; 0x3C5 is the ovl25 stub segment). e3 has its only prologue (55 89 e5) at 382D and its single retf at 3F30, so it runs 382D..3F30 and every map entry inside it is an artefact. Removed when e3 matches (make match UNIT=ovl16 WRITE=1 corrects e3's size and deletes the entries inside it)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -7494,7 +6753,7 @@ signature = ""
 c_name = "ovl16_fn_3C7A"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 14: not a routine. 3C7A is the displacement byte 0x0a of `jbe 3C85h` (bytes 76 0a at 3C79) inside ovl16_e3, mid-instruction; no prologue. The entry is the flat-linear reading (seg 0x03C5 * 16 + 0x002A = 0x3C7A) of the ovl25 ReadPromptChoice stub call (lcall 0x03C5:0x002A, e.g. at 0x0300 and at 39F9 inside e3 itself). e3's only prologue is 55 89 e5 at 382D and its single retf is at 3F30, so the entry is inside it. Removed when e3 matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -7507,7 +6766,7 @@ signature = ""
 c_name = "ovl16_fn_3C7F"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 14: not a routine. 3C7F is the opcode byte 0xfe of `dec byte ptr es:[di+0xbe]` (bytes 26 fe 8d be 00 at 3C7E) inside ovl16_e3, mid-instruction (the 0x26 segment prefix at 3C7E starts the instruction); no prologue. The entry is the flat-linear reading (seg 0x03C5 * 16 + 0x002F = 0x3C7F) of the ovl25 ClearPromptLine stub call (lcall 0x03C5:0x002F, e.g. at 0x0300 and at 3EB7 inside e3). e3's only prologue is 55 89 e5 at 382D and its single retf is at 3F30. Removed when e3 matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -7520,7 +6779,7 @@ signature = ""
 c_name = "ovl16_fn_3C84"
 level = "none"
 justification = ""
-notes = "auto:far_call"
+notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 14: not a routine. 3C84 is the displacement byte 0x09 of `jmp 3C8Eh` (bytes eb 09 at 3C83) inside ovl16_e3, mid-instruction; no prologue. The entry is the flat-linear reading (seg 0x03C5 * 16 + 0x0034 = 0x3C84) of the ovl25 LoadPictureSlot stub call (lcall 0x03C5:0x0034, e.g. at 0x0775 and at 0x30FB). e3's only prologue is 55 89 e5 at 382D and its single retf is at 3F30, so the entry is inside it. Removed when e3 matches (make match UNIT=ovl16 WRITE=1)"
 evidence = ["far_call"]
 
 [[routine]]
@@ -7533,8 +6792,8 @@ signature = ""
 c_name = "ovl16_fn_3C89"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 15: not a routine. 3C89 is the instruction boundary c6 85 be 00 1f (mov byte ptr [di+0xbe],0x1f, one of e3's bank assignments) with no prologue. The entry is the flat-linear reading (seg 0x03C5 * 16 + 0x0039 = 0x3C89) of the ovl25 AskYesNo stub call at 3F17 (lcall 0x3C5:0x39, also at 1E1C, 1F81, 1FA6, 2E98). e3 has its only prologue (55 89 e5) at 382D and its single retf at 3F30 (byte scan of build/re/overlays/ovl16.bin, re/learnings/ovl16.toml), so 3C89 lies inside e3, and a make tpc probe (tools/re/tp_idioms/ovl16/NOPROC.PAS) shows even a parameterless, local-less far procedure starts with 55 89 e5, so c6 cannot start a routine. Removed when e3 matches (make match UNIT=ovl16 WRITE=1 corrects e3's size to 1796 and deletes the entries inside it)"
+evidence = ["far_call", "tools/re/tp_idioms/ovl16/NOPROC.PAS", "re/learnings/ovl16.toml#ovl16-e3-map-entries-are-ovl25-stub-flats"]
 
 [[routine]]
 id = "ovl16:3C8E"
@@ -7546,8 +6805,8 @@ signature = ""
 c_name = "ovl16_fn_3C8E"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 15: not a routine. 3C8E is the instruction boundary eb 66 (jmp 0x3CF6) with no prologue. The entry is the flat-linear reading (seg 0x03C5 * 16 + 0x003E = 0x3C8E) of the ovl25 stub call lcall 0x3C5:0x3E at 0x0638, 0x092C, 0x0A5A, 0x0D9C. e3 has its only prologue (55 89 e5) at 382D and its single retf at 3F30 (byte scan of build/re/overlays/ovl16.bin, re/learnings/ovl16.toml), so 3C8E lies inside e3, and a make tpc probe (tools/re/tp_idioms/ovl16/NOPROC.PAS) shows a far procedure always starts with 55 89 e5, so eb cannot start one. Removed when e3 matches (make match UNIT=ovl16 WRITE=1 corrects e3's size to 1796 and deletes the entries inside it)"
+evidence = ["far_call", "tools/re/tp_idioms/ovl16/NOPROC.PAS", "re/learnings/ovl16.toml#ovl16-e3-map-entries-are-ovl25-stub-flats"]
 
 [[routine]]
 id = "ovl16:3C93"
@@ -7559,8 +6818,8 @@ signature = ""
 c_name = "ovl16_fn_3C93"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 15: not a routine. 3C93 is the byte 0x20, the rel8 of jne 0x3CB4 (75 20 at 3C92), mid-instruction, with no prologue. The entry is the flat-linear reading (seg 0x03C5 * 16 + 0x0043 = 0x3C93) of the ovl25 stub call lcall 0x3C5:0x43 at 0x091E, 0x0A33, 0x0D75, 0x0EDE, 0x3288. e3 has its only prologue (55 89 e5) at 382D and its single retf at 3F30 (byte scan of build/re/overlays/ovl16.bin, re/learnings/ovl16.toml), so 3C93 lies inside e3; its size 161 is only the gap to the next map entry (3D34). Removed when e3 matches (make match UNIT=ovl16 WRITE=1 corrects e3's size to 1796 and deletes the entries inside it)"
+evidence = ["far_call", "tools/re/tp_idioms/ovl16/NOPROC.PAS", "re/learnings/ovl16.toml#ovl16-e3-map-entries-are-ovl25-stub-flats"]
 
 [[routine]]
 id = "ovl16:3D34"
@@ -7572,8 +6831,8 @@ signature = ""
 c_name = "ovl16_fn_3D34"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 15: not a routine. 3D34 is the instruction boundary 88 46 e7 (mov byte ptr [bp-0x19],al) with no prologue. The entry is the flat-linear reading (seg 0x03D0 * 16 + 0x0034 = 0x3D34) of the ovl28 stub call lcall 0x3D0:0x34 at 0x340D (re/units.toml: stub 0x03D0 -> ovl28). e3 has its only prologue (55 89 e5) at 382D and its single retf at 3F30 (byte scan of build/re/overlays/ovl16.bin, re/learnings/ovl16.toml), so 3D34 lies inside e3; its size 246 is only the gap to the next map entry (3E2A). Removed when e3 matches (make match UNIT=ovl16 WRITE=1 corrects e3's size to 1796 and deletes the entries inside it)"
+evidence = ["far_call", "re/units.toml#ovl28", "tools/re/tp_idioms/ovl16/NOPROC.PAS", "re/learnings/ovl16.toml#ovl16-e3-map-entries-are-ovl25-stub-flats"]
 
 [[routine]]
 id = "ovl16:3E2A"
@@ -7585,8 +6844,8 @@ signature = ""
 c_name = "ovl16_fn_3E2A"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 15: not a routine. 3E2A is the instruction boundary 26 8a 85 bf 00 (mov al,es:[di+0xbf], the CombatIcon byte e3 hands to CopyPictureSlot) with no prologue. The entry is the flat-linear reading (seg 0x03E0 * 16 + 0x002A = 0x3E2A) of the ovl31_e2 stub call lcall 0x3E0:0x2A at 0x385A. e3 has its only prologue (55 89 e5) at 382D and its single retf at 3F30 (byte scan of build/re/overlays/ovl16.bin, re/learnings/ovl16.toml), so 3E2A lies inside e3, and a make tpc probe (tools/re/tp_idioms/ovl16/NOPROC.PAS) shows a far procedure always starts with 55 89 e5, so 26 cannot start one. Removed when e3 matches (make match UNIT=ovl16 WRITE=1 corrects e3's size to 1796 and deletes the entries inside it)"
+evidence = ["far_call", "re/units.toml#ovl31", "tools/re/tp_idioms/ovl16/NOPROC.PAS", "re/learnings/ovl16.toml#ovl16-e3-map-entries-are-ovl25-stub-flats"]
 
 [[routine]]
 id = "ovl16:3E2F"
@@ -7598,8 +6857,8 @@ signature = ""
 c_name = "ovl16_fn_3E2F"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 15: not a routine. 3E2F is the instruction boundary 50 (push ax, the CombatIcon argument of e3's nested CopyPictureSlot call at 3E38) with no prologue. The entry is the flat-linear reading (seg 0x03E0 * 16 + 0x002F = 0x3E2F) of the ovl31_e3 stub call lcall 0x3E0:0x2F at 3F28. e3 has its only prologue (55 89 e5) at 382D and its single retf at 3F30 (byte scan of build/re/overlays/ovl16.bin, re/learnings/ovl16.toml), so 3E2F lies inside e3; its size 144 is only the gap to the next map entry (3EBF). Removed when e3 matches (make match UNIT=ovl16 WRITE=1 corrects e3's size to 1796 and deletes the entries inside it)"
+evidence = ["far_call", "re/units.toml#ovl31", "tools/re/tp_idioms/ovl16/NOPROC.PAS", "re/learnings/ovl16.toml#ovl16-e3-map-entries-are-ovl25-stub-flats"]
 
 [[routine]]
 id = "ovl16:3EBF"
@@ -7611,8 +6870,8 @@ signature = ""
 c_name = "ovl16_fn_3EBF"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 16: not a routine. 3EBF is the instruction 9a 2f 00 e9 03 (lcall 0x03E9:0x002F, FreePictureSlot ovl32:014E) inside e3's body, and its own flat target (seg 0x03E9 * 16 + 0x002F = 0x3EBF) lands on it. The same stub is called at 0x3321 and 0x337B, whose flat targets also name 3EBF. e3 has its only prologue (55 89 e5) at 382D and its single retf at 3F30 (byte scan of build/re/overlays/ovl16.bin), so 3EBF lies inside e3; a make tpc probe (tools/re/tp_idioms/ovl16/NOPROC.PAS) shows a far procedure always starts with 55 89 e5, so 9a cannot start one. Removed when e3 matches (make match UNIT=ovl16 WRITE=1 corrects e3's size to 1796 and deletes the entries inside it)"
+evidence = ["far_call", "re/units.toml#ovl32", "tools/re/tp_idioms/ovl16/NOPROC.PAS", "re/learnings/ovl16.toml#ovl16-e3-map-entries-are-ovl25-stub-flats"]
 
 [[routine]]
 id = "ovl16:3EC4"
@@ -7624,8 +6883,8 @@ signature = ""
 c_name = "ovl16_fn_3EC4"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 16: not a routine. 3EC4 is the instruction boundary 80 3e fa 49 01 (cmp byte [0x49fa],1) inside e3 with no prologue. The entry is the flat-linear reading (seg 0x03E9 * 16 + 0x0034 = 0x3EC4) of the LoadPictureSlot (ovl32:01C8) stub call lcall 0x03E9:0x34 at 0x3EE0 and 0x3EFA. e3 has its only prologue (55 89 e5) at 382D and its single retf at 3F30 (byte scan of build/re/overlays/ovl16.bin, re/learnings/ovl16.toml), so 3EC4 lies inside e3; its size 5 is only the gap to the next map entry (3EC9). Removed when e3 matches (make match UNIT=ovl16 WRITE=1 corrects e3's size to 1796 and deletes the entries inside it)"
+evidence = ["far_call", "re/units.toml#ovl32", "tools/re/tp_idioms/ovl16/NOPROC.PAS", "re/learnings/ovl16.toml#ovl16-e3-map-entries-are-ovl25-stub-flats"]
 
 [[routine]]
 id = "ovl16:3EC9"
@@ -7637,85 +6896,59 @@ signature = ""
 c_name = "ovl16_fn_3EC9"
 level = "none"
 justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
+notes = "auto:far_call; blocked 2026-10-14 by dec-deepseek-3 batch 16: not a routine. 3EC9 is the instruction boundary 76 34 (jbe, no prologue) inside e3. The entry is the flat-linear reading (seg 0x03E9 * 16 + 0x0039 = 0x3EC9) of an ovl32 stub call lcall 0x03E9:0x39 at 0x3564, 0x357F, 0x3595 and 0x35B0. e3 has its only prologue (55 89 e5) at 382D and its single retf at 3F30 (byte scan of build/re/overlays/ovl16.bin, re/learnings/ovl16.toml), so 3EC9 lies inside e3; its size 104 is only the gap to the next map entry (3F31). Removed when e3 matches (make match UNIT=ovl16 WRITE=1 corrects e3's size to 1796 and deletes the entries inside it)"
+evidence = ["far_call", "re/units.toml#ovl32", "tools/re/tp_idioms/ovl16/NOPROC.PAS", "re/learnings/ovl16.toml#ovl16-e3-map-entries-are-ovl25-stub-flats"]
 
 [[routine]]
 id = "ovl16:3F31"
 unit = "ovl16"
 addr = "ovl16:3F31"
 size = 130
-name = "ovl16_fn_3F31"
-signature = ""
+name = "ConstitutionHitPointAdjustment"
+signature = "function ConstitutionHitPointAdjustment(Who: PCharacter): ShortInt"
 c_name = "ovl16_fn_3F31"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl16_fn_3F31 (ovl16:3F31 computes the signed constitution hit-point adjustment shared by the hit-point floor ovl16:3FB3 and the ceiling ovl16:408C: it sums ds408E[Constitution] (the AD&D 1e table: -2 at 3, -1 at 4..6, 0 at 7..14, +1 at 15, +2 at 16..18) over the classes with a level and adds the fighter bonus (ClassMask 2 above constitution 16 and 17); callers ModifyCharacter ovl16:209F use it through 3FB3/408C); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
 id = "ovl16:3FB3"
 unit = "ovl16"
 addr = "ovl16:3FB3"
-size = 148
-name = "ovl16_fn_3FB3"
-signature = ""
+size = 217
+name = "MinHitPoints"
+signature = "function MinHitPoints(Who: PCharacter): Byte"
 c_name = "ovl16_fn_3FB3"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl16_fn_3FB3 (ovl16:3FB3 is the floor ModifyCharacter (ovl16:209F) clamps a lowered HpMax to ('if ovl16:3FB3(SelectedCharacter) > HpMax then HpMax := ...'): over the classes with a level it counts the hit dice and totals their levels (one extra for class 4 and 7, whose maximum die is one higher, ovl16:408C), then divides by the class count after adding the constitution adjustment (ConstitutionHitPointAdjustment ovl16:3F31) and never returns below 1; the minimum-roll counterpart of the ceiling ovl16:408C); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl16:4047"
-unit = "ovl16"
-addr = "ovl16:4047"
-size = 69
-name = "ovl16_fn_4047"
-signature = ""
-c_name = "ovl16_fn_4047"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl16:408C"
 unit = "ovl16"
 addr = "ovl16:408C"
-size = 364
-name = "ovl16_fn_408C"
-signature = ""
+size = 425
+name = "MaxHitPoints"
+signature = "function MaxHitPoints(Who: PCharacter): Byte"
 c_name = "ovl16_fn_408C"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl16_fn_408C (ovl16:408C is the ceiling ModifyCharacter (ovl16:209F) clamps a raised HpMax to: over the classes with a level it totals the level times each class's maximum hit die and divides by the class count after adding the constitution adjustment (ConstitutionHitPointAdjustment ovl16:3F31), never below 1; the maximum-roll counterpart of MinHitPoints ovl16:3FB3); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl16:41F8"
-unit = "ovl16"
-addr = "ovl16:41F8"
-size = 61
-name = "ovl16_fn_41F8"
-signature = ""
-c_name = "ovl16_fn_41F8"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl16:4235"
 unit = "ovl16"
 addr = "ovl16:4235"
 size = 184
-name = "ovl16_fn_4235"
-signature = ""
+name = "RollHitPoints"
+signature = "function RollHitPoints(Who: PCharacter; ClassBits: Byte): Byte"
 c_name = "ovl16_fn_4235"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl16_fn_4235 (ovl16:4235 rolls the hit points a level gains: it sums over the classes in ClassBits that the character has a level in one RollDice roll of that class's hit dice (ds08B6 dice of ds08BE sides), with a first-level class raised to two thirds of its die; called by the training hall ovl16:29AE and the create-character run ovl16:1D1E, which divide the sum by the class count); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -7723,12 +6956,12 @@ id = "ovl16:42ED"
 unit = "ovl16"
 addr = "ovl16:42ED"
 size = 359
-name = "ovl16_fn_42ED"
-signature = ""
+name = "PayGold"
+signature = "procedure PayGold(Amount: LongInt; Who: PCharacter)"
 c_name = "ovl16_fn_42ED"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl16_fn_42ED (ovl16:42ED takes Amount gold pieces from Who's money for the training hall (ovl16:29AE calls it with the training cost): it converts the amount to copper, hands coins over from copper up (one more coin than the remainder needs) and gives the overshoot back as change from platinum down; the enum coin kind and Succ/Pred are proven by tools/re/tp_idioms/ovl16/PAYPRB2.PAS); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8005,6 +7238,7 @@ name = "ShowCharacterSheet"
 signature = ""
 c_name = "ovl19_e1"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 75f4aad"
 justification = ""
 notes = "renamed from ovl19_e1 (Called by ovl19_e5 (the View command, ovl19:0AB3) and ovl16 (ovl16_fn_0B52, ovl16_fn_1DCB, ovl16_fn_209F). Draws the sheet window with the name, sex, race, age, alignment, class, abilities, levels, experience, combat block, weapon, armor, status and portraits of SelectedCharacter (ovl19:004A).); auto:near_call"
 evidence = ["prologue"]
@@ -8018,6 +7252,7 @@ name = "ShowCharacterMoney"
 signature = ""
 c_name = "ovl19_e4"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 75f4aad"
 justification = ""
 notes = "renamed from ovl19_e4 (Called by ovl19_e1 (ovl19:004A, near call 050D after the Level line). Lists the Money[0..6] entries of SelectedCharacter (+$88) with their MoneyKindNames (DS:0FFA, ovl21:0DDF) in the window 12..26 x 7..14 (ovl19:050D code).); auto:near_call"
 evidence = ["prologue"]
@@ -8031,6 +7266,7 @@ name = "ShowCombatStats"
 signature = ""
 c_name = "ovl19_e2"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 75f4aad"
 justification = ""
 notes = "renamed from ovl19_e2 (Draws the AC, HP, THAC0, Damage, Encumbrance and Movement labels of the sheet (literal strings at ovl19:05BE..05FC, the labels of the combat block), with the values of the selected character. Called by ovl19_e1 (ovl19:03F5) and from ovl16 (ovl16_fn_1DCB, ovl16_fn_2639).); auto:near_call"
 evidence = ["prologue"]
@@ -8044,6 +7280,7 @@ name = "ShowAbilityScore"
 signature = "procedure ShowAbilityScore(Index: ShortInt; Highlight: Boolean)"
 c_name = "ovl19_e3"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 75f4aad"
 justification = ""
 notes = "renamed from ovl19_e3 (called by ovl19_e1 for rows 7..12 (STR..CHA labels, ovl19:004A loop, [bp-5] = 0..5 with Highlight 0); draws the score at offset 10h plus Index of SelectedCharacter; Strength 18 adds the percentile in parentheses (ovl19:0901 code)); auto:near_call"
 evidence = ["prologue"]
@@ -8057,6 +7294,7 @@ name = "ViewSelectedCharacter"
 signature = "procedure ViewSelectedCharacter(var Done: Byte)"
 c_name = "ovl19_e5"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 75f4aad"
 justification = ""
 notes = "renamed from ovl19_e5 (the View command: draws the sheet and the View: prompt with Items, Spells, Trade, Drop and Exit; the Temple, the shop and the camp call it for their V key (ovl19:0AB3; whitepaper 5.4, 5.22)); auto:entry_5"
 evidence = ["prologue"]
@@ -8070,6 +7308,7 @@ name = "CanGiveUpItem"
 signature = "function CanGiveUpItem(Item: PMenuLine): Boolean"
 c_name = "ovl19_fn_0D70"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 75f4aad"
 justification = ""
 notes = "renamed from ovl19_fn_0D70 (the Items menu's guard: False for a readied item (Must be unreadied) and for a scroll with a pending scribe the player does not give up (ovl19:0D70; whitepaper 5.22)); auto:near_call"
 evidence = ["prologue"]
@@ -8083,6 +7322,7 @@ name = "RunItemMenu"
 signature = "procedure RunItemMenu(var Done: Byte)"
 c_name = "ovl19_e6"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 75f4aad"
 justification = ""
 notes = "renamed from ovl19_e6 (the Items command of the View prompt: the Ready, Use, Trade, Drop, Halve, Join, Sell and Id menu over the carried items (ovl19:0EF8; whitepaper 5.4); called by ViewSelectedCharacter for I and by the Use command (ovl08:031A)); auto:near_call"
 evidence = ["prologue"]
@@ -8096,6 +7336,7 @@ name = "ReadyItem"
 signature = "procedure ReadyItem(Item: PMenuLine)"
 c_name = "ovl19_e7"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 75f4aad"
 justification = ""
 notes = "renamed from ovl19_e7 (ovl19:14D0 is the Ready action: RunItemMenu's R key (ovl19:0EF8) and the AI's item step (ovl09 calls it on SlotItems[0], SlotItems[1] and its picks). It marks the item Readied and applies its affect (CallAffectHandler, Affects[3] above $7F), or refuses with 'Wrong Class', 'already using <name>' or 'Your hands are full!' (RaceRow[ItemType] rows 0, 1 and 13 and PadB0)); auto:near_call"
 evidence = ["prologue"]
@@ -8109,6 +7350,7 @@ name = "TradeItem"
 signature = "procedure TradeItem(Item: PMenuLine)"
 c_name = "ovl19_fn_1734"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 75f4aad"
 justification = ""
 notes = "renamed from ovl19_fn_1734 (ovl19:1734 is the Trade action of RunItemMenu's T key (ovl19:0EF8, after CanGiveUpItem): 'Trade with Whom?' picks the recipient (res12_fn_2C48), the item is added to the recipient (res12_fn_15F7) and taken from SelectedCharacter (res12_fn_1509), or 'Overloaded' is shown when WouldOverloadInventory refuses the recipient); auto:near_call"
 evidence = ["prologue"]
@@ -8122,6 +7364,7 @@ name = "HalveItem"
 signature = "procedure HalveItem(Item: PMenuLine)"
 c_name = "ovl19_fn_17ED"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 75f4aad"
 justification = ""
 notes = "renamed from ovl19_fn_17ED (ovl19:17ED is the Halve action of RunItemMenu's H key (ovl19:0EF8, line H calls it): Count div 2 goes to a new 63-byte record copied from the item (Move, New), that record takes the item's Next, the item keeps the rest of the count, and 'Can''t halve that' is shown when the half is zero); auto:near_call"
 evidence = ["prologue"]
@@ -8135,6 +7378,7 @@ name = "JoinItem"
 signature = "procedure JoinItem(Item: PMenuLine)"
 c_name = "ovl19_fn_189D"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 75f4aad"
 justification = ""
 notes = "renamed from ovl19_fn_189D (ovl19:189D is the Join action of RunItemMenu's J key (ovl19:0EF8, line J calls it): it adds the counts of the matching stacks of SelectedCharacter (same NameNum, ItemType, Plus, Cursed, Weight, Affects[1] below 2) to Item up to 255, taking each match off the character (res12_fn_1509) and carrying the rest into the next stack); auto:near_call"
 evidence = ["prologue"]
@@ -8148,6 +7392,7 @@ name = "UseItem"
 signature = "procedure UseItem(Item: PMenuLine; var Done: Byte)"
 c_name = "ovl19_e8"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 75f4aad"
 justification = ""
 notes = "renamed from ovl19_e8 (ovl19:1A8A is the Use action: RunItemMenu's U key (ovl19:0EF8) and UseMagicItem (ovl09:03E4, the computer's magic-item step) pass it an item; a scroll (ovl22_e6 true) gives its spell by ChooseSpellFromList, an item with Affects[2] gives it directly, and the spell is cast through ovl22_e5 (matched, ovl19:1A8A)); auto:near_call"
 evidence = ["prologue"]
@@ -8161,6 +7406,7 @@ name = "SellItem"
 signature = "procedure SellItem(Item: PMenuLine)"
 c_name = "ovl19_fn_1CEE"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 75f4aad"
 justification = ""
 notes = "renamed from ovl19_fn_1CEE (ovl19:1CEE is the Sell action: RunItemMenu's S key (ovl19:0EF8) after CanGiveUpItem; it shows 'I'll give you <offer> gold pieces for your <item>', asks 'Is It a Deal?' and on Y shows 'Sold!', removes the item (res12_fn_1509) and pays the offer in platinum and gold (matched, ovl19:1CEE)); auto:near_call"
 evidence = ["prologue"]
@@ -8174,6 +7420,7 @@ name = "IdentifyItem"
 signature = "procedure IdentifyItem(Item: PMenuLine; var Redraw: Byte)"
 c_name = "ovl19_fn_1F52"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 75f4aad"
 justification = ""
 notes = "renamed from ovl19_fn_1F52 (ovl19:1F52 is the Id action of the item menu: RunItemMenu's I key calls it (ovl19:0EF8) and its strings are 'For 200 gold pieces I''ll identify your ' (1EC8), 'Is It a Deal? ' (1EF0), 'Not Enough Money' (1EFF), 'I can''t tell anything new about your ' (1F10) and 'It looks like some sort of ' (1F36); it charges IdentifyPrice 200 gold from the character or the pool and clears TMenuLine.HiddenNames of the item (matched, ovl19:1F52)); auto:near_call"
 evidence = ["prologue"]
@@ -8187,6 +7434,7 @@ name = "TradeMoney"
 signature = ""
 c_name = "ovl19_fn_2156"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 75f4aad"
 justification = ""
 notes = "renamed from ovl19_fn_2156 (ovl19:2156 is the Trade command of the View prompt for money: ViewSelectedCharacter's T key calls it (ovl19:0AB3); it asks 'Trade to?' (res12_fn_2C48), lists the coin kinds under 'Select type of coin' with ChooseFromList, asks 'How much <kind> will you trade? ' (ReadAmount) and moves the money with TransferMoney (ovl21:044C); its list is the one ovl21's TakeMoney builds (matched, ovl19:2156)); auto:near_call"
 evidence = ["prologue"]
@@ -8200,6 +7448,7 @@ name = "ChooseAndDropMoney"
 signature = ""
 c_name = "ovl19_fn_24A7"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 75f4aad"
 justification = ""
 notes = "renamed from ovl19_fn_24A7 (the View prompt's D key (ovl19:0AB3 calls it, followed by ShowCharacterMoney) lists the coin kinds SelectedCharacter holds under 'Select type of coin' (ChooseFromList), asks 'How much <kind> will you drop? ' (ReadAmount) and calls DropMoney (ovl21:0A01); ovl19:24A7 is the Drop twin of TradeMoney (ovl19:2156)); auto:near_call"
 evidence = ["prologue"]
@@ -8213,6 +7462,7 @@ name = "WouldOverloadInventory"
 signature = "function WouldOverloadInventory(Character: PCharacter; Item: PMenuLine): Boolean"
 c_name = "ovl19_e9"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 75f4aad"
 justification = ""
 notes = "renamed from ovl19_e9 (ovl19:275B checks the character item count and compares added item weight against the strength-based carry limit plus 1500; ovl06:0239 refuses when true); auto:near_call"
 evidence = ["prologue"]
@@ -8226,6 +7476,7 @@ name = "UpdateSelectedCharacter"
 signature = "procedure UpdateSelectedCharacter(Key: Char)"
 c_name = "ovl19_e10"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 75f4aad"
 justification = ""
 notes = "renamed from ovl19_e10 (ovl19:27DF writes SelectedCharacter from the party head; G selects the previous member with wraparound, O selects the next or wraps to the head); auto:entry_10"
 evidence = ["prologue"]
@@ -8239,6 +7490,7 @@ name = "CharacterMoneyValueInGold"
 signature = "function CharacterMoneyValueInGold(Who: PCharacter): LongInt"
 c_name = "ovl19_e11"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 75f4aad"
 justification = ""
 notes = "renamed from ovl19_e11 (ovl19:28BE sums Who.Money[0..4] times CoinCopperValues, adds 100 copper for rounding, divides by the 200-copper gold entry, and returns a LongInt); auto:near_call"
 evidence = ["prologue"]
@@ -8252,6 +7504,7 @@ name = "ChooseSpellFromList"
 signature = "function ChooseSpellFromList(SpellListKind, DisplayMode: Byte; var Choice: Word; var Listed: Byte): Byte"
 c_name = "ovl19_e12"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 75f4aad"
 justification = ""
 notes = "renamed from ovl19_e12 (ovl19:299C prepares the mode-specific spell-list heading and delegates the spell/choice selection to ovl22; callers in ovl15 use it for casting, memorizing, learning and scribing); auto:near_call"
 evidence = ["prologue"]
@@ -8265,6 +7518,7 @@ name = "ovl19_init"
 signature = ""
 c_name = "ovl19_init"
 level = "L2"
+review = "passed 2026-10-13 by rev-sonnet, 75f4aad"
 justification = ""
 notes = "auto:entry_0"
 evidence = ["prologue"]
@@ -12669,14 +11923,27 @@ evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:0C73; aligned by make tp
 id = "0AF8:0AF0"
 unit = "res00"
 addr = "0AF8:0AF0"
-size = 27
+size = 12
 name = "res00_fn_0AF0"
 signature = ""
 c_name = "res00_fn_0AF0"
 level = "none"
 justification = ""
-notes = "auto:forced"
-evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:0C7F; aligned by make tp-compare, confirmed by runtime_entries"]
+notes = "auto:forced; size 12 (was 27, the gap to 0B0B): the original calls 0AF8:0AFC as a routine entry (ovl16:43D2), so 0AFC is a second routine in the span, not part of this one"
+evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:0C7F; aligned by make tp-compare, confirmed by runtime_entries", "tools/re/tp_idioms/ovl16/PAYPRB2.PAS"]
+
+[[routine]]
+id = "0AF8:0AFC"
+unit = "res00"
+addr = "0AF8:0AFC"
+size = 15
+name = "res00_fn_0AFC"
+signature = ""
+c_name = "res00_fn_0AFC"
+level = "none"
+justification = ""
+notes = "Abs of a LongInt: `Amount := Abs(Amount)` compiles to lcall 0AF8:0AFC (tools/re/tp_idioms/ovl16/PAYPRB2.PAS, the probe longint Abs call; ovl16:43D2 calls it the same way with the value in ax:dx and stores ax:dx). The entry was missing because tools/re/rtl_ident.py scans only poolrad/start-unpack.exe for far calls, and the call at ovl16:43D2 is in an overlay (GAME.OVR)"
+evidence = ["far-called from outside res00 (1 site: ovl16:43D2)", "tools/re/tp_idioms/ovl16/PAYPRB2.PAS"]
 
 [[routine]]
 id = "0AF8:0B0B"

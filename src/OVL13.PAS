@@ -669,7 +669,7 @@ end;
   always allowed. Otherwise ds681E is cleared and RunAffectHooks kind 1 runs on Target; when no
   hook rejected it, Who's remembered Combat^.Target is saved, replaced by Target and the attacker's
   hook kind 0 runs, then the old target is put back. The result is True exactly when ds681E ended
-  0 (no hook vetoed). Called before an attack (ovl09 AiTurn, PartingShots, ovl12_e70 and ovl13's
+  0 (no hook vetoed). Called before an attack (ovl09 AiTurn, PartingShots, GazeCharmsTarget and ovl13's
   e17/e21/2FD3). Globals: ds681E. }
 function AttackTargetAllowed(Who, Target: PCharacter): Boolean;
 var
@@ -805,7 +805,7 @@ begin
 end;
 { ovl13:1406. Resolves all of one combatant's melee attacks for its turn, the work PerformAttack wraps
   (this routine covers 1406..17F6: the map's entries 14A1, 1583, 1713 and 1758 lie inside it):
-  it clears the attack-slot counters (ds6822[1..2], ds6E2C[1..2]) and the damage, marks the
+  it clears the attack-slot counters (AttackSlotRolls[1..2], ds6E2C[1..2]) and the damage, marks the
   attacker's Combat^.Pad8, then either takes the helpless auto-hit (no roll, ShowAttackResult kind 3
   with the target's Flag11B + 5, ClearAttackerAffect, both attack slots cleared) or, against a target
   that fights back, switches the readied weapon to its large-foe dice when the target is big
@@ -816,7 +816,7 @@ end;
   damage, ShowAttackResult shows it and the death hook runs; when nothing landed a miss is shown.
   Done is left nonzero when the turn ends (EndCombatTurn) and zero while another attack remains.
   QUIRK ovl13:1733: DamageAmount is passed as ShowAttackResult's second and third bytes. Called by
-  PerformAttack (ovl13:19D6). Globals: ds6822, ds6E2C, DamageAmount, ds2622, ds2626. }
+  PerformAttack (ovl13:19D6). Globals: AttackRoll, ds6E2C, DamageAmount, ds2622, ds2626. }
 procedure ResolveCombatantAttacks(Attacker, Target: PCharacter; AttackKind: Byte; var Done: Byte);
 var
   Item: TItemRow;                { the readied slot-0 item's row, when the large-foe dice are used }
@@ -831,8 +831,8 @@ var
 begin
   Behind := AttackKind;
   Done := 0;
-  ds6822[1] := 0;
-  ds6822[2] := 0;
+  AttackSlotRolls[1] := 0;
+  AttackSlotRolls[2] := 0;
   ds6E2C[1] := 0;
   ds6E2C[2] := 0;
   Landed := 0;
@@ -894,7 +894,7 @@ begin
         Inc(ds6E2C[SlotIndex]);
         if RollToHit(Attacker, Target, NeededRoll) or IsHelpless(Target) then
         begin
-          Inc(ds6822[SlotIndex]);
+          Inc(AttackSlotRolls[SlotIndex]);
           PlaySound(ds2622);
           Landed := 1;
           RollAttackDamage(Attacker, Target, SlotIndex);
@@ -2046,18 +2046,18 @@ begin
 end;
 { ovl13:39D2. The affect $49 handler, the rake: the ovl12 initialiser that fills AffectHandlers
   (the store at ovl12 code 0x354D) puts this routine in AffectHandlers[$49]. When Who's last attack
-  resolution landed both of its slot-1 attacks (ds6822[1] = 2, counted in ResolveCombatantAttacks)
+  resolution landed both of its slot-1 attacks (AttackSlotRolls[1] = 2, counted in ResolveCombatantAttacks)
   and the target it remembers (Combat^.Target) is still in the fight (Flag10D set), Who rakes it:
   the readied second attack form is armed in attack slot 2 (AttackSlots[2] 2, WeaponAttacks[2] 2,
   WeaponDamage[2] 4), slot 1 is emptied so only that form fires, 'Rakes...' is shown, and
   PerformAttack resolves the rake against the remembered target; the turn then ends through
   EndCombatTurn. Called through the affect hooks (affect $49 is in the kind 2 list, ovl24:02FA)
-  or when the affect is removed, so Affect and Mode are not read. Globals: ds6822 (read). }
+  or when the affect is removed, so Affect and Mode are not read. Globals: AttackRoll (read). }
 procedure RakeAttack(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   Done: Byte;                    { [bp-1] the turn-done flag PerformAttack fills in }
 begin
-  if ds6822[1] <> 2 then
+  if AttackSlotRolls[1] <> 2 then
     Exit;
   if Who^.Combat^.Target^.Flag10D = 0 then
     Exit;

@@ -6,7 +6,7 @@ unit OVL24;
   (SavingThrow), attack and resistance rolls (RollToHit, RollBeatsResistance); damage, going down
   and healing (DealDamage, DropCombatant, HealCharacter, ReviveCombatant); and strength changes kept
   in an affect (EncodeStrength, DecodeStrength, RaiseStrength). }
-{$A-,O+,F+,S-,R-,G-,I-}
+{$A-,O+,F+,S-,R-,G-,I-,L-}
 interface
 uses POOLVARS, RES06;
 procedure CallAffectHandler(AffectId: Byte; Who: PCharacter; Affect: PAffect; Mode: Byte);
@@ -485,11 +485,11 @@ begin
   RollDice := Total;
 end;
 
-{ ovl24:0E2E (e9). RollDice(Count, Sides), keeping Count in ds681C (who reads it is not known
+{ ovl24:0E2E (e9). RollDice(Count, Sides), keeping Count in LastDiceCount (who reads it is not known
   yet). }
 function RollDiceCounted(Count, Sides: Byte): Byte;
 begin
-  ds681C := Count;
+  LastDiceCount := Count;
   RollDiceCounted := RollDice(Count, Sides);
 end;
 

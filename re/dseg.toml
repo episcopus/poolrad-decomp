@@ -746,6 +746,11 @@ name = "AttackRoll"
 evidence = "RollToHit and RollBeatsResistance: d20 with 20 counted as 100, hooks may change it, negative means a miss (ovl24:0C63, 0CD5)"
 
 [[global]]
+offset = 0x6822
+name = "AttackSlotRolls"
+evidence = "DS:6822 as three bytes indexed by attack slot: element 0 is AttackRoll, elements 1 and 2 are the per-slot counters ResolveCombatantAttacks increments (ovl13:1406, 16F2)"
+
+[[global]]
 offset = 0x682A
 name = "SaveKind"
 evidence = "SavingThrow stores the saving throw kind for the hooks of kind 0Ch (ovl24:0DAD)"
@@ -759,6 +764,11 @@ evidence = "entries 1..16 (DS:0C14) are the affects RemoveDeathAffects removes (
 offset = 0x6828
 name = "AffectHandlers"
 evidence = "the far procedure table CallAffectHandler calls by affect id (lcall [di+6828h], ovl24:001E)"
+
+[[global]]
+offset = 0x6826
+name = "AttackTarget"
+evidence = "BoostAttackAgainstTarget (ovl12:013B) stores Who's combat Target here (a far pointer, ovl12:0147..014E); its segment word is DS:6828, where AffectHandlers starts"
 
 [[global]]
 offset = 0x5374
@@ -923,18 +933,18 @@ evidence = "eight string[9] at DS:0F03, ten bytes apart: Monster, Dwarf, Elf, Gn
 [[global]]
 offset = 0x0D38
 name = "ClassNames"
-evidence = "eight string[26] at DS:0D38, 27 bytes apart: Cleric, Druid, Fighter, Paladin, Ranger, Magic-User, Thief, Monk (the image); ovl19_e1 draws ClassNames[ClassMask] (+$2F, ovl19:01D2); the multi-class masks 8..16 index past the eighth entry"
+evidence = "17 string[26] at DS:0D38, 27 bytes apart (the image): Cleric, Druid, Fighter, Paladin, Ranger, Magic-User, Thief and Monk (0..7), then the real multi-class names Cleric/Fighter, Cleric/Fighter/Magic-User, Cleric/Ranger, Cleric/Magic-User, Cleric/Thief, Fighter/Magic-User, Fighter/Thief, Fighter/Magic-User/Thief and Magic-User/Thief (8..16; the table ends exactly at RaceNames, DS:0F03); ShowCharacterSheet draws ClassNames[ClassMask] (+$2F, ovl19:01D2) [V]"
 
 [[global]]
 offset = 0x0F53
 name = "AlignmentNames"
-evidence = "eight string[16] at DS:0F53, 17 bytes apart: Lawful Good .. Chaotic Neutral (the image); ovl19_e1 draws AlignmentNames[the signed byte at +$A0] (ovl19:0198)"
+evidence = "nine string[16] at DS:0F53, 17 bytes apart (the image): Lawful Good .. Chaotic Neutral (0..7) and Chaotic Evil (8; the table ends exactly at SexNames, DS:0FEC); ShowCharacterSheet draws AlignmentNames[the signed byte at +$A0] (ovl19:0198) [V]"
 
 [[global]]
 offset = 0x1047
 size = 104
 name = "StatusNames"
-evidence = "eight string[12] at DS:1047, 13 bytes apart: Okay Animated tempgone Running Unconscious Dying Dead Stoned (the image); ovl19_e1 draws StatusNames[+$10C] (ovl19:04D0); res12_fn_09E3 shows StatusNames[TCharacter.Status] as the character's status line (00BA:0B24, stride 13)"
+evidence = "nine string[12] at DS:1047, 13 bytes apart (the image): Okay Animated tempgone Running Unconscious Dying Dead Stoned and Gone (the ninth ends at DS:10BB, so the last two bytes overlap the start of ds10A7; size stops at 104 so a packet does not misname ds10A7); ShowCharacterSheet draws StatusNames[+$10C] (ovl19:04D0); res12_fn_09E3 shows StatusNames[TCharacter.Status] as the character's status line (00BA:0B24, stride 13) [V]"
 
 
 [[global]]
@@ -1085,3 +1095,23 @@ evidence = "res12_fn_0B73 (00BA:0B73) tests entries 1..4 through res12_fn_2199 a
 offset = 0x4846
 name = "ReadiedItemWeight"
 evidence = "res12_fn_0BB8 (00BA:0BB8) resets it to 0, adds each readied item's Weight times Count, and floors the character's CarriedWeight at it when the weight-excluding item (NameNum[1] $BA) is readied (00BA:0F43)"
+
+[[global]]
+offset = 0x408E
+name = "ConstitutionHitPointTable"
+evidence = "DS:408E is the AD&D 1e constitution hit-point adjustment table read by ovl16:3F31 (ConstitutionHitPointAdjustment): signed byte per constitution, -2 at 3, -1 at 4..6, 0 at 7..14, +1 at 15, +2 at 16..18; indexed by TCharacter.Constitution (+0x14), read as a signed byte (tools/re/tp_idioms/ovl16/CONHP.PAS)"
+
+[[global]]
+offset = 0x08B6
+name = "ClassHitDiceCount"
+evidence = "ovl16:4235 pushes ds08B6[Class] as RollDice's Count and ds08BE[Class] as its Sides for every class the character has a level in; the image at DS:08B6 holds 1,1,1,1,2,1,1,2 (two dice for ranger and monk)"
+
+[[global]]
+offset = 0x08BE
+name = "ClassHitDieSides"
+evidence = "ovl16:4235 pushes ds08BE[Class] as RollDice's Sides and raises a first-level roll to (ds08BE[Class] * 2) div 3; the image at DS:08BE holds 8,8,10,10,8,4,6,4 sides (its entry 7 is the first byte of the CHEAD suffix table ds08C5)"
+
+[[global]]
+offset = 0x681C
+name = "LastDiceCount"
+evidence = "the dice count of the last RollDiceCounted roll (ovl24:0E37 stores it); ovl12:2D38 adds it to DamageAmount for fire or magic damage"

@@ -251,3 +251,12 @@ tags = ["compiler", "repeat", "loop", "call", "frame"]
 title = "A repeat whose back jump lands on a call has that call inside the loop; the Drop money menu's frame"
 lesson = "ChooseAndDropMoney (ovl19:24A7, sub sp 0x22E, retf 0) is TradeMoney's coin list with one shape change: its `until Done` jumps back to ovl19:24AE, which is the push cs of ShowCharacterMoney, so that call is the first statement of the repeat. Written before the repeat, the jump lands on the list reset (a 4-byte mismatch at the jump). Locals in declaration order from bp-1: Kind (-1), CoinKind (-2), Pad (-3), I (-4), Kinds (Word, -6), Choice (-8), List (-0xC), Chosen (-0x10), Head (-0x14), Done (-0x15), Redraw (-0x16), Num (-0x26), Spaces (-0x2B), Text (-0x12B), Key (-0x12C), Amount (Word, -0x12E). The for-limit byte of the Spaces loop is the first temporary (-0x12F), and the 256-byte concatenation temporary sits at -0x22E..-0x12F."
 evidence = ["src/OVL19.PAS#ChooseAndDropMoney", "re/symbols.toml#ovl19:24A7"]
+
+[[lesson]]
+id = "bit-threshold-two-spellings"
+confidence = "V"
+units = ["*"]
+tags = ["compiler", "comparison", "bit", "constant"]
+title = "`X > $7F` and `X >= $80` are different bytes; keep both spellings and name each"
+lesson = "A bit-7 test has two source spellings that TP 6.0 compiles differently: `X > $7F` emits cmp ...,$7F with jbe/ja and `X >= $80` emits cmp ...,$80 with jb/jae (same for `X < $80` vs `X <= $7F`). When the original uses both forms (ShowCharacterSheet's `B84 > $7F` next to the `B84 < $80` tests, ReadyItem's `Affects[3] > $7F` next to UseItem's `Affects[3] < $80`), the decompilation must keep each form and give it a name: a bit constant for the `< $80` form and a threshold constant for the `> $7F` form. One name cannot replace both. Probe: tools/re/tp_idioms/ovl19/PB19BIT.PAS."
+evidence = ["tools/re/tp_idioms/ovl19/PB19BIT.PAS", "src/OVL19.PAS#ShowCharacterSheet", "src/OVL19.PAS#ReadyItem"]

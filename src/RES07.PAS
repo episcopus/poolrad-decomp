@@ -1165,7 +1165,7 @@ end;
   (EgaPlaneBitMasks). Every row it touches is marked in ds4A28 and in the trackers ds4C20,
   ds4AD0 and ds4D70 for FlushPictureChanges. Called by DrawWallDescriptors (ovl29:0174,
   four times, FirstCol = 2, the wall descriptors' pixel rows and the ds6A60..ds6A63
-  colours) and by ovl16_fn_34DF (ovl16:34DF).
+  colours) and by DrawIconCell (ovl16:34DF).
   QUIRK 0464:2707: a rectangle that starts above row 0 is drawn one row too far: the row
   bound is Height - |FirstRow| and the loop includes it. }
 procedure FillPictureRect(FirstCol, FirstRow: Integer; Width, Height: Word; Colour: Byte; Palette: Pointer; Target: Pointer);

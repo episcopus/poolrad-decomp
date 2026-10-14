@@ -4,7 +4,7 @@ unit OVL17;
   character (285 bytes), item (63 bytes) and affect (9 bytes) records. The file names are built
   from SaveDir and the game directory, CreateSaveDir makes the save directory on the save disk, and
   the "Put save disk in <drive>:" prompt shows while that disk is missing. }
-{$A-,O+,F+,S-,R-,G-,I-}
+{$A-,O+,F+,S-,R-,G-,I-,L-}
 interface
 uses POOLVARS;
 type
@@ -114,7 +114,7 @@ end;
   tries again while the open fails (IOResult non-zero). Writes one line per list entry whose text
   does not start with '*' (the party members are skipped, so they leave the available-character
   file), then closes it. Reads SaveDir and List; writes charlist.txt. Called by the ovl16 add-character
-  menu (ovl16_fn_306D) and by SaveCharacter. }
+  menu (AddSavedCharacters) and by SaveCharacter. }
 procedure RewriteSavedCharacterList(List: PMenuLine);
 var
   Line: PMenuLine;              { walks the list }
@@ -236,7 +236,7 @@ end;
   with a Name it makes the save directory and writes to SaveDir + Name + '.sav'. It rewrites the
   file (prompting for the save disk while the open fails), BlockWrites the 285-byte character,
   closes it, and (after erasing any old file) writes the 63-byte items of Who^.Items to '.itm' and
-  the 9-byte affects of Who^.Affects to '.spc'. Called by ovl16_e1, ovl16_fn_1EA3 and SaveGame. }
+  the 9-byte affects of Who^.Affects to '.spc'. Called by RunCharacterMenu, ovl16_fn_1EA3 and SaveGame. }
 procedure SaveCharacter(Who: PCharacter; Name: String8);
 var
   SaveFile: file;                      { the file written }
@@ -327,7 +327,7 @@ end;
   Who's list links (Next, Items, Affects, Combat), and, when FileName.itm / FileName.spc exist, reads
   the 63-byte item and 9-byte affect lists, each into a GetMem chain that runs to end of file. Reads
   SaveDir, GameDir, TileSet and InsertDiskPrompts; writes SaveFile, Who^ and the heap; then flushes the
-  keyboard. The read counterpart of SaveCharacter. Called by ovl16_fn_306D and LoadGame. }
+  keyboard. The read counterpart of SaveCharacter. Called by AddSavedCharacters and LoadGame. }
 procedure LoadCharacterFile(FileName: string; Who: PCharacter; SavedGame: Byte; UseSaveDir: Byte);
 var
   SaveFile: file;               { the character, item and affect files }
@@ -594,7 +594,7 @@ end;
   the scratch slot BuildCharacterIcon freed (the map view's party marker pictures are slots 9..11,
   ovl26 DrawPartyMarker). It animates the doors when the river gate is set, and flushes the
   keyboard. Reads the save files, SaveDir and the party list; writes the game state,
-  ds5D96, SelectedCharacter and the party list. Called by ovl16_e1. }
+  ds5D96, SelectedCharacter and the party list. Called by RunCharacterMenu. }
 procedure LoadGame;
 var
   MemberFiles: array[1..8] of string[40];  { the 'CHRDAT<slot><n>' names read from the save }

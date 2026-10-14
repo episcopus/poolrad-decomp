@@ -1,6 +1,6 @@
 unit OVL19;
 { Inventory: the party's carried-item menus and selection/transfer routines (whitepaper 5.4; strings at ovl19:0AB3). }
-{$A-,O+,F+,S-,R-,G-,I-}
+{$A-,O+,F+,S-,R-,G-,I-,L-}
 interface
 uses POOLVARS;
 procedure ShowCharacterSheet;
@@ -26,6 +26,31 @@ function ChooseSpellFromList(SpellListKind, DisplayMode: Byte; var Choice: Word;
   var Listed: Byte): Byte;
 implementation
 uses RES06, RES09, RES12, OVL21, OVL22, OVL24, OVL25, OVL28, OVL31;
+
+const
+  { The ds49F3 view modes the View command and the item menu test (whitepaper 5.4): 1 is the shop and
+    the Temple (VisitTemple sets it, ovl04:0D0F; the value OVL21 names ViewShop), 2 the camp (MakeCamp
+    sets it, ovl15:1E6F), 3 and 4 the two area-view pages (ShowAreaView sets them, whitepaper 5.2.1)
+    and 5 a combat (RunCombat sets it, ovl08:0080). }
+  ViewModeShop = 1;
+  ViewModeCamp = 2;
+  ViewModeMap = 3;
+  ViewModeView = 4;
+  ViewModeCombat = 5;
+  { B84 bit 7 marks a member the computer runs (PrepareCombatants, ovl10:0675; OVL05 and OVL21 name
+    the same bit ComputerRun). The code tests the bit from below as `B84 < ComputerRunB84` and, where
+    it branches on the seven low bits, from above as `B84 > ComputerRunThreshold`; the two spellings
+    compile to the original's two forms (probe tools/re/tp_idioms/ovl19/PB19BIT.PAS). }
+  ComputerRunB84 = $80;
+  ComputerRunThreshold = $7F;
+  { Affects[3] bit 7 marks an item with an affect of its own (ReadyItem applies it through
+    CallAffectHandler). ReadyItem tests it from above as `Affects[3] > AffectThreshold`, UseItem and
+    RunItemMenu test it from below as `Affects[3] < AffectFlag` (then the item's spell is Affects[2]). }
+  AffectFlag = $80;
+  AffectThreshold = $7F;
+  { The pending-scribe bit (bit 7) of a scroll's affects (whitepaper 5.22): CanGiveUpItem tests
+    Affects[1..3] above this before "was going to scribe from that scroll". }
+  ScribeAffectThreshold = $7F;
 
 type
   { The sheet reads three TCharacter bytes as signed table indexes (cwde at ovl19:00C6, 0198 and 04DE). }
@@ -56,19 +81,20 @@ type
   PDamageDice = ^TDamageDice;
 
 { ovl19:004A. Draws the character sheet of SelectedCharacter in the window 1..38 x 1..22: the name line
-  (DrawCharacterName), the sex, race and age on row 3, the alignment on row 4, the class on row 5, the six
+  (DrawCharacterName) with an "(NPC)" tag after it for a computer-run member (B84 bit 7), the sex, race
+  and age on row 3, the alignment on row 4, the class on row 5 (ClassNames, indexed by ClassMask: 0..7
+  are the single classes and 8..16 the multi-class names Cleric/Fighter .. Magic-User/Thief), the six
   ability lines (ShowAbilityScore) with their labels from row 7, the money (ShowCharacterMoney), the
   class levels and experience on row 15, the combat block (ShowCombatStats) on rows 17 and 18, the weapon
   and armor on rows 20 and 21 and the status on row 22, and the head and body portraits when they are
   on (ShowPortraits) and the tile set is 3. Called by ViewSelectedCharacter (the View command),
-  TradeMoney (ovl19:219D) and ovl16 (ovl16_fn_0B52, ovl16_fn_1DCB, ovl16_fn_209F). SheetCharacter keeps the
+  TradeMoney (ovl19:219D) and ovl16 (ovl16_fn_0B52, ovl16_fn_1DCB, ModifyCharacter). SheetCharacter keeps the
   character for the whole drawing. }
 procedure ShowCharacterSheet;
 const
   SheetRight = 38;
   SheetBottom = 22;
   NpcTagGap = 3;
-  ComputerRunThreshold = $7F;
   NameRow = 3;
   AlignmentRow = 4;
   ClassRow = 5;
@@ -304,7 +330,7 @@ var
   Kind: ShortInt;               { the money kind index of the scan (signed: cwde at ovl19:0B3F) }
   Choice: Word;                 { -1: ChooseSpellFromList opens its window and asks for a spell }
 begin
-  if ds49F3 = 5 then
+  if ds49F3 = ViewModeCombat then
     ovl31_e3;
   Key := ' ';
   Done := 0;
@@ -325,9 +351,9 @@ begin
       Menu := Menu + 'Items ';
     if HasSpells <> 0 then
       Menu := Menu + 'Spells ';
-    if (SheetCharacter^.B84 < $80) or (SheetCharacter^.Flag10D = 0) or
+    if (SheetCharacter^.B84 < ComputerRunB84) or (SheetCharacter^.Flag10D = 0) or
       (SheetCharacter^.Status = 1) then
-      if HasMoney and (ds49F3 <> 5) then
+      if HasMoney and (ds49F3 <> ViewModeCombat) then
         Menu := Menu + 'Trade ';
     if HasMoney then
       Menu := Menu + 'Drop ';
@@ -347,7 +373,7 @@ begin
     if (Done = 0) and (Key in ['I', 'S', 'T']) then
       ShowCharacterSheet;
   end;
-  if ds49F3 = 5 then
+  if ds49F3 = ViewModeCombat then
     ovl31_e2;
   RedrawView;
 end;
@@ -366,7 +392,8 @@ begin
     ShowFlashMessage('Must be unreadied')
   else if not ovl22_e6(Item) then
     CanGiveUpItem := True
-  else if (Item^.Affects[1] > $7F) or (Item^.Affects[2] > $7F) or (Item^.Affects[3] > $7F) then
+  else if (Item^.Affects[1] > ScribeAffectThreshold) or (Item^.Affects[2] > ScribeAffectThreshold) or
+    (Item^.Affects[3] > ScribeAffectThreshold) then
   begin
     DrawCharacterName(SelectedCharacter, 1, 21, 0);
     GlyphCol := Length(SelectedCharacter^.Name) + 2;
@@ -394,7 +421,6 @@ end;
   a character whose Combat^.CanUseMagicItem is set. Trade is not offered in combat. }
 procedure RunItemMenu(var Done: Byte);
 const
-  ViewCombat = 5;               { ds49F3 during combat (POOLVARS); ovl31 changes the combat map then }
   VarNoCasting = 229;          { the game word that forbids casting (ovl07, ovl08, ovl09, ovl15); Use is not
                                  offered while it is nonzero (ovl19:0F98) }
 var
@@ -427,20 +453,20 @@ begin
       Menu := 'Ready';
       if Character^.Flag10D <> 0 then
         if GameVars^[VarNoCasting] = 0 then
-          if (ds49F3 = 2) or (ds49F3 = 3) or (ds49F3 = 4) or
-            ((ds49F3 = ViewCombat) and (Character^.Combat^.CanUseMagicItem <> 0)) then
+          if (ds49F3 = ViewModeCamp) or (ds49F3 = ViewModeMap) or (ds49F3 = ViewModeView) or
+            ((ds49F3 = ViewModeCombat) and (Character^.Combat^.CanUseMagicItem <> 0)) then
             Menu := Menu + ' Use';
-      if ((Character^.B84 < $80) or (Character^.Flag10D = 0) or (Character^.Status = 1)) and
-        (ds49F3 <> ViewCombat) then
+      if ((Character^.B84 < ComputerRunB84) or (Character^.Flag10D = 0) or (Character^.Status = 1)) and
+        (ds49F3 <> ViewModeCombat) then
         Menu := Menu + ' Trade';
       Menu := Menu + ' Drop';
       if Character^.ItemCountC7 < 16 then
         Menu := Menu + ' Halve';
       Menu := Menu + ' Join';
-      if ((Character^.B84 < $80) or (Character^.Flag10D = 0) or (Character^.Status = 1)) and
-        (ds49F3 = 1) then
+      if ((Character^.B84 < ComputerRunB84) or (Character^.Flag10D = 0) or (Character^.Status = 1)) and
+        (ds49F3 = ViewModeShop) then
         Menu := Menu + ' Sell';
-      if ds49F3 = 1 then
+      if ds49F3 = ViewModeShop then
         Menu := Menu + ' Id';
       Cursor := Character^.Items;
       while Cursor <> nil do
@@ -471,10 +497,10 @@ begin
               ShowFlashMessage('Must be Readied');
               Key := ' ';
             end
-            else if ovl22_e6(Selected) or ((Selected^.Affects[2] > 0) and (Selected^.Affects[3] < $80)) then
+            else if ovl22_e6(Selected) or ((Selected^.Affects[2] > 0) and (Selected^.Affects[3] < AffectFlag)) then
             begin
               UseItem(Selected, Done);
-              if ds49F3 <> ViewCombat then
+              if ds49F3 <> ViewModeCombat then
                 Done := 0;
               if Done = 0 then
                 DrawItemWindow := True;
@@ -532,7 +558,6 @@ end;
   (+$F4) but the message names SlotItems[9] (+$F0). }
 procedure ReadyItem(Item: PMenuLine);
 const
-  ViewCombat = 5;
   MaxHands = 2;
   LastBodySlot = 8;
   QuirkSlot = 9;
@@ -541,12 +566,12 @@ const
   ReadySlotUsed = 2;
   ReadyHandsFull = 3;
 var
-  AffectOn: Boolean;            { the item's Affects[3] byte is above $7F: it has an affect }
+  AffectOn: Boolean;            { the item's Affects[3] byte is above AffectThreshold: it has an affect }
   Reason: Byte;                 { ReadyOk, or the check that failed }
   Slot: Byte;                   { the body slot of the item: ItemTable[ItemType].Slot, or 11 and 12 for $49 and $1C }
   Character: PCharacter;        { SelectedCharacter on entry }
 begin
-  AffectOn := Item^.Affects[3] > $7F;
+  AffectOn := Item^.Affects[3] > AffectThreshold;
   Character := SelectedCharacter;
   if Item^.Readied then
   begin
@@ -602,7 +627,7 @@ begin
           ShowFlashMessage('already using ' + Character^.SlotItems[ShortInt(Slot)]^.Text);
         end;
       ReadyHandsFull:
-        if (ds49F3 <> ViewCombat) or (Character^.Quick = 0) then
+        if (ds49F3 <> ViewModeCombat) or (Character^.Quick = 0) then
           ShowFlashMessage('Your hands are full!');
     end;
   end;
@@ -724,14 +749,12 @@ end;
   messages, the screen (the item line is on row 22, or 23 in combat). }
 procedure UseItem(Item: PMenuLine; var Done: Byte);
 const
-  ViewCombat = 5;
   TitleColor = 10;
   ItemPromptRow = 23;
   SpellListOnScroll = 2;
   UseListMode = 1;              { ChooseSpellFromList's DisplayMode for a use; ovl22_e1 receives it, meaning not known yet }
   LastSpell = $38;              { the last row of SpellTable; an affect value above it is shifted down by SpellShift }
   SpellShift = $17;
-  AffectFlag = $80;             { Affects[3] at or above this marks an item with an affect (ReadyItem) }
 var
   Spell: Byte;                  { the spell the use casts, from the scroll or Affects[2]; 0 when there is none }
   Choice: Word;                 { -1: ChooseSpellFromList opens its window and asks for a spell }
@@ -754,14 +777,14 @@ begin
     Done := 0
   else
   begin
-    if (ds49F3 = ViewCombat) and (SelectedCharacter^.Quick = 0) then
+    if (ds49F3 = ViewModeCombat) and (SelectedCharacter^.Quick = 0) then
       DrawCombatScreen;
     if ItemAffectUse then
     begin
       if Spell > LastSpell then
         Dec(Spell, SpellShift);
       ShowCharacterMessage(SelectedCharacter, 'uses an item', 10, 0);
-      if ds49F3 = ViewCombat then
+      if ds49F3 = ViewModeCombat then
       begin
         DrawTextAt(0, ItemPromptRow, TitleColor, 'Item:');
         res12_fn_0442(LongInt(SelectedCharacter), Item, 5, ItemPromptRow, 0, 1);
@@ -774,7 +797,7 @@ begin
     ItemAffectUse := True;
     ovl22_e5(Spell, SelectedCharacter^.Quick, 0, Done);
     ItemAffectUse := False;
-    if (ds49F3 = ViewCombat) and (SpellTable[Spell].PadB[$B] <> 0) then
+    if (ds49F3 = ViewModeCombat) and (SpellTable[Spell].PadB[$B] <> 0) then
       Done := EndCombatTurn(SelectedCharacter);
   end;
   if Done <> 0 then

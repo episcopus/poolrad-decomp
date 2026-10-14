@@ -5,7 +5,7 @@ unit OVL29;
   id, door kind and event byte (CellInRange and the off-map wrap shared by all three). DrawWallView
   draws the 3D view from ten wall pieces (DrawWallPiece) or, in WallMapMode, the overhead wall map
   (DrawWallMap); SetWallDescriptors and DrawWallDescriptors keep and draw the view's frame. }
-{$A-,O+,F+,S-,R-,G-,I-}
+{$A-,O+,F+,S-,R-,G-,I-,L-}
 interface
 procedure DrawWallMap(Col, Row: ShortInt; Dir: Byte);
 procedure SetWallDescriptors(Wall1, Wall2, Wall3, Wall4: Byte);

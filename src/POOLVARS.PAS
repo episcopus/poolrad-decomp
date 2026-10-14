@@ -141,6 +141,13 @@ type
     Frames: array[1..8] of TAnimFrame;  { +2 }
   end;
   TItem = TMenuLine;
+  { One slot of the training-hall function menu at DS:0619 (11 records, stride 42): the line the
+    create-character overlay (ovl16) draws and whether the function is offered. RunCharacterMenu reads
+    Name[I] with I = 0..10 and gates the hotkey 'C'..'J' on Present. }
+  TFunctionSlot = record
+    Name: string[40];
+    Present: Byte;               { +$29: nonzero: the function is drawn and its hotkey works }
+  end;
   { A character in memory: the 285-byte record of whitepaper 4.2.5 (name, abilities and hp_max
     [V] by tools/re/records.py). Only the fields a decompiled unit uses are named; the Pad
     arrays keep the offsets. }
@@ -202,12 +209,17 @@ type
       QuickTurn and MoveStep reroll it (ovl09:000F, 07F2). }
     StepPattern: Byte;
   end;
-  { One $13-byte record of the list at DS:6DBB (FreeMem size, ovl08:0029); only Next is known. }
+  { One $13-byte record of the list at DS:6DBB (FreeMem size, ovl08:0029): a cloud on the combat map
+    (ovl12:0CC3). Its centre is (X, Y); arm i is one step from it in direction ds290D[i], and Tiles[i]
+    is the tile that arm covered before the cloud came. }
   PCombatNode = ^TCombatNode;
   TCombatNode = record
-    Pad0: array[0..3] of Byte;
+    Owner: PCharacter;            { +$0: the character the cloud belongs to }
     Next: PCombatNode;            { +$4 }
-    Pad8: array[8..$12] of Byte;
+    Tiles: array[1..4] of Byte;   { +$8..$B: the tile each arm covered }
+    Arms: array[1..4] of Byte;    { +$C..$F: nonzero while the arm is still in place }
+    X, Y: ShortInt;               { +$10, +$11: the centre cell }
+    Kind: Byte;                   { +$12: the high nibble of the Data of the affect that made it }
   end;
   { One 16-byte row of the spell table DS:320A (SpellTable): RecalcClassStats reads the class
     and the level (ovl23:0110, 0119); the other bytes are not known yet. }
@@ -528,7 +540,31 @@ var
   { The 13 code wheel records of the copy protection (whitepaper 5.12): the answer, the rune
     indices and the path pattern. CheckCodeWheel picks one at random. }
   ds0000: array[0..12] of TCodeWheelEntry;  { the code wheel records; see above }
+  { Five 16-byte names at DS:0332 (rows 0 to 4; row 0 is the index base and is never read). The rows 1 to 4
+    are the names the affect handler at ovl12:0679 compares with the attacked character's name; their text
+    is not read yet [?]. }
+  ds0332: array[0..4] of string[15];
+  { Eight 16-byte names at DS:0382 (rows 1 to 8), directly after ds0332: the names the affect handler at ovl12:0947
+    compares with the attacked character's name. Their text is not read yet [?]. }
+  ds0382: array[1..8] of string[15];
+  { Eight 16-byte names at DS:0402 (rows 1 to 8), directly after ds0382: the names the affect handler at ovl12:11F9
+    compares with the attacked character's name. Their text is not read yet [?]. }
+  ds0402: array[1..8] of string[15];
   ds04DF: string[40];             { prompt string HandleWildernessKeys passes to ReadPromptChoice; filled elsewhere }
+  { One bit per class 0..7 (the value is added to a class-bit mask): ovl16:29AE builds the character's
+    class bits from the classes with a level above 0 (DS:05DE[ClassLevels]) and the bits it may train. }
+  ds05DE: array[0..7] of Byte;
+  { The 'C D M T V A R L S B E J' hotkey line: the prompt RunCharacterMenu (ovl16:0161) passes to
+    ReadPromptChoice under the title 'Choose a function '. }
+  ds05F0: string[23];
+  ds0619: array[0..10] of TFunctionSlot;  { the training-hall function menu (see TFunctionSlot) }
+  { The hit dice of the eight classes 0..7, rolled by ovl16:4235: ClassHitDiceCount[Class] dice of
+    ClassHitDieSides[Class] sides. The image holds 1,1,1,1,2,1,1,2 (cleric, druid, fighter, paladin,
+    ranger, magic-user, thief, monk; two dice for the ranger and the monk) and 8,8,10,10,8,4,6,4
+    sides. Entry 7 of the sides table is the byte at DS:08C5, entry 0 of the CHEAD suffix table
+    below (the image). }
+  ClassHitDiceCount: array[0..7] of Byte;    { the number of hit dice of the eight classes }
+  ClassHitDieSides: array[0..7] of Byte;     { the sides of each class's hit die }
   { The CHEAD/CBODY character-picture name suffix table: the byte ds08C5[FigureIndex] is the
     character BuildCharacterIcon appends to 'CHEAD'/'CBODY' (index 1 gives 'S', 2 gives 'T'). Its extent is
     unverified: the region runs to the door table at DS:0900. }
@@ -562,6 +598,23 @@ var
     I 1..6 holds 1, 2, 3, 4, 6, 7 (the destination colour of the I-th of the six colour pairs, and
     plus 8 for the high nibble). It sits inside the ThiefSkillTable region (DS:3CF4). }
   ds3CF5: array[0..$F] of Byte;
+  { The per-race ability limits ModifyCharacter (ovl16:209F) and ovl16:056C clamp to: a 16-byte row
+    per race, a minimum and maximum column per ability (ds3DA3, indexed by [Race, B9E] or
+    [Race, column]). Columns +0/+2/+4 hold the Strength minimum, maximum and exceptional percentile
+    maximum (RaceStrengthMax and RaceStrengthPercent are the same rows viewed two and four columns
+    on), columns +6/+7 .. +14/+15 the minimum and maximum of Intelligence, Wisdom, Dexterity,
+    Constitution and Charisma. }
+  ds3DA3: array[0..$F, 0..$F] of Byte;
+  RaceStrengthMax: array[0..$F, -2..$D] of Byte absolute ds3DA3;
+  RaceStrengthPercent: array[0..$F, -4..$B] of Byte absolute ds3DA3;
+  { The per-class ability minimums ModifyCharacter clamps to: six columns per class (Strength ..
+    Charisma), indexed by [ClassMask, Stat]. }
+  ds3F81: array[0..$10, 0..5] of Byte;
+  { The constitution hit-point adjustment table (the AD&D 1e table): ConstitutionHitPointTable[Constitution] is the
+    hit-point adjustment a class with a level gets, signed (Constitution 3 gives -2, 4..6 -1,
+    7..14 0, 15 +1, 16..18 +2). ovl16:3F31 sums it over the classes the character has a level in
+    and adds the fighter bonus (Constitution above 16). Indexed by TCharacter.Constitution (+$14). }
+  ConstitutionHitPointTable: array[0..$12] of ShortInt;
   ds43DC: Word;                   { nonzero after overlay sizing means the overlay manager failed: res08_init
                                     shows 'Overlay error, program abort!' and halts (probably OvrResult) }
   NewHeapEnd: Pointer;            { DS:$4848: HeapEnd cut by $400 paragraphs; assigned to HeapEnd }
@@ -664,6 +717,9 @@ var
   ds093D: array[0..$F] of Byte;   { the third 16-byte record AnimateAreaDoors passes to RemapPictureColours }
   ds094D: array[0..8] of Word;    { the per-step DrawAreaView columns of AnimateAreaDoors (indexed 0..8) }
   ds095F: array[0..8] of Word;    { the per-step DrawAreaView rows of AnimateAreaDoors (indexed 0..8) }
+  { Set to 1 by the RunCharacterMenu STING cheat (ovl16:0161) and read there to offer the modify
+    function; its meaning beyond that is unknown. }
+  ds470C: Byte;
   ds470E: Pointer;                { the FINAL picture bank ShowEndingNarrative loads through LoadPicture and draws }
   ds4712: Byte;                   { the DS:49F3 value ShowEndingNarrative saves at the start and restores at the end }
   ds4713: string[1];              { Str(TileSet): the picture number ShowEndingNarrative appends to FINAL }
@@ -846,7 +902,7 @@ var
   DiseaseAffects: array[0..6] of Byte;  { see above }
   ds681F: Byte;                   { 1 while the Temple removes affects (RemoveAffect; ovl04:0386, 05AB, 07CE), 0 after }
   { Set to 1 once SelectSpellTargets has filled the target list ds6C91 from a spell's area scan (ovl13:2205),
-    never cleared by ovl13; a reader elsewhere is not found yet. }
+    never cleared by ovl13; ovl12:09C0 (ImageAbsorbsHit) lets an image take a hit only while this byte is 0. }
   ds6820: Byte;
   PooledMoney: TPartyMoney;       { the Temple clears it on entry (ovl04:0D32) and passes it to MoneyValueInGold }
   { The spell targets SelectSpellTargets collects while a spell is aimed: entry I holds the PCharacter of a
@@ -901,15 +957,21 @@ var
     Platinum, Gems, Jewelry (the image); the Take menu lists the pool with them (ovl21:0DDF). }
   MoneyKindNames: array[0..6] of string[10];
   { The sheet's name tables (ShowCharacterSheet), the images' strings: the sex (+$9E, ShortInt), the race (+$2E),
-    the class (+$2F, the eight single classes) and the alignment (+$A0), and the status (+$10C). }
+    the class (+$2F: 0..7 the single classes, 8..16 the multi-class names) and the alignment (+$A0),
+    and the status (+$10C). }
   SexNames: array[0..1] of string[6];
   RaceNames: array[0..7] of string[9];
-  ClassNames: array[0..7] of string[26];
-  AlignmentNames: array[0..7] of string[16];
-  { The names of the eight character status values that DrawCharacterPanel shows as the status line:
-    string[12] at DS:1047 (the image: 0 Okay, 1 Animated, 2 tempgone, 3 Running, 4 Unconscious,
-    5 Dying, 6 Dead, 7 Stoned), indexed by TCharacter.Status. }
-  StatusNames: array[0..7] of string[12];
+  { 17 string[26] at DS:0D38, 27 bytes apart (the image): Cleric .. Monk (0..7), then Cleric/Fighter,
+    Cleric/Fighter/Magic-User, Cleric/Ranger, Cleric/Magic-User, Cleric/Thief, Fighter/Magic-User,
+    Fighter/Thief, Fighter/Magic-User/Thief and Magic-User/Thief (8..16), indexed by TCharacter.ClassMask. }
+  ClassNames: array[0..16] of string[26];
+  { Nine string[16] at DS:0F53, 17 bytes apart (the image): Lawful Good .. Chaotic Neutral (0..7) and
+    Chaotic Evil (8), indexed by the signed byte at +$A0. }
+  AlignmentNames: array[0..8] of string[16];
+  { The names of the nine character status values that DrawCharacterPanel shows as the status line:
+    string[12] at DS:1047, 13 bytes apart (the image: 0 Okay, 1 Animated, 2 tempgone, 3 Running,
+    4 Unconscious, 5 Dying, 6 Dead, 7 Stoned, 8 Gone), indexed by TCharacter.Status. }
+  StatusNames: array[0..8] of string[12];
   { The item name parts res12_fn_0442 appends to a menu line: 256 strings of at most 20
     characters (21 bytes each) at DS:10A7 (the image: entry 1 'Battle Axe' through entry 255
     'Cursed'; entry 0 overlaps the tail of the preceding status string and is never used).
@@ -932,7 +994,8 @@ var
     chosen target, ovl13:207C/2086); who reads them is not found yet. }
   ds6DB9: Byte;                   { see above: the chosen target's combat column }
   ds6DBA: Byte;                   { see above: the chosen target's combat row }
-  ds6DBB: PCombatNode;            { a list of $13-byte records EndCombat frees (ovl08:0006); meaning unknown }
+  { Globals of the combat unit ovl08 (whitepaper 5.5). }
+  ds6DBB: PCombatNode;            { the list of clouds (TCombatNode): EndCombat frees them (ovl08:0006); ovl12:0CC3 }
   ItemAffectUse: Boolean;         { True while the Use action (UseItem, ovl19:1BC2..1BE2) casts a spell through ovl22_e5,
                                     and set (ovl19:1AE7) for an item whose Affects[2] gives the spell (not a scroll);
                                     what ovl22_e5 does with it is not known yet. 0 in the spell setup paths
@@ -946,13 +1009,19 @@ var
   ds6814: Byte;                   { zero (or ds6815 zero) ends the combat (ovl08:009B, 095C); likely the count of one side }
   ds6815: Byte;                   { see ds6814; likely the count of the other side }
   { The round's Movement in half squares ComputeMovement computes for a combatant (it stores it
-    before the movement affect hooks and reads it back); StartCombatantRound also seeds it from Who^.PadA2. }
+    before the movement affect hooks and reads it back); StartCombatantRound also seeds it from Who^.PadA2.
+    ovl12:0C4B shifts it left by 1 every time it runs and ovl12:10C1 shifts it right by 1 [?]. }
   ds681A: Byte;
+  { Purpose unknown: ovl12:064E clears DamageAmount when this byte is $0F; ovl12:2556 cancels the damage hook then too;
+    ovl12:09C0 (ImageAbsorbsHit) needs it above 0. }
+  ds681B: Byte;
+  LastDiceCount: Byte;            { the dice count of the last RollDiceCounted roll (ovl24:0E37) }
   { Set while ComputeMovement runs the movement affect hooks and cleared around them; what reads
-    it is not known yet. }
+    it is not known yet (ovl12:1452 (ovl12_e48) clears ds681A while it is not 0). }
   ds681D: Boolean;
   { Cleared before and tested after RunAffectHooks kinds 1 (on the target) and 0 (on the attacker)
-    around an attack's target check (ovl13:1085); a hook that sets it rejects the attack. }
+    around an attack's target check (ovl13:1085); a hook that sets it rejects the attack. ovl12:0918 and
+    ovl12:0C26 also set it to 1 (turn pending). }
   ds681E: Byte;
   { The Turn Undead table (ovl13:122F): a row per undead type (TCharacter +$76) and a column per
     cleric level band (0..9, the code passes 1..10 with bounds checks off); a positive entry turns
@@ -967,6 +1036,9 @@ var
     combatant's turn; entry 0 at DS:6E2C is the array base, never read. }
   ds6E2C: array[0..2] of Byte;
   ds6825: Byte;                   { AI morale scratch (CheckMorale computes it from B84, compares percentages) }
+  { The character Who attacked last (Who^.Combat^.Target), copied by BoostAttackAgainstTarget (ovl12:013B).
+    A far pointer: its segment word is DS:6828, the start of AffectHandlers, which overlaps it. }
+  AttackTarget: PCharacter;
   { A combatant pointer the affect handlers share as scratch: ovl13:3A86 (the affect $4A handler)
     stores the combatant the affect records (CombatantRecord[Affect^.Data]) here and attacks it, and
     ovl12's handler at ovl12 code 0x138 stores Who^.Combat^.Target here before reading it. It
@@ -996,6 +1068,12 @@ var
     read: it is declared so that the index base, which RecalcClassStats adds (ovl23:0103), names it. }
   SpellTable: array[0..$38] of TSpellEntry;  { see above }
   ClassThac0Table: array[0..7, 0..10] of Byte;  { the to-hit value per class 0..7 and level (RecalcClassStats) }
+  { The experience needed to reach each level, one 56-byte row (14 LongInts, level 0..13) per class 0..7
+    at DS:409B: ovl16:29AE reads ds409B[class, level+1] (the next level's threshold) and
+    ds409B[class, level+2] (that of the level after, 0 when the class is capped). }
+  ds409B: array[0..7, 0..13] of LongInt;
+  { ClassXpTable is the same storage under the name ovl12:2122 uses (the nested routine for the highest class level). }
+  ClassXpTable: array[0..7, 0..13] of LongInt absolute ds409B;
   ds40BC: Byte;                   { the byte before ClericSlotTable; see above }
   ClericSlotTable: array[0..12, 1..3] of Byte;  { cleric spell slots of levels 1..3 per cleric level }
   ds41D4: Byte;                   { the byte before MageSlotTable; see above }
@@ -1024,13 +1102,15 @@ var
   HookAffectId: Byte;             { the affect ApplyAffect offers to the hooks; 0 afterwards: unaffected (ovl24:1672) }
   DamageAmount: Byte;             { the damage DealDamage offers to the hooks and then deals (ovl24:134E) }
   DamageKind: Byte;               { the kind of damage: 1 fire, 2 cold, 4 electricity, $10 acid, bit 3 magic (ovl24:13E4) }
-  ds681C: Byte;                   { the dice count of the last RollDiceCounted roll (ovl24:0E37) }
-  ds6821: Byte;                   { nonzero: the Items window is drawn even if its flag is clear (ovl19:1194) }
+  { Set to 1 by ovl12:2F57 when it adds a strength affect; nonzero: the Items window is drawn even if
+    its flag is clear (ovl19:1194). }
+  ds6821: Byte;
   { Byte DS:6822 as the three bytes ResolveCombatantAttacks addresses by attack slot: element 0 is the scalar
     AttackRoll that RollToHit and RollBeatsResistance write, elements 1 and 2 (DS:6823/6824) are the
     per-slot rolls the attack loop counts. }
-  ds6822: array[0..2] of ShortInt;
-  AttackRoll: ShortInt absolute ds6822;   { the scalar attack or resistance roll (ovl24:0C63) }
+  AttackSlotRolls: array[0..2] of ShortInt;
+  AttackRoll: ShortInt absolute AttackSlotRolls;   { the scalar attack or resistance roll (ovl24:0C63) }
+  ds6823: Byte;                   { decremented every time an attack is avoided (ovl12:0FAC); meaning unknown [?] }
   SaveKind: Byte;                 { the saving throw kind SavingThrow offers to the hooks (ovl24:0DAD) }
   { The handler of every affect number, called through CallAffectHandler (ovl24:001E); extent unknown. Entry 0
     is not a handler: SaveKind lies in it. }
@@ -1055,6 +1135,9 @@ var
     the next pending spell's level resets it to three times that level (ovl20:0B80..0B91). }
   RestStudyCountdowns: array[0..6] of Byte;
   ds6DD8: Word;                   { cleared when the camp opens (ovl15:1E80); meaning unknown }
+  { The direction of each cloud arm 1..4 (ovl12:0CC3): DirStepX[ds290D[Arm]] and DirStepY[ds290D[Arm]] give the
+    arm's step from the centre. The values are not read yet [?]. }
+  ds290D: array[0..4] of Byte;
   { The spell names, string[40] per spell 1..$38 at DS:2912 ('Bless' .. 'Restoration' in the image,
     the rows of SpellTable); entry 0 is the index base (ovl15:10EE), never read. }
   SpellNames: array[0..$38] of string[40];

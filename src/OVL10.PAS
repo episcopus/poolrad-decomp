@@ -7,7 +7,7 @@ unit OVL10;
   puts each one on the map: every side has an 11x6 placement grid in four groups (PlacementCells),
   laid on the map from an origin in area map steps, and FindStartCell walks rings of that grid
   until TryPlaceAt finds a free passable cell. }
-{$A-,O+,F+,S-,R-,G-,I-}
+{$A-,O+,F+,S-,R-,G-,I-,L-}
 interface
 procedure ScatterRareTiles;
 function PassageKind(Col, Row: ShortInt; Dir: Byte): Byte;
@@ -869,7 +869,7 @@ end;
   combatant Index (CombatantRecord, CombatantTable Unk2 and Kind from CombatSize) and gets a cell
   from FindStartCell. A placed character with Flag10D 0 is taken off again and, outside a duel and
   unless NoBody, leaves a body (TileBody, BodyTable). One that finds no cell and has NoBody is cut
-  out of the list through ovl16_e2; the list ends after the last character kept. }
+  out of the list through RemoveSelectedCharacter; the list ends after the last character kept. }
 procedure PlaceAllCombatants;
 var
   Col, Row: ShortInt;
@@ -950,7 +950,7 @@ begin
         Inc(DroppedCount);
         CombatantRecord[Index] := nil;
         SelectedCharacter := Who;
-        ovl16_e2(True, False);
+        RemoveSelectedCharacter(True, False);
         Who := Prev;
       end
       else
