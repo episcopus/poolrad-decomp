@@ -61,7 +61,7 @@ units = ["*"]
 tags = ["VideoAdapter", "case", "codegen", "dispatch"]
 title = "The VideoAdapter dispatch over 0/2 and 1 is a case, not an if"
 lesson = "A multi-label `case VideoAdapter of 0, 2: ...; 1: ...` loads the byte once and compares: `mov al,[VideoAdapter]; cmp al,0; je A; cmp al,2; je A; jmp Check1` (see res07 DrawPictureItem, 0464:0949, and ovl17:032F, ovl17:0335). The equivalent `if (VideoAdapter = 0) or (VideoAdapter = 2) then ... else if VideoAdapter = 1 then ...` compares the memory operand directly (`cmp byte [VideoAdapter],0`) and does not match. Use the case form when the dispatch compares the adapter more than once."
-evidence = ["src/OVL17.PAS#MergePictureData", "src/RES07.PAS#DrawPictureItem", "tools/re/tp_idioms/ovl17/PARAMPRB.PAS", "build/packets/ovl17_032F.md"]
+evidence = ["src/OVL17.PAS#MergePictureData", "src/RES07.PAS#DrawPictureItem", "tools/re/tp_idioms/ovl17/PARAMPRB.PAS"]
 
 [[lesson]]
 id = "in-memory-picture-record"
@@ -80,3 +80,12 @@ tags = ["nibble", "shr", "and", "byte", "codegen"]
 title = "Splitting a byte into nibbles needs the mask written out"
 lesson = "To split a byte X into its nibbles the original writes `X and $0F` for the low nibble and `(X and $F0) shr 4` for the high one. The plain `X shr 4` compiles to `mov al,X; xor ah,ah; mov cx,4; shr ax,cl` and is 2 bytes shorter than the original's `mov al,X; and al,$F0; xor ah,ah; mov cx,4; shr ax,cl` (ovl17:05D7..05E3). The `and al,$F0` must be in the source. Probe tools/re/tp_idioms/ovl17/RECOLPRB.PAS."
 evidence = ["src/OVL17.PAS#BuildCharacterIcon", "tools/re/tp_idioms/ovl17/RECOLPRB.PAS"]
+
+[[lesson]]
+id = "untyped-file-runtime-entries"
+confidence = "V"
+units = ["*"]
+tags = ["file", "untyped", "rewrite", "reset", "erase", "blockwrite", "assign", "string-parameter"]
+title = "The untyped file statements name these System entries"
+lesson = "For an untyped `file`: `Assign(F, Name)` calls 0AF8:13E2; `Reset(F, RecSize)` calls 0AF8:1410 (INT 21h AH=3Dh, open existing) with the size pushed; `Rewrite(F, RecSize)` calls 0AF8:1419, the twin nine bytes on (INT 21h AH=3Ch, create), also with the size pushed; `Erase(F)` calls 0AF8:161F (INT 21h AH=41h, delete) with only the record's address pushed; `Close(F)` calls 0AF8:1491 and `BlockWrite(F, Buf, Count)` calls 0AF8:1502. FileRec is $80 bytes. A value `string[N]` parameter is copied in the callee with System_StrLCopy limit N and the copy reads the pointer at [bp+6], so the value string parameter is the LAST declared parameter. Probes tools/re/tp_idioms/ovl17/FILEOP2.PAS and PROLOGPR.PAS."
+evidence = ["src/OVL17.PAS#SaveCharacter", "tools/re/tp_idioms/ovl17/FILEOP2.PAS", "tools/re/tp_idioms/ovl17/PROLOGPR.PAS"]

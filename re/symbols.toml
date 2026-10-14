@@ -8361,53 +8361,14 @@ evidence = ["prologue"]
 id = "ovl17:069E"
 unit = "ovl17"
 addr = "ovl17:069E"
-size = 378
-name = "ovl17_e4"
+size = 1062
+name = "SaveCharacter"
 signature = ""
 c_name = "ovl17_e4"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl17_e4 (ovl17:069E saves one character to the save disk: with an empty Name it adds the character's name to charlist.txt and writes SaveDir + DOS-cleaned name + .cha, with a Name it writes SaveDir + Name + .sav; BlockWrites the 285-byte character and the 63-byte items (.itm) and 9-byte affects (.spc) lists; called by ovl16_e1, ovl16_fn_1EA3 and ovl17_e9); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl17:0818"
-unit = "ovl17"
-addr = "ovl17:0818"
-size = 50
-name = "ovl17_fn_0818"
-signature = ""
-c_name = "ovl17_fn_0818"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
-
-[[routine]]
-id = "ovl17:084A"
-unit = "ovl17"
-addr = "ovl17:084A"
-size = 27
-name = "ovl17_fn_084A"
-signature = ""
-c_name = "ovl17_fn_084A"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl17:0865"
-unit = "ovl17"
-addr = "ovl17:0865"
-size = 640
-name = "ovl17_fn_0865"
-signature = ""
-c_name = "ovl17_fn_0865"
-level = "none"
-justification = ""
-notes = "auto:near_call"
-evidence = ["near_call"]
 
 [[routine]]
 id = "ovl17:0AE5"

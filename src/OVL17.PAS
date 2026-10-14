@@ -7,15 +7,14 @@ unit OVL17;
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
 uses POOLVARS;
+type
+  String8 = string[8];   { the short save-file base name SaveCharacter takes }
 procedure ReadSavedCharacterList(var List: PMenuLine);
 procedure RewriteSavedCharacterList(List: PMenuLine);
 procedure CreateSaveDir;
 procedure MergePictureData(Source, Dest: Pointer);
 procedure BuildCharacterIcon(Recolor: Boolean);
-procedure ovl17_e4;
-procedure ovl17_fn_0818;
-procedure ovl17_fn_084A;
-procedure ovl17_fn_0865;
+procedure SaveCharacter(Who: PCharacter; Name: String8);
 procedure ovl17_fn_0AE5;
 procedure ovl17_e5;
 procedure ovl17_fn_0B48;
@@ -55,7 +54,7 @@ const
   A name a party member (the ds5D96 list) already carries is prefixed '* ', so the menu shows who
   is already in the party. Does nothing (List stays nil) when the file is missing. Reads SaveDir
   and the party list; writes List; side effects: the disk prompt (CreateSaveDir) and the heap (one
-  menu line per saved character). Called by ovl16's character menu and by ovl17_e4 (save one
+  menu line per saved character). Called by ovl16's character menu and by SaveCharacter (save one
   character). }
 procedure ReadSavedCharacterList(var List: PMenuLine);
 var
@@ -98,7 +97,7 @@ end;
   tries again while the open fails (IOResult non-zero). Writes one line per list entry whose text
   does not start with '*' (the party members are skipped, so they leave the available-character
   file), then closes it. Reads SaveDir and List; writes charlist.txt. Called by the ovl16 add-character
-  menu (ovl16_fn_306D) and by ovl17_e4. }
+  menu (ovl16_fn_306D) and by SaveCharacter. }
 procedure RewriteSavedCharacterList(List: PMenuLine);
 var
   Line: PMenuLine;              { walks the list }
@@ -126,7 +125,7 @@ end;
   trailing backslash, and while that fails with anything but success or "already there" it shows
   "Put save disk in <drive>:" (the drive letter SaveDir starts with) and tries again. Reads SaveDir,
   creates the directory on the save disk as a side effect. Called before the save files are touched
-  by ReadSavedCharacterList, RewriteSavedCharacterList, ovl17_e4, ovl17_e8 and ovl17_e9. }
+  by ReadSavedCharacterList, RewriteSavedCharacterList, SaveCharacter, ovl17_e8 and ovl17_e9. }
 procedure CreateSaveDir;
 var
   ErrCode: Word;
@@ -214,14 +213,95 @@ begin
     FlushKeyboard;
   end;
 end;
-{ ovl17:069E: frame not read }
-{@stub} procedure ovl17_e4; begin end;
-{ ovl17:0818: frame not read }
-{@stub} procedure ovl17_fn_0818; begin end;
-{ ovl17:084A: frame not read }
-{@stub} procedure ovl17_fn_084A; begin end;
-{ ovl17:0865: retf 8: 8 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl17_fn_0865; begin end;
+{ ovl17:069E. Saves the character Who to the save disk. With an empty Name it adds Who's name to the
+  saved-character file charlist.txt (ReadSavedCharacterList, a new 46-byte line at the tail,
+  RewriteSavedCharacterList, FreeMenuList) and writes to SaveDir + a DOS-cleaned Who^.Name + '.cha';
+  with a Name it makes the save directory and writes to SaveDir + Name + '.sav'. It rewrites the
+  file (prompting for the save disk while the open fails), BlockWrites the 285-byte character,
+  closes it, and (after erasing any old file) writes the 63-byte items of Who^.Items to '.itm' and
+  the 9-byte affects of Who^.Affects to '.spc'. Called by ovl16_e1, ovl16_fn_1EA3 and ovl17_e9. }
+procedure SaveCharacter(Who: PCharacter; Name: String8);
+var
+  SaveFile: file;                      { the file written }
+  FileName: string[40];         { the file name without its extension }
+  Suffix: string[4];            { the file extension: '.sav' or '.cha' }
+  Unused: Word;                 { QUIRK ovl17:069E: two frame bytes the original reserves and never reads or writes }
+  Item: PItem;                  { walks Who^.Items }
+  Affect: PAffect;              { walks Who^.Affects }
+  List: PMenuLine;              { the saved-character list ReadSavedCharacterList built }
+  Walk: PMenuLine;              { walks List to its last line }
+  Last: PMenuLine;              { the new line added for Who }
+  ErrCode: Word;                { IOResult of the file rewrite }
+begin
+  if Name = '' then
+  begin
+    ReadSavedCharacterList(List);
+    Walk := List;
+    if Walk <> nil then
+      while Walk^.Next <> nil do
+        Walk := Walk^.Next;
+    GetMem(Last, MenuLineBytes);
+    FillChar(Last^, MenuLineBytes, 0);
+    Last^.Text := Who^.Name;
+    if Walk <> nil then
+      Walk^.Next := Last
+    else
+      List := Last;
+    RewriteSavedCharacterList(List);
+    FreeMenuList(List);
+    Suffix := '.cha';
+    FileName := SaveDir + MakeDosFileName(DeleteAllOccurrences(Who^.Name, '.'));
+  end
+  else
+  begin
+    CreateSaveDir;
+    Suffix := '.sav';
+    FileName := SaveDir + Name;
+  end;
+  repeat
+    Assign(SaveFile, FileName + Suffix);
+    Rewrite(SaveFile, 1);
+    ErrCode := IOResult;
+    if ErrCode <> 0 then
+      ShowMessageLine(Yellow, 'Put save disk in ' + SaveDir[1] + ':');
+  until ErrCode = 0;
+  BlockWrite(SaveFile, Who^, 285);
+  Close(SaveFile);
+  if FileExists(FileName + '.itm') then
+  begin
+    Assign(SaveFile, FileName + '.itm');
+    Erase(SaveFile);
+  end;
+  if Who^.Items <> nil then
+  begin
+    Assign(SaveFile, FileName + '.itm');
+    Rewrite(SaveFile, 1);
+    Item := Who^.Items;
+    while Item <> nil do
+    begin
+      BlockWrite(SaveFile, Item^, 63);
+      Item := Item^.Next;
+    end;
+    Close(SaveFile);
+  end;
+  if FileExists(FileName + '.spc') then
+  begin
+    Assign(SaveFile, FileName + '.spc');
+    Erase(SaveFile);
+  end;
+  if Who^.Affects <> nil then
+  begin
+    Assign(SaveFile, FileName + '.spc');
+    Rewrite(SaveFile, 1);
+    Affect := Who^.Affects;
+    while Affect <> nil do
+    begin
+      BlockWrite(SaveFile, Affect^, 9);
+      Affect := Affect^.Next;
+    end;
+    Close(SaveFile);
+  end;
+end;
 { ovl17:0AE5: frame not read }
 {@stub} procedure ovl17_fn_0AE5; begin end;
 { ovl17:0AEC: frame not read }

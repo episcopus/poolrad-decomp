@@ -3427,3 +3427,10 @@ kind = "routine"
 why = "ovl17:0482 loads the selected character's CHEAD (slot 11) and CBODY (its icon slot) pictures, merges the head halves into the body halves with MergePictureData, and optionally recolours the icon from the six Figure nibble pairs through ds3CF5; called by the ovl16 character menus, ovl17_e7 and ovl17_e8"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl17_e4"
+new = "SaveCharacter"
+kind = "routine"
+why = "ovl17:069E saves one character to the save disk: with an empty Name it adds the character's name to charlist.txt and writes SaveDir + DOS-cleaned name + .cha, with a Name it writes SaveDir + Name + .sav; BlockWrites the 285-byte character and the 63-byte items (.itm) and 9-byte affects (.spc) lists; called by ovl16_e1, ovl16_fn_1EA3 and ovl17_e9"
+date = "2026-10-13"
+

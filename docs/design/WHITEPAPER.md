@@ -785,8 +785,30 @@ character joins the party.
   (`RecalcClassStats`, ovl23). So every party member carries a distinct combat icon 0..7, and the
   party list `ds5D96` is the single list the combat and camp units walk **[V]** (5.5, 5.20).
 
+- **The saved-character list** **[V]** (`ReadSavedCharacterList`, `ovl17:0010`; `RewriteSavedCharacterList`,
+  `ovl17:01B8`): `charlist.txt` in `SaveDir` holds one saved character name per line. The reader makes
+  the save directory (`CreateSaveDir`), reads the file into a list of 46-byte menu lines (the Text,
+  Flag29 and Next fields of `TMenuLine`) and prefixes `'* '` to a name the party list `ds5D96` already
+  carries; the writer rewrites the file from such a list, skipping the lines that begin with `'*'`,
+  and prompts for the save disk while the file cannot be created. Both use the map disk prompt
+  `'Put save disk in <drive>:'`.
+- **Saving a character** **[V]** (`SaveCharacter`, `ovl17:069E`; `make match UNIT=ovl17`): with an
+  empty name it adds the character's name to `charlist.txt` (a new line at the tail, then the rewrite
+  above) and writes `SaveDir + MakeDosFileName(name) + '.cha'`; with a name it makes the directory and
+  writes `SaveDir + name + '.sav'`. Either way it `Rewrite`s the file with record size 1 (prompting
+  for the save disk while the open fails), `BlockWrite`s the 285-byte character, closes it and, after
+  `Erase`ing any old file, writes the 63-byte items of `Who^.Items` to `.itm` and the 9-byte affects
+  of `Who^.Affects` to `.spc`.
+- **The combat icon picture** **[V]** (`BuildCharacterIcon`, `ovl17:0482`; `MergePictureData`,
+  `ovl17:032F`): with 8X8D tile set 3 selected, it loads the selected character's CHEAD picture (the
+  name suffixed from `ds08C5[Sel^.Figure[0]]`, block `Sel^.CHeadBlock`) into slot 11 and its CBODY
+  (block `Sel^.CBodyBlock`) into slot `Sel^.CombatIcon`, then merges the CHEAD halves into the CBODY
+  halves (OR the tail tile bytes, AND the pixel bytes) so the head masks the body; when asked it also
+  builds a 16-entry colour map from the six nibble pairs `Sel^.Figure[1..6]` through `ds3CF5` and
+  applies it to both halves.
+
 **Boundary note** **[V]** (`make packet UNIT=ovl17`): the map splits several ovl17 routines into
-mid-instruction entries (`ovl17_fn_0818/084A/0865` inside `ovl17_e4`, `ovl17_fn_0B48` inside
+mid-instruction entries (`ovl17_fn_0818/084A/0865` inside `SaveCharacter`, `ovl17_fn_0B48` inside
 `ovl17_e5`, `ovl17_fn_0F99` inside `ovl17_e6`, `ovl17_fn_0AE5` a literal pool). Each real routine has
 one `push bp; mov bp, sp` prologue and one `retf`; the phantom entries share the parent frame. Scan
 for the real prologues before drafting, and let `make match WRITE=1` retire the phantom map entries.
