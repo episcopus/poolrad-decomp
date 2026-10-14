@@ -44,7 +44,7 @@ procedure ovl03_fn_238D;
 procedure ChooseAttitudeCommand;
 procedure ComparePartyItemCommand;
 procedure PauseCommand;
-procedure ovl03_fn_2775;
+procedure DamagePartyCommand;
 procedure ovl03_fn_2AA2;
 procedure ovl03_fn_2AC1;
 procedure ovl03_fn_2AEB;
@@ -66,7 +66,7 @@ procedure ovl03_e1;
 procedure ovl03_fn_3379;
 procedure ovl03_fn_34AB;
 implementation
-uses OVL04, OVL05, OVL06, OVL08, OVL17, OVL21, OVL24, OVL25, OVL26, OVL28, OVL29, OVL32, RES04, RES05, RES06;
+uses OVL04, OVL05, OVL06, OVL08, OVL17, OVL21, OVL24, OVL25, OVL26, OVL28, OVL29, OVL32, RES04, RES05, RES06, Crt;
 
 const
   { The operand types from this one up are strings: $80 a packed string, $81 the address of a
@@ -146,6 +146,27 @@ const
   OpContinueText = $11;
   { The menu of ECL command 44 (ovl03:25CB): the words of the attitudes, each after a hotkey mark. }
   AttitudeMenu = '~HAUGHTY ~SLY ~NICE ~MEEK ~ABUSIVE';
+  { ECL command 46 (ovl03:2775). Operand 1: bit 7 picks one target (clear: the number of hits, each on a
+    random member), bit 6 hits the whole party, bit 5 is a hit no saving throw stops; the low five bits are
+    the saving throw kind. Operand 5: bit 7 picks the selected character as the target (else a random
+    member); its low three bits are the saving throw bonus. }
+  TrapOneTargetBit = $80;
+  TrapWholePartyBit = $40;
+  TrapUnsavedBit = $20;
+  TrapKindMask = $1F;
+  TrapSelectedBit = $80;
+  TrapBonusMask = 7;
+  { The party-wiped screen of ECL command 46: its window, the window colour, the text colour and the pause. }
+  EndWindowLeft = 1;
+  EndWindowTop = 1;
+  EndWindowRight = $26;
+  EndWindowBottom = $16;
+  EndWindowColor = 15;
+  EndTextColor = 10;
+  EndPauseMs = 3000;
+  ContinueColor = 15;
+  { The party size: word 830 of ds49D6 (VarPartySize of ovl05, which is not visible here). }
+  VarPartySize = 830;
 var
   { ds84C8 (POOLVARS) under the type ShowEncounterPicture takes: TPictureShown is declared in OVL07,
     and Turbo Pascal accepts a var argument only of the identical type. }
@@ -1452,8 +1473,118 @@ begin
   Inc(ds49ED);
   DelayByGameSpeed;
 end;
-{ ovl03:2775: retf 0: 0 bytes of parameters; 62 bytes of locals }
-{@stub} procedure ovl03_fn_2775; begin end;
+{ ovl03:2775. ECL command 46 (dispatcher ovl03:2F2D, SkippedOpcode 2Eh): damages the party, a trap or an
+  ambush. Operands 2 to 4 are the damage (RollDice(DamageDice, DamageSides) + DamageBonus, rolled again for each
+  hit of the random mode). Operand 1 (Flags) bit 7 (TrapOneTargetBit) picks one target; when it is clear, the
+  value is the number of hits, each on a random member (RollDice over the party size VarPartySize, walking the
+  party list ds5D96) that takes the damage unless RollBeatsResistance (operand 5) fails for it. When bit 7 is set,
+  bit 6 hits the whole party, each member saving with SavingThrow (kind: the low five bits of Flags, bonus: the
+  low three bits of operand 5) unless bit 5 makes the hit unsaveable; with bit 6 clear, operand 5 bit 7 picks
+  the selected character as the target (saving with its bonus minus one, no save at bonus 0), else one random
+  member saves. DamageWithMessage
+  (ovl07:20CC) does the damage. Then PartyDestroyed (ds49FF) is 1 unless a member has Flag10D (combat
+  participation) set; if it is 1 the screen 'The END!' shows 'The entire party is killed!' and the game waits 3
+  seconds. The selected character is restored and 'press <enter>/<return> to continue' is shown.
+  Purpose unknown: which events use it. }
+procedure DamagePartyCommand;
+var
+  Flags: Byte;
+  DamageDice: Byte;
+  DamageSides: Byte;
+  I: Byte;
+  SaveKind: Byte;
+  Resistance: Byte;
+  DamageBonus: Byte;
+  MemberNumber: Byte;
+  SaveBonus: Byte;
+  Step: Byte;
+  Damage: Word;
+  Who: PCharacter;
+  Member: PCharacter;
+  SavedCharacter: PCharacter;
+  Unused: Boolean;              { QUIRK ovl03:2775: set to False, never read }
+  WholePartyHit: Boolean;
+begin
+  SavedCharacter := SelectedCharacter;
+  Unused := False;
+  WholePartyHit := False;
+  Who := PCharacter(ds5D96);
+  DecodeOperands(5);
+  Flags := OperandValue(1);
+  DamageDice := OperandValue(2);
+  DamageSides := OperandValue(3);
+  DamageBonus := OperandValue(4);
+  Resistance := OperandValue(5);
+  Damage := RollDice(DamageDice, DamageSides) + DamageBonus;
+  if (Flags and TrapWholePartyBit) <> 0 then
+    WholePartyHit := True
+  else
+    MemberNumber := RollDice(1, Byte(ds49D6^[VarPartySize]));
+  if (Flags and TrapOneTargetBit) <> 0 then
+  begin
+    SaveKind := Flags and TrapKindMask;
+    SaveBonus := Resistance and TrapBonusMask;
+    if WholePartyHit then
+    begin
+      while Who <> nil do
+      begin
+        if (Flags and TrapUnsavedBit) <> 0 then
+          DamageWithMessage(Damage, Who)
+        else if not SavingThrow(Who, SaveBonus, SaveKind) then
+          DamageWithMessage(Damage, Who);
+        Who := Who^.Next;
+      end;
+    end
+    else if (Resistance and TrapSelectedBit) <> 0 then
+    begin
+      if (SaveBonus = 0) or (not SavingThrow(SelectedCharacter, SaveBonus - 1, SaveKind)) then
+        DamageWithMessage(Damage, SelectedCharacter);
+    end
+    else
+    begin
+      for I := 2 to MemberNumber do
+        Who := Who^.Next;
+      if not SavingThrow(Who, SaveBonus, SaveKind) then
+        DamageWithMessage(Damage, Who);
+    end;
+  end
+  else
+  begin
+    for I := 1 to Flags do
+    begin
+      Who := PCharacter(ds5D96);
+      MemberNumber := RollDice(1, Byte(ds49D6^[VarPartySize]));
+      Step := 1;
+      while Step < MemberNumber do
+      begin
+        Who := Who^.Next;
+        Inc(Step);
+      end;
+      if RollBeatsResistance(Who, Resistance) then
+        DamageWithMessage(Damage, Who);
+      Damage := RollDice(DamageDice, DamageSides) + DamageBonus;
+    end;
+  end;
+  Member := PCharacter(ds5D96);
+  PartyDestroyed := 1;
+  while Member <> nil do
+  begin
+    if Member^.Flag10D <> 0 then
+      PartyDestroyed := 0;
+    Member := Member^.Next;
+  end;
+  if PartyDestroyed <> 0 then
+  begin
+    DrawWindow(EndWindowLeft, EndWindowTop, EndWindowRight, EndWindowBottom, 0, EndWindowColor, 'The END!');
+    GlyphCol := 2;
+    GlyphRow := 2;
+    ShowPagedText(EndWindowLeft, EndWindowTop, EndWindowRight, EndWindowBottom, EndTextColor, 1,
+      'The entire party is killed!');
+    Delay(EndPauseMs);
+  end;
+  SelectedCharacter := SavedCharacter;
+  ShowMessageLine(ContinueColor, 'press <enter>/<return> to continue');
+end;
 { ovl03:2AA2: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl03_fn_2AA2; begin end;
 { ovl03:2AC1: retf 0: 0 bytes of parameters; 2 bytes of locals }

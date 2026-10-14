@@ -641,12 +641,12 @@ id = "ovl03:2775"
 unit = "ovl03"
 addr = "ovl03:2775"
 size = 813
-name = "ovl03_fn_2775"
+name = "DamagePartyCommand"
 signature = ""
 c_name = "ovl03_fn_2775"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_2775 (dispatcher ovl03:2F2D sends SkippedOpcode 2Eh (46) here (cmp al,2Eh); it damages the party or one member with DamageWithMessage (ovl07:20CC) after saving throws (ovl24:0D63) or RollBeatsResistance (ovl24:0C4F), and shows 'The END!' when no member has Flag10D (match ovl03:2775)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

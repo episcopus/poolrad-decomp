@@ -3700,3 +3700,10 @@ kind = "routine"
 why = "dispatcher ovl03:2F2D sends SkippedOpcode 3Ah (58) here (cmp al,3Ah); it only counts ds49ED up and calls DelayByGameSpeed (RES06, GameSpeed * 225 ms), so it is a pause in the script (match ovl03:271F)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl03_fn_2775"
+new = "DamagePartyCommand"
+kind = "routine"
+why = "dispatcher ovl03:2F2D sends SkippedOpcode 2Eh (46) here (cmp al,2Eh); it damages the party or one member with DamageWithMessage (ovl07:20CC) after saving throws (ovl24:0D63) or RollBeatsResistance (ovl24:0C4F), and shows 'The END!' when no member has Flag10D (match ovl03:2775)"
+date = "2026-10-13"
+
