@@ -10634,12 +10634,12 @@ id = "ovl22:302A"
 unit = "ovl22"
 addr = "ovl22:302A"
 size = 46
-name = "ovl22_e59"
+name = "CastMonsterInvisibility"
 signature = ""
 c_name = "ovl22_e59"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_59"
+notes = "renamed from ovl22_e59 (handler of the monster-only spell 63 (SpellHandlers element 63, overlay entry 59, stub 0096:0147): applies the current spell with the message 'is invisible'); auto:entry_59"
 evidence = ["prologue"]
 
 [[routine]]

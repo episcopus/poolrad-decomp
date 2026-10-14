@@ -70,7 +70,7 @@ procedure CastMonsterStrength;
 procedure CastMonsterBeam;
 procedure CastMonsterParalyze;
 procedure CastMonsterHealWounds;
-procedure ovl22_e59;
+procedure CastMonsterInvisibility;
 procedure ovl22_e60;
 procedure ovl22_e61;
 procedure ovl22_e62;
@@ -1833,8 +1833,14 @@ begin
   if HealCharacter(ds6C95, RollDice(2, 4) + 2, 0) then
     res12_fn_1FEB(ds6C95, 1, 'is Healed');
 end;
-{ ovl22:302A: retf 0: 0 bytes of parameters; 14 bytes of locals }
-{@stub} procedure ovl22_e59; begin end;
+{ ovl22:302A (e59). Cast handler of spell 63, a monster-only spell: SpellNames[63] is empty and the
+  ovl22_e10 handler table points element 63 of SpellHandlers at this stub. It only applies the current
+  spell ds681B to the chosen targets with the message 'is invisible'; the spell's own affect does the
+  work (as CastDetectionSpell and CastCauseBlindness leave it to the affect). Reads ds681B. }
+procedure CastMonsterInvisibility;
+begin
+  ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is invisible');
+end;
 { ovl22:3058: retf 0: 0 bytes of parameters; 2 bytes of locals }
 {@stub} procedure ovl22_e60; begin end;
 { ovl22:3092: retf 0: 0 bytes of parameters; 0 bytes of locals }
