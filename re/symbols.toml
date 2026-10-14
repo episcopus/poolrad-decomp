@@ -10478,12 +10478,12 @@ id = "ovl22:2892"
 unit = "ovl22"
 addr = "ovl22:2892"
 size = 42
-name = "ovl22_e49"
+name = "CastHaste"
 signature = ""
 c_name = "ovl22_e49"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_49"
+notes = "renamed from ovl22_e49 (cast handler of spell 48 Haste: ovl22_e10 maps DS:6B84+48*4 to stub 0096:0115, SpellNames[48] is 'Haste', it removes the slow affect 2Ah from the caster's side up to the caster level and applies the spell with is Hasted); auto:entry_49"
 evidence = ["prologue"]
 
 [[routine]]

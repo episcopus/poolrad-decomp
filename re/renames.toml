@@ -3812,3 +3812,10 @@ kind = "routine"
 why = "applies the current spell to up to caster-level chosen targets on one side, first curing the opposite spell's affect; called by the Haste and Slow handlers"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl22_e49"
+new = "CastHaste"
+kind = "routine"
+why = "cast handler of spell 48 Haste: ovl22_e10 maps DS:6B84+48*4 to stub 0096:0115, SpellNames[48] is 'Haste', it removes the slow affect 2Ah from the caster's side up to the caster level and applies the spell with is Hasted"
+date = "2026-10-13"
+

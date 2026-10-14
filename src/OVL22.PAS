@@ -58,7 +58,7 @@ procedure CastBestowCurse;
 procedure CastBlink;
 procedure CastFireball;
 procedure ApplySpellToSideUpToLevel(Affect, Side: Byte; Message: String40);
-procedure ovl22_e49;
+procedure CastHaste;
 procedure ovl22_fn_28BC;
 procedure ovl22_fn_295B;
 procedure ovl22_fn_2B8B;
@@ -1470,8 +1470,8 @@ end;
   Affect: a target on Side with budget left spends one point of the level and, if it already carries
   Affect, has it cured and is dropped, so the surviving targets are the ones the spell then affects.
   It sets ds6820, applies the spell through ApplySpellToTargets with Message, and finally runs the
-  affect hooks $12 on each surviving target. Called by the Haste handler (CastHaste, ovl22:2892) and
-  the Slow handler (ovl22:2C09). Haste passes the slow affect $2A, Slow the haste affect $27 (the two
+  affect hooks $12 on each surviving target. Called by CastHaste (ovl22:2892) and the Slow handler
+  (ovl22:2C09). Haste passes the slow affect $2A, Slow the haste affect $27 (the two
   spells' SpellTable affect ids), so each removes the opposite spell from the side before it casts. }
 procedure ApplySpellToSideUpToLevel(Affect, Side: Byte; Message: String40);
 const
@@ -1496,8 +1496,17 @@ begin
     if ds6C91[I] <> nil then
       RunAffectHooks(AffectHooks, ds6C91[I]);
 end;
-{ ovl22:2892: retf 0: 0 bytes of parameters; 10 bytes of locals }
-{@stub} procedure ovl22_e49; begin end;
+{ ovl22:2892. Cast handler of spell 48, Haste (ovl22_e10 maps DS:6B84+48*4 to overlay stub
+  0096:0115; SpellNames[48] is 'Haste' and SpellTable[48].AffectId is the haste affect $27). It hands
+  the caster's own side and the slow affect $2A (SpellTable[55].AffectId) to ApplySpellToSideUpToLevel,
+  which cures Slow from up to caster-level members of the side and then applies Haste to the rest with
+  'is Hasted'. One of the per-spell handlers in SpellHandlers (SpellHandlers[48]). }
+procedure CastHaste;
+const
+  SlowAffect = $2A;               { the slow affect Haste removes from the caster's side (spell 55) }
+begin
+  ApplySpellToSideUpToLevel(SlowAffect, SelectedCharacter^.Side, 'is Hasted');
+end;
 { ovl22:28BC: retf 12: 12 bytes of parameters; 8 bytes of locals }
 {@stub} procedure ovl22_fn_28BC; begin end;
 { ovl22:295B: frame not read }
