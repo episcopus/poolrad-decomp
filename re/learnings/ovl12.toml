@@ -314,3 +314,39 @@ tags = ["if", "else", "compare", "branch", "codegen", "jbe", "ja"]
 title = "A diff of ja where the original has jbe means the branches of the if are swapped"
 lesson = "ProgressRot (ovl12:1399) first wrote `if Who^.Charisma <= 2 then Who^.Charisma := 0 else Dec(Who^.Charisma, 2)`: the match showed `ja 0x13dd` where the original has `jbe 0x13dd`, the jump to the zero assignment. The original tests `> 2` first and its then branch is the subtraction, so the matched form is `if Who^.Charisma > RotCharismaLoss then Dec(...) else Who^.Charisma := 0`. Check the jump sense in the packet before reversing the test."
 evidence = ["src/OVL12.PAS#ProgressRot", "re/symbols.toml#ovl12:1399"]
+
+[[lesson]]
+id = "map-entry-in-literal-pool"
+confidence = "V"
+units = ["ovl12"]
+tags = ["map", "boundary", "pool", "entry", "write", "tooling"]
+title = "A map entry in a routine's literal pool or inside its code is not a routine (ovl12:1543, ovl12:1583)"
+lesson = "The map listed ovl12:1543 (2 bytes, auto:near_call) and ovl12:1583 (104 bytes, auto:far_call). The bytes at 1543 are the tail `ed` of the string 'is killed' in the literal pool of ovl12:1545, followed by the push bp of 1545; the bytes at 1583 are the displacement byte of `lea di, [bp-0Ch]` (8D 7E F4 at 1582). When PoisonAttackTarget (ovl12:1545, 153 bytes, 22 bytes of pool) matched, `make match UNIT=ovl12 WRITE=1` removed both entries and corrected the size of ovl12:14EB from 88 to 90 (its 68 bytes plus the next routine's 22-byte pool). The source lost their stub lines and interface declarations afterwards; a declaration left behind fails with 'Undefined forward'. Compare the first byte of an invented entry with the bytes before it before any probe."
+evidence = ["src/OVL12.PAS#PoisonAttackTarget", "re/symbols.toml#ovl12:1545", "re/symbols.toml#ovl12:14EB"]
+
+[[lesson]]
+id = "for-global-bound-copied-to-frame"
+confidence = "V"
+units = ["ovl12"]
+tags = ["for", "loop", "bound", "frame", "Byte", "global", "codegen"]
+title = "for I := 1 to G with a Byte global G: the bound is copied into a frame slot below the counter"
+lesson = "ReduceFireDamageByRoll (ovl12:1490) has `sub sp, 2` and matches `for I := 1 to ds681C do` with `var I: Byte`: the bound is copied first (`mov al, [681Ch]; mov [bp-2], al`), the counter starts at `mov [bp-1], 1` after a `cmp al, [bp-2]; ja` skip over the body, and the loop ends with `cmp al, [bp-2]; jne` after `inc byte ptr [bp-1]`. The two frame bytes are exactly the counter and the bound copy, so no other local is declared. The body reads the global again, not the copy."
+evidence = ["src/OVL12.PAS#ReduceFireDamageByRoll", "re/symbols.toml#ovl12:1490"]
+
+[[lesson]]
+id = "readability-r3-address-form"
+confidence = "V"
+units = ["ovl12"]
+tags = ["readability", "R3", "comment", "address", "tooling"]
+title = "R3 accepts a routine comment only when it cites an address as ovl12:XXXX; a bare '1490.' fails"
+lesson = "After `make rename` gave ovl12_e50 its name, `make readability UNIT=ovl12` failed R3 for ReduceFireDamageByRoll: its comment began '{ 1490.' and the check looks for an address of the form XXXX:XXXX (tools/match/readability.py ADDRESS). ovl12_e49's comment passed only because it cites ovl24:0E52 in its text. Write the routine's own address as `ovl12:1490.` at the start of its comment."
+evidence = ["tools/match/readability.py", "src/OVL12.PAS#ReduceFireDamageByRoll"]
+
+[[lesson]]
+id = "global-rename-edits-other-units"
+confidence = "V"
+units = ["ovl12"]
+tags = ["rename", "global", "tooling", "unit", "ownership"]
+title = "make rename of a global used by another unit edits that unit's source (ds681C, set in ovl24)"
+lesson = "`make rename OLD=ds681C NEW=LastDiceCount` changed src/OVL24.PAS (RollDiceCounted, which sets it), src/POOLVARS.PAS and re/dseg.toml as well as ovl12. A unit branch may not edit another unit's file (AGENTS rule 3), so it was reverted with `git checkout` for the three files and the renames.toml record removed, and ds681C keeps its dsXXXX name (its POOLVARS comment carries what is known, which satisfies R5). A global read in several units should be renamed by the orchestrator or the owner of the unit that sets it."
+evidence = ["src/OVL24.PAS#RollDiceCounted", "src/POOLVARS.PAS#ds681C", "re/dseg.toml"]
