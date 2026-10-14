@@ -94,7 +94,7 @@ procedure FallDeadIfInFight(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure CancelDamageUnlessMagicSlotItem(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure AddConstitutionSaveBonusKind2Or4(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure RegainHitPoints(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ReviveDyingCharacter;
+procedure ReviveDyingCharacter(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure GiveAffectUnlessFireOrAcid;
 procedure GiveRegeneratingUnlessAffected;
 procedure RetryRevivalAtFullHitPoints;
@@ -1727,8 +1727,29 @@ begin
   if Who^.Flag11B > Who^.HpMax then
     Who^.Flag11B := Who^.HpMax;
 end;
-{ ovl12:2730: retf 10: 10 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ReviveDyingCharacter; begin end;
+{ ovl12:2730. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read). A dying character
+  (StatusDying) gets DyingRevivalPoints less the rounds it has bled (DyingRounds, TCombatant +$E), so one that has bled
+  six rounds or more stays dead; an unconscious one (StatusUnconscious) gets DyingRevivalPoints. When ReviveCombatant
+  (ovl24:1869) puts Who back on the map, Who gets AffectUnknown5F for 1d4 plus one rounds, and the affect Affect has its
+  Flag cleared (NoRemoveHandler) and is removed, so its handler does not run. Which affect runs it is not known yet [?]. }
+procedure ReviveDyingCharacter(Who: PCharacter; Affect: PAffect; Mode: Byte);
+var
+  HitPoints: Byte;              { the hit points the revival gives; 0 when there is none }
+begin
+  HitPoints := 0;
+  if Who^.Status = StatusDying then
+    if Who^.Combat^.DyingRounds < DyingRevivalPoints then
+      HitPoints := DyingRevivalPoints - Who^.Combat^.DyingRounds;
+  if Who^.Status = StatusUnconscious then
+    HitPoints := DyingRevivalPoints;
+  if HitPoints > 0 then
+    if ReviveCombatant(Who, HitPoints) then
+    begin
+      AddAffect(Who, AffectUnknown5F, RollDice(1, AffectUnknown5FDieSides) + 1, $FF, RunsHandlerOnRemove);
+      Affect^.Flag := NoRemoveHandler;
+      RemoveAffect(Who, AffectUnknown63, Affect);
+    end;
+end;
 { ovl12:27D9: retf 10: 10 bytes of parameters; 0 bytes of locals }
 {@stub} procedure GiveAffectUnlessFireOrAcid; begin end;
 { ovl12:2814: retf 10: 10 bytes of parameters; 4 bytes of locals }
