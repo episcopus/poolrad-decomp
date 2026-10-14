@@ -5385,12 +5385,12 @@ id = "ovl13:0627"
 unit = "ovl13"
 addr = "ovl13:0627"
 size = 235
-name = "ovl13_fn_0627"
+name = "GuardedEnemiesAttack"
 signature = ""
 c_name = "ovl13_fn_0627"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl13_fn_0627 (ovl13:0627 is called by the move routine ovl13_e3 after Who moves: it collects Who's adjacent enemies (CollectEnemiesInRange(Who,1)) and lets each one that is guarding (Combat^.B7, the flag GuardTurn sets) and not helpless attack Who through ovl13_e11 and ovl13_e12; called as ovl13_fn_0627(Who) with the mover, cleared at the end of a move in ovl13_fn_08AC too (stub)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

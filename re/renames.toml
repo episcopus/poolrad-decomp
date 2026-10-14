@@ -4029,3 +4029,10 @@ kind = "routine"
 why = "ovl13:0191 rolls one attack's damage for Attacker against Target: entry Index (1 or 2) of the readied weapon triple (WeaponAttacks/WeaponDamage/WeaponDamageBonus) through RollDiceCounted, stores it in DamageAmount, multiplies by the backstab factor when ovl13_fn_2574 says so, and runs the damage hooks (kinds 4 and 5); called per attack from ovl13:1713 which forwards it to ovl13_fn_02F9 with DamageAmount"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl13_fn_0627"
+new = "GuardedEnemiesAttack"
+kind = "routine"
+why = "ovl13:0627 is called by the move routine ovl13_e3 after Who moves: it collects Who's adjacent enemies (CollectEnemiesInRange(Who,1)) and lets each one that is guarding (Combat^.B7, the flag GuardTurn sets) and not helpless attack Who through ovl13_e11 and ovl13_e12; called as ovl13_fn_0627(Who) with the mover, cleared at the end of a move in ovl13_fn_08AC too (stub)"
+date = "2026-10-13"
+

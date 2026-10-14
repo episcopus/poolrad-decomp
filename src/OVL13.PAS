@@ -10,7 +10,7 @@ procedure StartCombatantRound(Who: PCharacter);
 function ComputeMovement(Who: PCharacter): Byte;
 procedure RollAttackDamage(Attacker: PCharacter; Target: PCharacter; Index: Byte);
 procedure ovl13_fn_02F9;
-procedure ovl13_fn_0627;
+procedure GuardedEnemiesAttack(Who: PCharacter);
 procedure ovl13_e3(Who: PCharacter; Dir: Byte);
 procedure ovl13_fn_08AC;
 procedure ovl13_e4(Who: Pointer; Dir: Byte);
@@ -208,8 +208,33 @@ begin
 end;
 { ovl13:02F9: retf 16: 16 bytes of parameters; 594 bytes of locals }
 {@stub} procedure ovl13_fn_02F9; begin end;
-{ ovl13:0627: retf 4: 4 bytes of parameters; 8 bytes of locals }
-{@stub} procedure ovl13_fn_0627; begin end;
+{ ovl13:0627. Lets every enemy next to Who that is watching (Combat^.B7) and not helpless strike
+  back: for each combatant CollectEnemiesInRange(Who, 1) gathers, it puts the cursor on Who, clears
+  the enemy's watch flag and runs the attack through ovl13_e11 and ovl13_e12. Does nothing for a
+  character that is out of the fight (Flag10D 0). Called after a move (ovl13_e3). }
+procedure GuardedEnemiesAttack(Who: PCharacter);
+var
+  Count: Byte;
+  I: Byte;
+  Enemy: PCharacter;
+  Done: Byte;
+begin
+  Count := CollectEnemiesInRange(Who, 1);
+  for I := 1 to Count do
+  begin
+    if Who^.Flag10D <> 0 then
+    begin
+      Enemy := CombatantRecord[ds6DE4[I]];
+      if (Enemy^.Combat^.B7 <> 0) and not IsHelpless(Enemy) then
+      begin
+        MoveCombatCursor(CombatantX(Who), CombatantY(Who), 2, 8);
+        Enemy^.Combat^.B7 := 0;
+        ovl13_e11(Enemy, Who);
+        ovl13_e12(Enemy, Who, 0, nil, Done);
+      end;
+    end;
+  end;
+end;
 { ovl13:0712: frame not read }
 {@stub} procedure ovl13_e3(Who: PCharacter; Dir: Byte); begin end;
 { ovl13:08AC: retf 6: 6 bytes of parameters; 0 bytes of locals }
