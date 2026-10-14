@@ -141,3 +141,27 @@ def test_the_whole_set_is_compiled_in_groups_under_the_reference_limit(monkeypat
     groups = match.build_groups(["a", "b", "c", "d"], sources)
     assert groups == [["a"], ["b", "c"], ["d"]]                  # order kept, none over the limit
     assert match.build_groups(["c"], sources) == [["c"]]
+
+
+def test_a_group_that_runs_tpc_out_of_memory_is_split_and_retried(monkeypatch):
+    """2026-10-14: a 357-reference group with ovl03's code in it still ran TPC out of memory."""
+    def unit(n):
+        return "unit X;\ninterface\nimplementation\n" + "".join("procedure P%d;\nbegin\nend;\n" % k for k in range(n)) + "end.\n"
+    sources = {"A": unit(10), "B": unit(10), "C": unit(10), "D": unit(10)}
+    tried = []
+
+    def compile_variant(units, srcs, pads, out, program=None):
+        tried.append(list(units))
+        if len(units) > 1:
+            raise match.MatchError("compile failed:\nMATCH.PAS(504): Error 1: Out of memory.")
+        return "build-of-%s" % units[0]
+    monkeypatch.setattr(match, "unit_sources", lambda: sources)
+    monkeypatch.setattr(match, "Original", lambda: type("O", (), {"units": {"a": 1, "b": 1, "c": 1, "d": 1}})())
+    monkeypatch.setattr(match, "compile_variant", compile_variant)
+    monkeypatch.setattr(match, "compare_unit", lambda orig, u, a, b, only: (a, u))
+    out = match.match_units(["a", "b", "c", "d"])
+    assert {u: r[0] for u, r in out.items()} == {u: "build-of-%s" % u for u in "abcd"}
+    assert tried[0] == ["a", "b", "c", "d"] and ["a", "b"] in tried
+    monkeypatch.setattr(match, "compile_variant", lambda *a, **k: (_ for _ in ()).throw(match.MatchError("Error 26: Type mismatch")))
+    with pytest.raises(match.MatchError, match="Type mismatch"):         # a real error is never split away
+        match.match_units(["a", "b"])

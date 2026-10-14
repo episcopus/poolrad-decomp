@@ -76,7 +76,8 @@ SRC = ROOT / "src"
 BUILD = ROOT / "build/match"
 RTL_UNITS = ("SYSTEM", "CRT", "DOS", "OVERLAY")
 DATA_PAD = 64                      # bytes of padding variable per unit in variant B
-MAX_REFS_PER_BUILD = 400           # routine references per generated MATCH program (build_groups)
+MAX_REFS_PER_BUILD = 250           # routine references per generated MATCH program (build_groups)
+TPC_LIMIT_RE = re.compile(r"Error (1|124): (Out of memory|Statement part too large)")   # split the group and retry
 CODE_PAD = 5                       # `procedure P; begin end;` = push bp; mov bp,sp; pop bp; retf
 PUSH_LINK = bytes([0xFF, 0x76, 0x06])   # push word ptr [bp+6]: a nested routine passing its static link on
 NAME_RE = re.compile(r"^(res|ovl)(\d\d)_(?:fn_([0-9a-f]{4})|init)$", re.I)
@@ -912,7 +913,10 @@ def build_groups(units: list[str], sources: dict[str, str]) -> list[list[str]]:
     holds what that links in memory: one program for every unit stopped compiling ("Out of memory")
     once about 1,050 routines were referenced (2026-10-14: ovl03 and ovl22 could not be integrated).
     Each group's program still uses every unit, exactly as a one-unit match does, so a unit's code and
-    its comparison do not depend on the group it is in; only the number of compiles grows."""
+    its comparison do not depend on the group it is in; only the number of compiles grows. What a group
+    can hold depends on how much code its routines link, not only on their number (a 357-reference group
+    failed once ovl03's routines were in it), so match_units splits a group that still runs TPC out of
+    memory in two and compiles the halves."""
     groups, size = [], 0
     for u in units:
         n = len(routines_of(sources[u.upper()]))
@@ -935,11 +939,21 @@ def match_units(units: list[str], only: list[str] | None = None) -> dict[str, tu
             raise MatchError("no unit %s in re/units.toml" % u)
         if u.upper() not in sources:
             raise MatchError("no source src/%s.PAS" % u.upper())
-    groups = build_groups(plain, sources)
-    for k, group in enumerate(groups):
-        tag = group[0] if len(plain) == 1 else ("all" if len(groups) == 1 else "all-%d" % k)
-        a = compile_variant(group, sources, False, BUILD / tag / "A")
-        b = compile_variant(group, sources, True, BUILD / tag / "B")
+    todo = build_groups(plain, sources)
+    k = 0
+    while todo:
+        group = todo.pop(0)
+        tag = group[0] if len(plain) == 1 else ("all" if len(todo) == 0 and k == 0 else "all-%d" % k)
+        try:
+            a = compile_variant(group, sources, False, BUILD / tag / "A")
+            b = compile_variant(group, sources, True, BUILD / tag / "B")
+        except MatchError as e:
+            if len(group) > 1 and TPC_LIMIT_RE.search(str(e)):
+                half = len(group) // 2              # what a group may link is found, not guessed
+                todo[:0] = [group[:half], group[half:]]
+                continue
+            raise
+        k += 1
         for u in group:
             out[u] = compare_unit(orig, u, a, b, only)
     if any(u.lower() == "main" for u in units):
