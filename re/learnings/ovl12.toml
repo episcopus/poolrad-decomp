@@ -89,3 +89,30 @@ tags = ["case", "else", "label", "field", "codegen"]
 title = "A case with a label list and else on a field: one cmp/je per label, every arm jumps to the common end"
 lesson = "`case AttackTarget^.Pad9E[$9F] of 10: Bonus := 1; 9, 12: Bonus := 2; 4: Bonus := 3; else Bonus := 0; end` matches ovl12:01C3: the selector is loaded once into AL, each label is a cmp with a je to its arm (a label list shares the arm, 9 and 12), the chain falls to the else arm, and each arm stores the local and jumps to the statement after the case."
 evidence = ["src/OVL12.PAS#BoostFireAttackByTarget", "re/symbols.toml#ovl12:01C3"]
+
+[[lesson]]
+id = "separate-ifs-over-far-jumps"
+confidence = "V"
+units = ["*"]
+tags = ["if", "else", "jump", "codegen", "nested"]
+title = "A routine whose if tests jump past 127 bytes: separate ifs match, if/else-if does not"
+lesson = "ovl12:07E0 first went `if Mode <> 0 then ... else if not Found and (count < limit) then ...`; the match differed at 083C (`je 0x85a` where the original has `je 0x857`). The original is three separate statements: `if Mode <> 0 then` (the removal), then `if Mode = 0 then if not Found then if count < limit then begin ... end`. A conditional jump over more than 127 bytes is compiled as a short `je` over a `jmp near`, so the listing shows pairs like `je +2; jmp 0907`. The nested form matched at 312 bytes. When a diff shows a jump target a few bytes off, check whether the source is an if/else chain."
+evidence = ["src/OVL12.PAS#GiveAffectItem", "re/symbols.toml#ovl12:07E0"]
+
+[[lesson]]
+id = "name-table-index-base-row"
+confidence = "V"
+units = ["*"]
+tags = ["array", "string", "index", "global", "compare", "dseg"]
+title = "A table of 16-byte names indexed from 1: declare the row 0 as the index base"
+lesson = "ovl12:0679 compares the attacked character's name (the string at offset 0 of TCharacter, passed as the record pointer) with rows 1..4 of a table at DS:0332. `ds0332: array[0..4] of string[15]` gives the 16-byte stride and the base address the code adds (`shl di, 4; add di, 332h`, the loop from 1 to 4). Row 0 is never read and is declared only so that the index base names DS:0332. The matcher maps the `dsXXXX` name to its original offset, so the declaration's place in POOLVARS does not matter."
+evidence = ["src/OVL12.PAS#BoostAttackVsListedTarget", "src/POOLVARS.PAS#ds0332", "re/symbols.toml#ovl12:0679"]
+
+[[lesson]]
+id = "invented-map-entry-inside-routine"
+confidence = "V"
+units = ["*"]
+tags = ["map", "boundary", "entry", "write", "tooling"]
+title = "A map entry inside a routine that matched is removed by make match WRITE=1"
+lesson = "The map invented ovl12_fn_06C8 (28 bytes, `auto:far_call`) inside ovl12:0679. Its first byte is in the middle of an instruction (`add di, 332h` at 06C7), so no caller can exist. When BoostAttackVsListedTarget (ovl12:0679) matched at 107 bytes, `make match UNIT=ovl12 WRITE=1` removed the entry and printed `lies inside ... removed from the map`. Do not write a stub for such an entry: drop its interface declaration and stub line in the source after the routine is written."
+evidence = ["re/symbols.toml#ovl12:0679", "src/OVL12.PAS#BoostAttackVsListedTarget"]
