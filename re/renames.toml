@@ -3903,3 +3903,10 @@ kind = "routine"
 why = "handler of the monster-only spell 63 (SpellHandlers element 63, overlay entry 59, stub 0096:0147): applies the current spell with the message 'is invisible'"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl22_e60"
+new = "CastMonsterMagicDamage"
+kind = "routine"
+why = "handler of the monster-only spell 65 (SpellHandlers element 65, overlay entry 60, stub 0096:014C): applies the current spell for 2d4 + 2 magic damage (kind 8) with no message"
+date = "2026-10-14"
+

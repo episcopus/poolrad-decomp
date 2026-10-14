@@ -71,7 +71,7 @@ procedure CastMonsterBeam;
 procedure CastMonsterParalyze;
 procedure CastMonsterHealWounds;
 procedure CastMonsterInvisibility;
-procedure ovl22_e60;
+procedure CastMonsterMagicDamage;
 procedure ovl22_e61;
 procedure ovl22_e62;
 procedure ovl22_e63;
@@ -1841,8 +1841,22 @@ procedure CastMonsterInvisibility;
 begin
   ApplySpellToTargets(ds681B, 0, 0, 0, 0, 'is invisible');
 end;
-{ ovl22:3058: retf 0: 0 bytes of parameters; 2 bytes of locals }
-{@stub} procedure ovl22_e60; begin end;
+{ ovl22:3058 (e60). Cast handler of spell 65, a monster-only spell: SpellNames[65] is empty and the
+  ovl22_e10 handler table points element 65 of SpellHandlers at this stub. It applies the current
+  spell ds681B to the chosen targets for 2d4 + 2 points (RollDiceCounted, its count kept in ds681C)
+  of magic damage with no message. The roll is the damage CastMagicMissile deals for a caster of
+  level 3 or 4 (two missiles of 1d4 + 1, ovl22:1439), fixed here since a monster has no caster level.
+  Reads ds681B; changes ds681C. }
+procedure CastMonsterMagicDamage;
+const
+  DiceCount = 2;                  { the two missiles of a 3rd or 4th level Magic Missile }
+  DiceSides = 4;                  { each missile does 1d4 plus 1 }
+  DamageBonus = 2;                { one point per missile }
+  DamageKind = 8;                 { DealDamage: kind 8 is magic (as CastMagicMissile, ovl22:1439) }
+begin
+  ApplySpellToTargets(ds681B, 0, 0,
+    RollDiceCounted(DiceCount, DiceSides) + DamageBonus, DamageKind, '');
+end;
 { ovl22:3092: retf 0: 0 bytes of parameters; 0 bytes of locals }
 {@stub} procedure ovl22_e61; begin end;
 { ovl22:30A2: retf 0: 0 bytes of parameters; 12 bytes of locals }

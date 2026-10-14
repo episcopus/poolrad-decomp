@@ -10647,12 +10647,12 @@ id = "ovl22:3058"
 unit = "ovl22"
 addr = "ovl22:3058"
 size = 58
-name = "ovl22_e60"
+name = "CastMonsterMagicDamage"
 signature = ""
 c_name = "ovl22_e60"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_60"
+notes = "renamed from ovl22_e60 (handler of the monster-only spell 65 (SpellHandlers element 65, overlay entry 60, stub 0096:014C): applies the current spell for 2d4 + 2 magic damage (kind 8) with no message); auto:entry_60"
 evidence = ["prologue"]
 
 [[routine]]
