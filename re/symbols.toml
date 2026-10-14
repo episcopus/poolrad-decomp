@@ -4694,27 +4694,14 @@ evidence = ["prologue"]
 id = "ovl12:30A5"
 unit = "ovl12"
 addr = "ovl12:30A5"
-size = 86
+size = 118
 name = "ovl12_e113"
 signature = ""
 c_name = "ovl12_e113"
-level = "none"
+level = "L2"
 justification = ""
 notes = "auto:entry_113"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:30FB"
-unit = "ovl12"
-addr = "ovl12:30FB"
-size = 57
-name = "ovl12_fn_30FB"
-signature = ""
-c_name = "ovl12_fn_30FB"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:3134"

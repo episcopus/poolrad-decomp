@@ -125,8 +125,7 @@ procedure CancelCharmUnknown35PoisonAndParalysisHooks(Who: PCharacter; Affect: P
 procedure SetFlagIfTargetReflects(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ApplyItemSecondAffect(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure GiveExceptionalStrength(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e113;
-procedure ovl12_fn_30FB;
+procedure ovl12_e113(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e114;
 procedure ovl12_e115;
 procedure ovl12_e116;
@@ -302,6 +301,9 @@ const
   AffectUnknown66Dice = 3;      { ovl12:27D9 gives AffectUnknown66 3d6 rounds: the number of dice }
   AffectUnknown66Sides = 6;     { the sides of those dice }
   AffectUnknown66RetryDuration = 1; { the Duration ovl12:2866 gives AffectUnknown66 }
+  SpellDamageIndex = 11;        { KnownSpells index of the byte ovl12:30A5 reads: its high nibble is the damage [?] }
+  SpellClearedIndex = 2;        { KnownSpells index ovl12:30A5 clears }
+  LowNibble = $0F;              { the low nibble of a byte }
 
 { ovl12:0000. Cancels the hook of an affect: when AffectId is 0 or is the affect the hooks are offering
   (HookAffectId), HookAffectId and DamageAmount are cleared. HookAffectId 0 reads as "is Unaffected"
@@ -2186,10 +2188,32 @@ begin
     AddAffect(Who, AffectStrength2, 0, Code, RunsHandlerOnRemove);
   end;
 end;
-{ ovl12:30A5: frame not read }
-{@stub} procedure ovl12_e113; begin end;
-{ ovl12:30FB: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_fn_30FB; begin end;
+{ ovl12:30A5. Affect handler of table entry 132 (affect $84, stub entry 113), with the AffectHandlers shape
+  (Who, Affect and Mode, ovl24:0000). Mode 0 applies it; any other Mode does nothing. QUIRK ovl12:30A5: the Affect
+  argument is read as a character (Other := PCharacter(Affect)), and its KnownSpells[SpellDamageIndex] and
+  KnownSpells[SpellClearedIndex] are used. When the low nibble of that byte is not Who's ByteA0, the second byte is
+  cleared, the high nibble of the first is dealt to Who as magic damage without a save (DealDamage), res12_fn_2B88
+  shows it in combat view and ds6821 becomes 1. Purpose unknown: no affect $84 is known to be given, and an affect
+  is not a character, so the handler's meaning is not clear. }
+procedure ovl12_e113(Who: PCharacter; Affect: PAffect; Mode: Byte);
+var
+  Other: PCharacter;
+  Damage: Byte;
+begin
+  Other := PCharacter(Affect);
+  if Mode <> 0 then
+    Exit;
+  if (Other^.KnownSpells[SpellDamageIndex] and LowNibble) <> Byte(Who^.ByteA0) then
+  begin
+    Other^.KnownSpells[SpellClearedIndex] := 0;
+    Damage := Other^.KnownSpells[SpellDamageIndex] div 16;
+    DamageKind := KindMagic;
+    if ds49F3 = CombatViewMode then
+      res12_fn_2B88;
+    DealDamage(Who, Damage, 0, False);
+    ds6821 := 1;
+  end;
+end;
 { ovl12:3134: retf 10: 10 bytes of parameters; 30 bytes of locals }
 {@stub} procedure ovl12_e114; begin end;
 { ovl12:317A: retf 10: 10 bytes of parameters; 0 bytes of locals }
