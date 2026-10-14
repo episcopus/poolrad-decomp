@@ -4643,12 +4643,12 @@ id = "ovl12:2E08"
 unit = "ovl12"
 addr = "ovl12:2E08"
 size = 47
-name = "ovl12_e109"
+name = "CancelCharmUnknown35PoisonAndParalysisHooks"
 signature = ""
 c_name = "ovl12_e109"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_109"
+notes = "renamed from ovl12_e109 (ovl12:2E08 cancels the hooks of affects /bin/zshB (charm), , (paralysis) and (poison) with CancelPendingHook, then sets SaveRoll to AlwaysSaves when SaveKind is the poison save (SaveKind 0)); auto:entry_109"
 evidence = ["prologue"]
 
 [[routine]]

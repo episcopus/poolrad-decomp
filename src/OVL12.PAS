@@ -121,7 +121,7 @@ procedure SpitAcidAtTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure SetDamageFromSlotItemType56(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure HalveOrCancelDamageForUnenchantedSlotItem(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure CancelCharmAndUnknown35ModerateChance(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e109;
+procedure CancelCharmUnknown35PoisonAndParalysisHooks(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e110;
 procedure ovl12_e111;
 procedure ovl12_fn_2EEA;
@@ -2065,8 +2065,21 @@ begin
     CancelPendingHook(AffectUnknown35);
   end;
 end;
-{ ovl12:2E08: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e109; begin end;
+{ ovl12:2E08. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). It cancels the
+  hooks of four affects with CancelPendingHook (ovl12:0000): the charm (AffectCharm), affect AffectUnknown35, the
+  paralysis (AffectParalysis) and the poison (AffectPoisoned). Then, when the saving throw in progress is the poison
+  save (SaveKind 0, SaveKindPoison), SaveRoll becomes AlwaysSaves, so that save succeeds. It is
+  CancelPoisonAndParalysisHooks (ovl12:29F0) with the charm and affect $35 cancelled first. Which affect runs it is not
+  known yet [?]. }
+procedure CancelCharmUnknown35PoisonAndParalysisHooks(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  CancelPendingHook(AffectCharm);
+  CancelPendingHook(AffectUnknown35);
+  CancelPendingHook(AffectParalysis);
+  CancelPendingHook(AffectPoisoned);
+  if SaveKind = SaveKindPoison then
+    SaveRoll := AlwaysSaves;
+end;
 { ovl12:2E37: retf 10: 10 bytes of parameters; 6 bytes of locals }
 {@stub} procedure ovl12_e110; begin end;
 { ovl12:2EDA: frame not read }
