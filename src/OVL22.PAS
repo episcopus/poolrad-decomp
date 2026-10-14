@@ -1637,8 +1637,25 @@ begin
   end;
   ds6820 := 0;
 end;
-{ ovl22:2BB7: retf 0: 0 bytes of parameters; 2 bytes of locals }
-{@stub} procedure CastLightningBolt; begin end;
+{ ovl22:2BB7 (e50). Cast handler of spell 51, Lightning Bolt: it rolls one d6 per caster level
+  (res12_fn_26C2(ds681B), RollDice) as the damage, deals it to the combatant on the aim cell
+  ds6DB9/ds6DBA (DamageTargetInCell, electrical, save kind 4) and then runs the beam CastLineBeam
+  with reach 8, the same damage and save kind and the bounce flag 1, so the bolt reflects off a wall
+  once. Reads ds681B. Called through SpellHandlers[51] (ovl22_e10). }
+procedure CastLightningBolt;
+const
+  LevelDiceSides = 6;             { one d6 per caster level (the AD&D Lightning Bolt) }
+  BeamReach = 8;                  { CastLineBeam's reach: the beam walks 16 cells }
+  SaveKindSpell = 4;              { SavingThrow's kind for a spell }
+  BounceOnce = 1;                 { the bolt reflects off a wall once }
+var
+  Damage: Byte;                   { the rolled damage (caster level d6) }
+  Blocked: Boolean;               { whether the aim cell's tile refuses the beam (not read) }
+begin
+  Damage := RollDice(res12_fn_26C2(ds681B), LevelDiceSides);
+  DamageTargetInCell(ds6DB9, ds6DBA, Damage, SaveKindSpell, Blocked);
+  CastLineBeam(BeamReach, Damage, SaveKindSpell, BounceOnce);
+end;
 { ovl22:2C09: retf 0: 0 bytes of parameters; 10 bytes of locals }
 {@stub} procedure CastSlow; begin end;
 { ovl22:2C43: frame not read }
