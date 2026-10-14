@@ -45,7 +45,7 @@ procedure ChooseAttitudeCommand;
 procedure ComparePartyItemCommand;
 procedure PauseCommand;
 procedure DamagePartyCommand;
-procedure ovl03_fn_2AA2;
+procedure RedrawAreaViewCommand;
 procedure ovl03_fn_2AC1;
 procedure ovl03_fn_2AEB;
 procedure ovl03_fn_2B14;
@@ -1586,7 +1586,20 @@ begin
   ShowMessageLine(ContinueColor, 'press <enter>/<return> to continue');
 end;
 { ovl03:2AA2: retf 0: 0 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl03_fn_2AA2; begin end;
+{ ovl03:2AA2. ECL command 49 (dispatcher ovl03:2F2D, SkippedOpcode 31h): redraws the area view when the 3D
+  encounter sprite is loaded (ds84E3, set by ShowEncounterPicture), as the hiding path of ShowCloseUpCommand
+  does, then clears the sprite flag and the close-up flag ds84E0. It has no operands, counts ds49ED up as ECL
+  commands 36 and 58 do, and does not move EclPC itself. Purpose unknown: why the script redraws the area. }
+procedure RedrawAreaViewCommand;
+begin
+  Inc(ds49ED);
+  if ds84E3 <> 0 then
+  begin
+    ShowAreaView;
+    ds84E3 := 0;
+    ds84E0 := 0;
+  end;
+end;
 { ovl03:2AC1: retf 0: 0 bytes of parameters; 2 bytes of locals }
 {@stub} procedure ovl03_fn_2AC1; begin end;
 { ovl03:2AEB: retf 0: 0 bytes of parameters; 0 bytes of locals }

@@ -654,12 +654,12 @@ id = "ovl03:2AA2"
 unit = "ovl03"
 addr = "ovl03:2AA2"
 size = 31
-name = "ovl03_fn_2AA2"
+name = "RedrawAreaViewCommand"
 signature = ""
 c_name = "ovl03_fn_2AA2"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl03_fn_2AA2 (dispatcher ovl03:2F2D sends SkippedOpcode 31h (49) here (cmp al,31h); it calls ShowAreaView (ovl26:016D) when ds84E3 (3D encounter sprite loaded) is set, then clears ds84E3 and ds84E0 (match ovl03:2AA2)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

@@ -3707,3 +3707,10 @@ kind = "routine"
 why = "dispatcher ovl03:2F2D sends SkippedOpcode 2Eh (46) here (cmp al,2Eh); it damages the party or one member with DamageWithMessage (ovl07:20CC) after saving throws (ovl24:0D63) or RollBeatsResistance (ovl24:0C4F), and shows 'The END!' when no member has Flag10D (match ovl03:2775)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl03_fn_2AA2"
+new = "RedrawAreaViewCommand"
+kind = "routine"
+why = "dispatcher ovl03:2F2D sends SkippedOpcode 31h (49) here (cmp al,31h); it calls ShowAreaView (ovl26:016D) when ds84E3 (3D encounter sprite loaded) is set, then clears ds84E3 and ds84E0 (match ovl03:2AA2)"
+date = "2026-10-13"
+
