@@ -4155,3 +4155,17 @@ kind = "routine"
 why = "ovl12:2C1C shows 'Spits Acid' on Who (string in the pool at ovl12:2C11), draws the spit to Who's combat target and deals 8d4 to it with a half-on-save; a handler, no direct caller"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl12_e106"
+new = "SetDamageFromSlotItemType56"
+kind = "routine"
+why = "ovl12:2D38 sets DamageAmount to 3d8 (RollDiceCounted 3, 8) when SelectedCharacter's first slot item has ItemType $56, the sibling of SetDamageFromSlotItemType55 (ovl12:2B20); no direct caller"
+date = "2026-10-14"
+
+[[rename]]
+old = "ds681C"
+new = "LastDiceCount"
+kind = "global"
+why = "the dice count of the last RollDiceCounted roll (ovl24:0E37 stores it); ovl12:2D38 adds it to DamageAmount for fire or magic damage"
+date = "2026-10-14"
+

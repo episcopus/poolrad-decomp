@@ -118,8 +118,7 @@ procedure HalveColdDamageNoSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure CancelDamageUnlessEnchantedSlotItem(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure AvoidDistantAttackForItemType57Or58(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure SpitAcidAtTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e106;
-procedure ovl12_fn_2D39;
+procedure SetDamageFromSlotItemType56(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e107;
 procedure ovl12_e108;
 procedure ovl12_e109;
@@ -1117,8 +1116,8 @@ begin
   AddAffect(Who, AffectUnknown62, 0, AffectUnknown62Data, NoRemoveHandler);
 end;
 { ovl12:1490. Damage hook (the AffectHandlers shape: Who, Affect and Mode; none of them read). While the damage is fire
-  (DamageKind bit KindFire, DS:6819), each of the ds681C dice of the last roll takes FireReductionPerDie off
-  DamageAmount, and it never goes below ds681C; SaveRoll then gets FireProtectionSaveBonus. Damage that is not
+  (DamageKind bit KindFire, DS:6819), each of the LastDiceCount dice of the last roll takes FireReductionPerDie off
+  DamageAmount, and it never goes below LastDiceCount; SaveRoll then gets FireProtectionSaveBonus. Damage that is not
   magical (KindMagic clear) is cancelled altogether: CancelPendingHook(0) clears DamageAmount and HookAffectId.
   Purpose unknown: which affect runs it is not known yet [?]. }
 procedure ReduceFireDamageByRoll(Who: PCharacter; Affect: PAffect; Mode: Byte);
@@ -1127,11 +1126,11 @@ var
 begin
   if (DamageKind and KindFire) <> 0 then
   begin
-    for I := 1 to ds681C do
+    for I := 1 to LastDiceCount do
     begin
       Dec(DamageAmount, FireReductionPerDie);
-      if DamageAmount < ds681C then
-        DamageAmount := ds681C;
+      if DamageAmount < LastDiceCount then
+        DamageAmount := LastDiceCount;
     end;
     Inc(SaveRoll, FireProtectionSaveBonus);
     if (DamageKind and KindMagic) = 0 then
@@ -1895,8 +1894,8 @@ begin
     CancelPendingHook(0);
 end;
 { ovl12:2A28. Damage hook (the AffectHandlers shape: Who, Affect and Mode; none of them is read, ovl24:0000). While the
-  damage is fire (DamageKind bit KindFire, DS:6819), each of the ds681C dice of the last roll takes one point off
-  DamageAmount, and it never goes below ds681C. The twin of ReduceFireDamageByRoll (ovl12:1490), which takes
+  damage is fire (DamageKind bit KindFire, DS:6819), each of the LastDiceCount dice of the last roll takes one point off
+  DamageAmount, and it never goes below LastDiceCount. The twin of ReduceFireDamageByRoll (ovl12:1490), which takes
   FireReductionPerDie per die and also adds the save bonus and cancels a non-magic hit. Purpose unknown: which affect
   runs it is not known yet [?]. }
 procedure ReduceFireDamageOnePerDie(Who: PCharacter; Affect: PAffect; Mode: Byte);
@@ -1904,11 +1903,11 @@ var
   I: Byte;
 begin
   if (DamageKind and KindFire) <> 0 then
-    for I := 1 to ds681C do
+    for I := 1 to LastDiceCount do
     begin
       Dec(DamageAmount);
-      if DamageAmount < ds681C then
-        DamageAmount := ds681C;
+      if DamageAmount < LastDiceCount then
+        DamageAmount := LastDiceCount;
     end;
 end;
 { ovl12:2A6D. Damage hook (the AffectHandlers shape: Who, Affect and Mode; none of them is read, ovl24:0000). While the
@@ -2018,10 +2017,22 @@ begin
       RemoveAffect(Who, AffectUnknown50, nil);
     end;
 end;
-{ ovl12:2D38: frame not read }
-{@stub} procedure ovl12_e106; begin end;
-{ ovl12:2D39: retf 10: 10 bytes of parameters; 4 bytes of locals }
-{@stub} procedure ovl12_fn_2D39; begin end;
+{ ovl12:2D38. Affect handler for damage (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). When the
+  first slot item of SelectedCharacter (SlotItems[0], TCharacter +$CC) has ItemType $56 (name not known [?]), DamageAmount
+  becomes 3d8 (RollDiceCounted, ovl24:0E2E). Then, when DamageKind has the fire or the magic bit (KindFire or KindMagic),
+  the dice count of the last roll (LastDiceCount) is added to DamageAmount. Purpose unknown: which affect runs it is not known
+  yet [?]. The routine starts at ovl12:2D38 (its push bp); the map's entry at ovl12:2D39 is inside it. }
+procedure SetDamageFromSlotItemType56(Who: PCharacter; Affect: PAffect; Mode: Byte);
+var
+  Item: PItem;                  { the first slot item of SelectedCharacter, nil when there is none }
+begin
+  Item := SelectedCharacter^.SlotItems[0];
+  if Item <> nil then
+    if Item^.ItemType = $56 then
+      DamageAmount := RollDiceCounted(3, 8);
+  if (DamageKind and (KindFire or KindMagic)) <> 0 then
+    Inc(DamageAmount, LastDiceCount);
+end;
 { ovl12:2D88: retf 10: 10 bytes of parameters; 4 bytes of locals }
 {@stub} procedure ovl12_e107; begin end;
 { ovl12:2DE4: retf 10: 10 bytes of parameters; 0 bytes of locals }

@@ -4603,27 +4603,14 @@ evidence = ["prologue"]
 id = "ovl12:2D38"
 unit = "ovl12"
 addr = "ovl12:2D38"
-size = 1
-name = "ovl12_e106"
+size = 80
+name = "SetDamageFromSlotItemType56"
 signature = ""
 c_name = "ovl12_e106"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_106"
+notes = "renamed from ovl12_e106 (ovl12:2D38 sets DamageAmount to 3d8 (RollDiceCounted 3, 8) when SelectedCharacter's first slot item has ItemType $56, the sibling of SetDamageFromSlotItemType55 (ovl12:2B20); no direct caller); auto:entry_106"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl12:2D39"
-unit = "ovl12"
-addr = "ovl12:2D39"
-size = 79
-name = "ovl12_fn_2D39"
-signature = ""
-c_name = "ovl12_fn_2D39"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl12:2D88"

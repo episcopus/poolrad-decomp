@@ -485,11 +485,11 @@ begin
   RollDice := Total;
 end;
 
-{ ovl24:0E2E (e9). RollDice(Count, Sides), keeping Count in ds681C (who reads it is not known
+{ ovl24:0E2E (e9). RollDice(Count, Sides), keeping Count in LastDiceCount (who reads it is not known
   yet). }
 function RollDiceCounted(Count, Sides: Byte): Byte;
 begin
-  ds681C := Count;
+  LastDiceCount := Count;
   RollDiceCounted := RollDice(Count, Sides);
 end;
 
