@@ -3931,3 +3931,10 @@ kind = "routine"
 why = "ovl22:323D returns True when the far pointer is not nil and RaceRow[Item^.ItemType][0] is in $B..$D; every caller (AddScrollSpells, UseMagicItem, StudyRestMinutes, CancelScribing, ScribeScrolls, ProcessPendingScribedSpell) uses it to find the items whose Affects carry scroll spells"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl22_e7"
+new = "ConsumeScrollSpell"
+kind = "routine"
+why = "ovl22:328A clears the first of Item^.Affects[1..3] whose low seven bits equal the scribed spell (Spell and $7F), decrements Item^.NameNum[2] and hands the item to res12_fn_1509 when it falls below $D2; ProcessPendingScribedSpell calls it to consume a spell from a scroll after it is marked known"
+date = "2026-10-14"
+

@@ -77,7 +77,7 @@ procedure CastMonsterReadMagic;
 procedure ovl22_e63;
 procedure ovl22_fn_31D7;
 function IsScroll(Item: PItem): Boolean;
-procedure ovl22_e7(Who: PCharacter; Item: PItem; Spell: Byte);
+procedure ConsumeScrollSpell(Who: PCharacter; Item: PItem; Spell: Byte);
 procedure ovl22_e8(Who: PCharacter; Message: String40; Spell: Byte);
 procedure ovl22_fn_3379;
 procedure ovl22_e10;
@@ -1896,8 +1896,35 @@ begin
   else
     IsScroll := False;
 end;
-{ ovl22:328A: retf 10: 10 bytes of parameters; 4 bytes of locals }
-{@stub} procedure ovl22_e7(Who: PCharacter; Item: PItem; Spell: Byte); begin end;
+{ ovl22:328A. ConsumeScrollSpell: removes one scribed spell from a scroll. The spell number (the low
+  seven bits of Spell) is looked for among the scroll's three spell bytes Item^.Affects[1..3]; the
+  last slot whose low seven bits match is cleared, the scroll's second name number (NameNum[2],
+  +$30) is decremented and, when it drops below $D2, the scroll is handed to res12_fn_1509 to redraw
+  (Who, Item). ProcessPendingScribedSpell calls it after marking the scribed spell known, and ovl19's
+  item code calls it too. Nothing happens when the spell is not on the scroll (Slot stays 0). }
+procedure ConsumeScrollSpell(Who: PCharacter; Item: PItem; Spell: Byte);
+const
+  SpellMask = $7F;                { the pending bit sits above the spell number on a scroll }
+  { The value the scroll's second name number is drawn from; meaning not known, the scroll is
+    redrawn through res12_fn_1509 when it drops below this. }
+  NameNumberRedrawBelow = $D2;
+var
+  SpellNumber: Byte;              { Spell with the pending bit cleared, the number looked for }
+  I: Byte;                        { the scroll spell slot, 1..3 }
+  Slot: Byte;                     { the slot the spell was found in, 0 when it was not found }
+begin
+  SpellNumber := Spell and SpellMask;
+  Slot := 0;
+  for I := 1 to 3 do
+    if (Item^.Affects[I] and SpellMask) = SpellNumber then
+      Slot := I;
+  if Slot = 0 then
+    Exit;
+  Item^.Affects[Slot] := 0;
+  Dec(Item^.NameNum[2]);
+  if Item^.NameNum[2] < NameNumberRedrawBelow then
+    res12_fn_1509(Who, Item);
+end;
 { ovl22:331A: frame not read }
 {@stub} procedure ovl22_e8(Who: PCharacter; Message: String40; Spell: Byte); begin end;
 { ovl22:3379: retf 10: 10 bytes of parameters; 0 bytes of locals }

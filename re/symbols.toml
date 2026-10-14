@@ -10725,12 +10725,12 @@ id = "ovl22:328A"
 unit = "ovl22"
 addr = "ovl22:328A"
 size = 144
-name = "ovl22_e7"
-signature = "procedure ovl22_e7(Who: PCharacter; Item: PItem; Spell: Byte)"
+name = "ConsumeScrollSpell"
+signature = "procedure ConsumeScrollSpell(Who: PCharacter; Item: PItem; Spell: Byte)"
 c_name = "ovl22_e7"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_7"
+notes = "renamed from ovl22_e7 (ovl22:328A clears the first of Item^.Affects[1..3] whose low seven bits equal the scribed spell (Spell and $7F), decrements Item^.NameNum[2] and hands the item to res12_fn_1509 when it falls below $D2; ProcessPendingScribedSpell calls it to consume a spell from a scroll after it is marked known); auto:entry_7"
 evidence = ["prologue"]
 
 [[routine]]

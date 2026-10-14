@@ -306,7 +306,7 @@ begin
   ProcessMemorizedSpell := SpellLevel;
 end;
 { ovl20:09E7: for Who, scans carried scrolls and their three spell bytes for pending scribing (bit 7 set).
-  When Handled is 0, it marks the first pending spell known, calls ovl22_e7 to consume it, redraws the
+  When Handled is 0, it marks the first pending spell known, calls ConsumeScrollSpell to consume it, redraws the
   rest-time line and reports "has scribed" through ovl22_e8; Handled becomes 1. When already handled, it
   returns the level of the next pending scroll spell, or 0. Reads Who^.Items and SpellTable; changes
   Who^.KnownSpells, the scroll and Handled; also changes the screen. }
@@ -333,7 +333,7 @@ begin
           begin
             SpellNumber := Item^.Affects[SpellIndex] and SpellNumberMask;
             Who^.KnownSpells[SpellNumber] := 1;
-            ovl22_e7(Who, Item, SpellNumber);
+            ConsumeScrollSpell(Who, Item, SpellNumber);
             ShowRestTime(0);
             ovl22_e8(Who, 'has scribed', SpellNumber);
             Handled := 1;
