@@ -4578,12 +4578,12 @@ id = "ovl12:2BC8"
 unit = "ovl12"
 addr = "ovl12:2BC8"
 size = 84
-name = "ovl12_e104"
+name = "AvoidDistantAttackForItemType57Or58"
 signature = ""
 c_name = "ovl12_e104"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_104"
+notes = "renamed from ovl12_e104 (ovl12:2BC8 calls AvoidDistantAttack (ovl12:0FAC, chance 50) only when SelectedCharacter's first slot item (SlotItems[0]) has ItemType $57 or $58; an affect handler, no direct caller); auto:entry_104"
 evidence = ["prologue"]
 
 [[routine]]

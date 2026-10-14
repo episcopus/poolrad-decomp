@@ -116,7 +116,7 @@ procedure HalveDamageForEnchantedSlotItem(Who: PCharacter; Affect: PAffect; Mode
 procedure SetDamageFromSlotItemType55(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure HalveColdDamageNoSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure CancelDamageUnlessEnchantedSlotItem(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e104;
+procedure AvoidDistantAttackForItemType57Or58(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e105;
 procedure ovl12_e106;
 procedure ovl12_fn_2D39;
@@ -230,6 +230,7 @@ const
   AlwaysAvoids = 100;           { the Chance that avoids every roll of 1d100 (ovl12:1086) }
   AlwaysSaves = 100;            { the SaveRoll that makes a saving throw succeed (ovl24:0D63 succeeds when it reaches) [I] }
   DistantAvoidChance = 60;      { the Chance ovl12:2901 gives AvoidDistantAttack }
+  SlotItemAvoidChance = 50;     { the Chance ovl12:2BC8 gives AvoidDistantAttack for a first slot item of type $57 or $58 }
   HookChanceHalf = 50;          { the Chance ovl12:2976 gives ovl12:2915 (the hook cancel with a roll) }
   HookChanceLow = 15;           { the Chance ovl12:2984 gives ovl12:2915 }
   HookChanceHigh = 90;          { the 1d100 roll at or below which ovl12:2992 cancels its hooks }
@@ -1969,8 +1970,19 @@ begin
     if (SelectedCharacter^.Race > 0) or (SelectedCharacter^.HighestLevel < 4) then
       DamageAmount := 0;
 end;
-{ ovl12:2BC8: retf 10: 10 bytes of parameters; 4 bytes of locals }
-{@stub} procedure ovl12_e104; begin end;
+{ ovl12:2BC8. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). When the first slot
+  item of SelectedCharacter (SlotItems[0], TCharacter +$CC) has ItemType $57 or $58 (names not known [?]), Who may avoid
+  the distant attack: AvoidDistantAttack (ovl12:0FAC) with SlotItemAvoidChance. Purpose unknown: which affect runs it is
+  not known yet [?]. }
+procedure AvoidDistantAttackForItemType57Or58(Who: PCharacter; Affect: PAffect; Mode: Byte);
+var
+  Item: PItem;                  { the first slot item of SelectedCharacter, nil when there is none }
+begin
+  Item := SelectedCharacter^.SlotItems[0];
+  if Item <> nil then
+    if (Item^.ItemType = $57) or (Item^.ItemType = $58) then
+      AvoidDistantAttack(Who, SlotItemAvoidChance);
+end;
 { ovl12:2C1C: retf 10: 10 bytes of parameters; 12 bytes of locals }
 {@stub} procedure ovl12_e105; begin end;
 { ovl12:2D38: frame not read }
