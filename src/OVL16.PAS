@@ -91,7 +91,6 @@ procedure ovl16_fn_3EC4;
 procedure ovl16_fn_3EC9;
 function ConstitutionHitPointAdjustment(Who: PCharacter): ShortInt;
 function MinHitPoints(Who: PCharacter): Byte;
-procedure ovl16_fn_4047;
 function ovl16_fn_408C(Who: PCharacter): Byte;
 procedure ovl16_fn_41F8;
 function ovl16_fn_4235(Who: PCharacter; ClassBits: Byte): Byte;
@@ -1075,8 +1074,6 @@ begin
     Total := (Total + Adjustment) div Count;
   MinHitPoints := Total;
 end;
-{ ovl16:4047: retf 4: 4 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl16_fn_4047; begin end;
 { ovl16:408C: frame not read }
 {@stub} function ovl16_fn_408C(Who: PCharacter): Byte; begin end;
 { ovl16:41F8: retf 4: 4 bytes of parameters; 0 bytes of locals }
