@@ -1058,3 +1058,8 @@ evidence = "ds6B80 is the far pointer ovl19:1AB3 stores the item in when ovl22_e
 offset = 0x6DBF
 name = "ItemAffectUse"
 evidence = "ds6DBF is set (ovl19:1AE7) for an item whose Affects[2] gives the spell, and around the ovl22_e5 cast (ovl19:1BC2..1BE2); the 'uses an item' message follows the flag (ovl19:1B1E); what ovl22_e5 does with it is not known yet"
+
+[[global]]
+offset = 0x471A
+name = "ViewedCharacter"
+evidence = "ds471A is the character the View command was started for: ViewSelectedCharacter stores SelectedCharacter in it (ovl19:0AD1), and the two Trade commands start 'Trade to?' from it and store the recipient in it (ovl19:1734 TradeItem, ovl19:2156 TradeMoney)"

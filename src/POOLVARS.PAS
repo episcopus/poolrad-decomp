@@ -579,9 +579,10 @@ var
   { The character whose sheet ShowCharacterSheet draws: a copy of SelectedCharacter taken at its start (ovl19:0051).
     The Sell action (ovl19:1CEE) passes it to res12_fn_0442 for the item's line (ovl19:1D59); no other routine reads it yet. }
   SheetCharacter: PCharacter;
-  { A copy of SelectedCharacter that the View command stores (ovl19:0AD1) before it draws the sheet;
-    no decompiled routine reads it yet. }
-  ds471A: PCharacter;
+  { The character the View command was started for: a copy of SelectedCharacter that ViewSelectedCharacter
+    stores (ovl19:0AD1). The two Trade commands start their "Trade to?" from it and store the recipient in it
+    (TradeItem, ovl19:1734; TradeMoney, ovl19:2156). }
+  ViewedCharacter: PCharacter;
   ds471E: array[0..$47] of Byte;  { 72 bytes reset to 1 when rest starts (ovl20:0CE5) }
   ds25C0: array[0..2, 0..2] of Byte;  { the 3x3 line pattern table StepLine reads at [SY+1, SX+1] }
   { DirStepX and DirStepY: nine entries each (DirStepY starts 9 bytes after DirStepX). ovl14's

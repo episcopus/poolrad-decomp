@@ -215,3 +215,30 @@ tags = ["compiler", "if", "else", "duplicate", "tail"]
 title = "A statement the original runs on both branches of an if-else is written in each branch"
 lesson = "Turbo Pascal does not move a common tail out of the branches: SellItem's gold addition (Money[GoldKind] += Gold) is code in the overload branch (ovl19:1E8B) and again in the other branch (ovl19:1EA5), each followed by a jump past the other. A single statement after the if-else gives one copy and a mismatch at the first jump. Write the statement in both branches to reproduce the original; a reviewer should read the two copies as one intended step."
 evidence = ["src/OVL19.PAS#SellItem", "re/symbols.toml#SellItem"]
+
+[[lesson]]
+id = "paid-flag-tested-twice-and-longint-price"
+confidence = "V"
+units = ["ovl19"]
+tags = ["compiler", "LongInt", "Dec", "if", "flag"]
+title = "A LongInt price is taken with Dec, and a flag the original tests twice is written as two tests"
+lesson = "IdentifyItem keeps the character's and the pool's money as LongInt (CharacterMoneyValueInGold, MoneyValueInGold). `Dec(Gold, 200)` compiles to sub word and sbb word on the variable, which is the original's shape; `Gold := Gold - 200` loads both words, subtracts, and stores them back, 12 bytes that mismatch. SetCharacterGold(Gold) with a Word parameter pushes only the low word of the LongInt. When the not-paid path of an if jumps to a second test of the same flag, write `if Paid then begin ... end;` followed by a separate `if Paid then DelayByGameSpeed;`: one merged block is 5 bytes shorter and jumps to the wrong place."
+evidence = ["src/OVL19.PAS#IdentifyItem", "re/symbols.toml#ovl19:1F52", "tools/re/tp_idioms/ovl19/PRB19DEC.PAS"]
+
+[[lesson]]
+id = "word-compare-zero-jne-or-ja"
+confidence = "V"
+units = ["ovl19"]
+tags = ["compiler", "Word", "compare", "jne", "ja"]
+title = "A Word compared with zero: <> 0 compiles to jne, > 0 to ja"
+lesson = "Money is a Word array. TradeMoney's listing loop tests `Money[Kind] <> 0` and compiles to cmp; jne (ovl19:21E9 of the original). Its flag loop tests `Money[Kind] > 0` and compiles to cmp; jbe past the body (ovl19:242C), the unsigned form. Writing > 0 in the listing loop gives ja into the body where the original has jne, and mismatches at that jump. Write the test the source shows."
+evidence = ["src/OVL19.PAS#TradeMoney", "re/symbols.toml#ovl19:2156"]
+
+[[lesson]]
+id = "trade-money-frame-layout"
+confidence = "V"
+units = ["ovl19"]
+tags = ["frame", "locals", "temporaries", "string"]
+title = "TradeMoney's frame: locals from bp-4 in declaration order, string temporaries below them"
+lesson = "TradeMoney (sub sp 0x234) takes its locals in declaration order from bp-4 downward: Recipient (4), Kind (ShortInt, -5), CoinKind (-6), I (-7), Pad (-8), List (-0xC), Chosen (-0x10), Head (-0x14), Kinds (Word, -0x16), Choice (Integer, -0x18), Num string[15] (-0x28), Spaces string[4] (-0x2D), Text string (-0x12D, 256 bytes), Key (-0x12E), Amount (Word, -0x130), Finished (-0x131), Done (-0x132), Redraw (-0x133). The 256-byte string temporaries occupy -0x233..-0x134 under them. Compare a missing or extra local with these addresses first."
+evidence = ["src/OVL19.PAS#TradeMoney", "re/symbols.toml#ovl19:2156"]

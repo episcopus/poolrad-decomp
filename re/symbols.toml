@@ -8781,7 +8781,7 @@ evidence = ["prologue"]
 id = "ovl19:1F52"
 unit = "ovl19"
 addr = "ovl19:1F52"
-size = 456
+size = 516
 name = "IdentifyItem"
 signature = "procedure IdentifyItem(Item: PMenuLine; var Redraw: Byte)"
 c_name = "ovl19_fn_1F52"
@@ -8794,79 +8794,14 @@ evidence = ["prologue"]
 id = "ovl19:2156"
 unit = "ovl19"
 addr = "ovl19:2156"
-size = 65
-name = "ovl19_fn_2156"
+size = 800
+name = "TradeMoney"
 signature = ""
 c_name = "ovl19_fn_2156"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl19_fn_2156 (ovl19:2156 is the Trade command of the View prompt for money: ViewSelectedCharacter's T key calls it (ovl19:0AB3); it asks 'Trade to?' (res12_fn_2C48), lists the coin kinds under 'Select type of coin' with ChooseFromList, asks 'How much <kind> will you trade? ' (ReadAmount) and moves the money with TransferMoney (ovl21:044C); its list is the one ovl21's TakeMoney builds (matched, ovl19:2156)); auto:near_call"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl19:2197"
-unit = "ovl19"
-addr = "ovl19:2197"
-size = 156
-name = "ovl19_fn_2197"
-signature = ""
-c_name = "ovl19_fn_2197"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl19:2233"
-unit = "ovl19"
-addr = "ovl19:2233"
-size = 89
-name = "ovl19_fn_2233"
-signature = ""
-c_name = "ovl19_fn_2233"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl19:228C"
-unit = "ovl19"
-addr = "ovl19:228C"
-size = 247
-name = "ovl19_fn_228C"
-signature = ""
-c_name = "ovl19_fn_228C"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl19:2383"
-unit = "ovl19"
-addr = "ovl19:2383"
-size = 51
-name = "ovl19_fn_2383"
-signature = ""
-c_name = "ovl19_fn_2383"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
-
-[[routine]]
-id = "ovl19:23B6"
-unit = "ovl19"
-addr = "ovl19:23B6"
-size = 241
-name = "ovl19_fn_23B6"
-signature = ""
-c_name = "ovl19_fn_23B6"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl19:24A7"

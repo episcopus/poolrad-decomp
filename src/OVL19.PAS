@@ -17,12 +17,7 @@ procedure JoinItem(Item: PMenuLine);
 procedure UseItem(Item: PMenuLine; var Done: Byte);
 procedure SellItem(Item: PMenuLine);
 procedure IdentifyItem(Item: PMenuLine; var Redraw: Byte);
-procedure ovl19_fn_2156;
-procedure ovl19_fn_2197;
-procedure ovl19_fn_2233;
-procedure ovl19_fn_228C;
-procedure ovl19_fn_2383;
-procedure ovl19_fn_23B6;
+procedure TradeMoney;
 procedure ovl19_fn_24A7;
 function WouldOverloadInventory(Character: PCharacter; Item: PMenuLine): Boolean;
 procedure UpdateSelectedCharacter(Key: Char);
@@ -66,7 +61,7 @@ type
   class levels and experience on row 15, the combat block (ShowCombatStats) on rows 17 and 18, the weapon
   and armor on rows 20 and 21 and the status on row 22, and the head and body portraits when they are
   on (ShowPortraits) and the tile set is 3. Called by ViewSelectedCharacter (the View command),
-  ovl19_fn_2197 and ovl16 (ovl16_fn_0B52, ovl16_fn_1DCB, ovl16_fn_209F). SheetCharacter keeps the
+  TradeMoney (ovl19:219D) and ovl16 (ovl16_fn_0B52, ovl16_fn_1DCB, ovl16_fn_209F). SheetCharacter keeps the
   character for the whole drawing. }
 procedure ShowCharacterSheet;
 const
@@ -293,10 +288,10 @@ end;
 { ovl19:0AB3. The View command (whitepaper 5.4; the shop's V key, the Temple's and the camp's View): draws
   the sheet of SelectedCharacter and shows the prompt "View:" with the words Items (I), Spells (S), Trade
   (T), Drop (D) and Exit (E) until Exit or Escape (#0) is chosen or Done is set. Items runs RunItemMenu,
-  Spells runs ChooseSpellFromList, Trade runs ovl19_fn_2156 and Drop runs ovl19_fn_24A7 and then
+  Spells runs ChooseSpellFromList, Trade runs TradeMoney and Drop runs ovl19_fn_24A7 and then
   ShowCharacterMoney. The sheet is drawn again after Items, Spells and Trade. In view mode 5 (combat)
   ovl31_e3 runs on entry and ovl31_e2 on exit. Done: the stop flag, 0 keeps the view going; RunItemMenu gets
-  it too. ds471A keeps a copy of SelectedCharacter (ovl19:0AD1). }
+  it too. ViewedCharacter keeps a copy of SelectedCharacter (ovl19:0AD1). }
 procedure ViewSelectedCharacter(var Done: Byte);
 var
   Key: Char;                    { the key of the View prompt; a space until the first one is read }
@@ -313,7 +308,7 @@ begin
     ovl31_e3;
   Key := ' ';
   Done := 0;
-  ds471A := SelectedCharacter;
+  ViewedCharacter := SelectedCharacter;
   ShowCharacterSheet;
   while not (Key in [#0, 'E']) and (Done = 0) do
   begin
@@ -342,7 +337,7 @@ begin
     case Key of
       'I': RunItemMenu(Done);
       'S': Spell := ChooseSpellFromList(0, 0, Choice, HasSpells);
-      'T': ovl19_fn_2156;
+      'T': TradeMoney;
       'D':
         begin
           ovl19_fn_24A7;
@@ -614,22 +609,22 @@ begin
 end;
 { ovl19:1734. The Trade action of the item menu (RunItemMenu's T key, after CanGiveUpItem; ovl19:0EF8).
   Redraws the screen, then asks "Trade with Whom?" (res12_fn_2C48), which picks the recipient into Recipient,
-  starting from the viewed character (ds471A). Nothing is traded when no member is picked. Otherwise ds471A
+  starting from the viewed character (ViewedCharacter). Nothing is traded when no member is picked. Otherwise ViewedCharacter
   is set to the recipient. When WouldOverloadInventory refuses the recipient, "Overloaded" is shown and the
   item stays. Otherwise the item goes to res12_fn_15F7 with the recipient and to res12_fn_1509 with
   SelectedCharacter (the Drop action makes the same res12_fn_1509 call), and the recipient's carried weight
-  is recalculated (res12_fn_0BB8). Parameter: Item, the item traded. Globals: ds471A (the viewed character),
+  is recalculated (res12_fn_0BB8). Parameter: Item, the item traded. Globals: ViewedCharacter (the viewed character),
   SelectedCharacter (the giver). Side effects: the screen (res12_fn_27D9) and the messages. }
 procedure TradeItem(Item: PMenuLine);
 var
   Recipient: PCharacter;
 begin
-  Recipient := ds471A;
+  Recipient := ViewedCharacter;
   res12_fn_27D9;
   res12_fn_2C48('Trade with Whom?', 1, Pointer(Recipient));
   if Recipient <> nil then
   begin
-    ds471A := Recipient;
+    ViewedCharacter := Recipient;
     if WouldOverloadInventory(Recipient, Item) then
       res12_fn_1693('Overloaded')
     else
@@ -935,18 +930,120 @@ begin
     DelayByGameSpeed;
   ClearWindow(MessageLeft, MessageTop, MessageRight, MessageBottom);
 end;
-{ ovl19:2156: frame not read }
-{@stub} procedure ovl19_fn_2156; begin end;
-{ ovl19:2197: frame not read }
-{@stub} procedure ovl19_fn_2197; begin end;
-{ ovl19:2233: frame not read }
-{@stub} procedure ovl19_fn_2233; begin end;
-{ ovl19:228C: frame not read }
-{@stub} procedure ovl19_fn_228C; begin end;
-{ ovl19:2383: frame not read }
-{@stub} procedure ovl19_fn_2383; begin end;
-{ ovl19:23B6: frame not read }
-{@stub} procedure ovl19_fn_23B6; begin end;
+{ ovl19:2156. The Trade command of the View prompt for money (ViewSelectedCharacter's T key; whitepaper 5.4):
+  gives money of SelectedCharacter to another member. "Trade to?" asks for the recipient (res12_fn_2C48), which
+  is kept in ViewedCharacter. The coin kinds SelectedCharacter holds are listed under "Select type of coin", each with
+  its amount, its name right-aligned in eight columns. The chosen kind is asked for ("How much <kind> will you
+  trade? ", ReadAmount, at most the character's money of that kind) and TransferMoney moves it to the recipient.
+  The list is built again while money is left, and the recipient is asked again when the list is left with
+  money still held. Parameters: none. Globals: ViewedCharacter (the recipient), SelectedCharacter (the giver).
+  Side effects: the screen (res12_fn_27D9, ShowCharacterSheet, ShowCharacterMoney) and the menu lines (GetMem,
+  FreeMenuList). Its list is the one TakeMoney (ovl21:0CEB) builds for the pool.
+  QUIRK ovl19:21EE: Kinds is incremented for every listed kind and never read.
+  QUIRK ovl19:2468: Finished is not set when the list is cancelled before any transfer, so the test reads the
+  byte the frame held before the call. }
+procedure TradeMoney;
+const
+  MenuLineBytes = $2E;          { the Text, Flag29 and Next fields of a menu line, as NewMenuList allocates }
+  LastMoneyKind = 6;
+  NameColumnWidth = 8;          { the coin names are right-aligned in this many columns }
+  ListHeadingColor = 13;
+  ListLineColor = 10;
+  ListHighlightColor = 15;
+  ListLeft = 12;
+  ListTop = 7;
+  ListRight = 25;
+  ListBottom = 13;
+  AmountColor = 10;
+var
+  Recipient: PCharacter;        { the member the money goes to: ViewedCharacter, then the answer of "Trade to?" }
+  Kind: ShortInt;               { the coin kind of the loops }
+  CoinKind: ShortInt;           { the coin kind the list gave }
+  I: Byte;                      { the padding loop counter }
+  Pad: Byte;                    { the spaces that right-align a coin name }
+  List: PMenuLine;              { the coin lines, passed to ChooseFromList }
+  Chosen: PMenuLine;            { the line ChooseFromList returns; also the old first line while the list grows }
+  Head: PMenuLine;              { the first line of the list, freed with FreeMenuList }
+  Kinds: Word;                  { the count of listed kinds }
+  Choice: Integer;              { ChooseFromList's highlighted line }
+  Num: string[15];              { the amount of a coin kind as text }
+  Spaces: string[4];            { the padding of a coin name }
+  Text: string;                 { the coin name, then the prompt "How much <kind> will you trade? " }
+  Key: Char;                    { the key ChooseFromList returned; never read }
+  Amount: Word;                 { the amount given }
+  Finished: Boolean;            { the trade is over: no recipient, or no money is left }
+  Done: Boolean;                { the list ends: it was left, or no money is left }
+  Redraw: Byte;                 { ChooseFromList's Redraw }
+begin
+  repeat
+    Recipient := ViewedCharacter;
+    res12_fn_27D9;
+    res12_fn_2C48('Trade to?', 1, Pointer(Recipient));
+    if Recipient = nil then
+      Finished := True
+    else
+    begin
+      ShowCharacterSheet;
+      repeat
+        ShowCharacterMoney;
+        ViewedCharacter := Recipient;
+        List := nil;
+        Chosen := nil;
+        Head := nil;
+        Kinds := 0;
+        for Kind := 0 to LastMoneyKind do
+          if SelectedCharacter^.Money[Kind] <> 0 then
+          begin
+            Inc(Kinds);
+            if List = nil then
+            begin
+              GetMem(List, MenuLineBytes);
+              List^.Next := nil;
+            end
+            else
+            begin
+              Chosen := List;
+              GetMem(List, MenuLineBytes);
+              List^.Next := Chosen;
+            end;
+            Str(SelectedCharacter^.Money[Kind], Num);
+            Pad := NameColumnWidth - Length(MoneyKindNames[Kind]);
+            Spaces := '';
+            Spaces[0] := Chr(Pad);
+            for I := 1 to Pad do
+              Spaces[I] := ' ';
+            List^.Text := Spaces + MoneyKindNames[Kind] + ' ' + Num;
+            List^.Flag29 := 0;
+          end;
+        Head := List;
+        Choice := 0;
+        Redraw := 1;
+        Key := ChooseFromList('Select type of coin', '', ListHeadingColor, ListLineColor, ListHighlightColor,
+          ListLeft, ListTop, ListRight, ListBottom, List, 1, Redraw, Choice, Chosen);
+        if Chosen = nil then
+          Done := True
+        else
+        begin
+          Text := '';
+          CoinKind := MoneyKindOfLine(Chosen^.Text, Text);
+          Text := 'How much ' + Text + 'will you trade? ';
+          Amount := ReadAmount(SelectedCharacter^.Money[CoinKind], Text, AmountColor);
+          TransferMoney(SelectedCharacter, Recipient, Amount, CoinKind);
+          Done := True;
+          Finished := True;
+          for Kind := 0 to LastMoneyKind do
+            if SelectedCharacter^.Money[Kind] > 0 then
+            begin
+              Finished := False;
+              Done := False;
+            end;
+        end;
+        if Head <> nil then
+          FreeMenuList(Head);
+      until Done;
+    end;
+  until Finished;
+end;
 { ovl19:24A7: retf 0: 0 bytes of parameters; 558 bytes of locals }
 {@stub} procedure ovl19_fn_24A7; begin end;
 { ovl19:275B: rejects an item when the character already has more than 15 items or when its added
