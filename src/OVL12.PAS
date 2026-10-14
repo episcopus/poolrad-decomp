@@ -97,7 +97,7 @@ procedure RegainHitPoints(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ReviveDyingCharacter(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure GiveAffectUnlessFireOrAcid(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure GiveRegeneratingUnlessAffected(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure RetryRevivalAtFullHitPoints;
+procedure RetryRevivalAtFullHitPoints(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure TurnGaseousAndEscape;
 procedure ovl12_e88;
 procedure ovl12_fn_2915;
@@ -1770,8 +1770,17 @@ begin
     if not res12_fn_2199(Who, AffectRegenerating, FoundAffect) then
       AddAffect(Who, AffectRegenerating, RegeneratingDuration, $FF, RunsHandlerOnRemove);
 end;
-{ ovl12:2866: retf 10: 10 bytes of parameters; 2 bytes of locals }
-{@stub} procedure RetryRevivalAtFullHitPoints; begin end;
+{ ovl12:2866. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read). ReviveCombatant
+  (ovl24:1869) tries to put Who back on the map with its full HpMax (+$32). When that fails, Who gets AffectUnknown66
+  for AffectUnknown66RetryDuration round with the Data of Affect, when TryAddAffect allows it; the result is stored
+  and never read. Which affect runs it is not known yet [?]. }
+procedure RetryRevivalAtFullHitPoints(Who: PCharacter; Affect: PAffect; Mode: Byte);
+var
+  Added: Boolean;               { the result of TryAddAffect, stored and never read }
+begin
+  if not ReviveCombatant(Who, Who^.HpMax) then
+    Added := TryAddAffect(Who, AffectUnknown66, Affect^.Data, AffectUnknown66RetryDuration);
+end;
 { ovl12:28BF: retf 10: 10 bytes of parameters; 26 bytes of locals }
 {@stub} procedure TurnGaseousAndEscape; begin end;
 { ovl12:2901: retf 10: 10 bytes of parameters; 0 bytes of locals }
