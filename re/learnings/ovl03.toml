@@ -143,3 +143,57 @@ tags = ["string", "concat", "argument", "O+", "retf"]
 title = "A string expression passed as a value argument is built in the argument temp: StrCopy and StrConcat leave the destination on the stack"
 lesson = "ovl17_e11(GameDir + 'ECL' + TileSetText + '.dax') in an overlay unit compiles to a 256-byte argument temp at bp-103h: the address of the temp is pushed first, then GameDir is copied into it (System_StrCopy, retf 4, pops only the source), then each piece is appended with System_StrConcat, which also pops only its source. The temp's address is then the 4-byte argument of ovl17_e11 (retf 4), so the callee's parameter is a `string` value parameter. StartEclBlock (ovl03:0BD1) matched with this form and the number from Str(TileSet, TileSetText) in a string[1] local."
 evidence = ["src/OVL03.PAS#StartEclBlock", "src/OVL17.PAS#ovl17_e11", "re/symbols.toml#ovl03:0BD1"]
+
+[[lesson]]
+id = "inc-byte-adds-in-place"
+confidence = "V"
+units = ["*"]
+tags = ["Inc", "Byte", "add", "word", "codegen"]
+title = "Inc(byte, word expression) adds AL in place; a byte := byte + word expression widens"
+lesson = "After a word expression (here a div 10 of a sum) the original does add byte ptr [x], al, 3 bytes. Written as `Checksum := Checksum + (...) div 10`, TP computes the sum in AX and widens the byte (mov dx,ax; mov al,[x]; xor ah,ah; add ax,dx; mov [x],al), 9 bytes longer, and the exit jump of the loop lands elsewhere. `Inc(Checksum, (...) div 10)` compiles to the original's form."
+evidence = ["tools/re/tp_idioms/ovl03/BYTEADD.PAS", "src/OVL03.PAS#ComputePartyValueCommand", "re/symbols.toml#ovl03:12C6"]
+
+[[lesson]]
+id = "dec-eclpc-then-redecode-count"
+confidence = "V"
+units = ["*"]
+tags = ["EclPC", "DecodeOperands", "Dec", "count", "script"]
+title = "A variable operand count is read by reading the count, Dec(EclPC) and DecodeOperands(Count) again"
+lesson = "ChooseFromListCommand (ovl03:0F08) and AskMenuCommand (ovl03:10D1) both decode a fixed header with DecodeOperands(3) or (2), read the count with OperandValue, then run `dec word [0x49ed]` (EclPC, see dseg) and DecodeOperands(Count). The Dec is the instruction before the second decode in both packets, so the source keeps `Dec(EclPC)` between them and both routines match with it. The variant without the Dec was not probed."
+evidence = ["src/OVL03.PAS#ChooseFromListCommand", "src/OVL03.PAS#AskMenuCommand", "re/dseg.toml#EclPC"]
+
+[[lesson]]
+id = "boolean-and-as-value-ord"
+confidence = "V"
+units = ["*"]
+tags = ["Boolean", "and", "Ord", "if", "codegen"]
+title = "A Boolean `and` stored as a Byte compiles to a materialised value; if-then-else on it does not"
+lesson = "`if (ds84E0 <> 0) and (ds84E1 <> 0) then Animate := 1 else Animate := 0` jumps straight to the else branch on the first clear flag (je to the else label), while the original builds the Boolean in AL (mov al,0; jmp; mov al,1) and stores it. `Animate := Ord((ds84E0 <> 0) and (ds84E1 <> 0));` matches (ovl03:10D1). Try the Ord form first when a flag is stored as a byte from a Boolean expression."
+evidence = ["src/OVL03.PAS#AskMenuCommand", "re/symbols.toml#ovl03:10D1"]
+
+[[lesson]]
+id = "string-expression-chain-into-max-target"
+confidence = "V"
+units = ["*"]
+tags = ["string", "concat", "loop", "O+", "codegen"]
+title = "`Text := Text + '~' + E + ' '` compiles to a temp copy, one concat per piece and a max-50 copy back"
+lesson = "In an overlay unit the assignment of a concatenation to a string[50] variable copies the target into a 256-byte temp (System_StrCopy, the target pushed first), appends each piece with System_StrConcat, then copies the temp back with System_StrLCopy and max 50 (ovl03:10D1, the loop body and the final option). Each such statement gets its own temp in the frame, so two of them can sit at bp-13Fh and bp-13Eh."
+evidence = ["src/OVL03.PAS#AskMenuCommand", "re/symbols.toml#ovl03:10D1"]
+
+[[lesson]]
+id = "empty-string-local-to-string40-param"
+confidence = "V"
+units = ["*"]
+tags = ["string", "param", "String40", "literal", "codegen"]
+title = "An empty string[1] local passed to a String40 value parameter is passed by address, with no copy"
+lesson = "`Empty := ''` on a string[1] local and passing Empty twice to AskListMenu (String40 value parameters for Title and Text) compiles to two lea/push pairs of the same address, the callee does the copy. The same holds for AskMenu's Title (ovl03:10D1)."
+evidence = ["src/OVL03.PAS#ChooseFromListCommand", "src/OVL03.PAS#AskMenuCommand", "re/symbols.toml#ovl03:0F08"]
+
+[[lesson]]
+id = "unused-word-after-pointer-local"
+confidence = "V"
+units = ["*"]
+tags = ["frame", "unused", "pointer", "locals"]
+title = "A 4-byte pointer local with a 6-byte frame needs a declared unused Word after it"
+lesson = "ClearEncounterCommand (ovl03:125D) has `sub sp, 6` but only the 4-byte Next pointer is used. With `Next: PMenuLine` alone the frame is 4 bytes (sub sp, 4); declaring `Unused: Word` after it, with the QUIRK comment, puts the 2 bytes at bp-6..bp-5 and the match passes."
+evidence = ["src/OVL03.PAS#ClearEncounterCommand", "re/symbols.toml#ovl03:125D"]
