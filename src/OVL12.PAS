@@ -110,7 +110,7 @@ procedure CancelColdDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure CancelPoisonAndParalysisHooks(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure CancelFireDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ReduceFireDamageOnePerDie(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e98;
+procedure HalveElectricityDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e99;
 procedure ovl12_e100;
 procedure ovl12_e101;
@@ -1904,8 +1904,14 @@ begin
         DamageAmount := ds681C;
     end;
 end;
-{ ovl12:2A6D: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e98; begin end;
+{ ovl12:2A6D. Damage hook (the AffectHandlers shape: Who, Affect and Mode; none of them is read, ovl24:0000). While the
+  damage is electricity (DamageKind bit KindElectricity, DS:6819), it halves DamageAmount (DS:6818): the electricity
+  twin of HalveColdDamage (ovl12:03E1), without its save bonus. Purpose unknown: which affect runs it is not known yet [?]. }
+procedure HalveElectricityDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  if (DamageKind and KindElectricity) <> 0 then
+    DamageAmount := DamageAmount shr 1;
+end;
 { ovl12:2A87: retf 10: 10 bytes of parameters; 4 bytes of locals }
 {@stub} procedure ovl12_e99; begin end;
 { ovl12:2AE6: retf 10: 10 bytes of parameters; 4 bytes of locals }

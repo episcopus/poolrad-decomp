@@ -4500,12 +4500,12 @@ id = "ovl12:2A6D"
 unit = "ovl12"
 addr = "ovl12:2A6D"
 size = 26
-name = "ovl12_e98"
+name = "HalveElectricityDamage"
 signature = ""
 c_name = "ovl12_e98"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_98"
+notes = "renamed from ovl12_e98 (ovl12:2A6D tests DamageKind bit 4 (KindElectricity, ds6819 and 4) and halves DamageAmount (shr 1), the electricity twin of HalveColdDamage (ovl12:03E1)); auto:entry_98"
 evidence = ["prologue"]
 
 [[routine]]

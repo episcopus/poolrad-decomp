@@ -4099,3 +4099,10 @@ kind = "routine"
 why = "ovl12:2A28 is the loop of ReduceFireDamageByRoll (ovl12:1490) with Dec(DamageAmount) (one point, fe 0e 18 68) per die of ds681C, and no save bonus or cancel"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl12_e98"
+new = "HalveElectricityDamage"
+kind = "routine"
+why = "ovl12:2A6D tests DamageKind bit 4 (KindElectricity, ds6819 and 4) and halves DamageAmount (shr 1), the electricity twin of HalveColdDamage (ovl12:03E1)"
+date = "2026-10-14"
+
