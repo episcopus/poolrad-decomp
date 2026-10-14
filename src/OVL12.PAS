@@ -21,8 +21,8 @@ procedure ComputerTakesOver(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ExchangeStrengthWithAffect(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure SetCharismaFromAffect(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure AddAffectAndDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e15;
-procedure ovl12_e16;
+procedure IgnoreAffect(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure RaiseResistanceAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ovl12_e17;
 procedure ovl12_fn_06C8;
 procedure ovl12_e18;
@@ -208,6 +208,8 @@ const
   AffectStrength2 = $26;
   AffectUnknown0F = $0F;        { purpose unknown; ovl04 removes it with the poison affect $37 (ovl04:0807) }
   AffectUnknown0FDuration = 10; { the Duration ovl12:05EB gives affect $0F }
+  MinimumResistance = $39;      { ovl12:064E raises ResistValue (+$111) to at least this (57) }
+  ClearDamageValue = $0F;       { ovl12:064E clears DamageAmount when ds681B is this }
 
 { ovl12:0000. Cancels the hook of an affect: when AffectId is 0 or is the affect the hooks are offering
   (HookAffectId), HookAffectId and DamageAmount are cleared. HookAffectId 0 reads as "is Unaffected"
@@ -392,7 +394,7 @@ begin
     Inc(SaveRoll, ColdSaveBonus);
   end;
 end;
-{ 0400. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode 0 applies, any other value
+{ ovl12:0400. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode 0 applies, any other value
   removes, ovl24:0000). The affect number that runs it is not known yet [?]. Applying gives Who to the
   computer, as quick combat does (whitepaper, "Who plays"): Quick is set so QuickTurn plays the turn, Who
   becomes computer-run with morale $33 unless it already is, the target Who attacked is dropped and
@@ -424,7 +426,7 @@ begin
     ds6825 := AffectMorale;
   end;
 end;
-{ 04BA. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000) of a strength
+{ ovl12:04BA. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000) of a strength
   affect whose Data holds an encoded strength (EncodeStrength, ovl24:10E4). Does nothing when Data has bit 7
   (StrengthKept): an earlier strength is kept in it. Otherwise Who's Strength and StrengthPercent take the
   affect's strength (DecodeStrength, ovl24:110D). Then the strongest other strength affect of Who, id $0C or
@@ -473,18 +475,19 @@ begin
     Who^.StrengthPercent := BestPercent;
   end;
 end;
-{ 05D6. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000): Who's
+{ ovl12:05D6. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000): Who's
   Charisma (TCharacter +$15) becomes the affect's Data byte. Applying and removing run the same code, so the
   value is set each time. Which affect id runs it is not known yet [?]. }
 procedure SetCharismaFromAffect(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   Who^.Charisma := Affect^.Data;
 end;
-{ 05EB. Purpose unknown: an affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000).
-  It adds affect $0F (AffectUnknown0F) to Who for AffectUnknown0FDuration with the Data byte of Affect, when
-  TryAddAffect allows it. Then, while Who has more than one hit point (Flag11B, the current hit points [I]), it
-  deals 1 point of plain damage (DamageKind 0, no save, DealDamage) and, outside combat, redraws the selected
-  character (ds49F3 is not CombatViewMode). Which affect id runs it is not known yet [?]. }
+{ ovl12:05EB. Purpose unknown: an affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is
+  not read, ovl24:0000). It adds affect $0F (AffectUnknown0F) to Who for AffectUnknown0FDuration with the
+  Data byte of Affect, when TryAddAffect allows it. Then, while Who has more than one hit point (Flag11B,
+  the current hit points [I]), it deals 1 point of plain damage (DamageKind 0, no save, DealDamage) and,
+  outside combat, redraws the selected character (ds49F3 is not CombatViewMode). Which affect id runs it
+  is not known yet [?]. }
 procedure AddAffectAndDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   if TryAddAffect(Who, AffectUnknown0F, Affect^.Data, AffectUnknown0FDuration) then
@@ -496,10 +499,23 @@ begin
         res12_fn_0767(SelectedCharacter);
     end;
 end;
-{ ovl12:0647: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e15; begin end;
-{ ovl12:064E: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl12_e16; begin end;
+{ ovl12:0647. Affect handler (the AffectHandlers shape: Who, Affect and Mode) that does nothing: none of its
+  parameters is read and no global is written. Which affect id runs it is not known yet [?]. }
+procedure IgnoreAffect(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+end;
+{ ovl12:064E. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Affect and Mode are not read). Raises
+  Who's ResistValue (TCharacter +$111, likely the magic resistance [I]) to at least MinimumResistance, adds one
+  to SaveRoll, and when ds681B is ClearDamageValue clears DamageAmount, so the damage of the roll in progress is
+  none. Which affect id runs it is not known yet [?]. }
+procedure RaiseResistanceAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
+begin
+  if Who^.ResistValue < MinimumResistance then
+    Who^.ResistValue := MinimumResistance;
+  Inc(SaveRoll);
+  if ds681B = ClearDamageValue then
+    DamageAmount := 0;
+end;
 { ovl12:0679: frame not read }
 {@stub} procedure ovl12_e17; begin end;
 { ovl12:06C8: frame not read }

@@ -3330,12 +3330,12 @@ id = "ovl12:0647"
 unit = "ovl12"
 addr = "ovl12:0647"
 size = 7
-name = "ovl12_e15"
-signature = ""
+name = "IgnoreAffect"
+signature = "procedure IgnoreAffect(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e15"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_15"
+notes = "renamed from ovl12_e15 (ovl12:0647 is push bp, mov bp,sp, pop bp, retf 10: an affect handler (AffectHandlers shape) with an empty body, so it ignores the affect when called); auto:entry_15"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3343,12 +3343,12 @@ id = "ovl12:064E"
 unit = "ovl12"
 addr = "ovl12:064E"
 size = 43
-name = "ovl12_e16"
-signature = ""
+name = "RaiseResistanceAndSave"
+signature = "procedure RaiseResistanceAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e16"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_16"
+notes = "renamed from ovl12_e16 (ovl12:064E is an affect handler (AffectHandlers shape, Affect and Mode not read): it raises ResistValue (TCharacter +hex 111) to at least 57, adds one to SaveRoll, and clears DamageAmount when ds681B is hex 0F); auto:entry_16"
 evidence = ["prologue"]
 
 [[routine]]

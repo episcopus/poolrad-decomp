@@ -3518,3 +3518,17 @@ kind = "routine"
 why = "ovl12:05EB is an affect handler (AffectHandlers shape, Mode not read) that calls TryAddAffect with affect hex 0F for 10 and the affect's Data, then deals 1 plain point of damage (DealDamage, DamageKind 0) while Flag11B is above 1; the meaning of affect 0F is not known (ovl04 AffectRemovedAtNeutralizePoison3)"
 date = "2026-10-13"
 
+[[rename]]
+old = "ovl12_e15"
+new = "IgnoreAffect"
+kind = "routine"
+why = "ovl12:0647 is push bp, mov bp,sp, pop bp, retf 10: an affect handler (AffectHandlers shape) with an empty body, so it ignores the affect when called"
+date = "2026-10-13"
+
+[[rename]]
+old = "ovl12_e16"
+new = "RaiseResistanceAndSave"
+kind = "routine"
+why = "ovl12:064E is an affect handler (AffectHandlers shape, Affect and Mode not read): it raises ResistValue (TCharacter +hex 111) to at least 57, adds one to SaveRoll, and clears DamageAmount when ds681B is hex 0F"
+date = "2026-10-13"
+
