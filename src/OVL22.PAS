@@ -74,8 +74,7 @@ procedure CastMonsterInvisibility;
 procedure CastMonsterMagicDamage;
 procedure CastMonsterNoEffect;
 procedure CastMonsterReadMagic;
-procedure ovl22_e63;
-procedure ovl22_fn_31D7;
+procedure MonsterBreath(Who: PCharacter; Affect: PAffect; Unused: Byte);
 function IsScroll(Item: PItem): Boolean;
 procedure ConsumeScrollSpell(Who: PCharacter; Item: PItem; Spell: Byte);
 procedure ovl22_e8(Who: PCharacter; Message: String40; Spell: Byte);
@@ -1538,7 +1537,7 @@ begin
   end;
 end;
 { ovl22:295B. The line-beam helper of the line spells: it draws the beam of the Lightning Bolt handler
-  CastLightningBolt and of the monster beams (CastMonsterBeam, the dragon breath ovl22_e63) and damages every combatant it
+  CastLightningBolt and of the monster beams (CastMonsterBeam, the dragon breath MonsterBreath) and damages every combatant it
   passes. It starts at the aim cell ds6DB9/ds6DBA (playing the zap animation res12_fn_19DE($13)) and
   walks a line away from the caster for Range * 2 steps (a TLineState filled by SetupLine and advanced
   by StepLine); it draws each step through res12_fn_1A29 and deals Damage (electrical, SavingThrow kind
@@ -1550,7 +1549,7 @@ end;
   Parameters: Range the spell's reach (the line walks Range * 2 cells); Damage the damage dealt per
   cell; SaveKind the SavingThrow kind; Bounce nonzero lets the beam reflect off a wall once. Globals:
   ds6DB9/ds6DBA (the aim cell, moved to the bounce point), ds6820, SelectedCharacter and CombatTiles.
-  Called by CastLightningBolt (Lightning Bolt), CastMonsterBeam and ovl22_e63 (the dragon breath). }
+  Called by CastLightningBolt (Lightning Bolt), CastMonsterBeam and MonsterBreath (the dragon breath). }
 procedure CastLineBeam(Range, Damage, SaveKind, Bounce: Byte);
 const
   LineStep = 4;                   { res12_fn_1A29's step: it walks the beam line in steps of 4 }
@@ -1874,10 +1873,62 @@ procedure CastMonsterReadMagic;
 begin
   ApplySpellToTargets(ds681B, $FF, 1, 0, 0, 'is Reading');
 end;
-{ ovl22:30D9: frame not read }
-{@stub} procedure ovl22_e63; begin end;
-{ ovl22:31D7: retf 10: 10 bytes of parameters; 0 bytes of locals }
-{@stub} procedure ovl22_fn_31D7; begin end;
+{ ovl22:30D9. MonsterBreath: the breath attack of a monster (the dragon breath the line spells'
+  comments name). When ds6DE3 is set (a combat round counter) it first rolls 1d100 and gives up on a
+  roll of 50 or less, so the monster does not breathe every round. It takes the breather's combat cell
+  (CombatantX/Y of Who), shows 'Breathes!', asks the target picker SpellTargetPicker for the aim
+  (spell $33, the Lightning Bolt, quick) with its Done at ds70C6, and nudges the aim cell
+  ds6DB9/ds6DBA one cell towards the breather (SignOf) and off the cell beside him. It clears the
+  breather's attacker affect, plays the zap animation (res12_fn_19DE($13)), draws the breath line
+  (res12_fn_1A29) from the breather to the aim cell, damages the aim cell for his maximum hit points
+  (DamageTargetInCell: electrical, save kind 3) and runs the line beam CastLineBeam($A, HpMax, 3, 0).
+  Finally it spends the breath affect Affect: while its Data byte is above $FD it is only decremented,
+  otherwise the affect $58 is removed; res12_fn_2637(Who) then runs and its byte result is left in the
+  unread Blocked local (QUIRK ovl22:30D9). Globals: ds6DE3, ds6DB9/ds6DBA, ds70C6. Parameters: Who the
+  breathing monster, Affect its breath affect, Unused is never read (QUIRK ovl22:30D9). }
+procedure MonsterBreath(Who: PCharacter; Affect: PAffect; Unused: Byte);
+const
+  BreatheChance = $32;            { the monster does not breathe on a 1d100 roll up to this }
+  ChanceSides = $64;              { the chance is rolled on 1d100 }
+  MessageColour = $A;             { the colour res12_fn_16EC shows 'Breathes!' in }
+  TimedMessage = 1;               { nonzero: res12_fn_16EC delays by the game speed and clears it }
+  PickerSpell = $33;              { the picker uses the Lightning Bolt's target mode }
+  PickerQuick = 1;                { the picker's second argument }
+  ZapAnimation = $13;             { res12_fn_19DE's zap animation, as DamageTargetInCell }
+  BeamStep = 4;                   { res12_fn_1A29's step for the breath line }
+  BeamWidth = $32;                { res12_fn_1A29's width for the breath line }
+  BeamReach = $A;                 { CastLineBeam's reach: the breath walks this many cells each way }
+  SaveKindBreath = 3;             { SavingThrow's kind for the breath }
+  NoBounce = 0;                   { the breath line does not reflect off a wall }
+  BreathAffect = $58;             { the affect removed once its data byte is spent }
+  BreathDataLimit = $FD;          { while the affect's data is above this it is only decremented }
+var
+  Blocked: Boolean;               { DamageTargetInCell's out flag, then res12_fn_2637's result }
+  CasterX, CasterY: ShortInt;     { the breather's combat cell (CombatantX/Y) }
+begin
+  if (ds6DE3 <> 0) and (RollDice(1, ChanceSides) <= BreatheChance) then
+    Exit;
+  CasterX := CombatantX(Who);
+  CasterY := CombatantY(Who);
+  res12_fn_16EC(Who, 'Breathes!', MessageColour, TimedMessage);
+  SpellTargetPicker(PickerSpell, PickerQuick, ds70C6);
+  ds6DB9 := CasterX + SignOf(ds6DB9 - CasterX);
+  ds6DBA := CasterY + SignOf(ds6DBA - CasterY);
+  if ds6DB9 = CasterX + 1 then
+    Inc(ds6DB9);
+  if ds6DBA = CasterY + 1 then
+    Inc(ds6DBA);
+  ClearAttackerAffect(Who);
+  res12_fn_19DE(ZapAnimation);
+  res12_fn_1A29(CasterX, CasterY, ds6DB9, ds6DBA, BeamStep, BeamWidth);
+  DamageTargetInCell(ds6DB9, ds6DBA, Who^.HpMax, SaveKindBreath, Blocked);
+  CastLineBeam(BeamReach, Who^.HpMax, SaveKindBreath, NoBounce);
+  if Affect^.Data > BreathDataLimit then
+    Dec(Affect^.Data)
+  else
+    RemoveAffect(Who, BreathAffect, Affect);
+  Blocked := Boolean(res12_fn_2637(Who));
+end;
 { ovl22:323D. IsScroll: whether Item is a spell scroll. It rejects a nil item first, then tests the
   item's class byte RaceRow[Item^.ItemType][0] (the first byte of the 16-byte row for the item type
   in the RaceRow table at DS:5582): the three values $B, $C and $D are the spell scrolls whose

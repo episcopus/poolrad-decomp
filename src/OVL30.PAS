@@ -18,7 +18,7 @@ procedure ScanTargets(FromX, FromY: ShortInt; MaxSteps: Word; Dir, Base: Byte; M
 implementation
 
 { ovl30:0000. Returns the sign of N: -1 when N is negative, 1 when N is positive and 0 when N is
-  zero. Called by ovl22_e63, SetupLine and res12_fn_1CE0. }
+  zero. Called by MonsterBreath, SetupLine and res12_fn_1CE0. }
 function SignOf(N: Integer): Integer;
 begin
   if N < 0 then

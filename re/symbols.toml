@@ -10685,27 +10685,14 @@ evidence = ["prologue"]
 id = "ovl22:30D9"
 unit = "ovl22"
 addr = "ovl22:30D9"
-size = 254
-name = "ovl22_e63"
-signature = ""
+size = 356
+name = "MonsterBreath"
+signature = "procedure MonsterBreath(Who: PCharacter; Affect: PAffect; Unused: Byte)"
 c_name = "ovl22_e63"
-level = "none"
+level = "L2"
 justification = ""
-notes = "auto:entry_63"
+notes = "renamed from ovl22_e63 (ovl22:30D9 shows 'Breathes!' and runs a breath attack: a 1d100 chance check on ds6DE3, the target picker, the zap animation, a line beam (CastLineBeam) and DamageTargetInCell for the breather's maximum hit points; Share the monster breath attack (called with a character and its breath affect)); auto:entry_63"
 evidence = ["prologue"]
-
-[[routine]]
-id = "ovl22:31D7"
-unit = "ovl22"
-addr = "ovl22:31D7"
-size = 102
-name = "ovl22_fn_31D7"
-signature = ""
-c_name = "ovl22_fn_31D7"
-level = "none"
-justification = ""
-notes = "auto:far_call"
-evidence = ["far_call"]
 
 [[routine]]
 id = "ovl22:323D"

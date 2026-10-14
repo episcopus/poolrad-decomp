@@ -3938,3 +3938,10 @@ kind = "routine"
 why = "ovl22:328A clears the first of Item^.Affects[1..3] whose low seven bits equal the scribed spell (Spell and $7F), decrements Item^.NameNum[2] and hands the item to res12_fn_1509 when it falls below $D2; ProcessPendingScribedSpell calls it to consume a spell from a scroll after it is marked known"
 date = "2026-10-14"
 
+[[rename]]
+old = "ovl22_e63"
+new = "MonsterBreath"
+kind = "routine"
+why = "ovl22:30D9 shows 'Breathes!' and runs a breath attack: a 1d100 chance check on ds6DE3, the target picker, the zap animation, a line beam (CastLineBeam) and DamageTargetInCell for the breather's maximum hit points; Share the monster breath attack (called with a character and its breath affect)"
+date = "2026-10-14"
+
