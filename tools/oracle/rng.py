@@ -21,9 +21,8 @@ from collections import namedtuple
 from unicorn import UC_HOOK_MEM_WRITE
 
 from .machine import LOAD_SEG
-from .state import dgroup_seg
 
-STEP_RET = (0x0AF8 + LOAD_SEG, 0x1244)     # the `ret` of the generator step; RandSeed already updated
+STEP_RET = (0x0AF8 + LOAD_SEG, 0x1244)     # the `ret` of the generator step; RandSeed already updated (original)
 NEAR_RET_RANGE = 0x11C3                    # step called from Random(range)
 NEAR_RET_REAL = 0x11D9                     # step called from Random (real)
 RANDSEED = 0x4428
@@ -34,14 +33,18 @@ SeedWrite = namedtuple("SeedWrite", "time where value")
 
 
 def install_random_log(m) -> None:
+    from . import layout
     from .trace import locate, overlay_stubs
+    lay = layout.current()
+    step_ret = (lay.system_para + LOAD_SEG, STEP_RET[1])    # System code is the same in every build
+    randseed = lay.randseed
+    ds_seg = lay.dgroup_para + LOAD_SEG
     m.random_log = []
     m.seed_writes = []
     stubs = overlay_stubs()
 
     def on_step(mach):
-        ds = dgroup_seg()
-        seed = (mach.rw(ds, RANDSEED + 2) << 16) | mach.rw(ds, RANDSEED)
+        seed = (mach.rw(ds_seg, randseed + 2) << 16) | mach.rw(ds_seg, randseed)
         ss, sp = mach.get("ss"), mach.get("sp")
         near, ip, cs = mach.rw(ss, sp), mach.rw(ss, sp + 2), mach.rw(ss, sp + 4)
         if near == NEAR_RET_RANGE:
@@ -56,13 +59,13 @@ def install_random_log(m) -> None:
 
     def on_seed_write(uc, access, addr, size, value, _ud):
         ip = m.get("ip")
-        if m.get("cs") == STEP_RET[0] and ip in STEP_BODY:
+        if m.get("cs") == step_ret[0] and ip in STEP_BODY:
             return
         where = locate(m, m.linear(m.get("cs"), ip), stubs)
         m.seed_writes.append(SeedWrite(m.now(), where, value))
 
-    m.add_breakpoint(STEP_RET[0], STEP_RET[1], on_step)
-    lo = dgroup_seg() * 16 + RANDSEED
+    m.add_breakpoint(step_ret[0], step_ret[1], on_step)
+    lo = ds_seg * 16 + randseed
     m.uc.hook_add(UC_HOOK_MEM_WRITE, on_seed_write, begin=lo, end=lo + 3)
 
 

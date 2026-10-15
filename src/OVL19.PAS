@@ -4,9 +4,9 @@ unit OVL19;
 interface
 uses POOLVARS;
 procedure ShowCharacterSheet;
-procedure ShowCharacterMoney;
 procedure ShowCombatStats;
 procedure ShowAbilityScore(Index: ShortInt; Highlight: Boolean);
+procedure ShowCharacterMoney;
 procedure ViewSelectedCharacter(var Done: Byte);
 function CanGiveUpItem(Item: PMenuLine): Boolean;
 procedure RunItemMenu(var Done: Byte);

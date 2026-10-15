@@ -323,6 +323,48 @@ What the matching harness relies on, each proven by a complete match of res04 (r
 
 ---
 
+### 3.7 The rebuild from Pascal (Phase 5) **[V]** (`make rebuild`, `make rebuild-golden`, playbook 50)
+
+`src/` links into the original program. `make rebuild` compiles `src/POOL.PAS` with the pinned Turbo Pascal
+6.0 and compares with the original: 51 of 51 segments identical (main, 15 resident units, 35 overlay units),
+the load image (68,592 bytes) byte for byte, the relocation table (561 entries) as a set, and `POOL.OVR`
+byte for byte against `GAME.OVR` (206,105 bytes). The EXE header of `start-unpack.exe` is not compared: it is
+the unpacker's (header of `0A0` paragraphs, the packed file's checksum word `15E5`), the TP-linked header is
+`08E` paragraphs with a zero checksum. Both goldens (boot-title, create-character) play on `POOL.EXE` in the
+oracle with the same instructions, virtual time, key reads, Random sequence, screens, files and the same
+DGROUP, heap and memory digests at every checkpoint.
+
+What the link taught (each probed with `make tpc` on small programs, then confirmed on our bytes):
+
+- **Data order.** Turbo Pascal allocates the data segment by declaration: first the typed constants of the
+  program, then those of every unit in reverse link order, then System's and Overlay's variable block, then
+  the variables of the program and of every unit in the same reverse order, then `Input`, `Output` and the
+  saved interrupt vectors. The first typed constant of a program sits at `DS:0002`; `DS:0000` holds two
+  bytes of the compiler's own. A game global is therefore where the original had it only if the whole
+  segment is declared, in offset order, with the initial values of the typed constants.
+- **DS:0002 to 43DB** is the game's initialised data (typed constants, 17,370 bytes); **43DC..43EB** are the
+  Overlay unit's own typed constants (`OvrResult` at 43DC, `OvrEmsPages`, `OvrTrapCount`, `OvrLoadCount`,
+  `OvrFileMode`: what res08 calls `ds43DC` is `OvrResult`); **43EC..442D** is the Overlay and System
+  variable block; the game's variables run from 442E to 84EF; **84F0..8507** is Crt's variable block
+  (`CheckBreak` at 84F0: `ds84F0 := 0` in res08_init is `CheckBreak := False`); `Input` is at 8508.
+- **The code wheel table** starts at `DS:0002`, not 0 (the `Unknown` bytes of its first record are the
+  compiler's two). `TCodeWheelEntry` is declared from the code word on and the table is `ds0002`.
+- **Link order.** The original code segments sit, from the highest, System `0AF8`, Overlay `0AA2`, Crt
+  `0A40`, Dos `0A32`, res02 `0A31`, then res03 and the game units down to main at `0000`: the uses clause
+  of the program begins `Overlay, Crt, Dos, RES02, RES03, ...`.
+- **Overlay stubs.** A stub's entry k is the k-th routine declared in the unit's interface that another
+  unit calls (the smart linker drops the others). The original's order is not the order of the code in 14
+  units (ovl06, 07, 12, 13, 14, 15, 17, 19, 21, 22, 26, 28, 29, 30), so every call into them is
+  `9A stub:entry`. `tools/re/stub_order.py` reads the order from the original's stub tables.
+- **The sound driver** of res03 is 5,721 bytes (`08AE:01D7` to the end of the segment) with nine segment
+  words in the relocation table, all of them the unit's own segment (`08AE`): an object file with one code
+  segment, a public name per routine and nine segment-base fixups links to the same bytes.
+
+Stand-ins and open work. The values of the typed constants in `src/POOLVARS.PAS` were read from the
+original image once (`tools/re/dgroup.py`); the sound driver object is written from the original image at
+build time (`tools/re/extobj.py`, not stored) until the driver has an assembly source that assembles to the
+same bytes; the globals still live in POOLVARS instead of their owning units (Phase 6).
+
 ## 4. Data files
 
 ### 4.1 DAX archives **[V]** (`make dax`: all 113 `.DAX` files, all 1,245 blocks)
@@ -917,7 +959,7 @@ entries share the parent frame. `make match WRITE=1` retires them as each real r
 
 ### 5.12 Copy protection: the code wheel
 
-- The check is `CheckCodeWheel` (`ovl02:00FD`, entry point of overlay 2, matched as a whole: `src/OVL02.PAS`, `make match UNIT=ovl02`: unit complete) **[V]**. At most three times it picks `r = Random(13)` (`System_Random`, `0AF8:11C0`), draws two rune glyphs and a path pattern from a table at the very start of DGROUP (`DS:0000`, 13 records of 21 bytes, the `TCodeWheelEntry` type in `src/POOLVARS.PAS`), calls the keyboard flush `res04:0104` (which does nothing, 5.8) and asks "INPUT THE CODE WORD:" **[V]**. The question window is drawn by `DrawWindow(1, 1, $26, $16, 0, 0, '')` and the instructions, the runes and the path by `DrawTextAt`, `DrawGlyph` (the runes as font characters at the four corners of a small grid) and one concatenation of five spaces with the record path **[V]** (code).
+- The check is `CheckCodeWheel` (`ovl02:00FD`, entry point of overlay 2, matched as a whole: `src/OVL02.PAS`, `make match UNIT=ovl02`: unit complete) **[V]**. At most three times it picks `r = Random(13)` (`System_Random`, `0AF8:11C0`), draws two rune glyphs and a path pattern from a table at the very start of DGROUP (`DS:0002`, 13 records of 21 bytes, the `TCodeWheelEntry` type in `src/POOLVARS.PAS`; DS:0000 holds two bytes of Turbo Pascal's own), calls the keyboard flush `res04:0104` (which does nothing, 5.8) and asks "INPUT THE CODE WORD:" **[V]**. The question window is drawn by `DrawWindow(1, 1, $26, $16, 0, 0, '')` and the instructions, the runes and the path by `DrawTextAt`, `DrawGlyph` (the runes as font characters at the four corners of a small grid) and one concatenation of five spaces with the record path **[V]** (code).
 - Record layout **[V]** (`start-unpack.exe` image at `0C7C0h`, and the lcalls in `ovl02:01A2..02FD`): `+02` Pascal string[6] with the answer; `+09`, `+0A`, `+0B` glyph indices, each drawn as character `index + 40h` in the game's font (the two rune pictures the prompt asks to match, then a third); `+0C` a fourth index drawn only when it is not FFh; `+0D` Pascal string with the path pattern drawn under the runes (`- - - -`, `-..-..-`, `.......`).
 - The 13 answers, in record order **[V]**: BEWARE, ZOMBIE, NOTNOW, COPPER, DRAGON, EFREET, FRIEND, JUNGLE, KNIGHT, SAVIOR, TEMPLE, VULCAN, WYVERN. The typed word is compared with `System_StrCompare` (`0AF8:0C10`, flags in ZF) after truncating the function result of `ReadInputLine` (the line reader of res06) to 40 characters; the failure message is "Sorry, that's incorrect." (`ovl02:00E4`) through `FlashMessageLine`; after the third failure `res04:0000` ends the program **[V]**.
 - The line reader `ReadInputLine` is a string function: TP 6.0 passes the caller result pointer as the first (deepest) argument and the callee `retf 8` pops only the prompt and the two numbers, leaving the result pointer for the caller to consume (here: the truncating assignment `Answer := ReadInputLine('INPUT THE CODE WORD: ', 13, 6)`, `0AF8:0B25` with max 40) **[V]** (the frames: `retf 8` = 8 bytes of parameters, the observed 12 pushed).

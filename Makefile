@@ -16,7 +16,7 @@ q = '$(subst ','\'',$(1))'
         packet claim lock locks unlock handoff handoffs handoff-done integrate start-run stop-run run-add run-status heartbeat agents watch-agents worker inbox \
         agent-control agent-step safety-check merge-check hooks match-gate merge-driver \
         agent-register agent-usage agent-meter performance learn learning-check expert-budget expert-request expert-take expert-step expert-finish expert-result experts expert-scan expert-candidates task-approve \
-        oracle-run oracle-dosbox timing-scan golden match test test-slow check review-pass rebuild skeleton stubs readability rename host coco3
+        oracle-run oracle-dosbox timing-scan golden match test test-slow check review-pass rebuild dgroup stub-order rebuild-golden rebuild-diff skeleton stubs readability rename host coco3
 
 help:
 	@echo "Available now:  setup doctor inputs unexepack overlays map dax smoke"
@@ -27,7 +27,8 @@ help:
 	@echo "Phase 3/4:      match (UNIT= FN= WRITE=1) check test test-slow (review-pass in P4)"
 	@echo "Agent safety:   agent-control agent-step safety-check merge-check merge-driver (docs/process/SAFETY.md)"
 	@echo "Throughput:     agent-register agent-meter performance learn experts (docs/process/THROUGHPUT.md)"
-	@echo "Later:          rebuild (P5) host (P7, branch track-c-hybrid) coco3 (P8)"
+	@echo "Phase 5:        rebuild dgroup stub-order golden CHECK=1 REBUILT=1 (docs/process/playbooks/50-rebuild.md)"
+	@echo "Later:          host (P7, branch track-c-hybrid) coco3 (P8)"
 	@echo "See AGENTS.md and docs/spec/SPEC.md."
 
 setup:            ## install the toolchain on macOS (see docs/setup/SETUP-macos.md)
@@ -230,16 +231,16 @@ define todo
 	@echo "make $@: not built yet; delivered in $(1) (docs/spec/SPEC.md section $(2))."; exit 2
 endef
 
-oracle-run:       ## run the original in the oracle: SCRIPT=tests/sessions/x.keys [OUT=dir] [TRACE=ints,calls,files,ports] [MAX=n]
-	$(PY) tools/oracle/run.py $(if $(SCRIPT),--script $(SCRIPT)) $(if $(OUT),--out $(OUT)) $(if $(TRACE),--trace $(TRACE)) $(if $(MAX),--max-insns $(MAX))
+oracle-run:       ## run the original in the oracle: SCRIPT=tests/sessions/x.keys [OUT=dir] [TRACE=ints,calls,files,ports] [MAX=n] [REBUILT=1: the rebuilt program]
+	$(PY) tools/oracle/run.py $(if $(SCRIPT),--script $(SCRIPT)) $(if $(OUT),--out $(OUT)) $(if $(TRACE),--trace $(TRACE)) $(if $(MAX),--max-insns $(MAX)) $(if $(REBUILT),--rebuilt)
 
 oracle-dosbox:    ## compare the oracle's title screens with DOSBox-X frames pixel for pixel (needs dosbox-x, ffmpeg)
 	$(PY) tools/oracle/dosbox_ref.py
 timing-scan:      ## find routines that wait on time or input (static; SESSIONS="boot-title create-character" adds the dynamic pass)
 	$(PY) tools/re/timing_scan.py $(foreach s,$(SESSIONS),--dynamic $(s))
 
-golden:           ## record goldens and their recordings (each session twice, must match): SESSION=name (default all); CHECK=1 verifies committed goldens
-	$(PY) tools/oracle/golden.py $(if $(SESSION),--session $(SESSION)) $(if $(CHECK),--check)
+golden:           ## record goldens and their recordings (each session twice, must match): SESSION=name (default all); CHECK=1 verifies committed goldens; CHECK=1 REBUILT=1 plays the rebuilt program (after `make rebuild`; STRICT=1 also compares state)
+	$(PY) tools/oracle/golden.py $(if $(SESSION),--session $(SESSION)) $(if $(CHECK),--check) $(if $(REBUILT),--rebuilt) $(if $(STRICT),--strict-state)
 match:            ## prove decompiled Pascal against the original (SPEC 8.3): UNIT=<id> [FN=<name>] [WRITE=1]; no UNIT: every unit with source
 	$(AUTOBEAT) "make match $(UNIT)$(if $(FN), FN=$(FN))$(if $(WRITE), WRITE=1)"
 	$(PY) tools/agent/activity.py match -- $(if $(UNIT),$(call q,$(value UNIT)),--all) $(foreach f,$(FN),--routine $(call q,$(f))) $(if $(WRITE),--write)
@@ -255,8 +256,20 @@ review-pass:       ## record a passed review (playbook 70): UNIT=<id> [CHECK=1 o
 	@test -n "$(UNIT)" || (echo 'review-pass: usage: make review-pass UNIT=<id> [CHECK=1]'; exit 2)
 	$(PY) tools/agent/review.py $(UNIT) $(if $(CHECK),--check)
 
-rebuild:           ## link the whole game from src/ and compare it with the original (SPEC 8.4)
+rebuild:           ## link the whole game from src/ and compare it with the original (SPEC 8.4); exit 1 unless identical
 	$(PY) tools/match/rebuild.py
+
+rebuild-golden:    ## play every golden session on the rebuilt program (after `make rebuild`): behaviour and state (playbook 50)
+	$(PY) tools/oracle/golden.py --check --rebuilt --strict-state $(if $(SESSION),--session $(SESSION))
+
+rebuild-diff:      ## where the rebuilt program differs from the original, byte by byte (after `make rebuild`)
+	$(PY) tools/re/rebuild_diff.py
+
+dgroup:            ## lay out DGROUP in src/POOLVARS.PAS (typed constants with their values, original order): WRITE=1 rewrites it
+	$(PY) tools/re/dgroup.py $(if $(WRITE),--write)
+
+stub-order:        ## put each overlay unit's interface in the original's stub entry order: UNIT=ovlNN (default all) WRITE=1
+	$(PY) tools/re/stub_order.py $(if $(WRITE),--write) $(UNIT)
 
 readability:       ## the checkable readability rules of docs/process/READABILITY.md: UNIT=<id> (no UNIT: every unit with decompiled routines)
 	$(PY) tools/agent/activity.py readability -- $(if $(UNIT),$(call q,$(value UNIT)))

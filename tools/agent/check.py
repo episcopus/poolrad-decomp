@@ -30,7 +30,10 @@ STAGES = (("inputs", "tools/setup/inputs.py", "--check"),
           ("match", "tools/agent/activity.py", "match", "--", "--all"),
           ("readability", "tools/match/readability.py"),
           ("rebuild", "tools/match/rebuild.py"),
-          ("golden", "tools/oracle/golden.py", "--check"))
+          ("golden", "tools/oracle/golden.py", "--check"),
+          # Phase 5: the rebuilt program plays every golden session, behaviour and state (playbook 50);
+          # never cached: it depends on src/, which the original goldens do not
+          ("rebuilt-golden", "tools/oracle/golden.py", "--check", "--rebuilt", "--strict-state"))
 
 
 def fingerprint() -> str:

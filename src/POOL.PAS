@@ -4,7 +4,9 @@ program POOL;
   then the main block. Evidence: the init chain of start-unpack.exe (build/re/overlays.json). }
 {$A-,F+,S-,R-,G-,I-}
 uses
+  Overlay,
   Crt,
+  Dos,
   RES02,
   RES03,
   RES04,

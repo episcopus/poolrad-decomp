@@ -17,6 +17,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from oracle import layout  # noqa: E402
 from oracle.machine import Machine, OracleError, Unimplemented, GuestCrash, ROOT, Stop  # noqa: E402
 from oracle.keys import KeyScript  # noqa: E402
 from oracle.trace import Tracer  # noqa: E402
@@ -29,7 +30,10 @@ GAME = ROOT / "poolrad"
 
 
 def build_machine(script: KeyScript | None, *, strict: bool = True, insn_per_sec: int = 1_000_000) -> Machine:
-    m = Machine(EXE, GAME, strict=strict, insn_per_sec=insn_per_sec)
+    lay = layout.current()       # the original unless layout.use() chose a rebuild (playbook 50)
+    m = Machine(EXE if lay.is_original else lay.exe, GAME, strict=strict, insn_per_sec=insn_per_sec)
+    if lay.overlay_file is not None:
+        m.vfs.alias("GAME.OVR", lay.overlay_file)    # the rebuilt program opens GAME.OVR like the original
     m.keys = script
     if script is not None:
         m.clock_pin = script.clock
@@ -143,7 +147,11 @@ def main(argv=None) -> int:
     ap.add_argument("--no-final-shot", action="store_true")
     ap.add_argument("--shot-every", type=int, default=0, help="screenshot every N instructions (debug)")
     ap.add_argument("--lenient", action="store_true", help="log unimplemented services instead of stopping")
+    ap.add_argument("--rebuilt", action="store_true",
+                    help="run the program `make rebuild` linked (build/rebuild/POOL.EXE and POOL.OVR)")
     a = ap.parse_args(argv)
+    if a.rebuilt:
+        layout.use(layout.rebuilt())
     text = Path(a.script).read_text() if a.script else None
     s = run_session(text, max_insns=a.max_insns, out_dir=Path(a.out), trace=a.trace,
                     shot_final=not a.no_final_shot, strict=not a.lenient, shot_every=a.shot_every)

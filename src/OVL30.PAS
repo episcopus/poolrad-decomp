@@ -11,9 +11,9 @@ function SignOf(N: Integer): Integer;
 procedure SortTable;
 procedure SetupLine(Line: PLineState);
 function StepLine(Line: PLineState): Boolean;
+function InDirArc(FromX, FromY, ToX, ToY: ShortInt; Dir: Byte): Boolean;
 function WalkLine(X1, Y1: ShortInt; var Ex, Ey: ShortInt; var StepCount: Word;
   Map: PMapRows): Boolean;
-function InDirArc(FromX, FromY, ToX, ToY: ShortInt; Dir: Byte): Boolean;
 procedure ScanTargets(FromX, FromY: ShortInt; MaxSteps: Word; Dir, Base: Byte; Map: Pointer);
 implementation
 

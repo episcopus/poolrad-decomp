@@ -133,8 +133,13 @@ class Tracer:
 
 
 def overlay_stubs(units: dict | None = None) -> dict[str, int]:
-    """Overlay unit id -> runtime stub segment (absolute), from re/units.toml."""
+    """Overlay unit id -> runtime stub segment (absolute): from the active layout (layout.py, a rebuild)
+    or else from re/units.toml."""
     if units is None:
+        from . import layout
+        lay = layout.current()
+        if lay.stubs is not None:
+            return {uid: seg + LOAD_SEG for uid, seg in lay.stubs.items()}
         units = load_symbols()[1]
     out = {}
     for u in units.get("overlay", []):
@@ -148,15 +153,20 @@ _RES_RANGES = None
 
 
 def _resident_ranges():
-    """[(start_linear_rel, end_linear_rel, base_segment, unit_id)] from re/units.toml, load-relative."""
+    """[(start_linear_rel, end_linear_rel, printed_segment, unit_id, base_linear_rel)] load-relative: from
+    re/units.toml, or from the active layout (a rebuild's map, printed in the original's form)."""
     global _RES_RANGES
     if _RES_RANGES is None:
+        from . import layout
+        if layout.current().resident_ranges is not None:
+            _RES_RANGES = layout.current().resident_ranges
+            return _RES_RANGES
         _, units = load_symbols()
         out = []
         for u in units.get("resident", []):
             if u.get("code_start") and u.get("code_end"):
                 (s0, o0), (s1, o1) = (tuple(int(x, 16) for x in u[k].split(":")) for k in ("code_start", "code_end"))
-                out.append((s0 * 16 + o0, s1 * 16 + o1, s0, u["id"]))
+                out.append((s0 * 16 + o0, s1 * 16 + o1, s0, u["id"], s0 * 16))
         _RES_RANGES = out
     return _RES_RANGES
 
@@ -172,7 +182,7 @@ def locate(m, linear: int, stubs: dict[str, int] | None = None) -> str:
         if loadseg and loadseg * 16 <= linear < loadseg * 16 + size:
             return "%s:%04X" % (unit, linear - loadseg * 16)
     rel = linear - LOAD_SEG * 16
-    for lo, hi, seg, _uid in _resident_ranges():
+    for lo, hi, seg, _uid, base in _resident_ranges():
         if lo <= rel < hi:
-            return "%04X:%04X" % (seg, rel - seg * 16)
+            return "%04X:%04X" % (seg, rel - base)
     return "rel:%05X" % (rel & 0xFFFFF)

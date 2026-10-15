@@ -20,7 +20,8 @@ DGROUP_PARA = 0x0C7C          # whitepaper 3.1: System init does `mov dx,0C7Ch; 
 
 
 def dgroup_seg() -> int:
-    return LOAD_SEG + DGROUP_PARA
+    from . import layout
+    return LOAD_SEG + layout.current().dgroup_para
 
 
 def load_definition(path: Path | None = None) -> dict:
@@ -36,9 +37,12 @@ HEAP_ORG, HEAP_PTR = 0x4400, 0x4404   # System variables, far pointers (whitepap
 
 def heap_bytes(m, ds: int) -> bytes:
     """The allocated heap: linear HeapOrg up to HeapPtr (empty before the runtime set them up)."""
+    from . import layout
+    lay = layout.current()
+
     def lin(o):
         return ((m.rw(ds, o + 2) << 4) + m.rw(ds, o)) & 0xFFFFF
-    lo, hi = lin(HEAP_ORG), lin(HEAP_PTR)
+    lo, hi = lin(lay.heap_org), lin(lay.heap_ptr)
     if not (0 < lo <= hi <= 0xA0000):
         return b""
     return bytes(m.uc.mem_read(lo, hi - lo))

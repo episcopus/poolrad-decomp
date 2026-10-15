@@ -36,8 +36,8 @@ function DoKnock: Boolean;
 procedure ClampPartyPosition;
 procedure MoveParty;
 procedure CheckMapCell;
-function HandleWildernessKeys: Char;
 procedure DoWildernessMenu;
+function HandleWildernessKeys: Char;
 implementation
 uses OVL29, RES03, RES05, RES06, RES07, OVL20, OVL24, OVL25, OVL19, OVL15, RES12, RES09, OVL32, OVL28;
 

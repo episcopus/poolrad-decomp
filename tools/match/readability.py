@@ -28,7 +28,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools/match"))
+sys.path.insert(0, str(ROOT / "tools/re"))
 
+import dgroup  # noqa: E402
 import match  # noqa: E402
 
 PROVISIONAL = re.compile(r"^(res|ovl)\d\d_(fn_[0-9a-f]{4}|e\d+|init)$", re.I)
@@ -94,7 +96,8 @@ def poolvars_comments() -> dict[str, str]:
     out = {}
     if p.exists():
         above = []                                    # the comment block directly above the current line
-        for line in p.read_text().splitlines():
+        # the declarations without the DGROUP layout: one line each, whatever the literal they carry
+        for line in dgroup.compact_poolvars(p.read_text()).splitlines():
             s = line.strip()
             m = re.match(r"\s*(ds[0-9A-F]{4})\s*:[^;]*;\s*(\{.*\})?", line, re.I)
             if m:
