@@ -7768,3 +7768,108 @@ kind = "routine"
 why = "for VideoAdapter 1 calls SetPaletteRegister(0, 0) then SetPaletteRegister(8, 8), the counterpart of SwapPaletteColours0And8 (ovl31:0105)"
 date = "2026-10-15"
 
+[[rename]]
+old = "res03_fn_1477"
+new = "SpeakerStep"
+kind = "routine"
+why = "label SpeakerStep of src/RES03.ASM (08AE:1477): steps the four PC speaker voices each timer tick and drives the speaker gate"
+date = "2026-10-15"
+
+[[rename]]
+old = "res03_fn_14EC"
+new = "TandyStep"
+kind = "routine"
+why = "label TandyStep of src/RES03.ASM (08AE:14EC): steps the four Tandy SN76489 voices each timer tick"
+date = "2026-10-15"
+
+[[rename]]
+old = "res03_fn_157A"
+new = "StepVoice"
+kind = "routine"
+why = "label StepVoice of src/RES03.ASM (08AE:157A): adds the pitch and level slopes and vibrato of one voice and counts its event down"
+date = "2026-10-15"
+
+[[rename]]
+old = "res03_fn_160B"
+new = "RunStream"
+kind = "routine"
+why = "label RunStream of src/RES03.ASM (08AE:160B): interprets the stream commands of the current voice"
+date = "2026-10-15"
+
+[[rename]]
+old = "res03_fn_09E3"
+new = "TuneData09E3"
+kind = "routine"
+why = "08AE:09E3 lies inside the tune and stream data of src/RES03.ASM (a tune table or stream label, not code); the map had entered it as a routine"
+date = "2026-10-15"
+
+[[rename]]
+old = "res03_fn_0A27"
+new = "TuneData0A27"
+kind = "routine"
+why = "08AE:0A27 lies inside the tune and stream data of src/RES03.ASM (a tune table or stream label, not code); the map had entered it as a routine"
+date = "2026-10-15"
+
+[[rename]]
+old = "res03_fn_0AD3"
+new = "TuneData0AD3"
+kind = "routine"
+why = "08AE:0AD3 lies inside the tune and stream data of src/RES03.ASM (a tune table or stream label, not code); the map had entered it as a routine"
+date = "2026-10-15"
+
+[[rename]]
+old = "res03_fn_0C8F"
+new = "TuneData0C8F"
+kind = "routine"
+why = "08AE:0C8F lies inside the tune and stream data of src/RES03.ASM (a tune table or stream label, not code); the map had entered it as a routine"
+date = "2026-10-15"
+
+[[rename]]
+old = "res03_fn_0DB1"
+new = "TuneData0DB1"
+kind = "routine"
+why = "08AE:0DB1 lies inside the tune and stream data of src/RES03.ASM (a tune table or stream label, not code); the map had entered it as a routine"
+date = "2026-10-15"
+
+[[rename]]
+old = "res03_fn_0DCC"
+new = "TuneData0DCC"
+kind = "routine"
+why = "08AE:0DCC lies inside the tune and stream data of src/RES03.ASM (a tune table or stream label, not code); the map had entered it as a routine"
+date = "2026-10-15"
+
+[[rename]]
+old = "res03_fn_0DEB"
+new = "TuneData0DEB"
+kind = "routine"
+why = "08AE:0DEB lies inside the tune and stream data of src/RES03.ASM (a tune table or stream label, not code); the map had entered it as a routine"
+date = "2026-10-15"
+
+[[rename]]
+old = "res03_fn_0E06"
+new = "TuneData0E06"
+kind = "routine"
+why = "08AE:0E06 lies inside the tune and stream data of src/RES03.ASM (a tune table or stream label, not code); the map had entered it as a routine"
+date = "2026-10-15"
+
+[[rename]]
+old = "res03_fn_0F5B"
+new = "TuneData0F5B"
+kind = "routine"
+why = "08AE:0F5B lies inside the tune and stream data of src/RES03.ASM (a tune table or stream label, not code); the map had entered it as a routine"
+date = "2026-10-15"
+
+[[rename]]
+old = "res03_fn_1091"
+new = "TuneData1091"
+kind = "routine"
+why = "08AE:1091 lies inside the tune and stream data of src/RES03.ASM (a tune table or stream label, not code); the map had entered it as a routine"
+date = "2026-10-15"
+
+[[rename]]
+old = "res03_fn_1221"
+new = "TuneData1221"
+kind = "routine"
+why = "08AE:1221 lies inside the tune and stream data of src/RES03.ASM (a tune table or stream label, not code); the map had entered it as a routine"
+date = "2026-10-15"
+
