@@ -54,7 +54,7 @@ const
   MenuColors = $F;        { the last ReadPromptChoice/AskYesNo argument of every menu here }
 
 { ovl08:0000. Frees the combat data after the last round: the DS:6DBB list of $13-byte records,
-  the CombatMap block, and the picture DS:6E36 (ReleasePicture). Then ovl31_e3, and DS:6B84 becomes
+  the CombatMap block, and the picture DS:6E36 (ReleasePicture). Then RestorePaletteColours0And8, and DS:6B84 becomes
   @ChooseSpellTargets. Called once by RunCombat. The word local is unused; it is there so the frame matches. }
 procedure EndCombat;
 var
@@ -70,7 +70,7 @@ begin
   FreeMem(CombatMap, CombatMapSize);
   CombatMap := nil;
   ReleasePicture(CombatPicture);
-  ovl31_e3;
+  RestorePaletteColours0And8;
   SpellPickerPointer := @ChooseSpellTargets;
 end;
 { ovl08:007A. The combat loop. Sets the view mode and DS:6B84 := @SelectSpellTargets, runs StartBattle,

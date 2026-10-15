@@ -10,15 +10,15 @@ uses POOLVARS, RES06;
 procedure CancelPendingHook(AffectId: Byte);
 function TryAddAffect(Who: PCharacter; AffectId, Data: Byte; Duration: Word): Boolean;
 procedure DropFromFight(Who: PCharacter; NewStatus: Byte; Msg: String40);
-procedure ovl12_e1;
+procedure InitAffectHandlers;
 procedure RaiseAttackAndMorale(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure LowerAttackAndMorale(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure BoostAttackAgainstTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure StartTrainingWithManual(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure BoostFireAttackByTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure TrainConstitution(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ShiftAttackToSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e9(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure ShiftAttackToSaveVsEvil(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure ShiftAttackToSaveVsGood(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure HalveColdDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ComputerTakesOver(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ExchangeStrengthWithAffect(Who: PCharacter; Affect: PAffect; Mode: Byte);
@@ -54,13 +54,13 @@ procedure LowerAttackVsEightListed(Who: PCharacter; Affect: PAffect; Mode: Byte)
 procedure LowerAttackIfSelectedIsBugbearOrGnoll(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure RaiseOrLowerAttackAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure AddHealingBlockAndHeal(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e43(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e44(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e45(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e46(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure EndAffectedCombatantTurn(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure IgnoreAffect36(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure IgnoreAffect37(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure GiveLowerAttackRollAffect(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ProgressRot(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e48(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e49(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure StopMovement(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure GiveRegainHitPointsAffect(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ReduceFireDamageByRoll(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure PoisonAttackTarget(Who: PCharacter; Bonus: ShortInt);
 procedure ParalyzeAttackTarget(Who: PCharacter; Duration: Word; Unused: Byte);
@@ -73,7 +73,7 @@ procedure ParalyzeAttackTargetUnlessImmune(Who: PCharacter; Affect: PAffect; Mod
 procedure ParalyzeAttackTargetFor1d9Plus10(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure PoisonAttackTargetBonusMinus2(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure SetFlagAndLowerAttackRollByFour(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e60(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure RollToGiveLowerAttackRollAffect(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure DrainBloodFromCombatant(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure StartBloodDrain(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure HoldWeakTargetFast(Who: PCharacter; Affect: PAffect; Mode: Byte);
@@ -88,9 +88,9 @@ procedure GazeCharmsTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure DrainAttackTargetLevel(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure DrainAttackTargetTwoLevels(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure CauseRotOnAttackTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e74(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure ForceFirstAttackMiss(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure AddConstitutionSaveBonus(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e76(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure CancelDamageOfSpellOrElectricity(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure HalveFireDamageNoSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure HalveDamageForFirstSlotItem(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure FallDeadIfInFight(Who: PCharacter; Affect: PAffect; Mode: Byte);
@@ -128,10 +128,10 @@ procedure CancelCharmUnknown35PoisonAndParalysisHooks(Who: PCharacter; Affect: P
 procedure SetFlagIfTargetReflects(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ApplyItemSecondAffect(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure GiveExceptionalStrength(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e113(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure DamageUnlessAlignmentMatches(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ShowMustHaveGiantStrength(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure RemoveAffect17WhenRemoved(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure ovl12_e116(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure IgnoreAffectShared(Who: PCharacter; Affect: PAffect; Mode: Byte);
 implementation
 uses RES12, OVL13, OVL23, OVL24, OVL30, OVL31, OVL33;
 const
@@ -186,7 +186,7 @@ const
   StrengthKept = $80;           { bit 7 of a strength affect's Data: an earlier strength is kept in it (ovl24:115C) }
   AffectStrength1 = $0C;        { the two strength affects (ovl24:115C keeps the earlier strength in them) }
   AffectStrength2 = $26;
-  AffectPoisoned = $37;  { the Poisoned affect (ovl15 names it 'Poisoned'; ovl04 calls it AffectPoison); id 55: ovl12_e45
+  AffectPoisoned = $37;  { the Poisoned affect (ovl15 names it 'Poisoned'; ovl04 calls it AffectPoison); id 55: IgnoreAffect37
   (empty) runs for it }
   SaveKindPoison = 0;           { SavingThrow kind 0, the first of the five saves: the poison save [I] (ovl12:1545) }
   SaveKindParalysis = 0;        { the same kind 0 for the paralysis save of ovl12:15EB [I] (the first of the five saves) }
@@ -200,7 +200,8 @@ const
   AffectDamagesEachRound = $0F;  { id 15: AddAffectAndDamage (ovl12:05EB) runs for it: 1 point of damage, and the affect
   again; ovl04:0807 removes it with the poison affect $37 [I] }
   AffectDamagesEachRoundDuration = 10;  { the Duration AddAffectAndDamage (ovl12:05EB) gives the affect }
-  AffectUnknown18 = $18;  { id 24: ovl12_e116 runs for it and does nothing; purpose unknown: the affect SelectedCharacter
+  AffectUnknown18 = $18;  { id 24: IgnoreAffectShared runs for it and does nothing; purpose unknown: the affect
+    SelectedCharacter
   must have for HookVetoFlag to stay 0 (ovl12:0918) }
   AttackPenalty = 4;            { what ovl12:0918, 0BAC, 0C15, 11F9 and 1276 take off AttackRoll }
   SavePenalty = 4;              { what ovl12:0BAC and 0C15 take off SaveRoll }
@@ -259,13 +260,15 @@ const
   HookChanceHigh = 90;          { the 1d100 roll at or below which ovl12:2992 cancels its hooks }
   HookChanceModerate = 30;      { the 1d100 roll at or below which ovl12:2DE4 cancels the charm's and AffectEndsTurn's hooks
   }
-  AffectLowerAttackRollByFour = $19;  { id 25: LowerAttackRollByFour (ovl12:0918) runs for it; ovl12_e46 (ovl12:1363) and
-  ovl12_e60 (ovl12:1730) give it; RollToHit clears it from the attacker (ovl24:0CB7) [I] }
+  AffectLowerAttackRollByFour = $19;  { id 25: LowerAttackRollByFour (ovl12:0918) runs for it;
+    GiveLowerAttackRollAffect (ovl12:1363) and
+  RollToGiveLowerAttackRollAffect (ovl12:1730) give it; RollToHit clears it from the attacker (ovl24:0CB7) [I] }
   AffectLowerAttackRollByFourDuration = 1;  { the Duration ovl12:1363 gives affect AffectLowerAttackRollByFour }
   AffectLowerAttackRollByFourData = $0C;    { the Data byte ovl12:1363 gives affect AffectLowerAttackRollByFour }
   AffectLowerAttackRollByFourChance = 95;   { ovl12:1730 gives affect AffectLowerAttackRollByFour when a 1d100 roll is at or
   below this }
-  AffectRegainHitPoints = $62;  { id 98: RegainHitPoints (ovl12:2700) runs for it; ovl12_e49 (ovl12:1472, id 59) gives it }
+  AffectRegainHitPoints = $62;  { id 98: RegainHitPoints (ovl12:2700) runs for it; GiveRegainHitPointsAffect
+    (ovl12:1472, id 59) gives it }
   AffectRegainHitPointsData = $FF;    { the Data byte ovl12:1472 gives affect AffectRegainHitPoints }
   AffectRot = $39;              { the rot affect: Cure Disease removes it (whitepaper 5.19 table, DS:0114) }
   RotDuration = 43200;          { $A8C0: the Duration the rot handler (ovl12:1399) gives the next rot }
@@ -283,7 +286,7 @@ const
   HeldFastDuration = 0;         { the Duration the blood drain gives AffectHeldFast }
   HeldFastStrengthLimit = $13;  { a target whose Strength (TCharacter +$10) is below this is held fast (ovl12:1935) }
   AffectBloodDrainWeak = $4A;  { the other blood drain affect, given to the drinker by ovl12:1935; its handler is the OVL13
-  entry ForcedAttack (AffectHandlers[74], ovl12_e1 [V]) }
+  entry ForcedAttack (AffectHandlers[74], InitAffectHandlers [V]) }
   BloodDrainWeakDuration = 0;   { the Duration ovl12:1935 gives AffectBloodDrainWeak }
   AffectRevival = $4E;          { the affect ovl24:175D calls (mode 1) for an unconscious character healed outside combat }
   RevivalRetryDuration = 1;     { the Duration ovl12:19D9 gives AffectRevival }
@@ -297,7 +300,8 @@ const
   RaceHuman = 7;                { TCharacter.Race of a human (whitepaper 4.2.5: the character sheet of a human, race 7) }
   FearDieSides = 4;             { ovl12:1BA8 paralyses a member with fear for 1d4 rounds }
   SaveKindStone = 1;            { SavingThrow kind 1, the second of the five saves: the stone save of ovl12:1CAD [I] }
-  AffectUnknown7F = $7F;  { id 127: ovl12_e116 runs for it and does nothing; purpose unknown [?]: the gazer must have it
+  AffectUnknown7F = $7F;  { id 127: IgnoreAffectShared runs for it and does nothing; purpose unknown [?]: the gazer
+    must have it
   (ovl12:1CAD) for a reflection to be looked for }
   ReflectingNameNum = $76;      { a NameNum of a readied item that turns a gaze back (ovl12:1CAD) [?] }
   GazeAnimation = $12;          { the argument of DrawCombatIcon that ovl12:1CAD shows the gaze with [?] }
@@ -306,7 +310,8 @@ const
   AffectCharm = $0B;            { the affect of "is charmed" (ovl12:1E77 gives it) [I] }
   CharmData = $0C;              { the low bits of the charm's Data (ovl12:1E77); bit 7 is the side of the gazer [?] }
   CharmSaveBonus = -2;          { what ovl12:1E77 takes off the fear save of the charmed character }
-  AffectEndsTurn = $35;  { id 53: ovl12_e43 (ovl12:133F) runs for it: it ends the affected combatant's turn (EndCombatTurn);
+  AffectEndsTurn = $35;  { id 53: EndAffectedCombatantTurn (ovl12:133F) runs for it: it ends the affected
+    combatant's turn (EndCombatTurn);
   ids 31, 51 and 52 share that handler; its hook is cancelled with the charm's (ovl12:2992, 29B6) }
   StatusFled = 3;               { TCharacter.Status 3: the combatant fled (ovl05:050D, ovl24 StatusFled) }
   StatusUnconscious = 4;        { TCharacter.Status 4: unconscious, what Bandage gives (ovl05 StatusUnconscious) }
@@ -343,7 +348,7 @@ const
   FireBonusForFour = 3;         { the same for TargetCodeFour }
 var
   { The AffectHandlers table (DS:6828) as untyped pointers. RakeAttack and ForcedAttack are declared without parameters in
-    OVL13 (which has no PCharacter), so ovl12_e1 stores their addresses through this alias until OVL13 declares them
+    OVL13 (which has no PCharacter), so InitAffectHandlers stores their addresses through this alias until OVL13 declares them
     with the handler shape. The stores are the same four bytes. }
   AffectHandlerPointers: array[0..$8B] of Pointer absolute AffectHandlers;
 
@@ -400,7 +405,8 @@ end;
 { ovl12:010D. Affect handler of an affect (the AffectHandlers shape: Who, Affect and Mode; Mode is not read,
   so applying and removing run the same code, ovl24:0000): adds MoraleStep to the morale scratch MoraleScratch (ovl09
   CheckMorale
-  computes it) and 1 to AttackRoll. The handler at ovl12:011D takes both back. Runs for affect $01 (id 1, ovl12_e1 [V]). }
+  computes it) and 1 to AttackRoll. The handler at ovl12:011D takes both back. Runs for affect $01 (id 1,
+  InitAffectHandlers [V]). }
 procedure RaiseAttackAndMorale(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   Inc(MoraleScratch, MoraleStep);
@@ -408,7 +414,7 @@ begin
 end;
 { ovl12:011D. The handler that undoes RaiseAttackAndMorale (ovl12:010D), with the AffectHandlers shape (Who,
   Affect and Mode; Mode not read): takes MoraleStep off the morale scratch MoraleScratch, or sets it to 0 when it
-  holds less, and takes 1 off AttackRoll. Runs for affect $02 (id 2, ovl12_e1 [V]). }
+  holds less, and takes 1 off AttackRoll. Runs for affect $02 (id 2, InitAffectHandlers [V]). }
 procedure LowerAttackAndMorale(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   if MoraleScratch < MoraleStep then
@@ -420,7 +426,8 @@ end;
 { ovl12:013B. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000).
   It copies the character Who attacked last (Who's combat Target, TCombatant at +$108 of Who, MeleeAttack
   sets it in ovl08) into AttackTarget. When that character's byte +$9F (CreatureType of TCharacter, purpose unknown [?])
-  is TargetCodeFour (4), the attack roll and the damage each gain TargetBonus. Runs for affect $03 (id 3, ovl12_e1 [V]). }
+  is TargetCodeFour (4), the attack roll and the damage each gain TargetBonus. Runs for affect $03 (id 3,
+  InitAffectHandlers [V]). }
 procedure BoostAttackAgainstTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   AttackTarget := Who^.Combat^.Target;
@@ -433,7 +440,8 @@ end;
 { ovl12:017F. Shows "starts to train" on Who at row MessageRow (ShowCharacterMessage, the message is copied to a
   stack temporary by 0AF8:0B0B first) and gives Who the training manual affect (AffectTrainingManual,
   duration TrainingManualDuration, data TrainingManualData), whose handler runs when it is removed.
-  It has the AffectHandlers frame (Who, Affect, Mode); Affect and Mode are not read here. Runs for affect $04 (id 4, ovl12_e1
+  It has the AffectHandlers frame (Who, Affect, Mode); Affect and Mode are not read here. Runs for affect $04 (id 4,
+  InitAffectHandlers
   [V]). }
 procedure StartTrainingWithManual(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
@@ -445,7 +453,7 @@ end;
   a bonus to the attack roll and to the damage from the target's byte +$9F (CreatureType of TCharacter, purpose unknown
   [?]): TargetCodeTen gives FireBonusForTen (1), TargetCodeNine or TargetCodeTwelve give FireBonusForNineTwelve (2),
   TargetCodeFour gives FireBonusForFour (3), any other value gives 0. The damage kind becomes KindFire or KindMagic
-  (fire, plus the magic bit 8, ovl24:13E4). Runs for affect $06 (id 6, ovl12_e1 [V]). }
+  (fire, plus the magic bit 8, ovl24:13E4). Runs for affect $06 (id 6, InitAffectHandlers [V]). }
 procedure BoostFireAttackByTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   Bonus: Byte;
@@ -468,7 +476,7 @@ end;
   and the gain goes to HpMax and to the current hit points Flag11B. Nothing is gained below Constitution 15,
   nor from 17 up without a fighter level. At Constitution 20 Who gets AffectTrainedOut instead and the
   routine ends. It has the AffectHandlers frame (Who, Affect, Mode); Affect and Mode are not read here. Runs for affect $07
-  (id 7, ovl12_e1 [V]). }
+  (id 7, InitAffectHandlers [V]). }
 procedure TrainConstitution(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   Gain: Byte;                   { HpMax - HpB1 first, then the gain of this training }
@@ -501,11 +509,12 @@ begin
     Inc(Who^.Flag11B, Gain);
   end;
 end;
-{ ovl12:0377. Purpose unknown: it moves 2 from the attack roll to the saving throw roll when the selected character's
-  ByteA0 (+$A0 of TCharacter, meaning not known) is 2, 5 or 8: SaveRoll (DS:6816) gains 2 and AttackRoll (DS:6822)
-  loses 2. It has the 10-byte frame of the affect handlers, but reads SelectedCharacter, not its parameters
-  (Who, Affect and Mode are not read). Runs for affects $08 and $2D (ids 8, 45, ovl12_e1 [V]). }
-procedure ShiftAttackToSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
+{ ovl12:0377. It moves 2 from the attack roll to the saving throw roll when the selected character's
+  ByteA0 (+$A0 of TCharacter, the alignment index of AlignmentNames [V]) is 2, 5 or 8, Lawful, Neutral and Chaotic
+  Evil: SaveRoll (DS:6816) gains 2 and AttackRoll (DS:6822) loses 2. The effect is that of Protection from Evil [I].
+  It has the 10-byte frame of the affect handlers, but reads SelectedCharacter, not its parameters
+  (Who, Affect and Mode are not read). Runs for affects $08 and $2D (ids 8, 45, InitAffectHandlers [V]). }
+procedure ShiftAttackToSaveVsEvil(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   if (SelectedCharacter^.ByteA0 = 2) or (SelectedCharacter^.ByteA0 = 5) or (SelectedCharacter^.ByteA0 = 8) then
   begin
@@ -513,10 +522,11 @@ begin
     Dec(AttackRoll, 2);
   end;
 end;
-{ ovl12:03AC. Purpose unknown: the twin of ShiftAttackToSave (ovl12:0377) with the ByteA0 values 0, 3 and 6
-  (+$A0 of the selected character) in place of 2, 5 and 8: SaveRoll (DS:6816) gains 2 and AttackRoll (DS:6822)
-  loses 2. Who, Affect and Mode are not read. Runs for affects $09 and $2E (ids 9, 46, ovl12_e1 [V]). }
-procedure ovl12_e9(Who: PCharacter; Affect: PAffect; Mode: Byte);
+{ ovl12:03AC. The twin of ShiftAttackToSaveVsEvil (ovl12:0377) with the ByteA0 values 0, 3 and 6 (Lawful, Neutral and
+  Chaotic Good in AlignmentNames) in place of 2, 5 and 8, the effect of Protection from Good [I]: SaveRoll (DS:6816)
+  gains 2 and AttackRoll (DS:6822)
+  loses 2. Who, Affect and Mode are not read. Runs for affects $09 and $2E (ids 9, 46, InitAffectHandlers [V]). }
+procedure ShiftAttackToSaveVsGood(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   if (SelectedCharacter^.ByteA0 = 0) or (SelectedCharacter^.ByteA0 = 3) or (SelectedCharacter^.ByteA0 = 6) then
   begin
@@ -526,7 +536,7 @@ begin
 end;
 { ovl12:03E1. Affect handler for damage (the AffectHandlers frame: Who, Affect and Mode, none of them read): when
   the damage being dealt is cold (DamageKind bit KindCold, DS:6819), it halves DamageAmount (DS:6818) and adds
-  ColdSaveBonus to SaveRoll (DS:6816). Purpose unknown: runs for affect $0A (id 10, ovl12_e1 [V]). }
+  ColdSaveBonus to SaveRoll (DS:6816). Purpose unknown: runs for affect $0A (id 10, InitAffectHandlers [V]). }
 procedure HalveColdDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   if (DamageKind and KindCold) <> 0 then
@@ -536,7 +546,7 @@ begin
   end;
 end;
 { ovl12:0400. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode 0 applies, any other value
-  removes, ovl24:0000). Runs for affect $0B (id 11, ovl12_e1 [V]). Applying gives Who to the
+  removes, ovl24:0000). Runs for affect $0B (id 11, InitAffectHandlers [V]). Applying gives Who to the
   computer, as quick combat does (whitepaper, "Who plays"): Quick is set so QuickTurn plays the turn, Who
   becomes computer-run with morale $33 unless it already is, the target Who attacked is dropped and
   RecountCombatSides runs (not named yet). The side becomes Affect.Data bit 7 (ControlSideBit); bit 6 keeps the
@@ -573,7 +583,7 @@ end;
   affect's strength (DecodeStrength, ovl24:110D). Then the strongest other strength affect of Who, id $0C or
   $26 (AffectStrength1, AffectStrength2), gives Who its strength, and it takes the encoded strength the
   affect gave Who. Strength 18 with a percentile counts above any other 18 (ExceptionalStrength). With no
-  other strength affect Who keeps the decoded strength. Runs for affects $0C and $26 (ids 12, 38, ovl12_e1 [V]).
+  other strength affect Who keeps the decoded strength. Runs for affects $0C and $26 (ids 12, 38, InitAffectHandlers [V]).
   QUIRK ovl12:05B8: the earlier affect's Data is written without StrengthKept, where RaiseStrength (ovl24:115C)
   sets it. }
 procedure ExchangeStrengthWithAffect(Who: PCharacter; Affect: PAffect; Mode: Byte);
@@ -618,7 +628,7 @@ begin
 end;
 { ovl12:05D6. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000): Who's
   Charisma (TCharacter +$15) becomes the affect's Data byte. Applying and removing run the same code, so the
-  value is set each time. Runs for affect $0E (id 14, ovl12_e1 [V]). }
+  value is set each time. Runs for affect $0E (id 14, InitAffectHandlers [V]). }
 procedure SetCharismaFromAffect(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   Who^.Charisma := Affect^.Data;
@@ -627,7 +637,8 @@ end;
   not read, ovl24:0000). It adds affect $0F (AffectDamagesEachRound) to Who for AffectDamagesEachRoundDuration with the
   Data byte of Affect, when TryAddAffect allows it. Then, while Who has more than one hit point (Flag11B,
   the current hit points [I]), it deals 1 point of plain damage (DamageKind 0, no save, DealDamage) and,
-  outside combat, redraws the selected character (ViewMode is not CombatViewMode). Runs for affect $0F (id 15, ovl12_e1 [V]). }
+  outside combat, redraws the selected character (ViewMode is not CombatViewMode). Runs for affect $0F (id 15,
+  InitAffectHandlers [V]). }
 procedure AddAffectAndDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   if TryAddAffect(Who, AffectDamagesEachRound, Affect^.Data, AffectDamagesEachRoundDuration) then
@@ -640,14 +651,14 @@ begin
     end;
 end;
 { ovl12:0647. Affect handler (the AffectHandlers shape: Who, Affect and Mode) that does nothing: none of its
-  parameters is read and no global is written. Runs for affect $10 (id 16, ovl12_e1 [V]). }
+  parameters is read and no global is written. Runs for affect $10 (id 16, InitAffectHandlers [V]). }
 procedure IgnoreAffect(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
 end;
 { ovl12:064E. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Affect and Mode are not read). Raises
   Who's ResistValue (TCharacter +$111, likely the magic resistance [I]) to at least MinimumResistance, adds one
   to SaveRoll, and when CastingSpell is ClearDamageValue clears DamageAmount, so the damage of the roll in progress is
-  none. Runs for affect $11 (id 17, ovl12_e1 [V]). }
+  none. Runs for affect $11 (id 17, InitAffectHandlers [V]). }
 procedure RaiseResistanceAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   if Who^.ResistValue < MinimumResistance then
@@ -659,7 +670,7 @@ end;
 { ovl12:0679. Affect handler (the AffectHandlers shape: Who, Affect and Mode; only Who is read). It copies the
   character Who attacked last (Who's combat Target) into AttackTarget, as BoostAttackAgainstTarget does. When that
   character's +$9F (CreatureType) and CombatSize (+$6C) are both 1, AttackRoll gains 1 for each of the names
-  FourListedNames[1..4] the character's name equals. Runs for affect $12 (id 18, ovl12_e1 [V]). }
+  FourListedNames[1..4] the character's name equals. Runs for affect $12 (id 18, InitAffectHandlers [V]). }
 procedure BoostAttackVsListedTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   I: Byte;
@@ -673,7 +684,7 @@ end;
 { ovl12:06E4. Affect handler for damage (the AffectHandlers frame: Who, Affect and Mode, none of them read): when
   the damage being dealt is fire (DamageKind bit KindFire, DS:6819), it halves DamageAmount (DS:6818) and adds
   FireSaveBonus to SaveRoll (DS:6816), the fire twin of HalveColdDamage (ovl12:03E1). Purpose unknown: runs for affect $14
-  (id 20, ovl12_e1 [V]). }
+  (id 20, InitAffectHandlers [V]). }
 procedure HalveFireDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   if (DamageKind and KindFire) <> 0 then
@@ -685,7 +696,7 @@ end;
 { ovl12:070F. Affect handler (the AffectHandlers shape: Who, Affect and Mode; only Who is read). When Who's combat
   byte CanUseMagicItem (+$2 of TCombatant) is set, Who shows "is silenced" at row MessageRow (ShowCharacterMessage). Then
   CanUseMagicItem and CanCast (+$1, zero hides Cast in the combat menu, ovl08:0747) are both cleared. Runs for affect $15 (id
-  21, ovl12_e1 [V]). }
+  21, InitAffectHandlers [V]). }
 procedure ShowSilenceAndStopCasting(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   if Who^.Combat^.CanUseMagicItem <> 0 then
@@ -697,7 +708,7 @@ end;
   character dies. When Who has the Poisoned affect (AffectPoisoned, ovl15 names it 'Poisoned'), DropFromFight takes
   Who out of the fight with StatusDead and the text 'dies from poison'. Then AffectDamagesEachRound is removed from Who
   inside the RemovingAffects bracket the Temple uses around RemoveAffect (ovl04:0386), so TryAddAffect adds nothing while
-  it runs. Runs for affect $16 (id 22, ovl12_e1 [V]). }
+  it runs. Runs for affect $16 (id 22, InitAffectHandlers [V]). }
 procedure DieIfPoisoned(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   PoisonAffect: Pointer;
@@ -713,7 +724,7 @@ end;
   ItemCountC7 (+$C7, likely the item count [I]) is below ItemCountLimit, Who gets such an item (AddItemCopy adds
   it to the list, the temporary is freed) and "Gains an item" is shown at row MessageRow. When it is removed (Mode not
   0) the item Who has is taken off the list (RemoveInventoryItem). Then RecalcCombatValues redraws Who. Purpose unknown: runs
-  for affect $17 (id 23, ovl12_e1 [V]). }
+  for affect $17 (id 23, InitAffectHandlers [V]). }
 procedure GiveAffectItem(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   Item: PItem;
@@ -752,7 +763,7 @@ end;
 { ovl12:0918. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none of them is read). It takes
   AttackPenalty (4) off AttackRoll. When SelectedCharacter has no affect AffectUnknown18 ($18), HookVetoFlag is set to 1
   (HasAffect looks the affect up in the affect list and gives the found affect in FoundAffect). Purpose unknown: runs for
-  affect $19 (id 25, ovl12_e1 [V]). }
+  affect $19 (id 25, InitAffectHandlers [V]). }
 procedure LowerAttackRollByFour(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   FoundAffect: Pointer;
@@ -764,7 +775,7 @@ end;
 { ovl12:0947. Affect handler (the AffectHandlers shape: Who, Affect and Mode; only Who is read). The twin of
   BoostAttackVsListedTarget (ovl12:0679) with eight names: when the character Who attacked last (Who's combat
   Target, copied into AttackTarget) has CreatureType and CombatSize (+$6C) both 1, AttackRoll gains 1 for each of
-  the names EightListedNamesA[1..8] that the character's name equals. Runs for affect $1A (id 26, ovl12_e1 [V]). }
+  the names EightListedNamesA[1..8] that the character's name equals. Runs for affect $1A (id 26, InitAffectHandlers [V]). }
 procedure BoostAttackVsEightListed(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   I: Byte;
@@ -780,7 +791,7 @@ end;
   one image may take it: with 1d(Data+1) (Data counts the images [I]) above 1, CastingSpell not 0 and SpellAppliedToArea 0,
   CancelPendingHook(0) drops the damage, Who shows "lost an image" at row MessageRow (ShowCharacterMessage) and Data goes
   down by one. When no image is left (Data 0) affect AffectImages is removed. A roll of 1 lets the hit through
-  [I]. Runs for affect $1C (id 28, ovl12_e1 [V]). }
+  [I]. Runs for affect $1C (id 28, InitAffectHandlers [V]). }
 procedure ImageAbsorbsHit(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   if (RollDice(1, Affect^.Data + 1) > 1) and (CastingSpell > 0) and (SpellAppliedToArea = 0) then
@@ -795,7 +806,7 @@ end;
 { ovl12:0A3D. Affect handler for damage (the AffectHandlers shape: Who, Affect and Mode; none is read, so the
   handler runs the same on applying and removing). It takes a quarter off the damage the hooks offer:
   DamageAmount := DamageAmount - DamageAmount div 4, so three quarters of the damage (rounded down) remain
-  (the damage hook is kind 6, ovl24:02FA). Runs for affect $1D (id 29, ovl12_e1 [V]). }
+  (the damage hook is kind 6, ovl24:02FA). Runs for affect $1D (id 29, InitAffectHandlers [V]). }
 procedure ReduceDamageByQuarter(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   DamageAmount := DamageAmount - DamageAmount div 4;
@@ -806,7 +817,7 @@ end;
   are cleared and Who is redrawn (RecalcCombatValues). Then TCharacter.ds112 (+$112, not named yet) steps down by
   CoughResistStep while above CoughResistLimit and is set to CoughResistReset otherwise, and that value becomes
   ResistValue (+$111). When Who is the selected character, DrawCharacterPanel runs (not named yet). The message suggests a
-  gas or smoke affect [I]. Runs for affect $1E (id 30, ovl12_e1 [V]). }
+  gas or smoke affect [I]. Runs for affect $1E (id 30, InitAffectHandlers [V]). }
 procedure CoughStopsCasting(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   if Who^.Combat^.CanUseMagicItem <> 0 then
@@ -828,7 +839,7 @@ end;
   'collapses'. Then Who's side becomes the high nibble of the affect's Data, Quick is set so the computer plays
   Who (as ComputerTakesOver does, ovl12:0400), the morale of a computer-run member is cleared, and Who's
   SweepAttacks (+$6B) gets the fighter level, +$72 gets 12, +$76 and +$9F get 0. Purpose unknown: runs for
-  affect $20 (id 32, ovl12_e1 [V]). }
+  affect $20 (id 32, InitAffectHandlers [V]). }
 procedure CollapseAndChangeSide(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   Affect^.Flag := 0;
@@ -845,7 +856,7 @@ begin
 end;
 { 0BAC. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). Takes AttackPenalty
   off AttackRoll, ResistPenalty off Who's ResistValue (+$111) and off ds112 (+$112, the byte CoughStopsCasting
-  copies into ResistValue, ovl12:0A65), and SavePenalty off SaveRoll. Runs for affect $21 (id 33, ovl12_e1 [V]). }
+  copies into ResistValue, ovl12:0A65), and SavePenalty off SaveRoll. Runs for affect $21 (id 33, InitAffectHandlers [V]). }
 procedure LowerAttackSaveAndResistance(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   Dec(AttackRoll, AttackPenalty);
@@ -856,7 +867,7 @@ end;
 { 0BCF. Affect handler (the AffectHandlers shape: Who, Affect and Mode, passed on unchanged). Runs the handler of
   affect AffectDrainsStrength and then the handler of AffectCauseDisease with the same Who, Affect and Mode (both through
   CallAffectHandler, ovl24:0000). Both ids are in the list Cure Disease removes, so the routine runs the disease
-  handlers. Runs for affect $22 (id 34, ovl12_e1 [V]). }
+  handlers. Runs for affect $22 (id 34, InitAffectHandlers [V]). }
 procedure RunDiseaseHandlers(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   CallAffectHandler(AffectDrainsStrength, Who, Affect, Mode);
@@ -864,7 +875,7 @@ begin
 end;
 { 0C06. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). Adds 1 to SaveRoll and
   to AttackRoll, the plus of the routine at ovl12:0C15. Called by ovl12:12B2 (RaiseOrLowerAttackAndSave, not decompiled yet).
-  Runs for affect $23 (id 35, ovl12_e1 [V]). }
+  Runs for affect $23 (id 35, InitAffectHandlers [V]). }
 procedure RaiseAttackAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   Inc(SaveRoll);
@@ -872,7 +883,7 @@ begin
 end;
 { 0C15. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). Takes AttackPenalty
   off AttackRoll and SavePenalty off SaveRoll, the minus of RaiseAttackAndSave (ovl12:0C06). Runs for affect $24 (id 36,
-  ovl12_e1 [V]). }
+  InitAffectHandlers [V]). }
 procedure LowerAttackAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   Dec(AttackRoll, AttackPenalty);
@@ -881,7 +892,8 @@ end;
 { 0C26. Affect handler (the AffectHandlers shape: Who, Affect and Mode; only Who is read, ovl24:0000). When Who's combatant
   still has its turn to take (Combat^.Initiative, TCombatant +$3, above 0: CombatTurn acts only above 0), HookVetoFlag
   is set to
-  1 and AttackRoll becomes MissRoll, a negative roll (a miss, ovl24:0CD5). Runs for affect $25 (id 37, ovl12_e1 [V]). }
+  1 and AttackRoll becomes MissRoll, a negative roll (a miss, ovl24:0CD5). Runs for affect $25 (id 37,
+  InitAffectHandlers [V]). }
 procedure SetAttackMissIfTurnPending(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   if Who^.Combat^.Initiative > 0 then
@@ -895,7 +907,7 @@ end;
   one
   year to Who's Age (+$30). Every run doubles HookedMoveOrAttacks (shl 1), whether or not Who was aged. Runs for
   affect $27 (id 39,
-  ovl12_e1 [V]). }
+  InitAffectHandlers [V]). }
 procedure AgeCharacterOnce(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   if (Affect^.Data and AgedBit) = 0 then
@@ -911,7 +923,7 @@ end;
   Data. Without one nothing happens. With one, "The air clears a little..." is shown (ShowFlashMessage), and the
   cloud goes: each arm still in place gets back the tile it covered, except that an arm where a body lies (BodyTable)
   shows CloudBodyTile. The cloud is unlinked and freed, and every cloud left repaints its arms with CloudTile.
-  Runs for affect $28 (id 40, ovl12_e1 [V]). }
+  Runs for affect $28 (id 40, InitAffectHandlers [V]). }
 procedure ClearCloud(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   Node: PCombatNode;            { walks the list: first to the cloud's predecessor, later over every cloud }
@@ -1000,7 +1012,7 @@ begin
 end;
 { ovl12:1086. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). When the
   selected character's first remembered item (FirstSlotItem) has Plus 0, Who avoids the attack in progress at once
-  (AvoidDistantAttack with AlwaysAvoids). Runs for affect $29 (id 41, ovl12_e1 [V]). }
+  (AvoidDistantAttack with AlwaysAvoids). Runs for affect $29 (id 41, InitAffectHandlers [V]). }
 procedure AvoidIfSelectedItemPlusZero(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   if FirstSlotItem(SelectedCharacter) <> nil then
@@ -1009,7 +1021,7 @@ begin
 end;
 { ovl12:10C1. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). It halves
   HookedMoveOrAttacks, the byte that AgeCharacterOnce (ovl12:0C4B) doubles every time it runs. Runs for affect $2A (id
-  42, ovl12_e1 [V]). }
+  42, InitAffectHandlers [V]). }
 procedure HalveAgeDoubling(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   HookedMoveOrAttacks := HookedMoveOrAttacks shr 1;
@@ -1017,7 +1029,8 @@ end;
 { ovl12:10DE. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000). It gives Who
   the affect AffectDrainsStrength (a Cure Disease affect, ovl04:031E) for WeakeningDuration rounds with the Data of Affect,
   when TryAddAffect allows it. While Who's Strength is above 3 each run shows "is weakened" (row MessageRow) and takes one
-  off Strength; at 3 or less Who gets AffectNausea unless it has it already. Runs for affect $2B (id 43, ovl12_e1 [V]). }
+  off Strength; at 3 or less Who gets AffectNausea unless it has it already. Runs for affect $2B (id 43,
+  InitAffectHandlers [V]). }
 procedure WeakenStrength(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   FoundAffect: Pointer;
@@ -1035,7 +1048,7 @@ end;
   the disease affect AffectCauseDisease for AffectCauseDiseaseDuration rounds, with the Data of Affect, when TryAddAffect
   allows it. Then, while Who has more than one hit point (Flag11B), it deals 1 point of plain damage (DamageKind 0, no
   save, DealDamage) and, outside combat, redraws the selected character. Otherwise Who gets AffectNausea unless it has
-  it already. Runs for affect $2C (id 44, ovl12_e1 [V]). }
+  it already. Runs for affect $2C (id 44, InitAffectHandlers [V]). }
 procedure CauseDiseaseAndDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   FoundAffect: Pointer;
@@ -1056,7 +1069,7 @@ end;
   AttackTarget. When the selected character has CreatureType (+$9F of TCharacter, not named yet) set to 1 and its
   CombatSize has footprint kind 2 (bits 0..6 of +$6C), AttackRoll loses AttackPenalty for each of the names
   EightListedNamesB[1..8]
-  that the target's name equals. Runs for affect $2F (id 47, ovl12_e1 [V]). }
+  that the target's name equals. Runs for affect $2F (id 47, InitAffectHandlers [V]). }
 procedure LowerAttackVsEightListed(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   I: Byte;                      { the name row 1..8 of EightListedNamesB }
@@ -1069,7 +1082,7 @@ begin
 end;
 { ovl12:1276. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). When the selected
   character has CreatureType (+$9F of TCharacter, not named yet) set to 1 and its name is 'BUGBEAR' or 'GNOLL', AttackRoll
-  loses AttackPenalty. Runs for affect $30 (id 48, ovl12_e1 [V]). }
+  loses AttackPenalty. Runs for affect $30 (id 48, InitAffectHandlers [V]). }
 procedure LowerAttackIfSelectedIsBugbearOrGnoll(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   if SelectedCharacter^.CreatureType = 1 then
@@ -1079,7 +1092,7 @@ end;
 { ovl12:12B2. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is passed on, ovl24:0000). The side
   the affect names is Affect's Data bit 4 (SideDataBit, 0 or 1). When Who's Side (+$10E of TCharacter) equals it,
   RaiseAttackAndSave (ovl12:0C06) runs with Who, Affect and Mode; otherwise AttackRoll and SaveRoll each lose one.
-  Runs for affect $31 (id 49, ovl12_e1 [V]). }
+  Runs for affect $31 (id 49, InitAffectHandlers [V]). }
 procedure RaiseOrLowerAttackAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   Side: Byte;                   { the side bit of Affect's Data, 0 or 1 }
@@ -1098,7 +1111,7 @@ end;
   AffectHealingBlockDuration rounds, with the Data of Affect, when TryAddAffect allows it. Then HealCharacter heals Who
   by one hit point with Flag 1, which the block does not stop, and when that healed Who, ShowHealResult (00BA:234A, not
   named yet) runs on Who. The map also had an entry at ovl12:1307, which is the middle of this routine (its pushes
-  for the first call start at 12FB), so it has no routine of its own. Runs for affect $32 (id 50, ovl12_e1 [V]). }
+  for the first call start at 12FB), so it has no routine of its own. Runs for affect $32 (id 50, InitAffectHandlers [V]). }
 procedure AddHealingBlockAndHeal(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   if TryAddAffect(Who, AffectHealingBlock, Affect^.Data, AffectHealingBlockDuration) then
@@ -1108,21 +1121,21 @@ end;
 { ovl12:133F. Affect handler (the AffectHandlers shape: Who, Affect and Mode; only Who is read). It calls
   EndCombatTurn(Who), the routine the combat units call to end a combatant's turn (ovl08, ovl09 AiTurn), and does
   nothing with its result: a Turbo Pascal statement cannot call a function, so the call is tested and the test
-  stands alone. Purpose unknown: runs for affects $1F, $33, $34 and $35 (ids 31, 51, 52, 53, ovl12_e1 [V]). }
-procedure ovl12_e43(Who: PCharacter; Affect: PAffect; Mode: Byte);
+  stands alone. runs for affects $1F, $33, $34 and $35 (ids 31, 51, 52, 53, InitAffectHandlers [V]). }
+procedure EndAffectedCombatantTurn(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   if EndCombatTurn(Who) <> 0 then ;
 end;
 { ovl12:1355. Affect handler (the AffectHandlers shape: Who, Affect and Mode) with an empty body, like IgnoreAffect
-  (ovl12:0647): none of its parameters is read and no global is written. Purpose unknown: runs for affect $36 (id 54,
-  ovl12_e1 [V]). }
-procedure ovl12_e44(Who: PCharacter; Affect: PAffect; Mode: Byte);
+  (ovl12:0647): none of its parameters is read and no global is written. runs for affect $36 (id 54,
+  InitAffectHandlers [V]). }
+procedure IgnoreAffect36(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
 end;
 { ovl12:135C. Affect handler (the AffectHandlers shape: Who, Affect and Mode) with an empty body, like IgnoreAffect
-  (ovl12:0647): none of its parameters is read and no global is written. Purpose unknown: runs for affect $37 (id 55,
-  ovl12_e1 [V]). }
-procedure ovl12_e45(Who: PCharacter; Affect: PAffect; Mode: Byte);
+  (ovl12:0647): none of its parameters is read and no global is written. runs for affect $37 (id 55,
+  InitAffectHandlers [V]). }
+procedure IgnoreAffect37(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
 end;
 { ovl12:1363. Affect handler (the AffectHandlers shape: Who, Affect and Mode; only Who is read). It gives Who the
@@ -1130,8 +1143,8 @@ end;
   AffectLowerAttackRollByFourData,
   with NoRemoveHandler: the handler does not run when the affect is removed. AffectLowerAttackRollByFour is the affect
   RollToHit
-  clears from the attacker (ovl24:0CB7) [I]. Purpose unknown: runs for affect $38 (id 56, ovl12_e1 [V]). }
-procedure ovl12_e46(Who: PCharacter; Affect: PAffect; Mode: Byte);
+  clears from the attacker (ovl24:0CB7) [I]. runs for affect $38 (id 56, InitAffectHandlers [V]). }
+procedure GiveLowerAttackRollAffect(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   AddAffect(Who, AffectLowerAttackRollByFour, AffectLowerAttackRollByFourDuration, AffectLowerAttackRollByFourData,
   NoRemoveHandler);
@@ -1142,7 +1155,7 @@ end;
   (+$15), never below RotMinimumCharisma. Then the rot moves on: while the stage (the high nibble of the affect's
   Data) is above RotLastStage, the stage drops by one (RotStage) and TryAddAffect gives Who the rot again with that
   Data for RotDuration rounds. At the last stage Who dies: DropFromFight takes Who out with StatusGone and the
-  text "Dies rots away". Runs for affect $39 (id 57, ovl12_e1 [V]). }
+  text "Dies rots away". Runs for affect $39 (id 57, InitAffectHandlers [V]). }
 procedure ProgressRot(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   if RemovingAffects <> 0 then Exit;
@@ -1163,8 +1176,9 @@ begin
 end;
 { ovl12:1452. Affect handler (the AffectHandlers shape: Who, Affect and Mode; only Who is read). It stops Who's
   movement: the combat record's Moves (+$6 of TCombatant, the movement left) goes to 0. When HookRunning is set it also
-  clears HookedMoveOrAttacks, the byte AgeCharacterOnce doubles. Purpose unknown: runs for affect $3A (id 58, ovl12_e1 [V]). }
-procedure ovl12_e48(Who: PCharacter; Affect: PAffect; Mode: Byte);
+  clears HookedMoveOrAttacks, the byte AgeCharacterOnce doubles. runs for affect $3A (id 58,
+  InitAffectHandlers [V]). }
+procedure StopMovement(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   Who^.Combat^.Moves := 0;
   if HookRunning then
@@ -1172,8 +1186,8 @@ begin
 end;
 { ovl12:1472. Affect handler (the AffectHandlers shape: Who, Affect and Mode; only Who is read). It gives Who the affect
   AffectRegainHitPoints (AddAffect, ovl24:0E52) with Duration 0 (permanent), the Data AffectRegainHitPointsData and no handler
-  when it is removed (NoRemoveHandler). Purpose unknown: runs for affect $3B (id 59, ovl12_e1 [V]). }
-procedure ovl12_e49(Who: PCharacter; Affect: PAffect; Mode: Byte);
+  when it is removed (NoRemoveHandler). runs for affect $3B (id 59, InitAffectHandlers [V]). }
+procedure GiveRegainHitPointsAffect(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   AddAffect(Who, AffectRegainHitPoints, PermanentDuration, AffectRegainHitPointsData, NoRemoveHandler);
 end;
@@ -1181,7 +1195,7 @@ end;
   (DamageKind bit KindFire, DS:6819), each of the LastDiceCount dice of the last roll takes FireReductionPerDie off
   DamageAmount, and it never goes below LastDiceCount; SaveRoll then gets FireProtectionSaveBonus. Damage that is not
   magical (KindMagic clear) is cancelled altogether: CancelPendingHook(0) clears DamageAmount and HookAffectId.
-  Purpose unknown: runs for affect $3D (id 61, ovl12_e1 [V]). }
+  Purpose unknown: runs for affect $3D (id 61, InitAffectHandlers [V]). }
 procedure ReduceFireDamageByRoll(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   I: Byte;
@@ -1203,7 +1217,8 @@ end;
   AddHealingBlockAndHeal (ovl12:12FB) with the trained-out affect: it gives Who AffectTrainedOut (the Constitution
   limit affect of TrainConstitution, ovl12:0233) for TrainedOutDuration rounds with the Data of Affect, when TryAddAffect
   allows it. Then HealCharacter heals Who by one hit point with Flag 1, which a healing block does not stop, and when
-  that healed Who, ShowHealResult (00BA:234A, not named yet) runs on Who. Runs for affect $3E (id 62, ovl12_e1 [V]). }
+  that healed Who, ShowHealResult (00BA:234A, not named yet) runs on Who. Runs for affect $3E (id 62,
+  InitAffectHandlers [V]). }
 procedure AddTrainedOutAndHeal(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   if TryAddAffect(Who, AffectTrainedOut, Affect^.Data, TrainedOutDuration) then
@@ -1216,7 +1231,8 @@ end;
   (row MessageRow) is shown on it, DelayByGameSpeed waits, it
   gets AffectPoisoned for good (AddAffect with Duration 0, Data $FF, no handler on removal) and DropFromFight kills it
   with StatusDead and "is killed". The map split this routine at ovl12:1543 and ovl12:1583, which are inside its
-  literal pool and inside its code. It is the poison hook of affects $40, $41, $42 and $46 (ids 64, 65, 66, 70, ovl12_e1
+  literal pool and inside its code. It is the poison hook of affects $40, $41, $42 and $46 (ids 64, 65, 66, 70,
+  InitAffectHandlers
   [V]). }
 procedure PoisonAttackTarget(Who: PCharacter; Bonus: ShortInt);
 begin
@@ -1246,28 +1262,28 @@ begin
 end;
 { ovl12:165D. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Affect and Mode are not read, ovl24:0000).
   The poison hook of an attack with save bonus 0: PoisonAttackTarget (ovl12:1545) with Bonus 0. Runs for affect $40 (id 64,
-  ovl12_e1 [V]). }
+  InitAffectHandlers [V]). }
 procedure PoisonAttackTargetBonus0(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   PoisonAttackTarget(Who, 0);
 end;
 { ovl12:1671. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Affect and Mode are not read, ovl24:0000).
   The poison hook of an attack with save bonus 4: PoisonAttackTarget (ovl12:1545) with Bonus 4. Runs for affect $41 (id 65,
-  ovl12_e1 [V]). }
+  InitAffectHandlers [V]). }
 procedure PoisonAttackTargetBonus4(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   PoisonAttackTarget(Who, 4);
 end;
 { ovl12:1685. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Affect and Mode are not read, ovl24:0000).
   The poison hook of an attack with save bonus 2: PoisonAttackTarget (ovl12:1545) with Bonus 2. Runs for affect $42 (id 66,
-  ovl12_e1 [V]). }
+  InitAffectHandlers [V]). }
 procedure PoisonAttackTargetBonus2(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   PoisonAttackTarget(Who, 2);
 end;
 { ovl12:1699. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Affect and Mode are not read, ovl24:0000).
   It paralyses the character Who attacked last for RollDice(2, 8) rounds: ParalyzeAttackTarget (ovl12:15EB) with the
-  unused byte 0. No caller is in the map (auto:entry_55); it runs for affect $43 (id 67, ovl12_e1 [V]). }
+  unused byte 0. No caller is in the map (auto:entry_55); it runs for affect $43 (id 67, InitAffectHandlers [V]). }
 procedure ParalyzeAttackTargetFor2d8(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   ParalyzeAttackTarget(Who, RollDice(2, 8), 0);
@@ -1275,7 +1291,7 @@ end;
 { ovl12:16BB. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Affect and Mode are not read, ovl24:0000).
   Unless the character Who attacked last (Who^.Combat^.Target) has race ParalysisImmuneRace, it is paralysed for
   ParalysisDuration rounds: ParalyzeAttackTarget (ovl12:15EB) with the unused byte 0. The map finds no direct caller
-  (auto:entry_56); it runs for affect $44 (id 68, ovl12_e1 [V]). }
+  (auto:entry_56); it runs for affect $44 (id 68, InitAffectHandlers [V]). }
 procedure ParalyzeAttackTargetUnlessImmune(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   if Who^.Combat^.Target^.Race <> ParalysisImmuneRace then
@@ -1283,7 +1299,7 @@ begin
 end;
 { ovl12:16E6. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Affect and Mode are not read, ovl24:0000).
   Paralyses the character Who attacked last for 1d9 plus ParalysisBaseRounds rounds: ParalyzeAttackTarget (ovl12:15EB).
-  Runs for affect $45 (id 69, ovl12_e1 [V]). }
+  Runs for affect $45 (id 69, InitAffectHandlers [V]). }
 procedure ParalyzeAttackTargetFor1d9Plus10(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   { the third argument is the unused byte: ParalyzeAttackTarget never reads it; this caller passes $FE, the others 0 }
@@ -1291,14 +1307,14 @@ begin
 end;
 { ovl12:170B. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Affect and Mode are not read, ovl24:0000).
   The poison hook of an attack with save bonus -2: PoisonAttackTarget (ovl12:1545) with Bonus -2. Runs for affect $46 (id 70,
-  ovl12_e1 [V]). }
+  InitAffectHandlers [V]). }
 procedure PoisonAttackTargetBonusMinus2(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   PoisonAttackTarget(Who, -2);
 end;
 { ovl12:171F. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none of them is read, ovl24:0000). Sets
   HookVetoFlag to 1 (the flag ovl12:0918 and ovl12:0C26 also set; nothing reads it yet) and takes AttackPenalty off AttackRoll
-  without the test LowerAttackRollByFour (ovl12:0918) makes first. Runs for affect $47 (id 71, ovl12_e1 [V]). }
+  without the test LowerAttackRollByFour (ovl12:0918) makes first. Runs for affect $47 (id 71, InitAffectHandlers [V]). }
 procedure SetFlagAndLowerAttackRollByFour(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   HookVetoFlag := 1;
@@ -1308,8 +1324,9 @@ end;
   is at or below AffectLowerAttackRollByFourChance it gives Who affect AffectLowerAttackRollByFour (AddAffect, ovl24:0E52) for
   AffectLowerAttackRollByFourDuration rounds with the Data AffectLowerAttackRollByFourData and no handler when it is removed:
   the same AddAffect
-  as ovl12_e46 (ovl12:1363), but with the roll. Purpose unknown: runs for affect $48 (id 72, ovl12_e1 [V]). }
-procedure ovl12_e60(Who: PCharacter; Affect: PAffect; Mode: Byte);
+  as GiveLowerAttackRollAffect (ovl12:1363), but with the roll. runs for affect $48 (id 72,
+  InitAffectHandlers [V]). }
+procedure RollToGiveLowerAttackRollAffect(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   if RollDice(1, 100) <= AffectLowerAttackRollByFourChance then
     AddAffect(Who, AffectLowerAttackRollByFour, AffectLowerAttackRollByFourDuration, AffectLowerAttackRollByFourData,
@@ -1325,7 +1342,7 @@ end;
   Flag is cleared and AffectBloodDrain is removed from Who. Last, when both still take part, Who's combat byte ForcedFlight
   becomes 1 (CheckMorale
   forces
-  a combatant with it nonzero to flee, ovl09:10D7). Runs for affect $4B (id 75, ovl12_e1 [V]). }
+  a combatant with it nonzero to flee, ovl09:10D7). Runs for affect $4B (id 75, InitAffectHandlers [V]). }
 procedure DrainBloodFromCombatant(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   Turn: Byte;                   { the result of EndCombatTurn (ends Who's turn), never read }
@@ -1360,7 +1377,7 @@ end;
   are not read, ovl24:0000). The character Who attacked last (Who's combat Target) is copied into AttackTarget. Who gets
   AffectBloodDrain for BloodDrainDuration rounds, its Data the combatant index of AttackTarget (CombatantIndex), so
   DrainBloodFromCombatant (ovl12:176F) runs on it when it is removed. AttackTarget gets AffectHeldFast and that affect's
-  handler runs at once (CallAffectHandler). Runs for affect $4C (id 76, ovl12_e1 [V]). }
+  handler runs at once (CallAffectHandler). Runs for affect $4C (id 76, InitAffectHandlers [V]). }
 procedure StartBloodDrain(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   AttackTarget := Who^.Combat^.Target;
@@ -1374,7 +1391,7 @@ end;
   Data the combatant index of AttackTarget, so DrainBloodFromCombatant (ovl12:176F) runs on it when it is removed),
   AttackTarget gets AffectHeldFast and that affect's handler runs, and "is held fast" is shown on AttackTarget at row
   MessageRow
-  (ShowCharacterMessage). Runs for affect $4D (id 77, ovl12_e1 [V]). }
+  (ShowCharacterMessage). Runs for affect $4D (id 77, InitAffectHandlers [V]). }
 procedure HoldWeakTargetFast(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   AttackTarget := Who^.Combat^.Target;
@@ -1389,7 +1406,7 @@ end;
 { ovl12:19D9. Affect handler that revives Who (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000).
   ReviveCombatant (ovl24:1869) puts Who back on its square at Who's current hit points (Flag11B) and returns False when it
   cannot be placed. Then Who gets AffectRevival for RevivalRetryDuration round, with the Data of Affect, so the revival is
-  tried again (TryAddAffect; its result is stored and never read). Runs for affect $4E (id 78, ovl12_e1 [V]). }
+  tried again (TryAddAffect; its result is stored and never read). Runs for affect $4E (id 78, InitAffectHandlers [V]). }
 procedure ReviveOrRetryRevival(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   Added: Boolean;               { the result of TryAddAffect, stored and never read }
@@ -1400,7 +1417,7 @@ end;
 { ovl12:1A19. Affect handler that burns the character Who attacked last (the AffectHandlers shape: Who, Affect and Mode;
   none is read, ovl24:0000). DamageKind becomes 9 (KindFire or KindMagic, fire with the magic bit, as
   BoostFireAttackByTarget sets it), then 2d10 damage goes to Who's combat Target (Who^.Combat^.Target) without a save
-  (DealDamage, ovl24:1344). Runs for affect $4F (id 79, ovl12_e1 [V]). }
+  (DealDamage, ovl24:1344). Runs for affect $4F (id 79, InitAffectHandlers [V]). }
 procedure FireAttackTargetFor2d10(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   DamageKind := KindFire or KindMagic;
@@ -1408,7 +1425,7 @@ begin
 end;
 { ovl12:1A4C. Affect handler that splashes acid on the character Who attacked last (the AffectHandlers shape: Who, Affect
   and Mode; none is read, ovl24:0000). DamageKind becomes KindAcid, then 1d4 damage goes to Who's combat Target without a
-  save (DealDamage, ovl24:1344). Runs for affect $50 (id 80, ovl12_e1 [V]). }
+  save (DealDamage, ovl24:1344). Runs for affect $50 (id 80, InitAffectHandlers [V]). }
 procedure AcidAttackTargetFor1d4(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   DamageKind := KindAcid;
@@ -1420,7 +1437,7 @@ end;
   with Flag10D set on the side of Who (OpposingSide, the side of the actor) makes a SavingThrow of kind SaveKindFear. Its
   HighestLevel (+$73) decides the affect: 0 to 3 gives AffectParalysis with the message 'is paralyzed with fear', 4 or 5
   gives AffectWeakened with 'is weakened by fear'; the Duration is 0 for both, and a successful save negates the affect
-  (ApplyAffect, ovl24:1656). Other levels get nothing. Runs for affect $51 (id 81, ovl12_e1 [V]). }
+  (ApplyAffect, ovl24:1656). Other levels get nothing. Runs for affect $51 (id 81, InitAffectHandlers [V]). }
 procedure FrightenSideWithFear(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   Scan: PCharacter;             { walks the party list: first member, then Next }
@@ -1448,7 +1465,7 @@ end;
   member with Flag10D set on the side of Who (OpposingSide) makes a paralysis save (SaveKindParalysis) with a bonus
   of 1 when its side has six or more members (SideCounts, the side's count [?]) and 2 when it is a human,
   and gets AffectParalysis for 1d4 rounds with Data FearData; "is paralyzed with fear" is shown on it, and a successful
-  save negates the affect. Runs for affect $52 (id 82, ovl12_e1 [V]). }
+  save negates the affect. Runs for affect $52 (id 82, InitAffectHandlers [V]). }
 procedure ParalyzeSideWithFear(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   Scan: PCharacter;             { walks the party list: first member, then Next }
@@ -1480,7 +1497,7 @@ end;
   AttackTarget are walked: a readied item with a NameNum of ReflectingNameNum turns the gaze back: "reflects it!" is shown
   on AttackTarget (row ReflectRow), the line is drawn back, and the gaze falls on Who (AttackTarget := Who). The gaze target
   then makes a stone save (SaveKindStone, no bonus); when it fails, DropFromFight takes it out of the fight with StatusStoned
-  and "is Stoned". Runs for affect $53 (id 83, ovl12_e1 [V]). }
+  and "is Stoned". Runs for affect $53 (id 83, InitAffectHandlers [V]). }
 procedure GazeStonesTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   Item: PItem;                  { the items of AttackTarget, walked from its first }
@@ -1522,7 +1539,7 @@ end;
   and AttackTarget gets the charm affect AffectCharm for good with Data: Who's side in bit 7 (ControlSideBit) and
   CharmData. A successful fear save (SavingThrow kind 4, CharmSaveBonus) negates it, and "is charmed" is shown on it.
   Then, when AttackTarget has the affect, its handler runs at once (CallAffectHandler, Mode 0). Runs for affect $54 (id 84,
-  ovl12_e1 [V]). }
+  InitAffectHandlers [V]). }
 procedure GazeCharmsTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   StepCount: Word;              { the steps WalkLine takes }
@@ -1657,14 +1674,14 @@ begin
 end;
 { ovl12:23A4. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Affect and Mode are not read, ovl24:0000)
   that drains one level from the character Who attacked last (Who's combat Target, TCombatant +$A): DrainLevels
-  takes one level off it, with "is drained a level" shown on it. Runs for affect $55 (id 85, ovl12_e1 [V]). }
+  takes one level off it, with "is drained a level" shown on it. Runs for affect $55 (id 85, InitAffectHandlers [V]). }
 procedure DrainAttackTargetLevel(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   DrainLevels(Who^.Combat^.Target, 1);
 end;
 { ovl12:23C2. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Affect and Mode are not read, ovl24:0000)
   that drains two levels from the character Who attacked last (Who's combat Target, TCombatant +$A): DrainLevels
-  takes two levels off it, with "is drained 2 levels" shown on it. Runs for affect $56 (id 86, ovl12_e1 [V]). }
+  takes two levels off it, with "is drained 2 levels" shown on it. Runs for affect $56 (id 86, InitAffectHandlers [V]). }
 procedure DrainAttackTargetTwoLevels(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   DrainLevels(Who^.Combat^.Target, 2);
@@ -1674,7 +1691,7 @@ end;
   character already has the healing block AffectHealingBlock (HasAffect finds it), it gets the block for
   AffectHealingBlockDuration rounds, then AffectRot for RotDuration rounds with the Data (1d6 * RotStage) + RotDataLow: the
   rot stage is the high nibble (ProgressRot, ovl12:1399). "is Diseased" is shown on it at row MessageRow. Runs for affect $57
-  (id 87, ovl12_e1 [V]). }
+  (id 87, InitAffectHandlers [V]). }
 procedure CauseRotOnAttackTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   FoundAffect: Pointer;         { the healing block HasAffect looks for on AttackTarget }
@@ -1687,11 +1704,11 @@ begin
     ShowCharacterMessage(AttackTarget, 'is Diseased', MessageRow, 1);
   end;
 end;
-{ ovl12:2490. Purpose unknown: an affect handler (the AffectHandlers shape: Who, Affect and Mode; Who and Mode are not
+{ ovl12:2490. an affect handler (the AffectHandlers shape: Who, Affect and Mode; Who and Mode are not
   read, ovl24:0000). It works on Affect's Data (+3). In combat round 0 (CombatRound, the round counter, is 0) with AttackRoll 0
   it keeps only DataLowNibble of Data. Otherwise, when MissedBit is clear, AttackRoll becomes MissRoll (a miss, ovl24:0CD5)
-  and MissedBit is set, so the attack misses once. Runs for affect $59 (id 89, ovl12_e1 [V]). }
-procedure ovl12_e74(Who: PCharacter; Affect: PAffect; Mode: Byte);
+  and MissedBit is set, so the attack misses once. Runs for affect $59 (id 89, InitAffectHandlers [V]). }
+procedure ForceFirstAttackMiss(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   if (CombatRound = 0) and (AttackRoll = 0) then
     Affect^.Data := Affect^.Data and DataLowNibble
@@ -1703,7 +1720,8 @@ begin
 end;
 { ovl12:24D9. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Affect and Mode are not read, ovl24:0000).
   For the first saving throw kind (SaveKind 0, SaveKindPoison [I]) it adds a bonus to SaveRoll from Who's Constitution
-  (+$14): 1 for 4..6, 2 for 7..10, 3 for 11..13, 4 for 14..17 and 5 for 18..20. Runs for affect $5A (id 90, ovl12_e1 [V]).
+  (+$14): 1 for 4..6, 2 for 7..10, 3 for 11..13, 4 for 14..17 and 5 for 18..20. Runs for affect $5A (id 90,
+  InitAffectHandlers [V]).
   QUIRK ovl12:24D9: a Constitution outside 4..20 sets no bonus, so the local Bonus keeps what the stack held, and that
   value is added to SaveRoll. }
 procedure AddConstitutionSaveBonus(Who: PCharacter; Affect: PAffect; Mode: Byte);
@@ -1722,12 +1740,12 @@ begin
     SaveRoll := SaveRoll + Bonus;
   end;
 end;
-{ ovl12:2556. Purpose unknown: an affect handler on the damage hook (the AffectHandlers shape: Who, Affect and Mode; Affect
+{ ovl12:2556. an affect handler on the damage hook (the AffectHandlers shape: Who, Affect and Mode; Affect
   and Mode are not read, ovl24:0000; Who is read for its message). When CastingSpell is ClearDamageValue the pending hook is
   cancelled (CancelPendingHook(0): the damage is dropped) and "is unaffected" is shown on Who at row MessageRow. Otherwise,
   when the damage is electricity (KindElectricity in DamageKind), the hook is cancelled without the message. Runs for affect
-  $5B (id 91, ovl12_e1 [V]). }
-procedure ovl12_e76(Who: PCharacter; Affect: PAffect; Mode: Byte);
+  $5B (id 91, InitAffectHandlers [V]). }
+procedure CancelDamageOfSpellOrElectricity(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   if CastingSpell = ClearDamageValue then
   begin
@@ -1739,7 +1757,7 @@ begin
 end;
 { ovl12:25A2. Affect handler for damage (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000).
   When the damage being dealt is fire (DamageKind bit KindFire, DS:6819), it halves DamageAmount (DS:6818): HalveFireDamage
-  (ovl12:06E4) without its SaveRoll bonus. Runs for affect $5D (id 93, ovl12_e1 [V]). }
+  (ovl12:06E4) without its SaveRoll bonus. Runs for affect $5D (id 93, InitAffectHandlers [V]). }
 procedure HalveFireDamageNoSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   if (DamageKind and KindFire) <> 0 then
@@ -1748,7 +1766,8 @@ end;
 { ovl12:25BC. Affect handler for damage (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000).
   It takes the first slot item of SelectedCharacter (FirstSlotItem, ovl12:101D). When there is one and byte 7 of its
   ItemTable row (ItemTable[ItemType].Pad7[7], DS:5589; the row is indexed by the item type, the meaning of byte 7 is
-  not known [?]) has ItemRowFlags bits set, DamageAmount is halved. Purpose unknown: runs for affect $5E (id 94, ovl12_e1
+  not known [?]) has ItemRowFlags bits set, DamageAmount is halved. Purpose unknown: runs for affect $5E (id 94,
+  InitAffectHandlers
   [V]). }
 procedure HalveDamageForFirstSlotItem(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
@@ -1762,7 +1781,7 @@ end;
 { ovl12:2610. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000). It clears the
   affect's Flag, so the handler does not run again when the affect is removed. When Who still takes part in the fight
   (Flag10D set), Who falls dead: DropFromFight takes Who out with StatusDead and the text 'Falls dead'. Runs for affect $5F
-  (id 95, ovl12_e1 [V]). }
+  (id 95, InitAffectHandlers [V]). }
 procedure FallDeadIfInFight(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   Affect^.Flag := 0;
@@ -1772,7 +1791,7 @@ end;
 { ovl12:264B. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). It cancels the
   damage (DamageAmount := 0) unless SelectedCharacter's first slot item (FirstSlotItem, ovl12:101D) is a magic item
   (Plus, +$32, not 0) or has NameNum[3] (+$31) SlotItemNameNum3; with no first slot item the damage is cancelled.
-  Runs for affect $60 (id 96, ovl12_e1 [V]). }
+  Runs for affect $60 (id 96, InitAffectHandlers [V]). }
 procedure CancelDamageUnlessMagicSlotItem(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   Item: PItem;
@@ -1784,7 +1803,7 @@ end;
 { ovl12:268A. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Affect and Mode are not read, ovl24:0000).
   For the saving throw kinds 2 and 4 (SaveKind, DS:682A; kind 4 is SaveKindFear [I]) it adds to SaveRoll the Constitution
   bonus of AddConstitutionSaveBonus (ovl12:24D9): 1 for 4..6, 2 for 7..10, 3 for 11..13, 4 for 14..17 and 5 for 18..20.
-  Runs for affect $61 (id 97, ovl12_e1 [V]).
+  Runs for affect $61 (id 97, InitAffectHandlers [V]).
   QUIRK ovl12:268A: a Constitution outside 4..20 sets no bonus, so the local Bonus keeps what the stack held, and that
   value is added to SaveRoll. }
 procedure AddConstitutionSaveBonusKind2Or4(Who: PCharacter; Affect: PAffect; Mode: Byte);
@@ -1805,7 +1824,7 @@ begin
 end;
 { ovl12:2700. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Affect and Mode are not read). Who gets
   RegainedHitPoints back on Flag11B (the current hit points [I], TCharacter +$11B), but never more than HpMax (+$32).
-  Runs for affect $62 (id 98, ovl12_e1 [V]). }
+  Runs for affect $62 (id 98, InitAffectHandlers [V]). }
 procedure RegainHitPoints(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   Inc(Who^.Flag11B, RegainedHitPoints);
@@ -1816,7 +1835,8 @@ end;
   (StatusDying) gets DyingRevivalPoints less the rounds it has bled (DyingRounds, TCombatant +$E), so one that has bled
   six rounds or more stays dead; an unconscious one (StatusUnconscious) gets DyingRevivalPoints. When ReviveCombatant
   (ovl24:1869) puts Who back on the map, Who gets AffectFallsDead for 1d4 plus one rounds, and the affect Affect has its
-  Flag cleared (NoRemoveHandler) and is removed, so its handler does not run. Runs for affect $63 (id 99, ovl12_e1 [V]). }
+  Flag cleared (NoRemoveHandler) and is removed, so its handler does not run. Runs for affect $63 (id 99,
+  InitAffectHandlers [V]). }
 procedure ReviveDyingCharacter(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   HitPoints: Byte;              { the hit points the revival gives; 0 when there is none }
@@ -1837,7 +1857,7 @@ begin
 end;
 { ovl12:27D9. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read). Unless the damage being dealt
   (DamageKind, DS:6819) has the fire bit (KindFire) or the acid bit (KindAcid), Who gets AffectRetryRevival for 3d6 rounds
-  with the Data $FF, and its handler runs when it is removed. Runs for affect $64 (id 100, ovl12_e1 [V]). }
+  with the Data $FF, and its handler runs when it is removed. Runs for affect $64 (id 100, InitAffectHandlers [V]). }
 procedure GiveAffectUnlessFireOrAcid(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   if (DamageKind and KindFire) = 0 then
@@ -1848,7 +1868,7 @@ end;
 { ovl12:2814. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read). Unless HasAffect finds
   AffectRegainHitPoints or AffectRegenerating on Who, Who gets AffectRegenerating (Regenerating) for RegeneratingDuration
   rounds
-  with the Data $FF, and its handler runs when it is removed. Runs for affect $65 (id 101, ovl12_e1 [V]). }
+  with the Data $FF, and its handler runs when it is removed. Runs for affect $65 (id 101, InitAffectHandlers [V]). }
 procedure GiveRegeneratingUnlessAffected(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   FoundAffect: Pointer;         { the affect HasAffect looks for; it is given back and never read }
@@ -1860,7 +1880,7 @@ end;
 { ovl12:2866. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read). ReviveCombatant
   (ovl24:1869) tries to put Who back on the map with its full HpMax (+$32). When that fails, Who gets AffectRetryRevival
   for AffectRetryRevivalRetryDuration round with the Data of Affect, when TryAddAffect allows it; the result is stored
-  and never read. Runs for affect $66 (id 102, ovl12_e1 [V]). }
+  and never read. Runs for affect $66 (id 102, InitAffectHandlers [V]). }
 procedure RetryRevivalAtFullHitPoints(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   Added: Boolean;               { the result of TryAddAffect, stored and never read }
@@ -1871,7 +1891,7 @@ end;
 { ovl12:28BF. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read). Affect's Flag is
   cleared (NoRemoveHandler) so its handler does not run again on removal. Then the cursor is shown on Who
   (ShowCursorOn, ovl31:1298; margin 3, cursor 0 [?]) and Who drops out of the fight with StatusFled and the text
-  'Turns gaseous and escapes' (DropCombatant, ovl24:0F06). Runs for affect $67 (id 103, ovl12_e1 [V]). }
+  'Turns gaseous and escapes' (DropCombatant, ovl24:0F06). Runs for affect $67 (id 103, InitAffectHandlers [V]). }
 procedure TurnGaseousAndEscape(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   Affect^.Flag := NoRemoveHandler;
@@ -1880,7 +1900,7 @@ begin
 end;
 { ovl12:2901. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). It runs
   AvoidDistantAttack on Who with DistantAvoidChance (60): a 1d100 roll of 60 or less avoids the attack in progress.
-  Runs for affect $68 (id 104, ovl12_e1 [V]). }
+  Runs for affect $68 (id 104, InitAffectHandlers [V]). }
 procedure AvoidDistantAttackByChance(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   AvoidDistantAttack(Who, DistantAvoidChance);
@@ -1909,21 +1929,21 @@ begin
 end;
 { ovl12:2976. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). It calls
   CancelHookOnChance with HookChanceHalf (50): the pending hook may be cancelled by a roll. Runs for affect $69 (id 105,
-  ovl12_e1 [V]). }
+  InitAffectHandlers [V]). }
 procedure CancelHookByHalfChance(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   CancelHookOnChance(HookChanceHalf);
 end;
 { ovl12:2984. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). It calls
   CancelHookOnChance with HookChanceLow (15): the pending hook is cancelled by a roll less often than at 50.
-  Runs for affect $6A (id 106, ovl12_e1 [V]). }
+  Runs for affect $6A (id 106, InitAffectHandlers [V]). }
 procedure CancelHookByLowChance(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   CancelHookOnChance(HookChanceLow);
 end;
 { ovl12:2992. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). A 1d100
   roll at or below HookChanceHigh (90) cancels the pending hook of affect AffectEndsTurn, then the one of the charm
-  (AffectCharm), each through CancelPendingHook. Runs for affect $6B (id 107, ovl12_e1 [V]). }
+  (AffectCharm), each through CancelPendingHook. Runs for affect $6B (id 107, InitAffectHandlers [V]). }
 procedure CancelCharmAndUnknown35HighChance(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   if RollDice(1, 100) <= HookChanceHigh then
@@ -1934,7 +1954,7 @@ begin
 end;
 { ovl12:29B6. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). It cancels
   the pending hook of the charm (AffectCharm) and then the one of affect AffectEndsTurn, without a roll. Runs for affect $6C
-  (id 108, ovl12_e1 [V]). }
+  (id 108, InitAffectHandlers [V]). }
 procedure CancelCharmAndUnknown35(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   CancelPendingHook(AffectCharm);
@@ -1942,14 +1962,14 @@ begin
 end;
 { ovl12:29CB. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none of them is read, ovl24:0000). It cancels
   the pending hook of the paralysis affect (AffectParalysis, $34) with CancelPendingHook, and nothing else. Purpose unknown:
-  runs for affect $6D (id 109, ovl12_e1 [V]). }
+  runs for affect $6D (id 109, InitAffectHandlers [V]). }
 procedure CancelParalysisHook(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   CancelPendingHook(AffectParalysis);
 end;
 { ovl12:29D9. Damage hook (the AffectHandlers shape: Who, Affect and Mode; none of them is read, ovl24:0000). While the
   damage being dealt is cold (DamageKind bit KindCold, DS:6819), CancelPendingHook(0) drops it: DamageAmount and the
-  hook offered are cleared. Purpose unknown: runs for affect $6E (id 110, ovl12_e1 [V]). }
+  hook offered are cleared. Purpose unknown: runs for affect $6E (id 110, InitAffectHandlers [V]). }
 procedure CancelColdDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   if (DamageKind and KindCold) <> 0 then
@@ -1958,7 +1978,7 @@ end;
 { ovl12:29F0. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none of them is read, ovl24:0000). It cancels
   the pending hooks of the poison affect (AffectPoisoned, $37) and of the paralysis affect (AffectParalysis, $34). Then,
   when the saving throw in progress is the poison save (SaveKind 0, SaveKindPoison), SaveRoll becomes AlwaysSaves, so that
-  save succeeds. Purpose unknown: runs for affect $6F (id 111, ovl12_e1 [V]). }
+  save succeeds. Purpose unknown: runs for affect $6F (id 111, InitAffectHandlers [V]). }
 procedure CancelPoisonAndParalysisHooks(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   CancelPendingHook(AffectPoisoned);
@@ -1968,7 +1988,7 @@ begin
 end;
 { ovl12:2A11. Damage hook (the AffectHandlers shape: Who, Affect and Mode; none of them is read, ovl24:0000). While the
   damage being dealt is fire (DamageKind bit KindFire, DS:6819), CancelPendingHook(0) drops it: DamageAmount and the
-  hook offered are cleared. Purpose unknown: runs for affect $70 (id 112, ovl12_e1 [V]). }
+  hook offered are cleared. Purpose unknown: runs for affect $70 (id 112, InitAffectHandlers [V]). }
 procedure CancelFireDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   if (DamageKind and KindFire) <> 0 then
@@ -1978,7 +1998,7 @@ end;
   damage is fire (DamageKind bit KindFire, DS:6819), each of the LastDiceCount dice of the last roll takes one point off
   DamageAmount, and it never goes below LastDiceCount. The twin of ReduceFireDamageByRoll (ovl12:1490), which takes
   FireReductionPerDie per die and also adds the save bonus and cancels a non-magic hit. Purpose unknown: runs for affect $71
-  (id 113, ovl12_e1 [V]). }
+  (id 113, InitAffectHandlers [V]). }
 procedure ReduceFireDamageOnePerDie(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   I: Byte;
@@ -1993,7 +2013,8 @@ begin
 end;
 { ovl12:2A6D. Damage hook (the AffectHandlers shape: Who, Affect and Mode; none of them is read, ovl24:0000). While the
   damage is electricity (DamageKind bit KindElectricity, DS:6819), it halves DamageAmount (DS:6818): the electricity
-  twin of HalveColdDamage (ovl12:03E1), without its save bonus. Purpose unknown: runs for affect $72 (id 114, ovl12_e1 [V]). }
+  twin of HalveColdDamage (ovl12:03E1), without its save bonus. Purpose unknown: runs for affect $72 (id 114,
+  InitAffectHandlers [V]). }
 procedure HalveElectricityDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   if (DamageKind and KindElectricity) <> 0 then
@@ -2002,7 +2023,7 @@ end;
 { ovl12:2A87. Affect handler for damage (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000).
   The first slot item of SelectedCharacter (FirstSlotItem, ovl12:101D) is looked at: when there is one and its
   ItemTable byte 7 (ItemTable[ItemType].Pad7[7], DS:5589) is 0 or odd, DamageAmount is halved. Purpose unknown: runs for
-  affect $73 (id 115, ovl12_e1 [V]). }
+  affect $73 (id 115, InitAffectHandlers [V]). }
 procedure HalveDamageByFirstSlotItemRow(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   Item: PItem;
@@ -2014,7 +2035,7 @@ begin
 end;
 { ovl12:2AE6. Affect handler for damage (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000).
   When the first slot item of SelectedCharacter (FirstSlotItem, ovl12:101D) has Plus (+$32, a signed byte) above 0,
-  DamageAmount is halved. Purpose unknown: runs for affect $74 (id 116, ovl12_e1 [V]). }
+  DamageAmount is halved. Purpose unknown: runs for affect $74 (id 116, InitAffectHandlers [V]). }
 procedure HalveDamageForEnchantedSlotItem(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   Item: PItem;
@@ -2027,7 +2048,7 @@ end;
 { ovl12:2B20: retf 10: 10 bytes of parameters; 4 bytes of locals }
 { ovl12:2B20. Affect handler for damage (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000).
   When the first slot item of SelectedCharacter (SlotItems[0], TCharacter +$CC) has ItemType $55, DamageAmount
-  becomes 1d6 plus one (RollDiceCounted, ovl24:0E2E). Purpose unknown: runs for affect $75 (id 117, ovl12_e1 [V]). }
+  becomes 1d6 plus one (RollDiceCounted, ovl24:0E2E). Purpose unknown: runs for affect $75 (id 117, InitAffectHandlers [V]). }
 procedure SetDamageFromSlotItemType55(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   Item: PItem;
@@ -2039,7 +2060,8 @@ begin
 end;
 { ovl12:2B63. Damage hook (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). While the damage is
   cold (DamageKind bit KindCold, DS:6819), DamageAmount is halved: HalveColdDamage (ovl12:03E1) without its SaveRoll
-  bonus, the cold twin of HalveFireDamageNoSave (ovl12:25A2). Purpose unknown: runs for affect $76 (id 118, ovl12_e1 [V]). }
+  bonus, the cold twin of HalveFireDamageNoSave (ovl12:25A2). Purpose unknown: runs for affect $76 (id 118,
+  InitAffectHandlers [V]). }
 procedure HalveColdDamageNoSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   if (DamageKind and KindCold) <> 0 then
@@ -2048,7 +2070,7 @@ end;
 { ovl12:2B7D. Affect handler for damage (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000).
   Unless the first slot item of SelectedCharacter (FirstSlotItem, ovl12:101D) exists and has Plus (+$32) not 0, the
   damage is cancelled (DamageAmount := 0) when the character's Race (+$2E, a signed byte) is above 0 or its
-  HighestLevel (+$73) is below 4. Purpose unknown: runs for affect $77 (id 119, ovl12_e1 [V]). }
+  HighestLevel (+$73) is below 4. Purpose unknown: runs for affect $77 (id 119, InitAffectHandlers [V]). }
 procedure CancelDamageUnlessEnchantedSlotItem(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   Item: PItem;
@@ -2061,7 +2083,7 @@ end;
 { ovl12:2BC8. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). When the first slot
   item of SelectedCharacter (SlotItems[0], TCharacter +$CC) has ItemType $57 or $58 (names not known [?]), Who may avoid
   the distant attack: AvoidDistantAttack (ovl12:0FAC) with SlotItemAvoidChance. Purpose unknown: runs for affect $78 (id 120,
-  ovl12_e1 [V]). }
+  InitAffectHandlers [V]). }
 procedure AvoidDistantAttackForItemType57Or58(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   Item: PItem;                  { the first slot item of SelectedCharacter, nil when there is none }
@@ -2081,7 +2103,7 @@ end;
   from Who (RemoveAffect; Affect is the affect handled).
   QUIRK ovl12:2C1C: DamageKind is not set here (AcidAttackTargetFor1d4, ovl12:1A4C, sets KindAcid first), so the spit's
   damage is dealt with whatever kind the damage before left in DamageKind (DealDamage, ovl24:1344). Never fixed. Runs for
-  affect $79 (id 121, ovl12_e1 [V]). }
+  affect $79 (id 121, InitAffectHandlers [V]). }
 procedure SpitAcidAtTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   Turn: Byte;                   { the result of EndCombatTurn (ends Who's turn), never read }
@@ -2104,7 +2126,7 @@ end;
   first slot item of SelectedCharacter (SlotItems[0], TCharacter +$CC) has ItemType $56 (name not known [?]), DamageAmount
   becomes 3d8 (RollDiceCounted, ovl24:0E2E). Then, when DamageKind has the fire or the magic bit (KindFire or KindMagic),
   the dice count of the last roll (LastDiceCount) is added to DamageAmount. Purpose unknown: runs for affect $7A (id 122,
-  ovl12_e1 [V]). The routine starts at ovl12:2D38 (its push bp); the map's entry at ovl12:2D39 is inside it. }
+  InitAffectHandlers [V]). The routine starts at ovl12:2D38 (its push bp); the map's entry at ovl12:2D39 is inside it. }
 procedure SetDamageFromSlotItemType56(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   Item: PItem;                  { the first slot item of SelectedCharacter, nil when there is none }
@@ -2120,7 +2142,7 @@ end;
   first slot item of SelectedCharacter (FirstSlotItem, ovl12:101D) decides the damage. With no item, DamageAmount is
   cancelled (0). With an item whose Plus (+$32) is 0, DamageAmount is halved when its NameNum[3] (+$31) is SlotItemNameNum3
   and cancelled otherwise. An item with Plus not 0 leaves the damage alone. Purpose unknown: runs for affect $7B (id 123,
-  ovl12_e1 [V]). }
+  InitAffectHandlers [V]). }
 procedure HalveOrCancelDamageForUnenchantedSlotItem(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   Item: PItem;                  { the first slot item of SelectedCharacter (FirstSlotItem), nil when there is none }
@@ -2138,7 +2160,7 @@ begin
 end;
 { ovl12:2DE4. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). A 1d100 roll at or
   below HookChanceModerate (30) cancels the pending hook of the charm (AffectCharm) and then the one of affect
-  AffectEndsTurn, each through CancelPendingHook (ovl12:0000). Runs for affect $7C (id 124, ovl12_e1 [V]). }
+  AffectEndsTurn, each through CancelPendingHook (ovl12:0000). Runs for affect $7C (id 124, InitAffectHandlers [V]). }
 procedure CancelCharmAndUnknown35ModerateChance(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   if RollDice(1, 100) <= HookChanceModerate then
@@ -2152,7 +2174,7 @@ end;
   paralysis (AffectParalysis) and the poison (AffectPoisoned). Then, when the saving throw in progress is the poison
   save (SaveKind 0, SaveKindPoison), SaveRoll becomes AlwaysSaves, so that save succeeds. It is
   CancelPoisonAndParalysisHooks (ovl12:29F0) with the charm and affect $35 cancelled first. Runs for affect $7D (id 125,
-  ovl12_e1 [V]). }
+  InitAffectHandlers [V]). }
 procedure CancelCharmUnknown35PoisonAndParalysisHooks(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   CancelPendingHook(AffectCharm);
@@ -2167,7 +2189,7 @@ end;
   AttackTarget (Items, +$C8) are walked while HookVetoFlag is 0. Every readied item (Readied, +$34) that has
   ReflectingNameNum ($76, the item that turns a gaze back, GazeStonesTarget at ovl12:1CAD) in one of its names
   (NameNum[1..3], +$2F..+$31), or FlagNameNum in one name with FlagNameNumThird in the third, sets HookVetoFlag to 1.
-  Purpose unknown: HookVetoFlag is read by nothing yet [?]; Runs for affect $7E (id 126, ovl12_e1 [V]). }
+  Purpose unknown: HookVetoFlag is read by nothing yet [?]; Runs for affect $7E (id 126, InitAffectHandlers [V]). }
 procedure SetFlagIfTargetReflects(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   Item: PItem;                  { the carried items of AttackTarget, walked from the first }
@@ -2190,7 +2212,7 @@ end;
   item names in Affects[2] from Who (RemoveAffect with nil). Mode 0 gives Who that affect with duration 0, Data
   ItemAffectData and no handler on removal (NoRemoveHandler), then CallAffectHandler runs the affect's handler on Who at
   once (Affect nil, Mode 0). The item that carries it is not known yet [?]. Runs for affects $80, $81, $82, $85, $86, $88,
-  $8A and $8B (ids 128, 129, 130, 133, 134, 136, 138, 139, ovl12_e1 [V]). }
+  $8A and $8B (ids 128, 129, 130, 133, 134, 136, 138, 139, InitAffectHandlers [V]). }
 procedure ApplyItemSecondAffect(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   Item: PItem;                  { Affect, read as the item it is }
@@ -2216,7 +2238,7 @@ end;
   the first AffectStrength2 that qualifies. When Who is 18/100 now, every such affect qualifies (QUIRK ovl12:2FCF: the
   test reads the affect's Id at +0, not its Data (StrengthKept, bit 7 at +3), so it always holds); otherwise the affect
   must decode to 18/100 (DecodeStrength). The walk then goes on to the next affect, reading the Next of the removed one
-  (QUIRK ovl12:2FFF), and stops once one was removed. Runs for affect $83 (id 131, ovl12_e1 [V]). }
+  (QUIRK ovl12:2FFF), and stops once one was removed. Runs for affect $83 (id 131, InitAffectHandlers [V]). }
 procedure GiveExceptionalStrength(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   Code: Byte;                   { the strength Who had before, encoded as RaiseStrength gives it (ovl24:115C) }
@@ -2271,9 +2293,9 @@ end;
   argument is read as a character (Other := PCharacter(Affect)), and its KnownSpells[SpellDamageIndex] and
   KnownSpells[SpellClearedIndex] are used. When the low nibble of that byte is not Who's ByteA0, the second byte is
   cleared, the high nibble of the first is dealt to Who as magic damage without a save (DealDamage), DrawCombatScreen
-  shows it in combat view and RedrawItemWindow becomes 1. Purpose unknown: no affect $84 is known to be given, and an affect
+  shows it in combat view and RedrawItemWindow becomes 1. no affect $84 is known to be given, and an affect
   is not a character, so the handler's meaning is not clear. }
-procedure ovl12_e113(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure DamageUnlessAlignmentMatches(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   Other: PCharacter;
   Damage: Byte;
@@ -2294,9 +2316,10 @@ begin
 end;
 { ovl12:3134. Affect handler of table entry 135 (affect $87, stub entry 114), with the AffectHandlers shape (Who,
   Affect and Mode, ovl24:0000). Mode 0 applies it; any other Mode does nothing. QUIRK ovl12:3134: the Affect argument
-  is read as a character (Other := PCharacter(Affect)), as in ovl12_e113. When Who's Strength is below GiantStrength,
+  is read as a character (Other := PCharacter(Affect)), as in DamageUnlessAlignmentMatches. When
+  Who's Strength is below GiantStrength,
   Other's KnownSpells[SpellClearedIndex] is cleared and ShowFlashMessage shows 'Must have Giant Strength' (the literal is
-  copied to a stack temporary first, $O+). Runs for affect $87 (id 135, ovl12_e1 [V]). }
+  copied to a stack temporary first, $O+). Runs for affect $87 (id 135, InitAffectHandlers [V]). }
 procedure ShowMustHaveGiantStrength(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   Other: PCharacter;
@@ -2312,59 +2335,60 @@ begin
 end;
 { ovl12:317A. Affect handler of table entry 137 (affect $89, stub entry 115), with the AffectHandlers shape (Who,
   Affect and Mode, ovl24:0000). Mode 0 applies it and does nothing; any other Mode, the removal (RemoveAffect,
-  ovl24:0026), removes affect AffectGivesItem from Who with no particular affect given. Runs for affect $89 (id 137, ovl12_e1
+  ovl24:0026), removes affect AffectGivesItem from Who with no particular affect given. Runs for affect $89 (id 137,
+  InitAffectHandlers
   [V]). }
 procedure RemoveAffect17WhenRemoved(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   if Mode <> 0 then
     RemoveAffect(Who, AffectGivesItem, nil);
 end;
-{ ovl12:319B. Purpose unknown: an affect handler with the AffectHandlers shape (Who, Affect and Mode, ovl24:0000)
+{ ovl12:319B. an affect handler with the AffectHandlers shape (Who, Affect and Mode, ovl24:0000)
   that does nothing: no parameter is read and no global is written, the same code as IgnoreAffect (ovl12:0647).
   It is the handler (stub entry 116, value 0264) of the affects 5, 13, 19, 24, 27, 60, 63, 92 and 127 in the
   AffectHandlers table (DS:6828). }
-procedure ovl12_e116(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure IgnoreAffectShared(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
 end;
-{ ovl12:31A2. Purpose unknown: the name stays provisional because ovl11 calls it by name (ovl11:002D, StartGame);
+{ ovl12:31A2. the name stays provisional because ovl11 calls it by name (ovl11:002D, StartGame);
   what it does is known. Entry 1 of the unit. It fills the affect handler table
   AffectHandlers (DS:6828, one four-byte handler per affect number) with the stub address of each affect's handler:
   this unit's stubs are in segment 0041, ovl13's in segment 0068 (entries 73 and 74). Affects 5, 13, 19, 24, 27, 60,
-  63, 92 and 127 get ovl12_e116, the handler that does nothing. Affect 0 and affect 88 are not set here [?]; entry 0 of
+  63, 92 and 127 get IgnoreAffectShared, the handler that does nothing. Affect 0 and affect 88 are not set here [?]; entry 0 of
   the table is not a handler (SaveKind lies in it). }
-procedure ovl12_e1;
+procedure InitAffectHandlers;
 begin
   AffectHandlers[1] := RaiseAttackAndMorale;
   AffectHandlers[2] := LowerAttackAndMorale;
   AffectHandlers[3] := BoostAttackAgainstTarget;
   AffectHandlers[4] := StartTrainingWithManual;
-  AffectHandlers[5] := ovl12_e116;
+  AffectHandlers[5] := IgnoreAffectShared;
   AffectHandlers[6] := BoostFireAttackByTarget;
   AffectHandlers[7] := TrainConstitution;
-  AffectHandlers[8] := ShiftAttackToSave;
-  AffectHandlers[9] := ovl12_e9;
+  AffectHandlers[8] := ShiftAttackToSaveVsEvil;
+  AffectHandlers[9] := ShiftAttackToSaveVsGood;
   AffectHandlers[10] := HalveColdDamage;
   AffectHandlers[11] := ComputerTakesOver;
   AffectHandlers[12] := ExchangeStrengthWithAffect;
-  AffectHandlers[13] := ovl12_e116;
+  AffectHandlers[13] := IgnoreAffectShared;
   AffectHandlers[14] := SetCharismaFromAffect;
   AffectHandlers[15] := AddAffectAndDamage;
   AffectHandlers[16] := IgnoreAffect;
   AffectHandlers[17] := RaiseResistanceAndSave;
   AffectHandlers[18] := BoostAttackVsListedTarget;
-  AffectHandlers[19] := ovl12_e116;
+  AffectHandlers[19] := IgnoreAffectShared;
   AffectHandlers[20] := HalveFireDamage;
   AffectHandlers[21] := ShowSilenceAndStopCasting;
   AffectHandlers[22] := DieIfPoisoned;
   AffectHandlers[23] := GiveAffectItem;
-  AffectHandlers[24] := ovl12_e116;
+  AffectHandlers[24] := IgnoreAffectShared;
   AffectHandlers[25] := LowerAttackRollByFour;
   AffectHandlers[26] := BoostAttackVsEightListed;
-  AffectHandlers[27] := ovl12_e116;
+  AffectHandlers[27] := IgnoreAffectShared;
   AffectHandlers[28] := ImageAbsorbsHit;
   AffectHandlers[29] := ReduceDamageByQuarter;
   AffectHandlers[30] := CoughStopsCasting;
-  AffectHandlers[31] := ovl12_e43;
+  AffectHandlers[31] := EndAffectedCombatantTurn;
   AffectHandlers[32] := CollapseAndChangeSide;
   AffectHandlers[33] := LowerAttackSaveAndResistance;
   AffectHandlers[34] := RunDiseaseHandlers;
@@ -2378,25 +2402,25 @@ begin
   AffectHandlers[42] := HalveAgeDoubling;
   AffectHandlers[43] := WeakenStrength;
   AffectHandlers[44] := CauseDiseaseAndDamage;
-  AffectHandlers[45] := ShiftAttackToSave;
-  AffectHandlers[46] := ovl12_e9;
+  AffectHandlers[45] := ShiftAttackToSaveVsEvil;
+  AffectHandlers[46] := ShiftAttackToSaveVsGood;
   AffectHandlers[47] := LowerAttackVsEightListed;
   AffectHandlers[48] := LowerAttackIfSelectedIsBugbearOrGnoll;
   AffectHandlers[49] := RaiseOrLowerAttackAndSave;
   AffectHandlers[50] := AddHealingBlockAndHeal;
-  AffectHandlers[51] := ovl12_e43;
-  AffectHandlers[52] := ovl12_e43;
-  AffectHandlers[53] := ovl12_e43;
-  AffectHandlers[54] := ovl12_e44;
-  AffectHandlers[55] := ovl12_e45;
-  AffectHandlers[56] := ovl12_e46;
+  AffectHandlers[51] := EndAffectedCombatantTurn;
+  AffectHandlers[52] := EndAffectedCombatantTurn;
+  AffectHandlers[53] := EndAffectedCombatantTurn;
+  AffectHandlers[54] := IgnoreAffect36;
+  AffectHandlers[55] := IgnoreAffect37;
+  AffectHandlers[56] := GiveLowerAttackRollAffect;
   AffectHandlers[57] := ProgressRot;
-  AffectHandlers[58] := ovl12_e48;
-  AffectHandlers[59] := ovl12_e49;
-  AffectHandlers[60] := ovl12_e116;
+  AffectHandlers[58] := StopMovement;
+  AffectHandlers[59] := GiveRegainHitPointsAffect;
+  AffectHandlers[60] := IgnoreAffectShared;
   AffectHandlers[61] := ReduceFireDamageByRoll;
   AffectHandlers[62] := AddTrainedOutAndHeal;
-  AffectHandlers[63] := ovl12_e116;
+  AffectHandlers[63] := IgnoreAffectShared;
   AffectHandlers[64] := PoisonAttackTargetBonus0;
   AffectHandlers[65] := PoisonAttackTargetBonus4;
   AffectHandlers[66] := PoisonAttackTargetBonus2;
@@ -2405,7 +2429,7 @@ begin
   AffectHandlers[69] := ParalyzeAttackTargetFor1d9Plus10;
   AffectHandlers[70] := PoisonAttackTargetBonusMinus2;
   AffectHandlers[71] := SetFlagAndLowerAttackRollByFour;
-  AffectHandlers[72] := ovl12_e60;
+  AffectHandlers[72] := RollToGiveLowerAttackRollAffect;
   AffectHandlerPointers[73] := @RakeAttack;
   AffectHandlerPointers[74] := @ForcedAttack;
   AffectHandlers[75] := DrainBloodFromCombatant;
@@ -2421,10 +2445,10 @@ begin
   AffectHandlers[85] := DrainAttackTargetLevel;
   AffectHandlers[86] := DrainAttackTargetTwoLevels;
   AffectHandlers[87] := CauseRotOnAttackTarget;
-  AffectHandlers[89] := ovl12_e74;
+  AffectHandlers[89] := ForceFirstAttackMiss;
   AffectHandlers[90] := AddConstitutionSaveBonus;
-  AffectHandlers[91] := ovl12_e76;
-  AffectHandlers[92] := ovl12_e116;
+  AffectHandlers[91] := CancelDamageOfSpellOrElectricity;
+  AffectHandlers[92] := IgnoreAffectShared;
   AffectHandlers[93] := HalveFireDamageNoSave;
   AffectHandlers[94] := HalveDamageForFirstSlotItem;
   AffectHandlers[95] := FallDeadIfInFight;
@@ -2459,12 +2483,12 @@ begin
   AffectHandlers[124] := CancelCharmAndUnknown35ModerateChance;
   AffectHandlers[125] := CancelCharmUnknown35PoisonAndParalysisHooks;
   AffectHandlers[126] := SetFlagIfTargetReflects;
-  AffectHandlers[127] := ovl12_e116;
+  AffectHandlers[127] := IgnoreAffectShared;
   AffectHandlers[128] := ApplyItemSecondAffect;
   AffectHandlers[129] := ApplyItemSecondAffect;
   AffectHandlers[130] := ApplyItemSecondAffect;
   AffectHandlers[131] := GiveExceptionalStrength;
-  AffectHandlers[132] := ovl12_e113;
+  AffectHandlers[132] := DamageUnlessAlignmentMatches;
   AffectHandlers[133] := ApplyItemSecondAffect;
   AffectHandlers[134] := ApplyItemSecondAffect;
   AffectHandlers[135] := ShowMustHaveGiantStrength;

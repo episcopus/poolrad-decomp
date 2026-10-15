@@ -16,7 +16,7 @@ function CastMemorizedSpell(Who: PCharacter): Byte;
 function CanAffordStep(Who: PCharacter; Column, BaseDir: Byte; var OffMap: Byte): Boolean;
 procedure MoveStep(Who: PCharacter);
 function AiTurn(Who: PCharacter): Byte;
-function ovl09_fn_0F4F(Who: PCharacter): Byte;
+function EndOrGuardTurn(Who: PCharacter): Byte;
 function HandleCombatKey(Who: PCharacter): Boolean;
 function CheckMorale(Who: PCharacter): Byte;
 function ScoreItem(Actor: PCharacter; Item: PItem): Byte;
@@ -66,7 +66,7 @@ const
   Turn Undead for a cleric, end of turn), cast a memorized spell (CastMemorizedSpell, Done := 1), use
   the best item (UseBestItem) and read keys again (HandleCombatKey); with Done clear it loops on
   ChooseCombatTarget(Who, $FF, 1, 0): an initiative above 0 runs AiTurn, else the turn ends through
-  ovl09_fn_0F4F. Globals: none. QUIRK: CastChosenSpell's var result is overwritten at once. }
+  EndOrGuardTurn. Globals: none. QUIRK: CastChosenSpell's var result is overwritten at once. }
 procedure QuickTurn(Who: PCharacter);
 var
   Pattern: Byte;
@@ -121,7 +121,7 @@ begin
     if ChooseCombatTarget(Who, $FF, 1, 0) and (Who^.Combat^.Initiative > 0) then
       Done := AiTurn(Who)
     else
-      Done := ovl09_fn_0F4F(Who);
+      Done := EndOrGuardTurn(Who);
   end;
 end;
 { ovl09:0203 (TryTurnUndead). The computer's Turn action, Turn Undead for a cleric: it returns True
@@ -390,10 +390,10 @@ end;
   patterns Step = 1..5 while CanAffordStep refuses them (a panicking actor that is off the map ends
   through TryFlee); with no affordable step, or one that would step back (AiLastDirection = (Turn + 4)
   mod 8), the pattern is advanced (AiStepTurns counts the turns) and the actor may instead end the turn
-  through ovl09_fn_0F4F or ChooseCombatTarget. A step taken sets the icon (SetCombatantIcon with the turn),
+  through EndOrGuardTurn or ChooseCombatTarget. A step taken sets the icon (SetCombatantIcon with the turn),
   runs PartingShots (or StepCombatant once Flag10D is set past it) and ApplyCloudTile; an ending turn runs
   EndCombatTurn. QUIRK: the jumps to MoveEnd and from there to Finish (ovl09:0B27) are the
-  original's; NoStep only computes ovl09_fn_0F4F. Globals: PartyFacing, AiLastDirection, AiStepTurns. }
+  original's; NoStep only computes EndOrGuardTurn. Globals: PartyFacing, AiLastDirection, AiStepTurns. }
 procedure MoveStep(Who: PCharacter);
 label
   TryTurn, CheckStep, AfterMove, MoveEnd, NoStep, Finish;
@@ -458,7 +458,7 @@ begin
         goto CheckStep;
       end;
       if not ChooseCombatTarget(Who, $FF, 1, 0) then
-        Done := ovl09_fn_0F4F(Who);
+        Done := EndOrGuardTurn(Who);
     end;
   end;
 CheckStep:
@@ -485,7 +485,7 @@ MoveEnd:
   { QUIRK: the original jumps to MoveEnd and from there to Finish (ovl09:0B27), then runs the
     NoStep block before the epilogue. }
 NoStep:
-  Done := ovl09_fn_0F4F(Who);
+  Done := EndOrGuardTurn(Who);
 Finish:
 end;
 { ovl09:0B3C. The AI's whole turn for Who (called by QuickTurn when the initiative allows). It
@@ -493,7 +493,7 @@ end;
   ends the turn at once. Otherwise the loop (Done = 0 and CanAct <> 0) first, while panicking (Panic,
   +$14), steps with MoveStep for as long as the moves last, the initiative is above 0 and below
   InitiativeQuickAll ($14). Then an initiative of 0 or InitiativeQuickAll ends the turn without any
-  action. Each pass counts I: after AiTurnLimit (20) passes Done is set and ovl09_fn_0F4F decides
+  action. Each pass counts I: after AiTurnLimit (20) passes Done is set and EndOrGuardTurn decides
   (a nonzero result ends the turn), and the pass still goes on to its attack. The attack range is the
   Range byte (+$C) of the item in slot 0 (SlotItems[0], +$CC) minus 1; a result of 0 or $FF (a Range of
   0 or 1) becomes 1. The remembered Combat^.Target is dropped when it is not dying or is on the party
@@ -555,7 +555,7 @@ Loop:
   if I > AiTurnLimit then
   begin
     Done := 1;
-    CanAct := Ord(ovl09_fn_0F4F(Who) = 0);
+    CanAct := Ord(EndOrGuardTurn(Who) = 0);
   end;
   Flag := 0;
   Range := 1;
@@ -585,7 +585,7 @@ Loop:
     if ChooseCombatTarget(Who, $FF, 0, 0) then
       MoveStep(Who)
     else
-      Done := ovl09_fn_0F4F(Who);
+      Done := EndOrGuardTurn(Who);
     goto Attack;
   end;
   Index := RollDice(1, Count);
@@ -632,17 +632,17 @@ Next:
 Finish:
   AiTurn := Ord(CanAct = 0);
 end;
-{ ovl09:0F4F. Purpose unknown: returns EndCombatTurn(Who) when IsHelpless(Who) or
+{ ovl09:0F4F. returns EndCombatTurn(Who) when IsHelpless(Who) or
   IsRangedWeapon(Who) is true or the combatant's Initiative is 0, else GuardTurn(Who).
   Called by QuickTurn (ovl09:01EE) and from the 07F2 and 0B3C regions. ClearCharacterMessage runs first
   (parameterless). }
-function ovl09_fn_0F4F(Who: PCharacter): Byte;
+function EndOrGuardTurn(Who: PCharacter): Byte;
 begin
   ClearCharacterMessage;
   if IsHelpless(Who) or IsRangedWeapon(Who) or (Who^.Combat^.Initiative = 0) then
-    ovl09_fn_0F4F := EndCombatTurn(Who)
+    EndOrGuardTurn := EndCombatTurn(Who)
   else
-    ovl09_fn_0F4F := GuardTurn(Who);
+    EndOrGuardTurn := GuardTurn(Who);
 end;
 { ovl09:0FC1. Handles a key pressed during the computer's combat turn (called by
   QuickTurn and the 07F2 region, who act when it returns True). Alt-M toggles the MagicToggleOn Magic
@@ -719,7 +719,7 @@ var
 begin
   CheckMorale := 0;
   Who^.Combat^.Panic := 0;
-  ovl24_e14(Who);
+  RemoveExtraDeathAffects(Who);
   if Who^.Combat^.ForcedFlight <> 0 then
   begin
     Who^.Combat^.Panic := 1;

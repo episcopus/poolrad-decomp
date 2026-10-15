@@ -23,7 +23,7 @@ procedure AddAffect(Who: PCharacter; AffectId: Byte; Duration: Word; Data, Flag:
 procedure DropCombatant(Who: PCharacter; NewStatus: Byte; Msg: String40);
 procedure ClearAttackerAffect(Who: PCharacter);
 procedure RemoveDeathAffects(Who: PCharacter);
-procedure ovl24_e14(Who: PCharacter);
+procedure RemoveExtraDeathAffects(Who: PCharacter);
 function CureAffect(Who: PCharacter; AffectId: Byte): Boolean;
 function EncodeStrength(Strength, Percent: Byte): Byte;
 procedure DecodeStrength(Affect: PAffect; var Strength, Percent: Byte);
@@ -563,9 +563,9 @@ begin
     RemoveAffect(Who, DeathAffects[I], nil);
 end;
 
-{ ovl24:1041 (e14). Purpose unknown: removes the two affects of ExtraDeathAffects ($4A and $4B, the last two
+{ ovl24:1041 (e14). removes the two affects of ExtraDeathAffects ($4A and $4B, the last two
   of DeathAffects too) from Who; an entry of the overlay, its callers are not decompiled yet. }
-procedure ovl24_e14(Who: PCharacter);
+procedure RemoveExtraDeathAffects(Who: PCharacter);
 var
   I: Byte;
 begin

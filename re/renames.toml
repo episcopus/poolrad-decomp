@@ -7642,3 +7642,129 @@ kind = "global"
 why = "word the loader sets to 1 (ovl11:03E0) and no routine reads"
 date = "2026-10-15"
 
+[[rename]]
+old = "ovl09_fn_0F4F"
+new = "EndOrGuardTurn"
+kind = "routine"
+why = "returns EndCombatTurn(Who) when Who is helpless, holds a ranged weapon or has no initiative, else GuardTurn(Who) (ovl09:0F4F; called by QuickTurn ovl09:01EE)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ovl12_e9"
+new = "ShiftAttackToSaveVsGood"
+kind = "routine"
+why = "twin of ShiftAttackToSave (ovl12:0377) for the selected character's ByteA0 0, 3, 6 = Lawful, Neutral and Chaotic Good in AlignmentNames (ovl12:03AC)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ShiftAttackToSave"
+new = "ShiftAttackToSaveVsEvil"
+kind = "routine"
+why = "gives SaveRoll 2 and takes 2 off AttackRoll when the selected character's ByteA0 is 2, 5 or 8 = Lawful, Neutral and Chaotic Evil in AlignmentNames (ovl12:0377)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ovl12_e43"
+new = "EndAffectedCombatantTurn"
+kind = "routine"
+why = "calls EndCombatTurn(Who) and ignores the result; handler of affects $1F, $33, $34 and $35 (ovl12:133F)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ovl12_e44"
+new = "IgnoreAffect36"
+kind = "routine"
+why = "empty handler body like IgnoreAffect, handler of affect $36 (ovl12:1355)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ovl12_e45"
+new = "IgnoreAffect37"
+kind = "routine"
+why = "empty handler body like IgnoreAffect, handler of affect $37 (ovl12:135C)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ovl12_e46"
+new = "GiveLowerAttackRollAffect"
+kind = "routine"
+why = "AddAffect of AffectLowerAttackRollByFour on Who for its fixed duration and data, no remove handler; handler of affect $38 (ovl12:1363)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ovl12_e48"
+new = "StopMovement"
+kind = "routine"
+why = "sets Who's combat Moves to 0 and clears HookedMoveOrAttacks while a movement hook runs; handler of affect $3A (ovl12:1452)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ovl12_e49"
+new = "GiveRegainHitPointsAffect"
+kind = "routine"
+why = "AddAffect of AffectRegainHitPoints with duration 0, no remove handler; handler of affect $3B (ovl12:1472)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ovl12_e60"
+new = "RollToGiveLowerAttackRollAffect"
+kind = "routine"
+why = "gives Who AffectLowerAttackRollByFour when 1d100 is at or below its chance, as GiveLowerAttackRollAffect does without the roll; handler of affect $48 (ovl12:1730)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ovl12_e74"
+new = "ForceFirstAttackMiss"
+kind = "routine"
+why = "makes the attack roll a miss once (MissedBit in the affect's Data), or keeps only the low nibble of Data in round 0 with AttackRoll 0; handler of affect $59 (ovl12:2490)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ovl12_e76"
+new = "CancelDamageOfSpellOrElectricity"
+kind = "routine"
+why = "cancels the pending damage hook (with 'is unaffected' when CastingSpell is ClearDamageValue) or when the damage is electricity; handler of affect $5B (ovl12:2556)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ovl12_e113"
+new = "DamageUnlessAlignmentMatches"
+kind = "routine"
+why = "reads Affect as a character; deals the high nibble of its damage byte to Who as magic damage unless the low nibble equals Who's ByteA0 (the alignment) (ovl12:30A5, QUIRK noted there)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ovl12_e116"
+new = "IgnoreAffectShared"
+kind = "routine"
+why = "empty handler body, the handler of affects 5, 13, 19, 24, 27, 60, 63, 92 and 127 in AffectHandlers (ovl12:319B)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ovl12_e1"
+new = "InitAffectHandlers"
+kind = "routine"
+why = "fills the AffectHandlers table (DS:6828) with the stub address of each affect's handler; called by StartGame (ovl11:002D) (ovl12:31A2)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ovl24_e14"
+new = "RemoveExtraDeathAffects"
+kind = "routine"
+why = "removes the two affects of ExtraDeathAffects ($4A, $4B) from Who, as RemoveDeathAffects does for DeathAffects (ovl24:1041)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ovl31_e2"
+new = "SwapPaletteColours0And8"
+kind = "routine"
+why = "for VideoAdapter 1 calls SetPaletteRegister(0, 8) then SetPaletteRegister(8, 0) (ovl31:00E3)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ovl31_e3"
+new = "RestorePaletteColours0And8"
+kind = "routine"
+why = "for VideoAdapter 1 calls SetPaletteRegister(0, 0) then SetPaletteRegister(8, 8), the counterpart of SwapPaletteColours0And8 (ovl31:0105)"
+date = "2026-10-15"
+

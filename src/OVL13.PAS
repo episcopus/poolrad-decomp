@@ -136,7 +136,7 @@ const
     not settled beyond that. }
   Var2AllyAttack = 819;
   { The two affects an enemy must not carry to take a parting shot (ovl13:0A91, 0AAB). ovl24
-    removes the same pair when a combatant goes down or panics (ovl24:0322, 0336) and ovl24_e14
+    removes the same pair when a combatant goes down or panics (ovl24:0322, 0336) and RemoveExtraDeathAffects
     removes them too. $4A is settled by its handler (ovl13:3A86, AffectForcedAttack); what $4B
     changes is not (whitepaper 5.5). }
   AffectNoPartingShot1 = $4B;

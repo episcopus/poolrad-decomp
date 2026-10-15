@@ -2095,13 +2095,13 @@ id = "ovl09:0F4F"
 unit = "ovl09"
 addr = "ovl09:0F4F"
 size = 114
-name = "ovl09_fn_0F4F"
+name = "EndOrGuardTurn"
 signature = ""
 c_name = "ovl09_fn_0F4F"
 level = "L2"
 review = "passed 2026-10-13 by rev-sonnet, b452899"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from ovl09_fn_0F4F (returns EndCombatTurn(Who) when Who is helpless, holds a ranged weapon or has no initiative, else GuardTurn(Who) (ovl09:0F4F; called by QuickTurn ovl09:01EE)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2655,13 +2655,13 @@ id = "ovl12:0377"
 unit = "ovl12"
 addr = "ovl12:0377"
 size = 53
-name = "ShiftAttackToSave"
-signature = "procedure ShiftAttackToSave(Who: PCharacter; Affect: PAffect; Mode: Byte)"
+name = "ShiftAttackToSaveVsEvil"
+signature = "procedure ShiftAttackToSaveVsEvil(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e8"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_e8 (ovl12:0377 adds 2 to SaveRoll (DS:6816) and takes 2 from AttackRoll (DS:6822) for SelectedCharacter when its +$A0 (ByteA0) is 2, 5 or 8 (SelectedCharacter DS:5D92); the purpose is not known, the mechanism is the code's; entry 8 of ovl12 (auto:entry_8)); auto:entry_8"
+notes = "renamed from ShiftAttackToSave (gives SaveRoll 2 and takes 2 off AttackRoll when the selected character's ByteA0 is 2, 5 or 8 = Lawful, Neutral and Chaotic Evil in AlignmentNames (ovl12:0377)); renamed from ovl12_e8 (ovl12:0377 adds 2 to SaveRoll (DS:6816) and takes 2 from AttackRoll (DS:6822) for SelectedCharacter when its +$A0 (ByteA0) is 2, 5 or 8 (SelectedCharacter DS:5D92); the purpose is not known, the mechanism is the code's; entry 8 of ovl12 (auto:entry_8)); auto:entry_8"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2669,13 +2669,13 @@ id = "ovl12:03AC"
 unit = "ovl12"
 addr = "ovl12:03AC"
 size = 53
-name = "ovl12_e9"
-signature = "procedure ovl12_e9(Who: PCharacter; Affect: PAffect; Mode: Byte)"
+name = "ShiftAttackToSaveVsGood"
+signature = "procedure ShiftAttackToSaveVsGood(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e9"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "auto:entry_9"
+notes = "renamed from ovl12_e9 (twin of ShiftAttackToSave (ovl12:0377) for the selected character's ByteA0 0, 3, 6 = Lawful, Neutral and Chaotic Good in AlignmentNames (ovl12:03AC)); auto:entry_9"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3173,13 +3173,13 @@ id = "ovl12:133F"
 unit = "ovl12"
 addr = "ovl12:133F"
 size = 22
-name = "ovl12_e43"
-signature = "procedure ovl12_e43(Who: PCharacter; Affect: PAffect; Mode: Byte)"
+name = "EndAffectedCombatantTurn"
+signature = "procedure EndAffectedCombatantTurn(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e43"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "auto:entry_43"
+notes = "renamed from ovl12_e43 (calls EndCombatTurn(Who) and ignores the result; handler of affects $1F, $33, $34 and $35 (ovl12:133F)); auto:entry_43"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3187,13 +3187,13 @@ id = "ovl12:1355"
 unit = "ovl12"
 addr = "ovl12:1355"
 size = 7
-name = "ovl12_e44"
-signature = "procedure ovl12_e44(Who: PCharacter; Affect: PAffect; Mode: Byte)"
+name = "IgnoreAffect36"
+signature = "procedure IgnoreAffect36(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e44"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "auto:entry_44"
+notes = "renamed from ovl12_e44 (empty handler body like IgnoreAffect, handler of affect $36 (ovl12:1355)); auto:entry_44"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3201,13 +3201,13 @@ id = "ovl12:135C"
 unit = "ovl12"
 addr = "ovl12:135C"
 size = 7
-name = "ovl12_e45"
-signature = "procedure ovl12_e45(Who: PCharacter; Affect: PAffect; Mode: Byte)"
+name = "IgnoreAffect37"
+signature = "procedure IgnoreAffect37(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e45"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "auto:entry_45"
+notes = "renamed from ovl12_e45 (empty handler body like IgnoreAffect, handler of affect $37 (ovl12:135C)); auto:entry_45"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3215,13 +3215,13 @@ id = "ovl12:1363"
 unit = "ovl12"
 addr = "ovl12:1363"
 size = 54
-name = "ovl12_e46"
-signature = "procedure ovl12_e46(Who: PCharacter; Affect: PAffect; Mode: Byte)"
+name = "GiveLowerAttackRollAffect"
+signature = "procedure GiveLowerAttackRollAffect(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e46"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "auto:entry_46"
+notes = "renamed from ovl12_e46 (AddAffect of AffectLowerAttackRollByFour on Who for its fixed duration and data, no remove handler; handler of affect $38 (ovl12:1363)); auto:entry_46"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3243,13 +3243,13 @@ id = "ovl12:1452"
 unit = "ovl12"
 addr = "ovl12:1452"
 size = 32
-name = "ovl12_e48"
-signature = "procedure ovl12_e48(Who: PCharacter; Affect: PAffect; Mode: Byte)"
+name = "StopMovement"
+signature = "procedure StopMovement(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e48"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "auto:entry_48"
+notes = "renamed from ovl12_e48 (sets Who's combat Moves to 0 and clears HookedMoveOrAttacks while a movement hook runs; handler of affect $3A (ovl12:1452)); auto:entry_48"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3257,13 +3257,13 @@ id = "ovl12:1472"
 unit = "ovl12"
 addr = "ovl12:1472"
 size = 30
-name = "ovl12_e49"
-signature = "procedure ovl12_e49(Who: PCharacter; Affect: PAffect; Mode: Byte)"
+name = "GiveRegainHitPointsAffect"
+signature = "procedure GiveRegainHitPointsAffect(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e49"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "auto:entry_49"
+notes = "renamed from ovl12_e49 (AddAffect of AffectRegainHitPoints with duration 0, no remove handler; handler of affect $3B (ovl12:1472)); auto:entry_49"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3439,13 +3439,13 @@ id = "ovl12:1730"
 unit = "ovl12"
 addr = "ovl12:1730"
 size = 63
-name = "ovl12_e60"
-signature = "procedure ovl12_e60(Who: PCharacter; Affect: PAffect; Mode: Byte)"
+name = "RollToGiveLowerAttackRollAffect"
+signature = "procedure RollToGiveLowerAttackRollAffect(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e60"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "auto:entry_60"
+notes = "renamed from ovl12_e60 (gives Who AffectLowerAttackRollByFour when 1d100 is at or below its chance, as GiveLowerAttackRollAffect does without the roll; handler of affect $48 (ovl12:1730)); auto:entry_60"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3663,13 +3663,13 @@ id = "ovl12:2490"
 unit = "ovl12"
 addr = "ovl12:2490"
 size = 73
-name = "ovl12_e74"
-signature = "procedure ovl12_e74(Who: PCharacter; Affect: PAffect; Mode: Byte)"
+name = "ForceFirstAttackMiss"
+signature = "procedure ForceFirstAttackMiss(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e74"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "auto:entry_74"
+notes = "renamed from ovl12_e74 (makes the attack roll a miss once (MissedBit in the affect's Data), or keeps only the low nibble of Data in round 0 with AttackRoll 0; handler of affect $59 (ovl12:2490)); auto:entry_74"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3691,13 +3691,13 @@ id = "ovl12:2556"
 unit = "ovl12"
 addr = "ovl12:2556"
 size = 76
-name = "ovl12_e76"
-signature = "procedure ovl12_e76(Who: PCharacter; Affect: PAffect; Mode: Byte)"
+name = "CancelDamageOfSpellOrElectricity"
+signature = "procedure CancelDamageOfSpellOrElectricity(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e76"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "auto:entry_76"
+notes = "renamed from ovl12_e76 (cancels the pending damage hook (with 'is unaffected' when CastingSpell is ClearDamageValue) or when the damage is electricity; handler of affect $5B (ovl12:2556)); auto:entry_76"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4223,13 +4223,13 @@ id = "ovl12:30A5"
 unit = "ovl12"
 addr = "ovl12:30A5"
 size = 143
-name = "ovl12_e113"
+name = "DamageUnlessAlignmentMatches"
 signature = ""
 c_name = "ovl12_e113"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "auto:entry_113"
+notes = "renamed from ovl12_e113 (reads Affect as a character; deals the high nibble of its damage byte to Who as magic damage unless the low nibble equals Who's ByteA0 (the alignment) (ovl12:30A5, QUIRK noted there)); auto:entry_113"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4265,13 +4265,13 @@ id = "ovl12:319B"
 unit = "ovl12"
 addr = "ovl12:319B"
 size = 7
-name = "ovl12_e116"
+name = "IgnoreAffectShared"
 signature = ""
 c_name = "ovl12_e116"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "auto:entry_116"
+notes = "renamed from ovl12_e116 (empty handler body, the handler of affects 5, 13, 19, 24, 27, 60, 63, 92 and 127 in AffectHandlers (ovl12:319B)); auto:entry_116"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4279,13 +4279,13 @@ id = "ovl12:31A2"
 unit = "ovl12"
 addr = "ovl12:31A2"
 size = 1799
-name = "ovl12_e1"
+name = "InitAffectHandlers"
 signature = ""
 c_name = "ovl12_e1"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "auto:entry_1"
+notes = "renamed from ovl12_e1 (fills the AffectHandlers table (DS:6828) with the stub address of each affect's handler; called by StartGame (ovl11:002D) (ovl12:31A2)); auto:entry_1"
 evidence = ["prologue"]
 
 [[routine]]
@@ -8003,13 +8003,13 @@ id = "ovl24:1041"
 unit = "ovl24"
 addr = "ovl24:1041"
 size = 64
-name = "ovl24_e14"
-signature = "procedure ovl24_e14(Who: PCharacter)"
+name = "RemoveExtraDeathAffects"
+signature = "procedure RemoveExtraDeathAffects(Who: PCharacter)"
 c_name = "ovl24_e14"
 level = "L2"
 review = "passed 2026-10-12 by rev-4, 238cae5"
 justification = ""
-notes = "auto:entry_14"
+notes = "renamed from ovl24_e14 (removes the two affects of ExtraDeathAffects ($4A, $4B) from Who, as RemoveDeathAffects does for DeathAffects (ovl24:1041)); auto:entry_14"
 evidence = ["prologue"]
 
 [[routine]]
@@ -9011,13 +9011,13 @@ id = "ovl31:00E3"
 unit = "ovl31"
 addr = "ovl31:00E3"
 size = 34
-name = "ovl31_e2"
-signature = "procedure ovl31_e2"
+name = "SwapPaletteColours0And8"
+signature = "procedure SwapPaletteColours0And8"
 c_name = "ovl31_e2"
 level = "L2"
 review = "passed 2026-10-12 by rev-4, 8291710"
 justification = ""
-notes = "auto:entry_2"
+notes = "renamed from ovl31_e2 (for VideoAdapter 1 calls SetPaletteRegister(0, 8) then SetPaletteRegister(8, 0) (ovl31:00E3)); auto:entry_2"
 evidence = ["prologue"]
 
 [[routine]]
@@ -9025,13 +9025,13 @@ id = "ovl31:0105"
 unit = "ovl31"
 addr = "ovl31:0105"
 size = 34
-name = "ovl31_e3"
-signature = "procedure ovl31_e3"
+name = "RestorePaletteColours0And8"
+signature = "procedure RestorePaletteColours0And8"
 c_name = "ovl31_e3"
 level = "L2"
 review = "passed 2026-10-12 by rev-4, 8291710"
 justification = ""
-notes = "auto:entry_3"
+notes = "renamed from ovl31_e3 (for VideoAdapter 1 calls SetPaletteRegister(0, 0) then SetPaletteRegister(8, 8), the counterpart of SwapPaletteColours0And8 (ovl31:0105)); auto:entry_3"
 evidence = ["prologue"]
 
 [[routine]]

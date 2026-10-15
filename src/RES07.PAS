@@ -1286,7 +1286,7 @@ begin
 end;
 { 0464:2A0D: sets one EGA palette register through INT 10h function $10
   (AL=0): Register is the palette register and Color the colour value, mapped from
-  the 0..15 palette range to the hardware's 0..7 and 16..23. Called by ovl31_e2/e3
+  the 0..15 palette range to the hardware's 0..7 and 16..23. Called by SwapPaletteColours0And8/e3
   (0,8)/(8,0) and (0,0)/(8,8) and by ShowTitleScreen (1,9). }
 procedure SetPaletteRegister(Register, Color: Byte);
 begin

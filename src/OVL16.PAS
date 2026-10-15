@@ -1597,7 +1597,8 @@ end;
   first reloads the ICON pictures 0 and 1 into slots 11 and 12 (the slots it used as scratch).
   Globals: reads and changes SelectedCharacter^ (CHeadBlock, CBodyBlock, CombatIcon, Figure) and the
   prompt lines IconEditorPrompts (the word 'xxxx' of line 3 becomes 'Hair' or 'Face'); reads AreaViewKind.
-  ovl31_e2 and ovl31_e3 bracket the editor (palette register calls when VideoAdapter is 1, purpose
+  SwapPaletteColours0And8 and RestorePaletteColours0And8 bracket the editor (palette register calls when VideoAdapter
+  is 1, purpose
   unknown).
   QUIRK ovl16:39F9: ReadPromptChoice is called with ExtKeys 0, so ExtKey is always 0 and the `if
   ExtKey = 0` guard never skips the key dispatch. QUIRK ovl16:3987: the size prompt names the size
@@ -1773,7 +1774,7 @@ var
 
 begin
   DrawWindow(WindowLeft, WindowTop, WindowRight, WindowBottom, 0, 0, '');
-  ovl31_e2;
+  SwapPaletteColours0And8;
   repeat
     BuildCharacterIcon(False);
     with SelectedCharacter^ do
@@ -2003,7 +2004,7 @@ begin
     end;
     Key := AskYesNo('Is this icon ok? ', PromptTitleColour, PromptWordColour, PromptHotColour);
   until Key = KeyYes;
-  ovl31_e3;
+  RestorePaletteColours0And8;
 end;
 { ovl16:3F31. The constitution hit-point adjustment shared by the hit-point floor MinHitPoints and
   the ceiling MaxHitPoints of ModifyCharacter (ovl16:209F). It sums ConstitutionHitPointTable[Constitution] over the

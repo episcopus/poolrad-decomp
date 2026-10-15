@@ -1559,7 +1559,7 @@ begin
 end;
 { 00BA:2686. Guards: ends Who's combat turn (EndCombatTurn) so the initiative, movement and pending
   spell are gone, then sets the guard byte (Combat^.B7, +$7) to 1 and flashes 'Guarding' on the
-  bottom line (ShowFlashMessage). The Done menu's Guard command (ovl08:0E45) and ovl09_fn_0F4F
+  bottom line (ShowFlashMessage). The Done menu's Guard command (ovl08:0E45) and EndOrGuardTurn
   (the AI's fallback when the character has nothing to do) call it; the return value is the 1
   EndCombatTurn gives, so the turn is over. Globals: none. }
 function GuardTurn(Who: Pointer): Byte;
@@ -1710,14 +1710,14 @@ begin
   DrawLocationLine;
   DrawPartyRoster(SelectedCharacter);
 end;
-{ 00BA:2B88. Draws the combat screen: ovl31_e2 prepares the EGA palette, the left window
+{ 00BA:2B88. Draws the combat screen: SwapPaletteColours0And8 prepares the EGA palette, the left window
   (1,1)-(21,21) and the right window (23,1)-(38,21) are drawn with DrawWindow, the bottom two rows
   (0,23)-(39,24) are cleared, and the cursor is placed on the combat map's view origin plus three
   cells (MoveCombatCursor: margin CursorMargin, direction CursorNoStep). Called by StartBattle,
   PlayerTurn and the combat overlays. Globals: CombatMap (read). Side effect: the screen. }
 procedure DrawCombatScreen;
 begin
-  ovl31_e2;
+  SwapPaletteColours0And8;
   DrawWindow(1, 1, $15, $15, 0, 0, '');
   DrawWindow($17, 1, $26, $15, 0, 0, '');
   ClearWindow(0, $17, $27, $18);

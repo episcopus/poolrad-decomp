@@ -12,8 +12,8 @@ interface
 uses POOLVARS;
 function FootprintCell(Kind, Index: Byte; var DX, DY: ShortInt): Boolean;
 procedure UpdateViewPositions;
-procedure ovl31_e2;
-procedure ovl31_e3;
+procedure SwapPaletteColours0And8;
+procedure RestorePaletteColours0And8;
 procedure DrawCursorAt(CellX, CellY: ShortInt);
 procedure RedrawMapCell(CellX, CellY: ShortInt);
 procedure RebuildOccupancy;
@@ -87,10 +87,11 @@ begin
   end;
 end;
 
-{ ovl31:00E3. Purpose unknown: when VideoAdapter is 1 it calls SetPaletteRegister(0, 8) and then
-  SetPaletteRegister(8, 0); ovl31_e3 makes the calls (0, 0) and (8, 8). Called by EditCharacterIcon, ovl19 and
+{ ovl31:00E3. when VideoAdapter is 1 it calls SetPaletteRegister(0, 8) and then
+  SetPaletteRegister(8, 0); RestorePaletteColours0And8 makes the calls (0, 0) and (8, 8). Called by EditCharacterIcon,
+  ovl19 and
   DrawCombatScreen. }
-procedure ovl31_e2;
+procedure SwapPaletteColours0And8;
 begin
   case VideoAdapter of
     1:
@@ -101,9 +102,9 @@ begin
   end;
 end;
 
-{ ovl31:0105. Purpose unknown: when VideoAdapter is 1 it calls SetPaletteRegister(0, 0) and then
-  SetPaletteRegister(8, 8), the counterpart of ovl31_e2. Called by ovl08, ovl16 and ViewSelectedCharacter. }
-procedure ovl31_e3;
+{ ovl31:0105. when VideoAdapter is 1 it calls SetPaletteRegister(0, 0) and then
+  SetPaletteRegister(8, 8), the counterpart of SwapPaletteColours0And8. Called by ovl08, ovl16 and ViewSelectedCharacter. }
+procedure RestorePaletteColours0And8;
 begin
   case VideoAdapter of
     1:

@@ -845,8 +845,9 @@ const
   ds0C13: array[0..15] of Byte =
     (
       $00, $07, $0B, $1E, $1F, $20, $33, $34, $35, $36, $3A, $3B, $5F, $62, $89, $4A);
-  { The two affects ovl24_e14 removes are entries 1..2 at DS:0C24 ($4A $4B); entry 0 is the byte before. }
-  ExtraDeathAffects: array[0..2] of Byte = (75, 74, 75);  { entries 1..2 ($4A $4B) are the affects ovl24_e14 removes }
+  { The two affects RemoveExtraDeathAffects removes are entries 1..2 at DS:0C24 ($4A $4B); entry 0 is the byte before. }
+  ExtraDeathAffects: array[0..2] of Byte = (75, 74, 75);  { entries 1..2 ($4A $4B) are the affects
+    RemoveExtraDeathAffects removes }
   { DS:0C26..0C2F: storage of WallViewIdTable }
   Raw0C26: array[0..9] of Byte =
     (
@@ -2222,7 +2223,7 @@ var
   CastingSpell: Byte;
   LastDiceCount: Byte;  { the dice count of the last RollDiceCounted roll (ovl24:0E37) }
   { Set while ComputeMovement runs the movement affect hooks and cleared around them; what reads
-    it is not known yet (ovl12:1452 (ovl12_e48) clears HookedMoveOrAttacks while it is not 0). }
+    it is not known yet (ovl12:1452 (StopMovement) clears HookedMoveOrAttacks while it is not 0). }
   HookRunning: Boolean;
   { Cleared before and tested after RunAffectHooks kinds 1 (on the target) and 0 (on the attacker)
     around an attack's target check (ovl13:1085); a hook that sets it rejects the attack. ovl12:0918 and
