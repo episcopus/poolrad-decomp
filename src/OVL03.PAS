@@ -140,10 +140,6 @@ const
   VarAreaDoorsLatch = 418;
   AreaDoorsOpen = $FE;
   VarWord725 = 725;
-  { ViewMode values the wilderness loop (ovl03:32F8) writes: 4 for the 3D wall view, 3 for a map page.
-    RunAreaEventCommand sets the same pair from AreaViewKind (1 gives 4, anything else 3). }
-  ViewModeMap = 3;
-  ViewModeWall = 4;
   { The GameVars words the wilderness loop saves the party's cell in before DoWildernessMenu, so a
     cell that changed can play SoundStep. }
   VarSavedPartyColumn = 240;
@@ -216,8 +212,6 @@ const
   CloseUpLastRow = $D;
   GlyphRunCol = 2;
   GlyphRunRow = 5;
-  { The party size: word 830 of GameVars2 (VarPartySize of ovl05, which is not visible here). }
-  VarPartySize = 830;
   { ECL command 45 (ovl03:2CCF) biases the operand word by CodeBias and tests the result against the
     actions below; the comments give the word the script writes. }
   CodeBias = $7FFF;

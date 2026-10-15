@@ -98,6 +98,7 @@ A target that is not built yet prints which phase delivers it.
 | `40-sessions.md` | Recording sessions and goldens; verifying a rebuild |
 | `50-rebuild.md` | Phase 5: the rebuild from Pascal is the original (layout, link order, stub order, external objects, goldens on the rebuild) |
 | `60-design-doc.md` | Updating the whitepaper from verified findings |
+| `65-consistency.md` | Phase 6: one vocabulary across units, shared constants, every symbol named where the evidence allows |
 | `70-review.md` | Independent review of a complete unit (`make claim REVIEW=1`, `make review-pass`) |
 | `90-orchestrate.md` | Integrating hand-offs with `make integrate`, the inbox, running several workers |
 | `80-expert.md` | Retired 2026-10-14 (rule 14): the escalation tier of docs/process/WORKER.md replaces it |

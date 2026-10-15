@@ -51,10 +51,8 @@ const
   { TCharacter.B84 values of the members that pool and share money: 0 and $B3 (a player-run
     member; what $B3 marks is not known) }
   SharerB84 = $B3;
-  ComputerRunB84 = $80; { B84 from $80 up: a member run by the computer, who gets no share }
   ViewShop = 1;         { ViewMode view modes where dropped money goes into the pool: a shop or }
   ViewTreasure = 6;     { the Temple (1), the treasure after a battle (6) }
-  MenuLineBytes = $2E;  { the Text, Flag29 and Next fields of TMenuLine, as NewMenuList allocates }
   MaxItems = 16;        { a character carries at most 16 items (TCharacter.ItemCountC7) }
   GemItemName = $65;    { the name number of a kept gem (NameNum[3]) }
   JewelItemName = $D6;  { the name number of a kept piece of jewelry }
@@ -295,7 +293,7 @@ begin
     end;
   while Who <> nil do
   begin
-    if Who^.B84 < ComputerRunB84 then
+    if Who^.B84 < ComputerRun then
       for Kind := LastMoneyKind downto 0 do
         if not WouldOverload(Who, Share[Kind], Room) then
         begin

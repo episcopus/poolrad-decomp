@@ -136,25 +136,13 @@ implementation
 uses RES12, OVL13, OVL23, OVL24, OVL30, OVL31, OVL33;
 const
   RunsHandlerOnRemove = 1;      { TAffect.Flag: the affect's handler runs when the affect is removed }
-  NoRemoveHandler = 0;          { the same Flag, clear: the affect's handler does not run when the affect is removed }
-  HookGoesDown = $D;            { RunAffectHooks kind: a combatant going down (DealDamage, DropCombatant) }
-  CombatViewMode = 5;           { ViewMode during a combat (RunCombat sets it, whitepaper 5.5) }
-  StatusAnimated = 1;           { TCharacter.Status 1, "Animated" in StatusNames (DS:1047); DrainLevels tests it (ovl12:2122)
-  }
-  StatusDead = 6;               { TCharacter.Status 6, "Dead" in StatusNames (DS:1047): 'dies from poison', 'collapses',
-                                  'is killed' (ovl04:0510) }
-  StatusStoned = 7;             { TCharacter.Status 7, stone (ovl04:093D) }
-  StatusGone = 8;               { TCharacter.Status 8, "Gone" in StatusNames (DS:1047): 'is dead forever' (ovl12:2122,
-                                  228C), 'Dies rots away' (ovl12:1399) }
   MoraleStep = 5;               { what the affect handlers add to or take from the morale scratch MoraleScratch }
   TargetBonus = 2;              { what BoostAttackAgainstTarget adds to AttackRoll and to DamageAmount }
-  AffectTrainingManual = 7;     { the affect id of "Training with Manual of Bodily Health" (ovl15:0FBC names it) }
   TrainingManualDuration = 43200; { $A8C0: the Duration ovl12:017F gives the affect }
   TrainingManualData = $FF;     { the Data byte ovl12:017F gives the affect }
   TrainingConstitution = 15;    { training needs at least this Constitution; a fighter level counts Constitution - 15,
                                   a non-fighter level counts twice above it (the same rule as Raise Dead, ovl04:0510) }
   FighterOnlyConstitution = 17; { from 17 up only a fighter level keeps the training gain (ovl04 uses the same limit) }
-  FighterClass = 2;             { index in ClassLevels of the fighter }
   LastClass = 7;
   ConstitutionLimit = 20;       { training that takes Constitution to 20 gives AffectTrainedOut and stops }
   AffectTrainedOut = $3E;  { id 62: AddTrainedOutAndHeal (ovl12:14EB) runs for it; TrainConstitution (ovl12:0233) gives it at
@@ -173,21 +161,14 @@ const
   ControlAppliedBit = $20;      { Affect.Data bit 5: set once the control is applied (ovl12:0400) }
   ControlSavedSideBit = $40;    { Affect.Data bit 6: the side Who had before; removing the affect gives it back }
   ControlSideBit = $80;         { Affect.Data bit 7: the side the control gives Who (TCharacter.Side) }
-  ComputerRunFlag = $80;        { TCharacter.B84 high bit: the computer runs the member (ovl09 CheckMorale) }
   ComputerRunMorale = $B3;      { TCharacter.B84 of a computer-run member: the flag and morale $33 }
   AffectMorale = 100;           { what applying the control sets the morale scratch MoraleScratch to }
-  ExceptionalStrength = 18;     { Strength 18 is written with a percentile (EncodeStrength, ovl24:10E4) }
   ExceptionalPercent = 100;     { the percentile of 18/100, the strength ovl12:2F57 raises Who to }
   GiantStrength = 19;           { the lowest Strength of the giant range 19..25 (whitepaper 5.24, StrengthRowIndex) }
   StrengthMessageView = 2;      { ViewMode while "is stronger" is shown in combat (ovl12:2F57); meaning not known [?] }
   FlagNameNum = $98;            { a NameNum that sets HookVetoFlag with FlagNameNumThird as the third name (ovl12:2E37) [?] }
   FlagNameNumThird = $FC;
   ItemAffectData = $0C;         { the Data byte ovl12:2EDA gives the affect an item names in Affects[2] }
-  StrengthKept = $80;           { bit 7 of a strength affect's Data: an earlier strength is kept in it (ovl24:115C) }
-  AffectStrength1 = $0C;        { the two strength affects (ovl24:115C keeps the earlier strength in them) }
-  AffectStrength2 = $26;
-  AffectPoisoned = $37;  { the Poisoned affect (ovl15 names it 'Poisoned'; ovl04 calls it AffectPoison); id 55: IgnoreAffect37
-  (empty) runs for it }
   SaveKindPoison = 0;           { SavingThrow kind 0, the first of the five saves: the poison save [I] (ovl12:1545) }
   SaveKindParalysis = 0;        { the same kind 0 for the paralysis save of ovl12:15EB [I] (the first of the five saves) }
   AffectParalysis = $34;        { the affect of "is Paralyzed" (ovl12:15EB): a spell affect that ovl15 names by its spell [I]
@@ -216,9 +197,7 @@ const
   back when removed; RemoveAffect17WhenRemoved (ovl12:317A) removes it too }
   AffectDrainsStrength = $2B;  { id 43: WeakenStrength (ovl12:10DE) runs for it: each run takes one off Strength; a Cure
   Disease affect (ovl04:031E), run by RunDiseaseHandlers }
-  AffectCauseDisease = $2C;     { named in ovl15 (ovl15:0FBC); a Cure Disease affect (ovl04:031E) }
   AffectCauseDiseaseDuration = 10; { the Duration ovl12:1168 gives affect AffectCauseDisease }
-  AffectHealingBlock = $32;     { HealCharacter with Flag 0 does nothing while the character has it (ovl24:175D) }
   AffectHealingBlockDuration = 14400; { $3840: the Duration ovl12:12FB gives affect AffectHealingBlock }
   HealingBlockData = $FF;       { the Data byte ovl12:23EC gives AffectHealingBlock }
   SideDataBit = $10;            { Affect.Data bit 4: a side, 0 or 1, compared with Who's Side (ovl12:12B2) }
@@ -238,9 +217,7 @@ const
   ItemCountLimit = $10;         { no item is given once ItemCountC7 is this or more (ovl12:07E0 at 0869) [I] }
   ItemRowFlags = $81;           { bits 0 and 7 of byte 7 of an item type's ItemTable row, tested by ovl12:25BC [?] }
   SlotItemNameNum3 = $B1;       { NameNum[3] of the item that keeps the damage at ovl12:264B and ovl12:2D88 [?] }
-  CloudTile = $1E;              { the cloud tile ApplyCloudTile (ovl24:0AE7) tests for; ovl12:0F14 repaints the arms with it }
   CloudBodyTile = $1F;          { the tile a cloud arm gets where a body lies when the cloud clears (ovl12:0CC3) [?] }
-  AffectNausea = $1F;           { the affect of a failed save against the cloud: nausea (ovl24:0AE7) }
   WeakeningDuration = $3C;      { the Duration ovl12:10DE gives the affect AffectDrainsStrength }
   AlwaysAvoids = 100;           { the Chance that avoids every roll of 1d100 (ovl12:1086) }
   AlwaysSaves = 100;            { the SaveRoll that makes a saving throw succeed (ovl24:0D63 succeeds when it reaches) [I] }
@@ -288,7 +265,6 @@ const
   AffectBloodDrainWeak = $4A;  { the other blood drain affect, given to the drinker by ovl12:1935; its handler is the OVL13
   entry ForcedAttack (AffectHandlers[74], InitAffectHandlers [V]) }
   BloodDrainWeakDuration = 0;   { the Duration ovl12:1935 gives AffectBloodDrainWeak }
-  AffectRevival = $4E;          { the affect ovl24:175D calls (mode 1) for an unconscious character healed outside combat }
   RevivalRetryDuration = 1;     { the Duration ovl12:19D9 gives AffectRevival }
   SaveKindFear = 4;             { SavingThrow kind 4, the fifth of the five saves: the save against fear (ovl12:1AAA) [I] }
   AffectWeakened = $02;  { id 2: LowerAttackAndMorale (ovl12:011D) runs for it; FrightenSideWithFear (ovl12:1AAA) gives it
@@ -297,7 +273,6 @@ const
   SaveNegatesAffect = 1;        { ApplyAffect's SaveNegates: a successful save makes the affect fail (ovl24:1656) }
   AffectParalyzeSide = $52;  { id 82: ParalyzeSideWithFear (ovl12:1BA8) runs for it; that handler takes it off every party
   member first }
-  RaceHuman = 7;                { TCharacter.Race of a human (whitepaper 4.2.5: the character sheet of a human, race 7) }
   FearDieSides = 4;             { ovl12:1BA8 paralyses a member with fear for 1d4 rounds }
   SaveKindStone = 1;            { SavingThrow kind 1, the second of the five saves: the stone save of ovl12:1CAD [I] }
   AffectUnknown7F = $7F;  { id 127: IgnoreAffectShared runs for it and does nothing; purpose unknown [?]: the gazer
@@ -313,12 +288,8 @@ const
   AffectEndsTurn = $35;  { id 53: EndAffectedCombatantTurn (ovl12:133F) runs for it: it ends the affected
     combatant's turn (EndCombatTurn);
   ids 31, 51 and 52 share that handler; its hook is cancelled with the charm's (ovl12:2992, 29B6) }
-  StatusFled = 3;               { TCharacter.Status 3: the combatant fled (ovl05:050D, ovl24 StatusFled) }
-  StatusUnconscious = 4;        { TCharacter.Status 4: unconscious, what Bandage gives (ovl05 StatusUnconscious) }
-  StatusDying = 5;              { TCharacter.Status 5: dying, the combatant bleeds (DyingRounds, ovl08:0FFF) }
   RegainedHitPoints = 3;        { what RegainHitPoints (ovl12:2700) adds to the current hit points }
   DyingRevivalPoints = 6;       { ovl12:2730: a revived dying character gets this many hit points less its DyingRounds }
-  AffectRegenerating = $3B;     { the affect "Regenerating" (ovl15:0FBC names it; ovl12:2814 gives it) }
   RegeneratingDuration = 3;     { the Duration ovl12:2814 gives AffectRegenerating }
   AffectFallsDead = $5F;  { id 95: FallDeadIfInFight (ovl12:2610) runs for it: a character still in the fight falls dead when
   it is removed; ovl12:2730 gives it to a revived character }
@@ -336,7 +307,6 @@ const
   MessageRow = $A;              { the Row ShowCharacterMessage shows a message at: the top row of the combat message
                                   window (RES12 00BA:16EC); ClearCharacterMessage clears from it (00BA:17E3) }
   ReflectRow = $C;              { the row of the message and the gaze line when a gaze is reflected (ovl12:1CAD) }
-  PermanentDuration = 0;        { the Duration of an affect that lasts for good (AddAffect, ApplyAffect) }
   DataFF = $FF;                 { a Data byte of $FF that several affects here are given; its meaning is not known [?] }
   TargetCodeFour = 4;           { a CreatureType value of a target (TCharacter +$9F): BoostAttackAgainstTarget
                                   gives it TargetBonus, BoostFireAttackByTarget gives it FireBonusForFour }
@@ -399,7 +369,7 @@ begin
     RemoveCombatant(Who);
   DelayByGameSpeed;
   ClearCharacterMessage;
-  if ViewMode <> CombatViewMode then
+  if ViewMode <> ViewModeCombat then
     DrawPartyRoster(SelectedCharacter);
 end;
 { ovl12:010D. Affect handler of an affect (the AffectHandlers shape: Who, Affect and Mode; Mode is not read,
@@ -495,7 +465,7 @@ begin
   if Who^.Constitution < TrainingConstitution then Exit;
   for I := 0 to LastClass do
     if Who^.ClassLevels[I] > 0 then
-      if I = FighterClass then
+      if I = ClassFighter then
         Inc(Weight, (Who^.Constitution - TrainingConstitution) * Who^.ClassLevels[I])
       else if Who^.Constitution > TrainingConstitution then
         Inc(Weight, Who^.ClassLevels[I] * 2)
@@ -503,7 +473,7 @@ begin
         Inc(Weight, Who^.ClassLevels[I]);
   if Weight = 0 then Weight := 1;
   Gain := Gain div Weight;
-  if (Who^.Constitution < FighterOnlyConstitution) or (Who^.ClassLevels[FighterClass] > 0) then
+  if (Who^.Constitution < FighterOnlyConstitution) or (Who^.ClassLevels[ClassFighter] > 0) then
   begin
     Inc(Who^.HpMax, Gain);
     Inc(Who^.Flag11B, Gain);
@@ -569,7 +539,7 @@ begin
       Affect^.Data := Affect^.Data + ControlAppliedBit + ShortInt(Who^.Side) * ControlSavedSideBit;
       Who^.Side := Affect^.Data div ControlSideBit;
       Who^.Quick := 1;
-      if Who^.B84 <= ComputerRunFlag - 1 then
+      if Who^.B84 <= ComputerRun - 1 then
         Who^.B84 := ComputerRunMorale;
       Who^.Combat^.Target := nil;
       RecountCombatSides;
@@ -637,7 +607,7 @@ end;
   not read, ovl24:0000). It adds affect $0F (AffectDamagesEachRound) to Who for AffectDamagesEachRoundDuration with the
   Data byte of Affect, when TryAddAffect allows it. Then, while Who has more than one hit point (Flag11B,
   the current hit points [I]), it deals 1 point of plain damage (DamageKind 0, no save, DealDamage) and,
-  outside combat, redraws the selected character (ViewMode is not CombatViewMode). Runs for affect $0F (id 15,
+  outside combat, redraws the selected character (ViewMode is not ViewModeCombat). Runs for affect $0F (id 15,
   InitAffectHandlers [V]). }
 procedure AddAffectAndDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
@@ -646,7 +616,7 @@ begin
     begin
       DamageKind := 0;
       DealDamage(Who, 1, 0, False);
-      if ViewMode <> CombatViewMode then
+      if ViewMode <> ViewModeCombat then
         DrawPartyRoster(SelectedCharacter);
     end;
 end;
@@ -848,7 +818,7 @@ begin
   Who^.Side := Affect^.Data div 16;
   Who^.Quick := 1;
   Who^.Pad74[$76] := 0;
-  Who^.SweepAttacks := Who^.ClassLevels[FighterClass];
+  Who^.SweepAttacks := Who^.ClassLevels[ClassFighter];
   Who^.BaseMovement := 12;
   if Who^.B84 = ComputerRunMorale then
     Who^.B84 := 0;
@@ -1058,7 +1028,7 @@ begin
     begin
       DamageKind := 0;
       DealDamage(Who, 1, 0, False);
-      if ViewMode <> CombatViewMode then
+      if ViewMode <> ViewModeCombat then
         DrawPartyRoster(SelectedCharacter);
     end
     else if not HasAffect(Who, AffectNausea, FoundAffect) then
@@ -2230,7 +2200,7 @@ end;
   read). Mode 0 (applying) raises Who's strength to ExceptionalStrength with ExceptionalPercent (18/100) with
   RaiseStrength (ovl24:115C). When that gives True (Who was not stronger), "is stronger" is shown on Who at row MessageRow
   (ShowCharacterMessage); in combat the view mode is set to StrengthMessageView while the text shows and back to
-  CombatViewMode after. Then RedrawItemWindow becomes 1 and affect AffectStrength2 is added with duration 0, Data Code (what
+  ViewModeCombat after. Then RedrawItemWindow becomes 1 and affect AffectStrength2 is added with duration 0, Data Code (what
   RaiseStrength wrote: the strength Who had before, encoded, when it gave True) and its handler on removal
   (RunsHandlerOnRemove).
   QUIRK ovl12:302D: the affect is added even when RaiseStrength gave False (Who already stronger), with Code as
@@ -2275,11 +2245,11 @@ begin
   begin
     if RaiseStrength(Who, ExceptionalStrength, ExceptionalPercent, Code) then
     begin
-      if ViewMode = CombatViewMode then
+      if ViewMode = ViewModeCombat then
       begin
         ViewMode := StrengthMessageView;
         ShowCharacterMessage(Who, 'is stronger', MessageRow, 1);
-        ViewMode := CombatViewMode;
+        ViewMode := ViewModeCombat;
       end
       else
         ShowCharacterMessage(Who, 'is stronger', MessageRow, 1);
@@ -2308,7 +2278,7 @@ begin
     Other^.KnownSpells[SpellClearedIndex] := 0;
     Damage := Other^.KnownSpells[SpellDamageIndex] div 16;
     DamageKind := KindMagic;
-    if ViewMode = CombatViewMode then
+    if ViewMode = ViewModeCombat then
       DrawCombatScreen;
     DealDamage(Who, Damage, 0, False);
     RedrawItemWindow := 1;

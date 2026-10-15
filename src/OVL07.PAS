@@ -61,13 +61,7 @@ const
   HotkeyMark = '~';              { marks the hotkey letter in a menu text (ParseHotkeys) }
   KeyReturn = #13;
   { The party's facing (PartyFacing) and the directions WallIdAt takes. }
-  DirNorth = 0;
-  DirEast = 2;
-  DirSouth = 4;
-  DirWest = 6;
   LastMapCell = $F;              { the area map is 16 x 16 cells, 0..15 }
-  StatusDead = 6;                { TCharacter.Status: dead }
-  VarNoCasting = 229;            { the game variable (+$1CA) that forbids casting here (as in ovl08, ovl15) }
 
 { ovl07:0000. DecodeOperands: reads the Count operands of the current command from the script at
   EclPC + 1 into OperandType, OperandLow and OperandHigh, and leaves EclPC on the next command.

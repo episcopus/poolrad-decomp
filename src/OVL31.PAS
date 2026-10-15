@@ -45,15 +45,11 @@ const
   CellStep = 3;                 { a cell is 3 picture units wide and high (DrawCellPicture) }
   FootprintCells = 3;           { footprint cells are numbered 0..3 }
   CursorIcon = $19;             { the DrawIcon picture of the cursor (ovl31:0236) }
-  DirNone = 8;                  { the direction with no step (DirStepX[8] = DirStepY[8] = 0) }
   CentreMargin = 3;             { how far from the centre a cell may be before the view scrolls }
   NoReach = $FF;                { ScrollViewTo's Margin that always scrolls and redraws }
-  ViewModeCombat = 5;           { ViewMode during combat (RemoveCombatant, PlaceCombatant) }
   KindMask = $7F;               { TCharacter.CombatSize bits that are the footprint kind }
   CostBlocked = $FF;            { a CombatTiles cost no combatant may stand on }
   FirstProbeTile = $17;         { the tile ProbeStep answers before any cell is looked at }
-  TileKept = $1E;               { a tile that is never replaced by a body and always wins ProbeStep }
-  TileBody = $1F;               { the tile a body leaves on the map }
   MaxBodies = 8;                { BodyTable holds 8 records }
   { SetSoundDriverIdle (the sound unit) is called with 0 before RemoveCombatant's work and with 10 after;
     what the two values select is not known. }
@@ -418,7 +414,7 @@ end;
 { ovl31:0CB9. Looks at the cells combatant Who's footprint would cover after one step in direction
   Dir (DirNone: where it stands): Occupant is another combatant on one of them (0 for none; the
   last one found), Tile the tile that decides the step: 0 when any cell is off the map or tile 0,
-  else TileKept when any cell has it, else the cell tile with the largest CombatTiles cost (from
+  else CloudTile when any cell has it, else the cell tile with the largest CombatTiles cost (from
   cost 1 up; FirstProbeTile when no cell exists). Called by PlaceCombatant and ovl08, ovl10, ovl24. }
 procedure ProbeStep(Who: PCharacter; Dir: Byte; var Occupant, Tile: Byte);
 var
@@ -441,8 +437,8 @@ begin
       if CellWho > 0 then Occupant := CellWho;
       if (CellTile = 0) or (Tile = 0) then
         Tile := 0
-      else if (CellTile = TileKept) or (Tile = TileKept) then
-        Tile := TileKept
+      else if (CellTile = CloudTile) or (Tile = CloudTile) then
+        Tile := CloudTile
       else if CombatTiles[CellTile].Cost >= BestCost then
       begin
         BestCost := CombatTiles[CellTile].Cost;
@@ -455,7 +451,7 @@ end;
   makes the PlaySound(SoundCombatantDies) call and waits (DelayByGameSpeed). In combat it does nothing when Who
   already has a body record; otherwise it brings Who into view, erases it, draws DyingPicture on
   each of its cells, and unless Who^.Combat^.NoBody is set adds a body record (BodyTable: who, cell,
-  the tile under it) and puts TileBody on its cell (a TileKept cell stays). Then the res03 call and
+  the tile under it) and puts BodyTile on its cell (a CloudTile cell stays). Then the res03 call and
   the wait, the ground is redrawn, its Kind is cleared, CellOccupant rebuilt, the view redrawn round
   its centre and four bytes of its combat record cleared. SetSoundDriverIdle brackets the whole.
   QUIRK ovl31:0E41: the search for an existing body record tests BodyTable[SharedLoopIndex] (the sprite list
@@ -495,8 +491,8 @@ begin
     begin
       Inc(BodyCount);
       BodyTable[BodyCount].Tile := CombatMap^.Cells[CellY, CellX];
-      if CombatMap^.Cells[CellY, CellX] <> TileKept then
-        CombatMap^.Cells[CellY, CellX] := TileBody;
+      if CombatMap^.Cells[CellY, CellX] <> CloudTile then
+        CombatMap^.Cells[CellY, CellX] := BodyTile;
       BodyTable[BodyCount].Who := Who;
       BodyTable[BodyCount].X := CellX;
       BodyTable[BodyCount].Y := CellY;
@@ -518,7 +514,7 @@ end;
 { ovl31:10A7. Puts combatant Who on map cell (CellX, CellY) with the footprint kind of its record
   (CombatSize and KindMask) and returns True, or clears its Kind again and returns False when
   ProbeStep finds another combatant there, tile 0 or a CostBlocked tile. With Restore set and no
-  NoBody flag it takes back its body records (the tile under the body, unless TileBody, becomes the
+  NoBody flag it takes back its body records (the tile under the body, unless BodyTile, becomes the
   one restored; the records are cleared) and, when no other body lies on (CellX, CellY), puts that tile on
   the cell. CellOccupant is rebuilt on success. Outside view mode 5 it only returns True.
   Called by ovl08, ovl22, ovl24. }
@@ -546,7 +542,7 @@ begin
           for I := 1 to BodyCount do
             if BodyTable[I].Who = Who then
             begin
-              if BodyTable[I].Tile <> TileBody then
+              if BodyTable[I].Tile <> BodyTile then
                 Tile := BodyTable[I].Tile;
               FillChar(BodyTable[I], SizeOf(TBody), 0);
             end;

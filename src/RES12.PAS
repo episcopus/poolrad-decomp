@@ -174,7 +174,7 @@ const
   DexBand6High = $19;
   DexBand6Adjust = 6;
   { EGA text colours DrawTextAt draws the character and shop panels in (whitepaper 5.24). }
-  Green = $0A;
+  LightGreen = $0A;
   LightCyan = $0B;
   LightRed = $0C;
   LightMagenta = $0D;
@@ -183,35 +183,13 @@ const
   { CopyPictureItem reads VideoAdapter: 1 is the EGA display pages, where the pixel buffer holds one
     plane byte per four data bytes of the EGA layout (whitepaper 5.23). }
   VideoAdapterEga = 1;
-  { SizeOf(TMenuLine): the item record GetMem allocates and FreeMem frees in 1509 and 15F7
-    (the original pushes $3f) and ovl05 frees with ItemListSize. }
-  ItemListSize = $3F;
   { The bottom message line 1509 reports a lost item on and 1693 flashes on. }
   BottomRow = 24;
   ScreenLastCol = 39;
-  { TCharacter.Status values this unit uses (the image names 0 Okay, 1 Animated, 4 Unconscious,
-    5 Dying, 6 Dead). ShowDamage uses the set StatusOkay + StatusAnimated as "still standing". }
-  StatusOkay = 0;
-  StatusAnimated = 1;
-  StatusUnconscious = 4;
-  StatusDying = 5;
-  StatusDead = 6;
-  { TCharacter.Side values: the party is 0, the monsters 1 (SetQuickCombat compares them). }
-  SideParty = 0;
-  SideMonsters = 1;
   { IsMaxClassLevel's race values (Race, +$2E, the RaceNames table DS:0F03) and the strength scores
     at which a demihuman's level limit in a class rises (the AD&D demihuman level limits [H]). }
-  RaceDwarf = 1;
-  RaceElf = 2;
-  RaceGnome = 3;
-  RaceHalfElf = 4;
-  RaceHalfling = 5;
   Strength17 = $11;   { 17, raises the fighter limit by one }
   Strength18 = $12;   { 18, raises it by two }
-  { The ClassLevels indices IsMaxClassLevel and SpellCasterLevel test (ClassNames DS:0D38). }
-  ClassCleric = 0;
-  ClassFighter = 2;
-  ClassMagicUser = 5;
   { SpellCasterLevel: the SpellTable.SpellClass values (ClassNames order: 0 cleric, 1 magic-user, 2
     a fixed level) and the fixed levels it returns for class 2 and while ItemAffectUse is set. What
     spell class 2 and ItemAffectUse are is not proven [?]. }
@@ -234,19 +212,6 @@ const
     bit 0 with the S (search) key and sets bit 1 with L). The location line (00BA:290B) appends
     ' search' while bit 0 is set. }
   VarTravelMode = 714;
-  { The ViewMode view modes RedrawView dispatches on (the setters are in the other units): 0 is the
-    plain full-window layout of the create-character and training screens (RunCharacterMenu,
-    ovl16:0161, sets it); 1 is set by the Temple (VisitTemple, ovl04:0D09) and the shop (ShopMain,
-    ovl06:053E), 2 by the camp (MakeCamp, ovl15:1E6F), 3 and 4 select the area view (ShowAreaView;
-    whitepaper 5.2.1), 5 by combat (StartBattle and RunCombat) and 6 by the end of battle (EndBattle,
-    ovl05:1527). }
-  ViewModePlain = 0;
-  ViewModePortrait = 1;
-  ViewModeCamp = 2;
-  ViewModeMap = 3;
-  ViewModeView = 4;
-  ViewModeCombat = 5;
-  ViewModeLoot = 6;
   { The width of one area map page: DrawLocationLine adds this many columns of the 44-wide map grid
     per map page for AreaViewKind 3 (one page, added once) and 4 (two pages, added twice). }
   MapPageWidth = $D;
@@ -436,7 +401,7 @@ begin
 end;
 
 { 00BA:0442. Builds an item menu line's display text in Item^.Text and, when ShowText is set,
-  draws it at (Col, Row) in Green. Clears Text, then, when ShowReadied is set, prefixes ' Yes  '
+  draws it at (Col, Row) in LightGreen. Clears Text, then, when ShowReadied is set, prefixes ' Yes  '
   or ' No   ' from Readied. When any member of the party list PartyListHead has MagicMarkAffect (affect
   5, HasAffect), a Plus, PlusSave or Cursed item is marked '* '. A Count above 0 is written in
   front of the name. The three NameNum parts (ItemNameParts, 256 string[20] at DS:10A7) are appended
@@ -507,7 +472,7 @@ begin
         Item^.Text := Item^.Text + ' ';
     end;
   if ShowText <> 0 then
-    DrawTextAt(Col, Row, Green, Item^.Text);
+    DrawTextAt(Col, Row, LightGreen, Item^.Text);
 end;
 
 { 00BA:0767. Draws the roster panel the view screens show (whitepaper 5.24): a "Name / AC  HP"
@@ -516,7 +481,7 @@ end;
   current hit points (DrawHitPoints) are drawn in one of three columns picked by the value's range,
   and each line is cleared first. The left column is 1 in the plain full-window layout (ViewModePlain,
   the create-character and training screens, RunCharacterMenu ovl16:0161) and $11 in every other view: the shop and the
-  Temple (ViewModePortrait, beside the portrait window), the camp and area views (RedrawView) and the
+  Temple (ViewModeShop, beside the portrait window), the camp and area views (RedrawView) and the
   loot screen. Callers: the shop, the Temple, RedrawView (camp, area view and loot), SelectPartyMember
   and DrawWildernessScreen. Globals: ViewMode (read), PartyListHead (read). }
 procedure DrawPartyRoster(Who: PCharacter);
@@ -564,7 +529,7 @@ begin
 end;
 { 00BA:08EF. Draws the character's armour value (the byte +$111 ovl24's RollBeatsResistance compares a
   d20+level against; DrawCharacterPanel shows it under the "AC" heading) as text at (Col, Row) in
-  Green: the distance from ArmourClassBase, Abs(Value - ArmourClassBase), written with a leading '-'
+  LightGreen: the distance from ArmourClassBase, Abs(Value - ArmourClassBase), written with a leading '-'
   when the value is above ArmourClassBase (a negative armour class). Called by DrawPartyRoster and
   DrawCharacterPanel. }
 procedure DrawArmourClass(Who: PCharacter; Col, Row: Byte);
@@ -575,11 +540,11 @@ begin
   ValueText := ByteToText(Abs(Who^.ResistValue - ArmourClassBase));
   if Who^.ResistValue > ArmourClassBase then
     ValueText := '-' + ValueText;
-  DrawTextAt(Col, Row, Green, ValueText);
+  DrawTextAt(Col, Row, LightGreen, ValueText);
 end;
 
 { 00BA:0973. Draws Who's current hit points (Flag11B, +$11b) as text at (Col, Row). The colour is
-  Yellow while the hit points are below the maximum (HpMax, +$32), Green at the maximum, and
+  Yellow while the hit points are below the maximum (HpMax, +$32), LightGreen at the maximum, and
   LightMagenta when Flag is set (the caller's highlight). Called by DrawPartyRoster and
   DrawCharacterPanel. }
 procedure DrawHitPoints(Who: PCharacter; Col, Row, Flag: Byte);
@@ -590,7 +555,7 @@ begin
   if Who^.Flag11B < Who^.HpMax then
     ValueColor := Yellow
   else
-    ValueColor := Green;
+    ValueColor := LightGreen;
   if Flag <> 0 then
     ValueColor := LightMagenta;
   DrawTextAt(Col, Row, ValueColor, ByteToText(Who^.Flag11B));
@@ -617,10 +582,10 @@ begin
   Row := 1;
   ShowCharacterMessage(Who, ' ', Row, 0);
   Inc(Row);
-  DrawTextAt($17, Row + 1, Green, 'Hitpoints');
+  DrawTextAt($17, Row + 1, LightGreen, 'Hitpoints');
   DrawHitPoints(Who, $21, Row + 1, 0);
   Inc(Row, 2);
-  DrawTextAt($17, Row + 1, Green, 'AC');
+  DrawTextAt($17, Row + 1, LightGreen, 'AC');
   DrawArmourClass(Who, $1A, Row + 1);
   GlyphRow := Row + 1;
   if Who^.SlotItems[0] <> nil then
@@ -630,7 +595,7 @@ begin
     FormatItemLine(LongInt(Who), Who^.SlotItems[0], 0, 0, 0, 0);
     { QUIRK 00BA:0AE2: the bottom row is the three additions Row + 1 + 1 + 1 (three inc ax); the
       folded Row + 3 compiles to add ax, 3 and does not match the original }
-    ShowPagedText($17, Row + 1, $26, Row + 1 + 1 + 1, Green, 1, Who^.SlotItems[0]^.Text);
+    ShowPagedText($17, Row + 1, $26, Row + 1 + 1 + 1, LightGreen, 1, Who^.SlotItems[0]^.Text);
   end;
   Row := GlyphRow + 1;
   if Who^.Flag10D = 0 then
@@ -1032,14 +997,14 @@ begin
     Prev^.Next := NewItem;
   end;
 end;
-{ 00BA:1693. Flashes Text on the bottom message line (row 24, columns 0..39) in green: clears the
+{ 00BA:1693. Flashes Text on the bottom message line (row 24, columns 0..39) in LightGreen: clears the
   row, writes the text, waits DelayByGameSpeed, and clears the row again. No key is waited for.
   Called with 'Not enough money.', 'OverLoaded' and similar combat and shop notices.
   Globals: none. }
 procedure ShowFlashMessage(Text: String40);
 begin
   ClearWindow(0, BottomRow, ScreenLastCol, BottomRow);
-  DrawTextAt(0, BottomRow, Green, Text);
+  DrawTextAt(0, BottomRow, LightGreen, Text);
   DelayByGameSpeed;
   ClearWindow(0, BottomRow, ScreenLastCol, BottomRow);
 end;
@@ -1057,7 +1022,7 @@ begin
   begin
     ClearWindow(CombatMessageLeft, Row, CombatMessageRight, CombatMessageBottom);
     DrawCharacterName(Who, CombatMessageLeft, Row, 0);
-    ShowPagedText(CombatMessageLeft, Row + 1, CombatMessageRight, CombatMessageBottom, Green, 1, Text);
+    ShowPagedText(CombatMessageLeft, Row + 1, CombatMessageRight, CombatMessageBottom, LightGreen, 1, Text);
   end
   else
   begin
@@ -1070,7 +1035,7 @@ begin
     end;
     ClearWindow(MessageLeft, Top, MessageRight, MessageBottom);
     DrawCharacterName(Who, MessageLeft, Top + 1, 0);
-    ShowPagedText(MessageLeft, Top + 1 + 1, MessageRight, MessageBottom, Green, 1, Text);
+    ShowPagedText(MessageLeft, Top + 1 + 1, MessageRight, MessageBottom, LightGreen, 1, Text);
   end;
   if Wait <> 0 then
   begin
@@ -1616,7 +1581,7 @@ procedure RedrawView;
 begin
   case ViewMode of
     ViewModePlain: DrawWindow(1, 1, $26, $16, 0, $F, '');
-    ViewModePortrait:
+    ViewModeShop:
       begin
         DrawViewWindows(1);
         LoadHeadBodySprites(ShownHeadBank, ShownBodyBank);
@@ -1629,7 +1594,7 @@ begin
         DrawPartyRoster(SelectedCharacter);
         DrawLocationLine;
       end;
-    ViewModeView:
+    ViewModeWall:
       begin
         DrawViewWindows(1);
         ShowAreaView;
@@ -1652,7 +1617,7 @@ begin
   end;
 end;
 { 00BA:290B. Builds the party location line and draws it on row 15 of the side window (ClearWindow
-  (17,15)-(38,15), then DrawTextAt (17,15) in Green): the party position (PartyMapColumn and
+  (17,15)-(38,15), then DrawTextAt (17,15) in LightGreen): the party position (PartyMapColumn and
   PartyMapRow, or the game map position GameVars^[VarMapX/Y] for the area view, the column shifted
   by the map page width for AreaViewKind 3 and 4), the facing (FacingNames) and the game clock time
   as hours:minutes (the game clock digits, each number padded to two digits with a leading zero).

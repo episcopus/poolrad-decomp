@@ -37,22 +37,11 @@ implementation
 uses RES07, RES12, OVL30, OVL31;
 
 const
-  ModeApply = 0;                { the Mode of a handler call that applies or checks the affect }
-  ModeRemove = 1;               { the Mode of a handler call when the affect is removed }
-  AffectSize = 9;               { SizeOf(TAffect) }
-  CombatViewMode = 5;           { ViewMode during a combat (RunCombat sets it, whitepaper 5.5) }
-  StatusOkay = 0;
-  StatusFled = 3;
-  StatusUnconscious = 4;
-  StatusDying = 5;
-  SideParty = 0;
-  SideMonsters = 1;
   { The kinds of RunAffectHooks the rolls of this unit use. }
   HookDamage = 6;               { DealDamage, on DamageAmount }
   HookApplyAffect = 9;          { ApplyAffect, on HookAffectId }
   HookAttacker = $A;            { RollToHit, on the attacker }
   HookSave = $C;                { SavingThrow, on SaveRoll }
-  HookGoesDown = $D;            { DealDamage, when the combatant goes down in combat }
   HookTarget = $10;             { RollToHit and RollBeatsResistance, on the target }
   NaturalOne = 1;               { a d20 of 1 always fails }
   NaturalTwenty = 20;           { a d20 of 20 always succeeds }
@@ -60,18 +49,10 @@ const
   VarSideBonusParty = 881;      { a game word added to the party's attack rolls (low byte, signed) }
   VarSideBonusMonsters = 880;   { the same for the other side }
   { The affects of a cloud tile (ApplyCloudTile). }
-  CloudTile = $1E;              { the tile ProbeStep reports under the combatant }
   AffectCough = $1E;            { a saved character coughs for one round }
-  AffectNausea = $1F;           { a failed save: nausea for 1d4 + 1 }
   AffectAttackerLoses = $19;    { removed from an attacker before it rolls (ClearAttackerAffect) }
-  AffectHealingBlock = $32;     { HealCharacter with Flag 0 does nothing while the character has it }
-  AffectRevival = $4E;          { handler called (mode 1) when an unconscious character is healed outside combat }
   { Strength as one byte (EncodeStrength): 18 with a percentile is 1..101, other values 100 up. }
-  ExceptionalStrength = 18;
   StrengthOffset = 100;
-  StrengthKept = $80;           { bit 7 of a strength affect's Data: the earlier strength is kept in it }
-  AffectStrength1 = $C;         { the two strength affects RaiseStrength keeps the earlier strength in }
-  AffectStrength2 = $26;
   DeathAffectCount = 16;        { entries of DeathAffects }
 
 { ovl24:0000 (e1). Calls the handler of an affect: AffectHandlers[AffectId](Who, Affect, Mode),
@@ -138,7 +119,7 @@ begin
     begin
       if HasAffect(Other, AffectId, Affect) then
       begin
-        if ViewMode = CombatViewMode then
+        if ViewMode = ViewModeCombat then
         begin
           if AffectId = $31 then
             Range := 6
@@ -690,7 +671,7 @@ begin
       Msg := Msg + 'from Magic';
     ShowHitMessage(Who, 0, Msg);
     ApplyDamage(Who, DamageAmount);
-    if ViewMode = CombatViewMode then
+    if ViewMode = ViewModeCombat then
     begin
       Who^.Combat^.CanCast := 0;
       if Who^.Combat^.PendingSpell > 0 then
@@ -708,7 +689,7 @@ begin
       if Who^.Status in [6, 7, 8] then
         Msg := 'is killed';
       ShowCharacterMessage(Who, Msg, GlyphRow + 1, 0);
-      if ViewMode <> CombatViewMode then
+      if ViewMode <> ViewModeCombat then
         DelayByGameSpeed
       else
       begin
@@ -774,7 +755,7 @@ begin
       begin
         if Who^.Status = StatusDying then
           Who^.Status := StatusUnconscious;
-        if (Who^.Status = StatusUnconscious) and (ViewMode <> CombatViewMode) then
+        if (Who^.Status = StatusUnconscious) and (ViewMode <> ViewModeCombat) then
           CallAffectHandler(AffectRevival, Who, nil, ModeRemove);
       end;
       HealCharacter := True;
@@ -793,7 +774,7 @@ begin
     Who^.Status := StatusOkay;
     Who^.Flag10D := 1;
     Who^.Flag11B := HitPoints;
-    if ViewMode = CombatViewMode then
+    if ViewMode = ViewModeCombat then
       ShowCursorOn(Who, 3, 0);
     if Who^.Side = SideMonsters then
       Msg := 'stands up and grins'

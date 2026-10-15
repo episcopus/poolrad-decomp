@@ -28,9 +28,6 @@ procedure PayGold(Amount: LongInt; Who: PCharacter);
 implementation
 
 const
-  CombatRecordSize = $16;   { FreeMem size of TCharacter.Combat (TCombatant) }
-  ItemListSize = $3F;       { FreeMem size of one item of TCharacter.Items (TMenuLine) }
-  AffectSize = 9;           { FreeMem size of one affect of TCharacter.Affects (TAffect) }
   CharacterSize = $11D;     { FreeMem size of a whole TCharacter }
   MenuLeft = 1;             { the function menu window, drawn by DrawWindow in RunCharacterMenu }
   MenuTop = 1;
@@ -60,7 +57,6 @@ const
   ConMaxOffset = 13;
   ChaMinOffset = 14;
   ChaMaxOffset = 15;
-  ExceptionalStrength = 18; { a Strength above this uses the exceptional percentile; 18 itself rolls one }
 
 type
   { The five coin kinds, in the order of CoinCopperValues (copper 0 .. platinum 4). The money routine
@@ -370,12 +366,6 @@ const
   HumanRace = 7;                { RaceNames[7] }
   MenuRaceLines = 7;            { NewMenuList's count: the title line and the six races }
   MenuGenderLines = 3;          { the title line and two genders }
-  RaceDwarf = 1;                { RaceNames: Dwarf, Elf, Gnome, Half-Elf, Halfling, Half-Orc, Human }
-  RaceElf = 2;
-  RaceGnome = 3;
-  RaceHalfElf = 4;
-  RaceHalfling = 5;
-  RaceHalfOrc = 6;              { not on the menu; its adjustments are in the dead racial roll code }
   FirstRaceLine = 1;
   LastMenuRace = 5;             { menu lines 1..5 are the races 1..5 }
   HumanMenuLine = 6;            { menu line 6 is Human, stored as race 7 }
@@ -406,17 +396,12 @@ const
   AffectTargetHookB = $30;
   AffectNewAffectElf = $6B;
   AffectNewAffectHalfElf = $7C;
-  PermanentDuration = 0;
   DataFF = $FF;
-  NoRemoveHandler = 0;
   FighterFigure = 1;            { Figure[0] for the Dwarf, Gnome and Halfling }
   OtherFigure = 2;              { Figure[0] for the others }
   { The class numbers (ClassLevels index, ClassNames order) and the multi-class ClassMask values. }
-  ClericClass = 0;
-  FighterClass = 2;
   RangerClass = 4;
   MageClass = 5;
-  ThiefClass = 6;
   ClassTypeCount = 8;
   ClericFighter = 8;
   ClericFighterMage = 9;
@@ -604,53 +589,53 @@ begin
       0..7: ClassLevels[ClassMask] := 1;
       ClericFighter:
         begin
-          ClassLevels[ClericClass] := 1;
-          ClassLevels[FighterClass] := 1;
+          ClassLevels[ClassCleric] := 1;
+          ClassLevels[ClassFighter] := 1;
         end;
       ClericFighterMage:
         begin
-          ClassLevels[ClericClass] := 1;
-          ClassLevels[FighterClass] := 1;
+          ClassLevels[ClassCleric] := 1;
+          ClassLevels[ClassFighter] := 1;
           ClassLevels[MageClass] := 1;
         end;
       ClericRanger:
         begin
-          ClassLevels[ClericClass] := 1;
+          ClassLevels[ClassCleric] := 1;
           ClassLevels[RangerClass] := 1;
         end;
       ClericMage:
         begin
-          ClassLevels[ClericClass] := 1;
+          ClassLevels[ClassCleric] := 1;
           ClassLevels[MageClass] := 1;
         end;
       ClericThief:
         begin
-          ClassLevels[ClericClass] := 1;
-          ClassLevels[ThiefClass] := 1;
+          ClassLevels[ClassCleric] := 1;
+          ClassLevels[ClassThief] := 1;
         end;
       FighterMage:
         begin
-          ClassLevels[FighterClass] := 1;
+          ClassLevels[ClassFighter] := 1;
           ClassLevels[MageClass] := 1;
         end;
       FighterThief:
         begin
-          ClassLevels[FighterClass] := 1;
-          ClassLevels[ThiefClass] := 1;
+          ClassLevels[ClassFighter] := 1;
+          ClassLevels[ClassThief] := 1;
         end;
       FighterMageThief:
         begin
-          ClassLevels[FighterClass] := 1;
+          ClassLevels[ClassFighter] := 1;
           ClassLevels[MageClass] := 1;
-          ClassLevels[ThiefClass] := 1;
+          ClassLevels[ClassThief] := 1;
         end;
       MageThief:
         begin
           ClassLevels[MageClass] := 1;
-          ClassLevels[ThiefClass] := 1;
+          ClassLevels[ClassThief] := 1;
         end;
     end;
-    if ClassLevels[ThiefClass] > 0 then
+    if ClassLevels[ClassThief] > 0 then
       ComputeThiefSkills(NewCharacter);
     ClassBits := 0;
     Thac0 := 0;
@@ -691,23 +676,23 @@ begin
     with NewCharacter^ do
       case ClassMask of
         ClericFighter:
-          Age := StartingAgeTable[Race, ClericClass].Base
-            + StartingAgeTable[Race, ClericClass].Sides * StartingAgeTable[Race, ClericClass].Count;
+          Age := StartingAgeTable[Race, ClassCleric].Base
+            + StartingAgeTable[Race, ClassCleric].Sides * StartingAgeTable[Race, ClassCleric].Count;
         ClericFighterMage:
-          Age := StartingAgeTable[Race, ClericClass].Base
-            + StartingAgeTable[Race, ClericClass].Sides * StartingAgeTable[Race, ClericClass].Count;
+          Age := StartingAgeTable[Race, ClassCleric].Base
+            + StartingAgeTable[Race, ClassCleric].Sides * StartingAgeTable[Race, ClassCleric].Count;
         ClericMage:
-          Age := StartingAgeTable[Race, ClericClass].Base
-            + StartingAgeTable[Race, ClericClass].Sides * StartingAgeTable[Race, ClericClass].Count;
+          Age := StartingAgeTable[Race, ClassCleric].Base
+            + StartingAgeTable[Race, ClassCleric].Sides * StartingAgeTable[Race, ClassCleric].Count;
         ClericThief:
-          Age := StartingAgeTable[Race, ClericClass].Base
-            + StartingAgeTable[Race, ClericClass].Sides * StartingAgeTable[Race, ClericClass].Count;
+          Age := StartingAgeTable[Race, ClassCleric].Base
+            + StartingAgeTable[Race, ClassCleric].Sides * StartingAgeTable[Race, ClassCleric].Count;
         FighterMage:
           Age := StartingAgeTable[Race, MageClass].Base
             + StartingAgeTable[Race, MageClass].Sides * StartingAgeTable[Race, MageClass].Count;
         FighterThief:
-          Age := StartingAgeTable[Race, FighterClass].Base
-            + StartingAgeTable[Race, FighterClass].Sides * StartingAgeTable[Race, FighterClass].Count;
+          Age := StartingAgeTable[Race, ClassFighter].Base
+            + StartingAgeTable[Race, ClassFighter].Sides * StartingAgeTable[Race, ClassFighter].Count;
         FighterMageThief:
           Age := StartingAgeTable[Race, MageClass].Base
             + StartingAgeTable[Race, MageClass].Sides * StartingAgeTable[Race, MageClass].Count;
@@ -770,7 +755,7 @@ begin
                 Scores[AbilityIndex] := RaceStrengthMax[Race, B9E];
               if Scores[AbilityIndex] < ClassAbilityMinimums[ClassMask, AbilityIndex] then
                 Scores[AbilityIndex] := ClassAbilityMinimums[ClassMask, AbilityIndex];
-              if (Scores[StrengthIndex] = ExceptionalStrength) and (ClassLevels[FighterClass] > 0) then
+              if (Scores[StrengthIndex] = ExceptionalStrength) and (ClassLevels[ClassFighter] > 0) then
               begin
                 StrengthPercent := Random(ExceptionalStrengthRoll) + 1;
                 if RaceStrengthPercent[Race, B9E] < StrengthPercent then
@@ -863,13 +848,13 @@ begin
         if ClassLevels[ClassIndex] > 0 then
         begin
           case ClassIndex of
-            ClericClass: SpellSlots[0, 1] := 1;
+            ClassCleric: SpellSlots[0, 1] := 1;
             MageClass: SpellSlots[1, 1] := 1;
           end;
           Inc(GoldDiceTotal, RollDice(StartingGoldDice[ClassIndex, 0], StartingGoldDice[ClassIndex, 1]));
           Inc(ClassTotal);
           case ClassIndex of
-            ClericClass:
+            ClassCleric:
               begin
                 AddWisdomBonusSpells(NewCharacter);
                 for I := 1 to SpellCount do
@@ -982,7 +967,6 @@ const
   { the hit-point line the cursor's last step shows (DrawHitPoints of res12) }
   HitPointColumn = 4;
   HitPointRow = $12;
-  FighterClass = 2;             { only a fighter raises the Strength percentile }
 var
   SavedScores: array[0..5] of Byte;   { [bp-6..bp-1]: the scores as they were on entry }
   SavedStrengthPercent: Byte;         { [bp-7]: the exceptional Strength on entry }
@@ -1111,7 +1095,7 @@ begin
                 if Scores[Stat] > RaceStrengthMax[Race, B9E] then
                 begin
                   if (Scores[Stat] > ExceptionalStrength)
-                     and (ClassLevels[FighterClass] > 0)
+                     and (ClassLevels[ClassFighter] > 0)
                      and (RaceStrengthPercent[Race, B9E] > StrengthPercent) then
                     Inc(StrengthPercent);
                   Scores[Stat] := RaceStrengthMax[Race, B9E];
@@ -1219,22 +1203,13 @@ const
   NameRow = 4;                  { DrawCharacterName's row; the first class line is the next }
   FirstBecomeRow = 5;
   NameCol = 4;                  { DrawCharacterName's column; its mode argument is 0 }
-  ClericClass = 0;              { ClassLevels index; a half-elf cleric caps at 5 }
-  FighterClass = 2;             { the class the racial level caps apply to }
   MageClass = 5;                { a rise here asks for a new spell }
   { TCharacter.Pad74 index of the drained-level state the class rise restores (the routine comment). }
-  DrainedLevels = $74;          { the count of levels DrainLevels (ovl12:2122) drained }
-  LostHitPoints = $75;          { the hit points lost with them (CastRestoration, ovl22) }
   SpellListToChoose = 4;        { ChooseSpellFromList's 'to choose from' list (ovl19:299C) }
   SpellDisplayMode = 4;         { the display mode the call pushes; ovl22 reads it }
   NoSpellChoice = $FFFF;        { negative, so ChooseSpellFromList opens the spell window }
   Strength17 = 17;              { the strength that raises a race's fighter cap by one }
   Strength18 = 18;              { a gnome fighter's cap looks at strength below 18 }
-  RaceDwarf = 1;                { RaceNames: Dwarf, Elf, Gnome, Half-Elf, Halfling (DS:0F03) }
-  RaceElf = 2;
-  RaceGnome = 3;
-  RaceHalfElf = 4;
-  RaceHalfling = 5;
 var
   AtLimit: Byte;                { [bp-1]: the class is at its racial level limit }
   NewExperience: LongInt;       { [bp-5]: the experience the training leaves the character at }
@@ -1279,28 +1254,28 @@ begin
         Level := ClassLevels[I];
         case Race of
           RaceDwarf:
-            if I = FighterClass then
+            if I = ClassFighter then
               if ((Level = 8) and (Strength = Strength17)) or
                  ((Level = 7) and (Strength < Strength17)) then
                 AtLimit := 1;
           RaceElf:
-            if I = FighterClass then
+            if I = ClassFighter then
               if (Level = 7) or ((Level = 6) and (Strength = Strength17))
                  or ((Level = 5) and (Strength < Strength17)) then
                 AtLimit := 1;
           RaceGnome:
-            if I = FighterClass then
+            if I = ClassFighter then
               if (Level = 6) or ((Level = 5) and (Strength < Strength18)) then
                 AtLimit := 1;
           RaceHalfElf:
-            if (I = ClericClass) and (Level = 5) then
+            if (I = ClassCleric) and (Level = 5) then
               AtLimit := 1
-            else if I = FighterClass then
+            else if I = ClassFighter then
               if (Level = 8) or ((Level = 7) and (Strength = Strength17))
                  or ((Level = 6) and (Strength < Strength17)) then
                 AtLimit := 1;
           RaceHalfling:
-            if I = FighterClass then
+            if I = ClassFighter then
               if (Level = 6) or ((Level = 5) and (Strength = Strength17))
                  or ((Level = 4) and (Strength < Strength17)) then
                 AtLimit := 1;
@@ -1413,8 +1388,6 @@ end;
   never assigns (whatever the previous frame left there). }
 procedure AddSavedCharacters;
 const
-  VarPartySize = 830;           { the party member count, a word of the GameVars2 game variable block }
-  ComputerRun = $80;            { high bit of B84: the computer runs the member (hireling) }
   MaxPlayerMembers = 6;         { the menu stops once six player-run members are in the party }
   MaxPartySize = 8;             { the menu stops once the party holds eight members }
   KeyEnter = #13;               { ChooseFromList returns Enter, or the chosen word's letter }
@@ -1491,8 +1464,6 @@ end;
   predecessor, and SelectedCharacter becomes the member that took its place (its successor at the head,
   its predecessor otherwise). Called on drop, load, battle removal and party reorder. }
 procedure RemoveSelectedCharacter(Uncounted, FreePicture: Boolean);
-const
-  VarPartySize = 830;   { the party member count, a word of the GameVars2 game variable block }
 var
   Cur: PCharacter;      { [bp-4]: the list node examined; the predecessor when the member is found }
 begin

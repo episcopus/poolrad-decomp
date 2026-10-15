@@ -2281,3 +2281,38 @@ evidence = "word the loader sets to 1 (ovl11:03DA) and no routine reads"
 offset = 0x5378
 name = "UnreadWord5378"
 evidence = "word the loader sets to 1 (ovl11:03E0) and no routine reads"
+
+[[global]]
+offset = 0x07E7
+name = "IconEditorPromptsBase"
+evidence = "the byte before IconEditorPrompts (DS:07E8) that the index base of the 1-based prompt table names; never read (whitepaper 5.x, POOLVARS comment)"
+
+[[global]]
+offset = 0x3CF3
+name = "ThiefSkillTableBase"
+evidence = "the byte before ThiefSkillTable (DS:3CF4) that the column base of the table [row, 1..8] addresses; never read (ovl23, POOLVARS comment)"
+
+[[global]]
+offset = 0x3D3B
+name = "ThiefRaceTableBase"
+evidence = "the byte before ThiefRaceTable (DS:3D3C) that the column base [row, 1..8] addresses; never read (ovl23, POOLVARS comment)"
+
+[[global]]
+offset = 0x3D4E
+name = "ThiefDexTableBase"
+evidence = "the byte before ThiefDexTable (DS:3D4F) that the column base [row, 1..5] addresses; never read (ovl23, POOLVARS comment)"
+
+[[global]]
+offset = 0x40BC
+name = "ClericSlotTableBase"
+evidence = "the byte before ClericSlotTable (DS:40BD) that the column base [row, 1..3] addresses; never read (ovl23, POOLVARS comment)"
+
+[[global]]
+offset = 0x41D4
+name = "MageSlotTableBase"
+evidence = "the byte before MageSlotTable (DS:41D5) that the column base [row, 1..3] addresses; never read (ovl23, POOLVARS comment)"
+
+[[global]]
+offset = 0x6AB6
+name = "PictureAnimationBase"
+evidence = "the 8 bytes below PictureAnimation (DS:6ABE) that the frame indexing of ReadPromptChoice reaches (PictureAnimation.Frames[I], ovl25:04C8); no decompiled routine reads them"

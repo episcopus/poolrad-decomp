@@ -11,7 +11,7 @@ implementation
 uses Crt, POOLVARS, RES04, RES06, RES07, RES09;
 
 const
-  Green = $0A;                { EGA text colour of the credit names }
+  LightGreen = $0A;                { EGA text colour of the credit names }
   LightCyan = $0B;            { EGA text colour of most credit lines }
   Yellow = $0E;               { EGA text colour of the headers }
 
@@ -32,17 +32,17 @@ begin
   FlushKeyboard;
 end;
 { ovl01:0206. Shows the credits screen: two empty windows (DrawWindow) and some thirty
-  name and role lines in green, cyan and yellow (DrawTextAt), then waits for a key or a
+  name and role lines in LightGreen, cyan and yellow (DrawTextAt), then waits for a key or a
   timeout (WaitKeyOrTimeout). Called by the title sequence (ShowTitleScreen). }
 procedure ShowCredits;
 begin
   DrawWindow(1, 1, $26, 3, 0, 0, '');
   DrawWindow(1, 5, $26, $17, 0, 0, '');
-  DrawTextAt(5, 1, Green, 'scenario created by:');
+  DrawTextAt(5, 1, LightGreen, 'scenario created by:');
   DrawTextAt($1A, 1, Yellow, 'tsr, inc.');
-  DrawTextAt($0F, 2, Green, 'jim ward');
-  DrawTextAt(2, 3, Green, 'david cook,steve winter,mike breault');
-  DrawTextAt(1, 5, Green, 'game created by:');
+  DrawTextAt($0F, 2, LightGreen, 'jim ward');
+  DrawTextAt(2, 3, LightGreen, 'david cook,steve winter,mike breault');
+  DrawTextAt(1, 5, LightGreen, 'game created by:');
   DrawTextAt($12, 5, Yellow, 'ssi special projects');
   DrawTextAt($0E, 6, LightCyan, 'version 1.3');
   DrawTextAt(2, 7, Yellow, 'programming:');

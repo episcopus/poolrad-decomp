@@ -9472,12 +9472,12 @@ id = "0AF8:00E2"
 unit = "res00"
 addr = "0AF8:00E2"
 size = 7
-name = "System_rtl_00E2"
+name = "System_RunError"
 signature = ""
 c_name = "System_rtl_00E2"
 level = "none"
 justification = ""
-notes = "[I] external far-call target from game/other units; ext_callers=1"
+notes = "renamed from System_rtl_00E2 ([I] 0AF8:00E2 pops the caller's address as ErrorAddr and falls into the Halt path with the code in AX; every checked error (203, 204, 201, 202, 205, 207, 200) jumps here; called by the Overlay unit); [I] external far-call target from game/other units; ext_callers=1"
 evidence = ["far-called from outside res00 (1 sites)"]
 
 [[routine]]
@@ -9498,12 +9498,12 @@ id = "0AF8:01A5"
 unit = "res00"
 addr = "0AF8:01A5"
 size = 14
-name = "res00_fn_01A5"
+name = "System_PrintString"
 signature = ""
 c_name = "res00_fn_01A5"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res00_fn_01A5 ([I] 0AF8:01A5 prints the ASCIIZ string at CS:BX through System_PrintChar (the 'Runtime error' text of System_Halt)); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -9511,12 +9511,12 @@ id = "0AF8:01B3"
 unit = "res00"
 addr = "0AF8:01B3"
 size = 12
-name = "res00_fn_01B3"
+name = "System_PrintByteDecimal"
 signature = ""
 c_name = "res00_fn_01B3"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res00_fn_01B3 ([I] 0AF8:01B3 prints AL as three decimal digits (divides by 100 and 10); the exit code of the runtime error message); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -9524,12 +9524,12 @@ id = "0AF8:01BF"
 unit = "res00"
 addr = "0AF8:01BF"
 size = 14
-name = "res00_fn_01BF"
+name = "System_PrintDecimalDigit"
 signature = ""
 c_name = "res00_fn_01BF"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res00_fn_01BF ([I] 0AF8:01BF divides AL by CL, prints the quotient as one digit and leaves the remainder in AL); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -9537,12 +9537,12 @@ id = "0AF8:01CD"
 unit = "res00"
 addr = "0AF8:01CD"
 size = 7
-name = "res00_fn_01CD"
+name = "System_PrintHexWord"
 signature = ""
 c_name = "res00_fn_01CD"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res00_fn_01CD ([I] 0AF8:01CD prints AX as four hex digits (the segment and offset of the runtime error address)); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -9550,12 +9550,12 @@ id = "0AF8:01D4"
 unit = "res00"
 addr = "0AF8:01D4"
 size = 11
-name = "res00_fn_01D4"
+name = "System_PrintHexByte"
 signature = ""
 c_name = "res00_fn_01D4"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res00_fn_01D4 ([I] 0AF8:01D4 prints AL as two hex digits); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -9563,12 +9563,12 @@ id = "0AF8:01DF"
 unit = "res00"
 addr = "0AF8:01DF"
 size = 8
-name = "res00_fn_01DF"
+name = "System_PrintHexDigit"
 signature = ""
 c_name = "res00_fn_01DF"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res00_fn_01DF ([I] 0AF8:01DF prints the low nibble of AL as one hex digit (adds 7 above 9)); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -9576,12 +9576,12 @@ id = "0AF8:01E7"
 unit = "res00"
 addr = "0AF8:01E7"
 size = 88
-name = "res00_fn_01E7"
+name = "System_PrintChar"
 signature = ""
 c_name = "res00_fn_01E7"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res00_fn_01E7 ([I] 0AF8:01E7 writes AL with INT 21h AH=06h (direct console output)); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -9589,12 +9589,12 @@ id = "0AF8:023F"
 unit = "res00"
 addr = "0AF8:023F"
 size = 21
-name = "System_rtl_023F"
+name = "System_GetMem"
 signature = ""
 c_name = "System_rtl_023F"
 level = "none"
 justification = ""
-notes = "[I] external callee; classify later"
+notes = "renamed from System_rtl_023F ([I] 0AF8:023F takes a size word, allocates through System_HeapAllocate and returns DX:AX; heap overflow is run error 203; New(P) and GetMem compile to a call here (whitepaper 5.x, ovl11 probes)); [I] external callee; classify later"
 evidence = ["hand-verified System entry"]
 
 [[routine]]
@@ -9615,12 +9615,12 @@ id = "0AF8:026E"
 unit = "res00"
 addr = "0AF8:026E"
 size = 18
-name = "res00_fn_026E"
+name = "System_Mark"
 signature = ""
 c_name = "res00_fn_026E"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res00_fn_026E ([I] 0AF8:026E stores HeapPtr into the pointer variable passed (Mark)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:026E; aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -9628,12 +9628,12 @@ id = "0AF8:0280"
 unit = "res00"
 addr = "0AF8:0280"
 size = 28
-name = "res00_fn_0280"
+name = "System_Release"
 signature = ""
 c_name = "res00_fn_0280"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res00_fn_0280 ([I] 0AF8:0280 sets HeapPtr and the FreeList head to the pointer passed (Release)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:0280; aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -9641,12 +9641,12 @@ id = "0AF8:029C"
 unit = "res00"
 addr = "0AF8:029C"
 size = 28
-name = "System_rtl_029C"
+name = "System_MemAvail"
 signature = ""
 c_name = "System_rtl_029C"
 level = "none"
 justification = ""
-notes = "[I] external far-call target from game/other units; ext_callers=1"
+notes = "renamed from System_rtl_029C ([I] 0AF8:029C sums the free blocks of the FreeList plus the gap HeapEnd-HeapPtr, in bytes (MemAvail); res08_init calls it); [I] external far-call target from game/other units; ext_callers=1"
 evidence = ["far-called from outside res00 (1 sites)"]
 
 [[routine]]
@@ -9654,12 +9654,12 @@ id = "0AF8:02B8"
 unit = "res00"
 addr = "0AF8:02B8"
 size = 80
-name = "res00_fn_02B8"
+name = "System_MaxAvail"
 signature = ""
 c_name = "res00_fn_02B8"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res00_fn_02B8 ([I] 0AF8:02B8 finds the largest free block (MaxAvail), the twin of System_MemAvail; LoadSpriteList calls it); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:02B8; aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -9667,12 +9667,12 @@ id = "0AF8:0308"
 unit = "res00"
 addr = "0AF8:0308"
 size = 203
-name = "res00_fn_0308"
+name = "System_HeapAllocate"
 signature = ""
 c_name = "res00_fn_0308"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res00_fn_0308 ([I] 0AF8:0308 walks the FreeList for a block of AX 8-byte units, splits it, grows HeapPtr and calls HeapError (HeapError at DS:4414) on failure; called by System_GetMem); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -9680,12 +9680,12 @@ id = "0AF8:03D3"
 unit = "res00"
 addr = "0AF8:03D3"
 size = 95
-name = "res00_fn_03D3"
+name = "System_HeapFree"
 signature = ""
 c_name = "res00_fn_03D3"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res00_fn_03D3 ([I] 0AF8:03D3 checks the block lies between HeapOrg and HeapPtr (else carry set, run error 204) and links it into the sorted FreeList; called by System_FreeMem); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -9693,12 +9693,12 @@ id = "0AF8:0432"
 unit = "res00"
 addr = "0AF8:0432"
 size = 95
-name = "res00_fn_0432"
+name = "System_HeapMergeFree"
 signature = ""
 c_name = "res00_fn_0432"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res00_fn_0432 ([I] 0AF8:0432 merges a free block with its successor or lowers HeapPtr when it ends at HeapPtr); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -9706,12 +9706,12 @@ id = "0AF8:0491"
 unit = "res00"
 addr = "0AF8:0491"
 size = 17
-name = "res00_fn_0491"
+name = "System_HeapRoundSize"
 signature = ""
 c_name = "res00_fn_0491"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res00_fn_0491 ([I] 0AF8:0491 turns a size in AX into 8-byte units in DX and the odd 8 in AX (the heap granularity)); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -9745,12 +9745,12 @@ id = "0AF8:04B7"
 unit = "res00"
 addr = "0AF8:04B7"
 size = 40
-name = "res00_fn_04B7"
+name = "System_RangeCheck"
 signature = ""
 c_name = "res00_fn_04B7"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res00_fn_04B7 ([I] 0AF8:04B7 compares DX:AX with the bounds at ES:DI and ends with run error 201 (range check error) when outside); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:04B7; aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -9758,12 +9758,12 @@ id = "0AF8:04DF"
 unit = "res00"
 addr = "0AF8:04DF"
 size = 24
-name = "res00_fn_04DF"
+name = "System_StackCheck"
 signature = ""
 c_name = "res00_fn_04DF"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res00_fn_04DF ([I] 0AF8:04DF compares SP with StackLimit and ends with run error 202 (stack overflow)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:04DF; aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -9771,12 +9771,12 @@ id = "0AF8:04F7"
 unit = "res00"
 addr = "0AF8:04F7"
 size = 69
-name = "System_rtl_04F7"
+name = "System_AssignText"
 signature = ""
 c_name = "System_rtl_04F7"
 level = "none"
 justification = ""
-notes = "[I] external far-call target from game/other units; ext_callers=1"
+notes = "renamed from System_rtl_04F7 ([I] 0AF8:04F7 fills a TextRec (Mode $D7B0 closed, BufSize $80, buffer at +$74, OpenFunc 060E) and copies the name up to 79 characters (Assign for a Text file)); [I] external far-call target from game/other units; ext_callers=1"
 evidence = ["far-called from outside res00 (1 sites)"]
 
 [[routine]]
@@ -9784,12 +9784,12 @@ id = "0AF8:053C"
 unit = "res00"
 addr = "0AF8:053C"
 size = 43
-name = "res00_fn_053C"
+name = "System_SetTextBuf"
 signature = ""
 c_name = "res00_fn_053C"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res00_fn_053C ([I] 0AF8:053C stores BufPtr and BufSize into the TextRec and clears BufPos and BufEnd (SetTextBuf)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:05E0; aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -9797,12 +9797,12 @@ id = "0AF8:0567"
 unit = "res00"
 addr = "0AF8:0567"
 size = 5
-name = "System_rtl_0567"
+name = "System_ResetText"
 signature = ""
 c_name = "System_rtl_0567"
 level = "none"
 justification = ""
-notes = "[I] external far-call target from game/other units; ext_callers=2"
+notes = "renamed from System_rtl_0567 ([I] 0AF8:0567 sets mode $D7B1 (input) and runs System_OpenText (Reset of a Text file)); [I] external far-call target from game/other units; ext_callers=2"
 evidence = ["far-called from outside res00 (2 sites)"]
 
 [[routine]]
@@ -9810,12 +9810,12 @@ id = "0AF8:056C"
 unit = "res00"
 addr = "0AF8:056C"
 size = 5
-name = "System_rtl_056C"
+name = "System_RewriteText"
 signature = ""
 c_name = "System_rtl_056C"
 level = "none"
 justification = ""
-notes = "[I] external far-call target from game/other units; ext_callers=1"
+notes = "renamed from System_rtl_056C ([I] 0AF8:056C sets mode $D7B2 (output) and runs System_OpenText (Rewrite of a Text file)); [I] external far-call target from game/other units; ext_callers=1"
 evidence = ["far-called from outside res00 (1 sites)"]
 
 [[routine]]
@@ -9823,12 +9823,12 @@ id = "0AF8:0571"
 unit = "res00"
 addr = "0AF8:0571"
 size = 3
-name = "res00_fn_0571"
+name = "System_AppendText"
 signature = ""
 c_name = "res00_fn_0571"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res00_fn_0571 ([I] 0AF8:0571 sets mode $D7B3 and runs System_OpenText, then positions at the end of the file (Append of a Text file)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:0615; aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -9836,12 +9836,12 @@ id = "0AF8:0574"
 unit = "res00"
 addr = "0AF8:0574"
 size = 73
-name = "res00_fn_0574"
+name = "System_OpenText"
 signature = ""
 c_name = "res00_fn_0574"
 level = "none"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res00_fn_0574 ([I] 0AF8:0574 closes an open Text file, clears BufPos and BufEnd and calls the OpenFunc; error 102 when the file was never assigned); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -9849,12 +9849,12 @@ id = "0AF8:05BD"
 unit = "res00"
 addr = "0AF8:05BD"
 size = 4
-name = "res00_fn_05BD"
+name = "System_FlushText"
 signature = ""
 c_name = "res00_fn_05BD"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res00_fn_05BD ([I] 0AF8:05BD runs the body of System_CloseText with AL=0: flushes an output Text file without closing it (Flush)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:0661; aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -9862,12 +9862,12 @@ id = "0AF8:05C1"
 unit = "res00"
 addr = "0AF8:05C1"
 size = 2
-name = "System_rtl_05C1"
+name = "System_CloseText"
 signature = ""
 c_name = "System_rtl_05C1"
 level = "none"
 justification = ""
-notes = "[I] external far-call target from game/other units; ext_callers=1"
+notes = "renamed from System_rtl_05C1 ([I] 0AF8:05C1 flushes an output Text file through its InOutFunc and calls its CloseFunc; error 103 when it is not open (Close of a Text file); Halt closes Input and Output with it); [I] external far-call target from game/other units; ext_callers=1"
 evidence = ["far-called from outside res00 (1 sites)"]
 
 [[routine]]
@@ -9875,12 +9875,12 @@ id = "0AF8:05C3"
 unit = "res00"
 addr = "0AF8:05C3"
 size = 58
-name = "res00_fn_05C3"
+name = "System_FlushOrCloseText"
 signature = ""
 c_name = "res00_fn_05C3"
 level = "none"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res00_fn_05C3 ([I] 0AF8:05C3 shared body of System_FlushText and System_CloseText); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -9888,12 +9888,12 @@ id = "0AF8:05FD"
 unit = "res00"
 addr = "0AF8:05FD"
 size = 147
-name = "res00_fn_05FD"
+name = "System_CallTextFunc"
 signature = ""
 c_name = "res00_fn_05FD"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res00_fn_05FD ([I] 0AF8:05FD calls the TextRec function at the offset BX and stores a nonzero result in InOutRes); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -9901,12 +9901,12 @@ id = "0AF8:0690"
 unit = "res00"
 addr = "0AF8:0690"
 size = 232
-name = "res00_fn_0690"
+name = "System_TrimTextAtCtrlZ"
 signature = ""
 c_name = "res00_fn_0690"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res00_fn_0690 ([I] 0AF8:0690 reads the last 128 bytes of the file, finds Ctrl-Z ($1A) and truncates the file there (what Append does before it writes)); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -9914,12 +9914,12 @@ id = "0AF8:0778"
 unit = "res00"
 addr = "0AF8:0778"
 size = 36
-name = "res00_fn_0778"
+name = "System_TextReadBegin"
 signature = ""
 c_name = "res00_fn_0778"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res00_fn_0778 ([I] 0AF8:0778 checks the Text file is open for input (else error 104), loads buffer position, end and pointer); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -9927,12 +9927,12 @@ id = "0AF8:079C"
 unit = "res00"
 addr = "0AF8:079C"
 size = 28
-name = "res00_fn_079C"
+name = "System_TextReadByte"
 signature = ""
 c_name = "res00_fn_079C"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res00_fn_079C ([I] 0AF8:079C returns the next byte of the Text buffer in AL, refilling it through System_TextFillBuffer; carry and $1A at the end of the file); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -9940,12 +9940,12 @@ id = "0AF8:07B8"
 unit = "res00"
 addr = "0AF8:07B8"
 size = 36
-name = "res00_fn_07B8"
+name = "System_TextWriteBegin"
 signature = ""
 c_name = "res00_fn_07B8"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res00_fn_07B8 ([I] 0AF8:07B8 checks the Text file is open for output (else error 105), loads buffer position, size and pointer); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -9953,12 +9953,12 @@ id = "0AF8:07DC"
 unit = "res00"
 addr = "0AF8:07DC"
 size = 15
-name = "res00_fn_07DC"
+name = "System_TextWriteByte"
 signature = ""
 c_name = "res00_fn_07DC"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res00_fn_07DC ([I] 0AF8:07DC stores AL in the Text buffer and flushes it through System_TextFillBuffer when full); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -9966,12 +9966,12 @@ id = "0AF8:07EB"
 unit = "res00"
 addr = "0AF8:07EB"
 size = 49
-name = "res00_fn_07EB"
+name = "System_TextFillBuffer"
 signature = ""
 c_name = "res00_fn_07EB"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res00_fn_07EB ([I] 0AF8:07EB stores the buffer position and calls the InOutFunc of the TextRec (refill when reading, flush when writing)); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -9979,12 +9979,12 @@ id = "0AF8:081C"
 unit = "res00"
 addr = "0AF8:081C"
 size = 46
-name = "System_rtl_081C"
+name = "System_ReadLn"
 signature = ""
 c_name = "System_rtl_081C"
 level = "none"
 justification = ""
-notes = "[I] external far-call target from game/other units; ext_callers=5"
+notes = "renamed from System_rtl_081C ([I] 0AF8:081C reads bytes until CR (and skips LF) or Ctrl-Z, then flushes (ReadLn of a Text file; res08_init and ReadSavedCharacterList)); [I] external far-call target from game/other units; ext_callers=5"
 evidence = ["far-called from outside res00 (5 sites)"]
 
 [[routine]]
@@ -9992,12 +9992,12 @@ id = "0AF8:084A"
 unit = "res00"
 addr = "0AF8:084A"
 size = 36
-name = "System_rtl_084A"
+name = "System_WriteLn"
 signature = ""
 c_name = "System_rtl_084A"
 level = "none"
 justification = ""
-notes = "[I] external far-call target from game/other units; ext_callers=5"
+notes = "renamed from System_rtl_084A ([I] 0AF8:084A writes CR and LF to a Text file and flushes (WriteLn)); [I] external far-call target from game/other units; ext_callers=5"
 evidence = ["far-called from outside res00 (5 sites)"]
 
 [[routine]]
@@ -10005,12 +10005,12 @@ id = "0AF8:086E"
 unit = "res00"
 addr = "0AF8:086E"
 size = 13
-name = "res00_fn_086E"
+name = "System_TextEnd"
 signature = ""
 c_name = "res00_fn_086E"
 level = "none"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res00_fn_086E ([I] 0AF8:086E calls the FlushFunc of the TextRec when it has one (the end of a Read or Write list)); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -10018,12 +10018,12 @@ id = "0AF8:087B"
 unit = "res00"
 addr = "0AF8:087B"
 size = 29
-name = "res00_fn_087B"
+name = "System_TextCallFlush"
 signature = ""
 c_name = "res00_fn_087B"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res00_fn_087B ([I] 0AF8:087B calls the FlushFunc at +$18 when it is set and InOutRes is 0); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -10031,12 +10031,12 @@ id = "0AF8:0898"
 unit = "res00"
 addr = "0AF8:0898"
 size = 31
-name = "System_rtl_0898"
+name = "System_ReadChar"
 signature = ""
 c_name = "System_rtl_0898"
 level = "none"
 justification = ""
-notes = "[I] external far-call target from game/other units; ext_callers=3"
+notes = "renamed from System_rtl_0898 ([I] 0AF8:0898 returns the next byte of a Text file in AL (Read(F, Ch)); res08_init reads CfgChar with it); [I] external far-call target from game/other units; ext_callers=3"
 evidence = ["far-called from outside res00 (3 sites)"]
 
 [[routine]]
@@ -10044,12 +10044,12 @@ id = "0AF8:08B7"
 unit = "res00"
 addr = "0AF8:08B7"
 size = 42
-name = "res00_fn_08B7"
+name = "System_WriteChar"
 signature = ""
 c_name = "res00_fn_08B7"
 level = "none"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res00_fn_08B7 ([I] 0AF8:08B7 writes a Char padded with spaces to the width (Write(F, Ch:Width))); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -10057,12 +10057,12 @@ id = "0AF8:08E1"
 unit = "res00"
 addr = "0AF8:08E1"
 size = 56
-name = "System_rtl_08E1"
+name = "System_ReadString"
 signature = ""
 c_name = "System_rtl_08E1"
 level = "none"
 justification = ""
-notes = "[I] external far-call target from game/other units; ext_callers=2"
+notes = "renamed from System_rtl_08E1 ([I] 0AF8:08E1 reads up to the maximum length of a string variable until CR or Ctrl-Z (Read(F, S))); [I] external far-call target from game/other units; ext_callers=2"
 evidence = ["far-called from outside res00 (2 sites)"]
 
 [[routine]]
@@ -10070,12 +10070,12 @@ id = "0AF8:0919"
 unit = "res00"
 addr = "0AF8:0919"
 size = 62
-name = "System_rtl_0919"
+name = "System_WriteString"
 signature = ""
 c_name = "System_rtl_0919"
 level = "none"
 justification = ""
-notes = "[I] external far-call target from game/other units; ext_callers=6"
+notes = "renamed from System_rtl_0919 ([I] 0AF8:0919 writes a string padded to the width (Write(F, S:Width))); [I] external far-call target from game/other units; ext_callers=6"
 evidence = ["far-called from outside res00 (6 sites)"]
 
 [[routine]]
@@ -10083,12 +10083,12 @@ id = "0AF8:0957"
 unit = "res00"
 addr = "0AF8:0957"
 size = 88
-name = "res00_fn_0957"
+name = "System_ReadLong"
 signature = ""
 c_name = "res00_fn_0957"
 level = "none"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res00_fn_0957 ([I] 0AF8:0957 skips blanks, collects up to 32 characters and converts them with System_ParseNumber, InOutRes 106 when invalid (Read(F, L) of a LongInt)); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -10096,12 +10096,12 @@ id = "0AF8:09AF"
 unit = "res00"
 addr = "0AF8:09AF"
 size = 73
-name = "System_rtl_09AF"
+name = "System_WriteLong"
 signature = ""
 c_name = "System_rtl_09AF"
 level = "none"
 justification = ""
-notes = "[I] external far-call target from game/other units; ext_callers=1"
+notes = "renamed from System_rtl_09AF ([I] 0AF8:09AF converts a LongInt with System_LongToDecimal and writes it padded to the width (Write(F, L:Width))); [I] external far-call target from game/other units; ext_callers=1"
 evidence = ["far-called from outside res00 (1 sites)"]
 
 [[routine]]
@@ -10109,12 +10109,12 @@ id = "0AF8:09F8"
 unit = "res00"
 addr = "0AF8:09F8"
 size = 4
-name = "res00_fn_09F8"
+name = "System_SeekEoln"
 signature = ""
 c_name = "res00_fn_09F8"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res00_fn_09F8 ([I] 0AF8:09F8 loads CL=3 and scans: skips blanks and stops at CR (SeekEoln)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:0B87; aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -10122,12 +10122,12 @@ id = "0AF8:09FC"
 unit = "res00"
 addr = "0AF8:09FC"
 size = 4
-name = "res00_fn_09FC"
+name = "System_SeekEof"
 signature = ""
 c_name = "res00_fn_09FC"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res00_fn_09FC ([I] 0AF8:09FC loads CL=2 and scans: skips blanks, stops at Ctrl-Z (SeekEof)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:0B8B; aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -10135,12 +10135,12 @@ id = "0AF8:0A00"
 unit = "res00"
 addr = "0AF8:0A00"
 size = 4
-name = "res00_fn_0A00"
+name = "System_Eoln"
 signature = ""
 c_name = "res00_fn_0A00"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res00_fn_0A00 ([I] 0AF8:0A00 loads CL=1 and scans: true at CR or Ctrl-Z (Eoln)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:0B8F; aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -10148,12 +10148,12 @@ id = "0AF8:0A04"
 unit = "res00"
 addr = "0AF8:0A04"
 size = 2
-name = "res00_fn_0A04"
+name = "System_Eof"
 signature = ""
 c_name = "res00_fn_0A04"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res00_fn_0A04 ([I] 0AF8:0A04 loads CL=0 and scans: true at Ctrl-Z (Eof of a Text file)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:0B93; aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -10161,12 +10161,12 @@ id = "0AF8:0A06"
 unit = "res00"
 addr = "0AF8:0A06"
 size = 57
-name = "res00_fn_0A06"
+name = "System_TextScan"
 signature = ""
 c_name = "res00_fn_0A06"
 level = "none"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res00_fn_0A06 ([I] 0AF8:0A06 shared body of Eof, Eoln, SeekEof and SeekEoln: CL bit 0 stops at CR, bit 1 skips blanks); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -10174,12 +10174,12 @@ id = "0AF8:0A3F"
 unit = "res00"
 addr = "0AF8:0A3F"
 size = 28
-name = "System_MemOp_0A3F"
+name = "System_CopyBlock"
 signature = ""
 c_name = "System_MemOp_0A3F"
 level = "none"
 justification = ""
-notes = "[I] rep movsb; external callee; ext_callers=6"
+notes = "renamed from System_MemOp_0A3F ([I] 0AF8:0A3F copies CX bytes from one far pointer to another with rep movsb, no overlap handling (record and array assignment); six callers in the game); [I] rep movsb; external callee; ext_callers=6"
 evidence = ["far-called from outside res00 (6 sites)"]
 
 [[routine]]
@@ -10187,12 +10187,12 @@ id = "0AF8:0A5B"
 unit = "res00"
 addr = "0AF8:0A5B"
 size = 27
-name = "System_rtl_0A5B"
+name = "System_LongMul"
 signature = ""
 c_name = "System_rtl_0A5B"
 level = "none"
 justification = ""
-notes = "[I] external far-call target from game/other units; ext_callers=7"
+notes = "renamed from System_rtl_0A5B ([I] 0AF8:0A5B multiplies two 32-bit values (DX:AX by CX:BX) into DX:AX (LongInt multiply, no overflow check)); [I] external far-call target from game/other units; ext_callers=7"
 evidence = ["far-called from outside res00 (7 sites)"]
 
 [[routine]]
@@ -10200,12 +10200,12 @@ id = "0AF8:0A76"
 unit = "res00"
 addr = "0AF8:0A76"
 size = 110
-name = "res00_fn_0A76"
+name = "System_LongDivMod"
 signature = ""
 c_name = "res00_fn_0A76"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res00_fn_0A76 ([I] 0AF8:0A76 signed 32-bit division: quotient in DX:AX, remainder in BX:CX, run error 200 on a zero divisor (div and mod of a LongInt)); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -10213,12 +10213,12 @@ id = "0AF8:0AE4"
 unit = "res00"
 addr = "0AF8:0AE4"
 size = 12
-name = "res00_fn_0AE4"
+name = "System_LongShr"
 signature = ""
 c_name = "res00_fn_0AE4"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res00_fn_0AE4 ([I] 0AF8:0AE4 shifts DX:AX right by CL (shr on a LongInt)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:0C73; aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -10226,12 +10226,12 @@ id = "0AF8:0AF0"
 unit = "res00"
 addr = "0AF8:0AF0"
 size = 12
-name = "res00_fn_0AF0"
+name = "System_LongShl"
 signature = ""
 c_name = "res00_fn_0AF0"
 level = "none"
 justification = ""
-notes = "auto:forced; size 12 (was 27, the gap to 0B0B): the original calls 0AF8:0AFC as a routine entry (ovl16:43D2), so 0AFC is a second routine in the span, not part of this one"
+notes = "renamed from res00_fn_0AF0 ([I] 0AF8:0AF0 shifts DX:AX left by CL (shl on a LongInt)); auto:forced; size 12 (was 27, the gap to 0B0B): the original calls 0AF8:0AFC as a routine entry (ovl16:43D2), so 0AFC is a second routine in the span, not part of this one"
 evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:0C7F; aligned by make tp-compare, confirmed by runtime_entries", "tools/re/tp_idioms/ovl16/PAYPRB2.PAS"]
 
 [[routine]]
@@ -10239,12 +10239,12 @@ id = "0AF8:0AFC"
 unit = "res00"
 addr = "0AF8:0AFC"
 size = 15
-name = "res00_fn_0AFC"
+name = "System_LongAbs"
 signature = ""
 c_name = "res00_fn_0AFC"
 level = "none"
 justification = ""
-notes = "Abs of a LongInt: `Amount := Abs(Amount)` compiles to lcall 0AF8:0AFC (tools/re/tp_idioms/ovl16/PAYPRB2.PAS, the probe longint Abs call; ovl16:43D2 calls it the same way with the value in ax:dx and stores ax:dx). The entry was missing because tools/re/rtl_ident.py scans only poolrad/start-unpack.exe for far calls, and the call at ovl16:43D2 is in an overlay (GAME.OVR)"
+notes = "renamed from res00_fn_0AFC ([I] 0AF8:0AFC negates DX:AX when negative (Abs of a LongInt; probe tools/re/tp_idioms/ovl16)); Abs of a LongInt: `Amount := Abs(Amount)` compiles to lcall 0AF8:0AFC (tools/re/tp_idioms/ovl16/PAYPRB2.PAS, the probe longint Abs call; ovl16:43D2 calls it the same way with the value in ax:dx and stores ax:dx). The entry was missing because tools/re/rtl_ident.py scans only poolrad/start-unpack.exe for far calls, and the call at ovl16:43D2 is in an overlay (GAME.OVR)"
 evidence = ["far-called from outside res00 (1 site: ovl16:43D2)", "tools/re/tp_idioms/ovl16/PAYPRB2.PAS"]
 
 [[routine]]
@@ -10278,12 +10278,12 @@ id = "0AF8:0B57"
 unit = "res00"
 addr = "0AF8:0B57"
 size = 65
-name = "System_rtl_0B57"
+name = "System_Copy"
 signature = ""
 c_name = "System_rtl_0B57"
 level = "none"
 justification = ""
-notes = "[I] string helper family"
+notes = "renamed from System_rtl_0B57 ([I] 0AF8:0B57 copies Count characters from Index of a string into a result string, both clamped (Copy)); [I] string helper family"
 evidence = ["hand-verified System entry"]
 
 [[routine]]
@@ -10304,12 +10304,12 @@ id = "0AF8:0BC4"
 unit = "res00"
 addr = "0AF8:0BC4"
 size = 76
-name = "res00_fn_0BC4"
+name = "System_Pos"
 signature = ""
 c_name = "res00_fn_0BC4"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res00_fn_0BC4 ([I] 0AF8:0BC4 searches a substring in a string with repe cmpsb and returns the 1-based index or 0 (Pos)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:0D53; aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -10330,12 +10330,12 @@ id = "0AF8:0C3B"
 unit = "res00"
 addr = "0AF8:0C3B"
 size = 45
-name = "System_MemOp_0C3B"
+name = "System_CharToString"
 signature = ""
 c_name = "System_MemOp_0C3B"
 level = "none"
 justification = ""
-notes = "[I] rep movsb; external callee; ext_callers=4"
+notes = "renamed from System_MemOp_0C3B ([I] 0AF8:0C3B stores length 1 and the character in a string (Char to String conversion, four callers)); [I] rep movsb; external callee; ext_callers=4"
 evidence = ["far-called from outside res00 (4 sites)"]
 
 [[routine]]
@@ -10343,12 +10343,12 @@ id = "0AF8:0C68"
 unit = "res00"
 addr = "0AF8:0C68"
 size = 84
-name = "res00_fn_0C68"
+name = "System_Insert"
 signature = ""
 c_name = "res00_fn_0C68"
 level = "none"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res00_fn_0C68 ([I] 0AF8:0C68 builds the result in a 256-byte temporary from Copy parts and the inserted string (Insert); EditCharacterIcon); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -10356,12 +10356,12 @@ id = "0AF8:0CBC"
 unit = "res00"
 addr = "0AF8:0CBC"
 size = 86
-name = "System_rtl_0CBC"
+name = "System_Delete"
 signature = ""
 c_name = "System_rtl_0CBC"
 level = "none"
 justification = ""
-notes = "[I] external far-call target from game/other units; ext_callers=1"
+notes = "renamed from System_rtl_0CBC ([I] 0AF8:0CBC removes Count characters from Index of a string using two Copy temporaries, nothing when Count is 0 or less (Delete)); [I] external far-call target from game/other units; ext_callers=1"
 evidence = ["far-called from outside res00 (1 sites)"]
 
 [[routine]]
@@ -10369,12 +10369,12 @@ id = "0AF8:0D12"
 unit = "res00"
 addr = "0AF8:0D12"
 size = 57
-name = "System_MemOp_0D12"
+name = "System_SetFromBytes"
 signature = ""
 c_name = "System_MemOp_0D12"
 level = "none"
 justification = ""
-notes = "[I] rep movsb; external callee; ext_callers=3"
+notes = "renamed from System_MemOp_0D12 ([I] 0AF8:0D12 builds a 32-byte set from BH zero bytes, BL data bytes and zero padding (a set constructor with constant bytes; ShowPagedText)); [I] rep movsb; external callee; ext_callers=3"
 evidence = ["far-called from outside res00 (3 sites)"]
 
 [[routine]]
@@ -10382,12 +10382,12 @@ id = "0AF8:0D4B"
 unit = "res00"
 addr = "0AF8:0D4B"
 size = 85
-name = "res00_fn_0D4B"
+name = "System_SetInclude"
 signature = ""
 c_name = "res00_fn_0D4B"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res00_fn_0D4B ([I] 0AF8:0D4B sets bit AL of a 32-byte set (Include and the set constructor)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:0EDA; aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -10395,12 +10395,12 @@ id = "0AF8:0DA0"
 unit = "res00"
 addr = "0AF8:0DA0"
 size = 32
-name = "res00_fn_0DA0"
+name = "System_SetSliceCopy"
 signature = ""
 c_name = "res00_fn_0DA0"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res00_fn_0DA0 ([I] 0AF8:0DA0 copies BL bytes starting BH bytes into a source set to the destination); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:0F2F; aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -10421,12 +10421,12 @@ id = "0AF8:0DE1"
 unit = "res00"
 addr = "0AF8:0DE1"
 size = 28
-name = "res00_fn_0DE1"
+name = "System_SetUnion"
 signature = ""
 c_name = "res00_fn_0DE1"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res00_fn_0DE1 ([I] 0AF8:0DE1 ORs two 32-byte sets word by word (set +)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:0F70; aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -10434,12 +10434,12 @@ id = "0AF8:0DFD"
 unit = "res00"
 addr = "0AF8:0DFD"
 size = 30
-name = "res00_fn_0DFD"
+name = "System_SetDifference"
 signature = ""
 c_name = "res00_fn_0DFD"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res00_fn_0DFD ([I] 0AF8:0DFD clears in the destination the bits of the source (set -)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:0F8C; aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -10447,12 +10447,12 @@ id = "0AF8:0E1B"
 unit = "res00"
 addr = "0AF8:0E1B"
 size = 28
-name = "res00_fn_0E1B"
+name = "System_SetIntersection"
 signature = ""
 c_name = "res00_fn_0E1B"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res00_fn_0E1B ([I] 0AF8:0E1B ANDs two 32-byte sets (set *)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:0FAA; aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -10460,12 +10460,12 @@ id = "0AF8:0E37"
 unit = "res00"
 addr = "0AF8:0E37"
 size = 23
-name = "res00_fn_0E37"
+name = "System_SetEqual"
 signature = ""
 c_name = "res00_fn_0E37"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res00_fn_0E37 ([I] 0AF8:0E37 compares two 32-byte sets with repe cmpsw, result in ZF (set =)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:0FC6; aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -10473,12 +10473,12 @@ id = "0AF8:0E4E"
 unit = "res00"
 addr = "0AF8:0E4E"
 size = 30
-name = "res00_fn_0E4E"
+name = "System_SetSubset"
 signature = ""
 c_name = "res00_fn_0E4E"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res00_fn_0E4E ([I] 0AF8:0E4E tests that the source ORed into the destination equals the destination (set <=)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:0FDD; aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -10486,12 +10486,12 @@ id = "0AF8:0E6C"
 unit = "res00"
 addr = "0AF8:0E6C"
 size = 4
-name = "res00_fn_0E6C"
+name = "System_RealSubCore"
 signature = ""
 c_name = "res00_fn_0E6C"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res00_fn_0E6C ([I] 0AF8:0E6C flips the sign of the second Real48 and falls into System_RealAddCore); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -10499,12 +10499,12 @@ id = "0AF8:0E70"
 unit = "res00"
 addr = "0AF8:0E70"
 size = 195
-name = "res00_fn_0E70"
+name = "System_RealAddCore"
 signature = ""
 c_name = "res00_fn_0E70"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res00_fn_0E70 ([I] 0AF8:0E70 adds two Real48 numbers (exponent in AL and CL), shifting the smaller mantissa; carry on overflow); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -10512,12 +10512,12 @@ id = "0AF8:0F33"
 unit = "res00"
 addr = "0AF8:0F33"
 size = 261
-name = "res00_fn_0F33"
+name = "System_RealMulCore"
 signature = ""
 c_name = "res00_fn_0F33"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res00_fn_0F33 ([I] 0AF8:0F33 multiplies two Real48 numbers (exponents added, mantissas multiplied); carry on overflow); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -10525,12 +10525,12 @@ id = "0AF8:1038"
 unit = "res00"
 addr = "0AF8:1038"
 size = 119
-name = "res00_fn_1038"
+name = "System_RealDivCore"
 signature = ""
 c_name = "res00_fn_1038"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res00_fn_1038 ([I] 0AF8:1038 divides two Real48 numbers (exponents subtracted, mantissa long division); carry on overflow); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -10538,12 +10538,12 @@ id = "0AF8:10AF"
 unit = "res00"
 addr = "0AF8:10AF"
 size = 23
-name = "res00_fn_10AF"
+name = "System_RealCompareCore"
 signature = ""
 c_name = "res00_fn_10AF"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res00_fn_10AF ([I] 0AF8:10AF compares two Real48 numbers by sign, exponent and mantissa and leaves the result in the flags); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -10551,12 +10551,12 @@ id = "0AF8:10C6"
 unit = "res00"
 addr = "0AF8:10C6"
 size = 19
-name = "res00_fn_10C6"
+name = "System_RealEqualBody"
 signature = ""
 c_name = "res00_fn_10C6"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res00_fn_10C6 ([I] 0AF8:10C6 compares exponent and mantissa words of two Real48 numbers for equality); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -10564,12 +10564,12 @@ id = "0AF8:10D9"
 unit = "res00"
 addr = "0AF8:10D9"
 size = 63
-name = "res00_fn_10D9"
+name = "System_LongToRealCore"
 signature = ""
 c_name = "res00_fn_10D9"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res00_fn_10D9 ([I] 0AF8:10D9 converts the LongInt in DX:AX to a Real48 (normalises, exponent from $80 up)); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -10577,12 +10577,12 @@ id = "0AF8:1118"
 unit = "res00"
 addr = "0AF8:1118"
 size = 92
-name = "res00_fn_1118"
+name = "System_RealToLongCore"
 signature = ""
 c_name = "res00_fn_1118"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res00_fn_1118 ([I] 0AF8:1118 converts a Real48 to a LongInt, rounding when CH is 1; carry when out of range (error 207)); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -10590,12 +10590,12 @@ id = "0AF8:1174"
 unit = "res00"
 addr = "0AF8:1174"
 size = 6
-name = "res00_fn_1174"
+name = "System_RealAdd"
 signature = ""
 c_name = "res00_fn_1174"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res00_fn_1174 ([I] 0AF8:1174 far entry: calls System_RealAddCore, run error 205 on overflow (Real +)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:1303; aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -10603,12 +10603,12 @@ id = "0AF8:117A"
 unit = "res00"
 addr = "0AF8:117A"
 size = 6
-name = "res00_fn_117A"
+name = "System_RealSub"
 signature = ""
 c_name = "res00_fn_117A"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res00_fn_117A ([I] 0AF8:117A far entry: calls System_RealSubCore, run error 205 on overflow (Real -)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:1309; aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -10616,12 +10616,12 @@ id = "0AF8:1180"
 unit = "res00"
 addr = "0AF8:1180"
 size = 6
-name = "res00_fn_1180"
+name = "System_RealSqr"
 signature = ""
 c_name = "res00_fn_1180"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res00_fn_1180 ([I] 0AF8:1180 copies the Real48 operand into the second operand registers and multiplies (Sqr)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:130F; aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -10629,12 +10629,12 @@ id = "0AF8:1186"
 unit = "res00"
 addr = "0AF8:1186"
 size = 6
-name = "res00_fn_1186"
+name = "System_RealMul"
 signature = ""
 c_name = "res00_fn_1186"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res00_fn_1186 ([I] 0AF8:1186 far entry: calls System_RealMulCore, run error 205 on overflow (Real *); ScaleMoney calls it); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:1315; aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -10642,12 +10642,12 @@ id = "0AF8:118C"
 unit = "res00"
 addr = "0AF8:118C"
 size = 10
-name = "res00_fn_118C"
+name = "System_RealDiv"
 signature = ""
 c_name = "res00_fn_118C"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res00_fn_118C ([I] 0AF8:118C far entry: run error 200 on a zero divisor, else System_RealDivCore (Real /); LoseMoneyAndItemsCommand calls it); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:131B; aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -10655,12 +10655,12 @@ id = "0AF8:1196"
 unit = "res00"
 addr = "0AF8:1196"
 size = 4
-name = "res00_fn_1196"
+name = "System_RealCompare"
 signature = ""
 c_name = "res00_fn_1196"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res00_fn_1196 ([I] 0AF8:1196 far entry: calls System_RealCompareCore (Real compare)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:1325; aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -10668,12 +10668,12 @@ id = "0AF8:119A"
 unit = "res00"
 addr = "0AF8:119A"
 size = 4
-name = "res00_fn_119A"
+name = "System_LongToReal"
 signature = ""
 c_name = "res00_fn_119A"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res00_fn_119A ([I] 0AF8:119A far entry: converts a LongInt to Real48 through System_LongToRealCore (the compiler's implicit conversion; RandomCommand, ScaleMoney)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:1329; aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -10681,12 +10681,12 @@ id = "0AF8:119E"
 unit = "res00"
 addr = "0AF8:119E"
 size = 8
-name = "res00_fn_119E"
+name = "System_RealTrunc"
 signature = ""
 c_name = "res00_fn_119E"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res00_fn_119E ([I] 0AF8:119E far entry: converts with truncation, run error 207 when out of range (Trunc)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:132D; aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -10694,12 +10694,12 @@ id = "0AF8:11A6"
 unit = "res00"
 addr = "0AF8:11A6"
 size = 26
-name = "res00_fn_11A6"
+name = "System_RealRound"
 signature = ""
 c_name = "res00_fn_11A6"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res00_fn_11A6 ([I] 0AF8:11A6 far entry: converts with rounding, run error 207 when out of range (Round)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:1335; aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -10720,12 +10720,12 @@ id = "0AF8:11D6"
 unit = "res00"
 addr = "0AF8:11D6"
 size = 57
-name = "res00_fn_11D6"
+name = "System_RandomReal"
 signature = ""
 c_name = "res00_fn_11D6"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res00_fn_11D6 ([I] 0AF8:11D6 steps RandSeed and returns a Real48 in [0, 1) (Random without an argument)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:17D8; aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -10759,12 +10759,12 @@ id = "0AF8:1254"
 unit = "res00"
 addr = "0AF8:1254"
 size = 112
-name = "res00_fn_1254"
+name = "System_LongToDecimal"
 signature = ""
 c_name = "res00_fn_1254"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res00_fn_1254 ([I] 0AF8:1254 writes the signed decimal text of DX:AX at ES:DI and returns its length in CX (used by Str and Write of a LongInt)); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -10772,12 +10772,12 @@ id = "0AF8:12C4"
 unit = "res00"
 addr = "0AF8:12C4"
 size = 10
-name = "res00_fn_12C4"
+name = "System_DecimalPowersTable"
 signature = ""
 c_name = "res00_fn_12C4"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res00_fn_12C4 ([I] 0AF8:12C4 the table of powers of ten 10^9 down to 1 that System_LongToDecimal divides by (data, not code)); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -10785,12 +10785,12 @@ id = "0AF8:12CE"
 unit = "res00"
 addr = "0AF8:12CE"
 size = 152
-name = "res00_fn_12CE"
+name = "System_ParseNumber"
 signature = ""
 c_name = "res00_fn_12CE"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res00_fn_12CE ([I] 0AF8:12CE converts the characters at ES:DI (count CX) to a LongInt in DX:AX, with an optional sign and a $ for hex; carry or CX nonzero when invalid); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -10798,12 +10798,12 @@ id = "0AF8:1366"
 unit = "res00"
 addr = "0AF8:1366"
 size = 75
-name = "System_Str_Format"
+name = "System_StrLong"
 signature = ""
 c_name = "System_Str_Format"
 level = "none"
 justification = ""
-notes = "[I] builds Pascal string with padding/spaces"
+notes = "renamed from System_Str_Format ([I] 0AF8:1366 builds a string from a LongInt through System_LongToDecimal, padded to the width and clamped to the string size (Str(L:Width, S))); [I] builds Pascal string with padding/spaces"
 evidence = ["hand-verified System entry"]
 
 [[routine]]
@@ -10811,12 +10811,12 @@ id = "0AF8:13B1"
 unit = "res00"
 addr = "0AF8:13B1"
 size = 49
-name = "System_rtl_13B1"
+name = "System_ValLong"
 signature = ""
 c_name = "System_rtl_13B1"
 level = "none"
 justification = ""
-notes = "[I] external far-call target from game/other units; ext_callers=1"
+notes = "renamed from System_rtl_13B1 ([I] 0AF8:13B1 skips leading blanks, converts a string with System_ParseNumber and stores the failing position or 0 in Code (Val(S, L, Code)); ReadAmount and ReadNumber); [I] external far-call target from game/other units; ext_callers=1"
 evidence = ["far-called from outside res00 (1 sites)"]
 
 [[routine]]
@@ -10850,12 +10850,12 @@ id = "0AF8:1419"
 unit = "res00"
 addr = "0AF8:1419"
 size = 6
-name = "res00_fn_1419"
+name = "System_Rewrite"
 signature = ""
 c_name = "res00_fn_1419"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res00_fn_1419 ([I] 0AF8:1419 loads AH=3Ch (create) and runs the body of System_Reset (Rewrite of a typed or untyped file); SaveCharacter and SaveGame); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:1DF8; aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -10863,12 +10863,12 @@ id = "0AF8:141F"
 unit = "res00"
 addr = "0AF8:141F"
 size = 86
-name = "res00_fn_141F"
+name = "System_OpenFile"
 signature = ""
 c_name = "res00_fn_141F"
 level = "none"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res00_fn_141F ([I] 0AF8:141F shared body of Reset and Rewrite: closes an open file, passes the name at +$30 to INT 21h and stores the handle); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -10876,12 +10876,12 @@ id = "0AF8:1475"
 unit = "res00"
 addr = "0AF8:1475"
 size = 28
-name = "res00_fn_1475"
+name = "System_Truncate"
 signature = ""
 c_name = "res00_fn_1475"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res00_fn_1475 ([I] 0AF8:1475 writes zero bytes at the current position, which cuts the file there (Truncate)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:1E54; aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -10902,12 +10902,12 @@ id = "0AF8:14B6"
 unit = "res00"
 addr = "0AF8:14B6"
 size = 15
-name = "res00_fn_14B6"
+name = "System_CheckFileOpen"
 signature = ""
 c_name = "res00_fn_14B6"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res00_fn_14B6 ([I] 0AF8:14B6 sets InOutRes 103 unless the file mode is $D7B3 (open)); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -10915,12 +10915,12 @@ id = "0AF8:14C5"
 unit = "res00"
 addr = "0AF8:14C5"
 size = 7
-name = "res00_fn_14C5"
+name = "System_ReadRecord"
 signature = ""
 c_name = "res00_fn_14C5"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res00_fn_14C5 ([I] 0AF8:14C5 loads INT 21h AH=3Fh and error 100, runs System_RecordTransfer (Read(F, Rec) of a typed file)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:1EA4; aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -10928,12 +10928,12 @@ id = "0AF8:14CC"
 unit = "res00"
 addr = "0AF8:14CC"
 size = 5
-name = "res00_fn_14CC"
+name = "System_WriteRecord"
 signature = ""
 c_name = "res00_fn_14CC"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res00_fn_14CC ([I] 0AF8:14CC loads INT 21h AH=40h and error 101, runs System_RecordTransfer (Write(F, Rec) of a typed file)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:1EAB; aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -10941,12 +10941,12 @@ id = "0AF8:14D1"
 unit = "res00"
 addr = "0AF8:14D1"
 size = 42
-name = "res00_fn_14D1"
+name = "System_RecordTransfer"
 signature = ""
 c_name = "res00_fn_14D1"
 level = "none"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res00_fn_14D1 ([I] 0AF8:14D1 moves one record (RecSize at +4) with INT 21h and stores error 100 or 101 when the byte count differs); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -10980,12 +10980,12 @@ id = "0AF8:1507"
 unit = "res00"
 addr = "0AF8:1507"
 size = 92
-name = "res00_fn_1507"
+name = "System_BlockTransfer"
 signature = ""
 c_name = "res00_fn_1507"
 level = "none"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res00_fn_1507 ([I] 0AF8:1507 shared body of BlockRead and BlockWrite: record count times RecSize, result count divided back); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -10993,12 +10993,12 @@ id = "0AF8:1563"
 unit = "res00"
 addr = "0AF8:1563"
 size = 48
-name = "System_rtl_1563"
+name = "System_Seek"
 signature = ""
 c_name = "System_rtl_1563"
 level = "none"
 justification = ""
-notes = "[I] file I/O helper; INT 21h"
+notes = "renamed from System_rtl_1563 ([I] 0AF8:1563 multiplies the record number by RecSize and moves the file pointer with INT 21h AX=4200h (Seek)); [I] file I/O helper; INT 21h"
 evidence = ["hand-verified System entry"]
 
 [[routine]]
@@ -11006,12 +11006,12 @@ id = "0AF8:1593"
 unit = "res00"
 addr = "0AF8:1593"
 size = 23
-name = "System_rtl_1593"
+name = "System_FileSize"
 signature = ""
 c_name = "System_rtl_1593"
 level = "none"
 justification = ""
-notes = "[I] external far-call target from game/other units; ext_callers=1"
+notes = "renamed from System_rtl_1593 ([I] 0AF8:1593 returns the file length in records: size from System_FileSizeAndPos divided by RecSize (FileSize); LoadDaxBlock); [I] external far-call target from game/other units; ext_callers=1"
 evidence = ["far-called from outside res00 (1 sites)"]
 
 [[routine]]
@@ -11019,12 +11019,12 @@ id = "0AF8:15AA"
 unit = "res00"
 addr = "0AF8:15AA"
 size = 27
-name = "res00_fn_15AA"
+name = "System_FilePos"
 signature = ""
 c_name = "res00_fn_15AA"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res00_fn_15AA ([I] 0AF8:15AA returns the file position in records: position from System_FileSizeAndPos divided by RecSize (FilePos)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:1F89; aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -11032,12 +11032,12 @@ id = "0AF8:15C5"
 unit = "res00"
 addr = "0AF8:15C5"
 size = 21
-name = "res00_fn_15C5"
+name = "System_FileEof"
 signature = ""
 c_name = "res00_fn_15C5"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res00_fn_15C5 ([I] 0AF8:15C5 true when the file position is not below the size (Eof of a typed or untyped file); LoadCharacterFile); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:1FA4; aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -11045,12 +11045,12 @@ id = "0AF8:15DA"
 unit = "res00"
 addr = "0AF8:15DA"
 size = 69
-name = "res00_fn_15DA"
+name = "System_FileSizeAndPos"
 signature = ""
 c_name = "res00_fn_15DA"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res00_fn_15DA ([I] 0AF8:15DA gets the position and the size with INT 21h AX=4201h and 4202h and restores the position); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -11058,12 +11058,12 @@ id = "0AF8:161F"
 unit = "res00"
 addr = "0AF8:161F"
 size = 23
-name = "res00_fn_161F"
+name = "System_Erase"
 signature = ""
 c_name = "res00_fn_161F"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res00_fn_161F ([I] 0AF8:161F deletes the file named at +$30 with INT 21h AH=41h (Erase)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:1FFE; aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -11071,12 +11071,12 @@ id = "0AF8:1636"
 unit = "res00"
 addr = "0AF8:1636"
 size = 79
-name = "res00_fn_1636"
+name = "System_Rename"
 signature = ""
 c_name = "res00_fn_1636"
 level = "none"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res00_fn_1636 ([I] 0AF8:1636 renames the file named at +$30 with INT 21h AH=56h (Rename)); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -11123,12 +11123,12 @@ id = "0AF8:170B"
 unit = "res00"
 addr = "0AF8:170B"
 size = 7
-name = "res00_fn_170B"
+name = "System_ParamCount"
 signature = ""
 c_name = "res00_fn_170B"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res00_fn_170B ([I] 0AF8:170B counts the arguments of the PSP command tail with System_ParseCommandLine (ParamCount)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls SYSTEM:20EA; aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -11136,12 +11136,12 @@ id = "0AF8:1712"
 unit = "res00"
 addr = "0AF8:1712"
 size = 50
-name = "res00_fn_1712"
+name = "System_ParseCommandLine"
 signature = ""
 c_name = "res00_fn_1712"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res00_fn_1712 ([I] 0AF8:1712 scans the PSP command tail at PSP:80h for DX blank separated arguments and returns the start in SI and the count in BX); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -11149,12 +11149,12 @@ id = "0AF8:1744"
 unit = "res00"
 addr = "0AF8:1744"
 size = 81
-name = "res00_fn_1744"
+name = "System_GetDir"
 signature = ""
 c_name = "res00_fn_1744"
 level = "none"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res00_fn_1744 ([I] 0AF8:1744 builds 'X:\\' plus the directory of INT 21h AH=47h into a string (GetDir)); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -11162,12 +11162,12 @@ id = "0AF8:1795"
 unit = "res00"
 addr = "0AF8:1795"
 size = 65
-name = "res00_fn_1795"
+name = "System_ChDir"
 signature = ""
 c_name = "res00_fn_1795"
 level = "none"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res00_fn_1795 ([I] 0AF8:1795 changes drive with INT 21h AH=0Eh when the path has a drive, then directory with AH=3Bh (ChDir)); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -11175,12 +11175,12 @@ id = "0AF8:17D6"
 unit = "res00"
 addr = "0AF8:17D6"
 size = 21
-name = "res00_fn_17D6"
+name = "System_MkDir"
 signature = ""
 c_name = "res00_fn_17D6"
 level = "none"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res00_fn_17D6 ([I] 0AF8:17D6 INT 21h AH=39h on the path (MkDir); CreateSaveDir calls it); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -11188,12 +11188,12 @@ id = "0AF8:17EB"
 unit = "res00"
 addr = "0AF8:17EB"
 size = 21
-name = "res00_fn_17EB"
+name = "System_RmDir"
 signature = ""
 c_name = "res00_fn_17EB"
 level = "none"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res00_fn_17EB ([I] 0AF8:17EB INT 21h AH=3Ah on the path (RmDir)); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -11201,12 +11201,12 @@ id = "0AF8:1800"
 unit = "res00"
 addr = "0AF8:1800"
 size = 27
-name = "res00_fn_1800"
+name = "System_PathToAsciiz"
 signature = ""
 c_name = "res00_fn_1800"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res00_fn_1800 ([I] 0AF8:1800 copies a string argument (at most 127 characters) to a zero terminated buffer on the stack); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -11214,12 +11214,12 @@ id = "0AF8:181B"
 unit = "res00"
 addr = "0AF8:181B"
 size = 15
-name = "res00_fn_181B"
+name = "System_DosPathCall"
 signature = ""
 c_name = "res00_fn_181B"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res00_fn_181B ([I] 0AF8:181B calls INT 21h with DS:DX at the path buffer and stores the error in InOutRes); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -11227,12 +11227,12 @@ id = "0AF8:182A"
 unit = "res00"
 addr = "0AF8:182A"
 size = 22
-name = "System_rtl_182A"
+name = "System_UpCase"
 signature = ""
 c_name = "System_rtl_182A"
 level = "none"
 justification = ""
-notes = "[I] external far-call target from game/other units; ext_callers=3"
+notes = "renamed from System_rtl_182A ([I] 0AF8:182A converts a to z to upper case and leaves other characters (UpCase)); [I] external far-call target from game/other units; ext_callers=3"
 evidence = ["far-called from outside res00 (3 sites)"]
 
 [[routine]]
@@ -11253,12 +11253,12 @@ id = "0A40:002E"
 unit = "res01"
 addr = "0A40:002E"
 size = 105
-name = "res01_fn_002E"
+name = "Crt_InitScreen"
 signature = ""
 c_name = "res01_fn_002E"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res01_fn_002E ([I] 0A40:002E reads the video mode (INT 10h AH=0Fh), sets text mode 3 unless it is 7 or at most 3, detects the screen size and stores TextAttr, CheckBreak, CheckEof and the snow flag; called by the Crt initialisation); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -11266,12 +11266,12 @@ id = "0A40:0097"
 unit = "res01"
 addr = "0A40:0097"
 size = 78
-name = "res01_fn_0097"
+name = "Crt_SetMode"
 signature = ""
 c_name = "res01_fn_0097"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res01_fn_0097 ([I] 0A40:0097 sets video mode AL (INT 10h AH=0), loads the 8x8 font (AX=1112h) when the high bit asks and notes the 43/50 line state at 40:87); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -11279,12 +11279,12 @@ id = "0A40:00E5"
 unit = "res01"
 addr = "0A40:00E5"
 size = 94
-name = "res01_fn_00E5"
+name = "Crt_DetectWindow"
 signature = ""
 c_name = "res01_fn_00E5"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res01_fn_00E5 ([I] 0A40:00E5 reads the mode and the last row (INT 10h AX=1130h), stores LastMode and the full window WindMin/WindMax); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -11292,12 +11292,12 @@ id = "0A40:0143"
 unit = "res01"
 addr = "0A40:0143"
 size = 40
-name = "res01_fn_0143"
+name = "Crt_CheckBreak"
 signature = ""
 c_name = "res01_fn_0143"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res01_fn_0143 ([I] 0A40:0143 runs when Ctrl-Break was seen: empties the keyboard buffer, echoes ^C and raises INT 23h); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -11305,12 +11305,12 @@ id = "0A40:016B"
 unit = "res01"
 addr = "0A40:016B"
 size = 21
-name = "res01_fn_016B"
+name = "Crt_TextMode"
 signature = ""
 c_name = "res01_fn_016B"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res01_fn_016B ([I] 0A40:016B sets the mode through Crt_SetMode, redetects the window and restores the normal TextAttr (TextMode)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls CRT:016B (public TEXTMODE); aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -11318,12 +11318,12 @@ id = "0A40:0180"
 unit = "res01"
 addr = "0A40:0180"
 size = 64
-name = "res01_fn_0180"
+name = "Crt_Window"
 signature = ""
 c_name = "res01_fn_0180"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res01_fn_0180 ([I] 0A40:0180 stores WindMin and WindMax after range checks and homes the cursor (Window)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls CRT:0180 (public WINDOW); aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -11331,12 +11331,12 @@ id = "0A40:01C0"
 unit = "res01"
 addr = "0A40:01C0"
 size = 26
-name = "res01_fn_01C0"
+name = "Crt_ClrScr"
 signature = ""
 c_name = "res01_fn_01C0"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res01_fn_01C0 ([I] 0A40:01C0 scrolls the window clear with INT 10h AX=0600h in TextAttr and homes the cursor (ClrScr)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls CRT:01C0 (public CLRSCR); aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -11344,12 +11344,12 @@ id = "0A40:01DA"
 unit = "res01"
 addr = "0A40:01DA"
 size = 20
-name = "res01_fn_01DA"
+name = "Crt_ClrEol"
 signature = ""
 c_name = "res01_fn_01DA"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res01_fn_01DA ([I] 0A40:01DA clears from the cursor to the right edge of the window with INT 10h AX=0600h (ClrEol)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls CRT:01DA (public CLREOL); aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -11357,12 +11357,12 @@ id = "0A40:01EE"
 unit = "res01"
 addr = "0A40:01EE"
 size = 5
-name = "res01_fn_01EE"
+name = "Crt_InsLine"
 signature = ""
 c_name = "res01_fn_01EE"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res01_fn_01EE ([I] 0A40:01EE scrolls the window below the cursor down one line (INT 10h AX=0701h, InsLine)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls CRT:01EE (public INSLINE); aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -11370,12 +11370,12 @@ id = "0A40:01F3"
 unit = "res01"
 addr = "0A40:01F3"
 size = 32
-name = "res01_fn_01F3"
+name = "Crt_DelLine"
 signature = ""
 c_name = "res01_fn_01F3"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res01_fn_01F3 ([I] 0A40:01F3 scrolls the window below the cursor up one line (INT 10h AX=0601h, DelLine)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls CRT:01F3 (public DELLINE); aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -11383,12 +11383,12 @@ id = "0A40:0213"
 unit = "res01"
 addr = "0A40:0213"
 size = 44
-name = "res01_fn_0213"
+name = "Crt_GotoXY"
 signature = ""
 c_name = "res01_fn_0213"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res01_fn_0213 ([I] 0A40:0213 moves the cursor to a window-relative column and row after bounds checks (GotoXY)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls CRT:0213 (public GOTOXY); aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -11396,12 +11396,12 @@ id = "0A40:023F"
 unit = "res01"
 addr = "0A40:023F"
 size = 12
-name = "res01_fn_023F"
+name = "Crt_WhereX"
 signature = ""
 c_name = "res01_fn_023F"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res01_fn_023F ([I] 0A40:023F returns the cursor column minus WindMin plus 1 (WhereX)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls CRT:023F (public WHEREX); aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -11409,12 +11409,12 @@ id = "0A40:024B"
 unit = "res01"
 addr = "0A40:024B"
 size = 12
-name = "res01_fn_024B"
+name = "Crt_WhereY"
 signature = ""
 c_name = "res01_fn_024B"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res01_fn_024B ([I] 0A40:024B returns the cursor row minus WindMin plus 1 (WhereY)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls CRT:024B (public WHEREY); aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -11422,12 +11422,12 @@ id = "0A40:0257"
 unit = "res01"
 addr = "0A40:0257"
 size = 26
-name = "res01_fn_0257"
+name = "Crt_TextColor"
 signature = ""
 c_name = "res01_fn_0257"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res01_fn_0257 ([I] 0A40:0257 sets the foreground bits and the blink bit of TextAttr from the colour (TextColor)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls CRT:0257 (public TEXTCOLOR); aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -11435,12 +11435,12 @@ id = "0A40:0271"
 unit = "res01"
 addr = "0A40:0271"
 size = 24
-name = "res01_fn_0271"
+name = "Crt_TextBackground"
 signature = ""
 c_name = "res01_fn_0271"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res01_fn_0271 ([I] 0A40:0271 sets bits 4 to 6 of TextAttr from the colour (TextBackground)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls CRT:0271 (public TEXTBACKGROUND); aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -11448,12 +11448,12 @@ id = "0A40:0289"
 unit = "res01"
 addr = "0A40:0289"
 size = 6
-name = "res01_fn_0289"
+name = "Crt_LowVideo"
 signature = ""
 c_name = "res01_fn_0289"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res01_fn_0289 ([I] 0A40:0289 clears the intensity bit of TextAttr (LowVideo)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls CRT:0289 (public LOWVIDEO); aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -11461,12 +11461,12 @@ id = "0A40:028F"
 unit = "res01"
 addr = "0A40:028F"
 size = 13
-name = "res01_fn_028F"
+name = "Crt_HighVideo"
 signature = ""
 c_name = "res01_fn_028F"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res01_fn_028F ([I] 0A40:028F sets the intensity bit of TextAttr (HighVideo)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls CRT:028F (public HIGHVIDEO); aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -11474,12 +11474,12 @@ id = "0A40:029C"
 unit = "res01"
 addr = "0A40:029C"
 size = 33
-name = "Crt_rtl_029C"
+name = "Crt_Delay"
 signature = ""
 c_name = "Crt_rtl_029C"
 level = "none"
 justification = ""
-notes = "[V] Crt unit entry; ext_callers=5"
+notes = "renamed from Crt_rtl_029C ([I] 0A40:029C waits the number of milliseconds passed by looping on the BIOS tick at 40:0 with a calibrated count (Delay); ShowTitleScreen and combat call it); [V] Crt unit entry; ext_callers=5"
 evidence = ["far-called from outside res01 (5 sites)"]
 
 [[routine]]
@@ -11487,12 +11487,12 @@ id = "0A40:02BD"
 unit = "res01"
 addr = "0A40:02BD"
 size = 12
-name = "res01_fn_02BD"
+name = "Crt_DelayTick"
 signature = ""
 c_name = "res01_fn_02BD"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res01_fn_02BD ([I] 0A40:02BD one calibrated delay pass that ends when the BIOS tick at 40:0 changes); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -11500,12 +11500,12 @@ id = "0A40:02C9"
 unit = "res01"
 addr = "0A40:02C9"
 size = 45
-name = "res01_fn_02C9"
+name = "Crt_Sound"
 signature = ""
 c_name = "res01_fn_02C9"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res01_fn_02C9 ([I] 0A40:02C9 programs PIT channel 2 for the frequency passed (1193180 div Hz) and opens the speaker gate (Sound)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls CRT:02C9 (public SOUND); aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -11513,12 +11513,12 @@ id = "0A40:02F6"
 unit = "res01"
 addr = "0A40:02F6"
 size = 7
-name = "res01_fn_02F6"
+name = "Crt_NoSound"
 signature = ""
 c_name = "res01_fn_02F6"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res01_fn_02F6 ([I] 0A40:02F6 closes the speaker gate bits 0 and 1 of port 61h (NoSound)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls CRT:02F6 (public NOSOUND); aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -11552,12 +11552,12 @@ id = "0A40:0331"
 unit = "res01"
 addr = "0A40:0331"
 size = 99
-name = "res01_fn_0331"
+name = "Crt_AssignCrt"
 signature = ""
 c_name = "res01_fn_0331"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res01_fn_0331 ([I] 0A40:0331 makes a TextRec a CRT device: mode $D7B0, buffer size $80, InOutFunc 035C (AssignCrt); Crt_init does it for Input and Output); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -11565,12 +11565,12 @@ id = "0A40:0394"
 unit = "res01"
 addr = "0A40:0394"
 size = 227
-name = "res01_fn_0394"
+name = "Crt_ReadLineFunc"
 signature = ""
 c_name = "res01_fn_0394"
 level = "none"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res01_fn_0394 ([I] 0A40:0394 the InOutFunc of a CRT Text file reading: reads keys with Crt_ReadKey, handles the editing keys (backspace, Ctrl-S, Ctrl-D, Ctrl-A, Ctrl-F, Esc), echoes them and fills the buffer up to CR); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -11578,12 +11578,12 @@ id = "0A40:0477"
 unit = "res01"
 addr = "0A40:0477"
 size = 7
-name = "res01_fn_0477"
+name = "Crt_WriteCrLf"
 signature = ""
 c_name = "res01_fn_0477"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res01_fn_0477 ([I] 0A40:0477 writes CR then LF with Crt_WriteChar); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -11591,12 +11591,12 @@ id = "0A40:047E"
 unit = "res01"
 addr = "0A40:047E"
 size = 89
-name = "res01_fn_047E"
+name = "Crt_WriteChar"
 signature = ""
 c_name = "res01_fn_047E"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res01_fn_047E ([I] 0A40:047E writes AL at the cursor in the window, handling bell, backspace, CR and LF and wrapping or scrolling at the window edge); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -11604,12 +11604,12 @@ id = "0A40:04D7"
 unit = "res01"
 addr = "0A40:04D7"
 size = 33
-name = "res01_fn_04D7"
+name = "Crt_NextRow"
 signature = ""
 c_name = "res01_fn_04D7"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res01_fn_04D7 ([I] 0A40:04D7 advances the cursor row and scrolls the window up one line when it was on the last row); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -11617,12 +11617,12 @@ id = "0A40:04F8"
 unit = "res01"
 addr = "0A40:04F8"
 size = 7
-name = "res01_fn_04F8"
+name = "Crt_GetCursor"
 signature = ""
 c_name = "res01_fn_04F8"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res01_fn_04F8 ([I] 0A40:04F8 reads the cursor position into DX with INT 10h AH=3); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -11630,12 +11630,12 @@ id = "0A40:04FF"
 unit = "res01"
 addr = "0A40:04FF"
 size = 7
-name = "res01_fn_04FF"
+name = "Crt_SetCursor"
 signature = ""
 c_name = "res01_fn_04FF"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res01_fn_04FF ([I] 0A40:04FF moves the cursor to DX with INT 10h AH=2); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -11643,12 +11643,12 @@ id = "0A40:0506"
 unit = "res01"
 addr = "0A40:0506"
 size = 157
-name = "res01_fn_0506"
+name = "Crt_WriteBlock"
 signature = ""
 c_name = "res01_fn_0506"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res01_fn_0506 ([I] 0A40:0506 writes the characters at ES:DI (count CX) to the window, interpreting bell, backspace, CR and LF, wrapping and scrolling; the CRT output function body); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -11656,12 +11656,12 @@ id = "0A40:05A3"
 unit = "res01"
 addr = "0A40:05A3"
 size = 104
-name = "res01_fn_05A3"
+name = "Crt_WriteRun"
 signature = ""
 c_name = "res01_fn_05A3"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res01_fn_05A3 ([I] 0A40:05A3 copies a run of characters with TextAttr to video memory (B800h or B000h), waiting for retrace when CheckSnow is set); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -11669,12 +11669,12 @@ id = "0A40:060B"
 unit = "res01"
 addr = "0A40:060B"
 size = 21
-name = "res01_fn_060B"
+name = "Crt_VideoInt"
 signature = ""
 c_name = "res01_fn_060B"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res01_fn_060B ([I] 0A40:060B INT 10h with SI, DI, BP and ES preserved); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -13788,12 +13788,12 @@ id = "0A32:0000"
 unit = "res13"
 addr = "0A32:0000"
 size = 11
-name = "res13_fn_0000"
+name = "Dos_MsDos"
 signature = ""
 c_name = "res13_fn_0000"
 level = "none"
 justification = ""
-notes = "auto:forced"
+notes = "renamed from res13_fn_0000 ([I] 0A32:0000 sets the interrupt number to $21 and falls into the Intr code (MsDos of a Registers record)); auto:forced"
 evidence = ["probe tp60-1991: sink.exe far-calls DOS:0005 (public MSDOS); aligned by make tp-compare, confirmed by runtime_entries"]
 
 [[routine]]
@@ -13801,12 +13801,12 @@ id = "0A32:000B"
 unit = "res13"
 addr = "0A32:000B"
 size = 61
-name = "Dos_rtl_000B"
+name = "Dos_Intr"
 signature = ""
 c_name = "Dos_rtl_000B"
 level = "none"
 justification = ""
-notes = "[V] Dos unit entry; ext_callers=9"
+notes = "renamed from Dos_rtl_000B ([I] 0A32:000B loads every register from the Registers record, fakes the interrupt frame with the vector of IntNo and stores the results (Intr(IntNo, Regs)); the game calls it for INT 10h video and INT 21h); [V] Dos unit entry; ext_callers=9"
 evidence = ["far-called from outside res13 (9 sites)"]
 
 [[routine]]
@@ -13814,12 +13814,12 @@ id = "0A32:0048"
 unit = "res13"
 addr = "0A32:0048"
 size = 36
-name = "res13_fn_0048"
+name = "Dos_IntrReturn"
 signature = ""
 c_name = "res13_fn_0048"
 level = "none"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res13_fn_0048 ([I] 0A32:0048 the return point of Dos_Intr: stores AX, BX, CX, DX, BP, SI, DI, DS, ES and the flags into the Registers record); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -13827,12 +13827,12 @@ id = "0A32:006C"
 unit = "res13"
 addr = "0A32:006C"
 size = 34
-name = "res13_fn_006C"
+name = "Dos_GetDate"
 signature = ""
 c_name = "res13_fn_006C"
 level = "none"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res13_fn_006C ([I] 0A32:006C INT 21h AH=2Ah then the four results through the var parameters (GetDate)); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -13840,12 +13840,12 @@ id = "0A32:008E"
 unit = "res13"
 addr = "0A32:008E"
 size = 20
-name = "res13_fn_008E"
+name = "Dos_SetDate"
 signature = ""
 c_name = "res13_fn_008E"
 level = "none"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res13_fn_008E ([I] 0A32:008E INT 21h AH=2Bh with year, month and day (SetDate)); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -13853,12 +13853,12 @@ id = "0A32:00A2"
 unit = "res13"
 addr = "0A32:00A2"
 size = 37
-name = "Dos_rtl_00A2"
+name = "Dos_GetTime"
 signature = ""
 c_name = "Dos_rtl_00A2"
 level = "none"
 justification = ""
-notes = "[V] Dos unit entry; ext_callers=2"
+notes = "renamed from Dos_rtl_00A2 ([I] 0A32:00A2 INT 21h AH=2Ch then hour, minute, second and hundredths through the var parameters (GetTime); TimeInHundredths and GameClock call it); [V] Dos unit entry; ext_callers=2"
 evidence = ["far-called from outside res13 (2 sites)"]
 
 [[routine]]
@@ -13866,12 +13866,12 @@ id = "0A32:00C7"
 unit = "res13"
 addr = "0A32:00C7"
 size = 25
-name = "res13_fn_00C7"
+name = "Dos_SetTime"
 signature = ""
 c_name = "res13_fn_00C7"
 level = "none"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res13_fn_00C7 ([I] 0A32:00C7 INT 21h AH=2Dh with hour, minute, second and hundredths (SetTime)); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -13879,12 +13879,12 @@ id = "0AA2:0000"
 unit = "res14"
 addr = "0AA2:0000"
 size = 18
-name = "res14_fn_0000"
+name = "Overlay_ReadError"
 signature = ""
 c_name = "res14_fn_0000"
 level = "none"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res14_fn_0000 ([I] 0AA2:0000 ends the program with run error 209 (overlay file read error); the overlay manager's error exit); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -13892,12 +13892,12 @@ id = "0AA2:0012"
 unit = "res14"
 addr = "0AA2:0012"
 size = 215
-name = "Overlay_rtl_0012"
+name = "Overlay_OvrInit"
 signature = ""
 c_name = "Overlay_rtl_0012"
 level = "none"
 justification = ""
-notes = "[V] Overlay unit entry; ext_callers=1"
+notes = "renamed from Overlay_rtl_0012 ([I] 0AA2:0012 opens the overlay file named by the argument (current directory, then the program's directory, then the PATH), checks its overlay header and sets OvrDosHandle (OvrInit); res08_init calls it); [V] Overlay unit entry; ext_callers=1"
 evidence = ["far-called from outside res14 (1 sites)"]
 
 [[routine]]
@@ -13905,12 +13905,12 @@ id = "0AA2:00E9"
 unit = "res14"
 addr = "0AA2:00E9"
 size = 12
-name = "res14_fn_00E9"
+name = "Overlay_OpenInCurrentDir"
 signature = ""
 c_name = "res14_fn_00E9"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res14_fn_00E9 ([I] 0AA2:00E9 opens the file name as given with INT 21h AH=3Dh); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -13918,12 +13918,12 @@ id = "0AA2:00F5"
 unit = "res14"
 addr = "0AA2:00F5"
 size = 59
-name = "res14_fn_00F5"
+name = "Overlay_OpenInProgramDir"
 signature = ""
 c_name = "res14_fn_00F5"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res14_fn_00F5 ([I] 0AA2:00F5 builds the name in the directory of the running program from the DOS environment block (DOS 3 and later) and opens it); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -13931,12 +13931,12 @@ id = "0AA2:0130"
 unit = "res14"
 addr = "0AA2:0130"
 size = 88
-name = "res14_fn_0130"
+name = "Overlay_OpenOnPath"
 signature = ""
 c_name = "res14_fn_0130"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res14_fn_0130 ([I] 0AA2:0130 searches the PATH= variable of the environment block directory by directory for the file and opens it); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -13944,12 +13944,12 @@ id = "0AA2:0188"
 unit = "res14"
 addr = "0AA2:0188"
 size = 27
-name = "res14_fn_0188"
+name = "Overlay_OpenFile"
 signature = ""
 c_name = "res14_fn_0188"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res14_fn_0188 ([I] 0AA2:0188 copies the Pascal string name to a zero terminated buffer and opens it with INT 21h AH=3Dh); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -13957,12 +13957,12 @@ id = "0AA2:01A3"
 unit = "res14"
 addr = "0AA2:01A3"
 size = 79
-name = "Overlay_rtl_01A3"
+name = "Overlay_OvrSetBuf"
 signature = ""
 c_name = "Overlay_rtl_01A3"
 level = "none"
 justification = ""
-notes = "[V] Overlay unit entry; ext_callers=1"
+notes = "renamed from Overlay_rtl_01A3 ([I] 0AA2:01A3 sets the overlay buffer size in paragraphs from a LongInt, checks it against the heap and moves HeapOrg, HeapPtr and FreeList above it (OvrSetBuf); res08_init); [V] Overlay unit entry; ext_callers=1"
 evidence = ["far-called from outside res14 (1 sites)"]
 
 [[routine]]
@@ -13970,12 +13970,12 @@ id = "0AA2:01F2"
 unit = "res14"
 addr = "0AA2:01F2"
 size = 35
-name = "Overlay_rtl_01F2"
+name = "Overlay_OvrGetBuf"
 signature = ""
 c_name = "Overlay_rtl_01F2"
 level = "none"
 justification = ""
-notes = "[V] Overlay unit entry; ext_callers=2"
+notes = "renamed from Overlay_rtl_01F2 ([I] 0AA2:01F2 returns the overlay buffer size in bytes as a LongInt (OvrGetBuf); res08_init); [V] Overlay unit entry; ext_callers=2"
 evidence = ["far-called from outside res14 (2 sites)"]
 
 [[routine]]
@@ -13983,12 +13983,12 @@ id = "0AA2:0215"
 unit = "res14"
 addr = "0AA2:0215"
 size = 57
-name = "res14_fn_0215"
+name = "Overlay_OvrClearBuf"
 signature = ""
 c_name = "res14_fn_0215"
 level = "none"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res14_fn_0215 ([I] 0AA2:0215 unloads every overlay in the load list and resets OvrHeapPtr (OvrClearBuf)); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -13996,12 +13996,12 @@ id = "0AA2:024E"
 unit = "res14"
 addr = "0AA2:024E"
 size = 13
-name = "res14_fn_024E"
+name = "Overlay_BytesToParagraphs"
 signature = ""
 c_name = "res14_fn_024E"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res14_fn_024E ([I] 0AA2:024E turns the byte count DX:AX into paragraphs in AX); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -14009,12 +14009,12 @@ id = "0AA2:025B"
 unit = "res14"
 addr = "0AA2:025B"
 size = 139
-name = "res14_fn_025B"
+name = "Overlay_ParagraphsToBytes"
 signature = ""
 c_name = "res14_fn_025B"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res14_fn_025B ([I] 0AA2:025B turns the paragraph count AX into a byte count in DX:AX); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -14022,12 +14022,12 @@ id = "0AA2:02E6"
 unit = "res14"
 addr = "0AA2:02E6"
 size = 82
-name = "res14_fn_02E6"
+name = "Overlay_TrapHandler"
 signature = ""
 c_name = "res14_fn_02E6"
 level = "none"
 justification = ""
-notes = "auto:prologue"
+notes = "renamed from res14_fn_02E6 ([I] 0AA2:02E6 the overlay stub's entry: saves registers, loads the overlay of the stub that called through Overlay_LoadOverlay and jumps to the routine); auto:prologue"
 evidence = ["prologue"]
 
 [[routine]]
@@ -14035,12 +14035,12 @@ id = "0AA2:0338"
 unit = "res14"
 addr = "0AA2:0338"
 size = 177
-name = "res14_fn_0338"
+name = "Overlay_LoadOverlay"
 signature = ""
 c_name = "res14_fn_0338"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res14_fn_0338 ([I] 0AA2:0338 makes sure an overlay is in the buffer: counts the trap, frees room by dropping the oldest overlays, reads it with a DOS read and relocates it); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -14048,12 +14048,12 @@ id = "0AA2:03E9"
 unit = "res14"
 addr = "0AA2:03E9"
 size = 76
-name = "res14_fn_03E9"
+name = "Overlay_TrimLoadList"
 signature = ""
 c_name = "res14_fn_03E9"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res14_fn_03E9 ([I] 0AA2:03E9 walks the load list and moves the overlays above OvrHeapPtr down against the end of the buffer); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -14061,12 +14061,12 @@ id = "0AA2:0435"
 unit = "res14"
 addr = "0AA2:0435"
 size = 54
-name = "res14_fn_0435"
+name = "Overlay_StubsToJumps"
 signature = ""
 c_name = "res14_fn_0435"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res14_fn_0435 ([I] 0AA2:0435 rewrites each stub entry of a loaded overlay as a far jmp (EAh) to its code); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -14074,12 +14074,12 @@ id = "0AA2:046B"
 unit = "res14"
 addr = "0AA2:046B"
 size = 51
-name = "res14_fn_046B"
+name = "Overlay_StubsToTraps"
 signature = ""
 c_name = "res14_fn_046B"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res14_fn_046B ([I] 0AA2:046B rewrites each stub entry as INT 3Fh again, when the overlay is unloaded); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -14087,12 +14087,12 @@ id = "0AA2:049E"
 unit = "res14"
 addr = "0AA2:049E"
 size = 72
-name = "res14_fn_049E"
+name = "Overlay_MoveOverlay"
 signature = ""
 c_name = "res14_fn_049E"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res14_fn_049E ([I] 0AA2:049E moves an overlay in the buffer with rep movsw (direction by position) and fixes the return addresses that point into it); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -14100,12 +14100,12 @@ id = "0AA2:04E6"
 unit = "res14"
 addr = "0AA2:04E6"
 size = 32
-name = "res14_fn_04E6"
+name = "Overlay_LinkLoaded"
 signature = ""
 c_name = "res14_fn_04E6"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res14_fn_04E6 ([I] 0AA2:04E6 appends the overlay to the end of the load list and advances OvrHeapPtr); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -14113,12 +14113,12 @@ id = "0AA2:0506"
 unit = "res14"
 addr = "0AA2:0506"
 size = 12
-name = "res14_fn_0506"
+name = "Overlay_FixReturns"
 signature = ""
 c_name = "res14_fn_0506"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res14_fn_0506 ([I] 0AA2:0506 patches the saved return addresses of an overlay with the new segment); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -14126,12 +14126,12 @@ id = "0AA2:0512"
 unit = "res14"
 addr = "0AA2:0512"
 size = 38
-name = "res14_fn_0512"
+name = "Overlay_FixChain"
 signature = ""
 c_name = "res14_fn_0512"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res14_fn_0512 ([I] 0AA2:0512 walks the overlay's return fixup chain and replaces matching segments); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -14139,12 +14139,12 @@ id = "0AA2:0538"
 unit = "res14"
 addr = "0AA2:0538"
 size = 27
-name = "res14_fn_0538"
+name = "Overlay_FreeParagraphs"
 signature = ""
 c_name = "res14_fn_0538"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res14_fn_0538 ([I] 0AA2:0538 returns the paragraphs free between the load list head and OvrHeapPtr (or the end of the buffer)); auto:near_call"
 evidence = ["near_call"]
 
 [[routine]]
@@ -14152,10 +14152,10 @@ id = "0AA2:0553"
 unit = "res14"
 addr = "0AA2:0553"
 size = 13
-name = "res14_fn_0553"
+name = "Overlay_SizeInParagraphs"
 signature = ""
 c_name = "res14_fn_0553"
 level = "none"
 justification = ""
-notes = "auto:near_call"
+notes = "renamed from res14_fn_0553 ([I] 0AA2:0553 returns the code size of the overlay at ES (word at +8) in paragraphs); auto:near_call"
 evidence = ["near_call"]

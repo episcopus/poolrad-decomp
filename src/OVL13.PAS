@@ -71,11 +71,6 @@ type
   end;
   PPictureHeader = ^TPictureHeader;
 const
-  { The two sides of a combat (POOLVARS, ovl24:0D96). }
-  SideParty = 0;
-  { The monster side (ovl05's SideMonsters and ovl10's SideEnemy): the combatants ovl13:2879 totals
-    the hit points of into SecondMoraleByte. }
-  SideMonsters = 1;
   { The round's Movement is checked against this before it is doubled into the half-square move
     budget (ovl13:0155): a Movement below 1 or above it is set to 1, not to this value, so an
     over-fast combatant gets the slowest move (QUIRK ovl13:0161). }
@@ -92,9 +87,6 @@ const
   { The cursor margin MoveCombatCursor gets after a non-quick step (ovl13:07B9): kept nearer the
     combatant's cell than ViewCentre. }
   StepCursorMargin = 1;
-  { The map tile a body is drawn over (ovl31's TileBody); a cell with it and no combatant makes a
-    scan look for the body lying there (ovl13:1D24, 2FBE, 30AA). }
-  BodyTile = $1F;
   { Word 882 of GameVars2^ (byte offset $6E4): added to a party member's Movement each round
     (ovl13:0137). ovl05 calls the same word VarAfterBattle3 and EndBattle clears it; what it
     holds during a combat is not settled. }
@@ -106,16 +98,6 @@ const
     what 4 and 5 change is not known there. }
   HookAttackerDamage = 4;
   HookTargetDamage = 5;
-  HookGoesDown = $D;           { run when a combatant goes down (ovl13:05F1, ovl24's HookGoesDown) }
-  { TCharacter.Status (+$10C) values the death message tests (ovl13:0583, 05AC). }
-  StatusDying = 5;
-  { The status a fleeing combatant is dropped with (ovl13:0CE1; the same 3 as ovl24's StatusFled). }
-  StatusFled = 3;
-  { The status the Alt-X debug command leaves a monster with (ovl13:3C00); res12's HealCharacter and
-    ovl07 give the same 6 the name StatusDead. }
-  StatusDead = 6;
-  { The health status of a combatant still standing (TCharacter.Status 0; ovl05's StatusOkay). }
-  StatusOkay = 0;
   { The statuses that show 'is killed': the set [6, 7, 8] at ovl13:02CF (the original bytes
     c0 01 00.. at that address are bits 6, 7 and 8). Status 5 (dying) gets 'and is Dying' instead. }
   StatusKilled = [6, 7, 8];
@@ -127,10 +109,6 @@ const
   InitiativeDieSides = 6;
   InitiativePenalty = 6;       { when the round penalty word matches the side, ovl13:00D9 }
   MaxInitiative = $14;
-  { Word 715 of GameVars2^ (byte offset $596): RunCombat clears it every round (ovl08:00A2). In
-    ovl13:00C2 a combatant whose (Side + 1) shares a bit with it loses InitiativePenalty; what
-    the word is filled with is not settled (named VarCombatWord715 in ovl08). }
-  VarCombatWord715 = 715;
   { Word 819 of GameVars2^: set to 1 with AllyAttackConfirmed when the player confirms attacking an ally
     (ovl13:2998); ovl10's StartBattle clears it every battle as Var2BattleWord, so its meaning is
     not settled beyond that. }
@@ -150,7 +128,6 @@ const
     the target's cell (ovl13:0AC7..0AF4); the compass direction tried each step is its index mod 8. }
   PartingShotFirstOffset = 6;
   PartingShotLastOffset = 10;
-  Directions = 8;
   { CollectEnemiesInRange's range byte for "every enemy" (the $FF ovl13:0C7A passes when a flee is
     tried; range 1 is the adjacent ring). }
   AllEnemiesRange = $FF;
@@ -165,8 +142,6 @@ const
   TurnBand9Low = 9;
   TurnBand9High = 13;
   TurnBandOther = 10;
-  { The status a destroyed undead is left with (TCharacter.Status; in StatusKilled with 6 and 7). }
-  StatusDestroyed = 8;
   { The starting smallest type row of the turn target scan (ovl13:1351), above every row of the
     Turn Undead table TurnUndeadTable (rows 0..10), so the first in-range undead always replaces it. }
   UndeadRowCeiling = 13;
@@ -767,7 +742,7 @@ begin
       begin
         ShowCharacterMessage(Selected, 'Is destroyed', 10, 0);
         RemoveCombatant(Selected);
-        Selected^.Status := StatusDestroyed;
+        Selected^.Status := StatusGone;
         Selected^.Flag10D := 0;
       end;
       if TurnsLeft > 0 then

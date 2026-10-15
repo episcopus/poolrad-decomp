@@ -40,18 +40,13 @@ const
   ActionCast = 1;
   ActionMemorize = 2;
   ActionScribe = 3;
-  VarNoCasting = 229;           { the game variable (+$1CA) that forbids casting here (as in ovl08) }
-  LastSpellSlot = 20;            { TCharacter.Spells is 0..20 }
   { Bit 7 of a memorized spell (Spells) or of a scroll's spell byte (TMenuLine.Affects): the spell
     is being memorized or scribed and only becomes real through the rest; the low bits are the
     spell number. }
   Pending = $80;
-  SpellMask = $7F;
   ScrollSpells = 3;              { a scroll holds up to three spells (TMenuLine.Affects[1..3]) }
   SpellLevels = 3;               { spell levels 1..3 of SpellSlots }
-  ClassCleric = 0;               { the rows of SpellSlots, TSpellEntry.SpellClass }
-  ClassMage = 1;
-  LastSpell = $38;               { SpellTable and SpellNames hold spells 1..$38 }
+  SpellBookMage = 1;
   { The rest a study needs (StudyRestMinutes): 4 hours, 6 when a spell is above level 2, plus 15
     minutes per spell level. }
   BaseRestHours = 4;
@@ -69,8 +64,6 @@ const
   No = 'N';
   KeyNone = #0;                  { leaves a menu, as 'E' (Exit) does }
   KeyEnter = #13;
-  ViewModeCamp = 2;              { the view mode (ViewMode) while the party camps }
-  MaxGameSpeed = 9;              { GameSpeed runs 0 (fastest) .. 9 (slowest) }
   NoChoice = $FFFF;              { the list position ChooseSpellFromList starts from }
   { Spell lists of ChooseSpellFromList (its first argument) as the camp uses them: 0 the memorized spells to
     cast, 1 the spells to memorize, 3 the scroll spells to scribe, 5 and 6 the spells being
@@ -83,7 +76,6 @@ const
   { The Display list (DisplaySpellEffects): NewMenuList's 46-byte lines (Text, Flag29, Next of
     TMenuLine, as ovl25 allocates them), the member heading flag, the window ChooseFromList shows
     them in (the full text window, as the Loot window of ovl05) and its colours. }
-  MenuLineBytes = $2E;
   HeadingLine = 1;               { Flag29 of a member's name line: a heading ChooseFromList skips }
   PlainLine = 0;
   ListLeft = 1;
@@ -100,15 +92,11 @@ const
   { The affects the Display names without a spell (the literals of ovl15:0FBC); every other named
     affect is a spell affect looked up in SpellTable (AffectId, byte +$A). }
   AffectStudyingManual = 4;
-  AffectTrainingManual = 7;
   AffectFeatherFall = $1B;
   AffectHelpless = $1F;
   AffectPrayer = $23;
-  AffectCauseDisease = $2C;
   AffectMummyDisease = $32;
   AffectRepulsed = $36;
-  AffectPoisoned = $37;
-  AffectRegenerating = $3B;
   AffectFireResistance = $3D;
   AffectInvisible = $47;
   AffectCamouflaged = $48;
@@ -286,7 +274,7 @@ var
   Any: Boolean;
 begin
   Any := False;
-  for SpellClass := ClassCleric to ClassMage do
+  for SpellClass := ClassCleric to SpellBookMage do
   begin
     HasClass[SpellClass] := False;
     for SpellLevel := 1 to SpellLevels do
@@ -305,12 +293,12 @@ begin
   begin
     ShowCharacterMessage(SelectedCharacter, 'can memorize:', MessageColor, 0);
     Row := 3;
-    for SpellClass := ClassCleric to ClassMage do
+    for SpellClass := ClassCleric to SpellBookMage do
       if HasClass[SpellClass] then
       begin
         case SpellClass of
           ClassCleric: Line := '    Cleric Spells:';
-          ClassMage: Line := 'Magic-User Spells:';
+          SpellBookMage: Line := 'Magic-User Spells:';
         end;
         DrawTextAt(1, Row + $11, TextColor, Line);
         Col := $13;

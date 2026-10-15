@@ -30,11 +30,6 @@ const
   AffectRemovedAtNeutralizePoison2 = $16; { purpose unknown; removed with $37 (ovl04:07F1) }
   AffectRemovedAtNeutralizePoison3 = $0F; { purpose unknown; removed with $37 (ovl04:0807) }
   AffectRemovedAtRaiseDead = $20;         { purpose unknown; removed before $37 (ovl04:05B8) }
-  { Status values of TCharacter.Status. }
-  StatusOkay = 0;
-  StatusDead = 1;               { Raise Dead accepts 1 and 6 (ovl04:0539) }
-  StatusGone = 6;
-  StatusStoned = 7;             { Stone to Flesh (ovl04:093D) }
   { Prices in gold pieces (the second argument of ChargeForCure). }
   PriceCureBlindness = 1000;
   PriceCureDisease = 1000;
@@ -48,7 +43,6 @@ const
   DiseaseCount = 6;             { entries of DiseaseAffects }
   { The constitution rules of Raise Dead (ovl04:0652..0710). }
   BonusConstitution = 14;       { from 14 up the lost constitution can cost hit points }
-  FighterClass = 2;             { index in ClassLevels with the larger bonus }
   HighConstitution = 15;        { above it a non-fighter class counts twice }
   FighterOnlyConstitution = 17; { from 17 up only a fighter level loses the hit points }
   LastClass = 7;
@@ -241,7 +235,7 @@ begin
   end;
 end;
 
-{ ovl04:0510. Raise Dead: the character is dead when Status is StatusDead or StatusGone; otherwise it
+{ ovl04:0510. Raise Dead: the character is dead when Status is StatusAnimated (1) or StatusDead (6) (ovl04:0539); otherwise it
   asks first. Charges PriceRaiseDead; only a dead character is raised: AffectRemovedAtRaiseDead and
   AffectPoison are removed, Status becomes StatusOkay, Flag10D becomes 1 (battle participant eligible
   for experience, ovl05:0355), and Flag11B becomes 1. Flag11B is the current hit points [I], so this
@@ -265,7 +259,7 @@ begin
   Dead := False;
   Unused := '';
   Answer := Yes;
-  if (Who^.Status = StatusGone) or (Who^.Status = StatusDead) then Dead := True;
+  if (Who^.Status = StatusDead) or (Who^.Status = StatusAnimated) then Dead := True;
   if not Dead then Answer := AskCastAnyway('is not dead.');
   if Answer = Yes then
   begin
@@ -290,14 +284,14 @@ begin
         begin
           for I := 0 to LastClass do
             if Who^.ClassLevels[I] > 0 then
-              if I = FighterClass then
+              if I = ClassFighter then
                 Inc(Bonus, (Who^.Constitution - BonusConstitution) * Who^.ClassLevels[I])
               else if Who^.Constitution > HighConstitution then
                 Inc(Bonus, Who^.ClassLevels[I] * 2)
               else
                 Inc(Bonus, Who^.ClassLevels[I]);
           if Bonus > 0 then HpLoss := HpLoss div Bonus;
-          if (Who^.Constitution < FighterOnlyConstitution) or (Who^.ClassLevels[FighterClass] > 0) then
+          if (Who^.Constitution < FighterOnlyConstitution) or (Who^.ClassLevels[ClassFighter] > 0) then
             Dec(Who^.HpMax, HpLoss);
         end;
       end;

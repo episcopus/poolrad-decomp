@@ -60,9 +60,6 @@ const
     when its caller did not ask for it and steps a frame on every pass of its wait loop; the prompt
     clears it when it returns (ovl25:048E, ovl25:0507, ovl25:06D8). }
   VarAnimateNow = $1FF;
-  { NewMenuList allocates 46 bytes per line: the Text, Flag29 and Next fields of TMenuLine
-    (ovl25:1146, ovl25:1234), not the whole item record. }
-  MenuLineBytes = $2E;
 
 { ovl25:0000. Returns line Index of the menu line list List, counting from 0, or nil when the list is
   shorter. Called by ChooseFromList and its nested routines and by ovl16 (packet). }

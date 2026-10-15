@@ -24,9 +24,6 @@ procedure SetQuickCombat(Who: PCharacter);
 implementation
 uses RES04, RES07, RES09, RES12, OVL09, OVL10, OVL13, OVL19, OVL20, OVL22, OVL24, OVL25, OVL31, Crt;
 const
-  StatusBandaged = 4;     { the Status BandageDying gives a dying character }
-  StatusDying = 5;        { the Status of a dying character: it bleeds one round per EndCombatRound }
-  StatusBledOut = 6;      { the Status after more than LastDyingRound rounds (Raise Dead's StatusGone) }
   LastDyingRound = 9;
   NoInitiative = 0;       { PickNextCombatant: no character is left to act this round }
   InitiativeLast = 1;     { Delay: act after everyone else }
@@ -46,11 +43,6 @@ const
   KeyLeft = 'K';
   KeyHome = 'G';
   CombatNodeSize = $13;   { FreeMem size of a DS:6DBB list record }
-  CombatMapSize = $4E9;   { FreeMem size of the CombatMap block }
-  ViewModeCombat = 5;     { ViewMode while a combat is running (ovl08:0080) }
-  MaxGameSpeed = 9;
-  VarNoCasting = 229;     { the game variable (+$1CA) that hides Cast in the combat menu }
-  VarCombatWord715 = 715; { a word of GameVars2^ RunCombat clears every round (+$596); meaning unknown }
   MenuColors = $F;        { the last ReadPromptChoice/AskYesNo argument of every menu here }
 
 { ovl08:0000. Frees the combat data after the last round: the DS:6DBB list of $13-byte records,
@@ -312,7 +304,7 @@ begin
 end;
 { ovl08:0880. The end of a combat round: AdvanceGameClock(1, 1), the round counter CombatRound, UpdateMonsterMorale,
   then for each character the RunAffectHooks hook $13 and ApplyCloudTile; a dying character (StatusDying)
-  bleeds one more round and after LastDyingRound rounds is StatusBledOut. Warns Your Teammate is
+  bleeds one more round and after LastDyingRound rounds is StatusDead. Warns Your Teammate is
   Dying while a party member can be bandaged, redraws the map around the CombatMap view position
   (MoveCombatCursor), and sets Done when one side is empty (PartySideCount or EnemySideCount zero). When only the
   enemies are gone and SuppressContinuePrompt is 0 it asks Continue Battle: and Y clears Done again. Index is
@@ -335,7 +327,7 @@ begin
     if Who^.Status = StatusDying then
     begin
       Inc(Who^.Combat^.DyingRounds);
-      if Who^.Combat^.DyingRounds > LastDyingRound then Who^.Status := StatusBledOut;
+      if Who^.Combat^.DyingRounds > LastDyingRound then Who^.Status := StatusDead;
     end;
     Inc(Index);
     Who := Who^.Next;
@@ -488,7 +480,7 @@ begin
 end;
 { ovl08:0FFF. Returns 1 when a party character (Side 0) is dying (StatusDying) and may be
   bandaged (Combat^.NoBody 0), else 0. With DoIt nonzero the first one found is bandaged: Status
-  StatusBandaged, the bleeding count reset and the message is bandaged (ShowCharacterMessage). }
+  StatusUnconscious, the bleeding count reset and the message is bandaged (ShowCharacterMessage). }
 function BandageDying(DoIt: Byte): Byte;
 var
   Who: PCharacter;
@@ -503,7 +495,7 @@ begin
       Found := 1;
       if DoIt <> 0 then
       begin
-        Who^.Status := StatusBandaged;
+        Who^.Status := StatusUnconscious;
         Who^.Combat^.DyingRounds := 0;
         ShowCharacterMessage(Who, 'is bandaged', 10, 1);
         DoIt := 0;

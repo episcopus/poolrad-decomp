@@ -28,20 +28,10 @@ implementation
 uses RES06, RES09, RES12, OVL21, OVL22, OVL24, OVL25, OVL28, OVL31;
 
 const
-  { The ViewMode view modes the View command and the item menu test (whitepaper 5.4): 1 is the shop and
-    the Temple (VisitTemple sets it, ovl04:0D0F; the value OVL21 names ViewShop), 2 the camp (MakeCamp
-    sets it, ovl15:1E6F), 3 and 4 the two area-view pages (ShowAreaView sets them, whitepaper 5.2.1)
-    and 5 a combat (RunCombat sets it, ovl08:0080). }
-  ViewModeShop = 1;
-  ViewModeCamp = 2;
-  ViewModeMap = 3;
-  ViewModeView = 4;
-  ViewModeCombat = 5;
   { B84 bit 7 marks a member the computer runs (PrepareCombatants, ovl10:0675; OVL05 and OVL21 name
-    the same bit ComputerRun). The code tests the bit from below as `B84 < ComputerRunB84` and, where
+    the same bit ComputerRun). The code tests the bit from below as `B84 < ComputerRun` and, where
     it branches on the seven low bits, from above as `B84 > ComputerRunThreshold`; the two spellings
     compile to the original's two forms (probe tools/re/tp_idioms/ovl19/PB19BIT.PAS). }
-  ComputerRunB84 = $80;
   ComputerRunThreshold = $7F;
   { Affects[3] bit 7 marks an item with an affect of its own (ReadyItem applies it through
     CallAffectHandler). ReadyItem tests it from above as `Affects[3] > AffectThreshold`, UseItem and
@@ -275,7 +265,6 @@ end;
   on row 7, two digits, 00 for 100. Called by ShowCharacterSheet for each of the six lines with Highlight False. }
 procedure ShowAbilityScore(Index: ShortInt; Highlight: Boolean);
 const
-  ExceptionalStrength = 18;
   FirstScoreColumn = 5;
   LastScoreColumn = 11;
   ScoreRow = 7;
@@ -352,7 +341,7 @@ begin
       Menu := Menu + 'Items ';
     if HasSpells <> 0 then
       Menu := Menu + 'Spells ';
-    if (SheetCharacter^.B84 < ComputerRunB84) or (SheetCharacter^.Flag10D = 0) or
+    if (SheetCharacter^.B84 < ComputerRun) or (SheetCharacter^.Flag10D = 0) or
       (SheetCharacter^.Status = 1) then
       if HasMoney and (ViewMode <> ViewModeCombat) then
         Menu := Menu + 'Trade ';
@@ -421,9 +410,6 @@ end;
   VisitTemple, ovl04:0D0F) offers Sell and Id; 2, 3 and 4 offer Use, and 5 (combat) offers Use only to
   a character whose Combat^.CanUseMagicItem is set. Trade is not offered in combat. }
 procedure RunItemMenu(var Done: Byte);
-const
-  VarNoCasting = 229;          { the game word that forbids casting (ovl07, ovl08, ovl09, ovl15); Use is not
-                                 offered while it is nonzero (ovl19:0F98) }
 var
   Key: Char;                    { the key of the item menu; a space until the first one is read }
   Menu: String40;               { the words of the item menu, built from the character and the view mode }
@@ -454,17 +440,17 @@ begin
       Menu := 'Ready';
       if Character^.Flag10D <> 0 then
         if GameVars^[VarNoCasting] = 0 then
-          if (ViewMode = ViewModeCamp) or (ViewMode = ViewModeMap) or (ViewMode = ViewModeView) or
+          if (ViewMode = ViewModeCamp) or (ViewMode = ViewModeMap) or (ViewMode = ViewModeWall) or
             ((ViewMode = ViewModeCombat) and (Character^.Combat^.CanUseMagicItem <> 0)) then
             Menu := Menu + ' Use';
-      if ((Character^.B84 < ComputerRunB84) or (Character^.Flag10D = 0) or (Character^.Status = 1)) and
+      if ((Character^.B84 < ComputerRun) or (Character^.Flag10D = 0) or (Character^.Status = 1)) and
         (ViewMode <> ViewModeCombat) then
         Menu := Menu + ' Trade';
       Menu := Menu + ' Drop';
       if Character^.ItemCountC7 < 16 then
         Menu := Menu + ' Halve';
       Menu := Menu + ' Join';
-      if ((Character^.B84 < ComputerRunB84) or (Character^.Flag10D = 0) or (Character^.Status = 1)) and
+      if ((Character^.B84 < ComputerRun) or (Character^.Flag10D = 0) or (Character^.Status = 1)) and
         (ViewMode = ViewModeShop) then
         Menu := Menu + ' Sell';
       if ViewMode = ViewModeShop then
@@ -754,7 +740,6 @@ const
   ItemPromptRow = 23;
   SpellListOnScroll = 2;
   UseListMode = 1;              { ChooseSpellFromList's DisplayMode for a use: PickSpellFromMenu's Cast mode }
-  LastSpell = $38;              { the last row of SpellTable; an affect value above it is shifted down by SpellShift }
   SpellShift = $17;
 var
   Spell: Byte;                  { the spell the use casts, from the scroll or Affects[2]; 0 when there is none }
@@ -968,7 +953,6 @@ end;
   byte the frame held before the call. }
 procedure TradeMoney;
 const
-  MenuLineBytes = $2E;          { the Text, Flag29 and Next fields of a menu line, as NewMenuList allocates }
   LastMoneyKind = 6;
   NameColumnWidth = 8;          { the coin names are right-aligned in this many columns }
   ListHeadingColor = 13;
@@ -1078,7 +1062,6 @@ end;
   QUIRK ovl19:24EF: Kinds is incremented for every listed kind and never read. }
 procedure ChooseAndDropMoney;
 const
-  MenuLineBytes = $2E;          { the Text, Flag29 and Next fields of a menu line, as NewMenuList allocates }
   LastMoneyKind = 6;
   NameColumnWidth = 8;          { the coin names are right-aligned in this many columns }
   ListHeadingColor = 13;

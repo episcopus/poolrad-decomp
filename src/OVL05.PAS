@@ -31,36 +31,21 @@ const
   { Nonzero: a duel gives 100 experience per level of the selected character (ovl05:000D), and a
     non-duel battle counts every player-run member as standing (ovl05:058D). Cleared by EndBattle. }
   VarFixedXpBattle = 742;
-  VarPartySize = 830;           { the members; RemoveSelectedCharacter decrements it when it removes a counted one }
   VarAfterBattle1 = 880;        { three words EndBattle clears (ovl05:163C..1652); meaning unknown }
   VarAfterBattle2 = 881;
   VarAfterBattle3 = 882;
   BattleOutcomeDestroyed = $80;
   BattleOutcomeFled = $81;
-  { TCharacter.Status values. }
-  StatusOkay = 0;
-  StatusDead = 1;
-  StatusFled = 3;               { left the battle: back to okay when the party survives }
-  StatusUnconscious = 4;        { what Bandage gives (whitepaper 5.5) }
-  StatusDying = 5;              { becomes unconscious when the battle ends }
   { TCharacter.Side values. }
-  SideParty = 0;
-  SideMonsters = 1;
-  ComputerRun = $80;            { TCharacter.B84 from $80 up: a member the player does not run (a hireling) }
   ShareMask = 7;                { the bits of HirelingShare that are the share }
   ExtraCombatant = 1;           { TCombatant.NoBody: a combatant that is not a real party member }
   { TCharacter.ClassMask values of AwardExperience: the four single classes whose prime requisite
     above PrimeRequisiteBonus gives 10% more experience. }
-  ClassCleric = 0;
-  ClassFighter = 2;
-  ClassMagicUser = 5;
-  ClassThief = 6;
   PrimeRequisiteBonus = 15;
   { The two memorized spells that add Detect to the treasure menu [I]: the cleric's and the
     magic-user's Detect Magic in the order of the Gold Box spell list. }
   SpellClericDetectMagic = 5;
   SpellMageDetectMagic = $B;
-  LastSpellSlot = 20;           { TCharacter.Spells is 0..20 }
   LastMoneyKind = 6;            { TPartyMoney and TCharacter.Money are 0..6 }
   { The experience value of each kind of pooled money (ComputeBattleExperience). }
   CopperPerXp = 200;
@@ -73,7 +58,6 @@ const
   XpPerLevel = 100;             { a fixed-experience duel }
   MaxWorthlessItems = 8;        { items of no value taken from monsters before they are left behind }
   WorthlessItemChance = 3;      { a worthless item is taken when 1d10 is at most this }
-  ItemListSize = $3F;           { SizeOf(TMenuLine): FreeMem sizes }
   CombatStateSize = $16;        { the size of a character's combat state (TCharacter.Combat) }
   AnswerNo = 1;                 { AskMenu returns the 0-based word of '~Yes ~No' }
   KeyEnter = #13;
@@ -174,7 +158,7 @@ begin
   Who := PCharacter(PartyListHead);
   while Who <> nil do
   begin
-    if (Who^.Flag10D <> 0) and (Who^.Status <> StatusDead) then
+    if (Who^.Flag10D <> 0) and (Who^.Status <> StatusAnimated) then
     begin
       Gain := Xp;
       case Who^.ClassMask of
@@ -226,15 +210,15 @@ begin
   begin
     while (Who <> nil) and (Who^.Combat^.NoBody <> ExtraCombatant) do
     begin
-      if ((Who^.Status = StatusFled) or (Who^.Status = StatusDead) or (Who^.Status = StatusOkay) or
+      if ((Who^.Status = StatusFled) or (Who^.Status = StatusAnimated) or (Who^.Status = StatusOkay) or
         (GameVars2^[VarFixedXpBattle] = 1)) and (Who^.Side = SideParty) and (Who^.B84 < ComputerRun) then
         PartyDestroyed := 0;
-      if (Who^.Status = StatusDead) or (Who^.Status = StatusOkay) then
+      if (Who^.Status = StatusAnimated) or (Who^.Status = StatusOkay) then
       begin
         BattleWon := 1;
         PartyFled := 0;
       end;
-      if (Who^.Flag10D = 0) or (Who^.Status = StatusDead) then
+      if (Who^.Flag10D = 0) or (Who^.Status = StatusAnimated) then
         Inc(NoExperienceCount);
       Who := Who^.Next;
     end;
@@ -316,7 +300,7 @@ begin
     Who := PCharacter(PartyListHead);
     while Who <> nil do
     begin
-      if (Who^.Status = StatusOkay) or (Who^.Status = StatusDead) then
+      if (Who^.Status = StatusOkay) or (Who^.Status = StatusAnimated) then
         Who^.Flag10D := 1;
       if Who^.Status = StatusDying then
         Who^.Status := StatusUnconscious;

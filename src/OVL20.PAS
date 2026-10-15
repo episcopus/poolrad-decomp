@@ -78,8 +78,6 @@ const
   LastScrollSpellSlot = 3;
   RestStepsPerHour = 12; { ovl20:0BBE advances RestHours every twelve five-minute steps }
   RestHealCheckInterval = $120; { ovl20:0877 waits this many five-minute rest steps }
-  ViewModeCamp = 2;          { ViewMode while the party camps (MakeCamp sets it, ovl15:1E6F) }
-  VarPartySize = 830;        { party member count, a word of the GameVars2 block (whitepaper 5.5) }
   VarRestInterruptSteps = $2D2;  { GameVars2 word: rest steps between checks (ovl07:0160 clears it) }
   VarRestInterruptChance = $2D3; { GameVars2 word: percent chance per check, 1d100 (ovl07:0160 clears it) }
   MaxAffectStep = 10;        { ovl20:0097 spends elapsed affect time in passes of at most ten units }

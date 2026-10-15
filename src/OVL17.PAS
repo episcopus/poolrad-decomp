@@ -61,10 +61,6 @@ const
   Yellow = $0E;        { EGA text colour of the disk prompt (the message colour OVL00 also uses) }
   IoSuccess = 0;       { IOResult of a MkDir that created the directory }
   IoDirExists = 5;     { IOResult of a MkDir when the directory is already there (DOS access denied) }
-  { A menu line as the save and load lists allocate it: the Text, Flag29 and Next fields of
-    TMenuLine (46 bytes), not the whole item record. ovl25's NewMenuList and FreeMenuList use the
-    same size. }
-  MenuLineBytes = $2E;
 
 { ovl17:0010. Reads the save disk's charlist.txt (SaveDir + 'charlist.txt') and builds List as the
   menu list of the saved characters: one 46-byte menu line per line of that file, in file order.
@@ -543,7 +539,6 @@ procedure AddPartyMember(Member: PCharacter);
 const
   FirstIcon = 0;                { lowest combat map icon number a party member can hold }
   IconCount = 8;                { the icon numbers run 0..IconCount-1 (the free-icon loop bound) }
-  VarPartySize = 830;           { party member count, a word of the GameVars2 game variable block }
 var
   Who: PCharacter;              { walks the party list }
   Used: array[FirstIcon..IconCount - 1] of Boolean;  { icon numbers already held by a member }

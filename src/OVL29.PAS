@@ -24,10 +24,6 @@ uses POOLVARS, RES04, RES05, RES07, OVL34;
 const
   { The facing directions the map routines take (the step tables DirStepX/DirStepY are indexed by
     them); which wall nibble and door bit pair each one selects is whitepaper 4.2.1. }
-  DirNorth = 0;
-  DirEast = 2;
-  DirSouth = 4;
-  DirWest = 6;
   MapLast = $F;          { the last row and column of the 16x16 area map }
   DoorOpen = 1;          { DoorKindAt's answer for a side with no wall }
   WallSymbols = $104;    { the 8x8 symbol of a map cell with no wall; plus 1/2/4/8 per wall side }

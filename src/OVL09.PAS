@@ -28,13 +28,10 @@ const
   KeyAltM = '2';                { Alt-M: Magic On / Magic Off (ovl08 calls it KeyAltM too) }
   KeyAltX = '-';                { Alt-X: GodsIntervene decides }
   InitiativeQuickAll = $14;     { Initiative marking a quick-combat character (ovl08: InitiativeQuickAll) }
-  VarNoCasting = 229;           { game variable (+$1CA) that hides Cast (ovl08: VarNoCasting) }
   MaxSpell = $38;               { highest spell number (ovl23: LastSpell) }
-  Directions = 8;               { the eight combat directions (DirStepX/DirStepY) }
   StraightCost = 2;             { a straight step costs twice the tile cost in half squares (ovl09:0718) }
   DiagonalCost = 3;             { a diagonal step (odd direction) three times (ovl09:0723) }
-  TileKept = $1E;               { the tile ProbeStep always answers when a cell has it (ovl31: TileKept) }
-  { The four affects that let a combatant step onto a TileKept cell (ovl09:0744..07A4); which
+  { The four affects that let a combatant step onto a CloudTile cell (ovl09:0744..07A4); which
     spells leave them is not known. }
   AffectKeptA = $20;
   AffectKeptB = $1E;
@@ -340,7 +337,7 @@ end;
   ProbeStep looks at the cells; when the probed tile is 0 (off the map, GetMapCell) OffMap is 1
   and the result False at once (ovl09:06EC). Otherwise the result is True when no combatant is
   in the way, the tile cost is below the moves left and the
-  step's cost (tile cost times 2, or 3 on a diagonal) is at or below the moves left; a TileKept
+  step's cost (tile cost times 2, or 3 on a diagonal) is at or below the moves left; a CloudTile
   tile is unaffordable unless Who has one of the four AffectKept affects. Called by MoveStep
   (ovl09:094B). Globals: StepTurnOffsets, CombatTiles. Affect receives the affect
   HasAffect finds and is never read. }
@@ -370,7 +367,7 @@ begin
       if Odd(Dir) then
         Cost := DiagonalCost;
       Cost := Cost * CombatTiles[Tile].Cost;
-      if Tile = TileKept then
+      if Tile = CloudTile then
         if not HasAffect(Who, AffectKeptA, Affect) then
           if not HasAffect(Who, AffectKeptB, Affect) then
             if not HasAffect(Who, AffectKeptC, Affect) then

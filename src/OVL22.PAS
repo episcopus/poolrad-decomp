@@ -190,9 +190,6 @@ end;
   SpellMenuSpells[Count] keeps the spell number (pending bit cleared) of the line added. Called by BuildSpellList
   and AddItemSpells. }
 procedure AddSpellMenuLine(Spell: Byte);
-const
-  MenuLineBytes = $2E;            { a menu line node: Text, Flag29 and Next, the used part of TMenuLine }
-  SpellMask = $7F;                { the low seven bits of a spell byte hold the spell number }
 var
   Line: PMenuLine;
   Count: ShortInt;                { ShortInt, not Byte: indexing SpellMenuSpells and the level compare
@@ -303,7 +300,6 @@ end;
   Called by ovl19:299C ChooseSpellFromList. }
 function BuildSpellList(Kind: Byte): Byte;
 const
-  SpellMask = $7F;                { the low seven bits of a spell byte hold the spell number }
   PendingSpell = $80;             { the pending bit above the spell number }
 var
   I: Byte;
@@ -375,7 +371,6 @@ const
   MonsterParalyze = $3D;           { spell 61: 5d4 }
   MonsterInvisibility = $3F;       { spell 63: 2d10 * 10 in combat, else (1d10 + 10) * 10 }
   MonsterReadMagic = $43;          { spell 67: a flat $5A0 }
-  CombatViewMode = 5;              { ViewMode during combat (whitepaper 5.5) }
   Scale = 10;
 var
   Value: Word;
@@ -388,7 +383,7 @@ begin
     MonsterStrength:
       Value := RollDice(1, 4) * Scale + 40;
     MonsterInvisibility:
-      if ViewMode = CombatViewMode then
+      if ViewMode = ViewModeCombat then
         Value := RollDice(2, 10) * Scale
       else
         Value := (RollDice(1, 10) + Scale) * Scale;
@@ -517,7 +512,6 @@ end;
   SpellHandlers table. }
 procedure CastChosenSpell(Spell, Quick, Announce: Byte; var Done: Byte);
 const
-  CombatViewMode = 5;             { ViewMode while a combat runs (whitepaper 5.5) }
   Fireball = $2F;                 { the two spells whose cast has its own sound }
   LightningBolt = $33;
   AimStep = 4;                    { the line WalkCombatLine walks for the cast animation }
@@ -534,7 +528,7 @@ var
 begin
   Caster := SelectedCharacter;
   OK := True;
-  if (ViewMode <> CombatViewMode) and (SpellTable[Spell].Pad2[7] = 0) then
+  if (ViewMode <> ViewModeCombat) and (SpellTable[Spell].Pad2[7] = 0) then
   begin
     if not ItemAffectUse then
     begin
@@ -561,7 +555,7 @@ begin
     if Done <> 0 then
     begin
       OK := False;
-      if ViewMode = CombatViewMode then
+      if ViewMode = ViewModeCombat then
       begin
         DrawCombatIcon(AnimationKind);
         CasterX := CombatantX(Caster);
@@ -595,7 +589,7 @@ begin
     end
     else
     begin
-      if ViewMode <> CombatViewMode then
+      if ViewMode <> ViewModeCombat then
         OK := False
       else if (Quick <> 0) or (AskYesNo('Abort Spell? ', $E, $A, $F) = 'Y') then
       begin
@@ -607,7 +601,7 @@ begin
     end;
   end;
   ClearCharacterMessage;
-  if ViewMode = CombatViewMode then
+  if ViewMode = ViewModeCombat then
     ClearWindow(0, $17, $27, $17);
 end;
 { ovl22:0F4F. Applies the current spell CastingSpell to the chosen targets (SpellTargets[1..SpellTargetCount]) but keeps
@@ -714,7 +708,6 @@ const
   SideScale = 128;
   { Charm Person's side effect: the affect handler runs when the affect is removed (Flag 1). }
   RunHandlerOnRemoval = 1;
-  ModeApply = 0;                  { CallAffectHandler's mode: apply (not remove) the affect }
   MessageColour = $A;             { the colour ShowCharacterMessage shows the message in }
   TimedMessage = 1;               { nonzero: ShowCharacterMessage delays by the game speed and clears it }
 var
@@ -743,7 +736,6 @@ end;
   InitSpellHandlers). }
 procedure CastEnlarge;
 const
-  ExceptionalStrength = 18;       { strength 18, whose RaiseStrength takes a percentile (ovl24) }
   StrengthAffect = $0C;           { the strength affect id AddAffect keeps the earlier strength in }
   { The exceptional-strength percentile Enlarge grants by caster level 1..6. }
   PercentLevel1 = 0;
@@ -860,7 +852,6 @@ const
   SleepAffect = $35;              { the affect that marks a target already asleep }
   PoolDiceCount = 4;              { the 4d4 pool of hit dice Sleep can affect }
   PoolDiceSides = 4;
-  StatusAnimated = 1;             { TCharacter.Status 1: Animated, the undead (StatusNames); Sleep refuses it }
   { The pool cost of one target, by its HighestLevel (a monster's hit dice), the AD&D Sleep table. }
   CostLevel0 = 1;
   CostLevel2 = 2;
@@ -986,7 +977,6 @@ end;
   units. Reads FirstSpellTarget and CastingSpell. }
 procedure CastSlowPoison;
 const
-  StatusAnimated = 1;             { TCharacter.Status 1: Animated, the undead (StatusNames); Slow Poison refuses it }
   PoisonedAffect = $37;           { the Poisoned affect the target must carry (ovl15 names $37 Poisoned) }
   { The revival affect whose removal handler heals an unconscious character (ovl24 AffectRevival). }
   RevivalAffect = $4E;
@@ -996,7 +986,6 @@ const
   SlowPoisonData = $FF;           { the affect's data byte }
   RunHandlerOnRemoval = 1;        { Flag: the affect's handler runs when the affect is removed }
   FullCasterLevel = $FF;          { ApplySpellToTargets uses this caster level instead of SpellCasterLevel }
-  ModeRemove = 1;                 { CallAffectHandler's mode: run the handler as if removing the affect }
 var
   Affect: Pointer;                { HasAffect's out pointer, the target's Poisoned affect }
   Target: PCharacter;             { FirstSpellTarget, the first chosen target }
@@ -1054,7 +1043,6 @@ procedure CastSpiritualHammer;
 const
   SpiritualHammerAffect = $17;    { the spell's own affect (SpellTable[28].AffectId): its handler is run here }
   RunHandlerOnRemoval = 1;        { ApplySpellToTargets' Flag: the affect's handler runs when it is removed }
-  ModeApply = 0;                  { CallAffectHandler's mode: apply (not remove) the affect }
 begin
   ApplySpellToTargets(CastingSpell, 0, RunHandlerOnRemoval, 0, 0, '');
   CallAffectHandler(SpiritualHammerAffect, FirstSpellTarget, nil, ModeApply);
@@ -1112,8 +1100,6 @@ end;
   SpellAppliedToArea, CloudList, the combat map and the affects of the targets. }
 procedure CastStinkingCloud;
 const
-  CloudTile = $1E;                { a noxious cloud cell (ApplyCloudTile tests the tile under a combatant for it) }
-  BodyTile = $1F;                 { a body on the map: the aim scan borrows the body's tile there (BodyTable) }
   CloudAffect = $28;              { the affect the cast leaves on the caster and his clouds }
   { The cloud count goes into the affect's data in bits 4..7 (Count * CloudCountScale). }
   CloudCountScale = 16;
@@ -1207,15 +1193,11 @@ end;
   spell's duration. Reads FirstSpellTarget and CastingSpell. }
 procedure CastStrength;
 const
-  ExceptionalStrength = 18;       { 18, the largest plain Strength; the overflow becomes the percentile }
   MaxPercent = 100;               { the exceptional-strength percentile ceiling }
   PercentStep = 10;               { each point of Strength above 18 is 10 percent }
   StrengthAffect = $26;           { the strength affect this spell leaves (same vehicle RaiseStrength updates) }
   { The class whose level picks the bonus die: magic-user (d4), cleric or thief (d6), fighter (d8). }
   MagicUserClass = 5;
-  ClericClass = 0;
-  ThiefClass = 6;
-  FighterClass = 2;
   { The bonus die by class. }
   MagicUserSides = 4;
   ClericSides = 6;
@@ -1234,16 +1216,16 @@ begin
   Target := FirstSpellTarget;
   if Target^.ClassLevels[MagicUserClass] > 0 then
     Bonus := RollDice(1, MagicUserSides);
-  if (Target^.ClassLevels[ClericClass] > 0) or (Target^.ClassLevels[ThiefClass] > 0) then
+  if (Target^.ClassLevels[ClassCleric] > 0) or (Target^.ClassLevels[ClassThief] > 0) then
     Bonus := RollDice(1, ClericSides);
-  if Target^.ClassLevels[FighterClass] > 0 then
+  if Target^.ClassLevels[ClassFighter] > 0 then
     Bonus := RollDice(1, FighterSides);
   Strength := Target^.Strength + Bonus;
   { QUIRK ovl22:1FFB: the cap is repeated in both branches (Strength 18 in each); the compiler keeps
     one store per branch instead of hoisting it, which is the original's layout. }
   if Strength > ExceptionalStrength then
   begin
-    if Target^.ClassLevels[FighterClass] > 0 then
+    if Target^.ClassLevels[ClassFighter] > 0 then
     begin
       { QUIRK ovl22:1FD4: TP 6.0 evaluates the right operand of `+` first, so the percentile sum is
         written target-first to keep the product on the left of the add in the original. }
@@ -1283,7 +1265,6 @@ const
     (b9 04 00), and the original at ovl22:210B has the byte form (probe PRB27.PAS). }
   SideScale = 16;
   AnimatedMark = 2;               { the byte at +$76 Animate Dead sets (ScoreItem reads it, ovl09:128D) }
-  CombatViewMode = 5;             { ViewMode during combat (whitepaper 5.5) }
   RunHandlerOnRemoval = 1;        { ApplyAffect Flag: the affect's handler runs when it is removed }
   NoSaveNegates = 0;              { ApplyAffect SaveNegates }
   NotSaved = False;               { ApplyAffect Saved }
@@ -1320,7 +1301,7 @@ begin
           else
             Current^.B84 := CreatureMorale;
           Current^.CreatureType := UndeadType;
-          if ViewMode = CombatViewMode then
+          if ViewMode = ViewModeCombat then
             Current^.Combat^.Target := nil;
           Dec(Level);
           if ReviveCombatant(Current, Current^.HpMax) then
@@ -1796,8 +1777,6 @@ end;
   levels, hit points, class level and Experience. }
 procedure CastRestoration;
 const
-  DrainedLevels = $74;            { TCharacter.Pad74 index: the levels the character was drained }
-  LostHitPoints = $75;            { TCharacter.Pad74 index: the hit points lost with them (ovl33:0004) }
   MaxRestoredLevel = 13;          { a class level above this is never advanced ($D) }
   MaxExperience = 10000000;       { the initial 'smallest' experience value the loop compares against }
   LastClass = 7;                  { the last class index of ClassLevels }
@@ -2075,7 +2054,6 @@ end;
   calls it too. Nothing happens when the spell is not on the scroll (Slot stays 0). }
 procedure ConsumeScrollSpell(Who: PCharacter; Item: PItem; Spell: Byte);
 const
-  SpellMask = $7F;                { the low seven bits of a scroll's spell byte hold the spell number }
   { A scroll's NameNum[2] is its remaining spell count plus $D1 (BuildTreasureItem, ovl21:1010); a
     value below this means no spells are left and the used-up scroll is removed. }
   UsedUpScrollBelow = $D2;
@@ -2106,7 +2084,6 @@ end;
   entry at 3379 was invented inside this routine; make match WRITE=1 removed it. }
 procedure ShowSpellMessage(Who: PCharacter; Message: String40; Spell: Byte);
 const
-  CombatViewMode = 5;             { ViewMode during combat (whitepaper 5.5) }
   TextColumn = 1;                 { the column the name and the spell's name are drawn at }
   MessageRow = $13;               { the row Who's name and Message are drawn on, out of combat }
   SpellNameRow = $14;             { the row the spell's name is drawn on }
@@ -2115,7 +2092,7 @@ const
   TimedMessage = 1;               { nonzero: ShowCharacterMessage delays by the game speed and clears it }
   NoMode = 0;                     { DrawCharacterName's Mode: no extra highlight }
 begin
-  if ViewMode = CombatViewMode then
+  if ViewMode = ViewModeCombat then
   begin
     ShowCharacterMessage(Who, 'Casts a Spell', MessageColour, TimedMessage);
     ClearWindow(0, $17, $27, $17);
