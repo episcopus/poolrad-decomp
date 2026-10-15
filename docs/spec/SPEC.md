@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| Version | 0.6 (ADR-002; integration, worker lifecycle and matcher gate made mechanical after the 2026-10-12 system review, `docs/process/SYSTEM-REVIEW-2026-10-12.md`) |
-| Date | 2026-10-12 |
+| Version | 0.7 (ADR-002; Phase 5 done: the rebuild is the original, the sound driver has an assembly source; earlier: integration, worker lifecycle and matcher gate made mechanical after the 2026-10-12 system review, `docs/process/SYSTEM-REVIEW-2026-10-12.md`) |
+| Date | 2026-10-15 |
 | Target | SSI *Pool of Radiance*, DOS, the build in `poolrad/` (hashes in section 2) |
 | Output | Turbo Pascal 6.0 source in `src/` that compiles to the original's machine code, a rebuild of the game from it, a living design doc in `docs/design/`; later a C translation for other platforms |
 | Execution | AI-agent driven, harness agnostic (Claude Code, Cursor, OpenCode), human supervised |
@@ -19,7 +19,7 @@ The previous approach (ADR-001: behaviour-matching C, run routine by routine ins
 | ID | Outcome | Measure of done |
 |---|---|---|
 | O1 | Pascal source for the whole game in `src/` | Every original routine outside the Turbo Pascal runtime is Pascal that the pinned compiler turns into the original's instructions (level L2, section 8) |
-| O2 | A rebuild of the game | `make rebuild` compiles `src/` with Turbo Pascal 6.0 into `START.EXE` and `GAME.OVR` that are identical to the originals, or differ only where a byte-identical link is shown to be impossible, and play the golden sessions identically in the oracle |
+| O2 | A rebuild of the game | `make rebuild` compiles `src/` (Pascal, and the assembly source of the sound driver) with Turbo Pascal 6.0 into a program whose load image, relocation table and overlay file are identical to the original's (`start-unpack.exe`, `GAME.OVR`), and the rebuilt program plays the golden sessions and the sound driver's trace identically in the oracle. Met 2026-10-14 (section 8.4) |
 | O3 | A design doc that explains how the game works | `docs/design/WHITEPAPER.md` covers every subsystem with evidence-tagged claims and is updated as part of each unit's definition of done |
 | O4 | Readable source | Meaningful names for units, routines, globals, parameters, constants and types, backed by evidence; a comment on every unit and routine; written unit by unit as part of decompiling (P4, `docs/process/READABILITY.md`), harmonised across units in P6 |
 | O5 | A portable C version | A translation of the matched Pascal into portable C (Phase 7) that builds natively and on the way to the CoCo 3 (CMOC), proven against the Pascal rebuild by the oracle's session replays |
@@ -99,7 +99,7 @@ Consequences:
 - **Instructions match:** every byte of the routine and of the literal pool before it is identical, except address fields.
 - **Addresses name the same things:** each address field refers to the same global, routine, literal or segment on both sides (section 8.3). Our build places things at other addresses until the whole program is rebuilt, so addresses are compared by what they name.
 - **Units match:** when every routine of a unit is decompiled, the unit's whole code segment (routines, literal pools, initialisation part, paragraph padding) is covered exactly.
-- **Data layout matches** at the rebuild (Phase 5): every global and record keeps its original offset, so saves and memory snapshots stay interchangeable.
+- **Data layout matches** at the rebuild (Phase 5): every global and record keeps its original offset, so saves and memory snapshots stay interchangeable. `src/POOLVARS.PAS` declares the whole of DGROUP in offset order (section 7.3).
 
 ### 4.4 The C track (ADR-001), kept for later
 
@@ -192,7 +192,7 @@ build/                    everything generated (ignored by git); build/toolchain
 - **Names.** A routine keeps its `re/symbols.toml` name (`res04_fn_0059`, `ovl00_e1`) until renamed there; a global is `dsXXXX` (its DS offset) until named in `re/dseg.toml`. The matcher resolves both forms (section 8.3), so renaming is a change in `re/` plus the source, never in the proof.
 - **Skeletons and stubs.** Every game unit has source from the start: `make skeleton` wrote each one with every routine of `re/symbols.toml` declared in address order and a stub body (`{@stub}` at the start of the header line, an empty body, a comment with the frame the code shows). Decompiling replaces a stub by the routine. A stub's signature is evidence (the callers' pushes and the callee's `retf n`), recorded in `re/symbols.toml` `signature` (the full Pascal header, for example `procedure res06_fn_0BF5(Color: Byte; Text: String40)`) so that regenerated skeletons keep it. An initialisation part that does real work and is not decompiled yet is marked `{@stub-init}` on the line before its `begin`; an empty one (`begin end.`, 44 of the 46 game units) is already decompiled.
 - **The main program** is `src/POOL.PAS`: its `uses` clause lists the units in the original initialisation order (the compiler emits one initialisation call per unit in that order), and its main block is the game's. `make match UNIT=main` proves it.
-- **Globals** whose owning unit is not known yet live in `src/POOLVARS.PAS`. Their declarations do not affect the instructions (addresses are compared by name), so they can move to their unit when the rebuild needs the exact DGROUP layout (Phase 5).
+- **Globals** live in `src/POOLVARS.PAS` (ownership by unit is a Phase 6 refinement). Their declarations do not affect the instructions (the matcher compares addresses by name); since Phase 5 the file is also the layout of DGROUP (section 7.3).
 - **Faithful first.** Same control flow, same evaluation order, original quirks kept (dead code after `Exit`, unassigned function results). Turbo Pascal leaves no other choice: a different program compiles differently.
 - **Readable at once** (`docs/process/READABILITY.md`). The source is what every port starts from, so a routine is not finished until it is named, its parameters, locals, constants and the globals it uses are named for what they are (with evidence), and it carries a comment with its address and its meaning in game terms. Names never change the code, so they are never postponed; `make readability` checks that nothing was skipped (part of `make check`), the reviewer judges whether the names and comments are true. Routines and globals are renamed with `make rename`, which keeps `re/` and the source in step.
 
@@ -202,7 +202,13 @@ How Turbo Pascal 6.0 compiles an idiom is settled by compiling it, never by reca
 
 ### 7.3 Memory and the rebuild
 
-During Phase 4, units are compiled into a generated program (`build/match/`) where addresses differ from the original; the matcher compares addresses by name. Phase 5 arranges the declarations so that the linker places every global and routine where the original has them: units in the original link order, globals in their units in offset order, overlay units marked with `{$O ...}`, then `make rebuild` compares the linked `START.EXE` and `GAME.OVR` with the originals.
+During Phase 4, units are compiled into a generated program (`build/match/`) where addresses differ from the original; the matcher compares addresses by name. Phase 5 arranged the declarations so that the linker places every global and routine where the original has them:
+
+- **Data.** Turbo Pascal allocates data by declaration: the typed constants of the program and of every unit (reverse link order), then the Overlay and System variable block, then the variables. `src/POOLVARS.PAS` therefore holds one generated layout (`tools/re/dgroup.py`, `make dgroup`): the typed constants with their original values from `DS:0002`, the variables up to Crt's block, objects that overlap as `absolute` views of `dsXXXX` storage cells. The matcher and `make readability` read the same declarations without the layout (`compact_poolvars`): Turbo Pascal's compiler memory does not hold the full model beside every unit.
+- **Code.** The `uses` clause of `src/POOL.PAS` is the original link order (`Overlay, Crt, Dos` first, then the init chain); overlay units are marked `{$O ...}` by the rebuild; the interface of each overlay unit lists its exported routines in the order of the original's stub entries (`tools/re/stub_order.py`).
+- **Assembly.** A unit's external object is `src/<UNIT>.ASM` (res03's sound driver), assembled by `tools/re/asm86.py` into the object `{$L}` links.
+
+Then `make rebuild` compares the linked program with the original (section 8.4).
 
 ### 7.4 The C translation (Phase 7)
 
@@ -218,7 +224,7 @@ Translating matched Pascal to C reuses the decisions recorded on branch `track-c
 |---|---|---|
 | L0 | Drafted | The routine is Pascal (not a stub) in its unit, and the unit compiles with the pinned TP 6.0 |
 | L2 | Matched | `make match` passes: the routine's instructions and literal pool are identical to the original's, and every address names the same thing (8.3). Written by `make match WRITE=1` |
-| L3 | Rebuilt | The routine's unit is byte-identical in the full rebuild, or the rebuilt program passes the golden sessions in the oracle (Phase 5) |
+| L3 | Rebuilt | The routine's unit is byte-identical in the full rebuild (`make rebuild` IDENTICAL), and the rebuilt program passes the golden sessions in the oracle (`make rebuild-golden`). A property of the whole program, true since 2026-10-14; `make check` keeps it |
 
 **Review** is recorded beside the level, not as a level: the matcher already proves the instructions, and the review checks what the compiler cannot (names, types, comments, evidence). `make review-pass UNIT=<id>` writes `review = "passed <date> by <reviewer>, <commit>"` on every routine of a complete unit when `work/reviews/<id>.md` names a reviewer who is not the decompiler and has no open must-fix finding (playbook 70). A unit is **done** when it is complete (every routine L2, `unit: complete`), readable (`make readability` clean, and the names and comments judged by the review) and reviewed.
 
@@ -234,7 +240,7 @@ Only tools write levels and reviews. A regression demotes a routine the next tim
 - Records every read of the outside world (keyboard, time of day, BIOS tick, timer and retrace ports) with the golden, and replays it (`tools/oracle/replay.py`, Exhume's method), so a build of the game whose code takes a different number of instructions still makes the same decisions.
 - Provides call tracing, memory watch points, state digests, screenshots, and an input script player.
 
-In ADR-002 the oracle verifies whole programs: the original (goldens) and the rebuild (Phase 5), and later the C translation (Phase 7). It also answers questions about behaviour while decompiling (traces, watch points).
+In ADR-002 the oracle verifies whole programs: the original (goldens) and the rebuild (Phase 5: `tools/oracle/layout.py` tells its hooks and digests where System, DGROUP and the overlay stubs are in the build under test), and later the C translation (Phase 7). It also records what the game sends to its sound hardware (`tools/oracle/sound.py`, `soundprobe.py`). It also answers questions about behaviour while decompiling (traces, watch points).
 
 ### 8.3 Matching (L2)
 
@@ -249,7 +255,7 @@ In ADR-002 the oracle verifies whole programs: the original (goldens) and the re
    - an offset into the code segment must be the same literal, at the same distance from the entry;
    - a segment fixup must name the same unit or DGROUP.
    An immediate counts as an address only if it moves between variants A and B; constants never move.
-4. With no stubs left in the unit, also checks that routines, pools, the initialisation part and the paragraph padding cover the original segment exactly. A unit with an external object file (`re/units.toml` `external_from`: code the original linked from an `.OBJ` after its initialisation part, as res03's sound driver) is complete when its Pascal part tiles the original up to the object; the object's routines are flagged `external = true` in the registry, declared as stubs for their callers, and kept as the original's bytes until Phase 5 rebuilds them from an assembly source.
+4. With no stubs left in the unit, also checks that routines, pools, the initialisation part and the paragraph padding cover the original segment exactly. A unit with an external object file (`re/units.toml` `external_from`: code the original linked from an `.OBJ` after its initialisation part, as res03's sound driver) is complete when its Pascal part tiles the original up to the object; the object's routines are flagged `external = true` in the registry, declared as stubs for their callers, and kept as the original's bytes by the matcher. Its source is `src/<UNIT>.ASM`, which the rebuild assembles and links (section 8.4).
 
 The first difference is reported with both instructions. `WRITE=1` records L2 for each matched routine and writes the compiler's boundaries into `re/symbols.toml` (a size the compiler disproves, a map entry inside matched code, a routine the map lacked), which retires the mapper role for boundaries.
 
@@ -257,7 +263,16 @@ The first difference is reported with both instructions. `WRITE=1` records L2 fo
 
 ### 8.4 The rebuild (L3, Phase 5)
 
-`make rebuild` (tools/match/rebuild.py) compiles `src/POOL.PAS` with every unit, adding `{$O OVLnn}` for the overlay units so the linker writes the overlay file, into `build/rebuild/POOL.EXE` and `POOL.OVR`. It compares segment by segment with `start-unpack.exe` and `GAME.OVR` (the main program, each resident unit, each overlay unit's code), ignoring relocation words on either side, and reports how many segments are identical and how large the image and the overlay file are. It runs in `make check` from P4 on as a gate on *linking* (every unit, decompiled or skeleton, must compile into one program); the comparison becomes the gate in Phase 5, which ends when the files are identical (or every difference is explained in the whitepaper) and the rebuilt program plays every golden session in the oracle. The smart linker drops routines nothing calls, so the rebuild converges only as callers are decompiled: until then it is a progress report.
+`make rebuild` (tools/match/rebuild.py) compiles `src/POOL.PAS` with every unit, adding `{$O OVLnn}` for the overlay units so the linker writes the overlay file, and `{$L}` of the object assembled from `src/RES03.ASM`, into `build/rebuild/POOL.EXE` and `POOL.OVR`. It compares with `start-unpack.exe` and `GAME.OVR`:
+
+| What | Compared as |
+|---|---|
+| each segment (main, each resident unit, each overlay unit's code) | bytes, ignoring relocation words on either side and overlay fixups; paragraph padding must be zero |
+| the load image | every byte after the EXE header |
+| the relocation table | the set of linear addresses |
+| the overlay file | byte for byte |
+
+The EXE header of `start-unpack.exe` is the unpacker's output (a padded header, the packed file's checksum word), not the program's, so it is not compared. `make rebuild` exits 1 unless everything is identical, and it is a stage of `make check`, followed by `make rebuild-golden` (every golden session on the rebuilt program: a behaviour tier, which is the gate, and a state tier, DGROUP, heap and memory digests, which is equal exactly when the layout is the original's) and `make sound-golden REBUILT=1` (every tune of the sound driver on both devices: the hardware trace is the original's). Phase 5 ended 2026-10-14 with all three passing; `docs/process/playbooks/50-rebuild.md` is the procedure and `docs/design/WHITEPAPER.md` 3.7 what it taught.
 
 ### 8.5 Sessions and goldens
 
@@ -376,7 +391,7 @@ largest cost. Its tools (`make expert-*`, playbook 80) remain for a human-starte
 | P2 Oracle and data | Run the original deterministically; decode the data | Done 2026-10-10: oracle, goldens with recordings, data codecs |
 | P3 Match harness | Prove ADR-002; ready for parallel agents | `make match` with tests; units decompiled to complete (res04, ovl00), the main program matched; skeletons for every unit; `make rebuild`, `make review-pass`, `make claim`; `make check` runs the unit tests, every unit's match, the rebuild link and the golden check. Done 2026-10-11 |
 | P4 Match | All game units in readable Pascal | Every game unit done (complete, readable and reviewed); map boundaries corrected from the compiler's; whitepaper chapter per subsystem |
-| P5 Rebuild | The original program from source | `make rebuild` byte-identical (or every difference explained); every golden session passes on the rebuild |
+| P5 Rebuild | The original program from source | `make rebuild` identical (load image, relocation table, overlay file); every golden session and the sound driver's trace pass on the rebuild. Done 2026-10-14 (sound driver source 2026-10-15) |
 | P6 Consistency | One vocabulary across the whole game | Readability is done unit by unit in P4; P6 harmonises names across units once the whole game is known (the same thing has one name everywhere, record types shared), every routine still L2, reviewer sign-off per subsystem |
 | P7 C translation | Portable C | C translated from the Pascal (starting from branch `track-c-hybrid`), native build plays the goldens through record/replay; portability rules for CMOC set |
 | P8 CoCo 3 | Plan and prototype | CMOC builds the engine for 6809; memory banking by unit; GIME video mapping |
@@ -390,7 +405,7 @@ Every phase has the human operator (starts and stops the agents, answers escalat
 | Phase | Produces (outcome) | Does the work | Proves or accepts | Ready? |
 |---|---|---|---|---|
 | P4 Match | O1, O3 (unit facts), O4 (unit by unit) | Decompilers (playbook 30, run by `make worker`), including readability (`docs/process/READABILITY.md`); documentarians for chapters across units (playbook 60); boundaries written by `make match WRITE=1` | `make match` (L2), `make readability`, reviewers judging names and comments (`make review-pass`, playbook 70), `make integrate`'s `make check` | Yes |
-| P5 Rebuild | O2 | **Placeholder:** a verifier. Moves globals from `src/POOLVARS.PAS` into their owning units in the original order, puts the overlay directives into `src/POOL.PAS`, matches the original link order and the layout of `GAME.OVR` | `make rebuild` byte-identical (or every difference explained in the whitepaper); goldens passing on the rebuild | **No:** needs a verifier playbook, and `make golden CHECK=1` against the rebuilt EXE (the oracle runs only the original today). Due before P4 ends |
+| P5 Rebuild | O2 | A verifier (playbook 50): lays out DGROUP in `src/POOLVARS.PAS` (`make dgroup`), orders overlay interfaces like the original's stubs (`make stub-order`), sets the link order in `src/POOL.PAS`, keeps the external object's assembly source (`src/RES03.ASM`) | `make rebuild` IDENTICAL; `make rebuild-golden` and `make sound-golden REBUILT=1` passing (all in `make check`) | **Done** 2026-10-14. What stays: changing a global or an interface means rerunning `make dgroup WRITE=1` and `make check` |
 | P6 Consistency | O4 (across units) | **Placeholder:** decompilers and a documentarian, per subsystem: one name for one thing across units, shared record types | Every routine still L2 (`make check`); a reviewer signs off each subsystem | Partly: `make rename` and `make readability` exist; a consistency playbook is due late in P4 |
 | P7 C translation | O5 | **Open decision for the human:** agents translating by hand, or a mechanical Pascal to C translator that agents then clean up. Either way it starts from branch `track-c-hybrid` (memory model, runtime, platform layer) | The oracle's record/replay sessions against the rebuild (`tools/oracle/replay.py`, on `main`) | **No:** decide late in P4 |
 | P8 CoCo 3 | Beyond the outcomes above | To be planned after P7 | | No |
@@ -448,8 +463,8 @@ Game data and the original executables are copyrighted; they stay in this privat
 | The compiler is on the critical path and not redistributable | A new machine cannot match without it | Archive hashes and sources in `tools/re/tp_toolchain.toml` and `docs/setup/SETUP-tp.md` |
 | Map boundaries wrong (`re/symbols.toml` merges routines, gives literal pools to the wrong routine, misses routines) | Wrong ids for routines | `make match WRITE=1` writes the compiler's boundaries; `make map` learns the TP 6.0 prologue `55 89 E5` |
 | Shared files (`POOLVARS.PAS`, registries, stub declarations) | Merge conflicts between agents | Record-level merge driver, stubs regenerated from signatures, `make integrate` with `make check` before anything lands |
-| A routine no Pascal reproduces because it was never Pascal (an `.OBJ` linked with `{$L}`) | Unit cannot be complete | `external_from` in `re/units.toml`: kept as the original's bytes, rebuilt from an assembly source in Phase 5 (res03) |
-| A byte-identical link is out of reach (link order, overlay file layout) | O2 is "identical up to explained differences" | Sessions on the rebuild prove behaviour; every difference is documented |
+| A routine no Pascal reproduces because it was never Pascal (an `.OBJ` linked with `{$L}`) | Unit cannot be complete | `external_from` in `re/units.toml`: kept as the original's bytes by the matcher, written as assembly (`src/RES03.ASM`) and linked by the rebuild (res03; resolved in Phase 5) |
+| A byte-identical link is out of reach (link order, overlay file layout) | O2 is "identical up to explained differences" | Did not occur: the link is identical (section 8.4). Kept for a future build with other sources |
 | Agents drift or hallucinate | Bad names, wrong claims | Packets, evidence tags, tool-written verdicts, independent review |
 | Scope (about 236 KB of game code) | Long project | Units in parallel worktrees; small units first |
 
@@ -461,5 +476,5 @@ Game data and the original executables are copyrighted; they stay in this privat
 2. ~~Compiler directives.~~ Resolved for `$A`, `$F`, `$S`, `$R`, `$G`, `$I`, `$O` (section 3, item 6). Still open: `$B`, `$V`, `$X` (no evidence yet).
 3. ~~Where `start-unpack.exe` came from.~~ Resolved: `make unexepack`.
 4. Meaning of the overlay stub field at +0E and of the `POOL.CFG` third option (`F`/`N`).
-5. How much of the resident code is hand-written assembly (Turbo Pascal `assembler` routines or external `.OBJ` files).
-6. The original unit link order and whether `GAME.OVR` can be reproduced byte for byte (Phase 5).
+5. ~~How much of the resident code is hand-written assembly.~~ Resolved 2026-10-15: one external object, res03's sound driver (5,721 bytes), now `src/RES03.ASM`; no `assembler` routines elsewhere.
+6. ~~The original unit link order and whether `GAME.OVR` can be reproduced byte for byte.~~ Resolved 2026-10-14: link order `Overlay, Crt, Dos`, then the init chain; `GAME.OVR` is reproduced byte for byte (section 8.4).
