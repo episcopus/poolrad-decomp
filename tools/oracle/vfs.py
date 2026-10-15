@@ -57,6 +57,12 @@ class VFS:
                 self.host_index[full] = p
         self.log: list[tuple] = []               # (op, path, extra), used by trace and tests
 
+    def alias(self, name: str, host_file: Path) -> None:
+        """Serve `host_file` (read only, copy on write like every pinned file) as `name` in the game
+        directory: the rebuilt program's overlay file `POOL.OVR` appears as GAME.OVR."""
+        self.host_index[self.mount + "\\" + name.upper()] = Path(host_file)
+        self.host_cache.pop(self.mount + "\\" + name.upper(), None)
+
     # --- path resolution -------------------------------------------------------------
     def resolve(self, path: str) -> str:
         p = norm(path)

@@ -13,8 +13,8 @@ type
   { The two flags of ShowEncounterPicture's caller: [0] the 3D sprite is loaded, [1] the close-up
     picture is shown. }
   TPictureShown = array[0..1] of Byte;
-procedure DecodeOperands(Count: Byte);
 function OperandValue(N: ShortInt): Word;
+procedure DecodeOperands(Count: Byte);
 procedure InitScript;
 procedure LoadEcl(BlockId: Byte);
 procedure LoadCharacter(Kind: Byte; var Who: PCharacter; var Items: PItem; var Affects: Pointer);
@@ -41,8 +41,8 @@ procedure AskListMenu(Title: String40; Text: string; HeadingColor, LineColor, Hi
 procedure CompareStrings(Left, Right: string);
 procedure CompareWords(Left, Right: Word);
 procedure ScriptGosub(N: Byte);
-procedure StepPartyForward;
 procedure SetupDuel(WithCopy: ShortInt);
+procedure StepPartyForward;
 procedure ScaleMoney(Factor: Real; Who: PCharacter);
 procedure LoseItems(Chance: Byte; Who: PCharacter);
 procedure SkipCommand;

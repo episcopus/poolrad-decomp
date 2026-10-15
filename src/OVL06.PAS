@@ -9,9 +9,9 @@ unit OVL06;
 interface
 uses POOLVARS;
 procedure ChooseShopItem(var Action: Char; var Selected: PMenuLine; var Head: PMenuLine; var Choice: Integer);
-procedure AddInventoryItem(Item: PMenuLine; var Overloaded: Byte);
-procedure BuyItems;
 procedure ShopMain;
+procedure BuyItems;
+procedure AddInventoryItem(Item: PMenuLine; var Overloaded: Byte);
 implementation
 uses OVL07, OVL19, OVL21, OVL25, RES06, RES09, RES12;
 

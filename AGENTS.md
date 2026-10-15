@@ -61,7 +61,9 @@ You are working on a **matching decompilation of SSI's Pool of Radiance (DOS) in
 | `make review-pass UNIT=<id> [CHECK=1]` | Record a passed review of a complete unit (playbook 70) |
 | `make readability [UNIT=<id>]` | The checkable readability rules (`docs/process/READABILITY.md`) |
 | `make rename OLD=<name> NEW=<Name> WHY="<evidence>"` | Rename a routine or a global in `re/`, the source and the whitepaper at once; `APPLY=1` after a merge |
-| `make rebuild` | Link the whole game from `src/` and compare it with the original, segment by segment |
+| `make rebuild` | Link the whole game from `src/` and compare it with the original (segments, load image, relocations, overlay file); exit 1 unless identical |
+| `make rebuild-golden` / `make rebuild-diff` | Play every golden session on the rebuilt program (behaviour and state); show where the rebuild differs, byte by byte |
+| `make dgroup [WRITE=1]` / `make stub-order [WRITE=1]` | Lay out DGROUP in `src/POOLVARS.PAS`; put overlay interfaces in the original's stub order (playbook 50) |
 | `make locks` / `make lock UNIT=` / `make unlock UNIT=` | List, take or release locks (shared by every worktree of the clone); `make integrate` releases merged ones, a worker releases its own empty one |
 | `make heartbeat AGENT=<you> NOTE="..." [DONE=1]` / `make agents` | Say what you are doing now (rule 9); list every agent's last heartbeat and who has gone quiet |
 | `make agent-control [STATE=<state> OPERATOR=1 REASON="..."]` | Display shared run control; only the human changes it |
@@ -93,6 +95,7 @@ A target that is not built yet prints which phase delivers it.
 | `25-oracle.md` | Building or extending the emulator harness |
 | `30-lift-unit.md` | Decompiling a unit to readable Pascal, routine by routine, to L2 (with `docs/process/READABILITY.md`) |
 | `40-sessions.md` | Recording sessions and goldens; verifying a rebuild |
+| `50-rebuild.md` | Phase 5: the rebuild from Pascal is the original (layout, link order, stub order, external objects, goldens on the rebuild) |
 | `60-design-doc.md` | Updating the whitepaper from verified findings |
 | `70-review.md` | Independent review of a complete unit (`make claim REVIEW=1`, `make review-pass`) |
 | `90-orchestrate.md` | Integrating hand-offs with `make integrate`, the inbox, running several workers |

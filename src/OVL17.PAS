@@ -19,9 +19,9 @@ procedure SaveCharacter(Who: PCharacter; Name: String8);
 procedure LoadCharacterFile(FileName: string; Who: PCharacter; SavedGame: Byte; UseSaveDir: Byte);
 procedure LoadMonster(Kind: Byte; Who: Pointer);
 procedure AddMonsterToParty(Kind: Byte);
-procedure AddPartyMember(Member: PCharacter);
 procedure LoadGame;
 procedure SaveGame;
+procedure AddPartyMember(Member: PCharacter);
 procedure SaveAndExit(AreaScript: ScriptName);
 implementation
 uses RES04, RES05, RES06, RES07, OVL18, OVL23, OVL24, OVL25, OVL29, OVL32;

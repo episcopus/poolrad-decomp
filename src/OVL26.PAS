@@ -6,8 +6,8 @@ unit OVL26;
   sites); ShowEncounterPicture (the loader) also calls ShowAreaView. }
 {$A-,O+,F+,S-,R-,G-,I-}
 interface
-procedure DrawPartyMarker;
 procedure ShowAreaView;
+procedure DrawPartyMarker;
 implementation
 uses POOLVARS, OVL27, OVL29, OVL32, RES07;
 

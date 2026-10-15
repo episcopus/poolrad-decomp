@@ -15,8 +15,9 @@ POOL.OVR. Then compares, segment by segment, with start-unpack.exe and GAME.OVR:
 
 Until every unit is decompiled the rebuild is smaller (skeleton stubs are empty, and the smart linker
 drops routines nothing calls), so most segments differ; the report shows how close it is. Phase 5 ends
-when every segment is identical and the files compare equal (SPEC 8.4). Exit status: 0 when the program
-compiles and links, 1 otherwise; the comparison itself is a report, not a gate, until Phase 5.
+when every segment is identical, the load image and the relocation table are the original's and the overlay
+file is GAME.OVR (the EXE header is the unpacker's output, not the program's). Exit status: 0 when the
+rebuild is identical, 1 when it differs or does not compile (the gate of Phase 5).
 """
 from __future__ import annotations
 
@@ -35,6 +36,7 @@ sys.path.insert(0, str(ROOT / "tools/re"))
 
 import match  # noqa: E402
 import tp_toolchain as tp  # noqa: E402
+import extobj  # noqa: E402
 
 OUT = ROOT / "build/rebuild"
 LIBRARY = ("SYSTEM", "CRT", "DOS", "OVERLAY")
@@ -47,6 +49,25 @@ def program_with_overlays(text: str, overlays: list[str]) -> str:
     if not n:
         raise match.MatchError("POOL.PAS: no main block")
     return out
+
+
+def link_external(unit: str, text: str) -> tuple[str, bytes]:
+    """The unit's source with its external routines declared `external` and `{$L}` of the object file that
+    carries their code (extobj.py: the original's bytes until Phase 5 has an assembly source), and that
+    object. The matcher keeps `{@stub}` declarations; only the rebuild links the object."""
+    obj = extobj.build_object(unit)
+    publics = [n for n, _off in extobj.external_part(unit)[1]]
+    obj_name = unit.upper() + "X.OBJ"
+    for n in publics:
+        text, k = re.subn(r"^\{@stub\}\s+((?:procedure|function)\s+%s\b[^;]*;)\s*begin\s+end;" % re.escape(n),
+                         r"\1 external;", text, count=1, flags=re.M | re.I)
+        if not k:
+            raise match.MatchError("%s: the external routine %s is not a `{@stub}` line of the unit" % (unit, n))
+    text, k = re.subn(r"^(implementation\b[^\n]*\n)", r"\1{$L %s}\n" % obj_name, text, count=1,
+                      flags=re.M | re.I)
+    if not k:
+        raise match.MatchError("%s: no implementation part" % unit)
+    return text, obj
 
 
 def compile_rebuild() -> tuple[Path, Path, Path, str]:
@@ -63,9 +84,14 @@ def compile_rebuild() -> tuple[Path, Path, Path, str]:
     for f in ("TPC.EXE", "TURBO.TPL"):
         shutil.copy(bin_dir / f, OUT / f)
     overlays = sorted(n for n in sources if n.startswith("OVL"))
+    units = tomllib.loads((ROOT / "re/units.toml").read_text())
+    external = {u["id"].upper() for u in units["resident"] if u.get("external_from")}
     for name, text in sources.items():
         if name == match.PROGRAM:
             text = program_with_overlays(text, overlays)
+        if name in external:
+            text, obj = link_external(name.lower(), text)
+            (OUT / (name + "X.OBJ")).write_bytes(obj)
         # {$D-,L-}: no debug or local-symbol information, which changes no code and which the comparison
         # does not read (only the map's segments). With it TPC ran out of memory linking the whole game
         # once ovl03, the event dispatcher, was decompiled (2026-10-14).
@@ -139,12 +165,22 @@ def compare(exe: Path, ovr: Path, mapf: Path) -> dict:
         rows.append({"unit": uid, "kind": "overlay", "orig_bytes": len(o_code), "ours_bytes": len(a),
                      "orig_entries": len(o["entries"]), "ours_entries": len(mine["entries"]),
                      "identical": len(a) == len(o_code) and same(a, o_code, mask)})
-    o_img, _ = tp.read_mz(tp.EXE)
+    o_img, o_rel = tp.read_mz(tp.EXE)
+    orig_ovr = (ROOT / "poolrad/GAME.OVR").read_bytes()
+    image_same = ours_img == o_img
+    relocs_same = ours_rel == o_rel
+    ovr_same = ovr.read_bytes() == orig_ovr
+    first = next((i for i in range(min(len(ours_img), len(o_img))) if ours_img[i] != o_img[i]), None)
     return {"rows": rows,
-            "image": {"orig": len(o_img), "ours": len(ours_img)},
-            "ovr": {"orig": (ROOT / "poolrad/GAME.OVR").stat().st_size, "ours": ovr.stat().st_size},
-            "files_identical": exe.read_bytes() == tp.EXE.read_bytes() and
-                               ovr.read_bytes() == (ROOT / "poolrad/GAME.OVR").read_bytes()}
+            "image": {"orig": len(o_img), "ours": len(ours_img), "identical": image_same,
+                      "first_difference": first, "differing_bytes": sum(
+                          1 for a, b in zip(ours_img, o_img) if a != b) + abs(len(ours_img) - len(o_img))},
+            "relocations": {"orig": len(o_rel), "ours": len(ours_rel), "identical": relocs_same},
+            "ovr": {"orig": len(orig_ovr), "ours": ovr.stat().st_size, "identical": ovr_same},
+            "segments_identical": all(r["identical"] for r in rows),
+            # the program is its load image, its relocation table and its overlay file. The EXE header of
+            # start-unpack.exe is the unpacker's (padded, with the packed file's checksum), not the program's
+            "files_identical": image_same and relocs_same and ovr_same}
 
 
 def main(argv=None) -> int:
@@ -166,13 +202,20 @@ def main(argv=None) -> int:
             (" at %s" % r["ours_at"]) if r.get("ours_at", "-") != "-" else "", r["orig_bytes"],
             (" at %s" % r["orig_at"]) if r.get("orig_at") else ""))
     same_n = sum(r["identical"] for r in rows)
-    print("rebuild: %d of %d segments identical (apart from relocations); load image %d of %d bytes; overlay file "
-          "%d of %d bytes; files %s" % (same_n, len(rows), result["image"]["ours"], result["image"]["orig"],
-                                       result["ovr"]["ours"], result["ovr"]["orig"],
-                                       "IDENTICAL" if result["files_identical"] else "differ (Phase 5 goal)"))
+    print("rebuild: %d of %d segments identical (apart from relocations); load image %d of %d bytes%s; "
+          "relocations %d of %d%s; overlay file %d of %d bytes%s" % (
+              same_n, len(rows), result["image"]["ours"], result["image"]["orig"],
+              "" if result["image"]["identical"] else " (%d differ)" % result["image"]["differing_bytes"],
+              result["relocations"]["ours"], result["relocations"]["orig"],
+              "" if result["relocations"]["identical"] else " (not the same set)",
+              result["ovr"]["ours"], result["ovr"]["orig"], "" if result["ovr"]["identical"] else " (differ)"))
+    print("rebuild: %s" % ("IDENTICAL: the rebuilt load image, relocation table and overlay file are the "
+                           "original's (the EXE header is the unpacker's; SPEC 8.4)" if result["files_identical"]
+                           else "DIFFERENT from the original (Phase 5 goal: identical)"))
+    (OUT / "result.json").write_text(json.dumps(result, indent=1))
     if a.json:
         Path(a.json).write_text(json.dumps(result, indent=1))
-    return 0
+    return 0 if result["files_identical"] else 1
 
 
 if __name__ == "__main__":

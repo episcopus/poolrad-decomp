@@ -12,6 +12,7 @@ Every playbook has the same parts: **Inputs**, **Steps**, **Done when**, **Hand-
 | 25-oracle.md | Verifier | P2 |
 | 30-lift-unit.md | Decompiler | P3 to P4 |
 | 40-sessions.md | Verifier | P2 to P5 |
+| 50-rebuild.md | Verifier | P5 |
 | 60-design-doc.md | Documentarian | all |
 | 70-review.md | Reviewer | P4 to P6 |
 | 90-orchestrate.md | Orchestrator | all |

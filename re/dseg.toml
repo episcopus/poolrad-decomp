@@ -1190,3 +1190,94 @@ evidence = "the members ECL command 11 (ovl03:0450) has added: incremented per m
 offset = 0x07E8
 name = "IconEditorPrompts"
 evidence = "ovl16:39F9 passes SizeName + DS:07E8[State] (State 1..5) as the ReadPromptChoice prompt of the icon editor and ovl16:3A31..3A8C Delete and Insert the word at column 13 of entry 3 (DS:083A); the image holds the five prompt lines 'Parts color-1 color-2 Size Exit', 'Head Weapon Exit', 'Weapon Body xxxx Shield Arm Leg Exit', ' Keep Exit' and 'Next Prev Keep Exit' at DS:07E8, stride 41"
+
+[[global]]
+offset = 0x43DC
+size = 2
+type = "system"
+name = "OvrResult"
+evidence = "the Overlay unit's typed constants (TP 6.0 interface) sit in the data segment 16 bytes below OvrCodeList: ds43DC is OvrResult (res08_init reads it after overlay sizing); placed by the rebuild's link order (make rebuild, playbook 50)"
+
+[[global]]
+offset = 0x43DE
+size = 2
+type = "system"
+name = "OvrEmsPages"
+evidence = "the Overlay unit's typed constants (TP 6.0 interface) sit in the data segment 16 bytes below OvrCodeList: ds43DC is OvrResult (res08_init reads it after overlay sizing); placed by the rebuild's link order (make rebuild, playbook 50)"
+
+[[global]]
+offset = 0x43E0
+size = 2
+type = "system"
+name = "OvrTrapCount"
+evidence = "the Overlay unit's typed constants (TP 6.0 interface) sit in the data segment 16 bytes below OvrCodeList: ds43DC is OvrResult (res08_init reads it after overlay sizing); placed by the rebuild's link order (make rebuild, playbook 50)"
+
+[[global]]
+offset = 0x43E2
+size = 2
+type = "system"
+name = "OvrLoadCount"
+evidence = "the Overlay unit's typed constants (TP 6.0 interface) sit in the data segment 16 bytes below OvrCodeList: ds43DC is OvrResult (res08_init reads it after overlay sizing); placed by the rebuild's link order (make rebuild, playbook 50)"
+
+[[global]]
+offset = 0x43E4
+size = 1
+type = "system"
+name = "OvrFileMode"
+evidence = "the Overlay unit's typed constants (TP 6.0 interface) sit in the data segment 16 bytes below OvrCodeList: ds43DC is OvrResult (res08_init reads it after overlay sizing); placed by the rebuild's link order (make rebuild, playbook 50)"
+
+[[global]]
+offset = 0x84F0
+size = 1
+type = "system"
+name = "CheckBreak"
+evidence = "the Crt unit's variables (TP 6.0 interface), 4 bytes below where the rebuild first placed them, which puts Input at 8508 as in the original; res08_init clears it after closing pool.cfg (`ds84F0 := 0`)"
+
+[[global]]
+offset = 0x84F1
+size = 1
+type = "system"
+name = "CheckEof"
+evidence = "the Crt unit's variables (TP 6.0 interface), 4 bytes below where the rebuild first placed them, which puts Input at 8508 as in the original; Crt variable block"
+
+[[global]]
+offset = 0x84F2
+size = 1
+type = "system"
+name = "DirectVideo"
+evidence = "the Crt unit's variables (TP 6.0 interface), 4 bytes below where the rebuild first placed them, which puts Input at 8508 as in the original; Crt variable block"
+
+[[global]]
+offset = 0x84F3
+size = 1
+type = "system"
+name = "CheckSnow"
+evidence = "the Crt unit's variables (TP 6.0 interface), 4 bytes below where the rebuild first placed them, which puts Input at 8508 as in the original; Crt variable block"
+
+[[global]]
+offset = 0x84F4
+size = 2
+type = "system"
+name = "LastMode"
+evidence = "the Crt unit's variables (TP 6.0 interface), 4 bytes below where the rebuild first placed them, which puts Input at 8508 as in the original; Crt variable block"
+
+[[global]]
+offset = 0x84F6
+size = 1
+type = "system"
+name = "TextAttr"
+evidence = "the Crt unit's variables (TP 6.0 interface), 4 bytes below where the rebuild first placed them, which puts Input at 8508 as in the original; Crt variable block"
+
+[[global]]
+offset = 0x84F8
+size = 2
+type = "system"
+name = "WindMin"
+evidence = "the Crt unit's variables (TP 6.0 interface), 4 bytes below where the rebuild first placed them, which puts Input at 8508 as in the original; Crt variable block"
+
+[[global]]
+offset = 0x84FA
+size = 2
+type = "system"
+name = "WindMax"
+evidence = "the Crt unit's variables (TP 6.0 interface), 4 bytes below where the rebuild first placed them, which puts Input at 8508 as in the original; Crt variable block"

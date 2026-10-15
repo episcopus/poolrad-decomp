@@ -111,6 +111,22 @@ def blocker_lines(path: Path) -> list[str]:
     return out
 
 
+def p5_state() -> str:
+    """The last `make rebuild` in this checkout (build/rebuild/result.json): what the rebuilt program is."""
+    import json
+    f = Path(__file__).resolve().parents[2] / "build/rebuild/result.json"
+    if not f.exists():
+        return "not measured here: `make rebuild` (SPEC 8.4); `make rebuild-golden` plays the goldens on it"
+    r = json.loads(f.read_text())
+    seg = sum(1 for x in r["rows"] if x["identical"])
+    word = lambda ok: "identical" if ok else "DIFFERENT"
+    state = "done" if r["files_identical"] else "in progress"
+    return ("%s: %d of %d segments identical; load image %s (%d bytes), relocation table %s, overlay file %s; "
+            "`make check` also plays every golden session on the rebuilt program (behaviour and state)" % (
+                state, seg, len(r["rows"]), word(r["image"]["identical"]), r["image"]["ours"],
+                word(r["relocations"]["identical"]), word(r["ovr"]["identical"])))
+
+
 def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("-o", "--output", default=str(ROOT / "work/status.md"))
@@ -183,7 +199,7 @@ def main(argv: list[str]) -> int:
         "| P4 Match | %d of %d game routines at L2 (%d of %d bytes by re/symbols.toml sizes); %d of %d game units complete, %d reviewed; %d routines (%d bytes) inside external object files are not Pascal and are matched by bytes; main program `src/POOL.PAS` matched by `make match UNIT=main` |" % (
             p4["matched"], p4["routines"], p4["matched_bytes"], p4["bytes"], p4["complete"], p4["units"], p4["reviewed"],
             p4["external"], p4["external_bytes"]),
-        "| P5 Rebuild | `make rebuild` links the whole game from `src/` (every unit has source: decompiled or skeleton) and reports identical segments |",
+        "| P5 Rebuild | %s |" % p5_state(),
         "",
         "### P4 units with matched routines",
         "",

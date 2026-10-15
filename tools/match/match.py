@@ -70,6 +70,7 @@ sys.path.insert(0, str(ROOT / "tools/re"))
 from capstone import Cs, CS_ARCH_X86, CS_MODE_16  # noqa: E402
 from capstone.x86 import X86_OP_IMM, X86_OP_MEM, X86_REG_BP, X86_REG_CS, X86_REG_DS, X86_REG_ES, X86_REG_SS  # noqa: E402
 
+import dgroup  # noqa: E402
 import tp_toolchain as tp  # noqa: E402
 
 SRC = ROOT / "src"
@@ -271,8 +272,14 @@ def all_sources() -> dict[str, str]:
 
 
 def unit_sources() -> dict[str, str]:
-    """The units of src/ (the main program excluded)."""
-    return {n: t for n, t in all_sources().items() if not re.match(r"\s*program\b", t, re.I)}
+    """The units of src/ (the main program excluded), as the matcher compiles them. POOLVARS comes without
+    its DGROUP layout (typed constants with their values, storage cells: tools/re/dgroup.py): the layout is
+    for the rebuild, which reads `all_sources()`; the matcher compares addresses by name, and TPC's 640K do
+    not hold the full model beside every unit (out of memory, 2026-10-14)."""
+    out = {n: t for n, t in all_sources().items() if not re.match(r"\s*program\b", t, re.I)}
+    if "POOLVARS" in out:
+        out["POOLVARS"] = dgroup.compact_poolvars(out["POOLVARS"])
+    return out
 
 
 def init_begin_line(text: str) -> int | None:

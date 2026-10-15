@@ -17,7 +17,7 @@ procedure CancelScribing(Who: PCharacter);
 procedure CancelPartyStudy;
 function SpellSlotsLeft(SpellLevel, SpellClass: ShortInt): Byte;
 function MayUseMagic(Action: Byte): Boolean;
-procedure CastSpells;
+procedure MakeCamp(var EndCamp: Byte);
 function ShowSpellSlotsLeft: Boolean;
 procedure RestParty(var EndCamp: Byte);
 procedure SortMemorizedSpells;
@@ -31,7 +31,7 @@ procedure PartyOrderMenu;
 procedure DropPartyMember;
 procedure CampSpeedMenu;
 procedure AlterMenu;
-procedure MakeCamp(var EndCamp: Byte);
+procedure CastSpells;
 implementation
 uses RES04, RES06, RES09, RES12, OVL16, OVL17, OVL19, OVL20, OVL22, OVL25;
 

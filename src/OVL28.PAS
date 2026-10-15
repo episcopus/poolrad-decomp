@@ -49,8 +49,8 @@ procedure DrawBodySprite(Col, Row: Byte; Sprite: Pointer);
 procedure LoadSpriteList(Name: String8; Bank: Byte; Mode: Byte; List: PSpriteList);
 procedure FreeSpriteList(Rec: PSpriteList);
 procedure ShowHeadBodyWindow;
-procedure LoadHeadBodySprites(HeadBank, BodyBank: Byte);
 procedure ShowHeadBodySprites(Col, Row: Byte; WithBody: Byte);
+procedure LoadHeadBodySprites(HeadBank, BodyBank: Byte);
 procedure Show3DSprite(Slot: Byte; Rec: PSpriteList);
 implementation
 uses RES04, RES05, RES09, RES07;

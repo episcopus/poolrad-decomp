@@ -38,16 +38,16 @@ function FindSpellTarget(Spell, Automatic, AimFlag: Byte; var Target: TSpellTarg
 procedure SelectSpellTargets(Spell, Automatic: Byte; var Done: Byte);
 procedure CastCombatSpell(SpellNumber, NoRedraw: Byte; var Done: Byte);
 function IsBackstab(Who: PCharacter; Target: PCharacter): Boolean;
-function BearingTo(Who, Target: Pointer): Byte;
-procedure ShowAttackAnimation(Who, Target: PCharacter; Item: PItem);
-procedure UpdateMonsterMorale;
-function FastestEnemyMovement(Who: Pointer): Byte;
 function ConfirmAttackTarget(Who, Target: PCharacter): Boolean;
+procedure ShowAttackAnimation(Who, Target: PCharacter; Item: PItem);
+procedure RunAimTargets(Who: PCharacter; Range, Automatic, AimFlag: Byte; var Done: Byte; var Aim);
+function BearingTo(Who, Target: Pointer): Byte;
+procedure UpdateMonsterMorale;
 function ShowAimPrompt(Who, Target: PCharacter; Range: Byte; ShowRange: Byte; Unused: Byte): Char;
 procedure ResolveAimedAttack(Who, Target: PCharacter; Automatic: Byte; var Done: Byte; var Aim: TSpellTarget);
 procedure RunAimCursor(Who, Target: PCharacter; Range, Automatic,
   AimFlag: Byte; var Done: Byte; var Aim: TSpellTarget);
-procedure RunAimTargets(Who: PCharacter; Range, Automatic, AimFlag: Byte; var Done: Byte; var Aim);
+function FastestEnemyMovement(Who: Pointer): Byte;
 function ChooseCombatTarget(Who: PCharacter; Range, ThroughWalls, ForgetTarget: Byte): Boolean;
 procedure RakeAttack(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ForcedAttack(Who: PCharacter; Affect: PAffect; Mode: Byte);
