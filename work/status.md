@@ -13,7 +13,7 @@ Approach: ADR-002 (SPEC 4), Pascal-first matching decompilation; the C track (AD
 | P2 Oracle and data | done: goldens with recordings for 2 of 2 session scripts (boot-title, create-character); `make golden CHECK=1` |
 | P3 Match harness | done: `make match` (tools/match/match.py, tests/unit/test_match.py); gate `make check` |
 | P4 Match | 804 of 804 game routines at L2 (235599 of 235599 bytes by re/symbols.toml sizes); 46 of 46 game units complete, 46 reviewed; 20 routines (3661 bytes) inside external object files are not Pascal and are matched by bytes; main program `src/POOL.PAS` matched by `make match UNIT=main` |
-| P5 Rebuild | `make rebuild` links the whole game from `src/` (every unit has source: decompiled or skeleton) and reports identical segments |
+| P5 Rebuild | done: 51 of 51 segments identical; load image identical (68592 bytes), relocation table identical, overlay file identical; `make check` also plays every golden session on the rebuilt program (behaviour and state) |
 
 ### P4 units with matched routines
 
