@@ -59,11 +59,13 @@ L2 while the whole program differs, because four things only the full link sees:
    `Overlay, Crt, Dos` first: the library units are linked right after System in the original (their
    code segments sit at `0AA2`, `0A40`, `0A32`), which also puts the Overlay unit's typed constants after
    the game's and Crt's variables after the game's.
-6. **External objects** (`tools/re/extobj.py`). For a unit with `external_from` in `re/units.toml` the
-   rebuild writes an OMF object from the original image (one code segment, a public per routine of the
-   registry, a segment-base fixup for each relocated word) and links it with `{$L}`. The bytes come from
-   the pinned original at build time and nothing is stored. This is a stand-in for an assembly source of
-   the driver; when that exists the rebuild links its object instead.
+6. **External objects** (`src/RES03.ASM`, `tools/re/asm86.py`). A unit with `external_from` in
+   `re/units.toml` keeps the code the original linked with `{$L}` in `src/<UNIT>.ASM`. The rebuild assembles
+   it into an OMF object (one code segment, publics, offset and segment fixups; the encodings are TASM's) and
+   links it with `{$L}` after turning the unit's `{@stub}` lines for its publics into `external;`
+   declarations. `make match` is unchanged: it keeps the original's bytes for that part. The assembler is
+   deliberately small (the instructions the driver uses); extend it when a unit needs more, with a test of
+   the encoding in `tests/unit/test_asm86.py`.
 7. **Goldens on the rebuild.** `make rebuild-golden` (`golden.py --check --rebuilt --strict-state`) runs
    `build/rebuild/POOL.EXE` in the oracle with `POOL.OVR` served as GAME.OVR (`tools/oracle/layout.py`
    knows where System, DGROUP and the overlay stubs are in the build) and compares with the committed
@@ -72,7 +74,13 @@ L2 while the whole program differs, because four things only the full link sees:
    the outside world) and **state** (DGROUP, heap and memory digests; equal exactly when the layout is the
    original's). A divergence names the first difference; `tools/oracle/routines.py` and the trace
    (`make oracle-run TRACE=calls`) say where.
-8. Add or change a decompiled routine, a global or an interface: run `make check`. It rebuilds and plays the
+8. **The sound driver's trace.** `make sound-golden REBUILT=1` (`tools/oracle/soundprobe.py`) boots the
+   game, then calls `SetSoundDriverIdle`, `PlaySound` for each of the 20 tunes on the PC speaker and on the
+   Tandy chip, and compares every write to PIT channel 0, PIT channel 2 with the speaker gate, and port
+   C0h with `tests/sessions/golden/sound-driver`. The two session goldens hardly play a sound, so this is the
+   check that the driver is the original's, and the reference for the C build's sound (compare without
+   times: `sound_sequence_digest`).
+9. Add or change a decompiled routine, a global or an interface: run `make check`. It rebuilds and plays the
    goldens, so a change that moves a byte of the program fails there.
 
 ## Rules
@@ -81,17 +89,17 @@ L2 while the whole program differs, because four things only the full link sees:
   committed except `src/POOLVARS.PAS` (the layout is source, its values were read from the image once).
 - The goldens and the matcher are not changed to make the rebuild pass (AGENTS.md rule 2). A tooling
   change merges when `make match-gate` passes.
-- An object file or a layout that needs the original's bytes at build time is a stand-in and is listed in
-  the whitepaper (section on the rebuild) with what replaces it.
+- Nothing of the original's bytes is needed at build time: the typed constants' values are in POOLVARS and
+  the sound driver is `src/RES03.ASM`. A new stand-in (something generated from the original at build
+  time) must be listed in the whitepaper section on the rebuild with what replaces it.
 - Do not move a global into a unit unless the byte comparison still passes: ownership by unit is a
   refinement for Phase 6, the layout does not need it.
 
 ## Done when
 
-`make rebuild` prints `IDENTICAL`, `make rebuild-golden` passes for every session in `tests/sessions/`, and
-`make check` passes with both stages. The whitepaper's rebuild section lists the stand-ins (the sound
-driver object, the values of the typed constants read from the image) and the open work (an assembly
-source for the driver, distributing globals to their units).
+`make rebuild` prints `IDENTICAL`, `make rebuild-golden` passes for every session in `tests/sessions/`, `make sound-golden REBUILT=1`
+passes, and `make check` passes with all three stages. The open work is in the whitepaper's rebuild
+section (distributing globals to their units, Phase 6).
 
 ## Hand-off
 

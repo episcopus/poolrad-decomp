@@ -31,7 +31,7 @@ SYSTEM_CHECK = (0x11C0, 0x1250)      # the System code the oracle's hooks sit in
 SYSTEM_DATA = (0x43EC, 0x8800)       # the original's DS offsets of System's variable blocks (re/dseg.toml)
 
 # Turbo Pascal runtime names the oracle needs, and what they are called in the link map (uppercase).
-SYSTEM_VARS = {"randseed": "RANDSEED", "heap_org": "HEAPORG", "heap_ptr": "HEAPPTR"}
+SYSTEM_VARS = {"randseed": "RANDSEED", "heap_org": "HEAPORG", "heap_ptr": "HEAPPTR", "soundmode": "SOUNDMODE"}
 
 
 @dataclass
@@ -44,6 +44,7 @@ class Layout:
     randseed: int = 0x4428                       # DS offsets of System variables
     heap_org: int = 0x4400
     heap_ptr: int = 0x4404
+    soundmode: int = 0x5372                      # the game's SoundMode (POOL.CFG line 2)
     wheel_table: int = 0x0000                    # DS offset of the code wheel table (whitepaper 5.12)
     stubs: dict[str, int] | None = None          # overlay id -> load-relative stub paragraph; None: re/units.toml
     # resident code ranges for `trace.locate`: (lo, hi, out_seg, unit id, base), load-relative linear;

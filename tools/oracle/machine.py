@@ -131,6 +131,8 @@ class Machine:
         self.next_irq0 = self._irq0_period()
         self.pic_mask = 0
         self.speaker_log = []              # (time, divisor, on) for sound capture
+        self.pit0_log = []                 # (time, reload) every time the timer's reload is written
+        self.tandy_log = []                # (time, byte) every write to the Tandy sound chip (port C0h)
         self.port_log_unhandled: dict = {}
 
         self.services: dict[int, callable] = {}
@@ -397,8 +399,10 @@ class Machine:
         elif port == 0x61:
             self.port61 = val & 0xFF
             self.speaker_log.append((self.now(), self.pit2_reload, (val & 3) == 3))
-        elif port in (0x22, 0x23, 0x80, 0xA0, 0xA1, 0x3F2, 0x201, 0x378, 0x379, 0x37A, 0xC0):
-            pass                                       # 0C0h: Tandy/PCjr sound chip writes (silence at start-up)
+        elif port == 0xC0:
+            self.tandy_log.append((self.now(), val & 0xFF))   # Tandy/PCjr SN76489 sound chip
+        elif port in (0x22, 0x23, 0x80, 0xA0, 0xA1, 0x3F2, 0x201, 0x378, 0x379, 0x37A):
+            pass
         else:
             self._unhandled_port("out", port, size, val)
 
@@ -421,6 +425,7 @@ class Machine:
                 self._pit_lo = val & 0xFF
             else:
                 self.pit_reload = ((val & 0xFF) << 8 | self._pit_lo) or 0x10000
+                self.pit0_log.append((self.now(), self.pit_reload))
                 self.next_irq0 = self.now() + self._irq0_period()
             self.pit_latch_lo = not self.pit_latch_lo
 

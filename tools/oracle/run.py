@@ -23,6 +23,7 @@ from oracle.keys import KeyScript  # noqa: E402
 from oracle.trace import Tracer  # noqa: E402
 from oracle.protection import install_wheel_solver  # noqa: E402
 from oracle.state import canonical_digest  # noqa: E402
+from oracle import sound  # noqa: E402
 from oracle.rng import install_random_log, sequence_digest, format_log  # noqa: E402
 
 EXE = ROOT / "poolrad/start-unpack.exe"
@@ -37,6 +38,11 @@ def build_machine(script: KeyScript | None, *, strict: bool = True, insn_per_sec
     m.keys = script
     if script is not None:
         m.clock_pin = script.clock
+        if getattr(script, "sound", None):
+            # POOL.CFG line 2 is the sound choice; the run sees the pinned file with that line replaced
+            lines = (GAME / "POOL.CFG").read_bytes().split(b"\r\n")
+            lines[1] = script.sound.encode()
+            m.vfs.layer["\\POOLRAD\\POOL.CFG"] = bytearray(b"\r\n".join(lines))
     install_wheel_solver(m)
     install_random_log(m)
     return m
@@ -112,6 +118,8 @@ def run_session(script_text: str | None, *, max_insns: int, out_dir: Path | None
             m.ega.screenshot(out_dir / "final.png")
         if "rng" in flags:
             (out_dir / "random.txt").write_text(format_log(m.random_log))
+        if "sound" in flags:
+            (out_dir / "sound.txt").write_text(sound.format_trace(sound.events(m)))
     summary = {
         "reason": reason, "error": err, "insns": m.insns, "virtual_seconds": round(m.seconds(), 3),
         "mode": m.ega.mode, "key_reads": m.bios.key_reads, "blocked_reads": m.bios.blocked_reads,
@@ -123,6 +131,7 @@ def run_session(script_text: str | None, *, max_insns: int, out_dir: Path | None
         "files_opened": [p for (op, p, _x) in m.vfs.log if op == "open"],
         "missing_opens": [p for (op, p, _x) in m.vfs.log if op == "open-missing"],
         "random_calls": len(m.random_log), "random_digest": sequence_digest(m.random_log),
+        **sound.summary(sound.events(m)),
         "random_seed_writes": [(w.time, w.where, w.value) for w in m.seed_writes],
         "clock_pinned": script.clock, "clock_reads": m.tod_log[:5],
         "routines_entered": len(tracer.entered) if tracer and tracer.calls else None,
