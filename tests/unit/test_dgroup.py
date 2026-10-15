@@ -11,7 +11,6 @@ sys.path.insert(0, str(ROOT / "tools/re"))
 sys.path.insert(0, str(ROOT / "tools/match"))
 
 import dgroup  # noqa: E402
-import extobj  # noqa: E402
 import stub_order  # noqa: E402
 
 
@@ -89,20 +88,6 @@ def test_poolvars_in_the_repository_has_a_layout_that_compacts_to_declarations_o
     assert len(compact) < len(text)
     assert max(len(l) for l in text.splitlines()) <= 127                # Turbo Pascal's line limit
     assert dgroup.compact_poolvars(compact) == compact
-
-
-def test_omf_records_have_valid_checksums_and_the_structure_the_linker_reads():
-    obj = extobj.omf("T", 6, [("Foo", 0), ("Bar", 3)], bytes(range(6)), [2])
-    pos, kinds = 0, []
-    while pos < len(obj):
-        rtype, length = obj[pos], obj[pos + 1] | obj[pos + 2] << 8
-        rec = obj[pos:pos + 3 + length]
-        assert sum(rec) % 256 == 0                                      # OMF checksum
-        kinds.append(rtype)
-        pos += 3 + length
-    assert kinds[0] == 0x80 and kinds[-1] == 0x8A                       # THEADR first, MODEND last
-    assert 0x98 in kinds and 0x90 in kinds and 0xA0 in kinds and 0x9C in kinds
-    assert bytes(range(6)) in obj
 
 
 def test_stub_order_moves_the_exported_routines_and_keeps_the_others():

@@ -18,7 +18,7 @@ You are working on a **matching decompilation of SSI's Pool of Radiance (DOS) in
 - **The compiler is on the critical path but proprietary:** it lives in `build/toolchain/` (ignored by git; `make tp-pin`, `docs/setup/SETUP-tp.md`) and is never committed, pushed or copied into `src/`.
 - Analyse `poolrad/start-unpack.exe` (the unpacked image), not `START.EXE` (EXEPACK packed).
 - `re/symbols.toml` boundaries are approximate until a routine matches: a size is the gap to the next entry (so it includes the next routine's literal pool), and the map can merge or invent routines. `make match WRITE=1` writes the compiler's boundaries into the registry (sizes, entries inside matched code removed, missing routines added); there is no mapper role.
-- **External object files.** Code the original linked from an `.OBJ` (`{$L}`, placed after the unit's initialisation part) is not Pascal: `re/units.toml` names it (`external_from`), the registry flags its routines `external = true`, the matcher keeps it as the original's bytes and the unit can still be complete (res03's sound driver). Phase 5 rebuilds it from an assembly source.
+- **External object files.** Code the original linked from an `.OBJ` (`{$L}`, placed after the unit's initialisation part) is not Pascal: `re/units.toml` names it (`external_from`), the registry flags its routines `external = true`, the matcher keeps it as the original's bytes and the unit can still be complete (res03's sound driver). Its source is `src/RES03.ASM`, assembled by `tools/re/asm86.py` and linked by `make rebuild`.
 - Our build differs from the 1988 build other projects analysed (38 overlays, `TPOV`). Their addresses never apply to us; their findings are leads to re-prove.
 
 ## Ground rules
@@ -63,6 +63,7 @@ You are working on a **matching decompilation of SSI's Pool of Radiance (DOS) in
 | `make rename OLD=<name> NEW=<Name> WHY="<evidence>"` | Rename a routine or a global in `re/`, the source and the whitepaper at once; `APPLY=1` after a merge |
 | `make rebuild` | Link the whole game from `src/` and compare it with the original (segments, load image, relocations, overlay file); exit 1 unless identical |
 | `make rebuild-golden` / `make rebuild-diff` | Play every golden session on the rebuilt program (behaviour and state); show where the rebuild differs, byte by byte |
+| `make sound-golden [REBUILT=1]` | Play every tune of the sound driver in the oracle and compare the hardware trace (PIT, speaker gate, Tandy chip) |
 | `make dgroup [WRITE=1]` / `make stub-order [WRITE=1]` | Lay out DGROUP in `src/POOLVARS.PAS`; put overlay interfaces in the original's stub order (playbook 50) |
 | `make locks` / `make lock UNIT=` / `make unlock UNIT=` | List, take or release locks (shared by every worktree of the clone); `make integrate` releases merged ones, a worker releases its own empty one |
 | `make heartbeat AGENT=<you> NOTE="..." [DONE=1]` / `make agents` | Say what you are doing now (rule 9); list every agent's last heartbeat and who has gone quiet |

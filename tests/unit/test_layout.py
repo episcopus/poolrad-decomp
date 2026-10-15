@@ -97,3 +97,20 @@ def test_rebuilt_layout_comes_from_the_link_map():
     assert lay.overlay_file.name.upper() == "POOL.OVR"
     assert len(lay.stubs) == 35 and lay.stubs["ovl00"] == 0x0016
     assert lay.randseed != 0x4428 or lay.dgroup_para == 0x0C7C       # the data layout is its own until identical
+
+
+def test_sound_setting_of_a_session_script():
+    from oracle.keys import KeyScript
+    assert KeyScript.parse("sound T\nclock 12:00:00\nwait 5\n").sound == "T"
+    assert KeyScript.parse("wait 5\n").sound is None
+    with pytest.raises(ValueError):
+        KeyScript.parse("sound X\n")
+
+
+def test_sound_trace_digests_ignore_time_when_asked():
+    from oracle import sound
+    a = [(10, "S", 1000, 1), (20, "T", 159, 0)]
+    b = [(15, "S", 1000, 1), (90, "T", 159, 0)]
+    assert sound.digest(a) != sound.digest(b)
+    assert sound.digest(a, with_time=False) == sound.digest(b, with_time=False)
+    assert sound.summary(a)["sound_speaker"] == 1 and sound.summary(a)["sound_tandy"] == 1

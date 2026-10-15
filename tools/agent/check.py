@@ -33,7 +33,9 @@ STAGES = (("inputs", "tools/setup/inputs.py", "--check"),
           ("golden", "tools/oracle/golden.py", "--check"),
           # Phase 5: the rebuilt program plays every golden session, behaviour and state (playbook 50);
           # never cached: it depends on src/, which the original goldens do not
-          ("rebuilt-golden", "tools/oracle/golden.py", "--check", "--rebuilt", "--strict-state"))
+          ("rebuilt-golden", "tools/oracle/golden.py", "--check", "--rebuilt", "--strict-state"),
+          # the sound driver, every tune on both devices: the hardware trace of the rebuild is the original's
+          ("rebuilt-sound", "tools/oracle/soundprobe.py", "--check", "--rebuilt"))
 
 
 def fingerprint() -> str:

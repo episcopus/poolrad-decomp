@@ -36,7 +36,7 @@ sys.path.insert(0, str(ROOT / "tools/re"))
 
 import match  # noqa: E402
 import tp_toolchain as tp  # noqa: E402
-import extobj  # noqa: E402
+import asm86  # noqa: E402
 
 OUT = ROOT / "build/rebuild"
 LIBRARY = ("SYSTEM", "CRT", "DOS", "OVERLAY")
@@ -52,17 +52,25 @@ def program_with_overlays(text: str, overlays: list[str]) -> str:
 
 
 def link_external(unit: str, text: str) -> tuple[str, bytes]:
-    """The unit's source with its external routines declared `external` and `{$L}` of the object file that
-    carries their code (extobj.py: the original's bytes until Phase 5 has an assembly source), and that
-    object. The matcher keeps `{@stub}` declarations; only the rebuild links the object."""
-    obj = extobj.build_object(unit)
-    publics = [n for n, _off in extobj.external_part(unit)[1]]
+    """The unit's source with its public routines of the assembly source declared `external` and `{$L}` of
+    the object file tools/re/asm86.py assembles from `src/<UNIT>.ASM` (the code the original linked from an
+    .OBJ: res03's sound driver). The matcher keeps `{@stub}` declarations; only the rebuild links the
+    object. Returns the Pascal text and the object."""
+    source = ROOT / "src" / (unit.upper() + ".ASM")
+    if not source.exists():
+        raise match.MatchError("%s has an external object in re/units.toml but no src/%s.ASM" % (
+            unit, unit.upper()))
+    try:
+        obj, assembler = asm86.assemble(source.read_text(), unit.upper() + "X")
+    except asm86.AsmError as e:
+        raise match.MatchError("%s: %s" % (source.name, e))
     obj_name = unit.upper() + "X.OBJ"
-    for n in publics:
+    for n in assembler.publics:
         text, k = re.subn(r"^\{@stub\}\s+((?:procedure|function)\s+%s\b[^;]*;)\s*begin\s+end;" % re.escape(n),
                          r"\1 external;", text, count=1, flags=re.M | re.I)
         if not k:
-            raise match.MatchError("%s: the external routine %s is not a `{@stub}` line of the unit" % (unit, n))
+            raise match.MatchError("%s: the public %s of %s is not a `{@stub}` line of the unit" % (
+                unit, n, source.name))
     text, k = re.subn(r"^(implementation\b[^\n]*\n)", r"\1{$L %s}\n" % obj_name, text, count=1,
                       flags=re.M | re.I)
     if not k:

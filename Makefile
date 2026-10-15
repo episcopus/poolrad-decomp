@@ -16,7 +16,7 @@ q = '$(subst ','\'',$(1))'
         packet claim lock locks unlock handoff handoffs handoff-done integrate start-run stop-run run-add run-status heartbeat agents watch-agents worker inbox \
         agent-control agent-step safety-check merge-check hooks match-gate merge-driver \
         agent-register agent-usage agent-meter performance learn learning-check expert-budget expert-request expert-take expert-step expert-finish expert-result experts expert-scan expert-candidates task-approve \
-        oracle-run oracle-dosbox timing-scan golden match test test-slow check review-pass rebuild dgroup stub-order rebuild-golden rebuild-diff skeleton stubs readability rename host coco3
+        oracle-run oracle-dosbox timing-scan golden match test test-slow check review-pass rebuild dgroup stub-order rebuild-golden rebuild-diff sound-golden skeleton stubs readability rename host coco3
 
 help:
 	@echo "Available now:  setup doctor inputs unexepack overlays map dax smoke"
@@ -27,7 +27,7 @@ help:
 	@echo "Phase 3/4:      match (UNIT= FN= WRITE=1) check test test-slow (review-pass in P4)"
 	@echo "Agent safety:   agent-control agent-step safety-check merge-check merge-driver (docs/process/SAFETY.md)"
 	@echo "Throughput:     agent-register agent-meter performance learn experts (docs/process/THROUGHPUT.md)"
-	@echo "Phase 5:        rebuild dgroup stub-order golden CHECK=1 REBUILT=1 (docs/process/playbooks/50-rebuild.md)"
+	@echo "Phase 5:        rebuild dgroup stub-order sound-golden golden CHECK=1 REBUILT=1 (playbooks/50-rebuild.md)"
 	@echo "Later:          host (P7, branch track-c-hybrid) coco3 (P8)"
 	@echo "See AGENTS.md and docs/spec/SPEC.md."
 
@@ -261,6 +261,9 @@ rebuild:           ## link the whole game from src/ and compare it with the orig
 
 rebuild-golden:    ## play every golden session on the rebuilt program (after `make rebuild`): behaviour and state (playbook 50)
 	$(PY) tools/oracle/golden.py --check --rebuilt --strict-state $(if $(SESSION),--session $(SESSION))
+
+sound-golden:      ## play every tune of the sound driver in the oracle and compare the hardware trace: RECORD=1 writes the golden; REBUILT=1 runs the rebuild
+	$(PY) tools/oracle/soundprobe.py $(if $(RECORD),--record,--check) $(if $(REBUILT),--rebuilt)
 
 rebuild-diff:      ## where the rebuilt program differs from the original, byte by byte (after `make rebuild`)
 	$(PY) tools/re/rebuild_diff.py

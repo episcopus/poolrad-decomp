@@ -15,6 +15,8 @@ Script format, one command per line, `#` starts a comment:
                          `Randomize` uses) returns exactly this; a script setting, not a timed op
     wheel                types the answer to the copy-protection question the game last asked
                          (protection.py), followed by ENTER
+    sound T              the sound device POOL.CFG names for this run: T (Tandy), P (PC speaker, the
+                         shipped file's choice) or S (silent); a script setting, not a timed op
     quit                 stop the run, timed like `shot`
 
 Idle means: the game is blocked in a keyboard read, or it has polled the keyboard `IDLE_POLLS` times in a
@@ -86,11 +88,13 @@ class KeyScript:
         self.on_op = None               # callback(op, machine) for shot / digest / quit
         self.after_key = False          # a key was just delivered: capture ops wait for the game's next poll
         self.clock: int | None = None   # pinned time of day in hundredths of a second (`clock` command)
+        self.sound: str | None = None   # `sound` command: the device letter POOL.CFG gets for this run
 
     @classmethod
     def parse(cls, text: str) -> "KeyScript":
         ops = []
         clock = None
+        sound = None
         for n, raw in enumerate(text.splitlines(), 1):
             line = raw.split("#", 1)[0].strip()
             if not line:
@@ -114,10 +118,15 @@ class KeyScript:
                 ops.append(("wheel", ""))
             elif cmd == "clock":
                 clock = parse_clock(arg, n)
+            elif cmd == "sound":
+                if arg.upper() not in ("T", "P", "S"):
+                    raise ValueError("line %d: sound wants T, P or S, got %r" % (n, arg))
+                sound = arg.upper()
             else:
                 raise ValueError("line %d: unknown command %r" % (n, cmd))
         script = cls(ops)
         script.clock = clock
+        script.sound = sound
         return script
 
     @classmethod

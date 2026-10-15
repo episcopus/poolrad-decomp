@@ -1,0 +1,11 @@
+{
+ "format": 1,
+ "probe": "tunes 1..20 on the PC speaker then the Tandy chip",
+ "exe": "poolrad/start-unpack.exe",
+ "sound_events": 120409,
+ "sound_pit0": 7,
+ "sound_speaker": 12266,
+ "sound_tandy": 108136,
+ "sound_digest": "231382d16ec39eadac3aa3596bae6b6bd08866da8f31196e4f9d4b866c0708ae",
+ "sound_sequence_digest": "f336edc9152f7b30ae2d4366dd29b91391ede1d4aabeff504f6124e567d3af4e"
+}
