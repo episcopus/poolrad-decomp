@@ -78,7 +78,7 @@ begin
         GeoCells^.Cells[Row, Col] := GeoCells^.Cells[Row, Col] and $FC or $01;
     end;
 end;
-{ ovl14:0236. Returns 1 when any record of the ds5D96 list has a positive byte at
+{ ovl14:0236. Returns 1 when any record of the PartyListHead list has a positive byte at
   +$96+Which, else 0. The Bash/Pick/Knock menu (DoWildernessMenu) offers Pick when flag 6 is
   found and Knock when flag 5 is found. }
 function HasRecFlag(Which: ShortInt): Byte;
@@ -87,7 +87,7 @@ var
   Found: Byte;
 begin
   Found := 0;
-  Rec := Pointer(ds5D96);
+  Rec := Pointer(PartyListHead);
   while (Rec <> nil) and (Found = 0) do
   begin
     if Rec^.Flags[Which] > 0 then
@@ -96,10 +96,10 @@ begin
   end;
   HasRecFlag := Found;
 end;
-{ ovl14:0294. The Bash command (the B key): walks the ds5D96 records and tries to force
+{ ovl14:0294. The Bash command (the B key): walks the PartyListHead records and tries to force
   the first one whose lock answers the DoorKindAt cell test with 3 (or another value,
   below): each lock type wants its own 1d6/1d8 roll (RollDice), setting Done on success
-  and clearing ds6DDE[0] on some failures. On success it sets the icon bits like Pick
+  and clearing DoorMenuFlags[0] on some failures. On success it sets the icon bits like Pick
   and returns 1, else 0. }
 function DoBash: Byte;
 var
@@ -107,7 +107,7 @@ var
   Done: Byte;
 begin
   Done := 0;
-  Rec := Pointer(ds5D96);
+  Rec := Pointer(PartyListHead);
   while (Rec <> nil) and (Done = 0) do
   begin
     with Rec^ do
@@ -123,7 +123,7 @@ begin
                 if RollDice(1, 6) <= 2 then
                   Done := 1;
             else
-              ds6DDE[0] := 0;
+              DoorMenuFlags[0] := 0;
             end;
           $13, $14:
             if RollDice(1, 6) <= 3 then
@@ -140,7 +140,7 @@ begin
           $19:
             Done := 1;
         else
-          ds6DDE[0] := 0;
+          DoorMenuFlags[0] := 0;
         end
       else
         case LockType of
@@ -177,16 +177,16 @@ begin
   DoBash := Done;
 end;
 { ovl14:04DF. The Pick command (the P key): rolls 1d100 (RollDice) against each
-  ds5D96 record's +$78 byte and requires its +$10C byte clear; on the first success it
+  PartyListHead record's +$78 byte and requires its +$10C byte clear; on the first success it
   sets the icon bits at the party cell and ahead of it (the facing cell uses the icon
-  set +4 mod 8), clears the ds6DDF menu flag, and returns 1, else 0. }
+  set +4 mod 8), clears the PickMenuFlag menu flag, and returns 1, else 0. }
 function DoPick: Byte;
 var
   Rec: PCodeRec;
   Done: Byte;
 begin
   Done := 0;
-  Rec := Pointer(ds5D96);
+  Rec := Pointer(PartyListHead);
   while (Rec <> nil) and (Done = 0) do
   begin
     with Rec^ do
@@ -197,7 +197,7 @@ begin
     end;
     Rec := Rec^.Next;
   end;
-  ds6DDF := 0;
+  PickMenuFlag := 0;
   if Done <> 0 then
   begin
     SetIconBits(PartyMapColumn, PartyMapRow, PartyFacing);
@@ -219,13 +219,13 @@ begin
   else
     FindCodeSlot := $FF;
 end;
-{ ovl14:05EE. Returns the first record of the ds5D96 list whose code table holds Code,
+{ ovl14:05EE. Returns the first record of the PartyListHead list whose code table holds Code,
   or nil when none does. }
 function FindCodeRecord(Code: Byte): PCodeRec;
 var
   Rec: PCodeRec;
 begin
-  Rec := Pointer(ds5D96);
+  Rec := Pointer(PartyListHead);
   while (Rec <> nil) and (FindCodeSlot(Code, Rec) = $FF) do
     Rec := Rec^.Next;
   FindCodeRecord := Rec;
@@ -249,7 +249,7 @@ begin
 end;
 { ovl14:068D. Steps the party one cell in the current icon set's direction when
   DoorKindAt allows it, clamping the result into the 16x16 area map: each clamped
-  coordinate is written back and the edge flag ds49D6^[725] (+$5AA) is set. Called
+  coordinate is written back and the edge flag GameVars2^[725] (+$5AA) is set. Called
   by the movement driver HandleWildernessKeys. The direction tables DirStepX/DirStepY are indexed
   by the icon set. }
 procedure ClampPartyPosition;
@@ -260,7 +260,7 @@ begin
   Col := PartyMapColumn;
   Row := PartyMapRow;
   Icon := PartyFacing;
-  ds49D6^[725] := 0;
+  GameVars2^[725] := 0;
   if DoorKindAt(Col, Row, Icon) <> 0 then
   begin
     Inc(Col, DirStepX[Icon]);
@@ -268,34 +268,34 @@ begin
     if Col > $F then
     begin
       PartyMapColumn := $F;
-      ds49D6^[725] := 1;
+      GameVars2^[725] := 1;
     end;
     if Col < 0 then
     begin
       PartyMapColumn := 0;
-      ds49D6^[725] := 1;
+      GameVars2^[725] := 1;
     end;
     if Row > $F then
     begin
       PartyMapRow := $F;
-      ds49D6^[725] := 1;
+      GameVars2^[725] := 1;
     end;
     if Row < 0 then
     begin
       PartyMapRow := 0;
-      ds49D6^[725] := 1;
+      GameVars2^[725] := 1;
     end;
   end;
 end;
 { ovl14:073B. Moves the party one cell in the current icon set's direction, wrapping
   the 16x16 area map ($F steps to 0, 0 steps to $F), then refreshes the cell bytes
-  ds6AB0 (through WallIdAt) and ds6AB1 (through EventByteAt), resets the ds6DDE..ds6DE0
+  PartyCellWallId (through WallIdAt) and PartyCellEventByte (through EventByteAt), resets the DoorMenuFlags..KnockMenuFlag
   menu flags to 1, and steps
-  the sound through AdvanceGameClock (mode 2 when ds49D6^[714] has bit 0, else mode 1).
+  the sound through AdvanceGameClock (mode 2 when GameVars2^[714] has bit 0, else mode 1).
   Called by DoWildernessMenu. }
 procedure MoveParty;
 begin
-  PlaySound(ds2628);
+  PlaySound(SoundStep);
   Inc(PartyMapColumn, DirStepX[PartyFacing]);
   Inc(PartyMapRow, DirStepY[PartyFacing]);
   if PartyMapColumn < 0 then
@@ -306,10 +306,10 @@ begin
     PartyMapRow := $F;
   if PartyMapRow > $F then
     PartyMapRow := 0;
-  ds6AB0 := WallIdAt(PartyMapColumn, PartyMapRow, PartyFacing);
-  FillChar(ds6DDE, 3, 1);
-  ds6AB1 := EventByteAt(PartyMapColumn, PartyMapRow);
-  if ds49D6^[714] and 1 > 0 then
+  PartyCellWallId := WallIdAt(PartyMapColumn, PartyMapRow, PartyFacing);
+  FillChar(DoorMenuFlags, 3, 1);
+  PartyCellEventByte := EventByteAt(PartyMapColumn, PartyMapRow);
+  if GameVars2^[714] and 1 > 0 then
     AdvanceGameClock(1, 2)
   else
     AdvanceGameClock(1, 1);
@@ -357,7 +357,7 @@ end;
   menu keys, H/M/P/K movement with the icon sets, anything else through UpdateSelectedCharacter),
   otherwise it loads the ICON pictures for map pages 2..4 and runs a smaller key loop;
   either loop repeats through DrawLocationLine until Redraw is set, then it tidies the
-  window and returns the key. Also clears ds49D6^[713] on entry. }
+  window and returns the key. Also clears GameVars2^[713] on entry. }
 function HandleWildernessKeys: Char;
 var
   Redraw: Byte;
@@ -367,13 +367,13 @@ var
   ViewFlag: Byte;         { flag ViewSelectedCharacter (View) takes }
   SpareLong: LongInt;     { 4 frame-filling bytes, never read; purpose unknown }
 begin
-  ds49D6^[713] := 0;
+  GameVars2^[713] := 0;
   case AreaViewKind of
     1:
       begin
         Redraw := 0;
     repeat
-      Key := ReadPromptChoice('', ds04B6, $D, $A, $F, 1, 0, KeyFlag);
+      Key := ReadPromptChoice('', WildernessPromptWithArea, $D, $A, $F, 1, 0, KeyFlag);
       if KeyFlag = 0 then
         case Key of
           'A':
@@ -392,12 +392,12 @@ begin
           'E':
             Redraw := 1;
           'S':
-            ds49D6^[714] := ds49D6^[714] xor 1;
+            GameVars2^[714] := GameVars2^[714] xor 1;
           'L':
             begin
-              ds49D6^[714] := ds49D6^[714] or 2;
+              GameVars2^[714] := GameVars2^[714] or 2;
               AdvanceGameClock(1, 2);
-              EclPC := ds49E5;
+              EclPC := EclSearchEntry;
               Redraw := 1;
             end;
         end
@@ -411,21 +411,21 @@ begin
           'P':
             begin
               PartyFacing := (PartyFacing + 4) mod 8;
-              ds6AB0 := WallIdAt(PartyMapColumn, PartyMapRow, PartyFacing);
+              PartyCellWallId := WallIdAt(PartyMapColumn, PartyMapRow, PartyFacing);
               DrawWallView(PartyMapColumn, PartyMapRow, PartyFacing);
             end;
           'K':
             begin
               PartyFacing := (PartyFacing + 6) mod 8;
-              PlaySound(ds2628);
-              ds6AB0 := WallIdAt(PartyMapColumn, PartyMapRow, PartyFacing);
+              PlaySound(SoundStep);
+              PartyCellWallId := WallIdAt(PartyMapColumn, PartyMapRow, PartyFacing);
               DrawWallView(PartyMapColumn, PartyMapRow, PartyFacing);
             end;
           'M':
             begin
               PartyFacing := (PartyFacing + 2) mod 8;
-              PlaySound(ds2628);
-              ds6AB0 := WallIdAt(PartyMapColumn, PartyMapRow, PartyFacing);
+              PlaySound(SoundStep);
+              PartyCellWallId := WallIdAt(PartyMapColumn, PartyMapRow, PartyFacing);
               DrawWallView(PartyMapColumn, PartyMapRow, PartyFacing);
             end;
         else
@@ -437,7 +437,7 @@ begin
   end;
   2..4:
   begin
-    if ds49F9 < 2 then
+    if PreviousAreaViewKind < 2 then
     begin
       LoadPictureSlot('ICON', 0, 9);
       LoadPictureSlot('ICON', 1, $A);
@@ -446,7 +446,7 @@ begin
     end;
     Redraw := 0;
     repeat
-      Key := ReadPromptChoice('', ds04DF, $D, $A, $F, 1, 0, KeyFlag);
+      Key := ReadPromptChoice('', WildernessPromptNoArea, $D, $A, $F, 1, 0, KeyFlag);
       if KeyFlag = 0 then
         case Key of
           'C':
@@ -456,12 +456,12 @@ begin
           'E':
             Redraw := 1;
           'S':
-            ds49D6^[714] := ds49D6^[714] xor 1;
+            GameVars2^[714] := GameVars2^[714] xor 1;
           'L':
             begin
-              ds49D6^[714] := ds49D6^[714] or 2;
+              GameVars2^[714] := GameVars2^[714] or 2;
               AdvanceGameClock(1, 2);
-              EclPC := ds49E5;
+              EclPC := EclSearchEntry;
               Redraw := 1;
             end;
         end
@@ -487,21 +487,21 @@ begin
     until Redraw <> 0;
     end;
   end;
-  ds49F9 := AreaViewKind;
-  if ds84E4 = 0 then
+  PreviousAreaViewKind := AreaViewKind;
+  if WindowClearOnce = 0 then
   begin
     ClearWindow(1, $11, $26, $16);
-    ds84E4 := 1;
+    WindowClearOnce := 1;
   end;
   HandleWildernessKeys := Key;
 end;
 { ovl14:0D6D. The wilderness command menu (called by ovl03_fn_3379): in the 3D view it
-  builds the Bash/Pick/Knock/Exit menu from the ds6DDE/ds6DDF/ds6DE0 flags and the
+  builds the Bash/Pick/Knock/Exit menu from the DoorMenuFlags/PickMenuFlag/KnockMenuFlag flags and the
   record flag checks, prompts through ReadPromptChoice and dispatches the key: in the DoorKindAt = 2
   arm 'B' calls DoBash, 'P' calls DoPick (ovl14:0ED6) and 'K' calls DoKnock, with Knock
   offered when FindCodeRecord($1F) finds a record (ovl14:0E14), while in the = 3 arm 'B'
   calls DoBash and 'K' calls DoKnock, with Knock offered when HasRecFlag(5) is set
-  (ovl14:0F53), but 'P' only clears the Pick flag (mov ds6DDF,0 at ovl14:1015, no DoPick
+  (ovl14:0F53), but 'P' only clears the Pick flag (mov PickMenuFlag,0 at ovl14:1015, no DoPick
   call); on the map pages it steps the area map (CheckMapCell on pages 2..4);
   on success it moves the party (MoveParty), then always tidies the sprite banks. }
 procedure DoWildernessMenu;
@@ -515,7 +515,7 @@ begin
   case AreaViewKind of
     1:
     begin
-      if ds49D6^[713] < $FF then
+      if GameVars2^[713] < $FF then
       begin
       case DoorKindAt(PartyMapColumn, PartyMapRow, PartyFacing) of
         1:
@@ -523,11 +523,11 @@ begin
         2:
         begin
           Menu[0] := #0;
-          if ds6DDE[0] <> 0 then
+          if DoorMenuFlags[0] <> 0 then
             Menu := 'Bash';
-          if (ds6DDF <> 0) and (HasRecFlag(6) <> 0) then
+          if (PickMenuFlag <> 0) and (HasRecFlag(6) <> 0) then
             Menu := Menu + ' Pick';
-          if (ds6DE0 <> 0) and (FindCodeRecord(KnockCode) <> nil) then
+          if (KnockMenuFlag <> 0) and (FindCodeRecord(KnockCode) <> nil) then
             Menu := Menu + ' Knock';
           Menu := Menu + ' Exit';
           if Menu = ' Exit' then
@@ -548,11 +548,11 @@ begin
         3:
         begin
           Menu[0] := #0;
-          if ds6DDE[0] <> 0 then
+          if DoorMenuFlags[0] <> 0 then
             Menu := 'Bash';
-          if (ds6DDF <> 0) and (HasRecFlag(6) <> 0) then
+          if (PickMenuFlag <> 0) and (HasRecFlag(6) <> 0) then
             Menu := Menu + ' Pick';
-          if (ds6DE0 <> 0) and (HasRecFlag(5) <> 0) then
+          if (KnockMenuFlag <> 0) and (HasRecFlag(5) <> 0) then
             Menu := Menu + ' Knock';
           Menu := Menu + ' Exit';
           if Menu = ' Exit' then
@@ -564,7 +564,7 @@ begin
               'B':
                 Done := DoBash;
               'P':
-                ds6DDF := 0;
+                PickMenuFlag := 0;
               'K':
                 Done := Ord(DoKnock);
             end;
@@ -574,26 +574,26 @@ begin
       if Done <> 0 then
         MoveParty
       else
-        PlaySound(ds2622);
+        PlaySound(SoundNoAction);
       DrawLocationLine;
     end
     else
-      ds49D6^[713] := 0;
+      GameVars2^[713] := 0;
   end;
   2..4:
   begin
-    if ds49D6^[713] < $FF then
+    if GameVars2^[713] < $FF then
     begin
       CheckMapCell;
       DrawLocationLine;
     end
     else
-      ds49D6^[713] := 0;
+      GameVars2^[713] := 0;
   end;
   end;
   FreeSpriteList(@PictureAnimation);
-  ReleasePicture(ds6B01);
-  ReleasePicture(ds6B06);
+  ReleasePicture(HeadSpriteBank);
+  ReleasePicture(BodySpriteBank);
   HeadBankIndex := $FF;
   BodyBankIndex := $FF;
 end;

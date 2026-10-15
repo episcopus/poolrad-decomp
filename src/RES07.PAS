@@ -95,8 +95,8 @@ begin
     PaletteColor := (Pal[Index shr 1] and $F0) shr 4;
 end;
 { 0464:00CF: sets video mode A through INT 10h function 0, the way the game
-  changes the EGA mode: the mode that was current (ds4A1D) is kept in
-  SavedVideoMode so the restore routine can go back, then ds4A1D becomes A.
+  changes the EGA mode: the mode that was current (PreviousVideoMode) is kept in
+  SavedVideoMode so the restore routine can go back, then PreviousVideoMode becomes A.
   Called by res08_init with $0D and by the restore routine. }
 procedure SetVideoMode(Mode: Byte);
 var
@@ -104,11 +104,11 @@ var
     writes; the compiler keeps declared locals, so the source had one too. }
   UnusedMode: Byte;
 begin
-  SavedVideoMode := ds4A1D;
+  SavedVideoMode := PreviousVideoMode;
   Regs.AH := 0;                      { INT 10h function 0: set video mode }
   Regs.AL := Mode;
   Intr($10, Regs);
-  ds4A1D := Mode;
+  PreviousVideoMode := Mode;
 end;
 
 { 0464:00FF: restores the video mode saved at the last mode set through
@@ -161,7 +161,7 @@ end;
 { 0464:02A5: unpacks the pixel data of the DAX block Source (its pixels start at Offset,
   $11) into Data, the picture LoadPicture allocated, one item and one cell (four source
   bytes, eight pixels) at a time. Per VideoAdapter: 0 writes two bytes per cell, the
-  palette colour of each pixel in 2-bit form (ds25FA), and, when the picture has a pixel
+  palette colour of each pixel in 2-bit form (PixelBitsByColour), and, when the picture has a pixel
   buffer (Pixels, AllocFlags bit 0), the mask of the pixels equal to Color; 1 writes the
   four EGA plane bytes of each cell (a pixel's colour bits select its planes) and the
   mask; 2 copies ByteSize bytes of each item unchanged and builds the mask from them.
@@ -209,10 +209,10 @@ begin
             begin
               if Odd(Index) then
                 Data[OutOfs] := Data[OutOfs] or
-                  ds25FA[PaletteColor(CellBytes[Index shr 1] and $0F, @Palette), Index]
+                  PixelBitsByColour[PaletteColor(CellBytes[Index shr 1] and $0F, @Palette), Index]
               else
                 Data[OutOfs] := Data[OutOfs] or
-                  ds25FA[PaletteColor((CellBytes[Index shr 1] and $F0) shr 4, @Palette), Index];
+                  PixelBitsByColour[PaletteColor((CellBytes[Index shr 1] and $F0) shr 4, @Palette), Index];
             end;
             if Pixels <> nil then
               Data[OutOfs] := Data[OutOfs] and not Pixels^[PixIndex - 2];
@@ -221,10 +221,10 @@ begin
             begin
               if Odd(Index) then
                 Data[OutOfs] := Data[OutOfs] or
-                  ds25FA[PaletteColor(CellBytes[Index shr 1] and $0F, @Palette), Index - 4]
+                  PixelBitsByColour[PaletteColor(CellBytes[Index shr 1] and $0F, @Palette), Index - 4]
               else
                 Data[OutOfs] := Data[OutOfs] or
-                  ds25FA[PaletteColor((CellBytes[Index shr 1] and $F0) shr 4, @Palette), Index - 4];
+                  PixelBitsByColour[PaletteColor((CellBytes[Index shr 1] and $F0) shr 4, @Palette), Index - 4];
             end;
             if Pixels <> nil then
               Data[OutOfs] := Data[OutOfs] and not Pixels^[PixIndex - 1];
@@ -284,7 +284,8 @@ begin
 end;
 { 0464:08D4: copies picture Source (item PicIndex of it) into Dest at cell column Col and
   pixel row Row * 8, one source row of bytes at a time, and marks the rows it changed in the
-  trackers (ds4A28, ds4C20, ds4AD0, ds4D70). With bit 0 of Flags and a pixel buffer in Source,
+  trackers (RowDirtyFlags, RowFirstChangedOfs, RowFirstChangedCol, RowLastChangedOfs). With bit 0 of Flags and a pixel
+  buffer in Source,
   the copy is masked: a destination byte keeps the bits its Pixels mask marks and takes the
   source bits. Per VideoAdapter the bytes per cell are 2 (0) or 4 (1 and 2); adapter 1 reads
   one mask byte per four data bytes. Called by DrawCellPicture (ovl32:00F1, flags 0 and
@@ -328,38 +329,38 @@ begin
       if HasMask then
         for SrcRow := 0 to SrcLastRow do
         begin
-          ds4A28[FirstRow] := 1;
+          RowDirtyFlags[FirstRow] := 1;
           Inc(DestOfs, LeftCol);
-          if ds4C20[FirstRow] > DestOfs then
+          if RowFirstChangedOfs[FirstRow] > DestOfs then
           begin
-            ds4AD0[FirstRow] := LeftBytes;
-            ds4C20[FirstRow] := DestOfs;
+            RowFirstChangedCol[FirstRow] := LeftBytes;
+            RowFirstChangedOfs[FirstRow] := DestOfs;
           end;
-          for ds70C7 := 1 to SrcRowBytes do
+          for SharedLoopIndex := 1 to SrcRowBytes do
           begin
             PPicture(Dest)^.Data[DestOfs] := (PPicture(Dest)^.Data[DestOfs] and
               PPicture(Source)^.Pixels^[ItemOfs]) or PPicture(Source)^.Data[ItemOfs];
             Inc(ItemOfs);
             Inc(DestOfs);
           end;
-          if DestOfs - 1 > ds4D70[FirstRow] then ds4D70[FirstRow] := DestOfs - 1;
+          if DestOfs - 1 > RowLastChangedOfs[FirstRow] then RowLastChangedOfs[FirstRow] := DestOfs - 1;
           Inc(DestOfs, RightRoom);
           Inc(FirstRow);
         end
       else
         for SrcRow := 0 to SrcLastRow do
         begin
-          ds4A28[FirstRow] := 1;
+          RowDirtyFlags[FirstRow] := 1;
           Inc(DestOfs, LeftCol);
-          if ds4C20[FirstRow] > DestOfs then
+          if RowFirstChangedOfs[FirstRow] > DestOfs then
           begin
-            ds4AD0[FirstRow] := LeftBytes;
-            ds4C20[FirstRow] := DestOfs;
+            RowFirstChangedCol[FirstRow] := LeftBytes;
+            RowFirstChangedOfs[FirstRow] := DestOfs;
           end;
           Move(PPicture(Source)^.Data[ItemOfs], PPicture(Dest)^.Data[DestOfs], SrcRowBytes);
           Inc(ItemOfs, SrcRowBytes);
           Inc(DestOfs, SrcRowBytes);
-          if DestOfs - 1 > ds4D70[FirstRow] then ds4D70[FirstRow] := DestOfs - 1;
+          if DestOfs - 1 > RowLastChangedOfs[FirstRow] then RowLastChangedOfs[FirstRow] := DestOfs - 1;
           Inc(DestOfs, RightRoom);
           Inc(FirstRow);
         end;
@@ -377,14 +378,14 @@ begin
       if HasMask then
         for SrcRow := 0 to SrcLastRow do
         begin
-          ds4A28[FirstRow] := 1;
+          RowDirtyFlags[FirstRow] := 1;
           Inc(DestOfs, LeftCol);
-          if ds4C20[FirstRow] > DestOfs then
+          if RowFirstChangedOfs[FirstRow] > DestOfs then
           begin
-            ds4AD0[FirstRow] := LeftBytes;
-            ds4C20[FirstRow] := DestOfs;
+            RowFirstChangedCol[FirstRow] := LeftBytes;
+            RowFirstChangedOfs[FirstRow] := DestOfs;
           end;
-          for ds70C7 := 1 to SrcRowBytes do
+          for SharedLoopIndex := 1 to SrcRowBytes do
           begin
             PPicture(Dest)^.Data[DestOfs] := (PPicture(Dest)^.Data[DestOfs] and
               PPicture(Source)^.Pixels^[MaskOfs]) or PPicture(Source)^.Data[ItemOfs];
@@ -397,24 +398,24 @@ begin
             end;
             Inc(DestOfs);
           end;
-          if DestOfs - 1 > ds4D70[FirstRow] then ds4D70[FirstRow] := DestOfs - 1;
+          if DestOfs - 1 > RowLastChangedOfs[FirstRow] then RowLastChangedOfs[FirstRow] := DestOfs - 1;
           Inc(DestOfs, RightRoom);
           Inc(FirstRow);
         end
       else
         for SrcRow := 0 to SrcLastRow do
         begin
-          ds4A28[FirstRow] := 1;
+          RowDirtyFlags[FirstRow] := 1;
           Inc(DestOfs, LeftCol);
-          if ds4C20[FirstRow] > DestOfs then
+          if RowFirstChangedOfs[FirstRow] > DestOfs then
           begin
-            ds4AD0[FirstRow] := LeftBytes;
-            ds4C20[FirstRow] := DestOfs;
+            RowFirstChangedCol[FirstRow] := LeftBytes;
+            RowFirstChangedOfs[FirstRow] := DestOfs;
           end;
           Move(PPicture(Source)^.Data[ItemOfs], PPicture(Dest)^.Data[DestOfs], SrcRowBytes);
           Inc(ItemOfs, SrcRowBytes);
           Inc(DestOfs, SrcRowBytes);
-          if DestOfs - 1 > ds4D70[FirstRow] then ds4D70[FirstRow] := DestOfs - 1;
+          if DestOfs - 1 > RowLastChangedOfs[FirstRow] then RowLastChangedOfs[FirstRow] := DestOfs - 1;
           Inc(DestOfs, RightRoom);
           Inc(FirstRow);
         end;
@@ -426,11 +427,11 @@ end;
   Source with its top-left cell at column Col and pixel row Row * 8, cut to Dest on
   all four sides. Bit 0 of Flags masks the picture (Source needs a pixel buffer);
   bit 2 first copies the destination bytes that are about to be overwritten into the
-  screen buffer ds4A24 (SaveOfs, the same layout as the picture rows). The range
-  checks run only while ds5370 is nonzero (set by the loader); when it is 0 the
+  screen buffer ScreenSaveBuffer (SaveOfs, the same layout as the picture rows). The range
+  checks run only while ClipChecksEnabled is nonzero (set by the loader); when it is 0 the
   picture is drawn with no check at all. Per VideoAdapter: 0 and 2 copy bytes (2 or
   4 per cell), 1 copies the four EGA planes and reads one mask byte per four data
-  bytes. The change marks go into ds4A28, ds4AD0, ds4C20 and ds4D70 per pixel row.
+  bytes. The change marks go into RowDirtyFlags, RowFirstChangedCol, RowFirstChangedOfs and RowLastChangedOfs per pixel row.
   QUIRK 0464:0D71: SaveOfs starts at the top-cut bytes only (no PicIndex offset), and
   the adapter 1 mask phase is set once per call, so it carries from row to row. }
 procedure DrawPictureItemClipped(Col, Row: Integer; PicIndex, Flags: Byte; Source, Dest: Pointer);
@@ -444,20 +445,20 @@ var
   VisibleBytes: Word;      { bytes of each source row that land in Dest }
   SrcOfs: Word;            { source byte offset of the next byte }
   DestOfs: Word;           { destination byte offset of the next byte }
-  SaveOfs: Word;           { byte offset in the save buffer ds4A24 }
+  SaveOfs: Word;           { byte offset in the save buffer ScreenSaveBuffer }
   SrcLastRow: Word;        { last source pixel row that is drawn }
   SrcRow: Word;            { source row loop counter }
   MaskOfs: Word;           { adapter 1: mask byte offset }
   BytesToNextMask: Byte;   { adapter 1: data bytes left before the next mask byte }
   FirstRow: Word;          { first destination pixel row: Row * 8, or 0 when Row < 0 }
-  LeftBytes: Word;         { the first changed byte of the row (ds4AD0) }
+  LeftBytes: Word;         { the first changed byte of the row (RowFirstChangedCol) }
   HasMask: Boolean;        { Flags bit 0 is set and Source has a pixel buffer }
   SaveBackground: Boolean; { Flags bit 2 is set }
 begin
   if (Source = nil) or (Dest = nil) then Exit;
   HasMask := ((Flags and 1) > 0) and (PPicture(Source)^.Pixels <> nil);
   SaveBackground := (Flags and 4) > 0;
-  if ds5370 <> 0 then
+  if ClipChecksEnabled <> 0 then
   begin
     if Col < 0 then
     begin
@@ -550,21 +551,21 @@ begin
       end;
       for SrcRow := 0 to SrcLastRow do
       begin
-        ds4A28[FirstRow] := 1;
+        RowDirtyFlags[FirstRow] := 1;
         Inc(SrcOfs, LeftCut);
         Inc(SaveOfs, LeftCut);
         Inc(DestOfs, LeftCol);
-        if ds4C20[FirstRow] > DestOfs then
+        if RowFirstChangedOfs[FirstRow] > DestOfs then
         begin
-          ds4AD0[FirstRow] := LeftBytes;
-          ds4C20[FirstRow] := DestOfs;
+          RowFirstChangedCol[FirstRow] := LeftBytes;
+          RowFirstChangedOfs[FirstRow] := DestOfs;
         end;
         if SaveBackground then
-          Move(PPicture(Dest)^.Data[DestOfs], PPicture(ds4A24)^.Data[SaveOfs], VisibleBytes);
+          Move(PPicture(Dest)^.Data[DestOfs], PPicture(ScreenSaveBuffer)^.Data[SaveOfs], VisibleBytes);
         Inc(SaveOfs, VisibleBytes);
         if HasMask then
         begin
-          for ds70C7 := 1 to VisibleBytes do
+          for SharedLoopIndex := 1 to VisibleBytes do
           begin
             PPicture(Dest)^.Data[DestOfs] := (PPicture(Dest)^.Data[DestOfs] and
               PPicture(Source)^.Pixels^[SrcOfs]) or PPicture(Source)^.Data[SrcOfs];
@@ -578,7 +579,7 @@ begin
           Inc(SrcOfs, VisibleBytes);
           Inc(DestOfs, VisibleBytes);
         end;
-        if DestOfs - 1 > ds4D70[FirstRow] then ds4D70[FirstRow] := DestOfs - 1;
+        if DestOfs - 1 > RowLastChangedOfs[FirstRow] then RowLastChangedOfs[FirstRow] := DestOfs - 1;
         Inc(SrcOfs, RightCut);
         Inc(SaveOfs, RightCut);
         Inc(DestOfs, RightRoom);
@@ -604,22 +605,22 @@ begin
       DestOfs := DestOfs * 4;
       for SrcRow := 0 to SrcLastRow do
       begin
-        ds4A28[FirstRow] := 1;
+        RowDirtyFlags[FirstRow] := 1;
         Inc(SrcOfs, LeftCut);
         Inc(MaskOfs, LeftMaskCut);
         Inc(SaveOfs, LeftCut);
         Inc(DestOfs, LeftCol);
-        if ds4C20[FirstRow] > DestOfs then
+        if RowFirstChangedOfs[FirstRow] > DestOfs then
         begin
-          ds4AD0[FirstRow] := LeftBytes;
-          ds4C20[FirstRow] := DestOfs;
+          RowFirstChangedCol[FirstRow] := LeftBytes;
+          RowFirstChangedOfs[FirstRow] := DestOfs;
         end;
         if SaveBackground then
-          Move(PPicture(Dest)^.Data[DestOfs], PPicture(ds4A24)^.Data[SaveOfs], VisibleBytes);
+          Move(PPicture(Dest)^.Data[DestOfs], PPicture(ScreenSaveBuffer)^.Data[SaveOfs], VisibleBytes);
         Inc(SaveOfs, VisibleBytes);
         if HasMask then
         begin
-          for ds70C7 := 1 to VisibleBytes do
+          for SharedLoopIndex := 1 to VisibleBytes do
           begin
             PPicture(Dest)^.Data[DestOfs] := (PPicture(Dest)^.Data[DestOfs] and
               PPicture(Source)^.Pixels^[MaskOfs]) or PPicture(Source)^.Data[SrcOfs];
@@ -639,7 +640,7 @@ begin
           Inc(SrcOfs, VisibleBytes);
           Inc(DestOfs, VisibleBytes);
         end;
-        if DestOfs - 1 > ds4D70[FirstRow] then ds4D70[FirstRow] := DestOfs - 1;
+        if DestOfs - 1 > RowLastChangedOfs[FirstRow] then RowLastChangedOfs[FirstRow] := DestOfs - 1;
         Inc(SrcOfs, RightCut);
         Inc(MaskOfs, RightMaskCut);
         Inc(SaveOfs, RightCut);
@@ -794,12 +795,12 @@ end;
 { 0464:1951: shows a picture at (PicCol, PicRow) by copying its packed pixel data
   straight to the video hardware, one branch per video adapter. PicRow * 8 is the
   first pixel row, and PicCol the first cell column. Adapter 0 moves a
-  WidthCols*2-byte row per screen row to the segment ds4EC0[Row] at column
+  WidthCols*2-byte row per screen row to the segment CellTextSegments[Row] at column
   PicCol*2; adapter 1 writes, per row and per cell column, the four plane bytes of
   the source cell (the plane-interleaved layout, 4 bytes per cell, one byte per
   EGA plane: each byte holds eight pixels of that plane, written through the map
-  mask EgaPlaneBitMasks[Plane] on port 3C5 to Mem[$A000:ds5050[Row] + Col]);
-  adapter 2 is the adapter-0 move with four bytes per column and the ds51E0
+  mask EgaPlaneBitMasks[Plane] on port 3C5 to Mem[$A000:CellRowOffsets[Row] + Col]);
+  adapter 2 is the adapter-0 move with four bytes per column and the CellPlaneSegments
   segment table. Called by ShowTitleScreen, ovl28 DrawSprite and ovl34 Put8x8Symbol. }
 procedure ShowPicture(PicCol, PicRow: Integer; Buf: Pointer);
 var
@@ -822,7 +823,7 @@ begin
           FirstCol := PicCol * 2;
           for Row := FirstRow to LastRow do
           begin
-            Move(PPicture(Buf)^.Data[SourceOfs], Mem[ds4EC0[Row]:FirstCol], RowBytes);
+            Move(PPicture(Buf)^.Data[SourceOfs], Mem[CellTextSegments[Row]:FirstCol], RowBytes);
             Inc(SourceOfs, RowBytes);
           end;
         end;
@@ -840,7 +841,7 @@ begin
               for Plane := 0 to 3 do
               begin
                 Port[$3C5] := EgaPlaneBitMasks[Plane];
-                Mem[$A000:ds5050[Row] + Col] := PPicture(Buf)^.Data[SourceOfs];
+                Mem[$A000:CellRowOffsets[Row] + Col] := PPicture(Buf)^.Data[SourceOfs];
                 Inc(SourceOfs);
               end;
             end;
@@ -855,26 +856,26 @@ begin
           FirstCol := PicCol * 4;
           for Row := FirstRow to LastRow do
           begin
-            Move(PPicture(Buf)^.Data[SourceOfs], Mem[ds51E0[Row]:FirstCol], RowBytes);
+            Move(PPicture(Buf)^.Data[SourceOfs], Mem[CellPlaneSegments[Row]:FirstCol], RowBytes);
             Inc(SourceOfs, RowBytes);
           end;
         end;
     end;
   end;
 end;
-{ 0464:1B52: presents the changed regions the blitters marked in ds4A28 (the
+{ 0464:1B52: presents the changed regions the blitters marked in RowDirtyFlags (the
   per-row changed flag) and the tracker arrays, one branch per video adapter. Per
   changed row the staging buffer DrawBuf holds the changed bytes at
-  Data[ds4C20[Row] .. ds4D70[Row]]: ds4C20 is the first (lowest) changed byte
-  offset, a minimum that starts at $FFFF, and ds4D70 the last (highest), which
-  starts at 0. ds4AD0[Row] is the screen-side byte column of that first changed
+  Data[RowFirstChangedOfs[Row] .. RowLastChangedOfs[Row]]: RowFirstChangedOfs is the first (lowest) changed byte
+  offset, a minimum that starts at $FFFF, and RowLastChangedOfs the last (highest), which
+  starts at 0. RowFirstChangedCol[Row] is the screen-side byte column of that first changed
   byte (LeftCol * 2 on adapter 0, LeftCol * 1 on adapter 1, LeftCol * 4 on
-  adapter 2). Adapter 0 moves each changed span to the segment ds4EC0[Row+8] at
-  column ds4AD0[Row]+2; adapter 1 writes the four EGA planes byte by byte through
+  adapter 2). Adapter 0 moves each changed span to the segment CellTextSegments[Row+8] at
+  column RowFirstChangedCol[Row]+2; adapter 1 writes the four EGA planes byte by byte through
   port 3C5 (stride 4 in the source) into the off-screen page $A200, then copies
   $A200 onto the visible page $A000 in GC write mode 1 (GC register 5 := 1,
-  restored to 0); adapter 2 moves the spans to the ds51E0 segments at column
-  ds4AD0[Row]+4. Finally the trackers are reset. Called after every sprite or
+  restored to 0); adapter 2 moves the spans to the CellPlaneSegments segments at column
+  RowFirstChangedCol[Row]+4. Finally the trackers are reset. Called after every sprite or
   picture blit. }
 procedure FlushPictureChanges;
 var
@@ -885,73 +886,73 @@ begin
   case VideoAdapter of
     0:
       for Row := 0 to $A7 do
-        if ds4A28[Row] <> 0 then
-          Move(PPicture(DrawBuf)^.Data[ds4C20[Row]],
-            Mem[ds4EC0[Row + 8]:ds4AD0[Row] + 2],
-            ds4D70[Row] - ds4C20[Row] + 1);
+        if RowDirtyFlags[Row] <> 0 then
+          Move(PPicture(DrawBuf)^.Data[RowFirstChangedOfs[Row]],
+            Mem[CellTextSegments[Row + 8]:RowFirstChangedCol[Row] + 2],
+            RowLastChangedOfs[Row] - RowFirstChangedOfs[Row] + 1);
     1:
       begin
         Port[$3C4] := 2;
         for Row := 0 to $A7 do
-          if ds4A28[Row] <> 0 then
+          if RowDirtyFlags[Row] <> 0 then
           begin
-            BaseOfs := ds5050[Row + 8] + ds4AD0[Row] + 1;
+            BaseOfs := CellRowOffsets[Row + 8] + RowFirstChangedCol[Row] + 1;
             Port[$3C5] := EgaPlaneBitMasks[0];
-            SrcOfs := ds4C20[Row];
+            SrcOfs := RowFirstChangedOfs[Row];
             DestOfs := BaseOfs;
             repeat
               Mem[$A200:DestOfs] := PPicture(DrawBuf)^.Data[SrcOfs];
               Inc(SrcOfs, 4);
               Inc(DestOfs);
-            until SrcOfs > ds4D70[Row];
+            until SrcOfs > RowLastChangedOfs[Row];
             Port[$3C5] := EgaPlaneBitMasks[1];
-            SrcOfs := ds4C20[Row] + 1;
+            SrcOfs := RowFirstChangedOfs[Row] + 1;
             DestOfs := BaseOfs;
             repeat
               Mem[$A200:DestOfs] := PPicture(DrawBuf)^.Data[SrcOfs];
               Inc(SrcOfs, 4);
               Inc(DestOfs);
-            until SrcOfs > ds4D70[Row];
+            until SrcOfs > RowLastChangedOfs[Row];
             Port[$3C5] := EgaPlaneBitMasks[2];
-            SrcOfs := ds4C20[Row] + 2;
+            SrcOfs := RowFirstChangedOfs[Row] + 2;
             DestOfs := BaseOfs;
             repeat
               Mem[$A200:DestOfs] := PPicture(DrawBuf)^.Data[SrcOfs];
               Inc(SrcOfs, 4);
               Inc(DestOfs);
-            until SrcOfs > ds4D70[Row];
+            until SrcOfs > RowLastChangedOfs[Row];
             Port[$3C5] := EgaPlaneBitMasks[3];
-            SrcOfs := ds4C20[Row] + 3;
+            SrcOfs := RowFirstChangedOfs[Row] + 3;
             DestOfs := BaseOfs;
             repeat
               Mem[$A200:DestOfs] := PPicture(DrawBuf)^.Data[SrcOfs];
               Inc(SrcOfs, 4);
               Inc(DestOfs);
-            until SrcOfs > ds4D70[Row];
+            until SrcOfs > RowLastChangedOfs[Row];
           end;
         Port[$3C5] := $0F;
-        DestOfs := ds5050[8] + 1;
+        DestOfs := CellRowOffsets[8] + 1;
         Port[$3CE] := 5;
         Port[$3CF] := 1;
         for Row := 0 to $A7 do
         begin
-          if ds4A28[Row] <> 0 then
-            Move(Mem[$A200:DestOfs + ds4AD0[Row]], Mem[$A000:DestOfs + ds4AD0[Row]],
-              (ds4D70[Row] - ds4C20[Row]) shr 1 shr 1 + 1);
+          if RowDirtyFlags[Row] <> 0 then
+            Move(Mem[$A200:DestOfs + RowFirstChangedCol[Row]], Mem[$A000:DestOfs + RowFirstChangedCol[Row]],
+              (RowLastChangedOfs[Row] - RowFirstChangedOfs[Row]) shr 1 shr 1 + 1);
           Inc(DestOfs, $28);
         end;
         Port[$3CF] := 0;
       end;
     2:
       for Row := 0 to $A7 do
-        if ds4A28[Row] <> 0 then
-          Move(PPicture(DrawBuf)^.Data[ds4C20[Row]],
-            Mem[ds51E0[Row + 8]:ds4AD0[Row] + 4],
-            ds4D70[Row] - ds4C20[Row] + 1);
+        if RowDirtyFlags[Row] <> 0 then
+          Move(PPicture(DrawBuf)^.Data[RowFirstChangedOfs[Row]],
+            Mem[CellPlaneSegments[Row + 8]:RowFirstChangedCol[Row] + 4],
+            RowLastChangedOfs[Row] - RowFirstChangedOfs[Row] + 1);
   end;
-  FillChar(ds4A28, $A8, 0);
-  FillChar(ds4C20, $150, $FF);
-  FillChar(ds4D70, $150, 0);
+  FillChar(RowDirtyFlags, $A8, 0);
+  FillChar(RowFirstChangedOfs, $150, $FF);
+  FillChar(RowLastChangedOfs, $150, 0);
 end;
 { 0464:1E5C: recolours item FirstItem of picture Pic (item 0 when FirstItem is
   negative). For every colour index I whose FromMap and ToMap entries differ, each pixel
@@ -962,7 +963,7 @@ end;
   but only item 0 is used. FirstItem is an item index (the byte offset of an item is
   FirstItem * ByteSize). Flicker (nonzero) makes each change random: adapters 0 and 2
   change each matching pixel with chance 1 in 4, adapter 1 changes a random subset of the
-  matching pixels of each cell. Adapter 0 compares 2-bit pixel pairs (ds25FA,
+  matching pixels of each cell. Adapter 0 compares 2-bit pixel pairs (PixelBitsByColour,
   GlyphPixelMasks), adapter 1 the four EGA planes (EgaPlaneBitMasks), adapter 2 the two
   nibbles of each byte. Called by LoadPictureSlot (ovl32), LoadSpriteList (ovl28),
   AnimateAreaDoors (ovl18, the door frame index) and ovl16, ovl17 (the others 0).
@@ -1030,16 +1031,16 @@ begin
         0:
         begin
           RowBytes := WidthCols * 2;
-          for ds70C7 := FirstItem to Items + FirstItem - 1 do
+          for SharedLoopIndex := FirstItem to Items + FirstItem - 1 do
             for PixelRow := 1 to Height do
               for ColByte := 1 to RowBytes do
               begin
                 for Quad := 0 to 3 do
                   if (PPicture(Pic)^.Data[PicOfs] and GlyphPixelMasks[Quad + 4]) =
-                    ds25FA[PaletteColor(FromMapCopy[Colour], @Palette), Quad] then
+                    PixelBitsByColour[PaletteColor(FromMapCopy[Colour], @Palette), Quad] then
                     if (Flicker = 0) or ((Flicker <> 0) and (Random(4) = 0)) then
                       Data[ScratchOfs] := (Data[ScratchOfs] and not GlyphPixelMasks[Quad + 4]) or
-                        ds25FA[PaletteColor(ToMapCopy[Colour], @Palette), Quad];
+                        PixelBitsByColour[PaletteColor(ToMapCopy[Colour], @Palette), Quad];
                 Inc(PicOfs);
                 Inc(ScratchOfs);
               end;
@@ -1051,7 +1052,7 @@ begin
               PlaneMask[Plane] := 0
             else
               PlaneMask[Plane] := $FF;
-          for ds70C7 := FirstItem to Items + FirstItem - 1 do
+          for SharedLoopIndex := FirstItem to Items + FirstItem - 1 do
             for PixelRow := 1 to Height do
               for ColByte := 1 to WidthCols do
               begin
@@ -1075,7 +1076,7 @@ begin
           RowBytes := WidthCols * 4;
           FromHigh := FromMapCopy[Colour] shl 4;
           ToHigh := ToMapCopy[Colour] shl 4;
-          for ds70C7 := FirstItem to Items + FirstItem - 1 do
+          for SharedLoopIndex := FirstItem to Items + FirstItem - 1 do
             for PixelRow := 1 to Height do
               for ColByte := 1 to RowBytes do
               begin
@@ -1160,11 +1161,11 @@ end;
   cell), but FirstRow and Height are PIXEL rows: the loop runs once per pixel row, from
   row FirstRow for Height rows, with no * 8. FirstCol and FirstRow may be negative: the
   rectangle is clipped at the picture's left, top, right and bottom edges. VideoAdapter 0
-  writes two bytes per cell (ds0D02[PaletteColor(Colour)]), 2 writes four bytes per cell
-  (ds0D06[Colour]) and 1 writes one byte per EGA plane through the plane mask of Colour
-  (EgaPlaneBitMasks). Every row it touches is marked in ds4A28 and in the trackers ds4C20,
-  ds4AD0 and ds4D70 for FlushPictureChanges. Called by DrawWallDescriptors (ovl29:0174,
-  four times, FirstCol = 2, the wall descriptors' pixel rows and the ds6A60..ds6A63
+  writes two bytes per cell (PixelsByColour2Bit[PaletteColor(Colour)]), 2 writes four bytes per cell
+  (PixelsByColour4Bit[Colour]) and 1 writes one byte per EGA plane through the plane mask of Colour
+  (EgaPlaneBitMasks). Every row it touches is marked in RowDirtyFlags and in the trackers RowFirstChangedOfs,
+  RowFirstChangedCol and RowLastChangedOfs for FlushPictureChanges. Called by DrawWallDescriptors (ovl29:0174,
+  four times, FirstCol = 2, the wall descriptors' pixel rows and the WallDescriptor1..WallDescriptor4
   colours) and by DrawIconCell (ovl16:34DF).
   QUIRK 0464:2707: a rectangle that starts above row 0 is drawn one row too far: the row
   bound is Height - |FirstRow| and the loop includes it. }
@@ -1235,19 +1236,19 @@ begin
       end;
       for Row := 0 to LastRow do
       begin
-        ds4A28[TrackRow] := 1;
+        RowDirtyFlags[TrackRow] := 1;
         Inc(DestOfs, StartCol);
-        if ds4C20[TrackRow] > DestOfs then
+        if RowFirstChangedOfs[TrackRow] > DestOfs then
         begin
-          ds4AD0[TrackRow] := StartBytes;
-          ds4C20[TrackRow] := DestOfs;
+          RowFirstChangedCol[TrackRow] := StartBytes;
+          RowFirstChangedOfs[TrackRow] := DestOfs;
         end;
         if VideoAdapter = 0 then
-          FillChar(PPicture(Target)^.Data[DestOfs], Count, ds0D02[PaletteColor(Colour, @Pal)])
+          FillChar(PPicture(Target)^.Data[DestOfs], Count, PixelsByColour2Bit[PaletteColor(Colour, @Pal)])
         else
-          FillChar(PPicture(Target)^.Data[DestOfs], Count, ds0D06[Colour]);
+          FillChar(PPicture(Target)^.Data[DestOfs], Count, PixelsByColour4Bit[Colour]);
         Inc(DestOfs, Count);
-        if DestOfs - 1 > ds4D70[TrackRow] then ds4D70[TrackRow] := DestOfs - 1;
+        if DestOfs - 1 > RowLastChangedOfs[TrackRow] then RowLastChangedOfs[TrackRow] := DestOfs - 1;
         Inc(DestOfs, RightRoom);
         Inc(TrackRow);
       end;
@@ -1264,19 +1265,19 @@ begin
         if (EgaPlaneBitMasks[PlaneIndex] and Colour) > 0 then Mask[PlaneIndex] := $FF;
       for Row := 0 to LastRow do
       begin
-        ds4A28[TrackRow] := 1;
+        RowDirtyFlags[TrackRow] := 1;
         Inc(DestOfs, StartCol);
-        if ds4C20[TrackRow] > DestOfs then
+        if RowFirstChangedOfs[TrackRow] > DestOfs then
         begin
-          ds4AD0[TrackRow] := StartBytes;
-          ds4C20[TrackRow] := DestOfs;
+          RowFirstChangedCol[TrackRow] := StartBytes;
+          RowFirstChangedOfs[TrackRow] := DestOfs;
         end;
-        for ds70C7 := 1 to Count do
+        for SharedLoopIndex := 1 to Count do
         begin
           Move(Mask, PPicture(Target)^.Data[DestOfs], 4);
           Inc(DestOfs, 4);
         end;
-        if DestOfs - 1 > ds4D70[TrackRow] then ds4D70[TrackRow] := DestOfs - 1;
+        if DestOfs - 1 > RowLastChangedOfs[TrackRow] then RowLastChangedOfs[TrackRow] := DestOfs - 1;
         Inc(DestOfs, RightRoom);
         Inc(TrackRow);
       end;

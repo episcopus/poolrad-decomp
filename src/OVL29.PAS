@@ -116,24 +116,24 @@ begin
   Put8x8Symbol(PartyCol + ViewLeft - 1, PartyRow + ViewLeft - 1, Dir shr 1 + PartyArrow, DrawDirect, MapSymbolAttr);
   StepDisplay;
 end;
-{ ovl29:0155. Stores the four wall view descriptors Wall1..Wall4 into ds6A60..ds6A63 (descriptor 1..4;
+{ ovl29:0155. Stores the four wall view descriptors Wall1..Wall4 into WallDescriptor1..WallDescriptor4 (descriptor 1..4;
   whitepaper 5.2). Called by ovl26 ShowAreaView with the wall view ids. }
 procedure SetWallDescriptors(Wall1, Wall2, Wall3, Wall4: Byte);
 begin
-  ds6A60 := Wall1;
-  ds6A61 := Wall2;
-  ds6A62 := Wall3;
-  ds6A63 := Wall4;
+  WallDescriptor1 := Wall1;
+  WallDescriptor2 := Wall2;
+  WallDescriptor3 := Wall3;
+  WallDescriptor4 := Wall4;
 end;
-{ ovl29:0174. Draws the four wall view descriptors ds6A60..ds6A63 through FillPictureRect (A=2,
-  B and D the descriptor's screen position/size, C=$B, E the descriptor, F=@ds260A's 8-byte
+{ ovl29:0174. Draws the four wall view descriptors WallDescriptor1..WallDescriptor4 through FillPictureRect (A=2,
+  B and D the descriptor's screen position/size, C=$B, E the descriptor, F=@FillRectPalette's 8-byte
   structure, G=DrawBuf). Called by DrawWallView. }
 procedure DrawWallDescriptors;
 begin
-  FillPictureRect(2, $10, $B, $2B, ds6A60, @ds260A, DrawBuf);
-  FillPictureRect(2, $3B, $B, 1, ds6A61, @ds260A, DrawBuf);
-  FillPictureRect(2, $3C, $B, 2, ds6A62, @ds260A, DrawBuf);
-  FillPictureRect(2, $3E, $B, $2A, ds6A63, @ds260A, DrawBuf);
+  FillPictureRect(2, $10, $B, $2B, WallDescriptor1, @FillRectPalette, DrawBuf);
+  FillPictureRect(2, $3B, $B, 1, WallDescriptor2, @FillRectPalette, DrawBuf);
+  FillPictureRect(2, $3C, $B, 2, WallDescriptor3, @FillRectPalette, DrawBuf);
+  FillPictureRect(2, $3E, $B, $2A, WallDescriptor4, @FillRectPalette, DrawBuf);
 end;
 { ovl29:0211. Draws piece Piece (0..9) of wall Wall (a wall id 1..15) in the 3D view: the piece's
   Width x Height tiles (WallPieceWidth, WallPieceHeight), taken in order from the wall's tile list WallTiles^[Wall]
@@ -223,7 +223,7 @@ begin
 end;
 { ovl29:057A. The event byte of map cell (Col, Row) from the event plane GeoCells^.Events (bit 7 =
   interior cell, whitepaper 4.2.1); ShowAreaView asks for the party cell and tests bit 7, MoveParty
-  keeps it in ds6AB1. Off-map cells answer 0 while WallViewMode is 0 or $A and wrap otherwise, as in
+  keeps it in PartyCellEventByte. Off-map cells answer 0 while WallViewMode is 0 or $A and wrap otherwise, as in
   DoorKindAt. }
 function EventByteAt(Col, Row: ShortInt): Byte;
 begin
@@ -480,10 +480,10 @@ end;
   bytes, whitepaper 4.2.4) into the wall tiles from wallset slot First (1..3) on; any other First
   does nothing. A missing block or one that does not fit in the slots left is fatal (Unable to
   load wallset in LoadWallSet. on Output, a key, QuitGame). For each wallset slot filled it marks
-  the slot's ds6AAEWords pair $FFFF, adds Delta (SymbolBase[First] - SymbolBase[1], the slot's
-  8x8 bank base) to every tile number at or above ds272C, and loads the slot's 8x8 tiles with
+  the slot's WallSetSlotPairs pair $FFFF, adds Delta (SymbolBase[First] - SymbolBase[1], the slot's
+  8x8 bank base) to every tile number at or above WallSymbolFloor, and loads the slot's 8x8 tiles with
   Load8x8Bank: block BlockId for a single wallset, BlockId * 10 + n for the n-th of several
-  (block 0 counting as 10 there). Finally ds6AAEWords[First] records (BlockId, First).
+  (block 0 counting as 10 there). Finally WallSetSlotPairs[First] records (BlockId, First).
   The size check does not ask for a multiple of $30C: a partial last wallset is copied whole
   (reading past the block) and counted, and only the slot test of ovl29:0F5B (1..3) keeps its
   tiles in range. QUIRK ovl29:101A: BlockId 0 becomes 10 inside the loop and back to 0 after it. }
@@ -524,11 +524,11 @@ begin
   for WallSet := 1 to Count do
     if First + WallSet - 1 in [1..LastWallSlot] then
     begin
-      ds6AAEWords[First + WallSet - 1].A := $FFFF;
-      ds6AAEWords[First + WallSet - 1].B := $FFFF;
+      WallSetSlotPairs[First + WallSet - 1].A := $FFFF;
+      WallSetSlotPairs[First + WallSet - 1].B := $FFFF;
       for Wall := 1 to WallsPerSet do
         for Tile := 0 to LastWallTile do
-          if WallSets^[First + WallSet - 1, Wall, Tile] >= ds272C then
+          if WallSets^[First + WallSet - 1, Wall, Tile] >= WallSymbolFloor then
             Inc(WallSets^[First + WallSet - 1, Wall, Tile], Delta);
       if Count > 1 then
       begin
@@ -539,8 +539,8 @@ begin
         Load8x8Bank(BlockId, First + WallSet - 1);
     end;
   if BlockId = 10 then BlockId := 0;
-  ds6AAEWords[First].A := BlockId;
-  ds6AAEWords[First].B := First;
+  WallSetSlotPairs[First].A := BlockId;
+  WallSetSlotPairs[First].B := First;
 end;
 { ovl29:10C7. Loads the 3D area map: block BlockId of GEO<TileSet>.DAX, which must be exactly
   $402 bytes (else Unable to load geo in Load3DMap. on Output, a key, QuitGame). It skips the

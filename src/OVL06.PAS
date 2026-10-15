@@ -20,7 +20,7 @@ const
                     (No) is 1, the answer ShopMain leaves on }
 
 { ovl06:0030 (ChooseShopItem). Builds the shop window and the item picker. Walks the stock list at
-  ds6810 and rewrites each entry's Text into a 30-character field with the item name on the left
+  PooledItems and rewrites each entry's Text into a 30-character field with the item name on the left
   and its Value (the price, +$3A) right-justified (a zero Value becomes 1, ovl06:0068), then draws
   the "Shop" window (DrawWindow) and runs the item picker ChooseFromList titled "Items: " with a "Buy"
   button. Action receives the picker's key, Head the chosen entry, Selected is set to Head;
@@ -37,7 +37,7 @@ var
   MenuFlag: Byte;   { the var Flag of ChooseFromList: set to 1 before the picker, not read here }
 begin
   MenuFlag := 1;
-  Entry := ds6810;
+  Entry := PooledItems;
   while Entry <> nil do
   begin
     Field := '                              ';
@@ -56,10 +56,10 @@ begin
     Entry := Entry^.Next;
   end;
   DrawWindow(1, 1, $26, $16, 0, $0F, 'Shop');
-  List := ds6810;
+  List := PooledItems;
   Action := ChooseFromList('Items: ', 'Buy', $0D, $0A, $0F, 1, 4, $26, $16, List, 1, MenuFlag, Choice, Head);
   Selected := Head;
-  Entry := ds6810;
+  Entry := PooledItems;
   while Entry <> nil do
   begin
     FormatItemLine(0, Entry, 0, 0, 0, 0);
@@ -133,7 +133,7 @@ var
   Choice: Integer;
 begin
   Selected := nil;
-  Head := ds6810;
+  Head := PooledItems;
   Choice := 1;
   repeat
     ChooseShopItem(Action, Selected, Head, Choice);
@@ -173,7 +173,7 @@ begin
 end;
 
 { ovl06:053E (ShopMain). The shop's entry and main loop, called from ovl03 (the area logic) when the
-  party enters a shop. It marks the shop open (ds49F3), redraws the shop screen (RedrawView,
+  party enters a shop. It marks the shop open (ViewMode), redraws the shop screen (RedrawView,
   DrawPartyRoster on SelectedCharacter), clears the money block PooledMoney and clears MoneyInPool, then shows the
   menu (ReadPromptChoice) with a text chosen by TreasureLeft (the Take/Share entries appear only while
   MoneyPooled says money lies in the pool) and dispatches the key: B BuyItems, V ViewSelectedCharacter, T TakeMoney,
@@ -197,14 +197,14 @@ var
   Appraised: Byte;     { set by Appraise (AppraiseGems); nonzero redraws the view }
   Entry: PMenuLine;
 begin
-  ds49F3 := 1;
+  ViewMode := 1;
   RedrawView;
   DrawPartyRoster(SelectedCharacter);
   FillChar(PooledMoney, SizeOf(PooledMoney), 0);
   Title := '';
   MoneyInPool := 0;
   Done := 0;
-  Entry := ds6810;
+  Entry := PooledItems;
   while Entry <> nil do
   begin
     FormatItemLine(0, Entry, 0, 0, 0, 0);

@@ -91,7 +91,7 @@ end;
 
 { ovl28:00A2. Loads the sprite pictures of block Bank of the DAX file <Name><TileSet>.dax (for
   example PIC or FINAL, ovl18 passes 'FINAL') into the sprite list List^, unless that file and block
-  are already loaded (the name and block of the last load are kept in ds6B0A and ds6B1C). The test
+  are already loaded (the name and block of the last load are kept in LastSpriteFile and LastSpriteBank). The test
   compares Name and Bank only, not the TileSet digit, so a TileSet change with the same name and
   block does not reload. It frees the old list first (FreeSpriteList), reads the block (LoadDaxBlock)
   and walks it: a count byte (at most PicBlock1Sprites for PIC block 1), then per sprite 4 bytes into
@@ -102,7 +102,7 @@ end;
   minus one. PIC and FINAL pictures are stored as differences: the first picture's data is kept in
   Prev and every later picture's bytes are xored with it before decoding. When bit 0 of Mode is set
   and VideoAdapter is not 0, the picture also goes through RemapPictureColours with the two 16-byte tables
-  ds0C6C and ds0C7C. Frees Prev and the block at the end and calls FlushKeyboard (which does nothing,
+  SpriteRemapFrom and SpriteRemapTo. Frees Prev and the block at the end and calls FlushKeyboard (which does nothing,
   QUIRK 0899:010A).
   QUIRK ovl28:0269: when MaxAvail is below FreeMemoryFloor the jump to the loop end skips not only
   the allocation but also the offset advance past the sprite's X, Y, skipped byte, palette and
@@ -114,7 +114,7 @@ end;
   Note ovl28:00D9: FreeSpriteList is passed @List^ (les/push es/push di), the same pointer as List.
   Parameters: Name (the file base name), Bank (the DAX block), Mode (passed on to the allocator and
   the decoder; bit 0 enables RemapPictureColours), List (the sprite list to fill). Side effects: the heap,
-  ds6B0A, ds6B1C. Callers: ovl03:0856, ShowEncounterPicture, ovl18:0006, RedrawView (packet). }
+  LastSpriteFile, LastSpriteBank. Callers: ovl03:0856, ShowEncounterPicture, ovl18:0006, RedrawView (packet). }
 procedure LoadSpriteList(Name: String8; Bank: Byte; Mode: Byte; List: PSpriteList);
 var
   Size: Word;
@@ -130,10 +130,10 @@ var
   PrevAllocated: Boolean;
   Loaded: Byte;
 begin
-  if (Name = ds6B0A) and (Bank = ds6B1C) then Exit;
+  if (Name = LastSpriteFile) and (Bank = LastSpriteBank) then Exit;
   FreeSpriteList(@List^);
-  ds6B0A := Name;
-  ds6B1C := Bank;
+  LastSpriteFile := Name;
+  LastSpriteBank := Bank;
   IsPicOrFinal := (Name = 'PIC') or (Name = 'FINAL');
   Str(TileSet, Digit);
   LoadDaxBlock(Name + Digit, '.dax', Bank, Size, Block);
@@ -187,7 +187,7 @@ begin
         end;
         UnpackPicturePixels(Block, Offset, Mode, 0, Slots[I].Sprite);
         if ((Mode and 1) > 0) and (VideoAdapter <> 0) then
-          RemapPictureColours(@ds0C6C, @ds0C7C, 0, 0, Slots[I].Sprite);
+          RemapPictureColours(@SpriteRemapFrom, @SpriteRemapTo, 0, 0, Slots[I].Sprite);
         Inc(Offset, Row + 1);
       end;
     end;
@@ -206,11 +206,11 @@ end;
 procedure FreeSpriteList(Rec: PSpriteList);
 begin
   with Rec^ do
-    for ds70C7 := 1 to Count do
-      ReleasePicture(Slots[ds70C7].Sprite);
+    for SharedLoopIndex := 1 to Count do
+      ReleasePicture(Slots[SharedLoopIndex].Sprite);
   FillChar(Rec^, SizeOf(TSpriteList), 0);
-  ds6B0A := '';
-  ds6B1C := NoBank;
+  LastSpriteFile := '';
+  LastSpriteBank := NoBank;
 end;
 { ovl28:04F9. Shows the HEAD/BODY picture window of the character screen: when the character record
   DS:5D92 has both a HEAD and a BODY picture bank it draws the window (columns 28..38, rows 1..11)
@@ -226,9 +226,9 @@ begin
   DrawWindow($1C, 1, $26, $B, 0, 0, '');
   with SelectedCharacter^ do
   begin
-    Str(ds286F[HeadBank], V1);
-    Str(ds287D[BodyBank], V2);
-    LoadHeadBodySprites(ds286F[HeadBank], ds287D[BodyBank]);
+    Str(HeadPictureNumbers[HeadBank], V1);
+    Str(BodyPictureNumbers[BodyBank], V2);
+    LoadHeadBodySprites(HeadPictureNumbers[HeadBank], BodyPictureNumbers[BodyBank]);
   end;
   ShowHeadBodySprites($1C, 1, 1);
 end;
@@ -245,13 +245,13 @@ begin
   if HeadBank <> NoBank then
     if (HeadBankIndex = NoBank) or (HeadBankIndex <> HeadBank) then
     begin
-      LoadPicture('HEAD' + Num, HeadBank, 0, 0, ds6B01);
+      LoadPicture('HEAD' + Num, HeadBank, 0, 0, HeadSpriteBank);
       HeadBankIndex := HeadBank;
     end;
   if BodyBank <> NoBank then
     if (BodyBankIndex = NoBank) or (BodyBankIndex <> BodyBank) then
     begin
-      LoadPicture('BODY' + Num, BodyBank, 0, 0, ds6B06);
+      LoadPicture('BODY' + Num, BodyBank, 0, 0, BodySpriteBank);
       BodyBankIndex := BodyBank;
     end;
   FlushKeyboard;
@@ -265,11 +265,11 @@ procedure ShowHeadBodySprites(Col, Row: Byte; WithBody: Byte);
 begin
   if WithBody <> 0 then
   begin
-    DrawHeadSprite(Col, Row, ds6B01);
-    DrawBodySprite(Col, Row, ds6B06);
+    DrawHeadSprite(Col, Row, HeadSpriteBank);
+    DrawBodySprite(Col, Row, BodySpriteBank);
   end
   else
-    DrawSprite(Col, Row, 0, ds6B01);
+    DrawSprite(Col, Row, 0, HeadSpriteBank);
 end;
 { ovl28:0708. Copies the sprite list Rec^ into a local record and shows slot Slot (only 1..3 are
   legal; another slot restores the saved video mode with RestoreVideoMode, which calls

@@ -96,25 +96,25 @@ const
     the party position (ovl03:02E0). }
   RemoveMemberBit = $80;
   PositionMask = $7F;
-  { The two words of ds49D6 that ECL command 12 (ovl03:03B4) works with: the largest distance the
+  { The two words of GameVars2 that ECL command 12 (ovl03:03B4) works with: the largest distance the
     script allows for the encounter picture, and the steps the party sees ahead (OpenStepsAhead,
     ovl07:0482, which also stores them there). }
   VarEncounterLimit = 704;
   VarStepsAhead = 705;
-  { The words of ds49D6 ECL command 36 (ovl03:179B) reads: a shop and a temple visit the script asked
+  { The words of GameVars2 ECL command 36 (ovl03:179B) reads: a shop and a temple visit the script asked
     for (cleared when served), and word 714, of which it keeps only the low bit (meaning unknown). }
   VarShopRequest = 876;
   VarTempleRequest = 738;
   VarWord714 = 714;
   { ECL command 11 (ovl03:0450) adds no encounter member once its count of members reaches this. }
   MaxEncounterMembers = 63;
-  { The icon slot ds6F83 starts at: InitScript (ovl07:01F0) and ECL command 28 (ovl03:125D) set it. }
+  { The icon slot EncounterIconSlot starts at: InitScript (ovl07:01F0) and ECL command 28 (ovl03:125D) set it. }
   FirstEncounterIcon = 8;
   { ECL command 29 (ovl03:12C6) counts only what is above these: ResistValue above 60 and HitAdjust
     above 39. Purpose unknown. }
   ResistThreshold = 60;
   HitAdjustThreshold = 39;
-  { The word of ds49D6 that ECL command 14 (ovl03:0856) reads: NoHeadBank when the close-up is the PIC
+  { The word of GameVars2 that ECL command 14 (ovl03:0856) reads: NoHeadBank when the close-up is the PIC
     picture, else the HEAD bank of the HEAD and BODY close-up (ShowEncounterPicture, ovl07:054E). }
   VarCloseUpHead = 737;
   NoHeadBank = $FF;
@@ -135,17 +135,17 @@ const
   WallModeMapPage4 = $1B;
   { The GameVars words the area step (ovl03:31B4) reads: the area doors are animated when word VarAreaDoors is
     AreaDoorsOpen and word VarAreaDoorsLatch is clear. Word 435 is one of the gates DrawAreaView reads
-    (ovl27:0000); the meaning of the values is not traced. Word VarWord725 of ds49D6 is cleared at each step. }
+    (ovl27:0000); the meaning of the values is not traced. Word VarWord725 of GameVars2 is cleared at each step. }
   VarAreaDoors = 435;
   VarAreaDoorsLatch = 418;
   AreaDoorsOpen = $FE;
   VarWord725 = 725;
-  { ds49F3 values the wilderness loop (ovl03:32F8) writes: 4 for the 3D wall view, 3 for a map page.
+  { ViewMode values the wilderness loop (ovl03:32F8) writes: 4 for the 3D wall view, 3 for a map page.
     RunAreaEventCommand sets the same pair from AreaViewKind (1 gives 4, anything else 3). }
   ViewModeMap = 3;
   ViewModeWall = 4;
   { The GameVars words the wilderness loop saves the party's cell in before DoWildernessMenu, so a
-    cell that changed can play ds2628. }
+    cell that changed can play SoundStep. }
   VarSavedPartyColumn = 240;
   VarSavedPartyRow = 241;
   { UpCase of the key that makes camp (RunCamp) in the wilderness loop. }
@@ -216,7 +216,7 @@ const
   CloseUpLastRow = $D;
   GlyphRunCol = 2;
   GlyphRunRow = 5;
-  { The party size: word 830 of ds49D6 (VarPartySize of ovl05, which is not visible here). }
+  { The party size: word 830 of GameVars2 (VarPartySize of ovl05, which is not visible here). }
   VarPartySize = 830;
   { ECL command 45 (ovl03:2CCF) biases the operand word by CodeBias and tests the result against the
     actions below; the comments give the word the script writes. }
@@ -224,42 +224,43 @@ const
   ActionRedrawArea = $AC91;     { word $2C90: redraw the area view when it is out of date }
   ActionDuelWithCopy = 1;       { word $8000: a duel with the copy }
   ActionDuelNoCopy = 2;         { word $8001: a duel without the copy }
-  ActionSound = $3A04;          { word $BA03: PlaySound by ds84CC }
+  ActionSound = $3A04;          { word $BA03: PlaySound by ScriptSoundCode }
   ActionStepParty = $401F;      { word $C01E: StepPartyForward }
-  ActionWallProbe = $4019;      { word $C018: WallIdAt into ds6AB0 when AreaViewKind is 1 }
+  ActionWallProbe = $4019;      { word $C018: WallIdAt into PartyCellWallId when AreaViewKind is 1 }
   DuelWithCopy = 1;             { SetupDuel's WithCopy flag }
   DuelNoCopy = 0;
   { ECL command 56 (ovl03:2E10) picks its screen by operand 1: 8 is the ending narrative, 9 the camp. }
   ScreenEnding = 8;
   ScreenCamp = 9;
 var
-  { ds84C8 (POOLVARS) under the type ShowEncounterPicture takes: TPictureShown is declared in OVL07,
+  { PictureShownFlags (POOLVARS) under the type ShowEncounterPicture takes: TPictureShown is declared in OVL07,
     and Turbo Pascal accepts a var argument only of the identical type. }
-  PictureShown: TPictureShown absolute ds84C8;
+  PictureShown: TPictureShown absolute PictureShownFlags;
 
 { ovl03:0001. The ECL command 0, the only command that takes no operands (the dispatcher at
-  ovl03:2F2D calls it for SkippedOpcode 0). It clears the text windows when ds84E2 is set (the
+  ovl03:2F2D calls it for SkippedOpcode 0). It clears the text windows when PictureFrameDirty is set (the
   second one only when the game variable VarForceWallView is set, since the code reads that same
-  word), selects the character at ds4436 when ds4430 is set, clears the two-byte scratch ds84C8,
+  word), selects the character at ReselectCharacter when ReselectCharacterPending is set, clears the two-byte scratch
+  PictureShownFlags,
   moves EclPC past the command, empties the return stack of ScriptGosub, and puts the text
   cursor at column 1, row 17 (GlyphCol, GlyphRow). }
 procedure EndCommand;
 begin
-  if ds84E2 <> 0 then
+  if PictureFrameDirty <> 0 then
   begin
     DrawWindow(PictureFrameLeft, PictureFrameTop, PictureFrameRight, PictureFrameBottom, 0, $F, '');
     if GameVars^[VarForceWallView] <> 0 then
       DrawWindow(3, 3, $D, $D, 0, $F, '');
   end;
-  if ds4430 <> 0 then
+  if ReselectCharacterPending <> 0 then
   begin
-    SelectedCharacter := ds4436;
-    ds4430 := 0;
+    SelectedCharacter := ReselectCharacter;
+    ReselectCharacterPending := 0;
   end;
-  FillChar(ds84C8, 2, 0);
-  ds84E0 := 0;
-  ds84E2 := 0;
-  ds442E := 1;
+  FillChar(PictureShownFlags, 2, 0);
+  CloseUpShown := 0;
+  PictureFrameDirty := 0;
+  ScriptRunEnded := 1;
   Inc(EclPC);
   while ReturnStack <> nil do
   begin
@@ -269,7 +270,7 @@ begin
   end;
   GlyphRow := EclTextTop;
   GlyphCol := EclTextLeft;
-  ds84DE := 0;
+  GlyphRunInBox := 0;
 end;
 { ovl03:00F4. ECL command 1 (dispatcher ovl03:2F2D, SkippedOpcode 1): an unconditional jump. Its
   one operand is a script address, and EclPC moves to it (the same jump ScriptGosub makes after
@@ -376,13 +377,14 @@ begin
     WriteVmString(Target, EclStrings[1]);
 end;
 { ovl03:02E0. ECL command 10 (dispatcher ovl03:2F2D, SkippedOpcode 10): selects the party member at
-  the 0-based position its operand names as SelectedCharacter. The walk starts at ds5D96, the head
+  the 0-based position its operand names as SelectedCharacter. The walk starts at PartyListHead, the head
   of the party list (Next at +$104), and stops at the position or at the end of the list; a
-  position past the end selects nothing. It sets ds4430 first, so the next EndCommand (ovl03:0001)
-  selects ds4436 again. When the operand's bit 7 is set and the script has just cleared the
-  character's name and status (ds84D2 and ds84D3, set by SetCharacterVar), the selected member
-  leaves the party (RemoveSelectedCharacter, as ovl15:18E5 does) and is redrawn (DrawPartyRoster), and ds4430 is
-  cleared when that member is ds4436. }
+  position past the end selects nothing. It sets ReselectCharacterPending first, so the next EndCommand (ovl03:0001)
+  selects ReselectCharacter again. When the operand's bit 7 is set and the script has just cleared the
+  character's name and status (CharWord6C00Zeroed and CharWord6B00Zeroed, set by SetCharacterVar), the selected member
+  leaves the party (RemoveSelectedCharacter, as ovl15:18E5 does) and is redrawn (DrawPartyRoster), and
+  ReselectCharacterPending is
+  cleared when that member is ReselectCharacter. }
 procedure SelectCharacterCommand;
 var
   Member: PCharacter;
@@ -391,11 +393,11 @@ var
   I: Byte;
   RemoveFlag: Byte;
 begin
-  ds4430 := 1;
+  ReselectCharacterPending := 1;
   DecodeOperands(1);
   I := 0;
   Position := OperandValue(1);
-  Member := PCharacter(ds5D96);
+  Member := PCharacter(PartyListHead);
   RemoveFlag := Position and RemoveMemberBit;
   Position := Position and PositionMask;
   if Position > 0 then
@@ -406,44 +408,44 @@ begin
     end;
   if Member <> nil then
     SelectedCharacter := Member;
-  if (RemoveFlag <> 0) and (ds84D2 <> 0) and (ds84D3 <> 0) then
+  if (RemoveFlag <> 0) and (CharWord6C00Zeroed <> 0) and (CharWord6B00Zeroed <> 0) then
   begin
-    if ds4436 = SelectedCharacter then
-      ds4430 := 0;
+    if ReselectCharacter = SelectedCharacter then
+      ReselectCharacterPending := 0;
     RemoveSelectedCharacter(False, True);
     DrawPartyRoster(SelectedCharacter);
-    ds84D2 := 0;
-    ds84D3 := 0;
+    CharWord6C00Zeroed := 0;
+    CharWord6B00Zeroed := 0;
   end;
 end;
 { ovl03:03B4. ECL command 12 (dispatcher ovl03:2F2D, SkippedOpcode 12): shows an encounter picture
   at the distance the party can see ahead. Operand 1 is the sprite bank (EncounterSpriteBank) and
   operand 3 the picture bank (EncounterPicBank), both passed to ShowEncounterPicture; operand 2 is
-  the largest distance the script allows, kept in word 704 of ds49D6. The distance is the steps
+  the largest distance the script allows, kept in word 704 of GameVars2. The distance is the steps
   ahead (OpenStepsAhead, which also stores them in word 705), cut down to that limit. The two shown
-  flags are PictureShown (ds84C8). }
+  flags are PictureShown (PictureShownFlags). }
 procedure ShowEncounterCommand;
 var
   Unused: Word;                 { QUIRK ovl03:03B4: two bytes of the frame nothing uses }
 begin
   DecodeOperands(3);
   EncounterSpriteBank := OperandValue(1);
-  ds49D6^[VarEncounterLimit] := OperandValue(2);
+  GameVars2^[VarEncounterLimit] := OperandValue(2);
   EncounterPicBank := OperandValue(3);
-  ds49D6^[VarStepsAhead] := OpenStepsAhead(PartyMapColumn, PartyMapRow, PartyFacing);
-  if ds49D6^[VarEncounterLimit] < ds49D6^[VarStepsAhead] then
-    ds49D6^[VarStepsAhead] := ds49D6^[VarEncounterLimit];
-  ShowEncounterPicture(EncounterSpriteBank, EncounterPicBank, Byte(ds49D6^[VarStepsAhead]), PictureShown);
+  GameVars2^[VarStepsAhead] := OpenStepsAhead(PartyMapColumn, PartyMapRow, PartyFacing);
+  if GameVars2^[VarEncounterLimit] < GameVars2^[VarStepsAhead] then
+    GameVars2^[VarStepsAhead] := GameVars2^[VarEncounterLimit];
+  ShowEncounterPicture(EncounterSpriteBank, EncounterPicBank, Byte(GameVars2^[VarStepsAhead]), PictureShown);
 end;
 { ovl03:0450. ECL command 11 (dispatcher ovl03:2F2D, SkippedOpcode 11): adds a group of encounter
-  members to the party list ds5D96 (icons from 8 up, so not the party's own members). Operand 1 is
+  members to the party list PartyListHead (icons from 8 up, so not the party's own members). Operand 1 is
   the kind LoadCharacter loads (LoadMonster, the save and load unit), operand 2 the number of members
-  (at least 1), operand 3 the block of the combat picture 'CPIC' loaded into the icon slot ds6F83.
+  (at least 1), operand 3 the block of the combat picture 'CPIC' loaded into the icon slot EncounterIconSlot.
   The loaded character goes to the tail of the list first, then Count - 1 copies of it, each with
   its own copies of the item and affect lists (the copies are prepended, so the lists come out in
-  reverse order). Every member gets CombatIcon := ds6F83, and the slot goes up by one afterwards.
+  reverse order). Every member gets CombatIcon := EncounterIconSlot, and the slot goes up by one afterwards.
   Nothing is added once EncounterMemberCount reaches MaxEncounterMembers. SelectedCharacter is saved
-  and restored, and ds84E7 is set. }
+  and restored, and EncounterMembersAdded is set. }
 procedure AddEncounterGroupCommand;
 var
   Kind: Byte;
@@ -479,14 +481,14 @@ begin
   if Count <= 0 then
     Count := 1;
   PictureBlock := OperandValue(3);
-  Last := PCharacter(ds5D96);
+  Last := PCharacter(PartyListHead);
   PictureSetName := 'CPIC';
-  LoadPictureSlot(PictureSetName, PictureBlock, ds6F83);
+  LoadPictureSlot(PictureSetName, PictureBlock, EncounterIconSlot);
   while Last^.Next <> nil do
     Last := Last^.Next;
   Last^.Next := Who;
   Last := Last^.Next;
-  Last^.CombatIcon := ds6F83;
+  Last^.CombatIcon := EncounterIconSlot;
   Last^.Next := nil;
   Inc(EncounterMemberCount);
   Inc(I);
@@ -496,7 +498,7 @@ begin
     Last^.Next := NewMember;
     Last := Last^.Next;
     Last^ := Template;
-    Last^.CombatIcon := ds6F83;
+    Last^.CombatIcon := EncounterIconSlot;
     Last^.Next := nil;
     Last^.Affects := nil;
     Last^.Items := nil;
@@ -539,31 +541,31 @@ begin
     end;
     Affects := AffectsHead;
   end;
-  Inc(ds6F83);
-  ds84E7 := 1;
+  Inc(EncounterIconSlot);
+  EncounterMembersAdded := 1;
   SelectedCharacter := Saved;
 end;
 { ovl03:0817. ECL command 13 (dispatcher ovl03:2F2D, SkippedOpcode 13): brings the encounter picture
-  one step nearer. While the steps the party sees ahead (VarStepsAhead, word 705 of ds49D6) are not
+  one step nearer. While the steps the party sees ahead (VarStepsAhead, word 705 of GameVars2) are not
   used up, it takes one off and shows the picture again at the new distance (ShowEncounterPicture).
   It has no operands and always moves EclPC past the command. }
 procedure ApproachEncounterCommand;
 begin
-  if ds49D6^[VarStepsAhead] > 0 then
+  if GameVars2^[VarStepsAhead] > 0 then
   begin
-    Dec(ds49D6^[VarStepsAhead]);
-    ShowEncounterPicture(EncounterSpriteBank, EncounterPicBank, Byte(ds49D6^[VarStepsAhead]), PictureShown);
+    Dec(GameVars2^[VarStepsAhead]);
+    ShowEncounterPicture(EncounterSpriteBank, EncounterPicBank, Byte(GameVars2^[VarStepsAhead]), PictureShown);
   end;
   Inc(EclPC);
 end;
 { ovl03:0856. ECL command 14 (dispatcher ovl03:2F2D, SkippedOpcode 14): shows the close-up picture of
   the encounter, or hides it. Operand 1 is the picture bank PicBank. When PicBank is HideCloseUp, the
-  close-up goes: when ds49F9 is above 1 or AreaViewKind is 1 and a close-up or the 3D sprite is up
-  (ds84E0 or ds84E3), the area view is drawn again (ShowAreaView), those flags are cleared and ds84E1
+  close-up goes: when PreviousAreaViewKind is above 1 or AreaViewKind is 1 and a close-up or the 3D sprite is up
+  (CloseUpShown or Sprite3DLoaded), the area view is drawn again (ShowAreaView), those flags are cleared and CloseUpHidden
   is set; both PictureShown flags are cleared. Otherwise the picture window (3, 3 to 13, 13) is
   cleared first unless VarForceWallView is set, and the close-up is drawn as ShowEncounterPicture
-  draws it: the PIC picture PicBank when word VarCloseUpHead of ds49D6 is NoHeadBank, else the HEAD
-  and BODY pictures (ShowHeadBody). Purpose of ds49F9 unknown: the loader sets it to 1 (ovl11:03EB). }
+  draws it: the PIC picture PicBank when word VarCloseUpHead of GameVars2 is NoHeadBank, else the HEAD
+  and BODY pictures (ShowHeadBody). Purpose of PreviousAreaViewKind unknown: the loader sets it to 1 (ovl11:03EB). }
 procedure ShowCloseUpCommand;
 var
   PicBank: Byte;
@@ -575,23 +577,23 @@ begin
   if PicBank <> HideCloseUp then
   begin
     PictureShown[1] := 1;
-    ds84E0 := 1;
-    if ds49D6^[VarCloseUpHead] = NoHeadBank then
+    CloseUpShown := 1;
+    if GameVars2^[VarCloseUpHead] = NoHeadBank then
     begin
       LoadSpriteList('PIC', PicBank, 0, @PictureAnimation);
       DrawSprite(3, 3, 1, PictureAnimation.Frames[1].Sprite);
     end
     else
-      ShowHeadBody(ds49D6^[VarCloseUpHead], PicBank);
+      ShowHeadBody(GameVars2^[VarCloseUpHead], PicBank);
   end
   else
   begin
-    if ((ds49F9 > 1) or (AreaViewKind = 1)) and ((ds84E0 <> 0) or (ds84E3 <> 0)) then
+    if ((PreviousAreaViewKind > 1) or (AreaViewKind = 1)) and ((CloseUpShown <> 0) or (Sprite3DLoaded <> 0)) then
     begin
       ShowAreaView;
-      ds84E0 := 0;
-      ds84E3 := 0;
-      ds84E1 := 1;
+      CloseUpShown := 0;
+      Sprite3DLoaded := 0;
+      CloseUpHidden := 1;
     end;
     PictureShown[0] := 0;
     PictureShown[1] := 0;
@@ -637,13 +639,13 @@ end;
   ShowPagedText. A number operand is turned into its text by WordToText and stored in EclStrings[1];
   a string operand is already there (DecodeOperands). Command 17 (OpContinueText) leaves the window and
   the cursor as they are; command 18 clears the window and puts the cursor at its top left corner first.
-  ds84E4 is cleared, and ds4A00 is set while the text is shown: DrawTextRun then waits after each
+  WindowClearOnce is cleared, and WaitAfterTextRun is set while the text is shown: DrawTextRun then waits after each
   glyph. }
 procedure ShowTextCommand;
 begin
   DecodeOperands(1);
-  ds84E4 := 0;
-  ds4A00 := 1;
+  WindowClearOnce := 0;
+  WaitAfterTextRun := 1;
   if OperandType[1] < FirstStringOperandType then
     EclStrings[1] := WordToText(OperandValue(1));
   if SkippedOpcode = OpContinueText then
@@ -654,7 +656,7 @@ begin
     GlyphCol := EclTextLeft;
     ShowPagedText(EclTextLeft, EclTextTop, EclTextRight, EclTextBottom, EclTextColor, 1, EclStrings[1]);
   end;
-  ds4A00 := 0;
+  WaitAfterTextRun := 0;
 end;
 { ovl03:0A9F. ECL command 19 (dispatcher ovl03:2F2D, SkippedOpcode $13): returns from a subroutine
   that ScriptGosub (ovl07:1951) called. EclPC moves past the command. When the return stack
@@ -714,7 +716,7 @@ end;
   area's script file. The operand is the block number: the WallViewMode of the area is saved in
   VarSavedWallView, then WallViewMode takes the block number. The file is GameDir + 'ECL' + the
   TileSet number + '.dax' (its path goes to SaveAndExit first), LoadEcl loads the block and InitScript
-  resets the script machine. ds442E and ds442F are set to 1 and ds4431 is cleared. }
+  resets the script machine. ScriptRunEnded and ScriptBlockStarted are set to 1 and AreaRedrawArmed is cleared. }
 procedure StartEclBlock;
 var
   Block: Byte;
@@ -728,9 +730,9 @@ begin
   SaveAndExit(GameDir + 'ECL' + TileSetText + '.dax');
   LoadEcl(Block);
   InitScript;
-  ds442E := 1;
-  ds442F := 1;
-  ds4431 := 0;
+  ScriptRunEnded := 1;
+  ScriptBlockStarted := 1;
+  AreaRedrawArmed := 0;
 end;
 { ovl03:0C74. ECL commands 33 and 55 (dispatcher ovl03:2F2D, SkippedOpcode $21 or $37): load the
   graphics of the area for the three operands, the block numbers Blocks, where $FF means none.
@@ -738,34 +740,35 @@ end;
   VarForceWallView is set, and the 'BACPAC' picture set (Load24x24Set) when Blocks[3] is given and
   VarForceWallView is clear. Command 55 loads the wall sets: slot 1 gets wall set 0 when Blocks[1] is
   $7F; when words 231 and 232 of GameVars are both set, slots 1 and 3 get Blocks[1] and Blocks[3],
-  else each slot I gets Blocks[I] or, for $FF, the two words of ds6AAEWords[I] become $FFFF. The
-  label ovl03:0D7B is the slot loop of this routine. ds4431 is set first. When ds4432, ds4433 and
-  ds4434 are all set, RedrawView runs, the selected character is redrawn (DrawPartyRoster) and
-  ds4432 is cleared. Words 231 and 232 of GameVars and word 713 of ds49D6 are not named yet. }
+  else each slot I gets Blocks[I] or, for $FF, the two words of WallSetSlotPairs[I] become $FFFF. The
+  label ovl03:0D7B is the slot loop of this routine. AreaRedrawArmed is set first. When RosterRedrawFlagA,
+  RosterRedrawFlagB and
+  RosterRedrawFlagC are all set, RedrawView runs, the selected character is redrawn (DrawPartyRoster) and
+  RosterRedrawFlagA is cleared. Words 231 and 232 of GameVars and word 713 of GameVars2 are not named yet. }
 procedure LoadAreaGraphics;
 var
   Blocks: array[1..3] of Byte;
   I: Byte;
 begin
   DecodeOperands(3);
-  ds4431 := 1;
+  AreaRedrawArmed := 1;
   for I := 1 to 3 do
     Blocks[I] := OperandValue(I);
   if SkippedOpcode = $21 then
   begin
-    ds4434 := 1;
+    RosterRedrawFlagC := 1;
     if (Blocks[1] <> $FF) and (Blocks[1] <> $7F) and (GameVars^[VarForceWallView] <> 0) then
     begin
       GameVars^[VarGeoBlock] := Blocks[1];
       Load3DMap(Blocks[1]);
-      ds49D6^[713] := 0;
+      GameVars2^[713] := 0;
     end;
     if (Blocks[3] <> $FF) and (GameVars^[VarForceWallView] = 0) then
       Load24x24Set('BACPAC', 0, 40);
   end
   else
   begin
-    ds4433 := 1;
+    RosterRedrawFlagB := 1;
     if Blocks[1] = $7F then
       LoadWallSet(0, 1)
     else if (GameVars^[231] <> 0) and (GameVars^[232] <> 0) then
@@ -779,15 +782,15 @@ begin
           LoadWallSet(Blocks[I], I)
         else
         begin
-          ds6AAEWords[I].A := $FFFF;
-          ds6AAEWords[I].B := $FFFF;
+          WallSetSlotPairs[I].A := $FFFF;
+          WallSetSlotPairs[I].B := $FFFF;
         end;
   end;
-  if (ds4432 <> 0) and (ds4433 <> 0) and (ds4434 <> 0) then
+  if (RosterRedrawFlagA <> 0) and (RosterRedrawFlagB <> 0) and (RosterRedrawFlagC <> 0) then
   begin
     RedrawView;
     DrawPartyRoster(SelectedCharacter);
-    ds4432 := 0;
+    RosterRedrawFlagA := 0;
   end;
 end;
 { ovl03:0DEF. ECL commands 47 and 48 (dispatcher ovl03:2F2D, SkippedOpcode OpAnd or OpOr): the
@@ -872,7 +875,7 @@ var
   Target: Word;
   Unused: Byte;                 { QUIRK ovl03:0F08: a byte of the frame nothing uses }
 begin
-  ds84E4 := 0;
+  WindowClearOnce := 0;
   Redraw := 1;
   Empty := '';
   I := 1;
@@ -910,7 +913,7 @@ end;
   last). AskMenu (ovl07:1684) shows it on the prompt line and returns the 0-based position of the key
   pressed, $FF for a key that is no hotkey; WriteVmWord stores it. A single option
   'PRESS <RETURN> OR BUTTON TO CONTINUE' becomes 'PRESS <ENTER>/<RETURN> TO CONTINUE' and Return
-  answers it (AcceptEnter). Animate is set when the close-up is up (ds84E0) and ds84E1 is set. The
+  answers it (AcceptEnter). Animate is set when the close-up is up (CloseUpShown) and CloseUpHidden is set. The
   prompt line is cleared afterwards. }
 procedure AskMenuCommand;
 var
@@ -947,7 +950,7 @@ begin
     HotColor := MenuHotColor;
     WordColor := MenuTextColor;
   end;
-  Animate := Ord((ds84E0 <> 0) and (ds84E1 <> 0));
+  Animate := Ord((CloseUpShown <> 0) and (CloseUpHidden <> 0));
   for I := 1 to Count - 1 do
     Options := Options + '~' + EclStrings[I] + ' ';
   Options := Options + '~' + EclStrings[Count];
@@ -957,8 +960,8 @@ begin
 end;
 { ovl03:125D. ECL command 28 (dispatcher ovl03:2F2D, SkippedOpcode $1C): clears the encounter. It has no
   operands and moves EclPC past the command. The members ECL command 11 added are dropped
-  (EncounterMemberCount and ds84E7 go to 0), the icon slot ds6F83 goes back to FirstEncounterIcon,
-  PooledMoney is cleared, and the item list ds6810 is freed line by line (SizeOf(TMenuLine) bytes each). }
+  (EncounterMemberCount and EncounterMembersAdded go to 0), the icon slot EncounterIconSlot goes back to FirstEncounterIcon,
+  PooledMoney is cleared, and the item list PooledItems is freed line by line (SizeOf(TMenuLine) bytes each). }
 procedure ClearEncounterCommand;
 var
   Next: PMenuLine;
@@ -966,18 +969,18 @@ var
 begin
   Inc(EclPC);
   EncounterMemberCount := 0;
-  ds84E7 := 0;
-  ds6F83 := FirstEncounterIcon;
+  EncounterMembersAdded := 0;
+  EncounterIconSlot := FirstEncounterIcon;
   FillChar(PooledMoney, SizeOf(TPartyMoney), 0);
-  while ds6810 <> nil do
+  while PooledItems <> nil do
   begin
-    Next := ds6810^.Next;
-    FreeMem(ds6810, SizeOf(TMenuLine));
-    ds6810 := Next;
+    Next := PooledItems^.Next;
+    FreeMem(PooledItems, SizeOf(TMenuLine));
+    PooledItems := Next;
   end;
 end;
 { ovl03:12C6. ECL command 29 (dispatcher ovl03:2F2D, SkippedOpcode $1D): stores in operand 1 one byte
-  computed over the whole party, the list ds5D96 followed through TCharacter.Next (+$104). For each
+  computed over the whole party, the list PartyListHead followed through TCharacter.Next (+$104). For each
   member it reads the current hit points (Flag11B, +$11B), ResistValue (+$111), HitAdjust (+$110) and
   the class levels 0 and 5 (ClassLevels, +$96 and +$9B). ResistValue is lowered by ResistThreshold and
   HitAdjust by HitAdjustThreshold (0 when they are not above it). The member's share is
@@ -997,7 +1000,7 @@ var
 begin
   DecodeOperands(1);
   Checksum := 0;
-  Member := PCharacter(ds5D96);
+  Member := PCharacter(PartyListHead);
   while Member <> nil do
   begin
     HitPoints := Member^.Flag11B;
@@ -1019,7 +1022,7 @@ begin
   Target := MakeWord(OperandLow[1], OperandHigh[1]);
   WriteVmWord(Target, Checksum);
 end;
-{ ovl03:1435. ECL command 30 (dispatcher ovl03:2F2D, SkippedOpcode $1E): scans the party (ds5D96
+{ ovl03:1435. ECL command 30 (dispatcher ovl03:2F2D, SkippedOpcode $1E): scans the party (PartyListHead
   followed through TCharacter.Next) and writes the answer to the script
   addresses of operands 3 to 6. Operand 1 chooses what is scanned. 0 is an affect search: operand 2
   is the affect id, HasAffect looks for it in each member's affect list, and operand 6 gets 1 when
@@ -1063,7 +1066,7 @@ var
   end;
 begin
   DecodeOperands(6);
-  Member := PCharacter(ds5D96);
+  Member := PCharacter(PartyListHead);
   Found := 0;
   if OperandType[1] = 1 then
     StatAddress := MakeWord(OperandLow[1], OperandHigh[1])
@@ -1123,7 +1126,7 @@ begin
   end;
 end;
 { ovl03:1629. ECL command 34 (dispatcher ovl03:2F2D, SkippedOpcode $22): reports whether a party member
-  has the class mask 4 or 10. It walks the party list ds5D96 (through TCharacter.Next) and tests the
+  has the class mask 4 or 10. It walks the party list PartyListHead (through TCharacter.Next) and tests the
   ClassMask (+$2F) of each member: a member with 4 or 10 sets the flag. Operand 1 receives the flag (1
   or 0) and operand 2 the second value, which the original always writes as 0 (QUIRK ovl03:1629: the
   Mark byte is set with the flag and never read). Mask 10 is one of the multi-class values AwardExperience
@@ -1139,7 +1142,7 @@ var
   Unused: Byte;                 { QUIRK ovl03:1629: a byte of the frame nothing uses }
 begin
   DecodeOperands(2);
-  Member := PCharacter(ds5D96);
+  Member := PCharacter(PartyListHead);
   Found := 0;
   Second := 0;
   Mark := 0;
@@ -1158,7 +1161,7 @@ begin
   WriteVmWord(SecondTarget, Second);
 end;
 { ovl03:16C9. ECL command 35 (dispatcher ovl03:2F2D, SkippedOpcode $23): rolls two six-sided dice and
-  writes an outcome, 0 to 2, to the script address $6DCB (word 715 of ds49D6, which RunCombat clears
+  writes an outcome, 0 to 2, to the script address $6DCB (word 715 of GameVars2, which RunCombat clears
   every round, VarCombatWord715 in ovl08). Operands 1 to 4 are four values. Width is operand 4 + 2 -
   operand 1 and Height is operand 2 + 2 - operand 3 (signed bytes). The first roll must not exceed
   Width and the second must be above Height for outcome 1; a second roll at most Height gives outcome
@@ -1199,30 +1202,30 @@ end;
 { ovl03:179B. ECL command 36 (dispatcher ovl03:2F2D, SkippedOpcode $24): the area logic. ShopMain
   (ovl06:053E) and RunCombat (ovl08:007A) name ovl03 as their caller. It has no operands; Inc(EclPC)
   steps the program counter past the opcode so RunScriptFrom (ovl03:3171) reads the next command (see
-  EclPC). An encounter is pending when ds84E7 (set by ECL command 11) or DuelMode is set.
-  Without one, a shop or temple the script asked for comes first: when word VarShopRequest of ds49D6
+  EclPC). An encounter is pending when EncounterMembersAdded (set by ECL command 11) or DuelMode is set.
+  Without one, a shop or temple the script asked for comes first: when word VarShopRequest of GameVars2
   is 1 it is cleared and ShopMain runs, else when VarTempleRequest is 1 it is cleared and VisitTemple
   runs; with neither request EndBattle runs. With an encounter, VarStepsAhead becomes the lower of its
   value and the steps ahead (OpenStepsAhead), RunCombat and EndBattle run, and when VarForceWallView is
   clear the BACPAC set (Load24x24Set) and the ICON pictures 0 to 2 are loaded into picture slots 9 to
-  11. DuelMode is then cleared. Both paths end by setting the view mode ds49F3 to 4 when AreaViewKind is 1,
-  else 3, keeping only the low bit of VarWord714, clearing PictureShown and ds84E0, and redrawing the
+  11. DuelMode is then cleared. Both paths end by setting the view mode ViewMode to 4 when AreaViewKind is 1,
+  else 3, keeping only the low bit of VarWord714, clearing PictureShown and CloseUpShown, and redrawing the
   screen (RedrawView). }
 procedure RunAreaEventCommand;
 var
   Steps: Word;                  { the steps ahead the party sees, from OpenStepsAhead }
 begin
   Inc(EclPC);
-  if (ds84E7 = 0) and (DuelMode = 0) then
+  if (EncounterMembersAdded = 0) and (DuelMode = 0) then
   begin
-    if ds49D6^[VarShopRequest] = 1 then
+    if GameVars2^[VarShopRequest] = 1 then
     begin
-      ds49D6^[VarShopRequest] := 0;
+      GameVars2^[VarShopRequest] := 0;
       ShopMain;
     end
-    else if ds49D6^[VarTempleRequest] = 1 then
+    else if GameVars2^[VarTempleRequest] = 1 then
     begin
-      ds49D6^[VarTempleRequest] := 0;
+      GameVars2^[VarTempleRequest] := 0;
       VisitTemple;
     end
     else
@@ -1231,8 +1234,8 @@ begin
   else
   begin
     Steps := OpenStepsAhead(PartyMapColumn, PartyMapRow, PartyFacing);
-    if Steps < ds49D6^[VarStepsAhead] then
-      ds49D6^[VarStepsAhead] := Steps;
+    if Steps < GameVars2^[VarStepsAhead] then
+      GameVars2^[VarStepsAhead] := Steps;
     RunCombat;
     EndBattle;
     if GameVars^[VarForceWallView] = 0 then
@@ -1246,12 +1249,12 @@ begin
       DuelMode := 0;
   end;
   if AreaViewKind = 1 then
-    ds49F3 := ViewModeWall
+    ViewMode := ViewModeWall
   else
-    ds49F3 := ViewModeMap;
-  ds49D6^[VarWord714] := ds49D6^[VarWord714] and 1;
-  FillChar(ds84C8, 2, 0);
-  ds84E0 := 0;
+    ViewMode := ViewModeMap;
+  GameVars2^[VarWord714] := GameVars2^[VarWord714] and 1;
+  FillChar(PictureShownFlags, 2, 0);
+  CloseUpShown := 0;
   RedrawView;
 end;
 { ovl03:18F8. ECL commands 37 and 38 (dispatcher ovl03:2F2D, SkippedOpcode OpChooseAddress or 38):
@@ -1290,15 +1293,15 @@ begin
       Inc(I);
   end;
 end;
-{ ovl03:19B0. ECL command 39 (dispatcher ovl03:2F2D, SkippedOpcode $27): adds loot to the loot list ds6810
+{ ovl03:19B0. ECL command 39 (dispatcher ovl03:2F2D, SkippedOpcode $27): adds loot to the loot list PooledItems
   (the list ComputeBattleExperience, ovl05:0000, fills). Operands 1 to 7 set PooledMoney (each read as a
   word); operand 8 is the Kind of the loot:
   - a Kind below TreasureTableBase is an item block: every 63-byte record of ITEM<TileSet>.dax block Kind
-    (LoadDaxBlock) is linked in front of ds6810, then the block is freed. An empty block (size 0) shows
+    (LoadDaxBlock) is linked in front of PooledItems, then the block is freed. An empty block (size 0) shows
     ItemErrorColor's message and ends the game (QuitGame).
   - NoTreasure adds nothing.
   - any other Kind is a treasure table with Kind - TreasureTableBase rolls. Each roll adds one item in
-    front of ds6810 (BuildTreasureItem, with the roll's Code). After the rolls FormatItemLine runs for every
+    front of PooledItems (BuildTreasureItem, with the roll's Code). After the rolls FormatItemLine runs for every
     item of the list with SelectedCharacter (its meaning is not traced yet).
   The Code of a roll: Chance (d100) of 1 to 60 picks Roll2, a second d100. 1 to 47 and 50 to 59 are the
   kind itself (45 gives ';'); 60 to 90 a d10 gives '$', '#', '"', '%' or '&' for 1 to 4, 5 to 7, 8, 9 or
@@ -1342,17 +1345,17 @@ begin
       Move(PByteArray(Block)^[Offset], Item, SizeOf(Item));
       Item.Next := nil;
       Inc(Offset, SizeOf(Item));
-      if ds6810 = nil then
+      if PooledItems = nil then
       begin
-        New(ds6810);
-        ds6810^ := Item;
+        New(PooledItems);
+        PooledItems^ := Item;
       end
       else
       begin
-        Entry := ds6810;
-        New(ds6810);
-        ds6810^ := Item;
-        ds6810^.Next := Entry;
+        Entry := PooledItems;
+        New(PooledItems);
+        PooledItems^ := Item;
+        PooledItems^.Next := Entry;
       end;
     until Offset >= Size;
     FreeMem(Block, Size);
@@ -1408,21 +1411,21 @@ begin
         99, 100: Code := 'E';
       end;
       BuildTreasureItem(Ord(Code), Item);
-      if ds6810 = nil then
+      if PooledItems = nil then
       begin
-        New(ds6810);
-        ds6810^ := Item;
-        ds6810^.Next := nil;
+        New(PooledItems);
+        PooledItems^ := Item;
+        PooledItems^.Next := nil;
       end
       else
       begin
-        Entry := ds6810;
-        New(ds6810);
-        ds6810^ := Item;
-        ds6810^.Next := Entry;
+        Entry := PooledItems;
+        New(PooledItems);
+        PooledItems^ := Item;
+        PooledItems^.Next := Entry;
       end;
     end;
-    Node := ds6810;
+    Node := PooledItems;
     while Node <> nil do
     begin
       FormatItemLine(LongInt(SelectedCharacter), Node, 0, 0, 0, 0);
@@ -1432,7 +1435,7 @@ begin
 end;
 { ovl03:1DB1. ECL command 40 (dispatcher ovl03:2F2D, SkippedOpcode $28): takes a share of the money and
   the items. Operand 1 is Mode: 0 takes it from the selected character only, any other value from every
-  member of the party (the list ds5D96, followed through TCharacter.Next, +$104). Operand 2 is the
+  member of the party (the list PartyListHead, followed through TCharacter.Next, +$104). Operand 2 is the
   percentage Percent: each member's money is scaled by (100 - Percent) / 100 (ScaleMoney), and each item
   is lost on a d100 roll at most Percent (LoseItems). Operand 2 is read a second time for the chance, the
   same value unless the operand is a variable that changed. Operand 3 is decoded and not read. }
@@ -1458,7 +1461,7 @@ begin
   end
   else
   begin
-    Member := PCharacter(ds5D96);
+    Member := PCharacter(PartyListHead);
     while Member <> nil do
     begin
       Items := Member^.Items;
@@ -1470,7 +1473,7 @@ begin
 end;
 { ovl03:1EF8. ECL command 41 (dispatcher ovl03:2F2D, opcode 41): the encounter action menu.
   It shows the encounter the way command 12 does (operand 1 the sprite bank, operand 2 the distance
-  limit kept in word VarEncounterLimit of ds49D6, operand 3 the picture bank, the steps ahead cut
+  limit kept in word VarEncounterLimit of GameVars2, operand 3 the picture bank, the steps ahead cut
   down to that limit), then asks COMBAT, WAIT, FLEE and either ADVANCE or PARLAY. ADVANCE is the
   fourth word only when steps remain and GameVars word VarForceWallView is set; otherwise that word
   is PARLAY and a pick of it is choice 4, not 3. Operand 4 is the script address the outcome is
@@ -1483,8 +1486,8 @@ end;
   The word written is 0 with 'The monsters flee.', 1 for a fight or a flee the movement check
   refuses, 2 for a flee the check allows (and for the flee choice in kinds 1, 3 and 4), and 3 when
   a parlay path has no step left. A step closer, or 'Both sides wait.', sets MenuAgain and the menu
-  is asked again. ds84E9 is set for the whole command, so ShowEncounterPicture skips the close-up
-  unless monster pictures are on; ds84E4 is cleared and ds4A00 is set, so DrawTextRun waits after
+  is asked again. SkipCloseUpIfNoPics is set for the whole command, so ShowEncounterPicture skips the close-up
+  unless monster pictures are on; WindowClearOnce is cleared and WaitAfterTextRun is set, so DrawTextRun waits after
   each glyph. The prompt line is cleared on the way out.
   QUIRK ovl03:210A: steps ahead other than 0, 1 or 2 leave the prompt (Lines[0]) unset. }
 procedure EncounterActionCommand;
@@ -1506,14 +1509,14 @@ var
   Line: Byte;                   { the candidate prompt being tried }
   ResultAddr: Word;             { operand 4: script address of the outcome }
 begin
-  ds84E9 := 1;
-  ds84E4 := 0;
-  ds4A00 := 1;
+  SkipCloseUpIfNoPics := 1;
+  WindowClearOnce := 0;
+  WaitAfterTextRun := 1;
   MovementRange(Fastest, Slowest);
   Title := '';
   DecodeOperands(14);
   EncounterSpriteBank := OperandValue(1);
-  ds49D6^[VarEncounterLimit] := OperandValue(2);
+  GameVars2^[VarEncounterLimit] := OperandValue(2);
   EncounterPicBank := OperandValue(3);
   ResultAddr := MakeWord(OperandLow[4], OperandHigh[4]);
   for I := 0 to 4 do
@@ -1522,17 +1525,17 @@ begin
     Lines[I] := EclStrings[I];
   FleeMovement := OperandValue(13);
   MonsterMovement := OperandValue(14);
-  ds49D6^[VarStepsAhead] := OpenStepsAhead(PartyMapColumn, PartyMapRow, PartyFacing);
-  if ds49D6^[VarEncounterLimit] < ds49D6^[VarStepsAhead] then
-    ds49D6^[VarStepsAhead] := ds49D6^[VarEncounterLimit];
-  ShowEncounterPicture(EncounterSpriteBank, EncounterPicBank, Byte(ds49D6^[VarStepsAhead]), PictureShown);
+  GameVars2^[VarStepsAhead] := OpenStepsAhead(PartyMapColumn, PartyMapRow, PartyFacing);
+  if GameVars2^[VarEncounterLimit] < GameVars2^[VarStepsAhead] then
+    GameVars2^[VarStepsAhead] := GameVars2^[VarEncounterLimit];
+  ShowEncounterPicture(EncounterSpriteBank, EncounterPicBank, Byte(GameVars2^[VarStepsAhead]), PictureShown);
   repeat
-    Animate := Ord((ds84E0 <> 0) and (ds84E1 <> 0));
+    Animate := Ord((CloseUpShown <> 0) and (CloseUpHidden <> 0));
     ClearWindow := 1;
     MenuAgain := 0;
     GlyphCol := EclTextLeft;
     GlyphRow := EclTextTop;
-    case ds49D6^[VarStepsAhead] of
+    case GameVars2^[VarStepsAhead] of
       0:
         begin
           Line := 1;
@@ -1566,12 +1569,12 @@ begin
       ClearWindow := 0;
     ShowPagedText(EclTextLeft, EclTextTop, EclTextRight, EclTextBottom, EclTextColor, ClearWindow, Lines[0]);
     { PARLAY is tested first so its literal is emitted before ADVANCE (pool at ovl03:1E9B). }
-    if (ds49D6^[VarStepsAhead] = 0) or (GameVars^[VarForceWallView] = 0) then
+    if (GameVars2^[VarStepsAhead] = 0) or (GameVars^[VarForceWallView] = 0) then
       Options := '~COMBAT ~WAIT ~FLEE ~PARLAY'
     else
       Options := '~COMBAT ~WAIT ~FLEE ~ADVANCE';
     Choice := AskMenu(Title, Options, MenuTitleColor, MenuTextColor, MenuHotColor, 0, Animate);
-    if (ds49D6^[VarStepsAhead] = 0) or (GameVars^[VarForceWallView] = 0) then
+    if (GameVars2^[VarStepsAhead] = 0) or (GameVars^[VarForceWallView] = 0) then
       if Choice = AdvanceChoice then
         Choice := ParlayChoice;
     ChoiceKind := ChoiceKinds[Choice];
@@ -1595,11 +1598,11 @@ begin
           FleeChoice: WriteVmWord(ResultAddr, PartyFleesResult);
           AdvanceChoice:
             begin
-              if ds49D6^[VarStepsAhead] <> 0 then
+              if GameVars2^[VarStepsAhead] <> 0 then
               begin
-                Dec(ds49D6^[VarStepsAhead]);
+                Dec(GameVars2^[VarStepsAhead]);
                 ShowEncounterPicture(EncounterSpriteBank, EncounterPicBank,
-                  Byte(ds49D6^[VarStepsAhead]), PictureShown);
+                  Byte(GameVars2^[VarStepsAhead]), PictureShown);
               end
               else
                 ShowPagedText(EclTextLeft, EclTextTop, EclTextRight, EclTextBottom, EclTextColor, 1,
@@ -1607,13 +1610,13 @@ begin
               MenuAgain := 1;
             end;
           ParlayChoice:
-            if ds49D6^[VarStepsAhead] <= 0 then
+            if GameVars2^[VarStepsAhead] <= 0 then
               WriteVmWord(ResultAddr, ParlayResult)
             else
             begin
-              Dec(ds49D6^[VarStepsAhead]);
+              Dec(GameVars2^[VarStepsAhead]);
               ShowEncounterPicture(EncounterSpriteBank, EncounterPicBank,
-                Byte(ds49D6^[VarStepsAhead]), PictureShown);
+                Byte(GameVars2^[VarStepsAhead]), PictureShown);
               MenuAgain := 1;
             end;
         end;
@@ -1644,11 +1647,11 @@ begin
           CombatChoice: WriteVmWord(ResultAddr, FightResult);
           WaitChoice, AdvanceChoice:
             begin
-              if ds49D6^[VarStepsAhead] <> 0 then
+              if GameVars2^[VarStepsAhead] <> 0 then
               begin
-                Dec(ds49D6^[VarStepsAhead]);
+                Dec(GameVars2^[VarStepsAhead]);
                 ShowEncounterPicture(EncounterSpriteBank, EncounterPicBank,
-                  Byte(ds49D6^[VarStepsAhead]), PictureShown);
+                  Byte(GameVars2^[VarStepsAhead]), PictureShown);
               end
               else
                 ShowPagedText(EclTextLeft, EclTextTop, EclTextRight, EclTextBottom, EclTextColor, 1,
@@ -1657,13 +1660,13 @@ begin
             end;
           FleeChoice: WriteVmWord(ResultAddr, PartyFleesResult);
           ParlayChoice:
-            if ds49D6^[VarStepsAhead] <= 0 then
+            if GameVars2^[VarStepsAhead] <= 0 then
               WriteVmWord(ResultAddr, ParlayResult)
             else
             begin
-              Dec(ds49D6^[VarStepsAhead]);
+              Dec(GameVars2^[VarStepsAhead]);
               ShowEncounterPicture(EncounterSpriteBank, EncounterPicBank,
-                Byte(ds49D6^[VarStepsAhead]), PictureShown);
+                Byte(GameVars2^[VarStepsAhead]), PictureShown);
               MenuAgain := 1;
             end;
         end;
@@ -1671,13 +1674,13 @@ begin
         case Choice of
           CombatChoice: WriteVmWord(ResultAddr, FightResult);
           WaitChoice, AdvanceChoice, ParlayChoice:
-            if ds49D6^[VarStepsAhead] <= 0 then
+            if GameVars2^[VarStepsAhead] <= 0 then
               WriteVmWord(ResultAddr, ParlayResult)
             else
             begin
-              Dec(ds49D6^[VarStepsAhead]);
+              Dec(GameVars2^[VarStepsAhead]);
               ShowEncounterPicture(EncounterSpriteBank, EncounterPicBank,
-                Byte(ds49D6^[VarStepsAhead]), PictureShown);
+                Byte(GameVars2^[VarStepsAhead]), PictureShown);
               MenuAgain := 1;
             end;
           FleeChoice: WriteVmWord(ResultAddr, PartyFleesResult);
@@ -1685,8 +1688,8 @@ begin
     end;
   until MenuAgain = 0;
   ClearRect(PromptLeftCol, PromptRow, PromptLastCol, PromptRow);
-  ds4A00 := 0;
-  ds84E9 := 0;
+  WaitAfterTextRun := 0;
+  SkipCloseUpIfNoPics := 0;
 end;
 { ovl03:25CB. ECL command 44 (dispatcher ovl03:2F2D, SkippedOpcode 2Ch): asks the player for an attitude.
   The menu offers AttitudeMenu's words (HAUGHTY, SLY, NICE, MEEK and ABUSIVE) under a blank title. Operands
@@ -1712,7 +1715,7 @@ begin
   WriteVmWord(Target, Value);
 end;
 { ovl03:266A. ECL command 50 (dispatcher ovl03:2F2D, SkippedOpcode 32h): tests whether a party member carries
-  an item of the type operand 1 names. It walks the party list ds5D96 (through TCharacter.Next) and each
+  an item of the type operand 1 names. It walks the party list PartyListHead (through TCharacter.Next) and each
   member's carried items (TCharacter.Items, +$C8; TMenuLine.Next at +$2A), comparing the ItemType (+$2E) of
   each with the operand, and stops at the first match. CompareFlags[0] (equal) is set and [1] (not equal)
   cleared when one is found, else [1] is set; the conditional commands 22 to 27 (ovl03:0B52) test them.
@@ -1730,7 +1733,7 @@ begin
   ItemType := OperandValue(1);
   FillChar(CompareFlags, SizeOf(CompareFlags), 0);
   CompareFlags[1] := 1;
-  Member := PCharacter(ds5D96);
+  Member := PCharacter(PartyListHead);
   while (Member <> nil) and (not Found) do
   begin
     Item := Member^.Items;
@@ -1764,7 +1767,7 @@ end;
   whole party when bit 6 (TrapWholePartyBit) is set (each member saves), else the selected character when
   operand 5 bit 7 (TrapSelectedBit) is set (it saves with its bonus minus one, no save at bonus 0), else one
   random member (RollDice over the party size VarPartySize). With bit 7 clear, Flags is the number of hits,
-  each on a random member of the party list ds5D96, that takes the damage when RollBeatsResistance (operand 5)
+  each on a random member of the party list PartyListHead, that takes the damage when RollBeatsResistance (operand 5)
   succeeds for it. QUIRK ovl03:2775: with bit 7 clear bit 6 is not a mode here and counts into that number:
   MemberNumber is not rolled and the loop `for I := 1 to Flags` runs once per bit, so Flags $40 or more means
   64 or more hits. DamageWithMessage (ovl07:20CC) does the damage. Then PartyDestroyed is 1 unless a member has
@@ -1793,7 +1796,7 @@ begin
   SavedCharacter := SelectedCharacter;
   Unused := False;
   WholePartyHit := False;
-  Who := PCharacter(ds5D96);
+  Who := PCharacter(PartyListHead);
   DecodeOperands(5);
   Flags := OperandValue(1);
   DamageDice := OperandValue(2);
@@ -1804,7 +1807,7 @@ begin
   if (Flags and TrapWholePartyBit) <> 0 then
     WholePartyHit := True
   else
-    MemberNumber := RollDice(1, Byte(ds49D6^[VarPartySize]));
+    MemberNumber := RollDice(1, Byte(GameVars2^[VarPartySize]));
   if (Flags and TrapSavingThrowBit) <> 0 then
   begin
     SaveKind := Flags and TrapKindMask;
@@ -1839,8 +1842,8 @@ begin
       adds to it here, and when bit 6 is set MemberNumber was not rolled above. }
     for I := 1 to Flags do
     begin
-      Who := PCharacter(ds5D96);
-      MemberNumber := RollDice(1, Byte(ds49D6^[VarPartySize]));
+      Who := PCharacter(PartyListHead);
+      MemberNumber := RollDice(1, Byte(GameVars2^[VarPartySize]));
       Step := 1;
       while Step < MemberNumber do
       begin
@@ -1852,7 +1855,7 @@ begin
       Damage := RollDice(DamageDice, DamageSides) + DamageBonus;
     end;
   end;
-  Member := PCharacter(ds5D96);
+  Member := PCharacter(PartyListHead);
   PartyDestroyed := 1;
   while Member <> nil do
   begin
@@ -1873,18 +1876,18 @@ begin
   ShowMessageLine(ContinueColor, 'press <enter>/<return> to continue');
 end;
 { ovl03:2AA2. ECL command 49 (dispatcher ovl03:2F2D, SkippedOpcode 31h): redraws the area view when the 3D
-  encounter sprite is loaded (ds84E3, set by ShowEncounterPicture), as the hiding path of ShowCloseUpCommand
-  does, then clears the sprite flag and the close-up flag ds84E0. It has no operands; Inc(EclPC) steps the
+  encounter sprite is loaded (Sprite3DLoaded, set by ShowEncounterPicture), as the hiding path of ShowCloseUpCommand
+  does, then clears the sprite flag and the close-up flag CloseUpShown. It has no operands; Inc(EclPC) steps the
   program counter past the opcode so RunScriptFrom (ovl03:3171) reads the next command (see EclPC).
   Purpose unknown: why the script redraws the area. }
 procedure RedrawAreaViewCommand;
 begin
   Inc(EclPC);
-  if ds84E3 <> 0 then
+  if Sprite3DLoaded <> 0 then
   begin
     ShowAreaView;
-    ds84E3 := 0;
-    ds84E0 := 0;
+    Sprite3DLoaded := 0;
+    CloseUpShown := 0;
   end;
 end;
 { ovl03:2AC1. ECL command 52 (dispatcher ovl03:2F2D, SkippedOpcode 34h): passes time. Operand 1 is the
@@ -1903,17 +1906,17 @@ begin
 end;
 { ovl03:2AEB. ECL command 51 (dispatcher ovl03:2F2D, SkippedOpcode 33h): starts a new line of text. The
   text cursor (GlyphCol, GlyphRow, the glyph position ShowPagedText keeps) goes to column 1 of the next
-  row. ds84DF is cleared when it is set; the cursor moves the same way on both branches, which the
+  row. GlyphRunPending is cleared when it is set; the cursor moves the same way on both branches, which the
   original compiles as two branches. Inc(EclPC) steps the program counter past the opcode so RunScriptFrom
   (ovl03:3171) reads the next command (see EclPC). }
 procedure NewLineCommand;
 begin
   Inc(EclPC);
-  if ds84DF <> 0 then
+  if GlyphRunPending <> 0 then
   begin
     GlyphCol := EclTextLeft;
     Inc(GlyphRow);
-    ds84DF := 0;
+    GlyphRunPending := 0;
   end
   else
   begin
@@ -1923,14 +1926,14 @@ begin
 end;
 { ovl03:2B14. ECL command 61 (dispatcher ovl03:2F2D, SkippedOpcode 3Dh): clears the picture window, the
   box at columns 1 to 15 and rows 1 to 15 that frames the encounter picture (ShowCloseUpCommand draws
-  the close-up inside the box at 3 to 13, and EndCommand draws this box as a frame). Then ds84DE is set
+  the close-up inside the box at 3 to 13, and EndCommand draws this box as a frame). Then GlyphRunInBox is set
   (its meaning is not traced; EndCommand clears it). Inc(EclPC) steps the program counter past the opcode
   so RunScriptFrom (ovl03:3171) reads the next command (see EclPC). }
 procedure ClearPictureWindowCommand;
 begin
   Inc(EclPC);
   ClearRect(PictureFrameLeft, PictureFrameTop, PictureFrameRight, PictureFrameBottom);
-  ds84DE := 1;
+  GlyphRunInBox := 1;
 end;
 { ovl03:2B33. ECL command 57 (dispatcher ovl03:2F2D, SkippedOpcode 39h): asks the player to choose a party
   member. The ECL text window (EclTextLeft to EclTextBottom) is cleared, the string operand 1 is copied
@@ -1974,7 +1977,7 @@ begin
   DrawPartyRoster(SelectedCharacter);
 end;
 { ovl03:2C03. ECL command 59 (dispatcher ovl03:2F2D, SkippedOpcode 3Bh): looks for the value of operand 1
-  among the memorized spells of the first party member (ds5D96, TCharacter.Spells). The bytes from Spells[1]
+  among the memorized spells of the first party member (PartyListHead, TCharacter.Spells). The bytes from Spells[1]
   up are compared with the value one by one, up to slot SpellScanLast. Operand 2 receives the slot found,
   or NoSpellSlot when none in those bytes has it; operand 3 receives Count, the members walked (1 for a party
   with a member, 0 for an empty one). Purpose unknown: what the script does with the two results.
@@ -1999,7 +2002,7 @@ begin
   CountAddr := MakeWord(OperandLow[3], OperandHigh[3]);
   I := 1;
   Count := 0;
-  Member := PCharacter(ds5D96);
+  Member := PCharacter(PartyListHead);
   while (Member <> nil) and (not Found) do
   begin
     repeat
@@ -2022,13 +2025,14 @@ end;
 { ovl03:2CCF. ECL command 45 (dispatcher ovl03:2F2D, SkippedOpcode 2Dh): runs the engine action that the
   word of its operand picks (the two bytes of the operand, not its value). The word less CodeBias is
   tested against the Action codes in turn; any other word does nothing. The actions:
-  - ActionRedrawArea: ds6AB1 takes the event byte of the party's cell (EventByteAt). When ds4431 is set
-    (ECL commands 33 and 55 set it, 32 clears it) and one of ds84E0, ds84E3, ds84E5, ds84E6 or ds84E8 is
+  - ActionRedrawArea: PartyCellEventByte takes the event byte of the party's cell (EventByteAt). When AreaRedrawArmed is set
+    (ECL commands 33 and 55 set it, 32 clears it) and one of CloseUpShown, Sprite3DLoaded, SpecialViewGate,
+    PartyMovedByScript or HeadBodyWritten is
     set, the area view is drawn again (ShowAreaView), DrawLocationLine runs and those five flags are cleared.
   - ActionDuelWithCopy and ActionDuelNoCopy: SetupDuel starts a duel with or without the copy.
-  - ActionSound: PlaySound of ds2628 when ds84CC is 8, of ds262A when ds84CC is 10.
+  - ActionSound: PlaySound of SoundStep when ScriptSoundCode is 8, of SoundFireball when ScriptSoundCode is 10.
   - ActionStepParty: StepPartyForward moves the party one cell.
-  - ActionWallProbe: when AreaViewKind is 1, ds6AB0 takes the wall id of the party's cell (WallIdAt). }
+  - ActionWallProbe: when AreaViewKind is 1, PartyCellWallId takes the wall id of the party's cell (WallIdAt). }
 procedure EngineActionCommand;
 var
   Code: Word;                   { the operand's word }
@@ -2040,68 +2044,69 @@ begin
   case Action of
     ActionRedrawArea:
       begin
-        ds6AB1 := EventByteAt(PartyMapColumn, PartyMapRow);
-        if (ds4431 <> 0) and ((ds84E0 <> 0) or (ds84E3 <> 0) or (ds84E5 <> 0) or (ds84E6 <> 0) or (ds84E8 <> 0)) then
+        PartyCellEventByte := EventByteAt(PartyMapColumn, PartyMapRow);
+        if (AreaRedrawArmed <> 0) and ((CloseUpShown <> 0) or (Sprite3DLoaded <> 0) or (SpecialViewGate <> 0) or
+          (PartyMovedByScript <> 0) or (HeadBodyWritten <> 0)) then
         begin
           ShowAreaView;
           DrawLocationLine;
-          ds84E8 := 0;
-          ds84E5 := 0;
-          ds84E6 := 0;
-          ds84E0 := 0;
-          ds84E3 := 0;
+          HeadBodyWritten := 0;
+          SpecialViewGate := 0;
+          PartyMovedByScript := 0;
+          CloseUpShown := 0;
+          Sprite3DLoaded := 0;
         end;
       end;
     ActionDuelWithCopy: SetupDuel(DuelWithCopy);
     ActionDuelNoCopy: SetupDuel(DuelNoCopy);
     ActionSound:
-      case ds84CC of
-        8: PlaySound(ds2628);
-        10: PlaySound(ds262A);
+      case ScriptSoundCode of
+        8: PlaySound(SoundStep);
+        10: PlaySound(SoundFireball);
       end;
     ActionStepParty: StepPartyForward;
     ActionWallProbe:
       if AreaViewKind = 1 then
-        ds6AB0 := WallIdAt(PartyMapColumn, PartyMapRow, PartyFacing);
+        PartyCellWallId := WallIdAt(PartyMapColumn, PartyMapRow, PartyFacing);
   end;
 end;
 { ovl03:2DD3. Runs the camp (MakeCamp, OVL15) between two script entries: the script machine runs the
-  third entry address, ds49E7, before the camp (through ovl03:3171, not decompiled yet). When the camp
-  leaves EndCamp set, the area view is redrawn (RedrawView) and the fourth entry address, ds49E9, runs.
+  third entry address, EclPreCampEntry, before the camp (through ovl03:3171, not decompiled yet). When the camp
+  leaves EndCamp set, the area view is redrawn (RedrawView) and the fourth entry address, EclCampInterruptedEntry, runs.
   Callers: ECL command 56 with operand 9 (ovl03:2E10) and RunWilderness (ovl03:33E7, the E key of the wilderness
   loop). Then the area view is drawn again
-  (ShowAreaView) and ds557D, the gate of the heap error retry, is cleared. }
+  (ShowAreaView) and HeapErrorStop, the gate of the heap error retry, is cleared. }
 procedure RunCamp;
 var
   EndCamp: Byte;                { the camp sets it when it is closed }
   Unused: Byte;                 { QUIRK ovl03:2DD3: a byte of the frame nothing uses }
 begin
   EndCamp := 0;
-  RunScriptFrom(ds49E7);
+  RunScriptFrom(EclPreCampEntry);
   MakeCamp(EndCamp);
   if EndCamp <> 0 then
   begin
     RedrawView;
-    RunScriptFrom(ds49E9);
+    RunScriptFrom(EclCampInterruptedEntry);
   end;
   ShowAreaView;
-  ds557D := False;
+  HeapErrorStop := False;
 end;
 { ovl03:2E10. ECL command 56 (dispatcher ovl03:2F2D, SkippedOpcode 38h, cmp al,38h at ovl03:3135): shows
   the screen that operand 1 picks. 0 runs RunCharacterMenu (not traced yet) and redraws the view (RedrawView);
   ScreenEnding shows the ending narrative (ShowEndingNarrative, OVL18); ScreenCamp runs the camp (RunCamp),
   keeps the script counter EclPC across it, and then EndCommand (ovl03:0001) runs. A pending selection
-  (ds4430, set by ECL command 10) first selects the character at ds4436, as EndCommand does. }
+  (ReselectCharacterPending, set by ECL command 10) first selects the character at ReselectCharacter, as EndCommand does. }
 procedure ShowSpecialScreenCommand;
 var
   Choice: Byte;                 { the screen the operand picks }
   SavedCounter: Word;           { EclPC, saved around RunCamp }
   Unused: Byte;                 { QUIRK ovl03:2E10: a byte of the frame nothing uses }
 begin
-  if ds4430 <> 0 then
+  if ReselectCharacterPending <> 0 then
   begin
-    SelectedCharacter := ds4436;
-    ds4430 := 0;
+    SelectedCharacter := ReselectCharacter;
+    ReselectCharacterPending := 0;
   end;
   DecodeOperands(1);
   Choice := OperandValue(1);
@@ -2124,8 +2129,9 @@ end;
 { ovl03:2E7D. ECL command 60 (dispatcher ovl03:2F2D, SkippedOpcode 3Ch): draws one line of glyphs at the text
   cursor. Operand 1 is the script address of a run of words: each word's low byte plus 1 is the glyph drawn
   (DrawGlyph, one copy, colour GlyphRunColor) at GlyphCol and GlyphRow, and the cursor moves right after each
-  glyph. The run ends at the first word whose low byte is 0 or $FF. When ds84DE is set (ECL command 61) and the
-  cursor is below CloseUpLastRow, the cursor first goes to GlyphRunCol, GlyphRunRow and ds84E2 is set. ds84DF
+  glyph. The run ends at the first word whose low byte is 0 or $FF. When GlyphRunInBox is set (ECL command 61) and the
+  cursor is below CloseUpLastRow, the cursor first goes to GlyphRunCol, GlyphRunRow and PictureFrameDirty is set.
+  GlyphRunPending
   is set, and the cursor goes down one row at the end. Purpose unknown: what the script writes this way. }
 procedure DrawGlyphRunCommand;
 var
@@ -2136,19 +2142,19 @@ var
   Done: Boolean;                { set when the run ends }
   Unused: Byte;                 { QUIRK ovl03:2E7D: a byte of the frame nothing uses }
 begin
-  FillChar(ds84C8, 2, 0);
-  ds84E0 := 0;
+  FillChar(PictureShownFlags, 2, 0);
+  CloseUpShown := 0;
   DecodeOperands(1);
   Start := MakeWord(OperandLow[1], OperandHigh[1]);
   Index := 0;
   Done := False;
-  if (ds84DE <> 0) and (GlyphRow > CloseUpLastRow) then
+  if (GlyphRunInBox <> 0) and (GlyphRow > CloseUpLastRow) then
   begin
     GlyphRow := GlyphRunRow;
     GlyphCol := GlyphRunCol;
-    ds84E2 := 1;
+    PictureFrameDirty := 1;
   end;
-  ds84DF := 1;
+  GlyphRunPending := 1;
   repeat
     Address := Start + Index;
     Value := ReadVmWord(Address) + 1;
@@ -2220,30 +2226,31 @@ begin
     61: ClearPictureWindowCommand;
   end;
 end;
-{ ovl03:3171. Runs the ECL script from the script address Address (an entry point: ds49E7 for the camp,
-  RunCamp ovl03:2DD3, or one InitScript sets). EclPC takes Address. While the run is not over (ds442E clear:
+{ ovl03:3171. Runs the ECL script from the script address Address (an entry point: EclPreCampEntry for the camp,
+  RunCamp ovl03:2DD3, or one InitScript sets). EclPC takes Address. While the run is not over (ScriptRunEnded clear:
   EndCommand and StartEclBlock set it) and the party is not destroyed (PartyDestroyed clear), the opcode of
-  the current command goes to ds6F7E, the opcode at EclPC is read into SkippedOpcode and DispatchCommand runs
+  the current command goes to PreviousOpcode, the opcode at EclPC is read into SkippedOpcode and DispatchCommand runs
   it. Both flags are cleared on the way out. }
 procedure RunScriptFrom(Address: Word);
 begin
   EclPC := Address;
-  ds442E := 0;
-  while (ds442E = 0) and (PartyDestroyed = 0) do
+  ScriptRunEnded := 0;
+  while (ScriptRunEnded = 0) and (PartyDestroyed = 0) do
   begin
-    ds6F7E := SkippedOpcode;
+    PreviousOpcode := SkippedOpcode;
     SkippedOpcode := EclCode^[EclPC];
     DispatchCommand;
   end;
-  ds442E := 0;
+  ScriptRunEnded := 0;
 end;
 { ovl03:31B4. One step of the area (the party has moved, or the script asked for the area to be drawn again):
-  the event byte of the party's cell goes to ds6AB1 (EventByteAt), word VarWord725 of ds49D6 is cleared, and
-  the view kind AreaViewKind is set to 1 (the 3D wall view) with its old value kept in ds49F9. The script entry
-  ds49EB runs. When VarForceWallView is clear, AreaViewKind takes 2, 3 or 4 from WallViewMode (the map window
+  the event byte of the party's cell goes to PartyCellEventByte (EventByteAt), word VarWord725 of GameVars2 is cleared, and
+  the view kind AreaViewKind is set to 1 (the 3D wall view) with its old value kept in PreviousAreaViewKind. The script entry
+  EclInitialEntry runs. When VarForceWallView is clear, AreaViewKind takes 2, 3 or 4 from WallViewMode (the map window
   pages; page 3 also animates the area doors, AnimateAreaDoors ovl18:06B3). The picture window is cleared
-  when the old kind was a map page, and the area is drawn (ShowAreaView). Then the script entries ds49E3 and
-  ds49E5 run, and the step repeats while a script block was started (ds442F, StartEclBlock). SelectedCharacter
+  when the old kind was a map page, and the area is drawn (ShowAreaView). Then the script entries EclStepEntry and
+  EclSearchEntry run, and the step repeats while a script block was started (ScriptBlockStarted, StartEclBlock).
+  SelectedCharacter
   is saved and restored around the entries. Called from the area loop RunWilderness (ovl03:32F8). Purpose unknown
   in parts: what the entries and word VarWord725 do. }
 procedure RunAreaStep;
@@ -2251,59 +2258,60 @@ var
   Saved: PCharacter;            { SelectedCharacter, restored after the second entry }
 begin
   repeat
-    ds6AB1 := EventByteAt(PartyMapColumn, PartyMapRow);
-    ds49D6^[VarWord725] := 0;
+    PartyCellEventByte := EventByteAt(PartyMapColumn, PartyMapRow);
+    GameVars2^[VarWord725] := 0;
     Saved := SelectedCharacter;
-    ds49F9 := AreaViewKind;
+    PreviousAreaViewKind := AreaViewKind;
     AreaViewKind := 1;
-    RunScriptFrom(ds49EB);
-    ds49F3 := ViewModeWall;
+    RunScriptFrom(EclInitialEntry);
+    ViewMode := ViewModeWall;
     if GameVars^[VarForceWallView] = 0 then
       case WallViewMode of
         WallModeMapPage2:
           begin
             AreaViewKind := 2;
-            ds49F3 := ViewModeMap;
+            ViewMode := ViewModeMap;
           end;
         WallModeMapPage3:
           begin
             AreaViewKind := 3;
-            ds49F3 := ViewModeMap;
+            ViewMode := ViewModeMap;
             if (GameVars^[VarAreaDoors] = AreaDoorsOpen) and (GameVars^[VarAreaDoorsLatch] = 0) then
               AnimateAreaDoors(1);
           end;
         WallModeMapPage4:
           begin
             AreaViewKind := 4;
-            ds49F3 := ViewModeMap;
+            ViewMode := ViewModeMap;
           end;
       end;
-    if (ds49F9 > 1) and (AreaViewKind = 1) then
+    if (PreviousAreaViewKind > 1) and (AreaViewKind = 1) then
       DrawWindow(3, 3, $D, $D, 0, $A, '');
-    if ((((ds49F9 > 1) or (AreaViewKind = 1)) and (ds4431 <> 0)) or ((ds49F9 = 1) and (AreaViewKind = 1))) then
+    if ((((PreviousAreaViewKind > 1) or (AreaViewKind = 1)) and (AreaRedrawArmed <> 0)) or ((PreviousAreaViewKind = 1)
+      and (AreaViewKind = 1))) then
       ShowAreaView;
-    ds442F := 0;
-    RunScriptFrom(ds49E3);
-    if ds442F = 0 then
+    ScriptBlockStarted := 0;
+    RunScriptFrom(EclStepEntry);
+    if ScriptBlockStarted = 0 then
     begin
-      RunScriptFrom(ds49E5);
+      RunScriptFrom(EclSearchEntry);
       SelectedCharacter := Saved;
       DrawPartyRoster(SelectedCharacter);
     end;
-  until ds442F = 0;
+  until ScriptBlockStarted = 0;
 end;
 { ovl03:32F8. The wilderness loop, entry 1 of this overlay: the main program calls it after the
   character menu and quits when it returns. It clears the area flags, takes WallViewMode from
-  VarSavedWallView, and sets the view mode ds49F3 to ViewModeMap for map pages 2 to 4 when
-  VarForceWallView is clear, else ViewModeWall. Unless ds49F8 is set it loads the area script
-  (LoadEcl) and always resets the script machine (InitScript) and runs entry ds49EB. A view mode
-  other than the map page redraws once (RedrawView, while ds4432 is still 1) and draws the area
-  (ShowAreaView). Then it loops on HandleWildernessKeys. While word VarWord714 of ds49D6 is above 1
+  VarSavedWallView, and sets the view mode ViewMode to ViewModeMap for map pages 2 to 4 when
+  VarForceWallView is clear, else ViewModeWall. Unless SkipAreaScriptLoad is set it loads the area script
+  (LoadEcl) and always resets the script machine (InitScript) and runs entry EclInitialEntry. A view mode
+  other than the map page redraws once (RedrawView, while RosterRedrawFlagA is still 1) and draws the area
+  (ShowAreaView). Then it loops on HandleWildernessKeys. While word VarWord714 of GameVars2 is above 1
   or the key is KeyCamp, and the party is not destroyed: KeyCamp makes camp (RunCamp); any other such
-  key saves the low bit of that word in ds84DD, forces the word to 1, draws the area, runs entry
-  ds49E5 and a step (RunAreaStep) if a script block started (ds442F), then restores the bit. Otherwise
-  entry ds49E3 runs, and a started block steps the area; if none started and the party lives, the
-  wilderness menu (DoWildernessMenu) runs and ds2628 plays when the party's cell changed. A destroyed
+  key saves the low bit of that word in SavedWord714Low, forces the word to 1, draws the area, runs entry
+  EclSearchEntry and a step (RunAreaStep) if a script block started (ScriptBlockStarted), then restores the bit. Otherwise
+  entry EclStepEntry runs, and a started block steps the area; if none started and the party lives, the
+  wilderness menu (DoWildernessMenu) runs and SoundStep plays when the party's cell changed. A destroyed
   party clears PartyDestroyed and leaves the loop. The map entries ovl03:3379 and ovl03:34AB are
   bytes of this routine (a call operand and a cmp), not routines. }
 procedure RunWilderness;
@@ -2311,60 +2319,60 @@ var
   Key: Char;                    { the key HandleWildernessKeys returned }
   Unused: Byte;                 { QUIRK ovl03:32F8: a byte of the frame nothing uses }
 begin
-  ds4433 := 0;
-  ds4434 := 0;
-  ds4430 := 0;
-  ds4431 := 0;
-  ds4432 := 1;
-  ds49F3 := ViewModeWall;
-  ds442F := 0;
+  RosterRedrawFlagB := 0;
+  RosterRedrawFlagC := 0;
+  ReselectCharacterPending := 0;
+  AreaRedrawArmed := 0;
+  RosterRedrawFlagA := 1;
+  ViewMode := ViewModeWall;
+  ScriptBlockStarted := 0;
   WallViewMode := GameVars^[VarSavedWallView];
   case WallViewMode of
     WallModeMapPage2, WallModeMapPage3, WallModeMapPage4:
       if GameVars^[VarForceWallView] = 0 then
-        ds49F3 := ViewModeMap;
+        ViewMode := ViewModeMap;
   end;
-  if ds49F8 = 0 then
+  if SkipAreaScriptLoad = 0 then
     LoadEcl(WallViewMode);
   InitScript;
-  RunScriptFrom(ds49EB);
-  if ds49F3 <> ViewModeMap then
+  RunScriptFrom(EclInitialEntry);
+  if ViewMode <> ViewModeMap then
   begin
-    if ds4432 = 1 then
+    if RosterRedrawFlagA = 1 then
     begin
       RedrawView;
-      ds4432 := 0;
+      RosterRedrawFlagA := 0;
     end;
     ShowAreaView;
   end;
   GameVars^[VarSavedWallView] := WallViewMode;
   repeat
     Key := HandleWildernessKeys;
-    ds4436 := SelectedCharacter;
+    ReselectCharacter := SelectedCharacter;
     GameVars^[VarSavedWallView] := WallViewMode;
-    while ((ds49D6^[VarWord714] > 1) or (UpCase(Key) = KeyCamp)) and (PartyDestroyed = 0) do
+    while ((GameVars2^[VarWord714] > 1) or (UpCase(Key) = KeyCamp)) and (PartyDestroyed = 0) do
     begin
       if UpCase(Key) = KeyCamp then
         RunCamp
       else
       begin
-        ds84DD := ds49D6^[VarWord714] and 1;
-        ds49D6^[VarWord714] := 1;
+        SavedWord714Low := GameVars2^[VarWord714] and 1;
+        GameVars2^[VarWord714] := 1;
         ShowAreaView;
-        RunScriptFrom(ds49E5);
-        if ds442F <> 0 then
+        RunScriptFrom(EclSearchEntry);
+        if ScriptBlockStarted <> 0 then
           RunAreaStep;
-        ds49D6^[VarWord714] := ds84DD;
+        GameVars2^[VarWord714] := SavedWord714Low;
       end;
       if PartyDestroyed = 0 then
       begin
         Key := HandleWildernessKeys;
-        ds4436 := SelectedCharacter;
+        ReselectCharacter := SelectedCharacter;
       end;
     end;
     if PartyDestroyed = 0 then
-      RunScriptFrom(ds49E3);
-    if ds442F <> 0 then
+      RunScriptFrom(EclStepEntry);
+    if ScriptBlockStarted <> 0 then
       RunAreaStep
     else if PartyDestroyed = 0 then
     begin
@@ -2375,11 +2383,11 @@ begin
       { ShortInt <> Word: the right operand is evaluated first, the original's load order (ovl03:3497). }
       if (PartyMapColumn <> GameVars^[VarSavedPartyColumn]) or
          (PartyMapRow <> GameVars^[VarSavedPartyRow]) then
-        PlaySound(ds2628);
-      ds84E0 := 0;
-      ds84E1 := 1;
-      RunScriptFrom(ds49E5);
-      if ds442F <> 0 then
+        PlaySound(SoundStep);
+      CloseUpShown := 0;
+      CloseUpHidden := 1;
+      RunScriptFrom(EclSearchEntry);
+      if ScriptBlockStarted <> 0 then
         RunAreaStep;
     end;
   until PartyDestroyed <> 0;

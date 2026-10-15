@@ -52,7 +52,7 @@ const
     member; what $B3 marks is not known) }
   SharerB84 = $B3;
   ComputerRunB84 = $80; { B84 from $80 up: a member run by the computer, who gets no share }
-  ViewShop = 1;         { ds49F3 view modes where dropped money goes into the pool: a shop or }
+  ViewShop = 1;         { ViewMode view modes where dropped money goes into the pool: a shop or }
   ViewTreasure = 6;     { the Temple (1), the treasure after a battle (6) }
   MenuLineBytes = $2E;  { the Text, Flag29 and Next fields of TMenuLine, as NewMenuList allocates }
   MaxItems = 16;        { a character carries at most 16 items (TCharacter.ItemCountC7) }
@@ -227,7 +227,7 @@ var
   Kind: ShortInt;
   Slot: ShortInt;
 begin
-  Who := PCharacter(ds5D96);
+  Who := PCharacter(PartyListHead);
   MoneyInPool := 1;
   while Who <> nil do
   begin
@@ -250,7 +250,7 @@ var
   Who: PCharacter;
   Count: Byte;
 begin
-  Who := PCharacter(ds5D96);
+  Who := PCharacter(PartyListHead);
   Count := 0;
   while Who <> nil do
   begin
@@ -277,7 +277,7 @@ var
   Remainder: array[0..LastMoneyKind] of Word;
   Kind: ShortInt;
 begin
-  Who := PCharacter(ds5D96);
+  Who := PCharacter(PartyListHead);
   Unused2 := 0;
   Sharers := CountSharers;
   FillChar(Share, SizeOf(Share), 0);
@@ -320,7 +320,7 @@ begin
   for Kind := LastMoneyKind downto 0 do
     if Remainder[Kind] > 0 then
     begin
-      Who := PCharacter(ds5D96);
+      Who := PCharacter(PartyListHead);
       while Who <> nil do
       begin
         Room := CarryLimit(Who) - Who^.CarriedWeight;
@@ -354,7 +354,7 @@ procedure DropMoney(Who: PCharacter; Amount: Word; Kind: ShortInt);
 begin
   Who^.Money[Kind] := Who^.Money[Kind] - Amount;
   RemoveCarriedWeight(Who, Amount);
-  if (ds49F3 = ViewTreasure) or (ds49F3 = ViewShop) then
+  if (ViewMode = ViewTreasure) or (ViewMode = ViewShop) then
     PooledMoney[Kind] := PooledMoney[Kind] + Amount;
 end;
 { ovl21:0A88. Who takes Amount of money kind Kind from the pool: "Overloaded" and nothing taken when
@@ -498,7 +498,7 @@ begin
   until Done;
 end;
 { ovl21:0F7E. Reports what treasure is left: MoneyLeft 1 when any kind of pooled money is not 0,
-  ItemsLeft 1 when the loot list (ds6810) is not empty, else 0. The shop, the Temple and the treasure
+  ItemsLeft 1 when the loot list (PooledItems) is not empty, else 0. The shop, the Temple and the treasure
   menu build their menus from it. }
 procedure TreasureLeft(var MoneyLeft, ItemsLeft: Byte);
 var
@@ -509,7 +509,7 @@ begin
   for Kind := 0 to LastMoneyKind do
     if PooledMoney[Kind] <> 0 then
       MoneyLeft := 1;
-  if ds6810 <> nil then
+  if PooledItems <> nil then
     ItemsLeft := 1;
 end;
 { ovl21:0FD2. Rolls the magic bonus of a treasure item: 1 on 1..14 of a d20, 2 on 15..19, 3 on 20. }

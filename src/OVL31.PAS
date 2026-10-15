@@ -6,7 +6,7 @@ unit OVL31;
   in the window. ScrollViewTo and MoveCombatCursor scroll the window and move the cursor,
   RedrawGround/RedrawMapCell/DrawCursorAt repaint cells, SetCombatantIcon turns a combatant,
   PlaceCombatant and RemoveCombatant put one on the map and take it off (leaving a body,
-  BodyTable). Everything that changes the map runs only in view mode 5 (ds49F3). }
+  BodyTable). Everything that changes the map runs only in view mode 5 (ViewMode). }
 {$A-,O+,F+,S-,R-,G-,I-,L-}
 interface
 uses POOLVARS;
@@ -48,7 +48,7 @@ const
   DirNone = 8;                  { the direction with no step (DirStepX[8] = DirStepY[8] = 0) }
   CentreMargin = 3;             { how far from the centre a cell may be before the view scrolls }
   NoReach = $FF;                { ScrollViewTo's Margin that always scrolls and redraws }
-  ViewModeCombat = 5;           { ds49F3 during combat (RemoveCombatant, PlaceCombatant) }
+  ViewModeCombat = 5;           { ViewMode during combat (RemoveCombatant, PlaceCombatant) }
   KindMask = $7F;               { TCharacter.CombatSize bits that are the footprint kind }
   CostBlocked = $FF;            { a CombatTiles cost no combatant may stand on }
   FirstProbeTile = $17;         { the tile ProbeStep answers before any cell is looked at }
@@ -451,13 +451,13 @@ begin
 end;
 
 { ovl31:0E11. Takes combatant Who off the combat map (it dies or leaves). Outside view mode 5 it only
-  makes the PlaySound(ds261E) call and waits (DelayByGameSpeed). In combat it does nothing when Who
+  makes the PlaySound(SoundCombatantDies) call and waits (DelayByGameSpeed). In combat it does nothing when Who
   already has a body record; otherwise it brings Who into view, erases it, draws DyingPicture on
   each of its cells, and unless Who^.Combat^.NoBody is set adds a body record (BodyTable: who, cell,
   the tile under it) and puts TileBody on its cell (a TileKept cell stays). Then the res03 call and
   the wait, the ground is redrawn, its Kind is cleared, CellOccupant rebuilt, the view redrawn round
   its centre and four bytes of its combat record cleared. SetSoundDriverIdle brackets the whole.
-  QUIRK ovl31:0E41: the search for an existing body record tests BodyTable[ds70C7] (the sprite list
+  QUIRK ovl31:0E41: the search for an existing body record tests BodyTable[SharedLoopIndex] (the sprite list
   loop counter of FreeSpriteList) every time, not BodyTable[I]; I only counts to 9.
   QUIRK ovl31:0E69: the early exit skips the closing SetSoundDriverIdle(10).
   QUIRK ovl31:0E14: the frame holds two bytes no code uses (Spare). }
@@ -468,15 +468,15 @@ var
   Spare: array[0..1] of Byte;
 begin
   SetSoundDriverIdle(BeforeRemoval);
-  if ds49F3 <> ViewModeCombat then
+  if ViewMode <> ViewModeCombat then
   begin
-    PlaySound(ds261E);
+    PlaySound(SoundCombatantDies);
     DelayByGameSpeed;
   end
   else
   begin
     I := 1;
-    while (I < MaxBodies + 1) and (BodyTable[ds70C7].Who <> Who) do
+    while (I < MaxBodies + 1) and (BodyTable[SharedLoopIndex].Who <> Who) do
       Inc(I);
     if I < MaxBodies + 1 then Exit;
     Index := CombatantIndex(Who);
@@ -500,7 +500,7 @@ begin
       BodyTable[BodyCount].X := CellX;
       BodyTable[BodyCount].Y := CellY;
     end;
-    PlaySound(ds261E);
+    PlaySound(SoundCombatantDies);
     DelayByGameSpeed;
     RedrawGround(0, 0, Index);
     CombatantTable[CombatantIndex(Who)].Kind := 0;
@@ -526,7 +526,7 @@ var
   Index, I, Occupant, Tile: Byte;
   BodyThere: Boolean;
 begin
-  if ds49F3 = ViewModeCombat then
+  if ViewMode = ViewModeCombat then
   begin
     PlaceCombatant := False;
     Index := CombatantIndex(Who);

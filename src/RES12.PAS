@@ -220,9 +220,9 @@ const
   SpellClassFixed = 2;
   SpecialSpellLevel = $0C;   { 12 }
   ItemSpellLevel = 6;
-  { The most records the ScanTargets table ds6718 can hold: one per combatant of CombatantTable
+  { The most records the ScanTargets table SortEntries can hold: one per combatant of CombatantTable
     (72 plus its count at entry 0), times the 3 bytes of a TSortRec. 255B saves and restores exactly
-    this many records of ds6718 around its scan. }
+    this many records of SortEntries around its scan. }
   SavedScanBytes = $D8;
   { The game clock is a seven-digit mixed-radix count in the game variables (VarsAt4900^[$49C6+Digit];
     AdvanceGameClock advances it and ShowRestTime reads the same digits). The location line (00BA:290B) reads
@@ -230,11 +230,11 @@ const
   ClockMinutes = $49C7;
   ClockTenMinutes = $49C8;
   ClockHours = $49C9;
-  { The movement mode word of the second game word block (ds49D6^[714]; HandleWildernessKeys toggles
+  { The movement mode word of the second game word block (GameVars2^[714]; HandleWildernessKeys toggles
     bit 0 with the S (search) key and sets bit 1 with L). The location line (00BA:290B) appends
     ' search' while bit 0 is set. }
   VarTravelMode = 714;
-  { The ds49F3 view modes RedrawView dispatches on (the setters are in the other units): 0 is the
+  { The ViewMode view modes RedrawView dispatches on (the setters are in the other units): 0 is the
     plain full-window layout of the create-character and training screens (RunCharacterMenu,
     ovl16:0161, sets it); 1 is set by the Temple (VisitTemple, ovl04:0D09) and the shop (ShopMain,
     ovl06:053E), 2 by the camp (MakeCamp, ovl15:1E6F), 3 and 4 select the area view (ShowAreaView;
@@ -437,9 +437,9 @@ end;
 
 { 00BA:0442. Builds an item menu line's display text in Item^.Text and, when ShowText is set,
   draws it at (Col, Row) in Green. Clears Text, then, when ShowReadied is set, prefixes ' Yes  '
-  or ' No   ' from Readied. When any member of the party list ds5D96 has MagicMarkAffect (affect
+  or ' No   ' from Readied. When any member of the party list PartyListHead has MagicMarkAffect (affect
   5, HasAffect), a Plus, PlusSave or Cursed item is marked '* '. A Count above 0 is written in
-  front of the name. The three NameNum parts (ds10A7, 256 string[20] at DS:10A7) are appended
+  front of the name. The three NameNum parts (ItemNameParts, 256 string[20] at DS:10A7) are appended
   from part 3 down to 1, skipping a part whose HiddenNames bit is set, and each shown part is
   followed by 's ' or ' '. The 's ' is used, once, when Count is at least 2 and this part is the
   only one shown, or part 1 is shown with part 3 also shown (Mask > ThirdNameBit) and the item
@@ -449,7 +449,7 @@ end;
   Callers: the shop, loot and inventory lists (ShowText 0, they draw Text themselves) and the
   character sheet (ShowText 1).
   QUIRK 00BA:0442: the LongInt Value is never read (callers pass LongInt(the character) or 0).
-  Globals: ds5D96 (read), ds10A7 (read). Side effects: Item^.Text, and the screen when ShowText
+  Globals: PartyListHead (read), ItemNameParts (read). Side effects: Item^.Text, and the screen when ShowText
   is set. }
 procedure FormatItemLine(Value: LongInt; Item: PItem; Col, Row, ShowReadied, ShowText: Byte);
 var
@@ -469,7 +469,7 @@ begin
       Item^.Text := ' No   ';
   end;
   Found := 0;
-  Member := PCharacter(ds5D96);
+  Member := PCharacter(PartyListHead);
   while (Member <> nil) and (Found = 0) do
   begin
     if HasAffect(Member, MagicMarkAffect, Affect) then
@@ -489,7 +489,7 @@ begin
   for I := 3 downto 1 do
     if ((Mask shr (I - 1)) and 1) > 0 then
     begin
-      Item^.Text := Item^.Text + ds10A7[Item^.NameNum[I]];
+      Item^.Text := Item^.Text + ItemNameParts[Item^.NameNum[I]];
       if (Item^.Count < 2) or (Plural <> 0) then
         Item^.Text := Item^.Text + ' '
       else if ((1 shl (I - 1)) = Mask) or
@@ -511,14 +511,14 @@ begin
 end;
 
 { 00BA:0767. Draws the roster panel the view screens show (whitepaper 5.24): a "Name / AC  HP"
-  header and one line per party member of the list ds5D96. The member Who is drawn white from its
+  header and one line per party member of the list PartyListHead. The member Who is drawn white from its
   Name, every other member through DrawCharacterName. Each line's armour value (DrawArmourClass) and
   current hit points (DrawHitPoints) are drawn in one of three columns picked by the value's range,
   and each line is cleared first. The left column is 1 in the plain full-window layout (ViewModePlain,
   the create-character and training screens, RunCharacterMenu ovl16:0161) and $11 in every other view: the shop and the
   Temple (ViewModePortrait, beside the portrait window), the camp and area views (RedrawView) and the
   loot screen. Callers: the shop, the Temple, RedrawView (camp, area view and loot), SelectPartyMember
-  and DrawWildernessScreen. Globals: ds49F3 (read), ds5D96 (read). }
+  and DrawWildernessScreen. Globals: ViewMode (read), PartyListHead (read). }
 procedure DrawPartyRoster(Who: PCharacter);
 var
   Member: PCharacter;
@@ -526,7 +526,7 @@ var
   Row: Byte;
   ValueShift: Byte;
 begin
-  if ds49F3 = ViewModePlain then
+  if ViewMode = ViewModePlain then
     Left := 1
   else
     Left := $11;
@@ -534,7 +534,7 @@ begin
   DrawTextAt(Left, Row, White, 'Name');
   DrawTextAt($21, Row, White, 'AC  HP');
   Inc(Row, 2);
-  Member := PCharacter(ds5D96);
+  Member := PCharacter(PartyListHead);
   while Member <> nil do
   begin
     ClearWindow(Left, Row, $26, Row);
@@ -1047,13 +1047,13 @@ end;
   mode ViewModeCombat) and a fixed window otherwise; draws Who's name (DrawCharacterName) and the paged text Text
   (ShowPagedText) and, when Wait is set, delays DelayByGameSpeed and clears the window again
   (ClearCharacterMessage). Used for the per-character combat and camp messages ('is bandaged',
-  'flees in panic', 'is cured'). Globals: ds49F3 (view mode), RestWindowActive (picks the window top).
+  'flees in panic', 'is cured'). Globals: ViewMode (view mode), RestWindowActive (picks the window top).
   Side effects: video memory, the keyboard through ShowPagedText's paging. }
 procedure ShowCharacterMessage(Who: PCharacter; Text: string; Row, Wait: Byte);
 var
   Top: Byte;
 begin
-  if ds49F3 = ViewModeCombat then
+  if ViewMode = ViewModeCombat then
   begin
     ClearWindow(CombatMessageLeft, Row, CombatMessageRight, CombatMessageBottom);
     DrawCharacterName(Who, CombatMessageLeft, Row, 0);
@@ -1081,10 +1081,10 @@ end;
 { 00BA:17E3. Clears the message window ShowCharacterMessage wrote in: in the combat view (ViewModeCombat)
   the box (CombatMessageLeft,CombatMessageRow)-(CombatMessageRight,CombatMessageBottom), otherwise the
   box (MessageLeft,MessageTop)-(MessageRight,MessageBottom). Called after the wait flag of
-  ShowCharacterMessage and by the camp, temple and resting screens to wipe a message. Globals: ds49F3. }
+  ShowCharacterMessage and by the camp, temple and resting screens to wipe a message. Globals: ViewMode. }
 procedure ClearCharacterMessage;
 begin
-  if ds49F3 = ViewModeCombat then
+  if ViewMode = ViewModeCombat then
     ClearWindow(CombatMessageLeft, CombatMessageRow, CombatMessageRight, CombatMessageBottom)
   else
     ClearWindow(MessageLeft, MessageTop, MessageRight, MessageBottom);
@@ -1109,9 +1109,9 @@ begin
   if Mode <> 0 then
     DrawTextAt(Col + Length(Who^.Name), Row, Color, '''s');
 end;
-{ 00BA:1892. Copies one row of a 24x3 picture into the combat picture ds6E36. PicIndex selects a
-  slot of the picture table ds5E5A and Half picks one of the slot's two pointers
-  (ds5E5A[PicIndex].Pics[Half]); Row is the destination row, copied at byte offset Row times the
+{ 00BA:1892. Copies one row of a 24x3 picture into the combat picture CombatPicture. PicIndex selects a
+  slot of the picture table PictureSlots and Half picks one of the slot's two pointers
+  (PictureSlots[PicIndex].Pics[Half]); Row is the destination row, copied at byte offset Row times the
   picture's bytes-per-item (ByteSize, +$11). When Mirror is not 0 the source picture is first
   mirrored into a temporary 24x3 picture (AllocatePicture then MirrorPicture) and that copy is
   blitted, otherwise the table picture is blitted directly. In both cases the bitmap (Data, +$17)
@@ -1119,33 +1119,34 @@ end;
   RowBytes on the EGA (VideoAdapterEga, 1: the EGA layout holds one plane byte per four data bytes,
   whitepaper 5.23). ReleasePicture frees the temporary.
   Called in a loop by DrawCombatIcon and by ovl13.
-  Globals: ds6E36 (read), ds5E5A (read), VideoAdapter (read). }
+  Globals: CombatPicture (read), PictureSlots (read), VideoAdapter (read). }
 procedure CopyPictureItem(PicIndex, Half, Row, Mirror: Byte);
 var
   Pic: Pointer;
   PixelBytes, RowBytes: Word;
 begin
-  RowBytes := PPicture(ds6E36)^.ByteSize;
+  RowBytes := PPicture(CombatPicture)^.ByteSize;
   PixelBytes := RowBytes;
   if VideoAdapter = VideoAdapterEga then
     PixelBytes := PixelBytes div 4;
   if Mirror <> 0 then
   begin
     AllocatePicture($18, 3, 1, 1, Pic);
-    MirrorPicture(ds5E5A[PicIndex].Pics[Half], Pic);
-    Move(PPicture(Pic)^.Data[0], PPicture(ds6E36)^.Data[Row * RowBytes], RowBytes);
-    Move(PPicture(Pic)^.Pixels^[0], PPicture(ds6E36)^.Pixels^[Row * PixelBytes], PixelBytes);
+    MirrorPicture(PictureSlots[PicIndex].Pics[Half], Pic);
+    Move(PPicture(Pic)^.Data[0], PPicture(CombatPicture)^.Data[Row * RowBytes], RowBytes);
+    Move(PPicture(Pic)^.Pixels^[0], PPicture(CombatPicture)^.Pixels^[Row * PixelBytes], PixelBytes);
     ReleasePicture(Pic);
   end
   else
   begin
-    Move(PPicture(ds5E5A[PicIndex].Pics[Half])^.Data[0], PPicture(ds6E36)^.Data[Row * RowBytes], RowBytes);
-    Move(PPicture(ds5E5A[PicIndex].Pics[Half])^.Pixels^[0], PPicture(ds6E36)^.Pixels^[Row * PixelBytes], PixelBytes);
+    Move(PPicture(PictureSlots[PicIndex].Pics[Half])^.Data[0], PPicture(CombatPicture)^.Data[Row * RowBytes], RowBytes);
+    Move(PPicture(PictureSlots[PicIndex].Pics[Half])^.Pixels^[0], PPicture(CombatPicture)^.Pixels^[Row * PixelBytes],
+      PixelBytes);
   end;
 end;
-{ 00BA:19DE. Draws the four items of a 2-wide combat icon into the combat picture ds6E36: it calls
+{ 00BA:19DE. Draws the four items of a 2-wide combat icon into the combat picture CombatPicture: it calls
   CopyPictureItem four times with Half 0, 0, 1, 1 and Row 0, 1, 2, 3, mirroring the second and
-  third item (Mirror 0, 1, 1, 0). PicIndex is the source slot in the picture table ds5E5A.
+  third item (Mirror 0, 1, 1, 0). PicIndex is the source slot in the picture table PictureSlots.
   Called by ovl12, ovl13 and ovl22 (a combatant's icon into the battle picture). Globals: none. }
 procedure DrawCombatIcon(PicIndex: Byte);
 begin
@@ -1158,12 +1159,12 @@ end;
   along it (whitepaper 5.18, combat movement). It builds the Bresenham path between the two cells
   (multiplied by CellPitch, 3, the 24x24 icon pitch) through SetupLine/StepLine, collecting each step's
   direction Pattern into Path. It then walks that path: it computes the screen cell (PX, PY), draws
-  the combat picture ds6E36 onto the staging buffer DrawBuf through DrawPictureItemClipped (frame Frame of
+  the combat picture CombatPicture onto the staging buffer DrawBuf through DrawPictureItemClipped (frame Frame of
   Count), flushes and delays, steps PX/PY by DirStepX/DirStepY[Path[I]], and keeps the cursor on
   the cell (CursorX, CursorY) through MoveCombatCursor. The Mode byte > 0 forces drawing every
   step; Count is the number of animation frames. Count/Mode/position come from ovl12, ovl13 and
   ovl22 (the aiming and movement code).
-  Globals: CombatMap (read), ds6E36 (read), DrawBuf (read), ds4A24 (read), DirStepX, DirStepY.
+  Globals: CombatMap (read), CombatPicture (read), DrawBuf (read), ScreenSaveBuffer (read), DirStepX, DirStepY.
   Calls ovl30's line routines and ovl31's cursor/view routines. Side effects: video memory, timing. }
 procedure WalkCombatLine(FromX, FromY, ToX, ToY: ShortInt; Count, Mode: Byte);
 var
@@ -1239,10 +1240,10 @@ begin
     repeat
       if (Mode > 0) or (PX mod CellPitch = 0) or (PY mod CellPitch = 0) then
       begin
-        DrawPictureItemClipped(PX, PY, Frame, 5, ds6E36, DrawBuf);
+        DrawPictureItemClipped(PX, PY, Frame, 5, CombatPicture, DrawBuf);
         FlushPictureChanges;
         Delay(Mode);
-        DrawPictureItemClipped(PX, PY, 0, 0, ds4A24, DrawBuf);
+        DrawPictureItemClipped(PX, PY, 0, 0, ScreenSaveBuffer, DrawBuf);
         Inc(Frame);
         if Frame >= Count then
           Frame := 0;
@@ -1299,12 +1300,12 @@ begin
         MoveCombatCursor(ToX, ToY, CursorCentreMargin, CursorNoStep);
       PX := (ToX - CombatMap^.ViewX) * CellPitch;
       PY := (ToY - CombatMap^.ViewY) * CellPitch;
-      DrawPictureItemClipped(PX, PY, Frame, 5, ds6E36, DrawBuf);
+      DrawPictureItemClipped(PX, PY, Frame, 5, CombatPicture, DrawBuf);
       if Mode > 0 then
       begin
         FlushPictureChanges;
         Delay(Mode);
-        DrawPictureItemClipped(PX, PY, 0, 0, ds4A24, DrawBuf);
+        DrawPictureItemClipped(PX, PY, 0, 0, ScreenSaveBuffer, DrawBuf);
       end;
     end;
   until LoopFlag;
@@ -1314,14 +1315,15 @@ end;
   its view cell. Outside the combat view (ViewModeCombat) it only shows the message Text with a wait
   and returns. In the combat view: silences the sound driver, draws the combat icon slot AffectHitIcon
   ($16) when Flag is set and DamageHitIcon ($17) otherwise, puts the combat cursor on the character
-  when it is off screen, plays the sound ds261C when Flag is set and ds261A otherwise, and shows Text
+  when it is off screen, plays the sound SoundHitMessage when Flag is set and SoundMissMessage otherwise, and shows Text
   without waiting. It then flashes the character's icon: for FlashCount + 1 passes it draws the four
-  picture items (0..3) of the combat picture ds6E36 at the character's pixel position (CellPitch, 3,
+  picture items (0..3) of the combat picture CombatPicture at the character's pixel position (CellPitch, 3,
   pixels per view cell, CombatantViewCol/CombatantViewRow), flushes and waits FlashDelay ($46) ms, and
-  restores the cell from ds4A24. Finally it resumes the sound driver and flushes; with Flag clear
+  restores the cell from ScreenSaveBuffer. Finally it resumes the sound driver and flushes; with Flag clear
   (FlashCount 0) it waits DelayByGameSpeed instead. DealDamage calls it with Flag 0 for the damage
   message, ApplyAffect with Flag 1 for an affect message, and the training code uses it too.
-  Globals: ds49F3 (view mode), GameSpeed (FlashCount), ds261A/ds261C (sounds), ds6E36, ds4A24,
+  Globals: ViewMode (view mode), GameSpeed (FlashCount), SoundMissMessage/SoundHitMessage (sounds), CombatPicture,
+  ScreenSaveBuffer,
   DrawBuf, CombatantViewCol, CombatantViewRow. Side effects: video memory, sound, timing. }
 procedure ShowHitMessage(Who: Pointer; Flag: Byte; Text: String40);
 var
@@ -1330,7 +1332,7 @@ var
   Frame, Pass: Byte;
   FlashCount: Byte;
 begin
-  if ds49F3 = ViewModeCombat then
+  if ViewMode = ViewModeCombat then
   begin
     SetSoundDriverIdle(0);
     if Flag <> 0 then
@@ -1341,9 +1343,9 @@ begin
     if not IsCombatantInView(Who, 1) then
       MoveCombatCursor(CombatantX(Who), CombatantY(Who), CursorCentreMargin, CursorNoStep);
     if Flag <> 0 then
-      PlaySound(ds261C)
+      PlaySound(SoundHitMessage)
     else
-      PlaySound(ds261A);
+      PlaySound(SoundMissMessage);
     ShowCharacterMessage(Who, Text, CombatMessageRow, 0);
     if Flag <> 0 then
       FlashCount := GameSpeed
@@ -1354,10 +1356,10 @@ begin
     for Pass := 0 to FlashCount do
       for Frame := 0 to 3 do
       begin
-        DrawPictureItemClipped(Col, Row, Frame, 5, ds6E36, DrawBuf);
+        DrawPictureItemClipped(Col, Row, Frame, 5, CombatPicture, DrawBuf);
         FlushPictureChanges;
         Delay(FlashDelay);
-        DrawPictureItemClipped(Col, Row, 0, 0, ds4A24, DrawBuf);
+        DrawPictureItemClipped(Col, Row, 0, 0, ScreenSaveBuffer, DrawBuf);
       end;
     SetSoundDriverIdle($A);
     FlushPictureChanges;
@@ -1397,9 +1399,9 @@ end;
   Combat^.DyingRounds (+$E) in the combat view; otherwise unconscious (StatusUnconscious) when
   Remaining = 0, that is an exact hit to 0. When the resulting status is not the standing set
   StatusOkay + StatusAnimated Who leaves combat: Flag10D and the hit points are cleared and, in the
-  combat view, its side's count (ds6814Sides, by Side) and its initiative (Combat^.Initiative, +$3)
+  combat view, its side's count (SideCounts, by Side) and its initiative (Combat^.Initiative, +$3)
   drop; a standing character just takes Remaining as its hit points. DealDamage, DamageWithMessage
-  and ovl13 call it. Globals: ds49F3 (view mode), ds6814Sides. }
+  and ovl13 call it. Globals: ViewMode (view mode), SideCounts. }
 procedure ApplyDamage(Who: Pointer; Damage: Byte);
 var
   Overkill, Remaining: Byte;
@@ -1415,7 +1417,7 @@ begin
   else if Overkill > 0 then
   begin
     PCharacter(Who)^.Status := StatusDying;
-    if ds49F3 = ViewModeCombat then
+    if ViewMode = ViewModeCombat then
       PCharacter(Who)^.Combat^.DyingRounds := Overkill;
   end
   else if Remaining = 0 then
@@ -1424,9 +1426,9 @@ begin
   begin
     PCharacter(Who)^.Flag10D := 0;
     PCharacter(Who)^.Flag11B := 0;
-    if ds49F3 = ViewModeCombat then
+    if ViewMode = ViewModeCombat then
     begin
-      Dec(ds6814Sides[ShortInt(PCharacter(Who)^.Side)]);
+      Dec(SideCounts[ShortInt(PCharacter(Who)^.Side)]);
       PCharacter(Who)^.Combat^.Initiative := 0;
     end;
   end
@@ -1437,7 +1439,7 @@ end;
   byte +$11B) equal its maximum (HpMax, +$32) and "is partially healed" otherwise, through
   ShowCharacterMessage with a wait. Outside the combat view it then redraws the party roster
   (DrawPartyRoster) for the selected character. ovl12 and ovl22 (the healing and training code)
-  call it. Globals: ds49F3 (view mode), SelectedCharacter. }
+  call it. Globals: ViewMode (view mode), SelectedCharacter. }
 procedure ShowHealResult(Who: Pointer);
 var
   Message: String40;
@@ -1447,11 +1449,11 @@ begin
   else
     Message := 'is partially healed';
   ShowCharacterMessage(Who, Message, CombatMessageRow, 1);
-  if ds49F3 <> ViewModeCombat then
+  if ViewMode <> ViewModeCombat then
     DrawPartyRoster(SelectedCharacter);
 end;
 { 00BA:23B7. Returns the side opposite Who's (Side, +$10E): 1 when Who is on the party side (0) and
-  0 otherwise. The combat AI indexes the per-side counts ds6814Sides with it to count Who's
+  0 otherwise. The combat AI indexes the per-side counts SideCounts with it to count Who's
   enemies (UseMagicItem, CastMemorizedSpell, DifferentSideInArea) and ovl12/ovl13/ovl22 use it
   too. Globals: none. }
 function OpposingSide(Who: Pointer): Byte;
@@ -1462,31 +1464,31 @@ begin
     OpposingSide := SideParty;
 end;
 { 00BA:23DB. Recounts the living combatants of each side: it clears both per-side counts
-  (ds6814Sides) and walks the character list (ds5D96) adding one for every member that takes part
+  (SideCounts) and walks the character list (PartyListHead) adding one for every member that takes part
   in combat (Flag10D, +$10D, set) to its own side's count. RunCombat and EndCombatRound call it at
   the start of a battle and each round; PlaceAllCombatants and ReviveCombatant also call it.
-  Globals: ds5D96 (read), ds6814Sides (write). }
+  Globals: PartyListHead (read), SideCounts (write). }
 procedure RecountCombatSides;
 var
   Member: PCharacter;
 begin
-  ds6814Sides[SideParty] := 0;
-  ds6814Sides[SideMonsters] := 0;
-  Member := PCharacter(ds5D96);
+  SideCounts[SideParty] := 0;
+  SideCounts[SideMonsters] := 0;
+  Member := PCharacter(PartyListHead);
   while Member <> nil do
   begin
     if Member^.Flag10D <> 0 then
-      Inc(ds6814Sides[ShortInt(Member^.Side)]);
+      Inc(SideCounts[ShortInt(Member^.Side)]);
     Member := Member^.Next;
   end;
 end;
-{ 00BA:2433. Collects Who's enemies that an area scan can reach into the target list ds6DE4 and
+{ 00BA:2433. Collects Who's enemies that an area scan can reach into the target list CombatantScanList and
   returns how many there are. It scans the map for every combatant whose footprint line from Who is
   at most Range steps away (ScanTargets, direction omni, footprint kind of Who), then keeps only the
-  records whose combatant is on the side opposite Who's (Side of CombatantRecord[ds6718[I].Head]
-  equals OpposingSide(Who)): each kept record is compacted into ds6718 (Move) and the table count
-  (ds6718[0].Val) is lowered to the kept count. Finally the combatant index of every kept record
-  (ds6718[I].Head) is written into ds6DE4[1..Count], the combatant order the AI and the area spells
+  records whose combatant is on the side opposite Who's (Side of CombatantRecord[SortEntries[I].Head]
+  equals OpposingSide(Who)): each kept record is compacted into SortEntries (Move) and the table count
+  (SortEntries[0].Val) is lowered to the kept count. Finally the combatant index of every kept record
+  (SortEntries[I].Head) is written into CombatantScanList[1..Count], the combatant order the AI and the area spells
   work through (ovl09:02EB, 0B3C). The result is that count; 0 when no enemy is in range. }
 function CollectEnemiesInRange(Who: Pointer; Range: Byte): Byte;
 var
@@ -1496,32 +1498,32 @@ var
 begin
   ScanTargets(CombatantX(PCharacter(Who)), CombatantY(PCharacter(Who)), Range, $FF,
               CombatantKind(PCharacter(Who)), CombatMap);
-  Count := ds6718[0].Val;
+  Count := SortEntries[0].Val;
   Found := 0;
   if Count > 0 then
   begin
     for Index := 1 to Count do
-      if CombatantRecord[ds6718[Index].Head]^.Side = OpposingSide(Who) then
+      if CombatantRecord[SortEntries[Index].Head]^.Side = OpposingSide(Who) then
       begin
         Inc(Found);
-        Move(ds6718[Index], ds6718[Found], SizeOf(TSortRec));
+        Move(SortEntries[Index], SortEntries[Found], SizeOf(TSortRec));
       end;
     Count := Found;
-    ds6718[0].Val := Found;
+    SortEntries[0].Val := Found;
   end;
   CollectEnemiesInRange := Count;
   for Index := 1 to Count do
-    ds6DE4[Index] := ds6718[Index].Head;
+    CombatantScanList[Index] := SortEntries[Index].Head;
 end;
 { 00BA:255B. Returns half the distance, in map steps, of Target from Who. It preserves the current
-  scan result (ds6718, the 72 records ScanTargets can fill), opens the WalkLine tile gate
+  scan result (SortEntries, the 72 records ScanTargets can fill), opens the WalkLine tile gate
   (CombatMap^.Head6, +6) so the line is not blocked by the tile the combatants stand on, scans from
   Who (ScanTargets over $FF steps, direction omni, footprint kind of Who), closes the gate again,
-  and looks Target up among the found combatants (CombatantRecord[ds6718[I].Head] = Target; the
+  and looks Target up among the found combatants (CombatantRecord[SortEntries[I].Head] = Target; the
   first index I with a match, or the scan count when it is not found). The result is that record's
   shortest walk length (Key, the fewest WalkLine steps) divided by two, the distance in map cells;
   ovl09:0B3C and others test it = 1 as melee range. The saved records are put back before the
-  return. Globals: ds6718 (read/write), CombatMap (write), CombatantRecord (read).
+  return. Globals: SortEntries (read/write), CombatMap (write), CombatantRecord (read).
   QUIRK 00BA:2617: when Target is not found the result comes from the record at the scan count
   (or from record 1 when nothing was found), not from a defined value. }
 function DistanceToTarget(Who, Target: Pointer): Byte;
@@ -1529,17 +1531,17 @@ var
   Saved: array[1..255] of TSortRec;   { [bp-$2fe] the scan table saved around the scan }
   Index: Byte;                        { [bp-$2ff] the walk of the scan table }
 begin
-  Move(ds6718[1], Saved, SavedScanBytes);
+  Move(SortEntries[1], Saved, SavedScanBytes);
   CombatMap^.Head6 := 1;
   ScanTargets(CombatantX(PCharacter(Who)), CombatantY(PCharacter(Who)), $FF, $FF,
               CombatantKind(PCharacter(Who)), CombatMap);
   CombatMap^.Head6 := 0;
   Index := 1;
-  while (CombatantRecord[ds6718[Index].Head] <> PCharacter(Target)) and
-        (Index < ds6718[0].Val) do
+  while (CombatantRecord[SortEntries[Index].Head] <> PCharacter(Target)) and
+        (Index < SortEntries[0].Val) do
     Inc(Index);
-  DistanceToTarget := ds6718[Index].Key shr 1;
-  Move(Saved, ds6718[1], SavedScanBytes);
+  DistanceToTarget := SortEntries[Index].Key shr 1;
+  Move(Saved, SortEntries[1], SavedScanBytes);
 end;
 { 00BA:2637. Ends Who's combat turn: it clears the pending spell (PendingSpell, +$0; CastChosenSpell
   casts it when the turn ends), the turn order (Initiative, +$3), the guard byte (B7, +$7; the Guard
@@ -1600,7 +1602,7 @@ begin
   if WithInner <> 0 then
     DrawWindow(3, 3, $D, $D, 0, $F, '');
 end;
-{ 00BA:27D9. Redraws the whole screen for the current view mode (ds49F3), the resident unit's view
+{ 00BA:27D9. Redraws the whole screen for the current view mode (ViewMode), the resident unit's view
   dispatcher. Mode 0 is the plain full window; mode 1 the character portrait screen
   (DrawViewWindows then the HEAD and BODY sprites at (3,3)); mode 2 the camp (the portrait
   windows, the PIC sprite list and the roster); modes 3 and 4 the area view (DrawViewWindows,
@@ -1609,15 +1611,15 @@ end;
   character roster and the location line, mode 6 the roster only; modes 0 and 1 draw neither
   (mode 1 shows the portrait). Called by the shop, the Temple, the loot, camp and combat menus to
   redraw their screen.
-  Globals: ds49F3 (read), ds49FD, ds49FE, PictureAnimation, SelectedCharacter (read). }
+  Globals: ViewMode (read), ShownHeadBank, ShownBodyBank, PictureAnimation, SelectedCharacter (read). }
 procedure RedrawView;
 begin
-  case ds49F3 of
+  case ViewMode of
     ViewModePlain: DrawWindow(1, 1, $26, $16, 0, $F, '');
     ViewModePortrait:
       begin
         DrawViewWindows(1);
-        LoadHeadBodySprites(ds49FD, ds49FE);
+        LoadHeadBodySprites(ShownHeadBank, ShownBodyBank);
         ShowHeadBodySprites(3, 3, 1);
       end;
     ViewModeCamp:
@@ -1656,9 +1658,9 @@ end;
   as hours:minutes (the game clock digits, each number padded to two digits with a leading zero).
   Outside the 3D view (GameVars^[VarShowWallOverlays] = 0) the position "column,row " is
   prepended; in the camp (ViewModeCamp) " camping" is appended and in the wilderness search mode
-  (bit 0 of the travel mode word ds49D6^[714]) " search". Called by the camp and wilderness screens.
+  (bit 0 of the travel mode word GameVars2^[714]) " search". Called by the camp and wilderness screens.
   Globals: PartyMapColumn, PartyMapRow, GameVars, AreaViewKind, VarsAt4900, FacingNames,
-  PartyFacing, ds49F3, ds49D6 (all read). Side effect: the screen. }
+  PartyFacing, ViewMode, GameVars2 (all read). Side effect: the screen. }
 procedure DrawLocationLine;
 var
   Col, Row: ShortInt;               { the party position shown in the line }
@@ -1687,9 +1689,9 @@ begin
     Line := ByteToText(Col) + ',' + ByteToText(Row) + ' ';
   Line := Line + FacingNames[PartyFacing] + ' ';
   Line := Line + Hours + ':' + Minutes;
-  if ds49F3 = ViewModeCamp then
+  if ViewMode = ViewModeCamp then
     Line := Line + ' camping'
-  else if (ds49D6^[VarTravelMode] and 1) > 0 then
+  else if (GameVars2^[VarTravelMode] and 1) > 0 then
     Line := Line + ' search';
   ClearWindow($11, $F, $26, $F);
   DrawTextAt($11, $F, $0A, Line);
@@ -1698,10 +1700,10 @@ end;
   adventure screen's three windows (DrawAdventureScreen), the area view (ShowAreaView), the party
   marker (DrawPartyMarker), the location line and the character roster. Called by ovl14's
   HandleWildernessKeys when the party moves in the wilderness.
-  Globals: ds49F3 (write). Side effect: the screen. }
+  Globals: ViewMode (write). Side effect: the screen. }
 procedure DrawWildernessScreen;
 begin
-  ds49F3 := ViewModeMap;
+  ViewMode := ViewModeMap;
   DrawAdventureScreen;
   ShowAreaView;
   DrawPartyMarker;
@@ -1726,13 +1728,13 @@ end;
   a ReadPromptChoice prompt titled Title with the word "Select" (and " Exit" when WithExit is set),
   updating the caller's Selected pointer. When ReadPromptChoice sets its extended-key flag ExtKey,
   the scan code 'O' (End) steps to the next member and 'G' (Home) to the previous (both wrap around
-  the party list ds5D96); with ExtKey clear a typed G or O does nothing. A typed 'E', or a key code
+  the party list PartyListHead); with ExtKey clear a typed G or O does nothing. A typed 'E', or a key code
   #0 with ExtKey clear, clears the selection. QUIRK 00BA:2C48: the #0 test runs only when ExtKey is
   clear, so #0 is not an extended-key prefix but the key code 0 returned with the flag clear. The
   loop ends on Enter, Escape, 'E' or 'S'; Enter, Escape and 'S' (the hotkey of the prompt's "Select"
   word) keep the current selection, 'E' clears it. Animate for ReadPromptChoice is 1 in the camp
   (ViewModeCamp) and loot (ViewModeLoot) screens. Called by ovl03, ovl19 and ovl22.
-  Globals: ds49F3 (read), ds5D96 (read). Side effects: the screen, the keyboard. }
+  Globals: ViewMode (read), PartyListHead (read). Side effects: the screen, the keyboard. }
 procedure SelectPartyMember(Title: String40; WithExit: Byte; var Selected: PCharacter);
 var
   Key: Char;                        { the key ReadPromptChoice returns }
@@ -1748,7 +1750,7 @@ begin
   while not (Key in [KeyEnter, KeyEscape, KeyExit, KeySelect]) do
   begin
     DrawPartyRoster(Selected);
-    if (ds49F3 = ViewModeCamp) or (ds49F3 = ViewModeLoot) then
+    if (ViewMode = ViewModeCamp) or (ViewMode = ViewModeLoot) then
       Animate := 1
     else
       Animate := 0;
@@ -1760,12 +1762,12 @@ begin
           begin
             PartyMember := PartyMember^.Next;
             if PartyMember = nil then
-              PartyMember := PCharacter(ds5D96);
+              PartyMember := PCharacter(PartyListHead);
           end;
         'G':
           begin
-            PartyMember := PCharacter(ds5D96);
-            if Selected <> PCharacter(ds5D96) then
+            PartyMember := PCharacter(PartyListHead);
+            if Selected <> PCharacter(PartyListHead) then
               while PartyMember^.Next <> Selected do
                 PartyMember := PartyMember^.Next
             else

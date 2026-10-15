@@ -13,8 +13,8 @@ const
 { ovl00:0042. Called by the heap manager when an allocation of Size bytes fails. A zero size
   returns at once with an unassigned Integer result (QUIRK ovl00:004C: jbe to ovl00:00A3, which
   loads AX from the result word at [bp-2] and returns without calling QuitGame). A non-zero
-  size warns that memory is short; when ds49D0 is set it lets the player act through the save
-  and load unit (SaveGame) and asks again until ds557D says to stop, else it announces the
+  size warns that memory is short; when OfferSaveOnHeapError is set it lets the player act through the save
+  and load unit (SaveGame) and asks again until HeapErrorStop says to stop, else it announces the
   exit. Then it always ends the game through QuitGame, so that path never returns to the heap
   manager. }
 function HeapErrorHandler(Size: Word): Integer;
@@ -26,10 +26,10 @@ begin
     Quit := False;
     repeat
       ShowMessageLine(Yellow, 'WARNING: Insufficient Memory');
-      if ds49D0 then
+      if OfferSaveOnHeapError then
       begin
         SaveGame;
-        Quit := ds557D;
+        Quit := HeapErrorStop;
       end
       else
       begin

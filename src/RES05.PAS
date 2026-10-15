@@ -69,20 +69,20 @@ end;
 
 { 0802:0040. Writes Count copies of the character Ch at text cell (Col, Row) through the BIOS
   (INT 10h function 2 sets the cursor, function 9 writes the character with its attribute) on the
-  page in ds4A1B. With VideoAdapter 0 the colour goes through the four-colour table ds25D5; with
-  VideoAdapter 1 the same two calls are repeated on the page in ds4A1A with the colour as it is. }
+  page in TextPage. With VideoAdapter 0 the colour goes through the four-colour table TextColourMap4; with
+  VideoAdapter 1 the same two calls are repeated on the page in FillTextPage with the colour as it is. }
 procedure WriteCharsAt(Col, Row, Color, Count: Byte; Ch: Char);
 begin
   Regs.AH := BiosSetCursor;
-  Regs.BH := ds4A1B;
+  Regs.BH := TextPage;
   Regs.DH := Row;
   Regs.DL := Col;
   Intr(BiosVideo, Regs);
   Regs.AH := BiosWriteChar;
   Regs.AL := Ord(Ch);
-  Regs.BH := ds4A1B;
+  Regs.BH := TextPage;
   if VideoAdapter = 0 then
-    Regs.BL := ds25D5[Color]
+    Regs.BL := TextColourMap4[Color]
   else
     Regs.BL := Color;
   Regs.CX := Count;
@@ -90,13 +90,13 @@ begin
   if VideoAdapter = 1 then
   begin
     Regs.AH := BiosSetCursor;
-    Regs.BH := ds4A1A;
+    Regs.BH := FillTextPage;
     Regs.DH := Row;
     Regs.DL := Col;
     Intr(BiosVideo, Regs);
     Regs.AH := BiosWriteChar;
     Regs.AL := Ord(Ch);
-    Regs.BH := ds4A1A;
+    Regs.BH := FillTextPage;
     Regs.BL := Color;
     Regs.CX := Count;
     Intr(BiosVideo, Regs);
@@ -174,7 +174,7 @@ begin
 end;
 
 { 0802:02EB. Tells whether FileName names a file that can be opened: opens and closes it with
-  I/O checks off, keeps IOResult in ds49CE, and returns True when that is 0 and the name is not
+  I/O checks off, keeps IOResult in FileProbeResult, and returns True when that is 0 and the name is not
   empty. }
 function FileExists(FileName: String40): Boolean;
 var
@@ -183,8 +183,8 @@ begin
   Assign(Probe, FileName);
   Reset(Probe);
   Close(Probe);
-  ds49CE := IOResult;
-  FileExists := (ds49CE = 0) and (Length(FileName) <> 0);
+  FileProbeResult := IOResult;
+  FileExists := (FileProbeResult = 0) and (Length(FileName) <> 0);
 end;
 {$I+}
 
@@ -247,7 +247,7 @@ begin
 end;
 
 { 0802:05CD. Opens the DAX file Name + Ext twice: as DataFile through OpenGameFile (prompting
-  with the disk name InsertDiskPrompts[TileSet], the drive letter ds547D and a colon; ds557C is the NoPrompt
+  with the disk name InsertDiskPrompts[TileSet], the drive letter DiskDriveLetter and a colon; OpenNoPrompt is the NoPrompt
   flag) and as IndexFile. Reads the header size word from IndexFile into HeaderSize, adds 2 for
   the word itself and seeks DataFile there. Returns False when the file was not found. }
 function OpenDaxFile(Name: String40; Ext: String40; var HeaderSize: Word;
@@ -255,7 +255,7 @@ function OpenDaxFile(Name: String40; Ext: String40; var HeaderSize: Word;
 var
   Got: Word;
 begin
-  if OpenGameFile(Name + Ext, InsertDiskPrompts[TileSet] + Chr(ds547D) + ':', ds557C, DataFile) <> 0 then
+  if OpenGameFile(Name + Ext, InsertDiskPrompts[TileSet] + Chr(DiskDriveLetter) + ':', OpenNoPrompt, DataFile) <> 0 then
   begin
     Assign(IndexFile, Name + Ext);
     Reset(IndexFile, 1);
@@ -329,18 +329,18 @@ begin
   end;
 end;
 
-{ 0802:094A. Saves TileSet in ds5377, then makes NewSet the current 8X8D file number.
-  RestoreTileSet copies ds5377 back. ovl07 and ovl17 call this. }
+{ 0802:094A. Saves TileSet in SavedTileSet, then makes NewSet the current 8X8D file number.
+  RestoreTileSet copies SavedTileSet back. ovl07 and ovl17 call this. }
 procedure SelectTileSet(NewSet: Byte);
 begin
-  ds5377 := TileSet;
+  SavedTileSet := TileSet;
   TileSet := NewSet;
 end;
 
-{ 0802:095D. Puts back the TileSet that SelectTileSet saved in ds5377. ovl17 calls this. }
+{ 0802:095D. Puts back the TileSet that SelectTileSet saved in SavedTileSet. ovl17 calls this. }
 procedure RestoreTileSet;
 begin
-  TileSet := ds5377;
+  TileSet := SavedTileSet;
 end;
 
 begin

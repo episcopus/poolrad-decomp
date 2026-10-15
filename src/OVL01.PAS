@@ -76,7 +76,7 @@ end;
 { ovl01:0627. Shows the title sequence: backs up GameDir (into a String40, so a directory of
   more than 40 characters comes back cut: StrLCopy limit $28 at ovl01:0647) and clears it, loads
   the title picture (LoadPicture) and shows it (ShowPicture), waits (WaitKeyOrTimeout), then,
-  when the F flag (ds49D1) is set, reloads, reshows, frees the title picture (ReleasePicture) and
+  when the F flag (CfgFlagF) is set, reloads, reshows, frees the title picture (ReleasePicture) and
   waits for a key or a deadline (GameClock ticks, 500 after the start). On EGA each pass of
   that wait adds Random(4) to the running sum Total (ovl01:0721..0726); when the sum passes 50000
   the palette animation runs (SetPaletteRegister with Delay) and the sum starts again from 0
@@ -101,7 +101,7 @@ begin
   LoadPicture('title', 1, 0, 0, Pic);
   ShowPicture(0, 0, Pic);
   WaitKeyOrTimeout(5);
-  if ds49D1 = 0 then
+  if CfgFlagF = 0 then
     GameDir := DirBackup
   else
   begin

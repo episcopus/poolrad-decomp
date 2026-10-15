@@ -28,7 +28,7 @@ implementation
 uses RES06, RES09, RES12, OVL21, OVL22, OVL24, OVL25, OVL28, OVL31;
 
 const
-  { The ds49F3 view modes the View command and the item menu test (whitepaper 5.4): 1 is the shop and
+  { The ViewMode view modes the View command and the item menu test (whitepaper 5.4): 1 is the shop and
     the Temple (VisitTemple sets it, ovl04:0D0F; the value OVL21 names ViewShop), 2 the camp (MakeCamp
     sets it, ovl15:1E6F), 3 and 4 the two area-view pages (ShowAreaView sets them, whitepaper 5.2.1)
     and 5 a combat (RunCombat sets it, ovl08:0080). }
@@ -330,7 +330,7 @@ var
   Kind: ShortInt;               { the money kind index of the scan (signed: cwde at ovl19:0B3F) }
   Choice: Word;                 { -1: ChooseSpellFromList opens its window and asks for a spell }
 begin
-  if ds49F3 = ViewModeCombat then
+  if ViewMode = ViewModeCombat then
     ovl31_e3;
   Key := ' ';
   Done := 0;
@@ -353,7 +353,7 @@ begin
       Menu := Menu + 'Spells ';
     if (SheetCharacter^.B84 < ComputerRunB84) or (SheetCharacter^.Flag10D = 0) or
       (SheetCharacter^.Status = 1) then
-      if HasMoney and (ds49F3 <> ViewModeCombat) then
+      if HasMoney and (ViewMode <> ViewModeCombat) then
         Menu := Menu + 'Trade ';
     if HasMoney then
       Menu := Menu + 'Drop ';
@@ -373,7 +373,7 @@ begin
     if (Done = 0) and (Key in ['I', 'S', 'T']) then
       ShowCharacterSheet;
   end;
-  if ds49F3 = ViewModeCombat then
+  if ViewMode = ViewModeCombat then
     ovl31_e2;
   RedrawView;
 end;
@@ -416,7 +416,7 @@ end;
   SelectedCharacter and the item. Halve, Join and Id run HalveItem, JoinItem and IdentifyItem.
   Done: the stop flag shared with ViewSelectedCharacter; UseItem may set it. The item menu is drawn
   only when the character carries items; the Items window (rows 1 to 22) is drawn when DrawItemWindow
-  is set or ds6821 is nonzero. The view mode ds49F3 decides which words are offered: 1 (set by
+  is set or RedrawItemWindow is nonzero. The view mode ViewMode decides which words are offered: 1 (set by
   VisitTemple, ovl04:0D0F) offers Sell and Id; 2, 3 and 4 offer Use, and 5 (combat) offers Use only to
   a character whose Combat^.CanUseMagicItem is set. Trade is not offered in combat. }
 procedure RunItemMenu(var Done: Byte);
@@ -453,20 +453,20 @@ begin
       Menu := 'Ready';
       if Character^.Flag10D <> 0 then
         if GameVars^[VarNoCasting] = 0 then
-          if (ds49F3 = ViewModeCamp) or (ds49F3 = ViewModeMap) or (ds49F3 = ViewModeView) or
-            ((ds49F3 = ViewModeCombat) and (Character^.Combat^.CanUseMagicItem <> 0)) then
+          if (ViewMode = ViewModeCamp) or (ViewMode = ViewModeMap) or (ViewMode = ViewModeView) or
+            ((ViewMode = ViewModeCombat) and (Character^.Combat^.CanUseMagicItem <> 0)) then
             Menu := Menu + ' Use';
       if ((Character^.B84 < ComputerRunB84) or (Character^.Flag10D = 0) or (Character^.Status = 1)) and
-        (ds49F3 <> ViewModeCombat) then
+        (ViewMode <> ViewModeCombat) then
         Menu := Menu + ' Trade';
       Menu := Menu + ' Drop';
       if Character^.ItemCountC7 < 16 then
         Menu := Menu + ' Halve';
       Menu := Menu + ' Join';
       if ((Character^.B84 < ComputerRunB84) or (Character^.Flag10D = 0) or (Character^.Status = 1)) and
-        (ds49F3 = ViewModeShop) then
+        (ViewMode = ViewModeShop) then
         Menu := Menu + ' Sell';
-      if ds49F3 = ViewModeShop then
+      if ViewMode = ViewModeShop then
         Menu := Menu + ' Id';
       Cursor := Character^.Items;
       while Cursor <> nil do
@@ -474,7 +474,7 @@ begin
         FormatItemLine(LongInt(Character), Cursor, 0, 0, 1, 0);
         Cursor := Cursor^.Next;
       end;
-      if DrawItemWindow or (ds6821 <> 0) then
+      if DrawItemWindow or (RedrawItemWindow <> 0) then
       begin
         ClearFullScreen;
         DrawWindowFrame(1, 1, 38, 22, 0);
@@ -484,7 +484,7 @@ begin
         DrawTextAt(1, 3, 15, 'Ready Item');
         Redraw := 1;
         DrawItemWindow := False;
-        ds6821 := 0;
+        RedrawItemWindow := 0;
       end;
       Key := ChooseFromList('', Menu, 13, 10, 15, 1, 5, 38, 22, Character^.Items, 1, Redraw, Choice,
         Selected);
@@ -500,7 +500,7 @@ begin
             else if IsScroll(Selected) or ((Selected^.Affects[2] > 0) and (Selected^.Affects[3] < AffectFlag)) then
             begin
               UseItem(Selected, Done);
-              if ds49F3 <> ViewModeCombat then
+              if ViewMode <> ViewModeCombat then
                 Done := 0;
               if Done = 0 then
                 DrawItemWindow := True;
@@ -552,7 +552,7 @@ end;
   marked Readied and its affect is applied: CallAffectHandler with the item's Affects[3] byte when that byte
   is above $7F. Unreadying a readied item refuses a cursed one ("It's Cursed") and otherwise clears Readied
   and removes the affect. The routine never stores the item in SlotItems.
-  Parameter: Item, the item. Globals: SelectedCharacter, ds49F3 (the view mode, 5 for combat), ItemTable
+  Parameter: Item, the item. Globals: SelectedCharacter, ViewMode (the view mode, 5 for combat), ItemTable
   (indexed by item type, not by race). Side effects: messages (ShowFlashMessage); the "already using" case
   first redraws the slot item (FormatItemLine). QUIRK ovl19:15BB: slot 9 is tested at SlotItems[10]
   (+$F4) but the message names SlotItems[9] (+$F0). }
@@ -627,7 +627,7 @@ begin
           ShowFlashMessage('already using ' + Character^.SlotItems[ShortInt(Slot)]^.Text);
         end;
       ReadyHandsFull:
-        if (ds49F3 <> ViewModeCombat) or (Character^.Quick = 0) then
+        if (ViewMode <> ViewModeCombat) or (Character^.Quick = 0) then
           ShowFlashMessage('Your hands are full!');
     end;
   end;
@@ -745,7 +745,7 @@ end;
   +$B set takes Done from EndCombatTurn instead. With Done set, a scroll is used up through ConsumeScrollSpell; an item that
   is not a scroll and has Affects[1] above 0 loses one of its Count when the count is above 1, else one charge
   (Affects[1]), and leaves the character (RemoveInventoryItem) with its last charge. Parameters: Item, Done. Globals:
-  SelectedCharacter, ds49F3 (the view mode, 5 for combat), SpellTable, CurrentItem, ItemAffectUse. Side effects:
+  SelectedCharacter, ViewMode (the view mode, 5 for combat), SpellTable, CurrentItem, ItemAffectUse. Side effects:
   messages, the screen (the item line is on row 22, or 23 in combat). }
 procedure UseItem(Item: PMenuLine; var Done: Byte);
 const
@@ -777,14 +777,14 @@ begin
     Done := 0
   else
   begin
-    if (ds49F3 = ViewModeCombat) and (SelectedCharacter^.Quick = 0) then
+    if (ViewMode = ViewModeCombat) and (SelectedCharacter^.Quick = 0) then
       DrawCombatScreen;
     if ItemAffectUse then
     begin
       if Spell > LastSpell then
         Dec(Spell, SpellShift);
       ShowCharacterMessage(SelectedCharacter, 'uses an item', 10, 0);
-      if ds49F3 = ViewModeCombat then
+      if ViewMode = ViewModeCombat then
       begin
         DrawTextAt(0, ItemPromptRow, TitleColor, 'Item:');
         FormatItemLine(LongInt(SelectedCharacter), Item, 5, ItemPromptRow, 0, 1);
@@ -797,7 +797,7 @@ begin
     ItemAffectUse := True;
     CastChosenSpell(Spell, SelectedCharacter^.Quick, 0, Done);
     ItemAffectUse := False;
-    if (ds49F3 = ViewModeCombat) and (SpellTable[Spell].PadB[$B] <> 0) then
+    if (ViewMode = ViewModeCombat) and (SpellTable[Spell].PadB[$B] <> 0) then
       Done := EndCombatTurn(SelectedCharacter);
   end;
   if Done <> 0 then
@@ -1189,7 +1189,7 @@ procedure UpdateSelectedCharacter(Key: Char);
 var
   Character: PCharacter;
 begin
-  Character := PCharacter(ds5D96);
+  Character := PCharacter(PartyListHead);
   if Character <> nil then
   begin
     case Key of
@@ -1213,7 +1213,7 @@ begin
             Character := SelectedCharacter^.Next;
         end;
     else
-      Character := PCharacter(ds5D96);
+      Character := PCharacter(PartyListHead);
     end;
   end;
   SelectedCharacter := Character;

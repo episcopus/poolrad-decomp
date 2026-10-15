@@ -25,7 +25,7 @@ const
   VideoSetMode = $00;         { INT 10h function: set video mode }
 
 { 0899:0000. Ends the program. Copies SoundModeBeforePause into SoundMode and calls
-  PlaySound(ds2612), the same call as the Ctrl-S pause path, not SilenceSound (the resume
+  PlaySound(SoundStopAll), the same call as the Ctrl-S pause path, not SilenceSound (the resume
   call at 0899:00A1). What that call does to the sound is not shown here; the sound unit's
   proven stop is 08AE:13B1 (whitepaper 5.14). Then INT 10h function VideoSetMode with
   SavedVideoMode in AL. No writer of SavedVideoMode is in this unit, so where that byte was
@@ -33,7 +33,7 @@ const
 procedure QuitGame;
 begin
   SoundMode := SoundModeBeforePause;
-  PlaySound(ds2612);
+  PlaySound(SoundStopAll);
   Regs.AH := VideoSetMode;
   Regs.AL := SavedVideoMode;
   Intr(VideoBios, Regs);
@@ -41,7 +41,7 @@ begin
 end;
 
 { 0899:0059. The ReadKey of the game: waits for a key and returns a Char. Ctrl-S, when SoundMode
-  is not SoundPaused, saves SoundMode in SoundModeBeforePause, calls PlaySound(ds2612) and
+  is not SoundPaused, saves SoundMode in SoundModeBeforePause, calls PlaySound(SoundStopAll) and
   sets SoundMode to SoundPaused. A later Ctrl-S resumes only when SoundMode is already
   SoundPaused and SoundModeBeforePause is ResumeIfSaved0 or ResumeIfSaved1: it copies the saved
   mode back and calls SilenceSound. Any other second Ctrl-S does nothing. When ParamStr(1) is
@@ -58,7 +58,7 @@ begin
     if SoundMode <> SoundPaused then
     begin
       SoundModeBeforePause := SoundMode;
-      PlaySound(ds2612);
+      PlaySound(SoundStopAll);
       SoundMode := SoundPaused;
     end
     else if SoundModeBeforePause in [ResumeIfSaved0, ResumeIfSaved1] then

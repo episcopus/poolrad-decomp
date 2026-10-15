@@ -40,7 +40,7 @@ const
   ModeApply = 0;                { the Mode of a handler call that applies or checks the affect }
   ModeRemove = 1;               { the Mode of a handler call when the affect is removed }
   AffectSize = 9;               { SizeOf(TAffect) }
-  CombatViewMode = 5;           { ds49F3 during a combat (RunCombat sets it, whitepaper 5.5) }
+  CombatViewMode = 5;           { ViewMode during a combat (RunCombat sets it, whitepaper 5.5) }
   StatusOkay = 0;
   StatusFled = 3;
   StatusUnconscious = 4;
@@ -116,7 +116,7 @@ end;
 { ovl24:0160. Runs one affect's hook: when Who has the affect its handler is called (mode 0). For
   the four affects $15, $2D, $2E and $31 that act around their bearer it is enough that another
   member of the party list has it and, in combat, reaches Who (ScanTargets from the bearer, 6
-  squares for $31, 1 for the others); the ovl30 sort table ds6718 is saved and restored around the
+  squares for $31, 1 for the others); the ovl30 sort table SortEntries is saved and restored around the
   scan. }
 procedure RunAffectHook(Who: PCharacter; AffectId: Byte);
 var
@@ -128,25 +128,25 @@ var
   Range: Byte;
 begin
   Found := False;
-  Other := PCharacter(ds5D96);
+  Other := PCharacter(PartyListHead);
   if HasAffect(Who, AffectId, Affect) then
     Found := True
   else if AffectId in [$15, $2D, $2E, $31] then
   begin
-    Move(ds6718[1], Saved, SizeOf(Saved));
+    Move(SortEntries[1], Saved, SizeOf(Saved));
     while (Other <> nil) and not Found do
     begin
       if HasAffect(Other, AffectId, Affect) then
       begin
-        if ds49F3 = CombatViewMode then
+        if ViewMode = CombatViewMode then
         begin
           if AffectId = $31 then
             Range := 6
           else
             Range := 1;
           ScanTargets(CombatantX(Other), CombatantY(Other), Range, $FF, CombatantKind(Other), CombatMap);
-          for I := 1 to ds6718[0].Val do
-            if ds6718[I].Head = CombatantIndex(Who) then
+          for I := 1 to SortEntries[0].Val do
+            if SortEntries[I].Head = CombatantIndex(Who) then
               Found := True;
         end
         else
@@ -154,7 +154,7 @@ begin
       end;
       Other := Other^.Next;
     end;
-    Move(Saved, ds6718[1], SizeOf(Saved));
+    Move(Saved, SortEntries[1], SizeOf(Saved));
   end;
   if Found then
     CallAffectHandler(AffectId, Who, Affect, ModeApply);
@@ -441,9 +441,9 @@ begin
     RunAffectHooks(HookAttacker, Attacker);
     RunAffectHooks(HookTarget, Target);
     if Attacker^.Side = SideParty then
-      SideBonus := ds49D6^[VarSideBonusParty]
+      SideBonus := GameVars2^[VarSideBonusParty]
     else
-      SideBonus := ds49D6^[VarSideBonusMonsters];
+      SideBonus := GameVars2^[VarSideBonusMonsters];
     if AttackRoll >= 0 then
       if AttackRoll + Attacker^.HitAdjust + SideBonus >= Needed then
         RollToHit := True;
@@ -563,14 +563,14 @@ begin
     RemoveAffect(Who, DeathAffects[I], nil);
 end;
 
-{ ovl24:1041 (e14). Purpose unknown: removes the two affects of ds0C23 ($4A and $4B, the last two
+{ ovl24:1041 (e14). Purpose unknown: removes the two affects of ExtraDeathAffects ($4A and $4B, the last two
   of DeathAffects too) from Who; an entry of the overlay, its callers are not decompiled yet. }
 procedure ovl24_e14(Who: PCharacter);
 var
   I: Byte;
 begin
   for I := 1 to 2 do
-    RemoveAffect(Who, ds0C23[I], nil);
+    RemoveAffect(Who, ExtraDeathAffects[I], nil);
 end;
 
 { ovl24:1081 (e15). When Who has the affect: shows 'is Cured', removes it and returns True;
@@ -690,7 +690,7 @@ begin
       Msg := Msg + 'from Magic';
     ShowHitMessage(Who, 0, Msg);
     ApplyDamage(Who, DamageAmount);
-    if ds49F3 = CombatViewMode then
+    if ViewMode = CombatViewMode then
     begin
       Who^.Combat^.CanCast := 0;
       if Who^.Combat^.PendingSpell > 0 then
@@ -708,7 +708,7 @@ begin
       if Who^.Status in [6, 7, 8] then
         Msg := 'is killed';
       ShowCharacterMessage(Who, Msg, GlyphRow + 1, 0);
-      if ds49F3 <> CombatViewMode then
+      if ViewMode <> CombatViewMode then
         DelayByGameSpeed
       else
       begin
@@ -774,7 +774,7 @@ begin
       begin
         if Who^.Status = StatusDying then
           Who^.Status := StatusUnconscious;
-        if (Who^.Status = StatusUnconscious) and (ds49F3 <> CombatViewMode) then
+        if (Who^.Status = StatusUnconscious) and (ViewMode <> CombatViewMode) then
           CallAffectHandler(AffectRevival, Who, nil, ModeRemove);
       end;
       HealCharacter := True;
@@ -793,7 +793,7 @@ begin
     Who^.Status := StatusOkay;
     Who^.Flag10D := 1;
     Who^.Flag11B := HitPoints;
-    if ds49F3 = CombatViewMode then
+    if ViewMode = CombatViewMode then
       ShowCursorOn(Who, 3, 0);
     if Who^.Side = SideMonsters then
       Msg := 'stands up and grins'

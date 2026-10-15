@@ -38,7 +38,7 @@ type
     Tail: array[0..20000] of Byte;  { +$17: the tile bytes, indexed by a byte times ByteSize }
   end;
   { The monster picture-bank tables a loaded monster's appearance is picked from: a view of the
-    ds08C5-region byte table (POOLVARS, whose ds08C5[Figure[0]] is the CHEAD/CBODY suffix) with the
+    FigureSuffixChars-region byte table (POOLVARS, whose FigureSuffixChars[Figure[0]] is the CHEAD/CBODY suffix) with the
     head bank table at +2 and the four body bank tables at +$12, +$1C, +$26 and +$30. AddMonsterToParty
     indexes each by Who^.B9E * its stride plus a RollDice. The first two bytes are the suffix
     table's. }
@@ -55,7 +55,7 @@ type
   end;
 
 var
-  MonsterBanks: TMonsterBanks absolute ds08C5;  { the ds08C5 picture-bank tables; see TMonsterBanks }
+  MonsterBanks: TMonsterBanks absolute FigureSuffixChars;  { the FigureSuffixChars picture-bank tables; see TMonsterBanks }
 
 const
   Yellow = $0E;        { EGA text colour of the disk prompt (the message colour OVL00 also uses) }
@@ -68,7 +68,7 @@ const
 
 { ovl17:0010. Reads the save disk's charlist.txt (SaveDir + 'charlist.txt') and builds List as the
   menu list of the saved characters: one 46-byte menu line per line of that file, in file order.
-  A name a party member (the ds5D96 list) already carries is prefixed '* ', so the menu shows who
+  A name a party member (the PartyListHead list) already carries is prefixed '* ', so the menu shows who
   is already in the party. Does nothing (List stays nil) when the file is missing. Reads SaveDir
   and the party list; writes List; side effects: the disk prompt (CreateSaveDir) and the heap (one
   menu line per saved character). Called by ovl16's character menu and by SaveCharacter (save one
@@ -77,7 +77,7 @@ procedure ReadSavedCharacterList(var List: PMenuLine);
 var
   SavedLine: PMenuLine;         { the menu line built for the line just read }
   Last: PMenuLine;              { the last line appended, the list's tail }
-  Who: PCharacter;              { walks the party list ds5D96 }
+  Who: PCharacter;              { walks the party list PartyListHead }
   Names: Text;                  { the opened charlist.txt }
 begin
   List := nil;
@@ -100,7 +100,7 @@ begin
       Last := Last^.Next;
     end;
     ReadLn(Names, Last^.Text);
-    Who := PCharacter(ds5D96);
+    Who := PCharacter(PartyListHead);
     while (Who <> nil) and (Who^.Name <> Last^.Text) do
       Who := Who^.Next;
     if Who <> nil then
@@ -157,7 +157,7 @@ end;
 { ovl17:032F. Combines two in-memory pictures, Dest and Source: ORs the tail bytes (the tile ids) of
   Source into Dest and ANDs its pixel bytes into Dest, so Source masks Dest. On the EGA adapter
   (VideoAdapter 1) the tail is ORed over Source^.ByteSize bytes and only the first
-  ds5E5A[11].FirstPic^.ByteSize div 4 pixel bytes are ANDed; on the other two adapters (0 and 2)
+  PictureSlots[11].FirstPic^.ByteSize div 4 pixel bytes are ANDed; on the other two adapters (0 and 2)
   both run over Source^.ByteSize bytes. Called by BuildCharacterIcon for each mirrored half of the character
   head and body pictures (slot 11 holds the reference picture). No heap or file effect. }
 procedure MergePictureData(Source, Dest: Pointer);
@@ -179,7 +179,7 @@ begin
       begin
         for I := 0 to PMemPic(Source)^.ByteSize - 1 do
           PMemPic(Dest)^.Tail[I] := PMemPic(Dest)^.Tail[I] or PMemPic(Source)^.Tail[I];
-        Count := PMemPic(ds5E5A[11].FirstPic)^.ByteSize div 4 - 1;
+        Count := PMemPic(PictureSlots[11].FirstPic)^.ByteSize div 4 - 1;
         for I := 0 to Count do
           PByteArray(PMemPic(Dest)^.Pixels)^[I] :=
             PByteArray(PMemPic(Dest)^.Pixels)^[I] and PByteArray(PMemPic(Source)^.Pixels)^[I];
@@ -188,11 +188,11 @@ begin
 end;
 { ovl17:0482. Builds the selected character's (SelectedCharacter) combat icon picture. It selects
   8X8D tile set 3, loads the character's CHEAD picture (block Sel^.CHeadBlock, the set name given
-  the suffix ds08C5[Sel^.Figure[0]]) into picture slot 11 and its CBODY picture (block
-  Sel^.CBodyBlock) into the character's icon slot (ds5E5A[Sel^.CombatIcon]), then merges the CHEAD
+  the suffix FigureSuffixChars[Sel^.Figure[0]]) into picture slot 11 and its CBODY picture (block
+  Sel^.CBodyBlock) into the character's icon slot (PictureSlots[Sel^.CombatIcon]), then merges the CHEAD
   halves into the CBODY halves (MergePictureData: OR the tile bytes, AND the pixels), so the head
   masks the body. When Recolor is set it also builds a 16-entry colour map from the six nibble pairs
-  Sel^.Figure[1..6] through ds3CF5 and applies it to both halves of the icon (RemapPictureColours).
+  Sel^.Figure[1..6] through FigureColourSlots and applies it to both halves of the icon (RemapPictureColours).
   Finally it frees slot 11, restores the tile set and flushes the keyboard. Called by the ovl16
   character menus, by AddMonsterToParty and by LoadGame. }
 procedure BuildCharacterIcon(Recolor: Boolean);
@@ -206,10 +206,10 @@ begin
   SelectTileSet(3);
   with SelectedCharacter^ do
   begin
-    LoadPictureSlot('CHEAD' + ds08C5[Figure[0]], CHeadBlock, 11);
-    LoadPictureSlot('CBODY' + ds08C5[Figure[0]], CBodyBlock, CombatIcon);
-    MergePictureData(ds5E5A[11].FirstPic, ds5E5A[CombatIcon].FirstPic);
-    MergePictureData(ds5E5A[11].SecondPic, ds5E5A[CombatIcon].SecondPic);
+    LoadPictureSlot('CHEAD' + FigureSuffixChars[Figure[0]], CHeadBlock, 11);
+    LoadPictureSlot('CBODY' + FigureSuffixChars[Figure[0]], CBodyBlock, CombatIcon);
+    MergePictureData(PictureSlots[11].FirstPic, PictureSlots[CombatIcon].FirstPic);
+    MergePictureData(PictureSlots[11].SecondPic, PictureSlots[CombatIcon].SecondPic);
     if Recolor then
     begin
       for I := 0 to 15 do
@@ -219,11 +219,11 @@ begin
       end;
       for I := 1 to 6 do
       begin
-        MapTo[ds3CF5[I]] := Figure[I] and $0F;
-        MapTo[ds3CF5[I] + 8] := (Figure[I] and $F0) shr 4;
+        MapTo[FigureColourSlots[I]] := Figure[I] and $0F;
+        MapTo[FigureColourSlots[I] + 8] := (Figure[I] and $F0) shr 4;
       end;
-      RemapPictureColours(@MapFrom, @MapTo, 0, 0, ds5E5A[CombatIcon].FirstPic);
-      RemapPictureColours(@MapFrom, @MapTo, 0, 0, ds5E5A[CombatIcon].SecondPic);
+      RemapPictureColours(@MapFrom, @MapTo, 0, 0, PictureSlots[CombatIcon].FirstPic);
+      RemapPictureColours(@MapFrom, @MapTo, 0, 0, PictureSlots[CombatIcon].SecondPic);
     end;
     FreePictureSlot(11);
     RestoreTileSet;
@@ -397,7 +397,7 @@ end;
   descriptor: Figure[0] is 1 for the races 1/3/5 and 2 for 2/4/6/7, Figure[1..3] and Figure[5..6] are
   two random nibble pairs from RollDice(1, 6), and Figure[4] is $C4. Then it loads MON<set>SPC.DAX
   and MON<set>ITM.DAX block Kind and copies their 9-byte affect and 63-byte item records out of the
-  buffer (the offset advances to the block size) into GetMem chains. Sets ds557C while the lists are
+  buffer (the offset advances to the block size) into GetMem chains. Sets OpenNoPrompt while the lists are
   read and flushes the keyboard. Called by ovl07 LoadCharacter and AddMonsterToParty. }
 procedure LoadMonster(Kind: Byte; Who: Pointer);
 var
@@ -441,7 +441,7 @@ begin
     end;
   end;
   FreeMem(Block, Size);
-  ds557C := 1;
+  OpenNoPrompt := 1;
   LoadDaxBlock('MON' + CharSet + 'SPC', '.dax', Kind, Size, Block);
   if Size <> 0 then
   begin
@@ -478,20 +478,20 @@ begin
     until Offset >= Size;
     FreeMem(Block, Size);
   end;
-  ds557C := 0;
+  OpenNoPrompt := 0;
   FlushKeyboard;
 end;
 { ovl17:1262. Adds a monster of kind Kind to the party. If the party already holds eight members
-  (ds49D6^[PartySize] > 7) it does nothing. Otherwise it allocates a 285-byte character and has
+  (GameVars2^[PartySize] > 7) it does nothing. Otherwise it allocates a 285-byte character and has
   LoadMonster fill it, gives it a random byte at +$AB (Random(256)), collects the classes with a
   positive level (Who^.ClassLevels[0..6]) into Pick[] (Pick[1] = 2 when none qualifies), rolls one of
-  them (RollDice(1, Count)) and picks the monster's body picture bank from the ds08C5-region
+  them (RollDice(1, Count)) and picks the monster's body picture bank from the FigureSuffixChars-region
   MonsterBanks tables by the roll and Who^.B9E (the body table of class 0, 5, 6 or the default), and
   its head bank from the head table the same way. Then AddPartyMember adds it and
   BuildCharacterIcon(True) rebuilds the combat icon. Called by AddComputerMemberCommand. }
 procedure AddMonsterToParty(Kind: Byte);
 const
-  PartySize = 830;              { party member count, a word of the ds49D6 game variable block }
+  PartySize = 830;              { party member count, a word of the GameVars2 game variable block }
   LastClass = 6;                { the highest ClassLevels index the class scan tests }
 var
   Unused: Pointer;              { QUIRK ovl17:1262: a spare far pointer the original never reads or writes }
@@ -502,7 +502,7 @@ var
     writes past the array into Count, I and Who for a monster with more than four classes. }
   Pick: array[1..4] of Byte;    { the classes with a positive level, 1-based }
 begin
-  if ds49D6^[PartySize] > 7 then Exit;
+  if GameVars2^[PartySize] > 7 then Exit;
   GetMem(Who, 285);
   LoadMonster(Kind, Who);
   with Who^ do
@@ -532,37 +532,37 @@ begin
   AddPartyMember(Who);
   BuildCharacterIcon(True);
 end;
-{ ovl17:1446. Adds one character to the party list (ds5D96) and gives it a combat map icon. Member
+{ ovl17:1446. Adds one character to the party list (PartyListHead) and gives it a combat map icon. Member
   points to the TCharacter to add: its Next is left nil. When the list is empty it becomes the head
   and SelectedCharacter; otherwise it is linked at the tail. Then every icon number 0..7 a member
   already holds is marked Used[], and SelectedCharacter (set to Member) gets the lowest number no one
   holds. Finally the party size word is counted up and the character's class statistics are
   recalculated. Reads the party list and SelectedCharacter; side effects: the party list,
-  SelectedCharacter^.CombatIcon, ds49D6^[VarPartySize], and whatever RecalcClassStats writes. }
+  SelectedCharacter^.CombatIcon, GameVars2^[VarPartySize], and whatever RecalcClassStats writes. }
 procedure AddPartyMember(Member: PCharacter);
 const
   FirstIcon = 0;                { lowest combat map icon number a party member can hold }
   IconCount = 8;                { the icon numbers run 0..IconCount-1 (the free-icon loop bound) }
-  VarPartySize = 830;           { party member count, a word of the ds49D6 game variable block }
+  VarPartySize = 830;           { party member count, a word of the GameVars2 game variable block }
 var
   Who: PCharacter;              { walks the party list }
   Used: array[FirstIcon..IconCount - 1] of Boolean;  { icon numbers already held by a member }
 begin
   Member^.CombatIcon := $FF;    { no icon until one is picked below (QUIRK ovl17:1446) }
-  if PCharacter(ds5D96) = nil then
+  if PCharacter(PartyListHead) = nil then
   begin
-    ds5D96 := LongInt(Member);
+    PartyListHead := LongInt(Member);
     SelectedCharacter := Member;
   end
   else
   begin
-    Who := PCharacter(ds5D96);
+    Who := PCharacter(PartyListHead);
     while Who^.Next <> nil do
       Who := Who^.Next;
     Who^.Next := Member;
   end;
   FillChar(Used, SizeOf(Used), 0);
-  Who := PCharacter(ds5D96);
+  Who := PCharacter(PartyListHead);
   while Who <> nil do
   begin
     if Who^.CombatIcon in [FirstIcon..IconCount - 1] then
@@ -576,31 +576,31 @@ begin
     while (CombatIcon < IconCount) and Used[CombatIcon] do
       Inc(CombatIcon);
   end;
-  Inc(ds49D6^[VarPartySize]);
+  Inc(GameVars2^[VarPartySize]);
   RecalcClassStats(Member);
 end;
 { ovl17:1602. Loads a saved game from the save disk. It scans the letters A..J for
   SaveDir + 'savgam<letter>.dat', collects the found ones into the 'Load Which Game: ' prompt
   (ReadPromptChoice, Escape cancels) and prompts again until the player picks a slot whose file
   exists. Then it opens the slot through OpenGameFile and reads the game state back: TileSet, the
-  three word blocks (GameVars, ds49D6, ds49DA), the ECL code, the party map bytes, AreaViewKind, the
+  three word blocks (GameVars, GameVars2, GameVars3), the ECL code, the party map bytes, AreaViewKind, the
   view mode, and the party list (a member count and the 8 'CHRDAT<slot><n>' names). It restores
   GameSpeed and the picture flags, loads every named member through LoadCharacterFile and
   AddPartyMember, erases the members' old standalone .cha/.itm/.spc files, rebuilds every member's
   combat icon (BuildCharacterIcon(True)), then restores the view: TileSet from $6E12, and either the
   3D view (AreaViewKind < 2: Load3DMap(GameVars^[VarGeoBlock]) and the three wall sets through
-  LoadWallSet, the ds6AAEWords pairs whose block id is not negative) or, for a map view
+  LoadWallSet, the WallSetSlotPairs pairs whose block id is not negative) or, for a map view
   (AreaViewKind > 1), LoadPictureSlot('ICON', 0, 11), which loads ICON block 0 into picture slot 11,
   the scratch slot BuildCharacterIcon freed (the map view's party marker pictures are slots 9..11,
   ovl26 DrawPartyMarker). It animates the doors when the river gate is set, and flushes the
   keyboard. Reads the save files, SaveDir and the party list; writes the game state,
-  ds5D96, SelectedCharacter and the party list. Called by RunCharacterMenu. }
+  PartyListHead, SelectedCharacter and the party list. Called by RunCharacterMenu. }
 procedure LoadGame;
 var
   MemberFiles: array[1..8] of string[40];  { the 'CHRDAT<slot><n>' names read from the save }
   SaveFile: file;               { the 'savgam<slot>.dat' save file and the erased member files }
   I: Byte;                      { the member loops and the wall-set loop }
-  Who: PCharacter;              { the loaded member, then the walker of the party list ds5D96 }
+  Who: PCharacter;              { the loaded member, then the walker of the party list PartyListHead }
   FileName: string[40];         { a member file's base name (its DOS-cleaned name) }
   ReadCount: Word;              { the BlockRead record count }
   MemberCount: Byte;            { the party member count read from the save }
@@ -625,12 +625,12 @@ begin
   DrawTextAt(0, $18, $A, 'Loading...Please Wait');
   BlockRead(SaveFile, TileSet, 1, ReadCount);
   BlockRead(SaveFile, GameVars^, $800, ReadCount);
-  BlockRead(SaveFile, ds49D6^, $800, ReadCount);
-  BlockRead(SaveFile, ds49DA^, $400, ReadCount);
+  BlockRead(SaveFile, GameVars2^, $800, ReadCount);
+  BlockRead(SaveFile, GameVars3^, $400, ReadCount);
   BlockRead(SaveFile, EclCode^, $1E00, ReadCount);
   BlockRead(SaveFile, PartyMapColumn, 5, ReadCount);
   BlockRead(SaveFile, AreaViewKind, 1, ReadCount);
-  BlockRead(SaveFile, ds49F3, 1, ReadCount);
+  BlockRead(SaveFile, ViewMode, 1, ReadCount);
   BlockRead(SaveFile, MemberCount, 1, ReadCount);
   BlockRead(SaveFile, MemberFiles, $148, ReadCount);
   Close(SaveFile);
@@ -649,7 +649,7 @@ begin
       CreateSaveDir;
     end;
   end;
-  Who := PCharacter(ds5D96);
+  Who := PCharacter(PartyListHead);
   while Who <> nil do
   begin
     FileName := SaveDir + MakeDosFileName(DeleteAllOccurrences(Who^.Name, '.'));
@@ -670,13 +670,13 @@ begin
     end;
     Who := Who^.Next;
   end;
-  SelectedCharacter := PCharacter(ds5D96);
+  SelectedCharacter := PCharacter(PartyListHead);
   while SelectedCharacter <> nil do
   begin
     BuildCharacterIcon(True);
     SelectedCharacter := SelectedCharacter^.Next;
   end;
-  SelectedCharacter := PCharacter(ds5D96);
+  SelectedCharacter := PCharacter(PartyListHead);
   TileSet := VarsAt6B00^[$6E12];
   if AreaViewKind < 2 then
     Load3DMap(GameVars^[VarGeoBlock]);
@@ -685,10 +685,10 @@ begin
   else
     for I := 1 to 3 do
     begin
-      ds6AAEWords[I].A := VarsAt4900^[$4AF9 + I];
-      ds6AAEWords[I].B := VarsAt4900^[$4AFC + I];
-      if Integer(ds6AAEWords[I].A) >= 0 then
-        LoadWallSet(ds6AAEWords[I].A, ds6AAEWords[I].B);
+      WallSetSlotPairs[I].A := VarsAt4900^[$4AF9 + I];
+      WallSetSlotPairs[I].B := VarsAt4900^[$4AFC + I];
+      if Integer(WallSetSlotPairs[I].A) >= 0 then
+        LoadWallSet(WallSetSlotPairs[I].A, WallSetSlotPairs[I].B);
     end;
   if GameVars^[VarRiverGate] <> 0 then
     AnimateAreaDoors(0);
@@ -700,18 +700,18 @@ end;
   (showing the disk prompt while the open fails), then writes the whole game state: the three loaded
   wall-set slots (block id and slot) into the ECL variable words at $4AF9 + I and $4AFC + I,
   GameSpeed and the picture flags, TileSet, the three word blocks
-  (GameVars, ds49D6, ds49DA), the ECL code, the party map bytes, AreaViewKind and the view mode. Then
+  (GameVars, GameVars2, GameVars3), the ECL code, the party map bytes, AreaViewKind and the view mode. Then
   it writes the party list to the slot: a one-byte member count and the 8 'CHRDAT<letter><n>' names,
   and finally saves each member with SaveCharacter and erases the member's old standalone .cha/.itm/
-  .spc files. Ends with the heap retry gate ds557D := 1 and clears the prompt line. Reads the slot
-  key, SaveDir, the game state and the party list ds5D96; writes the save files and ds557D. Called by
+  .spc files. Ends with the heap retry gate HeapErrorStop := 1 and clears the prompt line. Reads the slot
+  key, SaveDir, the game state and the party list PartyListHead; writes the save files and HeapErrorStop. Called by
   the heap error handler, MakeCamp, the character menu and SaveAndExit (SaveAndExit). }
 procedure SaveGame;
 var
   MemberFiles: array[1..8] of string[40];  { the 'CHRDAT<slot><n>' name written per party member }
   SaveFile: file;               { the 'savgam<slot>.dat' save file }
   Count: Byte;                  { party member count; also the small game-block loop index }
-  Walk: PCharacter;             { walks the party list ds5D96 }
+  Walk: PCharacter;             { walks the party list PartyListHead }
   NumText: string[1];           { Str(Count) }
   FileName: string[40];         { the member's standalone file name (SaveDir + its DOS name) }
   ExtKey: Byte;                 { ReadPromptChoice's extended-key flag (not used) }
@@ -720,7 +720,7 @@ var
 begin
   repeat
     Key := ReadPromptChoice('Save Which Game: ', 'A B C D E F G H I J', 13, 10, 15, 0,
-      Ord(ds49F3 = 2), ExtKey);
+      Ord(ViewMode = 2), ExtKey);
   until Key in [#0, 'A'..'J'];
   if Key = #0 then Exit;
   CreateSaveDir;
@@ -735,22 +735,22 @@ begin
   DrawTextAt(0, $18, $A, 'Saving...Please Wait');
   for Count := 1 to 3 do
   begin
-    VarsAt4900^[$4AF9 + Count] := ds6AAEWords[Count].A;
-    VarsAt4900^[$4AFC + Count] := ds6AAEWords[Count].B;
+    VarsAt4900^[$4AF9 + Count] := WallSetSlotPairs[Count].A;
+    VarsAt4900^[$4AFC + Count] := WallSetSlotPairs[Count].B;
   end;
   VarsAt4900^[$49FC] := GameSpeed;
   VarsAt4900^[$49FF] := ShowMonsterPics * 2 + ShowPortraits;
   VarsAt6B00^[$6E12] := TileSet;
   BlockWrite(SaveFile, TileSet, 1);
   BlockWrite(SaveFile, GameVars^, $800);
-  BlockWrite(SaveFile, ds49D6^, $800);
-  BlockWrite(SaveFile, ds49DA^, $400);
+  BlockWrite(SaveFile, GameVars2^, $800);
+  BlockWrite(SaveFile, GameVars3^, $400);
   BlockWrite(SaveFile, EclCode^, $1E00);
   BlockWrite(SaveFile, PartyMapColumn, 5);
   BlockWrite(SaveFile, AreaViewKind, 1);
-  BlockWrite(SaveFile, ds49F3, 1);
+  BlockWrite(SaveFile, ViewMode, 1);
   Count := 0;
-  Walk := PCharacter(ds5D96);
+  Walk := PCharacter(PartyListHead);
   while Walk <> nil do
   begin
     Inc(Count);
@@ -761,7 +761,7 @@ begin
   BlockWrite(SaveFile, Count, 1);
   BlockWrite(SaveFile, MemberFiles, $148);
   Close(SaveFile);
-  Walk := PCharacter(ds5D96);
+  Walk := PCharacter(PartyListHead);
   Count := 0;
   while Walk <> nil do
   begin
@@ -786,7 +786,7 @@ begin
     end;
     Walk := Walk^.Next;
   end;
-  ds557D := True;
+  HeapErrorStop := True;
   ClearPromptLine;
 end;
 { ovl17:22D5. Called by ovl03:0BD1 with the current area's ECL file name (GameDir + 'ECL' +

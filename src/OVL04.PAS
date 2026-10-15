@@ -175,7 +175,7 @@ end;
 
 { ovl04:02ED. Cure Disease: the character is diseased when it has one of the six
   DiseaseAffects; otherwise asks first. Charges PriceCureDisease and removes all six, with
-  ds681F set while it does. }
+  RemovingAffects set while it does. }
 procedure CureDisease;
 var
   Affect: Pointer;
@@ -195,9 +195,9 @@ begin
     Answer := ChargeForCure('Cure Disease', PriceCureDisease);
     if Answer = Yes then
     begin
-      ds681F := 1;
+      RemovingAffects := 1;
       for I := 1 to DiseaseCount do RemoveAffect(SelectedCharacter, DiseaseAffects[I], nil);
-      ds681F := 0;
+      RemovingAffects := 0;
     end;
   end;
 end;
@@ -273,10 +273,10 @@ begin
     if Answer = Yes then
       if Dead then
       begin
-        ds681F := 1;
+        RemovingAffects := 1;
         RemoveAffect(Who, AffectRemovedAtRaiseDead, nil);
         RemoveAffect(Who, AffectPoison, nil);
-        ds681F := 0;
+        RemovingAffects := 0;
         Who^.Flag11B := 1;
         Who^.Status := StatusOkay;
         Who^.Flag10D := 1;
@@ -323,18 +323,18 @@ begin
     Answer := ChargeForCure('Neutralize Poison', PriceNeutralizePoison);
     if Answer = Yes then
     begin
-      ds681F := 1;
+      RemovingAffects := 1;
       RemoveAffect(SelectedCharacter, AffectPoison, nil);
       RemoveAffect(SelectedCharacter, AffectRemovedAtNeutralizePoison2, nil);
       RemoveAffect(SelectedCharacter, AffectRemovedAtNeutralizePoison3, nil);
-      ds681F := 0;
+      RemovingAffects := 0;
     end;
   end;
 end;
 
 { ovl04:083A. Remove Curse: the character needs it when one of its items is cursed or it has
   AffectCurse; otherwise asks first. Charges PriceRemoveCurse and hands the character to
-  CastRemoveCurse through ds6C95. }
+  CastRemoveCurse through FirstSpellTarget. }
 procedure RemoveCurse;
 var
   Cursed: Boolean;
@@ -359,7 +359,7 @@ begin
     Answer := ChargeForCure('Remove Curse', PriceRemoveCurse);
     if Answer = Yes then
     begin
-      ds6C95 := SelectedCharacter;
+      FirstSpellTarget := SelectedCharacter;
       CastRemoveCurse;
     end;
   end;
@@ -463,7 +463,7 @@ end;
   ovl04:0F02 is not in the menu text. ReadPromptChoice can return scan letters for extended keys, but
   the physical key that yields B is unknown. Exit with money in the pool asks "Do you want to go back
   and retrieve your money?" ('~Yes ~No') and leaves on No (AskMenu returns position 1); Yes keeps the
-  money in the Temple. On entry it sets ds49F3 to 1, redraws the view and character, clears PooledMoney
+  money in the Temple. On entry it sets ViewMode to 1, redraws the view and character, clears PooledMoney
   and sets MoneyInPool to 0. }
 procedure VisitTemple;
 var
@@ -476,7 +476,7 @@ var
   LeaveAnswer: Byte;      { the choice in the "retrieve your money" question }
   Appraised: Byte;        { set by Appraise (AppraiseGems); nonzero redraws the view }
 begin
-  ds49F3 := 1;
+  ViewMode := 1;
   RedrawView;
   DrawPartyRoster(SelectedCharacter);
   FillChar(PooledMoney, SizeOf(PooledMoney), 0);

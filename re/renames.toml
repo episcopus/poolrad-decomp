@@ -6228,3 +6228,1417 @@ kind = "routine"
 why = "the main program calls it after the character menu (src/POOL.PAS) and quits when it returns; it loops on HandleWildernessKeys and DoWildernessMenu until the party is destroyed (ovl03:32F8)"
 date = "2026-10-14"
 
+[[rename]]
+old = "ds0332"
+new = "FourListedNames"
+kind = "global"
+why = "the four names (rows 1..4) the affect handlers RaiseResistanceAndSave and BoostAttackVsListedTarget compare with the attacked character's name (ovl12:0679)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds0002"
+new = "CodeWheelRecords"
+kind = "global"
+why = "the 13 TCodeWheelEntry records CheckCodeWheel (ovl02) picks one of at random (whitepaper 5.12)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds0382"
+new = "EightListedNamesA"
+kind = "global"
+why = "eight names (rows 1..8) the handlers LowerAttackRollByFour and BoostAttackVsEightListed compare with the attacked character's name (ovl12:0918, 0947)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds0402"
+new = "EightListedNamesB"
+kind = "global"
+why = "eight names (rows 1..8 at DS:0402) CauseDiseaseAndDamage and LowerAttackVsEightListed compare with the attacked character's name (ovl12)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds0447"
+new = "TurnUndeadTable"
+kind = "global"
+why = "the Turn Undead table: a row per undead type and a column per cleric level band (TurnUndead ovl13:122F)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds04B6"
+new = "WildernessPromptWithArea"
+kind = "global"
+why = "prompt string 'Area Cast View Encamp Search Look' HandleWildernessKeys passes to ReadPromptChoice (ovl14)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds04DF"
+new = "WildernessPromptNoArea"
+kind = "global"
+why = "prompt string 'Cast View Encamp Search Look' HandleWildernessKeys passes to ReadPromptChoice when the area key is not offered (ovl14)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds05D6"
+new = "ClassItemBits"
+kind = "global"
+why = "the item-usage bit of each class 0..7 ovl16:056C adds into TCharacter.ClassBits (+$B0)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds05DE"
+new = "ClassTrainingBits"
+kind = "global"
+why = "per class 0..7 the training hall class bits (1 magic-user, 2 cleric, 4 thief, 8 fighter [I] from the image values) TrainCharacter and PayGold test against the hall's mask (ovl16:29AE)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds05F0"
+new = "CharacterMenuHotkeys"
+kind = "global"
+why = "the 'C D M T V A R L S B E J' hotkey line RunCharacterMenu passes to ReadPromptChoice (ovl16:0161)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds0619"
+new = "CharacterMenuSlots"
+kind = "global"
+why = "the eleven TFunctionSlot entries of the training hall function menu (RunCharacterMenu ovl16:0161)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds08C5"
+new = "FigureSuffixChars"
+kind = "global"
+why = "byte table whose entry [Figure[0]] is the CHEAD/CBODY picture file suffix (BuildCharacterIcon ovl17:0482, MergePictureData)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds0900"
+new = "DoorBlockCodesFirst"
+kind = "global"
+why = "the first door block codes of AnimateAreaDoors, bit 7 selects the other bank (ovl18:06B3)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds090B"
+new = "DoorBlockCodesSecond"
+kind = "global"
+why = "the second door block codes of AnimateAreaDoors, same bit 7 flag (ovl18:06B3)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds091D"
+new = "DoorRemapFrom"
+kind = "global"
+why = "the 16-byte source colour record AnimateAreaDoors passes to RemapPictureColours (ovl18:06B3)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds092D"
+new = "DoorRemapToFirst"
+kind = "global"
+why = "the 16-byte target colour record AnimateAreaDoors uses with the first door blocks (ovl18:06B3)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds093D"
+new = "DoorRemapToSecond"
+kind = "global"
+why = "the 16-byte target colour record AnimateAreaDoors uses with the second door blocks (ovl18:06B3)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds094D"
+new = "DoorViewColumns"
+kind = "global"
+why = "the per-step DrawAreaView columns of AnimateAreaDoors, indexed 0..8 (ovl18:06B3)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds095F"
+new = "DoorViewRows"
+kind = "global"
+why = "the per-step DrawAreaView rows of AnimateAreaDoors, indexed 0..8 (ovl18:06B3)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds0C23"
+new = "ExtraDeathAffects"
+kind = "global"
+why = "the two further affects (entries 1..2 at DS:0C24, $4A $4B) ovl24:1041 removes after DeathAffects"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds0C26"
+new = "WallViewIdTable"
+kind = "global"
+why = "the wall view id table: two equal groups of eight ids ShowAreaView and DrawPartyMarker index with the wall index game variables (ovl26)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds0C6C"
+new = "SpriteRemapFrom"
+kind = "global"
+why = "source colour table LoadSpriteList passes to RemapPictureColours (ovl28)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds0C7C"
+new = "SpriteRemapTo"
+kind = "global"
+why = "target colour table LoadSpriteList passes to RemapPictureColours, colour 13 to 0 (ovl28)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds0CD2"
+new = "PictureRemapFrom"
+kind = "global"
+why = "identity colour map LoadPictureSlot passes as the source of RemapPictureColours (ovl32)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds0CE2"
+new = "PictureRemap13To8"
+kind = "global"
+why = "target colour map (colour 13 to 8) LoadPictureSlot and FreePictureSlot use for pictures of a tile set (ovl32)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds0CF2"
+new = "PictureRemap13To0"
+kind = "global"
+why = "target colour map (colour 13 to 0) LoadPictureSlot and FreePictureSlot use for ICON pictures (ovl32)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds0D02"
+new = "PixelsByColour2Bit"
+kind = "global"
+why = "per colour C 0..3 the byte of four 2-bit pixels of C FillPictureRect fills with (res07)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds0D06"
+new = "PixelsByColour4Bit"
+kind = "global"
+why = "per colour C the byte of two 4-bit pixels of C (C * $11) FillPictureRect fills with (res07)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds10A7"
+new = "ItemNameParts"
+kind = "global"
+why = "256 string[20] item name parts FormatItemLine appends, indexed by TMenuLine.NameNum (res12)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds25C0"
+new = "LinePatternTable"
+kind = "global"
+why = "the 3x3 line pattern table StepLine reads at [StepY+1, StepX+1] (ovl30)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds25D5"
+new = "TextColourMap4"
+kind = "global"
+why = "four-colour map of the 16 text colours AllocHeapBlock, WriteCharsAt and DrawGlyph use for VideoAdapter 0 (res05, res06)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds25FA"
+new = "PixelBitsByColour"
+kind = "global"
+why = "per palette colour and pixel position the byte UnpackPicturePixels ORs into a picture byte for VideoAdapter 0 (res07)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds260A"
+new = "FillRectPalette"
+kind = "global"
+why = "8-byte palette FillPictureRect copies, passed by DrawWallDescriptors and EditCharacterIcon (ovl29, ovl16)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds2618"
+new = "SoundSpellDefault"
+kind = "global"
+why = "PlaySound argument CastChosenSpell uses for a spell without its own sound, CastSleep and CastHoldPerson too (ovl22)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds261A"
+new = "SoundMissMessage"
+kind = "global"
+why = "PlaySound argument ShowHitMessage uses when Flag is clear (res12)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds261C"
+new = "SoundHitMessage"
+kind = "global"
+why = "PlaySound argument ShowHitMessage uses when Flag is set, a hit (res12)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds261E"
+new = "SoundCombatantDies"
+kind = "global"
+why = "PlaySound argument RemoveCombatant uses when a combatant dies (ovl31, whitepaper 5.5)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds2620"
+new = "SoundAttackLeaves"
+kind = "global"
+why = "PlaySound argument ShowAttackAnimation uses as the attack leaves the attacker (ovl13:26B0)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds262C"
+new = "SoundAttackArrives"
+kind = "global"
+why = "PlaySound argument ShowAttackAnimation uses as the attack reaches the target (ovl13:26B0)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds2622"
+new = "SoundNoAction"
+kind = "global"
+why = "PlaySound argument ResolveCombatantAttacks passes for a helpless target and DoWildernessMenu when the move is not made (ovl13, ovl14)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds2624"
+new = "SoundLightningBolt"
+kind = "global"
+why = "PlaySound argument CastChosenSpell uses for the Lightning Bolt spell $33 (ovl22)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds2626"
+new = "SoundAttackMissed"
+kind = "global"
+why = "PlaySound argument ResolveCombatantAttacks passes when no attack landed (ovl13:1774)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds2628"
+new = "SoundStep"
+kind = "global"
+why = "PlaySound argument for a party or combatant step or turn (MoveParty, HandleWildernessKeys, StepCombatant, ovl03 script action 8)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds262A"
+new = "SoundFireball"
+kind = "global"
+why = "PlaySound argument CastChosenSpell uses for the Fireball spell $2F and the script sound action 10 (ovl22, ovl03:2CCF)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds272C"
+new = "WallSymbolFloor"
+kind = "global"
+why = "LoadWallSet adds the bank's symbol offset to wall tile numbers at or above this word (ovl29)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds2745"
+new = "WalkTileTable"
+kind = "global"
+why = "the 256-entry tile table WalkLine reads for the bound of a cell (ovl30)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds286F"
+new = "HeadPictureNumbers"
+kind = "global"
+why = "the HEAD picture number per bank ShowHeadBodyWindow converts with Str (ovl28)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds287D"
+new = "BodyPictureNumbers"
+kind = "global"
+why = "the BODY picture number per bank ShowHeadBodyWindow converts with Str (ovl28)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds290D"
+new = "CloudArmDirections"
+kind = "global"
+why = "the direction of each cloud arm 1..4 ClearCloud steps along (ovl12:0CC3)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds3CF5"
+new = "FigureColourSlots"
+kind = "global"
+why = "the destination colour of each of the six figure colour pairs CreateCharacter, BuildCharacterIcon and EditCharacterIcon use (ovl16, ovl17)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds3DA3"
+new = "RaceAbilityLimits"
+kind = "global"
+why = "per race a 16-byte row of minimum and maximum of each ability CreateCharacter and ModifyCharacter clamp to (ovl16:056C, 209F)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds3E17"
+new = "RaceClassChoices"
+kind = "global"
+why = "per race the count and the ClassMask numbers a new character may pick (CreateCharacter ovl16:056C)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds3E5B"
+new = "StartingAgeTable"
+kind = "global"
+why = "per race and single class the TAgeEntry of the starting age roll (CreateCharacter ovl16:056C)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds3F31"
+new = "RaceAgeBrackets"
+kind = "global"
+why = "per race the age brackets (columns of the race row) CreateCharacter and RunCharacterMenu use to raise or lower the starting abilities (ovl16)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds3F81"
+new = "ClassAbilityMinimums"
+kind = "global"
+why = "per ClassMask the minimum of each ability CreateCharacter, ModifyCharacter and DropCharacter enforce (ovl16)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds3FE7"
+new = "ClassAlignmentChoices"
+kind = "global"
+why = "per ClassMask the count and the alignment numbers a class may pick (CreateCharacter ovl16:056C)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds4263"
+new = "StartingGoldDice"
+kind = "global"
+why = "per class the dice count and sides of the starting gold CreateCharacter rolls (ovl16:056C)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds442E"
+new = "ScriptRunEnded"
+kind = "global"
+why = "set to 1 by EndCommand and StartEclBlock (ovl03:0001, 0BD1) so the script run ends; RunScriptFrom clears it on entry and exit (ovl03:3171)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds442F"
+new = "ScriptBlockStarted"
+kind = "global"
+why = "set by StartEclBlock (ECL command 32, ovl03:0BD1); RunAreaStep repeats its step while it is set (ovl03:31B4)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds4430"
+new = "ReselectCharacterPending"
+kind = "global"
+why = "StoreCommand and SelectCharacterCommand set it; EndCommand then selects the character at ReselectCharacter (ovl03:0001)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds4436"
+new = "ReselectCharacter"
+kind = "global"
+why = "the character EndCommand makes SelectedCharacter again while ReselectCharacterPending is set (ovl03:0001)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds4431"
+new = "AreaRedrawArmed"
+kind = "global"
+why = "cleared by ECL command 32, set by 33 and 55; EngineActionCommand redraws the area view only while it is set (ovl03:2CCF, 0C74)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds4432"
+new = "RosterRedrawFlagA"
+kind = "global"
+why = "first of three flags that must all be set before LoadAreaGraphics redraws the selected character (ovl03:0C74)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds4433"
+new = "RosterRedrawFlagB"
+kind = "global"
+why = "second of three flags LoadAreaGraphics tests; set by ECL command 55 (ovl03:0C74)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds4434"
+new = "RosterRedrawFlagC"
+kind = "global"
+why = "third of three flags LoadAreaGraphics tests; set by ECL command 33 (ovl03:0C74)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds443C"
+new = "AiLastDirection"
+kind = "global"
+why = "the direction the AI chose last, 8 before its first step (AiTurn ovl09:0B3C, MoveStep 07F2)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds443D"
+new = "AiStepTurns"
+kind = "global"
+why = "counts the turns the AI spent looking for a step (ovl09:07F2)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds443E"
+new = "AiScratch"
+kind = "global"
+why = "cleared with AiLastDirection at the start of the AI turn (ovl09:0B3C); read nowhere else"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds465C"
+new = "LoaderLoopIndex"
+kind = "global"
+why = "loop counter of the loader's three fill loops (StartGame ovl11:0130, 02CA, 035E)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds4660"
+new = "LoaderOpenResult"
+kind = "global"
+why = "result of OpenGameFile the loader reads (ovl11:05A6)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds4661"
+new = "GameDirBackup"
+kind = "global"
+why = "StartGame copies GameDir here before building a file path and back after (ovl11:0469, 05EA)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds468C"
+new = "LoaderFile"
+kind = "global"
+why = "the untyped file the loader reads the ITEMS block from (ovl11:05A1..05E5)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds470C"
+new = "StingCheat"
+kind = "global"
+why = "set by the J key of RunCharacterMenu, the STING cheat (ovl16:0161); TrainCharacter skips its checks while set"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds470E"
+new = "FinalPictureBank"
+kind = "global"
+why = "the FINAL picture bank ShowEndingNarrative loads through LoadPicture and draws (ovl18)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds4712"
+new = "SavedViewMode"
+kind = "global"
+why = "the ViewMode value ShowEndingNarrative saves at its start and restores at its end (ovl18)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds4713"
+new = "FinalPictureNumber"
+kind = "global"
+why = "Str(TileSet): the picture number ShowEndingNarrative appends to FINAL (ovl18)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds471E"
+new = "TimedAffectFlagsFrom0"
+kind = "global"
+why = "the same 72 bytes as TimedAffectFlags[1..72], indexed from 0 (ovl20 rest code)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds4844"
+new = "SpellWorkByteA"
+kind = "global"
+why = "first working byte the ovl22 cast handlers share (CastEnlarge strength, CastSleep hit-point pool, CastSnakeCharm)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds4845"
+new = "SpellWorkByteB"
+kind = "global"
+why = "second working byte paired with SpellWorkByteA (percentile or cost, CastEnlarge, CastSleep, CastDispelMagic)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds49CE"
+new = "FileProbeResult"
+kind = "global"
+why = "IOResult of the last FileExists probe OpenGameFile reads (res05, 0802:0334)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds49D0"
+new = "OfferSaveOnHeapError"
+kind = "global"
+why = "when set, HeapErrorHandler offers SaveGame before quitting (ovl00:0042)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds49D1"
+new = "CfgFlagF"
+kind = "global"
+why = "1 when POOL.CFG line 5 is 'F' (res08_init; ShowTitleScreen and ShowCredits test it; meaning of F/N unknown, whitepaper 2.3)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds49D6"
+new = "GameVars2"
+kind = "global"
+why = "second $800-byte game word block the loader allocates (ovl11:0044), script words $6B00..$6EFF (VarsAt6B00)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds49DA"
+new = "GameVars3"
+kind = "global"
+why = "the $400-byte word block the loader allocates (ovl11:0054), script words $9700..$98FF (VarsAt9700)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds49E3"
+new = "EclStepEntry"
+kind = "global"
+why = "script entry address slot 0 (coab vm_run_1 [H]): RunAreaStep runs it after drawing the area (ovl03:31B4, InitScript ovl07:01B6)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds49E5"
+new = "EclSearchEntry"
+kind = "global"
+why = "script entry address slot 1 (coab SearchLocation [H]): the wilderness L key copies it to EclPC (ovl14, ovl03:31B4)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds49E7"
+new = "EclPreCampEntry"
+kind = "global"
+why = "script entry address slot 2 (coab PreCampCheck [H]): RunCamp runs it before the camp (ovl03:2DD3)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds49E9"
+new = "EclCampInterruptedEntry"
+kind = "global"
+why = "script entry address slot 3 (coab CampInterrupted [H]): EngineActionCommand runs it after the camp when EndCamp is left set (ovl03:2CCF)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds49EB"
+new = "EclInitialEntry"
+kind = "global"
+why = "script entry address slot 4 (coab ecl_initial_entryPoint [H]): runs first in RunAreaStep and RunWilderness (ovl03:31B4, 32F8)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds49F3"
+new = "ViewMode"
+kind = "global"
+why = "the view mode: 1 shop or temple (VisitTemple ovl04:0D0F), 3 map page and 4 3D wall view (ovl03:32F8), 5 combat; read by ovl03, ovl04..ovl19 and res12 (whitepaper 5.20)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds49F4"
+new = "SuppressContinuePrompt"
+kind = "global"
+why = "cleared by the loader; CombatMenu and EndCombatRound ask 'Continue Battle:' only while it is 0 (ovl08:0880, 095C)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds49F8"
+new = "SkipAreaScriptLoad"
+kind = "global"
+why = "cleared by the loader (ovl11:03A6); RunAreaStep, RunWilderness and InitScript skip the area script load while it is set (ovl03, ovl07)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds49F9"
+new = "PreviousAreaViewKind"
+kind = "global"
+why = "RunAreaStep copies AreaViewKind here before setting it to 1 (ovl03:31B4); ApproachEncounter and ShowCloseUp test it"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds49FD"
+new = "ShownHeadBank"
+kind = "global"
+why = "the HEAD bank ShowHeadBody last loaded (ovl07:051C); RedrawView reloads it (res12)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds49FE"
+new = "ShownBodyBank"
+kind = "global"
+why = "the BODY bank ShowHeadBody last loaded (ovl07:0522); RedrawView reloads it (res12)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds4A00"
+new = "WaitAfterTextRun"
+kind = "global"
+why = "set by the ECL text commands while text shows so DrawTextRun waits after each run (ovl03 ShowTextCommand; ShowPagedText res06; EndBattle ovl05:1631)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds4A16"
+new = "ActivePageSegment"
+kind = "global"
+why = "EGA display page segment SetActivePage selects, Page shl 9 + $A000 (res06:0709)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds4A18"
+new = "FillPageSegment"
+kind = "global"
+why = "EGA display page segment SetPageSegment stores for FillPlaneRect (res06:0709:00A0)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds4A1A"
+new = "FillTextPage"
+kind = "global"
+why = "the display page SetPageSegment and FillPlaneRect fill and WriteCharsAt repeats text on for VideoAdapter 1 (res05, res06)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds4A1B"
+new = "TextPage"
+kind = "global"
+why = "the BIOS display page WriteCharsAt and AllocHeapBlock write text to; res08_init sets it to 0 (res05)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds4A1D"
+new = "PreviousVideoMode"
+kind = "global"
+why = "copy of SavedVideoMode taken in res08_init; SetVideoMode and PaletteColor restore it (res07)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds4A24"
+new = "ScreenSaveBuffer"
+kind = "global"
+why = "the screen buffer the loader allocates through AllocatePicture (ovl11:00D4), SaveOfs of the picture draws (res07)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds4A28"
+new = "RowDirtyFlags"
+kind = "global"
+why = "per screen row flag DrawPictureItem sets to 1 when the row changed; $A8 bytes the loader clears (res07, ovl11:00EC)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds4AD0"
+new = "RowFirstChangedCol"
+kind = "global"
+why = "per screen row the byte column of its first changed byte (res07)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds4C20"
+new = "RowFirstChangedOfs"
+kind = "global"
+why = "per screen row the lowest changed byte offset in DrawBuf, starts $FFFF (res07)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds4D70"
+new = "RowLastChangedOfs"
+kind = "global"
+why = "per screen row the highest changed byte offset in DrawBuf, starts 0 (res07)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds4EC0"
+new = "CellTextSegments"
+kind = "global"
+why = "per cell row the text scanline segment ShowPicture and FlushPictureChanges write to (res07; the loader fills it, ovl11)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds5050"
+new = "CellRowOffsets"
+kind = "global"
+why = "per cell row offset table the loader fills (I * 40, ovl11:0186) FlushPictureChanges and ShowPicture add to (res07)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds51E0"
+new = "CellPlaneSegments"
+kind = "global"
+why = "per cell row graphics plane address the loader fills (ovl11) ShowPicture and MirrorPicture write to (res07)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds5370"
+new = "ClipChecksEnabled"
+kind = "global"
+why = "set to 1 by the loader (ovl11:042E); DrawPictureItem and DrawPictureItemClipped run their range checks only while nonzero (res07)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds5377"
+new = "SavedTileSet"
+kind = "global"
+why = "TileSet saved by SelectTileSet and restored by RestoreTileSet (res05); the loader sets it to 1"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds547D"
+new = "DiskDriveLetter"
+kind = "global"
+why = "the drive letter OpenGameFile appends to the 'Insert disk N in drive ' prompt (res05 OpenDaxFile, ovl11:0564)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds557C"
+new = "OpenNoPrompt"
+kind = "global"
+why = "the NoPrompt argument OpenDaxFile and UnpackRle pass to OpenGameFile; set while lists load (res05, ovl07, ovl17)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds557D"
+new = "HeapErrorStop"
+kind = "global"
+why = "the heap error retry gate: HeapErrorHandler asks again until it says to stop; the camp and the loader clear it (ovl00, ovl03, ovl11, ovl16, ovl17)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds5D96"
+new = "PartyListHead"
+kind = "global"
+why = "head of the party list every combatant is on, a far pointer; the single list the combat, camp and script units walk (whitepaper 5.5, 5.20)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds5D9A"
+new = "LootListBoundary"
+kind = "global"
+why = "loot list entry where the battle's item experience count stops (ComputeBattleExperience ovl05:02E5)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds5E1E"
+new = "LoaderReadCount"
+kind = "global"
+why = "BlockRead result count of the loader's ITEMS read (ovl11:05D6)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds5E52"
+new = "SqrPaciBank1"
+kind = "global"
+why = "SQRPACI bank 1 (ovl11:04D6); DrawCellPicture source for PicCode up to 127 (ovl32)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds5E56"
+new = "SqrPaciBank2"
+kind = "global"
+why = "SQRPACI bank 2 (ovl11:04F8); DrawCellPicture source when bit 7 is set (ovl32)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds5E5A"
+new = "PictureSlots"
+kind = "global"
+why = "the table of picture slots, two pointers each (ovl32; the loader clears $D0 bytes, ovl11:02B9)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6718"
+new = "SortEntries"
+kind = "global"
+why = "the ovl30 sort table, element 0 holds the count, filled by SortTable and CollectEnemiesInRange (ovl30, res12)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6810"
+new = "PooledItems"
+kind = "global"
+why = "head of the TMenuLine item list of loot or shop stock a far pointer the loader clears (ovl11:031A); AddLootCommand appends to it (ovl03, ovl05, ovl06)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6814"
+new = "PartySideCount"
+kind = "global"
+why = "zero (or EnemySideCount zero) ends the combat (RunCombat ovl08:009B, EndCombatRound 095C); CombatMenu asks Continue Battle when enemies are gone"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6815"
+new = "EnemySideCount"
+kind = "global"
+why = "the count of the other side; the combat ends when it or PartySideCount is zero (ovl08:009B, 095C)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds681A"
+new = "HookedMoveOrAttacks"
+kind = "global"
+why = "the movement (ComputeMovement doubles it) or attack count the affect hook $12 may change (ovl13:0123, RefreshAttacks; AgeCharacterOnce doubles it, ovl12:0C4B)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds681B"
+new = "CastingSpell"
+kind = "global"
+why = "the spell number CastChosenSpell sets while its handler runs, 0 after (ovl22); affect handlers test it (ovl12:064E)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds681D"
+new = "HookRunning"
+kind = "global"
+why = "brackets the movement and attack hook run: ComputeMovement and RefreshAttacks set it around RunAffectHooks (ovl13:0123)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds681E"
+new = "HookVetoFlag"
+kind = "global"
+why = "a hook sets it to refuse an attack target; AttackTargetAllowed returns True only when it stays 0 (ovl13, ovl12:0918, 2E37)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds681F"
+new = "RemovingAffects"
+kind = "global"
+why = "1 while the Temple and the cure spells remove affects (RemoveAffect; ovl04:0386, 05AB, 07CE), 0 after"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6820"
+new = "SpellAppliedToArea"
+kind = "global"
+why = "set to 1 once the area scan filled the target list (SelectSpellTargets ovl13:20C3, ApplySpellToSide ovl22:0F4F); the images affect does not absorb then (ovl12:09C0)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6821"
+new = "RedrawItemWindow"
+kind = "global"
+why = "set to 1 by affect handlers that change an item (ovl12:302D); RunItemMenu redraws the Items window while it is nonzero (ovl19)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6823"
+new = "AvoidedAttackCounter"
+kind = "global"
+why = "decremented every time an attack is avoided (AvoidDistantAttack ovl12:0FAC)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6825"
+new = "MoraleScratch"
+kind = "global"
+why = "AI morale scratch CheckMorale computes from B84 and compares with the percentage of hit points lost (ovl09:10D7, ovl12 handlers)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6826"
+new = "HandlerCombatant"
+kind = "global"
+why = "combatant pointer the affect handlers share as scratch: the affect $4A handler stores the combatant it attacks here (ovl13:3A86, ovl12:013B)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6988"
+new = "MonsterBreathVector"
+kind = "global"
+why = "set to @MonsterBreath by InitSpellHandlers (ovl22:37A1); no routine reads it"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6A5C"
+new = "GeoBlock"
+kind = "global"
+why = "the $400-byte GEO block the loader allocates (ovl11:0094); GeoCells is its cell-byte view (ovl14)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6A60"
+new = "WallDescriptor1"
+kind = "global"
+why = "wall view descriptor 1 of 4, set by SetWallDescriptors and ShowAreaView (ovl26, ovl29)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6A61"
+new = "WallDescriptor2"
+kind = "global"
+why = "wall view descriptor 2 of 4, ShowAreaView fills it from SpecialViewCode1 while SpecialViewGate is set (ovl26)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6A62"
+new = "WallDescriptor3"
+kind = "global"
+why = "wall view descriptor 3 of 4, ShowAreaView fills it from SpecialViewCode1 while SpecialViewGate is set (ovl26)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6A63"
+new = "WallDescriptor4"
+kind = "global"
+why = "wall view descriptor 4 of 4, ShowAreaView fills it from SpecialViewCode2 while SpecialViewGate is set (ovl26)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6AB0"
+new = "PartyCellWallId"
+kind = "global"
+why = "WallIdAt's result for the party cell and facing, set by EngineActionCommand and MoveParty (ovl03:2CCF, ovl14)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6AB1"
+new = "PartyCellEventByte"
+kind = "global"
+why = "the event byte of the party's map cell from EventByteAt, bit 7 = interior (ovl03:31B4, ovl14, ovl26)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6AFB"
+new = "LoadSlots"
+kind = "global"
+why = "the 5-byte TLoadSlot table; the loader sets entries 1 and 2 to Kind $FF and Addr nil (ovl11:02CA..0302)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6B01"
+new = "HeadSpriteBank"
+kind = "global"
+why = "the loaded HEAD sprite bank (LoadHeadBodySprites, ShowHeadBodySprites ovl28)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6B06"
+new = "BodySpriteBank"
+kind = "global"
+why = "the loaded BODY sprite bank (LoadHeadBodySprites, ShowHeadBodySprites ovl28)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6B0A"
+new = "LastSpriteFile"
+kind = "global"
+why = "the last picture file LoadSpriteList loaded; cleared by the loader and FreeSpriteList (ovl28, ovl11:043D)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6B1C"
+new = "LastSpriteBank"
+kind = "global"
+why = "the block of the last LoadSpriteList load, $FF when none (ovl28, ovl11:0442)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6B84"
+new = "SpellPickerPointer"
+kind = "global"
+why = "the DS:6B84 block's element 0 as a far pointer: RunCombat stores @SelectSpellTargets, EndCombat @ChooseSpellTargets (ovl08:0085, 0069)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6C91"
+new = "SpellTargets"
+kind = "global"
+why = "the 1-based spell target list of PCharacter SelectSpellTargets and ChooseSpellTargets collect (ovl13:20C3, ovl22)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6C94"
+new = "SpellTargetCount"
+kind = "global"
+why = "the number of entries in SpellTargets (ovl13:20C3, ovl22:08C3)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6C95"
+new = "FirstSpellTarget"
+kind = "global"
+why = "entry 1 of the spell target list, also the character Remove Curse hands to CastRemoveCurse (ovl04:08FA)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6DB5"
+new = "PickedSpellCharacter"
+kind = "global"
+why = "the character the spell picker chose; set to nil when the camp opens and closes and before casting (ovl15:04B0, 1FB6; ApplySpellToTargets ovl22)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6DB9"
+new = "SpellAimX"
+kind = "global"
+why = "X of the cell a spell being cast is aimed at (FindSpellTarget ovl13, ChooseSpellTargets ovl22)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6DBA"
+new = "SpellAimY"
+kind = "global"
+why = "Y of the cell a spell being cast is aimed at, the companion of SpellAimX"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6DBB"
+new = "CloudList"
+kind = "global"
+why = "the list of TCombatNode clouds (Stinking Cloud markers) EndCombat frees (ovl08:0006; ClearCloud ovl12:0CC3)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6DDE"
+new = "DoorMenuFlags"
+kind = "global"
+why = "3-byte buffer the loader fills with 1 (ovl11:0342); entry 0 is the Bash menu flag HasRecFlag and DoBash clear (ovl14)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6DDF"
+new = "PickMenuFlag"
+kind = "global"
+why = "Pick menu flag: DoWildernessMenu offers Pick while nonzero (ovl14)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6DE0"
+new = "KnockMenuFlag"
+kind = "global"
+why = "knock menu flag: DoWildernessMenu offers Knock while nonzero and a Knock code record exists (ovl14)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6DE2"
+new = "AllyAttackConfirmed"
+kind = "global"
+why = "set to 1 when the player confirms attacking an ally (ConfirmAttackTarget ovl13:2998)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6DE3"
+new = "CombatRound"
+kind = "global"
+why = "counted up once per combat round (EndCombatRound ovl08:0891); cleared by StartBattle (ovl10)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6DE4"
+new = "CombatantScanList"
+kind = "global"
+why = "combatant index list CollectEnemiesInRange fills and the AI and attack code work through, read from entry 1 (res12, ovl09:02EB, ovl13:0F90)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6E2C"
+new = "AttackSlotCounts"
+kind = "global"
+why = "per attack slot counters, entries 1..2: ResolveCombatantAttacks clears them and PerformAttack spends ammo by them (ovl13)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6E2F"
+new = "SecondMoraleByte"
+kind = "global"
+why = "byte CheckMorale copies into MoraleScratch for a monster's second morale test (ovl09:10D7, ovl13 ShowAttackAnimation)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6E30"
+new = "MagicToggleOn"
+kind = "global"
+why = "the Alt-M Magic On/Off toggle of the combat keys (PlayerTurn ovl08:04A7; UseMagicItem and CastMemorizedSpell test it)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6E31"
+new = "PromptKeyFlag"
+kind = "global"
+why = "the extended-key flag the ovl08 and ovl13 menus pass to ReadPromptChoice"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6E36"
+new = "CombatPicture"
+kind = "global"
+why = "the 24x3 combat picture AllocatePicture makes (StartBattle ovl10); EndCombat frees it with ReleasePicture (ovl08:005A)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6F68"
+new = "SpecialViewCode2"
+kind = "global"
+why = "special view code 2: StartGame sets $DB (ovl11:0435), InitScript $41 (ovl07), WriteVmWord from the script (ovl26 ShowAreaView)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6F69"
+new = "SpecialViewCode1"
+kind = "global"
+why = "special view code 1: StartGame sets $E8 (ovl11), InitScript 9 (ovl07), WriteVmWord from the script (ovl26 ShowAreaView)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6F6A"
+new = "ScriptWordFB"
+kind = "global"
+why = "the word ReadVmWord returns for script address $FB (ovl07:0EC3)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6F6C"
+new = "ScriptWordFC"
+kind = "global"
+why = "the word ReadVmWord returns for script address $FC (ovl07:0ED0)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6F6E"
+new = "ScriptWordB1"
+kind = "global"
+why = "the word ReadVmWord returns for script address $B1 (ovl07:0EB6)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6F7E"
+new = "PreviousOpcode"
+kind = "global"
+why = "the opcode that was current before the last one RunScriptFrom read (ovl03:3171)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6F83"
+new = "EncounterIconSlot"
+kind = "global"
+why = "the icon slot of the encounter group being set up: InitScript sets 8 (ovl07:01F0), ECL command 11 moves it on (ovl03:0450)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds70C6"
+new = "PickerDone"
+kind = "global"
+why = "the Done variable CastMonsterReadMagic and MonsterBreath pass to SpellTargetPicker; cleared by InitScript (ovl22, ovl07:01FB)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds70C7"
+new = "SharedLoopIndex"
+kind = "global"
+why = "a global ShortInt loop counter FreeSpriteList, DrawPictureItem, RemapPictureColours and FillPictureRect share (ovl28, res07)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds84CC"
+new = "ScriptSoundCode"
+kind = "global"
+why = "set by a script write to address $3DE (WriteVmWord ovl07:0D3B); EngineActionCommand plays SoundStep for 8 and SoundFireball for 10 (ovl03:2CCF)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds84D2"
+new = "CharWord6C00Zeroed"
+kind = "global"
+why = "set to 1 when the script writes 0 to the character word $6C00 (SetCharacterVar ovl07:0B99); SelectCharacterCommand tests it with CharWord6B00Zeroed (ovl03)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds84D3"
+new = "CharWord6B00Zeroed"
+kind = "global"
+why = "set to 1 when the script writes 0 to the character word $6B00 (SetCharacterVar ovl07:0A91)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds84DD"
+new = "SavedWord714Low"
+kind = "global"
+why = "the low bit of GameVars2 word 714 RunWilderness saves while the word is forced to 1 (ovl03:32F8); the loader clears it (ovl11:041A)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds84DE"
+new = "GlyphRunInBox"
+kind = "global"
+why = "cleared by the loader and EndCommand, set by ECL command 61; DrawGlyphRunCommand then starts a run below row 13 at column 2 row 5 (ovl03:2B14, 2E7D)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds84DF"
+new = "GlyphRunPending"
+kind = "global"
+why = "set by DrawGlyphRunCommand before it draws a run, cleared by NewLineCommand when set (ovl03:2E7D, 2AEB)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds84E0"
+new = "CloseUpShown"
+kind = "global"
+why = "set while a close-up picture is up (ShowEncounterPicture ovl07, ShowCloseUpCommand ovl03:0856); cleared by EndCommand and the loader"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds84E1"
+new = "CloseUpHidden"
+kind = "global"
+why = "set to 1 when ShowCloseUpCommand hides the close-up (ovl03:0856), cleared by ShowHeadBody (ovl07:0514)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds84E2"
+new = "PictureFrameDirty"
+kind = "global"
+why = "set by DrawGlyphRunCommand when it moves a glyph run to the picture window; EndCommand redraws the picture frame while it is set (ovl03:2E7D, 0001)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds84E3"
+new = "Sprite3DLoaded"
+kind = "global"
+why = "set when ShowEncounterPicture loads the 3D encounter sprite, cleared by ShowCloseUpCommand (ovl07, ovl03:0856)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds84E4"
+new = "WindowClearOnce"
+kind = "global"
+why = "window-clear once flag: HandleWildernessKeys clears the text window and sets it; the text commands clear it (ovl14, ovl03)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds84E5"
+new = "SpecialViewGate"
+kind = "global"
+why = "special view gate: ShowAreaView uses SpecialViewCode1 and 2 only while it is nonzero (ovl26)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds84E6"
+new = "PartyMovedByScript"
+kind = "global"
+why = "set to 1 when the script moves the party or changes its marker (WriteVmWord ovl07:0D6C..0DD6)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds84E7"
+new = "EncounterMembersAdded"
+kind = "global"
+why = "set to 1 by ECL command 11 after it has added members to the party list; AskMenuCommand and ClearEncounterCommand clear it (ovl03:0450, 10D1, 125D)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds84E8"
+new = "HeadBodyWritten"
+kind = "global"
+why = "set to 1 when the script writes game variable $49FD or $49FE (WriteVmWord ovl07:0CAF)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds84E9"
+new = "SkipCloseUpIfNoPics"
+kind = "global"
+why = "EncounterActionCommand sets it so ShowEncounterPicture skips the close-up unless monster pictures are on; the loader clears it (ovl03:1EF8, ovl11:0456)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds84EA"
+new = "LastShownPictureWord"
+kind = "global"
+why = "the head/picture word GameVars2[$2E1] ShowEncounterPicture last showed, so the same close-up is not shown twice (ovl07:0633)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds2612"
+new = "SoundStopAll"
+kind = "global"
+why = "PlaySound argument 255 QuitGame and the Ctrl-S pause path pass: sets both devices to tune 0 (res04, whitepaper 5.14)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds84C8"
+new = "PictureShownFlags"
+kind = "global"
+why = "two bytes of ShowEncounterPicture's TPictureShown flags InitScript and EndCommand clear (ovl07:01DF, ovl03:0001)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6814Sides"
+new = "SideCounts"
+kind = "global"
+why = "PartySideCount and EnemySideCount as an array indexed by side (ovl10:1AC7, ovl09:049F, res12 RecountCombatSides)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6AAEWords"
+new = "WallSetSlotPairs"
+kind = "global"
+why = "the three TPresenceSlot pairs (wall set and block) kept per wall set slot 1..3 and passed to LoadWallSet when the block id is not negative (loader ovl11:0369..0390, LoadGame ovl17, LoadAreaGraphics ovl03:0C74)"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds84CE"
+new = "ScriptWordB8"
+kind = "global"
+why = "word stored by a script write to address $B8 (WriteVmWord ovl07:0D48); no routine reads it"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds84D0"
+new = "ScriptWordB9"
+kind = "global"
+why = "word stored by a script write to address $B9 (WriteVmWord ovl07:0D55); no routine reads it"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6AB2"
+new = "UnreadWord6AB2"
+kind = "global"
+why = "word the loader clears (ovl11:0353) and no routine reads"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds6AB4"
+new = "UnreadWord6AB4"
+kind = "global"
+why = "word the loader sets to 1 (ovl11:0358) and no routine reads"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds547A"
+new = "UnreadWord547A"
+kind = "global"
+why = "word the loader sets to 1 (ovl11:03DA) and no routine reads"
+date = "2026-10-15"
+
+[[rename]]
+old = "ds5378"
+new = "UnreadWord5378"
+kind = "global"
+why = "word the loader sets to 1 (ovl11:03E0) and no routine reads"
+date = "2026-10-15"
+
