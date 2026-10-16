@@ -2223,7 +2223,7 @@ var
                                     resets it at the GameVars2 word VarRestInterruptSteps; the loader clears it
                                     (ovl11:03AD) }
   PartyDestroyed: Byte;  { 1 when no player-run member is left (SettleBattleOutcome); loader clears it }
-  { DS:4A00..4A01: storage of WaitAfterTextRun }
+  { DS:4A00..4A01: storage of DelayPerGlyph }
   Raw4A00: array[0..1] of Byte;
   Regs: Registers;  { registers for Intr calls (QuitGame) }
   ActivePageSegment: Word;  { EGA display page segment SetActivePage selects (Page shl 9 + $A000) }
@@ -2526,8 +2526,8 @@ var
   ScriptSoundCode: Word;  { set by a script write to address $3DE (WriteVmWord, ovl07:0D3B); meaning unknown }
   ScriptWordB8: Word;  { set by a script write to address $B8 (WriteVmWord, ovl07:0D48); meaning unknown }
   ScriptWordB9: Word;  { set by a script write to address $B9 (WriteVmWord, ovl07:0D55); meaning unknown }
-  CharWord6C00Zeroed: Byte;  { set to 1 when the script writes 0 to the character word $6C00 (ovl07:0B99) }
-  CharWord6B00Zeroed: Byte;  { set to 1 when the script writes 0 to the character word $6B00 (ovl07:0A91) }
+  ActiveFlagClearedByScript: Byte;  { set to 1 when the script writes 0 to the character word $6C00 (ovl07:0B99) }
+  NameClearedByScript: Byte;  { set to 1 when the script writes 0 to the character word $6B00 (ovl07:0A91) }
   { DoPick clears it. Overlaps DoorMenuFlags[1]; exact sharing uncertain. }
   DuelMode: Byte;  { nonzero during a duel (EndBattle's duel texts); the loader clears it (ovl11:040B) }
   NoExperienceCount: Byte;  { members that get no share of the battle's experience (ovl05:05EA) }
@@ -2554,7 +2554,7 @@ var
   PictureFrameDirty: Byte;  { cleared by InitScript (ovl07:01C1) }
   { Sprite3DLoaded: set when ShowEncounterPicture loads the 3D sprite; ShowCloseUpCommand (ovl03:0856) clears it. }
   Sprite3DLoaded: Byte;  { 3D encounter sprite loaded; cleared by the loader (ovl11:0433) }
-  WindowClearOnce: Byte;  { window-clear once flag: HandleWildernessKeys clears the text window and sets it }
+  EclWindowCleared: Byte;  { window-clear once flag: HandleWildernessKeys clears the text window and sets it }
   SpecialViewGate: Byte;  { special view gate: ShowAreaView uses SpecialViewCode2/SpecialViewCode1 only while it is nonzero }
   PartyMovedByScript: Byte;  { set to 1 when the script moves the party or changes its marker (ovl07:0D6C..0DD6) }
   { set to 1 by ECL command 11 (ovl03:0450) after it has added members to the party list; meaning unknown }
@@ -2783,7 +2783,7 @@ var
   VarsAt9700: ^TVmWords9700 absolute GameVars3;
   { up: ECL 36, 49, 51, 58 and 61 (ovl03:179B, 2AA2, 2AEB, 271F, 2B14); down: 37, 38 (ovl03:18F8); meaning unknown }
   EclPC: Word absolute ds49ED;  { set to $9900 by the loader (ovl11:03C0) }
-  WaitAfterTextRun: Byte absolute Raw4A00;  { set to 1 by the loader (ovl11:03A1) and by EndBattle (ovl05:1631) }
+  DelayPerGlyph: Byte absolute Raw4A00;  { set to 1 by the loader (ovl11:03A1) and by EndBattle (ovl05:1631) }
   VideoAdapter: Byte absolute ds4A1E;
   ClipChecksEnabled: Byte absolute Raw5370;  { set to 1 by the loader (ovl11:042E) }
   { POOL.CFG line 3: the game directory with trailing backslash (res08_init, whitepaper 2.3). StartGame

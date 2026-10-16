@@ -22,7 +22,7 @@ procedure ReadNumberCommand;
 procedure ReadStringCommand;
 procedure ShowTextCommand;
 procedure ReturnCommand;
-procedure ComparePairsCommand;
+procedure CompareBothPairsCommand;
 procedure RunIfCompared;
 procedure StartEclBlock;
 procedure LoadAreaGraphics;
@@ -196,7 +196,6 @@ const
   { ECL command 54 (ovl03:2B7E): the kind that makes the added member a member of the other side (Side 1),
     and the high bit of its B84 byte that marks a computer-run member. }
   OtherSideKind = $18;
-  ComputerMemberBit = $80;
   { The picture frame of ECL commands 0 and 61 (ovl03:0001, ovl03:2B14): columns 1 to 15 and rows 1 to
     15, a box the close-up picture is drawn inside (columns and rows 3 to 13). }
   PictureFrameLeft = 1;
@@ -373,7 +372,7 @@ end;
   of the party list (Next at +$104), and stops at the position or at the end of the list; a
   position past the end selects nothing. It sets ReselectCharacterPending first, so the next EndCommand (ovl03:0001)
   selects ReselectCharacter again. When the operand's bit 7 is set and the script has just cleared the
-  character's name and status (CharWord6C00Zeroed and CharWord6B00Zeroed, set by SetCharacterVar), the selected member
+  character's name and status (ActiveFlagClearedByScript and NameClearedByScript, set by SetCharacterVar), the selected member
   leaves the party (RemoveSelectedCharacter, as ovl15:18E5 does) and is redrawn (DrawPartyRoster), and
   ReselectCharacterPending is
   cleared when that member is ReselectCharacter. }
@@ -400,14 +399,14 @@ begin
     end;
   if Member <> nil then
     SelectedCharacter := Member;
-  if (RemoveFlag <> 0) and (CharWord6C00Zeroed <> 0) and (CharWord6B00Zeroed <> 0) then
+  if (RemoveFlag <> 0) and (ActiveFlagClearedByScript <> 0) and (NameClearedByScript <> 0) then
   begin
     if ReselectCharacter = SelectedCharacter then
       ReselectCharacterPending := 0;
     RemoveSelectedCharacter(False, True);
     DrawPartyRoster(SelectedCharacter);
-    CharWord6C00Zeroed := 0;
-    CharWord6B00Zeroed := 0;
+    ActiveFlagClearedByScript := 0;
+    NameClearedByScript := 0;
   end;
 end;
 { ovl03:03B4. ECL command 12 (dispatcher ovl03:2F2D, CurrentOpcode 12): shows an encounter picture
@@ -631,13 +630,13 @@ end;
   ShowPagedText. A number operand is turned into its text by WordToText and stored in EclStrings[1];
   a string operand is already there (DecodeOperands). Command 17 (OpContinueText) leaves the window and
   the cursor as they are; command 18 clears the window and puts the cursor at its top left corner first.
-  WindowClearOnce is cleared, and WaitAfterTextRun is set while the text is shown: DrawTextRun then waits after each
+  EclWindowCleared is cleared, and DelayPerGlyph is set while the text is shown: DrawTextRun then waits after each
   glyph. }
 procedure ShowTextCommand;
 begin
   DecodeOperands(1);
-  WindowClearOnce := 0;
-  WaitAfterTextRun := 1;
+  EclWindowCleared := 0;
+  DelayPerGlyph := 1;
   if OperandType[1] < FirstStringOperandType then
     EclStrings[1] := WordToText(OperandValue(1));
   if CurrentOpcode = OpContinueText then
@@ -648,7 +647,7 @@ begin
     GlyphCol := EclTextLeft;
     ShowPagedText(EclTextLeft, EclTextTop, EclTextRight, EclTextBottom, EclTextColor, 1, EclStrings[1]);
   end;
-  WaitAfterTextRun := 0;
+  DelayPerGlyph := 0;
 end;
 { ovl03:0A9F. ECL command 19 (dispatcher ovl03:2F2D, CurrentOpcode $13): returns from a subroutine
   that ScriptGosub (ovl07:1951) called. EclPC moves past the command. When the return stack
@@ -670,9 +669,8 @@ end;
   operands. The six CompareFlags are cleared, the four operands are read as words (OperandValue),
   and operand 1 is compared with operand 2 and operand 3 with operand 4. When both pairs are equal
   CompareFlags[0] (=) is set, else CompareFlags[1] (<>). The conditional commands 22 to 27 (the
-  handler at ovl03:0B52) test these flags. Purpose unknown: what the script compares this way (the
-  pairs are not yet traced to game variables). }
-procedure ComparePairsCommand;
+  handler at ovl03:0B52) test these flags. }
+procedure CompareBothPairsCommand;
 var
   Values: array[1..4] of Word;
   I: Byte;
@@ -690,7 +688,7 @@ end;
 { ovl03:0B52. ECL commands 22 to 27 (dispatcher ovl03:2F2D, CurrentOpcode OpIfEqual to
   OpIfGreaterOrEqual): a conditional. EclPC moves past the opcode, then the next command runs only
   when its comparison flag in CompareFlags is set (=, <>, <, >, <=, >= in that order, set by
-  CompareCommand, ComparePairsCommand and the comparison routines of OVL07). When the flag is clear,
+  CompareCommand, CompareBothPairsCommand and the comparison routines of OVL07). When the flag is clear,
   SkipCommand steps over the next command. Any other opcode only moves EclPC. }
 procedure RunIfCompared;
 begin
@@ -867,7 +865,7 @@ var
   Target: Word;
   Unused: Byte;                 { QUIRK ovl03:0F08: a byte of the frame nothing uses }
 begin
-  WindowClearOnce := 0;
+  EclWindowCleared := 0;
   Redraw := 1;
   Empty := '';
   I := 1;
@@ -1479,7 +1477,7 @@ end;
   refuses, 2 for a flee the check allows (and for the flee choice in kinds 1, 3 and 4), and 3 when
   a parlay path has no step left. A step closer, or 'Both sides wait.', sets MenuAgain and the menu
   is asked again. SkipCloseUpIfNoPics is set for the whole command, so ShowEncounterPicture skips the close-up
-  unless monster pictures are on; WindowClearOnce is cleared and WaitAfterTextRun is set, so DrawTextRun waits after
+  unless monster pictures are on; EclWindowCleared is cleared and DelayPerGlyph is set, so DrawTextRun waits after
   each glyph. The prompt line is cleared on the way out.
   QUIRK ovl03:210A: steps ahead other than 0, 1 or 2 leave the prompt (Lines[0]) unset. }
 procedure EncounterActionCommand;
@@ -1502,8 +1500,8 @@ var
   ResultAddr: Word;             { operand 4: script address of the outcome }
 begin
   SkipCloseUpIfNoPics := 1;
-  WindowClearOnce := 0;
-  WaitAfterTextRun := 1;
+  EclWindowCleared := 0;
+  DelayPerGlyph := 1;
   MovementRange(Fastest, Slowest);
   Title := '';
   DecodeOperands(14);
@@ -1680,7 +1678,7 @@ begin
     end;
   until MenuAgain = 0;
   ClearRect(PromptLeftCol, BottomRow, PromptLastCol, BottomRow);
-  WaitAfterTextRun := 0;
+  DelayPerGlyph := 0;
   SkipCloseUpIfNoPics := 0;
 end;
 { ovl03:25CB. ECL command 44 (dispatcher ovl03:2F2D, CurrentOpcode 2Ch): asks the player for an attitude.
@@ -1744,8 +1742,7 @@ begin
 end;
 { ovl03:271F. ECL command 58 (dispatcher ovl03:2F2D, CurrentOpcode 3Ah): pauses the script for the game
   speed (DelayByGameSpeed, RES06: GameSpeed * 225 milliseconds). It has no operands; Inc(EclPC) steps the
-  program counter past the opcode so RunScriptFrom (ovl03:3171) reads the next command (see EclPC).
-  Purpose unknown: why the script waits here. }
+  program counter past the opcode so RunScriptFrom (ovl03:3171) reads the next command (see EclPC). }
 procedure PauseCommand;
 begin
   Inc(EclPC);
@@ -1946,7 +1943,7 @@ begin
 end;
 { ovl03:2B7E. ECL command 54 (dispatcher ovl03:2F2D, CurrentOpcode 36h): adds a computer-run member. Operand
   1 is the kind AddMonsterToParty adds (it rolls the character and calls AddPartyMember, which makes it the
-  SelectedCharacter). Operand 2 halved, with the high bit ComputerMemberBit set, is its B84 byte: the low
+  SelectedCharacter). Operand 2 halved, with the high bit ComputerRun set, is its B84 byte: the low
   seven bits are its morale and the high bit marks it as run by the computer (TCharacter.B84). Its Side is
   1 for OtherSideKind and 0 otherwise. The character is then redrawn (RecalcCombatValues and DrawPartyRoster).
   QUIRK ovl03:2B7E: four bytes of the frame nothing uses. }
@@ -1961,7 +1958,7 @@ begin
   AddMonsterToParty(Kind);
   Morale := OperandValue(2);
   Morale := Morale shr 1;
-  Morale := Morale or ComputerMemberBit;
+  Morale := Morale or ComputerRun;
   SelectedCharacter^.B84 := Morale;
   if Kind <> OtherSideKind then
     SelectedCharacter^.Side := 0
@@ -2185,7 +2182,7 @@ begin
     16: ReadStringCommand;
     17, 18: ShowTextCommand;
     19: ReturnCommand;
-    20: ComparePairsCommand;
+    20: CompareBothPairsCommand;
     21: ChooseFromListCommand;
     OpIfEqual, OpIfNotEqual, OpIfLess, OpIfGreater, OpIfLessOrEqual, OpIfGreaterOrEqual: RunIfCompared;
     28: ClearEncounterCommand;

@@ -345,13 +345,13 @@ id = "ovl03:0AED"
 unit = "ovl03"
 addr = "ovl03:0AED"
 size = 101
-name = "ComparePairsCommand"
+name = "CompareBothPairsCommand"
 signature = ""
 c_name = "ovl03_fn_0AED"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, f30c5ac"
 justification = ""
-notes = "renamed from ovl03_fn_0AED (ECL command 20 (dispatcher ovl03:2F2D, opcode 14h): compares operands 1 with 2 and 3 with 4 as words and sets CompareFlags[0] (equal) or [1] (not equal), the flags the conditional opcodes 16h to 1Bh (ovl03:0B52) test (ovl03:0AED, matched)); auto:near_call"
+notes = "renamed from ComparePairsCommand (ECL command 17 compares two pairs and sets the compare flag to equal only when both pairs are equal, else not equal (ovl03:0AED; P6 review) [I]); renamed from ovl03_fn_0AED (ECL command 20 (dispatcher ovl03:2F2D, opcode 14h): compares operands 1 with 2 and 3 with 4 as words and sets CompareFlags[0] (equal) or [1] (not equal), the flags the conditional opcodes 16h to 1Bh (ovl03:0B52) test (ovl03:0AED, matched)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

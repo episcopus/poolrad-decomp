@@ -9343,3 +9343,38 @@ kind = "global"
 why = "the low bit of GameVars2 word 714 (VarTravelMode: bit 0 is search mode, res12 RedrawView and ovl14) that RunWilderness saves while it forces the word to 1 (ovl03:32F8); P6 review of ovl03 [I]"
 date = "2026-10-16"
 
+[[rename]]
+old = "CharWord6C00Zeroed"
+new = "ActiveFlagClearedByScript"
+kind = "global"
+why = "set to 1 when the script writes 0 to character word $6C00, which is TCharacter.Flag10D (SetCharacterVar ovl07:0B99); SelectCharacterCommand tests it with NameClearedByScript (P6 review of ovl03)"
+date = "2026-10-16"
+
+[[rename]]
+old = "CharWord6B00Zeroed"
+new = "NameClearedByScript"
+kind = "global"
+why = "set to 1 when the script writes 0 to character word $6B00, the character's name (SetCharacterVar ovl07:0A91) (P6 review of ovl03)"
+date = "2026-10-16"
+
+[[rename]]
+old = "WindowClearOnce"
+new = "EclWindowCleared"
+kind = "global"
+why = "1 once the ECL text window has been cleared (HandleWildernessKeys ovl14:471); the text commands reset it to 0 (ovl03) (P6 review)"
+date = "2026-10-16"
+
+[[rename]]
+old = "WaitAfterTextRun"
+new = "DelayPerGlyph"
+kind = "global"
+why = "set by the ECL text commands: DrawGlyph then delays after every glyph (RES06:349..356), not after a run (P6 review of ovl03)"
+date = "2026-10-16"
+
+[[rename]]
+old = "ComparePairsCommand"
+new = "CompareBothPairsCommand"
+kind = "routine"
+why = "ECL command 17 compares two pairs and sets the compare flag to equal only when both pairs are equal, else not equal (ovl03:0AED; P6 review) [I]"
+date = "2026-10-16"
+

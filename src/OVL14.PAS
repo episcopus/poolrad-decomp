@@ -468,10 +468,10 @@ begin
     end;
   end;
   PreviousAreaViewKind := AreaViewKind;
-  if WindowClearOnce = 0 then
+  if EclWindowCleared = 0 then
   begin
     ClearWindow(1, $11, $26, $16);
-    WindowClearOnce := 1;
+    EclWindowCleared := 1;
   end;
   HandleWildernessKeys := Key;
 end;

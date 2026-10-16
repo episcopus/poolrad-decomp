@@ -138,8 +138,8 @@ var
 begin
   CloseUpShown := 0;
   PictureFrameDirty := 0;
-  CharWord6C00Zeroed := 0;
-  CharWord6B00Zeroed := 0;
+  ActiveFlagClearedByScript := 0;
+  NameClearedByScript := 0;
   SpecialViewCode2 := $41;
   SpecialViewCode1 := 9;
   SpecialViewGate := 1;
@@ -443,7 +443,7 @@ begin
   case Addr of
     0:
       if Value = 0 then
-        CharWord6B00Zeroed := 1;
+        NameClearedByScript := 1;
     $20..$70:
       begin
         Index := Addr - $1F;
@@ -471,7 +471,7 @@ begin
             SelectedCharacter^.Status := 7;
         end;
         if Value = 0 then
-          CharWord6C00Zeroed := 1;
+          ActiveFlagClearedByScript := 1;
       end;
     $10C:
       case Value of

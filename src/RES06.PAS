@@ -346,14 +346,14 @@ var
                        or the last character of the text }
   Unused: Byte;      { never referenced; the original frame has this byte at [bp-105h] }
   { 0709:06A7. Draws Text[WordStart..WordEnd] glyph by glyph through DrawGlyph at (GlyphCol,
-    GlyphRow) in Color, waiting the Crt delay after each glyph when WaitAfterTextRun is set,
+    GlyphRow) in Color, waiting the Crt delay after each glyph when DelayPerGlyph is set,
     advancing WordStart and GlyphCol. Nested in ShowPagedText. }
   procedure DrawTextRun;
   begin
     while WordStart <= WordEnd do
     begin
       DrawGlyph(GlyphCol, GlyphRow, Color, 1, Ord(Text[WordStart]), 1);
-      if WaitAfterTextRun <> 0 then Delay(GameSpeed * 10);
+      if DelayPerGlyph <> 0 then Delay(GameSpeed * 10);
       Inc(WordStart);
       Inc(GlyphCol);
     end;

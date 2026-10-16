@@ -102,7 +102,7 @@ begin
   ShowPortraits := 1;
   ShowMonsterPics := 1;
   DebugMode := False;
-  WaitAfterTextRun := 1;
+  DelayPerGlyph := 1;
   SkipAreaScriptLoad := 0;
   RestInterruptCounter := 0;
   PartyListHead := 0;
