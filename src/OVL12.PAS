@@ -26,13 +26,13 @@ procedure SetCharismaFromAffect(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure AddAffectAndDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure IgnoreAffect(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure RaiseResistanceAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure BoostAttackVsListedTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure BoostAttackVsKoboldGoblin(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure HalveFireDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ShowSilenceAndStopCasting(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure DieIfPoisoned(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure GiveAffectItem(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure LowerAttackRollByFour(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure BoostAttackVsEightListed(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure BoostAttackVsOrcGoblinHobgoblin(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ImageAbsorbsHit(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ReduceDamageByQuarter(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure CoughStopsCasting(Who: PCharacter; Affect: PAffect; Mode: Byte);
@@ -50,7 +50,7 @@ procedure AvoidIfSelectedItemPlusZero(Who: PCharacter; Affect: PAffect; Mode: By
 procedure HalveAgeDoubling(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure WeakenStrength(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure CauseDiseaseAndDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure LowerAttackVsEightListed(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure LowerAttackVsOgreTrollGiant(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure LowerAttackIfSelectedIsBugbearOrGnoll(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure RaiseOrLowerAttackAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure AddHealingBlockAndHeal(Who: PCharacter; Affect: PAffect; Mode: Byte);
@@ -198,8 +198,8 @@ const
   AffectDrainsStrength = $2B;  { id 43: WeakenStrength (ovl12:10DE) runs for it: each run takes one off Strength; a Cure
   Disease affect (ovl04:031E), run by RunDiseaseHandlers }
   AffectCauseDiseaseDuration = 10; { the Duration ovl12:1168 gives affect AffectCauseDisease }
-  AffectHealingBlockDuration = 14400; { $3840: the Duration ovl12:12FB gives affect AffectHealingBlock }
-  HealingBlockData = $FF;       { the Data byte ovl12:23EC gives AffectHealingBlock }
+  MummyDiseaseDuration = 14400; { $3840: the Duration ovl12:12FB gives affect AffectMummyDisease }
+  HealingBlockData = $FF;       { the Data byte ovl12:23EC gives AffectMummyDisease }
   SideDataBit = $10;            { Affect.Data bit 4: a side, 0 or 1, compared with Who's Side (ovl12:12B2) }
   CombatKindMask = $7F;         { TCharacter.CombatSize bits 0..6: the combat footprint kind (POOLVARS, +$6C) }
   CoughResistLimit = 52;        { ovl12:0A65: TCharacter.ds112 above this steps down by CoughResistStep,
@@ -254,17 +254,11 @@ const
   RotLastStage = 1;             { a rot whose stage is this or lower kills its victim (the rot handler, ovl12:1399) }
   RotCharismaLoss = 2;          { what each run of the rot handler (ovl12:1399) takes off Charisma }
   RotMinimumCharisma = 3;       { Charisma is not taken below this by the rot handler (ovl12:1399) }
-  AffectBloodDrain = $4B;       { the affect of the blood drain on the drinker: its Data is the victim's combatant index and
-                                  DrainBloodFromCombatant (ovl12:176F) runs when it is removed }
   BloodDrainDuration = $CF;     { the Duration ovl12:18B5 gives AffectBloodDrain (207) }
-  AffectHeldFast = $3A;         { the affect of the victim of a blood drain; ovl12:1935 shows "is held fast" when it gives it
-  }
   HeldFastData = $FF;           { the Data byte the blood drain gives AffectHeldFast }
   HeldFastDuration = 0;         { the Duration the blood drain gives AffectHeldFast }
   HeldFastStrengthLimit = $13;  { a target whose Strength (TCharacter +$10) is below this is held fast (ovl12:1935) }
-  AffectBloodDrainWeak = $4A;  { the other blood drain affect, given to the drinker by ovl12:1935; its handler is the OVL13
-  entry ForcedAttack (AffectHandlers[74], InitAffectHandlers [V]) }
-  BloodDrainWeakDuration = 0;   { the Duration ovl12:1935 gives AffectBloodDrainWeak }
+  ForcedAttackDuration = 0;   { the Duration ovl12:1935 gives AffectForcedAttack }
   RevivalRetryDuration = 1;     { the Duration ovl12:19D9 gives AffectRevival }
   SaveKindFear = 4;             { SavingThrow kind 4, the fifth of the five saves: the save against fear (ovl12:1AAA) [I] }
   AffectWeakened = $02;  { id 2: LowerAttackAndMorale (ovl12:011D) runs for it; FrightenSideWithFear (ovl12:1AAA) gives it
@@ -480,25 +474,25 @@ begin
   end;
 end;
 { ovl12:0377. It moves 2 from the attack roll to the saving throw roll when the selected character's
-  ByteA0 (+$A0 of TCharacter, the alignment index of AlignmentNames [V]) is 2, 5 or 8, Lawful, Neutral and Chaotic
+  Alignment (+$A0 of TCharacter, the alignment index of AlignmentNames [V]) is 2, 5 or 8, Lawful, Neutral and Chaotic
   Evil: SaveRoll (DS:6816) gains 2 and AttackRoll (DS:6822) loses 2. The effect is that of Protection from Evil [I].
   It has the 10-byte frame of the affect handlers, but reads SelectedCharacter, not its parameters
   (Who, Affect and Mode are not read). Runs for affects $08 and $2D (ids 8, 45, InitAffectHandlers [V]). }
 procedure ShiftAttackToSaveVsEvil(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
-  if (SelectedCharacter^.ByteA0 = 2) or (SelectedCharacter^.ByteA0 = 5) or (SelectedCharacter^.ByteA0 = 8) then
+  if (SelectedCharacter^.Alignment = 2) or (SelectedCharacter^.Alignment = 5) or (SelectedCharacter^.Alignment = 8) then
   begin
     Inc(SaveRoll, 2);
     Dec(AttackRoll, 2);
   end;
 end;
-{ ovl12:03AC. The twin of ShiftAttackToSaveVsEvil (ovl12:0377) with the ByteA0 values 0, 3 and 6 (Lawful, Neutral and
+{ ovl12:03AC. The twin of ShiftAttackToSaveVsEvil (ovl12:0377) with the Alignment values 0, 3 and 6 (Lawful, Neutral and
   Chaotic Good in AlignmentNames) in place of 2, 5 and 8, the effect of Protection from Good [I]: SaveRoll (DS:6816)
   gains 2 and AttackRoll (DS:6822)
   loses 2. Who, Affect and Mode are not read. Runs for affects $09 and $2E (ids 9, 46, InitAffectHandlers [V]). }
 procedure ShiftAttackToSaveVsGood(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
-  if (SelectedCharacter^.ByteA0 = 0) or (SelectedCharacter^.ByteA0 = 3) or (SelectedCharacter^.ByteA0 = 6) then
+  if (SelectedCharacter^.Alignment = 0) or (SelectedCharacter^.Alignment = 3) or (SelectedCharacter^.Alignment = 6) then
   begin
     Inc(SaveRoll, 2);
     Dec(AttackRoll, 2);
@@ -640,15 +634,15 @@ end;
 { ovl12:0679. Affect handler (the AffectHandlers shape: Who, Affect and Mode; only Who is read). It copies the
   character Who attacked last (Who's combat Target) into AttackTarget, as BoostAttackAgainstTarget does. When that
   character's +$9F (CreatureType) and CombatSize (+$6C) are both 1, AttackRoll gains 1 for each of the names
-  FourListedNames[1..4] the character's name equals. Runs for affect $12 (id 18, InitAffectHandlers [V]). }
-procedure BoostAttackVsListedTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
+  KoboldGoblinNames[1..4] the character's name equals. Runs for affect $12 (id 18, InitAffectHandlers [V]). }
+procedure BoostAttackVsKoboldGoblin(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   I: Byte;
 begin
   AttackTarget := Who^.Combat^.Target;
   if (AttackTarget^.CreatureType = 1) and (AttackTarget^.CombatSize = 1) then
     for I := 1 to 4 do
-      if AttackTarget^.Name = FourListedNames[I] then
+      if AttackTarget^.Name = KoboldGoblinNames[I] then
         Inc(AttackRoll);
 end;
 { ovl12:06E4. Affect handler for damage (the AffectHandlers frame: Who, Affect and Mode, none of them read): when
@@ -743,17 +737,18 @@ begin
   Dec(AttackRoll, AttackPenalty);
 end;
 { ovl12:0947. Affect handler (the AffectHandlers shape: Who, Affect and Mode; only Who is read). The twin of
-  BoostAttackVsListedTarget (ovl12:0679) with eight names: when the character Who attacked last (Who's combat
+  BoostAttackVsKoboldGoblin (ovl12:0679) with eight names: when the character Who attacked last (Who's combat
   Target, copied into AttackTarget) has CreatureType and CombatSize (+$6C) both 1, AttackRoll gains 1 for each of
-  the names EightListedNamesA[1..8] that the character's name equals. Runs for affect $1A (id 26, InitAffectHandlers [V]). }
-procedure BoostAttackVsEightListed(Who: PCharacter; Affect: PAffect; Mode: Byte);
+  the names OrcGoblinHobgoblinNames[1..8] that the
+  character's name equals. Runs for affect $1A (id 26, InitAffectHandlers [V]). }
+procedure BoostAttackVsOrcGoblinHobgoblin(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   I: Byte;
 begin
   AttackTarget := Who^.Combat^.Target;
   if (AttackTarget^.CreatureType = 1) and (AttackTarget^.CombatSize = 1) then
     for I := 1 to 8 do
-      if AttackTarget^.Name = EightListedNamesA[I] then
+      if AttackTarget^.Name = OrcGoblinHobgoblinNames[I] then
         Inc(AttackRoll);
 end;
 { ovl12:09C0. Affect handler of the images affect (AffectImages, $1C; it runs on the damage hook, kind 6,
@@ -999,7 +994,7 @@ end;
 { ovl12:10DE. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000). It gives Who
   the affect AffectDrainsStrength (a Cure Disease affect, ovl04:031E) for WeakeningDuration rounds with the Data of Affect,
   when TryAddAffect allows it. While Who's Strength is above 3 each run shows "is weakened" (row MessageRow) and takes one
-  off Strength; at 3 or less Who gets AffectNausea unless it has it already. Runs for affect $2B (id 43,
+  off Strength; at 3 or less Who gets AffectHelpless unless it has it already. Runs for affect $2B (id 43,
   InitAffectHandlers [V]). }
 procedure WeakenStrength(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
@@ -1011,13 +1006,13 @@ begin
       ShowCharacterMessage(Who, 'is weakened', MessageRow, 1);
       Dec(Who^.Strength);
     end
-    else if not HasAffect(Who, AffectNausea, FoundAffect) then
-      AddAffect(Who, AffectNausea, PermanentDuration, DataFF, NoRemoveHandler);
+    else if not HasAffect(Who, AffectHelpless, FoundAffect) then
+      AddAffect(Who, AffectHelpless, PermanentDuration, DataFF, NoRemoveHandler);
 end;
 { ovl12:1168. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000). It gives Who
   the disease affect AffectCauseDisease for AffectCauseDiseaseDuration rounds, with the Data of Affect, when TryAddAffect
   allows it. Then, while Who has more than one hit point (Flag11B), it deals 1 point of plain damage (DamageKind 0, no
-  save, DealDamage) and, outside combat, redraws the selected character. Otherwise Who gets AffectNausea unless it has
+  save, DealDamage) and, outside combat, redraws the selected character. Otherwise Who gets AffectHelpless unless it has
   it already. Runs for affect $2C (id 44, InitAffectHandlers [V]). }
 procedure CauseDiseaseAndDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
@@ -1031,23 +1026,23 @@ begin
       if ViewMode <> ViewModeCombat then
         DrawPartyRoster(SelectedCharacter);
     end
-    else if not HasAffect(Who, AffectNausea, FoundAffect) then
-      AddAffect(Who, AffectNausea, PermanentDuration, DataFF, NoRemoveHandler);
+    else if not HasAffect(Who, AffectHelpless, FoundAffect) then
+      AddAffect(Who, AffectHelpless, PermanentDuration, DataFF, NoRemoveHandler);
 end;
 { ovl12:11F9. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000). It copies
   the character Who attacked last (Who's combat Target, TCombatant at +$108 of Who, MeleeAttack sets it in ovl08) into
   AttackTarget. When the selected character has CreatureType (+$9F of TCharacter, not named yet) set to 1 and its
   CombatSize has footprint kind 2 (bits 0..6 of +$6C), AttackRoll loses AttackPenalty for each of the names
-  EightListedNamesB[1..8]
+  OgreTrollGiantNames[1..8]
   that the target's name equals. Runs for affect $2F (id 47, InitAffectHandlers [V]). }
-procedure LowerAttackVsEightListed(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure LowerAttackVsOgreTrollGiant(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
-  I: Byte;                      { the name row 1..8 of EightListedNamesB }
+  I: Byte;                      { the name row 1..8 of OgreTrollGiantNames }
 begin
   AttackTarget := Who^.Combat^.Target;
   if (SelectedCharacter^.CreatureType = 1) and ((SelectedCharacter^.CombatSize and CombatKindMask) = 2) then
     for I := 1 to 8 do
-      if AttackTarget^.Name = EightListedNamesB[I] then
+      if AttackTarget^.Name = OgreTrollGiantNames[I] then
         Dec(AttackRoll, AttackPenalty);
 end;
 { ovl12:1276. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). When the selected
@@ -1077,14 +1072,14 @@ begin
   end;
 end;
 { ovl12:12FB. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000). It gives Who
-  the healing block AffectHealingBlock (ovl24:175D: HealCharacter with Flag 0 does nothing while it is there) for
-  AffectHealingBlockDuration rounds, with the Data of Affect, when TryAddAffect allows it. Then HealCharacter heals Who
+  the healing block AffectMummyDisease (ovl24:175D: HealCharacter with Flag 0 does nothing while it is there) for
+  MummyDiseaseDuration rounds, with the Data of Affect, when TryAddAffect allows it. Then HealCharacter heals Who
   by one hit point with Flag 1, which the block does not stop, and when that healed Who, ShowHealResult (00BA:234A, not
   named yet) runs on Who. The map also had an entry at ovl12:1307, which is the middle of this routine (its pushes
   for the first call start at 12FB), so it has no routine of its own. Runs for affect $32 (id 50, InitAffectHandlers [V]). }
 procedure AddHealingBlockAndHeal(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
-  if TryAddAffect(Who, AffectHealingBlock, Affect^.Data, AffectHealingBlockDuration) then
+  if TryAddAffect(Who, AffectMummyDisease, Affect^.Data, MummyDiseaseDuration) then
     if HealCharacter(Who, 1, 1) then
       ShowHealResult(Who);
 end;
@@ -1357,8 +1352,8 @@ begin
 end;
 { ovl12:1935. Affect handler that holds a weak combat target fast (the AffectHandlers shape: Who, Affect and Mode; Affect and
   Mode are not read, ovl24:0000). The character Who attacked last (Who's combat Target) is copied into AttackTarget. When
-  AttackTarget's Strength (TCharacter +$10) is below HeldFastStrengthLimit, Who gets AffectBloodDrainWeak (Duration 0, its
-  Data the combatant index of AttackTarget, so DrainBloodFromCombatant (ovl12:176F) runs on it when it is removed),
+  AttackTarget's Strength (TCharacter +$10) is below HeldFastStrengthLimit, Who gets AffectForcedAttack (Duration 0, its
+  Data the combatant index of AttackTarget; its handler is ForcedAttack, ovl13:3A86, which runs when it is removed),
   AttackTarget gets AffectHeldFast and that affect's handler runs, and "is held fast" is shown on AttackTarget at row
   MessageRow
   (ShowCharacterMessage). Runs for affect $4D (id 77, InitAffectHandlers [V]). }
@@ -1367,7 +1362,7 @@ begin
   AttackTarget := Who^.Combat^.Target;
   if AttackTarget^.Strength < HeldFastStrengthLimit then
   begin
-    AddAffect(Who, AffectBloodDrainWeak, BloodDrainWeakDuration, CombatantIndex(AttackTarget), RunsHandlerOnRemove);
+    AddAffect(Who, AffectForcedAttack, ForcedAttackDuration, CombatantIndex(AttackTarget), RunsHandlerOnRemove);
     AddAffect(AttackTarget, AffectHeldFast, HeldFastDuration, HeldFastData, NoRemoveHandler);
     CallAffectHandler(AffectHeldFast, AttackTarget, nil, 0);
     ShowCharacterMessage(AttackTarget, 'is held fast', MessageRow, 1);
@@ -1658,8 +1653,8 @@ begin
 end;
 { ovl12:23EC. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Affect and Mode are not read, ovl24:0000)
   that gives the rot to the character Who attacked last (Who's combat Target, copied into AttackTarget). Unless that
-  character already has the healing block AffectHealingBlock (HasAffect finds it), it gets the block for
-  AffectHealingBlockDuration rounds, then AffectRot for RotDuration rounds with the Data (1d6 * RotStage) + RotDataLow: the
+  character already has the healing block AffectMummyDisease (HasAffect finds it), it gets the block for
+  MummyDiseaseDuration rounds, then AffectRot for RotDuration rounds with the Data (1d6 * RotStage) + RotDataLow: the
   rot stage is the high nibble (ProgressRot, ovl12:1399). "is Diseased" is shown on it at row MessageRow. Runs for affect $57
   (id 87, InitAffectHandlers [V]). }
 procedure CauseRotOnAttackTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
@@ -1667,9 +1662,9 @@ var
   FoundAffect: Pointer;         { the healing block HasAffect looks for on AttackTarget }
 begin
   AttackTarget := Who^.Combat^.Target;
-  if not HasAffect(AttackTarget, AffectHealingBlock, FoundAffect) then
+  if not HasAffect(AttackTarget, AffectMummyDisease, FoundAffect) then
   begin
-    AddAffect(AttackTarget, AffectHealingBlock, AffectHealingBlockDuration, HealingBlockData, RunsHandlerOnRemove);
+    AddAffect(AttackTarget, AffectMummyDisease, MummyDiseaseDuration, HealingBlockData, RunsHandlerOnRemove);
     AddAffect(AttackTarget, AffectRot, RotDuration, (RollDice(1, 6) * RotStage) + RotDataLow, RunsHandlerOnRemove);
     ShowCharacterMessage(AttackTarget, 'is Diseased', MessageRow, 1);
   end;
@@ -2261,7 +2256,7 @@ end;
 { ovl12:30A5. Affect handler of table entry 132 (affect $84, stub entry 113), with the AffectHandlers shape
   (Who, Affect and Mode, ovl24:0000). Mode 0 applies it; any other Mode does nothing. QUIRK ovl12:30A5: the Affect
   argument is read as a character (Other := PCharacter(Affect)), and its KnownSpells[SpellDamageIndex] and
-  KnownSpells[SpellClearedIndex] are used. When the low nibble of that byte is not Who's ByteA0, the second byte is
+  KnownSpells[SpellClearedIndex] are used. When the low nibble of that byte is not Who's Alignment, the second byte is
   cleared, the high nibble of the first is dealt to Who as magic damage without a save (DealDamage), DrawCombatScreen
   shows it in combat view and RedrawItemWindow becomes 1. no affect $84 is known to be given, and an affect
   is not a character, so the handler's meaning is not clear. }
@@ -2273,7 +2268,7 @@ begin
   Other := PCharacter(Affect);
   if Mode <> 0 then
     Exit;
-  if (Other^.KnownSpells[SpellDamageIndex] and LowNibble) <> Byte(Who^.ByteA0) then
+  if (Other^.KnownSpells[SpellDamageIndex] and LowNibble) <> Byte(Who^.Alignment) then
   begin
     Other^.KnownSpells[SpellClearedIndex] := 0;
     Damage := Other^.KnownSpells[SpellDamageIndex] div 16;
@@ -2345,7 +2340,7 @@ begin
   AffectHandlers[15] := AddAffectAndDamage;
   AffectHandlers[16] := IgnoreAffect;
   AffectHandlers[17] := RaiseResistanceAndSave;
-  AffectHandlers[18] := BoostAttackVsListedTarget;
+  AffectHandlers[18] := BoostAttackVsKoboldGoblin;
   AffectHandlers[19] := IgnoreAffectShared;
   AffectHandlers[20] := HalveFireDamage;
   AffectHandlers[21] := ShowSilenceAndStopCasting;
@@ -2353,7 +2348,7 @@ begin
   AffectHandlers[23] := GiveAffectItem;
   AffectHandlers[24] := IgnoreAffectShared;
   AffectHandlers[25] := LowerAttackRollByFour;
-  AffectHandlers[26] := BoostAttackVsEightListed;
+  AffectHandlers[26] := BoostAttackVsOrcGoblinHobgoblin;
   AffectHandlers[27] := IgnoreAffectShared;
   AffectHandlers[28] := ImageAbsorbsHit;
   AffectHandlers[29] := ReduceDamageByQuarter;
@@ -2374,7 +2369,7 @@ begin
   AffectHandlers[44] := CauseDiseaseAndDamage;
   AffectHandlers[45] := ShiftAttackToSaveVsEvil;
   AffectHandlers[46] := ShiftAttackToSaveVsGood;
-  AffectHandlers[47] := LowerAttackVsEightListed;
+  AffectHandlers[47] := LowerAttackVsOgreTrollGiant;
   AffectHandlers[48] := LowerAttackIfSelectedIsBugbearOrGnoll;
   AffectHandlers[49] := RaiseOrLowerAttackAndSave;
   AffectHandlers[50] := AddHealingBlockAndHeal;

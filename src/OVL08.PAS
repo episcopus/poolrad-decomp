@@ -370,7 +370,7 @@ begin
   begin
     ClearWindow($18, $18, $27, $18);
     Key := ReadPromptChoice('Move/Attack, Move Left = ' + ByteToText(Who^.Combat^.Moves shr 1) + ' ', '',
-      $A, $A, MenuColors, 1, 0, PromptKeyFlag);
+      $A, $A, MenuColors, 1, 0, CombatScratchFlag);
     case Key of
       #0:
       begin
@@ -460,7 +460,7 @@ begin
   Key := ' ';
   while not (Key in [#0, 'E']) and (Done = 0) do
   begin
-    Key := ReadPromptChoice('', Menu, $D, $A, MenuColors, 0, 0, PromptKeyFlag);
+    Key := ReadPromptChoice('', Menu, $D, $A, MenuColors, 0, 0, CombatScratchFlag);
     case Key of
       'G': Done := GuardTurn(Who);
       'D':
@@ -521,7 +521,7 @@ begin
     if GameSpeed < MaxGameSpeed then Menu := Menu + 'Slower ';
     if GameSpeed > 0 then Menu := Menu + 'Faster ';
     Menu := Menu + 'Exit';
-    Key := ReadPromptChoice(Title, Menu, $D, $A, MenuColors, 0, 0, PromptKeyFlag);
+    Key := ReadPromptChoice(Title, Menu, $D, $A, MenuColors, 0, 0, CombatScratchFlag);
     case Key of
       'S': Inc(GameSpeed);
       'F': Dec(GameSpeed);

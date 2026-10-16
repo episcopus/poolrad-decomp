@@ -9154,3 +9154,108 @@ kind = "global"
 why = "the 8 bytes below PictureAnimation (DS:6ABE) that the frame indexing of ReadPromptChoice reaches (PictureAnimation.Frames[I], ovl25:04C8); no decompiled routine reads them"
 date = "2026-10-15"
 
+[[rename]]
+old = "FourListedNames"
+new = "KoboldGoblinNames"
+kind = "global"
+why = "DS:0332 rows 1..4 hold KOBOLD, KOBOLD LEADER, GOBLIN, GOBLIN LEADER (image bytes); BoostAttackVsListedTarget adds 1 to AttackRoll for each the attacked character's name equals (ovl12:0679)"
+date = "2026-10-15"
+
+[[rename]]
+old = "EightListedNamesA"
+new = "OrcGoblinHobgoblinNames"
+kind = "global"
+why = "DS:0382 rows 1..8 hold ORC, ORC LEADER, GOBLIN, GOBLIN LEADER, HOBGOBLIN, HOBGOBLIN CHIEF, GAGOOL, MACE (image); compared with the attacked character's name by LowerAttackRollByFour and BoostAttackVsEightListed (ovl12:0918, 0947)"
+date = "2026-10-15"
+
+[[rename]]
+old = "EightListedNamesB"
+new = "OgreTrollGiantNames"
+kind = "global"
+why = "DS:0402 rows 1..5 hold OGRE, OGRE LEADER, TROLL, FIRE GIANT, HILL GIANT (image); rows 6..8 run into the numeric TurnUndeadTable; compared with the attacked character's name by LowerAttackVsEightListed (ovl12:11F9)"
+date = "2026-10-15"
+
+[[rename]]
+old = "BoostAttackVsListedTarget"
+new = "BoostAttackVsKoboldGoblin"
+kind = "routine"
+why = "adds 1 to AttackRoll when the attacked character's name is one of KoboldGoblinNames (ovl12:0679)"
+date = "2026-10-15"
+
+[[rename]]
+old = "BoostAttackVsEightListed"
+new = "BoostAttackVsOrcGoblinHobgoblin"
+kind = "routine"
+why = "the same test against OrcGoblinHobgoblinNames (ovl12:0947)"
+date = "2026-10-15"
+
+[[rename]]
+old = "LowerAttackVsEightListed"
+new = "LowerAttackVsOgreTrollGiant"
+kind = "routine"
+why = "takes AttackPenalty off AttackRoll for each of OgreTrollGiantNames the target's name equals (ovl12:11F9)"
+date = "2026-10-15"
+
+[[rename]]
+old = "HasRecFlag"
+new = "AnyMemberHasClassLevel"
+kind = "routine"
+why = "true when a character of the party list has ClassLevels[Which] above 0: 5 is magic-user (Knock), 6 thief (Pick) (ovl14:0236); the records are TCharacter (+$96 ClassLevels, +$104 Next), not a separate type"
+date = "2026-10-15"
+
+[[rename]]
+old = "FindCodeSlot"
+new = "FindSpellSlot"
+kind = "routine"
+why = "scans the 21 memorized Spells slots (+$17) of a TCharacter for a spell number, $FF when absent (ovl14:05AB); Knock is spell $1F in SpellTable"
+date = "2026-10-15"
+
+[[rename]]
+old = "FindCodeRecord"
+new = "FindMemberWithSpell"
+kind = "routine"
+why = "first character of the party list that has the spell memorized (ovl14:05EE)"
+date = "2026-10-15"
+
+[[rename]]
+old = "PromptKeyFlag"
+new = "CombatScratchFlag"
+kind = "global"
+why = "one byte (DS:6E31) used as the extended-key flag ovl08 menus pass to ReadPromptChoice and as the Done result ovl13 passes to PerformAttack and stores from EndCombatTurn (ovl08:0C..., ovl13:0750); a shared scratch byte, not only a key flag (P6 review)"
+date = "2026-10-15"
+
+[[rename]]
+old = "FigureSuffixChars"
+new = "FigureBankTable"
+kind = "global"
+why = "DS:08C5: entries 1 and 2 are the letters S and T of the CHEAD/CBODY suffix; from entry 3 on picture bank numbers ovl17 views as MonsterBanks (LoadMonster ovl17:1262) (P6 review)"
+date = "2026-10-15"
+
+[[rename]]
+old = "RosterRedrawFlagA"
+new = "AreaStepRedrawOnce"
+kind = "global"
+why = "set at the start of RunWilderness area step (ovl03:32F8) and cleared after the redraw; with Command55Ran and Command33Ran set LoadAreaGraphics redraws the roster (ovl03:0C74)"
+date = "2026-10-15"
+
+[[rename]]
+old = "RosterRedrawFlagB"
+new = "Command55Ran"
+kind = "global"
+why = "set by ECL command 55 (LoadAreaGraphics ovl03:0C74), cleared at the start of the wilderness loop"
+date = "2026-10-15"
+
+[[rename]]
+old = "RosterRedrawFlagC"
+new = "Command33Ran"
+kind = "global"
+why = "set by ECL command 33 (LoadAreaGraphics ovl03:0C74), cleared at the start of the wilderness loop"
+date = "2026-10-15"
+
+[[rename]]
+old = "ByteA0"
+new = "Alignment"
+kind = "global"
+why = "TCharacter +$A0 is the alignment index: ShowCharacterSheet draws AlignmentNames[+$A0] (ovl19:0198) and the image order (0 LG, 1 LN, 2 LE, 3 NG, 4 TN, 5 NE, 6 CG, 7 CN, 8 CE) fits ShiftAttackToSaveVsGood/VsEvil (P6 review)"
+date = "2026-10-15"
+

@@ -59,21 +59,16 @@ constants), as for any unit; `make integrate` merges it. The evidence of every r
   class, race, view mode, direction, game variable, affect protocol, tile, size, spell limit constants);
   the names that contradicted `StatusNames` are fixed; `Green` (10) is `LightGreen`, as in Crt.
 
-## Findings for a reviewer (not settled by evidence)
+## Findings (review of the first pass, 2026-10-15)
 
-Two names for one affect number (`InitAffectHandlers` fills the table from the number, so the value is
-certain and only the meaning is open):
-
-| Number | Names in the source (unit) |
-|---|---|
-| $1E | AffectCough (ovl24), AffectKeptB (ovl09) |
-| $1F | AffectNausea (ovl12, ovl24, now shared), AffectHelpless (ovl15) |
-| $20 | AffectKeptA (ovl09), AffectRemovedAtRaiseDead (ovl04) |
-| $32 | AffectHealingBlock (shared), AffectMummyDisease (ovl15) |
-| $37 | AffectPoisoned (shared), AffectPoison (ovl04) |
-| $3A | AffectHeldFast (ovl12), AffectLostWithForcedAttack (ovl13) |
-| $4A | AffectBloodDrainWeak (ovl12), AffectForcedAttack (ovl13) |
-| $4B | AffectBloodDrain (ovl12), AffectNoPartingShot1 (ovl13) |
+Affect numbers named twice were settled by the review of 2026-10-15 from the game's own text
+(`DisplaySpellEffects` in ovl15 and the `AffectId` byte of `SpellTable`): $1E `AffectCough`, $1F
+`AffectHelpless`, $20 `AffectAnimateDead`, $32 `AffectMummyDisease`, $37 `AffectPoisoned`, $3A
+`AffectHeldFast`, $4A `AffectForcedAttack` (its handler is ovl13 `ForcedAttack`, it never drains), $4B
+`AffectBloodDrain`; all are in the shared block now. Not settled: $6F and $7D (`AffectKeptC`,
+`AffectKeptD`): both handlers cancel the charm, ends-turn, paralysis and poison hooks, and no spell or text
+names them. `AffectEndsTurn` ($35, Sleep's AffectId) and `AffectParalysis` ($34, Hold Person's; also given
+by fear) keep their effect names.
 
 Still defined in more than one unit (layout and key constants, deliberately local until a screen layout
 type exists): `MessageLeft/Right/Top/Bottom`, `List*`, `Prompt*`, `MessageColor` and `MessageColour`,
@@ -84,5 +79,6 @@ Not done in this pass:
 - **Ownership of globals.** Globals still live in `src/POOLVARS.PAS` because it is also the DGROUP layout
   (playbook 50); moving each to the unit that owns it needs the layout generator to read several units.
 - **`tools/re/rtl_ident.py`** (phase 1) still holds the provisional runtime names in its tables; running
-  `make map` again would write them over the names of this phase. Update its tables first.
+  `make map` again would write them over 30 names of this phase. A verified patch (4 provisional entries
+  updated, 26 names added, a `DOS_NAMED` table) is in the review notes; it is a tooling change, apply it first.
 - **Reviewer sign-off per subsystem** (SPEC 10, P6 exit): not started; `make review-pass` records it per unit.

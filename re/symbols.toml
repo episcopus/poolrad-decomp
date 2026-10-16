@@ -2781,13 +2781,13 @@ id = "ovl12:0679"
 unit = "ovl12"
 addr = "ovl12:0679"
 size = 107
-name = "BoostAttackVsListedTarget"
+name = "BoostAttackVsKoboldGoblin"
 signature = ""
 c_name = "ovl12_e17"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_e17 (ovl12:0679 is an affect handler (Who, Affect, Mode) that copies Who's combat Target into AttackTarget like BoostAttackAgainstTarget (ovl12:013B), and adds 1 to AttackRoll per name ds0332[1..4] equal to the target's name when its Pad9E[$9F] and CombatSize are 1); auto:entry_17"
+notes = "renamed from BoostAttackVsListedTarget (adds 1 to AttackRoll when the attacked character's name is one of KoboldGoblinNames (ovl12:0679)); renamed from ovl12_e17 (ovl12:0679 is an affect handler (Who, Affect, Mode) that copies Who's combat Target into AttackTarget like BoostAttackAgainstTarget (ovl12:013B), and adds 1 to AttackRoll per name ds0332[1..4] equal to the target's name when its Pad9E[$9F] and CombatSize are 1); auto:entry_17"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2865,13 +2865,13 @@ id = "ovl12:0947"
 unit = "ovl12"
 addr = "ovl12:0947"
 size = 121
-name = "BoostAttackVsEightListed"
-signature = "procedure BoostAttackVsEightListed(Who: PCharacter; Affect: PAffect; Mode: Byte)"
+name = "BoostAttackVsOrcGoblinHobgoblin"
+signature = "procedure BoostAttackVsOrcGoblinHobgoblin(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e23"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_e23 (ovl12:0947 is BoostAttackVsListedTarget (ovl12:0679) with eight names: the same Pad9E[$9F] and CombatSize tests, then AttackRoll gains 1 per equal name of ds0382[1..8] (loop bound 8, base 0x372 + 16*I, against 0x332 + 16*I for ds0332 in ovl12:0679); the AffectHandlers shape with only Who read); auto:entry_23"
+notes = "renamed from BoostAttackVsEightListed (the same test against OrcGoblinHobgoblinNames (ovl12:0947)); renamed from ovl12_e23 (ovl12:0947 is BoostAttackVsListedTarget (ovl12:0679) with eight names: the same Pad9E[$9F] and CombatSize tests, then AttackRoll gains 1 per equal name of ds0382[1..8] (loop bound 8, base 0x372 + 16*I, against 0x332 + 16*I for ds0332 in ovl12:0679); the AffectHandlers shape with only Who read); auto:entry_23"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3117,13 +3117,13 @@ id = "ovl12:11F9"
 unit = "ovl12"
 addr = "ovl12:11F9"
 size = 125
-name = "LowerAttackVsEightListed"
-signature = "procedure LowerAttackVsEightListed(Who: PCharacter; Affect: PAffect; Mode: Byte)"
+name = "LowerAttackVsOgreTrollGiant"
+signature = "procedure LowerAttackVsOgreTrollGiant(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e39"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_e39 (ovl12:11F9 takes AttackPenalty (4) off AttackRoll once for each of the eight names ds0402[1..8] that the attacked character's name equals, when the selected character has Pad9E[$9F]=1 and CombatSize kind 2: the twin of BoostAttackVsEightListed (ovl12:0947), with the condition on the selected character); auto:entry_39"
+notes = "renamed from LowerAttackVsEightListed (takes AttackPenalty off AttackRoll for each of OgreTrollGiantNames the target's name equals (ovl12:11F9)); renamed from ovl12_e39 (ovl12:11F9 takes AttackPenalty (4) off AttackRoll once for each of the eight names ds0402[1..8] that the attacked character's name equals, when the selected character has Pad9E[$9F]=1 and CombatSize kind 2: the twin of BoostAttackVsEightListed (ovl12:0947), with the condition on the selected character); auto:entry_39"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4881,13 +4881,13 @@ id = "ovl14:0236"
 unit = "ovl14"
 addr = "ovl14:0236"
 size = 94
-name = "HasRecFlag"
-signature = "function HasRecFlag(Which: ShortInt): Byte"
+name = "AnyMemberHasClassLevel"
+signature = "function AnyMemberHasClassLevel(Which: ShortInt): Byte"
 c_name = "ovl14_fn_0236"
 level = "L2"
 review = "passed 2026-10-12 by rev-4, 4160c56"
 justification = ""
-notes = "renamed from ovl14_fn_0236 (ovl14:0236 returns 1 when any ds5D96 record has a nonzero Flags byte at the given index (5 gates Knock, 6 gates Pick); called by ovl14_e1); auto:near_call"
+notes = "renamed from HasRecFlag (true when a character of the party list has ClassLevels[Which] above 0: 5 is magic-user (Knock), 6 thief (Pick) (ovl14:0236); the records are TCharacter (+$96 ClassLevels, +$104 Next), not a separate type); renamed from ovl14_fn_0236 (ovl14:0236 returns 1 when any ds5D96 record has a nonzero Flags byte at the given index (5 gates Knock, 6 gates Pick); called by ovl14_e1); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4923,13 +4923,13 @@ id = "ovl14:05AB"
 unit = "ovl14"
 addr = "ovl14:05AB"
 size = 67
-name = "FindCodeSlot"
-signature = "function FindCodeSlot(Code: Byte; Rec: PCodeRec): Byte"
+name = "FindSpellSlot"
+signature = "function FindSpellSlot(Code: Byte; Rec: PCodeRec): Byte"
 c_name = "ovl14_fn_05AB"
 level = "L2"
 review = "passed 2026-10-12 by rev-4, 4160c56"
 justification = ""
-notes = "renamed from ovl14_fn_05AB (ovl14:05AB scans a code-table record for a byte value and returns the slot index or FF; called by FindCodeRecord and Knock); auto:near_call"
+notes = "renamed from FindCodeSlot (scans the 21 memorized Spells slots (+$17) of a TCharacter for a spell number, $FF when absent (ovl14:05AB); Knock is spell $1F in SpellTable); renamed from ovl14_fn_05AB (ovl14:05AB scans a code-table record for a byte value and returns the slot index or FF; called by FindCodeRecord and Knock); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4937,13 +4937,13 @@ id = "ovl14:05EE"
 unit = "ovl14"
 addr = "ovl14:05EE"
 size = 90
-name = "FindCodeRecord"
-signature = "function FindCodeRecord(Code: Byte): PCodeRec"
+name = "FindMemberWithSpell"
+signature = "function FindMemberWithSpell(Code: Byte): PCodeRec"
 c_name = "ovl14_fn_05EE"
 level = "L2"
 review = "passed 2026-10-12 by rev-4, 4160c56"
 justification = ""
-notes = "renamed from ovl14_fn_05EE (ovl14:05EE walks the ds5D96 record list and returns the first record whose code table holds the byte, or nil; called with 1F by the Knock menu path and Knock); auto:near_call"
+notes = "renamed from FindCodeRecord (first character of the party list that has the spell memorized (ovl14:05EE)); renamed from ovl14_fn_05EE (ovl14:05EE walks the ds5D96 record list and returns the first record whose code table holds the byte, or nil; called with 1F by the Knock menu path and Knock); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]

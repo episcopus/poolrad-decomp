@@ -391,7 +391,7 @@ begin
     $BF: GetCharacterVar := SelectedCharacter^.Money[2];
     $C1: GetCharacterVar := SelectedCharacter^.Money[3];
     $C3: GetCharacterVar := SelectedCharacter^.Money[4];
-    $D8: GetCharacterVar := SelectedCharacter^.ByteA0;
+    $D8: GetCharacterVar := SelectedCharacter^.Alignment;
     $F7: GetCharacterVar := SelectedCharacter^.XpValue;
     $F9: GetCharacterVar := SelectedCharacter^.XpPerHp;
     $100:

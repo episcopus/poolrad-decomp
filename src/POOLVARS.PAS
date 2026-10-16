@@ -333,8 +333,8 @@ type
       is the fighter in the create-character run, whitepaper 5.8). Signed: only levels above 0 count. }
     ClassLevels: array[0..7] of ShortInt;
     { +$9E: Sign-extended row index LoadMonster's caller (ovl17:1262) and the create menus (ovl16)
-      use to pick the character's picture banks: ovl17:1262 reads FigureSuffixChars[2 + B9E*8 + roll] and
-      FigureSuffixChars[18/28/38/48 + B9E*5 + roll], and ovl16:13CB reads RaceAbilityLimits[B9E + (Race shl 4)].
+      use to pick the character's picture banks: ovl17:1262 reads FigureBankTable[2 + B9E*8 + roll] and
+      FigureBankTable[18/28/38/48 + B9E*5 + roll], and ovl16:13CB reads RaceAbilityLimits[B9E + (Race shl 4)].
       ovl16:0A29 sets it to (the create menu's selection - 1); it is probably the sex, 0 male
       (whitepaper 4.2.5), but that is not settled. }
     B9E: ShortInt;
@@ -345,7 +345,7 @@ type
     CreatureType: Byte;
     { +$A0: the script reads it signed (GetCharacterVar, ovl07:08C5). Purpose unknown: ScoreItem (ovl09:128D)
       refuses an item whose Affects[3] is $84 when the low nibble of its Affects[2] differs from this byte. }
-    ByteA0: ShortInt;
+    Alignment: ShortInt;
     { +$A1: RecalcClassStats sets 3 when the fighter level (ClassLevels[2]) is above 6, else 2
       (ovl23:0083): likely attacks per two rounds [I]. }
     Attacks: Byte;
@@ -388,7 +388,7 @@ type
     CHeadBlock: Byte;             { +$BD: the CHEAD picture block BuildCharacterIcon loads for the combat icon }
     CBodyBlock: Byte;             { +$BE: the CBODY picture block BuildCharacterIcon loads for the combat icon }
     CombatIcon: Byte;             { +$BF: the icon picture DrawIcon draws for it on the combat map (ovl31) }
-    { +$C0..+$C6: the character's figure descriptor as BuildCharacterIcon reads it. Figure[0] indexes FigureSuffixChars
+    { +$C0..+$C6: the character's figure descriptor as BuildCharacterIcon reads it. Figure[0] indexes FigureBankTable
       for the CHEAD/CBODY name suffix; Figure[1..6] are six colour pairs (low nibble the source
       colour's destination in the icon colour map, high nibble the source colour's + 8 slot). }
     Figure: array[0..6] of Byte;
@@ -650,12 +650,17 @@ const
   AffectTrainingManual = 7;       { "Training with Manual of Bodily Health" (ovl15:0FBC names it) }
   AffectSize = 9;
   AffectStrength1 = $0C;
-  AffectNausea = $1F;
+  AffectCough = $1E;
+  AffectHelpless = $1F;
+  AffectAnimateDead = $20;
   AffectStrength2 = $26;
   AffectCauseDisease = $2C;
-  AffectHealingBlock = $32;
+  AffectMummyDisease = $32;
   AffectPoisoned = $37;
+  AffectHeldFast = $3A;
   AffectRegenerating = $3B;
+  AffectForcedAttack = $4A;
+  AffectBloodDrain = $4B;
   AffectRevival = $4E;
   { Combat map tiles of CombatTiles (ovl31): a noxious cloud and the body a dead combatant leaves. }
   CloudTile = $1E;                { ProbeStep always reports it and a body never replaces it }
@@ -753,7 +758,7 @@ const
       $01, $00, $01, $00, $01, $00, $02, $09, $03, $0A, $04, $0A, $00, $02, $00, $03,
       $01, $04, $02, $05, $03, $06, $04, $07, $00, $06, $00, $07, $01, $08, $01, $00,
       $01, $00, $01, $00, $03, $06, $04, $07, $05, $08, $06, $09);
-  { DS:0332..0381: storage of FourListedNames }
+  { DS:0332..0381: storage of KoboldGoblinNames }
   Raw0332: array[0..79] of Byte =
     (
       $07, $0A, $08, $0A, $00, $06, $00, $07, $01, $08, $02, $09, $03, $0A, $04, $0A,
@@ -761,9 +766,10 @@ const
       $0D, $4B, $4F, $42, $4F, $4C, $44, $20, $4C, $45, $41, $44, $45, $52, $00, $00,
       $06, $47, $4F, $42, $4C, $49, $4E, $00, $00, $00, $00, $00, $00, $00, $00, $00,
       $0D, $47, $4F, $42, $4C, $49, $4E, $20, $4C, $45, $41, $44, $45, $52, $00, $00);
-  { Eight 16-byte names at DS:0382 (rows 1 to 8), directly after FourListedNames: the names the affect handler at ovl12:0947
-    compares with the attacked character's name. Their text is not read yet [?]. }
-  EightListedNamesA: array[1..8] of string[15] = (
+  { Eight 16-byte names at DS:0382 (rows 1 to 8), directly after KoboldGoblinNames: ORC, ORC LEADER, GOBLIN,
+    GOBLIN LEADER, HOBGOBLIN, HOBGOBLIN CHIEF, GAGOOL and MACE [V, image], the names the affect handlers at
+    ovl12:0918 and ovl12:0947 compare with the attacked character's name. }
+  OrcGoblinHobgoblinNames: array[1..8] of string[15] = (
       'ORC',
       'ORC LEADER',
       'GOBLIN',
@@ -772,7 +778,7 @@ const
       'HOBGOBLIN CHIEF',
       'GAGOOL',
       'MACE');
-  { DS:0402..0446: storage of EightListedNamesB }
+  { DS:0402..0446: storage of OgreTrollGiantNames }
   Raw0402: array[0..68] of Byte =
     (
       $04, $4F, $47, $52, $45, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00,
@@ -862,10 +868,10 @@ const
   ds08BE: array[0..6] of Byte =
     (
       $08, $08, $0A, $0A, $08, $04, $06);
-  { The CHEAD/CBODY character-picture name suffix table: the byte FigureSuffixChars[FigureIndex] is the
+  { The CHEAD/CBODY character-picture name suffix table: the byte FigureBankTable[FigureIndex] is the
     character BuildCharacterIcon appends to 'CHEAD'/'CBODY' (index 1 gives 'S', 2 gives 'T'). Its extent is
     unverified: the region runs to the door table at DS:0900. }
-  FigureSuffixChars: array[0..$3A] of Char = (
+  FigureBankTable: array[0..$3A] of Char = (
       #4, 'S', 'T', #1, #2, #3, #4, #5, #8, #11, #12, #6, #7, #9, #10, #13, #14, #6, #7, #2, #4, #2, #4, #2, #2,
       #4, #8, #2, #4, #1, #3, #4, #5, #6, #7, #9, #11, #7, #9, #2, #2, #2, #2, #2, #8, #10, #12, #8, #10, #6, #6,
       #6, #6, #6, #8, #10, #8, #10, #8);
@@ -2074,10 +2080,10 @@ var
   ScriptBlockStarted: Byte;  { set to 1 by ECL command 32 (ovl03:0BD1) }
   ReselectCharacterPending: Byte;  { when nonzero, the ECL command 0 (ovl03:0001) selects the character at ReselectCharacter }
   AreaRedrawArmed: Byte;  { cleared by ECL command 32 (ovl03:0BD1), set by 33 and 55 (ovl03:0C74) }
-  RosterRedrawFlagA: Byte;  { with RosterRedrawFlagB and RosterRedrawFlagC set, ovl03:0C74 redraws the character; set
+  AreaStepRedrawOnce: Byte;  { with Command55Ran and Command33Ran set, ovl03:0C74 redraws the character; set
     elsewhere }
-  RosterRedrawFlagB: Byte;  { set by ECL command 55 (ovl03:0C74); meaning unknown }
-  RosterRedrawFlagC: Byte;  { set by ECL command 33 (ovl03:0C74); meaning unknown }
+  Command55Ran: Byte;  { set by ECL command 55 (ovl03:0C74); meaning unknown }
+  Command33Ran: Byte;  { set by ECL command 33 (ovl03:0C74); meaning unknown }
   { The members ECL command 11 (ovl03:0450) has added to the party list; it adds none at
     MaxEncounterMembers (63). }
   EncounterMemberCount: Byte;
@@ -2265,7 +2271,8 @@ var
   { The selected character: the Temple acts on it (ovl04 reads it everywhere), ShowHeadBodyWindow
     shows its HEAD and BODY pictures (ovl28:04F9); the loader sets it nil (ovl11:03B8). }
   SelectedCharacter: PCharacter;  { see above }
-  PartyListHead: LongInt;  { head of the TCodeRec list ovl14 walks (see below) }
+  PartyListHead: LongInt;  { head of the party list: TCharacter records chained through Next (+$104), every
+                             combatant on it, monsters included (ovl03, ovl05, ovl13, ovl14) }
   { DS:5D9A..5E1D: storage of LootListBoundary }
   Raw5D9A: array[0..131] of Byte;
   { Kept LongInt, not Pointer: the loader clears it with `PartyListHead := 0` (ovl11:03B0),
@@ -2439,11 +2446,11 @@ var
   ds6DDA: array[0..1] of Byte;
   { DS:6DDC..6DDD: storage of MarkerFrame }
   ds6DDC: array[0..1] of Byte;
-  { DS:6DDE..6DDE: storage of DoorMenuFlags }
-  Raw6DDE: array[0..0] of Byte;
-  PickMenuFlag: Byte;  { pick/knock menu flag (e1 offers Pick/Knock while nonzero) }
-  { DS:6DE0..6DE1: storage of KnockMenuFlag }
-  Raw6DE0: array[0..1] of Byte;
+  { The three flags of the door menu (ovl14), the loader sets them to 1 (ovl11:0342): [0] Bash, [1] Pick (DoPick
+    clears it), [2] Knock; DoWildernessMenu offers each command while its flag is nonzero. }
+  DoorMenuFlags: array[0..2] of Byte;
+  { DS:6DE1: not read }
+  ds6DE1: array[0..0] of Byte;
   AllyAttackConfirmed: Byte;  { set to 1 when the player confirms attacking an ally (ovl13:2998) }
   CombatRound: Byte;  { counted up once per combat round (ovl08:0891) }
   { DS:6DE4..6E2B: storage of CombatantScanList }
@@ -2453,7 +2460,7 @@ var
   AttackSlotCounts: array[0..2] of Byte;
   SecondMoraleByte: Byte;  { byte CheckMorale copies into MoraleScratch; meaning unknown }
   MagicToggleOn: Boolean;  { the Alt-M Magic On/Off toggle of the combat keys (ovl08:04A7) }
-  { DS:6E31..6E35: storage of PromptKeyFlag }
+  { DS:6E31..6E35: storage of CombatScratchFlag }
   Raw6E31: array[0..4] of Byte;
   { DS:6E36..6F67: storage of CombatPicture }
   Raw6E36: array[0..305] of Byte;
@@ -2554,12 +2561,14 @@ var
     4 for group 1 (ovl10:1B38). }
   PlacementShapes: array[0..4, 0..5] of TColSpan absolute ds0306;
   { Five 16-byte names at DS:0332 (rows 0 to 4; row 0 is the index base and is never read). The rows 1 to 4
-    are the names the affect handler at ovl12:0679 compares with the attacked character's name; their text
-    is not read yet [?]. }
-  FourListedNames: array[0..4] of string[15] absolute Raw0332;
-  { Eight 16-byte names at DS:0402 (rows 1 to 8), directly after EightListedNamesA: the names the affect handler at ovl12:11F9
-    compares with the attacked character's name. Their text is not read yet [?]. }
-  EightListedNamesB: array[1..8] of string[15] absolute Raw0402;
+    are KOBOLD, KOBOLD LEADER, GOBLIN and GOBLIN LEADER [V, image]: the monster names the affect handler at
+    ovl12:0679 compares with the attacked character's name (probably the racial attack bonus of a small
+    race against them [H]). }
+  KoboldGoblinNames: array[0..4] of string[15] absolute Raw0332;
+  { Names at DS:0402, directly after OrcGoblinHobgoblinNames: rows 1 to 5 are OGRE, OGRE LEADER, TROLL, FIRE
+    GIANT and HILL GIANT [V, image]; rows 6 to 8 are not names but the start of TurnUndeadTable (DS:0447), which
+    the handler at ovl12:11F9 reads as names because its loop runs 1..8 [QUIRK]. }
+  OgreTrollGiantNames: array[1..8] of string[15] absolute Raw0402;
   { The Turn Undead table (ovl13:122F): a row per undead type (TCharacter +$76) and a column per
     cleric level band (0..9, the code passes 1..10 with bounds checks off); a positive entry turns
     the undead, a nonpositive one destroys it, and the d20 turning check must reach the entry's
@@ -2846,14 +2855,12 @@ var
   { nonzero while the rest screen is up: ovl20:0C9A sets it to 1 on entry and 0
                                     on exit, and RES12:0886 picks the top row of its message window from it;
                                     loader clears it (ovl11:0410) }
-  DoorMenuFlags: array[0..2] of Byte absolute Raw6DDE;  { 3-byte buffer the loader fills with 1 (ovl11:0342) }
-  KnockMenuFlag: Byte absolute Raw6DE0;  { knock menu flag: e1 offers Knock while nonzero; overlaps DoorMenuFlags[2] }
   { The combatant order the AI works through: one DS:5F27 combatant index per entry, read from
     entry 1 (ovl09:02EB loops 1..CollectEnemiesInRange(Who, SpellAreaSize(Spell)) over it; ovl13:0F90 moves
     the character at entry 1 to another entry). Entry 0 is never read. Extent not proven; the
     next named byte after it is SecondMoraleByte. }
   CombatantScanList: array[0..73] of Byte absolute Raw6DE4;
-  PromptKeyFlag: Byte absolute Raw6E31;  { the key flag the ovl08 menus pass to ReadPromptChoice }
+  CombatScratchFlag: Byte absolute Raw6E31;  { the key flag the ovl08 menus pass to ReadPromptChoice }
   CombatPicture: Pointer absolute Raw6E36;  { a picture EndCombat frees through ReleasePicture (ovl08:005A) }
   SkippedOpcode: Byte absolute ds6F7F;  { the opcode SkipCommand reads at EclPC (ovl07:1EB7) }
   { The icon slot of the encounter group being set up: InitScript sets 8 (ovl07:01F0). ECL command 11

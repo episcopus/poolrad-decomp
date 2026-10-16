@@ -26,10 +26,8 @@ const
   { Affect numbers (the ids HasAffect and RemoveAffect look for in a character's affect list). }
   AffectBlind = $21;            { Cure Blindness checks and removes it (ovl04:0262) }
   AffectCurse = $24;            { Remove Curse accepts it as a reason to cast (ovl04:08A0) }
-  AffectPoison = $37;           { Neutralize Poison checks it; Raise Dead also removes it }
   AffectRemovedAtNeutralizePoison2 = $16; { purpose unknown; removed with $37 (ovl04:07F1) }
   AffectRemovedAtNeutralizePoison3 = $0F; { purpose unknown; removed with $37 (ovl04:0807) }
-  AffectRemovedAtRaiseDead = $20;         { purpose unknown; removed before $37 (ovl04:05B8) }
   { Prices in gold pieces (the second argument of ChargeForCure). }
   PriceCureBlindness = 1000;
   PriceCureDisease = 1000;
@@ -236,8 +234,8 @@ begin
 end;
 
 { ovl04:0510. Raise Dead: the character is dead when Status is StatusAnimated (1) or StatusDead (6) (ovl04:0539); otherwise it
-  asks first. Charges PriceRaiseDead; only a dead character is raised: AffectRemovedAtRaiseDead and
-  AffectPoison are removed, Status becomes StatusOkay, Flag10D becomes 1 (battle participant eligible
+  asks first. Charges PriceRaiseDead; only a dead character is raised: AffectAnimateDead and
+  AffectPoisoned are removed, Status becomes StatusOkay, Flag10D becomes 1 (battle participant eligible
   for experience, ovl05:0355), and Flag11B becomes 1. Flag11B is the current hit points [I], so this
   restores one hit point [I] (ovl24:175D). Constitution is reduced by one before the constitution
   thresholds are tested; from 14 up the hit points above HpB1 are divided by the bonus over all class
@@ -268,8 +266,8 @@ begin
       if Dead then
       begin
         RemovingAffects := 1;
-        RemoveAffect(Who, AffectRemovedAtRaiseDead, nil);
-        RemoveAffect(Who, AffectPoison, nil);
+        RemoveAffect(Who, AffectAnimateDead, nil);
+        RemoveAffect(Who, AffectPoisoned, nil);
         RemovingAffects := 0;
         Who^.Flag11B := 1;
         Who^.Status := StatusOkay;
@@ -298,8 +296,8 @@ begin
   end;
 end;
 
-{ ovl04:0751. Neutralize Poison: asks first when the character has no AffectPoison; charges
-  PriceNeutralizePoison and removes AffectPoison plus values $16 and $0F (their meanings are unknown). }
+{ ovl04:0751. Neutralize Poison: asks first when the character has no AffectPoisoned; charges
+  PriceNeutralizePoison and removes AffectPoisoned plus values $16 and $0F (their meanings are unknown). }
 procedure NeutralizePoison;
 var
   Affect: Pointer;
@@ -310,7 +308,7 @@ begin
   Poisoned := False;
   Unused := '';
   Answer := Yes;
-  if HasAffect(SelectedCharacter, AffectPoison, Affect) then Poisoned := True;
+  if HasAffect(SelectedCharacter, AffectPoisoned, Affect) then Poisoned := True;
   if not Poisoned then Answer := AskCastAnyway('is not poisoned.');
   if Answer = Yes then
   begin
@@ -318,7 +316,7 @@ begin
     if Answer = Yes then
     begin
       RemovingAffects := 1;
-      RemoveAffect(SelectedCharacter, AffectPoison, nil);
+      RemoveAffect(SelectedCharacter, AffectPoisoned, nil);
       RemoveAffect(SelectedCharacter, AffectRemovedAtNeutralizePoison2, nil);
       RemoveAffect(SelectedCharacter, AffectRemovedAtNeutralizePoison3, nil);
       RemovingAffects := 0;

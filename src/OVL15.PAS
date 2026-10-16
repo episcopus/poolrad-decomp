@@ -93,9 +93,7 @@ const
     affect is a spell affect looked up in SpellTable (AffectId, byte +$A). }
   AffectStudyingManual = 4;
   AffectFeatherFall = $1B;
-  AffectHelpless = $1F;
   AffectPrayer = $23;
-  AffectMummyDisease = $32;
   AffectRepulsed = $36;
   AffectFireResistance = $3D;
   AffectInvisible = $47;

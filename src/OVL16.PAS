@@ -329,7 +329,7 @@ end;
     level 1 in each class it combines (ClassLevels, a multi-class mask such as 8 Cleric/Fighter sets
     several), then ComputeThiefSkills for a thief, THAC0 (the highest ClassThac0Table entry), the
     item-usage ClassBits (ClassItemBits) and ComputeSavingThrows.
-  - Alignment: the row of the class in ClassAlignmentChoices lists the alignments it may pick (ByteA0).
+  - Alignment: the row of the class in ClassAlignmentChoices lists the alignments it may pick (Alignment).
   The age comes next: the roll of the race and class entry in StartingAgeTable (a single class) or, for a
   multi-class, the maximum of one class's entry (Base + Sides * Count, not a roll). The class whose
   entry is used is not simply the first of the combined classes in the order cleric, fighter,
@@ -667,7 +667,7 @@ begin
       MenuTopRow, MenuRightCol, MenuBottomRow, MenuList, WithExit, Redraw, Choice, PickedLine);
     if Key = KeyEscape then Exit;
   until Key = KeyEnter;
-  NewCharacter^.ByteA0 := ClassAlignmentChoices[NewCharacter^.ClassMask, Choice];
+  NewCharacter^.Alignment := ClassAlignmentChoices[NewCharacter^.ClassMask, Choice];
   FreeMenuList(MenuList);
   if NewCharacter^.ClassMask <= 7 then
     with StartingAgeTable[NewCharacter^.Race, NewCharacter^.ClassMask] do

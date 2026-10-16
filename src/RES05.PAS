@@ -53,7 +53,7 @@ const
   MaxPackedSize = $8CA0;     { the largest packed block LoadDaxBlock accepts (0802:080B) }
 
 
-{ 0802:0000. Frees a heap block that AllocBlock allocated: the size is rounded up to the heap's
+{ 0802:0000. Frees a heap block that AllocHeapBlock allocated: the size is rounded up to the heap's
   8-byte granularity the same way. LoadDaxBlock frees its packed buffer with it. }
 procedure FreeHeapBlock(var Block: Pointer; Size: Word);
 begin

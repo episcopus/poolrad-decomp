@@ -33,8 +33,6 @@ const
   DiagonalCost = 3;             { a diagonal step (odd direction) three times (ovl09:0723) }
   { The four affects that let a combatant step onto a CloudTile cell (ovl09:0744..07A4); which
     spells leave them is not known. }
-  AffectKeptA = $20;
-  AffectKeptB = $1E;
   AffectKeptC = $6F;
   AffectKeptD = $7D;
   AiTurnLimit = 20;             { AiTurn gives up after this many passes of its loop (ovl09:0B3C) }
@@ -368,8 +366,8 @@ begin
         Cost := DiagonalCost;
       Cost := Cost * CombatTiles[Tile].Cost;
       if Tile = CloudTile then
-        if not HasAffect(Who, AffectKeptA, Affect) then
-          if not HasAffect(Who, AffectKeptB, Affect) then
+        if not HasAffect(Who, AffectAnimateDead, Affect) then
+          if not HasAffect(Who, AffectCough, Affect) then
             if not HasAffect(Who, AffectKeptC, Affect) then
               if not HasAffect(Who, AffectKeptD, Affect) then
                 Cost := Who^.Combat^.Moves + 1;
@@ -754,13 +752,13 @@ begin
 end;
 { ovl09:128D (ScoreItem). Rates an item for the AI's item step: UseBestItem calls it for each carried
   item whose class bits fit the character and keeps the highest score (ovl09:1543). Actor is the
-  character the step runs for (its Combat^.Target, HandsInUse and ByteA0 are read); Item is the
+  character the step runs for (its Combat^.Target, HandsInUse and Alignment are read); Item is the
   candidate (its ItemType, Plus, Affects and Cursed are read). The score is the item's largest damage
   against normal-size foes (DiceCountNormal times DiceSizeNormal), plus eight times Plus when Plus is
   above 0 (weapons and armour carry a bonus of 1..3, whitepaper 5.4), plus twice BonusNormal when that
   is above 0, plus 2 per attack beyond the first on an attack item (FlagAttack, Attacks), plus 3 when the
   item takes one hand or none. It is 0 when the item's Hands plus the actor's HandsInUse are above 3,
-  when Affects[3] is $84 and the low nibble of Affects[2] differs from the actor's ByteA0, when Affects[2]
+  when Affects[3] is $84 and the low nibble of Affects[2] differs from the actor's Alignment, when Affects[2]
   is $53, or when the item is cursed. Purpose unknown: the $84 and $53 rules, and the score of 8 for an
   item of type $55 when the actor's target's Pad74[$76] byte is above 0 (not named yet). Result: the
   score. Globals: ItemTable. }
@@ -786,7 +784,7 @@ begin
   if Row.Hands + Actor^.HandsInUse > 3 then
     Score := 0;
   if Item^.Affects[3] = $84 then
-    if (Item^.Affects[2] and $0F) <> Byte(Actor^.ByteA0) then
+    if (Item^.Affects[2] and $0F) <> Byte(Actor^.Alignment) then
       Score := 0;
   if Item^.Affects[2] = $53 then
     Score := 0;

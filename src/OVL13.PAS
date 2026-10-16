@@ -113,17 +113,6 @@ const
     (ovl13:2998); ovl10's StartBattle clears it every battle as Var2BattleWord, so its meaning is
     not settled beyond that. }
   Var2AllyAttack = 819;
-  { The two affects an enemy must not carry to take a parting shot (ovl13:0A91, 0AAB). ovl24
-    removes the same pair when a combatant goes down or panics (ovl24:0322, 0336) and RemoveExtraDeathAffects
-    removes them too. $4A is settled by its handler (ovl13:3A86, AffectForcedAttack); what $4B
-    changes is not (whitepaper 5.5). }
-  AffectNoPartingShot1 = $4B;
-  AffectForcedAttack = $4A;
-  { The affect the combatant an affect $4A records (HandlerCombatant) loses when the forced attack it stands
-    for does not happen or is over (ovl13:3AC7, 3B6E). It is one of the affects a combatant loses
-    when it goes down (ovl24's DeathAffects) and its handler runs among the movement hooks
-    (ovl24:02FA kind $12), so what it changes there is not settled. }
-  AffectLostWithForcedAttack = $3A;
   { The direction scan of a parting shot: the attacker's icon set plus 6 through plus 10 approach
     the target's cell (ovl13:0AC7..0AF4); the compass direction tried each step is its index mod 8. }
   PartingShotFirstOffset = 6;
@@ -417,10 +406,10 @@ end;
   being drawn (BF 0) it attacks at once, otherwise only when InDirArc says Who is in the arc facing
   the scanned direction from the enemy. The enemy's unused attack slot (1, or 2 for a monster with
   Attacks 0) is marked in AttackSlots, stored in the enemy's Combat^.Pad4[4], and PerformAttack(Enemy,
-  Who, 1, nil, PromptKeyFlag) makes the attack; the enemy's remembered Combat^.Target is restored after it.
+  Who, 1, nil, CombatScratchFlag) makes the attack; the enemy's remembered Combat^.Target is restored after it.
   When the shot leaves Who still in the fight, Who's panel is redrawn. Called before the move by
   MoveCharacter (ovl08:09DF) and MoveStep (ovl09:07F2), so the shots happen as the combatant leaves.
-  Globals: CombatantScanList, CombatantTable, DirStepX/DirStepY, CombatantRecord, PromptKeyFlag. }
+  Globals: CombatantScanList, CombatantTable, DirStepX/DirStepY, CombatantRecord, CombatScratchFlag. }
 procedure PartingShots(Who: PCharacter; Dir: Byte);
 var
   Enemies: array[1..12] of Byte;   { the enemies adjacent before the move (12 is CombatantScanList's size) }
@@ -468,7 +457,7 @@ begin
         Enemy := CombatantRecord[Enemies[I]];
         if not IsHelpless(Enemy) then
           if AttackTargetAllowed(Enemy, Who) then
-            if not HasAffect(Enemy, AffectNoPartingShot1, Affect) then
+            if not HasAffect(Enemy, AffectBloodDrain, Affect) then
               if not HasAffect(Enemy, AffectForcedAttack, Affect) then
                 for K := Enemy^.Combat^.IconSet + PartingShotFirstOffset
                   to Enemy^.Combat^.IconSet + PartingShotLastOffset do
@@ -488,7 +477,7 @@ begin
                         Enemy^.AttackSlots[Slot] := 1;
                       Enemy^.Combat^.Pad4[4] := Slot;
                       SavedTarget := Enemy^.Combat^.Target;
-                      PerformAttack(Enemy, Who, 1, nil, PromptKeyFlag);
+                      PerformAttack(Enemy, Who, 1, nil, CombatScratchFlag);
                       DidAttack := 1;
                       Enemy^.Combat^.Target := SavedTarget;
                       if Who^.Flag10D <> 0 then
@@ -601,7 +590,7 @@ end;
   each level-0 enemy in turn through NoteAttackBearing/PerformAttack, spending one attack per enemy
   (AttackSlots[1] := 1 and Dec(Extra)) until Extra runs out. Returns True when the sweep
   happened, so the caller ends the turn. Called by MeleeAttack (ovl08:0D45) and the AI
-  (ovl09:0B3C). Globals: CombatantScanList (the adjacent-enemy list), PromptKeyFlag (the done flag e12 writes),
+  (ovl09:0B3C). Globals: CombatantScanList (the adjacent-enemy list), CombatScratchFlag (the done flag e12 writes),
   CombatantRecord. }
 function SweepEnemies(Who, Target: PCharacter): Boolean;
 var
@@ -644,7 +633,7 @@ begin
                 Enemy := CombatantRecord[CombatantScanList[I]];
                 NoteAttackBearing(Who, Enemy);
                 Who^.AttackSlots[1] := 1;
-                PerformAttack(Who, Enemy, 0, nil, PromptKeyFlag);
+                PerformAttack(Who, Enemy, 0, nil, CombatScratchFlag);
                 Dec(Extra);
               end;
           SweepEnemies := True;
@@ -695,8 +684,8 @@ end;
   and an entry of exactly 0 destroys without giving it back (QUIRK ovl13:1302: the test is
   Result < 0, though the Result comment calls every nonpositive entry destroying). When nothing was
   turned it flashes 'Nothing Happens...'. Finally it recounts the sides,
-  stores EndCombatTurn's result in PromptKeyFlag and clears the message. Called by PlayerTurn's T case
-  (ovl08:031A) and TryTurnUndead (ovl09:0203). Globals: TurnUndeadTable, PromptKeyFlag. }
+  stores EndCombatTurn's result in CombatScratchFlag and clears the message. Called by PlayerTurn's T case
+  (ovl08:031A) and TryTurnUndead (ovl09:0203). Globals: TurnUndeadTable, CombatScratchFlag. }
 procedure TurnUndead(Who: PCharacter);
 var
   Roll20: Byte;                  { the d20 turning check }
@@ -758,7 +747,7 @@ begin
   if AnyTurned = 0 then
     ShowFlashMessage('Nothing Happens...');
   RecountCombatSides;
-  PromptKeyFlag := EndCombatTurn(Who);
+  CombatScratchFlag := EndCombatTurn(Who);
   ClearCharacterMessage;
 end;
 { ovl13:11D8: retf 4: 4 bytes of parameters; 0 bytes of locals }
@@ -1701,11 +1690,11 @@ end;
   existing Target passes AttackTargetAllowed and, for a ranged weapon with Automatic set,
   ChooseAttackItem finds usable ammo that can melee any adjacent enemy; with no target, AimFlag 0
   makes the aim illegal. It builds the prompt 'Center Exit', prefixed 'Target ' when legal, and reads
-  a key under the title '(Use Cursor keys) ' (ReadPromptChoice, PromptKeyFlag): Enter or 'T' confirms (the
+  a key under the title '(Use Cursor keys) ' (ReadPromptChoice, CombatScratchFlag): Enter or 'T' confirms (the
   cell and Target go into Aim and, when Automatic, ResolveAimedAttack resolves the attack, else Done
   is set; a failed aim redraws the cell and clears Aim), H/I/M/Q/P/O/K/G set Dir 0..7, #0 or 'E'
   cancels, 'C' centres the cursor (Dir 8) and any other key clears Dir. Called by the aim wrapper e17.
-  Globals: CombatMap, BodyCount, BodyTable, CombatantRecord, CombatTiles, DirStepX, DirStepY, PromptKeyFlag. }
+  Globals: CombatMap, BodyCount, BodyTable, CombatantRecord, CombatTiles, DirStepX, DirStepY, CombatScratchFlag. }
 procedure RunAimCursor(Who, Target: PCharacter; Range, Automatic, AimFlag: Byte; var Done: Byte; var Aim: TSpellTarget);
 var
   AimText: string[40];           { [bp-$29] the prompt text 'Center Exit' / 'Target Center Exit' }
@@ -1786,7 +1775,7 @@ begin
     AimText := 'Center Exit';
     if Valid then
       AimText := 'Target ' + AimText;
-    Key := ReadPromptChoice('(Use Cursor keys) ', AimText, $D, $A, $F, 1, 0, PromptKeyFlag);
+    Key := ReadPromptChoice('(Use Cursor keys) ', AimText, $D, $A, $F, 1, 0, CombatScratchFlag);
     case Key of
       #13, 'T':
         begin
@@ -2083,7 +2072,7 @@ begin
   HandlerCombatant := CombatantRecord[Affect^.Data];
   if (Mode <> 0) or (Who^.Flag10D = 0) or (HandlerCombatant^.Flag10D = 0) then
   begin
-    RemoveAffect(HandlerCombatant, AffectLostWithForcedAttack, nil);
+    RemoveAffect(HandlerCombatant, AffectHeldFast, nil);
     if Mode = 0 then
     begin
       Affect^.Flag := 0;

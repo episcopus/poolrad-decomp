@@ -38,7 +38,7 @@ type
     Tail: array[0..20000] of Byte;  { +$17: the tile bytes, indexed by a byte times ByteSize }
   end;
   { The monster picture-bank tables a loaded monster's appearance is picked from: a view of the
-    FigureSuffixChars-region byte table (POOLVARS, whose FigureSuffixChars[Figure[0]] is the CHEAD/CBODY suffix) with the
+    FigureBankTable-region byte table (POOLVARS, whose FigureBankTable[Figure[0]] is the CHEAD/CBODY suffix) with the
     head bank table at +2 and the four body bank tables at +$12, +$1C, +$26 and +$30. AddMonsterToParty
     indexes each by Who^.B9E * its stride plus a RollDice. The first two bytes are the suffix
     table's. }
@@ -55,7 +55,7 @@ type
   end;
 
 var
-  MonsterBanks: TMonsterBanks absolute FigureSuffixChars;  { the FigureSuffixChars picture-bank tables; see TMonsterBanks }
+  MonsterBanks: TMonsterBanks absolute FigureBankTable;  { the FigureBankTable picture-bank tables; see TMonsterBanks }
 
 const
   Yellow = $0E;        { EGA text colour of the disk prompt (the message colour OVL00 also uses) }
@@ -184,7 +184,7 @@ begin
 end;
 { ovl17:0482. Builds the selected character's (SelectedCharacter) combat icon picture. It selects
   8X8D tile set 3, loads the character's CHEAD picture (block Sel^.CHeadBlock, the set name given
-  the suffix FigureSuffixChars[Sel^.Figure[0]]) into picture slot 11 and its CBODY picture (block
+  the suffix FigureBankTable[Sel^.Figure[0]]) into picture slot 11 and its CBODY picture (block
   Sel^.CBodyBlock) into the character's icon slot (PictureSlots[Sel^.CombatIcon]), then merges the CHEAD
   halves into the CBODY halves (MergePictureData: OR the tile bytes, AND the pixels), so the head
   masks the body. When Recolor is set it also builds a 16-entry colour map from the six nibble pairs
@@ -202,8 +202,8 @@ begin
   SelectTileSet(3);
   with SelectedCharacter^ do
   begin
-    LoadPictureSlot('CHEAD' + FigureSuffixChars[Figure[0]], CHeadBlock, 11);
-    LoadPictureSlot('CBODY' + FigureSuffixChars[Figure[0]], CBodyBlock, CombatIcon);
+    LoadPictureSlot('CHEAD' + FigureBankTable[Figure[0]], CHeadBlock, 11);
+    LoadPictureSlot('CBODY' + FigureBankTable[Figure[0]], CBodyBlock, CombatIcon);
     MergePictureData(PictureSlots[11].FirstPic, PictureSlots[CombatIcon].FirstPic);
     MergePictureData(PictureSlots[11].SecondPic, PictureSlots[CombatIcon].SecondPic);
     if Recolor then
@@ -481,7 +481,7 @@ end;
   (GameVars2^[PartySize] > 7) it does nothing. Otherwise it allocates a 285-byte character and has
   LoadMonster fill it, gives it a random byte at +$AB (Random(256)), collects the classes with a
   positive level (Who^.ClassLevels[0..6]) into Pick[] (Pick[1] = 2 when none qualifies), rolls one of
-  them (RollDice(1, Count)) and picks the monster's body picture bank from the FigureSuffixChars-region
+  them (RollDice(1, Count)) and picks the monster's body picture bank from the FigureBankTable-region
   MonsterBanks tables by the roll and Who^.B9E (the body table of class 0, 5, 6 or the default), and
   its head bank from the head table the same way. Then AddPartyMember adds it and
   BuildCharacterIcon(True) rebuilds the combat icon. Called by AddComputerMemberCommand. }

@@ -735,10 +735,10 @@ end;
   VarForceWallView is clear. Command 55 loads the wall sets: slot 1 gets wall set 0 when Blocks[1] is
   $7F; when words 231 and 232 of GameVars are both set, slots 1 and 3 get Blocks[1] and Blocks[3],
   else each slot I gets Blocks[I] or, for $FF, the two words of WallSetSlotPairs[I] become $FFFF. The
-  label ovl03:0D7B is the slot loop of this routine. AreaRedrawArmed is set first. When RosterRedrawFlagA,
-  RosterRedrawFlagB and
-  RosterRedrawFlagC are all set, RedrawView runs, the selected character is redrawn (DrawPartyRoster) and
-  RosterRedrawFlagA is cleared. Words 231 and 232 of GameVars and word 713 of GameVars2 are not named yet. }
+  label ovl03:0D7B is the slot loop of this routine. AreaRedrawArmed is set first. When AreaStepRedrawOnce,
+  Command55Ran and
+  Command33Ran are all set, RedrawView runs, the selected character is redrawn (DrawPartyRoster) and
+  AreaStepRedrawOnce is cleared. Words 231 and 232 of GameVars and word 713 of GameVars2 are not named yet. }
 procedure LoadAreaGraphics;
 var
   Blocks: array[1..3] of Byte;
@@ -750,7 +750,7 @@ begin
     Blocks[I] := OperandValue(I);
   if SkippedOpcode = $21 then
   begin
-    RosterRedrawFlagC := 1;
+    Command33Ran := 1;
     if (Blocks[1] <> $FF) and (Blocks[1] <> $7F) and (GameVars^[VarForceWallView] <> 0) then
     begin
       GameVars^[VarGeoBlock] := Blocks[1];
@@ -762,7 +762,7 @@ begin
   end
   else
   begin
-    RosterRedrawFlagB := 1;
+    Command55Ran := 1;
     if Blocks[1] = $7F then
       LoadWallSet(0, 1)
     else if (GameVars^[231] <> 0) and (GameVars^[232] <> 0) then
@@ -780,11 +780,11 @@ begin
           WallSetSlotPairs[I].B := $FFFF;
         end;
   end;
-  if (RosterRedrawFlagA <> 0) and (RosterRedrawFlagB <> 0) and (RosterRedrawFlagC <> 0) then
+  if (AreaStepRedrawOnce <> 0) and (Command55Ran <> 0) and (Command33Ran <> 0) then
   begin
     RedrawView;
     DrawPartyRoster(SelectedCharacter);
-    RosterRedrawFlagA := 0;
+    AreaStepRedrawOnce := 0;
   end;
 end;
 { ovl03:0DEF. ECL commands 47 and 48 (dispatcher ovl03:2F2D, SkippedOpcode OpAnd or OpOr): the
@@ -2299,7 +2299,7 @@ end;
   VarSavedWallView, and sets the view mode ViewMode to ViewModeMap for map pages 2 to 4 when
   VarForceWallView is clear, else ViewModeWall. Unless SkipAreaScriptLoad is set it loads the area script
   (LoadEcl) and always resets the script machine (InitScript) and runs entry EclInitialEntry. A view mode
-  other than the map page redraws once (RedrawView, while RosterRedrawFlagA is still 1) and draws the area
+  other than the map page redraws once (RedrawView, while AreaStepRedrawOnce is still 1) and draws the area
   (ShowAreaView). Then it loops on HandleWildernessKeys. While word VarWord714 of GameVars2 is above 1
   or the key is KeyCamp, and the party is not destroyed: KeyCamp makes camp (RunCamp); any other such
   key saves the low bit of that word in SavedWord714Low, forces the word to 1, draws the area, runs entry
@@ -2313,11 +2313,11 @@ var
   Key: Char;                    { the key HandleWildernessKeys returned }
   Unused: Byte;                 { QUIRK ovl03:32F8: a byte of the frame nothing uses }
 begin
-  RosterRedrawFlagB := 0;
-  RosterRedrawFlagC := 0;
+  Command55Ran := 0;
+  Command33Ran := 0;
   ReselectCharacterPending := 0;
   AreaRedrawArmed := 0;
-  RosterRedrawFlagA := 1;
+  AreaStepRedrawOnce := 1;
   ViewMode := ViewModeWall;
   ScriptBlockStarted := 0;
   WallViewMode := GameVars^[VarSavedWallView];
@@ -2332,10 +2332,10 @@ begin
   RunScriptFrom(EclInitialEntry);
   if ViewMode <> ViewModeMap then
   begin
-    if RosterRedrawFlagA = 1 then
+    if AreaStepRedrawOnce = 1 then
     begin
       RedrawView;
-      RosterRedrawFlagA := 0;
+      AreaStepRedrawOnce := 0;
     end;
     ShowAreaView;
   end;

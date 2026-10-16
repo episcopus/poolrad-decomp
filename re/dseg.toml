@@ -1284,7 +1284,7 @@ evidence = "the Crt unit's variables (TP 6.0 interface), 4 bytes below where the
 
 [[global]]
 offset = 0x0332
-name = "FourListedNames"
+name = "KoboldGoblinNames"
 evidence = "the four names (rows 1..4) the affect handlers RaiseResistanceAndSave and BoostAttackVsListedTarget compare with the attacked character's name (ovl12:0679)"
 
 [[global]]
@@ -1294,12 +1294,12 @@ evidence = "the 13 TCodeWheelEntry records CheckCodeWheel (ovl02) picks one of a
 
 [[global]]
 offset = 0x0382
-name = "EightListedNamesA"
+name = "OrcGoblinHobgoblinNames"
 evidence = "eight names (rows 1..8) the handlers LowerAttackRollByFour and BoostAttackVsEightListed compare with the attacked character's name (ovl12:0918, 0947)"
 
 [[global]]
 offset = 0x0402
-name = "EightListedNamesB"
+name = "OgreTrollGiantNames"
 evidence = "eight names (rows 1..8 at DS:0402) CauseDiseaseAndDamage and LowerAttackVsEightListed compare with the attacked character's name (ovl12)"
 
 [[global]]
@@ -1339,7 +1339,7 @@ evidence = "the eleven TFunctionSlot entries of the training hall function menu 
 
 [[global]]
 offset = 0x08C5
-name = "FigureSuffixChars"
+name = "FigureBankTable"
 evidence = "byte table whose entry [Figure[0]] is the CHEAD/CBODY picture file suffix (BuildCharacterIcon ovl17:0482, MergePictureData)"
 
 [[global]]
@@ -1435,7 +1435,7 @@ evidence = "the 3x3 line pattern table StepLine reads at [StepY+1, StepX+1] (ovl
 [[global]]
 offset = 0x25D5
 name = "TextColourMap4"
-evidence = "four-colour map of the 16 text colours AllocHeapBlock, WriteCharsAt and DrawGlyph use for VideoAdapter 0 (res05, res06)"
+evidence = "four-colour map of the 16 text colours WriteCharsAt and DrawGlyph use for VideoAdapter 0 (res05, res06)"
 
 [[global]]
 offset = 0x25FA
@@ -1594,17 +1594,17 @@ evidence = "cleared by ECL command 32, set by 33 and 55; EngineActionCommand red
 
 [[global]]
 offset = 0x4432
-name = "RosterRedrawFlagA"
+name = "AreaStepRedrawOnce"
 evidence = "first of three flags that must all be set before LoadAreaGraphics redraws the selected character (ovl03:0C74)"
 
 [[global]]
 offset = 0x4433
-name = "RosterRedrawFlagB"
+name = "Command55Ran"
 evidence = "second of three flags LoadAreaGraphics tests; set by ECL command 55 (ovl03:0C74)"
 
 [[global]]
 offset = 0x4434
-name = "RosterRedrawFlagC"
+name = "Command33Ran"
 evidence = "third of three flags LoadAreaGraphics tests; set by ECL command 33 (ovl03:0C74)"
 
 [[global]]
@@ -1780,7 +1780,7 @@ evidence = "the display page SetPageSegment and FillPlaneRect fill and WriteChar
 [[global]]
 offset = 0x4A1B
 name = "TextPage"
-evidence = "the BIOS display page WriteCharsAt and AllocHeapBlock write text to; res08_init sets it to 0 (res05)"
+evidence = "the BIOS display page WriteCharsAt writes text to; res08_init sets it to 0 (res05)"
 
 [[global]]
 offset = 0x4A1D
@@ -2060,17 +2060,8 @@ evidence = "the list of TCombatNode clouds (Stinking Cloud markers) EndCombat fr
 [[global]]
 offset = 0x6DDE
 name = "DoorMenuFlags"
-evidence = "3-byte buffer the loader fills with 1 (ovl11:0342); entry 0 is the Bash menu flag HasRecFlag and DoBash clear (ovl14)"
-
-[[global]]
-offset = 0x6DDF
-name = "PickMenuFlag"
-evidence = "Pick menu flag: DoWildernessMenu offers Pick while nonzero (ovl14)"
-
-[[global]]
-offset = 0x6DE0
-name = "KnockMenuFlag"
-evidence = "knock menu flag: DoWildernessMenu offers Knock while nonzero and a Knock code record exists (ovl14)"
+size = 3
+evidence = "3-byte buffer the loader fills with 1 (ovl11:0342): [0] the Bash menu flag (AnyMemberHasClassLevel, DoBash clear it), [1] the Pick menu flag (DoPick clears it) and [2] the Knock menu flag; DoWildernessMenu offers each command while its flag is nonzero (ovl14)"
 
 [[global]]
 offset = 0x6DE2
@@ -2104,7 +2095,7 @@ evidence = "the Alt-M Magic On/Off toggle of the combat keys (PlayerTurn ovl08:0
 
 [[global]]
 offset = 0x6E31
-name = "PromptKeyFlag"
+name = "CombatScratchFlag"
 evidence = "the extended-key flag the ovl08 and ovl13 menus pass to ReadPromptChoice"
 
 [[global]]

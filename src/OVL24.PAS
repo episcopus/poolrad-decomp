@@ -49,7 +49,6 @@ const
   VarSideBonusParty = 881;      { a game word added to the party's attack rolls (low byte, signed) }
   VarSideBonusMonsters = 880;   { the same for the other side }
   { The affects of a cloud tile (ApplyCloudTile). }
-  AffectCough = $1E;            { a saved character coughs for one round }
   AffectAttackerLoses = $19;    { removed from an attacker before it rolls (ClearAttackerAffect) }
   { Strength as one byte (EncodeStrength): 18 with a percentile is 1..101, other values 100 up. }
   StrengthOffset = 100;
@@ -379,8 +378,8 @@ begin
                 end
                 else
                 begin
-                  ApplyAffect(Who, AffectNausea, RollDice(1, 4) + 1, $FF, 0, 0, Saved, 'chokes and gags from nausea');
-                  CallAffectHandler(AffectNausea, Who, Affect, ModeApply);
+                  ApplyAffect(Who, AffectHelpless, RollDice(1, 4) + 1, $FF, 0, 0, Saved, 'chokes and gags from nausea');
+                  CallAffectHandler(AffectHelpless, Who, Affect, ModeApply);
                 end;
               end;
   end;
@@ -746,7 +745,7 @@ begin
   HealCharacter := False;
   if Who^.Status in [0, 1, 4, 5] then
     if ((Who^.Flag11B < Who^.HpMax) and (Flag <> 0)) or
-      (not HasAffect(Who, AffectHealingBlock, Affect) and (Flag = 0)) then
+      (not HasAffect(Who, AffectMummyDisease, Affect) and (Flag = 0)) then
     begin
       Who^.Flag11B := Who^.Flag11B + Amount;
       if Who^.Flag11B > Who^.HpMax then
