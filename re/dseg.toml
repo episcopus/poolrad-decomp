@@ -1414,12 +1414,12 @@ evidence = "target colour map (colour 13 to 0) LoadPictureSlot and FreePictureSl
 
 [[global]]
 offset = 0x0D02
-name = "PixelsByColour2Bit"
+name = "PixelsByColor2Bit"
 evidence = "per colour C 0..3 the byte of four 2-bit pixels of C FillPictureRect fills with (res07)"
 
 [[global]]
 offset = 0x0D06
-name = "PixelsByColour4Bit"
+name = "PixelsByColor4Bit"
 evidence = "per colour C the byte of two 4-bit pixels of C (C * $11) FillPictureRect fills with (res07)"
 
 [[global]]
@@ -1434,12 +1434,12 @@ evidence = "the 3x3 line pattern table StepLine reads at [StepY+1, StepX+1] (ovl
 
 [[global]]
 offset = 0x25D5
-name = "TextColourMap4"
+name = "TextColorMap4"
 evidence = "four-colour map of the 16 text colours WriteCharsAt and DrawGlyph use for VideoAdapter 0 (res05, res06)"
 
 [[global]]
 offset = 0x25FA
-name = "PixelBitsByColour"
+name = "PixelBitsByColor"
 evidence = "per palette colour and pixel position the byte UnpackPicturePixels ORs into a picture byte for VideoAdapter 0 (res07)"
 
 [[global]]
@@ -1529,7 +1529,7 @@ evidence = "the direction of each cloud arm 1..4 ClearCloud steps along (ovl12:0
 
 [[global]]
 offset = 0x3CF5
-name = "FigureColourSlots"
+name = "FigureColorSlots"
 evidence = "the destination colour of each of the six figure colour pairs CreateCharacter, BuildCharacterIcon and EditCharacterIcon use (ovl16, ovl17)"
 
 [[global]]

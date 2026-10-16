@@ -46,7 +46,6 @@ const
   BiosSetCursor = 2;         { function 2: set the cursor position (DH row, DL column, BH page) }
   BiosWriteChar = 9;         { function 9: write AL CX times with attribute BL on page BH }
   SolidBlock = #$DB;         { the full block character of the PC character set }
-  PromptRow = 24;            { the bottom text row, where ShowBottomMessage shows its message }
   RowWidth = 40;             { text cells in a row (40-column mode) }
   Black = 0;
   Yellow = 14;
@@ -69,7 +68,7 @@ end;
 
 { 0802:0040. Writes Count copies of the character Ch at text cell (Col, Row) through the BIOS
   (INT 10h function 2 sets the cursor, function 9 writes the character with its attribute) on the
-  page in TextPage. With VideoAdapter 0 the colour goes through the four-colour table TextColourMap4; with
+  page in TextPage. With VideoAdapter 0 the colour goes through the four-colour table TextColorMap4; with
   VideoAdapter 1 the same two calls are repeated on the page in FillTextPage with the colour as it is. }
 procedure WriteCharsAt(Col, Row, Color, Count: Byte; Ch: Char);
 begin
@@ -82,7 +81,7 @@ begin
   Regs.AL := Ord(Ch);
   Regs.BH := TextPage;
   if VideoAdapter = 0 then
-    Regs.BL := TextColourMap4[Color]
+    Regs.BL := TextColorMap4[Color]
   else
     Regs.BL := Color;
   Regs.CX := Count;
@@ -130,10 +129,10 @@ procedure ShowBottomMessage(Color: Byte; Message: String40);
 var
   Key: Char;
 begin
-  FillBlocksAt(0, PromptRow, Black, RowWidth);
-  WriteTextAt(0, PromptRow, Color, Message);
+  FillBlocksAt(0, BottomRow, Black, RowWidth);
+  WriteTextAt(0, BottomRow, Color, Message);
   Key := ReadGameKey;
-  FillBlocksAt(0, PromptRow, Black, RowWidth);
+  FillBlocksAt(0, BottomRow, Black, RowWidth);
 end;
 
 { 0802:0212. Waits until the overlay file game.ovr can be opened: while it cannot, writes

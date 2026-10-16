@@ -92,7 +92,7 @@ end;
   CHEAD and CBODY sets: a name ending in T adds $40 to Block and loses that letter. COMSPR and
   ICON: the name is used as it is, and ICON pictures are recoloured with PictureRemap13To0. Any other set
   takes the file number TileSet as a suffix and both pictures are recoloured with PictureRemap13To8
-  (RemapPictureColours, from the identity map PictureRemapFrom). Flushes the keyboard at the end. StartGame
+  (RemapPictureColors, from the identity map PictureRemapFrom). Flushes the keyboard at the end. StartGame
   loads COMSPR pictures 0 to 11 into slots 13 to 24 and picture 25 into slot 25 with it. }
 procedure LoadPictureSlot(SetName: string; Block, Slot: Byte);
 var
@@ -114,17 +114,17 @@ begin
     LoadPicture(SetName + Suffix, Block + MirrorPictures, 1, 0, PictureSlots[Slot].SecondPic);
     if SetName = 'ICON' then
     begin
-      RemapPictureColours(@PictureRemapFrom, @PictureRemap13To0, 0, 0, PictureSlots[Slot].FirstPic);
-      RemapPictureColours(@PictureRemapFrom, @PictureRemap13To0, 0, 0, PictureSlots[Slot].SecondPic);
+      RemapPictureColors(@PictureRemapFrom, @PictureRemap13To0, 0, 0, PictureSlots[Slot].FirstPic);
+      RemapPictureColors(@PictureRemapFrom, @PictureRemap13To0, 0, 0, PictureSlots[Slot].SecondPic);
     end;
   end
   else
   begin
     Str(TileSet, Suffix);
     LoadPicture(SetName + Suffix, Block, 1, 0, PictureSlots[Slot].FirstPic);
-    RemapPictureColours(@PictureRemapFrom, @PictureRemap13To8, 0, 0, PictureSlots[Slot].FirstPic);
+    RemapPictureColors(@PictureRemapFrom, @PictureRemap13To8, 0, 0, PictureSlots[Slot].FirstPic);
     LoadPicture(SetName + Suffix, Block + MirrorPictures, 1, 0, PictureSlots[Slot].SecondPic);
-    RemapPictureColours(@PictureRemapFrom, @PictureRemap13To8, 0, 0, PictureSlots[Slot].SecondPic);
+    RemapPictureColors(@PictureRemapFrom, @PictureRemap13To8, 0, 0, PictureSlots[Slot].SecondPic);
   end;
   FlushKeyboard;
 end;

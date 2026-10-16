@@ -708,7 +708,7 @@ const
   SideScale = 128;
   { Charm Person's side effect: the affect handler runs when the affect is removed (Flag 1). }
   RunHandlerOnRemoval = 1;
-  MessageColour = $A;             { the colour ShowCharacterMessage shows the message in }
+  MessageColor = $A;             { the colour ShowCharacterMessage shows the message in }
   TimedMessage = 1;               { nonzero: ShowCharacterMessage delays by the game speed and clears it }
 var
   Affect: Pointer;                { the charm affect HasAffect finds on the target }
@@ -716,7 +716,7 @@ var
 begin
   Target := FirstSpellTarget;
   if (Target^.CreatureType > CharmableType) or (Target^.CombatSize > CharmableSize) then
-    ShowCharacterMessage(Target, 'is unaffected', MessageColour, TimedMessage)
+    ShowCharacterMessage(Target, 'is unaffected', MessageColor, TimedMessage)
   else
   begin
     ApplySpellToTargets(CastingSpell,
@@ -744,7 +744,7 @@ const
   PercentLevel4 = $4C;
   PercentLevel5 = $5B;
   PercentLevel6 = $64;
-  MessageColour = $A;             { the colour ShowCharacterMessage shows the message in }
+  MessageColor = $A;             { the colour ShowCharacterMessage shows the message in }
   TimedMessage = 1;               { nonzero: ShowCharacterMessage delays by the game speed and clears it }
 var
   Code: Byte;                     { RaiseStrength's earlier-strength code, passed to AddAffect as Data }
@@ -759,7 +759,7 @@ begin
     6: SpellWorkByteB := PercentLevel6;
   end;
   if RaiseStrength(FirstSpellTarget, SpellWorkByteA, SpellWorkByteB, Code) then
-    ShowCharacterMessage(FirstSpellTarget, 'is stronger', MessageColour, TimedMessage);
+    ShowCharacterMessage(FirstSpellTarget, 'is stronger', MessageColor, TimedMessage);
   AddAffect(FirstSpellTarget, StrengthAffect, SpellAffectDuration(CastingSpell), Code, 1);
 end;
 { ovl22:136E (e21). Cast handler of spell 13, Reduce (SpellHandlers[13]; InitSpellHandlers fills the table,
@@ -770,13 +770,13 @@ procedure CastReduce;
 const
   SaveKind = 4;                   { SavingThrow's kind for a spell (whitepaper 5.22.2) }
   StrengthAffect = $0C;           { the strength affect Enlarge adds; Reduce cancels it (ovl22:12A5) }
-  MessageColour = $A;             { the colour ShowCharacterMessage shows the message in }
+  MessageColor = $A;             { the colour ShowCharacterMessage shows the message in }
   TimedMessage = 1;               { nonzero: ShowCharacterMessage delays by the game speed and clears it }
 begin
   if SpellTargetCount > 0 then
     if not SavingThrow(FirstSpellTarget, SaveKind, 0) then
       if CureAffect(FirstSpellTarget, StrengthAffect) then
-        ShowCharacterMessage(FirstSpellTarget, 'has been reduced', MessageColour, TimedMessage);
+        ShowCharacterMessage(FirstSpellTarget, 'has been reduced', MessageColor, TimedMessage);
 end;
 { ovl22:13D8 (e22). Cast handler of spell 14, Friends (SpellHandlers[14]; InitSpellHandlers fills the table,
   whitepaper 5.22.2): raises the chosen target FirstSpellTarget's Charisma by 2d4, capped at 25 ($19), and calls
@@ -789,7 +789,7 @@ const
   DiceSides = 4;
   CharismaCap = $19;              { Charisma's maximum, 25 }
   RestoreOnRemoval = 1;           { Flag: the affect handler runs when the affect is removed }
-  MessageColour = $A;
+  MessageColor = $A;
   TimedMessage = 1;
 var
   OldCharisma: Byte;              { the target's Charisma before the roll, the affect's Data }
@@ -1106,7 +1106,7 @@ const
   RefusedTileCost = $FF;          { a combat tile cost this high refuses the cell (TCombatTile.Cost) }
   AimCursorMargin = $FF;          { the margin MoveCombatCursor centres the view with }
   AimCursorDir = 8;               { the omni direction MoveCombatCursor steps in (DirStepX/DirStepY) }
-  MessageColour = $A;             { the colour ShowCharacterMessage shows the message in }
+  MessageColor = $A;             { the colour ShowCharacterMessage shows the message in }
 var
   Cloud: PCombatNode;             { the walker of the CloudList cloud list }
   Node: PCombatNode;              { the cloud marker this cast fills }
@@ -1176,7 +1176,7 @@ begin
     if Node^.Arms[I] <> 0 then
       CombatMap^.Cells[SpellAimY + DirStepY[Dir], SpellAimX + DirStepX[Dir]] := CloudTile;
   end;
-  ShowCharacterMessage(SelectedCharacter, 'Creates a noxious cloud', MessageColour, 0);
+  ShowCharacterMessage(SelectedCharacter, 'Creates a noxious cloud', MessageColor, 0);
   MoveCombatCursor(SpellAimX, SpellAimY, AimCursorMargin, AimCursorDir);
   DelayByGameSpeed;
   ClearCharacterMessage;
@@ -1202,7 +1202,7 @@ const
   MagicUserSides = 4;
   ClericSides = 6;
   FighterSides = 8;
-  MessageColour = $A;             { the colour ShowCharacterMessage shows 'is stronger' in }
+  MessageColor = $A;             { the colour ShowCharacterMessage shows 'is stronger' in }
   TimedMessage = 1;               { nonzero: ShowCharacterMessage delays by the game speed and clears it }
   RunHandlerOnRemoval = 1;        { AddAffect Flag: the affect's handler runs when the affect is removed }
 var
@@ -1238,7 +1238,7 @@ begin
       Strength := ExceptionalStrength;
   end;
   if RaiseStrength(Target, Strength, Percent, Code) then
-    ShowCharacterMessage(Target, 'is stronger', MessageColour, TimedMessage);
+    ShowCharacterMessage(Target, 'is stronger', MessageColor, TimedMessage);
   AddAffect(Target, StrengthAffect, SpellAffectDuration(CastingSpell), Code, RunHandlerOnRemoval);
 end;
 { ovl22:206F. Cast handler of spell 36, Animate Dead: for up to the caster level corpses still in the
@@ -1780,7 +1780,7 @@ const
   MaxRestoredLevel = 13;          { a class level above this is never advanced ($D) }
   MaxExperience = 10000000;       { the initial 'smallest' experience value the loop compares against }
   LastClass = 7;                  { the last class index of ClassLevels }
-  MessageColour = $A;             { the colour ShowCharacterMessage shows 'is restored' in }
+  MessageColor = $A;             { the colour ShowCharacterMessage shows 'is restored' in }
   TimedMessage = 1;               { nonzero: ShowCharacterMessage delays by the game speed and clears it }
 var
   Target: PCharacter;             { FirstSpellTarget, the selected character being restored }
@@ -1819,7 +1819,7 @@ begin
   if Target^.Experience < BestXp then
     Target^.Experience := BestXp;
   RecalcClassStats(Target);
-  ShowCharacterMessage(Target, 'is restored', MessageColour, TimedMessage);
+  ShowCharacterMessage(Target, 'is restored', MessageColor, TimedMessage);
 end;
 { ovl22:2E02. Cast handler of spell 57, a monster-only spell: SpellNames[57] is empty, and the
   InitSpellHandlers table points element 57 of SpellHandlers at this stub. It first cancels the slow affect
@@ -1877,14 +1877,14 @@ const
   MonsterStrength = 21;           { the Strength RaiseStrength applies }
   NoPercent = 0;                  { no exceptional-strength percentile }
   StrengthAffect = $26;           { the strength affect left on the target (as CastStrength, ovl22:1F41) }
-  MessageColour = $A;             { the colour ShowCharacterMessage shows 'is stronger' in }
+  MessageColor = $A;             { the colour ShowCharacterMessage shows 'is stronger' in }
   TimedMessage = 1;               { nonzero: ShowCharacterMessage delays by the game speed and clears it }
   RunHandlerOnRemoval = 1;        { AddAffect Flag: the affect's handler runs when the affect is removed }
 var
   Code: Byte;                     { RaiseStrength's earlier-strength code, passed to AddAffect as Data }
 begin
   if RaiseStrength(FirstSpellTarget, MonsterStrength, NoPercent, Code) then
-    ShowCharacterMessage(FirstSpellTarget, 'is stronger', MessageColour, TimedMessage);
+    ShowCharacterMessage(FirstSpellTarget, 'is stronger', MessageColor, TimedMessage);
   AddAffect(FirstSpellTarget, StrengthAffect, SpellAffectDuration(CastingSpell), Code, RunHandlerOnRemoval);
 end;
 { ovl22:2F4D. Cast handler of spell 60, a monster-only spell: SpellNames[60] is empty, and the
@@ -1988,7 +1988,7 @@ procedure MonsterBreath(Who: PCharacter; Affect: PAffect; Unused: Byte);
 const
   BreatheChance = $32;            { the monster does not breathe on a 1d100 roll up to this }
   ChanceSides = $64;              { the chance is rolled on 1d100 }
-  MessageColour = $A;             { the colour ShowCharacterMessage shows 'Breathes!' in }
+  MessageColor = $A;             { the colour ShowCharacterMessage shows 'Breathes!' in }
   TimedMessage = 1;               { nonzero: ShowCharacterMessage delays by the game speed and clears it }
   PickerSpell = $33;              { the picker uses the Lightning Bolt's target mode }
   PickerQuick = 1;                { the picker's second argument }
@@ -2008,7 +2008,7 @@ begin
     Exit;
   CasterX := CombatantX(Who);
   CasterY := CombatantY(Who);
-  ShowCharacterMessage(Who, 'Breathes!', MessageColour, TimedMessage);
+  ShowCharacterMessage(Who, 'Breathes!', MessageColor, TimedMessage);
   SpellTargetPicker(PickerSpell, PickerQuick, PickerDone);
   SpellAimX := CasterX + SignOf(SpellAimX - CasterX);
   SpellAimY := CasterY + SignOf(SpellAimY - CasterY);
@@ -2088,22 +2088,22 @@ const
   MessageRow = $13;               { the row Who's name and Message are drawn on, out of combat }
   SpellNameRow = $14;             { the row the spell's name is drawn on }
   GapAfterName = 2;               { Message starts this many columns past the name's length }
-  MessageColour = $A;             { the colour of the messages }
+  MessageColor = $A;             { the colour of the messages }
   TimedMessage = 1;               { nonzero: ShowCharacterMessage delays by the game speed and clears it }
   NoMode = 0;                     { DrawCharacterName's Mode: no extra highlight }
 begin
   if ViewMode = ViewModeCombat then
   begin
-    ShowCharacterMessage(Who, 'Casts a Spell', MessageColour, TimedMessage);
+    ShowCharacterMessage(Who, 'Casts a Spell', MessageColor, TimedMessage);
     ClearWindow(0, $17, $27, $17);
-    DrawTextAt(0, $17, MessageColour, 'Spell:' + SpellNames[Spell]);
+    DrawTextAt(0, $17, MessageColor, 'Spell:' + SpellNames[Spell]);
   end
   else
   begin
     ClearWindow(TextColumn, $12, $26, $16);
     DrawCharacterName(Who, TextColumn, MessageRow, NoMode);
-    DrawTextAt(Length(Who^.Name) + GapAfterName, MessageRow, MessageColour, Message);
-    DrawTextAt(TextColumn, SpellNameRow, MessageColour, SpellNames[Spell]);
+    DrawTextAt(Length(Who^.Name) + GapAfterName, MessageRow, MessageColor, Message);
+    DrawTextAt(TextColumn, SpellNameRow, MessageColor, SpellNames[Spell]);
     DelayByGameSpeed;
     ClearCharacterMessage;
   end;

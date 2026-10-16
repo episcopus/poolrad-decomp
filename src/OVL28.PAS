@@ -101,7 +101,7 @@ end;
   data (UnpackPicturePixels), Row being the picture's ByteSize (twice the byte size when VideoAdapter is 0)
   minus one. PIC and FINAL pictures are stored as differences: the first picture's data is kept in
   Prev and every later picture's bytes are xored with it before decoding. When bit 0 of Mode is set
-  and VideoAdapter is not 0, the picture also goes through RemapPictureColours with the two 16-byte tables
+  and VideoAdapter is not 0, the picture also goes through RemapPictureColors with the two 16-byte tables
   SpriteRemapFrom and SpriteRemapTo. Frees Prev and the block at the end and calls FlushKeyboard (which does nothing,
   QUIRK 0899:010A).
   QUIRK ovl28:0269: when MaxAvail is below FreeMemoryFloor the jump to the loop end skips not only
@@ -113,7 +113,7 @@ end;
   first picture's size Prev was allocated with (FreeMem ignores the size, so it is harmless).
   Note ovl28:00D9: FreeSpriteList is passed @List^ (les/push es/push di), the same pointer as List.
   Parameters: Name (the file base name), Bank (the DAX block), Mode (passed on to the allocator and
-  the decoder; bit 0 enables RemapPictureColours), List (the sprite list to fill). Side effects: the heap,
+  the decoder; bit 0 enables RemapPictureColors), List (the sprite list to fill). Side effects: the heap,
   LastSpriteFile, LastSpriteBank. Callers: ovl03:0856, ShowEncounterPicture, ovl18:0006, RedrawView (packet). }
 procedure LoadSpriteList(Name: String8; Bank: Byte; Mode: Byte; List: PSpriteList);
 var
@@ -187,7 +187,7 @@ begin
         end;
         UnpackPicturePixels(Block, Offset, Mode, 0, Slots[I].Sprite);
         if ((Mode and 1) > 0) and (VideoAdapter <> 0) then
-          RemapPictureColours(@SpriteRemapFrom, @SpriteRemapTo, 0, 0, Slots[I].Sprite);
+          RemapPictureColors(@SpriteRemapFrom, @SpriteRemapTo, 0, 0, Slots[I].Sprite);
         Inc(Offset, Row + 1);
       end;
     end;

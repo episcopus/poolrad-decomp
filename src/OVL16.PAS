@@ -34,9 +34,9 @@ const
   MenuRight = $26;
   MenuBottom = $16;
   MenuFirstRow = $C;        { text row of the first function name in the menu }
-  HotKeyColour = $F;        { white: the function name's first (hotkey) letter }
-  NameColour = $A;          { green: the rest of the function name }
-  ChoiceTitleColour = $D;   { the ReadPromptChoice title colour of the menu }
+  HotKeyColor = $F;        { white: the function name's first (hotkey) letter }
+  NameColor = $A;          { green: the rest of the function name }
+  ChoiceTitleColor = $D;   { the ReadPromptChoice title colour of the menu }
   { GameVars2^ word 680: the set of classes this training hall trains, a mask over the ClassTrainingBits class
     bits (only its low byte is tested). RunCharacterMenu offers Train (slot 3) while it is nonzero,
     or while the STING cheat StingCheat is set; TrainCharacter needs it to share a bit with the
@@ -221,14 +221,14 @@ begin
       for I := 0 to 10 do
         if CharacterMenuSlots[I].Present <> 0 then
         begin
-          DrawTextAt(2, Row + MenuFirstRow, HotKeyColour, CharacterMenuSlots[I].Name[1]);
-          DrawTextAt(3, Row + MenuFirstRow, NameColour, Copy(CharacterMenuSlots[I].Name, 2,
+          DrawTextAt(2, Row + MenuFirstRow, HotKeyColor, CharacterMenuSlots[I].Name[1]);
+          DrawTextAt(3, Row + MenuFirstRow, NameColor, Copy(CharacterMenuSlots[I].Name, 2,
             Length(CharacterMenuSlots[I].Name) - 1));
           Inc(Row);
         end;
       Show := 0;
     end;
-    Key := ReadPromptChoice('Choose a function ', CharacterMenuHotkeys, ChoiceTitleColour, 0, 0, 1, 0, ExtKey);
+    Key := ReadPromptChoice('Choose a function ', CharacterMenuHotkeys, ChoiceTitleColor, 0, 0, 1, 0, ExtKey);
     ClearPromptLine;
     if ExtKey <> 0 then
     begin
@@ -314,7 +314,7 @@ begin
 end;
 { ovl16:056C. The C (Create) function of the training hall, called by RunCharacterMenu (ovl16:0161). It
   builds a new party member and saves it. The record is allocated (GetMem and FillChar, 285 bytes)
-  with its starting values: the six figure colour pairs from FigureColourSlots, magic resistance 50, THAC0 40,
+  with its starting values: the six figure colour pairs from FigureColorSlots, magic resistance 50, THAC0 40,
   Flag10D set (it takes part in combat and earns experience), picture banks 1 and 1 and a random BAB.
   Four list menus follow in the window (1,2)..($26,$16), each a ChooseFromList with the title line
   'Pick Race', 'Pick Gender', 'Pick Class' or 'Pick Alignment' and the choices indented by two
@@ -374,14 +374,14 @@ const
   MenuTopRow = 2;
   MenuRightCol = $26;
   MenuBottomRow = $16;
-  MenuHeadingColour = $D;
-  MenuLineColour = $A;
-  MenuHighlightColour = $F;
+  MenuHeadingColor = $D;
+  MenuLineColor = $A;
+  MenuHighlightColor = $F;
   { AskYesNo's and ReadInputLine's colours. }
-  PromptTitleColour = $D;
-  PromptWordColour = $A;
-  PromptHotColour = $F;
-  NamePromptColour = $D;
+  PromptTitleColor = $D;
+  PromptWordColor = $A;
+  PromptHotColor = $F;
+  NamePromptColor = $D;
   KeyEnter = #13;
   KeyEscape = #0;
   { The permanent affects the race gives (AddAffect Duration 0, Data $FF, Flag 0). The saving-throw
@@ -466,7 +466,7 @@ begin
   with NewCharacter^ do
   begin
     for I := 1 to StartFigureCount do
-      Figure[I] := FigureColourSlots[I] + (FigureColourSlots[I] + 8) * 16;
+      Figure[I] := FigureColorSlots[I] + (FigureColorSlots[I] + 8) * 16;
     ResistBase := StartResist;
     Thac0 := StartThac0;
     Status := 0;
@@ -497,7 +497,7 @@ begin
   Redraw := 1;
   WithExit := 1;
   repeat
-    Key := ChooseFromList('', '', MenuHeadingColour, MenuLineColour, MenuHighlightColour, MenuLeftCol,
+    Key := ChooseFromList('', '', MenuHeadingColor, MenuLineColor, MenuHighlightColor, MenuLeftCol,
       MenuTopRow, MenuRightCol, MenuBottomRow, MenuList, WithExit, Redraw, Choice, PickedLine);
     if Key = KeyEscape then Exit;
   until Key = KeyEnter;
@@ -557,7 +557,7 @@ begin
   WithExit := 1;
   Redraw := 1;
   repeat
-    Key := ChooseFromList('', '', MenuHeadingColour, MenuLineColour, MenuHighlightColour, MenuLeftCol,
+    Key := ChooseFromList('', '', MenuHeadingColor, MenuLineColor, MenuHighlightColor, MenuLeftCol,
       MenuTopRow, MenuRightCol, MenuBottomRow, MenuList, WithExit, Redraw, Choice, PickedLine);
     if Key = KeyEscape then Exit;
   until Key = KeyEnter;
@@ -577,7 +577,7 @@ begin
   WithExit := 1;
   Redraw := 1;
   repeat
-    Key := ChooseFromList('', '', MenuHeadingColour, MenuLineColour, MenuHighlightColour, MenuLeftCol,
+    Key := ChooseFromList('', '', MenuHeadingColor, MenuLineColor, MenuHighlightColor, MenuLeftCol,
       MenuTopRow, MenuRightCol, MenuBottomRow, MenuList, WithExit, Redraw, Choice, PickedLine);
     if Key = KeyEscape then Exit;
   until Key = KeyEnter;
@@ -663,7 +663,7 @@ begin
   WithExit := 1;
   Redraw := 1;
   repeat
-    Key := ChooseFromList('', '', MenuHeadingColour, MenuLineColour, MenuHighlightColour, MenuLeftCol,
+    Key := ChooseFromList('', '', MenuHeadingColor, MenuLineColor, MenuHighlightColor, MenuLeftCol,
       MenuTopRow, MenuRightCol, MenuBottomRow, MenuList, WithExit, Redraw, Choice, PickedLine);
     if Key = KeyEscape then Exit;
   until Key = KeyEnter;
@@ -889,12 +889,12 @@ begin
     end;
     ShowCombatStats;
     ShowCharacterMoney;
-    Key := AskYesNo('Keep this character? ', PromptTitleColour, PromptWordColour, PromptHotColour);
+    Key := AskYesNo('Keep this character? ', PromptTitleColor, PromptWordColor, PromptHotColor);
   until Key = KeepAnswer;
   ShowCharacterSheet;
   SelectedCharacter := SavedSelection;
   repeat
-    NewCharacter^.Name := ReadInputLine('Character name: ', NamePromptColour, NameMaxLength);
+    NewCharacter^.Name := ReadInputLine('Character name: ', NamePromptColor, NameMaxLength);
   until Length(NewCharacter^.Name) <> 0;
   SavedSelection := SelectedCharacter;
   SelectedCharacter := NewCharacter;
@@ -955,15 +955,13 @@ const
   ScanRight = #$4D;
   KeyEnter = #13;
   KeyKeep = 'K';                { the 'Keep' word of the prompt: accept the changes }
-  KeyExit = 'E';                { the 'Exit' word of the prompt: restore the saved abilities }
   KeyNone = #0;                 { what Escape returns }
   { The prompt line (ReadPromptChoice of ovl25): its title, word and hotkey colours; ExtKeys = 1
     accepts the arrow keys. }
-  PromptTitleColour = $D;
-  PromptWordColour = $A;
-  PromptHotColour = $F;
-  AcceptExtendedKeys = 1;
-  MessageColour = $E;           { the flash message on an experienced character }
+  PromptTitleColor = $D;
+  PromptWordColor = $A;
+  PromptHotColor = $F;
+  MessageColor = $E;           { the flash message on an experienced character }
   { the hit-point line the cursor's last step shows (DrawHitPoints of res12) }
   HitPointColumn = 4;
   HitPointRow = $12;
@@ -993,7 +991,7 @@ var
 begin
   if SelectedCharacter^.Experience > 0 then
   begin
-    FlashMessageLine(SelectedCharacter^.Name + ' can''t be modified.', MessageColour);
+    FlashMessageLine(SelectedCharacter^.Name + ' can''t be modified.', MessageColor);
     Exit;
   end;
   ShowCharacterSheet;
@@ -1008,7 +1006,7 @@ begin
   begin
     repeat
     Key := ReadPromptChoice('Modify character: ', 'Keep Exit',
-      PromptTitleColour, PromptWordColour, PromptHotColour, AcceptExtendedKeys, 0, ExtKey);
+      PromptTitleColor, PromptWordColor, PromptHotColor, AcceptExtendedKeys, 0, ExtKey);
     ShowStat(False);
     if ExtKey <> 0 then
     begin
@@ -1193,13 +1191,13 @@ end;
   ChooseSpellFromList (ovl19) to say. }
 procedure TrainCharacter;
 const
-  MessageColour = $E;           { yellow: the flash messages of the refusals }
+  MessageColor = $E;           { yellow: the flash messages of the refusals }
   TrainCost = 1000;             { the gold pieces the training costs }
-  PromptTitleColour = $D;       { the AskYesNo title colour }
-  PromptWordColour = $A;
-  PromptHotColour = $F;
+  PromptTitleColor = $D;       { the AskYesNo title colour }
+  PromptWordColor = $A;
+  PromptHotColor = $F;
   BecomeTextCol = 6;            { the column of the becoming lines }
-  BecomeTextColour = $A;        { green }
+  BecomeTextColor = $A;        { green }
   NameRow = 4;                  { DrawCharacterName's row; the first class line is the next }
   FirstBecomeRow = 5;
   NameCol = 4;                  { DrawCharacterName's column; its mode argument is 0 }
@@ -1208,8 +1206,7 @@ const
   SpellListToChoose = 4;        { ChooseSpellFromList's 'to choose from' list (ovl19:299C) }
   SpellDisplayMode = 4;         { the display mode the call pushes; ovl22 reads it }
   NoSpellChoice = $FFFF;        { negative, so ChooseSpellFromList opens the spell window }
-  Strength17 = 17;              { the strength that raises a race's fighter cap by one }
-  Strength18 = 18;              { a gnome fighter's cap looks at strength below 18 }
+  ExceptionalStrength = 18;              { a gnome fighter's cap looks at strength below 18 }
 var
   AtLimit: Byte;                { [bp-1]: the class is at its racial level limit }
   NewExperience: LongInt;       { [bp-5]: the experience the training leaves the character at }
@@ -1233,12 +1230,12 @@ var
 begin
   if (SelectedCharacter^.Status <> 0) and (StingCheat = 0) then
   begin
-    FlashMessageLine('we only train conscious people', MessageColour);
+    FlashMessageLine('we only train conscious people', MessageColor);
     Exit;
   end;
   if (CharacterMoneyValueInGold(SelectedCharacter) < TrainCost) and (StingCheat = 0) then
   begin
-    FlashMessageLine('Training costs 1000 gp.', MessageColour);
+    FlashMessageLine('Training costs 1000 gp.', MessageColor);
     Exit;
   end;
   TrainableBits := 0;
@@ -1265,7 +1262,7 @@ begin
                 AtLimit := 1;
           RaceGnome:
             if I = ClassFighter then
-              if (Level = 6) or ((Level = 5) and (Strength < Strength18)) then
+              if (Level = 6) or ((Level = 5) and (Strength < ExceptionalStrength)) then
                 AtLimit := 1;
           RaceHalfElf:
             if (I = ClassCleric) and (Level = 5) then
@@ -1296,12 +1293,12 @@ begin
     begin
       if Byte(GameVars2^[TrainableClassesWord] and ClassBitMask) = 0 then
       begin
-        FlashMessageLine('We don''t train that class here', MessageColour);
+        FlashMessageLine('We don''t train that class here', MessageColor);
         Exit;
       end
       else if Byte(GameVars2^[TrainableClassesWord] and TrainableBits) = 0 then
       begin
-        FlashMessageLine('Not Enough Experience', MessageColour);
+        FlashMessageLine('Not Enough Experience', MessageColor);
         Exit;
       end;
     end;
@@ -1312,20 +1309,20 @@ begin
     ClearWindow(MenuLeft, MenuTop, MenuRight, MenuBottom);
     Row := NameRow;
     DrawCharacterName(SelectedCharacter, NameCol, Row, 0);
-    DrawTextAt(Length(Name) + 4, Row, BecomeTextColour, ' will become:');
+    DrawTextAt(Length(Name) + 4, Row, BecomeTextColor, ' will become:');
     for I := 0 to 7 do
       if (ClassLevels[I] > 0) and ((ClassTrainingBits[I] and AllowedBits) > 0) then
       begin
         Inc(Row);
         if Row = FirstBecomeRow then
-          DrawTextAt(BecomeTextCol, Row, BecomeTextColour,
+          DrawTextAt(BecomeTextCol, Row, BecomeTextColor,
             '    a level ' + ByteToText(ClassLevels[I] + 1) + ' ' + ClassNames[I])
         else
-          DrawTextAt(BecomeTextCol, Row, BecomeTextColour,
+          DrawTextAt(BecomeTextCol, Row, BecomeTextColor,
             'and a level ' + ByteToText(ClassLevels[I] + 1) + ' ' + ClassNames[I]);
       end;
-    if AskYesNo('Do you wish to train? ', PromptTitleColour, PromptWordColour,
-      PromptHotColour) <> 'Y' then
+    if AskYesNo('Do you wish to train? ', PromptTitleColor, PromptWordColor,
+      PromptHotColor) <> 'Y' then
       Exit;
     ShowFlashMessage('Congratulations...');
     if StingCheat = 0 then
@@ -1392,7 +1389,6 @@ const
   MaxPartySize = 8;             { the menu stops once the party holds eight members }
   KeyEnter = #13;               { ChooseFromList returns Enter, or the chosen word's letter }
   KeyAdd = 'A';                 { the 'Add' word of the prompt }
-  KeyExit = 'E';                { the 'Exit' word of the prompt; Escape returns #0 }
 var
   List: PMenuLine;              { [bp-4]: the saved-character list ReadSavedCharacterList built }
   Selected: PMenuLine;          { [bp-8]: the highlighted line of that list }
@@ -1509,9 +1505,9 @@ const
   MaxHeadBank = $E;   { the highest HeadBank the picture table DS:286F (14 entries) offers }
   MaxBodyBank = $C;   { the highest BodyBank the picture table DS:287D offers }
   { The prompt line colours (ReadPromptChoice of ovl25). }
-  PromptTitleColour = 0;    { the title is empty, so its colour does not matter }
-  PromptWordColour = $F;    { white: the letters of the words 'Head Body Keep' }
-  PromptHotColour = $A;     { green: the words' capitals 'H', 'B', 'K' and the highlight }
+  PromptTitleColor = 0;    { the title is empty, so its colour does not matter }
+  PromptWordColor = $F;    { white: the letters of the words 'Head Body Keep' }
+  PromptHotColor = $A;     { green: the words' capitals 'H', 'B', 'K' and the highlight }
   PromptExtKeys = 0;        { the extended keys are not accepted }
   PromptAnimate = 0;        { the caller does not ask for the picture animation }
 var
@@ -1526,8 +1522,8 @@ begin
     SavedBodyBank := BodyBank;
     repeat
       ShowHeadBodyWindow;
-      Key := ReadPromptChoice('', 'Head Body Keep', PromptTitleColour, PromptWordColour,
-        PromptHotColour, PromptExtKeys, PromptAnimate, ExtKey);
+      Key := ReadPromptChoice('', 'Head Body Keep', PromptTitleColor, PromptWordColor,
+        PromptHotColor, PromptExtKeys, PromptAnimate, ExtKey);
       if ExtKey = 0 then
         case Key of
           'H':
@@ -1558,7 +1554,7 @@ end;
   scratch slot WorkSlot ($C): CopyPictureSlot recolours the combat icon into it after every key.
   A prompt line (ReadPromptChoice, no title, the word list IconEditorPrompts[State]) offers the choices of the
   current State: StateMain picks Parts, color-1, color-2 or Size (Exit or Escape leaves);
-  StateParts picks the Head or the Weapon picture; StateColourPart picks the part whose colour
+  StateParts picks the Head or the Weapon picture; StateColorPart picks the part whose colour
   changes (Weapon, Body, Hair or Face, Shield, Arm, Leg); StateSize picks Small or Large; StateStep
   then steps the chosen block with Next and Prev, or the chosen colour nibble through the 16 colours.
   Keep saves the value in the Saved... locals and returns to Mode, the state it came from; Exit or
@@ -1568,7 +1564,7 @@ end;
   first reloads the ICON pictures 0 and 1 into slots 11 and 12 (the slots it used as scratch).
   Globals: reads and changes SelectedCharacter^ (CHeadBlock, CBodyBlock, CombatIcon, Figure) and the
   prompt lines IconEditorPrompts (the word 'xxxx' of line 3 becomes 'Hair' or 'Face'); reads AreaViewKind.
-  SwapPaletteColours0And8 and RestorePaletteColours0And8 bracket the editor (palette register calls when VideoAdapter
+  SwapPaletteColors0And8 and RestorePaletteColors0And8 bracket the editor (palette register calls when VideoAdapter
   is 1, purpose
   unknown).
   QUIRK ovl16:39F9: ReadPromptChoice is called with ExtKeys 0, so ExtKey is always 0 and the `if
@@ -1576,10 +1572,10 @@ end;
   the player can switch to: 'Small' is shown while Figure[0] is 2 (large), 'Large' otherwise. }
 procedure EditCharacterIcon;
 type
-  TFigureColours = array[1..6] of Byte;
+  TFigureColors = array[1..6] of Byte;
   TFigureBytes = record             { the character's Figure array: the size, then the six colour pairs }
     Size: Byte;
-    Colours: TFigureColours;
+    Colors: TFigureColors;
   end;
 const
   WindowLeft = 1;                 { the editor window, drawn by DrawWindow with no title }
@@ -1589,12 +1585,12 @@ const
   { The editor's states: the line of IconEditorPrompts the prompt shows. }
   StateMain = 1;                  { 'Parts color-1 color-2 Size Exit' }
   StateParts = 2;                 { 'Head Weapon Exit' }
-  StateColourPart = 3;            { 'Weapon Body Hair Shield Arm Leg Exit' ('Face' instead of 'Hair' for color-2) }
+  StateColorPart = 3;            { 'Weapon Body Hair Shield Arm Leg Exit' ('Face' instead of 'Hair' for color-2) }
   StateSize = 4;                  { 'Small Keep Exit' or 'Large Keep Exit' }
   StateStep = 5;                  { 'Next Prev Keep Exit' }
-  ColourPromptLine = 3;           { the line of IconEditorPrompts holding the word 'xxxx' ... }
-  ColourWordColumn = 13;          { ... which starts at this column ... }
-  ColourWordLength = 4;           { ... and is this long ('Hair' or 'Face') }
+  ColorPromptLine = 3;           { the line of IconEditorPrompts holding the word 'xxxx' ... }
+  ColorWordColumn = 13;          { ... which starts at this column ... }
+  ColorWordLength = 4;           { ... and is this long ('Hair' or 'Face') }
   { The pictures. }
   WorkSlot = $C;                  { scratch picture slot of PictureSlots the editor draws the working icon from }
   ReloadedSlot = $B;              { slot 11: BuildCharacterIcon's scratch slot, reloaded with ICON picture 0 }
@@ -1607,7 +1603,7 @@ const
   HalvesCol = 3;                  { 'ready   action', under each cell }
   HalvesOldRow = $A;
   HalvesNewRow = $10;
-  CaptionColour = $F;
+  CaptionColor = $F;
   { The icon's fields. }
   IconSizeSmall = 1;              { Figure[0]: the CHEAD/CBODY suffix 'S' }
   IconSizeLarge = 2;              { Figure[0]: the suffix 'T' }
@@ -1622,15 +1618,15 @@ const
   PartWeapon = 6;
   { The prompt line (ReadPromptChoice of ovl25): title, word and hotkey colours; ExtKeys 0 and
     Animate 0. }
-  PromptTitleColour = $D;
-  PromptWordColour = $A;
-  PromptHotColour = $F;
+  PromptTitleColor = $D;
+  PromptWordColor = $A;
+  PromptHotColor = $F;
   { The hotkeys of the prompt words. }
   KeyEscape = #0;                 { what ReadPromptChoice returns on Escape }
   KeySpace = ' ';                 { the key the editor stores to mean 'nothing pressed' }
   KeyParts = 'P';
-  KeyColour1 = '1';
-  KeyColour2 = '2';
+  KeyColor1 = '1';
+  KeyColor2 = '2';
   KeySize = 'S';
   KeyHead = 'H';
   KeyWeapon = 'W';
@@ -1645,8 +1641,6 @@ const
   KeyNext = 'N';
   KeyPrev = 'P';
   KeyKeep = 'K';
-  KeyExit = 'E';
-  KeyYes = 'Y';
 var
   UnusedTop: Byte;                    { [bp-1]: the original frame reserves this byte, never read }
   Key: Char;                          { [bp-2]: the key ReadPromptChoice returned }
@@ -1658,12 +1652,12 @@ var
   State: Byte;                        { [bp-8]: the prompt line shown (StateMain..StateStep) }
   SizeName: string[5];                { [bp-0xe..bp-9]: 'Small' or 'Large' in StateSize, else empty }
   UnusedMid: Byte;                    { [bp-0xf]: the original frame reserves this byte, never read }
-  SavedFigure: TFigureColours;        { [bp-0x15..bp-0x10]: Figure[1..6] as last kept }
-  ColourPart: Byte;                   { [bp-0x16]: the Figure index (PartBody..PartWeapon) whose colours change }
+  SavedFigure: TFigureColors;        { [bp-0x15..bp-0x10]: Figure[1..6] as last kept }
+  ColorPart: Byte;                   { [bp-0x16]: the Figure index (PartBody..PartWeapon) whose colours change }
   EditFace: Boolean;                  { [bp-0x17]: the high nibble (color-2, Face) is edited, not the low (color-1, Hair) }
-  LowNibble: Byte;                    { [bp-0x18]: colour 1 of Figure[ColourPart] }
-  HighNibble: Byte;                   { [bp-0x19]: colour 2 of Figure[ColourPart] }
-  Mode: Byte;                         { [bp-0x1a]: the state StateStep returns to (StateParts or StateColourPart) }
+  LowNibble: Byte;                    { [bp-0x18]: colour 1 of Figure[ColorPart] }
+  HighNibble: Byte;                   { [bp-0x19]: colour 2 of Figure[ColorPart] }
+  Mode: Byte;                         { [bp-0x1a]: the state StateStep returns to (StateParts or StateColorPart) }
   PartKey: Char;                      { [bp-0x1b]: the picture chosen in StateParts (KeyHead or KeyWeapon) }
 
   { ovl16:34DF (nested). Draws one cell of the editor: it fills the cell (FillPictureRect, 12 cells
@@ -1679,14 +1673,14 @@ var
     CellWidthCells = $C;    { FillPictureRect width, in 8-pixel cells }
     CellHeightRows = $18;   { FillPictureRect height, in pixel rows }
     SecondHalfCol = 3;      { the mirrored-half icon is 3 columns right }
-    GroundColour = 3;       { the icon's ground colour on VideoAdapter 0 }
+    GroundColor = 3;       { the icon's ground colour on VideoAdapter 0 }
     BodyPicIndex = $19;     { the BODY picture block of the icon }
     HeadPicIndex = $C;      { the HEAD picture block of the icon }
     IconSet = 0;            { the icon set DrawIcon reads the pictures from }
   begin
     if VideoAdapter = 0 then
       FillPictureRect(CellCol * IconColsPerCell, CellRow * CellHeightRows, CellWidthCells,
-        CellHeightRows, GroundColour, @FillRectPalette, DrawBuf)
+        CellHeightRows, GroundColor, @FillRectPalette, DrawBuf)
     else
     begin
       FillPictureRect(CellCol * IconColsPerCell, CellRow * CellHeightRows, CellWidthCells,
@@ -1705,7 +1699,7 @@ var
     from Source into Dest. ByteSize (the word at +$11) gives the tile size; on the EGA adapter
     (VideoAdapter 1) the pixel buffer holds a quarter of that. When Recolor is set the copied
     destination icon is recoloured with the selected character's six colour pairs (Figure[1..6]
-    through FigureColourSlots), exactly the recolouring BuildCharacterIcon (ovl17:0482) applies. The editor
+    through FigureColorSlots), exactly the recolouring BuildCharacterIcon (ovl17:0482) applies. The editor
     calls it with the character's CombatIcon as Source and WorkSlot as Dest (and the other way round
     at the end, without recolouring). It reads nothing of the editor's own variables. }
   procedure CopyPictureSlot(Source, Dest, Recolor: Byte);
@@ -1735,23 +1729,23 @@ var
         end;
         for I := 1 to 6 do
         begin
-          MapTo[FigureColourSlots[I]] := Figure[I] and $0F;
-          MapTo[FigureColourSlots[I] + 8] := (Figure[I] and $F0) shr 4;
+          MapTo[FigureColorSlots[I]] := Figure[I] and $0F;
+          MapTo[FigureColorSlots[I] + 8] := (Figure[I] and $F0) shr 4;
         end;
-        RemapPictureColours(@MapFrom, @MapTo, 0, 0, PictureSlots[Dest].FirstPic);
-        RemapPictureColours(@MapFrom, @MapTo, 0, 0, PictureSlots[Dest].SecondPic);
+        RemapPictureColors(@MapFrom, @MapTo, 0, 0, PictureSlots[Dest].FirstPic);
+        RemapPictureColors(@MapFrom, @MapTo, 0, 0, PictureSlots[Dest].SecondPic);
       end;
   end;
 
 begin
   DrawWindow(WindowLeft, WindowTop, WindowRight, WindowBottom, 0, 0, '');
-  SwapPaletteColours0And8;
+  SwapPaletteColors0And8;
   repeat
     BuildCharacterIcon(False);
     with SelectedCharacter^ do
     begin
       State := StateMain;
-      SavedFigure := TFigureBytes(Figure).Colours;
+      SavedFigure := TFigureBytes(Figure).Colors;
       SavedCombatIcon := CombatIcon;
       CombatIcon := WorkSlot;
       BuildCharacterIcon(False);
@@ -1761,10 +1755,10 @@ begin
       SavedSize := Figure[0];
       CopyPictureSlot(CombatIcon, WorkSlot, 1);
       DrawIconCell(EditorCellCol, OldCellRow);
-      DrawTextAt(CaptionOldCol, CaptionOldRow, CaptionColour, 'old');
-      DrawTextAt(HalvesCol, HalvesOldRow, CaptionColour, 'ready   action');
-      DrawTextAt(CaptionOldCol, CaptionNewRow, CaptionColour, 'new');
-      DrawTextAt(HalvesCol, HalvesNewRow, CaptionColour, 'ready   action');
+      DrawTextAt(CaptionOldCol, CaptionOldRow, CaptionColor, 'old');
+      DrawTextAt(HalvesCol, HalvesOldRow, CaptionColor, 'ready   action');
+      DrawTextAt(CaptionOldCol, CaptionNewRow, CaptionColor, 'new');
+      DrawTextAt(HalvesCol, HalvesNewRow, CaptionColor, 'ready   action');
       repeat
         DrawIconCell(EditorCellCol, NewCellRow);
         SizeName := '';
@@ -1773,8 +1767,8 @@ begin
             SizeName := 'Small'
           else
             SizeName := 'Large';
-        Key := ReadPromptChoice('', SizeName + IconEditorPrompts[State], PromptTitleColour,
-          PromptWordColour, PromptHotColour, 0, 0, ExtKey);
+        Key := ReadPromptChoice('', SizeName + IconEditorPrompts[State], PromptTitleColor,
+          PromptWordColor, PromptHotColor, 0, 0, ExtKey);
         if ExtKey = 0 then
           case State of
             StateMain:
@@ -1782,19 +1776,19 @@ begin
                 Mode := StateMain;
                 case Key of
                   KeyParts: State := StateParts;
-                  KeyColour1:
+                  KeyColor1:
                     begin
-                      State := StateColourPart;
+                      State := StateColorPart;
                       EditFace := False;
-                      Delete(IconEditorPrompts[ColourPromptLine], ColourWordColumn, ColourWordLength);
-                      Insert('Hair', IconEditorPrompts[ColourPromptLine], ColourWordColumn);
+                      Delete(IconEditorPrompts[ColorPromptLine], ColorWordColumn, ColorWordLength);
+                      Insert('Hair', IconEditorPrompts[ColorPromptLine], ColorWordColumn);
                     end;
-                  KeyColour2:
+                  KeyColor2:
                     begin
-                      State := StateColourPart;
+                      State := StateColorPart;
                       EditFace := True;
-                      Delete(IconEditorPrompts[ColourPromptLine], ColourWordColumn, ColourWordLength);
-                      Insert('Face', IconEditorPrompts[ColourPromptLine], ColourWordColumn);
+                      Delete(IconEditorPrompts[ColorPromptLine], ColorWordColumn, ColorWordLength);
+                      Insert('Face', IconEditorPrompts[ColorPromptLine], ColorWordColumn);
                     end;
                   KeySize: State := StateSize;
                 end;
@@ -1810,19 +1804,19 @@ begin
                   State := StateStep;
                 end;
               end;
-            StateColourPart:
+            StateColorPart:
               begin
-                Mode := StateColourPart;
+                Mode := StateColorPart;
                 case Key of
-                  KeyWeapon: ColourPart := PartWeapon;
-                  KeyBody: ColourPart := PartBody;
-                  KeyHair: ColourPart := PartHairFace;
-                  KeyFace: ColourPart := PartHairFace;
-                  KeyShield: ColourPart := PartShield;
-                  KeyArm: ColourPart := PartArm;
-                  KeyLeg: ColourPart := PartLeg;
+                  KeyWeapon: ColorPart := PartWeapon;
+                  KeyBody: ColorPart := PartBody;
+                  KeyHair: ColorPart := PartHairFace;
+                  KeyFace: ColorPart := PartHairFace;
+                  KeyShield: ColorPart := PartShield;
+                  KeyArm: ColorPart := PartArm;
+                  KeyLeg: ColorPart := PartLeg;
                 else
-                  ColourPart := PartBody;
+                  ColorPart := PartBody;
                 end;
                 if Key in [KeyEscape, KeyExit] then
                   State := StateMain
@@ -1920,10 +1914,10 @@ begin
                         BuildCharacterIcon(False);
                       end;
                   end;
-                StateColourPart:
+                StateColorPart:
                   begin
-                    LowNibble := Figure[ColourPart] and $F;
-                    HighNibble := (Figure[ColourPart] and $F0) shr 4;
+                    LowNibble := Figure[ColorPart] and $F;
+                    HighNibble := (Figure[ColorPart] and $F0) shr 4;
                     case Key of
                       KeyNext:
                         begin
@@ -1931,7 +1925,7 @@ begin
                             HighNibble := (HighNibble + 1) mod 16
                           else
                             LowNibble := (LowNibble + 1) mod 16;
-                          Figure[ColourPart] := (HighNibble shl 4) + LowNibble;
+                          Figure[ColorPart] := (HighNibble shl 4) + LowNibble;
                         end;
                       KeyPrev:
                         begin
@@ -1939,17 +1933,17 @@ begin
                             HighNibble := (HighNibble - 1) and $F
                           else
                             LowNibble := (LowNibble - 1) and $F;
-                          Figure[ColourPart] := (HighNibble shl 4) + LowNibble;
+                          Figure[ColorPart] := (HighNibble shl 4) + LowNibble;
                         end;
                       KeyKeep:
                         begin
-                          SavedFigure := TFigureBytes(Figure).Colours;
+                          SavedFigure := TFigureBytes(Figure).Colors;
                           State := Mode;
                           Key := KeySpace;
                         end;
                       KeyExit, KeyEscape:
                         begin
-                          TFigureBytes(Figure).Colours := SavedFigure;
+                          TFigureBytes(Figure).Colors := SavedFigure;
                           State := Mode;
                           Key := KeySpace;
                         end;
@@ -1962,7 +1956,7 @@ begin
       CHeadBlock := SavedCHeadBlock;
       CBodyBlock := SavedCBodyBlock;
       Figure[0] := SavedSize;
-      TFigureBytes(Figure).Colours := SavedFigure;
+      TFigureBytes(Figure).Colors := SavedFigure;
       CopyPictureSlot(CombatIcon, WorkSlot, 1);
       CopyPictureSlot(WorkSlot, CombatIcon, 0);
     end;
@@ -1973,9 +1967,9 @@ begin
       LoadPictureSlot('ICON', 0, ReloadedSlot);
       LoadPictureSlot('ICON', 1, WorkSlot);
     end;
-    Key := AskYesNo('Is this icon ok? ', PromptTitleColour, PromptWordColour, PromptHotColour);
+    Key := AskYesNo('Is this icon ok? ', PromptTitleColor, PromptWordColor, PromptHotColor);
   until Key = KeyYes;
-  RestorePaletteColours0And8;
+  RestorePaletteColors0And8;
 end;
 { ovl16:3F31. The constitution hit-point adjustment shared by the hit-point floor MinHitPoints and
   the ceiling MaxHitPoints of ModifyCharacter (ovl16:209F). It sums ConstitutionHitPointTable[Constitution] over the

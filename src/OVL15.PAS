@@ -53,18 +53,15 @@ const
   LongRestHours = 6;
   LongRestLevel = 2;
   MinutesPerLevel = 15;
-  { Colours of the prompt line (ReadPromptChoice, AskYesNo) and of the messages (ShowCharacterMessage). }
+  { Colors of the prompt line (ReadPromptChoice, AskYesNo) and of the messages (ShowCharacterMessage). }
   TitleColor = 13;
   WordColor = 10;
   HotColor = 15;
   AskColor = 14;
   MessageColor = 10;
   TextColor = 10;                { DrawTextAt colour of the text window lines }
-  Yes = 'Y';
-  No = 'N';
   KeyNone = #0;                  { leaves a menu, as 'E' (Exit) does }
   KeyEnter = #13;
-  NoChoice = $FFFF;              { the list position ChooseSpellFromList starts from }
   { Spell lists of ChooseSpellFromList (its first argument) as the camp uses them: 0 the memorized spells to
     cast, 1 the spells to memorize, 3 the scroll spells to scribe, 5 and 6 the spells being
     memorized and scribed. }
@@ -368,7 +365,7 @@ begin
   Redraw := 1;
   if Listed <> 0 then
   begin
-    if AskYesNo('Memorize These Spells? ', AskColor, WordColor, HotColor) = No then
+    if AskYesNo('Memorize These Spells? ', AskColor, WordColor, HotColor) = KeyNo then
       CancelMemorizing(SelectedCharacter)
     else
       Done := True;
@@ -401,7 +398,7 @@ begin
     Choice := NoChoice;
     Spell := ChooseSpellFromList(ListMemorizing, 0, Choice, Listed);
     if Listed <> 0 then
-      if AskYesNo('Memorize these spells? ', AskColor, WordColor, HotColor) = No then
+      if AskYesNo('Memorize these spells? ', AskColor, WordColor, HotColor) = KeyNo then
         CancelMemorizing(SelectedCharacter);
   end;
   if Redraw <> 0 then RedrawView;
@@ -428,7 +425,7 @@ begin
   Redraw := 1;
   if Listed <> 0 then
   begin
-    if AskYesNo('Scribe These Spells? ', AskColor, WordColor, HotColor) = No then
+    if AskYesNo('Scribe These Spells? ', AskColor, WordColor, HotColor) = KeyNo then
       CancelScribing(SelectedCharacter)
     else
       Done := True;
@@ -495,7 +492,7 @@ begin
     Choice := NoChoice;
     Spell := ChooseSpellFromList(ListScribing, 0, Choice, Listed);
     if Listed <> 0 then
-      if AskYesNo('Scribe these spells? ', AskColor, WordColor, HotColor) = No then
+      if AskYesNo('Scribe these spells? ', AskColor, WordColor, HotColor) = KeyNo then
         CancelScribing(SelectedCharacter);
   end;
   if Redraw <> 0 then RedrawView;
@@ -749,7 +746,7 @@ procedure DropPartyMember;
 begin
   if (SelectedCharacter^.Next = nil) and (SelectedCharacter = PCharacter(PartyListHead)) then
   begin
-    if AskYesNo('quit TO DOS: ', AskColor, WordColor, HotColor) = Yes then
+    if AskYesNo('quit TO DOS: ', AskColor, WordColor, HotColor) = KeyYes then
     begin
       RemoveSelectedCharacter(False, True);
       QuitGame;
@@ -760,7 +757,7 @@ begin
   else
   begin
     ShowCharacterMessage(SelectedCharacter, 'will be gone', MessageColor, 0);
-    if AskYesNo('Drop from party? ', AskColor, WordColor, HotColor) = Yes then
+    if AskYesNo('Drop from party? ', AskColor, WordColor, HotColor) = KeyYes then
     begin
       if SelectedCharacter^.Flag10D <> 0 then
         ShowCharacterMessage(SelectedCharacter, 'bids you farewell', MessageColor, 1)
@@ -889,7 +886,7 @@ begin
         'S':
           begin
             SaveGame;
-            if AskYesNo('Quit TO DOS ', AskColor, WordColor, HotColor) = Yes then QuitGame;
+            if AskYesNo('Quit TO DOS ', AskColor, WordColor, HotColor) = KeyYes then QuitGame;
           end;
         'V': ViewSelectedCharacter(ViewFlag);
         'M': CampMagicMenu(EndCamp);

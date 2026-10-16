@@ -41,8 +41,6 @@ const
   GemsKind = 5;
   JewelryKind = 6;
   GoldPerPlatinum = 5;
-  PromptRow = 24;       { the bottom text row, where amounts are typed }
-  ScreenCols = 40;
   White = 15;
   KeyBackspace = #8;
   KeyEnter = #13;
@@ -163,8 +161,8 @@ var
   Code: Integer;
   Amount: Word;
 begin
-  ClearTextCells(0, PromptRow, 0, ScreenCols);
-  DrawTextAt(0, PromptRow, Color, Prompt);
+  ClearTextCells(0, BottomRow, 0, ScreenCols);
+  DrawTextAt(0, BottomRow, Color, Prompt);
   Start := Length(Prompt);
   Col := Start;
   Str(Max, MaxText);
@@ -183,18 +181,18 @@ begin
             Digits := MaxText;
             Col := Start + Length(MaxText);
           end;
-          DrawTextAt(Start, PromptRow, White, Digits);
+          DrawTextAt(Start, BottomRow, White, Digits);
         end;
       KeyBackspace:
         if Length(Digits) > 0 then
         begin
           Digits := Copy(Digits, 1, Length(Digits) - 1);
-          ClearTextCells(Col, PromptRow, 0, 1);
+          ClearTextCells(Col, BottomRow, 0, 1);
           Dec(Col);
         end;
     end;
   until (Key = KeyEnter) or (Key = KeyEscape);
-  ClearTextCells(0, PromptRow, 0, ScreenCols);
+  ClearTextCells(0, BottomRow, 0, ScreenCols);
   if Key = KeyEscape then
     Amount := 0
   else

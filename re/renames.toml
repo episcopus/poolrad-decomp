@@ -9259,3 +9259,59 @@ kind = "global"
 why = "TCharacter +$A0 is the alignment index: ShowCharacterSheet draws AlignmentNames[+$A0] (ovl19:0198) and the image order (0 LG, 1 LN, 2 LE, 3 NG, 4 TN, 5 NE, 6 CG, 7 CN, 8 CE) fits ShiftAttackToSaveVsGood/VsEvil (P6 review)"
 date = "2026-10-15"
 
+[[rename]]
+old = "FigureColourSlots"
+new = "FigureColorSlots"
+kind = "global"
+why = "spelling harmonised to Color, as in TextColor, HotColor and the other 400 uses (P6)"
+date = "2026-10-16"
+
+[[rename]]
+old = "PixelBitsByColour"
+new = "PixelBitsByColor"
+kind = "global"
+why = "spelling harmonised to Color, as in TextColor, HotColor and the other 400 uses (P6)"
+date = "2026-10-16"
+
+[[rename]]
+old = "PixelsByColour2Bit"
+new = "PixelsByColor2Bit"
+kind = "global"
+why = "spelling harmonised to Color, as in TextColor, HotColor and the other 400 uses (P6)"
+date = "2026-10-16"
+
+[[rename]]
+old = "PixelsByColour4Bit"
+new = "PixelsByColor4Bit"
+kind = "global"
+why = "spelling harmonised to Color, as in TextColor, HotColor and the other 400 uses (P6)"
+date = "2026-10-16"
+
+[[rename]]
+old = "RemapPictureColours"
+new = "RemapPictureColors"
+kind = "routine"
+why = "spelling harmonised to Color, as in TextColor, HotColor and the other 400 uses (P6)"
+date = "2026-10-16"
+
+[[rename]]
+old = "RestorePaletteColours0And8"
+new = "RestorePaletteColors0And8"
+kind = "routine"
+why = "spelling harmonised to Color, as in TextColor, HotColor and the other 400 uses (P6)"
+date = "2026-10-16"
+
+[[rename]]
+old = "SwapPaletteColours0And8"
+new = "SwapPaletteColors0And8"
+kind = "routine"
+why = "spelling harmonised to Color, as in TextColor, HotColor and the other 400 uses (P6)"
+date = "2026-10-16"
+
+[[rename]]
+old = "TextColourMap4"
+new = "TextColorMap4"
+kind = "global"
+why = "spelling harmonised to Color, as in TextColor, HotColor and the other 400 uses (P6)"
+date = "2026-10-16"
+

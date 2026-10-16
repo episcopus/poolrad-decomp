@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-16 | Phase 6 consistency | Color spelling in all identifiers, shared screen and key constants | docs/process/playbooks/65-consistency.md |
 | 2026-10-15 | Phase 6 consistency | Names for every global and routine, aliases merged, shared constants defined once, status names fixed, ovl14 records are TCharacter; rename --apply no longer renames storage cells | re/renames.toml, docs/process/playbooks/65-consistency.md |
 | 2026-10-13 | 5.22.1 | Rest menu RestTimeMenu matched and described | make match UNIT=ovl20, src/OVL20.PAS#RestTimeMenu |
 | 2026-10-13 | 5.11 | Added 5.11 Saving and loading (in progress): AddPartyMember links a TCharacter into party list ds5D96, assigns the lowest free combat icon 0..7, counts VarPartySize, calls RecalcClassStats; plus the ovl17 phantom map-boundary note | make match UNIT=ovl17 FN=AddPartyMember |

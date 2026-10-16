@@ -59,7 +59,6 @@ const
   MaxWorthlessItems = 8;        { items of no value taken from monsters before they are left behind }
   WorthlessItemChance = 3;      { a worthless item is taken when 1d10 is at most this }
   CombatStateSize = $16;        { the size of a character's combat state (TCharacter.Combat) }
-  AnswerNo = 1;                 { AskMenu returns the 0-based word of '~Yes ~No' }
   KeyEnter = #13;
   KeyNone = #0;
 

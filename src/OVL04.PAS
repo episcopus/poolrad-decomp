@@ -21,8 +21,6 @@ implementation
 uses POOLVARS, RES06, RES09, RES12, OVL07, OVL19, OVL21, OVL22, OVL24, OVL25;
 
 const
-  Yes = 'Y';                    { the answer key AskYesNo returns for yes }
-  No = 'N';
   { Affect numbers (the ids HasAffect and RemoveAffect look for in a character's affect list). }
   AffectBlind = $21;            { Cure Blindness checks and removes it (ovl04:0262) }
   AffectCurse = $24;            { Remove Curse accepts it as a reason to cast (ovl04:08A0) }
@@ -48,8 +46,6 @@ const
   KeyEnter = #13;
   KeyNone = #0;                 { Escape returns #0 from ReadPromptChoice (ovl25:059F..05A7); Escape, E and #0
                                   return #0 from ChooseFromList (ovl25:105C..1074), ending HealMenu }
-  AnswerNo = 1;                 { AskMenu returns the 0-based hotkey position: for '~Yes ~No' the
-                                   second key (No) is 1, the value VisitTemple leaves on }
   PromptTitleColor = 13;         { title, word and hotkey colours of AskCastAnyway and VisitTemple }
   PromptWordColor = 10;
   PromptHotColor = 15;
@@ -79,10 +75,8 @@ const
   PromptClearRight = 39;
   ScreenTopRow = 0;
   ScreenBottomRow = 24;
-  AcceptExtendedKeys = 1;
   NoExtendedKeys = 0;
   NoAnimation = 0;
-  ClearTextBeforeMessage = 1;    { ShowPagedText's ClearFirst parameter }
 
 { ovl04:0013. Shows Reason for the selected character (ShowCharacterMessage, e.g. "is not blind.") and
   asks "cast cure anyway: "; returns the key (Yes or not). ClearCharacterMessage clears the prompt. }
@@ -114,7 +108,7 @@ begin
   ShowPagedText(TextWindowLeft, TextWindowTop, TextWindowRight, TextWindowBottom,
                 TextWindowColor, 1, Service);
   Answer := AskYesNo('pay for cure ', PromptTitleColor, CostPromptWordColor, CostPromptHotColor);
-  if Answer = Yes then
+  if Answer = KeyYes then
   begin
     Money := CharacterMoneyValueInGold(SelectedCharacter);   { QUIRK ovl04:0177: a LongInt kept in a Word }
     if Price <= Money then
@@ -133,11 +127,11 @@ begin
       else
       begin
         ShowFlashMessage('Not enough money.');
-        Answer := No;
+        Answer := KeyNo;
       end;
     end;
   end;
-  if Answer = Yes then
+  if Answer = KeyYes then
   begin
     ClearCharacterMessage;
     ShowCharacterMessage(SelectedCharacter, 'is cured.', 0, 1);
@@ -155,13 +149,13 @@ var
   Answer: Char;
 begin
   Unused := '';
-  Answer := Yes;
+  Answer := KeyYes;
   if not HasAffect(SelectedCharacter, AffectBlind, Affect) then
     Answer := AskCastAnyway('is not blind.');
-  if Answer = Yes then
+  if Answer = KeyYes then
   begin
     Answer := ChargeForCure('Cure Blindness', PriceCureBlindness);
-    if Answer = Yes then RemoveAffect(SelectedCharacter, AffectBlind, nil);
+    if Answer = KeyYes then RemoveAffect(SelectedCharacter, AffectBlind, nil);
   end;
 end;
 
@@ -178,14 +172,14 @@ var
 begin
   Diseased := False;
   Unused := '';
-  Answer := Yes;
+  Answer := KeyYes;
   for I := 1 to DiseaseCount do
     if HasAffect(SelectedCharacter, DiseaseAffects[I], Affect) then Diseased := True;
   if not Diseased then Answer := AskCastAnyway('is not Diseased.');
-  if Answer = Yes then
+  if Answer = KeyYes then
   begin
     Answer := ChargeForCure('Cure Disease', PriceCureDisease);
-    if Answer = Yes then
+    if Answer = KeyYes then
     begin
       RemovingAffects := 1;
       for I := 1 to DiseaseCount do RemoveAffect(SelectedCharacter, DiseaseAffects[I], nil);
@@ -206,7 +200,7 @@ begin
     1:
       begin
         Answer := ChargeForCure('Cure Light Wounds', PriceCureLight);
-        if Answer = Yes then
+        if Answer = KeyYes then
         begin
           Amount := RollDice(1, 8);
           Healed := HealCharacter(SelectedCharacter, Amount, 0);
@@ -215,7 +209,7 @@ begin
     2:
       begin
         Answer := ChargeForCure('Cure Serious Wounds', PriceCureSerious);
-        if Answer = Yes then
+        if Answer = KeyYes then
         begin
           Amount := RollDice(2, 8) + 1;
           Healed := HealCharacter(SelectedCharacter, Amount, 0);
@@ -224,7 +218,7 @@ begin
     3:
       begin
         Answer := ChargeForCure('Cure Critical Wounds', PriceCureCritical);
-        if Answer = Yes then
+        if Answer = KeyYes then
         begin
           Amount := RollDice(3, 8) + 3;
           Healed := HealCharacter(SelectedCharacter, Amount, 0);
@@ -256,13 +250,13 @@ begin
   Who := SelectedCharacter;
   Dead := False;
   Unused := '';
-  Answer := Yes;
+  Answer := KeyYes;
   if (Who^.Status = StatusDead) or (Who^.Status = StatusAnimated) then Dead := True;
   if not Dead then Answer := AskCastAnyway('is not dead.');
-  if Answer = Yes then
+  if Answer = KeyYes then
   begin
     Answer := ChargeForCure('Raise Dead', PriceRaiseDead);
-    if Answer = Yes then
+    if Answer = KeyYes then
       if Dead then
       begin
         RemovingAffects := 1;
@@ -307,13 +301,13 @@ var
 begin
   Poisoned := False;
   Unused := '';
-  Answer := Yes;
+  Answer := KeyYes;
   if HasAffect(SelectedCharacter, AffectPoisoned, Affect) then Poisoned := True;
   if not Poisoned then Answer := AskCastAnyway('is not poisoned.');
-  if Answer = Yes then
+  if Answer = KeyYes then
   begin
     Answer := ChargeForCure('Neutralize Poison', PriceNeutralizePoison);
-    if Answer = Yes then
+    if Answer = KeyYes then
     begin
       RemovingAffects := 1;
       RemoveAffect(SelectedCharacter, AffectPoisoned, nil);
@@ -336,7 +330,7 @@ var
   Answer: Char;
 begin
   Unused := '';
-  Answer := Yes;
+  Answer := KeyYes;
   Cursed := False;
   Item := SelectedCharacter^.Items;
   while (Item <> nil) and not Cursed do
@@ -346,10 +340,10 @@ begin
   end;
   if not Cursed and not HasAffect(SelectedCharacter, AffectCurse, Affect) then
     Answer := AskCastAnyway('is not cursed.');
-  if Answer = Yes then
+  if Answer = KeyYes then
   begin
     Answer := ChargeForCure('Remove Curse', PriceRemoveCurse);
-    if Answer = Yes then
+    if Answer = KeyYes then
     begin
       FirstSpellTarget := SelectedCharacter;
       CastRemoveCurse;
@@ -368,12 +362,12 @@ var
   Answer: Char;
 begin
   Unused := '';
-  Answer := Yes;
+  Answer := KeyYes;
   if SelectedCharacter^.Status <> StatusStoned then Answer := AskCastAnyway('is not stoned.');
-  if Answer = Yes then
+  if Answer = KeyYes then
   begin
     Answer := ChargeForCure('Stone to Flesh', PriceStoneToFlesh);
-    if Answer = Yes then
+    if Answer = KeyYes then
       if SelectedCharacter^.Status = StatusStoned then
       begin
         SelectedCharacter^.Status := StatusOkay;
