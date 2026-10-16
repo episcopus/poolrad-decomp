@@ -38,6 +38,10 @@ void platform_speaker_set(u16 divisor, u8 port61_low2);   /* PIT channel 2 reloa
 void platform_speaker_off(void);
 void platform_tandy_write(u8 value);                      /* SN76489 byte written to port C0h */
 
+/* The sound driver reports each write it makes to PIT channel 0 (5041 on start, 65535 on stop) for the sound
+ * comparison (c/rtl/soundtrace.c, tools/c/sound_check.py). */
+void sound_trace_pit0(u16 reload);
+
 /* Video: the EGA memory changed; the host may present when it likes. */
 void platform_video_changed(void);
 
