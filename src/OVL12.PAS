@@ -118,12 +118,12 @@ procedure ReduceFireDamageOnePerDie(Who: PCharacter; Affect: PAffect; Mode: Byte
 procedure HalveElectricityDamage(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure HalveDamageByFirstSlotItemRow(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure HalveDamageForEnchantedSlotItem(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure SetDamageFromSlotItemType55(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure SetDamageFromHolyWater(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure HalveColdDamageNoSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure CancelDamageUnlessEnchantedSlotItem(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure AvoidDistantAttackForItemType57Or58(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure AvoidDistantAttackForBoulder(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure SpitAcidAtTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
-procedure SetDamageFromSlotItemType56(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure SetDamageFromOilFlask(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure HalveOrCancelDamageForUnenchantedSlotItem(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure HalfElfResistsCharmAndSleep(Who: PCharacter; Affect: PAffect; Mode: Byte);
 procedure ImmuneToCharmSleepHoldAndPoison(Who: PCharacter; Affect: PAffect; Mode: Byte);
@@ -287,14 +287,38 @@ const
   LowNibble = $0F;              { the low nibble of a byte }
   ReflectRow = $C;              { the row of the message and the gaze line when a gaze is reflected (ovl12:1CAD) }
   DataFF = $FF;                 { a Data byte of $FF that several affects here are given; its meaning is not known [?] }
-  TargetCodeFour = 4;           { a CreatureType value of a target (TCharacter +$9F): BoostAttackAgainstUndead
-                                  gives it TargetBonus, BoostFireAttackByTarget gives it FireBonusForFour }
-  TargetCodeNine = 9;           { CreatureType 9 of a target (purpose unknown [?]), see FireBonusForNineTwelve }
-  TargetCodeTen = 10;           { CreatureType 10 of a target (purpose unknown [?]), see FireBonusForTen }
-  TargetCodeTwelve = 12;        { CreatureType 12 of a target (purpose unknown [?]), see FireBonusForNineTwelve }
-  FireBonusForTen = 1;          { what BoostFireAttackByTarget adds to AttackRoll and DamageAmount for TargetCodeTen }
-  FireBonusForNineTwelve = 2;   { the same for TargetCodeNine and TargetCodeTwelve }
-  FireBonusForFour = 3;         { the same for TargetCodeFour }
+  { BoostFireAttackByTarget: the bonus a fire attack gets against a CreatureType (POOLVARS Creature*): trolls 1,
+    stirges 2 and undead 3. Why these is not known [?]. CreatureType 9, which it also tests, belongs to no monster. }
+  CreatureTypeNine = 9;
+  FireBonusForTroll = 1;        { what BoostFireAttackByTarget adds to AttackRoll and DamageAmount for CreatureTroll }
+  FireBonusForStirgeNine = 2;   { the same for CreatureStirge and CreatureTypeNine }
+  FireBonusForUndead = 3;       { the same for CreatureUndead }
+  ProtectionShift = 2;          { what ShiftAttackToSaveVsEvil and ShiftAttackToSaveVsGood move from AttackRoll to SaveRoll }
+  SmallFootprintKind = 1;       { the CombatSize of the humanoids of the kobold and orc name lists [I] }
+  LargeFootprintKind = 2;       { the CombatSize kind of the ogres, trolls and giants of OgreTrollGiantNames [I] }
+  KoboldGoblinNameCount = 4;    { KoboldGoblinNames[1..4] }
+  OrcGoblinHobgoblinNameCount = 8;
+  OgreTrollGiantNameCount = 8;
+  AnimatedBaseMovement = 12;    { the BaseMovement CollapseAndChangeSide gives the creature that returns to its own side }
+  SideShift = 16;               { ovl22 stores Side * 16 + caster level in an Animate Dead affect's Data }
+  MinimumStrength = 3;          { WeakenStrength takes no more off Strength than this; at it the target is helpless }
+  FearParalysisMaxLevel = 3;    { FrightenSideWithFear: a HighestLevel of 0..3 is paralyzed with fear }
+  FearWeakenMinLevel = 4;       { and one of 4 or 5 is weakened by fear }
+  FearWeakenMaxLevel = 5;
+  LargeSideCount = 6;           { ParalyzeSideWithFear: a side of six or more members gets a save bonus [?] }
+  HumanFearSaveBonus = 2;       { the paralysis save bonus of a human }
+  StrongMonsterLevel = 4;       { CancelDamageUnlessEnchantedSlotItem: a monster below this HighestLevel is not hurt }
+  ItemHolyWater = $55;          { ItemType: Vial Of Holy Water [V item files] }
+  ItemOilFlask = $56;           { ItemType: Flask OF Oil [V item files] }
+  ItemBoulderA = $57;           { ItemType of the giants' hurled rows, boulders [I] }
+  ItemBoulderB = $58;
+  HolyWaterDieSides = 6;        { holy water does 1d6 + 1 damage }
+  OilFlaskDiceCount = 3;        { an oil flask does 3d8 }
+  OilFlaskDieSides = 8;
+  SpitDiceCount = 8;            { the acid spit does 8d4 }
+  SpitDieSides = 4;
+  GaseousCursorMargin = 3;      { ShowCursorOn's Margin and ShowCursor arguments in TurnGaseousAndEscape [?] }
+  GaseousShowCursor = 0;
 
 { ovl12:0000. Cancels the hook of an affect: when AffectId is 0 or is the affect the hooks are offering
   (HookAffectId), HookAffectId and DamageAmount are cleared. HookAffectId 0 reads as "is Unaffected"
@@ -370,12 +394,12 @@ end;
 { ovl12:013B. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000).
   It copies the character Who attacked last (Who's combat Target, TCombatant at +$108 of Who, MeleeAttack
   sets it in ovl08) into AttackTarget. When that character's byte +$9F (CreatureType of TCharacter, purpose unknown [?])
-  is TargetCodeFour (4), the attack roll and the damage each gain TargetBonus. Runs for affect $03 (id 3,
+  is CreatureUndead (4), the attack roll and the damage each gain TargetBonus. Runs for affect $03 (id 3,
   InitAffectHandlers [V]). }
 procedure BoostAttackAgainstUndead(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   AttackTarget := Who^.Combat^.Target;
-  if AttackTarget^.CreatureType = TargetCodeFour then
+  if AttackTarget^.CreatureType = CreatureUndead then
   begin
     Inc(AttackRoll, TargetBonus);
     Inc(DamageAmount, TargetBonus);
@@ -395,8 +419,8 @@ end;
 { ovl12:01C3. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000).
   Like BoostAttackAgainstUndead (ovl12:013B) it copies Who's combat Target into AttackTarget, then gives
   a bonus to the attack roll and to the damage from the target's byte +$9F (CreatureType of TCharacter, purpose unknown
-  [?]): TargetCodeTen gives FireBonusForTen (1), TargetCodeNine or TargetCodeTwelve give FireBonusForNineTwelve (2),
-  TargetCodeFour gives FireBonusForFour (3), any other value gives 0. The damage kind becomes KindFire or KindMagic
+  [?]): CreatureTroll gives FireBonusForTroll (1), CreatureTypeNine or CreatureStirge give FireBonusForStirgeNine (2),
+  CreatureUndead gives FireBonusForUndead (3), any other value gives 0. The damage kind becomes KindFire or KindMagic
   (fire, plus the magic bit 8, ovl24:13E4). Runs for affect $06 (id 6, InitAffectHandlers [V]). }
 procedure BoostFireAttackByTarget(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
@@ -404,9 +428,9 @@ var
 begin
   AttackTarget := Who^.Combat^.Target;
   case AttackTarget^.CreatureType of
-    TargetCodeTen: Bonus := FireBonusForTen;
-    TargetCodeNine, TargetCodeTwelve: Bonus := FireBonusForNineTwelve;
-    TargetCodeFour: Bonus := FireBonusForFour;
+    CreatureTroll: Bonus := FireBonusForTroll;
+    CreatureTypeNine, CreatureStirge: Bonus := FireBonusForStirgeNine;
+    CreatureUndead: Bonus := FireBonusForUndead;
   else
     Bonus := 0;
   end;
@@ -460,10 +484,11 @@ end;
   (Who, Affect and Mode are not read). Runs for affects $08 and $2D (ids 8, 45, InitAffectHandlers [V]). }
 procedure ShiftAttackToSaveVsEvil(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
-  if (SelectedCharacter^.Alignment = 2) or (SelectedCharacter^.Alignment = 5) or (SelectedCharacter^.Alignment = 8) then
+  if (SelectedCharacter^.Alignment = AlignLawfulEvil) or (SelectedCharacter^.Alignment = AlignNeutralEvil) or
+     (SelectedCharacter^.Alignment = AlignChaoticEvil) then
   begin
-    Inc(SaveRoll, 2);
-    Dec(AttackRoll, 2);
+    Inc(SaveRoll, ProtectionShift);
+    Dec(AttackRoll, ProtectionShift);
   end;
 end;
 { ovl12:03AC. The twin of ShiftAttackToSaveVsEvil (ovl12:0377) with the Alignment values 0, 3 and 6 (Lawful, Neutral and
@@ -472,10 +497,11 @@ end;
   loses 2. Who, Affect and Mode are not read. Runs for affects $09 and $2E (ids 9, 46, InitAffectHandlers [V]). }
 procedure ShiftAttackToSaveVsGood(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
-  if (SelectedCharacter^.Alignment = 0) or (SelectedCharacter^.Alignment = 3) or (SelectedCharacter^.Alignment = 6) then
+  if (SelectedCharacter^.Alignment = AlignLawfulGood) or (SelectedCharacter^.Alignment = AlignNeutralGood) or
+     (SelectedCharacter^.Alignment = AlignChaoticGood) then
   begin
-    Inc(SaveRoll, 2);
-    Dec(AttackRoll, 2);
+    Inc(SaveRoll, ProtectionShift);
+    Dec(AttackRoll, ProtectionShift);
   end;
 end;
 { ovl12:03E1. Affect handler for damage (the AffectHandlers frame: Who, Affect and Mode, none of them read): when
@@ -616,14 +642,15 @@ end;
 { ovl12:0679. Affect handler (the AffectHandlers shape: Who, Affect and Mode; only Who is read). It copies the
   character Who attacked last (Who's combat Target) into AttackTarget, as BoostAttackAgainstUndead does. When that
   character's +$9F (CreatureType) and CombatSize (+$6C) are both 1, AttackRoll gains 1 for each of the names
-  KoboldGoblinNames[1..4] the character's name equals. Runs for affect $12 (id 18, InitAffectHandlers [V]). }
+  KoboldGoblinNames[1..4] the character's name equals. Runs for affect $12 (id 18, InitAffectHandlers [V]).
+  Given to the gnome by CreateCharacter [V]. }
 procedure BoostAttackVsKoboldGoblin(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   I: Byte;
 begin
   AttackTarget := Who^.Combat^.Target;
-  if (AttackTarget^.CreatureType = 1) and (AttackTarget^.CombatSize = 1) then
-    for I := 1 to 4 do
+  if (AttackTarget^.CreatureType = CreatureHumanoid) and (AttackTarget^.CombatSize = SmallFootprintKind) then
+    for I := 1 to KoboldGoblinNameCount do
       if AttackTarget^.Name = KoboldGoblinNames[I] then
         Inc(AttackRoll);
 end;
@@ -727,14 +754,14 @@ end;
   BoostAttackVsKoboldGoblin (ovl12:0679) with eight names: when the character Who attacked last (Who's combat
   Target, copied into AttackTarget) has CreatureType and CombatSize (+$6C) both 1, AttackRoll gains 1 for each of
   the names OrcGoblinHobgoblinNames[1..8] that the
-  character's name equals. Runs for affect $1A (id 26, InitAffectHandlers [V]). }
+  character's name equals. Runs for affect $1A (id 26, InitAffectHandlers [V]). Given to the dwarf by CreateCharacter [V]. }
 procedure BoostAttackVsOrcGoblinHobgoblin(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   I: Byte;
 begin
   AttackTarget := Who^.Combat^.Target;
-  if (AttackTarget^.CreatureType = 1) and (AttackTarget^.CombatSize = 1) then
-    for I := 1 to 8 do
+  if (AttackTarget^.CreatureType = CreatureHumanoid) and (AttackTarget^.CombatSize = SmallFootprintKind) then
+    for I := 1 to OrcGoblinHobgoblinNameCount do
       if AttackTarget^.Name = OrcGoblinHobgoblinNames[I] then
         Inc(AttackRoll);
 end;
@@ -800,11 +827,11 @@ begin
   Affect^.Flag := 0;
   if RemovingAffects = 0 then
     DropFromFight(Who, StatusDead, 'collapses');
-  Who^.Side := Affect^.Data div 16;
+  Who^.Side := Affect^.Data div SideShift;
   Who^.Quick := 1;
-  Who^.Pad74[$76] := 0;
+  Who^.Pad74[TurnUndeadIndex] := 0;
   Who^.SweepAttacks := Who^.ClassLevels[ClassFighter];
-  Who^.BaseMovement := 12;
+  Who^.BaseMovement := AnimatedBaseMovement;
   if Who^.B84 = ComputerRunMorale then
     Who^.B84 := 0;
   Who^.CreatureType := 0;
@@ -997,7 +1024,7 @@ var
   FoundAffect: Pointer;
 begin
   if TryAddAffect(Who, AffectDrainsStrength, Affect^.Data, WeakeningDuration) then
-    if Who^.Strength > 3 then
+    if Who^.Strength > MinimumStrength then
     begin
       ShowCharacterMessage(Who, 'is weakened', CombatMessageRow, 1);
       Dec(Who^.Strength);
@@ -1027,26 +1054,29 @@ begin
 end;
 { ovl12:11F9. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Mode is not read, ovl24:0000). It copies
   the character Who attacked last (Who's combat Target, TCombatant at +$108 of Who, MeleeAttack sets it in ovl08) into
-  AttackTarget. When the selected character has CreatureType (+$9F of TCharacter, not named yet) set to 1 and its
+  AttackTarget. When the selected character has CreatureType (+$9F of TCharacter, CreatureHumanoid) and its
   CombatSize has footprint kind 2 (bits 0..6 of +$6C), AttackRoll loses AttackPenalty for each of the names
   OgreTrollGiantNames[1..8]
-  that the target's name equals. Runs for affect $2F (id 47, InitAffectHandlers [V]). }
+  that the target's name equals. Runs for affect $2F (id 47, InitAffectHandlers [V]); given to the dwarf and the gnome by
+  CreateCharacter [V]. QUIRK ovl12:11F9: it tests CreatureType and CombatSize of SelectedCharacter but the
+  name of AttackTarget (Who's own last target), where the sibling handlers test the target for both [?]. }
 procedure LowerAttackVsOgreTrollGiant(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   I: Byte;                      { the name row 1..8 of OgreTrollGiantNames }
 begin
   AttackTarget := Who^.Combat^.Target;
-  if (SelectedCharacter^.CreatureType = 1) and ((SelectedCharacter^.CombatSize and CombatKindMask) = 2) then
-    for I := 1 to 8 do
+  if (SelectedCharacter^.CreatureType = CreatureHumanoid) and
+     ((SelectedCharacter^.CombatSize and CombatKindMask) = LargeFootprintKind) then
+    for I := 1 to OgreTrollGiantNameCount do
       if AttackTarget^.Name = OgreTrollGiantNames[I] then
         Dec(AttackRoll, AttackPenalty);
 end;
 { ovl12:1276. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). When the selected
-  character has CreatureType (+$9F of TCharacter, not named yet) set to 1 and its name is 'BUGBEAR' or 'GNOLL', AttackRoll
-  loses AttackPenalty. Runs for affect $30 (id 48, InitAffectHandlers [V]). }
+  character has CreatureType (+$9F of TCharacter) set to CreatureHumanoid and its name is 'BUGBEAR' or 'GNOLL', AttackRoll
+  loses AttackPenalty. Runs for affect $30 (id 48, InitAffectHandlers [V]); given to the gnome by CreateCharacter [V]. }
 procedure LowerAttackIfSelectedIsBugbearOrGnoll(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
-  if SelectedCharacter^.CreatureType = 1 then
+  if SelectedCharacter^.CreatureType = CreatureHumanoid then
     if (SelectedCharacter^.Name = 'BUGBEAR') or (SelectedCharacter^.Name = 'GNOLL') then
       Dec(AttackRoll, AttackPenalty);
 end;
@@ -1278,7 +1308,7 @@ begin
   PoisonAttackTarget(Who, -2);
 end;
 { ovl12:171F. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none of them is read, ovl24:0000). Sets
-  HookVetoFlag to 1 (the flag ovl12:0918 and ovl12:0C26 also set; AttackTargetAllowed reads it, ovl13:647..671) and
+  HookVetoFlag to 1 (the flag ovl12:0918 and ovl12:0C26 also set; AttackTargetAllowed reads it, OVL13.PAS lines 647..671) and
   takes AttackPenalty off AttackRoll
   without the test InvisibleTargetHardToHit (ovl12:0918) makes first. Runs for affect $47 (id 71, InitAffectHandlers [V]). }
 procedure InvisibleTargetCannotBeTargeted(Who: PCharacter; Affect: PAffect; Mode: Byte);
@@ -1418,10 +1448,10 @@ begin
       begin
         FearSaved := SavingThrow(Scan, SaveKindSpell, 0);
         case Scan^.HighestLevel of
-          0..3: ApplyAffect(Scan, AffectParalysis, PermanentDuration, FearData, NoRemoveHandler, SaveNegatesAffect, FearSaved,
-            'is paralyzed with fear');
-          4, 5: ApplyAffect(Scan, AffectCurse, PermanentDuration, FearData, NoRemoveHandler, SaveNegatesAffect, FearSaved,
-            'is weakened by fear');
+          0..FearParalysisMaxLevel: ApplyAffect(Scan, AffectParalysis, PermanentDuration, FearData, NoRemoveHandler,
+            SaveNegatesAffect, FearSaved, 'is paralyzed with fear');
+          FearWeakenMinLevel, FearWeakenMaxLevel: ApplyAffect(Scan, AffectCurse, PermanentDuration, FearData,
+            NoRemoveHandler, SaveNegatesAffect, FearSaved, 'is weakened by fear');
         end;
       end;
     Scan := Scan^.Next;
@@ -1447,10 +1477,10 @@ begin
       if OpposingSide(Who) = Scan^.Side then
       begin
         Bonus := 0;
-        if SideCounts[ShortInt(Scan^.Side)] >= 6 then
+        if SideCounts[ShortInt(Scan^.Side)] >= LargeSideCount then
           Inc(Bonus);
         if Scan^.Race = RaceHuman then
-          Inc(Bonus, 2);
+          Inc(Bonus, HumanFearSaveBonus);
         Saved := SavingThrow(Scan, SaveKindParalysis, Bonus);
         ApplyAffect(Scan, AffectParalysis, RollDice(1, FearDieSides), FearData, NoRemoveHandler, SaveNegatesAffect,
           Saved, 'is paralyzed with fear');
@@ -1537,9 +1567,9 @@ end;
   Shows "is drained " followed by "N levels" or "a level" on Who at row CombatMessageRow (ShowCharacterMessage). When Who's
   Status is StatusAnimated (1, "Animated" in StatusNames, not Dead: the test reads that value [I]) Who is dead forever:
   DropFromFight with StatusGone, and HpMax is 0. Otherwise,
-  for each of the Count levels: the counter Pad74[$74] (+$74, not named yet) goes up; the total of all class
+  for each of the Count levels: the counter Pad74[DrainedLevels] (+$74, the levels drained) goes up; the total of all class
   levels (Total) is taken; Quotient = HpMax div Total hit points are lost: for each of them HpMax, HpB1 and
-  HpCurrent (the current hit points) go down by one while above 0 and Pad74[$75] (the lost hit points, the
+  HpCurrent (the current hit points) go down by one while above 0 and Pad74[LostHitPoints] (the lost hit points, the
   third number of ShowDebugTrace, ovl33:0004) goes up. Then, when Who's HighestLevel is below 2, the
   character is dead forever (with a Count of 2 its highest class level is cleared too). Otherwise one level
   comes off the class that holds the highest level (nested HighestLevelClass), and when no hit points are
@@ -1605,12 +1635,12 @@ begin
   begin
     if Who^.Status <> StatusGone then
     begin
-      Inc(Who^.Pad74[$74]);
+      Inc(Who^.Pad74[DrainedLevels]);
       Total := 0;
       for ClassIndex := 0 to LastClass do
         Inc(Total, Who^.ClassLevels[ClassIndex]);
       Quotient := Who^.HpMax div Total;
-      ShowDebugTrace('max,cur,lost', Who^.HpMax, Who^.HpCurrent, Who^.Pad74[$75]);
+      ShowDebugTrace('max,cur,lost', Who^.HpMax, Who^.HpCurrent, Who^.Pad74[LostHitPoints]);
       for Point := 1 to Quotient do
       begin
         if Who^.HpMax > 0 then
@@ -1619,7 +1649,7 @@ begin
           Dec(Who^.HpB1);
         if Who^.HpCurrent > 0 then
           Dec(Who^.HpCurrent);
-        Inc(Who^.Pad74[$75]);
+        Inc(Who^.Pad74[LostHitPoints]);
       end;
       if Who^.HighestLevel < 2 then
       begin
@@ -1700,6 +1730,8 @@ var
 begin
   if SaveKind = SaveKindPoison then
   begin
+    { The bonus by Constitution bracket, the same table in ovl12:24D9 and ovl12:268A: 4..6 gives 1, 7..10 gives 2, 11..13 gives
+      3, 14..17 gives 4 and 18..20 gives 5 (the dwarf, gnome and halfling bonus of AD&D [I]). }
     case Who^.Constitution of
       4..6: Bonus := 1;
       7..10: Bonus := 2;
@@ -1782,8 +1814,10 @@ procedure DwarfGnomeHalflingWandSpellSaveBonus(Who: PCharacter; Affect: PAffect;
 var
   Bonus: Byte;                  { the bonus of Who's Constitution bracket }
 begin
-  if (SaveKind = SaveKindSpell) or (SaveKind = 2) then
+  if (SaveKind = SaveKindSpell) or (SaveKind = SaveKindWand) then
   begin
+    { The bonus by Constitution bracket, the same table in ovl12:24D9 and ovl12:268A: 4..6 gives 1, 7..10 gives 2, 11..13 gives
+      3, 14..17 gives 4 and 18..20 gives 5 (the dwarf, gnome and halfling bonus of AD&D [I]). }
     case Who^.Constitution of
       4..6: Bonus := 1;
       7..10: Bonus := 2;
@@ -1867,7 +1901,7 @@ end;
 procedure TurnGaseousAndEscape(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   Affect^.Flag := NoRemoveHandler;
-  ShowCursorOn(Who, 3, 0);
+  ShowCursorOn(Who, GaseousCursorMargin, GaseousShowCursor);
   DropCombatant(Who, StatusFled, 'Turns gaseous and escapes');
 end;
 { ovl12:2901. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). It runs
@@ -2029,14 +2063,14 @@ end;
   becomes 1d6 plus one (RollDiceCounted, ovl24:0E2E). runs for affect $75 (id 117, InitAffectHandlers [V]). Game
   meaning: every undead but FERRAN MARTINEZ (SPECTRE, WIGHT, WRAITH, SKELETONS, ZOMBIES, MUMMY, VAMPIRE) [V]; item
   type $55 is Vial Of Holy Water [V item files]: damage 1d6 + 1, holy water against undead [I]. }
-procedure SetDamageFromSlotItemType55(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure SetDamageFromHolyWater(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   Item: PItem;
 begin
   Item := SelectedCharacter^.SlotItems[0];
   if Item <> nil then
-    if Item^.ItemType = $55 then
-      DamageAmount := RollDiceCounted(1, 6) + 1;
+    if Item^.ItemType = ItemHolyWater then
+      DamageAmount := RollDiceCounted(1, HolyWaterDieSides) + 1;
 end;
 { ovl12:2B63. Damage hook (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). While the damage is
   cold (DamageKind bit KindCold, DS:6819), DamageAmount is halved: HalveColdDamage (ovl12:03E1) without its SaveRoll
@@ -2059,7 +2093,7 @@ var
 begin
   Item := FirstSlotItem(SelectedCharacter);
   if (Item = nil) or (Item^.Plus = 0) then
-    if (SelectedCharacter^.Race > 0) or (SelectedCharacter^.HighestLevel < 4) then
+    if (SelectedCharacter^.Race > RaceMonster) or (SelectedCharacter^.HighestLevel < StrongMonsterLevel) then
       DamageAmount := 0;
 end;
 { ovl12:2BC8. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). When the first slot
@@ -2068,13 +2102,13 @@ end;
   InitAffectHandlers [V]). Game meaning: HILL GIANT and FIRE GIANT [V]: item types $57 and $58 are two-handed
   bludgeoning rows (the type $57 item carries Affects[3] $87, Must have Giant Strength), so this is a giant catching a
   hurled boulder, 50 percent [I]. }
-procedure AvoidDistantAttackForItemType57Or58(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure AvoidDistantAttackForBoulder(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   Item: PItem;                  { the first slot item of SelectedCharacter, nil when there is none }
 begin
   Item := SelectedCharacter^.SlotItems[0];
   if Item <> nil then
-    if (Item^.ItemType = $57) or (Item^.ItemType = $58) then
+    if (Item^.ItemType = ItemBoulderA) or (Item^.ItemType = ItemBoulderB) then
       AvoidDistantAttack(Who, SlotItemAvoidChance);
 end;
 { ovl12:2C1C. Affect handler that spits acid at the character Who attacked last (the AffectHandlers shape: Who, Affect
@@ -2101,7 +2135,8 @@ begin
       DrawCombatIcon(SpitAnimation);
       WalkCombatLine(CombatantX(Who), CombatantY(Who), CombatantX(AttackTarget), CombatantY(AttackTarget),
         SpitLineKind, SpitLineFlag);
-      DealDamage(AttackTarget, RollDiceCounted(8, 4), 2, SavingThrow(AttackTarget, SaveKindBreath, 0));
+      DealDamage(AttackTarget, RollDiceCounted(SpitDiceCount, SpitDieSides), HalfOnSave,
+                 SavingThrow(AttackTarget, SaveKindBreath, 0));
       RemoveAffect(Who, AffectSpitsAcid, Affect);
       RemoveAffect(Who, AffectSplashesAcid, nil);
     end;
@@ -2113,14 +2148,14 @@ end;
   InitAffectHandlers [V]). The routine starts at ovl12:2D38 (its push bp); the
   map's entry at ovl12:2D39 is inside it. Game meaning: the MUMMY only [V]; item type $56 is Flask OF Oil [V]: 3d8
   plus the dice count for fire or magic damage, burning oil [I]. }
-procedure SetDamageFromSlotItemType56(Who: PCharacter; Affect: PAffect; Mode: Byte);
+procedure SetDamageFromOilFlask(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   Item: PItem;                  { the first slot item of SelectedCharacter, nil when there is none }
 begin
   Item := SelectedCharacter^.SlotItems[0];
   if Item <> nil then
-    if Item^.ItemType = $56 then
-      DamageAmount := RollDiceCounted(3, 8);
+    if Item^.ItemType = ItemOilFlask then
+      DamageAmount := RollDiceCounted(OilFlaskDiceCount, OilFlaskDieSides);
   if (DamageKind and (KindFire or KindMagic)) <> 0 then
     Inc(DamageAmount, LastDiceCount);
 end;
@@ -2176,7 +2211,7 @@ end;
   AttackTarget (Items, +$C8) are walked while HookVetoFlag is 0. Every readied item (Readied, +$34) that has
   MirrorNameNum ($76, the item that turns a gaze back, GazeStonesTarget at ovl12:1CAD) in one of its names
   (NameNum[1..3], +$2F..+$31), or HolySymbolNameNum in one name with WoodenNameNum in the third, sets HookVetoFlag to 1.
-  HookVetoFlag is read by AttackTargetAllowed (ovl13:647..671), which refuses a vetoed target. The VAMPIRE carries
+  HookVetoFlag is read by AttackTargetAllowed (OVL13.PAS lines 647..671), which refuses a vetoed target. The VAMPIRE carries
   affect $7E (MON4SPC blocks 23 and 105) [V]. Runs for affect $7E (id 126, InitAffectHandlers [V]). }
 procedure VetoTargetWithMirrorOrWoodenHolySymbol(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
@@ -2467,12 +2502,12 @@ begin
   AffectHandlers[114] := HalveElectricityDamage;
   AffectHandlers[115] := HalveDamageByFirstSlotItemRow;
   AffectHandlers[116] := HalveDamageForEnchantedSlotItem;
-  AffectHandlers[117] := SetDamageFromSlotItemType55;
+  AffectHandlers[117] := SetDamageFromHolyWater;
   AffectHandlers[118] := HalveColdDamageNoSave;
   AffectHandlers[119] := CancelDamageUnlessEnchantedSlotItem;
-  AffectHandlers[120] := AvoidDistantAttackForItemType57Or58;
+  AffectHandlers[120] := AvoidDistantAttackForBoulder;
   AffectHandlers[121] := SpitAcidAtTarget;
-  AffectHandlers[122] := SetDamageFromSlotItemType56;
+  AffectHandlers[122] := SetDamageFromOilFlask;
   AffectHandlers[123] := HalveOrCancelDamageForUnenchantedSlotItem;
   AffectHandlers[124] := HalfElfResistsCharmAndSleep;
   AffectHandlers[125] := ImmuneToCharmSleepHoldAndPoison;

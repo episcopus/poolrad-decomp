@@ -4,6 +4,7 @@ One line per update: date, section, change, evidence.
 
 | Date | Section | Change | Evidence |
 |---|---|---|---|
+| 2026-10-16 | P6 consistency | ovl12 review M12 closed: alignment indexes, CreatureType values, item types, spit and fear numbers named; shared constants in POOLVARS | make check passed, rebuild IDENTICAL |
 | 2026-10-16 | P6 consistency | sign-off round: the independent reviews of ovl03, ovl12, ovl16, res07 and res12 applied (armour class, hit points, message sounds, video mode, affect and race names, shared constants); ovl12 M12 and the should-fix lists stay open | work/reviews/*.md, make check passed, rebuild IDENTICAL |
 | 2026-10-16 | Phase 6 consistency | Color spelling in all identifiers, shared screen and key constants | docs/process/playbooks/65-consistency.md |
 | 2026-10-15 | Phase 6 consistency | Names for every global and routine, aliases merged, shared constants defined once, status names fixed, ovl14 records are TCharacter; rename --apply no longer renames storage cells | re/renames.toml, docs/process/playbooks/65-consistency.md |

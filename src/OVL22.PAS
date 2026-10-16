@@ -702,7 +702,7 @@ end;
 procedure CastCharmPerson;
 const
   CharmAffect = $0B;              { the charm affect CallAffectHandler runs and HasAffect finds }
-  CharmableType = 1;              { the largest CreatureType Charm Person can affect (a person) }
+  CharmableType = CreatureHumanoid;              { the largest CreatureType Charm Person can affect (a person) }
   CharmableSize = 1;              { the largest CombatSize (combat footprint kind) it can affect }
   { The caster's side goes into bit 7 of the affect's data (Side * SideScale). }
   SideScale = 128;
@@ -908,7 +908,7 @@ const
   HoldPersonBonus = -2;
   TwoTargetsBonus = -1;
   ThreeOrFourBonus = 0;
-  FriendlyType = 1;               { the largest CreatureType Hold Person can affect (a person) }
+  FriendlyType = CreatureHumanoid;               { the largest CreatureType Hold Person can affect (a person) }
   FriendlySize = 1;               { the largest CombatSize (combat footprint kind) it can affect }
   AnimationKind = $12;            { DrawCombatIcon's argument that starts the cast animation }
   AimStep = 4;                    { the line WalkCombatLine walks for the cast animation }
@@ -1011,8 +1011,6 @@ end;
   charmed snakes with the message 'is charmed'. Reads SelectedCharacter, PartyListHead and CastingSpell; changes
   SpellWorkByteA, SpellTargetCount and the target list. }
 procedure CastSnakeCharm;
-const
-  SnakeType = $E;                 { the CreatureType of a giant snake (MON*CHA, as ovl12 tests) }
 var
   Current: PCharacter;            { the walker of the party list PartyListHead }
 begin
@@ -1021,7 +1019,7 @@ begin
   Current := PCharacter(PartyListHead);
   while Current <> nil do
   begin
-    if (Current^.CreatureType = SnakeType) and (SpellWorkByteA >= Current^.HpCurrent) then
+    if (Current^.CreatureType = CreatureSnake) and (SpellWorkByteA >= Current^.HpCurrent) then
     begin
       SpellWorkByteA := SpellWorkByteA - Current^.HpCurrent;
       Inc(SpellTargetCount);
@@ -1248,8 +1246,6 @@ end;
 procedure CastAnimateDead;
 const
   DeadStatus = 6;                 { TCharacter.Status 6: a corpse Animate Dead can raise }
-  HumanType = 0;                  { CreatureType 0: the party's (human) corpses }
-  UndeadType = 4;                 { CreatureType 4 marks the undead (whitepaper 5.22.2) }
   AnimateAffect = $20;            { the affect Animate Dead leaves on the animated corpse }
   MaxSpellSlot = $14;             { Spells is array[0..$14] }
   { B84 (whitepaper 4.2.5): above $7F marks a computer-run member, which keeps its higher morale. }
@@ -1277,7 +1273,7 @@ begin
   while (Current <> nil) and (Level > 0) do
   begin
     if Current^.Status = DeadStatus then
-      if Current^.CreatureType = HumanType then
+      if Current^.CreatureType = CreatureHuman then
         if PlaceCombatant(Current, CombatantX(Current), CombatantY(Current), RestoreCell) then
         begin
           { The caster's Side goes into bits 4..7 of the affect data, the caster level into the low
@@ -1295,7 +1291,7 @@ begin
             Current^.B84 := HirelingMorale
           else
             Current^.B84 := CreatureMorale;
-          Current^.CreatureType := UndeadType;
+          Current^.CreatureType := CreatureUndead;
           if ViewMode = ViewModeCombat then
             Current^.Combat^.Target := nil;
           Dec(Level);
@@ -1601,7 +1597,6 @@ end;
 procedure DamageTargetInCell(CellX, CellY, Damage, SaveKind: Byte; var Blocked: Boolean);
 const
   RefusedTileCost = $FF;          { TCombatTile.Cost this high refuses the cell (CastStinkingCloud names it) }
-  HalfOnSave = 2;                 { DealDamage's SaveEffect 2: a target that saves takes half damage }
   DamageKindElectric = $0C;       { DealDamage: kind and $F7 = 4 names electricity (ovl24:1389) }
   ZapAnimation = $13;             { DrawCombatIcon's argument for the line spell's zap animation }
   NoBonus = 0;                    { SavingThrow's Bonus: the line spell gives none }

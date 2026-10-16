@@ -9602,3 +9602,24 @@ kind = "global"
 why = "OVL10:990 allocates it as AllocatePicture($18, 3, 4, 1): a 24x3 picture of four items that res12 plays as a four-frame animation (res12 review)"
 date = "2026-10-16"
 
+[[rename]]
+old = "SetDamageFromSlotItemType55"
+new = "SetDamageFromHolyWater"
+kind = "routine"
+why = "the item types are named now: ItemHolyWater ($55, Vial Of Holy Water), ItemOilFlask ($56, Flask OF Oil), ItemBoulderA/B ($57, $58) [V item files] (ovl12 review M12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "SetDamageFromSlotItemType56"
+new = "SetDamageFromOilFlask"
+kind = "routine"
+why = "the item types are named now: ItemHolyWater ($55, Vial Of Holy Water), ItemOilFlask ($56, Flask OF Oil), ItemBoulderA/B ($57, $58) [V item files] (ovl12 review M12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "AvoidDistantAttackForItemType57Or58"
+new = "AvoidDistantAttackForBoulder"
+kind = "routine"
+why = "the item types are named now: ItemHolyWater ($55, Vial Of Holy Water), ItemOilFlask ($56, Flask OF Oil), ItemBoulderA/B ($57, $58) [V item files] (ovl12 review M12)"
+date = "2026-10-16"
+

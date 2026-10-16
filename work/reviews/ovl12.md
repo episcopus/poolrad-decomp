@@ -79,6 +79,6 @@ Independent read-only review by a side session of the phase 6 pass (main at ffd0
 
 Commits: 1d92c48, 34a118e, 16859c6, cd024f8.
 
-Must-fix findings M1..M11 and M13..M15 applied (names from SpellTable, monster and item data, shared affect, save kind and spell constants, item handlers read their item, alias removed). M12 (bare numbers) is only partly done: the spell and affect constants are named, but the alignment indexes, CreatureType values, item types $55..$58, the Constitution table, the fear levels and the other literals the review lists are still bare.
+Must-fix findings M1..M11 and M13..M15 applied (names from SpellTable, monster and item data, shared affect, save kind and spell constants, item handlers read their item, alias removed). M12 (bare numbers) was finished on 2026-10-16 in a second commit (branch task/p6-ovl12): the alignment indexes, CreatureType values, item types $55..$58, the spit and fear numbers and the other literals the review lists are named (shared ones in POOLVARS), the stale comments are corrected and the racial handlers say whose they are.
 
-- [ ] must-fix ovl12 M12 (residual): name the bare alignment indexes, CreatureType values, item types $55..$58 and the other literals listed in the phase 6 review; no byte changes, run make match UNIT=ovl12.
+- [x] must-fix ovl12 M12 (residual, fixed in task/p6-ovl12): the bare literals are named; make match passes.

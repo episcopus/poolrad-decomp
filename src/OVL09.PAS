@@ -758,7 +758,7 @@ end;
   item takes one hand or none. It is 0 when the item's Hands plus the actor's HandsInUse are above 3,
   when Affects[3] is $84 and the low nibble of Affects[2] differs from the actor's Alignment, when Affects[2]
   is $53, or when the item is cursed. Purpose unknown: the $84 and $53 rules, and the score of 8 for an
-  item of type $55 when the actor's target's Pad74[$76] byte is above 0 (not named yet). Result: the
+  item of type $55 when the actor's target's Pad74[TurnUndeadIndex] byte is above 0 (not named yet). Result: the
   score. Globals: ItemTable. }
 function ScoreItem(Actor: PCharacter; Item: PItem): Byte;
 var
@@ -773,7 +773,7 @@ begin
     Score := Score + Row.BonusNormal * 2;
   if Item^.ItemType = $55 then
     if Actor^.Combat^.Target <> nil then
-      if ShortInt(Actor^.Combat^.Target^.Pad74[$76]) > 0 then
+      if ShortInt(Actor^.Combat^.Target^.Pad74[TurnUndeadIndex]) > 0 then
         Score := 8;
   if (Row.Flags and FlagAttack) > 0 then
     Score := Score + (Row.Attacks - 1) * 2;

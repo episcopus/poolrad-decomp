@@ -4055,13 +4055,13 @@ id = "ovl12:2B20"
 unit = "ovl12"
 addr = "ovl12:2B20"
 size = 67
-name = "SetDamageFromSlotItemType55"
-signature = "procedure SetDamageFromSlotItemType55(Who: PCharacter; Affect: PAffect; Mode: Byte)"
+name = "SetDamageFromHolyWater"
+signature = "procedure SetDamageFromHolyWater(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e101"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_e101 (ovl12:2B20 reads SelectedCharacter^.SlotItems[0] and, when its ItemType is $55, sets DamageAmount to RollDiceCounted(1, 6) + 1; the item type's name is not known); auto:entry_101"
+notes = "renamed from SetDamageFromSlotItemType55 (the item types are named now: ItemHolyWater ($55, Vial Of Holy Water), ItemOilFlask ($56, Flask OF Oil), ItemBoulderA/B ($57, $58) [V item files] (ovl12 review M12)); renamed from ovl12_e101 (ovl12:2B20 reads SelectedCharacter^.SlotItems[0] and, when its ItemType is $55, sets DamageAmount to RollDiceCounted(1, 6) + 1; the item type's name is not known); auto:entry_101"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4097,13 +4097,13 @@ id = "ovl12:2BC8"
 unit = "ovl12"
 addr = "ovl12:2BC8"
 size = 84
-name = "AvoidDistantAttackForItemType57Or58"
+name = "AvoidDistantAttackForBoulder"
 signature = ""
 c_name = "ovl12_e104"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_e104 (ovl12:2BC8 calls AvoidDistantAttack (ovl12:0FAC, chance 50) only when SelectedCharacter's first slot item (SlotItems[0]) has ItemType $57 or $58; an affect handler, no direct caller); auto:entry_104"
+notes = "renamed from AvoidDistantAttackForItemType57Or58 (the item types are named now: ItemHolyWater ($55, Vial Of Holy Water), ItemOilFlask ($56, Flask OF Oil), ItemBoulderA/B ($57, $58) [V item files] (ovl12 review M12)); renamed from ovl12_e104 (ovl12:2BC8 calls AvoidDistantAttack (ovl12:0FAC, chance 50) only when SelectedCharacter's first slot item (SlotItems[0]) has ItemType $57 or $58; an affect handler, no direct caller); auto:entry_104"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4125,13 +4125,13 @@ id = "ovl12:2D38"
 unit = "ovl12"
 addr = "ovl12:2D38"
 size = 80
-name = "SetDamageFromSlotItemType56"
+name = "SetDamageFromOilFlask"
 signature = ""
 c_name = "ovl12_e106"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_e106 (ovl12:2D38 sets DamageAmount to 3d8 (RollDiceCounted 3, 8) when SelectedCharacter's first slot item has ItemType $56, the sibling of SetDamageFromSlotItemType55 (ovl12:2B20); no direct caller); auto:entry_106"
+notes = "renamed from SetDamageFromSlotItemType56 (the item types are named now: ItemHolyWater ($55, Vial Of Holy Water), ItemOilFlask ($56, Flask OF Oil), ItemBoulderA/B ($57, $58) [V item files] (ovl12 review M12)); renamed from ovl12_e106 (ovl12:2D38 sets DamageAmount to 3d8 (RollDiceCounted 3, 8) when SelectedCharacter's first slot item has ItemType $56, the sibling of SetDamageFromSlotItemType55 (ovl12:2B20); no direct caller); auto:entry_106"
 evidence = ["prologue"]
 
 [[routine]]
