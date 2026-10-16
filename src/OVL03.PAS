@@ -1,7 +1,7 @@
 unit OVL03;
 { Encounter: the command loop of the ECL script interpreter (whitepaper 5.1), and the wilderness
   loop the main program runs after the character menu (RunWilderness, ovl03:32F8). DispatchCommand
-  dispatches each command by its opcode (SkippedOpcode) to a handler in this unit; the handlers
+  dispatches each command by its opcode (CurrentOpcode) to a handler in this unit; the handlers
   decode their operands through OVL07 and run them. }
 {$A-,O+,F+,S-,R-,G-,I-,L-}
 interface
@@ -34,8 +34,8 @@ procedure AskMenuCommand;
 procedure ClearEncounterCommand;
 procedure ComputePartyValueCommand;
 procedure ScanPartyCommand;
-procedure CheckPartyClassCommand;
-procedure RollRangeCommand;
+procedure CheckPartyHasRangerCommand;
+procedure RollSurpriseCommand;
 procedure RunAreaEventCommand;
 procedure SelectCaseCommand;
 procedure AddLootCommand;
@@ -100,12 +100,10 @@ const
     script allows for the encounter picture, and the steps the party sees ahead (OpenStepsAhead,
     ovl07:0482, which also stores them there). }
   VarEncounterLimit = 704;
-  VarStepsAhead = 705;
   { The words of GameVars2 ECL command 36 (ovl03:179B) reads: a shop and a temple visit the script asked
     for (cleared when served), and word 714, of which it keeps only the low bit (meaning unknown). }
   VarShopRequest = 876;
   VarTempleRequest = 738;
-  VarWord714 = 714;
   { ECL command 11 (ovl03:0450) adds no encounter member once its count of members reaches this. }
   MaxEncounterMembers = 63;
   { The icon slot EncounterIconSlot starts at: InitScript (ovl07:01F0) and ECL command 28 (ovl03:125D) set it. }
@@ -134,12 +132,10 @@ const
   WallModeMapPage3 = $1A;
   WallModeMapPage4 = $1B;
   { The GameVars words the area step (ovl03:31B4) reads: the area doors are animated when word VarAreaDoors is
-    AreaDoorsOpen and word VarAreaDoorsLatch is clear. Word 435 is one of the gates DrawAreaView reads
-    (ovl27:0000); the meaning of the values is not traced. Word VarWord725 of GameVars2 is cleared at each step. }
-  VarAreaDoors = 435;
-  VarAreaDoorsLatch = 418;
+    AreaDoorsOpen and word VarRiverGate is clear. Word 435 is one of the gates DrawAreaView reads
+    (ovl27:0000); the meaning of the values is not traced. Word VarMapEdgeHit of GameVars2 is cleared at each step. }
+  VarRiverGate = 418;
   AreaDoorsOpen = $FE;
-  VarWord725 = 725;
   { The GameVars words the wilderness loop saves the party's cell in before DoWildernessMenu, so a
     cell that changed can play SoundStep. }
   VarSavedPartyColumn = 240;
@@ -173,15 +169,16 @@ const
   { ECL command 46 (ovl03:2775). Operand 1: bit 7 (TrapSavingThrowBit) is the saving-throw mode, a targeted
     trap whose target saves; with it clear Flags is the number of hits, each on a random member that only
     ResistValue stops. In the saving-throw mode bit 6 (TrapWholePartyBit) hits the whole party and bit 5
-    (TrapUnsavedBit) is a hit no saving throw stops; the low five bits are the saving throw kind. Operand 5:
+    (TrapUnsavedBit) is a hit no saving throw stops; the low five bits are the saving throw bonus. Operand 5:
     bit 7 picks the selected character as the target (else a random member); its low three bits are the
-    saving throw bonus. }
+    saving throw kind (the original passes them in that order: ovl03:2864, 28B2, 290E; a first reading had
+    the two swapped). }
   TrapSavingThrowBit = $80;
   TrapWholePartyBit = $40;
   TrapUnsavedBit = $20;
-  TrapKindMask = $1F;
+  TrapBonusMask = $1F;
   TrapSelectedBit = $80;
-  TrapBonusMask = 7;
+  TrapKindMask = 7;
   { The party-wiped screen of ECL command 46: its window, the window colour, the text colour and the pause. }
   EndWindowLeft = 1;
   EndWindowTop = 1;
@@ -231,7 +228,7 @@ var
   PictureShown: TPictureShown absolute PictureShownFlags;
 
 { ovl03:0001. The ECL command 0, the only command that takes no operands (the dispatcher at
-  ovl03:2F2D calls it for SkippedOpcode 0). It clears the text windows when PictureFrameDirty is set (the
+  ovl03:2F2D calls it for CurrentOpcode 0). It clears the text windows when PictureFrameDirty is set (the
   second one only when the game variable VarForceWallView is set, since the code reads that same
   word), selects the character at ReselectCharacter when ReselectCharacterPending is set, clears the two-byte scratch
   PictureShownFlags,
@@ -265,7 +262,7 @@ begin
   GlyphCol := EclTextLeft;
   GlyphRunInBox := 0;
 end;
-{ ovl03:00F4. ECL command 1 (dispatcher ovl03:2F2D, SkippedOpcode 1): an unconditional jump. Its
+{ ovl03:00F4. ECL command 1 (dispatcher ovl03:2F2D, CurrentOpcode 1): an unconditional jump. Its
   one operand is a script address, and EclPC moves to it (the same jump ScriptGosub makes after
   it pushes the return address). }
 procedure GotoCommand;
@@ -273,7 +270,7 @@ begin
   DecodeOperands(1);
   EclPC := MakeWord(OperandLow[1], OperandHigh[1]);
 end;
-{ ovl03:0111. ECL command 2 (dispatcher ovl03:2F2D, SkippedOpcode 2): a subroutine call. Its one
+{ ovl03:0111. ECL command 2 (dispatcher ovl03:2F2D, CurrentOpcode 2): a subroutine call. Its one
   operand is the script address of the subroutine; ScriptGosub pushes the return address and
   jumps there. }
 procedure GosubCommand;
@@ -281,7 +278,7 @@ begin
   DecodeOperands(1);
   ScriptGosub(1);
 end;
-{ ovl03:0126. ECL command 3 (dispatcher ovl03:2F2D, SkippedOpcode 3): compares its two operands
+{ ovl03:0126. ECL command 3 (dispatcher ovl03:2F2D, CurrentOpcode 3): compares its two operands
   and sets CompareFlags for the conditional commands. When either operand is a string (type bit 7
   set) both strings are taken from EclStrings[1] and [2], whatever the types, and compared with
   CompareStrings; otherwise the two word values are compared with CompareWords. }
@@ -306,7 +303,7 @@ begin
     CompareWords(LeftWord, RightWord);
   end;
 end;
-{ ovl03:01A3. ECL commands 4 to 7 (dispatcher ovl03:2F2D, SkippedOpcode OpAdd, OpSub, OpDiv or
+{ ovl03:01A3. ECL commands 4 to 7 (dispatcher ovl03:2F2D, CurrentOpcode OpAdd, OpSub, OpDiv or
   OpMul): the values of the first two operands are combined and the answer is written with
   WriteVmWord to the script address the third operand names. Division and multiplication keep the
   low word of the answer. QUIRK ovl03:01FC: subtraction takes the second value minus the first,
@@ -323,7 +320,7 @@ begin
   for I := 1 to 2 do
     Values[I] := OperandValue(I);
   Target := MakeWord(OperandLow[3], OperandHigh[3]);
-  case SkippedOpcode of
+  case CurrentOpcode of
     OpAdd: Answer := Values[1] + Values[2];
     OpSub: Answer := Values[2] - Values[1];
     OpDiv: Answer := Values[1] div Values[2];
@@ -331,7 +328,7 @@ begin
   end;
   WriteVmWord(Target, Answer);
 end;
-{ ovl03:0234. ECL command 8 (dispatcher ovl03:2F2D, SkippedOpcode 8): stores a random number. The
+{ ovl03:0234. ECL command 8 (dispatcher ovl03:2F2D, CurrentOpcode 8): stores a random number. The
   first operand is the largest roll wanted: one is added to it, so the roll is 0 to that value
   (Random(n) gives 0 to n-1). The roll is written with WriteVmWord to the script address the
   second operand names. The Trunc keeps the Real conversion of the roll that the original makes
@@ -351,7 +348,7 @@ begin
   Roll := Trunc(Random(Range));
   WriteVmWord(Target, Roll);
 end;
-{ ovl03:0292. ECL command 9 (dispatcher ovl03:2F2D, SkippedOpcode 9): stores its first operand at
+{ ovl03:0292. ECL command 9 (dispatcher ovl03:2F2D, CurrentOpcode 9): stores its first operand at
   the script address its second operand names. A string operand (type bit 7 set) is stored with
   WriteVmString from EclStrings[1]; a value is stored as a word with WriteVmWord. }
 procedure StoreCommand;
@@ -369,7 +366,7 @@ begin
   else
     WriteVmString(Target, EclStrings[1]);
 end;
-{ ovl03:02E0. ECL command 10 (dispatcher ovl03:2F2D, SkippedOpcode 10): selects the party member at
+{ ovl03:02E0. ECL command 10 (dispatcher ovl03:2F2D, CurrentOpcode 10): selects the party member at
   the 0-based position its operand names as SelectedCharacter. The walk starts at PartyListHead, the head
   of the party list (Next at +$104), and stops at the position or at the end of the list; a
   position past the end selects nothing. It sets ReselectCharacterPending first, so the next EndCommand (ovl03:0001)
@@ -411,7 +408,7 @@ begin
     CharWord6B00Zeroed := 0;
   end;
 end;
-{ ovl03:03B4. ECL command 12 (dispatcher ovl03:2F2D, SkippedOpcode 12): shows an encounter picture
+{ ovl03:03B4. ECL command 12 (dispatcher ovl03:2F2D, CurrentOpcode 12): shows an encounter picture
   at the distance the party can see ahead. Operand 1 is the sprite bank (EncounterSpriteBank) and
   operand 3 the picture bank (EncounterPicBank), both passed to ShowEncounterPicture; operand 2 is
   the largest distance the script allows, kept in word 704 of GameVars2. The distance is the steps
@@ -430,7 +427,7 @@ begin
     GameVars2^[VarStepsAhead] := GameVars2^[VarEncounterLimit];
   ShowEncounterPicture(EncounterSpriteBank, EncounterPicBank, Byte(GameVars2^[VarStepsAhead]), PictureShown);
 end;
-{ ovl03:0450. ECL command 11 (dispatcher ovl03:2F2D, SkippedOpcode 11): adds a group of encounter
+{ ovl03:0450. ECL command 11 (dispatcher ovl03:2F2D, CurrentOpcode 11): adds a group of encounter
   members to the party list PartyListHead (icons from 8 up, so not the party's own members). Operand 1 is
   the kind LoadCharacter loads (LoadMonster, the save and load unit), operand 2 the number of members
   (at least 1), operand 3 the block of the combat picture 'CPIC' loaded into the icon slot EncounterIconSlot.
@@ -538,7 +535,7 @@ begin
   EncounterMembersAdded := 1;
   SelectedCharacter := Saved;
 end;
-{ ovl03:0817. ECL command 13 (dispatcher ovl03:2F2D, SkippedOpcode 13): brings the encounter picture
+{ ovl03:0817. ECL command 13 (dispatcher ovl03:2F2D, CurrentOpcode 13): brings the encounter picture
   one step nearer. While the steps the party sees ahead (VarStepsAhead, word 705 of GameVars2) are not
   used up, it takes one off and shows the picture again at the new distance (ShowEncounterPicture).
   It has no operands and always moves EclPC past the command. }
@@ -551,7 +548,7 @@ begin
   end;
   Inc(EclPC);
 end;
-{ ovl03:0856. ECL command 14 (dispatcher ovl03:2F2D, SkippedOpcode 14): shows the close-up picture of
+{ ovl03:0856. ECL command 14 (dispatcher ovl03:2F2D, CurrentOpcode 14): shows the close-up picture of
   the encounter, or hides it. Operand 1 is the picture bank PicBank. When PicBank is HideCloseUp, the
   close-up goes: when PreviousAreaViewKind is above 1 or AreaViewKind is 1 and a close-up or the 3D sprite is up
   (CloseUpShown or Sprite3DLoaded), the area view is drawn again (ShowAreaView), those flags are cleared and CloseUpHidden
@@ -592,7 +589,7 @@ begin
     PictureShown[1] := 0;
   end;
 end;
-{ ovl03:0951. ECL command 15 (dispatcher ovl03:2F2D, SkippedOpcode 15): asks the player for a number
+{ ovl03:0951. ECL command 15 (dispatcher ovl03:2F2D, CurrentOpcode 15): asks the player for a number
   and stores it as a word at the script address that operand 2 names. Operand 1 is decoded but never
   read. The prompt is empty; ReadNumber (RES06, colour 10) repeats the input line until the text is a
   number from 0 to 65536. }
@@ -608,7 +605,7 @@ begin
   Number := ReadNumber(Prompt, 10);
   WriteVmWord(Target, Number);
 end;
-{ ovl03:0994. ECL command 16 (dispatcher ovl03:2F2D, SkippedOpcode 16): asks the player for a line of
+{ ovl03:0994. ECL command 16 (dispatcher ovl03:2F2D, CurrentOpcode 16): asks the player for a line of
   text and stores it as a string at the script address that operand 2 names (WriteVmString). Operand
   1 is decoded but never read. The prompt is empty; ReadInputLine (RES06) reads the line in colour
   EclTextColor, at most EclInputMaxLength characters. An empty answer is stored as one space, so the
@@ -627,7 +624,7 @@ begin
     Answer := ' ';
   WriteVmString(Target, Answer);
 end;
-{ ovl03:0A09. ECL commands 17 and 18 (dispatcher ovl03:2F2D, SkippedOpcode $11 or $12): show the text
+{ ovl03:0A09. ECL commands 17 and 18 (dispatcher ovl03:2F2D, CurrentOpcode $11 or $12): show the text
   of operand 1 in the ECL text window (EclTextLeft to EclTextRight, EclTextTop to EclTextBottom) with
   ShowPagedText. A number operand is turned into its text by WordToText and stored in EclStrings[1];
   a string operand is already there (DecodeOperands). Command 17 (OpContinueText) leaves the window and
@@ -641,7 +638,7 @@ begin
   WaitAfterTextRun := 1;
   if OperandType[1] < FirstStringOperandType then
     EclStrings[1] := WordToText(OperandValue(1));
-  if SkippedOpcode = OpContinueText then
+  if CurrentOpcode = OpContinueText then
     ShowPagedText(EclTextLeft, EclTextTop, EclTextRight, EclTextBottom, EclTextColor, 0, EclStrings[1])
   else
   begin
@@ -651,7 +648,7 @@ begin
   end;
   WaitAfterTextRun := 0;
 end;
-{ ovl03:0A9F. ECL command 19 (dispatcher ovl03:2F2D, SkippedOpcode $13): returns from a subroutine
+{ ovl03:0A9F. ECL command 19 (dispatcher ovl03:2F2D, CurrentOpcode $13): returns from a subroutine
   that ScriptGosub (ovl07:1951) called. EclPC moves past the command. When the return stack
   ReturnStack is not empty, EclPC takes the return address of its top entry (ReturnPC), the entry is
   freed and ReturnStack moves to the entry below it (Next, which ReturnPrev holds while the entry is
@@ -667,7 +664,7 @@ begin
     ReturnStack := ReturnPrev;
   end;
 end;
-{ ovl03:0AED. ECL command 20 (dispatcher ovl03:2F2D, SkippedOpcode $14): compares two pairs of word
+{ ovl03:0AED. ECL command 20 (dispatcher ovl03:2F2D, CurrentOpcode $14): compares two pairs of word
   operands. The six CompareFlags are cleared, the four operands are read as words (OperandValue),
   and operand 1 is compared with operand 2 and operand 3 with operand 4. When both pairs are equal
   CompareFlags[0] (=) is set, else CompareFlags[1] (<>). The conditional commands 22 to 27 (the
@@ -688,7 +685,7 @@ begin
   else
     CompareFlags[1] := 1;
 end;
-{ ovl03:0B52. ECL commands 22 to 27 (dispatcher ovl03:2F2D, SkippedOpcode OpIfEqual to
+{ ovl03:0B52. ECL commands 22 to 27 (dispatcher ovl03:2F2D, CurrentOpcode OpIfEqual to
   OpIfGreaterOrEqual): a conditional. EclPC moves past the opcode, then the next command runs only
   when its comparison flag in CompareFlags is set (=, <>, <, >, <=, >= in that order, set by
   CompareCommand, ComparePairsCommand and the comparison routines of OVL07). When the flag is clear,
@@ -696,7 +693,7 @@ end;
 procedure RunIfCompared;
 begin
   Inc(EclPC);
-  case SkippedOpcode of
+  case CurrentOpcode of
     OpIfEqual: if CompareFlags[0] = 0 then SkipCommand;
     OpIfNotEqual: if CompareFlags[1] = 0 then SkipCommand;
     OpIfLess: if CompareFlags[2] = 0 then SkipCommand;
@@ -705,7 +702,7 @@ begin
     OpIfGreaterOrEqual: if CompareFlags[5] = 0 then SkipCommand;
   end;
 end;
-{ ovl03:0BD1. ECL command 32 (dispatcher ovl03:2F2D, SkippedOpcode $20): starts ECL block Block of the
+{ ovl03:0BD1. ECL command 32 (dispatcher ovl03:2F2D, CurrentOpcode $20): starts ECL block Block of the
   area's script file. The operand is the block number: the WallViewMode of the area is saved in
   VarSavedWallView, then WallViewMode takes the block number. The file is GameDir + 'ECL' + the
   TileSet number + '.dax' (its path goes to SaveAndExit first), LoadEcl loads the block and InitScript
@@ -727,7 +724,7 @@ begin
   ScriptBlockStarted := 1;
   AreaRedrawArmed := 0;
 end;
-{ ovl03:0C74. ECL commands 33 and 55 (dispatcher ovl03:2F2D, SkippedOpcode $21 or $37): load the
+{ ovl03:0C74. ECL commands 33 and 55 (dispatcher ovl03:2F2D, CurrentOpcode $21 or $37): load the
   graphics of the area for the three operands, the block numbers Blocks, where $FF means none.
   Command 33 loads the 3D map Blocks[1] (Load3DMap, VarGeoBlock keeps its number) when
   VarForceWallView is set, and the 'BACPAC' picture set (Load24x24Set) when Blocks[3] is given and
@@ -747,7 +744,7 @@ begin
   AreaRedrawArmed := 1;
   for I := 1 to 3 do
     Blocks[I] := OperandValue(I);
-  if SkippedOpcode = $21 then
+  if CurrentOpcode = $21 then
   begin
     Command33Ran := 1;
     if (Blocks[1] <> $FF) and (Blocks[1] <> $7F) and (GameVars^[VarForceWallView] <> 0) then
@@ -786,7 +783,7 @@ begin
     AreaStepRedrawOnce := 0;
   end;
 end;
-{ ovl03:0DEF. ECL commands 47 and 48 (dispatcher ovl03:2F2D, SkippedOpcode OpAnd or OpOr): the
+{ ovl03:0DEF. ECL commands 47 and 48 (dispatcher ovl03:2F2D, CurrentOpcode OpAnd or OpOr): the
   bitwise and (47) or or (48) of the values of operands 1 and 2, kept as a byte. CompareWords compares
   that byte with 0, which sets the flags of CompareFlags for the conditional commands, and the byte is
   written with WriteVmWord to the script address operand 3 names. }
@@ -801,14 +798,14 @@ begin
   First := OperandValue(1);
   Second := OperandValue(2);
   Target := MakeWord(OperandLow[3], OperandHigh[3]);
-  if SkippedOpcode = OpAnd then
+  if CurrentOpcode = OpAnd then
     Combined := First and Second
   else
     Combined := First or Second;
   CompareWords(0, Combined);
   WriteVmWord(Target, Combined);
 end;
-{ ovl03:0E5E. ECL command 42 (dispatcher ovl03:2F2D, SkippedOpcode $2A): copies a word out of a table.
+{ ovl03:0E5E. ECL command 42 (dispatcher ovl03:2F2D, CurrentOpcode $2A): copies a word out of a table.
   Operand 1 is the script address of the table, operand 2 the index (a byte) and operand 3 the script
   address the word goes to: the word at table + index is read with ReadVmWord and written with
   WriteVmWord. }
@@ -828,7 +825,7 @@ begin
   Value := ReadVmWord(Source);
   WriteVmWord(Dest, Value);
 end;
-{ ovl03:0EBC. ECL command 53 (dispatcher ovl03:2F2D, SkippedOpcode $35): stores operand 1 as a word
+{ ovl03:0EBC. ECL command 53 (dispatcher ovl03:2F2D, CurrentOpcode $35): stores operand 1 as a word
   in a table of words. Operand 2 is the script address of the table and operand 3 the index: the
   word goes to table + index with WriteVmWord. It is the store that CopyIndexedWordCommand (ovl03:0E5E,
   command 42) reads back. }
@@ -846,7 +843,7 @@ begin
   Addr := Base + Index;
   WriteVmWord(Addr, Value);
 end;
-{ ovl03:0F08. ECL command 21 (dispatcher ovl03:2F2D, SkippedOpcode $15): a list menu. Operand 1 is
+{ ovl03:0F08. ECL command 21 (dispatcher ovl03:2F2D, CurrentOpcode $15): a list menu. Operand 1 is
   the address that receives Choice, the index AskListMenu returns for the line the player picked.
   The prompt is the first string operand (EclStrings[1]); it is shown in the text window
   (EclTextLeft to EclTextRight, EclTextTop to EclTextBottom) and the list goes under it. Operand 3
@@ -899,7 +896,7 @@ begin
   FreeMenuList(Menu);
   ClearRect(EclTextLeft, EclTextTop, EclTextRight, EclTextBottom);
 end;
-{ ovl03:10D1. ECL command 43 (dispatcher ovl03:2F2D, SkippedOpcode $2B): asks the player a menu. Operand
+{ ovl03:10D1. ECL command 43 (dispatcher ovl03:2F2D, CurrentOpcode $2B): asks the player a menu. Operand
   1 is the address that receives the answer, operand 2 the number of options Count; the options are the
   string operands EclStrings[1..Count], decoded again after Dec(EclPC) as in ChooseFromListCommand. They
   become one text, each option after a '~' (the hotkey marker AskMenu reads, a space after all but the
@@ -951,7 +948,7 @@ begin
   WriteVmWord(Target, Choice);
   ClearRect(PromptLeftCol, BottomRow, PromptLastCol, BottomRow);
 end;
-{ ovl03:125D. ECL command 28 (dispatcher ovl03:2F2D, SkippedOpcode $1C): clears the encounter. It has no
+{ ovl03:125D. ECL command 28 (dispatcher ovl03:2F2D, CurrentOpcode $1C): clears the encounter. It has no
   operands and moves EclPC past the command. The members ECL command 11 added are dropped
   (EncounterMemberCount and EncounterMembersAdded go to 0), the icon slot EncounterIconSlot goes back to FirstEncounterIcon,
   PooledMoney is cleared, and the item list PooledItems is freed line by line (SizeOf(TMenuLine) bytes each). }
@@ -972,7 +969,7 @@ begin
     PooledItems := Next;
   end;
 end;
-{ ovl03:12C6. ECL command 29 (dispatcher ovl03:2F2D, SkippedOpcode $1D): stores in operand 1 one byte
+{ ovl03:12C6. ECL command 29 (dispatcher ovl03:2F2D, CurrentOpcode $1D): stores in operand 1 one byte
   computed over the whole party, the list PartyListHead followed through TCharacter.Next (+$104). For each
   member it reads the current hit points (Flag11B, +$11B), ResistValue (+$111), HitAdjust (+$110) and
   the class levels 0 and 5 (ClassLevels, +$96 and +$9B). ResistValue is lowered by ResistThreshold and
@@ -1015,7 +1012,7 @@ begin
   Target := MakeWord(OperandLow[1], OperandHigh[1]);
   WriteVmWord(Target, Checksum);
 end;
-{ ovl03:1435. ECL command 30 (dispatcher ovl03:2F2D, SkippedOpcode $1E): scans the party (PartyListHead
+{ ovl03:1435. ECL command 30 (dispatcher ovl03:2F2D, CurrentOpcode $1E): scans the party (PartyListHead
   followed through TCharacter.Next) and writes the answer to the script
   addresses of operands 3 to 6. Operand 1 chooses what is scanned. 0 is an affect search: operand 2
   is the affect id, HasAffect looks for it in each member's affect list, and operand 6 gets 1 when
@@ -1118,13 +1115,13 @@ begin
       end;
   end;
 end;
-{ ovl03:1629. ECL command 34 (dispatcher ovl03:2F2D, SkippedOpcode $22): reports whether a party member
+{ ovl03:1629. ECL command 34 (dispatcher ovl03:2F2D, CurrentOpcode $22): reports whether a party member
   has the class mask 4 or 10. It walks the party list PartyListHead (through TCharacter.Next) and tests the
   ClassMask (+$2F) of each member: a member with 4 or 10 sets the flag. Operand 1 receives the flag (1
   or 0) and operand 2 the second value, which the original always writes as 0 (QUIRK ovl03:1629: the
   Mark byte is set with the flag and never read). Mask 10 is one of the multi-class values AwardExperience
   halves (ovl05:0355); mask 4 is not named yet. }
-procedure CheckPartyClassCommand;
+procedure CheckPartyHasRangerCommand;
 var
   Member: PCharacter;           { the party member being tested }
   Found: Byte;                  { 1 when a member has a class mask of 4 or 10 }
@@ -1153,22 +1150,22 @@ begin
   WriteVmWord(Target, Found);
   WriteVmWord(SecondTarget, Second);
 end;
-{ ovl03:16C9. ECL command 35 (dispatcher ovl03:2F2D, SkippedOpcode $23): rolls two six-sided dice and
+{ ovl03:16C9. ECL command 35 (dispatcher ovl03:2F2D, CurrentOpcode $23): rolls two six-sided dice and
   writes an outcome, 0 to 2, to the script address $6DCB (word 715 of GameVars2, which RunCombat clears
-  every round, VarCombatWord715 in ovl08). Operands 1 to 4 are four values. Width is operand 4 + 2 -
+  every round, VarSurpriseSides in ovl08). Operands 1 to 4 are four values. Width is operand 4 + 2 -
   operand 1 and Height is operand 2 + 2 - operand 3 (signed bytes). The first roll must not exceed
   Width and the second must be above Height for outcome 1; a second roll at most Height gives outcome
   2 whatever the first roll did; otherwise the outcome is 0. Purpose unknown: what the script does with
   the outcome. QUIRK ovl03:175F: the value 3 is set when the first roll fits and the second is at most
   Height, but the test that follows overwrites it with 2 (ovl03:1769), so 3 is never written. }
-procedure RollRangeCommand;
+procedure RollSurpriseCommand;
 const
-  RollResultAddr = $6DCB;
+  SurpriseWordAddr = $6DCB;
 var
   RollA: Byte;                  { the first d6 }
   RollB: Byte;                  { the second d6 }
   I: Byte;
-  Kind: Byte;                   { the outcome written to RollResultAddr }
+  Kind: Byte;                   { the outcome written to SurpriseWordAddr }
   Values: array[1..4] of Byte;  { operands 1 to 4 }
   Width: ShortInt;              { operand 4 + 2 - operand 1 }
   Height: ShortInt;             { operand 2 + 2 - operand 3 }
@@ -1190,9 +1187,9 @@ begin
   end;
   if RollB <= Height then
     Kind := 2;
-  WriteVmWord(RollResultAddr, Kind);
+  WriteVmWord(SurpriseWordAddr, Kind);
 end;
-{ ovl03:179B. ECL command 36 (dispatcher ovl03:2F2D, SkippedOpcode $24): the area logic. ShopMain
+{ ovl03:179B. ECL command 36 (dispatcher ovl03:2F2D, CurrentOpcode $24): the area logic. ShopMain
   (ovl06:053E) and RunCombat (ovl08:007A) name ovl03 as their caller. It has no operands; Inc(EclPC)
   steps the program counter past the opcode so RunScriptFrom (ovl03:3171) reads the next command (see
   EclPC). An encounter is pending when EncounterMembersAdded (set by ECL command 11) or DuelMode is set.
@@ -1202,7 +1199,7 @@ end;
   value and the steps ahead (OpenStepsAhead), RunCombat and EndBattle run, and when VarForceWallView is
   clear the BACPAC set (Load24x24Set) and the ICON pictures 0 to 2 are loaded into picture slots 9 to
   11. DuelMode is then cleared. Both paths end by setting the view mode ViewMode to 4 when AreaViewKind is 1,
-  else 3, keeping only the low bit of VarWord714, clearing PictureShown and CloseUpShown, and redrawing the
+  else 3, keeping only the low bit of VarTravelMode, clearing PictureShown and CloseUpShown, and redrawing the
   screen (RedrawView). }
 procedure RunAreaEventCommand;
 var
@@ -1245,12 +1242,12 @@ begin
     ViewMode := ViewModeWall
   else
     ViewMode := ViewModeMap;
-  GameVars2^[VarWord714] := GameVars2^[VarWord714] and 1;
+  GameVars2^[VarTravelMode] := GameVars2^[VarTravelMode] and 1;
   FillChar(PictureShownFlags, 2, 0);
   CloseUpShown := 0;
   RedrawView;
 end;
-{ ovl03:18F8. ECL commands 37 and 38 (dispatcher ovl03:2F2D, SkippedOpcode OpChooseAddress or 38):
+{ ovl03:18F8. ECL commands 37 and 38 (dispatcher ovl03:2F2D, CurrentOpcode OpChooseAddress or 38):
   choose one of the script addresses that follow the command. Operand 1 is the choice and operand 2
   the number of addresses; a second DecodeOperands reads them, so operand I+1 is the address for choice
   I. Nothing is chosen when the choice is not below the count. Command 37 stores the chosen address in
@@ -1276,7 +1273,7 @@ begin
   begin
     if Choice = I then
     begin
-      if SkippedOpcode = OpChooseAddress then
+      if CurrentOpcode = OpChooseAddress then
         EclPC := MakeWord(OperandLow[I + 1], OperandHigh[I + 1])
       else
         ScriptGosub(I + 1);
@@ -1286,7 +1283,7 @@ begin
       Inc(I);
   end;
 end;
-{ ovl03:19B0. ECL command 39 (dispatcher ovl03:2F2D, SkippedOpcode $27): adds loot to the loot list PooledItems
+{ ovl03:19B0. ECL command 39 (dispatcher ovl03:2F2D, CurrentOpcode $27): adds loot to the loot list PooledItems
   (the list ComputeBattleExperience, ovl05:0000, fills). Operands 1 to 7 set PooledMoney (each read as a
   word); operand 8 is the Kind of the loot:
   - a Kind below TreasureTableBase is an item block: every 63-byte record of ITEM<TileSet>.dax block Kind
@@ -1426,7 +1423,7 @@ begin
     end;
   end;
 end;
-{ ovl03:1DB1. ECL command 40 (dispatcher ovl03:2F2D, SkippedOpcode $28): takes a share of the money and
+{ ovl03:1DB1. ECL command 40 (dispatcher ovl03:2F2D, CurrentOpcode $28): takes a share of the money and
   the items. Operand 1 is Mode: 0 takes it from the selected character only, any other value from every
   member of the party (the list PartyListHead, followed through TCharacter.Next, +$104). Operand 2 is the
   percentage Percent: each member's money is scaled by (100 - Percent) / 100 (ScaleMoney), and each item
@@ -1684,7 +1681,7 @@ begin
   WaitAfterTextRun := 0;
   SkipCloseUpIfNoPics := 0;
 end;
-{ ovl03:25CB. ECL command 44 (dispatcher ovl03:2F2D, SkippedOpcode 2Ch): asks the player for an attitude.
+{ ovl03:25CB. ECL command 44 (dispatcher ovl03:2F2D, CurrentOpcode 2Ch): asks the player for an attitude.
   The menu offers AttitudeMenu's words (HAUGHTY, SLY, NICE, MEEK and ABUSIVE) under a blank title. Operands
   1 to 5 are the value of each attitude in that order, and the value of the one the player picks is written
   with WriteVmWord to the script address operand 6 names. Purpose unknown: what the script does with the
@@ -1707,7 +1704,7 @@ begin
   Value := Values[Choice];
   WriteVmWord(Target, Value);
 end;
-{ ovl03:266A. ECL command 50 (dispatcher ovl03:2F2D, SkippedOpcode 32h): tests whether a party member carries
+{ ovl03:266A. ECL command 50 (dispatcher ovl03:2F2D, CurrentOpcode 32h): tests whether a party member carries
   an item of the type operand 1 names. It walks the party list PartyListHead (through TCharacter.Next) and each
   member's carried items (TCharacter.Items, +$C8; TMenuLine.Next at +$2A), comparing the ItemType (+$2E) of
   each with the operand, and stops at the first match. CompareFlags[0] (equal) is set and [1] (not equal)
@@ -1743,7 +1740,7 @@ begin
     Member := Member^.Next;
   end;
 end;
-{ ovl03:271F. ECL command 58 (dispatcher ovl03:2F2D, SkippedOpcode 3Ah): pauses the script for the game
+{ ovl03:271F. ECL command 58 (dispatcher ovl03:2F2D, CurrentOpcode 3Ah): pauses the script for the game
   speed (DelayByGameSpeed, RES06: GameSpeed * 225 milliseconds). It has no operands; Inc(EclPC) steps the
   program counter past the opcode so RunScriptFrom (ovl03:3171) reads the next command (see EclPC).
   Purpose unknown: why the script waits here. }
@@ -1752,13 +1749,15 @@ begin
   Inc(EclPC);
   DelayByGameSpeed;
 end;
-{ ovl03:2775. ECL command 46 (dispatcher ovl03:2F2D, SkippedOpcode 2Eh): damages the party, a trap or an
+{ ovl03:2775. ECL command 46 (dispatcher ovl03:2F2D, CurrentOpcode 2Eh): damages the party, a trap or an
   ambush. Operands 2 to 4 are the damage (RollDice(DamageDice, DamageSides) + DamageBonus, rolled again for each
   hit of the random mode). Operand 1 (Flags) bit 7 (TrapSavingThrowBit) is the saving-throw mode: the target
-  takes the damage unless SavingThrow (kind: the low five bits of Flags, bonus: the low three bits of operand
+  takes the damage unless SavingThrow (bonus: the low five bits of Flags, kind: the low three bits of operand
   5) succeeds for it, or unconditionally when bit 5 (TrapUnsavedBit) is set. In that mode the target is the
   whole party when bit 6 (TrapWholePartyBit) is set (each member saves), else the selected character when
-  operand 5 bit 7 (TrapSelectedBit) is set (it saves with its bonus minus one, no save at bonus 0), else one
+  operand 5 bit 7 (TrapSelectedBit) is set (the kind minus one: 0 means no save, 1..5 the five SavingThrows [I];
+  QUIRK: kinds 6 and 7
+  index past them), else one
   random member (RollDice over the party size VarPartySize). With bit 7 clear, Flags is the number of hits,
   each on a random member of the party list PartyListHead, that takes the damage when RollBeatsResistance (operand 5)
   succeeds for it. QUIRK ovl03:2775: with bit 7 clear bit 6 is not a mode here and counts into that number:
@@ -1773,11 +1772,11 @@ var
   DamageDice: Byte;
   DamageSides: Byte;
   I: Byte;
-  SaveKind: Byte;
+  SaveBonus: Byte;
   Resistance: Byte;
   DamageBonus: Byte;
   MemberNumber: Byte;
-  SaveBonus: Byte;
+  SaveKind: Byte;
   Step: Byte;
   Damage: Word;
   Who: PCharacter;
@@ -1803,29 +1802,29 @@ begin
     MemberNumber := RollDice(1, Byte(GameVars2^[VarPartySize]));
   if (Flags and TrapSavingThrowBit) <> 0 then
   begin
-    SaveKind := Flags and TrapKindMask;
-    SaveBonus := Resistance and TrapBonusMask;
+    SaveBonus := Flags and TrapBonusMask;
+    SaveKind := Resistance and TrapKindMask;
     if WholePartyHit then
     begin
       while Who <> nil do
       begin
         if (Flags and TrapUnsavedBit) <> 0 then
           DamageWithMessage(Damage, Who)
-        else if not SavingThrow(Who, SaveBonus, SaveKind) then
+        else if not SavingThrow(Who, SaveKind, SaveBonus) then
           DamageWithMessage(Damage, Who);
         Who := Who^.Next;
       end;
     end
     else if (Resistance and TrapSelectedBit) <> 0 then
     begin
-      if (SaveBonus = 0) or (not SavingThrow(SelectedCharacter, SaveBonus - 1, SaveKind)) then
+      if (SaveKind = 0) or (not SavingThrow(SelectedCharacter, SaveKind - 1, SaveBonus)) then
         DamageWithMessage(Damage, SelectedCharacter);
     end
     else
     begin
       for I := 2 to MemberNumber do
         Who := Who^.Next;
-      if not SavingThrow(Who, SaveBonus, SaveKind) then
+      if not SavingThrow(Who, SaveKind, SaveBonus) then
         DamageWithMessage(Damage, Who);
     end;
   end
@@ -1868,7 +1867,7 @@ begin
   SelectedCharacter := SavedCharacter;
   ShowMessageLine(ContinueColor, 'press <enter>/<return> to continue');
 end;
-{ ovl03:2AA2. ECL command 49 (dispatcher ovl03:2F2D, SkippedOpcode 31h): redraws the area view when the 3D
+{ ovl03:2AA2. ECL command 49 (dispatcher ovl03:2F2D, CurrentOpcode 31h): redraws the area view when the 3D
   encounter sprite is loaded (Sprite3DLoaded, set by ShowEncounterPicture), as the hiding path of ShowCloseUpCommand
   does, then clears the sprite flag and the close-up flag CloseUpShown. It has no operands; Inc(EclPC) steps the
   program counter past the opcode so RunScriptFrom (ovl03:3171) reads the next command (see EclPC).
@@ -1883,7 +1882,7 @@ begin
     CloseUpShown := 0;
   end;
 end;
-{ ovl03:2AC1. ECL command 52 (dispatcher ovl03:2F2D, SkippedOpcode 34h): passes time. Operand 1 is the
+{ ovl03:2AC1. ECL command 52 (dispatcher ovl03:2F2D, CurrentOpcode 34h): passes time. Operand 1 is the
   amount, and AdvanceGameClock advances the game clock by that many units of digit 1 (the digit the camp's
   rest, RunRestPeriod in ovl20, advances in steps of 5). QUIRK ovl03:2AC1: Amount is passed to
   OperandValue as the operand number before the routine has set it, so the operand read is whatever
@@ -1897,7 +1896,7 @@ begin
   Amount := OperandValue(Amount);
   AdvanceGameClock(Amount, 1);
 end;
-{ ovl03:2AEB. ECL command 51 (dispatcher ovl03:2F2D, SkippedOpcode 33h): starts a new line of text. The
+{ ovl03:2AEB. ECL command 51 (dispatcher ovl03:2F2D, CurrentOpcode 33h): starts a new line of text. The
   text cursor (GlyphCol, GlyphRow, the glyph position ShowPagedText keeps) goes to column 1 of the next
   row. GlyphRunPending is cleared when it is set; the cursor moves the same way on both branches, which the
   original compiles as two branches. Inc(EclPC) steps the program counter past the opcode so RunScriptFrom
@@ -1917,7 +1916,7 @@ begin
     Inc(GlyphRow);
   end;
 end;
-{ ovl03:2B14. ECL command 61 (dispatcher ovl03:2F2D, SkippedOpcode 3Dh): clears the picture window, the
+{ ovl03:2B14. ECL command 61 (dispatcher ovl03:2F2D, CurrentOpcode 3Dh): clears the picture window, the
   box at columns 1 to 15 and rows 1 to 15 that frames the encounter picture (ShowCloseUpCommand draws
   the close-up inside the box at 3 to 13, and EndCommand draws this box as a frame). Then GlyphRunInBox is set
   (its meaning is not traced; EndCommand clears it). Inc(EclPC) steps the program counter past the opcode
@@ -1928,7 +1927,7 @@ begin
   ClearRect(PictureFrameLeft, PictureFrameTop, PictureFrameRight, PictureFrameBottom);
   GlyphRunInBox := 1;
 end;
-{ ovl03:2B33. ECL command 57 (dispatcher ovl03:2F2D, SkippedOpcode 39h): asks the player to choose a party
+{ ovl03:2B33. ECL command 57 (dispatcher ovl03:2F2D, CurrentOpcode 39h): asks the player to choose a party
   member. The ECL text window (EclTextLeft to EclTextBottom) is cleared, the string operand 1 is copied
   into a local as the prompt, and SelectPartyMember runs with that prompt, mode 0 and SelectedCharacter as
   the var parameter that receives the chosen member. SelectPartyMember is the selection the learning notes
@@ -1943,7 +1942,7 @@ begin
   Prompt := EclStrings[1];
   SelectPartyMember(Prompt, 0, SelectedCharacter);
 end;
-{ ovl03:2B7E. ECL command 54 (dispatcher ovl03:2F2D, SkippedOpcode 36h): adds a computer-run member. Operand
+{ ovl03:2B7E. ECL command 54 (dispatcher ovl03:2F2D, CurrentOpcode 36h): adds a computer-run member. Operand
   1 is the kind AddMonsterToParty adds (it rolls the character and calls AddPartyMember, which makes it the
   SelectedCharacter). Operand 2 halved, with the high bit ComputerMemberBit set, is its B84 byte: the low
   seven bits are its morale and the high bit marks it as run by the computer (TCharacter.B84). Its Side is
@@ -1969,7 +1968,7 @@ begin
   RecalcCombatValues(SelectedCharacter);
   DrawPartyRoster(SelectedCharacter);
 end;
-{ ovl03:2C03. ECL command 59 (dispatcher ovl03:2F2D, SkippedOpcode 3Bh): looks for the value of operand 1
+{ ovl03:2C03. ECL command 59 (dispatcher ovl03:2F2D, CurrentOpcode 3Bh): looks for the value of operand 1
   among the memorized spells of the first party member (PartyListHead, TCharacter.Spells). The bytes from Spells[1]
   up are compared with the value one by one, up to slot SpellScanLast. Operand 2 receives the slot found,
   or NoSpellSlot when none in those bytes has it; operand 3 receives Count, the members walked (1 for a party
@@ -2015,7 +2014,7 @@ begin
   WriteVmWord(SlotAddr, I);
   WriteVmWord(CountAddr, Count);
 end;
-{ ovl03:2CCF. ECL command 45 (dispatcher ovl03:2F2D, SkippedOpcode 2Dh): runs the engine action that the
+{ ovl03:2CCF. ECL command 45 (dispatcher ovl03:2F2D, CurrentOpcode 2Dh): runs the engine action that the
   word of its operand picks (the two bytes of the operand, not its value). The word less CodeBias is
   tested against the Action codes in turn; any other word does nothing. The actions:
   - ActionRedrawArea: PartyCellEventByte takes the event byte of the party's cell (EventByteAt). When AreaRedrawArmed is set
@@ -2085,7 +2084,7 @@ begin
   ShowAreaView;
   HeapErrorStop := False;
 end;
-{ ovl03:2E10. ECL command 56 (dispatcher ovl03:2F2D, SkippedOpcode 38h, cmp al,38h at ovl03:3135): shows
+{ ovl03:2E10. ECL command 56 (dispatcher ovl03:2F2D, CurrentOpcode 38h, cmp al,38h at ovl03:3135): shows
   the screen that operand 1 picks. 0 runs RunCharacterMenu (not traced yet) and redraws the view (RedrawView);
   ScreenEnding shows the ending narrative (ShowEndingNarrative, OVL18); ScreenCamp runs the camp (RunCamp),
   keeps the script counter EclPC across it, and then EndCommand (ovl03:0001) runs. A pending selection
@@ -2119,7 +2118,7 @@ begin
       end;
   end;
 end;
-{ ovl03:2E7D. ECL command 60 (dispatcher ovl03:2F2D, SkippedOpcode 3Ch): draws one line of glyphs at the text
+{ ovl03:2E7D. ECL command 60 (dispatcher ovl03:2F2D, CurrentOpcode 3Ch): draws one line of glyphs at the text
   cursor. Operand 1 is the script address of a run of words: each word's low byte plus 1 is the glyph drawn
   (DrawGlyph, one copy, colour GlyphRunColor) at GlyphCol and GlyphRow, and the cursor moves right after each
   glyph. The run ends at the first word whose low byte is 0 or $FF. When GlyphRunInBox is set (ECL command 61) and the
@@ -2163,11 +2162,11 @@ begin
   Inc(GlyphRow);
 end;
 { ovl03:2F2D. The ECL command dispatcher (called by ovl03:3171 for each command the script runs): it runs
-  the handler of SkippedOpcode, one case arm per opcode. Each handler decodes its own operands and moves
+  the handler of CurrentOpcode, one case arm per opcode. Each handler decodes its own operands and moves
   EclPC past the command. An opcode without an arm (31, and 62 and above) does nothing. }
 procedure DispatchCommand;
 begin
-  case SkippedOpcode of
+  case CurrentOpcode of
     0: EndCommand;
     1: GotoCommand;
     2: GosubCommand;
@@ -2192,8 +2191,8 @@ begin
     30: ScanPartyCommand;
     32: StartEclBlock;
     33, 55: LoadAreaGraphics;
-    34: CheckPartyClassCommand;
-    35: RollRangeCommand;
+    34: CheckPartyHasRangerCommand;
+    35: RollSurpriseCommand;
     36: RunAreaEventCommand;
     OpChooseAddress, 38: SelectCaseCommand;
     39: AddLootCommand;
@@ -2222,7 +2221,7 @@ end;
 { ovl03:3171. Runs the ECL script from the script address Address (an entry point: EclPreCampEntry for the camp,
   RunCamp ovl03:2DD3, or one InitScript sets). EclPC takes Address. While the run is not over (ScriptRunEnded clear:
   EndCommand and StartEclBlock set it) and the party is not destroyed (PartyDestroyed clear), the opcode of
-  the current command goes to PreviousOpcode, the opcode at EclPC is read into SkippedOpcode and DispatchCommand runs
+  the current command goes to PreviousOpcode, the opcode at EclPC is read into CurrentOpcode and DispatchCommand runs
   it. Both flags are cleared on the way out. }
 procedure RunScriptFrom(Address: Word);
 begin
@@ -2230,14 +2229,14 @@ begin
   ScriptRunEnded := 0;
   while (ScriptRunEnded = 0) and (PartyDestroyed = 0) do
   begin
-    PreviousOpcode := SkippedOpcode;
-    SkippedOpcode := EclCode^[EclPC];
+    PreviousOpcode := CurrentOpcode;
+    CurrentOpcode := EclCode^[EclPC];
     DispatchCommand;
   end;
   ScriptRunEnded := 0;
 end;
 { ovl03:31B4. One step of the area (the party has moved, or the script asked for the area to be drawn again):
-  the event byte of the party's cell goes to PartyCellEventByte (EventByteAt), word VarWord725 of GameVars2 is cleared, and
+  the event byte of the party's cell goes to PartyCellEventByte (EventByteAt), word VarMapEdgeHit of GameVars2 is cleared, and
   the view kind AreaViewKind is set to 1 (the 3D wall view) with its old value kept in PreviousAreaViewKind. The script entry
   EclInitialEntry runs. When VarForceWallView is clear, AreaViewKind takes 2, 3 or 4 from WallViewMode (the map window
   pages; page 3 also animates the area doors, AnimateAreaDoors ovl18:06B3). The picture window is cleared
@@ -2245,14 +2244,14 @@ end;
   EclSearchEntry run, and the step repeats while a script block was started (ScriptBlockStarted, StartEclBlock).
   SelectedCharacter
   is saved and restored around the entries. Called from the area loop RunWilderness (ovl03:32F8). Purpose unknown
-  in parts: what the entries and word VarWord725 do. }
+  in parts: what the entries and word VarMapEdgeHit do. }
 procedure RunAreaStep;
 var
   Saved: PCharacter;            { SelectedCharacter, restored after the second entry }
 begin
   repeat
     PartyCellEventByte := EventByteAt(PartyMapColumn, PartyMapRow);
-    GameVars2^[VarWord725] := 0;
+    GameVars2^[VarMapEdgeHit] := 0;
     Saved := SelectedCharacter;
     PreviousAreaViewKind := AreaViewKind;
     AreaViewKind := 1;
@@ -2269,7 +2268,7 @@ begin
           begin
             AreaViewKind := 3;
             ViewMode := ViewModeMap;
-            if (GameVars^[VarAreaDoors] = AreaDoorsOpen) and (GameVars^[VarAreaDoorsLatch] = 0) then
+            if (GameVars^[VarAreaDoors] = AreaDoorsOpen) and (GameVars^[VarRiverGate] = 0) then
               AnimateAreaDoors(1);
           end;
         WallModeMapPage4:
@@ -2299,9 +2298,9 @@ end;
   VarForceWallView is clear, else ViewModeWall. Unless SkipAreaScriptLoad is set it loads the area script
   (LoadEcl) and always resets the script machine (InitScript) and runs entry EclInitialEntry. A view mode
   other than the map page redraws once (RedrawView, while AreaStepRedrawOnce is still 1) and draws the area
-  (ShowAreaView). Then it loops on HandleWildernessKeys. While word VarWord714 of GameVars2 is above 1
+  (ShowAreaView). Then it loops on HandleWildernessKeys. While word VarTravelMode of GameVars2 is above 1
   or the key is KeyCamp, and the party is not destroyed: KeyCamp makes camp (RunCamp); any other such
-  key saves the low bit of that word in SavedWord714Low, forces the word to 1, draws the area, runs entry
+  key saves the low bit of that word in SavedSearchMode, forces the word to 1, draws the area, runs entry
   EclSearchEntry and a step (RunAreaStep) if a script block started (ScriptBlockStarted), then restores the bit. Otherwise
   entry EclStepEntry runs, and a started block steps the area; if none started and the party lives, the
   wilderness menu (DoWildernessMenu) runs and SoundStep plays when the party's cell changed. A destroyed
@@ -2343,19 +2342,19 @@ begin
     Key := HandleWildernessKeys;
     ReselectCharacter := SelectedCharacter;
     GameVars^[VarSavedWallView] := WallViewMode;
-    while ((GameVars2^[VarWord714] > 1) or (UpCase(Key) = KeyCamp)) and (PartyDestroyed = 0) do
+    while ((GameVars2^[VarTravelMode] > 1) or (UpCase(Key) = KeyCamp)) and (PartyDestroyed = 0) do
     begin
       if UpCase(Key) = KeyCamp then
         RunCamp
       else
       begin
-        SavedWord714Low := GameVars2^[VarWord714] and 1;
-        GameVars2^[VarWord714] := 1;
+        SavedSearchMode := GameVars2^[VarTravelMode] and 1;
+        GameVars2^[VarTravelMode] := 1;
         ShowAreaView;
         RunScriptFrom(EclSearchEntry);
         if ScriptBlockStarted <> 0 then
           RunAreaStep;
-        GameVars2^[VarWord714] := SavedWord714Low;
+        GameVars2^[VarTravelMode] := SavedSearchMode;
       end;
       if PartyDestroyed = 0 then
       begin

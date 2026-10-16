@@ -182,7 +182,7 @@ begin
       { QUIRK ovl13:00C5: the original widens Side with cbw (a sign extend) and ANDs it with a
         16-bit signed word, then tests the low byte only; the casts reproduce that shape (Side is
         a Byte elsewhere: ovl09 and res12 compare it unsigned). }
-      if Byte((ShortInt(Who^.Side) + 1) and Integer(GameVars2^[VarCombatWord715])) <> 0 then
+      if Byte((ShortInt(Who^.Side) + 1) and Integer(GameVars2^[VarSurpriseSides])) <> 0 then
         Dec(Initiative, InitiativePenalty);
       if (Initiative < 0) or (Initiative > MaxInitiative) then
         Initiative := 0;

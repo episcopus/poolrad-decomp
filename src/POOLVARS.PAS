@@ -629,7 +629,18 @@ const
   { Words of GameVars2^ read by several units. }
   VarNoCasting = 229;             { nonzero: spells cannot be cast (a no-magic area) }
   VarPartySize = 830;             { the members of the party (RemoveSelectedCharacter decrements it) }
-  VarCombatWord715 = 715;         { a combat word ovl08 and ovl13 share; meaning not known yet }
+  { The surprise word ECL command 35 writes (RollSurpriseCommand): bit 0 makes the party side lose its initiative in the
+    first combat round, bit 1 the monster side (StartCombatantRound, ovl13:185); RunCombat clears it (ovl08:94) [I]. }
+  VarSurpriseSides = 715;
+  VarStepsAhead = 705;            { the steps the party sees ahead (OpenStepsAhead) = the encounter distance: ovl10 places the
+                                    two sides that many area map steps apart (ovl10:1A44) }
+  VarTravelMode = 714;            { bit 0: search mode (the S key, " search" on the location line, res12); bit 1: a search
+                                    was requested (the L key runs EclSearchEntry, ovl14:375) [I] }
+  VarMapEdgeHit = 725;            { cleared at each area step (ovl03:31B4); ovl14 ClampPartyPosition sets it to 1 when it
+                                    clamps the party at the edge of the 16x16 map [I] }
+  VarAreaDoors = 435;             { a GameVars word DrawAreaView reads as the block 8 and 9 gate (ovl27, drawn while above
+                                    253), ovl10 tests it for $FF (FlagPlain) and ovl03 for $FE; meaning of the values
+                                    not traced }
   { TCharacter.B84 from $80 up (bit 7): a member the player does not run (a hireling), whom the computer
     plays (PrepareCombatants, ovl10:0675). }
   ComputerRun = $80;
@@ -2490,7 +2501,7 @@ var
   CompareFlags: array[0..5] of Byte;
   { the opcode that was current before the last one the script run loop (ovl03:3171) read; no other reader yet }
   PreviousOpcode: Byte;
-  { DS:6F7F..6F80: storage of SkippedOpcode }
+  { DS:6F7F..6F80: storage of CurrentOpcode }
   ds6F7F: array[0..1] of Byte;
   { The encounter picture's banks: operand 1 and operand 3 of ECL command 12 (ovl03:03B4), passed to
     ShowEncounterPicture as SpriteBank (SPRIT) and PicBank (PIC, or HEAD and BODY). }
@@ -2524,7 +2535,7 @@ var
   WallViewMode: Byte;  { the wall view / outdoor mode EventByteAt tests (0 and $A both skip) }
   { The low bit of GameVars2 word 714, saved by the wilderness loop (ovl03:32F8) while that word is
     forced to 1. The loader clears it (ovl11:0415). }
-  SavedWord714Low: Byte;
+  SavedSearchMode: Byte;
   { cleared by the loader (ovl11:041A) and by EndCommand (ovl03:0001); set by ECL command 61
     (ovl03:2B14); while it is set, DrawGlyphRunCommand (ovl03:2E7D) starts a glyph run below row 13 at
     column 2, row 5; the rest is unknown }
@@ -2874,7 +2885,7 @@ var
   CombatantScanList: array[0..73] of Byte absolute Raw6DE4;
   CombatScratchFlag: Byte absolute Raw6E31;  { the key flag the ovl08 menus pass to ReadPromptChoice }
   CombatPicture: Pointer absolute Raw6E36;  { a picture EndCombat frees through ReleasePicture (ovl08:005A) }
-  SkippedOpcode: Byte absolute ds6F7F;  { the opcode SkipCommand reads at EclPC (ovl07:1EB7) }
+  CurrentOpcode: Byte absolute ds6F7F;  { the opcode SkipCommand reads at EclPC (ovl07:1EB7) }
   { The icon slot of the encounter group being set up: InitScript sets 8 (ovl07:01F0). ECL command 11
     (ovl03:0450) and SetupDuel (ovl07:1A6F) load the group's CPIC picture into it and give it to their
     members as CombatIcon; ECL command 11 moves it on by one per group. }

@@ -122,7 +122,7 @@ begin
   ListMenuTop := 1;
   DuelMode := 0;
   RestWindowActive := 0;
-  SavedWord714Low := 0;
+  SavedSearchMode := 0;
   GlyphRunInBox := 0;
   GlyphRunPending := 0;
   CloseUpShown := 0;

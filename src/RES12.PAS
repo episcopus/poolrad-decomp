@@ -206,10 +206,6 @@ const
   ClockMinutes = $49C7;
   ClockTenMinutes = $49C8;
   ClockHours = $49C9;
-  { The movement mode word of the second game word block (GameVars2^[714]; HandleWildernessKeys toggles
-    bit 0 with the S (search) key and sets bit 1 with L). The location line (00BA:290B) appends
-    ' search' while bit 0 is set. }
-  VarTravelMode = 714;
   { The width of one area map page: DrawLocationLine adds this many columns of the 44-wide map grid
     per map page for AreaViewKind 3 (one page, added once) and 4 (two pages, added twice). }
   MapPageWidth = $D;

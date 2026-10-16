@@ -1028,12 +1028,12 @@ begin
   end;
 end;
 { ovl07:1EA6. SkipCommand: steps EclPC over the script command at EclPC without running it: reads
-  its opcode (into SkippedOpcode) and decodes the number of operands that opcode takes (DecodeOperands);
+  its opcode (into CurrentOpcode) and decodes the number of operands that opcode takes (DecodeOperands);
   an opcode without operands is one byte. }
 procedure SkipCommand;
 begin
-  SkippedOpcode := EclCode^[EclPC];
-  case SkippedOpcode of
+  CurrentOpcode := EclCode^[EclPC];
+  case CurrentOpcode of
     1, 2, $A, $E, $11, $12, $1D, $20, $2D, $32, $34, $36, $38, $39, $3C: DecodeOperands(1);
     3, 8, 9, $C, $F, $10, $1F, $22: DecodeOperands(2);
     4..7, $B, $21, $28, $2A, $2F, $30, $35, $37, $3B: DecodeOperands(3);

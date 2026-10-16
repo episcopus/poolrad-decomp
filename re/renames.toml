@@ -9315,3 +9315,31 @@ kind = "global"
 why = "spelling harmonised to Color, as in TextColor, HotColor and the other 400 uses (P6)"
 date = "2026-10-16"
 
+[[rename]]
+old = "SkippedOpcode"
+new = "CurrentOpcode"
+kind = "global"
+why = "RunScriptFrom sets it from EclCode^[EclPC] before every dispatch (ovl03:3171) and DispatchCommand and the command routines read it as the command being run; SkipCommand (ovl07:1EB7) reads the same byte (P6 review of ovl03)"
+date = "2026-10-16"
+
+[[rename]]
+old = "CheckPartyClassCommand"
+new = "CheckPartyHasRangerCommand"
+kind = "routine"
+why = "ECL command 34 compares ClassMask with 4 (Ranger in ClassNames) and 10 (Cleric/Ranger), image DS ClassNames rows 4 and 10 (ovl03:1629; P6 review of ovl03) [I]"
+date = "2026-10-16"
+
+[[rename]]
+old = "RollRangeCommand"
+new = "RollSurpriseCommand"
+kind = "routine"
+why = "ECL command 35 writes GameVars2 word 715, read by StartCombatantRound (OVL13:185, (Side+1) and word takes InitiativePenalty off) and cleared after the first round (OVL08:94): the two sides' surprise rolls (ovl03:16C9; P6 review) [I]"
+date = "2026-10-16"
+
+[[rename]]
+old = "SavedWord714Low"
+new = "SavedSearchMode"
+kind = "global"
+why = "the low bit of GameVars2 word 714 (VarTravelMode: bit 0 is search mode, res12 RedrawView and ovl14) that RunWilderness saves while it forces the word to 1 (ovl03:32F8); P6 review of ovl03 [I]"
+date = "2026-10-16"
+

@@ -1013,7 +1013,7 @@ evidence = "CompareStrings and CompareWords clear its six bytes and set [0..5] f
 
 [[global]]
 offset = 0x6F7F
-name = "SkippedOpcode"
+name = "CurrentOpcode"
 evidence = "SkipCommand stores the opcode at EclPC in it and dispatches on it (ovl07:1EB7)"
 
 [[global]]
@@ -2165,7 +2165,7 @@ evidence = "set to 1 when the script writes 0 to the character word $6B00 (SetCh
 
 [[global]]
 offset = 0x84DD
-name = "SavedWord714Low"
+name = "SavedSearchMode"
 evidence = "the low bit of GameVars2 word 714 RunWilderness saves while the word is forced to 1 (ovl03:32F8); the loader clears it (ovl11:041A)"
 
 [[global]]

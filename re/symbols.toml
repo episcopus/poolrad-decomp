@@ -527,13 +527,13 @@ id = "ovl03:1629"
 unit = "ovl03"
 addr = "ovl03:1629"
 size = 160
-name = "CheckPartyClassCommand"
+name = "CheckPartyHasRangerCommand"
 signature = ""
 c_name = "ovl03_fn_1629"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, f30c5ac"
 justification = ""
-notes = "renamed from ovl03_fn_1629 (dispatcher ovl03:2F2D calls it for SkippedOpcode $22 (ECL command 34); it sets operand 1 to 1 when a party member's ClassMask (TCharacter +$2F) is 4 or 10, and writes 0 to operand 2); auto:near_call"
+notes = "renamed from CheckPartyClassCommand (ECL command 34 compares ClassMask with 4 (Ranger in ClassNames) and 10 (Cleric/Ranger), image DS ClassNames rows 4 and 10 (ovl03:1629; P6 review of ovl03) [I]); renamed from ovl03_fn_1629 (dispatcher ovl03:2F2D calls it for SkippedOpcode $22 (ECL command 34); it sets operand 1 to 1 when a party member's ClassMask (TCharacter +$2F) is 4 or 10, and writes 0 to operand 2); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -541,13 +541,13 @@ id = "ovl03:16C9"
 unit = "ovl03"
 addr = "ovl03:16C9"
 size = 210
-name = "RollRangeCommand"
+name = "RollSurpriseCommand"
 signature = ""
 c_name = "ovl03_fn_16C9"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, f30c5ac"
 justification = ""
-notes = "renamed from ovl03_fn_16C9 (dispatcher ovl03:2F2D calls it for SkippedOpcode $23 (ECL command 35); it rolls two d6 against two ranges made from operands 1 to 4 and writes the outcome 0 to 2 to script address $6DCB (word 715 of ds49D6)); auto:near_call"
+notes = "renamed from RollRangeCommand (ECL command 35 writes GameVars2 word 715, read by StartCombatantRound (OVL13:185, (Side+1) and word takes InitiativePenalty off) and cleared after the first round (OVL08:94): the two sides' surprise rolls (ovl03:16C9; P6 review) [I]); renamed from ovl03_fn_16C9 (dispatcher ovl03:2F2D calls it for SkippedOpcode $23 (ECL command 35); it rolls two d6 against two ranges made from operands 1 to 4 and writes the outcome 0 to 2 to script address $6DCB (word 715 of ds49D6)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
