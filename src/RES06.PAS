@@ -45,8 +45,6 @@ type
 const
   LastCol = $27;                 { rightmost cell column of the 40-column screen }
   LastRow = $18;                 { deepest cell row of the 25-row screen }
-  BottomRow = 24;                { the bottom message row }
-  ScreenCols = 40;               { cells per screen row }
   GlyphSpace = $20;              { the space glyph ClearTextCells fills with }
   GcIndex = $3CE;                { EGA Graphics Controller index port }
   GcData = $3CF;                 { EGA Graphics Controller data port }

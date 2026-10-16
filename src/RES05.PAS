@@ -46,7 +46,6 @@ const
   BiosSetCursor = 2;         { function 2: set the cursor position (DH row, DL column, BH page) }
   BiosWriteChar = 9;         { function 9: write AL CX times with attribute BL on page BH }
   SolidBlock = #$DB;         { the full block character of the PC character set }
-  PromptRow = 24;            { the bottom text row, where ShowBottomMessage shows its message }
   RowWidth = 40;             { text cells in a row (40-column mode) }
   Black = 0;
   Yellow = 14;
@@ -130,10 +129,10 @@ procedure ShowBottomMessage(Color: Byte; Message: String40);
 var
   Key: Char;
 begin
-  FillBlocksAt(0, PromptRow, Black, RowWidth);
-  WriteTextAt(0, PromptRow, Color, Message);
+  FillBlocksAt(0, BottomRow, Black, RowWidth);
+  WriteTextAt(0, BottomRow, Color, Message);
   Key := ReadGameKey;
-  FillBlocksAt(0, PromptRow, Black, RowWidth);
+  FillBlocksAt(0, BottomRow, Black, RowWidth);
 end;
 
 { 0802:0212. Waits until the overlay file game.ovr can be opened: while it cannot, writes

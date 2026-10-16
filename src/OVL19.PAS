@@ -885,7 +885,6 @@ const
   MessageRight = 38;
   MessageBottom = 22;
   MessageColor = 14;
-  ClearTextBeforeMessage = 1;
   IdentifyPrice = 200;
   PromptTitleColor = 13;
   PromptWordColor = 10;

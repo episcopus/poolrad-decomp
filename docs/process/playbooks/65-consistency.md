@@ -70,9 +70,13 @@ Affect numbers named twice were settled by the review of 2026-10-15 from the gam
 names them. `AffectEndsTurn` ($35, Sleep's AffectId) and `AffectParalysis` ($34, Hold Person's; also given
 by fear) keep their effect names.
 
-Still defined in more than one unit (layout and key constants, deliberately local until a screen layout
-type exists): `MessageLeft/Right/Top/Bottom`, `List*`, `Prompt*`, `MessageColor` and `MessageColour`,
-`KeyYes`/`Yes`, `KeyExit`, `Strength17`/`Strength18`.
+Spelling: every identifier says `Color` (about 40 names said `Colour`; `Green` is `LightGreen`). Screen and
+prompt constants that two or more units defined (`BottomRow`, `ScreenCols`, `KeyYes`, `KeyNo`, `KeyExit`,
+`AnswerNo`, `AcceptExtendedKeys`, `ClearTextBeforeMessage`, `NoChoice`, `Strength17`) are in the shared block;
+`PromptRow` is `BottomRow`, `Yes`/`No` are `KeyYes`/`KeyNo` and `Strength18` is `ExceptionalStrength`.
+
+Still defined per unit on purpose, because the values differ by screen: the window rectangles and colours
+`Message*`, `List*`, `Prompt*Color`, `NameRow`, `LastClass` (7, but 6 in ovl17's scan).
 
 Not done in this pass:
 

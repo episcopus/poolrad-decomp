@@ -152,7 +152,6 @@ const
   MenuTextColor = 10;
   MenuHotColor = 15;
   { The prompt line is text row $18; the menu command at ovl03:10D1 clears it, columns 0 to $27. }
-  PromptRow = $18;
   PromptLeftCol = 0;
   PromptLastCol = $27;
   { ECL command 17: the text goes on after the text already in the window; command 18 clears it first. }
@@ -950,7 +949,7 @@ begin
   Options := Options + '~' + EclStrings[Count];
   Choice := AskMenu(Title, Options, MenuTitleColor, WordColor, HotColor, AcceptEnter, Animate);
   WriteVmWord(Target, Choice);
-  ClearRect(PromptLeftCol, PromptRow, PromptLastCol, PromptRow);
+  ClearRect(PromptLeftCol, BottomRow, PromptLastCol, BottomRow);
 end;
 { ovl03:125D. ECL command 28 (dispatcher ovl03:2F2D, SkippedOpcode $1C): clears the encounter. It has no
   operands and moves EclPC past the command. The members ECL command 11 added are dropped
@@ -1681,7 +1680,7 @@ begin
         end;
     end;
   until MenuAgain = 0;
-  ClearRect(PromptLeftCol, PromptRow, PromptLastCol, PromptRow);
+  ClearRect(PromptLeftCol, BottomRow, PromptLastCol, BottomRow);
   WaitAfterTextRun := 0;
   SkipCloseUpIfNoPics := 0;
 end;

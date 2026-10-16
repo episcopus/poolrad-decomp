@@ -184,12 +184,10 @@ const
     plane byte per four data bytes of the EGA layout (whitepaper 5.23). }
   VideoAdapterEga = 1;
   { The bottom message line 1509 reports a lost item on and 1693 flashes on. }
-  BottomRow = 24;
   ScreenLastCol = 39;
   { IsMaxClassLevel's race values (Race, +$2E, the RaceNames table DS:0F03) and the strength scores
     at which a demihuman's level limit in a class rises (the AD&D demihuman level limits [H]). }
-  Strength17 = $11;   { 17, raises the fighter limit by one }
-  Strength18 = $12;   { 18, raises it by two }
+  ExceptionalStrength = $12;   { 18, raises it by two }
   { SpellCasterLevel: the SpellTable.SpellClass values (ClassNames order: 0 cleric, 1 magic-user, 2
     a fixed level) and the fixed levels it returns for class 2 and while ItemAffectUse is set. What
     spell class 2 and ItemAffectUse are is not proven [?]. }
@@ -220,7 +218,6 @@ const
     WithExit) and clears the selection. }
   KeyEnter = #13;
   KeyEscape = #27;
-  KeyExit = 'E';
   KeySelect = 'S';
   { DrawCombatScreen: MoveCombatCursor's margin ($FF passes its view-scroll test) and direction
     (index 8 of DirStepX/DirStepY is (0,0), so the cursor stays on its cell), and the view origin's
@@ -1812,7 +1809,7 @@ end;
   strength (+$10) pick the limit (the AD&D demihuman level limits [H]): a dwarf (RaceDwarf 1) in the
   fighter class (ClassFighter 2) stops at level 8 with Strength17 (17), at 7 with less; an elf
   (RaceElf 2) stops at 7, at 6 with Strength17, at 5 with less; a gnome (RaceGnome 3) stops at 6, at
-  5 with strength below Strength18 (18); a half-elf (RaceHalfElf 4) stops at 5 in the cleric class
+  5 with strength below ExceptionalStrength (18); a half-elf (RaceHalfElf 4) stops at 5 in the cleric class
   (ClassCleric 0) and at 8 in the fighter class, at 7 with Strength17, at 6 with less; a halfling
   (RaceHalfling 5) stops at 6, at 5 with Strength17, at 4 with less.
   ClassIndex is the class index 0..7. Globals: none. }
@@ -1840,7 +1837,7 @@ begin
         RaceGnome:
           if (ClassIndex = ClassFighter) and
              ((Level = 6) or
-              (Level = 5) and (Strength < Strength18)) then
+              (Level = 5) and (Strength < ExceptionalStrength)) then
             IsMaxClassLevel := True;
         RaceHalfElf:
           if (ClassIndex = ClassCleric) and (Level = 5) then

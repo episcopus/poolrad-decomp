@@ -15,9 +15,6 @@ procedure AddInventoryItem(Item: PMenuLine; var Overloaded: Byte);
 implementation
 uses OVL07, OVL19, OVL21, OVL25, RES06, RES09, RES12;
 
-const
-  AnswerNo = 1;   { AskMenu returns the 0-based hotkey position: for '~Yes ~No' the second key
-                    (No) is 1, the answer ShopMain leaves on }
 
 { ovl06:0030 (ChooseShopItem). Builds the shop window and the item picker. Walks the stock list at
   PooledItems and rewrites each entry's Text into a 30-character field with the item name on the left

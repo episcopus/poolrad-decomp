@@ -24,7 +24,6 @@ implementation
 uses RES04, RES09, OVL28, Crt;
 
 const
-  PromptRow = $18;              { the text row of the prompt line (ovl25:0469, ovl25:0253) }
   PromptLeftCol = 0;            { the title starts in column 0 (ovl25:0466); its words follow it }
   LastTextCol = $27;            { the last of the 40 text columns (ovl25:032B) }
   TextCols = $28;               { ClearPromptLine blanks 40 columns (ovl25:0707) }
@@ -35,8 +34,6 @@ const
   KeyEscape = #27;
   KeyPrevWord = ',';            { steps the prompt highlight left, wrapping (ovl25:05C4) }
   KeyNextWord = '.';            { steps it right, wrapping (ovl25:05E8) }
-  KeyYes = 'Y';
-  KeyNo = 'N';
   { Keypad digits 1..9 and '\' become extended keys when the caller accepts them (ovl25:0697):
     '\' gives '7' and digit k gives KeypadScanLetters[k - 1]. }
   KeypadBackslash = '\';
@@ -168,13 +165,13 @@ var
     begin
       for I := 1 to PromptLen do
         if (Words[Chosen].Start <= I) and (Words[Chosen].Stop >= I) and (HotColor <> 0) then
-          DrawGlyph(WordsCol + I - 1, PromptRow, HotColor, 1, Ord(Prompt[I]), 1)
+          DrawGlyph(WordsCol + I - 1, BottomRow, HotColor, 1, Ord(Prompt[I]), 1)
         else if Prompt[I] in ['0'..'9', 'A'..'Z'] then
-          DrawGlyph(WordsCol + I - 1, PromptRow, HotColor, 1, Ord(Prompt[I]), 1)
+          DrawGlyph(WordsCol + I - 1, BottomRow, HotColor, 1, Ord(Prompt[I]), 1)
         else
-          DrawGlyph(WordsCol + I - 1, PromptRow, WordColor, 1, Ord(Prompt[I]), 1);
+          DrawGlyph(WordsCol + I - 1, BottomRow, WordColor, 1, Ord(Prompt[I]), 1);
       if WordsCol + PromptLen < LastTextCol then
-        DrawGlyph(WordsCol + PromptLen, PromptRow, 0, LastTextCol - PromptLen - WordsCol + 1,
+        DrawGlyph(WordsCol + PromptLen, BottomRow, 0, LastTextCol - PromptLen - WordsCol + 1,
           Space, 1);
     end;
   end;
@@ -193,7 +190,7 @@ begin
   Unused30 := GameClock + 30;
   Unused80 := Unused30 + 50;
   if Length(Title) <> 0 then
-    DrawTextAt(PromptLeftCol, PromptRow, TitleColor, Title);
+    DrawTextAt(PromptLeftCol, BottomRow, TitleColor, Title);
   WordsCol := Length(Title) + PromptLeftCol;
   DrawPromptWords(PromptWordChoice);
   repeat
@@ -295,7 +292,7 @@ end;
   the loader (ovl07, ovl11), the area keys and many other units before they draw a new prompt. }
 procedure ClearPromptLine;
 begin
-  ClearTextCells(0, PromptRow, 0, TextCols);
+  ClearTextCells(0, BottomRow, 0, TextCols);
 end;
 
 { ovl25:0D9A. The list menu: shows the lines of List in the window Left..Right, Top..Bottom (lines

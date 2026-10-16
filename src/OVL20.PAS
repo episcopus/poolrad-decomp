@@ -65,7 +65,6 @@ const
     keys, so ScanUp and the hours key both hold 'H' but mean different things. }
   KeyEnter = #13;
   KeyEscape = #0;               { the key ReadPromptChoice returns for Escape }
-  KeyExit = 'E';
   KeyRest = 'R';
   KeyIgnore = 'X';              { the menu's internal do-nothing key, for the arrows and unknown extended keys }
   ScanUp = 'H';                 { extended key: up arrow, increases the selected field }

@@ -955,14 +955,12 @@ const
   ScanRight = #$4D;
   KeyEnter = #13;
   KeyKeep = 'K';                { the 'Keep' word of the prompt: accept the changes }
-  KeyExit = 'E';                { the 'Exit' word of the prompt: restore the saved abilities }
   KeyNone = #0;                 { what Escape returns }
   { The prompt line (ReadPromptChoice of ovl25): its title, word and hotkey colours; ExtKeys = 1
     accepts the arrow keys. }
   PromptTitleColor = $D;
   PromptWordColor = $A;
   PromptHotColor = $F;
-  AcceptExtendedKeys = 1;
   MessageColor = $E;           { the flash message on an experienced character }
   { the hit-point line the cursor's last step shows (DrawHitPoints of res12) }
   HitPointColumn = 4;
@@ -1208,8 +1206,7 @@ const
   SpellListToChoose = 4;        { ChooseSpellFromList's 'to choose from' list (ovl19:299C) }
   SpellDisplayMode = 4;         { the display mode the call pushes; ovl22 reads it }
   NoSpellChoice = $FFFF;        { negative, so ChooseSpellFromList opens the spell window }
-  Strength17 = 17;              { the strength that raises a race's fighter cap by one }
-  Strength18 = 18;              { a gnome fighter's cap looks at strength below 18 }
+  ExceptionalStrength = 18;              { a gnome fighter's cap looks at strength below 18 }
 var
   AtLimit: Byte;                { [bp-1]: the class is at its racial level limit }
   NewExperience: LongInt;       { [bp-5]: the experience the training leaves the character at }
@@ -1265,7 +1262,7 @@ begin
                 AtLimit := 1;
           RaceGnome:
             if I = ClassFighter then
-              if (Level = 6) or ((Level = 5) and (Strength < Strength18)) then
+              if (Level = 6) or ((Level = 5) and (Strength < ExceptionalStrength)) then
                 AtLimit := 1;
           RaceHalfElf:
             if (I = ClassCleric) and (Level = 5) then
@@ -1392,7 +1389,6 @@ const
   MaxPartySize = 8;             { the menu stops once the party holds eight members }
   KeyEnter = #13;               { ChooseFromList returns Enter, or the chosen word's letter }
   KeyAdd = 'A';                 { the 'Add' word of the prompt }
-  KeyExit = 'E';                { the 'Exit' word of the prompt; Escape returns #0 }
 var
   List: PMenuLine;              { [bp-4]: the saved-character list ReadSavedCharacterList built }
   Selected: PMenuLine;          { [bp-8]: the highlighted line of that list }
@@ -1645,8 +1641,6 @@ const
   KeyNext = 'N';
   KeyPrev = 'P';
   KeyKeep = 'K';
-  KeyExit = 'E';
-  KeyYes = 'Y';
 var
   UnusedTop: Byte;                    { [bp-1]: the original frame reserves this byte, never read }
   Key: Char;                          { [bp-2]: the key ReadPromptChoice returned }

@@ -1298,8 +1298,6 @@ end;
   local down one byte and is what makes the frame $1A. Globals: SelectedCharacter. }
 procedure CastCombatSpell(SpellNumber, NoRedraw: Byte; var Done: Byte);
 const
-  { The list position ChooseSpellFromList starts from and returns when nothing was picked. }
-  NoChoice = $FFFF;
   { The SpellTable bytes e15 tests (TSpellEntry.PadB). }
   SpellCombatFlag = $B;          { +$B: 0 marks a spell castable only in camp }
   SpellCastDelay = $C;           { +$C: div 3 gives the casting delay in rows }
