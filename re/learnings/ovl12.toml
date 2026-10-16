@@ -168,7 +168,7 @@ confidence = "V"
 units = ["ovl12"]
 tags = ["dec", "field", "pointer", "record", "les", "codegen", "byte"]
 title = "Dec on a Byte field reached through a pointer parameter reloads the pointer for each statement"
-lesson = "`Dec(Who^.ResistValue, ResistPenalty); Dec(Who^.Pad112[$112], ResistPenalty);` (LowerAttackSaveAndResistance, ovl12:0BAC) matches `les di, [bp+0Ch]; sub byte ptr es:[di+111h], 4` and then the same `les di` again before the second store. The pointer parameter is read from its frame slot for every statement. A constant Dec on a Byte global is one `sub byte ptr [..], n`. Write one statement per field through a pointer parameter; the match proves the form."
+lesson = "`Dec(Who^.ArmourClassValue, ResistPenalty); Dec(Who^.Pad112[$112], ResistPenalty);` (LowerAttackSaveAndResistance, ovl12:0BAC) matches `les di, [bp+0Ch]; sub byte ptr es:[di+111h], 4` and then the same `les di` again before the second store. The pointer parameter is read from its frame slot for every statement. A constant Dec on a Byte global is one `sub byte ptr [..], n`. Write one statement per field through a pointer parameter; the match proves the form."
 evidence = ["src/OVL12.PAS#LowerAttackSaveAndResistance", "re/symbols.toml#ovl12:0BAC"]
 
 [[lesson]]

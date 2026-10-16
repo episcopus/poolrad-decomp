@@ -385,7 +385,7 @@ end;
 
 { ovl24:0C4F (e5). A resistance roll against Who: AttackRoll is a d20 (a 1 fails, a 20 counts
   100), the target hooks ($10) may change it; True when it is not negative and AttackRoll plus
-  Level exceeds Who's ResistValue (+$111). }
+  Level exceeds Who's ArmourClassValue (+$111). }
 function RollBeatsResistance(Who: PCharacter; Level: Byte): Boolean;
 begin
   RollBeatsResistance := False;
@@ -396,7 +396,7 @@ begin
       AttackRoll := TwentyCounts;
     RunAffectHooks(HookTarget, Who);
     if AttackRoll >= 0 then
-      if AttackRoll + Level > Who^.ResistValue then
+      if AttackRoll + Level > Who^.ArmourClassValue then
         RollBeatsResistance := True;
   end;
 end;

@@ -399,7 +399,7 @@ end;
   else 0) and returns at once with no targets. For each non-nil target: it rolls the spell's own
   saving throw (SpellTable row byte +8 nonzero, the save kind in +9) into Saved, and, when the
   current spell's row byte +2 is $FF, runs the affect hooks, and rolls to hit the target's
-  ResistValue (+$111); a miss cancels the damage and counts as saved. It deals Damage through
+  ArmourClassValue (+$111); a miss cancels the damage and counts as saved. It deals Damage through
   DealDamage and, when the spell's AffectId (row byte +$A) is set, applies the affect through
   ApplyAffect with SpellAffectDuration(Spell), the caster level (CasterLevel, or SpellCasterLevel
   when 0), Flag, the row's save effect and Message. Called by the spell menus; the caster level is
@@ -433,7 +433,7 @@ begin
       begin
         RecalcCombatValues(Target);
         RunAffectHooks($0B, Target);
-        if not RollToHit(SelectedCharacter, Target, Target^.ResistValue) then
+        if not RollToHit(SelectedCharacter, Target, Target^.ArmourClassValue) then
         begin
           Damage := 0;
           Saved := True;
@@ -564,7 +564,7 @@ begin
         while not InDirArc(CasterX, CasterY, SpellAimX, SpellAimY, Dir) do
           Inc(Dir);
         SetCombatantIcon(Caster, Dir, 1, 0);
-        SetSoundDriverIdle(0);
+        SetSoundDriverIdle(SoundIdleOff);
         case Spell of
           Fireball: PlaySound(SoundFireball);
           LightningBolt: PlaySound(SoundLightningBolt);
@@ -572,7 +572,7 @@ begin
           PlaySound(SoundSpellDefault);
         end;
         WalkCombatLine(CasterX, CasterY, SpellAimX, SpellAimY, AimStep, AimWidth);
-        SetSoundDriverIdle($A);
+        SetSoundDriverIdle(SoundIdleDefault);
         if IsCombatantInView(Caster, 0) then
         begin
           SetCombatantIcon(Caster, Caster^.Combat^.IconSet, 1, 1);
@@ -934,12 +934,12 @@ begin
       Target := SpellTargets[I];
       if I < SpellTargetCount then
       begin
-        SetSoundDriverIdle(0);
+        SetSoundDriverIdle(SoundIdleOff);
         PlaySound(SoundSpellDefault);
         DrawCombatIcon(AnimationKind);
         WalkCombatLine(CombatantX(SelectedCharacter), CombatantY(SelectedCharacter),
           CombatantX(Target), CombatantY(Target), AimStep, AimWidth);
-        SetSoundDriverIdle($A);
+        SetSoundDriverIdle(SoundIdleDefault);
       end;
       Saved := SavingThrow(Target, SpellTable[CastingSpell].Pad2[9], SaveBonus);
       if (Target^.CreatureType > FriendlyType) or (Target^.CombatSize > FriendlySize) then
@@ -1525,7 +1525,6 @@ const
   LevelDiceSides = 3;
   LevelScale = 2;
   ScanSteps = 2;                  { ScanTargets' MaxSteps around the aim point }
-  OmniDir = $FF;                  { ScanTargets' Dir: every direction (InDirArc omni) }
   FootprintBase = 1;              { ScanTargets' Base: the FootprintCell neighbour base }
   DamageDiceSides = 6;            { one d6 per caster level }
   DamageKindFire = 9;             { DealDamage classifies kind 9 as fire (ovl24:1389) }

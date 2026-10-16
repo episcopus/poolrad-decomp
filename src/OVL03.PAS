@@ -108,7 +108,7 @@ const
   MaxEncounterMembers = 63;
   { The icon slot EncounterIconSlot starts at: InitScript (ovl07:01F0) and ECL command 28 (ovl03:125D) set it. }
   FirstEncounterIcon = 8;
-  { ECL command 29 (ovl03:12C6) counts only what is above these: ResistValue above 60 and HitAdjust
+  { ECL command 29 (ovl03:12C6) counts only what is above these: ArmourClassValue above 60 and HitAdjust
     above 39. Purpose unknown. }
   ResistThreshold = 60;
   HitAdjustThreshold = 39;
@@ -168,7 +168,7 @@ const
   ParlayResult = 3;             { a parlay path with no step left }
   { ECL command 46 (ovl03:2775). Operand 1: bit 7 (TrapSavingThrowBit) is the saving-throw mode, a targeted
     trap whose target saves; with it clear Flags is the number of hits, each on a random member that only
-    ResistValue stops. In the saving-throw mode bit 6 (TrapWholePartyBit) hits the whole party and bit 5
+    ArmourClassValue stops. In the saving-throw mode bit 6 (TrapWholePartyBit) hits the whole party and bit 5
     (TrapUnsavedBit) is a hit no saving throw stops; the low five bits are the saving throw bonus. Operand 5:
     bit 7 picks the selected character as the target (else a random member); its low three bits are the
     saving throw kind (the original passes them in that order: ovl03:2864, 28B2, 290E; a first reading had
@@ -971,10 +971,10 @@ begin
 end;
 { ovl03:12C6. ECL command 29 (dispatcher ovl03:2F2D, CurrentOpcode $1D): stores in operand 1 one byte
   computed over the whole party, the list PartyListHead followed through TCharacter.Next (+$104). For each
-  member it reads the current hit points (HpCurrent, +$11B), ResistValue (+$111), HitAdjust (+$110) and
-  the class levels 0 and 5 (ClassLevels, +$96 and +$9B). ResistValue is lowered by ResistThreshold and
+  member it reads the current hit points (HpCurrent, +$11B), ArmourClassValue (+$111), HitAdjust (+$110) and
+  the class levels 0 and 5 (ClassLevels, +$96 and +$9B). ArmourClassValue is lowered by ResistThreshold and
   HitAdjust by HitAdjustThreshold (0 when they are not above it). The member's share is
-  HitPoints + 5 * ResistValue + 5 * HitAdjust + 8 * ClassLevel5 + 4 * ClassLevel0, divided by 10; the low
+  HitPoints + 5 * ArmourClassValue + 5 * HitAdjust + 8 * ClassLevel5 + 4 * ClassLevel0, divided by 10; the low
   byte of that quotient is added to the byte, which WriteVmWord stores at operand 1. Purpose unknown:
   what the script does with the value. }
 procedure ComputePartyValueCommand;
@@ -983,7 +983,7 @@ var
   HitAdjust: Byte;
   ClassLevel5: Byte;
   ClassLevel0: Byte;
-  ResistValue: Byte;
+  ArmourClassValue: Byte;
   Checksum: Byte;
   Target: Word;
   Member: PCharacter;
@@ -994,19 +994,19 @@ begin
   while Member <> nil do
   begin
     HitPoints := Member^.HpCurrent;
-    ResistValue := Member^.ResistValue;
+    ArmourClassValue := Member^.ArmourClassValue;
     HitAdjust := Member^.HitAdjust;
     ClassLevel5 := Member^.ClassLevels[5];
     ClassLevel0 := Member^.ClassLevels[0];
-    if ResistValue > ResistThreshold then
-      ResistValue := ResistValue - ResistThreshold
+    if ArmourClassValue > ResistThreshold then
+      ArmourClassValue := ArmourClassValue - ResistThreshold
     else
-      ResistValue := 0;
+      ArmourClassValue := 0;
     if HitAdjust > HitAdjustThreshold then
       HitAdjust := HitAdjust - HitAdjustThreshold
     else
       HitAdjust := 0;
-    Inc(Checksum, (HitPoints + 5 * ResistValue + 5 * HitAdjust + 8 * ClassLevel5 + 4 * ClassLevel0) div 10);
+    Inc(Checksum, (HitPoints + 5 * ArmourClassValue + 5 * HitAdjust + 8 * ClassLevel5 + 4 * ClassLevel0) div 10);
     Member := Member^.Next;
   end;
   Target := MakeWord(OperandLow[1], OperandHigh[1]);

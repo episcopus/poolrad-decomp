@@ -61,7 +61,7 @@ begin
   end;
   FreeMem(CombatMap, CombatMapSize);
   CombatMap := nil;
-  ReleasePicture(CombatPicture);
+  ReleasePicture(CombatAnimationPicture);
   RestorePaletteColors0And8;
   SpellPickerPointer := @ChooseSpellTargets;
 end;

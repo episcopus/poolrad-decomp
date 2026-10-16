@@ -491,7 +491,7 @@ c_name = "ovl03_fn_12C6"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, f30c5ac"
 justification = ""
-notes = "renamed from ovl03_fn_12C6 (ECL command 29: dispatcher ovl03:2F2D calls it for SkippedOpcode 1Dh (cmp al,1Dh, call at ovl03:3038); it sums over the party list ds5D96 a byte from hit points, ResistValue, HitAdjust and ClassLevels[0] and [5] and writes it to operand 1; purpose unknown); auto:near_call"
+notes = "renamed from ovl03_fn_12C6 (ECL command 29: dispatcher ovl03:2F2D calls it for SkippedOpcode 1Dh (cmp al,1Dh, call at ovl03:3038); it sums over the party list ds5D96 a byte from hit points, ArmourClassValue, HitAdjust and ClassLevels[0] and [5] and writes it to operand 1; purpose unknown); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2563,7 +2563,7 @@ c_name = "ovl12_fn_0058"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_fn_0058 (ovl12:0058 shows Msg on Who (res12_fn_16EC, colour 10) unless Who's Status is 6, 7 or 8 already; then it sets Status to NewStatus, clears Flag10D and Flag11B, removes the death affects (ovl24:100A), runs the hooks of kind $D (a combatant going down, ovl24:02FA), removes Who from the map when Flag10D is clear (ovl31:0E11), and outside combat (ds49F3 not 5) redraws the selected character; the same steps as DropCombatant (ovl24:0F06) without its ground redraw); auto:near_call"
+notes = "renamed from ovl12_fn_0058 (ovl12:0058 shows Msg on Who (res12_fn_16EC, colour 10) unless Who's Status is 6, 7 or 8 already; then it sets Status to NewStatus, clears Flag10D and HpCurrent, removes the death affects (ovl24:100A), runs the hooks of kind $D (a combatant going down, ovl24:02FA), removes Who from the map when Flag10D is clear (ovl31:0E11), and outside combat (ds49F3 not 5) redraws the selected character; the same steps as DropCombatant (ovl24:0F06) without its ground redraw); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2647,7 +2647,7 @@ c_name = "ovl12_e7"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_e7 (ovl12:0233 shows 'is hardier' on Who (res12_fn_16EC), increments Constitution (+$14), and adds to HpMax (+$32) and the current hit points Flag11B (+$11B) the share of HpMax - HpB1 (+$B1) by the class weights of ovl04:0510 (Raise Dead's loss, mirrored); at Constitution 20 it gives affect $3E instead; AffectHandlers frame, entry 7 of ovl12 (auto:entry_7)); auto:entry_7"
+notes = "renamed from ovl12_e7 (ovl12:0233 shows 'is hardier' on Who (res12_fn_16EC), increments Constitution (+$14), and adds to HpMax (+$32) and the current hit points HpCurrent (+$11B) the share of HpMax - HpB1 (+$B1) by the class weights of ovl04:0510 (Raise Dead's loss, mirrored); at Constitution 20 it gives affect $3E instead; AffectHandlers frame, entry 7 of ovl12 (auto:entry_7)); auto:entry_7"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2745,7 +2745,7 @@ c_name = "ovl12_e14"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from AddAffectAndDamage (handler of affect $0F, the slowed poison CastSlowPoison (ovl22) gives: 1 point of damage and the affect again while the character has more than 1 hit point (ovl12:05EB) (P6 review of ovl12)); renamed from ovl12_e14 (ovl12:05EB is an affect handler (AffectHandlers shape, Mode not read) that calls TryAddAffect with affect hex 0F for 10 and the affect's Data, then deals 1 plain point of damage (DealDamage, DamageKind 0) while Flag11B is above 1; the meaning of affect 0F is not known (ovl04 AffectRemovedAtNeutralizePoison3)); auto:entry_14"
+notes = "renamed from AddAffectAndDamage (handler of affect $0F, the slowed poison CastSlowPoison (ovl22) gives: 1 point of damage and the affect again while the character has more than 1 hit point (ovl12:05EB) (P6 review of ovl12)); renamed from ovl12_e14 (ovl12:05EB is an affect handler (AffectHandlers shape, Mode not read) that calls TryAddAffect with affect hex 0F for 10 and the affect's Data, then deals 1 plain point of damage (DealDamage, DamageKind 0) while HpCurrent is above 1; the meaning of affect 0F is not known (ovl04 AffectRemovedAtNeutralizePoison3)); auto:entry_14"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2773,7 +2773,7 @@ c_name = "ovl12_e16"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_e16 (ovl12:064E is an affect handler (AffectHandlers shape, Affect and Mode not read): it raises ResistValue (TCharacter +hex 111) to at least 57, adds one to SaveRoll, and clears DamageAmount when ds681B is hex 0F); auto:entry_16"
+notes = "renamed from ovl12_e16 (ovl12:064E is an affect handler (AffectHandlers shape, Affect and Mode not read): it raises ArmourClassValue (TCharacter +hex 111) to at least 57, adds one to SaveRoll, and clears DamageAmount when ds681B is hex 0F); auto:entry_16"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2941,7 +2941,7 @@ c_name = "ovl12_e28"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_e28 (ovl12:0BAC is an affect handler (AffectHandlers shape, Mode not read): it takes 4 off AttackRoll and SaveRoll and off Who's ResistValue (+$111) and Pad112[$112] (+$112, the byte CoughStopsCasting copies into ResistValue, ovl12:0A65); which affect runs it is not known yet); auto:entry_28"
+notes = "renamed from ovl12_e28 (ovl12:0BAC is an affect handler (AffectHandlers shape, Mode not read): it takes 4 off AttackRoll and SaveRoll and off Who's ArmourClassValue (+$111) and Pad112[$112] (+$112, the byte CoughStopsCasting copies into ArmourClassValue, ovl12:0A65); which affect runs it is not known yet); auto:entry_28"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3109,7 +3109,7 @@ c_name = "ovl12_e38"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_e38 (ovl12:1168 gives Who the disease affect AffectCauseDisease ($2C, ovl15/ovl04 name it) for 10 rounds with Affect's Data, deals one point of damage when Flag11B is above 1, else gives nausea (AffectNausea) unless present); auto:entry_38"
+notes = "renamed from ovl12_e38 (ovl12:1168 gives Who the disease affect AffectCauseDisease ($2C, ovl15/ovl04 name it) for 10 rounds with Affect's Data, deals one point of damage when HpCurrent is above 1, else gives nausea (AffectNausea) unless present); auto:entry_38"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3501,7 +3501,7 @@ c_name = "ovl12_e64"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_e64 (ovl12:19D9 calls ReviveCombatant (ovl24:1869) on Who at Flag11B and, when that returns False, gives Who the revival affect 4E (AffectRevival, ovl24:175D) for one round with Affect's Data through TryAddAffect); auto:entry_64"
+notes = "renamed from ovl12_e64 (ovl12:19D9 calls ReviveCombatant (ovl24:1869) on Who at HpCurrent and, when that returns False, gives Who the revival affect 4E (AffectRevival, ovl24:175D) for one round with Affect's Data through TryAddAffect); auto:entry_64"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3781,7 +3781,7 @@ c_name = "ovl12_e82"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_e82 (ovl12:2700 adds RegainedHitPoints (3) to Flag11B, the current hit points (TCharacter +$11B), and caps it at HpMax (+$32); AffectHandlers shape, Affect and Mode not read); auto:entry_82"
+notes = "renamed from ovl12_e82 (ovl12:2700 adds RegainedHitPoints (3) to HpCurrent, the current hit points (TCharacter +$11B), and caps it at HpMax (+$32); AffectHandlers shape, Affect and Mode not read); auto:entry_82"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4621,7 +4621,7 @@ c_name = "ovl13_fn_2574"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, cdb1a6c"
 justification = ""
-notes = "renamed from ovl13_fn_2574 (ovl13:2574 returns True when Who's attack on Target is a thief backstab: thief level (ClassLevels[6]) above 0, a backstab-capable readied weapon and an allowed slot-2 item, Target attacked (Combat^.BF above 1) and facing Who (BearingTo(Who,Target)=IconSet); RollAttackDamage applies the thief damage multiplier and ResolveCombatantAttacks uses ds112-2 and attack kind 2); auto:near_call"
+notes = "renamed from ovl13_fn_2574 (ovl13:2574 returns True when Who's attack on Target is a thief backstab: thief level (ClassLevels[6]) above 0, a backstab-capable readied weapon and an allowed slot-2 item, Target attacked (Combat^.BF above 1) and facing Who (BearingTo(Who,Target)=IconSet); RollAttackDamage applies the thief damage multiplier and ResolveCombatantAttacks uses RearArmourClassValue-2 and attack kind 2); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -13164,7 +13164,7 @@ c_name = "res12_fn_0973"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, c87fa04"
 justification = ""
-notes = "renamed from res12_fn_0973 (00BA:0973 draws a character's current hit points (Flag11B +11Bh) in a range colour at (Col,Row); called by res12_fn_0767 and res12_fn_09E3); auto:near_call"
+notes = "renamed from res12_fn_0973 (00BA:0973 draws a character's current hit points (HpCurrent +11Bh) in a range colour at (Col,Row); called by res12_fn_0767 and res12_fn_09E3); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -13276,7 +13276,7 @@ c_name = "res12_fn_1168"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, c87fa04"
 justification = ""
-notes = "renamed from res12_fn_1168 (00BA:1168: ApplyWeaponBonuses (00BA:0000) adds it to Who^.HitAdjust for a weapon whose RaceRow attack flags have bit 2 (WeaponFlagDexToHit); the sibling DexterityAdjustment (00BA:10E6) is the defensive one summed into ResistValue. Both map Dexterity (+0x13).); auto:near_call"
+notes = "renamed from res12_fn_1168 (00BA:1168: ApplyWeaponBonuses (00BA:0000) adds it to Who^.HitAdjust for a weapon whose RaceRow attack flags have bit 2 (WeaponFlagDexToHit); the sibling DexterityAdjustment (00BA:10E6) is the defensive one summed into ArmourClassValue. Both map Dexterity (+0x13).); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -13439,7 +13439,7 @@ unit = "res12"
 addr = "00BA:1892"
 size = 332
 name = "CopyPictureItem"
-signature = "procedure CopyPictureItem(PicIndex, Half, Row, Mirror: Byte)"
+signature = "procedure CopyPictureItem(PicIndex, Half, ItemIndex, Mirror: Byte)"
 c_name = "res12_fn_1892"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, c87fa04"
@@ -13481,7 +13481,7 @@ unit = "res12"
 addr = "00BA:1FEB"
 size = 430
 name = "ShowHitMessage"
-signature = "procedure ShowHitMessage(Who: Pointer; Flag: Byte; Text: String40)"
+signature = "procedure ShowHitMessage(Who: Pointer; AffectMessage: Byte; Text: String40)"
 c_name = "res12_fn_1FEB"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, c87fa04"

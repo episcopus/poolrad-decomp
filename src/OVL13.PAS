@@ -56,13 +56,13 @@ implementation
 uses RES03, RES04, RES06, RES09, RES12, OVL19, OVL22, OVL24, OVL25, OVL30, OVL31, Crt;
 type
   { A view of the two bytes ResolveCombatantAttacks selects between with the from-behind flag: TCharacter
-    +$111 (ResistValue) and +$112 (ds112), accessed as a signed-indexed pair. }
+    +$111 (ArmourClassValue) and +$112 (RearArmourClassValue), accessed as a signed-indexed pair. }
   TResistView = record
     Pad: array[0..$110] of Byte;
     Pair: array[0..1] of Byte;
   end;
   PResistView = ^TResistView;
-  { A view of the header of the 24x3 combat picture AllocatePicture makes CombatPicture point at (the
+  { A view of the header of the 24x3 combat picture AllocatePicture makes CombatAnimationPicture point at (the
     TPicture res12's CopyPictureItem reads): only the bytes-per-item word at +$11 is needed here
     to quarter it for the text adapter, the rest of the header is not read. }
   TPictureHeader = record
@@ -791,7 +791,7 @@ end;
   displayed, ClearAttackerAffect, both attack slots cleared) or, against a target
   that fights back, switches the readied weapon to its large-foe dice when the target is big
   (CombatSize above $80 or a footprint kind above 1), recomputes the target's combat values, runs hook
-  $B on it, works out the needed to-hit roll and the hit kind (a from-behind hit uses the ds112 pair
+  $B on it, works out the needed to-hit roll and the hit kind (a from-behind hit uses the RearArmourClassValue pair
   and kind 1, a backstab kind 2), then walks the attacker's attack slots downward: each slot with
   attacks left fires once, RollToHit (or a helpless target) lands it, RollAttackDamage rolls the
   damage, ShowAttackResult shows it and the death hook runs; when nothing landed a miss is shown.
@@ -809,7 +809,7 @@ var
   SlotIndex: Byte;               { the attack slot being resolved, and the counter of the tail loop }
   SlotCount: Byte;               { the attacker's current attack slot (Combat^.Pad4[4]) }
   HitKind: Byte;                 { the ShowAttackResult kind: 0 plain, 1 from behind, 2 backstab }
-  RearAttack: ShortInt;          { nonzero selects the ds112 byte instead of ResistValue }
+  RearAttack: ShortInt;          { nonzero selects the RearArmourClassValue byte instead of ArmourClassValue }
 begin
   Behind := AttackKind;
   Done := 0;
@@ -850,7 +850,7 @@ begin
     RunAffectHooks(HookAttackSetup, Target);
     RearAttack := 0;
     if IsBackstab(Attacker, Target) then
-      NeededRoll := Target^.ds112 - 2
+      NeededRoll := Target^.RearArmourClassValue - 2
     else
     begin
       if Target^.Combat^.BF > 1 then
@@ -1008,7 +1008,7 @@ end;
   reduces it by the readied weapon's range band ItemTable[SlotItems[0]^.ItemType].Range div 3
   ((Range - 1) div 3, at least 0). While the distance then still exceeds the band it takes the band
   off the distance and adds 2, then 3 to NeededRoll (two bands at most). A melee weapon's band is the
-  distance itself, so no penalty. Called by ResolveCombatantAttacks after the resistance/ds112
+  distance itself, so no penalty. Called by ResolveCombatantAttacks after the resistance/RearArmourClassValue
   NeededRoll. Globals: ItemTable. }
 procedure AddRangePenalty(Attacker, Target: PCharacter; var NeededRoll: Byte);
 var
@@ -1354,7 +1354,7 @@ end;
   must have been attacked (Combat^.BF above 1) and must face Who (the direction from Who to Target,
   BearingTo, equals Target's Combat^.IconSet). The item kinds are read from ItemTable: 7 and 8 and
   $23..$25 are one-handed weapons, $22 and $26 are two-handed (excluded). RollAttackDamage applies
-  the thief-level damage multiplier and ResolveCombatantAttacks uses it for the ds112 - 2 to-hit and
+  the thief-level damage multiplier and ResolveCombatantAttacks uses it for the RearArmourClassValue - 2 to-hit and
   attack kind 2. Globals: none. }
 function IsBackstab(Who: PCharacter; Target: PCharacter): Boolean;
 const
@@ -1415,7 +1415,7 @@ end;
   kind (the missile sprite of the bearing from Who to Target for most kinds, a 2x2 combat icon or
   two rows of another picture for the rest) and draws it at Who's cell, then animates it along the
   line between the two combatants (WalkCombatLine), with a launch and an impact sound. Called by
-  PerformAttack for the aimed item and for a readied bow. Globals: CombatPicture (the combat picture whose
+  PerformAttack for the aimed item and for a readied bow. Globals: CombatAnimationPicture (the combat picture whose
   bytes-per-item word is read), VideoAdapter, SoundAttackLeaves and SoundAttackArrives (the two sounds). QUIRK ovl13:26DD:
   PixelBytes is worked out and never read. }
 procedure ShowAttackAnimation(Who, Target: PCharacter; Item: PItem);
@@ -1453,7 +1453,7 @@ begin
   Frames := MissileFrames;
   Mode := MissileMode;
   PicIndex := MissilePicBase;
-  PixelBytes := PPictureHeader(CombatPicture)^.ByteSize;
+  PixelBytes := PPictureHeader(CombatAnimationPicture)^.ByteSize;
   if VideoAdapter = AdapterEga then
     PixelBytes := PixelBytes div 4;
   case Item^.ItemType of
@@ -1489,12 +1489,12 @@ begin
       Mode := SwingMode;
     end;
   end;
-  SetSoundDriverIdle(0);
+  SetSoundDriverIdle(SoundIdleOff);
   PlaySound(SoundAttackLeaves);
   WalkCombatLine(CombatantX(Who), CombatantY(Who), CombatantX(Target), CombatantY(Target),
     Frames, Mode);
   PlaySound(SoundAttackArrives);
-  SetSoundDriverIdle(10);
+  SetSoundDriverIdle(SoundIdleDefault);
 end;
 { ovl13:2879. Works out the monster side's remaining hit points as a percentage and stores it in the
   morale byte SecondMoraleByte, the value CheckMorale reads for a monster's second morale test: it walks the

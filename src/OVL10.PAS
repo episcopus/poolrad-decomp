@@ -953,7 +953,7 @@ end;
   'A battle begins...' on row 24, resets the round state (MagicToggleOn, CombatRound, AttackRoll, the bodies,
   the lists CloudList and LootListBoundary, game word Var2BattleWord), caps Var2Morale at 100, creates the map,
   discards waiting keys, prepares combatants, discards waiting keys again, places them, and discards
-  waiting keys once more. It allocates CombatPicture, centres the view on the first party character, calls
+  waiting keys once more. It allocates CombatAnimationPicture, centres the view on the first party character, calls
   DrawCombatScreen, runs HookBattleStart for each character, calls UpdateMonsterMorale and enters ViewModeCombat. }
 procedure StartBattle;
 var
@@ -983,7 +983,7 @@ begin
   DiscardWaitingKey;
   PlaceAllCombatants;
   DiscardWaitingKey;
-  AllocatePicture($18, 3, 4, 1, CombatPicture);
+  AllocatePicture($18, 3, 4, 1, CombatAnimationPicture);
   CombatMap^.ViewX := CombatantX(PCharacter(PartyListHead)) - 3;
   CombatMap^.ViewY := CombatantY(PCharacter(PartyListHead)) - 3;
   DrawCombatScreen;

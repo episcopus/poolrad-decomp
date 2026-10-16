@@ -315,7 +315,7 @@ begin
 end;
 { ovl16:056C. The C (Create) function of the training hall, called by RunCharacterMenu (ovl16:0161). It
   builds a new party member and saves it. The record is allocated (GetMem and FillChar, 285 bytes)
-  with its starting values: the six figure colour pairs from FigureColorSlots, magic resistance 50, a to-hit base of
+  with its starting values: the six figure colour pairs from FigureColorSlots, armour class value 50 (AC 10), a to-hit base of
   40 that the class levels then replace (see Thac0),
   Flag10D set (it takes part in combat and earns experience), picture banks 1 and 1 and a random RandomTag.
   Four list menus follow in the window (1,2)..($26,$16), each a ChooseFromList with the title line
@@ -363,7 +363,7 @@ end;
 procedure CreateCharacter;
 const
   StartFigureCount = 6;         { Figure[1..6]: the six colour pairs of the character icon }
-  StartResist = 50;             { ResistBase }
+  StartResist = 50;             { BaseArmourClassValue }
   StartThac0 = 40;              { the starting Thac0 byte; CreateCharacter sets it to 0 and takes the highest
     ClassThac0Table entry
                                   (ovl16:641..646), so the class levels replace it: the byte is a to-hit base (the
@@ -469,7 +469,7 @@ begin
   begin
     for I := 1 to StartFigureCount do
       Figure[I] := FigureColorSlots[I] + (FigureColorSlots[I] + 8) * 16;
-    ResistBase := StartResist;
+    BaseArmourClassValue := StartResist;
     Thac0 := StartThac0;
     Status := 0;
     Flag10D := 1;

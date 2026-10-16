@@ -22,8 +22,8 @@ uses Crt, POOLVARS, RES03, RES06, RES07, RES09, OVL25, OVL26, OVL27, OVL28, OVL3
 type
   { The readied-item bonus accumulator AddReadiedItemBonus fills for RecalcCombatValues: five signed
     bytes (with the flag byte the second var parameter points at). RecalcCombatValues clears all five,
-    stores the dexterity adjustment in DexAdjust, and sums all five as Values into ResistValue (+$111);
-    only BestValue, PlusSum and BestPlus (minus two) go into ds112 (+$112). }
+    stores the dexterity adjustment in DexAdjust, and sums all five as Values into ArmourClassValue (+$111);
+    only BestValue, PlusSum and BestPlus (minus two) go into RearArmourClassValue (+$112). }
   TBonus = record
     case Integer of
       0: (DexAdjust: Byte;     { +0: the dexterity adjustment RecalcCombatValues stores }
@@ -60,10 +60,10 @@ procedure ShowFlashMessage(Text: String40);
 procedure ShowCharacterMessage(Who: PCharacter; Text: string; Row, Wait: Byte);
 procedure ClearCharacterMessage;
 procedure DrawCharacterName(Who: PCharacter; Col, Row, Mode: Byte);
-procedure CopyPictureItem(PicIndex, Half, Row, Mirror: Byte);
+procedure CopyPictureItem(PicIndex, Half, ItemIndex, Mirror: Byte);
 procedure DrawCombatIcon(PicIndex: Byte);
-procedure WalkCombatLine(FromX, FromY, ToX, ToY: ShortInt; Count, Mode: Byte);
-procedure ShowHitMessage(Who: Pointer; Flag: Byte; Text: String40);
+procedure WalkCombatLine(FromX, FromY, ToX, ToY: ShortInt; Count, StepDelay: Byte);
+procedure ShowHitMessage(Who: Pointer; AffectMessage: Byte; Text: String40);
 function HasAffect(Who: Pointer; AffectId: Byte; var Affect: Pointer): Boolean;
 procedure ApplyDamage(Who: Pointer; Damage: Byte);
 procedure ShowHealResult(Who: Pointer);
@@ -95,9 +95,9 @@ const
   WeaponFlagMelee = $10;        { the kind can strike with the readied weapon itself (2E46, 2E8B) }
   WeaponFlagAmmo = $08;         { the kind fires an ammo item: slot 11 or 12 (ChooseAttackItem) }
   WeaponFlagSlot12Plus = $80;   { add the plus of slot item 12 (+$FC) }
-  { The race value (Race, +$2E) that gets one more point with the item kinds $24, $25 and $29..$2C
-    (the bows and the long and short swords of AD&D); which race that is is not proven here. }
-  BonusRace = 2;
+  { The race that gets one more point with the item kinds $24, $25 and $29..$2C: the elf (RaceElf 2,
+    RaceNames at DS:0F03 [V]); that these are the bows and the long and short swords of AD&D is [H]. }
+  BonusRace = RaceElf;
   BonusKindRangeLow = $28;      { the kinds above it and below the next value get the point }
   BonusKindRangeHigh = $2D;
   BonusKindLow = $25;
@@ -131,7 +131,7 @@ const
   LastDirectSlotKind = 8;
   { RecalcCombatValues: the item types it files into SlotItems[11] and SlotItems[12].
     00BA:0442 also treats these two kinds as the ones whose plural 's' is suppressed when
-    NameNum[3] is NoPluralNameNum (00BA:06BD). }
+    NameNum[3] is SilverNameNum (00BA:06BD). }
   Slot11ItemType = $49;
   Slot12ItemType = $1C;
   { 00BA:0442: a party member with this affect makes a Plus, PlusSave or Cursed item show '* '
@@ -142,15 +142,17 @@ const
     special-case $56; which item it is is not proven. }
   PluralOnThirdPartType = $56;
   { 00BA:0442: NameNum[3] that keeps a slot-11 or slot-12 item from taking the plural 's'
-    (00BA:06D4). The same index keeps an unenchanted slot item's damage (ovl12:264B, ovl12:2D88);
-    which name it is is not proven. }
-  NoPluralNameNum = $B1;
+    (00BA:06D4). The same index keeps an unenchanted slot item's damage (ovl12:264B, ovl12:2D88).
+    ItemNameParts[$B1] is 'Silver' (DS:10A7 table, image [V]): the silvered ammunition keeps its name in the
+    plural; that these are arrows or bolts is [H]. }
+  SilverNameNum = $B1;
   { 00BA:0442: the mask bit of name part 3 (1 shl 2). A mask above this means part 3 is shown,
     because the part-1 and part-2 bits sum to at most 3 (00BA:0690, jbe). }
   ThirdNameBit = 4;
   { RecalcCombatValues: a readied item whose NameNum[1] is $BA instead counts ExcludedWeight (5000 less)
-    in the carried weight. $BA is an index of the DS:10A7 name table; which item it is is not proven. }
-  BagNameNum = $BA;
+    in the carried weight. ItemNameParts[$BA] is 'Holding' (DS:10A7 table, image [V]): the Bag of Holding is
+    [I], a container that weighs little. }
+  HoldingNameNum = $BA;
   ExcludedWeight = $1388;
   { DexterityAdjustment maps Who's dexterity (+$13) to its adjustment: dexterity 1..3 gives -4, 4..6
     the dexterity minus 7, 7..14 gives 0, 15..18 the dexterity minus 14, 19..20 gives 4, 21..23
@@ -180,14 +182,21 @@ const
   LightMagenta = $0D;
   Yellow = $0E;
   White = $0F;
+  { The colours of the SelectPartyMember prompt (ReadPromptChoice's title, word and hotkey colours). }
+  PromptTitleColor = LightMagenta;
+  PromptWordColor = LightGreen;
+  PromptHotColor = White;
   { CopyPictureItem reads VideoAdapter: 1 is the EGA display pages, where the pixel buffer holds one
     plane byte per four data bytes of the EGA layout (whitepaper 5.23). }
   VideoAdapterEga = 1;
-  { The bottom message line 1509 reports a lost item on and 1693 flashes on. }
-  ScreenLastCol = 39;
-  { SpellCasterLevel: the SpellTable.SpellClass values (ClassNames order: 0 cleric, 1 magic-user, 2
-    a fixed level) and the fixed levels it returns for class 2 and while ItemAffectUse is set. What
-    spell class 2 and ItemAffectUse are is not proven [?]. }
+  { The last column of the bottom message line that ShowFlashMessage (00BA:1693) clears and writes on, and of
+    the two bottom rows DrawCombatScreen clears. }
+  ScreenLastCol = ScreenCols - 1;
+  { SpellCasterLevel: the SpellTable.SpellClass values (the SpellSlots class order, not ClassNames: 0 cleric,
+    1 magic-user, 2 a fixed level) and the fixed levels it returns for class 2 and while ItemAffectUse is set.
+    ItemAffectUse is set when the Use command casts the spell an item gives (ovl19:1AE7). No spell of the
+    shipped table (1..LastSpell, SpellTable DS:31FA) has class 2, so the SpellClassFixed branch is unreachable
+    there [V from the image]. }
   SpellClassCleric = 0;
   SpellClassMagicUser = 1;
   SpellClassFixed = 2;
@@ -219,9 +228,9 @@ const
   CursorNoStep = 8;
   ViewCentreCell = 3;
   { DrawArmourClass shows the armour class as the distance from ArmourClassBase (60): the stored
-    ResistValue is 60 minus the AC (whitepaper 5.24; where the 60 comes from is not proven [?]). }
+    ArmourClassValue is 60 minus the AC (whitepaper 5.24); ovl16 starts a new character at 50, which is AC 10 [I]. }
   ArmourClassBase = 60;
-  { ShowHitMessage: the combat picture slots of an affect message (Flag set) and a damage message,
+  { ShowHitMessage: the combat picture slots of an affect message (AffectMessage set) and a damage message,
     and the delay after each drawn animation frame. }
   AffectHitIcon = $16;
   DamageHitIcon = $17;
@@ -399,7 +408,7 @@ end;
   only one shown, or part 1 is shown with part 3 also shown (Mask > ThirdNameBit) and the item
   type is not PluralOnThirdPartType ($56), or part 2 is shown while part 1 is not (not Odd(Mask):
   bit 0 of the mask is clear, 00BA:06A6), or part 3 is shown for PluralOnThirdPartType, or the
-  item type is Slot11ItemType or Slot12ItemType and NameNum[3] is not NoPluralNameNum ($B1).
+  item type is Slot11ItemType or Slot12ItemType and NameNum[3] is not SilverNameNum ($B1).
   Callers: the shop, loot and inventory lists (ShowText 0, they draw Text themselves) and the
   character sheet (ShowText 1).
   QUIRK 00BA:0442: the LongInt Value is never read (callers pass LongInt(the character) or 0).
@@ -452,7 +461,7 @@ begin
               ((I = 2) and not Odd(Mask)) or
               ((I = 3) and (Item^.ItemType = PluralOnThirdPartType)) or
               (((Item^.ItemType = Slot11ItemType) or (Item^.ItemType = Slot12ItemType)) and
-               (Item^.NameNum[3] <> NoPluralNameNum)) then
+               (Item^.NameNum[3] <> SilverNameNum)) then
       begin
         Item^.Text := Item^.Text + 's ';
         Plural := 1;
@@ -496,7 +505,7 @@ begin
       DrawTextAt(Left, Row, White, Member^.Name)
     else
       DrawCharacterName(Member, Left, Row, 0);
-    case Member^.ResistValue of
+    case Member^.ArmourClassValue of
       0..$32: ValueShift := 1;
       $33..$3C: ValueShift := 2;
       $3D..$45: ValueShift := 1;
@@ -526,13 +535,13 @@ var
   ValueText: string;
   Unused: Byte;   { the original frame carries one byte here that the code never reads }
 begin
-  ValueText := ByteToText(Abs(Who^.ResistValue - ArmourClassBase));
-  if Who^.ResistValue > ArmourClassBase then
+  ValueText := ByteToText(Abs(Who^.ArmourClassValue - ArmourClassBase));
+  if Who^.ArmourClassValue > ArmourClassBase then
     ValueText := '-' + ValueText;
   DrawTextAt(Col, Row, LightGreen, ValueText);
 end;
 
-{ 00BA:0973. Draws Who's current hit points (HpCurrent, +$11b) as text at (Col, Row). The colour is
+{ 00BA:0973. Draws Who's current hit points (HpCurrent, +$11B) as text at (Col, Row). The colour is
   Yellow while the hit points are below the maximum (HpMax, +$32), LightGreen at the maximum, and
   LightMagenta when Flag is set (the caller's highlight). Called by DrawPartyRoster and
   DrawCharacterPanel. }
@@ -584,7 +593,7 @@ begin
     FormatItemLine(LongInt(Who), Who^.SlotItems[0], 0, 0, 0, 0);
     { QUIRK 00BA:0AE2: the bottom row is the three additions Row + 1 + 1 + 1 (three inc ax); the
       folded Row + 3 compiles to add ax, 3 and does not match the original }
-    ShowPagedText($17, Row + 1, $26, Row + 1 + 1 + 1, LightGreen, 1, Who^.SlotItems[0]^.Text);
+    ShowPagedText($17, Row + 1, $26, Row + 1 + 1 + 1, LightGreen, ClearTextBeforeMessage, Who^.SlotItems[0]^.Text);
   end;
   Row := GlyphRow + 1;
   if Who^.Flag10D = 0 then
@@ -618,7 +627,7 @@ end;
   item type $49 into slot 11 and $1C into slot 12), raising HandsInUse (+$100) by the kind's
   ItemTable[item type].Hands. It adds the seven carried money words (Money, +$88, coins count one
   each) to the weight, copies the base attack triple (+$A3..+$A8) into the readied weapon triple
-  (+$115..+$11A) and the base resistance (ResistBase, +$A9) into ResistValue (+$111), then clears the
+  (+$115..+$11A) and the base armour class value (BaseArmourClassValue, +$A9) into ArmourClassValue (+$111), then clears the
   five accumulator bytes (TBonus), SaveBonus (+$101) and the armour-plus flag, sets Movement (+$11C)
   to BaseMovement (+$72) and HitAdjust (+$110) to Thac0 (+$2D), and stores the dexterity adjustment
   (DexterityAdjustment) in DexAdjust. With no readied weapon it adds the unarmed strength bonuses
@@ -626,16 +635,16 @@ end;
   ApplyWeaponBonuses. For every readied item it runs SetArmourMovement and AddReadiedItemBonus; a
   positive plus on a kind-2 (armour) item sets ArmourPlusFlag, and after the loop that flag clears
   Bonus.BestPlus (a magic armour drops the largest kind-9 plus; why is not proven [?]). A readied item
-  whose NameNum[1] is BagNameNum instead counts ExcludedWeight (5000) less, floored at
+  whose NameNum[1] is HoldingNameNum instead counts ExcludedWeight (5000) less, floored at
   ReadiedItemWeight. CapMovementByLoad then caps Movement by the load, and only after that does
-  BestValue reach its final value: it is first raised to the base ResistValue (so the armour base
-  counts once), ResistValue becomes the sum of all five accumulator bytes (DexAdjust, KindBonus,
-  PlusSum, BestPlus and BestValue), and ds112 (+$112) becomes BestValue + PlusSum + BestPlus - 2
+  BestValue reach its final value: it is first raised to the base ArmourClassValue (so the armour base
+  counts once), ArmourClassValue becomes the sum of all five accumulator bytes (DexAdjust, KindBonus,
+  PlusSum, BestPlus and BestValue), and RearArmourClassValue (+$112) becomes BestValue + PlusSum + BestPlus - 2
   (DexAdjust and KindBonus do not go into it). Finally SweepAttacks (+$6B) is set: the fighter level
-  (ClassLevels[2]) when it is above 0 and Race (+$2E) is above 0, else 1.
+  (ClassLevels[ClassFighter]) when it is above 0 and Race (+$2E) is above 0 (a player race: RaceNames[0] is 'Monster'), else 1.
   Globals: reads ItemTable, writes ReadiedItemWeight, and reads and writes Who's Race, ClassLevels,
   Money and the fields SlotItems, ItemCountC7, HandsInUse, CarriedWeight,
-  WeaponAttacks/WeaponDamage/WeaponDamageBonus, SaveBonus, ResistValue, Movement, HitAdjust, ds112
+  WeaponAttacks/WeaponDamage/WeaponDamageBonus, SaveBonus, ArmourClassValue, Movement, HitAdjust, RearArmourClassValue
   and SweepAttacks. }
 procedure RecalcCombatValues(Who: PCharacter);
 var
@@ -687,7 +696,7 @@ begin
         Who^.SlotItems[11] := Item;
       if Item^.ItemType = Slot12ItemType then
         Who^.SlotItems[12] := Item;
-      if Item^.NameNum[1] = BagNameNum then
+      if Item^.NameNum[1] = HoldingNameNum then
         IgnoresWeight := 1;
       Who^.HandsInUse := Who^.HandsInUse + ItemTable[Item^.ItemType].Hands;
     end;
@@ -705,7 +714,7 @@ begin
     Bonus.Values[BonusIndex] := 0;
   ArmourPlusFlag := 0;
   Who^.SaveBonus := 0;
-  Who^.ResistValue := Who^.ResistBase;
+  Who^.ArmourClassValue := Who^.BaseArmourClassValue;
   Who^.Movement := Who^.BaseMovement;
   Who^.HitAdjust := Who^.Thac0;
   Bonus.DexAdjust := DexterityAdjustment(Who);
@@ -737,14 +746,14 @@ begin
       Who^.CarriedWeight := ReadiedItemWeight;
   end;
   CapMovementByLoad(Who);
-  if Bonus.BestValue < Who^.ResistValue then
-    Bonus.BestValue := Who^.ResistValue;
-  Who^.ResistValue := 0;
+  if Bonus.BestValue < Who^.ArmourClassValue then
+    Bonus.BestValue := Who^.ArmourClassValue;
+  Who^.ArmourClassValue := 0;
   for BonusIndex := 0 to 4 do
-    Who^.ResistValue := Who^.ResistValue + Bonus.Values[BonusIndex];
-  Who^.ds112 := Bonus.BestValue + Bonus.PlusSum + Bonus.BestPlus - 2;
-  if (Who^.ClassLevels[2] > 0) and (Who^.Race > 0) then
-    Who^.SweepAttacks := Who^.ClassLevels[2]
+    Who^.ArmourClassValue := Who^.ArmourClassValue + Bonus.Values[BonusIndex];
+  Who^.RearArmourClassValue := Bonus.BestValue + Bonus.PlusSum + Bonus.BestPlus - 2;
+  if (Who^.ClassLevels[ClassFighter] > 0) and (Who^.Race > 0) then
+    Who^.SweepAttacks := Who^.ClassLevels[ClassFighter]
   else
     Who^.SweepAttacks := 1;
 end;
@@ -1011,7 +1020,8 @@ begin
   begin
     ClearWindow(CombatMessageLeft, Row, CombatMessageRight, CombatMessageBottom);
     DrawCharacterName(Who, CombatMessageLeft, Row, 0);
-    ShowPagedText(CombatMessageLeft, Row + 1, CombatMessageRight, CombatMessageBottom, LightGreen, 1, Text);
+    ShowPagedText(CombatMessageLeft, Row + 1, CombatMessageRight, CombatMessageBottom, LightGreen,
+                  ClearTextBeforeMessage, Text);
   end
   else
   begin
@@ -1024,7 +1034,7 @@ begin
     end;
     ClearWindow(MessageLeft, Top, MessageRight, MessageBottom);
     DrawCharacterName(Who, MessageLeft, Top + 1, 0);
-    ShowPagedText(MessageLeft, Top + 1 + 1, MessageRight, MessageBottom, LightGreen, 1, Text);
+    ShowPagedText(MessageLeft, Top + 1 + 1, MessageRight, MessageBottom, LightGreen, ClearTextBeforeMessage, Text);
   end;
   if Wait <> 0 then
   begin
@@ -1063,42 +1073,43 @@ begin
   if Mode <> 0 then
     DrawTextAt(Col + Length(Who^.Name), Row, Color, '''s');
 end;
-{ 00BA:1892. Copies one row of a 24x3 picture into the combat picture CombatPicture. PicIndex selects a
+{ 00BA:1892. Copies one item of a 24x3 picture into the combat picture CombatAnimationPicture. PicIndex selects a
   slot of the picture table PictureSlots and Half picks one of the slot's two pointers
-  (PictureSlots[PicIndex].Pics[Half]); Row is the destination row, copied at byte offset Row times the
+  (PictureSlots[PicIndex].Pics[Half]); ItemIndex is the destination item (0..3), copied at byte offset ItemIndex times the
   picture's bytes-per-item (ByteSize, +$11). When Mirror is not 0 the source picture is first
   mirrored into a temporary 24x3 picture (AllocatePicture then MirrorPicture) and that copy is
   blitted, otherwise the table picture is blitted directly. In both cases the bitmap (Data, +$17)
-  is copied with RowBytes bytes and the pixel buffer (Pixels, +$13) with PixelBytes, a quarter of
-  RowBytes on the EGA (VideoAdapterEga, 1: the EGA layout holds one plane byte per four data bytes,
+  is copied with ItemBytes bytes and the pixel buffer (Pixels, +$13) with PixelBytes, a quarter of
+  ItemBytes on the EGA (VideoAdapterEga, 1: the EGA layout holds one plane byte per four data bytes,
   whitepaper 5.23). ReleasePicture frees the temporary.
   Called in a loop by DrawCombatIcon and by ovl13.
-  Globals: CombatPicture (read), PictureSlots (read), VideoAdapter (read). }
-procedure CopyPictureItem(PicIndex, Half, Row, Mirror: Byte);
+  Globals: CombatAnimationPicture (read), PictureSlots (read), VideoAdapter (read). }
+procedure CopyPictureItem(PicIndex, Half, ItemIndex, Mirror: Byte);
 var
   Pic: Pointer;
-  PixelBytes, RowBytes: Word;
+  PixelBytes, ItemBytes: Word;
 begin
-  RowBytes := PPicture(CombatPicture)^.ByteSize;
-  PixelBytes := RowBytes;
+  ItemBytes := PPicture(CombatAnimationPicture)^.ByteSize;
+  PixelBytes := ItemBytes;
   if VideoAdapter = VideoAdapterEga then
     PixelBytes := PixelBytes div 4;
   if Mirror <> 0 then
   begin
     AllocatePicture($18, 3, 1, 1, Pic);
     MirrorPicture(PictureSlots[PicIndex].Pics[Half], Pic);
-    Move(PPicture(Pic)^.Data[0], PPicture(CombatPicture)^.Data[Row * RowBytes], RowBytes);
-    Move(PPicture(Pic)^.Pixels^[0], PPicture(CombatPicture)^.Pixels^[Row * PixelBytes], PixelBytes);
+    Move(PPicture(Pic)^.Data[0], PPicture(CombatAnimationPicture)^.Data[ItemIndex * ItemBytes], ItemBytes);
+    Move(PPicture(Pic)^.Pixels^[0], PPicture(CombatAnimationPicture)^.Pixels^[ItemIndex * PixelBytes], PixelBytes);
     ReleasePicture(Pic);
   end
   else
   begin
-    Move(PPicture(PictureSlots[PicIndex].Pics[Half])^.Data[0], PPicture(CombatPicture)^.Data[Row * RowBytes], RowBytes);
-    Move(PPicture(PictureSlots[PicIndex].Pics[Half])^.Pixels^[0], PPicture(CombatPicture)^.Pixels^[Row * PixelBytes],
-      PixelBytes);
+    Move(PPicture(PictureSlots[PicIndex].Pics[Half])^.Data[0],
+         PPicture(CombatAnimationPicture)^.Data[ItemIndex * ItemBytes], ItemBytes);
+    Move(PPicture(PictureSlots[PicIndex].Pics[Half])^.Pixels^[0],
+         PPicture(CombatAnimationPicture)^.Pixels^[ItemIndex * PixelBytes], PixelBytes);
   end;
 end;
-{ 00BA:19DE. Draws the four items of a 2-wide combat icon into the combat picture CombatPicture: it calls
+{ 00BA:19DE. Draws the four items of a 2-wide combat icon into the combat picture CombatAnimationPicture: it calls
   CopyPictureItem four times with Half 0, 0, 1, 1 and Row 0, 1, 2, 3, mirroring the second and
   third item (Mirror 0, 1, 1, 0). PicIndex is the source slot in the picture table PictureSlots.
   Called by ovl12, ovl13 and ovl22 (a combatant's icon into the battle picture). Globals: none. }
@@ -1113,14 +1124,15 @@ end;
   along it (whitepaper 5.18, combat movement). It builds the Bresenham path between the two cells
   (multiplied by CellPitch, 3, the 24x24 icon pitch) through SetupLine/StepLine, collecting each step's
   direction Pattern into Path. It then walks that path: it computes the screen cell (PX, PY), draws
-  the combat picture CombatPicture onto the staging buffer DrawBuf through DrawPictureItemClipped (frame Frame of
+  the combat picture CombatAnimationPicture onto the staging buffer DrawBuf through DrawPictureItemClipped (frame Frame of
   Count), flushes and delays, steps PX/PY by DirStepX/DirStepY[Path[I]], and keeps the cursor on
-  the cell (CursorX, CursorY) through MoveCombatCursor. The Mode byte > 0 forces drawing every
-  step; Count is the number of animation frames. Count/Mode/position come from ovl12, ovl13 and
-  ovl22 (the aiming and movement code).
-  Globals: CombatMap (read), CombatPicture (read), DrawBuf (read), IconBackgroundBuffer (read), DirStepX, DirStepY.
+  the cell (CursorX, CursorY) through MoveCombatCursor. StepDelay is both the number of
+  milliseconds waited after each drawn step (ovl13: MissileMode 10, IconMode $32, SwingMode $14) and, when above 0,
+  the switch that forces drawing every step; Count is the number of animation frames.
+  Count, StepDelay and the position come from ovl12, ovl13 and ovl22 (the aiming and movement code).
+  Globals: CombatMap (read), CombatAnimationPicture (read), DrawBuf (read), IconBackgroundBuffer (read), DirStepX, DirStepY.
   Calls ovl30's line routines and ovl31's cursor/view routines. Side effects: video memory, timing. }
-procedure WalkCombatLine(FromX, FromY, ToX, ToY: ShortInt; Count, Mode: Byte);
+procedure WalkCombatLine(FromX, FromY, ToX, ToY: ShortInt; Count, StepDelay: Byte);
 var
   Path: array[0..$93] of Byte;    { [bp-$94] the direction code of each step of the line }
   Line: TLineState;               { [bp-$ae] the Bresenham line state }
@@ -1129,8 +1141,8 @@ var
   PathCount: Byte;                { [bp-$b2] the number of steps in Path }
   Frame: Byte;                    { [bp-$b3] the animation frame, 0..Count-1 }
   PadC: Byte;                     { [bp-$b4] a frame byte the code never reads }
-  LoopFlag: Boolean;              { [bp-$b5] repeat the walk when False }
-  Done: Boolean;                  { [bp-$b6] the walk left the 19x19 view }
+  WalkFinished: Boolean;              { [bp-$b5] the walk is over (the loop repeats until it is True) }
+  Done: Boolean;                  { [bp-$b6] the line has no more steps (Bresenham), and the walk left the 19x19 view }
   CursorX, CursorY: ShortInt;     { [bp-$b7, bp-$b8] the cursor cell }
   StartX, StartY: ShortInt;       { [bp-$b9, bp-$ba] the cell the walk started at }
   AccX, AccY: ShortInt;           { [bp-$bb, bp-$bc] the sub-cell pixel accumulators }
@@ -1140,8 +1152,8 @@ var
 begin
   StartX := FromX;
   StartY := FromY;
-  FillChar(Path, $94, 8);
-  FillChar(Line, $1a, 0);
+  FillChar(Path, SizeOf(Path), DirNone);
+  FillChar(Line, SizeOf(Line), 0);
   PathLen := 0;
   Frame := 0;
   Line.X1 := FromX * CellPitch;
@@ -1164,20 +1176,20 @@ begin
   begin
     if (Abs(DeltaX) <= ViewLimit) and (Abs(DeltaY) <= ViewLimit) then
     begin
-      LoopFlag := True;
+      WalkFinished := True;
       CursorX := FromX + DeltaX div 2;
       CursorY := FromY + DeltaY div 2;
     end
     else
     begin
-      LoopFlag := False;
+      WalkFinished := False;
       CursorX := CombatMap^.ViewX + ViewCentreCell;
       CursorY := CombatMap^.ViewY + ViewCentreCell;
     end;
   end
   else
   begin
-    LoopFlag := True;
+    WalkFinished := True;
     CursorX := CombatMap^.ViewX + ViewCentreCell;
     CursorY := CombatMap^.ViewY + ViewCentreCell;
   end;
@@ -1192,12 +1204,12 @@ begin
     StartY := FromY;
     Done := False;
     repeat
-      if (Mode > 0) or (PX mod CellPitch = 0) or (PY mod CellPitch = 0) then
+      if (StepDelay > 0) or (PX mod CellPitch = 0) or (PY mod CellPitch = 0) then
       begin
-        DrawPictureItemClipped(PX, PY, Frame, 5, CombatPicture, DrawBuf);
+        DrawPictureItemClipped(PX, PY, Frame, PictureMasked or PictureSaveBackground, CombatAnimationPicture, DrawBuf);
         FlushPictureChanges;
-        Delay(Mode);
-        DrawPictureItemClipped(PX, PY, 0, 0, IconBackgroundBuffer, DrawBuf);
+        Delay(StepDelay);
+        DrawPictureItemClipped(PX, PY, 0, PictureRestore, IconBackgroundBuffer, DrawBuf);
         Inc(Frame);
         if Frame >= Count then
           Frame := 0;
@@ -1249,37 +1261,39 @@ begin
     end
     else
     begin
-      LoopFlag := True;
+      WalkFinished := True;
       if not IsInView(ToX - CombatMap^.ViewX, ToY - CombatMap^.ViewY) then
         MoveCombatCursor(ToX, ToY, CursorCentreMargin, CursorNoStep);
       PX := (ToX - CombatMap^.ViewX) * CellPitch;
       PY := (ToY - CombatMap^.ViewY) * CellPitch;
-      DrawPictureItemClipped(PX, PY, Frame, 5, CombatPicture, DrawBuf);
-      if Mode > 0 then
+      DrawPictureItemClipped(PX, PY, Frame, PictureMasked or PictureSaveBackground, CombatAnimationPicture, DrawBuf);
+      if StepDelay > 0 then
       begin
         FlushPictureChanges;
-        Delay(Mode);
-        DrawPictureItemClipped(PX, PY, 0, 0, IconBackgroundBuffer, DrawBuf);
+        Delay(StepDelay);
+        DrawPictureItemClipped(PX, PY, 0, PictureRestore, IconBackgroundBuffer, DrawBuf);
       end;
     end;
-  until LoopFlag;
+  until WalkFinished;
   FlushPictureChanges;
 end;
 { 00BA:1FEB. Shows a per-character combat message and flashes the character's combat icon over
   its view cell. Outside the combat view (ViewModeCombat) it only shows the message Text with a wait
   and returns. In the combat view: silences the sound driver, draws the combat icon slot AffectHitIcon
-  ($16) when Flag is set and DamageHitIcon ($17) otherwise, puts the combat cursor on the character
-  when it is off screen, plays the sound SoundHitMessage when Flag is set and SoundMissMessage otherwise, and shows Text
-  without waiting. It then flashes the character's icon: for FlashCount + 1 passes it draws the four
-  picture items (0..3) of the combat picture CombatPicture at the character's pixel position (CellPitch, 3,
+  ($16) when AffectMessage is set and DamageHitIcon ($17) otherwise, puts the combat cursor on the character
+  when it is off screen, plays the sound SoundAffectMessage when AffectMessage is set and SoundDamageMessage otherwise, and
+  shows Text without waiting. It then flashes the character's icon: for FlashCount + 1 passes it draws the four
+  picture items (0..3) of the combat picture CombatAnimationPicture at the character's pixel position (CellPitch, 3,
   pixels per view cell, CombatantViewCol/CombatantViewRow), flushes and waits FlashDelay ($46) ms, and
-  restores the cell from IconBackgroundBuffer. Finally it resumes the sound driver and flushes; with Flag clear
-  (FlashCount 0) it waits DelayByGameSpeed instead. DealDamage calls it with Flag 0 for the damage
-  message, ApplyAffect with Flag 1 for an affect message, and the training code uses it too.
-  Globals: ViewMode (view mode), GameSpeed (FlashCount), SoundMissMessage/SoundHitMessage (sounds), CombatPicture,
+  restores the cell from IconBackgroundBuffer. Finally it resumes the sound driver and flushes; with AffectMessage clear
+  (FlashCount 0) it waits DelayByGameSpeed instead. DealDamage calls it with AffectMessage 0 for the damage
+  message, ApplyAffect with 1 for an affect or spell effect message ('is Healed', 'is Paralyzed', 'is turned'),
+  and the training code uses it too.
+  Globals: ViewMode (view mode), GameSpeed (FlashCount), SoundDamageMessage/SoundAffectMessage (sounds),
+  CombatAnimationPicture,
   IconBackgroundBuffer,
   DrawBuf, CombatantViewCol, CombatantViewRow. Side effects: video memory, sound, timing. }
-procedure ShowHitMessage(Who: Pointer; Flag: Byte; Text: String40);
+procedure ShowHitMessage(Who: Pointer; AffectMessage: Byte; Text: String40);
 var
   Col, Row: ShortInt;
   Icon: Byte;
@@ -1288,20 +1302,20 @@ var
 begin
   if ViewMode = ViewModeCombat then
   begin
-    SetSoundDriverIdle(0);
-    if Flag <> 0 then
+    SetSoundDriverIdle(SoundIdleOff);
+    if AffectMessage <> 0 then
       Icon := AffectHitIcon
     else
       Icon := DamageHitIcon;
     DrawCombatIcon(Icon);
     if not IsCombatantInView(Who, 1) then
       MoveCombatCursor(CombatantX(Who), CombatantY(Who), CursorCentreMargin, CursorNoStep);
-    if Flag <> 0 then
-      PlaySound(SoundHitMessage)
+    if AffectMessage <> 0 then
+      PlaySound(SoundAffectMessage)
     else
-      PlaySound(SoundMissMessage);
+      PlaySound(SoundDamageMessage);
     ShowCharacterMessage(Who, Text, CombatMessageRow, 0);
-    if Flag <> 0 then
+    if AffectMessage <> 0 then
       FlashCount := GameSpeed
     else
       FlashCount := 0;
@@ -1310,12 +1324,12 @@ begin
     for Pass := 0 to FlashCount do
       for Frame := 0 to 3 do
       begin
-        DrawPictureItemClipped(Col, Row, Frame, 5, CombatPicture, DrawBuf);
+        DrawPictureItemClipped(Col, Row, Frame, PictureMasked or PictureSaveBackground, CombatAnimationPicture, DrawBuf);
         FlushPictureChanges;
         Delay(FlashDelay);
-        DrawPictureItemClipped(Col, Row, 0, 0, IconBackgroundBuffer, DrawBuf);
+        DrawPictureItemClipped(Col, Row, 0, PictureRestore, IconBackgroundBuffer, DrawBuf);
       end;
-    SetSoundDriverIdle($A);
+    SetSoundDriverIdle(SoundIdleDefault);
     FlushPictureChanges;
     if FlashCount = 0 then
       DelayByGameSpeed;
@@ -1450,7 +1464,7 @@ var
   Found: Byte;    { [bp-3] the kept records so far }
   Index: Byte;    { [bp-4] the walk of the scan table }
 begin
-  ScanTargets(CombatantX(PCharacter(Who)), CombatantY(PCharacter(Who)), Range, $FF,
+  ScanTargets(CombatantX(PCharacter(Who)), CombatantY(PCharacter(Who)), Range, OmniDir,
               CombatantKind(PCharacter(Who)), CombatMap);
   Count := SortEntries[0].Val;
   Found := 0;
@@ -1487,7 +1501,7 @@ var
 begin
   Move(SortEntries[1], Saved, SavedScanBytes);
   CombatMap^.Head6 := 1;
-  ScanTargets(CombatantX(PCharacter(Who)), CombatantY(PCharacter(Who)), $FF, $FF,
+  ScanTargets(CombatantX(PCharacter(Who)), CombatantY(PCharacter(Who)), UnlimitedSteps, OmniDir,
               CombatantKind(PCharacter(Who)), CombatMap);
   CombatMap^.Head6 := 0;
   Index := 1;
@@ -1527,9 +1541,8 @@ end;
   character's level in that class (ClassLevels: ClassCleric 0, ClassMagicUser 5; whitepaper 5.6), and a spell
   class SpellClassFixed (2) gives SpecialSpellLevel (12). When ItemAffectUse is set every class except
   SpellClassFixed gives ItemSpellLevel (6) instead. SpellAreaSize multiplies the
-  spell row's +3 byte by the result, so this is the power the spell is cast with; the res12 wrapper
-  takes the spell number. Called by the ovl22 casting routines.
-  Purpose unknown: what spell class SpellClassFixed and ItemAffectUse are.
+  spell row's +3 byte by the result, so this is the power the spell is cast with. Called by the ovl22 casting
+  routines.
   QUIRK 00BA:26FB: a spell class other than SpellClassCleric, SpellClassMagicUser or SpellClassFixed
   leaves the result unassigned (the frame byte is returned).
   Globals: SpellTable, SelectedCharacter (read), ItemAffectUse (read). }
@@ -1648,7 +1661,7 @@ begin
   else if (GameVars2^[VarTravelMode] and 1) > 0 then
     Line := Line + ' search';
   ClearWindow($11, $F, $26, $F);
-  DrawTextAt($11, $F, $0A, Line);
+  DrawTextAt($11, $F, LightGreen, Line);
 end;
 { 00BA:2B5E. Draws the wilderness map screen: it sets the view mode to ViewModeMap (3), draws the
   adventure screen's three windows (DrawAdventureScreen), the area view (ShowAreaView), the party
@@ -1674,7 +1687,7 @@ begin
   SwapPaletteColors0And8;
   DrawWindow(1, 1, $15, $15, 0, 0, '');
   DrawWindow($17, 1, $26, $15, 0, 0, '');
-  ClearWindow(0, $17, $27, $18);
+  ClearWindow(0, $17, ScreenLastCol, $18);
   MoveCombatCursor(CombatMap^.ViewX + ViewCentreCell, CombatMap^.ViewY + ViewCentreCell,
                    CursorMargin, CursorNoStep);
 end;
@@ -1708,7 +1721,8 @@ begin
       Animate := 1
     else
       Animate := 0;
-    Key := ReadPromptChoice(Title + ' ', 'Select' + Extra, $D, $A, $F, 1, Animate, ExtKey);
+    Key := ReadPromptChoice(Title + ' ', 'Select' + Extra, PromptTitleColor, PromptWordColor, PromptHotColor,
+                           AcceptExtendedKeys, Animate, ExtKey);
     PartyMember := Selected;
     if ExtKey <> 0 then
       case Key of

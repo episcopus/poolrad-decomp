@@ -181,7 +181,7 @@ const
   SlowPoisonDamageDuration = 10;  { the Duration SlowPoisonDamage (ovl12:05EB) gives the affect }
   AttackPenalty = 4;            { what ovl12:0918, 0BAC, 0C15, 11F9 and 1276 take off AttackRoll }
   SavePenalty = 4;              { what ovl12:0BAC and 0C15 take off SaveRoll }
-  ResistPenalty = 4;            { what ovl12:0BAC takes off Who's ResistValue and ds112 }
+  ResistPenalty = 4;            { what ovl12:0BAC takes off Who's ArmourClassValue and RearArmourClassValue }
   MissRoll = -1;                { AttackRoll below 0 is a miss (RollToHit, ovl24:0CD5); ovl12:0C26 sets it }
   AgedBit = $10;                { Affect.Data bit 4: set once the affect has aged Who (ovl12:0C4B) }
   MissedBit = $10;              { Affect.Data bit 4 again, set by ovl12:2490 once it has made the attack roll a miss [?] }
@@ -195,11 +195,11 @@ const
   HealingBlockData = $FF;       { the Data byte ovl12:23EC gives AffectMummyDisease }
   SideDataBit = $10;            { Affect.Data bit 4: a side, 0 or 1, compared with Who's Side (ovl12:12B2) }
   CombatKindMask = $7F;         { TCharacter.CombatSize bits 0..6: the combat footprint kind (POOLVARS, +$6C) }
-  CoughResistLimit = 52;        { ovl12:0A65: TCharacter.ds112 above this steps down by CoughResistStep,
+  CoughResistLimit = 52;        { ovl12:0A65: TCharacter.RearArmourClassValue above this steps down by CoughResistStep,
                                   else it is set to CoughResistReset }
   CoughResistReset = 50;
   CoughResistStep = 2;
-  MinimumResistance = $39;      { ovl12:064E raises ResistValue (+$111) to at least this (57) }
+  MinimumResistance = $39;      { ovl12:064E raises ArmourClassValue (+$111) to at least this (57 = AC 3) }
   HammerItemType = $14;          { TMenuLine.ItemType of the item the affect gives (ovl12:07E0) }
   GivenItemNameNum2 = $14;      { NameNum[2] of that item }
   GivenItemNameNum3 = $F3;      { NameNum[3] of that item; the search of Who's items uses it too (ovl12:07E0) }
@@ -602,13 +602,13 @@ procedure IgnoreAffect(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
 end;
 { ovl12:064E. Affect handler (the AffectHandlers shape: Who, Affect and Mode; Affect and Mode are not read). Raises
-  Who's ResistValue (TCharacter +$111, likely the magic resistance [I]) to at least MinimumResistance, adds one
-  to SaveRoll, and when CastingSpell is SpellMagicMissile clears DamageAmount, so the damage of the roll in progress is
-  none. Runs for affect $11 (id 17, InitAffectHandlers [V]). }
+  Who's ArmourClassValue (TCharacter +$111, the armour class stored as 60 minus the AC [I]) to at least
+  MinimumResistance, adds one to SaveRoll, and when CastingSpell is SpellMagicMissile clears DamageAmount, so the
+  damage of the roll in progress is none. Runs for affect $11 (id 17, InitAffectHandlers [V]). }
 procedure RaiseResistanceAndSave(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
-  if Who^.ResistValue < MinimumResistance then
-    Who^.ResistValue := MinimumResistance;
+  if Who^.ArmourClassValue < MinimumResistance then
+    Who^.ArmourClassValue := MinimumResistance;
   Inc(SaveRoll);
   if CastingSpell = SpellMagicMissile then
     DamageAmount := 0;
@@ -766,9 +766,9 @@ end;
 { ovl12:0A65. Affect handler (the AffectHandlers shape: Who, Affect and Mode; only Who is read). It stops Who
   casting: when Who's combat byte CanUseMagicItem (TCombatant +$2) is set, Who shows "is coughing" at row CombatMessageRow
   (ShowCharacterMessage), then CanUseMagicItem and CanCast (+$1, zero hides Cast in the combat menu, ovl08:0747)
-  are cleared and Who is redrawn (RecalcCombatValues). Then TCharacter.ds112 (+$112, not named yet) steps down by
+  are cleared and Who is redrawn (RecalcCombatValues). Then TCharacter.RearArmourClassValue (+$112) steps down by
   CoughResistStep while above CoughResistLimit and is set to CoughResistReset otherwise, and that value becomes
-  ResistValue (+$111). When Who is the selected character, DrawCharacterPanel runs. The message suggests a
+  ArmourClassValue (+$111). When Who is the selected character, DrawCharacterPanel runs. The message suggests a
   gas or smoke affect [I]. Runs for affect $1E (id 30, InitAffectHandlers [V]). }
 procedure CoughStopsCasting(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
@@ -777,11 +777,11 @@ begin
   Who^.Combat^.CanUseMagicItem := 0;
   Who^.Combat^.CanCast := 0;
   RecalcCombatValues(Who);
-  if Who^.ds112 > CoughResistLimit then
-    Dec(Who^.ds112, CoughResistStep)
+  if Who^.RearArmourClassValue > CoughResistLimit then
+    Dec(Who^.RearArmourClassValue, CoughResistStep)
   else
-    Who^.ds112 := CoughResistReset;
-  Who^.ResistValue := Who^.ds112;
+    Who^.RearArmourClassValue := CoughResistReset;
+  Who^.ArmourClassValue := Who^.RearArmourClassValue;
   if Who = SelectedCharacter then
     DrawCharacterPanel(Who);
 end;
@@ -810,13 +810,14 @@ begin
   Who^.CreatureType := 0;
 end;
 { 0BAC. Affect handler (the AffectHandlers shape: Who, Affect and Mode; none is read, ovl24:0000). Takes AttackPenalty
-  off AttackRoll, ResistPenalty off Who's ResistValue (+$111) and off ds112 (+$112, the byte CoughStopsCasting
-  copies into ResistValue, ovl12:0A65), and SavePenalty off SaveRoll. Runs for affect $21 (id 33, InitAffectHandlers [V]). }
+  off AttackRoll, ResistPenalty off Who's ArmourClassValue (+$111) and off RearArmourClassValue (+$112, the byte
+  CoughStopsCasting copies into ArmourClassValue, ovl12:0A65), and SavePenalty off SaveRoll.
+  Runs for affect $21 (id 33, InitAffectHandlers [V]). }
 procedure LowerAttackSaveAndResistance(Who: PCharacter; Affect: PAffect; Mode: Byte);
 begin
   Dec(AttackRoll, AttackPenalty);
-  Dec(Who^.ResistValue, ResistPenalty);
-  Dec(Who^.ds112, ResistPenalty);
+  Dec(Who^.ArmourClassValue, ResistPenalty);
+  Dec(Who^.RearArmourClassValue, ResistPenalty);
   Dec(SaveRoll, SavePenalty);
 end;
 { 0BCF. Affect handler (the AffectHandlers shape: Who, Affect and Mode, passed on unchanged). Runs the handler of

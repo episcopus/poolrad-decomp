@@ -1454,12 +1454,12 @@ evidence = "PlaySound argument CastChosenSpell uses for a spell without its own 
 
 [[global]]
 offset = 0x261A
-name = "SoundMissMessage"
+name = "SoundDamageMessage"
 evidence = "PlaySound argument ShowHitMessage uses when Flag is clear (res12)"
 
 [[global]]
 offset = 0x261C
-name = "SoundHitMessage"
+name = "SoundAffectMessage"
 evidence = "PlaySound argument ShowHitMessage uses when Flag is set, a hit (res12)"
 
 [[global]]
@@ -2095,7 +2095,7 @@ evidence = "the extended-key flag the ovl08 and ovl13 menus pass to ReadPromptCh
 
 [[global]]
 offset = 0x6E36
-name = "CombatPicture"
+name = "CombatAnimationPicture"
 evidence = "the 24x3 combat picture AllocatePicture makes (StartBattle ovl10); EndCombat frees it with ReleasePicture (ovl08:005A)"
 
 [[global]]

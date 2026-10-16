@@ -9581,3 +9581,24 @@ kind = "global"
 why = "3 cells x 24 rows (24x24 pixels, OVL11:57): the save-under buffer for one combat icon, drawn with Flags 5 (mask and save) and later restored by RES12 (res12:1205..1270) (P6 review of res07)"
 date = "2026-10-16"
 
+[[rename]]
+old = "SoundMissMessage"
+new = "SoundDamageMessage"
+kind = "global"
+why = "ShowHitMessage plays it when Flag is clear, which is the damage message (ovl24:671 Flag 0); a damage message is not a miss (res12 review)"
+date = "2026-10-16"
+
+[[rename]]
+old = "SoundHitMessage"
+new = "SoundAffectMessage"
+kind = "global"
+why = "ShowHitMessage plays it when Flag is set: the affect or spell effect message (ovl24:730, ovl22 ShowAbout, ovl13 turn, ovl12 paralyze) (res12 review)"
+date = "2026-10-16"
+
+[[rename]]
+old = "CombatPicture"
+new = "CombatAnimationPicture"
+kind = "global"
+why = "OVL10:990 allocates it as AllocatePicture($18, 3, 4, 1): a 24x3 picture of four items that res12 plays as a four-frame animation (res12 review)"
+date = "2026-10-16"
+
