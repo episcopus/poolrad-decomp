@@ -169,7 +169,7 @@ begin
           Move(PByteArray(Block)^[Offset], Palette, 8);
           Inc(Offset, 8);
         end;
-        if VideoAdapter = 0 then
+        if VideoAdapter = AdapterCga then
           Row := Slots[I].Sprite^.ByteSize * 2 - 1
         else
           Row := Slots[I].Sprite^.ByteSize - 1;
@@ -186,7 +186,7 @@ begin
               PByteArray(Block)^[J] := PByteArray(Block)^[J] xor Prev^[J - Offset];
         end;
         UnpackPicturePixels(Block, Offset, Mode, 0, Slots[I].Sprite);
-        if ((Mode and 1) > 0) and (VideoAdapter <> 0) then
+        if ((Mode and 1) > 0) and (VideoAdapter <> AdapterCga) then
           RemapPictureColors(@SpriteRemapFrom, @SpriteRemapTo, 0, 0, Slots[I].Sprite);
         Inc(Offset, Row + 1);
       end;

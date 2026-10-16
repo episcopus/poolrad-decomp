@@ -22,7 +22,6 @@ const
   NoPicIndex = 0;             { picture index this routine passes to DrawPictureItemClipped }
   BlitFlagBit = 1;            { DrawPictureItemClipped tests bit 0 of the flags byte }
   CellStep = 3;               { the cell column and row are multiplied by 3 for the blit }
-  QuarterAdapter = 1;         { VideoAdapter 1: the pixel copy is a quarter of the byte size }
   AltPictures = $40;          { a CHEAD/CBODY name ending in T selects the pictures from $40 on }
   MirrorPictures = $80;       { the mirrored half of picture N is picture N + $80 }
 
@@ -148,7 +147,7 @@ begin
       else
       begin
         Move(Tail, PMemPic(Dest)^.Tail, ByteSize);
-        if VideoAdapter = QuarterAdapter then
+        if VideoAdapter = AdapterEga then
           Move(Pixels^, PMemPic(Dest)^.Pixels^, ByteSize shr 1 shr 1)
         else
           Move(Pixels^, PMemPic(Dest)^.Pixels^, ByteSize);

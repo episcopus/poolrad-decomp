@@ -1454,7 +1454,7 @@ begin
   Mode := MissileMode;
   PicIndex := MissilePicBase;
   PixelBytes := PPictureHeader(CombatPicture)^.ByteSize;
-  if VideoAdapter = 1 then
+  if VideoAdapter = AdapterEga then
     PixelBytes := PixelBytes div 4;
   case Item^.ItemType of
     9, $15, $1C, $1F, $49:

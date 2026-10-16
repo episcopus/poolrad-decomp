@@ -13,18 +13,18 @@ implementation
 uses POOLVARS, RES03, RES05, RES06, RES07, OVL12, OVL22, OVL25, OVL32, OVL34;
 
 const
-  { The loader fills three tables of 200 cells (indices 0..$C7, ovl11:0130..024D). }
-  LastCell = $C7;
-  { A text row is 40 characters (the 16-bit wide multiply of CellRowOffsets, ovl11:018E). }
-  CellsPerRow = $28;
-  { The two text scanline video segments and the four graphics planes the cell tables address
+  { The loader fills three tables of 200 pixel scanlines (indices 0..$C7, ovl11:0130..024D). }
+  LastScanline = $C7;
+  { An EGA scanline is 40 bytes (the 16-bit wide multiply of EgaScanlineOffsets, ovl11:018E). }
+  BytesPerEgaScanline = $28;
+  { The two text scanline video segments and the four Tandy banks the scanline tables address
     (whitepaper 5.11). }
   TextSegOdd = $BA00;
   TextSegEven = $B800;
-  Plane1 = $B800;
-  Plane2 = $BA00;
-  Plane3 = $BC00;
-  Plane4 = $BE00;
+  TandyBank0 = $B800;
+  TandyBank1 = $BA00;
+  TandyBank2 = $BC00;
+  TandyBank3 = $BE00;
   { The loader reads one $810-byte block of the game file (ovl11:05D2). }
   LoadBlockSize = $810;
 
@@ -54,23 +54,23 @@ begin
   New(GeoBlock);
   AllocatePicture(8, 1, 1, 0, TileBuf);
   AllocatePicture($A8, $15, 1, 0, DrawBuf);
-  AllocatePicture($18, 3, 1, 0, ScreenSaveBuffer);
+  AllocatePicture($18, 3, 1, 0, IconBackgroundBuffer);
   FillChar(RowDirtyFlags, $A8, 0);
   FillChar(RowFirstChangedCol, $150, 0);
   FillChar(RowFirstChangedOfs, $150, $FF);
   FillChar(RowLastChangedOfs, $150, 0);
-  for LoaderLoopIndex := 0 to LastCell do
+  for LoaderLoopIndex := 0 to LastScanline do
   begin
     if Odd(LoaderLoopIndex) then
-      CellTextSegments[LoaderLoopIndex] := TextSegOdd + (LoaderLoopIndex div 2) * 5
+      CgaScanlineSegments[LoaderLoopIndex] := TextSegOdd + (LoaderLoopIndex div 2) * 5
     else
-      CellTextSegments[LoaderLoopIndex] := TextSegEven + (LoaderLoopIndex div 2) * 5;
-    CellRowOffsets[LoaderLoopIndex] := LoaderLoopIndex * CellsPerRow;
+      CgaScanlineSegments[LoaderLoopIndex] := TextSegEven + (LoaderLoopIndex div 2) * 5;
+    EgaScanlineOffsets[LoaderLoopIndex] := LoaderLoopIndex * BytesPerEgaScanline;
     case LoaderLoopIndex mod 4 of
-      0: CellPlaneSegments[LoaderLoopIndex] := (LoaderLoopIndex div 4) * $A + Plane1;
-      1: CellPlaneSegments[LoaderLoopIndex] := (LoaderLoopIndex div 4) * $A + Plane2;
-      2: CellPlaneSegments[LoaderLoopIndex] := (LoaderLoopIndex div 4) * $A + Plane3;
-      3: CellPlaneSegments[LoaderLoopIndex] := (LoaderLoopIndex div 4) * $A + Plane4;
+      0: TandyScanlineSegments[LoaderLoopIndex] := (LoaderLoopIndex div 4) * $A + TandyBank0;
+      1: TandyScanlineSegments[LoaderLoopIndex] := (LoaderLoopIndex div 4) * $A + TandyBank1;
+      2: TandyScanlineSegments[LoaderLoopIndex] := (LoaderLoopIndex div 4) * $A + TandyBank2;
+      3: TandyScanlineSegments[LoaderLoopIndex] := (LoaderLoopIndex div 4) * $A + TandyBank3;
     end;
   end;
   FillChar(TileBanks, $14, 0);

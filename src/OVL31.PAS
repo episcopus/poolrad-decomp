@@ -90,7 +90,7 @@ end;
 procedure SwapPaletteColors0And8;
 begin
   case VideoAdapter of
-    1:
+    AdapterEga:
       begin
         SetPaletteRegister(0, 8);
         SetPaletteRegister(8, 0);
@@ -103,7 +103,7 @@ end;
 procedure RestorePaletteColors0And8;
 begin
   case VideoAdapter of
-    1:
+    AdapterEga:
       begin
         SetPaletteRegister(0, 0);
         SetPaletteRegister(8, 8);

@@ -1118,7 +1118,7 @@ end;
   the cell (CursorX, CursorY) through MoveCombatCursor. The Mode byte > 0 forces drawing every
   step; Count is the number of animation frames. Count/Mode/position come from ovl12, ovl13 and
   ovl22 (the aiming and movement code).
-  Globals: CombatMap (read), CombatPicture (read), DrawBuf (read), ScreenSaveBuffer (read), DirStepX, DirStepY.
+  Globals: CombatMap (read), CombatPicture (read), DrawBuf (read), IconBackgroundBuffer (read), DirStepX, DirStepY.
   Calls ovl30's line routines and ovl31's cursor/view routines. Side effects: video memory, timing. }
 procedure WalkCombatLine(FromX, FromY, ToX, ToY: ShortInt; Count, Mode: Byte);
 var
@@ -1197,7 +1197,7 @@ begin
         DrawPictureItemClipped(PX, PY, Frame, 5, CombatPicture, DrawBuf);
         FlushPictureChanges;
         Delay(Mode);
-        DrawPictureItemClipped(PX, PY, 0, 0, ScreenSaveBuffer, DrawBuf);
+        DrawPictureItemClipped(PX, PY, 0, 0, IconBackgroundBuffer, DrawBuf);
         Inc(Frame);
         if Frame >= Count then
           Frame := 0;
@@ -1259,7 +1259,7 @@ begin
       begin
         FlushPictureChanges;
         Delay(Mode);
-        DrawPictureItemClipped(PX, PY, 0, 0, ScreenSaveBuffer, DrawBuf);
+        DrawPictureItemClipped(PX, PY, 0, 0, IconBackgroundBuffer, DrawBuf);
       end;
     end;
   until LoopFlag;
@@ -1273,11 +1273,11 @@ end;
   without waiting. It then flashes the character's icon: for FlashCount + 1 passes it draws the four
   picture items (0..3) of the combat picture CombatPicture at the character's pixel position (CellPitch, 3,
   pixels per view cell, CombatantViewCol/CombatantViewRow), flushes and waits FlashDelay ($46) ms, and
-  restores the cell from ScreenSaveBuffer. Finally it resumes the sound driver and flushes; with Flag clear
+  restores the cell from IconBackgroundBuffer. Finally it resumes the sound driver and flushes; with Flag clear
   (FlashCount 0) it waits DelayByGameSpeed instead. DealDamage calls it with Flag 0 for the damage
   message, ApplyAffect with Flag 1 for an affect message, and the training code uses it too.
   Globals: ViewMode (view mode), GameSpeed (FlashCount), SoundMissMessage/SoundHitMessage (sounds), CombatPicture,
-  ScreenSaveBuffer,
+  IconBackgroundBuffer,
   DrawBuf, CombatantViewCol, CombatantViewRow. Side effects: video memory, sound, timing. }
 procedure ShowHitMessage(Who: Pointer; Flag: Byte; Text: String40);
 var
@@ -1313,7 +1313,7 @@ begin
         DrawPictureItemClipped(Col, Row, Frame, 5, CombatPicture, DrawBuf);
         FlushPictureChanges;
         Delay(FlashDelay);
-        DrawPictureItemClipped(Col, Row, 0, 0, ScreenSaveBuffer, DrawBuf);
+        DrawPictureItemClipped(Col, Row, 0, 0, IconBackgroundBuffer, DrawBuf);
       end;
     SetSoundDriverIdle($A);
     FlushPictureChanges;

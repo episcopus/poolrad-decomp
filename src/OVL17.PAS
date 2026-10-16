@@ -162,7 +162,7 @@ var
   I: Word;                      { the byte index, 0 based }
 begin
   case VideoAdapter of
-    0, 2:
+    AdapterCga, AdapterTandy:
       begin
         for I := 0 to PMemPic(Source)^.ByteSize - 1 do
         begin
@@ -171,7 +171,7 @@ begin
             PByteArray(PMemPic(Dest)^.Pixels)^[I] and PByteArray(PMemPic(Source)^.Pixels)^[I];
         end;
       end;
-    1:
+    AdapterEga:
       begin
         for I := 0 to PMemPic(Source)^.ByteSize - 1 do
           PMemPic(Dest)^.Tail[I] := PMemPic(Dest)^.Tail[I] or PMemPic(Source)^.Tail[I];

@@ -87,7 +87,7 @@ var
   Row: Word;                  { the scanline or graphics row being cleared }
 begin
   case VideoAdapter of
-    0:
+    AdapterCga:
       begin
         TopCode := TopRow * ScanlinesPerTextRow;
         BottomCode := BottomRow * ScanlinesPerTextRow + LastTextScanline;
@@ -98,12 +98,12 @@ begin
           FillChar(VideoText1[Row, LeftCol * BytesPerTextColumn], Width, 0);
         end;
       end;
-    1:
+    AdapterEga:
       begin
         FillPlaneRect(LeftCol, TopRow, RightCol, BottomRow, 0, 0);
         FillPlaneRect(LeftCol, TopRow, RightCol, BottomRow, 1, 0);
       end;
-    2:
+    AdapterTandy:
       begin
         TopCode := TopRow * GraphRowsPerTextRow;
         BottomCode := BottomRow * GraphRowsPerTextRow + LastGraphRow;

@@ -1784,12 +1784,12 @@ evidence = "the BIOS display page WriteCharsAt writes text to; res08_init sets i
 
 [[global]]
 offset = 0x4A1D
-name = "PreviousVideoMode"
+name = "CurrentVideoMode"
 evidence = "copy of SavedVideoMode taken in res08_init; SetVideoMode and PaletteColor restore it (res07)"
 
 [[global]]
 offset = 0x4A24
-name = "ScreenSaveBuffer"
+name = "IconBackgroundBuffer"
 evidence = "the screen buffer the loader allocates through AllocatePicture (ovl11:00D4), SaveOfs of the picture draws (res07)"
 
 [[global]]
@@ -1814,17 +1814,17 @@ evidence = "per screen row the highest changed byte offset in DrawBuf, starts 0 
 
 [[global]]
 offset = 0x4EC0
-name = "CellTextSegments"
+name = "CgaScanlineSegments"
 evidence = "per cell row the text scanline segment ShowPicture and FlushPictureChanges write to (res07; the loader fills it, ovl11)"
 
 [[global]]
 offset = 0x5050
-name = "CellRowOffsets"
+name = "EgaScanlineOffsets"
 evidence = "per cell row offset table the loader fills (I * 40, ovl11:0186) FlushPictureChanges and ShowPicture add to (res07)"
 
 [[global]]
 offset = 0x51E0
-name = "CellPlaneSegments"
+name = "TandyScanlineSegments"
 evidence = "per cell row graphics plane address the loader fills (ovl11) ShowPicture and MirrorPicture write to (res07)"
 
 [[global]]

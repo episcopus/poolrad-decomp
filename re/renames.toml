@@ -9546,3 +9546,38 @@ kind = "routine"
 why = "item handler of affect $87: unreadies the item and shows 'Must have Giant Strength' when Strength is below 19 (ovl12:3134; P6 review of ovl12)"
 date = "2026-10-16"
 
+[[rename]]
+old = "PreviousVideoMode"
+new = "CurrentVideoMode"
+kind = "global"
+why = "written only by SetVideoMode and res08_init, always the AL of the last INT 10h function 0: the current video mode; SavedVideoMode is the other mode, so RestoreVideoMode toggles (res07 SetVideoMode, res08:42..43) (P6 review of res07)"
+date = "2026-10-16"
+
+[[rename]]
+old = "CellTextSegments"
+new = "CgaScanlineSegments"
+kind = "global"
+why = "per pixel scanline (200 entries) the CGA segment B800/BA00 plus 5 per two scanlines that ShowPicture writes on VideoAdapter 0 (OVL11:62..73, res07 ShowPicture) (P6 review of res07)"
+date = "2026-10-16"
+
+[[rename]]
+old = "CellRowOffsets"
+new = "EgaScanlineOffsets"
+kind = "global"
+why = "per pixel scanline the EGA byte offset scanline * 40 (VideoAdapter 1), filled by ovl11:0186, used by ShowPicture, MirrorPicture and FlushPictureChanges (res07) (P6 review of res07)"
+date = "2026-10-16"
+
+[[rename]]
+old = "CellPlaneSegments"
+new = "TandyScanlineSegments"
+kind = "global"
+why = "per pixel scanline the Tandy/PCjr mode 9 bank segment B800/BA00/BC00/BE00 (four interleaved banks, VideoAdapter 2), used by ShowPicture and FlushPictureChanges (OVL11:62..73) (P6 review of res07)"
+date = "2026-10-16"
+
+[[rename]]
+old = "ScreenSaveBuffer"
+new = "IconBackgroundBuffer"
+kind = "global"
+why = "3 cells x 24 rows (24x24 pixels, OVL11:57): the save-under buffer for one combat icon, drawn with Flags 5 (mask and save) and later restored by RES12 (res12:1205..1270) (P6 review of res07)"
+date = "2026-10-16"
+

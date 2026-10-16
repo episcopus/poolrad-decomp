@@ -1683,7 +1683,7 @@ var
     HeadPicIndex = $C;      { the HEAD picture block of the icon }
     IconSet = 0;            { the icon set DrawIcon reads the pictures from }
   begin
-    if VideoAdapter = 0 then
+    if VideoAdapter = AdapterCga then
       FillPictureRect(CellCol * IconColsPerCell, CellRow * CellHeightRows, CellWidthCells,
         CellHeightRows, GroundColor, @FillRectPalette, DrawBuf)
     else
@@ -1716,7 +1716,7 @@ var
     PixelBytes: Word;                 { [bp-0x24]: the pixel-buffer size copied }
   begin
     PixelBytes := PMemPic(PictureSlots[Dest].FirstPic)^.ByteSize;
-    if VideoAdapter = 1 then
+    if VideoAdapter = AdapterEga then
       PixelBytes := PixelBytes shr 1 shr 1;
     Move(PMemPic(PictureSlots[Source].FirstPic)^.Tail, PMemPic(PictureSlots[Dest].FirstPic)^.Tail,
       PMemPic(PictureSlots[Dest].FirstPic)^.ByteSize);

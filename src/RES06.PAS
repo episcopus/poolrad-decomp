@@ -46,15 +46,7 @@ const
   LastCol = $27;                 { rightmost cell column of the 40-column screen }
   LastRow = $18;                 { deepest cell row of the 25-row screen }
   GlyphSpace = $20;              { the space glyph ClearTextCells fills with }
-  GcIndex = $3CE;                { EGA Graphics Controller index port }
-  GcData = $3CF;                 { EGA Graphics Controller data port }
-  SeqIndex = $3C4;               { EGA Sequencer index port }
-  SeqData = $3C5;                { EGA Sequencer data port }
-  GcMode = 5;                    { GC register 5: mode }
-  WriteMode2 = 2;                { mode 2: the CPU data is the colour }
   GcBitMask = 8;                 { GC register 8: bit mask }
-  SeqMapMask = 2;                { SC register 2: the plane map mask }
-  MapMaskAll = $0F;              { all four planes enabled }
 var
   { The planes below are the CGA/Tandy video memory (VideoAdapter 0 and 2): the scanline banks
     $B800, $BA00 and, for the graphics planes, $BC00 and $BE00. DrawGlyph modes 0 and 2 and
@@ -197,7 +189,7 @@ begin
   for I := 1 to Count do
   begin
     case VideoAdapter of
-      0:
+      AdapterCga:
         begin
           Color := TextColorMap4[Color];
           DestOff := Row * 4;
@@ -227,7 +219,7 @@ begin
             Inc(DestOff);
           end;
         end;
-      1:
+      AdapterEga:
         begin
           DestOff := Row * 8 * GraphStride + Col;
           Port[SeqIndex] := SeqMapMask;
@@ -251,7 +243,7 @@ begin
           end;
           Port[SeqData] := MapMaskRestore;
         end;
-      2:
+      AdapterTandy:
         begin
           { QUIRK 0709:047B: the names of DestOff and FontRow are the other way round in this
             mode: DestOff holds the font row and FontRow the graph row of the destination (the
@@ -520,17 +512,17 @@ const
   BankBytes = $1F40;   { one 8000-byte scanline bank (or display page) }
 begin
   case VideoAdapter of
-    0:
+    AdapterCga:
       begin
         FillChar(TextPlane1, BankBytes, 0);
         FillChar(TextPlane0, BankBytes, 0);
       end;
-    1:
+    AdapterEga:
       begin
         FillPlaneRect(0, 0, LastCol, LastRow, 0, 0);
         FillPlaneRect(0, 0, LastCol, LastRow, 1, 0);
       end;
-    2:
+    AdapterTandy:
       begin
         FillChar(GraphPlane0, BankBytes, 0);
         FillChar(GraphPlane1, BankBytes, 0);
@@ -579,7 +571,7 @@ var
   Row: Word;                { the scanline or graphics row being cleared }
 begin
   case VideoAdapter of
-    0:
+    AdapterCga:
       begin
         TopCode := Top * ScanlinesPerTextRow;
         BottomCode := Bottom * ScanlinesPerTextRow + LastTextScanline;
@@ -590,12 +582,12 @@ begin
           FillChar(TextPlane1[Row, Left * BytesPerTextColumn], Width, 0);
         end;
       end;
-    1:
+    AdapterEga:
       begin
         FillPlaneRect(Left, Top, Right, Bottom, 0, 0);
         FillPlaneRect(Left, Top, Right, Bottom, 1, 0);
       end;
-    2:
+    AdapterTandy:
       begin
         TopCode := Top * GraphRowsPerTextRow;
         BottomCode := Bottom * GraphRowsPerTextRow + LastGraphRow;

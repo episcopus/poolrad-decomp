@@ -40,7 +40,7 @@ begin
   Regs.AH := $0F;
   Intr($10, Regs);
   SavedVideoMode := Regs.AL;
-  PreviousVideoMode := SavedVideoMode;
+  CurrentVideoMode := SavedVideoMode;
   case CfgChar of
     'E':
       begin

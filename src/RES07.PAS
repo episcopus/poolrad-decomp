@@ -95,8 +95,8 @@ begin
     PaletteColor := (Pal[Index shr 1] and $F0) shr 4;
 end;
 { 0464:00CF: sets video mode A through INT 10h function 0, the way the game
-  changes the EGA mode: the mode that was current (PreviousVideoMode) is kept in
-  SavedVideoMode so the restore routine can go back, then PreviousVideoMode becomes A.
+  changes the EGA mode: the mode that was current (CurrentVideoMode) is kept in
+  SavedVideoMode so the restore routine can go back, then CurrentVideoMode becomes A.
   Called by res08_init with $0D and by the restore routine. }
 procedure SetVideoMode(Mode: Byte);
 var
@@ -104,11 +104,11 @@ var
     writes; the compiler keeps declared locals, so the source had one too. }
   UnusedMode: Byte;
 begin
-  SavedVideoMode := PreviousVideoMode;
+  SavedVideoMode := CurrentVideoMode;
   Regs.AH := 0;                      { INT 10h function 0: set video mode }
   Regs.AL := Mode;
   Intr($10, Regs);
-  PreviousVideoMode := Mode;
+  CurrentVideoMode := Mode;
 end;
 
 { 0464:00FF: restores the video mode saved at the last mode set through
@@ -306,9 +306,9 @@ begin
   LeftCol := Col;
   RightRoom := PPicture(Dest)^.WidthCols - (Col + PPicture(Source)^.WidthCols);
   case VideoAdapter of
-    0, 2:
+    AdapterCga, AdapterTandy:
     begin
-      if VideoAdapter = 0 then
+      if VideoAdapter = AdapterCga then
       begin
         LeftBytes := LeftCol * 2;
         SrcRowBytes := PPicture(Source)^.WidthCols * 2;
@@ -365,7 +365,7 @@ begin
           Inc(FirstRow);
         end;
     end;
-    1:
+    AdapterEga:
     begin
       LeftBytes := LeftCol;
       SrcRowBytes := PPicture(Source)^.WidthCols * 4;
@@ -427,7 +427,7 @@ end;
   Source with its top-left cell at column Col and pixel row Row * 8, cut to Dest on
   all four sides. Bit 0 of Flags masks the picture (Source needs a pixel buffer);
   bit 2 first copies the destination bytes that are about to be overwritten into the
-  screen buffer ScreenSaveBuffer (SaveOfs, the same layout as the picture rows). The range
+  screen buffer IconBackgroundBuffer (SaveOfs, the same layout as the picture rows). The range
   checks run only while ClipChecksEnabled is nonzero (set by the loader); when it is 0 the
   picture is drawn with no check at all. Per VideoAdapter: 0 and 2 copy bytes (2 or
   4 per cell), 1 copies the four EGA planes and reads one mask byte per four data
@@ -445,7 +445,7 @@ var
   VisibleBytes: Word;      { bytes of each source row that land in Dest }
   SrcOfs: Word;            { source byte offset of the next byte }
   DestOfs: Word;           { destination byte offset of the next byte }
-  SaveOfs: Word;           { byte offset in the save buffer ScreenSaveBuffer }
+  SaveOfs: Word;           { byte offset in the save buffer IconBackgroundBuffer }
   SrcLastRow: Word;        { last source pixel row that is drawn }
   SrcRow: Word;            { source row loop counter }
   MaskOfs: Word;           { adapter 1: mask byte offset }
@@ -521,9 +521,9 @@ begin
     RightRoom := PPicture(Dest)^.WidthCols - (Col + PPicture(Source)^.WidthCols);
   end;
   case VideoAdapter of
-    0, 2:
+    AdapterCga, AdapterTandy:
     begin
-      if VideoAdapter = 0 then
+      if VideoAdapter = AdapterCga then
       begin
         LeftBytes := LeftCol * 2;
         VisibleBytes := (PPicture(Source)^.WidthCols - LeftCut - RightCut) * 2;
@@ -561,7 +561,7 @@ begin
           RowFirstChangedOfs[FirstRow] := DestOfs;
         end;
         if SaveBackground then
-          Move(PPicture(Dest)^.Data[DestOfs], PPicture(ScreenSaveBuffer)^.Data[SaveOfs], VisibleBytes);
+          Move(PPicture(Dest)^.Data[DestOfs], PPicture(IconBackgroundBuffer)^.Data[SaveOfs], VisibleBytes);
         Inc(SaveOfs, VisibleBytes);
         if HasMask then
         begin
@@ -586,7 +586,7 @@ begin
         Inc(FirstRow);
       end;
     end;
-    1:
+    AdapterEga:
     begin
       LeftBytes := LeftCol;
       VisibleBytes := (PPicture(Source)^.WidthCols - LeftCut - RightCut) * 4;
@@ -616,7 +616,7 @@ begin
           RowFirstChangedOfs[FirstRow] := DestOfs;
         end;
         if SaveBackground then
-          Move(PPicture(Dest)^.Data[DestOfs], PPicture(ScreenSaveBuffer)^.Data[SaveOfs], VisibleBytes);
+          Move(PPicture(Dest)^.Data[DestOfs], PPicture(IconBackgroundBuffer)^.Data[SaveOfs], VisibleBytes);
         Inc(SaveOfs, VisibleBytes);
         if HasMask then
         begin
@@ -715,7 +715,7 @@ begin
   begin
     Move(Palette, PPicture(Dest)^.Palette, 8);
     case VideoAdapter of
-      0:
+      AdapterCga:
         begin
           RowBytes := WidthCols * 2;
           SrcLastOfs := RowBytes - 2;
@@ -739,7 +739,7 @@ begin
             Inc(SrcLastOfs, RowBytes);
           end;
         end;
-      1:
+      AdapterEga:
         begin
           RowBytes := WidthCols * 4;
           SrcLastOfs := RowBytes - 4;
@@ -768,7 +768,7 @@ begin
             end;
           end;
         end;
-      2:
+      AdapterTandy:
         begin
           RowBytes := WidthCols * 4;
           SrcLastOfs := RowBytes - 1;
@@ -795,12 +795,12 @@ end;
 { 0464:1951: shows a picture at (PicCol, PicRow) by copying its packed pixel data
   straight to the video hardware, one branch per video adapter. PicRow * 8 is the
   first pixel row, and PicCol the first cell column. Adapter 0 moves a
-  WidthCols*2-byte row per screen row to the segment CellTextSegments[Row] at column
+  WidthCols*2-byte row per screen row to the segment CgaScanlineSegments[Row] at column
   PicCol*2; adapter 1 writes, per row and per cell column, the four plane bytes of
   the source cell (the plane-interleaved layout, 4 bytes per cell, one byte per
   EGA plane: each byte holds eight pixels of that plane, written through the map
-  mask EgaPlaneBitMasks[Plane] on port 3C5 to Mem[$A000:CellRowOffsets[Row] + Col]);
-  adapter 2 is the adapter-0 move with four bytes per column and the CellPlaneSegments
+  mask EgaPlaneBitMasks[Plane] on port 3C5 to Mem[EgaPage0Segment:EgaScanlineOffsets[Row] + Col]);
+  adapter 2 is the adapter-0 move with four bytes per column and the TandyScanlineSegments
   segment table. Called by ShowTitleScreen, ovl28 DrawSprite and ovl34 Put8x8Symbol. }
 procedure ShowPicture(PicCol, PicRow: Integer; Buf: Pointer);
 var
@@ -814,7 +814,7 @@ begin
   with PPicture(Buf)^ do
   begin
     case VideoAdapter of
-      0:
+      AdapterCga:
         begin
           RowBytes := WidthCols * 2;
           SourceOfs := 0;
@@ -823,31 +823,31 @@ begin
           FirstCol := PicCol * 2;
           for Row := FirstRow to LastRow do
           begin
-            Move(PPicture(Buf)^.Data[SourceOfs], Mem[CellTextSegments[Row]:FirstCol], RowBytes);
+            Move(PPicture(Buf)^.Data[SourceOfs], Mem[CgaScanlineSegments[Row]:FirstCol], RowBytes);
             Inc(SourceOfs, RowBytes);
           end;
         end;
-      1:
+      AdapterEga:
         begin
           SourceOfs := 0;
           FirstRow := PicRow * 8;
           LastRow := FirstRow + Height - 1;
           FirstCol := PicCol;
           LastCol := FirstCol + WidthCols - 1;
-          Port[$3C4] := 2;
+          Port[SeqIndex] := SeqMapMask;
           for Row := FirstRow to LastRow do
             for Col := FirstCol to LastCol do
             begin
               for Plane := 0 to 3 do
               begin
-                Port[$3C5] := EgaPlaneBitMasks[Plane];
-                Mem[$A000:CellRowOffsets[Row] + Col] := PPicture(Buf)^.Data[SourceOfs];
+                Port[SeqData] := EgaPlaneBitMasks[Plane];
+                Mem[EgaPage0Segment:EgaScanlineOffsets[Row] + Col] := PPicture(Buf)^.Data[SourceOfs];
                 Inc(SourceOfs);
               end;
             end;
-          Port[$3C5] := $0F;
+          Port[SeqData] := MapMaskAll;
         end;
-      2:
+      AdapterTandy:
         begin
           RowBytes := WidthCols * 4;
           SourceOfs := 0;
@@ -856,7 +856,7 @@ begin
           FirstCol := PicCol * 4;
           for Row := FirstRow to LastRow do
           begin
-            Move(PPicture(Buf)^.Data[SourceOfs], Mem[CellPlaneSegments[Row]:FirstCol], RowBytes);
+            Move(PPicture(Buf)^.Data[SourceOfs], Mem[TandyScanlineSegments[Row]:FirstCol], RowBytes);
             Inc(SourceOfs, RowBytes);
           end;
         end;
@@ -870,11 +870,11 @@ end;
   offset, a minimum that starts at $FFFF, and RowLastChangedOfs the last (highest), which
   starts at 0. RowFirstChangedCol[Row] is the screen-side byte column of that first changed
   byte (LeftCol * 2 on adapter 0, LeftCol * 1 on adapter 1, LeftCol * 4 on
-  adapter 2). Adapter 0 moves each changed span to the segment CellTextSegments[Row+8] at
+  adapter 2). Adapter 0 moves each changed span to the segment CgaScanlineSegments[Row+8] at
   column RowFirstChangedCol[Row]+2; adapter 1 writes the four EGA planes byte by byte through
-  port 3C5 (stride 4 in the source) into the off-screen page $A200, then copies
-  $A200 onto the visible page $A000 in GC write mode 1 (GC register 5 := 1,
-  restored to 0); adapter 2 moves the spans to the CellPlaneSegments segments at column
+  port 3C5 (stride 4 in the source) into the off-screen page EgaPage1Segment, then copies
+  EgaPage1Segment onto the visible page EgaPage0Segment in GC write mode 1 (GC register 5 := 1,
+  restored to 0); adapter 2 moves the spans to the TandyScanlineSegments segments at column
   RowFirstChangedCol[Row]+4. Finally the trackers are reset. Called after every sprite or
   picture blit. }
 procedure FlushPictureChanges;
@@ -884,70 +884,71 @@ var
   Unused: Word;    { QUIRK 0464:1B55: the original frame has one word the locals never use }
 begin
   case VideoAdapter of
-    0:
+    AdapterCga:
       for Row := 0 to $A7 do
         if RowDirtyFlags[Row] <> 0 then
           Move(PPicture(DrawBuf)^.Data[RowFirstChangedOfs[Row]],
-            Mem[CellTextSegments[Row + 8]:RowFirstChangedCol[Row] + 2],
+            Mem[CgaScanlineSegments[Row + 8]:RowFirstChangedCol[Row] + 2],
             RowLastChangedOfs[Row] - RowFirstChangedOfs[Row] + 1);
-    1:
+    AdapterEga:
       begin
-        Port[$3C4] := 2;
+        Port[SeqIndex] := SeqMapMask;
         for Row := 0 to $A7 do
           if RowDirtyFlags[Row] <> 0 then
           begin
-            BaseOfs := CellRowOffsets[Row + 8] + RowFirstChangedCol[Row] + 1;
-            Port[$3C5] := EgaPlaneBitMasks[0];
+            BaseOfs := EgaScanlineOffsets[Row + 8] + RowFirstChangedCol[Row] + 1;
+            Port[SeqData] := EgaPlaneBitMasks[0];
             SrcOfs := RowFirstChangedOfs[Row];
             DestOfs := BaseOfs;
             repeat
-              Mem[$A200:DestOfs] := PPicture(DrawBuf)^.Data[SrcOfs];
+              Mem[EgaPage1Segment:DestOfs] := PPicture(DrawBuf)^.Data[SrcOfs];
               Inc(SrcOfs, 4);
               Inc(DestOfs);
             until SrcOfs > RowLastChangedOfs[Row];
-            Port[$3C5] := EgaPlaneBitMasks[1];
+            Port[SeqData] := EgaPlaneBitMasks[1];
             SrcOfs := RowFirstChangedOfs[Row] + 1;
             DestOfs := BaseOfs;
             repeat
-              Mem[$A200:DestOfs] := PPicture(DrawBuf)^.Data[SrcOfs];
+              Mem[EgaPage1Segment:DestOfs] := PPicture(DrawBuf)^.Data[SrcOfs];
               Inc(SrcOfs, 4);
               Inc(DestOfs);
             until SrcOfs > RowLastChangedOfs[Row];
-            Port[$3C5] := EgaPlaneBitMasks[2];
+            Port[SeqData] := EgaPlaneBitMasks[2];
             SrcOfs := RowFirstChangedOfs[Row] + 2;
             DestOfs := BaseOfs;
             repeat
-              Mem[$A200:DestOfs] := PPicture(DrawBuf)^.Data[SrcOfs];
+              Mem[EgaPage1Segment:DestOfs] := PPicture(DrawBuf)^.Data[SrcOfs];
               Inc(SrcOfs, 4);
               Inc(DestOfs);
             until SrcOfs > RowLastChangedOfs[Row];
-            Port[$3C5] := EgaPlaneBitMasks[3];
+            Port[SeqData] := EgaPlaneBitMasks[3];
             SrcOfs := RowFirstChangedOfs[Row] + 3;
             DestOfs := BaseOfs;
             repeat
-              Mem[$A200:DestOfs] := PPicture(DrawBuf)^.Data[SrcOfs];
+              Mem[EgaPage1Segment:DestOfs] := PPicture(DrawBuf)^.Data[SrcOfs];
               Inc(SrcOfs, 4);
               Inc(DestOfs);
             until SrcOfs > RowLastChangedOfs[Row];
           end;
-        Port[$3C5] := $0F;
-        DestOfs := CellRowOffsets[8] + 1;
-        Port[$3CE] := 5;
-        Port[$3CF] := 1;
+        Port[SeqData] := MapMaskAll;
+        DestOfs := EgaScanlineOffsets[8] + 1;
+        Port[GcIndex] := GcMode;
+        Port[GcData] := WriteMode1;
         for Row := 0 to $A7 do
         begin
           if RowDirtyFlags[Row] <> 0 then
-            Move(Mem[$A200:DestOfs + RowFirstChangedCol[Row]], Mem[$A000:DestOfs + RowFirstChangedCol[Row]],
+            Move(Mem[EgaPage1Segment:DestOfs + RowFirstChangedCol[Row]], Mem[EgaPage0Segment:DestOfs +
+              RowFirstChangedCol[Row]],
               (RowLastChangedOfs[Row] - RowFirstChangedOfs[Row]) shr 1 shr 1 + 1);
           Inc(DestOfs, $28);
         end;
-        Port[$3CF] := 0;
+        Port[GcData] := WriteMode0;
       end;
-    2:
+    AdapterTandy:
       for Row := 0 to $A7 do
         if RowDirtyFlags[Row] <> 0 then
           Move(PPicture(DrawBuf)^.Data[RowFirstChangedOfs[Row]],
-            Mem[CellPlaneSegments[Row + 8]:RowFirstChangedCol[Row] + 4],
+            Mem[TandyScanlineSegments[Row + 8]:RowFirstChangedCol[Row] + 4],
             RowLastChangedOfs[Row] - RowFirstChangedOfs[Row] + 1);
   end;
   FillChar(RowDirtyFlags, $A8, 0);
@@ -1109,7 +1110,7 @@ var
   ItemBytes, BlockBytes: Word;
 begin
   ItemBytes := Height * WidthCols * 2;
-  if VideoAdapter <> 0 then ItemBytes := ItemBytes shl 1;
+  if VideoAdapter <> AdapterCga then ItemBytes := ItemBytes shl 1;
   BlockBytes := ItemCount * ItemBytes;
   GetMem(PPicture(Pointer(Pic)), BlockBytes + $17);
   FillChar(PPicture(Pointer(Pic))^, BlockBytes + $17, 0);
@@ -1119,7 +1120,7 @@ begin
   PPicture(Pointer(Pic))^.ItemCount := ItemCount;
   if AllocFlags and 1 > 0 then
   begin
-    if VideoAdapter = 1 then
+    if VideoAdapter = AdapterEga then
     begin
       GetMem(PPicture(Pointer(Pic))^.Pixels, BlockBytes shr 1 shr 1);
       FillChar(PPicture(Pointer(Pic))^.Pixels^, BlockBytes shr 1 shr 1, 0);
@@ -1146,7 +1147,7 @@ begin
       Size := ItemCount * ByteSize;
       if Pixels <> nil then
       begin
-        if VideoAdapter = 1 then
+        if VideoAdapter = AdapterEga then
           FreeMem(Pixels, Size shr 1 shr 1)
         else
           FreeMem(Pixels, Size);
@@ -1216,9 +1217,9 @@ begin
       LastRow := Height - 1;
   end;
   case VideoAdapter of
-    0, 2:
+    AdapterCga, AdapterTandy:
     begin
-      if VideoAdapter = 0 then
+      if VideoAdapter = AdapterCga then
       begin
         StartBytes := StartCol * 2;
         Count := (Width - ClipLeft - RightOver) * 2;
@@ -1243,7 +1244,7 @@ begin
           RowFirstChangedCol[TrackRow] := StartBytes;
           RowFirstChangedOfs[TrackRow] := DestOfs;
         end;
-        if VideoAdapter = 0 then
+        if VideoAdapter = AdapterCga then
           FillChar(PPicture(Target)^.Data[DestOfs], Count, PixelsByColor2Bit[PaletteColor(Color, @Pal)])
         else
           FillChar(PPicture(Target)^.Data[DestOfs], Count, PixelsByColor4Bit[Color]);
@@ -1253,7 +1254,7 @@ begin
         Inc(TrackRow);
       end;
     end;
-    1:
+    AdapterEga:
     begin
       StartBytes := StartCol;
       Count := Width - ClipLeft - RightOver;

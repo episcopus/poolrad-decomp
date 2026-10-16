@@ -669,6 +669,25 @@ const
     character's icon: 1 small (Dwarf, Gnome, Halfling; the CHEAD/CBODY suffix 'S'), 2 large ('T'). }
   IconSizeSmall = 1;
   IconSizeLarge = 2;
+  { VideoAdapter, the adapter kind POOL.CFG line 1 selects (res08_init): E gives 1 and BIOS mode $0D (EGA 320x200x16,
+    planar), T gives 2
+    and mode 9 (Tandy/PCjr 16 colours, packed, four interleaved banks), anything else (C) gives 0 and mode 4 (CGA 320x200x4). }
+  AdapterCga = 0;
+  AdapterEga = 1;
+  AdapterTandy = 2;
+  { EGA ports and registers (VideoAdapter 1): the Sequencer and the Graphics Controller, write modes and the video pages. }
+  GcIndex = $3CE;                 { Graphics Controller index port }
+  GcData = $3CF;                  { Graphics Controller data port }
+  SeqIndex = $3C4;                { Sequencer index port }
+  SeqData = $3C5;                 { Sequencer data port }
+  GcMode = 5;                     { GC register 5: mode }
+  SeqMapMask = 2;                 { SC register 2: the plane map mask }
+  MapMaskAll = $0F;               { all four planes enabled }
+  WriteMode0 = 0;                 { GC write mode 0: the CPU data goes to the selected planes }
+  WriteMode1 = 1;                 { mode 1: the latches are copied (the byte of every plane at once) }
+  WriteMode2 = 2;                 { mode 2: the CPU data is the colour }
+  EgaPage0Segment = $A000;        { the two EGA display pages (res06: Page shl 9 + $A000) }
+  EgaPage1Segment = $A200;
   { The affect handler protocol (ovl24 CallAffectHandler, AddAffect; whitepaper 5.19): the Mode of a handler call,
     the Flag of an affect (does its handler run when it is removed), the Duration of a lasting affect and the
     hook kind a combatant going down runs. }
@@ -2285,7 +2304,7 @@ var
     to 0 for EGA and passes it to SetActivePage. }
   TextPage: Byte;  { display page; see above }
   SavedVideoMode: Byte;  { video mode QuitGame passes to INT 10h; no writer is in the decompiled units }
-  PreviousVideoMode: Byte;  { copy of SavedVideoMode taken in res08_init; reader unknown }
+  CurrentVideoMode: Byte;  { copy of SavedVideoMode taken in res08_init; reader unknown }
   { DS:4A1E..4A1F: storage of VideoAdapter }
   ds4A1E: array[0..1] of Byte;
   { the video mode read by ClearWindow (03F1:0137) and res06: 0 fills
@@ -2293,7 +2312,7 @@ var
                                     display pages, 2 fills the four graphics banks; POOL.CFG 'E'
                                     selects 1 (whitepaper 2.3) }
   DrawBuf: Pointer;  { far pointer DrawCellPicture passes to DrawPictureItem; what it points at is unknown }
-  ScreenSaveBuffer: Pointer;  { screen buffer the loader allocates through AllocatePicture (ovl11:00D4) }
+  IconBackgroundBuffer: Pointer;  { screen buffer the loader allocates through AllocatePicture (ovl11:00D4) }
   RowDirtyFlags: array[0..$A7] of Byte;  { $A8-byte buffer the loader clears (ovl11:00EC) }
   { The changed-region trackers the blitters (res07 08D4/0D71/2632) fill and res07
     FlushPictureChanges (1B52) flushes: per changed screen row, RowFirstChangedOfs holds the
@@ -2309,11 +2328,11 @@ var
   RowLastChangedOfs: array[0..$A7] of Word;  { last (highest) changed byte offset in DrawBuf (starts 0) }
   { Per-cell screen address table the loader fills (ovl11:0130..0163): $B800 (even cell) or $BA00
     (odd cell) plus 5*(I div 2). }
-  CellTextSegments: array[0..$C7] of Word;  { cell text scanline address; see above }
-  CellRowOffsets: array[0..$C7] of Word;  { per-cell row offset table the loader fills (ovl11:0186): I*40 }
+  CgaScanlineSegments: array[0..$C7] of Word;  { cell text scanline address; see above }
+  EgaScanlineOffsets: array[0..$C7] of Word;  { per-cell row offset table the loader fills (ovl11:0186): I*40 }
   { Per-cell plane address table the loader fills (ovl11:019F..0241): 10*(I div 4) plus $B800,
     $BA00, $BC00 or $BE00. }
-  CellPlaneSegments: array[0..$C7] of Word;  { cell graphics plane address; see above }
+  TandyScanlineSegments: array[0..$C7] of Word;  { cell graphics plane address; see above }
   { DS:5370..5371: storage of ClipChecksEnabled }
   Raw5370: array[0..1] of Byte;
   SoundMode: Byte;  { sound setting; 2 while a Ctrl-S pause is in effect (ReadGameKey) }
