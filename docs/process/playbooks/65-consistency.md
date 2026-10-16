@@ -65,9 +65,8 @@ Affect numbers named twice were settled by the review of 2026-10-15 from the gam
 (`DisplaySpellEffects` in ovl15 and the `AffectId` byte of `SpellTable`): $1E `AffectCough`, $1F
 `AffectHelpless`, $20 `AffectAnimateDead`, $32 `AffectMummyDisease`, $37 `AffectPoisoned`, $3A
 `AffectHeldFast`, $4A `AffectForcedAttack` (its handler is ovl13 `ForcedAttack`, it never drains), $4B
-`AffectBloodDrain`; all are in the shared block now. Not settled: $6F and $7D (`AffectKeptC`,
-`AffectKeptD`): both handlers cancel the charm, ends-turn, paralysis and poison hooks, and no spell or text
-names them. `AffectEndsTurn` ($35, Sleep's AffectId) and `AffectParalysis` ($34, Hold Person's; also given
+`AffectBloodDrain`; all are in the shared block now. $6F is `AffectPoisonImmunity` and $7D `AffectUndeadImmunity`
+(the handlers cancel the charm, ends-turn, paralysis and poison hooks; the carriers are named in ovl12). `AffectEndsTurn` ($35, Sleep's AffectId) and `AffectParalysis` ($34, Hold Person's; also given
 by fear) keep their effect names.
 
 Spelling: every identifier says `Color` (about 40 names said `Colour`; `Green` is `LightGreen`). Screen and
@@ -82,7 +81,14 @@ Not done in this pass:
 
 - **Ownership of globals.** Globals still live in `src/POOLVARS.PAS` because it is also the DGROUP layout
   (playbook 50); moving each to the unit that owns it needs the layout generator to read several units.
-- **`tools/re/rtl_ident.py`** (phase 1) still holds the provisional runtime names in its tables; running
-  `make map` again would write them over 30 names of this phase. A verified patch (4 provisional entries
-  updated, 26 names added, a `DOS_NAMED` table) is in the review notes; it is a tooling change, apply it first.
-- **Reviewer sign-off per subsystem** (SPEC 10, P6 exit): not started; `make review-pass` records it per unit.
+- **Reviewer sign-off per subsystem** (SPEC 10, P6 exit): done for ovl03, ovl12, ovl16, res07 and res12 on
+  2026-10-16 (independent read-only reviews, must-fix findings applied; each `work/reviews/<unit>.md` has a
+  "Phase 6 sign-off" section). Open: ovl12 M12 (bare numbers: alignment indexes, CreatureType values, item
+  types $55..$58, the Constitution table), the `ClassMask` field (an index 0..16, to be `ClassCombo`; 61 uses in
+  6 files), and the should-fix lists of the reviews (`Thac0`, `B84`, `HpB1`, `Flag10D`, `Guarding`, `TileGate`,
+  `SortEntries` as the ScanTargets result list, Byte used as Boolean). The other units have not had a
+  phase 6 review. `make review-pass` is not rerun: it would restamp the round 2 pass.
+- **A lesson of the review:** a name is only as good as the evidence of its first use. The reviews found
+  names that two units read differently (`ResistValue` was the armour class, `Flag11B` the hit points,
+  `SoundHitMessage` the affect sound), comments that a later rename made false and constants copied into
+  a unit after the shared block existed; scan for those three after every consistency pass.
