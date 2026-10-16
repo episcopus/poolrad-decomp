@@ -180,7 +180,7 @@ end;
   B84 below $80) is okay, dead or fled (or VarFixedXpBattle is 1); BattleWon is set and PartyFled
   cleared when a combatant is okay or dead; NoExperienceCount counts the members without Flag10D or
   dead. A won battle computes and awards BattleExperience. A surviving party gets its fled members
-  back (Status 0, Flag10D 1), dying ones unconscious, unconscious ones with Flag11B back to okay; a
+  back (Status 0, Flag10D 1), dying ones unconscious, unconscious ones with HpCurrent back to okay; a
   fled party (VarBattleOutcome $81) keeps only its fled members, the others leave the list
   (RemoveSelectedCharacter). A destroyed party leaves the list entirely and VarPartySize becomes 0. In a duel the
   duelist (Flag10D 1, okay, not a monster) wins the experience, every okay or dead combatant gets
@@ -241,7 +241,7 @@ begin
               end;
             StatusDying: Who^.Status := StatusUnconscious;
             StatusUnconscious:
-              if Who^.Flag11B > 0 then
+              if Who^.HpCurrent > 0 then
               begin
                 Who^.Status := StatusOkay;
                 Who^.Flag10D := 1;
@@ -651,7 +651,7 @@ end;
   mode ViewMode to 6, settles the outcome and removes the monsters. While the party lives (or in a
   duel) the hirelings take their share, the result is shown, the treasure menu runs and the loot
   left in PooledItems is freed. A destroyed party gets VarBattleOutcome $80, 'The END!' and 'The monsters
-  rejoice for the party has been destroyed'. Then sets WaitAfterTextRun and clears VarAfterBattle1..3,
+  rejoice for the party has been destroyed'. Then sets DelayPerGlyph and clears VarAfterBattle1..3,
   VarNoItemLoot and VarFixedXpBattle. }
 procedure EndBattle;
 var
@@ -686,7 +686,7 @@ begin
     ShowPagedText(2, 5, $25, $16, $A, 1, 'The monsters rejoice for the party has been destroyed');
     ShowMessageLine($D, 'Press any key to continue');
   end;
-  WaitAfterTextRun := 1;
+  DelayPerGlyph := 1;
   GameVars2^[VarAfterBattle1] := 0;
   GameVars2^[VarAfterBattle2] := 0;
   GameVars2^[VarAfterBattle3] := 0;

@@ -345,13 +345,13 @@ id = "ovl03:0AED"
 unit = "ovl03"
 addr = "ovl03:0AED"
 size = 101
-name = "ComparePairsCommand"
+name = "CompareBothPairsCommand"
 signature = ""
 c_name = "ovl03_fn_0AED"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, f30c5ac"
 justification = ""
-notes = "renamed from ovl03_fn_0AED (ECL command 20 (dispatcher ovl03:2F2D, opcode 14h): compares operands 1 with 2 and 3 with 4 as words and sets CompareFlags[0] (equal) or [1] (not equal), the flags the conditional opcodes 16h to 1Bh (ovl03:0B52) test (ovl03:0AED, matched)); auto:near_call"
+notes = "renamed from ComparePairsCommand (ECL command 17 compares two pairs and sets the compare flag to equal only when both pairs are equal, else not equal (ovl03:0AED; P6 review) [I]); renamed from ovl03_fn_0AED (ECL command 20 (dispatcher ovl03:2F2D, opcode 14h): compares operands 1 with 2 and 3 with 4 as words and sets CompareFlags[0] (equal) or [1] (not equal), the flags the conditional opcodes 16h to 1Bh (ovl03:0B52) test (ovl03:0AED, matched)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -491,7 +491,7 @@ c_name = "ovl03_fn_12C6"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, f30c5ac"
 justification = ""
-notes = "renamed from ovl03_fn_12C6 (ECL command 29: dispatcher ovl03:2F2D calls it for SkippedOpcode 1Dh (cmp al,1Dh, call at ovl03:3038); it sums over the party list ds5D96 a byte from hit points, ResistValue, HitAdjust and ClassLevels[0] and [5] and writes it to operand 1; purpose unknown); auto:near_call"
+notes = "renamed from ovl03_fn_12C6 (ECL command 29: dispatcher ovl03:2F2D calls it for SkippedOpcode 1Dh (cmp al,1Dh, call at ovl03:3038); it sums over the party list ds5D96 a byte from hit points, ArmourClassValue, HitAdjust and ClassLevels[0] and [5] and writes it to operand 1; purpose unknown); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -527,13 +527,13 @@ id = "ovl03:1629"
 unit = "ovl03"
 addr = "ovl03:1629"
 size = 160
-name = "CheckPartyClassCommand"
+name = "CheckPartyHasRangerCommand"
 signature = ""
 c_name = "ovl03_fn_1629"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, f30c5ac"
 justification = ""
-notes = "renamed from ovl03_fn_1629 (dispatcher ovl03:2F2D calls it for SkippedOpcode $22 (ECL command 34); it sets operand 1 to 1 when a party member's ClassMask (TCharacter +$2F) is 4 or 10, and writes 0 to operand 2); auto:near_call"
+notes = "renamed from CheckPartyClassCommand (ECL command 34 compares ClassMask with 4 (Ranger in ClassNames) and 10 (Cleric/Ranger), image DS ClassNames rows 4 and 10 (ovl03:1629; P6 review of ovl03) [I]); renamed from ovl03_fn_1629 (dispatcher ovl03:2F2D calls it for SkippedOpcode $22 (ECL command 34); it sets operand 1 to 1 when a party member's ClassMask (TCharacter +$2F) is 4 or 10, and writes 0 to operand 2); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -541,13 +541,13 @@ id = "ovl03:16C9"
 unit = "ovl03"
 addr = "ovl03:16C9"
 size = 210
-name = "RollRangeCommand"
+name = "RollSurpriseCommand"
 signature = ""
 c_name = "ovl03_fn_16C9"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, f30c5ac"
 justification = ""
-notes = "renamed from ovl03_fn_16C9 (dispatcher ovl03:2F2D calls it for SkippedOpcode $23 (ECL command 35); it rolls two d6 against two ranges made from operands 1 to 4 and writes the outcome 0 to 2 to script address $6DCB (word 715 of ds49D6)); auto:near_call"
+notes = "renamed from RollRangeCommand (ECL command 35 writes GameVars2 word 715, read by StartCombatantRound (OVL13:185, (Side+1) and word takes InitiativePenalty off) and cleared after the first round (OVL08:94): the two sides' surprise rolls (ovl03:16C9; P6 review) [I]); renamed from ovl03_fn_16C9 (dispatcher ovl03:2F2D calls it for SkippedOpcode $23 (ECL command 35); it rolls two d6 against two ranges made from operands 1 to 4 and writes the outcome 0 to 2 to script address $6DCB (word 715 of ds49D6)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2563,7 +2563,7 @@ c_name = "ovl12_fn_0058"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_fn_0058 (ovl12:0058 shows Msg on Who (res12_fn_16EC, colour 10) unless Who's Status is 6, 7 or 8 already; then it sets Status to NewStatus, clears Flag10D and Flag11B, removes the death affects (ovl24:100A), runs the hooks of kind $D (a combatant going down, ovl24:02FA), removes Who from the map when Flag10D is clear (ovl31:0E11), and outside combat (ds49F3 not 5) redraws the selected character; the same steps as DropCombatant (ovl24:0F06) without its ground redraw); auto:near_call"
+notes = "renamed from ovl12_fn_0058 (ovl12:0058 shows Msg on Who (res12_fn_16EC, colour 10) unless Who's Status is 6, 7 or 8 already; then it sets Status to NewStatus, clears Flag10D and HpCurrent, removes the death affects (ovl24:100A), runs the hooks of kind $D (a combatant going down, ovl24:02FA), removes Who from the map when Flag10D is clear (ovl31:0E11), and outside combat (ds49F3 not 5) redraws the selected character; the same steps as DropCombatant (ovl24:0F06) without its ground redraw); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2599,13 +2599,13 @@ id = "ovl12:013B"
 unit = "ovl12"
 addr = "ovl12:013B"
 size = 68
-name = "BoostAttackAgainstTarget"
-signature = "procedure BoostAttackAgainstTarget(Who: PCharacter; Affect: PAffect; Mode: Byte)"
+name = "BoostAttackAgainstUndead"
+signature = "procedure BoostAttackAgainstUndead(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e4"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_e4 (ovl12:013B copies Who's combat record's Target (+$A of the TCombatant at +$108, the character attacked last, ovl08) into DS:6826, and when that character's byte +$9F is 4 adds 2 to AttackRoll and to DamageAmount; the AffectHandlers shape (Who, Affect, Mode), Mode not read); auto:entry_4"
+notes = "renamed from BoostAttackAgainstTarget (handler of affect $03 carried by Two-Handed Sword +1 +3 vs. Undead (Affects[2] $03 [V]); CreatureType 4 is undead (ovl12:013B) (P6 review of ovl12)); renamed from ovl12_e4 (ovl12:013B copies Who's combat record's Target (+$A of the TCombatant at +$108, the character attacked last, ovl08) into DS:6826, and when that character's byte +$9F is 4 adds 2 to AttackRoll and to DamageAmount; the AffectHandlers shape (Who, Affect, Mode), Mode not read); auto:entry_4"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2647,7 +2647,7 @@ c_name = "ovl12_e7"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_e7 (ovl12:0233 shows 'is hardier' on Who (res12_fn_16EC), increments Constitution (+$14), and adds to HpMax (+$32) and the current hit points Flag11B (+$11B) the share of HpMax - HpB1 (+$B1) by the class weights of ovl04:0510 (Raise Dead's loss, mirrored); at Constitution 20 it gives affect $3E instead; AffectHandlers frame, entry 7 of ovl12 (auto:entry_7)); auto:entry_7"
+notes = "renamed from ovl12_e7 (ovl12:0233 shows 'is hardier' on Who (res12_fn_16EC), increments Constitution (+$14), and adds to HpMax (+$32) and the current hit points HpCurrent (+$11B) the share of HpMax - HpB1 (+$B1) by the class weights of ovl04:0510 (Raise Dead's loss, mirrored); at Constitution 20 it gives affect $3E instead; AffectHandlers frame, entry 7 of ovl12 (auto:entry_7)); auto:entry_7"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2697,13 +2697,13 @@ id = "ovl12:0400"
 unit = "ovl12"
 addr = "ovl12:0400"
 size = 186
-name = "ComputerTakesOver"
-signature = "procedure ComputerTakesOver(Who: PCharacter; Affect: PAffect; Mode: Byte)"
+name = "ApplyCharmPerson"
+signature = "procedure ApplyCharmPerson(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e11"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_e11 (ovl12:0400 is an affect handler (AffectHandlers shape, Mode 0 applies): on apply it sets Quick (+$10F, the computer plays the turn, whitepaper 5.5 Who plays), marks B84 with the computer-run flag and morale $33, clears Combat^.Target and sets the side from Data bit 7; on removal it gives the side back from Data bit 6); auto:entry_11"
+notes = "renamed from ComputerTakesOver (handler of affect $0B, Charm Person (SpellTable spell 10 [V]): the computer plays Who on the gazer side (ovl12:0400) (P6 review of ovl12)); renamed from ovl12_e11 (ovl12:0400 is an affect handler (AffectHandlers shape, Mode 0 applies): on apply it sets Quick (+$10F, the computer plays the turn, whitepaper 5.5 Who plays), marks B84 with the computer-run flag and morale $33, clears Combat^.Target and sets the side from Data bit 7; on removal it gives the side back from Data bit 6); auto:entry_11"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2711,13 +2711,13 @@ id = "ovl12:04BA"
 unit = "ovl12"
 addr = "ovl12:04BA"
 size = 284
-name = "ExchangeStrengthWithAffect"
-signature = "procedure ExchangeStrengthWithAffect(Who: PCharacter; Affect: PAffect; Mode: Byte)"
+name = "ApplyStrengthAffect"
+signature = "procedure ApplyStrengthAffect(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e12"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_e12 (ovl12:04BA is an affect handler (AffectHandlers shape, Mode not read) of a strength affect: Who's Strength and StrengthPercent take the affect's strength (DecodeStrength, ovl24:110D), then the strongest other affect with id hex 0C or 26 gives Who its strength and takes the affect's encoded strength (EncodeStrength, ovl24:10E4); RaiseStrength (ovl24:115C) keeps the earlier strength in the same two affects); auto:entry_12"
+notes = "renamed from ExchangeStrengthWithAffect (handler of affects $0C Enlarge and $26 Strength (SpellTable spells 12 and 35 [V]): raises or restores Strength through the affect Data (ovl12) (P6 review of ovl12)); renamed from ovl12_e12 (ovl12:04BA is an affect handler (AffectHandlers shape, Mode not read) of a strength affect: Who's Strength and StrengthPercent take the affect's strength (DecodeStrength, ovl24:110D), then the strongest other affect with id hex 0C or 26 gives Who its strength and takes the affect's encoded strength (EncodeStrength, ovl24:10E4); RaiseStrength (ovl24:115C) keeps the earlier strength in the same two affects); auto:entry_12"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2739,13 +2739,13 @@ id = "ovl12:05EB"
 unit = "ovl12"
 addr = "ovl12:05EB"
 size = 92
-name = "AddAffectAndDamage"
-signature = "procedure AddAffectAndDamage(Who: PCharacter; Affect: PAffect; Mode: Byte)"
+name = "SlowPoisonDamage"
+signature = "procedure SlowPoisonDamage(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e14"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_e14 (ovl12:05EB is an affect handler (AffectHandlers shape, Mode not read) that calls TryAddAffect with affect hex 0F for 10 and the affect's Data, then deals 1 plain point of damage (DealDamage, DamageKind 0) while Flag11B is above 1; the meaning of affect 0F is not known (ovl04 AffectRemovedAtNeutralizePoison3)); auto:entry_14"
+notes = "renamed from AddAffectAndDamage (handler of affect $0F, the slowed poison CastSlowPoison (ovl22) gives: 1 point of damage and the affect again while the character has more than 1 hit point (ovl12:05EB) (P6 review of ovl12)); renamed from ovl12_e14 (ovl12:05EB is an affect handler (AffectHandlers shape, Mode not read) that calls TryAddAffect with affect hex 0F for 10 and the affect's Data, then deals 1 plain point of damage (DealDamage, DamageKind 0) while HpCurrent is above 1; the meaning of affect 0F is not known (ovl04 AffectRemovedAtNeutralizePoison3)); auto:entry_14"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2773,7 +2773,7 @@ c_name = "ovl12_e16"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_e16 (ovl12:064E is an affect handler (AffectHandlers shape, Affect and Mode not read): it raises ResistValue (TCharacter +hex 111) to at least 57, adds one to SaveRoll, and clears DamageAmount when ds681B is hex 0F); auto:entry_16"
+notes = "renamed from ovl12_e16 (ovl12:064E is an affect handler (AffectHandlers shape, Affect and Mode not read): it raises ArmourClassValue (TCharacter +hex 111) to at least 57, adds one to SaveRoll, and clears DamageAmount when ds681B is hex 0F); auto:entry_16"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2837,13 +2837,13 @@ id = "ovl12:07E0"
 unit = "ovl12"
 addr = "ovl12:07E0"
 size = 312
-name = "GiveAffectItem"
+name = "GiveSpiritualHammer"
 signature = ""
 c_name = "ovl12_e21"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_e21 (ovl12:07E0 is an affect handler (Who, Affect, Mode): on apply it gives Who an item of type $14 (NameNum $F3, Plus 1, Affects $17 and $89) unless Who has one or ItemCountC7 is $10 or more, shows 'Gains an item' (res12_fn_16EC) and on removal takes that item off Who's list (res12_fn_1509); Mode is read, Affect not); auto:entry_21"
+notes = "renamed from GiveAffectItem (handler of affect $17, the AffectId of Spiritual Hammer (SpellTable spell 28 [V]): gives the caster a +1 Hammer item (type $14) and takes it back when removed (ovl12:07E0) (P6 review of ovl12)); renamed from ovl12_e21 (ovl12:07E0 is an affect handler (Who, Affect, Mode): on apply it gives Who an item of type $14 (NameNum $F3, Plus 1, Affects $17 and $89) unless Who has one or ItemCountC7 is $10 or more, shows 'Gains an item' (res12_fn_16EC) and on removal takes that item off Who's list (res12_fn_1509); Mode is read, Affect not); auto:entry_21"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2851,13 +2851,13 @@ id = "ovl12:0918"
 unit = "ovl12"
 addr = "ovl12:0918"
 size = 47
-name = "LowerAttackRollByFour"
-signature = "procedure LowerAttackRollByFour(Who: PCharacter; Affect: PAffect; Mode: Byte)"
+name = "InvisibleTargetHardToHit"
+signature = "procedure InvisibleTargetHardToHit(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e22"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_e22 (ovl12:093C subtracts 4 from AttackRoll (sub byte [6822],4) on every call; the frame is the AffectHandlers shape (Who, Affect, Mode), none read; it sets ds681E only when res12_fn_2199(SelectedCharacter, $18) finds no affect (ovl12:0933..0937)); auto:entry_22"
+notes = "renamed from LowerAttackRollByFour (handler of affect $19, Invisibility (SpellTable spells 30 and 50 have AffectId $19 [V]): an attacker without Detect Invisibility ($18) sets HookVetoFlag and AttackRoll loses 4 (ovl12:0918) (P6 review of ovl12)); renamed from ovl12_e22 (ovl12:093C subtracts 4 from AttackRoll (sub byte [6822],4) on every call; the frame is the AffectHandlers shape (Who, Affect, Mode), none read; it sets ds681E only when res12_fn_2199(SelectedCharacter, $18) finds no affect (ovl12:0933..0937)); auto:entry_22"
 evidence = ["prologue"]
 
 [[routine]]
@@ -2941,7 +2941,7 @@ c_name = "ovl12_e28"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_e28 (ovl12:0BAC is an affect handler (AffectHandlers shape, Mode not read): it takes 4 off AttackRoll and SaveRoll and off Who's ResistValue (+$111) and Pad112[$112] (+$112, the byte CoughStopsCasting copies into ResistValue, ovl12:0A65); which affect runs it is not known yet); auto:entry_28"
+notes = "renamed from ovl12_e28 (ovl12:0BAC is an affect handler (AffectHandlers shape, Mode not read): it takes 4 off AttackRoll and SaveRoll and off Who's ArmourClassValue (+$111) and Pad112[$112] (+$112, the byte CoughStopsCasting copies into ArmourClassValue, ovl12:0A65); which affect runs it is not known yet); auto:entry_28"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3005,13 +3005,13 @@ id = "ovl12:0C4B"
 unit = "ovl12"
 addr = "ovl12:0C4B"
 size = 120
-name = "AgeCharacterOnce"
-signature = "procedure AgeCharacterOnce(Who: PCharacter; Affect: PAffect; Mode: Byte)"
+name = "ApplyHaste"
+signature = "procedure ApplyHaste(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e33"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_e33 (ovl12:0C4B is an affect handler (AffectHandlers shape, Mode not read): when the affect's Data bit 4 is clear it sets it, shows 'ages' on Who (res12_fn_16EC, colour 10, the message copied to a stack temporary as in StartTrainingWithManual) and adds one year to Who's Age (TCharacter +$30, the age in years, POOLVARS); it then doubles ds681A (shl 1) every time it runs; which affect runs it is not known yet); auto:entry_33"
+notes = "renamed from AgeCharacterOnce (handler of affect $27, Haste (SpellTable spell 48 [V]): ages the caster one year and doubles HookedMoveOrAttacks (ovl12:0C4B) (P6 review of ovl12)); renamed from ovl12_e33 (ovl12:0C4B is an affect handler (AffectHandlers shape, Mode not read): when the affect's Data bit 4 is clear it sets it, shows 'ages' on Who (res12_fn_16EC, colour 10, the message copied to a stack temporary as in StartTrainingWithManual) and adds one year to Who's Age (TCharacter +$30, the age in years, POOLVARS); it then doubles ds681A (shl 1) every time it runs; which affect runs it is not known yet); auto:entry_33"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3061,13 +3061,13 @@ id = "ovl12:1086"
 unit = "ovl12"
 addr = "ovl12:1086"
 size = 59
-name = "AvoidIfSelectedItemPlusZero"
-signature = "procedure AvoidIfSelectedItemPlusZero(Who: PCharacter; Affect: PAffect; Mode: Byte)"
+name = "ProtectFromNormalMissiles"
+signature = "procedure ProtectFromNormalMissiles(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e35"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_e35 (ovl12:1086 is an affect handler (AffectHandlers shape, nothing read): when FirstSlotItem of SelectedCharacter has Plus 0, Who avoids the attack in progress (AvoidDistantAttack with AlwaysAvoids); which affect runs it is not known); auto:entry_35"
+notes = "renamed from AvoidIfSelectedItemPlusZero (handler of affect $29, Protection From Normal Missiles (SpellTable spell 54 [V]): avoids a ranged attack when the attacker item has Plus 0 (ovl12:0FAC) (P6 review of ovl12)); renamed from ovl12_e35 (ovl12:1086 is an affect handler (AffectHandlers shape, nothing read): when FirstSlotItem of SelectedCharacter has Plus 0, Who avoids the attack in progress (AvoidDistantAttack with AlwaysAvoids); which affect runs it is not known); auto:entry_35"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3075,13 +3075,13 @@ id = "ovl12:10C1"
 unit = "ovl12"
 addr = "ovl12:10C1"
 size = 29
-name = "HalveAgeDoubling"
-signature = "procedure HalveAgeDoubling(Who: PCharacter; Affect: PAffect; Mode: Byte)"
+name = "ApplySlow"
+signature = "procedure ApplySlow(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e36"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_e36 (ovl12:10C1 halves ds681A, the byte AgeCharacterOnce (ovl12:0C4B) doubles every time it runs; affect handler (AffectHandlers shape, nothing read); which affect runs it is not known); auto:entry_36"
+notes = "renamed from HalveAgeDoubling (handler of affect $2A, Slow (SpellTable spell 55 [V]): halves HookedMoveOrAttacks (ovl12:10C1) (P6 review of ovl12)); renamed from ovl12_e36 (ovl12:10C1 halves ds681A, the byte AgeCharacterOnce (ovl12:0C4B) doubles every time it runs; affect handler (AffectHandlers shape, nothing read); which affect runs it is not known); auto:entry_36"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3109,7 +3109,7 @@ c_name = "ovl12_e38"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_e38 (ovl12:1168 gives Who the disease affect AffectCauseDisease ($2C, ovl15/ovl04 name it) for 10 rounds with Affect's Data, deals one point of damage when Flag11B is above 1, else gives nausea (AffectNausea) unless present); auto:entry_38"
+notes = "renamed from ovl12_e38 (ovl12:1168 gives Who the disease affect AffectCauseDisease ($2C, ovl15/ovl04 name it) for 10 rounds with Affect's Data, deals one point of damage when HpCurrent is above 1, else gives nausea (AffectNausea) unless present); auto:entry_38"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3215,13 +3215,13 @@ id = "ovl12:1363"
 unit = "ovl12"
 addr = "ovl12:1363"
 size = 54
-name = "GiveLowerAttackRollAffect"
-signature = "procedure GiveLowerAttackRollAffect(Who: PCharacter; Affect: PAffect; Mode: Byte)"
+name = "GiveInvisibilityForOneRound"
+signature = "procedure GiveInvisibilityForOneRound(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e46"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_e46 (AddAffect of AffectLowerAttackRollByFour on Who for its fixed duration and data, no remove handler; handler of affect $38 (ovl12:1363)); auto:entry_46"
+notes = "renamed from GiveLowerAttackRollAffect (AddAffect of $19 Invisibility for 1 round with Data $0C; handler of affect $38 (ovl12:1363) (P6 review of ovl12)); renamed from ovl12_e46 (AddAffect of AffectLowerAttackRollByFour on Who for its fixed duration and data, no remove handler; handler of affect $38 (ovl12:1363)); auto:entry_46"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3425,13 +3425,13 @@ id = "ovl12:171F"
 unit = "ovl12"
 addr = "ovl12:171F"
 size = 17
-name = "SetFlagAndLowerAttackRollByFour"
-signature = "procedure SetFlagAndLowerAttackRollByFour(Who: PCharacter; Affect: PAffect; Mode: Byte)"
+name = "InvisibleTargetCannotBeTargeted"
+signature = "procedure InvisibleTargetCannotBeTargeted(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e59"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_e59 (affect handler at ovl12:171F: ds681E := 1, then Dec(AttackRoll, AttackPenalty) with no res12_fn_2199 test; the unconditional form of LowerAttackRollByFour (ovl12:0918)); auto:entry_59"
+notes = "renamed from SetFlagAndLowerAttackRollByFour (handler of affect $47, Invisible in ovl15 DisplaySpellEffects: sets HookVetoFlag and takes 4 off AttackRoll without the Detect Invisibility test (ovl12:171F) (P6 review of ovl12)); renamed from ovl12_e59 (affect handler at ovl12:171F: ds681E := 1, then Dec(AttackRoll, AttackPenalty) with no res12_fn_2199 test; the unconditional form of LowerAttackRollByFour (ovl12:0918)); auto:entry_59"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3439,13 +3439,13 @@ id = "ovl12:1730"
 unit = "ovl12"
 addr = "ovl12:1730"
 size = 63
-name = "RollToGiveLowerAttackRollAffect"
-signature = "procedure RollToGiveLowerAttackRollAffect(Who: PCharacter; Affect: PAffect; Mode: Byte)"
+name = "CamouflageGivesInvisibility"
+signature = "procedure CamouflageGivesInvisibility(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e60"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_e60 (gives Who AffectLowerAttackRollByFour when 1d100 is at or below its chance, as GiveLowerAttackRollAffect does without the roll; handler of affect $48 (ovl12:1730)); auto:entry_60"
+notes = "renamed from RollToGiveLowerAttackRollAffect (handler of affect $48, shown as Camouflaged by ovl15 DisplaySpellEffects: gives $19 Invisibility 95 times in 100 (carried by the 6TH LVL THIEF, MON5SPC block 93) (ovl12:1730) (P6 review of ovl12)); renamed from ovl12_e60 (gives Who AffectLowerAttackRollByFour when 1d100 is at or below its chance, as GiveLowerAttackRollAffect does without the roll; handler of affect $48 (ovl12:1730)); auto:entry_60"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3501,7 +3501,7 @@ c_name = "ovl12_e64"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_e64 (ovl12:19D9 calls ReviveCombatant (ovl24:1869) on Who at Flag11B and, when that returns False, gives Who the revival affect 4E (AffectRevival, ovl24:175D) for one round with Affect's Data through TryAddAffect); auto:entry_64"
+notes = "renamed from ovl12_e64 (ovl12:19D9 calls ReviveCombatant (ovl24:1869) on Who at HpCurrent and, when that returns False, gives Who the revival affect 4E (AffectRevival, ovl24:175D) for one round with Affect's Data through TryAddAffect); auto:entry_64"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3677,13 +3677,13 @@ id = "ovl12:24D9"
 unit = "ovl12"
 addr = "ovl12:24D9"
 size = 125
-name = "AddConstitutionSaveBonus"
-signature = "procedure AddConstitutionSaveBonus(Who: PCharacter; Affect: PAffect; Mode: Byte)"
+name = "DwarfHalflingPoisonSaveBonus"
+signature = "procedure DwarfHalflingPoisonSaveBonus(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e75"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_e75 (ovl12:24D9 adds to SaveRoll a bonus from Who's Constitution (TCharacter +$14, POOLVARS: 1 for 4..6 up to 5 for 18..20), only when SaveKind is 0 (the first save, SaveKindPoison [I])); auto:entry_75"
+notes = "renamed from AddConstitutionSaveBonus (handler of affect $5A, given to dwarves and halflings (OVL16:513..530): a Constitution bonus on the poison save (kind 0) (ovl12:24D9) [I rule] (P6 review of ovl12)); renamed from ovl12_e75 (ovl12:24D9 adds to SaveRoll a bonus from Who's Constitution (TCharacter +$14, POOLVARS: 1 for 4..6 up to 5 for 18..20), only when SaveKind is 0 (the first save, SaveKindPoison [I])); auto:entry_75"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3691,13 +3691,13 @@ id = "ovl12:2556"
 unit = "ovl12"
 addr = "ovl12:2556"
 size = 76
-name = "CancelDamageOfSpellOrElectricity"
-signature = "procedure CancelDamageOfSpellOrElectricity(Who: PCharacter; Affect: PAffect; Mode: Byte)"
+name = "ImmuneToMagicMissileAndElectricity"
+signature = "procedure ImmuneToMagicMissileAndElectricity(Who: PCharacter; Affect: PAffect; Mode: Byte)"
 c_name = "ovl12_e76"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_e76 (cancels the pending damage hook (with 'is unaffected' when CastingSpell is ClearDamageValue) or when the damage is electricity; handler of affect $5B (ovl12:2556)); auto:entry_76"
+notes = "renamed from CancelDamageOfSpellOrElectricity (handler of affect $5B carried by the JUJU ZOMBIE: cancels damage of the Magic Missile spell (15) and of electricity (ovl12:2556) (P6 review of ovl12)); renamed from ovl12_e76 (cancels the pending damage hook (with 'is unaffected' when CastingSpell is ClearDamageValue) or when the damage is electricity; handler of affect $5B (ovl12:2556)); auto:entry_76"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3761,13 +3761,13 @@ id = "ovl12:268A"
 unit = "ovl12"
 addr = "ovl12:268A"
 size = 118
-name = "AddConstitutionSaveBonusKind2Or4"
+name = "DwarfGnomeHalflingWandSpellSaveBonus"
 signature = ""
 c_name = "ovl12_e81"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_e81 (ovl12:268A adds the Constitution bonus of AddConstitutionSaveBonus (ovl12:24D9) to SaveRoll when SaveKind is 2 or 4 (4 is the fear save [I]); matched [V]); auto:entry_81"
+notes = "renamed from AddConstitutionSaveBonusKind2Or4 (handler of affect $61, given to dwarves, gnomes and halflings (OVL16): the Constitution bonus on the rod/staff/wand (2) and spell (4) saves (ovl12) [I rule] (P6 review of ovl12)); renamed from ovl12_e81 (ovl12:268A adds the Constitution bonus of AddConstitutionSaveBonus (ovl12:24D9) to SaveRoll when SaveKind is 2 or 4 (4 is the fear save [I]); matched [V]); auto:entry_81"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3781,7 +3781,7 @@ c_name = "ovl12_e82"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_e82 (ovl12:2700 adds RegainedHitPoints (3) to Flag11B, the current hit points (TCharacter +$11B), and caps it at HpMax (+$32); AffectHandlers shape, Affect and Mode not read); auto:entry_82"
+notes = "renamed from ovl12_e82 (ovl12:2700 adds RegainedHitPoints (3) to HpCurrent, the current hit points (TCharacter +$11B), and caps it at HpMax (+$32); AffectHandlers shape, Affect and Mode not read); auto:entry_82"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3873,13 +3873,13 @@ id = "ovl12:2915"
 unit = "ovl12"
 addr = "ovl12:2915"
 size = 97
-name = "CancelHookOnChance"
+name = "RollMagicResistance"
 signature = ""
 c_name = "ovl12_fn_2915"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_fn_2915 (ovl12:2915 (callers ovl12:2976 and 2984): with a hook offered (HookAffectId) or magic damage (DamageKind bit 8), a 1d100 roll at or below Chance less 5 for each point that res12_fn_26C2 of ds681B falls short of 11 cancels the hook (CancelPendingHook 0)); auto:near_call"
+notes = "renamed from CancelHookOnChance (the hook cancel with a percent chance reduced by the caster level of CastingSpell, the AD&D magic resistance rule [I]; used by affects $69 (50) and $6A (15) (ovl12:2915) (P6 review of ovl12)); renamed from ovl12_fn_2915 (ovl12:2915 (callers ovl12:2976 and 2984): with a hook offered (HookAffectId) or magic damage (DamageKind bit 8), a 1d100 roll at or below Chance less 5 for each point that res12_fn_26C2 of ds681B falls short of 11 cancels the hook (CancelPendingHook 0)); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3915,13 +3915,13 @@ id = "ovl12:2992"
 unit = "ovl12"
 addr = "ovl12:2992"
 size = 36
-name = "CancelCharmAndUnknown35HighChance"
+name = "ElfResistsCharmAndSleep"
 signature = ""
 c_name = "ovl12_e91"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_e91 (ovl12:2992 is an affect handler (AffectHandlers shape, nothing read): a 1d100 roll at or below 90 cancels the offered hooks of affect $35 and of the charm (affect $0B) (CancelPendingHook); which affect runs it is not known); auto:entry_91"
+notes = "renamed from CancelCharmAndUnknown35HighChance (handler of affect $6B given to elves (OVL16 CreateCharacter): 90 percent to cancel the charm and sleep (Sleep is AffectId $35 [V]) hooks (ovl12:2992) (P6 review of ovl12)); renamed from ovl12_e91 (ovl12:2992 is an affect handler (AffectHandlers shape, nothing read): a 1d100 roll at or below 90 cancels the offered hooks of affect $35 and of the charm (affect $0B) (CancelPendingHook); which affect runs it is not known); auto:entry_91"
 evidence = ["prologue"]
 
 [[routine]]
@@ -3929,13 +3929,13 @@ id = "ovl12:29B6"
 unit = "ovl12"
 addr = "ovl12:29B6"
 size = 21
-name = "CancelCharmAndUnknown35"
+name = "ImmuneToCharmAndSleep"
 signature = ""
 c_name = "ovl12_e92"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_e92 (ovl12:29B6 is an affect handler (AffectHandlers shape, nothing read) that cancels the offered hooks of the charm (affect $0B) and of affect $35 (CancelPendingHook) without a roll; which affect runs it is not known); auto:entry_92"
+notes = "renamed from CancelCharmAndUnknown35 (handler of affect $6C carried by GHOUL, SPECTRE, WIGHT, WRAITH and FERRAN MARTINEZ (MON*SPC): always cancels the charm and sleep hooks (ovl12:29B6) (P6 review of ovl12)); renamed from ovl12_e92 (ovl12:29B6 is an affect handler (AffectHandlers shape, nothing read) that cancels the offered hooks of the charm (affect $0B) and of affect $35 (CancelPendingHook) without a roll; which affect runs it is not known); auto:entry_92"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4153,13 +4153,13 @@ id = "ovl12:2DE4"
 unit = "ovl12"
 addr = "ovl12:2DE4"
 size = 36
-name = "CancelCharmAndUnknown35ModerateChance"
+name = "HalfElfResistsCharmAndSleep"
 signature = ""
 c_name = "ovl12_e108"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_e108 (ovl12:2DE4 cancels the hooks of the charm (AffectCharm) and of AffectUnknown35 when a 1d100 roll is at or below 30; the sibling of CancelCharmAndUnknown35HighChance (ovl12:2992, 90), no direct caller); auto:entry_108"
+notes = "renamed from CancelCharmAndUnknown35ModerateChance (handler of affect $7C given to half-elves (OVL16 CreateCharacter): 30 percent to cancel the charm and sleep hooks (ovl12:2DE4) (P6 review of ovl12)); renamed from ovl12_e108 (ovl12:2DE4 cancels the hooks of the charm (AffectCharm) and of AffectUnknown35 when a 1d100 roll is at or below 30; the sibling of CancelCharmAndUnknown35HighChance (ovl12:2992, 90), no direct caller); auto:entry_108"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4167,13 +4167,13 @@ id = "ovl12:2E08"
 unit = "ovl12"
 addr = "ovl12:2E08"
 size = 47
-name = "CancelCharmUnknown35PoisonAndParalysisHooks"
+name = "ImmuneToCharmSleepHoldAndPoison"
 signature = ""
 c_name = "ovl12_e109"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_e109 (ovl12:2E08 cancels the hooks of affects /bin/zshB (charm), , (paralysis) and (poison) with CancelPendingHook, then sets SaveRoll to AlwaysSaves when SaveKind is the poison save (SaveKind 0)); auto:entry_109"
+notes = "renamed from CancelCharmUnknown35PoisonAndParalysisHooks (handler of affect $7D carried by SKELETON, GIANT SKELETON, ZOMBIE, JUJU ZOMBIE, MUMMY and VAMPIRE (MON4SPC): cancels the charm, sleep, paralysis and poison hooks (ovl12:2E08) (P6 review of ovl12)); renamed from ovl12_e109 (ovl12:2E08 cancels the hooks of affects /bin/zshB (charm), , (paralysis) and (poison) with CancelPendingHook, then sets SaveRoll to AlwaysSaves when SaveKind is the poison save (SaveKind 0)); auto:entry_109"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4181,13 +4181,13 @@ id = "ovl12:2E37"
 unit = "ovl12"
 addr = "ovl12:2E37"
 size = 163
-name = "SetFlagIfTargetReflects"
+name = "VetoTargetWithMirrorOrWoodenHolySymbol"
 signature = ""
 c_name = "ovl12_e110"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_e110 (ovl12:2E37 walks the readied items (+$34) of AttackTarget and sets ds681E when one of their names is ReflectingNameNum $76 (the item that turns a gaze back, GazeStonesTarget ovl12:1CAD)); auto:entry_110"
+notes = "renamed from SetFlagIfTargetReflects (handler of affect $7E carried by the VAMPIRE (MON4SPC 23 and 105): sets HookVetoFlag when the target has readied a Mirror (NameNum $76) or a Wooden Holy Symbol (NameNum $98 and $FC) (ovl12:2E37) (P6 review of ovl12)); renamed from ovl12_e110 (ovl12:2E37 walks the readied items (+$34) of AttackTarget and sets ds681E when one of their names is ReflectingNameNum $76 (the item that turns a gaze back, GazeStonesTarget ovl12:1CAD)); auto:entry_110"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4223,13 +4223,13 @@ id = "ovl12:30A5"
 unit = "ovl12"
 addr = "ovl12:30A5"
 size = 143
-name = "DamageUnlessAlignmentMatches"
+name = "AlignmentBoundWeaponHurtsOthers"
 signature = ""
 c_name = "ovl12_e113"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_e113 (reads Affect as a character; deals the high nibble of its damage byte to Who as magic damage unless the low nibble equals Who's ByteA0 (the alignment) (ovl12:30A5, QUIRK noted there)); auto:entry_113"
+notes = "renamed from DamageUnlessAlignmentMatches (item handler of affect $84 (ReadyItem ovl19:571, 607 passes the item as Affect): unreadies the item and deals the high nibble of its Affects[2] when the low nibble differs from the wielder's Alignment; ScoreItem tests the same nibble (ovl09:128D) (P6 review of ovl12)); renamed from ovl12_e113 (reads Affect as a character; deals the high nibble of its damage byte to Who as magic damage unless the low nibble equals Who's ByteA0 (the alignment) (ovl12:30A5, QUIRK noted there)); auto:entry_113"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4237,13 +4237,13 @@ id = "ovl12:3134"
 unit = "ovl12"
 addr = "ovl12:3134"
 size = 70
-name = "ShowMustHaveGiantStrength"
+name = "RequireGiantStrength"
 signature = ""
 c_name = "ovl12_e114"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_e114 (ovl12:3134 shows 'Must have Giant Strength' (res12_fn_1693 with the literal) when Who's Strength is below 19; the handler's own effect is that message); auto:entry_114"
+notes = "renamed from ShowMustHaveGiantStrength (item handler of affect $87: unreadies the item and shows 'Must have Giant Strength' when Strength is below 19 (ovl12:3134; P6 review of ovl12)); renamed from ovl12_e114 (ovl12:3134 shows 'Must have Giant Strength' (res12_fn_1693 with the literal) when Who's Strength is below 19; the handler's own effect is that message); auto:entry_114"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4251,13 +4251,13 @@ id = "ovl12:317A"
 unit = "ovl12"
 addr = "ovl12:317A"
 size = 33
-name = "RemoveAffect17WhenRemoved"
+name = "EndSpiritualHammerWhenHammerRemoved"
 signature = ""
 c_name = "ovl12_e115"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, 07cf80d"
 justification = ""
-notes = "renamed from ovl12_e115 (ovl12:317A calls RemoveAffect(Who, $17, nil) only when Mode is not 0, the removal of the affect (table entry 137, affect $89)); auto:entry_115"
+notes = "renamed from RemoveAffect17WhenRemoved (affect $89, the Spiritual Hammer item own affect (OVL13 NoLootCopyAffect): when the hammer leaves the character the spell affect $17 is removed (ovl12:317A) (P6 review of ovl12)); renamed from ovl12_e115 (ovl12:317A calls RemoveAffect(Who, $17, nil) only when Mode is not 0, the removal of the affect (table entry 137, affect $89)); auto:entry_115"
 evidence = ["prologue"]
 
 [[routine]]
@@ -4621,7 +4621,7 @@ c_name = "ovl13_fn_2574"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, cdb1a6c"
 justification = ""
-notes = "renamed from ovl13_fn_2574 (ovl13:2574 returns True when Who's attack on Target is a thief backstab: thief level (ClassLevels[6]) above 0, a backstab-capable readied weapon and an allowed slot-2 item, Target attacked (Combat^.BF above 1) and facing Who (BearingTo(Who,Target)=IconSet); RollAttackDamage applies the thief damage multiplier and ResolveCombatantAttacks uses ds112-2 and attack kind 2); auto:near_call"
+notes = "renamed from ovl13_fn_2574 (ovl13:2574 returns True when Who's attack on Target is a thief backstab: thief level (ClassLevels[6]) above 0, a backstab-capable readied weapon and an allowed slot-2 item, Target attacked (Combat^.BF above 1) and facing Who (BearingTo(Who,Target)=IconSet); RollAttackDamage applies the thief damage multiplier and ResolveCombatantAttacks uses RearArmourClassValue-2 and attack kind 2); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -13164,7 +13164,7 @@ c_name = "res12_fn_0973"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, c87fa04"
 justification = ""
-notes = "renamed from res12_fn_0973 (00BA:0973 draws a character's current hit points (Flag11B +11Bh) in a range colour at (Col,Row); called by res12_fn_0767 and res12_fn_09E3); auto:near_call"
+notes = "renamed from res12_fn_0973 (00BA:0973 draws a character's current hit points (HpCurrent +11Bh) in a range colour at (Col,Row); called by res12_fn_0767 and res12_fn_09E3); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -13276,7 +13276,7 @@ c_name = "res12_fn_1168"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, c87fa04"
 justification = ""
-notes = "renamed from res12_fn_1168 (00BA:1168: ApplyWeaponBonuses (00BA:0000) adds it to Who^.HitAdjust for a weapon whose RaceRow attack flags have bit 2 (WeaponFlagDexToHit); the sibling DexterityAdjustment (00BA:10E6) is the defensive one summed into ResistValue. Both map Dexterity (+0x13).); auto:near_call"
+notes = "renamed from res12_fn_1168 (00BA:1168: ApplyWeaponBonuses (00BA:0000) adds it to Who^.HitAdjust for a weapon whose RaceRow attack flags have bit 2 (WeaponFlagDexToHit); the sibling DexterityAdjustment (00BA:10E6) is the defensive one summed into ArmourClassValue. Both map Dexterity (+0x13).); auto:near_call"
 evidence = ["prologue"]
 
 [[routine]]
@@ -13439,7 +13439,7 @@ unit = "res12"
 addr = "00BA:1892"
 size = 332
 name = "CopyPictureItem"
-signature = "procedure CopyPictureItem(PicIndex, Half, Row, Mirror: Byte)"
+signature = "procedure CopyPictureItem(PicIndex, Half, ItemIndex, Mirror: Byte)"
 c_name = "res12_fn_1892"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, c87fa04"
@@ -13481,7 +13481,7 @@ unit = "res12"
 addr = "00BA:1FEB"
 size = 430
 name = "ShowHitMessage"
-signature = "procedure ShowHitMessage(Who: Pointer; Flag: Byte; Text: String40)"
+signature = "procedure ShowHitMessage(Who: Pointer; AffectMessage: Byte; Text: String40)"
 c_name = "res12_fn_1FEB"
 level = "L2"
 review = "passed 2026-10-14 by rev-sonnet, c87fa04"

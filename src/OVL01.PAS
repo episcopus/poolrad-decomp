@@ -111,7 +111,7 @@ begin
     ReleasePicture(Pic);
     Deadline := GameClock + 500;
     repeat
-      if VideoAdapter = 1 then
+      if VideoAdapter = AdapterEga then
       begin
         Inc(Total, Random(4));
         if Total > 50000 then

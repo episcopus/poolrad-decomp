@@ -61,7 +61,7 @@ begin
   end;
   FreeMem(CombatMap, CombatMapSize);
   CombatMap := nil;
-  ReleasePicture(CombatPicture);
+  ReleasePicture(CombatAnimationPicture);
   RestorePaletteColors0And8;
   SpellPickerPointer := @ChooseSpellTargets;
 end;
@@ -91,7 +91,7 @@ begin
       StartCombatantRound(Who);
       Who := Who^.Next;
     end;
-    GameVars2^[VarCombatWord715] := 0;
+    GameVars2^[VarSurpriseSides] := 0;
     PickNextCombatant(Who);
     while Who <> nil do
     begin

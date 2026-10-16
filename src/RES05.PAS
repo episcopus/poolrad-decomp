@@ -80,13 +80,13 @@ begin
   Regs.AH := BiosWriteChar;
   Regs.AL := Ord(Ch);
   Regs.BH := TextPage;
-  if VideoAdapter = 0 then
+  if VideoAdapter = AdapterCga then
     Regs.BL := TextColorMap4[Color]
   else
     Regs.BL := Color;
   Regs.CX := Count;
   Intr(BiosVideo, Regs);
-  if VideoAdapter = 1 then
+  if VideoAdapter = AdapterEga then
   begin
     Regs.AH := BiosSetCursor;
     Regs.BH := FillTextPage;

@@ -79,7 +79,7 @@ type
     array so a loop can index them by ability (ModifyCharacter's cursor, CreateCharacter's rolls). The
     offsets match TCharacter's
     (whitepaper 4.2.5): +$10 the scores, +$16 StrengthPercent, +$2E Race, +$2F ClassMask,
-    +$32 HpMax, +$85 HirelingShare, +$96 ClassLevels, +$9E B9E, +$B2 SpellSlots, +$11B Flag11B
+    +$32 HpMax, +$85 HirelingShare, +$96 ClassLevels, +$9E Sex, +$B2 SpellSlots, +$11B HpCurrent
     (the current hit points). }
   PScoredCharacter = ^TScoredCharacter;
   TScoredCharacter = record
@@ -96,12 +96,12 @@ type
     HirelingShare: Byte;                    { +$85 }
     Pad86: array[$86..$95] of Byte;
     ClassLevels: array[0..7] of ShortInt;   { +$96..+$9D }
-    B9E: ShortInt;                          { +$9E }
+    Sex: ShortInt;                          { +$9E }
     Pad9F: Byte;                            { +$9F }
     PadA0: array[$A0..$B1] of Byte;
     SpellSlots: array[0..1, 1..3] of Byte;  { +$B2..+$B7 }
     PadB8: array[$B8..$11A] of Byte;
-    Flag11B: Byte;                          { +$11B: the current hit points }
+    HpCurrent: Byte;                          { +$11B: the current hit points }
   end;
 
 { ovl16:0000. Frees a character and everything it owns: its combat state (Combat, size $16), its
@@ -134,7 +134,7 @@ begin
     begin
       CurAffect := NextAffect;
       NextAffect := NextAffect^.Next;
-      FreeMem(CurAffect, AffectSize);
+      FreeMem(CurAffect, AffectRecordSize);
     end;
   end;
   FreeMem(Who, CharacterSize);
@@ -153,7 +153,8 @@ end;
   V view (ViewSelectedCharacter), A add (AddSavedCharacters), R remove (SaveCharacter then
   RemoveSelectedCharacter), L load (LoadGame), S save (SaveGame), B BEGIN Adventuring (it needs a
   non-empty party, PartyListHead, and stores the view mode Mode 4 in ViewMode before it leaves), E exit
-  (AskYesNo, then save and QuitGame), J the STING cheat. An extended key G or O selects another
+  (AskYesNo, then save and QuitGame), J the STING cheat (only when the game was started with the argument STING:
+  ParamStr(1) = 'STING'). An extended key G or O selects another
   party member (UpdateSelectedCharacter); every other key (all except E and S) clears the heap
   retry gate HeapErrorStop, and E and S leave it alone: the E path's SaveGame retry loop reads HeapErrorStop to
   end the retry (POOLVARS). Mode (4) is the value stored in the view mode ViewMode on B. Local at
@@ -314,8 +315,9 @@ begin
 end;
 { ovl16:056C. The C (Create) function of the training hall, called by RunCharacterMenu (ovl16:0161). It
   builds a new party member and saves it. The record is allocated (GetMem and FillChar, 285 bytes)
-  with its starting values: the six figure colour pairs from FigureColorSlots, magic resistance 50, THAC0 40,
-  Flag10D set (it takes part in combat and earns experience), picture banks 1 and 1 and a random BAB.
+  with its starting values: the six figure colour pairs from FigureColorSlots, armour class value 50 (AC 10), a to-hit base of
+  40 that the class levels then replace (see Thac0),
+  Flag10D set (it takes part in combat and earns experience), picture banks 1 and 1 and a random RandomTag.
   Four list menus follow in the window (1,2)..($26,$16), each a ChooseFromList with the title line
   'Pick Race', 'Pick Gender', 'Pick Class' or 'Pick Alignment' and the choices indented by two
   blanks; Enter picks, Escape (#0) leaves the whole routine:
@@ -324,7 +326,7 @@ end;
     Dwarf, Gnome and Halfling, 2 otherwise) and gives permanent racial affects through AddAffect
     (Duration 0, Data $FF, Flag 0): Dwarf $5A $61 $1A $2F, Gnome $61 $12 $2F $30, Halfling $5A $61,
     Elf $6B, Half-Elf $7C, Human none.
-  - Gender: Male or Female (SexNames), stored as the zero-based choice in B9E.
+  - Gender: Male or Female (SexNames), stored as the zero-based choice in Sex.
   - Class: the row of the race in RaceClassChoices lists the classes it may pick; the chosen ClassMask gets
     level 1 in each class it combines (ClassLevels, a multi-class mask such as 8 Cleric/Fighter sets
     several), then ComputeThiefSkills for a thief, THAC0 (the highest ClassThac0Table entry), the
@@ -361,9 +363,11 @@ end;
 procedure CreateCharacter;
 const
   StartFigureCount = 6;         { Figure[1..6]: the six colour pairs of the character icon }
-  StartResist = 50;             { ResistBase }
-  StartThac0 = 40;              { Thac0 before the class levels lower it }
-  HumanRace = 7;                { RaceNames[7] }
+  StartResist = 50;             { BaseArmourClassValue }
+  StartThac0 = 40;              { the starting Thac0 byte; CreateCharacter sets it to 0 and takes the highest
+    ClassThac0Table entry
+                                  (ovl16:641..646), so the class levels replace it: the byte is a to-hit base (the
+                                  sheet shows 60 minus it [I]) }
   MenuRaceLines = 7;            { NewMenuList's count: the title line and the six races }
   MenuGenderLines = 3;          { the title line and two genders }
   FirstRaceLine = 1;
@@ -387,21 +391,21 @@ const
   { The permanent affects the race gives (AddAffect Duration 0, Data $FF, Flag 0). The saving-throw
     hooks (RunAffectHooks kind $C, ovl24:02FA) run $5A and $61, the hooks of kind $A (the attacker of
     a roll) $12 and $1A, kind $10 (the target of a roll) $2F and $30, kind 9 (a new affect)
-    $6B and $7C; what each does is not read yet [?]. }
-  AffectSaveHookA = $5A;
-  AffectSaveHookB = $61;
-  AffectAttackHookA = $1A;
-  AffectAttackHookB = $12;
-  AffectTargetHookA = $2F;
-  AffectTargetHookB = $30;
-  AffectNewAffectElf = $6B;
-  AffectNewAffectHalfElf = $7C;
+    $6B and $7C. The handlers are in ovl12 [V]: $5A a Constitution bonus on the poison save (dwarf, halfling), $61 the same
+    bonus on the wand and spell saves (dwarf, gnome, halfling), $1A +1 attack against OrcGoblinHobgoblinNames (dwarf), $12 the
+    same against KoboldGoblinNames (gnome), $2F attackers named in OgreTrollGiantNames lose AttackPenalty (dwarf, gnome), $30
+    attackers named BUGBEAR or GNOLL lose it (gnome), $6B 90 percent and $7C 30 percent to cancel a charm or sleep hook (elf,
+    half-elf). The AD&D racial rules behind them are [H]. }
+  AffectPoisonSaveConBonus = $5A;
+  AffectSaveConBonusKind2Or4 = $61;
+  AffectBonusVsOrcGoblin = $1A;
+  AffectBonusVsKoboldGoblin = $12;
+  AffectGiantsAttackPenalty = $2F;
+  AffectGnollBugbearAttackPenalty = $30;
+  AffectElfCharmSleepResistance = $6B;
+  AffectHalfElfCharmSleepResistance = $7C;
   DataFF = $FF;
-  FighterFigure = 1;            { Figure[0] for the Dwarf, Gnome and Halfling }
-  OtherFigure = 2;              { Figure[0] for the others }
   { The class numbers (ClassLevels index, ClassNames order) and the multi-class ClassMask values. }
-  RangerClass = 4;
-  MageClass = 5;
   ClassTypeCount = 8;
   ClericFighter = 8;
   ClericFighterMage = 9;
@@ -435,8 +439,6 @@ const
   SpellReadMagic = $12;
   SpellShield = $13;
   SpellSleep = $15;
-  SpellCount = $38;             { the spells of SpellTable }
-  KeepAnswer = 'Y';
   NameMaxLength = $F;           { TCharacter.Name is string[15] }
 var
   NewCharacter: PCharacter;     { [bp-4]: the working copy of the character being created }
@@ -467,26 +469,26 @@ begin
   begin
     for I := 1 to StartFigureCount do
       Figure[I] := FigureColorSlots[I] + (FigureColorSlots[I] + 8) * 16;
-    ResistBase := StartResist;
+    BaseArmourClassValue := StartResist;
     Thac0 := StartThac0;
     Status := 0;
     Flag10D := 1;
     HeadBank := 1;
     BodyBank := 1;
     CombatSize := 1;
-    BAB := Random(256);
+    RandomTag := Random(256);
   end;
   NewMenuList(MenuRaceLines, MenuList);
   MenuList^.Flag29 := 1;
   MenuList^.Text := 'Pick Race';
-  for RaceIndex := 1 to HumanRace do
+  for RaceIndex := 1 to RaceHuman do
     case RaceIndex of
       FirstRaceLine..LastMenuRace:
         begin
           PickedLine := GetMenuLine(RaceIndex, MenuList);
           PickedLine^.Text := '  ' + RaceNames[RaceIndex];
         end;
-      HumanRace:
+      RaceHuman:
         begin
           PickedLine := GetMenuLine(RaceIndex - 1, MenuList);
           PickedLine^.Text := '  ' + RaceNames[RaceIndex];
@@ -509,38 +511,38 @@ begin
     case Race of
       RaceHalfling:
         begin
-          Figure[0] := FighterFigure;
-          AddAffect(NewCharacter, AffectSaveHookA, PermanentDuration, DataFF, NoRemoveHandler);
-          AddAffect(NewCharacter, AffectSaveHookB, PermanentDuration, DataFF, NoRemoveHandler);
+          Figure[0] := IconSizeSmall;
+          AddAffect(NewCharacter, AffectPoisonSaveConBonus, PermanentDuration, DataFF, NoRemoveHandler);
+          AddAffect(NewCharacter, AffectSaveConBonusKind2Or4, PermanentDuration, DataFF, NoRemoveHandler);
         end;
       RaceDwarf:
         begin
-          Figure[0] := FighterFigure;
-          AddAffect(NewCharacter, AffectSaveHookA, PermanentDuration, DataFF, NoRemoveHandler);
-          AddAffect(NewCharacter, AffectSaveHookB, PermanentDuration, DataFF, NoRemoveHandler);
-          AddAffect(NewCharacter, AffectAttackHookA, PermanentDuration, DataFF, NoRemoveHandler);
-          AddAffect(NewCharacter, AffectTargetHookA, PermanentDuration, DataFF, NoRemoveHandler);
+          Figure[0] := IconSizeSmall;
+          AddAffect(NewCharacter, AffectPoisonSaveConBonus, PermanentDuration, DataFF, NoRemoveHandler);
+          AddAffect(NewCharacter, AffectSaveConBonusKind2Or4, PermanentDuration, DataFF, NoRemoveHandler);
+          AddAffect(NewCharacter, AffectBonusVsOrcGoblin, PermanentDuration, DataFF, NoRemoveHandler);
+          AddAffect(NewCharacter, AffectGiantsAttackPenalty, PermanentDuration, DataFF, NoRemoveHandler);
         end;
       RaceGnome:
         begin
-          Figure[0] := FighterFigure;
-          AddAffect(NewCharacter, AffectSaveHookB, PermanentDuration, DataFF, NoRemoveHandler);
-          AddAffect(NewCharacter, AffectAttackHookB, PermanentDuration, DataFF, NoRemoveHandler);
-          AddAffect(NewCharacter, AffectTargetHookA, PermanentDuration, DataFF, NoRemoveHandler);
-          AddAffect(NewCharacter, AffectTargetHookB, PermanentDuration, DataFF, NoRemoveHandler);
+          Figure[0] := IconSizeSmall;
+          AddAffect(NewCharacter, AffectSaveConBonusKind2Or4, PermanentDuration, DataFF, NoRemoveHandler);
+          AddAffect(NewCharacter, AffectBonusVsKoboldGoblin, PermanentDuration, DataFF, NoRemoveHandler);
+          AddAffect(NewCharacter, AffectGiantsAttackPenalty, PermanentDuration, DataFF, NoRemoveHandler);
+          AddAffect(NewCharacter, AffectGnollBugbearAttackPenalty, PermanentDuration, DataFF, NoRemoveHandler);
         end;
       RaceElf:
         begin
-          Figure[0] := OtherFigure;
-          AddAffect(NewCharacter, AffectNewAffectElf, PermanentDuration, DataFF, NoRemoveHandler);
+          Figure[0] := IconSizeLarge;
+          AddAffect(NewCharacter, AffectElfCharmSleepResistance, PermanentDuration, DataFF, NoRemoveHandler);
         end;
       RaceHalfElf:
         begin
-          Figure[0] := OtherFigure;
-          AddAffect(NewCharacter, AffectNewAffectHalfElf, PermanentDuration, DataFF, NoRemoveHandler);
+          Figure[0] := IconSizeLarge;
+          AddAffect(NewCharacter, AffectHalfElfCharmSleepResistance, PermanentDuration, DataFF, NoRemoveHandler);
         end;
     else
-      Figure[0] := OtherFigure;
+      Figure[0] := IconSizeLarge;
     end;
   end;
   FreeMenuList(MenuList);
@@ -561,7 +563,7 @@ begin
       MenuTopRow, MenuRightCol, MenuBottomRow, MenuList, WithExit, Redraw, Choice, PickedLine);
     if Key = KeyEscape then Exit;
   until Key = KeyEnter;
-  NewCharacter^.B9E := Choice - 1;
+  NewCharacter^.Sex := Choice - 1;
   FreeMenuList(MenuList);
   ChoiceCount := RaceClassChoices[NewCharacter^.Race, 0];
   NewMenuList(ChoiceCount + 1, MenuList);
@@ -596,17 +598,17 @@ begin
         begin
           ClassLevels[ClassCleric] := 1;
           ClassLevels[ClassFighter] := 1;
-          ClassLevels[MageClass] := 1;
+          ClassLevels[ClassMagicUser] := 1;
         end;
       ClericRanger:
         begin
           ClassLevels[ClassCleric] := 1;
-          ClassLevels[RangerClass] := 1;
+          ClassLevels[ClassRanger] := 1;
         end;
       ClericMage:
         begin
           ClassLevels[ClassCleric] := 1;
-          ClassLevels[MageClass] := 1;
+          ClassLevels[ClassMagicUser] := 1;
         end;
       ClericThief:
         begin
@@ -616,7 +618,7 @@ begin
       FighterMage:
         begin
           ClassLevels[ClassFighter] := 1;
-          ClassLevels[MageClass] := 1;
+          ClassLevels[ClassMagicUser] := 1;
         end;
       FighterThief:
         begin
@@ -626,12 +628,12 @@ begin
       FighterMageThief:
         begin
           ClassLevels[ClassFighter] := 1;
-          ClassLevels[MageClass] := 1;
+          ClassLevels[ClassMagicUser] := 1;
           ClassLevels[ClassThief] := 1;
         end;
       MageThief:
         begin
-          ClassLevels[MageClass] := 1;
+          ClassLevels[ClassMagicUser] := 1;
           ClassLevels[ClassThief] := 1;
         end;
     end;
@@ -688,17 +690,17 @@ begin
           Age := StartingAgeTable[Race, ClassCleric].Base
             + StartingAgeTable[Race, ClassCleric].Sides * StartingAgeTable[Race, ClassCleric].Count;
         FighterMage:
-          Age := StartingAgeTable[Race, MageClass].Base
-            + StartingAgeTable[Race, MageClass].Sides * StartingAgeTable[Race, MageClass].Count;
+          Age := StartingAgeTable[Race, ClassMagicUser].Base
+            + StartingAgeTable[Race, ClassMagicUser].Sides * StartingAgeTable[Race, ClassMagicUser].Count;
         FighterThief:
           Age := StartingAgeTable[Race, ClassFighter].Base
             + StartingAgeTable[Race, ClassFighter].Sides * StartingAgeTable[Race, ClassFighter].Count;
         FighterMageThief:
-          Age := StartingAgeTable[Race, MageClass].Base
-            + StartingAgeTable[Race, MageClass].Sides * StartingAgeTable[Race, MageClass].Count;
+          Age := StartingAgeTable[Race, ClassMagicUser].Base
+            + StartingAgeTable[Race, ClassMagicUser].Sides * StartingAgeTable[Race, ClassMagicUser].Count;
         MageThief:
-          Age := StartingAgeTable[Race, MageClass].Base
-            + StartingAgeTable[Race, MageClass].Sides * StartingAgeTable[Race, MageClass].Count;
+          Age := StartingAgeTable[Race, ClassMagicUser].Base
+            + StartingAgeTable[Race, ClassMagicUser].Sides * StartingAgeTable[Race, ClassMagicUser].Count;
       end;
   SavedSelection := SelectedCharacter;
   SelectedCharacter := NewCharacter;
@@ -749,17 +751,17 @@ begin
                 Dec(Scores[AbilityIndex], 2);
               if (Scores[AbilityIndex] > 0) and (RaceAgeBrackets[Race, VenerableAge] < Age) then
                 Dec(Scores[AbilityIndex]);
-              if Scores[AbilityIndex] < RaceAbilityLimits[Race, B9E] then
-                Scores[AbilityIndex] := RaceAbilityLimits[Race, B9E];
-              if Scores[AbilityIndex] > RaceStrengthMax[Race, B9E] then
-                Scores[AbilityIndex] := RaceStrengthMax[Race, B9E];
+              if Scores[AbilityIndex] < RaceAbilityLimits[Race, Sex] then
+                Scores[AbilityIndex] := RaceAbilityLimits[Race, Sex];
+              if Scores[AbilityIndex] > RaceStrengthMax[Race, Sex] then
+                Scores[AbilityIndex] := RaceStrengthMax[Race, Sex];
               if Scores[AbilityIndex] < ClassAbilityMinimums[ClassMask, AbilityIndex] then
                 Scores[AbilityIndex] := ClassAbilityMinimums[ClassMask, AbilityIndex];
               if (Scores[StrengthIndex] = ExceptionalStrength) and (ClassLevels[ClassFighter] > 0) then
               begin
                 StrengthPercent := Random(ExceptionalStrengthRoll) + 1;
-                if RaceStrengthPercent[Race, B9E] < StrengthPercent then
-                  StrengthPercent := RaceStrengthPercent[Race, B9E];
+                if RaceStrengthPercent[Race, Sex] < StrengthPercent then
+                  StrengthPercent := RaceStrengthPercent[Race, Sex];
               end;
             end;
           IntelligenceIndex:
@@ -836,7 +838,7 @@ begin
     end;
     with NewCharacter^ do
     begin
-      Flag11B := HpMax;
+      HpCurrent := HpMax;
       Attacks := StartAttacks;
       BaseAttacks[1] := 1;
       BaseDamage[1] := StartBaseDamage;
@@ -849,7 +851,7 @@ begin
         begin
           case ClassIndex of
             ClassCleric: SpellSlots[0, 1] := 1;
-            MageClass: SpellSlots[1, 1] := 1;
+            ClassMagicUser: SpellSlots[1, 1] := 1;
           end;
           Inc(GoldDiceTotal, RollDice(StartingGoldDice[ClassIndex, 0], StartingGoldDice[ClassIndex, 1]));
           Inc(ClassTotal);
@@ -857,12 +859,12 @@ begin
             ClassCleric:
               begin
                 AddWisdomBonusSpells(NewCharacter);
-                for I := 1 to SpellCount do
+                for I := 1 to LastSpell do
                   with SpellTable[I] do
                     if (SpellClass = 0) and (Level = 1) then
                       KnownSpells[I] := 1;
               end;
-            MageClass:
+            ClassMagicUser:
               begin
                 KnownSpells[SpellDetectMagic] := 1;
                 KnownSpells[SpellReadMagic] := 1;
@@ -884,13 +886,13 @@ begin
       end
       else
         HpMax := (HpMax + ConAdjustment) div ClassTotal;
-      Flag11B := HpMax;
+      HpCurrent := HpMax;
       HpB1 := HpB1 div ClassTotal;
     end;
     ShowCombatStats;
     ShowCharacterMoney;
     Key := AskYesNo('Keep this character? ', PromptTitleColor, PromptWordColor, PromptHotColor);
-  until Key = KeepAnswer;
+  until Key = KeyYes;
   ShowCharacterSheet;
   SelectedCharacter := SavedSelection;
   repeat
@@ -939,10 +941,10 @@ end;
   ..Charisma and the hit-point line) and adjust the value under it (Right raises, Left lowers); a
   value is held between the per-race limits (RaceAbilityLimits) and the per-class minimum (ClassAbilityMinimums), a Wisdom
   change recomputes the cleric bonus spells (AddWisdomBonusSpells), and a hit-point change is
-  bounded by fn_3FB3 (floor) and fn_408C (ceiling). 'K' (Keep) accepts the changes and leaves, 'E'
+  bounded by MinHitPoints (floor) and MaxHitPoints (ceiling). 'K' (Keep) accepts the changes and leaves, 'E'
   (Exit, or Escape) restores the saved abilities. The nested ShowStat (ovl16:2033) redraws the
   value under the cursor. A `with SelectedCharacter^` block edits the modified character; its
-  Experience, Scores (+$10), StrengthPercent, HpMax, Flag11B, Race, ClassMask, B9E, ClassLevels,
+  Experience, Scores (+$10), StrengthPercent, HpMax, HpCurrent, Race, ClassMask, Sex, ClassLevels,
   SpellSlots and HirelingShare are used. }
 procedure ModifyCharacter;
 const
@@ -1036,9 +1038,9 @@ begin
                   Dec(StrengthPercent);
                   Inc(Scores[Stat]);
                 end
-                else if (Scores[Stat] < RaceAbilityLimits[Race, B9E])
+                else if (Scores[Stat] < RaceAbilityLimits[Race, Sex])
                      or (Scores[Stat] < ClassAbilityMinimums[ClassMask, 0]) then
-                  Scores[Stat] := RaceAbilityLimits[Race, B9E];
+                  Scores[Stat] := RaceAbilityLimits[Race, Sex];
               1:
                 if (Scores[Stat] < RaceAbilityLimits[Race, IntMinOffset])
                    or (Scores[Stat] < ClassAbilityMinimums[ClassMask, 1]) then
@@ -1063,7 +1065,7 @@ begin
                     Scores[Stat] := RaceAbilityLimits[Race, ConMinOffset];
                   if MaxHitPoints(SelectedCharacter) < HpMax then
                     HpMax := MaxHitPoints(SelectedCharacter);
-                  Flag11B := HpMax;
+                  HpCurrent := HpMax;
                   StatIndex := HitPointIndex;
                   ShowStat(False);
                   StatIndex := 4;
@@ -1079,7 +1081,7 @@ begin
           Dec(HpMax);
           if MinHitPoints(SelectedCharacter) > HpMax then
             HpMax := MinHitPoints(SelectedCharacter);
-          Flag11B := HpMax;
+          HpCurrent := HpMax;
         end;
       end;
         ScanRight:
@@ -1090,13 +1092,13 @@ begin
             Inc(Scores[Stat]);
             case Stat of
               0:
-                if Scores[Stat] > RaceStrengthMax[Race, B9E] then
+                if Scores[Stat] > RaceStrengthMax[Race, Sex] then
                 begin
                   if (Scores[Stat] > ExceptionalStrength)
                      and (ClassLevels[ClassFighter] > 0)
-                     and (RaceStrengthPercent[Race, B9E] > StrengthPercent) then
+                     and (RaceStrengthPercent[Race, Sex] > StrengthPercent) then
                     Inc(StrengthPercent);
-                  Scores[Stat] := RaceStrengthMax[Race, B9E];
+                  Scores[Stat] := RaceStrengthMax[Race, Sex];
                 end;
               1:
                 if Scores[Stat] > RaceAbilityLimits[Race, IntMaxOffset] then
@@ -1118,7 +1120,7 @@ begin
                     Scores[Stat] := RaceAbilityLimits[Race, ConMaxOffset];
                   if MinHitPoints(SelectedCharacter) > HpMax then
                     HpMax := MinHitPoints(SelectedCharacter);
-                  Flag11B := HpMax;
+                  HpCurrent := HpMax;
                   StatIndex := HitPointIndex;
                   ShowStat(False);
                   StatIndex := 4;
@@ -1133,7 +1135,7 @@ begin
             Inc(HpMax);
             if MaxHitPoints(SelectedCharacter) < HpMax then
               HpMax := MaxHitPoints(SelectedCharacter);
-            Flag11B := HpMax;
+            HpCurrent := HpMax;
           end;
       end;
       end;
@@ -1146,7 +1148,7 @@ begin
             PScoredCharacter(SelectedCharacter)^.Scores[Stat] := SavedScores[Stat];
           SelectedCharacter^.StrengthPercent := SavedStrengthPercent;
           SelectedCharacter^.HpMax := SavedHpMax;
-          SelectedCharacter^.Flag11B := HpMax;
+          SelectedCharacter^.HpCurrent := HpMax;
           RecalcCombatValues(SelectedCharacter);
           Exit;
         end;
@@ -1179,7 +1181,7 @@ end;
   (ChooseSpellFromList, list kind 4, 'to choose from') and marks it known. The hit points
   gained are RollHitPoints of the trained classes, shared across every class with a level,
   with a floor of 1, added to HpB1 (+$B1) and, after the constitution adjustment, to HpMax;
-  Flag11B (the current hit points) keeps the same gap below HpMax. No parameters. Globals:
+  HpCurrent (the current hit points) keeps the same gap below HpMax. No parameters. Globals:
   SelectedCharacter, StingCheat, ClassTrainingBits, ExperienceTable, GameVars2, ClassNames. Side effects: the function
   window, the flash line, the character's experience, levels, spells, hit points and money.
   QUIRK ovl16:2CDA: the first refusal's Exit is followed by a jump the compiler keeps, the
@@ -1188,7 +1190,11 @@ end;
   the repeat ended because Listed = 0 with ChosenSpell = 0; KnownSpells is declared index 1..$38
   (+$33..+$6A), so index 0 is the byte at +$32, HpMax, and HpMax becomes 1 before the hit-point
   gain is added (range checks are off in this build). Whether Listed = 0 can be reached is for
-  ChooseSpellFromList (ovl19) to say. }
+  ChooseSpellFromList (ovl19) to say.
+  QUIRK ovl16:2C9D: Experience := NewExperience (the cut to one below the level after next) runs before the refusals
+  ('We do not train that class here', 'Not Enough Experience') and before the 'Do you wish to train?' confirmation, so
+  opening Train with enough experience for two levels lowers the experience even when the player declines or is
+  refused; kept. }
 procedure TrainCharacter;
 const
   MessageColor = $E;           { yellow: the flash messages of the refusals }
@@ -1201,12 +1207,10 @@ const
   NameRow = 4;                  { DrawCharacterName's row; the first class line is the next }
   FirstBecomeRow = 5;
   NameCol = 4;                  { DrawCharacterName's column; its mode argument is 0 }
-  MageClass = 5;                { a rise here asks for a new spell }
   { TCharacter.Pad74 index of the drained-level state the class rise restores (the routine comment). }
   SpellListToChoose = 4;        { ChooseSpellFromList's 'to choose from' list (ovl19:299C) }
   SpellDisplayMode = 4;         { the display mode the call pushes; ovl22 reads it }
   NoSpellChoice = $FFFF;        { negative, so ChooseSpellFromList opens the spell window }
-  ExceptionalStrength = 18;              { a gnome fighter's cap looks at strength below 18 }
 var
   AtLimit: Byte;                { [bp-1]: the class is at its racial level limit }
   NewExperience: LongInt;       { [bp-5]: the experience the training leaves the character at }
@@ -1328,7 +1332,7 @@ begin
     if StingCheat = 0 then
       PayGold(TrainCost, SelectedCharacter);
     TrainedCount := 0;
-    SavedMageLevel := ClassLevels[MageClass];
+    SavedMageLevel := ClassLevels[ClassMagicUser];
     for I := 0 to 7 do
       if ClassLevels[I] > 0 then
       begin
@@ -1346,7 +1350,7 @@ begin
         end;
       end;
     RecalcClassStats(SelectedCharacter);
-    if ClassLevels[MageClass] > SavedMageLevel then
+    if ClassLevels[ClassMagicUser] > SavedMageLevel then
     begin
       Choice := NoSpellChoice;
       repeat
@@ -1365,9 +1369,9 @@ begin
     HpGain := (HpRoll + ConBonus) div TrainedCount;
     if HpGain < 1 then
       HpGain := 1;
-    SavedHp := HpMax - Flag11B;
+    SavedHp := HpMax - HpCurrent;
     Inc(HpMax, HpGain);
-    Flag11B := HpMax - SavedHp;
+    HpCurrent := HpMax - SavedHp;
   end;
 end;
 { ovl16:306D. The Add (A) function of the training hall, dispatched by RunCharacterMenu (ovl16:0161):
@@ -1375,14 +1379,17 @@ end;
   the menu "Add a character: " with "Add Exit" (ChooseFromList). Enter or A loads the highlighted
   character's record (GetMem, LoadCharacterFile) and, when its menu line does not already start with
   '*', prefixes '* ' and tries to put it in the party. A character already in the party (same Name and
-  BAB, +$AB) is refused; a player-run member (B84 below $80) is refused once six are in the party, and
+  RandomTag, +$AB) is refused; a player-run member (B84 below $80) is refused once six are in the party, and
   a computer-run member (B84 $80 and up, a hireling) once the party size GameVars2^[VarPartySize] is
   eight. A refused record is freed (FreeMem); the party records themselves are freed elsewhere. The
   menu repeats until E, Escape or a full party. The edited list is written back
   (RewriteSavedCharacterList, ovl17) and freed (FreeMenuList, ovl25). No parameters; side effects: the
   function window, the menu, the heap and the saved-character list file.
   QUIRK ovl16:30E8: the ChooseFromList WithExit argument is read from [bp-0x14], a local the routine
-  never assigns (whatever the previous frame left there). }
+  never assigns (whatever the previous frame left there).
+  QUIRK ovl16:3263: the loop end test `Count > MaxPlayerMembers - 1` reads Count, which is assigned only inside the
+  branch of Enter or A on a line that does not yet start with '*'; Next, Prev or a line that already starts with '*'
+  reach the test with Count never set (first pass) or stale; kept. }
 procedure AddSavedCharacters;
 const
   MaxPlayerMembers = 6;         { the menu stops once six player-run members are in the party }
@@ -1426,7 +1433,7 @@ begin
         begin
           Who := PCharacter(PartyListHead);
           while (Who <> nil)
-                and ((Who^.Name <> NewChar^.Name) or (Who^.BAB <> NewChar^.BAB)) do
+                and ((Who^.Name <> NewChar^.Name) or (Who^.RandomTag <> NewChar^.RandomTag)) do
           begin
             if Who^.B84 < ComputerRun then
               Inc(Count);
@@ -1605,8 +1612,6 @@ const
   HalvesNewRow = $10;
   CaptionColor = $F;
   { The icon's fields. }
-  IconSizeSmall = 1;              { Figure[0]: the CHEAD/CBODY suffix 'S' }
-  IconSizeLarge = 2;              { Figure[0]: the suffix 'T' }
   MaxHeadBlock = 13;              { CHeadBlock runs 0..13 }
   MaxBodyBlock = $1F;             { CBodyBlock runs 0..31 }
   { The Figure[1..6] colour pairs, named by the prompt word that picks them. }
@@ -1678,7 +1683,7 @@ var
     HeadPicIndex = $C;      { the HEAD picture block of the icon }
     IconSet = 0;            { the icon set DrawIcon reads the pictures from }
   begin
-    if VideoAdapter = 0 then
+    if VideoAdapter = AdapterCga then
       FillPictureRect(CellCol * IconColsPerCell, CellRow * CellHeightRows, CellWidthCells,
         CellHeightRows, GroundColor, @FillRectPalette, DrawBuf)
     else
@@ -1711,7 +1716,7 @@ var
     PixelBytes: Word;                 { [bp-0x24]: the pixel-buffer size copied }
   begin
     PixelBytes := PMemPic(PictureSlots[Dest].FirstPic)^.ByteSize;
-    if VideoAdapter = 1 then
+    if VideoAdapter = AdapterEga then
       PixelBytes := PixelBytes shr 1 shr 1;
     Move(PMemPic(PictureSlots[Source].FirstPic)^.Tail, PMemPic(PictureSlots[Dest].FirstPic)^.Tail,
       PMemPic(PictureSlots[Dest].FirstPic)^.ByteSize);
@@ -2090,7 +2095,7 @@ begin
 end;
 { ovl16:4235. Rolls the hit points a level gains for the classes in ClassBits: over the eight classes
    it adds, for each class the character has a level in (ClassLevels, +$96, signed, above 0) whose
-   bit is in ClassBits (ClassTrainingBits, one bit per class), a roll of ClassHitDiceCount[I] dice of
+   bit is in ClassBits (ClassTrainingBits, the training guild bits of the classes), a roll of ClassHitDiceCount[I] dice of
    ClassHitDieSides[I] sides (RollDice, ovl24:0DE3), where a class at level 1 rolls at least two
    thirds of its hit die (the first-level minimum). The caller divides the sum by the number of
    classes with a level. Called by the training hall (ovl16:29AE, whitepaper 5.8) and the

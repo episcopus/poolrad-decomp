@@ -354,7 +354,7 @@ evidence = "holds SoundMode while Ctrl-S has it at 2; restored only when it is 0
 [[global]]
 offset = 0x49FA
 name = "AreaViewKind"
-evidence = "ovl26_e1 dispatches on it: case at ovl26:018C: 1 draws the 3D wall view (ovl29), 2..4 the map window (ovl27); ovl11_e1 sets 1 when an area loads, ovl03_fn_31B4 sets 2/3/4 with view type 3"
+evidence = "ovl26_e1 dispatches on it: case at ovl26:018C: 1 draws the 3D wall view (ovl29), 2..4 the map window (ovl27); ovl11_e1 sets 1 when an area loads, RunAreaStep (ovl03:31B4) sets 2/3/4 with view type 3"
 
 [[global]]
 offset = 0x3C76
@@ -409,7 +409,7 @@ evidence = "five words, one per 8x8 bank, subtracted from Symbol to index within
 [[global]]
 offset = 0x5E4E
 name = "TileBuf"
-evidence = "far pointer to the tile staging buffer: tiles are Moved to +$17 and shown by res07_fn_1951 (ovl34:027A,029E); the loader (StartGame) allocates it through res07_fn_248E(8, 1, 1, 0) at ovl11:00A4"
+evidence = "far pointer to the tile staging buffer: tiles are Moved to +$17 and shown by ShowPicture (ovl34:027A,029E); the loader (StartGame) allocates it through res07_fn_248E(8, 1, 1, 0) at ovl11:00A4"
 
 [[global]]
 offset = 0x4A20
@@ -803,7 +803,7 @@ evidence = "DrawGlyph mode 0 picks ds25E5[Bit] for pixel column Bit 0..7 of the 
 [[global]]
 offset = 0x25F6
 name = "EgaPlaneBitMasks"
-evidence = "res07_fn_1951 (0464:1A6E) writes ds25F6[Plane] (1, 2, 4, 8) to the Sequencer Map Mask (port 3C5h) for plane 0..3 when it copies one byte per plane at DS:5050[Row]+Col in segment A000"
+evidence = "ShowPicture (0464:1A6E) writes ds25F6[Plane] (1, 2, 4, 8) to the Sequencer Map Mask (port 3C5h) for plane 0..3 when it copies one byte per plane at DS:5050[Row]+Col in segment A000"
 
 [[global]]
 offset = 0x0508
@@ -1013,7 +1013,7 @@ evidence = "CompareStrings and CompareWords clear its six bytes and set [0..5] f
 
 [[global]]
 offset = 0x6F7F
-name = "SkippedOpcode"
+name = "CurrentOpcode"
 evidence = "SkipCommand stores the opcode at EclPC in it and dispatches on it (ovl07:1EB7)"
 
 [[global]]
@@ -1355,7 +1355,7 @@ evidence = "the second door block codes of AnimateAreaDoors, same bit 7 flag (ov
 [[global]]
 offset = 0x091D
 name = "DoorRemapFrom"
-evidence = "the 16-byte source colour record AnimateAreaDoors passes to RemapPictureColours (ovl18:06B3)"
+evidence = "the 16-byte source colour record AnimateAreaDoors passes to RemapPictureColors (ovl18:06B3)"
 
 [[global]]
 offset = 0x092D
@@ -1390,17 +1390,17 @@ evidence = "the wall view id table: two equal groups of eight ids ShowAreaView a
 [[global]]
 offset = 0x0C6C
 name = "SpriteRemapFrom"
-evidence = "source colour table LoadSpriteList passes to RemapPictureColours (ovl28)"
+evidence = "source colour table LoadSpriteList passes to RemapPictureColors (ovl28)"
 
 [[global]]
 offset = 0x0C7C
 name = "SpriteRemapTo"
-evidence = "target colour table LoadSpriteList passes to RemapPictureColours, colour 13 to 0 (ovl28)"
+evidence = "target colour table LoadSpriteList passes to RemapPictureColors, colour 13 to 0 (ovl28)"
 
 [[global]]
 offset = 0x0CD2
 name = "PictureRemapFrom"
-evidence = "identity colour map LoadPictureSlot passes as the source of RemapPictureColours (ovl32)"
+evidence = "identity colour map LoadPictureSlot passes as the source of RemapPictureColors (ovl32)"
 
 [[global]]
 offset = 0x0CE2
@@ -1454,12 +1454,12 @@ evidence = "PlaySound argument CastChosenSpell uses for a spell without its own 
 
 [[global]]
 offset = 0x261A
-name = "SoundMissMessage"
+name = "SoundDamageMessage"
 evidence = "PlaySound argument ShowHitMessage uses when Flag is clear (res12)"
 
 [[global]]
 offset = 0x261C
-name = "SoundHitMessage"
+name = "SoundAffectMessage"
 evidence = "PlaySound argument ShowHitMessage uses when Flag is set, a hit (res12)"
 
 [[global]]
@@ -1580,12 +1580,12 @@ evidence = "set by StartEclBlock (ECL command 32, ovl03:0BD1); RunAreaStep repea
 [[global]]
 offset = 0x4430
 name = "ReselectCharacterPending"
-evidence = "StoreCommand and SelectCharacterCommand set it; EndCommand then selects the character at ReselectCharacter (ovl03:0001)"
+evidence = "SelectCharacterCommand sets it (ovl03:02E0); EndCommand then selects the character at ReselectCharacter (ovl03:0001); cleared by EndCommand, ShowSpecialScreenCommand, SelectCharacterCommand and RunWilderness"
 
 [[global]]
 offset = 0x4436
 name = "ReselectCharacter"
-evidence = "the character EndCommand makes SelectedCharacter again while ReselectCharacterPending is set (ovl03:0001)"
+evidence = "the character EndCommand makes SelectedCharacter again while ReselectCharacterPending is set (ovl03:0001); RunWilderness sets it after each HandleWildernessKeys (ovl03:32F8)"
 
 [[global]]
 offset = 0x4431
@@ -1720,7 +1720,7 @@ evidence = "script entry address slot 2 (coab PreCampCheck [H]): RunCamp runs it
 [[global]]
 offset = 0x49E9
 name = "EclCampInterruptedEntry"
-evidence = "script entry address slot 3 (coab CampInterrupted [H]): EngineActionCommand runs it after the camp when EndCamp is left set (ovl03:2CCF)"
+evidence = "script entry address slot 3 (coab CampInterrupted [H]): RunCamp runs it after the camp when EndCamp is left set (ovl03:2DD3)"
 
 [[global]]
 offset = 0x49EB
@@ -1740,7 +1740,7 @@ evidence = "cleared by the loader; CombatMenu and EndCombatRound ask 'Continue B
 [[global]]
 offset = 0x49F8
 name = "SkipAreaScriptLoad"
-evidence = "cleared by the loader (ovl11:03A6); RunAreaStep, RunWilderness and InitScript skip the area script load while it is set (ovl03, ovl07)"
+evidence = "cleared by the loader (ovl11:03A6); RunWilderness and InitScript skip the area script load while it is set (ovl03:32F8, ovl07:01B6); ovl16 sets it (RunCharacterMenu)"
 
 [[global]]
 offset = 0x49F9
@@ -1759,7 +1759,7 @@ evidence = "the BODY bank ShowHeadBody last loaded (ovl07:0522); RedrawView relo
 
 [[global]]
 offset = 0x4A00
-name = "WaitAfterTextRun"
+name = "DelayPerGlyph"
 evidence = "set by the ECL text commands while text shows so DrawTextRun waits after each run (ovl03 ShowTextCommand; ShowPagedText res06; EndBattle ovl05:1631)"
 
 [[global]]
@@ -1784,12 +1784,12 @@ evidence = "the BIOS display page WriteCharsAt writes text to; res08_init sets i
 
 [[global]]
 offset = 0x4A1D
-name = "PreviousVideoMode"
-evidence = "copy of SavedVideoMode taken in res08_init; SetVideoMode and PaletteColor restore it (res07)"
+name = "CurrentVideoMode"
+evidence = "copy of SavedVideoMode taken in res08_init; written by SetVideoMode and res08_init; the current mode (res07)"
 
 [[global]]
 offset = 0x4A24
-name = "ScreenSaveBuffer"
+name = "IconBackgroundBuffer"
 evidence = "the screen buffer the loader allocates through AllocatePicture (ovl11:00D4), SaveOfs of the picture draws (res07)"
 
 [[global]]
@@ -1814,23 +1814,23 @@ evidence = "per screen row the highest changed byte offset in DrawBuf, starts 0 
 
 [[global]]
 offset = 0x4EC0
-name = "CellTextSegments"
+name = "CgaScanlineSegments"
 evidence = "per cell row the text scanline segment ShowPicture and FlushPictureChanges write to (res07; the loader fills it, ovl11)"
 
 [[global]]
 offset = 0x5050
-name = "CellRowOffsets"
+name = "EgaScanlineOffsets"
 evidence = "per cell row offset table the loader fills (I * 40, ovl11:0186) FlushPictureChanges and ShowPicture add to (res07)"
 
 [[global]]
 offset = 0x51E0
-name = "CellPlaneSegments"
-evidence = "per cell row graphics plane address the loader fills (ovl11) ShowPicture and MirrorPicture write to (res07)"
+name = "TandyScanlineSegments"
+evidence = "per cell row graphics plane address the loader fills (ovl11) ShowPicture and FlushPictureChanges write to (res07)"
 
 [[global]]
 offset = 0x5370
 name = "ClipChecksEnabled"
-evidence = "set to 1 by the loader (ovl11:042E); DrawPictureItem and DrawPictureItemClipped run their range checks only while nonzero (res07)"
+evidence = "set to 1 by the loader (ovl11:042E); DrawPictureItemClipped runs its range checks only while nonzero (DrawPictureItem never reads it) (res07)"
 
 [[global]]
 offset = 0x5377
@@ -1946,11 +1946,6 @@ evidence = "decremented every time an attack is avoided (AvoidDistantAttack ovl1
 offset = 0x6825
 name = "MoraleScratch"
 evidence = "AI morale scratch CheckMorale computes from B84 and compares with the percentage of hit points lost (ovl09:10D7, ovl12 handlers)"
-
-[[global]]
-offset = 0x6826
-name = "HandlerCombatant"
-evidence = "combatant pointer the affect handlers share as scratch: the affect $4A handler stores the combatant it attacks here (ovl13:3A86, ovl12:013B)"
 
 [[global]]
 offset = 0x6988
@@ -2100,7 +2095,7 @@ evidence = "the extended-key flag the ovl08 and ovl13 menus pass to ReadPromptCh
 
 [[global]]
 offset = 0x6E36
-name = "CombatPicture"
+name = "CombatAnimationPicture"
 evidence = "the 24x3 combat picture AllocatePicture makes (StartBattle ovl10); EndCombat frees it with ReleasePicture (ovl08:005A)"
 
 [[global]]
@@ -2146,7 +2141,7 @@ evidence = "the Done variable CastMonsterReadMagic and MonsterBreath pass to Spe
 [[global]]
 offset = 0x70C7
 name = "SharedLoopIndex"
-evidence = "a global ShortInt loop counter FreeSpriteList, DrawPictureItem, RemapPictureColours and FillPictureRect share (ovl28, res07)"
+evidence = "a global ShortInt loop counter FreeSpriteList, DrawPictureItem, RemapPictureColors and FillPictureRect share (ovl28, res07)"
 
 [[global]]
 offset = 0x84CC
@@ -2155,17 +2150,17 @@ evidence = "set by a script write to address $3DE (WriteVmWord ovl07:0D3B); Engi
 
 [[global]]
 offset = 0x84D2
-name = "CharWord6C00Zeroed"
+name = "ActiveFlagClearedByScript"
 evidence = "set to 1 when the script writes 0 to the character word $6C00 (SetCharacterVar ovl07:0B99); SelectCharacterCommand tests it with CharWord6B00Zeroed (ovl03)"
 
 [[global]]
 offset = 0x84D3
-name = "CharWord6B00Zeroed"
+name = "NameClearedByScript"
 evidence = "set to 1 when the script writes 0 to the character word $6B00 (SetCharacterVar ovl07:0A91)"
 
 [[global]]
 offset = 0x84DD
-name = "SavedWord714Low"
+name = "SavedSearchMode"
 evidence = "the low bit of GameVars2 word 714 RunWilderness saves while the word is forced to 1 (ovl03:32F8); the loader clears it (ovl11:041A)"
 
 [[global]]
@@ -2200,7 +2195,7 @@ evidence = "set when ShowEncounterPicture loads the 3D encounter sprite, cleared
 
 [[global]]
 offset = 0x84E4
-name = "WindowClearOnce"
+name = "EclWindowCleared"
 evidence = "window-clear once flag: HandleWildernessKeys clears the text window and sets it; the text commands clear it (ovl14, ovl03)"
 
 [[global]]
@@ -2216,7 +2211,7 @@ evidence = "set to 1 when the script moves the party or changes its marker (Writ
 [[global]]
 offset = 0x84E7
 name = "EncounterMembersAdded"
-evidence = "set to 1 by ECL command 11 after it has added members to the party list; AskMenuCommand and ClearEncounterCommand clear it (ovl03:0450, 10D1, 125D)"
+evidence = "set to 1 by ECL command 11 after it has added members to the party list; ClearEncounterCommand clears it (ovl03:0450, 125D)"
 
 [[global]]
 offset = 0x84E8

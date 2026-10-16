@@ -57,3 +57,11 @@ All eight must-fix findings are closed and I found no new must-fix. The should-f
 ## Verdict
 
 Passed (round 2): the eight must-fix findings of round 1 are fixed and verified against the code, the packet and the whitepaper; the should-fix findings stay open as advice.
+
+## Phase 6 sign-off (round 3, 2026-10-16)
+
+Independent read-only review by a side session of the phase 6 pass (main at ffd08bd; the side session has no registered agent name). Its must-fix findings were applied by claude-p6 on branch task/p6-review-fixes (commits listed below), checked with `make match` (47 units), `make rebuild` (IDENTICAL), `make readability` and `make check` (passed at a4cbff9). The reviewer did not re-read the applied fixes; the checks above are the verification. The round 2 pass above stays recorded in re/symbols.toml (the tool stamps one pass per unit).
+
+Commits: d4bbb73 and the ovl16 commit before it, cd024f8.
+
+Must-fix findings applied (racial affect constants, shared synonyms, Sex, HpCurrent, RandomTag, comments, QUIRK marks). Open should-fix: Thac0 to ToHitBase, B84 to ControlFlags, HpB1 and Flag10D names, ClassMask to ClassCombo (61 uses in 6 files).

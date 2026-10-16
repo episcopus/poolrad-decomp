@@ -49,3 +49,11 @@ No open must-fix finding remains. The should-fix and note items above stay open 
 Round 1: not passed, five must-fix findings (FlushPictureChanges copy direction, the tracker array semantics, ShowPicture's "one byte per pixel", RemapPictureColours' "items from FirstItem on", FillPictureRect's cell units), all comment corrections.
 
 Round 2: passed. All five are fixed and verified in the source, POOLVARS and the whitepaper; the open should-fix items do not block.
+
+## Phase 6 sign-off (round 3, 2026-10-16)
+
+Independent read-only review by a side session of the phase 6 pass (main at ffd08bd; the side session has no registered agent name). Its must-fix findings were applied by claude-p6 on branch task/p6-review-fixes (commits listed below), checked with `make match` (47 units), `make rebuild` (IDENTICAL), `make readability` and `make check` (passed at a4cbff9). The reviewer did not re-read the applied fixes; the checks above are the verification. The round 2 pass above stays recorded in re/symbols.toml (the tool stamps one pass per unit).
+
+Commits: 2875ab0, fb34667, cd024f8.
+
+Must-fix findings M1..M8 applied (CurrentVideoMode, scanline tables, adapter kinds, EGA port constants, comments, evidence text, QUIRK marks). Open: should-fix items (some parameter names).

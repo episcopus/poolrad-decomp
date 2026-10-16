@@ -72,3 +72,13 @@ Rerun: `make match UNIT=ovl12`: `unit: complete`, 126 matched, 1 nested, 0 diffe
 Round 1: not passed: eight must-fix findings (the "colour 10" comments are false, the "which affect runs it is not known" claim is contradicted by the unit's own table, the status names contradict the game's name table, bare numbers where a constant exists, and a missing byte-wrap quirk); the rest are should-fix.
 
 Round 2: passed. The eight must-fix findings are fixed and verified; the should-fix and note findings remain open and do not block.
+
+## Phase 6 sign-off (round 3, 2026-10-16)
+
+Independent read-only review by a side session of the phase 6 pass (main at ffd08bd; the side session has no registered agent name). Its must-fix findings were applied by claude-p6 on branch task/p6-review-fixes (commits listed below), checked with `make match` (47 units), `make rebuild` (IDENTICAL), `make readability` and `make check` (passed at a4cbff9). The reviewer did not re-read the applied fixes; the checks above are the verification. The round 2 pass above stays recorded in re/symbols.toml (the tool stamps one pass per unit).
+
+Commits: 1d92c48, 34a118e, 16859c6, cd024f8.
+
+Must-fix findings M1..M11 and M13..M15 applied (names from SpellTable, monster and item data, shared affect, save kind and spell constants, item handlers read their item, alias removed). M12 (bare numbers) is only partly done: the spell and affect constants are named, but the alignment indexes, CreatureType values, item types $55..$58, the Constitution table, the fear levels and the other literals the review lists are still bare.
+
+- [ ] must-fix ovl12 M12 (residual): name the bare alignment indexes, CreatureType values, item types $55..$58 and the other literals listed in the phase 6 review; no byte changes, run make match UNIT=ovl12.

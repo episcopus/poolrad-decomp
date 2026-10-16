@@ -90,7 +90,7 @@ end;
 procedure SwapPaletteColors0And8;
 begin
   case VideoAdapter of
-    1:
+    AdapterEga:
       begin
         SetPaletteRegister(0, 8);
         SetPaletteRegister(8, 0);
@@ -103,7 +103,7 @@ end;
 procedure RestorePaletteColors0And8;
 begin
   case VideoAdapter of
-    1:
+    AdapterEga:
       begin
         SetPaletteRegister(0, 0);
         SetPaletteRegister(8, 8);
@@ -225,7 +225,7 @@ begin
 end;
 
 { ovl31:06E9. True when view cell (Col, Row) is inside the 7x7 window (0..ViewLast both ways).
-  Called here and by ovl13, WalkCombatLine, res12_fn_1CE0. }
+  Called here and by ovl13, WalkCombatLine, WalkCombatLine. }
 function IsInView(Col, Row: ShortInt): Boolean;
 begin
   if (Col < 0) or (Col > ViewLast) or (Row < 0) or (Row > ViewLast) then

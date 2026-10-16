@@ -399,7 +399,7 @@ end;
   else 0) and returns at once with no targets. For each non-nil target: it rolls the spell's own
   saving throw (SpellTable row byte +8 nonzero, the save kind in +9) into Saved, and, when the
   current spell's row byte +2 is $FF, runs the affect hooks, and rolls to hit the target's
-  ResistValue (+$111); a miss cancels the damage and counts as saved. It deals Damage through
+  ArmourClassValue (+$111); a miss cancels the damage and counts as saved. It deals Damage through
   DealDamage and, when the spell's AffectId (row byte +$A) is set, applies the affect through
   ApplyAffect with SpellAffectDuration(Spell), the caster level (CasterLevel, or SpellCasterLevel
   when 0), Flag, the row's save effect and Message. Called by the spell menus; the caster level is
@@ -433,7 +433,7 @@ begin
       begin
         RecalcCombatValues(Target);
         RunAffectHooks($0B, Target);
-        if not RollToHit(SelectedCharacter, Target, Target^.ResistValue) then
+        if not RollToHit(SelectedCharacter, Target, Target^.ArmourClassValue) then
         begin
           Damage := 0;
           Saved := True;
@@ -564,7 +564,7 @@ begin
         while not InDirArc(CasterX, CasterY, SpellAimX, SpellAimY, Dir) do
           Inc(Dir);
         SetCombatantIcon(Caster, Dir, 1, 0);
-        SetSoundDriverIdle(0);
+        SetSoundDriverIdle(SoundIdleOff);
         case Spell of
           Fireball: PlaySound(SoundFireball);
           LightningBolt: PlaySound(SoundLightningBolt);
@@ -572,7 +572,7 @@ begin
           PlaySound(SoundSpellDefault);
         end;
         WalkCombatLine(CasterX, CasterY, SpellAimX, SpellAimY, AimStep, AimWidth);
-        SetSoundDriverIdle($A);
+        SetSoundDriverIdle(SoundIdleDefault);
         if IsCombatantInView(Caster, 0) then
         begin
           SetCombatantIcon(Caster, Caster^.Combat^.IconSet, 1, 1);
@@ -707,7 +707,6 @@ const
   { The caster's side goes into bit 7 of the affect's data (Side * SideScale). }
   SideScale = 128;
   { Charm Person's side effect: the affect handler runs when the affect is removed (Flag 1). }
-  RunHandlerOnRemoval = 1;
   MessageColor = $A;             { the colour ShowCharacterMessage shows the message in }
   TimedMessage = 1;               { nonzero: ShowCharacterMessage delays by the game speed and clears it }
 var
@@ -720,7 +719,7 @@ begin
   else
   begin
     ApplySpellToTargets(CastingSpell,
-      SpellCasterLevel(CastingSpell) + ShortInt(SelectedCharacter^.Side) * SideScale, RunHandlerOnRemoval, 0, 0,
+      SpellCasterLevel(CastingSpell) + ShortInt(SelectedCharacter^.Side) * SideScale, RunsHandlerOnRemove, 0, 0,
       'is charmed');
     if HasAffect(Target, CharmAffect, Affect) then
       CallAffectHandler(CharmAffect, FirstSpellTarget, PAffect(Affect), ModeApply);
@@ -729,7 +728,7 @@ end;
 { ovl22:12A5 (e20). Cast handler of spell 12, Enlarge: gives the first chosen target FirstSpellTarget the
   strength 18 (ExceptionalStrength) with the percentile for the caster level (SpellCasterLevel(CastingSpell):
   0 at level 1 up to 100 at level 6), through RaiseStrength, and shows 'is stronger' when the
-  strength actually rose; it then adds the strength affect (id $0C, ovl24's AffectStrength1) with
+  strength actually rose; it then adds the strength affect (id $0C, ovl24's AffectEnlarge) with
   the spell's duration, RaiseStrength's earlier-strength code and flag 1 (on removal it restores the
   old strength, ovl24:AddAffect). The level and percentile go through the shared working globals
   SpellWorkByteA/SpellWorkByteB. One of the per-spell handlers in SpellHandlers (SpellHandlers[12], filled by
@@ -935,12 +934,12 @@ begin
       Target := SpellTargets[I];
       if I < SpellTargetCount then
       begin
-        SetSoundDriverIdle(0);
+        SetSoundDriverIdle(SoundIdleOff);
         PlaySound(SoundSpellDefault);
         DrawCombatIcon(AnimationKind);
         WalkCombatLine(CombatantX(SelectedCharacter), CombatantY(SelectedCharacter),
           CombatantX(Target), CombatantY(Target), AimStep, AimWidth);
-        SetSoundDriverIdle($A);
+        SetSoundDriverIdle(SoundIdleDefault);
       end;
       Saved := SavingThrow(Target, SpellTable[CastingSpell].Pad2[9], SaveBonus);
       if (Target^.CreatureType > FriendlyType) or (Target^.CombatSize > FriendlySize) then
@@ -971,7 +970,7 @@ end;
   stub 0096:00B6; SpellNames[26] is 'Slow Poison' at DS:2D13). It needs the first chosen target FirstSpellTarget
   to not be Animated (Status is not 1, an undead) and to carry the Poisoned affect $37 (HasAffect);
   anything else is dropped (FirstSpellTarget := nil) and the cast does nothing. A poisoned target at 0 hit
-  points is brought back to 1 (Flag11B), the spell's own affect is applied to the targets
+  points is brought back to 1 (HpCurrent), the spell's own affect is applied to the targets
   ('is affected'), the revival affect's removal handler is run (CallAffectHandler($4E), which heals
   an unconscious character, ovl24 AffectRevival) and the poison-slowing affect $0F is added for $A
   units. Reads FirstSpellTarget and CastingSpell. }
@@ -984,7 +983,6 @@ const
   SlowPoisonAffect = $0F;         { the poison-slowing affect; Neutralize Poison removes it with the poison (ovl04) }
   SlowPoisonDuration = $A;        { the affect lasts ten units }
   SlowPoisonData = $FF;           { the affect's data byte }
-  RunHandlerOnRemoval = 1;        { Flag: the affect's handler runs when the affect is removed }
   FullCasterLevel = $FF;          { ApplySpellToTargets uses this caster level instead of SpellCasterLevel }
 var
   Affect: Pointer;                { HasAffect's out pointer, the target's Poisoned affect }
@@ -998,16 +996,16 @@ begin
   end;
   if HasAffect(Target, PoisonedAffect, Affect) then
   begin
-    if Target^.Flag11B = 0 then
-      Target^.Flag11B := ReviveHitPoints;
-    ApplySpellToTargets(CastingSpell, FullCasterLevel, RunHandlerOnRemoval, 0, 0, 'is affected');
+    if Target^.HpCurrent = 0 then
+      Target^.HpCurrent := ReviveHitPoints;
+    ApplySpellToTargets(CastingSpell, FullCasterLevel, RunsHandlerOnRemove, 0, 0, 'is affected');
     CallAffectHandler(RevivalAffect, Target, nil, ModeRemove);
-    AddAffect(Target, SlowPoisonAffect, SlowPoisonDuration, SlowPoisonData, RunHandlerOnRemoval);
+    AddAffect(Target, SlowPoisonAffect, SlowPoisonDuration, SlowPoisonData, RunsHandlerOnRemove);
   end;
 end;
 { ovl22:190F. Cast handler of spell 27, Snake Charm (entry 31: InitSpellHandlers maps DS:6B84+27*4 to overlay
   stub 0096:00BB; SpellNames[27] is 'Snake Charm' at DS:2D3C). The caster's own current hit points
-  (SelectedCharacter^.Flag11B) become the pool SpellWorkByteA; it then walks the party list PartyListHead and, for
+  (SelectedCharacter^.HpCurrent) become the pool SpellWorkByteA; it then walks the party list PartyListHead and, for
   every giant snake (CreatureType $E) whose hit points fit the remaining pool, subtracts them, counts
   it in SpellTargetCount and adds it to the chosen targets SpellTargets. The spell's own affect is then applied to the
   charmed snakes with the message 'is charmed'. Reads SelectedCharacter, PartyListHead and CastingSpell; changes
@@ -1018,14 +1016,14 @@ const
 var
   Current: PCharacter;            { the walker of the party list PartyListHead }
 begin
-  SpellWorkByteA := SelectedCharacter^.Flag11B;
+  SpellWorkByteA := SelectedCharacter^.HpCurrent;
   SpellTargetCount := 0;
   Current := PCharacter(PartyListHead);
   while Current <> nil do
   begin
-    if (Current^.CreatureType = SnakeType) and (SpellWorkByteA >= Current^.Flag11B) then
+    if (Current^.CreatureType = SnakeType) and (SpellWorkByteA >= Current^.HpCurrent) then
     begin
-      SpellWorkByteA := SpellWorkByteA - Current^.Flag11B;
+      SpellWorkByteA := SpellWorkByteA - Current^.HpCurrent;
       Inc(SpellTargetCount);
       SpellTargets[SpellTargetCount] := Current;
     end;
@@ -1042,9 +1040,8 @@ end;
 procedure CastSpiritualHammer;
 const
   SpiritualHammerAffect = $17;    { the spell's own affect (SpellTable[28].AffectId): its handler is run here }
-  RunHandlerOnRemoval = 1;        { ApplySpellToTargets' Flag: the affect's handler runs when it is removed }
 begin
-  ApplySpellToTargets(CastingSpell, 0, RunHandlerOnRemoval, 0, 0, '');
+  ApplySpellToTargets(CastingSpell, 0, RunsHandlerOnRemove, 0, 0, '');
   CallAffectHandler(SpiritualHammerAffect, FirstSpellTarget, nil, ModeApply);
 end;
 { ovl22:1A16 (e33). Cast handler of spell 30, Invisibility (SpellHandlers[30]: InitSpellHandlers maps
@@ -1204,7 +1201,6 @@ const
   FighterSides = 8;
   MessageColor = $A;             { the colour ShowCharacterMessage shows 'is stronger' in }
   TimedMessage = 1;               { nonzero: ShowCharacterMessage delays by the game speed and clears it }
-  RunHandlerOnRemoval = 1;        { AddAffect Flag: the affect's handler runs when the affect is removed }
 var
   Target: PCharacter;             { FirstSpellTarget, the chosen target whose Strength is raised }
   Percent: Byte;                  { the exceptional-strength percentile passed to RaiseStrength }
@@ -1239,7 +1235,7 @@ begin
   end;
   if RaiseStrength(Target, Strength, Percent, Code) then
     ShowCharacterMessage(Target, 'is stronger', MessageColor, TimedMessage);
-  AddAffect(Target, StrengthAffect, SpellAffectDuration(CastingSpell), Code, RunHandlerOnRemoval);
+  AddAffect(Target, StrengthAffect, SpellAffectDuration(CastingSpell), Code, RunsHandlerOnRemove);
 end;
 { ovl22:206F. Cast handler of spell 36, Animate Dead: for up to the caster level corpses still in the
   party list PartyListHead (Status 6, CreatureType 0) it places the body on the combat map at its own cell
@@ -1265,7 +1261,6 @@ const
     (b9 04 00), and the original at ovl22:210B has the byte form (probe PRB27.PAS). }
   SideScale = 16;
   AnimatedMark = 2;               { the byte at +$76 Animate Dead sets (ScoreItem reads it, ovl09:128D) }
-  RunHandlerOnRemoval = 1;        { ApplyAffect Flag: the affect's handler runs when it is removed }
   NoSaveNegates = 0;              { ApplyAffect SaveNegates }
   NotSaved = False;               { ApplyAffect Saved }
   RestoreCell = 1;                { PlaceCombatant Restore }
@@ -1306,7 +1301,7 @@ begin
           Dec(Level);
           if ReviveCombatant(Current, Current^.HpMax) then
           begin
-            ApplyAffect(Current, AnimateAffect, 0, SaveData, RunHandlerOnRemoval, NoSaveNegates,
+            ApplyAffect(Current, AnimateAffect, 0, SaveData, RunsHandlerOnRemove, NoSaveNegates,
               NotSaved, 'is animated');
             Current^.Status := 1;
           end;
@@ -1384,10 +1379,8 @@ end;
   own, but with Flag 1 so the spell's affect runs its handler when it is removed (the affect the
   Temple's Cure Disease and CureDiseaseAffects clear). Reads CastingSpell. }
 procedure CastCauseDisease;
-const
-  RunHandlerOnRemoval = 1;        { ApplySpellToTargets' Flag: the affect's handler runs when it is removed }
 begin
-  ApplySpellToTargets(CastingSpell, 0, RunHandlerOnRemoval, 0, 0, 'is diseased');
+  ApplySpellToTargets(CastingSpell, 0, RunsHandlerOnRemove, 0, 0, 'is diseased');
 end;
 { ovl22:2385 (e44). Cast handler of spells 41 and 46, Dispel Magic (InitSpellHandlers maps both
   DS:6B84+41*4 and DS:6B84+46*4 to overlay stub 0096:00FC; SpellNames[41] and SpellNames[46] are
@@ -1476,13 +1469,12 @@ end;
   finds, saying ''s item is un-cursed'. Reads FirstSpellTarget; changes the character's affects and its items. }
 procedure CastRemoveCurse;
 const
-  CurseAffect = $24;              { the curse affect CureAffect removes (AffectCurse, ovl04:08A0) }
   ShowAbout = 1;                  { ShowHitMessage's Flag argument }
 var
   Item: PItem;                    { the walker of the character's carried items }
   UnCursed: Boolean;              { whether a cursed item was found and cleared }
 begin
-  if CureAffect(FirstSpellTarget, CurseAffect) then
+  if CureAffect(FirstSpellTarget, AffectBestowCurse) then
     ShowHitMessage(FirstSpellTarget, ShowAbout, 'is un-cursed')
   else
   begin
@@ -1533,7 +1525,6 @@ const
   LevelDiceSides = 3;
   LevelScale = 2;
   ScanSteps = 2;                  { ScanTargets' MaxSteps around the aim point }
-  OmniDir = $FF;                  { ScanTargets' Dir: every direction (InDirArc omni) }
   FootprintBase = 1;              { ScanTargets' Base: the FootprintCell neighbour base }
   DamageDiceSides = 6;            { one d6 per caster level }
   DamageKindFire = 9;             { DealDamage classifies kind 9 as fire (ovl24:1389) }
@@ -1741,7 +1732,6 @@ procedure CastLightningBolt;
 const
   LevelDiceSides = 6;             { one d6 per caster level (the AD&D Lightning Bolt) }
   BeamReach = 8;                  { CastLineBeam's reach: the beam walks 16 cells }
-  SaveKindSpell = 4;              { SavingThrow's kind for a spell }
   BounceOnce = 1;                 { the bolt reflects off a wall once }
 var
   Damage: Byte;                   { the rolled damage (caster level d6) }
@@ -1796,7 +1786,7 @@ begin
     Exit;
   PerLevel := Target^.Pad74[LostHitPoints] div Target^.Pad74[DrainedLevels];
   Inc(Target^.HpMax, PerLevel);
-  Inc(Target^.Flag11B, PerLevel);
+  Inc(Target^.HpCurrent, PerLevel);
   Inc(Target^.HpB1, PerLevel);
   Dec(Target^.Pad74[LostHitPoints], PerLevel);
   Dec(Target^.Pad74[DrainedLevels]);
@@ -1843,7 +1833,7 @@ procedure CastMonsterHeal;
 const
   PoisonedAffect = $37;           { the Poisoned affect CureAffect removes (ovl15 names $37 Poisoned) }
   { The affect removed together with the Poisoned one, meaning unknown: ovl04's Neutralize Poison
-    removes the same pair (ovl04:07F1, its AffectRemovedAtNeutralizePoison2). }
+    removes the same pair (ovl04:07F1, its AffectSlowPoison). }
   PoisonAidAffect = $16;
   HealDiceCount = 1;              { the cure heals 1d4 hit points }
   HealDiceSides = 4;
@@ -1879,13 +1869,12 @@ const
   StrengthAffect = $26;           { the strength affect left on the target (as CastStrength, ovl22:1F41) }
   MessageColor = $A;             { the colour ShowCharacterMessage shows 'is stronger' in }
   TimedMessage = 1;               { nonzero: ShowCharacterMessage delays by the game speed and clears it }
-  RunHandlerOnRemoval = 1;        { AddAffect Flag: the affect's handler runs when the affect is removed }
 var
   Code: Byte;                     { RaiseStrength's earlier-strength code, passed to AddAffect as Data }
 begin
   if RaiseStrength(FirstSpellTarget, MonsterStrength, NoPercent, Code) then
     ShowCharacterMessage(FirstSpellTarget, 'is stronger', MessageColor, TimedMessage);
-  AddAffect(FirstSpellTarget, StrengthAffect, SpellAffectDuration(CastingSpell), Code, RunHandlerOnRemoval);
+  AddAffect(FirstSpellTarget, StrengthAffect, SpellAffectDuration(CastingSpell), Code, RunsHandlerOnRemove);
 end;
 { ovl22:2F4D. Cast handler of spell 60, a monster-only spell: SpellNames[60] is empty, and the
   InitSpellHandlers table points element 60 of SpellHandlers at this stub. It strikes the combatant on the aim
@@ -1901,7 +1890,6 @@ const
   StrikeBase = 20;
   BeamReach = 3;                  { CastLineBeam walks Range * 2 cells }
   BeamDamage = 20;
-  SaveKindSpell = 4;              { SavingThrow's kind for a spell }
   NoBounce = 0;                   { the beam does not reflect off a wall }
 var
   Blocked: Boolean;               { DamageTargetInCell's out flag: the aim cell's tile refuses the beam (not read) }
@@ -1996,7 +1984,6 @@ const
   BeamStep = 4;                   { WalkCombatLine's step for the breath line }
   BeamWidth = $32;                { WalkCombatLine's width for the breath line }
   BeamReach = $A;                 { CastLineBeam's reach: the breath walks this many cells each way }
-  SaveKindBreath = 3;             { SavingThrow's kind for the breath }
   NoBounce = 0;                   { the breath line does not reflect off a wall }
   BreathAffect = $58;             { the affect removed once its data byte is spent }
   BreathDataLimit = $FD;          { while the affect's data is above this it is only decremented }

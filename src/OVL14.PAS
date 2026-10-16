@@ -332,7 +332,7 @@ begin
     AdvanceGameClock($C, 3);
   end;
 end;
-{ ovl14:0989. The wilderness key driver (called by ovl03_fn_3379): in the 3D view it
+{ ovl14:0989. The wilderness key driver (called by RunWilderness (ovl03:32F8)): in the 3D view it
   reads menu and movement keys through ReadPromptChoice and dispatches them (A/C/V/E/S/L
   menu keys, H/M/P/K movement with the icon sets, anything else through UpdateSelectedCharacter),
   otherwise it loads the ICON pictures for map pages 2..4 and runs a smaller key loop;
@@ -468,14 +468,14 @@ begin
     end;
   end;
   PreviousAreaViewKind := AreaViewKind;
-  if WindowClearOnce = 0 then
+  if EclWindowCleared = 0 then
   begin
     ClearWindow(1, $11, $26, $16);
-    WindowClearOnce := 1;
+    EclWindowCleared := 1;
   end;
   HandleWildernessKeys := Key;
 end;
-{ ovl14:0D6D. The wilderness command menu (called by ovl03_fn_3379): in the 3D view it
+{ ovl14:0D6D. The wilderness command menu (called by RunWilderness (ovl03:32F8)): in the 3D view it
   builds the Bash/Pick/Knock/Exit menu from the DoorMenuFlags/DoorMenuFlags[1]/DoorMenuFlags[2] flags and the
   record flag checks, prompts through ReadPromptChoice and dispatches the key: in the DoorKindAt = 2
   arm 'B' calls DoBash, 'P' calls DoPick (ovl14:0ED6) and 'K' calls DoKnock, with Knock

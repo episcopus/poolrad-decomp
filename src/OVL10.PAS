@@ -70,11 +70,7 @@ const
   MaxComputerMorale = $66;      { CheckMorale zeroes thresholds above this (ovl09:0431) }
   HookBattleStart = 8;          { the RunAffectHooks kind StartBattle runs for every character }
   { Words of GameVars2^ (the second game word block) this unit reads or writes. }
-  Var2SideDistance = 705;       { area map steps between the two sides' placement origins (ovl10:1A44) }
   Var2BattleWord = 819;         { cleared when a battle starts; meaning unknown }
-  { A word of GameVars^: while it is $FF, Flag3DTiles is replaced by FlagPlain (ovl10:0B75);
-    DrawAreaView draws area blocks 8 and 9 while it is above 253 (GateVarBlock8Count in ovl27). }
-  VarBlock8Gate = 435;
 
 { ovl10:0000. Scatters rare tiles over the plain ground (GroundPicture cells) of the combat map:
   on a d100 roll of 98 tile $1A, of 99 tile $1B, and on 100, unless WallViewMode is $A, one time in 100
@@ -411,7 +407,7 @@ end;
   QUIRK ovl10:08AA..0B14: the first matching range wins for overlapping codes 3, 4 and 7 (value 3),
   $28, $29 and $2B (value 1), $7C (value 8), and $F5 (value $20). QUIRK ovl10:0B68: a code in no
   range leaves local Flags unassigned, so the returned byte is unset. QUIRK ovl10:0B6B: when
-  Flag3DTiles is set and game word VarBlock8Gate is $FF, that bit is replaced by FlagPlain. Called by
+  Flag3DTiles is set and game word VarAreaDoors is $FF, that bit is replaced by FlagPlain. Called by
   the wilderness builders for every test. }
 function BlockTerrainFlags: Byte;
 var
@@ -445,7 +441,7 @@ begin
     $E1..$E4, $EA..$ED: Flags := $A0;
   end;
   if (Flags and Flag3DTiles) <> 0 then
-    if GameVars^[VarBlock8Gate] = $FF then
+    if GameVars^[VarAreaDoors] = $FF then
     begin
       Dec(Flags, Flag3DTiles);
       Flags := Flags or FlagPlain;
@@ -850,7 +846,7 @@ end;
 
 { ovl10:19F5. Puts every character of the party list on the combat map. It clears CombatantTable,
   sets the two sides' grids: side 0 at the origin facing the party facing (PartyFacing), side 1
-  Var2SideDistance area map steps ahead facing back; the first ring of a side holds half its
+  VarStepsAhead area map steps ahead facing back; the first ring of a side holds half its
   combatants (PartySideCount/EnemySideCount, rounded up); each of the 4 groups of a side's PlacementCells is the
   shape PlacementShapes of the side's facing (group 1: shape 4). Then every character becomes
   combatant Index (CombatantRecord, CombatantTable Unk2 and Kind from CombatSize) and gets a cell
@@ -876,8 +872,8 @@ begin
   SideOriginCol[SideParty] := 0;
   SideOriginRow[SideParty] := 0;
   SideFacing[SideParty] := PartyFacing shr 1;
-  SideOriginCol[SideMonsters] := SideOriginCol[SideParty] + DirStepX[PartyFacing] * GameVars2^[Var2SideDistance];
-  SideOriginRow[SideMonsters] := SideOriginRow[SideParty] + DirStepY[PartyFacing] * GameVars2^[Var2SideDistance];
+  SideOriginCol[SideMonsters] := SideOriginCol[SideParty] + DirStepX[PartyFacing] * GameVars2^[VarStepsAhead];
+  SideOriginRow[SideMonsters] := SideOriginRow[SideParty] + DirStepY[PartyFacing] * GameVars2^[VarStepsAhead];
   SideFacing[SideMonsters] := ((PartyFacing + 4) mod 8) shr 1;
   for PlacingSide := SideParty to SideMonsters do
     FirstRingCells[PlacingSide] := (SideCounts[PlacingSide] + 1) shr 1;
@@ -957,7 +953,7 @@ end;
   'A battle begins...' on row 24, resets the round state (MagicToggleOn, CombatRound, AttackRoll, the bodies,
   the lists CloudList and LootListBoundary, game word Var2BattleWord), caps Var2Morale at 100, creates the map,
   discards waiting keys, prepares combatants, discards waiting keys again, places them, and discards
-  waiting keys once more. It allocates CombatPicture, centres the view on the first party character, calls
+  waiting keys once more. It allocates CombatAnimationPicture, centres the view on the first party character, calls
   DrawCombatScreen, runs HookBattleStart for each character, calls UpdateMonsterMorale and enters ViewModeCombat. }
 procedure StartBattle;
 var
@@ -987,7 +983,7 @@ begin
   DiscardWaitingKey;
   PlaceAllCombatants;
   DiscardWaitingKey;
-  AllocatePicture($18, 3, 4, 1, CombatPicture);
+  AllocatePicture($18, 3, 4, 1, CombatAnimationPicture);
   CombatMap^.ViewX := CombatantX(PCharacter(PartyListHead)) - 3;
   CombatMap^.ViewY := CombatantY(PCharacter(PartyListHead)) - 3;
   DrawCombatScreen;

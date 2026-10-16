@@ -23,7 +23,6 @@ const
   GateVarBlock4Flags = 380;      { or while bit 3 of this is set, }
   GateVarBlock4Empty = 415;      { or while this is zero }
   GateVarBlockBits = 416;         { bit 1 gates block 5 and bit 0 gates block 7: each is drawn while its bit is clear }
-  GateVarBlock8Count = 435;       { blocks 8 and 9 are drawn while this is above 253 }
 
   { The three windows of the adventure screen, in the grid DrawWindow works in: a column is
     16 pixels wide, a row 4 scanlines. The names give TopRow, LeftCol, BottomRow, RightCol. }
@@ -77,7 +76,7 @@ begin
             5: if (GameVars^[GateVarBlockBits] and 2) = 0 then Count := SpecialBlocks[Special].Pic - 1;
             6: Count := SpecialBlocks[Special].Pic - 1;
             7: if (GameVars^[GateVarBlockBits] and 1) = 0 then Count := SpecialBlocks[Special].Pic - 1;
-            8, 9: if GameVars^[GateVarBlock8Count] > 253 then Count := SpecialBlocks[Special].Pic - 1;
+            8, 9: if GameVars^[VarAreaDoors] > 253 then Count := SpecialBlocks[Special].Pic - 1;
           end
         end;
       { QUIRK ovl27:01CC: the original adds and subtracts 1 from both coordinates, which changes

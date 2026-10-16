@@ -33,8 +33,6 @@ const
   DiagonalCost = 3;             { a diagonal step (odd direction) three times (ovl09:0723) }
   { The four affects that let a combatant step onto a CloudTile cell (ovl09:0744..07A4); which
     spells leave them is not known. }
-  AffectKeptC = $6F;
-  AffectKeptD = $7D;
   AiTurnLimit = 20;             { AiTurn gives up after this many passes of its loop (ovl09:0B3C) }
   HookTurnStart = $0E;          { the affect hook kind AiTurn runs first, at the start of the turn [I] }
   RangeWrapped = $FF;           { a Range of 0 minus one wraps to this byte (AiTurn) }
@@ -368,8 +366,8 @@ begin
       if Tile = CloudTile then
         if not HasAffect(Who, AffectAnimateDead, Affect) then
           if not HasAffect(Who, AffectCough, Affect) then
-            if not HasAffect(Who, AffectKeptC, Affect) then
-              if not HasAffect(Who, AffectKeptD, Affect) then
+            if not HasAffect(Who, AffectPoisonImmunity, Affect) then
+              if not HasAffect(Who, AffectUndeadImmunity, Affect) then
                 Cost := Who^.Combat^.Moves + 1;
       if Who^.Combat^.Moves >= Cost then
         CanAffordStep := True;
@@ -697,8 +695,8 @@ end;
   forced to flee' is shown through ShowCharacterMessage, and nothing else is checked. A character with B84
   at or below $7F (not computer-run) is not checked either. Otherwise the morale is MoraleScratch =
   (B84 and $7F) * 2, zeroed above $66, which the hook kind $11 (RunAffectHooks) may change. The first
-  test holds when the morale is below the percentage of hit points lost (100 minus Flag11B * 100
-  div HpMax; Flag11B is the current hit points) or is zero. Then MoraleScratch takes SecondMoraleByte, the hook runs
+  test holds when the morale is below the percentage of hit points lost (100 minus HpCurrent * 100
+  div HpMax; HpCurrent is the current hit points) or is zero. Then MoraleScratch takes SecondMoraleByte, the hook runs
   again, and the second test holds when it is below 100 minus GameVars2^[Var2Morale] (word 710 of the
   second game word block, $6B00..$6EFF, not GameVars; the morale source of ovl10), or is zero, or Who
   is on the party side (Side 0). Only when both tests hold is there a roll: FastestEnemyMovement at or below half
@@ -727,7 +725,7 @@ begin
     if MoraleScratch > $66 then
       MoraleScratch := 0;
     RunAffectHooks($11, Who);
-    if (MoraleScratch < 100 - Who^.Flag11B * 100 div Who^.HpMax) or (MoraleScratch = 0) then
+    if (MoraleScratch < 100 - Who^.HpCurrent * 100 div Who^.HpMax) or (MoraleScratch = 0) then
     begin
       Saved6825 := MoraleScratch;
       MoraleScratch := SecondMoraleByte;

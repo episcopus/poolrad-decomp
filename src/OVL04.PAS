@@ -23,9 +23,6 @@ uses POOLVARS, RES06, RES09, RES12, OVL07, OVL19, OVL21, OVL22, OVL24, OVL25;
 const
   { Affect numbers (the ids HasAffect and RemoveAffect look for in a character's affect list). }
   AffectBlind = $21;            { Cure Blindness checks and removes it (ovl04:0262) }
-  AffectCurse = $24;            { Remove Curse accepts it as a reason to cast (ovl04:08A0) }
-  AffectRemovedAtNeutralizePoison2 = $16; { purpose unknown; removed with $37 (ovl04:07F1) }
-  AffectRemovedAtNeutralizePoison3 = $0F; { purpose unknown; removed with $37 (ovl04:0807) }
   { Prices in gold pieces (the second argument of ChargeForCure). }
   PriceCureBlindness = 1000;
   PriceCureDisease = 1000;
@@ -230,7 +227,7 @@ end;
 { ovl04:0510. Raise Dead: the character is dead when Status is StatusAnimated (1) or StatusDead (6) (ovl04:0539); otherwise it
   asks first. Charges PriceRaiseDead; only a dead character is raised: AffectAnimateDead and
   AffectPoisoned are removed, Status becomes StatusOkay, Flag10D becomes 1 (battle participant eligible
-  for experience, ovl05:0355), and Flag11B becomes 1. Flag11B is the current hit points [I], so this
+  for experience, ovl05:0355), and HpCurrent becomes 1. HpCurrent is the current hit points [I], so this
   restores one hit point [I] (ovl24:175D). Constitution is reduced by one before the constitution
   thresholds are tested; from 14 up the hit points above HpB1 are divided by the bonus over all class
   levels (fighter levels count constitution - 14; non-fighter levels count twice above constitution 15,
@@ -263,7 +260,7 @@ begin
         RemoveAffect(Who, AffectAnimateDead, nil);
         RemoveAffect(Who, AffectPoisoned, nil);
         RemovingAffects := 0;
-        Who^.Flag11B := 1;
+        Who^.HpCurrent := 1;
         Who^.Status := StatusOkay;
         Who^.Flag10D := 1;
         if Who^.Constitution > 0 then Dec(Who^.Constitution);
@@ -311,15 +308,15 @@ begin
     begin
       RemovingAffects := 1;
       RemoveAffect(SelectedCharacter, AffectPoisoned, nil);
-      RemoveAffect(SelectedCharacter, AffectRemovedAtNeutralizePoison2, nil);
-      RemoveAffect(SelectedCharacter, AffectRemovedAtNeutralizePoison3, nil);
+      RemoveAffect(SelectedCharacter, AffectSlowPoison, nil);
+      RemoveAffect(SelectedCharacter, AffectSlowPoisonDamage, nil);
       RemovingAffects := 0;
     end;
   end;
 end;
 
 { ovl04:083A. Remove Curse: the character needs it when one of its items is cursed or it has
-  AffectCurse; otherwise asks first. Charges PriceRemoveCurse and hands the character to
+  AffectBestowCurse; otherwise asks first. Charges PriceRemoveCurse and hands the character to
   CastRemoveCurse through FirstSpellTarget. }
 procedure RemoveCurse;
 var
@@ -338,7 +335,7 @@ begin
     if Item^.Cursed then Cursed := True;
     Item := Item^.Next;
   end;
-  if not Cursed and not HasAffect(SelectedCharacter, AffectCurse, Affect) then
+  if not Cursed and not HasAffect(SelectedCharacter, AffectBestowCurse, Affect) then
     Answer := AskCastAnyway('is not cursed.');
   if Answer = KeyYes then
   begin
@@ -353,7 +350,7 @@ end;
 
 { ovl04:0928. Stone to Flesh: asks first when Status is not StatusStoned; charges PriceStoneToFlesh
   and, for a stoned character, sets Status to StatusOkay, Flag10D to 1 (experience eligible,
-  ovl05:0355) and Flag11B to 1. Flag11B is the current hit points [I], so this restores one hit point [I]
+  ovl05:0355) and HpCurrent to 1. HpCurrent is the current hit points [I], so this restores one hit point [I]
   (ovl24:175D). }
 procedure StoneToFlesh;
 var
@@ -372,7 +369,7 @@ begin
       begin
         SelectedCharacter^.Status := StatusOkay;
         SelectedCharacter^.Flag10D := 1;
-        SelectedCharacter^.Flag11B := 1;
+        SelectedCharacter^.HpCurrent := 1;
       end;
   end;
 end;

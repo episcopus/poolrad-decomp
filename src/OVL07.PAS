@@ -138,8 +138,8 @@ var
 begin
   CloseUpShown := 0;
   PictureFrameDirty := 0;
-  CharWord6C00Zeroed := 0;
-  CharWord6B00Zeroed := 0;
+  ActiveFlagClearedByScript := 0;
+  NameClearedByScript := 0;
   SpecialViewCode2 := $41;
   SpecialViewCode1 := 9;
   SpecialViewGate := 1;
@@ -443,7 +443,7 @@ begin
   case Addr of
     0:
       if Value = 0 then
-        CharWord6B00Zeroed := 1;
+        NameClearedByScript := 1;
     $20..$70:
       begin
         Index := Addr - $1F;
@@ -471,7 +471,7 @@ begin
             SelectedCharacter^.Status := 7;
         end;
         if Value = 0 then
-          CharWord6C00Zeroed := 1;
+          ActiveFlagClearedByScript := 1;
       end;
     $10C:
       case Value of
@@ -1028,12 +1028,12 @@ begin
   end;
 end;
 { ovl07:1EA6. SkipCommand: steps EclPC over the script command at EclPC without running it: reads
-  its opcode (into SkippedOpcode) and decodes the number of operands that opcode takes (DecodeOperands);
+  its opcode (into CurrentOpcode) and decodes the number of operands that opcode takes (DecodeOperands);
   an opcode without operands is one byte. }
 procedure SkipCommand;
 begin
-  SkippedOpcode := EclCode^[EclPC];
-  case SkippedOpcode of
+  CurrentOpcode := EclCode^[EclPC];
+  case CurrentOpcode of
     1, 2, $A, $E, $11, $12, $1D, $20, $2D, $32, $34, $36, $38, $39, $3C: DecodeOperands(1);
     3, 8, 9, $C, $F, $10, $1F, $22: DecodeOperands(2);
     4..7, $B, $21, $28, $2A, $2F, $30, $35, $37, $3B: DecodeOperands(3);
@@ -1072,7 +1072,7 @@ begin
   end;
 end;
 { ovl07:20CC. DamageWithMessage: unless Who is already dead (Status 6), shows '<name> dies.' when
-  Damage is more than its hit points (Flag11B) plus 10, else '<name> is hit FOR <n> points of
+  Damage is more than its hit points (HpCurrent) plus 10, else '<name> is hit FOR <n> points of
   Damage.' in the text window (rows $11..$16, starting a new page with a 'press <enter>' prompt
   when the window is full), applies the damage (ApplyDamage), clears the window and redraws
   the selected character. }
@@ -1087,7 +1087,7 @@ begin
     Exit;
   ClearFirst := 0;
   Str(Damage, Num);
-  if Who^.Flag11B + 10 < Damage then
+  if Who^.HpCurrent + 10 < Damage then
     Text := '  ' + Who^.Name + ' dies. '
   else
     Text := '  ' + Who^.Name + ' is hit FOR ' + Num + ' points of Damage.';

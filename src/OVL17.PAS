@@ -40,14 +40,14 @@ type
   { The monster picture-bank tables a loaded monster's appearance is picked from: a view of the
     FigureBankTable-region byte table (POOLVARS, whose FigureBankTable[Figure[0]] is the CHEAD/CBODY suffix) with the
     head bank table at +2 and the four body bank tables at +$12, +$1C, +$26 and +$30. AddMonsterToParty
-    indexes each by Who^.B9E * its stride plus a RollDice. The first two bytes are the suffix
+    indexes each by Who^.Sex * its stride plus a RollDice. The first two bytes are the suffix
     table's. }
-  { Each table is indexed [Who^.B9E, a RollDice], one row per B9E (the 16/10-byte extents keep the
+  { Each table is indexed [Who^.Sex, a RollDice], one row per Sex (the 16/10-byte extents keep the
     next table at its own offset; a 2-D access is what makes the compiler index by the row stride,
     as ThiefDexTable[Dexterity, Skill] does in ovl23). }
   TMonsterBanks = record
     Suffix01: array[0..1] of Byte;       { +0..+1: the CHEAD/CBODY suffix table's first bytes }
-    Head: array[0..1, 0..7] of Byte;     { +2: head banks, [B9E, RollDice(1, 8)] }
+    Head: array[0..1, 0..7] of Byte;     { +2: head banks, [Sex, RollDice(1, 8)] }
     BodyClass0: array[0..1, 0..4] of Byte;  { +$12: body banks for class 0 }
     BodyOther: array[0..1, 0..4] of Byte;   { +$1C: body banks for the other classes }
     BodyClass5: array[0..1, 0..4] of Byte;  { +$26: body banks for class 5 }
@@ -162,7 +162,7 @@ var
   I: Word;                      { the byte index, 0 based }
 begin
   case VideoAdapter of
-    0, 2:
+    AdapterCga, AdapterTandy:
       begin
         for I := 0 to PMemPic(Source)^.ByteSize - 1 do
         begin
@@ -171,7 +171,7 @@ begin
             PByteArray(PMemPic(Dest)^.Pixels)^[I] and PByteArray(PMemPic(Source)^.Pixels)^[I];
         end;
       end;
-    1:
+    AdapterEga:
       begin
         for I := 0 to PMemPic(Source)^.ByteSize - 1 do
           PMemPic(Dest)^.Tail[I] := PMemPic(Dest)^.Tail[I] or PMemPic(Source)^.Tail[I];
@@ -232,7 +232,7 @@ end;
   with a Name it makes the save directory and writes to SaveDir + Name + '.sav'. It rewrites the
   file (prompting for the save disk while the open fails), BlockWrites the 285-byte character,
   closes it, and (after erasing any old file) writes the 63-byte items of Who^.Items to '.itm' and
-  the 9-byte affects of Who^.Affects to '.spc'. Called by RunCharacterMenu, ovl16_fn_1EA3 and SaveGame. }
+  the 9-byte affects of Who^.Affects to '.spc'. Called by RunCharacterMenu, CreateCharacter and SaveGame. }
 procedure SaveCharacter(Who: PCharacter; Name: String8);
 var
   SaveFile: file;                      { the file written }
@@ -482,7 +482,7 @@ end;
   LoadMonster fill it, gives it a random byte at +$AB (Random(256)), collects the classes with a
   positive level (Who^.ClassLevels[0..6]) into Pick[] (Pick[1] = 2 when none qualifies), rolls one of
   them (RollDice(1, Count)) and picks the monster's body picture bank from the FigureBankTable-region
-  MonsterBanks tables by the roll and Who^.B9E (the body table of class 0, 5, 6 or the default), and
+  MonsterBanks tables by the roll and Who^.Sex (the body table of class 0, 5, 6 or the default), and
   its head bank from the head table the same way. Then AddPartyMember adds it and
   BuildCharacterIcon(True) rebuilds the combat icon. Called by AddComputerMemberCommand. }
 procedure AddMonsterToParty(Kind: Byte);
@@ -503,7 +503,7 @@ begin
   LoadMonster(Kind, Who);
   with Who^ do
   begin
-    BAB := Random(256);
+    RandomTag := Random(256);
     Count := 0;
     for I := 0 to LastClass do
       if ClassLevels[I] > 0 then
@@ -518,12 +518,12 @@ begin
     end;
     Count := RollDice(1, Count);
     case Pick[Count] of
-      0: BodyBank := MonsterBanks.BodyClass0[B9E, RollDice(1, 5)];
-      5: BodyBank := MonsterBanks.BodyClass5[B9E, RollDice(1, 5)];
-      6: BodyBank := MonsterBanks.BodyClass6[B9E, RollDice(1, 5)];
-      else BodyBank := MonsterBanks.BodyOther[B9E, RollDice(1, 5)];
+      0: BodyBank := MonsterBanks.BodyClass0[Sex, RollDice(1, 5)];
+      5: BodyBank := MonsterBanks.BodyClass5[Sex, RollDice(1, 5)];
+      6: BodyBank := MonsterBanks.BodyClass6[Sex, RollDice(1, 5)];
+      else BodyBank := MonsterBanks.BodyOther[Sex, RollDice(1, 5)];
     end;
-    HeadBank := MonsterBanks.Head[B9E, RollDice(1, 8)];
+    HeadBank := MonsterBanks.Head[Sex, RollDice(1, 8)];
   end;
   AddPartyMember(Who);
   BuildCharacterIcon(True);

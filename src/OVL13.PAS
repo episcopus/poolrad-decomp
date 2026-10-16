@@ -56,13 +56,13 @@ implementation
 uses RES03, RES04, RES06, RES09, RES12, OVL19, OVL22, OVL24, OVL25, OVL30, OVL31, Crt;
 type
   { A view of the two bytes ResolveCombatantAttacks selects between with the from-behind flag: TCharacter
-    +$111 (ResistValue) and +$112 (ds112), accessed as a signed-indexed pair. }
+    +$111 (ArmourClassValue) and +$112 (RearArmourClassValue), accessed as a signed-indexed pair. }
   TResistView = record
     Pad: array[0..$110] of Byte;
     Pair: array[0..1] of Byte;
   end;
   PResistView = ^TResistView;
-  { A view of the header of the 24x3 combat picture AllocatePicture makes CombatPicture point at (the
+  { A view of the header of the 24x3 combat picture AllocatePicture makes CombatAnimationPicture point at (the
     TPicture res12's CopyPictureItem reads): only the bytes-per-item word at +$11 is needed here
     to quarter it for the text adapter, the rest of the header is not read. }
   TPictureHeader = record
@@ -182,7 +182,7 @@ begin
       { QUIRK ovl13:00C5: the original widens Side with cbw (a sign extend) and ANDs it with a
         16-bit signed word, then tests the low byte only; the casts reproduce that shape (Side is
         a Byte elsewhere: ovl09 and res12 compare it unsigned). }
-      if Byte((ShortInt(Who^.Side) + 1) and Integer(GameVars2^[VarCombatWord715])) <> 0 then
+      if Byte((ShortInt(Who^.Side) + 1) and Integer(GameVars2^[VarSurpriseSides])) <> 0 then
         Dec(Initiative, InitiativePenalty);
       if (Initiative < 0) or (Initiative > MaxInitiative) then
         Initiative := 0;
@@ -787,17 +787,17 @@ end;
   (this routine covers 1406..17F6: the map's entries 14A1, 1583, 1713 and 1758 lie inside it):
   it clears the attack-slot counters (AttackSlotRolls[1..2], AttackSlotCounts[1..2]) and the damage, marks the
   attacker's Combat^.Pad8, then either takes the helpless auto-hit (no roll, ShowAttackResult kind 3
-  passing the target's current hit points (Flag11B) plus 5 as the damage dealt and 1 as the number
+  passing the target's current hit points (HpCurrent) plus 5 as the damage dealt and 1 as the number
   displayed, ClearAttackerAffect, both attack slots cleared) or, against a target
   that fights back, switches the readied weapon to its large-foe dice when the target is big
   (CombatSize above $80 or a footprint kind above 1), recomputes the target's combat values, runs hook
-  $B on it, works out the needed to-hit roll and the hit kind (a from-behind hit uses the ds112 pair
+  $B on it, works out the needed to-hit roll and the hit kind (a from-behind hit uses the RearArmourClassValue pair
   and kind 1, a backstab kind 2), then walks the attacker's attack slots downward: each slot with
   attacks left fires once, RollToHit (or a helpless target) lands it, RollAttackDamage rolls the
   damage, ShowAttackResult shows it and the death hook runs; when nothing landed a miss is shown.
   Done is left nonzero when the turn ends (EndCombatTurn) and zero while another attack remains.
   QUIRK ovl13:1733: the damage dealt and the number displayed are both DamageAmount (the miss at
-  ovl13:1797 passes 0 for both, the helpless hit passes Flag11B + 5 and 1). Called by
+  ovl13:1797 passes 0 for both, the helpless hit passes HpCurrent + 5 and 1). Called by
   PerformAttack (ovl13:19D6). Globals: AttackRoll, AttackSlotCounts, DamageAmount, SoundNoAction, SoundAttackMissed. }
 procedure ResolveCombatantAttacks(Attacker, Target: PCharacter; AttackKind: Byte; var Done: Byte);
 var
@@ -809,7 +809,7 @@ var
   SlotIndex: Byte;               { the attack slot being resolved, and the counter of the tail loop }
   SlotCount: Byte;               { the attacker's current attack slot (Combat^.Pad4[4]) }
   HitKind: Byte;                 { the ShowAttackResult kind: 0 plain, 1 from behind, 2 backstab }
-  RearAttack: ShortInt;          { nonzero selects the ds112 byte instead of ResistValue }
+  RearAttack: ShortInt;          { nonzero selects the RearArmourClassValue byte instead of ArmourClassValue }
 begin
   Behind := AttackKind;
   Done := 0;
@@ -827,7 +827,7 @@ begin
     while Attacker^.AttackSlots[Attacker^.Combat^.Pad4[4]] = 0 do
       Dec(Attacker^.Combat^.Pad4[4]);
     Inc(AttackSlotCounts[Attacker^.Combat^.Pad4[4]]);
-    ShowAttackResult(Attacker, Target, 3, Target^.Flag11B + 5, 1, 1);
+    ShowAttackResult(Attacker, Target, 3, Target^.HpCurrent + 5, 1, 1);
     ClearAttackerAffect(Attacker);
     for SlotIndex := 1 to 2 do
       Attacker^.AttackSlots[SlotIndex] := 0;
@@ -850,7 +850,7 @@ begin
     RunAffectHooks(HookAttackSetup, Target);
     RearAttack := 0;
     if IsBackstab(Attacker, Target) then
-      NeededRoll := Target^.ds112 - 2
+      NeededRoll := Target^.RearArmourClassValue - 2
     else
     begin
       if Target^.Combat^.BF > 1 then
@@ -1008,7 +1008,7 @@ end;
   reduces it by the readied weapon's range band ItemTable[SlotItems[0]^.ItemType].Range div 3
   ((Range - 1) div 3, at least 0). While the distance then still exceeds the band it takes the band
   off the distance and adds 2, then 3 to NeededRoll (two bands at most). A melee weapon's band is the
-  distance itself, so no penalty. Called by ResolveCombatantAttacks after the resistance/ds112
+  distance itself, so no penalty. Called by ResolveCombatantAttacks after the resistance/RearArmourClassValue
   NeededRoll. Globals: ItemTable. }
 procedure AddRangePenalty(Attacker, Target: PCharacter; var NeededRoll: Byte);
 var
@@ -1035,7 +1035,7 @@ end;
   the routine FindSpellTarget and ovl09 SpellAccepted use. It walks the nine directions Dir 0..8
   from Who (Dir 8 is Who's own cell, DirStepX[8]/DirStepY[8] are 0,0), maps each with GetMapCell,
   and for an occupied cell keeps the SAME-side combatant (Side = Who^.Side) whose current hit
-  points (Flag11B) are below its maximum (HpMax) when it is the most wounded so far (BestHp) or,
+  points (HpCurrent) are below its maximum (HpMax) when it is the most wounded so far (BestHp) or,
   for Who's own cell (the occupant is Who), when it is below half its maximum; a body cell (tile
   BodyTile) with no occupant makes it walk BodyTable for a body standing on the scanned cell whose
   owner is not yet dead (Status not in StatusKilled, 6..8). It then hands over the chosen
@@ -1073,13 +1073,13 @@ begin
     begin
       PCharacter(Selected) := CombatantRecord[Occupant];
       if (PCharacter(Selected)^.Side = Who^.Side) and
-         (PCharacter(Selected)^.Flag11B < PCharacter(Selected)^.HpMax) then
-        if (PCharacter(Selected)^.Flag11B < BestHp) or
+         (PCharacter(Selected)^.HpCurrent < PCharacter(Selected)^.HpMax) then
+        if (PCharacter(Selected)^.HpCurrent < BestHp) or
            ((PCharacter(Selected) = Who) and
-            (PCharacter(Selected)^.Flag11B < PCharacter(Selected)^.HpMax shr 1)) then
+            (PCharacter(Selected)^.HpCurrent < PCharacter(Selected)^.HpMax shr 1)) then
         begin
           SelectedWho := PCharacter(Selected);
-          BestHp := PCharacter(Selected)^.Flag11B;
+          BestHp := PCharacter(Selected)^.HpCurrent;
         end;
     end
     else if Tile = BodyTile then
@@ -1301,8 +1301,6 @@ const
   { The SpellTable bytes e15 tests (TSpellEntry.PadB). }
   SpellCombatFlag = $B;          { +$B: 0 marks a spell castable only in camp }
   SpellCastDelay = $C;           { +$C: div 3 gives the casting delay in rows }
-  { The colour/row ShowCharacterMessage shows 'Begins Casting' on. }
-  CastMessageRow = 10;
 var
   Spell: Byte;                   { the spell number cast, 0 while none is chosen }
   Unused: Byte;                  { QUIRK ovl13:2417: declared but never read }
@@ -1341,7 +1339,7 @@ begin
   else
   begin
     Done := 1;
-    ShowCharacterMessage(ChosenChar, 'Begins Casting', CastMessageRow, 1);
+    ShowCharacterMessage(ChosenChar, 'Begins Casting', CombatMessageRow, 1);
     ChosenChar^.Combat^.PendingSpell := Spell;
     if ChosenChar^.Combat^.Initiative > CastTime then
       Dec(ChosenChar^.Combat^.Initiative, CastTime)
@@ -1356,7 +1354,7 @@ end;
   must have been attacked (Combat^.BF above 1) and must face Who (the direction from Who to Target,
   BearingTo, equals Target's Combat^.IconSet). The item kinds are read from ItemTable: 7 and 8 and
   $23..$25 are one-handed weapons, $22 and $26 are two-handed (excluded). RollAttackDamage applies
-  the thief-level damage multiplier and ResolveCombatantAttacks uses it for the ds112 - 2 to-hit and
+  the thief-level damage multiplier and ResolveCombatantAttacks uses it for the RearArmourClassValue - 2 to-hit and
   attack kind 2. Globals: none. }
 function IsBackstab(Who: PCharacter; Target: PCharacter): Boolean;
 const
@@ -1417,7 +1415,7 @@ end;
   kind (the missile sprite of the bearing from Who to Target for most kinds, a 2x2 combat icon or
   two rows of another picture for the rest) and draws it at Who's cell, then animates it along the
   line between the two combatants (WalkCombatLine), with a launch and an impact sound. Called by
-  PerformAttack for the aimed item and for a readied bow. Globals: CombatPicture (the combat picture whose
+  PerformAttack for the aimed item and for a readied bow. Globals: CombatAnimationPicture (the combat picture whose
   bytes-per-item word is read), VideoAdapter, SoundAttackLeaves and SoundAttackArrives (the two sounds). QUIRK ovl13:26DD:
   PixelBytes is worked out and never read. }
 procedure ShowAttackAnimation(Who, Target: PCharacter; Item: PItem);
@@ -1455,8 +1453,8 @@ begin
   Frames := MissileFrames;
   Mode := MissileMode;
   PicIndex := MissilePicBase;
-  PixelBytes := PPictureHeader(CombatPicture)^.ByteSize;
-  if VideoAdapter = 1 then
+  PixelBytes := PPictureHeader(CombatAnimationPicture)^.ByteSize;
+  if VideoAdapter = AdapterEga then
     PixelBytes := PixelBytes div 4;
   case Item^.ItemType of
     9, $15, $1C, $1F, $49:
@@ -1491,18 +1489,18 @@ begin
       Mode := SwingMode;
     end;
   end;
-  SetSoundDriverIdle(0);
+  SetSoundDriverIdle(SoundIdleOff);
   PlaySound(SoundAttackLeaves);
   WalkCombatLine(CombatantX(Who), CombatantY(Who), CombatantX(Target), CombatantY(Target),
     Frames, Mode);
   PlaySound(SoundAttackArrives);
-  SetSoundDriverIdle(10);
+  SetSoundDriverIdle(SoundIdleDefault);
 end;
 { ovl13:2879. Works out the monster side's remaining hit points as a percentage and stores it in the
   morale byte SecondMoraleByte, the value CheckMorale reads for a monster's second morale test: it walks the
   battle's character list PartyListHead and, for every combatant on the monster side (Side = SideMonsters),
   adds its maximum hit points (HpMax, +$32) and, when it is still in the fight (Flag10D set), its
-  current hit points (Flag11B, +$11B). A monster whose Flag10D is clear keeps its maximum counted
+  current hit points (HpCurrent, +$11B). A monster whose Flag10D is clear keeps its maximum counted
   while its current hit points fall out of the sum, so damage lowers the percentage. The result is
   20 * current div maximum * 5 (0 when the monster side has no maximum hit points at all, which
   leaves SecondMoraleByte unchanged). Called by StartBattle (ovl10:1E31, before the first round) and
@@ -1521,7 +1519,7 @@ begin
     if Who^.Side = SideMonsters then
     begin
       if Who^.Flag10D <> 0 then
-        TotalCurrentHp := TotalCurrentHp + Who^.Flag11B;
+        TotalCurrentHp := TotalCurrentHp + Who^.HpCurrent;
       TotalMaxHp := TotalMaxHp + Who^.HpMax;
     end;
     Who := Who^.Next;
@@ -2060,17 +2058,17 @@ end;
   called from behind (attack kind 1) and the turn ends through EndCombatTurn; the affect is removed
   from Who when the attack left the combatant out of the fight. Otherwise the combatant loses affect
   $3A, and (mode 0 only) the affect's removal flag is cleared and it is removed from Who, which runs
-  this handler again with mode 1 and so does not recurse. Globals: HandlerCombatant (the recorded combatant),
+  this handler again with mode 1 and so does not recurse. Globals: AttackTarget (the recorded combatant),
   CombatantRecord. }
 procedure ForcedAttack(Who: PCharacter; Affect: PAffect; Mode: Byte);
 var
   Done: Byte;                    { [bp-1] the turn-done flag PerformAttack fills in }
   Unused: Byte;                  { QUIRK ovl13:3A89: declared but never read; it pads the frame }
 begin
-  HandlerCombatant := CombatantRecord[Affect^.Data];
-  if (Mode <> 0) or (Who^.Flag10D = 0) or (HandlerCombatant^.Flag10D = 0) then
+  AttackTarget := CombatantRecord[Affect^.Data];
+  if (Mode <> 0) or (Who^.Flag10D = 0) or (AttackTarget^.Flag10D = 0) then
   begin
-    RemoveAffect(HandlerCombatant, AffectHeldFast, nil);
+    RemoveAffect(AttackTarget, AffectHeldFast, nil);
     if Mode = 0 then
     begin
       Affect^.Flag := 0;
@@ -2083,9 +2081,9 @@ begin
     Who^.AttackSlots[2] := 0;
     Who^.WeaponAttacks[1] := 3;
     Who^.WeaponDamage[1] := 4;
-    PerformAttack(Who, HandlerCombatant, 1, nil, Done);
+    PerformAttack(Who, AttackTarget, 1, nil, Done);
     Done := EndCombatTurn(Who);
-    if HandlerCombatant^.Flag10D = 0 then
+    if AttackTarget^.Flag10D = 0 then
       RemoveAffect(Who, AffectForcedAttack, Affect);
   end;
 end;

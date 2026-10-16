@@ -283,9 +283,14 @@ type
     { +$2E: the race (whitepaper 4.2.5); signed: ComputeThiefSkills sign-extends it (ovl23:034F)
       to index the race row of ThiefRaceTable. }
     Race: ShortInt;
-    { +$2F: the class (whitepaper 4.2.5): 0 cleric, 2 fighter, 5 magic-user, 6 thief, 8..16 the
-      multi-class combinations (AwardExperience splits the experience by 2 or 3, ovl05:0454);
-      signed (the case at ovl05:045A compares with jl). }
+    { +$2F: the class or class combination (whitepaper 4.2.5), NOT a bit mask: 0..7 a single class in ClassNames order
+      and 8..16 nine
+      named combinations (ClassNames[ClassMask], ovl19:01D2; the row index of ClassAlignmentChoices, ClassAbilityMinimums and
+      StartingAgeTable); AwardExperience splits the experience by 2 or 3 (ovl05:0454); signed (the case at ovl05:045A
+      compares with
+      jl). TItemRow.ClassMask and ClassBits are real bit masks, so the same word means two things; renaming this field
+      to ClassCombo
+      touches 61 uses in 6 files and is left to a later pass. }
     ClassMask: ShortInt;
     { +$30: the age in years; the saved record holds it at 0x30 (whitepaper 4.2.5); CarryClock adds one
       to every character when the rest clock's top digit reaches its radix (ovl20:037B). }
@@ -293,7 +298,10 @@ type
     HpMax: Byte;                  { +$32: maximum hit points }
     { +$33..+$6A: one byte per spell 1..$38 (the rows of the spell table SpellTable): RecalcClassStats sets it to 1
       for every cleric spell (table class 0) of a level the character has a cleric spell slot
-      for (ovl23:0135); likely the spells the character can learn [I]. }
+      for (ovl23:0135). In ovl16 it is the set of spells the character knows: a magic-user starts with Detect Magic,
+      Read Magic,
+      Shield and Sleep (spells 11, 18, 19, 21), a cleric with every level 1 spell of class 0 (spells 1..8), and TrainCharacter
+      sets the chosen spell [V image, code]. }
     KnownSpells: array[1..$38] of Byte;
     { +$6B: the sweep-attack limit RecalcCombatValues (00BA:0BB8) sets: the fighter level
       (ClassLevels[2]) when it is above 0 and the race is above 0, else 1; StartCombatantRound
@@ -332,19 +340,25 @@ type
     { +$96..$9D: the level in each of the eight classes; Raise Dead treats index 2 apart (class 2
       is the fighter in the create-character run, whitepaper 5.8). Signed: only levels above 0 count. }
     ClassLevels: array[0..7] of ShortInt;
-    { +$9E: Sign-extended row index LoadMonster's caller (ovl17:1262) and the create menus (ovl16)
-      use to pick the character's picture banks: ovl17:1262 reads FigureBankTable[2 + B9E*8 + roll] and
-      FigureBankTable[18/28/38/48 + B9E*5 + roll], and ovl16:13CB reads RaceAbilityLimits[B9E + (Race shl 4)].
-      ovl16:0A29 sets it to (the create menu's selection - 1); it is probably the sex, 0 male
-      (whitepaper 4.2.5), but that is not settled. }
-    B9E: ShortInt;
+    { +$9E: the sex, 0 male and 1 female [V]: CreateCharacter builds the 'Pick Gender' menu from SexNames[0..1] and
+      stores the choice
+      minus one (ovl16:0A29), ovl19 draws SexNames[Sex], RaceAbilityLimits rows are (male, female) pairs indexed by it
+      (the female
+      limits are lower or equal in every race) and ovl17 picks the head and body picture banks by it
+      (FigureBankTable[3 + Sex * 8 + roll] and [19..58], ovl17:1262). Sign-extended by ovl16:13CB. }
+    Sex: ShortInt;
     { +$9F: the creature kind some spells test a target by: Charm Person and the shared helper
-      ovl22_fn_1758 require 1 or less (ovl22:11F3, 1760), Snake Charm $E (ovl22:193E) and ovl12
+      the helper at ovl22:1758 require 1 or less (ovl22:11F3, 1760), Snake Charm $E (ovl22:193E) and ovl12
       tests 4 and $A; MON*CHA has the humanoids at 0 or 1, the undead at 4 and a giant snake at $E,
       and a saved party member at 0. }
     CreatureType: Byte;
-    { +$A0: the script reads it signed (GetCharacterVar, ovl07:08C5). Purpose unknown: ScoreItem (ovl09:128D)
-      refuses an item whose Affects[3] is $84 when the low nibble of its Affects[2] differs from this byte. }
+    { +$A0: the alignment index of AlignmentNames [V]: 0 Lawful Good, 1 Lawful Neutral, 2 Lawful Evil, 3 Neutral Good, 4 True
+      Neutral, 5 Neutral Evil, 6 Chaotic Good, 7 Chaotic Neutral, 8 Chaotic Evil (ShowCharacterSheet draws
+      AlignmentNames[Alignment],
+      ovl19:0198; CreateCharacter stores the picked entry of ClassAlignmentChoices; the script reads it signed, GetCharacterVar
+      ovl07:08C5). ScoreItem (ovl09:128D) and the item handler AlignmentBoundWeaponHurtsOthers compare it with the low
+      nibble of an
+      item's Affects[2]. }
     Alignment: ShortInt;
     { +$A1: RecalcClassStats sets 3 when the fighter level (ClassLevels[2]) is above 6, else 2
       (ovl23:0083): likely attacks per two rounds [I]. }
@@ -353,19 +367,20 @@ type
       chooser (ovl09:13CA) reads only entry 1 (it multiplies +$A3 by +$A5 into its item score and,
       when the signed +$A7 is above 0, adds twice it). RecalcCombatValues copies both entries of the
       three pairs into the readied weapon block at +$115. +$A9 is the base value RecalcCombatValues
-      copies into ResistValue (+$111); ovl16:05E4 sets it to 50. The rest is unknown. }
+      copies into ArmourClassValue (+$111); ovl16:05E4 sets it to 50. The rest is unknown. }
     PadA2: Byte;
     BaseAttacks: array[1..2] of Byte;      { +$A3, +$A4: attacks per round (base) }
     BaseDamage: array[1..2] of Byte;       { +$A5, +$A6: damage (base) }
     BaseDamageBonus: array[1..2] of ShortInt;  { +$A7, +$A8: signed damage bonus (base) }
-    ResistBase: Byte;             { +$A9: base magic resistance RecalcCombatValues copies into ResistValue }
+    BaseArmourClassValue: Byte;             { +$A9: unarmoured value (50 = AC 10), copied into ArmourClassValue }
     { +$AA: the strength reaction and damage adjustments (StrengthAttackAdjustment, StrengthDamageAdjustment) apply only
       when this byte is nonzero; its meaning beyond that is not proven (it may mark a creature whose
       attacks use the strength tables). }
     StrengthBonusFlag: Byte;
-    { +$AB: LoadMonster's caller gives a new monster the value Random(256) here (ovl17:1262);
-      the rest of the byte's use is not known. }
-    BAB: Byte;
+    { +$AB: a random tag: CreateCharacter and
+      LoadMonster's caller store Random(256) here (ovl16, ovl17:1262) and AddSavedCharacters
+      tells two records of the same name apart by it (ovl16:3263). It is never added to anything. }
+    RandomTag: Byte;
     Experience: LongInt;          { +$AC: experience points; AwardExperience adds a battle's share (ovl05:04A3) }
     { +$B0: the character's class bits [I]: UseBestItem skips an item whose ClassMask (TItemRow) shares
       no bit with it (ovl09:13CA). Purpose unknown beyond that. }
@@ -389,8 +404,10 @@ type
     CBodyBlock: Byte;             { +$BE: the CBODY picture block BuildCharacterIcon loads for the combat icon }
     CombatIcon: Byte;             { +$BF: the icon picture DrawIcon draws for it on the combat map (ovl31) }
     { +$C0..+$C6: the character's figure descriptor as BuildCharacterIcon reads it. Figure[0] indexes FigureBankTable
-      for the CHEAD/CBODY name suffix; Figure[1..6] are six colour pairs (low nibble the source
-      colour's destination in the icon colour map, high nibble the source colour's + 8 slot). }
+      for the CHEAD/CBODY name suffix; Figure[1..6] are six colour pairs: the low
+      nibble is the colour the picture colour FigureColorSlots[I] becomes, the high nibble the colour of slot + 8.
+      Figure[0] is the
+      icon size, 1 small (Dwarf, Gnome, Halfling) or 2 large. }
     Figure: array[0..6] of Byte;
     ItemCountC7: Byte;            { +$C7: nonzero offers Use in the combat menu (ovl08:06E1); likely the item count }
     Items: PItem;                 { +$C8: the list of carried items }
@@ -426,11 +443,12 @@ type
     { +$110: added to the d20 an attack roll (RollToHit) must bring to the needed value (ovl24:0D41) [I]. }
     HitAdjust: Byte;
     { +$111: the d20 roll (20 counts 100) plus the level RollBeatsResistance is given must exceed it
-      (ovl24:0C90); likely the magic resistance [I]. }
-    ResistValue: Byte;
+      (ovl24:0C90). It is the armour class stored as 60 minus the AC: DrawArmourClass shows Abs(value - 60), ovl16
+      starts it at 50 (AC 10) [I]. RollBeatsResistance (ovl24) is the routine that compares against it. }
+    ArmourClassValue: Byte;
     { +$112: RecalcCombatValues computes it (the sum of its frame bytes [bp-$B]..[bp-9] minus two);
       not read by a decompiled routine yet, meaning unknown. }
-    ds112: Byte;
+    RearArmourClassValue: Byte;
     { +$113, +$114: two bytes indexed 1..2 by PartingShots, which picks the higher one that is nonzero
       as its attack slot and sets it to 1 (ovl13:0B80..0BBA); StartCombatantRound writes entry 2
       from the attack byte (ovl13:006E). What the pair counts is not settled. The lower bound is 1
@@ -446,7 +464,7 @@ type
     WeaponDamageBonus: array[1..2] of ShortInt;  { +$119, +$11A: signed; the strength and item plus bonus goes here }
     { +$11B: Raise Dead and Stone to Flesh set it to 1; HealCharacter adds to it up to HpMax,
       ReviveCombatant sets it and DropCombatant clears it: the current hit points [I] (ovl24:17B9). }
-    Flag11B: Byte;
+    HpCurrent: Byte;
     { +$11C: the party's slowest and fastest values of it set the script's range (MovementRange,
       ovl07:1FB1), doubled by affect $27 and halved by affect $2A: likely the movement rate [I]. }
     Movement: Byte;
@@ -601,7 +619,7 @@ const
   ClassMagicUser = 5;
   ClassThief = 6;
   ClassMonk = 7;
-  { TCharacter.Race (RaceNames at DS:0FEC order). }
+  { TCharacter.Race (RaceNames at DS:0F03 order; 0 is 'Monster'). }
   RaceDwarf = 1;
   RaceElf = 2;
   RaceGnome = 3;
@@ -629,7 +647,18 @@ const
   { Words of GameVars2^ read by several units. }
   VarNoCasting = 229;             { nonzero: spells cannot be cast (a no-magic area) }
   VarPartySize = 830;             { the members of the party (RemoveSelectedCharacter decrements it) }
-  VarCombatWord715 = 715;         { a combat word ovl08 and ovl13 share; meaning not known yet }
+  { The surprise word ECL command 35 writes (RollSurpriseCommand): bit 0 makes the party side lose its initiative in the
+    first combat round, bit 1 the monster side (StartCombatantRound, ovl13:185); RunCombat clears it (ovl08:94) [I]. }
+  VarSurpriseSides = 715;
+  VarStepsAhead = 705;            { the steps the party sees ahead (OpenStepsAhead) = the encounter distance: ovl10 places the
+                                    two sides that many area map steps apart (ovl10:1A44) }
+  VarTravelMode = 714;            { bit 0: search mode (the S key, " search" on the location line, res12); bit 1: a search
+                                    was requested (the L key runs EclSearchEntry, ovl14:375) [I] }
+  VarMapEdgeHit = 725;            { cleared at each area step (ovl03:31B4); ovl14 ClampPartyPosition sets it to 1 when it
+                                    clamps the party at the edge of the 16x16 map [I] }
+  VarAreaDoors = 435;             { a GameVars word DrawAreaView reads as the block 8 and 9 gate (ovl27, drawn while above
+                                    253), ovl10 tests it for $FF (FlagPlain) and ovl03 for $FE; meaning of the values
+                                    not traced }
   { TCharacter.B84 from $80 up (bit 7): a member the player does not run (a hireling), whom the computer
     plays (PrepareCombatants, ovl10:0675). }
   ComputerRun = $80;
@@ -637,6 +666,29 @@ const
   ExceptionalStrength = 18;
   { sizeof(TMenuLine): the bytes of one menu line record. }
   MenuLineBytes = $2E;
+  { TCharacter.Figure[0], the size of the
+    character's icon: 1 small (Dwarf, Gnome, Halfling; the CHEAD/CBODY suffix 'S'), 2 large ('T'). }
+  IconSizeSmall = 1;
+  IconSizeLarge = 2;
+  { VideoAdapter, the adapter kind POOL.CFG line 1 selects (res08_init): E gives 1 and BIOS mode $0D (EGA 320x200x16,
+    planar), T gives 2
+    and mode 9 (Tandy/PCjr 16 colours, packed, four interleaved banks), anything else (C) gives 0 and mode 4 (CGA 320x200x4). }
+  AdapterCga = 0;
+  AdapterEga = 1;
+  AdapterTandy = 2;
+  { EGA ports and registers (VideoAdapter 1): the Sequencer and the Graphics Controller, write modes and the video pages. }
+  GcIndex = $3CE;                 { Graphics Controller index port }
+  GcData = $3CF;                  { Graphics Controller data port }
+  SeqIndex = $3C4;                { Sequencer index port }
+  SeqData = $3C5;                 { Sequencer data port }
+  GcMode = 5;                     { GC register 5: mode }
+  SeqMapMask = 2;                 { SC register 2: the plane map mask }
+  MapMaskAll = $0F;               { all four planes enabled }
+  WriteMode0 = 0;                 { GC write mode 0: the CPU data goes to the selected planes }
+  WriteMode1 = 1;                 { mode 1: the latches are copied (the byte of every plane at once) }
+  WriteMode2 = 2;                 { mode 2: the CPU data is the colour }
+  EgaPage0Segment = $A000;        { the two EGA display pages (res06: Page shl 9 + $A000) }
+  EgaPage1Segment = $A200;
   { The affect handler protocol (ovl24 CallAffectHandler, AddAffect; whitepaper 5.19): the Mode of a handler call,
     the Flag of an affect (does its handler run when it is removed), the Duration of a lasting affect and the
     hook kind a combatant going down runs. }
@@ -648,12 +700,14 @@ const
   StrengthKept = $80;             { bit 7 of a strength affect's Data: the earlier strength is kept in it (ovl24:115C) }
   { Affect numbers (AffectHandlers, DS:6828) that more than one unit names. }
   AffectTrainingManual = 7;       { "Training with Manual of Bodily Health" (ovl15:0FBC names it) }
-  AffectSize = 9;
-  AffectStrength1 = $0C;
+  AffectRecordSize = 9;           { the bytes of one TAffect (FreeMem of an affect, ovl16:137, ovl24:92); $09 as an
+    affect number is
+                                    Protection From Good }
+  AffectEnlarge = $0C;
   AffectCough = $1E;
   AffectHelpless = $1F;
   AffectAnimateDead = $20;
-  AffectStrength2 = $26;
+  AffectStrength = $26;
   AffectCauseDisease = $2C;
   AffectMummyDisease = $32;
   AffectPoisoned = $37;
@@ -677,6 +731,28 @@ const
   { TCharacter.Pad74 indexes: the levels a character was drained and the hit points lost with them. }
   DrainedLevels = $74;
   LostHitPoints = $75;
+  { Affects named by the spell, monster or race that gives them (SpellTable AffectId byte at +$A, ovl15 DisplaySpellEffects,
+    OVL16 CreateCharacter, the monster files; ovl12 review of 2026-10-16): Detect Invisibility and Invisibility,
+    Spiritual Hammer, the slowed poison and Slow Poison, Bestow Curse, and the immunities of the undead. }
+  AffectDetectInvisibility = $18;
+  AffectInvisibility = $19;       { also what attacking ends (RollToHit clears it from the attacker, ovl24:0CB7) }
+  AffectSpiritualHammer = $17;
+  AffectSlowPoisonDamage = $0F;   { the slowed poison CastSlowPoison gives: 1 point of damage and the affect again }
+  AffectSlowPoison = $16;         { Slow Poison; when it ends a character that is still poisoned dies }
+  AffectBestowCurse = $24;
+  AffectPoisonImmunity = $6F;     { SPECTRE, WIGHT, WRAITH, FERRAN MARTINEZ: poison and hold hooks cancelled [I] }
+  AffectUndeadImmunity = $7D;     { SKELETON, ZOMBIE, MUMMY, VAMPIRE: charm, sleep, hold and poison hooks cancelled [I] }
+  { SavingThrow kinds (TCharacter.SavingThrows[0..4]): the five saves in the order of the AD&D table [I]. }
+  SaveKindPoison = 0;
+  SaveKindStone = 1;
+  SaveKindWand = 2;
+  SaveKindBreath = 3;
+  SaveKindSpell = 4;
+  { Spell numbers of SpellTable that code tests CastingSpell against. }
+  SpellCharmPerson = 10;
+  SpellMagicMissile = 15;
+  CombatMessageRow = 10;          { the row ShowCharacterMessage shows a message at: the top row of the combat message window }
+  RunsHandlerOnRemove = 1;        { TAffect.Flag: the affect's handler runs when the affect is removed }
   { Screen and prompt constants several units share. BottomRow is the bottom text row (24) where prompts, amounts
     and messages are shown; ScreenCols the cells of a text row. The key constants are the answers of the prompts. }
   BottomRow = 24;
@@ -687,6 +763,13 @@ const
   AnswerNo = 1;                   { AskMenu returns the 0-based hotkey position: for '~Yes ~No' the second key }
   AcceptExtendedKeys = 1;         { the ExtKey argument of ReadPromptChoice that lets the prompt return extended keys }
   ClearTextBeforeMessage = 1;     { ShowPagedText's ClearFirst parameter }
+  OmniDir = $FF;                  { ScanTargets' Dir: every direction (InDirArc omni) }
+  UnlimitedSteps = $FF;           { ScanTargets' MaxSteps: no limit }
+  SoundIdleOff = 0;               { SetSoundDriverIdle: the driver stays silent while an animation or removal runs }
+  SoundIdleDefault = 10;          { SetSoundDriverIdle: the idle value the game restores afterwards }
+  PictureMasked = 1;              { DrawPictureItemClipped Flags bit 0: mask the picture (transparent pixels) }
+  PictureSaveBackground = 4;      { DrawPictureItemClipped Flags bit 2: save the background into IconBackgroundBuffer }
+  PictureRestore = 0;             { DrawPictureItemClipped Flags 0: copy the saved background back }
   NoChoice = $FFFF;               { the list position a list menu starts from, before the first choice }
   Strength17 = 17;                { the strength that raises a race's fighter cap by one (RaceAbilityLimits, ovl16, res12) }
 { ---- DGROUP layout, generated by tools/re/dgroup.py (playbook 50): do not reorder ---- }
@@ -780,7 +863,8 @@ const
       $0D, $47, $4F, $42, $4C, $49, $4E, $20, $4C, $45, $41, $44, $45, $52, $00, $00);
   { Eight 16-byte names at DS:0382 (rows 1 to 8), directly after KoboldGoblinNames: ORC, ORC LEADER, GOBLIN,
     GOBLIN LEADER, HOBGOBLIN, HOBGOBLIN CHIEF, GAGOOL and MACE [V, image], the names the affect handlers at
-    ovl12:0918 and ovl12:0947 compare with the attacked character's name. }
+    ovl12:0947 compares with the attacked character's name (BoostAttackVsOrcGoblinHobgoblin, affect $1A, given to
+    dwarves [V OVL16:521]; ovl12:0918 tests the Detect Invisibility affect, not names). }
   OrcGoblinHobgoblinNames: array[1..8] of string[15] = (
       'ORC',
       'ORC LEADER',
@@ -880,9 +964,13 @@ const
   ds08BE: array[0..6] of Byte =
     (
       $08, $08, $0A, $0A, $08, $04, $06);
-  { The CHEAD/CBODY character-picture name suffix table: the byte FigureBankTable[FigureIndex] is the
-    character BuildCharacterIcon appends to 'CHEAD'/'CBODY' (index 1 gives 'S', 2 gives 'T'). Its extent is
-    unverified: the region runs to the door table at DS:0900. }
+  { DS:08C5..08FF, 59 bytes [V image]: [0] = 4 (this is ClassHitDieSides[7], the monk die, read through the other
+    table); [1] and [2]
+    are the letters 'S' and 'T' BuildCharacterIcon appends to 'CHEAD'/'CBODY' by the icon size Figure[0]; [3..18] are
+    head picture
+    bank numbers by sex (two rows of 8, highest bank 14 = MaxHeadBank); [19..58] body banks by class group (highest 12
+    = MaxBodyBank),
+    which ovl17 views as MonsterBanks. }
   FigureBankTable: array[0..$3A] of Char = (
       #4, 'S', 'T', #1, #2, #3, #4, #5, #8, #11, #12, #6, #7, #9, #10, #13, #14, #6, #7, #2, #4, #2, #4, #2, #2,
       #4, #8, #2, #4, #1, #3, #4, #5, #6, #7, #9, #11, #7, #9, #2, #2, #2, #2, #2, #8, #10, #12, #8, #10, #6, #6,
@@ -1452,8 +1540,8 @@ const
     (
       $00, $00, $01, $00);
   SoundSpellDefault: Word = 2;  { PlaySound argument of CastChosenSpell for a spell without its own sound }
-  SoundMissMessage: Word = 3;  { the sound ShowHitMessage plays when Flag is clear; meaning unknown }
-  SoundHitMessage: Word = 4;  { the sound ShowHitMessage plays when Flag is set (a hit); meaning unknown }
+  SoundDamageMessage: Word = 3;  { ShowHitMessage plays it for a damage message (AffectMessage clear); id table DS:2612 [V] }
+  SoundAffectMessage: Word = 4;  { ShowHitMessage plays it for an affect or spell effect message (AffectMessage set) }
   SoundCombatantDies: Word = 5;  { the sound RemoveCombatant plays (PlaySound) when a combatant dies }
   SoundAttackLeaves: Word = 6;  { the sound PlaySound plays as an attack animation leaves the attacker (ovl13:26B0) }
   SoundNoAction: Word = 7;  { word e1 passes to PlaySound when Done is 0; meaning unknown }
@@ -2099,7 +2187,8 @@ var
   { The members ECL command 11 (ovl03:0450) has added to the party list; it adds none at
     MaxEncounterMembers (63). }
   EncounterMemberCount: Byte;
-  ReselectCharacter: PCharacter;  { and clears this flag; what sets the flag is not known }
+  ReselectCharacter: PCharacter;  { EndCommand makes it SelectedCharacter again and clears the flag; RunWilderness sets it
+                                    after each HandleWildernessKeys (ovl03:32F8), SelectCharacterCommand when it selects }
   { Globals of the battle's aftermath ovl05 (whitepaper 5.20). }
   MonstersLooted: Byte;  { 1 when a defeated monster gave up its money and items (ovl05:0088) }
   PartyFled: Byte;  { 1 when the party fled the battle (a member with Status 3, ovl05:050D) }
@@ -2145,11 +2234,11 @@ var
   SpellMenuList: PMenuLine;  { head of the spell menu list BuildSpellList builds, PickSpellFromMenu frees }
   SpellMenuSpells: array[0..$14] of Byte;  { the spell number (bit 7 = pending) of each menu line, in list order }
   SpellMenuItems: array[0..$30] of PMenuLine;  { for each scribed/learned line, the item (scroll) it came from }
-  SpellMenuItemCount: Byte;  { the number of entries SpellMenuItems holds (AddItemSpells, fn_051C) }
+  SpellMenuItemCount: Byte;  { the number of entries SpellMenuItems holds (AddItemSpells, AddScrollSpells) }
   { SpellWorkByteA and SpellWorkByteB: two byte working globals the ovl22 cast handlers share (the original keeps them
     at DS:4844 and DS:4845, between SpellMenuItemCount and NewHeapEnd). Enlarge (CastEnlarge) puts its
     strength (18) and its percentile in them for RaiseStrength; Sleep (CastSleep) its hit-point pool;
-    Snake Charm (CastSnakeCharm) a hit-point pool that reaches 0 through it; ovl24_fn_23B6 a value and a
+    Snake Charm (CastSnakeCharm) a hit-point pool that reaches 0 through it; the handler at ovl24:23B6 a value and a
     duration. }
   SpellWorkByteA: Byte;  { a spell handler's first working byte (see the note above) }
   SpellWorkByteB: Byte;  { the second working byte paired with SpellWorkByteA (see the note above) }
@@ -2184,7 +2273,7 @@ var
   EclStepEntry: Word;  { the first script entry address; see above }
   EclSearchEntry: Word;  { the second script entry address (see EclStepEntry); the ovl14 L key copies it to EclPC }
   EclPreCampEntry: Word;  { the third script entry address; see above }
-  EclCampInterruptedEntry: Word;  { the fourth script entry address; see above }
+  EclCampInterruptedEntry: Word;  { the fourth script entry address, run by RunCamp when the camp leaves EndCamp set [H] }
   EclInitialEntry: Word;  { the fifth script entry address; see above }
   { DS:49ED..49F2: storage of EclPC }
   ds49ED: array[0..5] of Byte;
@@ -2199,7 +2288,8 @@ var
   DebugMode: Boolean;  { STING debug mode: switched by Ctrl-D in ReadGameKey; ShowDebugTrace shows only when set }
   { nonzero: the monster pictures are shown; the camp's Pics submenu toggles it
                                     (ovl15:1D02, 1DE9); the loader sets it to 1 (ovl11:0397) }
-  SkipAreaScriptLoad: Byte;  { cleared by the loader (ovl11:03A6) }
+  SkipAreaScriptLoad: Byte;  { cleared by the loader (ovl11:03A6), set by RunCharacterMenu (ovl16:277); RunWilderness and
+                               InitScript skip the area script load while it is set }
   { the view kind before the last area step: RunAreaStep (ovl03:31B4) copies AreaViewKind here before it sets 1 }
   PreviousAreaViewKind: Byte;  { set to 1 by the loader (ovl11:03EB) }
   AreaViewKind: Byte;
@@ -2210,7 +2300,7 @@ var
                                     resets it at the GameVars2 word VarRestInterruptSteps; the loader clears it
                                     (ovl11:03AD) }
   PartyDestroyed: Byte;  { 1 when no player-run member is left (SettleBattleOutcome); loader clears it }
-  { DS:4A00..4A01: storage of WaitAfterTextRun }
+  { DS:4A00..4A01: storage of DelayPerGlyph }
   Raw4A00: array[0..1] of Byte;
   Regs: Registers;  { registers for Intr calls (QuitGame) }
   ActivePageSegment: Word;  { EGA display page segment SetActivePage selects (Page shl 9 + $A000) }
@@ -2221,16 +2311,24 @@ var
   { The display page WriteCharsAt writes to first (BH of INT 10h, 0802:0048); res08_init sets it
     to 0 for EGA and passes it to SetActivePage. }
   TextPage: Byte;  { display page; see above }
-  SavedVideoMode: Byte;  { video mode QuitGame passes to INT 10h; no writer is in the decompiled units }
-  PreviousVideoMode: Byte;  { copy of SavedVideoMode taken in res08_init; reader unknown }
+  { The other video mode: SetVideoMode (res07) sets it to the mode that was current before the call, res08_init sets
+    it to the DOS mode, and
+    QuitGame passes it to INT 10h. RestoreVideoMode is SetVideoMode(SavedVideoMode), so it toggles between the two [I]. }
+  SavedVideoMode: Byte;
+  CurrentVideoMode: Byte;  { the current video mode: res08_init sets it from INT 10h AH=0Fh, SetVideoMode to the mode it sets }
   { DS:4A1E..4A1F: storage of VideoAdapter }
   ds4A1E: array[0..1] of Byte;
   { the video mode read by ClearWindow (03F1:0137) and res06: 0 fills
                                     the text-scanline banks, 1 draws through FillPlaneRect on the EGA
                                     display pages, 2 fills the four graphics banks; POOL.CFG 'E'
                                     selects 1 (whitepaper 2.3) }
-  DrawBuf: Pointer;  { far pointer DrawCellPicture passes to DrawPictureItem; what it points at is unknown }
-  ScreenSaveBuffer: Pointer;  { screen buffer the loader allocates through AllocatePicture (ovl11:00D4) }
+  DrawBuf: Pointer;  { the staging picture of the main view: StartGame allocates it as a 21-cell x 168-row picture
+    (AllocatePicture($A8, $15,
+                       1, 0), ovl11:56); DrawCellPicture draws into it and FlushPictureChanges shows it at screen
+                       pixel (8, 8) }
+  IconBackgroundBuffer: Pointer;  { the save-under buffer for one combat icon: StartGame allocates 3 cells x 24 rows
+    (24x24 pixels, ovl11:57);
+                                    DrawCombatIcon draws with Flags 5 (mask and save) and restores the cell from it (res12) }
   RowDirtyFlags: array[0..$A7] of Byte;  { $A8-byte buffer the loader clears (ovl11:00EC) }
   { The changed-region trackers the blitters (res07 08D4/0D71/2632) fill and res07
     FlushPictureChanges (1B52) flushes: per changed screen row, RowFirstChangedOfs holds the
@@ -2246,11 +2344,11 @@ var
   RowLastChangedOfs: array[0..$A7] of Word;  { last (highest) changed byte offset in DrawBuf (starts 0) }
   { Per-cell screen address table the loader fills (ovl11:0130..0163): $B800 (even cell) or $BA00
     (odd cell) plus 5*(I div 2). }
-  CellTextSegments: array[0..$C7] of Word;  { cell text scanline address; see above }
-  CellRowOffsets: array[0..$C7] of Word;  { per-cell row offset table the loader fills (ovl11:0186): I*40 }
+  CgaScanlineSegments: array[0..$C7] of Word;  { cell text scanline address; see above }
+  EgaScanlineOffsets: array[0..$C7] of Word;  { per-cell row offset table the loader fills (ovl11:0186): I*40 }
   { Per-cell plane address table the loader fills (ovl11:019F..0241): 10*(I div 4) plus $B800,
     $BA00, $BC00 or $BE00. }
-  CellPlaneSegments: array[0..$C7] of Word;  { cell graphics plane address; see above }
+  TandyScanlineSegments: array[0..$C7] of Word;  { cell graphics plane address; see above }
   { DS:5370..5371: storage of ClipChecksEnabled }
   Raw5370: array[0..1] of Byte;
   SoundMode: Byte;  { sound setting; 2 while a Ctrl-S pause is in effect (ReadGameKey) }
@@ -2358,7 +2456,7 @@ var
   { DS:6823..6824: storage of AvoidedAttackCounter }
   Raw6823: array[0..1] of Byte;
   MoraleScratch: Byte;  { AI morale scratch (CheckMorale computes it from B84, compares percentages) }
-  { DS:6826..6827: storage of AttackTarget, HandlerCombatant }
+  { DS:6826..6827: storage of AttackTarget }
   Raw6826: array[0..1] of Byte;
   { DS:6828..6829: storage of AffectHandlers }
   ds6828: array[0..1] of Byte;
@@ -2415,7 +2513,8 @@ var
   PromptTimeout: Longint;  { prompt timeout in GameClock hundredths; 0 waits forever (ReadPromptChoice) }
   { DS:6B32..6B7F: storage of PromptTimeoutKey }
   ds6B32: array[0..77] of Byte;
-  { The current item the ovl22 spell lists work on (PickSpellFromMenu, fn_044E, fn_051C); UseItem (ovl19:1AB3) also
+  { The current item the ovl22 spell lists work on (PickSpellFromMenu, AddItemSpells, AddScrollSpells); UseItem
+    (ovl19:1AB3) also
     stores the scroll it takes its spell from here, when IsScroll accepts the item (main named it CurrentItem
     for that store; the ovl22 routines use it as their working item). }
   CurrentItem: PItem;
@@ -2474,7 +2573,7 @@ var
   MagicToggleOn: Boolean;  { the Alt-M Magic On/Off toggle of the combat keys (ovl08:04A7) }
   { DS:6E31..6E35: storage of CombatScratchFlag }
   Raw6E31: array[0..4] of Byte;
-  { DS:6E36..6F67: storage of CombatPicture }
+  { DS:6E36..6F67: storage of CombatAnimationPicture }
   Raw6E36: array[0..305] of Byte;
   { special view code 2: StartGame sets $DB (ovl11:0435, inside StartGame); InitScript sets $41 and SpecialViewGate }
   SpecialViewCode2: Byte;
@@ -2490,7 +2589,7 @@ var
   CompareFlags: array[0..5] of Byte;
   { the opcode that was current before the last one the script run loop (ovl03:3171) read; no other reader yet }
   PreviousOpcode: Byte;
-  { DS:6F7F..6F80: storage of SkippedOpcode }
+  { DS:6F7F..6F80: storage of CurrentOpcode }
   ds6F7F: array[0..1] of Byte;
   { The encounter picture's banks: operand 1 and operand 3 of ECL command 12 (ovl03:03B4), passed to
     ShowEncounterPicture as SpriteBank (SPRIT) and PicBank (PIC, or HEAD and BODY). }
@@ -2513,8 +2612,8 @@ var
   ScriptSoundCode: Word;  { set by a script write to address $3DE (WriteVmWord, ovl07:0D3B); meaning unknown }
   ScriptWordB8: Word;  { set by a script write to address $B8 (WriteVmWord, ovl07:0D48); meaning unknown }
   ScriptWordB9: Word;  { set by a script write to address $B9 (WriteVmWord, ovl07:0D55); meaning unknown }
-  CharWord6C00Zeroed: Byte;  { set to 1 when the script writes 0 to the character word $6C00 (ovl07:0B99) }
-  CharWord6B00Zeroed: Byte;  { set to 1 when the script writes 0 to the character word $6B00 (ovl07:0A91) }
+  ActiveFlagClearedByScript: Byte;  { set to 1 when the script writes 0 to the character word $6C00 (ovl07:0B99) }
+  NameClearedByScript: Byte;  { set to 1 when the script writes 0 to the character word $6B00 (ovl07:0A91) }
   { DoPick clears it. Overlaps DoorMenuFlags[1]; exact sharing uncertain. }
   DuelMode: Byte;  { nonzero during a duel (EndBattle's duel texts); the loader clears it (ovl11:040B) }
   NoExperienceCount: Byte;  { members that get no share of the battle's experience (ovl05:05EA) }
@@ -2524,7 +2623,7 @@ var
   WallViewMode: Byte;  { the wall view / outdoor mode EventByteAt tests (0 and $A both skip) }
   { The low bit of GameVars2 word 714, saved by the wilderness loop (ovl03:32F8) while that word is
     forced to 1. The loader clears it (ovl11:0415). }
-  SavedWord714Low: Byte;
+  SavedSearchMode: Byte;
   { cleared by the loader (ovl11:041A) and by EndCommand (ovl03:0001); set by ECL command 61
     (ovl03:2B14); while it is set, DrawGlyphRunCommand (ovl03:2E7D) starts a glyph run below row 13 at
     column 2, row 5; the rest is unknown }
@@ -2541,7 +2640,7 @@ var
   PictureFrameDirty: Byte;  { cleared by InitScript (ovl07:01C1) }
   { Sprite3DLoaded: set when ShowEncounterPicture loads the 3D sprite; ShowCloseUpCommand (ovl03:0856) clears it. }
   Sprite3DLoaded: Byte;  { 3D encounter sprite loaded; cleared by the loader (ovl11:0433) }
-  WindowClearOnce: Byte;  { window-clear once flag: HandleWildernessKeys clears the text window and sets it }
+  EclWindowCleared: Byte;  { window-clear once flag: HandleWildernessKeys clears the text window and sets it }
   SpecialViewGate: Byte;  { special view gate: ShowAreaView uses SpecialViewCode2/SpecialViewCode1 only while it is nonzero }
   PartyMovedByScript: Byte;  { set to 1 when the script moves the party or changes its marker (ovl07:0D6C..0DD6) }
   { set to 1 by ECL command 11 (ovl03:0450) after it has added members to the party list; meaning unknown }
@@ -2574,8 +2673,8 @@ var
   PlacementShapes: array[0..4, 0..5] of TColSpan absolute ds0306;
   { Five 16-byte names at DS:0332 (rows 0 to 4; row 0 is the index base and is never read). The rows 1 to 4
     are KOBOLD, KOBOLD LEADER, GOBLIN and GOBLIN LEADER [V, image]: the monster names the affect handler at
-    ovl12:0679 compares with the attacked character's name (probably the racial attack bonus of a small
-    race against them [H]). }
+    ovl12:0679 compares with the attacked character's name (affect $12, given to gnomes [V OVL16:527];
+    the AD&D racial attack bonus against kobolds and goblins [I]). }
   KoboldGoblinNames: array[0..4] of string[15] absolute Raw0332;
   { Names at DS:0402, directly after OrcGoblinHobgoblinNames: rows 1 to 5 are OGRE, OGRE LEADER, TROLL, FIRE
     GIANT and HILL GIANT [V, image]; rows 6 to 8 are not names but the start of TurnUndeadTable (DS:0447), which
@@ -2588,8 +2687,13 @@ var
     DS:04B6. }
   TurnUndeadTable: array[0..10, 0..9] of Byte absolute Raw0447;
   AlterMenuText: string[40] absolute ds055A;  { 'Order Drop Speed Icon Pics Exit': the camp Alter menu (ovl15:1C86) }
-  { One bit per class 0..7 (the value is added to a class-bit mask): ovl16:29AE builds the character's
-    class bits from the classes with a level above 0 (DS:05DE[ClassLevels]) and the bits it may train. }
+  { Per class 0..7 (cleric, druid, fighter, paladin, ranger, magic-user, thief, monk) the training guild bits [I]: 1
+    magic-user, 2 cleric,
+    4 thief, 8 fighter; cleric and druid share bit 2, paladin and ranger carry two bits (8 + 2), the monk 4 + 2 [V
+    image 02 02 08 0A 0A 01 04 06].
+    RollHitPoints and TrainCharacter (ovl16:29AE) test them against the hall's mask. The image holds 18 bytes: bytes
+    8..17 (10 10 10 20 20
+    20 40 40 40 00) are read by nothing by name (probably a group per ClassMask 8..16 [H]). }
   ClassTrainingBits: array[0..7] of Byte absolute Raw05DE;
   { The 'C D M T V A R L S B E J' hotkey line: the prompt RunCharacterMenu (ovl16:0161) passes to
     ReadPromptChoice under the title 'Choose a function '. }
@@ -2618,7 +2722,8 @@ var
     bytes are also entry 0 of SpecialBlocks, which DrawAreaView never reads. }
   WallViewIdTable: array[0..15] of Byte absolute Raw0C26;  { wall view id table, two equal groups of 8; see above }
   { Fill bytes of FillPictureRect (the image: 00 55 AA FF then 00 11 .. BB at PixelsByColor4Bit..). PixelsByColor2Bit[C] is
-    the byte of four 2-bit pixels of colour C (C 0..3); PixelsByColor4Bit[C] the byte of two 4-bit pixels of
+    the byte of four 2-bit pixels of colour C (C 0..3 are the CGA colours; the declared bound runs into the next
+    table); PixelsByColor4Bit[C] the byte of two 4-bit pixels of
     colour C (C * $11). The two tables overlap: PixelsByColor2Bit[C + 4] is PixelsByColor4Bit[C]. }
   PixelsByColor2Bit: array[0..15] of Byte absolute Raw0D02;  { four 2-bit pixels of colour C; see above }
   { Characters 0768's word scanner tests (0709:0822..08F0): the leading run is skipped,
@@ -2641,9 +2746,13 @@ var
     indexed by the bit column 0..7. }
   GlyphPixelMasks: array[0..7] of Word absolute ds25E5;
   { Per palette colour C (0..15) and pixel position K (0..3): the byte UnpackPicturePixels ORs
-    into a picture byte for VideoAdapter 0. For C 0..3 it is C's 2-bit value in pixel K's bit pair
-    (C = 1, K = 0 gives $40); the entries for C 4..15 do not follow that pattern (image bytes
-    from DS:25FA: 00 00 00 00 40 10 04 01 80 20 08 02 C0 30 0C 03 00 11 22 12 ...). }
+    into a picture byte for VideoAdapter 0. Only colours 0..3 exist [V image DS:25FA: 00 00 00 00 / 40 10 04 01 / 80
+    20 08 02 / C0 30 0C 03]:
+    C's 2-bit value in pixel K's bit pair (C = 1, K = 0 gives $40). The declared bound [0..15] only runs into the
+    neighbours (FillRectPalette
+    at DS:260A). Every 4-bit palette entry of every DAX picture is at most 3 (778 blocks parsed), so on VideoAdapter 0
+    the palette maps the
+    16 pixel values to CGA colours 0..3 [I]. }
   PixelBitsByColor: array[0..15, 0..3] of Byte absolute Raw25FA;
   { Globals of the loader (StartGame, src/OVL11.PAS); the address in each comment is the write or
     read that shows it. }
@@ -2677,7 +2786,9 @@ var
                                     MakeCamp clears it when the camp opens (ovl15:1E80) }
   { The direction of each cloud arm 1..4 (ovl12:0CC3): DirStepX[CloudArmDirections[Arm]] and
     DirStepY[CloudArmDirections[Arm]] give the
-    arm's step from the centre. The values are not read yet [?]. }
+    arm's step from the centre. The image bytes at DS:290E..2911 are 08 02 03 04 [V]: no step (DirNone), East,
+    South-East, South,
+    a 2x2 block from the aim cell (TSpellNamesPrefix.AimDirs names the same bytes). }
   CloudArmDirections: array[0..4] of Byte absolute Raw290D;
   { Class tables of ovl23 (whitepaper 5.6). Their extents are not known (only the rows the
     characters reach are read). A table whose columns count from 1 is addressed from the byte
@@ -2692,14 +2803,16 @@ var
   ClassThac0Table: array[0..7, 0..10] of Byte absolute ds3C7C;
   ThiefSkillTable: array[0..8, 1..8] of Byte absolute ds3CF4;  { the eight thief skills per thief level }
   { The colour-slot table BuildCharacterIcon reads to build the character icon's colour map: FigureColorSlots[I] for
-    I 1..6 holds 1, 2, 3, 4, 6, 7 (the destination colour of the I-th of the six colour pairs, and
-    plus 8 for the high nibble). It sits inside the ThiefSkillTable region (DS:3CF4). }
+    I 1..6 holds 1, 2, 3, 4, 6, 7: the colour of the ICON picture that the I-th Figure colour pair replaces
+    (MapTo[slot] gets the low
+    nibble, MapTo[slot + 8] the high nibble, MapFrom is the identity map [V ovl17:218, ovl16:1732]); the starting
+    values are the identity. It sits inside the ThiefSkillTable region (DS:3CF4). }
   FigureColorSlots: array[0..$F] of Byte absolute Raw3CF5;
   ThiefRaceTable: array[0..7, 1..8] of ShortInt absolute ds3D3C;  { the race adjustment of the eight thief skills }
   { the dexterity adjustment of the first five thief skills }
   ThiefDexTable: array[0..18, 1..5] of ShortInt absolute ds3D4F;
   { The per-race ability limits ModifyCharacter (ovl16:209F) and ovl16:056C clamp to: a 16-byte row
-    per race, a minimum and maximum column per ability (RaceAbilityLimits, indexed by [Race, B9E] or
+    per race, a minimum and maximum column per ability (RaceAbilityLimits, indexed by [Race, Sex] or
     [Race, column]). Columns +0/+2/+4 hold the Strength minimum, maximum and exceptional percentile
     maximum (RaceStrengthMax and RaceStrengthPercent are the same rows viewed two and four columns
     on), columns +6/+7 .. +14/+15 the minimum and maximum of Intelligence, Wisdom, Dexterity,
@@ -2748,9 +2861,12 @@ var
   LoaderLoopIndex: Byte absolute Raw465C;  { loop counter of the loader's three fill loops (ovl11:0130, 02CA, 035E) }
   GameDirBackup: string[40] absolute Raw4661;  { the save game name; the loader copies GameDir here and back
     (ovl11:0469, 05EA) }
-  { Set to 1 by the RunCharacterMenu STING cheat (the J key, ovl16:0161). While set, the menu
-    offers Train (CharacterMenuSlots slot 3), and TrainCharacter (ovl16:29AE) skips the consciousness, gold,
-    class and experience checks and does not charge the 1000 gold. }
+  { Set to 1 by the RunCharacterMenu STING cheat (the J key, ovl16:0161), which exists only when the game was started
+    with the argument
+    STING (ParamStr(1) = 'STING'). While set, the menu offers Train (CharacterMenuSlots slot 3), and TrainCharacter
+    (ovl16:29AE) skips
+    the status, gold, guild and experience refusals and does not charge the 1000 gold; the racial level cap is still
+    tested first. }
   StingCheat: Byte absolute Raw470C;
   FinalPictureNumber: string[1] absolute Raw4713;  { Str(TileSet): the picture number ShowEndingNarrative appends to FINAL }
   { The character the View command was started for: a copy of SelectedCharacter that ViewSelectedCharacter
@@ -2770,7 +2886,10 @@ var
   VarsAt9700: ^TVmWords9700 absolute GameVars3;
   { up: ECL 36, 49, 51, 58 and 61 (ovl03:179B, 2AA2, 2AEB, 271F, 2B14); down: 37, 38 (ovl03:18F8); meaning unknown }
   EclPC: Word absolute ds49ED;  { set to $9900 by the loader (ovl11:03C0) }
-  WaitAfterTextRun: Byte absolute Raw4A00;  { set to 1 by the loader (ovl11:03A1) and by EndBattle (ovl05:1631) }
+  DelayPerGlyph: Byte absolute Raw4A00;  { set to 1 by the loader (ovl11:03A1) and by EndBattle (ovl05:1631) }
+  { The adapter kind: 0 CGA (BIOS mode 4), 1 EGA (mode $0D, planar), 2 Tandy/PCjr (mode 9, packed); AdapterCga,
+    AdapterEga, AdapterTandy.
+    res08_init sets it from POOL.CFG line 1 (E, T or anything else), and res05, res06, res07 and the overlays branch on it. }
   VideoAdapter: Byte absolute ds4A1E;
   ClipChecksEnabled: Byte absolute Raw5370;  { set to 1 by the loader (ovl11:042E) }
   { POOL.CFG line 3: the game directory with trailing backslash (res08_init, whitepaper 2.3). StartGame
@@ -2798,14 +2917,11 @@ var
   AttackRoll: ShortInt absolute AttackSlotRolls;  { the scalar attack or resistance roll (ovl24:0C63) }
   AvoidedAttackCounter: Byte absolute Raw6823;  { decremented every time an attack is avoided (ovl12:0FAC); meaning
     unknown [?] }
-  { The character Who attacked last (Who^.Combat^.Target), copied by BoostAttackAgainstTarget (ovl12:013B).
+  { The character Who attacked last (Who^.Combat^.Target), copied by BoostAttackAgainstUndead (ovl12:013B).
     A far pointer: its segment word is DS:6828, the start of AffectHandlers, which overlaps it. }
+  { Also the combatant the affect $4A handler ForcedAttack (ovl13:3A86) stores from CombatantRecord[Affect^.Data] and attacks;
+    it overlaps the offset word of AffectHandlers[0], which is never called (SaveKind lies in it). }
   AttackTarget: PCharacter absolute Raw6826;
-  { A combatant pointer the affect handlers share as scratch: ovl13:3A86 (the affect $4A handler)
-    stores the combatant the affect records (CombatantRecord[Affect^.Data]) here and attacks it, and
-    ovl12's handler at ovl12 code 0x138 stores Who^.Combat^.Target here before reading it. It
-    overlaps the offset word of AffectHandlers[0], which is never called (SaveKind lies in it). }
-  HandlerCombatant: PCharacter absolute Raw6826;
   { The handler of every affect number, called through CallAffectHandler (ovl24:001E); extent unknown. Entry 0
     is not a handler: SaveKind lies in it. }
   AffectHandlers: array[0..$8B] of TAffectHandler absolute ds6828;  { see above }
@@ -2873,8 +2989,8 @@ var
     next named byte after it is SecondMoraleByte. }
   CombatantScanList: array[0..73] of Byte absolute Raw6DE4;
   CombatScratchFlag: Byte absolute Raw6E31;  { the key flag the ovl08 menus pass to ReadPromptChoice }
-  CombatPicture: Pointer absolute Raw6E36;  { a picture EndCombat frees through ReleasePicture (ovl08:005A) }
-  SkippedOpcode: Byte absolute ds6F7F;  { the opcode SkipCommand reads at EclPC (ovl07:1EB7) }
+  CombatAnimationPicture: Pointer absolute Raw6E36;  { a picture EndCombat frees through ReleasePicture (ovl08:005A) }
+  CurrentOpcode: Byte absolute ds6F7F;  { the opcode SkipCommand reads at EclPC (ovl07:1EB7) }
   { The icon slot of the encounter group being set up: InitScript sets 8 (ovl07:01F0). ECL command 11
     (ovl03:0450) and SetupDuel (ovl07:1A6F) load the group's CPIC picture into it and give it to their
     members as CombatIcon; ECL command 11 moves it on by one per group. }
@@ -2889,7 +3005,12 @@ var
     immediate word, $80 a packed string, $81 the address of a string. }
   OperandType: array[0..64] of Byte absolute ds7005;
   OperandHigh: array[0..64] of Byte absolute ds7045;  { the high byte of a word operand }
-  { loop counter of FreeSpriteList (the sprite list slots); ShortInt: the loop exits with jg }
+  { A global signed byte used as the for-loop counter of FreeSpriteList (ovl28:209), DrawPictureItem (four loops),
+    DrawPictureItemClipped (two),
+    RemapPictureColors (three) and FillPictureRect (res07), and read after its loop by ovl31 ProbeStep and
+    RemoveCombatant (QUIRK ovl31:0E41).
+    ShortInt: the loops exit with jg, and a limit of 128 or more truncates to its low byte (QUIRK res07
+    DrawPictureItem 0A3B..0A90). }
   SharedLoopIndex: ShortInt absolute Raw70C7;
   PictureShownFlags: array[0..1] of Byte absolute Raw84C8;  { two bytes InitScript clears (ovl07:01DF); meaning unknown }
   BattleWon: Byte absolute ds84DA;  { 1 when the party (or the duelist) won the battle (ovl05:05CA, 07AC) }

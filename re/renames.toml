@@ -6645,7 +6645,7 @@ date = "2026-10-15"
 old = "ds4430"
 new = "ReselectCharacterPending"
 kind = "global"
-why = "StoreCommand and SelectCharacterCommand set it; EndCommand then selects the character at ReselectCharacter (ovl03:0001)"
+why = "SelectCharacterCommand sets it; EndCommand then selects the character at ReselectCharacter (ovl03:0001)"
 date = "2026-10-15"
 
 [[rename]]
@@ -6841,7 +6841,7 @@ date = "2026-10-15"
 old = "ds49E9"
 new = "EclCampInterruptedEntry"
 kind = "global"
-why = "script entry address slot 3 (coab CampInterrupted [H]): EngineActionCommand runs it after the camp when EndCamp is left set (ovl03:2CCF)"
+why = "script entry address slot 3 (coab CampInterrupted [H]): RunCamp runs it after the camp when EndCamp is left set (ovl03:2CCF)"
 date = "2026-10-15"
 
 [[rename]]
@@ -6869,7 +6869,7 @@ date = "2026-10-15"
 old = "ds49F8"
 new = "SkipAreaScriptLoad"
 kind = "global"
-why = "cleared by the loader (ovl11:03A6); RunAreaStep, RunWilderness and InitScript skip the area script load while it is set (ovl03, ovl07)"
+why = "cleared by the loader (ovl11:03A6); RunWilderness and InitScript skip the area script load while it is set (ovl03, ovl07)"
 date = "2026-10-15"
 
 [[rename]]
@@ -7548,7 +7548,7 @@ date = "2026-10-15"
 old = "ds84E7"
 new = "EncounterMembersAdded"
 kind = "global"
-why = "set to 1 by ECL command 11 after it has added members to the party list; AskMenuCommand and ClearEncounterCommand clear it (ovl03:0450, 10D1, 125D)"
+why = "set to 1 by ECL command 11 after it has added members to the party list; ClearEncounterCommand clears it (ovl03:0450, 10D1, 125D)"
 date = "2026-10-15"
 
 [[rename]]
@@ -9313,5 +9313,292 @@ old = "TextColourMap4"
 new = "TextColorMap4"
 kind = "global"
 why = "spelling harmonised to Color, as in TextColor, HotColor and the other 400 uses (P6)"
+date = "2026-10-16"
+
+[[rename]]
+old = "SkippedOpcode"
+new = "CurrentOpcode"
+kind = "global"
+why = "RunScriptFrom sets it from EclCode^[EclPC] before every dispatch (ovl03:3171) and DispatchCommand and the command routines read it as the command being run; SkipCommand (ovl07:1EB7) reads the same byte (P6 review of ovl03)"
+date = "2026-10-16"
+
+[[rename]]
+old = "CheckPartyClassCommand"
+new = "CheckPartyHasRangerCommand"
+kind = "routine"
+why = "ECL command 34 compares ClassMask with 4 (Ranger in ClassNames) and 10 (Cleric/Ranger), image DS ClassNames rows 4 and 10 (ovl03:1629; P6 review of ovl03) [I]"
+date = "2026-10-16"
+
+[[rename]]
+old = "RollRangeCommand"
+new = "RollSurpriseCommand"
+kind = "routine"
+why = "ECL command 35 writes GameVars2 word 715, read by StartCombatantRound (OVL13:185, (Side+1) and word takes InitiativePenalty off) and cleared after the first round (OVL08:94): the two sides' surprise rolls (ovl03:16C9; P6 review) [I]"
+date = "2026-10-16"
+
+[[rename]]
+old = "SavedWord714Low"
+new = "SavedSearchMode"
+kind = "global"
+why = "the low bit of GameVars2 word 714 (VarTravelMode: bit 0 is search mode, res12 RedrawView and ovl14) that RunWilderness saves while it forces the word to 1 (ovl03:32F8); P6 review of ovl03 [I]"
+date = "2026-10-16"
+
+[[rename]]
+old = "CharWord6C00Zeroed"
+new = "ActiveFlagClearedByScript"
+kind = "global"
+why = "set to 1 when the script writes 0 to character word $6C00, which is TCharacter.Flag10D (SetCharacterVar ovl07:0B99); SelectCharacterCommand tests it with NameClearedByScript (P6 review of ovl03)"
+date = "2026-10-16"
+
+[[rename]]
+old = "CharWord6B00Zeroed"
+new = "NameClearedByScript"
+kind = "global"
+why = "set to 1 when the script writes 0 to character word $6B00, the character's name (SetCharacterVar ovl07:0A91) (P6 review of ovl03)"
+date = "2026-10-16"
+
+[[rename]]
+old = "WindowClearOnce"
+new = "EclWindowCleared"
+kind = "global"
+why = "1 once the ECL text window has been cleared (HandleWildernessKeys ovl14:471); the text commands reset it to 0 (ovl03) (P6 review)"
+date = "2026-10-16"
+
+[[rename]]
+old = "WaitAfterTextRun"
+new = "DelayPerGlyph"
+kind = "global"
+why = "set by the ECL text commands: DrawGlyph then delays after every glyph (RES06:349..356), not after a run (P6 review of ovl03)"
+date = "2026-10-16"
+
+[[rename]]
+old = "ComparePairsCommand"
+new = "CompareBothPairsCommand"
+kind = "routine"
+why = "ECL command 17 compares two pairs and sets the compare flag to equal only when both pairs are equal, else not equal (ovl03:0AED; P6 review) [I]"
+date = "2026-10-16"
+
+[[rename]]
+old = "LowerAttackRollByFour"
+new = "InvisibleTargetHardToHit"
+kind = "routine"
+why = "handler of affect $19, Invisibility (SpellTable spells 30 and 50 have AffectId $19 [V]): an attacker without Detect Invisibility ($18) sets HookVetoFlag and AttackRoll loses 4 (ovl12:0918) (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "GiveLowerAttackRollAffect"
+new = "GiveInvisibilityForOneRound"
+kind = "routine"
+why = "AddAffect of $19 Invisibility for 1 round with Data $0C; handler of affect $38 (ovl12:1363) (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "RollToGiveLowerAttackRollAffect"
+new = "CamouflageGivesInvisibility"
+kind = "routine"
+why = "handler of affect $48, shown as Camouflaged by ovl15 DisplaySpellEffects: gives $19 Invisibility 95 times in 100 (carried by the 6TH LVL THIEF, MON5SPC block 93) (ovl12:1730) (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "SetFlagAndLowerAttackRollByFour"
+new = "InvisibleTargetCannotBeTargeted"
+kind = "routine"
+why = "handler of affect $47, Invisible in ovl15 DisplaySpellEffects: sets HookVetoFlag and takes 4 off AttackRoll without the Detect Invisibility test (ovl12:171F) (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "SetFlagIfTargetReflects"
+new = "VetoTargetWithMirrorOrWoodenHolySymbol"
+kind = "routine"
+why = "handler of affect $7E carried by the VAMPIRE (MON4SPC 23 and 105): sets HookVetoFlag when the target has readied a Mirror (NameNum $76) or a Wooden Holy Symbol (NameNum $98 and $FC) (ovl12:2E37) (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "GiveAffectItem"
+new = "GiveSpiritualHammer"
+kind = "routine"
+why = "handler of affect $17, the AffectId of Spiritual Hammer (SpellTable spell 28 [V]): gives the caster a +1 Hammer item (type $14) and takes it back when removed (ovl12:07E0) (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "RemoveAffect17WhenRemoved"
+new = "EndSpiritualHammerWhenHammerRemoved"
+kind = "routine"
+why = "affect $89, the Spiritual Hammer item own affect (OVL13 NoLootCopyAffect): when the hammer leaves the character the spell affect $17 is removed (ovl12:317A) (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "AddAffectAndDamage"
+new = "SlowPoisonDamage"
+kind = "routine"
+why = "handler of affect $0F, the slowed poison CastSlowPoison (ovl22) gives: 1 point of damage and the affect again while the character has more than 1 hit point (ovl12:05EB) (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "CancelCharmAndUnknown35HighChance"
+new = "ElfResistsCharmAndSleep"
+kind = "routine"
+why = "handler of affect $6B given to elves (OVL16 CreateCharacter): 90 percent to cancel the charm and sleep (Sleep is AffectId $35 [V]) hooks (ovl12:2992) (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "CancelCharmAndUnknown35"
+new = "ImmuneToCharmAndSleep"
+kind = "routine"
+why = "handler of affect $6C carried by GHOUL, SPECTRE, WIGHT, WRAITH and FERRAN MARTINEZ (MON*SPC): always cancels the charm and sleep hooks (ovl12:29B6) (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "CancelCharmAndUnknown35ModerateChance"
+new = "HalfElfResistsCharmAndSleep"
+kind = "routine"
+why = "handler of affect $7C given to half-elves (OVL16 CreateCharacter): 30 percent to cancel the charm and sleep hooks (ovl12:2DE4) (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "CancelCharmUnknown35PoisonAndParalysisHooks"
+new = "ImmuneToCharmSleepHoldAndPoison"
+kind = "routine"
+why = "handler of affect $7D carried by SKELETON, GIANT SKELETON, ZOMBIE, JUJU ZOMBIE, MUMMY and VAMPIRE (MON4SPC): cancels the charm, sleep, paralysis and poison hooks (ovl12:2E08) (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "CancelDamageOfSpellOrElectricity"
+new = "ImmuneToMagicMissileAndElectricity"
+kind = "routine"
+why = "handler of affect $5B carried by the JUJU ZOMBIE: cancels damage of the Magic Missile spell (15) and of electricity (ovl12:2556) (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "AddConstitutionSaveBonus"
+new = "DwarfHalflingPoisonSaveBonus"
+kind = "routine"
+why = "handler of affect $5A, given to dwarves and halflings (OVL16:513..530): a Constitution bonus on the poison save (kind 0) (ovl12:24D9) [I rule] (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "AddConstitutionSaveBonusKind2Or4"
+new = "DwarfGnomeHalflingWandSpellSaveBonus"
+kind = "routine"
+why = "handler of affect $61, given to dwarves, gnomes and halflings (OVL16): the Constitution bonus on the rod/staff/wand (2) and spell (4) saves (ovl12) [I rule] (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "CancelHookOnChance"
+new = "RollMagicResistance"
+kind = "routine"
+why = "the hook cancel with a percent chance reduced by the caster level of CastingSpell, the AD&D magic resistance rule [I]; used by affects $69 (50) and $6A (15) (ovl12:2915) (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "AgeCharacterOnce"
+new = "ApplyHaste"
+kind = "routine"
+why = "handler of affect $27, Haste (SpellTable spell 48 [V]): ages the caster one year and doubles HookedMoveOrAttacks (ovl12:0C4B) (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "HalveAgeDoubling"
+new = "ApplySlow"
+kind = "routine"
+why = "handler of affect $2A, Slow (SpellTable spell 55 [V]): halves HookedMoveOrAttacks (ovl12:10C1) (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "AvoidIfSelectedItemPlusZero"
+new = "ProtectFromNormalMissiles"
+kind = "routine"
+why = "handler of affect $29, Protection From Normal Missiles (SpellTable spell 54 [V]): avoids a ranged attack when the attacker item has Plus 0 (ovl12:0FAC) (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "ExchangeStrengthWithAffect"
+new = "ApplyStrengthAffect"
+kind = "routine"
+why = "handler of affects $0C Enlarge and $26 Strength (SpellTable spells 12 and 35 [V]): raises or restores Strength through the affect Data (ovl12) (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "ComputerTakesOver"
+new = "ApplyCharmPerson"
+kind = "routine"
+why = "handler of affect $0B, Charm Person (SpellTable spell 10 [V]): the computer plays Who on the gazer side (ovl12:0400) (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "BoostAttackAgainstTarget"
+new = "BoostAttackAgainstUndead"
+kind = "routine"
+why = "handler of affect $03 carried by Two-Handed Sword +1 +3 vs. Undead (Affects[2] $03 [V]); CreatureType 4 is undead (ovl12:013B) (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "DamageUnlessAlignmentMatches"
+new = "AlignmentBoundWeaponHurtsOthers"
+kind = "routine"
+why = "item handler of affect $84 (ReadyItem ovl19:571, 607 passes the item as Affect): unreadies the item and deals the high nibble of its Affects[2] when the low nibble differs from the wielder's Alignment; ScoreItem tests the same nibble (ovl09:128D) (P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "ShowMustHaveGiantStrength"
+new = "RequireGiantStrength"
+kind = "routine"
+why = "item handler of affect $87: unreadies the item and shows 'Must have Giant Strength' when Strength is below 19 (ovl12:3134; P6 review of ovl12)"
+date = "2026-10-16"
+
+[[rename]]
+old = "PreviousVideoMode"
+new = "CurrentVideoMode"
+kind = "global"
+why = "written only by SetVideoMode and res08_init, always the AL of the last INT 10h function 0: the current video mode; SavedVideoMode is the other mode, so RestoreVideoMode toggles (res07 SetVideoMode, res08:42..43) (P6 review of res07)"
+date = "2026-10-16"
+
+[[rename]]
+old = "CellTextSegments"
+new = "CgaScanlineSegments"
+kind = "global"
+why = "per pixel scanline (200 entries) the CGA segment B800/BA00 plus 5 per two scanlines that ShowPicture writes on VideoAdapter 0 (OVL11:62..73, res07 ShowPicture) (P6 review of res07)"
+date = "2026-10-16"
+
+[[rename]]
+old = "CellRowOffsets"
+new = "EgaScanlineOffsets"
+kind = "global"
+why = "per pixel scanline the EGA byte offset scanline * 40 (VideoAdapter 1), filled by ovl11:0186, used by ShowPicture, MirrorPicture and FlushPictureChanges (res07) (P6 review of res07)"
+date = "2026-10-16"
+
+[[rename]]
+old = "CellPlaneSegments"
+new = "TandyScanlineSegments"
+kind = "global"
+why = "per pixel scanline the Tandy/PCjr mode 9 bank segment B800/BA00/BC00/BE00 (four interleaved banks, VideoAdapter 2), used by ShowPicture and FlushPictureChanges (OVL11:62..73) (P6 review of res07)"
+date = "2026-10-16"
+
+[[rename]]
+old = "ScreenSaveBuffer"
+new = "IconBackgroundBuffer"
+kind = "global"
+why = "3 cells x 24 rows (24x24 pixels, OVL11:57): the save-under buffer for one combat icon, drawn with Flags 5 (mask and save) and later restored by RES12 (res12:1205..1270) (P6 review of res07)"
+date = "2026-10-16"
+
+[[rename]]
+old = "SoundMissMessage"
+new = "SoundDamageMessage"
+kind = "global"
+why = "ShowHitMessage plays it when Flag is clear, which is the damage message (ovl24:671 Flag 0); a damage message is not a miss (res12 review)"
+date = "2026-10-16"
+
+[[rename]]
+old = "SoundHitMessage"
+new = "SoundAffectMessage"
+kind = "global"
+why = "ShowHitMessage plays it when Flag is set: the affect or spell effect message (ovl24:730, ovl22 ShowAbout, ovl13 turn, ovl12 paralyze) (res12 review)"
+date = "2026-10-16"
+
+[[rename]]
+old = "CombatPicture"
+new = "CombatAnimationPicture"
+kind = "global"
+why = "OVL10:990 allocates it as AllocatePicture($18, 3, 4, 1): a 24x3 picture of four items that res12 plays as a four-frame animation (res12 review)"
 date = "2026-10-16"
 
