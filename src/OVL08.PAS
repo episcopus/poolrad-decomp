@@ -497,7 +497,7 @@ begin
       begin
         Who^.Status := StatusUnconscious;
         Who^.Combat^.DyingRounds := 0;
-        ShowCharacterMessage(Who, 'is bandaged', 10, 1);
+        ShowCharacterMessage(Who, 'is bandaged', 10, True);
         DoIt := 0;
       end;
     end;

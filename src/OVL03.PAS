@@ -1117,7 +1117,7 @@ begin
 end;
 { ovl03:1629. ECL command 34 (dispatcher ovl03:2F2D, CurrentOpcode $22): reports whether a party member
   has the class mask 4 or 10. It walks the party list PartyListHead (through TCharacter.Next) and tests the
-  ClassMask (+$2F) of each member: a member with 4 or 10 sets the flag. Operand 1 receives the flag (1
+  ClassCombo (+$2F) of each member: a member with 4 or 10 sets the flag. Operand 1 receives the flag (1
   or 0) and operand 2 the second value, which the original always writes as 0 (QUIRK ovl03:1629: the
   Mark byte is set with the flag and never read). Mask 10 is one of the multi-class values AwardExperience
   halves (ovl05:0355); mask 4 is not named yet. }
@@ -1138,7 +1138,7 @@ begin
   Mark := 0;
   while Member <> nil do
   begin
-    if (Member^.ClassMask = 4) or (Member^.ClassMask = 10) then
+    if (Member^.ClassCombo = 4) or (Member^.ClassCombo = 10) then
     begin
       Found := 1;
       Mark := 1;
@@ -1418,7 +1418,7 @@ begin
     Node := PooledItems;
     while Node <> nil do
     begin
-      FormatItemLine(LongInt(SelectedCharacter), Node, 0, 0, 0, 0);
+      FormatItemLine(LongInt(SelectedCharacter), Node, 0, 0, False, False);
       Node := Node^.Next;
     end;
   end;
@@ -1939,7 +1939,7 @@ begin
   DecodeOperands(1);
   ClearRect(EclTextLeft, EclTextTop, EclTextRight, EclTextBottom);
   Prompt := EclStrings[1];
-  SelectPartyMember(Prompt, 0, SelectedCharacter);
+  SelectPartyMember(Prompt, False, SelectedCharacter);
 end;
 { ovl03:2B7E. ECL command 54 (dispatcher ovl03:2F2D, CurrentOpcode 36h): adds a computer-run member. Operand
   1 is the kind AddMonsterToParty adds (it rolls the character and calls AddPartyMember, which makes it the

@@ -72,7 +72,7 @@ type
 
 { ovl19:004A. Draws the character sheet of SelectedCharacter in the window 1..38 x 1..22: the name line
   (DrawCharacterName) with an "(NPC)" tag after it for a computer-run member (B84 bit 7), the sex, race
-  and age on row 3, the alignment on row 4, the class on row 5 (ClassNames, indexed by ClassMask: 0..7
+  and age on row 3, the alignment on row 4, the class on row 5 (ClassNames, indexed by ClassCombo: 0..7
   are the single classes and 8..16 the multi-class names Cleric/Fighter .. Magic-User/Thief), the six
   ability lines (ShowAbilityScore) with their labels from row 7, the money (ShowCharacterMoney), the
   class levels and experience on row 15, the combat block (ShowCombatStats) on rows 17 and 18, the weapon
@@ -110,7 +110,7 @@ begin
   SheetCharacter := SelectedCharacter;
   ClearFullScreen;
   DrawWindowFrame(1, 1, SheetRight, SheetBottom, 0);
-  DrawCharacterName(SheetCharacter, 1, 1, 0);
+  DrawCharacterName(SheetCharacter, 1, 1, False);
   if SheetCharacter^.B84 > ComputerRunThreshold then
     DrawTextAt(Length(SheetCharacter^.Name) + NpcTagGap, 1, ValueColor, '(NPC)');
   Col := 1;
@@ -123,7 +123,7 @@ begin
   DrawTextAt(Col, NameRow, TextColor, 'Age ' + WordToText(SheetCharacter^.Age));
   Text := AlignmentNames[PSheetFields(SheetCharacter)^.Alignment];
   DrawTextAt(1, AlignmentRow, TextColor, Text);
-  Text := ClassNames[SheetCharacter^.ClassMask];
+  Text := ClassNames[SheetCharacter^.ClassCombo];
   DrawTextAt(1, ClassRow, TextColor, Text);
   for Stat := 0 to 5 do
   begin
@@ -157,14 +157,14 @@ begin
   if SheetCharacter^.SlotItems[0] <> nil then
   begin
     DrawTextAt(1, Row, TextColor, 'Weapon');
-    FormatItemLine(LongInt(SheetCharacter), SheetCharacter^.SlotItems[0], 8, Row, 0, 1);
+    FormatItemLine(LongInt(SheetCharacter), SheetCharacter^.SlotItems[0], 8, Row, False, True);
   end;
   Inc(Row);
   if SheetCharacter^.SlotItems[2] <> nil then
   begin
     { QUIRK ovl19:0467: the Armor label is drawn in column 2, one column right of Weapon and Status }
     DrawTextAt(2, Row, TextColor, 'Armor');
-    FormatItemLine(LongInt(SheetCharacter), SheetCharacter^.SlotItems[2], 8, Row, 0, 1);
+    FormatItemLine(LongInt(SheetCharacter), SheetCharacter^.SlotItems[2], 8, Row, False, True);
   end;
   Inc(Row);
   DrawTextAt(1, Row, TextColor, 'Status');
@@ -237,7 +237,7 @@ begin
   DrawTextAt(ArmorLabelColumn, Row, LabelColor, 'AC    ');
   DrawArmourClass(Character, ArmorValueColumn, Row);
   DrawTextAt(ArmorLabelColumn, Row + 1, LabelColor, 'HP    ');
-  DrawHitPoints(Character, ArmorValueColumn, Row + 1, 0);
+  DrawHitPoints(Character, ArmorValueColumn, Row + 1, False);
   Col := 8;
   DrawTextAt(Col + 1, Row, LabelColor, 'THAC0   ');
   DrawTextAt(Col + 7, Row, ValueColor, ByteToText(ThacBase - Character^.HitAdjust));
@@ -386,7 +386,7 @@ begin
   else if (Item^.Affects[1] > ScribeAffectThreshold) or (Item^.Affects[2] > ScribeAffectThreshold) or
     (Item^.Affects[3] > ScribeAffectThreshold) then
   begin
-    DrawCharacterName(SelectedCharacter, 1, 21, 0);
+    DrawCharacterName(SelectedCharacter, 1, 21, False);
     GlyphCol := Length(SelectedCharacter^.Name) + 2;
     GlyphRow := 21;
     ShowPagedText(1, 21, 38, 22, 14, 0, ' was going to scribe from that scroll');
@@ -459,14 +459,14 @@ begin
       Cursor := Character^.Items;
       while Cursor <> nil do
       begin
-        FormatItemLine(LongInt(Character), Cursor, 0, 0, 1, 0);
+        FormatItemLine(LongInt(Character), Cursor, 0, 0, True, False);
         Cursor := Cursor^.Next;
       end;
       if DrawItemWindow or (RedrawItemWindow <> 0) then
       begin
         ClearFullScreen;
         DrawWindowFrame(1, 1, 38, 22, 0);
-        DrawCharacterName(Character, 1, 1, 1);
+        DrawCharacterName(Character, 1, 1, True);
         DrawTextAt(Length(Character^.Name) + 4, 1, 10, 'Items');
         DrawWindow(1, 3, 38, 22, 0, 0, '');
         DrawTextAt(1, 3, 15, 'Ready Item');
@@ -504,7 +504,7 @@ begin
           'D':
             if CanGiveUpItem(Selected) then
             begin
-              FormatItemLine(LongInt(Character), Selected, 0, 0, 0, 0);
+              FormatItemLine(LongInt(Character), Selected, 0, 0, False, False);
               ShowPagedText(1, 21, 38, 22, 14, 1, 'Your ' + Selected^.Text + 'will be gone forever');
               if AskYesNo('Drop It? ', 13, 10, 15) = 'Y' then
               begin
@@ -611,7 +611,7 @@ begin
         ShowFlashMessage('Wrong Class');
       ReadySlotUsed:
         begin
-          FormatItemLine(LongInt(Character), Character^.SlotItems[ShortInt(Slot)], 0, 0, 0, 0);
+          FormatItemLine(LongInt(Character), Character^.SlotItems[ShortInt(Slot)], 0, 0, False, False);
           ShowFlashMessage('already using ' + Character^.SlotItems[ShortInt(Slot)]^.Text);
         end;
       ReadyHandsFull:
@@ -634,7 +634,7 @@ var
 begin
   Recipient := ViewedCharacter;
   RedrawView;
-  SelectPartyMember('Trade with Whom?', 1, Recipient);
+  SelectPartyMember('Trade with Whom?', True, Recipient);
   if Recipient <> nil then
   begin
     ViewedCharacter := Recipient;
@@ -770,14 +770,14 @@ begin
     begin
       if Spell > LastSpell then
         Dec(Spell, SpellShift);
-      ShowCharacterMessage(SelectedCharacter, 'uses an item', 10, 0);
+      ShowCharacterMessage(SelectedCharacter, 'uses an item', 10, False);
       if ViewMode = ViewModeCombat then
       begin
         DrawTextAt(0, ItemPromptRow, TitleColor, 'Item:');
-        FormatItemLine(LongInt(SelectedCharacter), Item, 5, ItemPromptRow, 0, 1);
+        FormatItemLine(LongInt(SelectedCharacter), Item, 5, ItemPromptRow, False, True);
       end
       else
-        FormatItemLine(LongInt(SelectedCharacter), Item, 1, 22, 0, 1);
+        FormatItemLine(LongInt(SelectedCharacter), Item, 1, 22, False, True);
       DelayByGameSpeed;
       ClearCharacterMessage;
     end;
@@ -842,7 +842,7 @@ begin
       Offer := (Offer * Item^.Count) div StackDivisor
     else
       Offer := Offer * Item^.Count;
-  FormatItemLine(LongInt(SheetCharacter), Item, 0, 0, 0, 0);
+  FormatItemLine(LongInt(SheetCharacter), Item, 0, 0, False, False);
   ShowPagedText(MessageLeft, MessageTop, MessageRight, MessageBottom, MessageColor, 1,
     'I''ll give you ' + WordToText(Offer) + ' gold pieces for your ' + Item^.Text);
   if AskYesNo('Is It a Deal? ', 13, 10, 15) = 'Y' then
@@ -896,7 +896,7 @@ var
   Paid: Boolean;                { the price was taken from the character's money or from the pool }
 begin
   Paid := False;
-  FormatItemLine(LongInt(SheetCharacter), Item, 0, 0, 0, 0);
+  FormatItemLine(LongInt(SheetCharacter), Item, 0, 0, False, False);
   ShowPagedText(MessageLeft, MessageTop, MessageRight, MessageBottom, MessageColor, ClearTextBeforeMessage,
     'For 200 gold pieces I''ll identify your ' + Item^.Text);
   if AskYesNo('Is It a Deal? ', PromptTitleColor, PromptWordColor, PromptHotColor) = 'Y' then
@@ -929,7 +929,7 @@ begin
     else
     begin
       Item^.HiddenNames := 0;
-      FormatItemLine(LongInt(SheetCharacter), Item, 0, 0, 0, 0);
+      FormatItemLine(LongInt(SheetCharacter), Item, 0, 0, False, False);
       ShowPagedText(MessageLeft, MessageTop, MessageRight, MessageBottom, MessageColor, ClearTextBeforeMessage,
         'It looks like some sort of ' + Item^.Text);
       Redraw := 1;
@@ -986,7 +986,7 @@ begin
   repeat
     Recipient := ViewedCharacter;
     RedrawView;
-    SelectPartyMember('Trade to?', 1, Recipient);
+    SelectPartyMember('Trade to?', True, Recipient);
     if Recipient = nil then
       Finished := True
     else
@@ -1254,7 +1254,7 @@ begin
     if Integer(Choice) < 0 then
     begin
       DrawWindow(1, 1, $26, 1, 0, 0, '');
-      DrawCharacterName(SelectedCharacter, 1, 1, 1);
+      DrawCharacterName(SelectedCharacter, 1, 1, True);
       DrawTextAt(Length(SelectedCharacter^.Name) + 4, TitleRow,
         TitleColor, 'Spells ' + ModeDescription);
     end;

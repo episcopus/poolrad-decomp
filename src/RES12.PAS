@@ -35,12 +35,12 @@ type
   end;
 procedure ApplyWeaponBonuses(Who: PCharacter);
 procedure SetArmourMovement(Who: PCharacter; Item: PItem);
-procedure AddReadiedItemBonus(Who: PCharacter; Item: PItem; var Bonus: TBonus; var Flag: Byte);
+procedure AddReadiedItemBonus(Who: PCharacter; Item: PItem; var Bonus: TBonus; var Flag: Boolean);
 procedure CapMovementByLoad(Who: PCharacter);
-procedure FormatItemLine(Value: LongInt; Item: PItem; Col, Row, ShowReadied, ShowText: Byte);
+procedure FormatItemLine(Value: LongInt; Item: PItem; Col, Row: Byte; ShowReadied, ShowText: Boolean);
 procedure DrawPartyRoster(Who: PCharacter);
 procedure DrawArmourClass(Who: PCharacter; Col, Row: Byte);
-procedure DrawHitPoints(Who: PCharacter; Col, Row, Flag: Byte);
+procedure DrawHitPoints(Who: PCharacter; Col, Row: Byte; Highlight: Boolean);
 procedure DrawCharacterPanel(Who: PCharacter);
 function IsHelpless(Who: Pointer): Boolean;
 procedure RecalcCombatValues(Who: PCharacter);
@@ -57,10 +57,10 @@ procedure ForgetSpell(Spell: Byte);
 procedure RemoveInventoryItem(Who: PCharacter; Item: PItem);
 procedure AddItemCopy(Who: PCharacter; Item: PItem);
 procedure ShowFlashMessage(Text: String40);
-procedure ShowCharacterMessage(Who: PCharacter; Text: string; Row, Wait: Byte);
+procedure ShowCharacterMessage(Who: PCharacter; Text: string; Row: Byte; Wait: Boolean);
 procedure ClearCharacterMessage;
-procedure DrawCharacterName(Who: PCharacter; Col, Row, Mode: Byte);
-procedure CopyPictureItem(PicIndex, Half, ItemIndex, Mirror: Byte);
+procedure DrawCharacterName(Who: PCharacter; Col, Row: Byte; AddPossessive: Boolean);
+procedure CopyPictureItem(PicIndex, Half, ItemIndex: Byte; Mirror: Boolean);
 procedure DrawCombatIcon(PicIndex: Byte);
 procedure WalkCombatLine(FromX, FromY, ToX, ToY: ShortInt; Count, StepDelay: Byte);
 procedure ShowHitMessage(Who: Pointer; AffectMessage: Byte; Text: String40);
@@ -74,12 +74,12 @@ function DistanceToTarget(Who, Target: Pointer): Byte;
 function EndCombatTurn(Who: Pointer): Byte;
 function GuardTurn(Who: Pointer): Byte;
 function SpellCasterLevel(Spell: Byte): Byte;
-procedure DrawViewWindows(WithInner: Byte);
+procedure DrawViewWindows(WithInner: Boolean);
 procedure RedrawView;
 procedure DrawLocationLine;
 procedure DrawWildernessScreen;
 procedure DrawCombatScreen;
-procedure SelectPartyMember(Title: String40; WithExit: Byte; var Selected: PCharacter);
+procedure SelectPartyMember(Title: String40; WithExit: Boolean; var Selected: PCharacter);
 function IsRangedWeapon(Who: Pointer): Boolean;
 function RangedWeaponCanMelee(Who: Pointer): Boolean;
 function ChooseAttackItem(Who: Pointer; var Aim: Pointer): Byte;
@@ -335,7 +335,7 @@ end;
   Who^.SaveBonus; a Value above 0 keeps Value + Plus as the larger Bonus.BestValue and, for a
   positive plus on a kind-2 (armour) item, sets Flag.
   Globals: ItemTable. }
-procedure AddReadiedItemBonus(Who: PCharacter; Item: PItem; var Bonus: TBonus; var Flag: Byte);
+procedure AddReadiedItemBonus(Who: PCharacter; Item: PItem; var Bonus: TBonus; var Flag: Boolean);
 var
   Value: Byte;
   Kind: Byte;
@@ -367,7 +367,7 @@ begin
     begin
       Bonus.BestValue := Value + Item^.Plus;
       if (Item^.Plus > 0) and (Kind = ArmourItemKind) then
-        Flag := 1;
+        Flag := True;
     end;
   end;
 end;
@@ -409,37 +409,37 @@ end;
   type is not PluralOnThirdPartType ($56), or part 2 is shown while part 1 is not (not Odd(Mask):
   bit 0 of the mask is clear, 00BA:06A6), or part 3 is shown for PluralOnThirdPartType, or the
   item type is Slot11ItemType or Slot12ItemType and NameNum[3] is not SilverNameNum ($B1).
-  Callers: the shop, loot and inventory lists (ShowText 0, they draw Text themselves) and the
-  character sheet (ShowText 1).
+  Callers: the shop, loot and inventory lists (ShowText False, they draw Text themselves) and the
+  character sheet (ShowText True).
   QUIRK 00BA:0442: the LongInt Value is never read (callers pass LongInt(the character) or 0).
   Globals: PartyListHead (read), ItemNameParts (read). Side effects: Item^.Text, and the screen when ShowText
   is set. }
-procedure FormatItemLine(Value: LongInt; Item: PItem; Col, Row, ShowReadied, ShowText: Byte);
+procedure FormatItemLine(Value: LongInt; Item: PItem; Col, Row: Byte; ShowReadied, ShowText: Boolean);
 var
   I: Byte;
   Mask: Byte;
   Affect: Pointer;
-  Found: Byte;
-  Plural: Byte;
+  Found: Boolean;
+  Plural: Boolean;
   Member: PCharacter;
 begin
   Item^.Text := '';
-  if ShowReadied <> 0 then
+  if ShowReadied then
   begin
     if Item^.Readied then
       Item^.Text := ' Yes  '
     else
       Item^.Text := ' No   ';
   end;
-  Found := 0;
+  Found := False;
   Member := PCharacter(PartyListHead);
-  while (Member <> nil) and (Found = 0) do
+  while (Member <> nil) and not Found do
   begin
     if HasAffect(Member, MagicMarkAffect, Affect) then
-      Found := 1;
+      Found := True;
     Member := Member^.Next;
   end;
-  if Found <> 0 then
+  if Found then
     if (Item^.Plus > 0) or (Item^.PlusSave > 0) or Item^.Cursed then
       Item^.Text := Item^.Text + '*' + ' ';
   if Item^.Count > 0 then
@@ -448,12 +448,12 @@ begin
   for I := 1 to 3 do
     if (Item^.NameNum[I] <> 0) and (((Item^.HiddenNames shr (3 - I)) and 1) = 0) then
       Inc(Mask, 1 shl (I - 1));
-  Plural := 0;
+  Plural := False;
   for I := 3 downto 1 do
     if ((Mask shr (I - 1)) and 1) > 0 then
     begin
       Item^.Text := Item^.Text + ItemNameParts[Item^.NameNum[I]];
-      if (Item^.Count < 2) or (Plural <> 0) then
+      if (Item^.Count < 2) or Plural then
         Item^.Text := Item^.Text + ' '
       else if ((1 shl (I - 1)) = Mask) or
               ((I = 1) and (Mask > ThirdNameBit) and
@@ -464,12 +464,12 @@ begin
                (Item^.NameNum[3] <> SilverNameNum)) then
       begin
         Item^.Text := Item^.Text + 's ';
-        Plural := 1;
+        Plural := True;
       end
       else
         Item^.Text := Item^.Text + ' ';
     end;
-  if ShowText <> 0 then
+  if ShowText then
     DrawTextAt(Col, Row, LightGreen, Item^.Text);
 end;
 
@@ -504,7 +504,7 @@ begin
     if Member = Who then
       DrawTextAt(Left, Row, White, Member^.Name)
     else
-      DrawCharacterName(Member, Left, Row, 0);
+      DrawCharacterName(Member, Left, Row, False);
     case Member^.ArmourClassValue of
       0..$32: ValueShift := 1;
       $33..$3C: ValueShift := 2;
@@ -519,7 +519,7 @@ begin
     else
       ValueShift := 0;
     end;
-    DrawHitPoints(Member, ValueShift + $24, Row, 0);
+    DrawHitPoints(Member, ValueShift + $24, Row, False);
     Inc(Row);
     Member := Member^.Next;
   end;
@@ -543,9 +543,9 @@ end;
 
 { 00BA:0973. Draws Who's current hit points (HpCurrent, +$11B) as text at (Col, Row). The colour is
   Yellow while the hit points are below the maximum (HpMax, +$32), LightGreen at the maximum, and
-  LightMagenta when Flag is set (the caller's highlight). Called by DrawPartyRoster and
+  LightMagenta when Highlight is set (the caller's highlight). Called by DrawPartyRoster and
   DrawCharacterPanel. }
-procedure DrawHitPoints(Who: PCharacter; Col, Row, Flag: Byte);
+procedure DrawHitPoints(Who: PCharacter; Col, Row: Byte; Highlight: Boolean);
 var
   ValueColor: Byte;
   Unused: Byte;   { the original frame carries one byte here that the code never reads }
@@ -554,7 +554,7 @@ begin
     ValueColor := Yellow
   else
     ValueColor := LightGreen;
-  if Flag <> 0 then
+  if Highlight then
     ValueColor := LightMagenta;
   DrawTextAt(Col, Row, ValueColor, ByteToText(Who^.HpCurrent));
 end;
@@ -578,10 +578,10 @@ var
 begin
   ClearWindow($17, 1, $26, $15);
   Row := 1;
-  ShowCharacterMessage(Who, ' ', Row, 0);
+  ShowCharacterMessage(Who, ' ', Row, False);
   Inc(Row);
   DrawTextAt($17, Row + 1, LightGreen, 'Hitpoints');
-  DrawHitPoints(Who, $21, Row + 1, 0);
+  DrawHitPoints(Who, $21, Row + 1, False);
   Inc(Row, 2);
   DrawTextAt($17, Row + 1, LightGreen, 'AC');
   DrawArmourClass(Who, $1A, Row + 1);
@@ -590,7 +590,7 @@ begin
   begin
     Inc(Row, 2);
     Color := $17;   { QUIRK 00BA:0AAE: the original stores Color here and never reads it }
-    FormatItemLine(LongInt(Who), Who^.SlotItems[0], 0, 0, 0, 0);
+    FormatItemLine(LongInt(Who), Who^.SlotItems[0], 0, 0, False, False);
     { QUIRK 00BA:0AE2: the bottom row is the three additions Row + 1 + 1 + 1 (three inc ax); the
       folded Row + 3 compiles to add ax, 3 and does not match the original }
     ShowPagedText($17, Row + 1, $26, Row + 1 + 1 + 1, LightGreen, ClearTextBeforeMessage, Who^.SlotItems[0]^.Text);
@@ -651,8 +651,8 @@ var
   TripleIndex: Byte;
   BonusIndex: ShortInt;
   Item: PItem;
-  ArmourPlusFlag: Byte;
-  IgnoresWeight: Byte;
+  ArmourPlusFlag: Boolean;
+  IgnoresWeight: Boolean;
   Bonus: TBonus;
   SlotIndex: ShortInt;
   Unused: Byte;   { the original frame carries a byte no instruction of this routine reads }
@@ -662,7 +662,7 @@ var
 begin
   for SlotIndex := 0 to 12 do
     Who^.SlotItems[SlotIndex] := nil;
-  IgnoresWeight := 0;
+  IgnoresWeight := False;
   Who^.ItemCountC7 := 0;
   Item := Who^.Items;
   Who^.HandsInUse := 0;
@@ -697,7 +697,7 @@ begin
       if Item^.ItemType = Slot12ItemType then
         Who^.SlotItems[12] := Item;
       if Item^.NameNum[1] = HoldingNameNum then
-        IgnoresWeight := 1;
+        IgnoresWeight := True;
       Who^.HandsInUse := Who^.HandsInUse + ItemTable[Item^.ItemType].Hands;
     end;
     Item := Item^.Next;
@@ -712,7 +712,7 @@ begin
   end;
   for BonusIndex := 0 to 4 do
     Bonus.Values[BonusIndex] := 0;
-  ArmourPlusFlag := 0;
+  ArmourPlusFlag := False;
   Who^.SaveBonus := 0;
   Who^.ArmourClassValue := Who^.BaseArmourClassValue;
   Who^.Movement := Who^.BaseMovement;
@@ -734,9 +734,9 @@ begin
     end;
     Item := Item^.Next;
   end;
-  if ArmourPlusFlag <> 0 then
+  if ArmourPlusFlag then
     Bonus.BestPlus := 0;
-  if IgnoresWeight <> 0 then
+  if IgnoresWeight then
   begin
     if Who^.CarriedWeight < ExcludedWeight then
       Who^.CarriedWeight := 0
@@ -1012,14 +1012,14 @@ end;
   (ClearCharacterMessage). Used for the per-character combat and camp messages ('is bandaged',
   'flees in panic', 'is cured'). Globals: ViewMode (view mode), RestWindowActive (picks the window top).
   Side effects: video memory, the keyboard through ShowPagedText's paging. }
-procedure ShowCharacterMessage(Who: PCharacter; Text: string; Row, Wait: Byte);
+procedure ShowCharacterMessage(Who: PCharacter; Text: string; Row: Byte; Wait: Boolean);
 var
   Top: Byte;
 begin
   if ViewMode = ViewModeCombat then
   begin
     ClearWindow(CombatMessageLeft, Row, CombatMessageRight, CombatMessageBottom);
-    DrawCharacterName(Who, CombatMessageLeft, Row, 0);
+    DrawCharacterName(Who, CombatMessageLeft, Row, False);
     ShowPagedText(CombatMessageLeft, Row + 1, CombatMessageRight, CombatMessageBottom, LightGreen,
                   ClearTextBeforeMessage, Text);
   end
@@ -1033,10 +1033,10 @@ begin
       DrawWindowFrame(MessageLeft, Top, MessageRight, MessageBottom, 0);
     end;
     ClearWindow(MessageLeft, Top, MessageRight, MessageBottom);
-    DrawCharacterName(Who, MessageLeft, Top + 1, 0);
+    DrawCharacterName(Who, MessageLeft, Top + 1, False);
     ShowPagedText(MessageLeft, Top + 1 + 1, MessageRight, MessageBottom, LightGreen, ClearTextBeforeMessage, Text);
   end;
-  if Wait <> 0 then
+  if Wait then
   begin
     DelayByGameSpeed;
     ClearCharacterMessage;
@@ -1055,10 +1055,11 @@ begin
 end;
 { 00BA:1816. Draws Who's name (Name, +0) as text at (Col, Row) in the colour of Who's state:
   LightRed when Who takes no part in combat (Flag10D, +$10d = 0), Yellow for a monster
-  (SideMonsters = 1) and LightCyan otherwise (the party, SideParty = 0). When Mode is set it appends "'s" after the name
+  (SideMonsters = 1) and LightCyan otherwise (the party, SideParty = 0). When AddPossessive is set it
+  appends "'s" after the name
   (at Col + Length(Name)). Called by the roster, the character panel and ovl13, ovl16, ovl19,
   ovl21 and ovl22. Globals: none. }
-procedure DrawCharacterName(Who: PCharacter; Col, Row, Mode: Byte);
+procedure DrawCharacterName(Who: PCharacter; Col, Row: Byte; AddPossessive: Boolean);
 var
   Color: Byte;
 begin
@@ -1070,13 +1071,13 @@ begin
     else
       Color := LightCyan;
   DrawTextAt(Col, Row, Color, Who^.Name);
-  if Mode <> 0 then
+  if AddPossessive then
     DrawTextAt(Col + Length(Who^.Name), Row, Color, '''s');
 end;
 { 00BA:1892. Copies one item of a 24x3 picture into the combat picture CombatAnimationPicture. PicIndex selects a
   slot of the picture table PictureSlots and Half picks one of the slot's two pointers
   (PictureSlots[PicIndex].Pics[Half]); ItemIndex is the destination item (0..3), copied at byte offset ItemIndex times the
-  picture's bytes-per-item (ByteSize, +$11). When Mirror is not 0 the source picture is first
+  picture's bytes-per-item (ByteSize, +$11). When Mirror is set the source picture is first
   mirrored into a temporary 24x3 picture (AllocatePicture then MirrorPicture) and that copy is
   blitted, otherwise the table picture is blitted directly. In both cases the bitmap (Data, +$17)
   is copied with ItemBytes bytes and the pixel buffer (Pixels, +$13) with PixelBytes, a quarter of
@@ -1084,7 +1085,7 @@ end;
   whitepaper 5.23). ReleasePicture frees the temporary.
   Called in a loop by DrawCombatIcon and by ovl13.
   Globals: CombatAnimationPicture (read), PictureSlots (read), VideoAdapter (read). }
-procedure CopyPictureItem(PicIndex, Half, ItemIndex, Mirror: Byte);
+procedure CopyPictureItem(PicIndex, Half, ItemIndex: Byte; Mirror: Boolean);
 var
   Pic: Pointer;
   PixelBytes, ItemBytes: Word;
@@ -1093,7 +1094,7 @@ begin
   PixelBytes := ItemBytes;
   if VideoAdapter = VideoAdapterEga then
     PixelBytes := PixelBytes div 4;
-  if Mirror <> 0 then
+  if Mirror then
   begin
     AllocatePicture($18, 3, 1, 1, Pic);
     MirrorPicture(PictureSlots[PicIndex].Pics[Half], Pic);
@@ -1111,14 +1112,14 @@ begin
 end;
 { 00BA:19DE. Draws the four items of a 2-wide combat icon into the combat picture CombatAnimationPicture: it calls
   CopyPictureItem four times with Half 0, 0, 1, 1 and Row 0, 1, 2, 3, mirroring the second and
-  third item (Mirror 0, 1, 1, 0). PicIndex is the source slot in the picture table PictureSlots.
+  third item (Mirror False, True, True, False). PicIndex is the source slot in the picture table PictureSlots.
   Called by ovl12, ovl13 and ovl22 (a combatant's icon into the battle picture). Globals: none. }
 procedure DrawCombatIcon(PicIndex: Byte);
 begin
-  CopyPictureItem(PicIndex, 0, 0, 0);
-  CopyPictureItem(PicIndex, 0, 1, 1);
-  CopyPictureItem(PicIndex, 1, 2, 1);
-  CopyPictureItem(PicIndex, 1, 3, 0);
+  CopyPictureItem(PicIndex, 0, 0, False);
+  CopyPictureItem(PicIndex, 0, 1, True);
+  CopyPictureItem(PicIndex, 1, 2, True);
+  CopyPictureItem(PicIndex, 1, 3, False);
 end;
 { 00BA:1A29. Walks the line from cell (FromX, FromY) to cell (ToX, ToY) and animates the combat cursor
   along it (whitepaper 5.18, combat movement). It builds the Bresenham path between the two cells
@@ -1314,7 +1315,7 @@ begin
       PlaySound(SoundAffectMessage)
     else
       PlaySound(SoundDamageMessage);
-    ShowCharacterMessage(Who, Text, CombatMessageRow, 0);
+    ShowCharacterMessage(Who, Text, CombatMessageRow, False);
     if AffectMessage <> 0 then
       FlashCount := GameSpeed
     else
@@ -1335,7 +1336,7 @@ begin
       DelayByGameSpeed;
   end
   else
-    ShowCharacterMessage(Who, Text, CombatMessageRow, 1);
+    ShowCharacterMessage(Who, Text, CombatMessageRow, True);
 end;
 { 00BA:2199. Returns whether Who has the affect AffectId on its affect list (TCharacter.Affects, +$7F).
   It leaves in the caller's Affect the matching affect record when found, or the nil end of the list
@@ -1416,7 +1417,7 @@ begin
     Message := 'is fully healed'
   else
     Message := 'is partially healed';
-  ShowCharacterMessage(Who, Message, CombatMessageRow, 1);
+  ShowCharacterMessage(Who, Message, CombatMessageRow, True);
   if ViewMode <> ViewModeCombat then
     DrawPartyRoster(SelectedCharacter);
 end;
@@ -1561,12 +1562,12 @@ end;
   when WithInner is set it also draws the inner window (3,3)-(13,13) that frames the character
   portrait or the 3D view. RedrawView calls it before drawing the portrait, the sprites or the
   area view. Side effect: the screen (DrawWindow clears and frames each window). }
-procedure DrawViewWindows(WithInner: Byte);
+procedure DrawViewWindows(WithInner: Boolean);
 begin
   DrawWindow(1, 1, $26, $16, 0, $F, '');
   DrawWindow(1, $11, $26, $16, 0, $F, '');
   DrawWindow(1, 1, $F, $F, 0, $F, '');
-  if WithInner <> 0 then
+  if WithInner then
     DrawWindow(3, 3, $D, $D, 0, $F, '');
 end;
 { 00BA:27D9. Redraws the whole screen for the current view mode (ViewMode), the resident unit's view
@@ -1585,34 +1586,34 @@ begin
     ViewModePlain: DrawWindow(1, 1, $26, $16, 0, $F, '');
     ViewModeShop:
       begin
-        DrawViewWindows(1);
+        DrawViewWindows(True);
         LoadHeadBodySprites(ShownHeadBank, ShownBodyBank);
         ShowHeadBodySprites(3, 3, 1);
       end;
     ViewModeCamp:
       begin
-        DrawViewWindows(1);
+        DrawViewWindows(True);
         LoadSpriteList('PIC', $1D, 0, @PictureAnimation);
         DrawPartyRoster(SelectedCharacter);
         DrawLocationLine;
       end;
     ViewModeWall:
       begin
-        DrawViewWindows(1);
+        DrawViewWindows(True);
         ShowAreaView;
         DrawPartyRoster(SelectedCharacter);
         DrawLocationLine;
       end;
     ViewModeMap:
       begin
-        DrawViewWindows(0);
+        DrawViewWindows(False);
         ShowAreaView;
         DrawPartyRoster(SelectedCharacter);
         DrawLocationLine;
       end;
     ViewModeLoot:
       begin
-        DrawViewWindows(1);
+        DrawViewWindows(True);
         LoadSpriteList('PIC', 1, 0, @PictureAnimation);
         DrawPartyRoster(SelectedCharacter);
       end;
@@ -1702,7 +1703,7 @@ end;
   word) keep the current selection, 'E' clears it. Animate for ReadPromptChoice is 1 in the camp
   (ViewModeCamp) and loot (ViewModeLoot) screens. Called by ovl03, ovl19 and ovl22.
   Globals: ViewMode (read), PartyListHead (read). Side effects: the screen, the keyboard. }
-procedure SelectPartyMember(Title: String40; WithExit: Byte; var Selected: PCharacter);
+procedure SelectPartyMember(Title: String40; WithExit: Boolean; var Selected: PCharacter);
 var
   Key: Char;                        { the key ReadPromptChoice returns }
   ExtKey: Byte;                     { ReadPromptChoice's extended-key flag }
@@ -1712,7 +1713,7 @@ var
 begin
   Key := ' ';
   Extra := '';
-  if WithExit <> 0 then
+  if WithExit then
     Extra := ' Exit';
   while not (Key in [KeyEnter, KeyEscape, KeyExit, KeySelect]) do
   begin

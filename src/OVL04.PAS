@@ -79,7 +79,7 @@ const
   asks "cast cure anyway: "; returns the key (Yes or not). ClearCharacterMessage clears the prompt. }
 function AskCastAnyway(Reason: string): Char;
 begin
-  ShowCharacterMessage(SelectedCharacter, Reason, 0, 0);
+  ShowCharacterMessage(SelectedCharacter, Reason, 0, False);
   AskCastAnyway := AskYesNo('cast cure anyway: ', PromptTitleColor, PromptWordColor, PromptHotColor);
   ClearCharacterMessage;
 end;
@@ -131,7 +131,7 @@ begin
   if Answer = KeyYes then
   begin
     ClearCharacterMessage;
-    ShowCharacterMessage(SelectedCharacter, 'is cured.', 0, 1);
+    ShowCharacterMessage(SelectedCharacter, 'is cured.', 0, True);
   end;
   ChargeForCure := Answer;
 end;

@@ -257,9 +257,9 @@ begin
   else
     Text := 'Attacks';
   end;
-  ShowCharacterMessage(Attacker, Text, 10, 0);
+  ShowCharacterMessage(Attacker, Text, 10, False);
   Row := 12;
-  DrawCharacterName(Target, 23, Row, 0);
+  DrawCharacterName(Target, 23, Row, False);
   Inc(Row);
   if Kind = 1 then
     Text := '(from behind) '
@@ -290,7 +290,7 @@ begin
     if Target^.Combat^.PendingSpell > 0 then
     begin
       DelayByGameSpeed;
-      ShowCharacterMessage(Target, 'lost a spell', 12, 1);
+      ShowCharacterMessage(Target, 'lost a spell', 12, True);
       ForgetSpell(Target^.Combat^.PendingSpell);
       Target^.Combat^.PendingSpell := 0;
     end
@@ -301,12 +301,12 @@ begin
     DelayByGameSpeed;
   if Target^.Flag10D = 0 then
   begin
-    ShowCharacterMessage(Target, 'goes down', Row, 0);
+    ShowCharacterMessage(Target, 'goes down', Row, False);
     Inc(Row, 2);
     if Target^.Status = StatusDying then
       DrawTextAt(23, Row, 10, 'and is Dying');
     if Target^.Status in StatusKilled then
-      ShowCharacterMessage(Target, 'is killed', Row, 0);
+      ShowCharacterMessage(Target, 'is killed', Row, False);
     Inc(Row, 2);
     RemoveDeathAffects(Target);
     RunAffectHooks(HookGoesDown, Target);
@@ -619,7 +619,7 @@ begin
         begin
           if Extra > Who^.Combat^.Pad4[5] then
             Extra := Who^.Combat^.Pad4[5];
-          ShowCharacterMessage(Who, 'sweeps', 10, 1);
+          ShowCharacterMessage(Who, 'sweeps', 10, True);
           Enemy := CombatantRecord[CombatantScanList[1]];
           if Enemy <> Target then
           begin
@@ -697,7 +697,7 @@ var
   Selected: PCharacter;          { the undead SelectTurnUndeadTarget hands over }
   LevelBand: ShortInt;           { Who's cleric level mapped to the table column }
 begin
-  ShowCharacterMessage(Who, 'turns undead...', 10, 0);
+  ShowCharacterMessage(Who, 'turns undead...', 10, False);
   ClearPromptLine;
   DelayByGameSpeed;
   AnyTurned := 0;
@@ -729,7 +729,7 @@ begin
       end
       else
       begin
-        ShowCharacterMessage(Selected, 'Is destroyed', 10, 0);
+        ShowCharacterMessage(Selected, 'Is destroyed', 10, False);
         RemoveCombatant(Selected);
         Selected^.Status := StatusGone;
         Selected^.Flag10D := 0;
@@ -1339,7 +1339,7 @@ begin
   else
   begin
     Done := 1;
-    ShowCharacterMessage(ChosenChar, 'Begins Casting', CombatMessageRow, 1);
+    ShowCharacterMessage(ChosenChar, 'Begins Casting', CombatMessageRow, True);
     ChosenChar^.Combat^.PendingSpell := Spell;
     if ChosenChar^.Combat^.Initiative > CastTime then
       Dec(ChosenChar^.Combat^.Initiative, CastTime)
@@ -1461,12 +1461,12 @@ begin
       if Odd(Bearing) then
       begin
         if (Bearing = 3) or (Bearing = 5) then
-          CopyPictureItem(PicIndex + 1, 1, 0, Byte(Bearing = 5))
+          CopyPictureItem(PicIndex + 1, 1, 0, Bearing = 5)
         else
-          CopyPictureItem(PicIndex + 1, 0, 0, Byte(Bearing = 7));
+          CopyPictureItem(PicIndex + 1, 0, 0, Bearing = 7);
       end
       else
-        CopyPictureItem(PicIndex + Bearing mod 4, Bearing div 4, 0, 0);
+        CopyPictureItem(PicIndex + Bearing mod 4, Bearing div 4, 0, False);
     2, 7, $14:
       begin
         DrawCombatIcon(PicIndex + IconPicOffset1);
@@ -1483,8 +1483,8 @@ begin
     begin
       if Item^.ItemType = BowItemKind then
         Inc(PicIndex);
-      CopyPictureItem(PicIndex + SwingPicOffset, 0, 0, 0);
-      CopyPictureItem(PicIndex + SwingPicOffset, 1, 1, 0);
+      CopyPictureItem(PicIndex + SwingPicOffset, 0, 0, False);
+      CopyPictureItem(PicIndex + SwingPicOffset, 1, 1, False);
       Frames := SwingFrames;
       Mode := SwingMode;
     end;
@@ -1889,7 +1889,7 @@ var
   end;
 
 begin
-  CopyPictureItem(AimCursorPicture, 0, 0, 0);
+  CopyPictureItem(AimCursorPicture, 0, 0, False);
   FillChar(Aim, 7, 0);
   Done := 0;
   AimRange := Range;
@@ -1929,14 +1929,14 @@ begin
         'M':
           begin
             RunAimCursor(Who, Target, AimRange, Automatic, AimFlag, Done, TSpellTarget(Aim));
-            CopyPictureItem(AimCursorPicture, 0, 0, 0);
+            CopyPictureItem(AimCursorPicture, 0, 0, False);
             ListAimTargets(Who);
             Walk := 0;
           end;
         'T':
           begin
             ResolveAimedAttack(Who, Target, Automatic, Done, TSpellTarget(Aim));
-            CopyPictureItem(AimCursorPicture, 0, 0, 0);
+            CopyPictureItem(AimCursorPicture, 0, 0, False);
             ListAimTargets(Who);
             Walk := 0;
           end;
@@ -2046,7 +2046,7 @@ begin
   Who^.WeaponAttacks[2] := 2;
   Who^.WeaponDamage[2] := 4;
   Who^.AttackSlots[1] := 0;
-  ShowCharacterMessage(Who, 'Rakes...', 10, 1);
+  ShowCharacterMessage(Who, 'Rakes...', 10, True);
   PerformAttack(Who, Who^.Combat^.Target, 0, nil, Done);
   Done := EndCombatTurn(Who);
 end;
