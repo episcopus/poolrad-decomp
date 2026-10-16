@@ -659,7 +659,9 @@ const
   StrengthKept = $80;             { bit 7 of a strength affect's Data: the earlier strength is kept in it (ovl24:115C) }
   { Affect numbers (AffectHandlers, DS:6828) that more than one unit names. }
   AffectTrainingManual = 7;       { "Training with Manual of Bodily Health" (ovl15:0FBC names it) }
-  AffectRecordSize = 9;
+  AffectRecordSize = 9;           { the bytes of one TAffect (FreeMem of an affect, ovl16:137, ovl24:92); $09 as an
+    affect number is
+                                    Protection From Good }
   AffectEnlarge = $0C;
   AffectCough = $1E;
   AffectHelpless = $1F;
@@ -813,7 +815,8 @@ const
       $0D, $47, $4F, $42, $4C, $49, $4E, $20, $4C, $45, $41, $44, $45, $52, $00, $00);
   { Eight 16-byte names at DS:0382 (rows 1 to 8), directly after KoboldGoblinNames: ORC, ORC LEADER, GOBLIN,
     GOBLIN LEADER, HOBGOBLIN, HOBGOBLIN CHIEF, GAGOOL and MACE [V, image], the names the affect handlers at
-    ovl12:0918 and ovl12:0947 compare with the attacked character's name. }
+    ovl12:0947 compares with the attacked character's name (BoostAttackVsOrcGoblinHobgoblin, affect $1A, given to
+    dwarves [V OVL16:521]; ovl12:0918 tests the Detect Invisibility affect, not names). }
   OrcGoblinHobgoblinNames: array[1..8] of string[15] = (
       'ORC',
       'ORC LEADER',
@@ -2609,8 +2612,8 @@ var
   PlacementShapes: array[0..4, 0..5] of TColSpan absolute ds0306;
   { Five 16-byte names at DS:0332 (rows 0 to 4; row 0 is the index base and is never read). The rows 1 to 4
     are KOBOLD, KOBOLD LEADER, GOBLIN and GOBLIN LEADER [V, image]: the monster names the affect handler at
-    ovl12:0679 compares with the attacked character's name (probably the racial attack bonus of a small
-    race against them [H]). }
+    ovl12:0679 compares with the attacked character's name (affect $12, given to gnomes [V OVL16:527];
+    the AD&D racial attack bonus against kobolds and goblins [I]). }
   KoboldGoblinNames: array[0..4] of string[15] absolute Raw0332;
   { Names at DS:0402, directly after OrcGoblinHobgoblinNames: rows 1 to 5 are OGRE, OGRE LEADER, TROLL, FIRE
     GIANT and HILL GIANT [V, image]; rows 6 to 8 are not names but the start of TurnUndeadTable (DS:0447), which
@@ -2712,7 +2715,9 @@ var
                                     MakeCamp clears it when the camp opens (ovl15:1E80) }
   { The direction of each cloud arm 1..4 (ovl12:0CC3): DirStepX[CloudArmDirections[Arm]] and
     DirStepY[CloudArmDirections[Arm]] give the
-    arm's step from the centre. The values are not read yet [?]. }
+    arm's step from the centre. The image bytes at DS:290E..2911 are 08 02 03 04 [V]: no step (DirNone), East,
+    South-East, South,
+    a 2x2 block from the aim cell (TSpellNamesPrefix.AimDirs names the same bytes). }
   CloudArmDirections: array[0..4] of Byte absolute Raw290D;
   { Class tables of ovl23 (whitepaper 5.6). Their extents are not known (only the rows the
     characters reach are read). A table whose columns count from 1 is addressed from the byte

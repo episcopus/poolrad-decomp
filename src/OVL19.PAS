@@ -218,8 +218,9 @@ const
   ArmorValueColumn = 4;
   { the displayed THAC0 counts 60 minus HitAdjust (the to-hit bonus of RollToHit, ovl24:0CB7); why 60 [I] }
   ThacBase = 60;
-  { the code doubles the movement for affect $2A and halves it for $27; the POOLVARS comment on
-    Movement says the reverse, and the matched code is the evidence }
+  { QUIRK ovl19:0608: the sheet doubles the displayed movement for affect $2A and halves it for $27, but SpellTable says $27 is
+    Haste (spell 48) and $2A is Slow (spell 55) [V], and the handlers ApplyHaste and ApplySlow in ovl12 double and halve
+    them the other way round: the original's sheet shows Slow as fast and Haste as slow; kept, never fixed. }
   DoublingAffect = $2A;
   HalvingAffect = $27;
 var
