@@ -676,7 +676,7 @@ end;
   (RollDice(1, 12)) and the d20 turning check. Who's cleric level (ClassLevels[0]) is mapped to a
   table band (1..8 itself, 9..13 to 9, else 10). While SelectTurnUndeadTarget hands over an undead in range and
   the reach and the stop flag allow it, the table TurnUndeadTable gives the number to beat for that
-  monster's row (Pad74[$76] times 10 plus the band); a d20 at or above its absolute value turns it.
+  monster's row (Pad74[TurnUndeadIndex] times 10 plus the band); a d20 at or above its absolute value turns it.
   A positive entry forces flight (Combat^.ForcedFlight, 'is turned'); a nonpositive one destroys
   it ('Is destroyed', RemoveCombatant, Status 8, out of the fight). Each result spends one of the
   six turns and one of the reach; when a destroyed undead used the last reach, a strictly negative
@@ -716,7 +716,7 @@ begin
   end;
   while SelectTurnUndeadTarget(Who, Selected) and (Remaining > 0) and (Stop = 0) do
   begin
-    Result := TurnUndeadTable[ShortInt(Selected^.Pad74[$76]), LevelBand];
+    Result := TurnUndeadTable[ShortInt(Selected^.Pad74[TurnUndeadIndex]), LevelBand];
     if Roll20 >= Abs(Result) then
     begin
       AnyTurned := 1;
@@ -753,8 +753,8 @@ end;
 { ovl13:11D8: retf 4: 4 bytes of parameters; 0 bytes of locals }
 { ovl13:1351. Picks the undead TurnUndead tries to turn next: of the enemies the range scan
   CollectEnemiesInRange(Who, AllEnemiesRange) lists it keeps the one with the lowest signed type row
-  (TCharacter.Pad74[$76], above 0) whose combat state is not already forced to flee
-  (Combat^.ForcedFlight 0), clearing Selected first, and returns whether one was found. Pad74[$76]
+  (TCharacter.Pad74[TurnUndeadIndex], above 0) whose combat state is not already forced to flee
+  (Combat^.ForcedFlight 0), clearing Selected first, and returns whether one was found. Pad74[TurnUndeadIndex]
   is the monster row the Turn Undead table TurnUndeadTable is indexed by, so the scan picks the undead with
   the lowest row first. QUIRK ovl13:135B: Selected is untyped, so TurnUndead passes a
   PCharacter while ovl09 TryTurnUndead passes a 1-byte Done; the routine writes a 4-byte far pointer
@@ -774,10 +774,10 @@ begin
   begin
     Enemy := CombatantRecord[CombatantScanList[I]];
     if Enemy^.Combat^.ForcedFlight = 0 then
-      if ShortInt(Enemy^.Pad74[$76]) > 0 then
-        if ShortInt(Enemy^.Pad74[$76]) < MinRow then
+      if ShortInt(Enemy^.Pad74[TurnUndeadIndex]) > 0 then
+        if ShortInt(Enemy^.Pad74[TurnUndeadIndex]) < MinRow then
         begin
-          MinRow := Enemy^.Pad74[$76];
+          MinRow := Enemy^.Pad74[TurnUndeadIndex];
           PCharacter(Selected) := Enemy;
           SelectTurnUndeadTarget := True;
         end;

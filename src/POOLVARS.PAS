@@ -748,6 +748,31 @@ const
   SaveKindWand = 2;
   SaveKindBreath = 3;
   SaveKindSpell = 4;
+  { TCharacter.Alignment: the index of AlignmentNames (DS:0F53) [V image]; good is 0, 3, 6 and evil is 2, 5, 8. }
+  AlignLawfulGood = 0;
+  AlignLawfulNeutral = 1;
+  AlignLawfulEvil = 2;
+  AlignNeutralGood = 3;
+  AlignTrueNeutral = 4;
+  AlignNeutralEvil = 5;
+  AlignChaoticGood = 6;
+  AlignChaoticNeutral = 7;
+  AlignChaoticEvil = 8;
+  { TCharacter.CreatureType (MON*CHA +$9F, 172 monsters [V]): 0 the party and the human NPCs, 1 the humanoid monsters
+    (kobold, goblin, orc, ogre, ettin, bugbear, gnoll), 2 the giants, 4 all eleven undead, 10 the troll, 12 the stirge,
+    $E the snakes and scorpions (a giant snake is what Snake Charm affects). No monster has 9 (ovl12 review of 2026-10-16). }
+  CreatureHuman = 0;
+  CreatureHumanoid = 1;
+  CreatureGiant = 2;
+  CreatureUndead = 4;
+  CreatureTroll = 10;
+  CreatureStirge = 12;
+  CreatureSnake = $E;
+  RaceMonster = 0;                { TCharacter.Race 0 is 'Monster' in RaceNames: not a player race }
+  { DealDamage's SaveEffect: what a successful save does to the damage. }
+  NoneOnSave = 1;
+  HalfOnSave = 2;
+  TurnUndeadIndex = $76;          { TCharacter.Pad74 index of the Turn Undead row of a monster (TurnUndeadTable, ovl13) }
   { Spell numbers of SpellTable that code tests CastingSpell against. }
   SpellCharmPerson = 10;
   SpellMagicMissile = 15;
@@ -864,7 +889,7 @@ const
   { Eight 16-byte names at DS:0382 (rows 1 to 8), directly after KoboldGoblinNames: ORC, ORC LEADER, GOBLIN,
     GOBLIN LEADER, HOBGOBLIN, HOBGOBLIN CHIEF, GAGOOL and MACE [V, image], the names the affect handlers at
     ovl12:0947 compares with the attacked character's name (BoostAttackVsOrcGoblinHobgoblin, affect $1A, given to
-    dwarves [V OVL16:521]; ovl12:0918 tests the Detect Invisibility affect, not names). }
+    dwarves [V OVL16.PAS line 521]; ovl12:0918 tests the Detect Invisibility affect, not names). }
   OrcGoblinHobgoblinNames: array[1..8] of string[15] = (
       'ORC',
       'ORC LEADER',
@@ -2673,7 +2698,7 @@ var
   PlacementShapes: array[0..4, 0..5] of TColSpan absolute ds0306;
   { Five 16-byte names at DS:0332 (rows 0 to 4; row 0 is the index base and is never read). The rows 1 to 4
     are KOBOLD, KOBOLD LEADER, GOBLIN and GOBLIN LEADER [V, image]: the monster names the affect handler at
-    ovl12:0679 compares with the attacked character's name (affect $12, given to gnomes [V OVL16:527];
+    ovl12:0679 compares with the attacked character's name (affect $12, given to gnomes [V OVL16.PAS line 527];
     the AD&D racial attack bonus against kobolds and goblins [I]). }
   KoboldGoblinNames: array[0..4] of string[15] absolute Raw0332;
   { Names at DS:0402, directly after OrcGoblinHobgoblinNames: rows 1 to 5 are OGRE, OGRE LEADER, TROLL, FIRE

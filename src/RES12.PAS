@@ -752,7 +752,7 @@ begin
   for BonusIndex := 0 to 4 do
     Who^.ArmourClassValue := Who^.ArmourClassValue + Bonus.Values[BonusIndex];
   Who^.RearArmourClassValue := Bonus.BestValue + Bonus.PlusSum + Bonus.BestPlus - 2;
-  if (Who^.ClassLevels[ClassFighter] > 0) and (Who^.Race > 0) then
+  if (Who^.ClassLevels[ClassFighter] > 0) and (Who^.Race > RaceMonster) then
     Who^.SweepAttacks := Who^.ClassLevels[ClassFighter]
   else
     Who^.SweepAttacks := 1;

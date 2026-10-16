@@ -83,8 +83,8 @@ Not done in this pass:
   (playbook 50); moving each to the unit that owns it needs the layout generator to read several units.
 - **Reviewer sign-off per subsystem** (SPEC 10, P6 exit): done for ovl03, ovl12, ovl16, res07 and res12 on
   2026-10-16 (independent read-only reviews, must-fix findings applied; each `work/reviews/<unit>.md` has a
-  "Phase 6 sign-off" section). Open: ovl12 M12 (bare numbers: alignment indexes, CreatureType values, item
-  types $55..$58, the Constitution table), the `ClassMask` field (an index 0..16, to be `ClassCombo`; 61 uses in
+  "Phase 6 sign-off" section). ovl12 M12 (bare numbers) was finished the same day (shared `Align*`, `Creature*`,
+  `HalfOnSave`, `TurnUndeadIndex` in POOLVARS). Open: the `ClassMask` field (an index 0..16, to be `ClassCombo`; 61 uses in
   6 files), and the should-fix lists of the reviews (`Thac0`, `B84`, `HpB1`, `Flag10D`, `Guarding`, `TileGate`,
   `SortEntries` as the ScanTargets result list, Byte used as Boolean). The other units have not had a
   phase 6 review. `make review-pass` is not rerun: it would restamp the round 2 pass.
