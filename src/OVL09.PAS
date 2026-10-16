@@ -377,7 +377,7 @@ end;
   ovl09:0BD3 and 0D7C; the caller loops while the turn lasts): shows 'Move/Attack, Move Left = n'
   with DrawTextAt(0, 24, 10, ...), lets HandleCombatKey interrupt (True ends the step), then gives
   up on the same NoStep path when no half-move is left, the initiative is gone, or a magic-user
-  (ClassMask 5) is not panicking. A clear Panic byte +$14 asks BearingTo(Who, Combat^.Target) for
+  (ClassCombo 5) is not panicking. A clear Panic byte +$14 asks BearingTo(Who, Combat^.Target) for
   the direction; a panicking one rerolls the step pattern (StepPattern, RollDice(1, 2)) and derives a
   direction from the party marker facing PartyFacing (+ 4 on the party side, mod 8). The step then tries
   patterns Step = 1..5 while CanAffordStep refuses them (a panicking actor that is off the map ends
@@ -405,7 +405,7 @@ begin
     goto NoStep;
   if Who^.Combat^.Initiative <= 0 then
     goto NoStep;
-  if (Who^.Combat^.Panic = 0) and (Who^.ClassMask = 5) then
+  if (Who^.Combat^.Panic = 0) and (Who^.ClassCombo = 5) then
     goto NoStep;
   if Who^.Combat^.Panic = 0 then
     Dir := BearingTo(Who, Who^.Combat^.Target)

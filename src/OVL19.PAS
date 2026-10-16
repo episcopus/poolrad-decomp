@@ -72,7 +72,7 @@ type
 
 { ovl19:004A. Draws the character sheet of SelectedCharacter in the window 1..38 x 1..22: the name line
   (DrawCharacterName) with an "(NPC)" tag after it for a computer-run member (B84 bit 7), the sex, race
-  and age on row 3, the alignment on row 4, the class on row 5 (ClassNames, indexed by ClassMask: 0..7
+  and age on row 3, the alignment on row 4, the class on row 5 (ClassNames, indexed by ClassCombo: 0..7
   are the single classes and 8..16 the multi-class names Cleric/Fighter .. Magic-User/Thief), the six
   ability lines (ShowAbilityScore) with their labels from row 7, the money (ShowCharacterMoney), the
   class levels and experience on row 15, the combat block (ShowCombatStats) on rows 17 and 18, the weapon
@@ -123,7 +123,7 @@ begin
   DrawTextAt(Col, NameRow, TextColor, 'Age ' + WordToText(SheetCharacter^.Age));
   Text := AlignmentNames[PSheetFields(SheetCharacter)^.Alignment];
   DrawTextAt(1, AlignmentRow, TextColor, Text);
-  Text := ClassNames[SheetCharacter^.ClassMask];
+  Text := ClassNames[SheetCharacter^.ClassCombo];
   DrawTextAt(1, ClassRow, TextColor, Text);
   for Stat := 0 to 5 do
   begin

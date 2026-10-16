@@ -285,13 +285,11 @@ type
     Race: ShortInt;
     { +$2F: the class or class combination (whitepaper 4.2.5), NOT a bit mask: 0..7 a single class in ClassNames order
       and 8..16 nine
-      named combinations (ClassNames[ClassMask], ovl19:01D2; the row index of ClassAlignmentChoices, ClassAbilityMinimums and
+      named combinations (ClassNames[ClassCombo], ovl19:01D2; the row index of ClassAlignmentChoices, ClassAbilityMinimums and
       StartingAgeTable); AwardExperience splits the experience by 2 or 3 (ovl05:0454); signed (the case at ovl05:045A
       compares with
-      jl). TItemRow.ClassMask and ClassBits are real bit masks, so the same word means two things; renaming this field
-      to ClassCombo
-      touches 61 uses in 6 files and is left to a later pass. }
-    ClassMask: ShortInt;
+      jl). Not to be confused with TItemRow.ClassMask and ClassBits, which are real bit masks. }
+    ClassCombo: ShortInt;
     { +$30: the age in years; the saved record holds it at 0x30 (whitepaper 4.2.5); CarryClock adds one
       to every character when the rest clock's top digit reaches its radix (ovl20:037B). }
     Age: Word;
@@ -571,7 +569,7 @@ type
     DiceSizeNormal: Byte;         { +$A: the die size against normal-size foes }
     BonusNormal: ShortInt;        { +$B: the damage bonus against normal-size foes (signed) }
     Range: Byte;                  { +$C: the attack range }
-    ClassMask: Byte;              { +$D: the class bits that may use the item (ANDed with ClassBits) }
+    ClassMask: Byte;               { +$D: the class bits that may use the item (ANDed with ClassBits) }
     Flags: Byte;                  { +$E: the flag bits of the AI's item step (ovl09 constants FlagAttack etc.) }
     Pad15: Byte;
   end;
@@ -610,7 +608,7 @@ const
   { TCharacter.Side and the side indexes of the combat counters (SideCounts). }
   SideParty = 0;
   SideMonsters = 1;
-  { The single classes of ClassLevels and ClassNames (0..7; the multi-class numbers 8..16 are ClassMask only). }
+  { The single classes of ClassLevels and ClassNames (0..7; the multi-class numbers 8..16 are ClassCombo only). }
   ClassCleric = 0;
   ClassDruid = 1;
   ClassFighter = 2;
@@ -1133,7 +1131,7 @@ const
   CoinCopperValues: array[0..4] of LongInt = (1, 10, 100, 200, 1000);
   { 17 string[26] at DS:0D38, 27 bytes apart (the image): Cleric .. Monk (0..7), then Cleric/Fighter,
     Cleric/Fighter/Magic-User, Cleric/Ranger, Cleric/Magic-User, Cleric/Thief, Fighter/Magic-User,
-    Fighter/Thief, Fighter/Magic-User/Thief and Magic-User/Thief (8..16), indexed by TCharacter.ClassMask. }
+    Fighter/Thief, Fighter/Magic-User/Thief and Magic-User/Thief (8..16), indexed by TCharacter.ClassCombo. }
   ClassNames: array[0..16] of string[26] = (
       'Cleric',
       'Druid',
@@ -2088,7 +2086,7 @@ const
       (15, 30, 45, 60, 80),
       (20, 40, 60, 90, 120));
   { The per-class ability minimums ModifyCharacter clamps to: six columns per class (Strength ..
-    Charisma), indexed by [ClassMask, Stat]. }
+    Charisma), indexed by [ClassCombo, Stat]. }
   ClassAbilityMinimums: array[0..$10, 0..5] of Byte = (
       (6, 6, 9, 0, 0, 0),
       (0, 0, 12, 0, 0, 15),
@@ -2718,7 +2716,7 @@ var
     image 02 02 08 0A 0A 01 04 06].
     RollHitPoints and TrainCharacter (ovl16:29AE) test them against the hall's mask. The image holds 18 bytes: bytes
     8..17 (10 10 10 20 20
-    20 40 40 40 00) are read by nothing by name (probably a group per ClassMask 8..16 [H]). }
+    20 40 40 40 00) are read by nothing by name (probably a group per ClassCombo 8..16 [H]). }
   ClassTrainingBits: array[0..7] of Byte absolute Raw05DE;
   { The 'C D M T V A R L S B E J' hotkey line: the prompt RunCharacterMenu (ovl16:0161) passes to
     ReadPromptChoice under the title 'Choose a function '. }
@@ -2846,7 +2844,7 @@ var
   RaceStrengthMax: array[0..$F, -2..$D] of Byte absolute RaceAbilityLimits;
   RaceStrengthPercent: array[0..$F, -4..$B] of Byte absolute RaceAbilityLimits;
   { The classes each race may pick when a character is created (ovl16:056C): a 12-byte row per race 1..7
-    (Dwarf .. Human, RaceNames order), the count of choices first and then the ClassMask numbers (0..7
+    (Dwarf .. Human, RaceNames order), the count of choices first and then the ClassCombo numbers (0..7
     the single classes, 8..16 the multi-classes) in menu order. The image's Dwarf row is 3, 2, 6, 14
     (fighter, thief, fighter/thief) and its Human row 4, 0, 2, 5, 6. Row 0 is the index base; the image
     holds the tail of the Human row of RaceAbilityLimits there. }
@@ -2855,7 +2853,7 @@ var
     (the image's Dwarf cleric is 250 + 2d20, its fighter 40 + 5d4). Row 0 is the index base: it lies over
     the Half-Orc and Human rows of RaceClassChoices in the image. }
   StartingAgeTable: array[0..7, 0..6] of TAgeEntry absolute Raw3E5B;
-  { The alignments each class mask may pick (ovl16:056C): a 10-byte row per ClassMask 0..16, the count first and
+  { The alignments each class mask may pick (ovl16:056C): a 10-byte row per ClassCombo 0..16, the count first and
     then the AlignmentNames numbers (the image's cleric row is 9 and 0..8, its druid row 5 and 1, 3, 4, 5,
     7). }
   ClassAlignmentChoices: array[0..16, 0..9] of ShortInt absolute Raw3FE7;

@@ -78,7 +78,7 @@ type
   { TCharacter seen from its ability scores on, with the six scores (Strength .. Charisma) as an
     array so a loop can index them by ability (ModifyCharacter's cursor, CreateCharacter's rolls). The
     offsets match TCharacter's
-    (whitepaper 4.2.5): +$10 the scores, +$16 StrengthPercent, +$2E Race, +$2F ClassMask,
+    (whitepaper 4.2.5): +$10 the scores, +$16 StrengthPercent, +$2E Race, +$2F ClassCombo,
     +$32 HpMax, +$85 HirelingShare, +$96 ClassLevels, +$9E Sex, +$B2 SpellSlots, +$11B HpCurrent
     (the current hit points). }
   PScoredCharacter = ^TScoredCharacter;
@@ -89,7 +89,7 @@ type
     StrengthPercent: Byte;                  { +$16 }
     Pad17: array[$17..$2D] of Byte;
     Race: ShortInt;                         { +$2E }
-    ClassMask: ShortInt;                    { +$2F }
+    ClassCombo: ShortInt;                    { +$2F }
     Age: Word;                              { +$30 }
     HpMax: Byte;                            { +$32 }
     Pad33: array[$33..$84] of Byte;
@@ -327,7 +327,7 @@ end;
     (Duration 0, Data $FF, Flag 0): Dwarf $5A $61 $1A $2F, Gnome $61 $12 $2F $30, Halfling $5A $61,
     Elf $6B, Half-Elf $7C, Human none.
   - Gender: Male or Female (SexNames), stored as the zero-based choice in Sex.
-  - Class: the row of the race in RaceClassChoices lists the classes it may pick; the chosen ClassMask gets
+  - Class: the row of the race in RaceClassChoices lists the classes it may pick; the chosen ClassCombo gets
     level 1 in each class it combines (ClassLevels, a multi-class mask such as 8 Cleric/Fighter sets
     several), then ComputeThiefSkills for a thief, THAC0 (the highest ClassThac0Table entry), the
     item-usage ClassBits (ClassItemBits) and ComputeSavingThrows.
@@ -358,7 +358,7 @@ end;
   QUIRK ovl16:1236: the racial roll adjustments (race 1 +1 Con -1 Cha, 2 +1 Dex -1 Con, 5 -1 Str
   +1 Dex, 6 +1 Str +1 Con -2 Cha) test RaceIndex, the loop variable of the race menu, which is 7
   after that loop, not the chosen race, so they never apply.
-  QUIRK ovl16:0FF3: the maximum-age rule has no case for ClassMask $A (Cleric/Ranger); no race offers
+  QUIRK ovl16:0FF3: the maximum-age rule has no case for ClassCombo $A (Cleric/Ranger); no race offers
   it, so its age would stay 0. }
 procedure CreateCharacter;
 const
@@ -405,7 +405,7 @@ const
   AffectElfCharmSleepResistance = $6B;
   AffectHalfElfCharmSleepResistance = $7C;
   DataFF = $FF;
-  { The class numbers (ClassLevels index, ClassNames order) and the multi-class ClassMask values. }
+  { The class numbers (ClassLevels index, ClassNames order) and the multi-class ClassCombo values. }
   ClassTypeCount = 8;
   ClericFighter = 8;
   ClericFighterMage = 9;
@@ -585,10 +585,10 @@ begin
   until Key = KeyEnter;
   with NewCharacter^ do
   begin
-    ClassMask := RaceClassChoices[Race, Choice];
+    ClassCombo := RaceClassChoices[Race, Choice];
     HighestLevel := 1;
-    case ClassMask of
-      0..7: ClassLevels[ClassMask] := 1;
+    case ClassCombo of
+      0..7: ClassLevels[ClassCombo] := 1;
       ClericFighter:
         begin
           ClassLevels[ClassCleric] := 1;
@@ -651,14 +651,14 @@ begin
   end;
   ComputeSavingThrows(NewCharacter);
   FreeMenuList(MenuList);
-  ChoiceCount := ClassAlignmentChoices[NewCharacter^.ClassMask, 0];
+  ChoiceCount := ClassAlignmentChoices[NewCharacter^.ClassCombo, 0];
   NewMenuList(ChoiceCount + 1, MenuList);
   MenuList^.Flag29 := 1;
   MenuList^.Text := 'Pick Alignment';
   for I := 1 to ChoiceCount do
   begin
     PickedLine := GetMenuLine(I, MenuList);
-    PickedLine^.Text := '  ' + AlignmentNames[ClassAlignmentChoices[NewCharacter^.ClassMask, I]];
+    PickedLine^.Text := '  ' + AlignmentNames[ClassAlignmentChoices[NewCharacter^.ClassCombo, I]];
   end;
   PickedLine := MenuList;
   Choice := 1;
@@ -669,14 +669,14 @@ begin
       MenuTopRow, MenuRightCol, MenuBottomRow, MenuList, WithExit, Redraw, Choice, PickedLine);
     if Key = KeyEscape then Exit;
   until Key = KeyEnter;
-  NewCharacter^.Alignment := ClassAlignmentChoices[NewCharacter^.ClassMask, Choice];
+  NewCharacter^.Alignment := ClassAlignmentChoices[NewCharacter^.ClassCombo, Choice];
   FreeMenuList(MenuList);
-  if NewCharacter^.ClassMask <= 7 then
-    with StartingAgeTable[NewCharacter^.Race, NewCharacter^.ClassMask] do
+  if NewCharacter^.ClassCombo <= 7 then
+    with StartingAgeTable[NewCharacter^.Race, NewCharacter^.ClassCombo] do
       NewCharacter^.Age := RollDice(Count, Sides) + Base
   else
     with NewCharacter^ do
-      case ClassMask of
+      case ClassCombo of
         ClericFighter:
           Age := StartingAgeTable[Race, ClassCleric].Base
             + StartingAgeTable[Race, ClassCleric].Sides * StartingAgeTable[Race, ClassCleric].Count;
@@ -755,8 +755,8 @@ begin
                 Scores[AbilityIndex] := RaceAbilityLimits[Race, Sex];
               if Scores[AbilityIndex] > RaceStrengthMax[Race, Sex] then
                 Scores[AbilityIndex] := RaceStrengthMax[Race, Sex];
-              if Scores[AbilityIndex] < ClassAbilityMinimums[ClassMask, AbilityIndex] then
-                Scores[AbilityIndex] := ClassAbilityMinimums[ClassMask, AbilityIndex];
+              if Scores[AbilityIndex] < ClassAbilityMinimums[ClassCombo, AbilityIndex] then
+                Scores[AbilityIndex] := ClassAbilityMinimums[ClassCombo, AbilityIndex];
               if (Scores[StrengthIndex] = ExceptionalStrength) and (ClassLevels[ClassFighter] > 0) then
               begin
                 StrengthPercent := Random(ExceptionalStrengthRoll) + 1;
@@ -774,8 +774,8 @@ begin
                 Scores[AbilityIndex] := RaceAbilityLimits[Race, IntMinOffset];
               if Scores[AbilityIndex] > RaceAbilityLimits[Race, IntMaxOffset] then
                 Scores[AbilityIndex] := RaceAbilityLimits[Race, IntMaxOffset];
-              if Scores[AbilityIndex] < ClassAbilityMinimums[ClassMask, AbilityIndex] then
-                Scores[AbilityIndex] := ClassAbilityMinimums[ClassMask, AbilityIndex];
+              if Scores[AbilityIndex] < ClassAbilityMinimums[ClassCombo, AbilityIndex] then
+                Scores[AbilityIndex] := ClassAbilityMinimums[ClassCombo, AbilityIndex];
             end;
           WisdomIndex:
             begin
@@ -791,9 +791,9 @@ begin
                 Scores[AbilityIndex] := RaceAbilityLimits[Race, WisMinOffset];
               if Scores[AbilityIndex] > RaceAbilityLimits[Race, WisMaxOffset] then
                 Scores[AbilityIndex] := RaceAbilityLimits[Race, WisMaxOffset];
-              if Scores[AbilityIndex] < ClassAbilityMinimums[ClassMask, AbilityIndex] then
-                Scores[AbilityIndex] := ClassAbilityMinimums[ClassMask, AbilityIndex];
-              if (Scores[AbilityIndex] < MinClericWisdom) and (ClassMask in [ClericFighter..ClericThief]) then
+              if Scores[AbilityIndex] < ClassAbilityMinimums[ClassCombo, AbilityIndex] then
+                Scores[AbilityIndex] := ClassAbilityMinimums[ClassCombo, AbilityIndex];
+              if (Scores[AbilityIndex] < MinClericWisdom) and (ClassCombo in [ClericFighter..ClericThief]) then
                 Scores[AbilityIndex] := MinClericWisdom;
             end;
           DexterityIndex:
@@ -806,8 +806,8 @@ begin
                 Scores[AbilityIndex] := RaceAbilityLimits[Race, DexMinOffset];
               if Scores[AbilityIndex] > RaceAbilityLimits[Race, DexMaxOffset] then
                 Scores[AbilityIndex] := RaceAbilityLimits[Race, DexMaxOffset];
-              if Scores[AbilityIndex] < ClassAbilityMinimums[ClassMask, AbilityIndex] then
-                Scores[AbilityIndex] := ClassAbilityMinimums[ClassMask, AbilityIndex];
+              if Scores[AbilityIndex] < ClassAbilityMinimums[ClassCombo, AbilityIndex] then
+                Scores[AbilityIndex] := ClassAbilityMinimums[ClassCombo, AbilityIndex];
             end;
           ConstitutionIndex:
             begin
@@ -821,8 +821,8 @@ begin
                 Scores[AbilityIndex] := RaceAbilityLimits[Race, ConMinOffset];
               if Scores[AbilityIndex] > RaceAbilityLimits[Race, ConMaxOffset] then
                 Scores[AbilityIndex] := RaceAbilityLimits[Race, ConMaxOffset];
-              if Scores[AbilityIndex] < ClassAbilityMinimums[ClassMask, AbilityIndex] then
-                Scores[AbilityIndex] := ClassAbilityMinimums[ClassMask, AbilityIndex];
+              if Scores[AbilityIndex] < ClassAbilityMinimums[ClassCombo, AbilityIndex] then
+                Scores[AbilityIndex] := ClassAbilityMinimums[ClassCombo, AbilityIndex];
             end;
           CharismaIndex:
             begin
@@ -830,8 +830,8 @@ begin
                 Scores[AbilityIndex] := RaceAbilityLimits[Race, ChaMinOffset];
               if Scores[AbilityIndex] > RaceAbilityLimits[Race, ChaMaxOffset] then
                 Scores[AbilityIndex] := RaceAbilityLimits[Race, ChaMaxOffset];
-              if Scores[AbilityIndex] < ClassAbilityMinimums[ClassMask, AbilityIndex] then
-                Scores[AbilityIndex] := ClassAbilityMinimums[ClassMask, AbilityIndex];
+              if Scores[AbilityIndex] < ClassAbilityMinimums[ClassCombo, AbilityIndex] then
+                Scores[AbilityIndex] := ClassAbilityMinimums[ClassCombo, AbilityIndex];
             end;
         end;
       ShowAbilityScore(AbilityIndex, False);
@@ -944,7 +944,7 @@ end;
   bounded by MinHitPoints (floor) and MaxHitPoints (ceiling). 'K' (Keep) accepts the changes and leaves, 'E'
   (Exit, or Escape) restores the saved abilities. The nested ShowStat (ovl16:2033) redraws the
   value under the cursor. A `with SelectedCharacter^` block edits the modified character; its
-  Experience, Scores (+$10), StrengthPercent, HpMax, HpCurrent, Race, ClassMask, Sex, ClassLevels,
+  Experience, Scores (+$10), StrengthPercent, HpMax, HpCurrent, Race, ClassCombo, Sex, ClassLevels,
   SpellSlots and HirelingShare are used. }
 procedure ModifyCharacter;
 const
@@ -1039,16 +1039,16 @@ begin
                   Inc(Scores[Stat]);
                 end
                 else if (Scores[Stat] < RaceAbilityLimits[Race, Sex])
-                     or (Scores[Stat] < ClassAbilityMinimums[ClassMask, 0]) then
+                     or (Scores[Stat] < ClassAbilityMinimums[ClassCombo, 0]) then
                   Scores[Stat] := RaceAbilityLimits[Race, Sex];
               1:
                 if (Scores[Stat] < RaceAbilityLimits[Race, IntMinOffset])
-                   or (Scores[Stat] < ClassAbilityMinimums[ClassMask, 1]) then
+                   or (Scores[Stat] < ClassAbilityMinimums[ClassCombo, 1]) then
                   Scores[Stat] := RaceAbilityLimits[Race, IntMinOffset];
               2:
                 begin
                   if (Scores[Stat] < RaceAbilityLimits[Race, WisMinOffset])
-                     or (Scores[Stat] < ClassAbilityMinimums[ClassMask, 2]) then
+                     or (Scores[Stat] < ClassAbilityMinimums[ClassCombo, 2]) then
                     Scores[Stat] := RaceAbilityLimits[Race, WisMinOffset];
                   if SpellSlots[0, 1] > 0 then
                     SpellSlots[0, 1] := 1;
@@ -1056,12 +1056,12 @@ begin
                 end;
               3:
                 if (Scores[Stat] < RaceAbilityLimits[Race, DexMinOffset])
-                   or (Scores[Stat] < ClassAbilityMinimums[ClassMask, 3]) then
+                   or (Scores[Stat] < ClassAbilityMinimums[ClassCombo, 3]) then
                   Scores[Stat] := RaceAbilityLimits[Race, DexMinOffset];
               4:
                 begin
                   if (Scores[Stat] < RaceAbilityLimits[Race, ConMinOffset])
-                     or (Scores[Stat] < ClassAbilityMinimums[ClassMask, 4]) then
+                     or (Scores[Stat] < ClassAbilityMinimums[ClassCombo, 4]) then
                     Scores[Stat] := RaceAbilityLimits[Race, ConMinOffset];
                   if MaxHitPoints(SelectedCharacter) < HpMax then
                     HpMax := MaxHitPoints(SelectedCharacter);
@@ -1072,7 +1072,7 @@ begin
                 end;
               5:
                 if (Scores[Stat] < RaceAbilityLimits[Race, ChaMinOffset])
-                   or (Scores[Stat] < ClassAbilityMinimums[ClassMask, 5]) then
+                   or (Scores[Stat] < ClassAbilityMinimums[ClassCombo, 5]) then
                   Scores[Stat] := RaceAbilityLimits[Race, ChaMinOffset];
             end;
           end
@@ -1979,7 +1979,7 @@ end;
 { ovl16:3F31. The constitution hit-point adjustment shared by the hit-point floor MinHitPoints and
   the ceiling MaxHitPoints of ModifyCharacter (ovl16:209F). It sums ConstitutionHitPointTable[Constitution] over the
   eight classes the character has a level in (ClassLevels[I], +$96, signed, above 0), then adds the
-  fighter bonus: one more for a fighter (ClassMask = 2) above constitution 16 and a second above 17
+  fighter bonus: one more for a fighter (ClassCombo = 2) above constitution 16 and a second above 17
   (the AD&D 1e fighter constitution bonus). The `with Who^` evaluates the parameter once into a
   hidden local; the result is the signed total (it can be negative for a low constitution). }
 function ConstitutionHitPointAdjustment(Who: PCharacter): ShortInt;
@@ -1995,10 +1995,10 @@ begin
       begin
         Inc(Sum, ConstitutionHitPointTable[Constitution]);
         if Constitution > 16 then
-          if ClassMask = 2 then
+          if ClassCombo = 2 then
             Inc(Sum);
         if Constitution > 17 then
-          if ClassMask = 2 then
+          if ClassCombo = 2 then
             Inc(Sum);
       end;
   ConstitutionHitPointAdjustment := Sum;

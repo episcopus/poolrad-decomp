@@ -39,7 +39,7 @@ const
   { TCharacter.Side values. }
   ShareMask = 7;                { the bits of HirelingShare that are the share }
   ExtraCombatant = 1;           { TCombatant.NoBody: a combatant that is not a real party member }
-  { TCharacter.ClassMask values of AwardExperience: the four single classes whose prime requisite
+  { TCharacter.ClassCombo values of AwardExperience: the four single classes whose prime requisite
     above PrimeRequisiteBonus gives 10% more experience. }
   PrimeRequisiteBonus = 15;
   { The two memorized spells that add Detect to the treasure menu [I]: the cleric's and the
@@ -148,7 +148,7 @@ end;
 { ovl05:0355. Adds Xp to the Experience of every member of the party list (PartyListHead) that has Flag10D
   set and is not dead: 10% more for a cleric, fighter, magic-user or thief whose prime requisite
   (Wisdom, Strength, Intelligence, Dexterity) is above 15, half for the two-class combinations and
-  a third for the three-class ones (ClassMask 8, 10..14, 16 and 9, 15). }
+  a third for the three-class ones (ClassCombo 8, 10..14, 16 and 9, 15). }
 procedure AwardExperience(Xp: LongInt);
 var
   Who: PCharacter;
@@ -160,7 +160,7 @@ begin
     if (Who^.Flag10D <> 0) and (Who^.Status <> StatusAnimated) then
     begin
       Gain := Xp;
-      case Who^.ClassMask of
+      case Who^.ClassCombo of
         ClassCleric: if Who^.Wisdom > PrimeRequisiteBonus then Gain := Xp div 10 + Xp;
         ClassFighter: if Who^.Strength > PrimeRequisiteBonus then Gain := Xp div 10 + Xp;
         ClassMagicUser: if Who^.Intelligence > PrimeRequisiteBonus then Gain := Xp div 10 + Xp;

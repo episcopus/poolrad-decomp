@@ -938,7 +938,7 @@ evidence = "eight string[9] at DS:0F03, ten bytes apart: Monster, Dwarf, Elf, Gn
 [[global]]
 offset = 0x0D38
 name = "ClassNames"
-evidence = "17 string[26] at DS:0D38, 27 bytes apart (the image): Cleric, Druid, Fighter, Paladin, Ranger, Magic-User, Thief and Monk (0..7), then the real multi-class names Cleric/Fighter, Cleric/Fighter/Magic-User, Cleric/Ranger, Cleric/Magic-User, Cleric/Thief, Fighter/Magic-User, Fighter/Thief, Fighter/Magic-User/Thief and Magic-User/Thief (8..16; the table ends exactly at RaceNames, DS:0F03); ShowCharacterSheet draws ClassNames[ClassMask] (+$2F, ovl19:01D2) [V]"
+evidence = "17 string[26] at DS:0D38, 27 bytes apart (the image): Cleric, Druid, Fighter, Paladin, Ranger, Magic-User, Thief and Monk (0..7), then the real multi-class names Cleric/Fighter, Cleric/Fighter/Magic-User, Cleric/Ranger, Cleric/Magic-User, Cleric/Thief, Fighter/Magic-User, Fighter/Thief, Fighter/Magic-User/Thief and Magic-User/Thief (8..16; the table ends exactly at RaceNames, DS:0F03); ShowCharacterSheet draws ClassNames[ClassCombo] (+$2F, ovl19:01D2) [V]"
 
 [[global]]
 offset = 0x0F53
@@ -1540,7 +1540,7 @@ evidence = "per race a 16-byte row of minimum and maximum of each ability Create
 [[global]]
 offset = 0x3E17
 name = "RaceClassChoices"
-evidence = "per race the count and the ClassMask numbers a new character may pick (CreateCharacter ovl16:056C)"
+evidence = "per race the count and the ClassCombo numbers a new character may pick (CreateCharacter ovl16:056C)"
 
 [[global]]
 offset = 0x3E5B
@@ -1555,12 +1555,12 @@ evidence = "per race the age brackets (columns of the race row) CreateCharacter 
 [[global]]
 offset = 0x3F81
 name = "ClassAbilityMinimums"
-evidence = "per ClassMask the minimum of each ability CreateCharacter, ModifyCharacter and DropCharacter enforce (ovl16)"
+evidence = "per ClassCombo the minimum of each ability CreateCharacter, ModifyCharacter and DropCharacter enforce (ovl16)"
 
 [[global]]
 offset = 0x3FE7
 name = "ClassAlignmentChoices"
-evidence = "per ClassMask the count and the alignment numbers a class may pick (CreateCharacter ovl16:056C)"
+evidence = "per ClassCombo the count and the alignment numbers a class may pick (CreateCharacter ovl16:056C)"
 
 [[global]]
 offset = 0x4263
