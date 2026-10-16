@@ -354,7 +354,7 @@ evidence = "holds SoundMode while Ctrl-S has it at 2; restored only when it is 0
 [[global]]
 offset = 0x49FA
 name = "AreaViewKind"
-evidence = "ovl26_e1 dispatches on it: case at ovl26:018C: 1 draws the 3D wall view (ovl29), 2..4 the map window (ovl27); ovl11_e1 sets 1 when an area loads, ovl03_fn_31B4 sets 2/3/4 with view type 3"
+evidence = "ovl26_e1 dispatches on it: case at ovl26:018C: 1 draws the 3D wall view (ovl29), 2..4 the map window (ovl27); ovl11_e1 sets 1 when an area loads, RunAreaStep (ovl03:31B4) sets 2/3/4 with view type 3"
 
 [[global]]
 offset = 0x3C76
@@ -1580,12 +1580,12 @@ evidence = "set by StartEclBlock (ECL command 32, ovl03:0BD1); RunAreaStep repea
 [[global]]
 offset = 0x4430
 name = "ReselectCharacterPending"
-evidence = "StoreCommand and SelectCharacterCommand set it; EndCommand then selects the character at ReselectCharacter (ovl03:0001)"
+evidence = "SelectCharacterCommand sets it (ovl03:02E0); EndCommand then selects the character at ReselectCharacter (ovl03:0001); cleared by EndCommand, ShowSpecialScreenCommand, SelectCharacterCommand and RunWilderness"
 
 [[global]]
 offset = 0x4436
 name = "ReselectCharacter"
-evidence = "the character EndCommand makes SelectedCharacter again while ReselectCharacterPending is set (ovl03:0001)"
+evidence = "the character EndCommand makes SelectedCharacter again while ReselectCharacterPending is set (ovl03:0001); RunWilderness sets it after each HandleWildernessKeys (ovl03:32F8)"
 
 [[global]]
 offset = 0x4431
@@ -1720,7 +1720,7 @@ evidence = "script entry address slot 2 (coab PreCampCheck [H]): RunCamp runs it
 [[global]]
 offset = 0x49E9
 name = "EclCampInterruptedEntry"
-evidence = "script entry address slot 3 (coab CampInterrupted [H]): EngineActionCommand runs it after the camp when EndCamp is left set (ovl03:2CCF)"
+evidence = "script entry address slot 3 (coab CampInterrupted [H]): RunCamp runs it after the camp when EndCamp is left set (ovl03:2DD3)"
 
 [[global]]
 offset = 0x49EB
@@ -1740,7 +1740,7 @@ evidence = "cleared by the loader; CombatMenu and EndCombatRound ask 'Continue B
 [[global]]
 offset = 0x49F8
 name = "SkipAreaScriptLoad"
-evidence = "cleared by the loader (ovl11:03A6); RunAreaStep, RunWilderness and InitScript skip the area script load while it is set (ovl03, ovl07)"
+evidence = "cleared by the loader (ovl11:03A6); RunWilderness and InitScript skip the area script load while it is set (ovl03:32F8, ovl07:01B6); ovl16 sets it (RunCharacterMenu)"
 
 [[global]]
 offset = 0x49F9
@@ -2216,7 +2216,7 @@ evidence = "set to 1 when the script moves the party or changes its marker (Writ
 [[global]]
 offset = 0x84E7
 name = "EncounterMembersAdded"
-evidence = "set to 1 by ECL command 11 after it has added members to the party list; AskMenuCommand and ClearEncounterCommand clear it (ovl03:0450, 10D1, 125D)"
+evidence = "set to 1 by ECL command 11 after it has added members to the party list; ClearEncounterCommand clears it (ovl03:0450, 125D)"
 
 [[global]]
 offset = 0x84E8

@@ -6645,7 +6645,7 @@ date = "2026-10-15"
 old = "ds4430"
 new = "ReselectCharacterPending"
 kind = "global"
-why = "StoreCommand and SelectCharacterCommand set it; EndCommand then selects the character at ReselectCharacter (ovl03:0001)"
+why = "SelectCharacterCommand sets it; EndCommand then selects the character at ReselectCharacter (ovl03:0001)"
 date = "2026-10-15"
 
 [[rename]]
@@ -6841,7 +6841,7 @@ date = "2026-10-15"
 old = "ds49E9"
 new = "EclCampInterruptedEntry"
 kind = "global"
-why = "script entry address slot 3 (coab CampInterrupted [H]): EngineActionCommand runs it after the camp when EndCamp is left set (ovl03:2CCF)"
+why = "script entry address slot 3 (coab CampInterrupted [H]): RunCamp runs it after the camp when EndCamp is left set (ovl03:2CCF)"
 date = "2026-10-15"
 
 [[rename]]
@@ -6869,7 +6869,7 @@ date = "2026-10-15"
 old = "ds49F8"
 new = "SkipAreaScriptLoad"
 kind = "global"
-why = "cleared by the loader (ovl11:03A6); RunAreaStep, RunWilderness and InitScript skip the area script load while it is set (ovl03, ovl07)"
+why = "cleared by the loader (ovl11:03A6); RunWilderness and InitScript skip the area script load while it is set (ovl03, ovl07)"
 date = "2026-10-15"
 
 [[rename]]
@@ -7548,7 +7548,7 @@ date = "2026-10-15"
 old = "ds84E7"
 new = "EncounterMembersAdded"
 kind = "global"
-why = "set to 1 by ECL command 11 after it has added members to the party list; AskMenuCommand and ClearEncounterCommand clear it (ovl03:0450, 10D1, 125D)"
+why = "set to 1 by ECL command 11 after it has added members to the party list; ClearEncounterCommand clears it (ovl03:0450, 10D1, 125D)"
 date = "2026-10-15"
 
 [[rename]]

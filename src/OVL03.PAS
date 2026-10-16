@@ -188,8 +188,9 @@ const
   EndTextColor = 10;
   EndPauseMs = 3000;
   ContinueColor = 15;
-  { ECL command 59 (ovl03:2C03): the last slot the search reaches, and the slot value it returns when the
-    value is not found (the byte $FF, that is -1 in a ShortInt). }
+  { ECL command 59 (ovl03:2C03): the search steps through slots 1 to 82: the loop tests I <= SpellScanLast
+    after the increment (ovl03:2C78), so Spells[82] is compared too [QUIRK: Spells has slots 0..20]; and the slot value
+    it returns when the value is not found (the byte $FF, that is -1 in a ShortInt). }
   SpellScanLast = 81;
   NoSpellSlot = $FF;
   { ECL command 54 (ovl03:2B7E): the kind that makes the added member a member of the other side (Side 1),
@@ -228,9 +229,10 @@ var
   PictureShown: TPictureShown absolute PictureShownFlags;
 
 { ovl03:0001. The ECL command 0, the only command that takes no operands (the dispatcher at
-  ovl03:2F2D calls it for CurrentOpcode 0). It clears the text windows when PictureFrameDirty is set (the
-  second one only when the game variable VarForceWallView is set, since the code reads that same
-  word), selects the character at ReselectCharacter when ReselectCharacterPending is set, clears the two-byte scratch
+  ovl03:2F2D calls it for CurrentOpcode 0). When PictureFrameDirty is set it redraws (clears and frames) the
+  picture frame window and, when the game variable VarForceWallView is nonzero, the close-up box (columns 3 to 13)
+  inside it; it then selects the character at ReselectCharacter when ReselectCharacterPending is set, clears the
+  two-byte scratch
   PictureShownFlags,
   moves EclPC past the command, empties the return stack of ScriptGosub, and puts the text
   cursor at column 1, row 17 (GlyphCol, GlyphRow). }
@@ -1970,7 +1972,7 @@ begin
 end;
 { ovl03:2C03. ECL command 59 (dispatcher ovl03:2F2D, CurrentOpcode 3Bh): looks for the value of operand 1
   among the memorized spells of the first party member (PartyListHead, TCharacter.Spells). The bytes from Spells[1]
-  up are compared with the value one by one, up to slot SpellScanLast. Operand 2 receives the slot found,
+  up are compared with the value one by one, up to slot SpellScanLast + 1 (82). Operand 2 receives the slot found,
   or NoSpellSlot when none in those bytes has it; operand 3 receives Count, the members walked (1 for a party
   with a member, 0 for an empty one). Purpose unknown: what the script does with the two results.
   QUIRK ovl03:2C03: the walk stops after the first member, because the search sets Found both when it finds

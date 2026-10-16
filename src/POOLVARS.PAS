@@ -2110,7 +2110,8 @@ var
   { The members ECL command 11 (ovl03:0450) has added to the party list; it adds none at
     MaxEncounterMembers (63). }
   EncounterMemberCount: Byte;
-  ReselectCharacter: PCharacter;  { and clears this flag; what sets the flag is not known }
+  ReselectCharacter: PCharacter;  { EndCommand makes it SelectedCharacter again and clears the flag; RunWilderness sets it
+                                    after each HandleWildernessKeys (ovl03:32F8), SelectCharacterCommand when it selects }
   { Globals of the battle's aftermath ovl05 (whitepaper 5.20). }
   MonstersLooted: Byte;  { 1 when a defeated monster gave up its money and items (ovl05:0088) }
   PartyFled: Byte;  { 1 when the party fled the battle (a member with Status 3, ovl05:050D) }
@@ -2195,7 +2196,7 @@ var
   EclStepEntry: Word;  { the first script entry address; see above }
   EclSearchEntry: Word;  { the second script entry address (see EclStepEntry); the ovl14 L key copies it to EclPC }
   EclPreCampEntry: Word;  { the third script entry address; see above }
-  EclCampInterruptedEntry: Word;  { the fourth script entry address; see above }
+  EclCampInterruptedEntry: Word;  { the fourth script entry address, run by RunCamp when the camp leaves EndCamp set [H] }
   EclInitialEntry: Word;  { the fifth script entry address; see above }
   { DS:49ED..49F2: storage of EclPC }
   ds49ED: array[0..5] of Byte;
@@ -2210,7 +2211,8 @@ var
   DebugMode: Boolean;  { STING debug mode: switched by Ctrl-D in ReadGameKey; ShowDebugTrace shows only when set }
   { nonzero: the monster pictures are shown; the camp's Pics submenu toggles it
                                     (ovl15:1D02, 1DE9); the loader sets it to 1 (ovl11:0397) }
-  SkipAreaScriptLoad: Byte;  { cleared by the loader (ovl11:03A6) }
+  SkipAreaScriptLoad: Byte;  { cleared by the loader (ovl11:03A6), set by RunCharacterMenu (ovl16:277); RunWilderness and
+                               InitScript skip the area script load while it is set }
   { the view kind before the last area step: RunAreaStep (ovl03:31B4) copies AreaViewKind here before it sets 1 }
   PreviousAreaViewKind: Byte;  { set to 1 by the loader (ovl11:03EB) }
   AreaViewKind: Byte;
