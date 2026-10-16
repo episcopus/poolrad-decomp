@@ -348,7 +348,7 @@ type
       (FigureBankTable[3 + Sex * 8 + roll] and [19..58], ovl17:1262). Sign-extended by ovl16:13CB. }
     Sex: ShortInt;
     { +$9F: the creature kind some spells test a target by: Charm Person and the shared helper
-      ovl22_fn_1758 require 1 or less (ovl22:11F3, 1760), Snake Charm $E (ovl22:193E) and ovl12
+      the helper at ovl22:1758 require 1 or less (ovl22:11F3, 1760), Snake Charm $E (ovl22:193E) and ovl12
       tests 4 and $A; MON*CHA has the humanoids at 0 or 1, the undead at 4 and a giant snake at $E,
       and a saved party member at 0. }
     CreatureType: Byte;
@@ -2207,11 +2207,11 @@ var
   SpellMenuList: PMenuLine;  { head of the spell menu list BuildSpellList builds, PickSpellFromMenu frees }
   SpellMenuSpells: array[0..$14] of Byte;  { the spell number (bit 7 = pending) of each menu line, in list order }
   SpellMenuItems: array[0..$30] of PMenuLine;  { for each scribed/learned line, the item (scroll) it came from }
-  SpellMenuItemCount: Byte;  { the number of entries SpellMenuItems holds (AddItemSpells, fn_051C) }
+  SpellMenuItemCount: Byte;  { the number of entries SpellMenuItems holds (AddItemSpells, AddScrollSpells) }
   { SpellWorkByteA and SpellWorkByteB: two byte working globals the ovl22 cast handlers share (the original keeps them
     at DS:4844 and DS:4845, between SpellMenuItemCount and NewHeapEnd). Enlarge (CastEnlarge) puts its
     strength (18) and its percentile in them for RaiseStrength; Sleep (CastSleep) its hit-point pool;
-    Snake Charm (CastSnakeCharm) a hit-point pool that reaches 0 through it; ovl24_fn_23B6 a value and a
+    Snake Charm (CastSnakeCharm) a hit-point pool that reaches 0 through it; the handler at ovl24:23B6 a value and a
     duration. }
   SpellWorkByteA: Byte;  { a spell handler's first working byte (see the note above) }
   SpellWorkByteB: Byte;  { the second working byte paired with SpellWorkByteA (see the note above) }
@@ -2478,7 +2478,8 @@ var
   PromptTimeout: Longint;  { prompt timeout in GameClock hundredths; 0 waits forever (ReadPromptChoice) }
   { DS:6B32..6B7F: storage of PromptTimeoutKey }
   ds6B32: array[0..77] of Byte;
-  { The current item the ovl22 spell lists work on (PickSpellFromMenu, fn_044E, fn_051C); UseItem (ovl19:1AB3) also
+  { The current item the ovl22 spell lists work on (PickSpellFromMenu, AddItemSpells, AddScrollSpells); UseItem
+    (ovl19:1AB3) also
     stores the scroll it takes its spell from here, when IsScroll accepts the item (main named it CurrentItem
     for that store; the ovl22 routines use it as their working item). }
   CurrentItem: PItem;

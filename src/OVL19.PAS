@@ -78,7 +78,7 @@ type
   class levels and experience on row 15, the combat block (ShowCombatStats) on rows 17 and 18, the weapon
   and armor on rows 20 and 21 and the status on row 22, and the head and body portraits when they are
   on (ShowPortraits) and the tile set is 3. Called by ViewSelectedCharacter (the View command),
-  TradeMoney (ovl19:219D) and ovl16 (ovl16_fn_0B52, ovl16_fn_1DCB, ModifyCharacter). SheetCharacter keeps the
+  TradeMoney (ovl19:219D) and ovl16 (CreateCharacter, ModifyCharacter). SheetCharacter keeps the
   character for the whole drawing. }
 procedure ShowCharacterSheet;
 const
@@ -208,7 +208,7 @@ end;
   34 value); on row 18, HP (DrawHitPoints), Damage (dice count, d, sides, then the bonus with its sign)
   and Movement (the Movement byte doubled by affect $2A and halved by affect $27, column 25 label,
   34 value). Labels are drawn in bright white (15), values in bright green (10). Called by ShowCharacterSheet
-  (its call at ovl19:03F5) and by ovl16 (ovl16_fn_1DCB, ovl16_fn_2639). }
+  (its call at ovl19:03F5) and by ovl16 (CreateCharacter, ModifyCharacter). }
 procedure ShowCombatStats;
 const
   LabelColor = 15;

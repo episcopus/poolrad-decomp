@@ -232,7 +232,7 @@ end;
   with a Name it makes the save directory and writes to SaveDir + Name + '.sav'. It rewrites the
   file (prompting for the save disk while the open fails), BlockWrites the 285-byte character,
   closes it, and (after erasing any old file) writes the 63-byte items of Who^.Items to '.itm' and
-  the 9-byte affects of Who^.Affects to '.spc'. Called by RunCharacterMenu, ovl16_fn_1EA3 and SaveGame. }
+  the 9-byte affects of Who^.Affects to '.spc'. Called by RunCharacterMenu, CreateCharacter and SaveGame. }
 procedure SaveCharacter(Who: PCharacter; Name: String8);
 var
   SaveFile: file;                      { the file written }
